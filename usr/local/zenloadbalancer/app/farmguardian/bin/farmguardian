@@ -1,0 +1,217 @@
+#!/usr/bin/perl 
+
+#This script check is part of Zen Load Balancer, check Farms status configured
+#in Zen Load Balancer Gui
+#Copyright (C) 2010  Emilio Campos Martin / Laura Garcia Liebana
+#
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+#Created by Emilio Campos Martin
+
+##farmguardian 1.0
+#this script is a service that check all Bakends or servers in a farm
+#using a script to monitorice the status of backends.  If the execution script return
+# <> 0 this script put in blacklist the backendserver. This script check
+#the timeout execution of a script 
+#parameters:
+#
+#	>./farmguardian farmname [-l]
+#
+#fileconfig_penguardian structure:
+#[farmname]:::[timeout]:::[timetocheck]:::[script args]:::[logs]
+
+use Proc::Daemon;
+#Proc::Daemon::Init;
+
+
+require '/usr/local/zenloadbalancer/config/global.conf';
+$file=$ARGV[0]."_guardian.conf";
+$file_arg="$configdir/$file";
+#$file_arg = $ARGV[0];
+
+$file=$ARGV[0]."_guardian.pid";
+$filepid="/var/run/$file";
+open FO,"> $filepid";
+print FO "$$";
+close FO;
+
+if ($ARGV[1] eq "-l")
+	{
+	open STDERR, '>>', "$farmguardian_logs/$ARGV[0]_farmguardian.log" or die;
+	open STDOUT, '>>', "$farmguardian_logs/$ARGV[0]_farmguardian.log" or die;
+	}
+else
+	{
+	open STDERR, '>>', "/dev/null" or die;
+	open STDOUT, '>>', "/dev/null" or die;
+
+	}
+if ($ARGV[0] eq "" )
+	{
+	print "FarmGuardian V1.0. Check Backends Servers in a Farm and enable or disable the load balancing\n";
+	print "	help: farmguardian farmname [-l]\n";
+	print "		-l : Active logs in $farmguardian_logs directory\n";
+
+	exit 0;
+	}
+
+$fileconfig = "$file_arg";
+open FI,"$fileconfig";
+
+
+if (-e $fileconfig)
+{
+	open FI,"$fileconfig";
+	while (<FI>)
+		{
+		$line = $_;	
+		}
+	close FI;
+	#$line have the last line in a file
+	my @args = split(":::",$line);
+	$farmname = @args[0];
+	$timetocheck = @args[1];
+	$check = @args[2];
+	#search the admin port about farm
+	$farmfile = "$configdir/$farmname\_pen.cfg";
+	open FI,"$farmfile";
+	while (<FI>)
+		{
+		if ($_ =~ /^# pen/) {$line = $_};
+		}
+	close FI;
+	my @line_a = split("\ ",$line);
+        $port_manage = @line_a[11];
+        my @managep = split(":",$port_manage);
+        $portadmin =  @managep[1];
+	#know the server and port
+	#repeat
+	my @run = `$pen_ctl 127.0.0.1:$portadmin servers`;
+        $errorcode = $?;
+        if ($errorcode != 0)
+                {
+                print "Farm $farmname is down, abort.\n";
+                exit 1;
+                }
+
+	while(1)
+	{
+
+	my @run = `$pen_ctl 127.0.0.1:$portadmin servers`;
+	$errorcode = $?;
+	if ($errorcode != 0)
+		{
+		print "Farm $farmname is down, abort.\n";
+		exit 1;
+		}
+	$i=-1;
+	foreach $line(@run)
+		{
+		@lines = split("\ ",$line);
+		if (@lines[2] ne "0.0.0.0")
+			{
+			$i++;
+			@backendid[$i]=@lines[0];
+			@backendserv[$i]=@lines[2];
+			@backendport[$i]=@lines[4];
+			}
+		}
+	#timeout
+	my $run = `$pen_ctl 127.0.0.1:$portadmin timeout`;
+	$timeout = $run;
+	$timeout =~ s/\n//;	
+
+        my $run = `$pen_ctl 127.0.0.1:$portadmin blacklist`;
+        $blacklist = $run;
+        $blacklist =~ s/\n//;
+
+	
+	$j=0;
+	#print the info
+	if ($ARGV[1] eq "-l")
+	{
+	print "	checking:\n";
+	print "		farmname: $farmname\n";
+	print "		timeout: $timeout\n";
+	print "		blacklist: $blacklist\n";
+ 	print "		timetocheck: $timetocheck\n";
+ 	print "		portadmin: $portadmin\n";
+	
+	while ($j<=$i)
+		{
+		print "		server[@backendid[$j]]: @backendserv[$j]:@backendport[$j]\n";
+		$j++;
+		} 
+		
+	
+	print "		check: $check\n";
+	print "\n";
+	my $now=localtime time;
+	print "execution in $now ::\n";
+	}		
+	###
+	$j=0;
+	while ($j<=$i)
+		{
+		if ($ARGV[1] eq "-l")
+		{
+		print "		server[@backendid[$j]]: @backendserv[$j]:@backendport[$j]\n";
+		}
+		$HOST = @backendserv[$j];
+		$PORT = @backendport[$j];
+		$checking = $check;
+		$checking =~ s/HOST/@backendserv[$j]/;
+		$checking =~ s/PORT/@backendport[$j]/;
+		#execute the binary to check
+		#my $command = "adb shell cd /data/app; ./iperf -u -s -p 5001";
+		my $command = "$libexec_dir/$checking";
+		my @output;
+		my $timedout = 0;
+		eval {
+    			local $SIG{ALRM} = sub { die "Timeout\n" };
+    			alarm $timeout;	
+    			@output = `$command`;
+			$errorcode = $?;
+    			alarm 0;
+			};
+		if ($@) 
+			{
+ 	   		warn "$command timed out.\n";
+	   		$timedout = 1;
+			}
+		if ($timedout == 0 && $errorcode == 0)
+			{
+                        if ($ARGV[1] eq "-l")
+                                {
+                                print "**execution OK in server $j\n";
+                                print "errorcode: $errorcode\n";
+                                }
+                                #my $run = `$pen_ctl 127.0.0.1:$portadmin server $j blacklist 0`;
+			}
+		else
+			{
+			if ($ARGV[1] eq "-l")
+                                {
+                                print "**execution error in ' $command ', output::**\n", @output;
+                                }
+                                #if exec error put in blacklist the server
+                        my $run = `$pen_ctl 127.0.0.1:$portadmin server $j blacklist $blacklist`;
+			
+			}
+		$j++;
+		}
+	
+	sleep($timetocheck);
+	}
+}
+else
+{
+print "Abort: $fileconfig not exist\n";
+}
