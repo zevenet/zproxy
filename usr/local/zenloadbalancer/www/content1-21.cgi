@@ -43,17 +43,24 @@ if ($action eq "Save"){
 		$action = "addfarm";
 	}
 
-	if ($farmprotocol eq "DATALINK" || $vipp =~ /^[+-]?\d+$/){
-		$inuse = &checkport($vip,$vipp);
-		if ($inuse eq "true"){
+	if ($farmprotocol =~ /TCP|HTTP|UDP|HTTPS/ ) {
+		if (&isnumber($vipp) eq "true"){
+			$inuse = &checkport($vip,$vipp);
+			if ($inuse eq "true"){
+				$error = "true";
+				&errormsg("The Virtual Port $vipp in Virtual IP $vip is in use, select another port or add another Virtual IP");
+				$action = "addfarm";
+			}
+		} else {
 			$error = "true";
-			&errormsg("The Virtual Port $vipp in Virtual IP $vip is in use, select another port or add another Virtual IP");
+			&errormsg("Invalid Virtual Port value, it must be numeric");
 			$action = "addfarm";
 		}
-	} else {
-		$error = "true";
-		&errormsg("Invalid Virtual Port value, it must be numeric");
-		$action = "addfarm";
+	}
+
+	if ($farmprotocol =~ /L4.xNAT/ && &ismport($vipp) eq "false"){
+                &errormsg("Invalid Virtual Port $vipp value, it must be a valid multiport value");
+                $error = "true";
 	}
 
 	if ($error eq "false"){
@@ -101,6 +108,8 @@ if ($farmprotocol eq "" || $farmname eq ""){
 	print "<option value=\"UDP\">UDP</option>\n";
 	print "<option value=\"HTTP\">HTTP</option>\n";
 	print "<option value=\"HTTPS\">HTTPS</option>\n";
+	print "<option value=\"L4TxNAT\">L4TxNAT</option>\n";
+	print "<option value=\"L4UxNAT\">L4UxNAT</option>\n";
 	print "<option value=\"DATALINK\">DATALINK</option>\n";
 	print "</select>";
 } else {
@@ -131,8 +140,11 @@ if ($farmprotocol ne "" && $farmname ne ""){
 
 	if ($farmprotocol ne "DATALINK"){
 		#vip port
-		print "<b> Virtual Port: </b>";
-		print "<input type=\"text\" value=\"\" size=\"4\" name=\"vipp\">";
+		print "<b> Virtual Port(s): </b>";
+		print "<input type=\"text\" value=\"\" size=\"10\" name=\"vipp\">";
+	}
+	if ($farmprotocol eq "L4TxNAT" || $farmprotocol eq "L4UxNAT"){
+		print "&nbsp;<img src=\"img/icons/small/help.png\" title=\"Specify a port, several ports between `,', ports range between `:', or all ports with `*'. Also a combination of them should work.\"</img>";
 	}
 	print "<br><br><input type=\"submit\" value=\"Save\" name=\"action\" class=\"button small\">";
 	print "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";

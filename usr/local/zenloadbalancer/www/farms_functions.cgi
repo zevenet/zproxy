@@ -223,6 +223,23 @@ sub setFarmSessionType($session,$fname){
 		untie @contents;
 	}
 
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		use Tie::File;
+		tie @filelines, 'Tie::File', "$configdir\/$ffile";
+		my $i = 0;
+		for $line(@filelines){
+			if ($line =~ /^$fname\;/){
+				my @args = split("\;",$line);
+				$line = "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;$session\;@args[6]\;@args[7]";
+				splice @filelines,$i,$line;
+				$output = $?;
+			}
+			$i++;
+		}
+		untie @filelines;
+		$output = $?;
+	}
+
 	return $output;
 }
 
@@ -247,7 +264,19 @@ sub getFarmSessionType($fname){
 		close FR;
 	}
 
-	#&logfile("getting 'Session type $output' for $fname farm $type");
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		open FI, "<$configdir/$ffile";
+		my $first = "true";
+		while ($line=<FI>){
+			if ( $line ne "" && $first eq "true"){
+				$first = "false";
+				my @line = split("\;",$line);
+				$output = @line[5];
+			}
+		}
+		close FI;
+	}
+
 	return $output;
 }
 
@@ -474,6 +503,23 @@ sub setFarmAlgorithm($alg,$fname){
 		}
 	}
 
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		use Tie::File;
+		tie @filelines, 'Tie::File', "$configdir\/$ffile";
+		my $i = 0;
+		for $line(@filelines){
+			if ($line =~ /^$fname\;/){
+				my @args = split("\;",$line);
+				$line = "@args[0]\;@args[1]\;@args[2]\;@args[3]\;$alg\;@args[5]\;@args[6]\;@args[7]";
+				splice @filelines,$i,$line;
+				$output = $?;
+			}
+			$i++;
+		}
+		untie @filelines;
+		$output = $?;
+	}
+
 	return $output;
 }
 
@@ -508,7 +554,92 @@ sub getFarmAlgorithm($fname){
 		close FI;
 	}
 
-	#&logfile("getting 'Algorithm $alg' for $fname farm $type");
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		open FI, "<$configdir/$ffile";
+		my $first = "true";
+		while ($line=<FI>){
+			if ( $line ne "" && $first eq "true"){
+				$first = "false";
+				my @line = split("\;",$line);
+				$output = @line[4];
+			}
+		}
+		close FI;
+	}
+
+	return $output;
+}
+
+#
+sub getFarmProto($fname){
+	($fname) = @_;
+
+	my $type = &getFarmType($fname);
+	my $output = -1;
+
+	if ($type eq "l4txnat"){
+		$output = "tcp";
+	}
+
+	if ($type eq "l4uxnat"){
+		$output = "udp";
+	}
+
+	return $output;
+}
+
+#
+sub getFarmNatType($fname){
+	($fname) = @_;
+
+	my $type = &getFarmType($fname);
+	my $ffile = &getFarmFile($fname);
+	my $output = -1;
+
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		open FI, "<$configdir/$ffile";
+		my $first = "true";
+		while ($line=<FI>){
+			if ( $line ne "" && $first eq "true"){
+				$first = "false";
+				my @line = split("\;",$line);
+				$output = @line[3];
+			}
+		}
+		close FI;
+	}
+
+	return $output;
+}
+
+
+# set the NAT type for a farm
+sub setFarmNatType($nat,$fname){
+	($nat,$fname) = @_;
+
+	my $type = &getFarmType($fname);
+	my $ffile = &getFarmFile($fname);
+	my $output = -1;
+
+	&logfile("setting 'NAT type $nat' for $fname farm $type");
+
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		use Tie::File;
+		tie @filelines, 'Tie::File', "$configdir\/$ffile";
+		my $i = 0;
+		for $line(@filelines){
+			if ($line =~ /^$fname\;/){
+				my @args = split("\;",$line);
+				$line = "@args[0]\;@args[1]\;@args[2]\;$nat\;@args[4]\;@args[5]\;@args[6]\;@args[7]";
+				splice @filelines,$i,$line;
+				$output = $?;
+			}
+			$i++;
+		}
+		untie @filelines;
+		$output = $?;
+	}
+
 	return $output;
 }
 
@@ -536,6 +667,23 @@ sub setFarmPersistence($persistence,$fname){
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
 	}
 
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		use Tie::File;
+		tie @filelines, 'Tie::File', "$configdir\/$ffile";
+		my $i = 0;
+		for $line(@filelines){
+			if ($line =~ /^$fname\;/){
+				my @args = split("\;",$line);
+				$line = "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;$persistence\;@args[6]\;@args[7]";
+				splice @filelines,$i,$line;
+				$output = $?;
+			}
+			$i++;
+		}
+		untie @filelines;
+		$output = $?;
+	}
+
 	return $output;
 }
 
@@ -553,7 +701,19 @@ sub getFarmPersistence($fname){
 		if ( fgrep { /^no\ roundrobin/ } "$configdir/$ffile" ) { $output = "true"; }
 	}
 
-	#&logfile("getting 'Persistence $output' for $fname farm $type");
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		open FI, "<$configdir/$ffile";
+		my $first = "true";
+		while ($line=<FI>){
+			if ( $line ne "" && $first eq "true"){
+				$first = "false";
+				my @line = split("\;",$line);
+				$output = @line[5];
+			}
+		}
+		close FI;
+	}
+
 	return $output;
 }
 
@@ -598,6 +758,23 @@ sub setFarmMaxClientTime($maxcl,$track,$fname){
 		untie @filefarmhttp;
 	}
 
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		use Tie::File;
+		tie @filelines, 'Tie::File', "$configdir\/$ffile";
+		my $i = 0;
+		for $line(@filelines){
+			if ($line =~ /^$fname\;/){
+				my @args = split("\;",$line);
+				$line = "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;$track\;@args[7]";
+				splice @filelines,$i,$line;
+				$output = $?;
+			}
+			$i++;
+		}
+		untie @filelines;
+		$output = $?;
+	}
+
 	return $output;
 }
 
@@ -633,7 +810,20 @@ sub getFarmMaxClientTime($fname){
 		close FR;
 	}
 
-	#&logfile("getting 'MaxClientTime @output' for $fname farm $type");
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		my $ffile = &getFarmFile($fname);
+		open FI, "<$configdir/$ffile";
+		my $first = "true";
+		while ($line=<FI>){
+			if ( $line ne "" && $first eq "true"){
+				$first = "false";
+				my @line = split("\;",$line);
+				@output = @line[6];
+			}
+		}
+		close FI;
+	}
+
 	return @output;
 }
 
@@ -733,7 +923,7 @@ sub getFarmServers($fname){
 		@output = `$pen_ctl 127.0.0.1:$fport servers 2> /dev/null`;
 	}
 
-	if ($type eq "datalink"){
+	if ($type eq "datalink" || $type eq "l4txnat" || $type eq "l4uxnat"){
 		my $file = &getFarmFile($fname);
 		open FI, "<$configdir/$file";
 		my $first = "true";
@@ -1124,6 +1314,12 @@ sub getFarmType($fname){
 	if ($filename =~ /$fname\_datalink.cfg/){
 		return "datalink";
 	}
+	if ($filename =~ /$fname\_l4txnat.cfg/){
+		return "l4txnat";
+	}
+	if ($filename =~ /$fname\_l4uxnat.cfg/){
+		return "l4uxnat";
+	}
 	return 1;
 }
 
@@ -1147,7 +1343,7 @@ sub getFarmStatus($fname){
 	my $ftype = &getFarmType($fname);
 	my $output = -1;
 
-	if ($ftype ne "datalink"){
+	if ($ftype ne "datalink" && $ftype ne "l4txnat" && $ftype ne "l4uxnat"){
 		my $pid=&getFarmPid($fname);
 		if ($pid eq "-"){
 			$output = "down";
@@ -1155,12 +1351,14 @@ sub getFarmStatus($fname){
 			$output = "up";
 		}
 	} else {
-		if (-e "$piddir\/$fname\_datalink.pid"){
+		# Only for datalink and l4xnat
+		if (-e "$piddir\/$fname\_$ftype.pid"){
 			$output = "up";
 		} else {
 			$output = "down";
 		}
 	}
+
 	return $output;
 }
 
@@ -1192,6 +1390,21 @@ sub getFarmBootStatus($fname){
 				$first = "false";
 				my @line_a = split("\;",$line);
 				$output = @line_a[4];
+				chomp($output);
+			}
+		}
+		close FI;
+	}
+
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		my $file = &getFarmFile($fname);
+		open FI, "<$configdir/$file";
+		my $first = "true";
+		while ($line=<FI>){
+			if ( $line ne "" && $first eq "true" ){
+				$first = "false";
+				my @line_a = split("\;",$line);
+				$output = @line_a[7];
 				chomp($output);
 			}
 		}
@@ -1241,7 +1454,7 @@ sub runFarmStart($fname,$writeconf){
 	#my $status = $type;
 
 	&logfile("running 'Start write $writeconf' for $fname farm $type");
-	if ($writeconf eq "true" && $type ne "datalink"){
+	if ($writeconf eq "true" && $type ne "datalink" && $type ne "l4txnat" && $type ne "l4uxnat"){
 		use Tie::File;
 		tie @filelines, 'Tie::File', "$configdir\/$file";
 		@filelines = grep !/^\#down/, @filelines;
@@ -1352,6 +1565,134 @@ sub runFarmStart($fname,$writeconf){
 		}
 	}
 
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		if ($writeconf eq "true"){
+			use Tie::File;
+			tie @filelines, 'Tie::File', "$configdir\/$file";
+			my $first=1;
+			foreach (@filelines){
+				if ($first eq 1){
+					s/\;down/\;up/g;
+					$first=0;
+				}
+			}
+			untie @filelines;
+		}
+
+		# include cron task to check backends
+
+		# Apply changes online
+		if ($status != -1){
+			# Set fw rules calculating the $nattype and $protocol
+			# for every server of the farm do:
+			#   set mark rules for matched connections
+			#   set rule for nattype
+			my $nattype = &getFarmNatType($fname);
+			my $lbalg = &getFarmAlgorithm($fname);
+			my $vip = &getFarmVip("vip",$fname);
+			my $vport = &getFarmVip("vipp",$fname);
+			my $proto = &getFarmProto($fname);
+			my $persist = &getFarmPersistence($fname);
+			my @pttl = &getFarmMaxClientTime($fname);
+			my $ttl = @pttl[0];
+
+			my @run = &getFarmServers($farmname);
+			my @tmangle;
+			my @tnat;
+			my @tmanglep;
+			my @tsnat;
+
+			my $prob = 0;
+			foreach $lservers(@run){
+				my @serv = split("\;",$lservers);
+				$prob = $prob + @serv[4];
+			}
+
+			if ($vport eq "*"){
+				$vport = "0:65535";
+			}
+
+			foreach $lservers(@run){
+				my @serv = split("\;",$lservers);
+				my $port = @serv[2];
+
+				my $rip = @serv[1];
+				if (@serv[2] ne ""){
+					$rip = "$rip\:$port";
+				}
+
+
+				my $tag = &genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,@serv[0],@serv[3],@serv[4],@serv[6],$prob);
+				my $red = &genIptRedirect($fname,$nattype,@serv[0],$rip,$proto,@serv[3],@serv[4],$persist,@serv[6]);
+
+				if ($persist ne "none"){
+					my $tagp = &genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,@serv[0],@serv[3],@serv[6]);
+					push(@tmanglep,$tagp);
+					#my $tagp2 = &genIptMarkReturn($fname,$vip,$vport,$proto,@serv[0],@serv[6]);
+					#push(@tmanglep,$tagp2);
+				}
+
+				if ($nattype eq "nat"){
+					my $ntag = &genIptSourceNat($fname,$vip,$nattype,@serv[0],$proto,@serv[3],@serv[6]);
+					push(@tsnat,$ntag);
+				}
+
+				push(@tmangle,$tag);
+				push(@tnat,$red);
+				$prob = $prob - @serv[4];
+			}
+
+
+			@tmangle = reverse(@tmangle);
+			foreach $ntag(@tmangle){
+				&logfile("running $ntag");
+				my @run = `$ntag`;
+				if ($? != 0){
+					&logfile("last command failed!");
+					$status = -1;
+				}
+			}
+
+			if ($persist ne "none"){
+				foreach $ntag(@tmanglep){
+					&logfile("running $ntag");
+					my @run = `$ntag`;
+					if ($? != 0){
+						&logfile("last command failed!");
+						$status = -1;
+					}
+				}
+			}
+
+			foreach $nred(@tnat){
+				&logfile("running $nred");
+				my @run = `$nred`;
+				if ($? != 0){
+					&logfile("last command failed!");
+					$status = -1;
+				}
+			}
+
+			foreach $nred(@tsnat){
+				&logfile("running $nred");
+				my @run = `$nred`;
+				if ($? != 0){
+					&logfile("last command failed!");
+					$status = -1;
+				}
+			}
+
+			# Enable IP forwarding
+			&setIpForward("true");
+
+			# Enable active datalink file
+			if ($status != -1){
+				open FI, ">$piddir\/$fname\_$type.pid";
+				close FI;
+			}
+		}
+	}
+
 	return $status;
 }
 
@@ -1440,7 +1781,44 @@ sub runFarmStop($fname,$writeconf){
 		}
 	}
 
-	if ($writeconf eq "true" && $type ne "datalink"){
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		if ($writeconf eq "true"){
+			use Tie::File;
+			tie @filelines, 'Tie::File', "$configdir\/$filename";
+			my $first=1;
+			foreach (@filelines){
+				if ($first eq 1){
+					s/\;up/\;down/g;
+					$status = $?;
+					$first=0;
+				}
+			}
+			untie @filelines;
+		}
+
+		# delete cron task to check backends
+
+		# Apply changes online
+		if ($status != -1){
+			# Disable rules
+			my @allrules = &getIptList("mangle","PREROUTING");
+			$status = &deleteIptRules("farm",$fname,"PREROUTING",@allrules);
+			my @allrules = &getIptList("nat","PREROUTING");
+			$status = &deleteIptRules("farm",$fname,"PREROUTING",@allrules);
+			my @allrules = &getIptList("nat","POSTROUTING");
+			$status = &deleteIptRules("farm",$fname,"POSTROUTING",@allrules);
+
+			# Disable active datalink file
+			unlink("$piddir\/$fname\_$type.pid");
+			if (-e "$piddir\/$fname\_$type.pid"){
+				$status = -1;
+			} else {
+				$status = 0;
+			}
+		}
+	}
+
+	if ($writeconf eq "true" && $type ne "datalink" && $type ne "l4txnat" && $type ne "l4uxnat"){
 		open FW,">>$configdir/$filename";
 		print FW "#down\n";
 		close FW;
@@ -1532,6 +1910,23 @@ sub runFarmCreate($fproto,$fvip,$fvipp,$fname,$fdev){
 		if (! -e "$piddir/$fname_datalink.pid"){
 			# Enable active datalink file
 			open FI, ">$piddir\/$fname\_datalink.pid";
+			close FI;
+		}
+	}
+
+	if ($fproto =~ /L4.xNAT/){
+		my $type = "l4txnat";
+		if ($fproto eq "L4UxNAT"){
+			$type = "l4uxnat";
+		}
+		open FO, ">$configdir\/$fname\_$type.cfg";
+		print FO "$fname\;$fvip\;$fvipp\;dnat\;weight\;none\;120\;up\n";
+		close FO;
+		$output = $?;
+
+		if (! -e "$piddir/$fname_$type.pid"){
+			# Enable active l4xnat file
+			open FI, ">$piddir\/$fname\_$type.pid";
 			close FI;
 		}
 	}
@@ -1754,7 +2149,7 @@ sub getFarmVip($info,$fname){
 		}
 	}
 
-	if ($type eq "datalink"){
+	if ($type eq "datalink" || $type eq "l4txnat" || $type eq "l4uxnat"){
 		open FI, "<$configdir/$file";
 		my $first = "true";
 		while ($line=<FI>){
@@ -1884,6 +2279,9 @@ sub runFarmDelete($fname){
 	my @filelines = grep !/\# \_\_$farmname\_\_/,@filelines;
 	untie @filelines;
 
+	# delete nf marks
+	delMarks($fname,"");
+
 	return $status;
 }
 
@@ -1917,7 +2315,13 @@ sub getFarmList(){
 	opendir(DIR, $configdir);
 	my @files3= grep(/\_datalink.cfg$/,readdir(DIR));
 	closedir(DIR);
-	my @files = (@files,@files2,@files3);
+	opendir(DIR, $configdir);
+	my @files4= grep(/\_l4txnat.cfg$/,readdir(DIR));
+	closedir(DIR);
+	opendir(DIR, $configdir);
+	my @files5= grep(/\_l4uxnat.cfg$/,readdir(DIR));
+	closedir(DIR);
+	my @files = (@files,@files2,@files3,@files4,@files5);
 	return @files;
 }
 
@@ -1977,6 +2381,23 @@ sub setFarmVirtualConf($vip,$vipp,$fname){
 			if ($line =~ /^$fname\;/){
 				my @args = split("\;",$line);
 				$line = "@args[0]\;$vip\;$vipp\;@args[3]\;@args[4]";
+				splice @filelines,$i,$line;
+				$stat = $?;
+			}
+			$i++;
+		}
+		untie @filelines;
+		$stat = $?;
+	}
+
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		use Tie::File;
+		tie @filelines, 'Tie::File', "$configdir\/$fconf";
+		my $i = 0;
+		for $line(@filelines){
+			if ($line =~ /^$fname\;/){
+				my @args = split("\;",$line);
+				$line = "@args[0]\;$vip\;$vipp\;@args[3]\;@args[4]\;@args[5]\;@args[6]\;@args[7]";
 				splice @filelines,$i,$line;
 				$stat = $?;
 			}
@@ -2112,6 +2533,38 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname){
 		}
 	}
 
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		tie my @contents, 'Tie::File', "$configdir\/$file";
+		my $i = 0;
+		my $l = 0;
+		my $end = "false";
+		foreach $line(@contents){
+			if ( $line =~ /^\;server\;/ && $end ne "true"){
+				if ($i eq $ids){
+					my @aline = split("\;",$line);
+					my $dline = "\;server\;$rip\;$port\;@aline[4]\;$weight\;$priority\;up\n";
+					splice @contents,$l,1,$dline;
+					$output = $?;
+					$end = "true";
+				} else {
+					$i++;
+				}
+			}
+			$l++;
+		}
+		if ($end eq "false"){
+			my $mark = &getNewMark($fname);
+			push(@contents,"\;server\;$rip\;$port\;$mark\;$weight\;$priority\;up\n");
+			$output = $?;
+		}
+		untie @contents;
+		# Apply changes online
+		#if ($output != -1){
+		#	&runFarmStop($farmname,"true");
+		#	&runFarmStart($farmname,"true");
+		#}
+	}
+
 	if ($type eq "http" || $type eq "https"){
 		tie @contents, 'Tie::File', "$configdir\/$file";
 		my $be_section=0;
@@ -2217,7 +2670,7 @@ sub runFarmServerDelete($ids,$fname){
 	}
 
 	if ($type eq "datalink"){
-		tie @contents, 'Tie::File', "$configdir\/$ffile";
+		tie my @contents, 'Tie::File', "$configdir\/$ffile";
 		my $i = 0;
 		my $l = 0;
 		my $end = "false";
@@ -2234,7 +2687,30 @@ sub runFarmServerDelete($ids,$fname){
 			$l++;
 		}
 		untie @contents;
-		## TODO Eliminar nueva ruta
+	}
+
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		tie my @contents, 'Tie::File', "$configdir\/$ffile";
+		my $i = 0;
+		my $l = 0;
+		my $end = "false";
+		my $mark;
+
+		foreach $line(@contents){
+			if ( $line =~ /^\;server\;/ && $end ne "true"){
+				if ($i eq $ids){
+					my @sdata = split("\;",$line);
+					$mark = &delMarks("",@sdata[4]);
+					splice @contents,$l,1,;
+					$output = $?;
+					$end = "true";
+				} else {
+					$i++;
+				}
+			}
+			$l++;
+		}
+		untie @contents;
 	}
 
 	if ($type eq "http" || $type eq "https"){
@@ -2278,7 +2754,7 @@ sub getFarmBackendStatusCtl($fname){
 		@output = `$poundctl -c  /tmp/$fname\_pound.socket`;
 	}
 
-	if ($type eq "datalink"){
+	if ($type eq "datalink" || $type eq "l4txnat" || $type eq "l4uxnat"){
 		my $ffile = &getFarmFile($fname);
 		my @content;
 		tie @content, 'Tie::File', "$configdir\/$ffile";
@@ -2433,6 +2909,19 @@ sub getFarmBackendsStatus($fname,@content){
 		foreach $server(@content){
 			my @serv = split(";", $server);
 			push(@servers,"@serv[2]\;@serv[3]\;@serv[4]\;@serv[5]\;@serv[6]");
+		}
+		@output = @servers;
+	}
+
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		my @servers;
+		foreach $server(@content){
+			my @serv = split("\;", $server);
+			my $port = @serv[3];
+			if ($port eq ""){
+				$port = &getFarmVip("vipp",$fname);
+			}
+			push(@servers,"@serv[2]\;$port\;@serv[5]\;@serv[7]");
 		}
 		@output = @servers;
 	}
@@ -2734,8 +3223,8 @@ sub setNewFarmName($fname,$newfname){
 		}
 	}
 
-	if ($type eq "datalink"){
-		my $newffile = "$newfname\_datalink.cfg";
+	if ($type eq "datalink" || $type eq "l4txnat" || $type eq "l4uxnat"){
+		my $newffile = "$newfname\_$type.cfg";
 		use Tie::File;
 		tie @filelines, 'Tie::File', "$configdir\/$ffile";
 		for (@filelines){
@@ -2743,8 +3232,13 @@ sub setNewFarmName($fname,$newfname){
 		}
 		untie @filelines;
 		rename("$configdir\/$ffile","$configdir\/$newffile");
-		rename("$piddir\/$fname\_datalink.pid","$piddir\/$newfname\_datalink.pid");
+		rename("$piddir\/$fname\_$type.pid","$piddir\/$newfname\_$type.pid");
 		$output = $?;
+	}
+
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		# Rename fw marks for this farm
+		&renameMarks($fname,$newfname);
 	}
 
 	return $output;

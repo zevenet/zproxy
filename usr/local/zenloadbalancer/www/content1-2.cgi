@@ -24,13 +24,15 @@
 #";
 #require "menu.cgi";
 
+my $type = &getFarmType($farmname);
+
 print "
     <!--Content INI-->
         <div id=\"page-content\">
 
                 <!--Content Header INI-->";
                 if ($farmname){
-                        print "<h2>Manage::Farms::$farmname</h2>";
+                        print "<h2>Manage::Farms\:\:$type\:\:$farmname</h2>";
                 }else{
                         print "<h2>Manage::Farms</h2>";
                 }
@@ -83,7 +85,6 @@ if ($action eq "stopfarm"){
 }
 
 if ($action =~ "^editfarm" || $editfarm){
-	$type = &getFarmType($farmname);
 	if ($type == 1){
 		&errormsg("Unknown farm type of $farmname");
 	} else {
@@ -96,6 +97,9 @@ if ($action =~ "^editfarm" || $editfarm){
 		}
 		if ($type eq "datalink"){
 			require "content1-26.cgi";
+		}
+		if ($type eq "l4txnat" || $type eq "l4uxnat"){
+			require "content1-28.cgi";
 		}
 	}
 }
@@ -114,6 +118,9 @@ if ($action eq "managefarm"){
 		}
 		if ($type eq "datalink"){
 			require "content1-27.cgi";
+		}
+		if ($type eq "l4txnat" || $type eq "l4uxnat"){
+			require "content1-29.cgi";
 		}
 	}
 }
@@ -148,7 +155,7 @@ print "<thead>";
 print "<tr>";
 print "<td width=85>Name</td>";
 print "<td width=85>Virtual IP</td>";
-print "<td>Virtual Port</td>";
+print "<td>Virtual Port(s)</td>";
 print "<td>Pending Conns</td>";
 print "<td>Established Conns</td>";
 print "<td>Closed Conns</td>";
@@ -203,7 +210,11 @@ foreach $file (@files) {
 		$waitedconns = &getFarmTWConns($name,@netstat);
 		print "<td> $waitedconns </td>";
 		#print the pid of the process 
-		print "<td>$pid</td>";
+		if ($pid eq "-1"){
+			print "<td> - </td>";
+		} else {
+			print "<td>$pid</td>";
+		}
 
 		#print status of a farm
 		if ($status ne "up"){
@@ -217,7 +228,7 @@ foreach $file (@files) {
 
 		#menu
 		print "<td>";
-		if ($type eq "tcp" || $type eq "udp"){
+		if ($type eq "tcp" || $type eq "udp" || $type eq "l4txnat" || $type eq "l4uxnat"){
 			&createmenuvip($name,$id,$status);
 		}
 		if ($type =~ /http/ ){

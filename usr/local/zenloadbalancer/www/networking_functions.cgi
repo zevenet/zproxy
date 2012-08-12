@@ -503,6 +503,12 @@ sub getNetstat($args){
 	return @netstat;
 }
 
+sub getNetstatNat($args){
+	($args)= @_;
+	my @netstat = `$netstatNat -$args`;
+	return @netstat;
+}
+
 sub getDevData($dev){
 	($dev)= @_;
 	open FI, "</proc/net/dev";

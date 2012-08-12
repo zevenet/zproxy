@@ -20,6 +20,7 @@ $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
+require "/usr/local/zenloadbalancer/www/nf_functions.cgi";
 require "/usr/local/zenloadbalancer/www/cluster_functions.cgi";
 
 
@@ -35,6 +36,31 @@ else
         {
 	return "false";
         }
+}
+
+#check if the string is a valid multiport definition
+sub ismport($string){
+	($string) = @_;
+
+	chomp($string);
+	if ($string eq "*"){
+		return "true";
+	} elsif ( $string =~ /^[0-9]+(,[0-9]+|[0-9]+\:[0-9]+)*$/ ){
+		return "true";
+	} else {
+		return "false";
+	}
+}
+
+#check if the port has more than 1 port
+sub checkmport($port){
+	($port) = @_;
+
+	if ( $port =~ /\,|\:|\*/ ){
+		return "true";
+	} else {
+		return "false";
+	}
 }
 
 #function that paint a static progess bar
@@ -222,7 +248,7 @@ if ($actionmenu eq "normal")
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-editserver\">";
 print "<input type=\"image\" src=\"img/icons/small/server_edit.png\" title=\"Edit Real Server $id_server\" name=\"action\" value=\"editfarm-editserver\">";
 my $maintenance = &getFarmBackendMaintenance($name,$id_server);
-if ($type ne "datalink"){
+if ($type ne "datalink" && $type ne "l4txnat" && $type ne "l4uxnat"){
 	if ($maintenance ne "0"){
 		print "<a href=index.cgi?action=editfarm-maintenance&id=1-2&farmname=$name&id_server=$id_server title=\"Enable  maintenance mode for real Server $id_server\" oncl
 	ick=\"return confirm('Are you sure you want to enable the  maintenance mode for server: $id_server?')\"><img src=\"img/icons/small/server_maintenance.png\"></a>";
@@ -341,7 +367,6 @@ if ($status eq "up")
 #
 #
 #
-
 sub createmenuGW($id,$action)
 {
 ($id,$action) = @_;

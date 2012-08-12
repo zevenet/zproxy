@@ -134,6 +134,7 @@ $certname = $Variables{"certname"};
 $ciphers = $Variables{"ciphers"};
 $cipherc = $Variables{"cipherc"};
 $idcluster = $Variables{'idcluster'};
+$nattype = $Variables{'nattype'};
 
 #end variables in get string
 

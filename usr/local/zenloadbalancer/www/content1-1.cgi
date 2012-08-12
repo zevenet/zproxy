@@ -244,7 +244,7 @@ print "	<div class=\"box table\">
 		print "<tr>";
 		$farmname = &getFarmName($file);
 		my $type = &getFarmType($farmname);
-		if ($type !~ /datalink/){
+		if ($type !~ /datalink/ && $type !~ /l4.xnat/){
 			$pid = &getFarmPid($farmname);
 			chomp($pid);
 		}

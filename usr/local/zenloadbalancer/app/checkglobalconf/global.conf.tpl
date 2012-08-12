@@ -74,6 +74,10 @@ $datentp="/usr/sbin/ntpdate";
 $arping_bin="/usr/bin/arping";
 #Where is openssl?
 $openssl="/usr/bin/openssl";
+#Where is iptables?
+$iptables="/sbin/iptables";
+#Where is netstat-nat?
+$netstatNat="/usr/bin/netstat-nat";
 
 #where is pound binary?
 $pound="/usr/local/zenloadbalancer/app/pound/sbin/pound";
@@ -86,6 +90,7 @@ $piddir="/var/run/";
 
 ## Network global configuration options ##
 $rttables = "/etc/iproute2/rt_tables";
+$fwmarksconf = "$configdir/fwmarks.conf";
 #System Default Gateway
 $defaultgw="";
 #Interface Default Gateway

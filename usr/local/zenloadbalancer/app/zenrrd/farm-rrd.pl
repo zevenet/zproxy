@@ -30,7 +30,7 @@ foreach $farmfile(@farmlist){
 	@farmargs = split(/_/,$farmfile);
 	$farm = @farmargs[0];
 	my $ftype = &getFarmType($farm);
-	if ($ftype !~ /datalink/){
+	if ($ftype !~ /datalink/ && $ftype !~ /l4.xnat/){
 		$db_if="$farm-farm.rrd";
 		my @netstat = &getNetstat("atunp");
 
