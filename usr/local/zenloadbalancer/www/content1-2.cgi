@@ -68,7 +68,7 @@ if ($action eq "startfarm"){
 
 	$stat = &getFarmGuardianStatus($farmname);
 	if ($stat != -1){
-		$stat = &runFarmGuardianStart($farmname);
+		$stat = &runFarmGuardianStart($farmname,"");
 		if ($stat == 0){
 			&successmsg("The FarmGuardian of $farmname is now running");
 		}

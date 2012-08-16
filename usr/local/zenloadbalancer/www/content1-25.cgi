@@ -31,6 +31,21 @@ $fpid = $fpid+1;
 my @content = &getFarmBackendStatusCtl($farmname);
 my @backends = &getFarmBackendsStatus($farmname,@content);
 
+
+#TEMPORAL:
+my @a_services;
+my $sv;
+foreach (@content){
+		if ($_ =~ /Service/){
+			my @l = split("\ ",$_);
+			$sv = @l[2];
+			$sv =~ s/"//g; 	
+			chomp($sv);
+			push(@a_service,$sv);
+		}
+	}
+
+
 my $backendsize = @backends;
 my $activebackends = 0;
 my $activesessions = 0;
@@ -44,23 +59,34 @@ foreach (@backends){
 print "<div class=\"box-header\">Real servers status<font size=1>&nbsp;&nbsp;&nbsp; $backendsize servers, $activebackends active </font></div>";
 print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 print "<thead>\n";
-print "<tr><td>Server</td><td>Address</td><td>Port</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Closed Conns</td><td>Sessions</td><td>Weight</td>";
+#print "<tr><td>Service</td><td>Server</td><td>Address</td><td>Port</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Closed Conns</td><td>Sessions</td><td>Weight</td>";
+print "<tr><td>Service<td>Server</td><td>Address</td><td>Port</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Closed Conns</td><td>Weight</td>";
 print "</thead>\n";
 print "<tbody>";
 
+my $i = -1;
 foreach (@backends){
 	my @backends_data = split("\t",$_);
 	$activesessions = $activesessions+$backends_data[6];
 	print "<tr>";
+	print "<td>";
+	if ($backends_data[0] == 0){
+		$i++;
+	}	
+	print "@a_service[$i]";
+
+	print "</td>";
 	print "<td> $backends_data[0] </td> ";
 	print "<td> $backends_data[1] </td> ";
 	print "<td> $backends_data[2] </td> ";
 	if ($backends_data[3] eq "maintenance"){
-		print "<td><img src=\"img/icons/small/warning.png\" title=\"up\"></td> ";
-	}elsif ($backends_data[3] eq "up"){
-		print "<td><img src=\"img/icons/small/start.png\" title=\"up\"></td> ";
-	}else{
-		print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td> ";
+		print "<td><img src=\"img/icons/small/warning.png\" title=\"Maintenance\"></td> ";
+	} elsif ($backends_data[3] eq "up"){
+		print "<td><img src=\"img/icons/small/start.png\" title=\"Up\"></td> ";
+	} elsif ($backends_data[3] eq "fgDOWN"){
+		print "<td><img src=\"img/icons/small/disconnect.png\" title=\"FarmGuardian down\"></td> ";
+	} else {
+		print "<td><img src=\"img/icons/small/stop.png\" title=\"Down\"></td> ";
 	}
 	$ip_backend = $backends_data[1];
 	$port_backend= $backends_data[2];
@@ -73,7 +99,8 @@ foreach (@backends){
 	@timewnetstatback = &getNetstatFilter("tcp","\.\*\_WAIT\.\*","$ip_backend\:$port_backend",$fpid,@netstat);
 	$ntimew = @timewnetstatback;
 	print "<td>$ntimew</td>";
-	print "<td> $backends_data[6] </td> ";
+	#TODO count number of session by backend
+	#print "<td> $backends_data[6] </td> ";
 	print "<td> $backends_data[5] </td>";
 	print "</tr>";
 }
@@ -92,14 +119,16 @@ if ($viewtableclients eq "yes"){
 	print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=yes\" title=\"Maximize\"><img src=\"img/icons/small/bullet_toggle_plus.png\"></a>";
 }
 
-print "Client sessions status<font size=1>&nbsp;&nbsp;&nbsp; $activesessions active sessions</font></div>\n";
+my @sessions = &getFarmBackendsClientsList($farmname,@content);
+my $t_sessions = $#sessions + 1;
+print "Client sessions status<font size=1>&nbsp;&nbsp;&nbsp; $t_sessions active sessions</font></div>\n";
 
 if ($viewtableclients eq "yes"){
-	my @sessions = &getFarmBackendsClientsList($farmname,@content);
+	#my @sessions = &getFarmBackendsClientsList($farmname,@content);
 
 	print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 	print "<thead>\n";
-	print "<tr><td>Client</td><td>Session ID</td><td>Server</td>";
+	print "<tr><td>Service</td><td>Client</td><td>Session ID</td><td>Server</td>";
 	print "</thead>\n";
 	print "<tbody>";
 
@@ -109,6 +138,7 @@ if ($viewtableclients eq "yes"){
 		print "<td> $sessions_data[0] </td> ";
 		print "<td> $sessions_data[1] </td> ";
 		print "<td> $sessions_data[2] </td> ";
+		print "<td> $sessions_data[3] </td> ";
 		print "</tr>";
 	}
 

@@ -163,8 +163,8 @@ sub getFarmClientTimeout($fname){
 }
 
 #
-sub setFarmSessionType($session,$fname){
-	($session,$fname) = @_;
+sub setFarmSessionType($session,$fname,$service){
+	($session,$fname,$svice) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -245,8 +245,8 @@ sub setFarmSessionType($session,$fname){
 
 
 #
-sub getFarmSessionType($fname){
-	($fname) = @_;
+sub getFarmSessionType($fname,$service){
+	($fname,$svice) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -281,8 +281,8 @@ sub getFarmSessionType($fname){
 }
 
 #
-sub setFarmSessionId($sessionid,$fname){
-	($sessionid,$fname) = @_;
+sub setFarmSessionId($sessionid,$fname,$service){
+	($sessionid,$fname,$svice) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -310,8 +310,8 @@ sub setFarmSessionId($sessionid,$fname){
 }
 
 #
-sub getFarmSessionId($fname){
-	($fname) = @_;
+sub getFarmSessionId($fname,$service){
+	($fname,$svice) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -719,8 +719,8 @@ sub getFarmPersistence($fname){
 
 
 # set the max clients of a farm
-sub setFarmMaxClientTime($maxcl,$track,$fname){
-	($maxcl,$track,$fname) = @_;
+sub setFarmMaxClientTime($maxcl,$track,$fname,$service){
+	($maxcl,$track,$fname,$svice) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -779,8 +779,8 @@ sub setFarmMaxClientTime($maxcl,$track,$fname){
 }
 
 #
-sub getFarmMaxClientTime($fname){
-	($fname) = @_;
+sub getFarmMaxClientTime($fname,$service){
+	($fname,$svice) = @_;
 
 	my $type = &getFarmType($fname);
 	my @output;
@@ -1722,6 +1722,7 @@ sub runFarmStop($fname,$writeconf){
 	}
 
 	if ($type eq "http" || $type eq "https"){
+		&runFarmGuardianStop($fname,"");
                 my $checkfarm = &getFarmConfigIsOK($fname);
                 if ($checkfarm == 0){
                         $pid=&getFarmPid($fname);
@@ -2027,6 +2028,10 @@ sub getFarmPort($fname){
 		close FI;
 	}
 
+	if ($type eq "http" || $type eq "https"){
+		$output = "/tmp/".$fname."_pound.socket";
+	}
+
 	return $output;
 }
 
@@ -2169,11 +2174,11 @@ sub getFarmVip($info,$fname){
 
 
 # Returns FarmGuardian config file for this farm
-sub getFarmGuardianFile($fname){
-	($fname)= @_;
+sub getFarmGuardianFile($fname,$svice){
+	($fname,$svice)= @_;
 
 	opendir(my $dir, "$configdir") || return -1;
-	my @files = grep { /^$fname\_.*guardian\.conf/ && -f "$configdir/$_" } readdir($dir);
+	my @files = grep { /^$fname\_$svice.*guardian\.conf/ && -f "$configdir/$_" } readdir($dir);
 	closedir $dir;
 	my $nfiles = @files;
 	if ($nfiles == 0){
@@ -2184,10 +2189,10 @@ sub getFarmGuardianFile($fname){
 }
 
 # Returns if FarmGuardian is activated for this farm
-sub getFarmGuardianStatus($fname){
-	($fname)= @_;
+sub getFarmGuardianStatus($fname,$svice){
+	($fname,$svice)= @_;
 
-	my $fgfile = &getFarmGuardianFile($fname);
+	my $fgfile = &getFarmGuardianFile($fname,$svice);
 
 	if ($fgfile == -1){
 		return -1;
@@ -2207,10 +2212,10 @@ sub getFarmGuardianStatus($fname){
 }
 
 # Returns if FarmGuardian has logs activated for this farm
-sub getFarmGuardianLog($fname){
-	($fname)= @_;
+sub getFarmGuardianLog($fname,$svice){
+	($fname,$svice)= @_;
 
-	my $fgfile = &getFarmGuardianFile($fname);
+	my $fgfile = &getFarmGuardianFile($fname,$svice);
 	if ($fgfile == -1){
 		return -1;
 	}
@@ -2229,33 +2234,82 @@ sub getFarmGuardianLog($fname){
 }
 
 # Start FarmGuardian rutine
-sub runFarmGuardianStart($fname){
-	($fname)= @_;
-	my $status = -1;
-	if (&getFarmGuardianLog($fname)){
-		&logfile("running '$farmguardian $fname -l &'");
-		zsystem("$farmguardian $fname -l &");
-		$status = $?;
+sub runFarmGuardianStart($fname,$svice){
+	($fname,$svice)= @_;
+	my $status = 0;
+	my $log;
+	my $sv;
+	my $ftype = &getFarmType($fname);
+
+	if (&getFarmGuardianLog($fname,$svice)){
+		$log = "-l";
+	}
+
+	if ($svice ne ""){
+		$sv = "-s '$svice'";
+	}
+
+	if ($ftype =~ /http/ && $svice eq ""){
+		# Iterate over every farm service
+		my $services = &getFarmVS($fname,"","");
+		my @servs = split(" ",$services);
+		foreach $service(@servs){
+			$stat = &runFarmGuardianStart($fname,$service);
+			$status = $status + $stat;
+		}
 	} else {
-		&logfile("running '$farmguardian $fname &'");
-		zsystem("$farmguardian $fname &");
+		&logfile("running $farmguardian $fname $sv $log &");
+		zsystem("$farmguardian $fname $sv $log &");
 		$status = $?;
 	}
+
 	return $status;
 }
 
-# Stop FarmGuardian rutine
-sub runFarmGuardianStop($fname){
-	($fname)= @_;
-	$status = -1;
-	$fgpid = &getFarmGuardianPid($fname);
 
-	if ($fgpid != -1){
-		&logfile ("running 'kill 9, $fgpid' stopping FarmGuardian $fname");
-		$run = kill 9, $fgpid;
-		$status = $?;
-		unlink glob("/var/run/$fname\_*guardian.pid");
+sub runFarmGuardianStop($fname,$svice){
+	my ($fname,$svice)= @_;
+	my $status = 0;
+	my $sv;
+	my $type = &getFarmType($fname);
+	my $fgpid = &getFarmGuardianPid($fname,$svice);
+
+	if ($ftype =~ /http/ && $svice eq ""){
+		# Iterate over every farm service
+		my $services = &getFarmVS($fname,"","");
+		my @servs = split(" ",$services);
+		foreach $service(@servs){
+			$stat = &runFarmGuardianStop($fname,$service);
+			$status = $status + $stat;
+		}
+	} else {
+		if ($svice ne ""){
+			$sv = "${svice}_";
+		}
+		if ($fgpid != -1){
+			if ($type eq "http" || $type eq "https"){
+				if (-e "$configdir\/$fname\_status.cfg"){
+					my $portadmin = &getFarmPort($fname);
+					my $idsv = &getFarmVSI($fname,$svice);
+					my $index=-1;
+					tie @filelines, 'Tie::File', "$configdir\/$fname\_status.cfg";
+					for (@filelines){
+						$index++;
+						if ($_ =~ /fgDOWN/){
+							$_ = "-B 0 $idsv $index active";
+							my $run = `$poundctl -c $portadmin -B 0 $idsv $index`;
+						}
+					}
+					untie @filelines;
+				}
+			}
+			&logfile ("running 'kill 9, $fgpid' stopping FarmGuardian $fname $svice");
+			$run = kill 9, $fgpid;
+			$status = $?;
+			unlink glob("/var/run/$fname\_${sv}guardian.pid");
+		}
 	}
+
 	return $status;
 }
 
@@ -2271,7 +2325,7 @@ sub runFarmDelete($fname){
 	unlink glob("$basedir/img/graphs/bar$fname*");
 	unlink glob("$basedir/img/graphs/$fname-farm\_*");
 	unlink glob("$basedir/../app/zenrrd/rrd/$fname-farm*");
-	unlink glob("${logdir}/${fname}\_farmguardian*");
+	unlink glob("${logdir}/${fname}\_*farmguardian*");
 
 	# delete cron task to check backends
 	use Tie::File;
@@ -2411,14 +2465,17 @@ sub setFarmVirtualConf($vip,$vipp,$fname){
 }
 
 # create farmguardian config file
-sub runFarmGuardianCreate($fname,$ttcheck,$script,$usefg,$fglog){
-	($fname,$ttcheck,$script,$usefg,$fglog)= @_;
+sub runFarmGuardianCreate($fname,$ttcheck,$script,$usefg,$fglog,$svice){
+	($fname,$ttcheck,$script,$usefg,$fglog,$svice)= @_;
 
-	my $fgfile = &getFarmGuardianFile($fname);
+	my $fgfile = &getFarmGuardianFile($fname,$svice);
 	my $output = -1;
 
 	if ($fgfile == -1){
-		$fgfile = "${fname}_guardian.conf";
+		if ($svice ne ""){
+			$svice = "${svice}_";
+		}
+		$fgfile = "${fname}_${svice}guardian.conf";
 	}
 
 	&logfile("running 'Create FarmGuardian $ttcheck $script $usefg $fglog' for $fname farm");
@@ -2435,16 +2492,20 @@ sub runFarmGuardianCreate($fname,$ttcheck,$script,$usefg,$fglog){
 }
 
 #
-sub getFarmGuardianConf($fname){
-	($fname)= @_;
+sub getFarmGuardianConf($fname,$svice){
+	($fname,$svice)= @_;
 
-	my $fgfile = &getFarmGuardianFile($fname);
+	my $fgfile = &getFarmGuardianFile($fname,$svice);
 
 	if ($fgfile == -1){
-		$fgfile = "${fname}_guardian.conf";
+		if ($svice ne ""){
+			$svice = "${svice}_";
+		}
+		$fgfile = "${fname}_${svice}guardian.conf";
 	}
 
 	open FG,"$configdir/$fgfile";
+	my $line;
 	while ($line=<FG>) {
 		if ( $line !~ /^#/ ) {
 			$lastline=$line;
@@ -2458,13 +2519,13 @@ sub getFarmGuardianConf($fname){
 }
 
 #
-sub getFarmGuardianPid($fname){
-	($fname)= @_;
+sub getFarmGuardianPid($fname,$svice){
+	($fname,$svice)= @_;
 
 	my $pidfile = "";
 
 	opendir(my $dir, "$piddir") || return -1;
-	@files = grep { /^$fname\_.*guardian\.pid/ && -f "$piddir/$_" } readdir($dir);
+	@files = grep { /^$fname\_$svice.*guardian\.pid/ && -f "$piddir/$_" } readdir($dir);
 	closedir $dir;
 	$numfiles = @files;
 	if (@files){
@@ -2479,12 +2540,15 @@ sub getFarmGuardianPid($fname){
 }
 
 #
-sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname){
-	($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname)= @_;
+sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$service){
+	($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$svice)= @_;
 
 	my $type = &getFarmType($fname);
 	my $file = &getFarmFile($fname);
 	my $output = -1;
+	my $nsflag = "false";
+	my $backend = 0;
+	my $idservice = 0;
 
 	&logfile("setting 'Server $ids $rip $port max $max weight $weight prio $priority timeout $timeout' for $fname farm $type");
 
@@ -2567,13 +2631,18 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname){
 
 	if ($type eq "http" || $type eq "https"){
 		tie @contents, 'Tie::File', "$configdir\/$file";
-		my $be_section=0;
+		my $be_section=-1;
 		if ($ids !~ /^$/){
 			my $index_count=-1;
 			my $i=-1;
+			my $sw = 0;
 			foreach $line(@contents){
 				$i++;
-				if ($line =~ /BackEnd/ and $line !~ /#/){
+				#search the service to modify
+				if ($line =~ /Service \"$svice\"/){
+					$sw = 1;        
+				}
+				if ($line =~ /BackEnd/ && $line !~ /#/ && $sw eq  1){
 					$index_count++;
 					if ($index_count == $ids){
 						#server for modify $ids;
@@ -2615,11 +2684,18 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname){
 			}
 		} else {
 			#add new server
-			$index=-1;
+			my $index=-1;
+			my $backend=0;
 			foreach $line(@contents){
 				$index++;
-				if ($line =~ /#BackEnd/){
-					$be_section=1;		
+				if ($be_section == 1 && $line =~ /Address/){
+					$backend++;
+				}
+				if ($line =~ /Service \"$svice\"/){
+					$be_section++;
+				}
+				if ($line =~ /#BackEnd/ && $be_section == 0){
+					$be_section++;          
 				}
 				if ($be_section == 1 && $line =~ /#End/){
 					splice @contents, $index,0,"\t\tBackEnd";
@@ -2640,19 +2716,25 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname){
 						$index++;
 					}
 					splice @contents, $index,0,"\t\tEnd";
-					$be_section=0;
+					$be_section=-1;
 				}
+			# if backend added then go out of form
 			}
+			$nsflag="true";
 		}
 		untie @contents;
+		if ($nsflag eq "true"){
+			$idservice = &getFarmVSI($fname,$svice);
+			&getFarmHttpBackendStatus($fname,$backend,"active",$idservice);
+		}
 	}
 
 	return $output;
 }
 
 #
-sub runFarmServerDelete($ids,$fname){
-	($ids,$fname)= @_;
+sub runFarmServerDelete($ids,$fname,$service){
+	($ids,$fname,$svice)= @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -2716,10 +2798,14 @@ sub runFarmServerDelete($ids,$fname){
 	if ($type eq "http" || $type eq "https"){
 		my $i=-1;
 		my $j=-1;
+		my $sw=0;
 		tie @contents, 'Tie::File', "$configdir\/$ffile";
 		foreach $line(@contents){
 			$i++;
-			if ($line =~ /BackEnd/ && $line !~ /#/){
+			if ($line =~ /Service \"$svice\"/){
+				$sw = 1;
+			}
+			if ($line =~ /BackEnd/ && $line !~ /#/ && $sw == 1){
 				$j++;
 				if ($j == $ids){
 					splice @contents,$i,1,;
@@ -2732,6 +2818,9 @@ sub runFarmServerDelete($ids,$fname){
 			}
 		}
 		untie @contents;
+		if ($output != -1){
+			&runRemovehttpBackend($fname,$ids,$svice);
+		}
 	}
 
 	return $output;
@@ -2781,7 +2870,13 @@ sub getFarmBackendsStatus($fname,@content){
 		my @backends;
 		my @b_data;
 		my $line;
+		my @serviceline;
 		foreach (@content){
+			if ($_ =~ /Service/){
+				@serviceline = split("\ ",$_);
+				@serviceline[2] =~ s/"//g;
+				chomp(@serviceline[2]);
+			}
 			if ($_ =~ /Backend/){
 				#backend ID
 				@backends = split("\ ",$_);
@@ -2794,9 +2889,10 @@ sub getFarmBackendsStatus($fname,@content){
 				$line = $line ."\t". $ip_backend ."\t". $port_backend;
 				#status
 			        $status_backend = @backends[7];
-				my $backend_maintenance = @backends[3];
-				if ($backend_maintenance eq "DISABLED"){
-					$status_backend = "maintenance";
+				my $backend_disabled = @backends[3];
+				if ($backend_disabled eq "DISABLED"){
+					#Checkstatusfile
+					$status_backend = &getBackendStatusFromFile($fname,@backends[0],@serviceline[2]);
 				}elsif ($status_backend eq "alive"){
 					$status_backend = "up";
 				}elsif ($status_backend eq "DEAD"){
@@ -2929,6 +3025,37 @@ sub getFarmBackendsStatus($fname,@content){
         return @output;
 }
 
+
+#function that return if a pound backend is active, down by farmguardian or it's in maintenance mode
+sub getBackendStatusFromFile($fname,$backend,$svice){
+        my ($fname,$backend,$svice) = @_;
+        my $index;
+        my $line;
+        my $stfile="$configdir\/$fname\_status.cfg";
+        my $output = -1;
+        if ( -e "$stfile" ){
+                $index = &getFarmVSI($fname,$svice);
+                open FG,"$stfile";
+                while ($line=<FG>) {
+                        #service index
+                        if ( $line =~ /\ 0\ ${index}\ ${backend}/ ){
+                                if ($line =~ /maintenance/){
+                                        $output="maintenance";
+                                }
+                                elsif($line =~ /fgDOWN/){
+                                        $output="fgDOWN";
+                                }
+                                else{
+                                        $output="active";
+                                }
+                        }
+                }
+                close FG;
+        }
+        return $output;
+}
+
+
 #function that return the status information of a farm:
 sub getFarmBackendsClients($idserver,@content){
 	($idserver,@content) = @_;
@@ -2983,13 +3110,21 @@ sub getFarmBackendsClientsList($fname,@content){
 		}
 		my @sess;
 		my @s_data;
+		my @service;
+		my $s;
+
 		foreach (@content){
 			my $line;
+			if ($_ =~ /Service/){
+				@service = split("\ ",$_);
+				$s = @service[2];
+				$s =~ s/"//g;
+			}
 			if ($_ =~ / Session /){
 				@sess = split("\ ",$_);
 				my $id = @sess[0];
 				$id =~ s/\.//g;
-				$line = $id . "\t" . @sess[2] . "\t" . @sess[4];
+				$line = $s . "\t" . $id . "\t" . @sess[2] . "\t" . @sess[4];
 				push (@s_data,$line);
 			}
 		}
@@ -3202,8 +3337,8 @@ sub setNewFarmName($fname,$newfname){
 	}
 
 	if ($type eq "http" || $type eq "https"){
-		my @ffiles = ("$configdir\/$fname\_status.cfg","$configdir\/$fname\_pound.cfg","$configdir\/$fname\_Err414.html","$configdir\/$fname\_Err500.html","$configdir\/$fname\_Err501.html","$configdir\/$fname\_Err503.html");
-		my @newffiles = ("$configdir\/$newfname\_status.cfg","$configdir\/$newfname\_pound.cfg","$configdir\/$newfname\_Err414.html","$configdir\/$newfname\_Err500.html","$configdir\/$newfname\_Err501.html","$configdir\/$newfname\_Err503.html");
+		my @ffiles = ("$configdir\/$fname\_status.cfg","$configdir\/$fname\_pound.cfg","$configdir\/$fname\_Err414.html","$configdir\/$fname\_Err500.html","$configdir\/$fname\_Err501.html","$configdir\/$fname\_Err503.html","$fname\_guardian.conf");
+		my @newffiles = ("$configdir\/$newfname\_status.cfg","$configdir\/$newfname\_pound.cfg","$configdir\/$newfname\_Err414.html","$configdir\/$newfname\_Err500.html","$configdir\/$newfname\_Err501.html","$configdir\/$newfname\_Err503.html","$fname\_guardian.conf");
 		if (-e "\/tmp\/$fname\_pound.socket"){
 			unlink("\/tmp\/$fname\_pound.socket");
 		}
@@ -3327,8 +3462,8 @@ sub getFarmConfigIsOK($fname){
 }
 
 #function that check if a backend on a farm is on maintenance mode
-sub getFarmBackendMaintenance($fname,$backend){
-	($fname,$backend) =  @_;
+sub getFarmBackendMaintenance($fname,$backend,$sv){
+	my ($fname,$backend,$svice) =  @_;
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
 	$output = -1;
@@ -3345,13 +3480,21 @@ sub getFarmBackendMaintenance($fname,$backend){
 
 	if ($type eq "http" || $type eq "https"){
 		@run = `$poundctl -c "/tmp/$fname\_pound.socket"`;
+		my $sw = 0;
 		foreach $line(@run){
-			if ($line =~ /$backend\. Backend/){
+			if ($line =~ /Service \"$svice\"/){
+				$sw=1;  
+			}
+			if ($line =~ /$backend\. Backend/ && $sw == 1){
 				my @line = split("\ ",$line);
 				my $backendstatus = @line[3];
 				if ($backendstatus eq "DISABLED"){
-					$output = 0;
+					$backendstatus = &getBackendStatusFromFile($fname,$backend,$sv);
+					if ($backendstatus =~ /maintenance/){
+						$output = 0;
+					}
 				}
+				last;
 			}
 		}
 	}
@@ -3360,8 +3503,8 @@ sub getFarmBackendMaintenance($fname,$backend){
 }
 
 #function that enable the maintenance mode for backend
-sub setFarmBackendMaintenance($fname,$backend){
-	($fname,$backend) =  @_;
+sub setFarmBackendMaintenance($fname,$backend,$service){
+	my ($fname,$backend,$svice) =  @_;
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
 	$output = -1;
@@ -3376,19 +3519,21 @@ sub setFarmBackendMaintenance($fname,$backend){
 	}
 
 	if ($type eq "http" || $type eq "https"){
-		&logfile("setting Maintenance mode for $fname backend $backend");
-		@run = `$poundctl -c /tmp/$fname\_pound.socket -b 0 0 $backend`;
+		&logfile("setting Maintenance mode for $fname service $svice backend $backend");
+		#find the service number
+		my $idsv = &getFarmVSI($fname,$svice);
+		@run = `$poundctl -c /tmp/$fname\_pound.socket -b 0 $idsv $backend`;
 		$output = $?;
-		&logfile ("running '$poundctl -c /tmp/$fname\_pound.socket -b 0 0 $backend'");
-		&getFarmHttpBackendStatus($farmname);
+		&logfile ("running '$poundctl -c /tmp/$fname\_pound.socket -b 0 $idsv $backend'");
+		&getFarmHttpBackendStatus($farmname,$backend,"maintenance",$idsv);
 	}
 
 	return $output;
 }
 
 #function that disable the maintenance mode for backend
-sub setFarmBackendNoMaintenance($fname,$backend){
-	($fname,$backend) =  @_;
+sub setFarmBackendNoMaintenance($fname,$backend,$service){
+	my ($fname,$backend,$svice) =  @_;
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
 	$output = -1;
@@ -3404,34 +3549,101 @@ sub setFarmBackendNoMaintenance($fname,$backend){
 
 	if ($type eq "http" || $type eq "https"){
 		&logfile("setting Disabled maintenance mode for $fname backend $backend");
-		@run = `$poundctl -c /tmp/$fname\_pound.socket -B 0 0 $backend`;
+		#find the service number
+		my $idsv = &getFarmVSI($fname,$svice);
+		@run = `$poundctl -c /tmp/$fname\_pound.socket -B 0 $idsv $backend`;
 		$output = $?;
-		&logfile ("running '$poundctl -c /tmp/$fname\_pound.socket -B 0 0 $backend'");
-		&getFarmHttpBackendStatus($farmname);
+		&logfile ("running '$poundctl -c /tmp/$fname\_pound.socket -B 0 $idsv $backend'");
+		&getFarmHttpBackendStatus($fname,$backend,"active",$idsv);
 	}
 	return $output;
 }
 
 #function that save in a file the backend status (maintenance or not)
-sub getFarmHttpBackendStatus($fname){
-	($fname) = @_;
+sub getFarmHttpBackendStatus($fname,$backend,$status,$idsv){
+	($fname,$backend,$status,$idsv) = @_;
 	my $line;
+	my @sw;
+	my @bw;
+	my $changed = "false";
+	my $statusfile="$configdir\/$fname\_status.cfg";
 	&logfile("Saving backends status in farm $fname");
-	@run = `$poundctl -c /tmp/$fname\_pound.socket`;
-	open FW,">$configdir\/$fname\_status.cfg";
-	foreach $line(@run){
-		if ($line =~ /\. Backend/){
-			my @line = split("\ ",$line);
-			@line[0] =~ s/\.//g;
-			if (@line[3] eq "active"){
-				print FW "-B 0 0 @line[0]\n";
-			}else{
-				print FW "-b 0 0 @line[0]\n";
+	if(! -e $statusfile){
+		open FW,">$statusfile";
+		@run = `$poundctl -c /tmp/$fname\_pound.socket`;
+		foreach $line(@run){
+			if ($line =~ /\.\ Service\ /){
+				@sw = split("\ ",$line);
+				@sw[0] =~ s/\.//g;
+				chomp @sw[0];
+			}
+			if ($line =~ /\.\ Backend\ /){
+				@bw = split("\ ",$line);
+				@bw[0] =~ s/\.//g;
+				chomp @bw[0];
+				if (@bw[3] eq "active"){
+					print FW "-B 0 @sw[0] @bw[0] active\n";
+				}else{
+					print FW "-b 0 @sw[0] @bw[0] fgDOWN\n";
+				}
+			}
+		}
+		close FW;
+	}
+	use Tie::File;
+	tie @filelines, 'Tie::File', "$statusfile";
+	for (@filelines){
+		if($_ =~ /\ 0\ $idsv\ $backend/){
+			if( $status =~ /maintenance/ || $status =~ /fgDOWN/){
+				$_ = "-b 0 $idsv $backend $status";
+				$changed = "true";
+			}
+			else{
+				$_ = "-B 0 $idsv $backend $status";
+				$changed = "true";
 			}
 		}
 	}
-	close FW;
+	untie @filelines;
+	if ($changed eq "false"){
+		open FW,">>$statusfile";
+		if( $status =~ /maintenance/ || $status =~ /fgDOWN/){
+			print FW "-b 0 $idsv $backend $status\n";
+		}
+		else{
+			print FW "-B 0 $idsv $backend active\n";
+		}
+		close FW;
+	}
 }
+
+#Function that removes a backend from the status file
+sub runRemovehttpBackend($fname,$backend,$service){
+       ($fname,$backend,$service) = @_;
+       my $i=-1;
+       my $j=-1;
+       my $change="false";
+       my $sindex = &getFarmVSI($fname,$service);
+       tie @contents, 'Tie::File', "$configdir\/$fname\_status.cfg";
+       foreach $line(@contents){
+               $i++;
+               if ($line =~ /0\ ${sindex}\ ${backend}/){
+                       splice @contents,$i,1,; 
+               }
+       }
+       untie @contents;
+       my $index=-1;
+       tie @filelines, 'Tie::File', "$configdir\/$fname\_status.cfg";
+       for (@filelines){
+               $index++;
+               if ($_ !~ /0\ ${sindex}\ $index/){
+                       $jndex = $index + 1;
+                       $_ =~ s/0\ ${sindex}\ $jndex/0\ ${sindex}\ $index/g;
+               }
+       }
+       untie @filelines;
+}
+
 
 sub setFarmHttpBackendStatus($fname){
 	($fname) = @_;
@@ -3439,7 +3651,8 @@ sub setFarmHttpBackendStatus($fname){
 	&logfile("Setting backends status in farm $fname");
 	open FR,"<$configdir\/$fname\_status.cfg";
 	while(<FR>){
-		@run = `$poundctl -c /tmp/$fname\_pound.socket $_`;
+		@line = split("\ ",$_);
+		@run = `$poundctl -c /tmp/$fname\_pound.socket @line[0] @line[1] @line[2] @line[3]`;
 	}
 	close FR;
 }
@@ -3455,6 +3668,465 @@ sub checkFarmnameOK($fname){
 
 	return $output;
 }
+
+#Create a new Service in a HTTP farm
+sub setFarmHTTPNewService($fname,$service){
+       ($fname,$svice) =  @_;
+       $output = -1;
+       #first check if service name exist
+       if ( $service =~ /(?=)/ && $service =~ /^$/){
+               #error 2 eq $service is empty
+               $output = 2;
+               return $output;
+       }
+       use File::Grep qw( fgrep fmap fdo );
+        if ( !fgrep { /Service "$service"/ } "$configdir/$fname\_pound.cfg" ){
+               #create service 
+               my @newservice;
+               my $sw = 0;
+               my $count = 0;
+               tie @poundtpl, 'Tie::File', "$poundtpl";
+               my $countend = 0;
+               foreach $line(@poundtpl){
+                       if ($line =~ /Service \"\[DESC\]\"/){
+                               $sw = 1;
+                       }
+                       
+                        if ($sw eq "1"){
+                                push(@newservice,$line);
+
+                        }
+
+                       if ($line =~ /End/) {
+                               $count++;
+                       }
+                       if ($count eq "4"){
+                               last;
+                       }
+
+               }
+               untie @poundtpl;
+
+               @newservice[0] =~ s/#//g;
+               @newservice[$#newservice] =~ s/#//g;
+               
+               my  @fileconf;
+               tie @fileconf, 'Tie::File', "$configdir/$fname\_pound.cfg";
+               my $i = 0;
+               foreach $line(@fileconf){
+                       if ($line =~ /#ZWACL-END/){
+                               foreach $lline(@newservice){
+                                       if ($lline =~ /\[DESC\]/){ $lline =~ s/\[DESC\]/$service/;}
+                                       splice @fileconf,$i,0,"$lline";
+                                       $i++;
+                               }
+                       last;
+                       }
+               $i++
+               }
+               untie @fileconf;
+               $output = 0;
+               
+
+       }else{
+               $output = 1;
+       }
+       return $output;
+}
+
+#delete a service in a Farm
+sub deleteFarmService($farmname,$service){
+       ($fname,$svice) = @_;
+
+       my $ffile = &getFarmFile($fname);
+       my @fileconf;
+       my $line;
+       use Tie::File;
+       tie @fileconf, 'Tie::File', "$configdir/$ffile";
+       my $sw=0;
+       my $output = -1;
+
+       # Stop FG service
+       &runFarmGuardianStop($farmname,$svice);
+
+       my $i=0;
+       for ($i = 0; $i<$#fileconf;$i++){
+               $line = @fileconf[$i];
+               if ($sw eq "1" && ($line =~ /ZWACL-END/ || $line =~ /Service/)){
+                       $output = 0;
+                       last;
+                       }
+
+               if ($sw == 1){
+                       splice @fileconf,$i,1,;
+                       $i--;
+               }
+               if($line =~ /Service "$svice"/){
+                       $sw = 1;
+                       splice @fileconf,$i,1,;
+                       $i--;
+                       }
+
+
+               }
+       untie @fileconf;
+
+       return $output;
+
+}
+#function that return indicated value from a HTTP Service 
+#vs return virtual server
+sub getFarmVS($farmname,$service,$tag){
+($fname,$svice,$tag) = @_;
+
+my $output = "";
+my $ffile = &getFarmFile($fname);
+my @fileconf;
+my $line;
+use Tie::File;
+tie @fileconf, 'Tie::File', "$configdir/$ffile";
+my $sw = 0;
+my @return;
+my $be_section=0;
+my $be=-1;
+my @output;
+my $sw_ti = 0;
+my $output_ti = "";
+my $sw_pr = 0;
+my $output_pr = "";
+
+foreach $line(@fileconf){
+       if ($line =~ /Service/){
+               $sw = 0;
+               }
+       if ($line =~ /Service \"$svice\"/){
+               $sw=1;
+       }
+
+       # returns all services for this farm
+       if ($tag eq "" && $service eq ""){
+               if ($line =~ "Service" && $line !~ "#"){
+                       @return = split("\ ",$line);
+                       @return[1] =~ s/\"//g;
+                       @return[1] =~ s/^\s+//;
+                       @return[1] =~ s/\s+$//;
+                       $output = "$output @return[1]";
+               }
+       }
+
+       #vs tag
+       if ($tag eq "vs"){
+               if ($line =~ "HeadRequire" && $sw == 1 && $line !~ "#"){
+                       @return = split("Host:",$line);
+                       @return[1] =~ s/\"//g;
+                       @return[1] =~ s/^\s+//;
+                       @return[1] =~ s/\s+$//;
+                       $output = @return[1];
+                       last;
+                       
+               }
+       }
+       #url pattern
+       if ($tag eq "urlp"){
+               if ($line =~ "Url" && $sw == 1 && $line !~ "#"){
+                       @return = split("Url",$line);
+                        @return[1] =~ s/\"//g;
+                        @return[1] =~ s/^\s+//;
+                        @return[1] =~ s/\s+$//;
+                        $output = @return[1];
+                        last;
+
+               }
+               
+       }
+       #redirect
+       if ($tag eq "redirect"){
+               if ($line =~ "Redirect" && $sw == 1 && $line !~ "#"){
+                       @return = split("Redirect",$line);
+                        @return[1] =~ s/\"//g;
+                        @return[1] =~ s/^\s+//;
+                        @return[1] =~ s/\s+$//;
+                        $output = @return[1];
+                        last;
+
+               }
+       }
+
+       #sesstion type 
+       if ($tag eq "sesstype"){
+               if ($line =~ "Type" && $sw == 1 && $line !~ "#"){
+                        @return = split("\ ",$line);
+                        @return[1] =~ s/\"//g;
+                        @return[1] =~ s/^\s+//;
+                        @return[1] =~ s/\s+$//;
+                        $output = @return[1];
+                       last;
+
+               }
+
+       }
+
+
+
+       #ttl
+        if ($tag eq "ttl"){
+                if ($line =~ "TTL" && $sw == 1 && $line !~ "#"){
+                        @return = split("\ ",$line);
+                        @return[1] =~ s/\"//g;
+                        @return[1] =~ s/^\s+//;
+                        @return[1] =~ s/\s+$//;
+                        $output = @return[1];
+                        last;
+
+                }
+        }
+
+        #session id
+        if ($tag eq "sessionid"){
+                if ($line =~ "ID" && $sw == 1 && $line !~ "#"){
+                        @return = split("\ ",$line);
+                        @return[1] =~ s/\"//g;
+                        @return[1] =~ s/^\s+//;
+                        @return[1] =~ s/\s+$//;
+                        $output = @return[1];
+                        last;
+
+                }
+
+        }
+
+       #backends
+       if ($tag eq "backends"){
+               if ($line =~ /#BackEnd/ && $sw == 1){
+                       $be_section=1;
+               }
+               if ($be_section == 1){
+
+                       #if ($line =~ /Address/ && $be >=1){
+                       if ($line =~ /End/ && $line !~ /#/ && $sw == 1 && $be_section == 1 && $line !~ /BackEnd/){
+                               if ($sw_ti == 0){
+                                               $output_ti = "TimeOut -";
+                               }
+                                if ($sw_pr == 0){
+                                       $output_pr = "Priority -";
+                                }
+                                $output = "$output $outputa $outputp $output_ti $output_pr\n";
+                                $output_ti = "";
+                                $output_pr = "";
+                                $sw_ti = 0;
+                                $sw_pr = 0;
+                       }
+                       if ($line =~ /Address/){
+                               $be++;
+                               chomp($line);
+                               $outputa = "Server $be $line";
+                       }
+                       if ($line =~ /Port/){
+                                chomp($line);
+                                $outputp = "$line";
+                       }
+                       if ($line =~ /TimeOut/){
+                                chomp($line);
+                                #$output = $output . "$line";
+                               $output_ti = $line;
+                               $sw_ti = 1;
+                       }
+                       if ($line =~ /Priority/){
+                                chomp($line);
+                                #$output = $output . "$line";
+                               $output_pr = $line;
+                               $sw_pr = 1;
+                       }
+               }
+               if ($sw == 1 && $be_section == 1 && $line =~ /#End/){
+                       last;
+               }
+ 
+               
+       }
+
+
+
+}
+untie @fileconf;
+return $output;
+
+}
+
+#set values for a service
+sub setFarmVS($farmname,$service,$tag,$string){
+
+($fname,$svice,$tag,$stri) = @_;
+
+my $output = "";
+my $ffile = &getFarmFile($fname);
+my @fileconf;
+my $line;
+use Tie::File;
+tie @fileconf, 'Tie::File', "$configdir/$ffile";
+my $sw = 0;
+my @vserver;
+
+foreach $line(@fileconf){
+        if ($line =~ /Service \"$svice\"/){
+                $sw=1;
+        }
+       $stri =~ s/^\s+//;
+       $stri =~ s/\s+$//;
+        #vs tag
+        if ($tag eq "vs"){
+                if ($line =~ "HeadRequire" && $sw == 1 && $stri ne ""){
+                       $line = "\t\tHeadRequire \"Host: $stri\"";
+                        last;
+
+                }
+                if ($line =~ "HeadRequire" && $sw == 1 && $stri eq ""){
+                        $line = "\t\t#HeadRequire \"Host:\"";
+                        last;
+               }
+       }
+       #url pattern
+       if ($tag eq "urlp"){
+               if ($line =~ "Url" && $sw == 1 && $stri ne ""){
+                       $line = "\t\tUrl \"$stri\"";
+                       last;
+
+               }
+               if ($line =~ "Url" & $sw == 1 && $stri eq ""){
+                       $line = "\t\t#Url \"\"";
+                       last;
+               }
+       }
+       #client redirect
+       if ($tag eq "redirect"){
+               if ($line =~ "Redirect" && $sw == 1 && $stri ne ""){
+                       $line = "\t\tRedirect \"$stri\"";
+                       last;
+               }
+               if ($line =~ "Redirect" && $sw == 1 && $stri eq ""){
+                       $line = "\t\t#Redirect \"\"";
+                       last;
+               }
+
+               
+       }       
+       #TTL
+        if ($tag eq "ttl"){
+                if ($line =~ "TTL" && $sw == 1 && $stri ne ""){
+                        $line = "\t\t\tTTL $stri";
+                        last;
+                }
+                if ($line =~ "TTL" && $sw == 1 && $stri eq ""){
+                        $line = "\t\t\t#TTL 120";
+                        last;
+                }
+
+
+        }
+
+       #session id
+        if ($tag eq "sessionid"){
+                if ($line =~ "ID" && $sw == 1 && $stri ne ""){
+                        $line = "\t\t\tID \"$stri\"";
+                        last;
+               }
+                if ($line =~ "TTL" && $sw == 1 && $stri eq ""){
+                        $line = "\t\t\t#ID \"$stri\"";
+                        last;
+                }
+        }
+
+
+
+       #session type
+       if ($tag eq "session"){
+                        if ($session ne "nothing" && $sw == 1){
+                                if ($line =~ "Session"){
+                                        $line = "\t\tSession";
+                                }
+                                if ( $line =~ "End"){
+                                        $line= "\t\tEnd";
+                                }
+                                if ($line =~ "Type"){
+                                        $line = "\t\t\tType $session";
+                                        #@contents[$i+1]=~ s/#//g;
+                               }
+                               if ($line =~ "TTL"){
+                                       $line =~ s/#//g;        
+
+                               }
+                                if ($session eq "URL" || $session eq "COOKIE" || $session eq "HEADER"){
+                                       #@contents[$i+2]=~ s/#//g;
+                                       if ($line =~ /ID/){
+                                               $line =~ s/#//g;        
+                                       }
+                               }
+                               if ($session eq "IP"){
+                                       if ($line =~ /ID/){
+                                               $line = "\#$line\""
+                                       }
+                               }
+                                $output = $?;
+                        }
+                        if ($session eq "nothing" && $sw == 1){
+                                if ($line =~ "Session"){
+                                        $line = "\t\t#Session";
+                                }
+                                if ($line =~ "End"){
+                                        $line = "\t\t#End";
+                                }
+                                if ($line =~ "TTL"){
+                                        $line = "\t\t\t#TTL 120";
+                                }
+                                if ($line =~ "Type"){
+                                        $line = "\t\t\t#Type nothing";
+                                }
+                                if ($line =~ "ID"){
+                                        $line = "\t\t\t#ID \"sessionname\"";
+                                }
+                        }
+                       if ($sw == 1 && $line =~ /End/){
+                               last;
+                       }
+
+       }
+
+
+        
+}
+
+untie @fileconf;
+
+return @output;
+
+
+}
+
+
+#get index of a service in a http farm
+sub getFarmVSI($farmname,$sv){
+
+my ($fname,$svice) = @_;
+my $output;
+my @line;
+my $index;
+my $l;
+my @content = &getFarmBackendStatusCtl($fname);
+foreach(@content){
+       if ($_ =~ /Service \"$svice\"/){
+               $l = $_;
+               @line = split('\.',$l);
+               $index = @line[0];                      
+       }
+}      
+$index =~ s/\"//g;
+$index =~ s/^\s+//;
+$index =~ s/\s+$//;
+$output = $index;
+return $output;
+
+}
+
 
 # do not remove this
 1

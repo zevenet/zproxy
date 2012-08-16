@@ -299,21 +299,21 @@ if ($action eq "editfarm-xforwardedfor") {
 
 #change farmguardian values
 if ($action eq "editfarm-farmguardian"){
-	$fguardianconf = &getFarmGuardianFile($fname);
+	$fguardianconf = &getFarmGuardianFile($fname,"");
 
 	if (&isnumber($timetocheck) eq "false"){
 		&errormsg("Invalid period time value $timetocheck, it must be numeric");
 	} else {
 		$status = -1;
 		$usefarmguardian =~ s/\n//g;
-		&runFarmGuardianStop($farmname);
+		&runFarmGuardianStop($farmname,"");
 		&logfile("creating $farmname farmguardian configuration file in  $fguardianconf");
 		$check_script =~ s/\"/\'/g;
-		$status = &runFarmGuardianCreate($farmname,$timetocheck,$check_script,$usefarmguardian,$farmguardianlog);
+		$status = &runFarmGuardianCreate($farmname,$timetocheck,$check_script,$usefarmguardian,$farmguardianlog,"");
 		if ($status != -1){
 			&successmsg("The FarmGuardian service for the $farmname farm has been modified");
 			if ($usefarmguardian eq "true"){
-				$status = &runFarmGuardianStart($farmname);
+				$status = &runFarmGuardianStart($farmname,"");
 				if($status != -1){
 					&successmsg("The FarmGuardian service for the $farmname farm has been started");
 				} else {
@@ -558,7 +558,7 @@ print "</form>";
 if ($ftype eq "tcp"){
 #use farmguardian
 #open farmguardian file to view config.
-@fgconfig = &getFarmGuardianConf($farmname);
+@fgconfig = &getFarmGuardianConf($farmname,"");
 $fgttcheck = @fgconfig[1];
 $fgscript = @fgconfig[2];
 $fgscript =~ s/\n//g;
