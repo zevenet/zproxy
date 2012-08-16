@@ -31,10 +31,14 @@ print "
         <div id=\"page-content\">
 
                 <!--Content Header INI-->";
-                if ($farmname){
+                if ($farmname ne "" && $type != 1){
                         print "<h2>Manage::Farms\:\:$type\:\:$farmname</h2>";
                 }else{
-                        print "<h2>Manage::Farms</h2>";
+			if ($farmname ne ""){
+	                        print "<h2>Manage::Farms::$farmname</h2>";
+			} else {
+        	                print "<h2>Manage::Farms</h2>";
+			}
                 }
 
 print           "<!--Content Header END-->";

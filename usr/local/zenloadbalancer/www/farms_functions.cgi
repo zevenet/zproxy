@@ -3567,7 +3567,7 @@ sub getFarmHttpBackendStatus($fname,$backend,$status,$idsv){
 	my @bw;
 	my $changed = "false";
 	my $statusfile="$configdir\/$fname\_status.cfg";
-	&logfile("Saving backends status in farm $fname");
+	#&logfile("Saving backends status in farm $fname");
 	if(! -e $statusfile){
 		open FW,">$statusfile";
 		@run = `$poundctl -c /tmp/$fname\_pound.socket`;

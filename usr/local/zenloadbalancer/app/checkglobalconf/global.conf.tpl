@@ -27,7 +27,7 @@ $rttables = "/etc/iproute2/rt_tables";
 #this file
 $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 #version ZEN
-$version="2.0";#update
+$version="3.0-rc1";#update
 #Cipher PCI
 $cipher_pci="TLSv1+SSLv3+HIGH:-MEDIUM:-LOW*:-ADH*";
 

@@ -279,8 +279,23 @@ address {
 .box.stats {
 	padding:30px 15px;
 }
+
+
 .box.table {
-	padding:0;
+	padding:0px;
+}
+
+
+.box-content {
+	border:1px solid #9d9d9d;
+        /*font-size:13px;*/
+        /*background:#cdcdcd url('../img/boxheader.gif') repeat-x top;*/
+        /*background:#b2da42 url('../img/boxheader2.gif') repeat-x top;*/
+        padding:30px 15px;
+        /*text-shadow: 1px 1px 1px #fff;*/
+	background:#fff;
+	border-bottom: 1px solid #DEDEDE;
+
 }
 
 .box-header {

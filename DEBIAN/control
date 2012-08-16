@@ -1,9 +1,9 @@
 Package: zenloadbalancer
-Version: 2.0
+Version: 3.0-rc1
 Maintainer: Emilio Campos <zenloadbalancer-support@lists.sourceforge.net>
 Architecture: i386
 Section: adminPriority: optional
-Description: Zen Load Balancer v2.0
+Description: Zen Load Balancer v3.0-rc1
  Zen Load Balancer 
-Depends: rrdtool, libnet-netmask-perl, libnet-ssh-perl, libexpect-perl, expect, libnet-ssh-expect-perl, libproc-daemon-perl, libnetwork-ipv4addr-perl, librrds-perl, libio-interface-perl, libgd-3dbargrapher-perl, libfile-grep-perl, libdata-validate-ip-perl, rsync, libpcap0.8, ntpdate, liblinux-inotify2-perl, libfile-grep-perl, iputils-arping, openssl
+Depends: rrdtool, libnet-netmask-perl, libnet-ssh-perl, libexpect-perl, expect, libnet-ssh-expect-perl, libproc-daemon-perl, libnetwork-ipv4addr-perl, librrds-perl, libio-interface-perl, libgd-3dbargrapher-perl, libfile-grep-perl, libdata-validate-ip-perl, rsync, libpcap0.8, ntpdate, liblinux-inotify2-perl, libfile-grep-perl, iputils-arping, openssl, netstat-nat
 

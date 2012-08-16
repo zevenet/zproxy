@@ -96,6 +96,17 @@ if (-e $fileconfig)
 
 	while(1)
 	{
+		#check file log
+		$filesize = -s "$farmguardian_logs/$ARGV[0]_${fservice}farmguardian.log";
+		if ( (($ARGV[1] eq "-l" || $ARGV[3] eq -l ) && !( -e "$farmguardian_logs/$ARGV[0]_${fservice}farmguardian.log") ) || ($filesize == 0) )
+        		{
+			print "$farmguardian $fservice log doesn't exist, creating now...\n";
+			close STDERR;
+			close STDOUT;
+        		open STDERR, '>>', "$farmguardian_logs/$ARGV[0]_${fservice}farmguardian.log" or die;
+        		open STDOUT, '>>', "$farmguardian_logs/$ARGV[0]_${fservice}farmguardian.log" or die;
+        		}
+
 
 		if ($type eq "tcp" || $type eq "udp"){
 			my @run = `$pen_ctl 127.0.0.1:$portadmin servers`;
