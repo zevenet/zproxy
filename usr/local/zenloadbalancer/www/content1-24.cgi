@@ -479,7 +479,7 @@ print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 print "<br>";
 
-print "<b>Frequency to check resurrected backends.</b>";
+print "<b>Frequency to check resurrected backends secs.</b>";
 $alive = &getFarmBlacklistTime($farmname);
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-Alive\">";
@@ -490,7 +490,7 @@ print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button sm
 print "<br>";
 
 #Timeout for client
-print "<b>Timeout request from clients.</b>";
+print "<b>Timeout request from clients secs.</b>";
 $client = &getFarmClientTimeout($farmname);
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-Client\">";
@@ -985,7 +985,7 @@ foreach $line(@file){
 			}
 			print "&nbsp;<b>Use FarmGuardian to check Backend Servers.</b><br>";
 			print "<input type=\"hidden\" name=\"action\" value=\"editfarm-farmguardian\">";
-			print "<font size=1>Check every </font>&nbsp;<input type=\"text\" value=\"$fgttcheck\" size=\"1\" name=\"timetocheck\">&nbsp;<font size=1> seconds.</font><br>";
+			print "<font size=1>Check every </font>&nbsp;<input type=\"text\" value=\"$fgttcheck\" size=\"1\" name=\"timetocheck\">&nbsp;<font size=1> secs.</font><br>";
 			print "<font size=1>Command to check </font><input type=\"text\" value=\"$fgscript\" size=\"60\" name=\"check_script\">";
 			print "<br>";
 			if ($fglog eq "true"){

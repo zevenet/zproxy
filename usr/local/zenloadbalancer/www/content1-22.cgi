@@ -546,7 +546,7 @@ if ($blacklist == -1){
 }
 print "<br>";
 print "<form method=\"get\" action=\"index.cgi\">";
-print "&nbsp;<b>Frequency to check resurrected backends.</b><br>";
+print "&nbsp;<b>Frequency to check resurrected backends secs.</b><br>";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-blacklist\">";
 print "<input type=\"text\" value=\"$blacklist\" size=\"4\" name=\"blacklist\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
@@ -577,7 +577,7 @@ if ($fguse eq "true"){
 }
 print "&nbsp;<b>Use FarmGuardian to check Backend Servers.</b><br>";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-farmguardian\">";
-print "<font size=1>Check every </font>&nbsp;<input type=\"text\" value=\"$fgttcheck\" size=\"1\" name=\"timetocheck\">&nbsp;<font size=1> seconds.</font><br>";
+print "<font size=1>Check every </font>&nbsp;<input type=\"text\" value=\"$fgttcheck\" size=\"1\" name=\"timetocheck\">&nbsp;<font size=1> secs.</font><br>";
 print "<font size=1>Command to check </font><input type=\"text\" value=\"$fgscript\" size=\"60\" name=\"check_script\">";
 print "<br>";
 if ($fglog eq "true"){
