@@ -728,8 +728,6 @@ print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 print "<input type=\"text\" value=\"\" size=\"25\" name=\"service\">";
 print "<input type=\"submit\" value=\"Add\" name=\"buttom\" class=\"button small\"></form>";
 
-
-
 print "</form>";
 
 print "</div><div style=\"align:right; margin-left: 50%; \">";
@@ -813,6 +811,7 @@ if ($morelinescipher eq "true"){
 
 
 print "</div>";
+print "<div style=\"clear:both;\"></div>";
 #print "</td></tr></table>";
 
 #Services
@@ -978,13 +977,13 @@ foreach $line(@file){
 			if (!$timetocheck){$timetocheck=5;}
 
 			print "<br>";
-			print "&nbsp;<b>Use FarmGuardian to check Backend Servers.</b><br>";
 			print "<form method=\"get\" action=\"index.cgi\">";
 			if ($fguse eq "true"){
 			        print "<input type=\"checkbox\" checked name=\"usefarmguardian\" value=\"true\">";
 			} else {
 			        print "<input type=\"checkbox\"  name=\"usefarmguardian\" value=\"true\"> ";
 			}
+			print "&nbsp;<b>Use FarmGuardian to check Backend Servers.</b><br>";
 			print "<input type=\"hidden\" name=\"action\" value=\"editfarm-farmguardian\">";
 			print "<font size=1>Check every </font>&nbsp;<input type=\"text\" value=\"$fgttcheck\" size=\"1\" name=\"timetocheck\">&nbsp;<font size=1> seconds.</font><br>";
 			print "<font size=1>Command to check </font><input type=\"text\" value=\"$fgscript\" size=\"60\" name=\"check_script\">";
@@ -1020,7 +1019,7 @@ foreach $line(@file){
 		$vserver = 0;
 		#print "<div class=\"box-header\">header</div>";
 
-               #add new server to  server pool
+               #edit server at server pool
 		if (($action eq "editfarm-editserver" || $action eq "editfarm-addserver") &&  $service eq "\"$actualservice\""){
         		print "<form method=\"get\" action=\"index.cgi\#backendlist\">";
 			}
@@ -1111,7 +1110,6 @@ foreach $line(@file){
 		print "    </tr>";
 
                 print "</tbody></table></div><br>";
-
 	}
 	
         if ($line =~ /Service "$farmname"/){
@@ -1289,7 +1287,9 @@ print "</form>";
 
 print "</tr>";
 
-print "</tbody></table></div>";
+print "</tbody></table>";
+print "<div style=\"clear:both;\"></div>";
+print "</div>";
 
 #if ($action eq "editfarm-editserver" || $action eq "editfarm-addserver"){ print "</form>";}
 
