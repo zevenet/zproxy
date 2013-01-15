@@ -146,7 +146,13 @@ if ($action eq "editfarm-saveserver"){
 			$error = 1;
 		}
 	}
-
+	if ($weight_server =~ /^$/){
+		$weight_server = 1;
+	} 
+	elsif ($weight_server eq "0"){
+		&errormsg("Invalid real server weight value, please insert a value greater than 0");
+		$error = 1;		
+	}
         if ($error == 0){
 		$status = &setFarmServer($id_server,$rip_server,$port_server,$max_server,$weight_server,$priority_server,$timeout_server,$farmname);
 		if ($status != -1){
@@ -292,7 +298,7 @@ print "<br>";
 #print "<br>";
 
 #Timeout for client
-#print "<b>Timeout request from clients.</b>";
+#print "<b>Timeout request from clients secs.</b>";
 #$client = &getFarmClientTimeout($farmname);
 #print "<form method=\"get\" action=\"index.cgi\">";
 #print "<input type=\"hidden\" name=\"action\" value=\"editfarm-Client\">";
@@ -364,7 +370,7 @@ print "<br>";
 
 #session TTL
 #if ($session ne "nothing" && $session){
-print "<b>Source IP Address Persistence time to limit </b><font size=\"1\">*in seconds, only for IP persistence</font><b>.</b>";
+print "<b>Source IP Address Persistence time to limit </b><font size=\"1\">*in secs, only for IP persistence</font><b>.</b>";
 @ttl = &getFarmMaxClientTime($farmname);
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-TTL\">";
