@@ -81,25 +81,34 @@ print "<div id=\"page-header\"></div>";
 
 if ($action eq "See logs" && $nlines !~ /^$/ && $filelog !~ /^$/)
 	{
-	print "<b>file $filelog tail last $nlines lines</b><br>";
-	my @eject;
-	if ($filelog =~ /gz$/)
-		{
-		@eject = `$zcat $filelog | $tail -$nlines`;
+	if (-e $filelog){
+		if ($nlines =~ m/^\d+$/){
+			print "<b>file $filelog tail last $nlines lines</b><br>";
+			my @eject;
+			if ($filelog =~ /gz$/)
+				{
+				@eject = `$zcat $filelog | $tail -$nlines`;
+				}
+			else
+				{
+				@eject = `$tail -$nlines $filelog`;
+				}
+			foreach $line(@eject)
+				{
+				print "$line<br>";
+				}
+			print "<form method=\"get\" action=\"index.cgi\">";
+			print "<input type=\"hidden\" name=\"id\" value=\"2-2\">";
+			print "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
+			print "</form>";
 		}
-	else
-		{
-		@eject = `$tail -$nlines $filelog`;
+		else{
+			&errormsg("The number of lines you want to tail must be a number");
 		}
-	foreach $line(@eject)
-		{
-		print "$line<br>";
-		}
-	print "<form method=\"get\" action=\"index.cgi\">";
-	print "<input type=\"hidden\" name=\"id\" value=\"2-2\">";
-	print "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
-	print "</form>";
-
+	}
+	else{
+		&errormsg("We can not find the file $filelog");
+	}
 	}
 
 

@@ -86,6 +86,10 @@ switch ($action) {
 			&errormsg("Interface name can not be empty");
 			$swaddif = "false";
 		}
+		if ( $if =~ /\s+/ ){
+			&errormsg("Interface name is not valid");
+			$swaddif = "false";
+		}
 		if ($action eq "addvlan2" && &isnumber($if) eq "false"){
 			&errormsg("Invalid vlan tag value, it must be a numeric value");
 			$swaddif = "false";
