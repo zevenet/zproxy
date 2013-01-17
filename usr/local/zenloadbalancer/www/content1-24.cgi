@@ -1020,9 +1020,9 @@ foreach $line(@file){
 		#print "<div class=\"box-header\">header</div>";
 
                #edit server at server pool
-		if (($action eq "editfarm-editserver" || $action eq "editfarm-addserver") &&  $service eq "\"$actualservice\""){
-        		print "<form method=\"get\" action=\"index.cgi\#backendlist\">";
-			}
+#		if (($action eq "editfarm-editserver" || $action eq "editfarm-addserver") &&  $service eq "\"$actualservice\""){
+#        		print "<form method=\"get\" action=\"index.cgi\#backendlist\">";
+#			}
                 print "<div class=\"box table\">";
                 print "<table cellpadding=0>";
                 print "<thead><tr><td>Server</td><td>Address</td><td>Port</td><td>Timeout</td><td>Weight</td><td>Actions</td></tr></thead><tbody>";
@@ -1053,7 +1053,7 @@ foreach $line(@file){
                                 print "</form>";
                         } else {
 				print "<form method=\"get\" action=\"index.cgi\#backendlist\">";
-                        	print "<td>@subbe[1]</td>";
+                        	print "<tr><td>@subbe[1]</td>";
                         	print "<td>@subbe[3]</td>";
                         	print "<td>@subbe[5]</td>";
                         	print "<td>@subbe[7]</td>";
@@ -1073,6 +1073,10 @@ foreach $line(@file){
 
                	#add new server to  server pool
                 if ($action eq "editfarm-addserver" && $service eq "\"$actualservice\""){
+			if (($action eq "editfarm-editserver" || $action eq "editfarm-addserver") &&  $service eq "\"$actualservice\""){
+        			print "<form method=\"get\" action=\"index.cgi\#backendlist\">";
+			}
+
                         print "<tr class=\"selected\">";
                         #id server
                         print "<td>-</td>";
