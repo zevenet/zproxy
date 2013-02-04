@@ -229,6 +229,35 @@ if ($action eq "editfarm-TTL"){
 	}
 }
 
+#change farmguardian values
+if ($action eq "editfarm-farmguardian"){
+	$fguardianconf = &getFarmGuardianFile($fname,"");
+
+	if (&isnumber($timetocheck) eq "false"){
+		&errormsg("Invalid period time value $timetocheck, it must be numeric");
+	} else {
+		$status = -1;
+		$usefarmguardian =~ s/\n//g;
+		&runFarmGuardianStop($farmname,"");
+		&logfile("creating $farmname farmguardian configuration file in  $fguardianconf");
+		$check_script =~ s/\"/\'/g;
+		$status = &runFarmGuardianCreate($farmname,$timetocheck,$check_script,$usefarmguardian,$farmguardianlog,"");
+		if ($status != -1){
+			&successmsg("The FarmGuardian service for the $farmname farm has been modified");
+			if ($usefarmguardian eq "true"){
+				$status = &runFarmGuardianStart($farmname,"");
+				if($status != -1){
+					&successmsg("The FarmGuardian service for the $farmname farm has been started");
+				} else {
+					&errormsg("An error ocurred while starting the FarmGuardian service for the $farmname farm");
+				}
+			}
+		} else {
+			&errormsg("It's not possible to create the FarmGuardian configuration file for the $farmname farm");
+		}
+	}
+}
+
 #check if the farm need a restart
 #if (-e "/tmp/$farmname.lock"){
 #	&tipmsg("There're changes that need to be applied, stop and start farm to apply them!");
@@ -379,6 +408,43 @@ print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 #}
+
+print "<br>";
+
+#use farmguardian
+#open farmguardian file to view config.
+@fgconfig = &getFarmGuardianConf($farmname,"");
+$fgttcheck = @fgconfig[1];
+$fgscript = @fgconfig[2];
+$fgscript =~ s/\n//g;
+$fgscript =~ s/\"/\'/g;
+$fguse = @fgconfig[3];
+$fguse =~ s/\n//g;
+$fglog = @fgconfig[4];
+if (!$timetocheck){$timetocheck=5;}
+
+print "<form method=\"get\" action=\"index.cgi\">";
+if ($fguse eq "true"){
+        print "<input type=\"checkbox\" checked name=\"usefarmguardian\" value=\"true\">";
+} else {
+        print "<input type=\"checkbox\"  name=\"usefarmguardian\" value=\"true\"> ";
+}
+print "&nbsp;<b>Use FarmGuardian to check Backend Servers.</b><br>";
+print "<input type=\"hidden\" name=\"action\" value=\"editfarm-farmguardian\">";
+print "<font size=1>Check every </font>&nbsp;<input type=\"text\" value=\"$fgttcheck\" size=\"1\" name=\"timetocheck\">&nbsp;<font size=1> secs.</font><br>";
+print "<font size=1>Command to check </font><input type=\"text\" value=\"$fgscript\" size=\"60\" name=\"check_script\">";
+print "<br>";
+if ($fglog eq "true"){
+        print "<input type=\"checkbox\" checked name=\"farmguardianlog\" value=\"true\"> ";
+} else {
+        print "<input type=\"checkbox\"  name=\"farmguardianlog\" value=\"true\"> ";
+}
+print "&nbsp;<font size=1> Active logs</font>";
+print "<br>";
+print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
+print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
+print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+print "</form>";
 
 
 print "<br>";

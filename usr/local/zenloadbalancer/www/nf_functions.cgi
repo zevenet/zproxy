@@ -130,9 +130,9 @@ sub genIptMarkReturn($fname,$vip,$vport,$proto,$index,$state){
 
 	my $rule;
 
-	if ($state !~ /^up$/){
-		return $rule;
-	}
+#	if ($state !~ /^up$/){
+#		return $rule;
+#	}
 
 	$rule = "$iptables -t mangle -A PREROUTING -d $vip -p $proto -m multiport --dports $vport -j RETURN -m comment --comment ' FARM\_$fname\_$index\_ '";
 
@@ -146,9 +146,9 @@ sub genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state){
 
 	my $rule;
 
-	if ($state !~ /^up$/){
-		return $rule;
-	}
+#	if ($state !~ /^up$/){
+#		return $rule;
+#	}
 
 	$rule = "$iptables -t mangle -A PREROUTING -m recent --name \"\_$fname\_$mark\_\" --rcheck --seconds $ttl -d $vip -p $proto -m multiport --dports $vport -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
 
@@ -161,9 +161,9 @@ sub genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$weight,$s
 
 	my $rule;
 
-	if ($state !~ /^up$/){
-		return $rule;
-	}
+#	if ($state !~ /^up$/){
+#		return $rule;
+#	}
 
 	if ($lbalg eq "weight"){
 		if ($prob == 0){
@@ -182,9 +182,9 @@ sub genIptRedirect($fname,$nattype,$index,$rip,$proto,$mark,$weight,$persist,$st
 
 	my $rule;
 
-	if ($state !~ /^up$/){
-		return $rule;
-	}
+#	if ($state !~ /^up$/){
+#		return $rule;
+#	}
 
 	if ($persist ne "none"){
 		$persist = "-m recent --name \"\_$fname\_$mark\_\" --set";
@@ -203,9 +203,9 @@ sub genIptSourceNat($fname,$vip,$nattype,$index,$proto,$mark,$state){
 
 	my $rule;
 
-	if ($state !~ /^up$/){
-		return $rule;
-	}
+#	if ($state !~ /^up$/){
+#		return $rule;
+#	}
 
 	$rule = "$iptables -t nat -A POSTROUTING -m mark --mark $mark -j SNAT -p $proto --to-source $vip -m comment --comment ' FARM\_$fname\_$index\_ '";
 

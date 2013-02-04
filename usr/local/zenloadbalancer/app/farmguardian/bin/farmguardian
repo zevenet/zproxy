@@ -35,7 +35,7 @@ require '/usr/local/zenloadbalancer/config/global.conf';
 #require '/usr/local/zenloadbalancer/www/farms_functions.cgi';
 require '/usr/local/zenloadbalancer/www/functions.cgi';
 if ( $ARGV[0] eq "" ){
-	print "FarmGuardian V2.0. Check Backends Servers in a Farm and enable or disable the load balancing\n";
+	print "FarmGuardian V3.0. Check Backends Servers in a Farm and enable or disable the load balancing\n";
 	print "	help: farmguardian farmname [-s <service>] [-l]\n";
 	print "		-s <service>	: Launch FarmGuardian for a certain HTTP/S farm service\n";
 	print "		-l 		: Active logs in $farmguardian_logs directory\n";
@@ -142,6 +142,18 @@ if (-e $fileconfig)
 				#print "--> DATA:\n $i @backendid[$i] @backendserv[$i] @backendport[$i] @backendstatus[$i]\n";
 			}
 		}
+		elsif ($type eq "l4txnat" || $type eq "l4uxnat"){
+			my @be = &getFarmBackendStatusCtl($farmname);
+			$i=-1;
+			foreach my $line(@be){
+				my @subbe = split(";",$line);
+				$i++;
+				@backendid[$i]=$i;
+				@backendserv[$i]=@subbe[2];
+				@backendport[$i]=@subbe[3];
+				@backendstatus[$i]=@subbe[7];
+			}
+		}
 	
 	#timeout
 	if ($type eq "tcp" || $type eq "udp"){
@@ -154,6 +166,11 @@ if (-e $fileconfig)
 	}
 	if ($type eq "http" || $type eq "https"){
 		$timeout = &getFarmTimeout($farmname);
+	}
+
+	# Use the default timetocheck as the timeout for the backends response
+	if ($timeout eq ""){
+		$timeout = $timetocheck;
 	}
 	print "The servers timeout is: $timeout\n";
 	
@@ -188,20 +205,24 @@ if (-e $fileconfig)
 		}
 		print "Backend status $j: @backendstatus[$j]\n";
 		if ( @backendstatus[$j] !~ /maintenance/ ){
-			$HOST = @backendserv[$j];
-			$PORT = @backendport[$j];
+			my $HOST = @backendserv[$j];
+			my $PORT = @backendport[$j];
 			$checking = $check;
-			$checking =~ s/HOST/@backendserv[$j]/;
-			$checking =~ s/PORT/@backendport[$j]/;
+			$checking =~ s/HOST/$HOST/;
+			if ($PORT !~ /^$/){
+				$checking =~ s/PORT/$PORT/;
+			}
 #			#execute the binary to check
 #			#my $command = "adb shell cd /data/app; ./iperf -u -s -p 5001";
 			my $command = "$libexec_dir/$checking";
+			#print "executing: $command\n";
 			my @output;
 			my $timedout = 0;
-			my $idsv = &getFarmVSI($farmname,$service);
 			eval {
+				
    				local $SIG{ALRM} = sub { die "Timeout\n" };
-    				alarm $timeout;	
+    				alarm $timeout;
+				print "command: $command\n";
     				@output = `$command`;
 				$errorcode = $?;
     				alarm 0;
@@ -210,19 +231,32 @@ if (-e $fileconfig)
  	   			warn "$command timed out.\n";
 	   			$timedout = 1;
 			}
-			if ($timedout == 0 && $errorcode == 0){
+			if ($ARGV[1] eq "-l"){
+				print "timedout: $timedout \n";
+				print "errorcode: $errorcode \n";
+			}
+			### Switch to up
+			if ($timedout == 0 && $errorcode == 0 && @backendstatus[$j] =~ /down/i){
 	                       	if ($ARGV[1] eq "-l"){
-                                	print "**execution OK in server $j\n";
-                                	print "errorcode: $errorcode\n";
+                                	print "**execution OK in server $j\nerrorcode: $errorcode\ntimedout: $timedout\nbackend state: @backendstatus[$j]\n";
 	                        }
-#                               #my $run = `$pen_ctl 127.0.0.1:$portadmin server $j blacklist 0`;
+				if ($type eq "tcp" || $type eq "udp"){
+					my $run = `$pen_ctl 127.0.0.1:$portadmin server $j blacklist 0`;
+				}
 				if ($type eq "http" || $type eq "https"){
+					my $idsv = &getFarmVSI($farmname,$service);
 					my $run = `$poundctl -c $portadmin -B 0 $idsv $j`;
 					&getFarmHttpBackendStatus($farmname,$j,"active",$idsv);
 				}
+				if ($type eq "l4txnat" || $type eq "l4uxnat"){
+					&runFarmStop($farmname,"false");
+					&setFarmBackendStatus($farmname,$j,"up");
+					&runFarmStart($farmname,"false");
+				}
+
 				@backendstatus[$j] = "active";
 			}
-			else{
+			elsif (($timedout != 0 || $errorcode != 0) && @backendstatus[$j] ne "fgDOWN"){
 				if ($ARGV[1] eq "-l" || $ARGV[3] eq "-l"){
                                 	print "**execution error in ' $command ', output::**\n", @output;
                                 }
@@ -231,11 +265,19 @@ if (-e $fileconfig)
                         		my $run = `$pen_ctl 127.0.0.1:$portadmin server $j blacklist $blacklist`;
 				}
 				if ($type eq "http" || $type eq "https"){
+					my $idsv = &getFarmVSI($farmname,$service);
 					my $run = `$poundctl -c $portadmin -b 0 $idsv $j`;
 					&getFarmHttpBackendStatus($farmname,$j,"fgDOWN",$idsv);
 				}
-				@backendstatus[$j] = "fgDOWN";				
-#			
+				if ($type eq "l4txnat" || $type eq "l4uxnat"){
+					&runFarmStop($farmname,"false");
+					&setFarmBackendStatus($farmname,$j,"fgDOWN");
+					&runFarmStart($farmname,"false");
+				}
+
+				@backendstatus[$j] = "fgDOWN";
+			} else {
+				print "No state changed for the backend.\n";
 			}
 		}
 		$j++;

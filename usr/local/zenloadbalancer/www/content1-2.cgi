@@ -66,16 +66,15 @@ if ($action eq "startfarm"){
 	$stat = &runFarmStart($farmname,"true");
 	if ($stat == 0){
 		&successmsg("The Farm $farmname is now running");
+		$stat = &getFarmGuardianStatus($farmname);
+		if ($stat != 0){
+			$stat = &runFarmGuardianStart($farmname,"");
+			if ($stat == 0){
+				&successmsg("The FarmGuardian of $farmname is now running");
+			}
+		}
 	} else {
 		&errormsg("The Farm $farmname isn't running, check if the IP address is up and the PORT is in use");
-	}
-
-	$stat = &getFarmGuardianStatus($farmname);
-	if ($stat != -1){
-		$stat = &runFarmGuardianStart($farmname,"");
-		if ($stat == 0){
-			&successmsg("The FarmGuardian of $farmname is now running");
-		}
 	}
 }
 
@@ -83,6 +82,13 @@ if ($action eq "stopfarm"){
 	$stat = &runFarmStop($farmname,"true");
 	if ($stat == 0){
 		&successmsg("The Farm $farmname is now disabled");
+		$stat = &getFarmGuardianStatus($farmname);
+		if ($stat != -1){
+			$stat = &runFarmGuardianStop($farmname,"");
+			if ($stat == 0){
+				&successmsg("The FarmGuardian of $farmname is now stopped");
+			}
+		}
 	} else {
 		&errormsg("The Farm $farmname is not disabled");
 	}

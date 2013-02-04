@@ -70,6 +70,8 @@ foreach (@backends){
 		print "<td><img src=\"img/icons/small/warning.png\" title=\"up\"></td> ";
 	}elsif ($backends_data[3] eq "up"){
 		print "<td><img src=\"img/icons/small/start.png\" title=\"up\"></td> ";
+	} elsif ($backends_data[3] eq "fgDOWN"){
+		print "<td><img src=\"img/icons/small/disconnect.png\" title=\"FarmGuardian down\"></td> ";	
 	}else{
 		print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td> ";
 	}

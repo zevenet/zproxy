@@ -1496,10 +1496,10 @@ sub runFarmStart($fname,$writeconf){
 		# include cron task to check backends
 		use Tie::File;
 		tie @filelines, 'Tie::File', "/etc/cron.d/zenloadbalancer";
-		my @farmcron = grep /\# \_\_$farmname\_\_/,@filelines;
+		my @farmcron = grep /\# \_\_$fname\_\_/,@filelines;
 		my $cron = @farmcron;
 		if ($cron eq 0){
-			push(@filelines,"* * * * *	root	\/usr\/local\/zenloadbalancer\/app\/libexec\/check_uplink $farmname \# \_\_$farmname\_\_");
+			push(@filelines,"* * * * *	root	\/usr\/local\/zenloadbalancer\/app\/libexec\/check_uplink $fname \# \_\_$fname\_\_");
 		}
 		untie @filelines;
 
@@ -1579,7 +1579,7 @@ sub runFarmStart($fname,$writeconf){
 			untie @filelines;
 		}
 
-		# include cron task to check backends
+		#&runFarmGuardianStart($fname,"");
 
 		# Apply changes online
 		if ($status != -1){
@@ -1596,7 +1596,7 @@ sub runFarmStart($fname,$writeconf){
 			my @pttl = &getFarmMaxClientTime($fname);
 			my $ttl = @pttl[0];
 
-			my @run = &getFarmServers($farmname);
+			my @run = &getFarmServers($fname);
 			my @tmangle;
 			my @tnat;
 			my @tmanglep;
@@ -1605,7 +1605,9 @@ sub runFarmStart($fname,$writeconf){
 			my $prob = 0;
 			foreach $lservers(@run){
 				my @serv = split("\;",$lservers);
-				$prob = $prob + @serv[4];
+				if (@serv[6] =~ /up/){
+					$prob = $prob + @serv[4];
+				}
 			}
 
 			if ($vport eq "*"){
@@ -1614,47 +1616,40 @@ sub runFarmStart($fname,$writeconf){
 
 			foreach $lservers(@run){
 				my @serv = split("\;",$lservers);
-				my $port = @serv[2];
+				if (@serv[6] =~ /up/){
+					my $port = @serv[2];
 
-				my $rip = @serv[1];
-				if (@serv[2] ne ""){
-					$rip = "$rip\:$port";
+					my $rip = @serv[1];
+					if (@serv[2] ne ""){
+						$rip = "$rip\:$port";
+					}
+
+
+					my $tag = &genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,@serv[0],@serv[3],@serv[4],@serv[6],$prob);
+					my $red = &genIptRedirect($fname,$nattype,@serv[0],$rip,$proto,@serv[3],@serv[4],$persist,@serv[6]);
+
+					if ($persist ne "none"){
+						my $tagp = &genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,@serv[0],@serv[3],@serv[6]);
+						push(@tmanglep,$tagp);
+						#my $tagp2 = &genIptMarkReturn($fname,$vip,$vport,$proto,@serv[0],@serv[6]);
+						#push(@tmanglep,$tagp2);
+					}
+
+					if ($nattype eq "nat"){
+						my $ntag = &genIptSourceNat($fname,$vip,$nattype,@serv[0],$proto,@serv[3],@serv[6]);
+						push(@tsnat,$ntag);
+					}
+
+					push(@tmangle,$tag);
+					push(@tnat,$red);
+					$prob = $prob - @serv[4];
 				}
-
-
-				my $tag = &genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,@serv[0],@serv[3],@serv[4],@serv[6],$prob);
-				my $red = &genIptRedirect($fname,$nattype,@serv[0],$rip,$proto,@serv[3],@serv[4],$persist,@serv[6]);
-
-				if ($persist ne "none"){
-					my $tagp = &genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,@serv[0],@serv[3],@serv[6]);
-					push(@tmanglep,$tagp);
-					#my $tagp2 = &genIptMarkReturn($fname,$vip,$vport,$proto,@serv[0],@serv[6]);
-					#push(@tmanglep,$tagp2);
-				}
-
-				if ($nattype eq "nat"){
-					my $ntag = &genIptSourceNat($fname,$vip,$nattype,@serv[0],$proto,@serv[3],@serv[6]);
-					push(@tsnat,$ntag);
-				}
-
-				push(@tmangle,$tag);
-				push(@tnat,$red);
-				$prob = $prob - @serv[4];
 			}
 
 
 			@tmangle = reverse(@tmangle);
 			foreach $ntag(@tmangle){
-				&logfile("running $ntag");
-				my @run = `$ntag`;
-				if ($? != 0){
-					&logfile("last command failed!");
-					$status = -1;
-				}
-			}
-
-			if ($persist ne "none"){
-				foreach $ntag(@tmanglep){
+				if ($ntag ne ""){
 					&logfile("running $ntag");
 					my @run = `$ntag`;
 					if ($? != 0){
@@ -1664,28 +1659,45 @@ sub runFarmStart($fname,$writeconf){
 				}
 			}
 
+			if ($persist ne "none"){
+				foreach $ntag(@tmanglep){
+					if ($ntag ne ""){
+						&logfile("running $ntag");
+						my @run = `$ntag`;
+						if ($? != 0){
+							&logfile("last command failed!");
+							$status = -1;
+						}
+					}
+				}
+			}
+
 			foreach $nred(@tnat){
-				&logfile("running $nred");
-				my @run = `$nred`;
-				if ($? != 0){
-					&logfile("last command failed!");
-					$status = -1;
+				if ($nred ne ""){
+					&logfile("running $nred");
+					my @run = `$nred`;
+					if ($? != 0){
+						&logfile("last command failed!");
+						$status = -1;
+					}
 				}
 			}
 
 			foreach $nred(@tsnat){
-				&logfile("running $nred");
-				my @run = `$nred`;
-				if ($? != 0){
-					&logfile("last command failed!");
-					$status = -1;
+				if ($nred ne ""){
+					&logfile("running $nred");
+					my @run = `$nred`;
+					if ($? != 0){
+						&logfile("last command failed!");
+						$status = -1;
+					}
 				}
 			}
 
 			# Enable IP forwarding
 			&setIpForward("true");
 
-			# Enable active datalink file
+			# Enable active l4 file
 			if ($status != -1){
 				open FI, ">$piddir\/$fname\_$type.pid";
 				close FI;
@@ -1721,7 +1733,7 @@ sub runFarmStop($fname,$writeconf){
 		$status = $?;
 	}
 
-	if ($type eq "http" || $type eq "https"){
+	if ($type eq "http" || $type eq "https" ){
 		&runFarmGuardianStop($fname,"");
                 my $checkfarm = &getFarmConfigIsOK($fname);
                 if ($checkfarm == 0){
@@ -1797,7 +1809,7 @@ sub runFarmStop($fname,$writeconf){
 			untie @filelines;
 		}
 
-		# delete cron task to check backends
+		#&runFarmGuardianStop($fname,"");
 
 		# Apply changes online
 		if ($status != -1){
@@ -2240,6 +2252,11 @@ sub runFarmGuardianStart($fname,$svice){
 	my $log;
 	my $sv;
 	my $ftype = &getFarmType($fname);
+	my $fgfile = &getFarmGuardianFile($fname,$svice);
+
+	if ($fgfile == -1){
+		return -1;
+	}
 
 	if (&getFarmGuardianLog($fname,$svice)){
 		$log = "-l";
@@ -3223,6 +3240,25 @@ sub setFarmBackendStatus($fname,$index,$stat){
 				if ($serverid eq $index){
 					my @lineargs = split("\;",$line);
 					@lineargs[6] = $stat;
+					@filelines[$fileid] = join("\;",@lineargs);
+				}
+				$serverid++;
+			}
+			$fileid++;
+		}
+		untie @filelines;
+	}
+
+	if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		use Tie::File;
+		tie @filelines, 'Tie::File', "$configdir\/$file";
+		my $fileid = 0;
+		my $serverid = 0;
+		foreach $line(@filelines){
+			if ($line =~ /\;server\;/ ){
+				if ($serverid eq $index){
+					my @lineargs = split("\;",$line);
+					@lineargs[7] = $stat;
 					@filelines[$fileid] = join("\;",@lineargs);
 				}
 				$serverid++;
