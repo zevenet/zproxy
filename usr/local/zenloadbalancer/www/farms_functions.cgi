@@ -827,45 +827,45 @@ sub getFarmMaxClientTime($fname,$service){
 	return @output;
 }
 
-# ser the max conn of a farm
+# set the max conn of a farm
 sub setFarmMaxConn($maxc,$fname){
-	($maxc,$fname) = @_;
+        ($maxc,$fname) = @_;
 
-	my $type = &getFarmType($fname);
-	my $ffile = &getFarmFile($fname);
-	my $output = -1;
+        my $type = &getFarmType($fname);
+        my $ffile = &getFarmFile($fname);
+        my $output = -1;
 
-	&logfile("setting 'MaxConn $maxc' for $fname farm $type");
-	if ($type eq "tcp" || $type eq "udp"){
-        	use Tie::File;
-        	tie @array, 'Tie::File', "$configdir/$ffile";
-        	for (@array) {
-			if ($_ =~ "# pen"){
-				s/-x [0-9]*/-x $maxc/g;
-				$output = $?;
-			}
-             	}
-		untie @array;
-	}
+        &logfile("setting 'MaxConn $maxc' for $fname farm $type");
+        if ($type eq "tcp" || $type eq "udp"){
+                use Tie::File;
+                tie @array, 'Tie::File', "$configdir/$ffile";
+                for (@array) {
+                        if ($_ =~ "# pen"){
+                                s/-x [0-9]*/-x $maxc/g;
+                                $output = $?;
+                        }
+                }
+                untie @array;
+        }
 
-	return $output;
-}
 
-#
-sub getFarmMaxConn($fname){
-	($fname) = @_;
+        if ($type eq "http" || $type eq "https"){
+                use Tie::File;
+                tie @array, 'Tie::File', "$configdir/$ffile";
+                for (@array) {
+                        if ($_ =~ "Threads"){
+                                #s/^Threads.*/Threads   $maxc/g;
+                                $_="Threads\t\t$maxc";
+                                $output = $?;
+                        }
 
-	my $type = &getFarmType($fname);
-	my $output = -1;
+                }
+                untie @array;
 
-	if ($type eq "tcp" || $type eq "udp"){
-		my $fport = &getFarmPort($fname);
-		&logfile("running '$pen_ctl 127.0.0.1:$fport conn_max' ");
-		$output = `$pen_ctl 127.0.0.1:$fport conn_max 2> /dev/null`;
-	}
+        }
 
-	#&logfile("getting 'MaxConn $output' for $fname farm $type");
-	return $output;
+        return $output;
+
 }
 
 # set the max servers of a farm
@@ -1982,34 +1982,53 @@ sub getFarmBlacklist($fname){
 
 # Returns farm max connections
 sub getFarmMaxConn($fname){
-	($fname)= @_;
+        ($fname)= @_;
 
-	my $type = &getFarmType($fname);
-	my $file = &getFarmFile($fname);
-	my $output = -1;
+        my $type = &getFarmType($fname);
+        my $file = &getFarmFile($fname);
+        my $output = -1;
 
-	if ($type eq "tcp" || $type eq "udp"){
-		open FI, "$configdir/$file";
-		my $exit = "false";
-		while ($line=<FI> || $exit eq "false"){
-			if ( $line =~ /^# pen/ ){
-				$exit = "true";
-				my @line_a = split("\ ",$line);
-				if ($type eq "tcp"){	
-					$admin_ip = @line_a[11];
-				} else {
-					$admin_ip = @line_a[12];
-				}
-				my @conn_max = `$pen_ctl $admin_ip conn_max 2> /dev/null`;
-				if (@conn_max =~ /^[1-9].*/){$output = "@conn_max";}
-				else{$output = "-";}
-			}
-		}
-		close FI;
-	}
+        if ($type eq "tcp" || $type eq "udp"){
+                open FI, "$configdir/$file";
+                my $exit = "false";
+                while ($line=<FI> || $exit eq "false"){
+                        if ( $line =~ /^# pen/ ){
+                                $exit = "true";
+                                my @line_a = split("\ ",$line);
+                                if ($type eq "tcp"){
+                                        $admin_ip = @line_a[11];
+                                } else {
+                                        $admin_ip = @line_a[12];
+                                }
+                                my @conn_max = `$pen_ctl $admin_ip conn_max 2> /dev/null`;
+                                if (@conn_max =~ /^[1-9].*/){$output = "@conn_max";}
+                                else{$output = "-";}
+                        }
+                }
+                close FI;
+        }
 
-	#&logfile("getting 'MaxConn $output' for $fname farm $type");
-	return $output;
+       if ($type eq "http" || $type eq "https"){
+               my $ffile = &getFarmFile($fname);
+                open FR, "<$configdir\/$ffile";
+                my @file = <FR>;
+                foreach $line(@file){
+                        if ($line =~ /^Threads/){
+                                @line = split("\ ",$line);
+                                my $maxt = @line[1];
+                                $maxt =~ s/\ //g;
+                               chomp($maxt);
+                               $output = $maxt;
+                                }
+                        }
+                close FR;
+       }
+
+
+
+        #&logfile("getting 'MaxConn $output' for $fname farm $type");
+        return $output;
+
 }
 
 
