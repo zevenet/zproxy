@@ -17,8 +17,8 @@
 #Created by Emilio Campos Martin
 #File that create the Zen Load Balancer GUI
 
-require "config/global.conf";
-require "functions.cgi";
+require "./config/global.conf";
+require "./functions.cgi";
 use CGI qw(:standard escapeHTML);
 print "Content-type: text/html\n\n";
 

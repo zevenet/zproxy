@@ -22,7 +22,7 @@ use CGI qw(:standard escapeHTML);
 print "Content-type: text/html\n\n";
 
 ##REQUIRES
-require "help-content.cgi";
+require "./help-content.cgi";
 
 #loading form variables
 my(%Variables); #reset hash

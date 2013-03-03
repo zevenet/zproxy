@@ -36,7 +36,7 @@ switch ($action) {
 
 	# action edit interface
 	case "editif" {
-		require "content3-21.cgi";
+		require "./content3-21.cgi";
 	}
 
 	# action Save Config

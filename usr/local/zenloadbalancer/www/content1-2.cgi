@@ -45,7 +45,7 @@ print           "<!--Content Header END-->";
 
 #evaluate the $action variable, used for manage forms
 if ($action eq "addfarm" || $action eq "Save" || $action eq "Save & continue"){
-	require "content1-21.cgi";
+	require "./content1-21.cgi";
 }
 
 if ($action eq "deletefarm"){
@@ -100,16 +100,16 @@ if ($action =~ "^editfarm" || $editfarm){
 	} else {
 		$file = &getFarmFile($farmname);
 		if ($type eq "tcp" || $type eq "udp"){
-			require "content1-22.cgi";
+			require "./content1-22.cgi";
 		}
 		if ($type eq "http" || $type eq "https"){
-			require "content1-24.cgi";
+			require "./content1-24.cgi";
 		}
 		if ($type eq "datalink"){
-			require "content1-26.cgi";
+			require "./content1-26.cgi";
 		}
 		if ($type eq "l4txnat" || $type eq "l4uxnat"){
-			require "content1-28.cgi";
+			require "./content1-28.cgi";
 		}
 	}
 }
@@ -121,16 +121,16 @@ if ($action eq "managefarm"){
 	} else {
 		$file = &getFarmFile($farmname);
 		if ($type eq "tcp" || $type eq "udp"){
-			require "content1-23.cgi";
+			require "./content1-23.cgi";
 		}
 		if ($type eq "http" || $type eq "https"){
-			require "content1-25.cgi";
+			require "./content1-25.cgi";
 		}
 		if ($type eq "datalink"){
-			require "content1-27.cgi";
+			require "./content1-27.cgi";
 		}
 		if ($type eq "l4txnat" || $type eq "l4uxnat"){
-			require "content1-29.cgi";
+			require "./content1-29.cgi";
 		}
 	}
 }
@@ -143,7 +143,7 @@ $size = $#files + 1;
 if ($size == 0){
 	$action = "addfarm";
 	$farmname = "";
-	require "content1-21.cgi";
+	require "./content1-21.cgi";
 }
 
 #table that print the info

@@ -28,9 +28,9 @@ print "Content-type: text/html\n\n";
 
 ##REQUIRES
 
-require "functions.cgi";
+require "./functions.cgi";
 #require 'functions.cgi';
-require "config/global.conf";
+require "./config/global.conf";
 
 #loading form variables
 my(%Variables); #reset hash
@@ -188,8 +188,8 @@ else
 
 
 ##HEADER
-require "header.cgi";
-require "menu.cgi";
+require "./header.cgi";
+require "./menu.cgi";
 
 if (! -f "$basedir/lock")
 {
@@ -198,7 +198,7 @@ eval {
 
 	alarm $timeouterrors; 
 	#LEFT LATERAL MENU
-	require "content".$id.".cgi";
+	require "./content".$id.".cgi";
 	alarm 0;
     };
 	if ($@) { print "Error in content$id cgi execution, see ZEN logs\n";}	
@@ -208,4 +208,4 @@ else
 &errormsg("Actually Zen GUI is locked, please unlock with '/etc/init.d/zenloadbalancer start' command");
 }
 #FOOTER
-require "footer.cgi";
+require "./footer.cgi";
