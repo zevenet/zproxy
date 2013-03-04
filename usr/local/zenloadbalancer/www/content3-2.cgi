@@ -30,17 +30,15 @@ use IO::Socket;
 use IO::Interface qw(:flags);
 #
 use Tie::File;
-use Switch;
 
-switch ($action) {
 
 	# action edit interface
-	case "editif" {
+	if ($action eq "editif") {
 		require "./content3-21.cgi";
 	}
 
 	# action Save Config
-	case "Save Config" {
+	elsif ( $action eq "Save Config") {
 		$swaddif = "true";
 		# check all possible errors
 		# check if the interface is empty
@@ -78,7 +76,7 @@ switch ($action) {
 	}
 
 	# action Save & Up!
-	case ["Save & Up!","addvip2","addvlan2"] {
+	elsif ($action eq "Save & Up!" || $action eq "addvip2" || $action eq "addvlan2") {
 		$swaddif = "true";
 		# check all possible errors
 		# check if the interface is empty
@@ -153,7 +151,7 @@ switch ($action) {
 	# action adddvip2 if ok add if not ok error and set variables
 	#@list = $ip->find_prefixes($other_ip));
 	#print "el bc es $bc, la nueva ip es $newip con la ip $toip y la netmask es $netmask";
-	case "deleteif" {
+	elsif ($action eq  "deleteif") {
 		if ( $if !~ /^$/) {
 			&delRoutes("local",$if);
 			&downIf($if);
@@ -165,7 +163,7 @@ switch ($action) {
 	}
 
 	#
-	case "upif" {
+	elsif ($action eq  "upif") {
 		if ( $if !~ /^$/) {
 			$exists = &ifexist($if);
 			if ($exists eq "false"){
@@ -190,7 +188,7 @@ switch ($action) {
 	}
 
 	#
-	case "downif" {
+	elsif ($action eq  "downif") {
 		tie @array, 'Tie::File', "$configdir/if_$if\_conf", recsep => ':';
 		&delRoutes("local",$if);
 		&downIf($if);
@@ -203,7 +201,7 @@ switch ($action) {
 		untie @array;
 	}
 
-	case "editgw" {
+	elsif ($action eq  "editgw") {
 		if ( $gwaddr !~ /^$/ ){
 			&applyRoutes("global",$if,$gwaddr);
 			$state = $?;
@@ -217,7 +215,7 @@ switch ($action) {
 		}
 	}
 
-	case "deletegw" {
+	elsif ($action eq  "deletegw") {
 		&delRoutes("global",$if);
 		$state = $?;
 		$action = "";
@@ -227,7 +225,7 @@ switch ($action) {
 			&errormsg("The default gateway hasn't been deleted");
 		}
 	}
-}
+
 
 #list interfaces
 my $s = IO::Socket::INET->new(Proto => 'udp');
@@ -338,21 +336,19 @@ for my $if (@interfaces) {
 
 		if ( ($action eq "addvip" || $action eq "addvlan" ) && ($if eq $toif)) {
 			print "<tr class=\"selected\">";
-			switch ($action) {
-			case "addvip" {
+			if ($action eq "addvip") {
 				print "<td>$if:<input type=\"text\" maxlength=\"10\" size=\"2\"  name=\"if\" value=\"$ifname\"></td>";
 			}
-			case "addvlan" {
+			elsif ($action eq "addvlan") {
 				print "<td>$if.<input type=\"text\" maxlength=\"10\" size=\"3\"  name=\"if\" value=\"$ifname\"></td>";
 			}
-			}
+			
 			print "<td><input type=\"text\" size=\"10\"  name=\"newip\" > </td>";
 			print "<input type=\"hidden\" name=\"id\" value=\"3-2\">";
 			print "<input type=\"hidden\" name=\"toif\" value=\"$if\">";
 			print "<input type=\"hidden\" name=\"status\" value=\"$status\">";
 			print "<td>$hwaddr</td>";
-			switch ($action) {
-			case "addvip" {
+			if ($action eq "addvip") {
 				print "<input type=\"hidden\" name=\"netmask\" value=\"$netmask\">";
 				print "<td>$netmask</td>";
 				my @splif = split(":",$if);
@@ -364,22 +360,21 @@ for my $if (@interfaces) {
 				}
 				print "<input type=\"hidden\" name=\"action\" value=\"addvip2\">";
 			}
-			case "addvlan" {
+			elsif ($action eq "addvlan") {
 				print "<td><input type=\"text\" size=\"10\"  name=\"netmask\" value=\"\" ></td>";
 				print "<td><input type=\"text\" size=\"10\"  name=\"gwaddr\" value=\"\" ></td>";
 				print "<input type=\"hidden\" name=\"action\" value=\"addvlan2\">";
 			}
-			}
+			
 			print "<td>adding</td>";
 			print "<td>";
-			switch ($action) {
-			case "addvip" {
+			if ($action eq "addvip") {
 		 		print "<input type=\"image\" src=\"img/icons/small/plugin_save.png\" onclick=\"submit();\" name=\"action\" type=\"submit\" value=\"addvip2\" title=\"save virtual interface\">";
 			}
-			case "addvlan" {
+			elsif ($action eq "addvlan") {
 			 	print "<input type=\"image\" src=\"img/icons/small/plugin_save.png\" onclick=\"submit();\" name=\"action\" type=\"submit\" value=\"addvlan2\" title=\"save vlan interface\">";
 			}
-			}
+			
 		 	print " <a href=\"index.cgi?id=$id\"><img src=\"img/icons/small/plugin_back.png\" title=\"cancel operation\"></a> ";
 			print "</td>";
 			print "</tr>";
