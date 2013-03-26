@@ -250,11 +250,11 @@ if (-e $filecluster)
 			my $checkcommand = "date > null";
 			my $stderrcheckcommand = $ssh->exec($checkcommand);
 			my $checkcommandlength = length($checkcommand);
-			my $promptlength = (-1)*(9 + length($rhost));
-			$stderrcheckcommand = substr $stderrcheckcommand, $checkcommandlength, $promptlength;
-			$stderrcheckcommand =~ s/^\s+//;
-			$stderrcheckcommand =~ s/\s+$//;
-			if ($stderrcheckcommand !~ /^$/)
+			my $stderrcheckcommand = substr $stderrcheckcommand, $checkcommandlength;
+			my @stderrcheckcommand = split(" ",$stderrcheckcommand);
+			@stderrcheckcommand[1] =~ s/^\s+//;
+			@stderrcheckcommand[1] =~ s/\s+$//;
+			if (@stderrcheckcommand[1] !~ /^$/)
 				{
 				&errormsg("Login on $rhost ($rip) ok, but can not execute commands");
 				$error = "true";
