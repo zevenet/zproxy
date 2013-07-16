@@ -156,8 +156,8 @@ sub genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state){
 }
 
 #
-sub genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$weight,$state,$prob){
-	($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$weight,$state,$prob)= @_;
+sub genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$state,$prob){
+	($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$state,$prob)= @_;
 
 	my $rule;
 
@@ -167,18 +167,22 @@ sub genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$weight,$s
 
 	if ($lbalg eq "weight"){
 		if ($prob == 0){
-			$prob = $weight;
+			$prob = $value;
 		}
-		$prob = $weight / $prob;
+		$prob = $value / $prob;
 		$rule = "$iptables -t mangle -A PREROUTING -m statistic --mode random --probability $prob -d $vip -p $proto -m multiport --dports $vport -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
+	}
+
+	if ($lbalg eq "prio"){
+		$rule = "$iptables -t mangle -A PREROUTING -d $vip -p $proto -m multiport --dports $vport -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
 	}
 
 	return $rule;
 }
 
 #
-sub genIptRedirect($fname,$nattype,$index,$rip,$proto,$mark,$weight,$persist,$state){
-	($fname,$nattype,$index,$rip,$proto,$mark,$weight,$persist,$state)= @_;
+sub genIptRedirect($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$state){
+	($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$state)= @_;
 
 	my $rule;
 

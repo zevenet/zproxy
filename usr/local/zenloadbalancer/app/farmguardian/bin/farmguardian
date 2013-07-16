@@ -249,9 +249,9 @@ if (-e $fileconfig)
 					&getFarmHttpBackendStatus($farmname,$j,"active",$idsv);
 				}
 				if ($type eq "l4txnat" || $type eq "l4uxnat"){
-					&runFarmStop($farmname,"false");
+					&_runFarmStop($farmname,"false");
 					&setFarmBackendStatus($farmname,$j,"up");
-					&runFarmStart($farmname,"false");
+					&_runFarmStart($farmname,"false");
 				}
 
 				@backendstatus[$j] = "active";
@@ -270,9 +270,9 @@ if (-e $fileconfig)
 					&getFarmHttpBackendStatus($farmname,$j,"fgDOWN",$idsv);
 				}
 				if ($type eq "l4txnat" || $type eq "l4uxnat"){
-					&runFarmStop($farmname,"false");
+					&_runFarmStop($farmname,"false");
 					&setFarmBackendStatus($farmname,$j,"fgDOWN");
-					&runFarmStart($farmname,"false");
+					&_runFarmStart($farmname,"false");
 				}
 
 				@backendstatus[$j] = "fgDOWN";

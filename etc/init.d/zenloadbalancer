@@ -350,7 +350,7 @@ if ($eject eq "startlocal")
 	opendir(DIR, $configdir);
 	@files = grep (/^if\_.*\_conf$/,readdir(DIR));
 	closedir(DIR);
-	print "*Running Interfaces:\n";
+	print "* Running Interfaces:\n";
 	#first real interfaces
 	foreach $file(@files)
 		{
@@ -358,7 +358,7 @@ if ($eject eq "startlocal")
 		if ($file !~ /:/ && $file !~ /\./)
 			{
 			my @file_s = split("\_",$file);
-			print "	*Running interface @file_s[1]\n";
+			print "	* Running interface @file_s[1]\n";
 			open FR,"$configdir/$file";
 			while ($line=<FR>)
 				{
@@ -393,7 +393,7 @@ if ($eject eq "startlocal")
                 if ($file =~ /\./ && $file !~ /:/)
                         {
                         my @file_s = split("\_",$file);
-                        print "         *Running interface @file_s[1]\n";
+                        print "         * Running interface @file_s[1]\n";
                         open FR,"$configdir/$file";
                         while ($line=<FR>)
                                 {
@@ -430,7 +430,7 @@ if ($eject eq "startlocal")
                 if ($file =~ /:/)
                         {
                         my @file_s = split("\_",$file);
-                        print "         *Running interface @file_s[1]\n";
+                        print "         * Running interface @file_s[1]\n";
                         open FR,"$configdir/$file";
                         while ($line=<FR>)
                                 {
@@ -468,7 +468,7 @@ if ($eject eq "startlocal")
 		$bstatus = &getFarmBootStatus($farmname);
 		if ($bstatus eq "up"){
 			print "	 * Starting Farm $farmname:";
-			$status = &runFarmStart($farmname, "false");
+			$status = &_runFarmStart($farmname, "false");
 			if ($status == 0){
 				print " \033[1;32m OK \033[0m \n";
 			} else {
@@ -503,7 +503,7 @@ if ($eject eq "stoplocal"){
 		$status = &getFarmStatus($farmname);
 		if ($status eq "up"){
 			print "	 * Stopping Farm $farmname:";
-			$status = &runFarmStop($farmname,"false");
+			$status = &_runFarmStop($farmname,"false");
 			if ($status == 0){
 				print " \033[1;32m OK \033[0m \n";
 			} else {

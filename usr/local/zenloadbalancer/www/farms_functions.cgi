@@ -1440,7 +1440,7 @@ sub getFarmInterface($fname){
 }
 
 # Start Farm rutine
-sub runFarmStart($fname,$writeconf){
+sub _runFarmStart($fname,$writeconf){
 	($fname,$writeconf)= @_;
 
 	my $status = &getFarmStatus($fname);
@@ -1579,8 +1579,6 @@ sub runFarmStart($fname,$writeconf){
 			untie @filelines;
 		}
 
-		#&runFarmGuardianStart($fname,"");
-
 		# Apply changes online
 		if ($status != -1){
 			# Set fw rules calculating the $nattype and $protocol
@@ -1614,36 +1612,69 @@ sub runFarmStart($fname,$writeconf){
 				$vport = "0:65535";
 			}
 
+			my $bestprio=1000;
+			my @srvprio;
+
 			foreach $lservers(@run){
 				my @serv = split("\;",$lservers);
 				if (@serv[6] =~ /up/){
-					my $port = @serv[2];
+					if ($lbalg eq "weight"){
+						my $port = @serv[2];
+						my $rip = @serv[1];
+						if (@serv[2] ne ""){
+							$rip = "$rip\:$port";
+						}
+						my $tag = &genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,@serv[0],@serv[3],@serv[4],@serv[6],$prob);
+						my $red = &genIptRedirect($fname,$nattype,@serv[0],$rip,$proto,@serv[3],@serv[4],$persist,@serv[6]);
 
-					my $rip = @serv[1];
-					if (@serv[2] ne ""){
-						$rip = "$rip\:$port";
+						if ($persist ne "none"){
+							my $tagp = &genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,@serv[0],@serv[3],@serv[6]);
+							push(@tmanglep,$tagp);
+							#my $tagp2 = &genIptMarkReturn($fname,$vip,$vport,$proto,@serv[0],@serv[6]);
+							#push(@tmanglep,$tagp2);
+						}
+
+						if ($nattype eq "nat"){
+							my $ntag = &genIptSourceNat($fname,$vip,$nattype,@serv[0],$proto,@serv[3],@serv[6]);
+							push(@tsnat,$ntag);
+						}
+
+						push(@tmangle,$tag);
+						push(@tnat,$red);
+						$prob = $prob - @serv[4];
 					}
 
-
-					my $tag = &genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,@serv[0],@serv[3],@serv[4],@serv[6],$prob);
-					my $red = &genIptRedirect($fname,$nattype,@serv[0],$rip,$proto,@serv[3],@serv[4],$persist,@serv[6]);
-
-					if ($persist ne "none"){
-						my $tagp = &genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,@serv[0],@serv[3],@serv[6]);
-						push(@tmanglep,$tagp);
-						#my $tagp2 = &genIptMarkReturn($fname,$vip,$vport,$proto,@serv[0],@serv[6]);
-						#push(@tmanglep,$tagp2);
+					if ($lbalg eq "prio"){
+						if (@serv[5] ne "" && @serv[5]<$bestprio){
+							@srvprio=@serv;
+							$bestprio=@serv[5];
+						}
 					}
-
-					if ($nattype eq "nat"){
-						my $ntag = &genIptSourceNat($fname,$vip,$nattype,@serv[0],$proto,@serv[3],@serv[6]);
-						push(@tsnat,$ntag);
-					}
-
-					push(@tmangle,$tag);
-					push(@tnat,$red);
-					$prob = $prob - @serv[4];
 				}
+			}
+
+			if (@srvprio && $lbalg eq "prio"){
+				#&logfile("BESTPRIO $bestprio");
+				my $port = @srvprio[2];
+				my $rip = @srvprio[1];
+				if (@srvprio[2] ne ""){
+					$rip = "$rip\:$port";
+				}
+				my $tag = &genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,@srvprio[0],@srvprio[3],@srvprio[4],@srvprio[6],$prob);
+				my $red = &genIptRedirect($fname,$nattype,@srvprio[0],$rip,$proto,@srvprio[3],@srvprio[4],$persist,@srvprio[6]);
+
+				if ($persist ne "none"){
+					my $tagp = &genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,@srvprio[0],@srvprio[3],@srvprio[6]);
+					push(@tmanglep,$tagp);
+					#my $tagp2 = &genIptMarkReturn($fname,$vip,$vport,$proto,@srvprio[0],@srvprio[6]);
+					#push(@tmanglep,$tagp2);
+				}
+				if ($nattype eq "nat"){
+					my $ntag = &genIptSourceNat($fname,$vip,$nattype,@srvprio[0],$proto,@srvprio[3],@srvprio[6]);
+					push(@tsnat,$ntag);
+				}
+				push(@tmangle,$tag);
+				push(@tnat,$red);
 			}
 
 
@@ -1703,14 +1734,41 @@ sub runFarmStart($fname,$writeconf){
 				close FI;
 			}
 		}
+
 	}
 
 	return $status;
 }
 
-# Stop Farm rutine
+# Start Farm basic rutine
+sub runFarmStart($fname,$writeconf){
+	($fname,$writeconf)= @_;
+
+	my $status = &_runFarmStart($fname,$writeconf);
+
+	if ($status == 0){
+		&runFarmGuardianStart($fname,"");
+	}
+
+	return $status;
+}
+
+# Stop Farm basic rutine
 sub runFarmStop($fname,$writeconf){
 	($fname,$writeconf)= @_;
+
+	&runFarmGuardianStart($fname,"");
+
+	my $status = &_runFarmStop($fname,$writeconf);
+
+	return $status;
+}
+
+# Stop Farm rutine
+sub _runFarmStop($fname,$writeconf){
+	($fname,$writeconf)= @_;
+
+	#&runFarmGuardianStop($fname,"");
 
 	my $status = &getFarmStatus($fname);
 	if ($status eq "down"){
@@ -2272,6 +2330,11 @@ sub runFarmGuardianStart($fname,$svice){
 	my $sv;
 	my $ftype = &getFarmType($fname);
 	my $fgfile = &getFarmGuardianFile($fname,$svice);
+	my $fgpid = &getFarmGuardianPid($fname,$svice);
+
+	if ($fgpid != -1){
+		return -1;
+	}
 
 	if ($fgfile == -1){
 		return -1;
@@ -2309,6 +2372,7 @@ sub runFarmGuardianStop($fname,$svice){
 	my $sv;
 	my $type = &getFarmType($fname);
 	my $fgpid = &getFarmGuardianPid($fname,$svice);
+
 
 	if ($ftype =~ /http/ && $svice eq ""){
 		# Iterate over every farm service

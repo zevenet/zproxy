@@ -337,29 +337,29 @@ print "<br>";
 #print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 
 #algorithm
-#print "<b>Load Balance Algorithm.</b>";
-#$lbalg = &getFarmAlgorithm($farmname);
-#if ($lbalg == -1){
-#	$lbalg = "weight";
-#}
-#print "<form method=\"get\" action=\"index.cgi\">";
-#print "<input type=\"hidden\" name=\"action\" value=\"editfarm-algorithm\">";
-#print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-#print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-#print "<select  name=\"lb\">";
-#if ($lbalg eq "weight"){
-#	print "<option value=\"weight\" selected=\"selected\">Weight: connection linear dispatching by weight</option>";
-#} else {
-#	print "<option value=\"weight\">Weight: connection linear dispatching by weight</option>";
-#}
-##if ($lbalg eq "prio"){	
-##	print "<option value=\"prio\" disabled >Priority: connections always to the most prio avaliable</option>";
-##} else {
-#	print "<option value=\"prio\" disabled >Priority: connections always to the most prio avaliable</option>";
-##}
-#print "</select>";
-#print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
-#print "<br>";
+print "<b>Load Balance Algorithm.</b>";
+$lbalg = &getFarmAlgorithm($farmname);
+if ($lbalg == -1){
+	$lbalg = "weight";
+}
+print "<form method=\"get\" action=\"index.cgi\">";
+print "<input type=\"hidden\" name=\"action\" value=\"editfarm-algorithm\">";
+print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
+print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
+print "<select  name=\"lb\">";
+if ($lbalg eq "weight"){
+	print "<option value=\"weight\" selected=\"selected\">Weight: connection linear dispatching by weight</option>";
+} else {
+	print "<option value=\"weight\">Weight: connection linear dispatching by weight</option>";
+}
+if ($lbalg eq "prio"){	
+	print "<option value=\"prio\" selected=\"selected\">Priority: connections always to the most prio available</option>";
+} else {
+	print "<option value=\"prio\" >Priority: connections always to the most prio available</option>";
+}
+print "</select>";
+print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+print "<br>";
 
 #type session
 print "<b>Persistence mode </b><font size=\"1\">*the service will be restarted</font><b>.</b>";
@@ -500,7 +500,7 @@ print "		<td>Server</td>";
 print "		<td>Address</td>";
 print "		<td>Port</td>";
 print "		<td>Weight</td>";
-#print "		<td>Priority</td>";
+print "		<td>Priority</td>";
 print "		<td>Actions</td>";
 print "    </tr>";
 print "    </thead>";
@@ -530,7 +530,7 @@ foreach $l_servers(@run){
 			#Weight
 			print "<td><input type=\"text\" size=\"4\"  name=\"weight_server\" value=\"@l_serv[4]\"> </td>";
 			#Priority
-			#print "<td><input type=\"text\" size=\"4\"  name=\"priority_server\" value=\"@l_serv[5]\"> </td>";
+			print "<td><input type=\"text\" size=\"4\"  name=\"priority_server\" value=\"@l_serv[5]\"> </td>";
 			&createmenuserversfarm("edit",$farmname,@l_serv[0]);
 		} else {
 			print "<form method=\"get\" action=\"index.cgi\#backendlist\">";
@@ -543,7 +543,7 @@ foreach $l_servers(@run){
         			print "<td>@l_serv[2]</td>";
 			}
 			print "<td>@l_serv[4]</td>";
-			#print "<td>@l_serv[5]</td>";
+			print "<td>@l_serv[5]</td>";
 			&createmenuserversfarm("normal",$farmname,@l_serv[0]);
 		}
 		print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
@@ -576,7 +576,7 @@ if ($action eq "editfarm-addserver"){
         #Weight
         print "<td><input type=\"text\" size=\"4\"  name=\"weight_server\" value=\"\"></td>";
 	#Priority
-	#print "<td><input type=\"text\" size=\"4\"  name=\"priority_server\" value=\"\"> </td>";
+	print "<td><input type=\"text\" size=\"4\"  name=\"priority_server\" value=\"\"> </td>";
 	&createmenuserversfarm("add",$farmname,$sindex);
 	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";	
         print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
@@ -586,7 +586,7 @@ if ($action eq "editfarm-addserver"){
 }
 
 print "<tr>";
-print "<td  colspan=\"4\"></td>";
+print "<td  colspan=\"5\"></td>";
 print "<form method=\"get\" action=\"index.cgi\#backendlist\">";
 &createmenuserversfarm("new",$farmname,"");
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";	

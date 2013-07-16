@@ -63,7 +63,7 @@ if ($action eq "deletefarm"){
 }
 
 if ($action eq "startfarm"){
-	$stat = &runFarmStart($farmname,"true");
+	$stat = &_runFarmStart($farmname,"true");
 	if ($stat == 0){
 		&successmsg("The Farm $farmname is now running");
 		$stat = &getFarmGuardianStatus($farmname);
@@ -79,7 +79,7 @@ if ($action eq "startfarm"){
 }
 
 if ($action eq "stopfarm"){
-	$stat = &runFarmStop($farmname,"true");
+	$stat = &_runFarmStop($farmname,"true");
 	if ($stat == 0){
 		&successmsg("The Farm $farmname is now disabled");
 		$stat = &getFarmGuardianStatus($farmname);

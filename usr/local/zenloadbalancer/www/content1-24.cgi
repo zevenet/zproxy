@@ -179,7 +179,7 @@ if ($action eq "editfarm-httpscert"){
 
 if ($action eq "editfarm-restart"){
 	&runFarmStop($farmname,"true");
-	my $status = &runFarmStart($farmname,"true");
+	my $status = &_runFarmStart($farmname,"true");
 	if ($status == 0){
 		&successmsg("The $farmname farm has been restarted");
 		&setFarmHttpBackendStatus($farmname);
@@ -499,82 +499,6 @@ print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 
-#type session
-#print "<br>";
-#print "<b>Persistence session.</b>";
-#$session = &getFarmSessionType($farmname,$service);
-#if ($session == -1){
-#	$session = "nothing";
-#}
-#print "<form method=\"get\" action=\"index.cgi\">";
-#print "<input type=\"hidden\" name=\"action\" value=\"editfarm-typesession\">";
-#print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-#print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-#print "<select  name=\"session\">";
-#print "<option value=\"nothing\">no persistence</option>";
-#if ($session eq "IP"){	
-#	print "<option value=\"IP\" selected=\"selected\">IP: client address</option>";
-#} else {
-#	print "<option value=\"IP\">IP: client address</option>";
-#}
-#if ($session eq "BASIC"){
-#	print "<option value=\"BASIC\" selected=\"selected\">BASIC: basic authentication</option>";
-#} else {
-#	print "<option value=\"BASIC\">BASIC: basic authentication</option>";
-#}
-#if ($session eq "URL"){
-#	print "<option value=\"URL\" selected=\"selected\">URL: a request parameter</option>";
-#} else {
-#	print "<option value=\"URL\">URL: a request parameter</option>";
-#}
-#if ($session eq "PARM"){
-#	print "<option value=\"PARM\" selected=\"selected\">PARM: a  URI parameter</option>";
-#} else {
-#	print "<option value=\"PARM\">PARM: a URI parameter</option>";
-#}
-#if ($session eq "COOKIE"){
-#	print "<option value=\"COOKIE\" selected=\"selected\">COOKIE: a certain cookie</option>";
-#} else {
-#	print "<option value=\"COOKIE\">COOKIE: a certain cookie</option>";
-#}
-#if ($session eq "HEADER"){
-#	print "<option value=\"HEADER\" selected=\"selected\">HEADER: A certains request header</option>";
-#} else {
-#	print "<option value=\"HEADER\">HEADER: A certains request header</option>";
-#}
-#print "</select>";
-#print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
-#
-##session TTL
-#if ($session ne "nothing" && $session){
-#	print "<br>";
-#	print "<b>Persistence session time to limit.</b>";
-#	@ttl = &getFarmMaxClientTime($farmname,$service);
-#	print "<form method=\"get\" action=\"index.cgi\">";
-#	print "<input type=\"hidden\" name=\"action\" value=\"editfarm-TTL\">";
-#	print "<input type=\"text\" value=\"@ttl[1]\" size=\"4\" name=\"param\">";
-#	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-#	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-#	print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
-#}
-#
-##session ID
-#$morelines = "false";
-#if ($session eq "URL" || $session eq "COOKIE" || $session eq "HEADER"){
-#	print "<br>";
-#	print "<b>Persistence session identifier.</b> <font size=1>*a cookie name, a header name or url value name</font>";
-#	$sessionid = &getFarmSessionId($farmname,$service);
-#	print "<form method=\"get\" action=\"index.cgi\">";
-#	print "<input type=\"hidden\" name=\"action\" value=\"editfarm-sessionid\">";
-#	print "<input type=\"text\" value=\"$sessionid\" size=\"20\" name=\"param\">";
-#	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-#	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-#	print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
-#	$morelines = "true";
-#}
-
-#acepted verbs
-#
 print "<br>";
 $type0="standard HTTP request";
 $type1="+ extended HTTP request";
