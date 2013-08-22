@@ -78,43 +78,6 @@ foreach $line(@system)
 		RRDs::update "$rrdap_dir$rrd_dir$if_name$db_if",
 			"-t", "in:out",
 			"N:$in:$out";
-		#size graph
-		$width="500";
-		$height="150";
-		#create graphs
-		@time=("d","w","m","y");
-		foreach $time_graph(@time)
-			{
-
-			$graph = $basedir.$img_dir.$if_name."_".$time_graph.".png";
-			print "Creating graph in $graph ...\n";
-			RRDs::graph ("$graph",
-               			"--start=-1$time_graph",
-				"-h", "$height", "-w", "$width",
-              			"--lazy",
-               			"-l 0",
-               			"-a", "PNG",
-               			"-v TRAFFIC ON $if_name",
-               			"DEF:in=$rrdap_dir$rrd_dir$if_name$db_if:in:AVERAGE",
-               			"DEF:out=$rrdap_dir$rrd_dir$if_name$db_if:out:AVERAGE",
-               			"CDEF:out_neg=out,-1,*",
-               			"AREA:in#32CD32:In ",
-               			"LINE1:in#336600",
-				"GPRINT:in:LAST:Last\\:%5.1lf %sByte/sec", 
-				"GPRINT:in:MIN:Min\\:%5.1lf %sByte/sec",  
-				"GPRINT:in:AVERAGE:Avg\\:%5.1lf %sByte/sec",  
-				"GPRINT:in:MAX:Max\\:%5.1lf %sByte/sec\\n",
-               			"AREA:out_neg#4169E1:Out",
-               			"LINE1:out_neg#0033CC",
-				"GPRINT:in:LAST:Last\\:%5.1lf %sByte/sec", 
-				"GPRINT:in:MIN:Min\\:%5.1lf %sByte/sec",  
-				"GPRINT:in:AVERAGE:Avg\\:%5.1lf %sByte/sec",  
-				"GPRINT:in:MAX:Max\\:%5.1lf %sByte/sec\\n",
-               			"HRULE:0#000000");
-
-		       if ($ERROR = RRDs::error) { print "$0: unable to generate $if_name traffic graph: $ERROR\n"; }
-			
-			}
 		
 		#end process rrd for $if_name
 		}

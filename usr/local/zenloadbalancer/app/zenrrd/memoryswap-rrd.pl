@@ -107,56 +107,7 @@ RRDs::update "$rrdap_dir$rrd_dir$db_memsw",
 	"-t", "swt:swu:swf:swc",
 	"N:$mvalue:$mused:$mfvalue:$mcvalue";
 
-#size graph
-$weidth="500";
-$height="150";
-#create graphs
-#1 day
-$last =  RRDs::last "$rrdap_dir$rrd_dir$db_memsw";
+#$last =  RRDs::last "$rrdap_dir$rrd_dir$db_memsw";
 
 
-@time=("d","w","m","y");
-foreach $time_graph(@time)
-	{
-
-	$graph = $basedir.$img_dir."memsw_".$time_graph.".png";
-	print "Creating graph in $graph ...\n";
-	#print "creating graph" .$rrd_dir.$png_mem. "...\n";
-
-	#print "Creating image 1".$time_graph." ".$rrd_dir.$png_mem.$time_graph." ...\n";
-	RRDs::graph ("$graph",
-		"--imgformat=PNG",
-		"--start=-1$time_graph",
-		"--width=$weidth",
-		"--height=$height",  
-		"--alt-autoscale-max",
-		"--lower-limit=0",
-		"--vertical-label=SWAP MEMORY",
-		"--base=1024",
-		"DEF:swt=$rrdap_dir$rrd_dir$db_memsw:swt:AVERAGE",
-		"DEF:swu=$rrdap_dir$rrd_dir$db_memsw:swu:AVERAGE",
-		"DEF:swf=$rrdap_dir$rrd_dir$db_memsw:swf:AVERAGE",
-		"DEF:swc=$rrdap_dir$rrd_dir$db_memsw:swc:AVERAGE",
-		"AREA:swt#AAA8E4:Total Swap\\t\\t", 
-				"GPRINT:swt:LAST:Last\\:%8.2lf %s", 
-				"GPRINT:swt:MIN:Min\\:%8.2lf %s",  
-				"GPRINT:swt:AVERAGE:Avg\\:%8.2lf %s",  
-				"GPRINT:swt:MAX:Max\\:%8.2lf %s\\n",
-		"LINE2:swu#EEE8A1:Used Swap\\t\\t", 
-				"GPRINT:swu:LAST:Last\\:%8.2lf %s", 
-				"GPRINT:swu:MIN:Min\\:%8.2lf %s",  
-				"GPRINT:swu:AVERAGE:Avg\\:%8.2lf %s",  
-				"GPRINT:swu:MAX:Max\\:%8.2lf %s\\n",
-		"LINE2:swf#FF0000:Free Swap\\t\\t", 
-				"GPRINT:swf:LAST:Last\\:%8.2lf %s", 
-				"GPRINT:swf:MIN:Min\\:%8.2lf %s",  
-				"GPRINT:swf:AVERAGE:Avg\\:%8.2lf %s",  
-				"GPRINT:swf:MAX:Max\\:%8.2lf %s\\n",
-		"LINE2:swc#46F2A2:Cached Swap\\t\\t", 
-				"GPRINT:swc:LAST:Last\\:%8.2lf %s", 
-				"GPRINT:swc:MIN:Min\\:%8.2lf %s",  
-				"GPRINT:swc:AVERAGE:Avg\\:%8.2lf %s",  
-				"GPRINT:swc:MAX:Max\\:%8.2lf %s\\n");
-		if ($ERROR = RRDs::error) { print "$0: unable to generate $graph: $ERROR\n"};
-	}
 

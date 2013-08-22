@@ -22,6 +22,7 @@ require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
 require "/usr/local/zenloadbalancer/www/nf_functions.cgi";
 require "/usr/local/zenloadbalancer/www/cluster_functions.cgi";
+require "/usr/local/zenloadbalancer/www/rrd_functions.cgi";
 
 
 #function that check if variable is a number no float
@@ -559,34 +560,6 @@ sub setGuiPort($httpsguiport,$minihttpdconf) {
 	tie @array, 'Tie::File', "$minihttpdconf";
 	@array[1] = "port=$httpsguiport\n";
 	untie @array;
-}
-
-#function that returns the graph list to show
-sub getGraphs2Show($graphtype){
-	my ($graphtype) = @_;
-	my @list = -1;
-	if ($graphtype eq System){
-		opendir(DIR, "$basedir$img_dir");
-		my @disk = grep(/^dev-.*\_d\.png$/,readdir(DIR));
-		closedir(DIR);
-		@list=("cpu_d.png",@disk,"load_d.png","mem_d.png","memsw_d.png");
-	}
-	elsif ($graphtype eq Network){
-		opendir(DIR, "$basedir$img_dir");
-		@list = grep(/^eth.*\_d\.png$/,readdir(DIR));
-		closedir(DIR);
-	}
-	elsif ($graphtype eq Farm){
-		opendir(DIR, "$basedir$img_dir");
-		@list = grep(/farm\_d\.png$/,readdir(DIR));
-		closedir(DIR);
-	}
-	else{
-		opendir(DIR, "$basedir$img_dir");
-		@list = grep(/\_d\.png$/,readdir(DIR));
-		closedir(DIR);
-	}
-	return @list;
 }
 
 #function that create the menu for manage the vips in HTTP Farm Table

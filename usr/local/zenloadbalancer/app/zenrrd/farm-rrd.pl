@@ -20,11 +20,6 @@ use RRDs;
 require ("/usr/local/zenloadbalancer/config/global.conf");
 require ("/usr/local/zenloadbalancer/www/functions.cgi");
 
-#$db_if="iface.rrd";
-#my @system = `$ifconfig_bin -a`;
-#my @system = `$ifconfig_bin`;
-
-#$is_if=0;
 @farmlist = &getFarmList();
 foreach $farmfile(@farmlist){
 	@farmargs = split(/_/,$farmfile);
@@ -75,43 +70,7 @@ foreach $farmfile(@farmlist){
 		RRDs::update "$rrdap_dir$rrd_dir$db_if",
 			"-t", "pending:established:closed",
 			"N:$synconns:$globalconns:$waitedconns";
-		#size graph
-		$width="500";
-		$height="150";
-		#create graphs
-		@time=("d","w","m","y");
-		foreach $time_graph(@time){
-			$graph = $basedir.$img_dir.$farm."-".farm."_".$time_graph.".png";
-			print "Creating graph in $graph ...\n";
-			RRDs::graph ("$graph",
-               			"--start=-1$time_graph",
-				"-h", "$height", "-w", "$width",
-              			"--lazy",
-               			"-l 0",
-               			"-a", "PNG",
-               			"-v CONNECTIONS ON $farm farm",
-               			"DEF:pending=$rrdap_dir$rrd_dir$db_if:pending:AVERAGE",
-               			"DEF:established=$rrdap_dir$rrd_dir$db_if:established:AVERAGE",
-               			"DEF:closed=$rrdap_dir$rrd_dir$db_if:closed:AVERAGE",
-		"LINE2:pending#FF0000:Pending Conns\\t", 
-				"GPRINT:pending:LAST:Last\\:%6.0lf ", 
-				"GPRINT:pending:MIN:Min\\:%6.0lf ",  
-				"GPRINT:pending:AVERAGE:Avg\\:%6.0lf ",  
-				"GPRINT:pending:MAX:Max\\:%6.0lf \\n",
-		"LINE2:established#AAA8E4:Established C\\t", 
-				"GPRINT:established:LAST:Last\\:%6.0lf ", 
-				"GPRINT:established:MIN:Min\\:%6.0lf ",  
-				"GPRINT:established:AVERAGE:Avg\\:%6.0lf ",  
-				"GPRINT:established:MAX:Max\\:%6.0lf \\n",
-		"LINE2:closed#EEE8A1:Closed Conns\\t", 
-				"GPRINT:closed:LAST:Last\\:%6.0lf ", 
-				"GPRINT:closed:MIN:Min\\:%6.0lf ",  
-				"GPRINT:closed:AVERAGE:Avg\\:%6.0lf ",  
-				"GPRINT:closed:MAX:Max\\:%6.0lf \\n");
-				       if ($ERROR = RRDs::error) { print "$0: unable to generate $farm farm graph: $ERROR\n"; }
-		}
 			
-		#end process rrd for farm
 	}
 }	
 

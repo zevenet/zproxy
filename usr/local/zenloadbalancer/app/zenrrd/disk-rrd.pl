@@ -87,42 +87,7 @@ foreach $line(@system)
 						"N:$tot:$used:$free";
 
 					if ($ERROR = RRDs::error) { print "$0: unable to generate $partition database: $ERROR\n"};
-					$width="500";
-					$height="150";
-					@time=("d","w","m","y");
-					foreach $time_graph(@time)
-						{
-						$graph = $basedir.$img_dir.$partitions."_".$time_graph.".png";
-						print "Creating graph in $graph ...\n";
-						RRDs::graph ("$graph",
-							"--start=-1$time_graph",
-							"-v $partition MOUNTED IN $mount (USED:$size%)",	
-							"-h", "$height", "-w", "$width",
-							"--lazy",
-							"-l 0",
-							"-a", "PNG",
-					                "DEF:tot=$rrdap_dir$rrd_dir$partitions$db_hd:tot:AVERAGE",
-					                "DEF:used=$rrdap_dir$rrd_dir$partitions$db_hd:used:AVERAGE",
-					                "DEF:free=$rrdap_dir$rrd_dir$partitions$db_hd:free:AVERAGE",
-							"AREA:tot#aaa8e4:Total\\t",
-							"GPRINT:tot:LAST:Last\\:%8.2lf %s", 
-							"GPRINT:tot:MIN:Min\\:%8.2lf %s",  
-							"GPRINT:tot:AVERAGE:Avg\\:%8.2lf %s",  
-							"GPRINT:tot:MAX:Max\\:%8.2lf %s\\n",
-							"LINE2:used#E0E02D:Used\\t",
-							"GPRINT:used:LAST:Last\\:%8.2lf %s", 
-							"GPRINT:used:MIN:Min\\:%8.2lf %s",  
-							"GPRINT:used:AVERAGE:Avg\\:%8.2lf %s",  
-							"GPRINT:used:MAX:Max\\:%8.2lf %s\\n",
-							"LINE2:free#46F2A2:Free\\t",
-							"GPRINT:free:LAST:Last\\:%8.2lf %s", 
-							"GPRINT:free:MIN:Min\\:%8.2lf %s",  
-							"GPRINT:free:AVERAGE:Avg\\:%8.2lf %s",  
-							"GPRINT:free:MAX:Max\\:%8.2lf %s\\n");
 
-                		       if ($ERROR = RRDs::error) { print "$0: unable to generate $partition graph: $ERROR\n"; }
-	
-						}
 					}
 				}
 		}

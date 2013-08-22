@@ -36,9 +36,9 @@ print "
 
 
 
-opendir(DIR, "$basedir$img_dir");
-@files = grep(/\_d.png$/,readdir(DIR));
-closedir(DIR);
+#opendir(DIR, "$basedir$img_dir");
+#@files = grep(/\_d.png$/,readdir(DIR));
+#closedir(DIR);
 
 
 if ($action && $action ne "Select Graph type"){
@@ -47,13 +47,10 @@ if ($action && $action ne "Select Graph type"){
           <div class=\"box-header\"> Graphs daily, weekly, monthly yearly </div>
           <div class=\"box stats\">
 	";
-	print "<center><img src=\"img/graphs/$action\"></center><br><br>";
-	$action =~ s/\_d\.png/\_w\.png/;
-	print "<center><img src=\"img/graphs/$action\"></center><br><br>";
-	$action =~ s/\_w\.png/\_m\.png/;
-	print "<center><img src=\"img/graphs/$action\"></center><br><br>";
-	$action =~ s/\_m\.png/\_y\.png/;
-	print "<center><img src=\"img/graphs/$action\"></center><br><br>";
+	print '<center><img src="data:image/png;base64,'.&printGraph($action,"d").'"/></center><br><br>';
+	print '<center><img src="data:image/png;base64,'.&printGraph($action,"w").'"/></center><br><br>';
+	print '<center><img src="data:image/png;base64,'.&printGraph($action,"m").'"/></center><br><br>';
+	print '<center><img src="data:image/png;base64,'.&printGraph($action,"y").'"/></center><br><br>';
 
 	print "</div></div></div>";
         print "<form method=\"get\" action=\"index.cgi\">";
@@ -64,21 +61,21 @@ if ($action && $action ne "Select Graph type"){
 else{
 	if ($graphtype eq "System"){
 		@graphselected[0] = "";
-		@graphselected[1] = "selected=\"seleted\"";
+		@graphselected[1] = "selected=\"selected\"";
 		@graphselected[2] = "";
 		@graphselected[3] = "";
 	}
 	elsif ($graphtype eq "Network"){
 		@graphselected[0] = "";
 		@graphselected[1] = "";
-		@graphselected[2] = "selected=\"seleted\"";
+		@graphselected[2] = "selected=\"selected\"";
 		@graphselected[3] = "";
 	}
 	elsif ($graphtype eq "Farm"){
 		@graphselected[0] = "";
 		@graphselected[1] = "";
 		@graphselected[2] = "";
-		@graphselected[3] = "selected=\"seleted\"";
+		@graphselected[3] = "selected=\"selected\"";
 	}
 	else{
 		@graphselected[0] = "";
@@ -112,7 +109,8 @@ else{
 			@graphlist = &getGraphs2Show($gtype);
 			foreach $graph(@graphlist){
 				print "<a href=\"?id=$id&action=$graph\"><center><img src=\"img/icons/small/zoom_in.png\" title=\"More info\"></a>";
-				print "<img src=\"img/graphs/$graph\"></center><br><br>";
+				print '<img src="data:image/png;base64,'.&printGraph($graph,"d").'"/>';
+				print "</center><br><br>";
 			}
 		}
 	}
@@ -120,7 +118,9 @@ else{
 		@graphlist = &getGraphs2Show($graphtype);
 		foreach $graph(@graphlist){
 			print "<a href=\"?id=$id&action=$graph\"><center><img src=\"img/icons/small/zoom_in.png\" title=\"More info\"></a>";
-			print "<img src=\"img/graphs/$graph\"></center><br><br>";
+			#print "<img src=\"img/graphs/$graph\"></center><br><br>";
+			print '<img src="data:image/png;base64,'.&printGraph($graph,"d").'"/>';
+			print "</center><br><br>";
 		}
 	}
 	print "</div></div></div>";

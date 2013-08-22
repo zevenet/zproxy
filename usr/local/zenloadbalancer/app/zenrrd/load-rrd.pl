@@ -75,45 +75,7 @@ RRDs::update "$rrdap_dir$rrd_dir$db_load",
 	"-t", "load:load5:load15",
 	"N:$last:$last5:$last15";
 
-#size graph
-$width="500";
-$height="150";
-#create graphs
-#1 day
-$last =  RRDs::last "$rrdap_dir$rrd_dir$db_load";
+#$last =  RRDs::last "$rrdap_dir$rrd_dir$db_load";
 
 
-@time=("d","w","m","y");
-foreach $time_graph(@time)
-	{
-	$graph = $basedir.$img_dir."load_".$time_graph.".png";
-	print "Creating graph in $graph ...\n";
-	RRDs::graph ("$graph",
-		"--imgformat=PNG",
-		"--start=-1$time_graph",
-		"--width=$width",
-		"--height=$height",  
-		"--alt-autoscale-max",
-		"--lower-limit=0",
-		"--vertical-label=LOAD AVERAGE",
-		"DEF:load=$rrdap_dir$rrd_dir$db_load:load:AVERAGE",
-		"DEF:load5=$rrdap_dir$rrd_dir$db_load:load5:AVERAGE",
-		"DEF:load15=$rrdap_dir$rrd_dir$db_load:load15:AVERAGE",
-		"LINE2:load#AAA8E4:last minute\\t\\t", 
-				"GPRINT:load:LAST:Last\\:%3.2lf", 
-				"GPRINT:load:MIN:Min\\:%3.2lf",  
-				"GPRINT:load:AVERAGE:Avg\\:%3.2lf",  
-				"GPRINT:load:MAX:Max\\:%3.2lf\\n",
-		"LINE2:load5#EEE8A1:last 5 minutes\\t", 
-				"GPRINT:load5:LAST:Last\\:%3.2lf", 
-				"GPRINT:load5:MIN:Min\\:%3.2lf",  
-				"GPRINT:load5:AVERAGE:Avg\\:%3.2lf",  
-				"GPRINT:load5:MAX:Max\\:%3.2lf\\n",
-		"LINE2:load15#FF0000:last 15 minutes\\t", 
-				"GPRINT:load15:LAST:Last\\:%3.2lf", 
-				"GPRINT:load15:MIN:Min\\:%3.2lf",  
-				"GPRINT:load15:AVERAGE:Avg\\:%3.2lf",  
-				"GPRINT:load15:MAX:Max\\:%3.2lf\\n");
-		if ($ERROR = RRDs::error) { print "$0: unable to generate $graph: $ERROR\n"};
-	}
 
