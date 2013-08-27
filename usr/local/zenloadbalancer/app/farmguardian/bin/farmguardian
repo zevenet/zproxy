@@ -142,7 +142,7 @@ if (-e $fileconfig)
 				#print "--> DATA:\n $i @backendid[$i] @backendserv[$i] @backendport[$i] @backendstatus[$i]\n";
 			}
 		}
-		elsif ($type eq "l4txnat" || $type eq "l4uxnat"){
+		elsif ($type eq "l4xnat"){
 			my @be = &getFarmBackendStatusCtl($farmname);
 			$i=-1;
 			foreach my $line(@be){
@@ -248,10 +248,10 @@ if (-e $fileconfig)
 					my $run = `$poundctl -c $portadmin -B 0 $idsv $j`;
 					&getFarmHttpBackendStatus($farmname,$j,"active",$idsv);
 				}
-				if ($type eq "l4txnat" || $type eq "l4uxnat"){
-					&_runFarmStop($farmname,"false");
+				if ($type eq "l4xnat"){
+					&runFarmStop($farmname,"false");
 					&setFarmBackendStatus($farmname,$j,"up");
-					&_runFarmStart($farmname,"false");
+					&runFarmStart($farmname,"false");
 				}
 
 				@backendstatus[$j] = "active";
@@ -269,10 +269,10 @@ if (-e $fileconfig)
 					my $run = `$poundctl -c $portadmin -b 0 $idsv $j`;
 					&getFarmHttpBackendStatus($farmname,$j,"fgDOWN",$idsv);
 				}
-				if ($type eq "l4txnat" || $type eq "l4uxnat"){
-					&_runFarmStop($farmname,"false");
+				if ($type eq "l4xnat"){
+					&runFarmStop($farmname,"false");
 					&setFarmBackendStatus($farmname,$j,"fgDOWN");
-					&_runFarmStart($farmname,"false");
+					&runFarmStart($farmname,"false");
 				}
 
 				@backendstatus[$j] = "fgDOWN";

@@ -24,7 +24,7 @@ if ($farmname =~ /^$/){
 }
 
 $ftype = &getFarmType($farmname);
-if ($ftype ne "l4txnat" && $ftype ne "l4uxnat"){
+if ($ftype ne "l4xnat"){
 	&errormsg("Invalid farm type");
 	$action = "";
 }
@@ -80,7 +80,8 @@ if ($action eq "editfarm-Name"){
 }
 
 if ($action eq "editfarm-changevipvipp"){
-        if ( &ismport($vipp) eq "false"){
+	my $fproto = &getFarmProto($farmname);
+        if ( $fproto ne "all" && &ismport($vipp) eq "false"){
                 &errormsg("Invalid Virtual Port $vipp value, it must be a valid multiport value");
                 $error = 1;
         }
@@ -211,6 +212,18 @@ if ($action eq "editfarm-nattype"){
 	}
 }
 
+#proto type
+if ($action eq "editfarm-prototype"){
+	$status = &setFarmProto($farmprotocol,$farmname);
+	if ($status == 0){
+		&runFarmStop($farmname,"false");
+		&runFarmStart($farmname,"false");
+		&successmsg("The protocol type for $farmname farm has been modified");
+	} else {
+		&errormsg("It's not possible to change the $farmname farm protocol type");
+	}
+}
+
 #TTL
 if ($action eq "editfarm-TTL"){
 	$error = 0;
@@ -286,7 +299,37 @@ print "<input type=\"hidden\" name=\"id_server\" value=\"@l_serv[0]\">";
 print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 print "<br>";
 
-#type session
+#protocol
+print "<b>Protocol type </b><font size=\"1\">*the service will be restarted</font><b>.</b>";
+my $farmprotocol = &getFarmProto($farmname);
+if ($farmprotocol == -1){
+	$farmprotocol = "all";
+}
+print "<form method=\"get\" action=\"index.cgi\">";
+print "<input type=\"hidden\" name=\"action\" value=\"editfarm-prototype\">";
+print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
+print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
+print "<select  name=\"farmprotocol\">";
+if ($farmprotocol eq "all"){	
+	print "<option value=\"all\" selected=\"selected\">ALL</option>";
+} else {
+	print "<option value=\"all\">ALL</option>";
+}
+if ($farmprotocol eq "tcp"){
+	print "<option value=\"tcp\" selected=\"selected\">TCP</option>";
+} else {
+	print "<option value=\"tcp\">TCP</option>";
+}
+if ($farmprotocol eq "udp"){
+	print "<option value=\"udp\" selected=\"selected\">UDP</option>";
+} else {
+	print "<option value=\"udp\">UDP</option>";
+}
+print "</select>";
+print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+print "<br>";
+
+# NAT type
 print "<b>NAT type </b><font size=\"1\">*the service will be restarted</font><b>.</b>";
 my $nattype = &getFarmNatType($farmname);
 if ($nattype == -1){
@@ -337,7 +380,7 @@ print "<br>";
 #print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 
 #algorithm
-print "<b>Load Balance Algorithm.</b>";
+print "<b>Load Balance Algorithm </b><font size=\"1\">*the service will be restarted</font><b>.</b>";
 $lbalg = &getFarmAlgorithm($farmname);
 if ($lbalg == -1){
 	$lbalg = "weight";
@@ -454,6 +497,10 @@ $vport = &getFarmVip("vipp",$farmname);
 print "<br>";
 @listinterfaces = &listallips();
 $clrip = &clrip();
+my $disabled="";
+if ($farmprotocol eq "all"){
+	$disabled="disabled";
+}
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-changevipvipp\">";
@@ -469,7 +516,7 @@ foreach $ip(@listinterfaces){
 	}
 }
 print "</select>";
-print " <input type=\"text\" value=\"$vport\" size=\"20\" name=\"vipp\">";
+print " <input type=\"text\" value=\"$vport\" size=\"20\" name=\"vipp\" $disabled>";
 print "&nbsp;<img src=\"img/icons/small/help.png\" title=\"Specify a port, several ports between `,', ports range between `:', or all ports with `*'. Also a combination of them should work.\"</img>&nbsp;";
 print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 
@@ -522,10 +569,10 @@ foreach $l_servers(@run){
 			#real server ip
 			print "<td><input type=\"text\" size=\"12\"  name=\"rip_server\" value=\"@l_serv[1]\"> </td>";
 			#local interface
-			if (@l_serv[2] eq ""){
-				print "<td><input type=\"text\" size=\"12\"  name=\"port_server\" value=\"$vport\"></td>";
+			if (@l_serv[2] eq "" || $farmprotocol eq "all"){
+				print "<td><input type=\"text\" size=\"12\"  name=\"port_server\" value=\"$vport\" $disabled></td>";
 			} else {
-        			print "<td><input type=\"text\" size=\"12\"  name=\"port_server\" value=\"@l_serv[2]\"> </td>";
+        			print "<td><input type=\"text\" size=\"12\"  name=\"port_server\" value=\"@l_serv[2]\" $disabled> </td>";
 			}
 			#Weight
 			print "<td><input type=\"text\" size=\"4\"  name=\"weight_server\" value=\"@l_serv[4]\"> </td>";
@@ -537,7 +584,7 @@ foreach $l_servers(@run){
 			print "<tr>";
 			print "<td>@l_serv[0]</td>";
 			print "<td>@l_serv[1]</td>";
-			if (@l_serv[2] eq ""){
+			if (@l_serv[2] eq "" || $farmprotocol eq "all"){
 				print "<td>$vport</td>";
 			} else {
         			print "<td>@l_serv[2]</td>";
@@ -568,10 +615,10 @@ if ($action eq "editfarm-addserver"){
         #real server ip
         print "<td><input type=\"text\" size=\"12\"  name=\"rip_server\" value=\"\"> </td>";
 	# port only editable if the farm isnt multiport
-	if (@l_serv[2] eq ""){
-		print "<td><input type=\"text\" size=\"12\"  name=\"port_server\" value=\"$vport\" ></td>";
+	if (@l_serv[2] eq "" || $farmprotocol eq "all"){
+		print "<td><input type=\"text\" size=\"12\"  name=\"port_server\" value=\"$vport\" $disabled></td>";
 	} else {
-        	print "<td><input type=\"text\" size=\"12\"  name=\"port_server\" value=\"@l_serv[2]\"> </td>";
+        	print "<td><input type=\"text\" size=\"12\"  name=\"port_server\" value=\"@l_serv[2]\" $disabled> </td>";
 	}
         #Weight
         print "<td><input type=\"text\" size=\"4\"  name=\"weight_server\" value=\"\"></td>";

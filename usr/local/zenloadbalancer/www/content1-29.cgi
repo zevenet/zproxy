@@ -22,13 +22,14 @@
 #if ($viewtableconn eq ""){ $viewtableconn = "no";}
 
 # Real Server Table
-my $args = "Nn";
+#my $args = "Nn";
+my @args;
 my $nattype = &getFarmNatType($farmname);
-if ($nattype eq "dnat"){
-	$args = "D$args";
-}
+#if ($nattype eq "dnat"){
+#	$args = "D$args";
+#}
 my $proto = &getFarmProto($farmname);
-$args = "$args -p $proto";
+#$args = "$args -p $proto";
 
 my @netstat = &getNetstatNat($args);
 $fvip = &getFarmVip("vip",$farmname);
@@ -36,7 +37,7 @@ $fvip = &getFarmVip("vip",$farmname);
 my @content = &getFarmBackendStatusCtl($farmname);
 my @backends = &getFarmBackendsStatus($farmname,@content);
 
-#print "contenido: @content<br>";
+#print "content: @content<br>";
 #print "backends: @backends<br>";
 
 my $backendsize = @backends;
@@ -75,14 +76,17 @@ foreach (@backends){
 	}else{
 		print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td> ";
 	}
-	my @synnetstatback1 = &getNetstatFilter("$proto","\.\*SYN\.\*"," $fvip\:.*\ *$ip_backend\:.*\ *","",@netstat);
-	my @synnetstatback2 = &getNetstatFilter("$proto","UNREPLIED"," $fvip\:.*\ *$ip_backend\:.*\ *","",@netstat);
-	my $npend = @synnetstatback1+@synnetstatback2;
+#	my @synnetstatback1 = &getNetstatFilter("$proto","\.\*SYN\.\*|UNREPLIED"," src=.* dst=.* .* src=$ip_backend dst=$fvip ","",@netstat);
+	my @synnetstatback1 = &getNetstatFilter("$proto","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat);
+	my $npend = @synnetstatback1;
+#	my @synnetstatback2 = &getNetstatFilter("$proto","UNREPLIED"," src=$fvip dst=$ip_backend ","",@netstat);
+#	my $npend = @synnetstatback1+@synnetstatback2;
 	print "<td>$npend</td>";
-	@stabnetstatback = &getNetstatFilter("$proto","ESTABLISHED"," $fvip\:.*\ *$ip_backend\:.*\ *","",@netstat);
+	@stabnetstatback = &getNetstatFilter("$proto","","\.* ESTABLISHED src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat);
 	my $nestab = @stabnetstatback;
 	print "<td>$nestab</td>";
-	@timewnetstatback = &getNetstatFilter("$proto","\.\*\_WAIT\.\*"," $fvip\:.*\ *$ip_backend\:.*\ *","",@netstat);
+	@timewnetstatback = &getNetstatFilter("$proto","","\.*\_WAIT src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat);
+#	@timewnetstatback = &getNetstatFilter("","","\.*WAIT \.*","",@netstat);
 	my $ntimew = @timewnetstatback;
 	print "<td>$ntimew</td>";
 	print "<td> $backends_data[2] </td>";

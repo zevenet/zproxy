@@ -253,7 +253,7 @@ print "	<div class=\"box table\">
 		}
 		my @eject;
 		$pc = "-";
-		if ($pid ne "-"){
+		if ($pid ne "-" && $pid ne "-1"){
 			@eject = `top -p $pid -b -n 1`;
 			$line = @eject[7];
 			@line = split (" ",$line);

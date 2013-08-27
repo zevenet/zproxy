@@ -249,7 +249,7 @@ if ($actionmenu eq "normal")
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-editserver\">";
 print "<input type=\"image\" src=\"img/icons/small/server_edit.png\" title=\"Edit Real Server $id_server\" name=\"action\" value=\"editfarm-editserver\">";
 my $maintenance = &getFarmBackendMaintenance($name,$id_server,$sv);
-if ($type ne "datalink" && $type ne "l4txnat" && $type ne "l4uxnat"){
+if ($type ne "datalink" && $type ne "l4xnat"){
 	if ($maintenance ne "0"){
 		print "<a href=index.cgi?action=editfarm-maintenance&id=1-2&farmname=$name&id_server=$id_server&service=$sv title=\"Enable  maintenance mode for real Server $id_server $sv\" onclick=\"return confirm('Are you sure you want to enable the  maintenance mode for server: $id_server $sv?')\"><img src=\"img/icons/small/server_maintenance.png\"></a>";
 	}else{
@@ -561,6 +561,7 @@ sub setGuiPort($httpsguiport,$minihttpdconf) {
 	@array[1] = "port=$httpsguiport\n";
 	untie @array;
 }
+
 
 #function that create the menu for manage the vips in HTTP Farm Table
 sub createmenuviph($name,$pid,"HTTP")

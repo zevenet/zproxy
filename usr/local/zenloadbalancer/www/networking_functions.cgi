@@ -505,7 +505,10 @@ sub getNetstat($args){
 
 sub getNetstatNat($args){
 	($args)= @_;
-	my @netstat = `$netstatNat -$args`;
+	#my @netstat = `$netstatNat -$args`;
+	open CONNS, "</proc/net/nf_conntrack";
+	my @netstat = <CONNS>;
+	close CONNS;
 	return @netstat;
 }
 

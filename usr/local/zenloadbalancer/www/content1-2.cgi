@@ -108,7 +108,7 @@ if ($action =~ "^editfarm" || $editfarm){
 		if ($type eq "datalink"){
 			require "./content1-26.cgi";
 		}
-		if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		if ($type eq "l4xnat"){
 			require "./content1-28.cgi";
 		}
 	}
@@ -129,7 +129,7 @@ if ($action eq "managefarm"){
 		if ($type eq "datalink"){
 			require "./content1-27.cgi";
 		}
-		if ($type eq "l4txnat" || $type eq "l4uxnat"){
+		if ($type eq "l4xnat"){
 			require "./content1-29.cgi";
 		}
 	}
@@ -238,7 +238,7 @@ foreach $file (@files) {
 
 		#menu
 		print "<td>";
-		if ($type eq "tcp" || $type eq "udp" || $type eq "l4txnat" || $type eq "l4uxnat"){
+		if ($type eq "tcp" || $type eq "udp" || $type eq "l4xnat"){
 			&createmenuvip($name,$id,$status);
 		}
 		if ($type =~ /http/ ){
