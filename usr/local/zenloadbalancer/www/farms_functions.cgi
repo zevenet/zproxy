@@ -1816,7 +1816,7 @@ sub runFarmStart($fname,$writeconf){
 sub runFarmStop($fname,$writeconf){
 	($fname,$writeconf)= @_;
 
-	&runFarmGuardianStart($fname,"");
+	&runFarmGuardianStop($fname,"");
 
 	my $status = &_runFarmStop($fname,$writeconf);
 

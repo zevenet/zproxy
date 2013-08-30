@@ -79,16 +79,17 @@ if ($action eq "startfarm"){
 }
 
 if ($action eq "stopfarm"){
+	$stat = &getFarmGuardianStatus($farmname);
+	if ($stat != -1){
+		$stat = &runFarmGuardianStop($farmname,"");
+		if ($stat == 0){
+			&successmsg("The FarmGuardian of $farmname is now stopped");
+		}
+	}
+
 	$stat = &_runFarmStop($farmname,"true");
 	if ($stat == 0){
 		&successmsg("The Farm $farmname is now disabled");
-		$stat = &getFarmGuardianStatus($farmname);
-		if ($stat != -1){
-			$stat = &runFarmGuardianStop($farmname,"");
-			if ($stat == 0){
-				&successmsg("The FarmGuardian of $farmname is now stopped");
-			}
-		}
 	} else {
 		&errormsg("The Farm $farmname is not disabled");
 	}
