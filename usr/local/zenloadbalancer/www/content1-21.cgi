@@ -24,6 +24,7 @@ if ($action eq "Save"){
 	#check if farm name is ok
 	$farmname =~ s/\ //g;
 	$farmname =~ s/\_//g;
+	&setFarmName($farmname);
 	#check ip is ok
 	$error = "false";
 	@fvip = split(" ",$vip);
@@ -107,7 +108,6 @@ if ($farmprotocol eq "" || $farmname eq ""){
 	print "<option value=\"TCP\">TCP</option>\n";
 	print "<option value=\"UDP\">UDP</option>\n";
 	print "<option value=\"HTTP\">HTTP</option>\n";
-	print "<option value=\"HTTPS\">HTTPS</option>\n";
 	print "<option value=\"L4xNAT\">L4xNAT</option>\n";
 	print "<option value=\"DATALINK\">DATALINK</option>\n";
 	print "</select>";

@@ -256,9 +256,10 @@ if ($type ne "datalink" && $type ne "l4xnat"){
 		print "<a href=index.cgi?action=editfarm-nomaintenance&id=1-2&farmname=$name&id_server=$id_server&service=$sv title=\"Disable maintenance mode for real Server $id_server $sv\" onclick=\"return confirm('Are you sure you want to disable the maintenance mode for server: $id_server $sv?')\"><img src=\"img/icons/small/server_ok.png\"></a>";
 	}
 }
-print "<a href=index.cgi?action=editfarm-deleteserver&id=1-2&farmname=$name&id_server=$id_server&service=$sv title=\"Delete Real Server $id_server\" onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\"><img src=\"img/icons/small/server_delete.png\"></a>";
 
-
+my $sv20 = $sv;
+$sv20 =~ s/\ /%20/g;
+print "<a href=index.cgi?action=editfarm-deleteserver&id=1-2&farmname=$name&id_server=$id_server&service=$sv20 title=\"Delete Real Server $id_server\" onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\"><img src=\"img/icons/small/server_delete.png\"></a>";
 
 }
 
@@ -619,13 +620,17 @@ sub zsystem(@exec){
 
 #function that create the menu for delete, move a service in a http[s] farm
 sub createmenuservice($fname,$sv,$pos){
-	($fname,$svice,$pos) = @_;
+	($fname,$sv,$pos) = @_;
+	my $serv20 = $sv;
+	my $serv = $sv;
 	my $filefarm = &getFarmFile($fname);
 	use Tie::File;
 	tie @array, 'Tie::File', "$configdir/$filefarm";
 	my @output = grep{ /Service/ } @array;
 	untie @array ;
-	print "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service=$svice&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $service\"></a>";
+	$serv20 =~ s/\ /%20/g;
+	#print "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service=$svice&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $svice\" onclick=\"return confirm('Are you sure you want to delete the Service $svice?')\"></a>";
+	print "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service=$serv20&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $svice\" onclick=\"return confirm('Are you sure you want to delete the Service $serv?')\" ></a>";
 #	if ($pos != $#output){
 #		print "<a href=index.cgi?id=1-2&action=editfarm-downservice&service=$svice&farmname=$farmname><img src=\"img/icons/small/arrow_down.png\" title=\"Move down service $service\"></a>";
 #	}

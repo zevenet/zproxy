@@ -36,6 +36,33 @@ print "
 <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />
 <link type=\"text/css\" rel=\"stylesheet\" media=\"all\" href=\"css/base.css\" />
 <link type=\"text/css\" rel=\"stylesheet\" media=\"all\" href=\"css/grid.css\" />
+                <script type=\"text/javascript\">
+                function logout() {
+                var xmlhttp;
+                if (window.XMLHttpRequest) {
+                          xmlhttp = new XMLHttpRequest();
+                }
+                // code for IE
+                else if (window.ActiveXObject) {
+                xmlhttp=new ActiveXObject(\"Microsoft.XMLHTTP\");
+                }
+                if (window.ActiveXObject) {
+                // IE clear HTTP Authentication
+                        document.execCommand(\"ClearAuthenticationCache\");
+                        window.location.href=\'/out/out.cgi\';
+                } else {
+                        xmlhttp.open(\"GET\", \'/noexist/\', true, \"logout\", \"logout\");
+                        xmlhttp.send(\"\");
+                        xmlhttp.onreadystatechange = function() {
+                                if (xmlhttp.readyState == 4) {window.location.href=\'/out/out.cgi\';}
+
+                        }
+
+                }
+                return false;
+                }
+                </script>
+
 <title>ZEN Load Balancer GUI v$version on $host</title>
 
 <link href=\"/img/favicon.ico\" rel=\"icon\" type=\"image/x-icon\" />
@@ -65,7 +92,7 @@ if (-e $filecluster && (grep(/UP/,@file)))
 	print " |";
 	}
 
-print " Host: <strong>$host</strong> | Date: <strong>$month $day $year  $hour:$min:$sec</strong></p>
+print " Host: <strong>$host</strong> | Date: <strong>$month $day $year  $hour:$min:$sec</strong> | <a href=\'#\' onclick=\'logout()\' title=\'Logout\'> <strong>Logout</strong></a></p>
  </div>
 </div>
 ";

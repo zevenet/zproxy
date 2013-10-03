@@ -585,7 +585,7 @@ if ($fglog eq "true"){
 } else {
         print "<input type=\"checkbox\"  name=\"farmguardianlog\" value=\"true\"> ";
 }
-print "&nbsp;<font size=1> Active logs</font>";
+print "&nbsp;<font size=1> Enable farmguardian logs</font>";
 print "<br>";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";

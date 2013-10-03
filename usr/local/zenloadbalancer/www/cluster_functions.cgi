@@ -227,6 +227,29 @@ sub getClusterID($clfile)
 	return $output;
 }
 
+#get cluster DEADRATIO
+sub getClusterDEADRATIO($clfile)
+{
+        ($clfile) = @_;
+        my $output = -1;
+        my $line = -1;
+        open FR,"$clfile";
+        foreach (<FR>){
+                if ( $_ =~ /^DEADRATIO/){
+                        $line= $_;
+                }
+        }
+        close FR;
+        my @cl_iddata = split(":",$line);
+        my $cl_id = @cl_iddata[1];
+        chomp($cl_id);
+        if (!$cl_id =~ /^$/){
+                $output = $cl_id;
+        }
+        return $output;
+
+}
+
 #force local node failover
 sub setLocalNodeForceFail()
 {

@@ -489,6 +489,12 @@ if ($eject eq "startlocal")
 			print " Farm $farmname configured DOWN\n";
 		}
 	}
+#At this point every zen interfaces and farms are running 
+#now a personalized script can be executed
+
+my @ownscript = `$configdir/zlb-start`;
+print "@ownscript";
+
 }
 
 if ($eject eq "stoplocal"){
@@ -616,6 +622,12 @@ if ($eject eq "stoplocal"){
 			}
                 }
         }
+
+#At this point every zen interfaces and farms are stopped
+#now a personalized script can be executed
+
+my @ownscript = `$configdir/zlb-stop`;
+print "@ownscript";
 
 }
 &runhttpsgui();

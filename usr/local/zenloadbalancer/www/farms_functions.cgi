@@ -387,6 +387,158 @@ sub getFarmHttpVerb($fname){
 	return $output;
 }
 
+#change HTTP or HTTP listener
+sub setFarmListen($farmlisten){
+       ($fname,$flisten) = @_;
+
+        my $ffile = &getFarmFile($fname);
+        tie @filefarmhttp, 'Tie::File', "$configdir/$ffile";
+        my $i_f=-1;
+        my $array_count = @filefarmhttp;
+        my $found = "false";
+        while ($i_f <= $array_count && $found eq "false"){
+               $i_f++;
+                if (@filefarmhttp[$i_f] =~ /^ListenHTTP/ && $flisten eq "http"){
+                               @filefarmhttp[$i_f] = "ListenHTTP";
+                }
+               if (@filefarmhttp[$i_f] =~ /^ListenHTTP/ && $flisten eq "https"){
+                               @filefarmhttp[$i_f] = "ListenHTTPS";
+                }
+
+               #
+                if (@filefarmhttp[$i_f] =~ /.*Cert\ \"/ && $flisten eq "http"){
+                       @filefarmhttp[$i_f] =~ s/Cert\ \"/#Cert\ \"/;
+                }
+               if (@filefarmhttp[$i_f] =~ /.*Cert\ \"/ && $flisten eq "https"){
+                       @filefarmhttp[$i_f] =~ s/#//g;
+
+                }
+       
+               #
+               if (@filefarmhttp[$i_f] =~ /.*Ciphers\ \"/ && $flisten eq "http"){
+                        @filefarmhttp[$i_f] =~ s/Ciphers\ \"/#Ciphers\ \"/;
+                }
+                if (@filefarmhttp[$i_f] =~ /.*Ciphers\ \"/ && $flisten eq "https"){
+                        @filefarmhttp[$i_f] =~ s/#//g;
+
+                }
+
+
+       }
+        untie @filefarmhttp;
+}
+
+#asign a RewriteLocation vaue to a farm HTTP or HTTPS
+sub setFarmRewriteL($fname,$rewritelocation)
+{
+       ($fname,$rewritelocation) = @_;
+
+        my $type = &getFarmType($fname);
+        my $ffile = &getFarmFile($fname);
+        my $output = -1;
+       &logfile("setting 'Rewrite Location' for $fname to $rewritelocation");  
+
+       if ($type eq "http" || $type eq "https"){
+               tie @filefarmhttp, 'Tie::File', "$configdir/$ffile";
+                my $i_f=-1;
+                my $array_count = @filefarmhttp;
+                my $found = "false";
+                while ($i_f <= $array_count && $found eq "false"){
+                        $i_f++;
+                        if (@filefarmhttp[$i_f] =~ /RewriteLocation\ .*/){
+                                @filefarmhttp[$i_f] = "\tRewriteLocation $rewritelocation";
+                                $output = $?;
+                                $found = "true";
+                        }
+                }
+                untie @filefarmhttp;
+        }
+
+
+
+}
+
+#set ConnTo value to a farm HTTP or HTTPS
+sub setFarmConnTO($tout,$fname){
+        ($tout,$fname) = @_;
+
+        my $type = &getFarmType($fname);
+        my $ffile = &getFarmFile($fname);
+        my $output = -1;
+
+        &logfile("setting 'ConnTo timeout $tout' for $fname farm $type");
+
+        if ($type eq "http" || $type eq "https"){
+        tie @filefarmhttp, 'Tie::File', "$configdir/$ffile";
+        my $i_f=-1;
+        my $array_count = @filefarmhttp;
+        my $found = "false";
+        while ($i_f <= $array_count && $found eq "false"){
+                        $i_f++;
+                        if (@filefarmhttp[$i_f] =~ /^ConnTO.*/){
+                                @filefarmhttp[$i_f] = "ConnTO\t\t $tout";
+                                $output = $?;
+                                $found = "true";
+                        }
+                }
+                untie @filefarmhttp;
+        }
+
+        return $output;
+
+
+
+}
+
+#Get RewriteLocation Header configuration HTTP and HTTPS farms
+sub getFarmRewriteL($fname){
+        ($fname) = @_;
+
+        my $type = &getFarmType($fname);
+        my $ffile = &getFarmFile($fname);
+        my $output = -1;
+
+        if ($type eq "http" || $type eq "https"){
+                open FR, "<$configdir\/$ffile";
+                my @file = <FR>;
+                foreach $line(@file){
+                        if ($line =~ /RewriteLocation\ .*/){
+                                @line = split("\ ",$line);
+                                $output = @line[1];
+                        }
+                }
+                close FR;
+        }
+
+        #&logfile("getting 'Timeout $output' for $fname farm $type");
+        return $output;
+
+}
+
+#get farm ConnTO value for http and https farms
+sub getFarmConnTO($fname){
+        ($fname) = @_;
+
+        my $type = &getFarmType($fname);
+        my $ffile = &getFarmFile($fname);
+        my $output = -1;
+
+        if ($type eq "http" || $type eq "https"){
+                open FR, "<$configdir\/$ffile";
+                my @file = <FR>;
+                foreach $line(@file){
+                        if ($line =~ /^ConnTO/){
+                                @line = split("\ ",$line);
+                                $output = @line[1];
+                        }
+                }
+                close FR;
+        }
+
+       return $output;
+}
+
+
 #asign a timeout value to a farm
 sub setFarmTimeout($tout,$fname){
 	($tout,$fname) = @_;
@@ -2809,8 +2961,14 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$servic
 					$index_count++;
 					if ($index_count == $ids){
 						#server for modify $ids;
-						@contents[$i+1] = "\t\t\tAddress $rip";
+                                                #HTTPS
+                                                my $httpsbe = &getFarmVS($fname,$svice,"httpsbackend"); 
+                                                if ( $httpsbe eq "true"){
+                                                #       #add item
+                                                        $i++;
+                                                }
 						$output=$?;
+                                                @contents[$i+1] = "\t\t\tAddress $rip";
 						@contents[$i+2] = "\t\t\tPort $port";
 						if (@contents[$i+3] =~ /TimeOut/){
 							@contents[$i+3] = "\t\t\tTimeOut $timeout";
@@ -2865,6 +3023,12 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$servic
 					$output=$?;
 					$index++;
 					splice @contents, $index,0,"\t\t\tAddress $rip";
+                                        my $httpsbe = &getFarmVS($fname,$svice,"httpsbackend");
+                                        if ( $httpsbe eq "true"){
+                                                #add item
+                                                splice @contents,$index,0,"\t\t\tHTTPS";
+                                                $index++;
+                                        }
 					$index++;
 					splice @contents, $index,0,"\t\t\tPort $port";
 					$index++;
@@ -4010,8 +4174,8 @@ foreach $line(@fileconf){
        }
        #url pattern
        if ($tag eq "urlp"){
-               if ($line =~ "Url" && $sw == 1 && $line !~ "#"){
-                       @return = split("Url",$line);
+               if ($line =~ "Url \"" && $sw == 1 && $line !~ "#"){
+                        @return = split("Url",$line);
                         @return[1] =~ s/\"//g;
                         @return[1] =~ s/^\s+//;
                         @return[1] =~ s/\s+$//;
@@ -4023,8 +4187,8 @@ foreach $line(@fileconf){
        }
        #redirect
        if ($tag eq "redirect"){
-               if ($line =~ "Redirect" && $sw == 1 && $line !~ "#"){
-                       @return = split("Redirect",$line);
+		if ($line =~ "Redirect \"" && $sw == 1 && $line !~ "#"){
+                        @return = split("Redirect",$line);
                         @return[1] =~ s/\"//g;
                         @return[1] =~ s/^\s+//;
                         @return[1] =~ s/\s+$//;
@@ -4076,6 +4240,14 @@ foreach $line(@fileconf){
                 }
 
         }
+
+       #HTTPS tag
+       if ($tag eq "httpsbackend"){
+               if ($line =~ "##True##HTTPS-backend##" && $sw == 1 ){
+                       $output = "true";
+                       last;
+               }
+       }
 
        #backends
        if ($tag eq "backends"){
@@ -4149,12 +4321,14 @@ tie @fileconf, 'Tie::File', "$configdir/$ffile";
 my $sw = 0;
 my @vserver;
 
+$j=-1;
 foreach $line(@fileconf){
+	$j++;
         if ($line =~ /Service \"$svice\"/){
                 $sw=1;
         }
-       $stri =~ s/^\s+//;
-       $stri =~ s/\s+$//;
+        $stri =~ s/^\s+//;
+        $stri =~ s/\s+$//;
         #vs tag
         if ($tag eq "vs"){
                 if ($line =~ "HeadRequire" && $sw == 1 && $stri ne ""){
@@ -4218,7 +4392,42 @@ foreach $line(@fileconf){
                 }
         }
 
+       #HTTPS Backends tag
+       if ($tag eq "httpsbackend"){
+               if ($line =~ "##HTTPS-backend##" && $sw == 1 && $stri ne ""){
+                      #turn on
+                       $line = "\t\t##True##HTTPS-backend##";
+                       #last;
+               }
+              #
+               if ($line =~ "##HTTPS-backend##" && $sw == 1 && $stri eq "" ){
+                      #turn off
+                       $line = "\t\t##False##HTTPS-backend##";
+                      #last;
+               }
+               
+               #Delete HTTPS tag in a BackEnd
+               if ($sw == 1 && $line =~ /HTTPS$/ && $stri eq ""){
+                       #Delete HTTPS tag
+                       splice @fileconf,$j,1,;
+               }
+               #Add HTTPS tag
+               if ($sw == 1 && $line =~ /BackEnd$/ && $stri ne ""){
+                       if (@fileconf[$j+1] =~ /Address\ .*/){
+                               #add new line with HTTPS tag
+                               splice @fileconf,$j+1,0,"\t\t\tHTTPS";
+                       }
+                       
+               }
+               #go out of curret Service
+               if ($line =~ /Service \"/ && $sw == 1 && $line !~ /Service \"$svice\"/){
+                       $tag = "";
+                       $sw = 0;
+                       last;
+               }
 
+
+       }
 
        #session type
        if ($tag eq "session"){
@@ -4306,6 +4515,12 @@ $index =~ s/^\s+//;
 $index =~ s/\s+$//;
 $output = $index;
 return $output;
+
+}
+
+sub setFarmName($farmname){
+
+$farmname =~ s/[^a-zA-Z0-9]//g;
 
 }
 

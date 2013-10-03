@@ -20,7 +20,7 @@
 #FOOTER
 print "
 <!-- Start Footer -->
-<div class=\"footer\">Zen Load Balancer is created under GNU/GPL License Copyright (C) zenloadbalancer-support\@lists.sourceforge.net</a>. </div>
+<div class=\"footer\">Zen Load Balancer is created under GNU/GPL License Copyright (C) zenloadbalancer-support\@lists.sourceforge.net. </div>
 <!-- End Footer -->
 <!-- Close div class=\"container\"
 </div> -->

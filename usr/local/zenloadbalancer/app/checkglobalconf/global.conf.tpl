@@ -29,7 +29,7 @@ $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 #version ZEN
 $version="3.02";#update
 #Cipher PCI
-$cipher_pci="TLSv1+SSLv3+HIGH:-MEDIUM:-LOW*:-ADH*";
+$cipher_pci="RC4-SHA";#update
 
 
 #dns file server?
