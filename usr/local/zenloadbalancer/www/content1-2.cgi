@@ -49,7 +49,7 @@ if ($action eq "addfarm" || $action eq "Save" || $action eq "Save & continue"){
 }
 
 if ($action eq "deletefarm"){
-	$stat = &runFarmStop($farmname,"true");
+	my $stat = &runFarmStop($farmname,"true");
 	if ($stat == 0){
 		&successmsg("The Farm $farmname is now disabled");
 	}
@@ -63,31 +63,16 @@ if ($action eq "deletefarm"){
 }
 
 if ($action eq "startfarm"){
-	$stat = &_runFarmStart($farmname,"true");
+	my $stat = &runFarmStart($farmname,"true");
 	if ($stat == 0){
 		&successmsg("The Farm $farmname is now running");
-		$stat = &getFarmGuardianStatus($farmname);
-		if ($stat != 0){
-			$stat = &runFarmGuardianStart($farmname,"");
-			if ($stat == 0){
-				&successmsg("The FarmGuardian of $farmname is now running");
-			}
-		}
 	} else {
 		&errormsg("The Farm $farmname isn't running, check if the IP address is up and the PORT is in use");
 	}
 }
 
 if ($action eq "stopfarm"){
-	$stat = &getFarmGuardianStatus($farmname);
-	if ($stat != -1){
-		$stat = &runFarmGuardianStop($farmname,"");
-		if ($stat == 0){
-			&successmsg("The FarmGuardian of $farmname is now stopped");
-		}
-	}
-
-	$stat = &_runFarmStop($farmname,"true");
+	my $stat = &runFarmStop($farmname,"true");
 	if ($stat == 0){
 		&successmsg("The Farm $farmname is now disabled");
 	} else {

@@ -2592,7 +2592,7 @@ sub runFarmGuardianStop($fname,$svice){
 	my $fgpid = &getFarmGuardianPid($fname,$svice);
 
 
-	if ($ftype =~ /http/ && $svice eq ""){
+	if ($type =~ /http/ && $svice eq ""){
 		# Iterate over every farm service
 		my $services = &getFarmVS($fname,"","");
 		my @servs = split(" ",$services);

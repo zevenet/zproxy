@@ -212,7 +212,7 @@ if ($action eq "editfarm-httpscert"){
 
 if ($action eq "editfarm-restart"){
 	&runFarmStop($farmname,"true");
-	my $status = &_runFarmStart($farmname,"true");
+	my $status = &runFarmStart($farmname,"true");
 	if ($status == 0){
 		&successmsg("The $farmname farm has been restarted");
 		&setFarmHttpBackendStatus($farmname);
@@ -220,13 +220,6 @@ if ($action eq "editfarm-restart"){
 		&errormsg("The $farmname farm hasn't been restarted");
 	}
 
-        my $stat = &getFarmGuardianStatus($farmname);
-        if ($stat != -1){
-                $stat = &runFarmGuardianStart($farmname,"");
-                if ($stat == 0){
-                        &successmsg("The FarmGuardian of $farmname is now running");
-                }
-        }
 }
 
 if ($action eq "editfarm-Err414"){
@@ -528,7 +521,7 @@ print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button sm
 print "<br>";
 
 #Backend connection timeout.
-print "<b>Backend connection timeout.<br>";
+print "<b>Backend connection timeout secs.<br>";
 $connto = &getFarmConnTO($farmname);
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-ConnTO-http\">";
@@ -538,7 +531,7 @@ print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 print "<br>";
 
-print "<b>Backend response timeout.<br>";
+print "<b>Backend response timeout secs.<br>";
 $timeout = &getFarmTimeout($farmname);
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-Timeout-http\">";

@@ -127,6 +127,12 @@ if (-e $fileconfig)
 			}
 		}
 		elsif ($type eq "http" || $type eq "https"){
+			my @run = `$poundctl -c $portadmin`;
+			$errorcode = $?;
+			if ($errorcode != 0){
+				print "Farm $farmname is down, abort.\n";
+				exit 1;
+			}
 			#$farmfile = "$configdir/$farmname\_pound.cfg";
 			my $backendsvs = &getFarmVS($farmname,$service,"backends");
 			#print "--> BACKENDS: \n$backendsvs";

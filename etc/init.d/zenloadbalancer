@@ -476,9 +476,9 @@ if ($eject eq "startlocal")
 			}
 			#farmguardian configured and up?
 			$fgstatus = &getFarmGuardianStatus($farmname);
-			if (($status == 0) && ($fgstatus == 1)){
+			if (($status == 0) && ($fgstatus == 0)){
 				print "	 * Starting Farm Guardian for $farmname:";
-				$stat = &runFarmGuardianStart($farmname);
+				$stat = &runFarmGuardianStart($farmname,"");
 				if ($stat == 0){
 					print " \033[1;32m OK \033[0m \n";
 				} else {
@@ -512,7 +512,7 @@ if ($eject eq "stoplocal"){
 			$fgstatus = &getFarmGuardianStatus($farmname);
 			if ($fgstatus == 1){
 				print "	 * Stopping Farm Guardian for $farmname:";
-				$stat = &runFarmGuardianStop($farmname);
+				$stat = &runFarmGuardianStop($farmname,"");
 				if ($stat == 0){
 					print " \033[1;32m OK \033[0m \n";
 				} else {
