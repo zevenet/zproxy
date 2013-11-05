@@ -517,7 +517,7 @@ sub getDevData($dev){
 	open FI, "</proc/net/dev";
 	my $exit = "false";
 	my @dataout;
-	while ($line=<FI> || $exit eq "false"){
+	while ($line=<FI> && $exit eq "false"){
 		if ($dev ne ""){
 			my @curline = split(":",$line);
 			my $ini = @curline[0];
