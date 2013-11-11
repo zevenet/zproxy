@@ -2410,6 +2410,29 @@ sub getFarmPid($fname){
 	return $output;
 }
 
+# Returns farm Child PID
+sub getFarmChildPid($fname){
+	($fname)= @_;
+	use File::Grep qw( fgrep fmap fdo );
+
+	my $type = &getFarmType($fname);
+	my $fpid = &getFarmPid($fname);
+	my $output = -1;
+
+	if ($type eq "http" || $type eq "https"){
+		my $pids=`pidof -o $fpid pound`;
+		print "pids: $pids<br/>";
+		my @pids=split(" ",$pids);
+		print "pids: @pids<br/>";
+		foreach $pid(@pids){
+			print "usa: $pid<br/>";
+			if ( fgrep { /^PPid:.*${fpid}$/ } "/proc/$pid/status" ) { $output = $pid; last;}
+		}
+	}
+
+	return $output;
+
+}
 
 # Returns farm vip
 sub getFarmVip($info,$fname){

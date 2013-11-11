@@ -24,9 +24,7 @@ if ($viewtableclients eq ""){ $viewtableclients = "no";}
 # Real Server Table
 my @netstat = &getNetstat("atnp");
 $fvip = &getFarmVip("vip",$farmname);
-$fpid = &getFarmPid($farmname);
-# Pound second process
-$fpid = $fpid+1;
+$fpid = &getFarmChildPid($farmname);
 
 my @content = &getFarmBackendStatusCtl($farmname);
 my @backends = &getFarmBackendsStatus($farmname,@content);
