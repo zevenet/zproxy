@@ -150,7 +150,12 @@ sub genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state){
 #		return $rule;
 #	}
 
-	$rule = "$iptables -t mangle -A PREROUTING -m recent --name \"\_$fname\_$mark\_sessions\" --rcheck --seconds $ttl -d $vip -p $proto -m multiport --dports $vport -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
+	my $layer="";
+	if ($proto ne "all"){
+		$layer="-p $proto -m multiport --dports $vport";
+	}
+
+	$rule = "$iptables -t mangle -A PREROUTING -m recent --name \"\_$fname\_$mark\_sessions\" --rcheck --seconds $ttl -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
 
 	return $rule;
 }

@@ -149,10 +149,13 @@ if ($action eq "editfarm-saveserver"){
 	}
 	if ($weight_server =~ /^$/){
 		$weight_server = 1;
-	} 
+	}
 	elsif ($weight_server eq "0"){
 		&errormsg("Invalid real server weight value, please insert a value greater than 0");
-		$error = 1;		
+		$error = 1;
+	}
+	if ($priority_server =~ /^$/){
+		$priority_server = 1;
 	}
         if ($error == 0){
 		$status = &setFarmServer($id_server,$rip_server,$port_server,$max_server,$weight_server,$priority_server,$timeout_server,$farmname);
