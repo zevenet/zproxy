@@ -261,6 +261,7 @@ if (-e $filecluster)
 			my @stderrcheckcommand = split(" ",$stderrcheckcommand);
 			@stderrcheckcommand[1] =~ s/^\s+//;
 			@stderrcheckcommand[1] =~ s/\s+$//;
+			@stderrcheckcommand[1] =~ s/^#//;
 			if (@stderrcheckcommand[1] !~ /^$/)
 				{
 				&errormsg("Login on $rhost ($rip) ok, but can not execute commands");
@@ -586,7 +587,7 @@ $zeninorun2 = "false";
 $activeino = "false";
 $activeino1 = "false";
 $activeino2 = "false";
-if (@zeninopidl)
+if (@zeninopidl &&  @zeninopidl[0] !~ /^$/)
         {
         print "<b>$lhost</b>\n";
         $zeninorun = "true";
@@ -595,7 +596,7 @@ if (@zeninopidl)
         }
 
 my @zeninopidr = `ssh -o \"ConnectTimeout=10\" -o \"StrictHostKeyChecking=no\" root\@$rip "pidof -x zeninotify.pl" `;
-if (@zeninopidr)
+if (@zeninopidr && @zeninopidr[0] !~ /^$/)
         {
         print "<b>$rhost</b>\n";
         $zeninorun = "true";
@@ -607,12 +608,13 @@ if ($activeino2 ne "false" && $activeino1 ne "false")
 	{
 	#print "<b>$rhost and $lhost</b>\n";
 	$zeninorun = "false";
+	$error = "true";
 	}
 
-if (@zeninopidr && @zeninopidl)
-        {
-        $error = "true";
-        }
+#if (@zeninopidr && @zeninopidl)
+#        {
+#        $error = "true";
+#        }
 if (($zeninorun eq "false" && $zeninorun2 eq "false") || ($zeninorun ne "false" && $zeninorun2 ne "false") )
         {
         print " <img src=\"/img/icons/small/exclamation.png\">";
