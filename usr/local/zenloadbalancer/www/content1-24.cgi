@@ -134,9 +134,14 @@ if ($action eq "editfarm-httpscipherscustom"){
 #change Farm's name
 
 if ($action eq "editfarm-Name"){
-	#Check the farm's name change
+	#Check if farmname has correct characters (letters, numbers and hyphens)
+        my $farmnameok = &checkFarmnameOK($newfarmname);
+        #Check the farm's name change
 	if ("$newfarmname" eq "$farmname"){
-		&errormsg("The new farm's name \"$newfarmname\" is the same as the old farm's name \"$farmname\": nothing to do");
+		&errormsg("The new farm's name \"$newfarmname\" is the same as the old farm's name \"$farmname\". Nothing to do");
+	}
+        elsif ($farmnameok ne 0){
+                &errormsg("Farm name is not valid, only allowed numbers, letters and hyphens");
 	}
 	else{
 		#Check if the new farm's name alredy exists

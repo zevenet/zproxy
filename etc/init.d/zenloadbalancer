@@ -136,6 +136,14 @@ if (-e $filecluster){
 		@rifclname = split(":",$ifclname);
 		@cliface = ("IPCLUSTER",$vipcl,$rifclname[0],$rifclname[1]);
 		$cltype = "TYPECLUSTER:$typecl:$clstatus";
+		
+		#get cluster's ID
+		$idcluster = &getClusterID($filecluster);
+		print "Cluster ID: $idcluster";
+
+		#get cluster DEADRATIO
+		$deadratio = &getClusterDEADRATIO($filecluster);
+		print "Cluster DEADRATIO: $deadratio";
 
 		print "HOST: $host CL_LIP: $lip CL_RIP: $rip CL_IF: @cliface[2] CL_IP: @cliface[1]\n";
 		#if real interface not configured, configured it
@@ -162,13 +170,13 @@ if (-e $filecluster){
 		#equal
 		if ($cltype =~ /equal/) {
 			print "CL_TYPE=equal\n";
-			my @eject = system("$ucarp $ignoreifstate --interface=@cliface[2] --srcip=$lip --vhid=1 --pass=secret --addr=@cliface[1] --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6");
+			my @eject = system("$ucarp $ignoreifstate -r $deadratio --interface=@cliface[2] --srcip=$lip --vhid=$idcluster --pass=secret --addr=@cliface[1] --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6");
 		}
 		#master-backup-with failback
 		if ($cltype =~ /-/) {
 			print "CL_TYPE=M-B\n";
-			my @eject = system("$ucarp $ignoreifstate --interface=@cliface[2] --srcip=$lip -P --vhid=1 --pass=secret --addr=@cliface[1] --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6");
-			#print "$ucarp --interface=@cliface[2] --srcip=$lip -P --vhid=1 --pass=secret --addr=@cliface[1] --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B\n";
+			my @eject = system("$ucarp $ignoreifstate -r $deadratio --interface=@cliface[2] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=@cliface[1] --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6");
+			#print "$ucarp -r $deadratio --interface=@cliface[2] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=@cliface[1] --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B\n";
 		}
 		chomp($lip);
 
@@ -476,7 +484,7 @@ if ($eject eq "startlocal")
 			}
 			#farmguardian configured and up?
 			$fgstatus = &getFarmGuardianStatus($farmname);
-			if (($status == 0) && ($fgstatus == 0)){
+			if (($status == 0) && ($fgstatus == 1)){
 				print "	 * Starting Farm Guardian for $farmname:";
 				$stat = &runFarmGuardianStart($farmname,"");
 				if ($stat == 0){
@@ -509,8 +517,8 @@ if ($eject eq "stoplocal"){
 		$status = &getFarmStatus($farmname);
 		if ($status eq "up"){
 			#farmguardian configured and up?
-			$fgstatus = &getFarmGuardianStatus($farmname);
-			if ($fgstatus == 1){
+			$fgstatus = &getFarmGuardianPid($farmname);
+			if ($fgstatus != -1){
 				print "	 * Stopping Farm Guardian for $farmname:";
 				$stat = &runFarmGuardianStop($farmname,"");
 				if ($stat == 0){
@@ -533,13 +541,13 @@ if ($eject eq "stoplocal"){
 	opendir(DIR, $configdir);
 	@files = grep (/^if\_.*\_conf$/,readdir(DIR));
 	closedir(DIR);
-	print "*Stopping Interfaces:\n";
+	print "* Stopping Interfaces:\n";
         foreach $file(@files)
         {
 		if ($file =~ /:/)
 		{	
                 my @file_s = split("\_",$file);
-                print "         *Down interface @file_s[1]\n";
+                print "         * Down interface @file_s[1]\n";
                 open FR,"$configdir/$file";
                 while ($line=<FR>)
                         {
@@ -567,7 +575,7 @@ if ($eject eq "stoplocal"){
                 if ($file !~ /:/)
                 {
                 my @file_s = split("\_",$file);
-                print "         *Down interface @file_s[1]\n";
+                print "         * Down interface @file_s[1]\n";
                 open FR,"$configdir/$file";
                 while ($line=<FR>)
                         {
