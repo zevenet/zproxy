@@ -2425,7 +2425,7 @@ sub getFarmChildPid($fname){
 		my @pids=split(" ",$pids);
 		print "pids: @pids<br/>";
 		foreach $pid(@pids){
-			print "usa: $pid<br/>";
+#			print "usa: $pid<br/>";
 			if ( fgrep { /^PPid:.*${fpid}$/ } "/proc/$pid/status" ) { $output = $pid; last;}
 		}
 	}
@@ -2628,6 +2628,10 @@ sub runFarmGuardianStop($fname,$svice){
 			$sv = "${svice}_";
 		}
 		if ($fgpid != -1){
+			&logfile ("running 'kill 9, $fgpid' stopping FarmGuardian $fname $svice");
+			$run = kill 9, $fgpid;
+			$status = $?;
+			unlink glob("/var/run/$fname\_${sv}guardian.pid");
 			if ($type eq "http" || $type eq "https"){
 				if (-e "$configdir\/$fname\_status.cfg"){
 					my $portadmin = &getFarmPort($fname);
@@ -2644,10 +2648,24 @@ sub runFarmGuardianStop($fname,$svice){
 					untie @filelines;
 				}
 			}
-			&logfile ("running 'kill 9, $fgpid' stopping FarmGuardian $fname $svice");
-			$run = kill 9, $fgpid;
-			$status = $?;
-			unlink glob("/var/run/$fname\_${sv}guardian.pid");
+			if ($type eq "l4xnat"){
+				my @be = &getFarmBackendStatusCtl($fname);
+				$i=-1;
+				foreach my $line(@be){
+					my @subbe = split(";",$line);
+					$i++;
+					my $backendid=$i;
+					my $backendserv=@subbe[2];
+					my $backendport=@subbe[3];
+					my $backendstatus=@subbe[7];
+					if ($backendstatus eq "fgDOWN"){
+						&_runFarmStop($fname,"false");
+						&setFarmBackendStatus($fname,$i,"up");
+						&_runFarmStart($fname,"false");
+					}
+				}
+			}
+
 		}
 	}
 
