@@ -143,7 +143,9 @@ print "<div class=\"box table\">";
 #print "<form method=\"get\" action=\"index.cgi\">";
 #}
 
-my @netstat = &getNetstat("atunp");
+my @netstat = &getNetstatNat("atunp");
+push (@netstat, &getNetstat("atunp"));
+
 my $thereisdl = "false";
 
 print "<table cellspacing=\"0\">";

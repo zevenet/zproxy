@@ -1340,9 +1340,25 @@ sub getFarmEstConns($fname,@netstat){
 	}
 
 	if ($type eq "http" || $type eq "https"){
-		$pid=$pid+1;
+		$pid=&getFarmChildPid($fname);
 		@nets = &getNetstatFilter("tcp","ESTABLISHED",$ninfo,$pid,@netstat);
 	}
+
+        if ($type eq "l4xnat"){
+                my $proto = &getFarmProto($fname);
+                $fvip = &getFarmVip("vip",$fname);
+
+                my @content = &getFarmBackendStatusCtl($fname);
+                my @backends = &getFarmBackendsStatus($fname,@content);
+                foreach (@backends){
+                        my @backends_data = split(";",$_);
+                        if ($backends_data[3] eq "up"){
+                                my $ip_backend = $backends_data[0];
+                                my $port_backend = $backends_data[1];
+                                push(@nets, &getNetstatFilter("$proto","","\.* ESTABLISHED src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat));
+                        }
+                }
+        }
 
 	return @nets;
 }
@@ -1364,6 +1380,22 @@ sub getFarmTWConns($fname,@netstat){
 	if ($type eq "udp"){
 		@nets = &getNetstatFilter("udp","\.\*\_WAIT\.\*",$ninfo,"",@netstat);
 	}
+
+        if ($type eq "l4xnat"){
+                my $proto = &getFarmProto($fname);
+                $fvip = &getFarmVip("vip",$fname);
+
+                my @content = &getFarmBackendStatusCtl($fname);
+                my @backends = &getFarmBackendsStatus($fname,@content);
+                foreach (@backends){
+                        my @backends_data = split(";",$_);
+                        if ($backends_data[3] eq "up"){
+                                my $ip_backend = $backends_data[0];
+                                my $port_backend = $backends_data[1];
+                                push(@nets, &getNetstatFilter("$proto","","\.*\_WAIT src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat));
+                        }
+                }
+        }
 
 	return @nets;
 }
@@ -1389,6 +1421,22 @@ sub getFarmSYNConns($fname,@netstat){
 	if ($type eq "http" || $type eq "https"){
 		@nets = &getNetstatFilter("tcp","\.\*SYN\.\*",$ninfo,"",@netstat);
 	}
+
+        if ($type eq "l4xnat"){
+                my $proto = &getFarmProto($fname);
+                $fvip = &getFarmVip("vip",$fname);
+
+                my @content = &getFarmBackendStatusCtl($fname);
+                my @backends = &getFarmBackendsStatus($fname,@content);
+                foreach (@backends){
+                        my @backends_data = split(";",$_);
+                        if ($backends_data[3] eq "up"){
+                                my $ip_backend = $backends_data[0];
+                                my $port_backend = $backends_data[1];
+                                push(@nets, &getNetstatFilter("$proto","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat));
+                        }
+                }
+        }
 
 	return @nets;
 }
@@ -3746,6 +3794,9 @@ sub setNewFarmName($fname,$newfname){
 	}
 
 	if ($type eq "datalink" || $type eq "l4xnat"){
+                if ($type eq "l4xnat"){
+                        &runFarmStop($fname,"false");
+                }
 		my $newffile = "$newfname\_$type.cfg";
 		use Tie::File;
 		tie @filelines, 'Tie::File', "$configdir\/$ffile";
@@ -3761,6 +3812,7 @@ sub setNewFarmName($fname,$newfname){
 	if ($type eq "l4xnat"){
 		# Rename fw marks for this farm
 		&renameMarks($fname,$newfname);
+		&runFarmStart($newfname,"false");
 	}
 
 	return $output;
