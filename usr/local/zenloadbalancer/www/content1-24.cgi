@@ -57,6 +57,7 @@ if ($action eq "editfarm-httpsbackends"){
 if ($action eq "editfarm-redirect"){
 	if ($string =~ /^http\:\/\//i || $string =~ /^https:\/\//i || $string =~ /^$/){
 		&setFarmVS($farmname,$service,"redirect",$string);
+		&setFarmRestart($farmname);
 	}else{
 		&errormsg("Redirect doesn't begin with http or https");
 	}

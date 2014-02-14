@@ -4448,11 +4448,11 @@ foreach $line(@fileconf){
        }
        #client redirect
        if ($tag eq "redirect"){
-               if ($line =~ "Redirect" && $sw == 1 && $stri ne ""){
+               if ($line =~ "Redirect\ \"" && $sw == 1 && $stri ne ""){
                        $line = "\t\tRedirect \"$stri\"";
                        last;
                }
-               if ($line =~ "Redirect" && $sw == 1 && $stri eq ""){
+               if ($line =~ "Redirect\ \"" && $sw == 1 && $stri eq ""){
                        $line = "\t\t#Redirect \"\"";
                        last;
                }
