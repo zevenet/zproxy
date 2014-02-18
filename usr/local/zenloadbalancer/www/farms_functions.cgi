@@ -2469,11 +2469,8 @@ sub getFarmChildPid($fname){
 
 	if ($type eq "http" || $type eq "https"){
 		my $pids=`pidof -o $fpid pound`;
-		print "pids: $pids<br/>";
 		my @pids=split(" ",$pids);
-		print "pids: @pids<br/>";
 		foreach $pid(@pids){
-#			print "usa: $pid<br/>";
 			if ( fgrep { /^PPid:.*${fpid}$/ } "/proc/$pid/status" ) { $output = $pid; last;}
 		}
 	}
