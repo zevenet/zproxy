@@ -523,14 +523,12 @@ print "<div class=\"notification error\"> <span class=\"strong\">ERROR!</span> $
 sub logfile($string)
 {
 ($string) = @_;
-$date = localtime;
+my $date = `date`;
+$date =~ s/\n//g;
 open FO, ">> $logfile";
-#print "$configdir/$logfile";
-#print FO "$date - $host - $string\n";
 print FO "$date - $ENV{'SERVER_NAME'} - $ENV{'REMOTE_ADDR'} - $ENV{'REMOTE_USER'} - $string\n";
 close FO;
 }
-
 
 #get ip GUI
 sub GUIip()
