@@ -3091,6 +3091,7 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$servic
 			}
 		} else {
 			#add new server
+			$nsflag="true";
 			my $index=-1;
 			my $backend=0;
 			foreach $line(@contents){
@@ -3133,13 +3134,14 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$servic
 				}
 			# if backend added then go out of form
 			}
-			$nsflag="true";
+			if ($nsflag eq "true"){
+				$idservice = &getFarmVSI($fname,$svice);
+				if ($idservice ne ""){
+					&getFarmHttpBackendStatus($fname,$backend,"active",$idservice);
+				}
+			}
 		}
 		untie @contents;
-		if ($nsflag eq "true"){
-			$idservice = &getFarmVSI($fname,$svice);
-			&getFarmHttpBackendStatus($fname,$backend,"active",$idservice);
-		}
 	}
 
 	return $output;

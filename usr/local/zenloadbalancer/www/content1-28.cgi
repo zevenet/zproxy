@@ -92,7 +92,6 @@ if ($action eq "editfarm-changevipvipp"){
         if ($error == 0){
                 $status = &setFarmVirtualConf($vip,$vipp,$farmname);
                 if ($status != -1){
-#                	&setFarmRestart($farmname);
 			&runFarmStop($farmname,"false");
 			&runFarmStart($farmname,"false");
                         &successmsg("Virtual IP and Virtual Port has been modified, the $farmname farm need be restarted");
@@ -118,7 +117,6 @@ if ($action eq "editfarm-restart"){
 if ($action eq "editfarm-deleteserver"){
 	$status = &runFarmServerDelete($id_server,$farmname);
 	if ($status != -1){
-#		&setFarmRestart($farmname);
 		&runFarmStop($farmname,"false");
 		&runFarmStart($farmname,"false");
 		&successmsg("The real server with ID $id_server of the $farmname farm has been deleted");
@@ -160,7 +158,6 @@ if ($action eq "editfarm-saveserver"){
         if ($error == 0){
 		$status = &setFarmServer($id_server,$rip_server,$port_server,$max_server,$weight_server,$priority_server,$timeout_server,$farmname);
 		if ($status != -1){
-#			&setFarmRestart($farmname);
 			&runFarmStop($farmname,"false");
 			&runFarmStart($farmname,"false");
 			&successmsg("The real server with ID $id_server and IP $rip_server of the $farmname farm has been modified");
@@ -174,7 +171,6 @@ if ($action eq "editfarm-saveserver"){
 if ($action eq "editfarm-typesession"){
 	$status = &setFarmSessionType($session,$farmname);
 	if ($status == 0){
-#		&setFarmRestart($farmname);
 		&runFarmStop($farmname,"false");
 		&runFarmStart($farmname,"false");
 		&successmsg("The session type for $farmname farm has been modified");
@@ -237,7 +233,8 @@ if ($action eq "editfarm-TTL"){
 	if ($error == 0){
 		$status = &setFarmMaxClientTime(0,$param,$farmname);
 		if ($status == 0){
-			&setFarmRestart($farmname);
+			&runFarmStop($farmname,"false");
+			&runFarmStart($farmname,"false");
 			&successmsg("The sessions TTL for $farmname farm has been modified");
 		} else {
 			&errormsg("It's not possible to change the $farmname farm sessions TTL");
