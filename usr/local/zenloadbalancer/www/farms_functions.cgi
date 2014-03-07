@@ -2895,6 +2895,7 @@ sub runFarmGuardianCreate($fname,$ttcheck,$script,$usefg,$fglog,$svice){
 #
 sub getFarmGuardianConf($fname,$svice){
 	($fname,$svice)= @_;
+	my $lastline;
 
 	my $fgfile = &getFarmGuardianFile($fname,$svice);
 
@@ -4609,6 +4610,45 @@ $output = $index;
 return $output;
 
 }
+
+#function that removes all the active sessions enabled to a backend in a given service
+#needed: farmname, serviceid, backendid
+sub setFarmBackendsSessionsRemove($fname,$svice,$backendid)
+{
+($fname,$svice,$backendid) = @_;
+my @content = &getFarmBackendStatusCtl($fname);
+my @sessions = &getFarmBackendsClientsList($fname,@content);
+my @service;
+my $sw=0;
+my $sviceid;
+my @sessionid;
+my $sessid;
+
+&logfile("Deleting established sessions to a backend $backendid from farm $fname in service $svice");
+foreach(@content){
+               if ($_ =~ /Service/ && $sw eq 1){
+                $sw = 0;
+        }
+
+       if ($_ =~ /Service\ \"$svice\"/ && $sw eq 0){
+               $sw = 1;
+               @service = split(/\./,$_);
+               $sviceid = @service[0];
+       }
+       if ($_ =~ /Session.*->\ $backendid/ && $sw eq 1){
+               @sessionid = split(/Session/,$_);
+               $sessionid2 = @sessionid[1];
+               @sessionid = split(/\ /,$sessionid2);
+               $sessid = @sessionid[1];        
+               @output = `$poundctl -c  /tmp/$fname\_pound.socket -n 0 $sviceid $sessid`;
+               &logfile("Executing:  $poundctl -c /tmp/$fname\_pound.socket -n 0 $sviceid $sessid");
+       
+       }
+}
+
+
+}
+
 
 sub setFarmName($farmname){
 

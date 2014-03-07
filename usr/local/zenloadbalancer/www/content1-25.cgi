@@ -94,7 +94,7 @@ foreach (@backends){
 	@stabnetstatback = &getNetstatFilter("tcp","ESTABLISHED","$ip_backend\:$port_backend",$fpid,@netstat);
 	$nestab = @stabnetstatback;
 	print "<td>$nestab</td>";
-	@timewnetstatback = &getNetstatFilter("tcp","\.\*\_WAIT\.\*","$ip_backend\:$port_backend",$fpid,@netstat);
+	@timewnetstatback = &getNetstatFilter("tcp","\.\*\_WAIT\.\*","$ip_backend\:$port_backend","",@netstat);
 	$ntimew = @timewnetstatback;
 	print "<td>$ntimew</td>";
 	#TODO count number of session by backend

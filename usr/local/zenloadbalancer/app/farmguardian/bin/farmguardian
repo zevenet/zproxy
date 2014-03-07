@@ -274,6 +274,7 @@ if (-e $fileconfig)
 					my $idsv = &getFarmVSI($farmname,$service);
 					my $run = `$poundctl -c $portadmin -b 0 $idsv $j`;
 					&getFarmHttpBackendStatus($farmname,$j,"fgDOWN",$idsv);
+					&setFarmBackendsSessionsRemove($farmname,$service,$j);
 				}
 				if ($type eq "l4xnat"){
 					&_runFarmStop($farmname,"false");
