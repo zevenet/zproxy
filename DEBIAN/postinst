@@ -1,5 +1,15 @@
 #!/bin/sh
 
+MSCRIPT="/usr/local/zenloadbalancer/app/zbin/zlbmigration302to303.pl"
+GLOBALCF="/usr/local/zenloadbalncer/config/global.conf"
+GLOBALCFT="/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tpl"
+if [ -f $MSCRIPT ]; then
+	oldver=`cat $GLOBALCF | grep "\$version=" | awk -F'"' '{printf $2}'`
+	newver=`cat $GLOBALCFT | grep "\$version=" | awk -F'"' '{printf $2}'`
+	if [ "$oldver" == "3.02" ]; then
+		$MSCRIPT
+	fi
+fi
 #upgrading global.conf
 /usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi
 
@@ -9,4 +19,7 @@ echo "Restarting Zen Load Balancer web GUI..."
 echo "Now you need restart zenloadbalancer service with"
 echo "/etc/init.d/zenloadbalancer stop"
 echo "/etc/init.d/zenloadbalancer start"
+echo "ZLB will be unavailable meanwile restarting service."
+echo "Restart it out of working hours or out of production"
+echo "environment can be a good option."
 echo "Last version of Zen Load Balancer update completed..."
