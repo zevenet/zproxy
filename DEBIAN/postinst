@@ -1,7 +1,7 @@
 #!/bin/sh
 
 MSCRIPT="/usr/local/zenloadbalancer/app/zbin/zlbmigration302to303.pl"
-GLOBALCF="/usr/local/zenloadbalncer/config/global.conf"
+GLOBALCF="/usr/local/zenloadbalancer/config/global.conf"
 GLOBALCFT="/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tpl"
 if [ -f $MSCRIPT ]; then
 	oldver=`cat $GLOBALCF | grep "\$version=" | awk -F'"' '{printf $2}'`
@@ -16,10 +16,17 @@ fi
 echo "Restarting Zen Load Balancer web GUI..."
 /etc/init.d/minihttpd stop
 /etc/init.d/minihttpd start
-echo "Now you need restart zenloadbalancer service with"
-echo "/etc/init.d/zenloadbalancer stop"
-echo "/etc/init.d/zenloadbalancer start"
 echo "ZLB will be unavailable meanwile restarting service."
-echo "Restart it out of working hours or out of production"
-echo "environment can be a good option."
+echo "Now you need to restart zenloadbalancer service, so "
+echo "meanwhile ZLB will be unavailable."
+echo "Do you want to proceed? y/n"
+read response
+if [ "$response" == "y" -o "$response" == "Y" ]; then
+	/etc/init.d/zenloadbalancer stop
+	/etc/init.d/zenloadbalancer start
+else
+	echo "Changes will not be available till next service restart."
+	echo "(/etc/init.d/zenloadbalancer stop)"
+	echo "(/etc/init.d/zenloadbalancer start)"
+fi
 echo "Last version of Zen Load Balancer update completed..."
