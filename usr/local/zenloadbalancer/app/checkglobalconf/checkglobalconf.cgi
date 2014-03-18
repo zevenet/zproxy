@@ -31,7 +31,6 @@
 #vble on globa.conf persist.
 #*if end of line on vble global.conf.tpl is #update, vble is updated
 #on global.conf
-#emilio campos martin <emilio.campos.martin@gmail.com>
 
 use File::Copy;
 
