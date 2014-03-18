@@ -1,12 +1,28 @@
 /*
-	960 Grid System ~ Core CSS.
-	Learn more ~ http://960.gs/
+###############################################################################
+#
+#     Zen Load Balancer Software License
+#     This file is part of the Zen Load Balancer software package.
+#
+#     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
+#
+#     This library is free software; you can redistribute it and/or modify it
+#     under the terms of the GNU Lesser General Public License as published
+#     by the Free Software Foundation; either version 2.1 of the License, or 
+#     (at your option) any later version.
+#
+#     This library is distributed in the hope that it will be useful, but 
+#     WITHOUT ANY WARRANTY; without even the implied warranty of 
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+#     General Public License for more details.
+#
+#     You should have received a copy of the GNU Lesser General Public License
+#     along with this library; if not, write to the Free Software Foundation,
+#     Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+#
+###############################################################################	
 
-	Licensed under GPL and MIT.
 */
-
-/* =Containers
---------------------------------------------------------------------------------*/
 
 .container_12,
 .container_16
@@ -14,8 +30,6 @@
 	width: 100%;
 }
 
-/* =Grid >> Global
---------------------------------------------------------------------------------*/
 
 .grid_1,
 .grid_2,
@@ -64,8 +78,6 @@
 	width: 100%;
 }
 
-/* =Grid >> Children (Alpha ~ First, Omega ~ Last)
---------------------------------------------------------------------------------*/
 
 .alpha
 {
@@ -77,8 +89,7 @@
 	margin-right: 0;
 }
 
-/* =Grid >> 12 Columns
---------------------------------------------------------------------------------*/
+
 
 .container_12 .grid_1
 {
@@ -120,8 +131,6 @@
 	width: 89.666%;
 }
 
-/* =Grid >> 16 Columns
---------------------------------------------------------------------------------*/
 
 .container_16 .grid_1
 {
@@ -183,8 +192,7 @@
 	width: 91.75%;
 }
 
-/* =Prefix Extra Space >> Global
---------------------------------------------------------------------------------*/
+
 
 .container_12 .prefix_3,
 .container_16 .prefix_4
@@ -204,8 +212,6 @@
 	padding-left: 75%;
 }
 
-/* =Prefix Extra Space >> 12 Columns
---------------------------------------------------------------------------------*/
 
 .container_12 .prefix_1
 {
@@ -247,8 +253,7 @@
 	padding-left: 91.666%;
 }
 
-/* =Prefix Extra Space >> 16 Columns
---------------------------------------------------------------------------------*/
+
 
 .container_16 .prefix_1
 {
@@ -310,8 +315,6 @@
 	padding-left: 93.75%;
 }
 
-/* =Suffix Extra Space >> Global
---------------------------------------------------------------------------------*/
 
 .container_12 .suffix_3,
 .container_16 .suffix_4
@@ -331,8 +334,7 @@
 	padding-right: 75%;
 }
 
-/* =Suffix Extra Space >> 12 Columns
---------------------------------------------------------------------------------*/
+
 
 .container_12 .suffix_1
 {
@@ -374,8 +376,7 @@
 	padding-right: 91.666%;
 }
 
-/* =Suffix Extra Space >> 16 Columns
---------------------------------------------------------------------------------*/
+
 
 .container_16 .suffix_1
 {
@@ -437,10 +438,6 @@
 	padding-right: 93.75%;
 }
 
-/* =Clear Floated Elements
---------------------------------------------------------------------------------*/
-
-/* http://sonspring.com/journal/clearing-floats */
 
 html body * span.clear,
 html body * div.clear,
@@ -461,8 +458,6 @@ html body * dd.clear
 	width: 0;
 	height: 0;
 }
-
-/* http://www.positioniseverything.net/easyclearing.html */
 
 .clearfix:after
 {
