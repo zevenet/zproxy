@@ -25,7 +25,7 @@
 #FOOTER
 print "
 <!-- Start Footer -->
-<div class=\"footer\">Zen Load Balancer is created under GNU/GPL License Copyright (C) zenloadbalancer-support\@lists.sourceforge.net. </div>
+<div class=\"footer\">Zen Load Balancer is created under GNU/LGPL License Copyright (C) 2014 SOFINTEL IT ENGINEERING SL </div>
 <!-- End Footer -->
 <!-- Close div class=\"container\"
 </div> -->

@@ -55,7 +55,7 @@ print "
 	close FR;
 	print "</textarea>";
 	print "<br>";
-	print "<b>*If you use this program, you accept the GNU/GPL license</b>";
+	print "<b>*If you use this program, you accept the GNU/LGPL license</b>";
 	print "</form>";
 	print "</div>";
 	print "		</div>";
