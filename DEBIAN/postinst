@@ -3,7 +3,7 @@
 MSCRIPT="/usr/local/zenloadbalancer/app/zbin/zlbmigration302to303.pl"
 GLOBALCF="/usr/local/zenloadbalancer/config/global.conf"
 GLOBALCFT="/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tpl"
-if [ -f $MSCRIPT ]; then
+if [ -f $MSCRIPT -a -f $GLOBALCF ]; then
 	oldver=`cat $GLOBALCF | grep "version=" | awk -F'"' '{printf $2}'`
 	newver=`cat $GLOBALCFT | grep "version=" | awk -F'"' '{printf $2}'`
 	if [ "$oldver" == "3.02" ]; then
