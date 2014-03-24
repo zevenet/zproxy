@@ -1,7 +1,7 @@
 #!/bin/bash
 LOGFILE="/usr/local/zenloadbalancer/logs/zenloadbalancer.log"
-[ ! "$1" == "configure" ] && echo "Installation aborted $1 $2" | tee -a $LOGFILE; exit 1
-[ "$1" == "configure" ] && echo "Completing the ZLB installation" | tee -a $LOGFILE
+[ ! "$1" == "configure" ] && echo "Installation aborted $1 $2" | tee -a $LOGFILE && exit 1
+[ "$1" == "configure" ] && echo "Completing the ZLB installation..." | tee -a $LOGFILE
 MSCRIPT="/usr/local/zenloadbalancer/app/zbin/zlbmigration302to303.pl"
 GLOBALCF="/usr/local/zenloadbalancer/config/global.conf"
 GLOBALCFT="/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tpl"
