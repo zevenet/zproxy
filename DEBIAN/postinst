@@ -12,6 +12,9 @@ if [ -f $MSCRIPT -a -f $GLOBALCF ]; then
 		$MSCRIPT
 	fi
 fi
+if [ -f /usr/local/zenloadbalancer/app/zennetname/write_net_rules ]; then
+	cp -f /usr/local/zenloadbalancer/app/zennetname/write_net_rules /lib/udev/
+fi
 #upgrading global.conf
 /usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi
 
