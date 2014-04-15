@@ -36,6 +36,7 @@
 #[farmname]:::[timeout]:::[timetocheck]:::[script args]:::[logs]
 
 use Proc::Daemon;
+use POSIX(WNOHANG);
 #Proc::Daemon::Init;
 
 
@@ -244,6 +245,10 @@ if (-e $fileconfig)
 			if ($@){
  	   			warn "$command timed out.\n";
 	   			$timedout = 1;
+				do {
+					my $kid = waitpid(-1, WNOHANG);
+					#print "pid $kid exited\n";
+				} while $kid > 0;
 			}
 			if ($ARGV[1] eq "-l"){
 				print "timedout: $timedout \n";
@@ -270,7 +275,7 @@ if (-e $fileconfig)
 
 				@backendstatus[$j] = "active";
 			}
-			elsif (($timedout != 0 || $errorcode != 0) && @backendstatus[$j] ne "fgDOWN"){
+			elsif ((($timedout != 0 || $errorcode != 0) && @backendstatus[$j] ne "fgDOWN") || $type eq "tcp" || $type eq "udp" ){
 				if ($ARGV[1] eq "-l" || $ARGV[3] eq "-l"){
                                 	print "**execution error in ' $command ', output::**\n", @output;
                                 }
