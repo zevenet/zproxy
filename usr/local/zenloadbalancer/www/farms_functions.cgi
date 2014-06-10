@@ -2534,7 +2534,7 @@ sub getFarmVip($info,$fname){
 		}
 	}
 
-	if ($type eq "datalink" || $type eq "l4xnat"){
+	if ($type eq "l4xnat"){
 		open FI, "<$configdir/$file";
 		my $first = "true";
 		while ($line=<FI>){
@@ -2544,6 +2544,21 @@ sub getFarmVip($info,$fname){
 				if ($info eq "vip"){$output = @line_a[2];}
 				if ($info eq "vipp"){$output = @line_a[3];}
 				if ($info eq "vipps"){$output = "@vip[2]\:@vipp[3]";}
+			}
+		}
+		close FI;
+	}
+
+	if ($type eq "datalink"){
+		open FI, "<$configdir/$file";
+		my $first = "true";
+		while ($line=<FI>){
+			if ( $line ne "" && $first eq "true"){
+				$first = "false";
+				my @line_a = split("\;",$line);
+				if ($info eq "vip"){$output = @line_a[1];}
+				if ($info eq "vipp"){$output = @line_a[2];}
+				if ($info eq "vipps"){$output = "@vip[1]\:@vipp[2]";}
 			}
 		}
 		close FI;

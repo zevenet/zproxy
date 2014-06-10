@@ -563,7 +563,7 @@ print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button sm
 print "<br>";
 
 #Timeout for client
-print "<b>Client request timeout.</b>";
+print "<b>Client request timeout secs.</b>";
 $client = &getFarmClientTimeout($farmname);
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-Client\">";
