@@ -275,7 +275,8 @@ if (-e $fileconfig)
 
 				@backendstatus[$j] = "active";
 			}
-			elsif ((($timedout != 0 || $errorcode != 0) && @backendstatus[$j] ne "fgDOWN") || $type eq "tcp" || $type eq "udp" ){
+			#elsif ((($timedout != 0 || $errorcode != 0) && @backendstatus[$j] ne "fgDOWN") || $type eq "tcp" || $type eq "udp" ){
+			elsif (($timedout != 0 || $errorcode != 0) && @backendstatus[$j] ne "fgDOWN" || ($timedout != 0 || $errorcode != 0) && @backendstatus[$j] eq "fgDOWN" && $type eq "tcp"){
 				if ($ARGV[1] eq "-l" || $ARGV[3] eq "-l"){
                                 	print "**execution error in ' $command ', output::**\n", @output;
                                 }
@@ -309,3 +310,4 @@ else
 {
 print "Abort: $fileconfig not exist\n";
 }
+
