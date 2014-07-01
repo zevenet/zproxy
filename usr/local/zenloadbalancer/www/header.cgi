@@ -38,6 +38,15 @@ print "
 
 <head>
 <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />
+
+";
+
+if ($refresh){
+	print "<meta http-equiv=\"refresh\" content=\"$refresh\">";
+}
+
+
+print "
 <link type=\"text/css\" rel=\"stylesheet\" media=\"all\" href=\"css/base.css\" />
 <link type=\"text/css\" rel=\"stylesheet\" media=\"all\" href=\"css/grid.css\" />
                 <script type=\"text/javascript\">
@@ -66,6 +75,7 @@ print "
                 return false;
                 }
                 </script>
+
 
 <title>ZEN Load Balancer GUI v$version on $host</title>
 

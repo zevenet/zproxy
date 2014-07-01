@@ -51,6 +51,8 @@ foreach (@backends){
 	}
 }
 
+&refreshstats();
+print "<br>";
 
 print "<div class=\"box-header\">Real servers status<font size=1>&nbsp;&nbsp;&nbsp; $backendsize servers, $activebackends active </font></div>";
 print "<div class=\"box table\"><table cellspacing=\"0\">\n";

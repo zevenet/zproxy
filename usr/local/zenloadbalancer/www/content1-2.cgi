@@ -164,6 +164,8 @@ print "<tbody>";
 
 foreach $file (@files) {
 	$name = &getFarmName($file);
+##########if farm is not the current farm then it doesn't print. only print for global view.
+	if ($farmname eq $name || !(defined $farmname) || $farmname eq "" || $action eq "deletefarm" || $action =~ /^Save|^Cancel/ ){
 	$type = &getFarmType($name);
 
 	if ($type ne "datalink"){
@@ -234,6 +236,7 @@ foreach $file (@files) {
 	} else {
 		$thereisdl = "true";
 	}
+  }
 }
 print "</tbody>";
 

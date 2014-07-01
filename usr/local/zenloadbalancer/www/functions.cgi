@@ -644,7 +644,42 @@ sub createmenuservice($fname,$sv,$pos){
 
 }
 
+#Refresh stats
+sub refreshstats(){
+print "<form method=\"get\" action=\"index.cgi\">";
+print "<b>Refresh stats every</b><input type=\"hidden\" name=\"id\" value=\"$id\">";
+print "<select name=\"refresh\" onchange=\"this.form.submit()\">";
+print "<option value=\"Disabled\"> - </option>\n";
+if ($refresh eq "10"){
+        print "<option value=\"10\" selected>10</option>\n";
+}else{
+        print "<option value=\"10\">10</option>\n";
+}
+if ($refresh eq "30"){
+        print "<option value=\"30\" selected>30</option>\n";
+}else{
+        print "<option value=\"30\">30</option>\n";
+}
+if ($refresh eq "60"){
+        print "<option value=\"60\" selected>60</option>\n";
+}else{
+        print "<option value=\"60\">60</option>\n";
+}
+if ($refresh eq "120"){
+        print "<option value=\"120\" selected>120</option>\n";
+}else{
+        print "<option value=\"120\">120</option>\n";
+}
 
+        print "</select> <b>secs</b>, <font size=1>It can overload the zen server</font>";
+
+print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
+print "<input type=\"hidden\" name=\"viewtableclients\" value=\"$viewtableclients\">";
+print "<input type=\"hidden\" name=\"viewtableconn\" value=\"$viewtableconn\">";
+print "<input type=\"hidden\" value=\"managefarm\" name=\"action\" class=\"button small\">";
+#print "<input type=\"submit\" value=\"Submit\" name=\"button\" class=\"button small\">";
+print "</form>";
+}
 
 #
 #no remove this 

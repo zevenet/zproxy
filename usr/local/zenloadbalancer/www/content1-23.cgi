@@ -68,8 +68,16 @@ foreach (@backends){
 		}
         }
 }
+
+
+##
+ &refreshstats();
+print "<br>";
 my @back_header = split("\t",@backends[0]);
-print "<div class=\"box-header\">Real servers status <font size=1>&nbsp;&nbsp;&nbsp; $activeservbackends servers, $activebackends current</font></div>\n";
+print "<div class=\"box-header\">Real servers status <font size=1>&nbsp;&nbsp;&nbsp; $activeservbackends servers, $activebackends current</font>";
+#print "<div class=\"box-header\">";
+# &refreshstats();
+print  "</div>\n";
 print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 print "<thead>\n";
 
