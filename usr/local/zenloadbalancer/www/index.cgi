@@ -146,6 +146,7 @@ $httpsbackend = $Variables{'httpsbackend'};
 $rewritelocation = $Variables{'rewritelocation'};
 $deadratio = $Variables{'deadratio'};
 $farmlisten = $Variables{'farmlisten'};
+$refresh = $Variables{'refresh'};
 
 
 #end variables in get string

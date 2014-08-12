@@ -118,6 +118,9 @@ if ($action eq "managefarm"){
 	}
 }
 
+#check if the user is into a farm for editing or for modifying
+
+
 #list all farms configuration and status 
 #first list all configuration files
 @files = &getFarmList();
@@ -133,12 +136,6 @@ if ($size == 0){
 #print "<div class=\"grid_8\">";
 print "<div class=\"box-header\">Farms table</div>";
 print "<div class=\"box table\">";
-
-#para no perder el css de form
-#if ( $action eq "addvip" )
-#{
-#print "<form method=\"get\" action=\"index.cgi\">";
-#}
 
 my @netstat = &getNetstatNat("atunp");
 push (@netstat, &getNetstat("atunp"));
@@ -162,12 +159,13 @@ print "</tr>";
 print "</thead>";
 print "<tbody>";
 
+my $globalfarm = 0;
 foreach $file (@files) {
 	$name = &getFarmName($file);
 ##########if farm is not the current farm then it doesn't print. only print for global view.
 	if ($farmname eq $name || !(defined $farmname) || $farmname eq "" || $action eq "deletefarm" || $action =~ /^Save|^Cancel/ ){
 	$type = &getFarmType($name);
-
+	$globalfarm++;
 	if ($type ne "datalink"){
 
 		if ($farmname eq $name && $action ne "addfarm" && $action ne "Cancel"){
@@ -354,6 +352,15 @@ print "<tr><td colspan=\"9\"></td><td><a href=\"index.cgi?id=$id&action=addfarm\
 
 print "</table>";
 print "</div>";
+
+if ($globalfarm == 1 ){
+	print "<div id=\"page-header\"></div>";
+	print "<form method=\"get\" action=\"index.cgi\">";
+	print "<input type=\"hidden\" value=\"1-2\" name=\"id\">";
+	print "<input type=\"submit\" value=\"Return to all Farms\" name=\"action\" class=\"button small\">";
+	print "</form>";
+	print "<div id=\"page-header\"></div>";
+}
 
 print "<br class=\"cl\" >";
 print "</div>";
