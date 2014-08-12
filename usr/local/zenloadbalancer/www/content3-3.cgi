@@ -19,7 +19,7 @@
 #     along with this library; if not, write to the Free Software Foundation,
 #     Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #
-###############################################################################	
+############################################################################### 
 
 
 use Net::SSH qw(ssh sshopen2);
@@ -217,83 +217,89 @@ if (-e $filecluster)
 		}	
 	#action configure connection
 	if ($action eq "Configure RSA connection between nodes" && $lhost !~ /^\$/ && $lip !~ /^$/ && $rhost !~ /^$/ && $rip !~ /^\$/ && $vipcl !~ /^$/)
-        	{
+        {
 		###########################################
                 #my $user = "root";
                 #my $host = "$rip";
                 chomp($rip);
                 chomp($pass);
+		# 1) create ssh object
 		my $ssh = Net::SSH::Expect->new (
 		host => "$rip",
 		user => 'root',
-		raw_pty => 1);
-
-		$ssh->run_ssh() or die "SSH process couldn't start: $!";
-		my $eject = $ssh->exec("rm -rf /root/.ssh/authorized_keys");
-		$ssh->close();
-		# 1) create ssh object
-        	my $ssh = Net::SSH::Expect->new (
-            	host => "$rip",
-            	password=> "$pass",
-            	user => 'root',
-            	raw_pty => 1);
-        	# 2) logon to the SSH server using those credentials.
-        	# test the login output to make sure we had success
-		$error = "false";
+		password => "$pass",
+		raw_pty => 1,
+		restart_timeout_upon_receive => 1);
 		eval {
-        	my $login_output = $ssh->login();
-		$error = "false";
-		if ($login_output !~ /last login/i)
-                        {
-                        #print "Login has failed. Login output was $login_output";
-                        &errormsg("Login on $rhost ($rip) has failed");
-			$error = "true";
-                        }
-		else
-			{
-			my $checkcommand = "date > null";
-			my $stderrcheckcommand = $ssh->exec($checkcommand);
-			my $checkcommandlength = length($checkcommand);
-			my $stderrcheckcommand = substr $stderrcheckcommand, $checkcommandlength;
-			my @stderrcheckcommand = split(" ",$stderrcheckcommand);
-			@stderrcheckcommand[1] =~ s/^\s+//;
-			@stderrcheckcommand[1] =~ s/\s+$//;
-			@stderrcheckcommand[1] =~ s/^#//;
-			if (@stderrcheckcommand[1] !~ /^$/)
-				{
-				&errormsg("Login on $rhost ($rip) ok, but can not execute commands");
+	        	# 2) logon to the SSH server using those credentials.
+	        	# test the login output to make sure we had success
+			$ssh->run_ssh() or die "SSH process couldn't start: $!";
+			my $sshstat = $ssh->waitfor('password',10);
+			my $sshpasswrong = "false";
+			if ( $sshstat eq 1 ){
+				$ssh->read_all();
+				$ssh->send($pass);
+				$sshstat = $ssh->waitfor('password',10);
+				if ( $sshstat eq 1 ){
+					$ssh->read_all();
+					$sshpasswrong = "true";
+				}
+				else{
+					$ssh->read_all();
+				}
+			}else{
+				$ssh->read_all();
+				#There were an old RSA communication, we have to delete it
+				my $eject = $ssh->exec("rm -rf /root/.ssh/authorized_keys");
+			}
+			$error = "false";
+			if ($sshstat eq 1){
+				if ( $sshpasswrong eq "true" ){
+	                        	&errormsg("Login on $rhost ($rip) has failed, wrong password could be a cause...");
+				}else{
+	                        	&errormsg("Login on $rhost ($rip) has failed, timeout on ssh connection could be a cause...");
+				}
 				$error = "true";
+	                }else{
+				#Check if can exec commands through ssh
+				my $checkcommand = "date > null";
+				$ssh->send($checkcommand);   # using send() instead of exec()
+	        		my $line;
+				my $ind = 0;
+				my @sshoutput;
+	        		while ( defined ($line = $ssh->read_line()) ){
+	            			@sshoutput[$ind]=$line;
+					$ind ++;   
+	        		}
+				#The first line is the command echoed
+				#The second line is stderr output
+				$ssh->read_all(); #There is the prompt in the input stream, we remove it
+				@sshoutput[1] =~ s/^\s+//;
+				@sshoutput[1] =~ s/\s+$//;
+				if (@sshoutput[1] !~ /^$/){
+					&errormsg("Login on $rhost ($rip) ok, but can not execute commands");
+					$error = "true";
 				}
 			}
 		};
 		$err_out = $@;
-        	#my $login_output = $ssh->login() or die "SSH ERROR: $!";
-        	#if ($login_output !~ /Debian/) 
-		#	{
-            	#	#print "Login has failed. Login output was $login_output";
-           	# 	&errormsg("Login on $rhost ($rip) has failed.");
-        	#	}
-		#if ($@ =~ /^$/ && $error eq "false" )
-		if ($err_out =~ /^$/ && $error eq "false" )
-			{
+		if ($err_out =~ /^$/ && $error eq "false" ){
 			&successmsg("Running process for configure RSA comunication");
 	                &logfile("Deleting old RSA key on $lhost ($lip)");
        		        unlink glob("/root/.ssh/id_rsa*");
                 	&logfile("Creating new RSA keys on $lhost ($lip)");
                 	@eject=`$sshkeygen -t rsa -f /root/.ssh/id_rsa -N \"\"`;
                 	open FR, "/root/.ssh/id_rsa.pub";
-                	while (<FR>)
-                        	{
+                	while (<FR>){
                         	$rsa_pass = $_;
-                        	}
+                        }
                 	chomp($rsa_pass);
 			close FR;
 
         		# - now you know you're logged in - #
         		# run command
 			&logfile("Copying new RSA key from $lhost ($lip) to $rhost ($rip)");
-        		my $eject = $ssh->exec("rm /root/.ssh/authorized_keys; mkdir /root/.ssh/; echo $rsa_pass \>\> /root/.ssh/authorized_keys ");
-
+        		my $eject = $ssh->exec("rm /root/.ssh/authorized_keys; mkdir -p /root/.ssh/; echo $rsa_pass \>\> /root/.ssh/authorized_keys");			
 	                my $rhostname = $ssh->exec("hostname");
        		        @rhostname = split("\ ",$rhostname);
                 	$rhostname = @rhostname[1];
@@ -307,28 +313,25 @@ if (-e $filecluster)
                 	chomp($ripeth0);
 			
 			$modified = "false";
-	                if ($rhostname ne $rhost)
-                        	{
+	                if ($rhostname ne $rhost){
                         	$rhost = $rhostname;
                         	&errormsg("Remote hostname is not OK, modified to $rhostname");
 				$modified = "true";
-                        	}
+                        }
 
-       		        if ($ripeth0 ne $rip)
-                        	{
+       		        if ($ripeth0 ne $rip){
                         	$rip = $ripeth0;
                         	&errormsg("Remote ip on eth0 is not OK, modified to $ripeth0");
 				$modified = "true";
-                        	}
+                        }
 
-			if ($modified eq "true")
-				{
+			if ($modified eq "true"){
 				open FO, "> $filecluster";
 				print FO "MEMBERS\:$lhost\:$lip\:$rhost\:$rip\n";
         			print FO "IPCLUSTER\:$vipcl\:$ifname\n";
 				print FO "CABLE\:$cable\n";
         			close FO;
-				}
+			}
 
         		# closes the ssh connection
         		$ssh->close();
@@ -355,16 +358,11 @@ if (-e $filecluster)
 			&logfile("Enabled RSA communication between cluster hosts");
 			&successmsg("Enabled RSA communication between cluster hosts");
 			#run zeninotify for syncronization directories	
-			}
-			
-		else
-			{
+		}else{
+           	 	&errormsg("RSA communication with $rhost ($rip) has failed...");
 			$ssh->close();
-			}
-
-
-        	}
-	
+		}
+        }
 	#action configure cluster ucarp
 	if ($action eq "Configure cluster type" && $typecl !~ /^$/)
 		{
@@ -584,7 +582,7 @@ $zeninorun2 = "false";
 $activeino = "false";
 $activeino1 = "false";
 $activeino2 = "false";
-if (@zeninopidl &&  @zeninopidl[0] !~ /^$/)
+if (@zeninopidl)
         {
         print "<b>$lhost</b>\n";
         $zeninorun = "true";
@@ -593,7 +591,7 @@ if (@zeninopidl &&  @zeninopidl[0] !~ /^$/)
         }
 
 my @zeninopidr = `ssh -o \"ConnectTimeout=10\" -o \"StrictHostKeyChecking=no\" root\@$rip "pidof -x zeninotify.pl" `;
-if (@zeninopidr && @zeninopidr[0] !~ /^$/)
+if (@zeninopidr)
         {
         print "<b>$rhost</b>\n";
         $zeninorun = "true";
@@ -605,13 +603,12 @@ if ($activeino2 ne "false" && $activeino1 ne "false")
 	{
 	#print "<b>$rhost and $lhost</b>\n";
 	$zeninorun = "false";
-	$error = "true";
 	}
 
-#if (@zeninopidr && @zeninopidl)
-#        {
-#        $error = "true";
-#        }
+if (@zeninopidr && @zeninopidl)
+        {
+        $error = "true";
+        }
 if (($zeninorun eq "false" && $zeninorun2 eq "false") || ($zeninorun ne "false" && $zeninorun2 ne "false") )
         {
         print " <img src=\"/img/icons/small/exclamation.png\">";
