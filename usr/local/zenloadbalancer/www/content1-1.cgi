@@ -21,6 +21,7 @@
 #
 ###############################################################################
 
+
 print "
     <!--Content INI-->
         <div id=\"page-content\">
@@ -211,11 +212,35 @@ my @data = (
         ['Last 15', $last15],
   );
 
+####################################
+# ZLB COMMERCIAL INFORMATION
+####################################
+
+my $systemuuid = `/usr/sbin/dmidecode | grep UUID | awk '{print \$2}'`;
+chomp($systemuuid); 
+print "<div class=\"box-header\">Zen Load Balancer Professional Products &amp; Services</div>";
+print " <div class=\"box table\">
+	<table class=\"commerce\">
+	<thead>";
+print "		<tr>";
+print "			<td>Professional Services</td><td>Professional Products</td>";
+print "				<td>News</td>";
+print "		</tr>";
+print "</thead>";
+print "<tbody>";
+print "		<tr>";
+
+print "			<td><div id=\"support\"></div></td>
+			<td><div id=\"products\"></div></td>
+			<td><div id=\"news\"></div></td>";
+print "		</tr>";
+print "</tbody>"; 	
+print "</table></div>";
+print "<br>";
 
 ####################################
 # GLOBAL FARMS INFORMATION
 ####################################
-
 
 print "<div class=\"box-header\">Global farms information</div>";
 print "	<div class=\"box table\"> 
@@ -349,6 +374,47 @@ print "</tbody>";
 print "</table>";
 print "</div>";
 
-print "<br class=\"cl\" ></div>";
+print "<br class=\"cl\" ></div>\n";
 
 
+print "<script src=\"https://code.jquery.com/jquery-latest.pack.js\"></script>
+<script>
+\$(document).ready(function(){
+  var container0 = \$('#support');
+  var container1 = \$('#products');
+  var container2 = \$('#news');
+  var fixedsupport = '<a href=\"http://www.zenloadbalancer.com/support-programs/?zlb_gui\" target=\"_blank\">Get Support for Zen Community and Enterprise Edition</a><br>Already have Professional Support?<a href=\"https://www.sofintel.net/support/?zlb_gui\" target=\"_blank\"> Open a Support Request here</a><br>';
+  var fixedproducts = 'Searching more performance? <a href=\"http://www.zenloadbalancer.com/products/?zlb_gui\" target=\"_blank\">Visit our Enterprise Products</a><br>Looking for strong SSL certificates at the best price? <a href=\"http://ecommerce.sofintel.net/ssl/ssl-certificate.aspx\" target=\"_blank\">Get one of our Verified SSL Certificates</a><br><img src=\"/img/img_verified_logo.gif\" title=\"Verified by Starfield Technologies\"><font size=1><br>&nbsp;* We are a Starfield Technologies supplier</font>';
+  var fixednews = 'ZLB News<br><a href=\"http://www.zenloadbalancer.com/news/?zlb_gui\" target=\"_blank\">Visit the news page on our WEB site</a><br>';
+  var url = '$url';
+  window.connect = 'false';
+  \$.getJSON(url + '?callback=?&uuid=$systemuuid',
+     function(data){
+	window.connect = 'true';
+	if(data.results[0] == ''){
+            	container0.html(fixedsupport);
+	} 
+	else{
+		container0.html(data.results[0]);
+	}
+	if(data.results[1] == ''){
+            	container1.html(fixedproducts);
+	} 
+	else{
+		container1.html(data.results[1]);
+	}
+	if(data.results[2] == ''){
+            	container2.html(fixednews);
+	} 
+	else{
+		container2.html(data.results[2]);
+	}
+     }
+  );
+  if(window.connect == 'false'){
+    container0.html(fixedsupport);
+    container1.html(fixedproducts);
+    container2.html(fixednews);
+  }
+});
+</script>";
