@@ -595,6 +595,13 @@ tbody tr:hover {
 	/*background:#a5c0dc;*/
 	background:#E3F6CE;
 }
+table.commerce tr{
+       background:none;
+}
+
+table.commerce td{
+       vertical-align:top;
+}
 /* Dialog Box */
 .message {
 	font-size:12px;
