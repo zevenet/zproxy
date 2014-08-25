@@ -30,7 +30,10 @@ $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 $version="3.05";#update
 #Cipher PCI
 $cipher_pci="RC4-SHA";#update
-
+#BUY SSL Certificates
+$buy_ssl="http://ecommerce.sofintel.net/ssl/ssl-certificate.aspx?ci=8347&prog_id=503889";
+#URL of dinamic content in global view
+$url="https://www.sofintel.net/json/eeinfo.php";
 
 #dns file server?
 $filedns="/etc/resolv.conf";

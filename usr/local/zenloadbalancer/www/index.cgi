@@ -179,6 +179,19 @@ $err501 = $Variablespost{'err501'} if(defined($Variablespost{'err501'}));
 $err503 = $Variablespost{'err503'} if(defined($Variablespost{'err503'}));
 $farmname = $Variablespost{'farmname'} if(defined($Variablespost{'farmname'}));
 
+$cert_name = $Variablespost{'cert_name'} if(defined($Variablespost{'cert_name'}));
+$cert_issuer = $Variablespost{'cert_issuer'} if(defined($Variablespost{'cert_issuer'}));
+$cert_fqdn = $Variablespost{'cert_fqdn'} if(defined($Variablespost{'cert_fqdn'}));
+$cert_division = $Variablespost{'cert_division'} if(defined($Variablespost{'cert_division'}));
+$cert_organization = $Variablespost{'cert_organization'} if(defined($Variablespost{'cert_organization'}));
+$cert_locality = $Variablespost{'cert_locality'} if(defined($Variablespost{'cert_locality'}));
+$cert_state = $Variablespost{'cert_state'} if(defined($Variablespost{'cert_state'}));
+$cert_country = $Variablespost{'cert_country'} if(defined($Variablespost{'cert_country'}));
+$cert_mail = $Variablespost{'cert_mail'} if(defined($Variablespost{'cert_mail'}));
+$cert_password = $Variablespost{'cert_password'} if(defined($Variablespost{'cert_password'}));
+$cert_cpassword = $Variablespost{'cert_cpassword'} if(defined($Variablespost{'cert_cpassword'}));
+$cert_key = $Variablespost{'cert_key'} if(defined($Variablespost{'cert_key'}));
+
 #
 ###login 
 
