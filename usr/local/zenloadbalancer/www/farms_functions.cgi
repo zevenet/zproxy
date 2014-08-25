@@ -3062,7 +3062,7 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$servic
 				$i++;
 				#search the service to modify
 				if ($line =~ /Service \"$svice\"/){
-					$sw = 1;        
+					$sw = 1;
 				}
 				if ($line =~ /BackEnd/ && $line !~ /#/ && $sw eq  1){
 					$index_count++;
@@ -3077,14 +3077,19 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$servic
 						$output=$?;
                                                 @contents[$i+1] = "\t\t\tAddress $rip";
 						@contents[$i+2] = "\t\t\tPort $port";
+						my $p_m = 0;
 						if (@contents[$i+3] =~ /TimeOut/){
 							@contents[$i+3] = "\t\t\tTimeOut $timeout";
+							&logfile("Modified current timeout");
 						}	
 						if (@contents[$i+4] =~ /Priority/){
 							@contents[$i+4] = "\t\t\tPriority $priority";
+							&logfile("Modified current priority");
+							$p_m = 1;
 						}
 						if (@contents[$i+3] =~ /Priority/){
 							@contents[$i+3] = "\t\t\tPriority $priority";
+							$p_m = 1;
 						}
 						#delete item
 						if ($timeout =~ /^$/){
@@ -3101,11 +3106,15 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$servic
 							}
 						}
 						#new item
-						if ($timeout !~ /^$/ && @contents[$i+3] =~ /End/){
+						if ($timeout !~ /^$/ && (@contents[$i+3] =~ /End/ || @contents[$i+3] =~ /Priority/)){
 							splice @contents,$i+3,0,"\t\t\tTimeOut $timeout";
 						}
-						if ($priority !~ /^$/ && (@contents[$i+3] =~ /End/ || @contents[$i+4] =~ /End/)){
-							splice @contents,$i+3,0,"\t\t\tPriority $priority";
+						if ($p_m eq 0 && $priority !~ /^$/ && (@contents[$i+3] =~ /End/ || @contents[$i+4] =~ /End/)){
+							if (@contents[$i+3] =~ /TimeOut/){
+								splice @contents,$i+4,0,"\t\t\tPriority $priority";
+							}else{
+								splice @contents,$i+3,0,"\t\t\tPriority $priority";
+							}
 						}
 					}
 				}
