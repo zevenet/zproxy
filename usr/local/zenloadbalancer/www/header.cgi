@@ -7,11 +7,11 @@
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
-#     by the Free Software Foundation; either version 2.1 of the License, or 
+#     by the Free Software Foundation; either version 2.1 of the License, or
 #     (at your option) any later version.
 #
-#     This library is distributed in the hope that it will be useful, but 
-#     WITHOUT ANY WARRANTY; without even the implied warranty of 
+#     This library is distributed in the hope that it will be useful, but
+#     WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
 #     General Public License for more details.
 #
@@ -19,13 +19,15 @@
 #     along with this library; if not, write to the Free Software Foundation,
 #     Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #
-###############################################################################	
+###############################################################################
 
+#header secction
 use Sys::Hostname;
 my $host = hostname();
-
 $timeseconds = time();
-my $time = $timeseconds;
+
+$now = ctime();
+
 my @months = ("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec");
 my ($sec, $min, $hour, $day,$month,$year) = (localtime($time))[0,1,2,3,4,5,6];
 $month = $months[$month];
@@ -38,13 +40,11 @@ print "
 
 <head>
 <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />
-
 ";
 
 if ($refresh){
 	print "<meta http-equiv=\"refresh\" content=\"$refresh\">";
 }
-
 
 print "
 <link type=\"text/css\" rel=\"stylesheet\" media=\"all\" href=\"css/base.css\" />
@@ -76,7 +76,6 @@ print "
                 }
                 </script>
 
-
 <title>ZEN Load Balancer GUI v$version on $host</title>
 
 <link href=\"/img/favicon.ico\" rel=\"icon\" type=\"image/x-icon\" />
@@ -106,7 +105,8 @@ if (-e $filecluster && (grep(/UP/,@file)))
 	print " |";
 	}
 
-print " Host: <strong>$host</strong> | Date: <strong>$month $day $year  $hour:$min:$sec</strong> | <a href=\'#\' onclick=\'logout()\' title=\'Logout\'> <strong>Logout</strong></a></p>
+#print " Host: <strong>$host</strong> | Date: <strong>$month $day $year  $hour:$min:$sec</strong></p>
+print " Host: <strong>$host</strong> | Date: <strong>$now</strong> | <a href=\'#\' onclick=\'logout()\' title=\'Logout\'> <strong>Logout</strong></a></p>
  </div>
 </div>
 ";
