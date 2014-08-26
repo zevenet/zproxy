@@ -440,10 +440,10 @@ foreach $srv(@services){
 					print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 					print "<input type=\"hidden\" name=\"service\" value=\"$service\">";
 		          	        print "<input type=\"hidden\" name=\"lb\" value=\"$lb\">";
-		          	        print "<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">";
+		          	        print "<input type=\"hidden\" name=\"id_server\" value=\"$id_serverr\">";
 					print "<input type=\"hidden\" name=\"service_type\" value=\"service\">";
 					$sv=$srv;
-		                        &createmenuserversfarm("edit",$farmname,$id_server);
+		                        &createmenuserversfarm("edit",$farmname,$id_serverr);
 					print "</tr>";
 		                        print "</form>";
 		                } else {

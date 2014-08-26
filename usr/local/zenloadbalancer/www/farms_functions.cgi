@@ -5316,14 +5316,21 @@ sub setFarmGSLBNewBackend($fname,$srv,$lb,$id,$ipaddress){
 }
 
 sub runFarmReload($farmname){
-	my ($farmname)= @_;
+	my ($fname)= @_;
 
-	my $stat = &runFarmStop($farmname,"false");
-	if ($stat == 0){
-		sleep 1;
-		$stat = &runFarmStart($farmname,"false");
+	my $type = &getFarmType($fname);
+	my $output;
+
+	if ($type eq "gslb"){
+		&logfile("running $gdnsd -d $configdir\/$fname\_$type.cfg reload");
+		zsystem("$gdnsd -d $configdir\/$fname\_$type.cfg reload 2>/dev/null");
+		$output = $?;
+		if ($output != 0) {
+			$output = -1;
+		}
 	}
-	return $stat;
+
+	return $output;
 }
 
 #get index of a service in a http farm
