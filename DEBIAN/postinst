@@ -15,6 +15,14 @@ fi
 if [ -f /usr/local/zenloadbalancer/app/zennetname/write_net_rules ]; then
 	cp -f /usr/local/zenloadbalancer/app/zennetname/write_net_rules /lib/udev/
 fi
+
+# GSLB user management
+GSLBHOME="/var/run/gdnsd"
+GSLBSHELL="/usr/sbin/nologin"
+GSLBUSER="gdnsd"
+GSLBGROUP="nogroup"
+adduser --system -q --home $GSLBHOME --shell $GSLBSHELL --disabled-password --ingroup $GSLBGROUP $GSLBUSER
+
 #upgrading global.conf
 /usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi
 
