@@ -748,6 +748,10 @@ sub setFarmProto($proto,$fname){
 				if ($proto eq "all"){
 					@args[3]="*";
 				}
+				if ($proto eq "sip"){
+					@args[3]="5060";	# the port by default for sip protocol
+					@args[4]="nat";
+				}
 				$line = "@args[0]\;$proto\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;@args[6]\;@args[7]\;@args[8]";
 				splice @filelines,$i,$line;
 				$output = $?;
@@ -1563,6 +1567,9 @@ sub getFarmType($fname){
 	if ($filename =~ /$fname\_l4xnat.cfg/){
 		return "l4xnat";
 	}
+	if ($filename =~ /$fname\_gslb.cfg/){
+		return "gslb";
+	}
 	return 1;
 }
 
@@ -1570,7 +1577,8 @@ sub getFarmType($fname){
 sub getFarmFile($fname){
 	($fname)= @_;
 	opendir(my $dir, "$configdir") || return -1;
-	my @ffiles = grep { /^$fname\_.*\.cfg/ && !/^$fname\_.*guardian\.conf/ && -f "$configdir/$_" && !/^$fname\_status.cfg/} readdir($dir);
+#	my @ffiles = grep { /^$fname\_.*\.cfg/ && !/^$fname\_.*guardian\.conf/ && -f "$configdir/$_" && !/^$fname\_status.cfg/} readdir($dir);
+	my @ffiles = grep { /^$fname\_.*\.cfg/ && !/^$fname\_.*guardian\.conf/ && !/^$fname\_status.cfg/} readdir($dir);
 	closedir $dir;
 	if (@ffiles){
 		return @ffiles[0];
@@ -1624,8 +1632,21 @@ sub getFarmBootStatus($fname){
 		}
 	}
 
+	if ($type eq "gslb"){
+		open FI, "<$configdir/$file/etc/config";
+		my $first = "true";
+		while ($line=<FI>){
+			if ( $line ne "" && $first eq "true" ){
+				$first = "false";
+				my @line_a = split("\;",$line);
+				$output = @line_a[1];
+				chomp($output);
+			}
+		}
+		close FI;
+	}
+
 	if ($type eq "datalink"){
-		my $file = &getFarmFile($fname);
 		open FI, "<$configdir/$file";
 		my $first = "true";
 		while ($line=<FI>){
@@ -1640,7 +1661,6 @@ sub getFarmBootStatus($fname){
 	}
 
 	if ($type eq "l4xnat"){
-		my $file = &getFarmFile($fname);
 		open FI, "<$configdir/$file";
 		my $first = "true";
 		while ($line=<FI>){
@@ -1697,7 +1717,7 @@ sub _runFarmStart($fname,$writeconf){
 	#my $status = $type;
 
 	&logfile("running 'Start write $writeconf' for $fname farm $type");
-	if ($writeconf eq "true" && $type ne "datalink" && $type ne "l4xnat"){
+	if ($writeconf eq "true" && $type ne "datalink" && $type ne "l4xnat" && $type ne "gslb"){
 		use Tie::File;
 		tie @filelines, 'Tie::File', "$configdir\/$file";
 		@filelines = grep !/^\#down/, @filelines;
@@ -1718,6 +1738,28 @@ sub _runFarmStart($fname,$writeconf){
 		$status = $?;
 		if ($status == 0){
 			&setFarmHttpBackendStatus($fname);
+		}
+	}
+
+	if ($type eq "gslb"){
+		if ($writeconf eq "true"){
+			use Tie::File;
+			tie @filelines, 'Tie::File', "$configdir\/$file\/etc\/config";
+			my $first=1;
+			foreach (@filelines){
+				if ($first eq 1){
+					s/\;down/\;up/g;
+					$first=0;
+					last;
+				}
+			}
+			untie @filelines;
+		}
+		&logfile("running $gdnsd -d $configdir\/$file start");
+		zsystem("$gdnsd -d $configdir\/$file start 2>/dev/null");
+		$output = $?;
+		if ($output != 0) {
+			$output = -1;
 		}
 	}
 
@@ -1832,10 +1874,11 @@ sub _runFarmStart($fname,$writeconf){
 			my $lbalg = &getFarmAlgorithm($fname);
 			my $vip = &getFarmVip("vip",$fname);
 			my $vport = &getFarmVip("vipp",$fname);
-			my $proto = &getFarmProto($fname);
+			my $vproto = &getFarmProto($fname);
 			my $persist = &getFarmPersistence($fname);
 			my @pttl = &getFarmMaxClientTime($fname);
 			my $ttl = @pttl[0];
+			my $proto = "";
 
 			my @run = &getFarmServers($fname);
 			my @tmangle;
@@ -1854,6 +1897,15 @@ sub _runFarmStart($fname,$writeconf){
 
 			if ($vport eq "*"){
 				$vport = "0:65535";
+			}
+
+			if ($vproto eq "sip"){
+				# TODO: load the netfilter required modules
+				my $lmstatus = &loadNfModule("ip_conntrack_sip","");
+				my $lmstatus = &loadNfModule("ip_nat_sip","");
+				$proto = "udp";
+			} else {
+				$proto = $vproto;
 			}
 
 			my $bestprio=1000;
@@ -1877,13 +1929,20 @@ sub _runFarmStart($fname,$writeconf){
 							#push(@tmanglep,$tagp2);
 						}
 
-						#if ($nattype eq "dnat"){
+						# dnat rules
+						#if ($vproto ne "sip"){
 							my $red = &genIptRedirect($fname,$nattype,@serv[0],$rip,$proto,@serv[3],@serv[4],$persist,@serv[6]);
 							push(@tnat,$red);
 						#}
 
 						if ($nattype eq "nat"){
-							my $ntag = &genIptMasquerade($fname,$nattype,@serv[0],$proto,@serv[3],@serv[6]);
+							my $ntag;
+							if ($vproto eq "sip"){
+								$ntag = &genIptSourceNat($fname,$vip,$nattype,@serv[0],$proto,@serv[3],@serv[6]);
+							} else {
+								$ntag = &genIptMasquerade($fname,$nattype,@serv[0],$proto,@serv[3],@serv[6]);
+							}
+
 							push(@tsnat,$ntag);
 						}
 
@@ -1911,7 +1970,11 @@ sub _runFarmStart($fname,$writeconf){
 					$rip = "$rip\:$port";
 				}
 				my $tag = &genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,@srvprio[0],@srvprio[3],@srvprio[4],@srvprio[6],$prob);
-				my $red = &genIptRedirect($fname,$nattype,@srvprio[0],$rip,$proto,@srvprio[3],@srvprio[4],$persist,@srvprio[6]);
+
+				# dnat rules
+				#if ($vproto ne "sip"){
+					my $red = &genIptRedirect($fname,$nattype,@srvprio[0],$rip,$proto,@srvprio[3],@srvprio[4],$persist,@srvprio[6]);
+				#}
 
 				if ($persist ne "none"){
 					my $tagp = &genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,@srvprio[0],@srvprio[3],@srvprio[6]);
@@ -1919,10 +1982,17 @@ sub _runFarmStart($fname,$writeconf){
 					#my $tagp2 = &genIptMarkReturn($fname,$vip,$vport,$proto,@srvprio[0],@srvprio[6]);
 					#push(@tmanglep,$tagp2);
 				}
+
 				if ($nattype eq "nat"){
-					my $ntag = &genIptSourceNat($fname,$vip,$nattype,@srvprio[0],$proto,@srvprio[3],@srvprio[6]);
+					my $ntag;
+					if ($vproto eq "sip"){
+						$ntag = &genIptSourceNat($fname,$vip,$nattype,@srvprio[0],$proto,@srvprio[3],@srvprio[6]);
+					} else {
+						$ntag = &genIptMasquerade($fname,$nattype,@srvprio[0],$proto,@srvprio[3],@srvprio[6]);
+					}
 					push(@tsnat,$ntag);
 				}
+
 				#my $nraw = "$iptables -t raw -A OUTPUT -j NOTRACK -p $proto -d $vip --dport $vport -m comment --comment ' FARM\_$fname\_@srvprio[0]\_ '";
 				#my $nnraw = "$iptables -t raw -A OUTPUT -j NOTRACK -p $proto -s $vip -m comment --comment ' FARM\_$fname\_@srvprio[0]\_ '";
 				push(@tmangle,$tag);
@@ -2071,6 +2141,28 @@ sub _runFarmStop($fname,$writeconf){
                 }
 	}
 
+	if ($type eq "gslb"){
+		if ($writeconf eq "true"){
+			use Tie::File;
+			tie @filelines, 'Tie::File', "$configdir\/$filename\/etc\/config";
+			my $first=1;
+			foreach (@filelines){
+				if ($first eq 1){
+					s/\;up/\;down/g;
+					$status = $?;
+					$first=0;
+				}
+			}
+			untie @filelines;
+		}
+		&logfile("running $gdnsd -d $configdir\/$filename stop");
+		zsystem("$gdnsd -d $configdir\/$filename stop 2>/dev/null");
+		$output = $?;
+		if ($output != 0) {
+			$output = -1;
+		}
+	}
+
 	if ($type eq "datalink"){
 		if ($writeconf eq "true"){
 			use Tie::File;
@@ -2155,7 +2247,7 @@ sub _runFarmStop($fname,$writeconf){
 		}
 	}
 
-	if ($writeconf eq "true" && $type ne "datalink" && $type ne "l4xnat"){
+	if ($writeconf eq "true" && $type ne "datalink" && $type ne "l4xnat" && $type ne "gslb"){
 		open FW,">>$configdir/$filename";
 		print FW "#down\n";
 		close FW;
@@ -2270,6 +2362,38 @@ sub runFarmCreate($fproto,$fvip,$fvipp,$fname,$fdev){
 			# Enable active l4xnat file
 			open FI, ">$piddir\/$fname\_$type.pid";
 			close FI;
+		}
+	}
+
+	if ($fproto eq "GSLB"){
+		my $type="gslb";
+		mkdir "$configdir\/$fname\_$type.cfg";
+		mkdir "$configdir\/$fname\_$type.cfg\/etc";
+		mkdir "$configdir\/$fname\_$type.cfg\/etc\/zones";
+		mkdir "$configdir\/$fname\_$type.cfg\/etc\/plugins";
+		my $httpport=35060;
+		while ($httpport<35160 && &checkport($fvip,$httpport) eq "true"){
+			$httpport++;
+		}
+		if ($httpport==35160){
+			$output=-1;	# No room for a new farm
+		} else {
+			open FO, ">$configdir\/$fname\_$type.cfg\/etc\/config";
+			print FO ";up\noptions => {\n   listen = $fvip\n   dns_port = $fvipp\n   http_port = $httpport\n   http_listen = $fvip\n}\n\n";
+			print FO "service_types => { \n\n}\n\n";
+			print FO "plugins => { \n\n}\n\n";
+			close FO;
+
+			#run farm
+			&logfile("running $gdnsd -d $configdir\/$fname\_$type.cfg start");
+			zsystem("$gdnsd -d $configdir\/$fname\_$type.cfg start 2>/dev/null");
+			$output = $?;
+			if ($output != 0) {
+				$output = -1;
+			}
+		}
+		if ($output != 0) {
+			&runFarmDelete($fname);
 		}
 	}
 
@@ -2460,6 +2584,18 @@ sub getFarmPid($fname){
 		else {$output = "-";}
 	}
 
+	if ($type eq "gslb"){
+		@fname = split(/\_/,$file);
+		open FPID, "<$configdir\/$fname\_gslb.cfg\/run\/gdnsd.pid";
+		@pid = <FPID>;
+		close FPID;
+		$pid_hprof = @pid[0];
+		chomp($pid_hprof);
+		my $exists = kill 0, $pid_hprof;
+		if ($pid_hprof =~ /^[1-9].*/ && $exists){$output = "$pid_hprof";}
+		else {$output = "-";}
+	}
+
 	return $output;
 }
 
@@ -2562,6 +2698,27 @@ sub getFarmVip($info,$fname){
 			}
 		}
 		close FI;
+	}
+
+	if ($type eq "gslb"){
+		open FI, "<$configdir/$file/etc/config";
+		my @file = <FI>;
+		my $i=0;
+		close FI;
+		foreach $line(@file){
+			if ( $line =~ /^options =>/ ){
+				my $vip = @file[$i+1];
+				my $vipp = @file[$i+2];
+				chomp($vip);
+				chomp($vipp);
+				my @vip = split("\ ",$vip);
+				my @vipp = split("\ ",$vipp);
+				if ($info eq "vip"){$output = @vip[2];}
+				if ($info eq "vipp"){$output = @vipp[2];}
+				if ($info eq "vipps"){$output = "@vip[2]\:@vipp[2]";}
+			}
+			$i++;
+		}
 	}
 
 	return $output;
@@ -2741,6 +2898,8 @@ sub runFarmGuardianStop($fname,$svice){
 sub runFarmDelete($fname){
 	($fname)= @_;
 
+	my $ftype=&getFarmType($fname);
+
 	&logfile("running 'Delete' for $fname");
 	unlink glob("$configdir/$fname\_*\.cfg");
 	$status = $?;
@@ -2750,6 +2909,11 @@ sub runFarmDelete($fname){
 	unlink glob("$basedir/img/graphs/$fname-farm\_*");
 	unlink glob("$rrdap_dir$rrd_dir/$fname-farm*");
 	unlink glob("${logdir}/${fname}\_*farmguardian*");
+
+	if ($ftype eq "gslb"){
+		use File::Path 'rmtree';
+		rmtree([ "$configdir/$fname\_gslb.cfg" ]);
+	}
 
 	# delete cron task to check backends
 	use Tie::File;
@@ -2796,7 +2960,10 @@ sub getFarmList(){
 	opendir(DIR, $configdir);
 	my @files4= grep(/\_l4xnat.cfg$/,readdir(DIR));
 	closedir(DIR);
-	my @files = (@files,@files2,@files3,@files4);
+	opendir(DIR, $configdir);
+	my @files5= grep(/\_gslb.cfg$/,readdir(DIR));
+	closedir(DIR);
+	my @files = (@files,@files2,@files3,@files4,@files5);
 	return @files;
 }
 
@@ -2882,6 +3049,28 @@ sub setFarmVirtualConf($vip,$vipp,$fname){
 		$stat = $?;
 	}
 
+	if ($type eq "gslb"){
+		my $index = 0;
+		my $found = 0;
+		tie @fileconf, 'Tie::File', "$configdir/$fconf/etc/config";
+		foreach $line(@fileconf){
+			if ($line =~ /options => /){
+				$found = 1;
+			}
+			if ($found == 1 && $line =~ /listen = /){
+				$line =~ s/.*/   listen = $vip/g;
+			}
+			if ($found == 1 && $line =~ /dns_port = /){
+				$line =~ s/.*/   dns_port = $vipp/g;
+			}
+			if ($found == 1 && $line =~ /\}/){
+				last;
+			}
+			$index++;
+		}
+		untie @fileconf;
+	}
+
 	return $stat;
 }
 
@@ -2960,6 +3149,7 @@ sub getFarmGuardianPid($fname,$svice){
 		return -1;
 	}
 }
+
 
 #
 sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$service){
@@ -3266,6 +3456,28 @@ sub runFarmServerDelete($ids,$fname,$service){
 		if ($output != -1){
 			&runRemovehttpBackend($fname,$ids,$svice);
 		}
+	}
+
+	if ($type eq "gslb"){
+		my @fileconf;
+		my $line;
+		my $param;
+		my @linesplt;
+		my $index=0;
+		use Tie::File;
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$service";
+		foreach $line(@fileconf){
+			if ($line =~ /\;index_/){
+				@linesplt = split("\;index_",$line);
+				$param = @linesplt[1];
+				if ($ids !~ /^$/ && $ids eq $param){
+					splice @fileconf,$index,1,;
+				}
+			}
+			$index++;
+		}
+		untie @fileconf;
+		$output = $?;
 	}
 
 	return $output;
@@ -3844,6 +4056,11 @@ sub setNewFarmName($fname,$newfname){
 		&runFarmStart($newfname,"false");
 	}
 
+	if ($type eq "gslb"){
+		my $newffile = "$newfname\_$type.cfg";
+		rename("$configdir\/$ffile","$configdir\/$newffile");
+	}
+
 	return $output;
 }
 
@@ -4202,9 +4419,176 @@ sub setFarmHTTPNewService($fname,$service){
        return $output;
 }
 
+# Create a new Zone in a GSLB farm
+sub setFarmGSLBNewZone($fname,$service){
+	my ($fname,$svice) =  @_;
+
+	my $output = -1;
+	my $ftype = &getFarmType($fname);
+
+	if ($ftype eq "gslb"){
+		opendir(DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/");
+		my @files= grep { /^$svice/ } readdir(DIR);
+		closedir(DIR);
+
+		if ( $files == 0 ) {
+			open FO, ">$configdir\/$fname\_$ftype.cfg\/etc\/zones\/$svice";
+			print FO "@	SOA ns1 hostmaster (\n	1\n	7200\n	1800\n	259200\n	900\n)\n\n";
+			print FO "@		NS	ns1 ;index_0\n";
+			print FO "ns1		A	0.0.0.0 ;index_1\n";
+			close FO;
+
+			$output = 0;
+       		} else {
+			$output = 1;
+       		}
+	}
+	return $output;
+}
+
+# Delete an existing Zone in a GSLB farm
+sub setFarmGSLBDeleteZone($fname,$service){
+	my ($fname,$svice) =  @_;
+
+	my $output = -1;
+	my $ftype = &getFarmType($fname);
+
+	if ($ftype eq "gslb"){
+		use File::Path 'rmtree';
+		rmtree([ "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/$svice" ]);
+		$output = 0;
+	}
+	return $output;
+}
+
+# Create a new Service in a GSLB farm
+sub setFarmGSLBNewService($fname,$service,$algorithm){
+	my ($fname,$svice,$alg) =  @_;
+
+	my $output = -1;
+	my $ftype = &getFarmType($fname);
+	my $gsalg = "simplefo";
+
+	if ($ftype eq "gslb"){
+		if ($alg eq "roundrobin"){
+			$gsalg = "multifo";
+		} else {
+			if ($alg eq "prio"){
+			$gsalg = "simplefo";
+			}
+		}
+		opendir(DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/");
+		my @files= grep { /^$svice/ } readdir(DIR);
+		closedir(DIR);
+
+		if ( $files == 0 ) {
+			open FO, ">$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$svice.cfg";
+			print FO "$gsalg => {\n\tservice_types = up\n";
+			print FO "\t$svice => {\n\t\tservice_types = tcp_80\n";
+			print FO "\t}\n}\n";
+			close FO;
+			$output = 0;
+			# Include the plugin file in the main configuration
+			tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
+			my $found=0;
+			my $index=0;
+			foreach $line(@fileconf){
+				if ($line =~ /plugins => /){
+					$found=1;
+					$index++;
+				}
+				if ($found==1){
+					splice @fileconf,$index,0,"	\$include{plugins\/$svice.cfg},";
+					last;
+				}
+				$index++;
+			}
+			untie @fileconf;
+			&setFarmVS($fname,$svice,"dpc","80");
+       		} else {
+			$output = -1;
+       		}
+	}
+	return $output;
+}
+
+# Delete an existing Zone in a GSLB farm
+sub setFarmGSLBDeleteService($fname,$service){
+	my ($fname,$svice) =  @_;
+
+	my $output = -1;
+	my $ftype = &getFarmType($fname);
+
+	if ($ftype eq "gslb"){
+		use File::Path 'rmtree';
+		rmtree([ "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$svice.cfg" ]);
+		tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
+		my $found=0;
+		my $index=0;
+		foreach $line(@fileconf){
+			if ($line =~ /plugins => /){
+				$found=1;
+				$index++;
+			}
+			if ($found==1 && $line =~ /plugins\/$svice.cfg/){
+				splice @fileconf,$index,1;
+				last;
+			}
+			$index++;
+		}
+		untie @fileconf;
+		$output = 0;
+	}
+	return $output;
+}
+
+# Get farm zones list for GSLB farms
+sub getFarmZones($fname){
+	my ($fname) =  @_;
+
+	my $output = -1;
+	my $ftype = &getFarmType($fname);
+
+	opendir(DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/");
+	my @files= grep { /^[a-zA-Z]/ } readdir(DIR);
+	closedir(DIR);
+
+	return @files;
+}
+
+# Get farm services list for GSLB farms
+sub getFarmServices($fname){
+	my ($fname) =  @_;
+
+	my $output = -1;
+	my $ftype = &getFarmType($fname);
+
+	opendir(DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/");
+	my @files= grep { /^[a-zA-Z].*\.cfg/ } readdir(DIR);
+	closedir(DIR);
+
+	return @files;
+}
+
+
+#Create a new farm service
+sub setFarmNewService($fname,$service){
+        my ($fname,$svice) =  @_;
+
+	my $type = &getFarmType($fname);
+	my $output = -1;
+
+	if ($type eq "http" || $type eq "https"){
+		$output = &setFarmHTTPNewService($fname,$svice);
+	}
+
+	return $output;
+}
+
+
 #delete a service in a Farm
 sub deleteFarmService($farmname,$service){
-       ($fname,$svice) = @_;
+       my ($fname,$svice) = @_;
 
        my $ffile = &getFarmFile($fname);
        my @fileconf;
@@ -4245,376 +4629,702 @@ sub deleteFarmService($farmname,$service){
 #function that return indicated value from a HTTP Service 
 #vs return virtual server
 sub getFarmVS($farmname,$service,$tag){
-($fname,$svice,$tag) = @_;
+	my ($fname,$svice,$tag) = @_;
 
-my $output = "";
-my $ffile = &getFarmFile($fname);
-my @fileconf;
-my $line;
-use Tie::File;
-tie @fileconf, 'Tie::File', "$configdir/$ffile";
-my $sw = 0;
-my @return;
-my $be_section=0;
-my $be=-1;
-my @output;
-my $sw_ti = 0;
-my $output_ti = "";
-my $sw_pr = 0;
-my $output_pr = "";
+	my $output = "";
+	my $type = &getFarmType($fname);
+	my $ffile = &getFarmFile($fname);
 
-foreach $line(@fileconf){
-       if ($line =~ /Service/){
-               $sw = 0;
-               }
-       if ($line =~ /Service \"$svice\"/){
-               $sw=1;
-       }
+	if ($type eq "http" || $type eq "https"){
+		my @fileconf;
+		my $line;
+		use Tie::File;
+		tie @fileconf, 'Tie::File', "$configdir/$ffile";
+		my $sw = 0;
+		my @return;
+		my $be_section=0;
+		my $be=-1;
+		my @output;
+		my $sw_ti = 0;
+		my $output_ti = "";
+		my $sw_pr = 0;
+		my $output_pr = "";
 
-       # returns all services for this farm
-       if ($tag eq "" && $service eq ""){
-               if ($line =~ "Service" && $line !~ "#"){
-                       @return = split("\ ",$line);
-                       @return[1] =~ s/\"//g;
-                       @return[1] =~ s/^\s+//;
-                       @return[1] =~ s/\s+$//;
-                       $output = "$output @return[1]";
-               }
-       }
+		foreach $line(@fileconf){
+			if ($line =~ /Service/){
+				$sw = 0;
+			}
+			if ($line =~ /Service \"$svice\"/){
+				$sw=1;
+			}
 
-       #vs tag
-       if ($tag eq "vs"){
-               if ($line =~ "HeadRequire" && $sw == 1 && $line !~ "#"){
-                       @return = split("Host:",$line);
-                       @return[1] =~ s/\"//g;
-                       @return[1] =~ s/^\s+//;
-                       @return[1] =~ s/\s+$//;
-                       $output = @return[1];
-                       last;
+			# returns all services for this farm
+			if ($tag eq "" && $service eq ""){
+				if ($line =~ "Service" && $line !~ "#"){
+					@return = split("\ ",$line);
+					@return[1] =~ s/\"//g;
+					@return[1] =~ s/^\s+//;
+					@return[1] =~ s/\s+$//;
+					$output = "$output @return[1]";
+				}
+			}
+
+			#vs tag
+			if ($tag eq "vs"){
+				if ($line =~ "HeadRequire" && $sw == 1 && $line !~ "#"){
+					@return = split("Host:",$line);
+					@return[1] =~ s/\"//g;
+					@return[1] =~ s/^\s+//;
+					@return[1] =~ s/\s+$//;
+					$output = @return[1];
+					last;
                        
-               }
-       }
-       #url pattern
-       if ($tag eq "urlp"){
-               if ($line =~ "Url \"" && $sw == 1 && $line !~ "#"){
-                        @return = split("Url",$line);
-                        @return[1] =~ s/\"//g;
-                        @return[1] =~ s/^\s+//;
-                        @return[1] =~ s/\s+$//;
-                        $output = @return[1];
-                        last;
+				}
+			}
+			#url pattern
+			if ($tag eq "urlp"){
+				if ($line =~ "Url \"" && $sw == 1 && $line !~ "#"){
+					@return = split("Url",$line);
+					@return[1] =~ s/\"//g;
+					@return[1] =~ s/^\s+//;
+					@return[1] =~ s/\s+$//;
+					$output = @return[1];
+					last;
+				}
+			}
+			#redirect
+			if ($tag eq "redirect"){
+				if ($line =~ "Redirect \"" && $sw == 1 && $line !~ "#"){
+					@return = split("Redirect",$line);
+					@return[1] =~ s/\"//g;
+					@return[1] =~ s/^\s+//;
+					@return[1] =~ s/\s+$//;
+					$output = @return[1];
+					last;
+				}
+			}
 
-               }
-               
-       }
-       #redirect
-       if ($tag eq "redirect"){
-		if ($line =~ "Redirect \"" && $sw == 1 && $line !~ "#"){
-                        @return = split("Redirect",$line);
-                        @return[1] =~ s/\"//g;
-                        @return[1] =~ s/^\s+//;
-                        @return[1] =~ s/\s+$//;
-                        $output = @return[1];
-                        last;
+			#sesstion type 
+			if ($tag eq "sesstype"){
+				if ($line =~ "Type" && $sw == 1 && $line !~ "#"){
+					@return = split("\ ",$line);
+					@return[1] =~ s/\"//g;
+					@return[1] =~ s/^\s+//;
+					@return[1] =~ s/\s+$//;
+					$output = @return[1];
+					last;
+				}
+			}
 
-               }
-       }
+			#ttl
+			if ($tag eq "ttl"){
+				if ($line =~ "TTL" && $sw == 1 && $line !~ "#"){
+					@return = split("\ ",$line);
+					@return[1] =~ s/\"//g;
+					@return[1] =~ s/^\s+//;
+					@return[1] =~ s/\s+$//;
+					$output = @return[1];
+					last;
+				}
+			}
 
-       #sesstion type 
-       if ($tag eq "sesstype"){
-               if ($line =~ "Type" && $sw == 1 && $line !~ "#"){
-                        @return = split("\ ",$line);
-                        @return[1] =~ s/\"//g;
-                        @return[1] =~ s/^\s+//;
-                        @return[1] =~ s/\s+$//;
-                        $output = @return[1];
-                       last;
+			#session id
+			if ($tag eq "sessionid"){
+				if ($line =~ "ID" && $sw == 1 && $line !~ "#"){
+					@return = split("\ ",$line);
+					@return[1] =~ s/\"//g;
+					@return[1] =~ s/^\s+//;
+					@return[1] =~ s/\s+$//;
+					$output = @return[1];
+					last;
+				}
+			}
 
-               }
+			#HTTPS tag
+			if ($tag eq "httpsbackend"){
+				if ($line =~ "##True##HTTPS-backend##" && $sw == 1 ){
+					$output = "true";
+					last;
+				}
+			}
 
-       }
+			#backends
+			if ($tag eq "backends"){
+				if ($line =~ /#BackEnd/ && $sw == 1){
+					$be_section=1;
+				}
+				if ($be_section == 1){
+					#if ($line =~ /Address/ && $be >=1){
+					if ($line =~ /End/ && $line !~ /#/ && $sw == 1 && $be_section == 1 && $line !~ /BackEnd/){
+						if ($sw_ti == 0){
+							$output_ti = "TimeOut -";
+						}
+						if ($sw_pr == 0){
+							$output_pr = "Priority -";
+						}
+						$output = "$output $outputa $outputp $output_ti $output_pr\n";
+						$output_ti = "";
+						$output_pr = "";
+						$sw_ti = 0;
+                                		$sw_pr = 0;
+					}
+					if ($line =~ /Address/){
+						$be++;
+						chomp($line);
+						$outputa = "Server $be $line";
+					}
+					if ($line =~ /Port/){
+						chomp($line);
+						$outputp = "$line";
+					}
+					if ($line =~ /TimeOut/){
+						chomp($line);
+						#$output = $output . "$line";
+						$output_ti = $line;
+						$sw_ti = 1;
+					}
+					if ($line =~ /Priority/){
+						chomp($line);
+						#$output = $output . "$line";
+						$output_pr = $line;
+						$sw_pr = 1;
+					}
+				}
+				if ($sw == 1 && $be_section == 1 && $line =~ /#End/){
+					last;
+				}
+			}
+		}
+		untie @fileconf;
+	}
 
+	if ($type eq "gslb"){
+		my @fileconf;
+		my $line;
+		my @linesplt;
+		use Tie::File;
+		if ($tag eq "ns" || $tag eq "resources"){
+			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$svice";
+			foreach $line(@fileconf){
+		     	   if ($tag eq "ns"){
+				if ($line =~ /@.*SOA .* hostmaster /){
+					@linesplt = split(" ",$line);
+					$output = @linesplt[2];
+					last;
+				}
+			   }
+			   if ($tag eq "resources"){
+				if ($line =~ /;index_.*/){
+					my $tmpline=$line;
+					$tmpline =~ s/multifo!|simplefo!//g;
+					$output = "$output\n$tmpline";
+				}
+			   }
+			}
+		} else {
+			my $found=0;
+			tie @fileconf, 'Tie::File', "$configdir\/$fname\_$type.cfg\/etc\/plugins\/$svice.cfg";
+			foreach $line(@fileconf){
+				if ($tag eq "backends"){
+					if ($found ==1 && $line =~ /.*}.*/){
+						last;
+					}
+					if ($found==1 && $line !~ /^$/ && $line !~ /.*service_types.*/){
+						$output = "$output\n$line";
+					}
+					if ($line =~ /\t$svice => /){
+						$found = 1;
+					}
+				}
+				if ($tag eq "algorithm"){
+					@linesplt = split(" ",$line);
+					if (@linesplt[0] eq "simplefo"){
+						$output="prio";
+					}
+					if (@linesplt[0] eq "multifo"){
+						$output="roundrobin";
+					}
+					last;
+				}
+				if ($tag eq "plugin"){
+					@linesplt = split(" ",$line);
+					$output=@linesplt[0];
+					last;
+				}
+				if ($tag eq "dpc"){
+					if ($found ==1 && $line =~ /.*}.*/){
+						last;
+					}
+					if ($found==1 && $line =~ /.*service_types.*/){
+						my @tmpline = split("=", $line);
+						$output = @tmpline[1];
+						$output =~ s/['\[''\]'' ']//g;
+						my @tmp = split("_", $output);
+						$output = @tmp[1];
+						last;
+					}
+					if ($line =~ /\t$svice => /){
+						$found = 1;
+					}
+				}
+			}
+		}
+		untie @fileconf;
+	}
 
-
-       #ttl
-        if ($tag eq "ttl"){
-                if ($line =~ "TTL" && $sw == 1 && $line !~ "#"){
-                        @return = split("\ ",$line);
-                        @return[1] =~ s/\"//g;
-                        @return[1] =~ s/^\s+//;
-                        @return[1] =~ s/\s+$//;
-                        $output = @return[1];
-                        last;
-
-                }
-        }
-
-        #session id
-        if ($tag eq "sessionid"){
-                if ($line =~ "ID" && $sw == 1 && $line !~ "#"){
-                        @return = split("\ ",$line);
-                        @return[1] =~ s/\"//g;
-                        @return[1] =~ s/^\s+//;
-                        @return[1] =~ s/\s+$//;
-                        $output = @return[1];
-                        last;
-
-                }
-
-        }
-
-       #HTTPS tag
-       if ($tag eq "httpsbackend"){
-               if ($line =~ "##True##HTTPS-backend##" && $sw == 1 ){
-                       $output = "true";
-                       last;
-               }
-       }
-
-       #backends
-       if ($tag eq "backends"){
-               if ($line =~ /#BackEnd/ && $sw == 1){
-                       $be_section=1;
-               }
-               if ($be_section == 1){
-
-                       #if ($line =~ /Address/ && $be >=1){
-                       if ($line =~ /End/ && $line !~ /#/ && $sw == 1 && $be_section == 1 && $line !~ /BackEnd/){
-                               if ($sw_ti == 0){
-                                               $output_ti = "TimeOut -";
-                               }
-                                if ($sw_pr == 0){
-                                       $output_pr = "Priority -";
-                                }
-                                $output = "$output $outputa $outputp $output_ti $output_pr\n";
-                                $output_ti = "";
-                                $output_pr = "";
-                                $sw_ti = 0;
-                                $sw_pr = 0;
-                       }
-                       if ($line =~ /Address/){
-                               $be++;
-                               chomp($line);
-                               $outputa = "Server $be $line";
-                       }
-                       if ($line =~ /Port/){
-                                chomp($line);
-                                $outputp = "$line";
-                       }
-                       if ($line =~ /TimeOut/){
-                                chomp($line);
-                                #$output = $output . "$line";
-                               $output_ti = $line;
-                               $sw_ti = 1;
-                       }
-                       if ($line =~ /Priority/){
-                                chomp($line);
-                                #$output = $output . "$line";
-                               $output_pr = $line;
-                               $sw_pr = 1;
-                       }
-               }
-               if ($sw == 1 && $be_section == 1 && $line =~ /#End/){
-                       last;
-               }
- 
-               
-       }
-
-
-
-}
-untie @fileconf;
-return $output;
-
+	return $output;
 }
 
 #set values for a service
 sub setFarmVS($farmname,$service,$tag,$string){
+	($fname,$svice,$tag,$stri) = @_;
 
-($fname,$svice,$tag,$stri) = @_;
+	my $output = "";
+	my $type = &getFarmType($fname);
+	my $ffile = &getFarmFile($fname);
 
-my $output = "";
-my $ffile = &getFarmFile($fname);
-my @fileconf;
-my $line;
-use Tie::File;
-tie @fileconf, 'Tie::File', "$configdir/$ffile";
-my $sw = 0;
-my @vserver;
+	if ($type eq "http" || $type eq "https"){
+		my @fileconf;
+		my $line;
+		use Tie::File;
+		tie @fileconf, 'Tie::File', "$configdir/$ffile";
+		my $sw = 0;
+		my @vserver;
 
-$j=-1;
-foreach $line(@fileconf){
-	$j++;
-        if ($line =~ /Service \"$svice\"/){
-                $sw=1;
-        }
-        $stri =~ s/^\s+//;
-        $stri =~ s/\s+$//;
-        #vs tag
-        if ($tag eq "vs"){
-                if ($line =~ "HeadRequire" && $sw == 1 && $stri ne ""){
-                       $line = "\t\tHeadRequire \"Host: $stri\"";
-                        last;
+		$j=-1;
+		foreach $line(@fileconf){
+			$j++;
+		        if ($line =~ /Service \"$svice\"/){
+		                $sw=1;
+		        }
+		        $stri =~ s/^\s+//;
+		        $stri =~ s/\s+$//;
+		        #vs tag
+		        if ($tag eq "vs"){
+		                if ($line =~ "HeadRequire" && $sw == 1 && $stri ne ""){
+					$line = "\t\tHeadRequire \"Host: $stri\"";
+		                        last;
+		                }
+	                	if ($line =~ "HeadRequire" && $sw == 1 && $stri eq ""){
+	                        	$line = "\t\t#HeadRequire \"Host:\"";
+	                        	last;
+	               		}
+	       		}
+	       		#url pattern
+	       		if ($tag eq "urlp"){
+				if ($line =~ "Url" && $sw == 1 && $stri ne ""){
+					$line = "\t\tUrl \"$stri\"";
+					last;
+				}
+               			if ($line =~ "Url" & $sw == 1 && $stri eq ""){
+                       			$line = "\t\t#Url \"\"";
+                       			last;
+               			}
+       			}
+       			#client redirect
+       			if ($tag eq "redirect"){
+               			if ($line =~ "Redirect\ \"" && $sw == 1 && $stri ne ""){
+                       			$line = "\t\tRedirect \"$stri\"";
+                       			last;
+               			}
+               			if ($line =~ "Redirect\ \"" && $sw == 1 && $stri eq ""){
+                       			$line = "\t\t#Redirect \"\"";
+                       			last;
+				}
+			}       
+       			#TTL
+			if ($tag eq "ttl"){
+				if ($line =~ "TTL" && $sw == 1 && $stri ne ""){
+                        		$line = "\t\t\tTTL $stri";
+                        		last;
+                		}
+                		if ($line =~ "TTL" && $sw == 1 && $stri eq ""){
+                        		$line = "\t\t\t#TTL 120";
+                        		last;
+                		}
+		        }
+			#session id
+		        if ($tag eq "sessionid"){
+				if ($line =~ "ID" && $sw == 1 && $stri ne ""){
+					$line = "\t\t\tID \"$stri\"";
+					last;
+				}
+				if ($line =~ "TTL" && $sw == 1 && $stri eq ""){
+					$line = "\t\t\t#ID \"$stri\"";
+					last;
+				}
+			}
+			#HTTPS Backends tag
+			if ($tag eq "httpsbackend"){
+				if ($line =~ "##HTTPS-backend##" && $sw == 1 && $stri ne ""){
+					#turn on
+					$line = "\t\t##True##HTTPS-backend##";
+					#last;
+				}
+				#
+				if ($line =~ "##HTTPS-backend##" && $sw == 1 && $stri eq "" ){
+					#turn off
+					$line = "\t\t##False##HTTPS-backend##";
+					#last;
+				}
+				#Delete HTTPS tag in a BackEnd
+				if ($sw == 1 && $line =~ /HTTPS$/ && $stri eq ""){
+					#Delete HTTPS tag
+					splice @fileconf,$j,1,;
+				}
+				#Add HTTPS tag
+				if ($sw == 1 && $line =~ /BackEnd$/ && $stri ne ""){
+					if (@fileconf[$j+1] =~ /Address\ .*/){
+						#add new line with HTTPS tag
+						splice @fileconf,$j+1,0,"\t\t\tHTTPS";
+					}
+				}
+				#go out of curret Service
+				if ($line =~ /Service \"/ && $sw == 1 && $line !~ /Service \"$svice\"/){
+					$tag = "";
+					$sw = 0;
+					last;
+				}
+			}
+			#session type
+			if ($tag eq "session"){
+				if ($session ne "nothing" && $sw == 1){
+					if ($line =~ "Session"){
+						$line = "\t\tSession";
+					}
+					if ( $line =~ "End"){
+						$line= "\t\tEnd";
+					}
+					if ($line =~ "Type"){
+						$line = "\t\t\tType $session";
+						#@contents[$i+1]=~ s/#//g;
+					}
+					if ($line =~ "TTL"){
+						$line =~ s/#//g;        
+					}
+					if ($session eq "URL" || $session eq "COOKIE" || $session eq "HEADER"){
+						#@contents[$i+2]=~ s/#//g;
+						if ($line =~ /ID/){
+							$line =~ s/#//g;        
+						}
+					}
+					if ($session eq "IP"){
+						if ($line =~ /ID/){
+							$line = "\#$line\""
+						}
+					}
+					$output = $?;
+				}
+				if ($session eq "nothing" && $sw == 1){
+					if ($line =~ "Session"){
+						$line = "\t\t#Session";
+					}
+					if ($line =~ "End"){
+						$line = "\t\t#End";
+					}
+					if ($line =~ "TTL"){
+						$line = "\t\t\t#TTL 120";
+					}
+					if ($line =~ "Type"){
+						$line = "\t\t\t#Type nothing";
+					}
+					if ($line =~ "ID"){
+						$line = "\t\t\t#ID \"sessionname\"";
+					}
+				}
+				if ($sw == 1 && $line =~ /End/){
+					last;
+				}
+			}
+		}
+		untie @fileconf;
+	}
 
-                }
-                if ($line =~ "HeadRequire" && $sw == 1 && $stri eq ""){
-                        $line = "\t\t#HeadRequire \"Host:\"";
-                        last;
-               }
-       }
-       #url pattern
-       if ($tag eq "urlp"){
-               if ($line =~ "Url" && $sw == 1 && $stri ne ""){
-                       $line = "\t\tUrl \"$stri\"";
-                       last;
+	if ($type eq "gslb"){
+		my @fileconf;
+		my $line;
+		my $param;
+		my @linesplt;
+		use Tie::File;
+		if ($tag eq "ns"){
+			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$svice";
+			foreach $line(@fileconf){
+				if ($line =~ /^@\tSOA .* hostmaster /){
+					@linesplt = split(" ",$line);
+					$param = @linesplt[2];
+					$line = "@\tSOA $stri hostmaster (";
+				}
+				if ($line =~ /\t$param /){
+					$line =~ s/\t$param /\t$stri /g;
+				}
+				if ($line =~ /^$param\t/){
+					$line =~ s/^$param\t/$stri\t/g;
+				}
+			}
+			untie @fileconf;
+			&setFarmZoneSerial($fname,$svice);
+		}
+		if ($tag eq "dpc"){
+			my $found = 0;
+			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$svice.cfg";
+			foreach $line(@fileconf){
+				if ($found ==1 && $line =~ /.*}.*/){
+					last;
+				}
+				if ($found==1 && $line =~ /.*service_types.*/){
+					$line = "\t\tservice_types = tcp_$stri";
+					$output = "0";
+					last;
+				}
+				if ($line =~ /\t$svice => /){
+					$found = 1;
+				}
+			}
+			untie @fileconf;
+			if ($output eq "0") {
+				# Check if there is already an entry
+				my $found = 0;
+				my $index = 1;
+				tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
+				while (@fileconf[$index] !~ /plugins => /){
+					my $line = @fileconf[$index];
+					if ($found ==2 && $line =~ /.*}.*/){
+						splice @fileconf,$index,1;
+						last;
+					}
+					if ($found==2){
+						splice @fileconf,$index,1;
+						next;
+					}
+					if ($found==1 && $line =~ /tcp_$stri => /){
+						splice @fileconf,$index,1;
+						$found = 2;
+						next;
+					}
+					if ($line =~ /service_types => /){
+						$found = 1;
+					}
+					$index++;
+				}
+				untie @fileconf;
+				# New service_types entry
+				my $index = 0;
+				tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
+				foreach $line(@fileconf){
+					if ($line =~ /service_types => /){
+						$index++;
+						splice @fileconf,$index,0,"\ttcp_$stri => {\n\t\tplugin = tcp_connect,\n\t\tport = $stri,\n\t\tup_thresh = 2,\n\t\tok_thresh = 2,\n\t\tdown_thresh = 2,\n\t\tinterval = 5,\n\t\ttimeout = 3,\n\t}\n";
+						last;
+					}
+					$index++;
+				}
+				untie @fileconf;
+			}
+		}
+	}
 
-               }
-               if ($line =~ "Url" & $sw == 1 && $stri eq ""){
-                       $line = "\t\t#Url \"\"";
-                       last;
-               }
-       }
-       #client redirect
-       if ($tag eq "redirect"){
-               if ($line =~ "Redirect\ \"" && $sw == 1 && $stri ne ""){
-                       $line = "\t\tRedirect \"$stri\"";
-                       last;
-               }
-               if ($line =~ "Redirect\ \"" && $sw == 1 && $stri eq ""){
-                       $line = "\t\t#Redirect \"\"";
-                       last;
-               }
-
-               
-       }       
-       #TTL
-        if ($tag eq "ttl"){
-                if ($line =~ "TTL" && $sw == 1 && $stri ne ""){
-                        $line = "\t\t\tTTL $stri";
-                        last;
-                }
-                if ($line =~ "TTL" && $sw == 1 && $stri eq ""){
-                        $line = "\t\t\t#TTL 120";
-                        last;
-                }
-
-
-        }
-
-       #session id
-        if ($tag eq "sessionid"){
-                if ($line =~ "ID" && $sw == 1 && $stri ne ""){
-                        $line = "\t\t\tID \"$stri\"";
-                        last;
-               }
-                if ($line =~ "TTL" && $sw == 1 && $stri eq ""){
-                        $line = "\t\t\t#ID \"$stri\"";
-                        last;
-                }
-        }
-
-       #HTTPS Backends tag
-       if ($tag eq "httpsbackend"){
-               if ($line =~ "##HTTPS-backend##" && $sw == 1 && $stri ne ""){
-                      #turn on
-                       $line = "\t\t##True##HTTPS-backend##";
-                       #last;
-               }
-              #
-               if ($line =~ "##HTTPS-backend##" && $sw == 1 && $stri eq "" ){
-                      #turn off
-                       $line = "\t\t##False##HTTPS-backend##";
-                      #last;
-               }
-               
-               #Delete HTTPS tag in a BackEnd
-               if ($sw == 1 && $line =~ /HTTPS$/ && $stri eq ""){
-                       #Delete HTTPS tag
-                       splice @fileconf,$j,1,;
-               }
-               #Add HTTPS tag
-               if ($sw == 1 && $line =~ /BackEnd$/ && $stri ne ""){
-                       if (@fileconf[$j+1] =~ /Address\ .*/){
-                               #add new line with HTTPS tag
-                               splice @fileconf,$j+1,0,"\t\t\tHTTPS";
-                       }
-                       
-               }
-               #go out of curret Service
-               if ($line =~ /Service \"/ && $sw == 1 && $line !~ /Service \"$svice\"/){
-                       $tag = "";
-                       $sw = 0;
-                       last;
-               }
-
-
-       }
-
-       #session type
-       if ($tag eq "session"){
-                        if ($session ne "nothing" && $sw == 1){
-                                if ($line =~ "Session"){
-                                        $line = "\t\tSession";
-                                }
-                                if ( $line =~ "End"){
-                                        $line= "\t\tEnd";
-                                }
-                                if ($line =~ "Type"){
-                                        $line = "\t\t\tType $session";
-                                        #@contents[$i+1]=~ s/#//g;
-                               }
-                               if ($line =~ "TTL"){
-                                       $line =~ s/#//g;        
-
-                               }
-                                if ($session eq "URL" || $session eq "COOKIE" || $session eq "HEADER"){
-                                       #@contents[$i+2]=~ s/#//g;
-                                       if ($line =~ /ID/){
-                                               $line =~ s/#//g;        
-                                       }
-                               }
-                               if ($session eq "IP"){
-                                       if ($line =~ /ID/){
-                                               $line = "\#$line\""
-                                       }
-                               }
-                                $output = $?;
-                        }
-                        if ($session eq "nothing" && $sw == 1){
-                                if ($line =~ "Session"){
-                                        $line = "\t\t#Session";
-                                }
-                                if ($line =~ "End"){
-                                        $line = "\t\t#End";
-                                }
-                                if ($line =~ "TTL"){
-                                        $line = "\t\t\t#TTL 120";
-                                }
-                                if ($line =~ "Type"){
-                                        $line = "\t\t\t#Type nothing";
-                                }
-                                if ($line =~ "ID"){
-                                        $line = "\t\t\t#ID \"sessionname\"";
-                                }
-                        }
-                       if ($sw == 1 && $line =~ /End/){
-                               last;
-                       }
-
-       }
-
-
-        
+	return @output;
 }
 
-untie @fileconf;
+sub setFarmZoneSerial($fname,$zone){
+	my ($farmname,$zone) = @_;
+	my $ftype = &getFarmType($fname);
+	my $ffile = &getFarmFile($fname);
 
-return @output;
-
-
+	if ($ftype eq "gslb"){
+		my @fileconf;
+		use Tie::File;
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$zone";
+		foreach $line(@fileconf){
+			if ($line =~ /@\tSOA /){
+				my $date=`date +%s`;
+				splice @fileconf,$index+1,1,"\t$date";
+			}
+			$index++;
+		}
+	}
 }
 
+sub setFarmZoneResource($id,$resource,$ttl,$type,$rdata,$fname,$service){
+	my ($id,$resource,$ttl,$type,$rdata,$fname,$service)= @_;
+
+	my $output = 0;
+	my $ftype = &getFarmType($fname);
+	my $ffile = &getFarmFile($fname);
+
+	if ($ftype eq "gslb"){
+		my @fileconf;
+		my $line;
+		my $param;
+		my @linesplt;
+		my $index=0;
+		my $lb="";
+		if ($type =~ /DYN./){
+			$lb = &getFarmVS($fname,$rdata,"plugin");
+			$lb="$lb!";
+		}
+		use Tie::File;
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$service";
+		foreach $line(@fileconf){
+			if ($line =~ /\;index_/){
+				@linesplt = split("\;index_",$line);
+				$param = @linesplt[1];
+				if ($id !~ /^$/ && $id eq $param){
+					$line = "$resource\t$ttl\t$type\t$lb$rdata ;index_$param";
+				} else {
+					$index=$param+1;
+				}
+			}
+		}
+		if ($id =~ /^$/){
+			push @fileconf, "$resource\t$ttl\t$type\t$lb$rdata ;index_$index";
+		}
+		untie @fileconf;
+		&setFarmZoneSerial($fname,$service);
+		$output=$?;
+	}
+
+	return $output;
+}
+
+sub remFarmZoneResource($id,$fname,$service){
+	my ($id,$fname,$service)= @_;
+
+	my $output = 0;
+	my $ftype = &getFarmType($fname);
+	my $ffile = &getFarmFile($fname);
+
+	if ($ftype eq "gslb"){
+		my @fileconf;
+		my $line;
+		my $index=0;
+		use Tie::File;
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$service";
+		foreach $line(@fileconf){
+			if ($line =~ /\;index_$id/){
+				splice @fileconf,$index,1;
+			}
+			$index++;
+		}
+		untie @fileconf;
+		$output=$?;
+	}
+
+	return $output;
+}
+
+sub remFarmServiceBackend($id,$fname,$service){
+	my ($id,$fname,$srv)= @_;
+
+	my $output = 0;
+	my $ftype = &getFarmType($fname);
+	my $ffile = &getFarmFile($fname);
+
+	if ($ftype eq "gslb"){
+		my @fileconf;
+		my $line;
+		my $index=0;
+		use Tie::File;
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$srv.cfg";
+		foreach $line(@fileconf){
+			if ($line =~ /$srv => /){
+				$found = 1;
+				$index++;
+				next;
+			}
+			if ($found==1 && $line =~ /primary => / && $id eq "primary"){
+				splice @fileconf,$index,1;
+				$found=2;
+			}
+			if ($found==2 && $line =~ /secondary => /){
+				$line =~ s/secondary/primary/g;
+				last;
+			}
+			if ($found==1 && $line =~ /$id => /){
+				splice @fileconf,$index,1;
+				last;
+			}
+			$index++;
+		}
+		untie @fileconf;
+		$output=$?;
+	}
+
+	return $output;
+}
+
+sub setFarmGSLBNewBackend($fname,$srv,$lb,$id,$ipaddress){
+	my ($fname,$srv,$lb,$id,$ipaddress)= @_;
+
+	my $output = 0;
+	my $ftype = &getFarmType($fname);
+	my $ffile = &getFarmFile($fname);
+
+	if ($ftype eq "gslb"){
+		my @fileconf;
+		my $line;
+		my @linesplt;
+		my $found=0;
+		my $index=0;
+		my $idx=0;
+		use Tie::File;
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$srv.cfg";
+		foreach $line(@fileconf){
+			if ($line =~ /$srv => /){
+				$found = 1;
+				$index++;
+				next;
+			}
+			if ($found==1 && $lb eq "prio" && $line =~ /\}/ && $id eq "primary"){
+				splice @fileconf,$index,0,"		$id => $ipaddress";
+				last;
+			}
+			if ($found==1 && $lb eq "prio" && $line =~ /primary => / && $id eq "primary"){
+				splice @fileconf,$index,1,"		$id => $ipaddress";
+				last;
+			}
+			if ($found==1 && $lb eq "prio" && $line =~ /\}/ && $id eq "secondary"){
+				splice @fileconf,$index,0,"		$id => $ipaddress";
+				last;
+			}
+			if ($found==1 && $lb eq "prio" && $line =~ /secondary => / && $id eq "secondary"){
+				splice @fileconf,$index,1,"		$id => $ipaddress";
+				last;
+			}
+			if ($found==1 && $lb eq "roundrobin" && $line =~ /\t\t$id => /){
+				splice @fileconf,$index,1,"		$id => $ipaddress";
+				last;
+			}
+			if ($found==1 && $lb eq "roundrobin" && $line =~ / => /){
+				# What is the latest id used?
+				my @temp = split(" => ",$line);
+				$idx = @temp[0];
+				$idx =~ s/^\s+//;
+			}
+			if ($found==1 && $lb eq "roundrobin" && $line =~ /\}/){
+				$idx++;
+				splice @fileconf,$index,0,"		$idx => $ipaddress";
+				last;
+			}
+			$index++;
+		}
+		untie @fileconf;
+		$output=$?;
+	}
+
+	return $output;
+}
+
+sub runFarmReload($farmname){
+	my ($farmname)= @_;
+
+	my $stat = &runFarmStop($farmname,"false");
+	if ($stat == 0){
+		sleep 1;
+		$stat = &runFarmStart($farmname,"false");
+	}
+	return $stat;
+}
 
 #get index of a service in a http farm
 sub getFarmVSI($farmname,$sv){

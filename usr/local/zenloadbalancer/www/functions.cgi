@@ -255,7 +255,7 @@ if ($actionmenu eq "normal")
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-editserver\">";
 print "<input type=\"image\" src=\"img/icons/small/server_edit.png\" title=\"Edit Real Server $id_server\" name=\"action\" value=\"editfarm-editserver\">";
 my $maintenance = &getFarmBackendMaintenance($name,$id_server,$sv);
-if ($type ne "datalink" && $type ne "l4xnat"){
+if ($type ne "datalink" && $type ne "l4xnat" && $type ne "gslb"){
 	if ($maintenance ne "0"){
 		print "<a href=index.cgi?action=editfarm-maintenance&id=1-2&farmname=$name&id_server=$id_server&service=$sv title=\"Enable  maintenance mode for real Server $id_server $sv\" onclick=\"return confirm('Are you sure you want to enable the  maintenance mode for server: $id_server $sv?')\"><img src=\"img/icons/small/server_maintenance.png\"></a>";
 	}else{
@@ -265,7 +265,12 @@ if ($type ne "datalink" && $type ne "l4xnat"){
 
 my $sv20 = $sv;
 $sv20 =~ s/\ /%20/g;
+
+if ( $type eq "gslb"){
+print "<a href=index.cgi?action=editfarm-deleteserver&id=1-2&farmname=$name&id_server=$id_server&service=$sv20&service_type=$service_type title=\"Delete Real Server $id_server\" onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\"><img src=\"img/icons/small/server_delete.png\"></a>";
+} else {
 print "<a href=index.cgi?action=editfarm-deleteserver&id=1-2&farmname=$name&id_server=$id_server&service=$sv20 title=\"Delete Real Server $id_server\" onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\"><img src=\"img/icons/small/server_delete.png\"></a>";
+}
 
 }
 
@@ -624,7 +629,7 @@ sub zsystem(@exec){
 
 #function that create the menu for delete, move a service in a http[s] farm
 sub createmenuservice($fname,$sv,$pos){
-	($fname,$sv,$pos) = @_;
+	my ($fname,$sv,$pos) = @_;
 	my $serv20 = $sv;
 	my $serv = $sv;
 	my $filefarm = &getFarmFile($fname);
@@ -634,7 +639,7 @@ sub createmenuservice($fname,$sv,$pos){
 	untie @array ;
 	$serv20 =~ s/\ /%20/g;
 	#print "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service=$svice&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $svice\" onclick=\"return confirm('Are you sure you want to delete the Service $svice?')\"></a>";
-	print "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service=$serv20&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $svice\" onclick=\"return confirm('Are you sure you want to delete the Service $serv?')\" ></a>";
+	print "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service=$serv20&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $svice\" onclick=\"return confirm('Are you sure you want to delete the Service $serv?')\" ></a> ";
 #	if ($pos != $#output){
 #		print "<a href=index.cgi?id=1-2&action=editfarm-downservice&service=$svice&farmname=$farmname><img src=\"img/icons/small/arrow_down.png\" title=\"Move down service $service\"></a>";
 #	}
@@ -643,6 +648,7 @@ sub createmenuservice($fname,$sv,$pos){
 #	}
 
 }
+
 
 #Refresh stats
 sub refreshstats(){
@@ -680,6 +686,7 @@ print "<input type=\"hidden\" value=\"managefarm\" name=\"action\" class=\"butto
 #print "<input type=\"submit\" value=\"Submit\" name=\"button\" class=\"button small\">";
 print "</form>";
 }
+
 
 #
 #no remove this 

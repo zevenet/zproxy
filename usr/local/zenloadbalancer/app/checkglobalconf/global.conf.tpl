@@ -81,6 +81,8 @@ $openssl="/usr/bin/openssl";
 $iptables="/sbin/iptables";
 #Where is netstat-nat?
 $netstatNat="/usr/bin/netstat-nat";
+#Where is gdnsd?
+$gdnsd="/usr/local/zenloadbalancer/app/gdnsd/sbin/gdnsd";
 
 #where is pound binary?
 $pound="/usr/local/zenloadbalancer/app/pound/sbin/pound";

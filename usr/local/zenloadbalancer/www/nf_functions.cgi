@@ -21,6 +21,18 @@
 #
 ###############################################################################	
 
+#
+sub loadNfModule($modname,$params){
+	($modname,$params)= @_;
+	
+	my $status=0;
+	my @modules = `lsmod`;
+	if (! grep /^$modname /, @modules) {
+		my $status = `/sbin/modprobe $modname $params`;
+	}
+	
+	return $status;
+}
 
 # 
 sub getIptFilter($type, $desc, @iptables){

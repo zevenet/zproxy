@@ -147,6 +147,12 @@ $rewritelocation = $Variables{'rewritelocation'};
 $deadratio = $Variables{'deadratio'};
 $farmlisten = $Variables{'farmlisten'};
 $refresh = $Variables{'refresh'};
+$resource_server = $Variables{'resource_server'};
+$ttl_server = $Variables{'ttl_server'};
+$type_server = $Variables{'type_server'};
+$service_type = $Variables{'service_type'};
+$rdata_server = $Variables{'rdata_server'};
+$zone = $Variables{'zone'};
 
 
 #end variables in get string

@@ -94,6 +94,9 @@ if ($action =~ "^editfarm" || $editfarm){
 		if ($type eq "l4xnat"){
 			require "./content1-28.cgi";
 		}
+		if ($type eq "gslb"){
+			require "./content1-202.cgi";
+		}
 	}
 }
 
@@ -114,6 +117,9 @@ if ($action eq "managefarm"){
 		}
 		if ($type eq "l4xnat"){
 			require "./content1-29.cgi";
+		}
+		if ($type eq "gslb"){
+			require "./content1-203.cgi";
 		}
 	}
 }
@@ -226,7 +232,7 @@ foreach $file (@files) {
 		if ($type eq "tcp" || $type eq "udp" || $type eq "l4xnat"){
 			&createmenuvip($name,$id,$status);
 		}
-		if ($type =~ /http/ ){
+		if ($type =~ /http/ || $type eq "gslb"){
 			&createmenuviph($name,$id,"HTTP");
 		}
 		print "</td>";

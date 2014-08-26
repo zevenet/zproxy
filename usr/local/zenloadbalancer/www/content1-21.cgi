@@ -45,7 +45,7 @@ if ($action eq "Save"){
 		$action = "addfarm";
 	}
 
-	if ($farmprotocol =~ /TCP|HTTP|UDP|HTTPS/ ) {
+	if ($farmprotocol =~ /TCP|HTTP|UDP|HTTPS|GSLB/ ) {
 		if (&isnumber($vipp) eq "true"){
 			$inuse = &checkport($vip,$vipp);
 			if ($inuse eq "true"){
@@ -71,7 +71,6 @@ if ($action eq "Save"){
 		if ($status == -1){
 			&errormsg("The $farmname farm can't be created");
 			$error = 1;
-			
 		}
 		if ($status == -2){
 			&errormsg("The $farmname farm already exists, please set a different farm name");
@@ -111,6 +110,7 @@ if ($farmprotocol eq "" || $farmname eq ""){
 	print "<option value=\"HTTP\">HTTP</option>\n";
 	print "<option value=\"L4xNAT\">L4xNAT</option>\n";
 	print "<option value=\"DATALINK\">DATALINK</option>\n";
+	print "<option value=\"GSLB\">GSLB</option>\n";
 	print "</select>";
 } else {
 	print "<input type=\"text\" value=\"$farmprotocol\" size=\"10\" name=\"farmprotocol\" disabled >";
