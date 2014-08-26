@@ -79,6 +79,7 @@ print "
 <title>ZEN Load Balancer GUI v$version on $host</title>
 
 <link href=\"/img/favicon.ico\" rel=\"icon\" type=\"image/x-icon\" />
+<link rel='stylesheet' href='/font/font-aw/css/font-awesome.min.css'>
 
 </head>
 <body>

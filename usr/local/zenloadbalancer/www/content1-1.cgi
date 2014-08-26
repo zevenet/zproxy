@@ -383,9 +383,9 @@ print "<script src=\"https://code.jquery.com/jquery-latest.pack.js\"></script>
   var container0 = \$('#support');
   var container1 = \$('#products');
   var container2 = \$('#news');
-  var fixedsupport = '<a href=\"http://www.zenloadbalancer.com/support-programs/?zlb_gui\" target=\"_blank\">Get Support for Zen Community and Enterprise Edition</a><br>Already have Professional Support?<a href=\"https://www.sofintel.net/support/?zlb_gui\" target=\"_blank\"> Open a Support Request here</a><br>';
-  var fixedproducts = 'Searching more performance? <a href=\"http://www.zenloadbalancer.com/products/?zlb_gui\" target=\"_blank\">Visit our Enterprise Products</a><br>Looking for strong SSL certificates at the best price? <a href=\"http://ecommerce.sofintel.net/ssl/ssl-certificate.aspx\" target=\"_blank\">Get one of our Verified SSL Certificates</a><br><img src=\"/img/img_verified_logo.gif\" title=\"Verified by Starfield Technologies\"><font size=1><br>&nbsp;* We are a Starfield Technologies supplier</font>';
-  var fixednews = 'ZLB News<br><a href=\"http://www.zenloadbalancer.com/news/?zlb_gui\" target=\"_blank\">Visit the news page on our WEB site</a><br>';
+  var fixedsupport = '<a href=\"http://www.zenloadbalancer.com/support-programs/?zlb_gui\" target=\"_blank\"><i class=\"fa fa-support fa-2x\"></i>&nbsp;&nbsp;Get Support for Zen Community and Enterprise Edition</a><br><a href=\"https://www.sofintel.net/support?zlb_gui\" target=\"_blank\"><i class=\"fa fa-users fa-2x\"></i>&nbsp;&nbsp;Already have Professional Support? Open a Support Request here</a><br>';
+  var fixedproducts = '<a href=\"http://www.zenloadbalancer.com/products/?zlb_gui\" target=\"_blank\"><i class=\"fa fa-tasks fa-2x\"></i>&nbsp;&nbsp;Get more from Zen with Enterprise Edition Appliances</a><br><a href=\"http://ecommerce.sofintel.net/ssl/ssl-certificate.aspx\" target=\"_blank\"><i class=\"fa fa-certificate fa-2x\"></i>&nbsp;&nbsp;Get your best Zen-Ready SSL Certificates at the best price *</a><br><br><font size=1>&nbsp;&nbsp;&nbsp;* We are a Starfield Technologies supplier&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><<img src=\"/img/img_verified_logo.gif\" title=\"Verified by Starfield Technologies\">';
+  var fixednews = 'ZLB News<br><a href=\"http://www.zenloadbalancer.com/news/?zlb_gui\" target=\"_blank\"><i class=\"fa fa-info-circle fa-2x\"></i>&nbsp;&nbsp;Visit the news page on our WEB site</a><br>';
   var url = '$url';
   window.connect = 'false';
   \$.getJSON(url + '?callback=?&uuid=$systemuuid',
