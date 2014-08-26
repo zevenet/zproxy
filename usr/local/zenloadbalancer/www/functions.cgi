@@ -574,7 +574,7 @@ sub setGuiPort($httpsguiport,$minihttpdconf) {
 
 
 #function that create the menu for manage the vips in HTTP Farm Table
-sub createmenuviph($name,$pid,"HTTP")
+sub createmenuviph($name,$pid,$fproto)
 {
 ($name,$id,$farmprotocol) = @_;
 
@@ -588,29 +588,7 @@ if ( $pid =~ /^[1-9]/ )
         print "<a href=\"index.cgi?id=$id&action=startfarm&farmname=$name\"><img src=\"img/icons/small/farm_up.png\" title=\"Start the $name Farm\"></a> ";
         }
 print "<a href=\"index.cgi?id=$id&action=deletefarm&farmname=$name\"><img src=\"img/icons/small/farm_cancel.png\" title=\"Delete the $name Farm\" onclick=\"return confirm('Are you sure you want to delete the farm: $name?')\"></a> ";
-if ($pid =~ /^[1-9]/)
-        {
-        print "<a href=\"index.cgi?id=$id&action=managefarm&farmname=$name\"><img src=\"img/icons/small/farm_manage.png\" title=\"View $name backends status\"></a> ";
-        }
-
-}
-
-#function that create the menu for manage the vips in HTTP Farm Table
-sub createmenuviph($name,$pid,"HTTP")
-{
-($name,$id,$farmprotocol) = @_;
-
-if ( $pid =~ /^[1-9]/ )
-        {
-        print "<a href=\"index.cgi?id=$id&action=stopfarm&farmname=$name\" onclick=\"return confirm('Are you sure you want to stop the farm: $name?')\"><img src=\"img/icons/small/farm_delete.png\" title=\"Stop the $name Farm\"></a> ";
-        print "<a href=\"index.cgi?id=$id&action=editfarm&farmname=$name\"><img src=\"img/icons/small/farm_edit.png\" title=\"Edit the $name Farm\"></a> ";
-        }
-        else
-        {
-        print "<a href=\"index.cgi?id=$id&action=startfarm&farmname=$name\"><img src=\"img/icons/small/farm_up.png\" title=\"Start the $name Farm\"></a> ";
-        }
-print "<a href=\"index.cgi?id=$id&action=deletefarm&farmname=$name\"><img src=\"img/icons/small/farm_cancel.png\" title=\"Delete the $name Farm\" onclick=\"return confirm('Are you sure you want to delete the farm: $name?')\"></a> ";
-if ($pid =~ /^[1-9]/)
+if ($pid =~ /^[1-9]/ && $farmprotocol ne "gslb")
         {
         print "<a href=\"index.cgi?id=$id&action=managefarm&farmname=$name\"><img src=\"img/icons/small/farm_manage.png\" title=\"View $name backends status\"></a> ";
         }

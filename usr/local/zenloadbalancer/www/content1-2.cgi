@@ -232,7 +232,10 @@ foreach $file (@files) {
 		if ($type eq "tcp" || $type eq "udp" || $type eq "l4xnat"){
 			&createmenuvip($name,$id,$status);
 		}
-		if ($type =~ /http/ || $type eq "gslb"){
+		if ($type eq "gslb"){
+			&createmenuviph($name,$id,$type);
+		}
+		if ($type =~ /http/){
 			&createmenuviph($name,$id,"HTTP");
 		}
 		print "</td>";
