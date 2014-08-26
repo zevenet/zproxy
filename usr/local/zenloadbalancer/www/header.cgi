@@ -91,8 +91,7 @@ print "
 open FR,"<$filecluster";
 @file = <FR>;
 
-if (-e $filecluster && (grep(/UP/,@file)))
-	{
+if (-e $filecluster && (grep(/UP/,@file))){
 	if (&activenode() eq "true"){
 		print "Cluster: <b>this node is master</b>";
 	}
@@ -103,8 +102,10 @@ if (-e $filecluster && (grep(/UP/,@file)))
 		print "<img src=\"img/icons/small/exclamation_octagon_fram.png\" title=\"Changes will not be replicated!\">Cluster: <b>this node is backup</b>";
 	}
 	print " |";
-	}
-
+}
+else{
+	print "<img src=\"img/icons/small/exclamation_octagon_fram.png\" title=\"HA issue, cluster not configured\">Cluster: <b>Not configured. <a href=\"http://www.zenloadbalancer.com/eliminate-a-single-point-of-failure/\" target=\"_blank\"><u>How to eliminate this single point of failure</u></a></b> |";
+}
 #print " Host: <strong>$host</strong> | Date: <strong>$month $day $year  $hour:$min:$sec</strong></p>
 print " Host: <strong>$host</strong> | Date: <strong>$now</strong> | <a href=\'#\' onclick=\'logout()\' title=\'Logout\'> <strong>Logout</strong></a></p>
  </div>
