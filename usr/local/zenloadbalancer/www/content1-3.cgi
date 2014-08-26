@@ -74,10 +74,10 @@ if ($action eq "Generate CSR"){
 		&errormsg("Fields can not be empty. Try again.");
 		$action = "Show_Form";
 	}elsif(&checkFQDN($cert_fqdn) eq "false"){
-		&errormsg("FQDN not valid. It must be as these examples: domain.com, mail.domain.com, or *.domain.com. Try again.");
+		&errormsg("FQDN is not valid. It must be as these examples: domain.com, mail.domain.com, or *.domain.com. Try again.");
 		$action = "Show_Form";
 	}elsif ($cert_name !~ /^[a-zA-Z0-9\-]*$/){
-		&errormsg("Name not valid. Only letters, numbers and '-' chararter are allowed. Try again.");
+		&errormsg("Certificate Name is not valid. Only letters, numbers and '-' chararter are allowed. Try again.");
 		$action = "Show_Form";
 	}else{		
 		&createCSR($cert_name, $cert_fqdn, $cert_country, $cert_state, $cert_locality, $cert_organization, $cert_division, $cert_mail, $cert_key, "");
