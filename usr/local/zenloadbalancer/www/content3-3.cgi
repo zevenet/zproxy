@@ -234,6 +234,11 @@ if (-e $filecluster)
 	        	# 2) logon to the SSH server using those credentials.
 	        	# test the login output to make sure we had success
 			$ssh->run_ssh() or die "SSH process couldn't start: $!";
+			my $eject = $ssh->peek(5);
+			if ($eject =~ /yes/){
+				$ssh->read_all();
+				$ssh->send("yes");
+			}
 			my $sshstat = $ssh->waitfor('password',10);
 			my $sshpasswrong = "false";
 			if ( $sshstat eq 1 ){
@@ -250,7 +255,7 @@ if (-e $filecluster)
 			}else{
 				$ssh->read_all();
 				#There were an old RSA communication, we have to delete it
-				my $eject = $ssh->exec("rm -rf /root/.ssh/authorized_keys");
+				my $eject = $ssh->exec("rm -f /root/.ssh/authorized_keys");
 			}
 			$error = "false";
 			if ($sshstat eq 1){
@@ -299,7 +304,9 @@ if (-e $filecluster)
         		# - now you know you're logged in - #
         		# run command
 			&logfile("Copying new RSA key from $lhost ($lip) to $rhost ($rip)");
-        		my $eject = $ssh->exec("rm /root/.ssh/authorized_keys; mkdir -p /root/.ssh/; echo $rsa_pass \>\> /root/.ssh/authorized_keys");			
+        		my $eject = $ssh->exec("rm -f /root/.ssh/authorized_keys; mkdir -p /root/.ssh/; echo $rsa_pass \>\> /root/.ssh/authorized_keys");
+
+			$ssh->read_all(); #Clean the ssh buffer
 	                my $rhostname = $ssh->exec("hostname");
        		        @rhostname = split("\ ",$rhostname);
                 	$rhostname = @rhostname[1];
