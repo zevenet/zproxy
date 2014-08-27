@@ -32,8 +32,9 @@ echo "Restarting Zen Load Balancer web GUI..."
 echo "ZLB will be unavailable meanwile restarting service."
 echo "Now you need to restart zenloadbalancer service, so "
 echo "meanwhile ZLB will be unavailable."
-echo "Do you want to proceed? y/n"
-read response
+#echo "Do you want to proceed? y/n"
+#read response
+response = "y"
 if [ "$response" == "y" -o "$response" == "Y" ]; then
 	/etc/init.d/zenloadbalancer stop
 	/etc/init.d/zenloadbalancer start
