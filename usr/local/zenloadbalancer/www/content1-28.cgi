@@ -346,9 +346,9 @@ if ($nattype == -1){
 	$nattype = "nat";
 }
 my $seldisabled="";
-if ($farmprotocol eq "sip"){
-	$seldisabled="disabled";
-}
+#if ($farmprotocol eq "sip"){
+#	$seldisabled="disabled";
+#}
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-nattype\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";

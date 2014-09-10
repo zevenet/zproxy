@@ -490,13 +490,16 @@ sub gwofif($ifgw){
 
 # Returns array execution of netstat
 sub getNetstatFilter($proto,$state,$ninfo,$fpid,@netstat){
-	($proto,$state,$ninfo,$fpid,@netstat)= @_;
+	my ($proto,$state,$ninfo,$fpid,@netstat)= @_;
 
 	my $lfpid = $fpid;
 	chomp($lfpid);
 	#print "proto $proto ninfo $ninfo state $state pid $fpid<br/>";
 	if ($lfpid){
 		$lfpid = "\ $lfpid\/";
+	}
+	if ($proto ne "tcp" && $proto ne "udp"){
+		$proto = "";
 	}
 	my @output = grep{ /${proto}.*\ ${ninfo}\ .*\ ${state}.*${lfpid}/ } @netstat;
 	return @output;
