@@ -100,6 +100,8 @@ $fwmarksconf = "$configdir/fwmarks.conf";
 $defaultgw="";
 #Interface Default Gateway
 $defaultgwif="";
+#Number of gratuitous pings
+$pingc="1";
 
 #Directory where is check script. In this directory you can save your own check scripts. 
 $libexec_dir="/usr/local/zenloadbalancer/app/libexec";

@@ -562,8 +562,8 @@ sub sendGArp($if,$ip){
 	($if,$ip) = @_;
 	my @iface = split(":.",$if);
 	&logfile("sending '$arping_bin -c 2 -A -I $iface[0] $ip' ");
-	my @eject = `$arping_bin -c 2 -A -I $iface[0] $ip > /dev/null`;
-	if ($ext == 1 && ){
+	my @eject = `$arping_bin -c 2 -A -I $iface[0] $ip > /dev/null &`;
+	if ($ext == 1){
 		&sendGPing($iface[0]);
 	}
 }
