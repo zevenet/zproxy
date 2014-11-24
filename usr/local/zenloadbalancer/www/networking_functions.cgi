@@ -21,6 +21,12 @@
 #
 ###############################################################################	
 
+my $ext = 0;
+if ( -e "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi" ){
+	require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";
+	$ext = 1;
+}
+
 #check if a port in a ip is up
 sub checkport($host,$port){
 	($host,$port) = @_;
@@ -557,6 +563,9 @@ sub sendGArp($if,$ip){
 	my @iface = split(":.",$if);
 	&logfile("sending '$arping_bin -c 2 -A -I $iface[0] $ip' ");
 	my @eject = `$arping_bin -c 2 -A -I $iface[0] $ip > /dev/null`;
+	if ($ext == 1 && ){
+		&sendGPing($iface[0]);
+	}
 }
 
 # Enable(true) / Disable(false) IP Forwarding
