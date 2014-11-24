@@ -468,6 +468,9 @@ if ($action eq "editfarm-addservice"){
 	if ($result eq "1"){
 		&errormsg("Service named $service exists");
 	}
+        if ($result eq "3"){
+                &errormsg("Service name is not valid, only allowed numbers, letters and hyphens.");
+        }
 
 }
 

@@ -4356,15 +4356,21 @@ sub checkFarmnameOK($fname){
 
 #Create a new Service in a HTTP farm
 sub setFarmHTTPNewService($fname,$service){
-       ($fname,$svice) =  @_;
-       $output = -1;
-       #first check if service name exist
-       if ( $service =~ /(?=)/ && $service =~ /^$/){
+	($fname,$svice) =  @_;
+	$output = -1;
+	#first check if service name exist
+	if ( $service =~ /(?=)/ && $service =~ /^$/){
                #error 2 eq $service is empty
                $output = 2;
                return $output;
-       }
-       use File::Grep qw( fgrep fmap fdo );
+	}
+	#check the correct string in the service
+	my $newservice = &checkFarmnameOK($service);
+	if ($newservice ne 0){
+               $output = 3;
+               return $output;
+	}
+	use File::Grep qw( fgrep fmap fdo );
         if ( !fgrep { /Service "$service"/ } "$configdir/$fname\_pound.cfg" ){
                #create service 
                my @newservice;
