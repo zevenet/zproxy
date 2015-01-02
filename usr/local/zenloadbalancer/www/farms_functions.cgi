@@ -4344,10 +4344,10 @@ sub setFarmHttpBackendStatus($fname){
 
 #checks thata farmname has correct characters (number, letters and lowercases)
 sub checkFarmnameOK($fname){
-	($fname) =  @_;
+	($check_name) =  @_;
 	$output = -1;
 	#if ($fname =~ /^\w+$/){
-	if ($fname =~ /^[a-zA-Z0-9\-]*$/){
+	if ($check_name =~ /^[a-zA-Z0-9\-]*$/){
 		$output = 0;
 	}
 
@@ -4710,6 +4710,17 @@ sub getFarmVS($farmname,$service,$tag){
 				}
 			}
 
+
+                        #dynscale
+                        if ($tag eq "dynscale"){
+                                if ($line =~ "DynScale\ " && $sw == 1 && $line !~ "#"){
+                                        $output = "true";
+                                        last;
+                                }
+
+                        }
+
+
 			#sesstion type 
 			if ($tag eq "sesstype"){
 				if ($line =~ "Type" && $sw == 1 && $line !~ "#"){
@@ -4927,6 +4938,18 @@ sub setFarmVS($farmname,$service,$tag,$string){
                        			last;
                			}
        			}
+		        #dynscale
+                        if ($tag eq "dynscale"){
+                                if ($line =~ "DynScale" && $sw == 1 && $stri ne ""){
+                                        $line = "\t\tDynScale 1";
+                                        last;
+                                }
+                                if ($line =~ "DynScale" && $sw == 1 && $stri eq ""){
+                                        $line = "\t\t#DynScale 1";
+                                        last;
+                                }
+                        }
+
        			#client redirect
        			if ($tag eq "redirect"){
                			if ($line =~ "Redirect\ \"" && $sw == 1 && $stri ne ""){
