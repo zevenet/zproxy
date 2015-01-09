@@ -22,6 +22,8 @@
 ###############################################################################	
 
 my $ext = 0;
+my $routeparams;
+
 if ( -e "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi" ){
 	require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";
 	$ext = 1;
@@ -214,8 +216,8 @@ sub addlocalnet($if){
 	if ( $ip =~ /\./ ){
 		$ipmask = &maskonif($if);
 		($net,$mask) = ipv4_network("$ip / $ipmask");
-		&logfile("running '$ip_bin route add $net/$mask dev $if src $ip table table_$if' ");
-		@eject = `$ip_bin route add $net/$mask dev $if src $ip table table_$if`;
+		&logfile("running '$ip_bin route add $net/$mask dev $if src $ip table table_$if $routeparams' ");
+		@eject = `$ip_bin route add $net/$mask dev $if src $ip table table_$if $routeparams`;
 	}
 }
 
@@ -248,8 +250,8 @@ sub applyRoutes($table,$if,$gw){
 			&delRoutes("local", $if);
 			&addlocalnet($if);
 			if ($gw !~ /^$/){
-				&logfile("running '$ip_bin route add default via $gw dev $if table table_$if' ");
-				@eject = `$ip_bin route add default via $gw dev $if table table_$if 2> /dev/null`;
+				&logfile("running '$ip_bin route add default via $gw dev $if table table_$if $routeparams' ");
+				@eject = `$ip_bin route add default via $gw dev $if table table_$if $routeparams 2> /dev/null`;
 				$statusR = $?;
 			}
 			if (&isRule($ip,$if) eq 0) {
@@ -260,8 +262,8 @@ sub applyRoutes($table,$if,$gw){
 			# Apply routes on the global table
 			&delRoutes("global", $if);
 			if ($gw !~ /^$/){
-				&logfile("running '$ip_bin route add default via $gw dev $if' ");
-				@eject = `$ip_bin route add default via $gw dev $if 2> /dev/null`;
+				&logfile("running '$ip_bin route add default via $gw dev $if $routeparams' ");
+				@eject = `$ip_bin route add default via $gw dev $if $routeparams 2> /dev/null`;
 				$statusR = $?;
 				tie @contents, 'Tie::File', "$globalcfg";
 				for (@contents) {
