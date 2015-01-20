@@ -30,10 +30,7 @@ require "/usr/local/zenloadbalancer/www/nf_functions.cgi";
 require "/usr/local/zenloadbalancer/www/cluster_functions.cgi";
 require "/usr/local/zenloadbalancer/www/rrd_functions.cgi";
 require "/usr/local/zenloadbalancer/www/cert_functions.cgi";
-if (-e "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi"){
-	require "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi";
-}
-
+require "/usr/local/zenloadbalancer/www/l4_functions.cgi";
 
 #function that check if variable is a number no float
 sub isnumber($num)

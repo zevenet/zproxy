@@ -23,7 +23,7 @@
 
 #STATUS of a L4xNAT Farm
 
-#if ($viewtableclients eq ""){ $viewtableclients = "no";}
+if ($viewtableclients eq ""){ $viewtableclients = "no";}
 #if ($viewtableconn eq ""){ $viewtableconn = "no";}
 
 # Real Server Table
@@ -34,6 +34,9 @@ my $nattype = &getFarmNatType($farmname);
 #	$args = "D$args";
 #}
 my $proto = &getFarmProto($farmname);
+if ($proto eq "all"){
+	$proto="";
+}
 #$args = "$args -p $proto";
 
 my @netstat = &getNetstatNat($args);
@@ -84,17 +87,55 @@ foreach (@backends){
 	}else{
 		print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td> ";
 	}
+
 #	my @synnetstatback1 = &getNetstatFilter("$proto","\.\*SYN\.\*|UNREPLIED"," src=.* dst=.* .* src=$ip_backend dst=$fvip ","",@netstat);
-	my @synnetstatback1 = &getNetstatFilter("$proto","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat);
-	my $npend = @synnetstatback1;
+	my @synnetstatback1;
+	my @synnetstatback2;
+	if ($nattype eq "dnat"){
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+			@synnetstatback1 = &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat); # TCP
+		}
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+			@synnetstatback2 = &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat); # UDP
+		}
+	} else {
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+			@synnetstatback1 = &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat); # TCP
+		}
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+			@synnetstatback2 = &getNetstatFilter("udp","","\.* src=$fvip dst=\.* \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat); # UDP
+		}
+	}
+
 #	my @synnetstatback2 = &getNetstatFilter("$proto","UNREPLIED"," src=$fvip dst=$ip_backend ","",@netstat);
-#	my $npend = @synnetstatback1+@synnetstatback2;
+	my $npend = @synnetstatback1+@synnetstatback2;
 	print "<td>$npend</td>";
-	@stabnetstatback = &getNetstatFilter("$proto","","\.* ESTABLISHED src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat);
-	my $nestab = @stabnetstatback;
+
+	my @stabnetstatback1;
+	my @stabnetstatback2;
+	if ($nattype eq "dnat"){
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+			@stabnetstatback1 = &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$ip_backend \.* src=$ip_backend \.*","",@netstat);
+		}
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+			@stabnetstatback2 = &getNetstatFilter("udp","","\.* src=\.* dst=$ip_backend \.* src=$ip_backend \.*ASSURED\.*","",@netstat);
+		}
+	} else {
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+			@stabnetstatback1 = &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat);
+		}
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+			@stabnetstatback2 = &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* src=$ip_backend \.*ASSURED\.*","",@netstat);
+		}
+	}
+	my $nestab = @stabnetstatback1+@stabnetstatback2;
 	print "<td>$nestab</td>";
-	@timewnetstatback = &getNetstatFilter("$proto","","\.*\_WAIT src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat);
-#	@timewnetstatback = &getNetstatFilter("","","\.*WAIT \.*","",@netstat);
+
+	my @timewnetstatback;
+	# Close connections for UDP has no sense 
+	if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+		@timewnetstatback = &getNetstatFilter("tcp","","\.*\_WAIT src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat);
+	}
 	my $ntimew = @timewnetstatback;
 	print "<td>$ntimew</td>";
 	print "<td> $backends_data[2] </td>";
@@ -103,8 +144,46 @@ foreach (@backends){
 
 print "</tbody>";
 print "</table>";
-print "</div>";
+print "</div>\n\n";
 
+if ($proto eq "sip"){
+
+	# Active sessions
+	print "<div class=\"box-header\">";
+	my @csessions = &getConntrackExpect();
+	my $totalsessions = @csessions;
+
+	if ($viewtableclients eq "yes"){
+		print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=no&viewtableconn=$viewtableconn\" title=\"Minimize\"><img src=\"img/icons/small/bullet_toggle_minus.png\"></a>";
+	} else {
+		print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=yes&viewtableconn=$viewtableconn\" title=\"Maximize\"><img src=\"img/icons/small/bullet_toggle_plus.png\"></a>";
+	}
+
+	print "Client sessions status <font size=1>&nbsp;&nbsp;&nbsp; $totalsessions active clients</font></div>\n";
+	print "<div class=\"box table\"><table cellspacing=\"0\">\n";
+	if ($viewtableclients eq "yes")
+		{
+		print "<thead>\n";
+		print "<tr><td>Client Address</td></tr>\n";
+		print "</thead>";
+		print "<tbody>";
+
+		foreach $session (@csessions){
+			#my @s_backend  = split("\t",$_);
+			#if (@s_backend[0] =~ /^[0-9]/ && ($ftracking == 0 || @s_backend[2] <= $ftracking))
+			#	{
+			#	print "<tr><td>@s_backend[0]  </td><td>@s_backend[1]  </td><td>@s_backend[2] </td><td>@s_backend[3] </td><td>@s_backend[4] </td><td>@s_backend[5] </td><td>@s_backend[6] </td></tr>";
+			#	}
+
+			print "<tr><td>$session</td></tr>";
+		}
+		print "</tbody>";
+		}
+
+	print "</table>";
+	print "</div>";
+
+}
 
 print "<!--END MANAGE-->";
 

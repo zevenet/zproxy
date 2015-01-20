@@ -26,11 +26,24 @@ sub loadNfModule($modname,$params){
 	($modname,$params)= @_;
 	
 	my $status=0;
-	my @modules = `lsmod`;
+	my @modules = `$lsmod`;
 	if (! grep /^$modname /, @modules) {
-		my $status = `/sbin/modprobe $modname $params`;
+		`$modprobe $modname $params`;
+		$status = $?;
 	}
 	
+	return $status;
+}
+
+#
+sub ReloadNfModule($modname,$params){
+	($modname,$params)= @_;
+
+	my $status=0;
+	`$modprobe -r $modname`;
+	`$modprobe $modname $params`;
+	$status = $?;
+
 	return $status;
 }
 
@@ -199,6 +212,10 @@ sub genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$st
 		}
 		$prob = $value / $prob;
 		$rule = "$iptables -t mangle -A PREROUTING -m statistic --mode random --probability $prob -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
+	}
+
+	if ($lbalg eq "leastconn"){
+		$rule = "$iptables -t mangle -A PREROUTING -m condition --condition '\_$fname\_$mark\_' -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
 	}
 
 	if ($lbalg eq "prio"){
