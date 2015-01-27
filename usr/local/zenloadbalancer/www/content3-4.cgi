@@ -58,8 +58,8 @@ if(!(valid_form())) {
 	print "			<label>Verify password: </label>";
 	print "			<input type=\"password\" name=\"trustedpass\">";
 	print "			<br><br>";
-	print "			<input type=\"submit\" value=\"Change\" name=\"action\" class=\"button small\">";
-	print "			<input type=\"submit\" value=\"Change & Sync with root passwd\" name=\"action\" class=\"button small\">";
+	print "			<input type=\"submit\" value=\"Change\" name=\"actionpost\" class=\"button small\">";
+	print "			<input type=\"submit\" value=\"Change & Sync with root passwd\" name=\"actionpost\" class=\"button small\">";
 	print "			<div style=\"clear:both;\"></div>";
 	print "		</form>";
 
@@ -71,7 +71,7 @@ if(!(valid_form())) {
 else {
 	change_passwd();
 	&successmsg("Successfully changed password");
-	if ($actionpost eq "Change & Sync with root passwd")
+	if ($action eq "Change & Sync with root passwd")
 		{
 		chomp($newpass);
 ##no move the next lines

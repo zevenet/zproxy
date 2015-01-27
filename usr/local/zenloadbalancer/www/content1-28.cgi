@@ -409,7 +409,7 @@ if ($lbalg eq "weight"){
 } else {
 	print "<option value=\"weight\">Weight: connection linear dispatching by weight</option>";
 }
-if ($lbalg eq "prio"){	
+if ($lbalg eq "prio"){
 	print "<option value=\"prio\" selected=\"selected\">Priority: connections always to the most prio available</option>";
 } else {
 	print "<option value=\"prio\" >Priority: connections always to the most prio available</option>";
