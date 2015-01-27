@@ -4103,6 +4103,9 @@ sub setNewFarmName($fname,$newfname){
 		rename("$configdir\/$ffile","$configdir\/$newffile");
 	}
 
+	#rename rrd
+	rename("$rrdap_dir$rrd_dir/$fname-farm.rrd","$rrdap_dir$rrd_dir/$newfname-farm.rrd");
+
 	return $output;
 }
 
