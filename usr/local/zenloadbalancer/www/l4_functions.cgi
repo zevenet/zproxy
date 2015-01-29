@@ -81,5 +81,72 @@ sub validL4ExtPort($fproto,$ports){
 	return $status;
 }
 
+#
+sub runL4FarmRestart($fname,$writeconf,$type){
+	my ($fname, $writeconf, $type) = @_;
+
+	my $alg = &getFarmAlgorithm($fname);
+	my $fbootstatus = &getFarmBootStatus($fname);
+	my $output = 0;
+	my $pidfile = "/var/run/l4sd.pid";
+
+	if ($alg eq "leastconn" && $fbootstatus eq "up" && $writeconf eq "false" && $type eq "hot" && -e "$pidfile") {
+		open FILE,"<$pidfile";
+		my $pid = <FILE>;
+		close FILE;
+		kill USR1, $pid;
+		$output = $?;
+	} else {
+		&runFarmStop($farmname,$writeconf);
+		$output = &runFarmStart($farmname,$writeconf);
+	}
+
+	return $output;
+}
+
+#
+sub _runL4FarmRestart($fname,$writeconf,$type){
+	my ($fname, $writeconf, $type) = @_;
+
+	my $alg = &getFarmAlgorithm($fname);
+	my $fbootstatus = &getFarmBootStatus($fname);
+	my $output = 0;
+	my $pidfile = "/var/run/l4sd.pid";
+
+	if ($alg eq "leastconn" && $fbootstatus eq "up" && $writeconf eq "false" && $type eq "hot" && -e "$pidfile") {
+		open FILE,"<$pidfile";
+		my $pid = <FILE>;
+		close FILE;
+		kill '-USR1', $pid;
+		$output = $?;
+	} else {
+		&_runFarmStop($farmname,$writeconf);
+		$output = &_runFarmStart($farmname,$writeconf);
+	}
+
+	return $output;
+}
+
+#
+sub sendL4ConfChange($fname){
+	my ($fname) = @_;
+
+	my $alg = &getFarmAlgorithm($fname);
+	my $fbootstatus = &getFarmBootStatus($fname);
+	my $output = 0;
+	my $pidfile = "/var/run/l4sd.pid";
+
+	if ($alg eq "leastconn" && -e "$pidfile") {
+		open FILE,"<$pidfile";
+		my $pid = <FILE>;
+		close FILE;
+		kill USR1, $pid;
+		$output = $?;
+	}
+
+	return $output;
+}
+
+
 # do not remove this
 1

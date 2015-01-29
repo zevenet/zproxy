@@ -268,9 +268,14 @@ if (-e $fileconfig)
 					&getFarmHttpBackendStatus($farmname,$j,"active",$idsv);
 				}
 				if ($type eq "l4xnat"){
-					&_runFarmStop($farmname,"false");
+					my $falg = &getFarmAlgorithm($fname);
+					if ($falg ne "leastconn"){
+						&_runFarmStop($farmname,"false");
+					}
 					&setFarmBackendStatus($farmname,$j,"up");
-					&_runFarmStart($farmname,"false");
+					if ($falg ne "leastconn"){
+						&_runFarmStart($farmname,"false");
+					}
 				}
 
 				@backendstatus[$j] = "active";
@@ -291,9 +296,9 @@ if (-e $fileconfig)
 					&setFarmBackendsSessionsRemove($farmname,$service,$j);
 				}
 				if ($type eq "l4xnat"){
-					&_runFarmStop($farmname,"false");
+					my $falg = &getFarmAlgorithm($fname);
 					&setFarmBackendStatus($farmname,$j,"fgDOWN");
-					&_runFarmStart($farmname,"false");
+					&sendL4ConfChange($farmname);
 				}
 
 				@backendstatus[$j] = "fgDOWN";
