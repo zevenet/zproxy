@@ -88,7 +88,7 @@ $netstatNat="/usr/bin/netstat-nat";
 #Where is gdnsd?
 $gdnsd="/usr/local/zenloadbalancer/app/gdnsd/sbin/gdnsd";
 #Where is l4sd?
-$l4sd="";
+$l4sd="/usr/local/zenloadbalancer/app/l4s/bin/l4sd";
 
 #where is pound binary?
 $pound="/usr/local/zenloadbalancer/app/pound/sbin/pound";
