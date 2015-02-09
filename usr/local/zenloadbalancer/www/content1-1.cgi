@@ -248,8 +248,8 @@ print "	<div class=\"box table\">
 	<thead>";
 	#if ($temp){print "<td style=\"border: 0px\">Tempherature: <b>$temp</b></td>";}
 
-	my @netstat = &getNetstat("atnp");
-	@netstat= &getNetstatFilter("","ESTABLISHED","","",@netstat);
+	my @netstat = &getNetstatNat();
+	#@netstat= &getNetstatFilter("","ESTABLISHED","","",@netstat);
 	my $conn_max = @netstat;
 
 	@files = &getFarmList();
@@ -264,7 +264,7 @@ print "	<div class=\"box table\">
 		print "<tr>";
 		$farmname = &getFarmName($file);
 		my $type = &getFarmType($farmname);
-		if ($type !~ /datalink/ && $type !~ /l4.xnat/){
+		if ($type !~ /datalink/ && $type !~ /l4xnat/){
 			$pid = &getFarmPid($farmname);
 			chomp($pid);
 		}

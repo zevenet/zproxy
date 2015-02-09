@@ -31,6 +31,7 @@ require "/usr/local/zenloadbalancer/www/cluster_functions.cgi";
 require "/usr/local/zenloadbalancer/www/rrd_functions.cgi";
 require "/usr/local/zenloadbalancer/www/cert_functions.cgi";
 require "/usr/local/zenloadbalancer/www/l4_functions.cgi";
+require "/usr/local/zenloadbalancer/www/gslb_functions.cgi";
 
 #function that check if variable is a number no float
 sub isnumber($num)

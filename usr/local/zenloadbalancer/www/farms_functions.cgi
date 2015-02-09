@@ -1366,14 +1366,28 @@ sub getFarmEstConns($fname,@netstat){
                                 my $ip_backend = $backends_data[0];
                                 #my $port_backend = $backends_data[1];
                                 #push(@nets, &getNetstatFilter("$proto","","\.* ESTABLISHED src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat));
+				#if ($nattype eq "dnat"){
+				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+				#		push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$ip_backend \.* src=$ip_backend \.*","",@netstat));
+				#	}
+				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+				#		push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$ip_backend \.* src=$ip_backend \.*ASSURED\.*","",@netstat));
+				#	}
+				#} else {
+				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+				#		push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat));
+				#	}
+				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+				#		push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* src=$ip_backend \.*ASSURED\.*","",@netstat));
+				#	}
+				#}
+
 				if ($nattype eq "dnat"){
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
-						push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$ip_backend \.* src=$ip_backend \.*","",@netstat
-));
+						push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$ip_backend \.* src=$ip_backend \.*","",@netstat));
 					}
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
-						push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$ip_backend \.* src=$ip_backend \.*ASSURED\.*","",@netstat))
-;
+						push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$ip_backend \.* src=$ip_backend \.*ASSURED\.*","",@netstat));
 					}
 				} else {
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
@@ -1420,7 +1434,7 @@ sub getFarmTWConns($fname,@netstat){
                         if ($backends_data[3] eq "up"){
                                 my $ip_backend = $backends_data[0];
                                 my $port_backend = $backends_data[1];
-                                push(@nets, &getNetstatFilter("$proto","","\.*\_WAIT src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat));
+                                push(@nets, &getNetstatFilter("tcp","","\.*\_WAIT src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat));
                         }
                 }
         }
@@ -1463,6 +1477,22 @@ sub getFarmSYNConns($fname,@netstat){
                                 my $ip_backend = $backends_data[0];
                                 #my $port_backend = $backends_data[1];
                                 #push(@nets, &getNetstatFilter("$proto","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat));
+				#if ($nattype eq "dnat"){
+				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+				#		push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
+				#	}
+				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+				#		push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat)); # UDP
+				#	}
+				#} else {
+				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+				#		push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
+				#	}
+				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+				#		push(@nets,&getNetstatFilter("udp","","\.* src=$fvip dst=\.* \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat)); # UDP
+				#	}
+				#}
+
 				if ($nattype eq "dnat"){
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
 						push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
@@ -1475,7 +1505,7 @@ sub getFarmSYNConns($fname,@netstat){
 						push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
 					}
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
-						push(@nets,&getNetstatFilter("udp","","\.* src=$fvip dst=\.* \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat)); # UDP
+						push(@nets, &getNetstatFilter("udp","","\.* src=$fvip dst=\.* \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat)); # UDP
 					}
 				}
 
@@ -1791,8 +1821,11 @@ sub _runFarmStart($fname,$writeconf){
 			}
 			untie @filelines;
 		}
-		&logfile("running $gdnsd -d $configdir\/$file start");
-		zsystem("$gdnsd -d $configdir\/$file start 2>/dev/null");
+		my $exec = &getGSLBStartCommand($fname);
+		#&logfile("running $gdnsd -d $configdir\/$file start");
+		#zsystem("$gdnsd -d $configdir\/$file start 2>&1 /dev/null");
+		&logfile("running $exec");
+		zsystem("$exec > /dev/null 2>&1");
 		$output = $?;
 		if ($output != 0) {
 			$output = -1;
@@ -2197,12 +2230,15 @@ sub _runFarmStop($fname,$writeconf){
 			}
 			untie @filelines;
 		}
-		&logfile("running $gdnsd -d $configdir\/$filename stop");
-		zsystem("$gdnsd -d $configdir\/$filename stop 2>/dev/null");
+		my $exec = &getGSLBStopCommand($fname);
+		my $pidfile = &getGSLBFarmPidFile($fname);
+		&logfile("running $exec");
+		zsystem("$exec > /dev/null 2>&1");
 		$output = $?;
 		if ($output != 0) {
 			$output = -1;
 		}
+		unlink($pidfile);
 	}
 
 	if ($type eq "datalink"){
@@ -2266,6 +2302,7 @@ sub _runFarmStop($fname,$writeconf){
 		}
 
 		#&runFarmGuardianStop($fname,"");
+		my $falg = &getFarmAlgorithm($fname);
 
 		# Apply changes online
 		if ($status != -1){
@@ -2427,8 +2464,9 @@ sub runFarmCreate($fproto,$fvip,$fvipp,$fname,$fdev){
 			close FO;
 
 			#run farm
-			&logfile("running $gdnsd -d $configdir\/$fname\_$type.cfg start");
-			zsystem("$gdnsd -d $configdir\/$fname\_$type.cfg start 2>/dev/null");
+			my $exec = &getGSLBStartCommand($fname);
+			&logfile("running $exec");
+			zsystem("$exec > /dev/null 2>&1");
 			$output = $?;
 			if ($output != 0) {
 				$output = -1;
@@ -2617,25 +2655,32 @@ sub getFarmPid($fname){
 
 	if ($type eq "http" || $type eq "https"){
 		@fname = split(/\_/,$file);
-		open FPID, "<$piddir\/$fname\_pound.pid";
-		@pid = <FPID>;
-		close FPID;
-		$pid_hprof = @pid[0];
-		chomp($pid_hprof);
-		if ($pid_hprof =~ /^[1-9].*/){$output = "$pid_hprof";}
-		else {$output = "-";}
+		my $pidfile = "$piddir\/$fname\_pound.pid";
+		if (-e $pidfile){
+			open FPID, "<$pidfile";
+			@pid = <FPID>;
+			close FPID;
+			$pid_hprof = @pid[0];
+			chomp($pid_hprof);
+			if ($pid_hprof =~ /^[1-9].*/){$output = "$pid_hprof";}
+			else {$output = "-";}
+		} else {$output = "-";}
 	}
 
 	if ($type eq "gslb"){
 		@fname = split(/\_/,$file);
-		open FPID, "<$configdir\/$fname\_gslb.cfg\/run\/gdnsd.pid";
-		@pid = <FPID>;
-		close FPID;
-		$pid_hprof = @pid[0];
-		chomp($pid_hprof);
-		my $exists = kill 0, $pid_hprof;
-		if ($pid_hprof =~ /^[1-9].*/ && $exists){$output = "$pid_hprof";}
-		else {$output = "-";}
+		my $pidfile = &getGSLBFarmPidFile($fname);
+		if (-e $pidfile)
+		{
+			open FPID, "<$pidfile";
+			@pid = <FPID>;
+			close FPID;
+			$pid_hprof = @pid[0];
+			chomp($pid_hprof);
+			my $exists = kill 0, $pid_hprof;
+			if ($pid_hprof =~ /^[1-9].*/ && $exists){$output = "$pid_hprof";}
+			else {$output = "-";}
+		} else {$output = "-";}
 	}
 
 	return $output;

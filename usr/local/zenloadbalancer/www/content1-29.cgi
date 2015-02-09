@@ -92,17 +92,17 @@ foreach (@backends){
 	my @synnetstatback1;
 	my @synnetstatback2;
 	if ($nattype eq "dnat"){
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "" ||$proto eq "tcp"){
 			@synnetstatback1 = &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat); # TCP
 		}
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "udp"){
 			@synnetstatback2 = &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat); # UDP
 		}
 	} else {
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "tcp"){
 			@synnetstatback1 = &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat); # TCP
 		}
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "udp"){
 			@synnetstatback2 = &getNetstatFilter("udp","","\.* src=$fvip dst=\.* \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat); # UDP
 		}
 	}
@@ -114,17 +114,17 @@ foreach (@backends){
 	my @stabnetstatback1;
 	my @stabnetstatback2;
 	if ($nattype eq "dnat"){
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "tcp"){
 			@stabnetstatback1 = &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$ip_backend \.* src=$ip_backend \.*","",@netstat);
 		}
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "udp"){
 			@stabnetstatback2 = &getNetstatFilter("udp","","\.* src=\.* dst=$ip_backend \.* src=$ip_backend \.*ASSURED\.*","",@netstat);
 		}
 	} else {
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "tcp"){
 			@stabnetstatback1 = &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat);
 		}
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "udp"){
 			@stabnetstatback2 = &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* src=$ip_backend \.*ASSURED\.*","",@netstat);
 		}
 	}
@@ -133,7 +133,7 @@ foreach (@backends){
 
 	my @timewnetstatback;
 	# Close connections for UDP has no sense 
-	if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+	if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "tcp"){
 		@timewnetstatback = &getNetstatFilter("tcp","","\.*\_WAIT src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat);
 	}
 	my $ntimew = @timewnetstatback;

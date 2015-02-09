@@ -79,10 +79,16 @@ $arping_bin="/usr/bin/arping";
 $openssl="/usr/bin/openssl";
 #Where is iptables?
 $iptables="/sbin/iptables";
+#Where is modprobe?
+$modprobe="/sbin/modprobe";
+#Where is lsmod?
+$lsmod="/sbin/lsmod";
 #Where is netstat-nat?
 $netstatNat="/usr/bin/netstat-nat";
 #Where is gdnsd?
 $gdnsd="/usr/local/zenloadbalancer/app/gdnsd/sbin/gdnsd";
+#Where is l4sd?
+$l4sd="";
 
 #where is pound binary?
 $pound="/usr/local/zenloadbalancer/app/pound/sbin/pound";

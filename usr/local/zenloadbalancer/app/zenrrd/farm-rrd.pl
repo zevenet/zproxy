@@ -27,13 +27,14 @@ require ("/usr/local/zenloadbalancer/config/global.conf");
 require ("/usr/local/zenloadbalancer/www/functions.cgi");
 
 @farmlist = &getFarmList();
+my @netstat = &getNetstatNat();
 foreach $farmfile(@farmlist){
 	@farmargs = split(/_/,$farmfile);
 	$farm = @farmargs[0];
 	my $ftype = &getFarmType($farm);
-	if ($ftype !~ /datalink/ && $ftype !~ /l4.xnat/){
+	if ($ftype !~ /datalink/){
 		$db_if="$farm-farm.rrd";
-		my @netstat = &getNetstat("atunp");
+		#my @netstat = &getNetstat("atunp");
 
 		$synconns = &getFarmSYNConns($farm,@netstat);
 		@gconns=&getFarmEstConns($farm,@netstat);

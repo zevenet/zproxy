@@ -143,7 +143,7 @@ if ($size == 0){
 print "<div class=\"box-header\">Farms table</div>";
 print "<div class=\"box table\">";
 
-my @netstat = &getNetstatNat("atunp");
+my @netstat = &getNetstatNat();
 push (@netstat, &getNetstat("atunp"));
 
 my $thereisdl = "false";
