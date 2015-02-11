@@ -22,7 +22,6 @@
 ###############################################################################	
 
 my $ext = 0;
-my $routeparams;
 
 if ( -e "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi" ){
 	require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";

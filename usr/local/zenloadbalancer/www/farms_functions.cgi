@@ -21,6 +21,9 @@
 #
 ###############################################################################	
 
+if ( -e "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi" ){
+	require "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi";
+}
 
 #asign a port for manage a pen Farm
 sub setFarmPort(){
