@@ -51,7 +51,7 @@ sub getL4FarmsPorts($farmtype){
 
 #
 sub loadL4Modules($vproto){
-	my ($farmtype) = @_;
+	my ($vproto) = @_;
 
 	my $status = 0;
 	my $fports = &getL4FarmsPorts($vproto);
