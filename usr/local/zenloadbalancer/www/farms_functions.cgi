@@ -2141,7 +2141,7 @@ sub _runFarmStart($fname,$writeconf){
 			&setIpForward("true");
 
 			# Enable active l4 file
-			if ($status == 0){
+			if ($status != -1){
 				open FI, ">$piddir\/$fname\_$type.pid";
 				close FI;
 			}
@@ -2311,13 +2311,13 @@ sub _runFarmStop($fname,$writeconf){
 		if ($status != -1){
 			# Disable rules
 			my @allrules = &getIptList("raw","OUTPUT");
-			$status = &deleteIptRules("farm",$fname,"PREROUTING",@allrules);
+			$status = &deleteIptRules("farm",$fname,"raw","OUTPUT",@allrules);
 			my @allrules = &getIptList("mangle","PREROUTING");
-			$status = &deleteIptRules("farm",$fname,"PREROUTING",@allrules);
+			$status = &deleteIptRules("farm",$fname,"mangle","PREROUTING",@allrules);
 			my @allrules = &getIptList("nat","PREROUTING");
-			$status = &deleteIptRules("farm",$fname,"PREROUTING",@allrules);
+			$status = &deleteIptRules("farm",$fname,"nat","PREROUTING",@allrules);
 			my @allrules = &getIptList("nat","POSTROUTING");
-			$status = &deleteIptRules("farm",$fname,"POSTROUTING",@allrules);
+			$status = &deleteIptRules("farm",$fname,"nat","POSTROUTING",@allrules);
 
 			# Disable active datalink file
 			unlink("$piddir\/$fname\_$type.pid");
@@ -3221,7 +3221,7 @@ sub getFarmGuardianConf($fname,$svice){
 
 #
 sub getFarmGuardianPid($fname,$svice){
-	($fname,$svice)= @_;
+	my ($fname,$svice)= @_;
 
 	my $pidfile = "";
 

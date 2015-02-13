@@ -23,11 +23,12 @@
 
 #
 sub loadNfModule($modname,$params){
-	($modname,$params)= @_;
+	my ($modname,$params)= @_;
 	
 	my $status=0;
 	my @modules = `$lsmod`;
 	if (! grep /^$modname /, @modules) {
+		&logfile("L4 loadNfModule: $modprobe $modname $params");
 		`$modprobe $modname $params`;
 		$status = $?;
 	}
@@ -36,12 +37,12 @@ sub loadNfModule($modname,$params){
 }
 
 #
-sub ReloadNfModule($modname,$params){
-	($modname,$params)= @_;
+sub removeNfModule($modname,$params){
+	my ($modname,$params)= @_;
 
 	my $status=0;
+	&logfile("L4 removeNfModule: $modprobe -r $modname");
 	`$modprobe -r $modname`;
-	`$modprobe $modname $params`;
 	$status = $?;
 
 	return $status;
@@ -49,7 +50,7 @@ sub ReloadNfModule($modname,$params){
 
 # 
 sub getIptFilter($type, $desc, @iptables){
-	($type,$desc,@iptables) = @_;
+	my ($type,$desc,@iptables) = @_;
 
 	my $output;
 	if ($type eq "farm"){
@@ -60,7 +61,7 @@ sub getIptFilter($type, $desc, @iptables){
 
 #
 sub getIptList($table,$chain){
-	($table,$chain)= @_;
+	my ($table,$chain)= @_;
 
 	my $ttable = $table;
 	if ($ttable ne ""){
@@ -72,14 +73,14 @@ sub getIptList($table,$chain){
 }
 
 #
-sub deleteIptRules($type,$desc,$chain,@allrules){
-	($type,$desc,@allrules) = @_;
+sub deleteIptRules($type,$desc,$table,$chain,@allrules){
+	my ($type,$desc,$table,$chain,@allrules) = @_;
 
 	my $status = 0;
 	my @rules = &getIptFilter($type,$desc,@allrules);
 	# do not change rules id starting by the end
 	@rules = reverse(@rules);
-	foreach $rule(@rules){
+	foreach my $rule(@rules){
 		my @sprule = split("\ ",$rule);
 		if ($type eq "farm"){
 			&logfile("deleteIptRules:: running '$iptables -t $table -D $chain @sprule[0]'");
@@ -118,7 +119,7 @@ sub getNewMark($fname){
 
 #
 sub delMarks($fname,$mark){
-	($fname,$mark) = @_;
+	my ($fname,$mark) = @_;
 
 	my $status = 0;
 	if ($fname ne ""){
@@ -140,7 +141,7 @@ sub delMarks($fname,$mark){
 
 #
 sub renameMarks($fname,$newfname){
-	($fname,$newfname) = @_;
+	my ($fname,$newfname) = @_;
 
 	my $status = 0;
 	if ($fname ne ""){
@@ -157,7 +158,7 @@ sub renameMarks($fname,$newfname){
 
 #
 sub genIptMarkReturn($fname,$vip,$vport,$proto,$index,$state){
-	($fname,$vip,$vport,$proto,$index,$state)= @_;
+	my ($fname,$vip,$vport,$proto,$index,$state)= @_;
 
 	my $rule;
 
@@ -173,7 +174,7 @@ sub genIptMarkReturn($fname,$vip,$vport,$proto,$index,$state){
 
 #
 sub genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state){
-	($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state)= @_;
+	my ($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state)= @_;
 
 	my $rule;
 
@@ -193,7 +194,7 @@ sub genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state){
 
 #
 sub genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$state,$prob){
-	($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$state,$prob)= @_;
+	my ($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$state,$prob)= @_;
 
 	my $rule;
 
@@ -227,7 +228,7 @@ sub genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$st
 
 #
 sub genIptRedirect($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$state){
-	($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$state)= @_;
+	my ($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$state)= @_;
 
 	my $rule;
 
@@ -253,7 +254,7 @@ sub genIptRedirect($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$sta
 
 #
 sub genIptSourceNat($fname,$vip,$nattype,$index,$proto,$mark,$state){
-	($fname,$vip,$nattype,$index,$proto,$mark,$state)= @_;
+	my ($fname,$vip,$nattype,$index,$proto,$mark,$state)= @_;
 
 	my $rule;
 
@@ -274,7 +275,7 @@ sub genIptSourceNat($fname,$vip,$nattype,$index,$proto,$mark,$state){
 
 #
 sub genIptMasquerade($fname,$nattype,$index,$proto,$mark,$state){
-	($fname,$nattype,$index,$proto,$mark,$state)= @_;
+	my ($fname,$nattype,$index,$proto,$mark,$state)= @_;
 
 	my $rule;
 
