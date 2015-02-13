@@ -50,7 +50,7 @@ sub setFarmPort(){
 
 #
 sub setFarmBlacklistTime($fbltime,$fname){
-	($fbltime,$fname) = @_;
+	my ($fbltime,$fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -89,7 +89,7 @@ sub setFarmBlacklistTime($fbltime,$fname){
 
 #
 sub getFarmBlacklistTime($fname){
-	($fname) = @_;
+	my ($fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -119,7 +119,7 @@ sub getFarmBlacklistTime($fname){
 
 #
 sub setFarmClientTimeout($client,$fname){
-	($client,$fname) = @_;
+	my ($client,$fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -148,7 +148,7 @@ sub setFarmClientTimeout($client,$fname){
 
 #
 sub getFarmClientTimeout($fname){
-	($fname) = @_;
+	my ($fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -172,7 +172,7 @@ sub getFarmClientTimeout($fname){
 
 #
 sub setFarmSessionType($session,$fname,$service){
-	($session,$fname,$svice) = @_;
+	my ($session,$fname,$svice) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -254,7 +254,7 @@ sub setFarmSessionType($session,$fname,$service){
 
 #
 sub getFarmSessionType($fname,$service){
-	($fname,$svice) = @_;
+	my ($fname,$svice) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -290,7 +290,7 @@ sub getFarmSessionType($fname,$service){
 
 #
 sub setFarmSessionId($sessionid,$fname,$service){
-	($sessionid,$fname,$svice) = @_;
+	my ($sessionid,$fname,$svice) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -319,7 +319,7 @@ sub setFarmSessionId($sessionid,$fname,$service){
 
 #
 sub getFarmSessionId($fname,$service){
-	($fname,$svice) = @_;
+	my ($fname,$svice) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -344,7 +344,7 @@ sub getFarmSessionId($fname,$service){
 
 #
 sub setFarmHttpVerb($verb,$fname){
-	($verb,$fname) = @_;
+	my ($verb,$fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -373,7 +373,7 @@ sub setFarmHttpVerb($verb,$fname){
 
 #
 sub getFarmHttpVerb($fname){
-	($fname) = @_;
+	my ($fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -397,7 +397,7 @@ sub getFarmHttpVerb($fname){
 
 #change HTTP or HTTP listener
 sub setFarmListen($farmlisten){
-       ($fname,$flisten) = @_;
+       my ($fname,$flisten) = @_;
 
         my $ffile = &getFarmFile($fname);
         tie @filefarmhttp, 'Tie::File', "$configdir/$ffile";
@@ -439,7 +439,7 @@ sub setFarmListen($farmlisten){
 #asign a RewriteLocation vaue to a farm HTTP or HTTPS
 sub setFarmRewriteL($fname,$rewritelocation)
 {
-       ($fname,$rewritelocation) = @_;
+       my ($fname,$rewritelocation) = @_;
 
         my $type = &getFarmType($fname);
         my $ffile = &getFarmFile($fname);
@@ -468,7 +468,7 @@ sub setFarmRewriteL($fname,$rewritelocation)
 
 #set ConnTo value to a farm HTTP or HTTPS
 sub setFarmConnTO($tout,$fname){
-        ($tout,$fname) = @_;
+        my ($tout,$fname) = @_;
 
         my $type = &getFarmType($fname);
         my $ffile = &getFarmFile($fname);
@@ -500,7 +500,7 @@ sub setFarmConnTO($tout,$fname){
 
 #Get RewriteLocation Header configuration HTTP and HTTPS farms
 sub getFarmRewriteL($fname){
-        ($fname) = @_;
+        my ($fname) = @_;
 
         my $type = &getFarmType($fname);
         my $ffile = &getFarmFile($fname);
@@ -525,7 +525,7 @@ sub getFarmRewriteL($fname){
 
 #get farm ConnTO value for http and https farms
 sub getFarmConnTO($fname){
-        ($fname) = @_;
+        my ($fname) = @_;
 
         my $type = &getFarmType($fname);
         my $ffile = &getFarmFile($fname);
@@ -549,7 +549,7 @@ sub getFarmConnTO($fname){
 
 #asign a timeout value to a farm
 sub setFarmTimeout($tout,$fname){
-	($tout,$fname) = @_;
+	my ($tout,$fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -588,7 +588,7 @@ sub setFarmTimeout($tout,$fname){
 
 #
 sub getFarmTimeout($fname){
-	($fname) = @_;
+	my ($fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -618,7 +618,7 @@ sub getFarmTimeout($fname){
 
 # set the lb algorithm to a farm
 sub setFarmAlgorithm($alg,$fname){
-	($alg,$fname) = @_;
+	my ($alg,$fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -685,7 +685,7 @@ sub setFarmAlgorithm($alg,$fname){
 
 #
 sub getFarmAlgorithm($fname){
-	($fname) = @_;
+	my ($fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -733,7 +733,7 @@ sub getFarmAlgorithm($fname){
 
 # set the protocol to a farm
 sub setFarmProto($proto,$fname){
-	($proto,$fname) = @_;
+	my ($proto,$fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -771,7 +771,7 @@ sub setFarmProto($proto,$fname){
 
 #
 sub getFarmProto($fname){
-	($fname) = @_;
+	my ($fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -795,7 +795,7 @@ sub getFarmProto($fname){
 
 #
 sub getFarmNatType($fname){
-	($fname) = @_;
+	my ($fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -820,7 +820,7 @@ sub getFarmNatType($fname){
 
 # set the NAT type for a farm
 sub setFarmNatType($nat,$fname){
-	($nat,$fname) = @_;
+	my ($nat,$fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -851,7 +851,7 @@ sub setFarmNatType($nat,$fname){
 
 # set client persistence to a farm
 sub setFarmPersistence($persistence,$fname){
-	($persistence,$fname) = @_;
+	my ($persistence,$fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -894,7 +894,7 @@ sub setFarmPersistence($persistence,$fname){
 
 #
 sub getFarmPersistence($fname){
-	($fname) = @_;
+	my ($fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -925,7 +925,7 @@ sub getFarmPersistence($fname){
 
 # set the max clients of a farm
 sub setFarmMaxClientTime($maxcl,$track,$fname,$service){
-	($maxcl,$track,$fname,$svice) = @_;
+	my ($maxcl,$track,$fname,$svice) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -985,7 +985,7 @@ sub setFarmMaxClientTime($maxcl,$track,$fname,$service){
 
 #
 sub getFarmMaxClientTime($fname,$service){
-	($fname,$svice) = @_;
+	my ($fname,$svice) = @_;
 
 	my $type = &getFarmType($fname);
 	my @output;
@@ -1034,7 +1034,7 @@ sub getFarmMaxClientTime($fname,$service){
 
 # set the max conn of a farm
 sub setFarmMaxConn($maxc,$fname){
-        ($maxc,$fname) = @_;
+        my ($maxc,$fname) = @_;
 
         my $type = &getFarmType($fname);
         my $ffile = &getFarmFile($fname);
@@ -1075,7 +1075,7 @@ sub setFarmMaxConn($maxc,$fname){
 
 # set the max servers of a farm
 sub setFarmMaxServers($maxs,$fname){
-	($maxs,$fname) = @_;
+	my ($maxs,$fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -1099,7 +1099,7 @@ sub setFarmMaxServers($maxs,$fname){
 
 #
 sub getFarmMaxServers($fname){
-	($fname) = @_;
+	my ($fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $output = -1;
@@ -1117,7 +1117,7 @@ sub getFarmMaxServers($fname){
 
 #
 sub getFarmServers($fname){
-	($fname) = @_;
+	my ($fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my @output;
@@ -1153,7 +1153,7 @@ sub getFarmServers($fname){
 
 #
 sub getFarmCertificate($fname){
-	($fname) = @_;
+	my ($fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $output = -1;
@@ -1180,7 +1180,7 @@ sub getFarmCertificate($fname){
 
 # 
 sub setFarmCertificate($cfile,$fname){
-	($cfile,$fname) = @_;
+	my ($cfile,$fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -1204,7 +1204,7 @@ sub setFarmCertificate($cfile,$fname){
 
 # set xforwarder for feature for a farm
 sub setFarmXForwFor($isset,$fname){
-	($isset,$fname) = @_;
+	my ($isset,$fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -1234,7 +1234,7 @@ sub setFarmXForwFor($isset,$fname){
 
 #
 sub getFarmXForwFor($fname){
-	($fname) = @_;
+	my ($fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -1311,7 +1311,7 @@ sub getFarmXForwFor($fname){
 
 #
 sub getFarmGlobalStatus($fname){
-	($fname) = @_;
+	my ($fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my @run;
@@ -1331,7 +1331,7 @@ sub getFarmGlobalStatus($fname){
 
 #
 sub getFarmEstConns($fname,@netstat){
-	($fname,@netstat) = @_;
+	my ($fname,@netstat) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ninfo = &getFarmVip("vipps",$fname);
@@ -1411,7 +1411,7 @@ sub getFarmEstConns($fname,@netstat){
 
 #
 sub getFarmTWConns($fname,@netstat){
-	($fname,@netstat) = @_;
+	my ($fname,@netstat) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ninfo = &getFarmVip("vipps",$fname);
@@ -1448,7 +1448,7 @@ sub getFarmTWConns($fname,@netstat){
 
 #
 sub getFarmSYNConns($fname,@netstat){
-	($fname,@netstat) = @_;
+	my ($fname,@netstat) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ninfo = &getFarmVip("vipps",$fname);
@@ -1521,7 +1521,7 @@ sub getFarmSYNConns($fname,@netstat){
 
 #
 sub setFarmErr($fname,$content,$nerr){
-	($fname,$content,$nerr) = @_;
+	my ($fname,$content,$nerr) = @_;
 
 	my $type = &getFarmType($fname);
 	my $output = -1;
@@ -1547,7 +1547,7 @@ sub setFarmErr($fname,$content,$nerr){
 
 #
 sub getFarmErr($fname,$nerr){
-	($fname,$nerr) = @_;
+	my ($fname,$nerr) = @_;
 
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
@@ -1579,7 +1579,7 @@ sub getFarmErr($fname,$nerr){
 
 # Returns farm file name
 sub getFarmsByType($ftype){
-	($ftype)= @_;
+	my ($ftype)= @_;
 	opendir(my $dir, "$configdir") || return -1;
 	my @ffiles = grep { /^.*\_.*\.cfg/ && -f "$configdir/$_" } readdir($dir);
 	closedir $dir;
@@ -1596,7 +1596,7 @@ sub getFarmsByType($ftype){
 
 #
 sub getFarmCertUsed($cfile){
-	($cfile) = @_;
+	my ($cfile) = @_;
 
 	my @farms = &getFarmsByType("https");
 	my $output = -1;
@@ -1616,7 +1616,7 @@ sub getFarmCertUsed($cfile){
 
 # Returns farm type [udp|tcp|http|https]
 sub getFarmType($fname){
-	($fname)= @_;
+	my ($fname)= @_;
 	my $filename=&getFarmFile($fname);
 	if ($filename =~ /$fname\_pen\_udp.cfg/){
 		return "udp";
@@ -1644,7 +1644,7 @@ sub getFarmType($fname){
 
 # Returns farm file name
 sub getFarmFile($fname){
-	($fname)= @_;
+	my ($fname)= @_;
 	opendir(my $dir, "$configdir") || return -1;
 #	my @ffiles = grep { /^$fname\_.*\.cfg/ && !/^$fname\_.*guardian\.conf/ && -f "$configdir/$_" && !/^$fname\_status.cfg/} readdir($dir);
 	my @ffiles = grep { /^$fname\_.*\.cfg/ && !/^$fname\_.*guardian\.conf/ && !/^$fname\_status.cfg/} readdir($dir);
@@ -1658,7 +1658,7 @@ sub getFarmFile($fname){
 
 # Returns farm status
 sub getFarmStatus($fname){
-	($fname)= @_;
+	my ($fname)= @_;
 
 	my $ftype = &getFarmType($fname);
 	my $output = -1;
@@ -1684,7 +1684,7 @@ sub getFarmStatus($fname){
 
 # Returns farm status
 sub getFarmBootStatus($fname){
-	($fname)= @_;
+	my ($fname)= @_;
 
 	my $type = &getFarmType($fname);
 	my $file = &getFarmFile($fname);
@@ -1748,7 +1748,7 @@ sub getFarmBootStatus($fname){
 
 # get network physical (vlan included) interface used by the farm vip
 sub getFarmInterface($fname){
-	($fname) = @_;
+	my ($fname) = @_;
 
 	my $type = &getFarmType($fname);
 	my $output = -1;
@@ -1773,7 +1773,7 @@ sub getFarmInterface($fname){
 
 # Start Farm rutine
 sub _runFarmStart($fname,$writeconf){
-	($fname,$writeconf)= @_;
+	my ($fname,$writeconf)= @_;
 
 	my $status = &getFarmStatus($fname);
 	chomp($status);
@@ -1783,7 +1783,6 @@ sub _runFarmStart($fname,$writeconf){
 
 	my $type = &getFarmType($fname);
 	my $file = &getFarmFile($fname);
-	#my $status = $type;
 
 	&logfile("running 'Start write $writeconf' for $fname farm $type");
 	if ($writeconf eq "true" && $type ne "datalink" && $type ne "l4xnat" && $type ne "gslb"){
@@ -1942,6 +1941,7 @@ sub _runFarmStart($fname,$writeconf){
 			# for every server of the farm do:
 			#   set mark rules for matched connections
 			#   set rule for nattype
+			my $status = 0;
 			my $nattype = &getFarmNatType($fname);
 			my $lbalg = &getFarmAlgorithm($fname);
 			my $vip = &getFarmVip("vip",$fname);
@@ -1975,6 +1975,7 @@ sub _runFarmStart($fname,$writeconf){
 			if ($lbalg eq "leastconn" && -e "$l4sd"){
 				system("$l4sd & > /dev/null");
 			}
+
 			# Load required modules
 			if ($vproto eq "sip" || $vproto eq "tftp"){
 				$status = &loadL4Modules($vproto);
@@ -1985,7 +1986,6 @@ sub _runFarmStart($fname,$writeconf){
 			} else {
 				$proto = $vproto;
 			}
-
 			my $bestprio=1000;
 			my @srvprio;
 
@@ -2141,7 +2141,7 @@ sub _runFarmStart($fname,$writeconf){
 			&setIpForward("true");
 
 			# Enable active l4 file
-			if ($status != -1){
+			if ($status == 0){
 				open FI, ">$piddir\/$fname\_$type.pid";
 				close FI;
 			}
@@ -2154,7 +2154,7 @@ sub _runFarmStart($fname,$writeconf){
 
 # Start Farm basic rutine
 sub runFarmStart($fname,$writeconf){
-	($fname,$writeconf)= @_;
+	my ($fname,$writeconf)= @_;
 
 	my $status = &_runFarmStart($fname,$writeconf);
 
@@ -2167,7 +2167,7 @@ sub runFarmStart($fname,$writeconf){
 
 # Stop Farm basic rutine
 sub runFarmStop($fname,$writeconf){
-	($fname,$writeconf)= @_;
+	my ($fname,$writeconf)= @_;
 
 	&runFarmGuardianStop($fname,"");
 
@@ -2178,7 +2178,7 @@ sub runFarmStop($fname,$writeconf){
 
 # Stop Farm rutine
 sub _runFarmStop($fname,$writeconf){
-	($fname,$writeconf)= @_;
+	my ($fname,$writeconf)= @_;
 
 	#&runFarmGuardianStop($fname,"");
 
@@ -2340,7 +2340,7 @@ sub _runFarmStop($fname,$writeconf){
 
 #
 sub runFarmCreate($fproto,$fvip,$fvipp,$fname,$fdev){
-	($fproto,$fvip,$fvipp,$fname,$fdev)= @_;
+	my ($fproto,$fvip,$fvipp,$fname,$fdev)= @_;
 
 	my $output = -1;
 	my $ffile = &getFarmFile($fname);
@@ -2485,7 +2485,7 @@ sub runFarmCreate($fproto,$fvip,$fvipp,$fname,$fdev){
 
 # Returns Farm blacklist
 sub getFarmBlacklist($fname){
-	($fname)= @_;
+	my ($fname)= @_;
 
 	my $type = &getFarmType($fname);
 	my $file = &getFarmFile($fname);
@@ -2518,7 +2518,7 @@ sub getFarmBlacklist($fname){
 
 # Returns farm max connections
 sub getFarmMaxConn($fname){
-        ($fname)= @_;
+        my ($fname)= @_;
 
         my $type = &getFarmType($fname);
         my $file = &getFarmFile($fname);
@@ -2570,7 +2570,7 @@ sub getFarmMaxConn($fname){
 
 # Returns farm listen port
 sub getFarmPort($fname){
-	($fname)= @_;
+	my ($fname)= @_;
 
 	my $type = &getFarmType($fname);
 	my $file = &getFarmFile($fname);
@@ -2605,7 +2605,7 @@ sub getFarmPort($fname){
 
 # Returns farm command
 sub getFarmCommand($fname){
-	($fname)= @_;
+	my ($fname)= @_;
 
 	my $type = &getFarmType($fname);
 	my $file = &getFarmFile($fname);
@@ -2630,7 +2630,7 @@ sub getFarmCommand($fname){
 
 # Returns farm PID
 sub getFarmPid($fname){
-	($fname)= @_;
+	my ($fname)= @_;
 
 	my $type = &getFarmType($fname);
 	my $file = &getFarmFile($fname);
@@ -2691,7 +2691,7 @@ sub getFarmPid($fname){
 
 # Returns farm Child PID
 sub getFarmChildPid($fname){
-	($fname)= @_;
+	my ($fname)= @_;
 	use File::Grep qw( fgrep fmap fdo );
 
 	my $type = &getFarmType($fname);
@@ -2712,7 +2712,7 @@ sub getFarmChildPid($fname){
 
 # Returns farm vip
 sub getFarmVip($info,$fname){
-	($info,$fname)= @_;
+	my ($info,$fname)= @_;
 
 	my $type = &getFarmType($fname);
 	my $file = &getFarmFile($fname);
@@ -2817,7 +2817,7 @@ sub getFarmVip($info,$fname){
 
 # Returns FarmGuardian config file for this farm
 sub getFarmGuardianFile($fname,$svice){
-	($fname,$svice)= @_;
+	my ($fname,$svice)= @_;
 
 	opendir(my $dir, "$configdir") || return -1;
 	my @files = grep { /^$fname\_$svice.*guardian\.conf/ && -f "$configdir/$_" } readdir($dir);
@@ -2832,7 +2832,7 @@ sub getFarmGuardianFile($fname,$svice){
 
 # Returns if FarmGuardian is activated for this farm
 sub getFarmGuardianStatus($fname,$svice){
-	($fname,$svice)= @_;
+	my ($fname,$svice)= @_;
 
 	my $fgfile = &getFarmGuardianFile($fname,$svice);
 
@@ -2855,7 +2855,7 @@ sub getFarmGuardianStatus($fname,$svice){
 
 # Returns if FarmGuardian has logs activated for this farm
 sub getFarmGuardianLog($fname,$svice){
-	($fname,$svice)= @_;
+	my ($fname,$svice)= @_;
 
 	my $fgfile = &getFarmGuardianFile($fname,$svice);
 	if ($fgfile == -1){
@@ -2877,7 +2877,7 @@ sub getFarmGuardianLog($fname,$svice){
 
 # Start FarmGuardian rutine
 sub runFarmGuardianStart($fname,$svice){
-	($fname,$svice)= @_;
+	my ($fname,$svice)= @_;
 	my $status = 0;
 	my $log;
 	my $sv;
@@ -2986,7 +2986,7 @@ sub runFarmGuardianStop($fname,$svice){
 
 # Delete Farm rutine
 sub runFarmDelete($fname){
-	($fname)= @_;
+	my ($fname)= @_;
 
 	my $ftype=&getFarmType($fname);
 
@@ -3019,7 +3019,7 @@ sub runFarmDelete($fname){
 
 #function that create a file for tell that the farm need a restart for apply the changes
 sub setFarmRestart($farmname){
-	($farmname)= @_;
+	my ($farmname)= @_;
 	if (! -e "/tmp/$farmname.lock"){
 		open FILE,">/tmp/$farmname.lock";
 		print FILE "";
@@ -3030,7 +3030,7 @@ sub setFarmRestart($farmname){
 
 #function that delete a file used for tell that the farm need a restart for apply the changes
 sub setFarmNoRestart($farmname){
-	($farmname)= @_;
+	my ($farmname)= @_;
 	if (-e "/tmp/$farmname.lock"){
 		unlink("/tmp/$farmname.lock");
 	}
@@ -3058,14 +3058,14 @@ sub getFarmList(){
 }
 
 sub getFarmName($farmfile){
-	($farmfile)= @_;
+	my ($farmfile)= @_;
 	my @ffile = split("_",$farmfile);
 	return @ffile[0];
 }
 
 # Set farm virtual IP and virtual PORT
 sub setFarmVirtualConf($vip,$vipp,$fname){
-	($vip,$vipp,$fname)= @_;
+	my ($vip,$vipp,$fname)= @_;
 	my $fconf = &getFarmFile($fname);
 	my $type = &getFarmType($fname);
 	my $stat = -1;

@@ -32,8 +32,8 @@ sub getL4FarmsPorts($farmtype){
 		foreach $file (@files){
 			my $fname = &getFarmName($file);
 			my $ftype = &getFarmType($fname);
-			if ($ftype eq "l4xnat" && $ftype eq $farmtype){
-				my $fproto = &getFarmProto($fname);
+			my $fproto = &getFarmProto($fname);
+			if ($ftype eq "l4xnat" && $fproto eq $farmtype){
 				my $fport = &getFarmVip("vipp",$fname);
 				if (&validL4ExtPort($fproto,$fport)){
 					if ($first == 1){
@@ -56,14 +56,25 @@ sub loadL4Modules($vproto){
 	my $status = 0;
 	my $fports = &getL4FarmsPorts($vproto);
 	if ($vproto eq "sip"){
+		&removeNfModule("nf_nat_sip","");
+		&removeNfModule("nf_conntrack_sip","");
+		&loadNfModule("nf_conntrack_sip","ports=$fports");
 		&loadNfModule("nf_nat_sip","");
-		$status = &ReloadNfModule("nf_conntrack_sip","ports=$fports");
+		#$status = &ReloadNfModule("nf_conntrack_sip","ports=$fports");
 	} elsif ($vproto eq "ftp"){
+		&removeNfModule("nf_nat_ftp","");
+		&removeNfModule("nf_conntrack_ftp","");
+		&loadNfModule("nf_conntrack_ftp","ports=$fports");
 		&loadNfModule("nf_nat_ftp","");
-		$status = &ReloadNfModule("nf_conntrack_ftp","ports=$fports");
+		#&loadNfModule("nf_nat_ftp","");
+		#$status = &ReloadNfModule("nf_conntrack_ftp","ports=$fports");
 	} elsif ($vproto eq "tftp"){
+		&removeNfModule("nf_nat_tftp","");
+		&removeNfModule("nf_conntrack_tftp","");
+		&loadNfModule("nf_conntrack_tftp","ports=$fports");
 		&loadNfModule("nf_nat_tftp","");
-		$status = &ReloadNfModule("nf_conntrack_tftp","ports=$fports");
+		#&loadNfModule("nf_nat_tftp","");
+		#$status = &ReloadNfModule("nf_conntrack_tftp","ports=$fports");
 	}
 	return $status;
 }
@@ -73,7 +84,7 @@ sub validL4ExtPort($fproto,$ports){
 	my ($fproto,$ports) = @_;
 
 	my $status = 0;
-	if ($fproto eq "sip" && $fproto eq "ftp" && $fproto eq "tftp"){
+	if ($fproto eq "sip" || $fproto eq "ftp" || $fproto eq "tftp"){
 		if ($ports =~ /\d+/ || $ports =~ /((\d+),(\d+))+/){
 			$status = 1;
 		}
