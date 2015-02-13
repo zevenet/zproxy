@@ -296,7 +296,12 @@ print "	<div class=\"box table\">
 		if ($pid ne "-"){
 			@conns=&getFarmEstConns($farmname,@netstat);
 			$global_conns=@conns;
-			$pc = 100*$global_conns/$conn_max;
+			$pc;
+			if ($conn_max != 0){
+				$pc = 100*$global_conns/$conn_max;
+			} else {
+				$pc = 0;
+			}
 			$pc = sprintf('%.0f', $pc);
 			$vbar = 149*$pc/100;
 			print "<td>";
