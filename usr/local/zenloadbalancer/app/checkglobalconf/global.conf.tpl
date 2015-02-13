@@ -75,6 +75,8 @@ $zcat="/bin/zcat";
 $datentp="/usr/sbin/ntpdate";
 #Where is arping?
 $arping_bin="/usr/bin/arping";
+#Where is ping?
+$ping_bin="/bin/ping";
 #Where is openssl?
 $openssl="/usr/bin/openssl";
 #Where is iptables?
