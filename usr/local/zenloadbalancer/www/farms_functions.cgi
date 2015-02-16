@@ -4180,7 +4180,7 @@ sub setFarmCiphers($fname,$ciphers){
 				}
 				if ($ciphers eq "ciphercustom"){
 					$_ =~ s/#//g;
-					$_ = "\tCiphers \"ALL\"";
+					$_ = "\tCiphers \"$cipher_pci\"";
 					$output = 0;
 				}
 				if ($cipherc){
@@ -4213,11 +4213,7 @@ sub getFarmCipher($fname){
 				chomp($lfile);
 				if ($line =~ /#/){
 					$output = "cipherglobal";
-				}
-				if ("$lfile" eq "$cipher_pci" && "$line" !~ /#/){
-					$output = "cipherpci";
-				}                       
-				if ($line !~ /#/ && "$lfile" ne "$cipher_pci"){
+				}else{
 					$output = $lfile;
 				}
 			}
