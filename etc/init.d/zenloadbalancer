@@ -173,16 +173,17 @@ if (-e $filecluster){
                         $ignoreifstate="";
                 }
 
-		#equal
-		if ($cltype =~ /equal/) {
-			print "CL_TYPE=equal\n";
+		if ($cltype =~ /^equal$/){
+        		print "CL_TYPE=equal\n";
 			my @eject = system("$ucarp $ignoreifstate -r $deadratio --interface=@cliface[2] --srcip=$lip --vhid=$idcluster --pass=secret --addr=@cliface[1] --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6");
 		}
-		#master-backup-with failback
-		if ($cltype =~ /-/) {
-			print "CL_TYPE=M-B\n";
+		elsif ($cltype =~ /$lhost-$rhost/){
+			print "CL_TYPE=M-B, Master node\n";
 			my @eject = system("$ucarp $ignoreifstate -r $deadratio --interface=@cliface[2] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=@cliface[1] --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6");
-			#print "$ucarp -r $deadratio --interface=@cliface[2] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=@cliface[1] --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B\n";
+		}
+		else{
+			print "CL_TYPE=M-B Backup node\n";
+			my @eject = system("$ucarp $ignoreifstate -r $deadratio --interface=@cliface[2] -k 50 --srcip=$lip --vhid=$idcluster --pass=secret --addr=@cliface[1] --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6");
 		}
 		chomp($lip);
 
