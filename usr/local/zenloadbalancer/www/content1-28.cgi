@@ -75,7 +75,7 @@ if ($action eq "editfarm-Name"){
 			#Change farm name
 			$fnchange = &setNewFarmName($farmname,$newfarmname);
 			if ($fnchange != -1){
-				&successmsg("The Farm $farmname is now renamed to $newfarmname, restart the farm to apply the changes.");
+				&successmsg("The Farm $farmname is now renamed to $newfarmname.");
 				$farmname=$newfarmname;
 			} else {
 				&errormsg("The name of the Farm $farmname can't be modified, delete the farm and create a new one.");
@@ -99,7 +99,7 @@ if ($action eq "editfarm-changevipvipp"){
                 if ($status != -1){
 			&runFarmStop($farmname,"false");
 			&runFarmStart($farmname,"false");
-                        &successmsg("Virtual IP and Virtual Port has been modified, the $farmname farm need be restarted");
+                        &successmsg("Virtual IP and Virtual Port has been modified for the farm $farmname");
                 } else {
                         &errormsg("It's not possible to change the $farmname farm virtual IP and port");
                 }
