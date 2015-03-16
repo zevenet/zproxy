@@ -4228,11 +4228,13 @@ sub setNewFarmName($fname,$newfname){
 		# Rename fw marks for this farm
 		&renameMarks($fname,$newfname);
 		&runFarmStart($newfname,"false");
+		$output = 0;
 	}
 
 	if ($type eq "gslb"){
 		my $newffile = "$newfname\_$type.cfg";
 		rename("$configdir\/$ffile","$configdir\/$newffile");
+		$output = 0;
 	}
 
 	# rename rrd
