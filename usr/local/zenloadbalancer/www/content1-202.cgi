@@ -117,13 +117,15 @@ if ($action eq "editfarm-Name"){
 		else{
 			#Change farm name
 			$fnchange = &setNewFarmName($farmname,$newfarmname);
-			if ($fnchange != -1){
-				&successmsg("The Farm $farmname can be renamed to $newfarmname");
-				$farmname=$newfarmname;
-			}
-			else{
-				&errormsg("The name of the Farm $farmname can't be modified, delete the farm and create a new one.");
-			}
+
+                        if ($fnchange == -1){
+                                &errormsg("The name of the Farm $farmname can't be modified, delete the farm and create a new one.");
+                        } elsif($fnchange == -2) {
+                                &errormsg("The name of the Farm $farmname can't be modified, the new name can't be empty");
+                        } else {
+                                &successmsg("The Farm $farmname has been just renamed to $newfarmname.");
+                                $farmname=$newfarmname;
+                        }
 		}
 	}
 	$action="editfarm";

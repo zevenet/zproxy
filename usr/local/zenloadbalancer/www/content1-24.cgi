@@ -166,24 +166,30 @@ if ($action eq "editfarm-Name"){
         		}
 			#Change farm name
 			$fnchange = &setNewFarmName($farmname,$newfarmname);
-			if ($fnchange != -1){
-				&successmsg("The Farm $farmname can be renamed to $newfarmname");
-				$farmname=$newfarmname;
-				$file = &getFarmFile($newfarmname);
-				#Start farm
-				$newfstat = &runFarmStart($farmname,"true");
-	        		if ($newfstat == 0){
-	                		&successmsg("The Farm $farmname is now running");
-	        		} 
-				else{
-			                &errormsg("The Farm $farmname isn't running, check if the IP address is up and the PORT is in use");
-	        		}
 
-			}
-			else{
-				&errormsg("The name of the Farm $farmname can't be modified, delete the farm and create a new one.");
-			}
-
+                        if ($fnchange == -1){
+                                &errormsg("The name of the Farm $farmname can't be modified, delete the farm and create a new one.");
+                        } elsif ($fnchange == -2) {
+                                &errormsg("The name of the Farm $farmname can't be modified, the new name can't be empty");
+                                my $newfstat = &runFarmStart($farmname,"true");
+                                if ($newfstat == 0){
+                                        &successmsg("The Farm $farmname is now running");
+                                }
+                                else{
+                                        &errormsg("The Farm $farmname isn't running, check if the IP address is up and the PORT is in use");
+                                }
+                        } else {
+                                &successmsg("The Farm $farmname has been just renamed to $newfarmname");
+                                $farmname=$newfarmname;
+                                #Start farm
+                                my $newfstat = &runFarmStart($farmname,"true");
+                                if ($newfstat == 0){
+                                        &successmsg("The Farm $farmname is now running");
+                                }
+                                else{
+                                        &errormsg("The Farm $farmname isn't running, check if the IP address is up and the PORT is in use");
+                                }
+                        }
 		}
 	}
 	$action="editfarm";

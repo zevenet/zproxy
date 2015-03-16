@@ -4144,10 +4144,15 @@ sub getFarmBackendsClientsActives($fname,@content){
 
 #function that renames a farm
 sub setNewFarmName($fname,$newfname){
-	($fname,$newfname) = @_;
+	my ($fname,$newfname) = @_;
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
 	my $output = -1;
+
+        if($newfname =~ /^$/){
+                &logfile("error 'NewFarmName $newfname' is empty");
+                return -2;
+        }
 
 	&logfile("setting 'NewFarmName $newfname' for $fname farm $type");
 
