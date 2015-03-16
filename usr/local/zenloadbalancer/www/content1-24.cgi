@@ -462,7 +462,7 @@ if ($action eq "editfarm-addservice"){
 		&setFarmRestart($farmname);
 		&successmsg("Service name $service has been added to the farm");
 	}
-	if ($resutl eq "2"){
+	if ($result eq "2"){
 		&errormsg("New service can't be empty");
 	}
 	if ($result eq "1"){

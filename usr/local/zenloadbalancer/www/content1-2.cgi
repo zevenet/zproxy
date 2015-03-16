@@ -144,7 +144,7 @@ print "<div class=\"box-header\">Farms table</div>";
 print "<div class=\"box table\">";
 
 my @netstat = &getNetstatNat();
-push (@netstat, &getNetstat("atunp"));
+#push (@netstat, &getNetstat("atunp"));
 
 my $thereisdl = "false";
 

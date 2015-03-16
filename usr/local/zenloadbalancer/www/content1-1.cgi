@@ -249,8 +249,9 @@ print "	<div class=\"box table\">
 	#if ($temp){print "<td style=\"border: 0px\">Tempherature: <b>$temp</b></td>";}
 
 	my @netstat = &getNetstatNat();
-	#@netstat= &getNetstatFilter("","ESTABLISHED","","",@netstat);
-	my $conn_max = @netstat;
+	my @nets= &getNetstatFilter("","ESTABLISHED","","",@netstat);
+	push (@nets, &getNetstatFilter("udp","[^UNREPLIED]","","",@netstat));
+	my $conn_max = @nets;
 
 	@files = &getFarmList();
 
@@ -293,7 +294,7 @@ print "	<div class=\"box table\">
 		print "<td>$farmname</td><td>$type</td>";
 		print "<td>@line[8]</td><td>@line[9]</td>";
 
-		if ($pid ne "-"){
+		#if ($pid ne "-"){
 			@conns=&getFarmEstConns($farmname,@netstat);
 			$global_conns=@conns;
 			$pc;
@@ -309,9 +310,9 @@ print "	<div class=\"box table\">
 			print "<img src=\"img/graphs/bar$farmname.png\">";
 			print " $global_conns ($pc%)";
 			print "</td>";
-		} else {
-			print "<td>-</td>";
-		}
+		#} else {
+		#	print "<td>-</td>";
+		#}
 		print "</tr>";
 	}
 
