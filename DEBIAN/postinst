@@ -47,4 +47,12 @@ else
 	echo "(/etc/init.d/zenloadbalancer stop)"
 	echo "(/etc/init.d/zenloadbalancer start)"
 fi
+
+###move .htpasswd from tmp to dst
+#Save .htpasswd file
+if [ -f /tmp/.htpasswd ];
+then
+	mv /tmp/.htpasswd /usr/local/zenloadbalancer/www/.htpasswd
+fi
+
 echo "Last version of Zen Load Balancer update completed..."
