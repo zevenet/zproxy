@@ -22,8 +22,19 @@
 ###############################################################################
 
 ### EDIT GSLB FARM ###
-#maintenance mode for servers
 
+#Farm restart
+if ($action eq "editfarm-restart"){
+        &runFarmStop($farmname,"true");
+        my $status = &runFarmStart($farmname,"true");
+        if ($status == 0){
+                &successmsg("The $farmname farm has been restarted");
+        } else {
+                &errormsg("The $farmname farm hasn't been restarted");
+        }
+}
+
+#Change health check port for a service
 if ($action eq "editfarm-dpc"){
 	if ($service =~ /^$/){
 		&errormsg("Invalid service, please select a valid value");
@@ -41,7 +52,8 @@ if ($action eq "editfarm-dpc"){
 		&setFarmVS($farmname,$service,"dpc",$string);
 		if ($? eq 0){
 			&successmsg("The default port health check for the service $service has been successfully changed");
-			&setFarmReload($farmname);
+			&setFarmRestart($farmname);
+			#&runFarmReload($farmname);
 		} else {
 			&errormsg("The default port health check for the service $service has failed");
 		}
@@ -82,7 +94,7 @@ if ($action eq "editfarm-deleteservice"){
 		if ($service_type eq "zone"){
 			&setFarmGSLBDeleteZone($farmname,$service);
 			if ($? eq 0){
-				&successmsg("Deleted service $service in farm $farmname");
+				&successmsg("Deleted zone $service in farm $farmname");
 				&runFarmReload($farmname);
 			}
 		} else {
@@ -90,7 +102,8 @@ if ($action eq "editfarm-deleteservice"){
 			&setFarmGSLBDeleteService($farmname,$service);
 			if ($? eq 0){
 				&successmsg("Deleted service $service in farm $farmname");
-				&runFarmReload($farmname);
+				&setFarmRestart($farmname);
+				#&runFarmReload($farmname);
 			}
 		}
 		}
@@ -143,8 +156,9 @@ if ($action eq "editfarm-changevipvipp"){
         if ($error == 0){
                 $status = &setFarmVirtualConf($vip,$vipp,$farmname);
                 if ($status != -1){
-                	&runFarmReload($farmname);
+                	#&runFarmReload($farmname);
                         &successmsg("Virtual IP and Virtual Port has been modified, the $farmname farm need be restarted");
+			&setFarmRestart($farmname);
                 } else {
                         &errormsg("It's not possible to change the $farmname farm virtual IP and port");
                 }
@@ -181,8 +195,9 @@ if ($action eq "editfarm-deleteserver"){
         	if ($error == 0){
 			$status = &remFarmServiceBackend($id_server,$farmname,$service);
 			if ($status != -1){
-				&runFarmReload($farmname);
+				#&runFarmReload($farmname);
 				&successmsg("The backend with ID $id_server in the zone $zone has been deleted");
+				&setFarmRestart($farmname);
 			} else {
 				&errormsg("It's not possible to delete the resource server with ID $id_server in the zone $service");
 			}
@@ -208,13 +223,18 @@ if ($action eq "editfarm-saveserver"){
 			$error = 1;
 		}
         	if ($error == 0){
-			$status = &setFarmZoneResource($id_server,$resource_server,$ttl_server,$type_server,$rdata_server,$farmname,$service);
-			if ($status != -1){
-				&runFarmReload($farmname);
-				&successmsg("The resource name $resource_server for the zone $zone has been modified");
-				$action="";
-			} else {
-				&errormsg("It's not possible to modify the resource name $resource_server for the zone $zone");
+			if ($type_server eq "A" && &ipisok($rdata_server) eq "false"){
+				 &errormsg("If you choose A type, RDATA must be a valid IP address, $resource_server not modified for the zone $service");
+			}
+			else {
+				$status = &setFarmZoneResource($id_server,$resource_server,$ttl_server,$type_server,$rdata_server,$farmname,$service);
+				if ($status != -1){
+					&runFarmReload($farmname);
+					&successmsg("The resource name $resource_server for the zone $zone has been modified");
+					$action="";
+				} else {
+					&errormsg("It's not possible to modify the resource name $resource_server for the zone $zone");
+				}
 			}
 		}
 	} else {
@@ -225,8 +245,9 @@ if ($action eq "editfarm-saveserver"){
         	if ($error == 0){
 			$status = &setFarmGSLBNewBackend($farmname,$service,$lb,$id_server,$rip_server);
 			if ($status != -1){
-				&runFarmReload($farmname);
+				#&runFarmReload($farmname);
 				&successmsg("The backend $rip_server for the service $service has been modified");
+				&setFarmRestart($farmname);
 			} else {
 				&errormsg("It's not possible to modify the backend $rip_server for the service $service");
 			}
@@ -237,12 +258,17 @@ if ($action eq "editfarm-saveserver"){
 
 if ($action eq "editfarm-addservice"){
 	if ($service_type eq "zone"){
-		my $result = &setFarmGSLBNewZone($farmname,$zone);
-		if ($result eq "0"){
-			&runFarmReload($farmname);
-			&successmsg("Zone $zone has been added to the farm");
-		} else {
-			&errormsg("The zone $zone can't be created");
+		if ( $zone !~ /.*\..*/){
+			&errormsg("Wrong zone name. The name has to be like zonename.com, zonename.net, etc. The zone $zone can't be created");
+		}
+		else{
+			my $result = &setFarmGSLBNewZone($farmname,$zone);
+			if ($result eq "0"){
+				&runFarmReload($farmname);
+				&successmsg("Zone $zone has been added to the farm");
+			} else {
+				&errormsg("The zone $zone can't be created");
+			}
 		}
 	} else {
 	if ($service_type eq "service"){
@@ -261,8 +287,9 @@ if ($action eq "editfarm-addservice"){
         	if ($error == 0){
 			$status = &setFarmGSLBNewService($farmname,$service,$lb);
 			if ($status != -1){
-				&runFarmReload($farmname);
+				#&runFarmReload($farmname);
 				&successmsg("The service $service has been successfully created");
+				&setFarmRestart($farmname);
 			} else {
 				&errormsg("It's not possible to create the service $service");
 			}
@@ -274,9 +301,9 @@ if ($action eq "editfarm-addservice"){
 
 #$service=$farmname;
 #check if the farm need a restart
-#if (-e "/tmp/$farmname.lock"){
-#	&tipmsg("There're changes that need to be applied, stop and start farm to apply them!");
-#}
+if (-e "/tmp/$farmname.lock"){
+	&tipmsg("There're changes that need to be applied, stop and start farm to apply them!");
+}
 
 #global info for a farm
 print "<div class=\"container_12\">";

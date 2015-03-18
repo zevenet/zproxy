@@ -1890,6 +1890,7 @@ sub _runFarmStart($fname,$writeconf){
 
 	if ($type eq "gslb"){
 		if ($writeconf eq "true"){
+			unlink("/tmp/$fname.lock");
 			use Tie::File;
 			tie @filelines, 'Tie::File', "$configdir\/$file\/etc\/config";
 			my $first=1;
@@ -2293,34 +2294,40 @@ sub _runFarmStop($fname,$writeconf){
                         unlink("$piddir\/$fname\_pound.pid");
                         unlink("\/tmp\/$fname\_pound.socket");
                 }else{
-                        &errormsg("Farm $fname can't be stopped, check the configuration");
+                        &errormsg("Farm $fname can't be stopped, check the logs and modify the configuration");
                         return 1;
                 }
 	}
 
 	if ($type eq "gslb"){
-		if ($writeconf eq "true"){
-			use Tie::File;
-			tie @filelines, 'Tie::File', "$configdir\/$filename\/etc\/config";
-			my $first=1;
-			foreach (@filelines){
-				if ($first eq 1){
-					s/\;up/\;down/g;
-					$status = $?;
-					$first=0;
+                my $checkfarm = &getFarmConfigIsOK($fname);
+                if ($checkfarm == 0){
+			if ($writeconf eq "true"){
+				use Tie::File;
+				tie @filelines, 'Tie::File', "$configdir\/$filename\/etc\/config";
+				my $first=1;
+				foreach (@filelines){
+					if ($first eq 1){
+						s/\;up/\;down/g;
+						$status = $?;
+						$first=0;
+					}
 				}
+				untie @filelines;
 			}
-			untie @filelines;
-		}
-		my $exec = &getGSLBStopCommand($fname);
-		my $pidfile = &getGSLBFarmPidFile($fname);
-		&logfile("running $exec");
-		zsystem("$exec > /dev/null 2>&1");
-		$output = $?;
-		if ($output != 0) {
-			$output = -1;
-		}
-		unlink($pidfile);
+			my $exec = &getGSLBStopCommand($fname);
+			my $pidfile = &getGSLBFarmPidFile($fname);
+			&logfile("running $exec");
+			zsystem("$exec > /dev/null 2>&1");
+			$status = $?;
+			if ($status != 0) {
+				$status = -1;
+			}
+			unlink($pidfile);
+                }else{
+                        &errormsg("Farm $fname can't be stopped, check the logs and modify the configuration");
+                        return 1;
+                }
 	}
 
 	if ($type eq "datalink"){
@@ -2398,7 +2405,7 @@ sub _runFarmStop($fname,$writeconf){
 			my @allrules = &getIptList("nat","POSTROUTING");
 			$status = &deleteIptRules("farm",$fname,"nat","POSTROUTING",@allrules);
 
-			# Disable active datalink file
+			# Disable active l4xnat file
 			unlink("$piddir\/$fname\_$type.pid");
 			if (-e "$piddir\/$fname\_$type.pid"){
 				$status = -1;
@@ -2533,14 +2540,14 @@ sub runFarmCreate($fproto,$fvip,$fvipp,$fname,$fdev){
 		mkdir "$configdir\/$fname\_$type.cfg\/etc\/zones";
 		mkdir "$configdir\/$fname\_$type.cfg\/etc\/plugins";
 		my $httpport=35060;
-		while ($httpport<35160 && &checkport($fvip,$httpport) eq "true"){
+		while ($httpport<35160 && &checkport(127.0.0.1,$httpport) eq "true"){
 			$httpport++;
 		}
 		if ($httpport==35160){
 			$output=-1;	# No room for a new farm
 		} else {
 			open FO, ">$configdir\/$fname\_$type.cfg\/etc\/config";
-			print FO ";up\noptions => {\n   listen = $fvip\n   dns_port = $fvipp\n   http_port = $httpport\n   http_listen = $fvip\n}\n\n";
+			print FO ";up\noptions => {\n   listen = $fvip\n   dns_port = $fvipp\n   http_port = $httpport\n   http_listen = 127.0.0.1\n}\n\n";
 			print FO "service_types => { \n\n}\n\n";
 			print FO "plugins => { \n\n}\n\n";
 			close FO;
@@ -3226,11 +3233,11 @@ sub setFarmVirtualConf($vip,$vipp,$fname){
 			if ($line =~ /options => /){
 				$found = 1;
 			}
-			if ($found == 1 && $line =~ /listen = /){
-				$line =~ s/.*/   listen = $vip/g;
+			if ($found == 1 && $line =~ / listen = /){
+				$line =~ s/$line/   listen = $vip/g;
 			}
 			if ($found == 1 && $line =~ /dns_port = /){
-				$line =~ s/.*/   dns_port = $vipp/g;
+				$line =~ s/$line/   dns_port = $vipp/g;
 			}
 			if ($found == 1 && $line =~ /\}/){
 				last;
@@ -3238,6 +3245,7 @@ sub setFarmVirtualConf($vip,$vipp,$fname){
 			$index++;
 		}
 		untie @fileconf;
+		$stat = $?;
 	}
 
 	return $stat;
@@ -4317,7 +4325,14 @@ sub getFarmConfigIsOK($fname){
 	if ($type eq "http" || $type eq "https"){
 		&logfile("running: $pound -f $configdir\/$ffile -c ");
 		#zsystem("$pound -f $configdir\/$ffile -c >/dev/null");
-		my $run = `$pound -f $configdir\/$ffile -c 2>/dev/nul`;
+		my $run = `$pound -f $configdir\/$ffile -c 2>&1`;
+		&logfile("output: $run ");
+		$output = $?;
+	}
+	if ($type eq "gslb") {
+		&logfile("running: $gdnsd -c $configdir\/$ffile/etc checkconf ");
+		my $run = `$gdnsd -c $configdir\/$ffile/etc checkconf 2>&1`;
+		&logfile("output: $run ");
 		$output = $?;
 	}
 	return $output;
@@ -4608,6 +4623,7 @@ sub setFarmGSLBNewZone($fname,$service){
 
 	my $output = -1;
 	my $ftype = &getFarmType($fname);
+	my $fvip = &getFarmVip("vip",$fname);
 
 	if ($ftype eq "gslb"){
 		opendir(DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/");
@@ -4618,7 +4634,7 @@ sub setFarmGSLBNewZone($fname,$service){
 			open FO, ">$configdir\/$fname\_$ftype.cfg\/etc\/zones\/$svice";
 			print FO "@	SOA ns1 hostmaster (\n	1\n	7200\n	1800\n	259200\n	900\n)\n\n";
 			print FO "@		NS	ns1 ;index_0\n";
-			print FO "ns1		A	0.0.0.0 ;index_1\n";
+			print FO "ns1		A	$fvip ;index_1\n";
 			close FO;
 
 			$output = 0;
@@ -4668,9 +4684,11 @@ sub setFarmGSLBNewService($fname,$service,$algorithm){
 			open FO, ">$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$svice.cfg";
 			print FO "$gsalg => {\n\tservice_types = up\n";
 			print FO "\t$svice => {\n\t\tservice_types = tcp_80\n";
+			print FO "\t\t1 => 127.0.0.1\n";
 			print FO "\t}\n}\n";
 			close FO;
 			$output = 0;
+
 			# Include the plugin file in the main configuration
 			tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
 			my $found=0;
@@ -5333,10 +5351,10 @@ sub setFarmVS($farmname,$service,$tag,$string){
 }
 
 sub setFarmZoneSerial($fname,$zone){
-	my ($farmname,$zone) = @_;
+	my ($fname,$zone) = @_;
 	my $ftype = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
-
+	my $output = -1;
 	if ($ftype eq "gslb"){
 		my @fileconf;
 		use Tie::File;
@@ -5348,7 +5366,10 @@ sub setFarmZoneSerial($fname,$zone){
 			}
 			$index++;
 		}
+                untie @fileconf;
+		$output = $?;
 	}
+	return $output;
 }
 
 sub setFarmZoneResource($id,$resource,$ttl,$type,$rdata,$fname,$service){
@@ -5414,8 +5435,9 @@ sub remFarmZoneResource($id,$fname,$service){
 		}
 		untie @fileconf;
 		$output=$?;
+                &setFarmZoneSerial($fname,$service);
+                $output=$output + $?;
 	}
-
 	return $output;
 }
 
@@ -5528,8 +5550,8 @@ sub runFarmReload($farmname){
 	my $output;
 
 	if ($type eq "gslb"){
-		&logfile("running $gdnsd -d $configdir\/$fname\_$type.cfg reload");
-		zsystem("$gdnsd -d $configdir\/$fname\_$type.cfg reload 2>/dev/null");
+		&logfile("running $gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones");
+		zsystem("$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones &>/dev/null");
 		$output = $?;
 		if ($output != 0) {
 			$output = -1;
