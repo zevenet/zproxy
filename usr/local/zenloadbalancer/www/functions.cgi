@@ -269,9 +269,11 @@ my $sv20 = $sv;
 $sv20 =~ s/\ /%20/g;
 
 if ( $type eq "gslb"){
-print "<a href=index.cgi?action=editfarm-deleteserver&id=1-2&farmname=$name&id_server=$id_server&service=$sv20&service_type=$service_type title=\"Delete Real Server $id_server\" onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\"><img src=\"img/icons/small/server_delete.png\"></a>";
+	if ( $id_server ne "primary" && $id_server ne "secondary"){
+		print "<a href=index.cgi?action=editfarm-deleteserver&id=1-2&farmname=$name&id_server=$id_server&service=$sv20&service_type=$service_type title=\"Delete Real Server $id_server\" onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\"><img src=\"img/icons/small/server_delete.png\"></a>";
+	}
 } else {
-print "<a href=index.cgi?action=editfarm-deleteserver&id=1-2&farmname=$name&id_server=$id_server&service=$sv20 title=\"Delete Real Server $id_server\" onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\"><img src=\"img/icons/small/server_delete.png\"></a>";
+	print "<a href=index.cgi?action=editfarm-deleteserver&id=1-2&farmname=$name&id_server=$id_server&service=$sv20 title=\"Delete Real Server $id_server\" onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\"><img src=\"img/icons/small/server_delete.png\"></a>";
 }
 
 }

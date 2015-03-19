@@ -185,7 +185,7 @@ if ($action eq "editfarm-deleteserver"){
 			$status = &remFarmZoneResource($id_server,$farmname,$service);
 			if ($status != -1){
 				&runFarmReload($farmname);
-				&successmsg("The resource with ID $id_server in the zone $zone has been deleted");
+				&successmsg("The resource with ID $id_server in the zone $service has been deleted");
 			} else {
 				&errormsg("It's not possible to delete the resource server with ID $id_server in the zone $service");
 			}
@@ -195,11 +195,16 @@ if ($action eq "editfarm-deleteserver"){
         	if ($error == 0){
 			$status = &remFarmServiceBackend($id_server,$farmname,$service);
 			if ($status != -1){
-				#&runFarmReload($farmname);
-				&successmsg("The backend with ID $id_server in the zone $zone has been deleted");
-				&setFarmRestart($farmname);
+				if ($status == -2){
+					&errormsg("You need at least one bakcend in the service. It's not possible to delete the backend.");
+				}
+				else {
+					#&runFarmReload($farmname);
+					&successmsg("The backend with ID $id_server in the service $service has been deleted");
+					&setFarmRestart($farmname);
+				}
 			} else {
-				&errormsg("It's not possible to delete the resource server with ID $id_server in the zone $service");
+				&errormsg("It's not possible to delete the backend with ID $id_server in the service $service");
 			}
 		}
 		$service_type="service";
@@ -264,7 +269,7 @@ if ($action eq "editfarm-addservice"){
 		else{
 			my $result = &setFarmGSLBNewZone($farmname,$zone);
 			if ($result eq "0"){
-				&runFarmReload($farmname);
+				&setFarmRestart($farmname);
 				&successmsg("Zone $zone has been added to the farm");
 			} else {
 				&errormsg("The zone $zone can't be created");

@@ -432,13 +432,12 @@ sub setFarmListen($farmlisten){
                 }
 
 		# Enable 'Disable SSLv3'
-                if (@filefarmhttp[$i_f] =~ /.*DisableSSLv3$/ && $flisten eq "http"){
-                        @filefarmhttp[$i_f] =~ s/DisableSSLv3/#DisableSSLv3/;
-                }
-                if (@filefarmhttp[$i_f] =~ /.*DisableSSLv3$/ && $flisten eq "https"){
-                        @filefarmhttp[$i_f] =~ s/#//g;
-
-                }
+		if (@filefarmhttp[$i_f] =~ /.*DisableSSLv3$/ && $flisten eq "http"){
+			@filefarmhttp[$i_f] =~ s/DisableSSLv3/#DisableSSLv3/;
+		}
+		if (@filefarmhttp[$i_f] =~ /.*DisableSSLv3$/ && $flisten eq "https"){
+			@filefarmhttp[$i_f] =~ s/#//g;
+		}
 
        }
         untie @filefarmhttp;
@@ -4692,7 +4691,13 @@ sub setFarmGSLBNewService($fname,$service,$algorithm){
 			open FO, ">$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$svice.cfg";
 			print FO "$gsalg => {\n\tservice_types = up\n";
 			print FO "\t$svice => {\n\t\tservice_types = tcp_80\n";
-			print FO "\t\t1 => 127.0.0.1\n";
+			if ($gsalg eq "simplefo"){
+				print FO "\t\tprimary => 127.0.0.1\n";
+				print FO "\t\tsecondary => 127.0.0.1\n";
+			}
+			else{
+				print FO "\t\t1 => 127.0.0.1\n";
+			}
 			print FO "\t}\n}\n";
 			close FO;
 			$output = 0;
@@ -5468,22 +5473,25 @@ sub remFarmServiceBackend($id,$fname,$service){
 				$index++;
 				next;
 			}
-			if ($found==1 && $line =~ /primary => / && $id eq "primary"){
-				splice @fileconf,$index,1;
-				$found=2;
-			}
-			if ($found==2 && $line =~ /secondary => /){
-				$line =~ s/secondary/primary/g;
+			if ($found==1 && $line =~ /primary => /){
+				$output = -2;
 				last;
 			}
 			if ($found==1 && $line =~ /$id => /){
-				splice @fileconf,$index,1;
+				my @backendslist = grep(/^\s+[1-9].* =>/, @fileconf);
+				my $nbackends = @backendslist;
+				if ($nbackends == 1){
+					$output = -2;
+				}
+				else {
+					splice @fileconf,$index,1;
+				}
 				last;
 			}
 			$index++;
 		}
 		untie @fileconf;
-		$output=$?;
+		$output=$output + $?;
 	}
 
 	return $output;
