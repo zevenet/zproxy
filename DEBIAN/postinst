@@ -56,7 +56,7 @@ then
 fi
 
 # Load conntrack modules
-my @eject=`/sbin/modprobe nf_conntrack 2> /dev/null`;
-my @eject=`/sbin/modprobe ip_conntrack 2> /dev/null`;
+/sbin/modprobe nf_conntrack 2> /dev/null
+/sbin/modprobe ip_conntrack 2> /dev/null
 
 echo "Last version of Zen Load Balancer update completed..."
