@@ -59,4 +59,11 @@ fi
 /sbin/modprobe nf_conntrack 2> /dev/null
 /sbin/modprobe ip_conntrack 2> /dev/null
 
+# Delete duplicated ZenLB link services
+if [ -f /etc/rc2.d/S02zenloadbalancer ];
+then
+	rm -f /etc/rc2.d/S01zenloadbalancer
+	rm -f /etc/rcS.d/S01zenloadbalancer
+fi
+
 echo "Last version of Zen Load Balancer update completed..."
