@@ -268,14 +268,9 @@ if (-e $fileconfig)
 					&getFarmHttpBackendStatus($farmname,$j,"active",$idsv);
 				}
 				if ($type eq "l4xnat"){
-					my $falg = &getFarmAlgorithm($fname);
-					if ($falg ne "leastconn"){
-						&_runFarmStop($farmname,"false");
-					}
-					&setFarmBackendStatus($farmname,$j,"up");
-					if ($falg ne "leastconn"){
-						&_runFarmStart($farmname,"false");
-					}
+                                        my $falg = &getFarmAlgorithm($farmname);
+                                        &setFarmBackendStatus($farmname,$j,"up");
+                                        &sendL4ConfChange($farmname);
 				}
 
 				@backendstatus[$j] = "active";

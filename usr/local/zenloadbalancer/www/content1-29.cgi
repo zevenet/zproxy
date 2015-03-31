@@ -50,10 +50,9 @@ my @backends = &getFarmBackendsStatus($farmname,@content);
 
 my $backendsize = @backends;
 my $activebackends = 0;
-#my $activesessions = 0;
 foreach (@backends){
 	my @backends_data = split(";",$_);
-	if ($backends_data[3] eq "up"){
+	if ($backends_data[4] eq "up"){
 		$activebackends++;
 	}
 }
@@ -64,25 +63,24 @@ print "<br>";
 print "<div class=\"box-header\">Real servers status<font size=1>&nbsp;&nbsp;&nbsp; $backendsize servers, $activebackends active </font></div>";
 print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 print "<thead>\n";
-print "<tr><td>Server</td><td>Address</td><td>Port(s)</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Closed Conns</td><td>Weight</td>";
+print "<tr><td>Server</td><td>Address</td><td>Port(s)</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Closed Conns</td><td>Weight</td><td>Priority</td>";
 print "</thead>\n";
 print "<tbody>";
 
 my $index = 0;
 foreach (@backends){
 	my @backends_data = split(";",$_);
-	$activesessions = $activesessions+$backends_data[6];
 	my $ip_backend = $backends_data[0];
 	my $port_backend = $backends_data[1];
 	print "<tr>";
 	print "<td> $index </td> ";
 	print "<td> $ip_backend </td> ";
 	print "<td> $port_backend </td> ";
-	if ($backends_data[3] eq "maintenance"){
+	if ($backends_data[4] eq "maintenance"){
 		print "<td><img src=\"img/icons/small/warning.png\" title=\"up\"></td> ";
-	}elsif ($backends_data[3] eq "up"){
+	}elsif ($backends_data[4] eq "up"){
 		print "<td><img src=\"img/icons/small/start.png\" title=\"up\"></td> ";
-	} elsif ($backends_data[3] eq "fgDOWN"){
+	} elsif ($backends_data[4] eq "fgDOWN"){
 		print "<td><img src=\"img/icons/small/disconnect.png\" title=\"FarmGuardian down\"></td> ";	
 	}else{
 		print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td> ";
@@ -139,7 +137,9 @@ foreach (@backends){
 	my $ntimew = @timewnetstatback;
 	print "<td>$ntimew</td>";
 	print "<td> $backends_data[2] </td>";
+	print "<td> $backends_data[3] </td>";
 	print "</tr>";
+	$index++;
 }
 
 print "</tbody>";

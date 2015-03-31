@@ -2078,7 +2078,7 @@ sub _runFarmStart($fname,$writeconf){
 
 			foreach $lservers(@run){
 				my @serv = split("\;",$lservers);
-				if (@serv[6] =~ /up/){
+				if (@serv[6] =~ /up/ || $lbalg eq "leastconn"){  # TMP: leastconn dynamic backend status check
 					if ($lbalg eq "weight" || $lbalg eq "leastconn"){
 						my $port = @serv[2];
 						my $rip = @serv[1];
@@ -3858,7 +3858,7 @@ sub getFarmBackendsStatus($fname,@content){
 			if ($port eq ""){
 				$port = &getFarmVip("vipp",$fname);
 			}
-			push(@servers,"@serv[2]\;$port\;@serv[5]\;@serv[7]");
+			push(@servers,"@serv[2]\;$port\;@serv[5]\;@serv[6]\;@serv[7]");
 		}
 		@output = @servers;
 	}

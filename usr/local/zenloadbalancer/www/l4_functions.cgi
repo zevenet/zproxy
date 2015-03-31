@@ -153,6 +153,9 @@ sub sendL4ConfChange($fname){
 		close FILE;
 		kill USR1, $pid;
 		$output = $?;
+	} else {
+		&logfile("Running L4 restart for $fname");
+		&_runL4FarmRestart($fname,"false","");
 	}
 
 	return $output;
