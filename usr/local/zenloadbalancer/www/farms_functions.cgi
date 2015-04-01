@@ -3337,7 +3337,7 @@ sub getFarmGuardianPid($fname,$svice){
 
 #
 sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$service){
-	($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$svice)= @_;
+	my ($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$svice)= @_;
 
 	my $type = &getFarmType($fname);
 	my $file = &getFarmFile($fname);
@@ -3529,7 +3529,7 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$servic
 						$index++;
 					}
 					#Priority?
-					if ($priority_server){
+					if ($priority){
 						splice @contents, $index,0,"\t\t\tPriority $priority";
 						$index++;
 					}
