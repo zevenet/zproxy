@@ -6,3 +6,5 @@ my $orig = "$basedir\/\.htpasswd";
 my $dst = "\/tmp\/\.htpasswd";
 move $orig, $dst or WriteLog ("move $orig, $dst failed: $!");
 
+#Move minihttpd configuration to persist interface configuration
+move "/usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf", "/tmp/mini_httpd.conf" or WriteLog ("move mini_httpd.conf failed: $!");
