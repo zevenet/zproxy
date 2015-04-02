@@ -108,8 +108,8 @@ sub runL4FarmRestart($fname,$writeconf,$type){
 		kill USR1, $pid;
 		$output = $?;
 	} else {
-		&runFarmStop($farmname,$writeconf);
-		$output = &runFarmStart($farmname,$writeconf);
+		&runFarmStop($fname,$writeconf);
+		$output = &runFarmStart($fname,$writeconf);
 	}
 
 	return $output;
@@ -131,8 +131,8 @@ sub _runL4FarmRestart($fname,$writeconf,$type){
 		kill '-USR1', $pid;
 		$output = $?;
 	} else {
-		&_runFarmStop($farmname,$writeconf);
-		$output = &_runFarmStart($farmname,$writeconf);
+		&_runFarmStop($fname,$writeconf);
+		$output = &_runFarmStart($fname,$writeconf);
 	}
 
 	return $output;
