@@ -47,7 +47,7 @@ print "
                 			<li><a href=\"index.cgi?id=3-1\"><img src=\"../img/icons/small/application_edit.png\"> Server</a></li>
                 			<li><a href=\"index.cgi?id=3-2\"><img src=\"../img/icons/small/plugin.png\"> Interfaces</a></li>
                 			<li><a href=\"index.cgi?id=3-3\"><img src=\"../img/icons/small/databases.png\"> Cluster</a></li>
-                			<li><a href=\"index.cgi?id=3-4\"><img src=\"../img/icons/small/user.png\"> Change Password</a></li>
+                			<li><a href=\"index.cgi?id=3-4\"><img src=\"../img/icons/small/user.png\"> Users Management</a></li>
                 			<li><a href=\"index.cgi?id=3-5\"><img src=\"../img/icons/small/drive_disk.png\"> Backup</a></li>
                 		</ul>
           		</li>

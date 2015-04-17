@@ -566,8 +566,8 @@ sub setFarmTimeout($tout,$fname){
 
 	if ($type eq "tcp" || $type eq "udp"){
 		my $fport = &getFarmPort($fname);
-		&logfile("running '$pen_ctl 127.0.0.1:$fport timeout $timeout' for $fname farm $type");
-		my @run = `$pen_ctl 127.0.0.1:$fport timeout $timeout 2> /dev/null`;
+		&logfile("running '$pen_ctl 127.0.0.1:$fport timeout $tout' for $fname farm $type");
+		my @run = `$pen_ctl 127.0.0.1:$fport timeout $tout 2> /dev/null`;
 		$output = $?;
 		&logfile ("running '$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'' for $fname farm $type");
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;

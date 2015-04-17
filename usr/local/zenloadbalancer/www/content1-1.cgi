@@ -34,183 +34,29 @@ print "
 #graph
 use GD::3DBarGrapher qw(creategraph);
 &logfile("loading default view");
-#graph the memory
-if (-f "/proc/meminfo")
-	{
-	open FR,"/proc/meminfo";
-	while ($line=<FR>)
-		{
-		if ($line =~ /memtotal/i)
-			{
-			my @memtotal = split(": ",$line);
-			$mvalue = @memtotal[1]/1024;
-			$mname = @memtotal[0];
-			}
-		if ($line =~ /memfree/i)
-			{
-			my @memfree = split(": ",$line);
-			$mfvalue = @memfree[1]/1024;
-			$mfname = @memfree[0];
-			}
-		if ($mname && $mfname)
-			{
-			$mused = $mvalue-$mfvalue
-			}
-		if ($line =~ /buffers/i)
-			{
-			my @membuf = split(": ",$line);
-			$mbvalue = @membuf[1]/1024;
-			$mbname = @membuf[0];		
-			}
-		if ($line =~ /^cached/i)
-			{
-			my @memcached = split(": ",$line);
-			$mcvalue = @memcached[1]/1024;
-			$mcname = @memcached[0];
-			}
-		if ($line =~ /swaptotal/i)
-			{
-			my @swtotal = split(": ",$line);
-			$swtvalue = @swtotal[1]/1024;
-			$swtname = @swtotal[0];
-			}
-		if ($line =~ /swapfree/i)
-			{
-			my @swfree =split(": ",$line);
-			$swfvalue = @swfree[1]/1024;
-			$swfname = @swfree[0];
-			}
-		if ($swtname && $swfname)
-			{
-			$swused = $swtvalue-$swfvalue;
-			}
-		
-		}
-	}
 
-#foreach $line(@run)
-#	{
-#	print "$line<br>\n";
-#	}
-#memory @data
-my @data = (
-      [$mname, $mvalue],
-      [$mfname, $mfvalue],
-      ['MemUsed', $mused],
-      [$mbname, $mbvalue],
-      [$mcname, $mcvalue],
-      [$swtname, $swtvalue],
-      [$swfname, $swfvalue],
-      ['SwapUsed', $swused],
-  );
-
+#memory values
+my @data_mem = &getMemStats();
 
 #memory graph
 $description = "img/graphs/graphmem.jpg";
-&graphs($description,@data);
-#
 
-if (-f "/proc/loadavg")
-        {
-        open FR,"/proc/loadavg";
-        while ($line=<FR>)
-		{
-		$lastline = $line	
-		}
-	my @splitline = split(" ", $lastline);
-	$last = @splitline[0];
-	$last5 = @splitline[1];
-	$last15 = @splitline[2];
+&graphs($description,@data_mem);
 
-	}
-my @data = (
-	['Last', $last],
-	['Last 5', $last5],
-	['Last 15', $last15],
-  );
+#load values
+my @data_load = &getLoadStats();
 
 #load graph
 $description = "img/graphs/graphload.jpg";
-&graphs($description,@data);
 
-#2 decimals
-$mvalue = sprintf('%.2f', $mvalue);
-$mfvalue = sprintf('%.2f', $mfvalue);
-$mused = sprintf('%.2f', $mused);
-$mbvalue = sprintf('%.2f', $mbvalue);
-$mcvalue = sprintf('%.2f', $mcvalue);
-$swtvalue = sprintf('%.2f',$swtvalue);
-$swfvalue = sprintf('%.2f',$swfvalue);
-$swused = sprintf('%.2f',$swused);
-
+&graphs($description,@data_load);
 
 #network interfaces
-#
-open DEV,'/proc/net/dev' or die $!;
-my ($in,$out);
-$i=-1;
-while(<DEV>) 
-{
-if ($_ =~ /\:/ && $_ !~ /lo/)
-        {
-	$i++;
-        my @iface = split(":",$_);
-        $if =~ s/\ //g;
-        $if = @iface[0];
-        #exit;
-        #next unless /$dev:\d+/;
-        #($in,$out) = (split)[0,8];
-	if ($_ =~ /:\ /)
-		{
-        	($in,$out) = (split)[1,9];
-		}
-		else
-		{
-        	($in,$out) = (split)[0,8];
-        	$in = (split/:/,$in)[1];
-		}
-        $in = (($in/1024)/1024);
-        $out = (($out/1024)/1024);
-        $in = sprintf('%.2f',$in);
-        $out = sprintf('%.2f',$out);
-        $if =~ s/\ //g;
-
-	$interface[$i] = $if;
-	$interfacein[$i] = $in;
-	$interfaceout[$i] = $out;
-        }
-	
-}
-
-my @data = ();
-for($j=0;$j<=$i;$j++)
-	{
-	push @data, [$interface[$j].' in', $interfacein[$j]],
-		    [$interface[$j].' out', $interfaceout[$j]];
-	} 
-
+my @data_net = &getNetworkStats();
+#network graph
 $description = "img/graphs/graphnet.jpg";
-&graphs($description,@data);
+&graphs($description,@data_net);
 #
-
-if (-f "/proc/acpi/thermal_zone/THRM/temperature")
-        {
-        open FR,"/proc/acpi/thermal_zone/THRM/loadavg";
-        while ($line=<FR>)
-                {
-                $lastline = $line
-                }
-        my @splitline = split(" ", $lastline);
-        $last = @splitline[0];
-        $last5 = @splitline[1];
-        $last15 = @splitline[2];
-
-        }
-my @data = (
-        ['Last', $last],
-        ['Last 5', $last5],
-        ['Last 15', $last15],
-  );
 
 ####################################
 # ZLB COMMERCIAL INFORMATION
@@ -328,13 +174,13 @@ print "<div class=\"box-header\">Memory (mb)</div>";
 print " <div class=\"box table\">
         <table>
         <thead>";
-print "<tr><td>$mname</td><td>$mfname</td><td>MemUsed</td><td>$mbname</td><td>$mcname</td><td>$swtname</td><td>$swfname</td><td>SwapUsed</td>    </tr>";
+print "<tr><td>$data_mem[0][0]</td><td>$data_mem[1][0]</td><td>$data_mem[2][0]</td><td>$data_mem[3][0]</td><td>$data_mem[4][0]</td><td>$data_mem[5][0]</td><td>$data_mem[6][0]</td><td>$data_mem[7][0]</td>    </tr>";
 print "</thead>";
 
 
 print "<tbody>";
 
-print "<tr><td>$mvalue</td><td>$mfvalue</td><td>$mused</td><td>$mbvalue</td><td>$mcvalue</td><td>$swtvalue</td><td>$swfvalue</td><td>$swused</td>    </tr>";
+print "<tr><td>$data_mem[0][1]</td><td>$data_mem[1][1]</td><td>$data_mem[2][1]</td><td>$data_mem[3][1]</td><td>$data_mem[4][1]</td><td>$data_mem[5][1]</td><td>$data_mem[6][1]</td><td>$data_mem[7][1]</td>    </tr>";
 print "<tr style=\"background:none\;\"><td colspan=\"8\" style=\"text-align:center;\"><img src=\"img/graphs/graphmem.jpg\">  </tr>";
 
 print "</tbody>";
@@ -348,7 +194,7 @@ print " <div class=\"box table\">
 print "<tr><td colspan=3>Load last minute</td><td colspan=2>Load Last 5 minutes</td><td colspan=3>Load Last 15 minutes</td></tr>";
 print "</thead>";
 print "<tbody>";
-print "<tr><td colspan=3>$last</td><td colspan=2>$last5</td><td colspan=3>$last15</td></tr>";
+print "<tr><td colspan=3>$data_load[0][1]</td><td colspan=2>$data_load[1][1]</td><td colspan=3>$data_load[2][1]</td></tr>";
 print "<tr style=\"background:none;\"><td colspan=8 style=\"text-align:center;\"><img src=\"img/graphs/graphload.jpg\"></td></tr>";
 print "</tbody>";
 
@@ -368,9 +214,10 @@ print " <div class=\"box table\">
 print "<tr><td>Interface</td><td>Input</td><td>Output</td></tr>";
 print "</thead>";
 print "<tbody>";
-for($j=0;$j<=$i;$j++){
+my $indice = @data_net;
+for my $i ( 0 .. @data_net-2 ){
                 print "<tr>";
-                print "<td>$interface[$j]</td><td>$interfacein[$j]</td><td>$interfaceout[$j]</td>\n";
+		print "<td>$data_net[$i][0]</td><td>$data_net[$i][1]</td><td>$data_net[$i+1][1]</td>\n";
                 print "</tr>";
         }
 

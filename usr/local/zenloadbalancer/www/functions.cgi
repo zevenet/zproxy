@@ -32,6 +32,12 @@ require "/usr/local/zenloadbalancer/www/rrd_functions.cgi";
 require "/usr/local/zenloadbalancer/www/cert_functions.cgi";
 require "/usr/local/zenloadbalancer/www/l4_functions.cgi";
 require "/usr/local/zenloadbalancer/www/gslb_functions.cgi";
+require "/usr/local/zenloadbalancer/www/system_functions.cgi";
+require "/usr/local/zenloadbalancer/www/gui_functions.cgi";
+
+if (-e "/usr/local/zenloadbalancer/www/zapi_functions.cgi"){
+	require "/usr/local/zenloadbalancer/www/zapi_functions.cgi";
+}
 
 #function that check if variable is a number no float
 sub isnumber($num)
@@ -544,38 +550,6 @@ open FO, ">> $logfile";
 print FO "$date - $ENV{'SERVER_NAME'} - $ENV{'REMOTE_ADDR'} - $ENV{'REMOTE_USER'} - $string\n";
 close FO;
 }
-
-#get ip GUI
-sub GUIip()
-{
-open FO, "<$confhttp";
-@file = <FO>;
-$guiip = @file[0];
-@guiip = split("=",$guiip);
-chomp(@guiip);
-return @guiip[1];
-
-}
-
-#function that read the https port for GUI
-sub getGuiPort($minihttpdconf) {
-	($minihttpdconf) = @_;
-	open FR, "<$minihttpdconf";
-	@minihttpdconffile = <FR>;
-	my @guiportline = split("=",@minihttpdconffile[1]);
-	close FR;
-	return @guiportline[1];
-}
-
-#function that write the https port for GUI
-sub setGuiPort($httpsguiport,$minihttpdconf) {
-	($httpsguiport,$minihttpdconf) = @_;
-	use Tie::File;
-	tie @array, 'Tie::File', "$minihttpdconf";
-	@array[1] = "port=$httpsguiport\n";
-	untie @array;
-}
-
 
 #function that create the menu for manage the vips in HTTP Farm Table
 sub createmenuviph($name,$pid,$fproto)
