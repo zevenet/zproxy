@@ -5567,7 +5567,7 @@ sub runFarmReload($farmname){
 
 	if ($type eq "gslb"){
 		&logfile("running $gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones");
-		zsystem("$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones &>/dev/null");
+		zsystem("$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones 1>/dev/null 2>/dev/null");
 		$output = $?;
 		if ($output != 0) {
 			$output = -1;
