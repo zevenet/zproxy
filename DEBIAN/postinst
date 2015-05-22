@@ -79,6 +79,9 @@ then
 	if [ -d /usr/local/zenloadbalancer/app/cherokee/etc/cherokee ];
 	then
 		cat /tmp/.htpasswd > /usr/local/zenloadbalancer/app/cherokee/etc/cherokee/.htpasswd
+		if [ -f /tmp/cherokee.conf ]; then
+			cat /tmp/cherokee.conf /usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf
+		fi
 	else
 		cat /tmp/.htpasswd > /usr/local/zenloadbalancer/www/.htpasswd
 	fi
