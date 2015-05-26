@@ -4865,16 +4865,16 @@ sub getFarmVS($farmname,$service,$tag){
 		my $output_pr = "";
 
 		foreach $line(@fileconf){
-			if ($line =~ /Service/){
+			if ($line =~ /^\tService/){
 				$sw = 0;
 			}
-			if ($line =~ /Service \"$svice\"/){
+			if ($line =~ /^\tService \"$svice\"/){
 				$sw=1;
 			}
 
 			# returns all services for this farm
-			if ($tag eq "" && $service eq ""){
-				if ($line =~ "Service" && $line !~ "#"){
+			if ($tag eq "" && $svice eq ""){
+				if ($line =~ /^\tService\ \"/ && $line !~ "#"){
 					@return = split("\ ",$line);
 					@return[1] =~ s/\"//g;
 					@return[1] =~ s/^\s+//;
@@ -5567,7 +5567,7 @@ sub runFarmReload($farmname){
 
 	if ($type eq "gslb"){
 		&logfile("running $gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones");
-		zsystem("$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones 1>/dev/null 2>/dev/null");
+		zsystem("$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones &>/dev/null");
 		$output = $?;
 		if ($output != 0) {
 			$output = -1;
