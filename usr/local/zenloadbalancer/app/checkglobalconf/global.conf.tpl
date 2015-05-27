@@ -79,6 +79,14 @@ $arping_bin="/usr/bin/arping";
 $ping_bin="/bin/ping";
 #Where is openssl?
 $openssl="/usr/bin/openssl";
+#Where is unzip?
+$unzip="/usr/bin/unzip";
+#Where is mv?
+$mv="/bin/mv";
+#Where is ls?
+$ls="/bin/ls";
+#Where is cp?
+$cp="/bin/cp";
 #Where is iptables?
 $iptables="/sbin/iptables";
 #Where is modprobe?

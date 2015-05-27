@@ -60,12 +60,13 @@ my $action = $query->param("action");
 my $filename = $query->param("fileup");
 my $certname = $query->param("certname");
 my $certaut = "Starfield";
+my $filecert = "";
 my $certautfile = "sf_bundle-g2-g1.crt";
 my $upload_filehandle = $query->upload("fileup");
 if ($action eq "Upload" && $filename !~ /^$/ && $certname !~ /^$/){
 	if ($filename =~ /\.pem$/ || $filename =~ /\.zip$/ || $filename =~ /\.cert$/){
-		if ($filename =~ /\\/){
-                	@filen = split(/\\/,$filename);
+		if ($filename =~ /\//){
+                	@filen = split(/\//,$filename);
                 	$filename = $filen[-1];
 		}
 
@@ -81,11 +82,14 @@ if ($action eq "Upload" && $filename !~ /^$/ && $certname !~ /^$/){
 		&successmsg("File $filename uploaded!");
 		if($filename =~ /\.zip/){
 			my @eject = `$unzip -o -d $tmpdir $upload_dir/$filename 2> /dev/null`;
-			my @eject = `$mv -f $upload_dir/$filename $tmpdir/ 2> /dev/null`;
-			$filename =~ s/\.zip$/\.crt/;
+			$filecert = `$ls -1 $tmpdir | grep -v "$certautfile"`;
+			@eject = `$mv -f $upload_dir/$filename $tmpdir/ 2> /dev/null`;
+			#$filename =~ s/\.zip$/\.crt/;
+			$filename = $filecert;
+			chomp($filename);
 		}
 		if($filename =~ /\.crt/){
-			if (!(-e $tmpdir/$filename)){
+			if (!(-e "${tmpdir}/${filename}")){
 				my @eject = `$mv -f $upload_dir/$filename $tmpdir/$filename 2> /dev/null`;
 			}
 			$crtaut = &getCertIssuer("$tmpdir/$filename");
@@ -125,7 +129,7 @@ if ($action eq "Upload" && $filename !~ /^$/ && $certname !~ /^$/){
 			$crtcn = &getCertCN("$tmpdir/$filename");
 
 			if ( $csrcn ne $crtcn ){
-				&errormsg("CRT file was not created from this CSR.");	
+				&errormsg("PEM file was not created from this CSR.");	
 			}else{
 				$keyfile = $certname;
 				$keyfile =~ s/\.csr$/\.key/;
