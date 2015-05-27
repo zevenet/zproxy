@@ -23,7 +23,7 @@
 ###############################################################################	
      
 ## Load pragmas and modules
-require "./config/global.conf";
+require "/usr/local/zenloadbalancer/config/global.conf";
 require "./functions.cgi";
 use CGI; 
 # Uncomment the next line only for debugging the script.

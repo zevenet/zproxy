@@ -42,7 +42,7 @@ print "
 if ( $action =~ /^Modify$/ )
 	{
 	use Tie::File;
-	tie @array, 'Tie::File', "config/global.conf";
+	tie @array, 'Tie::File', "$globalcfg";
 	for (@array)
 		{
 		s/\$$var.*/\$$var=\"$line\";/g;
@@ -162,7 +162,7 @@ if ($action eq "Restart GUI Service")
 
 #open glogal file config 	
 $nextline="false";
-open FR,"config/global.conf";
+open FR,"$globalcfg";
 while (<FR>)
 	{
 	if ( $_ =~ /^#::INI/ )
