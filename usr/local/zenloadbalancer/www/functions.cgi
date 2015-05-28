@@ -236,8 +236,7 @@ sub createmenubackup($file)
 {
 ($file)=@_;
 	print "<a href=\"index.cgi?id=$id&action=apply&file=$file\"><img src=\"img/icons/small/accept2.png\" title=\"Apply $file backup and restart Zen Load Balancer service\"></a> ";
-	print "<a href=\"backup/$file\"><img src=\"img/icons/small/arrow_down.png\" title=\"Download $file backup\"></a>";
-	#print "<a href=\"index.cgi?id=$id&action=down&file=$file\"><img src=\"img/icons/small/arrow_down.png\" title=\"Download $file backup\"></a> ";
+	print "<a href=\"downloads.cgi?filename=$file\"><img src=\"img/icons/small/arrow_down.png\" title=\"Download $file backup\"></a>";
 	print "<a href=\"index.cgi?id=$id&action=del&file=$file\" onclick=\"return confirm('Are you sure you wish to delete this backup?')\"><img src=\"img/icons/small/cross_octagon.png\" title=\"Delete $file backup\"></a> ";
 
 }
