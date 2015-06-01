@@ -12,6 +12,7 @@ if [ -f $MSCRIPT -a -f $GLOBALCF ]; then
 		$MSCRIPT
 	fi
 fi
+
 if [ -f /usr/local/zenloadbalancer/app/zennetname/write_net_rules ]; then
 	cp -f /usr/local/zenloadbalancer/app/zennetname/write_net_rules /lib/udev/
 fi
@@ -39,6 +40,24 @@ fi
 
 if [ -f /tmp/cherokee.conf ];
 then
+	# Migrate if needed from minihttpd to cherokee
+	if [ -f /tmp/zenport ];
+	then
+		ZENPORT = `cat /tmp/zenport`
+		sed -i 's/^.*server!bind!1!port.*/server!bind!1!port = $ZENPORT/g' /tmp/cherokee.conf
+		rm -f /tmp/zenport
+	fi
+	if [ -f /tmp/zenhost ];
+	then
+		ZENHOST = `cat /tmp/zenhost`
+		if [ "$ZENHOST" = "*" ];
+		then
+			sed -i 's/^.*server!bind!1!interface.*/#server!bind!1!interface/g' /tmp/cherokee.conf
+		else
+			sed -i 's/^.*server!bind!1!interface.*/server!bind!1!interface = $ZENHOST/g' /tmp/cherokee.conf
+		fi
+		rm -f /tmp/zenhost
+	fi
 	cat /tmp/cherokee.conf > /usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf
 	rm -f /tmp/cherokee.conf
 fi
@@ -49,7 +68,7 @@ if [ -f /etc/init.d/cherokee ];
 then
 	if [ "`pidof mini_httpd`" != "" ];
 	then
-		/etc/init.d/minihttpd stop
+		killall mini_httpd
 	fi
 	/etc/init.d/cherokee stop
 	/etc/init.d/cherokee start
