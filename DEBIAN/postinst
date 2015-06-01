@@ -100,9 +100,9 @@ then
 fi
 
 # Change profile in order to launch ZenBui
-if [ -f /usr/local/zenloadbalancer/app/zenbui/zenbui.pl -a "`grep zenbui /etc/profile`" = "" ];
-then
-	echo "/usr/bin/perl /usr/local/zenloadbalancer/app/zenbui/zenbui.pl &" >> /etc/profile
-fi
+#if [ -f /usr/local/zenloadbalancer/app/zenbui/zenbui.pl -a "`grep zenbui /etc/profile`" = "" ];
+#then
+#	echo "/usr/bin/perl /usr/local/zenloadbalancer/app/zenbui/zenbui.pl &" >> /etc/profile
+#fi
 
 echo "Last version of Zen Load Balancer update completed..."
