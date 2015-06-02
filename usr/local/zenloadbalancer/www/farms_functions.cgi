@@ -4333,14 +4333,14 @@ sub getFarmConfigIsOK($fname){
 		&logfile("running: $pound -f $configdir\/$ffile -c ");
 		#zsystem("$pound -f $configdir\/$ffile -c >/dev/null");
 		my $run = `$pound -f $configdir\/$ffile -c 2>&1`;
-		&logfile("output: $run ");
 		$output = $?;
+		&logfile("output: $run ");
 	}
 	if ($type eq "gslb") {
 		&logfile("running: $gdnsd -c $configdir\/$ffile/etc checkconf ");
 		my $run = `$gdnsd -c $configdir\/$ffile/etc checkconf 2>&1`;
-		&logfile("output: $run ");
 		$output = $?;
+		&logfile("output: $run ");
 	}
 	return $output;
 }
@@ -4669,91 +4669,141 @@ sub setFarmGSLBDeleteZone($fname,$service){
 
 # Create a new Service in a GSLB farm
 sub setFarmGSLBNewService($fname,$service,$algorithm){
-	my ($fname,$svice,$alg) =  @_;
+        my ($fname,$svice,$alg) =  @_;
 
-	my $output = -1;
-	my $ftype = &getFarmType($fname);
-	my $gsalg = "simplefo";
+        my $output = -1;
+        my $ftype = &getFarmType($fname);
+        my $gsalg = "simplefo";
 
-	if ($ftype eq "gslb"){
-		if ($alg eq "roundrobin"){
-			$gsalg = "multifo";
-		} else {
-			if ($alg eq "prio"){
-			$gsalg = "simplefo";
-			}
-		}
-		opendir(DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/");
-		my @files= grep { /^$svice/ } readdir(DIR);
-		closedir(DIR);
-
-		if ( $files == 0 ) {
-			open FO, ">$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$svice.cfg";
-			print FO "$gsalg => {\n\tservice_types = up\n";
-			print FO "\t$svice => {\n\t\tservice_types = tcp_80\n";
-			if ($gsalg eq "simplefo"){
-				print FO "\t\tprimary => 127.0.0.1\n";
-				print FO "\t\tsecondary => 127.0.0.1\n";
-			}
-			else{
-				print FO "\t\t1 => 127.0.0.1\n";
-			}
-			print FO "\t}\n}\n";
-			close FO;
-			$output = 0;
-
-			# Include the plugin file in the main configuration
-			tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
-			my $found=0;
-			my $index=0;
-			foreach $line(@fileconf){
-				if ($line =~ /plugins => /){
-					$found=1;
-					$index++;
-				}
-				if ($found==1){
-					splice @fileconf,$index,0,"	\$include{plugins\/$svice.cfg},";
-					last;
-				}
-				$index++;
-			}
-			untie @fileconf;
-			&setFarmVS($fname,$svice,"dpc","80");
-       		} else {
+        if ($ftype eq "gslb"){
+                if ($alg eq "roundrobin"){
+                        $gsalg = "multifo";
+                } else {
+                        if ($alg eq "prio"){
+                        	$gsalg = "simplefo";
+                        }
+                }
+		if (grep(/^$svice$/, &getFarmServices($fname))){
 			$output = -1;
-       		}
-	}
-	return $output;
+		}else{
+			if (!(-e "$configdir/${fname}_${ftype}.cfg/etc/plugins/${gsalg}.cfg")){
+				open FO, ">$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$gsalg.cfg";
+	                       	print FO "$gsalg => {\n\tservice_types = up\n";
+	                        print FO "\t$svice => {\n\t\tservice_types = tcp_80\n";
+				if ($gsalg eq "simplefo"){
+	                               	print FO "\t\tprimary => 127.0.0.1\n";
+	                               	print FO "\t\tsecondary => 127.0.0.1\n";
+				}else{
+					print FO "\t\t1 => 127.0.0.1\n";
+				}
+	                        print FO "\t}\n}\n";
+	                        close FO;
+				$output = 0;
+			}else{
+	                        # Include the service in the plugin file
+	                        tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$gsalg.cfg";
+				if (grep (/^\t$svice =>.*/, @fileconf)){
+		                        $output = -1;
+				}else{
+	                               	my $found=0;
+	                               	my $index=0;
+	                               	foreach $line(@fileconf){
+	                        	        if ($line =~ /$gsalg => /){
+	                               	        	$found=1;
+	                               	        }
+	                               	        if ($found==1 && $line =~ /service_types /){
+	                               	        	$index++;
+	                               	                #splice @fileconf,$index,0,"     \$include{plugins\/$svice.cfg},";
+							if ($gsalg eq "simplefo"){
+                               		                	splice @fileconf,$index,0,("\t$svice => {", "\t\tservice_types = tcp_80", "\t\tprimary => 127.0.0.1", "\t\tsecundary => 127.0.0.1","\t}");
+							}else{
+								splice @fileconf,$index,0,("\t$svice => {", "\t\tservice_types = tcp_80", "\t\t1 => 127.0.0.1", "\t}");
+							}
+							$found=0;
+                               		                last;
+                               		        }
+                               		        $index++;
+                               		}
+					$output = 0;
+				}
+                	       	untie @fileconf;
+			}
+			if ($output == 0){
+                	       	# Include the plugin file in the main configuration
+                	       	tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
+				if ((grep(/include{plugins\/$gsalg\.cfg}/, @fileconf)) == 0){
+                	       		my $found=0;
+                	       		my $index=0;
+                	       		foreach $line(@fileconf){
+                	               		if ($line =~ /plugins => /){
+                	                       		$found=1;
+                	                       		$index++;
+                	               		}
+                	               		if ($found==1){
+                	                       		splice @fileconf,$index,0,"     \$include{plugins\/$gsalg.cfg},";
+	        	                               	last;
+                	                	}
+                	                	$index++;
+                	        	}
+				}
+                        	untie @fileconf;
+                        	&setFarmVS($fname,$svice,"dpc","80");
+                	}
+		}
+        }
+        return $output;
 }
 
-# Delete an existing Zone in a GSLB farm
+# Delete an existing Service in a GSLB farm
 sub setFarmGSLBDeleteService($fname,$service){
-	my ($fname,$svice) =  @_;
+        my ($fname,$svice) =  @_;
 
-	my $output = -1;
-	my $ftype = &getFarmType($fname);
+        my $output = -1;
+        my $ftype = &getFarmType($fname);
+	my $pluginfile = "";
 
-	if ($ftype eq "gslb"){
-		use File::Path 'rmtree';
-		rmtree([ "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$svice.cfg" ]);
-		tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
-		my $found=0;
-		my $index=0;
-		foreach $line(@fileconf){
-			if ($line =~ /plugins => /){
-				$found=1;
-				$index++;
+        if ($ftype eq "gslb"){
+		#Find the plugin file
+		opendir(DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/");
+        	my @pluginlist = readdir(DIR);
+        	foreach $plugin(@pluginlist){
+			tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+			if(grep(/^\t$svice => /, @fileconf)){
+				$pluginfile = $plugin;
 			}
-			if ($found==1 && $line =~ /plugins\/$svice.cfg/){
-				splice @fileconf,$index,1;
-				last;
-			}
-			$index++;
+			untie @fileconf;
 		}
-		untie @fileconf;
-		$output = 0;
+		closedir(DIR);
+		if($pluginfile eq ""){
+			$output = -1;		
+		}else{
+			#Delete section from the plugin file
+                        tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$pluginfile";
+                        my $found = 0;
+                        my $index = 0;
+			my $deleted = 0;
+                        while ($deleted == 0){
+                        	if ($fileconf[$index] =~ /^\t$svice => /){
+                        	        $found = 1;
+                                }
+                                if ($found == 1){
+					if ($fileconf[$index] !~ /^\t\}/){
+                                        	splice @fileconf,$index,1;
+					}else{
+						splice @fileconf,$index,1;
+						$found=0;
+						$output=0;
+						$deleted = 1;
+					}
+				}
+				if ($found == 0){
+					$index++;
+				}
+			}
+			untie @fileconf;
+		}
 	}
-	return $output;
+        return $output;
 }
 
 # Get farm zones list for GSLB farms
@@ -4776,12 +4826,29 @@ sub getFarmServices($fname){
 
 	my $output = -1;
 	my $ftype = &getFarmType($fname);
+	my @srvarr = ();
 
 	opendir(DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/");
-	my @files= grep { /^[a-zA-Z].*\.cfg/ } readdir(DIR);
+	my @pluginlist = readdir(DIR);
 	closedir(DIR);
-
-	return @files;
+	foreach $plugin(@pluginlist){
+		if ($plugin !~ /^\./){
+			@fileconf = ();
+			tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+			my @srv = grep (/^\t[a-zA-Z1-9].* => {/, @fileconf);
+			foreach $srvstring(@srv){
+				my @srvstr = split(' => ', $srvstring);
+				$srvstring = $srvstr[0];
+				$srvstring =~ s/^\s+|\s+$//g;
+			}
+			my $nsrv = @srv;
+			if ($nsrv > 0){
+				push(@srvarr,@srv);
+			}
+			untie @fileconf;
+		}
+	}
+	return @srvarr;
 }
 
 
@@ -5048,7 +5115,18 @@ sub getFarmVS($farmname,$service,$tag){
 			}
 		} else {
 			my $found=0;
-			tie @fileconf, 'Tie::File', "$configdir\/$fname\_$type.cfg\/etc\/plugins\/$svice.cfg";
+			my $pluginfile = "";
+			opendir(DIR, "$configdir\/$fname\_$type.cfg\/etc\/plugins\/");
+        		my @pluginlist = readdir(DIR);
+        		foreach $plugin(@pluginlist){
+				tie @fileconf, 'Tie::File', "$configdir\/$fname\_$type.cfg\/etc\/plugins\/$plugin";
+				if(grep(/^\t$svice => /, @fileconf)){
+					$pluginfile = $plugin;
+				}
+				untie @fileconf;
+			}
+			closedir(DIR);
+			tie @fileconf, 'Tie::File', "$configdir\/$fname\_$type.cfg\/etc\/plugins\/$pluginfile";
 			foreach $line(@fileconf){
 				if ($tag eq "backends"){
 					if ($found ==1 && $line =~ /.*}.*/){
@@ -5303,7 +5381,20 @@ sub setFarmVS($farmname,$service,$tag,$string){
 		}
 		if ($tag eq "dpc"){
 			my $found = 0;
-			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$svice.cfg";
+			#Find the plugin file
+			opendir(DIR, "$configdir\/$ffile\/etc\/plugins\/");
+        		my @pluginlist = readdir(DIR);
+        		foreach $plugin(@pluginlist){
+				tie @fileconf, 'Tie::File', "$configdir\/$ffile\/etc\/plugins\/$plugin";
+				if(grep(/^\t$svice => /, @fileconf)){
+					$pluginfile = $plugin;
+				}
+				untie @fileconf;
+			}
+			closedir(DIR);
+
+
+			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
 			foreach $line(@fileconf){
 				if ($found ==1 && $line =~ /.*}.*/){
 					last;
@@ -5465,10 +5556,23 @@ sub remFarmServiceBackend($id,$fname,$service){
 		my @fileconf;
 		my $line;
 		my $index=0;
+		my $pluginfile="";
 		use Tie::File;
-		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$srv.cfg";
+		#Find the plugin file
+		opendir(DIR, "$configdir\/$ffile\/etc\/plugins\/");
+        	my @pluginlist = readdir(DIR);
+        	foreach $plugin(@pluginlist){
+			tie @fileconf, 'Tie::File', "$configdir\/$ffile\/etc\/plugins\/$plugin";
+			if(grep(/^\t$srv => /, @fileconf)){
+				$pluginfile = $plugin;
+			}
+			untie @fileconf;
+		}
+		closedir(DIR);
+
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
 		foreach $line(@fileconf){
-			if ($line =~ /$srv => /){
+			if ($line =~ /^\t$srv => /){
 				$found = 1;
 				$index++;
 				next;
@@ -5511,10 +5615,22 @@ sub setFarmGSLBNewBackend($fname,$srv,$lb,$id,$ipaddress){
 		my $found=0;
 		my $index=0;
 		my $idx=0;
+		my $pluginfile="";
 		use Tie::File;
-		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$srv.cfg";
+		#Find the plugin file
+		opendir(DIR, "$configdir\/$ffile\/etc\/plugins\/");
+        	my @pluginlist = readdir(DIR);
+        	foreach $plugin(@pluginlist){
+			tie @fileconf, 'Tie::File', "$configdir\/$ffile\/etc\/plugins\/$plugin";
+			if(grep(/^\t$srv => /, @fileconf)){
+				$pluginfile = $plugin;
+			}
+			untie @fileconf;
+		}
+		closedir(DIR);
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
 		foreach $line(@fileconf){
-			if ($line =~ /$srv => /){
+			if ($line =~ /^\t$srv => /){
 				$found = 1;
 				$index++;
 				next;
@@ -5567,7 +5683,7 @@ sub runFarmReload($farmname){
 
 	if ($type eq "gslb"){
 		&logfile("running $gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones");
-		zsystem("$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones &>/dev/null");
+		zsystem("$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones 2>/dev/null");
 		$output = $?;
 		if ($output != 0) {
 			$output = -1;
