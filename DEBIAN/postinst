@@ -68,7 +68,7 @@ if [ -f /etc/init.d/cherokee ];
 then
 	if [ "`pidof mini_httpd`" != "" ];
 	then
-		killall mini_httpd
+		kill -9 `pidof mini_httpd`
 	fi
 	/etc/init.d/cherokee stop
 	/etc/init.d/cherokee start
