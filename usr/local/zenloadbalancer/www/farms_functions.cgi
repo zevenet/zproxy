@@ -4715,7 +4715,7 @@ sub setFarmGSLBNewService($fname,$service,$algorithm){
 	                               	        	$index++;
 	                               	                #splice @fileconf,$index,0,"     \$include{plugins\/$svice.cfg},";
 							if ($gsalg eq "simplefo"){
-                               		                	splice @fileconf,$index,0,("\t$svice => {", "\t\tservice_types = tcp_80", "\t\tprimary => 127.0.0.1", "\t\tsecundary => 127.0.0.1","\t}");
+                               		                	splice @fileconf,$index,0,("\t$svice => {", "\t\tservice_types = tcp_80", "\t\tprimary => 127.0.0.1", "\t\tsecondary => 127.0.0.1","\t}");
 							}else{
 								splice @fileconf,$index,0,("\t$svice => {", "\t\tservice_types = tcp_80", "\t\t1 => 127.0.0.1", "\t}");
 							}
