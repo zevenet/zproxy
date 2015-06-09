@@ -38,23 +38,28 @@ then
 	rm -f /tmp/mini_httpd.conf
 fi
 
+if [ -d /usr/local/zenloadbalancer/app/cherokee ] && [ ! -f /tmp/cherokee.conf ]
+then
+	cp /usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf /tmp/cherokee.conf
+fi
+
 if [ -f /tmp/cherokee.conf ];
 then
 	# Migrate if needed from minihttpd to cherokee
 	if [ -f /tmp/zenport ];
 	then
-		ZENPORT = `cat /tmp/zenport`
-		sed -i 's/^.*server!bind!1!port.*/server!bind!1!port = $ZENPORT/g' /tmp/cherokee.conf
+		ZENPORT=`cat /tmp/zenport`
+		sed -i "s/^.*server!bind!1!port.*/server!bind!1!port = ${ZENPORT}/g" /tmp/cherokee.conf
 		rm -f /tmp/zenport
 	fi
 	if [ -f /tmp/zenhost ];
 	then
-		ZENHOST = `cat /tmp/zenhost`
+		ZENHOST=`cat /tmp/zenhost`
 		if [ "$ZENHOST" = "*" ];
 		then
-			sed -i 's/^.*server!bind!1!interface.*/#server!bind!1!interface/g' /tmp/cherokee.conf
+			sed -i "s/^.*server!bind!1!interface.*/#server!bind!1!interface/g" /tmp/cherokee.conf
 		else
-			sed -i 's/^.*server!bind!1!interface.*/server!bind!1!interface = $ZENHOST/g' /tmp/cherokee.conf
+			sed -i "s/^.*server!bind!1!interface.*/server!bind!1!interface = ${ZENHOST}/g" /tmp/cherokee.conf
 		fi
 		rm -f /tmp/zenhost
 	fi
