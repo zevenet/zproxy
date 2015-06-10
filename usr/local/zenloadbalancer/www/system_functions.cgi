@@ -194,8 +194,8 @@ if ($_ =~ /\:/ && $_ !~ /lo/)
 
 for($j=0;$j<=$i;$j++)
         {
-	push @data, [$interface[$j], $interfacein[$j]],
-                    [$interface[$j], $interfaceout[$j]];
+	push @data, [$interface[$j] . ' in', $interfacein[$j]],
+                    [$interface[$j] . ' out', $interfaceout[$j]];
 
         } 
 
