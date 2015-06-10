@@ -28,6 +28,8 @@ print "Content-type: text/html\n\n";
 ##REQUIRES
 require "./help-content.cgi";
 
+&login();
+
 #loading form variables
 my(%Variables); #reset hash
 #read query send get
