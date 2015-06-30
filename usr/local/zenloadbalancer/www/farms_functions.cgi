@@ -4373,7 +4373,7 @@ sub getFarmBackendMaintenance($fname,$backend,$sv){
 				my @line = split("\ ",$line);
 				my $backendstatus = @line[3];
 				if ($backendstatus eq "DISABLED"){
-					$backendstatus = &getBackendStatusFromFile($fname,$backend,$sv);
+					$backendstatus = &getBackendStatusFromFile($fname,$backend,$svice);
 					if ($backendstatus =~ /maintenance/){
 						$output = 0;
 					}
