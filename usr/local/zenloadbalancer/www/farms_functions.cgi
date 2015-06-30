@@ -5011,6 +5011,66 @@ sub getFarmVS($farmname,$service,$tag){
 				}
 			}
 
+                        #cookie insertion
+                        if ($tag eq "cookieins"){
+                                if ($line =~ "BackendCookie \"" && $sw == 1 && $line !~ "#"){
+                                        $output = "true";
+                                        last;
+                                }
+                        }
+
+                        #cookie insertion name 
+                        if ($tag eq "cookieins-name"){
+                               if ($line =~ "BackendCookie \"" && $sw == 1 && $line !~ "#"){
+                                        $l = $line;
+                                        $l =~ s/\t\t//g;
+                                        $l =~ s/\"//g;
+                                        my @values = split("\ ",$l);
+                                        $output = @values[1];
+                                        chomp($output);
+                                        last;
+                                }
+                        }
+
+                        #cookie insertion Domain
+                        if ($tag eq "cookieins-domain"){
+                               if ($line =~ "BackendCookie \"" && $sw == 1 && $line !~ "#"){
+                                        $l = $line;
+                                        $l =~ s/\t\t//g;
+                                        $l =~ s/\"//g;
+                                        my @values = split("\ ",$l);
+                                        $output = @values[2];
+                                        chomp($output);
+                                        last;
+                                }
+                        }
+
+                        #cookie insertion Path
+                        if ($tag eq "cookieins-path"){
+                               if ($line =~ "BackendCookie \"" && $sw == 1 && $line !~ "#"){
+                                        $l = $line;
+                                        $l =~ s/\t\t//g;
+                                        $l =~ s/\"//g;
+                                        my @values = split("\ ",$l);
+                                        $output = @values[3];
+                                        chomp($output);
+                                        last;
+                                }
+                        }
+
+                        #cookie insertion TTL 
+                        if ($tag eq "cookieins-ttlc"){
+                               if ($line =~ "BackendCookie \"" && $sw == 1 && $line !~ "#"){
+                                        $l = $line;
+                                        $l =~ s/\t\t//g;
+                                        $l =~ s/\"//g;
+                                        my @values = split("\ ",$l);
+                                        $output = @values[4];
+                                        chomp($output);
+                                        last;
+                                }
+                        }
+
 
                         #dynscale
                         if ($tag eq "dynscale"){
@@ -5273,6 +5333,75 @@ sub setFarmVS($farmname,$service,$tag,$string){
                        			last;
 				}
 			}       
+
+			#cookie ins
+                        if ($tag eq "cookieins"){
+                                if ($line =~ "BackendCookie" && $sw == 1 && $stri ne ""){
+                                        #$line =~ s/\t\t/$line/g;
+                                        $line =~ s/#//g;
+                                        #$line = "$line";
+                                        last;
+                                }
+                                if ($line =~ "BackendCookie" && $sw == 1 && $stri eq ""){
+                                        $line =~ s/\t\t//g;
+                                        $line = "\t\t#$line";
+                                        last;
+                                }
+                        }
+
+                        #cookie insertion name
+                        if ($tag eq "cookieins-name"){
+                                if ($line =~ "BackendCookie" && $sw == 1 && $stri ne ""){
+                                        $l = $line;
+                                        $l =~ s/\t\t//g;
+                                        my @values = split("\ ",$l);
+                                        @values[1] =~ s/\"//g;
+                                        $line = "\t\tBackendCookie \"$stri\" @values[2] @values[3] @values[4]";
+                                        last;
+                                }
+                        }
+
+                        #cookie insertion domain
+                        if ($tag eq "cookieins-domain"){
+                                if ($line =~ "BackendCookie" && $sw == 1 && $stri ne ""){
+                                        $l = $line;
+                                        $l =~ s/\t\t//g;
+                                        my @values = split("\ ",$l);
+                                        @values[2] =~ s/\"//g;
+                                        $line = "\t\tBackendCookie @values[1] \"$stri\" @values[3] @values[4]";
+                                        last;
+                                }
+                        }
+
+                        #cookie insertion path
+                        if ($tag eq "cookieins-path"){
+                                if ($line =~ "BackendCookie" && $sw == 1 && $stri ne ""){
+                                        $l = $line;
+                                        $l =~ s/\t\t//g;
+                                        my @values = split("\ ",$l);
+                                        @values[3] =~ s/\"//g;
+                                        $line = "\t\tBackendCookie @values[1] @values[2] \"$stri\" @values[4]";
+                                        last;
+                                }
+                        }
+
+                        #cookie insertion TTL
+                        if ($tag eq "cookieins-ttlc"){
+                                if ($line =~ "BackendCookie" && $sw == 1 && $stri ne ""){
+                                        $l = $line;
+                                        $l =~ s/\t\t//g;
+                                        my @values = split("\ ",$l);
+                                        @values[4] =~ s/\"//g;
+                                        $line = "\t\tBackendCookie @values[1] @values[2] @values[3] $stri";
+                                        last;
+                                }
+                        }
+
+
+
+
+
+
        			#TTL
 			if ($tag eq "ttl"){
 				if ($line =~ "TTL" && $sw == 1 && $stri ne ""){
