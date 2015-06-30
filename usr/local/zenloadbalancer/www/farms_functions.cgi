@@ -59,12 +59,14 @@ sub setFarmBlacklistTime($fbltime,$fname){
 	if ($type eq "tcp" || $type eq "udp"){
 		&logfile("setting 'Blacklist time $fbltime' for $fname farm $type");
 		my $fport = &getFarmPort($fname);
+		my $fmaxservers = &getFarmMaxServers($fname);
 		&logfile("running '$pen_ctl 127.0.0.1:$fport blacklist $fbltime'");
 		my @run = `$pen_ctl 127.0.0.1:$fport blacklist $fbltime 2> /dev/null`;
 		$output = $?;
 		&logfile ("running '$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile''");
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
 		$output = $? && $output;
+		&setFarmMaxServers($fmaxservers, $fname);
 	}
 
 	if ($type eq "http" || $type eq "https"){
@@ -566,12 +568,14 @@ sub setFarmTimeout($tout,$fname){
 
 	if ($type eq "tcp" || $type eq "udp"){
 		my $fport = &getFarmPort($fname);
+		my $fmaxservers = &getFarmMaxServers($fname);
 		&logfile("running '$pen_ctl 127.0.0.1:$fport timeout $tout' for $fname farm $type");
 		my @run = `$pen_ctl 127.0.0.1:$fport timeout $tout 2> /dev/null`;
 		$output = $?;
 		&logfile ("running '$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'' for $fname farm $type");
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
 		$output = $? && $output;
+		&setFarmMaxServers($fmaxservers, $fname);
 	}
 
 	if ($type eq "http" || $type eq "https"){
@@ -635,6 +639,7 @@ sub setFarmAlgorithm($alg,$fname){
 
 	if ($type eq "tcp" || $type eq "udp"){
 		my $fport = &getFarmPort($fname);
+		my $fmaxservers = &getFarmMaxServers($fname);
 		my @run = `$pen_ctl 127.0.0.1:$fport no hash 2> /dev/null`;
 		my @run = `$pen_ctl 127.0.0.1:$fport no prio 2> /dev/null`;
 		my @run = `$pen_ctl 127.0.0.1:$fport no weight 2> /dev/null`;
@@ -645,6 +650,7 @@ sub setFarmAlgorithm($alg,$fname){
 			$output = $?;
 		}
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
+		&setFarmMaxServers($fmaxservers, $fname);
 	}
 
 	if ($type eq "datalink"){
@@ -867,6 +873,7 @@ sub setFarmPersistence($persistence,$fname){
 	if ($type eq "tcp" || $type eq "udp"){
 		&logfile("setting 'Persistence $persistence' for $fname farm $type");
 		my $fport = &getFarmPort($fname);
+		my $fmaxservers = &getFarmMaxServers($fname);
 		if ($persistence eq "true"){
 			&logfile("running '$pen_ctl 127.0.0.1:$fport no roundrobin' for $fname farm $type");
 			my @run = `$pen_ctl 127.0.0.1:$fport no roundrobin 2> /dev/null`;
@@ -877,6 +884,7 @@ sub setFarmPersistence($persistence,$fname){
 			$output = $?;
 		}
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
+		&setFarmMaxServers($fmaxservers, $fname);
 	}
 
 	if ($type eq "l4xnat"){
@@ -941,6 +949,7 @@ sub setFarmMaxClientTime($maxcl,$track,$fname,$service){
 	&logfile("setting 'MaxClientTime $maxcl $track' for $fname farm $type");
 	if ($type eq "tcp" || $type eq "udp"){
 		$fport = &getFarmPort($fname);
+		my $fmaxservers = &getFarmMaxServers($fname);
 		my @run = `$pen_ctl 127.0.0.1:$fport tracking $track 2> /dev/null`;
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
         	use Tie::File;
@@ -952,6 +961,7 @@ sub setFarmMaxClientTime($maxcl,$track,$fname,$service){
 			}
              	}
 		untie @array;
+		&setFarmMaxServers($fmaxservers, $fname);
 	}
 
 	if ($type eq "http" || $type eq "https"){
@@ -1094,8 +1104,14 @@ sub setFarmMaxServers($maxs,$fname){
         	tie @array, 'Tie::File', "$configdir/$ffile";
         	for (@array) {
 			if ($_ =~ "# pen"){
-	                        s/-S [0-9]*/-S $maxs/g;
-				$output = $?;
+				if ($_ !~ "-S "){
+					s/# pen/# pen -S $maxs/g;
+					$output = $?
+				}
+				else{
+	                        	s/-S [0-9]*/-S $maxs/g;
+					$output = $?;
+				}
 			}
              	}
 		untie @array;
@@ -1220,6 +1236,7 @@ sub setFarmXForwFor($isset,$fname){
 	&logfile("setting 'XForwFor $isset' for $fname farm $type");
 	if ($type eq "tcp" || $type eq "udp"){
 		my $fport = &getFarmPort($fname);
+		my $fmaxservers = &getFarmMaxServers($fname);
 		if ($isset eq "true"){
     		    	&logfile("running '$pen_ctl 127.0.0.1:$fport http'");
         		my @run = `$pen_ctl 127.0.0.1:$fport http 2> /dev/null`;
@@ -1233,6 +1250,7 @@ sub setFarmXForwFor($isset,$fname){
 		if ($output != -1){
 		        my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
 			&logfile("configuration saved in $configdir/$ffile file");
+			&setFarmMaxServers($fmaxservers, $fname);
 		}
 	}
 
@@ -3350,6 +3368,7 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$servic
 
 	if ($type eq "tcp" || $type eq "udp"){
 		$fport = &getFarmPort($fname);
+		my $fmaxservers = &getFarmMaxServers($fname);
 		if ($max ne ""){$max = "max $max";}
 		if ($weight ne ""){$weight = "weight $weight";}
 		if ($priority ne ""){$priority = "prio $priority";}
@@ -3360,6 +3379,7 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$servic
 		$output = $?;
 		&logfile ("running '$pen_ctl 127.0.0.1:$fport write '$configdir/$file''");
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$file'`;
+		&setFarmMaxServers($fmaxservers, $fname);
 	}
 
 	if ($type eq "datalink"){
@@ -3563,11 +3583,13 @@ sub runFarmServerDelete($ids,$fname,$service){
 
 	if ($type eq "tcp" || $type eq "udp"){
 		my $fport = &getFarmPort($fname);
+                my $fmaxservers = &getFarmMaxServers($fname);
 		&logfile ("running '$pen_ctl 127.0.0.1:$fport server $ids address 0 port 0 max 0 weight 0 prio 0' deleting server $ids in $fname farm");
 		my @run = `$pen_ctl 127.0.0.1:$fport server $ids address 0 port 0 max 0 weight 0 prio 0`;
 		$output = $?;
 		&logfile ("running '$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile''");
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
+                &setFarmMaxServers($fmaxservers, $fname);
 	}
 
 	if ($type eq "datalink"){
@@ -4395,11 +4417,13 @@ sub setFarmBackendMaintenance($fname,$backend,$service){
 	if ($type eq "tcp" || $type eq "udp"){
 		&logfile("setting Maintenance mode for $fname backend $backend");
 		my $fport = &getFarmPort($fname);
+		my $fmaxservers = &getFarmMaxServers($fname);
 		&logfile("running '$pen_ctl 127.0.0.1:$fport server $id_server acl 9'");
 		my @run = `$pen_ctl 127.0.0.1:$fport server $id_server acl 9  2> /dev/null`;
 		$output = $?;
 		&logfile ("running '$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'");
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
+		&setFarmMaxServers($fmaxservers, $fname);
 	}
 
 	if ($type eq "http" || $type eq "https"){
@@ -4424,11 +4448,13 @@ sub setFarmBackendNoMaintenance($fname,$backend,$service){
 	if ($type eq "tcp" || $type eq "udp"){
 		&logfile("setting Disabled maintenance mode for $fname backend $backend");
 		my $fport = &getFarmPort($fname);
+		my $fmaxservers = &getFarmMaxServers($fname);
 		&logfile("running '$pen_ctl 127.0.0.1:$fport server $id_server acl 0'");
 		my @run = `$pen_ctl 127.0.0.1:$fport server $id_server acl 0  2> /dev/null`;
 		$output = $?;
 		&logfile ("running '$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'");
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
+		&setFarmMaxServers($fmaxservers, $fname);
 	}
 
 	if ($type eq "http" || $type eq "https"){
