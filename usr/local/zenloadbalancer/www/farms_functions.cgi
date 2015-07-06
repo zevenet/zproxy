@@ -434,13 +434,16 @@ sub setFarmListen($farmlisten){
                 }
 
 		# Enable 'Disable SSLv3'
-		if (@filefarmhttp[$i_f] =~ /.*DisableSSLv3$/ && $flisten eq "http"){
-			@filefarmhttp[$i_f] =~ s/DisableSSLv3/#DisableSSLv3/;
-		}
-		if (@filefarmhttp[$i_f] =~ /.*DisableSSLv3$/ && $flisten eq "https"){
-			@filefarmhttp[$i_f] =~ s/#//g;
-		}
-
+		if (@filefarmhttp[$i_f] =~ /.*Disable SSLv3$/ && $flisten eq "http"){
+                        @filefarmhttp[$i_f] =~ s/Disable SSLv3/#Disable SSLv3/;
+                }elsif (@filefarmhttp[$i_f] =~ /.*DisableSSLv3$/ && $flisten eq "http"){
+                        @filefarmhttp[$i_f] =~ s/DisableSSLv3/#DisableSSLv3/;
+                }
+                if (@filefarmhttp[$i_f] =~ /.*Disable SSLv3$/ && $flisten eq "https"){
+                        @filefarmhttp[$i_f] =~ s/#//g;
+                }elsif (@filefarmhttp[$i_f] =~ /.*DisableSSLv3$/ && $flisten eq "https"){
+                        @filefarmhttp[$i_f] =~ s/#//g;
+                }
        }
         untie @filefarmhttp;
 }
