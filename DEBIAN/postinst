@@ -139,4 +139,7 @@ then
 	ln -sf /usr/local/zenloadbalancer/app/zenbui/zenbui /usr/bin/zenbui
 fi
 
+#Fix prompt color
+sed -i "s/1;30m/0;37/g" /etc/bash.bashrc 2> /dev/null
+
 echo "Last version of Zen Load Balancer update completed..."
