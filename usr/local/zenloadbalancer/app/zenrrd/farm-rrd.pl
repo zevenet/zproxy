@@ -26,20 +26,30 @@ use RRDs;
 require ("/usr/local/zenloadbalancer/config/global.conf");
 require ("/usr/local/zenloadbalancer/www/functions.cgi");
 
+my $synconns= 0;
+my $globalconns = 0;
+
 @farmlist = &getFarmList();
-my @netstat = &getNetstatNat();
+my @netstat = "";
 foreach $farmfile(@farmlist){
 	@farmargs = split(/_/,$farmfile);
 	$farm = @farmargs[0];
 	my $ftype = &getFarmType($farm);
 	if ($ftype !~ /datalink/){
 		$db_if="$farm-farm.rrd";
-		#my @netstat = &getNetstat("atunp");
-
-		$synconns = &getFarmSYNConns($farm,@netstat);
-		@gconns=&getFarmEstConns($farm,@netstat);
-		$globalconns = @gconns;
-		$waitedconns = &getFarmTWConns($farm,@netstat);
+		#status
+                $status = &getFarmStatus($farm);
+		#vip
+	        $vip = &getFarmVip("vip",$farm);
+		  if ($status eq "up"){
+                        @netstat = &getConntrack("",$vip,"","","");
+                        # SYN_RECV connections
+                        @synconnslist = &getFarmSYNConns($farm,@netstat);
+                        $synconns = @synconnslist;
+			# ESTABLISHED connections
+                        @gconns = &getFarmEstConns($farm,@netstat);
+                        $globalconns = @gconns;
+                } 
 
 		#process farm
 		if (! -f "$rrdap_dir$rrd_dir$db_if"){
@@ -48,7 +58,6 @@ foreach $farmfile(@farmlist){
         	               	"-s 300",
         	               	"DS:pending:GAUGE:600:0:12500000",
         	               	"DS:established:GAUGE:600:0:12500000",
-       	                	"DS:closed:GAUGE:600:0:12500000",
 				"RRA:LAST:0.5:1:288",		# daily - every 5 min - 288 reg
 				"RRA:MIN:0.5:1:288",		# daily - every 5 min - 288 reg
 				"RRA:AVERAGE:0.5:1:288",	# daily - every 5 min - 288 reg
@@ -71,14 +80,12 @@ foreach $farmfile(@farmlist){
 		print "Information for $farm farm graph ...\n";
 		print "		pending: $synconns\n";
 		print "		established: $globalconns\n";
-		print "		closed: $waitedconns\n";
 		#update rrd info
 		print "Updating Information in $rrdap_dir$rrd_dir$db_if ...\n";
 		RRDs::update "$rrdap_dir$rrd_dir$db_if",
-			"-t", "pending:established:closed",
-			"N:$synconns:$globalconns:$waitedconns";
+			"-t", "pending:established",
+			"N:$synconns:$globalconns";
 			
 	}
 }	
-
 

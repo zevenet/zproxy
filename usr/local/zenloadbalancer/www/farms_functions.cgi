@@ -444,6 +444,26 @@ sub setFarmListen($farmlisten){
                 }elsif (@filefarmhttp[$i_f] =~ /.*DisableSSLv3$/ && $flisten eq "https"){
                         @filefarmhttp[$i_f] =~ s/#//g;
                 }
+
+		#Enable DhParams
+                if (@filefarmhttp[$i_f] =~ /.*DHParams/ && $flisten eq "http"){
+                        @filefarmhttp[$i_f] =~ s/DHParams/#DHParams/;
+                }
+                if (@filefarmhttp[$i_f] =~ /.*DHParams/ && $flisten eq "https"){
+                        @filefarmhttp[$i_f] =~ s/#//g;
+                }
+
+		#Enable Dhcurve ECDHCurve prime256v1
+                if (@filefarmhttp[$i_f] =~ /.*ECDHCurve\ / && $flisten eq "http"){
+                        @filefarmhttp[$i_f] =~ s/ECDHCurve/#ECDHCurve/;
+                }
+                if (@filefarmhttp[$i_f] =~ /.*ECDHCurve\ / && $flisten eq "https"){
+                        @filefarmhttp[$i_f] =~ s/#//g;
+                }
+
+		
+
+
        }
         untie @filefarmhttp;
 }
@@ -1357,6 +1377,51 @@ sub getFarmGlobalStatus($fname){
 	return @run;
 }
 
+sub getBackendEstConns($fname,$ip_backend,$port_backend,@netstat){
+	my($fname,$ip_backend,$port_backend,@netstat) =@_;
+	my $type = &getFarmType($fname);
+        my $fvip = &getFarmVip("vip",$fname);
+        my $fvipp = &getFarmVip("vipp",$fname);
+        my @nets=();
+	if ( $type eq "tcp" || $type eq "udp" || $type eq "http"){
+		if( $type eq "http" ){
+			$type = "tcp";
+		}
+	        @nets = &getNetstatFilter("$type","","\.*ESTABLISHED src=$fvip dst=$ip_backend sport=\.* dport=$port_backend \.*","",@netstat);
+	} 
+	if ( $type eq "l4xnat" ){
+                my $proto = &getFarmProto($fname);
+                my $nattype = &getFarmNatType($farmname);
+		my @fportlist;
+		my $regexp = "";
+		@fportlist = &getFarmPortList($fvipp);
+		if ( @fportlist[0] !~ /\*/ ){
+			$regexp = "\(" . join('|', @fportlist) . "\)";
+		}
+		else{
+			$regexp = "\.*";
+		}
+		undef(@fportlist);
+		if ($nattype eq "dnat"){
+			if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+				push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend \.*","",@netstat));
+			}
+			if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+				push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend .\*","",@netstat));
+			}
+		} else {
+			if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+				push(@nets, &getNetstatFilter("tcp","","\.*ESTABLISHED src=\.* dst=$fvip sport=\.* dport=80 src=$ip_backend \.*","",@netstat));
+			}
+			if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+				push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend .\*","",@netstat));
+			}
+		}
+		
+	}
+	return @nets;
+}
+
 #
 sub getFarmEstConns($fname,@netstat){
 	my ($fname,@netstat) = @_;
@@ -1374,18 +1439,14 @@ sub getFarmEstConns($fname,@netstat){
 	#&logfile("getting 'EstConns' for $fname farm $type");
 	if ($type eq "tcp"){
 		push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$fvipp src=\.*","",@netstat));
-		#@nets = &getNetstatFilter("tcp","ESTABLISHED",$ninfo,$pid,@netstat);
 	}
 
 	if ($type eq "udp"){
 		push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip sport=\.* dport=$fvipp src=\.*","",@netstat));
-		#@nets = &getNetstatFilter("udp","ESTABLISHED",$ninfo,$pid,@netstat);
 	}
 
 	if ($type eq "http" || $type eq "https"){
                 push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$fvipp src=\.*","",@netstat));
-		#$pid=&getFarmChildPid($fname);
-		#@nets = &getNetstatFilter("tcp","ESTABLISHED",$ninfo,$pid,@netstat);
 	}
 
         if ($type eq "l4xnat"){
@@ -1407,43 +1468,21 @@ sub getFarmEstConns($fname,@netstat){
                 my @backends = &getFarmBackendsStatus($fname,@content);
                 foreach (@backends){
                         my @backends_data = split(";",$_);
-                        if ($backends_data[3] eq "up"){
+                        if ($backends_data[4] eq "up"){
                                 my $ip_backend = $backends_data[0];
-                                #my $port_backend = $backends_data[1];
-                                #push(@nets, &getNetstatFilter("$proto","","\.* ESTABLISHED src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat));
-				#if ($nattype eq "dnat"){
-				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
-				#		push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$ip_backend \.* src=$ip_backend \.*","",@netstat));
-				#	}
-				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
-				#		push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$ip_backend \.* src=$ip_backend \.*ASSURED\.*","",@netstat));
-				#	}
-				#} else {
-				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
-				#		push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat));
-				#	}
-				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
-				#		push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* src=$ip_backend \.*ASSURED\.*","",@netstat));
-				#	}
-				#}
-
 				if ($nattype eq "dnat"){
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
 						push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend \.*","",@netstat));
-						#push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$ip_backend \.* src=$ip_backend \.*","",@netstat));
 					}
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
 						push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend .\*","",@netstat));
-						#push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$ip_backend \.* src=$ip_backend \.*ASSURED\.*","",@netstat));
 					}
 				} else {
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
 						push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend \.*","",@netstat));
-						#push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat));
 					}
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
 						push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend .\*","",@netstat));
-						#push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* src=$ip_backend \.*ASSURED\.*","",@netstat));
 					}
 				}
 
@@ -1454,6 +1493,41 @@ sub getFarmEstConns($fname,@netstat){
 	return @nets;
 }
 
+sub getBackendTWConns($fname,$ip_backend,$port_backend,@netstat){
+	my($fname,$ip_backend,$port_backend,@netstat) =@_;
+	my $type = &getFarmType($fname);
+        my $fvip = &getFarmVip("vip",$fname);
+        my $fvipp = &getFarmVip("vipp",$fname);
+        my @nets=();
+	if ( $type eq "tcp" || $type eq "udp" || $type eq "http"){
+		if( $type eq "http" ){
+			$type = "tcp";
+		}
+	        @nets = &getNetstatFilter("$type","","\.*TIME\_WAIT src=$fvip dst=$ip_backend sport=\.* dport=$port_backend \.*","",@netstat);
+	} 
+	if ( $type eq "l4xnat" ){
+                my $proto = &getFarmProto($fname);
+                my $nattype = &getFarmNatType($farmname);
+		my @fportlist;
+		my $regexp = "";
+		@fportlist = &getFarmPortList($fvipp);
+		if ( @fportlist[0] !~ /\*/ ){
+			$regexp = "\(" . join('|', @fportlist) . "\)";
+		}
+		else{
+			$regexp = "\.*";
+		}
+		undef(@fportlist);
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+			push(@nets, &getNetstatFilter("tcp","","\.*TIME\_WAIT src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend \.*","",@netstat));
+		}
+		if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+			push(@nets, &getNetstatFilter("udp","","\.*TIME\_WAIT src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend .\*","",@netstat));
+		}
+		
+	}
+	return @nets;
+}
 
 #
 sub getFarmTWConns($fname,@netstat){
@@ -1493,7 +1567,7 @@ sub getFarmTWConns($fname,@netstat){
                 my @backends = &getFarmBackendsStatus($fname,@content);
                 foreach (@backends){
                         my @backends_data = split(";",$_);
-                        if ($backends_data[3] eq "up"){
+                        if ($backends_data[4] eq "up"){
                                 my $ip_backend = $backends_data[0];
                                 my $port_backend = $backends_data[1];
 				push(@nets, &getNetstatFilter("tcp","","\.*\_WAIT src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend \.*","",@netstat));
@@ -1505,6 +1579,50 @@ sub getFarmTWConns($fname,@netstat){
 	return @nets;
 }
 
+sub getBackendSYNConns($fname,$ip_backend,$port_backend,@netstat){
+	my($fname,$ip_backend,$port_backend,@netstat) =@_;
+	my $type = &getFarmType($fname);
+        my $fvip = &getFarmVip("vip",$fname);
+        my $fvipp = &getFarmVip("vipp",$fname);
+        my @nets=();
+	if ( $type eq "tcp" || $type eq "http"){
+	        @nets = &getNetstatFilter("tcp","","\.*SYN\.* src=$fvip dst=$ip_backend sport=\.* dport=$port_backend \.*","",@netstat);
+	} 
+	if ( $type eq "udp" ){
+		@nets = &getNetstatFilter("udp","","\.* src=$fvip dst=$ip_backend \.* dport=$port_backend \.*UNREPLIED\.* src=\.*","",@netstat);
+	}
+	if ( $type eq "l4xnat" ){
+                my $proto = &getFarmProto($fname);
+                my $nattype = &getFarmNatType($farmname);
+		my @fportlist;
+		my $regexp = "";
+		@fportlist = &getFarmPortList($fvipp);
+		if ( @fportlist[0] !~ /\*/ ){
+			$regexp = "\(" . join('|', @fportlist) . "\)";
+		}
+		else{
+			$regexp = "\.*";
+		}
+		undef(@fportlist);
+		if ($nattype eq "dnat"){
+			if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+				push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*","",@netstat));
+			}
+			if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+				push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat));
+			}
+		} else {
+			if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
+				push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*","",@netstat));
+			}
+			if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
+				push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat));
+			}
+		}
+		
+	}
+	return @nets;
+}
 
 #
 sub getFarmSYNConns($fname,@netstat){
@@ -1550,7 +1668,7 @@ sub getFarmSYNConns($fname,@netstat){
                 my @backends = &getFarmBackendsStatus($fname,@content);
                 foreach (@backends){
                         my @backends_data = split(";",$_);
-                        if ($backends_data[3] eq "up"){
+                        if ($backends_data[4] eq "up"){
                                 my $ip_backend = $backends_data[0];
                                 #my $port_backend = $backends_data[1];
                                 #push(@nets, &getNetstatFilter("$proto","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat));
@@ -1586,8 +1704,8 @@ sub getFarmSYNConns($fname,@netstat){
 					}
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
 						push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat));
-						#push(@nets, &getNetstatFilter("udp","","\.* src=$fvip dst=\.* \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat)); # UDP
 					}
+
 				}
 
                         }
@@ -5920,6 +6038,32 @@ $farmname =~ s/[^a-zA-Z0-9]//g;
 
 }
 
+sub getConntrack($orig_src, $orig_dst, $reply_src, $reply_dst, $proto){
+	($orig_src, $orig_dst, $reply_src, $reply_dst, $proto) = @_;
+	my @output=();
+	chomp($orig_src);
+	chomp($orig_dst);
+	chomp($reply_src);
+	chomp($reply_dst);
+	chomp($proto);
+	if ( $orig_src ){
+		$orig_src = "-s $orig_src";
+	}
+	if ( $orig_dst ){
+		$orig_dst = "-d $orig_dst";
+	}
+	if ( $reply_src ){
+		$reply_src = "-r $reply_src";
+	}
+	if ( $reply_dst ){
+		$reply_dst = "-q $reply_dst";
+	}
+	if ( $proto ){
+		$proto = "-p $proto";
+	}
+	@output = `$conntrack -L $orig_src $orig_dst $reply_src $reply_dst $proto 2>/dev/null`;
+	return @output;
+}
 
 # do not remove this
 1

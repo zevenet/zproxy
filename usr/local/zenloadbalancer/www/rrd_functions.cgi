@@ -36,9 +36,6 @@ sub printImgFile($file){
 	my ($file) = @_;
 
         open PNG, "<$file" or print_error("Can't open $file: $!");
-	#fprint PNG;
-        #binmode PNG;
-        #http_headers("image/$imagetype",'');
 	$raw_string = do{ local $/ = undef; <PNG>; };
 	$encoded = encode_base64( $raw_string );
 	close PNG;
@@ -381,7 +378,6 @@ sub genFarmGraph($type,$graph,$time){
                			"-v CONNECTIONS ON $fname farm",
                			"DEF:pending=$rrdap_dir$rrd_dir$db_farm:pending:AVERAGE",
                			"DEF:established=$rrdap_dir$rrd_dir$db_farm:established:AVERAGE",
-               			"DEF:closed=$rrdap_dir$rrd_dir$db_farm:closed:AVERAGE",
 		"LINE2:pending#FF0000:Pending Conns\\t", 
 				"GPRINT:pending:LAST:Last\\:%6.0lf ", 
 				"GPRINT:pending:MIN:Min\\:%6.0lf ",  
@@ -391,12 +387,7 @@ sub genFarmGraph($type,$graph,$time){
 				"GPRINT:established:LAST:Last\\:%6.0lf ", 
 				"GPRINT:established:MIN:Min\\:%6.0lf ",  
 				"GPRINT:established:AVERAGE:Avg\\:%6.0lf ",  
-				"GPRINT:established:MAX:Max\\:%6.0lf \\n",
-		"LINE2:closed#EEE8A1:Closed Conns\\t", 
-				"GPRINT:closed:LAST:Last\\:%6.0lf ", 
-				"GPRINT:closed:MIN:Min\\:%6.0lf ",  
-				"GPRINT:closed:AVERAGE:Avg\\:%6.0lf ",  
-				"GPRINT:closed:MAX:Max\\:%6.0lf \\n");
+				"GPRINT:established:MAX:Max\\:%6.0lf \\n");
 				       if ($ERROR = RRDs::error) { print "$0: unable to generate $farm farm graph: $ERROR\n"; }
 
 }
