@@ -34,6 +34,17 @@
 #and viewing in Zen load balancer GUI (Monitoring secction)
 
 require ("/usr/local/zenloadbalancer/config/global.conf");
+$lockfile="/tmp/rrd.lock";
+
+if ( -e $lockfile ){
+        print "RRD Locked by $lockfile, maybe other zenrrd in execution\n";
+	exit;
+}else {
+   open LOCK, '>', $lockfile;
+   print LOCK "lock rrd";
+   close LOCK;
+}
+
 opendir(DIR, $rrdap_dir);
 @files = grep(/-rrd.pl$/,readdir(DIR));
 closedir(DIR);
@@ -51,3 +62,9 @@ foreach $file(@files)
 		my @system =`$rrdap_dir$file >> $rrdap_dir$log_rrd`;
 		}
 	}
+
+if ( -e $lockfile ){
+	unlink($lockfile);
+}
+
+
