@@ -136,6 +136,6 @@ then
 fi
 
 #Fix prompt color
-sed -i "s/1;30m/0;37/g" /etc/bash.bashrc 2> /dev/null
+sed -i "s/1;30m/0;37m/g" /etc/bash.bashrc 2> /dev/null
 
 echo "Last version of Zen Load Balancer update completed..."
