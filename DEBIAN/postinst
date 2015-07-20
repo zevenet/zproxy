@@ -67,13 +67,9 @@ then
 	rm -f /tmp/cherokee.conf
 fi
 
-if [ "grep 'Disable SSLv3' /usr/local/zenloadbalancer/app/pound/etc/poundcfg.tpl" != "" ]; then
-	cd /usr/local/zenloadbalancer/config/
-	STR="DisableSSLv3"
-	for i in `grep -l $STR *_pound.cfg`; do
-		sed -i "s/$STR/Disable\ SSLv3/g" $i
-	done
-	cd -
+# Http profile directives migration
+if [ -f /usr/local/zenloadbalancer/app/zbin/zlbmigrationto402.sh ]; then
+	/usr/local/zenloadbalancer/app/zbin/zlbmigrationto402.sh
 fi
 
 echo "Restarting Zen Load Balancer web GUI..."
