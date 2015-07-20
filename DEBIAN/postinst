@@ -138,4 +138,8 @@ fi
 #Fix prompt color
 sed -i "s/1;30m/0;37m/g" /etc/bash.bashrc 2> /dev/null
 
+#Flush apt sources
+echo > /etc/apt/sources.list
+/usr/bin/apt-get update
+
 echo "Last version of Zen Load Balancer update completed..."
