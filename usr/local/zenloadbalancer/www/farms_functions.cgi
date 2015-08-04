@@ -446,20 +446,20 @@ sub setFarmListen($farmlisten){
                 }
 
 		#Enable DhParams
-                if (@filefarmhttp[$i_f] =~ /.*DHParams/ && $flisten eq "http"){
-                        @filefarmhttp[$i_f] =~ s/DHParams/#DHParams/;
-                }
-                if (@filefarmhttp[$i_f] =~ /.*DHParams/ && $flisten eq "https"){
-                        @filefarmhttp[$i_f] =~ s/#//g;
-                }
+                #if (@filefarmhttp[$i_f] =~ /.*DHParams/ && $flisten eq "http"){
+                #        @filefarmhttp[$i_f] =~ s/DHParams/#DHParams/;
+                #}
+                #if (@filefarmhttp[$i_f] =~ /.*DHParams/ && $flisten eq "https"){
+                #        @filefarmhttp[$i_f] =~ s/#//g;
+                #}
 
 		#Enable Dhcurve ECDHCurve prime256v1
-                if (@filefarmhttp[$i_f] =~ /.*ECDHCurve\ / && $flisten eq "http"){
-                        @filefarmhttp[$i_f] =~ s/ECDHCurve/#ECDHCurve/;
-                }
-                if (@filefarmhttp[$i_f] =~ /.*ECDHCurve\ / && $flisten eq "https"){
-                        @filefarmhttp[$i_f] =~ s/#//g;
-                }
+                #if (@filefarmhttp[$i_f] =~ /.*ECDHCurve\ / && $flisten eq "http"){
+                #        @filefarmhttp[$i_f] =~ s/ECDHCurve/#ECDHCurve/;
+                #}
+                #if (@filefarmhttp[$i_f] =~ /.*ECDHCurve\ / && $flisten eq "https"){
+                #        @filefarmhttp[$i_f] =~ s/#//g;
+                #}
 
 		
 
@@ -5595,13 +5595,13 @@ sub setFarmVS($farmname,$service,$tag,$string){
 					}
 					if ($session eq "URL" || $session eq "COOKIE" || $session eq "HEADER"){
 						#@contents[$i+2]=~ s/#//g;
-						if ($line =~ /ID/){
+						if ($line =~ /ID /){
 							$line =~ s/#//g;        
 						}
 					}
 					if ($session eq "IP"){
-						if ($line =~ /ID/){
-							$line = "\#$line\""
+						if ($line =~ /ID /){
+							$line = "\#$line";
 						}
 					}
 					$output = $?;
