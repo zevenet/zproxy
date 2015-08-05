@@ -55,7 +55,7 @@ else
 
 #check if the string is a valid multiport definition
 sub ismport($string){
-	($string) = @_;
+	my ($string) = @_;
 
 	chomp($string);
 	if ($string eq "*"){
@@ -503,7 +503,7 @@ print "</td>";
 #
 sub successmsg($string)
 {
-($string) = @_;
+my ($string) = @_;
 print "<div class=\"notification success\"> <span class=\"strong\">SUCCESS!</span> $string.</div>";
 #print "<div class=\"notification success\"> <span class=\"strong\">SUCCESS!</span> $string. <a href='index.cgi?id=$id'><img src='img/icons/small/cross.png' title='accept'></a></div>";
 &logfile($string);
@@ -513,7 +513,7 @@ print "<div class=\"notification success\"> <span class=\"strong\">SUCCESS!</spa
 #function that print a TIP message
 sub tipmsg($string)
 {
-($string) = @_;
+my ($string) = @_;
 print "<div class=\"notification tip\"> <span class=\"strong\">TIP!</span> $string. Restart HERE! <a href='index.cgi?id=$id&farmname=$farmname&action=editfarm-restart'><img src='img/icons/small/arrow_refresh.png' title='restart'></a></div>";
 &logfile($string);
 }
@@ -522,7 +522,7 @@ print "<div class=\"notification tip\"> <span class=\"strong\">TIP!</span> $stri
 #function that print a WARNING message
 sub warnmsg($string)
 {
-($string) = @_;
+my ($string) = @_;
 print "<div class=\"notification warning\"> <span class=\"strong\">WARNING!</span> $string.</div>";
 #print "<div class=\"notification warning\"> <span class=\"strong\">WARNING!</span> $string. <a href='index.cgi?id=$id'><img src='img/icons/small/warning.png' title='accept'></a></div>";
 &logfile($string);
@@ -533,7 +533,7 @@ print "<div class=\"notification warning\"> <span class=\"strong\">WARNING!</spa
 #
 sub errormsg($string)
 {
-($string) = @_;
+my ($string) = @_;
 print "<div class=\"notification error\"> <span class=\"strong\">ERROR!</span> $string.</div>";
 #print "<div class=\"notification error\"> <span class=\"strong\">ERROR!</span> $string. <a href='index.cgi?id=$id'><img src='img/icons/small/cross.png' title='accept'></a></div>";
 &logfile($string);
@@ -542,7 +542,7 @@ print "<div class=\"notification error\"> <span class=\"strong\">ERROR!</span> $
 #insert info in log file
 sub logfile($string)
 {
-($string) = @_;
+my ($string) = @_;
 my $date = `date`;
 $date =~ s/\n//g;
 open FO, ">> $logfile";
