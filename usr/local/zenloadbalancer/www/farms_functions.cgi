@@ -445,13 +445,13 @@ sub setFarmListen($farmlisten){
                         @filefarmhttp[$i_f] =~ s/#//g;
                 }
 
-		#Enable DhParams
-                #if (@filefarmhttp[$i_f] =~ /.*DHParams/ && $flisten eq "http"){
-                #        @filefarmhttp[$i_f] =~ s/DHParams/#DHParams/;
-                #}
-                #if (@filefarmhttp[$i_f] =~ /.*DHParams/ && $flisten eq "https"){
-                #        @filefarmhttp[$i_f] =~ s/#//g;
-                #}
+		# Enable SSLHonorCipherOrder 
+                if (@filefarmhttp[$i_f] =~ /.*SSLHonorCipherOrder/ && $flisten eq "http"){
+                        @filefarmhttp[$i_f] =~ s/SSLHonorCipherOrder/#SSLHonorCipherOrder/;
+                }
+                if (@filefarmhttp[$i_f] =~ /.*SSLHonorCipherOrder/ && $flisten eq "https"){
+                        @filefarmhttp[$i_f] =~ s/#//g;
+                }
 
 		#Enable Dhcurve ECDHCurve prime256v1
                 #if (@filefarmhttp[$i_f] =~ /.*ECDHCurve\ / && $flisten eq "http"){
@@ -5122,14 +5122,30 @@ sub getFarmVS($farmname,$service,$tag){
 			}
 			#redirect
 			if ($tag eq "redirect"){
-				if ($line =~ "Redirect \"" && $sw == 1 && $line !~ "#"){
-					@return = split("Redirect",$line);
+				if (($line =~ "Redirect \"" || $line =~ "RedirectAppend \"") && $sw == 1 && $line !~ "#"){
+					if ($line =~ "Redirect \""){
+						@return = split("Redirect",$line);
+					}
+					elsif ($line =~ "RedirectAppend \""){
+						@return = split("RedirectAppend",$line);
+					}
 					@return[1] =~ s/\"//g;
 					@return[1] =~ s/^\s+//;
 					@return[1] =~ s/\s+$//;
 					$output = @return[1];
 					last;
 				}
+			}
+			if ($tag eq "redirecttype"){
+				if (($line =~ "Redirect \"" || $line =~ "RedirectAppend \"") && $sw == 1 && $line !~ "#"){
+                                        if ($line =~ "Redirect \""){
+                                                $output = "default";
+                                        }
+                                        elsif ($line =~ "RedirectAppend \""){
+                                                $output = "append";
+                                        }
+                                        last;
+                                }
 			}
 
                         #cookie insertion
@@ -5443,13 +5459,25 @@ sub setFarmVS($farmname,$service,$tag,$string){
                                 }
                         }
 
-       			#client redirect
+       			#client redirect default
        			if ($tag eq "redirect"){
-               			if ($line =~ "Redirect\ \"" && $sw == 1 && $stri ne ""){
+               			if (($line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"")&& $sw == 1 && $stri ne ""){
                        			$line = "\t\tRedirect \"$stri\"";
                        			last;
                			}
-               			if ($line =~ "Redirect\ \"" && $sw == 1 && $stri eq ""){
+               			if (($line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"") && $sw == 1 && $stri eq ""){
+                       			$line = "\t\t#Redirect \"\"";
+                       			last;
+				}
+			}
+       
+       			#client redirect append
+       			if ($tag eq "redirectappend"){
+               			if (($line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"")&& $sw == 1 && $stri ne ""){
+                       			$line = "\t\tRedirectAppend \"$stri\"";
+                       			last;
+               			}
+               			if (($line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"") && $sw == 1 && $stri eq ""){
                        			$line = "\t\t#Redirect \"\"";
                        			last;
 				}
