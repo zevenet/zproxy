@@ -17,6 +17,22 @@ if [ -f /usr/local/zenloadbalancer/app/zennetname/write_net_rules ]; then
 	cp -f /usr/local/zenloadbalancer/app/zennetname/write_net_rules /lib/udev/
 fi
 
+# Check for compilation binaries
+PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
+if [ ! -e "/usr/local/zenloadbalancer/www/index.cgi" ]; then
+	mv "/usr/local/zenloadbalancer/www/index.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/index.cgi"
+	rm /usr/local/zenloadbalancer/www/index.cgi.*
+fi
+if [ ! -e "/usr/local/zenloadbalancer/www/zapi.cgi" ]; then
+	mv "/usr/local/zenloadbalancer/www/zapi.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/zapi.cgi"
+	rm /usr/local/zenloadbalancer/www/zapi.cgi.*
+fi
+if [ ! -e "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer" ]; then
+	mv "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer.${PERLVER}" "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer"
+	rm /usr/local/zenloadbalancer/app/zbin/zenloadbalancer.*
+fi
+
+
 # GSLB user management
 GSLBHOME="/var/run/gdnsd"
 GSLBSHELL="/usr/sbin/nologin"
