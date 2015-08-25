@@ -453,16 +453,17 @@ sub setFarmListen($farmlisten){
                         @filefarmhttp[$i_f] =~ s/#//g;
                 }
 
-		#Enable Dhcurve ECDHCurve prime256v1
-                #if (@filefarmhttp[$i_f] =~ /.*ECDHCurve\ / && $flisten eq "http"){
-                #        @filefarmhttp[$i_f] =~ s/ECDHCurve/#ECDHCurve/;
-                #}
-                #if (@filefarmhttp[$i_f] =~ /.*ECDHCurve\ / && $flisten eq "https"){
-                #        @filefarmhttp[$i_f] =~ s/#//g;
-                #}
+                # Enable StrictTransportSecurity
+                if (@filefarmhttp[$i_f] =~ /.*StrictTransportSecurity/ && $flisten eq "http"){
+                        @filefarmhttp[$i_f] =~ s/StrictTransportSecurity/#StrictTransportSecurity/;
+                }
+                if (@filefarmhttp[$i_f] =~ /.*StrictTransportSecurity/ && $flisten eq "https"){
+                        @filefarmhttp[$i_f] =~ s/#//g;
+                }
 
-		
-
+		if (@filefarmhttp[$i_f] =~ /ZWACL-END/){
+			$found = "true";
+		}
 
        }
         untie @filefarmhttp;
@@ -4750,10 +4751,15 @@ sub setFarmHTTPNewService($fname,$service){
                my  @fileconf;
                tie @fileconf, 'Tie::File', "$configdir/$fname\_pound.cfg";
                my $i = 0;
+		my $type = "";
+		$type = &getFarmType($farmname);
                foreach $line(@fileconf){
                        if ($line =~ /#ZWACL-END/){
                                foreach $lline(@newservice){
                                        if ($lline =~ /\[DESC\]/){ $lline =~ s/\[DESC\]/$service/;}
+				       if ($lline =~ /StrictTransportSecurity/ && $type eq "https"){
+						$lline =~ s/#//;
+					}
                                        splice @fileconf,$i,0,"$lline";
                                        $i++;
                                }
