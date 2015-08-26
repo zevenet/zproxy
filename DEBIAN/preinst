@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/perl
 
 #Save .htpasswd file
 use File::Copy 'move';
