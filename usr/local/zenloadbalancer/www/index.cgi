@@ -33,9 +33,8 @@ print "Content-type: text/html\n\n";
 
 ##REQUIRES
 
-require "functions.cgi";
-#require 'functions.cgi';
-require "config/global.conf";
+require "/usr/local/zenloadbalancer/www/functions.cgi";
+require "/usr/local/zenloadbalancer/config/global.conf";
 
 #loading form variables
 my(%Variables); #reset hash
