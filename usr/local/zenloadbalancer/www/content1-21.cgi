@@ -136,7 +136,9 @@ if ($farmprotocol ne "" && $farmname ne ""){
 		print "<option value=\"@ip[0] @ip[1]\">@vips[$i]</option>\n";
 	}
 	print "</select>";
-	print "<b> or add <a href=\"index.cgi?id=3-2\">new VIP interface</a>.</b>";
+	if ($farmprotocol ne "DATALINK"){
+		print "<b> or add <a href=\"index.cgi?id=3-2\">new VIP interface</a>.</b>";
+	}
 
 	if ($farmprotocol ne "DATALINK" && $farmprotocol ne "L4xNAT"){
 		#vip port
