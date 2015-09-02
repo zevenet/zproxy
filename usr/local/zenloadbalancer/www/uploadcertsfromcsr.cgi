@@ -25,9 +25,7 @@
 
 require "/usr/local/zenloadbalancer/config/global.conf";
 require "./functions.cgi";
-require "./login_functions.cgi";
 use CGI qw(:standard escapeHTML);
-&login();
 print "Content-type: text/html\n\n";
 
 
