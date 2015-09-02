@@ -25,7 +25,6 @@
 ## Load pragmas and modules
 require "/usr/local/zenloadbalancer/config/global.conf";
 require "./functions.cgi";
-require "./login_functions.cgi";
 use CGI; 
 # Uncomment the next line only for debugging the script.
 #use CGI::Carp qw/fatalsToBrowser/;
@@ -35,7 +34,6 @@ use CGI;
 $CGI::POST_MAX = 1240;
 $CGI::DISABLE_UPLOADS = 1; 
      
-&login();   
 ####################################
 #### User Configuration Section ####
 ####################################
