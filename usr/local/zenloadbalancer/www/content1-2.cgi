@@ -143,9 +143,6 @@ if ($size == 0){
 print "<div class=\"box-header\">Farms table</div>";
 print "<div class=\"box table\">";
 
-my @netstat = &getNetstatNat();
-#push (@netstat, &getNetstat("atunp"));
-
 my $thereisdl = "false";
 
 print "<table cellspacing=\"0\">";
@@ -191,8 +188,10 @@ foreach $file (@files) {
 		$pid = &getFarmPid($name);
 		$status = &getFarmStatus($name);
 		if ($status eq "up"){
+			@netstat = &getConntrack("",$vip,"","","");
 			# SYN_RECV connections
-			$synconns = &getFarmSYNConns($name,@netstat);
+			my @synconnslist = &getFarmSYNConns($name,@netstat);
+			$synconns = @synconnslist;
 			print "<td> $synconns </td>";
 		} else {
 			print "<td>0</td>";
