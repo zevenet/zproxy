@@ -156,7 +156,6 @@ print "<td width=85>Virtual IP</td>";
 print "<td>Virtual Port(s)</td>";
 print "<td>Pending Conns</td>";
 print "<td>Established Conns</td>";
-print "<td>Closed Conns</td>";
 print "<td>PID</td>";
 print "<td>Status</td>";
 print "<td>Profile</td>";
@@ -207,9 +206,6 @@ foreach $file (@files) {
 		} else {
 			print "<td>0</td>";
 		}
-		# TIME_WAIT connections
-		$waitedconns = &getFarmTWConns($name,@netstat);
-		print "<td> $waitedconns </td>";
 		#print the pid of the process 
 		if ($pid eq "-1"){
 			print "<td> - </td>";
@@ -254,7 +250,7 @@ print "<thead>";
 print "<tr>";
 print "<td width=85>Name</td>";
 print "<td width=85>IP</td>";
-print "<td>Interface</td>";
+#print "<td>Interface</td>";
 #print "<td>Rx Bytes<br>Rx Bytes/sec</td>";
 #print "<td>Rx Packets<br>Rx Packets/sec</td>";
 #print "<td>Tx Bytes<br>Tx Bytes/sec</td>";
@@ -295,7 +291,7 @@ foreach $file (@files) {
 		$vip = &getFarmVip("vip",$name);
 		print "<td>$vip</td>";
 		#print the interface to be the defaut gw
-		print "<td>$vipp</td>";
+		#print "<td>$vipp</td>";
 	
 		#print global packets
 		$status = &getFarmStatus($name);
@@ -357,7 +353,7 @@ foreach $file (@files) {
 
 print "</tbody>";
 }
-print "<tr><td colspan=\"9\"></td><td><a href=\"index.cgi?id=$id&action=addfarm\"><img src=\"img/icons/small/farm_add.png\" title=\"Add new Farm\"></a></td></tr>";
+print "<tr><td colspan=\"8\"></td><td><a href=\"index.cgi?id=$id&action=addfarm\"><img src=\"img/icons/small/farm_add.png\" title=\"Add new Farm\"></a></td></tr>";
 
 print "</table>";
 print "</div>";
