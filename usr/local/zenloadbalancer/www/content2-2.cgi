@@ -19,119 +19,231 @@
 #     along with this library; if not, write to the Free Software Foundation,
 #     Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #
-###############################################################################	
+###############################################################################
 
-use File::stat;
-use Time::localtime;
-
+#my $type = &getFarmType($farmname);
 
 print "
 <!--Content INI-->
 <div id=\"page-content\">
 
-<!--Content Header INI-->
-<h2>Monitoring::Logs</h2>
-<!--Content Header END-->";
+                <!--Content Header INI-->";
+        	                print "<h2>Monitoring::Conns stats</h2>";
+print           "<!--Content Header END-->";
 
-
-print "<div class=\"container_12\">";
-print "	<div class=\"grid_12\">";
-print "		<div class=\"box-header\">System logs</div>";
-print "		<div class=\"box stats\">";
-
-# Print form
-#search farm files
-opendir(DIR, $logdir);
-@files = grep(/.*\.log$/,readdir(DIR));
-closedir(DIR);
-
-print "<form method=\"get\" action=\"index.cgi\">";
-print "<input type=\"hidden\" name=\"id\" value=\"2-2\">";
-
-foreach $file (@files)
-	{
-	print "<b>Log: $file</b><br>";
-	print "<table>";
-	$filepath="$logdir$file";
-	print "<tr ><td style=\"border: 0px\"><input type=\"radio\" name=\"filelog\" value=\"$filepath\"></td>";
-	$datetime_string = ctime(stat($filepath)->mtime);
-	print "<td style=\"border: 0px\"> $filepath - $datetime_string</td></tr>\n";	
-	@filen = split("\.log",$file);
-	#all files with same name:
-	opendir(DIR, $logdir);
-	@filesgz = grep(/@filen[0].*gz$/,readdir(DIR));
-	closedir(DIR);
-	@filesgz = sort(@filesgz);
-	foreach $filegz(@filesgz)
-		{
-		$filepath="$logdir$filegz";
-		$datetime_string = ctime(stat($filepath)->mtime);
-		print "<tr><td style=\"border: 0px\"><input type=\"radio\" name=\"filelog\" value=\"$filepath\"></td>";
-		print "<td style=\"border: 0px\">$filepath - $datetime_string</td></tr>";
-		}	
-	print "</table>";	
-	print "<br><br>";
-	}
-
-print "Tail the last <input type=\"text\" value=\"100\" name=\"nlines\" size=\"5\"> lines";
-print "<input type=\"submit\" value=\"See logs\" name=\"action\" class=\"button small\">";
-print "</form>";
-
-
-print "<br>";
-
-print "<div id=\"page-header\"></div>";
-
-if ($action eq "See logs" && $nlines !~ /^$/ && $filelog !~ /^$/)
-	{
-	if (-e $filelog){
-		if ($nlines =~ m/^\d+$/){
-			print "<b>file $filelog tail last $nlines lines</b><br>";
-			my @eject;
-			if ($filelog =~ /gz$/)
-				{
-				@eject = `$zcat $filelog | $tail -$nlines`;
-				}
-			else
-				{
-				@eject = `$tail -$nlines $filelog`;
-				}
-			foreach $line(@eject)
-				{
-				print "$line<br>";
-				}
-			print "<form method=\"get\" action=\"index.cgi\">";
-			print "<input type=\"hidden\" name=\"id\" value=\"2-2\">";
-			print "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
-			print "</form>";
+if ($action eq "managefarm"){
+	$type = &getFarmType($farmname);
+	if ($type == 1){
+		&errormsg("Unknown farm type of $farmname");
+	} else {
+		$file = &getFarmFile($farmname);
+		if ($type eq "tcp" || $type eq "udp"){
+			require "./content1-23.cgi";
 		}
-		else{
-			&errormsg("The number of lines you want to tail must be a number");
+		if ($type eq "http" || $type eq "https"){
+			require "./content1-25.cgi";
+		}
+		if ($type eq "datalink"){
+			require "./content1-27.cgi";
+		}
+		if ($type eq "l4xnat"){
+			require "./content1-29.cgi";
+		}
+		if ($type eq "gslb"){
+			require "./content1-203.cgi";
 		}
 	}
-	else{
-		&errormsg("We can not find the file $filelog");
+}
+
+@files = &getFarmList();
+
+print "<div class=\"box-header\">Farms table</div>";
+print "<div class=\"box table\">";
+
+my @netstat;
+my $thereisdl = "false";
+
+print "<table cellspacing=\"0\">";
+print "<thead>";
+print "<tr>";
+print "<td width=85>Name</td>";
+print "<td width=85>Virtual IP</td>";
+print "<td>Virtual Port(s)</td>";
+print "<td>Pending Conns</td>";
+print "<td>Established Conns</td>";
+print "<td>Status</td>";
+print "<td>Profile</td>";
+print "<td>Actions</td>";
+print "</tr>";
+print "</thead>";
+print "<tbody>";
+
+my $globalfarm = 0;
+foreach $file (@files) {
+	$name = &getFarmName($file);
+##########if farm is not the current farm then it doesn't print. only print for global view.
+	if ($farmname eq $name || !(defined $farmname) || $farmname eq "" || $action eq "deletefarm" || $action =~ /^Save|^Cancel/ ){
+	$type = &getFarmType($name);
+	$globalfarm++;
+	if ($type ne "datalink"){
+
+		if ($farmname eq $name && $action ne "addfarm" && $action ne "Cancel"){
+			print "<tr class=\"selected\">";
+		} else {
+			print "<tr>";
+		}
+		#print the farm description name
+		print "<td>$name</td>";
+		#print the virtual ip
+		$vip = &getFarmVip("vip",$name);
+		print "<td>$vip</td>";
+		#print the virtual port where the vip is listening
+		$vipp = &getFarmVip("vipp",$name);
+		print "<td>$vipp</td>";
+	
+		#print global connections bar
+		$pid = &getFarmPid($name);
+		$status = &getFarmStatus($name);
+		if ($status eq "up"){
+			@netstat = &getConntrack("",$vip,"","","");
+			# SYN_RECV connections
+			my @synconnslist = &getFarmSYNConns($name,@netstat);
+			$synconns = @synconnslist;
+			print "<td> $synconns </td>";
+		} else {
+			print "<td>0</td>";
+		}
+		if ($status eq "up"){
+			@gconns=&getFarmEstConns($name,@netstat);
+			$global_conns = @gconns;
+			print "<td>";
+			print " $global_conns ";
+			print "</td>";
+		} else {
+			print "<td>0</td>";
+		}
+
+		#print status of a farm
+		if ($status ne "up"){
+			print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td>";
+		} else {
+			print "<td><img src=\"img/icons/small/start.png\" title=\"up\"></td>";
+		}
+
+		#type of farm
+		print "<td>$type</td>";
+
+		#menu
+		print "<td>";
+		&createmenuvipstats($name,$id,$status,$type);
+		print "</td>";
+		print "</tr>";
+	} else {
+		$thereisdl = "true";
 	}
+  }
+}
+print "</tbody>";
+
+# DATALINK
+
+if ($thereisdl eq "true"){
+print "<thead>";
+print "<tr>";
+print "<td width=85>Name</td>";
+print "<td width=85 colspan=2>IP</td>";
+print "<td>Rx Bytes/sec</td>";
+print "<td>Tx Bytes/sec</td>";
+print "<td>Status</td>";
+print "<td>Profile</td>";
+print "<td></td>";
+print "</tr>";
+print "</thead>";
+print "<tbody>";
+use Time::HiRes qw (sleep);
+
+foreach $file (@files) {
+	$name = &getFarmName($file);
+	$type = &getFarmType($name);
+
+	if ($type eq "datalink"){
+
+		$vipp = &getFarmVip("vipp",$name);
+		my @startdata = &getDevData($vipp);
+		sleep (0.5);
+		my @enddata = &getDevData($vipp);
+
+		if ($farmname eq $name && $action ne "addfarm" && $action ne "Cancel"){
+			print "<tr class=\"selected\">";
+		} else {
+			print "<tr>";
+		}
+		#print the farm description name
+		print "<td>$name</td>";
+		#print the virtual ip
+		$vip = &getFarmVip("vip",$name);
+		print "<td colspan=2>$vip</td>";
+		#print global packets
+		$status = &getFarmStatus($name);
+		
+		if ($status eq "up"){
+			my $ncalc = (@enddata[0]-@startdata[0])*2;
+			print "<td> $ncalc B/s </td>";
+		} else {
+			print "<td>0</td>";
+		}
+
+		if ($status eq "up"){
+			my $ncalc = (@enddata[2]-@startdata[2])*2;
+			print "<td> $ncalc B/s </td>";
+		} else {
+			print "<td>0</td>";
+		}
+		#print status of a farm
+		if ($status ne "up"){
+			print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td>";
+		} else {
+			print "<td><img src=\"img/icons/small/start.png\" title=\"up\"></td>";
+		}
+
+		#type of farm
+		print "<td>$type</td>";
+
+		#menu
+		print "<td>";
+		print "</td>";
+		print "</tr>";
 	}
+}
 
 
-print "<div id=\"page-header\"></div>";
+## END DATALINK
 
+print "</tbody>";
+}
+#~ print "<tr><td colspan=\"8\"></td><td><a href=\"index.cgi?id=$id&action=addfarm\"><img src=\"img/icons/small/farm_add.png\" title=\"Add new Farm\"></a></td></tr>";
 
-print "		</div>";
-print "<br>";
-print "	</div>";
+print "</table>";
+print "</div>";
+
+if ($globalfarm == 1 ){
+	print "<div id=\"page-header\"></div>";
+	print "<form method=\"get\" action=\"index.cgi\">";
+	print "<input type=\"hidden\" value=\"1-2\" name=\"id\">";
+	print "<input type=\"submit\" value=\"Return to all Farms\" name=\"action\" class=\"button small\">";
+	print "</form>";
+	print "<div id=\"page-header\"></div>";
+}
+
+print "<br class=\"cl\" >";
 print "</div>";
 
 
 
-
-print "<br class=\"cl\">";
-print "
-        <br><br><br>
-        </div>
-    <!--Content END-->
-  </div>
-</div>
-";
+#print "<br class=\"cl\">";
+#rint "        </div>
+#    <!--Content END-->";
+#  </div>
+#</div>
+#";
 

@@ -56,14 +56,16 @@ if ($action eq "apply")
 
 if ($action eq "Create Backup")
 	{
-	if ($name !~ /^$/)
+    if ($name !~ /^$/ && $name =~ /^[a-zA-Z0-9\-]*$/)
 		{
 		$name =~ s/\ //g;		
 		my @eject = `$zenbackup $name -c 2> /dev/null`;
 		&successmsg("Local system backup created <b>backup-$name.tar.gz</b>");
 		}
-
-
+    else
+    {
+        &errormsg("Backup name is not valid. Only numbers, letters and hyphens are allowed.");
+    }
 	}
 
 if ($action eq "del")

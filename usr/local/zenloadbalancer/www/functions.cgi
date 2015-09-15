@@ -34,6 +34,7 @@ require "/usr/local/zenloadbalancer/www/l4_functions.cgi";
 require "/usr/local/zenloadbalancer/www/gslb_functions.cgi";
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 require "/usr/local/zenloadbalancer/www/gui_functions.cgi";
+#require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
 
 if (-e "/usr/local/zenloadbalancer/www/zapi_functions.cgi"){
 	require "/usr/local/zenloadbalancer/www/zapi_functions.cgi";
@@ -375,14 +376,21 @@ if ( $status eq "up" )
 	print "<a href=\"index.cgi?id=$id&action=startfarm&farmname=$name\"><img src=\"img/icons/small/farm_up.png\" title=\"Start the $name Farm\"></a> ";
 	}
 print "<a href=\"index.cgi?id=$id&action=deletefarm&farmname=$name\" onclick=\"return confirm('Are you sure you wish to delete the farm: $name?')\"><img src=\"img/icons/small/farm_cancel.png\" title=\"Delete the $name Farm\"></a> ";
-if ($status eq "up")
-	{
-	print "<a href=\"index.cgi?id=$id&action=managefarm&farmname=$name\"><img src=\"img/icons/small/farm_manage.png\" title=\"View $name backends status\"></a> ";
-	}
-
-
 }
 
+#Create menu for Actions in Conns stats
+sub createmenuvipstats($name,$id,$status,$type)
+{
+my ($name,$id,$status,$type) = @_;
+
+print "<a href=\"index.cgi?id=2-1&action=$name-farm\" \">
+		<img src=\"img/icons/small/chart_bar.png\"
+			title=\"Show connection graphs for Farm $name\"></a> ";
+
+if ($status eq "up" && $type ne "gslb"){
+	print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$name\"><img src=\"img/icons/small/connect.png\" title=\"View $name backends status\"></a> ";
+        }
+}
 
 
 #
@@ -549,99 +557,6 @@ open FO, ">> $logfile";
 print FO "$date - $ENV{'SERVER_NAME'} - $ENV{'REMOTE_ADDR'} - $ENV{'REMOTE_USER'} - $string\n";
 close FO;
 }
-
-#function that create the menu for manage the vips in HTTP Farm Table
-sub createmenuviph($name,$pid,$fproto)
-{
-($name,$id,$farmprotocol) = @_;
-
-if ( $pid =~ /^[1-9]/ )
-        {
-        print "<a href=\"index.cgi?id=$id&action=stopfarm&farmname=$name\" onclick=\"return confirm('Are you sure you want to stop the farm: $name?')\"><img src=\"img/icons/small/farm_delete.png\" title=\"Stop the $name Farm\"></a> ";
-        print "<a href=\"index.cgi?id=$id&action=editfarm&farmname=$name\"><img src=\"img/icons/small/farm_edit.png\" title=\"Edit the $name Farm\"></a> ";
-        }
-        else
-        {
-        print "<a href=\"index.cgi?id=$id&action=startfarm&farmname=$name\"><img src=\"img/icons/small/farm_up.png\" title=\"Start the $name Farm\"></a> ";
-        }
-print "<a href=\"index.cgi?id=$id&action=deletefarm&farmname=$name\"><img src=\"img/icons/small/farm_cancel.png\" title=\"Delete the $name Farm\" onclick=\"return confirm('Are you sure you want to delete the farm: $name?')\"></a> ";
-if ($pid =~ /^[1-9]/ && $farmprotocol ne "gslb")
-        {
-        print "<a href=\"index.cgi?id=$id&action=managefarm&farmname=$name\"><img src=\"img/icons/small/farm_manage.png\" title=\"View $name backends status\"></a> ";
-        }
-
-}
-
-
-# 
-sub zsystem(@exec){
-	(@exec) = @_;
-
-	system(". /etc/profile && @exec");
-	return $?;
-}
-
-
-#function that create the menu for delete, move a service in a http[s] farm
-sub createmenuservice($fname,$sv,$pos){
-	my ($fname,$sv,$pos) = @_;
-	my $serv20 = $sv;
-	my $serv = $sv;
-	my $filefarm = &getFarmFile($fname);
-	use Tie::File;
-	tie @array, 'Tie::File', "$configdir/$filefarm";
-	my @output = grep{ /Service/ } @array;
-	untie @array ;
-	$serv20 =~ s/\ /%20/g;
-	#print "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service=$svice&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $svice\" onclick=\"return confirm('Are you sure you want to delete the Service $svice?')\"></a>";
-	print "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service=$serv20&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $svice\" onclick=\"return confirm('Are you sure you want to delete the Service $serv?')\" ></a> ";
-#	if ($pos != $#output){
-#		print "<a href=index.cgi?id=1-2&action=editfarm-downservice&service=$svice&farmname=$farmname><img src=\"img/icons/small/arrow_down.png\" title=\"Move down service $service\"></a>";
-#	}
-#	if ($pos != 1){
-#	      print "<a href=index.cgi?id=1-2&action=editfarm-upservice&service=$svice&farmname=$farmname><img src=\"img/icons/small/arrow_up.png\" title=\"Move up service $service\"></a>";
-#	}
-
-}
-
-
-#Refresh stats
-sub refreshstats(){
-print "<form method=\"get\" action=\"index.cgi\">";
-print "<b>Refresh stats every</b><input type=\"hidden\" name=\"id\" value=\"$id\">";
-print "<select name=\"refresh\" onchange=\"this.form.submit()\">";
-print "<option value=\"Disabled\"> - </option>\n";
-if ($refresh eq "10"){
-        print "<option value=\"10\" selected>10</option>\n";
-}else{
-        print "<option value=\"10\">10</option>\n";
-}
-if ($refresh eq "30"){
-        print "<option value=\"30\" selected>30</option>\n";
-}else{
-        print "<option value=\"30\">30</option>\n";
-}
-if ($refresh eq "60"){
-        print "<option value=\"60\" selected>60</option>\n";
-}else{
-        print "<option value=\"60\">60</option>\n";
-}
-if ($refresh eq "120"){
-        print "<option value=\"120\" selected>120</option>\n";
-}else{
-        print "<option value=\"120\">120</option>\n";
-}
-
-        print "</select> <b>secs</b>, <font size=1>It can overload the zen server</font>";
-
-print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-print "<input type=\"hidden\" name=\"viewtableclients\" value=\"$viewtableclients\">";
-print "<input type=\"hidden\" name=\"viewtableconn\" value=\"$viewtableconn\">";
-print "<input type=\"hidden\" value=\"managefarm\" name=\"action\" class=\"button small\">";
-#print "<input type=\"submit\" value=\"Submit\" name=\"button\" class=\"button small\">";
-print "</form>";
-}
-
 
 #
 #no remove this 

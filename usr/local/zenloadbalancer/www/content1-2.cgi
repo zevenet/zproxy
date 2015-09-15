@@ -130,7 +130,6 @@ if ($action eq "managefarm"){
 #list all farms configuration and status 
 #first list all configuration files
 @files = &getFarmList();
-#print "<br class=\"cl\">";
 $size = $#files + 1;
 if ($size == 0){
 	$action = "addfarm";
@@ -139,27 +138,37 @@ if ($size == 0){
 }
 
 #table that print the info
-#print "<div class=\"grid_8\">";
 print "<div class=\"box-header\">Farms table</div>";
 print "<div class=\"box table\">";
 
 my $thereisdl = "false";
 
 print "<table cellspacing=\"0\">";
-print "<thead>";
-print "<tr>";
-print "<td width=85>Name</td>";
-print "<td width=85>Virtual IP</td>";
-print "<td>Virtual Port(s)</td>";
-print "<td>Pending Conns</td>";
-print "<td>Established Conns</td>";
-print "<td>PID</td>";
-print "<td>Status</td>";
-print "<td>Profile</td>";
-print "<td>Actions</td>";
-print "</tr>";
-print "</thead>";
-print "<tbody>";
+
+my $nodl_farms = "false";
+for $file (@files) {
+	$name = &getFarmName($file);
+	if ($farmname eq $name || !(defined $farmname) || $farmname eq "" || $action eq "deletefarm" || $action =~ /^Save|^Cancel/ ){
+	$type = &getFarmType($name);
+	if ($type ne "datalink"){
+		$nodl_farms = "true";
+	}
+}
+}
+
+if ( $nodl_farms eq "true" ) {
+	print "<thead>";
+	print "<tr>";
+	print "<td width=85>Name</td>";
+	print "<td width=85>Virtual IP</td>";
+	print "<td>Virtual Port(s)</td>";
+	print "<td>Status</td>";
+	print "<td>Profile</td>";
+	print "<td>Actions</td>";
+	print "</tr>";
+	print "</thead>";
+	print "<tbody>";
+}
 
 my $globalfarm = 0;
 foreach $file (@files) {
@@ -187,30 +196,6 @@ foreach $file (@files) {
 		#print global connections bar
 		$pid = &getFarmPid($name);
 		$status = &getFarmStatus($name);
-		if ($status eq "up"){
-			@netstat = &getConntrack("",$vip,"","","");
-			# SYN_RECV connections
-			my @synconnslist = &getFarmSYNConns($name,@netstat);
-			$synconns = @synconnslist;
-			print "<td> $synconns </td>";
-		} else {
-			print "<td>0</td>";
-		}
-		if ($status eq "up"){
-			@gconns=&getFarmEstConns($name,@netstat);
-			$global_conns = @gconns;
-			print "<td>";
-			print " $global_conns ";
-			print "</td>";
-		} else {
-			print "<td>0</td>";
-		}
-		#print the pid of the process 
-		if ($pid eq "-1"){
-			print "<td> - </td>";
-		} else {
-			print "<td>$pid</td>";
-		}
 
 		#print status of a farm
 		if ($status ne "up"){
@@ -248,16 +233,7 @@ if ($thereisdl eq "true"){
 print "<thead>";
 print "<tr>";
 print "<td width=85>Name</td>";
-print "<td width=85>IP</td>";
-#print "<td>Interface</td>";
-#print "<td>Rx Bytes<br>Rx Bytes/sec</td>";
-#print "<td>Rx Packets<br>Rx Packets/sec</td>";
-#print "<td>Tx Bytes<br>Tx Bytes/sec</td>";
-#print "<td>Tx Packets<br>Tx Packets/sec</td>";
-print "<td>Rx Bytes/sec</td>";
-print "<td>Rx Packets/sec</td>";
-print "<td>Tx Bytes/sec</td>";
-print "<td>Tx Packets/sec</td>";
+print "<td width=85 colspan=2>IP</td>";
 print "<td>Status</td>";
 print "<td>Profile</td>";
 print "<td>Actions</td>";
@@ -288,47 +264,14 @@ foreach $file (@files) {
 		print "<td>$name</td>";
 		#print the virtual ip
 		$vip = &getFarmVip("vip",$name);
-		print "<td>$vip</td>";
+		print "<td colspan=2>$vip</td>";
 		#print the interface to be the defaut gw
 		#print "<td>$vipp</td>";
 	
 		#print global packets
 		$status = &getFarmStatus($name);
 		
-		if ($status eq "up"){
-			my $ncalc = (@enddata[0]-@startdata[0])*2;
-			#print "<td> @enddata[0] B<br>$ncalc B/s </td>";
-			print "<td> $ncalc B/s </td>";
-		} else {
-			print "<td>0</td>";
-		}
-
-		if ($status eq "up"){
-			my $ncalc = (@enddata[1]-@startdata[1])*2;
-			#print "<td> @enddata[1] Pkt<br>$ncalc Pkt/s </td>";
-			print "<td> $ncalc Pkt/s </td>";
-		} else {
-			print "<td>0</td>";
-		}
-
-		if ($status eq "up"){
-			my $ncalc = (@enddata[2]-@startdata[2])*2;
-			#print "<td> @enddata[2] B<br>$ncalc B/s </td>";
-			print "<td> $ncalc B/s </td>";
-		} else {
-			print "<td>0</td>";
-		}
-
-		if ($status eq "up"){
-			my $ncalc = (@enddata[3]-@startdata[3])*2;
-			#print "<td> @enddata[3] Pkt<br>$ncalc Pkt/s </td>";
-			print "<td>$ncalc Pkt/s </td>";
-		} else {
-			print "<td>0</td>";
-		}
-
 		#print status of a farm
-
 		if ($status ne "up"){
 			print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td>";
 		} else {
@@ -352,7 +295,7 @@ foreach $file (@files) {
 
 print "</tbody>";
 }
-print "<tr><td colspan=\"8\"></td><td><a href=\"index.cgi?id=$id&action=addfarm\"><img src=\"img/icons/small/farm_add.png\" title=\"Add new Farm\"></a></td></tr>";
+print "<tr><td colspan=\"5\"></td><td><a href=\"index.cgi?id=$id&action=addfarm\"><img src=\"img/icons/small/farm_add.png\" title=\"Add new Farm\"></a></td></tr>";
 
 print "</table>";
 print "</div>";
@@ -368,13 +311,3 @@ if ($globalfarm == 1 ){
 
 print "<br class=\"cl\" >";
 print "</div>";
-
-
-
-#print "<br class=\"cl\">";
-#rint "        </div>
-#    <!--Content END-->";
-#  </div>
-#</div>
-#";
-

@@ -44,14 +44,6 @@ my @sessions = &getFarmBackendsClientsList($farmname,@content);
 my @backends = &getFarmBackendsStatus($farmname,@content);
 
 my @netstat;
-if ($type eq "tcp")
-	{
-	 @netstat = &getNetstat("atnp");
-	}
-if ($type eq "udp")
-	{
-	 @netstat = &getNetstat("aunp");
-	}
 $fvip = &getFarmVip("vip",$farmname);
 $fpid = &getFarmPid($farmname);
 
@@ -81,7 +73,7 @@ print  "</div>\n";
 print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 print "<thead>\n";
 
-print "<tr><td>Server</td><td>Address</td><td>Port</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Closed Conns</td><td>Clients</td><td>Weight</td><td>Priority</td></tr>\n";
+print "<tr><td>Server</td><td>Address</td><td>Port</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Clients</td><td>Weight</td><td>Priority</td></tr>\n";
 print "</thead>";
 print "<tbody>";
 foreach(@backends)
@@ -103,15 +95,13 @@ foreach(@backends)
 		}
 	        $ip_backend = $backends_data[1];
        		$port_backend= $backends_data[2];
-        	@synnetstatback = &getNetstatFilter("$type","\.\*SYN\.\*","$ip_backend\:$port_backend",$fpid,@netstat);
+       		@netstat = &getConntrack("",$ip_backend,"","", $type);
+       		@synnetstatback = &getBackendSYNConns($farmname,$ip_backend,$port_backend,@netstat);
         	$npend = @synnetstatback;
         	print "<td>$npend</td>";
-        	@stabnetstatback = &getNetstatFilter("$type","ESTABLISHED","$ip_backend\:$port_backend",$fpid,@netstat);
+        	@stabnetstatback = &getBackendEstConns($farmname,$ip_backend,$port_backend,@netstat);
         	$nestab = @stabnetstatback;
         	print "<td>$nestab</td>";
-        	@timewnetstatback = &getNetstatFilter("$type","\.\*\_WAIT\.\*","$ip_backend\:$port_backend",$fpid,@netstat);
-        	$ntimew = @timewnetstatback;
-        	print "<td>$ntimew</td>";
 		print "<td>@backends_data[6] </td>";
 		$totalsessions = $totalsessions + @backends_data[6];
 		print "<td>@backends_data[4]</td>";

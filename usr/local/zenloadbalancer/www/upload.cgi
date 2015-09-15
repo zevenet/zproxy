@@ -65,12 +65,12 @@ my $filename = $query->param("fileup");
 
 my $upload_filehandle = $query->upload("fileup");
 
-if ($action eq "Upload Backup" && $filename !~ /^$/)
+if ($action eq "Upload Backup")
         {
-	if ($filename =~ /\\backup/){
+	if ($filename =~ /^backup\-[a-zA-Z0-9\-]*.tar.gz$/){
 		@filen = split(/\\/,$filename);
 		 $filename = $filen[-1];
-	}
+	
         open ( UPLOADFILE, ">$upload_dir/$filename" ) or die "$!";
         binmode UPLOADFILE;
         while ( <$upload_filehandle> )
@@ -80,6 +80,10 @@ if ($action eq "Upload Backup" && $filename !~ /^$/)
         close UPLOADFILE;
         print "<b>File uploaded. Now refresh the parent window!</b>";
         }
+	else {
+		&errormsg("Filename is not valid. Only numbers, letters and hyphens are allowed");
+	}
+}
 
 print "<br>";
 print "<br>";

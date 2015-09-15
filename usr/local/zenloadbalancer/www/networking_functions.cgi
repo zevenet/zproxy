@@ -512,20 +512,21 @@ sub getNetstatFilter($proto,$state,$ninfo,$fpid,@netstat){
 	return @output;
 }
 
-sub getNetstat($args){
-	($args)= @_;
-	my @netstat = `netstat -$args`;
-	return @netstat;
-}
+#~ Legacy function
+#~ sub getNetstat($args){
+	#~ ($args)= @_;
+	#~ my @netstat = `netstat -$args`;
+	#~ return @netstat;
+#~ }
 
-sub getNetstatNat($args){
-	($args)= @_;
-	#my @netstat = `$netstatNat -$args`;
-	open CONNS, "</proc/net/nf_conntrack";
-	my @netstat = <CONNS>;
-	close CONNS;
-	return @netstat;
-}
+#~ sub getNetstatNat($args){
+	#~ ($args)= @_;
+	#~ #my @netstat = `$netstatNat -$args`;
+	#~ open CONNS, "</proc/net/nf_conntrack";
+	#~ my @netstat = <CONNS>;
+	#~ close CONNS;
+	#~ return @netstat;
+#~ }
 
 sub getDevData($dev){
 	($dev)= @_;

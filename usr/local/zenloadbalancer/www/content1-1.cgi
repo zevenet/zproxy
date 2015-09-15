@@ -33,7 +33,6 @@ print "
 	#&help("1");
 #graph
 use GD::3DBarGrapher qw(creategraph);
-&logfile("loading default view");
 
 #memory values
 my @data_mem = &getMemStats();
@@ -92,73 +91,29 @@ print "<div class=\"box-header\">Global farms information</div>";
 print "	<div class=\"box table\"> 
 	<table>
 	<thead>";
-	#if ($temp){print "<td style=\"border: 0px\">Tempherature: <b>$temp</b></td>";}
-
-	my @netstat = &getNetstatNat();
-	my @nets= &getNetstatFilter("","ESTABLISHED","","",@netstat);
-	push (@nets, &getNetstatFilter("udp","[^UNREPLIED]","","",@netstat));
-	my $conn_max = @nets;
 
 	@files = &getFarmList();
 
 	print "<tr>";
-	print "<td>Farm</td><td>Profile</td>";
-	print "<td>%CPU</td><td>%MEM</b></td><td>Total connections on system</td>";
+	print "<td>Farm</td>";
+	print "<td>Profile</td>";
+	print "<td>Status</td>";
 	print "</tr>";
 	print "</thead>";
 	print "<tbody>";
 	foreach $file(@files){
 		print "<tr>";
-		$farmname = &getFarmName($file);
+		my $farmname = &getFarmName($file);
 		my $type = &getFarmType($farmname);
-		if ($type !~ /datalink/ && $type !~ /l4xnat/){
-			$pid = &getFarmPid($farmname);
-			chomp($pid);
-		}
-		else{
-			$pid = "-";
-		}
-		my @eject;
-		$pc = "-";
-		if ($pid ne "-" && $pid ne "-1"){
-			@eject = `top -p $pid -b -n 1`;
-			$line = @eject[7];
-			@line = split (" ",$line);
-			if ($type =~ /http/){
-				$pid2 = $pid + 1;
-				@eject = `top -p $pid2 -b -n 1`;
-				$line2 = @eject[7];
-				@line2 = split (" ",$line2);
-				@line[8] += @line2[8];
-				@line[9] += @line2[9];
-			}
-		}
-		else{
-			@line[8]="-";
-			@line[9]="-";
-		}
-		print "<td>$farmname</td><td>$type</td>";
-		print "<td>@line[8]</td><td>@line[9]</td>";
 
-		#if ($pid ne "-"){
-			@conns=&getFarmEstConns($farmname,@netstat);
-			$global_conns=@conns;
-			$pc;
-			if ($conn_max != 0){
-				$pc = 100*$global_conns/$conn_max;
-			} else {
-				$pc = 0;
-			}
-			$pc = sprintf('%.0f', $pc);
-			$vbar = 149*$pc/100;
-			print "<td>";
-			&progressbar("img/graphs/bar$farmname.png",$vbar);
-			print "<img src=\"img/graphs/bar$farmname.png\">";
-			print " $global_conns ($pc%)";
-			print "</td>";
-		#} else {
-		#	print "<td>-</td>";
-		#}
+		print "<td>$farmname</td><td>$type</td>";
+		$status = &getFarmStatus($farmname);
+		if ($status ne "up"){
+				print "<td class=\"tc\"><img src=\"img/icons/small/stop.png\" title=\"down\"></td>";
+		} else {
+				print "<td class=\"tc\"><img src=\"img/icons/small/start.png\" title=\"up\"></td>";
+		}
+
 		print "</tr>";
 	}
 
@@ -215,9 +170,10 @@ print "<tr><td>Interface</td><td>Input</td><td>Output</td></tr>";
 print "</thead>";
 print "<tbody>";
 my $indice = @data_net;
-for my $i ( 0 .. @data_net-2 ){
+for (my $i=0;  $i < $indice - 1; $i=$i+2){
+	my @ifname = split(' ', $data_net[$i][0]);
                 print "<tr>";
-		print "<td>$data_net[$i][0]</td><td>$data_net[$i][1]</td><td>$data_net[$i+1][1]</td>\n";
+	print "<td>$ifname[0]</td><td>$data_net[$i][1]</td><td>$data_net[$i+1][1]</td>\n";
                 print "</tr>";
         }
 

@@ -70,22 +70,8 @@ if ( $pid =~ /^[1-9]/ )
         print "<a href=\"index.cgi?id=$id&action=startfarm&farmname=$name\"><img src=\"img/icons/small/farm_up.png\" title=\"Start the $name Farm\"></a> ";
         }
 print "<a href=\"index.cgi?id=$id&action=deletefarm&farmname=$name\"><img src=\"img/icons/small/farm_cancel.png\" title=\"Delete the $name Farm\" onclick=\"return confirm('Are you sure you want to delete the farm: $name?')\"></a> ";
-if ($pid =~ /^[1-9]/ && $farmprotocol ne "gslb")
-        {
-        print "<a href=\"index.cgi?id=$id&action=managefarm&farmname=$name\"><img src=\"img/icons/small/farm_manage.png\" title=\"View $name backends status\"></a> ";
-        }
 
 }
-
-
-# 
-sub zsystem(@exec){
-	(@exec) = @_;
-
-	system(". /etc/profile && @exec");
-	return $?;
-}
-
 
 #function that create the menu for delete, move a service in a http[s] farm
 sub createmenuservice($fname,$sv,$pos){
@@ -98,14 +84,8 @@ sub createmenuservice($fname,$sv,$pos){
 	my @output = grep{ /Service/ } @array;
 	untie @array ;
 	$serv20 =~ s/\ /%20/g;
-	#print "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service=$svice&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $svice\" onclick=\"return confirm('Are you sure you want to delete the Service $svice?')\"></a>";
 	print "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service=$serv20&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $svice\" onclick=\"return confirm('Are you sure you want to delete the Service $serv?')\" ></a> ";
-#	if ($pos != $#output){
-#		print "<a href=index.cgi?id=1-2&action=editfarm-downservice&service=$svice&farmname=$farmname><img src=\"img/icons/small/arrow_down.png\" title=\"Move down service $service\"></a>";
-#	}
-#	if ($pos != 1){
-#	      print "<a href=index.cgi?id=1-2&action=editfarm-upservice&service=$svice&farmname=$farmname><img src=\"img/icons/small/arrow_up.png\" title=\"Move up service $service\"></a>";
-#	}
+
 
 }
 

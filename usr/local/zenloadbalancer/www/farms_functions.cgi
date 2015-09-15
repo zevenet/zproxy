@@ -1303,61 +1303,6 @@ sub getFarmXForwFor($fname){
 	return $output;
 }
 
-#get global connections of all real servers
-#sub getFarmGlobalConns($fname){
-#	($fname) = @_;
-
-#	my $type = &getFarmType($fname);
-#	my $ninfo = &getFarmVip("vipps",$fname);
-#	my $pid = &getFarmPid($fname);
-#	my @netstat;
-
-##	my $i=0;
-##	my $block="false";
-#	my $output = -1;
-#	if ($pid eq "-"){
-##		$total=0;
-##		$mport = &getFarmPort($fname);
-##		my @eject = `$pen_ctl 127.0.0.1:$mport status`;
-##		$exit = "false";
-##		$block = "false";
-##		$count = 0;
-##		while ($count <= $#eject && $exit eq "false"){
-##			$line = @eject[$count];
-##			if ($line =~ /^<\/tr>/ && $exit eq "false"){
-##				$block = "true";
-##				$i=0;
-##			}
-##			if ($exit eq "false" && $block eq "true"){
-##				$i=$i+1;
-##				if ($i == 7){
-##					$line =~ s/<td>//;
-##					$line =~ s/<\/td>//;
-##					$total = $total + $line;
-##					$i=0;
-##				}
-##				if ($line =~  /^<\/table>/){
-##					$exit = "true";
-##					$i=0;
-##				}
-##			}
-##			$count = $count + 1;
-##		}
-#		return $output;
-#	}
-#
-#	if ($type eq "tcp" || $type eq "http" || $type eq "https"){
-#		@netstat = &getNetstat("atnp","ESTABLISHED",$ninfo,$pid);
-#	}
-#
-#	if ($type eq "udp"){
-#		@netstat = &getNetstat("aunp","ESTABLISHED",$ninfo,$pid);
-#	}
-#
-#	$output = @netstat;
-#	return $output;
-#}
-
 #
 sub getFarmGlobalStatus($fname){
 	my ($fname) = @_;
@@ -1384,11 +1329,11 @@ sub getBackendEstConns($fname,$ip_backend,$port_backend,@netstat){
         my $fvip = &getFarmVip("vip",$fname);
         my $fvipp = &getFarmVip("vipp",$fname);
         my @nets=();
-	if ( $type eq "tcp" || $type eq "udp" || $type eq "http"){
-		if( $type eq "http" ){
+	if ( $type eq "tcp" || $type eq "udp" || $type =~ "http"){
+		if( $type =~ "http" ){
 			$type = "tcp";
 		}
-	        @nets = &getNetstatFilter("$type","","\.*ESTABLISHED src=$fvip dst=$ip_backend sport=\.* dport=$port_backend \.*","",@netstat);
+        @nets = &getNetstatFilter("$type","","\.*ESTABLISHED src=\.* dst=$ip_backend sport=\.* dport=$port_backend \.*src=$ip_backend \.*","",@netstat);
 	} 
 	if ( $type eq "l4xnat" ){
                 my $proto = &getFarmProto($fname);
@@ -1405,17 +1350,17 @@ sub getBackendEstConns($fname,$ip_backend,$port_backend,@netstat){
 		undef(@fportlist);
 		if ($nattype eq "dnat"){
 			if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
-				push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend \.*","",@netstat));
+				push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp \.*src=$ip_backend \.*","",@netstat));
 			}
 			if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
-				push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend .\*","",@netstat));
+				push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*","",@netstat));
 			}
 		} else {
 			if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
-				push(@nets, &getNetstatFilter("tcp","","\.*ESTABLISHED src=\.* dst=$fvip sport=\.* dport=80 src=$ip_backend \.*","",@netstat));
+				push(@nets, &getNetstatFilter("tcp","","\.*ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$regexp \.*src=$ip_backend \.*","",@netstat));
 			}
 			if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
-				push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend .\*","",@netstat));
+				push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*","",@netstat));
 			}
 		}
 		
@@ -1437,17 +1382,17 @@ sub getFarmEstConns($fname,@netstat){
 		return @nets;
 	}
 
-	#&logfile("getting 'EstConns' for $fname farm $type");
 	if ($type eq "tcp"){
-		push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$fvipp src=\.*","",@netstat));
+		push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*","",@netstat));
+						#push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
 	}
 
 	if ($type eq "udp"){
-		push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip sport=\.* dport=$fvipp src=\.*","",@netstat));
+		push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*","",@netstat));
 	}
 
 	if ($type eq "http" || $type eq "https"){
-                push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$fvipp src=\.*","",@netstat));
+                push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*","",@netstat));
 	}
 
         if ($type eq "l4xnat"){
@@ -1473,17 +1418,17 @@ sub getFarmEstConns($fname,@netstat){
                                 my $ip_backend = $backends_data[0];
 				if ($nattype eq "dnat"){
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
-						push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend \.*","",@netstat));
+						push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*","",@netstat));
 					}
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
-						push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend .\*","",@netstat));
+						push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*","",@netstat));
 					}
 				} else {
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
-						push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend \.*","",@netstat));
+						push(@nets, &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*","",@netstat));
 					}
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
-						push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend .\*","",@netstat));
+						push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp .*[^\[UNREPLIED\]] src=$ip_backend","",@netstat));
 					}
 				}
 
@@ -1520,10 +1465,10 @@ sub getBackendTWConns($fname,$ip_backend,$port_backend,@netstat){
 		}
 		undef(@fportlist);
 		if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
-			push(@nets, &getNetstatFilter("tcp","","\.*TIME\_WAIT src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend \.*","",@netstat));
+			push(@nets, &getNetstatFilter("tcp","","\.*TIME\_WAIT src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*","",@netstat));
 		}
 		if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
-			push(@nets, &getNetstatFilter("udp","","\.*TIME\_WAIT src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend .\*","",@netstat));
+			push(@nets, &getNetstatFilter("udp","","\.*TIME\_WAIT src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend .\*","",@netstat));
 		}
 		
 	}
@@ -1541,8 +1486,7 @@ sub getFarmTWConns($fname,@netstat){
 
 	#&logfile("getting 'TWConns' for $fname farm $type");
 	if ($type eq "tcp" || $type eq "http" || $type eq "https"){
-		push(@nets, &getNetstatFilter("tcp","","\.*\_WAIT src=\.* dst=$fvip sport=\.* dport=$fvipp src=\.*","",@netstat));
-		#@nets = &getNetstatFilter("tcp","\.\*\_WAIT\.\*",$ninfo,"",@netstat);
+		push(@nets, &getNetstatFilter("tcp","","\.*\_WAIT src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*","",@netstat));
 	}
 
 	if ($type eq "udp"){
@@ -1571,8 +1515,7 @@ sub getFarmTWConns($fname,@netstat){
                         if ($backends_data[4] eq "up"){
                                 my $ip_backend = $backends_data[0];
                                 my $port_backend = $backends_data[1];
-				push(@nets, &getNetstatFilter("tcp","","\.*\_WAIT src=\.* dst=$fvip \.* dport=$regexp src=$ip_backend \.*","",@netstat));
-                                #push(@nets, &getNetstatFilter("tcp","","\.*\_WAIT src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat));
+				push(@nets, &getNetstatFilter("tcp","","\.*\_WAIT src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*","",@netstat));
                         }
                 }
         }
@@ -1587,10 +1530,10 @@ sub getBackendSYNConns($fname,$ip_backend,$port_backend,@netstat){
         my $fvipp = &getFarmVip("vipp",$fname);
         my @nets=();
 	if ( $type eq "tcp" || $type eq "http"){
-	        @nets = &getNetstatFilter("tcp","","\.*SYN\.* src=$fvip dst=$ip_backend sport=\.* dport=$port_backend \.*","",@netstat);
+	        @nets = &getNetstatFilter("tcp","","\.*SYN\.* src=\.* dst=$ip_backend sport=\.* dport=$port_backend \.*","",@netstat);
 	} 
 	if ( $type eq "udp" ){
-		@nets = &getNetstatFilter("udp","","\.* src=$fvip dst=$ip_backend \.* dport=$port_backend \.*UNREPLIED\.* src=\.*","",@netstat);
+		@nets = &getNetstatFilter("udp","","\.* src=\.* dst=$ip_backend \.* dport=$port_backend \.*UNREPLIED\.* src=\.*","",@netstat);
 	}
 	if ( $type eq "l4xnat" ){
                 my $proto = &getFarmProto($fname);
@@ -1637,58 +1580,39 @@ sub getFarmSYNConns($fname,@netstat){
 	#&logfile("getting 'SYNConns' for $fname farm $type");
 	if ($type eq "tcp"){
 		push(@nets, &getNetstatFilter("tcp","","\.*SYN\.* src=\.* dst=$fvip sport=\.* dport=$fvipp \.* src=\.*","",@netstat));
-		#@nets = &getNetstatFilter("tcp","\.\*SYN\.\*",$ninfo,"",@netstat);
 	}
 
 	if ($type eq "udp"){
 		push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$fvipp \.*UNREPLIED\.* src=\.*","",@netstat));
-		#@nets = &getNetstatFilter("udp","\.\*SYN\.\*",$ninfo,"",@netstat);
 	}
 
 	if ($type eq "http" || $type eq "https"){
-		push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* dport=$fvipp \.* src=\.*","",@netstat));
-		#@nets = &getNetstatFilter("tcp","\.\*SYN\.\*",$ninfo,"",@netstat);
+		push(@nets, 
+			 &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* dport=$fvipp \.* src=\.*","",@netstat));
 	}
 
-        if ($type eq "l4xnat"){
-                my $proto = &getFarmProto($fname);
-                my $nattype = &getFarmNatType($farmname);
-                my $fvip = &getFarmVip("vip",$fname);
-                my $fvipp = &getFarmVip("vipp",$fname);
-                my @fportlist;
-                my $regexp = "";
-                @fportlist = &getFarmPortList($fvipp);
-                if ( @fportlist[0] !~ /\*/ ){
-                        $regexp = "\(" . join('|', @fportlist) . "\)";
-                }
-                else{
-                        $regexp = "\.*";
-                }
-                undef(@fportlist);
-                my @content = &getFarmBackendStatusCtl($fname);
-                my @backends = &getFarmBackendsStatus($fname,@content);
-                foreach (@backends){
-                        my @backends_data = split(";",$_);
-                        if ($backends_data[4] eq "up"){
-                                my $ip_backend = $backends_data[0];
-                                #my $port_backend = $backends_data[1];
-                                #push(@nets, &getNetstatFilter("$proto","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat));
-				#if ($nattype eq "dnat"){
-				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
-				#		push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
-				#	}
-				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
-				#		push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat)); # UDP
-				#	}
-				#} else {
-				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
-				#		push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
-				#	}
-				#	if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
-				#		push(@nets,&getNetstatFilter("udp","","\.* src=$fvip dst=\.* \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat)); # UDP
-				#	}
-				#}
-
+	if ($type eq "l4xnat"){
+		my $proto = &getFarmProto($fname);
+		my $nattype = &getFarmNatType($farmname);
+		my $fvip = &getFarmVip("vip",$fname);
+		my $fvipp = &getFarmVip("vipp",$fname);
+		my @fportlist;
+		my $regexp = "";
+		@fportlist = &getFarmPortList($fvipp);
+		if ( @fportlist[0] !~ /\*/ ){
+				$regexp = "\(" . join('|', @fportlist) . "\)";
+		}
+		else{
+				$regexp = "\.*";
+		}
+		undef(@fportlist);
+		my @content = &getFarmBackendStatusCtl($fname);
+		my @backends = &getFarmBackendsStatus($fname,@content);
+		foreach (@backends){
+			my @backends_data = split(";",$_);
+			if ($backends_data[4] eq "up"){
+				my $ip_backend = $backends_data[0];
+		
 				if ($nattype eq "dnat"){
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "tcp"){
 						push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*","",@netstat));
@@ -1706,12 +1630,12 @@ sub getFarmSYNConns($fname,@netstat){
 					if ($proto eq "sip" || $proto eq "all" || $proto eq "udp"){
 						push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat));
 					}
-
+		
 				}
 
-                        }
-                }
-        }
+			}
+		}
+	}
 
 	return @nets;
 }
@@ -2687,22 +2611,21 @@ sub runFarmCreate($fproto,$fvip,$fvipp,$fname,$fdev){
 		mkdir "$configdir\/$fname\_$type.cfg\/etc\/zones";
 		mkdir "$configdir\/$fname\_$type.cfg\/etc\/plugins";
 		my $httpport=35060;
-		while ($httpport<35160 && &checkport(127.0.0.1,$httpport) eq "true"){
+		while ($httpport<35160 && &checkport($fvip,$httpport) eq "true"){
 			$httpport++;
 		}
 		if ($httpport==35160){
 			$output=-1;	# No room for a new farm
 		} else {
 			open FO, ">$configdir\/$fname\_$type.cfg\/etc\/config";
-			print FO ";up\noptions => {\n   listen = $fvip\n   dns_port = $fvipp\n   http_port = $httpport\n   http_listen = 127.0.0.1\n}\n\n";
+			print FO ";up\noptions => {\n   listen = $fvip\n   dns_port = $fvipp\n   http_port = $httpport\n   http_listen = $fvip\n}\n\n";
 			print FO "service_types => { \n\n}\n\n";
 			print FO "plugins => { \n\n}\n\n";
 			close FO;
 
 			#run farm
-			my $exec = &getGSLBStartCommand($fname);
-			&logfile("running $exec");
-			zsystem("$exec > /dev/null 2>&1");
+			&logfile("running $gdnsd -d $configdir\/$fname\_$type.cfg start");
+			zsystem("$gdnsd -d $configdir\/$fname\_$type.cfg start 2>/dev/null");
 			$output = $?;
 			if ($output != 0) {
 				$output = -1;
@@ -2748,55 +2671,54 @@ sub getFarmBlacklist($fname){
 	return $output;
 }
 
-
 # Returns farm max connections
 sub getFarmMaxConn($fname){
-        my ($fname)= @_;
+	my ($fname)= @_;
 
-        my $type = &getFarmType($fname);
-        my $file = &getFarmFile($fname);
-        my $output = -1;
+	my $type = &getFarmType($fname);
+	my $file = &getFarmFile($fname);
+	my $output = -1;
 
-        if ($type eq "tcp" || $type eq "udp"){
-                open FI, "$configdir/$file";
-                my $exit = "false";
-                while ($line=<FI> || $exit eq "false"){
-                        if ( $line =~ /^# pen/ ){
-                                $exit = "true";
-                                my @line_a = split("\ ",$line);
-                                if ($type eq "tcp"){
-                                        $admin_ip = @line_a[11];
-                                } else {
-                                        $admin_ip = @line_a[12];
-                                }
-                                my @conn_max = `$pen_ctl $admin_ip conn_max 2> /dev/null`;
-                                if (@conn_max =~ /^[1-9].*/){$output = "@conn_max";}
-                                else{$output = "-";}
-                        }
-                }
-                close FI;
-        }
+	if ($type eq "tcp" || $type eq "udp"){
+		open FI, "$configdir/$file";
+		my $exit = "false";
+		while ($line=<FI> || $exit eq "false"){
+			if ( $line =~ /^# pen/ ){
+				$exit = "true";
+				my @line_a = split("\ ",$line);
+				if ($type eq "tcp"){
+					 $admin_ip = @line_a[11];
+				} else {
+					 $admin_ip = @line_a[12];
+				}
+				my @conn_max = `$pen_ctl $admin_ip conn_max 2> /dev/null`;
+				if (@conn_max =~ /^[1-9].*/){$output = "@conn_max";}
+				else{$output = "-";}
+			}
+		}
+		close FI;
+	}
 
-       if ($type eq "http" || $type eq "https"){
-               my $ffile = &getFarmFile($fname);
-                open FR, "<$configdir\/$ffile";
-                my @file = <FR>;
-                foreach $line(@file){
-                        if ($line =~ /^Threads/){
-                                @line = split("\ ",$line);
-                                my $maxt = @line[1];
-                                $maxt =~ s/\ //g;
-                               chomp($maxt);
-                               $output = $maxt;
-                                }
-                        }
-                close FR;
-       }
+   if ($type eq "http" || $type eq "https"){
+		   my $ffile = &getFarmFile($fname);
+			open FR, "<$configdir\/$ffile";
+			my @file = <FR>;
+			foreach $line(@file){
+					if ($line =~ /^Threads/){
+							@line = split("\ ",$line);
+							my $maxt = @line[1];
+							$maxt =~ s/\ //g;
+						   chomp($maxt);
+						   $output = $maxt;
+							}
+					}
+			close FR;
+   }
 
 
 
-        #&logfile("getting 'MaxConn $output' for $fname farm $type");
-        return $output;
+	#&logfile("getting 'MaxConn $output' for $fname farm $type");
+	return $output;
 
 }
 
@@ -2876,11 +2798,8 @@ sub getFarmPid($fname){
 			if ( $line =~ /^# pen/ ){
 				$exit = "true";
 				my @line_a = split("\ ",$line);
-				if ($type eq "tcp"){
-					$admin_ip = @line_a[11];
-				} else {
-					$admin_ip = @line_a[12];
-				}
+				@ip_and_port = split(":",@line_a[-2]);
+				$admin_ip = "@ip_and_port[0]:@ip_and_port[1]";
 				my @pid = `$pen_ctl $admin_ip pid 2> /dev/null`;
 				if (@pid =~ /^[1-9].*/){$output = "@pid"; }
 				else {$output = "-";}
@@ -2955,14 +2874,12 @@ sub getFarmVip($info,$fname){
 		open FI, "$configdir/$file";
 		my $exit = "false";
 		while ($line=<FI> || $exit eq "false"){
+			# find line with pen command
 			if ( $line =~ /^# pen/ ){
 				$exit = "true";
 				my @line_a = split("\ ",$line);
-				if ($type eq "tcp"){
-					$vip_port = @line_a[12];
-				} else  {
-					$vip_port = @line_a[13];
-				}
+				# use last argument
+				$vip_port = @line_a[-1];
 				my @vipp = split(":",$vip_port);
 				if ($info eq "vip"){$output = @vipp[0];}
 				if ($info eq "vipp"){$output = @vipp[1];}
@@ -4777,188 +4694,6 @@ sub setFarmHTTPNewService($fname,$service){
        return $output;
 }
 
-# Create a new Zone in a GSLB farm
-sub setFarmGSLBNewZone($fname,$service){
-	my ($fname,$svice) =  @_;
-
-	my $output = -1;
-	my $ftype = &getFarmType($fname);
-	my $fvip = &getFarmVip("vip",$fname);
-
-	if ($ftype eq "gslb"){
-		opendir(DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/");
-		my @files= grep { /^$svice/ } readdir(DIR);
-		closedir(DIR);
-
-		if ( $files == 0 ) {
-			open FO, ">$configdir\/$fname\_$ftype.cfg\/etc\/zones\/$svice";
-			print FO "@	SOA ns1 hostmaster (\n	1\n	7200\n	1800\n	259200\n	900\n)\n\n";
-			print FO "@		NS	ns1 ;index_0\n";
-			print FO "ns1		A	$fvip ;index_1\n";
-			close FO;
-
-			$output = 0;
-       		} else {
-			$output = 1;
-       		}
-	}
-	return $output;
-}
-
-# Delete an existing Zone in a GSLB farm
-sub setFarmGSLBDeleteZone($fname,$service){
-	my ($fname,$svice) =  @_;
-
-	my $output = -1;
-	my $ftype = &getFarmType($fname);
-
-	if ($ftype eq "gslb"){
-		use File::Path 'rmtree';
-		rmtree([ "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/$svice" ]);
-		$output = 0;
-	}
-	return $output;
-}
-
-# Create a new Service in a GSLB farm
-sub setFarmGSLBNewService($fname,$service,$algorithm){
-        my ($fname,$svice,$alg) =  @_;
-
-        my $output = -1;
-        my $ftype = &getFarmType($fname);
-        my $gsalg = "simplefo";
-
-        if ($ftype eq "gslb"){
-                if ($alg eq "roundrobin"){
-                        $gsalg = "multifo";
-                } else {
-                        if ($alg eq "prio"){
-                        	$gsalg = "simplefo";
-                        }
-                }
-		if (grep(/^$svice$/, &getFarmServices($fname))){
-			$output = -1;
-		}else{
-			if (!(-e "$configdir/${fname}_${ftype}.cfg/etc/plugins/${gsalg}.cfg")){
-				open FO, ">$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$gsalg.cfg";
-	                       	print FO "$gsalg => {\n\tservice_types = up\n";
-	                        print FO "\t$svice => {\n\t\tservice_types = tcp_80\n";
-				if ($gsalg eq "simplefo"){
-	                               	print FO "\t\tprimary => 127.0.0.1\n";
-	                               	print FO "\t\tsecondary => 127.0.0.1\n";
-				}else{
-					print FO "\t\t1 => 127.0.0.1\n";
-				}
-	                        print FO "\t}\n}\n";
-	                        close FO;
-				$output = 0;
-			}else{
-	                        # Include the service in the plugin file
-	                        tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$gsalg.cfg";
-				if (grep (/^\t$svice =>.*/, @fileconf)){
-		                        $output = -1;
-				}else{
-	                               	my $found=0;
-	                               	my $index=0;
-	                               	foreach $line(@fileconf){
-	                        	        if ($line =~ /$gsalg => /){
-	                               	        	$found=1;
-	                               	        }
-	                               	        if ($found==1 && $line =~ /service_types /){
-	                               	        	$index++;
-	                               	                #splice @fileconf,$index,0,"     \$include{plugins\/$svice.cfg},";
-							if ($gsalg eq "simplefo"){
-                               		                	splice @fileconf,$index,0,("\t$svice => {", "\t\tservice_types = tcp_80", "\t\tprimary => 127.0.0.1", "\t\tsecondary => 127.0.0.1","\t}");
-							}else{
-								splice @fileconf,$index,0,("\t$svice => {", "\t\tservice_types = tcp_80", "\t\t1 => 127.0.0.1", "\t}");
-							}
-							$found=0;
-                               		                last;
-                               		        }
-                               		        $index++;
-                               		}
-					$output = 0;
-				}
-                	       	untie @fileconf;
-			}
-			if ($output == 0){
-                	       	# Include the plugin file in the main configuration
-                	       	tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
-				if ((grep(/include{plugins\/$gsalg\.cfg}/, @fileconf)) == 0){
-                	       		my $found=0;
-                	       		my $index=0;
-                	       		foreach $line(@fileconf){
-                	               		if ($line =~ /plugins => /){
-                	                       		$found=1;
-                	                       		$index++;
-                	               		}
-                	               		if ($found==1){
-                	                       		splice @fileconf,$index,0,"     \$include{plugins\/$gsalg.cfg},";
-	        	                               	last;
-                	                	}
-                	                	$index++;
-                	        	}
-				}
-                        	untie @fileconf;
-                        	&setFarmVS($fname,$svice,"dpc","80");
-                	}
-		}
-        }
-        return $output;
-}
-
-# Delete an existing Service in a GSLB farm
-sub setFarmGSLBDeleteService($fname,$service){
-        my ($fname,$svice) =  @_;
-
-        my $output = -1;
-        my $ftype = &getFarmType($fname);
-	my $pluginfile = "";
-
-        if ($ftype eq "gslb"){
-		#Find the plugin file
-		opendir(DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/");
-        	my @pluginlist = readdir(DIR);
-        	foreach $plugin(@pluginlist){
-			tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
-			if(grep(/^\t$svice => /, @fileconf)){
-				$pluginfile = $plugin;
-			}
-			untie @fileconf;
-		}
-		closedir(DIR);
-		if($pluginfile eq ""){
-			$output = -1;		
-		}else{
-			#Delete section from the plugin file
-                        tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$pluginfile";
-                        my $found = 0;
-                        my $index = 0;
-			my $deleted = 0;
-                        while ($deleted == 0){
-                        	if ($fileconf[$index] =~ /^\t$svice => /){
-                        	        $found = 1;
-                                }
-                                if ($found == 1){
-					if ($fileconf[$index] !~ /^\t\}/){
-                                        	splice @fileconf,$index,1;
-					}else{
-						splice @fileconf,$index,1;
-						$found=0;
-						$output=0;
-						$deleted = 1;
-					}
-				}
-				if ($found == 0){
-					$index++;
-				}
-			}
-			untie @fileconf;
-		}
-	}
-        return $output;
-}
-
 # Get farm zones list for GSLB farms
 sub getFarmZones($fname){
 	my ($fname) =  @_;
@@ -5251,7 +4986,7 @@ sub getFarmVS($farmname,$service,$tag){
 
 			#session id
 			if ($tag eq "sessionid"){
-				if ($line =~ "ID" && $sw == 1 && $line !~ "#"){
+				if ($line =~ "\t\t\tID" && $sw == 1 && $line !~ "#"){
 					@return = split("\ ",$line);
 					@return[1] =~ s/\"//g;
 					@return[1] =~ s/^\s+//;
@@ -5570,11 +5305,11 @@ sub setFarmVS($farmname,$service,$tag,$string){
 		        }
 			#session id
 		        if ($tag eq "sessionid"){
-				if ($line =~ "ID" && $sw == 1 && $stri ne ""){
+				if ($line =~ "\t\t\tID|\t\t\t#ID" && $sw == 1 && $stri ne ""){
 					$line = "\t\t\tID \"$stri\"";
 					last;
 				}
-				if ($line =~ "TTL" && $sw == 1 && $stri eq ""){
+				if ($line =~ "\t\t\tID|\t\t\t#ID" && $sw == 1 && $stri eq ""){
 					$line = "\t\t\t#ID \"$stri\"";
 					last;
 				}
@@ -5629,12 +5364,12 @@ sub setFarmVS($farmname,$service,$tag,$string){
 					}
 					if ($session eq "URL" || $session eq "COOKIE" || $session eq "HEADER"){
 						#@contents[$i+2]=~ s/#//g;
-						if ($line =~ /ID /){
+						if ($line =~ "\t\t\tID |\t\t\t#ID "){
 							$line =~ s/#//g;        
 						}
 					}
 					if ($session eq "IP"){
-						if ($line =~ /ID /){
+						if ($line =~ "\t\t\tID |\t\t\t#ID "){
 							$line = "\#$line";
 						}
 					}
@@ -5653,7 +5388,7 @@ sub setFarmVS($farmname,$service,$tag,$string){
 					if ($line =~ "Type"){
 						$line = "\t\t\t#Type nothing";
 					}
-					if ($line =~ "ID"){
+					if ($line =~ "\t\t\tID |\t\t\t#ID "){
 						$line = "\t\t\t#ID \"sessionname\"";
 					}
 				}
@@ -5928,17 +5663,7 @@ sub setFarmGSLBNewBackend($fname,$srv,$lb,$id,$ipaddress){
 		my $pluginfile="";
 		use Tie::File;
 		#Find the plugin file
-		opendir(DIR, "$configdir\/$ffile\/etc\/plugins\/");
-        	my @pluginlist = readdir(DIR);
-        	foreach $plugin(@pluginlist){
-			tie @fileconf, 'Tie::File', "$configdir\/$ffile\/etc\/plugins\/$plugin";
-			if(grep(/^\t$srv => /, @fileconf)){
-				$pluginfile = $plugin;
-			}
-			untie @fileconf;
-		}
-		closedir(DIR);
-		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$srv.cfg";
 		foreach $line(@fileconf){
 			if ($line =~ /^\t$srv => /){
 				$found = 1;
@@ -6095,6 +5820,7 @@ sub getConntrack($orig_src, $orig_dst, $reply_src, $reply_dst, $proto){
 	if ( $proto ){
 		$proto = "-p $proto";
 	}
+	&logfile("$conntrack -L $orig_src $orig_dst $reply_src $reply_dst $proto 2>/dev/null");
 	@output = `$conntrack -L $orig_src $orig_dst $reply_src $reply_dst $proto 2>/dev/null`;
 	return @output;
 }

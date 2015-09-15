@@ -328,7 +328,13 @@ return @data;
 
 }
 
+# 
+sub zsystem(@exec){
+	(@exec) = @_;
 
+	system(". /etc/profile && @exec");
+	return $?;
+}
 
 #do not remove this
 1

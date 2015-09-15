@@ -38,7 +38,8 @@ print "
 			<li><a href=\"#\" id=\"current\"><img src=\"../img/icons/small/find.png\"> Monitoring</a>
 				<ul>
 					<li><a href=\"index.cgi?id=2-1\"><img src=\"../img/icons/small/chart_bar.png\"> Graphs</a></li>
-					<li><a href=\"index.cgi?id=2-2\"><img src=\"../img/icons/small/page_lightning.png\"> Logs</a></li>
+					<li><a href=\"index.cgi?id=2-2\"><img src=\"../img/icons/small/connect.png\"> Conns stats</a></li>
+					<li><a href=\"index.cgi?id=2-3\"><img src=\"../img/icons/small/page_lightning.png\"> Logs</a></li>
 				</ul>
 			
 			</li>

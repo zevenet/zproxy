@@ -27,7 +27,7 @@ if ($viewtableclients eq ""){ $viewtableclients = "no";}
 #if ($viewtableconn eq ""){ $viewtableconn = "no";}
 
 # Real Server Table
-my @netstat = &getNetstat("atnp");
+my @netstat;
 $fvip = &getFarmVip("vip",$farmname);
 $fpid = &getFarmChildPid($farmname);
 
@@ -66,7 +66,7 @@ print "<div class=\"box-header\">Real servers status<font size=1>&nbsp;&nbsp;&nb
 print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 print "<thead>\n";
 #print "<tr><td>Service</td><td>Server</td><td>Address</td><td>Port</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Closed Conns</td><td>Sessions</td><td>Weight</td>";
-print "<tr><td>Service<td>Server</td><td>Address</td><td>Port</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Closed Conns</td><td>Weight</td>";
+print "<tr><td>Service<td>Server</td><td>Address</td><td>Port</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Weight</td>";
 print "</thead>\n";
 print "<tbody>";
 
@@ -96,17 +96,13 @@ foreach (@backends){
 	}
 	$ip_backend = $backends_data[1];
 	$port_backend= $backends_data[2];
-	@synnetstatback = &getNetstatFilter("tcp","\.\*SYN\.\*","$ip_backend\:$port_backend",$fpid,@netstat);
+	@netstat = &getConntrack("",$ip_backend,"","","tcp");
+	@synnetstatback = &getBackendSYNConns($farmname,$ip_backend,$port_backend,@netstat);
 	$npend = @synnetstatback;
 	print "<td>$npend</td>";
-	@stabnetstatback = &getNetstatFilter("tcp","ESTABLISHED","$ip_backend\:$port_backend",$fpid,@netstat);
+	@stabnetstatback = &getBackendEstConns($farmname,$ip_backend,$port_backend,@netstat);
 	$nestab = @stabnetstatback;
 	print "<td>$nestab</td>";
-	@timewnetstatback = &getNetstatFilter("tcp","\.\*\_WAIT\.\*","$ip_backend\:$port_backend","",@netstat);
-	$ntimew = @timewnetstatback;
-	print "<td>$ntimew</td>";
-	#TODO count number of session by backend
-	#print "<td> $backends_data[6] </td> ";
 	print "<td> $backends_data[5] </td>";
 	print "</tr>";
 }

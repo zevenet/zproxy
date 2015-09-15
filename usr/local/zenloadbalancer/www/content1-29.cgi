@@ -27,26 +27,16 @@ if ($viewtableclients eq ""){ $viewtableclients = "no";}
 #if ($viewtableconn eq ""){ $viewtableconn = "no";}
 
 # Real Server Table
-#my $args = "Nn";
-my @args;
 my $nattype = &getFarmNatType($farmname);
-#if ($nattype eq "dnat"){
-#	$args = "D$args";
-#}
 my $proto = &getFarmProto($farmname);
 if ($proto eq "all"){
 	$proto="";
 }
-#$args = "$args -p $proto";
 
-my @netstat = &getNetstatNat($args);
 $fvip = &getFarmVip("vip",$farmname);
 
 my @content = &getFarmBackendStatusCtl($farmname);
 my @backends = &getFarmBackendsStatus($farmname,@content);
-
-#print "content: @content<br>";
-#print "backends: @backends<br>";
 
 my $backendsize = @backends;
 my $activebackends = 0;
@@ -63,7 +53,7 @@ print "<br>";
 print "<div class=\"box-header\">Real servers status<font size=1>&nbsp;&nbsp;&nbsp; $backendsize servers, $activebackends active </font></div>";
 print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 print "<thead>\n";
-print "<tr><td>Server</td><td>Address</td><td>Port(s)</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Closed Conns</td><td>Weight</td><td>Priority</td>";
+print "<tr><td>Server</td><td>Address</td><td>Port(s)</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Weight</td><td>Priority</td>";
 print "</thead>\n";
 print "<tbody>";
 
@@ -86,56 +76,16 @@ foreach (@backends){
 		print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td> ";
 	}
 
-#	my @synnetstatback1 = &getNetstatFilter("$proto","\.\*SYN\.\*|UNREPLIED"," src=.* dst=.* .* src=$ip_backend dst=$fvip ","",@netstat);
-	my @synnetstatback1;
-	my @synnetstatback2;
-	if ($nattype eq "dnat"){
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "" ||$proto eq "tcp"){
-			@synnetstatback1 = &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat); # TCP
-		}
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "udp"){
-			@synnetstatback2 = &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat); # UDP
-		}
-	} else {
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "tcp"){
-			@synnetstatback1 = &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat); # TCP
-		}
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "udp"){
-			@synnetstatback2 = &getNetstatFilter("udp","","\.* src=$fvip dst=\.* \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat); # UDP
-		}
-	}
-
-#	my @synnetstatback2 = &getNetstatFilter("$proto","UNREPLIED"," src=$fvip dst=$ip_backend ","",@netstat);
-	my $npend = @synnetstatback1+@synnetstatback2;
+	my @synnetstatback;
+	@netstat = &getConntrack("",$fvip,$ip_backend,"","");
+	@synnetstatback = &getBackendSYNConns($farmname,$ip_backend,$port_backend,@netstat);
+	my $npend = @synnetstatback;
 	print "<td>$npend</td>";
 
-	my @stabnetstatback1;
-	my @stabnetstatback2;
-	if ($nattype eq "dnat"){
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "tcp"){
-			@stabnetstatback1 = &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$ip_backend \.* src=$ip_backend \.*","",@netstat);
-		}
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "udp"){
-			@stabnetstatback2 = &getNetstatFilter("udp","","\.* src=\.* dst=$ip_backend \.* src=$ip_backend \.*ASSURED\.*","",@netstat);
-		}
-	} else {
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "tcp"){
-			@stabnetstatback1 = &getNetstatFilter("tcp","","\.* ESTABLISHED src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat);
-		}
-		if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "udp"){
-			@stabnetstatback2 = &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.* src=$ip_backend \.*ASSURED\.*","",@netstat);
-		}
-	}
-	my $nestab = @stabnetstatback1+@stabnetstatback2;
+	my @stabnetstatback;
+	@stabnetstatback = &getBackendEstConns($farmname,${ip_backend},$port_backend,@netstat);
+	my $nestab = @stabnetstatback;
 	print "<td>$nestab</td>";
-
-	my @timewnetstatback;
-	# Close connections for UDP has no sense 
-	if ($proto eq "sip" || $proto eq "all" || $proto eq "" || $proto eq "tcp"){
-		@timewnetstatback = &getNetstatFilter("tcp","","\.*\_WAIT src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat);
-	}
-	my $ntimew = @timewnetstatback;
-	print "<td>$ntimew</td>";
 	print "<td> $backends_data[2] </td>";
 	print "<td> $backends_data[3] </td>";
 	print "</tr>";
