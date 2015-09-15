@@ -3650,14 +3650,14 @@ sub runFarmServerDelete($ids,$fname,$service){
 
 #
 sub getFarmBackendStatusCtl($fname){
-	($fname) = @_;
+	my ($fname) = @_;
         my $type = &getFarmType($fname);
 	my @output = -1;
 
 	#&logfile("getting 'BackendStatusCtl' for $fname farm $type");
 
 	if ($type eq "tcp" || $type eq "udp"){
-		my $mport = &getFarmPort($farmname);
+		my $mport = &getFarmPort($fname);
 		@output = `$pen_ctl 127.0.0.1:$mport status`;
 	}
 
