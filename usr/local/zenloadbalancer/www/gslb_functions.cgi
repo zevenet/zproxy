@@ -34,8 +34,7 @@ sub getGSLBFarmPidFile($farmname){
 sub getGSLBStartCommand($farmname){
 	my ($fname) = @_;
 
-	my $file = &getFarmFile($fname);
-	my $cmd = "$gdnsd -d $configdir\/$file start";
+	my $cmd = "$gdnsd -d $configdir\/$fname\_gslb.cfg start";
 
 	return $cmd;
 }
@@ -44,8 +43,7 @@ sub getGSLBStartCommand($farmname){
 sub getGSLBStopCommand($farmname){
 	my ($fname) = @_;
 
-	my $file = &getFarmFile($fname);
-	my $cmd = "$gdnsd -d $configdir\/$file stop";
+	my $cmd = "$gdnsd -d $configdir\/$fname\_gslb.cfg stop";
 
 	return $cmd;
 }
@@ -55,25 +53,22 @@ sub setFarmGSLBNewZone($fname,$service){
 	my ($fname,$svice) =  @_;
 
 	my $output = -1;
-	my $ftype = &getFarmType($fname);
 
-	if ($ftype eq "gslb"){
-		opendir(DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/");
-		my @files= grep { /^$svice/ } readdir(DIR);
-		closedir(DIR);
+	opendir(DIR, "$configdir\/$fname\_gslb.cfg\/etc\/zones\/");
+	my @files= grep { /^$svice/ } readdir(DIR);
+	closedir(DIR);
 
-		if ( $files == 0 ) {
-			open FO, ">$configdir\/$fname\_$ftype.cfg\/etc\/zones\/$svice";
-			print FO "@	SOA ns1 hostmaster (\n	1\n	7200\n	1800\n	259200\n	900\n)\n\n";
-			print FO "@		NS	ns1 ;index_0\n";
-			print FO "ns1		A	0.0.0.0 ;index_1\n";
-			close FO;
-
-			$output = 0;
-       		} else {
-			$output = 1;
-       		}
+	if ( $files == 0 ) {
+		open FO, ">$configdir\/$fname\_gslb.cfg\/etc\/zones\/$svice";
+		print FO "@	SOA ns1 hostmaster (\n	1\n	7200\n	1800\n	259200\n	900\n)\n\n";
+		print FO "@		NS	ns1 ;index_0\n";
+		print FO "ns1		A	0.0.0.0 ;index_1\n";
+		close FO;
+		$output = 0;
+	} else {
+		$output = 1;
 	}
+
 	return $output;
 }
 
@@ -82,13 +77,11 @@ sub setFarmGSLBDeleteZone($fname,$service){
 	my ($fname,$svice) =  @_;
 
 	my $output = -1;
-	my $ftype = &getFarmType($fname);
 
-	if ($ftype eq "gslb"){
-		use File::Path 'rmtree';
-		rmtree([ "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/$svice" ]);
-		$output = 0;
-	}
+	use File::Path 'rmtree';
+	rmtree([ "$configdir\/$fname\_gslb.cfg\/etc\/zones\/$svice" ]);
+	$output = 0;
+
 	return $output;
 }
 
@@ -97,49 +90,48 @@ sub setFarmGSLBNewService($fname,$service,$algorithm){
         my ($fname,$svice,$alg) =  @_;
 
         my $output = -1;
-        my $ftype = &getFarmType($fname);
         my $gsalg = "simplefo";
 
-        if ($ftype eq "gslb"){
-                if ($alg eq "roundrobin"){
-                        $gsalg = "multifo";
-                } else {
-                        if ($alg eq "prio"){
-                        	$gsalg = "simplefo";
-                        }
-                }
-		opendir(DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/");
-		my @files= grep { /^$svice/ } readdir(DIR);
-		closedir(DIR);
 
-		if ( $files == 0 ) {
-			open FO, ">$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$svice.cfg";
-			print FO "$gsalg => {\n\tservice_types = up\n";
-			print FO "\t$svice => {\n\t\tservice_types = tcp_80\n";
-			print FO "\t}\n}\n";
-			close FO;
-			$output = 0;
-			# Include the plugin file in the main configuration
-			tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
-			my $found=0;
-			my $index=0;
-			foreach $line(@fileconf){
-				if ($line =~ /plugins => /){
-					$found=1;
-					$index++;
-				}
-				if ($found==1){
-					splice @fileconf,$index,0,"	\$include{plugins\/$svice.cfg},";
-					last;
-				}
+	if ($alg eq "roundrobin"){
+		$gsalg = "multifo";
+	} else {
+		if ($alg eq "prio"){
+			$gsalg = "simplefo";
+		}
+	}
+	opendir(DIR, "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/");
+	my @files= grep { /^$svice/ } readdir(DIR);
+	closedir(DIR);
+
+	if ( $files == 0 ) {
+		open FO, ">$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$svice.cfg";
+		print FO "$gsalg => {\n\tservice_types = up\n";
+		print FO "\t$svice => {\n\t\tservice_types = tcp_80\n";
+		print FO "\t}\n}\n";
+		close FO;
+		$output = 0;
+		# Include the plugin file in the main configuration
+		tie @fileconf, 'Tie::File', "$configdir\/$fname\_gslb.cfg\/etc\/config";
+		my $found=0;
+		my $index=0;
+		foreach $line(@fileconf){
+			if ($line =~ /plugins => /){
+				$found=1;
 				$index++;
 			}
-			untie @fileconf;
-			&setFarmVS($fname,$svice,"dpc","80");
-       		} else {
-			$output = -1;
-       		}
-	}
+			if ($found==1){
+				splice @fileconf,$index,0,"	\$include{plugins\/$svice.cfg},";
+				last;
+			}
+			$index++;
+		}
+		untie @fileconf;
+		&setFarmVS($fname,$svice,"dpc","80");
+       	} else {
+		$output = -1;
+       	}
+	
 	return $output;
 }
 
@@ -148,30 +140,152 @@ sub setFarmGSLBDeleteService($fname,$service){
 	my ($fname,$svice) =  @_;
 
 	my $output = -1;
-	my $ftype = &getFarmType($fname);
 
-	if ($ftype eq "gslb"){
-		use File::Path 'rmtree';
-		rmtree([ "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$svice.cfg" ]);
-		tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
-		my $found=0;
-		my $index=0;
-		foreach $line(@fileconf){
-			if ($line =~ /plugins => /){
-				$found=1;
-				$index++;
-			}
-			if ($found==1 && $line =~ /plugins\/$svice.cfg/){
-				splice @fileconf,$index,1;
-				last;
-			}
+	use File::Path 'rmtree';
+	rmtree([ "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$svice.cfg" ]);
+	tie @fileconf, 'Tie::File', "$configdir\/$fname\_gslb.cfg\/etc\/config";
+	my $found=0;
+	my $index=0;
+	foreach $line(@fileconf){
+		if ($line =~ /plugins => /){
+			$found=1;
 			$index++;
 		}
-		untie @fileconf;
-		$output = 0;
+		if ($found==1 && $line =~ /plugins\/$svice.cfg/){
+			splice @fileconf,$index,1;
+			last;
+		}
+		$index++;
 	}
+	untie @fileconf;
+	$output = 0;
+
 	return $output;
 }
+
+#
+sub getFarmGSLBBootStatus($file){
+	my ($file) = @_;
+
+	open FI, "<$configdir/$file/etc/config";
+	my $first = "true";
+	while ($line=<FI>){
+		if ( $line ne "" && $first eq "true" ){
+			$first = "false";
+			my @line_a = split("\;",$line);
+			$output = @line_a[1];
+			chomp($output);
+		}
+	}
+	close FI;
+
+	return $ouput
+}
+
+#
+sub setFarmGSLBBootStatus($fname, $status){
+	my ($fname, $status) = @_;
+
+	use Tie::File;
+	tie @filelines, 'Tie::File', "$configdir\/$file\/etc\/config";
+	my $first=1;
+	foreach (@filelines){
+		if ($first eq 1){
+			if ( $status eq "start" ){
+				s/\;down/\;up/g;
+			} else {
+				s/\;up/\;down/g;
+			}
+			$first=0;
+			last;
+		}
+	}
+	untie @filelines;
+
+	return $ouput;
+}
+
+#
+sub setFarmGSLBStatus($fname, $status, $writeconf){
+
+	my ($fname, $status $writeconf) = @_;
+
+	my $exec = "";
+
+	unlink("/tmp/$fname.lock");
+	if ($writeconf eq "true") {
+		&setFarmGSLBBootStatus( $fname, $status );
+	}
+
+	if ( $status eq "start") {
+		$exec = &getGSLBStartCommand($fname);
+	} else {
+		$exec = &getGSLBStopCommand($fname);
+	}
+	&logfile("setFarmGSLBStatus(): Executing $exec");
+	zsystem("$exec > /dev/null 2>&1");
+	$output = $?;
+	if ($output != 0) {
+		$output = -1;
+	}
+
+	return $output;
+}
+
+#function that check if the config file is OK.
+sub getFarmGSLBConfigIsOK($ffile){
+	($ffile) = @_;
+
+	my $output = -1;
+
+	&logfile("getFarmGSLBConfigIsOK(): Executing $gdnsd -c $configdir\/$ffile/etc checkconf ");
+	my $run = `$gdnsd -c $configdir\/$ffile/etc checkconf 2>&1`;
+	$output = $?;
+	&logfile("Execution output: $output ");
+
+	return $output;
+}
+
+# Create a new GSLB farm
+sub setFarmGSLB($fvip,$fvipp,$fname){
+	my ($fvip,$fvipp,$fname) =  @_;
+
+	my $output = -1;
+	my $type = "gslb";
+
+	mkdir "$configdir\/$fname\_$type.cfg";
+	mkdir "$configdir\/$fname\_$type.cfg\/etc";
+	mkdir "$configdir\/$fname\_$type.cfg\/etc\/zones";
+	mkdir "$configdir\/$fname\_$type.cfg\/etc\/plugins";
+	my $httpport=35060;
+	while ($httpport<35160 && &checkport(127.0.0.1,$httpport) eq "true"){
+		$httpport++;
+	}
+	if ($httpport==35160){
+		$output=-1;	# No room for a new farm
+	} else {
+		open FO, ">$configdir\/$fname\_$type.cfg\/etc\/config";
+		print FO ";up\noptions => {\n   listen = $fvip\n   dns_port = $fvipp\n   http_port = $httpport\n   http_listen = 127.0.0.1\n}\n\n";
+		print FO "service_types => { \n\n}\n\n";
+		print FO "plugins => { \n\n}\n\n";
+		close FO;
+
+		#run farm
+		my $exec = &getGSLBStartCommand($fname);
+		&logfile("setFarmGSLB(): Executing $exec");
+		zsystem("$exec > /dev/null 2>&1");
+		$output = $?;
+		if ($output != 0) {
+			$output = -1;
+		}
+	}
+	if ($output != 0) {
+		&runFarmDelete($fname);
+	}
+
+	return $output;
+}
+
 
 # do not remove this
 1

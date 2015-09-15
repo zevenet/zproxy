@@ -1852,17 +1852,7 @@ sub getFarmBootStatus($fname){
 	}
 
 	if ($type eq "gslb"){
-		open FI, "<$configdir/$file/etc/config";
-		my $first = "true";
-		while ($line=<FI>){
-			if ( $line ne "" && $first eq "true" ){
-				$first = "false";
-				my @line_a = split("\;",$line);
-				$output = @line_a[1];
-				chomp($output);
-			}
-		}
-		close FI;
+		$output = &getFarmGSLBBootStatus($file);
 	}
 
 	if ($type eq "datalink"){
@@ -1960,29 +1950,7 @@ sub _runFarmStart($fname,$writeconf){
 	}
 
 	if ($type eq "gslb"){
-		if ($writeconf eq "true"){
-			unlink("/tmp/$fname.lock");
-			use Tie::File;
-			tie @filelines, 'Tie::File', "$configdir\/$file\/etc\/config";
-			my $first=1;
-			foreach (@filelines){
-				if ($first eq 1){
-					s/\;down/\;up/g;
-					$first=0;
-					last;
-				}
-			}
-			untie @filelines;
-		}
-		my $exec = &getGSLBStartCommand($fname);
-		#&logfile("running $gdnsd -d $configdir\/$file start");
-		#zsystem("$gdnsd -d $configdir\/$file start 2>&1 /dev/null");
-		&logfile("running $exec");
-		zsystem("$exec > /dev/null 2>&1");
-		$output = $?;
-		if ($output != 0) {
-			$output = -1;
-		}
+		$output = &setFarmGSLBStatus($fname, "start", $writeconf);
 	}
 
 	if ($type eq "datalink"){
@@ -2373,27 +2341,7 @@ sub _runFarmStop($fname,$writeconf){
 	if ($type eq "gslb"){
                 my $checkfarm = &getFarmConfigIsOK($fname);
                 if ($checkfarm == 0){
-			if ($writeconf eq "true"){
-				use Tie::File;
-				tie @filelines, 'Tie::File', "$configdir\/$filename\/etc\/config";
-				my $first=1;
-				foreach (@filelines){
-					if ($first eq 1){
-						s/\;up/\;down/g;
-						$status = $?;
-						$first=0;
-					}
-				}
-				untie @filelines;
-			}
-			my $exec = &getGSLBStopCommand($fname);
-			my $pidfile = &getGSLBFarmPidFile($fname);
-			&logfile("running $exec");
-			zsystem("$exec > /dev/null 2>&1");
-			$status = $?;
-			if ($status != 0) {
-				$status = -1;
-			}
+			$output = &setFarmGSLBStatus($fname, "stop", $writeconf);
 			unlink($pidfile);
                 }else{
                         &errormsg("Farm $fname can't be stopped, check the logs and modify the configuration");
@@ -2605,35 +2553,7 @@ sub runFarmCreate($fproto,$fvip,$fvipp,$fname,$fdev){
 	}
 
 	if ($fproto eq "GSLB"){
-		my $type="gslb";
-		mkdir "$configdir\/$fname\_$type.cfg";
-		mkdir "$configdir\/$fname\_$type.cfg\/etc";
-		mkdir "$configdir\/$fname\_$type.cfg\/etc\/zones";
-		mkdir "$configdir\/$fname\_$type.cfg\/etc\/plugins";
-		my $httpport=35060;
-		while ($httpport<35160 && &checkport($fvip,$httpport) eq "true"){
-			$httpport++;
-		}
-		if ($httpport==35160){
-			$output=-1;	# No room for a new farm
-		} else {
-			open FO, ">$configdir\/$fname\_$type.cfg\/etc\/config";
-			print FO ";up\noptions => {\n   listen = $fvip\n   dns_port = $fvipp\n   http_port = $httpport\n   http_listen = $fvip\n}\n\n";
-			print FO "service_types => { \n\n}\n\n";
-			print FO "plugins => { \n\n}\n\n";
-			close FO;
-
-			#run farm
-			&logfile("running $gdnsd -d $configdir\/$fname\_$type.cfg start");
-			zsystem("$gdnsd -d $configdir\/$fname\_$type.cfg start 2>/dev/null");
-			$output = $?;
-			if ($output != 0) {
-				$output = -1;
-			}
-		}
-		if ($output != 0) {
-			&runFarmDelete($fname);
-		}
+		$output = &setFarmGSLB($fvip,$fvipp,$fname);
 	}
 
 	return $output;
@@ -4387,6 +4307,7 @@ sub getFarmCipher($fname){
 #function that check if the config file is OK.
 sub getFarmConfigIsOK($fname){
 	($fname) = @_;
+
 	my $type = &getFarmType($fname);
 	my $ffile = &getFarmFile($fname);
 	$output = -1;
@@ -4398,10 +4319,7 @@ sub getFarmConfigIsOK($fname){
 		&logfile("output: $run ");
 	}
 	if ($type eq "gslb") {
-		&logfile("running: $gdnsd -c $configdir\/$ffile/etc checkconf ");
-		my $run = `$gdnsd -c $configdir\/$ffile/etc checkconf 2>&1`;
-		$output = $?;
-		&logfile("output: $run ");
+		$output = &getFarmGSLBConfigIsOK($ffile);
 	}
 	return $output;
 }
