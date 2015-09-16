@@ -413,7 +413,7 @@ if (-e $filecluster)
                 		my $eject = $ssh->exec("$ucarp -r $deadratio $ignoreifstate --interface=@ifname[0] --srcip=$rip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6");
 				sleep(10);
                         	&successmsg("Cluster configured on mode $lhost or $rhost can be masters");
-                        	&successmsg("Reload here <a href=\"index.cgi?id=$id\"><img src=\"img/icons/small/arrow_refresh.png\"></a> for see changes");
+                        	&successmsg("Reload here <a href=\"index.cgi?id=$id\"><img src=\"img/icons/small/arrow_refresh.png\"></a> to apply changes");
 				}
 			if ($typecl =~ /$lhost-$rhost/)
 				{
@@ -423,7 +423,7 @@ if (-e $filecluster)
                 		my $eject = $ssh->exec("$ucarp -r $deadratio $ignoreifstate --interface=@ifname[0] -k 50 --srcip=$rip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6");
 				sleep(10);
                         	&successmsg("Cluster configured on mode $lhost master and $rhost backup automatic failover");
-                        	&successmsg("Reload here <a href=\"index.cgi?id=$id\"><img src=\"img/icons/small/arrow_refresh.png\"></a> for see changes");
+                        	&successmsg("Reload here <a href=\"index.cgi?id=$id\"><img src=\"img/icons/small/arrow_refresh.png\"></a> to apply changes");
 				}
 			
 			if ($typecl =~ /Disabled/)
