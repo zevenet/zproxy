@@ -205,7 +205,7 @@ sub getFarmGSLBBootStatus($file)
 	}
 	close FI;
 
-	return $ouput;
+	return $output;
 }
 
 #
@@ -234,7 +234,7 @@ sub setFarmGSLBBootStatus($fname, $status)
 	}
 	untie @filelines;
 
-	return $ouput;
+	return $output;
 }
 
 #
