@@ -528,7 +528,7 @@ if ( -e $filecluster )
 			}
 			else
 			{
-				&errormsg( "Error connecting between $lip and $rip, please configure the RSA connectiong firs" );
+				&errormsg( "Error connecting between $lip and $rip, please configure the RSA connectiong first" );
 			}
 		}
 	}
