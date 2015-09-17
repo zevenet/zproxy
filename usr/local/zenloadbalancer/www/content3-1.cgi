@@ -7,11 +7,11 @@
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
-#     by the Free Software Foundation; either version 2.1 of the License, or 
+#     by the Free Software Foundation; either version 2.1 of the License, or
 #     (at your option) any later version.
 #
-#     This library is distributed in the hope that it will be useful, but 
-#     WITHOUT ANY WARRANTY; without even the implied warranty of 
+#     This library is distributed in the hope that it will be useful, but
+#     WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
 #     General Public License for more details.
 #
@@ -19,11 +19,10 @@
 #     along with this library; if not, write to the Free Software Foundation,
 #     Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #
-###############################################################################	
+###############################################################################
 
 use Sys::Hostname;
 my $host = hostname();
-
 
 print "
 <!--Content INI-->
@@ -33,180 +32,180 @@ print "
 <h2>Settings::Server</h2>
 <!--Content Header END-->";
 
-
 #process changes in global.conf when action=Modify
-
 
 #print "la linea es $line y la variable $var<br>";
 
 if ( $action =~ /^Modify$/ )
-	{
+{
 	use Tie::File;
 	tie @array, 'Tie::File', "$globalcfg";
-	for (@array)
-		{
+	for ( @array )
+	{
 		s/\$$var.*/\$$var=\"$line\";/g;
-		}
+	}
+
 	#apt modifications
-	if ($var eq "apt")
-		{
+	if ( $var eq "apt" )
+	{
 		tie @arrayapt, 'Tie::File', "$fileapt";
 		print "$line\n";
-		$i=0;
-		foreach $aptserv(@arrayapt)
-			{
+		$i = 0;
+		foreach $aptserv ( @arrayapt )
+		{
 			print "line $aptserv\n";
-			if ($aptserv =~ /zenloadbalancer\.sourceforge\.net/)
-				{
-				splice(@arrayapt,$i,$i);		
-				}
-			$i=$i+1;
+			if ( $aptserv =~ /zenloadbalancer\.sourceforge\.net/ )
+			{
+				splice ( @arrayapt, $i, $i );
 			}
-		push(@arrayapt,"deb $line\n");
+			$i = $i + 1;
+		}
+		push ( @arrayapt, "deb $line\n" );
 		untie @arrayapt;
 
-		}	
+	}
+
 	#dns modifications
-	if ($var eq "dns")
-		{
-		print "var es $var";
-		@dns = split("\ ",$line);
-		open FW, ">$filedns";
-		foreach $dnsserv(@dns)
-			{
-			print FW "nameserver $dnsserv\n";
-			}
-		close FW;
-		} 
-	if ( $var eq "mgwebip" || $var eq "mgwebport")
+	if ( $var eq "dns" )
 	{
-	&successmsg("Changes OK, restart web service now");
+		print "var es $var";
+		@dns = split ( "\ ", $line );
+		open FW, ">$filedns";
+		foreach $dnsserv ( @dns )
+		{
+			print FW "nameserver $dnsserv\n";
+		}
+		close FW;
+	}
+	if ( $var eq "mgwebip" || $var eq "mgwebport" )
+	{
+		&successmsg( "Changes OK, restart web service now" );
 	}
 	else
-	{	
-	&successmsg("Changes OK");
+	{
+		&successmsg( "Changes OK" );
 	}
-	
+
 	untie @array;
 
 	#actions with Modify buttom
-	}
+}
 
 #action Save DNS
-if ($var eq "Save DNS")
-	{
+if ( $var eq "Save DNS" )
+{
 	open FW, ">$filedns";
 	print FW "$line";
-	&successmsg("DNS saved");
+	&successmsg( "DNS saved" );
 	close FW;
 
-	}
+}
 
 #action Save APT
-if ($var eq "Save APT")
-        {
-        open FW, ">$fileapt";
-        print FW "$line";
-        &successmsg("APT saved");
-        close FW;
-        }
-
+if ( $var eq "Save APT" )
+{
+	open FW, ">$fileapt";
+	print FW "$line";
+	&successmsg( "APT saved" );
+	close FW;
+}
 
 #action save ip
-if ($action eq "Save IP")
-	{
+if ( $action eq "Save IP" )
+{
 	use Tie::File;
 	tie @array, 'Tie::File', "$confhttp";
 	@array[0] = "host=$ipgui\n";
-		
+
 	untie @array;
-	}
-
-if ($action eq "Change GUI https port")
-	{
-	&setGuiPort($guiport,$confhttp);
-	}
-
-if ($action eq "Restart GUI Service")
-{
-    	if( $pid=fork )
-        {
-                #$SIG{'CHLD'}='IGNORE';
-                #print "Proceso de restart lanzado ...";
-        }
-        elsif(defined $pid)
-        {
-                #$SIG{'CHLD'}=\&REAPER;
-                #child
-                #exec $MIGRASCRIPT,@args;
-                system("/etc/init.d/minihttpd restart > /dev/null &");
-                exit(0);
-        }
-	if ($ipgui =~ /^$/)
-		{
-		$ipgui = &GUIip();
-		}
-	if ($guiport =~ /^$/)
-		{
-		$guiport = &getGuiPort($confhttp);
-		}
-	if ($ipgui =~ /\*/)
-		{
-		&successmsg("Restarted Service, access to GUI over any IP on port $guiport");
-		}
-	else
-		{
-		&successmsg("Restarted Service, access to GUI over $ipgui IP on port $guiport <a href=\"https:\/\/$ipgui:$guiport\/index.cgi?id=$id\">go here</a>");
-		}
 }
 
-#open glogal file config 	
-$nextline="false";
-open FR,"$globalcfg";
-while (<FR>)
+if ( $action eq "Change GUI https port" )
+{
+	&setGuiPort( $guiport, $confhttp );
+}
+
+if ( $action eq "Restart GUI Service" )
+{
+	if ( $pid = fork )
 	{
+
+		#$SIG{'CHLD'}='IGNORE';
+		#print "Proceso de restart lanzado ...";
+	}
+	elsif ( defined $pid )
+	{
+
+		#$SIG{'CHLD'}=\&REAPER;
+		#child
+		#exec $MIGRASCRIPT,@args;
+		system ( "/etc/init.d/minihttpd restart > /dev/null &" );
+		exit ( 0 );
+	}
+	if ( $ipgui =~ /^$/ )
+	{
+		$ipgui = &GUIip();
+	}
+	if ( $guiport =~ /^$/ )
+	{
+		$guiport = &getGuiPort( $confhttp );
+	}
+	if ( $ipgui =~ /\*/ )
+	{
+		&successmsg( "Restarted Service, access to GUI over any IP on port $guiport" );
+	}
+	else
+	{
+		&successmsg( "Restarted Service, access to GUI over $ipgui IP on port $guiport <a href=\"https:\/\/$ipgui:$guiport\/index.cgi?id=$id\">go here</a>" );
+	}
+}
+
+#open glogal file config
+$nextline = "false";
+open FR, "$globalcfg";
+while ( <FR> )
+{
 	if ( $_ =~ /^#::INI/ )
-		{
+	{
 		$linea = $_;
 		$linea =~ s/^#::INI//;
-		my @actionform = split(/\ /,$linea);
+		my @actionform = split ( /\ /, $linea );
 		print "<div class=\"container_12\">";
-	 	print "<div class=\"grid_12\">";
-          	print "<div class=\"box-header\">$linea</div>";
+		print "<div class=\"grid_12\">";
+		print "<div class=\"box-header\">$linea</div>";
 		print "<div class=\"box stats\">";
-		}
-	if ($_ =~ /^#\./ )
-		{
+	}
+	if ( $_ =~ /^#\./ )
+	{
 		$nextline = "true";
 		print "<div class=\"row\">";
 		$linea = $_;
 		$linea =~ s/^#\.//;
 		print "<label>$linea</label>";
-		}
+	}
 
-	if ($_ =~ /^\$/ && $nextline eq "true")
-		{
-		$nextline="fase";
-		my @linea = split (/=/,$_);
+	if ( $_ =~ /^\$/ && $nextline eq "true" )
+	{
+		$nextline = "fase";
+		my @linea = split ( /=/, $_ );
 		@linea[1] =~ s/"||\;//g;
 		@linea[0] =~ s/^\$//g;
 		print "<form method=\"get\" action=\"index.cgi\">";
 		print "<input type=\"hidden\" name=\"id\" value=\"3-1\">";
-		print "<input type=\"text\" value=\"@linea[1]\" size=\"20\" name=\"line\">";	
+		print "<input type=\"text\" value=\"@linea[1]\" size=\"20\" name=\"line\">";
 		print "<input type=\"hidden\" name=\"var\" value=\"@linea[0]\">";
 		print "<input type=\"submit\" value=\"Modify\" name=\"action\" class=\"button small\">";
 		print "</form>";
 		print "</div>";
 		print "<br>";
-		}
+	}
 
 	if ( $_ =~ /^#::END/ )
-		{
+	{
 		print "</div></div></div>";
-		}
-		
-
 	}
+
+}
 
 close FR;
 
@@ -216,99 +215,99 @@ print "<div class=\"grid_12\">";
 print "<div class=\"box-header\">Local configuration</div>";
 print "<div class=\"box stats\">";
 
-
 open FR, "<$confhttp";
 
-@file=<FR>;
-$hosthttp=@file[0];
+@file     = <FR>;
+$hosthttp = @file[0];
 close FR;
 print "<b>Physical interface where is running GUI service.</b><font size=\"1\"> If cluster is up you only can select \"--All interfaces--\" option, or \"the cluster interface\". Changes need restart GUI service.</font>";
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"3-1\">";
 
-opendir(DIR, "$configdir");
-@files = grep(/^if.*/,readdir(DIR));
-closedir(DIR);
+opendir ( DIR, "$configdir" );
+@files = grep ( /^if.*/, readdir ( DIR ) );
+closedir ( DIR );
 
-@ipguic = split("=",@file[0]);
-$hosthttp=@ipguic[1];
-chomp($hosthttp);
+@ipguic = split ( "=", @file[0] );
+$hosthttp = @ipguic[1];
+chomp ( $hosthttp );
 
 open FR, "<$filecluster";
 @filecluster = <FR>;
 close FR;
 $lclusterstatus = @filecluster[2];
-@lclustermember = split(":",@filecluster[0]);
-chomp(@lclustermember);
+@lclustermember = split ( ":", @filecluster[0] );
+chomp ( @lclustermember );
 $lhost = @lclustermember[1];
 $rhost = @lclustermember[3];
-$lip = @lclustermember[2];
-$rip = @lclustermember[4];
-if ($host eq $rhost)
-	{
+$lip   = @lclustermember[2];
+$rip   = @lclustermember[4];
+if ( $host eq $rhost )
+{
 	$thost = $rhost;
 	$rhost = $lhost;
 	$lhost = $thost;
-	$tip = $rip;
-	$rip = $lip;
-	$lip = $tip;
-	}
+	$tip   = $rip;
+	$rip   = $lip;
+	$lip   = $tip;
+}
 
 #       print "Zen cluster service is UP, Zen GUI should works over ip $lip";
 print "<select name=\"ipgui\">\n";
 
-$existiphttp="false";
-if ($hosthttp =~ /\*/)
-	{
-        print "<option value=\"*\" selected=\"selected\">--All interfaces--</option>";
-	$existiphttp="true";
-        }
+$existiphttp = "false";
+if ( $hosthttp =~ /\*/ )
+{
+	print "<option value=\"*\" selected=\"selected\">--All interfaces--</option>";
+	$existiphttp = "true";
+}
 else
-        {
-        print "<option value=\"*\">--All interfaces--</option>";
-        }
+{
+	print "<option value=\"*\">--All interfaces--</option>";
+}
 
-if (grep(/UP/,$lclusterstatus))
-	{
+if ( grep ( /UP/, $lclusterstatus ) )
+{
+
 	#cluster active you only can use all interfaces or cluster real ip
-	if ($hosthttp =~ /$lip/)
-		{
-		print "<option value=\"$lip\" selected=\"selected\">*cluster $lip</option>";	
-		$existiphttp="true";
-		}
-	else
-		{
-		print "<option value=\"$lip\">*cluster $lip</option>";	
-		}
-	}
-else
+	if ( $hosthttp =~ /$lip/ )
 	{
-	foreach $file(@files)
+		print "<option value=\"$lip\" selected=\"selected\">*cluster $lip</option>";
+		$existiphttp = "true";
+	}
+	else
+	{
+		print "<option value=\"$lip\">*cluster $lip</option>";
+	}
+}
+else
+{
+	foreach $file ( @files )
+	{
+		if ( $file !~ /:/ )
 		{
-		if ($file !~/:/)
-			{
 			open FI, "$configdir\/$file";
 			@lines = <FI>;
-			@line = split(":",@lines[0]);
-			chomp(@line);
-			if (@line[4] =~ /up/i)
+			@line = split ( ":", @lines[0] );
+			chomp ( @line );
+			if ( @line[4] =~ /up/i )
+			{
+				chomp ( @line[2] );
+				if ( $hosthttp =~ /@line[2]/ )
 				{
-				chomp(@line[2]);
-				if ($hosthttp =~ /@line[2]/)
-					{
 					print "<option value=\"@line[2]\" selected=\"selected\">@line[0] @line[2]</option>";
-					}
-				else
-					{
-					print "<option value=\"@line[2]\">@line[0] @line[2]</option>";
-					}
 				}
-		
-			close FI;
+				else
+				{
+					print "<option value=\"@line[2]\">@line[0] @line[2]</option>";
+				}
 			}
-		}
 
+			close FI;
+		}
 	}
+
+}
 
 print "</select>";
 
@@ -319,8 +318,9 @@ print "<br>";
 print "</form>";
 
 #https port for GUI interface
-$guiport = &getGuiPort($confhttp);
-if ($guiport =~ /^$/){
+$guiport = &getGuiPort( $confhttp );
+if ( $guiport =~ /^$/ )
+{
 	$guiport = 444;
 }
 print "<b>HTTPS Port where is running GUI service.</b><font size=\"1\"> Default is 444. Changes need restart GUI service.</font>";
@@ -360,10 +360,8 @@ print "</textarea>";
 print "<input type=\"submit\" value=\"Save APT\" name=\"action\" class=\"button small\">";
 print "</form>";
 
-
 print "</div></div></div>";
 
 print "<br class=\"cl\">";
 print "</div><!--Content END--></div></div>";
-
 

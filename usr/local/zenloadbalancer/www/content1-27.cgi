@@ -7,11 +7,11 @@
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
-#     by the Free Software Foundation; either version 2.1 of the License, or 
+#     by the Free Software Foundation; either version 2.1 of the License, or
 #     (at your option) any later version.
 #
-#     This library is distributed in the hope that it will be useful, but 
-#     WITHOUT ANY WARRANTY; without even the implied warranty of 
+#     This library is distributed in the hope that it will be useful, but
+#     WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
 #     General Public License for more details.
 #
@@ -31,22 +31,28 @@
 use Time::HiRes qw (sleep);
 
 #my $vipp = &getFarmVip("vipp",$farmname);
-my @startdata = &getDevData("");
+my @startdata = &getDevData( "" );
+
 #print "@startdata<br>";
-sleep (0.5);
-my @enddata = &getDevData("");
+sleep ( 0.5 );
+my @enddata = &getDevData( "" );
+
 #print "@enddata<br>";
 
-my @content = &getFarmBackendStatusCtl($farmname);
+my @content = &getFarmBackendStatusCtl( $farmname );
+
 #print"@content<br>";
-my @backends = &getFarmBackendsStatus($farmname,@content);
+my @backends = &getFarmBackendsStatus( $farmname, @content );
+
 #print"@backends<br>";
 
-my $backendsize = @backends;
+my $backendsize    = @backends;
 my $activebackends = 0;
-foreach (@backends){
-	my @backends_data = split(";",$_);
-	if ($backends_data[3] eq "up"){
+foreach ( @backends )
+{
+	my @backends_data = split ( ";", $_ );
+	if ( $backends_data[3] eq "up" )
+	{
 		$activebackends++;
 	}
 }
@@ -63,34 +69,39 @@ print "<tbody>";
 
 my $index = 0;
 
-foreach (@backends){
-	my @backends_data = split(";",$_);
+foreach ( @backends )
+{
+	my @backends_data = split ( ";", $_ );
 
 	my @startdataout;
-	foreach $line(@startdata){
-		my @curline = split(":",$line);
+	foreach $line ( @startdata )
+	{
+		my @curline = split ( ":", $line );
 		my $ini = @curline[0];
-		chomp($ini);
-		if ( $ini ne "" && $ini =~ $backends_data[1] ){
-			my @datain = split(" ",@curline[1]);
-			push(@startdataout,@datain[0]);
-			push(@startdataout,@datain[1]);
-			push(@startdataout,@datain[8]);
-			push(@startdataout,@datain[9]);
+		chomp ( $ini );
+		if ( $ini ne "" && $ini =~ $backends_data[1] )
+		{
+			my @datain = split ( " ", @curline[1] );
+			push ( @startdataout, @datain[0] );
+			push ( @startdataout, @datain[1] );
+			push ( @startdataout, @datain[8] );
+			push ( @startdataout, @datain[9] );
 		}
 	}
 
 	my @enddataout;
-	foreach $line(@enddata){
-		my @curline = split(":",$line);
+	foreach $line ( @enddata )
+	{
+		my @curline = split ( ":", $line );
 		my $ini = @curline[0];
-		chomp($ini);
-		if ( $ini ne "" && $ini =~ $backends_data[1] ){
-			my @datain = split(" ",@curline[1]);
-			push(@enddataout,@datain[0]);
-			push(@enddataout,@datain[1]);
-			push(@enddataout,@datain[8]);
-			push(@enddataout,@datain[9]);
+		chomp ( $ini );
+		if ( $ini ne "" && $ini =~ $backends_data[1] )
+		{
+			my @datain = split ( " ", @curline[1] );
+			push ( @enddataout, @datain[0] );
+			push ( @enddataout, @datain[1] );
+			push ( @enddataout, @datain[8] );
+			push ( @enddataout, @datain[9] );
 		}
 	}
 
@@ -99,26 +110,29 @@ foreach (@backends){
 	print "<td> $backends_data[0] </td> ";
 	print "<td> $backends_data[1] </td> ";
 
-	if ($backends_data[4] eq "up"){
+	if ( $backends_data[4] eq "up" )
+	{
 		print "<td><img src=\"img/icons/small/start.png\" title=\"up\"></td> ";
-	} else {
+	}
+	else
+	{
 		print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td> ";
 	}
 	my $calc = @enddataout[0];
 	print "<td> $calc </td> ";
-	my $calc = (@enddataout[0]-@startdataout[0])*2;
+	my $calc = ( @enddataout[0] - @startdataout[0] ) * 2;
 	print "<td> $calc </td> ";
 	my $calc = @enddataout[1];
 	print "<td> $calc </td> ";
-	my $calc = (@enddataout[1]-@startdataout[1])*2;
+	my $calc = ( @enddataout[1] - @startdataout[1] ) * 2;
 	print "<td> $calc </td> ";
 	my $calc = @enddataout[2];
 	print "<td> $calc </td> ";
-	my $calc = (@enddataout[2]-@startdataout[2])*2;
+	my $calc = ( @enddataout[2] - @startdataout[2] ) * 2;
 	print "<td> $calc </td> ";
 	my $calc = @enddataout[3];
 	print "<td> $calc </td> ";
-	my $calc = (@enddataout[3]-@startdataout[3])*2;
+	my $calc = ( @enddataout[3] - @startdataout[3] ) * 2;
 	print "<td> $calc </td> ";
 
 	print "<td> $backends_data[2] </td> ";

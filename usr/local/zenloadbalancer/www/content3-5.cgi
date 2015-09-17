@@ -7,11 +7,11 @@
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
-#     by the Free Software Foundation; either version 2.1 of the License, or 
+#     by the Free Software Foundation; either version 2.1 of the License, or
 #     (at your option) any later version.
 #
-#     This library is distributed in the hope that it will be useful, but 
-#     WITHOUT ANY WARRANTY; without even the implied warranty of 
+#     This library is distributed in the hope that it will be useful, but
+#     WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
 #     General Public License for more details.
 #
@@ -19,7 +19,7 @@
 #     along with this library; if not, write to the Free Software Foundation,
 #     Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #
-###############################################################################	
+###############################################################################
 
 use File::stat;
 use File::Basename;
@@ -35,80 +35,78 @@ print "
 <h2>Settings::Backup</h2>
 <!--Content Header END-->";
 
-
-if ($action eq "apply")
-	{
-	&successmsg("Backup will be decompressed and Zen Load Balancer will be restarted, Zen Cluster node could switch...");
+if ( $action eq "apply" )
+{
+	&successmsg( "Backup will be decompressed and Zen Load Balancer will be restarted, Zen Cluster node could switch..." );
 	my @eject = `$tar -xvzf $backupdir$file -C /`;
-	&logfile("Restoring backup $backupdir$file");
-	&logfile("unpacking files: @eject");	
+	&logfile( "Restoring backup $backupdir$file" );
+	&logfile( "unpacking files: @eject" );
 	my @eject = `/etc/init.d/zenloadbalancer restart 2> /dev/null`;
-	if ($? == 0)
-		{
-		&successmsg("Backup applied and Zen Load Balancer restarted...");
-		}
+	if ( $? == 0 )
+	{
+		&successmsg( "Backup applied and Zen Load Balancer restarted..." );
+	}
 	else
-		{
-		&errormsg("Problem restarting Zen Load Balancer service");
-		}
-
+	{
+		&errormsg( "Problem restarting Zen Load Balancer service" );
 	}
 
-if ($action eq "Create Backup")
+}
+
+if ( $action eq "Create Backup" )
+{
+	if ( $name !~ /^$/ && $name =~ /^[a-zA-Z0-9\-]*$/ )
 	{
-    if ($name !~ /^$/ && $name =~ /^[a-zA-Z0-9\-]*$/)
-		{
-		$name =~ s/\ //g;		
+		$name =~ s/\ //g;
 		my @eject = `$zenbackup $name -c 2> /dev/null`;
-		&successmsg("Local system backup created <b>backup-$name.tar.gz</b>");
-		}
-    else
-    {
-        &errormsg("Backup name is not valid. Only numbers, letters and hyphens are allowed.");
-    }
+		&successmsg( "Local system backup created <b>backup-$name.tar.gz</b>" );
 	}
-
-if ($action eq "del")
-	{
-	$filepath = "$backupdir$file";
-	if (-e $filepath)
-		{
-		unlink($filepath);
-		&successmsg("Deleted backup file <b>$file</b>");
-
-		}
 	else
-		{
-		&errormsg("File <b>$file</b> not found");
-		}
+	{
+		&errormsg( "Backup name is not valid. Only numbers, letters and hyphens are allowed." );
+	}
+}
+
+if ( $action eq "del" )
+{
+	$filepath = "$backupdir$file";
+	if ( -e $filepath )
+	{
+		unlink ( $filepath );
+		&successmsg( "Deleted backup file <b>$file</b>" );
 
 	}
+	else
+	{
+		&errormsg( "File <b>$file</b> not found" );
+	}
+
+}
 
 #if ($action eq "Upload Backup")
 #	{
-#$CGI::POST_MAX = 1024 * 5000;  
+#$CGI::POST_MAX = 1024 * 5000;
 #my $query = new CGI;
-#my $safe_filename_characters = "a-zA-Z0-9_.-";  
-#my $upload_dir = "$backupdir";  
-#my $filex = $query->param("file"); 
-#my $upload_filehandle = $query->upload("fileName");  
-# 
-#open ( UPLOADFILE, ">$backupdir$file" ) or die "$!";  
-#binmode UPLOADFILE;  
-# 
-#while ( <$upload_filehandle> )  
-#{  
-# print UPLOADFILE;  
-#}  
-# 
-#close UPLOADFILE;  
+#my $safe_filename_characters = "a-zA-Z0-9_.-";
+#my $upload_dir = "$backupdir";
+#my $filex = $query->param("file");
+#my $upload_filehandle = $query->upload("fileName");
+#
+#open ( UPLOADFILE, ">$backupdir$file" ) or die "$!";
+#binmode UPLOADFILE;
+#
+#while ( <$upload_filehandle> )
+#{
+# print UPLOADFILE;
+#}
+#
+#close UPLOADFILE;
 #	}
 
 print "<div class=\"container_12\">";
 print "	<div class=\"grid_12\">";
 print "		<div class=\"box-header\">Backup</div>";
 print "		<div class=\"box stats\">";
-
 
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<b>Description name: </b><input type=\"text\" name=\"name\" value=\"$lhost\">";
@@ -119,6 +117,7 @@ print "<br><br>";
 
 print "</div></div></div>";
 print "<br class=\"cl\">";
+
 #table
 print "<div class=\"box-header\"> Backup files <a href=\"index.cgi?id=$id\"><img src=\"img/icons/small/arrow_refresh.png\" title=\"refresh\"></a></div>";
 print "<div class=\"box table\">";
@@ -135,25 +134,26 @@ print "</tr>";
 print "</thead>";
 print "<tbody>";
 
-opendir(DIR, "$backupdir");
-@files = grep(/^backup.*/,readdir(DIR));
-closedir(DIR);
+opendir ( DIR, "$backupdir" );
+@files = grep ( /^backup.*/, readdir ( DIR ) );
+closedir ( DIR );
 
-foreach $file(@files)
-	{
+foreach $file ( @files )
+{
 	print "<tr>";
 	$filepath = "$backupdir$file";
-	chomp($filepath);
+	chomp ( $filepath );
+
 	#print "filepath: $filepath";
-	$datetime_string = ctime(stat($filepath)->mtime);
+	$datetime_string = ctime( stat ( $filepath )->mtime );
 	print "<td>$file</td>";
 	print "<td>$datetime_string</td>";
 	print "<td>$host</td>";
 	print "<td>";
-	&createmenubackup($file);
+	&createmenubackup( $file );
 	print "</td>";
 	print "</tr>";
-	}
+}
 
 print "<tr><td colspan=3></td><td>";
 
@@ -164,19 +164,13 @@ print "</tbody>";
 print "</table>";
 print "</div>";
 
-
-
-
-
 #print "		</div>";
 #print "<br>";
 #print "	</div>";
 #print "</div>";
 
-
-
-
 print "<br class=\"cl\">";
+
 #content 3-4 END
 print " </div>
     <!--Content END-->

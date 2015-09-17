@@ -24,14 +24,14 @@
 #header secction
 use Sys::Hostname;
 my $host = hostname();
-$timeseconds = time();
+$timeseconds = time ();
 
 $now = ctime();
 
-my @months = ("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec");
-my ($sec, $min, $hour, $day,$month,$year) = (localtime($time))[0,1,2,3,4,5,6];
+my @months = ( "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" );
+my ( $sec, $min, $hour, $day, $month, $year ) = ( localtime ( $time ) )[0, 1, 2, 3, 4, 5, 6];
 $month = $months[$month];
-$year = $year+1900;
+$year  = $year + 1900;
 
 #print "$month $day $year $hour:$min:$sec\n";
 print "
@@ -42,7 +42,8 @@ print "
 <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />
 ";
 
-if ($refresh){
+if ( $refresh )
+{
 	print "<meta http-equiv=\"refresh\" content=\"$refresh\">";
 }
 
@@ -89,24 +90,30 @@ print "
   <div class=\"header-top tr\">
     <p>Hello <strong>$ENV{'REMOTE_USER'}</strong> | ";
 
-open FR,"<$filecluster";
+open FR, "<$filecluster";
 @file = <FR>;
 
-if (-e $filecluster && (grep(/UP/,@file))){
-	if (&activenode() eq "true"){
+if ( -e $filecluster && ( grep ( /UP/, @file ) ) )
+{
+	if ( &activenode() eq "true" )
+	{
 		print "Cluster: <b>this node is master</b>";
 	}
-	elsif (`ps aux | grep "ucarp" | grep "\\-k 100" | grep -v grep`){
+	elsif ( `ps aux | grep "ucarp" | grep "\\-k 100" | grep -v grep` )
+	{
 		print "<img src=\"img/icons/small/exclamation_octagon_fram.png\" title=\"Changes will not be replicated!\">Cluster: <b>this node is on maintenance</b>";
 	}
-	else{
+	else
+	{
 		print "<img src=\"img/icons/small/exclamation_octagon_fram.png\" title=\"Changes will not be replicated!\">Cluster: <b>this node is backup</b>";
 	}
 	print " |";
 }
-else{
+else
+{
 	print "<img src=\"img/icons/small/exclamation_octagon_fram.png\" title=\"HA issue, cluster not configured\">Cluster: <b>Not configured. <a href=\"http://www.zenloadbalancer.com/eliminate-a-single-point-of-failure/\" target=\"_blank\"><u>How to eliminate this single point of failure</u></a></b> |";
 }
+
 #print " Host: <strong>$host</strong> | Date: <strong>$month $day $year  $hour:$min:$sec</strong></p>
 print " Host: <strong>$host</strong> | Date: <strong>$now</strong> | <a href=\'#\' onclick=\'logout()\' title=\'Logout\'> <strong>Logout</strong></a></p>
  </div>

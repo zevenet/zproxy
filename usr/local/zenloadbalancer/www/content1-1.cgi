@@ -7,11 +7,11 @@
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
-#     by the Free Software Foundation; either version 2.1 of the License, or 
+#     by the Free Software Foundation; either version 2.1 of the License, or
 #     (at your option) any later version.
 #
-#     This library is distributed in the hope that it will be useful, but 
-#     WITHOUT ANY WARRANTY; without even the implied warranty of 
+#     This library is distributed in the hope that it will be useful, but
+#     WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
 #     General Public License for more details.
 #
@@ -21,7 +21,6 @@
 #
 ###############################################################################
 
-
 print "
     <!--Content INI-->
         <div id=\"page-content\">
@@ -30,7 +29,7 @@ print "
                         <h2>Manage::Global View</h2>
                 <!--Content Header END-->";
 
-	#&help("1");
+#&help("1");
 #graph
 use GD::3DBarGrapher qw(creategraph);
 
@@ -40,7 +39,7 @@ my @data_mem = &getMemStats();
 #memory graph
 $description = "img/graphs/graphmem.jpg";
 
-&graphs($description,@data_mem);
+&graphs( $description, @data_mem );
 
 #load values
 my @data_load = &getLoadStats();
@@ -48,13 +47,15 @@ my @data_load = &getLoadStats();
 #load graph
 $description = "img/graphs/graphload.jpg";
 
-&graphs($description,@data_load);
+&graphs( $description, @data_load );
 
 #network interfaces
 my @data_net = &getNetworkStats();
+
 #network graph
 $description = "img/graphs/graphnet.jpg";
-&graphs($description,@data_net);
+&graphs( $description, @data_net );
+
 #
 
 ####################################
@@ -62,7 +63,7 @@ $description = "img/graphs/graphnet.jpg";
 ####################################
 
 my $systemuuid = `/usr/sbin/dmidecode | grep UUID | awk '{print \$2}'`;
-chomp($systemuuid); 
+chomp ( $systemuuid );
 print "<div class=\"box-header\">Zen Load Balancer Professional Products &amp; Services</div>";
 print " <div class=\"box table\">
 	<table class=\"commerce\">
@@ -79,7 +80,7 @@ print "			<td><div id=\"support\"></div></td>
 			<td><div id=\"products\"></div></td>
 			<td><div id=\"news\"></div></td>";
 print "		</tr>";
-print "</tbody>"; 	
+print "</tbody>";
 print "</table></div>";
 print "<br>";
 
@@ -88,42 +89,45 @@ print "<br>";
 ####################################
 
 print "<div class=\"box-header\">Global farms information</div>";
-print "	<div class=\"box table\"> 
+print "	<div class=\"box table\">
 	<table>
 	<thead>";
 
-	@files = &getFarmList();
+@files = &getFarmList();
 
+print "<tr>";
+print "<td>Farm</td>";
+print "<td>Profile</td>";
+print "<td>Status</td>";
+print "</tr>";
+print "</thead>";
+print "<tbody>";
+foreach $file ( @files )
+{
 	print "<tr>";
-	print "<td>Farm</td>";
-	print "<td>Profile</td>";
-	print "<td>Status</td>";
-	print "</tr>";
-	print "</thead>";
-	print "<tbody>";
-	foreach $file(@files){
-		print "<tr>";
-		my $farmname = &getFarmName($file);
-		my $type = &getFarmType($farmname);
+	my $farmname = &getFarmName( $file );
+	my $type     = &getFarmType( $farmname );
 
-		print "<td>$farmname</td><td>$type</td>";
-		$status = &getFarmStatus($farmname);
-		if ($status ne "up"){
-				print "<td class=\"tc\"><img src=\"img/icons/small/stop.png\" title=\"down\"></td>";
-		} else {
-				print "<td class=\"tc\"><img src=\"img/icons/small/start.png\" title=\"up\"></td>";
-		}
-
-		print "</tr>";
+	print "<td>$farmname</td><td>$type</td>";
+	$status = &getFarmStatus( $farmname );
+	if ( $status ne "up" )
+	{
+		print "<td class=\"tc\"><img src=\"img/icons/small/stop.png\" title=\"down\"></td>";
+	}
+	else
+	{
+		print "<td class=\"tc\"><img src=\"img/icons/small/start.png\" title=\"up\"></td>";
 	}
 
-	print "</tbody></table></div>";
-	print "<br>";
+	print "</tr>";
+}
+
+print "</tbody></table></div>";
+print "<br>";
 
 ####################################
 # MEM INFORMATION
 ####################################
-
 
 print "<div class=\"box-header\">Memory (mb)</div>";
 print " <div class=\"box table\">
@@ -131,7 +135,6 @@ print " <div class=\"box table\">
         <thead>";
 print "<tr><td>$data_mem[0][0]</td><td>$data_mem[1][0]</td><td>$data_mem[2][0]</td><td>$data_mem[3][0]</td><td>$data_mem[4][0]</td><td>$data_mem[5][0]</td><td>$data_mem[6][0]</td><td>$data_mem[7][0]</td>    </tr>";
 print "</thead>";
-
 
 print "<tbody>";
 
@@ -160,9 +163,8 @@ print "</div>";
 # NETWORK TRAFFIC INFORMATION
 ####################################
 
-
 print "\n";
-print "<div class=\"box-header\">Network traffic interfaces (mb) from ". &uptime ."</div>";
+print "<div class=\"box-header\">Network traffic interfaces (mb) from " . &uptime . "</div>";
 print " <div class=\"box table\">
         <table>
         <thead>";
@@ -170,12 +172,13 @@ print "<tr><td>Interface</td><td>Input</td><td>Output</td></tr>";
 print "</thead>";
 print "<tbody>";
 my $indice = @data_net;
-for (my $i=0;  $i < $indice - 1; $i=$i+2){
-	my @ifname = split(' ', $data_net[$i][0]);
-                print "<tr>";
+for ( my $i = 0 ; $i < $indice - 1 ; $i = $i + 2 )
+{
+	my @ifname = split ( ' ', $data_net[$i][0] );
+	print "<tr>";
 	print "<td>$ifname[0]</td><td>$data_net[$i][1]</td><td>$data_net[$i+1][1]</td>\n";
-                print "</tr>";
-        }
+	print "</tr>";
+}
 
 print "<tr style=\"background:none;\"><td colspan=3 style=\"text-align:center;\"><img src=\"img/graphs/graphnet.jpg\"></td></tr>";
 
@@ -184,7 +187,6 @@ print "</table>";
 print "</div>";
 
 print "<br class=\"cl\" ></div>\n";
-
 
 print "<script src=\"https://code.jquery.com/jquery-latest.pack.js\"></script>
 <script>
@@ -201,14 +203,14 @@ print "<script src=\"https://code.jquery.com/jquery-latest.pack.js\"></script>
      function(data){
 	window.connect = 'true';
 	if(data.results[0] == ''){
-            	container0.html(fixedsupport);
-	} 
-	else{
+		container0.html(fixedsupport);
+	}
+	else {
 		container0.html(data.results[0]);
 	}
 	if(data.results[1] == ''){
-            	container1.html(fixedproducts);
-	} 
+		container1.html(fixedproducts);
+	}
 	else{
 		container1.html(data.results[1]);
 	}

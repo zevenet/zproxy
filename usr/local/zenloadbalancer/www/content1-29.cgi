@@ -7,11 +7,11 @@
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
-#     by the Free Software Foundation; either version 2.1 of the License, or 
+#     by the Free Software Foundation; either version 2.1 of the License, or
 #     (at your option) any later version.
 #
-#     This library is distributed in the hope that it will be useful, but 
-#     WITHOUT ANY WARRANTY; without even the implied warranty of 
+#     This library is distributed in the hope that it will be useful, but
+#     WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
 #     General Public License for more details.
 #
@@ -23,26 +23,30 @@
 
 #STATUS of a L4xNAT Farm
 
-if ($viewtableclients eq ""){ $viewtableclients = "no";}
+if ( $viewtableclients eq "" ) { $viewtableclients = "no"; }
+
 #if ($viewtableconn eq ""){ $viewtableconn = "no";}
 
 # Real Server Table
-my $nattype = &getFarmNatType($farmname);
-my $proto = &getFarmProto($farmname);
-if ($proto eq "all"){
-	$proto="";
+my $nattype = &getFarmNatType( $farmname );
+my $proto   = &getFarmProto( $farmname );
+if ( $proto eq "all" )
+{
+	$proto = "";
 }
 
-$fvip = &getFarmVip("vip",$farmname);
+$fvip = &getFarmVip( "vip", $farmname );
 
-my @content = &getFarmBackendStatusCtl($farmname);
-my @backends = &getFarmBackendsStatus($farmname,@content);
+my @content = &getFarmBackendStatusCtl( $farmname );
+my @backends = &getFarmBackendsStatus( $farmname, @content );
 
-my $backendsize = @backends;
+my $backendsize    = @backends;
 my $activebackends = 0;
-foreach (@backends){
-	my @backends_data = split(";",$_);
-	if ($backends_data[4] eq "up"){
+foreach ( @backends )
+{
+	my @backends_data = split ( ";", $_ );
+	if ( $backends_data[4] eq "up" )
+	{
 		$activebackends++;
 	}
 }
@@ -58,32 +62,40 @@ print "</thead>\n";
 print "<tbody>";
 
 my $index = 0;
-foreach (@backends){
-	my @backends_data = split(";",$_);
-	my $ip_backend = $backends_data[0];
-	my $port_backend = $backends_data[1];
+foreach ( @backends )
+{
+	my @backends_data = split ( ";", $_ );
+	my $ip_backend    = $backends_data[0];
+	my $port_backend  = $backends_data[1];
 	print "<tr>";
 	print "<td> $index </td> ";
 	print "<td> $ip_backend </td> ";
 	print "<td> $port_backend </td> ";
-	if ($backends_data[4] eq "maintenance"){
+	if ( $backends_data[4] eq "maintenance" )
+	{
 		print "<td><img src=\"img/icons/small/warning.png\" title=\"up\"></td> ";
-	}elsif ($backends_data[4] eq "up"){
+	}
+	elsif ( $backends_data[4] eq "up" )
+	{
 		print "<td><img src=\"img/icons/small/start.png\" title=\"up\"></td> ";
-	} elsif ($backends_data[4] eq "fgDOWN"){
-		print "<td><img src=\"img/icons/small/disconnect.png\" title=\"FarmGuardian down\"></td> ";	
-	}else{
+	}
+	elsif ( $backends_data[4] eq "fgDOWN" )
+	{
+		print "<td><img src=\"img/icons/small/disconnect.png\" title=\"FarmGuardian down\"></td> ";
+	}
+	else
+	{
 		print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td> ";
 	}
 
 	my @synnetstatback;
-	@netstat = &getConntrack("",$fvip,$ip_backend,"","");
-	@synnetstatback = &getBackendSYNConns($farmname,$ip_backend,$port_backend,@netstat);
+	@netstat = &getConntrack( "", $fvip, $ip_backend, "", "" );
+	@synnetstatback = &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
 	my $npend = @synnetstatback;
 	print "<td>$npend</td>";
 
 	my @stabnetstatback;
-	@stabnetstatback = &getBackendEstConns($farmname,${ip_backend},$port_backend,@netstat);
+	@stabnetstatback = &getBackendEstConns( $farmname, ${ ip_backend }, $port_backend, @netstat );
 	my $nestab = @stabnetstatback;
 	print "<td>$nestab</td>";
 	print "<td> $backends_data[2] </td>";
@@ -96,29 +108,35 @@ print "</tbody>";
 print "</table>";
 print "</div>\n\n";
 
-if ($proto eq "sip"){
+if ( $proto eq "sip" )
+{
 
 	# Active sessions
 	print "<div class=\"box-header\">";
-	my @csessions = &getConntrackExpect();
+	my @csessions     = &getConntrackExpect();
 	my $totalsessions = @csessions;
 
-	if ($viewtableclients eq "yes"){
+	if ( $viewtableclients eq "yes" )
+	{
 		print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=no&viewtableconn=$viewtableconn\" title=\"Minimize\"><img src=\"img/icons/small/bullet_toggle_minus.png\"></a>";
-	} else {
+	}
+	else
+	{
 		print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=yes&viewtableconn=$viewtableconn\" title=\"Maximize\"><img src=\"img/icons/small/bullet_toggle_plus.png\"></a>";
 	}
 
 	print "Client sessions status <font size=1>&nbsp;&nbsp;&nbsp; $totalsessions active clients</font></div>\n";
 	print "<div class=\"box table\"><table cellspacing=\"0\">\n";
-	if ($viewtableclients eq "yes")
-		{
+	if ( $viewtableclients eq "yes" )
+	{
 		print "<thead>\n";
 		print "<tr><td>Client Address</td></tr>\n";
 		print "</thead>";
 		print "<tbody>";
 
-		foreach $session (@csessions){
+		foreach $session ( @csessions )
+		{
+
 			#my @s_backend  = split("\t",$_);
 			#if (@s_backend[0] =~ /^[0-9]/ && ($ftracking == 0 || @s_backend[2] <= $ftracking))
 			#	{
@@ -128,7 +146,7 @@ if ($proto eq "sip"){
 			print "<tr><td>$session</td></tr>";
 		}
 		print "</tbody>";
-		}
+	}
 
 	print "</table>";
 	print "</div>";

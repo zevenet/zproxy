@@ -8,11 +8,11 @@
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
-#     by the Free Software Foundation; either version 2.1 of the License, or 
+#     by the Free Software Foundation; either version 2.1 of the License, or
 #     (at your option) any later version.
 #
-#     This library is distributed in the hope that it will be useful, but 
-#     WITHOUT ANY WARRANTY; without even the implied warranty of 
+#     This library is distributed in the hope that it will be useful, but
+#     WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
 #     General Public License for more details.
 #
@@ -20,8 +20,7 @@
 #     along with this library; if not, write to the Free Software Foundation,
 #     Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #
-###############################################################################	
-
+###############################################################################
 
 require "/usr/local/zenloadbalancer/config/global.conf";
 require "./functions.cgi";
@@ -30,7 +29,6 @@ print "Content-type: text/html\n\n";
 
 ##REQUIRES
 #require "help-content.cgi";
-
 
 print "
 <HTML>
@@ -52,36 +50,37 @@ print "<div id=\"page-header\"></div>
 	 </div>
       </div>";
 
-
 #print "<b>Upload Backup.</b>";
 #print "<div id=\"page-header\"></div>";
 print "<br>";
 print "<br>";
 
-my $query = new CGI;
-my $upload_dir= $backupdir;
-my $action = $query->param("action");
-my $filename = $query->param("fileup");
+my $query      = new CGI;
+my $upload_dir = $backupdir;
+my $action     = $query->param( "action" );
+my $filename   = $query->param( "fileup" );
 
-my $upload_filehandle = $query->upload("fileup");
+my $upload_filehandle = $query->upload( "fileup" );
 
-if ($action eq "Upload Backup")
-        {
-	if ($filename =~ /^backup\-[a-zA-Z0-9\-]*.tar.gz$/){
-		@filen = split(/\\/,$filename);
-		 $filename = $filen[-1];
-	
-        open ( UPLOADFILE, ">$upload_dir/$filename" ) or die "$!";
-        binmode UPLOADFILE;
-        while ( <$upload_filehandle> )
-                {
-                print UPLOADFILE;
-                }
-        close UPLOADFILE;
-        print "<b>File uploaded. Now refresh the parent window!</b>";
-        }
-	else {
-		&errormsg("Filename is not valid. Only numbers, letters and hyphens are allowed");
+if ( $action eq "Upload Backup" )
+{
+	if ( $filename =~ /^backup\-[a-zA-Z0-9\-]*.tar.gz$/ )
+	{
+		@filen = split ( /\\/, $filename );
+		$filename = $filen[-1];
+
+		open ( UPLOADFILE, ">$upload_dir/$filename" ) or die "$!";
+		binmode UPLOADFILE;
+		while ( <$upload_filehandle> )
+		{
+			print UPLOADFILE;
+		}
+		close UPLOADFILE;
+		print "<b>File uploaded. Now refresh the parent window!</b>";
+	}
+	else
+	{
+		&errormsg( "Filename is not valid. Only numbers, letters and hyphens are allowed" );
 	}
 }
 
@@ -89,6 +88,7 @@ print "<br>";
 print "<br>";
 
 print "<form method=\"post\" action=\"upload.cgi\" enctype=\"multipart/form-data\">";
+
 #print "<form method=\"post\" action=\"index.cgi\">";
 #print "<b>File:</b> <input  type=\"file\" name=\"file\">";
 #print qq{
@@ -104,10 +104,7 @@ print "<br>";
 print "<input type=\"submit\" value=\"Upload Backup\" name=\"action\" class=\"button small\">";
 print "</form>";
 
-
-
-
 print "<br>";
 print "</BODY>";
-print "</HTML>"; 
+print "</HTML>";
 
