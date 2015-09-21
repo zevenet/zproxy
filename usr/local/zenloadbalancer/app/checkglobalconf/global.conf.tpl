@@ -83,6 +83,8 @@ $openssl="/usr/bin/openssl";
 $unzip="/usr/bin/unzip";
 #Where is mv?
 $mv="/bin/mv";
+#Where is rm?
+$rm="/bin/rm";
 #Where is ls?
 $ls="/bin/ls";
 #Where is cp?
@@ -101,6 +103,8 @@ $gdnsd="/usr/local/zenloadbalancer/app/gdnsd/sbin/gdnsd";
 $l4sd="/usr/local/zenloadbalancer/app/l4s/bin/l4sd";
 #Where is conntrack?
 $conntrack="/usr/sbin/conntrack";
+#Where is ln?
+$ln="/bin/ln";
 
 #where is pound binary?
 $pound="/usr/local/zenloadbalancer/app/pound/sbin/pound";
@@ -157,6 +161,9 @@ $zenlatlog="/usr/local/zenloadbalancer/logs/zenlatency.log";
 
 #Zen backup
 $zenbackup="/usr/local/zenloadbalancer/app/zenbackup/zenbackup.pl";
+
+#SNMP service
+$snmpdconfig_file="/etc/snmp/snmpd.conf";
 #::END Global Section
 
 #!!!!NOT REMOVE NEXT LINE!!!!!!

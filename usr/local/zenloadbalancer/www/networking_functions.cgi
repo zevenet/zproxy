@@ -739,5 +739,24 @@ sub uplinkUsed($if)
 	return $output;
 }
 
+sub isValidPortNumber($port)
+{
+	my ( $port ) = @_;
+	my $valid;
+
+	if ( defined ( $port ) && $port >= 1 && $port <= 65535 )
+	{
+		$valid = 'true';
+	}
+	else
+	{
+		$valid = 'false';
+
+		#&logfile("Port $port out of range");
+	}
+
+	return $valid;
+}
+
 # do not remove this
 1

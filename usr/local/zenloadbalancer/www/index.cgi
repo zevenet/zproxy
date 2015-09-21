@@ -155,6 +155,10 @@ $type_server        = $Variables{ 'type_server' };
 $service_type       = $Variables{ 'service_type' };
 $rdata_server       = $Variables{ 'rdata_server' };
 $zone               = $Variables{ 'zone' };
+$snmpd_enabled = $Variables{'snmpd_enabled'};
+$snmpd_scope = $Variables{'snmpd_scope'};
+$snmpd_port = $Variables{'snmpd_port'};
+$snmpd_community = $Variables{'snmpd_community'};
 
 #end variables in get string
 
@@ -234,7 +238,9 @@ if ( !-f "$basedir/lock" )
 		require "content" . $id . ".cgi";
 		alarm 0;
 	};
-	if ( $@ ) { print "Error in content$id cgi execution, see ZEN logs\n"; }
+	if ($@) { print "Error in content$id cgi execution, see ZEN logs\n";
+		print "<br>$@\n";
+	}	
 }
 else
 {

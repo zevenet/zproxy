@@ -33,9 +33,6 @@ print "
 <!--Content Header END-->";
 
 #process changes in global.conf when action=Modify
-
-#print "la linea es $line y la variable $var<br>";
-
 if ( $action =~ /^Modify$/ )
 {
 	use Tie::File;
@@ -111,13 +108,27 @@ if ( $var eq "Save APT" )
 }
 
 #action save ip
-if ( $action eq "Save IP" )
+if ( $action eq "Save Management IP" )
 {
+	# save http gui ip
 	use Tie::File;
 	tie @array, 'Tie::File', "$confhttp";
 	@array[0] = "host=$ipgui\n";
-
 	untie @array;
+
+	# save snmp ip
+	my $mng_ip  = &GUIip();
+	my $snmp_ip = &getSnmpdIp();
+
+	# if snmp ip is different to management ip
+	if ( $snmp_ip ne $mng_ip )
+	{
+		# with the exception of * in management, it is 0.0.0.0 for snmp server
+		if ( !( $mng_ip eq '*' && $snmp_ip eq '0.0.0.0' ) )
+		{
+			&setSnmpdIp( $mng_ip );
+		}
+	}
 }
 
 if ( $action eq "Change GUI https port" )
@@ -125,7 +136,7 @@ if ( $action eq "Change GUI https port" )
 	&setGuiPort( $guiport, $confhttp );
 }
 
-if ( $action eq "Restart GUI Service" )
+if ( $action eq "Restart Management Services" )
 {
 	if ( $pid = fork )
 	{
@@ -135,10 +146,14 @@ if ( $action eq "Restart GUI Service" )
 	}
 	elsif ( defined $pid )
 	{
+		# snmpd restart if running
+		if ( &getSnmpdStatus eq 'true' )
+		{
+			&setSnmpdStatus( 'false' );    # stopping snmp
+			&setSnmpdStatus( 'true' );     # starting snmp
+		}
 
-		#$SIG{'CHLD'}=\&REAPER;
-		#child
-		#exec $MIGRASCRIPT,@args;
+		# minihttpd restart
 		system ( "/etc/init.d/minihttpd restart > /dev/null &" );
 		exit ( 0 );
 	}
@@ -152,11 +167,23 @@ if ( $action eq "Restart GUI Service" )
 	}
 	if ( $ipgui =~ /\*/ )
 	{
-		&successmsg( "Restarted Service, access to GUI over any IP on port $guiport" );
+		&successmsg( "Restarted Service, access to management services over any IP on port $guiport" );
 	}
 	else
 	{
-		&successmsg( "Restarted Service, access to GUI over $ipgui IP on port $guiport <a href=\"https:\/\/$ipgui:$guiport\/index.cgi?id=$id\">go here</a>" );
+		&successmsg( "Restarted Service, access to management services over $ipgui IP on port $guiport <a href=\"https:\/\/$ipgui:$guiport\/index.cgi?id=$id\">go here</a>" );
+	}
+}
+
+if ( $action eq "edit-snmp" )
+{
+	if ( &applySnmpChanges( $snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_scope ) )
+	{
+		&errormsg( "SNMP service changes have failed. Please check the logs" );
+	}
+	else
+	{
+		&successmsg( "SNMP service changes applied successfully" );
 	}
 }
 
@@ -220,7 +247,8 @@ open FR, "<$confhttp";
 @file     = <FR>;
 $hosthttp = @file[0];
 close FR;
-print "<b>Physical interface where is running GUI service.</b><font size=\"1\"> If cluster is up you only can select \"--All interfaces--\" option, or \"the cluster interface\". Changes need restart GUI service.</font>";
+print "<b>Management interface where is running GUI service and SNMP (if enabled).</b>";
+print "<font size=\"1\"> If cluster is up you only can select \"--All interfaces--\" option, or \"the cluster interface\". Changes need restart management services.</font>";
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"3-1\">";
 
@@ -311,8 +339,8 @@ else
 
 print "</select>";
 
-print "<input type=\"submit\" value=\"Save IP\" name=\"action\" class=\"button small\">";
-print "<input type=\"submit\" value=\"Restart GUI Service\" name=\"action\" class=\"button small\">";
+print "<input type=\"submit\" value=\"Save Management IP\" name=\"action\" class=\"button small\">";
+print "<input type=\"submit\" value=\"Restart Management Services\" name=\"action\" class=\"button small\">";
 print "<br>";
 print "<br>";
 print "</form>";
@@ -329,9 +357,48 @@ print "<input type=\"hidden\" name=\"id\" value=\"3-1\">";
 print "<input type=\"text\" name=\"guiport\" value=\"$guiport\" size=12>";
 print "<input type=\"submit\" value=\"Change GUI https port\" name=\"action\" class=\"button small\">";
 print "<input type=\"submit\" value=\"Restart GUI Service\" name=\"action\" class=\"button small\">";
-print "<br>";
-print "<br>";
 print "</form>";
+print "<br>";
+
+#snmp
+print "<form method=\"get\" action=\"index.cgi\">";
+
+# set global variables as in config file
+( $snmpd_ip, $snmpd_port, $snmpd_community, $snmpd_scope ) = &getSnmpdConfig();
+
+# SNMPD Switch
+if ( &getSnmpdStatus() eq "true" )
+{
+	print "<input type=\"checkbox\" name=\"snmpd_enabled\" value=\"true\" checked>";
+}
+else
+{
+	print "<input type=\"checkbox\" name=\"snmpd_enabled\" value=\"true\"> ";
+}
+print "&nbsp;<b>SNMP Service</b><br>";
+
+# SNMP port
+print "<font size=1>Port: </font>";
+print "<input type=\"number\" name=\"snmpd_port\" value=\"$snmpd_port\" size=\"5\" min=\"1\" max=\"65535\" required>";
+print "<br>";
+
+# SNMP community
+print "<font size=1>Community name: </font>";
+print "<input type=\"text\" name=\"snmpd_community\" value=\"$snmpd_community\" size=\"12\" required >";
+print "<br>";
+
+# IP or subnet with access to SNMP server
+print "<font size=1>IP or subnet with access: </font>";
+print "<input type=\"text\" name=\"snmpd_scope\" value=\"$snmpd_scope\" size=\"12\" required>";
+print "<br>";
+
+print "<input type=\"hidden\" name=\"id\" value=\"3-1\">";
+print "<input type=\"hidden\" name=\"action\" value=\"edit-snmp\">";
+
+# Submit
+print "<input type=\"submit\" name=\"button\" value=\"Apply\" class=\"button small\">";
+print "</form>";
+print "<br>";
 
 #dns
 print "<b>DNS servers</b>";

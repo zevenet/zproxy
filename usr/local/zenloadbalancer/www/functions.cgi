@@ -33,8 +33,7 @@ require "/usr/local/zenloadbalancer/www/l4_functions.cgi";
 require "/usr/local/zenloadbalancer/www/gslb_functions.cgi";
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 require "/usr/local/zenloadbalancer/www/gui_functions.cgi";
-
-#require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
+require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
 
 if ( -e "/usr/local/zenloadbalancer/www/zapi_functions.cgi" )
 {
