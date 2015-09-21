@@ -215,12 +215,12 @@ while ( <FR> )
 	{
 		$nextline = "fase";
 		my @linea = split ( /=/, $_ );
-		@linea[1] =~ s/"||\;//g;
-		@linea[0] =~ s/^\$//g;
+		$linea[1] =~ s/"||\;//g;
+		$linea[0] =~ s/^\$//g;
 		print "<form method=\"get\" action=\"index.cgi\">";
 		print "<input type=\"hidden\" name=\"id\" value=\"3-1\">";
-		print "<input type=\"text\" value=\"@linea[1]\" size=\"20\" name=\"line\">";
-		print "<input type=\"hidden\" name=\"var\" value=\"@linea[0]\">";
+		print "<input type=\"text\" value=\"$linea[1]\" size=\"20\" name=\"line\">";
+		print "<input type=\"hidden\" name=\"var\" value=\"$linea[0]\">";
 		print "<input type=\"submit\" value=\"Modify\" name=\"action\" class=\"button small\">";
 		print "</form>";
 		print "</div>";
@@ -245,7 +245,7 @@ print "<div class=\"box stats\">";
 open FR, "<$confhttp";
 
 @file     = <FR>;
-$hosthttp = @file[0];
+$hosthttp = $file[0];
 close FR;
 print "<b>Management interface where is running GUI service and SNMP (if enabled).</b>";
 print "<font size=\"1\"> If cluster is up you only can select \"--All interfaces--\" option, or \"the cluster interface\". Changes need restart management services.</font>";
@@ -256,20 +256,20 @@ opendir ( DIR, "$configdir" );
 @files = grep ( /^if.*/, readdir ( DIR ) );
 closedir ( DIR );
 
-@ipguic = split ( "=", @file[0] );
-$hosthttp = @ipguic[1];
+@ipguic = split ( "=", $file[0] );
+$hosthttp = $ipguic[1];
 chomp ( $hosthttp );
 
 open FR, "<$filecluster";
 @filecluster = <FR>;
 close FR;
-$lclusterstatus = @filecluster[2];
-@lclustermember = split ( ":", @filecluster[0] );
+$lclusterstatus = $filecluster[2];
+@lclustermember = split ( ":", $filecluster[0] );
 chomp ( @lclustermember );
-$lhost = @lclustermember[1];
-$rhost = @lclustermember[3];
-$lip   = @lclustermember[2];
-$rip   = @lclustermember[4];
+$lhost = $lclustermember[1];
+$rhost = $lclustermember[3];
+$lip   = $lclustermember[2];
+$rip   = $lclustermember[4];
 if ( $host eq $rhost )
 {
 	$thost = $rhost;
@@ -316,18 +316,18 @@ else
 		{
 			open FI, "$configdir\/$file";
 			@lines = <FI>;
-			@line = split ( ":", @lines[0] );
+			@line = split ( ":", $lines[0] );
 			chomp ( @line );
-			if ( @line[4] =~ /up/i )
+			if ( $line[4] =~ /up/i )
 			{
-				chomp ( @line[2] );
-				if ( $hosthttp =~ /@line[2]/ )
+				chomp ( $line[2] );
+				if ( $hosthttp =~ /$line[2]/ )
 				{
-					print "<option value=\"@line[2]\" selected=\"selected\">@line[0] @line[2]</option>";
+					print "<option value=\"$line[2]\" selected=\"selected\">$line[0] $line[2]</option>";
 				}
 				else
 				{
-					print "<option value=\"@line[2]\">@line[0] @line[2]</option>";
+					print "<option value=\"$line[2]\">$line[0] $line[2]</option>";
 				}
 			}
 
@@ -364,7 +364,7 @@ print "<br>";
 print "<form method=\"get\" action=\"index.cgi\">";
 
 # set global variables as in config file
-( $snmpd_ip, $snmpd_port, $snmpd_community, $snmpd_scope ) = &getSnmpdConfig();
+( undef, $snmpd_port, $snmpd_community, $snmpd_scope ) = &getSnmpdConfig();
 
 # SNMPD Switch
 if ( &getSnmpdStatus() eq "true" )
