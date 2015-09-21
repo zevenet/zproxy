@@ -222,6 +222,16 @@ puts itself in the background). By specifying this option you can force
 to work like a regular process. Useful for debugging or if you want to
 use something like \fIdaemontools\fR.
 .TP
+\fBThreads\fR nnn
+How many worker threads
+.B Pound
+should use. Default: 128. Tune this parameter to improve performance.
+If you set it too high,
+.B Pound
+will use a lot memory, and some CPU will be wasted on context switches.
+If you set it too low requests may be served with some delay. Experiment
+to find the optimal value for your installation.
+.TP
 \fBLogFacility\fR value
 Specify the log facility to use.
 .I value
@@ -307,6 +317,9 @@ does not listen for any commands. The commands may be issued by using
 the
 .I poundctl(8)
 program.
+.TP
+\fBInclude\fR "/path/to/file"
+Include the file as though it were part of the configuration file.
 .SH "HTTP Listener"
 An HTTP listener defines an address and port that
 .B Pound
@@ -405,7 +418,8 @@ caution).
 .TP
 \fBAddHeader\fR "header: to add"
 Add the defined header to the request passed to the back-end server. The header
-is added verbatim.
+is added verbatim. Use multiple \fIAddHeader\fR directives if you need to add more
+than one header.
 .TP
 \fBRewriteLocation\fR 0|1|2
 If 1 force
@@ -454,12 +468,31 @@ is the file containing the certificate, possibly a certificate chain and the sig
 for this server. This directive is
 .B mandatory
 for HTTPS listeners.
+.IP
+Please note that multiple
+.I Cert
+directives are allowed if your OpenSSL version supports SNI. In such cases,
+the first directive is the default certificate, with additional certificates
+used if the client requests them.
+.IP
+The ordering of the directives is important: the first certificate where the CN
+matches the client request will be used, so put your directives in the
+most-specific-to-least specific order (i.e. wildcard certificates
+.B after
+host-specific certificates).
+.IP
+.I Cert
+directives
+.B must
+precede all other SSL-specific directives.
 .TP
 \fBClientCert\fR 0|1|2|3 depth
 Ask for the client's HTTPS certificate: 0 - don't ask (default), 1 - ask,
 2 - ask and fail if no certificate was presented, 3 - ask but do not verify.
-.I depth
-is the depth of verification for a client certificate (up to 9).
+.I Depth
+is the depth of verification for a client certificate (up to 9). The default
+depth limit is 9, allowing for the peer certificate and additional 9 CA
+certificates that must be verified.
 .TP
 \fBCiphers\fR "acceptable:cipher:list"
 This is the list of ciphers that will be accepted by the SSL connection; it is a
@@ -467,6 +500,19 @@ string in the same format as in OpenSSL
 .I ciphers(1)
 and
 .I SSL_CTX_set_cipher_list(3).
+.TP
+\fBSSLHonorCipherOrder\fR 0|1
+If this value is 1, the server will broadcast a preference to use \fBCiphers\fR in the
+order supplied in the \fBCiphers\fR directive.  If the value is 0, the server will treat
+the Ciphers list as the list of Ciphers it will accept, but no preference will be
+indicated.  Default value is 0.
+.TP
+\fBSSLAllowClientRenegotiation\fR 0|1|2
+If this value is 0, client initiated renegotiation will be disabled.  This will mitigate
+DoS exploits based on client renegotiation, regardless of the patch status of clients and
+servers related to "Secure renegotiation".  If the value is 1, secure renegotiation is
+supported.  If the value is 2, insecure renegotiation is supported, with unpatched
+clients.  /fBThis can lead to a DoS and a Man in the Middle attack!/fR  Default value is 0.
 .TP
 \fBCAlist\fR "CAcert_file"
 Set the list of "trusted" CA's for this server. The CAcert_file is a file containing
@@ -550,6 +596,14 @@ the service matching is attempted.
 \fBDynScale\fR 0|1
 Enable or disable dynamic rescaling for the current service. This value will
 override the value globally defined.
+.TP
+\fBDisabled\fR 0|1
+Start
+.B Pound
+with this service disabled (1) or enabled (0). If started as disabled, the
+service can be later enabled with
+.I poundctl
+(8).
 .TP
 \fBBackEnd\fR
 Directives enclosed between a
@@ -682,6 +736,14 @@ the "High Availability" section for a more detailed discussion. By default
 .B Pound
 uses the same address as the back-end server, but you may use a separate address
 if you wish. This directive applies only to non Unix-domain servers.
+.TP
+\fBDisabled\fR 0|1
+Start
+.B Pound
+with this back-end disabled (1) or enabled (0). If started as disabled, the
+back-end can be later enabled with
+.I poundctl
+(8).
 .SH "Emergency"
 The emergency server will be used once all existing back-ends are "dead".
 All configuration directives enclosed between
