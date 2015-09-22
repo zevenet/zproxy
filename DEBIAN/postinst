@@ -171,7 +171,10 @@ else
 fi
 
 #Flush apt sources
-echo > /etc/apt/sources.list
-( (sleep 5; /usr/bin/apt-get update) 2> /dev/null ) &
+if [ `dpkg --print-architecture` != "i386" ];
+then
+	echo > /etc/apt/sources.list
+	( (sleep 5; /usr/bin/apt-get update) 2> /dev/null ) &
+fi
 
 echo "Last version of Zen Load Balancer update completed..."
