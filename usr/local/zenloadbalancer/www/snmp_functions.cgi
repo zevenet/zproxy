@@ -178,17 +178,11 @@ sub setSnmpdService($snmpd_enabled)
 	# perform runlevel change
 	if ( $snmpd_enabled eq 'true' )
 	{
-		if ( !-e "/etc/rc2.d/S02snmpd" )
-		{
-			$return_code = system ( "$ln -s ../init.d/snmpd /etc/rc2.d/S02snmpd" );
-		}
+		$return_code = system ( "$insserv snmpd" );
 	}
 	else
 	{
-		if ( -e "/etc/rc2.d/S02snmpd" )
-		{
-			$return_code = system ( "$rm /etc/rc2.d/S02snmpd" );
-		}
+		$return_code = system ( "$insserv -r snmpd" );
 	}
 
 	# show message if failed

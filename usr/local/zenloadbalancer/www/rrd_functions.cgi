@@ -152,9 +152,10 @@ sub genCpuGraph($type,$graph,$time)
 		"GPRINT:tused:AVERAGE:Avg\\:%8.2lf %%",
 		"GPRINT:tused:MAX:Max\\:%8.2lf %%\\n"
 	);
-
-	if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n" }
-
+	if ( $ERROR = RRDs::error )
+	{
+		print "$0: unable to generate $graph: $ERROR\n";
+	}
 }
 
 #
@@ -181,10 +182,41 @@ sub genDiskGraph($type,$graph,$time)
 		}
 	}
 
-	RRDs::graph( "$graph", "--start=-1$time", "-v $partition MOUNTED IN $mount (USED:$size%)", "-h", "$height", "-w", "$width", "--lazy", "-l 0", "-a", "$imagetype", "DEF:tot=$rrdap_dir$rrd_dir$partitions$db_hd:tot:AVERAGE", "DEF:used=$rrdap_dir$rrd_dir$partitions$db_hd:used:AVERAGE", "DEF:free=$rrdap_dir$rrd_dir$partitions$db_hd:free:AVERAGE", "AREA:tot#aaa8e4:Total\\t", "GPRINT:tot:LAST:Last\\:%8.2lf %s", "GPRINT:tot:MIN:Min\\:%8.2lf %s", "GPRINT:tot:AVERAGE:Avg\\:%8.2lf %s", "GPRINT:tot:MAX:Max\\:%8.2lf %s\\n", "LINE2:used#E0E02D:Used\\t", "GPRINT:used:LAST:Last\\:%8.2lf %s", "GPRINT:used:MIN:Min\\:%8.2lf %s", "GPRINT:used:AVERAGE:Avg\\:%8.2lf %s", "GPRINT:used:MAX:Max\\:%8.2lf %s\\n", "LINE2:free#46F2A2:Free\\t", "GPRINT:free:LAST:Last\\:%8.2lf %s", "GPRINT:free:MIN:Min\\:%8.2lf %s", "GPRINT:free:AVERAGE:Avg\\:%8.2lf %s", "GPRINT:free:MAX:Max\\:%8.2lf %s\\n" );
-
-	if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n" }
-
+	RRDs::graph(
+				 "$graph",
+				 "--start=-1$time",
+				 "-v $partition MOUNTED IN $mount (USED:$size%)",
+				 "-h",
+				 "$height",
+				 "-w",
+				 "$width",
+				 "--lazy",
+				 "-l 0",
+				 "-a",
+				 "$imagetype",
+				 "DEF:tot=$rrdap_dir$rrd_dir$partitions$db_hd:tot:AVERAGE",
+				 "DEF:used=$rrdap_dir$rrd_dir$partitions$db_hd:used:AVERAGE",
+				 "DEF:free=$rrdap_dir$rrd_dir$partitions$db_hd:free:AVERAGE",
+				 "AREA:tot#aaa8e4:Total\\t",
+				 "GPRINT:tot:LAST:Last\\:%8.2lf %s",
+				 "GPRINT:tot:MIN:Min\\:%8.2lf %s",
+				 "GPRINT:tot:AVERAGE:Avg\\:%8.2lf %s",
+				 "GPRINT:tot:MAX:Max\\:%8.2lf %s\\n",
+				 "LINE2:used#E0E02D:Used\\t",
+				 "GPRINT:used:LAST:Last\\:%8.2lf %s",
+				 "GPRINT:used:MIN:Min\\:%8.2lf %s",
+				 "GPRINT:used:AVERAGE:Avg\\:%8.2lf %s",
+				 "GPRINT:used:MAX:Max\\:%8.2lf %s\\n",
+				 "LINE2:free#46F2A2:Free\\t",
+				 "GPRINT:free:LAST:Last\\:%8.2lf %s",
+				 "GPRINT:free:MIN:Min\\:%8.2lf %s",
+				 "GPRINT:free:AVERAGE:Avg\\:%8.2lf %s",
+				 "GPRINT:free:MAX:Max\\:%8.2lf %s\\n"
+	);
+	if ( $ERROR = RRDs::error )
+	{
+		print "$0: unable to generate $graph: $ERROR\n";
+	}
 }
 
 #
@@ -194,9 +226,38 @@ sub genLoadGraph($type,$graph,$time)
 	my ( $type, $graph, $time ) = @_;
 	my $db_load = "$type.rrd";
 
-	RRDs::graph( "$graph", "--imgformat=$imagetype", "--start=-1$time", "--width=$width", "--height=$height", "--alt-autoscale-max", "--lower-limit=0", "--vertical-label=LOAD AVERAGE", "DEF:load=$rrdap_dir$rrd_dir$db_load:load:AVERAGE", "DEF:load5=$rrdap_dir$rrd_dir$db_load:load5:AVERAGE", "DEF:load15=$rrdap_dir$rrd_dir$db_load:load15:AVERAGE", "LINE2:load#AAA8E4:last minute\\t\\t", "GPRINT:load:LAST:Last\\:%3.2lf", "GPRINT:load:MIN:Min\\:%3.2lf", "GPRINT:load:AVERAGE:Avg\\:%3.2lf", "GPRINT:load:MAX:Max\\:%3.2lf\\n", "LINE2:load5#EEE8A1:last 5 minutes\\t", "GPRINT:load5:LAST:Last\\:%3.2lf", "GPRINT:load5:MIN:Min\\:%3.2lf", "GPRINT:load5:AVERAGE:Avg\\:%3.2lf", "GPRINT:load5:MAX:Max\\:%3.2lf\\n", "LINE2:load15#FF0000:last 15 minutes\\t", "GPRINT:load15:LAST:Last\\:%3.2lf", "GPRINT:load15:MIN:Min\\:%3.2lf", "GPRINT:load15:AVERAGE:Avg\\:%3.2lf", "GPRINT:load15:MAX:Max\\:%3.2lf\\n" );
-	if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n" }
-
+	RRDs::graph(
+				 "$graph",
+				 "--imgformat=$imagetype",
+				 "--start=-1$time",
+				 "--width=$width",
+				 "--height=$height",
+				 "--alt-autoscale-max",
+				 "--lower-limit=0",
+				 "--vertical-label=LOAD AVERAGE",
+				 "DEF:load=$rrdap_dir$rrd_dir$db_load:load:AVERAGE",
+				 "DEF:load5=$rrdap_dir$rrd_dir$db_load:load5:AVERAGE",
+				 "DEF:load15=$rrdap_dir$rrd_dir$db_load:load15:AVERAGE",
+				 "LINE2:load#AAA8E4:last minute\\t\\t",
+				 "GPRINT:load:LAST:Last\\:%3.2lf",
+				 "GPRINT:load:MIN:Min\\:%3.2lf",
+				 "GPRINT:load:AVERAGE:Avg\\:%3.2lf",
+				 "GPRINT:load:MAX:Max\\:%3.2lf\\n",
+				 "LINE2:load5#EEE8A1:last 5 minutes\\t",
+				 "GPRINT:load5:LAST:Last\\:%3.2lf",
+				 "GPRINT:load5:MIN:Min\\:%3.2lf",
+				 "GPRINT:load5:AVERAGE:Avg\\:%3.2lf",
+				 "GPRINT:load5:MAX:Max\\:%3.2lf\\n",
+				 "LINE2:load15#FF0000:last 15 minutes\\t",
+				 "GPRINT:load15:LAST:Last\\:%3.2lf",
+				 "GPRINT:load15:MIN:Min\\:%3.2lf",
+				 "GPRINT:load15:AVERAGE:Avg\\:%3.2lf",
+				 "GPRINT:load15:MAX:Max\\:%3.2lf\\n"
+	);
+	if ( $ERROR = RRDs::error )
+	{
+		print "$0: unable to generate $graph: $ERROR\n";
+	}
 }
 
 #
@@ -241,8 +302,10 @@ sub genMemGraph($type,$graph,$time)
 		"GPRINT:memc:AVERAGE:Avg\\:%8.2lf %s",
 		"GPRINT:memc:MAX:Max\\:%8.2lf %s\\n"
 	);
-	if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n" }
-
+	if ( $ERROR = RRDs::error )
+	{
+		print "$0: unable to generate $graph: $ERROR\n";
+	}
 }
 
 #
@@ -287,8 +350,10 @@ sub genMemSwGraph($type,$graph,$time)
 		"GPRINT:swc:AVERAGE:Avg\\:%8.2lf %s",
 		"GPRINT:swc:MAX:Max\\:%8.2lf %s\\n"
 	);
-	if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n" }
-
+	if ( $ERROR = RRDs::error )
+	{
+		print "$0: unable to generate $graph: $ERROR\n";
+	}
 }
 
 #
@@ -300,10 +365,39 @@ sub genNetGraph($type,$graph,$time)
 	my $if_name = $type;
 	$if_name =~ s/iface//g;
 
-	RRDs::graph( "$graph", "--start=-1$time", "-h", "$height", "-w", "$width", "--lazy", "-l 0", "-a", "$imagetype", "-v TRAFFIC ON $if_name", "DEF:in=$rrdap_dir$rrd_dir$db_if:in:AVERAGE", "DEF:out=$rrdap_dir$rrd_dir$db_if:out:AVERAGE", "CDEF:out_neg=out,-1,*", "AREA:in#32CD32:In ", "LINE1:in#336600", "GPRINT:in:LAST:Last\\:%5.1lf %sByte/sec", "GPRINT:in:MIN:Min\\:%5.1lf %sByte/sec", "GPRINT:in:AVERAGE:Avg\\:%5.1lf %sByte/sec", "GPRINT:in:MAX:Max\\:%5.1lf %sByte/sec\\n", "AREA:out_neg#4169E1:Out", "LINE1:out_neg#0033CC", "GPRINT:in:LAST:Last\\:%5.1lf %sByte/sec", "GPRINT:in:MIN:Min\\:%5.1lf %sByte/sec", "GPRINT:in:AVERAGE:Avg\\:%5.1lf %sByte/sec", "GPRINT:in:MAX:Max\\:%5.1lf %sByte/sec\\n", "HRULE:0#000000" );
-
-	if ( $ERROR = RRDs::error ) { print "$0: unable to generate $if_name traffic graph: $ERROR\n"; }
-
+	RRDs::graph(
+				 "$graph",
+				 "--start=-1$time",
+				 "-h",
+				 "$height",
+				 "-w",
+				 "$width",
+				 "--lazy",
+				 "-l 0",
+				 "-a",
+				 "$imagetype",
+				 "-v TRAFFIC ON $if_name",
+				 "DEF:in=$rrdap_dir$rrd_dir$db_if:in:AVERAGE",
+				 "DEF:out=$rrdap_dir$rrd_dir$db_if:out:AVERAGE",
+				 "CDEF:out_neg=out,-1,*",
+				 "AREA:in#32CD32:In ",
+				 "LINE1:in#336600",
+				 "GPRINT:in:LAST:Last\\:%5.1lf %sByte/sec",
+				 "GPRINT:in:MIN:Min\\:%5.1lf %sByte/sec",
+				 "GPRINT:in:AVERAGE:Avg\\:%5.1lf %sByte/sec",
+				 "GPRINT:in:MAX:Max\\:%5.1lf %sByte/sec\\n",
+				 "AREA:out_neg#4169E1:Out",
+				 "LINE1:out_neg#0033CC",
+				 "GPRINT:in:LAST:Last\\:%5.1lf %sByte/sec",
+				 "GPRINT:in:MIN:Min\\:%5.1lf %sByte/sec",
+				 "GPRINT:in:AVERAGE:Avg\\:%5.1lf %sByte/sec",
+				 "GPRINT:in:MAX:Max\\:%5.1lf %sByte/sec\\n",
+				 "HRULE:0#000000"
+	);
+	if ( $ERROR = RRDs::error )
+	{
+		print "$0: unable to generate $if_name traffic graph: $ERROR\n";
+	}
 }
 
 #
@@ -315,9 +409,35 @@ sub genFarmGraph($type,$graph,$time)
 	my $fname   = $type;
 	$fname =~ s/-farm$//g;
 
-	RRDs::graph( "$graph", "--start=-1$time", "-h", "$height", "-w", "$width", "--lazy", "-l 0", "-a", "$imagetype", "-v CONNECTIONS ON $fname farm", "DEF:pending=$rrdap_dir$rrd_dir$db_farm:pending:AVERAGE", "DEF:established=$rrdap_dir$rrd_dir$db_farm:established:AVERAGE", "LINE2:pending#FF0000:Pending Conns\\t", "GPRINT:pending:LAST:Last\\:%6.0lf ", "GPRINT:pending:MIN:Min\\:%6.0lf ", "GPRINT:pending:AVERAGE:Avg\\:%6.0lf ", "GPRINT:pending:MAX:Max\\:%6.0lf \\n", "LINE2:established#AAA8E4:Established C\\t", "GPRINT:established:LAST:Last\\:%6.0lf ", "GPRINT:established:MIN:Min\\:%6.0lf ", "GPRINT:established:AVERAGE:Avg\\:%6.0lf ", "GPRINT:established:MAX:Max\\:%6.0lf \\n" );
-	if ( $ERROR = RRDs::error ) { print "$0: unable to generate $farm farm graph: $ERROR\n"; }
-
+	RRDs::graph(
+			   "$graph",
+			   "--start=-1$time",
+			   "-h",
+			   "$height",
+			   "-w",
+			   "$width",
+			   "--lazy",
+			   "-l 0",
+			   "-a",
+			   "$imagetype",
+			   "-v farm conns $fname",
+			   "DEF:pending=$rrdap_dir$rrd_dir$db_farm:pending:AVERAGE",
+			   "DEF:established=$rrdap_dir$rrd_dir$db_farm:established:AVERAGE",
+			   "LINE2:pending#FF0000:Pending\\t",
+			   "GPRINT:pending:LAST:Last\\:%6.0lf ",
+			   "GPRINT:pending:MIN:Min\\:%6.0lf ",
+			   "GPRINT:pending:AVERAGE:Avg\\:%6.0lf ",
+			   "GPRINT:pending:MAX:Max\\:%6.0lf \\n",
+			   "LINE2:established#AAA8E4:Established\\t",
+			   "GPRINT:established:LAST:Last\\:%6.0lf ",
+			   "GPRINT:established:MIN:Min\\:%6.0lf ",
+			   "GPRINT:established:AVERAGE:Avg\\:%6.0lf ",
+			   "GPRINT:established:MAX:Max\\:%6.0lf \\n"
+	);
+	if ( $ERROR = RRDs::error )
+	{
+		print "$0: unable to generate $farm farm graph: $ERROR\n";
+	}
 }
 
 #function that returns the graph list to show

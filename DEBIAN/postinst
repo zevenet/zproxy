@@ -136,12 +136,13 @@ fi
 /sbin/modprobe nf_conntrack 2> /dev/null
 /sbin/modprobe ip_conntrack 2> /dev/null
 
-# Delete duplicated ZenLB link services
-if [ -f /etc/rc2.d/S02zenloadbalancer ];
-then
-	rm -f /etc/rc2.d/S01zenloadbalancer
-	rm -f /etc/rcS.d/S01zenloadbalancer
-fi
+# Delete manually setup ZenLB services
+rm -f /etc/rc2.d/S02zenloadbalancer
+rm -f /etc/rc2.d/S01zenloadbalancer
+rm -f /etc/rcS.d/S01zenloadbalancer
+
+# Add ZenLB services to boot process including dependencies
+insserv zenloadbalancer
 
 # Change profile in order to launch ZenBui
 #if [ -f /usr/local/zenloadbalancer/app/zenbui/zenbui.pl -a "`grep zenbui /etc/profile`" = "" ];

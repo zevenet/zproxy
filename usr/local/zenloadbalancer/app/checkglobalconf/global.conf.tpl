@@ -105,6 +105,8 @@ $l4sd="/usr/local/zenloadbalancer/app/l4s/bin/l4sd";
 $conntrack="/usr/sbin/conntrack";
 #Where is ln?
 $ln="/bin/ln";
+#Where is insserv?
+$ln="/sbin/insserv";
 
 #where is pound binary?
 $pound="/usr/local/zenloadbalancer/app/pound/sbin/pound";
