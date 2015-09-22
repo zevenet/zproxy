@@ -137,9 +137,7 @@ fi
 /sbin/modprobe ip_conntrack 2> /dev/null
 
 # Delete manually setup ZenLB services
-rm -f /etc/rc2.d/S02zenloadbalancer
-rm -f /etc/rc2.d/S01zenloadbalancer
-rm -f /etc/rcS.d/S01zenloadbalancer
+rm -f /etc/rc*.d/*zenloadbalancer
 
 # Add ZenLB services to boot process including dependencies
 insserv zenloadbalancer
