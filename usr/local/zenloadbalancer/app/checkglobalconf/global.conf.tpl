@@ -29,7 +29,7 @@ $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 #version ZEN
 $version="3.7";#update
 #Cipher PCI
-$cipher_pci="RC4-SHA";#update
+$cipher_pci="DEFAULT";#update
 #BUY SSL Certificates
 $buy_ssl="http://ecommerce.sofintel.net/ssl/ssl-certificate.aspx?ci=8347&prog_id=503889";
 #URL of dinamic content in global view
@@ -83,8 +83,6 @@ $openssl="/usr/bin/openssl";
 $unzip="/usr/bin/unzip";
 #Where is mv?
 $mv="/bin/mv";
-#Where is rm?
-$rm="/bin/rm";
 #Where is ls?
 $ls="/bin/ls";
 #Where is cp?
@@ -103,10 +101,8 @@ $gdnsd="/usr/local/zenloadbalancer/app/gdnsd/sbin/gdnsd";
 $l4sd="/usr/local/zenloadbalancer/app/l4s/bin/l4sd";
 #Where is conntrack?
 $conntrack="/usr/sbin/conntrack";
-#Where is ln?
-$ln="/bin/ln";
 #Where is insserv?
-$ln="/sbin/insserv";
+$insserv="/sbin/insserv";
 
 #where is pound binary?
 $pound="/usr/local/zenloadbalancer/app/pound/sbin/pound";

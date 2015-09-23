@@ -31,7 +31,6 @@ if ( $action eq "editfarm-farmlisten" )
 	&setFarmListen( $farmname, $farmlisten );
 	&successmsg( "HTTP listener modified" );
 	&setFarmRestart( $farmname );
-
 }
 
 if ( $action eq "editfarm-rewritelocation" )
@@ -39,7 +38,6 @@ if ( $action eq "editfarm-rewritelocation" )
 	&setFarmRewriteL( $farmname, "$rewritelocation" );
 	&successmsg( "Rewrite Location modified for farm $farmname" );
 	&setFarmRestart( $farmname );
-
 }
 
 if ( $action eq "editfarm-httpsbackends" )
@@ -49,17 +47,13 @@ if ( $action eq "editfarm-httpsbackends" )
 		&setFarmVS( $farmname, $service, "httpsbackend", $httpsbackend );
 		&successmsg( "HTTPS mode enabled for backends in service $service" );
 		&setFarmRestart( $farmname );
-
 	}
 	else
 	{
-
 		&setFarmVS( $farmname, $service, "httpsbackend", "" );
 		&successmsg( "HTTPS mode disabled for backends in service $service" );
 		&setFarmRestart( $farmname );
-
 	}
-
 }
 
 if ( $action eq "editfarm-redirect" )
@@ -73,21 +67,18 @@ if ( $action eq "editfarm-redirect" )
 	{
 		&errormsg( "Redirect doesn't begin with http or https" );
 	}
-
 }
 
 if ( $action eq "editfarm-vs" )
 {
 	&setFarmVS( $farmname, $service, "vs", $string );
 	&setFarmRestart( $farmname );
-
 }
 
 if ( $action eq "editfarm-urlp" )
 {
 	&setFarmVS( $farmname, $service, "urlp", $string );
 	&setFarmRestart( $farmname );
-
 }
 
 if ( $action eq "editfarm-maintenance" )
@@ -97,7 +88,6 @@ if ( $action eq "editfarm-maintenance" )
 	{
 		&successmsg( "Enabled maintenance mode for backend $id_server in service $service" );
 	}
-
 }
 
 #disable maintenance mode for servers
@@ -108,7 +98,6 @@ if ( $action eq "editfarm-nomaintenance" )
 	{
 		&successmsg( "Disabled maintenance mode for backend" );
 	}
-
 }
 
 #editfarm delete service
@@ -141,7 +130,6 @@ if ( $action eq "editfarm-httpsciphers" )
 	{
 		&setFarmCiphers( $farmname, $ciphers );
 	}
-
 }
 
 if ( $action eq "editfarm-httpscipherscustom" )
@@ -156,7 +144,6 @@ if ( $action eq "editfarm-httpscipherscustom" )
 		&setFarmCiphers( $farmname, "", $cipherc );
 		&successmsg( "Ciphers changed for farm $farmname" );
 		&setFarmRestart( $farmname );
-
 	}
 }
 
@@ -164,7 +151,6 @@ if ( $action eq "editfarm-httpscipherscustom" )
 
 if ( $action eq "editfarm-Name" )
 {
-
 	#Check if farmname has correct characters (letters, numbers and hyphens)
 	my $farmnameok = &checkFarmnameOK( $newfarmname );
 
@@ -179,7 +165,6 @@ if ( $action eq "editfarm-Name" )
 	}
 	else
 	{
-
 		#Check if the new farm's name alredy exists
 		$newffile = &getFarmFile( $newfarmname );
 		if ( $newffile != -1 )
@@ -188,7 +173,6 @@ if ( $action eq "editfarm-Name" )
 		}
 		else
 		{
-
 			#Stop farm
 			$oldfstat = &runFarmStop( $farmname, "true" );
 			if ( $oldfstat == 0 )
@@ -295,7 +279,6 @@ if ( $action eq "editfarm-restart" )
 	{
 		&errormsg( "The $farmname farm hasn't been restarted" );
 	}
-
 }
 
 if ( $action eq "editfarm-Err414" )
@@ -383,7 +366,6 @@ if ( $action eq "editfarm-saveserver" )
 	}
 	if ( $priority_server && ( $priority_server > 9 || $priority_server < 1 ) )
 	{
-
 		# For HTTP and HTTPS farms the priority field its the weight
 		&errormsg( "Invalid weight value for a real server, it must be 1-9" );
 		$error = 1;
@@ -393,7 +375,6 @@ if ( $action eq "editfarm-saveserver" )
 		&errormsg( "Invalid IP address and port for a real server, it can't be blank" );
 		$error = 1;
 	}
-
 	if ( $error == 0 )
 	{
 		$status = &setFarmServer( $id_server, $rip_server, $port_server, $max_server, $weight_server, $priority_server, $timeout_server, $farmname, $service );
@@ -410,7 +391,6 @@ if ( $action eq "editfarm-saveserver" )
 }
 
 #actions over farm
-
 if ( $action eq "editfarm-ConnTO-http" )
 {
 	$error = 0;
@@ -556,7 +536,6 @@ if ( $action eq "editfarm-sessionid" )
 	}
 	if ( $error == 0 )
 	{
-
 		#$status = &setFarmSessionId($param,$farmname,$service);
 		$status = &setFarmVS( $farmname, $service, "sessionid", "$string" );
 		if ( $status == 0 )
@@ -574,7 +553,6 @@ if ( $action eq "editfarm-sessionid" )
 #session type
 if ( $action eq "editfarm-typesession" )
 {
-
 	#$status = &setFarmSessionType($session,$farmname,$service);
 	$status = &setFarmVS( $farmname, $service, "session", "$session" );
 	if ( $status == 0 )
@@ -608,7 +586,6 @@ if ( $action eq "editfarm-addservice" )
 	{
 		&errormsg( "Service name is not valid, only allowed numbers, letters and hyphens." );
 	}
-
 }
 
 #farm guardian
@@ -766,80 +743,6 @@ else
 print "</select>";
 print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 
-#type session
-#print "<br>";
-#print "<b>Persistence session.</b>";
-#$session = &getFarmSessionType($farmname,$service);
-#if ($session == -1){
-#	$session = "nothing";
-#}
-#print "<form method=\"get\" action=\"index.cgi\">";
-#print "<input type=\"hidden\" name=\"action\" value=\"editfarm-typesession\">";
-#print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-#print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-#print "<select  name=\"session\">";
-#print "<option value=\"nothing\">no persistence</option>";
-#if ($session eq "IP"){
-#	print "<option value=\"IP\" selected=\"selected\">IP: client address</option>";
-#} else {
-#	print "<option value=\"IP\">IP: client address</option>";
-#}
-#if ($session eq "BASIC"){
-#	print "<option value=\"BASIC\" selected=\"selected\">BASIC: basic authentication</option>";
-#} else {
-#	print "<option value=\"BASIC\">BASIC: basic authentication</option>";
-#}
-#if ($session eq "URL"){
-#	print "<option value=\"URL\" selected=\"selected\">URL: a request parameter</option>";
-#} else {
-#	print "<option value=\"URL\">URL: a request parameter</option>";
-#}
-#if ($session eq "PARM"){
-#	print "<option value=\"PARM\" selected=\"selected\">PARM: a  URI parameter</option>";
-#} else {
-#	print "<option value=\"PARM\">PARM: a URI parameter</option>";
-#}
-#if ($session eq "COOKIE"){
-#	print "<option value=\"COOKIE\" selected=\"selected\">COOKIE: a certain cookie</option>";
-#} else {
-#	print "<option value=\"COOKIE\">COOKIE: a certain cookie</option>";
-#}
-#if ($session eq "HEADER"){
-#	print "<option value=\"HEADER\" selected=\"selected\">HEADER: A certains request header</option>";
-#} else {
-#	print "<option value=\"HEADER\">HEADER: A certains request header</option>";
-#}
-#print "</select>";
-#print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
-#
-##session TTL
-#if ($session ne "nothing" && $session){
-#	print "<br>";
-#	print "<b>Persistence session time to limit.</b>";
-#	@ttl = &getFarmMaxClientTime($farmname,$service);
-#	print "<form method=\"get\" action=\"index.cgi\">";
-#	print "<input type=\"hidden\" name=\"action\" value=\"editfarm-TTL\">";
-#	print "<input type=\"text\" value=\"@ttl[1]\" size=\"4\" name=\"param\">";
-#	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-#	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-#	print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
-#}
-#
-##session ID
-#$morelines = "false";
-#if ($session eq "URL" || $session eq "COOKIE" || $session eq "HEADER"){
-#	print "<br>";
-#	print "<b>Persistence session identifier.</b> <font size=1>*a cookie name, a header name or url value name</font>";
-#	$sessionid = &getFarmSessionId($farmname,$service);
-#	print "<form method=\"get\" action=\"index.cgi\">";
-#	print "<input type=\"hidden\" name=\"action\" value=\"editfarm-sessionid\">";
-#	print "<input type=\"text\" value=\"$sessionid\" size=\"20\" name=\"param\">";
-#	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-#	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-#	print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
-#	$morelines = "true";
-#}
-
 #acepted verbs
 #
 print "<br>";
@@ -865,6 +768,7 @@ else
 {
 	print "<option value=\"0\">$type0</option>";
 }
+
 if ( $httpverb == 1 )
 {
 	print "<option value=\"1\" selected=\"selected\">$type1</option>";
@@ -873,6 +777,7 @@ else
 {
 	print "<option value=\"1\">$type1</option>";
 }
+
 if ( $httpverb == 2 )
 {
 	print "<option value=\"2\" selected=\"selected\">$type2</option>";
@@ -881,6 +786,7 @@ else
 {
 	print "<option value=\"2\">$type2</option>";
 }
+
 if ( $httpverb == 3 )
 {
 	print "<option value=\"3\" selected=\"selected\">$type3</option>";
@@ -889,6 +795,7 @@ else
 {
 	print "<option value=\"3\">$type3</option>";
 }
+
 if ( $httpverb == 4 )
 {
 	print "<option value=\"4\" selected=\"selected\">$type4</option>";
@@ -899,7 +806,6 @@ else
 }
 print "</select>";
 print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
-
 print "<br>";
 
 $type = &getFarmType( $farmname );
@@ -980,33 +886,19 @@ if ( $type eq "https" )
 	if ( $cipher eq "cipherglobal" )
 	{
 		print "<option value=\"cipherglobal\" selected=\"selected\">All</option>\n";
+		print "<option value=\"ciphercustom\">Custom security</option>\n";
 	}
 	else
 	{
 		print "<option value=\"cipherglobal\">All</option>\n";
-	}
-	if ( $cipher eq "cipherpci" )
-	{
-		print "<option value=\"cipherpci\" selected=\"selected\">HIGH security / PCI compliance</option>\n";
-	}
-	else
-	{
-		print "<option value=\"cipherpci\">HIGH security / PCI compliance</option>\n";
-	}
-	if ( $cipher ne "cipherglobal" && $cipher ne "cipherpci" )
-	{
 		print "<option value=\"ciphercustom\" selected=\"selected\">Custom security</option>\n";
 		$morelinescipher = "true";
-	}
-	else
-	{
-		print "<option value=\"ciphercustom\">Custom security</option>\n";
 	}
 
 	print "</select>";
 	print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 	print "<br>";
-	if ( $cipher ne "cipherpci" && $cipher ne "cipherglobal" )
+	if ( $cipher ne "cipherglobal" )
 	{
 		print "Customize your ciphers.";
 		print "<form method=\"get\" action=\"\">";
@@ -1017,7 +909,6 @@ if ( $type eq "https" )
 
 		print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 	}
-
 }
 
 #END HTTPS FARM:
@@ -1038,7 +929,6 @@ print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 print "<select name=\"vip\">";
 foreach $ip ( @listinterfaces )
 {
-
 	if ( $ip !~ $clrip )
 	{
 		if ( $vip eq $ip )
@@ -1064,9 +954,7 @@ print "<input type=\"hidden\" name=\"action\" value=\"editfarm-addservice\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 print "<input type=\"text\" value=\"\" size=\"25\" name=\"service\">";
 print "<input type=\"submit\" value=\"Add\" name=\"buttom\" class=\"button small\"></form>";
-
 print "</form>";
-
 print "</div><div style=\"align:right; margin-left: 50%; \">";
 
 #Error messages
@@ -1153,13 +1041,10 @@ if ( $moreliness eq "true" )
 if ( $morelinescipher eq "true" )
 {
 	print "<br><br><br><br>";
-
 }
 
 print "</div>";
 print "<div style=\"clear:both;\"></div>";
-
-#print "</td></tr></table>";
 
 #Services
 
@@ -1182,13 +1067,10 @@ my $pos     = 0;
 $id_serverr = $id_server;
 foreach $line ( @file )
 {
-
 	if ( $first == 1 && $line =~ /Service.*/ )
 	{
-
 		if ( $vserver == 0 )
 		{
-
 			#Virtual Server
 			my $vser = &getFarmVS( $farmname, $sv, "vs" );
 			print "<form method=\"get\" action=\"index.cgi\">";
@@ -1253,6 +1135,7 @@ foreach $line ( @file )
 			{
 				print "<option value=\"IP\">IP: client address</option>";
 			}
+			
 			if ( $session eq "BASIC" )
 			{
 				print "<option value=\"BASIC\" selected=\"selected\">BASIC: basic authentication</option>";
@@ -1261,6 +1144,7 @@ foreach $line ( @file )
 			{
 				print "<option value=\"BASIC\">BASIC: basic authentication</option>";
 			}
+			
 			if ( $session eq "URL" )
 			{
 				print "<option value=\"URL\" selected=\"selected\">URL: a request parameter</option>";
@@ -1269,6 +1153,7 @@ foreach $line ( @file )
 			{
 				print "<option value=\"URL\">URL: a request parameter</option>";
 			}
+			
 			if ( $session eq "PARM" )
 			{
 				print "<option value=\"PARM\" selected=\"selected\">PARM: a  URI parameter</option>";
@@ -1277,6 +1162,7 @@ foreach $line ( @file )
 			{
 				print "<option value=\"PARM\">PARM: a URI parameter</option>";
 			}
+			
 			if ( $session eq "COOKIE" )
 			{
 				print "<option value=\"COOKIE\" selected=\"selected\">COOKIE: a certain cookie</option>";
@@ -1285,6 +1171,7 @@ foreach $line ( @file )
 			{
 				print "<option value=\"COOKIE\">COOKIE: a certain cookie</option>";
 			}
+			
 			if ( $session eq "HEADER" )
 			{
 				print "<option value=\"HEADER\" selected=\"selected\">HEADER: A certains request header</option>";
@@ -1457,7 +1344,6 @@ foreach $line ( @file )
 				print "<input type=\"hidden\" name=\"service\" value=\"$sv\">";
 				print "</form>";
 			}
-
 		}
 
 		print "<a name=\"backendlist-$sv\"></a>";
@@ -1539,16 +1425,8 @@ foreach $line ( @file )
 		#chomp($service);
 		#$service = @serv[1];
 		$service = $sv;
-
 	}
-	if ( $vserver == 0 && $first == 1 )
-	{
-
-	}
-
 }
-
-#print "</div>";
 
 close FR;
 
@@ -1679,7 +1557,6 @@ untie @contents;
 #content table
 if ( $action eq "editfarm-addserver" && $actualservice eq $service )
 {
-
 	#add new server to  server pool
 	$action = "editfarm";
 	$isrs   = "true";

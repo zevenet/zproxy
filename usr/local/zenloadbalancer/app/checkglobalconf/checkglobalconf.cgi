@@ -82,4 +82,4 @@ close FR;
 close FTPL;
 
 move($tglobal,$global);
-print "update global.conf file done...\n";
+print "Update global.conf file done...\n";

@@ -59,7 +59,6 @@ if ( $action =~ /^Modify$/ )
 		}
 		push ( @arrayapt, "deb $line\n" );
 		untie @arrayapt;
-
 	}
 
 	#dns modifications
@@ -84,7 +83,6 @@ if ( $action =~ /^Modify$/ )
 	}
 
 	untie @array;
-
 	#actions with Modify buttom
 }
 
@@ -95,7 +93,6 @@ if ( $var eq "Save DNS" )
 	print FW "$line";
 	&successmsg( "DNS saved" );
 	close FW;
-
 }
 
 #action Save APT
@@ -129,6 +126,7 @@ if ( $action eq "Save Management IP" )
 			&setSnmpdIp( $mng_ip );
 		}
 	}
+	&successmsg("Changes have been applied. You need to restart management services")
 }
 
 if ( $action eq "Change GUI https port" )
@@ -140,7 +138,6 @@ if ( $action eq "Restart Management Services" )
 {
 	if ( $pid = fork )
 	{
-
 		#$SIG{'CHLD'}='IGNORE';
 		#print "Proceso de restart lanzado ...";
 	}
@@ -187,7 +184,8 @@ if ( $action eq "edit-snmp" )
 	}
 }
 
-#open glogal file config
+### BEGIN Global information ###
+#open global file config
 $nextline = "false";
 open FR, "$globalcfg";
 while ( <FR> )
@@ -231,12 +229,11 @@ while ( <FR> )
 	{
 		print "</div></div></div>";
 	}
-
 }
-
 close FR;
+### END Global information ###
 
-#other configuration
+### BEGIN Local configuration ###
 print "<div class=\"container_12\">";
 print "<div class=\"grid_12\">";
 print "<div class=\"box-header\">Local configuration</div>";
@@ -296,7 +293,6 @@ else
 
 if ( grep ( /UP/, $lclusterstatus ) )
 {
-
 	#cluster active you only can use all interfaces or cluster real ip
 	if ( $hosthttp =~ /$lip/ )
 	{
@@ -330,11 +326,9 @@ else
 					print "<option value=\"$line[2]\">$line[0] $line[2]</option>";
 				}
 			}
-
 			close FI;
 		}
 	}
-
 }
 
 print "</select>";
@@ -360,7 +354,7 @@ print "<input type=\"submit\" value=\"Restart GUI Service\" name=\"action\" clas
 print "</form>";
 print "<br>";
 
-#snmp
+## START SNMP ##
 print "<form method=\"get\" action=\"index.cgi\">";
 
 # set global variables as in config file
@@ -396,9 +390,10 @@ print "<input type=\"hidden\" name=\"id\" value=\"3-1\">";
 print "<input type=\"hidden\" name=\"action\" value=\"edit-snmp\">";
 
 # Submit
-print "<input type=\"submit\" name=\"button\" value=\"Apply\" class=\"button small\">";
+print "<input type=\"submit\" name=\"button\" value=\"Modify\" class=\"button small\">";
 print "</form>";
 print "<br>";
+## END SNMP ##
 
 #dns
 print "<b>DNS servers</b>";
@@ -431,4 +426,4 @@ print "</div></div></div>";
 
 print "<br class=\"cl\">";
 print "</div><!--Content END--></div></div>";
-
+### END Local configuration ###

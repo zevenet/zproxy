@@ -28,6 +28,13 @@ print "
         <div id=\"page-content\">
 
                 <!--Content Header INI-->";
+
+if ( $farmname !~ /^[a-zA-Z0-9\-]*$/)
+{
+	&errormsg("Farm name is not valid. Only numbers, letters and hyphens are allowed");
+	$farmname = "";
+}
+
 if ( $farmname ne "" && $type != 1 )
 {
 	print "<h2>Manage::Farms\:\:$type\:\:$farmname</h2>";

@@ -97,7 +97,6 @@ if ( $action eq "Save" )
 
 if ( $action eq "addfarm" || $action eq "Save & continue" )
 {
-
 	print "<div class=\"container_12\">";
 	print "<div class=\"box-header\">Configure a new Farm</div>";
 	print "<div class=\"box stats\">";
@@ -126,7 +125,23 @@ if ( $action eq "addfarm" || $action eq "Save & continue" )
 		print "<option value=\"HTTP\">HTTP</option>\n";
 		print "<option value=\"L4xNAT\">L4xNAT</option>\n";
 		print "<option value=\"DATALINK\">DATALINK</option>\n";
-		print "<option value=\"GSLB\">GSLB</option>\n";
+
+		# Only one GSLB farm is possible
+		my $has_gslb = 0;
+		for my $farm_file ( &getFarmList() )
+		{
+			my $farm_name = &getFarmName( $farm_file );
+			my $farm_type = &getFarmType( $farm_name );
+			if ( $farm_type eq 'gslb' )
+			{
+				$has_gslb += 1;
+			}
+		}
+		if ( $has_gslb == 0 )
+		{
+			print "<option value=\"GSLB\">GSLB</option>\n";
+		}
+		
 		print "</select>";
 	}
 	else
@@ -138,7 +153,6 @@ if ( $action eq "addfarm" || $action eq "Save & continue" )
 
 	if ( $farmprotocol ne "" && $farmname ne "" )
 	{
-
 		#eth interface selection
 		print "<b>Virtual IP: </b>";
 		my $nvips;
@@ -166,7 +180,6 @@ if ( $action eq "addfarm" || $action eq "Save & continue" )
 
 		if ( $farmprotocol ne "DATALINK" && $farmprotocol ne "L4xNAT" )
 		{
-
 			#vip port
 			print "<b> Virtual Port(s): </b>";
 			print "<input type=\"text\" value=\"\" size=\"10\" name=\"vipp\">";

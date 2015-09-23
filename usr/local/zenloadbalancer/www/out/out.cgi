@@ -59,7 +59,7 @@ print "<br>";
 print "<center>";
 print "<strong>Good bye Zen Master!</strong><br>";
 print "<br><br>";
-print "<strong><a href=\"../\">Login</a></strong><br>";
+print "<strong><a href=\"../index.cgi\">Login</a></strong><br>";
 print "</center>";
 
 print "<br>";
