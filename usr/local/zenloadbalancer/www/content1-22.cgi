@@ -922,7 +922,8 @@ foreach $l_servers ( @run )
 	if ( @l_serv[2] ne "0.0.0.0" )
 	{
 		$isrs = "true";
-		if ( $action eq "editfarm-editserver" && $id_serverchange eq @l_serv[0] )
+		if (    $action eq "editfarm-editserver"
+			 && $id_serverchange eq @l_serv[0] )
 		{
 			print "<form method=\"get\" action=\"index.cgi\#backendlist\">";
 			print "<tr class=\"selected\">";

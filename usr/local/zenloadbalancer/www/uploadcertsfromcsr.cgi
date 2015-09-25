@@ -62,7 +62,9 @@ my $upload_filehandle = $query->upload( "fileup" );
 if ( $action eq "Upload" && $filename !~ /^$/ && $certname !~ /^$/ )
 {
 
-	if ( $filename =~ /\.pem$/ || $filename =~ /\.zip$/ || $filename =~ /\.cert$/ )
+	if (    $filename =~ /\.pem$/
+		 || $filename =~ /\.zip$/
+		 || $filename =~ /\.cert$/ )
 	{
 		if ( $filename =~ /\// )
 		{
@@ -116,7 +118,8 @@ if ( $action eq "Upload" && $filename !~ /^$/ && $certname !~ /^$/ )
 				{
 					$keyfile = $certname;
 					$keyfile =~ s/\.csr$/\.key/;
-					if ( -e "$upload_dir/$keyfile" && -e "$tmpdir/$certautfile" )
+					if (    -e "$upload_dir/$keyfile"
+						 && -e "$tmpdir/$certautfile" )
 					{
 						&createPemFromKeyCRT( $keyfile, $filename, $certautfile, $tmpdir );
 						my @eject = `$mv -f $upload_dir/$certname $tmpdir/ 2> /dev/null`;

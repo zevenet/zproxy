@@ -223,9 +223,11 @@ if ( $action eq "editfarm-saveserver" )
 	}
 	if ( $error == 0 )
 	{
-		$status =
-		  &setFarmServer( $id_server, $rip_server, $port_server, $max_server,
-						  $weight_server, $priority_server, $timeout_server, $farmname );
+		$status = &setFarmServer(
+								  $id_server,      $rip_server,    $port_server,
+								  $max_server,     $weight_server, $priority_server,
+								  $timeout_server, $farmname
+		);
 		if ( $status != -1 )
 		{
 			&runFarmStop( $farmname, "false" );
@@ -780,7 +782,9 @@ foreach $l_servers ( @run )
 		  "<td><input type=\"text\" size=\"12\"  name=\"rip_server\" value=\"@l_serv[1]\"> </td>";
 
 		#local interface
-		if ( @l_serv[2] eq "" || $farmprotocol eq "all" || $farmprotocol eq "sip" )
+		if (    @l_serv[2] eq ""
+			 || $farmprotocol eq "all"
+			 || $farmprotocol eq "sip" )
 		{
 			print
 			  "<td><input type=\"text\" size=\"12\"  name=\"port_server\" value=\"$vport\" $disabled></td>";
@@ -806,7 +810,9 @@ foreach $l_servers ( @run )
 		print "<tr>";
 		print "<td>@l_serv[0]</td>";
 		print "<td>@l_serv[1]</td>";
-		if ( @l_serv[2] eq "" || $farmprotocol eq "all" || $farmprotocol eq "sip" )
+		if (    @l_serv[2] eq ""
+			 || $farmprotocol eq "all"
+			 || $farmprotocol eq "sip" )
 		{
 			print "<td>$vport</td>";
 		}

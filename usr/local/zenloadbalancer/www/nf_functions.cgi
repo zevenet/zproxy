@@ -344,5 +344,42 @@ sub genIptMasquerade($fname,$nattype,$index,$proto,$mark,$state)
 	return $rule;
 }
 
+#
+sub getConntrack($orig_src, $orig_dst, $reply_src, $reply_dst, $proto)
+{
+	( $orig_src, $orig_dst, $reply_src, $reply_dst, $proto ) = @_;
+	my @output = ();
+	chomp ( $orig_src );
+	chomp ( $orig_dst );
+	chomp ( $reply_src );
+	chomp ( $reply_dst );
+	chomp ( $proto );
+	if ( $orig_src )
+	{
+		$orig_src = "-s $orig_src";
+	}
+	if ( $orig_dst )
+	{
+		$orig_dst = "-d $orig_dst";
+	}
+	if ( $reply_src )
+	{
+		$reply_src = "-r $reply_src";
+	}
+	if ( $reply_dst )
+	{
+		$reply_dst = "-q $reply_dst";
+	}
+	if ( $proto )
+	{
+		$proto = "-p $proto";
+	}
+	&logfile(
+		 "$conntrack -L $orig_src $orig_dst $reply_src $reply_dst $proto 2>/dev/null" );
+	@output =
+	  `$conntrack -L $orig_src $orig_dst $reply_src $reply_dst $proto 2>/dev/null`;
+	return @output;
+}
+
 # do not remove this
 1

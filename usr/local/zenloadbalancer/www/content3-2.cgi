@@ -437,7 +437,8 @@ for my $if ( @interfaces )
 			print "</tr>";
 		}
 
-		if ( ( $action eq "addvip" || $action eq "addvlan" ) && ( $if eq $toif ) )
+		if (    ( $action eq "addvip" || $action eq "addvlan" )
+			 && ( $if eq $toif ) )
 		{
 			print "<tr class=\"selected\">";
 			if ( $action eq "addvip" )
@@ -508,7 +509,8 @@ for my $if ( @interfaces )
 		{
 			my @filename = split ( '_', $file );
 			$iff = @filename[1];
-			if ( !( grep $_ eq $iff, @interfaces ) && !( grep $_ eq $iff, @interfacesdw ) )
+			if (    !( grep $_ eq $iff, @interfaces )
+				 && !( grep $_ eq $iff, @interfacesdw ) )
 			{
 				open FI, "$configdir/$file";
 				while ( $line = <FI> )

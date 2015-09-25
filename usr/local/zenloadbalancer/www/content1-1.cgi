@@ -173,9 +173,8 @@ print "</div>";
 ####################################
 
 print "\n";
-print "<div class=\"box-header\">Network traffic interfaces (mb) from "
-  . &uptime
-  . "</div>";
+print "<div class=\"box-header\">";
+print "Network traffic interfaces (mb) from " . &uptime print "</div>";
 print " <div class=\"box table\">
         <table>
         <thead>";
@@ -188,13 +187,17 @@ for ( my $i = 0 ; $i < $indice - 1 ; $i = $i + 2 )
 {
 	my @ifname = split ( ' ', $data_net[$i][0] );
 	print "<tr>";
-	print
-	  "<td>$ifname[0]</td><td>$data_net[$i][1]</td><td>$data_net[$i+1][1]</td>\n";
+	print "<td>$ifname[0]</td>";
+	print "<td>$data_net[$i][1]</td>";
+	print "<td>$data_net[$i+1][1]</td>\n";
 	print "</tr>";
 }
 
-print
-  "<tr style=\"background:none;\"><td colspan=3 style=\"text-align:center;\"><img src=\"img/graphs/graphnet.jpg\"></td></tr>";
+print "<tr style=\"background:none;\">";
+print "<td colspan=3 style=\"text-align:center;\">";
+print "<img src=\"img/graphs/graphnet.jpg\">";
+print "</td>";
+print "</tr>";
 
 print "</tbody>";
 print "</table>";
@@ -202,44 +205,71 @@ print "</div>";
 
 print "<br class=\"cl\" ></div>\n";
 
-print "<script src=\"https://code.jquery.com/jquery-latest.pack.js\"></script>
-<script>
-\$(document).ready(function(){
-  var container0 = \$('#support');
-  var container1 = \$('#products');
-  var container2 = \$('#news');
-  var fixedsupport = '<a href=\"http://www.zenloadbalancer.com/support-programs/?zlb_gui\" target=\"_blank\"><i class=\"fa fa-support fa-2x\"></i>&nbsp;&nbsp;Get Support for Zen Community and Enterprise Edition</a><br><a href=\"https://www.sofintel.net/support?zlb_gui\" target=\"_blank\"><i class=\"fa fa-users fa-2x\"></i>&nbsp;&nbsp;Already have Professional Support? Open a Support Request here</a><br>';
-  var fixedproducts = '<a href=\"http://www.zenloadbalancer.com/products/?zlb_gui\" target=\"_blank\"><i class=\"fa fa-tasks fa-2x\"></i>&nbsp;&nbsp;Get more from Zen with Enterprise Edition Appliances</a><br><a href=\"http://ecommerce.sofintel.net/ssl/ssl-certificate.aspx\" target=\"_blank\"><i class=\"fa fa-certificate fa-2x\"></i>&nbsp;&nbsp;Get your best Zen-Ready SSL Certificates at the best price *</a><br><br><font size=1>&nbsp;&nbsp;&nbsp;* We are a Starfield Technologies supplier&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><<img src=\"/img/img_verified_logo.gif\" title=\"Verified by Starfield Technologies\">';
-  var fixednews = 'ZLB News<br><a href=\"http://www.zenloadbalancer.com/news/?zlb_gui\" target=\"_blank\"><i class=\"fa fa-info-circle fa-2x\"></i>&nbsp;&nbsp;Visit the news page on our WEB site</a><br>';
-  var url = '$url';
-  window.connect = 'false';
-  \$.getJSON(url + '?callback=?&uuid=$systemuuid',
-     function(data){
-	window.connect = 'true';
-	if(data.results[0] == ''){
-		container0.html(fixedsupport);
-	}
-	else {
-		container0.html(data.results[0]);
-	}
-	if(data.results[1] == ''){
-		container1.html(fixedproducts);
-	}
-	else{
-		container1.html(data.results[1]);
-	}
-	if(data.results[2] == ''){
-            	container2.html(fixednews);
-	} 
-	else{
-		container2.html(data.results[2]);
-	}
-     }
-  );
-  if(window.connect == 'false'){
-    container0.html(fixedsupport);
-    container1.html(fixedproducts);
-    container2.html(fixednews);
-  }
-});
-</script>";
+print "<script src=\"https://code.jquery.com/jquery-latest.pack.js\"></script>"
+  . "<script>"
+  . "\$(document).ready(function(){"
+  . "var container0 = \$('#support');"
+  . "var container1 = \$('#products');"
+  . "var container2 = \$('#news');"
+
+  . "var fixedsupport = "
+  . "'<a href=\"http://www.zenloadbalancer.com/support-programs/?zlb_gui\" target=\"_blank\">"
+  . "<i class=\"fa fa-support fa-2x\"></i>"
+  . "&nbsp;&nbsp;"
+  . "Get Support for Zen Community and Enterprise Edition"
+  . "</a><br>"
+  . "<a href=\"https://www.sofintel.net/support?zlb_gui\" target=\"_blank\">"
+  . "<i class=\"fa fa-users fa-2x\"></i>"
+  . "&nbsp;&nbsp;"
+  . "Already have Professional Support? Open a Support Request here"
+  . "</a><br>';"
+
+  . "var fixedproducts = "
+  . "'<a href=\"http://www.zenloadbalancer.com/products/?zlb_gui\" target=\"_blank\">"
+  . "<i class=\"fa fa-tasks fa-2x\"></i>"
+  . "&nbsp;&nbsp;"
+  . "Get more from Zen with Enterprise Edition Appliances"
+  . "</a><br>"
+  . "<a href=\"http://ecommerce.sofintel.net/ssl/ssl-certificate.aspx\" target=\"_blank\">"
+  . "<i class=\"fa fa-certificate fa-2x\"></i>"
+  . "&nbsp;&nbsp;"
+  . "Get your best Zen-Ready SSL Certificates at the best price *"
+  . "</a><br><br>"
+  . "<font size=1>"
+  . "&nbsp;&nbsp;&nbsp;"
+  . "* We are a Starfield Technologies supplier"
+  . "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+  . "</font>"
+  . "<img src=\"/img/img_verified_logo.gif\" title=\"Verified by Starfield Technologies\">';"
+
+  . "var fixednews = "
+  . "'ZLB News<br>"
+  . "<a href=\"http://www.zenloadbalancer.com/news/?zlb_gui\" target=\"_blank\">"
+  . "<i class=\"fa fa-info-circle fa-2x\"></i>"
+  . "&nbsp;&nbsp;"
+  . "Visit the news page on our WEB site</a><br>';"
+
+  . "var url = '$url';"
+  . "window.connect = 'false';"
+  . "\$.getJSON(url + '?callback=?&uuid=$systemuuid',"
+  . "	function(data)" . "	{"
+  . "	window.connect = 'true';"
+  . "		if (data.results[0] == '')"
+  . " 			{ container0.html(fixedsupport);	}"
+  . "		else	{ container0.html(data.results[0]); }"
+  . "		if (data.results[1] == '')"
+  . "				{ container1.html(fixedproducts);	}"
+  . "		else	{ container1.html(data.results[1]);	}"
+  . "		if (data.results[2] == '')"
+  . "				{ container2.html(fixednews);		}"
+  . "		else	{ container2.html(data.results[2]); }"
+
+  . "	}"
+
+  . ");"
+
+  . "  if(window.connect == 'false'){"
+  . "    container0.html(fixedsupport);"
+  . "    container1.html(fixedproducts);"
+  . "    container2.html(fixednews);" . "  }" . "});"
+  . "</script>";

@@ -58,7 +58,9 @@ if ( $action eq "editfarm-httpsbackends" )
 
 if ( $action eq "editfarm-redirect" )
 {
-	if ( $string =~ /^http\:\/\//i || $string =~ /^https:\/\//i || $string =~ /^$/ )
+	if (    $string =~ /^http\:\/\//i
+		 || $string =~ /^https:\/\//i
+		 || $string =~ /^$/ )
 	{
 		&setFarmVS( $farmname, $service, "redirect", $string );
 		&setFarmRestart( $farmname );
@@ -539,8 +541,6 @@ if ( $action eq "editfarm-TTL" )
 	}
 	if ( $error == 0 )
 	{
-
-		#$status = &setFarmMaxClientTime(0,$param,$farmname,$service);
 		$status = &setFarmVS( $farmname, $service, "ttl", "$string" );
 		if ( $status == 0 )
 		{
@@ -1289,7 +1289,9 @@ foreach $line ( @file )
 
 			#session ID
 			$morelines = "false";
-			if ( $session eq "URL" || $session eq "COOKIE" || $session eq "HEADER" )
+			if (    $session eq "URL"
+				 || $session eq "COOKIE"
+				 || $session eq "HEADER" )
 			{
 				print "<br>";
 				print

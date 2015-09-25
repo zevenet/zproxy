@@ -47,7 +47,6 @@ if (    $action eq "Save"
 	 || $action eq "Save VIP"
 	 || $action eq "Configure cluster type" )
 {
-
 	#create new configuration cluster file
 	open FO, "> $filecluster";
 	print FO "MEMBERS\:$lhost\:$lip\:$rhost\:$rip\n";
@@ -59,34 +58,12 @@ if (    $action eq "Save"
 	close FO;
 }
 
-#if ($vipcl =~ /Disabled/ || $typecl =~ /Disabled/)
-#        {
-#my @eject = `pkill -9f zeninotify.pl`;
-#my @eject = `/etc/init.d/zenloadbalancer stop`;
-#if ($? == 0)
-#        {
-#        &successmsg("Zen Inotify stopped on local")
-#        }
-#
-#my @eject = `pkill -9 ucarp`;
-#if ($? == 0)
-#	{
-#	&successmsg("Zen Ucarp stopped on local")
-#	}
-#	&successmsg("Stopping cluster service on localhost");
-#	my @eject = `pkill -9
-#	#my @eject = `/etc/init.d/zenloadbalancer stop`;
-#        unlink($filecluster);
-#	$vipcl="";
-#	&successmsg("Cluster service stopped  on this host, please, now connect to GUI remote host  and stop cluster service");
-#        }
-
 if ( -e $filecluster )
 {
-
 	#get cluster's members data
 	@clmembers = &getClusterMembersData( $host, $filecluster );
 	$lhost = @clmembers[0];
+
 	if ( @clmembers[1] !~ /^$/ )
 	{
 		$lip = @clmembers[1];
@@ -174,12 +151,22 @@ if ( -e $filecluster )
 		&successmsg(
 			"Demoting the node to backup for maintenance, please wait and don't stop the process"
 		);
-		&logfile(
-			"$ucarp $ignoreifstate -r $deadratio --interface=@rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl -k 100 --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-		);
-		@eject = system (
-			"$ucarp $ignoreifstate -r $deadratio --interface=@rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl -k 100 --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-		);
+		my $ucarp_command =
+		    "$ucarp "
+		  . "$ignoreifstate "
+		  . "-r $deadratio "
+		  . "--interface=@rifname[0] "
+		  . "--srcip=$lip "
+		  . "--vhid=$idcluster "
+		  . "--pass=secret "
+		  . "--addr=$vipcl "
+		  . "-k 100 "
+		  . "--upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl "
+		  . " --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl "
+		  . " -B "
+		  . "-f local6";
+		&logfile( $ucarp_command );
+		@eject = system ( $ucarp_command );
 		sleep ( 10 );
 	}
 
@@ -200,30 +187,58 @@ if ( -e $filecluster )
 			  "Returning the node from maintenance, please wait and not stop the process" );
 		if ( $typecl =~ /^equal$/ )
 		{
-			&logfile(
-				"$ucarp $ignoreifstate -r $deadratio --interface=@rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-			);
-			my @eject = system (
-				"$ucarp $ignoreifstate -r $deadratio --interface=@rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-			);
+			my $ucarp_command =
+			    "$ucarp "
+			  . "$ignoreifstate "
+			  . "-r $deadratio "
+			  . "--interface=@rifname[0] "
+			  . "--srcip=$lip "
+			  . "--vhid=$idcluster "
+			  . "--pass=secret "
+			  . "--addr=$vipcl "
+			  . "--upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl "
+			  . "--downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl "
+			  . "-B "
+			  . "-f local6";
+			&logfile( $ucarp_command );
+			my @eject = system ( $ucarp_command );
 		}
 		elsif ( $typecl =~ /$lhost-$rhost/ )
 		{
-			&logfile(
-				"$ucarp $ignoreifstate -r $deadratio --interface=@rifname[0] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-			);
-			my @eject = system (
-				"$ucarp $ignoreifstate -r $deadratio --interface=@rifname[0] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-			);
+			my $ucarp_command =
+			    "$ucarp "
+			  . "$ignoreifstate "
+			  . "-r $deadratio "
+			  . "--interface=@rifname[0] "
+			  . "--srcip=$lip " . "-P "
+			  . "--vhid=$idcluster "
+			  . "--pass=secret "
+			  . "--addr=$vipcl "
+			  . "--upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl "
+			  . "--downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl "
+			  . "-B "
+			  . "-f local6";
+			&logfile( $ucarp_command );
+			my @eject = system ( $ucarp_command );
 		}
 		else
 		{
-			&logfile(
-				"$ucarp $ignoreifstate -r $deadratio --interface=@rifname[0] -k 50 --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-			);
-			my $eject = system (
-				"$ucarp $ignoreifstate -r $deadratio --interface=@rifname[0] -k 50 --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-			);
+			my $ucarp_command =
+			    "$ucarp "
+			  . "$ignoreifstate "
+			  . "-r $deadratio "
+			  . "--interface=@rifname[0] "
+			  . "-k 50 "
+			  . "--srcip=$lip "
+			  . "--vhid=$idcluster "
+			  . "--pass=secret "
+			  . "--addr=$vipcl "
+			  . "--upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl "
+			  . "--downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl "
+			  . "-B "
+			  . "-f local6";
+			&logfile( $ucarp_command );
+			my $eject = system ( $ucarp_command );
 		}
 		sleep ( 10 );
 	}
@@ -247,7 +262,6 @@ if ( -e $filecluster )
 		{
 			&errormsg( "RSA connection from $lhost ($lip) to $rhost ($rip) not works" );
 		}
-
 	}
 
 	#action configure connection
@@ -258,9 +272,6 @@ if ( -e $filecluster )
 		 && $rip !~ /^\$/
 		 && $vipcl !~ /^$/ )
 	{
-		###########################################
-		#my $user = "root";
-		#my $host = "$rip";
 		chomp ( $rip );
 		chomp ( $pass );
 
@@ -273,7 +284,6 @@ if ( -e $filecluster )
 										 restart_timeout_upon_receive => 1
 		);
 		eval {
-
 			# 2) logon to the SSH server using those credentials.
 			# test the login output to make sure we had success
 			$ssh->run_ssh() or die "SSH process couldn't start: $!";
@@ -325,7 +335,6 @@ if ( -e $filecluster )
 			}
 			else
 			{
-
 				#Check if can exec commands through ssh
 				my $checkcommand = "date > null";
 				$ssh->send( $checkcommand );    # using send() instead of exec()
@@ -452,7 +461,6 @@ if ( -e $filecluster )
 	#action configure cluster ucarp
 	if ( $action eq "Configure cluster type" && $typecl !~ /^$/ )
 	{
-
 		if ( $cable eq "Crossover cord" )
 		{
 			$ignoreifstate = "--ignoreifstate";
@@ -466,7 +474,6 @@ if ( -e $filecluster )
 		  `$ssh -o \"ConnectTimeout=10\" -o \"StrictHostKeyChecking=no\" root\@$rip \'$pen_bin\' 2>&1 `;
 		if ( $? == 0 )
 		{
-
 			#remote execution
 			my $ssh = Net::SSH::Expect->new(
 											 host    => "$rip",
@@ -491,19 +498,36 @@ if ( -e $filecluster )
 				&successmsg(
 					"Running Zen latency Service and Zen inotify Service, please wait and not stop the process"
 				);
-				&logfile(
-					"running on local: $ucarp -r $deadratio $ignoreifstate --interface=@ifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-				);
-				my @eject = system (
-					"$ucarp -r $deadratio $ignoreifstate --interface=@ifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-				);
+				my $ucarp_local_command =
+				    "$ucarp "
+				  . "-r $deadratio "
+				  . "$ignoreifstate "
+				  . "--interface=@ifname[0] "
+				  . "--srcip=$lip "
+				  . "--vhid=$idcluster "
+				  . "--pass=secret "
+				  . "--addr=$vipcl "
+				  . "--upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl "
+				  . "--downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl "
+				  . "-B "
+				  . "-f local6";
+				&logfile( "running on local: $ucarp_local_command" );
+				my @eject = system ( $ucarp_local_command );
 				sleep ( 10 );
-				&logfile(
-					"running on remote: $ucarp -r $deadratio $ignoreifstate --interface=@ifname[0] --srcip=$rip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-				);
-				my $eject = $ssh->exec(
-					"$ucarp -r $deadratio $ignoreifstate --interface=@ifname[0] --srcip=$rip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-				);
+				my $ucarp_remote_command =
+				    "$ucarp "
+				  . "-r $deadratio "
+				  . "$ignoreifstate "
+				  . "--interface=@ifname[0] "
+				  . "--srcip=$rip "
+				  . "--vhid=$idcluster "
+				  . "--pass=secret "
+				  . "--addr=$vipcl "
+				  . "--upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl "
+				  . "--downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl "
+				  . "-B "
+				  . "-f local6" & logfile( "running on remote: $ucarp_remote_command" );
+				my $eject = $ssh->exec( $ucarp_remote_command );
 				sleep ( 10 );
 				&successmsg( "Cluster configured on mode $lhost or $rhost can be masters" );
 				&successmsg(
@@ -514,13 +538,33 @@ if ( -e $filecluster )
 			{
 				&successmsg(
 							 "Running Zen latency Service and Zen inotify Service, please wait" );
-				my @eject = system (
-					"$ucarp -r $deadratio $ignoreifstate --interface=@ifname[0] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-				);
+				my @eject =
+				  system ( "$ucarp "
+					. "-r $deadratio "
+					. "$ignoreifstate "
+					. "--interface=@ifname[0] "
+					. "--srcip=$lip " . "-P "
+					. "--vhid=$idcluster "
+					. "--pass=secret "
+					. "--addr=$vipcl "
+					. "--upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl "
+					. "--downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+				  );
 				sleep ( 5 );
-				my $eject = $ssh->exec(
-					"$ucarp -r $deadratio $ignoreifstate --interface=@ifname[0] -k 50 --srcip=$rip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-				);
+				my $eject =
+				  $ssh->exec( "$ucarp "
+					. "-r $deadratio "
+					. "$ignoreifstate "
+					. "--interface=@ifname[0] "
+					. "-k 50 "
+					. "--srcip=$rip "
+					. "--vhid=$idcluster "
+					. "--pass=secret "
+					. "--addr=$vipcl "
+					. "--upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl "
+					. "--downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl "
+					. "-B "
+					. "-f local6" );
 				sleep ( 10 );
 				&successmsg(
 					 "Cluster configured on mode $lhost master and $rhost backup automatic failover"
@@ -590,14 +634,12 @@ if ( -e $filecluster )
 			}
 		}
 	}
-
 }
 
 print " <div class=\"container_12\">
        <div class=\"grid_12\">
        <div class=\"box-header\"> Cluster configuration </div>
-       <div class=\"box stats\">
-	";
+       <div class=\"box stats\">";
 
 opendir ( DIR, "$configdir" );
 @files = grep ( /^if.*\:.*$/, readdir ( DIR ) );
@@ -606,17 +648,14 @@ closedir ( DIR );
 #vip cluster form
 
 #cluster information
-
 print
   "<b>Cluster status <a href=\"index.cgi?id=$id\"><img src=\"img/icons/small/arrow_refresh.png\" title=\"Refresh\"></a>:</b><br>";
 
 print "<div id=\"page-header\"></div>";
 $error = "false";
 
-#if (($rhost && $lhost && $rip && $lip && $rip && $vipcl)){
 if ( ( $rhost && $lhost && $rip && $lip && $rip && $vipcl && $clstatus ) )
 {
-
 	#zenlatency is running on local:
 	my @ucarppidl = `$pidof -x ucarp`;
 	print "Zen latency ";
@@ -749,7 +788,6 @@ if ( ( $rhost && $lhost && $rip && $lip && $rip && $vipcl && $clstatus ) )
 			$error = "true";
 		}
 	}
-
 }
 else
 {
@@ -771,9 +809,7 @@ if ( $error eq "false" )
 		  "<input type=\"submit\" value=\"Force sync cluster from master to backup\" name=\"action\" class=\"button small\">";
 		print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 		print "</form>";
-
 	}
-
 }
 else
 {
@@ -784,19 +820,13 @@ print "<br>";
 print "<div id=\"page-header\"></div>";
 
 #cluster form
-
 if ( $error eq "true" )
 {
-
 	print "<form method=\"get\" action=\"index.cgi\">";
 	print
 	  "<b>Virtual IP for Cluster, or create new virtual <a href=\"index.cgi?id=3-2\">here</a>.</b> <font size=\"1\">*Virtual ips with status up are listed only</font>";
 	print "<br>";
 	print "<select name=\"vipcl\">\n";
-
-	#print "<option value=\"Disabled\">--Disabled--</option>";
-	#files with vip interface:
-	#search virtual active interfaces.
 
 	foreach $file ( @files )
 	{
@@ -857,12 +887,9 @@ if ( $error eq "true" )
 							chomp ( $lip );
 						}
 					}
-
 				}
-
 			}
 		}
-
 		close FINT;
 	}
 
@@ -881,7 +908,6 @@ if ( $error eq "true" )
 		print "<br>";
 		print "<br>";
 
-		#
 		print "<b>Remote hostname.</b>";
 		print "<br>";
 		print " <input type=\"text\" name=\"rhost\" value=\"$rhost\" size=12>";
@@ -910,7 +936,6 @@ if ( $error eq "true" )
 		print
 		  "<input type=\"submit\" value=\"Save\" name=\"action\" class=\"button small\">";
 
-#print "<input type=\"submit\" value=\"Test RSA connections\" name=\"action\" class=\"button small\">";
 		print "</form>";
 	}
 	print "<br>";
@@ -933,7 +958,6 @@ if ( $error eq "true" )
 		  "<input type=\"submit\" value=\"Configure RSA connection between nodes\" name=\"actionpost\" class=\"button small\">";
 		print "</form>";
 		print "<br>";
-
 	}
 }
 
@@ -943,7 +967,6 @@ if (    $rhost !~ /^$/
 	 && $lip !~ /^$/
 	 && $vipcl !~ /^$/ )
 {
-
 	#form for run and stop ucarp service
 	print "<form method=\"get\" action=\"index.cgi\">";
 	print "<b>Cluster type:</b>";
@@ -953,7 +976,6 @@ if (    $rhost !~ /^$/
 	print "<select name=\"typecl\">\n";
 	if ( $activecl eq "$lhost" || $clstatus eq "" )
 	{
-
 		if ( $typecl =~ /^$/ )
 		{
 			print
@@ -1046,11 +1068,8 @@ if (    $rhost !~ /^$/
 	print "<br>";
 }
 
-#print "<input type=\"submit\" value=\"Test connection\" name=\"action\" class=\"button small\">";
-
 print "<div id=\"page-header\"></div>";
 
-####
 if ( $vipcl !~ /^$/ && $clstatus eq "" )
 {
 	print "<form method=\"get\" action=\"index.cgi\">";

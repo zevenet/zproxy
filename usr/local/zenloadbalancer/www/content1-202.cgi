@@ -341,8 +341,8 @@ if ( $action eq "editfarm-saveserver" )
 			else
 			{
 				$status =
-				  &setFarmZoneResource( $id_server, $resource_server, $ttl_server, $type_server,
-										$rdata_server, $farmname, $service );
+				  &setFarmZoneResource( $id_server, $resource_server, $ttl_server,
+										$type_server, $rdata_server, $farmname, $service );
 				if ( $status != -1 )
 				{
 					&runFarmReload( $farmname );

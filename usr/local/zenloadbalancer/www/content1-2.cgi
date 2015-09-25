@@ -242,7 +242,9 @@ foreach $file ( @files )
 		if ( $type ne "datalink" )
 		{
 
-			if ( $farmname eq $name && $action ne "addfarm" && $action ne "Cancel" )
+			if (    $farmname eq $name
+				 && $action ne "addfarm"
+				 && $action ne "Cancel" )
 			{
 				print "<tr class=\"selected\">";
 			}
@@ -337,7 +339,9 @@ if ( $thereisdl eq "true" )
 
 			#print "@enddata<br>";
 
-			if ( $farmname eq $name && $action ne "addfarm" && $action ne "Cancel" )
+			if (    $farmname eq $name
+				 && $action ne "addfarm"
+				 && $action ne "Cancel" )
 			{
 				print "<tr class=\"selected\">";
 			}

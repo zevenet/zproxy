@@ -75,7 +75,8 @@ sub getSnmpdConfig()
 
 	## rocommunity line ##
 	# rocommunity public 0.0.0.0/0
-	my ( undef, $snmpd_community, $snmpd_scope ) = split ( /\s+/, $config_file[1] );
+	my ( undef, $snmpd_community, $snmpd_scope ) =
+	  split ( /\s+/, $config_file[1] );
 
 	# Close file
 	untie @config_file;

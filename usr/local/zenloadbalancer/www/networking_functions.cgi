@@ -36,8 +36,11 @@ sub checkport($host,$port)
 
 	#use strict;
 	use IO::Socket;
-	my $sock =
-	  new IO::Socket::INET( PeerAddr => $host, PeerPort => $port, Proto => 'tcp' );
+	my $sock = new IO::Socket::INET(
+									 PeerAddr => $host,
+									 PeerPort => $port,
+									 Proto    => 'tcp'
+	);
 
 	if ( $sock )
 	{
@@ -99,13 +102,19 @@ sub listactiveips($class)
 			#if ( $bc && ($bc !~ /^0\.0\.0\.0$/) )
 			#cluster ip will not be listed
 			$clrip = &clrip();
-			if ( $bc && $ip !~ /^127\.0\.0\.1$/ && $ip ne $clrip && $ip ne &GUIip() )
+			if (    $bc
+				 && $ip !~ /^127\.0\.0\.1$/
+				 && $ip ne $clrip
+				 && $ip ne &GUIip() )
 			{
-				if ( !$netmask )            { $netmask = "-"; }
-				if ( !$ip )                 { $ip      = "-"; }
-				if ( !$hwaddr )             { $hwaddr  = "-"; }
-				if ( $gw )                  { $gw      = "-"; }
-				if ( $flags & IFF_RUNNING ) { $nvips   = $nvips . " " . $if . "->" . $ip; }
+				if ( !$netmask ) { $netmask = "-"; }
+				if ( !$ip )      { $ip      = "-"; }
+				if ( !$hwaddr )  { $hwaddr  = "-"; }
+				if ( $gw )       { $gw      = "-"; }
+				if ( $flags & IFF_RUNNING )
+				{
+					$nvips = $nvips . " " . $if . "->" . $ip;
+				}
 			}
 		}
 	}
@@ -625,7 +634,8 @@ sub getNetstatFilter($proto,$state,$ninfo,$fpid,@netstat)
 	{
 		$proto = "";
 	}
-	my @output = grep { /${proto}.*\ ${ninfo}\ .*\ ${state}.*${lfpid}/ } @netstat;
+	my @output =
+	  grep { /${proto}.*\ ${ninfo}\ .*\ ${state}.*${lfpid}/ } @netstat;
 	return @output;
 }
 

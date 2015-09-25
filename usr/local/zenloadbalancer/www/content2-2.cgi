@@ -103,7 +103,9 @@ foreach $file ( @files )
 		if ( $type ne "datalink" )
 		{
 
-			if ( $farmname eq $name && $action ne "addfarm" && $action ne "Cancel" )
+			if (    $farmname eq $name
+				 && $action ne "addfarm"
+				 && $action ne "Cancel" )
 			{
 				print "<tr class=\"selected\">";
 			}
@@ -210,7 +212,9 @@ if ( $thereisdl eq "true" )
 			sleep ( 0.5 );
 			my @enddata = &getDevData( $vipp );
 
-			if ( $farmname eq $name && $action ne "addfarm" && $action ne "Cancel" )
+			if (    $farmname eq $name
+				 && $action ne "addfarm"
+				 && $action ne "Cancel" )
 			{
 				print "<tr class=\"selected\">";
 			}
