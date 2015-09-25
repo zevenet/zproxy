@@ -27,12 +27,12 @@
 #my @run = `$pen_ctl 127.0.0.1:$mport status`;
 
 if ( $viewtableclients eq "" ) { $viewtableclients = "no"; }
-if ( $viewtableconn    eq "" ) { $viewtableconn    = "no"; }
+if ( $viewtableconn eq "" )    { $viewtableconn    = "no"; }
 
 $type = &getFarmType( $farmname );
 
 if ( $viewtableclients eq "" ) { $viewtableclients = "no"; }
-if ( $viewtableconn    eq "" ) { $viewtableconn    = "no"; }
+if ( $viewtableconn eq "" )    { $viewtableconn    = "no"; }
 
 my @content = &getFarmBackendStatusCtl( $farmname );
 
@@ -68,7 +68,8 @@ foreach ( @backends )
 &refreshstats();
 print "<br>";
 my @back_header = split ( "\t", @backends[0] );
-print "<div class=\"box-header\">Real servers status <font size=1>&nbsp;&nbsp;&nbsp; $activeservbackends servers, $activebackends current</font>";
+print
+  "<div class=\"box-header\">Real servers status <font size=1>&nbsp;&nbsp;&nbsp; $activeservbackends servers, $activebackends current</font>";
 
 #print "<div class=\"box-header\">";
 # &refreshstats();
@@ -76,7 +77,8 @@ print "</div>\n";
 print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 print "<thead>\n";
 
-print "<tr><td>Server</td><td>Address</td><td>Port</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Clients</td><td>Weight</td><td>Priority</td></tr>\n";
+print
+  "<tr><td>Server</td><td>Address</td><td>Port</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Clients</td><td>Weight</td><td>Priority</td></tr>\n";
 print "</thead>";
 print "<tbody>";
 foreach ( @backends )
@@ -92,7 +94,8 @@ foreach ( @backends )
 		print "<td>@backends_data[2]</td>";
 		if ( $backends_data[3] eq "MAINTENANCE" )
 		{
-			print "<td><img src=\"img/icons/small/warning.png\" title=\"maintenance\"></td> ";
+			print
+			  "<td><img src=\"img/icons/small/warning.png\" title=\"maintenance\"></td> ";
 		}
 		elsif ( $backends_data[3] eq "UP" )
 		{
@@ -102,13 +105,15 @@ foreach ( @backends )
 		{
 			print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td> ";
 		}
-		$ip_backend     = $backends_data[1];
-		$port_backend   = $backends_data[2];
-		@netstat        = &getConntrack( "", $ip_backend, "", "", $type );
-		@synnetstatback = &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
-		$npend          = @synnetstatback;
+		$ip_backend   = $backends_data[1];
+		$port_backend = $backends_data[2];
+		@netstat      = &getConntrack( "", $ip_backend, "", "", $type );
+		@synnetstatback =
+		  &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
+		$npend = @synnetstatback;
 		print "<td>$npend</td>";
-		@stabnetstatback = &getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
+		@stabnetstatback =
+		  &getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
 		$nestab = @stabnetstatback;
 		print "<td>$nestab</td>";
 		print "<td>@backends_data[6] </td>";
@@ -139,28 +144,34 @@ else
 
 if ( $viewtableclients eq "yes" )
 {
-	print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=no&viewtableconn=$viewtableconn\" title=\"Minimize\"><img src=\"img/icons/small/bullet_toggle_minus.png\"></a>";
+	print
+	  "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=no&viewtableconn=$viewtableconn\" title=\"Minimize\"><img src=\"img/icons/small/bullet_toggle_minus.png\"></a>";
 }
 else
 {
-	print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=yes&viewtableconn=$viewtableconn\" title=\"Maximize\"><img src=\"img/icons/small/bullet_toggle_plus.png\"></a>";
+	print
+	  "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=yes&viewtableconn=$viewtableconn\" title=\"Maximize\"><img src=\"img/icons/small/bullet_toggle_plus.png\"></a>";
 }
 
-print "Client sessions status <font size=1>&nbsp;&nbsp;&nbsp; $totalsessions active clients</font></div>\n";
+print
+  "Client sessions status <font size=1>&nbsp;&nbsp;&nbsp; $totalsessions active clients</font></div>\n";
 print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 if ( $viewtableclients eq "yes" )
 {
 	print "<thead>\n";
-	print "<tr><td>Client</td><td>Address</td><td>Age(sec)</td><td>Last Server</td><td>Connects</td><td>Sent(mb)</td><td>Received(mb)</td></tr>\n";
+	print
+	  "<tr><td>Client</td><td>Address</td><td>Age(sec)</td><td>Last Server</td><td>Connects</td><td>Sent(mb)</td><td>Received(mb)</td></tr>\n";
 	print "</thead>";
 	print "<tbody>";
 
 	foreach ( @sessions )
 	{
 		my @s_backend = split ( "\t", $_ );
-		if ( @s_backend[0] =~ /^[0-9]/ && ( $ftracking == 0 || @s_backend[2] <= $ftracking ) )
+		if ( @s_backend[0] =~ /^[0-9]/
+			 && ( $ftracking == 0 || @s_backend[2] <= $ftracking ) )
 		{
-			print "<tr><td>@s_backend[0]  </td><td>@s_backend[1]  </td><td>@s_backend[2] </td><td>@s_backend[3] </td><td>@s_backend[4] </td><td>@s_backend[5] </td><td>@s_backend[6] </td></tr>";
+			print
+			  "<tr><td>@s_backend[0]  </td><td>@s_backend[1]  </td><td>@s_backend[2] </td><td>@s_backend[3] </td><td>@s_backend[4] </td><td>@s_backend[5] </td><td>@s_backend[6] </td></tr>";
 		}
 	}
 	print "</tbody>";
@@ -177,14 +188,17 @@ print "<div class=\"box-header\">";
 
 if ( $viewtableconn eq "yes" )
 {
-	print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=$viewtableclients&viewtableconn=no\" title=\"Minimize\"><img src=\"img/icons/small/bullet_toggle_minus.png\"></a>";
+	print
+	  "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=$viewtableclients&viewtableconn=no\" title=\"Minimize\"><img src=\"img/icons/small/bullet_toggle_minus.png\"></a>";
 }
 else
 {
-	print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=$viewtableclients&viewtableconn=yes\" title=\"Maximize\"><img src=\"img/icons/small/bullet_toggle_plus.png\"></a>";
+	print
+	  "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=$viewtableclients&viewtableconn=yes\" title=\"Maximize\"><img src=\"img/icons/small/bullet_toggle_plus.png\"></a>";
 }
 
-print "@conns_header[0]<font size=1>&nbsp;&nbsp;&nbsp; @conns_header[1] </font></div>\n";
+print
+  "@conns_header[0]<font size=1>&nbsp;&nbsp;&nbsp; @conns_header[1] </font></div>\n";
 print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 print "<thead>\n";
 
@@ -199,7 +213,8 @@ if ( $viewtableconn eq "yes" )
 		my @s_backend = split ( "\t", $_ );
 		if ( @s_backend[0] =~ /^[0-9]/ )
 		{
-			print "<tr><td>@s_backend[0]  </td><td>@s_backend[1]  </td><td>@s_backend[2] </td></tr>";
+			print
+			  "<tr><td>@s_backend[0]  </td><td>@s_backend[1]  </td><td>@s_backend[2] </td></tr>";
 		}
 	}
 	print "</tbody>";
@@ -213,7 +228,8 @@ print "<!--END MANAGE-->";
 print "<div id=\"page-header\"></div>";
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" value=\"1-2\" name=\"id\">";
-print "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
 print "</form>";
 print "<div id=\"page-header\"></div>";
 

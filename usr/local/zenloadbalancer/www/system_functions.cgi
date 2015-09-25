@@ -99,7 +99,16 @@ sub getMemStats()
 	$swfvalue = sprintf ( '%.2f', $swfvalue );
 	$swused   = sprintf ( '%.2f', $swused );
 
-	@data = ( [$mname, $mvalue], [$mfname, $mfvalue], ['MemUsed', $mused], [$mbname, $mbvalue], [$mcname, $mcvalue], [$swtname, $swtvalue], [$swfname, $swfvalue], ['SwapUsed', $swused], );
+	@data = (
+			  [$mname,     $mvalue],
+			  [$mfname,    $mfvalue],
+			  ['MemUsed',  $mused],
+			  [$mbname,    $mbvalue],
+			  [$mcname,    $mcvalue],
+			  [$swtname,   $swtvalue],
+			  [$swfname,   $swfvalue],
+			  ['SwapUsed', $swused],
+	);
 
 	close FR;
 	return @data;
@@ -181,7 +190,8 @@ sub getNetworkStats()
 
 	for ( $j = 0 ; $j <= $i ; $j++ )
 	{
-		push @data, [$interface[$j] . ' in', $interfacein[$j]], [$interface[$j] . ' out', $interfaceout[$j]];
+		push @data, [$interface[$j] . ' in', $interfacein[$j]],
+		  [$interface[$j] . ' out', $interfaceout[$j]];
 
 	}
 
@@ -231,7 +241,14 @@ sub getCPU()
 				$cpu_iowait1  = @line_s[5];
 				$cpu_irq1     = @line_s[6];
 				$cpu_softirq1 = @line_s[7];
-				$cpu_total1   = $cpu_user1 + $cpu_nice1 + $cpu_sys1 + $cpu_idle1 + $cpu_iowait1 + $cpu_irq1 + $cpu_softirq1;
+				$cpu_total1 =
+				  $cpu_user1 +
+				  $cpu_nice1 +
+				  $cpu_sys1 +
+				  $cpu_idle1 +
+				  $cpu_iowait1 +
+				  $cpu_irq1 +
+				  $cpu_softirq1;
 			}
 		}
 		close FR;
@@ -249,7 +266,14 @@ sub getCPU()
 				$cpu_iowait2  = @line_s[5];
 				$cpu_irq2     = @line_s[6];
 				$cpu_softirq2 = @line_s[7];
-				$cpu_total2   = $cpu_user2 + $cpu_nice2 + $cpu_sys2 + $cpu_idle2 + $cpu_iowait2 + $cpu_irq2 + $cpu_softirq2;
+				$cpu_total2 =
+				  $cpu_user2 +
+				  $cpu_nice2 +
+				  $cpu_sys2 +
+				  $cpu_idle2 +
+				  $cpu_iowait2 +
+				  $cpu_irq2 +
+				  $cpu_softirq2;
 			}
 
 		}
@@ -272,7 +296,8 @@ sub getCPU()
 		$cpu_softirq = ( 100 * $diff_cpu_softirq ) / $diff_cpu_total;
 
 		#	$cpu_total = (100*$diff_cpu_total)/$diff_cpu_total;
-		$cpu_usage = $cpu_user + $cpu_nice + $cpu_sys + $cpu_iowait + $cpu_irq + $cpu_softirq;
+		$cpu_usage =
+		  $cpu_user + $cpu_nice + $cpu_sys + $cpu_iowait + $cpu_irq + $cpu_softirq;
 
 	}
 	else
@@ -290,15 +315,24 @@ sub getCPU()
 	$cpu_idle    = sprintf ( "%.2f", $cpu_idle );
 	$cpu_usage   = sprintf ( "%.2f", $cpu_usage );
 
-	$cpu_user    =~ s/,/\./g;
-	$cpu_nice    =~ s/,/\./g;
-	$cpu_sys     =~ s/,/\./g;
-	$cpu_iowait  =~ s/,/\./g;
+	$cpu_user =~ s/,/\./g;
+	$cpu_nice =~ s/,/\./g;
+	$cpu_sys =~ s/,/\./g;
+	$cpu_iowait =~ s/,/\./g;
 	$cpu_softirq =~ s/,/\./g;
-	$cpu_idle    =~ s/,/\./g;
-	$cpu_usage   =~ s/,/\./g;
+	$cpu_idle =~ s/,/\./g;
+	$cpu_usage =~ s/,/\./g;
 
-	@data = ( ['CPUuser', $cpu_user], ['CPUnice', $cpu_nice], ['CPUsys', $cpu_sys], ['CPUiowait', $cpu_iowait], ['CPUirq', $cpu_irq], ['CPUsoftirq', $cpu_softirq], ['CPUidle', $cpu_idle], ['CPUusage', $cpu_usage], );
+	@data = (
+			  ['CPUuser',    $cpu_user],
+			  ['CPUnice',    $cpu_nice],
+			  ['CPUsys',     $cpu_sys],
+			  ['CPUiowait',  $cpu_iowait],
+			  ['CPUirq',     $cpu_irq],
+			  ['CPUsoftirq', $cpu_softirq],
+			  ['CPUidle',    $cpu_idle],
+			  ['CPUusage',   $cpu_usage],
+	);
 
 	return @data;
 

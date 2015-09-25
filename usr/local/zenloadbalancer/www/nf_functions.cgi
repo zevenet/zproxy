@@ -94,7 +94,8 @@ sub deleteIptRules($type,$desc,$table,$chain,@allrules)
 		my @sprule = split ( "\ ", $rule );
 		if ( $type eq "farm" )
 		{
-			&logfile( "deleteIptRules:: running '$iptables -t $table -D $chain @sprule[0]'" );
+			&logfile(
+					  "deleteIptRules:: running '$iptables -t $table -D $chain @sprule[0]'" );
 			my @run = `$iptables -t $table -D $chain @sprule[0]`;
 			&logfile( "deleteIptRules:: delete netfilter rule '$rule'" );
 			$status = $status + $?;
@@ -188,7 +189,8 @@ sub genIptMarkReturn($fname,$vip,$vport,$proto,$index,$state)
 	#		return $rule;
 	#	}
 
-	$rule = "$iptables -t mangle -A PREROUTING -d $vip -p $proto -m multiport --dports $vport -j RETURN -m comment --comment ' FARM\_$fname\_$index\_ '";
+	$rule =
+	  "$iptables -t mangle -A PREROUTING -d $vip -p $proto -m multiport --dports $vport -j RETURN -m comment --comment ' FARM\_$fname\_$index\_ '";
 
 	return $rule;
 
@@ -211,7 +213,8 @@ sub genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state)
 		$layer = "-p $proto -m multiport --dports $vport";
 	}
 
-	$rule = "$iptables -t mangle -A PREROUTING -m recent --name \"\_$fname\_$mark\_sessions\" --rcheck --seconds $ttl -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
+	$rule =
+	  "$iptables -t mangle -A PREROUTING -m recent --name \"\_$fname\_$mark\_sessions\" --rcheck --seconds $ttl -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
 
 	return $rule;
 }
@@ -219,7 +222,10 @@ sub genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state)
 #
 sub genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$state,$prob)
 {
-	my ( $fname, $nattype, $lbalg, $vip, $vport, $proto, $index, $mark, $value, $state, $prob ) = @_;
+	my (
+		 $fname, $nattype, $lbalg, $vip,   $vport, $proto,
+		 $index, $mark,    $value, $state, $prob
+	) = @_;
 
 	my $rule;
 
@@ -240,17 +246,20 @@ sub genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$st
 			$prob = $value;
 		}
 		$prob = $value / $prob;
-		$rule = "$iptables -t mangle -A PREROUTING -m statistic --mode random --probability $prob -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
+		$rule =
+		  "$iptables -t mangle -A PREROUTING -m statistic --mode random --probability $prob -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
 	}
 
 	if ( $lbalg eq "leastconn" )
 	{
-		$rule = "$iptables -t mangle -A PREROUTING -m condition --condition '\_$fname\_$mark\_' -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
+		$rule =
+		  "$iptables -t mangle -A PREROUTING -m condition --condition '\_$fname\_$mark\_' -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
 	}
 
 	if ( $lbalg eq "prio" )
 	{
-		$rule = "$iptables -t mangle -A PREROUTING -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
+		$rule =
+		  "$iptables -t mangle -A PREROUTING -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
 	}
 
 	return $rule;
@@ -259,7 +268,8 @@ sub genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$st
 #
 sub genIptRedirect($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$state)
 {
-	my ( $fname, $nattype, $index, $rip, $proto, $mark, $value, $persist, $state ) = @_;
+	my ( $fname, $nattype, $index, $rip, $proto, $mark, $value, $persist, $state )
+	  = @_;
 
 	my $rule;
 
@@ -282,7 +292,8 @@ sub genIptRedirect($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$sta
 		$persist = "";
 	}
 
-	$rule = "$iptables -t nat -A PREROUTING -m mark --mark $mark -j DNAT $layer --to-destination $rip $persist -m comment --comment ' FARM\_$fname\_$index\_ '";
+	$rule =
+	  "$iptables -t nat -A PREROUTING -m mark --mark $mark -j DNAT $layer --to-destination $rip $persist -m comment --comment ' FARM\_$fname\_$index\_ '";
 
 	return $rule;
 }
@@ -304,7 +315,8 @@ sub genIptSourceNat($fname,$vip,$nattype,$index,$proto,$mark,$state)
 		$layer = "-p $proto";
 	}
 
-	$rule = "$iptables -t nat -A POSTROUTING -m mark --mark $mark -j SNAT $layer --to-source $vip -m comment --comment ' FARM\_$fname\_$index\_ '";
+	$rule =
+	  "$iptables -t nat -A POSTROUTING -m mark --mark $mark -j SNAT $layer --to-source $vip -m comment --comment ' FARM\_$fname\_$index\_ '";
 
 	return $rule;
 }
@@ -326,7 +338,8 @@ sub genIptMasquerade($fname,$nattype,$index,$proto,$mark,$state)
 		$layer = "-p $proto";
 	}
 
-	$rule = "$iptables -t nat -A POSTROUTING -m mark --mark $mark -j MASQUERADE $layer -m comment --comment ' FARM\_$fname\_$index\_ '";
+	$rule =
+	  "$iptables -t nat -A POSTROUTING -m mark --mark $mark -j MASQUERADE $layer -m comment --comment ' FARM\_$fname\_$index\_ '";
 
 	return $rule;
 }

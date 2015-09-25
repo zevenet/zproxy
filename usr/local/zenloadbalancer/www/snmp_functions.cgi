@@ -234,22 +234,25 @@ sub applySnmpChanges($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_scope
 	}
 
 	# get config values of snmp server
-	my ( $cf_snmpd_enabled, $cf_snmpd_ip, $cf_snmpd_port, $cf_snmpd_community, $cf_snmpd_scope ) = ( &getSnmpdStatus(), &getSnmpdConfig() );
+	my (
+		 $cf_snmpd_enabled,   $cf_snmpd_ip, $cf_snmpd_port,
+		 $cf_snmpd_community, $cf_snmpd_scope
+	) = ( &getSnmpdStatus(), &getSnmpdConfig() );
 
 	my $conf_changed = 'false';
 
 	# configuration/service status logic
 	# setup config file if requested configuration changes
-	if (   $cf_snmpd_ip ne $snmpd_ip
-		|| $cf_snmpd_port ne $snmpd_port
-		|| $cf_snmpd_community ne $snmpd_community
-		|| $cf_snmpd_scope ne $snmpd_scope )
+	if (    $cf_snmpd_ip ne $snmpd_ip
+		 || $cf_snmpd_port ne $snmpd_port
+		 || $cf_snmpd_community ne $snmpd_community
+		 || $cf_snmpd_scope ne $snmpd_scope )
 	{
 		&setSnmpdConfig( $snmpd_ip, $snmpd_port, $snmpd_community, $snmpd_scope );
 		$conf_changed = 'true';
 	}
 
-	# if the desired snmp status is different to the current status => switch service
+   # if the desired snmp status is different to the current status => switch service
 	if ( $snmpd_enabled ne $cf_snmpd_enabled )
 	{
 		if ( &setSnmpdService( $snmpd_enabled ) )
@@ -260,7 +263,9 @@ sub applySnmpChanges($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_scope
 	}
 
 	# if snmp is on and want it on loading new configuration => restart server
-	elsif ( $snmpd_enabled eq 'true' && $cf_snmpd_enabled eq 'true' && $conf_changed eq 'true' )
+	elsif (    $snmpd_enabled eq 'true'
+			&& $cf_snmpd_enabled eq 'true'
+			&& $conf_changed eq 'true' )
 	{
 		if ( &setSnmpdStatus( 'false' ) || &setSnmpdStatus( 'true' ) )
 		{

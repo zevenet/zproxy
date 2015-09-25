@@ -38,7 +38,9 @@ if ( $action eq "Save" )
 	if ( $vip eq "" )
 	{
 		$error = "true";
-		&errormsg( "Please select a Virtual IP or add a new Virtual IP in \"Settings >> Interfaces\" Section" );
+		&errormsg(
+			"Please select a Virtual IP or add a new Virtual IP in \"Settings >> Interfaces\" Section"
+		);
 		$action = "addfarm";
 	}
 
@@ -58,7 +60,9 @@ if ( $action eq "Save" )
 			if ( $inuse eq "true" )
 			{
 				$error = "true";
-				&errormsg( "The Virtual Port $vipp in Virtual IP $vip is in use, select another port or add another Virtual IP" );
+				&errormsg(
+					"The Virtual Port $vipp in Virtual IP $vip is in use, select another port or add another Virtual IP"
+				);
 				$action = "addfarm";
 			}
 		}
@@ -81,12 +85,15 @@ if ( $action eq "Save" )
 		}
 		if ( $status == -2 )
 		{
-			&errormsg( "The $farmname farm already exists, please set a different farm name" );
+			&errormsg(
+					   "The $farmname farm already exists, please set a different farm name" );
 			$error = 1;
 		}
 		if ( $error == 0 )
 		{
-			&successmsg( "The $farmname farm has been added to VIP $vip over $fdev, now you can manage it" );
+			&successmsg(
+				"The $farmname farm has been added to VIP $vip over $fdev, now you can manage it"
+			);
 		}
 		else
 		{
@@ -141,12 +148,13 @@ if ( $action eq "addfarm" || $action eq "Save & continue" )
 		{
 			print "<option value=\"GSLB\">GSLB</option>\n";
 		}
-		
+
 		print "</select>";
 	}
 	else
 	{
-		print "<input type=\"text\" value=\"$farmprotocol\" size=\"10\" name=\"farmprotocol\" disabled >";
+		print
+		  "<input type=\"text\" value=\"$farmprotocol\" size=\"10\" name=\"farmprotocol\" disabled >";
 		print "<input type=\"hidden\" name=\"farmprotocol\" value=\"$farmprotocol\">";
 	}
 	print "<br><br>";
@@ -184,13 +192,17 @@ if ( $action eq "addfarm" || $action eq "Save & continue" )
 			print "<b> Virtual Port(s): </b>";
 			print "<input type=\"text\" value=\"\" size=\"10\" name=\"vipp\">";
 		}
-		print "<br><br><input type=\"submit\" value=\"Save\" name=\"action\" class=\"button small\">";
-		print "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
+		print
+		  "<br><br><input type=\"submit\" value=\"Save\" name=\"action\" class=\"button small\">";
+		print
+		  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
 	}
 	else
 	{
-		print "<input type=\"submit\" value=\"Save & continue\" name=\"action\" class=\"button small\">";
-		print "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
+		print
+		  "<input type=\"submit\" value=\"Save & continue\" name=\"action\" class=\"button small\">";
+		print
+		  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
 	}
 
 	print "</form>";

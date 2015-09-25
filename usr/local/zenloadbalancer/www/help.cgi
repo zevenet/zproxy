@@ -45,8 +45,8 @@ foreach my $pair ( @pairs )
 	my ( $name, $value ) = split ( /=/, $pair );
 
 	#
-	$name  =~ tr/+/ /;
-	$name  =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+	$name =~ tr/+/ /;
+	$name =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
 	$value =~ tr/+/ /;
 	$value =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
 

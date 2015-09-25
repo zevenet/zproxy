@@ -277,7 +277,9 @@ sub getFarmGSLBConfigIsOK($ffile)
 
 	my $output = -1;
 
-	&logfile( "getFarmGSLBConfigIsOK(): Executing $gdnsd -c $configdir\/$ffile/etc checkconf " );
+	&logfile(
+		"getFarmGSLBConfigIsOK(): Executing $gdnsd -c $configdir\/$ffile/etc checkconf "
+	);
 	my $run = `$gdnsd -c $configdir\/$ffile/etc checkconf 2>&1`;
 	$output = $?;
 	&logfile( "Execution output: $output " );
@@ -309,7 +311,8 @@ sub setFarmGSLB($fvip,$fvipp,$fname)
 	else
 	{
 		open FO, ">$configdir\/$fname\_$type.cfg\/etc\/config";
-		print FO ";up\noptions => {\n   listen = $fvip\n   dns_port = $fvipp\n   http_port = $httpport\n   http_listen = 127.0.0.1\n}\n\n";
+		print FO
+		  ";up\noptions => {\n   listen = $fvip\n   dns_port = $fvipp\n   http_port = $httpport\n   http_listen = 127.0.0.1\n}\n\n";
 		print FO "service_types => { \n\n}\n\n";
 		print FO "plugins => { \n\n}\n\n";
 		close FO;

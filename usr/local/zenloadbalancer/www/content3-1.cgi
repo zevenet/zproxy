@@ -83,6 +83,7 @@ if ( $action =~ /^Modify$/ )
 	}
 
 	untie @array;
+
 	#actions with Modify buttom
 }
 
@@ -126,7 +127,8 @@ if ( $action eq "Save Management IP" )
 			&setSnmpdIp( $mng_ip );
 		}
 	}
-	&successmsg("Changes have been applied. You need to restart management services")
+	&successmsg(
+				 "Changes have been applied. You need to restart management services" );
 }
 
 if ( $action eq "Change GUI https port" )
@@ -164,17 +166,24 @@ if ( $action eq "Restart Management Services" )
 	}
 	if ( $ipgui =~ /\*/ )
 	{
-		&successmsg( "Restarted Service, access to management services over any IP on port $guiport" );
+		&successmsg(
+			 "Restarted Service, access to management services over any IP on port $guiport"
+		);
 	}
 	else
 	{
-		&successmsg( "Restarted Service, access to management services over $ipgui IP on port $guiport <a href=\"https:\/\/$ipgui:$guiport\/index.cgi?id=$id\">go here</a>" );
+		&successmsg(
+			"Restarted Service, access to management services over $ipgui IP on port $guiport <a href=\"https:\/\/$ipgui:$guiport\/index.cgi?id=$id\">go here</a>"
+		);
 	}
 }
 
 if ( $action eq "edit-snmp" )
 {
-	if ( &applySnmpChanges( $snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_scope ) )
+	if (
+		 &applySnmpChanges( $snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_scope
+		 )
+	  )
 	{
 		&errormsg( "SNMP service changes have failed. Please check the logs" );
 	}
@@ -219,7 +228,8 @@ while ( <FR> )
 		print "<input type=\"hidden\" name=\"id\" value=\"3-1\">";
 		print "<input type=\"text\" value=\"$linea[1]\" size=\"20\" name=\"line\">";
 		print "<input type=\"hidden\" name=\"var\" value=\"$linea[0]\">";
-		print "<input type=\"submit\" value=\"Modify\" name=\"action\" class=\"button small\">";
+		print
+		  "<input type=\"submit\" value=\"Modify\" name=\"action\" class=\"button small\">";
 		print "</form>";
 		print "</div>";
 		print "<br>";
@@ -244,8 +254,10 @@ open FR, "<$confhttp";
 @file     = <FR>;
 $hosthttp = $file[0];
 close FR;
-print "<b>Management interface where is running GUI service and SNMP (if enabled).</b>";
-print "<font size=\"1\"> If cluster is up you only can select \"--All interfaces--\" option, or \"the cluster interface\". Changes need restart management services.</font>";
+print
+  "<b>Management interface where is running GUI service and SNMP (if enabled).</b>";
+print
+  "<font size=\"1\"> If cluster is up you only can select \"--All interfaces--\" option, or \"the cluster interface\". Changes need restart management services.</font>";
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"3-1\">";
 
@@ -319,7 +331,8 @@ else
 				chomp ( $line[2] );
 				if ( $hosthttp =~ /$line[2]/ )
 				{
-					print "<option value=\"$line[2]\" selected=\"selected\">$line[0] $line[2]</option>";
+					print
+					  "<option value=\"$line[2]\" selected=\"selected\">$line[0] $line[2]</option>";
 				}
 				else
 				{
@@ -333,8 +346,10 @@ else
 
 print "</select>";
 
-print "<input type=\"submit\" value=\"Save Management IP\" name=\"action\" class=\"button small\">";
-print "<input type=\"submit\" value=\"Restart Management Services\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Save Management IP\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Restart Management Services\" name=\"action\" class=\"button small\">";
 print "<br>";
 print "<br>";
 print "</form>";
@@ -345,12 +360,15 @@ if ( $guiport =~ /^$/ )
 {
 	$guiport = 444;
 }
-print "<b>HTTPS Port where is running GUI service.</b><font size=\"1\"> Default is 444. Changes need restart GUI service.</font>";
+print
+  "<b>HTTPS Port where is running GUI service.</b><font size=\"1\"> Default is 444. Changes need restart GUI service.</font>";
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"3-1\">";
 print "<input type=\"text\" name=\"guiport\" value=\"$guiport\" size=12>";
-print "<input type=\"submit\" value=\"Change GUI https port\" name=\"action\" class=\"button small\">";
-print "<input type=\"submit\" value=\"Restart GUI Service\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Change GUI https port\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Restart GUI Service\" name=\"action\" class=\"button small\">";
 print "</form>";
 print "<br>";
 
@@ -373,24 +391,28 @@ print "&nbsp;<b>SNMP Service</b><br>";
 
 # SNMP port
 print "<font size=1>Port: </font>";
-print "<input type=\"number\" name=\"snmpd_port\" value=\"$snmpd_port\" size=\"5\" min=\"1\" max=\"65535\" required>";
+print
+  "<input type=\"number\" name=\"snmpd_port\" value=\"$snmpd_port\" size=\"5\" min=\"1\" max=\"65535\" required>";
 print "<br>";
 
 # SNMP community
 print "<font size=1>Community name: </font>";
-print "<input type=\"text\" name=\"snmpd_community\" value=\"$snmpd_community\" size=\"12\" required >";
+print
+  "<input type=\"text\" name=\"snmpd_community\" value=\"$snmpd_community\" size=\"12\" required >";
 print "<br>";
 
 # IP or subnet with access to SNMP server
 print "<font size=1>IP or subnet with access: </font>";
-print "<input type=\"text\" name=\"snmpd_scope\" value=\"$snmpd_scope\" size=\"12\" required>";
+print
+  "<input type=\"text\" name=\"snmpd_scope\" value=\"$snmpd_scope\" size=\"12\" required>";
 print "<br>";
 
 print "<input type=\"hidden\" name=\"id\" value=\"3-1\">";
 print "<input type=\"hidden\" name=\"action\" value=\"edit-snmp\">";
 
 # Submit
-print "<input type=\"submit\" name=\"button\" value=\"Modify\" class=\"button small\">";
+print
+  "<input type=\"submit\" name=\"button\" value=\"Modify\" class=\"button small\">";
 print "</form>";
 print "<br>";
 ## END SNMP ##
@@ -405,7 +427,8 @@ print "<textarea  name=\"line\" cols=\"30\" rows=\"2\" align=\"center\">";
 open FR, "$filedns";
 print <FR>;
 print "</textarea>";
-print "<input type=\"submit\" value=\"Save DNS\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Save DNS\" name=\"action\" class=\"button small\">";
 print "</form>";
 
 #apt
@@ -419,7 +442,8 @@ print "<textarea  name=\"line\" cols=\"60\" rows=\"6\" align=\"center\">";
 open FR, "$fileapt";
 print <FR>;
 print "</textarea>";
-print "<input type=\"submit\" value=\"Save APT\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Save APT\" name=\"action\" class=\"button small\">";
 print "</form>";
 
 print "</div></div></div>";

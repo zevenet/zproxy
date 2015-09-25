@@ -97,7 +97,9 @@ elsif ( $action eq "Save Config" )
 }
 
 # action Save & Up!
-elsif ( $action eq "Save & Up!" || $action eq "addvip2" || $action eq "addvlan2" )
+elsif (    $action eq "Save & Up!"
+		|| $action eq "addvip2"
+		|| $action eq "addvlan2" )
 {
 	$swaddif = "true";
 
@@ -257,7 +259,9 @@ elsif ( $action eq "downif" )
 	}
 	else
 	{
-		&errormsg( "Interface $if is not DOWN, check if any Farms is running over this interface" );
+		&errormsg(
+			  "Interface $if is not DOWN, check if any Farms is running over this interface"
+		);
 	}
 	untie @array;
 }
@@ -371,8 +375,10 @@ for my $if ( @interfaces )
 		if ( !$hwaddr )  { $hwaddr  = "-"; }
 		if ( !$gw )      { $gw      = "-"; }
 
-		# Physical interfaces are shown always, virtual or vlan interfaces only shows if are configured
-		if ( ( $if !~ /\:/ && $if !~ /\./ ) || ( $status eq "up" ) || ( -e "$configdir/if_$if\_conf" ) )
+# Physical interfaces are shown always, virtual or vlan interfaces only shows if are configured
+		if (    ( $if !~ /\:/ && $if !~ /\./ )
+			 || ( $status eq "up" )
+			 || ( -e "$configdir/if_$if\_conf" ) )
 		{
 			if ( ( $if eq $toif ) && ( $action eq "editif" ) )
 			{
@@ -385,11 +391,13 @@ for my $if ( @interfaces )
 			print "<td>$if";
 			if ( $ip eq $clrip || $ip eq $clvip )
 			{
-				print "&nbsp;&nbsp;<img src=\"img/icons/small/databases.png\" title=\"The cluster service interface has to be changed or disabled before to be able to modify this interface\">";
+				print
+				  "&nbsp;&nbsp;<img src=\"img/icons/small/databases.png\" title=\"The cluster service interface has to be changed or disabled before to be able to modify this interface\">";
 			}
 			if ( $ip eq $guiip )
 			{
-				print "&nbsp;&nbsp;<img src=\"img/icons/small/application_home.png\" title=\"The GUI service interface has to be changed before to be able to modify this interface\">";
+				print
+				  "&nbsp;&nbsp;<img src=\"img/icons/small/application_home.png\" title=\"The GUI service interface has to be changed before to be able to modify this interface\">";
 			}
 			print "</td>";
 			print "<td>$ip</td>";
@@ -408,7 +416,8 @@ for my $if ( @interfaces )
 			}
 			else
 			{
-				print "<td>&nbsp;&nbsp;<img src=\"img/icons/small/lock.png\" title=\"A datalink farm is locking the gateway of this interface\"></td>";
+				print
+				  "<td>&nbsp;&nbsp;<img src=\"img/icons/small/lock.png\" title=\"A datalink farm is locking the gateway of this interface\"></td>";
 			}
 			if ( $status eq "up" )
 			{
@@ -420,7 +429,8 @@ for my $if ( @interfaces )
 			}
 			if ( $link eq "off" )
 			{
-				print "&nbsp;&nbsp;<img src=\"img/icons/small/disconnect.png\" title=\"No link\">";
+				print
+				  "&nbsp;&nbsp;<img src=\"img/icons/small/disconnect.png\" title=\"No link\">";
 			}
 			print "</td>";
 			&createmenuif( $if, $id, $configured, $status );
@@ -432,11 +442,13 @@ for my $if ( @interfaces )
 			print "<tr class=\"selected\">";
 			if ( $action eq "addvip" )
 			{
-				print "<td>$if:<input type=\"text\" maxlength=\"10\" size=\"2\"  name=\"if\" value=\"$ifname\"></td>";
+				print
+				  "<td>$if:<input type=\"text\" maxlength=\"10\" size=\"2\"  name=\"if\" value=\"$ifname\"></td>";
 			}
 			elsif ( $action eq "addvlan" )
 			{
-				print "<td>$if.<input type=\"text\" maxlength=\"10\" size=\"3\"  name=\"if\" value=\"$ifname\"></td>";
+				print
+				  "<td>$if.<input type=\"text\" maxlength=\"10\" size=\"3\"  name=\"if\" value=\"$ifname\"></td>";
 			}
 
 			print "<td><input type=\"text\" size=\"10\"  name=\"newip\" > </td>";
@@ -456,13 +468,15 @@ for my $if ( @interfaces )
 				}
 				else
 				{
-					print "<td>&nbsp;&nbsp;<img src=\"img/icons/small/lock.png\" title=\"A datalink farm is locking the gateway of this interface\"></td>";
+					print
+					  "<td>&nbsp;&nbsp;<img src=\"img/icons/small/lock.png\" title=\"A datalink farm is locking the gateway of this interface\"></td>";
 				}
 				print "<input type=\"hidden\" name=\"action\" value=\"addvip2\">";
 			}
 			elsif ( $action eq "addvlan" )
 			{
-				print "<td><input type=\"text\" size=\"10\"  name=\"netmask\" value=\"\" ></td>";
+				print
+				  "<td><input type=\"text\" size=\"10\"  name=\"netmask\" value=\"\" ></td>";
 				print "<td><input type=\"text\" size=\"10\"  name=\"gwaddr\" value=\"\" ></td>";
 				print "<input type=\"hidden\" name=\"action\" value=\"addvlan2\">";
 			}
@@ -471,14 +485,17 @@ for my $if ( @interfaces )
 			print "<td>";
 			if ( $action eq "addvip" )
 			{
-				print "<input type=\"image\" src=\"img/icons/small/plugin_save.png\" onclick=\"submit();\" name=\"action\" type=\"submit\" value=\"addvip2\" title=\"save virtual interface\">";
+				print
+				  "<input type=\"image\" src=\"img/icons/small/plugin_save.png\" onclick=\"submit();\" name=\"action\" type=\"submit\" value=\"addvip2\" title=\"save virtual interface\">";
 			}
 			elsif ( $action eq "addvlan" )
 			{
-				print "<input type=\"image\" src=\"img/icons/small/plugin_save.png\" onclick=\"submit();\" name=\"action\" type=\"submit\" value=\"addvlan2\" title=\"save vlan interface\">";
+				print
+				  "<input type=\"image\" src=\"img/icons/small/plugin_save.png\" onclick=\"submit();\" name=\"action\" type=\"submit\" value=\"addvlan2\" title=\"save vlan interface\">";
 			}
 
-			print " <a href=\"index.cgi?id=$id\"><img src=\"img/icons/small/plugin_back.png\" title=\"cancel operation\"></a> ";
+			print
+			  " <a href=\"index.cgi?id=$id\"><img src=\"img/icons/small/plugin_back.png\" title=\"cancel operation\"></a> ";
 			print "</td>";
 			print "</tr>";
 		}
@@ -517,11 +534,13 @@ for my $if ( @interfaces )
 					print "<td>$iff";
 					if ( $toipv eq $clrip || $toipv eq $clvip )
 					{
-						print "&nbsp;&nbsp;<img src=\"img/icons/small/databases.png\" title=\"The cluster service interface has to be changed or disabled before to be able to modify this interface\">";
+						print
+						  "&nbsp;&nbsp;<img src=\"img/icons/small/databases.png\" title=\"The cluster service interface has to be changed or disabled before to be able to modify this interface\">";
 					}
 					if ( $toipv eq $guiip )
 					{
-						print "&nbsp;&nbsp;<img src=\"img/icons/small/application_home.png\" title=\"The GUI service interface has to be changed before to be able to modify this interface\">";
+						print
+						  "&nbsp;&nbsp;<img src=\"img/icons/small/application_home.png\" title=\"The GUI service interface has to be changed before to be able to modify this interface\">";
 					}
 					print "</td>";
 					print "<td>$toipv</td>";
@@ -539,7 +558,8 @@ for my $if ( @interfaces )
 					}
 					if ( $link eq "off" )
 					{
-						print "&nbsp;&nbsp;<img src=\"img/icons/small/disconnect.png\" title=\"No link\">";
+						print
+						  "&nbsp;&nbsp;<img src=\"img/icons/small/disconnect.png\" title=\"No link\">";
 					}
 					print "</td>";
 					&createmenuif( $iff, $id, $configured, $status );

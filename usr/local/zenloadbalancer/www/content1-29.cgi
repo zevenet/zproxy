@@ -54,10 +54,12 @@ foreach ( @backends )
 &refreshstats();
 print "<br>";
 
-print "<div class=\"box-header\">Real servers status<font size=1>&nbsp;&nbsp;&nbsp; $backendsize servers, $activebackends active </font></div>";
+print
+  "<div class=\"box-header\">Real servers status<font size=1>&nbsp;&nbsp;&nbsp; $backendsize servers, $activebackends active </font></div>";
 print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 print "<thead>\n";
-print "<tr><td>Server</td><td>Address</td><td>Port(s)</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Weight</td><td>Priority</td>";
+print
+  "<tr><td>Server</td><td>Address</td><td>Port(s)</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Weight</td><td>Priority</td>";
 print "</thead>\n";
 print "<tbody>";
 
@@ -81,7 +83,8 @@ foreach ( @backends )
 	}
 	elsif ( $backends_data[4] eq "fgDOWN" )
 	{
-		print "<td><img src=\"img/icons/small/disconnect.png\" title=\"FarmGuardian down\"></td> ";
+		print
+		  "<td><img src=\"img/icons/small/disconnect.png\" title=\"FarmGuardian down\"></td> ";
 	}
 	else
 	{
@@ -90,12 +93,14 @@ foreach ( @backends )
 
 	my @synnetstatback;
 	@netstat = &getConntrack( "", $fvip, $ip_backend, "", "" );
-	@synnetstatback = &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
+	@synnetstatback =
+	  &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
 	my $npend = @synnetstatback;
 	print "<td>$npend</td>";
 
 	my @stabnetstatback;
-	@stabnetstatback = &getBackendEstConns( $farmname, ${ ip_backend }, $port_backend, @netstat );
+	@stabnetstatback =
+	  &getBackendEstConns( $farmname, ${ ip_backend }, $port_backend, @netstat );
 	my $nestab = @stabnetstatback;
 	print "<td>$nestab</td>";
 	print "<td> $backends_data[2] </td>";
@@ -118,14 +123,17 @@ if ( $proto eq "sip" )
 
 	if ( $viewtableclients eq "yes" )
 	{
-		print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=no&viewtableconn=$viewtableconn\" title=\"Minimize\"><img src=\"img/icons/small/bullet_toggle_minus.png\"></a>";
+		print
+		  "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=no&viewtableconn=$viewtableconn\" title=\"Minimize\"><img src=\"img/icons/small/bullet_toggle_minus.png\"></a>";
 	}
 	else
 	{
-		print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=yes&viewtableconn=$viewtableconn\" title=\"Maximize\"><img src=\"img/icons/small/bullet_toggle_plus.png\"></a>";
+		print
+		  "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=yes&viewtableconn=$viewtableconn\" title=\"Maximize\"><img src=\"img/icons/small/bullet_toggle_plus.png\"></a>";
 	}
 
-	print "Client sessions status <font size=1>&nbsp;&nbsp;&nbsp; $totalsessions active clients</font></div>\n";
+	print
+	  "Client sessions status <font size=1>&nbsp;&nbsp;&nbsp; $totalsessions active clients</font></div>\n";
 	print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 	if ( $viewtableclients eq "yes" )
 	{
@@ -137,11 +145,11 @@ if ( $proto eq "sip" )
 		foreach $session ( @csessions )
 		{
 
-			#my @s_backend  = split("\t",$_);
-			#if (@s_backend[0] =~ /^[0-9]/ && ($ftracking == 0 || @s_backend[2] <= $ftracking))
-			#	{
-			#	print "<tr><td>@s_backend[0]  </td><td>@s_backend[1]  </td><td>@s_backend[2] </td><td>@s_backend[3] </td><td>@s_backend[4] </td><td>@s_backend[5] </td><td>@s_backend[6] </td></tr>";
-			#	}
+#my @s_backend  = split("\t",$_);
+#if (@s_backend[0] =~ /^[0-9]/ && ($ftracking == 0 || @s_backend[2] <= $ftracking))
+#	{
+#	print "<tr><td>@s_backend[0]  </td><td>@s_backend[1]  </td><td>@s_backend[2] </td><td>@s_backend[3] </td><td>@s_backend[4] </td><td>@s_backend[5] </td><td>@s_backend[6] </td></tr>";
+#	}
 
 			print "<tr><td>$session</td></tr>";
 		}
@@ -158,7 +166,8 @@ print "<!--END MANAGE-->";
 print "<div id=\"page-header\"></div>";
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" value=\"1-2\" name=\"id\">";
-print "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
 print "</form>";
 print "<div id=\"page-header\"></div>";
 

@@ -57,8 +57,8 @@ foreach my $pair ( @pairsget )
 	my ( $name, $value ) = split ( /=/, $pair );
 
 	#
-	$name  =~ tr/+/ /;
-	$name  =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+	$name =~ tr/+/ /;
+	$name =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
 	$value =~ tr/+/ /;
 	$value =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
 
@@ -155,10 +155,10 @@ $type_server        = $Variables{ 'type_server' };
 $service_type       = $Variables{ 'service_type' };
 $rdata_server       = $Variables{ 'rdata_server' };
 $zone               = $Variables{ 'zone' };
-$snmpd_enabled = $Variables{'snmpd_enabled'};
-$snmpd_scope = $Variables{'snmpd_scope'};
-$snmpd_port = $Variables{'snmpd_port'};
-$snmpd_community = $Variables{'snmpd_community'};
+$snmpd_enabled      = $Variables{ 'snmpd_enabled' };
+$snmpd_scope        = $Variables{ 'snmpd_scope' };
+$snmpd_port         = $Variables{ 'snmpd_port' };
+$snmpd_community    = $Variables{ 'snmpd_community' };
 
 #end variables in get string
 
@@ -172,38 +172,58 @@ foreach $pair ( @pairs )
 	( $name, $value ) = split ( /=/, $pair );
 
 	#Decodificamos
-	$name  =~ tr/+/ /;
-	$name  =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+	$name =~ tr/+/ /;
+	$name =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
 	$value =~ tr/+/ /;
 	$value =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
 	$Variablespost{ $name } = $value;
 }
 
-$pass        = $Variablespost{ 'pass' }        if ( defined ( $Variablespost{ 'pass' } ) );
-$newpass     = $Variablespost{ 'newpass' }     if ( defined ( $Variablespost{ 'newpass' } ) );
-$trustedpass = $Variablespost{ 'trustedpass' } if ( defined ( $Variablespost{ 'trustedpass' } ) );
-$idpost      = $Variablespost{ 'id' }          if ( defined ( $Variablespost{ 'id' } ) );
+$pass = $Variablespost{ 'pass' } if ( defined ( $Variablespost{ 'pass' } ) );
+$newpass = $Variablespost{ 'newpass' }
+  if ( defined ( $Variablespost{ 'newpass' } ) );
+$trustedpass = $Variablespost{ 'trustedpass' }
+  if ( defined ( $Variablespost{ 'trustedpass' } ) );
+$idpost = $Variablespost{ 'id' } if ( defined ( $Variablespost{ 'id' } ) );
 
 #$id= $Variablespost{'id'} if(defined($Variablespost{'id'}));
-$action   = $Variablespost{ 'actionpost' } if ( defined ( $Variablespost{ 'actionpost' } ) );
-$err414   = $Variablespost{ 'err414' }     if ( defined ( $Variablespost{ 'err414' } ) );
-$err500   = $Variablespost{ 'err500' }     if ( defined ( $Variablespost{ 'err500' } ) );
-$err501   = $Variablespost{ 'err501' }     if ( defined ( $Variablespost{ 'err501' } ) );
-$err503   = $Variablespost{ 'err503' }     if ( defined ( $Variablespost{ 'err503' } ) );
-$farmname = $Variablespost{ 'farmname' }   if ( defined ( $Variablespost{ 'farmname' } ) );
+$action = $Variablespost{ 'actionpost' }
+  if ( defined ( $Variablespost{ 'actionpost' } ) );
+$err414 = $Variablespost{ 'err414' }
+  if ( defined ( $Variablespost{ 'err414' } ) );
+$err500 = $Variablespost{ 'err500' }
+  if ( defined ( $Variablespost{ 'err500' } ) );
+$err501 = $Variablespost{ 'err501' }
+  if ( defined ( $Variablespost{ 'err501' } ) );
+$err503 = $Variablespost{ 'err503' }
+  if ( defined ( $Variablespost{ 'err503' } ) );
+$farmname = $Variablespost{ 'farmname' }
+  if ( defined ( $Variablespost{ 'farmname' } ) );
 
-$cert_name         = $Variablespost{ 'cert_name' }         if ( defined ( $Variablespost{ 'cert_name' } ) );
-$cert_issuer       = $Variablespost{ 'cert_issuer' }       if ( defined ( $Variablespost{ 'cert_issuer' } ) );
-$cert_fqdn         = $Variablespost{ 'cert_fqdn' }         if ( defined ( $Variablespost{ 'cert_fqdn' } ) );
-$cert_division     = $Variablespost{ 'cert_division' }     if ( defined ( $Variablespost{ 'cert_division' } ) );
-$cert_organization = $Variablespost{ 'cert_organization' } if ( defined ( $Variablespost{ 'cert_organization' } ) );
-$cert_locality     = $Variablespost{ 'cert_locality' }     if ( defined ( $Variablespost{ 'cert_locality' } ) );
-$cert_state        = $Variablespost{ 'cert_state' }        if ( defined ( $Variablespost{ 'cert_state' } ) );
-$cert_country      = $Variablespost{ 'cert_country' }      if ( defined ( $Variablespost{ 'cert_country' } ) );
-$cert_mail         = $Variablespost{ 'cert_mail' }         if ( defined ( $Variablespost{ 'cert_mail' } ) );
-$cert_password     = $Variablespost{ 'cert_password' }     if ( defined ( $Variablespost{ 'cert_password' } ) );
-$cert_cpassword    = $Variablespost{ 'cert_cpassword' }    if ( defined ( $Variablespost{ 'cert_cpassword' } ) );
-$cert_key          = $Variablespost{ 'cert_key' }          if ( defined ( $Variablespost{ 'cert_key' } ) );
+$cert_name = $Variablespost{ 'cert_name' }
+  if ( defined ( $Variablespost{ 'cert_name' } ) );
+$cert_issuer = $Variablespost{ 'cert_issuer' }
+  if ( defined ( $Variablespost{ 'cert_issuer' } ) );
+$cert_fqdn = $Variablespost{ 'cert_fqdn' }
+  if ( defined ( $Variablespost{ 'cert_fqdn' } ) );
+$cert_division = $Variablespost{ 'cert_division' }
+  if ( defined ( $Variablespost{ 'cert_division' } ) );
+$cert_organization = $Variablespost{ 'cert_organization' }
+  if ( defined ( $Variablespost{ 'cert_organization' } ) );
+$cert_locality = $Variablespost{ 'cert_locality' }
+  if ( defined ( $Variablespost{ 'cert_locality' } ) );
+$cert_state = $Variablespost{ 'cert_state' }
+  if ( defined ( $Variablespost{ 'cert_state' } ) );
+$cert_country = $Variablespost{ 'cert_country' }
+  if ( defined ( $Variablespost{ 'cert_country' } ) );
+$cert_mail = $Variablespost{ 'cert_mail' }
+  if ( defined ( $Variablespost{ 'cert_mail' } ) );
+$cert_password = $Variablespost{ 'cert_password' }
+  if ( defined ( $Variablespost{ 'cert_password' } ) );
+$cert_cpassword = $Variablespost{ 'cert_cpassword' }
+  if ( defined ( $Variablespost{ 'cert_cpassword' } ) );
+$cert_key = $Variablespost{ 'cert_key' }
+  if ( defined ( $Variablespost{ 'cert_key' } ) );
 
 #
 ###login
@@ -238,13 +258,17 @@ if ( !-f "$basedir/lock" )
 		require "content" . $id . ".cgi";
 		alarm 0;
 	};
-	if ($@) { print "Error in content$id cgi execution, see ZEN logs\n";
+	if ( $@ )
+	{
+		print "Error in content$id cgi execution, see ZEN logs\n";
 		print "<br>$@\n";
-	}	
+	}
 }
 else
 {
-	&errormsg( "Actually Zen GUI is locked, please unlock with '/etc/init.d/zenloadbalancer start' command" );
+	&errormsg(
+		"Actually Zen GUI is locked, please unlock with '/etc/init.d/zenloadbalancer start' command"
+	);
 }
 
 #FOOTER

@@ -42,7 +42,9 @@ sub setFarmPort()
 		$randport = int ( rand ( $sup - $inf ) ) + $inf;
 		use IO::Socket;
 		my $host = "127.0.0.1";
-		my $sock = new IO::Socket::INET( PeerAddr => $host, PeerPort => $randport, Proto => 'tcp' );
+		my $sock =
+		  new IO::Socket::INET( PeerAddr => $host, PeerPort => $randport,
+								Proto => 'tcp' );
 		if ( $sock )
 		{
 			close ( $sock );
@@ -285,7 +287,8 @@ sub setFarmSessionType($session,$fname,$service)
 			if ( $line =~ /^$fname\;/ )
 			{
 				my @args = split ( "\;", $line );
-				$line = "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;$session\;@args[7]\;@args[8]";
+				$line =
+				  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;$session\;@args[7]\;@args[8]";
 				splice @filelines, $i, $line;
 				$output = $?;
 			}
@@ -690,10 +693,13 @@ sub setFarmTimeout($tout,$fname)
 	{
 		my $fport       = &getFarmPort( $fname );
 		my $fmaxservers = &getFarmMaxServers( $fname );
-		&logfile( "running '$pen_ctl 127.0.0.1:$fport timeout $tout' for $fname farm $type" );
+		&logfile(
+				"running '$pen_ctl 127.0.0.1:$fport timeout $tout' for $fname farm $type" );
 		my @run = `$pen_ctl 127.0.0.1:$fport timeout $tout 2> /dev/null`;
 		$output = $?;
-		&logfile( "running '$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'' for $fname farm $type" );
+		&logfile(
+			"running '$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'' for $fname farm $type"
+		);
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
 		$output = $? && $output;
 		&setFarmMaxServers( $fmaxservers, $fname );
@@ -822,7 +828,8 @@ sub setFarmAlgorithm($alg,$fname)
 			if ( $line =~ /^$fname\;/ )
 			{
 				my @args = split ( "\;", $line );
-				$line = "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;$alg\;@args[6]\;@args[7]\;@args[8]";
+				$line =
+				  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;$alg\;@args[6]\;@args[7]\;@args[8]";
 				splice @filelines, $i, $line;
 				$output = $?;
 			}
@@ -932,7 +939,8 @@ sub setFarmProto($proto,$fname)
 					@args[3] = "5060";    # the port by default for sip protocol
 					@args[4] = "nat";
 				}
-				$line = "@args[0]\;$proto\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;@args[6]\;@args[7]\;@args[8]";
+				$line =
+				  "@args[0]\;$proto\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;@args[6]\;@args[7]\;@args[8]";
 				splice @filelines, $i, $line;
 				$output = $?;
 			}
@@ -1022,7 +1030,8 @@ sub setFarmNatType($nat,$fname)
 			if ( $line =~ /^$fname\;/ )
 			{
 				my @args = split ( "\;", $line );
-				$line = "@args[0]\;@args[1]\;@args[2]\;@args[3]\;$nat\;@args[5]\;@args[6]\;@args[7]\;@args[8]";
+				$line =
+				  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;$nat\;@args[5]\;@args[6]\;@args[7]\;@args[8]";
 				splice @filelines, $i, $line;
 				$output = $?;
 			}
@@ -1051,13 +1060,15 @@ sub setFarmPersistence($persistence,$fname)
 		my $fmaxservers = &getFarmMaxServers( $fname );
 		if ( $persistence eq "true" )
 		{
-			&logfile( "running '$pen_ctl 127.0.0.1:$fport no roundrobin' for $fname farm $type" );
+			&logfile(
+					"running '$pen_ctl 127.0.0.1:$fport no roundrobin' for $fname farm $type" );
 			my @run = `$pen_ctl 127.0.0.1:$fport no roundrobin 2> /dev/null`;
 			$output = $?;
 		}
 		else
 		{
-			&logfile( "running '$pen_ctl 127.0.0.1:$fport roundrobin' for $fname farm $type" );
+			&logfile(
+					  "running '$pen_ctl 127.0.0.1:$fport roundrobin' for $fname farm $type" );
 			my @run = `$pen_ctl 127.0.0.1:$fport roundrobin 2> /dev/null`;
 			$output = $?;
 		}
@@ -1075,7 +1086,8 @@ sub setFarmPersistence($persistence,$fname)
 			if ( $line =~ /^$fname\;/ )
 			{
 				my @args = split ( "\;", $line );
-				$line = "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;$persistence\;@args[7]\;@args[8]";
+				$line =
+				  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;$persistence\;@args[7]\;@args[8]";
 				splice @filelines, $i, $line;
 				$output = $?;
 			}
@@ -1186,7 +1198,8 @@ sub setFarmMaxClientTime($maxcl,$track,$fname,$service)
 			if ( $line =~ /^$fname\;/ )
 			{
 				my @args = split ( "\;", $line );
-				$line = "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;@args[6]\;$track\;@args[8]";
+				$line =
+				  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;@args[6]\;$track\;@args[8]";
 				splice @filelines, $i, $line;
 				$output = $?;
 			}
@@ -1560,7 +1573,13 @@ sub getBackendEstConns($fname,$ip_backend,$port_backend,@netstat)
 		{
 			$type = "tcp";
 		}
-		@nets = &getNetstatFilter( "$type", "", "\.*ESTABLISHED src=\.* dst=$ip_backend sport=\.* dport=$port_backend \.*src=$ip_backend \.*", "", @netstat );
+		@nets = &getNetstatFilter(
+			"$type",
+			"",
+			"\.*ESTABLISHED src=\.* dst=$ip_backend sport=\.* dport=$port_backend \.*src=$ip_backend \.*",
+			"",
+			@netstat
+		);
 	}
 	if ( $type eq "l4xnat" )
 	{
@@ -1582,22 +1601,52 @@ sub getBackendEstConns($fname,$ip_backend,$port_backend,@netstat)
 		{
 			if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 			{
-				push ( @nets, &getNetstatFilter( "tcp", "", "\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp \.*src=$ip_backend \.*", "", @netstat ) );
+				push (
+					@nets,
+					&getNetstatFilter(
+						   "tcp", "",
+						   "\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp \.*src=$ip_backend \.*",
+						   "", @netstat
+					)
+				);
 			}
 			if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 			{
-				push ( @nets, &getNetstatFilter( "udp", "", "\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*", "", @netstat ) );
+				push (
+					   @nets,
+					   &getNetstatFilter(
+										"udp", "",
+										"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+										"", @netstat
+					   )
+				);
 			}
 		}
 		else
 		{
 			if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 			{
-				push ( @nets, &getNetstatFilter( "tcp", "", "\.*ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$regexp \.*src=$ip_backend \.*", "", @netstat ) );
+				push (
+					@nets,
+					&getNetstatFilter(
+						"tcp",
+						"",
+						"\.*ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$regexp \.*src=$ip_backend \.*",
+						"",
+						@netstat
+					)
+				);
 			}
 			if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 			{
-				push ( @nets, &getNetstatFilter( "udp", "", "\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*", "", @netstat ) );
+				push (
+					   @nets,
+					   &getNetstatFilter(
+										"udp", "",
+										"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+										"", @netstat
+					   )
+				);
 			}
 		}
 
@@ -1623,19 +1672,40 @@ sub getFarmEstConns($fname,@netstat)
 
 	if ( $type eq "tcp" )
 	{
-		push ( @nets, &getNetstatFilter( "tcp", "", "\.* ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*", "", @netstat ) );
+		push (
+			   @nets,
+			   &getNetstatFilter(
+						   "tcp", "",
+						   "\.* ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*",
+						   "", @netstat
+			   )
+		);
 
-		#push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
+#push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
 	}
 
 	if ( $type eq "udp" )
 	{
-		push ( @nets, &getNetstatFilter( "udp", "", "\.* src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*", "", @netstat ) );
+		push (
+			   @nets,
+			   &getNetstatFilter(
+								  "udp", "",
+								  "\.* src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*",
+								  "", @netstat
+			   )
+		);
 	}
 
 	if ( $type eq "http" || $type eq "https" )
 	{
-		push ( @nets, &getNetstatFilter( "tcp", "", "\.* ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*", "", @netstat ) );
+		push (
+			   @nets,
+			   &getNetstatFilter(
+						   "tcp", "",
+						   "\.* ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*",
+						   "", @netstat
+			   )
+		);
 	}
 
 	if ( $type eq "l4xnat" )
@@ -1668,22 +1738,50 @@ sub getFarmEstConns($fname,@netstat)
 				{
 					if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 					{
-						push ( @nets, &getNetstatFilter( "tcp", "", "\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*", "", @netstat ) );
+						push (
+							 @nets,
+							 &getNetstatFilter(
+									"tcp", "",
+									"\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+									"", @netstat
+							 )
+						);
 					}
 					if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 					{
-						push ( @nets, &getNetstatFilter( "udp", "", "\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*", "", @netstat ) );
+						push (
+							   @nets,
+							   &getNetstatFilter(
+												"udp", "",
+												"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+												"", @netstat
+							   )
+						);
 					}
 				}
 				else
 				{
 					if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 					{
-						push ( @nets, &getNetstatFilter( "tcp", "", "\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*", "", @netstat ) );
+						push (
+							 @nets,
+							 &getNetstatFilter(
+									"tcp", "",
+									"\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+									"", @netstat
+							 )
+						);
 					}
 					if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 					{
-						push ( @nets, &getNetstatFilter( "udp", "", "\.* src=\.* dst=$fvip \.* dport=$regexp .*[^\[UNREPLIED\]] src=$ip_backend", "", @netstat ) );
+						push (
+							@nets,
+							&getNetstatFilter(
+								   "udp", "",
+								   "\.* src=\.* dst=$fvip \.* dport=$regexp .*[^\[UNREPLIED\]] src=$ip_backend",
+								   "", @netstat
+							)
+						);
 					}
 				}
 
@@ -1707,7 +1805,10 @@ sub getBackendTWConns($fname,$ip_backend,$port_backend,@netstat)
 		{
 			$type = "tcp";
 		}
-		@nets = &getNetstatFilter( "$type", "", "\.*TIME\_WAIT src=$fvip dst=$ip_backend sport=\.* dport=$port_backend \.*", "", @netstat );
+		@nets =
+		  &getNetstatFilter( "$type", "",
+			 "\.*TIME\_WAIT src=$fvip dst=$ip_backend sport=\.* dport=$port_backend \.*",
+			 "", @netstat );
 	}
 	if ( $type eq "l4xnat" )
 	{
@@ -1727,11 +1828,25 @@ sub getBackendTWConns($fname,$ip_backend,$port_backend,@netstat)
 		undef ( @fportlist );
 		if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 		{
-			push ( @nets, &getNetstatFilter( "tcp", "", "\.*TIME\_WAIT src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*", "", @netstat ) );
+			push (
+				   @nets,
+				   &getNetstatFilter(
+						  "tcp", "",
+						  "\.*TIME\_WAIT src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+						  "", @netstat
+				   )
+			);
 		}
 		if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 		{
-			push ( @nets, &getNetstatFilter( "udp", "", "\.*TIME\_WAIT src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend .\*", "", @netstat ) );
+			push (
+				   @nets,
+				   &getNetstatFilter(
+						  "udp", "",
+						  "\.*TIME\_WAIT src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend .\*",
+						  "", @netstat
+				   )
+			);
 		}
 
 	}
@@ -1751,7 +1866,14 @@ sub getFarmTWConns($fname,@netstat)
 	#&logfile("getting 'TWConns' for $fname farm $type");
 	if ( $type eq "tcp" || $type eq "http" || $type eq "https" )
 	{
-		push ( @nets, &getNetstatFilter( "tcp", "", "\.*\_WAIT src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*", "", @netstat ) );
+		push (
+			   @nets,
+			   &getNetstatFilter(
+								 "tcp", "",
+								 "\.*\_WAIT src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*",
+								 "", @netstat
+			   )
+		);
 	}
 
 	if ( $type eq "udp" )
@@ -1786,7 +1908,14 @@ sub getFarmTWConns($fname,@netstat)
 			{
 				my $ip_backend   = $backends_data[0];
 				my $port_backend = $backends_data[1];
-				push ( @nets, &getNetstatFilter( "tcp", "", "\.*\_WAIT src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*", "", @netstat ) );
+				push (
+					   @nets,
+					   &getNetstatFilter(
+								  "tcp", "",
+								  "\.*\_WAIT src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+								  "", @netstat
+					   )
+				);
 			}
 		}
 	}
@@ -1803,11 +1932,17 @@ sub getBackendSYNConns($fname,$ip_backend,$port_backend,@netstat)
 	my @nets  = ();
 	if ( $type eq "tcp" || $type eq "http" )
 	{
-		@nets = &getNetstatFilter( "tcp", "", "\.*SYN\.* src=\.* dst=$ip_backend sport=\.* dport=$port_backend \.*", "", @netstat );
+		@nets =
+		  &getNetstatFilter( "tcp", "",
+				   "\.*SYN\.* src=\.* dst=$ip_backend sport=\.* dport=$port_backend \.*",
+				   "", @netstat );
 	}
 	if ( $type eq "udp" )
 	{
-		@nets = &getNetstatFilter( "udp", "", "\.* src=\.* dst=$ip_backend \.* dport=$port_backend \.*UNREPLIED\.* src=\.*", "", @netstat );
+		@nets =
+		  &getNetstatFilter( "udp", "",
+			"\.* src=\.* dst=$ip_backend \.* dport=$port_backend \.*UNREPLIED\.* src=\.*",
+			"", @netstat );
 	}
 	if ( $type eq "l4xnat" )
 	{
@@ -1829,22 +1964,50 @@ sub getBackendSYNConns($fname,$ip_backend,$port_backend,@netstat)
 		{
 			if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 			{
-				push ( @nets, &getNetstatFilter( "tcp", "", "\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*", "", @netstat ) );
+				push (
+					   @nets,
+					   &getNetstatFilter(
+							   "tcp", "",
+							   "\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*",
+							   "", @netstat
+					   )
+				);
 			}
 			if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 			{
-				push ( @nets, &getNetstatFilter( "udp", "", "\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*", "", @netstat ) );
+				push (
+					@nets,
+					&getNetstatFilter(
+						  "udp", "",
+						  "\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*",
+						  "", @netstat
+					)
+				);
 			}
 		}
 		else
 		{
 			if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 			{
-				push ( @nets, &getNetstatFilter( "tcp", "", "\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*", "", @netstat ) );
+				push (
+					   @nets,
+					   &getNetstatFilter(
+							   "tcp", "",
+							   "\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*",
+							   "", @netstat
+					   )
+				);
 			}
 			if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 			{
-				push ( @nets, &getNetstatFilter( "udp", "", "\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*", "", @netstat ) );
+				push (
+					@nets,
+					&getNetstatFilter(
+						  "udp", "",
+						  "\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*",
+						  "", @netstat
+					)
+				);
 			}
 		}
 
@@ -1865,17 +2028,38 @@ sub getFarmSYNConns($fname,@netstat)
 	#&logfile("getting 'SYNConns' for $fname farm $type");
 	if ( $type eq "tcp" )
 	{
-		push ( @nets, &getNetstatFilter( "tcp", "", "\.*SYN\.* src=\.* dst=$fvip sport=\.* dport=$fvipp \.* src=\.*", "", @netstat ) );
+		push (
+			   @nets,
+			   &getNetstatFilter(
+							   "tcp", "",
+							   "\.*SYN\.* src=\.* dst=$fvip sport=\.* dport=$fvipp \.* src=\.*",
+							   "", @netstat
+			   )
+		);
 	}
 
 	if ( $type eq "udp" )
 	{
-		push ( @nets, &getNetstatFilter( "udp", "", "\.* src=\.* dst=$fvip \.* dport=$fvipp \.*UNREPLIED\.* src=\.*", "", @netstat ) );
+		push (
+			   @nets,
+			   &getNetstatFilter(
+							   "udp", "",
+							   "\.* src=\.* dst=$fvip \.* dport=$fvipp \.*UNREPLIED\.* src=\.*",
+							   "", @netstat
+			   )
+		);
 	}
 
 	if ( $type eq "http" || $type eq "https" )
 	{
-		push ( @nets, &getNetstatFilter( "tcp", "", "\.* SYN\.* src=\.* dst=$fvip \.* dport=$fvipp \.* src=\.*", "", @netstat ) );
+		push (
+			   @nets,
+			   &getNetstatFilter(
+								  "tcp", "",
+								  "\.* SYN\.* src=\.* dst=$fvip \.* dport=$fvipp \.* src=\.*",
+								  "", @netstat
+			   )
+		);
 	}
 
 	if ( $type eq "l4xnat" )
@@ -1909,28 +2093,56 @@ sub getFarmSYNConns($fname,@netstat)
 				{
 					if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 					{
-						push ( @nets, &getNetstatFilter( "tcp", "", "\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*", "", @netstat ) );
+						push (
+							   @nets,
+							   &getNetstatFilter(
+									   "tcp", "",
+									   "\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*",
+									   "", @netstat
+							   )
+						);
 
-						#push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
+#push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
 					}
 					if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 					{
-						push ( @nets, &getNetstatFilter( "udp", "", "\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*", "", @netstat ) );
+						push (
+							@nets,
+							&getNetstatFilter(
+								  "udp", "",
+								  "\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*",
+								  "", @netstat
+							)
+						);
 
-						#push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat)); # UDP
+#push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat)); # UDP
 					}
 				}
 				else
 				{
 					if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 					{
-						push ( @nets, &getNetstatFilter( "tcp", "", "\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*", "", @netstat ) );
+						push (
+							   @nets,
+							   &getNetstatFilter(
+									   "tcp", "",
+									   "\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*",
+									   "", @netstat
+							   )
+						);
 
-						#push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
+#push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
 					}
 					if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 					{
-						push ( @nets, &getNetstatFilter( "udp", "", "\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*", "", @netstat ) );
+						push (
+							@nets,
+							&getNetstatFilter(
+								  "udp", "",
+								  "\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*",
+								  "", @netstat
+							)
+						);
 					}
 
 				}
@@ -2132,8 +2344,12 @@ sub getFarmFile($fname)
 	my ( $fname ) = @_;
 	opendir ( my $dir, "$configdir" ) || return -1;
 
-	#	my @ffiles = grep { /^$fname\_.*\.cfg/ && !/^$fname\_.*guardian\.conf/ && -f "$configdir/$_" && !/^$fname\_status.cfg/} readdir($dir);
-	my @ffiles = grep { /^$fname\_.*\.cfg/ && !/^$fname\_.*guardian\.conf/ && !/^$fname\_status.cfg/ } readdir ( $dir );
+#	my @ffiles = grep { /^$fname\_.*\.cfg/ && !/^$fname\_.*guardian\.conf/ && -f "$configdir/$_" && !/^$fname\_status.cfg/} readdir($dir);
+	my @ffiles =
+	  grep
+	{
+		/^$fname\_.*\.cfg/ && !/^$fname\_.*guardian\.conf/ && !/^$fname\_status.cfg/
+	} readdir ( $dir );
 	closedir $dir;
 	if ( @ffiles )
 	{
@@ -2292,7 +2508,10 @@ sub _runFarmStart($fname,$writeconf)
 	my $file = &getFarmFile( $fname );
 
 	&logfile( "running 'Start write $writeconf' for $fname farm $type" );
-	if ( $writeconf eq "true" && $type ne "datalink" && $type ne "l4xnat" && $type ne "gslb" )
+	if (    $writeconf eq "true"
+		 && $type ne "datalink"
+		 && $type ne "l4xnat"
+		 && $type ne "gslb" )
 	{
 		use Tie::File;
 		tie @filelines, 'Tie::File', "$configdir\/$file";
@@ -2312,7 +2531,8 @@ sub _runFarmStart($fname,$writeconf)
 	{
 		unlink ( "/tmp/$fname.lock" );
 		&logfile( "running $pound -f $configdir\/$file -p $piddir\/$fname\_pound.pid" );
-		zsystem( "$pound -f $configdir\/$file -p $piddir\/$fname\_pound.pid 2>/dev/null" );
+		zsystem(
+				 "$pound -f $configdir\/$file -p $piddir\/$fname\_pound.pid 2>/dev/null" );
 		$status = $?;
 		if ( $status == 0 )
 		{
@@ -2351,7 +2571,9 @@ sub _runFarmStart($fname,$writeconf)
 		my $cron = @farmcron;
 		if ( $cron eq 0 )
 		{
-			push ( @filelines, "* * * * *	root	\/usr\/local\/zenloadbalancer\/app\/libexec\/check_uplink $fname \# \_\_$fname\_\_" );
+			push ( @filelines,
+				   "* * * * *	root	\/usr\/local\/zenloadbalancer\/app\/libexec\/check_uplink $fname \# \_\_$fname\_\_"
+			);
 		}
 		untie @filelines;
 
@@ -2404,8 +2626,10 @@ sub _runFarmStart($fname,$writeconf)
 			}
 			if ( $routes ne "" )
 			{
-				&logfile( "running $ip_bin route add default scope global table table_$iface $routes" );
-				my @eject = `$ip_bin route add default scope global table table_$iface $routes 2> /dev/null`;
+				&logfile(
+					  "running $ip_bin route add default scope global table table_$iface $routes" );
+				my @eject =
+				  `$ip_bin route add default scope global table table_$iface $routes 2> /dev/null`;
 				$status = $?;
 			}
 			else
@@ -2528,11 +2752,14 @@ sub _runFarmStart($fname,$writeconf)
 						{
 							$rip = "$rip\:$port";
 						}
-						my $tag = &genIptMark( $fname, $nattype, $lbalg, $vip, $vport, $proto, @serv[0], @serv[3], @serv[4], @serv[6], $prob );
+						my $tag = &genIptMark( $fname,   $nattype, $lbalg,   $vip,     $vport, $proto,
+											   @serv[0], @serv[3], @serv[4], @serv[6], $prob );
 
 						if ( $persist ne "none" )
 						{
-							my $tagp = &genIptMarkPersist( $fname, $vip, $vport, $proto, $ttl, @serv[0], @serv[3], @serv[6] );
+							my $tagp =
+							  &genIptMarkPersist( $fname, $vip, $vport, $proto, $ttl, @serv[0],
+												  @serv[3], @serv[6] );
 							push ( @tmanglep, $tagp );
 
 							#my $tagp2 = &genIptMarkReturn($fname,$vip,$vport,$proto,@serv[0],@serv[6]);
@@ -2541,7 +2768,8 @@ sub _runFarmStart($fname,$writeconf)
 
 						# dnat rules
 						#if ($vproto ne "sip"){
-						my $red = &genIptRedirect( $fname, $nattype, @serv[0], $rip, $proto, @serv[3], @serv[4], $persist, @serv[6] );
+						my $red = &genIptRedirect( $fname,   $nattype, @serv[0], $rip, $proto,
+												   @serv[3], @serv[4], $persist, @serv[6] );
 						push ( @tnat, $red );
 
 						#}
@@ -2551,11 +2779,14 @@ sub _runFarmStart($fname,$writeconf)
 							my $ntag;
 							if ( $vproto eq "sip" )
 							{
-								$ntag = &genIptSourceNat( $fname, $vip, $nattype, @serv[0], $proto, @serv[3], @serv[6] );
+								$ntag =
+								  &genIptSourceNat( $fname, $vip,     $nattype, @serv[0],
+													$proto, @serv[3], @serv[6] );
 							}
 							else
 							{
-								$ntag = &genIptMasquerade( $fname, $nattype, @serv[0], $proto, @serv[3], @serv[6] );
+								$ntag =
+								  &genIptMasquerade( $fname, $nattype, @serv[0], $proto, @serv[3], @serv[6] );
 							}
 
 							push ( @tsnat, $ntag );
@@ -2589,21 +2820,31 @@ sub _runFarmStart($fname,$writeconf)
 				{
 					$rip = "$rip\:$port";
 				}
-				my $tag = &genIptMark( $fname, $nattype, $lbalg, $vip, $vport, $proto, @srvprio[0], @srvprio[3], @srvprio[4], @srvprio[6], $prob );
+				my $tag = &genIptMark(
+									   $fname,      $nattype,    $lbalg,      $vip,
+									   $vport,      $proto,      @srvprio[0], @srvprio[3],
+									   @srvprio[4], @srvprio[6], $prob
+				);
 
 				# dnat rules
 				#if ($vproto ne "sip"){
-				my $red = &genIptRedirect( $fname, $nattype, @srvprio[0], $rip, $proto, @srvprio[3], @srvprio[4], $persist, @srvprio[6] );
+				my $red = &genIptRedirect(
+										   $fname,      $nattype, @srvprio[0],
+										   $rip,        $proto,   @srvprio[3],
+										   @srvprio[4], $persist, @srvprio[6]
+				);
 
 				#}
 
 				if ( $persist ne "none" )
 				{
-					my $tagp = &genIptMarkPersist( $fname, $vip, $vport, $proto, $ttl, @srvprio[0], @srvprio[3], @srvprio[6] );
+					my $tagp =
+					  &genIptMarkPersist( $fname, $vip, $vport, $proto, $ttl, @srvprio[0],
+										  @srvprio[3], @srvprio[6] );
 					push ( @tmanglep, $tagp );
 
-					#my $tagp2 = &genIptMarkReturn($fname,$vip,$vport,$proto,@srvprio[0],@srvprio[6]);
-					#push(@tmanglep,$tagp2);
+				  #my $tagp2 = &genIptMarkReturn($fname,$vip,$vport,$proto,@srvprio[0],@srvprio[6]);
+				  #push(@tmanglep,$tagp2);
 				}
 
 				if ( $nattype eq "nat" )
@@ -2611,17 +2852,21 @@ sub _runFarmStart($fname,$writeconf)
 					my $ntag;
 					if ( $vproto eq "sip" )
 					{
-						$ntag = &genIptSourceNat( $fname, $vip, $nattype, @srvprio[0], $proto, @srvprio[3], @srvprio[6] );
+						$ntag =
+						  &genIptSourceNat( $fname, $vip, $nattype, @srvprio[0], $proto,
+											@srvprio[3], @srvprio[6] );
 					}
 					else
 					{
-						$ntag = &genIptMasquerade( $fname, $nattype, @srvprio[0], $proto, @srvprio[3], @srvprio[6] );
+						$ntag =
+						  &genIptMasquerade( $fname, $nattype, @srvprio[0], $proto, @srvprio[3],
+											 @srvprio[6] );
 					}
 					push ( @tsnat, $ntag );
 				}
 
-				#my $nraw = "$iptables -t raw -A OUTPUT -j NOTRACK -p $proto -d $vip --dport $vport -m comment --comment ' FARM\_$fname\_@srvprio[0]\_ '";
-				#my $nnraw = "$iptables -t raw -A OUTPUT -j NOTRACK -p $proto -s $vip -m comment --comment ' FARM\_$fname\_@srvprio[0]\_ '";
+#my $nraw = "$iptables -t raw -A OUTPUT -j NOTRACK -p $proto -d $vip --dport $vport -m comment --comment ' FARM\_$fname\_@srvprio[0]\_ '";
+#my $nnraw = "$iptables -t raw -A OUTPUT -j NOTRACK -p $proto -s $vip -m comment --comment ' FARM\_$fname\_@srvprio[0]\_ '";
 				push ( @tmangle, $tag );
 				push ( @tnat,    $red );
 
@@ -2792,7 +3037,8 @@ sub _runFarmStop($fname,$writeconf)
 		}
 		else
 		{
-			&errormsg( "Farm $fname can't be stopped, check the logs and modify the configuration" );
+			&errormsg(
+				  "Farm $fname can't be stopped, check the logs and modify the configuration" );
 			return 1;
 		}
 	}
@@ -2807,7 +3053,8 @@ sub _runFarmStop($fname,$writeconf)
 		}
 		else
 		{
-			&errormsg( "Farm $fname can't be stopped, check the logs and modify the configuration" );
+			&errormsg(
+				  "Farm $fname can't be stopped, check the logs and modify the configuration" );
 			return 1;
 		}
 	}
@@ -2917,7 +3164,10 @@ sub _runFarmStop($fname,$writeconf)
 		}
 	}
 
-	if ( $writeconf eq "true" && $type ne "datalink" && $type ne "l4xnat" && $type ne "gslb" )
+	if (    $writeconf eq "true"
+		 && $type ne "datalink"
+		 && $type ne "l4xnat"
+		 && $type ne "gslb" )
 	{
 		open FW, ">>$configdir/$filename";
 		print FW "#down\n";
@@ -2946,24 +3196,30 @@ sub runFarmCreate($fproto,$fvip,$fvipp,$fname,$fdev)
 	if ( $fproto eq "TCP" )
 	{
 		my $fport = &setFarmPort();
-		&logfile( "running '$pen_bin $fvip:$fvipp -c 2049 -x 257 -S 10 -C 127.0.0.1:$fport'" );
+		&logfile(
+			   "running '$pen_bin $fvip:$fvipp -c 2049 -x 257 -S 10 -C 127.0.0.1:$fport'" );
 		my @run = `$pen_bin $fvip:$fvipp -c 2049 -x 257 -S 10 -C 127.0.0.1:$fport`;
 		$output = $?;
 		&logfile( "running '$pen_ctl 127.0.0.1:$fport acl 9 deny 0.0.0.0 0.0.0.0'" );
 		my @run = `$pen_ctl 127.0.0.1:$fport acl 9 deny 0.0.0.0 0.0.0.0`;
-		&logfile( "running $pen_ctl 127.0.0.1:$fport write '$configdir/$fname\_pen.cfg' " );
+		&logfile(
+				  "running $pen_ctl 127.0.0.1:$fport write '$configdir/$fname\_pen.cfg' " );
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$fname\_pen.cfg'`;
 	}
 
 	if ( $fproto eq "UDP" )
 	{
 		my $fport = &setFarmPort();
-		&logfile( "running '$pen_bin $fvip:$fvipp -U -t 1 -b 3 -c 2049 -x 257 -S 10 -C 127.0.0.1:$fport'" );
-		my @run = `$pen_bin $fvip:$fvipp -U -t 1 -b 3 -c 2049 -x 257 -S 10 -C 127.0.0.1:$fport`;
+		&logfile(
+			"running '$pen_bin $fvip:$fvipp -U -t 1 -b 3 -c 2049 -x 257 -S 10 -C 127.0.0.1:$fport'"
+		);
+		my @run =
+		  `$pen_bin $fvip:$fvipp -U -t 1 -b 3 -c 2049 -x 257 -S 10 -C 127.0.0.1:$fport`;
 		$output = $?;
 		&logfile( "running '$pen_ctl 127.0.0.1:$fport acl 9 deny 0.0.0.0 0.0.0.0'" );
 		my @run = `$pen_ctl 127.0.0.1:$fport acl 9 deny 0.0.0.0 0.0.0.0`;
-		&logfile( "running $pen_ctl 127.0.0.1:$fport write '$configdir/$fname\_pen\_udp.cfg' " );
+		&logfile(
+			 "running $pen_ctl 127.0.0.1:$fport write '$configdir/$fname\_pen\_udp.cfg' " );
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$fname\_pen\_udp.cfg'`;
 	}
 
@@ -3007,8 +3263,12 @@ sub runFarmCreate($fproto,$fvip,$fvipp,$fname,$fdev)
 		close FERR;
 
 		#run farm
-		&logfile( "running $pound -f $configdir\/$fname\_pound.cfg -p $piddir\/$fname\_pound.pid" );
-		zsystem( "$pound -f $configdir\/$fname\_pound.cfg -p $piddir\/$fname\_pound.pid 2>/dev/null" );
+		&logfile(
+			 "running $pound -f $configdir\/$fname\_pound.cfg -p $piddir\/$fname\_pound.pid"
+		);
+		zsystem(
+			"$pound -f $configdir\/$fname\_pound.cfg -p $piddir\/$fname\_pound.pid 2>/dev/null"
+		);
 		$output = $?;
 	}
 
@@ -3452,7 +3712,9 @@ sub getFarmGuardianFile($fname,$svice)
 	my ( $fname, $svice ) = @_;
 
 	opendir ( my $dir, "$configdir" ) || return -1;
-	my @files = grep { /^$fname\_$svice.*guardian\.conf/ && -f "$configdir/$_" } readdir ( $dir );
+	my @files =
+	  grep { /^$fname\_$svice.*guardian\.conf/ && -f "$configdir/$_" }
+	  readdir ( $dir );
 	closedir $dir;
 	my $nfiles = @files;
 	if ( $nfiles == 0 )
@@ -3821,7 +4083,8 @@ sub setFarmVirtualConf($vip,$vipp,$fname)
 			if ( $line =~ /^$fname\;/ )
 			{
 				my @args = split ( "\;", $line );
-				$line = "@args[0]\;@args[1]\;$vip\;$vipp\;@args[4]\;@args[5]\;@args[6]\;@args[7]\;@args[8]";
+				$line =
+				  "@args[0]\;@args[1]\;$vip\;$vipp\;@args[4]\;@args[5]\;@args[6]\;@args[7]\;@args[8]";
 				splice @filelines, $i, $line;
 				$stat = $?;
 			}
@@ -3880,7 +4143,9 @@ sub runFarmGuardianCreate($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 		$fgfile = "${fname}_${svice}guardian.conf";
 	}
 
-	&logfile( "running 'Create FarmGuardian $ttcheck $script $usefg $fglog' for $fname farm" );
+	&logfile(
+		  "running 'Create FarmGuardian $ttcheck $script $usefg $fglog' for $fname farm"
+	);
 	if ( ( $ttcheck eq "" || $script eq "" ) && $usefg eq "true" )
 	{
 		return $output;
@@ -3935,7 +4200,8 @@ sub getFarmGuardianPid($fname,$svice)
 	my $pidfile = "";
 
 	opendir ( my $dir, "$piddir" ) || return -1;
-	@files = grep { /^$fname\_$svice.*guardian\.pid/ && -f "$piddir/$_" } readdir ( $dir );
+	@files =
+	  grep { /^$fname\_$svice.*guardian\.pid/ && -f "$piddir/$_" } readdir ( $dir );
 	closedir $dir;
 	$numfiles = @files;
 	if ( @files )
@@ -3955,7 +4221,8 @@ sub getFarmGuardianPid($fname,$svice)
 #
 sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$service)
 {
-	my ( $ids, $rip, $port, $max, $weight, $priority, $timeout, $fname, $svice ) = @_;
+	my ( $ids, $rip, $port, $max, $weight, $priority, $timeout, $fname, $svice ) =
+	  @_;
 
 	my $type      = &getFarmType( $fname );
 	my $file      = &getFarmFile( $fname );
@@ -3964,20 +4231,25 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$servic
 	my $backend   = 0;
 	my $idservice = 0;
 
-	&logfile( "setting 'Server $ids $rip $port max $max weight $weight prio $priority timeout $timeout' for $fname farm $type" );
+	&logfile(
+		"setting 'Server $ids $rip $port max $max weight $weight prio $priority timeout $timeout' for $fname farm $type"
+	);
 
 	if ( $type eq "tcp" || $type eq "udp" )
 	{
 		$fport = &getFarmPort( $fname );
 		my $fmaxservers = &getFarmMaxServers( $fname );
-		if ( $max      ne "" ) { $max      = "max $max"; }
-		if ( $weight   ne "" ) { $weight   = "weight $weight"; }
+		if ( $max ne "" )      { $max      = "max $max"; }
+		if ( $weight ne "" )   { $weight   = "weight $weight"; }
 		if ( $priority ne "" ) { $priority = "prio $priority"; }
 
-		#&logfile ("running '$pen_ctl 127.0.0.1:$fport server $ids address $rip port $port max $max weight $weight prio $priority' in $fname farm");
-		#my @run = `$pen_ctl 127.0.0.1:$fport server $ids address $rip port $port max $max weight $weight prio $priority`;
-		&logfile( "running '$pen_ctl 127.0.0.1:$fport server $ids address $rip port $port $max $weight $priority' in $fname farm" );
-		my @run = `$pen_ctl 127.0.0.1:$fport server $ids address $rip port $port $max $weight $priority`;
+#&logfile ("running '$pen_ctl 127.0.0.1:$fport server $ids address $rip port $port max $max weight $weight prio $priority' in $fname farm");
+#my @run = `$pen_ctl 127.0.0.1:$fport server $ids address $rip port $port max $max weight $weight prio $priority`;
+		&logfile(
+			"running '$pen_ctl 127.0.0.1:$fport server $ids address $rip port $port $max $weight $priority' in $fname farm"
+		);
+		my @run =
+		  `$pen_ctl 127.0.0.1:$fport server $ids address $rip port $port $max $weight $priority`;
 		$output = $?;
 		&logfile( "running '$pen_ctl 127.0.0.1:$fport write '$configdir/$file''" );
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$file'`;
@@ -4139,11 +4411,14 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$servic
 						}
 
 						#new item
-						if ( $timeout !~ /^$/ && ( @contents[$i + 3] =~ /End/ || @contents[$i + 3] =~ /Priority/ ) )
+						if ( $timeout !~ /^$/
+							 && ( @contents[$i + 3] =~ /End/ || @contents[$i + 3] =~ /Priority/ ) )
 						{
 							splice @contents, $i + 3, 0, "\t\t\tTimeOut $timeout";
 						}
-						if ( $p_m eq 0 && $priority !~ /^$/ && ( @contents[$i + 3] =~ /End/ || @contents[$i + 4] =~ /End/ ) )
+						if (    $p_m eq 0
+							 && $priority !~ /^$/
+							 && ( @contents[$i + 3] =~ /End/ || @contents[$i + 4] =~ /End/ ) )
 						{
 							if ( @contents[$i + 3] =~ /TimeOut/ )
 							{
@@ -4247,8 +4522,11 @@ sub runFarmServerDelete($ids,$fname,$service)
 	{
 		my $fport       = &getFarmPort( $fname );
 		my $fmaxservers = &getFarmMaxServers( $fname );
-		&logfile( "running '$pen_ctl 127.0.0.1:$fport server $ids address 0 port 0 max 0 weight 0 prio 0' deleting server $ids in $fname farm" );
-		my @run = `$pen_ctl 127.0.0.1:$fport server $ids address 0 port 0 max 0 weight 0 prio 0`;
+		&logfile(
+			"running '$pen_ctl 127.0.0.1:$fport server $ids address 0 port 0 max 0 weight 0 prio 0' deleting server $ids in $fname farm"
+		);
+		my @run =
+		  `$pen_ctl 127.0.0.1:$fport server $ids address 0 port 0 max 0 weight 0 prio 0`;
 		$output = $?;
 		&logfile( "running '$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile''" );
 		my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
@@ -4457,7 +4735,8 @@ sub getFarmBackendsStatus($fname,@content)
 				{
 
 					#Checkstatusfile
-					$status_backend = &getBackendStatusFromFile( $fname, @backends[0], @serviceline[2] );
+					$status_backend =
+					  &getBackendStatusFromFile( $fname, @backends[0], @serviceline[2] );
 				}
 				elsif ( $status_backend eq "alive" )
 				{
@@ -5018,8 +5297,24 @@ sub setNewFarmName($fname,$newfname)
 
 	if ( $type eq "http" || $type eq "https" )
 	{
-		my @ffiles    = ( "$configdir\/$fname\_status.cfg",    "$configdir\/$fname\_pound.cfg",    "$configdir\/$fname\_Err414.html",    "$configdir\/$fname\_Err500.html",    "$configdir\/$fname\_Err501.html",    "$configdir\/$fname\_Err503.html",    "$fname\_guardian.conf" );
-		my @newffiles = ( "$configdir\/$newfname\_status.cfg", "$configdir\/$newfname\_pound.cfg", "$configdir\/$newfname\_Err414.html", "$configdir\/$newfname\_Err500.html", "$configdir\/$newfname\_Err501.html", "$configdir\/$newfname\_Err503.html", "$fname\_guardian.conf" );
+		my @ffiles = (
+					   "$configdir\/$fname\_status.cfg",
+					   "$configdir\/$fname\_pound.cfg",
+					   "$configdir\/$fname\_Err414.html",
+					   "$configdir\/$fname\_Err500.html",
+					   "$configdir\/$fname\_Err501.html",
+					   "$configdir\/$fname\_Err503.html",
+					   "$fname\_guardian.conf"
+		);
+		my @newffiles = (
+						  "$configdir\/$newfname\_status.cfg",
+						  "$configdir\/$newfname\_pound.cfg",
+						  "$configdir\/$newfname\_Err414.html",
+						  "$configdir\/$newfname\_Err500.html",
+						  "$configdir\/$newfname\_Err501.html",
+						  "$configdir\/$newfname\_Err503.html",
+						  "$fname\_guardian.conf"
+		);
 		if ( -e "\/tmp\/$fname\_pound.socket" )
 		{
 			unlink ( "\/tmp\/$fname\_pound.socket" );
@@ -5079,7 +5374,8 @@ sub setNewFarmName($fname,$newfname)
 	}
 
 	# rename rrd
-	rename ( "$rrdap_dir$rrd_dir/$fname-farm.rrd", "$rrdap_dir$rrd_dir/$newfname-farm.rrd" );
+	rename ( "$rrdap_dir$rrd_dir/$fname-farm.rrd",
+			 "$rrdap_dir$rrd_dir/$newfname-farm.rrd" );
 
 	# delete old graphs
 	unlink ( "img/graphs/bar$fname.png" );
@@ -5262,13 +5558,15 @@ sub setFarmBackendMaintenance($fname,$backend,$service)
 
 	if ( $type eq "http" || $type eq "https" )
 	{
-		&logfile( "setting Maintenance mode for $fname service $svice backend $backend" );
+		&logfile(
+				  "setting Maintenance mode for $fname service $svice backend $backend" );
 
 		#find the service number
 		my $idsv = &getFarmVSI( $fname, $svice );
 		@run    = `$poundctl -c /tmp/$fname\_pound.socket -b 0 $idsv $backend`;
 		$output = $?;
-		&logfile( "running '$poundctl -c /tmp/$fname\_pound.socket -b 0 $idsv $backend'" );
+		&logfile(
+				  "running '$poundctl -c /tmp/$fname\_pound.socket -b 0 $idsv $backend'" );
 		&getFarmHttpBackendStatus( $farmname, $backend, "maintenance", $idsv );
 	}
 
@@ -5303,7 +5601,8 @@ sub setFarmBackendNoMaintenance($fname,$backend,$service)
 		my $idsv = &getFarmVSI( $fname, $svice );
 		@run    = `$poundctl -c /tmp/$fname\_pound.socket -B 0 $idsv $backend`;
 		$output = $?;
-		&logfile( "running '$poundctl -c /tmp/$fname\_pound.socket -B 0 $idsv $backend'" );
+		&logfile(
+				  "running '$poundctl -c /tmp/$fname\_pound.socket -B 0 $idsv $backend'" );
 		&getFarmHttpBackendStatus( $fname, $backend, "active", $idsv );
 	}
 	return $output;
@@ -5424,7 +5723,8 @@ sub setFarmHttpBackendStatus($fname)
 	while ( <FR> )
 	{
 		@line = split ( "\ ", $_ );
-		@run = `$poundctl -c /tmp/$fname\_pound.socket @line[0] @line[1] @line[2] @line[3]`;
+		@run =
+		  `$poundctl -c /tmp/$fname\_pound.socket @line[0] @line[1] @line[2] @line[3]`;
 	}
 	close FR;
 }
@@ -5571,7 +5871,8 @@ sub getFarmServices($fname)
 		if ( $plugin !~ /^\./ )
 		{
 			@fileconf = ();
-			tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+			tie @fileconf, 'Tie::File',
+			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
 			my @srv = grep ( /^\t[a-zA-Z1-9].* => {/, @fileconf );
 			foreach $srvstring ( @srv )
 			{
@@ -5733,7 +6034,9 @@ sub getFarmVS($farmname,$service,$tag)
 			#redirect
 			if ( $tag eq "redirect" )
 			{
-				if ( ( $line =~ "Redirect \"" || $line =~ "RedirectAppend \"" ) && $sw == 1 && $line !~ "#" )
+				if (    ( $line =~ "Redirect \"" || $line =~ "RedirectAppend \"" )
+					 && $sw == 1
+					 && $line !~ "#" )
 				{
 					if ( $line =~ "Redirect \"" )
 					{
@@ -5752,7 +6055,9 @@ sub getFarmVS($farmname,$service,$tag)
 			}
 			if ( $tag eq "redirecttype" )
 			{
-				if ( ( $line =~ "Redirect \"" || $line =~ "RedirectAppend \"" ) && $sw == 1 && $line !~ "#" )
+				if (    ( $line =~ "Redirect \"" || $line =~ "RedirectAppend \"" )
+					 && $sw == 1
+					 && $line !~ "#" )
 				{
 					if ( $line =~ "Redirect \"" )
 					{
@@ -5910,7 +6215,11 @@ sub getFarmVS($farmname,$service,$tag)
 				{
 
 					#if ($line =~ /Address/ && $be >=1){
-					if ( $line =~ /End/ && $line !~ /#/ && $sw == 1 && $be_section == 1 && $line !~ /BackEnd/ )
+					if (    $line =~ /End/
+						 && $line !~ /#/
+						 && $sw == 1
+						 && $be_section == 1
+						 && $line !~ /BackEnd/ )
 					{
 						if ( $sw_ti == 0 )
 						{
@@ -6002,7 +6311,8 @@ sub getFarmVS($farmname,$service,$tag)
 			my @pluginlist = readdir ( DIR );
 			foreach $plugin ( @pluginlist )
 			{
-				tie @fileconf, 'Tie::File', "$configdir\/$fname\_$type.cfg\/etc\/plugins\/$plugin";
+				tie @fileconf, 'Tie::File',
+				  "$configdir\/$fname\_$type.cfg\/etc\/plugins\/$plugin";
 				if ( grep ( /^\t$svice => /, @fileconf ) )
 				{
 					$pluginfile = $plugin;
@@ -6010,7 +6320,8 @@ sub getFarmVS($farmname,$service,$tag)
 				untie @fileconf;
 			}
 			closedir ( DIR );
-			tie @fileconf, 'Tie::File', "$configdir\/$fname\_$type.cfg\/etc\/plugins\/$pluginfile";
+			tie @fileconf, 'Tie::File',
+			  "$configdir\/$fname\_$type.cfg\/etc\/plugins\/$pluginfile";
 			foreach $line ( @fileconf )
 			{
 				if ( $tag eq "backends" )
@@ -6152,12 +6463,16 @@ sub setFarmVS($farmname,$service,$tag,$string)
 			#client redirect default
 			if ( $tag eq "redirect" )
 			{
-				if ( ( $line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"" ) && $sw == 1 && $stri ne "" )
+				if (    ( $line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"" )
+					 && $sw == 1
+					 && $stri ne "" )
 				{
 					$line = "\t\tRedirect \"$stri\"";
 					last;
 				}
-				if ( ( $line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"" ) && $sw == 1 && $stri eq "" )
+				if (    ( $line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"" )
+					 && $sw == 1
+					 && $stri eq "" )
 				{
 					$line = "\t\t#Redirect \"\"";
 					last;
@@ -6167,12 +6482,16 @@ sub setFarmVS($farmname,$service,$tag,$string)
 			#client redirect append
 			if ( $tag eq "redirectappend" )
 			{
-				if ( ( $line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"" ) && $sw == 1 && $stri ne "" )
+				if (    ( $line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"" )
+					 && $sw == 1
+					 && $stri ne "" )
 				{
 					$line = "\t\tRedirectAppend \"$stri\"";
 					last;
 				}
-				if ( ( $line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"" ) && $sw == 1 && $stri eq "" )
+				if (    ( $line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"" )
+					 && $sw == 1
+					 && $stri eq "" )
 				{
 					$line = "\t\t#Redirect \"\"";
 					last;
@@ -6517,7 +6836,8 @@ sub setFarmVS($farmname,$service,$tag,$string)
 					if ( $line =~ /service_types => / )
 					{
 						$index++;
-						splice @fileconf, $index, 0, "\ttcp_$stri => {\n\t\tplugin = tcp_connect,\n\t\tport = $stri,\n\t\tup_thresh = 2,\n\t\tok_thresh = 2,\n\t\tdown_thresh = 2,\n\t\tinterval = 5,\n\t\ttimeout = 3,\n\t}\n";
+						splice @fileconf, $index, 0,
+						  "\ttcp_$stri => {\n\t\tplugin = tcp_connect,\n\t\tport = $stri,\n\t\tup_thresh = 2,\n\t\tok_thresh = 2,\n\t\tdown_thresh = 2,\n\t\tinterval = 5,\n\t\ttimeout = 3,\n\t}\n";
 						last;
 					}
 					$index++;
@@ -6739,7 +7059,10 @@ sub setFarmGSLBNewBackend($fname,$srv,$lb,$id,$ipaddress)
 				splice @fileconf, $index, 0, "		$id => $ipaddress";
 				last;
 			}
-			if ( $found == 1 && $lb eq "prio" && $line =~ /primary => / && $id eq "primary" )
+			if (    $found == 1
+				 && $lb eq "prio"
+				 && $line =~ /primary => /
+				 && $id eq "primary" )
 			{
 				splice @fileconf, $index, 1, "		$id => $ipaddress";
 				last;
@@ -6749,7 +7072,10 @@ sub setFarmGSLBNewBackend($fname,$srv,$lb,$id,$ipaddress)
 				splice @fileconf, $index, 0, "		$id => $ipaddress";
 				last;
 			}
-			if ( $found == 1 && $lb eq "prio" && $line =~ /secondary => / && $id eq "secondary" )
+			if (    $found == 1
+				 && $lb eq "prio"
+				 && $line =~ /secondary => /
+				 && $id eq "secondary" )
 			{
 				splice @fileconf, $index, 1, "		$id => $ipaddress";
 				last;
@@ -6792,7 +7118,8 @@ sub runFarmReload($farmname)
 	if ( $type eq "gslb" )
 	{
 		&logfile( "running $gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones" );
-		zsystem( "$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones 2>/dev/null" );
+		zsystem(
+				 "$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones 2>/dev/null" );
 		$output = $?;
 		if ( $output != 0 )
 		{
@@ -6844,7 +7171,9 @@ sub setFarmBackendsSessionsRemove($fname,$svice,$backendid)
 	my @sessionid;
 	my $sessid;
 
-	&logfile( "Deleting established sessions to a backend $backendid from farm $fname in service $svice" );
+	&logfile(
+		"Deleting established sessions to a backend $backendid from farm $fname in service $svice"
+	);
 	foreach ( @content )
 	{
 		if ( $_ =~ /Service/ && $sw eq 1 )
@@ -6865,7 +7194,8 @@ sub setFarmBackendsSessionsRemove($fname,$svice,$backendid)
 			@sessionid  = split ( /\ /, $sessionid2 );
 			$sessid     = @sessionid[1];
 			@output     = `$poundctl -c  /tmp/$fname\_pound.socket -n 0 $sviceid $sessid`;
-			&logfile( "Executing:  $poundctl -c /tmp/$fname\_pound.socket -n 0 $sviceid $sessid" );
+			&logfile(
+				   "Executing:  $poundctl -c /tmp/$fname\_pound.socket -n 0 $sviceid $sessid" );
 
 		}
 	}
@@ -6908,8 +7238,10 @@ sub getConntrack($orig_src, $orig_dst, $reply_src, $reply_dst, $proto)
 	{
 		$proto = "-p $proto";
 	}
-	&logfile( "$conntrack -L $orig_src $orig_dst $reply_src $reply_dst $proto 2>/dev/null" );
-	@output = `$conntrack -L $orig_src $orig_dst $reply_src $reply_dst $proto 2>/dev/null`;
+	&logfile(
+		 "$conntrack -L $orig_src $orig_dst $reply_src $reply_dst $proto 2>/dev/null" );
+	@output =
+	  `$conntrack -L $orig_src $orig_dst $reply_src $reply_dst $proto 2>/dev/null`;
 	return @output;
 }
 

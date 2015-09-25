@@ -90,9 +90,11 @@ print "$if<br><br>";
 print "<b>HWaddr: </b>";
 print "$hwaddr<br><br>";
 print "<b>IP Addr: </b>";
-print "<input type=\"text\" value=\"$ipaddr\" size=\"15\" name=\"newip\"><br><br>";
+print
+  "<input type=\"text\" value=\"$ipaddr\" size=\"15\" name=\"newip\"><br><br>";
 print "<b>Netmask: </b>";
-print "<input type=\"text\" value=\"$netmask\" size=\"15\" name=\"netmask\"><br><br>";
+print
+  "<input type=\"text\" value=\"$netmask\" size=\"15\" name=\"netmask\"><br><br>";
 print "<b>Broadcast: </b>";
 
 if ( $broadcast eq "" )
@@ -120,7 +122,8 @@ if ( $if =~ /\:/ )
 		}
 		else
 		{
-			print "<img src=\"img/icons/small/lock.png\" title=\"A datalink farm is locking the gateway of this interface\"><br><br>";
+			print
+			  "<img src=\"img/icons/small/lock.png\" title=\"A datalink farm is locking the gateway of this interface\"><br><br>";
 		}
 	}
 }
@@ -129,11 +132,13 @@ else
 	my $ifused = &uplinkUsed( $if );
 	if ( $ifused eq "false" )
 	{
-		print "<input type=\"text\" value=\"$gwaddr\" size=\"15\" name=\"gwaddr\"><br><br>";
+		print
+		  "<input type=\"text\" value=\"$gwaddr\" size=\"15\" name=\"gwaddr\"><br><br>";
 	}
 	else
 	{
-		print "<img src=\"img/icons/small/lock.png\" title=\"A datalink farm is locking the gateway of this interface\"><br><br>";
+		print
+		  "<img src=\"img/icons/small/lock.png\" title=\"A datalink farm is locking the gateway of this interface\"><br><br>";
 	}
 }
 print "<b>Vlan tag: </b>";
@@ -148,8 +153,10 @@ else
 print "</select><br>";
 
 #print "<input type=\"submit\" value=\"Save Config\" name=\"action\" class=\"button small\">";
-print "<input type=\"submit\" value=\"Save & Up!\" name=\"action\" class=\"button small\">";
-print "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Save & Up!\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
 print "</form>";
 print "</div>";
 

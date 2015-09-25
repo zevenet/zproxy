@@ -122,7 +122,11 @@ sub runL4FarmRestart($fname,$writeconf,$type)
 	my $output      = 0;
 	my $pidfile     = "/var/run/l4sd.pid";
 
-	if ( $alg eq "leastconn" && $fbootstatus eq "up" && $writeconf eq "false" && $type eq "hot" && -e "$pidfile" )
+	if (    $alg eq "leastconn"
+		 && $fbootstatus eq "up"
+		 && $writeconf eq "false"
+		 && $type eq "hot"
+		 && -e "$pidfile" )
 	{
 		open FILE, "<$pidfile";
 		my $pid = <FILE>;
@@ -149,7 +153,11 @@ sub _runL4FarmRestart($fname,$writeconf,$type)
 	my $output      = 0;
 	my $pidfile     = "/var/run/l4sd.pid";
 
-	if ( $alg eq "leastconn" && $fbootstatus eq "up" && $writeconf eq "false" && $type eq "hot" && -e "$pidfile" )
+	if (    $alg eq "leastconn"
+		 && $fbootstatus eq "up"
+		 && $writeconf eq "false"
+		 && $type eq "hot"
+		 && -e "$pidfile" )
 	{
 		open FILE, "<$pidfile";
 		my $pid = <FILE>;

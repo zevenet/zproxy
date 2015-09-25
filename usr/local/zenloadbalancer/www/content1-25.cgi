@@ -64,12 +64,14 @@ foreach ( @backends )
 &refreshstats();
 print "<br>";
 
-print "<div class=\"box-header\">Real servers status<font size=1>&nbsp;&nbsp;&nbsp; $backendsize servers, $activebackends active </font></div>";
+print
+  "<div class=\"box-header\">Real servers status<font size=1>&nbsp;&nbsp;&nbsp; $backendsize servers, $activebackends active </font></div>";
 print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 print "<thead>\n";
 
 #print "<tr><td>Service</td><td>Server</td><td>Address</td><td>Port</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Closed Conns</td><td>Sessions</td><td>Weight</td>";
-print "<tr><td>Service<td>Server</td><td>Address</td><td>Port</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Weight</td>";
+print
+  "<tr><td>Service<td>Server</td><td>Address</td><td>Port</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Weight</td>";
 print "</thead>\n";
 print "<tbody>";
 
@@ -92,7 +94,8 @@ foreach ( @backends )
 	print "<td> $backends_data[2] </td> ";
 	if ( $backends_data[3] eq "maintenance" )
 	{
-		print "<td><img src=\"img/icons/small/warning.png\" title=\"Maintenance\"></td> ";
+		print
+		  "<td><img src=\"img/icons/small/warning.png\" title=\"Maintenance\"></td> ";
 	}
 	elsif ( $backends_data[3] eq "up" )
 	{
@@ -100,19 +103,22 @@ foreach ( @backends )
 	}
 	elsif ( $backends_data[3] eq "fgDOWN" )
 	{
-		print "<td><img src=\"img/icons/small/disconnect.png\" title=\"FarmGuardian down\"></td> ";
+		print
+		  "<td><img src=\"img/icons/small/disconnect.png\" title=\"FarmGuardian down\"></td> ";
 	}
 	else
 	{
 		print "<td><img src=\"img/icons/small/stop.png\" title=\"Down\"></td> ";
 	}
-	$ip_backend     = $backends_data[1];
-	$port_backend   = $backends_data[2];
-	@netstat        = &getConntrack( "", $ip_backend, "", "", "tcp" );
-	@synnetstatback = &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
-	$npend          = @synnetstatback;
+	$ip_backend   = $backends_data[1];
+	$port_backend = $backends_data[2];
+	@netstat      = &getConntrack( "", $ip_backend, "", "", "tcp" );
+	@synnetstatback =
+	  &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
+	$npend = @synnetstatback;
 	print "<td>$npend</td>";
-	@stabnetstatback = &getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
+	@stabnetstatback =
+	  &getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
 	$nestab = @stabnetstatback;
 	print "<td>$nestab</td>";
 	print "<td> $backends_data[5] </td>";
@@ -128,16 +134,19 @@ print "<div class=\"box-header\">";
 
 if ( $viewtableclients eq "yes" )
 {
-	print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=no\" title=\"Minimize\"><img src=\"img/icons/small/bullet_toggle_minus.png\"></a>";
+	print
+	  "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=no\" title=\"Minimize\"><img src=\"img/icons/small/bullet_toggle_minus.png\"></a>";
 }
 else
 {
-	print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=yes\" title=\"Maximize\"><img src=\"img/icons/small/bullet_toggle_plus.png\"></a>";
+	print
+	  "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=yes\" title=\"Maximize\"><img src=\"img/icons/small/bullet_toggle_plus.png\"></a>";
 }
 
 my @sessions = &getFarmBackendsClientsList( $farmname, @content );
 my $t_sessions = $#sessions + 1;
-print "Client sessions status<font size=1>&nbsp;&nbsp;&nbsp; $t_sessions active sessions</font></div>\n";
+print
+  "Client sessions status<font size=1>&nbsp;&nbsp;&nbsp; $t_sessions active sessions</font></div>\n";
 
 if ( $viewtableclients eq "yes" )
 {
@@ -171,7 +180,8 @@ print "<!--END MANAGE-->";
 print "<div id=\"page-header\"></div>";
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" value=\"1-2\" name=\"id\">";
-print "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
 print "</form>";
 print "<div id=\"page-header\"></div>";
 

@@ -90,7 +90,8 @@ if ( $action eq "Upload" && $filename !~ /^$/ )
 print "<br>";
 print "<br>";
 
-print "<form method=\"post\" action=\"uploadcerts.cgi\" enctype=\"multipart/form-data\">";
+print
+  "<form method=\"post\" action=\"uploadcerts.cgi\" enctype=\"multipart/form-data\">";
 
 #print "<form method=\"post\" action=\"index.cgi\">";
 #print "<b>File:</b> <input  type=\"file\" name=\"file\">";
@@ -102,10 +103,12 @@ print "<form method=\"post\" action=\"uploadcerts.cgi\" enctype=\"multipart/form
 #</div>
 #};
 
-print "<b>Upload file on pem format. <font size=1> filename.pem</fon>:</b> <input   type=\"file\" name=\"fileup\" value=\"Ex\" >";
+print
+  "<b>Upload file on pem format. <font size=1> filename.pem</fon>:</b> <input   type=\"file\" name=\"fileup\" value=\"Ex\" >";
 print "<br>";
 print "<br>";
-print "<input type=\"submit\" value=\"Upload\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Upload\" name=\"action\" class=\"button small\">";
 print "</form>";
 print "<br>";
 

@@ -72,11 +72,14 @@ if ( $action eq "editfarm-changevipvipp" )
 		if ( $status != -1 )
 		{
 			&runFarmStart( $farmname, "true" );
-			&successmsg( "Virtual IP and Interface has been modified, the $farmname farm has been restarted" );
+			&successmsg(
+				"Virtual IP and Interface has been modified, the $farmname farm has been restarted"
+			);
 		}
 		else
 		{
-			&errormsg( "It's not possible to change the $farmname farm virtual IP and interface" );
+			&errormsg(
+					"It's not possible to change the $farmname farm virtual IP and interface" );
 		}
 	}
 }
@@ -92,7 +95,9 @@ if ( $action eq "editfarm-Name" )
 	#Check the farm's name change
 	if ( "$newfarmname" eq "$farmname" )
 	{
-		&errormsg( "The new farm's name \"$newfarmname\" is the same as the old farm's name \"$farmname\": nothing to do" );
+		&errormsg(
+			"The new farm's name \"$newfarmname\" is the same as the old farm's name \"$farmname\": nothing to do"
+		);
 	}
 	elsif ( $farmnameok ne 0 )
 	{
@@ -115,11 +120,15 @@ if ( $action eq "editfarm-Name" )
 
 			if ( $fnchange == -1 )
 			{
-				&errormsg( "The name of the Farm $farmname can't be modified, delete the farm and create a new one." );
+				&errormsg(
+					"The name of the Farm $farmname can't be modified, delete the farm and create a new one."
+				);
 			}
 			elsif ( $fnchange == -2 )
 			{
-				&errormsg( "The name of the Farm $farmname can't be modified, the new name can't be empty" );
+				&errormsg(
+					 "The name of the Farm $farmname can't be modified, the new name can't be empty"
+				);
 			}
 			else
 			{
@@ -167,15 +176,19 @@ if ( $action eq "editfarm-saveserver" )
 	}
 	if ( $rip_server =~ /^$/ || $if =~ /^$/ )
 	{
-		&errormsg( "Invalid IP address and network interface for a real server, it can't be blank" );
+		&errormsg(
+			 "Invalid IP address and network interface for a real server, it can't be blank"
+		);
 		$error = 1;
 	}
-	if ( $priority_server ne "" && ( $priority_server <= 0 || $priority_server >= 10 ) )
+	if ( $priority_server ne ""
+		 && ( $priority_server <= 0 || $priority_server >= 10 ) )
 	{
 		&errormsg( "Invalid priority value for real server" );
 		$error = 1;
 	}
-	if ( $weight_server ne "" && ( $weight_server <= 0 || $weight_server >= 10000 ) )
+	if ( $weight_server ne ""
+		 && ( $weight_server <= 0 || $weight_server >= 10000 ) )
 	{
 		&errormsg( "Invalid weight value for real server" );
 		$error = 1;
@@ -183,14 +196,20 @@ if ( $action eq "editfarm-saveserver" )
 
 	if ( $error == 0 )
 	{
-		$status = &setFarmServer( $id_server, $rip_server, $if, "", $weight_server, $priority_server, "", $farmname );
+		$status =
+		  &setFarmServer( $id_server, $rip_server, $if, "", $weight_server,
+						  $priority_server, "", $farmname );
 		if ( $status != -1 )
 		{
-			&successmsg( "The real server with ip $rip_server and local interface $if for the $farmname farm has been modified" );
+			&successmsg(
+				"The real server with ip $rip_server and local interface $if for the $farmname farm has been modified"
+			);
 		}
 		else
 		{
-			&errormsg( "It's not possible to modify the real server with ip $rip_server and interface $if for the $farmname farm" );
+			&errormsg(
+				"It's not possible to modify the real server with ip $rip_server and interface $if for the $farmname farm"
+			);
 		}
 	}
 }
@@ -201,11 +220,14 @@ if ( $action eq "editfarm-deleteserver" )
 	$status = &runFarmServerDelete( $id_server, $farmname );
 	if ( $status != -1 )
 	{
-		&successmsg( "The real server with ID $id_server of the $farmname farm has been deleted" );
+		&successmsg(
+			  "The real server with ID $id_server of the $farmname farm has been deleted" );
 	}
 	else
 	{
-		&errormsg( "It's not possible to delete the real server with ID $id_server of the $farmname farm" );
+		&errormsg(
+			"It's not possible to delete the real server with ID $id_server of the $farmname farm"
+		);
 	}
 }
 
@@ -221,12 +243,14 @@ print "<div class=\"row\">";
 print "<b>Farm's name.</b><br>";
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-Name\">";
-print "<input type=\"text\" value=\"$farmname\" size=\"25\" name=\"newfarmname\">";
+print
+  "<input type=\"text\" value=\"$farmname\" size=\"25\" name=\"newfarmname\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 
 #print "<input type=\"hidden\" name=\"id_server\" value=\"@l_serv[0]\">";
-print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+print
+  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 print "<br><br>";
 
 #load balance algoritm
@@ -261,20 +285,23 @@ else
 print "</select>";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+print
+  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 print "<br>";
 
 #change ip or port for VIP
 $vip   = &getFarmVip( "vip",  $farmname );
 $vport = &getFarmVip( "vipp", $farmname );
-print "<b>Farm Virtual IP and Interface</b> <font size=1> *service will be restarted</font><b>.</b>";
+print
+  "<b>Farm Virtual IP and Interface</b> <font size=1> *service will be restarted</font><b>.</b>";
 
 #my @listinterfaces = &listallips();
 $clrip = &clrip();
 $guiip = &GUIip();
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-print "<input type=\"hidden\" name=\"action\" value=\"editfarm-changevipvipp\">";
+print
+  "<input type=\"hidden\" name=\"action\" value=\"editfarm-changevipvipp\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 
 #print "<input type=\"hidden\" value=\"$vip\" size=\"12\" name=\"vip\">";
@@ -291,7 +318,8 @@ for ( $i = 0 ; $i <= $#vips ; $i++ )
 	{
 		if ( $vip eq @ip[1] )
 		{
-			print "<option value=\"@ip[0] @ip[1]\" selected=\"selected\">@vips[$i]</option>\n";
+			print
+			  "<option value=\"@ip[0] @ip[1]\" selected=\"selected\">@vips[$i]</option>\n";
 		}
 		else
 		{
@@ -300,7 +328,8 @@ for ( $i = 0 ; $i <= $#vips ; $i++ )
 	}
 }
 print "</select>";
-print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+print
+  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 
 #print "</form>";
 
@@ -349,10 +378,11 @@ foreach $l_servers ( @run )
 		print "<input type=\"hidden\" name=\"id_server\" value=\"@l_serv[0]\">";
 
 		#real server ip
-		print "<td><input type=\"text\" size=\"12\"  name=\"rip_server\" value=\"@l_serv[1]\"> </td>";
+		print
+		  "<td><input type=\"text\" size=\"12\"  name=\"rip_server\" value=\"@l_serv[1]\"> </td>";
 
-		#local interface
-		#print "<td><input type=\"text\" size=\"4\"  name=\"port_server\" value=\"@l_serv[2]\"> </td>";
+#local interface
+#print "<td><input type=\"text\" size=\"4\"  name=\"port_server\" value=\"@l_serv[2]\"> </td>";
 		print "<td>";
 		print "<select name=\"if\">";
 		foreach $iface ( @laifaces )
@@ -370,10 +400,12 @@ foreach $l_servers ( @run )
 		print "</td>";
 
 		#Weight
-		print "<td><input type=\"text\" size=\"4\"  name=\"weight_server\" value=\"@l_serv[3]\"> </td>";
+		print
+		  "<td><input type=\"text\" size=\"4\"  name=\"weight_server\" value=\"@l_serv[3]\"> </td>";
 
 		#Priority
-		print "<td><input type=\"text\" size=\"4\"  name=\"priority_server\" value=\"@l_serv[4]\"> </td>";
+		print
+		  "<td><input type=\"text\" size=\"4\"  name=\"priority_server\" value=\"@l_serv[4]\"> </td>";
 		&createmenuserversfarm( "edit", $farmname, @l_serv[0] );
 	}
 	else
@@ -411,7 +443,8 @@ if ( $action eq "editfarm-addserver" )
 	print "<input type=\"hidden\" name=\"id_server\" value=\"$sindex\">";
 
 	#real server ip
-	print "<td><input type=\"text\" size=\"12\"  name=\"rip_server\" value=\"\"> </td>";
+	print
+	  "<td><input type=\"text\" size=\"12\"  name=\"rip_server\" value=\"\"> </td>";
 
 	#local interface
 	#print "<td><input type=\"text\" size=\"4\"  name=\"if\" value=\"\"> </td>";
@@ -434,10 +467,12 @@ if ( $action eq "editfarm-addserver" )
 	print "</td>";
 
 	#Weight
-	print "<td><input type=\"text\" size=\"4\"  name=\"weight_server\" value=\"\"></td>";
+	print
+	  "<td><input type=\"text\" size=\"4\"  name=\"weight_server\" value=\"\"></td>";
 
 	#Priority
-	print "<td><input type=\"text\" size=\"4\"  name=\"priority_server\" value=\"\"> </td>";
+	print
+	  "<td><input type=\"text\" size=\"4\"  name=\"priority_server\" value=\"\"> </td>";
 	&createmenuserversfarm( "add", $farmname, $sindex );
 	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
@@ -467,7 +502,8 @@ print "</div>";
 print "</div>";
 
 print "<div id=\"page-header\"></div>";
-print "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
 print "<div id=\"page-header\"></div>";
 print "</form>";
 print "</div>";

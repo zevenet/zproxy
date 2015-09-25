@@ -46,7 +46,8 @@ print "<div align=\"center\">";
 print "<form method=\"get\" action=\"index.cgi\">";
 
 #print "<input type=\"hidden\" name=\"id\" value=\"$id\"
-print "<textarea  name=\"license\" cols=\"80\" rows=\"20\" align=\"center\" readonly>";
+print
+  "<textarea  name=\"license\" cols=\"80\" rows=\"20\" align=\"center\" readonly>";
 open FR, "/usr/local/zenloadbalancer/license.txt";
 while ( <FR> )
 {

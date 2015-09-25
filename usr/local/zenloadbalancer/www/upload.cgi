@@ -80,14 +80,16 @@ if ( $action eq "Upload Backup" )
 	}
 	else
 	{
-		&errormsg( "Filename is not valid. Only numbers, letters and hyphens are allowed" );
+		&errormsg(
+				   "Filename is not valid. Only numbers, letters and hyphens are allowed" );
 	}
 }
 
 print "<br>";
 print "<br>";
 
-print "<form method=\"post\" action=\"upload.cgi\" enctype=\"multipart/form-data\">";
+print
+  "<form method=\"post\" action=\"upload.cgi\" enctype=\"multipart/form-data\">";
 
 #print "<form method=\"post\" action=\"index.cgi\">";
 #print "<b>File:</b> <input  type=\"file\" name=\"file\">";
@@ -101,7 +103,8 @@ print "<form method=\"post\" action=\"upload.cgi\" enctype=\"multipart/form-data
 print "<b>File:</b> <input   type=\"file\" name=\"fileup\" value=\"Ex\" >";
 print "<br>";
 print "<br>";
-print "<input type=\"submit\" value=\"Upload Backup\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Upload Backup\" name=\"action\" class=\"button small\">";
 print "</form>";
 
 print "<br>";

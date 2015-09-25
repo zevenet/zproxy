@@ -57,8 +57,10 @@ if ( !( valid_form() ) )
 	print "			<label>Verify password: </label>";
 	print "			<input type=\"password\" name=\"trustedpass\">";
 	print "			<br><br>";
-	print "			<input type=\"submit\" value=\"Change\" name=\"actionpost\" class=\"button small\">";
-	print "			<input type=\"submit\" value=\"Change & Sync with root passwd\" name=\"actionpost\" class=\"button small\">";
+	print
+	  "			<input type=\"submit\" value=\"Change\" name=\"actionpost\" class=\"button small\">";
+	print
+	  "			<input type=\"submit\" value=\"Change & Sync with root passwd\" name=\"actionpost\" class=\"button small\">";
 	print "			<div style=\"clear:both;\"></div>";
 	print "		</form>";
 
