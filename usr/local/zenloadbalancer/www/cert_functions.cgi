@@ -327,6 +327,28 @@ sub createPemFromKeyCRT($keyfile,$crtfile,$certautfile,$tmpdir)
 	close $pemhandler;
 }
 
+# content 1-3 certificate-https
+sub getFarmCertUsed($cfile)
+{
+	my ( $cfile ) = @_;
+
+	my @farms  = &getFarmsByType( "https" );
+	my $output = -1;
+
+	for ( @farms )
+	{
+		my $fname = $_;
+		my $file  = &getFarmFile( $fname );
+		use File::Grep qw( fgrep fmap fdo );
+		if ( fgrep { /Cert \"$configdir\/$cfile\"/ } "$configdir/$file" )
+		{
+			$output = 0;
+		}
+	}
+
+	return $output;
+}
+
 # do not remove this
 1
 

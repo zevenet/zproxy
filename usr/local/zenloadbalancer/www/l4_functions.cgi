@@ -202,9 +202,9 @@ sub sendL4ConfChange($fname)
 }
 
 #
-sub setL4FarmSessionType($session,$ffile,$service)
+sub setL4FarmSessionType($session,$ffile)
 {
-	my ( $session, $ffile, $service ) = @_;
+	my ( $session, $ffile ) = @_;
 	my $output = -1;
 
 	use Tie::File;
@@ -1488,9 +1488,8 @@ sub runL4FarmServerDelete($ids,$ffile)
 sub getL4FarmBackendsStatus($fname,@content)
 {
 	my ( $fname, @content ) = @_;
-	my @output = -1;
-
 	my @servers;
+
 	foreach $server ( @content )
 	{
 		my @serv = split ( "\;", $server );
@@ -1501,14 +1500,15 @@ sub getL4FarmBackendsStatus($fname,@content)
 		}
 		push ( @servers, "@serv[2]\;$port\;@serv[5]\;@serv[6]\;@serv[7]" );
 	}
-	@output = @servers;
 
-	return @output;
+	return @servers;
 }
 
 sub setL4FarmBackendStatus($file,$index,$stat)
 {
 	my ( $file, $index, $stat ) = @_;
+
+	# check output !!!
 	my $output = -1;
 
 	use Tie::File;
@@ -1532,6 +1532,57 @@ sub setL4FarmBackendStatus($file,$index,$stat)
 	untie @filelines;
 
 	return $output;
+}
+
+sub getFarmPortList($fvipp)
+{
+	my ( $fvipp ) = @_;
+	my @portlist;
+	my $port;
+	my @retportlist = ();
+	@portlist = split ( ",", $fvipp );
+
+	if ( $portlist[0] !~ /\*/ )
+	{
+
+		foreach $port ( @portlist )
+		{
+			if ( $port =~ /:/ )
+			{
+				my @intlimits = split ( ":", $port );
+				for ( my $i = @intlimits[0] ; $i <= @intlimits[1] ; $i++ )
+				{
+					push ( @retportlist, $i );
+				}
+			}
+			else
+			{
+				push ( @retportlist, $port );
+			}
+
+		}
+	}
+	else
+	{
+		$retportlist[0] = '*';
+	}
+	return @retportlist;
+}
+
+#
+sub getL4FarmBackendStatusCtl($fname)
+{
+	my ( $fname ) = @_;
+	my @output = -1;
+
+	my $ffile = &getFarmFile( $fname );
+	my @content;
+
+	tie my @content, 'Tie::File', "$configdir\/$ffile";
+	@output = grep /^\;server\;/, @content;
+	untie @content;
+
+	return @output;
 }
 
 # do not remove this

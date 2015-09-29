@@ -36,6 +36,8 @@ require "/usr/local/zenloadbalancer/www/gui_functions.cgi";
 require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
 require "/usr/local/zenloadbalancer/www/farmguardian_functions.cgi";
 require "/usr/local/zenloadbalancer/www/datalink_functions.cgi";
+require "/usr/local/zenloadbalancer/www/http_functions.cgi";
+require "/usr/local/zenloadbalancer/www/tcpudp_functions.cgi";
 
 if ( -e "/usr/local/zenloadbalancer/www/zapi_functions.cgi" )
 {

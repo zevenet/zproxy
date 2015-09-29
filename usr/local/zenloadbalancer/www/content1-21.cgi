@@ -23,7 +23,6 @@
 
 if ( $action eq "Save" )
 {
-
 	#check if farm name is ok
 	$farmname =~ s/\ //g;
 	$farmname =~ s/\_//g;
