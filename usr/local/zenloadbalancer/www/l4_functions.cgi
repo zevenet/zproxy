@@ -22,87 +22,82 @@
 ###############################################################################
 
 #
-sub getL4FarmsPorts($farmtype)
+sub getL4FarmsPorts($farm_type)
 {
-	my ( $farmtype ) = @_;
+	my ( $farm_type ) = @_;
 
-	my $first  = 1;
-	my $fports = "";
-	my @files  = &getFarmList();
-	if ( $#files > -1 )
+	my $first           = 1;
+	my $port_list       = "";
+	my @farms_filenames = &getFarmList();
+	if ( $#farms_filenames > -1 )
 	{
-		foreach $file ( @files )
+		foreach my $farm_filename ( @farms_filenames )
 		{
-			my $fname  = &getFarmName( $file );
-			my $ftype  = &getFarmType( $fname );
-			my $fproto = &getFarmProto( $fname );
-			if ( $ftype eq "l4xnat" && $fproto eq $farmtype )
+			my $farm_name     = &getFarmName( $farm_filename );
+			my $farm_type     = &getFarmType( $farm_name );
+			my $farm_protocol = &getFarmProto( $farm_name );
+
+			if ( $farm_type eq "l4xnat" && $farm_protocol eq $farm_type )
 			{
-				my $fport = &getFarmVip( "vipp", $fname );
-				if ( &validL4ExtPort( $fproto, $fport ) )
+				my $farm_port = &getFarmVip( "vipp", $farm_name );
+				if ( &validL4ExtPort( $farm_protocol, $farm_port ) )
 				{
 					if ( $first == 1 )
 					{
-						$fports = $fport;
-						$first  = 0;
+						$port_list = $farm_port;
+						$first     = 0;
 					}
 					else
 					{
-						$fports = "$fports,$fport";
+						$port_list = "$port_list,$farm_port";
 					}
 				}
 			}
 		}
 	}
-	return $fports;
+	return $port_list;
 }
 
 #
-sub loadL4Modules($vproto)
+sub loadL4Modules($protocol)
 {
-	my ( $vproto ) = @_;
+	my ( $protocol ) = @_;
 
-	my $status = 0;
-	my $fports = &getL4FarmsPorts( $vproto );
-	if ( $vproto eq "sip" )
+	my $status    = 0;
+	my $port_list = &getL4FarmsPorts( $protocol );
+	if ( $protocol eq "sip" )
 	{
 		&removeNfModule( "nf_nat_sip",       "" );
 		&removeNfModule( "nf_conntrack_sip", "" );
-		&loadNfModule( "nf_conntrack_sip", "ports=$fports" );
+		&loadNfModule( "nf_conntrack_sip", "ports=$port_list" );
 		&loadNfModule( "nf_nat_sip",       "" );
-
-		#$status = &ReloadNfModule("nf_conntrack_sip","ports=$fports");
 	}
-	elsif ( $vproto eq "ftp" )
+	elsif ( $protocol eq "ftp" )
 	{
 		&removeNfModule( "nf_nat_ftp",       "" );
 		&removeNfModule( "nf_conntrack_ftp", "" );
-		&loadNfModule( "nf_conntrack_ftp", "ports=$fports" );
+		&loadNfModule( "nf_conntrack_ftp", "ports=$port_list" );
 		&loadNfModule( "nf_nat_ftp",       "" );
-
-		#&loadNfModule("nf_nat_ftp","");
-		#$status = &ReloadNfModule("nf_conntrack_ftp","ports=$fports");
 	}
-	elsif ( $vproto eq "tftp" )
+	elsif ( $protocol eq "tftp" )
 	{
 		&removeNfModule( "nf_nat_tftp",       "" );
 		&removeNfModule( "nf_conntrack_tftp", "" );
-		&loadNfModule( "nf_conntrack_tftp", "ports=$fports" );
+		&loadNfModule( "nf_conntrack_tftp", "ports=$port_list" );
 		&loadNfModule( "nf_nat_tftp",       "" );
-
-		#&loadNfModule("nf_nat_tftp","");
-		#$status = &ReloadNfModule("nf_conntrack_tftp","ports=$fports");
 	}
 	return $status;
 }
 
 #
-sub validL4ExtPort($fproto,$ports)
+sub validL4ExtPort($farm_protocol,$ports)
 {
-	my ( $fproto, $ports ) = @_;
+	my ( $farm_protocol, $ports ) = @_;
 
 	my $status = 0;
-	if ( $fproto eq "sip" || $fproto eq "ftp" || $fproto eq "tftp" )
+	if (    $farm_protocol eq "sip"
+		 || $farm_protocol eq "ftp"
+		 || $farm_protocol eq "tftp" )
 	{
 		if ( $ports =~ /\d+/ || $ports =~ /((\d+),(\d+))+/ )
 		{
@@ -113,16 +108,16 @@ sub validL4ExtPort($fproto,$ports)
 }
 
 #
-sub runL4FarmRestart($fname,$writeconf,$type)
+sub runL4FarmRestart($farm_name,$writeconf,$type)
 {
-	my ( $fname, $writeconf, $type ) = @_;
+	my ( $farm_name, $writeconf, $type ) = @_;
 
-	my $alg         = &getFarmAlgorithm( $fname );
-	my $fbootstatus = &getFarmBootStatus( $fname );
+	my $algorithm   = &getFarmAlgorithm( $farm_name );
+	my $fbootstatus = &getFarmBootStatus( $farm_name );
 	my $output      = 0;
 	my $pidfile     = "/var/run/l4sd.pid";
 
-	if (    $alg eq "leastconn"
+	if (    $algorithm eq "leastconn"
 		 && $fbootstatus eq "up"
 		 && $writeconf eq "false"
 		 && $type eq "hot"
@@ -136,24 +131,24 @@ sub runL4FarmRestart($fname,$writeconf,$type)
 	}
 	else
 	{
-		&runFarmStop( $fname, $writeconf );
-		$output = &runFarmStart( $fname, $writeconf );
+		&runFarmStop( $farm_name, $writeconf );
+		$output = &runFarmStart( $farm_name, $writeconf );
 	}
 
 	return $output;
 }
 
 #
-sub _runL4FarmRestart($fname,$writeconf,$type)
+sub _runL4FarmRestart($farm_name,$writeconf,$type)
 {
-	my ( $fname, $writeconf, $type ) = @_;
+	my ( $farm_name, $writeconf, $type ) = @_;
 
-	my $alg         = &getFarmAlgorithm( $fname );
-	my $fbootstatus = &getFarmBootStatus( $fname );
+	my $algorithm   = &getFarmAlgorithm( $farm_name );
+	my $fbootstatus = &getFarmBootStatus( $farm_name );
 	my $output      = 0;
 	my $pidfile     = "/var/run/l4sd.pid";
 
-	if (    $alg eq "leastconn"
+	if (    $algorithm eq "leastconn"
 		 && $fbootstatus eq "up"
 		 && $writeconf eq "false"
 		 && $type eq "hot"
@@ -167,24 +162,24 @@ sub _runL4FarmRestart($fname,$writeconf,$type)
 	}
 	else
 	{
-		&_runFarmStop( $fname, $writeconf );
-		$output = &_runFarmStart( $fname, $writeconf );
+		&_runFarmStop( $farm_name, $writeconf );
+		$output = &_runFarmStart( $farm_name, $writeconf );
 	}
 
 	return $output;
 }
 
 #
-sub sendL4ConfChange($fname)
+sub sendL4ConfChange($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $alg         = &getFarmAlgorithm( $fname );
-	my $fbootstatus = &getFarmBootStatus( $fname );
+	my $algorithm   = &getFarmAlgorithm( $farm_name );
+	my $fbootstatus = &getFarmBootStatus( $farm_name );
 	my $output      = 0;
 	my $pidfile     = "/var/run/l4sd.pid";
 
-	if ( $alg eq "leastconn" && -e "$pidfile" )
+	if ( $algorithm eq "leastconn" && -e "$pidfile" )
 	{
 		open FILE, "<$pidfile";
 		my $pid = <FILE>;
@@ -194,49 +189,54 @@ sub sendL4ConfChange($fname)
 	}
 	else
 	{
-		&logfile( "Running L4 restart for $fname" );
-		&_runL4FarmRestart( $fname, "false", "" );
+		&logfile( "Running L4 restart for $farm_name" );
+		&_runL4FarmRestart( $farm_name, "false", "" );
 	}
 
 	return $output;
 }
 
 #
-sub setL4FarmSessionType($session,$ffile)
+sub setL4FarmSessionType($session,$farm_filename)
 {
-	my ( $session, $ffile ) = @_;
+	my ( $session, $farm_filename ) = @_;
+
 	my $output = -1;
+	my $i      = 0;
 
 	use Tie::File;
-	tie @filelines, 'Tie::File', "$configdir\/$ffile";
-	my $i = 0;
-	for $line ( @filelines )
+	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+
+	for my $line ( @configfile )
 	{
-		if ( $line =~ /^$fname\;/ )
+		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
 			$line =
 			  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;$session\;@args[7]\;@args[8]";
-			splice @filelines, $i, $line;
+			splice @configfile, $i, $line;
 			$output = $?;
 		}
 		$i++;
 	}
-	untie @filelines;
+	untie @configfile;
 	$output = $?;
 
 	return $output;
 }
 
 #
-sub getL4FarmSessionType($ffile)
+sub getL4FarmSessionType($farm_name)
 {
-	my ( $ffile ) = @_;
-	my $output = -1;
+	my ( $farm_name ) = @_;
 
-	open FI, "<$configdir/$ffile";
-	my $first = "true";
-	while ( $line = <FI> )
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $first         = "true";
+
+	open FI, "<$configdir/$farm_filename";
+
+	while ( my $line = <FI> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
@@ -246,44 +246,52 @@ sub getL4FarmSessionType($ffile)
 		}
 	}
 	close FI;
+
 	return $output;
 }
 
 # set the lb algorithm to a farm
-sub setL4FarmAlgorithm($alg,$ffile)
+sub setL4FarmAlgorithm($algorithm,$farm_name)
 {
-	my ( $alg, $ffile ) = @_;
-	my $output = -1;
+	my ( $algorithm, $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $i             = 0;
 
 	use Tie::File;
-	tie @filelines, 'Tie::File', "$configdir\/$ffile";
-	my $i = 0;
-	for $line ( @filelines )
+	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+
+	for my $line ( @configfile )
 	{
-		if ( $line =~ /^$fname\;/ )
+		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
 			$line =
-			  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;$alg\;@args[6]\;@args[7]\;@args[8]";
-			splice @filelines, $i, $line;
+			  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;$algorithm\;@args[6]\;@args[7]\;@args[8]";
+			splice @configfile, $i, $line;
 			$output = $?;
 		}
 		$i++;
 	}
-	untie @filelines;
+	untie @configfile;
 	$output = $?;
+
 	return $output;
 }
 
 #
-sub getL4FarmAlgorithm($ffile)
+sub getL4FarmAlgorithm($farm_name)
 {
-	my ( $ffile ) = @_;
-	my $output = -1;
+	my ( $farm_name ) = @_;
 
-	open FI, "<$configdir/$ffile";
-	my $first = "true";
-	while ( $line = <FI> )
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $first         = "true";
+
+	open FI, "<$configdir/$farm_filename";
+
+	while ( my $line = <FI> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
@@ -293,28 +301,29 @@ sub getL4FarmAlgorithm($ffile)
 		}
 	}
 	close FI;
+
 	return $output;
 }
 
 # set the protocol to a L4 farm
-sub setFarmProto($proto,$fname)
+sub setFarmProto($proto,$farm_name)
 {
-	my ( $proto, $fname ) = @_;
+	my ( $proto, $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
 
-	&logfile( "setting 'Protocol $proto' for $fname farm $type" );
+	&logfile( "setting 'Protocol $proto' for $farm_name farm $farm_type" );
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
 		use Tie::File;
-		tie @filelines, 'Tie::File', "$configdir\/$ffile";
+		tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
 		my $i = 0;
-		for $line ( @filelines )
+		for my $line ( @configfile )
 		{
-			if ( $line =~ /^$fname\;/ )
+			if ( $line =~ /^$farm_name\;/ )
 			{
 				my @args = split ( "\;", $line );
 				if ( $proto eq "all" )
@@ -328,12 +337,12 @@ sub setFarmProto($proto,$fname)
 				}
 				$line =
 				  "@args[0]\;$proto\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;@args[6]\;@args[7]\;@args[8]";
-				splice @filelines, $i, $line;
+				splice @configfile, $i, $line;
 				$output = $?;
 			}
 			$i++;
 		}
-		untie @filelines;
+		untie @configfile;
 		$output = $?;
 	}
 
@@ -341,17 +350,17 @@ sub setFarmProto($proto,$fname)
 }
 
 #
-sub getFarmProto($fname)
+sub getFarmProto($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		open FI, "<$configdir/$ffile";
+		open FI, "<$configdir/$farm_filename";
 		my $first = "true";
 		while ( $line = <FI> )
 		{
@@ -369,17 +378,17 @@ sub getFarmProto($fname)
 }
 
 #
-sub getFarmNatType($fname)
+sub getFarmNatType($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		open FI, "<$configdir/$ffile";
+		open FI, "<$configdir/$farm_filename";
 		my $first = "true";
 		while ( $line = <FI> )
 		{
@@ -397,34 +406,34 @@ sub getFarmNatType($fname)
 }
 
 # set the NAT type for a farm
-sub setFarmNatType($nat,$fname)
+sub setFarmNatType($nat,$farm_name)
 {
-	my ( $nat, $fname ) = @_;
+	my ( $nat, $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
 
-	&logfile( "setting 'NAT type $nat' for $fname farm $type" );
+	&logfile( "setting 'NAT type $nat' for $farm_name farm $farm_type" );
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
 		use Tie::File;
-		tie @filelines, 'Tie::File', "$configdir\/$ffile";
+		tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
 		my $i = 0;
-		for $line ( @filelines )
+		for $line ( @configfile )
 		{
-			if ( $line =~ /^$fname\;/ )
+			if ( $line =~ /^$farm_name\;/ )
 			{
 				my @args = split ( "\;", $line );
 				$line =
 				  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;$nat\;@args[5]\;@args[6]\;@args[7]\;@args[8]";
-				splice @filelines, $i, $line;
+				splice @configfile, $i, $line;
 				$output = $?;
 			}
 			$i++;
 		}
-		untie @filelines;
+		untie @configfile;
 		$output = $?;
 	}
 
@@ -432,112 +441,158 @@ sub setFarmNatType($nat,$fname)
 }
 
 # set client persistence to a farm
-sub setL4FarmPersistence($persistence,$ffile)
+sub setL4FarmPersistence($persistence,$farm_name)
 {
-	my ( $persistence, $ffile ) = @_;
-	my $output = -1;
+	my ( $persistence, $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $i             = 0;
+
 	use Tie::File;
-	tie @filelines, 'Tie::File', "$configdir\/$ffile";
-	my $i = 0;
-	for $line ( @filelines )
+	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+
+	for my $line ( @configfile )
 	{
-		if ( $line =~ /^$fname\;/ )
+		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
 			$line =
 			  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;$persistence\;@args[7]\;@args[8]";
-			splice @filelines, $i, $line;
+			splice @configfile, $i, $line;
 			$output = $?;
 		}
 		$i++;
 	}
-	untie @filelines;
+	untie @configfile;
 	$output = $?;
 
 	return $output;
 }
 
 #
-sub getL4FarmPersistence($ffile)
+sub getL4FarmPersistence($farm_name)
 {
-	my ( $ffile ) = @_;
-	my $output = -1;
-	open FI, "<$configdir/$ffile";
-	my $first = "true";
-	while ( $line = <FI> )
+	my ( $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $persistence   = -1;
+	my $first         = "true";
+
+	open FI, "<$configdir/$farm_filename";
+
+	while ( my $line = <FI> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
 			$first = "false";
 			my @line = split ( "\;", $line );
-			$output = @line[6];
+			$persistence = @line[6];
 		}
 	}
 	close FI;
-	return $output;
+
+	return $persistence;
 }
 
 # set the max clients of a farm
-sub setL4FarmMaxClientTime($track,$ffile)
+sub setL4FarmMaxClientTime($track,$farm_name)
 {
-	my ( $track, $ffile ) = @_;
-	my $output = -1;
+	my ( $track, $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $i             = 0;
 
 	use Tie::File;
-	tie @filelines, 'Tie::File', "$configdir\/$ffile";
-	my $i = 0;
+	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
-	for $line ( @filelines )
+	for my $line ( @configfile )
 	{
-		if ( $line =~ /^$fname\;/ )
+		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
 			$line =
 			  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;@args[6]\;$track\;@args[8]";
-			splice @filelines, $i, $line;
+			splice @configfile, $i, $line;
 			$output = $?;
 		}
 		$i++;
 	}
-	untie @filelines;
+	untie @configfile;
 	$output = $?;
+
 	return $output;
 }
 
 #
-sub getL4FarmMaxClientTime($ffile)
+sub getL4FarmMaxClientTime($farm_name)
 {
-	my ( $ffile ) = @_;
-	my @output;
+	my ( $farm_name ) = @_;
 
-	my $ffile = &getFarmFile( $fname );
-	open FI, "<$configdir/$ffile";
-	my $first = "true";
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $first         = "true";
+	my @max_client_time;
 
-	while ( $line = <FI> )
+	open FI, "<$configdir/$farm_filename";
+
+	while ( my $line = <FI> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
 			$first = "false";
 			my @line = split ( "\;", $line );
-			@output = @line[7];
+			@max_client_time = @line[7];
 		}
 	}
 	close FI;
-	return @output;
+
+	return @max_client_time;
 }
 
 #
-sub getL4BackendEstConns($fname,$ip_backend,@netstat)
+sub getL4FarmServers($farm_name)
 {
-	my ( $fname, $ip_backend, @netstat ) = @_;
-	my @nets = ();
+	my ( $farm_name ) = @_;
 
-	my $proto   = &getFarmProto( $fname );
-	my $nattype = &getFarmNatType( $farmname );
-	my @fportlist;
-	my $regexp = "";
-	@fportlist = &getFarmPortList( $fvipp );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $farm_type     = &getFarmType( $farm_name );
+	my $first         = "true";
+	my $sindex        = 0;
+	my @servers;
+
+	open FI, "<$configdir/$farm_filename";
+
+	while ( my $line = <FI> )
+	{
+		if ( $line ne "" && $line =~ /^\;server\;/ && $first ne "true" )
+		{
+			$line =~ s/^\;server/$sindex/g, $line;
+			push ( @servers, $line );
+			$sindex = $sindex + 1;
+		}
+		else
+		{
+			$first = "false";
+		}
+	}
+	close FI;
+
+	return @servers;
+}
+
+#
+sub getL4BackendEstConns($farm_name,$ip_backend,@netstat)
+{
+	my ( $farm_name, $ip_backend, @netstat ) = @_;
+
+	my $fvip  = &getFarmVip( "vip",  $farm_name );
+	my $fvipp = &getFarmVip( "vipp", $farm_name );
+	my $proto = &getFarmProto( $farm_name );
+	my $nattype   = &getFarmNatType( $farm_name );
+	my @fportlist = &getFarmPortList( $fvipp );
+	my $regexp    = "";
+	my @nets      = ();
 
 	if ( @fportlist[0] !~ /\*/ )
 	{
@@ -547,8 +602,6 @@ sub getL4BackendEstConns($fname,$ip_backend,@netstat)
 	{
 		$regexp = "\.*";
 	}
-
-	undef ( @fportlist );
 
 	if ( $nattype eq "dnat" )
 	{
@@ -607,18 +660,18 @@ sub getL4BackendEstConns($fname,$ip_backend,@netstat)
 }
 
 #
-sub getL4FarmEstConns($fname,@netstat)
+sub getL4FarmEstConns($farm_name,@netstat)
 {
-	my ( $fname, @netstat ) = @_;
-	my @nets = ();
+	my ( $farm_name, @netstat ) = @_;
 
-	my $proto   = &getFarmProto( $fname );
-	my $nattype = &getFarmNatType( $farmname );
-	my $fvip    = &getFarmVip( "vip", $fname );
-	my $fvipp   = &getFarmVip( "vipp", $fname );
-	my @fportlist;
-	my $regexp = "";
-	@fportlist = &getFarmPortList( $fvipp );
+	my $proto     = &getFarmProto( $farm_name );
+	my $nattype   = &getFarmNatType( $farm_name );
+	my $fvip      = &getFarmVip( "vip", $farm_name );
+	my $fvipp     = &getFarmVip( "vipp", $farm_name );
+	my @fportlist = &getFarmPortList( $fvipp );
+	my $regexp    = "";
+	my @nets      = ();
+
 	if ( @fportlist[0] !~ /\*/ )
 	{
 		$regexp = "\(" . join ( '|', @fportlist ) . "\)";
@@ -627,9 +680,10 @@ sub getL4FarmEstConns($fname,@netstat)
 	{
 		$regexp = "\.*";
 	}
-	undef ( @fportlist );
-	my @content = &getFarmBackendStatusCtl( $fname );
-	my @backends = &getFarmBackendsStatus( $fname, @content );
+
+	my @content = &getFarmBackendStatusCtl( $farm_name );
+	my @backends = &getFarmBackendsStatus( $farm_name, @content );
+
 	foreach ( @backends )
 	{
 		my @backends_data = split ( ";", $_ );
@@ -686,22 +740,23 @@ sub getL4FarmEstConns($fname,@netstat)
 					);
 				}
 			}
-
 		}
 	}
 	return @nets;
 }
 
-sub getL4BackendTWConns($fname,$ip_backend,@netstat)
+sub getL4BackendTWConns($farm_name,$ip_backend,@netstat)
 {
-	my ( $fname, $ip_backend, @netstat ) = @_;
-	my @nets = ();
+	my ( $farm_name, $ip_backend, @netstat ) = @_;
 
-	my $proto   = &getFarmProto( $fname );
-	my $nattype = &getFarmNatType( $farmname );
-	my @fportlist;
-	my $regexp = "";
-	@fportlist = &getFarmPortList( $fvipp );
+	my $fvip  = &getFarmVip( "vip",  $farm_name );
+	my $fvipp = &getFarmVip( "vipp", $farm_name );
+	my $proto = &getFarmProto( $farm_name );
+	my $nattype   = &getFarmNatType( $farm_name );
+	my @fportlist = &getFarmPortList( $fvipp );
+	my $regexp    = "";
+	my @nets      = ();
+
 	if ( @fportlist[0] !~ /\*/ )
 	{
 		$regexp = "\(" . join ( '|', @fportlist ) . "\)";
@@ -710,7 +765,7 @@ sub getL4BackendTWConns($fname,$ip_backend,@netstat)
 	{
 		$regexp = "\.*";
 	}
-	undef ( @fportlist );
+
 	if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 	{
 		push (
@@ -738,18 +793,19 @@ sub getL4BackendTWConns($fname,$ip_backend,@netstat)
 }
 
 #
-sub getL4FarmTWConns($fname,@netstat)
+sub getL4FarmTWConns($farm_name,@netstat)
 {
-	my ( $fname, @netstat ) = @_;
+	my ( $farm_name, @netstat ) = @_;
 	my @nets = ();
 
-	my $proto   = &getFarmProto( $fname );
-	my $nattype = &getFarmNatType( $farmname );
-	my $fvip    = &getFarmVip( "vip", $fname );
-	my $fvipp   = &getFarmVip( "vipp", $fname );
+	my $proto   = &getFarmProto( $farm_name );
+	my $nattype = &getFarmNatType( $farm_name );
+	my $fvip    = &getFarmVip( "vip", $farm_name );
+	my $fvipp   = &getFarmVip( "vipp", $farm_name );
 	my @fportlist;
 	my $regexp = "";
 	@fportlist = &getFarmPortList( $fvipp );
+
 	if ( @fportlist[0] !~ /\*/ )
 	{
 		$regexp = "\(" . join ( '|', @fportlist ) . "\)";
@@ -758,9 +814,10 @@ sub getL4FarmTWConns($fname,@netstat)
 	{
 		$regexp = "\.*";
 	}
-	undef ( @fportlist );
-	my @content = &getFarmBackendStatusCtl( $fname );
-	my @backends = &getFarmBackendsStatus( $fname, @content );
+
+	my @content = &getFarmBackendStatusCtl( $farm_name );
+	my @backends = &getFarmBackendsStatus( $farm_name, @content );
+
 	foreach ( @backends )
 	{
 		my @backends_data = split ( ";", $_ );
@@ -782,15 +839,15 @@ sub getL4FarmTWConns($fname,@netstat)
 	return @nets;
 }
 
-sub getL4BackendSYNConns($fname,$ip_backend,@netstat)
+sub getL4BackendSYNConns($farm_name,$ip_backend,@netstat)
 {
-	my ( $fname, $ip_backend, @netstat ) = @_;
-	my @nets = ();
+	my ( $farm_name, $ip_backend, @netstat ) = @_;
 
-	my $proto     = &getFarmProto( $fname );
-	my $nattype   = &getFarmNatType( $farmname );
+	my $proto     = &getFarmProto( $farm_name );
+	my $nattype   = &getFarmNatType( $farm_name );
 	my @fportlist = &getFarmPortList( $fvipp );
 	my $regexp    = "";
+	my @nets      = ();
 
 	if ( @fportlist[0] !~ /\*/ )
 	{
@@ -800,7 +857,7 @@ sub getL4BackendSYNConns($fname,$ip_backend,@netstat)
 	{
 		$regexp = "\.*";
 	}
-	undef ( @fportlist );
+
 	if ( $nattype eq "dnat" )
 	{
 		if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
@@ -856,17 +913,17 @@ sub getL4BackendSYNConns($fname,$ip_backend,@netstat)
 }
 
 #
-sub getL4FarmSYNConns($fname,@netstat)
+sub getL4FarmSYNConns($farm_name,@netstat)
 {
-	my ( $fname, @netstat ) = @_;
-	my @nets = ();
+	my ( $farm_name, @netstat ) = @_;
 
-	my $proto     = &getFarmProto( $fname );
-	my $nattype   = &getFarmNatType( $farmname );
-	my $fvip      = &getFarmVip( "vip", $fname );
-	my $fvipp     = &getFarmVip( "vipp", $fname );
+	my $fvip  = &getFarmVip( "vip",  $farm_name );
+	my $fvipp = &getFarmVip( "vipp", $farm_name );
+	my $proto = &getFarmProto( $farm_name );
+	my $nattype   = &getFarmNatType( $farm_name );
 	my @fportlist = &getFarmPortList( $fvipp );
 	my $regexp    = "";
+	my @nets      = ();
 
 	if ( @fportlist[0] !~ /\*/ )
 	{
@@ -876,9 +933,10 @@ sub getL4FarmSYNConns($fname,@netstat)
 	{
 		$regexp = "\.*";
 	}
-	undef ( @fportlist );
-	my @content = &getFarmBackendStatusCtl( $fname );
-	my @backends = &getFarmBackendsStatus( $fname, @content );
+
+	my @content = &getFarmBackendStatusCtl( $farm_name );
+	my @backends = &getFarmBackendsStatus( $farm_name, @content );
+
 	foreach ( @backends )
 	{
 		my @backends_data = split ( ";", $_ );
@@ -898,8 +956,6 @@ sub getL4FarmSYNConns($fname,@netstat)
 								   "", @netstat
 						   )
 					);
-
-#push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
 				}
 				if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 				{
@@ -911,8 +967,6 @@ sub getL4FarmSYNConns($fname,@netstat)
 							  "", @netstat
 						)
 					);
-
-#push(@nets, &getNetstatFilter("udp","","\.* src=\.* dst=$fvip \.*UNREPLIED\.* src=$ip_backend \.*","",@netstat)); # UDP
 				}
 			}
 			else
@@ -927,8 +981,6 @@ sub getL4FarmSYNConns($fname,@netstat)
 								   "", @netstat
 						   )
 					);
-
-#push(@nets, &getNetstatFilter("tcp","","\.* SYN\.* src=\.* dst=$fvip \.* src=$ip_backend \.*","",@netstat)); # TCP
 				}
 				if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 				{
@@ -941,9 +993,7 @@ sub getL4FarmSYNConns($fname,@netstat)
 						)
 					);
 				}
-
 			}
-
 		}
 	}
 
@@ -951,13 +1001,16 @@ sub getL4FarmSYNConns($fname,@netstat)
 }
 
 # Returns farm status
-sub getL4FarmBootStatus($file)
+sub getL4FarmBootStatus($farm_name)
 {
-	my ( $file ) = @_;
-	my $output = "down";
+	my ( $farm_name ) = @_;
 
-	open FI, "<$configdir/$file";
-	my $first = "true";
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = "down";
+	my $first         = "true";
+
+	open FI, "<$configdir/$farm_filename";
+
 	while ( $line = <FI> )
 	{
 		if ( $line ne "" && $first eq "true" )
@@ -969,20 +1022,23 @@ sub getL4FarmBootStatus($file)
 		}
 	}
 	close FI;
+
 	return $output;
 }
 
 # Start Farm rutine
-sub _runL4FarmStart($file,$writeconf,$status)
+sub _runL4FarmStart($farm_name,$writeconf,$status)
 {
-	my ( $file, $writeconf, $status ) = @_;
+	my ( $farm_name, $writeconf, $status ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
 
 	if ( $writeconf eq "true" )
 	{
 		use Tie::File;
-		tie @filelines, 'Tie::File', "$configdir\/$file";
+		tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
 		my $first = 1;
-		foreach ( @filelines )
+		foreach ( @configfile )
 		{
 			if ( $first eq 1 )
 			{
@@ -990,29 +1046,28 @@ sub _runL4FarmStart($file,$writeconf,$status)
 				$first = 0;
 			}
 		}
-		untie @filelines;
+		untie @configfile;
 	}
 
 	# Apply changes online
 	if ( $status != -1 )
 	{
-
 		# Set fw rules calculating the $nattype and $protocol
 		# for every server of the farm do:
 		#   set mark rules for matched connections
 		#   set rule for nattype
 		my $status  = 0;
-		my $nattype = &getFarmNatType( $fname );
-		my $lbalg   = &getFarmAlgorithm( $fname );
-		my $vip     = &getFarmVip( "vip", $fname );
-		my $vport   = &getFarmVip( "vipp", $fname );
-		my $vproto  = &getFarmProto( $fname );
-		my $persist = &getFarmPersistence( $fname );
-		my @pttl    = &getFarmMaxClientTime( $fname );
+		my $nattype = &getFarmNatType( $farm_name );
+		my $lbalg   = &getFarmAlgorithm( $farm_name );
+		my $vip     = &getFarmVip( "vip", $farm_name );
+		my $vport   = &getFarmVip( "vipp", $farm_name );
+		my $vproto  = &getFarmProto( $farm_name );
+		my $persist = &getFarmPersistence( $farm_name );
+		my @pttl    = &getFarmMaxClientTime( $farm_name );
 		my $ttl     = @pttl[0];
 		my $proto   = "";
 
-		my @run = &getFarmServers( $fname );
+		my @run = &getFarmServers( $farm_name );
 		my @tmangle;
 		my @tnat;
 		my @tmanglep;
@@ -1020,7 +1075,7 @@ sub _runL4FarmStart($file,$writeconf,$status)
 		my @traw;
 
 		my $prob = 0;
-		foreach $lservers ( @run )
+		foreach my $lservers ( @run )
 		{
 			my @serv = split ( "\;", $lservers );
 			if ( @serv[6] =~ /up/ )
@@ -1058,7 +1113,7 @@ sub _runL4FarmStart($file,$writeconf,$status)
 		my $bestprio = 1000;
 		my @srvprio;
 
-		foreach $lservers ( @run )
+		foreach my $lservers ( @run )
 		{
 			my @serv = split ( "\;", $lservers );
 			if ( @serv[6] =~ /up/ || $lbalg eq "leastconn" )
@@ -1071,40 +1126,38 @@ sub _runL4FarmStart($file,$writeconf,$status)
 					{
 						$rip = "$rip\:$port";
 					}
-					my $tag = &genIptMark( $fname,   $nattype, $lbalg,   $vip,     $vport, $proto,
-										   @serv[0], @serv[3], @serv[4], @serv[6], $prob );
+					my $tag = &genIptMark(
+										   $farm_name, $nattype, $lbalg,   $vip,
+										   $vport,     $proto,   @serv[0], @serv[3],
+										   @serv[4],   @serv[6], $prob
+					);
 
 					if ( $persist ne "none" )
 					{
 						my $tagp =
-						  &genIptMarkPersist( $fname, $vip, $vport, $proto, $ttl, @serv[0], @serv[3],
-											  @serv[6] );
+						  &genIptMarkPersist( $farm_name, $vip, $vport, $proto, $ttl, @serv[0],
+											  @serv[3], @serv[6] );
 						push ( @tmanglep, $tagp );
-
-						#my $tagp2 = &genIptMarkReturn($fname,$vip,$vport,$proto,@serv[0],@serv[6]);
-						#push(@tmanglep,$tagp2);
 					}
 
 					# dnat rules
-					#if ($vproto ne "sip"){
-					my $red = &genIptRedirect( $fname,   $nattype, @serv[0], $rip, $proto,
-											   @serv[3], @serv[4], $persist, @serv[6] );
+					my $red = &genIptRedirect( $farm_name, $nattype, @serv[0], $rip, $proto,
+											   @serv[3],   @serv[4], $persist, @serv[6] );
 					push ( @tnat, $red );
-
-					#}
 
 					if ( $nattype eq "nat" )
 					{
 						my $ntag;
 						if ( $vproto eq "sip" )
 						{
-							$ntag = &genIptSourceNat( $fname, $vip,     $nattype, @serv[0],
-													  $proto, @serv[3], @serv[6] );
+							$ntag = &genIptSourceNat( $farm_name, $vip,     $nattype, @serv[0],
+													  $proto,     @serv[3], @serv[6] );
 						}
 						else
 						{
 							$ntag =
-							  &genIptMasquerade( $fname, $nattype, @serv[0], $proto, @serv[3], @serv[6] );
+							  &genIptMasquerade( $farm_name, $nattype, @serv[0], $proto, @serv[3],
+												 @serv[6] );
 						}
 
 						push ( @tsnat, $ntag );
@@ -1131,7 +1184,6 @@ sub _runL4FarmStart($file,$writeconf,$status)
 			my @run = `echo 10 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream`;
 			my @run = `echo 5 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout`;
 
-			#&logfile("BESTPRIO $bestprio");
 			my $port = @srvprio[2];
 			my $rip  = @srvprio[1];
 			if ( @srvprio[2] ne "" )
@@ -1139,30 +1191,24 @@ sub _runL4FarmStart($file,$writeconf,$status)
 				$rip = "$rip\:$port";
 			}
 			my $tag = &genIptMark(
-								   $fname,      $nattype,    $lbalg,      $vip,
+								   $farm_name,  $nattype,    $lbalg,      $vip,
 								   $vport,      $proto,      @srvprio[0], @srvprio[3],
 								   @srvprio[4], @srvprio[6], $prob
 			);
 
 			# dnat rules
-			#if ($vproto ne "sip"){
 			my $red = &genIptRedirect(
-									   $fname,      $nattype, @srvprio[0],
+									   $farm_name,  $nattype, @srvprio[0],
 									   $rip,        $proto,   @srvprio[3],
 									   @srvprio[4], $persist, @srvprio[6]
 			);
 
-			#}
-
 			if ( $persist ne "none" )
 			{
 				my $tagp =
-				  &genIptMarkPersist( $fname, $vip, $vport, $proto, $ttl, @srvprio[0],
+				  &genIptMarkPersist( $farm_name, $vip, $vport, $proto, $ttl, @srvprio[0],
 									  @srvprio[3], @srvprio[6] );
 				push ( @tmanglep, $tagp );
-
-			  #my $tagp2 = &genIptMarkReturn($fname,$vip,$vport,$proto,@srvprio[0],@srvprio[6]);
-			  #push(@tmanglep,$tagp2);
 			}
 
 			if ( $nattype eq "nat" )
@@ -1171,25 +1217,20 @@ sub _runL4FarmStart($file,$writeconf,$status)
 				if ( $vproto eq "sip" )
 				{
 					$ntag =
-					  &genIptSourceNat( $fname, $vip, $nattype, @srvprio[0], $proto, @srvprio[3],
-										@srvprio[6] );
+					  &genIptSourceNat( $farm_name, $vip, $nattype, @srvprio[0], $proto,
+										@srvprio[3], @srvprio[6] );
 				}
 				else
 				{
 					$ntag =
-					  &genIptMasquerade( $fname, $nattype, @srvprio[0], $proto, @srvprio[3],
-										 @srvprio[6] );
+					  &genIptMasquerade( $farm_name, $nattype,    @srvprio[0],
+										 $proto,     @srvprio[3], @srvprio[6] );
 				}
 				push ( @tsnat, $ntag );
 			}
 
-#my $nraw = "$iptables -t raw -A OUTPUT -j NOTRACK -p $proto -d $vip --dport $vport -m comment --comment ' FARM\_$fname\_@srvprio[0]\_ '";
-#my $nnraw = "$iptables -t raw -A OUTPUT -j NOTRACK -p $proto -s $vip -m comment --comment ' FARM\_$fname\_@srvprio[0]\_ '";
 			push ( @tmangle, $tag );
 			push ( @tnat,    $red );
-
-			#push(@traw,$nraw);
-			#push(@traw,$nnraw);
 		}
 
 		foreach $nraw ( @traw )
@@ -1272,7 +1313,7 @@ sub _runL4FarmStart($file,$writeconf,$status)
 		# Enable active l4 file
 		if ( $status != -1 )
 		{
-			open FI, ">$piddir\/$fname\_$type.pid";
+			open FI, ">$piddir\/$farm_name\_$farm_type.pid";
 			close FI;
 		}
 	}
@@ -1281,46 +1322,50 @@ sub _runL4FarmStart($file,$writeconf,$status)
 }
 
 # Stop Farm rutine
-sub _runL4FarmStop($filename,$writeconf,$status)
+sub _runL4FarmStop($farm_name,$writeconf)
 {
-	my ( $filename, $writeconf, $status ) = @_;
+	my ( $farm_name, $writeconf ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $status        = -1;
 
 	if ( $writeconf eq "true" )
 	{
 		use Tie::File;
-		tie @filelines, 'Tie::File', "$configdir\/$filename";
+		tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
 		my $first = 1;
-		foreach ( @filelines )
+		foreach ( @configfile )
 		{
-			if ( $first eq 1 )
+			if ( $first == 1 )
 			{
 				s/\;up/\;down/g;
 				$status = $?;
 				$first  = 0;
 			}
 		}
-		untie @filelines;
+		untie @configfile;
 	}
 
-	#&runFarmGuardianStop($fname,"");
-	my $falg = &getFarmAlgorithm( $fname );
+	my $falg = &getFarmAlgorithm( $farm_name );
 
 	# Apply changes online
 	if ( $status != -1 )
 	{
 		# Disable rules
 		my @allrules = &getIptList( "raw", "OUTPUT" );
-		$status = &deleteIptRules( "farm", $fname, "raw", "OUTPUT", @allrules );
+		$status = &deleteIptRules( "farm", $farm_name, "raw", "OUTPUT", @allrules );
 		my @allrules = &getIptList( "mangle", "PREROUTING" );
-		$status = &deleteIptRules( "farm", $fname, "mangle", "PREROUTING", @allrules );
+		$status =
+		  &deleteIptRules( "farm", $farm_name, "mangle", "PREROUTING", @allrules );
 		my @allrules = &getIptList( "nat", "PREROUTING" );
-		$status = &deleteIptRules( "farm", $fname, "nat", "PREROUTING", @allrules );
+		$status = &deleteIptRules( "farm", $farm_name, "nat", "PREROUTING", @allrules );
 		my @allrules = &getIptList( "nat", "POSTROUTING" );
-		$status = &deleteIptRules( "farm", $fname, "nat", "POSTROUTING", @allrules );
+		$status =
+		  &deleteIptRules( "farm", $farm_name, "nat", "POSTROUTING", @allrules );
 
 		# Disable active l4xnat file
-		unlink ( "$piddir\/$fname\_$type.pid" );
-		if ( -e "$piddir\/$fname\_$type.pid" )
+		unlink ( "$piddir\/$farm_name\_$farm_type.pid" );
+		if ( -e "$piddir\/$farm_name\_$farm_type.pid" )
 		{
 			$status = -1;
 		}
@@ -1334,22 +1379,22 @@ sub _runL4FarmStop($filename,$writeconf,$status)
 }
 
 #
-sub runL4FarmCreate($fvip,$fname)
+sub runL4FarmCreate($vip,$farm_name)
 {
-	my ( $fvip, $fname ) = @_;
-	my $output = -1;
-	my $type   = "l4xnat";
+	my ( $vip, $farm_name ) = @_;
 
-	open FO, ">$configdir\/$fname\_$type.cfg";
-	print FO "$fname\;all\;$fvip\;*\;dnat\;weight\;none\;120\;up\n";
+	my $output    = -1;
+	my $farm_type = "l4xnat";
+
+	open FO, ">$configdir\/$farm_name\_$farm_type.cfg";
+	print FO "$farm_name\;all\;$vip\;*\;dnat\;weight\;none\;120\;up\n";
 	close FO;
 	$output = $?;
 
-	if ( !-e "$piddir/$fname_$type.pid" )
+	if ( !-e "$piddir/$farm_name_$farm_type.pid" )
 	{
-
 		# Enable active l4xnat file
-		open FI, ">$piddir\/$fname\_$type.pid";
+		open FI, ">$piddir\/$farm_name\_$farm_type.pid";
 		close FI;
 	}
 
@@ -1357,19 +1402,23 @@ sub runL4FarmCreate($fvip,$fname)
 }
 
 # Returns farm vip
-sub getL4FarmVip($info,$file)
+sub getL4FarmVip($info,$farm_name)
 {
-	my ( $info, $file ) = @_;
-	my $output = -1;
+	my ( $info, $farm_name ) = @_;
 
-	open FI, "<$configdir/$file";
-	my $first = "true";
-	while ( $line = <FI> )
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $first         = "true";
+	my $output        = -1;
+
+	open FI, "<$configdir/$farm_filename";
+
+	while ( my $line = <FI> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
 			$first = "false";
 			my @line_a = split ( "\;", $line );
+
 			if ( $info eq "vip" )   { $output = @line_a[2]; }
 			if ( $info eq "vipp" )  { $output = @line_a[3]; }
 			if ( $info eq "vipps" ) { $output = "@line_a[2]\:@line_a[3]"; }
@@ -1381,43 +1430,49 @@ sub getL4FarmVip($info,$file)
 }
 
 # Set farm virtual IP and virtual PORT
-sub setL4FarmVirtualConf($vip,$vipp,$fname,$fconf)
+sub setL4FarmVirtualConf($vip,$vip_port,$farm_name)
 {
-	my ( $vip, $vipp, $fname, $fconf ) = @_;
-	my $stat = -1;
+	my ( $vip, $vip_port, $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $stat          = -1;
+	my $i             = 0;
 
 	use Tie::File;
-	tie @filelines, 'Tie::File', "$configdir\/$fconf";
-	my $i = 0;
-	for $line ( @filelines )
+	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+
+	for my $line ( @configfile )
 	{
-		if ( $line =~ /^$fname\;/ )
+		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
 			$line =
-			  "@args[0]\;@args[1]\;$vip\;$vipp\;@args[4]\;@args[5]\;@args[6]\;@args[7]\;@args[8]";
-			splice @filelines, $i, $line;
+			  "@args[0]\;@args[1]\;$vip\;$vip_port\;@args[4]\;@args[5]\;@args[6]\;@args[7]\;@args[8]";
+			splice @configfile, $i, $line;
 			$stat = $?;
 		}
 		$i++;
 	}
-	untie @filelines;
+	untie @configfile;
 	$stat = $?;
 
 	return $stat;
 }
 
 #
-sub setL4FarmServer($ids,$rip,$port,$weight,$priority,$fname,$file)
+sub setL4FarmServer($ids,$rip,$port,$weight,$priority,$farm_name)
 {
-	my ( $ids, $rip, $port, $weight, $priority, $fname, $file );
-	my $output = -1;
+	my ( $ids, $rip, $port, $weight, $priority, $farm_name ) = @_;
 
-	tie my @contents, 'Tie::File', "$configdir\/$file";
-	my $i   = 0;
-	my $l   = 0;
-	my $end = "false";
-	foreach $line ( @contents )
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $end           = "false";
+	my $i             = 0;
+	my $l             = 0;
+
+	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
+
+	foreach my $line ( @contents )
 	{
 		if ( $line =~ /^\;server\;/ && $end ne "true" )
 		{
@@ -1425,6 +1480,7 @@ sub setL4FarmServer($ids,$rip,$port,$weight,$priority,$fname,$file)
 			{
 				my @aline = split ( "\;", $line );
 				my $dline = "\;server\;$rip\;$port\;@aline[4]\;$weight\;$priority\;up\n";
+
 				splice @contents, $l, 1, $dline;
 				$output = $?;
 				$end    = "true";
@@ -1438,7 +1494,7 @@ sub setL4FarmServer($ids,$rip,$port,$weight,$priority,$fname,$file)
 	}
 	if ( $end eq "false" )
 	{
-		my $mark = &getNewMark( $fname );
+		my $mark = &getNewMark( $farm_name );
 		push ( @contents, "\;server\;$rip\;$port\;$mark\;$weight\;$priority\;up\n" );
 		$output = $?;
 	}
@@ -1448,26 +1504,30 @@ sub setL4FarmServer($ids,$rip,$port,$weight,$priority,$fname,$file)
 }
 
 #
-sub runL4FarmServerDelete($ids,$ffile)
+sub runL4FarmServerDelete($ids,$farm_name)
 {
-	my ( $ids, $ffile ) = @_;
-	my $output = -1;
+	my ( $ids, $farm_name ) = @_;
 
-	tie my @contents, 'Tie::File', "$configdir\/$ffile";
-	my $i   = 0;
-	my $l   = 0;
-	my $end = "false";
-	my $mark;
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $end           = "false";
+	my $i             = 0;
+	my $l             = 0;
 
-	foreach $line ( @contents )
+	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
+
+	foreach my $line ( @contents )
 	{
 		if ( $line =~ /^\;server\;/ && $end ne "true" )
 		{
 			if ( $i eq $ids )
 			{
 				my @sdata = split ( "\;", $line );
-				$mark = &delMarks( "", @sdata[4] );
+
+				#~ my $mark = &delMarks( "", @sdata[4] ); ## used??
+
 				splice @contents, $l, 1,;
+
 				$output = $?;
 				$end    = "true";
 			}
@@ -1485,37 +1545,41 @@ sub runL4FarmServerDelete($ids,$ffile)
 
 #function that return the status information of a farm:
 #ip, port, backendstatus, weight, priority, clients
-sub getL4FarmBackendsStatus($fname,@content)
+sub getL4FarmBackendsStatus($farm_name,@content)
 {
-	my ( $fname, @content ) = @_;
-	my @servers;
+	my ( $farm_name, @content ) = @_;
 
-	foreach $server ( @content )
+	my @backends_data;
+
+	foreach my $server ( @content )
 	{
 		my @serv = split ( "\;", $server );
 		my $port = @serv[3];
 		if ( $port eq "" )
 		{
-			$port = &getFarmVip( "vipp", $fname );
+			$port = &getFarmVip( "vipp", $farm_name );
 		}
-		push ( @servers, "@serv[2]\;$port\;@serv[5]\;@serv[6]\;@serv[7]" );
+		push ( @backends_data, "@serv[2]\;$port\;@serv[5]\;@serv[6]\;@serv[7]" );
 	}
 
-	return @servers;
+	return @backends_data;
 }
 
-sub setL4FarmBackendStatus($file,$index,$stat)
+sub setL4FarmBackendStatus($farm_name,$index,$stat)
 {
-	my ( $file, $index, $stat ) = @_;
+	my ( $farm_name, $index, $stat ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
 
 	# check output !!!
-	my $output = -1;
-
-	use Tie::File;
-	tie @filelines, 'Tie::File', "$configdir\/$file";
+	#	my $output   = -1;
 	my $fileid   = 0;
 	my $serverid = 0;
-	foreach $line ( @filelines )
+
+	use Tie::File;
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
+
+	foreach my $line ( @configfile )
 	{
 		if ( $line =~ /\;server\;/ )
 		{
@@ -1523,15 +1587,15 @@ sub setL4FarmBackendStatus($file,$index,$stat)
 			{
 				my @lineargs = split ( "\;", $line );
 				@lineargs[7] = $stat;
-				@filelines[$fileid] = join ( "\;", @lineargs );
+				@configfile[$fileid] = join ( "\;", @lineargs );
 			}
 			$serverid++;
 		}
 		$fileid++;
 	}
-	untie @filelines;
+	untie @configfile;
 
-	return $output;
+	#	return $output;
 }
 
 sub getFarmPortList($fvipp)
@@ -1570,19 +1634,52 @@ sub getFarmPortList($fvipp)
 }
 
 #
-sub getL4FarmBackendStatusCtl($fname)
+sub getL4FarmBackendStatusCtl($farm_name)
 {
-	my ( $fname ) = @_;
-	my @output = -1;
+	my ( $farm_name ) = @_;
 
-	my $ffile = &getFarmFile( $fname );
-	my @content;
+	my $farm_filename = &getFarmFile( $farm_name );
+	my @output        = -1;
 
-	tie my @content, 'Tie::File', "$configdir\/$ffile";
+	tie my @content, 'Tie::File', "$configdir\/$farm_filename";
 	@output = grep /^\;server\;/, @content;
 	untie @content;
 
 	return @output;
+}
+
+#function that renames a farm
+sub setL4NewFarmName($farm_name,$new_farm_name)
+{
+	my ( $farm_name, $new_farm_name ) = @_;
+
+	my $farm_filename     = &getFarmFile( $farm_name );
+	my $farm_type         = &getFarmType( $farm_name );
+	my $new_farm_filename = "$new_farm_name\_$farm_type.cfg";
+	my $output            = -1;
+
+	&runFarmStop( $farm_name, "false" );
+
+	use Tie::File;
+	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+
+	for ( @configfile )
+	{
+		s/^$farm_name\;/$new_farm_name\;/g;
+	}
+	untie @configfile;
+
+	rename ( "$configdir\/$farm_filename", "$configdir\/$new_farm_filename" );
+	rename ( "$piddir\/$farm_name\_$farm_type.pid",
+			 "$piddir\/$new_farm_name\_$farm_type.pid" );
+	$output = $?;
+
+	# Rename fw marks for this farm
+	&renameMarks( $farm_name, $new_farm_name );
+	&runFarmStart( $new_farm_name, "false" );
+	$output = $?;
+
+	return $output;
 }
 
 # do not remove this

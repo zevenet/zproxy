@@ -26,591 +26,533 @@ if ( -e "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi" )
 	require "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi";
 }
 
-#asign a port for manage a pen Farm
-sub setFarmPort()
-{
-	#down limit
-	$inf = "10000";
-
-	#up limit
-	$sup = "20000";
-
-	$lock = "true";
-	do
-	{
-		$randport = int ( rand ( $sup - $inf ) ) + $inf;
-		use IO::Socket;
-		my $host = "127.0.0.1";
-		my $sock = new IO::Socket::INET(
-										 PeerAddr => $host,
-										 PeerPort => $randport,
-										 Proto    => 'tcp'
-		);
-		if ( $sock )
-		{
-			close ( $sock );
-		}
-		else
-		{
-			$lock = "false";
-		}
-	} while ( $lock eq "true" );
-
-	return $randport;
-}
-
 #
-sub setFarmBlacklistTime($fbltime,$fname)
+sub setFarmBlacklistTime($blacklist_time,$farm_name)
 {
-	my ( $fbltime, $fname ) = @_;
+	my ( $blacklist_time, $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
 	my $output = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &setTcpUdpFarmBlacklistTime( $fbltime, $fname, $type, $ffile );
+		$output = &setTcpUdpFarmBlacklistTime( $blacklist_time, $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &setHTTPFarmBlacklistTime( $fbltime, $fname, $ffile );
+		$output = &setHTTPFarmBlacklistTime( $blacklist_time, $farm_name );
 	}
 
 	return $output;
 }
 
 #
-sub getFarmBlacklistTime($fname)
+sub getFarmBlacklistTime($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type      = &getFarmType( $farm_name );
+	my $farm_filename  = &getFarmFile( $farm_name );
+	my $blacklist_time = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &getTcpUdpFarmBlacklistTime( $fname );
+		$blacklist_time = &getTcpUdpFarmBlacklistTime( $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &getHTTPFarmBlacklistTime( $ffile );
+		$blacklist_time = &getHTTPFarmBlacklistTime( $farm_filename );
 	}
 
+	return $blacklist_time;
+}
+
+#
+sub setFarmSessionType($session,$farm_name)
+{
+	my ( $session, $farm_name ) = @_;
+
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
+
+	if ( $farm_type eq "http" || $farm_type eq "https" )
+	{
+		$output = &setHTTPFarmSessionType( $session, $farm_name );
+	}
+
+	if ( $farm_type eq "l4xnat" )
+	{
+		$output = &setL4FarmSessionType( $session, $farm_name );
+	}
 	return $output;
 }
 
 #
-sub setFarmSessionType($session,$fname)
+sub getFarmSessionType($farm_name)
 {
-	my ( $session, $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &setHTTPFarmSessionType( $session, $ffile );
+		$output = &getHTTPFarmSessionType( $farm_name );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		$output = &setL4FarmSessionType( $session, $ffile );
-	}
-	return $output;
-}
-
-#
-sub getFarmSessionType($fname)
-{
-	my ( $fname ) = @_;
-
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
-
-	if ( $type eq "http" || $type eq "https" )
-	{
-		$output = &getHTTPFarmSessionType( $fname );
-	}
-
-	if ( $type eq "l4xnat" )
-	{
-		$output = &getL4FarmSessionType( $ffile );
+		$output = &getL4FarmSessionType( $farm_name );
 	}
 
 	return $output;
 }
 
 #asign a timeout value to a farm
-sub setFarmTimeout($timeout,$fname)
+sub setFarmTimeout($timeout,$farm_name)
 {
-	my ( $timeout, $fname ) = @_;
+	my ( $timeout, $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
-	&logfile( "setting 'Timeout $timeout' for $fname farm $type" );
+	&logfile( "setting 'Timeout $timeout' for $farm_name farm $farm_type" );
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &setTcpUdpFarmTimeout( $timeout, $fname );
+		$output = &setTcpUdpFarmTimeout( $timeout, $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &setHTTPFarmTimeout( $timeout, $ffile );
+		$output = &setHTTPFarmTimeout( $timeout, $farm_name );
 	}
 
 	return $output;
 }
 
 #
-sub getFarmTimeout($fname)
+sub getFarmTimeout($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &getTcpUdpFarmTimeout( $fname );
+		$output = &getTcpUdpFarmTimeout( $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &getHTTPFarmTimeout( $ffile );
+		$output = &getHTTPFarmTimeout( $farm_name );
 	}
 
 	return $output;
 }
 
 # set the lb algorithm to a farm
-sub setFarmAlgorithm($alg,$fname)
+sub setFarmAlgorithm($algorithm,$farm_name)
 {
-	my ( $alg, $fname ) = @_;
+	my ( $algorithm, $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
-	&logfile( "setting 'Algorithm $alg' for $fname farm $type" );
+	&logfile( "setting 'Algorithm $algorithm' for $farm_name farm $farm_type" );
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &setTcpUdpFarmAlgorithm( $alg, $fname );
+		$output = &setTcpUdpFarmAlgorithm( $algorithm, $farm_name );
 	}
 
-	if ( $type eq "datalink" )
+	if ( $farm_type eq "datalink" )
 	{
-		$output = &setDatalinkFarmAlgorithm( $alg, $ffile );
+		$output = &setDatalinkFarmAlgorithm( $algorithm, $farm_name );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		$output = &setL4FarmAlgorithm( $alg, $ffile );
+		$output = &setL4FarmAlgorithm( $algorithm, $farm_name );
 	}
 
 	return $output;
 }
 
 #
-sub getFarmAlgorithm($fname)
+sub getFarmAlgorithm($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $algorithm = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &getTcpUdpFarmAlgorithm( $ffile );
+		$algorithm = &getTcpUdpFarmAlgorithm( $farm_name );
 	}
 
-	if ( $type eq "datalink" )
+	if ( $farm_type eq "datalink" )
 	{
-		$output = &getDatalinkFarmAlgorithm( $fname );
+		$algorithm = &getDatalinkFarmAlgorithm( $farm_name );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		$output = &getL4FarmAlgorithm( $ffile );
+		$algorithm = &getL4FarmAlgorithm( $farm_name );
 	}
 
-	return $output;
+	return $algorithm;
 }
 
 # set client persistence to a farm
-sub setFarmPersistence($persistence,$fname)
+sub setFarmPersistence($persistence,$farm_name)
 {
-	my ( $persistence, $fname ) = @_;
+	my ( $persistence, $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &setTcpUdpFarmPersistence( $persistence, $fname, $type );
+		$output = &setTcpUdpFarmPersistence( $persistence, $farm_name );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		$output = &setL4FarmPersistence( $persistence, $ffile );
+		$output = &setL4FarmPersistence( $persistence, $farm_name );
 	}
 
 	return $output;
 }
 
 #
-sub getFarmPersistence($fname)
+sub getFarmPersistence($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type   = &getFarmType( $farm_name );
+	my $persistence = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &getTcpUdpFarmPersistence( $ffile );
+		$persistence = &getTcpUdpFarmPersistence( $farm_name );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		$output = &getL4FarmPersistence( $ffile );
+		$persistence = &getL4FarmPersistence( $farm_name );
 	}
 
-	return $output;
+	return $persistence;
 }
 
 # set the max clients of a farm
-sub setFarmMaxClientTime($maxcl,$track,$fname)
+sub setFarmMaxClientTime($max_client_time,$track,$farm_name)
 {
-	my ( $maxcl, $track, $fname ) = @_;
+	my ( $max_client_time, $track, $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
-	&logfile( "setting 'MaxClientTime $maxcl $track' for $fname farm $type" );
-	if ( $type eq "tcp" || $type eq "udp" )
+	&logfile(
+		"setting 'MaxClientTime $max_client_time $track' for $farm_name farm $farm_type"
+	);
+
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &setTcpUdpFarmMaxClientTime( $maxcl, $track, $fname, $ffile );
+		$output = &setTcpUdpFarmMaxClientTime( $max_client_time, $track, $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &setHTTPFarmMaxClientTime( $track, $ffile );
+		$output = &setHTTPFarmMaxClientTime( $track, $farm_name );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		$output = &setL4FarmMaxClientTime( $track, $ffile );
+		$output = &setL4FarmMaxClientTime( $track, $farm_name );
 	}
 
 	return $output;
 }
 
 #
-sub getFarmMaxClientTime($fname)
+sub getFarmMaxClientTime($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type = &getFarmType( $fname );
-	my @output;
+	my $farm_type = &getFarmType( $farm_name );
+	my @max_client_time;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &getTcpUdpFarmMaxClientTime( $fname );
+		@max_client_time = &getTcpUdpFarmMaxClientTime( $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &getHTTPFarmMaxClientTime( $fname );
+		@max_client_time = &getHTTPFarmMaxClientTime( $farm_name );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		@output = &getL4FarmMaxClientTime( $ffile );
+		@max_client_time = &getL4FarmMaxClientTime( $farm_name );
 	}
 
-	return @output;
+	return @max_client_time;
 }
 
 # set the max conn of a farm
-sub setFarmMaxConn($maxc,$fname)
+sub setFarmMaxConn($max_connections,$farm_name)
 {
-	my ( $maxc, $fname ) = @_;
+	my ( $max_connections, $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
 
-	&logfile( "setting 'MaxConn $maxc' for $fname farm $type" );
-	if ( $type eq "tcp" || $type eq "udp" )
+	&logfile( "setting 'MaxConn $maxc' for $farm_name farm $farm_type" );
+
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &setTcpUdpFarmMaxConn( $maxc, $ffile );
+		$output = &setTcpUdpFarmMaxConn( $max_connections, $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &setHTTPFarmMaxConn( $maxc, $ffile );
+		$output = &setHTTPFarmMaxConn( $max_connections, $farm_name );
 	}
 
 	return $output;
 }
 
 #
-sub getFarmServers($fname)
+sub getFarmServers($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type = &getFarmType( $fname );
-	my @output;
+	my $farm_type = &getFarmType( $farm_name );
+	my @servers;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		@output = &getTcpUdpFarmServers( $fname );
+		@servers = &getTcpUdpFarmServers( $farm_name );
 	}
 
-	if ( $type eq "datalink" || $type eq "l4xnat" )
+	if ( $farm_type eq "datalink" )
 	{
-		my $file = &getFarmFile( $fname );
-		open FI, "<$configdir/$file";
-		my $first  = "true";
-		my $sindex = 0;
-		while ( $line = <FI> )
-		{
-			if ( $line ne "" && $line =~ /^\;server\;/ && $first ne "true" )
-			{
-				#print "$line<br>";
-				$line =~ s/^\;server/$sindex/g, $line;
-				push ( @output, $line );
-				$sindex = $sindex + 1;
-			}
-			else
-			{
-				$first = "false";
-			}
-		}
-		close FI;
+		@servers = &getL4FarmServers( $farm_name );
 	}
 
-	#&logfile("getting 'Servers @output' for $fname farm $type");
-	return @output;
+	if ( $farm_type eq "l4xnat" )
+	{
+		@servers = &getDatalinkFarmServers( $farm_name );
+	}
+
+	return @servers;
 }
 
 #
-sub getFarmGlobalStatus($fname)
+sub getFarmGlobalStatus($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type = &getFarmType( $fname );
+	my $farm_type = &getFarmType( $farm_name );
 	my @run;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		@run = &getTcpUdpFarmGlobalStatus( $fname );
+		@run = &getTcpUdpFarmGlobalStatus( $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		@run = getHTTPFarmGlobalStatus( $fname );
+		@run = getHTTPFarmGlobalStatus( $farm_name );
 	}
 
 	return @run;
 }
 
-sub getBackendEstConns($fname,$ip_backend,$port_backend,@netstat)
+#
+sub getBackendEstConns($farm_name,$ip_backend,$port_backend,@netstat)
 {
-	my ( $fname, $ip_backend, $port_backend, @netstat ) = @_;
-	my $type  = &getFarmType( $fname );
-	my $fvip  = &getFarmVip( "vip", $fname );
-	my $fvipp = &getFarmVip( "vipp", $fname );
-	my @nets  = ();
-	if ( $type eq "tcp" || $type eq "udp" || $type =~ "http" )
+	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
+
+	my $farm_type = &getFarmType( $farm_name );
+	my @nets      = ();
+
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		if ( $type =~ "http" )
-		{
-			$type = "tcp";
-		}
-		@nets = &getNetstatFilter(
-			"$type",
-			"",
-			"\.*ESTABLISHED src=\.* dst=$ip_backend sport=\.* dport=$port_backend \.*src=$ip_backend \.*",
-			"",
-			@netstat
-		);
+		@nets =
+		  &getTcpUdpBackendEstConns( $farm_name, $ip_backend, $port_backend, @netstat );
 	}
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		@nets = &getL4BackendEstConns( $fname, $ip_backend, @netstat );
+		@nets =
+		  &getHTTPBackendEstConns( $farm_name, $ip_backend, $port_backend, @netstat );
 	}
+	if ( $farm_type eq "l4xnat" )
+	{
+		@nets = &getL4BackendEstConns( $farm_name, $ip_backend, @netstat );
+	}
+
 	return @nets;
 }
 
 #
-sub getFarmEstConns($fname,@netstat)
+sub getFarmEstConns($farm_name,@netstat)
 {
-	my ( $fname, @netstat ) = @_;
+	my ( $farm_name, @netstat ) = @_;
 
-	my $type  = &getFarmType( $fname );
-	my $fvip  = &getFarmVip( "vip", $fname );
-	my $fvipp = &getFarmVip( "vipp", $fname );
-	my $pid   = &getFarmPid( $fname );
-	my @nets  = ();
+	my $farm_type = &getFarmType( $farm_name );
+	my $pid       = &getFarmPid( $farm_name );
+	my @nets      = ();
 
 	if ( $pid eq "-" )
 	{
 		return @nets;
 	}
 
-	if ( $type eq "tcp" )
+	if ( $farm_type eq "tcp" )
 	{
-		@nets = &getTcpFarmEstConns( @nets, @netstat, $fvip, $fvipp );
+		@nets = &getTcpFarmEstConns( $farm_name, @netstat );
 	}
 
-	if ( $type eq "udp" )
+	if ( $farm_type eq "udp" )
 	{
-		@nets = &getUdpFarmEstConns( @nets, @netstat, $fvip, $fvipp );
+		@nets = &getUdpFarmEstConns( $farm_name, @netstat );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		@nets = &getHTTPFarmEstConns( @nets, @netstat, $fvip, $fvipp );
+		@nets = &getHTTPFarmEstConns( $farm_name, @netstat );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		@nets = &getL4FarmEstConns( $fname, @netstat );
+		@nets = &getL4FarmEstConns( $farm_name, @netstat );
 	}
 
 	return @nets;
 }
 
-sub getBackendTWConns($fname,$ip_backend,$port_backend,@netstat)
+#
+sub getBackendTWConns($farm_name,$ip_backend,$port_backend,@netstat)
 {
-	my ( $fname, $ip_backend, $port_backend, @netstat ) = @_;
+	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
 
-	my $type  = &getFarmType( $fname );
-	my $fvip  = &getFarmVip( "vip", $fname );
-	my $fvipp = &getFarmVip( "vipp", $fname );
-	my @nets  = ();
+	my $farm_type = &getFarmType( $farm_name );
+	my @nets      = ();
 
-	if ( $type eq "tcp" || $type eq "udp" || $type eq "http" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		if ( $type eq "http" )
-		{
-			$type = "tcp";
-		}
 		@nets =
-		  &getNetstatFilter( "$type", "",
-			 "\.*TIME\_WAIT src=$fvip dst=$ip_backend sport=\.* dport=$port_backend \.*",
-			 "", @netstat );
+		  &getTcpUdpBackendTWConns( $farm_name, $ip_backend, $port_backend, @netstat );
 	}
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		@nets = &getL4BackendTWConns( $fname, $ip_backend, @netstat );
+		@nets =
+		  &getHTTPBackendTWConns( $farm_name, $ip_backend, $port_backend, @netstat );
+	}
+	if ( $farm_type eq "l4xnat" )
+	{
+		@nets = &getL4BackendTWConns( $farm_name, $ip_backend, @netstat );
 	}
 
 	return @nets;
 }
 
 #
-sub getFarmTWConns($fname,@netstat)
+sub getFarmTWConns($farm_name,@netstat)
 {
-	my ( $fname, @netstat ) = @_;
+	my ( $farm_name, @netstat ) = @_;
 
-	my $type  = &getFarmType( $fname );
-	my $fvip  = &getFarmVip( "vip", $fname );
-	my $fvipp = &getFarmVip( "vipp", $fname );
-	my @nets  = ();
+	my $farm_type = &getFarmType( $farm_name );
+	my @nets      = ();
 
-	#&logfile("getting 'TWConns' for $fname farm $type");
-	if ( $type eq "tcp" || $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		push (
-			   @nets,
-			   &getNetstatFilter(
-								 "tcp", "",
-								 "\.*\_WAIT src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*",
-								 "", @netstat
-			   )
-		);
+		@nets = &getHTTPFarmTWConns( $farm_name, @netstat );
 	}
 
-	if ( $type eq "udp" )
+	if ( $farm_type eq "tcp" )
 	{
-		@nets = &getNetstatFilter( "udp", "\.\*\_WAIT\.\*", $ninfo, "", @netstat );
+		@nets = &getTcpFarmTWConns( $farm_name, @netstat );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "udp" )
 	{
-		@nets = &getL4FarmTWConns( $fname, @netstat );
+		@nets = &getUdpFarmTWConns( $farm_name, @netstat );
+	}
+
+	if ( $farm_type eq "l4xnat" )
+	{
+		@nets = &getL4FarmTWConns( $farm_name, @netstat );
 	}
 
 	return @nets;
 }
 
-sub getBackendSYNConns($fname,$ip_backend,$port_backend,@netstat)
+sub getBackendSYNConns($farm_name,$ip_backend,$port_backend,@netstat)
 {
-	my ( $fname, $ip_backend, $port_backend, @netstat ) = @_;
+	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
 
-	my $type = &getFarmType( $fname );
-	my @nets = ();
+	my $farm_type = &getFarmType( $farm_name );
+	my @nets      = ();
 
-	if ( $type eq "tcp" || $type eq "http" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		@nets = &getTcpBackendSYNConns( $ip_backend, $port_backend, @netstat );
+		@nets =
+		  &getHTTPBackendSYNConns( $farm_name, $ip_backend, $port_backend, @netstat );
 	}
-	if ( $type eq "udp" )
+	if ( $farm_type eq "tcp" )
 	{
-		@nets = &getUdpBackendSYNConns( $ip_backend, $port_backend, @netstat );
+		@nets =
+		  &getTcpBackendSYNConns( $farm_name, $ip_backend, $port_backend, @netstat );
 	}
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "udp" )
 	{
-		@nets = &getL4BackendSYNConns( $fname, $ip_backend, @netstat );
+		@nets =
+		  &getUdpBackendSYNConns( $farm_name, $ip_backend, $port_backend, @netstat );
 	}
+	if ( $farm_type eq "l4xnat" )
+	{
+		@nets =
+		  &getL4BackendSYNConns( $farm_name, $ip_backend, $port_backend, @netstat );
+	}
+
 	return @nets;
 }
 
 #
-sub getFarmSYNConns($fname,@netstat)
+sub getFarmSYNConns($farm_name, @netstat)
 {
-	my ( $fname, @netstat ) = @_;
+	my ( $farm_name, @netstat ) = @_;
 
-	my $type  = &getFarmType( $fname );
-	my $fvip  = &getFarmVip( "vip", $fname );
-	my $fvipp = &getFarmVip( "vipp", $fname );
-	my @nets  = ();
+	my $farm_type = &getFarmType( $farm_name );
+	my @nets      = ();
 
-	if ( $type eq "tcp" )
+	if ( $farm_type eq "tcp" )
 	{
-		@nets = &getTcpFarmSYNConns( @netstat, $fvip, $fvipp );
+		@nets = &getTcpFarmSYNConns( $farm_name, @netstat );
 	}
 
-	if ( $type eq "udp" )
+	if ( $farm_type eq "udp" )
 	{
-		@nets = &getUdpFarmSYNConns( @netstat, $fvip, $fvipp );
+		@nets = &getUdpFarmSYNConns( $farm_name, @netstat );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		@nets = &getHTTPFarmSYNConns( @nets, @netstat, $fvip, $fvipp );
+		@nets = &getHTTPFarmSYNConns( $farm_name, @netstat );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		@nets = &getL4FarmSYNConns( $fname, @netstat );
+		@nets = &getL4FarmSYNConns( $farm_name, @netstat );
 	}
 
 	return @nets;
@@ -618,58 +560,66 @@ sub getFarmSYNConns($fname,@netstat)
 
 # Generic function
 # Returns farm file name
-sub getFarmsByType($ftype)
+sub getFarmsByType($farm_type)
 {
-	my ( $ftype ) = @_;
+	my ( $farm_type ) = @_;
+
+	my @farms = ();
+
 	opendir ( my $dir, "$configdir" ) || return -1;
-	my @ffiles = grep { /^.*\_.*\.cfg/ && -f "$configdir/$_" } readdir ( $dir );
+	my @farm_files = grep { /^.*\_.*\.cfg/ && -f "$configdir/$_" } readdir ( $dir );
 	closedir $dir;
-	my @farms;
-	foreach ( @ffiles )
+
+	foreach ( @farm_files )
 	{
-		my $fname = &getFarmName( $_ );
-		my $tp    = &getFarmType( $fname );
-		if ( $tp eq $ftype )
+		my $farm_name = &getFarmName( $_ );
+
+		if ( &getFarmType( $farm_name ) eq $farm_type )
 		{
-			push ( @farms, $fname );
+			push ( @farms, $farm_name );
 		}
 	}
+
 	return @farms;
 }
 
 # Generic function
 # Returns farm type [udp|tcp|http|https|datalink|l4xnat|gslb]
-sub getFarmType($fname)
+sub getFarmType($farm_name)
 {
-	my ( $fname ) = @_;
-	my $filename = &getFarmFile( $fname );
-	if ( $filename =~ /$fname\_pen\_udp.cfg/ )
+	my ( $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+
+	if ( $farm_filename =~ /$farm_name\_pen\_udp.cfg/ )
 	{
 		return "udp";
 	}
-	if ( $filename =~ /$fname\_pen.cfg/ )
+	if ( $farm_filename =~ /$farm_name\_pen.cfg/ )
 	{
 		return "tcp";
 	}
-	if ( $filename =~ /$fname\_pound.cfg/ )
+	if ( $farm_filename =~ /$farm_name\_pound.cfg/ )
 	{
-		my $out = "http";
 		use File::Grep qw( fgrep fmap fdo );
-		if ( fgrep { /ListenHTTPS/ } "$configdir/$filename" )
+		if ( fgrep { /ListenHTTPS/ } "$configdir/$farm_filename" )
 		{
-			$out = "https";
+			return "https";
 		}
-		return $out;
+		else
+		{
+			return "http";
+		}
 	}
-	if ( $filename =~ /$fname\_datalink.cfg/ )
+	if ( $farm_filename =~ /$farm_name\_datalink.cfg/ )
 	{
 		return "datalink";
 	}
-	if ( $filename =~ /$fname\_l4xnat.cfg/ )
+	if ( $farm_filename =~ /$farm_name\_l4xnat.cfg/ )
 	{
 		return "l4xnat";
 	}
-	if ( $filename =~ /$fname\_gslb.cfg/ )
+	if ( $farm_filename =~ /$farm_name\_gslb.cfg/ )
 	{
 		return "gslb";
 	}
@@ -678,21 +628,22 @@ sub getFarmType($fname)
 
 # Generic function
 # Returns farm file name
-sub getFarmFile($fname)
+sub getFarmFile($farm_name)
 {
-	my ( $fname ) = @_;
-	opendir ( my $dir, "$configdir" ) || return -1;
+	my ( $farm_name ) = @_;
 
-	my @ffiles =
+	opendir ( my $dir, "$configdir" ) || return -1;
+	my @farm_files =
 	  grep {
-		     /^$fname\_.*\.cfg/
-		  && !/^$fname\_.*guardian\.conf/
-		  && !/^$fname\_status.cfg/
+		     /^$farm_name\_.*\.cfg/
+		  && !/^$farm_name\_.*guardian\.conf/
+		  && !/^$farm_name\_status.cfg/
 	  } readdir ( $dir );
 	closedir $dir;
-	if ( @ffiles )
+
+	if ( @farm_files )
 	{
-		return @ffiles[0];
+		return @farm_files[0];
 	}
 	else
 	{
@@ -702,17 +653,17 @@ sub getFarmFile($fname)
 
 # Generic function
 # Returns farm status
-sub getFarmStatus($fname)
+sub getFarmStatus($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $ftype  = &getFarmType( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
 	# for every farm type but datalink or l4xnat
-	if ( $ftype ne "datalink" && $ftype ne "l4xnat" )
+	if ( $farm_type ne "datalink" && $farm_type ne "l4xnat" )
 	{
-		my $pid = &getFarmPid( $fname );
+		my $pid = &getFarmPid( $farm_name );
 		if ( $pid eq "-" )
 		{
 			$output = "down";
@@ -725,7 +676,7 @@ sub getFarmStatus($fname)
 	else
 	{
 		# Only for datalink and l4xnat
-		if ( -e "$piddir\/$fname\_$ftype.pid" )
+		if ( -e "$piddir\/$farm_name\_$farm_type.pid" )
 		{
 			$output = "up";
 		}
@@ -739,55 +690,47 @@ sub getFarmStatus($fname)
 }
 
 # Returns farm status
-sub getFarmBootStatus($fname)
+sub getFarmBootStatus($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $file   = &getFarmFile( $fname );
-	my $output = "down";
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = "down";
 
-	if (    $type eq "tcp"
-		 || $type eq "udp"
-		 || $type eq "http"
-		 || $type eq "https" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		open FO, "<$configdir/$file";
-		while ( $line = <FO> )
-		{
-			$lastline = $line;
-		}
-		close FO;
-		if ( $lastline !~ /^#down/ )
-		{
-			$output = "up";
-		}
+		$output = &getTcpUdpFarmBootStatus( $farm_name );
 	}
 
-	if ( $type eq "gslb" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &getFarmGSLBBootStatus( $file );
+		$output = &getHTTPFarmBootStatus( $farm_name );
 	}
 
-	if ( $type eq "datalink" )
+	if ( $farm_type eq "gslb" )
 	{
-		$output = &getDatalinkFarmBootStatus( $file );
+		$output = &getGSLBFarmBootStatus( $farm_name );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "datalink" )
 	{
-		$output = &getL4FarmBootStatus( $file );
+		$output = &getDatalinkFarmBootStatus( $farm_name );
+	}
+
+	if ( $farm_type eq "l4xnat" )
+	{
+		$output = &getL4FarmBootStatus( $farm_name );
 	}
 
 	return $output;
 }
 
 # Start Farm rutine
-sub _runFarmStart($fname,$writeconf)
+sub _runFarmStart($farm_name, $writeconf)
 {
-	my ( $fname, $writeconf ) = @_;
+	my ( $farm_name, $writeconf ) = @_;
 
-	my $status = &getFarmStatus( $fname );
+	my $status = &getFarmStatus( $farm_name );
 	chomp ( $status );
 
 	if ( $status eq "up" )
@@ -795,129 +738,132 @@ sub _runFarmStart($fname,$writeconf)
 		return 0;
 	}
 
-	my $type = &getFarmType( $fname );
-	my $file = &getFarmFile( $fname );
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
 
-	&logfile( "running 'Start write $writeconf' for $fname farm $type" );
+	&logfile( "running 'Start write $writeconf' for $farm_name farm $farm_type" );
 
 	if (    $writeconf eq "true"
-		 && $type ne "datalink"
-		 && $type ne "l4xnat"
-		 && $type ne "gslb" )
+		 && $farm_type ne "datalink"
+		 && $farm_type ne "l4xnat"
+		 && $farm_type ne "gslb" )
 	{
 		use Tie::File;
-		tie @filelines, 'Tie::File', "$configdir\/$file";
-		@filelines = grep !/^\#down/, @filelines;
-		untie @filelines;
+		tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+		@configfile = grep !/^\#down/, @configfile;
+		untie @configfile;
 	}
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$status = &_runTcpUdpFarmStart( $fname );
+		$status = &_runTcpUdpFarmStart( $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$status = &_runHTTPFarmStart( $fname, $file, $status );
+		$status = &_runHTTPFarmStart( $farm_name );
 	}
 
-	if ( $type eq "gslb" )
+	if ( $farm_type eq "gslb" )
 	{
-		$output = &setFarmGSLBStatus( $fname, "start", $writeconf );
+		$status = &setGSLBFarmStatus( $farm_name, "start", $writeconf );
 	}
 
-	if ( $type eq "datalink" )
+	if ( $farm_type eq "datalink" )
 	{
-		$status = &_runDatalinkFarmStart();
+		$status = &_runDatalinkFarmStart( $farm_name, $writeconf, $status );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		$status = &_runL4FarmStart( $file, $writeconf, $status );
+		$status = &_runL4FarmStart( $farm_name, $writeconf, $status );
 	}
 
 	return $status;
 }
 
+# Generic function
 # Start Farm basic rutine
-sub runFarmStart($fname,$writeconf)
+sub runFarmStart($farm_name,$writeconf)
 {
-	my ( $fname, $writeconf ) = @_;
+	my ( $farm_name, $writeconf ) = @_;
 
-	my $status = &_runFarmStart( $fname, $writeconf );
+	my $status = &_runFarmStart( $farm_name, $writeconf );
 
 	if ( $status == 0 )
 	{
-		&runFarmGuardianStart( $fname, "" );
+		&runFarmGuardianStart( $farm_name, "" );
 	}
 
 	return $status;
 }
 
+# Generic function
 # Stop Farm basic rutine
-sub runFarmStop($fname,$writeconf)
+sub runFarmStop($farm_name,$writeconf)
 {
-	my ( $fname, $writeconf ) = @_;
+	my ( $farm_name, $writeconf ) = @_;
 
-	&runFarmGuardianStop( $fname, "" );
+	&runFarmGuardianStop( $farm_name, "" );
 
-	my $status = &_runFarmStop( $fname, $writeconf );
+	my $status = &_runFarmStop( $farm_name, $writeconf );
 
 	return $status;
 }
 
 # Stop Farm rutine
-sub _runFarmStop($fname,$writeconf)
+sub _runFarmStop($farm_name,$writeconf)
 {
-	my ( $fname, $writeconf ) = @_;
+	my ( $farm_name, $writeconf ) = @_;
 
-	my $status = &getFarmStatus( $fname );
+	my $status = &getFarmStatus( $farm_name );
 	if ( $status eq "down" )
 	{
 		return 0;
 	}
 
-	my $filename = &getFarmFile( $fname );
-	if ( $filename == -1 )
+	my $farm_filename = &getFarmFile( $farm_name );
+	if ( $farm_filename == -1 )
 	{
 		return -1;
 	}
 
-	my $type   = &getFarmType( $fname );
-	my $status = $type;
+	my $farm_type = &getFarmType( $farm_name );
+	my $status    = $farm_type;
 
-	&logfile( "running 'Stop write $writeconf' for $fname farm $type" );
-	if ( $type eq "tcp" || $type eq "udp" )
+	&logfile( "running 'Stop write $writeconf' for $farm_name farm $farm_type" );
+
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$status = &_runTcpUdpFarmStop( $fname );
+		$status = &_runTcpUdpFarmStop( $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$status = &_runHTTPFarmStop( $fname, $status );
+		$status = &_runHTTPFarmStop( $farm_name );
 	}
 
-	if ( $type eq "gslb" )
+	if ( $farm_type eq "gslb" )
 	{
-		$status = &_runGSLBFarmStop( $fname, $writeconf, $status );
+		$status = &_runGSLBFarmStop( $farm_name, $writeconf );
 	}
 
-	if ( $type eq "datalink" )
+	if ( $farm_type eq "datalink" )
 	{
-		$status = &_runDatalinkFarmStop( $fname, $writeconf, $status );
+		$status = &_runDatalinkFarmStop( $farm_name, $writeconf );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		$status = &_runL4FarmStop( $filename, $writeconf, $status );
+		$status = &_runL4FarmStop( $farm_name, $writeconf, $status );
 	}
 
 	if (    $writeconf eq "true"
-		 && $type ne "datalink"
-		 && $type ne "l4xnat"
-		 && $type ne "gslb" )
+		 && $farm_type ne "datalink"
+		 && $farm_type ne "l4xnat"
+		 && $farm_type ne "gslb" )
 	{
-		open FW, ">>$configdir/$filename";
+		open FW, ">>$configdir/$farm_filename";
 		print FW "#down\n";
 		close FW;
 	}
@@ -926,156 +872,154 @@ sub _runFarmStop($fname,$writeconf)
 }
 
 #
-sub runFarmCreate($fproto,$fvip,$fvipp,$fname,$fdev)
+sub runFarmCreate($farm_type,$vip,$vip_port,$farm_name,$fdev)
 {
-	my ( $fproto, $fvip, $fvipp, $fname, $fdev ) = @_;
+	my ( $farm_type, $vip, $vip_port, $farm_name, $fdev ) = @_;
 
-	my $output = -1;
-	my $ffile  = &getFarmFile( $fname );
-	if ( $ffile != -1 )
+	my $output        = -1;
+	my $farm_filename = &getFarmFile( $farm_name );
+
+	if ( $farm_filename != -1 )
 	{
 		# the farm name already exists
 		$output = -2;
 		return $output;
 	}
 
-	&logfile( "running 'Create' for $fname farm $type" );
-	if ( $fproto eq "TCP" )
+	&logfile( "running 'Create' for $farm_name farm $farm_type" );
+
+	if ( $farm_type eq "TCP" )
 	{
-		$output = &runTcpFarmCreate( $fvip, $fvipp, $fname );
+		$output = &runTcpFarmCreate( $vip, $vip_port, $farm_name );
 	}
 
-	if ( $fproto eq "UDP" )
+	if ( $farm_type eq "UDP" )
 	{
-		$output = &runUdpFarmCreate( $fvip, $fvipp, $fname );
+		$output = &runUdpFarmCreate( $vip, $vip_port, $farm_name );
 	}
 
-	if ( $fproto eq "HTTP" || $fproto eq "HTTPS" )
+	if ( $farm_type eq "HTTP" || $farm_type eq "HTTPS" )
 	{
-		$output = &runHTTPFarmCreate( $fproto, $fvip, $fvipp, $fname );
+		$output = &runHTTPFarmCreate( $vip, $vip_port, $farm_name, $farm_type );
 	}
 
-	if ( $fproto eq "DATALINK" )
+	if ( $farm_type eq "DATALINK" )
 	{
-		$output = &runDatalinkFarmCreate( $fname, $fvip, $fdev );
+		$output = &runDatalinkFarmCreate( $farm_name, $vip, $fdev );
 	}
 
-	if ( $fproto eq "L4xNAT" )
+	if ( $farm_type eq "L4xNAT" )
 	{
-		$output = &runL4FarmCreate( $fvip, $fname );
+		$output = &runL4FarmCreate( $vip, $farm_name );
 	}
 
-	if ( $fproto eq "GSLB" )
+	if ( $farm_type eq "GSLB" )
 	{
-		$output = &setFarmGSLB( $fvip, $fvipp, $fname );
+		$output = &setGSLBFarm( $vip, $vip_port, $farm_name );
 	}
 
 	return $output;
 }
 
 # Returns farm max connections
-sub getFarmMaxConn($fname)
+sub getFarmMaxConn($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $file   = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &getTcpUdpFarmMaxConn( $file, $type );
+		$output = &getTcpUdpFarmMaxConn( $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &getHTTPFarmMaxConn( $fname );
+		$output = &getHTTPFarmMaxConn( $farm_name );
 	}
 
 	return $output;
 }
 
 # Returns farm listen port
-sub getFarmPort($fname)
+sub getFarmPort($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $file   = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &getTcpUdpFarmPort( $file );
+		$output = &getTcpUdpFarmPort( $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &getHTTPFarmPort( $fname );
+		$output = &getHTTPFarmPort( $farm_name );
 	}
 
 	return $output;
 }
 
 # Returns farm PID
-sub getFarmPid($fname)
+sub getFarmPid($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $file   = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &getTcpUdpFarmPid( $file );
+		$output = &getTcpUdpFarmPid( $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &getHTTPFarmPid( $fname );
+		$output = &getHTTPFarmPid( $farm_name );
 	}
 
-	if ( $type eq "gslb" )
+	if ( $farm_type eq "gslb" )
 	{
-		$output = &getGSLBFarmPid( $fname, $file );
+		$output = &getGSLBFarmPid( $farm_name );
 	}
 
 	return $output;
 }
 
 # Returns farm vip
-sub getFarmVip($info,$fname)
+sub getFarmVip($info,$farm_name)
 {
-	my ( $info, $fname ) = @_;
+	my ( $info, $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $file   = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &getTcpUdpFarmVip( $info, $file );
+		$output = &getTcpUdpFarmVip( $info, $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &getHTTPFarmVip( $info, $file );
+		$output = &getHTTPFarmVip( $info, $farm_name );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		$output = &getL4FarmVip( $info, $file );
+		$output = &getL4FarmVip( $info, $farm_name );
 	}
 
-	if ( $type eq "datalink" )
+	if ( $farm_type eq "datalink" )
 	{
-		$output = &getDatalinkFarmVip( $info, $file );
+		$output = &getDatalinkFarmVip( $info, $farm_name );
 	}
 
-	if ( $type eq "gslb" )
+	if ( $farm_type eq "gslb" )
 	{
-		$output = &getGSLBFarmVip( $info, $file );
+		$output = &getGSLBFarmVip( $info, $farm_name );
 	}
 
 	return $output;
@@ -1083,12 +1027,13 @@ sub getFarmVip($info,$fname)
 
 # Generic function
 # this function creates a file to tell that the farm needs to be restarted to apply changes
-sub setFarmRestart($farmname)
+sub setFarmRestart($farm_name)
 {
-	my ( $farmname ) = @_;
-	if ( !-e "/tmp/$farmname.lock" )
+	my ( $farm_name ) = @_;
+
+	if ( !-e "/tmp/$farm_name.lock" )
 	{
-		open FILE, ">/tmp/$farmname.lock";
+		open FILE, ">/tmp/$farm_name.lock";
 		print FILE "";
 		close FILE;
 	}
@@ -1096,17 +1041,18 @@ sub setFarmRestart($farmname)
 
 # Generic function
 # this function deletes the file marking the farm to be restarted to apply changes
-sub setFarmNoRestart($farmname)
+sub setFarmNoRestart($farm_name)
 {
-	my ( $farmname ) = @_;
-	if ( -e "/tmp/$farmname.lock" )
+	my ( $farm_name ) = @_;
+
+	if ( -e "/tmp/$farm_name.lock" )
 	{
-		unlink ( "/tmp/$farmname.lock" );
+		unlink ( "/tmp/$farm_name.lock" );
 	}
 }
 
 # Generic function
-# Returns farm file list
+# Returns farms configuration filename list
 sub getFarmList()
 {
 	opendir ( DIR, $configdir );
@@ -1125,203 +1071,203 @@ sub getFarmList()
 	my @files5 = grep ( /\_gslb.cfg$/, readdir ( DIR ) );
 	closedir ( DIR );
 	my @files = ( @files, @files2, @files3, @files4, @files5 );
+
 	return @files;
 }
 
 # Generic function
-sub getFarmName($farmfile)
+# Returns
+sub getFarmName($farm_filename)
 {
-	my ( $farmfile ) = @_;
-	my @ffile = split ( "_", $farmfile );
+	my ( $farm_filename ) = @_;
+
+	my @ffile = split ( "_", $farm_filename );
+
 	return @ffile[0];
 }
 
 # Generic function
 # Delete Farm rutine
-sub runFarmDelete($fname)
+sub runFarmDelete($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $ftype = &getFarmType( $fname );
+	my $farm_type = &getFarmType( $farm_name );
 
-	&logfile( "running 'Delete' for $fname" );
-	unlink glob ( "$configdir/$fname\_*\.cfg" );
+	&logfile( "running 'Delete' for $farm_name" );
+	unlink glob ( "$configdir/$farm_name\_*\.cfg" );
 	$status = $?;
-	unlink glob ( "$configdir/$fname\_*\.html" );
-	unlink glob ( "$configdir/$fname\_*\.conf" );
-	unlink glob ( "$basedir/img/graphs/bar$fname*" );
-	unlink glob ( "$basedir/img/graphs/$fname-farm\_*" );
-	unlink glob ( "$rrdap_dir$rrd_dir/$fname-farm*" );
+	unlink glob ( "$configdir/$farm_name\_*\.html" );
+	unlink glob ( "$configdir/$farm_name\_*\.conf" );
+	unlink glob ( "$basedir/img/graphs/bar$farm_name*" );
+	unlink glob ( "$basedir/img/graphs/$farm_name-farm\_*" );
+	unlink glob ( "$rrdap_dir$rrd_dir/$farm_name-farm*" );
 	unlink glob ( "${logdir}/${fname}\_*farmguardian*" );
 
-	if ( $ftype eq "gslb" )
+	if ( $farm_type eq "gslb" )
 	{
 		use File::Path 'rmtree';
-		rmtree( ["$configdir/$fname\_gslb.cfg"] );
+		rmtree( ["$configdir/$farm_name\_gslb.cfg"] );
 	}
 
 	# delete cron task to check backends
 	use Tie::File;
 	tie @filelines, 'Tie::File', "/etc/cron.d/zenloadbalancer";
-	my @filelines = grep !/\# \_\_$farmname\_\_/, @filelines;
+	my @filelines = grep !/\# \_\_$farm_name\_\_/, @filelines;
 	untie @filelines;
 
 	# delete nf marks
-	delMarks( $fname, "" );
+	delMarks( $farm_name, "" );
 
 	return $status;
 }
 
 # Set farm virtual IP and virtual PORT
-sub setFarmVirtualConf($vip,$vipp,$fname)
+sub setFarmVirtualConf($vip,$vip_port,$farm_name)
 {
-	my ( $vip, $vipp, $fname ) = @_;
+	my ( $vip, $vip_port, $farm_name ) = @_;
 
-	my $fconf = &getFarmFile( $fname );
-	my $type  = &getFarmType( $fname );
-	my $stat  = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $stat      = -1;
 
-	&logfile( "setting 'VirtualConf $vip $vipp' for $fname farm $type" );
-	if ( $type eq "tcp" || $type eq "udp" )
+	&logfile(
+			  "setting 'VirtualConf $vip $vip_port' for $farm_name farm $farm_type" );
+
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$stat = &setTcpUdpFarmVirtualConf( $vip, $vipp, $fname, $fconf );
+		$stat = &setTcpUdpFarmVirtualConf( $vip, $vip_port, $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$stat = &setHTTPFarmVirtualConf( $vip, $vipp, $fconf );
+		$stat = &setHTTPFarmVirtualConf( $vip, $vip_port, $farm_name );
 	}
 
-	if ( $type eq "datalink" )
+	if ( $farm_type eq "datalink" )
 	{
-		$stat = &setDatalinkFarmVirtualConf( $vip, $vipp, $fname, $fconf );
+		$stat = &setDatalinkFarmVirtualConf( $vip, $vip_port, $farm_name );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		$stat = &setL4FarmVirtualConf( $vip, $vipp, $fname, $fconf );
+		$stat = &setL4FarmVirtualConf( $vip, $vip_port, $farm_name );
 	}
 
-	if ( $type eq "gslb" )
+	if ( $farm_type eq "gslb" )
 	{
-		$stat = &setGSLBFarmVirtualConf( $vip, $vipp, $fconf );
+		$stat = &setGSLBFarmVirtualConf( $vip, $vip_port, $farm_name );
 	}
 
 	return $stat;
 }
 
 #
-sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$fname,$service)
+sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$farm_name,$service)
 {
-	my ( $ids, $rip, $port, $max, $weight, $priority, $timeout, $fname, $svice ) =
-	  @_;
+	my (
+		 $ids,      $rip,     $port,      $max, $weight,
+		 $priority, $timeout, $farm_name, $service
+	) = @_;
 
-	my $type      = &getFarmType( $fname );
-	my $file      = &getFarmFile( $fname );
+	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
-	my $nsflag    = "false";
-	my $backend   = 0;
-	my $idservice = 0;
 
 	&logfile(
-		"setting 'Server $ids $rip $port max $max weight $weight prio $priority timeout $timeout' for $fname farm $type"
+		"setting 'Server $ids $rip $port max $max weight $weight prio $priority timeout $timeout' for $farm_name farm $farm_type"
 	);
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
 		$output =
-		  &setTcpUdpFarmServer( $ids, $rip, $port, $max, $weight, $priority, $fname,
-								$file );
+		  &setTcpUdpFarmServer( $ids, $rip, $port, $max, $weight, $priority,
+								$farm_name );
 	}
 
-	if ( $type eq "datalink" )
+	if ( $farm_type eq "datalink" )
 	{
 		$output =
-		  &setDatalinkFarmServer( $file, $ids, $rip, $port, $weight, $priority );
+		  &setDatalinkFarmServer( $ids, $rip, $port, $weight, $priority, $farm_name );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
+	{
+		$output = &setL4FarmServer( $ids, $rip, $port, $weight, $priority, $farm_name );
+	}
+
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$output =
-		  &setL4FarmServer( $ids, $rip, $port, $weight, $priority, $fname, $file );
-	}
-
-	if ( $type eq "http" || $type eq "https" )
-	{
-		$output = setHTTPFarmServer(
-									 $ids,     $rip,     $port,  $priority,
-									 $timeout, $fname,   $svice, $file,
-									 $nsflag,  $backend, $idservice
-		);
+		  &setHTTPFarmServer( $ids, $rip, $port, $priority,
+							  $timeout, $farm_name, $service, );
 	}
 
 	return $output;
 }
 
 #
-sub runFarmServerDelete($ids,$fname,$service)
+sub runFarmServerDelete($ids,$farm_name,$service)
 {
-	( $ids, $fname, $svice ) = @_;
+	( $ids, $farm_name, $service ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
-	&logfile( "running 'ServerDelete $ids' for $fname farm $type" );
+	&logfile( "running 'ServerDelete $ids' for $farm_name farm $farm_type" );
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &runTcpUdpFarmServerDelete( $ids, $fname, $ffile );
+		$output = &runTcpUdpFarmServerDelete( $ids, $farm_name );
 	}
 
-	if ( $type eq "datalink" )
+	if ( $farm_type eq "datalink" )
 	{
-		$output = &runDatalinkFarmServerDelete( $ids, $ffile );
+		$output = &runDatalinkFarmServerDelete( $ids, $farm_name );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		$output = &runL4FarmServerDelete( $ids, $ffile );
+		$output = &runL4FarmServerDelete( $ids, $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &runHTTPFarmServerDelete( $ids, $fname, $ffile );
+		$output = &runHTTPFarmServerDelete( $ids, $farm_name );
 	}
 
-	if ( $type eq "gslb" )
+	if ( $farm_type eq "gslb" )
 	{
-		$output = &runGSLBFarmServerDelete( $ids, $ffile, $service );
+		$output = &runGSLBFarmServerDelete( $ids, $farm_name, $service );
 	}
 
 	return $output;
 }
 
 #
-sub getFarmBackendStatusCtl($fname)
+sub getFarmBackendStatusCtl($farm_name)
 {
-	my ( $fname ) = @_;
-	my $type      = &getFarmType( $fname );
+	my ( $farm_name ) = @_;
+
+	my $farm_type = &getFarmType( $farm_name );
 	my @output    = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &getTcpUdpFarmBackendStatusCtl( $fname );
+		$output = &getTcpUdpFarmBackendStatusCtl( $farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		@output = &getHTTPFarmBackendStatusCtl( $fname );
+		@output = &getHTTPFarmBackendStatusCtl( $farm_name );
 	}
 
-	if ( $type eq "datalink" )
+	if ( $farm_type eq "datalink" )
 	{
-		@output = &getDatalinkFarmBackendStatusCtl( $fname );
+		@output = &getDatalinkFarmBackendStatusCtl( $farm_name );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		@output = &getL4FarmBackendStatusCtl( $fname );
+		@output = &getL4FarmBackendStatusCtl( $farm_name );
 	}
 
 	return @output;
@@ -1329,241 +1275,229 @@ sub getFarmBackendStatusCtl($fname)
 
 #function that return the status information of a farm:
 #ip, port, backendstatus, weight, priority, clients
-sub getFarmBackendsStatus($fname,@content)
+sub getFarmBackendsStatus($farm_name,@content)
 {
-	my ( $fname, @content ) = @_;
-	my $type   = &getFarmType( $fname );
-	my @output = -1;
+	my ( $farm_name, @content ) = @_;
 
-	if ( $type eq "http" || $type eq "https" )
+	my $farm_type = &getFarmType( $farm_name );
+	my @output    = -1;
+
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		@output = &getHTTPFarmBackendsStatus( $fname, @content );
+		@output = &getHTTPFarmBackendsStatus( $farm_name, @content );
 	}
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		@output = &getTcpUdpFarmBackendsStatus( $fname, @content );
+		@output = &getTcpUdpFarmBackendsStatus( $farm_name, @content );
 	}
 
-	if ( $type eq "datalink" )
+	if ( $farm_type eq "datalink" )
 	{
 		@output = &getDatalinkFarmBackendsStatus( @content );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		@output = &getL4FarmBackendsStatus( $fname, @content );
+		@output = &getL4FarmBackendsStatus( $farm_name, @content );
 	}
 
 	return @output;
 }
 
 #function that return the status information of a farm:
-sub getFarmBackendsClients($idserver,@content,$fname)
+sub getFarmBackendsClients($idserver,@content,$farm_name)
 {
-	my ( $idserver, @content, $fname ) = @_;
-	my $type   = &getFarmType( $fname );
-	my $output = -1;
+	my ( $idserver, @content, $farm_name ) = @_;
 
-	if ( $type eq "http" || $type eq "https" )
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
+
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &getHTTPFarmBackendsClients( $idserver, @content, $fname );
+		$output = &getHTTPFarmBackendsClients( $idserver, @content, $farm_name );
 	}
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &getTcpUdpFarmBackendsClients( $idserver, @content, $fname );
+		$output = &getTcpUdpFarmBackendsClients( $idserver, @content, $farm_name );
 	}
 	return $output;
 }
 
 #function that return the status information of a farm:
-sub getFarmBackendsClientsList($fname,@content)
+sub getFarmBackendsClientsList($farm_name,@content)
 {
-	( $fname, @content ) = @_;
-	my $type   = &getFarmType( $fname );
-	my @output = -1;
+	( $farm_name, @content ) = @_;
 
-	if ( $type eq "http" || $type eq "https" )
+	my $farm_type = &getFarmType( $farm_name );
+	my @output    = -1;
+
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		@output = &getHTTPFarmBackendsClientsList( $fname, @content );
+		@output = &getHTTPFarmBackendsClientsList( $farm_name, @content );
 	}
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		@output = &getFarmBackendsClientsList( $fname, @content );
+		@output = &getTcpUdpFarmBackendsClientsList( $farm_name, @content );
 	}
+
 	return @output;
 }
 
-sub setFarmBackendStatus($fname,$index,$stat)
+sub setFarmBackendStatus($farm_name,$index,$stat)
 {
-	( $fname, $index, $stat ) = @_;
+	( $farm_name, $index, $stat ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $file   = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $farm_type     = &getFarmType( $farm_name );
 
-	if ( $type eq "datalink" )
+	#	my $output = -1;
+
+	if ( $farm_type eq "datalink" )
 	{
-		$output = &setDatalinkFarmBackendStatus( $file, $index, $stat );
+		$output = &setDatalinkFarmBackendStatus( $farm_name, $index, $stat );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-		$output = &setL4FarmBackendStatus( $file, $index, $stat );
+		$output = &setL4FarmBackendStatus( $farm_name, $index, $stat );
 	}
 
-	return $output;
+	#	return $output;
 }
 
 #function that renames a farm
-sub setNewFarmName($fname,$newfname)
+sub setNewFarmName($farm_name,$new_farm_name)
 {
-	my ( $fname, $newfname ) = @_;
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my ( $farm_name, $new_farm_name ) = @_;
 
-	if ( $newfname =~ /^$/ )
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
+
+	if ( $new_farm_name =~ /^$/ )
 	{
-		&logfile( "error 'NewFarmName $newfname' is empty" );
+		&logfile( "error 'NewFarmName $new_farm_name' is empty" );
 		return -2;
 	}
 
-	&logfile( "setting 'NewFarmName $newfname' for $fname farm $type" );
+	&logfile(
+			  "setting 'NewFarmName $new_farm_name' for $farm_name farm $farm_type" );
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &setTcpUdpNewFarmName( $fname, $newfname );
+		$output = &setTcpUdpNewFarmName( $farm_name, $new_farm_name );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &setHTTPNewFarmName( $fname, $newfname );
+		$output = &setHTTPNewFarmName( $farm_name, $new_farm_name );
 	}
 
-	if ( $type eq "datalink" || $type eq "l4xnat" )
+	if ( $farm_type eq "datalink" )
 	{
-		if ( $type eq "l4xnat" )
-		{
-			&runFarmStop( $fname, "false" );
-		}
-		my $newffile = "$newfname\_$type.cfg";
-		use Tie::File;
-		tie @filelines, 'Tie::File', "$configdir\/$ffile";
-		for ( @filelines )
-		{
-			s/^$fname\;/$newfname\;/g;
-		}
-		untie @filelines;
-		rename ( "$configdir\/$ffile",         "$configdir\/$newffile" );
-		rename ( "$piddir\/$fname\_$type.pid", "$piddir\/$newfname\_$type.pid" );
-		$output = $?;
+		$output = &setDatalinkNewFarmName( $farm_name, $new_farm_name );
 	}
 
-	if ( $type eq "l4xnat" )
+	if ( $farm_type eq "l4xnat" )
 	{
-
-		# Rename fw marks for this farm
-		&renameMarks( $fname, $newfname );
-		&runFarmStart( $newfname, "false" );
-		$output = 0;
+		$output = &setL4NewFarmName( $farm_name, $new_farm_name );
 	}
 
-	if ( $type eq "gslb" )
+	if ( $farm_type eq "gslb" )
 	{
-		$output = &setGSLBNewFarmName( $newfname, $ffile, $type );
+		$output = &setGSLBNewFarmName( $farm_name, $new_farm_name );
 	}
 
 	# rename rrd
-	rename ( "$rrdap_dir$rrd_dir/$fname-farm.rrd",
-			 "$rrdap_dir$rrd_dir/$newfname-farm.rrd" );
+	rename ( "$rrdap_dir$rrd_dir/$farm_name-farm.rrd",
+			 "$rrdap_dir$rrd_dir/$new_farm_name-farm.rrd" );
 
 	# delete old graphs
-	unlink ( "img/graphs/bar$fname.png" );
+	unlink ( "img/graphs/bar$farm_name.png" );
 
 	return $output;
 }
 
 #function that check if the config file is OK.
-sub getFarmConfigIsOK($fname)
+sub getFarmConfigIsOK($farm_name)
 {
-	( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &getHTTPFarmConfigIsOK( $ffile );
+		$output = &getHTTPFarmConfigIsOK( $farm_name );
 	}
-	if ( $type eq "gslb" )
+	if ( $farm_type eq "gslb" )
 	{
-		$output = &getFarmGSLBConfigIsOK( $ffile );
+		$output = &getGSLBFarmConfigIsOK( $farm_name );
 	}
+
 	return $output;
 }
 
 #function that check if a backend on a farm is on maintenance mode
-sub getFarmBackendMaintenance($fname,$backend,$service)
+sub getFarmBackendMaintenance($farm_name,$backend,$service)
 {
-	my ( $fname, $backend, $service ) = @_;
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my ( $farm_name, $backend, $service ) = @_;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
+
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &getTcpUdpFarmBackendMaintenance( $fname, $backend );
+		$output = &getTcpUdpFarmBackendMaintenance( $farm_name, $backend );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &getHTTPFarmBackendMaintenance( $fname, $backend, $service );
+		$output = &getHTTPFarmBackendMaintenance( $farm_name, $backend, $service );
 	}
 
 	return $output;
 }
 
 #function that enable the maintenance mode for backend
-sub setFarmBackendMaintenance($fname,$backend,$service)
+sub setFarmBackendMaintenance($farm_name,$backend,$service)
 {
-	my ( $fname, $backend, $service ) = @_;
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my ( $farm_name, $backend, $service ) = @_;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
+
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &setTcpUdpFarmBackendMaintenance( $fname, $backend );
+		$output = &setTcpUdpFarmBackendMaintenance( $farm_name, $backend );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &setHTTPFarmBackendMaintenance( $fname, $backend, $service );
+		$output = &setHTTPFarmBackendMaintenance( $farm_name, $backend, $service );
 	}
 
 	return $output;
 }
 
 #function that disable the maintenance mode for backend
-sub setFarmBackendNoMaintenance($fname,$backend,$service)
+sub setFarmBackendNoMaintenance($farm_name,$backend,$service)
 {
-	my ( $fname, $backend, $service ) = @_;
-	my $type  = &getFarmType( $fname );
-	my $ffile = &getFarmFile( $fname );
-	$output = -1;
+	my ( $farm_name, $backend, $service ) = @_;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
+
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &setTcpUdpFarmBackendNoMaintenance( $fname, $backend );
+		$output = &setTcpUdpFarmBackendNoMaintenance( $farm_name, $backend );
 	}
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &setHTTPFarmBackendNoMaintenance( $fname, $backend, $service );
+		$output = &setHTTPFarmBackendNoMaintenance( $farm_name, $backend, $service );
 	}
 
 	return $output;
@@ -1571,12 +1505,12 @@ sub setFarmBackendNoMaintenance($fname,$backend,$service)
 
 # Generic function
 #checks thata farmname has correct characters (number, letters and lowercases)
-sub checkFarmnameOK($fname)
+sub checkFarmnameOK($farm_name)
 {
 	( $check_name ) = @_;
-	$output = -1;
 
-	#if ($fname =~ /^\w+$/){
+	my $output = -1;
+
 	if ( $check_name =~ /^[a-zA-Z0-9\-]*$/ )
 	{
 		$output = 0;
@@ -1587,54 +1521,50 @@ sub checkFarmnameOK($fname)
 
 #function that return indicated value from a HTTP Service
 #vs return virtual server
-sub getFarmVS($farmname,$service,$tag)
+sub getFarmVS($farm_name, $service, $tag)
 {
-	my ( $fname, $service, $tag ) = @_;
+	my ( $farm_name, $service, $tag ) = @_;
 
-	my $output = "";
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
+	my $output    = "";
+	my $farm_type = &getFarmType( $farm_name );
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &getHTTPFarmVS( $ffile, $service, $tag );
+		$output = &getHTTPFarmVS( $farm_name, $service, $tag );
 	}
 
-	if ( $type eq "gslb" )
+	if ( $farm_type eq "gslb" )
 	{
-		$output = &getGSLBFarmVS( $ffile, $service, $tag );
+		$output = &getGSLBFarmVS( $farm_name, $service, $tag );
 	}
 
 	return $output;
 }
 
 #set values for a service
-sub setFarmVS($farmname,$service,$tag,$string)
+sub setFarmVS($farm_name,$service,$tag,$string)
 {
-	my ( $fname, $service, $tag, $string ) = @_;
+	my ( $farm_name, $service, $tag, $string ) = @_;
 
-	my $output = "";
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
+	my $output    = "";
+	my $farm_type = &getFarmType( $farm_name );
 
-	if ( $type eq "http" || $type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &setHTTPFarmVS( $ffile, $service, $tag, $string );
+		$output = &setHTTPFarmVS( $farm_name, $service, $tag, $string );
 	}
 
-	if ( $type eq "gslb" )
+	if ( $farm_type eq "gslb" )
 	{
-		$output = &setGSLBFarmVS( $ffile, $service, $tag, $string );
+		$output = &setGSLBFarmVS( $farm_name, $service, $tag, $string );
 	}
 
 	return @output;
 }
 
-sub setFarmName($farmname)
+sub setFarmName($farm_name)
 {
-
-	$farmname =~ s/[^a-zA-Z0-9]//g;
-
+	$farm_name =~ s/[^a-zA-Z0-9]//g;
 }
 
 # do not remove this

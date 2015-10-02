@@ -65,8 +65,6 @@ if ( $action eq "editfarm-dpc" )
 				"The default port health check for the service $service has been successfully changed"
 			);
 			&setFarmRestart( $farmname );
-
-			#&runFarmReload($farmname);
 		}
 		else
 		{
@@ -121,7 +119,7 @@ if ( $action eq "editfarm-deleteservice" )
 	{
 		if ( $service_type eq "zone" )
 		{
-			&setFarmGSLBDeleteZone( $farmname, $service );
+			&setGSLBFarmDeleteZone( $farmname, $service );
 			if ( $? eq 0 )
 			{
 				&successmsg( "Deleted zone $service in farm $farmname" );
@@ -132,13 +130,11 @@ if ( $action eq "editfarm-deleteservice" )
 		{
 			if ( $service_type eq "service" )
 			{
-				&setFarmGSLBDeleteService( $farmname, $service );
+				&setGSLBFarmDeleteService( $farmname, $service );
 				if ( $? eq 0 )
 				{
 					&successmsg( "Deleted service $service in farm $farmname" );
 					&setFarmRestart( $farmname );
-
-					#&runFarmReload($farmname);
 				}
 			}
 		}
@@ -148,7 +144,6 @@ if ( $action eq "editfarm-deleteservice" )
 #change Farm's name
 if ( $action eq "editfarm-Name" )
 {
-
 	#Check if farmname has correct characters (letters, numbers and hyphens)
 	my $farmnameok = &checkFarmnameOK( $newfarmname );
 
@@ -166,7 +161,6 @@ if ( $action eq "editfarm-Name" )
 	}
 	else
 	{
-
 		#Check if the new farm's name alredy exists
 		$newffile = &getFarmFile( $newfarmname );
 		if ( $newffile != -1 )
@@ -175,7 +169,6 @@ if ( $action eq "editfarm-Name" )
 		}
 		else
 		{
-
 			#Change farm name
 			$fnchange = &setNewFarmName( $farmname, $newfarmname );
 
@@ -369,11 +362,9 @@ if ( $action eq "editfarm-saveserver" )
 		if ( $error == 0 )
 		{
 			$status =
-			  &setFarmGSLBNewBackend( $farmname, $service, $lb, $id_server, $rip_server );
+			  &setGSLBFarmNewBackend( $farmname, $service, $lb, $id_server, $rip_server );
 			if ( $status != -1 )
 			{
-
-				#&runFarmReload($farmname);
 				&successmsg(
 							 "The backend $rip_server for the service $service has been modified" );
 				&setFarmRestart( $farmname );
@@ -400,7 +391,7 @@ if ( $action eq "editfarm-addservice" )
 		}
 		else
 		{
-			my $result = &setFarmGSLBNewZone( $farmname, $zone );
+			my $result = &setGSLBFarmNewZone( $farmname, $zone );
 			if ( $result eq "0" )
 			{
 				&setFarmRestart( $farmname );
@@ -433,11 +424,9 @@ if ( $action eq "editfarm-addservice" )
 			}
 			if ( $error == 0 )
 			{
-				$status = &setFarmGSLBNewService( $farmname, $service, $lb );
+				$status = &setGSLBFarmNewService( $farmname, $service, $lb );
 				if ( $status != -1 )
 				{
-
-					#&runFarmReload($farmname);
 					&successmsg( "The service $service has been successfully created" );
 					&setFarmRestart( $farmname );
 				}
@@ -552,7 +541,6 @@ print "</div>";
 print "<div style=\"clear:both;\"></div>";
 
 #Services
-#$service=$farmname;
 print "</div><br>";
 print "</div>";
 
@@ -573,10 +561,9 @@ foreach $srv ( @services )
 	my $lb   = &getFarmVS( $farmname, $srv, "algorithm" );
 	print "<div class=\"box-header\">";
 
-#print "<a href=index.cgi?id=1-2&action=editfarm&service_type=service&service=$srv&farmname=$farmname><img src=\"img/icons/small/bullet_toggle_plus.png \" title=\"Maximize service $srv\"></a>";
 	print
 	  "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service_type=service&service=$srv&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $srv\" onclick=\"return confirm('Are you sure you want to delete the Service $srv?')\" ></a> &nbsp;";
-	print " Service \"$srv\" with ";
+	print " Service \"$srv\" with $lb";
 	if ( $lb eq "roundrobin" )
 	{
 		print "Round Robin";

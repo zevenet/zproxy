@@ -510,35 +510,10 @@ else
 	print "<option value=\"dnat\">DNAT</option>";
 }
 
-#if ($nattype eq "snat"){
-#	print "<option value=\"snat\" selected=\"selected\">SNAT</option>";
-#} else {
-#	print "<option value=\"snat\">SNAT</option>";
-#}
 print "</select>";
 print
   "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 print "<br>";
-
-#print "<b>Backend response timeout secs.<br>";
-#$timeout = &getFarmTimeout($farmname);
-#print "<form method=\"get\" action=\"index.cgi\">";
-#print "<input type=\"hidden\" name=\"action\" value=\"editfarm-Timeout-http\">";
-#print "<input type=\"text\" value=\"$timeout\" size=\"4\" name=\"param\">";
-#print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-#print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-#print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
-#print "<br>";
-
-#Timeout for client
-#print "<b>Timeout request from clients secs.</b>";
-#$client = &getFarmClientTimeout($farmname);
-#print "<form method=\"get\" action=\"index.cgi\">";
-#print "<input type=\"hidden\" name=\"action\" value=\"editfarm-Client\">";
-#print "<input type=\"text\" value=\"$client\" size=\"4\" name=\"param\">";
-#print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-#print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-#print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 
 #algorithm
 print
