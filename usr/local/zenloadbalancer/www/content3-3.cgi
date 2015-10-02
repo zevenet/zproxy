@@ -526,7 +526,8 @@ if ( -e $filecluster )
 				  . "--upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl "
 				  . "--downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl "
 				  . "-B "
-				  . "-f local6" & logfile( "running on remote: $ucarp_remote_command" );
+				  . "-f local6";
+				&logfile( "running on remote: $ucarp_remote_command" );
 				my $eject = $ssh->exec( $ucarp_remote_command );
 				sleep ( 10 );
 				&successmsg( "Cluster configured on mode $lhost or $rhost can be masters" );
