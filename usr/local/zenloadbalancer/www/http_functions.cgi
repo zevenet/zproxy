@@ -1434,8 +1434,7 @@ sub getHTTPFarmBackendsStatus($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
 
-	my @backends_data = -1;
-	my @serviceline;
+	my @backends_data;
 
 	if ( !@content )
 	{
@@ -1444,6 +1443,7 @@ sub getHTTPFarmBackendsStatus($farm_name,@content)
 
 	foreach ( @content )
 	{
+		my @serviceline;
 		if ( $_ =~ /Service/ )
 		{
 			@serviceline = split ( "\ ", $_ );
@@ -1502,14 +1502,17 @@ sub getHTTPFarmBackendsStatus($farm_name,@content)
 	return @backends_data;
 }
 
-#function that return if a pound backend is active, down by farmguardian or it's in maintenance mode
+# function that return if a pound backend is active, down by farmguardian
+# or it's in maintenance mode
 sub getHTTPBackendStatusFromFile($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
+
 	my $index;
 	my $line;
 	my $stfile = "$configdir\/$farm_name\_status.cfg";
 	my $output = -1;
+
 	if ( -e "$stfile" )
 	{
 		$index = &getFarmVSI( $farm_name, $service );
@@ -1535,6 +1538,7 @@ sub getHTTPBackendStatusFromFile($farm_name,$backend,$service)
 		}
 		close FG;
 	}
+
 	return $output;
 }
 
@@ -1580,6 +1584,7 @@ sub getHTTPFarmBackendsClientsList($farm_name,@content)
 			my @service = split ( "\ ", $_ );
 			$s = @service[2];
 			$s =~ s/"//g;
+			print $s;
 		}
 		if ( $_ =~ / Session / )
 		{

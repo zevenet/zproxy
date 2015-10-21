@@ -334,8 +334,8 @@ if ( $action eq "editfarm-saveserver" )
 			else
 			{
 				$status =
-				  &setFarmZoneResource( $id_server, $resource_server, $ttl_server,
-										$type_server, $rdata_server, $farmname, $service );
+				  &setFarmZoneResource( $id_server, $resource_server, $ttl_server, $type_server,
+										$rdata_server, $farmname, $service );
 				if ( $status != -1 )
 				{
 					&runFarmReload( $farmname );
@@ -481,7 +481,7 @@ print "<br>";
 @listinterfaces = &listallips();
 
 #print @listinterfaces;
-$clrip = &clrip();
+$clrip = &getClusterRealIp();
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print

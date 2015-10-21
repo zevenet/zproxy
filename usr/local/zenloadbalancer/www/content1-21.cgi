@@ -76,6 +76,8 @@ if ( $action eq "Save" )
 	if ( $error eq "false" )
 	{
 		$error = 0;
+
+		# creating a new farm
 		$status = &runFarmCreate( $farmprotocol, $vip, $vipp, $farmname, $fdev );
 		if ( $status == -1 )
 		{
@@ -160,18 +162,13 @@ if ( $action eq "addfarm" || $action eq "Save & continue" )
 
 	if ( $farmprotocol ne "" && $farmname ne "" )
 	{
+		my @vips =
+		  ( $farmprotocol eq "DATALINK" )
+		  ? &listactiveips( "phvlan" )
+		  : &listactiveips();
+
 		#eth interface selection
 		print "<b>Virtual IP: </b>";
-		my $nvips;
-		if ( $farmprotocol eq "DATALINK" )
-		{
-			$nvips = &listactiveips( "phvlan" );
-		}
-		else
-		{
-			$nvips = &listactiveips();
-		}
-		my @vips = split ( " ", $nvips );
 		print "<select name=\"vip\">\n";
 		print "<option value=\"\">-Select One-</option>\n";
 		for ( $i = 0 ; $i <= $#vips ; $i++ )

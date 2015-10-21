@@ -123,10 +123,6 @@ if ( $action eq "editfarm-changevipvipp" )
 		$error = 1;
 	}
 
-#        if (&checkport($vip,$vipp) eq "true"){
-#                &errormsg("Virtual Port $vipp in Virtual IP $vip is in use, select another port");
-#                $error = 1;
-#        }
 	if ( $error == 0 )
 	{
 		$status = &setFarmVirtualConf( $vip, $vipp, $farmname );
@@ -188,10 +184,6 @@ if ( $action eq "editfarm-saveserver" )
 		$error = 1;
 	}
 
-	#if ($port_server =~ /^$/) {
-	#	&errormsg("Invalid port for real server, it can't be blank");
-	#	$error = 1;
-	#}
 	if ( &checkmport( $port_server ) eq "true" )
 	{
 		my $port = &getFarmVip( "vipp", $fname );
@@ -223,11 +215,9 @@ if ( $action eq "editfarm-saveserver" )
 	}
 	if ( $error == 0 )
 	{
-		$status = &setFarmServer(
-								  $id_server,      $rip_server,    $port_server,
-								  $max_server,     $weight_server, $priority_server,
-								  $timeout_server, $farmname
-		);
+		$status =
+		  &setFarmServer( $id_server, $rip_server, $port_server, $max_server,
+						  $weight_server, $priority_server, $timeout_server, $farmname );
 		if ( $status != -1 )
 		{
 			&runFarmStop( $farmname, "false" );
@@ -408,8 +398,6 @@ print "<div class=\"box-header\">Edit $farmname Farm global parameters</div>";
 print "<div class=\"box stats\">";
 print "<div class=\"row\">";
 
-#print "<div style=\"float:left;\">";
-
 #Change farm's name form
 print
   "<b>Farm's name</b><font size=1> *service will be restarted</font><b>.</b><br>";
@@ -485,9 +473,6 @@ if ( $nattype == -1 )
 }
 my $seldisabled = "";
 
-#if ($farmprotocol eq "sip"){
-#	$seldisabled="disabled";
-#}
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-nattype\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
@@ -666,7 +651,7 @@ $vip   = &getFarmVip( "vip",  $farmname );
 $vport = &getFarmVip( "vipp", $farmname );
 print "<br>";
 @listinterfaces = &listallips();
-$clrip          = &clrip();
+$clrip          = &getClusterRealIp();
 my $disabled = "";
 
 if ( $farmprotocol eq "all" || $farmprotocol eq "sip" )

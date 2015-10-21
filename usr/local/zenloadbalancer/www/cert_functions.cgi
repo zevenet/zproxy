@@ -337,10 +337,10 @@ sub getFarmCertUsed($cfile)
 
 	for ( @farms )
 	{
-		my $fname = $_;
-		my $file  = &getFarmFile( $fname );
+		my $fname         = $_;
+		my $farm_filename = &getFarmFile( $fname );
 		use File::Grep qw( fgrep fmap fdo );
-		if ( fgrep { /Cert \"$configdir\/$cfile\"/ } "$configdir/$file" )
+		if ( fgrep { /Cert \"$configdir\/$cfile\"/ } "$configdir/$farm_filename" )
 		{
 			$output = 0;
 		}

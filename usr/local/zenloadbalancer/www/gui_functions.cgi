@@ -82,13 +82,16 @@ sub createmenuviph($name,$pid,$fproto)
 sub createmenuservice($fname,$sv,$pos)
 {
 	my ( $fname, $sv, $pos ) = @_;
-	my $serv20   = $sv;
-	my $serv     = $sv;
-	my $filefarm = &getFarmFile( $fname );
+
+	my $serv20        = $sv;
+	my $serv          = $sv;
+	my $farm_filename = &getFarmFile( $fname );
+
 	use Tie::File;
-	tie @array, 'Tie::File', "$configdir/$filefarm";
+	tie @array, 'Tie::File', "$configdir/$farm_filename";
 	my @output = grep { /Service/ } @array;
 	untie @array;
+
 	$serv20 =~ s/\ /%20/g;
 	print
 	  "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service=$serv20&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $svice\" onclick=\"return confirm('Are you sure you want to delete the Service $serv?')\" ></a> ";

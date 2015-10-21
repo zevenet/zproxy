@@ -788,7 +788,7 @@ sub getGSLBFarmVS($farm_name, $service, $tag)
 	my ( $farm_name, $service, $tag ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $farm_type = &getFarmType( $farm_name );
+	my $farm_type     = &getFarmType( $farm_name );
 	my $output        = "";
 	my @linesplt;
 

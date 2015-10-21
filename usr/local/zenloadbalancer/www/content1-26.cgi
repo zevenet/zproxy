@@ -296,7 +296,7 @@ print
   "<b>Farm Virtual IP and Interface</b> <font size=1> *service will be restarted</font><b>.</b>";
 
 #my @listinterfaces = &listallips();
-$clrip = &clrip();
+$clrip = &getClusterRealIp();
 $guiip = &GUIip();
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
@@ -307,8 +307,7 @@ print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 #print "<input type=\"hidden\" value=\"$vip\" size=\"12\" name=\"vip\">";
 #print "<br>";
 
-$nvips = &listactiveips( "phvlan" );
-my @vips = split ( " ", $nvips );
+my @vips = &listactiveips( "phvlan" );
 print "<select name=\"vip\">\n";
 print "<option value=\"\">-Select One-</option>\n";
 for ( $i = 0 ; $i <= $#vips ; $i++ )

@@ -226,9 +226,9 @@ elsif ( $action eq "upif" )
 		tie @array, 'Tie::File', "$configdir/if_$if\_conf", recsep => ':';
 		&logfile( "running '$ifconfig_bin $if @array[2] netmask @array[3]' " );
 		@eject = `$ifconfig_bin $if @array[2] netmask @array[3] 2> /dev/null`;
-		&upIf( $if );
-		$state = $?;
-		if ( $state == 0 )
+
+		# check if interface setup is ok and the interface is actually up
+		if ( &upIf( $if ) == 0 && &ifexist( $if ) == 'true' )
 		{
 			@array[4] = "up";
 			&successmsg( "Network interface $if is now UP" );
@@ -329,9 +329,9 @@ print "</thead>";
 print "<tbody>";
 
 # Calculate cluster and gui ips
-$clrip = &clrip();
+$clrip = &getClusterRealIp();
 $guiip = &GUIip();
-$clvip = &clvip();
+$clvip = &getClusterVirtualIp();
 
 #check interfaces status
 
@@ -375,7 +375,8 @@ for my $if ( @interfaces )
 		if ( !$hwaddr )  { $hwaddr  = "-"; }
 		if ( !$gw )      { $gw      = "-"; }
 
-# Physical interfaces are shown always, virtual or vlan interfaces only shows if are configured
+		# Physical interfaces are shown always, virtual or vlan interfaces
+		# are shown only if they are configured
 		if (    ( $if !~ /\:/ && $if !~ /\./ )
 			 || ( $status eq "up" )
 			 || ( -e "$configdir/if_$if\_conf" ) )

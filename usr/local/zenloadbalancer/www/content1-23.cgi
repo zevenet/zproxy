@@ -21,18 +21,10 @@
 #
 ###############################################################################
 
-#search te manage port for selected farm
-#$mport = &getFarmPort($farmname);
-#&logfile("running '$pen_ctl 127.0.0.1:$mport status'");
-#my @run = `$pen_ctl 127.0.0.1:$mport status`;
-
 if ( $viewtableclients eq "" ) { $viewtableclients = "no"; }
 if ( $viewtableconn eq "" )    { $viewtableconn    = "no"; }
 
 $type = &getFarmType( $farmname );
-
-if ( $viewtableclients eq "" ) { $viewtableclients = "no"; }
-if ( $viewtableconn eq "" )    { $viewtableconn    = "no"; }
 
 my @content = &getFarmBackendStatusCtl( $farmname );
 
@@ -50,7 +42,6 @@ my $activebackends     = 0;
 my $activeservbackends = 0;
 my $totalsessions      = 0;
 
-#my $activesessions = 0;
 foreach ( @backends )
 {
 	my @backends_data = split ( "\t", $_ );
@@ -63,7 +54,6 @@ foreach ( @backends )
 		}
 	}
 }
-
 ##
 &refreshstats();
 print "<br>";
@@ -71,8 +61,6 @@ my @back_header = split ( "\t", @backends[0] );
 print
   "<div class=\"box-header\">Real servers status <font size=1>&nbsp;&nbsp;&nbsp; $activeservbackends servers, $activebackends current</font>";
 
-#print "<div class=\"box-header\">";
-# &refreshstats();
 print "</div>\n";
 print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 print "<thead>\n";
@@ -85,7 +73,6 @@ foreach ( @backends )
 {
 	my @backends_data = split ( "\t", $_ );
 
-	#$activesessions = $activesessions+$backends_data[6];
 	if ( @backends_data[1] ne "0\.0\.0\.0" && @backends_data[0] =~ /^[0-9]/ )
 	{
 		print "<tr>";

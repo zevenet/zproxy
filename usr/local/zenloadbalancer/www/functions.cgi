@@ -582,9 +582,9 @@ sub createmenuif($if, $id, $configured, $state)
 	my @interfaces = $s->if_list;
 
 	( $if, $id, $configured, $state ) = @_;
-	$clrip = &clrip();
+	$clrip = &getClusterRealIp();
 	$guiip = &GUIip();
-	$clvip = &clvip();
+	$clvip = &getClusterVirtualIp();
 
 	print "<td>";
 	$ip     = $s->if_addr( $if );
@@ -758,6 +758,51 @@ sub logfile($string)
 	print FO
 	  "$date - $ENV{'SERVER_NAME'} - $ENV{'REMOTE_ADDR'} - $ENV{'REMOTE_USER'} - $string\n";
 	close FO;
+}
+
+sub array2string
+{
+	my @array = @_;
+
+	return "( " . join ( ", ", @array ) . " )";
+}
+
+sub array2stringCol
+{
+	my @array = @_;
+
+	my $lf = "<br>";
+
+	#my $lf = "\n";
+	return "( $lf" . join ( ", $lf", @array ) . "$lf )";
+}
+
+{    # cache html output scope
+	use feature "state";
+	state @cache;
+
+	sub cache_print
+	{
+		push @cache, @_;
+	}
+
+	sub cache_flush
+	{
+		print @cache and @cache = ();
+	}
+
+}    # end of cache html output scope
+
+sub timer
+{
+	my ( $reference_time, $message ) = @_;
+
+	use Time::HiRes;
+	my $timed = Time::HiRes::gettimeofday() - $reference_time;
+
+	$message = "" if undef ( $message );
+
+	printf "<br>ExecTime:%2.3f:%s<br>", $timed, $message;
 }
 
 #
