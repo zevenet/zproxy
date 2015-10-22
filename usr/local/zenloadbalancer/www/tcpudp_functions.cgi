@@ -21,236 +21,295 @@
 #
 ###############################################################################
 
-#
-sub setTcpUdpFarmBlacklistTime($fbltime,$fname,$type,$ffile)
+#asign a port for manage a pen Farm
+sub setFarmPort()
 {
-	my ( $fbltime, $fname, $type, $ffile ) = @_;
+	#down limit
+	my $min = "10000";
 
-	my $output = -1;
+	#up limit
+	my $max = "20000";
 
-	&logfile( "setting 'Blacklist time $fbltime' for $fname farm $type" );
-	my $fport       = &getFarmPort( $fname );
-	my $fmaxservers = &getFarmMaxServers( $fname );
-	&logfile( "running '$pen_ctl 127.0.0.1:$fport blacklist $fbltime'" );
-	my @run = `$pen_ctl 127.0.0.1:$fport blacklist $fbltime 2> /dev/null`;
+	my $lock = "true";
+	do
+	{
+		$random_port = int ( rand ( $max - $min ) ) + $min;
+		use IO::Socket;
+		my $host = "127.0.0.1";
+		my $socket = new IO::Socket::INET(
+										   PeerAddr => $host,
+										   PeerPort => $random_port,
+										   Proto    => 'tcp'
+		);
+		if ( $socket )
+		{
+			close ( $socket );
+		}
+		else
+		{
+			$lock = "false";
+		}
+	} while ( $lock eq "true" );
+
+	return $random_port;
+}
+
+#
+sub setTcpUdpFarmBlacklistTime($blacklist_time,$farm_name)
+{
+	my ( $blacklist_time, $farm_name ) = @_;
+
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+
+	&logfile(
+			"setting 'Blacklist time $blacklist_time' for $farm_name farm $farm_type" );
+
+	my $farm_port   = &getFarmPort( $farm_name );
+	my $fmaxservers = &getFarmMaxServers( $farm_name );
+
+	my $pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port blacklist $blacklist_time";
+	&logfile( "running '$pen_ctl_command'" );
+	my @run = `$pen_ctl_command 2> /dev/null`;
 	$output = $?;
-	&logfile( "running '$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile''" );
-	my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
+
+	my $pen_write_config_command =
+	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'";
+	&logfile( "running '$pen_write_config_command'" );
+	my @run = `$pen_write_config_command`;
 	$output = $? && $output;
-	&setFarmMaxServers( $fmaxservers, $fname );
+
+	&setFarmMaxServers( $fmaxservers, $farm_name );
 
 	return $output;
 }
 
 #
-sub getTcpUdpFarmBlacklistTime($fname)
+sub getTcpUdpFarmBlacklistTime($farm_name)
 {
-	my ( $fname ) = @_;
-	my $output = -1;
+	my ( $farm_name ) = @_;
+	my $blacklist_time = -1;
 
-	my $fport = &getFarmPort( $fname );
-	&logfile( "running '$pen_ctl 127.0.0.1:$fport blacklist' for $fname farm" );
-	$output = `$pen_ctl 127.0.0.1:$fport blacklist 2> /dev/null`;
+	my $farm_port = &getFarmPort( $farm_name );
 
-	return $output;
+	my $pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port blacklist";
+	&logfile( "running '$pen_ctl_command' for $farm_name farm" );
+	$blacklist_time = `$pen_ctl_command 2> /dev/null`;
+
+	return $blacklist_time;
 }
 
 #asign a timeout value to a farm
-sub setTcpUdpFarmTimeout($timeout,$fname)
+sub setTcpUdpFarmTimeout($timeout,$farm_name)
 {
-	my ( $timeout, $fname ) = @_;
+	my ( $timeout, $farm_name ) = @_;
 
 	my $output      = -1;
-	my $fport       = &getFarmPort( $fname );
-	my $fmaxservers = &getFarmMaxServers( $fname );
+	my $farm_port   = &getFarmPort( $farm_name );
+	my $fmaxservers = &getFarmMaxServers( $farm_name );
 
-	&logfile(
-		 "running '$pen_ctl 127.0.0.1:$fport timeout $timeout' for $fname farm $type" );
-
-	my @run = `$pen_ctl 127.0.0.1:$fport timeout $timeout 2> /dev/null`;
+	my $pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port timeout $timeout";
+	&logfile( "running '$pen_ctl_command' for $farm_name farm $farm_type" );
+	my @run = `$pen_ctl_command 2> /dev/null`;
 	$output = $?;
 
+	my $pen_write_config_command =
+	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'";
 	&logfile(
-		"running '$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'' for $fname farm $type"
-	);
-
-	my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
+			  "running '$pen_write_config_command' for $farm_name farm $farm_type" );
+	my @run = `$pen_write_config_command`;
 	$output = $? && $output;
-	&setFarmMaxServers( $fmaxservers, $fname );
+
+	&setFarmMaxServers( $fmaxservers, $farm_name );
 
 	return $output;
 }
 
 #
-sub getTcpUdpFarmTimeout($fname)
+sub getTcpUdpFarmTimeout($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $output = -1;
-	my $fport  = &getFarmPort( $fname );
+	my $output    = -1;
+	my $farm_port = &getFarmPort( $farm_name );
 
-	$output = `$pen_ctl 127.0.0.1:$fport timeout 2> /dev/null`;
-	&logfile( "running '$pen_ctl 127.0.0.1:$fport timeout' for $fname farm $type" );
+	$pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port timeout";
+	$output          = `$pen_ctl_command 2> /dev/null`;
+	&logfile( "running '$pen_ctl_command' for $farm_name farm $farm_type" );
 
 	return $output;
 }
 
 # set the lb algorithm to a farm
-sub setTcpUdpFarmAlgorithm($alg,$fname)
+sub setTcpUdpFarmAlgorithm($algorithm,$farm_name)
 {
-	my ( $alg, $fname ) = @_;
+	my ( $algorithm, $farm_name ) = @_;
 
 	my $output      = -1;
-	my $fport       = &getFarmPort( $fname );
-	my $fmaxservers = &getFarmMaxServers( $fname );
-	my @run         = `$pen_ctl 127.0.0.1:$fport no hash 2> /dev/null`;
-	my @run         = `$pen_ctl 127.0.0.1:$fport no prio 2> /dev/null`;
-	my @run         = `$pen_ctl 127.0.0.1:$fport no weight 2> /dev/null`;
+	my $farm_port   = &getFarmPort( $farm_name );
+	my $fmaxservers = &getFarmMaxServers( $farm_name );
+	my @run         = `$pen_ctl 127.0.0.1:$farm_port no hash 2> /dev/null`;
+	my @run         = `$pen_ctl 127.0.0.1:$farm_port no prio 2> /dev/null`;
+	my @run         = `$pen_ctl 127.0.0.1:$farm_port no weight 2> /dev/null`;
 	$output = $?;
-	if ( $alg ne "roundrobin" )
+
+	if ( $algorithm ne "roundrobin" )
 	{
-		&logfile( "running '$pen_ctl 127.0.0.1:$fport $alg'" );
-		my @run = `$pen_ctl 127.0.0.1:$fport $alg 2> /dev/null`;
+		my $pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port $algorithm";
+		&logfile( "running '$pen_ctl_command'" );
+		my @run = `$pen_ctl_command 2> /dev/null`;
 		$output = $?;
 	}
-	my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
-	&setFarmMaxServers( $fmaxservers, $fname );
+	my @run = `$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'`;
+	&setFarmMaxServers( $fmaxservers, $farm_name );
 
 	return $output;
 }
 
 #
-sub getTcpUdpFarmAlgorithm($ffile)
+sub getTcpUdpFarmAlgorithm($farm_name)
 {
-	my ( $ffile ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $flb = "roundrobin";
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $algorithm     = "roundrobin";
 
 	use File::Grep qw( fgrep fmap fdo );
-	if ( fgrep { /^roundrobin/ } "$configdir/$ffile" )
+	if ( fgrep { /^roundrobin/ } "$configdir/$farm_filename" )
 	{
-		$flb = "roundrobin";
+		$algorithm = "roundrobin";
 	}
-	if ( fgrep { /^hash/ } "$configdir/$ffile" )
+	if ( fgrep { /^hash/ } "$configdir/$farm_filename" )
 	{
-		$flb = "hash";
+		$algorithm = "hash";
 	}
-	if ( fgrep { /^weight/ } "$configdir/$ffile" )
+	if ( fgrep { /^weight/ } "$configdir/$farm_filename" )
 	{
-		$flb = "weight";
+		$algorithm = "weight";
 	}
-	if ( fgrep { /^prio/ } "$configdir/$ffile" )
+	if ( fgrep { /^prio/ } "$configdir/$farm_filename" )
 	{
-		$flb = "prio";
+		$algorithm = "prio";
 	}
 
-	return $flb;
+	return $algorithm;
 }
 
 # set client persistence to a farm
-sub setTcpUdpFarmPersistence($persistence,$fname,$type,$ffile)
+sub setTcpUdpFarmPersistence($persistence,$farm_name)
 {
-	my ( $persistence, $fname, $type ) = @_;
+	my ( $persistence, $farm_name ) = @_;
 
-	my $output = -1;
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $farm_port     = &getFarmPort( $farm_name );
+	my $fmaxservers   = &getFarmMaxServers( $farm_name );
+	my $output        = -1;
 
-	&logfile( "setting 'Persistence $persistence' for $fname farm $type" );
-	my $fport       = &getFarmPort( $fname );
-	my $fmaxservers = &getFarmMaxServers( $fname );
+	&logfile( "setting 'Persistence $persistence' for $farm_name farm $farm_type" );
+
 	if ( $persistence eq "true" )
 	{
 		&logfile(
-				"running '$pen_ctl 127.0.0.1:$fport no roundrobin' for $fname farm $type" );
-		my @run = `$pen_ctl 127.0.0.1:$fport no roundrobin 2> /dev/null`;
+			"running '$pen_ctl 127.0.0.1:$farm_port no roundrobin' for $farm_name farm $farm_type"
+		);
+		my @run = `$pen_ctl 127.0.0.1:$farm_port no roundrobin 2> /dev/null`;
 		$output = $?;
 	}
 	else
 	{
 		&logfile(
-				  "running '$pen_ctl 127.0.0.1:$fport roundrobin' for $fname farm $type" );
-		my @run = `$pen_ctl 127.0.0.1:$fport roundrobin 2> /dev/null`;
+			"running '$pen_ctl 127.0.0.1:$farm_port roundrobin' for $farm_name farm $farm_type"
+		);
+		my @run = `$pen_ctl 127.0.0.1:$farm_port roundrobin 2> /dev/null`;
 		$output = $?;
 	}
-	my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
-	&setFarmMaxServers( $fmaxservers, $fname );
+	my @run = `$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'`;
+	&setFarmMaxServers( $fmaxservers, $farm_name );
 
 	return $output;
 }
 
 #
-sub getTcpUdpFarmPersistence($ffile)
+sub getTcpUdpFarmPersistence($farm_name)
 {
-	my ( $ffile ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $output = "false";
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $persistence   = "false";
 
 	use File::Grep qw( fgrep fmap fdo );
-	if ( fgrep { /^no\ roundrobin/ } "$configdir/$ffile" )
+	if ( fgrep { /^no\ roundrobin/ } "$configdir/$farm_filename" )
 	{
-		$output = "true";
+		$persistence = "true";
 	}
 
-	return $output;
+	return $persistence;
 }
 
 # set the max clients of a farm
-sub setTcpUdpFarmMaxClientTime($maxcl,$track,$fname,$ffile)
+sub setTcpUdpFarmMaxClientTime($max_client_time,$track,$farm_name)
 {
-	my ( $maxcl, $track, $fname, $ffile ) = @_;
+	my ( $max_client_time, $track, $farm_name ) = @_;
 
-	my $output      = -1;
-	my $fport       = &getFarmPort( $fname );
-	my $fmaxservers = &getFarmMaxServers( $fname );
-	my @run         = `$pen_ctl 127.0.0.1:$fport tracking $track 2> /dev/null`;
-	my @run         = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $farm_port     = &getFarmPort( $farm_name );
+	my $fmaxservers   = &getFarmMaxServers( $farm_name );
+	my $output        = -1;
+	my @run = `$pen_ctl 127.0.0.1:$farm_port tracking $track 2> /dev/null`;
+	my @run = `$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'`;
 
 	use Tie::File;
-	tie @array, 'Tie::File', "$configdir/$ffile";
+	tie @array, 'Tie::File', "$configdir/$farm_filename";
 
 	for ( @array )
 	{
 		if ( $_ =~ "# pen" )
 		{
-			s/-c [0-9]*/-c $maxcl/g;
+			s/-c [0-9]*/-c $max_client_time/g;
 			$output = $?;
 		}
 	}
 	untie @array;
-	&setFarmMaxServers( $fmaxservers, $fname );
+	&setFarmMaxServers( $fmaxservers, $farm_name );
 
 	return $output;
 }
 
 #
-sub getTcpUdpFarmMaxClientTime($fname)
+sub getTcpUdpFarmMaxClientTime($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my @output;
-	push ( @output, "" );
-	push ( @output, "" );
-	my $fport = &getFarmPort( $fname );
-	&logfile( "running '$pen_ctl 127.0.0.1:$fport clients_max' " );
-	@output[0] = `$pen_ctl 127.0.0.1:$fport clients_max 2> /dev/null`;
-	@output[1] = `$pen_ctl 127.0.01:$fport tracking 2> /dev/null`;
+	my @max_client_time;
+	push ( @max_client_time, "" );
+	push ( @max_client_time, "" );
+	my $farm_port = &getFarmPort( $farm_name );
 
-	return $output;
+	&logfile( "running '$pen_ctl 127.0.0.1:$farm_port clients_max' " );
+	@max_client_time[0] = `$pen_ctl 127.0.0.1:$farm_port clients_max 2> /dev/null`;
+	@max_client_time[1] = `$pen_ctl 127.0.01:$farm_port tracking 2> /dev/null`;
+
+	return @max_client_time;
 }
 
 # set the max conn of a farm
-sub setTcpUdpFarmMaxConn($maxc,$ffile)
+sub setTcpUdpFarmMaxConn($max_connections,$farm_name)
 {
-	my ( $maxc, $ffile ) = @_;
+	my ( $max_connections, $farm_name ) = @_;
 
-	my $output = -1;
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
 
 	use Tie::File;
-	tie @array, 'Tie::File', "$configdir/$ffile";
+	tie my @array, 'Tie::File', "$configdir/$farm_filename";
+
 	for ( @array )
 	{
 		if ( $_ =~ "# pen" )
 		{
-			s/-x [0-9]*/-x $maxc/g;
+			s/-x [0-9]*/-x $max_connections/g;
 			$output = $?;
 		}
 	}
@@ -261,19 +320,19 @@ sub setTcpUdpFarmMaxConn($maxc,$ffile)
 
 # Tcp/Udp only function
 # set the max servers of a farm
-sub setFarmMaxServers($maxs,$fname)
+sub setFarmMaxServers($maxs,$farm_name)
 {
-	my ( $maxs, $fname ) = @_;
+	my ( $maxs, $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
 
-	&logfile( "setting 'MaxServers $maxs' for $fname farm $type" );
-	if ( $type eq "tcp" || $type eq "udp" )
+	&logfile( "setting 'MaxServers $maxs' for $farm_name farm $farm_type" );
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
 		use Tie::File;
-		tie @array, 'Tie::File', "$configdir/$ffile";
+		tie @array, 'Tie::File', "$configdir/$farm_filename";
 		for ( @array )
 		{
 			if ( $_ =~ "# pen" )
@@ -297,73 +356,72 @@ sub setFarmMaxServers($maxs,$fname)
 }
 
 # Tcp/Udp only function
-sub getFarmMaxServers($fname)
+sub getFarmMaxServers($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		my $fport = &getFarmPort( $fname );
-		&logfile( "running '$pen_ctl 127.0.0.1:$fport servers' " );
-		my @out = `$pen_ctl 127.0.0.1:$fport servers 2> /dev/null`;
+		my $farm_port = &getFarmPort( $farm_name );
+		&logfile( "running '$pen_ctl 127.0.0.1:$farm_port servers' " );
+		my @out = `$pen_ctl 127.0.0.1:$farm_port servers 2> /dev/null`;
 		$output = @out;
 	}
 
-	#&logfile("getting 'MaxServers $output' for $fname farm $type");
 	return $output;
 }
 
 #
-sub getTcpUdpFarmServers($fname)
+sub getTcpUdpFarmServers($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
 	my @output;
-	my $fport = &getFarmPort( $fname );
+	my $farm_port = &getFarmPort( $farm_name );
 
-	&logfile( "running '$pen_ctl 127.0.0.1:$fport servers' " );
+	&logfile( "running '$pen_ctl 127.0.0.1:$farm_port servers' " );
 
-	@output = `$pen_ctl 127.0.0.1:$fport servers 2> /dev/null`;
+	@output = `$pen_ctl 127.0.0.1:$farm_port servers 2> /dev/null`;
 
 	return @output;
 }
 
 # Tcp/Udp only function
 # set xforwarder for feature for a farm
-sub setFarmXForwFor($isset,$fname)
+sub setFarmXForwFor($isset,$farm_name)
 {
-	my ( $isset, $fname ) = @_;
+	my ( $isset, $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
 
-	&logfile( "setting 'XForwFor $isset' for $fname farm $type" );
-	if ( $type eq "tcp" || $type eq "udp" )
+	&logfile( "setting 'XForwFor $isset' for $farm_name farm $farm_type" );
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		my $fport       = &getFarmPort( $fname );
-		my $fmaxservers = &getFarmMaxServers( $fname );
+		my $farm_port   = &getFarmPort( $farm_name );
+		my $fmaxservers = &getFarmMaxServers( $farm_name );
 		if ( $isset eq "true" )
 		{
-			&logfile( "running '$pen_ctl 127.0.0.1:$fport http'" );
-			my @run = `$pen_ctl 127.0.0.1:$fport http 2> /dev/null`;
+			&logfile( "running '$pen_ctl 127.0.0.1:$farm_port http'" );
+			my @run = `$pen_ctl 127.0.0.1:$farm_port http 2> /dev/null`;
 			$output = $?;
 		}
 		else
 		{
-			&logfile( "running '$pen_ctl 127.0.0.1:$fport no http'" );
-			my @run = `$pen_ctl 127.0.0.1:$fport no http 2> /dev/null`;
+			&logfile( "running '$pen_ctl 127.0.0.1:$farm_port no http'" );
+			my @run = `$pen_ctl 127.0.0.1:$farm_port no http 2> /dev/null`;
 			$output = $?;
 		}
 
 		if ( $output != -1 )
 		{
-			my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
-			&logfile( "configuration saved in $configdir/$ffile file" );
-			&setFarmMaxServers( $fmaxservers, $fname );
+			my @run = `$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'`;
+			&logfile( "configuration saved in $configdir/$farm_filename file" );
+			&setFarmMaxServers( $fmaxservers, $farm_name );
 		}
 	}
 
@@ -371,18 +429,18 @@ sub setFarmXForwFor($isset,$fname)
 }
 
 # Tcp/Udp only function
-sub getFarmXForwFor($fname)
+sub getFarmXForwFor($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
 		use Tie::File;
-		tie @array, 'Tie::File', "$configdir/$ffile";
+		tie @array, 'Tie::File', "$configdir/$farm_filename";
 		$output = "false";
 		if ( grep ( /^http/, @array ) )
 		{
@@ -391,59 +449,105 @@ sub getFarmXForwFor($fname)
 		untie @array;
 	}
 
-	#&logfile("getting 'XForwFor $output' for $fname farm $type");
 	return $output;
 }
 
 #
-sub getTcpUdpFarmGlobalStatus($fname)
+sub getTcpUdpFarmGlobalStatus($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
 	my @run;
-	my $port = &getFarmPort( $fname );
+	my $port = &getFarmPort( $farm_name );
 	@run = `$pen_ctl 127.0.0.1:$port status`;
 
 	return @run;
 }
 
 #
-sub getTcpFarmEstConns(@nets,@netstat,$fvip,$fvipp)
+sub getTcpUdpBackendEstConns($farm_name,$ip_backend,$port_backend,@netstat)
 {
-	my ( @nets, @netstat, $fvip, $fvipp ) = @_;
+	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
 
-	push (
-		   @nets,
-		   &getNetstatFilter(
-					   "tcp", "",
-					   "\.* ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*",
-					   "", @netstat
-		   )
-	);
+	my $farm_type = &getFarmType( $farm_name );
 
-	return @nets;
+	return
+	  &getNetstatFilter(
+		"$farm_type",
+		"",
+		"\.*ESTABLISHED src=\.* dst=$ip_backend sport=\.* dport=$port_backend \.*src=$ip_backend \.*",
+		"",
+		@netstat
+	  );
 }
 
 #
-sub getUdpFarmEstConns(@nets,@netstat,$fvip,$fvipp)
+sub getTcpFarmEstConns($farm_name,@netstat)
 {
-	my ( @nets, @netstat, $fvip, $fvipp ) = @_;
+	my ( $farm_name, @netstat ) = @_;
 
-	push (
-		   @nets,
-		   &getNetstatFilter(
-							  "udp", "",
-							  "\.* src=\.* dst=$fvip sport=\.* dport=$fvipp .*src=\.*",
-							  "", @netstat
-		   )
-	);
+	my $vip      = &getFarmVip( "vip",  $farm_name );
+	my $vip_port = &getFarmVip( "vipp", $farm_name );
 
-	return @nets;
+	return
+	  &getNetstatFilter( "tcp", "",
+			  "\.* ESTABLISHED src=\.* dst=$vip sport=\.* dport=$vip_port .*src=\.*",
+			  "", @netstat );
 }
 
-sub getTcpBackendSYNConns($ip_backend,$port_backend,@netstat)
+#
+sub getUdpFarmEstConns($farm_name, @netstat)
 {
-	my ( @nets, $ip_backend, $port_backend, @netstat ) = @_;
+	my ( $farm_name, @netstat ) = @_;
+
+	my $vip      = &getFarmVip( "vip",  $farm_name );
+	my $vip_port = &getFarmVip( "vipp", $farm_name );
+
+	return
+	  &getNetstatFilter( "udp", "",
+						 "\.* src=\.* dst=$vip sport=\.* dport=$vip_port .*src=\.*",
+						 "", @netstat );
+}
+
+#
+sub getTcpUdpBackendTWConns($farm_name,$ip_backend,$port_backend,@netstat)
+{
+	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
+
+	my $farm_type = &getFarmType( $farm_name );
+	my $vip = &getFarmVip( "vip", $farm_name );
+
+	return
+	  &getNetstatFilter( "$farm_type", "",
+		  "\.*TIME\_WAIT src=$vip dst=$ip_backend sport=\.* dport=$port_backend \.*",
+		  "", @netstat );
+}
+
+#
+sub getTcpFarmTWConns($farm_name,@netstat)
+{
+	my ( $farm_name, @netstat ) = @_;
+
+	my $vip      = &getFarmVip( "vip",  $farm_name );
+	my $vip_port = &getFarmVip( "vipp", $farm_name );
+
+	return
+	  &getNetstatFilter( "tcp", "",
+					"\.*\_WAIT src=\.* dst=$vip sport=\.* dport=$vip_port .*src=\.*",
+					"", @netstat );
+}
+
+#
+sub getUdpFarmTWConns($farm_name,@netstat)
+{
+	my ( $farm_name, @netstat ) = @_;
+
+	return &getNetstatFilter( "udp", "\.\*\_WAIT\.\*", $ninfo, "", @netstat );
+}
+
+sub getTcpBackendSYNConns($farm_name, $ip_backend, $port_backend, @netstat)
+{
+	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
 
 	return
 	  &getNetstatFilter( "tcp", "",
@@ -451,9 +555,9 @@ sub getTcpBackendSYNConns($ip_backend,$port_backend,@netstat)
 				"", @netstat );
 }
 
-sub getUdpBackendSYNConns($ip_backend,$port_backend,@netstat)
+sub getUdpBackendSYNConns($farm_name, $ip_backend, $port_backend, @netstat)
 {
-	my ( @nets, $ip_backend, $port_backend, @netstat ) = @_;
+	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
 
 	return
 	  &getNetstatFilter( "udp", "",
@@ -462,47 +566,63 @@ sub getUdpBackendSYNConns($ip_backend,$port_backend,@netstat)
 }
 
 #
-sub getTcpFarmSYNConns(@netstat,$fvip,$fvipp)
+sub getTcpFarmSYNConns($farm_name, @netstat)
 {
-	my ( @netstat, $fvip, $fvipp ) = @_;
-	my @nets = ();
+	my ( $farm_name, @netstat ) = @_;
 
-	push (
-		   @nets,
-		   &getNetstatFilter(
-						   "tcp", "",
-						   "\.*SYN\.* src=\.* dst=$fvip sport=\.* dport=$fvipp \.* src=\.*",
-						   "", @netstat
-		   )
-	);
+	my $vip      = &getFarmVip( "vip",  $farm_name );
+	my $vip_port = &getFarmVip( "vipp", $farm_name );
 
-	return @nets;
+	return
+	  &getNetstatFilter( "tcp", "",
+				  "\.*SYN\.* src=\.* dst=$vip sport=\.* dport=$vip_port \.* src=\.*",
+				  "", @netstat );
 }
 #
-sub getUdpFarmSYNConns(@netstat,$fvip,$fvipp)
+sub getUdpFarmSYNConns($farm_name, @netstat)
 {
-	my ( @netstat, $fvip, $fvipp ) = @_;
-	my @nets = ();
+	my ( $farm_name, @netstat ) = @_;
 
-	push (
-		   @nets,
-		   &getNetstatFilter(
-						   "udp", "",
-						   "\.* src=\.* dst=$fvip \.* dport=$fvipp \.*UNREPLIED\.* src=\.*",
-						   "", @netstat
-		   )
-	);
+	my $vip      = &getFarmVip( "vip",  $farm_name );
+	my $vip_port = &getFarmVip( "vipp", $farm_name );
 
-	return @nets;
+	return
+	  &getNetstatFilter( "udp", "",
+				  "\.* src=\.* dst=$vip \.* dport=$vip_port \.*UNREPLIED\.* src=\.*",
+				  "", @netstat );
+}
+
+# Returns farm status
+sub getTcpUdpFarmBootStatus($farm_name)
+{
+	my ( $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = "down";
+
+	open FO, "<$configdir/$farm_filename";
+	while ( $line = <FO> )
+	{
+		$lastline = $line;
+	}
+	close FO;
+
+	if ( $lastline !~ /^#down/ )
+	{
+		$output = "up";
+	}
+
+	return $output;
 }
 
 # Start Farm rutine
-sub _runTcpUdpFarmStart($fname)
+sub _runTcpUdpFarmStart($farm_name)
 {
-	my ( $fname ) = @_;
-	my $status = -1;
+	my ( $farm_name ) = @_;
 
-	my $run_farm = &getFarmCommand( $fname );
+	my $status   = -1;
+	my $run_farm = &getFarmCommand( $farm_name );
+
 	&logfile( "running $pen_bin $run_farm" );
 	zsystem( "$pen_bin $run_farm" );
 	$status = $?;
@@ -511,11 +631,11 @@ sub _runTcpUdpFarmStart($fname)
 }
 
 # Stop Farm rutine
-sub _runTcpUdpFarmStop($fname)
+sub _runTcpUdpFarmStop($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $pid = &getFarmPid( $fname );
+	my $pid = &getFarmPid( $farm_name );
 
 	&logfile( "running 'kill 15, $pid'" );
 	kill 15, $pid;
@@ -524,28 +644,29 @@ sub _runTcpUdpFarmStop($fname)
 }
 
 #
-sub runTcpFarmCreate($fvip,$fvipp,$fname)
+sub runTcpFarmCreate($vip,$vip_port,$farm_name)
 {
-	my ( $fvip, $fvipp, $fname ) = @_;
+	my ( $vip, $vip_port, $farm_name ) = @_;
 
-	my $output = -1;
-	my $fport  = &setFarmPort();
+	my $output    = -1;
+	my $farm_port = &setFarmPort();
 
 	# execute pen command
 	my $pen_command =
-	  "$pen_bin $fvip:$fvipp -c 2049 -x 257 -S 10 -C 127.0.0.1:$fport";
+	  "$pen_bin $vip:$vip_port -c 2049 -x 257 -S 10 -C 127.0.0.1:$farm_port";
 	&logfile( "running '$pen_command'" );
 	my @run = `$pen_command`;
 	$output = $?;
 
 	# execute pen_ctl command
-	my $pen_ctl_command = "$pen_ctl 127.0.0.1:$fport acl 9 deny 0.0.0.0 0.0.0.0";
+	my $pen_ctl_command =
+	  "$pen_ctl 127.0.0.1:$farm_port acl 9 deny 0.0.0.0 0.0.0.0";
 	&logfile( "running '$pen_ctl_command" );
 	my @run = `$pen_ctl_command`;
 
 	# write configuration file
 	$pen_ctl_command =
-	  "$pen_ctl 127.0.0.1:$fport write '$configdir/$fname\_pen.cfg'";
+	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_name\_pen.cfg'";
 	&logfile( "running $pen_ctl_command" );
 	my @run = `$pen_ctl_command`;
 
@@ -553,28 +674,29 @@ sub runTcpFarmCreate($fvip,$fvipp,$fname)
 }
 
 #
-sub runUdpFarmCreate($fvip,$fvipp,$fname)
+sub runUdpFarmCreate($vip,$vip_port,$farm_name)
 {
-	my ( $fvip, $fvipp, $fname ) = @_;
+	my ( $vip, $vip_port, $farm_name ) = @_;
 
-	my $output = -1;
-	my $fport  = &setFarmPort();
+	my $output    = -1;
+	my $farm_port = &setFarmPort();
 
 	# execute pen command
 	my $pen_command =
-	  "$pen_bin $fvip:$fvipp -U -t 1 -b 3 -c 2049 -x 257 -S 10 -C 127.0.0.1:$fport";
+	  "$pen_bin $vip:$vip_port -U -t 1 -b 3 -c 2049 -x 257 -S 10 -C 127.0.0.1:$farm_port";
 	&logfile( "running '$pen_command'" );
 	my @run = `$pen_command`;
 	$output = $?;
 
 	# execute pen_ctl command
-	my $pen_ctl_command = "$pen_ctl 127.0.0.1:$fport acl 9 deny 0.0.0.0 0.0.0.0";
+	my $pen_ctl_command =
+	  "$pen_ctl 127.0.0.1:$farm_port acl 9 deny 0.0.0.0 0.0.0.0";
 	&logfile( "running '$pen_ctl_command" );
 	my @run = `$pen_ctl_command`;
 
 	# write configuration file
 	$pen_ctl_command =
-	  "$pen_ctl 127.0.0.1:$fport write '$configdir/$fname\_pen\_udp.cfg'";
+	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_name\_pen\_udp.cfg'";
 	&logfile( "running $pen_ctl_command" );
 	my @run = `$pen_ctl_command`;
 
@@ -582,15 +704,15 @@ sub runUdpFarmCreate($fvip,$fvipp,$fname)
 }
 
 # Returns Farm blacklist
-sub getFarmBlacklist($fname)
+sub getFarmBlacklist($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $file   = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $file      = &getFarmFile( $farm_name );
+	my $output    = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
 		open FI, "$configdir/$file";
 		my $exit = "false";
@@ -600,7 +722,7 @@ sub getFarmBlacklist($fname)
 			{
 				$exit = "true";
 				my @line_a = split ( "\ ", $line );
-				if ( $type eq "tcp" )
+				if ( $farm_type eq "tcp" )
 				{
 					$admin_ip = @line_a[11];
 				}
@@ -620,21 +742,25 @@ sub getFarmBlacklist($fname)
 }
 
 # Returns farm max connections
-sub getTcpUdpFarmMaxConn($file,$type)
+sub getTcpUdpFarmMaxConn( $farm_name )
 {
-	my ( $file, $type ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $output = -1;
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $farm_type     = &getFarmType( $farm_name );
+	my $output        = -1;
+	my $exit          = "false";
+	my $admin_ip;
 
-	open FI, "$configdir/$file";
-	my $exit = "false";
-	while ( $line = <FI> || $exit eq "false" )
+	open FI, "$configdir/$farm_filename";
+	while ( my $line = <FI> || $exit eq "false" )
 	{
 		if ( $line =~ /^# pen/ )
 		{
 			$exit = "true";
 			my @line_a = split ( "\ ", $line );
-			if ( $type eq "tcp" )
+
+			if ( $farm_type eq "tcp" )
 			{
 				$admin_ip = @line_a[11];
 			}
@@ -642,7 +768,9 @@ sub getTcpUdpFarmMaxConn($file,$type)
 			{
 				$admin_ip = @line_a[12];
 			}
+
 			my @conn_max = `$pen_ctl $admin_ip conn_max 2> /dev/null`;
+
 			if ( @conn_max =~ /^[1-9].*/ )
 			{
 				$output = "@conn_max";
@@ -659,21 +787,24 @@ sub getTcpUdpFarmMaxConn($file,$type)
 }
 
 # Returns farm listen port
-sub getTcpUdpFarmPort($file)
+sub getTcpUdpFarmPort($farm_name)
 {
-	my ( $file ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $output = -1;
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $farm_type     = &getFarmType( $farm_name );
+	my $output        = -1;
+	my $exit          = "false";
+	my $port_manage;
 
-	open FI, "$configdir/$file";
-	my $exit = "false";
+	open FI, "$configdir/$farm_filename";
 	while ( my $line = <FI> || $exit eq "false" )
 	{
 		if ( $line =~ /^# pen/ )
 		{
 			$exit = "true";
 			my @line_a = split ( "\ ", $line );
-			if ( $type eq "tcp" )
+			if ( $farm_type eq "tcp" )
 			{
 				$port_manage = @line_a[11];
 			}
@@ -692,15 +823,15 @@ sub getTcpUdpFarmPort($file)
 
 # Only used by tcpudp_func
 # Returns farm command
-sub getFarmCommand($fname)
+sub getFarmCommand($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $file   = &getFarmFile( $fname );
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $file      = &getFarmFile( $farm_name );
+	my $output    = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
 		open FI, "$configdir/$file";
 		my $exit = "false";
@@ -720,23 +851,24 @@ sub getFarmCommand($fname)
 }
 
 # Returns farm PID
-sub getTcpUdpFarmPid($file)
+sub getTcpUdpFarmPid($farm_name)
 {
-	my ( $file ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $output = -1;
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $exit          = "false";
 
-	open FI, "$configdir/$file";
-	my $exit = "false";
+	open FI, "$configdir/$farm_filename";
 	while ( my $line = <FI> || $exit eq "false" )
 	{
 		if ( $line =~ /^# pen/ )
 		{
 			$exit = "true";
-			my @line_a = split ( "\ ", $line );
-			@ip_and_port = split ( ":", @line_a[-2] );
-			$admin_ip = "@ip_and_port[0]:@ip_and_port[1]";
-			my @pid = `$pen_ctl $admin_ip pid 2> /dev/null`;
+			my @line_a      = split ( "\ ", $line );
+			my @ip_and_port = split ( ":",  @line_a[-2] );
+			my $admin_ip    = "@ip_and_port[0]:@ip_and_port[1]";
+			my @pid         = `$pen_ctl $admin_ip pid 2> /dev/null`;
 
 			if ( @pid =~ /^[1-9].*/ )
 			{
@@ -754,17 +886,18 @@ sub getTcpUdpFarmPid($file)
 }
 
 # Returns farm vip
-sub getTcpUdpFarmVip($info,$file)
+sub getTcpUdpFarmVip($info,$farm_name)
 {
-	my ( $info, $file ) = @_;
+	my ( $info, $farm_name ) = @_;
 
-	my $output = -1;
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $exit          = "false";
 
-	open FI, "$configdir/$file";
-	my $exit = "false";
+	open FI, "$configdir/$farm_filename";
+
 	while ( my $line = <FI> || $exit eq "false" )
 	{
-
 		# find line with pen command
 		if ( $line =~ /^# pen/ )
 		{
@@ -774,6 +907,7 @@ sub getTcpUdpFarmVip($info,$file)
 			# use last argument
 			$vip_port = @line_a[-1];
 			my @vipp = split ( ":", $vip_port );
+
 			if ( $info eq "vip" )   { $output = @vipp[0]; }
 			if ( $info eq "vipp" )  { $output = @vipp[1]; }
 			if ( $info eq "vipps" ) { $output = "$vip_port"; }
@@ -785,37 +919,39 @@ sub getTcpUdpFarmVip($info,$file)
 }
 
 # Set farm virtual IP and virtual PORT
-sub setTcpUdpFarmVirtualConf($vip,$vipp,$fname,$fconf)
+sub setTcpUdpFarmVirtualConf($vip,$vip_port,$farm_name)
 {
-	my ( $vip, $vipp, $fname, $fconf ) = @_;
+	my ( $vip, $vip_port, $farm_name ) = @_;
 
-	my $stat = -1;
-	my $vips = &getFarmVip( "vipps", $fname );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $vips          = &getFarmVip( "vipps", $farm_name );
+	my $stat          = -1;
 
 	use Tie::File;
-	tie @filelines, 'Tie::File', "$configdir\/$fconf";
+	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
-	for ( @filelines )
+	for ( @configfile )
 	{
 		if ( $_ =~ "# pen" )
 		{
-			s/$vips/$vip:$vipp/g;
+			s/$vips/$vip:$vip_port/g;
 			$stat = $?;
 		}
 	}
-	untie @filelines;
+	untie @configfile;
 
 	return $stat;
 }
 
 #
-sub setTcpUdpFarmServer($ids,$rip,$port,$max,$weight,$priority,$fname,$file)
+sub setTcpUdpFarmServer($ids,$rip,$port,$max,$weight,$priority,$farm_name)
 {
-	my ( $ids, $rip, $port, $max, $weight, $priority, $fname, $file ) = @_;
+	my ( $ids, $rip, $port, $max, $weight, $priority, $farm_name, ) = @_;
 
-	my $output      = -1;
-	my $fport       = &getFarmPort( $fname );
-	my $fmaxservers = &getFarmMaxServers( $fname );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $fmaxservers   = &getFarmMaxServers( $farm_name );
+	my $farm_port     = &getFarmPort( $farm_name );
+	my $output        = -1;
 
 	if ( $max ne "" )      { $max      = "max $max"; }
 	if ( $weight ne "" )   { $weight   = "weight $weight"; }
@@ -823,73 +959,74 @@ sub setTcpUdpFarmServer($ids,$rip,$port,$max,$weight,$priority,$fname,$file)
 
 	# pen setup server
 	my $pen_ctl_command =
-	  "$pen_ctl 127.0.0.1:$fport server $ids address $rip port $port $max $weight $priority";
-	&logfile( "running '$pen_ctl_command' in $fname farm" );
+	  "$pen_ctl 127.0.0.1:$farm_port server $ids address $rip port $port $max $weight $priority";
+
+	&logfile( "running '$pen_ctl_command' in $farm_name farm" );
 	my @run = `$pen_ctl_command`;
 	$output = $?;
 
 	# pen write configuration file
 	my $pen_write_config_command =
-	  "$pen_ctl 127.0.0.1:$fport write '$configdir/$file'";
+	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'";
+
 	&logfile( "running '$pen_write_config_command'" );
 	my @run = `$pen_write_config_command`;
 
-	&setFarmMaxServers( $fmaxservers, $fname );
+	&setFarmMaxServers( $fmaxservers, $farm_name );
 
 	return $output;
 }
 
 #
-sub runTcpUdpFarmServerDelete($ids,$fname,$ffile)
+sub runTcpUdpFarmServerDelete($ids,$farm_name)
 {
-	my ( $ids, $fname, $ffile ) = @_;
+	my ( $ids, $farm_name ) = @_;
 
-	my $output = -1;
-
-	my $fport       = &getFarmPort( $fname );
-	my $fmaxservers = &getFarmMaxServers( $fname );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $fmaxservers   = &getFarmMaxServers( $farm_name );
+	my $farm_port     = &getFarmPort( $farm_name );
+	my $output        = -1;
 
 	my $pen_ctl_command =
-	  "$pen_ctl 127.0.0.1:$fport server $ids address 0 port 0 max 0 weight 0 prio 0' deleting server $ids in $fname farm";
+	  "$pen_ctl 127.0.0.1:$farm_port server $ids address 0 port 0 max 0 weight 0 prio 0' deleting server $ids in $farm_name farm";
 
-	&logfile( "running '$pen_ctl_command' deleting server $ids in $fname farm" );
+	&logfile(
+			  "running '$pen_ctl_command' deleting server $ids in $farm_name farm" );
 	my @run = `$pen_ctl_command`;
 	$output = $?;
 
 	my $pen_write_config_command =
-	  "$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'";
+	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'";
+
 	&logfile( "running '$pen_write_config_command'" );
 	my @run = `$pen_write_config_command`;
 
-	&setFarmMaxServers( $fmaxservers, $fname );
+	&setFarmMaxServers( $fmaxservers, $farm_name );
 
 	return $output;
 }
 
 #
-sub getTcpUdpFarmBackendStatusCtl($fname)
+sub getTcpUdpFarmBackendStatusCtl($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my @output = -1;
+	my $mport = &getFarmPort( $farm_name );
 
-	my $mport = &getFarmPort( $fname );
-	@output = `$pen_ctl 127.0.0.1:$mport status`;
-
-	return @output;
+	return `$pen_ctl 127.0.0.1:$mport status`;
 }
 
 #function that return the status information of a farm:
 #ip, port, backendstatus, weight, priority, clients
-sub getTcpUdpFarmBackendsStatus($fname,@content)
+sub getTcpUdpFarmBackendsStatus($farm_name,@content)
 {
-	my ( $fname, @content ) = @_;
+	my ( $farm_name, @content ) = @_;
 
-	my @output = -1;
+	my @backends_data = -1;
 
 	if ( !@content )
 	{
-		@content = &getFarmBackendStatusCtl( $fname );
+		@content = &getFarmBackendStatusCtl( $farm_name );
 	}
 
 	foreach ( @content )
@@ -931,7 +1068,7 @@ sub getTcpUdpFarmBackendsStatus($fname,@content)
 			@content[$i + 2] =~ s/\<td\>//;
 			@content[$i + 2] =~ s/\<\/td\>//;
 			@content[$i + 2] =~ s/\n//;
-			my $status_maintenance = &getFarmBackendMaintenance( $fname, $id_backend );
+			my $status_maintenance = &getFarmBackendMaintenance( $farm_name, $id_backend );
 			my $status_backend = @content[$i + 2];
 			if ( $status_maintenance eq "0" )
 			{
@@ -964,7 +1101,7 @@ sub getTcpUdpFarmBackendsStatus($fname,@content)
 			#sessions
 			if ( $ip_backend ne "0\.0\.0\.0" )
 			{
-				my $clients = &getFarmBackendsClients( $id_backend, @content, $fname );
+				my $clients = &getFarmBackendsClients( $id_backend, @content, $farm_name );
 				if ( $clients != -1 )
 				{
 					$line = $line . "\t" . $clients;
@@ -976,34 +1113,34 @@ sub getTcpUdpFarmBackendsStatus($fname,@content)
 			}
 
 			#end
-			push ( @b_data, $line );
+			push ( @backends_data, $line );
 		}
 		if ( $_ =~ /\/table/ )
 		{
 			last;
 		}
 	}
-	@output = @b_data;
 
-	return @output;
+	return @backends_data;
 }
 
 #function that return the status information of a farm:
-sub getTcpUdpFarmBackendsClients($idserver,@content,$fname)
+sub getTcpUdpFarmBackendsClients($idserver,@content,$farm_name)
 {
-	my ( $idserver, @content, $fname ) = @_;
+	my ( $idserver, @content, $farm_name ) = @_;
 
-	my $output = -1;
+	my $numclients = 0;
 
 	if ( !@content )
 	{
-		@content = &getFarmBackendStatusCtl( $fname );
+		@content = &getFarmBackendStatusCtl( $farm_name );
 	}
+
 	if ( !@sessions )
 	{
-		@sessions = &getFarmBackendsClientsList( $fname, @content );
+		@sessions = &getFarmBackendsClientsList( $farm_name, @content );
 	}
-	my $numclients = 0;
+
 	foreach ( @sessions )
 	{
 		my @ses_client = split ( "\t", $_ );
@@ -1014,45 +1151,43 @@ sub getTcpUdpFarmBackendsClients($idserver,@content,$fname)
 			$numclients++;
 		}
 	}
-	$output = $numclients;
 
-	return $output;
+	return $numclients;
 }
 
 #function that return the status information of a farm:
-sub getFarmBackendsClientsList($fname,@content)
+sub getTcpUdpFarmBackendsClientsList($farm_name,@content)
 {
-	my ( $fname, @content ) = @_;
+	my ( $farm_name, @content ) = @_;
 
-	my @output = -1;
+	my @client_list;
+	my $ac_header = 0;
+	my $i         = 0;
 
 	if ( !@content )
 	{
-		@content = &getFarmBackendStatusCtl( $fname );
+		@content = &getFarmBackendStatusCtl( $farm_name );
 	}
-
-	my $line;
-	my @sess;
-	my @s_data;
-	my $ac_header = 0;
-	my $tr        = 0;
-	my $i         = -1;
 
 	foreach ( @content )
 	{
-		$i++;
+		my $line;
+		my $tr = 0;
+
 		if ( $_ =~ /Active clients/ )
 		{
 			$ac_header = 1;
 			@value_session = split ( "\<\/h2\>", $_ );
 			@value_session[1] =~ s/\<p\>\<table bgcolor\=\"#c0c0c0\">//;
 			$line = @value_session[1];
-			push ( @s_data, "Client sessions status\t$line" );
+			push ( @client_list, "Client sessions status\t$line" );
 		}
+
 		if ( $ac_header == 1 && $_ =~ /\<tr\>/ )
 		{
 			$tr++;
 		}
+
 		if ( $tr >= 2 && $_ =~ /\<tr\>/ )
 		{
 			@content[$i + 1] =~ s/\<td\>//;
@@ -1097,31 +1232,32 @@ sub getFarmBackendsClientsList($fname,@content)
 
 			#
 			$line = $line . "\t" . @content[$i + 7];
-			push ( @s_data, $line );
+			push ( @client_list, $line );
 		}
+
 		if ( $ac_header == 1 && $_ =~ /\<\/table\>/ )
 		{
 			last;
 		}
+		$i++;
 	}
-	@output = @s_data;
 
-	return @output;
+	return @client_list;
 }
 
 # Only used for tcp/udp
-sub getFarmBackendsClientsActives($fname,@content)
+sub getFarmBackendsClientsActives($farm_name,@content)
 {
-	my ( $fname, @content ) = @_;
+	my ( $farm_name, @content ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my @output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my @output    = -1;
 
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
 		if ( !@content )
 		{
-			@content = &getFarmBackendStatusCtl( $fname );
+			@content = &getFarmBackendStatusCtl( $farm_name );
 		}
 
 		my $line;
@@ -1179,115 +1315,139 @@ sub getFarmBackendsClientsActives($fname,@content)
 }
 
 #function that renames a farm
-sub setTcpUdpNewFarmName($fname,$newfname)
+sub setTcpUdpNewFarmName($farm_name,$new_farm_name)
 {
-	my ( $fname, $newfname ) = @_;
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my ( $farm_name, $new_farm_name ) = @_;
 
-	my $newffile = "$newfname\_pen.cfg";
-	if ( $type eq "udp" )
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $farm_type     = &getFarmType( $farm_name );
+	my $output        = -1;
+
+	my $new_farm_filename = "$new_farm_name\_pen.cfg";
+
+	if ( $farm_type eq "udp" )
 	{
-		$newffile = "$newfname\_pen\_udp.cfg";
+		$new_farm_filename = "$new_farm_name\_pen\_udp.cfg";
 	}
-	my $gfile = "$fname\_guardian.conf";
+	my $farmguardian_filename = "$farm_name\_guardian.conf";
+
 	use Tie::File;
-	tie @filelines, 'Tie::File', "$configdir\/$ffile";
-	for ( @filelines )
-	{
-		s/$fname/$newfname/g;
-	}
-	untie @filelines;
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
-	rename ( "$configdir\/$ffile", "$configdir\/$newffile" );
-	$output = $?;
-	&logfile( "configuration saved in $configdir/$newffile file" );
-	if ( -e "$configdir\/$gfile" )
+	for ( @configfile )
 	{
-		my $newgfile = "$newfname\_guardian.conf";
+		s/$farm_name/$new_farm_name/g;
+	}
+	untie @configfile;
+
+	rename ( "$configdir\/$farm_filename", "$configdir\/$new_farm_filename" );
+	$output = $?;
+
+	&logfile( "configuration saved in $configdir/$new_farm_filename file" );
+
+	if ( -e "$configdir\/$farmguardian_filename" )
+	{
+		my $new_farmguardian_filename = "$new_farm_name\_guardian.conf";
+
 		use Tie::File;
-		tie @filelines, 'Tie::File', "$configdir\/$gfile";
-		for ( @filelines )
+		tie my @farmgardian_configfile, 'Tie::File',
+		  "$configdir\/$farmguardian_filename";
+
+		for ( @farmgardian_configfile )
 		{
-			s/$fname/$newfname/g;
+			s/$farm_name/$new_farm_name/g;
 		}
-		untie @filelines;
-		rename ( "$configdir\/$gfile", "$configdir\/$newgfile" );
+		untie @farmgardian_configfile;
+
+		rename ( "$configdir\/$farmguardian_filename",
+				 "$configdir\/$new_farmguardian_filename" );
 		$output = $?;
-		&logfile( "configuration saved in $configdir/$newgfile file" );
+
+		&logfile( "configuration saved in $configdir/$new_farmguardian_filename file" );
 	}
 
 	return $output;
 }
 
 #function that check if a backend on a farm is on maintenance mode
-sub getTcpUdpFarmBackendMaintenance($fname,$backend)
+sub getTcpUdpFarmBackendMaintenance($farm_name,$backend)
 {
-	my ( $fname, $backend ) = @_;
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my ( $farm_name, $backend ) = @_;
 
-	open FR, "<$configdir\/$ffile";
-	my @content = <FR>;
-	foreach $line ( @content )
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+
+	open FR, "<$configdir\/$farm_filename";
+	my @configfile = <FR>;
+
+	foreach my $line ( @configfile )
 	{
 		if ( $line =~ /^server $backend acl 9/ )
 		{
 			$output = 0;
 		}
-		close FR;
 	}
+	close FR;
 
 	return $output;
 }
 
 #function that enable the maintenance mode for backend
-sub setTcpUdpFarmBackendMaintenance($fname,$backend)
+sub setTcpUdpFarmBackendMaintenance($farm_name,$backend)
 {
-	my ( $fname, $backend ) = @_;
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my ( $farm_name, $backend ) = @_;
 
-	&logfile( "setting Maintenance mode for $fname backend $backend" );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $fmaxservers   = &getFarmMaxServers( $farm_name );
+	my $farm_port     = &getFarmPort( $farm_name );
+	my $output        = -1;
 
-	my $fport       = &getFarmPort( $fname );
-	my $fmaxservers = &getFarmMaxServers( $fname );
+	&logfile( "setting Maintenance mode for $farm_name backend $backend" );
 
-	&logfile( "running '$pen_ctl 127.0.0.1:$fport server $id_server acl 9'" );
+	my $pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port server $id_server acl 9";
 
-	my @run = `$pen_ctl 127.0.0.1:$fport server $id_server acl 9  2> /dev/null`;
+	&logfile( "running '$pen_ctl_command'" );
+	my @run = `$pen_ctl_command  2> /dev/null`;
 	$output = $?;
 
-	&logfile( "running '$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'" );
-	my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
+	my $pen_write_config_command =
+	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'";
 
-	&setFarmMaxServers( $fmaxservers, $fname );
+	&logfile( "running '$pen_write_config_command'" );
+	my @run = `$pen_write_config_command`;
+
+	&setFarmMaxServers( $fmaxservers, $farm_name );
 
 	return $output;
 }
 
 #function that disable the maintenance mode for backend
-sub setTcpUdpFarmBackendNoMaintenance($fname,$backend)
+sub setTcpUdpFarmBackendNoMaintenance($farm_name,$backend)
 {
-	my ( $fname, $backend ) = @_;
-	my $ffile = &getFarmFile( $fname );
-	$output = -1;
+	my ( $farm_name, $backend ) = @_;
 
-	&logfile( "setting Disabled maintenance mode for $fname backend $backend" );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $farm_port     = &getFarmPort( $farm_name );
+	my $fmaxservers   = &getFarmMaxServers( $farm_name );
+	my $output        = -1;
 
-	my $fport       = &getFarmPort( $fname );
-	my $fmaxservers = &getFarmMaxServers( $fname );
+	&logfile( "setting Disabled maintenance mode for $farm_name backend $backend" );
 
-	&logfile( "running '$pen_ctl 127.0.0.1:$fport server $id_server acl 0'" );
+	#
+	my $pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port server $backend acl 0";
 
-	my @run = `$pen_ctl 127.0.0.1:$fport server $id_server acl 0  2> /dev/null`;
+	&logfile( "running '$pen_ctl_command'" );
+	my @run = `$pen_ctl_command 2> /dev/null`;
 	$output = $?;
-	&logfile( "running '$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'" );
 
-	my @run = `$pen_ctl 127.0.0.1:$fport write '$configdir/$ffile'`;
+	#
+	my $pen_write_config_command =
+	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'";
 
-	&setFarmMaxServers( $fmaxservers, $fname );
+	&logfile( "running '$pen_write_config_command'" );
+	my @run = `$pen_write_config_command`;
+
+	&setFarmMaxServers( $fmaxservers, $farm_name );
 
 	return $output;
 }

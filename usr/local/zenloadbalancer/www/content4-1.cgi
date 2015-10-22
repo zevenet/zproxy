@@ -31,10 +31,7 @@ print "
 <h2>About::License</h2>
 <!--Content Header END-->";
 
-#my $cgiurl = $ENV{SCRIPT_NAME}."?".$ENV{QUERY_STRING};
-
 # Print form if not a valid form
-#if(!( ($pass || $newpass || $trustedpass) && check_valid_user() && verify_passwd()) ) {
 ##content 3-2 INI
 print "<div class=\"container_12\">";
 print "	<div class=\"grid_12\">";

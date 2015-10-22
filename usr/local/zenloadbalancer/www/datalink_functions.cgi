@@ -22,45 +22,54 @@
 ###############################################################################
 
 #
-sub getDatalinkFarmAlgorithm($ffile)
+sub getDatalinkFarmAlgorithm($farm_name)
 {
-	my ( $ffile ) = @_;
-	my $output = -1;
-	open FI, "<$configdir/$ffile";
-	my $first = "true";
+	my ( $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $algorithm     = -1;
+	my $first         = "true";
+
+	open FI, "<$configdir/$farm_filename";
+
 	while ( my $line = <FI> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
 			$first = "false";
 			my @line = split ( "\;", $line );
-			$output = @line[3];
+			$algorithm = $line[3];
 		}
 	}
 	close FI;
-	return $output;
+
+	return $algorithm;
 }
 
 # set the lb algorithm to a farm
-sub setDatalinkFarmAlgorithm($alg,$ffile)
+sub setDatalinkFarmAlgorithm($algorithm,$farm_name)
 {
-	my ( $alg, $ffile ) = @_;
-	my $output = -1;
+	my ( $algorithm, $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $i             = 0;
+
 	use Tie::File;
-	tie @filelines, 'Tie::File', "$configdir\/$ffile";
-	my $i = 0;
-	for $line ( @filelines )
+	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+
+	for my $line ( @configfile )
 	{
-		if ( $line =~ /^$fname\;/ )
+		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
-			$line = "@args[0]\;@args[1]\;@args[2]\;$alg\;@args[4]";
-			splice @filelines, $i, $line;
+			$line = "@args[0]\;@args[1]\;@args[2]\;$algorithm\;@args[4]";
+			splice @configfile, $i, $line;
 			$output = $?;
 		}
 		$i++;
 	}
-	untie @filelines;
+	untie @configfile;
 	$output = $?;
 
 	# Apply changes online
@@ -69,16 +78,52 @@ sub setDatalinkFarmAlgorithm($alg,$ffile)
 		&runFarmStop( $farmname, "true" );
 		&runFarmStart( $farmname, "true" );
 	}
+
 	return $output;
 }
 
 #
-sub getDatalinkFarmBootStatus($file)
+sub getDatalinkFarmServers($farm_name)
 {
-	my ( $file ) = @_;
-	my $output = "down";
-	open FI, "<$configdir/$file";
-	my $first = "true";
+	my ( $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $farm_type     = &getFarmType( $farm_name );
+	my $first         = "true";
+	my $sindex        = 0;
+	my @servers;
+
+	open FI, "<$configdir/$farm_filename";
+
+	while ( my $line = <FI> )
+	{
+		if ( $line ne "" && $line =~ /^\;server\;/ && $first ne "true" )
+		{
+			$line =~ s/^\;server/$sindex/g, $line;
+			push ( @servers, $line );
+			$sindex = $sindex + 1;
+		}
+		else
+		{
+			$first = "false";
+		}
+	}
+	close FI;
+
+	return @servers;
+}
+
+#
+sub getDatalinkFarmBootStatus($farm_name)
+{
+	my ( $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = "down";
+	my $first         = "true";
+
+	open FI, "<$configdir/$farm_filename";
+
 	while ( my $line = <FI> )
 	{
 		if ( $line ne "" && $first eq "true" )
@@ -90,21 +135,22 @@ sub getDatalinkFarmBootStatus($file)
 		}
 	}
 	close FI;
+
 	return $output;
 }
 
 # get network physical (vlan included) interface used by the farm vip
-sub getFarmInterface($fname)
+sub getFarmInterface($farm_name)
 {
-	my ( $fname ) = @_;
+	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $fname );
+	my $type   = &getFarmType( $farm_name );
 	my $output = -1;
 
 	if ( $type eq "datalink" )
 	{
-		my $file = &getFarmFile( $fname );
-		open FI, "<$configdir/$file";
+		my $farm_filename = &getFarmFile( $farm_name );
+		open FI, "<$configdir/$farm_filename";
 		my $first = "true";
 		while ( $line = <FI> )
 		{
@@ -123,15 +169,19 @@ sub getFarmInterface($fname)
 }
 
 #
-sub _runDatalinkFarmStart($file,$writeconf,$status)
+sub _runDatalinkFarmStart($farm_name, $writeconf, $status)
 {
-	my ( $file, $writeconf, $status ) = @_;
+	my ( $farm_name, $writeconf, $status ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+
 	if ( $writeconf eq "true" )
 	{
 		use Tie::File;
-		tie @filelines, 'Tie::File', "$configdir\/$file";
+		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 		my $first = 1;
-		foreach ( @filelines )
+
+		foreach ( @configfile )
 		{
 			if ( $first eq 1 )
 			{
@@ -139,30 +189,29 @@ sub _runDatalinkFarmStart($file,$writeconf,$status)
 				$first = 0;
 			}
 		}
-		untie @filelines;
+		untie @configfile;
 	}
 
 	# include cron task to check backends
 	use Tie::File;
-	tie @filelines, 'Tie::File', "/etc/cron.d/zenloadbalancer";
-	my @farmcron = grep /\# \_\_$fname\_\_/, @filelines;
-	my $cron = @farmcron;
-	if ( $cron eq 0 )
+	tie my @cron_file, 'Tie::File', "/etc/cron.d/zenloadbalancer";
+	my @farmcron = grep /\# \_\_$farm_name\_\_/, @cron_file;
+	if ( scalar @farmcron eq 0 )
 	{
-		push ( @filelines,
-			   "* * * * *	root	\/usr\/local\/zenloadbalancer\/app\/libexec\/check_uplink $fname \# \_\_$fname\_\_"
+		push ( @cron_file,
+			   "* * * * *	root	\/usr\/local\/zenloadbalancer\/app\/libexec\/check_uplink $farm_name \# \_\_$farm_name\_\_"
 		);
 	}
-	untie @filelines;
+	untie @cron_file;
 
 	# Apply changes online
 	if ( $status != -1 )
 	{
 		# Set default uplinks as gateways
-		my $iface     = &getFarmInterface( $fname );
+		my $iface     = &getFarmInterface( $farm_name );
 		my @eject     = `$ip_bin route del default table table_$iface 2> /dev/null`;
-		my @servers   = &getFarmServers( $fname );
-		my $algorithm = &getFarmAlgorithm( $fname );
+		my @servers   = &getFarmServers( $farm_name );
+		my $algorithm = &getFarmAlgorithm( $farm_name );
 		my $routes    = "";
 		if ( $algorithm eq "weight" )
 		{
@@ -231,43 +280,47 @@ sub _runDatalinkFarmStart($file,$writeconf,$status)
 		&setIpForward( "true" );
 
 		# Enable active datalink file
-		open FI, ">$piddir\/$fname\_datalink.pid";
+		open FI, ">$piddir\/$farm_name\_datalink.pid";
 		close FI;
 	}
 	return $status;
 }
 
 #
-sub _runDatalinkFarmStop($filename,$writeconf,$status)
+sub _runDatalinkFarmStop($farm_name,$writeconf)
 {
-	my ( $filename, $writeconf, $status ) = @_;
+	my ( $farm_name, $writeconf ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $status        = -1;
+
 	if ( $writeconf eq "true" )
 	{
 		use Tie::File;
-		tie @filelines, 'Tie::File', "$configdir\/$filename";
+		tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
 		my $first = 1;
-		foreach ( @filelines )
+		foreach ( @configfile )
 		{
-			if ( $first eq 1 )
+			if ( $first == 1 )
 			{
 				s/\;up/\;down/g;
 				$status = $?;
 				$first  = 0;
 			}
 		}
-		untie @filelines;
+		untie @configfile;
 	}
 
 	# delete cron task to check backends
 	use Tie::File;
-	tie @filelines, 'Tie::File', "/etc/cron.d/zenloadbalancer";
-	@filelines = grep !/\# \_\_$farmname\_\_/, @filelines;
-	untie @filelines;
+	tie @cron_file, 'Tie::File', "/etc/cron.d/zenloadbalancer";
+	@cron_file = grep !/\# \_\_$farmname\_\_/, @cron_file;
+	untie @cron_file;
 
 	# Apply changes online
 	if ( $status != -1 )
 	{
-		my $iface = &getFarmInterface( $fname );
+		my $iface = &getFarmInterface( $farm_name );
 
 		# Disable policies to the local network
 		my $ip = &iponif( $iface );
@@ -275,6 +328,7 @@ sub _runDatalinkFarmStop($filename,$writeconf,$status)
 		{
 			my $ipmask = &maskonif( $if );
 			my ( $net, $mask ) = ipv4_network( "$ip / $ipmask" );
+
 			&logfile( "running $ip_bin rule del from $net/$mask lookup table_$iface" );
 			my @eject = `$ip_bin rule del from $net/$mask lookup table_$iface 2> /dev/null`;
 		}
@@ -283,8 +337,8 @@ sub _runDatalinkFarmStop($filename,$writeconf,$status)
 		my @eject = `$ip_bin route del default table table_$iface 2> /dev/null`;
 
 		# Disable active datalink file
-		unlink ( "$piddir\/$fname\_datalink.pid" );
-		if ( -e "$piddir\/$fname\_datalink.pid" )
+		unlink ( "$piddir\/$farm_name\_datalink.pid" );
+		if ( -e "$piddir\/$farm_name\_datalink.pid" )
 		{
 			$status = -1;
 		}
@@ -297,82 +351,97 @@ sub _runDatalinkFarmStop($filename,$writeconf,$status)
 }
 
 #
-sub runDatalinkFarmCreate($fname,$fvip,$fdev)
+sub runDatalinkFarmCreate($farm_name,$vip,$fdev)
 {
-	my ( $fname, $fvip, $fdev ) = @_;
-	open FO, ">$configdir\/$fname\_datalink.cfg";
-	print FO "$fname\;$fvip\;$fdev\;weight\;up\n";
+	my ( $farm_name, $vip, $fdev ) = @_;
+
+	open FO, ">$configdir\/$farm_name\_datalink.cfg";
+	print FO "$farm_name\;$vip\;$fdev\;weight\;up\n";
 	close FO;
 	$output = $?;
 
-	if ( !-e "$piddir/$fname_datalink.pid" )
+	if ( !-e "$piddir/$farm_name_datalink.pid" )
 	{
-
 		# Enable active datalink file
-		open FI, ">$piddir\/$fname\_datalink.pid";
+		open FI, ">$piddir\/$farm_name\_datalink.pid";
 		close FI;
 	}
+
 	return $output;
 }
 
 # Returns farm vip
-sub getDatalinkFarmVip($info,$file)
+sub getDatalinkFarmVip($info,$farm_name)
 {
-	my ( $info, $file ) = @_;
-	my $output = -1;
-	open FI, "<$configdir/$file";
-	my $first = "true";
-	while ( $line = <FI> )
+	my ( $info, $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $first         = "true";
+
+	open FI, "<$configdir/$farm_filename";
+
+	while ( my $line = <FI> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
 			$first = "false";
 			my @line_a = split ( "\;", $line );
+
 			if ( $info eq "vip" )   { $output = @line_a[1]; }
 			if ( $info eq "vipp" )  { $output = @line_a[2]; }
-			if ( $info eq "vipps" ) { $output = "@vip[1]\:@vipp[2]"; }
+			if ( $info eq "vipps" ) { $output = "@line_a[1]\:@line_a[2]"; }
 		}
 	}
 	close FI;
+
 	return $output;
 }
 
 # Set farm virtual IP and virtual PORT
-sub setDatalinkFarmVirtualConf($vip,$vipp,$fname,$fconf)
+sub setDatalinkFarmVirtualConf($vip,$vip_port,$farm_name)
 {
-	my ( $vip, $vipp, $fname, $fconf ) = @_;
-	my $stat = -1;
+	my ( $vip, $vip_port, $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $stat          = -1;
+	my $i             = 0;
+
 	use Tie::File;
-	tie @filelines, 'Tie::File', "$configdir\/$fconf";
-	my $i = 0;
-	for $line ( @filelines )
+	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+
+	for my $line ( @configfile )
 	{
-		if ( $line =~ /^$fname\;/ )
+		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
-			$line = "@args[0]\;$vip\;$vipp\;@args[3]\;@args[4]";
-			splice @filelines, $i, $line;
+			$line = "@args[0]\;$vip\;$vip_port\;@args[3]\;@args[4]";
+			splice @configfile, $i, $line;
 			$stat = $?;
 		}
 		$i++;
 	}
-	untie @filelines;
+	untie @configfile;
 	$stat = $?;
+
 	return $stat;
 }
 
 #
-sub setDatalinkFarmServer($file,$ids,$rip,$iface,$weight,$priority)
+sub setDatalinkFarmServer($ids,$rip,$iface,$weight,$priority,$farm_name)
 {
-	my ( $file, $ids, $rip, $iface, $weight, $priority ) = @_;
-	my $output = -1;
-	tie @contents, 'Tie::File', "$configdir\/$file";
-	my $i   = 0;
-	my $l   = 0;
-	my $end = "false";
-	foreach $line ( @contents )
-	{
+	my ( $ids, $rip, $iface, $weight, $priority, $farm_name ) = @_;
 
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $end           = "false";
+	my $i             = 0;
+	my $l             = 0;
+
+	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
+
+	foreach my $line ( @contents )
+	{
 		if ( $line =~ /^\;server\;/ && $end ne "true" )
 		{
 			if ( $i eq $ids )
@@ -402,21 +471,25 @@ sub setDatalinkFarmServer($file,$ids,$rip,$iface,$weight,$priority)
 		&runFarmStop( $farmname, "true" );
 		&runFarmStart( $farmname, "true" );
 	}
+
 	return $output;
 }
 
 #
-sub runDatalinkFarmServerDelete($ids,$ffile)
+sub runDatalinkFarmServerDelete($ids,$farm_name)
 {
-	my ( $ids, $ffile ) = @_;
-	my $output = -1;
-	tie my @contents, 'Tie::File', "$configdir\/$ffile";
-	my $i   = 0;
-	my $l   = 0;
-	my $end = "false";
-	foreach $line ( @contents )
-	{
+	my ( $ids, $farm_name ) = @_;
 
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $end           = "false";
+	my $i             = 0;
+	my $l             = 0;
+
+	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
+
+	foreach my $line ( @contents )
+	{
 		if ( $line =~ /^\;server\;/ && $end ne "true" )
 		{
 			if ( $i eq $ids )
@@ -433,6 +506,7 @@ sub runDatalinkFarmServerDelete($ids,$ffile)
 		$l++;
 	}
 	untie @contents;
+
 	return $output;
 }
 
@@ -441,28 +515,32 @@ sub runDatalinkFarmServerDelete($ids,$ffile)
 sub getDatalinkFarmBackendsStatus(@content)
 {
 	my ( @content ) = @_;
-	my @output = -1;
-	my @servers;
-	foreach $server ( @content )
+
+	my @backends_data = -1;
+
+	foreach my $server ( @content )
 	{
 		my @serv = split ( ";", $server );
-		push ( @servers, "@serv[2]\;@serv[3]\;@serv[4]\;@serv[5]\;@serv[6]" );
+		push ( @backends_data, "@serv[2]\;@serv[3]\;@serv[4]\;@serv[5]\;@serv[6]" );
 	}
-	@output = @servers;
 
-	return $output;
+	return @backends_data;
 }
 
-sub setDatalinkFarmBackendStatus($file,$index,$stat)
+sub setDatalinkFarmBackendStatus($farm_name,$index,$stat)
 {
-	my ( $file, $index, $stat ) = @_;
-	my $output = -1;
+	my ( $farm_name, $index, $stat ) = @_;
 
-	use Tie::File;
-	tie @filelines, 'Tie::File', "$configdir\/$file";
+	my $farm_filename = &getFarmFile( $farm_name );
+
+	#	my $output = -1;
 	my $fileid   = 0;
 	my $serverid = 0;
-	foreach $line ( @filelines )
+
+	use Tie::File;
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
+
+	foreach my $line ( @configfile )
 	{
 		if ( $line =~ /\;server\;/ )
 		{
@@ -470,31 +548,57 @@ sub setDatalinkFarmBackendStatus($file,$index,$stat)
 			{
 				my @lineargs = split ( "\;", $line );
 				@lineargs[6] = $stat;
-				@filelines[$fileid] = join ( "\;", @lineargs );
+				@configfile[$fileid] = join ( "\;", @lineargs );
 			}
 			$serverid++;
 		}
 		$fileid++;
 	}
-	untie @filelines;
+	untie @configfile;
 
-	return $output;
+	#	return $output;
 }
 
 #
-sub getDatalinkFarmBackendStatusCtl($fname)
+sub getDatalinkFarmBackendStatusCtl($farm_name)
 {
-	my ( $fname ) = @_;
-	my @output = -1;
+	my ( $farm_name ) = @_;
 
-	my $ffile = &getFarmFile( $fname );
-	my @content;
+	my $farm_filename = &getFarmFile( $farm_name );
+	my @output        = -1;
 
-	tie my @content, 'Tie::File', "$configdir\/$ffile";
+	tie my @content, 'Tie::File', "$configdir\/$farm_filename";
 	@output = grep /^\;server\;/, @content;
 	untie @content;
 
 	return @output;
+}
+
+#function that renames a farm
+sub setDatalinkNewFarmName($farm_name,$new_farm_name)
+{
+	my ( $farm_name, $new_farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $farm_type     = &getFarmType( $farm_name );
+	my $newffile      = "$new_farm_name\_$farm_type.cfg";
+	my $output        = -1;
+
+	use Tie::File;
+	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+
+	for ( @configfile )
+	{
+		s/^$farm_name\;/$new_farm_name\;/g;
+	}
+	untie @configfile;
+
+	rename ( "$configdir\/$farm_filename", "$configdir\/$newffile" );
+	rename ( "$piddir\/$farm_name\_$farm_type.pid",
+			 "$piddir\/$new_farm_name\_$farm_type.pid" );
+	$output = $?;
+
+	return $output;
 }
 
 # do not remove this
