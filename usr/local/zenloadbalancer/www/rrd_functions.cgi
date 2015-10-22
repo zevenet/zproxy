@@ -444,7 +444,7 @@ sub genFarmGraph($type,$graph,$time)
 sub getGraphs2Show($graphtype)
 {
 	my ( $graphtype ) = @_;
-	my @list = -1;
+	my @list;
 	if ( $graphtype eq System )
 	{
 		opendir ( DIR, "$rrdap_dir$rrd_dir" );

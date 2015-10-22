@@ -29,28 +29,30 @@ require ("/usr/local/zenloadbalancer/www/functions.cgi");
 my $synconns= 0;
 my $globalconns = 0;
 
-@farmlist = &getFarmList();
-my @netstat = "";
-foreach $farmfile(@farmlist){
+foreach $farmfile ( &getFarmList() ){
 	@farmargs = split(/_/,$farmfile);
 	$farm = @farmargs[0];
 	my $ftype = &getFarmType($farm);
 	if ($ftype !~ /datalink/){
 		$db_if="$farm-farm.rrd";
-		#status
-                $status = &getFarmStatus($farm);
-		#vip
-	        $vip = &getFarmVip("vip",$farm);
-		  if ($status eq "up"){
-                        @netstat = &getConntrack("",$vip,"","","");
-                        # SYN_RECV connections
-                        @synconnslist = &getFarmSYNConns($farm,@netstat);
-                        $synconns = @synconnslist;
-			# ESTABLISHED connections
-                        @gconns = &getFarmEstConns($farm,@netstat);
-                        $globalconns = @gconns;
-                } 
 
+		#status
+		$status = &getFarmStatus($farm);
+
+		#vip
+        $vip = &getFarmVip("vip",$farm);
+
+		if ($status eq "up")
+		{
+			my @netstat = &getConntrack("",$vip,"","","");
+			# SYN_RECV connections
+			@synconnslist = &getFarmSYNConns($farm,@netstat);
+			$synconns = @synconnslist;
+			# ESTABLISHED connections
+			@gconns = &getFarmEstConns($farm,@netstat);
+			$globalconns = @gconns;
+		}
+	
 		#process farm
 		if (! -f "$rrdap_dir$rrd_dir$db_if"){
 			print "Creating traffic rrd database for $farm $rrdap_dir$rrd_dir$db_if ...\n";
@@ -77,6 +79,7 @@ foreach $farmfile(@farmlist){
 	
 			if ($ERROR = RRDs::error) { print "$0: unable to generate $farm database: $ERROR\n"};
 		}
+		
 		print "Information for $farm farm graph ...\n";
 		print "		pending: $synconns\n";
 		print "		established: $globalconns\n";
@@ -85,7 +88,6 @@ foreach $farmfile(@farmlist){
 		RRDs::update "$rrdap_dir$rrd_dir$db_if",
 			"-t", "pending:established",
 			"N:$synconns:$globalconns";
-			
 	}
 }	
 

@@ -533,23 +533,27 @@ sub getFarmsByType($farm_type)
 {
 	my ( $farm_type ) = @_;
 
-	my @farms = ();
+	my @farm_names = ();
 
 	opendir ( my $dir, "$configdir" ) || return -1;
-	my @farm_files = grep { /^.*\_.*\.cfg/ && -f "$configdir/$_" } readdir ( $dir );
+
+  # gslb uses a directory, not a file
+  # my @farm_files = grep { /^.*\_.*\.cfg/ && -f "$configdir/$_" } readdir ( $dir );
+	my @farm_files = grep { /^.*\_.*\.cfg/ } readdir ( $dir );
 	closedir $dir;
 
-	foreach ( @farm_files )
+	foreach my $farm_filename ( @farm_files )
 	{
-		my $farm_name = &getFarmName( $_ );
+		next if $farm_filename =~ /.*status.cfg/;
+		my $farm_name = &getFarmName( $farm_filename );
 
 		if ( &getFarmType( $farm_name ) eq $farm_type )
 		{
-			push ( @farms, $farm_name );
+			push ( @farm_names, $farm_name );
 		}
 	}
 
-	return @farms;
+	return @farm_names;
 }
 
 # Generic function
@@ -700,8 +704,8 @@ sub _runFarmStart($farm_name, $writeconf)
 	my ( $farm_name, $writeconf ) = @_;
 
 	my $status = &getFarmStatus( $farm_name );
-	chomp ( $status );
 
+	# finish the function if the tarm is already up
 	if ( $status eq "up" )
 	{
 		return 0;
@@ -824,8 +828,9 @@ sub _runFarmStop($farm_name,$writeconf)
 
 	if ( $farm_type eq "l4xnat" )
 	{
-		$status = &_runL4FarmStop( $farm_name, $writeconf, $status );
+		$status = &_runL4FarmStop( $farm_name, $writeconf );
 	}
+	&logfile( 'stopFarm: ' . $status );
 
 	if (    $writeconf eq "true"
 		 && $farm_type ne "datalink"
@@ -1050,9 +1055,9 @@ sub getFarmName($farm_filename)
 {
 	my ( $farm_filename ) = @_;
 
-	my @ffile = split ( "_", $farm_filename );
+	my @filename_split = split ( "_", $farm_filename );
 
-	return @ffile[0];
+	return @filename_split[0];
 }
 
 # Generic function
@@ -1166,8 +1171,8 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$farm_name,$se
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$output =
-		  &setHTTPFarmServer( $ids, $rip, $port, $priority,
-							  $timeout, $farm_name, $service, );
+		  &setHTTPFarmServer( $ids, $rip, $port, $priority, $timeout, $farm_name,
+							  $service, );
 	}
 
 	return $output;
@@ -1217,11 +1222,11 @@ sub getFarmBackendStatusCtl($farm_name)
 	my ( $farm_name ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
-	my @output    = -1;
+	my @output;
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		$output = &getTcpUdpFarmBackendStatusCtl( $farm_name );
+		@output = &getTcpUdpFarmBackendStatusCtl( $farm_name );
 	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
@@ -1249,7 +1254,7 @@ sub getFarmBackendsStatus($farm_name,@content)
 	my ( $farm_name, @content ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
-	my @output    = -1;
+	my @output;
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -1300,7 +1305,7 @@ sub getFarmBackendsClientsList($farm_name,@content)
 	( $farm_name, @content ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
-	my @output    = -1;
+	my @output;
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{

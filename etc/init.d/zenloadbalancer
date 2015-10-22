@@ -155,92 +155,46 @@ if ( $eject eq "start" )
 
 	if ( -e $filecluster )
 	{
+		# get cluster configuration
+		my ( $lhost, $lip, $rhost, $rip, $vipcl, $ifname, $typecl, $clstatus, $cable, $idcluster, $deadratio )
+			= &getClusterConfig();
+		
 		print "Cluster file exist\n";
 		$host = hostname();
-
-		#get cluster's members data
-
-		#get cluster's type and status
-		@cltypestatus = &getClusterTypeStatus( $filecluster );
-		$typecl       = @cltypestatus[0];
-		$clstatus     = @cltypestatus[1];
 
 		if ( $clstatus =~ /UP/ )
 		{
 			print "UP status configured\n";
-
-			@clmembers = &getClusterMembersData( $host, $filecluster );
-			$lhost     = @clmembers[0];
-			$lip       = @clmembers[1];
-			$rhost     = @clmembers[2];
-			$rip       = @clmembers[3];
-
-			#get cluster's VIP data
-			@clvipdata = &getClusterVIPData( $filecluster );
-			$vipcl     = @clvipdata[0];
-			$ifclname  = @clvipdata[1];
-
-			#get cluster's cable link data
-			$cable     = &getClusterCableLink( $filecluster );
-			@rifclname = split ( ":", $ifclname );
-			@cliface   = ( "IPCLUSTER", $vipcl, $rifclname[0], $rifclname[1] );
-			$cltype    = "TYPECLUSTER:$typecl:$clstatus";
-
-			#get cluster's ID
-			$idcluster = &getClusterID( $filecluster );
-			print "Cluster ID: $idcluster";
-
-			#get cluster DEADRATIO
-			$deadratio = &getClusterDEADRATIO( $filecluster );
-			print "Cluster Deadratio:$deadratio";
-
-			print "Host:$host CL_LIP:$lip CL_RIP:$rip CL_IF:@cliface[2] CL_IP:@cliface[1]\n";
+			print "Cluster ID: $idcluster\n";
+			print "Cluster Deadratio: $deadratio\n";
+			print "Host:\t$lhost\n";
+			print "CL_LIP:\t$lip\n";
+			print "CL_RIP:\t$rip\n";
+			print "CL_IF:\t$ifname\n";
+			print "CL_IP:\t$vipcl\n";
 
 			#if real interface not configured, configured it
-			&createIf( @cliface[2] );
-			&upIf( @cliface[2] );
-			open FO, "<$configdir\/if\_@cliface[2]\_conf";
-			@fileif = <FO>;
-			chomp ( @fileif[0] );
-			@netmask = split ( ":", @fileif[0] );
-			my $run = `$ifconfig_bin @cliface[2] $lip netmask @netmask[3]`;
+			my ($phys_iface) = split ':', $ifname;
+			&createIf( $phys_iface );
+			&upIf( $phys_iface );
+			# read gateway
+			open FO, "<$configdir\/if\_$phys_iface\_conf";
+			chomp (@fileif = <FO>);
+			my $netmask = ( split ":", @fileif[0] )[3];
 
-			$ifgw   = @cliface[2];
+			my $ifconfig_command = "$ifconfig_bin $phys_iface $lip netmask $netmask";
+			system($ifconfig_command);
+
+			$ifgw   = $phys_iface;
 			$ipifgw = &gwofif( $ifgw );
 			&writeRoutes( $ifgw );
-			&applyRoutes( "local", @cliface[2], $ipifgw );
+			&applyRoutes( "local", $phys_iface, $ipifgw );
 
-			if ( $cable eq "Crossover cord" )
-			{
-				$ignoreifstate = "--ignoreifstate";
-			}
-			else
-			{
-				$ignoreifstate = "";
-			}
-
-			if ( $cltype =~ /^equal$/ )
-			{
-				print "CL_TYPE=equal\n";
-				my @eject = system (
-					"$ucarp $ignoreifstate -r $deadratio --interface=@cliface[2] --srcip=$lip --vhid=$idcluster --pass=secret --addr=@cliface[1] --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-				);
-			}
-			elsif ( $cltype =~ /$lhost-$rhost/ )
-			{
-				print "CL_TYPE=M-B, Master node\n";
-				my @eject = system (
-					"$ucarp $ignoreifstate -r $deadratio --interface=@cliface[2] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=@cliface[1] --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-				);
-			}
-			else
-			{
-				print "CL_TYPE=M-B Backup node\n";
-				my @eject = system (
-					"$ucarp $ignoreifstate -r $deadratio --interface=@cliface[2] -k 50 --srcip=$lip --vhid=$idcluster --pass=secret --addr=@cliface[1] --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-				);
-			}
-			chomp ( $lip );
+			if	  ( $typecl =~ /^equal$/	   ) { print "CL_TYPE: equal\n";		   }
+			elsif ( $typecl =~ /$lhost-$rhost/ ) { print "CL_TYPE: M-B, Master node\n";}
+			else								 { print "CL_TYPE: M-B Backup node\n"; }
+			
+			&setClusterNodeOffMaintenance( $cable, $ifname, $deadratio, $lip, $idcluster, $vipcl, $typecl );
 
 			#check the gui interface
 			print "Running GUI interface\n";
@@ -300,11 +254,11 @@ if ( $eject eq "start" )
 
 			sleep ( 5 );
 
-			#check if virtual interface cluster is up:
-			my @eject = `$ifconfig_bin`;
-			print "CL_IP: @cliface[1]\n";
-			if ( grep ( /@cliface[1]/, @eject ) )
+			if ( grep ( /$vipcl/, `$ifconfig_bin` ) )
 			{
+				#check if virtual interface cluster is up:
+				print "CL_IP: $vipcl\n";
+				
 				print
 				  "Cluster is running on this node, running IPS and FARMS for Zen Load Balancer...\n";
 				$eject = "startlocal";
@@ -701,6 +655,7 @@ if ( $eject eq "stoplocal" )
 			}
 			close FR;
 			my @lastline = split ( ":", $lastline );
+			
 			print "    Interface:@lastline[0] Ip:@lastline[2] Netmask:@lastline[3]";
 
 			if ( -e $filecluster )
@@ -709,6 +664,7 @@ if ( $eject eq "stoplocal" )
 				open FO, "<$filecluster";
 				@filecl = <FO>;
 				close FO;
+				# if interface is not mentioned in cluster file _and_ this ip is not the gui ip
 				if ( !grep ( /@lastline[0]/, @filecl ) && $gui ne @lastline[2] )
 				{
 					&delRoutes( "local", @lastline[0] );
@@ -722,6 +678,10 @@ if ( $eject eq "stoplocal" )
 						print " \033[1;31m ERROR \033[0m \n";
 					}
 
+				}
+				else
+				{
+					print " \033[1;31m This interface is part of a cluster, it cannot be stopped while being part of the cluster.\033[0m \n"
 				}
 			}
 			else

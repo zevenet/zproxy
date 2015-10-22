@@ -21,6 +21,8 @@
 #
 ###############################################################################
 
+use IO::Socket;
+
 my $ext = 0;
 
 if ( -e "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi" )
@@ -87,11 +89,13 @@ sub listactiveips($class)
 
 	my $s = IO::Socket::INET->new( Proto => 'udp' );
 	my @interfaces = $s->if_list;
+	my @nvips;
 
 	for my $if ( @interfaces )
 	{
 		if ( ( $class eq "phvlan" && $if !~ /\:/ ) || $class eq "" )
 		{
+			#~ print 'if: '. $if . '<br>'; ###########################################
 			my $flags = $s->if_flags( $if );
 			$ip      = $s->if_addr( $if );
 			$hwaddr  = $s->if_hwaddr( $if );
@@ -101,7 +105,9 @@ sub listactiveips($class)
 
 			#if ( $bc && ($bc !~ /^0\.0\.0\.0$/) )
 			#cluster ip will not be listed
-			$clrip = &clrip();
+			$clrip = &getClusterRealIp();
+
+		 #			print &array2stringCol( $bc, $ip, $clrip, &GUIip() ); #########################
 			if (    $bc
 				 && $ip !~ /^127\.0\.0\.1$/
 				 && $ip ne $clrip
@@ -113,12 +119,12 @@ sub listactiveips($class)
 				if ( $gw )       { $gw      = "-"; }
 				if ( $flags & IFF_RUNNING )
 				{
-					$nvips = $nvips . " " . $if . "->" . $ip;
+					push ( @nvips, $if . "->" . $ip );
 				}
 			}
 		}
 	}
-	return "$nvips";
+	return @nvips;
 }
 
 # list all interfaces
@@ -585,9 +591,11 @@ sub iponif($if)
 
 	use IO::Socket;
 	use IO::Interface qw(:flags);
+
 	my $s = IO::Socket::INET->new( Proto => 'udp' );
 	my @interfaces = $s->if_list;
 	$iponif = $s->if_addr( $if );
+
 	return $iponif;
 }
 
@@ -636,6 +644,7 @@ sub getNetstatFilter($proto,$state,$ninfo,$fpid,@netstat)
 	}
 	my @output =
 	  grep { /${proto}.*\ ${ninfo}\ .*\ ${state}.*${lfpid}/ } @netstat;
+
 	return @output;
 }
 
@@ -775,6 +784,75 @@ sub isValidPortNumber($port)
 	}
 
 	return $valid;
+}
+
+sub getInterfaceList
+{
+	my ( $socket ) = @_;
+
+	# udp for a basic socket
+	$socket = getIOSocket() if !defined ( $socket );
+
+	return $socket->if_list;
+}
+
+# IO Socket is needed to get information about interfaces
+sub getIOSocket
+{
+	# udp for a basic socket
+	return IO::Socket::INET->new( Proto => 'udp' );
+}
+
+sub getVipOutputIp
+{
+	my ( $vip ) = @_;
+
+	my $socket = &getIOSocket();
+	my $device;
+
+	foreach $interface ( &getInterfaceList( $socket ) )
+	{
+		# ignore/skip localhost
+		next if $interface eq "lo";
+
+		# get interface ip
+		$ip = $socket->if_addr( $interface );
+
+		# get NIC of our vip
+		if ( $ip eq $vip )
+		{
+			# remove alias part of interface name
+			( $device ) = split ( ":", $interface );
+			last;
+		}
+	}
+
+	return $socket->if_addr( $device );
+}
+
+sub getVirtualInterfaceFilenameList
+{
+	opendir ( DIR, "$configdir" );
+
+	my @filenames = grep ( /^if.*\:.*$/, readdir ( DIR ) );
+
+	closedir ( DIR );
+
+	return @filenames;
+}
+
+sub getInterfaceOfIp
+{
+	my ( $ip ) = @_;
+
+	foreach $iface ( &getInterfaceList() )
+	{
+		# return interface if fount in the list
+		return $iface if &iponif( $iface ) eq $ip;
+	}
+
+	# returns an invalid interface name, an undefined variable
+	return undef;
 }
 
 # do not remove this

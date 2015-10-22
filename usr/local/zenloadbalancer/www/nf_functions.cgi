@@ -28,6 +28,7 @@ sub loadNfModule($modname,$params)
 
 	my $status  = 0;
 	my @modules = `$lsmod`;
+
 	if ( !grep /^$modname /, @modules )
 	{
 		&logfile( "L4 loadNfModule: $modprobe $modname $params" );
@@ -43,12 +44,10 @@ sub removeNfModule($modname,$params)
 {
 	my ( $modname, $params ) = @_;
 
-	my $status = 0;
-	&logfile( "L4 removeNfModule: $modprobe -r $modname" );
-	`$modprobe -r $modname`;
-	$status = $?;
+	my $modprobe_command = "$modprobe -r $modname";
 
-	return $status;
+	&logfile( "L4 removeNfModule: $modprobe_command" );
+	return system ( "$modprobe_command >/dev/null 2>&1" );
 }
 
 #
@@ -56,12 +55,7 @@ sub getIptFilter($type, $desc, @iptables)
 {
 	my ( $type, $desc, @iptables ) = @_;
 
-	my $output;
-	if ( $type eq "farm" )
-	{
-		@output = grep { / FARM\_$desc\_.* / } @iptables;
-	}
-	return @output;
+	return grep { / FARM\_$desc\_.* / } @iptables if ( $type eq "farm" );
 }
 
 #
@@ -69,14 +63,16 @@ sub getIptList($table,$chain)
 {
 	my ( $table, $chain ) = @_;
 
-	my $ttable = $table;
-	if ( $ttable ne "" )
+	if ( $table ne "" )
 	{
-		$ttable = "-t $ttable";
+		$table = "-t $table";
 	}
-	my @iptables = `$iptables $ttable -L $chain -n -v --line-numbers`;
 
-	return @iptables;
+	my $iptables_command = "$iptables $table -L $chain -n -v --line-numbers";
+
+	&logfile( $iptables_command );
+
+	return `$iptables_command`;
 }
 
 #
@@ -88,16 +84,18 @@ sub deleteIptRules($type,$desc,$table,$chain,@allrules)
 	my @rules = &getIptFilter( $type, $desc, @allrules );
 
 	# do not change rules id starting by the end
-	@rules = reverse ( @rules );
-	foreach my $rule ( @rules )
+	chomp ( @rules = reverse ( @rules ) );
+	foreach $rule ( @rules )
 	{
 		my @sprule = split ( "\ ", $rule );
 		if ( $type eq "farm" )
 		{
-			&logfile(
-					  "deleteIptRules:: running '$iptables -t $table -D $chain @sprule[0]'" );
-			my @run = `$iptables -t $table -D $chain @sprule[0]`;
+			my $iptables_command = "$iptables -t $table -D $chain $sprule[0]";
+
+			&logfile( "deleteIptRules:: running '$iptables_command'" );
+			system ( "$iptables_command >/dev/null 2>&1" );
 			&logfile( "deleteIptRules:: delete netfilter rule '$rule'" );
+
 			$status = $status + $?;
 		}
 	}
@@ -183,17 +181,12 @@ sub genIptMarkReturn($fname,$vip,$vport,$proto,$index,$state)
 {
 	my ( $fname, $vip, $vport, $proto, $index, $state ) = @_;
 
-	my $rule;
-
-	#	if ($state !~ /^up$/){
-	#		return $rule;
-	#	}
-
-	$rule =
+	my $iptables_command =
 	  "$iptables -t mangle -A PREROUTING -d $vip -p $proto -m multiport --dports $vport -j RETURN -m comment --comment ' FARM\_$fname\_$index\_ '";
 
-	return $rule;
+	&logfile( $iptables_command );
 
+	return $iptables_command;
 }
 
 #
@@ -201,22 +194,18 @@ sub genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state)
 {
 	my ( $fname, $vip, $vport, $proto, $ttl, $index, $mark, $state ) = @_;
 
-	my $rule;
-
-	#	if ($state !~ /^up$/){
-	#		return $rule;
-	#	}
-
 	my $layer = "";
+	my $iptables_command =
+	  "$iptables -t mangle -A PREROUTING -m recent --name \"\_$fname\_$mark\_sessions\" --rcheck --seconds $ttl -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
+
 	if ( $proto ne "all" )
 	{
 		$layer = "-p $proto -m multiport --dports $vport";
 	}
 
-	$rule =
-	  "$iptables -t mangle -A PREROUTING -m recent --name \"\_$fname\_$mark\_sessions\" --rcheck --seconds $ttl -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
+	&logfile( $iptables_command );
 
-	return $rule;
+	return $iptables_command;
 }
 
 #
@@ -228,10 +217,6 @@ sub genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$st
 	) = @_;
 
 	my $rule;
-
-	#	if ($state !~ /^up$/){
-	#		return $rule;
-	#	}
 
 	my $layer = "";
 	if ( $proto ne "all" )
@@ -262,6 +247,8 @@ sub genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$st
 		  "$iptables -t mangle -A PREROUTING -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
 	}
 
+	&logfile( $rule );
+
 	return $rule;
 }
 
@@ -271,31 +258,22 @@ sub genIptRedirect($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$sta
 	my ( $fname, $nattype, $index, $rip, $proto, $mark, $value, $persist, $state )
 	  = @_;
 
-	my $rule;
+	my $layer =
+	  ( $proto ne "all" )
+	  ? "-p $proto"
+	  : '';
 
-	#	if ($state !~ /^up$/){
-	#		return $rule;
-	#	}
+	$persist =
+	  ( $persist ne "none" )
+	  ? "-m recent --name \"\_$fname\_$mark\_sessions\" --set"
+	  : '';
 
-	my $layer = "";
-	if ( $proto ne "all" )
-	{
-		$layer = "-p $proto";
-	}
-
-	if ( $persist ne "none" )
-	{
-		$persist = "-m recent --name \"\_$fname\_$mark\_sessions\" --set";
-	}
-	else
-	{
-		$persist = "";
-	}
-
-	$rule =
+	my $iptables_command =
 	  "$iptables -t nat -A PREROUTING -m mark --mark $mark -j DNAT $layer --to-destination $rip $persist -m comment --comment ' FARM\_$fname\_$index\_ '";
 
-	return $rule;
+	&logfile( $iptables_command );
+
+	return $iptables_command;
 }
 
 #
@@ -303,22 +281,18 @@ sub genIptSourceNat($fname,$vip,$nattype,$index,$proto,$mark,$state)
 {
 	my ( $fname, $vip, $nattype, $index, $proto, $mark, $state ) = @_;
 
-	my $rule;
-
-	#	if ($state !~ /^up$/){
-	#		return $rule;
-	#	}
-
 	my $layer = "";
+	my $iptables_command =
+	  "$iptables -t nat -A POSTROUTING -m mark --mark $mark -j SNAT $layer --to-source $vip -m comment --comment ' FARM\_$fname\_$index\_ '";
+
 	if ( $proto ne "all" )
 	{
 		$layer = "-p $proto";
 	}
 
-	$rule =
-	  "$iptables -t nat -A POSTROUTING -m mark --mark $mark -j SNAT $layer --to-source $vip -m comment --comment ' FARM\_$fname\_$index\_ '";
+	&logfile( $iptables_command );
 
-	return $rule;
+	return $iptables_command;
 }
 
 #
@@ -326,34 +300,31 @@ sub genIptMasquerade($fname,$nattype,$index,$proto,$mark,$state)
 {
 	my ( $fname, $nattype, $index, $proto, $mark, $state ) = @_;
 
-	my $rule;
-
-	#	if ($state !~ /^up$/){
-	#		return $rule;
-	#	}
-
 	my $layer = "";
+	my $iptables_command =
+	  "$iptables -t nat -A POSTROUTING -m mark --mark $mark -j MASQUERADE $layer -m comment --comment ' FARM\_$fname\_$index\_ '";
+
 	if ( $proto ne "all" )
 	{
 		$layer = "-p $proto";
 	}
 
-	$rule =
-	  "$iptables -t nat -A POSTROUTING -m mark --mark $mark -j MASQUERADE $layer -m comment --comment ' FARM\_$fname\_$index\_ '";
+	&logfile( $iptables_command );
 
-	return $rule;
+	return $iptables_command;
 }
 
 #
 sub getConntrack($orig_src, $orig_dst, $reply_src, $reply_dst, $proto)
 {
 	( $orig_src, $orig_dst, $reply_src, $reply_dst, $proto ) = @_;
-	my @output = ();
+
 	chomp ( $orig_src );
 	chomp ( $orig_dst );
 	chomp ( $reply_src );
 	chomp ( $reply_dst );
 	chomp ( $proto );
+
 	if ( $orig_src )
 	{
 		$orig_src = "-s $orig_src";
@@ -376,9 +347,9 @@ sub getConntrack($orig_src, $orig_dst, $reply_src, $reply_dst, $proto)
 	}
 	&logfile(
 		 "$conntrack -L $orig_src $orig_dst $reply_src $reply_dst $proto 2>/dev/null" );
-	@output =
+
+	return
 	  `$conntrack -L $orig_src $orig_dst $reply_src $reply_dst $proto 2>/dev/null`;
-	return @output;
 }
 
 # do not remove this

@@ -8,11 +8,11 @@
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
-#     by the Free Software Foundation; either version 2.1 of the License, or
+#     by the Free Software Foundation; either version 2.1 of the License, or 
 #     (at your option) any later version.
 #
-#     This library is distributed in the hope that it will be useful, but
-#     WITHOUT ANY WARRANTY; without even the implied warranty of
+#     This library is distributed in the hope that it will be useful, but 
+#     WITHOUT ANY WARRANTY; without even the implied warranty of 
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
 #     General Public License for more details.
 #
@@ -34,9 +34,9 @@
 
 use File::Copy;
 
-$tglobal   = "/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tmp";
-$global    = "/usr/local/zenloadbalancer/config/global.conf";
-$globaltpl = "/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tpl";
+$tglobal="/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tmp";
+$global="/usr/local/zenloadbalancer/config/global.conf";
+$globaltpl="/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tpl";
 open FW, ">$tglobal";
 
 #use Tie::File;
@@ -44,42 +44,42 @@ open FW, ">$tglobal";
 #tie @gfile, 'Tie::File', "$global";
 #tie @tfile, 'Tie::File', "$globaltpl";
 open FTPL, "$globaltpl";
-while ( $linetpl = <FTPL> )
-{
-	$newline = $linetpl;
-	if ( $linetpl =~ /^\$/ )
+while ($linetpl=<FTPL>)
 	{
-		@vble = split ( "\=", $linetpl );
+	$newline = $linetpl;
+	if ($linetpl =~ /^\$/)
+		{
+		@vble = split("\=",$linetpl);
 		@vble[0] =~ s/\$//;
 		open FR, "$global";
 		$exit = "true";
-		while ( $line = <FR> || $exit eq "false" )
-		{
-			if ( $line =~ /^\$@vble[0]\=/ )
+		while ($line=<FR> || $exit eq "false")	
 			{
+			if ($line =~ /^\$@vble[0]\=/)
+				{
 				#$exit = "false";
-				@vblegconf = split ( "\=", $line );
-
+				@vblegconf = split("\=",$line);
 				#if (@vblegconf[1] !~ /""/ && @vble[1] !~ @vblegconf[1])
-				if ( @vblegconf[1] !~ /""/ && @vblegconf[1] !~ @vble[1] )
-				{
+				if (@vblegconf[1] !~ /""/ && @vblegconf[1] !~ @vble[1])
+					{
 					$newline = $line;
-				}
-				if ( @vble[1] =~ /\#update/i )
-				{
+					}
+				if (@vble[1] =~ /\#update/i)
+					{
 					$linetpl =~ s/\#update//i;
 					$newline = $linetpl;
+					}
 				}
 			}
+		
 		}
-
-	}
 	print FW "$newline";
-}
+	}
+
 
 close FW;
 close FR;
 close FTPL;
 
-move( $tglobal, $global );
+move($tglobal,$global);
 print "Update global.conf file done...\n";

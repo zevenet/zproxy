@@ -207,7 +207,7 @@ sub setL4FarmSessionType($session,$farm_filename)
 	use Tie::File;
 	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
-	for my $line ( @configfile )
+	for $line ( @configfile )
 	{
 		if ( $line =~ /^$farm_name\;/ )
 		{
@@ -985,6 +985,8 @@ sub _runL4FarmStart($farm_name,$writeconf,$status)
 {
 	my ( $farm_name, $writeconf, $status ) = @_;
 
+	return $status if ( $status == -1 );
+
 	my $farm_filename = &getFarmFile( $farm_name );
 
 	if ( $writeconf eq "true" )
@@ -1004,205 +1006,220 @@ sub _runL4FarmStart($farm_name,$writeconf,$status)
 	}
 
 	# Apply changes online
-	if ( $status != -1 )
+
+	# Set fw rules calculating the $nattype and $protocol
+	# for every server of the farm do:
+	#   set mark rules for matched connections
+	#   set rule for nattype
+	$status = 0;
+	my $nattype = &getFarmNatType( $farm_name );
+	my $lbalg   = &getFarmAlgorithm( $farm_name );
+	my $vip     = &getFarmVip( "vip", $farm_name );
+	my $vport   = &getFarmVip( "vipp", $farm_name );
+	my $vproto  = &getFarmProto( $farm_name );
+	my $persist = &getFarmPersistence( $farm_name );
+	my @pttl    = &getFarmMaxClientTime( $farm_name );
+	my $ttl     = @pttl[0];
+	my $proto   = "";
+
+	my @run = &getFarmServers( $farm_name );
+	my @tmangle;
+	my @tnat;
+	my @tmanglep;
+	my @tsnat;
+	my @traw;
+
+	my $prob = 0;
+	foreach my $lservers ( @run )
 	{
-		# Set fw rules calculating the $nattype and $protocol
-		# for every server of the farm do:
-		#   set mark rules for matched connections
-		#   set rule for nattype
-		my $status  = 0;
-		my $nattype = &getFarmNatType( $farm_name );
-		my $lbalg   = &getFarmAlgorithm( $farm_name );
-		my $vip     = &getFarmVip( "vip", $farm_name );
-		my $vport   = &getFarmVip( "vipp", $farm_name );
-		my $vproto  = &getFarmProto( $farm_name );
-		my $persist = &getFarmPersistence( $farm_name );
-		my @pttl    = &getFarmMaxClientTime( $farm_name );
-		my $ttl     = @pttl[0];
-		my $proto   = "";
-
-		my @run = &getFarmServers( $farm_name );
-		my @tmangle;
-		my @tnat;
-		my @tmanglep;
-		my @tsnat;
-		my @traw;
-
-		my $prob = 0;
-		foreach my $lservers ( @run )
+		my @serv = split ( "\;", $lservers );
+		if ( @serv[6] =~ /up/ )
 		{
-			my @serv = split ( "\;", $lservers );
-			if ( @serv[6] =~ /up/ )
+			$prob = $prob + @serv[4];
+		}
+	}
+
+	if ( $vport eq "*" )
+	{
+		$vport = "0:65535";
+	}
+
+	# Load L4 scheduler if needed
+	if ( $lbalg eq "leastconn" && -e "$l4sd" )
+	{
+		system ( "$l4sd & > /dev/null" );
+	}
+
+	# Load required modules
+	if ( $vproto eq "sip" || $vproto eq "tftp" )
+	{
+		$status = &loadL4Modules( $vproto );
+		$proto  = "udp";
+	}
+	elsif ( $vproto eq "ftp" )
+	{
+		$status = &loadL4Modules( $vproto );
+		$proto  = "tcp";
+	}
+	else
+	{
+		$proto = $vproto;
+	}
+	my $bestprio = 1000;
+	my @srvprio;
+
+	foreach my $lservers ( @run )
+	{
+		my @serv = split ( "\;", $lservers );
+		if ( @serv[6] =~ /up/ || $lbalg eq "leastconn" )
+		{    # TMP: leastconn dynamic backend status check
+			if ( $lbalg eq "weight" || $lbalg eq "leastconn" )
 			{
-				$prob = $prob + @serv[4];
-			}
-		}
-
-		if ( $vport eq "*" )
-		{
-			$vport = "0:65535";
-		}
-
-		# Load L4 scheduler if needed
-		if ( $lbalg eq "leastconn" && -e "$l4sd" )
-		{
-			system ( "$l4sd & > /dev/null" );
-		}
-
-		# Load required modules
-		if ( $vproto eq "sip" || $vproto eq "tftp" )
-		{
-			$status = &loadL4Modules( $vproto );
-			$proto  = "udp";
-		}
-		elsif ( $vproto eq "ftp" )
-		{
-			$status = &loadL4Modules( $vproto );
-			$proto  = "tcp";
-		}
-		else
-		{
-			$proto = $vproto;
-		}
-		my $bestprio = 1000;
-		my @srvprio;
-
-		foreach my $lservers ( @run )
-		{
-			my @serv = split ( "\;", $lservers );
-			if ( @serv[6] =~ /up/ || $lbalg eq "leastconn" )
-			{    # TMP: leastconn dynamic backend status check
-				if ( $lbalg eq "weight" || $lbalg eq "leastconn" )
+				my $port = @serv[2];
+				my $rip  = @serv[1];
+				if ( @serv[2] ne "" && $proto ne "all" )
 				{
-					my $port = @serv[2];
-					my $rip  = @serv[1];
-					if ( @serv[2] ne "" && $proto ne "all" )
-					{
-						$rip = "$rip\:$port";
-					}
-					my $tag = &genIptMark(
-										   $farm_name, $nattype, $lbalg,   $vip,
-										   $vport,     $proto,   @serv[0], @serv[3],
-										   @serv[4],   @serv[6], $prob
-					);
+					$rip = "$rip\:$port";
+				}
+				my $tag = &genIptMark(
+									   $farm_name, $nattype, $lbalg,   $vip,
+									   $vport,     $proto,   @serv[0], @serv[3],
+									   @serv[4],   @serv[6], $prob
+				);
 
-					if ( $persist ne "none" )
+				if ( $persist ne "none" )
+				{
+					my $tagp =
+					  &genIptMarkPersist( $farm_name, $vip, $vport, $proto, $ttl, @serv[0],
+										  @serv[3], @serv[6] );
+					push ( @tmanglep, $tagp );
+				}
+
+				# dnat rules
+				my $red = &genIptRedirect( $farm_name, $nattype, @serv[0], $rip, $proto,
+										   @serv[3],   @serv[4], $persist, @serv[6] );
+				push ( @tnat, $red );
+
+				if ( $nattype eq "nat" )
+				{
+					my $ntag;
+					if ( $vproto eq "sip" )
 					{
-						my $tagp =
-						  &genIptMarkPersist( $farm_name, $vip, $vport, $proto, $ttl, @serv[0],
-											  @serv[3], @serv[6] );
-						push ( @tmanglep, $tagp );
+						$ntag =
+						  &genIptSourceNat( $farm_name, $vip,     $nattype, @serv[0],
+											$proto,     @serv[3], @serv[6] );
+					}
+					else
+					{
+						$ntag =
+						  &genIptMasquerade( $farm_name, $nattype, @serv[0],
+											 $proto, @serv[3], @serv[6] );
 					}
 
-					# dnat rules
-					my $red = &genIptRedirect( $farm_name, $nattype, @serv[0], $rip, $proto,
-											   @serv[3],   @serv[4], $persist, @serv[6] );
-					push ( @tnat, $red );
-
-					if ( $nattype eq "nat" )
-					{
-						my $ntag;
-						if ( $vproto eq "sip" )
-						{
-							$ntag = &genIptSourceNat( $farm_name, $vip,     $nattype, @serv[0],
-													  $proto,     @serv[3], @serv[6] );
-						}
-						else
-						{
-							$ntag =
-							  &genIptMasquerade( $farm_name, $nattype, @serv[0], $proto, @serv[3],
-												 @serv[6] );
-						}
-
-						push ( @tsnat, $ntag );
-					}
-
-					push ( @tmangle, $tag );
-
-					$prob = $prob - @serv[4];
+					push ( @tsnat, $ntag );
 				}
 
-				if ( $lbalg eq "prio" )
+				push ( @tmangle, $tag );
+
+				$prob = $prob - @serv[4];
+			}
+
+			if ( $lbalg eq "prio" )
+			{
+				if ( @serv[5] ne "" && @serv[5] < $bestprio )
 				{
-					if ( @serv[5] ne "" && @serv[5] < $bestprio )
-					{
-						@srvprio  = @serv;
-						$bestprio = @serv[5];
-					}
+					@srvprio  = @serv;
+					$bestprio = @serv[5];
 				}
 			}
 		}
+	}
 
-		if ( @srvprio && $lbalg eq "prio" )
+	if ( @srvprio && $lbalg eq "prio" )
+	{
+		my @run = `echo 10 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream`;
+		my @run = `echo 5 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout`;
+
+		my $port = @srvprio[2];
+		my $rip  = @srvprio[1];
+		if ( @srvprio[2] ne "" )
 		{
-			my @run = `echo 10 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream`;
-			my @run = `echo 5 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout`;
-
-			my $port = @srvprio[2];
-			my $rip  = @srvprio[1];
-			if ( @srvprio[2] ne "" )
-			{
-				$rip = "$rip\:$port";
-			}
-			my $tag = &genIptMark(
-								   $farm_name,  $nattype,    $lbalg,      $vip,
-								   $vport,      $proto,      @srvprio[0], @srvprio[3],
-								   @srvprio[4], @srvprio[6], $prob
-			);
-
-			# dnat rules
-			my $red = &genIptRedirect(
-									   $farm_name,  $nattype, @srvprio[0],
-									   $rip,        $proto,   @srvprio[3],
-									   @srvprio[4], $persist, @srvprio[6]
-			);
-
-			if ( $persist ne "none" )
-			{
-				my $tagp =
-				  &genIptMarkPersist( $farm_name, $vip, $vport, $proto, $ttl, @srvprio[0],
-									  @srvprio[3], @srvprio[6] );
-				push ( @tmanglep, $tagp );
-			}
-
-			if ( $nattype eq "nat" )
-			{
-				my $ntag;
-				if ( $vproto eq "sip" )
-				{
-					$ntag =
-					  &genIptSourceNat( $farm_name, $vip, $nattype, @srvprio[0], $proto,
-										@srvprio[3], @srvprio[6] );
-				}
-				else
-				{
-					$ntag =
-					  &genIptMasquerade( $farm_name, $nattype,    @srvprio[0],
-										 $proto,     @srvprio[3], @srvprio[6] );
-				}
-				push ( @tsnat, $ntag );
-			}
-
-			push ( @tmangle, $tag );
-			push ( @tnat,    $red );
+			$rip = "$rip\:$port";
 		}
+		my $tag = &genIptMark(
+							   $farm_name,  $nattype,    $lbalg,      $vip,
+							   $vport,      $proto,      @srvprio[0], @srvprio[3],
+							   @srvprio[4], @srvprio[6], $prob
+		);
 
-		foreach $nraw ( @traw )
+		# dnat rules
+		my $red = &genIptRedirect(
+								   $farm_name,  $nattype, @srvprio[0],
+								   $rip,        $proto,   @srvprio[3],
+								   @srvprio[4], $persist, @srvprio[6]
+		);
+
+		if ( $persist ne "none" )
 		{
-			if ( $nraw ne "" )
-			{
-				&logfile( "running $nraw" );
-				my @run = `$nraw`;
-				if ( $? != 0 )
-				{
-					&logfile( "last command failed!" );
-					$status = -1;
-				}
-			}
+			my $tagp =
+			  &genIptMarkPersist( $farm_name, $vip, $vport, $proto, $ttl, @srvprio[0],
+								  @srvprio[3], @srvprio[6] );
+			push ( @tmanglep, $tagp );
 		}
 
-		@tmangle = reverse ( @tmangle );
-		foreach $ntag ( @tmangle )
+		if ( $nattype eq "nat" )
+		{
+			my $ntag;
+			if ( $vproto eq "sip" )
+			{
+				$ntag =
+				  &genIptSourceNat( $farm_name, $vip, $nattype, @srvprio[0], $proto,
+									@srvprio[3], @srvprio[6] );
+			}
+			else
+			{
+				$ntag = &genIptMasquerade( $farm_name, $nattype,    @srvprio[0],
+										   $proto,     @srvprio[3], @srvprio[6] );
+			}
+			push ( @tsnat, $ntag );
+		}
+
+		push ( @tmangle, $tag );
+		push ( @tnat,    $red );
+	}
+
+	foreach $nraw ( @traw )
+	{
+		if ( $nraw ne "" )
+		{
+			&logfile( "running $nraw" );
+			my @run = `$nraw`;
+			if ( $? != 0 )
+			{
+				&logfile( "last command failed!" );
+				$status = -1;
+			}
+		}
+	}
+
+	@tmangle = reverse ( @tmangle );
+	foreach $ntag ( @tmangle )
+	{
+		if ( $ntag ne "" )
+		{
+			&logfile( "running $ntag" );
+			my @run = `$ntag`;
+			if ( $? != 0 )
+			{
+				&logfile( "last command failed!" );
+				$status = -1;
+			}
+		}
+	}
+
+	if ( $persist ne "none" )
+	{
+		foreach $ntag ( @tmanglep )
 		{
 			if ( $ntag ne "" )
 			{
@@ -1215,73 +1232,59 @@ sub _runL4FarmStart($farm_name,$writeconf,$status)
 				}
 			}
 		}
+	}
 
-		if ( $persist ne "none" )
+	foreach $nred ( @tnat )
+	{
+		if ( $nred ne "" )
 		{
-			foreach $ntag ( @tmanglep )
+			&logfile( "running $nred" );
+			my @run = `$nred`;
+			if ( $? != 0 )
 			{
-				if ( $ntag ne "" )
-				{
-					&logfile( "running $ntag" );
-					my @run = `$ntag`;
-					if ( $? != 0 )
-					{
-						&logfile( "last command failed!" );
-						$status = -1;
-					}
-				}
+				&logfile( "last command failed!" );
+				$status = -1;
 			}
 		}
+	}
 
-		foreach $nred ( @tnat )
+	foreach $nred ( @tsnat )
+	{
+		if ( $nred ne "" )
 		{
-			if ( $nred ne "" )
+			&logfile( "running $nred" );
+			my @run = `$nred`;
+			if ( $? != 0 )
 			{
-				&logfile( "running $nred" );
-				my @run = `$nred`;
-				if ( $? != 0 )
-				{
-					&logfile( "last command failed!" );
-					$status = -1;
-				}
+				&logfile( "last command failed!" );
+				$status = -1;
 			}
 		}
+	}
 
-		foreach $nred ( @tsnat )
-		{
-			if ( $nred ne "" )
-			{
-				&logfile( "running $nred" );
-				my @run = `$nred`;
-				if ( $? != 0 )
-				{
-					&logfile( "last command failed!" );
-					$status = -1;
-				}
-			}
-		}
+	# Enable IP forwarding
+	&setIpForward( "true" );
 
-		# Enable IP forwarding
-		&setIpForward( "true" );
-
-		# Enable active l4 file
-		if ( $status != -1 )
-		{
-			open FI, ">$piddir\/$farm_name\_$farm_type.pid";
-			close FI;
-		}
+	# Enable active l4 file
+	if ( $status != -1 )
+	{
+		open FI, ">$piddir\/$farm_name\_l4xnat.pid";
+		close FI;
 	}
 
 	return $status;
 }
 
 # Stop Farm rutine
-sub _runL4FarmStop($farm_name,$writeconf)
+sub _runL4FarmStop($farm_name,$writeconf, $status)
 {
-	my ( $farm_name, $writeconf ) = @_;
+	my ( $farm_name, $writeconf, $status ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $status        = -1;
+	my $status =
+	  ( $writeconf eq "true" )
+	  ? -1
+	  : 0;
 
 	if ( $writeconf eq "true" )
 	{
@@ -1318,14 +1321,10 @@ sub _runL4FarmStop($farm_name,$writeconf)
 		  &deleteIptRules( "farm", $farm_name, "nat", "POSTROUTING", @allrules );
 
 		# Disable active l4xnat file
-		unlink ( "$piddir\/$farm_name\_$farm_type.pid" );
-		if ( -e "$piddir\/$farm_name\_$farm_type.pid" )
+		unlink ( "$piddir\/$farm_name\_l4xnat.pid" );
+		if ( -e "$piddir\/$farm_name\_l4xnat.pid" )
 		{
 			$status = -1;
-		}
-		else
-		{
-			$status = 0;
 		}
 	}
 

@@ -99,11 +99,11 @@ open FR, "<$filecluster";
 
 if ( -e $filecluster && ( grep ( /UP/, @file ) ) )
 {
-	if ( &activenode() eq "true" )
+	if ( &isClusterLocalNodeActive() )
 	{
 		print "Cluster: <b>this node is master</b>";
 	}
-	elsif ( `ps aux | grep "ucarp" | grep "\\-k 100" | grep -v grep` )
+	elsif ( &isClusterNodeInMaintenanceMode() )
 	{
 		print
 		  "<img src=\"img/icons/small/exclamation_octagon_fram.png\" title=\"Changes will not be replicated!\">Cluster: <b>this node is on maintenance</b>";

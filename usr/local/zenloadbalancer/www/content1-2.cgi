@@ -96,15 +96,9 @@ if ( $action eq "startfarm" )
 
 if ( $action eq "stopfarm" )
 {
-	my $stat = &runFarmStop( $farmname, "true" );
-	if ( $stat == 0 )
-	{
-		&successmsg( "The Farm $farmname is now disabled" );
-	}
-	else
-	{
-		&errormsg( "The Farm $farmname is not disabled" );
-	}
+	&runFarmStop( $farmname, "true" ) == 0
+	  ? &successmsg( "The Farm $farmname is now disabled" )
+	  : &errormsg( "The Farm $farmname is not disabled" );
 }
 
 if ( $action =~ "^editfarm" || $editfarm )
@@ -207,6 +201,7 @@ for $file ( @files )
 		if ( $type ne "datalink" )
 		{
 			$nodl_farms = "true";
+			last;
 		}
 	}
 }
@@ -236,6 +231,8 @@ foreach $file ( @files )
 		 || $farmname eq ""
 		 || $action eq "deletefarm"
 		 || $action =~ /^Save|^Cancel/ )
+
+#~ if ( ( $action =~ /^editfarm/ && $farmname eq $name ) or ($action ne 'editfarm') )
 	{
 		$type = &getFarmType( $name );
 		$globalfarm++;

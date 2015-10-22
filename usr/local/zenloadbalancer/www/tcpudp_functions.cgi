@@ -694,13 +694,13 @@ sub getFarmBlacklist($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $farm_type = &getFarmType( $farm_name );
-	my $file      = &getFarmFile( $farm_name );
-	my $output    = -1;
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		open FI, "$configdir/$file";
+		open FI, "$configdir/$farm_filename";
 		my $exit = "false";
 		while ( $line = <FI> || $exit eq "false" )
 		{
@@ -813,13 +813,13 @@ sub getFarmCommand($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $farm_type = &getFarmType( $farm_name );
-	my $file      = &getFarmFile( $farm_name );
-	my $output    = -1;
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
-		open FI, "$configdir/$file";
+		open FI, "$configdir/$farm_filename";
 		my $exit = "false";
 		while ( $line = <FI> || $exit eq "false" )
 		{
@@ -1008,7 +1008,7 @@ sub getTcpUdpFarmBackendsStatus($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
 
-	my @backends_data = -1;
+	my @backends_data;
 
 	if ( !@content )
 	{
@@ -1237,7 +1237,7 @@ sub getFarmBackendsClientsActives($farm_name,@content)
 	my ( $farm_name, @content ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
-	my @output    = -1;
+	my @s_data;
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
@@ -1248,7 +1248,6 @@ sub getFarmBackendsClientsActives($farm_name,@content)
 
 		my $line;
 		my @sess;
-		my @s_data;
 		my $ac_header = 0;
 		my $tr        = 0;
 		my $i         = -1;
@@ -1292,12 +1291,10 @@ sub getFarmBackendsClientsActives($farm_name,@content)
 			{
 				last;
 			}
-
 		}
-		@output = @s_data;
 	}
 
-	return @output;
+	return @s_data;
 }
 
 #function that renames a farm

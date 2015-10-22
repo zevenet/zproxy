@@ -173,6 +173,8 @@ sub _runDatalinkFarmStart($farm_name, $writeconf, $status)
 {
 	my ( $farm_name, $writeconf, $status ) = @_;
 
+	return $status if ( $status == -1 );
+
 	my $farm_filename = &getFarmFile( $farm_name );
 
 	if ( $writeconf eq "true" )
@@ -205,84 +207,83 @@ sub _runDatalinkFarmStart($farm_name, $writeconf, $status)
 	untie @cron_file;
 
 	# Apply changes online
-	if ( $status != -1 )
+
+	# Set default uplinks as gateways
+	my $iface     = &getFarmInterface( $farm_name );
+	my @eject     = `$ip_bin route del default table table_$iface 2> /dev/null`;
+	my @servers   = &getFarmServers( $farm_name );
+	my $algorithm = &getFarmAlgorithm( $farm_name );
+	my $routes    = "";
+	if ( $algorithm eq "weight" )
 	{
-		# Set default uplinks as gateways
-		my $iface     = &getFarmInterface( $farm_name );
-		my @eject     = `$ip_bin route del default table table_$iface 2> /dev/null`;
-		my @servers   = &getFarmServers( $farm_name );
-		my $algorithm = &getFarmAlgorithm( $farm_name );
-		my $routes    = "";
-		if ( $algorithm eq "weight" )
-		{
 
-			foreach $serv ( @servers )
+		foreach $serv ( @servers )
+		{
+			chomp ( $serv );
+			my @line = split ( "\;", $serv );
+			my $stat = @line[5];
+			chomp ( $stat );
+			my $weight = 1;
+			if ( @line[3] ne "" )
 			{
-				chomp ( $serv );
-				my @line = split ( "\;", $serv );
-				my $stat = @line[5];
-				chomp ( $stat );
-				my $wei = 1;
-				if ( @line[3] ne "" )
-				{
-					$wei = @line[3];
-				}
-				if ( $stat eq "up" )
-				{
-					$routes = "$routes nexthop via @line[1] dev @line[2] weight $wei";
-				}
+				$weight = @line[3];
+			}
+			if ( $stat eq "up" )
+			{
+				$routes = "$routes nexthop via @line[1] dev @line[2] weight $weight";
 			}
 		}
-		if ( $algorithm eq "prio" )
-		{
-			my $bestprio = 100;
-			foreach $serv ( @servers )
-			{
-				chomp ( $serv );
-				my @line = split ( "\;", $serv );
-				my $stat = @line[5];
-				my $prio = @line[4];
-				chomp ( $stat );
-				if (    $stat eq "up"
-					 && $prio > 0
-					 && $prio < 10
-					 && $prio < $bestprio )
-				{
-					$routes   = "nexthop via @line[1] dev @line[2] weight 1";
-					$bestprio = $prio;
-				}
-			}
-		}
-		if ( $routes ne "" )
-		{
-			&logfile(
-				  "running $ip_bin route add default scope global table table_$iface $routes" );
-			my @eject =
-			  `$ip_bin route add default scope global table table_$iface $routes 2> /dev/null`;
-			$status = $?;
-		}
-		else
-		{
-			$status = 0;
-		}
-
-		# Set policies to the local network
-		my $ip = &iponif( $iface );
-		if ( $ip =~ /\./ )
-		{
-			my $ipmask = &maskonif( $if );
-			my ( $net, $mask ) = ipv4_network( "$ip / $ipmask" );
-			&logfile( "running $ip_bin rule add from $net/$mask lookup table_$iface" );
-			my @eject = `$ip_bin rule add from $net/$mask lookup table_$iface 2> /dev/null`;
-		}
-
-		# Enable IP forwarding
-		&setIpForward( "true" );
-
-		# Enable active datalink file
-		open FI, ">$piddir\/$farm_name\_datalink.pid";
-		close FI;
 	}
+	if ( $algorithm eq "prio" )
+	{
+		my $bestprio = 100;
+		foreach $serv ( @servers )
+		{
+			chomp ( $serv );
+			my @line = split ( "\;", $serv );
+			my $stat = @line[5];
+			my $prio = @line[4];
+			chomp ( $stat );
+			if (    $stat eq "up"
+				 && $prio > 0
+				 && $prio < 10
+				 && $prio < $bestprio )
+			{
+				$routes   = "nexthop via @line[1] dev @line[2] weight 1";
+				$bestprio = $prio;
+			}
+		}
+	}
+	if ( $routes ne "" )
+	{
+		my $ip_command =
+		  "$ip_bin route add default scope global table table_$iface $routes";
+
+		&logfile( "running $ip_command" );
+		$status = system ( "$ip_command >/dev/null 2>&1" );
+	}
+	else
+	{
+		$status = 0;
+	}
+
+	# Set policies to the local network
+	my $ip = &iponif( $iface );
+	if ( $ip =~ /\./ )
+	{
+		my $ipmask = &maskonif( $if );
+		my ( $net, $mask ) = ipv4_network( "$ip / $ipmask" );
+		&logfile( "running $ip_bin rule add from $net/$mask lookup table_$iface" );
+		my @eject = `$ip_bin rule add from $net/$mask lookup table_$iface 2> /dev/null`;
+	}
+
+	# Enable IP forwarding
+	&setIpForward( "true" );
+
+	# Enable active datalink file
+	open FI, ">$piddir\/$farm_name\_datalink.pid";
+	close FI;
+
 	return $status;
 }
 
@@ -292,7 +293,10 @@ sub _runDatalinkFarmStop($farm_name,$writeconf)
 	my ( $farm_name, $writeconf ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $status        = -1;
+	my $status =
+	  ( $writeconf eq "true" )
+	  ? -1
+	  : 0;
 
 	if ( $writeconf eq "true" )
 	{
@@ -316,6 +320,8 @@ sub _runDatalinkFarmStop($farm_name,$writeconf)
 	tie @cron_file, 'Tie::File', "/etc/cron.d/zenloadbalancer";
 	@cron_file = grep !/\# \_\_$farmname\_\_/, @cron_file;
 	untie @cron_file;
+
+	$status = 0 if $writeconf eq 'false';
 
 	# Apply changes online
 	if ( $status != -1 )
@@ -342,11 +348,8 @@ sub _runDatalinkFarmStop($farm_name,$writeconf)
 		{
 			$status = -1;
 		}
-		else
-		{
-			$status = 0;
-		}
 	}
+
 	return $status;
 }
 
@@ -516,7 +519,7 @@ sub getDatalinkFarmBackendsStatus(@content)
 {
 	my ( @content ) = @_;
 
-	my @backends_data = -1;
+	my @backends_data;
 
 	foreach my $server ( @content )
 	{
@@ -565,7 +568,7 @@ sub getDatalinkFarmBackendStatusCtl($farm_name)
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my @output        = -1;
+	my @output;
 
 	tie my @content, 'Tie::File', "$configdir\/$farm_filename";
 	@output = grep /^\;server\;/, @content;

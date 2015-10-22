@@ -964,7 +964,7 @@ if ( $type eq "https" )
 		  "<input type=\"hidden\" name=\"action\" value=\"editfarm-httpscipherscustom\">";
 		print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 		print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-		print " <input type=\"text\" value=\"$cipher\" size=\"50\" name=\"cipherc\">";
+		print " <input type=\"text\" value=\"$cipher\" size=\"35\" name=\"cipherc\">";
 
 		print
 		  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
@@ -981,7 +981,7 @@ print "<br>";
 @listinterfaces = &listallips();
 
 #print @listinterfaces;
-$clrip = &clrip();
+$clrip = &getClusterRealIp();
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print
@@ -1722,8 +1722,6 @@ print "</tr>";
 print "</tbody></table>";
 print "<div style=\"clear:both;\"></div>";
 print "</div>";
-
-#if ($action eq "editfarm-editserver" || $action eq "editfarm-addserver"){ print "</form>";}
 
 #end table
 

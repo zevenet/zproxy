@@ -857,7 +857,7 @@ print "<br>";
 print
   "<b>Farm Virtual IP and Virtual port</b> <font size=1> *service will be restarted</font><b>.</b>";
 @listinterfaces = &listallips();
-$clrip          = &clrip();
+$clrip          = &getClusterRealIp();
 $guiip          = &GUIip();
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
