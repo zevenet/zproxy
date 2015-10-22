@@ -36,7 +36,11 @@ sub checkport($host,$port)
 
 	#use strict;
 	use IO::Socket;
-	my $sock = new IO::Socket::INET( PeerAddr => $host, PeerPort => $port, Proto => 'tcp' );
+	my $sock = new IO::Socket::INET(
+									 PeerAddr => $host,
+									 PeerPort => $port,
+									 Proto    => 'tcp'
+	);
 
 	if ( $sock )
 	{
@@ -98,13 +102,19 @@ sub listactiveips($class)
 			#if ( $bc && ($bc !~ /^0\.0\.0\.0$/) )
 			#cluster ip will not be listed
 			$clrip = &clrip();
-			if ( $bc && $ip !~ /^127\.0\.0\.1$/ && $ip ne $clrip && $ip ne &GUIip() )
+			if (    $bc
+				 && $ip !~ /^127\.0\.0\.1$/
+				 && $ip ne $clrip
+				 && $ip ne &GUIip() )
 			{
-				if ( !$netmask )            { $netmask = "-"; }
-				if ( !$ip )                 { $ip      = "-"; }
-				if ( !$hwaddr )             { $hwaddr  = "-"; }
-				if ( $gw )                  { $gw      = "-"; }
-				if ( $flags & IFF_RUNNING ) { $nvips   = $nvips . " " . $if . "->" . $ip; }
+				if ( !$netmask ) { $netmask = "-"; }
+				if ( !$ip )      { $ip      = "-"; }
+				if ( !$hwaddr )  { $hwaddr  = "-"; }
+				if ( $gw )       { $gw      = "-"; }
+				if ( $flags & IFF_RUNNING )
+				{
+					$nvips = $nvips . " " . $if . "->" . $ip;
+				}
 			}
 		}
 	}
@@ -260,8 +270,11 @@ sub addlocalnet($if)
 	{
 		$ipmask = &maskonif( $if );
 		( $net, $mask ) = ipv4_network( "$ip / $ipmask" );
-		&logfile( "running '$ip_bin route add $net/$mask dev $if src $ip table table_$if $routeparams' " );
-		@eject = `$ip_bin route add $net/$mask dev $if src $ip table table_$if $routeparams`;
+		&logfile(
+			"running '$ip_bin route add $net/$mask dev $if src $ip table table_$if $routeparams' "
+		);
+		@eject =
+		  `$ip_bin route add $net/$mask dev $if src $ip table table_$if $routeparams`;
 	}
 }
 
@@ -303,8 +316,11 @@ sub applyRoutes($table,$if,$gw)
 			&addlocalnet( $if );
 			if ( $gw !~ /^$/ )
 			{
-				&logfile( "running '$ip_bin route add default via $gw dev $if table table_$if $routeparams' " );
-				@eject   = `$ip_bin route add default via $gw dev $if table table_$if $routeparams 2> /dev/null`;
+				&logfile(
+					"running '$ip_bin route add default via $gw dev $if table table_$if $routeparams' "
+				);
+				@eject =
+				  `$ip_bin route add default via $gw dev $if table table_$if $routeparams 2> /dev/null`;
 				$statusR = $?;
 			}
 			if ( &isRule( $ip, $if ) eq 0 )
@@ -321,7 +337,7 @@ sub applyRoutes($table,$if,$gw)
 			if ( $gw !~ /^$/ )
 			{
 				&logfile( "running '$ip_bin route add default via $gw dev $if $routeparams' " );
-				@eject   = `$ip_bin route add default via $gw dev $if $routeparams 2> /dev/null`;
+				@eject = `$ip_bin route add default via $gw dev $if $routeparams 2> /dev/null`;
 				$statusR = $?;
 				tie @contents, 'Tie::File', "$globalcfg";
 				for ( @contents )
@@ -426,8 +442,10 @@ sub createIf($if)
 
 		# enable the parent physical interface
 		$status = upIf( $iface[0] );
-		&logfile( "running '$ip_bin link add link $iface[0] name $if type vlan id $iface[1]' " );
-		my @eject = `$ip_bin link add link $iface[0] name $if type vlan id $iface[1] 2> /dev/null`;
+		&logfile(
+			 "running '$ip_bin link add link $iface[0] name $if type vlan id $iface[1]' " );
+		my @eject =
+		  `$ip_bin link add link $iface[0] name $if type vlan id $iface[1] 2> /dev/null`;
 		$status = $?;
 	}
 	return $status;
@@ -616,7 +634,8 @@ sub getNetstatFilter($proto,$state,$ninfo,$fpid,@netstat)
 	{
 		$proto = "";
 	}
-	my @output = grep { /${proto}.*\ ${ninfo}\ .*\ ${state}.*${lfpid}/ } @netstat;
+	my @output =
+	  grep { /${proto}.*\ ${ninfo}\ .*\ ${state}.*${lfpid}/ } @netstat;
 	return @output;
 }
 

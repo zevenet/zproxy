@@ -186,17 +186,27 @@ sub delCert($certname)
 #Create CSR file
 sub createCSR($certname, $certfqdn, $certcountry, $certstate, $certlocality, $certorganization, $certdivision, $certmail, $certkey, $certpassword)
 {
-	( $certname, $certfqdn, $certcountry, $certstate, $certlocality, $certorganization, $certdivision, $certmail, $certkey, $certpassword ) = @_;
+	(
+	   $certname,     $certfqdn,         $certcountry,  $certstate,
+	   $certlocality, $certorganization, $certdivision, $certmail,
+	   $certkey,      $certpassword
+	) = @_;
 	##sustituir los espacios por guiones bajos en el nombre de archivo###
 	if ( $certpassword eq "" )
 	{
-		&logfile( "Creating CSR: $openssl req -nodes -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\"" );
-		my @opensslout = `$openssl req -nodes -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj "/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail" 2> /dev/null`;
+		&logfile(
+			"Creating CSR: $openssl req -nodes -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\""
+		);
+		my @opensslout =
+		  `$openssl req -nodes -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj "/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail" 2> /dev/null`;
 	}
 	else
 	{
-		my @opensslout = `$openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out  $configdir/$certname.csr -batch -subj "/C=$certcountry/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail" 2> /dev/null`;
-		&logfile( "Creating CSR: $openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\"" );
+		my @opensslout =
+		  `$openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out  $configdir/$certname.csr -batch -subj "/C=$certcountry/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail" 2> /dev/null`;
+		&logfile(
+			"Creating CSR: $openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\""
+		);
 	}
 }
 
@@ -209,9 +219,12 @@ sub createMenuCert($action,$certfile)
 	{
 		&uploadCertFromCSR( $certfile );
 	}
-	print "<a href=\"index.cgi?id=$id&action=deletecert&certname=$certfile\"><img src=\"img/icons/small/page_white_delete.png\" title=\"Delete $certtype $certfile\" onclick=\"return confirm('Are you sure you want to delete the certificate: $certfile?')\"></a> ";
-	print "<a href=\"index.cgi?id=$id&action=View_Cert&certname=$certfile\"><img src=\"img/icons/small/page_white_find.png\" title=\"View $certtype $certfile content\"></a> ";
-	print "<a href=\"downloadcerts.cgi?certname=$certfile\" target=\"_blank\"><img src=\"img/icons/small/page_white_put.png\" title=\"Download $certtype $certfile\"></a> ";
+	print
+	  "<a href=\"index.cgi?id=$id&action=deletecert&certname=$certfile\"><img src=\"img/icons/small/page_white_delete.png\" title=\"Delete $certtype $certfile\" onclick=\"return confirm('Are you sure you want to delete the certificate: $certfile?')\"></a> ";
+	print
+	  "<a href=\"index.cgi?id=$id&action=View_Cert&certname=$certfile\"><img src=\"img/icons/small/page_white_find.png\" title=\"View $certtype $certfile content\"></a> ";
+	print
+	  "<a href=\"downloadcerts.cgi?certname=$certfile\" target=\"_blank\"><img src=\"img/icons/small/page_white_put.png\" title=\"Download $certtype $certfile\"></a> ";
 
 	#&downloadCert($certfile);
 }
@@ -229,7 +242,8 @@ sub uploadCertFromCSR($certfile)
 	        </script>";
 
 	#print the information icon with the popup with info.
-	print "<a href=\"uploadcertsfromcsr.cgi?certname=$certfile\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/page_white_get.png' title=\"Upload certificate for CSR $certfile\"></a> ";
+	print
+	  "<a href=\"uploadcertsfromcsr.cgi?certname=$certfile\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/page_white_get.png' title=\"Upload certificate for CSR $certfile\"></a> ";
 }
 
 sub uploadPEMCerts($certfile)
@@ -245,7 +259,8 @@ sub uploadPEMCerts($certfile)
 	        </script>";
 
 	#print the information icon with the popup with info.
-	print "<a href=\"uploadcerts.cgi\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/page_white_get.png' title=\"Upload .pem certificate\"></a> ";
+	print
+	  "<a href=\"uploadcerts.cgi\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/page_white_get.png' title=\"Upload .pem certificate\"></a> ";
 }
 
 sub downloadCert($certfile)
@@ -261,7 +276,8 @@ sub downloadCert($certfile)
 	        </script>";
 
 	#print the information icon with the popup with info.
-	print "<a href=\"downloadcerts.cgi?certname=$certfile\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/page_white_put.png' title=\"Download $certfile\"></a> ";
+	print
+	  "<a href=\"downloadcerts.cgi?certname=$certfile\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/page_white_put.png' title=\"Download $certfile\"></a> ";
 }
 
 sub getCertData($certfile)
@@ -294,7 +310,7 @@ sub createPemFromKeyCRT($keyfile,$crtfile,$certautfile,$tmpdir)
 		# Open key files
 		open FILE, "<", $file or die $!;
 
-		# Now get every line in the file, and attach it to the full ‘buffer’ variable.
+	  # Now get every line in the file, and attach it to the full ‘buffer’ variable.
 		while ( my $line = <FILE> )
 		{
 			$buff .= $line;

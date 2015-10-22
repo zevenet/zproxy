@@ -277,7 +277,9 @@ sub getFarmGSLBConfigIsOK($ffile)
 
 	my $output = -1;
 
-	&logfile( "getFarmGSLBConfigIsOK(): Executing $gdnsd -c $configdir\/$ffile/etc checkconf " );
+	&logfile(
+		"getFarmGSLBConfigIsOK(): Executing $gdnsd -c $configdir\/$ffile/etc checkconf "
+	);
 	my $run = `$gdnsd -c $configdir\/$ffile/etc checkconf 2>&1`;
 	$output = $?;
 	&logfile( "Execution output: $output " );
@@ -309,7 +311,8 @@ sub setFarmGSLB($fvip,$fvipp,$fname)
 	else
 	{
 		open FO, ">$configdir\/$fname\_$type.cfg\/etc\/config";
-		print FO ";up\noptions => {\n   listen = $fvip\n   dns_port = $fvipp\n   http_port = $httpport\n   http_listen = 127.0.0.1\n}\n\n";
+		print FO
+		  ";up\noptions => {\n   listen = $fvip\n   dns_port = $fvipp\n   http_port = $httpport\n   http_listen = 127.0.0.1\n}\n\n";
 		print FO "service_types => { \n\n}\n\n";
 		print FO "plugins => { \n\n}\n\n";
 		close FO;
@@ -327,6 +330,222 @@ sub setFarmGSLB($fvip,$fvipp,$fname)
 	if ( $output != 0 )
 	{
 		&runFarmDelete( $fname );
+	}
+
+	return $output;
+}
+
+# Get farm zones list for GSLB farms
+sub getFarmZones($fname)
+{
+	my ( $fname ) = @_;
+
+	my $output = -1;
+	my $ftype  = &getFarmType( $fname );
+
+	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/" );
+	my @files = grep { /^[a-zA-Z]/ } readdir ( DIR );
+	closedir ( DIR );
+
+	return @files;
+}
+
+#
+sub setFarmZoneSerial($fname,$zone)
+{
+	my ( $fname, $zone ) = @_;
+	my $ftype  = &getFarmType( $fname );
+	my $ffile  = &getFarmFile( $fname );
+	my $output = -1;
+	if ( $ftype eq "gslb" )
+	{
+		my @fileconf;
+		use Tie::File;
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$zone";
+		foreach $line ( @fileconf )
+		{
+			if ( $line =~ /@\tSOA / )
+			{
+				my $date = `date +%s`;
+				splice @fileconf, $index + 1, 1, "\t$date";
+			}
+			$index++;
+		}
+		untie @fileconf;
+		$output = $?;
+	}
+	return $output;
+}
+
+#
+sub setFarmZoneResource($id,$resource,$ttl,$type,$rdata,$fname,$service)
+{
+	my ( $id, $resource, $ttl, $type, $rdata, $fname, $service ) = @_;
+
+	my $output = 0;
+	my $ftype  = &getFarmType( $fname );
+	my $ffile  = &getFarmFile( $fname );
+
+	if ( $ftype eq "gslb" )
+	{
+		my @fileconf;
+		my $line;
+		my $param;
+		my @linesplt;
+		my $index = 0;
+		my $lb    = "";
+		if ( $type =~ /DYN./ )
+		{
+			$lb = &getFarmVS( $fname, $rdata, "plugin" );
+			$lb = "$lb!";
+		}
+		use Tie::File;
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$service";
+		foreach $line ( @fileconf )
+		{
+			if ( $line =~ /\;index_/ )
+			{
+				@linesplt = split ( "\;index_", $line );
+				$param = @linesplt[1];
+				if ( $id !~ /^$/ && $id eq $param )
+				{
+					$line = "$resource\t$ttl\t$type\t$lb$rdata ;index_$param";
+				}
+				else
+				{
+					$index = $param + 1;
+				}
+			}
+		}
+		if ( $id =~ /^$/ )
+		{
+			push @fileconf, "$resource\t$ttl\t$type\t$lb$rdata ;index_$index";
+		}
+		untie @fileconf;
+		&setFarmZoneSerial( $fname, $service );
+		$output = $?;
+	}
+
+	return $output;
+}
+
+#
+sub remFarmZoneResource($id,$fname,$service)
+{
+	my ( $id, $fname, $service ) = @_;
+
+	my $output = 0;
+	my $ftype  = &getFarmType( $fname );
+	my $ffile  = &getFarmFile( $fname );
+
+	if ( $ftype eq "gslb" )
+	{
+		my @fileconf;
+		my $line;
+		my $index = 0;
+		use Tie::File;
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$service";
+		foreach $line ( @fileconf )
+		{
+			if ( $line =~ /\;index_$id/ )
+			{
+				splice @fileconf, $index, 1;
+			}
+			$index++;
+		}
+		untie @fileconf;
+		$output = $?;
+		&setFarmZoneSerial( $fname, $service );
+		$output = $output + $?;
+	}
+	return $output;
+}
+
+#
+sub setFarmGSLBNewBackend($fname,$srv,$lb,$id,$ipaddress)
+{
+	my ( $fname, $srv, $lb, $id, $ipaddress ) = @_;
+
+	my $output = 0;
+	my $ftype  = &getFarmType( $fname );
+	my $ffile  = &getFarmFile( $fname );
+
+	if ( $ftype eq "gslb" )
+	{
+		my @fileconf;
+		my $line;
+		my @linesplt;
+		my $found      = 0;
+		my $index      = 0;
+		my $idx        = 0;
+		my $pluginfile = "";
+		use Tie::File;
+
+		#Find the plugin file
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$srv.cfg";
+		foreach $line ( @fileconf )
+		{
+			if ( $line =~ /^\t$srv => / )
+			{
+				$found = 1;
+				$index++;
+				next;
+			}
+			if (    $found == 1
+				 && $lb eq "prio"
+				 && $line =~ /\}/
+				 && $id eq "primary" )
+			{
+				splice @fileconf, $index, 0, "		$id => $ipaddress";
+				last;
+			}
+			if (    $found == 1
+				 && $lb eq "prio"
+				 && $line =~ /primary => /
+				 && $id eq "primary" )
+			{
+				splice @fileconf, $index, 1, "		$id => $ipaddress";
+				last;
+			}
+			if (    $found == 1
+				 && $lb eq "prio"
+				 && $line =~ /\}/
+				 && $id eq "secondary" )
+			{
+				splice @fileconf, $index, 0, "		$id => $ipaddress";
+				last;
+			}
+			if (    $found == 1
+				 && $lb eq "prio"
+				 && $line =~ /secondary => /
+				 && $id eq "secondary" )
+			{
+				splice @fileconf, $index, 1, "		$id => $ipaddress";
+				last;
+			}
+			if ( $found == 1 && $lb eq "roundrobin" && $line =~ /\t\t$id => / )
+			{
+				splice @fileconf, $index, 1, "		$id => $ipaddress";
+				last;
+			}
+			if ( $found == 1 && $lb eq "roundrobin" && $line =~ / => / )
+			{
+
+				# What is the latest id used?
+				my @temp = split ( " => ", $line );
+				$idx = @temp[0];
+				$idx =~ s/^\s+//;
+			}
+			if ( $found == 1 && $lb eq "roundrobin" && $line =~ /\}/ )
+			{
+				$idx++;
+				splice @fileconf, $index, 0, "		$idx => $ipaddress";
+				last;
+			}
+			$index++;
+		}
+		untie @fileconf;
+		$output = $?;
 	}
 
 	return $output;

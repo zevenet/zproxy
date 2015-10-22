@@ -28,8 +28,12 @@ $timeseconds = time ();
 
 $now = ctime();
 
-my @months = ( "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" );
-my ( $sec, $min, $hour, $day, $month, $year ) = ( localtime ( $time ) )[0, 1, 2, 3, 4, 5, 6];
+my @months = (
+			   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+			   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+);
+my ( $sec, $min, $hour, $day, $month, $year ) =
+  ( localtime ( $time ) )[0, 1, 2, 3, 4, 5, 6];
 $month = $months[$month];
 $year  = $year + 1900;
 
@@ -101,21 +105,25 @@ if ( -e $filecluster && ( grep ( /UP/, @file ) ) )
 	}
 	elsif ( `ps aux | grep "ucarp" | grep "\\-k 100" | grep -v grep` )
 	{
-		print "<img src=\"img/icons/small/exclamation_octagon_fram.png\" title=\"Changes will not be replicated!\">Cluster: <b>this node is on maintenance</b>";
+		print
+		  "<img src=\"img/icons/small/exclamation_octagon_fram.png\" title=\"Changes will not be replicated!\">Cluster: <b>this node is on maintenance</b>";
 	}
 	else
 	{
-		print "<img src=\"img/icons/small/exclamation_octagon_fram.png\" title=\"Changes will not be replicated!\">Cluster: <b>this node is backup</b>";
+		print
+		  "<img src=\"img/icons/small/exclamation_octagon_fram.png\" title=\"Changes will not be replicated!\">Cluster: <b>this node is backup</b>";
 	}
 	print " |";
 }
 else
 {
-	print "<img src=\"img/icons/small/exclamation_octagon_fram.png\" title=\"HA issue, cluster not configured\">Cluster: <b>Not configured. <a href=\"http://www.zenloadbalancer.com/eliminate-a-single-point-of-failure/\" target=\"_blank\"><u>How to eliminate this single point of failure</u></a></b> |";
+	print
+	  "<img src=\"img/icons/small/exclamation_octagon_fram.png\" title=\"HA issue, cluster not configured\">Cluster: <b>Not configured. <a href=\"http://www.zenloadbalancer.com/eliminate-a-single-point-of-failure/\" target=\"_blank\"><u>How to eliminate this single point of failure</u></a></b> |";
 }
 
 #print " Host: <strong>$host</strong> | Date: <strong>$month $day $year  $hour:$min:$sec</strong></p>
-print " Host: <strong>$host</strong> | Date: <strong>$now</strong> | <a href=\'#\' onclick=\'logout()\' title=\'Logout\'> <strong>Logout</strong></a></p>
+print
+  " Host: <strong>$host</strong> | Date: <strong>$now</strong> | <a href=\'#\' onclick=\'logout()\' title=\'Logout\'> <strong>Logout</strong></a></p>
  </div>
 </div>
 ";

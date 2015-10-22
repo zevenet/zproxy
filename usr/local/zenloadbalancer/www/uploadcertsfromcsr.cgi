@@ -62,7 +62,9 @@ my $upload_filehandle = $query->upload( "fileup" );
 if ( $action eq "Upload" && $filename !~ /^$/ && $certname !~ /^$/ )
 {
 
-	if ( $filename =~ /\.pem$/ || $filename =~ /\.zip$/ || $filename =~ /\.cert$/ )
+	if (    $filename =~ /\.pem$/
+		 || $filename =~ /\.zip$/
+		 || $filename =~ /\.cert$/ )
 	{
 		if ( $filename =~ /\// )
 		{
@@ -100,7 +102,8 @@ if ( $action eq "Upload" && $filename !~ /^$/ && $certname !~ /^$/ )
 			$crtaut = &getCertIssuer( "$tmpdir/$filename" );
 			if ( $crtaut !~ /$certaut/ )
 			{
-				&errormsg( "File can not be proccesed, you have to build your pem file by yourself." );
+				&errormsg(
+						"File can not be proccesed, you have to build your pem file by yourself." );
 			}
 			else
 			{
@@ -115,7 +118,8 @@ if ( $action eq "Upload" && $filename !~ /^$/ && $certname !~ /^$/ )
 				{
 					$keyfile = $certname;
 					$keyfile =~ s/\.csr$/\.key/;
-					if ( -e "$upload_dir/$keyfile" && -e "$tmpdir/$certautfile" )
+					if (    -e "$upload_dir/$keyfile"
+						 && -e "$tmpdir/$certautfile" )
 					{
 						&createPemFromKeyCRT( $keyfile, $filename, $certautfile, $tmpdir );
 						my @eject = `$mv -f $upload_dir/$certname $tmpdir/ 2> /dev/null`;
@@ -181,13 +185,16 @@ if ( $action eq "Upload" && $filename !~ /^$/ && $certname !~ /^$/ )
 print "<br>";
 print "<br>";
 
-print "<form method=\"post\" action=\"uploadcertsfromcsr.cgi\" enctype=\"multipart/form-data\">";
+print
+  "<form method=\"post\" action=\"uploadcertsfromcsr.cgi\" enctype=\"multipart/form-data\">";
 
-print "<b>Upload file on pem, crt or zip format. <font size=1> filename.pem, filename.crt, filename.zip</fon>:</b> <input   type=\"file\" name=\"fileup\" value=\"Ex\" >";
+print
+  "<b>Upload file on pem, crt or zip format. <font size=1> filename.pem, filename.crt, filename.zip</fon>:</b> <input   type=\"file\" name=\"fileup\" value=\"Ex\" >";
 print "<br>";
 print "<br>";
 print "<input type=\"hidden\" value=\"$certname\" name=\"certname\">";
-print "<input type=\"submit\" value=\"Upload\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Upload\" name=\"action\" class=\"button small\">";
 print "</form>";
 print "<br>";
 

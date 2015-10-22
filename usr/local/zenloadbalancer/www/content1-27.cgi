@@ -60,10 +60,12 @@ foreach ( @backends )
 &refreshstats();
 print "<br>";
 
-print "<div class=\"box-header\">Real servers status<font size=1>&nbsp;&nbsp;&nbsp; $backendsize servers, $activebackends active </font></div>";
+print
+  "<div class=\"box-header\">Real servers status<font size=1>&nbsp;&nbsp;&nbsp; $backendsize servers, $activebackends active </font></div>";
 print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 print "<thead>\n";
-print "<tr><td>Server</td><td>Address</td><td>Interface</td><td>Status</td><td>Rx Total Bytes</td><td>Rx Bytes/sec</td><td>Rx Total Packets</td><td>Rx Packets/sec</td><td>Tx Total Bytes</td><td>Tx Bytes/sec</td><td>Tx Total Packets</td><td>Tx Packets/sec</td><td>Weight</td><td>Priority</td></tr>";
+print
+  "<tr><td>Server</td><td>Address</td><td>Interface</td><td>Status</td><td>Rx Total Bytes</td><td>Rx Bytes/sec</td><td>Rx Total Packets</td><td>Rx Packets/sec</td><td>Tx Total Bytes</td><td>Tx Bytes/sec</td><td>Tx Total Packets</td><td>Tx Packets/sec</td><td>Weight</td><td>Priority</td></tr>";
 print "</thead>\n";
 print "<tbody>";
 
@@ -151,7 +153,8 @@ print "<!--END MANAGE-->";
 print "<div id=\"page-header\"></div>";
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" value=\"1-2\" name=\"id\">";
-print "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
 print "</form>";
 print "<div id=\"page-header\"></div>";
 

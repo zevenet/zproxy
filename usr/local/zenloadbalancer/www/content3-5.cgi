@@ -37,7 +37,9 @@ print "
 
 if ( $action eq "apply" )
 {
-	&successmsg( "Backup will be decompressed and Zen Load Balancer will be restarted, Zen Cluster node could switch..." );
+	&successmsg(
+		"Backup will be decompressed and Zen Load Balancer will be restarted, Zen Cluster node could switch..."
+	);
 	my @eject = `$tar -xvzf $backupdir$file -C /`;
 	&logfile( "Restoring backup $backupdir$file" );
 	&logfile( "unpacking files: @eject" );
@@ -63,7 +65,8 @@ if ( $action eq "Create Backup" )
 	}
 	else
 	{
-		&errormsg( "Backup name is not valid. Only numbers, letters and hyphens are allowed." );
+		&errormsg(
+			   "Backup name is not valid. Only numbers, letters and hyphens are allowed." );
 	}
 }
 
@@ -109,9 +112,11 @@ print "		<div class=\"box-header\">Backup</div>";
 print "		<div class=\"box stats\">";
 
 print "<form method=\"get\" action=\"index.cgi\">";
-print "<b>Description name: </b><input type=\"text\" name=\"name\" value=\"$lhost\">";
+print
+  "<b>Description name: </b><input type=\"text\" name=\"name\" value=\"$lhost\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-print "<input type=\"submit\" value=\"Create Backup\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Create Backup\" name=\"action\" class=\"button small\">";
 print "</form>";
 print "<br><br>";
 
@@ -119,7 +124,8 @@ print "</div></div></div>";
 print "<br class=\"cl\">";
 
 #table
-print "<div class=\"box-header\"> Backup files <a href=\"index.cgi?id=$id\"><img src=\"img/icons/small/arrow_refresh.png\" title=\"refresh\"></a></div>";
+print
+  "<div class=\"box-header\"> Backup files <a href=\"index.cgi?id=$id\"><img src=\"img/icons/small/arrow_refresh.png\" title=\"refresh\"></a></div>";
 print "<div class=\"box table\">";
 
 print "<table>";

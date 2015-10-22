@@ -89,7 +89,8 @@ if ( $action eq "editfarm-changevipvipp" )
 	}
 	if ( &checkport( $vip, $vipp ) eq "true" )
 	{
-		&errormsg( "Virtual Port $vipp in Virtual IP $vip is in use, select another port" );
+		&errormsg(
+				   "Virtual Port $vipp in Virtual IP $vip is in use, select another port" );
 		$error = 1;
 	}
 	if ( $error == 0 )
@@ -99,11 +100,14 @@ if ( $action eq "editfarm-changevipvipp" )
 		{
 			&runFarmStop( $farmname, "true" );
 			&runFarmStart( $farmname, "true" );
-			&successmsg( "Virtual IP and Virtual Port has been modified, the $farmname farm has been restarted" );
+			&successmsg(
+				"Virtual IP and Virtual Port has been modified, the $farmname farm has been restarted"
+			);
 		}
 		else
 		{
-			&errormsg( "It's not possible to change the $farmname farm virtual IP and port" );
+			&errormsg(
+					   "It's not possible to change the $farmname farm virtual IP and port" );
 		}
 	}
 }
@@ -119,7 +123,9 @@ if ( $action eq "editfarm-Name" )
 	#Check the farm's name change
 	if ( "$newfarmname" eq "$farmname" )
 	{
-		&errormsg( "The new farm's name \"$newfarmname\" is the same as the old farm's name \"$farmname\": nothing to do" );
+		&errormsg(
+			"The new farm's name \"$newfarmname\" is the same as the old farm's name \"$farmname\": nothing to do"
+		);
 	}
 	elsif ( $farmnameok ne 0 )
 	{
@@ -154,11 +160,15 @@ if ( $action eq "editfarm-Name" )
 
 			if ( $fnchange == -1 )
 			{
-				&errormsg( "The name of the Farm $farmname can't be modified, delete the farm and create a new one." );
+				&errormsg(
+					"The name of the Farm $farmname can't be modified, delete the farm and create a new one."
+				);
 			}
 			elsif ( $fnchange == -2 )
 			{
-				&errormsg( "The name of the Farm $farmname can't be modified, the new name can't be empty" );
+				&errormsg(
+					 "The name of the Farm $farmname can't be modified, the new name can't be empty"
+				);
 				my $newfstat = &runFarmStart( $farmname, "true" );
 				if ( $newfstat == 0 )
 				{
@@ -166,7 +176,9 @@ if ( $action eq "editfarm-Name" )
 				}
 				else
 				{
-					&errormsg( "The Farm $farmname isn't running, check if the IP address is up and the PORT is in use" );
+					&errormsg(
+						"The Farm $farmname isn't running, check if the IP address is up and the PORT is in use"
+					);
 				}
 			}
 			else
@@ -182,7 +194,9 @@ if ( $action eq "editfarm-Name" )
 				}
 				else
 				{
-					&errormsg( "The Farm $farmname isn't running, check if the IP address is up and the PORT is in use" );
+					&errormsg(
+						"The Farm $farmname isn't running, check if the IP address is up and the PORT is in use"
+					);
 				}
 			}
 		}
@@ -200,7 +214,8 @@ if ( $action eq "editfarm-Timeout" )
 	}
 	if ( $timeout > $maxtimeout )
 	{
-		&errormsg( "Invalid timeout $timeout value, the max timeout value is $maxtimeout" );
+		&errormsg(
+				   "Invalid timeout $timeout value, the max timeout value is $maxtimeout" );
 		$error = 1;
 	}
 	if ( $error == 0 )
@@ -235,7 +250,8 @@ if ( $action eq "editfarm-blacklist" )
 		}
 		else
 		{
-			&errormsg( "It's not possible to change the farm $farmname blacklist time value" );
+			&errormsg(
+					   "It's not possible to change the farm $farmname blacklist time value" );
 		}
 	}
 }
@@ -277,7 +293,8 @@ if ( $action eq "editfarm-persistence" )
 		}
 		else
 		{
-			&errormsg( "It's not possible to enable the client persistence for the farm $farmname" );
+			&errormsg(
+				  "It's not possible to enable the client persistence for the farm $farmname" );
 		}
 	}
 	else
@@ -289,7 +306,8 @@ if ( $action eq "editfarm-persistence" )
 		}
 		else
 		{
-			&errormsg( "It's not possible to disable the client persistence for the farm $farmname" );
+			&errormsg(
+				 "It's not possible to disable the client persistence for the farm $farmname" );
 		}
 	}
 }
@@ -305,7 +323,8 @@ if ( $action eq "editfarm-max_clients" )
 	}
 	if ( $max_clients > $maxmaxclient )
 	{
-		&errormsg( "Invalid max clients value $max_clients, the max value is $maxmaxclient" );
+		&errormsg(
+				 "Invalid max clients value $max_clients, the max value is $maxmaxclient" );
 		$error = 1;
 	}
 	if ( $error == 0 )
@@ -315,7 +334,9 @@ if ( $action eq "editfarm-max_clients" )
 		{
 			&runFarmStop( $farmname, "true" );
 			&runFarmStart( $farmname, "true" );
-			&successmsg( "The max number of clients has been modified, the farm $farmname has been restarted" );
+			&successmsg(
+				"The max number of clients has been modified, the farm $farmname has been restarted"
+			);
 		}
 		else
 		{
@@ -335,7 +356,8 @@ if ( $action eq "editfarm-conn_max" )
 	}
 	if ( $conn_max > $maxsimconn )
 	{
-		&errormsg( "Invalid max connections value $conn_max, the max value is $maxsimconn" );
+		&errormsg(
+				  "Invalid max connections value $conn_max, the max value is $maxsimconn" );
 		$error = 1;
 	}
 	if ( $error == 0 )
@@ -345,7 +367,9 @@ if ( $action eq "editfarm-conn_max" )
 		{
 			&runFarmStop( $farmname, "true" );
 			&runFarmStart( $farmname, "true" );
-			&successmsg( "The max number of connections has been modified, the farm $farmname has been restarted" );
+			&successmsg(
+				"The max number of connections has been modified, the farm $farmname has been restarted"
+			);
 		}
 		else
 		{
@@ -365,7 +389,8 @@ if ( $action eq "editfarm-max_servers" )
 	}
 	if ( $max_servers > $maxbackend )
 	{
-		&errormsg( "Invalid max servers value $max_servers, the max value is $maxsimconn" );
+		&errormsg(
+				   "Invalid max servers value $max_servers, the max value is $maxsimconn" );
 		$error = 1;
 	}
 	if ( $error == 0 )
@@ -375,7 +400,9 @@ if ( $action eq "editfarm-max_servers" )
 		{
 			&runFarmStop( $farmname, "true" );
 			&runFarmStart( $farmname, "true" );
-			&successmsg( "The max number of servers has been modified, the farm $farmname has been restarted" );
+			&successmsg(
+				"The max number of servers has been modified, the farm $farmname has been restarted"
+			);
 		}
 		else
 		{
@@ -398,7 +425,9 @@ if ( $action eq "editfarm-xforwardedfor" )
 			}
 			else
 			{
-				&errormsg( "It's not possible to enable the X-Forwarded-For header for the farm $farmname" );
+				&errormsg(
+					 "It's not possible to enable the X-Forwarded-For header for the farm $farmname"
+				);
 			}
 		}
 		else
@@ -410,13 +439,17 @@ if ( $action eq "editfarm-xforwardedfor" )
 			}
 			else
 			{
-				&errormsg( "It's not possible to disable the X-Forwarded-For header for the farm $farmname" );
+				&errormsg(
+					"It's not possible to disable the X-Forwarded-For header for the farm $farmname"
+				);
 			}
 		}
 	}
 	else
 	{
-		&errormsg( "It's not possible to use the X-Forwarded-For header for the UDP farm $farmname" );
+		&errormsg(
+			"It's not possible to use the X-Forwarded-For header for the UDP farm $farmname"
+		);
 	}
 }
 
@@ -434,28 +467,37 @@ if ( $action eq "editfarm-farmguardian" )
 		$status = -1;
 		$usefarmguardian =~ s/\n//g;
 		&runFarmGuardianStop( $farmname, "" );
-		&logfile( "creating $farmname farmguardian configuration file in  $fguardianconf" );
+		&logfile(
+				  "creating $farmname farmguardian configuration file in  $fguardianconf" );
 		$check_script =~ s/\"/\'/g;
-		$status = &runFarmGuardianCreate( $farmname, $timetocheck, $check_script, $usefarmguardian, $farmguardianlog, "" );
+		$status =
+		  &runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
+								  $usefarmguardian, $farmguardianlog, "" );
 		if ( $status != -1 )
 		{
-			&successmsg( "The FarmGuardian service for the $farmname farm has been modified" );
+			&successmsg(
+						 "The FarmGuardian service for the $farmname farm has been modified" );
 			if ( $usefarmguardian eq "true" )
 			{
 				$status = &runFarmGuardianStart( $farmname, "" );
 				if ( $status != -1 )
 				{
-					&successmsg( "The FarmGuardian service for the $farmname farm has been started" );
+					&successmsg(
+								 "The FarmGuardian service for the $farmname farm has been started" );
 				}
 				else
 				{
-					&errormsg( "An error ocurred while starting the FarmGuardian service for the $farmname farm" );
+					&errormsg(
+						"An error ocurred while starting the FarmGuardian service for the $farmname farm"
+					);
 				}
 			}
 		}
 		else
 		{
-			&errormsg( "It's not possible to create the FarmGuardian configuration file for the $farmname farm" );
+			&errormsg(
+				"It's not possible to create the FarmGuardian configuration file for the $farmname farm"
+			);
 		}
 	}
 }
@@ -478,14 +520,20 @@ if ( $action eq "editfarm-saveserver" )
 
 	if ( $error == 0 )
 	{
-		$status = &setFarmServer( $id_server, $rip_server, $port_server, $max_server, $weight_server, $priority_server, "", $farmname );
+		$status =
+		  &setFarmServer( $id_server, $rip_server, $port_server, $max_server,
+						  $weight_server, $priority_server, "", $farmname );
 		if ( $status != -1 )
 		{
-			&successmsg( "The real server with ip $rip_server and port $port_server for the $farmname farm has been modified" );
+			&successmsg(
+				"The real server with ip $rip_server and port $port_server for the $farmname farm has been modified"
+			);
 		}
 		else
 		{
-			&errormsg( "It's not possible to modify the real server with ip $rip_server and port $port_server for the $farmname farm" );
+			&errormsg(
+				"It's not possible to modify the real server with ip $rip_server and port $port_server for the $farmname farm"
+			);
 		}
 	}
 }
@@ -496,11 +544,14 @@ if ( $action eq "editfarm-deleteserver" )
 	$status = &runFarmServerDelete( $id_server, $farmname );
 	if ( $status != -1 )
 	{
-		&successmsg( "The real server with ID $id_server of the $farmname farm has been deleted" );
+		&successmsg(
+			  "The real server with ID $id_server of the $farmname farm has been deleted" );
 	}
 	else
 	{
-		&errormsg( "It's not possible to delete the real server with ID $id_server of the $farmname farm" );
+		&errormsg(
+			"It's not possible to delete the real server with ID $id_server of the $farmname farm"
+		);
 	}
 }
 
@@ -513,15 +564,18 @@ print "<div class=\"box stats\">";
 print "<div class=\"row\">";
 
 #Change farm's name form
-print "<b>Farm's name</b><font size=1> *service will be restarted</font><b>.</b><br>";
+print
+  "<b>Farm's name</b><font size=1> *service will be restarted</font><b>.</b><br>";
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-Name\">";
-print "<input type=\"text\" value=\"$farmname\" size=\"25\" name=\"newfarmname\">";
+print
+  "<input type=\"text\" value=\"$farmname\" size=\"25\" name=\"newfarmname\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 
 #print "<input type=\"hidden\" name=\"id_server\" value=\"@l_serv[0]\">";
-print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+print
+  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 print "<br><br>";
 
 #load balance algoritm
@@ -582,7 +636,8 @@ else
 print "</select>";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+print
+  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 
 #enable client persistence
 if ( $ftype eq "tcp" )
@@ -606,7 +661,8 @@ if ( $ftype eq "tcp" )
 	print "<input type=\"hidden\" name=\"action\" value=\"editfarm-persistence\">";
 	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-	print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+	print
+	  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 	print "</form><br/>";
 
 	#clients_max value
@@ -621,14 +677,18 @@ if ( $ftype eq "tcp" )
 		$maxclients = @client[0];
 		$tracking   = @client[1];
 	}
-	print "<b>Max number of clients memorized in the farm</b><font size=1> *service will be restarted</font><b>.</b><br>";
+	print
+	  "<b>Max number of clients memorized in the farm</b><font size=1> *service will be restarted</font><b>.</b><br>";
 	print "<form method=\"get\" action=\"index.cgi\">";
 	print "<input type=\"hidden\" name=\"action\" value=\"editfarm-max_clients\">";
-	print "<input type=\"text\" value=\"$maxclients\" size=\"4\" name=\"max_clients\">";
+	print
+	  "<input type=\"text\" value=\"$maxclients\" size=\"4\" name=\"max_clients\">";
 	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-	print "<b> client-time</b>(sec, 0=always)<input type=\"text\" value=\"$tracking\" size=\"4\" name=\"tracking\">";
-	print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+	print
+	  "<b> client-time</b>(sec, 0=always)<input type=\"text\" value=\"$tracking\" size=\"4\" name=\"tracking\">";
+	print
+	  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 	print "</form>";
 }
 print "<br>";
@@ -645,7 +705,8 @@ print "<input type=\"hidden\" name=\"action\" value=\"editfarm-Timeout\">";
 print "<input type=\"text\" value=\"$ftimeout\" size=\"4\" name=\"timeout\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+print
+  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 
 #conn_max value
 $conn_max = &getFarmMaxConn( $farmname );
@@ -654,13 +715,15 @@ if ( $conn_max == -1 )
 	$conn_max = 512;
 }
 print "<br>";
-print "<b>Max number of simultaneous connections that manage in Virtual IP</b><font size=1> *service will be restarted</font><b>.</b><br>";
+print
+  "<b>Max number of simultaneous connections that manage in Virtual IP</b><font size=1> *service will be restarted</font><b>.</b><br>";
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-conn_max\">";
 print "<input type=\"text\" value=\"$conn_max\" size=\"4\" name=\"conn_max\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+print
+  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 print "</form>";
 
 #number of real ip
@@ -670,13 +733,16 @@ if ( $numberofservers == -1 )
 	$numberofservers = 16;
 }
 print "<br>";
-print "<b>Max number of real ip servers</b><font size=1> *service will be restarted</font><b>.</b><br>";
+print
+  "<b>Max number of real ip servers</b><font size=1> *service will be restarted</font><b>.</b><br>";
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-max_servers\">";
-print "<input type=\"text\" value=\"$numberofservers\" size=\"4\" name=\"max_servers\">";
+print
+  "<input type=\"text\" value=\"$numberofservers\" size=\"4\" name=\"max_servers\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+print
+  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 print "</form>";
 
 if ( $ftype eq "tcp" )
@@ -699,10 +765,12 @@ if ( $ftype eq "tcp" )
 		print "<input type=\"checkbox\" checked name=\"xforwardedfor\" value=\"true\">";
 	}
 	print "&nbsp;<b>Add X-Forwarded-For header to http requests.</b><br>";
-	print "<input type=\"hidden\" name=\"action\" value=\"editfarm-xforwardedfor\">";
+	print
+	  "<input type=\"hidden\" name=\"action\" value=\"editfarm-xforwardedfor\">";
 	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-	print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+	print
+	  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 	print "</form>";
 }
 
@@ -723,10 +791,12 @@ print "<br>";
 print "<form method=\"get\" action=\"index.cgi\">";
 print "&nbsp;<b>Frequency to check resurrected backends secs.</b><br>";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-blacklist\">";
-print "<input type=\"text\" value=\"$blacklist\" size=\"4\" name=\"blacklist\">";
+print
+  "<input type=\"text\" value=\"$blacklist\" size=\"4\" name=\"blacklist\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+print
+  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 print "</form>";
 
 if ( $ftype eq "tcp" )
@@ -748,7 +818,8 @@ if ( $ftype eq "tcp" )
 	print "<form method=\"get\" action=\"index.cgi\">";
 	if ( $fguse eq "true" )
 	{
-		print "<input type=\"checkbox\" checked name=\"usefarmguardian\" value=\"true\">";
+		print
+		  "<input type=\"checkbox\" checked name=\"usefarmguardian\" value=\"true\">";
 	}
 	else
 	{
@@ -756,12 +827,15 @@ if ( $ftype eq "tcp" )
 	}
 	print "&nbsp;<b>Use FarmGuardian to check Backend Servers.</b><br>";
 	print "<input type=\"hidden\" name=\"action\" value=\"editfarm-farmguardian\">";
-	print "<font size=1>Check every </font>&nbsp;<input type=\"text\" value=\"$fgttcheck\" size=\"1\" name=\"timetocheck\">&nbsp;<font size=1> secs.</font><br>";
-	print "<font size=1>Command to check </font><input type=\"text\" value=\"$fgscript\" size=\"60\" name=\"check_script\">";
+	print
+	  "<font size=1>Check every </font>&nbsp;<input type=\"text\" value=\"$fgttcheck\" size=\"1\" name=\"timetocheck\">&nbsp;<font size=1> secs.</font><br>";
+	print
+	  "<font size=1>Command to check </font><input type=\"text\" value=\"$fgscript\" size=\"60\" name=\"check_script\">";
 	print "<br>";
 	if ( $fglog eq "true" )
 	{
-		print "<input type=\"checkbox\" checked name=\"farmguardianlog\" value=\"true\"> ";
+		print
+		  "<input type=\"checkbox\" checked name=\"farmguardianlog\" value=\"true\"> ";
 	}
 	else
 	{
@@ -771,7 +845,8 @@ if ( $ftype eq "tcp" )
 	print "<br>";
 	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-	print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+	print
+	  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 	print "</form>";
 }
 
@@ -779,13 +854,15 @@ if ( $ftype eq "tcp" )
 $vip   = &getFarmVip( "vip",  $farmname );
 $vport = &getFarmVip( "vipp", $farmname );
 print "<br>";
-print "<b>Farm Virtual IP and Virtual port</b> <font size=1> *service will be restarted</font><b>.</b>";
+print
+  "<b>Farm Virtual IP and Virtual port</b> <font size=1> *service will be restarted</font><b>.</b>";
 @listinterfaces = &listallips();
 $clrip          = &clrip();
 $guiip          = &GUIip();
 print "<form method=\"get\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-print "<input type=\"hidden\" name=\"action\" value=\"editfarm-changevipvipp\">";
+print
+  "<input type=\"hidden\" name=\"action\" value=\"editfarm-changevipvipp\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 
 #print "<input type=\"hidden\" value=\"$vip\" size=\"12\" name=\"vip\">";
@@ -807,7 +884,8 @@ foreach $ip ( @listinterfaces )
 
 print "</select>";
 print " <input type=\"text\" value=\"$vport\" size=\"4\" name=\"vipp\">";
-print "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
+print
+  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
 print "</form>";
 
 ####end form for global parameters
@@ -844,7 +922,8 @@ foreach $l_servers ( @run )
 	if ( @l_serv[2] ne "0.0.0.0" )
 	{
 		$isrs = "true";
-		if ( $action eq "editfarm-editserver" && $id_serverchange eq @l_serv[0] )
+		if (    $action eq "editfarm-editserver"
+			 && $id_serverchange eq @l_serv[0] )
 		{
 			print "<form method=\"get\" action=\"index.cgi\#backendlist\">";
 			print "<tr class=\"selected\">";
@@ -854,19 +933,24 @@ foreach $l_servers ( @run )
 			print "<input type=\"hidden\" name=\"id_server\" value=\"@l_serv[0]\">";
 
 			#real server ip
-			print "<td><input type=\"text\" size=\"12\"  name=\"rip_server\" value=\"@l_serv[2]\"> </td>";
+			print
+			  "<td><input type=\"text\" size=\"12\"  name=\"rip_server\" value=\"@l_serv[2]\"> </td>";
 
 			#port
-			print "<td><input type=\"text\" size=\"4\"  name=\"port_server\" value=\"@l_serv[4]\"> </td>";
+			print
+			  "<td><input type=\"text\" size=\"4\"  name=\"port_server\" value=\"@l_serv[4]\"> </td>";
 
 			#max connections
-			print "<td><input type=\"text\" size=\"4\"  name=\"max_server\" value=\"@l_serv[8]\"> </td>";
+			print
+			  "<td><input type=\"text\" size=\"4\"  name=\"max_server\" value=\"@l_serv[8]\"> </td>";
 
 			#Weight
-			print "<td><input type=\"text\" size=\"4\"  name=\"weight_server\" value=\"@l_serv[12]\"> </td>";
+			print
+			  "<td><input type=\"text\" size=\"4\"  name=\"weight_server\" value=\"@l_serv[12]\"> </td>";
 
 			#Priority
-			print "<td><input type=\"text\" size=\"4\"  name=\"priority_server\" value=\"@l_serv[14]\"> </td>";
+			print
+			  "<td><input type=\"text\" size=\"4\"  name=\"priority_server\" value=\"@l_serv[14]\"> </td>";
 			&createmenuserversfarm( "edit", $farmname, @l_serv[0] );
 		}
 		else
@@ -901,19 +985,24 @@ foreach $l_servers ( @run )
 		print "<input type=\"hidden\" name=\"id_server\" value=\"@l_serv[0]\">";
 
 		#real server ip
-		print "<td><input type=\"text\" size=\"12\"  name=\"rip_server\" value=\"\"> </td>";
+		print
+		  "<td><input type=\"text\" size=\"12\"  name=\"rip_server\" value=\"\"> </td>";
 
 		#port
-		print "<td><input type=\"text\" size=\"4\"  name=\"port_server\" value=\"\"> </td>";
+		print
+		  "<td><input type=\"text\" size=\"4\"  name=\"port_server\" value=\"\"> </td>";
 
 		#max connections
-		print "<td><input type=\"text\" size=\"4\"  name=\"max_server\" value=\"\"> </td>";
+		print
+		  "<td><input type=\"text\" size=\"4\"  name=\"max_server\" value=\"\"> </td>";
 
 		#Weight
-		print "<td><input type=\"text\" size=\"4\"  name=\"weight_server\" value=\"\"> </td>";
+		print
+		  "<td><input type=\"text\" size=\"4\"  name=\"weight_server\" value=\"\"> </td>";
 
 		#Priority
-		print "<td><input type=\"text\" size=\"4\"  name=\"priority_server\" value=\"\"> </td>";
+		print
+		  "<td><input type=\"text\" size=\"4\"  name=\"priority_server\" value=\"\"> </td>";
 		&createmenuserversfarm( "add", $farmname, @l_serv[0] );
 		print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 		print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
@@ -944,7 +1033,8 @@ print "</div>";
 print "</div>";
 
 print "<div id=\"page-header\"></div>";
-print "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
+print
+  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
 print "<div id=\"page-header\"></div>";
 print "</form>";
 print "</div>";

@@ -128,15 +128,19 @@ sub download
 {
 	my $file = $_[0] or return ( 0 );
 
-	# Uncomment the next line only for debugging the script
-	#open(my $DLFILE, '<', "$path_to_files/$file") or die "Can't open file '$path_to_files/$file' : $!";
+# Uncomment the next line only for debugging the script
+#open(my $DLFILE, '<', "$path_to_files/$file") or die "Can't open file '$path_to_files/$file' : $!";
 
 	# Comment the next line if you uncomment the above line
 	open ( my $DLFILE, '<', "$path_to_files/$file" ) or return ( 0 );
 
-	# This prints the download headers with the file size included
-	# so you get a progress bar in the dialog box that displays during file downlaods.
-	print $q->header( -type => 'application/x-download', -attachment => $file, 'Content-length' => -s "$path_to_files/$file", );
+  # This prints the download headers with the file size included
+  # so you get a progress bar in the dialog box that displays during file downlaods.
+	print $q->header(
+					  -type            => 'application/x-download',
+					  -attachment      => $file,
+					  'Content-length' => -s "$path_to_files/$file",
+	);
 
 	binmode $DLFILE;
 	print while <$DLFILE>;
@@ -147,7 +151,8 @@ sub download
 # This is a very generic error page. You should make a better one.
 sub error
 {
-	print $q->header( -type => 'text/html' ), $q->start_html( -title => 'Error' ), $q->h3( "Error: $_[0]" ), $q->end_html;
+	print $q->header( -type => 'text/html' ), $q->start_html( -title => 'Error' ),
+	  $q->h3( "Error: $_[0]" ), $q->end_html;
 	log_error( $_[0] ) if $log;
 	exit ( 0 );
 }
@@ -165,6 +170,19 @@ sub log_error
 
 	flock $log, 2;
 	my $params = join ( ':::', map { "$_=$IN{$_}" } keys %IN ) || 'no params';
-	print $log '"', join ( '","', time, scalar localtime (), $ENV{ 'REMOTE_ADDR' }, $ENV{ 'SERVER_NAME' }, $ENV{ 'HTTP_HOST' }, $ENV{ 'HTTP_REFERER' }, $ENV{ 'HTTP_USER_AGENT' }, $ENV{ 'SCRIPT_NAME' }, $ENV{ 'REQUEST_METHOD' }, $params, $error ), "\"\n";
+	print $log '"',
+	  join ( '","',
+			 time,
+			 scalar localtime (),
+			 $ENV{ 'REMOTE_ADDR' },
+			 $ENV{ 'SERVER_NAME' },
+			 $ENV{ 'HTTP_HOST' },
+			 $ENV{ 'HTTP_REFERER' },
+			 $ENV{ 'HTTP_USER_AGENT' },
+			 $ENV{ 'SCRIPT_NAME' },
+			 $ENV{ 'REQUEST_METHOD' },
+			 $params,
+			 $error ),
+	  "\"\n";
 }
 
