@@ -465,37 +465,6 @@ sub getBackendTWConns($farm_name,$ip_backend,$port_backend,@netstat)
 	return @nets;
 }
 
-#
-sub getFarmTWConns($farm_name,@netstat)
-{
-	my ( $farm_name, @netstat ) = @_;
-
-	my $farm_type = &getFarmType( $farm_name );
-	my @nets      = ();
-
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		@nets = &getHTTPFarmTWConns( $farm_name, @netstat );
-	}
-
-	if ( $farm_type eq "tcp" )
-	{
-		@nets = &getTcpFarmTWConns( $farm_name, @netstat );
-	}
-
-	if ( $farm_type eq "udp" )
-	{
-		@nets = &getUdpFarmTWConns( $farm_name, @netstat );
-	}
-
-	if ( $farm_type eq "l4xnat" )
-	{
-		@nets = &getL4FarmTWConns( $farm_name, @netstat );
-	}
-
-	return @nets;
-}
-
 sub getBackendSYNConns($farm_name,$ip_backend,$port_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;

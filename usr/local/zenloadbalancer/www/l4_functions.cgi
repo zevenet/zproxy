@@ -793,52 +793,6 @@ sub getL4BackendTWConns($farm_name,$ip_backend,@netstat)
 }
 
 #
-sub getL4FarmTWConns($farm_name,@netstat)
-{
-	my ( $farm_name, @netstat ) = @_;
-	my @nets = ();
-
-	my $proto   = &getFarmProto( $farm_name );
-	my $nattype = &getFarmNatType( $farm_name );
-	my $fvip    = &getFarmVip( "vip", $farm_name );
-	my $fvipp   = &getFarmVip( "vipp", $farm_name );
-	my @fportlist;
-	my $regexp = "";
-	@fportlist = &getFarmPortList( $fvipp );
-
-	if ( @fportlist[0] !~ /\*/ )
-	{
-		$regexp = "\(" . join ( '|', @fportlist ) . "\)";
-	}
-	else
-	{
-		$regexp = "\.*";
-	}
-
-	my @content = &getFarmBackendStatusCtl( $farm_name );
-	my @backends = &getFarmBackendsStatus( $farm_name, @content );
-
-	foreach ( @backends )
-	{
-		my @backends_data = split ( ";", $_ );
-		if ( $backends_data[4] eq "up" )
-		{
-			my $ip_backend   = $backends_data[0];
-			my $port_backend = $backends_data[1];
-			push (
-				   @nets,
-				   &getNetstatFilter(
-							  "tcp", "",
-							  "\.*\_WAIT src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
-							  "", @netstat
-				   )
-			);
-		}
-	}
-
-	return @nets;
-}
-
 sub getL4BackendSYNConns($farm_name,$ip_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, @netstat ) = @_;

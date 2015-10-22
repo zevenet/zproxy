@@ -563,7 +563,7 @@ foreach $srv ( @services )
 
 	print
 	  "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service_type=service&service=$srv&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $srv\" onclick=\"return confirm('Are you sure you want to delete the Service $srv?')\" ></a> &nbsp;";
-	print " Service \"$srv\" with $lb";
+	print " Service \"$srv\" with ";
 	if ( $lb eq "roundrobin" )
 	{
 		print "Round Robin";

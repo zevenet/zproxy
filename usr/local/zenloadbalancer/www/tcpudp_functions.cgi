@@ -524,20 +524,6 @@ sub getTcpUdpBackendTWConns($farm_name,$ip_backend,$port_backend,@netstat)
 }
 
 #
-sub getTcpFarmTWConns($farm_name,@netstat)
-{
-	my ( $farm_name, @netstat ) = @_;
-
-	my $vip      = &getFarmVip( "vip",  $farm_name );
-	my $vip_port = &getFarmVip( "vipp", $farm_name );
-
-	return
-	  &getNetstatFilter( "tcp", "",
-					"\.*\_WAIT src=\.* dst=$vip sport=\.* dport=$vip_port .*src=\.*",
-					"", @netstat );
-}
-
-#
 sub getUdpFarmTWConns($farm_name,@netstat)
 {
 	my ( $farm_name, @netstat ) = @_;

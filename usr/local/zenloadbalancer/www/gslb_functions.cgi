@@ -785,9 +785,10 @@ sub getFarmServices($farm_name)
 #vs return virtual server
 sub getGSLBFarmVS($farm_name, $service, $tag)
 {
-	my ( $farm_filename, $service, $tag ) = @_;
+	my ( $farm_name, $service, $tag ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
+	my $farm_type = &getFarmType( $farm_name );
 	my $output        = "";
 	my @linesplt;
 
@@ -840,6 +841,7 @@ sub getGSLBFarmVS($farm_name, $service, $tag)
 
 		tie my @configfile, 'Tie::File',
 		  "$configdir\/$farm_name\_$farm_type.cfg\/etc\/plugins\/$pluginfile";
+
 		foreach my $line ( @configfile )
 		{
 			if ( $tag eq "backends" )

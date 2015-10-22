@@ -21,8 +21,6 @@
 #
 ###############################################################################
 
-#my $type = &getFarmType($farmname);
-
 print "
 <!--Content INI-->
 <div id=\"page-content\">
@@ -31,46 +29,8 @@ print "
 print "<h2>Monitoring::Conns stats</h2>";
 print "<!--Content Header END-->";
 
-if ( $action eq "managefarm" )
-{
-	$type = &getFarmType( $farmname );
-	if ( $type == 1 )
-	{
-		&errormsg( "Unknown farm type of $farmname" );
-	}
-	else
-	{
-		$file = &getFarmFile( $farmname );
-		if ( $type eq "tcp" || $type eq "udp" )
-		{
-			require "./content1-23.cgi";
-		}
-		if ( $type eq "http" || $type eq "https" )
-		{
-			require "./content1-25.cgi";
-		}
-		if ( $type eq "datalink" )
-		{
-			require "./content1-27.cgi";
-		}
-		if ( $type eq "l4xnat" )
-		{
-			require "./content1-29.cgi";
-		}
-		if ( $type eq "gslb" )
-		{
-			require "./content1-203.cgi";
-		}
-	}
-}
-
-@files = &getFarmList();
-
 print "<div class=\"box-header\">Farms table</div>";
 print "<div class=\"box table\">";
-
-my @netstat;
-my $thereisdl = "false";
 
 print "<table cellspacing=\"0\">";
 print "<thead>";
@@ -87,8 +47,11 @@ print "</tr>";
 print "</thead>";
 print "<tbody>";
 
+my @netstat;
+my $thereisdl = "false";
 my $globalfarm = 0;
-foreach $file ( @files )
+
+foreach my $file ( &getFarmList() )
 {
 	$name = &getFarmName( $file );
 ##########if farm is not the current farm then it doesn't print. only print for global view.
@@ -278,8 +241,6 @@ if ( $thereisdl eq "true" )
 	print "</tbody>";
 }
 
-#~ print "<tr><td colspan=\"8\"></td><td><a href=\"index.cgi?id=$id&action=addfarm\"><img src=\"img/icons/small/farm_add.png\" title=\"Add new Farm\"></a></td></tr>";
-
 print "</table>";
 print "</div>";
 
@@ -296,11 +257,3 @@ if ( $globalfarm == 1 )
 
 print "<br class=\"cl\" >";
 print "</div>";
-
-#print "<br class=\"cl\">";
-#rint "        </div>
-#    <!--Content END-->";
-#  </div>
-#</div>
-#";
-
