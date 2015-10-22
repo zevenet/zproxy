@@ -269,7 +269,7 @@ sub isUcarpRunningLocally
 	return `$pidof -x ucarp`;
 }
 
-sub isUcarpRunningOn($rip)
+sub isUcarpRunningOn
 {
 	my ( $rip ) = @_;
 	return
@@ -336,24 +336,23 @@ sub getClusterLocalIPandInterface
 
 sub showCluserStatus
 {
-	my ( $rhost, $lhost, $rip, $lip, $vipcl, $clstatus, $error ) = @_;
+	my ( $rhost, $lhost, $rip, $lip, $vipcl, $clstatus ) = @_;
 
 	if ( &areClusterNodesDefined() && $clstatus )
 	{
 		print "<br>";
 		&showZenLatencyStatus();
 		print "<br>";
-		$activecl = &getClusterActiveNode();
+		getClusterActiveNode();
 		print "<br>";
-		$activeino = &showZenInotifyStatus( $activecl );
+		&showZenInotifyStatus();
 	}
 	else
 	{
 		print "Cluster not configured!";
-		$error = "true";
 	}
 
-	return ( $rhost, $lhost, $rip, $lip, $vipcl, $clstatus, $error );
+	return ( $rhost, $lhost, $rip, $lip, $vipcl, $clstatus );
 }
 
 sub showZenLatencyStatus
@@ -381,13 +380,11 @@ sub showZenLatencyStatus
 	print $local_ucarp && $remote_ucarp
 	  ? " <img src=\"/img/icons/small/accept.png\">"
 	  : " <img src=\"/img/icons/small/exclamation.png\">";
-
-	return $error;
 }
 
 sub getClusterActiveNode
 {
-	my $active_node = "false";
+	my $active_node = 'false';
 
 	my ( $lhost, undef, $rhost, $rip, $vipcl ) = ( &getClusterConfig() )[0 .. 4];
 
@@ -409,11 +406,12 @@ sub getClusterActiveNode
 
 	if ( grep ( /$vipcl/, @vipwhereis2 ) )
 	{
+		print ' and ' if $active_node ne 'false';
 		print "<b>$rhost</b>";
 		$active_node .= $rhost;
 	}
 
-	print $activecl eq 'false'
+	print $active_node eq 'false'
 	  ? " <img src=\"/img/icons/small/exclamation.png\">"
 	  : " <img src=\"/img/icons/small/accept.png\">";
 
@@ -422,8 +420,6 @@ sub getClusterActiveNode
 
 sub showZenInotifyStatus
 {
-	my ( $activecl ) = @_;
-
 	my ( $lhost, undef, $rhost, $rip ) = getClusterConfigMembers();
 	my $activeino = 'false';
 
@@ -631,7 +627,7 @@ sub setClusterNodeOffMaintenance
 
 sub setClusterRsaConnection
 {
-	my ( $lhost, $rhost, $lip, $rip, $pass ) = @_;
+	my ( $lhost, $rhost, $lip, $rip, $pass, $vipcl, $cable) = @_;
 
 	my $error = "false";
 
@@ -843,8 +839,6 @@ sub setClusterRsaConnection
 	}
 
 	$ssh->close();
-
-	return ();
 }
 
 # setup rsa connections with remote host

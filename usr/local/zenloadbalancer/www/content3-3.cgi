@@ -54,7 +54,7 @@ if (    $action eq "Save"
 if ( -e $filecluster )    # get configuration from file
 {
 	(
-	   $lhost,  $lip,      $rhost, $rip,       $vipcl, $ifname,
+	   $lhost,  $lip,      $rhost, $rip,       $vipcl, 		$ifname,
 	   $typecl, $clstatus, $cable, $idcluster, $deadratio
 	) = &getClusterConfig();
 }
@@ -102,7 +102,7 @@ if ( $action eq "Test RSA connections" && $lhost && $rhost && $lip && $rip )
 
 if ( $action eq "Configure RSA connection between nodes" )
 {
-	&setClusterRsaConnection( $lhost, $rhost, $lip, $rip, $pass );
+	&setClusterRsaConnection( $lhost, $rhost, $lip, $rip, $pass, $vipcl, $cable );
 	undef $typecl if !&isClusterConfigured();
 }
 
@@ -142,8 +142,8 @@ print "<b>Cluster status $refresh_link: </b>";
 
 # Show Cluster status
 # this function prints html
-( $rhost, $lhost, $rip, $lip, $vipcl, $clstatus, $error ) =
-  showCluserStatus( $rhost, $lhost, $rip, $lip, $vipcl, $clstatus, $error );
+( $rhost, $lhost, $rip, $lip, $vipcl, $clstatus )
+	= showCluserStatus( $rhost, $lhost, $rip, $lip, $vipcl, $clstatus );
 print "<div id=\"page-header\"></div>";
 
 ### show Global status ###
