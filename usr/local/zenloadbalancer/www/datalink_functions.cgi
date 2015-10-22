@@ -481,5 +481,21 @@ sub setDatalinkFarmBackendStatus($file,$index,$stat)
 	return $output;
 }
 
+#
+sub getDatalinkFarmBackendStatusCtl($fname)
+{
+	my ( $fname ) = @_;
+	my @output = -1;
+
+	my $ffile = &getFarmFile( $fname );
+	my @content;
+
+	tie my @content, 'Tie::File', "$configdir\/$ffile";
+	@output = grep /^\;server\;/, @content;
+	untie @content;
+
+	return @output;
+}
+
 # do not remove this
 1

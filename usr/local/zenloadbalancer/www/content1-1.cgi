@@ -174,10 +174,10 @@ print "</div>";
 
 print "\n";
 print "<div class=\"box-header\">";
-print "Network traffic interfaces (mb) from " . &uptime print "</div>";
-print " <div class=\"box table\">
-        <table>
-        <thead>";
+print "Network traffic interfaces (mb) from " . &uptime . "</div>";
+print "<div class=\"box table\">";
+print "<table>";
+print "<thead>";
 print "<tr><td>Interface</td><td>Input</td><td>Output</td></tr>";
 print "</thead>";
 print "<tbody>";

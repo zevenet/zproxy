@@ -551,5 +551,541 @@ sub setFarmGSLBNewBackend($fname,$srv,$lb,$id,$ipaddress)
 	return $output;
 }
 
+# Stop Farm rutine
+sub _runGSLBFarmStop($fname,$writeconf,$status)
+{
+	my ( $fname, $writeconf, $status ) = @_;
+
+	my $checkfarm = &getFarmConfigIsOK( $fname );
+	if ( $checkfarm == 0 )
+	{
+		$output = &setFarmGSLBStatus( $fname, "stop", $writeconf );
+		unlink ( $pidfile );
+	}
+	else
+	{
+		&errormsg(
+			  "Farm $fname can't be stopped, check the logs and modify the configuration" );
+		return 1;
+	}
+
+	return $status;
+}
+
+# Returns farm PID
+sub getGSLBFarmPid($fname,$file)
+{
+	my ( $fname, $file ) = @_;
+	my $output = -1;
+
+	my @fname = split ( /\_/, $file );
+	my $pidfile = &getGSLBFarmPidFile( $fname );
+	if ( -e $pidfile )
+	{
+		open FPID, "<$pidfile";
+		my @pid = <FPID>;
+		close FPID;
+		my $pid_hprof = @pid[0];
+		chomp ( $pid_hprof );
+		my $exists = kill 0, $pid_hprof;
+		if ( $pid_hprof =~ /^[1-9].*/ && $exists )
+		{
+			$output = "$pid_hprof";
+		}
+		else
+		{
+			$output = "-";
+		}
+	}
+	else
+	{
+		$output = "-";
+	}
+
+	return $output;
+}
+
+# Returns farm vip
+sub getGSLBFarmVip($info,$file)
+{
+	my ( $info, $file ) = @_;
+	my $output = -1;
+
+	open FI, "<$configdir/$file/etc/config";
+	my @file = <FI>;
+	my $i    = 0;
+	close FI;
+	foreach $line ( @file )
+	{
+		if ( $line =~ /^options =>/ )
+		{
+			my $vip  = @file[$i + 1];
+			my $vipp = @file[$i + 2];
+			chomp ( $vip );
+			chomp ( $vipp );
+			my @vip  = split ( "\ ", $vip );
+			my @vipp = split ( "\ ", $vipp );
+			if ( $info eq "vip" )   { $output = @vip[2]; }
+			if ( $info eq "vipp" )  { $output = @vipp[2]; }
+			if ( $info eq "vipps" ) { $output = "@vip[2]\:@vipp[2]"; }
+		}
+		$i++;
+	}
+
+	return $output;
+}
+
+# Set farm virtual IP and virtual PORT
+sub setGSLBFarmVirtualConf($vip,$vipp,$fconf)
+{
+
+	my $stat  = -1;
+	my $index = 0;
+	my $found = 0;
+
+	tie @fileconf, 'Tie::File', "$configdir/$fconf/etc/config";
+	foreach $line ( @fileconf )
+	{
+		if ( $line =~ /options => / )
+		{
+			$found = 1;
+		}
+		if ( $found == 1 && $line =~ / listen = / )
+		{
+			$line =~ s/$line/   listen = $vip/g;
+		}
+		if ( $found == 1 && $line =~ /dns_port = / )
+		{
+			$line =~ s/$line/   dns_port = $vipp/g;
+		}
+		if ( $found == 1 && $line =~ /\}/ )
+		{
+			last;
+		}
+		$index++;
+	}
+	untie @fileconf;
+	$stat = $?;
+
+	return $stat;
+}
+
+#
+sub runGSLBFarmServerDelete($ids,$ffile,$service)
+{
+	my ( $ids, $ffile, $service ) = @_;
+
+	my $output = -1;
+	my $param;
+	my @linesplt;
+	my $index = 0;
+	use Tie::File;
+	tie my @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$service";
+	foreach my $line ( @fileconf )
+	{
+
+		if ( $line =~ /\;index_/ )
+		{
+			@linesplt = split ( "\;index_", $line );
+			$param = @linesplt[1];
+			if ( $ids !~ /^$/ && $ids eq $param )
+			{
+				splice @fileconf, $index, 1,;
+			}
+		}
+		$index++;
+	}
+	untie @fileconf;
+	$output = $?;
+
+	return $output;
+}
+
+#function that renames a farm
+sub setGSLBNewFarmName($newfname,$ffile,$type)
+{
+	my ( $newfname, $ffile, $type ) = @_;
+	my $output = -1;
+
+	my $newffile = "$newfname\_$type.cfg";
+	rename ( "$configdir\/$ffile", "$configdir\/$newffile" );
+	$output = 0;
+
+	return $output;
+}
+
+# Get farm services list for GSLB farms
+sub getFarmServices($fname)
+{
+	my ( $fname ) = @_;
+
+	my $output = -1;
+	my $ftype  = &getFarmType( $fname );
+	my @srvarr = ();
+
+	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
+	my @pluginlist = readdir ( DIR );
+	closedir ( DIR );
+	foreach $plugin ( @pluginlist )
+	{
+		if ( $plugin !~ /^\./ )
+		{
+			@fileconf = ();
+			tie @fileconf, 'Tie::File',
+			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+			my @srv = grep ( /^\t[a-zA-Z1-9].* => {/, @fileconf );
+			foreach $srvstring ( @srv )
+			{
+				my @srvstr = split ( ' => ', $srvstring );
+				$srvstring = $srvstr[0];
+				$srvstring =~ s/^\s+|\s+$//g;
+			}
+			my $nsrv = @srv;
+			if ( $nsrv > 0 )
+			{
+				push ( @srvarr, @srv );
+			}
+			untie @fileconf;
+		}
+	}
+	return @srvarr;
+}
+
+#function that return indicated value from a HTTP Service
+#vs return virtual server
+sub getGSLBFarmVS($ffile,$service,$tag)
+{
+	my ( $ffile, $service, $tag ) = @_;
+
+	my $output = "";
+
+	my @fileconf;
+	my $line;
+	my @linesplt;
+	use Tie::File;
+	if ( $tag eq "ns" || $tag eq "resources" )
+	{
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$service";
+		foreach $line ( @fileconf )
+		{
+			if ( $tag eq "ns" )
+			{
+				if ( $line =~ /@.*SOA .* hostmaster / )
+				{
+					@linesplt = split ( " ", $line );
+					$output = @linesplt[2];
+					last;
+				}
+			}
+			if ( $tag eq "resources" )
+			{
+				if ( $line =~ /;index_.*/ )
+				{
+					my $tmpline = $line;
+					$tmpline =~ s/multifo!|simplefo!//g;
+					$output = "$output\n$tmpline";
+				}
+			}
+		}
+	}
+	else
+	{
+		my $found      = 0;
+		my $pluginfile = "";
+		opendir ( DIR, "$configdir\/$fname\_$type.cfg\/etc\/plugins\/" );
+		my @pluginlist = readdir ( DIR );
+		foreach $plugin ( @pluginlist )
+		{
+			tie @fileconf, 'Tie::File',
+			  "$configdir\/$fname\_$type.cfg\/etc\/plugins\/$plugin";
+			if ( grep ( /^\t$service => /, @fileconf ) )
+			{
+				$pluginfile = $plugin;
+			}
+			untie @fileconf;
+		}
+		closedir ( DIR );
+		tie @fileconf, 'Tie::File',
+		  "$configdir\/$fname\_$type.cfg\/etc\/plugins\/$pluginfile";
+		foreach $line ( @fileconf )
+		{
+			if ( $tag eq "backends" )
+			{
+				if ( $found == 1 && $line =~ /.*}.*/ )
+				{
+					last;
+				}
+				if (    $found == 1
+					 && $line !~ /^$/
+					 && $line !~ /.*service_types.*/ )
+				{
+					$output = "$output\n$line";
+				}
+				if ( $line =~ /\t$service => / )
+				{
+					$found = 1;
+				}
+			}
+			if ( $tag eq "algorithm" )
+			{
+				@linesplt = split ( " ", $line );
+				if ( @linesplt[0] eq "simplefo" )
+				{
+					$output = "prio";
+				}
+				if ( @linesplt[0] eq "multifo" )
+				{
+					$output = "roundrobin";
+				}
+				last;
+			}
+			if ( $tag eq "plugin" )
+			{
+				@linesplt = split ( " ", $line );
+				$output = @linesplt[0];
+				last;
+			}
+			if ( $tag eq "dpc" )
+			{
+				if ( $found == 1 && $line =~ /.*}.*/ )
+				{
+					last;
+				}
+				if ( $found == 1 && $line =~ /.*service_types.*/ )
+				{
+					my @tmpline = split ( "=", $line );
+					$output = @tmpline[1];
+					$output =~ s/['\[''\]'' ']//g;
+					my @tmp = split ( "_", $output );
+					$output = @tmp[1];
+					last;
+				}
+				if ( $line =~ /\t$service => / )
+				{
+					$found = 1;
+				}
+			}
+		}
+	}
+	untie @fileconf;
+
+	return $output;
+}
+
+#set values for a service
+sub setGSLBFarmVS($ffile,$service,$tag,$string)
+{
+	my ( $ffile, $service, $tag, $string ) = @_;
+	my $output = "";
+
+	my @fileconf;
+	my $line;
+	my $param;
+	my @linesplt;
+	use Tie::File;
+	if ( $tag eq "ns" )
+	{
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$service";
+		foreach $line ( @fileconf )
+		{
+			if ( $line =~ /^@\tSOA .* hostmaster / )
+			{
+				@linesplt = split ( " ", $line );
+				$param    = @linesplt[2];
+				$line     = "@\tSOA $string hostmaster (";
+			}
+			if ( $line =~ /\t$param / )
+			{
+				$line =~ s/\t$param /\t$string /g;
+			}
+			if ( $line =~ /^$param\t/ )
+			{
+				$line =~ s/^$param\t/$string\t/g;
+			}
+		}
+		untie @fileconf;
+		&setFarmZoneSerial( $fname, $service );
+	}
+	if ( $tag eq "dpc" )
+	{
+		my $found = 0;
+
+		#Find the plugin file
+		opendir ( DIR, "$configdir\/$ffile\/etc\/plugins\/" );
+		my @pluginlist = readdir ( DIR );
+		foreach $plugin ( @pluginlist )
+		{
+			tie @fileconf, 'Tie::File', "$configdir\/$ffile\/etc\/plugins\/$plugin";
+			if ( grep ( /^\t$service => /, @fileconf ) )
+			{
+				$pluginfile = $plugin;
+			}
+			untie @fileconf;
+		}
+		closedir ( DIR );
+
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
+		foreach $line ( @fileconf )
+		{
+			if ( $found == 1 && $line =~ /.*}.*/ )
+			{
+				last;
+			}
+			if ( $found == 1 && $line =~ /.*service_types.*/ )
+			{
+				$line   = "\t\tservice_types = tcp_$string";
+				$output = "0";
+				last;
+			}
+			if ( $line =~ /\t$service => / )
+			{
+				$found = 1;
+			}
+		}
+		untie @fileconf;
+		if ( $output eq "0" )
+		{
+			# Check if there is already an entry
+			my $found = 0;
+			my $index = 1;
+			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
+			while ( @fileconf[$index] !~ /plugins => / )
+			{
+				my $line = @fileconf[$index];
+				if ( $found == 2 && $line =~ /.*}.*/ )
+				{
+					splice @fileconf, $index, 1;
+					last;
+				}
+				if ( $found == 2 )
+				{
+					splice @fileconf, $index, 1;
+					next;
+				}
+				if ( $found == 1 && $line =~ /tcp_$string => / )
+				{
+					splice @fileconf, $index, 1;
+					$found = 2;
+					next;
+				}
+				if ( $line =~ /service_types => / )
+				{
+					$found = 1;
+				}
+				$index++;
+			}
+			untie @fileconf;
+
+			# New service_types entry
+			my $index = 0;
+			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
+			foreach $line ( @fileconf )
+			{
+				if ( $line =~ /service_types => / )
+				{
+					$index++;
+					splice @fileconf, $index, 0,
+					  "\ttcp_$string => {\n\t\tplugin = tcp_connect,\n\t\tport = $string,\n\t\tup_thresh = 2,\n\t\tok_thresh = 2,\n\t\tdown_thresh = 2,\n\t\tinterval = 5,\n\t\ttimeout = 3,\n\t}\n";
+					last;
+				}
+				$index++;
+			}
+			untie @fileconf;
+		}
+	}
+
+	return $output;
+}
+
+# Remove Gslb service
+sub remFarmServiceBackend($id,$fname,$service)
+{
+	my ( $id, $fname, $srv ) = @_;
+
+	my $output = 0;
+	my $ftype  = &getFarmType( $fname );
+	my $ffile  = &getFarmFile( $fname );
+
+	if ( $ftype eq "gslb" )
+	{
+		my @fileconf;
+		my $line;
+		my $index      = 0;
+		my $pluginfile = "";
+		use Tie::File;
+
+		#Find the plugin file
+		opendir ( DIR, "$configdir\/$ffile\/etc\/plugins\/" );
+		my @pluginlist = readdir ( DIR );
+		foreach $plugin ( @pluginlist )
+		{
+			tie @fileconf, 'Tie::File', "$configdir\/$ffile\/etc\/plugins\/$plugin";
+			if ( grep ( /^\t$srv => /, @fileconf ) )
+			{
+				$pluginfile = $plugin;
+			}
+			untie @fileconf;
+		}
+		closedir ( DIR );
+
+		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
+		foreach $line ( @fileconf )
+		{
+			if ( $line =~ /^\t$srv => / )
+			{
+				$found = 1;
+				$index++;
+				next;
+			}
+			if ( $found == 1 && $line =~ /primary => / )
+			{
+				$output = -2;
+				last;
+			}
+			if ( $found == 1 && $line =~ /$id => / )
+			{
+				my @backendslist = grep ( /^\s+[1-9].* =>/, @fileconf );
+				my $nbackends = @backendslist;
+				if ( $nbackends == 1 )
+				{
+					$output = -2;
+				}
+				else
+				{
+					splice @fileconf, $index, 1;
+				}
+				last;
+			}
+			$index++;
+		}
+		untie @fileconf;
+		$output = $output + $?;
+	}
+
+	return $output;
+}
+
+sub runFarmReload($farmname)
+{
+	my ( $fname ) = @_;
+
+	my $type = &getFarmType( $fname );
+	my $output;
+
+	if ( $type eq "gslb" )
+	{
+		&logfile( "running $gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones" );
+		zsystem(
+				 "$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones 2>/dev/null" );
+		$output = $?;
+		if ( $output != 0 )
+		{
+			$output = -1;
+		}
+	}
+
+	return $output;
+}
+
 # do not remove this
 1
