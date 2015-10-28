@@ -306,9 +306,7 @@ sub createmenubackactions($id_server)
 #function that create a menu for configure servers in a farm
 sub createmenuserversfarm($action,$name,$id_server)
 {
-
 	my ( $actionmenu, $name, $id_server ) = @_;
-
 	my $type = &getFarmType( $farmname );
 
 	print "<td>";
