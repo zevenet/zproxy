@@ -627,7 +627,7 @@ sub setClusterNodeOffMaintenance
 
 sub setClusterRsaConnection
 {
-	my ( $lhost, $rhost, $lip, $rip, $pass, $vipcl, $cable) = @_;
+	my ( $lhost, $rhost, $lip, $rip, $pass, $vipcl, $cable ) = @_;
 
 	my $error = "false";
 
@@ -977,8 +977,8 @@ sub setClusterType
 				"Error connecting between $lip and $rip, please configure the RSA connectiong first"
 			);
 
-			# leave cluster type without configuration because rsa configuration is required first
-			# to keep a correct cluster configuration
+	  # leave cluster type without configuration because rsa configuration is required first
+	  # to keep a correct cluster configuration
 			undef ( $typecl );
 		}
 	}

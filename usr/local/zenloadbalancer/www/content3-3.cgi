@@ -54,7 +54,7 @@ if (    $action eq "Save"
 if ( -e $filecluster )    # get configuration from file
 {
 	(
-	   $lhost,  $lip,      $rhost, $rip,       $vipcl, 		$ifname,
+	   $lhost,  $lip,      $rhost, $rip,       $vipcl, $ifname,
 	   $typecl, $clstatus, $cable, $idcluster, $deadratio
 	) = &getClusterConfig();
 }
@@ -82,8 +82,8 @@ if ( $action eq "Return node from maintenance" )
 {
 	&successmsg(
 		  "Returning the node from maintenance, please wait and not stop the process" );
-	&setClusterNodeOffMaintenance( $cable, $ifname,    $deadratio,
-								   $lip,   $idcluster, $vipcl, $typecl );
+	&setClusterNodeOffMaintenance( $cable,     $ifname, $deadratio, $lip,
+								   $idcluster, $vipcl,  $typecl );
 	sleep ( 10 );
 }
 
@@ -142,8 +142,8 @@ print "<b>Cluster status $refresh_link: </b>";
 
 # Show Cluster status
 # this function prints html
-( $rhost, $lhost, $rip, $lip, $vipcl, $clstatus )
-	= showCluserStatus( $rhost, $lhost, $rip, $lip, $vipcl, $clstatus );
+( $rhost, $lhost, $rip, $lip, $vipcl, $clstatus ) =
+  showCluserStatus( $rhost, $lhost, $rip, $lip, $vipcl, $clstatus );
 print "<div id=\"page-header\"></div>";
 
 ### show Global status ###
@@ -327,8 +327,10 @@ if ( &areClusterNodesDefined() )
 	print "<br>";
 
 	# initialize $cable => $checked
-	$checked = ( $cable eq "Crossover cord" )	?	'checked'
-												:	'';
+	$checked =
+	  ( $cable eq "Crossover cord" )
+	  ? 'checked'
+	  : '';
 
 	print
 	  "<input type=\"checkbox\" name=\"cable\" value=\"Crossover cord\" $checked />&nbsp;Use crossover patch cord";

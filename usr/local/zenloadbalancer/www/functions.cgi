@@ -47,7 +47,8 @@ if ( -e "/usr/local/zenloadbalancer/www/zapi_functions.cgi" )
 #function that check if variable is a number no float
 sub isnumber($num)
 {
-	( $num ) = @_;
+	my ( $num ) = @_;
+
 	if ( $num !~ /[^0-9]/ )
 	{
 		return "true";
@@ -81,7 +82,7 @@ sub ismport($string)
 #check if the port has more than 1 port
 sub checkmport($port)
 {
-	( $port ) = @_;
+	my ( $port ) = @_;
 
 	if ( $port =~ /\,|\:|\*/ )
 	{
@@ -96,7 +97,7 @@ sub checkmport($port)
 #function that paint a static progess bar
 sub progressbar($filename,$vbar)
 {
-	( $filename, $vbar ) = @_;
+	my ( $filename, $vbar ) = @_;
 	$max = "150";
 
 	# Create a new image
@@ -171,8 +172,8 @@ sub uptime()
 #sub graphs(@data,$description)
 sub graphs($description,@data)
 {
-	( $description, @data ) = @_;
-####graph configuration
+	my ( $description, @data ) = @_;
+	####graph configuration
 	#midblue     => { R => 165,  G => 192, B => 220 },
 	my %options = (
 
@@ -255,7 +256,7 @@ sub graphs($description,@data)
 #function that create a menu for certificates actions
 sub createMenuFarmCert($fname,$cname)
 {
-	( $fname, $cname ) = @_;
+	my ( $fname, $cname ) = @_;
 
 	print "<input type=\"hidden\" name=\"action\" value=\"changecert\">";
 	print "<input "
@@ -269,7 +270,8 @@ sub createMenuFarmCert($fname,$cname)
 #function that create a menu for backup actions
 sub createmenubackup($file)
 {
-	( $file ) = @_;
+	my ( $file ) = @_;
+
 	print "<a href=\"index.cgi?id=$id&action=apply&file=$file\">" . "<img"
 	  . "src=\"img/icons/small/accept2.png\" "
 	  . "title=\"Apply $file backup and restart Zen Load Balancer service\">"
@@ -288,7 +290,7 @@ sub createmenubackup($file)
 #function that create a menu where you can enable/disable the server backend in a farm.
 sub createmenubackactions($id_server)
 {
-	( $id_server ) = @_;
+	my ( $id_server ) = @_;
 
 	print "<input type=\"image\" "
 	  . "src=\"img/icons/small/server_edit.png\" "
@@ -305,7 +307,8 @@ sub createmenubackactions($id_server)
 sub createmenuserversfarm($action,$name,$id_server)
 {
 
-	( $actionmenu, $name, $id_server ) = @_;
+	my ( $actionmenu, $name, $id_server ) = @_;
+
 	my $type = &getFarmType( $farmname );
 
 	print "<td>";
@@ -458,7 +461,7 @@ sub uploadcerts()
 sub help($cod)
 {
 	#code
-	( $cod ) = @_;
+	my ( $cod ) = @_;
 
 	#this is javascript emmbebed in perl
 	print "<script language=\"javascript\">
@@ -480,7 +483,7 @@ sub help($cod)
 #function that create the menu for manage the vips in Farm Table
 sub createmenuvip($name,$id,$status)
 {
-	( $name, $id, $status ) = @_;
+	my ( $name, $id, $status ) = @_;
 
 	if ( $status eq "up" )
 	{
@@ -534,7 +537,8 @@ sub createmenuvipstats($name,$id,$status,$type)
 #
 sub createmenuGW($id,$action)
 {
-	( $id, $action ) = @_;
+	my ( $id, $action ) = @_;
+
 	if ( $action =~ /editgw/ )
 	{
 		print "<input " . "type=\"hidden\" " . "name=\"action\" " . "value=\"editgw\">";
@@ -575,13 +579,14 @@ sub createmenuGW($id,$action)
 #function create menu for interfaces in id 3-2
 sub createmenuif($if, $id, $configured, $state)
 {
+	my ( $if, $id, $configured, $state ) = @_;
+
 	use IO::Socket;
 	use IO::Interface qw(:flags);
 
 	my $s = IO::Socket::INET->new( Proto => 'udp' );
 	my @interfaces = $s->if_list;
 
-	( $if, $id, $configured, $state ) = @_;
 	$clrip = &getClusterRealIp();
 	$guiip = &GUIip();
 	$clvip = &getClusterVirtualIp();
@@ -703,6 +708,7 @@ sub createmenuif($if, $id, $configured, $state)
 sub successmsg($string)
 {
 	my ( $string ) = @_;
+
 	print "<div class=\"notification success\">";
 	print "<span class=\"strong\">SUCCESS!</span>";
 	print " $string.";
@@ -714,6 +720,7 @@ sub successmsg($string)
 sub tipmsg($string)
 {
 	my ( $string ) = @_;
+
 	print "<div class=\"notification tip\">";
 	print "<span class=\"strong\">TIP!</span>";
 	print " $string. Restart HERE! ";
@@ -728,6 +735,7 @@ sub tipmsg($string)
 sub warnmsg($string)
 {
 	my ( $string ) = @_;
+
 	print "<div class=\"notification warning\">";
 	print "<span class=\"strong\">WARNING!</span>";
 	print " $string.";
@@ -740,6 +748,7 @@ sub warnmsg($string)
 sub errormsg($string)
 {
 	my ( $string ) = @_;
+
 	print "<div class=\"notification error\">";
 	print "<span class=\"strong\">ERROR!</span>";
 	print " $string.";
@@ -752,57 +761,13 @@ sub errormsg($string)
 sub logfile($string)
 {
 	my ( $string ) = @_;
+
 	my $date = `date`;
 	$date =~ s/\n//g;
 	open FO, ">> $logfile";
 	print FO
 	  "$date - $ENV{'SERVER_NAME'} - $ENV{'REMOTE_ADDR'} - $ENV{'REMOTE_USER'} - $string\n";
 	close FO;
-}
-
-sub array2string
-{
-	my @array = @_;
-
-	return "( " . join ( ", ", @array ) . " )";
-}
-
-sub array2stringCol
-{
-	my @array = @_;
-
-	my $lf = "<br>";
-
-	#my $lf = "\n";
-	return "( $lf" . join ( ", $lf", @array ) . "$lf )";
-}
-
-{    # cache html output scope
-	use feature "state";
-	state @cache;
-
-	sub cache_print
-	{
-		push @cache, @_;
-	}
-
-	sub cache_flush
-	{
-		print @cache and @cache = ();
-	}
-
-}    # end of cache html output scope
-
-sub timer
-{
-	my ( $reference_time, $message ) = @_;
-
-	use Time::HiRes;
-	my $timed = Time::HiRes::gettimeofday() - $reference_time;
-
-	$message = "" if undef ( $message );
-
-	printf "<br>ExecTime:%2.3f:%s<br>", $timed, $message;
 }
 
 #
