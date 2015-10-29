@@ -24,7 +24,7 @@
 
 ## Load pragmas and modules
 require "/usr/local/zenloadbalancer/config/global.conf";
-require "./functions.cgi";
+require "/usr/local/zenloadbalancer/www/functions.cgi";
 use CGI;
 
 # Uncomment the next line only for debugging the script.
@@ -34,6 +34,12 @@ use CGI;
 # if you do not understand what they do.
 $CGI::POST_MAX        = 1240;
 $CGI::DISABLE_UPLOADS = 1;
+
+if ( -e "/usr/local/zenloadbalancer/www/login_functions.cgi" )
+{
+    require "/usr/local/zenloadbalancer/www/login_functions.cgi";
+    &login();
+}
 
 ####################################
 #### User Configuration Section ####
