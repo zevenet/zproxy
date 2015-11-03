@@ -23,7 +23,7 @@
 ###############################################################################
 
 require "/usr/local/zenloadbalancer/config/global.conf";
-require "./functions.cgi";
+require "/usr/local/zenloadbalancer/www/functions.cgi";
 use CGI qw(:standard escapeHTML);
 print "Content-type: text/html\n\n";
 

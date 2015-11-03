@@ -3,7 +3,7 @@ print "
 <div id=\"page-wrapper\">
   <div class=\"page\">
 ";
-require "./menu.cgi";
+require "/usr/local/zenloadbalancer/www/menu.cgi";
 
 print "
     <!--Content INI-->

@@ -39,7 +39,7 @@ use Tie::File;
 # action edit interface
 if ( $action eq "editif" )
 {
-	require "./content3-21.cgi";
+	require "/usr/local/zenloadbalancer/www/content3-21.cgi";
 }
 
 # action Save Config

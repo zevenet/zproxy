@@ -26,7 +26,7 @@ use CGI qw(:standard escapeHTML);
 print "Content-type: text/html\n\n";
 
 ##REQUIRES
-require "./help-content.cgi";
+require "/usr/local/zenloadbalancer/www/help-content.cgi";
 
 &login();
 
