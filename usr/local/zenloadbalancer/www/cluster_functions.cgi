@@ -24,8 +24,6 @@
 use Net::SSH qw(ssh sshopen2);
 use Net::SSH::Expect;
 
-#~ use warnings;
-
 #get real ip from cluster on this host
 sub getClusterRealIp
 {
@@ -1131,6 +1129,58 @@ sub areClusterNodesDefined
 
 	# if all parameters ar defined return a true value
 	return 1;
+}
+
+###HTML cluster INFO ### from ee branch
+sub getClusterInfo()
+{
+	open FR, "<$filecluster";
+	@file         = <FR>;
+	$cluster_msg  = "Not configured";
+	$cluster_icon = "fa-cog yellow";
+
+	if ( -e $filecluster && ( grep ( /UP/, @file ) ) )
+	{
+		if ( &activenode() eq "true" )
+		{
+
+			#print "Cluster: <b>this node is master</b>";
+			$cluster_msg  = "Master";
+			$cluster_icon = "fa-cog green";
+		}
+		elsif ( `ps aux | grep "ucarp" | grep "\\-k 100" | grep -v grep` )
+		{
+
+			#print "Cluster: <b>this node is on maintenance</b>";
+			$cluster_msg  = "Maintenance";
+			$cluster_icon = "fa-cog red";
+		}
+		else
+		{
+
+			#print "Cluster: <b>this node is backup</b>";
+			$cluster_msg  = "Backup";
+			$cluster_icon = "fa-cog green";
+		}
+	}
+
+}
+
+###HTML Cluster status icons ### from ee branch
+sub getClusterStatus()
+{
+	if ( $cluster_msg eq "Not configured" )
+	{
+		print
+		  "<div class=\"grid_4\"><p class=\"cluster\"><a href=\"http://www.zenloadbalancer.com/eliminate-a-single-point-of-failure/\" target=\"_blank\"><i class=\"fa fa-fw $cluster_icon action-icon\" title=\"How to eliminate this single point of failure\"></i></a> Cluster status: $cluster_msg</p></div>";
+		print "<div class=\"clear\"></div>";
+	}
+	else
+	{
+		print
+		  "<div class=\"grid_4\"><p class=\"cluster\"><i class=\"fa fa-fw $cluster_icon action-icon\"></i> Cluster status: $cluster_msg</p></div>";
+		print "<div class=\"clear\"></div>";
+	}
 }
 
 # do not remove this
