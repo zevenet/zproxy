@@ -219,14 +219,20 @@ sub createMenuCert($action,$certfile)
 	{
 		&uploadCertFromCSR( $certfile );
 	}
+	print "<a href=\"index.cgi?id=$id&action=deletecert&certname=$certfile\">";
 	print
-	  "<a href=\"index.cgi?id=$id&action=deletecert&certname=$certfile\"><img src=\"img/icons/small/page_white_delete.png\" title=\"Delete $certtype $certfile\" onclick=\"return confirm('Are you sure you want to delete the certificate: $certfile?')\"></a> ";
-	print
-	  "<a href=\"index.cgi?id=$id&action=View_Cert&certname=$certfile\"><img src=\"img/icons/small/page_white_find.png\" title=\"View $certtype $certfile content\"></a> ";
-	print
-	  "<a href=\"downloadcerts.cgi?certname=$certfile\" target=\"_blank\"><img src=\"img/icons/small/page_white_put.png\" title=\"Download $certtype $certfile\"></a> ";
+	  "<img src=\"img/icons/small/page_white_delete.png\" title=\"Delete $certtype $certfile\" onclick=\"return confirm('Are you sure you want to delete the certificate: $certfile?')\">";
+	print "</a> ";
 
-	#&downloadCert($certfile);
+	print "<a href=\"index.cgi?id=$id&action=View_Cert&certname=$certfile\">";
+	print
+	  "<img src=\"img/icons/small/page_white_find.png\" title=\"View $certtype $certfile content\">";
+	print "</a> ";
+
+	print "<a href=\"downloadcerts.cgi?certname=$certfile\" target=\"_blank\">";
+	print
+	  "<img src=\"img/icons/small/page_white_put.png\" title=\"Download $certtype $certfile\">";
+	print "</a> ";
 }
 
 sub uploadCertFromCSR($certfile)
@@ -243,7 +249,10 @@ sub uploadCertFromCSR($certfile)
 
 	#print the information icon with the popup with info.
 	print
-	  "<a href=\"uploadcertsfromcsr.cgi?certname=$certfile\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/page_white_get.png' title=\"Upload certificate for CSR $certfile\"></a> ";
+	  "<a href=\"uploadcertsfromcsr.cgi?certname=$certfile\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\">";
+	print
+	  "<img src='img/icons/small/page_white_get.png' title=\"Upload certificate for CSR $certfile\">";
+	print "</a> ";
 }
 
 sub uploadPEMCerts($certfile)
@@ -260,7 +269,10 @@ sub uploadPEMCerts($certfile)
 
 	#print the information icon with the popup with info.
 	print
-	  "<a href=\"uploadcerts.cgi\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/page_white_get.png' title=\"Upload .pem certificate\"></a> ";
+	  "<a href=\"uploadcerts.cgi\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\">";
+	print
+	  "<img src='img/icons/small/page_white_get.png' title=\"Upload .pem certificate\">";
+	print "</a> ";
 }
 
 sub downloadCert($certfile)
