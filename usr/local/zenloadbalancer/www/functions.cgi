@@ -44,6 +44,11 @@ if ( -e "/usr/local/zenloadbalancer/www/zapi_functions.cgi" )
 	require "/usr/local/zenloadbalancer/www/zapi_functions.cgi";
 }
 
+if ( -e "/usr/local/zenloadbalancer/www/login_functions.cgi" )
+{
+	require "/usr/local/zenloadbalancer/www/login_functions.cgi";
+}
+
 #function that check if variable is a number no float
 sub isnumber($num)
 {
@@ -272,19 +277,21 @@ sub createmenubackup($file)
 {
 	my ( $file ) = @_;
 
-	print "<a href=\"index.cgi?id=$id&action=apply&file=$file\">" . "<img"
-	  . "src=\"img/icons/small/accept2.png\" "
-	  . "title=\"Apply $file backup and restart Zen Load Balancer service\">"
-	  . "</a> ";
-	print "<a href=\"downloads.cgi?filename=$file\">" . "<img"
-	  . "src=\"img/icons/small/arrow_down.png\" "
-	  . "title=\"Download $file backup\">" . "</a>";
-	print "<a "
-	  . "href=\"index.cgi?id=$id&action=del&file=$file\" "
-	  . "onclick=\"return confirm('Are you sure you wish to delete this backup?')\">"
-	  . "<img "
-	  . "src=\"img/icons/small/cross_octagon.png\" "
-	  . "title=\"Delete $file backup\">" . "</a> ";
+	print "<a href=\"index.cgi?id=$id&action=apply&file=$file\">";
+	print
+	  "<img src=\"img/icons/small/accept2.png\"  title=\"Apply $file backup and restart Zen Load Balancer service\">";
+	print "</a>";
+
+	print "<a href=\"downloads.cgi?filename=$file\">";
+	print
+	  "<img src=\"img/icons/small/arrow_down.png\"  title=\"Download $file backup\">";
+	print "</a>";
+
+	print
+	  "<a href=\"index.cgi?id=$id&action=del&file=$file\" onclick=\"return confirm('Are you sure you wish to delete this backup?')\">";
+	print
+	  "<img src=\"img/icons/small/cross_octagon.png\" title=\"Delete $file backup\">";
+	print "</a>";
 }
 
 #function that create a menu where you can enable/disable the server backend in a farm.
@@ -292,58 +299,45 @@ sub createmenubackactions($id_server)
 {
 	my ( $id_server ) = @_;
 
-	print "<input type=\"image\" "
-	  . "src=\"img/icons/small/server_edit.png\" "
-	  . "title=\"Edit Real Server $id_server\" "
-	  . "name=\"action\" "
-	  . "value=\"editfarm-editserver\"> ";
-	print "<input type=\"image\" "
-	  . "src=\"img/icons/small/server_edit.png\" "
-	  . "title=\"Edit Real Server $id_server\" "
-	  . "name=\"action\" value=\"editfarm-editserver\"> ";
+	print
+	  "<input type=\"image\" src=\"img/icons/small/server_edit.png\" title=\"Edit Real Server $id_server\" name=\"action\" value=\"editfarm-editserver\"> ";
+	print
+	  "<input type=\"image\" src=\"img/icons/small/server_edit.png\" title=\"Edit Real Server $id_server\" name=\"action\" value=\"editfarm-editserver\"> ";
 }
 
 #function that create a menu for configure servers in a farm
 sub createmenuserversfarm($action,$name,$id_server)
 {
 	my ( $actionmenu, $name, $id_server ) = @_;
-	my $type = &getFarmType( $farmname );
+	my $type = &getFarmType( $name );
 
 	print "<td>";
 	if ( $actionmenu eq "normal" )
 	{
 		print "<input type=\"hidden\" name=\"action\" value=\"editfarm-editserver\">";
-		print "<input type=\"image\" "
-		  . "src=\"img/icons/small/server_edit.png\" "
-		  . "title=\"Edit Real Server $id_server\" "
-		  . "name=\"action\" "
-		  . "value=\"editfarm-editserver\">";
+		print
+		  "<input type=\"image\" src=\"img/icons/small/server_edit.png\" title=\"Edit Real Server $id_server\" name=\"action\" value=\"editfarm-editserver\">";
+
 		my $maintenance = &getFarmBackendMaintenance( $name, $id_server, $sv );
 		if ( $type ne "datalink" && $type ne "l4xnat" && $type ne "gslb" )
 		{
 			if ( $maintenance ne "0" )
 			{
-				print "<a href=index.cgi?"
-				  . "action=editfarm-maintenance&"
-				  . "id=1-2&"
-				  . "farmname=$name&"
-				  . "id_server=$id_server&"
-				  . "service=$sv "
+				print
+				  "<a href=index.cgi?action=editfarm-maintenance&id=1-2&farmname=$name&id_server=$id_server&service=$sv "
 				  . "title=\"Enable  maintenance mode for real Server $id_server $sv\" "
-				  . "onclick=\"return confirm('Are you sure you want to enable the  maintenance mode for server: $id_server $sv?')\">"
-				  . "<img src=\"img/icons/small/server_maintenance.png\">" . "</a>";
+				  . "onclick=\"return confirm('Are you sure you want to enable the  maintenance mode for server: $id_server $sv?')\">";
+				print "<img src=\"img/icons/small/server_maintenance.png\">";
+				print "</a>";
 			}
 			else
 			{
-				print "<a href=index.cgi?"
-				  . "action=editfarm-nomaintenance&"
-				  . "id=1-2&"
-				  . "farmname=$name&"
-				  . "id_server=$id_server&"
-				  . "service=$sv "
+				print
+				  "<a href=index.cgi?action=editfarm-nomaintenance&id=1-2&farmname=$name&id_server=$id_server&service=$sv "
 				  . "title=\"Disable maintenance mode for real Server $id_server $sv\" "
-				  . "onclick=\"return confirm('Are you sure you want to disable the maintenance mode for server: $id_server $sv?')\">"
-				  . "<img src=\"img/icons/small/server_ok.png\">" . "</a>";
+				  . "onclick=\"return confirm('Are you sure you want to disable the maintenance mode for server: $id_server $sv?')\">";
+				print "<img src=\"img/icons/small/server_ok.png\">";
+				print "</a>";
 			}
 		}
 
@@ -354,28 +348,22 @@ sub createmenuserversfarm($action,$name,$id_server)
 		{
 			if ( $id_server ne "primary" && $id_server ne "secondary" )
 			{
-				print "<a href=index.cgi?"
-				  . "action=editfarm-deleteserver"
-				  . "&id=1-2"
-				  . "&farmname=$name"
-				  . "&id_server=$id_server"
-				  . "&service=$sv20"
-				  . "&service_type=$service_type "
+				print
+				  "<a href=index.cgi?action=editfarm-deleteserver&id=1-2&farmname=$name&id_server=$id_server&service=$sv20&service_type=$service_type "
 				  . "title=\"Delete Real Server $id_server\" "
-				  . "onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\">"
-				  . "<img src=\"img/icons/small/server_delete.png\">" . "</a>";
+				  . "onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\">";
+				print "<img src=\"img/icons/small/server_delete.png\">";
+				print "</a>";
 			}
 		}
 		else
 		{
-			print "<a href=index.cgi?"
-			  . "action=editfarm-deleteserver"
-			  . "&id=1-2&farmname=$name"
-			  . "&id_server=$id_server"
-			  . "&service=$sv20 "
+			print
+			  "<a href=index.cgi?action=editfarm-deleteserver&id=1-2&farmname=$name&id_server=$id_server&service=$sv20 "
 			  . "title=\"Delete Real Server $id_server\" "
-			  . "onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\">"
-			  . "<img src=\"img/icons/small/server_delete.png\">" . "</a>";
+			  . "onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\">";
+			print "<img src=\"img/icons/small/server_delete.png\">";
+			print "</a>";
 		}
 	}
 
@@ -388,8 +376,9 @@ sub createmenuserversfarm($action,$name,$id_server)
 		  . "title=\"Save Real Server $id_server\" "
 		  . "name=\"action\" value=\"editfarm-saveserver\">";
 
-		print "<a href=index.cgi?id=1-2&action=editfarm&farmname=$farmname>"
-		  . "<img src=\"img/icons/small/server_out.png\">" . "</a>";
+		print "<a href=\"index.cgi?id=1-2&action=editfarm&farmname=$farmname\">";
+		print "<img src=\"img/icons/small/server_out.png\">";
+		print "</a>";
 	}
 
 	if ( $actionmenu eq "new" )
@@ -411,8 +400,9 @@ sub createmenuserversfarm($action,$name,$id_server)
 		  . "title=\"Save Real Server $id_server\" "
 		  . "name=\"action\" value=\"editfarm-saveserver\"> ";
 
-		print "<a href=index.cgi?id=1-2&action=editfarm&farmname=$farmname>"
-		  . "<img src=\"img/icons/small/server_out.png\">" . "</a>";
+		print "<a href=\"index.cgi?id=1-2&action=editfarm&farmname=$farmname\">";
+		print "<img src=\"img/icons/small/server_out.png\">";
+		print "</a>";
 	}
 
 	print "</td>";
@@ -488,9 +478,11 @@ sub createmenuvip($name,$id,$status)
 		print "<a "
 		  . "href=\"index.cgi?id=$id&action=stopfarm&farmname=$name\" "
 		  . "onclick=\"return confirm('Are you sure you want to stop the farm: $name?')\">";
+
 		print
 		  "<img src=\"img/icons/small/farm_delete.png\" title=\"Stop the $name Farm\">";
 		print "</a> ";
+
 		print "<a href=\"index.cgi?id=$id&action=editfarm&farmname=$name\">";
 		print
 		  "<img src=\"img/icons/small/farm_edit.png\" title=\"Edit the $name Farm\">";
@@ -549,10 +541,9 @@ sub createmenuGW($id,$action)
 		  . "value=\"editgw\" "
 		  . "title=\"save "
 		  . "default gw\">";
+
 		print "<a href=\"index.cgi?id=$id\">";
-		print "<img "
-		  . "src=\"img/icons/small/arrow_left.png\" "
-		  . "title=\"cancel operation\">";
+		print "<img src=\"img/icons/small/arrow_left.png\" title=\"cancel operation\">";
 		print "</a> ";
 	}
 	else
@@ -619,9 +610,11 @@ sub createmenuif($if, $id, $configured, $state)
 			print "<a "
 			  . "href=\"index.cgi?id=$id&action=downif&if=$if\" "
 			  . "onclick=\"return confirm('Are you sure you wish to shutdown the interface: $if?')\">";
+
 			print "<img "
 			  . "src=\"img/icons/small/plugin_stop.png\" "
 			  . "title=\"down network interface\">";
+
 			print "</a> ";
 			$source = "system";
 		}
