@@ -74,14 +74,15 @@ use Sys::Hostname;
 
 if ( !$eject && $eject !~ /stop|start|status|startlocal|stoplocal/ )
 {
-	print "Usage: /etc/init.d/zenloadbalancer stop|start|status|startlocal|stoplocal\n";
+	print
+	  "Usage: /etc/init.d/zenloadbalancer stop|start|status|startlocal|stoplocal\n";
 	exit;
 }
 
 if ( $eject eq "restart" )
 {
-	my @eject = `/etc/init.d/zenloadbalancer stop`;
-	my @eject = `/etc/init.d/zenloadbalancer start`;
+	system("/etc/init.d/zenloadbalancer stop");
+	system("/etc/init.d/zenloadbalancer start");
 }
 
 if ( $eject eq "start" )
@@ -156,9 +157,11 @@ if ( $eject eq "start" )
 	if ( -e $filecluster )
 	{
 		# get cluster configuration
-		my ( $lhost, $lip, $rhost, $rip, $vipcl, $ifname, $typecl, $clstatus, $cable, $idcluster, $deadratio )
-			= &getClusterConfig();
-		
+		my (
+			 $lhost,  $lip,      $rhost, $rip,       $vipcl, $ifname,
+			 $typecl, $clstatus, $cable, $idcluster, $deadratio
+		) = &getClusterConfig();
+
 		print "Cluster file exist\n";
 		$host = hostname();
 
@@ -174,27 +177,29 @@ if ( $eject eq "start" )
 			print "CL_IP:\t$vipcl\n";
 
 			#if real interface not configured, configured it
-			my ($phys_iface) = split ':', $ifname;
+			my ( $phys_iface ) = split ':', $ifname;
 			&createIf( $phys_iface );
 			&upIf( $phys_iface );
+
 			# read gateway
 			open FO, "<$configdir\/if\_$phys_iface\_conf";
-			chomp (@fileif = <FO>);
+			chomp ( @fileif = <FO> );
 			my $netmask = ( split ":", @fileif[0] )[3];
 
 			my $ifconfig_command = "$ifconfig_bin $phys_iface $lip netmask $netmask";
-			system($ifconfig_command);
+			system ( $ifconfig_command);
 
 			$ifgw   = $phys_iface;
 			$ipifgw = &gwofif( $ifgw );
 			&writeRoutes( $ifgw );
 			&applyRoutes( "local", $phys_iface, $ipifgw );
 
-			if	  ( $typecl =~ /^equal$/	   ) { print "CL_TYPE: equal\n";		   }
-			elsif ( $typecl =~ /$lhost-$rhost/ ) { print "CL_TYPE: M-B, Master node\n";}
-			else								 { print "CL_TYPE: M-B Backup node\n"; }
-			
-			&setClusterNodeOffMaintenance( $cable, $ifname, $deadratio, $lip, $idcluster, $vipcl, $typecl );
+			if    ( $typecl =~ /^equal$/ )       { print "CL_TYPE: equal\n"; }
+			elsif ( $typecl =~ /$lhost-$rhost/ ) { print "CL_TYPE: M-B, Master node\n"; }
+			else                                 { print "CL_TYPE: M-B Backup node\n"; }
+
+			&setClusterNodeOffMaintenance( $cable,     $ifname, $deadratio, $lip,
+										   $idcluster, $vipcl,  $typecl );
 
 			#check the gui interface
 			print "Running GUI interface\n";
@@ -258,7 +263,7 @@ if ( $eject eq "start" )
 			{
 				#check if virtual interface cluster is up:
 				print "CL_IP: $vipcl\n";
-				
+
 				print
 				  "Cluster is running on this node, running IPS and FARMS for Zen Load Balancer...\n";
 				$eject = "startlocal";
@@ -302,7 +307,8 @@ if ( $eject eq "startlocal" )
 	close FR;
 	if ( !grep ( /ucarp/, @filelog ) )
 	{
-		my @eject = `echo \"local6.* /usr/local/zenloadbalancer/logs/ucarp.log\">> $rsyslog`;
+		my @eject =
+		  `echo \"local6.* /usr/local/zenloadbalancer/logs/ucarp.log\">> $rsyslog`;
 		my @eject = `/etc/init.d/rsyslog restart`;
 	}
 
@@ -627,7 +633,8 @@ if ( $eject eq "stoplocal" )
 			}
 			close FR;
 			my @lastline = split ( ":", $lastline );
-			print "    Interface:@lastline[0]:@lastline[1] Ip:@lastline[2] Netmask:@lastline[3]";
+			print
+			  "    Interface:@lastline[0]:@lastline[1] Ip:@lastline[2] Netmask:@lastline[3]";
 
 			&delRoutes( "local", "@lastline[0]:@lastline[1]" );
 			&downIf( "@lastline[0]:@lastline[1]" );
@@ -655,7 +662,7 @@ if ( $eject eq "stoplocal" )
 			}
 			close FR;
 			my @lastline = split ( ":", $lastline );
-			
+
 			print "    Interface:@lastline[0] Ip:@lastline[2] Netmask:@lastline[3]";
 
 			if ( -e $filecluster )
@@ -664,6 +671,7 @@ if ( $eject eq "stoplocal" )
 				open FO, "<$filecluster";
 				@filecl = <FO>;
 				close FO;
+
 				# if interface is not mentioned in cluster file _and_ this ip is not the gui ip
 				if ( !grep ( /@lastline[0]/, @filecl ) && $gui ne @lastline[2] )
 				{
@@ -681,7 +689,8 @@ if ( $eject eq "stoplocal" )
 				}
 				else
 				{
-					print " \033[1;31m This interface is part of a cluster, it cannot be stopped while being part of the cluster.\033[0m \n"
+					print
+					  " \033[1;31m This interface is part of a cluster, it cannot be stopped while being part of the cluster.\033[0m \n";
 				}
 			}
 			else
