@@ -27,7 +27,7 @@ if ( -e "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi" )
 }
 
 #
-sub setFarmBlacklistTime($blacklist_time,$farm_name)
+sub setFarmBlacklistTime # ($blacklist_time,$farm_name)
 {
 	my ( $blacklist_time, $farm_name ) = @_;
 
@@ -47,7 +47,7 @@ sub setFarmBlacklistTime($blacklist_time,$farm_name)
 }
 
 #
-sub getFarmBlacklistTime($farm_name)
+sub getFarmBlacklistTime # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -69,7 +69,7 @@ sub getFarmBlacklistTime($farm_name)
 }
 
 #
-sub setFarmSessionType($session,$farm_name)
+sub setFarmSessionType # ($session,$farm_name)
 {
 	my ( $session, $farm_name ) = @_;
 
@@ -89,7 +89,7 @@ sub setFarmSessionType($session,$farm_name)
 }
 
 #
-sub getFarmSessionType($farm_name)
+sub getFarmSessionType # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -110,7 +110,7 @@ sub getFarmSessionType($farm_name)
 }
 
 #asign a timeout value to a farm
-sub setFarmTimeout($timeout,$farm_name)
+sub setFarmTimeout # ($timeout,$farm_name)
 {
 	my ( $timeout, $farm_name ) = @_;
 
@@ -133,7 +133,7 @@ sub setFarmTimeout($timeout,$farm_name)
 }
 
 #
-sub getFarmTimeout($farm_name)
+sub getFarmTimeout # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -154,7 +154,7 @@ sub getFarmTimeout($farm_name)
 }
 
 # set the lb algorithm to a farm
-sub setFarmAlgorithm($algorithm,$farm_name)
+sub setFarmAlgorithm # ($algorithm,$farm_name)
 {
 	my ( $algorithm, $farm_name ) = @_;
 
@@ -182,7 +182,7 @@ sub setFarmAlgorithm($algorithm,$farm_name)
 }
 
 #
-sub getFarmAlgorithm($farm_name)
+sub getFarmAlgorithm # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -208,7 +208,7 @@ sub getFarmAlgorithm($farm_name)
 }
 
 # set client persistence to a farm
-sub setFarmPersistence($persistence,$farm_name)
+sub setFarmPersistence # ($persistence,$farm_name)
 {
 	my ( $persistence, $farm_name ) = @_;
 
@@ -229,7 +229,7 @@ sub setFarmPersistence($persistence,$farm_name)
 }
 
 #
-sub getFarmPersistence($farm_name)
+sub getFarmPersistence # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -250,7 +250,7 @@ sub getFarmPersistence($farm_name)
 }
 
 # set the max clients of a farm
-sub setFarmMaxClientTime($max_client_time,$track,$farm_name)
+sub setFarmMaxClientTime # ($max_client_time,$track,$farm_name)
 {
 	my ( $max_client_time, $track, $farm_name ) = @_;
 
@@ -280,7 +280,7 @@ sub setFarmMaxClientTime($max_client_time,$track,$farm_name)
 }
 
 #
-sub getFarmMaxClientTime($farm_name)
+sub getFarmMaxClientTime # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -306,7 +306,7 @@ sub getFarmMaxClientTime($farm_name)
 }
 
 # set the max conn of a farm
-sub setFarmMaxConn($max_connections,$farm_name)
+sub setFarmMaxConn # ($max_connections,$farm_name)
 {
 	my ( $max_connections, $farm_name ) = @_;
 
@@ -314,7 +314,7 @@ sub setFarmMaxConn($max_connections,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&logfile( "setting 'MaxConn $maxc' for $farm_name farm $farm_type" );
+	&logfile( "setting 'MaxConn $max_connections' for $farm_name farm $farm_type" );
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
@@ -330,7 +330,7 @@ sub setFarmMaxConn($max_connections,$farm_name)
 }
 
 #
-sub getFarmServers($farm_name)
+sub getFarmServers # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -356,7 +356,7 @@ sub getFarmServers($farm_name)
 }
 
 #
-sub getFarmGlobalStatus($farm_name)
+sub getFarmGlobalStatus # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -377,7 +377,7 @@ sub getFarmGlobalStatus($farm_name)
 }
 
 #
-sub getBackendEstConns($farm_name,$ip_backend,$port_backend,@netstat)
+sub getBackendEstConns # ($farm_name,$ip_backend,$port_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
 
@@ -403,7 +403,7 @@ sub getBackendEstConns($farm_name,$ip_backend,$port_backend,@netstat)
 }
 
 #
-sub getFarmEstConns($farm_name,@netstat)
+sub getFarmEstConns # ($farm_name,@netstat)
 {
 	my ( $farm_name, @netstat ) = @_;
 
@@ -440,7 +440,7 @@ sub getFarmEstConns($farm_name,@netstat)
 }
 
 #
-sub getBackendTWConns($farm_name,$ip_backend,$port_backend,@netstat)
+sub getBackendTWConns # ($farm_name,$ip_backend,$port_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
 
@@ -465,7 +465,7 @@ sub getBackendTWConns($farm_name,$ip_backend,$port_backend,@netstat)
 	return @nets;
 }
 
-sub getBackendSYNConns($farm_name,$ip_backend,$port_backend,@netstat)
+sub getBackendSYNConns # ($farm_name,$ip_backend,$port_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
 
@@ -497,7 +497,7 @@ sub getBackendSYNConns($farm_name,$ip_backend,$port_backend,@netstat)
 }
 
 #
-sub getFarmSYNConns($farm_name, @netstat)
+sub getFarmSYNConns # ($farm_name, @netstat)
 {
 	my ( $farm_name, @netstat ) = @_;
 
@@ -529,7 +529,7 @@ sub getFarmSYNConns($farm_name, @netstat)
 
 # Generic function
 # Returns farm file name
-sub getFarmsByType($farm_type)
+sub getFarmsByType # ($farm_type)
 {
 	my ( $farm_type ) = @_;
 
@@ -558,7 +558,7 @@ sub getFarmsByType($farm_type)
 
 # Generic function
 # Returns farm type [udp|tcp|http|https|datalink|l4xnat|gslb]
-sub getFarmType($farm_name)
+sub getFarmType # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -601,7 +601,7 @@ sub getFarmType($farm_name)
 
 # Generic function
 # Returns farm file name
-sub getFarmFile($farm_name)
+sub getFarmFile # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -616,7 +616,7 @@ sub getFarmFile($farm_name)
 
 	if ( @farm_files )
 	{
-		return @farm_files[0];
+		return $farm_files[0];
 	}
 	else
 	{
@@ -626,7 +626,7 @@ sub getFarmFile($farm_name)
 
 # Generic function
 # Returns farm status
-sub getFarmStatus($farm_name)
+sub getFarmStatus # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -663,7 +663,7 @@ sub getFarmStatus($farm_name)
 }
 
 # Returns farm status
-sub getFarmBootStatus($farm_name)
+sub getFarmBootStatus # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -699,7 +699,7 @@ sub getFarmBootStatus($farm_name)
 }
 
 # Start Farm rutine
-sub _runFarmStart($farm_name, $writeconf)
+sub _runFarmStart # ($farm_name, $writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
 
@@ -757,7 +757,7 @@ sub _runFarmStart($farm_name, $writeconf)
 
 # Generic function
 # Start Farm basic rutine
-sub runFarmStart($farm_name,$writeconf)
+sub runFarmStart # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
 
@@ -773,7 +773,7 @@ sub runFarmStart($farm_name,$writeconf)
 
 # Generic function
 # Stop Farm basic rutine
-sub runFarmStop($farm_name,$writeconf)
+sub runFarmStop # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
 
@@ -785,7 +785,7 @@ sub runFarmStop($farm_name,$writeconf)
 }
 
 # Stop Farm rutine
-sub _runFarmStop($farm_name,$writeconf)
+sub _runFarmStop # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
 
@@ -802,7 +802,7 @@ sub _runFarmStop($farm_name,$writeconf)
 	}
 
 	my $farm_type = &getFarmType( $farm_name );
-	my $status    = $farm_type;
+	$status    = $farm_type;
 
 	&logfile( "running 'Stop write $writeconf' for $farm_name farm $farm_type" );
 
@@ -846,7 +846,7 @@ sub _runFarmStop($farm_name,$writeconf)
 }
 
 #
-sub runFarmCreate($farm_type,$vip,$vip_port,$farm_name,$fdev)
+sub runFarmCreate # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 {
 	my ( $farm_type, $vip, $vip_port, $farm_name, $fdev ) = @_;
 
@@ -896,7 +896,7 @@ sub runFarmCreate($farm_type,$vip,$vip_port,$farm_name,$fdev)
 }
 
 # Returns farm max connections
-sub getFarmMaxConn($farm_name)
+sub getFarmMaxConn # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -917,7 +917,7 @@ sub getFarmMaxConn($farm_name)
 }
 
 # Returns farm listen port
-sub getFarmPort($farm_name)
+sub getFarmPort # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -938,7 +938,7 @@ sub getFarmPort($farm_name)
 }
 
 # Returns farm PID
-sub getFarmPid($farm_name)
+sub getFarmPid # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -964,7 +964,7 @@ sub getFarmPid($farm_name)
 }
 
 # Returns farm vip
-sub getFarmVip($info,$farm_name)
+sub getFarmVip # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
 
@@ -1001,7 +1001,7 @@ sub getFarmVip($info,$farm_name)
 
 # Generic function
 # this function creates a file to tell that the farm needs to be restarted to apply changes
-sub setFarmRestart($farm_name)
+sub setFarmRestart # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -1015,7 +1015,7 @@ sub setFarmRestart($farm_name)
 
 # Generic function
 # this function deletes the file marking the farm to be restarted to apply changes
-sub setFarmNoRestart($farm_name)
+sub setFarmNoRestart # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -1027,10 +1027,10 @@ sub setFarmNoRestart($farm_name)
 
 # Generic function
 # Returns farms configuration filename list
-sub getFarmList()
+sub getFarmList # ()
 {
 	opendir ( DIR, $configdir );
-	my @files = grep ( /\_pen.*\.cfg$/, readdir ( DIR ) );
+	my @files1 = grep ( /\_pen.*\.cfg$/, readdir ( DIR ) );
 	closedir ( DIR );
 	opendir ( DIR, $configdir );
 	my @files2 = grep ( /\_pound.cfg$/, readdir ( DIR ) );
@@ -1044,25 +1044,25 @@ sub getFarmList()
 	opendir ( DIR, $configdir );
 	my @files5 = grep ( /\_gslb.cfg$/, readdir ( DIR ) );
 	closedir ( DIR );
-	my @files = ( @files, @files2, @files3, @files4, @files5 );
+	my @files = ( @files1, @files2, @files3, @files4, @files5 );
 
 	return @files;
 }
 
 # Generic function
 # Returns
-sub getFarmName($farm_filename)
+sub getFarmName # ($farm_filename)
 {
 	my ( $farm_filename ) = @_;
 
 	my @filename_split = split ( "_", $farm_filename );
 
-	return @filename_split[0];
+	return $filename_split[0];
 }
 
 # Generic function
 # Delete Farm rutine
-sub runFarmDelete($farm_name)
+sub runFarmDelete # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -1075,8 +1075,8 @@ sub runFarmDelete($farm_name)
 	unlink glob ( "$configdir/$farm_name\_*\.conf" );
 	unlink glob ( "$basedir/img/graphs/bar$farm_name*" );
 	unlink glob ( "$basedir/img/graphs/$farm_name-farm\_*" );
-	unlink glob ( "$rrdap_dir$rrd_dir/$farm_name-farm*" );
-	unlink glob ( "${logdir}/${fname}\_*farmguardian*" );
+	unlink glob ( "$rrdap_dir/$rrd_dir/$farm_name-farm*" );
+	unlink glob ( "${logdir}/${farm_name}\_*farmguardian*" );
 
 	if ( $farm_type eq "gslb" )
 	{
@@ -1097,7 +1097,7 @@ sub runFarmDelete($farm_name)
 }
 
 # Set farm virtual IP and virtual PORT
-sub setFarmVirtualConf($vip,$vip_port,$farm_name)
+sub setFarmVirtualConf # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
@@ -1136,7 +1136,7 @@ sub setFarmVirtualConf($vip,$vip_port,$farm_name)
 }
 
 #
-sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$farm_name,$service)
+sub setFarmServer # ($ids,$rip,$port,$max,$weight,$priority,$timeout,$farm_name,$service)
 {
 	my (
 		 $ids,      $rip,     $port,      $max, $weight,
@@ -1179,7 +1179,7 @@ sub setFarmServer($ids,$rip,$port,$max,$weight,$priority,$timeout,$farm_name,$se
 }
 
 #
-sub runFarmServerDelete($ids,$farm_name,$service)
+sub runFarmServerDelete # ($ids,$farm_name,$service)
 {
 	( $ids, $farm_name, $service ) = @_;
 
@@ -1217,7 +1217,7 @@ sub runFarmServerDelete($ids,$farm_name,$service)
 }
 
 #
-sub getFarmBackendStatusCtl($farm_name)
+sub getFarmBackendStatusCtl # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -1249,7 +1249,7 @@ sub getFarmBackendStatusCtl($farm_name)
 
 #function that return the status information of a farm:
 #ip, port, backendstatus, weight, priority, clients
-sub getFarmBackendsStatus($farm_name,@content)
+sub getFarmBackendsStatus # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
 
@@ -1280,7 +1280,7 @@ sub getFarmBackendsStatus($farm_name,@content)
 }
 
 #function that return the status information of a farm:
-sub getFarmBackendsClients($idserver,@content,$farm_name)
+sub getFarmBackendsClients # ($idserver,@content,$farm_name)
 {
 	my ( $idserver, @content, $farm_name ) = @_;
 
@@ -1300,7 +1300,7 @@ sub getFarmBackendsClients($idserver,@content,$farm_name)
 }
 
 #function that return the status information of a farm:
-sub getFarmBackendsClientsList($farm_name,@content)
+sub getFarmBackendsClientsList # ($farm_name,@content)
 {
 	( $farm_name, @content ) = @_;
 
@@ -1320,7 +1320,7 @@ sub getFarmBackendsClientsList($farm_name,@content)
 	return @output;
 }
 
-sub setFarmBackendStatus($farm_name,$index,$stat)
+sub setFarmBackendStatus # ($farm_name,$index,$stat)
 {
 	( $farm_name, $index, $stat ) = @_;
 
@@ -1343,7 +1343,7 @@ sub setFarmBackendStatus($farm_name,$index,$stat)
 }
 
 #function that renames a farm
-sub setNewFarmName($farm_name,$new_farm_name)
+sub setNewFarmName # ($farm_name,$new_farm_name)
 {
 	my ( $farm_name, $new_farm_name ) = @_;
 
@@ -1395,7 +1395,7 @@ sub setNewFarmName($farm_name,$new_farm_name)
 }
 
 #function that check if the config file is OK.
-sub getFarmConfigIsOK($farm_name)
+sub getFarmConfigIsOK # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -1415,7 +1415,7 @@ sub getFarmConfigIsOK($farm_name)
 }
 
 #function that check if a backend on a farm is on maintenance mode
-sub getFarmBackendMaintenance($farm_name,$backend,$service)
+sub getFarmBackendMaintenance # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
 
@@ -1436,7 +1436,7 @@ sub getFarmBackendMaintenance($farm_name,$backend,$service)
 }
 
 #function that enable the maintenance mode for backend
-sub setFarmBackendMaintenance($farm_name,$backend,$service)
+sub setFarmBackendMaintenance # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
 
@@ -1457,7 +1457,7 @@ sub setFarmBackendMaintenance($farm_name,$backend,$service)
 }
 
 #function that disable the maintenance mode for backend
-sub setFarmBackendNoMaintenance($farm_name,$backend,$service)
+sub setFarmBackendNoMaintenance # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
 
@@ -1479,7 +1479,7 @@ sub setFarmBackendNoMaintenance($farm_name,$backend,$service)
 
 # Generic function
 #checks thata farmname has correct characters (number, letters and lowercases)
-sub checkFarmnameOK($farm_name)
+sub checkFarmnameOK # ($farm_name)
 {
 	( $check_name ) = @_;
 
@@ -1495,7 +1495,7 @@ sub checkFarmnameOK($farm_name)
 
 #function that return indicated value from a HTTP Service
 #vs return virtual server
-sub getFarmVS($farm_name, $service, $tag)
+sub getFarmVS # ($farm_name, $service, $tag)
 {
 	my ( $farm_name, $service, $tag ) = @_;
 
@@ -1516,7 +1516,7 @@ sub getFarmVS($farm_name, $service, $tag)
 }
 
 #set values for a service
-sub setFarmVS($farm_name,$service,$tag,$string)
+sub setFarmVS # ($farm_name,$service,$tag,$string)
 {
 	my ( $farm_name, $service, $tag, $string ) = @_;
 
@@ -1536,7 +1536,7 @@ sub setFarmVS($farm_name,$service,$tag,$string)
 	return @output;
 }
 
-sub setFarmName($farm_name)
+sub setFarmName # ($farm_name)
 {
 	$farm_name =~ s/[^a-zA-Z0-9]//g;
 }
