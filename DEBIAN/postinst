@@ -88,7 +88,7 @@ if [ -f /usr/local/zenloadbalancer/app/zbin/zlbmigrationto402.sh ]; then
 	/usr/local/zenloadbalancer/app/zbin/zlbmigrationto402.sh
 fi
 
-if [ -f /usr/local/zenloadbalancer/config/if_eth* ];
+if [ `ls /usr/local/zenloadbalancer/config/if_eth* 2>/dev/null | wc -l` -gt 0 ];
 then
 	echo "Restarting Zen Load Balancer web GUI..."
 	if [ -f /etc/init.d/cherokee ];
