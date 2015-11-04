@@ -146,22 +146,32 @@ sub setTcpUdpFarmAlgorithm($algorithm,$farm_name)
 {
 	my ( $algorithm, $farm_name ) = @_;
 
-	my $output      = -1;
-	my $farm_port   = &getFarmPort( $farm_name );
-	my $fmaxservers = &getFarmMaxServers( $farm_name );
-	my @run         = `$pen_ctl 127.0.0.1:$farm_port no hash 2> /dev/null`;
-	my @run         = `$pen_ctl 127.0.0.1:$farm_port no prio 2> /dev/null`;
-	my @run         = `$pen_ctl 127.0.0.1:$farm_port no weight 2> /dev/null`;
+	my $output        = -1;
+	my $farm_port     = &getFarmPort( $farm_name );
+	my $fmaxservers   = &getFarmMaxServers( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+
+	system ( "$pen_ctl 127.0.0.1:$farm_port no hash >/dev/null 2>&1" );
+	system ( "$pen_ctl 127.0.0.1:$farm_port no prio >/dev/null 2>&1" );
+	system ( "$pen_ctl 127.0.0.1:$farm_port no weight >/dev/null 2>&1" );
+
 	$output = $?;
 
 	if ( $algorithm ne "roundrobin" )
 	{
 		my $pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port $algorithm";
+
 		&logfile( "running '$pen_ctl_command'" );
-		my @run = `$pen_ctl_command 2> /dev/null`;
+		system ( "$pen_ctl_command >/dev/null 2>&1" );
 		$output = $?;
 	}
-	my @run = `$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'`;
+
+	my $pen_ctl_command =
+	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'";
+
+	&logfile( "runing '$pen_ctl_command'" );
+	system ( $pen_ctl_command);
+
 	&setFarmMaxServers( $fmaxservers, $farm_name );
 
 	return $output;
@@ -524,12 +534,12 @@ sub getTcpUdpBackendTWConns($farm_name,$ip_backend,$port_backend,@netstat)
 }
 
 #
-sub getUdpFarmTWConns($farm_name,@netstat)
-{
-	my ( $farm_name, @netstat ) = @_;
-
-	return &getNetstatFilter( "udp", "\.\*\_WAIT\.\*", $ninfo, "", @netstat );
-}
+#~ sub getUdpFarmTWConns($farm_name,@netstat)
+#~ {
+#~ my ( $farm_name, @netstat ) = @_;
+#~
+#~ return &getNetstatFilter( "udp", "\.\*\_WAIT\.\*", $ninfo, "", @netstat );
+#~ }
 
 sub getTcpBackendSYNConns($farm_name, $ip_backend, $port_backend, @netstat)
 {
