@@ -533,14 +533,6 @@ sub getTcpUdpBackendTWConns($farm_name,$ip_backend,$port_backend,@netstat)
 		  "", @netstat );
 }
 
-#
-#~ sub getUdpFarmTWConns($farm_name,@netstat)
-#~ {
-#~ my ( $farm_name, @netstat ) = @_;
-#~
-#~ return &getNetstatFilter( "udp", "\.\*\_WAIT\.\*", $ninfo, "", @netstat );
-#~ }
-
 sub getTcpBackendSYNConns($farm_name, $ip_backend, $port_backend, @netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
