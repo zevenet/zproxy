@@ -22,7 +22,7 @@
 ###############################################################################
 
 # Returns FarmGuardian config file for this farm
-sub getFarmGuardianFile($fname,$svice)
+sub getFarmGuardianFile    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
 
@@ -38,12 +38,12 @@ sub getFarmGuardianFile($fname,$svice)
 	}
 	else
 	{
-		return @files[0];
+		return $files[0];
 	}
 }
 
 # Returns if FarmGuardian is activated for this farm
-sub getFarmGuardianStatus($fname,$svice)
+sub getFarmGuardianStatus    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
 
@@ -59,7 +59,7 @@ sub getFarmGuardianStatus($fname,$svice)
 		$lastline = $line;
 	}
 	my @line_s = split ( "\:\:\:", $lastline );
-	$value = @line_s[3];
+	$value = $line_s[3];
 	close FR;
 	if ( $value =~ /true/ )
 	{
@@ -72,7 +72,7 @@ sub getFarmGuardianStatus($fname,$svice)
 }
 
 # Returns if FarmGuardian has logs activated for this farm
-sub getFarmGuardianLog($fname,$svice)
+sub getFarmGuardianLog    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
 
@@ -87,7 +87,7 @@ sub getFarmGuardianLog($fname,$svice)
 		$lastline = $line;
 	}
 	my @line_s = split ( "\:\:\:", $lastline );
-	$value = @line_s[4];
+	$value = $line_s[4];
 	close FR;
 	if ( $value =~ /true/ )
 	{
@@ -100,7 +100,7 @@ sub getFarmGuardianLog($fname,$svice)
 }
 
 # Start FarmGuardian rutine
-sub runFarmGuardianStart($fname,$svice)
+sub runFarmGuardianStart    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
 	my $status = 0;
@@ -152,7 +152,7 @@ sub runFarmGuardianStart($fname,$svice)
 	return $status;
 }
 
-sub runFarmGuardianStop($fname,$svice)
+sub runFarmGuardianStop    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
 	my $status = 0;
@@ -181,7 +181,7 @@ sub runFarmGuardianStop($fname,$svice)
 		if ( $fgpid != -1 )
 		{
 			&logfile( "running 'kill 9, $fgpid' stopping FarmGuardian $fname $svice" );
-			$run = kill 9, $fgpid;
+			kill 9, $fgpid;
 			$status = $?;
 			unlink glob ( "/var/run/$fname\_${sv}guardian.pid" );
 			if ( $type eq "http" || $type eq "https" )
@@ -198,7 +198,7 @@ sub runFarmGuardianStop($fname,$svice)
 						if ( $_ =~ /fgDOWN/ )
 						{
 							$_ = "-B 0 $idsv $index active";
-							my $run = `$poundctl -c $portadmin -B 0 $idsv $index`;
+							system ( "$poundctl -c $portadmin -B 0 $idsv $index >/dev/null 2>&1" );
 						}
 					}
 					untie @filelines;
@@ -213,9 +213,9 @@ sub runFarmGuardianStop($fname,$svice)
 					my @subbe = split ( ";", $line );
 					$i++;
 					my $backendid     = $i;
-					my $backendserv   = @subbe[2];
-					my $backendport   = @subbe[3];
-					my $backendstatus = @subbe[7];
+					my $backendserv   = $subbe[2];
+					my $backendport   = $subbe[3];
+					my $backendstatus = $subbe[7];
 					if ( $backendstatus eq "fgDOWN" )
 					{
 						&_runFarmStop( $fname, "false" );
@@ -230,7 +230,7 @@ sub runFarmGuardianStop($fname,$svice)
 }
 
 # create farmguardian config file
-sub runFarmGuardianCreate($fname,$ttcheck,$script,$usefg,$fglog,$svice)
+sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 {
 	( $fname, $ttcheck, $script, $usefg, $fglog, $svice ) = @_;
 
@@ -263,7 +263,7 @@ sub runFarmGuardianCreate($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 }
 
 #
-sub getFarmGuardianConf($fname,$svice)
+sub getFarmGuardianConf    # ($fname,$svice)
 {
 	( $fname, $svice ) = @_;
 	my $lastline;
@@ -296,7 +296,7 @@ sub getFarmGuardianConf($fname,$svice)
 }
 
 #
-sub getFarmGuardianPid($fname,$svice)
+sub getFarmGuardianPid    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
 
@@ -306,10 +306,10 @@ sub getFarmGuardianPid($fname,$svice)
 	@files =
 	  grep { /^$fname\_$svice.*guardian\.pid/ && -f "$piddir/$_" } readdir ( $dir );
 	closedir $dir;
-	$numfiles = @files;
+
 	if ( @files )
 	{
-		$pidfile = @files[0];
+		$pidfile = $files[0];
 		open FR, "$piddir/$pidfile";
 		$fgpid = <FR>;
 		close FR;

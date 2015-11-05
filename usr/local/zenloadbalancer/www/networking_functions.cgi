@@ -32,7 +32,7 @@ if ( -e "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi" )
 }
 
 #check if a port in a ip is up
-sub checkport($host,$port)
+sub checkport    # ($host,$port)
 {
 	( $host, $port ) = @_;
 
@@ -56,7 +56,7 @@ sub checkport($host,$port)
 }
 
 #list ALL IPS UP
-sub listallips()
+sub listallips    # ()
 {
 	use IO::Socket;
 	use IO::Interface qw(:flags);
@@ -70,7 +70,7 @@ sub listallips()
 		my $flags = $s->if_flags( $if );
 
 		#print "ip es: $ip";
-		if ( $flags & IFF_RUNNING && $ip !~ /127.0.0.1/ && ip !~ /0.0.0.0/ )
+		if ( $flags & IFF_RUNNING && $ip !~ /127.0.0.1/ && $ip !~ /0.0.0.0/ )
 		{
 			push ( @listinterfaces, $ip );
 		}
@@ -79,7 +79,7 @@ sub listallips()
 }
 
 #list all real ips up in server
-sub listactiveips($class)
+sub listactiveips    # ($class)
 {
 	( $class ) = @_;
 
@@ -128,7 +128,7 @@ sub listactiveips($class)
 }
 
 # list all interfaces
-sub listActiveInterfaces($class)
+sub listActiveInterfaces    # ($class)
 {
 	( $class ) = @_;
 	my $s = IO::Socket::INET->new( Proto => 'udp' );
@@ -154,7 +154,7 @@ sub listActiveInterfaces($class)
 }
 
 #check if a ip is ok structure
-sub ipisok($checkip)
+sub ipisok    # ($checkip)
 {
 	( $checkip ) = @_;
 	use Data::Validate::IP;
@@ -169,7 +169,7 @@ sub ipisok($checkip)
 }
 
 #function checks if ip is in a range
-sub ipinrange($netmask, $toip, $newip)
+sub ipinrange    # ($netmask, $toip, $newip)
 {
 	( $netmask, $toip, $newip ) = @_;
 	use Net::IPv4Addr qw( :all );
@@ -189,7 +189,7 @@ sub ipinrange($netmask, $toip, $newip)
 }
 
 #function check if interface exist
-sub ifexist($niface)
+sub ifexist    # ($niface)
 {
 	( $nif ) = @_;
 
@@ -216,7 +216,7 @@ sub ifexist($niface)
 }
 
 # saving network interfaces config files
-sub writeConfigIf($if,$string)
+sub writeConfigIf    # ($if,$string)
 {
 	( $if, $string ) = @_;
 
@@ -227,7 +227,7 @@ sub writeConfigIf($if,$string)
 }
 
 # create table route identification
-sub writeRoutes($if)
+sub writeRoutes      # ($if)
 {
 	( $if ) = @_;
 
@@ -269,7 +269,7 @@ sub writeRoutes($if)
 }
 
 # add local network into routing table
-sub addlocalnet($if)
+sub addlocalnet    # ($if)
 {
 	$ip = &iponif( $if );
 	if ( $ip =~ /\./ )
@@ -285,7 +285,7 @@ sub addlocalnet($if)
 }
 
 # ask for rules
-sub isRule($ip,$if)
+sub isRule    # ($ip,$if)
 {
 	$existRule = 0;
 	@eject     = `$ip_bin rule list`;
@@ -300,7 +300,7 @@ sub isRule($ip,$if)
 }
 
 # apply routes
-sub applyRoutes($table,$if,$gw)
+sub applyRoutes    # ($table,$if,$gw)
 {
 	( $table, $if, $gw ) = @_;
 	$statusR = 0;
@@ -368,10 +368,10 @@ sub applyRoutes($table,$if,$gw)
 			return 1;
 		}
 		@iface = split ( /:/, $if );
-		if ( &isRule( $ip, @iface[0] ) eq 0 )
+		if ( &isRule( $ip, $iface[0] ) eq 0 )
 		{
-			&logfile( "running '$ip_bin rule add from $ip table table_@iface[0]' " );
-			@eject   = `$ip_bin rule add from $ip table table_@iface[0]  2> /dev/null`;
+			&logfile( "running '$ip_bin rule add from $ip table table_$iface[0]' " );
+			@eject   = `$ip_bin rule add from $ip table table_$iface[0]  2> /dev/null`;
 			$statusR = $?;
 		}
 	}
@@ -379,7 +379,7 @@ sub applyRoutes($table,$if,$gw)
 }
 
 # delete routes
-sub delRoutes($table,$if)
+sub delRoutes    # ($table,$if)
 {
 	( $table, $if ) = @_;
 
@@ -430,14 +430,14 @@ sub delRoutes($table,$if)
 			return 1;
 		}
 		@iface = split ( /:/, $if );
-		&logfile( "running '$ip_bin rule del from $ip table table_@iface[0]' " );
-		@eject = `$ip_bin rule del from $ip table table_@iface[0] 2> /dev/null`;
+		&logfile( "running '$ip_bin rule del from $ip table table_$iface[0]' " );
+		@eject = `$ip_bin rule del from $ip table table_$iface[0] 2> /dev/null`;
 		return $?;
 	}
 }
 
 # create network interface
-sub createIf($if)
+sub createIf    # ($if)
 {
 	( $if ) = @_;
 
@@ -458,7 +458,7 @@ sub createIf($if)
 }
 
 # up network interface
-sub upIf($if)
+sub upIf    # ($if)
 {
 	my ( $if ) = @_;
 
@@ -470,7 +470,7 @@ sub upIf($if)
 }
 
 # down network interface
-sub downIf($if)
+sub downIf    # ($if)
 {
 	( $if ) = @_;
 
@@ -491,7 +491,7 @@ sub downIf($if)
 }
 
 # delete network interface
-sub delIf($if)
+sub delIf    # ($if)
 {
 	( $if ) = @_;
 
@@ -535,7 +535,7 @@ sub delIf($if)
 }
 
 # get default gw for interface
-sub getDefaultGW($if)
+sub getDefaultGW    # ($if)
 {
 	( $if ) = @_;
 
@@ -553,13 +553,10 @@ sub getDefaultGW($if)
 		if ( grep { /^...\ttable_$cif$/ } <ROUTINGFILE> )
 		{
 			@routes = `$ip_bin route list table table_$cif`;
-
-			#} else {
-			#	@routes = `$ip_bin route list`;
 		}
 		close ROUTINGFILE;
 		@defgw = grep ( /^default/, @routes );
-		@line = split ( / /, @defgw[0] );
+		@line = split ( / /, $defgw[0] );
 		$gw = $line[2];
 		return $gw;
 	}
@@ -568,24 +565,24 @@ sub getDefaultGW($if)
 		@routes = "";
 		@routes = `$ip_bin route list`;
 		@defgw  = grep ( /^default/, @routes );
-		@line   = split ( / /, @defgw[0] );
+		@line   = split ( / /, $defgw[0] );
 		$gw     = $line[2];
 		return $gw;
 	}
 }
 
 # get interface for default gw
-sub getIfDefaultGW()
+sub getIfDefaultGW    # ()
 {
 	@routes = "";
 	@routes = `$ip_bin route list`;
 	@defgw  = grep ( /^default/, @routes );
-	@line   = split ( / /, @defgw[0] );
+	@line   = split ( / /, $defgw[0] );
 	return $line[4];
 }
 
 #know if and return ip
-sub iponif($if)
+sub iponif            # ($if)
 {
 	( $if ) = @_;
 
@@ -600,7 +597,7 @@ sub iponif($if)
 }
 
 # return the mask of an if
-sub maskonif($if)
+sub maskonif    # ($if)
 {
 	( $if ) = @_;
 
@@ -613,20 +610,20 @@ sub maskonif($if)
 }
 
 #return the gw of a if
-sub gwofif($ifgw)
+sub gwofif    # ($if)
 {
-	( $ifgw ) = @_;
+	( $if ) = @_;
 
 	open FGW, "<$configdir\/if\_$if\_conf";
 	@gw_if = <FGW>;
 	close FGW;
-	@gw_ifspt = split ( /:/, @gw_if[0] );
-	chomp ( @gw_ifspt[5] );
-	return @gw_ifspt[5];
+	@gw_ifspt = split ( /:/, $gw_if[0] );
+	chomp ( $gw_ifspt[5] );
+	return $gw_ifspt[5];
 }
 
 # Returns array execution of netstat
-sub getNetstatFilter($proto,$state,$ninfo,$fpid,@netstat)
+sub getNetstatFilter    # ($proto,$state,$ninfo,$fpid,@netstat)
 {
 	my ( $proto, $state, $ninfo, $fpid, @netstat ) = @_;
 
@@ -664,7 +661,7 @@ sub getNetstatFilter($proto,$state,$ninfo,$fpid,@netstat)
 #~ return @netstat;
 #~ }
 
-sub getDevData($dev)
+sub getDevData    # ($dev)
 {
 	( $dev ) = @_;
 	open FI, "</proc/net/dev";
@@ -675,16 +672,16 @@ sub getDevData($dev)
 		if ( $dev ne "" )
 		{
 			my @curline = split ( ":", $line );
-			my $ini = @curline[0];
+			my $ini = $curline[0];
 			chomp ( $ini );
 			if ( $ini ne "" && $ini =~ $dev )
 			{
 				$exit = "true";
-				my @datain = split ( " ", @curline[1] );
-				push ( @dataout, @datain[0] );
-				push ( @dataout, @datain[1] );
-				push ( @dataout, @datain[8] );
-				push ( @dataout, @datain[9] );
+				my @datain = split ( " ", $curline[1] );
+				push ( @dataout, $datain[0] );
+				push ( @dataout, $datain[1] );
+				push ( @dataout, $datain[8] );
+				push ( @dataout, $datain[9] );
 			}
 		}
 		else
@@ -705,7 +702,7 @@ sub getDevData($dev)
 }
 
 # send gratuitous ARP frames
-sub sendGArp($if,$ip)
+sub sendGArp    # ($if,$ip)
 {
 	( $if, $ip ) = @_;
 	my @iface = split ( ":.", $if );
@@ -718,39 +715,36 @@ sub sendGArp($if,$ip)
 }
 
 # Enable(true) / Disable(false) IP Forwarding
-sub setIpForward($arg)
+sub setIpForward    # ($arg)
 {
 	( $arg ) = @_;
+
 	my $status = -1;
 
+	my $switch = ( $arg eq 'true' )
+	  ? 1           # set switch on if arg == 'true'
+	  : 0;          # switch is off by default
+
 	&logfile( "setting $arg to IP forwarding " );
-	if ( $arg eq "true" )
-	{
-		my @run = `echo 1 > /proc/sys/net/ipv4/conf/all/forwarding`;
-		my @run = `echo 1 > /proc/sys/net/ipv4/ip_forward`;
-		$status = $?;
-		my @run = `echo 1 > /proc/sys/net/ipv6/conf/all/forwarding`;
-	}
-	else
-	{
-		my @run = `echo 0 > /proc/sys/net/ipv4/conf/all/forwarding`;
-		my @run = `echo 0 > /proc/sys/net/ipv4/ip_forward`;
-		$status = $?;
-		my @run = `echo 0 > /proc/sys/net/ipv6/conf/all/forwarding`;
-	}
+
+	# switch forwarding as requested
+	system ( "echo $switch > /proc/sys/net/ipv4/conf/all/forwarding" );
+	system ( "echo $switch > /proc/sys/net/ipv4/ip_forward" );
+	$status = $?;
+	system ( "echo $switch > /proc/sys/net/ipv6/conf/all/forwarding" );
 
 	return $status;
 }
 
 # Flush cache routes
-sub flushCacheRoutes()
+sub flushCacheRoutes    # ()
 {
 	&logfile( "flushing routes cache" );
-	@run = `$ip_bin route flush cache`;
+	system ( "$ip_bin route flush cache >/dev/null 2>$1" );
 }
 
 # Return if interface is used for datalink farm
-sub uplinkUsed($if)
+sub uplinkUsed          # ($if)
 {
 	( $if ) = @_;
 	my @farms  = &getFarmsByType( "datalink" );
@@ -767,7 +761,7 @@ sub uplinkUsed($if)
 	return $output;
 }
 
-sub isValidPortNumber($port)
+sub isValidPortNumber    # ($port)
 {
 	my ( $port ) = @_;
 	my $valid;

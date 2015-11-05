@@ -22,7 +22,7 @@
 ###############################################################################
 
 # Only used in http content
-sub setFarmClientTimeout($client,$farm_name)
+sub setFarmClientTimeout    # ($client,$farm_name)
 {
 	my ( $client, $farm_name ) = @_;
 
@@ -42,10 +42,10 @@ sub setFarmClientTimeout($client,$farm_name)
 		{
 			$i_f++;
 
-			if ( @filefarmhttp[$i_f] =~ /^Client/ )
+			if ( $filefarmhttp[$i_f] =~ /^Client/ )
 			{
 				&logfile( "setting 'ClientTimeout $client' for $farm_name farm $farm_type" );
-				@filefarmhttp[$i_f] = "Client\t\t $client";
+				$filefarmhttp[$i_f] = "Client\t\t $client";
 				$output             = $?;
 				$found              = "true";
 			}
@@ -57,7 +57,7 @@ sub setFarmClientTimeout($client,$farm_name)
 }
 
 # Only used in http content
-sub getFarmClientTimeout($farm_name)
+sub getFarmClientTimeout    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -75,7 +75,7 @@ sub getFarmClientTimeout($farm_name)
 			if ( $line =~ /Client/i )
 			{
 				@line = split ( "\ ", $line );
-				$output = @line[1];
+				$output = $line[1];
 			}
 		}
 		close FR;
@@ -85,10 +85,12 @@ sub getFarmClientTimeout($farm_name)
 }
 
 #
-sub setHTTPFarmSessionType($session,$farm_name)
+sub setHTTPFarmSessionType    # ($session,$farm_name)
 {
 	my ( $session, $farm_name ) = @_;
+
 	my $farm_filename = &getFarmFile( $farm_name );
+	my $farm_type     = &getFarmType( $farm_name );
 	my $output        = -1;
 
 	&logfile( "setting 'Session type $session' for $farm_name farm $farm_type" );
@@ -102,30 +104,30 @@ sub setHTTPFarmSessionType($session,$farm_name)
 		{
 			if ( $line =~ "Session" )
 			{
-				@contents[$i] = "\t\tSession";
+				$contents[$i] = "\t\tSession";
 				$found = "true";
 			}
 			if ( $found eq "true" && $line =~ "End" )
 			{
-				@contents[$i] = "\t\tEnd";
+				$contents[$i] = "\t\tEnd";
 				$found = "false";
 			}
 			if ( $line =~ "Type" )
 			{
-				@contents[$i] = "\t\t\tType $session";
+				$contents[$i] = "\t\t\tType $session";
 				$output = $?;
-				@contents[$i + 1] =~ s/#//g;
+				$contents[$i + 1] =~ s/#//g;
 				if (    $session eq "URL"
 					 || $session eq "COOKIE"
 					 || $session eq "HEADER" )
 				{
-					@contents[$i + 2] =~ s/#//g;
+					$contents[$i + 2] =~ s/#//g;
 				}
 				else
 				{
-					if ( @contents[$i + 2] !~ /#/ )
+					if ( $contents[$i + 2] !~ /#/ )
 					{
-						@contents[$i + 2] =~ s/^/#/;
+						$contents[$i + 2] =~ s/^/#/;
 					}
 				}
 			}
@@ -134,26 +136,26 @@ sub setHTTPFarmSessionType($session,$farm_name)
 		{
 			if ( $line =~ "Session" )
 			{
-				@contents[$i] = "\t\t#Session $session";
+				$contents[$i] = "\t\t#Session $session";
 				$found = "true";
 			}
 			if ( $found eq "true" && $line =~ "End" )
 			{
-				@contents[$i] = "\t\t#End";
+				$contents[$i] = "\t\t#End";
 				$found = "false";
 			}
 			if ( $line =~ "TTL" )
 			{
-				@contents[$i] = "#@contents[$i]";
+				$contents[$i] = "#$contents[$i]";
 			}
 			if ( $line =~ "Type" )
 			{
-				@contents[$i] = "#@contents[$i]";
+				$contents[$i] = "#$contents[$i]";
 				$output = $?;
 			}
 			if ( $line =~ "ID" )
 			{
-				@contents[$i] = "#@contents[$i]";
+				$contents[$i] = "#$contents[$i]";
 			}
 		}
 	}
@@ -162,7 +164,7 @@ sub setHTTPFarmSessionType($session,$farm_name)
 }
 
 #
-sub getHTTPFarmSessionType($farm_name)
+sub getHTTPFarmSessionType    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 	my $output = -1;
@@ -174,7 +176,7 @@ sub getHTTPFarmSessionType($farm_name)
 		if ( $line =~ /Type/ && $line !~ /#/ )
 		{
 			@line = split ( "\ ", $line );
-			$output = @line[1];
+			$output = $line[1];
 		}
 	}
 	close FR;
@@ -200,10 +202,10 @@ sub getHTTPFarmSessionType($farm_name)
 #while ( $i_f <= $array_count && $found eq "false" )
 #{
 #$i_f++;
-#if ( @filefarmhttp[$i_f] =~ /ID/ )
+#if ( $filefarmhttp[$i_f] =~ /ID/ )
 #{
 #&logfile( "setting 'Session id $sessionid' for $farm_name farm $farm_type" );
-#@filefarmhttp[$i_f] = "\t\t\tID \"$sessionid\"";
+#$filefarmhttp[$i_f] = "\t\t\tID \"$sessionid\"";
 #$output             = $?;
 #$found              = "true";
 #}
@@ -233,7 +235,7 @@ sub getHTTPFarmSessionType($farm_name)
 #if ( $line =~ /ID/ )
 #{
 #@line = split ( "\ ", $line );
-#$output = @line[1];
+#$output = $line[1];
 #$output =~ s/\"//g;
 #}
 #}
@@ -245,7 +247,7 @@ sub getHTTPFarmSessionType($farm_name)
 #}
 
 #
-sub setHTTPFarmBlacklistTime($blacklist_time,$farm_name)
+sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 {
 	my ( $blacklist_time, $farm_name ) = @_;
 
@@ -261,11 +263,11 @@ sub setHTTPFarmBlacklistTime($blacklist_time,$farm_name)
 	while ( $i_f <= $array_count && $found eq "false" )
 	{
 		$i_f++;
-		if ( @filefarmhttp[$i_f] =~ /^Alive/ )
+		if ( $filefarmhttp[$i_f] =~ /^Alive/ )
 		{
 			&logfile(
 					"setting 'Blacklist time $blacklist_time' for $farm_name farm $farm_type" );
-			@filefarmhttp[$i_f] = "Alive\t\t $blacklist_time";
+			$filefarmhttp[$i_f] = "Alive\t\t $blacklist_time";
 			$output             = $?;
 			$found              = "true";
 		}
@@ -276,7 +278,7 @@ sub setHTTPFarmBlacklistTime($blacklist_time,$farm_name)
 }
 
 #
-sub getHTTPFarmBlacklistTime($farm_filename)
+sub getHTTPFarmBlacklistTime    # ($farm_filename)
 {
 	my ( $farm_filename ) = @_;
 	my $blacklist_time = -1;
@@ -288,7 +290,7 @@ sub getHTTPFarmBlacklistTime($farm_filename)
 		if ( $line =~ /Alive/i )
 		{
 			@line = split ( "\ ", $line );
-			$blacklist_time = @line[1];
+			$blacklist_time = $line[1];
 		}
 	}
 	close FR;
@@ -297,7 +299,7 @@ sub getHTTPFarmBlacklistTime($farm_filename)
 }
 
 #
-sub setFarmHttpVerb($verb,$farm_name)
+sub setFarmHttpVerb    # ($verb,$farm_name)
 {
 	my ( $verb, $farm_name ) = @_;
 
@@ -314,10 +316,10 @@ sub setFarmHttpVerb($verb,$farm_name)
 		while ( $i_f <= $array_count && $found eq "false" )
 		{
 			$i_f++;
-			if ( @filefarmhttp[$i_f] =~ /xHTTP/ )
+			if ( $filefarmhttp[$i_f] =~ /xHTTP/ )
 			{
 				&logfile( "setting 'Http verb $verb' for $farm_name farm $farm_type" );
-				@filefarmhttp[$i_f] = "\txHTTP $verb";
+				$filefarmhttp[$i_f] = "\txHTTP $verb";
 				$output             = $?;
 				$found              = "true";
 			}
@@ -329,7 +331,7 @@ sub setFarmHttpVerb($verb,$farm_name)
 }
 
 #
-sub getFarmHttpVerb($farm_name)
+sub getFarmHttpVerb    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -346,7 +348,7 @@ sub getFarmHttpVerb($farm_name)
 			if ( $line =~ /xHTTP/ )
 			{
 				@line = split ( "\ ", $line );
-				$output = @line[1];
+				$output = $line[1];
 			}
 		}
 		close FR;
@@ -356,7 +358,7 @@ sub getFarmHttpVerb($farm_name)
 }
 
 #change HTTP or HTTP listener
-sub setFarmListen( $farm_name, $farmlisten )
+sub setFarmListen    # ( $farm_name, $farmlisten )
 {
 	my ( $farm_name, $flisten ) = @_;
 
@@ -368,81 +370,81 @@ sub setFarmListen( $farm_name, $farmlisten )
 	while ( $i_f <= $array_count && $found eq "false" )
 	{
 		$i_f++;
-		if ( @filefarmhttp[$i_f] =~ /^ListenHTTP/ && $flisten eq "http" )
+		if ( $filefarmhttp[$i_f] =~ /^ListenHTTP/ && $flisten eq "http" )
 		{
-			@filefarmhttp[$i_f] = "ListenHTTP";
+			$filefarmhttp[$i_f] = "ListenHTTP";
 		}
-		if ( @filefarmhttp[$i_f] =~ /^ListenHTTP/ && $flisten eq "https" )
+		if ( $filefarmhttp[$i_f] =~ /^ListenHTTP/ && $flisten eq "https" )
 		{
-			@filefarmhttp[$i_f] = "ListenHTTPS";
-		}
-
-		#
-		if ( @filefarmhttp[$i_f] =~ /.*Cert\ \"/ && $flisten eq "http" )
-		{
-			@filefarmhttp[$i_f] =~ s/Cert\ \"/#Cert\ \"/;
-		}
-		if ( @filefarmhttp[$i_f] =~ /.*Cert\ \"/ && $flisten eq "https" )
-		{
-			@filefarmhttp[$i_f] =~ s/#//g;
-
+			$filefarmhttp[$i_f] = "ListenHTTPS";
 		}
 
 		#
-		if ( @filefarmhttp[$i_f] =~ /.*Ciphers\ \"/ && $flisten eq "http" )
+		if ( $filefarmhttp[$i_f] =~ /.*Cert\ \"/ && $flisten eq "http" )
 		{
-			@filefarmhttp[$i_f] =~ s/Ciphers\ \"/#Ciphers\ \"/;
+			$filefarmhttp[$i_f] =~ s/Cert\ \"/#Cert\ \"/;
 		}
-		if ( @filefarmhttp[$i_f] =~ /.*Ciphers\ \"/ && $flisten eq "https" )
+		if ( $filefarmhttp[$i_f] =~ /.*Cert\ \"/ && $flisten eq "https" )
 		{
-			@filefarmhttp[$i_f] =~ s/#//g;
+			$filefarmhttp[$i_f] =~ s/#//g;
+
+		}
+
+		#
+		if ( $filefarmhttp[$i_f] =~ /.*Ciphers\ \"/ && $flisten eq "http" )
+		{
+			$filefarmhttp[$i_f] =~ s/Ciphers\ \"/#Ciphers\ \"/;
+		}
+		if ( $filefarmhttp[$i_f] =~ /.*Ciphers\ \"/ && $flisten eq "https" )
+		{
+			$filefarmhttp[$i_f] =~ s/#//g;
 
 		}
 
 		# Enable 'Disable SSLv3'
-		if ( @filefarmhttp[$i_f] =~ /.*Disable SSLv3$/ && $flisten eq "http" )
+		if ( $filefarmhttp[$i_f] =~ /.*Disable SSLv3$/ && $flisten eq "http" )
 		{
-			@filefarmhttp[$i_f] =~ s/Disable SSLv3/#Disable SSLv3/;
+			$filefarmhttp[$i_f] =~ s/Disable SSLv3/#Disable SSLv3/;
 		}
-		elsif ( @filefarmhttp[$i_f] =~ /.*DisableSSLv3$/ && $flisten eq "http" )
+		elsif ( $filefarmhttp[$i_f] =~ /.*DisableSSLv3$/ && $flisten eq "http" )
 		{
-			@filefarmhttp[$i_f] =~ s/DisableSSLv3/#DisableSSLv3/;
+			$filefarmhttp[$i_f] =~ s/DisableSSLv3/#DisableSSLv3/;
 		}
-		if ( @filefarmhttp[$i_f] =~ /.*Disable SSLv3$/ && $flisten eq "https" )
+		if ( $filefarmhttp[$i_f] =~ /.*Disable SSLv3$/ && $flisten eq "https" )
 		{
-			@filefarmhttp[$i_f] =~ s/#//g;
+			$filefarmhttp[$i_f] =~ s/#//g;
 		}
-		elsif (    @filefarmhttp[$i_f] =~ /.*DisableSSLv3$/
+		elsif (    $filefarmhttp[$i_f] =~ /.*DisableSSLv3$/
 				&& $flisten eq "https" )
 		{
-			@filefarmhttp[$i_f] =~ s/#//g;
+			$filefarmhttp[$i_f] =~ s/#//g;
 		}
 
 		# Enable SSLHonorCipherOrder
-		if (    @filefarmhttp[$i_f] =~ /.*SSLHonorCipherOrder/
+		if (    $filefarmhttp[$i_f] =~ /.*SSLHonorCipherOrder/
 			 && $flisten eq "http" )
 		{
-			@filefarmhttp[$i_f] =~ s/SSLHonorCipherOrder/#SSLHonorCipherOrder/;
+			$filefarmhttp[$i_f] =~ s/SSLHonorCipherOrder/#SSLHonorCipherOrder/;
 		}
-		if (    @filefarmhttp[$i_f] =~ /.*SSLHonorCipherOrder/
+		if (    $filefarmhttp[$i_f] =~ /.*SSLHonorCipherOrder/
 			 && $flisten eq "https" )
 		{
-			@filefarmhttp[$i_f] =~ s/#//g;
+			$filefarmhttp[$i_f] =~ s/#//g;
 		}
 
 		# Enable StrictTransportSecurity
-		if (    @filefarmhttp[$i_f] =~ /.*StrictTransportSecurity/
+		if (    $filefarmhttp[$i_f] =~ /.*StrictTransportSecurity/
 			 && $flisten eq "http" )
 		{
-			@filefarmhttp[$i_f] =~ s/StrictTransportSecurity/#StrictTransportSecurity/;
+			$filefarmhttp[$i_f] =~ s/StrictTransportSecurity/#StrictTransportSecurity/;
 		}
-		if (    @filefarmhttp[$i_f] =~ /.*StrictTransportSecurity/
+		if (    $filefarmhttp[$i_f] =~ /.*StrictTransportSecurity/
 			 && $flisten eq "https" )
 		{
-			@filefarmhttp[$i_f] =~ s/#//g;
+			$filefarmhttp[$i_f] =~ s/#//g;
 		}
 
-		if ( @filefarmhttp[$i_f] =~ /ZWACL-END/ )
+		if ( $filefarmhttp[$i_f] =~ /ZWACL-END/ )
 		{
 			$found = "true";
 		}
@@ -452,7 +454,7 @@ sub setFarmListen( $farm_name, $farmlisten )
 }
 
 #asign a RewriteLocation vaue to a farm HTTP or HTTPS
-sub setFarmRewriteL($farm_name,$rewritelocation)
+sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 {
 	my ( $farm_name, $rewritelocation ) = @_;
 
@@ -470,9 +472,9 @@ sub setFarmRewriteL($farm_name,$rewritelocation)
 		while ( $i_f <= $array_count && $found eq "false" )
 		{
 			$i_f++;
-			if ( @filefarmhttp[$i_f] =~ /RewriteLocation\ .*/ )
+			if ( $filefarmhttp[$i_f] =~ /RewriteLocation\ .*/ )
 			{
-				@filefarmhttp[$i_f] = "\tRewriteLocation $rewritelocation";
+				$filefarmhttp[$i_f] = "\tRewriteLocation $rewritelocation";
 				$output             = $?;
 				$found              = "true";
 			}
@@ -483,7 +485,7 @@ sub setFarmRewriteL($farm_name,$rewritelocation)
 }
 
 #Get RewriteLocation Header configuration HTTP and HTTPS farms
-sub getFarmRewriteL($farm_name)
+sub getFarmRewriteL    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -500,7 +502,7 @@ sub getFarmRewriteL($farm_name)
 			if ( $line =~ /RewriteLocation\ .*/ )
 			{
 				@line = split ( "\ ", $line );
-				$output = @line[1];
+				$output = $line[1];
 			}
 		}
 		close FR;
@@ -510,7 +512,7 @@ sub getFarmRewriteL($farm_name)
 }
 
 #set ConnTo value to a farm HTTP or HTTPS
-sub setFarmConnTO($tout,$farm_name)
+sub setFarmConnTO    # ($tout,$farm_name)
 {
 	my ( $tout, $farm_name ) = @_;
 
@@ -529,9 +531,9 @@ sub setFarmConnTO($tout,$farm_name)
 		while ( $i_f <= $array_count && $found eq "false" )
 		{
 			$i_f++;
-			if ( @filefarmhttp[$i_f] =~ /^ConnTO.*/ )
+			if ( $filefarmhttp[$i_f] =~ /^ConnTO.*/ )
 			{
-				@filefarmhttp[$i_f] = "ConnTO\t\t $tout";
+				$filefarmhttp[$i_f] = "ConnTO\t\t $tout";
 				$output             = $?;
 				$found              = "true";
 			}
@@ -542,7 +544,7 @@ sub setFarmConnTO($tout,$farm_name)
 }
 
 #get farm ConnTO value for http and https farms
-sub getFarmConnTO($farm_name)
+sub getFarmConnTO    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -559,7 +561,7 @@ sub getFarmConnTO($farm_name)
 			if ( $line =~ /^ConnTO/ )
 			{
 				@line = split ( "\ ", $line );
-				$output = @line[1];
+				$output = $line[1];
 			}
 		}
 		close FR;
@@ -569,9 +571,9 @@ sub getFarmConnTO($farm_name)
 }
 
 #asign a timeout value to a farm
-sub setHTTPFarmTimeout($timeout,$farm_name)
+sub setHTTPFarmTimeout    # ($timeout,$farm_name)
 {
-	my ( $timeout, $farm_filename ) = @_;
+	my ( $timeout, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
@@ -584,9 +586,9 @@ sub setHTTPFarmTimeout($timeout,$farm_name)
 	while ( $i_f <= $array_count && $found eq "false" )
 	{
 		$i_f++;
-		if ( @filefarmhttp[$i_f] =~ /^Timeout/ )
+		if ( $filefarmhttp[$i_f] =~ /^Timeout/ )
 		{
-			@filefarmhttp[$i_f] = "Timeout\t\t $tout";
+			$filefarmhttp[$i_f] = "Timeout\t\t $timeout";
 			$output             = $?;
 			$found              = "true";
 		}
@@ -597,9 +599,9 @@ sub setHTTPFarmTimeout($timeout,$farm_name)
 }
 
 #
-sub getHTTPFarmTimeout($farm_filename)
+sub getHTTPFarmTimeout    # ($farm_filename)
 {
-	my ( $farm_filename ) = @_;
+	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
@@ -612,7 +614,7 @@ sub getHTTPFarmTimeout($farm_filename)
 		if ( $line =~ /^Timeout/ )
 		{
 			@line = split ( "\ ", $line );
-			$output = @line[1];
+			$output = $line[1];
 		}
 	}
 	close FR;
@@ -621,7 +623,7 @@ sub getHTTPFarmTimeout($farm_filename)
 }
 
 # set the max clients of a farm
-sub setHTTPFarmMaxClientTime($track,$farm_name)
+sub setHTTPFarmMaxClientTime    # ($track,$farm_name)
 {
 	my ( $track, $farm_name ) = @_;
 
@@ -636,9 +638,9 @@ sub setHTTPFarmMaxClientTime($track,$farm_name)
 	while ( $i_f <= $array_count && $found eq "false" )
 	{
 		$i_f++;
-		if ( @filefarmhttp[$i_f] =~ /TTL/ )
+		if ( $filefarmhttp[$i_f] =~ /TTL/ )
 		{
-			@filefarmhttp[$i_f] = "\t\t\tTTL $track";
+			$filefarmhttp[$i_f] = "\t\t\tTTL $track";
 			$output             = $?;
 			$found              = "true";
 		}
@@ -649,7 +651,7 @@ sub setHTTPFarmMaxClientTime($track,$farm_name)
 }
 
 #
-sub getHTTPFarmMaxClientTime($farm_name)
+sub getHTTPFarmMaxClientTime    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -667,7 +669,7 @@ sub getHTTPFarmMaxClientTime($farm_name)
 		{
 			@line = split ( "\ ", $line );
 			@max_client_time[0] = "";
-			@max_client_time[1] = @line[1];
+			@max_client_time[1] = $line[1];
 		}
 	}
 	close FR;
@@ -676,7 +678,7 @@ sub getHTTPFarmMaxClientTime($farm_name)
 }
 
 # set the max conn of a farm
-sub setHTTPFarmMaxConn($max_connections,$farm_name)
+sub setHTTPFarmMaxConn    # ($max_connections,$farm_name)
 {
 	my ( $max_connections, $farm_name ) = @_;
 
@@ -701,7 +703,7 @@ sub setHTTPFarmMaxConn($max_connections,$farm_name)
 }
 
 #
-sub getFarmCertificate($farm_name)
+sub getFarmCertificate    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -719,9 +721,9 @@ sub getFarmCertificate($farm_name)
 			if ( $line =~ /Cert/ && $line !~ /\#.*Cert/ )
 			{
 				my @partline = split ( '\"', $line );
-				@partline = split ( "\/", @partline[1] );
+				@partline = split ( "\/", $partline[1] );
 				my $lfile = @partline;
-				$output = @partline[$lfile - 1];
+				$output = $partline[$lfile - 1];
 			}
 		}
 	}
@@ -730,7 +732,7 @@ sub getFarmCertificate($farm_name)
 }
 
 #
-sub setFarmCertificate($cfile,$farm_name)
+sub setFarmCertificate    # ($cfile,$farm_name)
 {
 	my ( $cfile, $farm_name ) = @_;
 
@@ -757,7 +759,7 @@ sub setFarmCertificate($cfile,$farm_name)
 	return $output;
 }
 
-sub getHTTPFarmGlobalStatus($farm_name)
+sub getHTTPFarmGlobalStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -765,7 +767,7 @@ sub getHTTPFarmGlobalStatus($farm_name)
 }
 
 #
-sub getHTTPBackendEstConns($farm_name,$ip_backend,$port_backend,@netstat)
+sub getHTTPBackendEstConns     # ($farm_name,$ip_backend,$port_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
 
@@ -780,7 +782,7 @@ sub getHTTPBackendEstConns($farm_name,$ip_backend,$port_backend,@netstat)
 }
 
 #
-sub getHTTPFarmEstConns($farm_name,@netstat)
+sub getHTTPFarmEstConns    # ($farm_name,@netstat)
 {
 	my ( $farm_name, @netstat ) = @_;
 
@@ -794,7 +796,7 @@ sub getHTTPFarmEstConns($farm_name,@netstat)
 }
 
 #
-sub getHTTPBackendTWConns($farm_name,$ip_backend,$port_backend,@netstat)
+sub getHTTPBackendTWConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
 
@@ -807,7 +809,7 @@ sub getHTTPBackendTWConns($farm_name,$ip_backend,$port_backend,@netstat)
 }
 
 #
-sub getHTTPBackendSYNConns($farm_name, $ip_backend, $port_backend, @netstat)
+sub getHTTPBackendSYNConns  # ($farm_name, $ip_backend, $port_backend, @netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
 
@@ -818,7 +820,7 @@ sub getHTTPBackendSYNConns($farm_name, $ip_backend, $port_backend, @netstat)
 }
 
 #
-sub getHTTPFarmSYNConns($farm_name, @netstat)
+sub getHTTPFarmSYNConns     # ($farm_name, @netstat)
 {
 	my ( $farm_name, @netstat ) = @_;
 
@@ -832,7 +834,7 @@ sub getHTTPFarmSYNConns($farm_name, @netstat)
 }
 
 # Only http function
-sub setFarmErr($farm_name,$content,$nerr)
+sub setFarmErr    # ($farm_name,$content,$nerr)
 {
 	my ( $farm_name, $content, $nerr ) = @_;
 
@@ -862,7 +864,7 @@ sub setFarmErr($farm_name,$content,$nerr)
 }
 
 # Only http function
-sub getFarmErr($farm_name,$nerr)
+sub getFarmErr    # ($farm_name,$nerr)
 {
 	my ( $farm_name, $nerr ) = @_;
 
@@ -879,7 +881,7 @@ sub getFarmErr($farm_name,$nerr)
 			if ( $line =~ /Err$nerr/ )
 			{
 				@line = split ( "\ ", $line );
-				my $err = @line[1];
+				my $err = $line[1];
 				$err =~ s/"//g;
 				if ( -e $err )
 				{
@@ -899,7 +901,7 @@ sub getFarmErr($farm_name,$nerr)
 }
 
 # Returns farm status
-sub getHTTPFarmBootStatus($farm_name)
+sub getHTTPFarmBootStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -922,7 +924,7 @@ sub getHTTPFarmBootStatus($farm_name)
 }
 
 # Start Farm rutine
-sub _runHTTPFarmStart($farm_name)
+sub _runHTTPFarmStart    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -947,7 +949,7 @@ sub _runHTTPFarmStart($farm_name)
 }
 
 # Stop Farm rutine
-sub _runHTTPFarmStop($farm_name)
+sub _runHTTPFarmStop    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -976,7 +978,7 @@ sub _runHTTPFarmStop($farm_name)
 }
 
 #
-sub runHTTPFarmCreate( $vip, $vip_port, $farm_name, $farm_type )
+sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 {
 	my ( $vip, $vip_port, $farm_name, $farm_type ) = @_;
 
@@ -1031,7 +1033,7 @@ sub runHTTPFarmCreate( $vip, $vip_port, $farm_name, $farm_type )
 }
 
 # Returns farm max connections
-sub getHTTPFarmMaxConn($farm_name)
+sub getHTTPFarmMaxConn    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -1046,7 +1048,7 @@ sub getHTTPFarmMaxConn($farm_name)
 		if ( $line =~ /^Threads/ )
 		{
 			@line = split ( "\ ", $line );
-			my $maxt = @line[1];
+			my $maxt = $line[1];
 
 			$maxt =~ s/\ //g;
 			chomp ( $maxt );
@@ -1059,7 +1061,7 @@ sub getHTTPFarmMaxConn($farm_name)
 }
 
 # Returns farm listen port
-sub getHTTPFarmPort($farm_name)
+sub getHTTPFarmPort    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -1067,7 +1069,7 @@ sub getHTTPFarmPort($farm_name)
 }
 
 # Returns farm PID
-sub getHTTPFarmPid($farm_name)
+sub getHTTPFarmPid     # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 	my $output = -1;
@@ -1079,7 +1081,7 @@ sub getHTTPFarmPid($farm_name)
 		my @pid = <FPID>;
 		close FPID;
 
-		my $pid_hprof = @pid[0];
+		my $pid_hprof = $pid[0];
 		chomp ( $pid_hprof );
 
 		if ( $pid_hprof =~ /^[1-9].*/ )
@@ -1100,7 +1102,7 @@ sub getHTTPFarmPid($farm_name)
 }
 
 # Returns farm Child PID (ONLY HTTP Farms)
-sub getFarmChildPid($farm_name)
+sub getFarmChildPid    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 	use File::Grep qw( fgrep fmap fdo );
@@ -1127,7 +1129,7 @@ sub getFarmChildPid($farm_name)
 }
 
 # Returns farm vip
-sub getHTTPFarmVip($info,$farm_name)
+sub getHTTPFarmVip    # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
 
@@ -1143,8 +1145,8 @@ sub getHTTPFarmVip($info,$farm_name)
 	{
 		if ( $line =~ /^ListenHTTP/ )
 		{
-			my $vip  = @file[$i + 5];
-			my $vipp = @file[$i + 6];
+			my $vip  = $file[$i + 5];
+			my $vipp = $file[$i + 6];
 
 			chomp ( $vip );
 			chomp ( $vipp );
@@ -1152,9 +1154,9 @@ sub getHTTPFarmVip($info,$farm_name)
 			my @vip  = split ( "\ ", $vip );
 			my @vipp = split ( "\ ", $vipp );
 
-			if ( $info eq "vip" )   { $output = @vip[1]; }
-			if ( $info eq "vipp" )  { $output = @vipp[1]; }
-			if ( $info eq "vipps" ) { $output = "@vip[1]\:@vipp[1]"; }
+			if ( $info eq "vip" )   { $output = $vip[1]; }
+			if ( $info eq "vipp" )  { $output = $vipp[1]; }
+			if ( $info eq "vipps" ) { $output = "$vip[1]\:$vipp[1]"; }
 		}
 		$i++;
 	}
@@ -1163,7 +1165,7 @@ sub getHTTPFarmVip($info,$farm_name)
 }
 
 # Set farm virtual IP and virtual PORT
-sub setHTTPFarmVirtualConf($vip,$vip_port,$farm_name)
+sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
@@ -1177,15 +1179,15 @@ sub setHTTPFarmVirtualConf($vip,$vip_port,$farm_name)
 
 	for ( my $i = 0 ; $i < $size && $enter > 0 ; $i++ )
 	{
-		if ( @array[$i] =~ /Address/ )
+		if ( $array[$i] =~ /Address/ )
 		{
-			@array[$i] =~ s/.*Address\ .*/\tAddress\ $vip/g;
+			$array[$i] =~ s/.*Address\ .*/\tAddress\ $vip/g;
 			$stat = $? || $stat;
 			$enter--;
 		}
-		if ( @array[$i] =~ /Port/ )
+		if ( $array[$i] =~ /Port/ )
 		{
-			@array[$i] =~ s/.*Port\ .*/\tPort\ $vip_port/g;
+			$array[$i] =~ s/.*Port\ .*/\tPort\ $vip_port/g;
 			$stat = $? || $stat;
 			$enter--;
 		}
@@ -1196,7 +1198,7 @@ sub setHTTPFarmVirtualConf($vip,$vip_port,$farm_name)
 }
 
 #
-sub setHTTPFarmServer($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
+sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 {
 	my ( $ids, $rip, $port, $priority, $timeout, $farm_name, $service ) = @_;
 
@@ -1233,41 +1235,41 @@ sub setHTTPFarmServer($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 						$i++;
 					}
 					$output           = $?;
-					@contents[$i + 1] = "\t\t\tAddress $rip";
-					@contents[$i + 2] = "\t\t\tPort $port";
+					$contents[$i + 1] = "\t\t\tAddress $rip";
+					$contents[$i + 2] = "\t\t\tPort $port";
 					my $p_m = 0;
-					if ( @contents[$i + 3] =~ /TimeOut/ )
+					if ( $contents[$i + 3] =~ /TimeOut/ )
 					{
-						@contents[$i + 3] = "\t\t\tTimeOut $timeout";
+						$contents[$i + 3] = "\t\t\tTimeOut $timeout";
 						&logfile( "Modified current timeout" );
 					}
-					if ( @contents[$i + 4] =~ /Priority/ )
+					if ( $contents[$i + 4] =~ /Priority/ )
 					{
-						@contents[$i + 4] = "\t\t\tPriority $priority";
+						$contents[$i + 4] = "\t\t\tPriority $priority";
 						&logfile( "Modified current priority" );
 						$p_m = 1;
 					}
-					if ( @contents[$i + 3] =~ /Priority/ )
+					if ( $contents[$i + 3] =~ /Priority/ )
 					{
-						@contents[$i + 3] = "\t\t\tPriority $priority";
+						$contents[$i + 3] = "\t\t\tPriority $priority";
 						$p_m = 1;
 					}
 
 					#delete item
 					if ( $timeout =~ /^$/ )
 					{
-						if ( @contents[$i + 3] =~ /TimeOut/ )
+						if ( $contents[$i + 3] =~ /TimeOut/ )
 						{
 							splice @contents, $i + 3, 1,;
 						}
 					}
 					if ( $priority =~ /^$/ )
 					{
-						if ( @contents[$i + 3] =~ /Priority/ )
+						if ( $contents[$i + 3] =~ /Priority/ )
 						{
 							splice @contents, $i + 3, 1,;
 						}
-						if ( @contents[$i + 4] =~ /Priority/ )
+						if ( $contents[$i + 4] =~ /Priority/ )
 						{
 							splice @contents, $i + 4, 1,;
 						}
@@ -1276,8 +1278,8 @@ sub setHTTPFarmServer($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 					#new item
 					if (
 						 $timeout !~ /^$/
-						 && (    @contents[$i + 3] =~ /End/
-							  || @contents[$i + 3] =~ /Priority/ )
+						 && (    $contents[$i + 3] =~ /End/
+							  || $contents[$i + 3] =~ /Priority/ )
 					  )
 					{
 						splice @contents, $i + 3, 0, "\t\t\tTimeOut $timeout";
@@ -1285,11 +1287,11 @@ sub setHTTPFarmServer($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 					if (
 						    $p_m eq 0
 						 && $priority !~ /^$/
-						 && (    @contents[$i + 3] =~ /End/
-							  || @contents[$i + 4] =~ /End/ )
+						 && (    $contents[$i + 3] =~ /End/
+							  || $contents[$i + 4] =~ /End/ )
 					  )
 					{
-						if ( @contents[$i + 3] =~ /TimeOut/ )
+						if ( $contents[$i + 3] =~ /TimeOut/ )
 						{
 							splice @contents, $i + 4, 0, "\t\t\tPriority $priority";
 						}
@@ -1376,7 +1378,7 @@ sub setHTTPFarmServer($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 }
 
 #
-sub runHTTPFarmServerDelete($ids,$farm_name)
+sub runHTTPFarmServerDelete    # ($ids,$farm_name)
 {
 	my ( $ids, $farm_name ) = @_;
 
@@ -1402,7 +1404,7 @@ sub runHTTPFarmServerDelete($ids,$farm_name)
 			{
 				splice @contents, $i, 1,;
 				$output = $?;
-				while ( @contents[$i] !~ /End/ )
+				while ( $contents[$i] !~ /End/ )
 				{
 					splice @contents, $i, 1,;
 				}
@@ -1421,7 +1423,7 @@ sub runHTTPFarmServerDelete($ids,$farm_name)
 }
 
 #
-sub getHTTPFarmBackendStatusCtl($farm_name)
+sub getHTTPFarmBackendStatusCtl    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -1430,7 +1432,7 @@ sub getHTTPFarmBackendStatusCtl($farm_name)
 
 #function that return the status information of a farm:
 #ip, port, backendstatus, weight, priority, clients
-sub getHTTPFarmBackendsStatus($farm_name,@content)
+sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
 
@@ -1447,30 +1449,30 @@ sub getHTTPFarmBackendsStatus($farm_name,@content)
 		if ( $_ =~ /Service/ )
 		{
 			@serviceline = split ( "\ ", $_ );
-			@serviceline[2] =~ s/"//g;
-			chomp ( @serviceline[2] );
+			$serviceline[2] =~ s/"//g;
+			chomp ( $serviceline[2] );
 		}
 		if ( $_ =~ /Backend/ )
 		{
 			#backend ID
 			my @backends = split ( "\ ", $_ );
-			@backends[0] =~ s/\.//g;
-			my $line = @backends[0];
+			$backends[0] =~ s/\.//g;
+			my $line = $backends[0];
 
 			#backend IP,PORT
-			@backends_ip  = split ( ":", @backends[2] );
-			$ip_backend   = @backends_ip[0];
-			$port_backend = @backends_ip[1];
+			@backends_ip  = split ( ":", $backends[2] );
+			$ip_backend   = $backends_ip[0];
+			$port_backend = $backends_ip[1];
 			$line         = $line . "\t" . $ip_backend . "\t" . $port_backend;
 
 			#status
-			$status_backend = @backends[7];
-			my $backend_disabled = @backends[3];
+			$status_backend = $backends[7];
+			my $backend_disabled = $backends[3];
 			if ( $backend_disabled eq "DISABLED" )
 			{
 				#Checkstatusfile
 				$status_backend =
-				  &getBackendStatusFromFile( $farm_name, @backends[0], @serviceline[2] );
+				  &getBackendStatusFromFile( $farm_name, $backends[0], $serviceline[2] );
 			}
 			elsif ( $status_backend eq "alive" )
 			{
@@ -1483,10 +1485,10 @@ sub getHTTPFarmBackendsStatus($farm_name,@content)
 			$line = $line . "\t" . $status_backend;
 
 			#priority
-			$priority_backend = @backends[4];
+			$priority_backend = $backends[4];
 			$priority_backend =~ s/\(//g;
 			$line = $line . "\t" . "-\t" . $priority_backend;
-			my $clients = &getFarmBackendsClients( @backends[0], @content, $farm_name );
+			my $clients = &getFarmBackendsClients( $backends[0], @content, $farm_name );
 			if ( $clients != -1 )
 			{
 				$line = $line . "\t" . $clients;
@@ -1504,7 +1506,7 @@ sub getHTTPFarmBackendsStatus($farm_name,@content)
 
 # function that return if a pound backend is active, down by farmguardian
 # or it's in maintenance mode
-sub getHTTPBackendStatusFromFile($farm_name,$backend,$service)
+sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
 
@@ -1543,7 +1545,7 @@ sub getHTTPBackendStatusFromFile($farm_name,$backend,$service)
 }
 
 #function that return the status information of a farm:
-sub getHTTPFarmBackendsClients($idserver,@content,$farm_name)
+sub getHTTPFarmBackendsClients    # ($idserver,@content,$farm_name)
 {
 	my ( $idserver, @content, $farm_name ) = @_;
 
@@ -1564,7 +1566,7 @@ sub getHTTPFarmBackendsClients($idserver,@content,$farm_name)
 }
 
 #function that return the status information of a farm:
-sub getHTTPFarmBackendsClientsList($farm_name,@content)
+sub getHTTPFarmBackendsClientsList    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
 
@@ -1582,16 +1584,16 @@ sub getHTTPFarmBackendsClientsList($farm_name,@content)
 		if ( $_ =~ /Service/ )
 		{
 			my @service = split ( "\ ", $_ );
-			$s = @service[2];
+			$s = $service[2];
 			$s =~ s/"//g;
 			print $s;
 		}
 		if ( $_ =~ / Session / )
 		{
 			my @sess = split ( "\ ", $_ );
-			my $id = @sess[0];
+			my $id = $sess[0];
 			$id =~ s/\.//g;
-			$line = $s . "\t" . $id . "\t" . @sess[2] . "\t" . @sess[4];
+			$line = $s . "\t" . $id . "\t" . $sess[2] . "\t" . $sess[4];
 			push ( @client_list, $line );
 		}
 	}
@@ -1600,7 +1602,7 @@ sub getHTTPFarmBackendsClientsList($farm_name,@content)
 }
 
 #function that renames a farm
-sub setHTTPNewFarmName($farm_name,$new_farm_name)
+sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $farm_name, $new_farm_name ) = @_;
 
@@ -1655,7 +1657,7 @@ sub setHTTPNewFarmName($farm_name,$new_farm_name)
 
 # HTTPS
 # Set Farm Ciphers vale
-sub setFarmCiphers($farm_name,$ciphers)
+sub setFarmCiphers    # ($farm_name,$ciphers)
 {
 	( $farm_name, $ciphers, $cipherc ) = @_;
 	my $farm_type = &getFarmType( $farm_name );
@@ -1700,7 +1702,7 @@ sub setFarmCiphers($farm_name,$ciphers)
 
 # HTTPS
 # Get Farm Ciphers value
-sub getFarmCipher($farm_name)
+sub getFarmCipher    # ($farm_name)
 {
 	( $farm_name ) = @_;
 	my $farm_type = &getFarmType( $farm_name );
@@ -1716,7 +1718,7 @@ sub getFarmCipher($farm_name)
 			if ( $line =~ /Ciphers/ )
 			{
 				my @partline = split ( '\ ', $line );
-				$lfile = @partline[1];
+				$lfile = $partline[1];
 				$lfile =~ s/\"//g;
 				chomp ( $lfile );
 				if ( $line =~ /#/ )
@@ -1734,7 +1736,7 @@ sub getFarmCipher($farm_name)
 }
 
 #function that check if the config file is OK.
-sub getHTTPFarmConfigIsOK($farm_name)
+sub getHTTPFarmConfigIsOK    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -1753,7 +1755,7 @@ sub getHTTPFarmConfigIsOK($farm_name)
 }
 
 #function that check if a backend on a farm is on maintenance mode
-sub getHTTPFarmBackendMaintenance($farm_name,$backend,$service)
+sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
 
@@ -1770,7 +1772,7 @@ sub getHTTPFarmBackendMaintenance($farm_name,$backend,$service)
 		if ( $line =~ /$backend\. Backend/ && $sw == 1 )
 		{
 			my @line = split ( "\ ", $line );
-			my $backendstatus = @line[3];
+			my $backendstatus = $line[3];
 
 			if ( $backendstatus eq "DISABLED" )
 			{
@@ -1789,7 +1791,7 @@ sub getHTTPFarmBackendMaintenance($farm_name,$backend,$service)
 }
 
 #function that enable the maintenance mode for backend
-sub setHTTPFarmBackendMaintenance($farm_name,$backend,$service)
+sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
 
@@ -1814,7 +1816,7 @@ sub setHTTPFarmBackendMaintenance($farm_name,$backend,$service)
 }
 
 #function that disable the maintenance mode for backend
-sub setHTTPFarmBackendNoMaintenance($farm_name,$backend,$service)
+sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
 
@@ -1839,7 +1841,7 @@ sub setHTTPFarmBackendNoMaintenance($farm_name,$backend,$service)
 }
 
 #function that save in a file the backend status (maintenance or not)
-sub getFarmHttpBackendStatus($farm_name,$backend,$status,$idsv)
+sub getFarmHttpBackendStatus    # ($farm_name,$backend,$status,$idsv)
 {
 	( $farm_name, $backend, $status, $idsv ) = @_;
 
@@ -1858,21 +1860,21 @@ sub getFarmHttpBackendStatus($farm_name,$backend,$status,$idsv)
 			if ( $line =~ /\.\ Service\ / )
 			{
 				@sw = split ( "\ ", $line );
-				@sw[0] =~ s/\.//g;
-				chomp @sw[0];
+				$sw[0] =~ s/\.//g;
+				chomp $sw[0];
 			}
 			if ( $line =~ /\.\ Backend\ / )
 			{
 				@bw = split ( "\ ", $line );
-				@bw[0] =~ s/\.//g;
-				chomp @bw[0];
-				if ( @bw[3] eq "active" )
+				$bw[0] =~ s/\.//g;
+				chomp $bw[0];
+				if ( $bw[3] eq "active" )
 				{
-					print FW "-B 0 @sw[0] @bw[0] active\n";
+					print FW "-B 0 $sw[0] $bw[0] active\n";
 				}
 				else
 				{
-					print FW "-b 0 @sw[0] @bw[0] fgDOWN\n";
+					print FW "-b 0 $sw[0] $bw[0] fgDOWN\n";
 				}
 			}
 		}
@@ -1915,7 +1917,7 @@ sub getFarmHttpBackendStatus($farm_name,$backend,$status,$idsv)
 }
 
 #Function that removes a backend from the status file
-sub runRemovehttpBackend($farm_name,$backend,$service)
+sub runRemovehttpBackend    # ($farm_name,$backend,$service)
 {
 	( $farm_name, $backend, $service ) = @_;
 	my $i      = -1;
@@ -1946,7 +1948,7 @@ sub runRemovehttpBackend($farm_name,$backend,$service)
 	untie @filelines;
 }
 
-sub setFarmHttpBackendStatus($farm_name)
+sub setFarmHttpBackendStatus    # ($farm_name)
 {
 	( $farm_name ) = @_;
 	my $line;
@@ -1956,13 +1958,13 @@ sub setFarmHttpBackendStatus($farm_name)
 	{
 		@line = split ( "\ ", $_ );
 		@run =
-		  `$poundctl -c /tmp/$farm_name\_pound.socket @line[0] @line[1] @line[2] @line[3]`;
+		  `$poundctl -c /tmp/$farm_name\_pound.socket $line[0] $line[1] $line[2] $line[3]`;
 	}
 	close FR;
 }
 
 #Create a new Service in a HTTP farm
-sub setFarmHTTPNewService($farm_name,$service)
+sub setFarmHTTPNewService    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
 	my $output = -1;
@@ -2016,8 +2018,8 @@ sub setFarmHTTPNewService($farm_name,$service)
 		}
 		untie @poundtpl;
 
-		@newservice[0] =~ s/#//g;
-		@newservice[$#newservice] =~ s/#//g;
+		$newservice[0] =~ s/#//g;
+		$newservice[$#newservice] =~ s/#//g;
 
 		my @fileconf;
 		tie @fileconf, 'Tie::File', "$configdir/$farm_name\_pound.cfg";
@@ -2058,7 +2060,7 @@ sub setFarmHTTPNewService($farm_name,$service)
 }
 
 #Create a new farm service
-sub setFarmNewService($farm_name,$service)
+sub setFarmNewService    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
 
@@ -2074,7 +2076,7 @@ sub setFarmNewService($farm_name,$service)
 }
 
 #delete a service in a Farm
-sub deleteFarmService($farm_name,$service)
+sub deleteFarmService    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
 
@@ -2091,7 +2093,7 @@ sub deleteFarmService($farm_name,$service)
 	my $i = 0;
 	for ( $i = 0 ; $i < $#fileconf ; $i++ )
 	{
-		my $line = @fileconf[$i];
+		my $line = $fileconf[$i];
 		if ( $sw eq "1" && ( $line =~ /ZWACL-END/ || $line =~ /Service/ ) )
 		{
 			$output = 0;
@@ -2118,7 +2120,7 @@ sub deleteFarmService($farm_name,$service)
 
 #function that return indicated value from a HTTP Service
 #vs return virtual server
-sub getHTTPFarmVS($farm_name,$service,$tag)
+sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 {
 	my ( $farm_name, $service, $tag ) = @_;
 
@@ -2154,10 +2156,10 @@ sub getHTTPFarmVS($farm_name,$service,$tag)
 			if ( $line =~ /^\tService\ \"/ && $line !~ "#" )
 			{
 				@return = split ( "\ ", $line );
-				@return[1] =~ s/\"//g;
-				@return[1] =~ s/^\s+//;
-				@return[1] =~ s/\s+$//;
-				$output = "$output @return[1]";
+				$return[1] =~ s/\"//g;
+				$return[1] =~ s/^\s+//;
+				$return[1] =~ s/\s+$//;
+				$output = "$output $return[1]";
 			}
 		}
 
@@ -2167,10 +2169,10 @@ sub getHTTPFarmVS($farm_name,$service,$tag)
 			if ( $line =~ "HeadRequire" && $sw == 1 && $line !~ "#" )
 			{
 				@return = split ( "Host:", $line );
-				@return[1] =~ s/\"//g;
-				@return[1] =~ s/^\s+//;
-				@return[1] =~ s/\s+$//;
-				$output = @return[1];
+				$return[1] =~ s/\"//g;
+				$return[1] =~ s/^\s+//;
+				$return[1] =~ s/\s+$//;
+				$output = $return[1];
 				last;
 
 			}
@@ -2182,10 +2184,10 @@ sub getHTTPFarmVS($farm_name,$service,$tag)
 			if ( $line =~ "Url \"" && $sw == 1 && $line !~ "#" )
 			{
 				@return = split ( "Url", $line );
-				@return[1] =~ s/\"//g;
-				@return[1] =~ s/^\s+//;
-				@return[1] =~ s/\s+$//;
-				$output = @return[1];
+				$return[1] =~ s/\"//g;
+				$return[1] =~ s/^\s+//;
+				$return[1] =~ s/\s+$//;
+				$output = $return[1];
 				last;
 			}
 		}
@@ -2205,10 +2207,10 @@ sub getHTTPFarmVS($farm_name,$service,$tag)
 				{
 					@return = split ( "RedirectAppend", $line );
 				}
-				@return[1] =~ s/\"//g;
-				@return[1] =~ s/^\s+//;
-				@return[1] =~ s/\s+$//;
-				$output = @return[1];
+				$return[1] =~ s/\"//g;
+				$return[1] =~ s/^\s+//;
+				$return[1] =~ s/\s+$//;
+				$output = $return[1];
 				last;
 			}
 		}
@@ -2249,7 +2251,7 @@ sub getHTTPFarmVS($farm_name,$service,$tag)
 				$l =~ s/\t\t//g;
 				$l =~ s/\"//g;
 				my @values = split ( "\ ", $l );
-				$output = @values[1];
+				$output = $values[1];
 				chomp ( $output );
 				last;
 			}
@@ -2264,7 +2266,7 @@ sub getHTTPFarmVS($farm_name,$service,$tag)
 				$l =~ s/\t\t//g;
 				$l =~ s/\"//g;
 				my @values = split ( "\ ", $l );
-				$output = @values[2];
+				$output = $values[2];
 				chomp ( $output );
 				last;
 			}
@@ -2279,7 +2281,7 @@ sub getHTTPFarmVS($farm_name,$service,$tag)
 				$l =~ s/\t\t//g;
 				$l =~ s/\"//g;
 				my @values = split ( "\ ", $l );
-				$output = @values[3];
+				$output = $values[3];
 				chomp ( $output );
 				last;
 			}
@@ -2294,7 +2296,7 @@ sub getHTTPFarmVS($farm_name,$service,$tag)
 				$l =~ s/\t\t//g;
 				$l =~ s/\"//g;
 				my @values = split ( "\ ", $l );
-				$output = @values[4];
+				$output = $values[4];
 				chomp ( $output );
 				last;
 			}
@@ -2317,10 +2319,10 @@ sub getHTTPFarmVS($farm_name,$service,$tag)
 			if ( $line =~ "Type" && $sw == 1 && $line !~ "#" )
 			{
 				@return = split ( "\ ", $line );
-				@return[1] =~ s/\"//g;
-				@return[1] =~ s/^\s+//;
-				@return[1] =~ s/\s+$//;
-				$output = @return[1];
+				$return[1] =~ s/\"//g;
+				$return[1] =~ s/^\s+//;
+				$return[1] =~ s/\s+$//;
+				$output = $return[1];
 				last;
 			}
 		}
@@ -2331,10 +2333,10 @@ sub getHTTPFarmVS($farm_name,$service,$tag)
 			if ( $line =~ "TTL" && $sw == 1 && $line !~ "#" )
 			{
 				@return = split ( "\ ", $line );
-				@return[1] =~ s/\"//g;
-				@return[1] =~ s/^\s+//;
-				@return[1] =~ s/\s+$//;
-				$output = @return[1];
+				$return[1] =~ s/\"//g;
+				$return[1] =~ s/^\s+//;
+				$return[1] =~ s/\s+$//;
+				$output = $return[1];
 				last;
 			}
 		}
@@ -2345,10 +2347,10 @@ sub getHTTPFarmVS($farm_name,$service,$tag)
 			if ( $line =~ "\t\t\tID" && $sw == 1 && $line !~ "#" )
 			{
 				@return = split ( "\ ", $line );
-				@return[1] =~ s/\"//g;
-				@return[1] =~ s/^\s+//;
-				@return[1] =~ s/\s+$//;
-				$output = @return[1];
+				$return[1] =~ s/\"//g;
+				$return[1] =~ s/^\s+//;
+				$return[1] =~ s/\s+$//;
+				$output = $return[1];
 				last;
 			}
 		}
@@ -2434,7 +2436,7 @@ sub getHTTPFarmVS($farm_name,$service,$tag)
 }
 
 #set values for a service
-sub setHTTPFarmVS($farm_name,$service,$tag,$string)
+sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 {
 	my ( $farm_name, $service, $tag, $string ) = @_;
 
@@ -2479,7 +2481,7 @@ sub setHTTPFarmVS($farm_name,$service,$tag,$string)
 				$line = "\t\tUrl \"$string\"";
 				last;
 			}
-			if ( $line =~ "Url" & $sw == 1 && $string eq "" )
+			if ( $line =~ "Url" && $sw == 1 && $string eq "" )
 			{
 				$line = "\t\t#Url \"\"";
 				last;
@@ -2563,8 +2565,8 @@ sub setHTTPFarmVS($farm_name,$service,$tag,$string)
 				$l = $line;
 				$l =~ s/\t\t//g;
 				my @values = split ( "\ ", $l );
-				@values[1] =~ s/\"//g;
-				$line = "\t\tBackendCookie \"$string\" @values[2] @values[3] @values[4]";
+				$values[1] =~ s/\"//g;
+				$line = "\t\tBackendCookie \"$string\" $values[2] $values[3] $values[4]";
 				last;
 			}
 		}
@@ -2577,8 +2579,8 @@ sub setHTTPFarmVS($farm_name,$service,$tag,$string)
 				$l = $line;
 				$l =~ s/\t\t//g;
 				my @values = split ( "\ ", $l );
-				@values[2] =~ s/\"//g;
-				$line = "\t\tBackendCookie @values[1] \"$string\" @values[3] @values[4]";
+				$values[2] =~ s/\"//g;
+				$line = "\t\tBackendCookie $values[1] \"$string\" $values[3] $values[4]";
 				last;
 			}
 		}
@@ -2591,8 +2593,8 @@ sub setHTTPFarmVS($farm_name,$service,$tag,$string)
 				$l = $line;
 				$l =~ s/\t\t//g;
 				my @values = split ( "\ ", $l );
-				@values[3] =~ s/\"//g;
-				$line = "\t\tBackendCookie @values[1] @values[2] \"$string\" @values[4]";
+				$values[3] =~ s/\"//g;
+				$line = "\t\tBackendCookie $values[1] $values[2] \"$string\" $values[4]";
 				last;
 			}
 		}
@@ -2605,8 +2607,8 @@ sub setHTTPFarmVS($farm_name,$service,$tag,$string)
 				$l = $line;
 				$l =~ s/\t\t//g;
 				my @values = split ( "\ ", $l );
-				@values[4] =~ s/\"//g;
-				$line = "\t\tBackendCookie @values[1] @values[2] @values[3] $string";
+				$values[4] =~ s/\"//g;
+				$line = "\t\tBackendCookie $values[1] $values[2] $values[3] $string";
 				last;
 			}
 		}
@@ -2667,7 +2669,7 @@ sub setHTTPFarmVS($farm_name,$service,$tag,$string)
 			#Add HTTPS tag
 			if ( $sw == 1 && $line =~ /BackEnd$/ && $string ne "" )
 			{
-				if ( @fileconf[$j + 1] =~ /Address\ .*/ )
+				if ( $fileconf[$j + 1] =~ /Address\ .*/ )
 				{
 					#add new line with HTTPS tag
 					splice @fileconf, $j + 1, 0, "\t\t\tHTTPS";
@@ -2760,7 +2762,7 @@ sub setHTTPFarmVS($farm_name,$service,$tag,$string)
 }
 
 #get index of a service in a http farm
-sub getFarmVSI($farm_name,$service)
+sub getFarmVSI    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
 	my $output;
@@ -2815,7 +2817,7 @@ sub getFarmVSI($farm_name,$service)
 #~ {
 #~ $sw      = 1;
 #~ @service = split ( /\./, $_ );
-#~ $serviceid = @service[0];
+#~ $serviceid = $service[0];
 #~ }
 #~
 #~ if ( $_ =~ /Session.*->\ $backendid/ && $sw eq 1 )

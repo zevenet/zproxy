@@ -22,7 +22,7 @@
 ###############################################################################
 
 #
-sub getL4FarmsPorts($farm_type)
+sub getL4FarmsPorts    # ($farm_type)
 {
 	my ( $farm_type ) = @_;
 
@@ -59,7 +59,7 @@ sub getL4FarmsPorts($farm_type)
 }
 
 #
-sub loadL4Modules($protocol)
+sub loadL4Modules    # ($protocol)
 {
 	my ( $protocol ) = @_;
 
@@ -90,7 +90,7 @@ sub loadL4Modules($protocol)
 }
 
 #
-sub validL4ExtPort($farm_protocol,$ports)
+sub validL4ExtPort    # ($farm_protocol,$ports)
 {
 	my ( $farm_protocol, $ports ) = @_;
 
@@ -108,7 +108,7 @@ sub validL4ExtPort($farm_protocol,$ports)
 }
 
 #
-sub runL4FarmRestart($farm_name,$writeconf,$type)
+sub runL4FarmRestart    # ($farm_name,$writeconf,$type)
 {
 	my ( $farm_name, $writeconf, $type ) = @_;
 
@@ -139,7 +139,7 @@ sub runL4FarmRestart($farm_name,$writeconf,$type)
 }
 
 #
-sub _runL4FarmRestart($farm_name,$writeconf,$type)
+sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
 {
 	my ( $farm_name, $writeconf, $type ) = @_;
 
@@ -170,7 +170,7 @@ sub _runL4FarmRestart($farm_name,$writeconf,$type)
 }
 
 #
-sub sendL4ConfChange($farm_name)
+sub sendL4ConfChange    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -197,12 +197,13 @@ sub sendL4ConfChange($farm_name)
 }
 
 #
-sub setL4FarmSessionType($session,$farm_filename)
+sub setL4FarmSessionType    # ($session,$farm_name)
 {
-	my ( $session, $farm_filename ) = @_;
+	my ( $session, $farm_name ) = @_;
 
-	my $output = -1;
-	my $i      = 0;
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	my $i             = 0;
 
 	use Tie::File;
 	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
@@ -213,7 +214,7 @@ sub setL4FarmSessionType($session,$farm_filename)
 		{
 			my @args = split ( "\;", $line );
 			$line =
-			  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;$session\;@args[7]\;@args[8]";
+			  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$session\;$args[7]\;$args[8]";
 			splice @configfile, $i, $line;
 			$output = $?;
 		}
@@ -226,7 +227,7 @@ sub setL4FarmSessionType($session,$farm_filename)
 }
 
 #
-sub getL4FarmSessionType($farm_name)
+sub getL4FarmSessionType    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -242,7 +243,7 @@ sub getL4FarmSessionType($farm_name)
 		{
 			$first = "false";
 			my @line = split ( "\;", $line );
-			$output = @line[6];
+			$output = $line[6];
 		}
 	}
 	close FI;
@@ -251,7 +252,7 @@ sub getL4FarmSessionType($farm_name)
 }
 
 # set the lb algorithm to a farm
-sub setL4FarmAlgorithm($algorithm,$farm_name)
+sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 {
 	my ( $algorithm, $farm_name ) = @_;
 
@@ -268,7 +269,7 @@ sub setL4FarmAlgorithm($algorithm,$farm_name)
 		{
 			my @args = split ( "\;", $line );
 			$line =
-			  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;$algorithm\;@args[6]\;@args[7]\;@args[8]";
+			  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$args[4]\;$algorithm\;$args[6]\;$args[7]\;$args[8]";
 			splice @configfile, $i, $line;
 			$output = $?;
 		}
@@ -281,7 +282,7 @@ sub setL4FarmAlgorithm($algorithm,$farm_name)
 }
 
 #
-sub getL4FarmAlgorithm($farm_name)
+sub getL4FarmAlgorithm    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -297,7 +298,7 @@ sub getL4FarmAlgorithm($farm_name)
 		{
 			$first = "false";
 			my @line = split ( "\;", $line );
-			$output = @line[5];
+			$output = $line[5];
 		}
 	}
 	close FI;
@@ -306,7 +307,7 @@ sub getL4FarmAlgorithm($farm_name)
 }
 
 # set the protocol to a L4 farm
-sub setFarmProto($proto,$farm_name)
+sub setFarmProto    # ($proto,$farm_name)
 {
 	my ( $proto, $farm_name ) = @_;
 
@@ -328,15 +329,15 @@ sub setFarmProto($proto,$farm_name)
 				my @args = split ( "\;", $line );
 				if ( $proto eq "all" )
 				{
-					@args[3] = "*";
+					$args[3] = "*";
 				}
 				if ( $proto eq "sip" )
 				{
-					@args[3] = "5060";    # the port by default for sip protocol
-					@args[4] = "nat";
+					$args[3] = "5060";    # the port by default for sip protocol
+					$args[4] = "nat";
 				}
 				$line =
-				  "@args[0]\;$proto\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;@args[6]\;@args[7]\;@args[8]";
+				  "$args[0]\;$proto\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8]";
 				splice @configfile, $i, $line;
 				$output = $?;
 			}
@@ -350,7 +351,7 @@ sub setFarmProto($proto,$farm_name)
 }
 
 #
-sub getFarmProto($farm_name)
+sub getFarmProto    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -368,7 +369,7 @@ sub getFarmProto($farm_name)
 			{
 				$first = "false";
 				my @line = split ( "\;", $line );
-				$output = @line[1];
+				$output = $line[1];
 			}
 		}
 		close FI;
@@ -378,7 +379,7 @@ sub getFarmProto($farm_name)
 }
 
 #
-sub getFarmNatType($farm_name)
+sub getFarmNatType    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -396,7 +397,7 @@ sub getFarmNatType($farm_name)
 			{
 				$first = "false";
 				my @line = split ( "\;", $line );
-				$output = @line[4];
+				$output = $line[4];
 			}
 		}
 		close FI;
@@ -406,7 +407,7 @@ sub getFarmNatType($farm_name)
 }
 
 # set the NAT type for a farm
-sub setFarmNatType($nat,$farm_name)
+sub setFarmNatType    # ($nat,$farm_name)
 {
 	my ( $nat, $farm_name ) = @_;
 
@@ -427,7 +428,7 @@ sub setFarmNatType($nat,$farm_name)
 			{
 				my @args = split ( "\;", $line );
 				$line =
-				  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;$nat\;@args[5]\;@args[6]\;@args[7]\;@args[8]";
+				  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$nat\;$args[5]\;$args[6]\;$args[7]\;$args[8]";
 				splice @configfile, $i, $line;
 				$output = $?;
 			}
@@ -441,7 +442,7 @@ sub setFarmNatType($nat,$farm_name)
 }
 
 # set client persistence to a farm
-sub setL4FarmPersistence($persistence,$farm_name)
+sub setL4FarmPersistence    # ($persistence,$farm_name)
 {
 	my ( $persistence, $farm_name ) = @_;
 
@@ -458,7 +459,7 @@ sub setL4FarmPersistence($persistence,$farm_name)
 		{
 			my @args = split ( "\;", $line );
 			$line =
-			  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;$persistence\;@args[7]\;@args[8]";
+			  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$persistence\;$args[7]\;$args[8]";
 			splice @configfile, $i, $line;
 			$output = $?;
 		}
@@ -471,7 +472,7 @@ sub setL4FarmPersistence($persistence,$farm_name)
 }
 
 #
-sub getL4FarmPersistence($farm_name)
+sub getL4FarmPersistence    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -487,7 +488,7 @@ sub getL4FarmPersistence($farm_name)
 		{
 			$first = "false";
 			my @line = split ( "\;", $line );
-			$persistence = @line[6];
+			$persistence = $line[6];
 		}
 	}
 	close FI;
@@ -496,7 +497,7 @@ sub getL4FarmPersistence($farm_name)
 }
 
 # set the max clients of a farm
-sub setL4FarmMaxClientTime($track,$farm_name)
+sub setL4FarmMaxClientTime    # ($track,$farm_name)
 {
 	my ( $track, $farm_name ) = @_;
 
@@ -513,7 +514,7 @@ sub setL4FarmMaxClientTime($track,$farm_name)
 		{
 			my @args = split ( "\;", $line );
 			$line =
-			  "@args[0]\;@args[1]\;@args[2]\;@args[3]\;@args[4]\;@args[5]\;@args[6]\;$track\;@args[8]";
+			  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$args[6]\;$track\;$args[8]";
 			splice @configfile, $i, $line;
 			$output = $?;
 		}
@@ -526,7 +527,7 @@ sub setL4FarmMaxClientTime($track,$farm_name)
 }
 
 #
-sub getL4FarmMaxClientTime($farm_name)
+sub getL4FarmMaxClientTime    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -542,7 +543,7 @@ sub getL4FarmMaxClientTime($farm_name)
 		{
 			$first = "false";
 			my @line = split ( "\;", $line );
-			@max_client_time = @line[7];
+			@max_client_time = $line[7];
 		}
 	}
 	close FI;
@@ -551,7 +552,7 @@ sub getL4FarmMaxClientTime($farm_name)
 }
 
 #
-sub getL4FarmServers($farm_name)
+sub getL4FarmServers    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -567,7 +568,7 @@ sub getL4FarmServers($farm_name)
 	{
 		if ( $line ne "" && $line =~ /^\;server\;/ && $first ne "true" )
 		{
-			$line =~ s/^\;server/$sindex/g, $line;
+			$line =~ s/^\;server/$sindex/g;    #, $line;
 			push ( @servers, $line );
 			$sindex = $sindex + 1;
 		}
@@ -582,7 +583,7 @@ sub getL4FarmServers($farm_name)
 }
 
 #
-sub getL4BackendEstConns($farm_name,$ip_backend,@netstat)
+sub getL4BackendEstConns    # ($farm_name,$ip_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, @netstat ) = @_;
 
@@ -594,7 +595,7 @@ sub getL4BackendEstConns($farm_name,$ip_backend,@netstat)
 	my $regexp    = "";
 	my @nets      = ();
 
-	if ( @fportlist[0] !~ /\*/ )
+	if ( $fportlist[0] !~ /\*/ )
 	{
 		$regexp = "\(" . join ( '|', @fportlist ) . "\)";
 	}
@@ -660,7 +661,7 @@ sub getL4BackendEstConns($farm_name,$ip_backend,@netstat)
 }
 
 #
-sub getL4FarmEstConns($farm_name,@netstat)
+sub getL4FarmEstConns    # ($farm_name,@netstat)
 {
 	my ( $farm_name, @netstat ) = @_;
 
@@ -672,7 +673,7 @@ sub getL4FarmEstConns($farm_name,@netstat)
 	my $regexp    = "";
 	my @nets      = ();
 
-	if ( @fportlist[0] !~ /\*/ )
+	if ( $fportlist[0] !~ /\*/ )
 	{
 		$regexp = "\(" . join ( '|', @fportlist ) . "\)";
 	}
@@ -745,7 +746,7 @@ sub getL4FarmEstConns($farm_name,@netstat)
 	return @nets;
 }
 
-sub getL4BackendTWConns($farm_name,$ip_backend,@netstat)
+sub getL4BackendTWConns    # ($farm_name,$ip_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, @netstat ) = @_;
 
@@ -757,7 +758,7 @@ sub getL4BackendTWConns($farm_name,$ip_backend,@netstat)
 	my $regexp    = "";
 	my @nets      = ();
 
-	if ( @fportlist[0] !~ /\*/ )
+	if ( $fportlist[0] !~ /\*/ )
 	{
 		$regexp = "\(" . join ( '|', @fportlist ) . "\)";
 	}
@@ -793,17 +794,18 @@ sub getL4BackendTWConns($farm_name,$ip_backend,@netstat)
 }
 
 #
-sub getL4BackendSYNConns($farm_name,$ip_backend,@netstat)
+sub getL4BackendSYNConns    # ($farm_name,$ip_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, @netstat ) = @_;
 
 	my $proto     = &getFarmProto( $farm_name );
 	my $nattype   = &getFarmNatType( $farm_name );
+	my $fvipp     = &getFarmVip( "vipp", $farm_name );
 	my @fportlist = &getFarmPortList( $fvipp );
 	my $regexp    = "";
 	my @nets      = ();
 
-	if ( @fportlist[0] !~ /\*/ )
+	if ( $fportlist[0] !~ /\*/ )
 	{
 		$regexp = "\(" . join ( '|', @fportlist ) . "\)";
 	}
@@ -867,7 +869,7 @@ sub getL4BackendSYNConns($farm_name,$ip_backend,@netstat)
 }
 
 #
-sub getL4FarmSYNConns($farm_name,@netstat)
+sub getL4FarmSYNConns    # ($farm_name,@netstat)
 {
 	my ( $farm_name, @netstat ) = @_;
 
@@ -879,7 +881,7 @@ sub getL4FarmSYNConns($farm_name,@netstat)
 	my $regexp    = "";
 	my @nets      = ();
 
-	if ( @fportlist[0] !~ /\*/ )
+	if ( $fportlist[0] !~ /\*/ )
 	{
 		$regexp = "\(" . join ( '|', @fportlist ) . "\)";
 	}
@@ -955,7 +957,7 @@ sub getL4FarmSYNConns($farm_name,@netstat)
 }
 
 # Returns farm status
-sub getL4FarmBootStatus($farm_name)
+sub getL4FarmBootStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -971,7 +973,7 @@ sub getL4FarmBootStatus($farm_name)
 		{
 			$first = "false";
 			my @line_a = split ( "\;", $line );
-			$output = @line_a[8];
+			$output = $line_a[8];
 			chomp ( $output );
 		}
 	}
@@ -981,7 +983,7 @@ sub getL4FarmBootStatus($farm_name)
 }
 
 # Start Farm rutine
-sub _runL4FarmStart($farm_name,$writeconf,$status)
+sub _runL4FarmStart    # ($farm_name,$writeconf,$status)
 {
 	my ( $farm_name, $writeconf, $status ) = @_;
 
@@ -1019,7 +1021,7 @@ sub _runL4FarmStart($farm_name,$writeconf,$status)
 	my $vproto  = &getFarmProto( $farm_name );
 	my $persist = &getFarmPersistence( $farm_name );
 	my @pttl    = &getFarmMaxClientTime( $farm_name );
-	my $ttl     = @pttl[0];
+	my $ttl     = $pttl[0];
 	my $proto   = "";
 
 	my @run = &getFarmServers( $farm_name );
@@ -1033,9 +1035,9 @@ sub _runL4FarmStart($farm_name,$writeconf,$status)
 	foreach my $lservers ( @run )
 	{
 		my @serv = split ( "\;", $lservers );
-		if ( @serv[6] =~ /up/ )
+		if ( $serv[6] =~ /up/ )
 		{
-			$prob = $prob + @serv[4];
+			$prob = $prob + $serv[4];
 		}
 	}
 
@@ -1071,33 +1073,33 @@ sub _runL4FarmStart($farm_name,$writeconf,$status)
 	foreach my $lservers ( @run )
 	{
 		my @serv = split ( "\;", $lservers );
-		if ( @serv[6] =~ /up/ || $lbalg eq "leastconn" )
+		if ( $serv[6] =~ /up/ || $lbalg eq "leastconn" )
 		{    # TMP: leastconn dynamic backend status check
 			if ( $lbalg eq "weight" || $lbalg eq "leastconn" )
 			{
-				my $port = @serv[2];
-				my $rip  = @serv[1];
-				if ( @serv[2] ne "" && $proto ne "all" )
+				my $port = $serv[2];
+				my $rip  = $serv[1];
+				if ( $serv[2] ne "" && $proto ne "all" )
 				{
 					$rip = "$rip\:$port";
 				}
 				my $tag = &genIptMark(
 									   $farm_name, $nattype, $lbalg,   $vip,
-									   $vport,     $proto,   @serv[0], @serv[3],
-									   @serv[4],   @serv[6], $prob
+									   $vport,     $proto,   $serv[0], $serv[3],
+									   $serv[4],   $serv[6], $prob
 				);
 
 				if ( $persist ne "none" )
 				{
 					my $tagp =
-					  &genIptMarkPersist( $farm_name, $vip, $vport, $proto, $ttl, @serv[0],
-										  @serv[3], @serv[6] );
+					  &genIptMarkPersist( $farm_name, $vip, $vport, $proto, $ttl, $serv[0],
+										  $serv[3], $serv[6] );
 					push ( @tmanglep, $tagp );
 				}
 
 				# dnat rules
-				my $red = &genIptRedirect( $farm_name, $nattype, @serv[0], $rip, $proto,
-										   @serv[3],   @serv[4], $persist, @serv[6] );
+				my $red = &genIptRedirect( $farm_name, $nattype, $serv[0], $rip, $proto,
+										   $serv[3],   $serv[4], $persist, $serv[6] );
 				push ( @tnat, $red );
 
 				if ( $nattype eq "nat" )
@@ -1106,14 +1108,14 @@ sub _runL4FarmStart($farm_name,$writeconf,$status)
 					if ( $vproto eq "sip" )
 					{
 						$ntag =
-						  &genIptSourceNat( $farm_name, $vip,     $nattype, @serv[0],
-											$proto,     @serv[3], @serv[6] );
+						  &genIptSourceNat( $farm_name, $vip,     $nattype, $serv[0],
+											$proto,     $serv[3], $serv[6] );
 					}
 					else
 					{
 						$ntag =
-						  &genIptMasquerade( $farm_name, $nattype, @serv[0],
-											 $proto, @serv[3], @serv[6] );
+						  &genIptMasquerade( $farm_name, $nattype, $serv[0],
+											 $proto, $serv[3], $serv[6] );
 					}
 
 					push ( @tsnat, $ntag );
@@ -1121,15 +1123,15 @@ sub _runL4FarmStart($farm_name,$writeconf,$status)
 
 				push ( @tmangle, $tag );
 
-				$prob = $prob - @serv[4];
+				$prob = $prob - $serv[4];
 			}
 
 			if ( $lbalg eq "prio" )
 			{
-				if ( @serv[5] ne "" && @serv[5] < $bestprio )
+				if ( $serv[5] ne "" && $serv[5] < $bestprio )
 				{
 					@srvprio  = @serv;
-					$bestprio = @serv[5];
+					$bestprio = $serv[5];
 				}
 			}
 		}
@@ -1137,33 +1139,33 @@ sub _runL4FarmStart($farm_name,$writeconf,$status)
 
 	if ( @srvprio && $lbalg eq "prio" )
 	{
-		my @run = `echo 10 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream`;
-		my @run = `echo 5 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout`;
+		system ( "echo 10 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream" );
+		system ( "echo 5 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout" );
 
-		my $port = @srvprio[2];
-		my $rip  = @srvprio[1];
-		if ( @srvprio[2] ne "" )
+		my $port = $srvprio[2];
+		my $rip  = $srvprio[1];
+		if ( $srvprio[2] ne "" )
 		{
 			$rip = "$rip\:$port";
 		}
 		my $tag = &genIptMark(
 							   $farm_name,  $nattype,    $lbalg,      $vip,
-							   $vport,      $proto,      @srvprio[0], @srvprio[3],
-							   @srvprio[4], @srvprio[6], $prob
+							   $vport,      $proto,      $srvprio[0], $srvprio[3],
+							   $srvprio[4], $srvprio[6], $prob
 		);
 
 		# dnat rules
 		my $red = &genIptRedirect(
-								   $farm_name,  $nattype, @srvprio[0],
-								   $rip,        $proto,   @srvprio[3],
-								   @srvprio[4], $persist, @srvprio[6]
+								   $farm_name,  $nattype, $srvprio[0],
+								   $rip,        $proto,   $srvprio[3],
+								   $srvprio[4], $persist, $srvprio[6]
 		);
 
 		if ( $persist ne "none" )
 		{
 			my $tagp =
-			  &genIptMarkPersist( $farm_name, $vip, $vport, $proto, $ttl, @srvprio[0],
-								  @srvprio[3], @srvprio[6] );
+			  &genIptMarkPersist( $farm_name, $vip, $vport, $proto, $ttl, $srvprio[0],
+								  $srvprio[3], $srvprio[6] );
 			push ( @tmanglep, $tagp );
 		}
 
@@ -1173,13 +1175,13 @@ sub _runL4FarmStart($farm_name,$writeconf,$status)
 			if ( $vproto eq "sip" )
 			{
 				$ntag =
-				  &genIptSourceNat( $farm_name, $vip, $nattype, @srvprio[0], $proto,
-									@srvprio[3], @srvprio[6] );
+				  &genIptSourceNat( $farm_name, $vip, $nattype, $srvprio[0], $proto,
+									$srvprio[3], $srvprio[6] );
 			}
 			else
 			{
-				$ntag = &genIptMasquerade( $farm_name, $nattype,    @srvprio[0],
-										   $proto,     @srvprio[3], @srvprio[6] );
+				$ntag = &genIptMasquerade( $farm_name, $nattype,    $srvprio[0],
+										   $proto,     $srvprio[3], $srvprio[6] );
 			}
 			push ( @tsnat, $ntag );
 		}
@@ -1276,9 +1278,9 @@ sub _runL4FarmStart($farm_name,$writeconf,$status)
 }
 
 # Stop Farm rutine
-sub _runL4FarmStop($farm_name,$writeconf, $status)
+sub _runL4FarmStop    # ($farm_name,$writeconf)
 {
-	my ( $farm_name, $writeconf, $status ) = @_;
+	my ( $farm_name, $writeconf ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $status =
@@ -1309,14 +1311,19 @@ sub _runL4FarmStop($farm_name,$writeconf, $status)
 	if ( $status != -1 )
 	{
 		# Disable rules
-		my @allrules = &getIptList( "raw", "OUTPUT" );
+		my @allrules;
+
+		@allrules = &getIptList( "raw", "OUTPUT" );
 		$status = &deleteIptRules( "farm", $farm_name, "raw", "OUTPUT", @allrules );
-		my @allrules = &getIptList( "mangle", "PREROUTING" );
+
+		@allrules = &getIptList( "mangle", "PREROUTING" );
 		$status =
 		  &deleteIptRules( "farm", $farm_name, "mangle", "PREROUTING", @allrules );
-		my @allrules = &getIptList( "nat", "PREROUTING" );
+
+		@allrules = &getIptList( "nat", "PREROUTING" );
 		$status = &deleteIptRules( "farm", $farm_name, "nat", "PREROUTING", @allrules );
-		my @allrules = &getIptList( "nat", "POSTROUTING" );
+
+		@allrules = &getIptList( "nat", "POSTROUTING" );
 		$status =
 		  &deleteIptRules( "farm", $farm_name, "nat", "POSTROUTING", @allrules );
 
@@ -1332,7 +1339,7 @@ sub _runL4FarmStop($farm_name,$writeconf, $status)
 }
 
 #
-sub runL4FarmCreate($vip,$farm_name)
+sub runL4FarmCreate    # ($vip,$farm_name)
 {
 	my ( $vip, $farm_name ) = @_;
 
@@ -1344,7 +1351,7 @@ sub runL4FarmCreate($vip,$farm_name)
 	close FO;
 	$output = $?;
 
-	if ( !-e "$piddir/$farm_name_$farm_type.pid" )
+	if ( !-e "$piddir/${farm_name}_$farm_type.pid" )
 	{
 		# Enable active l4xnat file
 		open FI, ">$piddir\/$farm_name\_$farm_type.pid";
@@ -1355,7 +1362,7 @@ sub runL4FarmCreate($vip,$farm_name)
 }
 
 # Returns farm vip
-sub getL4FarmVip($info,$farm_name)
+sub getL4FarmVip    # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
 
@@ -1372,9 +1379,9 @@ sub getL4FarmVip($info,$farm_name)
 			$first = "false";
 			my @line_a = split ( "\;", $line );
 
-			if ( $info eq "vip" )   { $output = @line_a[2]; }
-			if ( $info eq "vipp" )  { $output = @line_a[3]; }
-			if ( $info eq "vipps" ) { $output = "@line_a[2]\:@line_a[3]"; }
+			if ( $info eq "vip" )   { $output = $line_a[2]; }
+			if ( $info eq "vipp" )  { $output = $line_a[3]; }
+			if ( $info eq "vipps" ) { $output = "$line_a[2]\:$line_a[3]"; }
 		}
 	}
 	close FI;
@@ -1383,7 +1390,7 @@ sub getL4FarmVip($info,$farm_name)
 }
 
 # Set farm virtual IP and virtual PORT
-sub setL4FarmVirtualConf($vip,$vip_port,$farm_name)
+sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
@@ -1400,7 +1407,7 @@ sub setL4FarmVirtualConf($vip,$vip_port,$farm_name)
 		{
 			my @args = split ( "\;", $line );
 			$line =
-			  "@args[0]\;@args[1]\;$vip\;$vip_port\;@args[4]\;@args[5]\;@args[6]\;@args[7]\;@args[8]";
+			  "$args[0]\;$args[1]\;$vip\;$vip_port\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8]";
 			splice @configfile, $i, $line;
 			$stat = $?;
 		}
@@ -1413,7 +1420,7 @@ sub setL4FarmVirtualConf($vip,$vip_port,$farm_name)
 }
 
 #
-sub setL4FarmServer($ids,$rip,$port,$weight,$priority,$farm_name)
+sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 {
 	my ( $ids, $rip, $port, $weight, $priority, $farm_name ) = @_;
 
@@ -1432,7 +1439,7 @@ sub setL4FarmServer($ids,$rip,$port,$weight,$priority,$farm_name)
 			if ( $i eq $ids )
 			{
 				my @aline = split ( "\;", $line );
-				my $dline = "\;server\;$rip\;$port\;@aline[4]\;$weight\;$priority\;up\n";
+				my $dline = "\;server\;$rip\;$port\;$aline[4]\;$weight\;$priority\;up\n";
 
 				splice @contents, $l, 1, $dline;
 				$output = $?;
@@ -1457,7 +1464,7 @@ sub setL4FarmServer($ids,$rip,$port,$weight,$priority,$farm_name)
 }
 
 #
-sub runL4FarmServerDelete($ids,$farm_name)
+sub runL4FarmServerDelete    # ($ids,$farm_name)
 {
 	my ( $ids, $farm_name ) = @_;
 
@@ -1498,7 +1505,7 @@ sub runL4FarmServerDelete($ids,$farm_name)
 
 #function that return the status information of a farm:
 #ip, port, backendstatus, weight, priority, clients
-sub getL4FarmBackendsStatus($farm_name,@content)
+sub getL4FarmBackendsStatus    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
 
@@ -1507,18 +1514,18 @@ sub getL4FarmBackendsStatus($farm_name,@content)
 	foreach my $server ( @content )
 	{
 		my @serv = split ( "\;", $server );
-		my $port = @serv[3];
+		my $port = $serv[3];
 		if ( $port eq "" )
 		{
 			$port = &getFarmVip( "vipp", $farm_name );
 		}
-		push ( @backends_data, "@serv[2]\;$port\;@serv[5]\;@serv[6]\;@serv[7]" );
+		push ( @backends_data, "$serv[2]\;$port\;$serv[5]\;$serv[6]\;$serv[7]" );
 	}
 
 	return @backends_data;
 }
 
-sub setL4FarmBackendStatus($farm_name,$index,$stat)
+sub setL4FarmBackendStatus    # ($farm_name,$index,$stat)
 {
 	my ( $farm_name, $index, $stat ) = @_;
 
@@ -1551,7 +1558,7 @@ sub setL4FarmBackendStatus($farm_name,$index,$stat)
 	#	return $output;
 }
 
-sub getFarmPortList($fvipp)
+sub getFarmPortList    # ($fvipp)
 {
 	my ( $fvipp ) = @_;
 	my @portlist;
@@ -1567,7 +1574,7 @@ sub getFarmPortList($fvipp)
 			if ( $port =~ /:/ )
 			{
 				my @intlimits = split ( ":", $port );
-				for ( my $i = @intlimits[0] ; $i <= @intlimits[1] ; $i++ )
+				for ( my $i = $intlimits[0] ; $i <= $intlimits[1] ; $i++ )
 				{
 					push ( @retportlist, $i );
 				}
@@ -1587,7 +1594,7 @@ sub getFarmPortList($fvipp)
 }
 
 #
-sub getL4FarmBackendStatusCtl($farm_name)
+sub getL4FarmBackendStatusCtl    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -1602,7 +1609,7 @@ sub getL4FarmBackendStatusCtl($farm_name)
 }
 
 #function that renames a farm
-sub setL4NewFarmName($farm_name,$new_farm_name)
+sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $farm_name, $new_farm_name ) = @_;
 

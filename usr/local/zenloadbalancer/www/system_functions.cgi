@@ -24,9 +24,8 @@
 #get Memory usage of the System.
 #return @array
 #	name,value
-sub getMemStats()
+sub getMemStats    # ()
 {
-
 	my @data;
 	my $mvalue;
 	my $mfvalue;
@@ -45,14 +44,14 @@ sub getMemStats()
 			if ( $line =~ /memtotal/i )
 			{
 				my @memtotal = split ( ": ", $line );
-				$mvalue = @memtotal[1] / 1024;
-				$mname  = @memtotal[0];
+				$mvalue = $memtotal[1] / 1024;
+				$mname  = $memtotal[0];
 			}
 			if ( $line =~ /memfree/i )
 			{
 				my @memfree = split ( ": ", $line );
-				$mfvalue = @memfree[1] / 1024;
-				$mfname  = @memfree[0];
+				$mfvalue = $memfree[1] / 1024;
+				$mfname  = $memfree[0];
 			}
 			if ( $mname && $mfname )
 			{
@@ -61,26 +60,26 @@ sub getMemStats()
 			if ( $line =~ /buffers/i )
 			{
 				my @membuf = split ( ": ", $line );
-				$mbvalue = @membuf[1] / 1024;
-				$mbname  = @membuf[0];
+				$mbvalue = $membuf[1] / 1024;
+				$mbname  = $membuf[0];
 			}
 			if ( $line =~ /^cached/i )
 			{
 				my @memcached = split ( ": ", $line );
-				$mcvalue = @memcached[1] / 1024;
-				$mcname  = @memcached[0];
+				$mcvalue = $memcached[1] / 1024;
+				$mcname  = $memcached[0];
 			}
 			if ( $line =~ /swaptotal/i )
 			{
 				my @swtotal = split ( ": ", $line );
-				$swtvalue = @swtotal[1] / 1024;
-				$swtname  = @swtotal[0];
+				$swtvalue = $swtotal[1] / 1024;
+				$swtname  = $swtotal[0];
 			}
 			if ( $line =~ /swapfree/i )
 			{
 				my @swfree = split ( ": ", $line );
-				$swfvalue = @swfree[1] / 1024;
-				$swfname  = @swfree[0];
+				$swfvalue = $swfree[1] / 1024;
+				$swfname  = $swfree[0];
 			}
 			if ( $swtname && $swfname )
 			{
@@ -118,7 +117,7 @@ sub getMemStats()
 #get Load usage of the System.
 #return @array
 #       name,value
-sub getLoadStats()
+sub getLoadStats    # ()
 {
 
 	#my @datan;
@@ -134,9 +133,9 @@ sub getLoadStats()
 			$lastline = $line;
 		}
 		my @splitline = split ( " ", $lastline );
-		$last   = @splitline[0];
-		$last5  = @splitline[1];
-		$last15 = @splitline[2];
+		$last   = $splitline[0];
+		$last5  = $splitline[1];
+		$last15 = $splitline[2];
 
 	}
 	@data = ( ['Last', $last], ['Last 5', $last5], ['Last 15', $last15], );
@@ -146,7 +145,7 @@ sub getLoadStats()
 
 }
 
-sub getNetworkStats()
+sub getNetworkStats    # ()
 {
 
 	open DEV, '/proc/net/dev' or die $!;
@@ -161,7 +160,7 @@ sub getNetworkStats()
 			$i++;
 			my @iface = split ( ":", $_ );
 			$if =~ s/\ //g;
-			$if = @iface[0];
+			$if = $iface[0];
 
 			#exit;
 			#next unless /$dev:\d+/;
@@ -201,7 +200,7 @@ sub getNetworkStats()
 }
 
 #get Date
-sub getDate()
+sub getDate    # ()
 {
 
 	#$timeseconds = time();
@@ -211,7 +210,7 @@ sub getDate()
 }
 
 #get hostname
-sub getHostname()
+sub getHostname    # ()
 {
 
 	use Sys::Hostname;
@@ -221,7 +220,7 @@ sub getHostname()
 }
 
 #get total CPU usage
-sub getCPU()
+sub getCPU         # ()
 {
 
 	my @data;
@@ -234,13 +233,13 @@ sub getCPU()
 			if ( $line =~ /^cpu\ / )
 			{
 				my @line_s = split ( "\ ", $line );
-				$cpu_user1    = @line_s[1];
-				$cpu_nice1    = @line_s[2];
-				$cpu_sys1     = @line_s[3];
-				$cpu_idle1    = @line_s[4];
-				$cpu_iowait1  = @line_s[5];
-				$cpu_irq1     = @line_s[6];
-				$cpu_softirq1 = @line_s[7];
+				$cpu_user1    = $line_s[1];
+				$cpu_nice1    = $line_s[2];
+				$cpu_sys1     = $line_s[3];
+				$cpu_idle1    = $line_s[4];
+				$cpu_iowait1  = $line_s[5];
+				$cpu_irq1     = $line_s[6];
+				$cpu_softirq1 = $line_s[7];
 				$cpu_total1 =
 				  $cpu_user1 +
 				  $cpu_nice1 +
@@ -259,13 +258,13 @@ sub getCPU()
 			if ( $line =~ /^cpu\ / )
 			{
 				@line_s       = split ( "\ ", $line );
-				$cpu_user2    = @line_s[1];
-				$cpu_nice2    = @line_s[2];
-				$cpu_sys2     = @line_s[3];
-				$cpu_idle2    = @line_s[4];
-				$cpu_iowait2  = @line_s[5];
-				$cpu_irq2     = @line_s[6];
-				$cpu_softirq2 = @line_s[7];
+				$cpu_user2    = $line_s[1];
+				$cpu_nice2    = $line_s[2];
+				$cpu_sys2     = $line_s[3];
+				$cpu_idle2    = $line_s[4];
+				$cpu_iowait2  = $line_s[5];
+				$cpu_irq2     = $line_s[6];
+				$cpu_softirq2 = $line_s[7];
 				$cpu_total2 =
 				  $cpu_user2 +
 				  $cpu_nice2 +
@@ -339,7 +338,7 @@ sub getCPU()
 }
 
 #
-sub zsystem(@exec)
+sub zsystem    # (@exec)
 {
 	( @exec ) = @_;
 

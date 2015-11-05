@@ -21,9 +21,9 @@
 #
 ###############################################################################
 
-require "/usr/local/zenloadbalancer/www/functions.cgi";
+#require "/usr/local/zenloadbalancer/www/functions.cgi";
 
-sub setSnmpdStatus($snmpd_status)
+sub setSnmpdStatus    # ($snmpd_status)
 {
 	# get 'true' string to start, or a 'false' string to stop
 	my ( $snmpd_status ) = @_;
@@ -47,7 +47,7 @@ sub setSnmpdStatus($snmpd_status)
 	return $return_code;
 }
 
-sub getSnmpdStatus()
+sub getSnmpdStatus    # ()
 {
 	my $status = `$pidof snmpd`;
 	my $return_code;
@@ -65,7 +65,7 @@ sub getSnmpdStatus()
 	return $return_code;
 }
 
-sub getSnmpdConfig()
+sub getSnmpdConfig    # ()
 {
 	tie my @config_file, 'Tie::File', $snmpdconfig_file;
 
@@ -84,7 +84,7 @@ sub getSnmpdConfig()
 	return ( $snmpd_ip, $snmpd_port, $snmpd_community, $snmpd_scope );
 }
 
-sub setSnmpdConfig($snmpd_ip, $snmpd_port, $snmpd_community, $snmpd_scope)
+sub setSnmpdConfig    # ($snmpd_ip, $snmpd_port, $snmpd_community, $snmpd_scope)
 {
 	my ( $snmpd_ip, $snmpd_port, $snmpd_community, $snmpd_scope ) = @_;
 
@@ -106,7 +106,7 @@ sub setSnmpdConfig($snmpd_ip, $snmpd_port, $snmpd_community, $snmpd_scope)
 	untie @config_file;
 }
 
-sub setSnmpdIp($snmpd_ip)
+sub setSnmpdIp    # ($snmpd_ip)
 {
 	my ( $snmpd_ip ) = @_;
 
@@ -128,7 +128,7 @@ sub setSnmpdIp($snmpd_ip)
 	untie @config_file;
 }
 
-sub getSnmpdIp()
+sub getSnmpdIp    # ()
 {
 	# example: agentAddress  udp:127.0.0.1:161
 	# Open config file
@@ -143,7 +143,7 @@ sub getSnmpdIp()
 	return $snmpd_ip;
 }
 
-sub getSnmpdPort()
+sub getSnmpdPort    # ()
 {
 	tie my @config_file, 'Tie::File', $snmpdconfig_file;
 
@@ -157,7 +157,7 @@ sub getSnmpdPort()
 	return $port;
 }
 
-sub setSnmpdService($snmpd_enabled)
+sub setSnmpdService    # ($snmpd_enabled)
 {
 	my ( $snmpd_enabled ) = @_;
 	my $return_code = -1;
@@ -194,7 +194,7 @@ sub setSnmpdService($snmpd_enabled)
 	return $return_code;
 }
 
-sub applySnmpChanges($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_scope)
+sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_scope)
 {
 	my ( $snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_scope ) = @_;
 	my $return_code = -1;

@@ -22,7 +22,7 @@
 ###############################################################################
 
 #
-sub getGSLBFarmPidFile($farm_name)
+sub getGSLBFarmPidFile    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -30,7 +30,7 @@ sub getGSLBFarmPidFile($farm_name)
 }
 
 #
-sub getGSLBStartCommand($farm_name)
+sub getGSLBStartCommand    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -38,7 +38,7 @@ sub getGSLBStartCommand($farm_name)
 }
 
 #
-sub getGSLBStopCommand($farm_name)
+sub getGSLBStopCommand     # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -46,7 +46,7 @@ sub getGSLBStopCommand($farm_name)
 }
 
 # Create a new Zone in a GSLB farm
-sub setGSLBFarmNewZone($farm_name,$service)
+sub setGSLBFarmNewZone     # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
 
@@ -76,7 +76,7 @@ sub setGSLBFarmNewZone($farm_name,$service)
 }
 
 # Delete an existing Zone in a GSLB farm
-sub setGSLBFarmDeleteZone($farm_name,$service)
+sub setGSLBFarmDeleteZone    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
 
@@ -90,7 +90,7 @@ sub setGSLBFarmDeleteZone($farm_name,$service)
 }
 
 # Create a new Service in a GSLB farm
-sub setGSLBFarmNewService($farm_name,$service,$algorithm)
+sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 {
 	my ( $farm_name, $service, $algorithm ) = @_;
 
@@ -153,7 +153,7 @@ sub setGSLBFarmNewService($farm_name,$service,$algorithm)
 }
 
 # Delete an existing Service in a GSLB farm
-sub setGSLBFarmDeleteService($farm_name,$service)
+sub setGSLBFarmDeleteService    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
 
@@ -188,7 +188,7 @@ sub setGSLBFarmDeleteService($farm_name,$service)
 }
 
 #
-sub getGSLBFarmBootStatus($farm_name)
+sub getGSLBFarmBootStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -204,7 +204,7 @@ sub getGSLBFarmBootStatus($farm_name)
 		{
 			$first = "false";
 			my @line_a = split ( "\;", $line );
-			$output = @line_a[1];
+			$output = $line_a[1];
 			chomp ( $output );
 		}
 	}
@@ -214,9 +214,11 @@ sub getGSLBFarmBootStatus($farm_name)
 }
 
 #
-sub setGSLBFarmBootStatus($farm_name, $status)
+sub setGSLBFarmBootStatus    # ($farm_name, $status)
 {
 	my ( $farm_name, $status ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
 
 	use Tie::File;
 	tie @filelines, 'Tie::File', "$configdir\/$farm_filename\/etc\/config";
@@ -243,7 +245,7 @@ sub setGSLBFarmBootStatus($farm_name, $status)
 }
 
 #
-sub setGSLBFarmStatus($farm_name, $status, $writeconf)
+sub setGSLBFarmStatus    # ($farm_name, $status, $writeconf)
 {
 	my ( $farm_name, $status, $writeconf ) = @_;
 
@@ -278,7 +280,7 @@ sub setGSLBFarmStatus($farm_name, $status, $writeconf)
 }
 
 #function that check if the config file is OK.
-sub getGSLBFarmConfigIsOK($farm_name)
+sub getGSLBFarmConfigIsOK    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -297,7 +299,7 @@ sub getGSLBFarmConfigIsOK($farm_name)
 }
 
 # Create a new GSLB farm
-sub setGSLBFarm($vip,$vip_port,$farm_name)
+sub setGSLBFarm    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
@@ -350,7 +352,7 @@ sub setGSLBFarm($vip,$vip_port,$farm_name)
 }
 
 # Get farm zones list for GSLB farms
-sub getFarmZones($farm_name)
+sub getFarmZones    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -365,7 +367,7 @@ sub getFarmZones($farm_name)
 }
 
 #
-sub setFarmZoneSerial($farm_name,$zone)
+sub setFarmZoneSerial    # ($farm_name,$zone)
 {
 	my ( $farm_name, $zone ) = @_;
 
@@ -394,7 +396,7 @@ sub setFarmZoneSerial($farm_name,$zone)
 }
 
 #
-sub setFarmZoneResource($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
+sub setFarmZoneResource  # ($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
 {
 	my ( $id, $resource, $ttl, $type, $rdata, $farm_name, $service ) = @_;
 
@@ -422,7 +424,7 @@ sub setFarmZoneResource($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
 			if ( $line =~ /\;index_/ )
 			{
 				my @linesplt = split ( "\;index_", $line );
-				$param = @linesplt[1];
+				$param = $linesplt[1];
 				if ( $id !~ /^$/ && $id eq $param )
 				{
 					$line = "$resource\t$ttl\t$type\t$lb$rdata ;index_$param";
@@ -446,7 +448,7 @@ sub setFarmZoneResource($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
 }
 
 #
-sub remFarmZoneResource($id,$farm_name,$service)
+sub remFarmZoneResource    # ($id,$farm_name,$service)
 {
 	my ( $id, $farm_name, $service ) = @_;
 
@@ -476,7 +478,7 @@ sub remFarmZoneResource($id,$farm_name,$service)
 }
 
 #
-sub setGSLBFarmNewBackend($farm_name,$service,$lb,$id,$ipaddress)
+sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 {
 	my ( $farm_name, $service, $lb, $id, $ipaddress ) = @_;
 
@@ -546,7 +548,7 @@ sub setGSLBFarmNewBackend($farm_name,$service,$lb,$id,$ipaddress)
 
 				# What is the latest id used?
 				my @temp = split ( " => ", $line );
-				$idx = @temp[0];
+				$idx = $temp[0];
 				$idx =~ s/^\s+//;
 			}
 			if ( $found == 1 && $lb eq "roundrobin" && $line =~ /\}/ )
@@ -565,7 +567,7 @@ sub setGSLBFarmNewBackend($farm_name,$service,$lb,$id,$ipaddress)
 }
 
 # Stop Farm rutine
-sub _runGSLBFarmStop($farm_name,$writeconf)
+sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
 
@@ -574,7 +576,7 @@ sub _runGSLBFarmStop($farm_name,$writeconf)
 	if ( &getFarmConfigIsOK( $farm_name ) == 0 )
 	{
 		$status = &setGSLBFarmStatus( $farm_name, "stop", $writeconf );
-		unlink ( $pidfile );
+		unlink ( &getGSLBFarmPidFile( $farm_name ) );
 	}
 	else
 	{
@@ -588,7 +590,7 @@ sub _runGSLBFarmStop($farm_name,$writeconf)
 }
 
 # Returns farm PID
-sub getGSLBFarmPid($farm_name)
+sub getGSLBFarmPid    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -602,7 +604,7 @@ sub getGSLBFarmPid($farm_name)
 		my @pid = <FPID>;
 		close FPID;
 
-		my $pid_hprof = @pid[0];
+		my $pid_hprof = $pid[0];
 		chomp ( $pid_hprof );
 
 		my $exists = kill 0, $pid_hprof;
@@ -624,7 +626,7 @@ sub getGSLBFarmPid($farm_name)
 }
 
 # Returns farm vip
-sub getGSLBFarmVip($info,$farm_name)
+sub getGSLBFarmVip    # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
 
@@ -640,8 +642,8 @@ sub getGSLBFarmVip($info,$farm_name)
 	{
 		if ( $line =~ /^options =>/ )
 		{
-			my $vip  = @file[$i + 1];
-			my $vipp = @file[$i + 2];
+			my $vip  = $file[$i + 1];
+			my $vipp = $file[$i + 2];
 
 			chomp ( $vip );
 			chomp ( $vipp );
@@ -649,9 +651,9 @@ sub getGSLBFarmVip($info,$farm_name)
 			my @vip  = split ( "\ ", $vip );
 			my @vipp = split ( "\ ", $vipp );
 
-			if ( $info eq "vip" )   { $output = @vip[2]; }
-			if ( $info eq "vipp" )  { $output = @vipp[2]; }
-			if ( $info eq "vipps" ) { $output = "@vip[2]\:@vipp[2]"; }
+			if ( $info eq "vip" )   { $output = $vip[2]; }
+			if ( $info eq "vipp" )  { $output = $vipp[2]; }
+			if ( $info eq "vipps" ) { $output = "$vip[2]\:$vipp[2]"; }
 		}
 		$i++;
 	}
@@ -660,7 +662,7 @@ sub getGSLBFarmVip($info,$farm_name)
 }
 
 # Set farm virtual IP and virtual PORT
-sub setGSLBFarmVirtualConf($vip,$vip_port,$farm_name)
+sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
@@ -698,7 +700,7 @@ sub setGSLBFarmVirtualConf($vip,$vip_port,$farm_name)
 }
 
 #
-sub runGSLBFarmServerDelete($ids,$farm_name,$service)
+sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
 {
 	my ( $ids, $farm_name, $service ) = @_;
 
@@ -714,7 +716,7 @@ sub runGSLBFarmServerDelete($ids,$farm_name,$service)
 		if ( $line =~ /\;index_/ )
 		{
 			my @linesplt = split ( "\;index_", $line );
-			my $param = @linesplt[1];
+			my $param = $linesplt[1];
 			if ( $ids !~ /^$/ && $ids eq $param )
 			{
 				splice @configfile, $index, 1,;
@@ -729,7 +731,7 @@ sub runGSLBFarmServerDelete($ids,$farm_name,$service)
 }
 
 #function that renames a farm
-sub setGSLBNewFarmName($farm_name,$new_farm_name)
+sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $farm_name, $new_farm_name ) = @_;
 
@@ -743,7 +745,7 @@ sub setGSLBNewFarmName($farm_name,$new_farm_name)
 
 # GSLB function
 # Get farm services list for GSLB farms
-sub getFarmServices($farm_name)
+sub getFarmServices    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -783,7 +785,7 @@ sub getFarmServices($farm_name)
 
 #function that return indicated value from a HTTP Service
 #vs return virtual server
-sub getGSLBFarmVS($farm_name, $service, $tag)
+sub getGSLBFarmVS    # ($farm_name, $service, $tag)
 {
 	my ( $farm_name, $service, $tag ) = @_;
 
@@ -804,7 +806,7 @@ sub getGSLBFarmVS($farm_name, $service, $tag)
 				if ( $line =~ /@.*SOA .* hostmaster / )
 				{
 					@linesplt = split ( " ", $line );
-					$output = @linesplt[2];
+					$output = $linesplt[2];
 					last;
 				}
 			}
@@ -818,6 +820,7 @@ sub getGSLBFarmVS($farm_name, $service, $tag)
 				}
 			}
 		}
+		untie @configfile;
 	}
 	else
 	{
@@ -864,11 +867,11 @@ sub getGSLBFarmVS($farm_name, $service, $tag)
 			if ( $tag eq "algorithm" )
 			{
 				@linesplt = split ( " ", $line );
-				if ( @linesplt[0] eq "simplefo" )
+				if ( $linesplt[0] eq "simplefo" )
 				{
 					$output = "prio";
 				}
-				if ( @linesplt[0] eq "multifo" )
+				if ( $linesplt[0] eq "multifo" )
 				{
 					$output = "roundrobin";
 				}
@@ -877,7 +880,7 @@ sub getGSLBFarmVS($farm_name, $service, $tag)
 			if ( $tag eq "plugin" )
 			{
 				@linesplt = split ( " ", $line );
-				$output = @linesplt[0];
+				$output = $linesplt[0];
 				last;
 			}
 			if ( $tag eq "dpc" )
@@ -889,10 +892,10 @@ sub getGSLBFarmVS($farm_name, $service, $tag)
 				if ( $found == 1 && $line =~ /.*service_types.*/ )
 				{
 					my @tmpline = split ( "=", $line );
-					$output = @tmpline[1];
+					$output = $tmpline[1];
 					$output =~ s/['\[''\]'' ']//g;
 					my @tmp = split ( "_", $output );
-					$output = @tmp[1];
+					$output = $tmp[1];
 					last;
 				}
 				if ( $line =~ /\t$service => / )
@@ -901,14 +904,14 @@ sub getGSLBFarmVS($farm_name, $service, $tag)
 				}
 			}
 		}
+		untie @configfile;
 	}
-	untie @configfile;
 
 	return $output;
 }
 
 #set values for a service
-sub setGSLBFarmVS($farm_name,$service,$tag,$string)
+sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 {
 	my ( $farm_name, $service, $tag, $string ) = @_;
 
@@ -986,9 +989,9 @@ sub setGSLBFarmVS($farm_name,$service,$tag,$string)
 			my $found = 0;
 			my $index = 1;
 			tie my @configfile, 'Tie::File', "$configdir/$farm_filename/etc/config";
-			while ( @configfile[$index] !~ /plugins => / )
+			while ( $configfile[$index] !~ /plugins => / )
 			{
-				my $line = @configfile[$index];
+				my $line = $configfile[$index];
 				if ( $found == 2 && $line =~ /.*}.*/ )
 				{
 					splice @configfile, $index, 1;
@@ -1014,8 +1017,8 @@ sub setGSLBFarmVS($farm_name,$service,$tag,$string)
 			untie @configfile;
 
 			# New service_types entry
-			my $index = 0;
-			tie my @configfile, 'Tie::File', "$configdir/$farm_filename/etc/config";
+			$index = 0;
+			tie @configfile, 'Tie::File', "$configdir/$farm_filename/etc/config";
 			foreach my $line ( @configfile )
 			{
 				if ( $line =~ /service_types => / )
@@ -1035,7 +1038,7 @@ sub setGSLBFarmVS($farm_name,$service,$tag,$string)
 }
 
 # Remove Gslb service
-sub remFarmServiceBackend($id,$farm_name,$service)
+sub remFarmServiceBackend    # ($id,$farm_name,$service)
 {
 	my ( $id, $farm_name, $service ) = @_;
 
@@ -1103,7 +1106,7 @@ sub remFarmServiceBackend($id,$farm_name,$service)
 	return $output;
 }
 
-sub runFarmReload($farm_name)
+sub runFarmReload    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 

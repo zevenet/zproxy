@@ -22,7 +22,7 @@
 ###############################################################################
 
 #
-sub loadNfModule($modname,$params)
+sub loadNfModule    # ($modname,$params)
 {
 	my ( $modname, $params ) = @_;
 
@@ -40,7 +40,7 @@ sub loadNfModule($modname,$params)
 }
 
 #
-sub removeNfModule($modname,$params)
+sub removeNfModule    # ($modname,$params)
 {
 	my ( $modname, $params ) = @_;
 
@@ -51,7 +51,7 @@ sub removeNfModule($modname,$params)
 }
 
 #
-sub getIptFilter($type, $desc, @iptables)
+sub getIptFilter      # ($type, $desc, @iptables)
 {
 	my ( $type, $desc, @iptables ) = @_;
 
@@ -59,7 +59,7 @@ sub getIptFilter($type, $desc, @iptables)
 }
 
 #
-sub getIptList($table,$chain)
+sub getIptList        # ($table,$chain)
 {
 	my ( $table, $chain ) = @_;
 
@@ -76,7 +76,7 @@ sub getIptList($table,$chain)
 }
 
 #
-sub deleteIptRules($type,$desc,$table,$chain,@allrules)
+sub deleteIptRules    # ($type,$desc,$table,$chain,@allrules)
 {
 	my ( $type, $desc, $table, $chain, @allrules ) = @_;
 
@@ -104,8 +104,10 @@ sub deleteIptRules($type,$desc,$table,$chain,@allrules)
 }
 
 #
-sub getNewMark($fname)
+sub getNewMark    # ($fname)
 {
+	my ( $fname ) = @_;
+
 	my $found   = "false";
 	my $marknum = 0x200;
 	my $i;
@@ -121,7 +123,7 @@ sub getNewMark($fname)
 	}
 	untie @contents;
 
-	if ( $found = "true" )
+	if ( $found == "true" )
 	{
 		open ( MARKSFILE, ">>$fwmarksconf" );
 		print MARKSFILE "$marknum // FARM\_$fname\_\n";
@@ -132,7 +134,7 @@ sub getNewMark($fname)
 }
 
 #
-sub delMarks($fname,$mark)
+sub delMarks    # ($fname,$mark)
 {
 	my ( $fname, $mark ) = @_;
 
@@ -157,7 +159,7 @@ sub delMarks($fname,$mark)
 }
 
 #
-sub renameMarks($fname,$newfname)
+sub renameMarks    # ($fname,$newfname)
 {
 	my ( $fname, $newfname ) = @_;
 
@@ -177,7 +179,7 @@ sub renameMarks($fname,$newfname)
 }
 
 #
-sub genIptMarkReturn($fname,$vip,$vport,$proto,$index,$state)
+sub genIptMarkReturn    # ($fname,$vip,$vport,$proto,$index,$state)
 {
 	my ( $fname, $vip, $vport, $proto, $index, $state ) = @_;
 
@@ -190,7 +192,7 @@ sub genIptMarkReturn($fname,$vip,$vport,$proto,$index,$state)
 }
 
 #
-sub genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state)
+sub genIptMarkPersist    # ($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state)
 {
 	my ( $fname, $vip, $vport, $proto, $ttl, $index, $mark, $state ) = @_;
 
@@ -209,7 +211,7 @@ sub genIptMarkPersist($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state)
 }
 
 #
-sub genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$state,$prob)
+sub genIptMark # ($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$state,$prob)
 {
 	my (
 		 $fname, $nattype, $lbalg, $vip,   $vport, $proto,
@@ -253,7 +255,7 @@ sub genIptMark($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$st
 }
 
 #
-sub genIptRedirect($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$state)
+sub genIptRedirect # ($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$state)
 {
 	my ( $fname, $nattype, $index, $rip, $proto, $mark, $value, $persist, $state )
 	  = @_;
@@ -277,7 +279,7 @@ sub genIptRedirect($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$sta
 }
 
 #
-sub genIptSourceNat($fname,$vip,$nattype,$index,$proto,$mark,$state)
+sub genIptSourceNat    # ($fname,$vip,$nattype,$index,$proto,$mark,$state)
 {
 	my ( $fname, $vip, $nattype, $index, $proto, $mark, $state ) = @_;
 
@@ -296,7 +298,7 @@ sub genIptSourceNat($fname,$vip,$nattype,$index,$proto,$mark,$state)
 }
 
 #
-sub genIptMasquerade($fname,$nattype,$index,$proto,$mark,$state)
+sub genIptMasquerade    # ($fname,$nattype,$index,$proto,$mark,$state)
 {
 	my ( $fname, $nattype, $index, $proto, $mark, $state ) = @_;
 
@@ -315,7 +317,7 @@ sub genIptMasquerade($fname,$nattype,$index,$proto,$mark,$state)
 }
 
 #
-sub getConntrack($orig_src, $orig_dst, $reply_src, $reply_dst, $proto)
+sub getConntrack    # ($orig_src, $orig_dst, $reply_src, $reply_dst, $proto)
 {
 	( $orig_src, $orig_dst, $reply_src, $reply_dst, $proto ) = @_;
 
