@@ -22,7 +22,7 @@
 ###############################################################################
 
 #
-sub getDatalinkFarmAlgorithm($farm_name)
+sub getDatalinkFarmAlgorithm    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -47,7 +47,7 @@ sub getDatalinkFarmAlgorithm($farm_name)
 }
 
 # set the lb algorithm to a farm
-sub setDatalinkFarmAlgorithm($algorithm,$farm_name)
+sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 {
 	my ( $algorithm, $farm_name ) = @_;
 
@@ -63,7 +63,7 @@ sub setDatalinkFarmAlgorithm($algorithm,$farm_name)
 		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
-			$line = "@args[0]\;@args[1]\;@args[2]\;$algorithm\;@args[4]";
+			$line = "$args[0]\;$args[1]\;$args[2]\;$algorithm\;$args[4]";
 			splice @configfile, $i, $line;
 			$output = $?;
 		}
@@ -83,7 +83,7 @@ sub setDatalinkFarmAlgorithm($algorithm,$farm_name)
 }
 
 #
-sub getDatalinkFarmServers($farm_name)
+sub getDatalinkFarmServers    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -99,7 +99,7 @@ sub getDatalinkFarmServers($farm_name)
 	{
 		if ( $line ne "" && $line =~ /^\;server\;/ && $first ne "true" )
 		{
-			$line =~ s/^\;server/$sindex/g, $line;
+			$line =~ s/^\;server/$sindex/g;    #, $line;
 			push ( @servers, $line );
 			$sindex = $sindex + 1;
 		}
@@ -114,7 +114,7 @@ sub getDatalinkFarmServers($farm_name)
 }
 
 #
-sub getDatalinkFarmBootStatus($farm_name)
+sub getDatalinkFarmBootStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -130,7 +130,7 @@ sub getDatalinkFarmBootStatus($farm_name)
 		{
 			$first = "false";
 			my @line_a = split ( "\;", $line );
-			$output = @line_a[4];
+			$output = $line_a[4];
 			chomp ( $output );
 		}
 	}
@@ -140,7 +140,7 @@ sub getDatalinkFarmBootStatus($farm_name)
 }
 
 # get network physical (vlan included) interface used by the farm vip
-sub getFarmInterface($farm_name)
+sub getFarmInterface    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -158,8 +158,8 @@ sub getFarmInterface($farm_name)
 			{
 				$first = "false";
 				my @line_a = split ( "\;", $line );
-				my @line_b = split ( "\:", @line_a[2] );
-				$output = @line_b[0];
+				my @line_b = split ( "\:", $line_a[2] );
+				$output = $line_b[0];
 			}
 		}
 		close FI;
@@ -169,7 +169,7 @@ sub getFarmInterface($farm_name)
 }
 
 #
-sub _runDatalinkFarmStart($farm_name, $writeconf, $status)
+sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 {
 	my ( $farm_name, $writeconf, $status ) = @_;
 
@@ -221,16 +221,16 @@ sub _runDatalinkFarmStart($farm_name, $writeconf, $status)
 		{
 			chomp ( $serv );
 			my @line = split ( "\;", $serv );
-			my $stat = @line[5];
+			my $stat = $line[5];
 			chomp ( $stat );
 			my $weight = 1;
-			if ( @line[3] ne "" )
+			if ( $line[3] ne "" )
 			{
-				$weight = @line[3];
+				$weight = $line[3];
 			}
 			if ( $stat eq "up" )
 			{
-				$routes = "$routes nexthop via @line[1] dev @line[2] weight $weight";
+				$routes = "$routes nexthop via $line[1] dev $line[2] weight $weight";
 			}
 		}
 	}
@@ -241,15 +241,15 @@ sub _runDatalinkFarmStart($farm_name, $writeconf, $status)
 		{
 			chomp ( $serv );
 			my @line = split ( "\;", $serv );
-			my $stat = @line[5];
-			my $prio = @line[4];
+			my $stat = $line[5];
+			my $prio = $line[4];
 			chomp ( $stat );
 			if (    $stat eq "up"
 				 && $prio > 0
 				 && $prio < 10
 				 && $prio < $bestprio )
 			{
-				$routes   = "nexthop via @line[1] dev @line[2] weight 1";
+				$routes   = "nexthop via $line[1] dev $line[2] weight 1";
 				$bestprio = $prio;
 			}
 		}
@@ -288,7 +288,7 @@ sub _runDatalinkFarmStart($farm_name, $writeconf, $status)
 }
 
 #
-sub _runDatalinkFarmStop($farm_name,$writeconf)
+sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
 
@@ -354,7 +354,7 @@ sub _runDatalinkFarmStop($farm_name,$writeconf)
 }
 
 #
-sub runDatalinkFarmCreate($farm_name,$vip,$fdev)
+sub runDatalinkFarmCreate    # ($farm_name,$vip,$fdev)
 {
 	my ( $farm_name, $vip, $fdev ) = @_;
 
@@ -363,7 +363,7 @@ sub runDatalinkFarmCreate($farm_name,$vip,$fdev)
 	close FO;
 	$output = $?;
 
-	if ( !-e "$piddir/$farm_name_datalink.pid" )
+	if ( !-e "$piddir/${farm_name}_datalink.pid" )
 	{
 		# Enable active datalink file
 		open FI, ">$piddir\/$farm_name\_datalink.pid";
@@ -374,7 +374,7 @@ sub runDatalinkFarmCreate($farm_name,$vip,$fdev)
 }
 
 # Returns farm vip
-sub getDatalinkFarmVip($info,$farm_name)
+sub getDatalinkFarmVip    # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
 
@@ -391,9 +391,9 @@ sub getDatalinkFarmVip($info,$farm_name)
 			$first = "false";
 			my @line_a = split ( "\;", $line );
 
-			if ( $info eq "vip" )   { $output = @line_a[1]; }
-			if ( $info eq "vipp" )  { $output = @line_a[2]; }
-			if ( $info eq "vipps" ) { $output = "@line_a[1]\:@line_a[2]"; }
+			if ( $info eq "vip" )   { $output = $line_a[1]; }
+			if ( $info eq "vipp" )  { $output = $line_a[2]; }
+			if ( $info eq "vipps" ) { $output = "$line_a[1]\:$line_a[2]"; }
 		}
 	}
 	close FI;
@@ -402,7 +402,7 @@ sub getDatalinkFarmVip($info,$farm_name)
 }
 
 # Set farm virtual IP and virtual PORT
-sub setDatalinkFarmVirtualConf($vip,$vip_port,$farm_name)
+sub setDatalinkFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
@@ -418,7 +418,7 @@ sub setDatalinkFarmVirtualConf($vip,$vip_port,$farm_name)
 		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
-			$line = "@args[0]\;$vip\;$vip_port\;@args[3]\;@args[4]";
+			$line = "$args[0]\;$vip\;$vip_port\;$args[3]\;$args[4]";
 			splice @configfile, $i, $line;
 			$stat = $?;
 		}
@@ -431,7 +431,7 @@ sub setDatalinkFarmVirtualConf($vip,$vip_port,$farm_name)
 }
 
 #
-sub setDatalinkFarmServer($ids,$rip,$iface,$weight,$priority,$farm_name)
+sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 {
 	my ( $ids, $rip, $iface, $weight, $priority, $farm_name ) = @_;
 
@@ -479,7 +479,7 @@ sub setDatalinkFarmServer($ids,$rip,$iface,$weight,$priority,$farm_name)
 }
 
 #
-sub runDatalinkFarmServerDelete($ids,$farm_name)
+sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 {
 	my ( $ids, $farm_name ) = @_;
 
@@ -515,7 +515,7 @@ sub runDatalinkFarmServerDelete($ids,$farm_name)
 
 #function that return the status information of a farm:
 #ip, port, backendstatus, weight, priority, clients
-sub getDatalinkFarmBackendsStatus(@content)
+sub getDatalinkFarmBackendsStatus    # (@content)
 {
 	my ( @content ) = @_;
 
@@ -524,13 +524,13 @@ sub getDatalinkFarmBackendsStatus(@content)
 	foreach my $server ( @content )
 	{
 		my @serv = split ( ";", $server );
-		push ( @backends_data, "@serv[2]\;@serv[3]\;@serv[4]\;@serv[5]\;@serv[6]" );
+		push ( @backends_data, "$serv[2]\;$serv[3]\;$serv[4]\;$serv[5]\;$serv[6]" );
 	}
 
 	return @backends_data;
 }
 
-sub setDatalinkFarmBackendStatus($farm_name,$index,$stat)
+sub setDatalinkFarmBackendStatus    # ($farm_name,$index,$stat)
 {
 	my ( $farm_name, $index, $stat ) = @_;
 
@@ -563,7 +563,7 @@ sub setDatalinkFarmBackendStatus($farm_name,$index,$stat)
 }
 
 #
-sub getDatalinkFarmBackendStatusCtl($farm_name)
+sub getDatalinkFarmBackendStatusCtl    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -578,7 +578,7 @@ sub getDatalinkFarmBackendStatusCtl($farm_name)
 }
 
 #function that renames a farm
-sub setDatalinkNewFarmName($farm_name,$new_farm_name)
+sub setDatalinkNewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $farm_name, $new_farm_name ) = @_;
 
