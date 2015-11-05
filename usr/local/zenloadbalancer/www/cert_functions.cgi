@@ -22,7 +22,7 @@
 ###############################################################################
 
 #Return all certificate files in config directory
-sub getCertFiles()
+sub getCertFiles    # ()
 {
 	opendir ( DIR, $configdir );
 	my @files = grep ( /.*\.pem$/, readdir ( DIR ) );
@@ -35,7 +35,7 @@ sub getCertFiles()
 }
 
 #Delete all blancs from the beginning and from the end of a variable.
-sub getCleanBlanc($vartoclean)
+sub getCleanBlanc    # ($vartoclean)
 {
 	( $vartoclean ) = @_;
 	$vartoclean =~ s/^\s+//;
@@ -44,7 +44,7 @@ sub getCleanBlanc($vartoclean)
 }
 
 #Return the type of a certificate file
-sub getCertType($certfile)
+sub getCertType      # ($certfile)
 {
 	( $certfile ) = @_;
 	my $certtype = "none";
@@ -60,39 +60,39 @@ sub getCertType($certfile)
 }
 
 #Return the Common Name of a certificate file
-sub getCertCN($certfile)
+sub getCertCN    # ($certfile)
 {
 	( $certfile ) = @_;
 	my $certcn = "";
 	if ( &getCertType( $certfile ) eq "Certificate" )
 	{
 		@eject  = `$openssl x509 -noout -in $certfile -text | grep Subject:`;
-		@eject  = split ( /CN=/, @eject[0] );
-		@eject  = split ( /\/emailAddress=/, @eject[1] );
-		$certcn = @eject[0];
+		@eject  = split ( /CN=/, $eject[0] );
+		@eject  = split ( /\/emailAddress=/, $eject[1] );
+		$certcn = $eject[0];
 	}
 	else
 	{
 		@eject  = `$openssl req -noout -in $certfile -text | grep Subject:`;
-		@eject  = split ( /CN=/, @eject[0] );
-		@eject  = split ( /\/emailAddress=/, @eject[1] );
-		$certcn = @eject[0];
+		@eject  = split ( /CN=/, $eject[0] );
+		@eject  = split ( /\/emailAddress=/, $eject[1] );
+		$certcn = $eject[0];
 	}
 	$certcn = &getCleanBlanc( $certcn );
 	return $certcn;
 }
 
 #Return the Issuer Common Name of a certificate file
-sub getCertIssuer($certfile)
+sub getCertIssuer    # ($certfile)
 {
 	( $certfile ) = @_;
 	my $certissu = "";
 	if ( &getCertType( $certfile ) eq "Certificate" )
 	{
 		my @eject = `$openssl x509 -noout -in $certfile -text | grep Issuer:`;
-		@eject = split ( /CN=/,             @eject[0] );
-		@eject = split ( /\/emailAddress=/, @eject[1] );
-		$certissu = @eject[0];
+		@eject = split ( /CN=/,             $eject[0] );
+		@eject = split ( /\/emailAddress=/, $eject[1] );
+		$certissu = $eject[0];
 	}
 	else
 	{
@@ -103,7 +103,7 @@ sub getCertIssuer($certfile)
 }
 
 #Return the creation date of a certificate file
-sub getCertCreation($certfile)
+sub getCertCreation    # ($certfile)
 {
 	( $certfile ) = @_;
 	use File::stat;
@@ -112,8 +112,8 @@ sub getCertCreation($certfile)
 	if ( &getCertType( $certfile ) eq "Certificate" )
 	{
 		my @eject = `$openssl x509 -noout -in $certfile -dates`;
-		my @datefrom = split ( /=/, @eject[0] );
-		$datecreation = @datefrom[1];
+		my @datefrom = split ( /=/, $eject[0] );
+		$datecreation = $datefrom[1];
 	}
 	else
 	{
@@ -126,15 +126,15 @@ sub getCertCreation($certfile)
 }
 
 #Return the expiration date of a certificate file
-sub getCertExpiration($certfile)
+sub getCertExpiration    # ($certfile)
 {
 	( $certfile ) = @_;
 	my $dateexpiration = "";
 	if ( &getCertType( $certfile ) eq "Certificate" )
 	{
 		my @eject = `$openssl x509 -noout -in $certfile -dates`;
-		my @dateto = split ( /=/, @eject[1] );
-		$dateexpiration = @dateto[1];
+		my @dateto = split ( /=/, $eject[1] );
+		$dateexpiration = $dateto[1];
 	}
 	else
 	{
@@ -144,7 +144,7 @@ sub getCertExpiration($certfile)
 }
 
 #Check if a fqdn is valid
-sub checkFQDN($certfqdn)
+sub checkFQDN    # ($certfqdn)
 {
 	( $certfqdn ) = @_;
 	my $valid = "true";
@@ -167,11 +167,11 @@ sub checkFQDN($certfqdn)
 	return $valid;
 }
 
-sub delCert($certname)
+sub delCert    # ($certname)
 {
 	( $certname ) = @_;
 	my @filename = split ( /\./, $certname );
-	my @filename = splice ( @filename, -0, 1 );
+	@filename = splice ( @filename, -0, 1 );
 	$certname = join ( '.', @filename );
 	opendir ( DIR, $configdir );
 	my @files = grep ( /^($certname)\.[a-zA-Z0-9]+$/, readdir ( DIR ) );
@@ -184,7 +184,7 @@ sub delCert($certname)
 }
 
 #Create CSR file
-sub createCSR($certname, $certfqdn, $certcountry, $certstate, $certlocality, $certorganization, $certdivision, $certmail, $certkey, $certpassword)
+sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, $certorganization, $certdivision, $certmail, $certkey, $certpassword)
 {
 	(
 	   $certname,     $certfqdn,         $certcountry,  $certstate,
@@ -211,31 +211,28 @@ sub createCSR($certname, $certfqdn, $certcountry, $certstate, $certlocality, $ce
 }
 
 #function that creates a menu to manage a certificate
-sub createMenuCert($action,$certfile)
+sub createMenuCert    # ($certfile)
 {
-	( $actionmenu, $certfile ) = @_;
+	( $certfile ) = @_;
+
 	my $certtype = &getCertType( $certfile );
+
+	print "<p>";
 	if ( $certtype eq "CSR" )
 	{
 		&uploadCertFromCSR( $certfile );
 	}
-	print "<a href=\"index.cgi?id=$id&action=deletecert&certname=$certfile\">";
-	print
-	  "<img src=\"img/icons/small/page_white_delete.png\" title=\"Delete $certtype $certfile\" onclick=\"return confirm('Are you sure you want to delete the certificate: $certfile?')\">";
-	print "</a> ";
 
-	print "<a href=\"index.cgi?id=$id&action=View_Cert&certname=$certfile\">";
 	print
-	  "<img src=\"img/icons/small/page_white_find.png\" title=\"View $certtype $certfile content\">";
-	print "</a> ";
-
-	print "<a href=\"downloadcerts.cgi?certname=$certfile\" target=\"_blank\">";
+	  "<a href=\"index.cgi?id=$id&action=deletecert&certname=$certfile\" title=\"Delete $certtype $certfile\" onclick=\"return confirm('Are you sure you want to delete the certificate: $certfile?')\"><i class=\"fa fa-times-circle action-icon fa-fw red\"></i></a> ";
 	print
-	  "<img src=\"img/icons/small/page_white_put.png\" title=\"Download $certtype $certfile\">";
-	print "</a> ";
+	  "<a href=\"index.cgi?id=$id&action=View_Cert&certname=$certfile\" title=\"View $certtype $certfile content\"><i class=\"fa fa-search action-icon fa-fw\"></i></a> ";
+	print
+	  "<a href=\"downloadcerts.cgi?certname=$certfile\" target=\"_blank\" title=\"Download $certtype $certfile\"><i class=\"fa fa-download action-icon fa-fw\"></i></a>";
+	print "</p>";
 }
 
-sub uploadCertFromCSR($certfile)
+sub uploadCertFromCSR    # ($certfile)
 {
 	( $certfile ) = @_;
 	print "<script language=\"javascript\">
@@ -247,35 +244,33 @@ sub uploadCertFromCSR($certfile)
 	                }
 	        </script>";
 
-	#print the information icon with the popup with info.
+#print the information icon with the popup with info.
+#print "<a href=\"uploadcertsfromcsr.cgi?certname=$certfile\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/page_white_get.png' title=\"Upload certificate for CSR $certfile\"></a> ";
 	print
-	  "<a href=\"uploadcertsfromcsr.cgi?certname=$certfile\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\">";
-	print
-	  "<img src='img/icons/small/page_white_get.png' title=\"Upload certificate for CSR $certfile\">";
-	print "</a> ";
+	  "<a href=\"uploadcertsfromcsr.cgi?certname=$certfile\" title=\"Upload certificate for CSR $certfile\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><i class=\"fa fa-upload action-icon fa-fw green\"></i></a> ";
 }
 
-sub uploadPEMCerts($certfile)
+sub uploadPEMCerts    # ($certfile)
 {
 	( $certfile ) = @_;
-	print "<script language=\"javascript\">
-	                var popupWindow = null;
-	                function positionedPopup(url,winName,w,h,t,l,scroll)
-	                {
-	                settings ='height='+h+',width='+w+',top='+t+',left='+l+',scrollbars='+scroll+',resizable'
-	                popupWindow = window.open(url,winName,settings)
-	                }
-	        </script>";
 
-	#print the information icon with the popup with info.
+# print "<script language=\"javascript\">
+# var popupWindow = null;
+# function positionedPopup(url,winName,w,h,t,l,scroll)
+# {
+# settings ='height='+h+',width='+w+',top='+t+',left='+l+',scrollbars='+scroll+',resizable'
+# popupWindow = window.open(url,winName,settings)
+# }
+# </script>";
+# #print the information icon with the popup with info.
+# print "<li><a href=\"uploadcerts.cgi\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src=\"img/icons/basic/up.png\" alt=\"Upload cert\" title=\"Upload cert\"> </a></li>";
 	print
-	  "<a href=\"uploadcerts.cgi\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\">";
+	  "<li><a href=\"uploadcerts.cgi\" class=\"open-dialog\"><img src=\"img/icons/basic/up.png\" alt=\"Upload cert\" title=\"Upload cert\">Upload Certificate </a></li>";
 	print
-	  "<img src='img/icons/small/page_white_get.png' title=\"Upload .pem certificate\">";
-	print "</a> ";
+	  "<div id=\"dialog-container\" style=\"display: none;\"><iframe id=\"dialog\" width=\"350\" height=\"350\"></iframe></div>";
 }
 
-sub downloadCert($certfile)
+sub downloadCert    # ($certfile)
 {
 	( $certfile ) = @_;
 	print "<script language=\"javascript\">
@@ -292,7 +287,7 @@ sub downloadCert($certfile)
 	  "<a href=\"downloadcerts.cgi?certname=$certfile\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/page_white_put.png' title=\"Download $certfile\"></a> ";
 }
 
-sub getCertData($certfile)
+sub getCertData    # ($certfile)
 {
 	( $certfile ) = @_;
 	my $filepath = "$configdir\/$certfile";
@@ -308,7 +303,7 @@ sub getCertData($certfile)
 	return @eject;
 }
 
-sub createPemFromKeyCRT($keyfile,$crtfile,$certautfile,$tmpdir)
+sub createPemFromKeyCRT    # ($keyfile,$crtfile,$certautfile,$tmpdir)
 {
 	( $keyfile, $crtfile, $certautfile, $tmpdir ) = @_;
 	$path = $configdir;
@@ -337,28 +332,6 @@ sub createPemFromKeyCRT($keyfile,$crtfile,$certautfile,$tmpdir)
 	print $pemhandler $buff;
 
 	close $pemhandler;
-}
-
-# content 1-3 certificate-https
-sub getFarmCertUsed($cfile)
-{
-	my ( $cfile ) = @_;
-
-	my @farms  = &getFarmsByType( "https" );
-	my $output = -1;
-
-	for ( @farms )
-	{
-		my $fname         = $_;
-		my $farm_filename = &getFarmFile( $fname );
-		use File::Grep qw( fgrep fmap fdo );
-		if ( fgrep { /Cert \"$configdir\/$cfile\"/ } "$configdir/$farm_filename" )
-		{
-			$output = 0;
-		}
-	}
-
-	return $output;
 }
 
 # do not remove this
