@@ -35,6 +35,7 @@ sub printImgFile($file)
 	my ( $file ) = @_;
 
 	open PNG, "<$file" or print_error( "Can't open $file: $!" );
+
 	$raw_string = do { local $/ = undef; <PNG>; };
 	$encoded = encode_base64( $raw_string );
 	close PNG;
@@ -152,6 +153,7 @@ sub genCpuGraph($type,$graph,$time)
 				 "GPRINT:tused:AVERAGE:Avg\\:%8.2lf %%",
 				 "GPRINT:tused:MAX:Max\\:%8.2lf %%\\n"
 	);
+
 	if ( $ERROR = RRDs::error )
 	{
 		print "$0: unable to generate $graph: $ERROR\n";
@@ -167,6 +169,7 @@ sub genDiskGraph($type,$graph,$time)
 	my @df_system = `$df_bin -k`;
 	my $dev =~ s/hd$//g;
 	my $partition, $size, $mount, $partitions;
+
 	for $line_df ( @df_system )
 	{
 		if ( $line_df =~ /$dev/ )
@@ -213,6 +216,7 @@ sub genDiskGraph($type,$graph,$time)
 				 "GPRINT:free:AVERAGE:Avg\\:%8.2lf %s",
 				 "GPRINT:free:MAX:Max\\:%8.2lf %s\\n"
 	);
+
 	if ( $ERROR = RRDs::error )
 	{
 		print "$0: unable to generate $graph: $ERROR\n";
@@ -254,6 +258,7 @@ sub genLoadGraph($type,$graph,$time)
 				 "GPRINT:load15:AVERAGE:Avg\\:%3.2lf",
 				 "GPRINT:load15:MAX:Max\\:%3.2lf\\n"
 	);
+
 	if ( $ERROR = RRDs::error )
 	{
 		print "$0: unable to generate $graph: $ERROR\n";
@@ -394,6 +399,7 @@ sub genNetGraph($type,$graph,$time)
 				 "GPRINT:in:MAX:Max\\:%5.1lf %sByte/sec\\n",
 				 "HRULE:0#000000"
 	);
+
 	if ( $ERROR = RRDs::error )
 	{
 		print "$0: unable to generate $if_name traffic graph: $ERROR\n";
