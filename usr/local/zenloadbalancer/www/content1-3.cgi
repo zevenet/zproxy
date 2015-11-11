@@ -177,6 +177,7 @@ foreach ( @files )
 
 	print
 	  "<tr><td>$_</td><td>$cert_type</td><td>$commonname</td><td>$issuer</td><td>$datecreation</td><td>$dateexpiration</td><td>";
+
 	if ( $_ ne "zencert\.pem" )
 	{
 		&createMenuCert( $_ );

@@ -22,7 +22,7 @@
 ###############################################################################
 
 #get ip GUI
-sub GUIip # ()
+sub GUIip    # ()
 {
 	open FO, "<$confhttp";
 	@file  = <FO>;
@@ -35,7 +35,7 @@ sub GUIip # ()
 }
 
 #function that read the https port for GUI
-sub getGuiPort # ($minihttpdconf)
+sub getGuiPort    # ($minihttpdconf)
 {
 	( $minihttpdconf ) = @_;
 	open FR, "<$minihttpdconf";
@@ -46,7 +46,7 @@ sub getGuiPort # ($minihttpdconf)
 }
 
 #function that write the https port for GUI
-sub setGuiPort # ($httpsguiport,$minihttpdconf)
+sub setGuiPort    # ($httpsguiport,$minihttpdconf)
 {
 	( $httpsguiport, $minihttpdconf ) = @_;
 	$httpsguiport =~ s/\ //g;
@@ -57,7 +57,7 @@ sub setGuiPort # ($httpsguiport,$minihttpdconf)
 }
 
 #function that create the menu for manage the vips in HTTP Farm Table
-sub createmenuviph # ($name,$pid,$fproto)
+sub createmenuviph    # ($name,$pid,$fproto)
 {
 	( $name, $id, $farmprotocol ) = @_;
 
@@ -79,7 +79,7 @@ sub createmenuviph # ($name,$pid,$fproto)
 }
 
 #function that create the menu for delete, move a service in a http[s] farm
-sub createmenuservice # ($fname,$sv,$pos)
+sub createmenuservice    # ($fname,$sv,$pos)
 {
 	my ( $fname, $sv, $pos ) = @_;
 
@@ -99,7 +99,7 @@ sub createmenuservice # ($fname,$sv,$pos)
 }
 
 #Refresh stats
-sub refreshstats # ()
+sub refreshstats    # ()
 {
 	print "<form method=\"get\" action=\"index.cgi\">";
 	print

@@ -1116,10 +1116,10 @@ sub runFarmReload    # ($farm_name)
 	if ( $farm_type eq "gslb" )
 	{
 		my $gdnsd_command =
-		  "$gdnsd -d $configdir\/$farm_name\_$farm_type.cfg/etc reload-zones";
+		  "$gdnsd -d $configdir\/$farm_name\_$farm_type.cfg\/etc reload-zones";
 
 		&logfile( "running $gdnsd_command" );
-		zsystem( "$gdnsd_command 2>/dev/null" );
+		zsystem( "$gdnsd_command >/dev/null 2>&1" );
 		$output = $?;
 
 		if ( $output != 0 )
