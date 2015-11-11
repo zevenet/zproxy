@@ -1,10 +1,15 @@
 #!/bin/bash
+
 LOGFILE="/usr/local/zenloadbalancer/logs/zenloadbalancer.log"
+
 [ ! "$1" == "configure" ] && echo "Installation aborted $1 $2" | tee -a $LOGFILE && exit 1
+
 [ "$1" == "configure" ] && echo "Completing the ZLB installation..." | tee -a $LOGFILE
+
 MSCRIPT="/usr/local/zenloadbalancer/app/zbin/zlbmigration302to303.pl"
 GLOBALCF="/usr/local/zenloadbalancer/config/global.conf"
 GLOBALCFT="/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tpl"
+
 if [ -f $MSCRIPT -a -f $GLOBALCF ]; then
 	oldver=`cat $GLOBALCF | grep "version=" | awk -F'"' '{printf $2}'`
 	newver=`cat $GLOBALCFT | grep "version=" | awk -F'"' '{printf $2}'`
@@ -23,9 +28,9 @@ if [ -e "/usr/local/zenloadbalancer/www/index.cgi.${PERLVER}" ]; then
 	mv "/usr/local/zenloadbalancer/www/index.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/index.cgi"
 	rm /usr/local/zenloadbalancer/www/index.cgi.*
 fi
-if [ -e "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.${PERLVER}" ]; then
-	mv "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi"
-	rm /usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.*
+if [ -e "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.${PERLVER}" ]; then
+	mv "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi"
+	rm /usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.*
 fi
 if [ -e "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer.${PERLVER}" ]; then
 	mv "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer.${PERLVER}" "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer"
