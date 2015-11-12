@@ -152,7 +152,7 @@ sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
 		 && $fbootstatus eq "up"
 		 && $writeconf eq "false"
 		 && $type eq "hot"
-		 && -e "$pidfile" )
+		 && -e $pidfile )
 	{
 		open FILE, "<$pidfile";
 		my $pid = <FILE>;
@@ -1617,8 +1617,10 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	my $farm_type         = &getFarmType( $farm_name );
 	my $new_farm_filename = "$new_farm_name\_$farm_type.cfg";
 	my $output            = -1;
+	my $status            = &getFarmStatus( $farm_name );
 
-	&runFarmStop( $farm_name, "false" );
+	# stop farm if it was up
+	&runFarmStop( $farm_name, "false" ) if ( $status eq 'up' );
 
 	use Tie::File;
 	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
@@ -1636,7 +1638,9 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 
 	# Rename fw marks for this farm
 	&renameMarks( $farm_name, $new_farm_name );
-	&runFarmStart( $new_farm_name, "false" );
+
+	# start farm if it was up before
+	&runFarmStart( $new_farm_name, "false" ) if ( $status eq 'up' );
 	$output = $?;
 
 	return $output;
