@@ -628,10 +628,12 @@ sub getFarmFile    # ($farm_name)
 # Returns farm status
 sub getFarmStatus    # ($farm_name)
 {
-	my ( $farm_name ) = @_;
+	my $farm_name = shift;
+
+	my $output = -1;
+	return $output if !defined ( $farm_name );    # farm name cannot be empty
 
 	my $farm_type = &getFarmType( $farm_name );
-	my $output    = -1;
 
 	# for every farm type but datalink or l4xnat
 	if ( $farm_type ne "datalink" && $farm_type ne "l4xnat" )
@@ -665,7 +667,7 @@ sub getFarmStatus    # ($farm_name)
 # Returns farm status
 sub getFarmBootStatus    # ($farm_name)
 {
-	my ( $farm_name ) = @_;
+	my $farm_name = shift;
 
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = "down";
