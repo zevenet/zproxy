@@ -132,7 +132,6 @@ sub runFarmGuardianStart    # ($fname,$svice)
 
 	if ( $ftype =~ /http/ && $svice eq "" )
 	{
-
 		# Iterate over every farm service
 		my $services = &getFarmVS( $fname, "", "" );
 		my @servs = split ( " ", $services );
@@ -162,7 +161,6 @@ sub runFarmGuardianStop    # ($fname,$svice)
 
 	if ( $type =~ /http/ && $svice eq "" )
 	{
-
 		# Iterate over every farm service
 		my $services = &getFarmVS( $fname, "", "" );
 		my @servs = split ( " ", $services );

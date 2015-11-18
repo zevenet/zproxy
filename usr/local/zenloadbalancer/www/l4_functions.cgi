@@ -67,22 +67,22 @@ sub loadL4Modules    # ($protocol)
 	my $port_list = &getL4FarmsPorts( $protocol );
 	if ( $protocol eq "sip" )
 	{
-		&removeNfModule( "nf_nat_sip",       "" );
-		&removeNfModule( "nf_conntrack_sip", "" );
+		&removeNfModule( "nf_nat_sip" );
+		&removeNfModule( "nf_conntrack_sip" );
 		&loadNfModule( "nf_conntrack_sip", "ports=$port_list" );
 		&loadNfModule( "nf_nat_sip",       "" );
 	}
 	elsif ( $protocol eq "ftp" )
 	{
-		&removeNfModule( "nf_nat_ftp",       "" );
-		&removeNfModule( "nf_conntrack_ftp", "" );
+		&removeNfModule( "nf_nat_ftp" );
+		&removeNfModule( "nf_conntrack_ftp" );
 		&loadNfModule( "nf_conntrack_ftp", "ports=$port_list" );
 		&loadNfModule( "nf_nat_ftp",       "" );
 	}
 	elsif ( $protocol eq "tftp" )
 	{
-		&removeNfModule( "nf_nat_tftp",       "" );
-		&removeNfModule( "nf_conntrack_tftp", "" );
+		&removeNfModule( "nf_nat_tftp" );
+		&removeNfModule( "nf_conntrack_tftp" );
 		&loadNfModule( "nf_conntrack_tftp", "ports=$port_list" );
 		&loadNfModule( "nf_nat_tftp",       "" );
 	}
@@ -554,11 +554,9 @@ sub getL4FarmMaxClientTime    # ($farm_name)
 #
 sub getL4FarmServers    # ($farm_name)
 {
-	my ( $farm_name ) = @_;
+	my $farm_name = shift;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $farm_type     = &getFarmType( $farm_name );
-	my $first         = "true";
 	my $sindex        = 0;
 	my @servers;
 
@@ -566,15 +564,11 @@ sub getL4FarmServers    # ($farm_name)
 
 	while ( my $line = <FI> )
 	{
-		if ( $line ne "" && $line =~ /^\;server\;/ && $first ne "true" )
+		if ( $line =~ /^\;server\;/ )
 		{
 			$line =~ s/^\;server/$sindex/g;    #, $line;
 			push ( @servers, $line );
 			$sindex = $sindex + 1;
-		}
-		else
-		{
-			$first = "false";
 		}
 	}
 	close FI;
@@ -987,6 +981,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf,$status)
 {
 	my ( $farm_name, $writeconf, $status ) = @_;
 
+	# exit if wrong status
 	return $status if ( $status == -1 );
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -995,14 +990,10 @@ sub _runL4FarmStart    # ($farm_name,$writeconf,$status)
 	{
 		use Tie::File;
 		tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
-		my $first = 1;
 		foreach ( @configfile )
 		{
-			if ( $first eq 1 )
-			{
-				s/\;down/\;up/g;
-				$first = 0;
-			}
+			s/\;down/\;up/g;
+			last;
 		}
 		untie @configfile;
 	}
@@ -1022,25 +1013,28 @@ sub _runL4FarmStart    # ($farm_name,$writeconf,$status)
 	my $persist = &getFarmPersistence( $farm_name );
 	my @pttl    = &getFarmMaxClientTime( $farm_name );
 	my $ttl     = $pttl[0];
-	my $proto   = "";
+	my $proto   = &getL4ProtocolTransportLayer( $vproto );
 
-	my @run = &getFarmServers( $farm_name );
+	my @server_lines = &getFarmServers( $farm_name );
+	&logfile( '_runL4FarmStart: @server_lines: ' . "@server_lines" );    ########
 	my @tmangle;
 	my @tnat;
 	my @tmanglep;
 	my @tsnat;
 	my @traw;
 
+	# calculate backends probability with Weight values
 	my $prob = 0;
-	foreach my $lservers ( @run )
+	foreach my $server_line ( @server_lines )
 	{
-		my @serv = split ( "\;", $lservers );
-		if ( $serv[6] =~ /up/ )
+		my @server_args = split ( "\;", $server_line );
+		if ( $server_args[6] =~ /up/ )
 		{
-			$prob = $prob + $serv[4];
+			$prob = $prob + $server_args[4];
 		}
 	}
 
+	# replace port * for all the range
 	if ( $vport eq "*" )
 	{
 		$vport = "0:65535";
@@ -1053,85 +1047,81 @@ sub _runL4FarmStart    # ($farm_name,$writeconf,$status)
 	}
 
 	# Load required modules
-	if ( $vproto eq "sip" || $vproto eq "tftp" )
+	if ( $vproto =~ /sip|ftp/ )
 	{
 		$status = &loadL4Modules( $vproto );
-		$proto  = "udp";
 	}
-	elsif ( $vproto eq "ftp" )
-	{
-		$status = &loadL4Modules( $vproto );
-		$proto  = "tcp";
-	}
-	else
-	{
-		$proto = $vproto;
-	}
+
 	my $bestprio = 1000;
 	my @srvprio;
 
-	foreach my $lservers ( @run )
+	foreach my $server_line ( @server_lines )
 	{
-		my @serv = split ( "\;", $lservers );
-		if ( $serv[6] =~ /up/ || $lbalg eq "leastconn" )
-		{    # TMP: leastconn dynamic backend status check
+		# separate every argument in the line
+		my @server_args = split ( "\;", $server_line );
+		if ( $server_args[6] =~ /up/ || $lbalg eq "leastconn" )
+		{
+			# TMP: leastconn dynamic backend status check
 			if ( $lbalg eq "weight" || $lbalg eq "leastconn" )
 			{
-				my $port = $serv[2];
-				my $rip  = $serv[1];
-				if ( $serv[2] ne "" && $proto ne "all" )
+				my $port = $server_args[2];
+				my $rip  = $server_args[1];
+				if ( $server_args[2] ne "" && $proto ne "all" )
 				{
 					$rip = "$rip\:$port";
 				}
-				my $tag = &genIptMark(
-									   $farm_name, $nattype, $lbalg,   $vip,
-									   $vport,     $proto,   $serv[0], $serv[3],
-									   $serv[4],   $serv[6], $prob
-				);
 
+				# packet marking rules
+				my $tag = &genIptMark(
+									   $farm_name,      $lbalg,          $vip,
+									   $vport,          $proto,          $server_args[0],
+									   $server_args[3], $server_args[4], $prob
+				);
+				push ( @tmangle, $tag );
+
+				# dnat (redirect) rules
+				my $red =
+				  &genIptRedirect( $farm_name, $server_args[0], $rip, $proto, $server_args[3],
+								   $persist );
+				push ( @tnat, $red );
+
+				# persistence rules
 				if ( $persist ne "none" )
 				{
 					my $tagp =
-					  &genIptMarkPersist( $farm_name, $vip, $vport, $proto, $ttl, $serv[0],
-										  $serv[3], $serv[6] );
+					  &genIptMarkPersist( $farm_name, $vip, $vport, $proto, $ttl, $server_args[0],
+										  $server_args[3] );
 					push ( @tmanglep, $tagp );
 				}
 
-				# dnat rules
-				my $red = &genIptRedirect( $farm_name, $nattype, $serv[0], $rip, $proto,
-										   $serv[3],   $serv[4], $persist, $serv[6] );
-				push ( @tnat, $red );
-
+				# rules for nat_type = nat
 				if ( $nattype eq "nat" )
 				{
 					my $ntag;
 					if ( $vproto eq "sip" )
 					{
 						$ntag =
-						  &genIptSourceNat( $farm_name, $vip,     $nattype, $serv[0],
-											$proto,     $serv[3], $serv[6] );
+						  &genIptSourceNat( $farm_name, $vip, $server_args[0],
+											$proto, $server_args[3] );
 					}
 					else
 					{
 						$ntag =
-						  &genIptMasquerade( $farm_name, $nattype, $serv[0],
-											 $proto, $serv[3], $serv[6] );
+						  &genIptMasquerade( $farm_name, $server_args[0], $proto, $server_args[3] );
 					}
 
 					push ( @tsnat, $ntag );
 				}
 
-				push ( @tmangle, $tag );
-
-				$prob = $prob - $serv[4];
+				$prob = $prob - $server_args[4];
 			}
 
 			if ( $lbalg eq "prio" )
 			{
-				if ( $serv[5] ne "" && $serv[5] < $bestprio )
+				if ( $server_args[5] ne "" && $server_args[5] < $bestprio )
 				{
-					@srvprio  = @serv;
-					$bestprio = $serv[5];
+					@srvprio  = @server_args;
+					$bestprio = $server_args[5];
 				}
 			}
 		}
@@ -1148,24 +1138,27 @@ sub _runL4FarmStart    # ($farm_name,$writeconf,$status)
 		{
 			$rip = "$rip\:$port";
 		}
+
+		# packet marking rules
 		my $tag = &genIptMark(
-							   $farm_name,  $nattype,    $lbalg,      $vip,
-							   $vport,      $proto,      $srvprio[0], $srvprio[3],
-							   $srvprio[4], $srvprio[6], $prob
+							   $farm_name,  $lbalg,      $vip,
+							   $vport,      $proto,      $srvprio[0],
+							   $srvprio[3], $srvprio[4], $prob
 		);
+		push ( @tmangle, $tag );
 
-		# dnat rules
-		my $red = &genIptRedirect(
-								   $farm_name,  $nattype, $srvprio[0],
-								   $rip,        $proto,   $srvprio[3],
-								   $srvprio[4], $persist, $srvprio[6]
-		);
+		# dnat (redirect) rules
+		my $red =
+		  &genIptRedirect( $farm_name, $srvprio[0], $rip, $proto, $srvprio[3],
+						   $persist );
+		push ( @tnat, $red );
 
+		# persistence rules
 		if ( $persist ne "none" )
 		{
 			my $tagp =
 			  &genIptMarkPersist( $farm_name, $vip, $vport, $proto, $ttl, $srvprio[0],
-								  $srvprio[3], $srvprio[6] );
+								  $srvprio[3] );
 			push ( @tmanglep, $tagp );
 		}
 
@@ -1174,48 +1167,41 @@ sub _runL4FarmStart    # ($farm_name,$writeconf,$status)
 			my $ntag;
 			if ( $vproto eq "sip" )
 			{
-				$ntag =
-				  &genIptSourceNat( $farm_name, $vip, $nattype, $srvprio[0], $proto,
-									$srvprio[3], $srvprio[6] );
+				$ntag = &genIptSourceNat( $farm_name, $vip, $srvprio[0], $proto, $srvprio[3] );
 			}
 			else
 			{
-				$ntag = &genIptMasquerade( $farm_name, $nattype,    $srvprio[0],
-										   $proto,     $srvprio[3], $srvprio[6] );
+				$ntag = &genIptMasquerade( $farm_name, $srvprio[0], $proto, $srvprio[3] );
 			}
 			push ( @tsnat, $ntag );
 		}
 
-		push ( @tmangle, $tag );
-		push ( @tnat,    $red );
 	}
 
 	foreach $nraw ( @traw )
 	{
-		if ( $nraw ne "" )
+		next if !$nraw;
+
+		&logfile( "running $nraw" );
+		system ( "$nraw >/dev/null 2>&1" );
+		if ( $? != 0 )
 		{
-			&logfile( "running $nraw" );
-			my @run = `$nraw`;
-			if ( $? != 0 )
-			{
-				&logfile( "last command failed!" );
-				$status = -1;
-			}
+			&logfile( "last command failed!" );
+			$status = -1;
 		}
 	}
 
 	@tmangle = reverse ( @tmangle );
 	foreach $ntag ( @tmangle )
 	{
-		if ( $ntag ne "" )
+		next if !$ntag;
+
+		&logfile( "running $ntag" );
+		system ( "$ntag >/dev/null 2>&1" );
+		if ( $? != 0 )
 		{
-			&logfile( "running $ntag" );
-			my @run = `$ntag`;
-			if ( $? != 0 )
-			{
-				&logfile( "last command failed!" );
-				$status = -1;
-			}
+			&logfile( "last command failed!" );
+			$status = -1;
 		}
 	}
 
@@ -1223,44 +1209,41 @@ sub _runL4FarmStart    # ($farm_name,$writeconf,$status)
 	{
 		foreach $ntag ( @tmanglep )
 		{
-			if ( $ntag ne "" )
+			next if !$ntag;
+
+			&logfile( "running $ntag" );
+			system ( "$ntag >/dev/null 2>&1" );
+			if ( $? != 0 )
 			{
-				&logfile( "running $ntag" );
-				my @run = `$ntag`;
-				if ( $? != 0 )
-				{
-					&logfile( "last command failed!" );
-					$status = -1;
-				}
+				&logfile( "last command failed!" );
+				$status = -1;
 			}
 		}
 	}
 
 	foreach $nred ( @tnat )
 	{
-		if ( $nred ne "" )
+		next if !$nred;
+
+		&logfile( "running $nred" );
+		system ( "$nred >/dev/null 2>&1" );
+		if ( $? != 0 )
 		{
-			&logfile( "running $nred" );
-			my @run = `$nred`;
-			if ( $? != 0 )
-			{
-				&logfile( "last command failed!" );
-				$status = -1;
-			}
+			&logfile( "last command failed!" );
+			$status = -1;
 		}
 	}
 
 	foreach $nred ( @tsnat )
 	{
-		if ( $nred ne "" )
+		next if !$nred;
+
+		&logfile( "running $nred" );
+		system ( "$nred >/dev/null 2>&1" );
+		if ( $? != 0 )
 		{
-			&logfile( "running $nred" );
-			my @run = `$nred`;
-			if ( $? != 0 )
-			{
-				&logfile( "last command failed!" );
-				$status = -1;
-			}
+			&logfile( "last command failed!" );
+			$status = -1;
 		}
 	}
 
@@ -1536,15 +1519,18 @@ sub setL4FarmBackendStatus    # ($farm_name,$index,$stat)
 	my $fileid   = 0;
 	my $serverid = 0;
 
+	# load farm configuration file
 	use Tie::File;
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
+	# look for $index backend
 	foreach my $line ( @configfile )
 	{
 		if ( $line =~ /\;server\;/ )
 		{
 			if ( $serverid eq $index )
 			{
+				# change status in configuration file
 				my @lineargs = split ( "\;", $line );
 				@lineargs[7] = $stat;
 				@configfile[$fileid] = join ( "\;", @lineargs );
@@ -1560,7 +1546,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$index,$stat)
 
 sub getFarmPortList    # ($fvipp)
 {
-	my ( $fvipp ) = @_;
+	my $fvipp = shift;
 	my @portlist;
 	my $port;
 	my @retportlist = ();
@@ -1596,10 +1582,10 @@ sub getFarmPortList    # ($fvipp)
 #
 sub getL4FarmBackendStatusCtl    # ($farm_name)
 {
-	my ( $farm_name ) = @_;
+	my $farm_name = shift;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my @output        = -1;
+	my @output;
 
 	tie my @content, 'Tie::File', "$configdir\/$farm_filename";
 	@output = grep /^\;server\;/, @content;
@@ -1644,6 +1630,16 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	$output = $?;
 
 	return $output;
+}
+
+sub getL4ProtocolTransportLayer
+{
+	my $vproto = shift;
+
+	return
+	    ( $vproto =~ /sip|tftp/ ) ? 'udp'
+	  : ( $vproto eq 'ftp' )      ? 'tcp'
+	  :                             $vproto;
 }
 
 # do not remove this

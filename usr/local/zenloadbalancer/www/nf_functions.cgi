@@ -31,8 +31,10 @@ sub loadNfModule    # ($modname,$params)
 
 	if ( !grep /^$modname /, @modules )
 	{
-		&logfile( "L4 loadNfModule: $modprobe $modname $params" );
-		`$modprobe $modname $params`;
+		my $modprobe_command = "$modprobe $modname $params";
+
+		&logfile( "L4 loadNfModule: $modprobe_command" );
+		system ( "$modprobe_command >/dev/null 2>&1" );
 		$status = $?;
 	}
 
@@ -40,9 +42,9 @@ sub loadNfModule    # ($modname,$params)
 }
 
 #
-sub removeNfModule    # ($modname,$params)
+sub removeNfModule    # ($modname)
 {
-	my ( $modname, $params ) = @_;
+	my $modname = shift;
 
 	my $modprobe_command = "$modprobe -r $modname";
 
@@ -111,6 +113,7 @@ sub getNewMark    # ($fname)
 	my $found   = "false";
 	my $marknum = 0x200;
 	my $i;
+
 	tie my @contents, 'Tie::File', "$fwmarksconf";
 	for ( $i = 512 ; $i < 1024 && $found eq "false" ; $i++ )
 	{
@@ -178,27 +181,39 @@ sub renameMarks    # ($fname,$newfname)
 	return $status;
 }
 
+# genIptMarkReturn is not used
+#~ sub genIptMarkReturn    # ($fname,$vip,$vport,$proto,$index)
+#~ {
+#~ my ( $fname, $vip, $vport, $proto, $index ) = @_;
+#~
+#~ my $iptables_command =
+#~ "$iptables -t mangle -A PREROUTING -d $vip -p $proto -m multiport --dports $vport -j RETURN -m comment --comment ' FARM\_$fname\_$index\_ '";
+#~
+#~ &logfile( $iptables_command );
+#~
+#~ return $iptables_command;
+#~ }
+
 #
-sub genIptMarkReturn    # ($fname,$vip,$vport,$proto,$index,$state)
+sub genIptMarkPersist    # ($fname,$vip,$vport,$proto,$ttl,$index,$mark)
 {
-	my ( $fname, $vip, $vport, $proto, $index, $state ) = @_;
-
-	my $iptables_command =
-	  "$iptables -t mangle -A PREROUTING -d $vip -p $proto -m multiport --dports $vport -j RETURN -m comment --comment ' FARM\_$fname\_$index\_ '";
-
-	&logfile( $iptables_command );
-
-	return $iptables_command;
-}
-
-#
-sub genIptMarkPersist    # ($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state)
-{
-	my ( $fname, $vip, $vport, $proto, $ttl, $index, $mark, $state ) = @_;
+	my ( $fname, $vip, $vport, $proto, $ttl, $index, $mark ) = @_;
 
 	my $layer = "";
 	my $iptables_command =
-	  "$iptables -t mangle -A PREROUTING -m recent --name \"\_$fname\_$mark\_sessions\" --rcheck --seconds $ttl -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
+	    "$iptables "
+	  . "-t mangle "
+	  . "-A PREROUTING "
+	  . "-m recent "
+	  . "--name \"\_$fname\_$mark\_sessions\" "
+	  . "--rcheck "
+	  . "--seconds $ttl "
+	  . "-d $vip "
+	  . "$layer "
+	  . "-j MARK "
+	  . "--set-mark $mark "
+	  . "-m comment "
+	  . "--comment ' FARM\_$fname\_$index\_ '";
 
 	if ( $proto ne "all" )
 	{
@@ -211,12 +226,9 @@ sub genIptMarkPersist    # ($fname,$vip,$vport,$proto,$ttl,$index,$mark,$state)
 }
 
 #
-sub genIptMark # ($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$state,$prob)
+sub genIptMark    # ($fname,$lbalg,$vip,$vport,$proto,$index,$mark,$value,$prob)
 {
-	my (
-		 $fname, $nattype, $lbalg, $vip,   $vport, $proto,
-		 $index, $mark,    $value, $state, $prob
-	) = @_;
+	my ( $fname, $lbalg, $vip, $vport, $proto, $index, $mark, $value, $prob ) = @_;
 
 	my $rule;
 
@@ -234,19 +246,45 @@ sub genIptMark # ($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,
 		}
 		$prob = $value / $prob;
 		$rule =
-		  "$iptables -t mangle -A PREROUTING -m statistic --mode random --probability $prob -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
+		    "$iptables "
+		  . "-t mangle "
+		  . "-A PREROUTING "
+		  . "-m statistic "
+		  . "--mode random "
+		  . "--probability $prob "
+		  . "-d $vip $layer "
+		  . "-j MARK "
+		  . "--set-mark $mark "
+		  . "-m comment "
+		  . "--comment ' FARM\_$fname\_$index\_ '";
 	}
 
 	if ( $lbalg eq "leastconn" )
 	{
 		$rule =
-		  "$iptables -t mangle -A PREROUTING -m condition --condition '\_$fname\_$mark\_' -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
+		    "$iptables "
+		  . "-t mangle "
+		  . "-A PREROUTING "
+		  . "-m condition "
+		  . "--condition '\_$fname\_$mark\_' "
+		  . "-d $vip $layer "
+		  . "-j MARK "
+		  . "--set-mark $mark "
+		  . "-m comment "
+		  . "--comment ' FARM\_$fname\_$index\_ '";
 	}
 
 	if ( $lbalg eq "prio" )
 	{
 		$rule =
-		  "$iptables -t mangle -A PREROUTING -d $vip $layer -j MARK --set-mark $mark -m comment --comment ' FARM\_$fname\_$index\_ '";
+		    "$iptables "
+		  . "-t mangle "
+		  . "-A PREROUTING "
+		  . "-d $vip $layer "
+		  . "-j MARK "
+		  . "--set-mark $mark "
+		  . "-m comment "
+		  . "--comment ' FARM\_$fname\_$index\_ '";
 	}
 
 	&logfile( $rule );
@@ -255,10 +293,9 @@ sub genIptMark # ($fname,$nattype,$lbalg,$vip,$vport,$proto,$index,$mark,$value,
 }
 
 #
-sub genIptRedirect # ($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$state)
+sub genIptRedirect    # ($fname,$index,$rip,$proto,$mark,$persist)
 {
-	my ( $fname, $nattype, $index, $rip, $proto, $mark, $value, $persist, $state )
-	  = @_;
+	my ( $fname, $index, $rip, $proto, $mark, $persist ) = @_;
 
 	my $layer =
 	  ( $proto ne "all" )
@@ -271,7 +308,17 @@ sub genIptRedirect # ($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$
 	  : '';
 
 	my $iptables_command =
-	  "$iptables -t nat -A PREROUTING -m mark --mark $mark -j DNAT $layer --to-destination $rip $persist -m comment --comment ' FARM\_$fname\_$index\_ '";
+	    "$iptables "
+	  . "-t nat "
+	  . "-A PREROUTING "
+	  . "-m mark "
+	  . "--mark $mark "
+	  . "-j DNAT "
+	  . "$layer "
+	  . "--to-destination $rip "
+	  . "$persist "
+	  . "-m comment "
+	  . "--comment ' FARM\_$fname\_$index\_ '";
 
 	&logfile( $iptables_command );
 
@@ -279,13 +326,21 @@ sub genIptRedirect # ($fname,$nattype,$index,$rip,$proto,$mark,$value,$persist,$
 }
 
 #
-sub genIptSourceNat    # ($fname,$vip,$nattype,$index,$proto,$mark,$state)
+sub genIptSourceNat    # ($fname,$vip,$index,$proto,$mark)
 {
-	my ( $fname, $vip, $nattype, $index, $proto, $mark, $state ) = @_;
+	my ( $fname, $vip, $index, $proto, $mark ) = @_;
 
 	my $layer = "";
 	my $iptables_command =
-	  "$iptables -t nat -A POSTROUTING -m mark --mark $mark -j SNAT $layer --to-source $vip -m comment --comment ' FARM\_$fname\_$index\_ '";
+	    "$iptables "
+	  . "-t nat "
+	  . "-A POSTROUTING "
+	  . "-m mark "
+	  . "--mark $mark "
+	  . "-j SNAT $layer "
+	  . "--to-source $vip "
+	  . "-m comment "
+	  . "--comment ' FARM\_$fname\_$index\_ '";
 
 	if ( $proto ne "all" )
 	{
@@ -298,13 +353,20 @@ sub genIptSourceNat    # ($fname,$vip,$nattype,$index,$proto,$mark,$state)
 }
 
 #
-sub genIptMasquerade    # ($fname,$nattype,$index,$proto,$mark,$state)
+sub genIptMasquerade    # ($fname,$index,$proto,$mark)
 {
-	my ( $fname, $nattype, $index, $proto, $mark, $state ) = @_;
+	my ( $fname, $index, $proto, $mark ) = @_;
 
 	my $layer = "";
 	my $iptables_command =
-	  "$iptables -t nat -A POSTROUTING -m mark --mark $mark -j MASQUERADE $layer -m comment --comment ' FARM\_$fname\_$index\_ '";
+	    "$iptables "
+	  . "-t nat "
+	  . "-A POSTROUTING "
+	  . "-m mark "
+	  . "--mark $mark "
+	  . "-j MASQUERADE $layer "
+	  . "-m comment "
+	  . "--comment ' FARM\_$fname\_$index\_ '";
 
 	if ( $proto ne "all" )
 	{
