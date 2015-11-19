@@ -900,7 +900,7 @@ sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 # Returns farm max connections
 sub getFarmMaxConn    # ($farm_name)
 {
-	my ( $farm_name ) = @_;
+	my $farm_name = shift;
 
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
@@ -921,7 +921,7 @@ sub getFarmMaxConn    # ($farm_name)
 # Returns farm listen port
 sub getFarmPort    # ($farm_name)
 {
-	my ( $farm_name ) = @_;
+	my $farm_name = shift;
 
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
@@ -942,7 +942,7 @@ sub getFarmPort    # ($farm_name)
 # Returns farm PID
 sub getFarmPid    # ($farm_name)
 {
-	my ( $farm_name ) = @_;
+	my $farm_name = shift;
 
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
@@ -1005,7 +1005,10 @@ sub getFarmVip    # ($info,$farm_name)
 # this function creates a file to tell that the farm needs to be restarted to apply changes
 sub setFarmRestart    # ($farm_name)
 {
-	my ( $farm_name ) = @_;
+	my $farm_name = shift;
+
+	# do nothing if the farm is not running
+	return if &getFarmStatus( $farm_name ) ne 'up';
 
 	if ( !-e "/tmp/$farm_name.lock" )
 	{
@@ -1019,7 +1022,7 @@ sub setFarmRestart    # ($farm_name)
 # this function deletes the file marking the farm to be restarted to apply changes
 sub setFarmNoRestart    # ($farm_name)
 {
-	my ( $farm_name ) = @_;
+	my $farm_name = shift;
 
 	if ( -e "/tmp/$farm_name.lock" )
 	{
@@ -1055,7 +1058,7 @@ sub getFarmList    # ()
 # Returns
 sub getFarmName    # ($farm_filename)
 {
-	my ( $farm_filename ) = @_;
+	my $farm_filename = shift;
 
 	my @filename_split = split ( "_", $farm_filename );
 
@@ -1066,7 +1069,7 @@ sub getFarmName    # ($farm_filename)
 # Delete Farm rutine
 sub runFarmDelete    # ($farm_name)
 {
-	my ( $farm_name ) = @_;
+	my $farm_name = shift;
 
 	my $farm_type = &getFarmType( $farm_name );
 
@@ -1483,16 +1486,11 @@ sub setFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 #checks thata farmname has correct characters (number, letters and lowercases)
 sub checkFarmnameOK    # ($farm_name)
 {
-	( $check_name ) = @_;
+	my $farm_name = shift;
 
-	my $output = -1;
-
-	if ( $check_name =~ /^[a-zA-Z0-9\-]*$/ )
-	{
-		$output = 0;
-	}
-
-	return $output;
+	return ( $farm_name =~ /^[a-zA-Z0-9\-]*$/ )
+	  ? 0
+	  : -1;
 }
 
 #function that return indicated value from a HTTP Service
@@ -1504,12 +1502,11 @@ sub getFarmVS    # ($farm_name, $service, $tag)
 	my $output    = "";
 	my $farm_type = &getFarmType( $farm_name );
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	if ( $farm_type =~ /http/ )
 	{
 		$output = &getHTTPFarmVS( $farm_name, $service, $tag );
 	}
-
-	if ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" )
 	{
 		$output = &getGSLBFarmVS( $farm_name, $service, $tag );
 	}
@@ -1525,12 +1522,11 @@ sub setFarmVS    # ($farm_name,$service,$tag,$string)
 	my $output    = "";
 	my $farm_type = &getFarmType( $farm_name );
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	if ( $farm_type =~ /http/ )
 	{
 		$output = &setHTTPFarmVS( $farm_name, $service, $tag, $string );
 	}
-
-	if ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" )
 	{
 		$output = &setGSLBFarmVS( $farm_name, $service, $tag, $string );
 	}
