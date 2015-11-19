@@ -230,7 +230,7 @@ sub runFarmGuardianStop    # ($fname,$svice)
 # create farmguardian config file
 sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 {
-	( $fname, $ttcheck, $script, $usefg, $fglog, $svice ) = @_;
+	my ( $fname, $ttcheck, $script, $usefg, $fglog, $svice ) = @_;
 
 	my $fgfile = &getFarmGuardianFile( $fname, $svice );
 	my $output = -1;
@@ -253,7 +253,7 @@ sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 	}
 
 	open FO, ">$configdir/$fgfile";
-	print FO "$fname\:\:\:$ttcheck\:\:\:$script\:\:\:$usefg\:\:\:$fglog";
+	print FO "$fname\:\:\:$ttcheck\:\:\:$script\:\:\:$usefg\:\:\:$fglog\n";
 	$output = $?;
 	close FO;
 
@@ -263,9 +263,10 @@ sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 #
 sub getFarmGuardianConf    # ($fname,$svice)
 {
-	( $fname, $svice ) = @_;
+	my ( $fname, $svice ) = @_;
 	my $lastline;
 
+	# get filename
 	my $fgfile = &getFarmGuardianFile( $fname, $svice );
 
 	if ( $fgfile == -1 )
@@ -277,6 +278,7 @@ sub getFarmGuardianConf    # ($fname,$svice)
 		$fgfile = "${fname}_${svice}guardian.conf";
 	}
 
+	# read file
 	open FG, "$configdir/$fgfile";
 	my $line;
 	while ( $line = <FG> )
@@ -284,10 +286,12 @@ sub getFarmGuardianConf    # ($fname,$svice)
 		if ( $line !~ /^#/ )
 		{
 			$lastline = $line;
+			last;
 		}
 	}
 	close FG;
 	my @line = split ( ":::", $lastline );
+	chomp ( @line );
 
 	#&logfile("getting 'FarmGuardianConf @line' for $fname farm");
 	return @line;
