@@ -931,7 +931,6 @@ sub _runHTTPFarmStart    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $status        = -1;
 
-	unlink ( "/tmp/$farm_name.lock" );
 	&logfile(
 		"running $pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid"
 	);
@@ -965,6 +964,7 @@ sub _runHTTPFarmStop    # ($farm_name)
 
 		unlink ( "$piddir\/$farm_name\_pound.pid" );
 		unlink ( "\/tmp\/$farm_name\_pound.socket" );
+		unlink ( "/tmp/$farm_name.lock" );
 	}
 	else
 	{
@@ -1472,7 +1472,7 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 			{
 				#Checkstatusfile
 				$status_backend =
-				  &getBackendStatusFromFile( $farm_name, $backends[0], $serviceline[2] );
+				  &getHTTPBackendStatusFromFile( $farm_name, $backends[0], $serviceline[2] );
 			}
 			elsif ( $status_backend eq "alive" )
 			{
@@ -1655,83 +1655,82 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 	return $output;
 }
 
-# HTTPS
-# Set Farm Ciphers vale
-sub setFarmCiphers    # ($farm_name,$ciphers)
+# HTTPS only
+# Set Farm Ciphers value
+sub setFarmCiphers    # ($farm_name,$ciphers,$cipherc)
 {
-	( $farm_name, $ciphers, $cipherc ) = @_;
+	my ( $farm_name, $ciphers, $cipherc ) = @_;
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
-	if ( $farm_type eq "https" )
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	tie @array, 'Tie::File', "$configdir/$farm_filename";
+	for ( @array )
 	{
-		my $farm_filename = &getFarmFile( $farm_name );
-		tie @array, 'Tie::File', "$configdir/$farm_filename";
-		for ( @array )
+		if ( $_ =~ /Ciphers/ )
 		{
-			if ( $_ =~ /Ciphers/ )
+			if ( $ciphers eq "cipherglobal" )
 			{
-				if ( $ciphers eq "cipherglobal" )
-				{
-					$_ =~ s/\tCiphers/\t#Ciphers/g;
-					$output = 0;
-				}
-				if ( $ciphers eq "cipherpci" )
-				{
-					$_ =~ s/#//g;
-					$_      = "\tCiphers \"$cipher_pci\"";
-					$output = 0;
-				}
-				if ( $ciphers eq "ciphercustom" )
-				{
-					$_ =~ s/#//g;
-					$_      = "\tCiphers \"$cipher_pci\"";
-					$output = 0;
-				}
-				if ( $cipherc )
-				{
-					$_ =~ s/#//g;
-					$_      = "\tCiphers \"$cipherc\"";
-					$output = 0;
-				}
+				$_ =~ s/\tCiphers/\t#Ciphers/g;
+				$output = 0;
+			}
+			if ( $ciphers eq "cipherpci" )
+			{
+				$_ =~ s/#//g;
+				$_      = "\tCiphers \"$cipher_pci\"";
+				$output = 0;
+			}
+			if ( $ciphers eq "ciphercustom" )
+			{
+				$_ =~ s/#//g;
+				$_      = "\tCiphers \"$cipher_pci\"";
+				$output = 0;
+			}
+			if ( $cipherc )
+			{
+				$_ =~ s/#//g;
+				$_      = "\tCiphers \"$cipherc\"";
+				$output = 0;
 			}
 		}
-		untie @array;
 	}
+	untie @array;
+
 	return $output;
 }
 
-# HTTPS
+# HTTPS only
 # Get Farm Ciphers value
 sub getFarmCipher    # ($farm_name)
 {
-	( $farm_name ) = @_;
+	my $farm_name = shift;
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
-	if ( $farm_type eq "https" )
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	open FI, "<$configdir/$farm_filename";
+	my @content = <FI>;
+	close FI;
+
+	foreach $line ( @content )
 	{
-		my $farm_filename = &getFarmFile( $farm_name );
-		open FI, "<$configdir/$farm_filename";
-		my @content = <FI>;
-		close FI;
-		foreach $line ( @content )
+		if ( $line =~ /Ciphers/ )
 		{
-			if ( $line =~ /Ciphers/ )
+			my @partline = split ( '\ ', $line );
+			$lfile = $partline[1];
+			$lfile =~ s/\"//g;
+			chomp ( $lfile );
+			if ( $line =~ /#/ )
 			{
-				my @partline = split ( '\ ', $line );
-				$lfile = $partline[1];
-				$lfile =~ s/\"//g;
-				chomp ( $lfile );
-				if ( $line =~ /#/ )
-				{
-					$output = "cipherglobal";
-				}
-				else
-				{
-					$output = $lfile;
-				}
+				$output = "cipherglobal";
+			}
+			else
+			{
+				$output = $lfile;
 			}
 		}
 	}
+
 	return $output;
 }
 
@@ -1776,7 +1775,8 @@ sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 
 			if ( $backendstatus eq "DISABLED" )
 			{
-				$backendstatus = &getBackendStatusFromFile( $farm_name, $backend, $service );
+				$backendstatus =
+				  &getHTTPBackendStatusFromFile( $farm_name, $backend, $service );
 
 				if ( $backendstatus =~ /maintenance/ )
 				{
