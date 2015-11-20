@@ -1657,42 +1657,51 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 
 # HTTPS only
 # Set Farm Ciphers value
-sub setFarmCiphers    # ($farm_name,$ciphers,$cipherc)
+sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 {
-	my ( $farm_name, $ciphers, $cipherc ) = @_;
-	my $farm_type = &getFarmType( $farm_name );
-	my $output    = -1;
+	# assign first/second/third argument or take global value
+	my $farm_name = shift // $farmname;
+	my $ciphers   = shift // $ciphers;
+	my $cipherc   = shift // $cipherc;
 
+	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+
 	tie @array, 'Tie::File', "$configdir/$farm_filename";
-	for ( @array )
+	for $line ( @array )
 	{
-		if ( $_ =~ /Ciphers/ )
+		# takes the first Ciphers line only
+		next if ( $line !~ /Ciphers/ );
+
+		if ( $ciphers eq "cipherglobal" )
 		{
-			if ( $ciphers eq "cipherglobal" )
-			{
-				$_ =~ s/\tCiphers/\t#Ciphers/g;
-				$output = 0;
-			}
-			if ( $ciphers eq "cipherpci" )
-			{
-				$_ =~ s/#//g;
-				$_      = "\tCiphers \"$cipher_pci\"";
-				$output = 0;
-			}
-			if ( $ciphers eq "ciphercustom" )
-			{
-				$_ =~ s/#//g;
-				$_      = "\tCiphers \"$cipher_pci\"";
-				$output = 0;
-			}
-			if ( $cipherc )
-			{
-				$_ =~ s/#//g;
-				$_      = "\tCiphers \"$cipherc\"";
-				$output = 0;
-			}
+			$line =~ s/#//g;
+			$line   = "\tCiphers \"ALL\"";
+			$output = 0;
 		}
+		elsif ( $ciphers eq "cipherpci" )
+		{
+			$line =~ s/#//g;
+			$line   = "\tCiphers \"$cipher_pci\"";
+			$output = 0;
+		}
+		elsif ( $ciphers eq "ciphercustom" && $cipherc )
+		{
+			$line =~ s/#//g;
+			$line   = "\tCiphers \"$cipherc\"";
+			$output = 0;
+		}
+
+		# default custom cipher
+		else    #( $ciphers eq "ciphercustom" && ! $cipherc )
+		{
+			$line =~ s/#//g;
+			$line   = "\tCiphers \"$cipher_pci\"";
+			$output = 0;
+		}
+
+		last;
 	}
 	untie @array;
 
@@ -1701,34 +1710,49 @@ sub setFarmCiphers    # ($farm_name,$ciphers,$cipherc)
 
 # HTTPS only
 # Get Farm Ciphers value
-sub getFarmCipher    # ($farm_name)
+sub getFarmCipherList    # ($farm_name)
 {
-	my $farm_name = shift;
-	my $farm_type = &getFarmType( $farm_name );
-	my $output    = -1;
+	my $farm_name = shift // $farmname;
+	my $output = -1;
 
 	my $farm_filename = &getFarmFile( $farm_name );
+
 	open FI, "<$configdir/$farm_filename";
 	my @content = <FI>;
 	close FI;
 
 	foreach $line ( @content )
 	{
-		if ( $line =~ /Ciphers/ )
-		{
-			my @partline = split ( '\ ', $line );
-			$lfile = $partline[1];
-			$lfile =~ s/\"//g;
-			chomp ( $lfile );
-			if ( $line =~ /#/ )
-			{
-				$output = "cipherglobal";
-			}
-			else
-			{
-				$output = $lfile;
-			}
-		}
+		next if ( $line !~ /Ciphers/ );
+
+		$output = ( split ( '\"', $line ) )[1];
+
+		last;
+	}
+
+	return $output;
+}
+
+# HTTPS only
+# Get Farm Ciphers value
+sub getFarmCipherSet    # ($farm_name)
+{
+	my $farm_name = shift // $farmname;
+	my $output = -1;
+
+	my $cipher_list = &getFarmCipherList( $farm_name );
+
+	if ( $cipher_list eq 'ALL' )
+	{
+		$output = "cipherglobal";
+	}
+	elsif ( $cipher_list eq $cipher_pci )
+	{
+		$output = "cipherpci";
+	}
+	else
+	{
+		$output = "ciphercustom";
 	}
 
 	return $output;
@@ -1737,7 +1761,7 @@ sub getFarmCipher    # ($farm_name)
 #function that check if the config file is OK.
 sub getHTTPFarmConfigIsOK    # ($farm_name)
 {
-	my ( $farm_name ) = @_;
+	my $farm_name = shift;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $pound_command = "$pound -f $configdir\/$farm_filename -c";
