@@ -157,6 +157,7 @@ sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
 		open FILE, "<$pidfile";
 		my $pid = <FILE>;
 		close FILE;
+		# reload config file
 		kill '-USR1', $pid;
 		$output = $?;
 	}
