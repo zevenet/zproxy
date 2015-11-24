@@ -31,7 +31,8 @@ sub setFarmBlacklistTime    # ($blacklist_time,$farm_name)
 {
 	my ( $blacklist_time, $farm_name ) = @_;
 
-	my $output = -1;
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
