@@ -1697,7 +1697,7 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 		else    #( $ciphers eq "ciphercustom" && ! $cipherc )
 		{
 			$line =~ s/#//g;
-			$line   = "\tCiphers \"$cipher_pci\"";
+			$line   = "\tCiphers \"DEFAULT\"";
 			$output = 0;
 		}
 

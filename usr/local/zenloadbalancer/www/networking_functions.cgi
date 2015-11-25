@@ -34,7 +34,7 @@ if ( -e "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi" )
 #check if a port in a ip is up
 sub checkport    # ($host,$port)
 {
-	( $host, $port ) = @_;
+	my ( $host, $port ) = @_;
 
 	#use strict;
 	use IO::Socket;
@@ -81,7 +81,7 @@ sub listallips    # ()
 #list all real ips up in server
 sub listactiveips    # ($class)
 {
-	( $class ) = @_;
+	my $class = shift;
 
 	#list interfaces
 	use IO::Socket;
@@ -95,7 +95,6 @@ sub listactiveips    # ($class)
 	{
 		if ( ( $class eq "phvlan" && $if !~ /\:/ ) || $class eq "" )
 		{
-			#~ print 'if: '. $if . '<br>'; ###########################################
 			my $flags = $s->if_flags( $if );
 			$ip      = $s->if_addr( $if );
 			$hwaddr  = $s->if_hwaddr( $if );
@@ -103,11 +102,9 @@ sub listactiveips    # ($class)
 			$gw      = $s->if_dstaddr( $if );
 			$bc      = $s->if_broadcast( $if );
 
-			#if ( $bc && ($bc !~ /^0\.0\.0\.0$/) )
 			#cluster ip will not be listed
 			$clrip = &getClusterRealIp();
 
-		 #			print &array2stringCol( $bc, $ip, $clrip, &GUIip() ); #########################
 			if (    $bc
 				 && $ip !~ /^127\.0\.0\.1$/
 				 && $ip ne $clrip
@@ -130,7 +127,8 @@ sub listactiveips    # ($class)
 # list all interfaces
 sub listActiveInterfaces    # ($class)
 {
-	( $class ) = @_;
+	my $class = shift;
+
 	my $s = IO::Socket::INET->new( Proto => 'udp' );
 	my @interfaces = $s->if_list;
 	my @aifaces;
@@ -156,8 +154,10 @@ sub listActiveInterfaces    # ($class)
 #check if a ip is ok structure
 sub ipisok    # ($checkip)
 {
-	( $checkip ) = @_;
+	my $checkip = shift;
+
 	use Data::Validate::IP;
+
 	if ( is_ipv4( $checkip ) )
 	{
 		return "true";
@@ -171,7 +171,8 @@ sub ipisok    # ($checkip)
 #function checks if ip is in a range
 sub ipinrange    # ($netmask, $toip, $newip)
 {
-	( $netmask, $toip, $newip ) = @_;
+	my ( $netmask, $toip, $newip ) = @_;
+
 	use Net::IPv4Addr qw( :all );
 
 	#$ip_str1="10.234.18.13";
@@ -191,7 +192,7 @@ sub ipinrange    # ($netmask, $toip, $newip)
 #function check if interface exist
 sub ifexist    # ($niface)
 {
-	( $nif ) = @_;
+	my $nif = shift;
 
 	use IO::Socket;
 	use IO::Interface qw(:flags);
@@ -218,7 +219,7 @@ sub ifexist    # ($niface)
 # saving network interfaces config files
 sub writeConfigIf    # ($if,$string)
 {
-	( $if, $string ) = @_;
+	my ( $if, $string ) = @_;
 
 	open CONFFILE, "> $configdir/if\_$if\_conf";
 	print CONFFILE "$string\n";
@@ -229,7 +230,7 @@ sub writeConfigIf    # ($if,$string)
 # create table route identification
 sub writeRoutes      # ($if)
 {
-	( $if ) = @_;
+	my $if = shift;
 
 	open ROUTINGFILE, '<', $rttables;
 	my @contents = <ROUTINGFILE>;
@@ -271,7 +272,10 @@ sub writeRoutes      # ($if)
 # add local network into routing table
 sub addlocalnet    # ($if)
 {
-	$ip = &iponif( $if );
+	my $if = shift;
+
+	my $ip = &iponif( $if );
+
 	if ( $ip =~ /\./ )
 	{
 		$ipmask = &maskonif( $if );
@@ -287,8 +291,11 @@ sub addlocalnet    # ($if)
 # ask for rules
 sub isRule    # ($ip,$if)
 {
-	$existRule = 0;
-	@eject     = `$ip_bin rule list`;
+	my ( $ip, $if ) = @_;
+
+	my $existRule = 0;
+	my @eject     = `$ip_bin rule list`;
+
 	for ( @eject )
 	{
 		if ( $_ =~ /from $ip lookup table_$if/ )
@@ -302,8 +309,9 @@ sub isRule    # ($ip,$if)
 # apply routes
 sub applyRoutes    # ($table,$if,$gw)
 {
-	( $table, $if, $gw ) = @_;
-	$statusR = 0;
+	my ( $table, $if, $gw ) = @_;
+
+	my $statusR = 0;
 	chomp ( $gw );
 
 	$ip = &iponif( $if );
@@ -312,7 +320,6 @@ sub applyRoutes    # ($table,$if,$gw)
 	{
 		if ( $table eq "local" )
 		{
-
 			# Apply routes on the interface table
 			if ( $ip !~ /\./ )
 			{
@@ -337,14 +344,15 @@ sub applyRoutes    # ($table,$if,$gw)
 		}
 		else
 		{
-
 			# Apply routes on the global table
 			&delRoutes( "global", $if );
 			if ( $gw !~ /^$/ )
 			{
 				&logfile( "running '$ip_bin route add default via $gw dev $if $routeparams' " );
+				
 				@eject = `$ip_bin route add default via $gw dev $if $routeparams 2> /dev/null`;
 				$statusR = $?;
+				
 				tie @contents, 'Tie::File', "$globalcfg";
 				for ( @contents )
 				{
@@ -360,7 +368,6 @@ sub applyRoutes    # ($table,$if,$gw)
 	}
 	else
 	{
-
 		# Include rules for virtual interfaces
 		&delRoutes( "global", $if );
 		if ( $ip !~ /\./ )
@@ -371,6 +378,7 @@ sub applyRoutes    # ($table,$if,$gw)
 		if ( &isRule( $ip, $iface[0] ) eq 0 )
 		{
 			&logfile( "running '$ip_bin rule add from $ip table table_$iface[0]' " );
+			
 			@eject   = `$ip_bin rule add from $ip table table_$iface[0]  2> /dev/null`;
 			$statusR = $?;
 		}
@@ -381,15 +389,14 @@ sub applyRoutes    # ($table,$if,$gw)
 # delete routes
 sub delRoutes    # ($table,$if)
 {
-	( $table, $if ) = @_;
+	my ( $table, $if ) = @_;
 
-	$ip = &iponif( $if );
+	my $ip = &iponif( $if );
 
 	if ( $if !~ /\:/ )
 	{
 		if ( $table eq "local" )
 		{
-
 			# Delete routes on the interface table
 			if ( $ip !~ /\./ )
 			{
@@ -403,7 +410,6 @@ sub delRoutes    # ($table,$if)
 		}
 		else
 		{
-
 			# Delete routes on the global table
 			&logfile( "running '$ip_bin route del default' " );
 			@eject  = `$ip_bin route del default 2> /dev/null`;
@@ -423,7 +429,6 @@ sub delRoutes    # ($table,$if)
 	}
 	else
 	{
-
 		# Delete rules for virtual interfaces
 		if ( $ip !~ /\./ )
 		{
@@ -439,9 +444,10 @@ sub delRoutes    # ($table,$if)
 # create network interface
 sub createIf    # ($if)
 {
-	( $if ) = @_;
+	my $if = shift;
 
 	my $status = 0;
+
 	if ( $if =~ /\./ )
 	{
 		my @iface = split ( /\./, $if );
@@ -460,7 +466,7 @@ sub createIf    # ($if)
 # up network interface
 sub upIf    # ($if)
 {
-	my ( $if ) = @_;
+	my $if = shift;
 
 	my $status = 0;
 	&logfile( "running '$ip_bin link set $if up' " );
@@ -472,9 +478,10 @@ sub upIf    # ($if)
 # down network interface
 sub downIf    # ($if)
 {
-	( $if ) = @_;
+	my $if = shift;
 
-	$status = 0;
+	my $status = 0;
+
 	if ( $if !~ /\:/ )
 	{
 		&logfile( "running '$ip_bin link set $if down' " );
@@ -493,16 +500,18 @@ sub downIf    # ($if)
 # delete network interface
 sub delIf    # ($if)
 {
-	( $if ) = @_;
+	my $if = shift;
 
 	my $status = 0;
 	my $file   = "$configdir/if_$if\_conf";
 	unlink ( $file );
 	$status = $?;
+
 	if ( $status != 0 )
 	{
 		return $status;
 	}
+
 	if ( $if !~ /\:/ )
 	{
 		&logfile( "running '$ip_bin address flush dev $if' " );
@@ -537,7 +546,7 @@ sub delIf    # ($if)
 # get default gw for interface
 sub getDefaultGW    # ($if)
 {
-	( $if ) = @_;
+	my $if = shift;
 
 	if ( $if ne "" )
 	{
@@ -584,7 +593,7 @@ sub getIfDefaultGW    # ()
 #know if and return ip
 sub iponif            # ($if)
 {
-	( $if ) = @_;
+	my $if = shift;
 
 	use IO::Socket;
 	use IO::Interface qw(:flags);
@@ -599,7 +608,7 @@ sub iponif            # ($if)
 # return the mask of an if
 sub maskonif    # ($if)
 {
-	( $if ) = @_;
+	my $if = shift;
 
 	use IO::Socket;
 	use IO::Interface qw(:flags);
@@ -612,7 +621,7 @@ sub maskonif    # ($if)
 #return the gw of a if
 sub gwofif    # ($if)
 {
-	( $if ) = @_;
+	my $if = shift;
 
 	open FGW, "<$configdir\/if\_$if\_conf";
 	@gw_if = <FGW>;
@@ -663,7 +672,7 @@ sub getNetstatFilter    # ($proto,$state,$ninfo,$fpid,@netstat)
 
 sub getDevData    # ($dev)
 {
-	( $dev ) = @_;
+	my $dev = shift;
 	open FI, "</proc/net/dev";
 	my $exit = "false";
 	my @dataout;
@@ -704,10 +713,12 @@ sub getDevData    # ($dev)
 # send gratuitous ARP frames
 sub sendGArp    # ($if,$ip)
 {
-	( $if, $ip ) = @_;
+	my ( $if, $ip ) = @_;
+
 	my @iface = split ( ":.", $if );
 	&logfile( "sending '$arping_bin -c 2 -A -I $iface[0] $ip' " );
 	my @eject = `$arping_bin -c 2 -A -I $iface[0] $ip > /dev/null &`;
+
 	if ( $ext == 1 )
 	{
 		&sendGPing( $iface[0] );
@@ -717,7 +728,7 @@ sub sendGArp    # ($if,$ip)
 # Enable(true) / Disable(false) IP Forwarding
 sub setIpForward    # ($arg)
 {
-	( $arg ) = @_;
+	my $arg = shift;
 
 	my $status = -1;
 
@@ -746,9 +757,11 @@ sub flushCacheRoutes    # ()
 # Return if interface is used for datalink farm
 sub uplinkUsed          # ($if)
 {
-	( $if ) = @_;
+	my $if     = shift;
+
 	my @farms  = &getFarmsByType( "datalink" );
 	my $output = "false";
+	
 	foreach $farm ( @farms )
 	{
 		my $farmif = &getFarmVip( "vipp", $farm );
@@ -763,7 +776,7 @@ sub uplinkUsed          # ($if)
 
 sub isValidPortNumber    # ($port)
 {
-	my ( $port ) = @_;
+	my $port = shift;
 	my $valid;
 
 	if ( defined ( $port ) && $port >= 1 && $port <= 65535 )
@@ -782,7 +795,7 @@ sub isValidPortNumber    # ($port)
 
 sub getInterfaceList
 {
-	my ( $socket ) = @_;
+	my $socket = shift;
 
 	# udp for a basic socket
 	$socket = getIOSocket() if !defined ( $socket );
@@ -799,7 +812,7 @@ sub getIOSocket
 
 sub getVipOutputIp
 {
-	my ( $vip ) = @_;
+	my $vip = shift;
 
 	my $socket = &getIOSocket();
 	my $device;
@@ -837,7 +850,7 @@ sub getVirtualInterfaceFilenameList
 
 sub getInterfaceOfIp
 {
-	my ( $ip ) = @_;
+	my $ip = shift;
 
 	foreach $iface ( &getInterfaceList() )
 	{
