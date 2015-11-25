@@ -271,7 +271,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 	my $ip = &iponif( $iface );
 	if ( $ip =~ /\./ )
 	{
-		my $ipmask = &maskonif( $if );
+		my $ipmask = &maskonif( $iface );
 		my ( $net, $mask ) = ipv4_network( "$ip / $ipmask" );
 		&logfile( "running $ip_bin rule add from $net/$mask lookup table_$iface" );
 		my @eject = `$ip_bin rule add from $net/$mask lookup table_$iface 2> /dev/null`;
@@ -332,7 +332,7 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 		my $ip = &iponif( $iface );
 		if ( $ip =~ /\./ )
 		{
-			my $ipmask = &maskonif( $if );
+			my $ipmask = &maskonif( $iface );
 			my ( $net, $mask ) = ipv4_network( "$ip / $ipmask" );
 
 			&logfile( "running $ip_bin rule del from $net/$mask lookup table_$iface" );
