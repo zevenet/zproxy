@@ -441,31 +441,6 @@ sub getFarmEstConns    # ($farm_name,@netstat)
 }
 
 #
-sub getBackendTWConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
-{
-	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
-
-	my $farm_type = &getFarmType( $farm_name );
-	my @nets      = ();
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		@nets =
-		  &getTcpUdpBackendTWConns( $farm_name, $ip_backend, $port_backend, @netstat );
-	}
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		@nets =
-		  &getHTTPBackendTWConns( $farm_name, $ip_backend, $port_backend, @netstat );
-	}
-	if ( $farm_type eq "l4xnat" )
-	{
-		@nets = &getL4BackendTWConns( $farm_name, $ip_backend, @netstat );
-	}
-
-	return @nets;
-}
-
 sub getBackendSYNConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
@@ -1141,8 +1116,8 @@ sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	return $stat;
 }
 
-#
-sub setFarmServer # ($ids,$rip,$port,$max,$weight,$priority,$timeout,$farm_name,$service)
+# Add a new Backend
+sub setFarmServer # $output ($ids,$rip,$port,$max,$weight,$priority,$timeout,$farm_name,$service)
 {
 	my (
 		 $ids,      $rip,     $port,      $max, $weight,
@@ -1181,13 +1156,15 @@ sub setFarmServer # ($ids,$rip,$port,$max,$weight,$priority,$timeout,$farm_name,
 							  $service, );
 	}
 
+	# FIXME: include setGSLBFarmNewBackend
+
 	return $output;
 }
 
 #
 sub runFarmServerDelete    # ($ids,$farm_name,$service)
 {
-	( $ids, $farm_name, $service ) = @_;
+	my ( $ids, $farm_name, $service ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
@@ -1308,7 +1285,7 @@ sub getFarmBackendsClients    # ($idserver,@content,$farm_name)
 #function that return the status information of a farm:
 sub getFarmBackendsClientsList    # ($farm_name,@content)
 {
-	( $farm_name, @content ) = @_;
+	my ( $farm_name, @content ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
 	my @output;
@@ -1328,7 +1305,7 @@ sub getFarmBackendsClientsList    # ($farm_name,@content)
 
 sub setFarmBackendStatus    # ($farm_name,$index,$stat)
 {
-	( $farm_name, $index, $stat ) = @_;
+	my ( $farm_name, $index, $stat ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $farm_type     = &getFarmType( $farm_name );
@@ -1397,6 +1374,8 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	# delete old graphs
 	unlink ( "img/graphs/bar$farm_name.png" );
 
+	# FIXME: farmguardian files
+	# FIXME: logfiles
 	return $output;
 }
 
@@ -1432,10 +1411,13 @@ sub getFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	{
 		$output = &getTcpUdpFarmBackendMaintenance( $farm_name, $backend );
 	}
-
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	elsif ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$output = &getHTTPFarmBackendMaintenance( $farm_name, $backend, $service );
+	}
+	elsif ( $farm_type eq "l4xnat" )
+	{
+		$output = &getL4FarmBackendMaintenance( $farm_name, $backend );
 	}
 
 	return $output;
@@ -1453,10 +1435,13 @@ sub setFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	{
 		$output = &setTcpUdpFarmBackendMaintenance( $farm_name, $backend );
 	}
-
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	elsif ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$output = &setHTTPFarmBackendMaintenance( $farm_name, $backend, $service );
+	}
+	elsif ( $farm_type eq "l4xnat" )
+	{
+		$output = &setL4FarmBackendMaintenance( $farm_name, $backend );
 	}
 
 	return $output;
@@ -1474,10 +1459,13 @@ sub setFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 	{
 		$output = &setTcpUdpFarmBackendNoMaintenance( $farm_name, $backend );
 	}
-
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	elsif ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$output = &setHTTPFarmBackendNoMaintenance( $farm_name, $backend, $service );
+	}
+	elsif ( $farm_type eq "l4xnat" )
+	{
+		$output = &setL4FarmBackendNoMaintenance( $farm_name, $backend );
 	}
 
 	return $output;
