@@ -1738,6 +1738,7 @@ sub getFarmCipherList    # ($farm_name)
 sub getFarmCipherSet    # ($farm_name)
 {
 	my $farm_name = shift // $farmname;
+
 	my $output = -1;
 
 	my $cipher_list = &getFarmCipherList( $farm_name );
@@ -1792,6 +1793,7 @@ sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 		{
 			$sw = 1;
 		}
+
 		if ( $line =~ /$backend\. Backend/ && $sw == 1 )
 		{
 			my @line = split ( "\ ", $line );
@@ -1867,7 +1869,7 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 #function that save in a file the backend status (maintenance or not)
 sub getFarmHttpBackendStatus    # ($farm_name,$backend,$status,$idsv)
 {
-	( $farm_name, $backend, $status, $idsv ) = @_;
+	my ( $farm_name, $backend, $status, $idsv ) = @_;
 
 	my $statusfile = "$configdir\/$farm_name\_status.cfg";
 	my $changed    = "false";
@@ -1943,7 +1945,8 @@ sub getFarmHttpBackendStatus    # ($farm_name,$backend,$status,$idsv)
 #Function that removes a backend from the status file
 sub runRemovehttpBackend    # ($farm_name,$backend,$service)
 {
-	( $farm_name, $backend, $service ) = @_;
+	my ( $farm_name, $backend, $service ) = @_;
+
 	my $i      = -1;
 	my $j      = -1;
 	my $change = "false";
@@ -1974,9 +1977,11 @@ sub runRemovehttpBackend    # ($farm_name,$backend,$service)
 
 sub setFarmHttpBackendStatus    # ($farm_name)
 {
-	( $farm_name ) = @_;
+	my $farm_name = shift;
+
 	my $line;
 	&logfile( "Setting backends status in farm $farm_name" );
+
 	open FR, "<$configdir\/$farm_name\_status.cfg";
 	while ( <FR> )
 	{
