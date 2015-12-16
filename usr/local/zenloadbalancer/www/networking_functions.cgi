@@ -349,10 +349,10 @@ sub applyRoutes    # ($table,$if,$gw)
 			if ( $gw !~ /^$/ )
 			{
 				&logfile( "running '$ip_bin route add default via $gw dev $if $routeparams' " );
-				
+
 				@eject = `$ip_bin route add default via $gw dev $if $routeparams 2> /dev/null`;
 				$statusR = $?;
-				
+
 				tie @contents, 'Tie::File', "$globalcfg";
 				for ( @contents )
 				{
@@ -378,7 +378,7 @@ sub applyRoutes    # ($table,$if,$gw)
 		if ( &isRule( $ip, $iface[0] ) eq 0 )
 		{
 			&logfile( "running '$ip_bin rule add from $ip table table_$iface[0]' " );
-			
+
 			@eject   = `$ip_bin rule add from $ip table table_$iface[0]  2> /dev/null`;
 			$statusR = $?;
 		}
@@ -757,11 +757,11 @@ sub flushCacheRoutes    # ()
 # Return if interface is used for datalink farm
 sub uplinkUsed          # ($if)
 {
-	my $if     = shift;
+	my $if = shift;
 
 	my @farms  = &getFarmsByType( "datalink" );
 	my $output = "false";
-	
+
 	foreach $farm ( @farms )
 	{
 		my $farmif = &getFarmVip( "vipp", $farm );
