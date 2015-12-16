@@ -272,7 +272,7 @@ while ( 1 )
 	my $j = 0;
 
 	# backend loop. checking every backend.
-  JLOOP:
+  BACKEND_IDX:
 	while ( $j <= $i )    # $i is the NumberOfBackends-1
 	{
 		if ( $ARGV[1] eq "-l" || $ARGV[3] eq "-l" )
@@ -285,7 +285,7 @@ while ( 1 )
 		if ( @backendstatus[$j] =~ /maintenance/ )
 		{
 			$j++;
-			next JLOOP;
+			next BACKEND_IDX;
 		}
 
 		# substitute HOST and PORT variables for this backend's values
@@ -354,7 +354,6 @@ while ( 1 )
 			{
 				my $falg = &getFarmAlgorithm( $farmname );
 				&setFarmBackendStatus( $farmname, $j, "up" );
-				&sendL4ConfChange( $farmname );
 			}
 
 			@backendstatus[$j] = "active";
@@ -389,7 +388,6 @@ while ( 1 )
 			{
 				my $falg = &getFarmAlgorithm( $fname );
 				&setFarmBackendStatus( $farmname, $j, "fgDOWN" );
-				&sendL4ConfChange( $farmname );
 			}
 
 			@backendstatus[$j] = "fgDOWN";
