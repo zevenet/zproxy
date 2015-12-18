@@ -981,7 +981,7 @@ sub runTcpUdpFarmServerDelete    # ($ids,$farm_name)
 	my $output        = -1;
 
 	my $pen_ctl_command =
-	  "$pen_ctl 127.0.0.1:$farm_port server $ids address 0 port 0 max 0 weight 0 prio 0' deleting server $ids in $farm_name farm";
+	  "$pen_ctl 127.0.0.1:$farm_port server $ids address 0 port 0 max 0 weight 0 prio 0";
 
 	&logfile(
 			  "running '$pen_ctl_command' deleting server $ids in $farm_name farm" );
