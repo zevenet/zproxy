@@ -1287,10 +1287,10 @@ sub runL4FarmCreate    # ($vip,$farm_name)
 	my ( $vip, $farm_name ) = @_;
 
 	my $output    = -1;
-	my $farm_type = "l4xnat";
+	my $farm_type = 'l4xnat';
 
 	open FO, ">$configdir\/$farm_name\_$farm_type.cfg";
-	print FO "$farm_name\;all\;$vip\;*\;dnat\;weight\;none\;120\;up\n";
+	print FO "$farm_name\;all\;$vip\;*\;nat\;weight\;none\;120\;up\n";
 	close FO;
 	$output = $?;
 
