@@ -427,7 +427,7 @@ sub setFarmProto    # ($proto,$farm_name)
 	if ( $farm_type eq "l4xnat" )
 	{
 		use Tie::File;
-		tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+		tie @configfile, 'Tie::File', "$configdir\/$farm_filename" or return $output;
 		my $i = 0;
 		for my $line ( @configfile )
 		{
@@ -446,14 +446,12 @@ sub setFarmProto    # ($proto,$farm_name)
 				$line =
 				  "$args[0]\;$proto\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8]";
 				splice @configfile, $i, $line;
-				$output = $?;
 
 				&logfile( "setFarmProto >> line:$line" );
 			}
 			$i++;
 		}
-		untie @configfile;
-		$output = $?;
+		untie @configfile or return $output;
 	}
 
 	my $farm = &getL4FarmStruct( $farm_name );
@@ -465,7 +463,7 @@ sub setFarmProto    # ($proto,$farm_name)
 		$output = &refreshL4FarmRules( $farm );
 	}
 
-	return $output;
+	return;	# $output;
 }
 
 #
@@ -1290,7 +1288,7 @@ sub runL4FarmCreate    # ($vip,$farm_name)
 	my $farm_type = 'l4xnat';
 
 	open FO, ">$configdir\/$farm_name\_$farm_type.cfg";
-	print FO "$farm_name\;all\;$vip\;*\;nat\;weight\;none\;120\;up\n";
+	print FO "$farm_name\;tcp\;$vip\;80\;nat\;weight\;none\;120\;up\n";
 	close FO;
 	$output = $?;
 
