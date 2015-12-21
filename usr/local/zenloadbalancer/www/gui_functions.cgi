@@ -24,52 +24,35 @@
 #get ip GUI
 sub GUIip    # ()
 {
-	my $ip_gui;    # output
-
-	open $fo, "<", "$confhttp";
-	my @file = <$fo>;
-	close $fo;
-
-	my $guiip = $file[1];
-	my @guiip = split ( "=", $guiip );
+	open FO, "<$confhttp";
+	@file  = <FO>;
+	$guiip = @file[0];
+	@guiip = split ( "=", $guiip );
 	chomp ( @guiip );
+	@guiip[1] =~ s/\ //g;
+	return @guiip[1];
 
-	if ( $guiip[0] =~ /^#/ )
-	{
-		$ip_gui = "*";
-	}
-	else
-	{
-		$guiip[1] =~ s/\ //g;
-		$ip_gui = $guiip[1];
-	}
-
-	return $ip_gui;
 }
 
 #function that read the https port for GUI
 sub getGuiPort    # ($minihttpdconf)
 {
-	my $confhttp = shift;
-
-	open FR, "<$confhttp";
-	@httpdconffile = <FR>;
-	my @guiportline = split ( "=", $httpdconffile[2] );
+	( $minihttpdconf ) = @_;
+	open FR, "<$minihttpdconf";
+	@minihttpdconffile = <FR>;
+	my @guiportline = split ( "=", @minihttpdconffile[1] );
 	close FR;
-	$guiportline[1] =~ s/\ //g;
-
-	return $guiportline[1];
+	return @guiportline[1];
 }
 
 #function that write the https port for GUI
-sub setGuiPort    # ($httpsguiport,$httpdconf)
+sub setGuiPort    # ($httpsguiport,$minihttpdconf)
 {
-	my ( $httpsguiport, $httpdconf ) = @_;
-
+	( $httpsguiport, $minihttpdconf ) = @_;
 	$httpsguiport =~ s/\ //g;
 	use Tie::File;
-	tie @array, 'Tie::File', "$httpdconf";
-	@array[2] = "server!bind!1!port = $httpsguiport\n";
+	tie @array, 'Tie::File', "$minihttpdconf";
+	@array[1] = "port=$httpsguiport\n";
 	untie @array;
 }
 
@@ -78,211 +61,177 @@ sub createmenuservice    # ($fname,$sv,$pos)
 {
 	my ( $fname, $sv, $pos ) = @_;
 
-	my $serv20   = $sv;
-	my $serv     = $sv;
-	my $filefarm = &getFarmFile( $fname );
+	my $serv20        = $sv;
+	my $serv          = $sv;
+	my $farm_filename = &getFarmFile( $fname );
+
 	use Tie::File;
-	tie @array, 'Tie::File', "$configdir/$filefarm";
+	tie @array, 'Tie::File', "$configdir/$farm_filename";
 	my @output = grep { /Service/ } @array;
 	untie @array;
+
 	$serv20 =~ s/\ /%20/g;
-	print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Delete service $serv\" onclick=\"return confirm('Are you sure you want to delete the Service $serv?')\">
-			<span class=\"icon-24 fugue-24 cross-circle\"></span>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"1-2\">
-		<input type=\"hidden\" name=\"action\" value=\"editfarm-deleteservice\">
-		<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">
-		<input type=\"hidden\" name=\"service\" value=\"$serv20\">
-		</form>";
+	print
+	  "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service=$serv20&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $svice\" onclick=\"return confirm('Are you sure you want to delete the Service $serv?')\" ></a> ";
+
 }
 
 #Refresh stats
 sub refreshstats    # ()
 {
-	print "<form method=\"post\" action=\"index.cgi\">";
-	print "<p class=\"grid_12\">";
-	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
+	print "<form method=\"get\" action=\"index.cgi\">";
+	print
+	  "<b>Refresh stats every</b><input type=\"hidden\" name=\"id\" value=\"$id\">";
+	print "<select name=\"refresh\" onchange=\"this.form.submit()\">";
+	print "<option value=\"Disabled\"> - </option>\n";
+	if ( $refresh eq "10" )
+	{
+		print "<option value=\"10\" selected>10</option>\n";
+	}
+	else
+	{
+		print "<option value=\"10\">10</option>\n";
+	}
+	if ( $refresh eq "30" )
+	{
+		print "<option value=\"30\" selected>30</option>\n";
+	}
+	else
+	{
+		print "<option value=\"30\">30</option>\n";
+	}
+	if ( $refresh eq "60" )
+	{
+		print "<option value=\"60\" selected>60</option>\n";
+	}
+	else
+	{
+		print "<option value=\"60\">60</option>\n";
+	}
+	if ( $refresh eq "120" )
+	{
+		print "<option value=\"120\" selected>120</option>\n";
+	}
+	else
+	{
+		print "<option value=\"120\">120</option>\n";
+	}
+
+	print
+	  "</select> <b>secs</b>, <font size=1>It can overload the zen server</font>";
+
 	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 	print
 	  "<input type=\"hidden\" name=\"viewtableclients\" value=\"$viewtableclients\">";
 	print "<input type=\"hidden\" name=\"viewtableconn\" value=\"$viewtableconn\">";
 	print
 	  "<input type=\"hidden\" value=\"managefarm\" name=\"action\" class=\"button small\">";
-	print "Refresh stats every: ";
 
-	print "<select name=\"refresh\" onchange=\"this.form.submit()\">";
-	print "<option value=\"Disabled\"> - </option>\n";
-
-	( $refresh eq "10" )
-	  ? print "<option value=\"10\" selected>10 seconds</option>\n"
-	  : print "<option value=\"10\">10 seconds</option>\n";
-
-	( $refresh eq "30" )
-	  ? print "<option value=\"30\" selected>30 seconds</option>\n"
-	  : print "<option value=\"30\">30 seconds</option>\n";
-
-	( $refresh eq "60" )
-	  ? print "<option value=\"60\" selected>60 seconds</option>\n"
-	  : print "<option value=\"60\">60 seconds</option>\n";
-
-	( $refresh eq "120" )
-	  ? print "<option value=\"120\" selected>120 seconds</option>\n"
-	  : print "<option value=\"120\">120 seconds</option>\n";
-
-	print "</select> NOTE: It can overload the Zen server.</p>";
-
+#print "<input type=\"submit\" value=\"Submit\" name=\"button\" class=\"button small\">";
 	print "</form>";
-	print "<div class=\"onlyclear\">&nbsp;</div>";
 }
 
 #Create menu for Actions in Conns stats
-sub createmenuvipstats    # ($name,$id,$status,$type)
+sub createmenuvipstats($name,$id,$status,$type)
 {
 	my ( $name, $id, $status, $type ) = @_;
 
-	if ( $type eq "datalink" )
-	{
-		print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Show interface graph for Farm $name\">
-			<i class=\"fa fa-bar-chart action-icon fa-fw gray\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"2-1\">
-		<input type=\"hidden\" name=\"action\" value=\"${id}iface\">
-		</form>";
-	}
-	else
-	{
-		print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Show connection graph for Farm $name\">
-			<i class=\"fa fa-bar-chart action-icon fa-fw gray\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"2-1\">
-		<input type=\"hidden\" name=\"action\" value=\"$name-farm\">
-		</form>";
-	}
+	print "<a href=\"index.cgi?id=2-1&action=$name-farm\" \">";
+	print "<img "
+	  . "src=\"img/icons/small/chart_bar.png\" "
+	  . "title=\"Show connection graphs for Farm $name\">";
+	print "</a> ";
 
-	if ( $status eq "up" )
+	if ( $status eq "up" && $type ne "gslb" )
 	{
-		print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\"  title=\"Show global status for $name\">
-			<i class=\"fa fa-line-chart action-icon fa-fw\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"1-2\">
-		<input type=\"hidden\" name=\"action\" value=\"managefarm\">
-		<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-		</form>";
+		print "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$name\">";
+		print "<img "
+		  . "src=\"img/icons/small/connect.png\" "
+		  . "title=\"View $name backends status\">";
+		print "</a> ";
 	}
 }
 
-#function that create the menu for manage the vips in HTTP Farm Table
-sub createmenuvip    # ($farm_name)
+#function that create the menu for manage the vips in Farm Table
+sub createmenuvip($name,$id,$status)
 {
-	my $farm_name = shift;
+	my ( $name, $id, $status ) = @_;
 
-	if ( &getFarmStatus( $farm_name ) eq 'up' )
+	if ( $status eq "up" )
 	{
-		# stop farm
 		print "<a "
-		  . "href=\"index.cgi?id=$id&action=stopfarm&farmname=$farm_name\" "
-		  . "onclick=\"return confirm('Are you sure you want to stop the farm: $farm_name?')\">";
+		  . "href=\"index.cgi?id=$id&action=stopfarm&farmname=$name\" "
+		  . "onclick=\"return confirm('Are you sure you want to stop the farm: $name?')\">";
+
 		print
-		  "<i class=\"fa fa-minus-circle action-icon fa-fw red\" title=\"Stop the $farm_name Farm\">";
-		print "</i>";
+		  "<img src=\"img/icons/small/farm_delete.png\" title=\"Stop the $name Farm\">";
 		print "</a> ";
 
-		# edit farm
-		print "<a href=\"index.cgi?id=$id&action=editfarm&farmname=$farm_name\">";
+		print "<a href=\"index.cgi?id=$id&action=editfarm&farmname=$name\">";
 		print
-		  "<i class=\"fa fa-pencil-square-o action-icon fa-fw\" title=\"Edit the $farm_name Farm\">";
-		print "</i>";
+		  "<img src=\"img/icons/small/farm_edit.png\" title=\"Edit the $name Farm\">";
 		print "</a> ";
 	}
 	else
 	{
-		# start farm
-		print "<a href=\"index.cgi?id=$id&action=startfarm&farmname=$farm_name\">";
+		print "<a href=\"index.cgi?id=$id&action=startfarm&farmname=$name\">";
 		print
-		  "<i class=\"fa fa-play-circle action-icon fa-fw green\" title=\"Start the $farm_name Farm\">";
-		print "</i>";
+		  "<img src=\"img/icons/small/farm_up.png\" title=\"Start the $name Farm\">";
 		print "</a> ";
-
-		my $farm_type = &getFarmType( $farm_name );
-		if ( $farm_type eq "gslb" )
-		{
-			print "<a href=\"index.cgi?id=$id&action=editfarm&farmname=$farm_name\">";
-			print
-			  "<i class=\"fa fa-pencil-square-o action-icon fa-fw\" title=\"Edit the $farm_name Farm\">";
-			print "</i>";
-			print "</a> ";
-		}
 	}
-
-	# delete farm
 	print "<a "
-	  . "href=\"index.cgi?id=$id&action=deletefarm&farmname=$farm_name\" "
-	  . "onclick=\"return confirm('Are you sure you want to delete the farm: $farm_name?')\">";
+	  . "href=\"index.cgi?id=$id&action=deletefarm&farmname=$name\" "
+	  . "onclick=\"return confirm('Are you sure you wish to delete the farm: $name?')\">";
 	print
-	  "<i class=\"fa fa-times-circle action-icon fa-fw red\" title=\"Delete the $farm_name Farm\">";
-	print "</i>";
+	  "<img src=\"img/icons/small/farm_cancel.png\" title=\"Delete the $name Farm\">";
 	print "</a> ";
 }
 
 #
-sub createmenuGW    # ($id,$action)
+sub createmenuGW($id,$action)
 {
 	my ( $id, $action ) = @_;
 
 	if ( $action =~ /editgw/ )
 	{
-		# Save GW (the beginning of form is in corresponding content)
-		print "
-		<button type=\"submit\" class=\"myicons\" title=\"Save default GW\">
-			<i class=\"fa fa-floppy-o fa-fw action-icon\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"$id\">
-		<input type=\"hidden\" name=\"action\" value=\"editgw\">
-		</form>";
+		print "<input " . "type=\"hidden\" " . "name=\"action\" " . "value=\"editgw\">";
+		print "<input "
+		  . "type=\"image\" "
+		  . "src=\"img/icons/small/disk.png\" "
+		  . "onclick=\"submit();\" "
+		  . "name=\"action\" "
+		  . "type=\"submit\" "
+		  . "value=\"editgw\" "
+		  . "title=\"save "
+		  . "default gw\">";
 
-		#Cancel
-		print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Cancel\">
-			<i class=\"fa fa-sign-out fa-fw action-icon\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"$id\">
-		</form>";
+		print "<a href=\"index.cgi?id=$id\">";
+		print "<img src=\"img/icons/small/arrow_left.png\" title=\"cancel operation\">";
+		print "</a> ";
 	}
 	else
 	{
-		print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Edit default GW\">
-			<i class=\"fa fa-pencil-square-o action-icon fa-fw\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"$id\">
-		<input type=\"hidden\" name=\"action\" value=\"editgw\">
-		</form>";
-
-		print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Cancel\" onclick=\"return confirm('Are you sure you wish to delete the default gateway?')\">
-			<i class=\"fa fa-times-circle action-icon fa-fw red\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"$id\">
-		<input type=\"hidden\" name=\"action\" value=\"deletegw\">
-		</form>";
+		print "<a href=\"index.cgi?id=$id&action=editgw\">";
+		print "<img "
+		  . "src=\"img/icons/small/pencil.png\" "
+		  . "title=\"edit "
+		  . "default GW\"/>";
+		print "</a>";
+		print "&nbsp";
+		print "<a "
+		  . "href=\"index.cgi?id=$id&action=deletegw\" "
+		  . "onclick=\"return confirm('Are you sure you wish to delete the default gateway?')\">";
+		print "<img "
+		  . "src=\"img/icons/small/delete.png\" "
+		  . "title=\"delete default GW\"/>";
+		print "</a> ";
 	}
 }
 
 #function create menu for interfaces in id 3-2
-sub createmenuif    # ($if, $id, $configured, $status)
+sub createmenuif($if, $id, $configured, $state)
 {
-	my ( $if, $id, $configured, $status ) = @_;
+	my ( $if, $id, $configured, $state ) = @_;
 
 	use IO::Socket;
 	use IO::Interface qw(:flags);
@@ -312,7 +261,6 @@ sub createmenuif    # ($if, $id, $configured, $status)
 			$locked = "true";
 		}
 	}
-
 	if ( $ip !~ /^$/ && ( ( $ip eq $clrip ) || ( $ip eq $guiip ) ) )
 	{
 		$locked = "true";
@@ -322,16 +270,15 @@ sub createmenuif    # ($if, $id, $configured, $status)
 	{
 		if ( $locked eq "false" )
 		{
-			print "
-			<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-			<button type=\"submit\" class=\"myicons\" title=\"down network interface\" onclick=\"return confirm('Are you sure you wish to shutdown the interface: $if?')\">
-				<i class=\"fa fa-minus-circle action-icon fa-fw red\"></i>
-			</button>
-			<input type=\"hidden\" name=\"id\" value=\"$id\">
-			<input type=\"hidden\" name=\"action\" value=\"downif\">
-			<input type=\"hidden\" name=\"if\" value=\"$if\">
-			</form>";
+			print "<a "
+			  . "href=\"index.cgi?id=$id&action=downif&if=$if\" "
+			  . "onclick=\"return confirm('Are you sure you wish to shutdown the interface: $if?')\">";
 
+			print "<img "
+			  . "src=\"img/icons/small/plugin_stop.png\" "
+			  . "title=\"down network interface\">";
+
+			print "</a> ";
 			$source = "system";
 		}
 	}
@@ -341,38 +288,24 @@ sub createmenuif    # ($if, $id, $configured, $status)
 		{
 			if ( $locked eq "false" )
 			{
-				print "
-				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"up network interface\">
-					<i class=\"fa fa-play-circle action-icon fa-fw green\"></i>
-				</button>
-				<input type=\"hidden\" name=\"id\" value=\"$id\">
-				<input type=\"hidden\" name=\"action\" value=\"upif\">
-				<input type=\"hidden\" name=\"if\" value=\"$if\">
-				</form>";
-
+				print "<a href=\"index.cgi?id=$id&action=upif&if=$if\">";
+				print
+				  "<img src=\"img/icons/small/plugin_upn.png\" title=\"up network interface\">";
+				print "</a> ";
 				$source = "files";
 			}
 		}
 	}
 
-	if ( ( ( $ip ne $clrip ) && ( $ip ne $guiip ) )
-		 || !$ip )
+	if ( ( ( $ip ne $clrip ) && ( $ip ne $guiip ) ) || !$ip )
 	{
 		if ( $locked eq "false" )
 		{
-			print "
-				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"edit network interface\">
-					<i class=\"fa fa-pencil-square-o action-icon fa-fw\"></i>
-				</button>
-				<input type=\"hidden\" name=\"id\" value=\"$id\">
-				<input type=\"hidden\" name=\"action\" value=\"editif\">
-				<input type=\"hidden\" name=\"if\" value=\"$if\">
-				<input type=\"hidden\" name=\"source\" value=\"$source\">
-				<input type=\"hidden\" name=\"status\" value=\"$status\">
-				<input type=\"hidden\" name=\"toif\" value=\"$if\">
-				</form>";
+			print
+			  "<a href=\"index.cgi?id=$id&action=editif&if=$if&toif=$if&source=$source&status=$status\">";
+			print
+			  "<img src=\"img/icons/small/plugin_edit.png\" title=\"edit network interface\">";
+			print "</a> ";
 		}
 	}
 
@@ -381,15 +314,11 @@ sub createmenuif    # ($if, $id, $configured, $status)
 		#virtual interface
 		if ( $locked eq "false" )
 		{
-			print "
-				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"delete network interface\" onclick=\"return confirm('Are you sure you wish to delete the virtual interface: $if?')\">
-					<i class=\"fa fa-times-circle fa-fw action-icon red\"></i>
-				</button>
-				<input type=\"hidden\" name=\"id\" value=\"$id\">
-				<input type=\"hidden\" name=\"action\" value=\"deleteif\">
-				<input type=\"hidden\" name=\"if\" value=\"$if\">
-				</form>";
+			print
+			  "<a href=\"index.cgi?id=$id&action=deleteif&if=$if\" onclick=\"return confirm('Are you sure you wish to delete the virtual interface: $if?')\">";
+			print
+			  "<img src=\"img/icons/small/plugin_delete.png\" title=\"delete network interface\">";
+			print "</a> ";
 		}
 	}
 	else
@@ -399,75 +328,38 @@ sub createmenuif    # ($if, $id, $configured, $status)
 		{
 			if ( $locked eq "false" )
 			{
-				print "
-				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"add virtual network interface\">
-					<i class=\"fa fa-plus-circle fa-fw action-icon\"></i>
-				</button>
-				<input type=\"hidden\" name=\"id\" value=\"$id\">
-				<input type=\"hidden\" name=\"action\" value=\"addvip\">
-				<input type=\"hidden\" name=\"toif\" value=\"$if\">
-				</form>";
-
-				print "
-				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"delete network interface\" onclick=\"return confirm('Are you sure you wish to delete the physical interface: $if?')\">
-					<i class=\"fa fa-times-circle fa-fw action-icon red\"></i>
-				</button>
-				<input type=\"hidden\" name=\"id\" value=\"$id\">
-				<input type=\"hidden\" name=\"action\" value=\"deleteif\">
-				<input type=\"hidden\" name=\"if\" value=\"$if\">
-				</form>";
+				print
+				  "<a href=\"index.cgi?id=$id&action=addvip&toif=$if\"><img src=\"img/icons/small/pluginv_add.png\" title=\"add virtual network interface\"></a> ";
+				print
+				  "<a href=\"index.cgi?id=$id&action=deleteif&if=$if\" onclick=\"return confirm('Are you sure you wish to delete the physical interface: $if?')\"><img src=\"img/icons/small/plugin_delete.png\" title=\"delete network interface\"></a> ";
 			}
 		}
 		else
 		{
-			print "
-				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"add virtual network interface\">
-					<i class=\"fa fa-plus-circle fa-fw action-icon\"></i>
-				</button>
-				<input type=\"hidden\" name=\"id\" value=\"$id\">
-				<input type=\"hidden\" name=\"action\" value=\"addvip\">
-				<input type=\"hidden\" name=\"toif\" value=\"$if\">
-				</form>";
-
-			print "
-				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"add vlan network interface\">
-					<i class=\"fa fa-plus-circle green fa-fw action-icon\"></i>
-				</button>
-				<input type=\"hidden\" name=\"id\" value=\"$id\">
-				<input type=\"hidden\" name=\"action\" value=\"addvlan\">
-				<input type=\"hidden\" name=\"toif\" value=\"$if\">
-				</form>";
-
+			print
+			  "<a href=\"index.cgi?id=$id&action=addvip&toif=$if\"><img src=\"img/icons/small/pluginv_add.png\" title=\"add virtual network interface\"></a> ";
+			print
+			  "<a href=\"index.cgi?id=$id&action=addvlan&toif=$if\"><img src=\"img/icons/small/plugin_add.png\" title=\"add vlan network interface\"></a> ";
 			if ( $locked eq "false" )
 			{
-				print "
-				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"delete network interface\" onclick=\"return confirm('Are you sure you wish to delete the physical interface: $if?')\">
-					<i class=\"fa fa-times-circle fa-fw action-icon red\"></i>
-				</button>
-				<input type=\"hidden\" name=\"id\" value=\"$id\">
-				<input type=\"hidden\" name=\"action\" value=\"deleteif\">
-				<input type=\"hidden\" name=\"if\" value=\"$if\">
-				</form>";
+				print
+				  "<a href=\"index.cgi?id=$id&action=deleteif&if=$if\" onclick=\"return confirm('Are you sure you wish to delete the physical interface: $if?')\"><img src=\"img/icons/small/plugin_delete.png\" title=\"delete network interface\"></a> ";
 			}
 		}
 	}
 
 	if ( $locked eq "true" )
 	{
+		print "&nbsp&nbsp&nbsp&nbsp";
 		print
-		  "<i class=\"fa fa-lock action-icon fa-fw\" title=\"some actions are locked\">";
+		  "<img src=\"img/icons/small/lock.png\" title=\"some actions are locked\">";
 	}
 
 	print "</td>";
 }
 
 #function that create a menu for certificates actions
-sub createMenuFarmCert    # ($fname,$cname)
+sub createMenuFarmCert($fname,$cname)
 {
 	my ( $fname, $cname ) = @_;
 
@@ -481,43 +373,31 @@ sub createMenuFarmCert    # ($fname,$cname)
 }
 
 #function that create a menu for backup actions
-sub createmenubackup    # ($file)
+sub createmenubackup($file)
 {
-	my $file = shift;
+	my ( $file ) = @_;
 
-	# Apply
-	print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Apply $file backup and restart Zen Load Balancer service\">
-			<i class=\"fa fa-check-circle action-icon fa-fw green\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"$id\">
-		<input type=\"hidden\" name=\"action\" value=\"apply\">
-		<input type=\"hidden\" name=\"file\" value=\"$file\">
-		</form>";
-
-	# Download
-	print "<a href=\"downloads.cgi?filename=$file\">";
+	print "<a href=\"index.cgi?id=$id&action=apply&file=$file\">";
 	print
-	  "<i class=\"fa fa-download action-icon fa-fw\" title=\"Download $file backup\"></i>";
+	  "<img src=\"img/icons/small/accept2.png\"  title=\"Apply $file backup and restart Zen Load Balancer service\">";
 	print "</a>";
 
-	# Delete
-	print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Delete $file backup\" onclick=\"return confirm('Are you sure you wish to delete this backup?')\">
-			<i class=\"fa fa-times-circle action-icon fa-fw red\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"$id\">
-		<input type=\"hidden\" name=\"action\" value=\"del\">
-		<input type=\"hidden\" name=\"file\" value=\"$file\">
-		</form>";
+	print "<a href=\"downloads.cgi?filename=$file\">";
+	print
+	  "<img src=\"img/icons/small/arrow_down.png\"  title=\"Download $file backup\">";
+	print "</a>";
+
+	print
+	  "<a href=\"index.cgi?id=$id&action=del&file=$file\" onclick=\"return confirm('Are you sure you wish to delete this backup?')\">";
+	print
+	  "<img src=\"img/icons/small/cross_octagon.png\" title=\"Delete $file backup\">";
+	print "</a>";
 }
 
 #function that create a menu where you can enable/disable the server backend in a farm.
-sub createmenubackactions    # ($id_server)
+sub createmenubackactions($id_server)
 {
-	my $id_server = shift;
+	my ( $id_server ) = @_;
 
 	print
 	  "<input type=\"image\" src=\"img/icons/small/server_edit.png\" title=\"Edit Real Server $id_server\" name=\"action\" value=\"editfarm-editserver\"> ";
@@ -525,401 +405,182 @@ sub createmenubackactions    # ($id_server)
 	  "<input type=\"image\" src=\"img/icons/small/server_edit.png\" title=\"Edit Real Server $id_server\" name=\"action\" value=\"editfarm-editserver\"> ";
 }
 
-# function that create a menu for configure servers in a farm
-sub createmenuserversfarm    # ($action,$name,$id_server)
+#function that create a menu for configure servers in a farm
+sub createmenuserversfarm($action,$name,$id_server)
 {
 	my ( $actionmenu, $name, $id_server ) = @_;
-
 	my $type = &getFarmType( $name );
 
-	( $actionmenu eq "new" )
-	  ? print "<td class='gray'>"
-	  : print "<td>";
-
-	my $sv20 = $sv;
-	$sv20 =~ s/\ /%20/g;
-
+	print "<td>";
 	if ( $actionmenu eq "normal" )
 	{
-		if ( $type eq "http" || $type eq "https" )
-		{
-			print "
-			<form method=\"post\" action=\"index.cgi\#backendlist-$sv\" class=\"myform\">
-			<input type=\"hidden\" name=\"service\" value=\"$sv\">";
-		}
-		elsif ( $type eq "gslb" )
-		{
-			print "
-			<form method=\"post\" action=\"index.cgi\#servicelist-$srv\" class=\"myform\">
-			<input type=\"hidden\" name=\"service\" value=\"$srv\">
-			<input type=\"hidden\" name=\"service_type\" value=\"service\">
-			<input type=\"hidden\" name=\"lb\" value=\"$lb\">";
-		}
-		else
-		{
-			print "
-			<form method=\"post\" action=\"index.cgi\#backendlist\" class=\"myform\">";
-		}
-
-		print "
-		<button type=\"submit\" class=\"myicons\" title=\"Edit Real Server $id_server\">
-			<i class=\"fa fa-pencil-square-o action-icon fa-fw\"></i>
-		</button>";
-
-		print "
-		<input type=\"hidden\" name=\"id\" value=\"1-2\">
-		<input type=\"hidden\" name=\"action\" value=\"editfarm-editserver\">
-		<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-		<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-		</form>";
+		print "<input type=\"hidden\" name=\"action\" value=\"editfarm-editserver\">";
+		print
+		  "<input type=\"image\" src=\"img/icons/small/server_edit.png\" title=\"Edit Real Server $id_server\" name=\"action\" value=\"editfarm-editserver\">";
 
 		my $maintenance = &getFarmBackendMaintenance( $name, $id_server, $sv );
-		if ( $type ne "datalink" && $type ne "gslb" )
+		if ( $type ne "datalink" && $type ne "l4xnat" && $type ne "gslb" )
 		{
-			if ( $maintenance != 0 )
+			if ( $maintenance ne "0" )
 			{
-				print "
-				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"Enable maintenance mode for real Server $id_server $sv\" onclick=\"return confirm('Are you sure you want to enable the  maintenance mode for server: $id_server $sv?')\">
-					<i class=\"fa fa-minus-circle action-icon fa-fw red\"></i>
-				</button>
-				<input type=\"hidden\" name=\"id\" value=\"1-2\">
-				<input type=\"hidden\" name=\"action\" value=\"editfarm-maintenance\">
-				<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-				<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-				<input type=\"hidden\" name=\"service\" value=\"$sv\">
-				</form>";
+				print
+				  "<a href=index.cgi?action=editfarm-maintenance&id=1-2&farmname=$name&id_server=$id_server&service=$sv "
+				  . "title=\"Enable  maintenance mode for real Server $id_server $sv\" "
+				  . "onclick=\"return confirm('Are you sure you want to enable the  maintenance mode for server: $id_server $sv?')\">";
+				print "<img src=\"img/icons/small/server_maintenance.png\">";
+				print "</a>";
 			}
 			else
 			{
-				print "
-				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"Disable maintenance mode for real Server $id_server $sv\" onclick=\"return confirm('Are you sure you want to disable the  maintenance mode for server: $id_server $sv?')\">
-					<i class=\"fa fa-play-circle action-icon fa-fw green\"></i>
-				</button>
-				<input type=\"hidden\" name=\"id\" value=\"1-2\">
-				<input type=\"hidden\" name=\"action\" value=\"editfarm-nomaintenance\">
-				<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-				<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-				<input type=\"hidden\" name=\"service\" value=\"$sv\">
-				</form>";
+				print
+				  "<a href=index.cgi?action=editfarm-nomaintenance&id=1-2&farmname=$name&id_server=$id_server&service=$sv "
+				  . "title=\"Disable maintenance mode for real Server $id_server $sv\" "
+				  . "onclick=\"return confirm('Are you sure you want to disable the maintenance mode for server: $id_server $sv?')\">";
+				print "<img src=\"img/icons/small/server_ok.png\">";
+				print "</a>";
 			}
 		}
+
+		my $sv20 = $sv;
+		$sv20 =~ s/\ /%20/g;
 
 		if ( $type eq "gslb" )
 		{
 			if ( $id_server ne "primary" && $id_server ne "secondary" )
 			{
-				print "
-				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"Delete Real Server $id_server\" onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\">
-					<i class=\"fa fa-times-circle action-icon fa-fw red\"></i>
-				</button>
-				<input type=\"hidden\" name=\"id\" value=\"1-2\">
-				<input type=\"hidden\" name=\"action\" value=\"editfarm-deleteserver\">
-				<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-				<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-				<input type=\"hidden\" name=\"service\" value=\"$sv20\">
-				<input type=\"hidden\" name=\"service_type\" value=\"$service_type\">
-				</form>";
+				print
+				  "<a href=index.cgi?action=editfarm-deleteserver&id=1-2&farmname=$name&id_server=$id_server&service=$sv20&service_type=$service_type "
+				  . "title=\"Delete Real Server $id_server\" "
+				  . "onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\">";
+				print "<img src=\"img/icons/small/server_delete.png\">";
+				print "</a>";
 			}
 		}
 		else
 		{
-			print "
-				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"Delete Real Server $id_server\" onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\">
-					<i class=\"fa fa-times-circle action-icon fa-fw red\"></i>
-				</button>
-				<input type=\"hidden\" name=\"id\" value=\"1-2\">
-				<input type=\"hidden\" name=\"action\" value=\"editfarm-deleteserver\">
-				<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-				<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">";
-
-			if ( $type eq "http" || $type eq "https" || $type eq "gslb" )
-			{
-				print "<input type=\"hidden\" name=\"service\" value=\"$sv20\">";
-			}
-
-			print "</form>";
+			print
+			  "<a href=index.cgi?action=editfarm-deleteserver&id=1-2&farmname=$name&id_server=$id_server&service=$sv20 "
+			  . "title=\"Delete Real Server $id_server\" "
+			  . "onclick=\"return confirm('Are you sure you want to delete the server: $id_server?')\">";
+			print "<img src=\"img/icons/small/server_delete.png\">";
+			print "</a>";
 		}
 	}
 
 	if ( $actionmenu eq "add" )
 	{
-		# Save Server (the beginning of form is in corresponding content)
-		print "
-		<button type=\"submit\" class=\"myicons\" title=\"Save Real Server $id_server\">
-			<i class=\"fa fa-floppy-o fa-fw action-icon\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"1-2\">
-		<input type=\"hidden\" name=\"action\" value=\"editfarm-saveserver\">
-		<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-		<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-		</form>";
+		print "<input type=\"hidden\" name=\"action\" value=\"editfarm-saveserver\">";
+		print "<input "
+		  . "type=\"image\" "
+		  . "src=\"img/icons/small/server_save.png\" "
+		  . "title=\"Save Real Server $id_server\" "
+		  . "name=\"action\" value=\"editfarm-saveserver\">";
 
-		#Cancel
-		print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Cancel\">
-			<i class=\"fa fa-sign-out fa-fw action-icon\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"1-2\">
-		<input type=\"hidden\" name=\"action\" value=\"editfarm\">
-		<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-		<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-		</form>";
+		print "<a href=\"index.cgi?id=1-2&action=editfarm&farmname=$farmname\">";
+		print "<img src=\"img/icons/small/server_out.png\">";
+		print "</a>";
 	}
 
 	if ( $actionmenu eq "new" )
 	{
-		if ( $type eq "http" || $type eq "https" )
-		{
-			print "
-			<form method=\"post\" action=\"index.cgi\#backendlist-$sv\" class=\"myform\">
-			<button type=\"submit\" class=\"myicons\" title=\"Add Real Server\">
-				<i class=\"fa fa-plus-circle fa-fw action-icon\"></i>
-			</button>
-			<input type=\"hidden\" name=\"id\" value=\"1-2\">
-			<input type=\"hidden\" name=\"action\" value=\"editfarm-addserver\">
-			<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-			<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-			<input type=\"hidden\" name=\"service\" value=\"$sv\">";
-		}
-		elsif ( $type eq "gslb" )
-		{
-			print "
-			<form method=\"post\" action=\"index.cgi\#servicelist-$srv\" class=\"myform\">
-			<button type=\"submit\" class=\"myicons\" title=\"Add Real Server\">
-				<i class=\"fa fa-plus-circle fa-fw action-icon\"></i>
-			</button>
-			<input type=\"hidden\" name=\"id\" value=\"1-2\">
-			<input type=\"hidden\" name=\"action\" value=\"editfarm-addserver\">
-			<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-			<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-			<input type=\"hidden\" name=\"service\" value=\"$srv\">
-			<input type=\"hidden\" name=\"service_type\" value=\"service\">
-			<input type=\"hidden\" name=\"lb\" value=\"$lb\">
-			</form>";
-		}
-		else
-		{
-			print "
-			<form method=\"post\" action=\"index.cgi\#backendlist\" class=\"myform\">
-			<button type=\"submit\" class=\"myicons\" title=\"Add Real Server\">
-				<i class=\"fa fa-plus-circle fa-fw action-icon\"></i>
-			</button>
-			<input type=\"hidden\" name=\"id\" value=\"1-2\">
-			<input type=\"hidden\" name=\"action\" value=\"editfarm-addserver\">
-			<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-			<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-			</form>";
-		}
+		print "<input type=\"hidden\" name=\"action\" value=\"editfarm-addserver\">";
+		print "<input "
+		  . "type=\"image\" "
+		  . "src=\"img/icons/small/server_add.png\" "
+		  . "title=\"Add Real Server\" "
+		  . "name=\"action\" "
+		  . "value=\"editfarm-addserver\"> ";
 	}
 
 	if ( $actionmenu eq "edit" )
 	{
-		# Save Server (the beginning of form is in corresponding content)
-		print "
-		<button type=\"submit\" class=\"myicons\" title=\"Save Real Server $id_server\">
-			<i class=\"fa fa-floppy-o fa-fw action-icon\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"1-2\">
-		<input type=\"hidden\" name=\"action\" value=\"editfarm-saveserver\">
-		<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-		<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-		</form>";
+		print "<input type=\"hidden\" name=\"action\" value=\"editfarm-saveserver\">";
+		print "<input "
+		  . "type=\"image\" src=\"img/icons/small/server_save.png\" "
+		  . "title=\"Save Real Server $id_server\" "
+		  . "name=\"action\" value=\"editfarm-saveserver\"> ";
 
-		#Cancel
-		print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Cancel\">
-			<i class=\"fa fa-sign-out fa-fw action-icon\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"1-2\">
-		<input type=\"hidden\" name=\"action\" value=\"editfarm\">
-		<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-		<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-		</form>";
+		print "<a href=\"index.cgi?id=1-2&action=editfarm&farmname=$farmname\">";
+		print "<img src=\"img/icons/small/server_out.png\">";
+		print "</a>";
 	}
 
 	print "</td>";
 }
 
-#function that create a menu for configure zone resources in a gslb farm
-sub createmenuserversfarmz    # ($action,$name,$id_server)
-{
-	( $actionmenu, $name, $id_server ) = @_;
-
-	my $type = &getFarmType( $farmname );
-
-	( $actionmenu eq "new" )
-	  ? print "<td class='gray'>"
-	  : print "<td>";
-
-	if ( $actionmenu eq "normal" )
-	{
-		my $zoneaux = $zone;
-		$zoneaux =~ s/\./\_/g;
-
-		print "
-		<form method=\"post\" action=\"index.cgi\#zonelist-$zone\" class=\"myform\">
-			<input type=\"hidden\" name=\"service\" value=\"$zone\">
-			<input type=\"hidden\" name=\"service_type\" value=\"zone\">
-			<button type=\"submit\" class=\"myicons\" title=\"Edit Resource $id_server\">
-				<i class=\"fa fa-pencil-square-o action-icon fa-fw\"></i>
-			</button>
-			<input type=\"hidden\" name=\"id\" value=\"1-2\">
-			<input type=\"hidden\" name=\"action\" value=\"editfarm-editserver\">
-			<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-			<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-		</form>";
-
-		my $sv20 = $sv;
-		$sv20 =~ s/\ /%20/g;
-
-		print "
-			<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"Delete Resource $id_server\" onclick=\"return confirm('Are you sure you want to delete the resource: $id_server?')\">
-					<i class=\"fa fa-times-circle action-icon fa-fw red\"></i>
-				</button>
-				<input type=\"hidden\" name=\"id\" value=\"1-2\">
-				<input type=\"hidden\" name=\"action\" value=\"editfarm-deleteserver\">
-				<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-				<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-				<input type=\"hidden\" name=\"service\" value=\"$zone\">
-				<input type=\"hidden\" name=\"service_type\" value=\"zone\">
-			</form>";
-	}
-
-	if ( $actionmenu eq "add" )
-	{
-		my $zoneaux = $zone;
-		$zoneaux =~ s/\./\_/g;
-
-		# Save Server (the beginning of form is in corresponding content)
-		print "
-		<button type=\"submit\" class=\"myicons\" title=\"Save Resource $id_server\">
-			<i class=\"fa fa-floppy-o fa-fw action-icon\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"1-2\">
-		<input type=\"hidden\" name=\"action\" value=\"editfarm-saveserver\">
-		<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-		<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-		</form>";
-
-		#Cancel
-		print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Cancel\">
-			<i class=\"fa fa-sign-out fa-fw action-icon\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"1-2\">
-		<input type=\"hidden\" name=\"action\" value=\"editfarm\">
-		<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-		<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-		</form>";
-	}
-
-	if ( $actionmenu eq "new" )
-	{
-		print "
-		<form method=\"post\" action=\"index.cgi\#zonelist-$zone\" class=\"myform\">
-			<button type=\"submit\" class=\"myicons\" title=\"Add Resource\">
-				<i class=\"fa fa-plus-circle fa-fw action-icon\"></i>
-			</button>
-			<input type=\"hidden\" name=\"id\" value=\"1-2\">
-			<input type=\"hidden\" name=\"action\" value=\"editfarm-addserver\">
-			<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-			<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-			<input type=\"hidden\" name=\"service\" value=\"$zone\">
-			<input type=\"hidden\" name=\"service_type\" value=\"zone\">
-		</form>";
-	}
-
-	if ( $actionmenu eq "edit" )
-	{
-		# Save Server (the beginning of form is in corresponding content)
-		print "
-		<button type=\"submit\" class=\"myicons\" title=\"Save Resource $id_server\">
-			<i class=\"fa fa-floppy-o fa-fw action-icon\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"1-2\">
-		<input type=\"hidden\" name=\"action\" value=\"editfarm-saveserver\">
-		<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-		<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-		</form>";
-
-		#Cancel
-		print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Cancel\">
-			<i class=\"fa fa-sign-out fa-fw action-icon\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"1-2\">
-		<input type=\"hidden\" name=\"action\" value=\"editfarm\">
-		<input type=\"hidden\" name=\"farmname\" value=\"$name\">
-		<input type=\"hidden\" name=\"id_server\" value=\"$id_server\">
-		</form>";
-	}
-}
-
 #function that print a OK message
-sub successmsg    # ($string)
+sub successmsg($string)
 {
-	my $string = shift;
+	my ( $string ) = @_;
 
-	print "<div class=\"ad-notif-success grid_12 small-mg\">";
-	print "<p><b>SUCCESS!</b> $string</p>";
+	print "<div class=\"notification success\">";
+	print "<span class=\"strong\">SUCCESS!</span>";
+	print " $string.";
 	print "</div>";
-
 	&logfile( $string );
 }
 
 #function that print a TIP message
-sub tipmsg        # ($string)
+sub tipmsg($string)
 {
-	my $string = shift;
+	my ( $string ) = @_;
 
-	print "<div class=\"ad-notif-info grid_12 small-mg ad-notif-restart\">";
-	print "<p>";
-	print "<b>TIP!</b> $string. Restart HERE!";
-	print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">		
-		<button type=\"submit\" class=\"myicons\" title=\"restart\">
-			<i class=\"fa fa-refresh action-icon fa-fw green\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"$id\">
-		<input type=\"hidden\" name=\"action\" value=\"editfarm-restart\">
-		<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">
-		</form>";
+	print "<div class=\"notification tip\">";
+	print "<span class=\"strong\">TIP!</span>";
+	print " $string. Restart HERE! ";
+	print "<a href='index.cgi?id=$id&farmname=$farmname&action=editfarm-restart'>";
+	print "<img src='img/icons/small/arrow_refresh.png' title='restart'>";
+	print "</a>";
 	print "</div>";
-
 	&logfile( $string );
 }
 
 #function that print a WARNING message
-sub warnmsg    # ($string)
+sub warnmsg($string)
 {
-	my $string = shift;
+	my ( $string ) = @_;
 
-	print "<div class=\"ad-notif-warn grid_12 small-mg\">";
-	print "<p><b>WARNING!</b> $string</p>";
+	print "<div class=\"notification warning\">";
+	print "<span class=\"strong\">WARNING!</span>";
+	print " $string.";
 	print "</div>";
 
 	&logfile( $string );
 }
 
 #function that print a ERROR message
-sub errormsg    # ($string)
+sub errormsg($string)
 {
-	my $string = shift;
+	my ( $string ) = @_;
 
-	print "<div class=\"ad-notif-error grid_12 small-mg\">";
-	print "<p><b>ERROR!</b> $string</p>";
+	print "<div class=\"notification error\">";
+	print "<span class=\"strong\">ERROR!</span>";
+	print " $string.";
 	print "</div>";
 
 	&logfile( $string );
+}
+
+#function that create the menu for manage the vips in HTTP Farm Table
+sub createmenuviph    # ($name,$pid,$fproto)
+{
+	( $name, $id, $farmprotocol ) = @_;
+
+	if ( $pid =~ /^[1-9]/ )
+	{
+		print
+		  "<a href=\"index.cgi?id=$id&action=stopfarm&farmname=$name\" onclick=\"return confirm('Are you sure you want to stop the farm: $name?')\"><img src=\"img/icons/small/farm_delete.png\" title=\"Stop the $name Farm\"></a> ";
+		print
+		  "<a href=\"index.cgi?id=$id&action=editfarm&farmname=$name\"><img src=\"img/icons/small/farm_edit.png\" title=\"Edit the $name Farm\"></a> ";
+	}
+	else
+	{
+		print
+		  "<a href=\"index.cgi?id=$id&action=startfarm&farmname=$name\"><img src=\"img/icons/small/farm_up.png\" title=\"Start the $name Farm\"></a> ";
+	}
+	print
+	  "<a href=\"index.cgi?id=$id&action=deletefarm&farmname=$name\"><img src=\"img/icons/small/farm_cancel.png\" title=\"Delete the $name Farm\" onclick=\"return confirm('Are you sure you want to delete the farm: $name?')\"></a> ";
+
 }
 
 #
