@@ -1668,8 +1668,8 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	tie @array, 'Tie::File', "$configdir/$farm_filename";
-	for $line ( @array )
+	tie my @array, 'Tie::File', "$configdir/$farm_filename";
+	for my $line ( @array )
 	{
 		# takes the first Ciphers line only
 		next if ( $line !~ /Ciphers/ );
@@ -1697,7 +1697,7 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 		else    #( $ciphers eq "ciphercustom" && ! $cipherc )
 		{
 			$line =~ s/#//g;
-			$line   = "\tCiphers \"DEFAULT\"";
+			$line   = "\tCiphers \"ALL\"";
 			$output = 0;
 		}
 
