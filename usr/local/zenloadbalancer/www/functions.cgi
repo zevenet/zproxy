@@ -318,7 +318,6 @@ sub help($cod)
 	print "</a>";
 }
 
-
 #insert info in log file
 sub logfile($string)
 {

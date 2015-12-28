@@ -1851,9 +1851,10 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 	#find the service number
 	my $idsv = &getFarmVSI( $farm_name, $service );
 
-	&logfile( "setting Disabled maintenance mode for $farm_name backend $backend" );
+	&logfile(
+		"setting Disabled maintenance mode for $farm_name service $service backend $backend"
+	);
 
-	#
 	my $poundctl_command =
 	  "$poundctl -c /tmp/$farm_name\_pound.socket -B 0 $idsv $backend";
 

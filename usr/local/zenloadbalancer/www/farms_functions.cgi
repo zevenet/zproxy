@@ -441,6 +441,31 @@ sub getFarmEstConns    # ($farm_name,@netstat)
 }
 
 #
+sub getBackendTWConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
+{
+	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
+
+	my $farm_type = &getFarmType( $farm_name );
+	my @nets      = ();
+
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
+	{
+		@nets =
+		  &getTcpUdpBackendTWConns( $farm_name, $ip_backend, $port_backend, @netstat );
+	}
+	if ( $farm_type eq "http" || $farm_type eq "https" )
+	{
+		@nets =
+		  &getHTTPBackendTWConns( $farm_name, $ip_backend, $port_backend, @netstat );
+	}
+	if ( $farm_type eq "l4xnat" )
+	{
+		@nets = &getL4BackendTWConns( $farm_name, $ip_backend, @netstat );
+	}
+
+	return @nets;
+}
+
 sub getBackendSYNConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
@@ -717,7 +742,7 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 
 	if ( $farm_type eq "gslb" )
 	{
-		$status = &setGSLBFarmStatus( $farm_name, "start", $writeconf );
+		$status = &_runGSLBFarmStart( $farm_name, $writeconf );
 	}
 
 	if ( $farm_type eq "datalink" )
@@ -867,7 +892,7 @@ sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 
 	if ( $farm_type eq "GSLB" )
 	{
-		$output = &setGSLBFarm( $vip, $vip_port, $farm_name );
+		$output = &runGSLBFarmCreate( $vip, $vip_port, $farm_name );
 	}
 
 	return $output;
