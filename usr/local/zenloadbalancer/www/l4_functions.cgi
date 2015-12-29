@@ -21,7 +21,16 @@
 #
 ###############################################################################
 
-use Data::Dumper;
+use Tie::File;
+
+### Debug ###
+#~ use v5.14;
+#~ use strict;
+#~ use warnings;
+#~ use Data::Dumper;
+#~ require "/usr/local/zenloadbalancer/config/global.conf";
+#~ our ( $basedir, $configdir, $logdir, $logfile, $timeouterrors, $filecluster, $confhttp, $ntp, $backupfor, $backupdir, $rttables, $globalcfg, $version, $cipher_pci, $buy_ssl, $url, $htpass, $zapikey, $filedns, $fileapt, $tar, $ifconfig_bin, $ip_bin, $pen_bin, $pen_ctl, $fdisk_bin, $df_bin, $sshkeygen, $ssh, $scp, $rsync, $ucarp, $pidof, $ps, $tail, $zcat, $datentp, $arping_bin, $ping_bin, $openssl, $unzip, $mv, $ls, $cp, $iptables, $modprobe, $lsmod, $netstatNat, $gdnsd, $l4sd, $bin_id, $conntrack, $pound, $poundctl, $poundtpl, $piddir, $fwmarksconf, $defaultgw, $defaultgwif, $pingc, $libexec_dir, $farmguardian, $farmguardian_dir, $farmguardian_logs, $rrdap_dir, $img_dir, $rrd_dir, $log_rrd, $zenino, $zeninopid, $zeninolog, $zenrsync, $zenlatup, $zenlatdown, $zenlatlog, $zenbackup );
+# End Debug ###
 
 #
 sub getL4FarmsPorts    # ($farm_type)
@@ -128,7 +137,7 @@ sub runL4FarmRestart    # ($farm_name,$writeconf,$type)
 		open FILE, "<$pidfile";
 		my $pid = <FILE>;
 		close FILE;
-		kill USR1, $pid;
+		kill USR1 => $pid;
 		$output = $?;
 	}
 	else
@@ -161,7 +170,7 @@ sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
 		close FILE;
 
 		# reload config file
-		kill '-USR1', $pid;
+		kill USR1 => $pid;
 		$output = $?;
 	}
 	else
@@ -190,7 +199,7 @@ sub sendL4ConfChange    # ($farm_name)
 		my $pid = <$file>;
 		close $file;
 
-		kill USR1, $pid;
+		kill USR1 => $pid;
 		$output = $?;
 	}
 	else
@@ -211,10 +220,9 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 	my $output        = -1;
 	my $i             = 0;
 
-	use Tie::File;
-	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
-	for $line ( @configfile )
+	for my $line ( @configfile )
 	{
 		if ( $line =~ /^$farm_name\;/ )
 		{
@@ -286,8 +294,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 	my $i             = 0;
 	my $prev_alg      = getL4FarmAlgorithm( $farm_name );    # previous algorithm
 
-	use Tie::File;
-	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	for my $line ( @configfile )
 	{
@@ -426,8 +433,7 @@ sub setFarmProto    # ($proto,$farm_name)
 
 	if ( $farm_type eq "l4xnat" )
 	{
-		use Tie::File;
-		tie @configfile, 'Tie::File', "$configdir\/$farm_filename" or return $output;
+		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename" or return $output;
 		my $i = 0;
 		for my $line ( @configfile )
 		{
@@ -479,7 +485,7 @@ sub getFarmProto    # ($farm_name)
 	{
 		open FI, "<$configdir/$farm_filename";
 		my $first = "true";
-		while ( $line = <FI> )
+		while ( my $line = <FI> )
 		{
 			if ( $line ne "" && $first eq "true" )
 			{
@@ -507,7 +513,7 @@ sub getFarmNatType    # ($farm_name)
 	{
 		open FI, "<$configdir/$farm_filename";
 		my $first = "true";
-		while ( $line = <FI> )
+		while ( my $line = <FI> )
 		{
 			if ( $line ne "" && $first eq "true" )
 			{
@@ -535,10 +541,9 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 	if ( $farm_type eq "l4xnat" )
 	{
-		use Tie::File;
-		tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 		my $i = 0;
-		for $line ( @configfile )
+		for my $line ( @configfile )
 		{
 			if ( $line =~ /^$farm_name\;/ )
 			{
@@ -592,8 +597,7 @@ sub setL4FarmPersistence    # ($persistence,$farm_name)
 	my $output        = -1;
 	my $i             = 0;
 
-	use Tie::File;
-	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	for my $line ( @configfile )
 	{
@@ -612,11 +616,11 @@ sub setL4FarmPersistence    # ($persistence,$farm_name)
 
 	my $farm = &getL4FarmStruct( $farm_name );
 
-	if ( $farm{ status } eq 'up' && $farm{ lbalg } ne 'prio' )
+	if ( $$farm{ status } eq 'up' && $$farm{ lbalg } ne 'prio' )
 	{
 		my @rules;
 
-		foreach my $server ( $farm{ servers } )
+		foreach my $server ( $$farm{ servers } )
 		{
 			my $rule = &genIptMarkPersist( $farm, $server );
 
@@ -666,8 +670,7 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 	my $output        = -1;
 	my $i             = 0;
 
-	use Tie::File;
-	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	for my $line ( @configfile )
 	{
@@ -929,6 +932,7 @@ sub getL4BackendSYNConns    # ($farm_name,$ip_backend,@netstat)
 
 	my $proto     = &getFarmProto( $farm_name );
 	my $nattype   = &getFarmNatType( $farm_name );
+	my $fvip      = &getFarmVip( "vip", $farm_name );
 	my $fvipp     = &getFarmVip( "vipp", $farm_name );
 	my @fportlist = &getFarmPortList( $fvipp );
 	my $regexp    = "";
@@ -1096,7 +1100,7 @@ sub getL4FarmBootStatus    # ($farm_name)
 
 	open FI, "<$configdir/$farm_filename";
 
-	while ( $line = <FI> )
+	while ( my $line = <FI> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
@@ -1112,22 +1116,22 @@ sub getL4FarmBootStatus    # ($farm_name)
 }
 
 # Start Farm rutine
-sub _runL4FarmStart    # ($farm_name,$writeconf,$status)
+sub _runL4FarmStart    # ($farm_name,$writeconf)
 {
 	my $farm_name = shift;    # input
 	my $writeconf = shift;    # input
-	my $status    = shift;    # input
+
+	my $status = 0;           # output
+
+	&logfile( "_runL4FarmStart << farm_name:$farm_name writeconf:$writeconf" )
+	  if &debug;
 
 	# initialize a farm struct
 	my $farm = &getL4FarmStruct( $farm_name );
 
-	# exit if wrong status
-	return $status if ( $status == -1 );
-
 	if ( $writeconf eq "true" )
 	{
-		use Tie::File;
-		tie @configfile, 'Tie::File', "$configdir\/$$farm{ filename }";
+		tie my @configfile, 'Tie::File', "$configdir\/$$farm{ filename }";
 		foreach ( @configfile )
 		{
 			s/\;down/\;up/g;
@@ -1135,8 +1139,6 @@ sub _runL4FarmStart    # ($farm_name,$writeconf,$status)
 		}
 		untie @configfile;
 	}
-
-	$status = 0;
 
 	# Load L4 scheduler if needed
 	if ( $$farm{ lbalg } eq 'leastconn' && -e "$l4sd" )
@@ -1158,8 +1160,14 @@ sub _runL4FarmStart    # ($farm_name,$writeconf,$status)
 	my $lowest_prio;
 	my $server_prio;    # reference to the selected server for prio algorithm
 
+	&logfile( "_runL4FarmStart :: farm:" . Dumper( $farm ) ) if &debug;
+
+#~ &logfile("_runL4FarmStart :: farm{servers}:".Dumper(@{$$farm{ servers }[0]})) if &debug;
+
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
+		&logfile( "_runL4FarmStart :: server:$server" ) if &debug;
+
 		# go to next cycle if server must not be up or not a least connection algorithm
 		next
 		  if not (    $$server{ status } =~ /up|maintenance/
@@ -1191,7 +1199,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf,$status)
 		&getL4ServerActionRules( $farm, $server_prio, 'on', $rules );
 	}
 
- #~ &logfile( 'dumping rules scruct : ' . Dumper( \%rules ) );   ###################
+	#~ &logfile( 'dumping rules scruct : ' . Dumper( \%rules ) );   #########
 
 	# first insert the save rule, then insert on top the restore rule
 	&setIptConnmarkSave( 'true' );
@@ -1200,7 +1208,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf,$status)
 	# persistence rules if wanted
 	# NOTE: persistance must be done before tagging
 	$status = &applyIptRules( @{ $$rules{ t_mangle_p } } )
-	  if ( $persist ne 'none' );
+	  if ( $$farm{ persist } ne 'none' );
 	$status = &applyIptRules( @{ $$rules{ t_mangle } } );
 	$status = &applyIptRules( @{ $$rules{ t_nat } } );
 	&applyIptRules( @{ $$rules{ t_snat } } );
@@ -1233,8 +1241,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 
 	if ( $writeconf eq "true" )
 	{
-		use Tie::File;
-		tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 		my $first = 1;
 		foreach ( @configfile )
 		{
@@ -1339,8 +1346,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	my $stat          = -1;
 	my $i             = 0;
 
-	use Tie::File;
-	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	for my $line ( @configfile )
 	{
@@ -1383,7 +1389,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 			}
 		}
 
-		$output = &applyIptRules( @rules );
+		&applyIptRules( @rules );
 	}
 
 	return $stat;
@@ -1393,6 +1399,10 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 {
 	my ( $ids, $rip, $port, $weight, $priority, $farm_name ) = @_;
+
+	&logfile(
+		"setL4FarmServer << ids:$ids rip:$rip port:$port weight:$weight priority:$priority farm_name:$farm_name"
+	) if &debug;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;                           # output: error code
@@ -1544,13 +1554,13 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 
 	my $off_maintenance = 0;  # false by default
 
-	if ( $farm{ servers }[server_id]{ status } eq 'maintenance' && $status eq 'up' )
+	if (    $farm{ servers }[$server_id]{ status } eq 'maintenance'
+		 && $status eq 'up' )
 	{
 		$off_maintenance = 1;    # make it true
 	}
 
 	# load farm configuration file
-	use Tie::File;
 	tie my @configfile, 'Tie::File', "$configdir\/$farm{filename}";
 
 	# look for $server_id backend
@@ -1585,7 +1595,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	elsif ( $status =~ /down|maintenance/ )
 	{
 		&logfile(
-			"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status) => status:$farm{servers}[server_id]{ status }"
+			"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status) => status:$farm{servers}[$server_id]{ status }"
 		);
 
 		&refreshL4FarmRules( \%farm );
@@ -1666,8 +1676,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	# previous farm info
 	my $prev_farm = &getL4FarmStruct( $farm_name );
 
-	use Tie::File;
-	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	for ( @configfile )
 	{
@@ -1779,15 +1788,13 @@ sub getL4ProtocolTransportLayer
 	  :                             $vproto;
 }
 
-########################## new l4 functions ###########################
-
 sub getL4FarmStruct
 {
 	my %farm;    # declare output hash
 
 	$farm{ name } = shift;    # input: farm name
 
-	$farm{ filename } = &getFarmFile( $farm{ name } );                # not used yet
+	$farm{ filename } = &getFarmFile( $farm{ name } );
 	$farm{ nattype }  = &getFarmNatType( $farm{ name } );
 	$farm{ lbalg }    = &getFarmAlgorithm( $farm{ name } );
 	$farm{ vip }      = &getFarmVip( 'vip', $farm{ name } );
@@ -1795,9 +1802,9 @@ sub getL4FarmStruct
 	$farm{ vproto }   = &getFarmProto( $farm{ name } );
 	$farm{ persist }  = &getFarmPersistence( $farm{ name } );
 	$farm{ ttl }      = ( &getFarmMaxClientTime( $farm{ name } ) )[0];
-	$farm{ proto }   = &getL4ProtocolTransportLayer( $farm{ vproto } );
-	$farm{ status }  = &getFarmStatus( $farm{ name } );
-	$farm{ servers } = [];
+	$farm{ proto }    = &getL4ProtocolTransportLayer( $farm{ vproto } );
+	$farm{ status }   = &getFarmStatus( $farm{ name } );
+	$farm{ servers }  = [];
 
 	foreach my $server_line ( &getFarmServers( $farm{ name } ) )
 	{
@@ -1872,6 +1879,8 @@ sub getL4ServerActionRules
 
 	my $rule;
 
+	#&zlog('getL4ServerActionRules server:'.Dumper($server));
+
 	## packet marking rules ##
 	$rule = &genIptMark( $farm, $server );
 
@@ -1929,10 +1938,20 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	my $farm_name = shift;    # input: farm name string
 	my $server_id = shift;    # input: server id number
 
+	&logfile( "_runL4ServerStart << farm_name:$farm_name server_id:$server_id" )
+	  if &debug;
+
 	# initialize a farm struct
 	my %farm   = %{ &getL4FarmStruct( $farm_name ) };
 	my %server = %{ $farm{ servers }[$server_id] };
 	my %rules  = %{ &getIptRulesStruct() };
+
+	my $status;
+
+	&logfile( "_runL4ServerStart << farm:" . Dumper \%farm )
+	  if &debug;
+	&logfile( "_runL4ServerStart << server:" . Dumper \%server )
+	  if &debug;
 
 	&getL4ServerActionRules( \%farm, \%server, 'on', \%rules );
 
@@ -1941,14 +1960,15 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 
 	# persistence rules if apply.
 	# NOTE: persistance must be done before tagging
-	$status = &applyIptRules( @{ $rules{ t_mangle_p } } ) if ( $persist ne 'none' );
+	$status = &applyIptRules( @{ $rules{ t_mangle_p } } )
+	  if ( $farm{ persist } ne 'none' );
 	$status = &applyIptRules( @{ $rules{ t_mangle } } );  # mangle rules for tagging
 	$status = &applyIptRules( @{ $rules{ t_nat } } );     # rules for dnat
 	$status = &applyIptRules( @{ $rules{ t_snat } } );    # source nat or nat
 	&setIptConnmarkSave( 'true' );
 	## End applying rules ##
 
-	return;
+	return $status;
 }
 
 # Stop Farm rutine
@@ -1961,6 +1981,8 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	my $farm   = &getL4FarmStruct( $farm_name );
 	my $server = $$farm{ servers }[$server_id];
 	my %rules  = %{ &getIptRulesStruct() };
+
+	my $status;
 
 	&getL4ServerActionRules( $farm, $server, 'off', \%rules );
 
@@ -1989,11 +2011,11 @@ sub getL4ServerWithLowestPriority                         # ($farm)
 
 	my $server_prio;    # reference to the selected server for prio algorithm
 
-	foreach my $server ( @{ $farm{ servers } } )
+	foreach my $server ( @{ $$farm{ servers } } )
 	{
 		# find the lowest priority server
 		$server_prio = $server if not defined $server_prio;
-		$server_prio = $server if $server_prio{ priority } > $server{ priority };
+		$server_prio = $server if $$server_prio{ priority } > $$server{ priority };
 	}
 
 	return $server_prio;
@@ -2077,10 +2099,8 @@ sub refreshL4FarmRules    # AlgorithmRules
 	{
 		# skip cycle for servers not running
 		next if ( $$server{ status } !~ /up|maintenance/ );
-		&logfile( "refreshL4FarmRules >> hola 1" );
 
 		next if ( $$farm{ lbalg } eq 'prio' && $$server{ id } != $$prio_server{ id } );
-		&logfile( "refreshL4FarmRules >> hola 2" );
 
 		my $rule;
 		my $rule_num;
@@ -2088,31 +2108,33 @@ sub refreshL4FarmRules    # AlgorithmRules
 		# refresh marks
 		$rule = &genIptMark( $farm, $server );
 
-		$rule_num =
+		$rule =
 		  ( $$farm{ lbalg } eq 'prio' )
-		  ? &getIptRuleNumber( $rule, $$farm{ name } )
-		  : &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
-		$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
+		  ? &getIptRuleReplace( $farm, undef,   $rule )
+		  : &getIptRuleReplace( $farm, $server, $rule );
+
 		push ( @rules, $rule );
 
 		if ( $$farm{ persist } ne 'none' )    # persistence
 		{
 			$rule = &genIptMarkPersist( $farm, $server );
-			$rule_num =
+
+			$rule =
 			  ( $$farm{ lbalg } eq 'prio' )
-			  ? &getIptRuleNumber( $rule, $$farm{ name } )
-			  : &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
-			$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
+			  ? &getIptRuleReplace( $farm, undef,   $rule )
+			  : &getIptRuleReplace( $farm, $server, $rule );
+
 			push ( @rules, $rule );
 		}
 
 		# redirect
 		$rule = &genIptRedirect( $farm, $server );
-		$rule_num =
+
+		$rule =
 		  ( $$farm{ lbalg } eq 'prio' )
-		  ? &getIptRuleNumber( $rule, $$farm{ name } )
-		  : &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
-		$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
+		  ? &getIptRuleReplace( $farm, undef,   $rule )
+		  : &getIptRuleReplace( $farm, $server, $rule );
+
 		push ( @rules, $rule );
 
 		if ( $$farm{ nattype } eq 'nat' )    # nat type = nat
@@ -2126,11 +2148,11 @@ sub refreshL4FarmRules    # AlgorithmRules
 				$rule = &genIptMasquerade( $farm, $server );
 			}
 
-			$rule_num =
+			$rule =
 			  ( $$farm{ lbalg } eq 'prio' )
-			  ? &getIptRuleNumber( $rule, $$farm{ name } )
-			  : &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
-			$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
+			  ? &getIptRuleReplace( $farm, undef,   $rule )
+			  : &getIptRuleReplace( $farm, $server, $rule );
+
 			push ( @rules, $rule );
 		}
 	}
