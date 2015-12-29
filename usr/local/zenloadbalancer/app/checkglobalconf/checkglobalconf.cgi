@@ -8,11 +8,11 @@
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
-#     by the Free Software Foundation; either version 2.1 of the License, or 
+#     by the Free Software Foundation; either version 2.1 of the License, or
 #     (at your option) any later version.
 #
-#     This library is distributed in the hope that it will be useful, but 
-#     WITHOUT ANY WARRANTY; without even the implied warranty of 
+#     This library is distributed in the hope that it will be useful, but
+#     WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
 #     General Public License for more details.
 #
@@ -34,52 +34,51 @@
 
 use File::Copy;
 
-$tglobal="/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tmp";
-$global="/usr/local/zenloadbalancer/config/global.conf";
-$globaltpl="/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tpl";
-open FW, ">$tglobal";
+$tglobal   = "/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tmp";
+$global    = "/usr/local/zenloadbalancer/config/global.conf";
+$globaltpl = "/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tpl";
 
-#use Tie::File;
+open my $fw, '>', "$tglobal";
+open my $file_template, "$globaltpl";
 
-#tie @gfile, 'Tie::File', "$global";
-#tie @tfile, 'Tie::File', "$globaltpl";
-open FTPL, "$globaltpl";
-while ($linetpl=<FTPL>)
+while ( my $linetpl = <$file_template> )
+{
+	my $newline = $linetpl;
+
+	if ( $linetpl =~ /^\$/ )
 	{
-	$newline = $linetpl;
-	if ($linetpl =~ /^\$/)
+		my @vble = split ( "\=", $linetpl );
+		$vble[0] =~ s/\$//;
+		my $exit = 'true';
+
+		open my $fr, "$global";
+
+		while ( my $line = <$fr> || $exit eq 'false' )
 		{
-		@vble = split("\=",$linetpl);
-		@vble[0] =~ s/\$//;
-		open FR, "$global";
-		$exit = "true";
-		while ($line=<FR> || $exit eq "false")	
+			if ( $line =~ /^\$$vble[0]\=/ )
 			{
-			if ($line =~ /^\$@vble[0]\=/)
+				@vblegconf = split ( "\=", $line );
+
+				if ( $vblegconf[1] !~ /""/ && $vblegconf[1] !~ $vble[1] )
 				{
-				#$exit = "false";
-				@vblegconf = split("\=",$line);
-				#if (@vblegconf[1] !~ /""/ && @vble[1] !~ @vblegconf[1])
-				if (@vblegconf[1] !~ /""/ && @vblegconf[1] !~ @vble[1])
-					{
 					$newline = $line;
-					}
-				if (@vble[1] =~ /\#update/i)
-					{
+				}
+
+				if ( $vble[1] =~ /\#update/i )
+				{
 					$linetpl =~ s/\#update//i;
 					$newline = $linetpl;
-					}
 				}
 			}
-		
 		}
-	print FW "$newline";
 	}
 
+	print $fw "$newline";
+}
 
-close FW;
-close FR;
-close FTPL;
+close $fw;
+close $fr;
+close $file_template;
 
-move($tglobal,$global);
+move( $tglobal, $global );
 print "Update global.conf file done...\n";
