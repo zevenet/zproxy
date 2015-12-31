@@ -440,32 +440,6 @@ sub getFarmEstConns    # ($farm_name,@netstat)
 	return @nets;
 }
 
-#
-sub getBackendTWConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
-{
-	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
-
-	my $farm_type = &getFarmType( $farm_name );
-	my @nets      = ();
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		@nets =
-		  &getTcpUdpBackendTWConns( $farm_name, $ip_backend, $port_backend, @netstat );
-	}
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		@nets =
-		  &getHTTPBackendTWConns( $farm_name, $ip_backend, $port_backend, @netstat );
-	}
-	if ( $farm_type eq "l4xnat" )
-	{
-		@nets = &getL4BackendTWConns( $farm_name, $ip_backend, @netstat );
-	}
-
-	return @nets;
-}
-
 sub getBackendSYNConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
@@ -752,7 +726,7 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 
 	if ( $farm_type eq "l4xnat" )
 	{
-		$status = &_runL4FarmStart( $farm_name, $writeconf, $status );
+		$status = &_runL4FarmStart( $farm_name, $writeconf );
 	}
 
 	return $status;
@@ -1213,7 +1187,7 @@ sub runFarmServerDelete    # ($ids,$farm_name,$service)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		$output = &runHTTPFarmServerDelete( $ids, $farm_name );
+		$output = &runHTTPFarmServerDelete( $ids, $farm_name, $service );
 	}
 
 	if ( $farm_type eq "gslb" )

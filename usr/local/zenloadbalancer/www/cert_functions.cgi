@@ -143,6 +143,28 @@ sub getCertExpiration    # ($certfile)
 	return $dateexpiration;
 }
 
+# content 1-3 certificate-https
+sub getFarmCertUsed($cfile)
+{
+	my ( $cfile ) = @_;
+
+	my @farms  = &getFarmsByType( "https" );
+	my $output = -1;
+
+	for ( @farms )
+	{
+		my $fname         = $_;
+		my $farm_filename = &getFarmFile( $fname );
+		use File::Grep qw( fgrep fmap fdo );
+		if ( fgrep { /Cert \"$configdir\/$cfile\"/ } "$configdir/$farm_filename" )
+		{
+			$output = 0;
+		}
+	}
+
+	return $output;
+}
+
 #Check if a fqdn is valid
 sub checkFQDN    # ($certfqdn)
 {
@@ -223,10 +245,30 @@ sub createMenuCert    # ($certfile)
 		&uploadCertFromCSR( $certfile );
 	}
 
-	print
-	  "<a href=\"index.cgi?id=$id&action=deletecert&certname=$certfile\" title=\"Delete $certtype $certfile\" onclick=\"return confirm('Are you sure you want to delete the certificate: $certfile?')\"><i class=\"fa fa-times-circle action-icon fa-fw red\"></i></a> ";
-	print
-	  "<a href=\"index.cgi?id=$id&action=View_Cert&certname=$certfile\" title=\"View $certtype $certfile content\"><i class=\"fa fa-search action-icon fa-fw\"></i></a> ";
+	print "
+		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
+		<button type=\"submit\" class=\"myicons\" title=\"Delete $certtype $certfile\" onclick=\"return confirm('Are you sure you want to delete the certificate: $certfile?')\">
+			<i class=\"fa fa-times-circle action-icon fa-fw red\"></i>
+		</button>
+		<input type=\"hidden\" name=\"id\" value=\"$id\">
+		<input type=\"hidden\" name=\"action\" value=\"deletecert\">
+		<input type=\"hidden\" name=\"certname\" value=\"$certfile\">
+		</form>";
+
+	print "
+		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
+		<button type=\"submit\" class=\"myicons\" title=\"Delete $certtype $certfile\">
+			<i class=\"fa fa-search action-icon fa-fw\"></i>
+		</button>
+		<input type=\"hidden\" name=\"id\" value=\"$id\">
+		<input type=\"hidden\" name=\"action\" value=\"View_Cert\">
+		<input type=\"hidden\" name=\"certname\" value=\"$certfile\">
+		</form>";
+
+# print
+# "<a href=\"index.cgi?id=$id&action=deletecert&certname=$certfile\" title=\"Delete $certtype $certfile\" onclick=\"return confirm('Are you sure you want to delete the certificate: $certfile?')\"><i class=\"fa fa-times-circle action-icon fa-fw red\"></i></a> ";
+# print
+# "<a href=\"index.cgi?id=$id&action=View_Cert&certname=$certfile\" title=\"View $certtype $certfile content\"><i class=\"fa fa-search action-icon fa-fw\"></i></a> ";
 	print
 	  "<a href=\"downloadcerts.cgi?certname=$certfile\" target=\"_blank\" title=\"Download $certtype $certfile\"><i class=\"fa fa-download action-icon fa-fw\"></i></a>";
 	print "</p>";
