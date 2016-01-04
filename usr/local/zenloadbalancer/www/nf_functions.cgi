@@ -219,10 +219,10 @@ sub genIptMarkPersist    # ($farm_name,$vip,$vport,$protocol,$ttl,$index,$mark)
 	  ? "--protocol $$farm{ proto } -m multiport --dports $$farm{ vport }"
 	  : '';
 
-	$rule =
-	    "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
-	  . "--destination $$farm{ vip } "
-	  . "$layer "
+	$rule = "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
+
+	  #~ . "--wait"
+	  . "--destination $$farm{ vip } " . "$layer "
 
 	  . "--match recent --name \"\_$$farm{ name }\_$$server{ tag }\_sessions\" --rcheck --seconds $$farm{ ttl } "
 
@@ -261,10 +261,10 @@ sub genIptMark # ($farm_name,$lbalg,$vip,$vport,$protocol,$index,$mark,$value,$p
 
 	# Every rule starts with:
 	# table, chain, destination(farm ip) and port(if required) definition
-	$rule =
-	    "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
-	  . "--destination $$farm{ vip } "
-	  . "$layer ";
+	$rule = "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
+
+	  #~ . "--wait"
+	  . "--destination $$farm{ vip } " . "$layer ";
 
 	if ( $$farm{ lbalg } eq 'weight' )
 	{
@@ -328,8 +328,9 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 	  ? "--match recent --name \"\_$$farm{ name }\_$$server{ tag }\_sessions\" --set"
 	  : '';
 
-	$rule =
-	    "$iptables --table nat --::ACTION_TAG:: PREROUTING "
+	$rule = "$iptables --table nat --::ACTION_TAG:: PREROUTING "
+
+	  #~ . "--wait"
 	  . "$persist_match "
 	  . "--match mark --mark $$server{ tag } "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
@@ -361,8 +362,9 @@ sub genIptSourceNat    # ($farm_name,$vip,$index,$protocol,$mark)
 	  ? "--protocol $$farm{ proto }"
 	  : '';
 
-	$rule =
-	    "$iptables --table nat --::ACTION_TAG:: POSTROUTING "
+	$rule = "$iptables --table nat --::ACTION_TAG:: POSTROUTING "
+
+	  #~ . "--wait"
 	  . "--match mark --mark $$server{ tag } "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
 	  . "--jump SNAT $layer --to-source $$server{ vip } ";
@@ -393,8 +395,9 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 	  ? "--protocol $$farm{ proto }"
 	  : '';
 
-	$rule =
-	    "$iptables --table nat --::ACTION_TAG:: POSTROUTING "
+	$rule = "$iptables --table nat --::ACTION_TAG:: POSTROUTING "
+
+	  #~ . "--wait"
 	  . "$layer "
 	  . "--match mark --mark $$server{ tag } "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
@@ -438,8 +441,9 @@ sub getIptStringConnmarkRestore
 # append restore mark at the end of
 sub getIptStringConnmarkSave
 {
-	return "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
-	  . "--match state --state NEW "    # by Neira
+	return
+	    "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
+	  . "--match state --state NEW "
 	  . "--jump CONNMARK --save-mark ";
 
 	#~ . "--nfmask 0xffffffff --ctmask 0xffffffff "
@@ -448,8 +452,8 @@ sub getIptStringConnmarkSave
 
 sub setIptConnmarkRestore
 {
-	my $switch      = shift;            # 'true' or not true value
-	my $return_code = -1;               # return value
+	my $switch      = shift;    # 'true' or not true value
+	my $return_code = -1;       # return value
 
 	my $rule = &getIptStringConnmarkRestore();
 	my $restore_on = ( &logAndRun( &applyIptRuleAction( $rule, 'check' ) ) == 0 );
@@ -531,36 +535,48 @@ sub applyIptRuleAction
 
 sub getIptRuleNumber
 {
-	my (                                        # input array
+	my (
 		 $rule,                                  # rule string
 		 $farm_name,                             # farm name string
 		 $index                                  # backend index number. OPTIONAL
 	) = @_;
 
+	( defined ( $rule ) && $rule ne '' )
+	  or &logfile( ( caller ( 0 ) )[3] . ' $rule invalid' );
+	( defined ( $farm_name ) && !ref $farm_name )
+	  or &logfile( ( caller ( 0 ) )[3] . ' $farm_name invalid' );
+	( defined ( $index ) && !ref $index )
+	  or &logfile( ( caller ( 0 ) )[3] . ' $index invalid' );
+
 	my $rule_num;    # output: rule number for requested rule
 
 	# read rule table and chain
-	my @rule_args = split / +/, $rule;
+	my @rule_args = split / +/, $rule;    # ignore blanks
 	my $table     = $rule_args[2];        # second argument of iptables is the table
 	my $chain     = $rule_args[4];        # forth argument of iptables is the chain
-	my $comment   = "FARM\_$farm_name\_";
+
+	my $ipt_cmd = "$iptables --numeric --line-number --table $table --list $chain";
+	my $comment = "FARM\_$farm_name\_";
 	$comment = $comment . "$index\_" if defined ( $index );
 
+	#~ &logfile ("getIptRuleNumber >> rule list\n".`$ipt_cmd`); ######
+
 	# pick rule by farm and optionally server id
-	my @rules =
-	  grep { /$comment/ } `$iptables --numeric --line-number -t $table -L $chain`;
+	my @rules = grep { /$comment/ } `$ipt_cmd`;
 	chomp ( @rules );
+
+#~ &logfile ("getIptRuleNumber >> farm_name:$farm_name index:$index rule:$rule\n".join "\n", @rules); ######
 
 	# only for marking tags, when ip persistance is enabled
 	if ( scalar @rules > 1 )
 	{
-		if ( $rule =~ /mode random/ )     # for weight tagging rules
-		{
-			@rules = grep { /mode random/ } @rules;
-		}
-		elsif ( $rule =~ /recent: CHECK/ )    # for persistence rules
+		if ( $rule =~ /--match recent/ )    # for persistence rules
 		{
 			@rules = grep { /recent: CHECK/ } @rules;
+		}
+		else                                # for non persistence rules
+		{
+			@rules = grep { !/recent: CHECK/ } @rules;
 		}
 	}
 
@@ -568,6 +584,8 @@ sub getIptRuleNumber
 	# e.g.: 1    DNAT       all  --  0.0.0.0/0 ...
 	# if no rule was found: return -1
 	$rule_num = ( split / +/, $rules[0] )[0] // -1;
+
+#~ &logfile ("getIptRuleNumber >> rule_num:$rule_num >> \n".join "\n", @rules); ######
 
 	#~ &logfile( "<< getIptRuleNumber() = rule_num:$rule_num" );
 	return $rule_num;
@@ -691,7 +709,7 @@ sub getIptRuleDelete
 
 	return $rule;
 }
-#####################
+
 sub setIptRuleReplace    # $return_code ( \%farm, \%server, $rule)
 {
 	my $farm   = shift;    # input: farm struc reference
@@ -706,29 +724,24 @@ sub getIptRuleReplace      # $return_code ( \%farm, \%server, $rule)
 	my $farm   = shift;    # input: farm struc reference
 	my $server = shift;    # input: server struc reference
 	my $rule   = shift;    # input: iptables rule string
-	my $rule_num;          # input: possition to insert the rule
+	my $rule_num;          # possition to insert the rule
 
 	# if the rule exist
-	if ( &setIptRuleCheck( $rule ) == 0 )
-	{
-		my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
+	my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
 
-		return &applyIptRuleAction( $rule, 'replace', $rule_num );
-	}
-
-	return;
+	return &applyIptRuleAction( $rule, 'replace', $rule_num );
 }
 
-sub setIptRuleAppend    # $return_code (\%farm, \%server, $rule)
+sub setIptRuleAppend       # $return_code (\%farm, \%server, $rule)
 {
-	my $rule = shift;    # input: iptables rule string
+	my $rule = shift;      # input: iptables rule string
 
 	return &applyIptRules( &getIptRuleAppend( $rule ) );
 }
 
-sub getIptRuleAppend     # $return_code (\%farm, \%server, $rule)
+sub getIptRuleAppend       # $return_code (\%farm, \%server, $rule)
 {
-	my $rule = shift;    # input: iptables rule string
+	my $rule = shift;      # input: iptables rule string
 
 	# if the rule does not exist
 	if ( &setIptRuleCheck( $rule ) != 0 )
