@@ -162,20 +162,23 @@ fi
 sed -i "s/1;30m/0;37m/g" /etc/bash.bashrc 2> /dev/null
 
 # snmpd
-grep zenlb /etc/snmp/snmpd.conf &> /dev/null
-if [ $? -eq 0 ]
+if [[ -f /usr/sbin/snmpd ]];
 then
-        echo "SNMP currently configured by Zen"
-else
-        #stop the SNMP service
-        /etc/init.d/snmpd stop
-        #reconfigure snmp service
-        cp /usr/local/zenloadbalancer/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
-        insserv -r snmpd
-        #modify SNMP service
-        # boot dependencies
-        sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$network \$remote_fs \$syslog zenloadbalancer/g' /etc/init.d/snmpd
-        sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$network \$remote_fs \$syslog zenloadbalancer/g' /etc/init.d/snmpd
+	grep zenlb /etc/snmp/snmpd.conf &> /dev/null
+	if [ $? -eq 0 ]
+	then
+			echo "SNMP currently configured by Zen"
+	else
+			#stop the SNMP service
+			/etc/init.d/snmpd stop
+			#reconfigure snmp service
+			cp /usr/local/zenloadbalancer/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
+			insserv -r snmpd
+			#modify SNMP service
+			# boot dependencies
+			sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$network \$remote_fs \$syslog zenloadbalancer/g' /etc/init.d/snmpd
+			sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$network \$remote_fs \$syslog zenloadbalancer/g' /etc/init.d/snmpd
+	fi
 fi
 
 #Flush apt sources
