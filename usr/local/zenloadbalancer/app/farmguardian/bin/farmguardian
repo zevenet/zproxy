@@ -58,17 +58,17 @@ if ( $ARGV[0] eq "" )
 my $service;
 my $fservice;
 
-# declare config files/path
-my $pidfile    = $ARGV[0] . "_${fservice}guardian.pid";
-my $file       = $ARGV[0] . "_${fservice}guardian.conf";
-my $fileconfig = "$configdir/$file";
-
 # handle service argument
 if ( $ARGV[1] eq "-s" )
 {
 	$service  = $ARGV[2];
 	$fservice = "${service}_";
 }
+
+# declare config files/path
+my $pidfile    = $ARGV[0] . "_${fservice}guardian.pid";
+my $file       = $ARGV[0] . "_${fservice}guardian.conf";
+my $fileconfig = "$configdir/$file";
 
 # handle log argument
 if ( $ARGV[1] eq "-l" || $ARGV[3] eq "-l" )
@@ -100,11 +100,11 @@ while ( <FI> )
 close FI;
 
 # $line have the last line in a file
-my @args        = split ( ":::", $line );
-my $farmname    = @args[0];
-my $timetocheck = @args[1];
-my $check_cmd   = @args[2];
-my $enabled     = @args[3];
+my @args          = split ( ":::", $line );
+my $farmname      = @args[0];
+my $timetocheck   = @args[1];
+my $check_cmd_tpl = @args[2];
+my $enabled       = @args[3];
 
 # check if the service is enabled in the current farm
 if ( $enabled ne "true" )
@@ -195,7 +195,7 @@ while ( 1 )
 			@backendid[$i]     = @subbe[1];
 			@backendserv[$i]   = @subbe[3];
 			@backendport[$i]   = @subbe[5];
-			@backendstatus[$i] = &getBackendStatusFromFile( $farmname, $i, $service );
+			@backendstatus[$i] = &getHTTPBackendStatusFromFile( $farmname, $i, $service );
 
 #print "--> DATA:\n $i @backendid[$i] @backendserv[$i] @backendport[$i] @backendstatus[$i]\n";
 			$i++;
@@ -256,13 +256,13 @@ while ( 1 )
 		print "		timetocheck: $timetocheck\n";
 		print "		portadmin: $portadmin\n";
 
-		while ( $j <= $i )    # $i is the NumberOfBackends-1
+		while ( $j < $i )    # $i is the NumberOfBackends-1
 		{
 			print "		server[@backendid[$j]]: @backendserv[$j]:@backendport[$j]\n";
 			$j++;
 		}
 
-		print "		check: $check_cmd\n";
+		print "		check: $check_cmd_tpl\n";
 		print "\n";
 		my $now = localtime time;
 		print "execution in $now ::\n";
@@ -273,7 +273,7 @@ while ( 1 )
 
 	# backend loop. checking every backend.
   BACKEND_IDX:
-	while ( $j <= $i )    # $i is the NumberOfBackends-1
+	while ( $j < $i )    # $i is the NumberOfBackends-1
 	{
 		if ( $ARGV[1] eq "-l" || $ARGV[3] eq "-l" )
 		{
@@ -287,6 +287,8 @@ while ( 1 )
 			$j++;
 			next BACKEND_IDX;
 		}
+
+		my $check_cmd = $check_cmd_tpl;
 
 		# substitute HOST and PORT variables for this backend's values
 		$check_cmd =~ s/HOST/$backendserv[$j]/;
@@ -352,7 +354,6 @@ while ( 1 )
 			}
 			elsif ( $type eq "l4xnat" )
 			{
-				my $falg = &getFarmAlgorithm( $farmname );
 				&setFarmBackendStatus( $farmname, $j, "up" );
 			}
 
@@ -386,7 +387,6 @@ while ( 1 )
 			}
 			elsif ( $type eq "l4xnat" )
 			{
-				my $falg = &getFarmAlgorithm( $fname );
 				&setFarmBackendStatus( $farmname, $j, "fgDOWN" );
 			}
 
