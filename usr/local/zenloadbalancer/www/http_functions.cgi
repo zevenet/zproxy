@@ -1586,7 +1586,6 @@ sub getHTTPFarmBackendsClientsList    # ($farm_name,@content)
 			my @service = split ( "\ ", $_ );
 			$s = $service[2];
 			$s =~ s/"//g;
-			print $s;
 		}
 		if ( $_ =~ / Session / )
 		{
