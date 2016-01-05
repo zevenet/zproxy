@@ -1293,15 +1293,18 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 }
 
 #
-sub runL4FarmCreate    # ($vip,$farm_name)
+#
+sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 {
-	my ( $vip, $farm_name ) = @_;
+	my ( $vip, $farm_name, $vip_port ) = @_;
 
 	my $output    = -1;
 	my $farm_type = 'l4xnat';
 
+	$vip_port = 80 if not defined $vip_port;
+
 	open FO, ">$configdir\/$farm_name\_$farm_type.cfg";
-	print FO "$farm_name\;tcp\;$vip\;80\;nat\;weight\;none\;120\;up\n";
+	print FO "$farm_name\;tcp\;$vip\;$vip_port\;nat\;weight\;none\;120\;up\n";
 	close FO;
 	$output = $?;
 
@@ -1594,32 +1597,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	# do no apply rules if the farm is not up
 	if ( $farm{ status } eq 'up' )
 	{
-		if ( $status eq 'up' )
-		{
-			#~ if ( !$off_maintenance )
-			#~ {
-			#~ $output = &_runL4ServerStart( $farm{ name }, $server_id );
-			#~ }
-
-			&refreshL4FarmRules( \%farm );
-		}
-		elsif ( $status =~ /down|maintenance/i )
-		{
-			&logfile(
-				"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status) => status:$farm{servers}[$server_id]{ status }"
-			);
-
-			&refreshL4FarmRules( \%farm );
-
-			#~ if ( $status ne 'maintenance' )
-			#~ {
-			#~ $output = &_runL4ServerStop( $farm{ name }, $server_id );
-			#~ }
-		}
-		else
-		{
-			&logfile( "Backend status requested no recognized: $status" );
-		}
+		&refreshL4FarmRules( \%farm );
 	}
 
 	return $output;

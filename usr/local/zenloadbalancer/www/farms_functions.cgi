@@ -861,7 +861,7 @@ sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 
 	if ( $farm_type eq "L4xNAT" )
 	{
-		$output = &runL4FarmCreate( $vip, $farm_name );
+		$output = &runL4FarmCreate( $vip, $farm_name, $vip_port );
 	}
 
 	if ( $farm_type eq "GSLB" )
