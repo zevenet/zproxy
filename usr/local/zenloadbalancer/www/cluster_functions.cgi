@@ -1172,13 +1172,13 @@ sub getClusterStatus()
 	if ( $cluster_msg eq "Not configured" )
 	{
 		print
-		  "<div class=\"grid_4\"><p class=\"cluster\"><a href=\"http://www.zenloadbalancer.com/eliminate-a-single-point-of-failure/\" target=\"_blank\"><i class=\"fa fa-fw $cluster_icon action-icon\" title=\"How to eliminate this single point of failure\"></i></a> Cluster status: $cluster_msg</p></div>";
+		  "<div class=\"grid_6\"><p class=\"cluster\"><a href=\"http://www.zenloadbalancer.com/eliminate-a-single-point-of-failure/\" target=\"_blank\"><i class=\"fa fa-fw $cluster_icon action-icon\" title=\"How to eliminate this single point of failure\"></i></a> Cluster status: $cluster_msg</p></div>";
 		print "<div class=\"clear\"></div>";
 	}
 	else
 	{
 		print
-		  "<div class=\"grid_4\"><p class=\"cluster\"><i class=\"fa fa-fw $cluster_icon action-icon\"></i> Cluster status: $cluster_msg</p></div>";
+		  "<div class=\"grid_6\"><p class=\"cluster\"><i class=\"fa fa-fw $cluster_icon action-icon\"></i> Cluster status: $cluster_msg</p></div>";
 		print "<div class=\"clear\"></div>";
 	}
 }
