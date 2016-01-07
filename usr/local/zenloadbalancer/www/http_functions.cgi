@@ -1685,15 +1685,16 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 			$line   = "\tCiphers \"$cipher_pci\"";
 			$output = 0;
 		}
-		elsif ( $ciphers eq "ciphercustom" && $cipherc )
+		elsif ( $ciphers eq "ciphercustom" )
 		{
+			$cipherc = 'DEFAULT' if not defined $cipherc;
 			$line =~ s/#//g;
 			$line   = "\tCiphers \"$cipherc\"";
 			$output = 0;
 		}
 
-		# default custom cipher
-		else    #( $ciphers eq "ciphercustom" && ! $cipherc )
+		# default cipher
+		else
 		{
 			$line =~ s/#//g;
 			$line   = "\tCiphers \"ALL\"";
