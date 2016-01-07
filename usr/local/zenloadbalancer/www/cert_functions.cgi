@@ -257,7 +257,7 @@ sub createMenuCert    # ($certfile)
 
 	print "
 		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Delete $certtype $certfile\">
+		<button type=\"submit\" class=\"myicons\" title=\"View $certtype $certfile content\">
 			<i class=\"fa fa-search action-icon fa-fw\"></i>
 		</button>
 		<input type=\"hidden\" name=\"id\" value=\"$id\">
@@ -265,10 +265,6 @@ sub createMenuCert    # ($certfile)
 		<input type=\"hidden\" name=\"certname\" value=\"$certfile\">
 		</form>";
 
-# print
-# "<a href=\"index.cgi?id=$id&action=deletecert&certname=$certfile\" title=\"Delete $certtype $certfile\" onclick=\"return confirm('Are you sure you want to delete the certificate: $certfile?')\"><i class=\"fa fa-times-circle action-icon fa-fw red\"></i></a> ";
-# print
-# "<a href=\"index.cgi?id=$id&action=View_Cert&certname=$certfile\" title=\"View $certtype $certfile content\"><i class=\"fa fa-search action-icon fa-fw\"></i></a> ";
 	print
 	  "<a href=\"downloadcerts.cgi?certname=$certfile\" target=\"_blank\" title=\"Download $certtype $certfile\"><i class=\"fa fa-download action-icon fa-fw\"></i></a>";
 	print "</p>";
