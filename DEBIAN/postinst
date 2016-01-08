@@ -32,6 +32,10 @@ if [ -e "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.${PERLVER}" ]; then
 	mv "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi"
 	rm /usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.*
 fi
+if [ -e "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.${PERLVER}" ]; then
+	mv "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi"
+	rm /usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.*
+fi
 if [ -e "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer.${PERLVER}" ]; then
 	mv "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer.${PERLVER}" "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer"
 	rm /usr/local/zenloadbalancer/app/zbin/zenloadbalancer.*
