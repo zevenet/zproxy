@@ -120,16 +120,16 @@ sub getNewMark    # ($farm_name)
 	my $farm_name = shift;
 
 	my $found;
-	my $marknum = 512;
+	my $marknum = 0x200;
 
 	tie my @contents, 'Tie::File', "$fwmarksconf";
 
 	for my $i ( 512 .. 1023 )
 	{
 		# end loop if found
-		last if $found;
+		last if defined $found;
 
-		#~ my $num = sprintf ( "0x%x", $i );
+		my $num = sprintf ( "0x%x", $i );
 		my $num = $i;
 		if ( !grep { /^$num/x } @contents )
 		{
@@ -214,19 +214,22 @@ sub genIptMarkPersist    # ($farm_name,$vip,$vport,$protocol,$ttl,$index,$mark)
 		$server = $$farm{ servers }[$index];
 	}
 
-	my $layer =
-	  ( $$farm{ proto } ne 'all' )
-	  ? "--protocol $$farm{ proto } -m multiport --dports $$farm{ vport }"
-	  : '';
+	my $layer = '';
+	if ( $$farm{ proto } ne 'all' )
+	{
+		$layer = "--protocol $$farm{ proto } -m multiport --dports $$farm{ vport }";
+	}
 
 	$rule = "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
 
-	  #~ . "--wait"
-	  . "--destination $$farm{ vip } " . "$layer "
+	  . "--destination $$farm{ vip } "
+
+	  #~ . "$layer "
 
 	  . "--match recent --name \"\_$$farm{ name }\_$$server{ tag }\_sessions\" --rcheck --seconds $$farm{ ttl } "
 
-	  . "--match state ! --state NEW "    # new
+	  #~ . "--match state ! --state NEW "    # new
+	  . "$layer "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
 	  . "--jump MARK --set-xmark $$server{ tag } ";    # new
 	    #~ . "--jump MARK --set-mark $$server{ tag } ";	# old
@@ -254,28 +257,27 @@ sub genIptMark # ($farm_name,$lbalg,$vip,$vport,$protocol,$index,$mark,$value,$p
 		$server = $$farm{ servers }[$index];
 	}
 
-	my $layer =
-	  ( $$farm{ proto } ne 'all' )
-	  ? "--protocol $$farm{ proto } -m multiport --dports $$farm{ vport }"
-	  : '';
+	my $layer;
+	if ( $$farm{ proto } ne 'all' )
+	{
+		$layer = "--protocol $$farm{ proto } -m multiport --dports $$farm{ vport }";
+	}
 
 	# Every rule starts with:
 	# table, chain, destination(farm ip) and port(if required) definition
 	$rule = "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
 
-	  #~ . "--wait"
-	  . "--destination $$farm{ vip } " . "$layer ";
+	  #~ . "--destination $$farm{ vip } " . "$layer "
+	  ;
 
 	if ( $$farm{ lbalg } eq 'weight' )
 	{
-		$rule =
-		  $rule . "--match statistic --mode random --probability $$server{ prob } ";
+		$rule .= "--match statistic --mode random --probability $$server{ prob } ";
 	}
 
 	if ( $$farm{ lbalg } eq 'leastconn' )
 	{
-		$rule = $rule
-		  . "--match condition --condition '\_$$farm{ name }\_$$server{ tag }\_' ";
+		$rule .= "--match condition --condition '\_$$farm{ name }\_$$server{ tag }\_' ";
 
 	}
 
@@ -288,7 +290,11 @@ sub genIptMark # ($farm_name,$lbalg,$vip,$vport,$protocol,$index,$mark,$value,$p
 	# - match new packets/connections
 	# - add comment with farm name and backend id number
 	# - set mark
-	$rule = $rule . "--match state --state NEW "    # new
+	$rule = $rule
+
+	  #~ . "--match state --state NEW "    # new
+	  . "--destination $$farm{ vip } "
+	  . "$layer "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
 	  . "--jump MARK --set-xmark $$server{ tag } ";    # new
 	    #~ . "--jump MARK --set-mark $$server{ tag } ";	# old
@@ -323,16 +329,17 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 		$rip   = "$rip:$$farm{ vport }";
 	}
 
-	$persist_match =
-	  ( $$farm{ persist } ne "none" )
-	  ? "--match recent --name \"\_$$farm{ name }\_$$server{ tag }\_sessions\" --set"
-	  : '';
+	my $persist_match = '';
+	if ( $$farm{ persist } ne "none" )
+	{
+		$persist_match =
+		  "--match recent --name \"\_$$farm{ name }\_$$server{ tag }\_sessions\" --set";
+	}
 
-	$rule = "$iptables --table nat --::ACTION_TAG:: PREROUTING "
-
-	  #~ . "--wait"
-	  . "$persist_match "
+	$rule =
+	    "$iptables --table nat --::ACTION_TAG:: PREROUTING "
 	  . "--match mark --mark $$server{ tag } "
+	  . "$persist_match "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
 	  . "--jump DNAT $layer --to-destination $$server{ rip } ";
 
@@ -357,14 +364,14 @@ sub genIptSourceNat    # ($farm_name,$vip,$index,$protocol,$mark)
 		$server = $$farm{ servers }[$index];
 	}
 
-	my $layer =
-	  ( $$farm{ proto } ne "all" )
-	  ? "--protocol $$farm{ proto }"
-	  : '';
+	my $layer = '';
+	if ( $$farm{ proto } ne "all" )
+	{
+		$layer = "--protocol $$farm{ proto }";
+	}
 
-	$rule = "$iptables --table nat --::ACTION_TAG:: POSTROUTING "
-
-	  #~ . "--wait"
+	$rule =
+	    "$iptables --table nat --::ACTION_TAG:: POSTROUTING "
 	  . "--match mark --mark $$server{ tag } "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
 	  . "--jump SNAT $layer --to-source $$server{ vip } ";
@@ -390,14 +397,14 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 		$server = $$farm{ servers }[$index];
 	}
 
-	my $layer =
-	  ( $$farm{ proto } ne "all" )
-	  ? "--protocol $$farm{ proto }"
-	  : '';
+	my $layer = '';
+	if ( $$farm{ proto } ne "all" )
+	{
+		$layer = "--protocol $$farm{ proto }";
+	}
 
-	$rule = "$iptables --table nat --::ACTION_TAG:: POSTROUTING "
-
-	  #~ . "--wait"
+	$rule =
+	    "$iptables --table nat --::ACTION_TAG:: POSTROUTING "
 	  . "$layer "
 	  . "--match mark --mark $$server{ tag } "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
@@ -527,8 +534,7 @@ sub applyIptRuleAction
 	# applied for any accepted action
 	$rule =~ s/::ACTION_TAG::/$action/x;
 
-	&logfile( "<< applyIptRuleAction:{action:$action,rulenum:$rulenum} $rule" )
-	  ;                                         ####
+	&logfile( "<< applyIptRuleAction:{action:$action,rulenum:$rulenum} $rule" ); ###
 
 	return $rule;
 }
@@ -536,9 +542,9 @@ sub applyIptRuleAction
 sub getIptRuleNumber
 {
 	my (
-		 $rule,                                  # rule string
-		 $farm_name,                             # farm name string
-		 $index                                  # backend index number. OPTIONAL
+		 $rule,         # rule string
+		 $farm_name,    # farm name string
+		 $index         # backend index number. OPTIONAL
 	) = @_;
 
 	( defined ( $rule ) && $rule ne '' )
@@ -548,7 +554,7 @@ sub getIptRuleNumber
 	( defined ( $index ) && !ref $index )
 	  or &logfile( ( caller ( 0 ) )[3] . ' $index invalid' );
 
-	my $rule_num;    # output: rule number for requested rule
+	my $rule_num;      # output: rule number for requested rule
 
 	# read rule table and chain
 	my @rule_args = split / +/, $rule;    # ignore blanks
@@ -556,16 +562,23 @@ sub getIptRuleNumber
 	my $chain     = $rule_args[4];        # forth argument of iptables is the chain
 
 	my $ipt_cmd = "$iptables --numeric --line-number --table $table --list $chain";
-	my $comment = "FARM\_$farm_name\_";
-	$comment = $comment . "$index\_" if defined ( $index );
+	my $filter;
 
-	#~ &logfile ("getIptRuleNumber >> rule list\n".`$ipt_cmd`); ######
+	if ( defined ( $index ) )
+	{
+		my $farm = &getL4FarmStruct( $farm_name );
+		$filter = $$farm{ servers }[$index]{ tag };
+	}
+	else
+	{
+		$filter = "FARM\_$farm_name\_";
+
+		#~ $comment = $comment . "$index\_" if defined ( $index );
+	}
 
 	# pick rule by farm and optionally server id
-	my @rules = grep { /$comment/ } `$ipt_cmd`;
+	my @rules = grep { /$filter/ } `$ipt_cmd`;
 	chomp ( @rules );
-
-#~ &logfile ("getIptRuleNumber >> farm_name:$farm_name index:$index rule:$rule\n".join "\n", @rules); ######
 
 	# only for marking tags, when ip persistance is enabled
 	if ( scalar @rules > 1 )
@@ -585,9 +598,6 @@ sub getIptRuleNumber
 	# if no rule was found: return -1
 	$rule_num = ( split / +/, $rules[0] )[0] // -1;
 
-#~ &logfile ("getIptRuleNumber >> rule_num:$rule_num >> \n".join "\n", @rules); ######
-
-	#~ &logfile( "<< getIptRuleNumber() = rule_num:$rule_num" );
 	return $rule_num;
 }
 
@@ -655,20 +665,31 @@ sub getIptRuleInsert
 			my $table     = $rule_args[2];       # second argument of iptables is the table
 			my $chain     = $rule_args[4];       # forth argument of iptables is the chain
 
-			my @rule_list = `$iptables -n --table $table --list $chain`;
+			my @rule_list = `$iptables -n --line-number --table $table --list $chain`;
 			$rule_max_position = ( scalar @rule_list ) - 1;
+
+			if ( $table eq 'mangle' && $rule =~ /--match recent/ )
+			{
+				@rule_list = grep { /recent: CHECK/ } @rule_list;
+
+				&logfile( "getIptRuleInsert: @rule_list" );    ########
+
+				@rule_args = split / +/, $rule_list[0];
+				my $recent_rule_num = $rule_args[0];
+				$rule_num = $recent_rule_num if $recent_rule_num > $rule_num;
+			}
 		}
 
 		$rulenum = $rule_max_position if $rule_max_position < $rule_num;
 	}
 
 	# if the rule does not exist
-	if ( &setIptRuleCheck( $rule ) != 0 )        # 256
+	if ( &setIptRuleCheck( $rule ) != 0 )                      # 256
 	{
 		$rule = &applyIptRuleAction( $rule, 'insert', $rule_num );
 		return $rule;
 	}
-	else                                         # if the rule exist replace it.
+	else    # if the rule exist replace it.
 	{
 		$rule = &setIptRuleReplace( $farm, $server, $rule );
 	}

@@ -218,7 +218,7 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 	my ( $session, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
+	my $output        = 0;
 	my $i             = 0;
 
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
@@ -261,6 +261,8 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 			$rule = &getIptRuleReplace( $farm, $server, $rule );    # insert second
 			$output = &applyIptRules( $rule );
 		}
+
+		#~ $output = &refreshL4FarmRules( $farm );
 	}
 
 	return $output;
@@ -1172,12 +1174,11 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	# calculate backends probability with Weight values
 	&getL4BackendsWeightProbability( $farm );
 
+	my $rules;
 	my $lowest_prio;
 	my $server_prio;    # reference to the selected server for prio algorithm
 
 	&logfile( "_runL4FarmStart :: farm:" . Dumper( $farm ) ) if &debug;
-
-#~ &logfile("_runL4FarmStart :: farm{servers}:".Dumper(@{$$farm{ servers }[0]})) if &debug;
 
 	# first insert the save rule, then insert on top the restore rule
 	&setIptConnmarkSave( 'true' );
@@ -1187,6 +1188,8 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	{
 		&logfile( "_runL4FarmStart :: server:$server" ) if &debug;
 
+		my $backend_rules;
+
 		# go to next cycle if server must not be up or not a least connection algorithm
 		next
 		  if not (    $$server{ status } =~ /up|maintenance/
@@ -1195,7 +1198,12 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		# TMP: leastconn dynamic backend status check
 		if ( $$farm{ lbalg } =~ /weight|leastconn/ )
 		{
-			&getL4ServerActionRules( $farm, $server, 'on' );
+			$backend_rules = &getL4ServerActionRules( $farm, $server, 'on' );
+
+			push ( @{ $$rules{ t_mangle_p } }, @{ $$backend_rules{ t_mangle_p } } );
+			push ( @{ $$rules{ t_mangle } },   @{ $$backend_rules{ t_mangle } } );
+			push ( @{ $$rules{ t_nat } },      @{ $$backend_rules{ t_nat } } );
+			push ( @{ $$rules{ t_snat } },     @{ $$backend_rules{ t_snat } } );
 		}
 		elsif ( $$farm{ lbalg } eq 'prio' )
 		{
@@ -1215,10 +1223,13 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		system ( "echo 10 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream" );
 		system ( "echo 5 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout" );
 
-		&getL4ServerActionRules( $farm, $server_prio, 'on' );
+		$rules = &getL4ServerActionRules( $farm, $server_prio, 'on' );
 	}
 
-	#~ &logfile( 'dumping rules scruct : ' . Dumper( \%rules ) );   #########
+	&applyIptRules( @{ $$rules{ t_mangle_p } } );
+	&applyIptRules( @{ $$rules{ t_mangle } } );
+	&applyIptRules( @{ $$rules{ t_nat } } );
+	&applyIptRules( @{ $$rules{ t_snat } } );
 
 	&logfile( "_runL4FarmStart: status => $status" );
 
@@ -1447,7 +1458,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	# add a new backend if not found
 	if ( $found_server eq 'false' )
 	{
-		my $mark = &getNewMark( $farm_name );
+		my $mark = sprintf ( "0x%x", &getNewMark( $farm_name ) );
 		push ( @contents, "\;server\;$rip\;$port\;$mark\;$weight\;$priority\;up\n" );
 		$output = $?;
 	}
@@ -1593,12 +1604,28 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	}
 	untie @configfile;
 
-	%farm = %{ &getL4FarmStruct( $farm_name ) };
+	%farm   = %{ &getL4FarmStruct( $farm_name ) };
+	%server = %{ $farm{ servers }[$server_id] };
 
 	# do no apply rules if the farm is not up
 	if ( $farm{ status } eq 'up' )
 	{
 		&refreshL4FarmRules( \%farm );
+
+		if ( $status eq 'fgDOWN' && $farm{ persist } eq 'ip' )
+		{
+			my $recent_file = "/proc/net/xt_recent/_$farm{name}_$server{tag}_sessions";
+
+			if ( open ( my $file, '>', $recent_file ) )
+			{
+				print $file "/\n";    # flush recent file!!
+				close $file;
+			}
+			else
+			{
+				&logfile( "Could not open file $recent_file: $!" );
+			}
+		}
 	}
 
 	return $output;
@@ -1867,6 +1894,7 @@ sub getL4ServerActionRules
 	my $switch = shift;    # input: on/off
 	     #~ my $rules  = shift;    # input/output: reference to rules hash structure
 
+	my $rules = &getIptRulesStruct();
 	my $rule;
 
 	#&zlog('getL4ServerActionRules server:'.Dumper($server));
@@ -1887,7 +1915,9 @@ sub getL4ServerActionRules
 			$rule = ( $switch eq 'off' )
 			  ? &getIptRuleDelete( $rule )    # delete
 			  : &getIptRuleInsert( $farm, $server, $rule );    # insert second
-			&applyIptRules( $rule );                           # collect rule
+
+			#			&applyIptRules( $rule );                           # collect rule
+			push ( @{ $$rules{ t_mangle_p } }, $rule );
 		}
 	}
 
@@ -1898,7 +1928,8 @@ sub getL4ServerActionRules
 	  ? &getIptRuleDelete( $rule )                             # delete
 	  : &getIptRuleAppend( $rule );
 
-	&applyIptRules( $rule );                                   # collect rule
+	#~ &applyIptRules( $rule );                                   # collect rule
+	push ( @{ $$rules{ t_nat } }, $rule );
 
 	## rules for source nat or nat ##
 	if ( $$farm{ nattype } eq 'nat' )
@@ -1915,7 +1946,9 @@ sub getL4ServerActionRules
 		$rule = ( $switch eq 'off' )
 		  ? &getIptRuleDelete( $rule )    # delete
 		  : &getIptRuleAppend( $rule );
-		&applyIptRules( $rule );          # collect rule
+
+		#~ &applyIptRules( $rule );          # collect rule
+		push ( @{ $$rules{ t_snat } }, $rule );
 	}
 
 	## packet marking rules ##
@@ -1925,9 +1958,10 @@ sub getL4ServerActionRules
 	  ? &getIptRuleDelete( $rule )        # delete
 	  : &getIptRuleInsert( $farm, $server, $rule );    # insert second
 
-	&applyIptRules( $rule );                           # collect rule
+	#~ &applyIptRules( $rule );                           # collect rule
+	push ( @{ $$rules{ t_mangle } }, $rule );
 
-	return;
+	return $rules;
 }
 
 # Start Farm rutine
@@ -1944,15 +1978,22 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	my %farm   = %{ &getL4FarmStruct( $farm_name ) };
 	my %server = %{ $farm{ servers }[$server_id] };
 
+	my $rules;
 	my $status;
 
 	#~ &logfile( "_runL4ServerStart << farm:" . Dumper \%farm ) if &debug;
 	#~ &logfile( "_runL4ServerStart << server:" . Dumper \%server ) if &debug;
 
 	## Applying all rules ##
-	&setIptConnmarkRestore( 'true' );
-	&getL4ServerActionRules( \%farm, \%server, 'on' );
-	&setIptConnmarkSave( 'true' );
+	#~ &setIptConnmarkRestore( 'true' );
+	$rules = &getL4ServerActionRules( \%farm, \%server, 'on' );
+
+	&applyIptRules( @{ $$rules{ t_mangle_p } } );
+	&applyIptRules( @{ $$rules{ t_mangle } } );
+	&applyIptRules( @{ $$rules{ t_nat } } );
+	&applyIptRules( @{ $$rules{ t_snat } } );
+
+	#~ &setIptConnmarkSave( 'true' );
 	## End applying rules ##
 
 	return $status;
@@ -1968,12 +2009,21 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	my $farm   = &getL4FarmStruct( $farm_name );
 	my $server = $$farm{ servers }[$server_id];
 
+	my $rules;
 	my $status;
 
 	## Applying all rules ##
-	&setIptConnmarkRestore( 'true' );
-	&getL4ServerActionRules( $farm, $server, 'off' );
-	&setIptConnmarkSave( 'true' );
+	#~ &setIptConnmarkRestore( 'true' );
+	$rules = &getL4ServerActionRules( $farm, $server, 'off' );
+
+	#~ $logfile("_runL4ServerStop: ".Dumper($rules));
+
+	&applyIptRules( @{ $$rules{ t_mangle_p } } );
+	&applyIptRules( @{ $$rules{ t_mangle } } );
+	&applyIptRules( @{ $$rules{ t_nat } } );
+	&applyIptRules( @{ $$rules{ t_snat } } );
+
+	#~ &setIptConnmarkSave( 'true' );
 	## End applying rules ##
 
 	return $status;
@@ -2100,7 +2150,7 @@ sub refreshL4FarmRules    # AlgorithmRules
 		{
 			$rule = &genIptMarkPersist( $farm, $server );
 
-			$rule =~ s/--match recent // if $$server{ status } eq 'fgDOWN';
+			#~ $rule =~ s/--match recent // if $$server{ status } eq 'fgDOWN';
 
 			$rule =
 			  ( $$farm{ lbalg } eq 'prio' )
@@ -2141,7 +2191,7 @@ sub refreshL4FarmRules    # AlgorithmRules
 	}
 
 	# apply new rules
-	return &applyIptRules( @rules );
+	return;    # &applyIptRules( @rules );
 }
 
 # do not remove this
