@@ -629,7 +629,7 @@ sub getFarmStatus    # ($farm_name)
 				unlink "$piddir\/$farm_name\_pound.pid"  if ( $farm_type =~ /http/ );
 			}
 
-			$output = "doww";
+			$output = "down";
 		}
 	}
 	else
