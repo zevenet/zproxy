@@ -614,13 +614,22 @@ sub getFarmStatus    # ($farm_name)
 	if ( $farm_type ne "datalink" && $farm_type ne "l4xnat" )
 	{
 		my $pid = &getFarmPid( $farm_name );
-		if ( $pid eq "-" )
+		my $running_pid;
+		$running_pid = kill ( 0, $pid ) if $pid ne "-";
+
+		if ( $pid ne "-" && $running_pid )
 		{
-			$output = "down";
+			$output = "up";
 		}
 		else
 		{
-			$output = "up";
+			if ( $pid ne "-" && !$running_pid )
+			{
+				unlink &getGSLBFarmPidFile( $farm_name ) if ( $farm_type eq 'gslb' );
+				unlink "$piddir\/$farm_name\_pound.pid"  if ( $farm_type =~ /http/ );
+			}
+
+			$output = "doww";
 		}
 	}
 	else
