@@ -2817,6 +2817,41 @@ sub getFarmVSI    # ($farm_name,$service)
 	return $output;
 }
 
+# Get an array containing services that are configured in a http farm
+sub getFarmServices {
+
+	#print "Content-type: text/javascript; charset=utf8\n\n";
+
+	my ( $farm_name ) = @_;
+	my @output;
+	my $farm_filename = &getFarmFile( $farm_name );
+
+	open FR, "<$configdir\/$farm_filename";
+	my @file    = <FR>;
+	my $pos     = 0;
+	
+	#print "farm filename is $farm_filename. Full path is $configdir\/$farm_filename";
+	
+	foreach $line ( @file )
+	{
+		#print "line is $line";
+
+		if ( $line =~ /\tService\ \"/ )
+		{
+
+			$pos++;
+			@line    = split ( "\"", $line );
+			$service = @line[1];
+			
+			#print "line is $line and service is $service";
+			
+			push ( @output, $service );
+		}
+	}
+	return @output;
+
+}
+
 # setFarmBackendsSessionsRemove not in use???
 #function that removes all the active sessions enabled to a backend in a given service
 #needed: farmname, serviceid, backendid
