@@ -401,6 +401,12 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 				#~ &applyIptRules( $rule ) if defined ( $rule );
 			}
 		}
+
+		if ( $$farm{ lbalg } eq 'leastconn' && -e "$l4sd" )
+		{
+			system ( "$l4sd & >/dev/null" );
+		}
+
 	}
 
 	return;
