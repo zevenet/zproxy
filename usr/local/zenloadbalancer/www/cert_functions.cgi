@@ -21,6 +21,9 @@
 #
 ###############################################################################
 
+use File::stat;
+use Time::localtime;
+
 #Return all certificate files in config directory
 sub getCertFiles    # ()
 {
@@ -31,23 +34,27 @@ sub getCertFiles    # ()
 	opendir ( DIR, $configdir );
 	push ( @files, grep ( /.*\.csr$/, readdir ( DIR ) ) );
 	closedir ( DIR );
+
 	return @files;
 }
 
 #Delete all blancs from the beginning and from the end of a variable.
 sub getCleanBlanc    # ($vartoclean)
 {
-	( $vartoclean ) = @_;
+	my ( $vartoclean ) = @_;
+
 	$vartoclean =~ s/^\s+//;
 	$vartoclean =~ s/\s+$//;
+
 	return $vartoclean;
 }
 
 #Return the type of a certificate file
 sub getCertType      # ($certfile)
 {
-	( $certfile ) = @_;
+	my ( $certfile ) = @_;
 	my $certtype = "none";
+
 	if ( $certfile =~ /\.pem/ || $certfile =~ /\.crt/ )
 	{
 		$certtype = "Certificate";
@@ -56,14 +63,16 @@ sub getCertType      # ($certfile)
 	{
 		$certtype = "CSR";
 	}
+
 	return $certtype;
 }
 
 #Return the Common Name of a certificate file
 sub getCertCN    # ($certfile)
 {
-	( $certfile ) = @_;
+	my ( $certfile ) = @_;
 	my $certcn = "";
+
 	if ( &getCertType( $certfile ) eq "Certificate" )
 	{
 		@eject  = `$openssl x509 -noout -in $certfile -text | grep Subject:`;
@@ -78,15 +87,18 @@ sub getCertCN    # ($certfile)
 		@eject  = split ( /\/emailAddress=/, $eject[1] );
 		$certcn = $eject[0];
 	}
+
 	$certcn = &getCleanBlanc( $certcn );
+
 	return $certcn;
 }
 
 #Return the Issuer Common Name of a certificate file
 sub getCertIssuer    # ($certfile)
 {
-	( $certfile ) = @_;
+	my ( $certfile ) = @_;
 	my $certissu = "";
+
 	if ( &getCertType( $certfile ) eq "Certificate" )
 	{
 		my @eject = `$openssl x509 -noout -in $certfile -text | grep Issuer:`;
@@ -98,17 +110,22 @@ sub getCertIssuer    # ($certfile)
 	{
 		$certissu = "NA";
 	}
+
 	$certissu = &getCleanBlanc( $certissu );
+
 	return $certissu;
 }
 
 #Return the creation date of a certificate file
 sub getCertCreation    # ($certfile)
 {
-	( $certfile ) = @_;
-	use File::stat;
-	use Time::localtime;
+	my ( $certfile ) = @_;
+
+	#~ use File::stat;
+	#~ use Time::localtime;
+
 	my $datecreation = "";
+
 	if ( &getCertType( $certfile ) eq "Certificate" )
 	{
 		my @eject = `$openssl x509 -noout -in $certfile -dates`;
@@ -122,14 +139,16 @@ sub getCertCreation    # ($certfile)
 		push ( @eject, "GMT" );
 		$datecreation = join ( ' ', @eject );
 	}
+
 	return $datecreation;
 }
 
 #Return the expiration date of a certificate file
 sub getCertExpiration    # ($certfile)
 {
-	( $certfile ) = @_;
+	my ( $certfile ) = @_;
 	my $dateexpiration = "";
+
 	if ( &getCertType( $certfile ) eq "Certificate" )
 	{
 		my @eject = `$openssl x509 -noout -in $certfile -dates`;
@@ -140,6 +159,7 @@ sub getCertExpiration    # ($certfile)
 	{
 		$dateexpiration = "NA";
 	}
+
 	return $dateexpiration;
 }
 
@@ -168,8 +188,9 @@ sub getFarmCertUsed($cfile)
 #Check if a fqdn is valid
 sub checkFQDN    # ($certfqdn)
 {
-	( $certfqdn ) = @_;
+	my ( $certfqdn ) = @_;
 	my $valid = "true";
+
 	if ( $certfqdn =~ /^http:/ )
 	{
 		$valid = "false";
@@ -186,33 +207,35 @@ sub checkFQDN    # ($certfqdn)
 	{
 		$valid = "false";
 	}
+
 	return $valid;
 }
 
 sub delCert    # ($certname)
 {
-	( $certname ) = @_;
-	my @filename = split ( /\./, $certname );
-	@filename = splice ( @filename, -0, 1 );
-	$certname = join ( '.', @filename );
-	opendir ( DIR, $configdir );
-	my @files = grep ( /^($certname)\.[a-zA-Z0-9]+$/, readdir ( DIR ) );
-	closedir ( DIR );
-	foreach $file ( @files )
-	{
-		unlink ( "$configdir\/$file" );
-	}
+	my ( $certname ) = @_;
 
+	# escaping special caracters
+	$certname = quotemeta $certname;
+
+	# verify existance in config directory for security reasons
+	opendir ( DIR, $configdir );
+	my @file = grep ( /^$certname$/, readdir ( DIR ) );
+	closedir ( DIR );
+
+	unlink ( "$configdir\/$file[0]" )
+	  or &logfile( "Error removing certificate $configdir\/$file[0]" );
 }
 
 #Create CSR file
 sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, $certorganization, $certdivision, $certmail, $certkey, $certpassword)
 {
-	(
-	   $certname,     $certfqdn,         $certcountry,  $certstate,
-	   $certlocality, $certorganization, $certdivision, $certmail,
-	   $certkey,      $certpassword
+	my (
+		 $certname,     $certfqdn,         $certcountry,  $certstate,
+		 $certlocality, $certorganization, $certdivision, $certmail,
+		 $certkey,      $certpassword
 	) = @_;
+
 	##sustituir los espacios por guiones bajos en el nombre de archivo###
 	if ( $certpassword eq "" )
 	{
@@ -235,16 +258,18 @@ sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, 
 #function that creates a menu to manage a certificate
 sub createMenuCert    # ($certfile)
 {
-	( $certfile ) = @_;
+	my ( $certfile ) = @_;
 
 	my $certtype = &getCertType( $certfile );
 
-	print "<p>";
 	if ( $certtype eq "CSR" )
 	{
 		&uploadCertFromCSR( $certfile );
 	}
 
+	print "<p>";
+
+	# delete
 	print "
 		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
 		<button type=\"submit\" class=\"myicons\" title=\"Delete $certtype $certfile\" onclick=\"return confirm('Are you sure you want to delete the certificate: $certfile?')\">
@@ -255,6 +280,7 @@ sub createMenuCert    # ($certfile)
 		<input type=\"hidden\" name=\"certname\" value=\"$certfile\">
 		</form>";
 
+	# view
 	print "
 		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
 		<button type=\"submit\" class=\"myicons\" title=\"View $certtype $certfile content\">
@@ -265,6 +291,7 @@ sub createMenuCert    # ($certfile)
 		<input type=\"hidden\" name=\"certname\" value=\"$certfile\">
 		</form>";
 
+	# download
 	print
 	  "<a href=\"downloadcerts.cgi?certname=$certfile\" target=\"_blank\" title=\"Download $certtype $certfile\"><i class=\"fa fa-download action-icon fa-fw\"></i></a>";
 	print "</p>";
@@ -272,7 +299,8 @@ sub createMenuCert    # ($certfile)
 
 sub uploadCertFromCSR    # ($certfile)
 {
-	( $certfile ) = @_;
+	my ( $certfile ) = @_;
+
 	print "<script language=\"javascript\">
 	                var popupWindow = null;
 	                function positionedPopup(url,winName,w,h,t,l,scroll)
@@ -282,35 +310,24 @@ sub uploadCertFromCSR    # ($certfile)
 	                }
 	        </script>";
 
-#print the information icon with the popup with info.
-#print "<a href=\"uploadcertsfromcsr.cgi?certname=$certfile\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/page_white_get.png' title=\"Upload certificate for CSR $certfile\"></a> ";
 	print
 	  "<a href=\"uploadcertsfromcsr.cgi?certname=$certfile\" title=\"Upload certificate for CSR $certfile\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><i class=\"fa fa-upload action-icon fa-fw green\"></i></a> ";
 }
 
 sub uploadPEMCerts    # ($certfile)
 {
-	( $certfile ) = @_;
+	my ( $certfile ) = @_;
 
-# print "<script language=\"javascript\">
-# var popupWindow = null;
-# function positionedPopup(url,winName,w,h,t,l,scroll)
-# {
-# settings ='height='+h+',width='+w+',top='+t+',left='+l+',scrollbars='+scroll+',resizable'
-# popupWindow = window.open(url,winName,settings)
-# }
-# </script>";
-# #print the information icon with the popup with info.
-# print "<li><a href=\"uploadcerts.cgi\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src=\"img/icons/basic/up.png\" alt=\"Upload cert\" title=\"Upload cert\"> </a></li>";
 	print
 	  "<li><a href=\"uploadcerts.cgi\" class=\"open-dialog\"><img src=\"img/icons/basic/up.png\" alt=\"Upload cert\" title=\"Upload cert\">Upload Certificate </a></li>";
 	print
 	  "<div id=\"dialog-container\" style=\"display: none;\"><iframe id=\"dialog\" width=\"350\" height=\"350\"></iframe></div>";
 }
 
-sub downloadCert    # ($certfile)
+sub downloadCert      # ($certfile)
 {
-	( $certfile ) = @_;
+	my ( $certfile ) = @_;
+
 	print "<script language=\"javascript\">
 	                var popupWindow = null;
 	                function positionedPopup(url,winName,w,h,t,l,scroll)
@@ -327,9 +344,10 @@ sub downloadCert    # ($certfile)
 
 sub getCertData    # ($certfile)
 {
-	( $certfile ) = @_;
-	my $filepath = "$configdir\/$certfile";
-	my @eject    = ( "" );
+	my ( $certfile ) = @_;
+	my $filepath     = "$configdir\/$certfile";
+	my @eject        = ( "" );
+
 	if ( &getCertType( $filepath ) eq "Certificate" )
 	{
 		@eject = `$openssl x509 -in $filepath -text`;
@@ -338,20 +356,23 @@ sub getCertData    # ($certfile)
 	{
 		@eject = `$openssl req -in $filepath -text`;
 	}
+
 	return @eject;
 }
 
 sub createPemFromKeyCRT    # ($keyfile,$crtfile,$certautfile,$tmpdir)
 {
-	( $keyfile, $crtfile, $certautfile, $tmpdir ) = @_;
-	$path = $configdir;
+	my ( $keyfile, $crtfile, $certautfile, $tmpdir ) = @_;
+
+	my $path    = $configdir;
+	my $buff    = "";
 	my $pemfile = $keyfile;
 	$pemfile =~ s/\.key$/\.pem/;
-	my $buff = "";
+
 	@files = ( "$path/$keyfile", "$tmpdir/$crtfile", "$tmpdir/$certautfile" );
+
 	foreach $file ( @files )
 	{
-
 		# Open key files
 		open FILE, "<", $file or die $!;
 
@@ -373,5 +394,5 @@ sub createPemFromKeyCRT    # ($keyfile,$crtfile,$certautfile,$tmpdir)
 }
 
 # do not remove this
-1
+1;
 
