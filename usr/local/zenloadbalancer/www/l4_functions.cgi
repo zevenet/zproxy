@@ -402,11 +402,35 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 			}
 		}
 
+		# manage l4sd
+		my $l4sd_pidfile = '/var/run/l4sd.pid';
+
 		if ( $$farm{ lbalg } eq 'leastconn' && -e "$l4sd" )
 		{
 			system ( "$l4sd & >/dev/null" );
 		}
+		elsif ( -e $l4sd_pidfile )
+		{
+			my $num_lines = grep {/-m condition --condition/} `iptables --numeric --table mangle --list PREROUTING`;
 
+			if ( $num_lines == 0 )
+			{
+				# stop l4sd
+				if ( open my $pidfile, '<', $l4sd_pidfile )
+				{
+					my $pid = <$pidfile>;
+					close $pidfile;
+
+					# close normally
+					kill 'TERM' => $pid;
+					&logfile("l4sd ended");
+				}
+				else
+				{
+					&logfile("Error opening file l4sd_pidfile: $!") if ! defined $pidfile;
+				}
+			}
+		}
 	}
 
 	return;
@@ -1307,10 +1331,35 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 		}
 	}
 
+	# manage l4sd if required
+	my $l4sd_pidfile = '/var/run/l4sd.pid';
+
+	if ( -e $l4sd_pidfile )
+	{
+		my $num_lines = grep {/-m condition --condition/} `iptables --numeric --table mangle --list PREROUTING`;
+
+		if ( $num_lines == 0 )
+		{
+			# stop l4sd
+			if ( open my $pidfile, '<', $l4sd_pidfile )
+			{
+				my $pid = <$pidfile>;
+				close $pidfile;
+
+				# close normally
+				kill 'TERM' => $pid;
+				&logfile("l4sd ended");
+			}
+			else
+			{
+				&logfile("Error opening file l4sd_pidfile: $!") if ! defined $pidfile;
+			}
+		}
+	}
+
 	return $status;
 }
 
-#
 #
 sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 {
