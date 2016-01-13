@@ -530,6 +530,12 @@ sub setFarmProto    # ($proto,$farm_name)
 	{
 		&logfile( "setFarmProto >> farm is UP" );
 
+		# Load required modules
+		if ( $$farm{ vproto } =~ /sip|ftp/ )
+		{
+			$status = &loadL4Modules( $$farm{ vproto } );
+		}
+
 		$output = &refreshL4FarmRules( $farm );
 	}
 
@@ -1224,7 +1230,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	}
 
 	# Load required modules
-	if ( $$farm{ vport } =~ /sip|ftp/ )
+	if ( $$farm{ vproto } =~ /sip|ftp/ )
 	{
 		$status = &loadL4Modules( $$farm{ vproto } );
 	}
