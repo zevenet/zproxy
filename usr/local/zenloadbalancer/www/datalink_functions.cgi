@@ -52,8 +52,9 @@ sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 	my ( $algorithm, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
-	my $i             = 0;
+
+	#~ my $output        = -1;
+	my $i = 0;
 
 	use Tie::File;
 	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
@@ -65,21 +66,19 @@ sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 			my @args = split ( "\;", $line );
 			$line = "$args[0]\;$args[1]\;$args[2]\;$algorithm\;$args[4]";
 			splice @configfile, $i, $line;
-			$output = $?;
 		}
 		$i++;
 	}
 	untie @configfile;
-	$output = $?;
 
 	# Apply changes online
-	if ( $output != -1 )
+	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
 		&runFarmStop( $farmname, "true" );
 		&runFarmStart( $farmname, "true" );
 	}
 
-	return $output;
+	return;    # $output;
 }
 
 #
@@ -214,9 +213,9 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 	my @servers   = &getFarmServers( $farm_name );
 	my $algorithm = &getFarmAlgorithm( $farm_name );
 	my $routes    = "";
+
 	if ( $algorithm eq "weight" )
 	{
-
 		foreach $serv ( @servers )
 		{
 			chomp ( $serv );
@@ -224,6 +223,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 			my $stat = $line[5];
 			chomp ( $stat );
 			my $weight = 1;
+
 			if ( $line[3] ne "" )
 			{
 				$weight = $line[3];
@@ -234,6 +234,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 			}
 		}
 	}
+
 	if ( $algorithm eq "prio" )
 	{
 		my $bestprio = 100;
@@ -244,6 +245,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 			my $stat = $line[5];
 			my $prio = $line[4];
 			chomp ( $stat );
+
 			if (    $stat eq "up"
 				 && $prio > 0
 				 && $prio < 10
@@ -254,6 +256,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 			}
 		}
 	}
+
 	if ( $routes ne "" )
 	{
 		my $ip_command =
@@ -269,6 +272,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 
 	# Set policies to the local network
 	my $ip = &iponif( $iface );
+
 	if ( $ip =~ /\./ )
 	{
 		my $ipmask = &maskonif( $iface );
@@ -407,8 +411,11 @@ sub setDatalinkFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
+	my $farm_state    = &getFarmStatus( $farm_name );
 	my $stat          = -1;
 	my $i             = 0;
+
+	&runFarmStop( $farm_name, 'true' ) if $farm_state eq 'up';
 
 	use Tie::File;
 	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
@@ -427,6 +434,8 @@ sub setDatalinkFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	untie @configfile;
 	$stat = $?;
 
+	&runFarmStart( $farm_name, 'true' ) if $farm_state eq 'up';
+
 	return $stat;
 }
 
@@ -436,7 +445,6 @@ sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 	my ( $ids, $rip, $iface, $weight, $priority, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
 	my $end           = "false";
 	my $i             = 0;
 	my $l             = 0;
@@ -451,8 +459,7 @@ sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 			{
 				my $dline = "\;server\;$rip\;$iface\;$weight\;$priority\;up\n";
 				splice @contents, $l, 1, $dline;
-				$output = $?;
-				$end    = "true";
+				$end = "true";
 			}
 			else
 			{
@@ -461,21 +468,22 @@ sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 		}
 		$l++;
 	}
+
 	if ( $end eq "false" )
 	{
 		push ( @contents, "\;server\;$rip\;$iface\;$weight\;$priority\;up\n" );
-		$output = $?;
 	}
+
 	untie @contents;
 
 	# Apply changes online
-	if ( $output != -1 )
+	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
 		&runFarmStop( $farmname, "true" );
 		&runFarmStart( $farmname, "true" );
 	}
 
-	return $output;
+	return;
 }
 
 #
@@ -510,6 +518,13 @@ sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 	}
 	untie @contents;
 
+	# Apply changes online
+	if ( &getFarmStatus( $farm_name ) eq 'up' )
+	{
+		&runFarmStop( $farmname, "true" );
+		&runFarmStart( $farmname, "true" );
+	}
+
 	return $output;
 }
 
@@ -536,7 +551,6 @@ sub setDatalinkFarmBackendStatus    # ($farm_name,$index,$stat)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 
-	#	my $output = -1;
 	my $fileid   = 0;
 	my $serverid = 0;
 
@@ -559,7 +573,14 @@ sub setDatalinkFarmBackendStatus    # ($farm_name,$index,$stat)
 	}
 	untie @configfile;
 
-	#	return $output;
+	# Apply changes online
+	if ( &getFarmStatus( $farm_name ) eq 'up' )
+	{
+		&runFarmStop( $farmname, "true" );
+		&runFarmStart( $farmname, "true" );
+	}
+
+	return;
 }
 
 #
@@ -605,4 +626,4 @@ sub setDatalinkNewFarmName    # ($farm_name,$new_farm_name)
 }
 
 # do not remove this
-1
+1;
