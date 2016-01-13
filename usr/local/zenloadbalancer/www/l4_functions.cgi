@@ -236,12 +236,16 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 		$i++;
 	}
 	untie @configfile;
-	$output = $?;
 
 	my $farm = &getL4FarmStruct( $farm_name );
 
 	if ( $$farm{ status } eq 'up' )
 	{
+		## lock iptables use ##
+		my $lockipt = "/tmp/iptables.lock";
+		open my $ipt_lockfile, '>', $lockipt;
+		&setIptLock( $ipt_lockfile );
+
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 
@@ -261,6 +265,10 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 			$rule = &getIptRuleReplace( $farm, $server, $rule );    # insert second
 			$output = &applyIptRules( $rule );
 		}
+
+		## unlock iptables use ##
+		&setIptUnlock( $ipt_lockfile );
+		close $ipt_lockfile;
 
 		#~ $output = &refreshL4FarmRules( $farm );
 	}
@@ -324,6 +332,11 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
+		## lock iptables use ##
+		my $lockipt = "/tmp/iptables.lock";
+		open my $ipt_lockfile, '>', $lockipt;
+		&setIptLock( $ipt_lockfile );
+
 		my @rules;
 
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
@@ -411,7 +424,8 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 		}
 		elsif ( -e $l4sd_pidfile )
 		{
-			my $num_lines = grep {/-m condition --condition/} `iptables --numeric --table mangle --list PREROUTING`;
+			my $num_lines = grep { /-m condition --condition/ }
+			  `iptables --numeric --table mangle --list PREROUTING`;
 
 			if ( $num_lines == 0 )
 			{
@@ -423,14 +437,18 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 
 					# close normally
 					kill 'TERM' => $pid;
-					&logfile("l4sd ended");
+					&logfile( "l4sd ended" );
 				}
 				else
 				{
-					&logfile("Error opening file l4sd_pidfile: $!") if ! defined $pidfile;
+					&logfile( "Error opening file l4sd_pidfile: $!" ) if !defined $pidfile;
 				}
 			}
 		}
+
+		## unlock iptables use ##
+		&setIptUnlock( $ipt_lockfile );
+		close $ipt_lockfile;
 	}
 
 	return;
@@ -606,6 +624,11 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
+		## lock iptables use ##
+		my $lockipt = "/tmp/iptables.lock";
+		open my $ipt_lockfile, '>', $lockipt;
+		&setIptLock( $ipt_lockfile );
+
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 
@@ -629,6 +652,10 @@ sub setFarmNatType    # ($nat,$farm_name)
 			# apply rules as they are generated, so rule numbers are right
 			$output = &applyIptRules( $rule );
 		}
+
+		## unlock iptables use ##
+		&setIptUnlock( $ipt_lockfile );
+		close $ipt_lockfile;
 	}
 
 	return $output;
@@ -664,19 +691,6 @@ sub setL4FarmPersistence    # ($persistence,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		#~ my @rules;
-		#~
-		#~ foreach my $server ( $$farm{ servers } )
-		#~ {
-		#~ my $rule = &genIptMarkPersist( $farm, $server );
-		#~
-		#~ $rule = ( $$farm{ persist } eq 'none' )
-		#~ ? &getIptRuleDelete( $rule )    # delete
-		#~ : &getIptRuleInsert( $farm, $server, $rule );    # insert second
-		#~ push ( @rules, $rule );                            # collect rule
-		#~ }
-		#~
-		#~ $output = &applyIptRules( @rules );
 		&refreshL4FarmRules( $farm );
 	}
 
@@ -738,6 +752,11 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 
 	if ( $$farm{ status } eq 'up' && $$farm{ persist } ne 'none' )
 	{
+		## lock iptables use ##
+		my $lockipt = "/tmp/iptables.lock";
+		open my $ipt_lockfile, '>', $lockipt;
+		&setIptLock( $ipt_lockfile );
+
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 
@@ -755,13 +774,17 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 		}
 
 		$output = &applyIptRules( @rules );
+
+		## unlock iptables use ##
+		&setIptUnlock( $ipt_lockfile );
+		close $ipt_lockfile;
 	}
 
 	return $output;
 }
 
 #
-sub getL4FarmMaxClientTime             # ($farm_name)
+sub getL4FarmMaxClientTime    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -1175,6 +1198,11 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	&logfile( "_runL4FarmStart << farm_name:$farm_name writeconf:$writeconf" )
 	  if &debug;
 
+	## lock iptables use ##
+	my $lockipt = "/tmp/iptables.lock";
+	open my $ipt_lockfile, '>', $lockipt;
+	&setIptLock( $ipt_lockfile );
+
 	# initialize a farm struct
 	my $farm = &getL4FarmStruct( $farm_name );
 
@@ -1273,6 +1301,10 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		close $fi;
 	}
 
+	## unlock iptables use ##
+	&setIptUnlock( $ipt_lockfile );
+	close $ipt_lockfile;
+
 	return $status;
 }
 
@@ -1282,79 +1314,50 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	my ( $farm_name, $writeconf ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $status =
-	  ( $writeconf eq 'true' )
-	  ? -1
-	  : 0;
+	my $status;       # output
 
 	if ( $writeconf eq 'true' )
 	{
 		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
-		my $first = 1;
 		foreach ( @configfile )
 		{
-			if ( $first == 1 )
-			{
-				s/\;up/\;down/g;
-				$status = $?;
-				$first  = 0;
-			}
+			s/\;up/\;down/g;
+			last;     # run only for the first line
 		}
 		untie @configfile;
 	}
 
-	# Apply changes online
-	if ( $status != -1 )
+	## lock iptables use ##
+	my $lockipt = "/tmp/iptables.lock";
+	open my $ipt_lockfile, '>', $lockipt;
+	&setIptLock( $ipt_lockfile );
+
+	# Disable rules
+	my @allrules;
+
+	@allrules = &getIptList( "mangle", "PREROUTING" );
+	$status =
+	  &deleteIptRules( "farm", $farm_name, "mangle", "PREROUTING", @allrules );
+
+	@allrules = &getIptList( "nat", "PREROUTING" );
+	$status = &deleteIptRules( "farm", $farm_name, "nat", "PREROUTING", @allrules );
+
+	@allrules = &getIptList( "nat", "POSTROUTING" );
+	$status =
+	  &deleteIptRules( "farm", $farm_name, "nat", "POSTROUTING", @allrules );
+
+	&setIptConnmarkRestore();
+	&setIptConnmarkSave();
+
+	## unlock iptables use ##
+	&setIptUnlock( $ipt_lockfile );
+	close $ipt_lockfile;
+
+	# Disable active l4xnat file
+	unlink ( "$piddir\/$farm_name\_l4xnat.pid" );
+	if ( -e "$piddir\/$farm_name\_l4xnat.pid" )
 	{
-		# Disable rules
-		my @allrules;
-
-		@allrules = &getIptList( "mangle", "PREROUTING" );
-		$status =
-		  &deleteIptRules( "farm", $farm_name, "mangle", "PREROUTING", @allrules );
-
-		@allrules = &getIptList( "nat", "PREROUTING" );
-		$status = &deleteIptRules( "farm", $farm_name, "nat", "PREROUTING", @allrules );
-
-		@allrules = &getIptList( "nat", "POSTROUTING" );
-		$status =
-		  &deleteIptRules( "farm", $farm_name, "nat", "POSTROUTING", @allrules );
-
-		&setIptConnmarkRestore();    # new
-		&setIptConnmarkSave();       # new
-
-		# Disable active l4xnat file
-		unlink ( "$piddir\/$farm_name\_l4xnat.pid" );
-		if ( -e "$piddir\/$farm_name\_l4xnat.pid" )
-		{
-			$status = -1;
-		}
-	}
-
-	# manage l4sd if required
-	my $l4sd_pidfile = '/var/run/l4sd.pid';
-
-	if ( -e $l4sd_pidfile )
-	{
-		my $num_lines = grep {/-m condition --condition/} `iptables --numeric --table mangle --list PREROUTING`;
-
-		if ( $num_lines == 0 )
-		{
-			# stop l4sd
-			if ( open my $pidfile, '<', $l4sd_pidfile )
-			{
-				my $pid = <$pidfile>;
-				close $pidfile;
-
-				# close normally
-				kill 'TERM' => $pid;
-				&logfile("l4sd ended");
-			}
-			else
-			{
-				&logfile("Error opening file l4sd_pidfile: $!") if ! defined $pidfile;
-			}
-		}
+		$status = -1;
 	}
 
 	return $status;
@@ -1445,6 +1448,11 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	{
 		my @rules;
 
+		## lock iptables use ##
+		my $lockipt = "/tmp/iptables.lock";
+		open my $ipt_lockfile, '>', $lockipt;
+		&setIptLock( $ipt_lockfile );
+
 		foreach my $server ( @{ $$farm{ servers } } )
 		{
 			my $rule = &genIptMark( $farm, $server );
@@ -1466,6 +1474,11 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		}
 
 		&applyIptRules( @rules );
+
+		## unlock iptables use ##
+		&setIptUnlock( $ipt_lockfile );
+		close $ipt_lockfile;
+
 	}
 
 	return $stat;
@@ -1650,8 +1663,8 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 			{
 				# change status in configuration file
 				my @lineargs = split ( "\;", $line );
-				@lineargs[7] = $status;
-				@configfile[$line_num] = join ( "\;", @lineargs );
+				$lineargs[7] = $status;
+				$configfile[$line_num] = join ( "\;", @lineargs );
 			}
 			$serverid++;
 		}
@@ -1765,90 +1778,105 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	# Rename fw marks for this farm
 	&renameMarks( $farm_name, $new_farm_name );
 
-	my @rules;
-	my $farm        = &getL4FarmStruct( $new_farm_name );
-	my $prio_server = &getL4ServerWithLowestPriority( $$farm{ name } )
-	  if ( $$farm{ lbalg } eq 'prio' );
+	my $farm = &getL4FarmStruct( $new_farm_name );
 
-	# refresh backends probability values
-	&getL4BackendsWeightProbability( $farm ) if ( $$farm{ lbalg } eq 'weight' );
-
-	# get new rules
-	foreach my $server ( @{ $$farm{ servers } } )
+	if ( $$farm{ status } eq 'up' )
 	{
-		# skip cycle for servers not running
-		next if ( $$server{ status } !~ /up|maintenance/ );
+		## lock iptables use ##
+		my $lockipt = "/tmp/iptables.lock";
+		open my $ipt_lockfile, '>', $lockipt;
+		&setIptLock( $ipt_lockfile );
 
-		next if ( $$farm{ lbalg } eq 'prio' && $$server{ id } != $$prio_server{ id } );
+		my @rules;
 
-		my $rule;
-		my $rule_num;
+		my $prio_server = &getL4ServerWithLowestPriority( $$farm{ name } )
+		  if ( $$farm{ lbalg } eq 'prio' );
 
-		# refresh marks
-		$rule = &genIptMark( $prev_farm, $server );
+		# refresh backends probability values
+		&getL4BackendsWeightProbability( $farm ) if ( $$farm{ lbalg } eq 'weight' );
 
-		$rule_num =
-		  ( $$farm{ lbalg } eq 'prio' )
-		  ? &getIptRuleNumber( $rule, $$prev_farm{ name } )
-		  : &getIptRuleNumber( $rule, $$prev_farm{ name }, $$server{ id } );
-		$rule = &genIptMark( $farm, $server );
-		$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
-		push ( @rules, $rule );
-
-		if ( $$farm{ persist } ne 'none' )    # persistence
+		# get new rules
+		foreach my $server ( @{ $$farm{ servers } } )
 		{
-			$rule = &genIptMarkPersist( $prev_farm, $server );
-			$rule_num =
-			  ( $$farm{ lbalg } eq 'prio' )
-			  ? &getIptRuleNumber( $rule, $$prev_farm{ name } )
-			  : &getIptRuleNumber( $rule, $$prev_farm{ name }, $$server{ id } );
-			$rule = &genIptMarkPersist( $farm, $server );
-			$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
-			push ( @rules, $rule );
-		}
+			# skip cycle for servers not running
+			next if ( $$server{ status } !~ /up|maintenance/ );
 
-		# redirect
-		$rule = &genIptRedirect( $prev_farm, $server );
-		$rule_num =
-		  ( $$farm{ lbalg } eq 'prio' )
-		  ? &getIptRuleNumber( $rule, $$prev_farm{ name } )
-		  : &getIptRuleNumber( $rule, $$prev_farm{ name }, $$server{ id } );
-		$rule = &genIptRedirect( $farm, $server );
-		$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
-		push ( @rules, $rule );
+			next if ( $$farm{ lbalg } eq 'prio' && $$server{ id } != $$prio_server{ id } );
 
-		if ( $$farm{ nattype } eq 'nat' )    # nat type = nat
-		{
-			if ( $$farm{ vproto } eq 'sip' )
-			{
-				$rule = &genIptSourceNat( $prev_farm, $server );
-			}
-			else
-			{
-				$rule = &genIptMasquerade( $prev_farm, $server );
-			}
+			my $rule;
+			my $rule_num;
+
+			# refresh marks
+			$rule = &genIptMark( $prev_farm, $server );
 
 			$rule_num =
 			  ( $$farm{ lbalg } eq 'prio' )
 			  ? &getIptRuleNumber( $rule, $$prev_farm{ name } )
 			  : &getIptRuleNumber( $rule, $$prev_farm{ name }, $$server{ id } );
-
-			if ( $$farm{ vproto } eq 'sip' )
-			{
-				$rule = &genIptSourceNat( $farm, $server );
-			}
-			else
-			{
-				$rule = &genIptMasquerade( $farm, $server );
-			}
-
+			$rule = &genIptMark( $farm, $server );
 			$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
 			push ( @rules, $rule );
+
+			if ( $$farm{ persist } ne 'none' )    # persistence
+			{
+				$rule = &genIptMarkPersist( $prev_farm, $server );
+				$rule_num =
+				  ( $$farm{ lbalg } eq 'prio' )
+				  ? &getIptRuleNumber( $rule, $$prev_farm{ name } )
+				  : &getIptRuleNumber( $rule, $$prev_farm{ name }, $$server{ id } );
+				$rule = &genIptMarkPersist( $farm, $server );
+				$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
+				push ( @rules, $rule );
+			}
+
+			# redirect
+			$rule = &genIptRedirect( $prev_farm, $server );
+			$rule_num =
+			  ( $$farm{ lbalg } eq 'prio' )
+			  ? &getIptRuleNumber( $rule, $$prev_farm{ name } )
+			  : &getIptRuleNumber( $rule, $$prev_farm{ name }, $$server{ id } );
+			$rule = &genIptRedirect( $farm, $server );
+			$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
+			push ( @rules, $rule );
+
+			if ( $$farm{ nattype } eq 'nat' )    # nat type = nat
+			{
+				if ( $$farm{ vproto } eq 'sip' )
+				{
+					$rule = &genIptSourceNat( $prev_farm, $server );
+				}
+				else
+				{
+					$rule = &genIptMasquerade( $prev_farm, $server );
+				}
+
+				$rule_num =
+				  ( $$farm{ lbalg } eq 'prio' )
+				  ? &getIptRuleNumber( $rule, $$prev_farm{ name } )
+				  : &getIptRuleNumber( $rule, $$prev_farm{ name }, $$server{ id } );
+
+				if ( $$farm{ vproto } eq 'sip' )
+				{
+					$rule = &genIptSourceNat( $farm, $server );
+				}
+				else
+				{
+					$rule = &genIptMasquerade( $farm, $server );
+				}
+
+				$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
+				push ( @rules, $rule );
+			}
 		}
+
+		## unlock iptables use ##
+		&setIptUnlock( $ipt_lockfile );
+		close $ipt_lockfile;
 	}
 
 	# apply new rules
-	return &applyIptRules( @rules );
+	&applyIptRules( @rules );
+	return;
 }
 
 sub getL4ProtocolTransportLayer
@@ -2029,6 +2057,11 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	&logfile( "_runL4ServerStart << farm_name:$farm_name server_id:$server_id" )
 	  if &debug;
 
+	## lock iptables use ##
+	my $lockipt = "/tmp/iptables.lock";
+	open my $ipt_lockfile, '>', $lockipt;
+	&setIptLock( $ipt_lockfile );
+
 	# initialize a farm struct
 	my %farm   = %{ &getL4FarmStruct( $farm_name ) };
 	my %server = %{ $farm{ servers }[$server_id] };
@@ -2040,16 +2073,17 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	#~ &logfile( "_runL4ServerStart << server:" . Dumper \%server ) if &debug;
 
 	## Applying all rules ##
-	#~ &setIptConnmarkRestore( 'true' );
 	$rules = &getL4ServerActionRules( \%farm, \%server, 'on' );
 
 	&applyIptRules( @{ $$rules{ t_mangle_p } } );
 	&applyIptRules( @{ $$rules{ t_mangle } } );
 	&applyIptRules( @{ $$rules{ t_nat } } );
 	&applyIptRules( @{ $$rules{ t_snat } } );
-
-	#~ &setIptConnmarkSave( 'true' );
 	## End applying rules ##
+
+	## unlock iptables use ##
+	&setIptUnlock( $ipt_lockfile );
+	close $ipt_lockfile;
 
 	return $status;
 }
@@ -2061,14 +2095,19 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	my $farm_name = shift;    # input: farm name string
 	my $server_id = shift;    # input: server id number
 
+	my $rules;
+
+	#~ my $status;
+
+	## lock iptables use ##
+	my $lockipt = "/tmp/iptables.lock";
+	open my $ipt_lockfile, '>', $lockipt;
+	&setIptLock( $ipt_lockfile );
+
 	my $farm   = &getL4FarmStruct( $farm_name );
 	my $server = $$farm{ servers }[$server_id];
 
-	my $rules;
-	my $status;
-
 	## Applying all rules ##
-	#~ &setIptConnmarkRestore( 'true' );
 	$rules = &getL4ServerActionRules( $farm, $server, 'off' );
 
 	#~ $logfile("_runL4ServerStop: ".Dumper($rules));
@@ -2077,11 +2116,13 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	&applyIptRules( @{ $$rules{ t_mangle } } );
 	&applyIptRules( @{ $$rules{ t_nat } } );
 	&applyIptRules( @{ $$rules{ t_snat } } );
-
-	#~ &setIptConnmarkSave( 'true' );
 	## End applying rules ##
 
-	return $status;
+	## unlock iptables use ##
+	&setIptUnlock( $ipt_lockfile );
+	close $ipt_lockfile;
+
+	return;    # $status;
 }
 
 # Start Farm rutine
@@ -2169,9 +2210,12 @@ sub refreshL4FarmRules    # AlgorithmRules
 	my $farm = shift;     # input: reference to farm structure
 	my $prio_server;
 
-	$prio_server = &getL4ServerWithLowestPriority( $farm );
+	## lock iptables use ##
+	my $lockipt = "/tmp/iptables.lock";
+	open my $ipt_lockfile, '>', $lockipt;
+	&setIptLock( $ipt_lockfile );
 
-	#~ if ( $$farm{ lbalg } eq 'prio' );
+	$prio_server = &getL4ServerWithLowestPriority( $farm );
 
 	&logfile( "refreshL4FarmRules >> prio_server:$$prio_server{id}" );
 
@@ -2184,7 +2228,6 @@ sub refreshL4FarmRules    # AlgorithmRules
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
 		# skip cycle for servers not running
-		#~ next if ( $$server{ status } !~ /up|maintenance/ );
 
 		next if ( $$farm{ lbalg } eq 'prio' && $$server{ id } != $$prio_server{ id } );
 
@@ -2204,8 +2247,6 @@ sub refreshL4FarmRules    # AlgorithmRules
 		if ( $$farm{ persist } ne 'none' )    # persistence
 		{
 			$rule = &genIptMarkPersist( $farm, $server );
-
-			#~ $rule =~ s/--match recent // if $$server{ status } eq 'fgDOWN';
 
 			$rule =
 			  ( $$farm{ lbalg } eq 'prio' )
@@ -2245,8 +2286,12 @@ sub refreshL4FarmRules    # AlgorithmRules
 		}
 	}
 
+	## unlock iptables use ##
+	&setIptUnlock( $ipt_lockfile );
+	close $ipt_lockfile;
+
 	# apply new rules
-	return;    # &applyIptRules( @rules );
+	return;
 }
 
 # do not remove this

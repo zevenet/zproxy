@@ -781,5 +781,23 @@ sub getIptRulesStruct
 	};
 }
 
+#lock iptables 
+sub setIptLock	# ($lockfile)
+{
+	my $lockfile = shift;
+
+	flock($lockfile, LOCK_EX) or &logfile("Cannot lock IPTABLES - $!");
+}
+
+use Fcntl qw(:flock SEEK_END);
+
+#unlock iptables
+sub setIptUnlock	# ($lockfile)
+{
+	my $lockfile = shift;
+
+	flock($lockfile,LOCK_UN) or &logfile("Can't unlock IPTABLES - $!");
+}
+
 # do not remove this
 1;
