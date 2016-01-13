@@ -221,7 +221,6 @@ sub genIptMarkPersist    # ($farm_name,$vip,$vport,$protocol,$ttl,$index,$mark)
 	}
 
 	$rule = "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
-
 	  . "--destination $$farm{ vip } "
 
 	  #~ . "$layer "
@@ -266,8 +265,8 @@ sub genIptMark # ($farm_name,$lbalg,$vip,$vport,$protocol,$index,$mark,$value,$p
 	# Every rule starts with:
 	# table, chain, destination(farm ip) and port(if required) definition
 	$rule = "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
-
-	  #~ . "--destination $$farm{ vip } " . "$layer "
+	  #~ . "--destination $$farm{ vip } "
+	  #~ . "$layer "
 	  ;
 
 	if ( $$farm{ lbalg } eq 'weight' )
@@ -547,6 +546,7 @@ sub getIptRuleNumber
 		 $index         # backend index number. OPTIONAL
 	) = @_;
 
+	# debugging
 	( defined ( $rule ) && $rule ne '' )
 	  or &logfile( ( caller ( 0 ) )[3] . ' $rule invalid' );
 	( defined ( $farm_name ) && !ref $farm_name )
@@ -557,7 +557,7 @@ sub getIptRuleNumber
 	my $rule_num;      # output: rule number for requested rule
 
 	# read rule table and chain
-	my @rule_args = split / +/, $rule;    # ignore blanks
+	my @rule_args = split / +/, $rule;    # divide rule by blanks
 	my $table     = $rule_args[2];        # second argument of iptables is the table
 	my $chain     = $rule_args[4];        # forth argument of iptables is the chain
 
@@ -572,8 +572,6 @@ sub getIptRuleNumber
 	else
 	{
 		$filter = "FARM\_$farm_name\_";
-
-		#~ $comment = $comment . "$index\_" if defined ( $index );
 	}
 
 	# pick rule by farm and optionally server id
@@ -607,7 +605,7 @@ sub applyIptRules
 	my @rules       = @_;    # input: rule array
 	my $return_code = -1;    # output:
 
-	foreach $rule ( @rules )
+	foreach my $rule ( @rules )
 	{
 		# skip cycle if $rule empty
 		next if not $rule or $rule !~ 'iptables';
