@@ -616,7 +616,6 @@ sub applyIptRules
 	return $return_code;     # FIXME: make a proper return code control
 }
 
-########################################################################
 sub setIptRuleCheck
 {
 	my $rule = shift;        # input: iptables rule string
@@ -630,7 +629,7 @@ sub getIptRuleCheck
 
 	return &applyIptRuleAction( $rule, 'check' );
 }
-####################
+
 sub setIptRuleInsert
 {
 	my $farm     = shift;    # input: farm struc reference
@@ -693,7 +692,7 @@ sub getIptRuleInsert
 	}
 	return;    # do not return a rule if the rule already exist
 }
-####################
+
 sub setIptRuleDelete
 {
 	my $rule = shift;    # input: iptables rule string
@@ -770,7 +769,7 @@ sub getIptRuleAppend       # $return_code (\%farm, \%server, $rule)
 
 	return;
 }
-##################################################################
+
 sub getIptRulesStruct
 {
 	return {

@@ -41,6 +41,7 @@ sub getL4FarmsPorts    # ($farm_type)
 	my $first           = 1;
 	my $port_list       = "";
 	my @farms_filenames = &getFarmList();
+
 	if ( $#farms_filenames > -1 )
 	{
 		foreach my $farm_filename ( @farms_filenames )
@@ -52,6 +53,7 @@ sub getL4FarmsPorts    # ($farm_type)
 			if ( $farm_type eq "l4xnat" && $farm_protocol eq $farm_type )
 			{
 				my $farm_port = &getFarmVip( "vipp", $farm_name );
+
 				if ( &validL4ExtPort( $farm_protocol, $farm_port ) )
 				{
 					if ( $first == 1 )
@@ -77,6 +79,7 @@ sub loadL4Modules    # ($protocol)
 
 	my $status    = 0;
 	my $port_list = &getL4FarmsPorts( $protocol );
+
 	if ( $protocol eq "sip" )
 	{
 		&removeNfModule( "nf_nat_sip" );
@@ -98,6 +101,7 @@ sub loadL4Modules    # ($protocol)
 		&loadNfModule( "nf_conntrack_tftp", "ports=$port_list" );
 		&loadNfModule( "nf_nat_tftp",       "" );
 	}
+
 	return $status;
 }
 
@@ -107,6 +111,7 @@ sub validL4ExtPort    # ($farm_protocol,$ports)
 	my ( $farm_protocol, $ports ) = @_;
 
 	my $status = 0;
+
 	if (    $farm_protocol eq "sip"
 		 || $farm_protocol eq "ftp"
 		 || $farm_protocol eq "tftp" )
@@ -242,8 +247,7 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 	if ( $$farm{ status } eq 'up' )
 	{
 		## lock iptables use ##
-		my $lockipt = "/tmp/iptables.lock";
-		open my $ipt_lockfile, '>', $lockipt;
+		open my $ipt_lockfile, '>', $iptlock;
 		&setIptLock( $ipt_lockfile );
 
 		my @rules;
@@ -333,8 +337,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 	if ( $$farm{ status } eq 'up' )
 	{
 		## lock iptables use ##
-		my $lockipt = "/tmp/iptables.lock";
-		open my $ipt_lockfile, '>', $lockipt;
+		open my $ipt_lockfile, '>', $iptlock;
 		&setIptLock( $ipt_lockfile );
 
 		my @rules;
@@ -625,8 +628,7 @@ sub setFarmNatType    # ($nat,$farm_name)
 	if ( $$farm{ status } eq 'up' )
 	{
 		## lock iptables use ##
-		my $lockipt = "/tmp/iptables.lock";
-		open my $ipt_lockfile, '>', $lockipt;
+		open my $ipt_lockfile, '>', $iptlock;
 		&setIptLock( $ipt_lockfile );
 
 		my @rules;
@@ -753,8 +755,7 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 	if ( $$farm{ status } eq 'up' && $$farm{ persist } ne 'none' )
 	{
 		## lock iptables use ##
-		my $lockipt = "/tmp/iptables.lock";
-		open my $ipt_lockfile, '>', $lockipt;
+		open my $ipt_lockfile, '>', $iptlock;
 		&setIptLock( $ipt_lockfile );
 
 		my @rules;
@@ -1199,8 +1200,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	  if &debug;
 
 	## lock iptables use ##
-	my $lockipt = "/tmp/iptables.lock";
-	open my $ipt_lockfile, '>', $lockipt;
+	open my $ipt_lockfile, '>', $iptlock;
 	&setIptLock( $ipt_lockfile );
 
 	# initialize a farm struct
@@ -1328,8 +1328,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	}
 
 	## lock iptables use ##
-	my $lockipt = "/tmp/iptables.lock";
-	open my $ipt_lockfile, '>', $lockipt;
+	open my $ipt_lockfile, '>', $iptlock;
 	&setIptLock( $ipt_lockfile );
 
 	# Disable rules
@@ -1449,8 +1448,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		my @rules;
 
 		## lock iptables use ##
-		my $lockipt = "/tmp/iptables.lock";
-		open my $ipt_lockfile, '>', $lockipt;
+		open my $ipt_lockfile, '>', $iptlock;
 		&setIptLock( $ipt_lockfile );
 
 		foreach my $server ( @{ $$farm{ servers } } )
@@ -1783,8 +1781,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	if ( $$farm{ status } eq 'up' )
 	{
 		## lock iptables use ##
-		my $lockipt = "/tmp/iptables.lock";
-		open my $ipt_lockfile, '>', $lockipt;
+		open my $ipt_lockfile, '>', $iptlock;
 		&setIptLock( $ipt_lockfile );
 
 		my @rules;
@@ -2058,8 +2055,7 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	  if &debug;
 
 	## lock iptables use ##
-	my $lockipt = "/tmp/iptables.lock";
-	open my $ipt_lockfile, '>', $lockipt;
+	open my $ipt_lockfile, '>', $iptlock;
 	&setIptLock( $ipt_lockfile );
 
 	# initialize a farm struct
@@ -2100,8 +2096,7 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	#~ my $status;
 
 	## lock iptables use ##
-	my $lockipt = "/tmp/iptables.lock";
-	open my $ipt_lockfile, '>', $lockipt;
+	open my $ipt_lockfile, '>', $iptlock;
 	&setIptLock( $ipt_lockfile );
 
 	my $farm   = &getL4FarmStruct( $farm_name );
@@ -2211,8 +2206,7 @@ sub refreshL4FarmRules    # AlgorithmRules
 	my $prio_server;
 
 	## lock iptables use ##
-	my $lockipt = "/tmp/iptables.lock";
-	open my $ipt_lockfile, '>', $lockipt;
+	open my $ipt_lockfile, '>', $iptlock;
 	&setIptLock( $ipt_lockfile );
 
 	$prio_server = &getL4ServerWithLowestPriority( $farm );
