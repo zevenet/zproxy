@@ -116,7 +116,7 @@ then
 	echo "ZLB will be unavailable meanwhile the service is restarting."
 	#echo "Now you need to restart zenloadbalancer service, so "
 	#echo "meanwhile ZLB will be unavailable."
-	echo "Do you want to proceed with the restart? y/n"
+	echo -n "Do you want to proceed with the restart? (y/n) "
 	read response
 	#response = "y"
 	if [ "$response" == "y" -o "$response" == "Y" ]; then
