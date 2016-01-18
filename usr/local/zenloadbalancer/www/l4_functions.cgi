@@ -1249,9 +1249,6 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		$status = &loadL4Modules( $$farm{ vproto } );
 	}
 
-	# calculate backends probability with Weight values
-	&getL4BackendsWeightProbability( $farm );
-
 	my $rules;
 	my $lowest_prio;
 	my $server_prio;    # reference to the selected server for prio algorithm
@@ -1308,8 +1305,6 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	&applyIptRules( @{ $$rules{ t_mangle } } );
 	&applyIptRules( @{ $$rules{ t_nat } } );
 	&applyIptRules( @{ $$rules{ t_snat } } );
-
-	&logfile( "_runL4FarmStart: status => $status" );
 
 	# Enable IP forwarding
 	&setIpForward( 'true' );
