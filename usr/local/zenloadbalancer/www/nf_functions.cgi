@@ -22,6 +22,7 @@
 ###############################################################################
 
 use Data::Dumper;
+use Fcntl qw(:flock SEEK_END);
 
 #
 sub loadNfModule    # ($modname,$params)
@@ -51,6 +52,7 @@ sub removeNfModule    # ($modname)
 	my $modprobe_command = "$modprobe -r $modname";
 
 	&logfile( "L4 removeNfModule: $modprobe_command" );
+
 	return system ( "$modprobe_command >/dev/null 2>&1" );
 }
 
@@ -64,7 +66,6 @@ sub getIptFilter      # ($type, $desc, @iptables)
 	@selected_rules = grep { / FARM\_$desc\_.* /x } @iptables
 	  if ( $type eq 'farm' );
 
-	# FIXME: cannot return conditionally
 	return @selected_rules;
 }
 
@@ -73,7 +74,7 @@ sub getIptList                              # ($table,$chain)
 {
 	my ( $table, $chain ) = @_;
 
-	if ( $table ne "" )
+	if ( $table ne '' )
 	{
 		$table = "--table $table";
 	}
@@ -82,7 +83,17 @@ sub getIptList                              # ($table,$chain)
 
 	&logfile( $iptables_command );
 
-	return `$iptables_command`;
+	## lock iptables use ##
+	open my $ipt_lockfile, '>', $iptlock;
+	&setIptLock( $ipt_lockfile );
+
+	my @ipt_output = `$iptables_command`;
+
+	## unlock iptables use ##
+	&setIptUnlock( $ipt_lockfile );
+	close $ipt_lockfile;
+
+	return @ipt_output;
 }
 
 #
@@ -95,19 +106,16 @@ sub deleteIptRules    # ($type,$desc,$table,$chain,@allrules)
 
 	# do not change rules id starting by the end
 	chomp ( @rules = reverse ( @rules ) );
+
 	foreach my $rule ( @rules )
 	{
-		my @sprule = split ( "\ ", $rule );
-		if ( $type eq "farm" )
+		my @sprule = split ( ' ', $rule );
+
+		if ( $type eq 'farm' )
 		{
 			my $iptables_command = "$iptables --table $table --delete $chain $sprule[0]";
 
-			&logfile( "deleteIptRules:: running '$iptables_command'" );
-			system ( "$iptables_command >/dev/null 2>&1" );
-
-			#~ &logfile( "deleteIptRules:: delete netfilter rule '$rule'" );
-
-			$status = $status + $?;
+			$status = iptSystem( $iptables_command );
 		}
 	}
 
@@ -142,7 +150,7 @@ sub getNewMark    # ($farm_name)
 
 	if ( $found eq 'true' )
 	{
-		open ( my $marksfile, ">>", "$fwmarksconf" );
+		open ( my $marksfile, '>>', "$fwmarksconf" );
 		print $marksfile "$marknum // FARM\_$farm_name\_\n";
 		close $marksfile;
 	}
@@ -161,7 +169,7 @@ sub delMarks    # ($farm_name,$mark)
 	{
 		tie my @contents, 'Tie::File', "$fwmarksconf";
 		@contents = grep { !/ \/\/ FARM\_$farm_name\_$/x } @contents;
-		$status = $?;
+		$status = $?;    # FIXME
 		untie @contents;
 	}
 
@@ -169,15 +177,15 @@ sub delMarks    # ($farm_name,$mark)
 	{
 		tie my @contents, 'Tie::File', "$fwmarksconf";
 		@contents = grep { !/^$mark \/\//x } @contents;
-		$status = $?;
+		$status = $?;    # FIXME
 		untie @contents;
 	}
 
-	return $status;
+	return $status;    # FIXME
 }
 
 #
-sub renameMarks    # ($farm_name,$newfname)
+sub renameMarks        # ($farm_name,$newfname)
 {
 	my ( $farm_name, $newfname ) = @_;
 
@@ -190,11 +198,11 @@ sub renameMarks    # ($farm_name,$newfname)
 		{
 			$line =~ s/ \/\/ FARM\_$farm_name\_/ \/\/ FARM\_$newfname\_/x;
 		}
-		$status = $?;
+		$status = $?;    # FIXME
 		untie @contents;
 	}
 
-	return $status;
+	return $status;      # FIXME
 }
 
 #
@@ -265,6 +273,7 @@ sub genIptMark # ($farm_name,$lbalg,$vip,$vport,$protocol,$index,$mark,$value,$p
 	# Every rule starts with:
 	# table, chain, destination(farm ip) and port(if required) definition
 	$rule = "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
+
 	  #~ . "--destination $$farm{ vip } "
 	  #~ . "$layer "
 	  ;
@@ -462,12 +471,12 @@ sub setIptConnmarkRestore
 	my $return_code = -1;       # return value
 
 	my $rule = &getIptStringConnmarkRestore();
-	my $restore_on = ( &logAndRun( &applyIptRuleAction( $rule, 'check' ) ) == 0 );
+	my $restore_on = ( &iptSystem( &applyIptRuleAction( $rule, 'check' ) ) == 0 );
 
 	# if want to set it on but not already on
 	if ( $switch eq 'true' && !$restore_on )
 	{
-		$return_code = &logAndRun( &applyIptRuleAction( $rule, 'insert' ) );
+		$return_code = &iptSystem( &applyIptRuleAction( $rule, 'insert' ) );
 	}
 
 	# if want to turn it off, is on and only one farm needs it
@@ -475,7 +484,7 @@ sub setIptConnmarkRestore
 			&& $restore_on
 			&& &getNumberOfFarmTypeRunning( 'l4xnat' ) == 0 )
 	{
-		$return_code = &logAndRun( &applyIptRuleAction( $rule, 'delete' ) );
+		$return_code = &iptSystem( &applyIptRuleAction( $rule, 'delete' ) );
 	}
 
 	return $return_code;
@@ -487,12 +496,12 @@ sub setIptConnmarkSave
 	my $return_code = -1;       # return value
 
 	my $rule = &getIptStringConnmarkSave();
-	my $restore_on = ( &logAndRun( &applyIptRuleAction( $rule, 'check' ) ) == 0 );
+	my $restore_on = ( &iptSystem( &applyIptRuleAction( $rule, 'check' ) ) == 0 );
 
 	# if want to set it on but not already on
 	if ( $switch eq 'true' && !$restore_on )
 	{
-		$return_code = &logAndRun( &applyIptRuleAction( $rule, 'append' ) );
+		$return_code = &iptSystem( &applyIptRuleAction( $rule, 'append' ) );
 	}
 
 	# if want to turn it off, is on and only one farm needs it
@@ -500,7 +509,7 @@ sub setIptConnmarkSave
 			&& $restore_on
 			&& &getNumberOfFarmTypeRunning( 'l4xnat' ) == 0 )
 	{
-		$return_code = &logAndRun( &applyIptRuleAction( $rule, 'delete' ) );
+		$return_code = &iptSystem( &applyIptRuleAction( $rule, 'delete' ) );
 	}
 
 	return $return_code;
@@ -510,7 +519,7 @@ sub applyIptRuleAction
 {
 	my $rule    = shift;    # rule string with ::ACTION_TAG:: instead of action
 	my $action  = shift;    # must be append|check|delete|insert|replace
-	my $rulenum = shift;    # input: optional
+	my $rulenum = shift;    # input: optional (required for replace)
 
 	# return the action requested if not supported
 	return $action if $action !~ /append|check|delete|insert|replace/x;
@@ -532,8 +541,6 @@ sub applyIptRuleAction
 
 	# applied for any accepted action
 	$rule =~ s/::ACTION_TAG::/$action/x;
-
-	&logfile( "<< applyIptRuleAction:{action:$action,rulenum:$rulenum} $rule" ); ###
 
 	return $rule;
 }
@@ -561,9 +568,10 @@ sub getIptRuleNumber
 	my $table     = $rule_args[2];        # second argument of iptables is the table
 	my $chain     = $rule_args[4];        # forth argument of iptables is the chain
 
-	my $ipt_cmd = "$iptables --numeric --line-number --table $table --list $chain";
 	my $filter;
+	my $ipt_cmd = "$iptables --numeric --line-number --table $table --list $chain";
 
+	# define filter with or without index paramenter
 	if ( defined ( $index ) )
 	{
 		my $farm = &getL4FarmStruct( $farm_name );
@@ -574,8 +582,17 @@ sub getIptRuleNumber
 		$filter = "FARM\_$farm_name\_";
 	}
 
+	## lock iptables use ##
+	open my $ipt_lockfile, '>', $iptlock;
+	&setIptLock( $ipt_lockfile );
+
 	# pick rule by farm and optionally server id
 	my @rules = grep { /$filter/ } `$ipt_cmd`;
+
+	## unlock iptables use ##
+	&setIptUnlock( $ipt_lockfile );
+	close $ipt_lockfile;
+
 	chomp ( @rules );
 
 	# only for marking tags, when ip persistance is enabled
@@ -610,7 +627,7 @@ sub applyIptRules
 		# skip cycle if $rule empty
 		next if not $rule or $rule !~ 'iptables';
 
-		$return_code = &logAndRun( $rule );
+		$return_code = &iptSystem( $rule );
 	}
 
 	return $return_code;     # FIXME: make a proper return code control
@@ -649,27 +666,33 @@ sub getIptRuleInsert
 
 	if ( ( not defined $rule_num ) || $rule_num eq '' )
 	{
-		# FIXME: insert rule in proper place
 		# by default insert in 2nd position to skip CONNMARK rule if applies
 		$rule_num = 2;
 
 		# do not insert a rule on a position higher than this, iptable will fail
 		my $rule_max_position;
 
-		{    # calculate rule_max_position
-			    # read rule table and chain
+		{                    # calculate rule_max_position
+			                 # read rule table and chain
 			my @rule_args = split / +/, $rule;
 			my $table     = $rule_args[2];       # second argument of iptables is the table
 			my $chain     = $rule_args[4];       # forth argument of iptables is the chain
 
+			## lock iptables use ##
+			open my $ipt_lockfile, '>', $iptlock;
+			&setIptLock( $ipt_lockfile );
+
 			my @rule_list = `$iptables -n --line-number --table $table --list $chain`;
+
+			## unlock iptables use ##
+			&setIptUnlock( $ipt_lockfile );
+			close $ipt_lockfile;
+
 			$rule_max_position = ( scalar @rule_list ) - 1;
 
 			if ( $table eq 'mangle' && $rule =~ /--match recent/ )
 			{
 				@rule_list = grep { /recent: CHECK/ } @rule_list;
-
-				&logfile( "getIptRuleInsert: @rule_list" );    ########
 
 				@rule_args = split / +/, $rule_list[0];
 				my $recent_rule_num = $rule_args[0];
@@ -681,15 +704,16 @@ sub getIptRuleInsert
 	}
 
 	# if the rule does not exist
-	if ( &setIptRuleCheck( $rule ) != 0 )                      # 256
+	if ( &setIptRuleCheck( $rule ) != 0 )    # 256
 	{
 		$rule = &applyIptRuleAction( $rule, 'insert', $rule_num );
 		return $rule;
 	}
-	else    # if the rule exist replace it.
+	else                                     # if the rule exist replace it.
 	{
 		$rule = &setIptRuleReplace( $farm, $server, $rule );
 	}
+
 	return;    # do not return a rule if the rule already exist
 }
 
@@ -722,7 +746,6 @@ sub getIptRuleDelete
 		my @rule_args = split / +/, $rule;
 		my $table     = $rule_args[2];       # second argument of iptables is the table
 		my $chain     = $rule_args[4];       # forth argument of iptables is the chain
-		&logfile( `$iptables -n --line-number -t $table -L $chain` );
 	}
 
 	return $rule;
@@ -780,22 +803,81 @@ sub getIptRulesStruct
 	};
 }
 
-#lock iptables 
-sub setIptLock	# ($lockfile)
+#lock iptables
+sub setIptLock    # ($lockfile)
 {
-	my $lockfile = shift;
+	my $ipt_lockfile = shift;
 
-	flock($lockfile, LOCK_EX) or &logfile("Cannot lock IPTABLES - $!");
+	if ( flock ( $ipt_lockfile, LOCK_EX ) )
+	{
+		&logfile( "Success locking IPTABLES" ) if &debug;
+	}
+	else
+	{
+		&logfile( "Cannot lock iptables: $!" );
+	}
 }
 
-use Fcntl qw(:flock SEEK_END);
-
 #unlock iptables
-sub setIptUnlock	# ($lockfile)
+sub setIptUnlock    # ($lockfile)
 {
-	my $lockfile = shift;
+	my $ipt_lockfile = shift;
 
-	flock($lockfile,LOCK_UN) or &logfile("Can't unlock IPTABLES - $!");
+	if ( flock ( $ipt_lockfile, LOCK_UN ) )
+	{
+		&logfile( "Success unlocking IPTABLES" ) if &debug;
+	}
+	else
+	{
+		&logfile( "Cannot unlock iptables: $!" );
+	}
+}
+
+# log and run the command string input parameter returning execution error code
+sub iptSystem
+{
+	my $command = shift;    # command string to log and run
+	my $return_code;
+
+	# $iptlock defined in global.conf
+
+	&logfile( "Running: $command" );    # log
+
+	## lock iptables use ##
+	my $open_rc = open ( my $ipt_lockfile, '>', $iptlock );
+	if ( $open_rc )
+	{
+		&setIptLock( $ipt_lockfile );
+	}
+	else
+	{
+		&logfile( "Cannot open $iptlock: $!" );
+	}
+
+	$return_code = system ( "$command >/dev/null 2>&1" );    # run
+
+	## unlock iptables use ##
+	if ( open_rc )
+	{
+		&setIptUnlock( $ipt_lockfile );
+		close $ipt_lockfile;
+	}
+
+	if ( $return_code )
+	{
+		if ( grep { /--check/ } $command )
+		{
+			&logfile( "Previous iptables line not found" )
+			  if &debug;    # show in logs if failed
+		}
+		else
+		{
+			&logfile( "Previous command failed!" );    # show in logs if failed
+		}
+	}
+
+	# returning error code from execution
+	return $return_code;
 }
 
 # do not remove this

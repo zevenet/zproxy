@@ -69,6 +69,7 @@ sub getL4FarmsPorts    # ($farm_type)
 			}
 		}
 	}
+
 	return $port_list;
 }
 
@@ -143,8 +144,9 @@ sub runL4FarmRestart    # ($farm_name,$writeconf,$type)
 		open FILE, "<$pidfile";
 		my $pid = <FILE>;
 		close FILE;
+
 		kill USR1 => $pid;
-		$output = $?;
+		$output = $?;    # FIXME
 	}
 	else
 	{
@@ -177,7 +179,7 @@ sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
 
 		# reload config file
 		kill USR1 => $pid;
-		$output = $?;
+		$output = $?;    # FIXME
 	}
 	else
 	{
@@ -189,7 +191,7 @@ sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
 }
 
 #
-sub sendL4ConfChange    # ($farm_name)
+sub sendL4ConfChange     # ($farm_name)
 {
 	my $farm_name = shift;
 
@@ -206,7 +208,7 @@ sub sendL4ConfChange    # ($farm_name)
 		close $file;
 
 		kill USR1 => $pid;
-		$output = $?;
+		$output = $?;    # FIXME
 	}
 	else
 	{
@@ -214,7 +216,7 @@ sub sendL4ConfChange    # ($farm_name)
 		&_runL4FarmRestart( $farm_name, "false", "" );
 	}
 
-	return $output;
+	return $output;      # FIXME
 }
 
 # Persistence mode
@@ -236,7 +238,7 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 			$line =
 			  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$session\;$args[7]\;$args[8]";
 			splice @configfile, $i, $line;
-			$output = $?;
+			$output = $?;    # FIXME
 		}
 		$i++;
 	}
@@ -246,22 +248,25 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		## lock iptables use ##
-		open my $ipt_lockfile, '>', $iptlock;
-		&setIptLock( $ipt_lockfile );
+		my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStop( $$farm{ name } );
+		}
 
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 
 		foreach my $server ( @{ $$farm{ servers } } )
 		{
-			next if $$server{ status } !~ /up|maintenance/;
+			next if $$server{ status } !~ /up|maintenance/;    # status eq fgDOWN
 			next if $$farm{ lbalg } eq 'prio' && $$prio_server{ id } != $$server{ id };
 
 			my $rule = &genIptMarkPersist( $farm, $server );
 
 			$rule = ( $$farm{ persist } eq 'none' )
-			  ? &getIptRuleDelete( $rule )    # delete
+			  ? &getIptRuleDelete( $rule )                     # delete
 			  : &getIptRuleInsert( $farm, $server, $rule );    # insert second
 			&applyIptRules( $rule );
 
@@ -270,11 +275,10 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 			$output = &applyIptRules( $rule );
 		}
 
-		## unlock iptables use ##
-		&setIptUnlock( $ipt_lockfile );
-		close $ipt_lockfile;
-
-		#~ $output = &refreshL4FarmRules( $farm );
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStart( $$farm{ name } );
+		}
 	}
 
 	return $output;
@@ -325,12 +329,12 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 			$line =
 			  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$args[4]\;$algorithm\;$args[6]\;$args[7]\;$args[8]";
 			splice @configfile, $i, $line;
-			$output = $?;
+			$output = $?;                                    # FIXME
 		}
 		$i++;
 	}
 	untie @configfile;
-	$output = $?;
+	$output = $?;                                            # FIXME
 
 	my $farm = &getL4FarmStruct( $farm_name );
 
@@ -621,21 +625,27 @@ sub setFarmNatType    # ($nat,$farm_name)
 				$line =
 				  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$nat\;$args[5]\;$args[6]\;$args[7]\;$args[8]";
 				splice @configfile, $i, $line;
-				$output = $?;
+				$output = $?;    # FIXME
 			}
 			$i++;
 		}
 		untie @configfile;
-		$output = $?;
+		$output = $?;            # FIXME
 	}
 
 	my $farm = &getL4FarmStruct( $farm_name );
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		## lock iptables use ##
-		open my $ipt_lockfile, '>', $iptlock;
-		&setIptLock( $ipt_lockfile );
+		my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+		if ( $fg_enabled eq 'true' )
+		{
+			if ( $0 !~ /farmguardian/ )
+			{
+				&runFarmGuardianStop( $$farm{ name } );
+			}
+		}
 
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
@@ -661,9 +671,13 @@ sub setFarmNatType    # ($nat,$farm_name)
 			$output = &applyIptRules( $rule );
 		}
 
-		## unlock iptables use ##
-		&setIptUnlock( $ipt_lockfile );
-		close $ipt_lockfile;
+		if ( $fg_enabled eq 'true' )
+		{
+			if ( $0 !~ /farmguardian/ )
+			{
+				&runFarmGuardianStart( $$farm{ name } );
+			}
+		}
 	}
 
 	return $output;
@@ -688,12 +702,12 @@ sub setL4FarmPersistence    # ($persistence,$farm_name)
 			$line =
 			  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$persistence\;$args[7]\;$args[8]";
 			splice @configfile, $i, $line;
-			$output = $?;
+			$output = $?;    # FIXME
 		}
 		$i++;
 	}
 	untie @configfile;
-	$output = $?;
+	$output = $?;            # FIXME
 
 	my $farm = &getL4FarmStruct( $farm_name );
 
@@ -749,20 +763,23 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 			$line =
 			  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$args[6]\;$track\;$args[8]";
 			splice @configfile, $i, $line;
-			$output = $?;
+			$output = $?;    # FIXME
 		}
 		$i++;
 	}
 	untie @configfile;
-	$output = $?;
+	$output = $?;            # FIXME
 
 	my $farm = &getL4FarmStruct( $farm_name );
 
 	if ( $$farm{ status } eq 'up' && $$farm{ persist } ne 'none' )
 	{
-		## lock iptables use ##
-		open my $ipt_lockfile, '>', $iptlock;
-		&setIptLock( $ipt_lockfile );
+		my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStop( $$farm{ name } );
+		}
 
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
@@ -782,9 +799,10 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 
 		$output = &applyIptRules( @rules );
 
-		## unlock iptables use ##
-		&setIptUnlock( $ipt_lockfile );
-		close $ipt_lockfile;
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStart( $$farm{ name } );
+		}
 	}
 
 	return $output;
@@ -1205,10 +1223,6 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	&logfile( "_runL4FarmStart << farm_name:$farm_name writeconf:$writeconf" )
 	  if &debug;
 
-	## lock iptables use ##
-	open my $ipt_lockfile, '>', $iptlock;
-	&setIptLock( $ipt_lockfile );
-
 	# initialize a farm struct
 	my $farm = &getL4FarmStruct( $farm_name );
 
@@ -1307,10 +1321,6 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		close $fi;
 	}
 
-	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
-	close $ipt_lockfile;
-
 	return $status;
 }
 
@@ -1333,10 +1343,6 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 		untie @configfile;
 	}
 
-	## lock iptables use ##
-	open my $ipt_lockfile, '>', $iptlock;
-	&setIptLock( $ipt_lockfile );
-
 	# Disable rules
 	my @allrules;
 
@@ -1353,10 +1359,6 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 
 	&setIptConnmarkRestore();
 	&setIptConnmarkSave();
-
-	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
-	close $ipt_lockfile;
 
 	# Disable active l4xnat file
 	unlink ( "$piddir\/$farm_name\_l4xnat.pid" );
@@ -1381,7 +1383,7 @@ sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 	open FO, ">$configdir\/$farm_name\_$farm_type.cfg";
 	print FO "$farm_name\;tcp\;$vip\;$vip_port\;nat\;weight\;none\;120\;up\n";
 	close FO;
-	$output = $?;
+	$output = $?;      # FIXME
 
 	if ( !-e "$piddir/${farm_name}_$farm_type.pid" )
 	{
@@ -1390,11 +1392,11 @@ sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 		close FI;
 	}
 
-	return $output;
+	return $output;    # FIXME
 }
 
 # Returns farm vip
-sub getL4FarmVip    # ($info,$farm_name)
+sub getL4FarmVip       # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
 
@@ -1440,12 +1442,12 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 			$line =
 			  "$args[0]\;$args[1]\;$vip\;$vip_port\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8]";
 			splice @configfile, $i, $line;
-			$stat = $?;
+			$stat = $?;    # FIXME
 		}
 		$i++;
 	}
 	untie @configfile;
-	$stat = $?;
+	$stat = $?;            # FIXME
 
 	my $farm = &getL4FarmStruct( $farm_name );
 
@@ -1453,9 +1455,12 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	{
 		my @rules;
 
-		## lock iptables use ##
-		open my $ipt_lockfile, '>', $iptlock;
-		&setIptLock( $ipt_lockfile );
+		my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStop( $$farm{ name } ) if ( $fg_enabled eq 'true' );
+		}
 
 		foreach my $server ( @{ $$farm{ servers } } )
 		{
@@ -1479,10 +1484,10 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 
 		&applyIptRules( @rules );
 
-		## unlock iptables use ##
-		&setIptUnlock( $ipt_lockfile );
-		close $ipt_lockfile;
-
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStart( $$farm{ name } );
+		}
 	}
 
 	return $stat;
@@ -1516,7 +1521,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 				my $dline = "\;server\;$rip\;$port\;$aline[4]\;$weight\;$priority\;up\n";
 
 				splice @contents, $l, 1, $dline;
-				$output       = $?;
+				$output       = $?;       # FIXME
 				$found_server = 'true';
 			}
 			else
@@ -1532,7 +1537,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	{
 		my $mark = sprintf ( "0x%x", &getNewMark( $farm_name ) );
 		push ( @contents, "\;server\;$rip\;$port\;$mark\;$weight\;$priority\;up\n" );
-		$output = $?;
+		$output = $?;    # FIXME
 	}
 	untie @contents;
 	### end editing config file ###
@@ -1553,7 +1558,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 		&refreshL4FarmRules( $farm );
 	}
 
-	return $output;
+	return $output;    # FIXME
 }
 
 #
@@ -1647,14 +1652,6 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 		"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status)"
 	);                        ###
 
-	my $off_maintenance = 0;  # false by default
-
-	if (    $farm{ servers }[$server_id]{ status } eq 'maintenance'
-		 && $status eq 'up' )
-	{
-		$off_maintenance = 1;    # make it true
-	}
-
 	# load farm configuration file
 	tie my @configfile, 'Tie::File', "$configdir\/$farm{filename}";
 
@@ -1707,17 +1704,17 @@ sub getFarmPortList    # ($fvipp)
 {
 	my $fvipp = shift;
 
-	my @portlist = split ( ",", $fvipp );
-	my $port;
+	my @portlist = split ( ',', $fvipp );
 	my @retportlist = ();
 
 	if ( $portlist[0] !~ /\*/ )
 	{
-		foreach $port ( @portlist )
+		foreach my $port ( @portlist )
 		{
 			if ( $port =~ /:/ )
 			{
-				my @intlimits = split ( ":", $port );
+				my @intlimits = split ( ':', $port );
+
 				for ( my $i = $intlimits[0] ; $i <= $intlimits[1] ; $i++ )
 				{
 					push ( @retportlist, $i );
@@ -1777,7 +1774,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	rename ( "$configdir\/$farm_filename", "$configdir\/$new_farm_filename" );
 	rename ( "$piddir\/$farm_name\_$farm_type.pid",
 			 "$piddir\/$new_farm_name\_$farm_type.pid" );
-	$output = $?;
+	$output = $?;    # FIXME
 
 	# Rename fw marks for this farm
 	&renameMarks( $farm_name, $new_farm_name );
@@ -1786,9 +1783,15 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		## lock iptables use ##
-		open my $ipt_lockfile, '>', $iptlock;
-		&setIptLock( $ipt_lockfile );
+		my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+		if ( $fg_enabled eq 'true' )
+		{
+			if ( $0 !~ /farmguardian/ )
+			{
+				&runFarmGuardianStop( $$farm{ name } );
+			}
+		}
 
 		my @rules;
 
@@ -1872,9 +1875,13 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 			}
 		}
 
-		## unlock iptables use ##
-		&setIptUnlock( $ipt_lockfile );
-		close $ipt_lockfile;
+		if ( $fg_enabled eq 'true' )
+		{
+			if ( $0 !~ /farmguardian/ )
+			{
+				&runFarmGuardianStart( $$farm{ name } );
+			}
+		}
 	}
 
 	# apply new rules
@@ -1983,8 +1990,6 @@ sub getL4ServerActionRules
 	my $rules = &getIptRulesStruct();
 	my $rule;
 
-	#&zlog('getL4ServerActionRules server:'.Dumper($server));
-
 	## persistence rules ##
 	if ( $$farm{ persist } ne 'none' )
 	{
@@ -2002,7 +2007,6 @@ sub getL4ServerActionRules
 			  ? &getIptRuleDelete( $rule )    # delete
 			  : &getIptRuleInsert( $farm, $server, $rule );    # insert second
 
-			#			&applyIptRules( $rule );                           # collect rule
 			push ( @{ $$rules{ t_mangle_p } }, $rule );
 		}
 	}
@@ -2014,7 +2018,6 @@ sub getL4ServerActionRules
 	  ? &getIptRuleDelete( $rule )                             # delete
 	  : &getIptRuleAppend( $rule );
 
-	#~ &applyIptRules( $rule );                                   # collect rule
 	push ( @{ $$rules{ t_nat } }, $rule );
 
 	## rules for source nat or nat ##
@@ -2033,7 +2036,6 @@ sub getL4ServerActionRules
 		  ? &getIptRuleDelete( $rule )    # delete
 		  : &getIptRuleAppend( $rule );
 
-		#~ &applyIptRules( $rule );          # collect rule
 		push ( @{ $$rules{ t_snat } }, $rule );
 	}
 
@@ -2044,7 +2046,6 @@ sub getL4ServerActionRules
 	  ? &getIptRuleDelete( $rule )        # delete
 	  : &getIptRuleInsert( $farm, $server, $rule );    # insert second
 
-	#~ &applyIptRules( $rule );                           # collect rule
 	push ( @{ $$rules{ t_mangle } }, $rule );
 
 	return $rules;
@@ -2060,9 +2061,12 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	&logfile( "_runL4ServerStart << farm_name:$farm_name server_id:$server_id" )
 	  if &debug;
 
-	## lock iptables use ##
-	open my $ipt_lockfile, '>', $iptlock;
-	&setIptLock( $ipt_lockfile );
+	my $fg_enabled = ( &getFarmGuardianConf( $farm_name ) )[3];
+
+	if ( $fg_enabled eq 'true' )
+	{
+		&runFarmGuardianStop( $farm_name );
+	}
 
 	# initialize a farm struct
 	my %farm   = %{ &getL4FarmStruct( $farm_name ) };
@@ -2070,9 +2074,6 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 
 	my $rules;
 	my $status;
-
-	#~ &logfile( "_runL4ServerStart << farm:" . Dumper \%farm ) if &debug;
-	#~ &logfile( "_runL4ServerStart << server:" . Dumper \%server ) if &debug;
 
 	## Applying all rules ##
 	$rules = &getL4ServerActionRules( \%farm, \%server, 'on' );
@@ -2083,9 +2084,10 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	&applyIptRules( @{ $$rules{ t_snat } } );
 	## End applying rules ##
 
-	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
-	close $ipt_lockfile;
+	if ( $fg_enabled eq 'true' )
+	{
+		&runFarmGuardianStart( $farm_name );
+	}
 
 	return $status;
 }
@@ -2099,11 +2101,12 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 
 	my $rules;
 
-	#~ my $status;
+	my $fg_enabled = ( &getFarmGuardianConf( $farm_name ) )[3];
 
-	## lock iptables use ##
-	open my $ipt_lockfile, '>', $iptlock;
-	&setIptLock( $ipt_lockfile );
+	if ( $fg_enabled eq 'true' )
+	{
+		&runFarmGuardianStop( $farm_name );
+	}
 
 	my $farm   = &getL4FarmStruct( $farm_name );
 	my $server = $$farm{ servers }[$server_id];
@@ -2111,19 +2114,18 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	## Applying all rules ##
 	$rules = &getL4ServerActionRules( $farm, $server, 'off' );
 
-	#~ $logfile("_runL4ServerStop: ".Dumper($rules));
-
 	&applyIptRules( @{ $$rules{ t_mangle_p } } );
 	&applyIptRules( @{ $$rules{ t_mangle } } );
 	&applyIptRules( @{ $$rules{ t_nat } } );
 	&applyIptRules( @{ $$rules{ t_snat } } );
 	## End applying rules ##
 
-	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
-	close $ipt_lockfile;
+	if ( $fg_enabled eq 'true' )
+	{
+		&runFarmGuardianStart( $farm_name );
+	}
 
-	return;    # $status;
+	return;
 }
 
 # Start Farm rutine
@@ -2135,10 +2137,8 @@ sub getL4ServerWithLowestPriority    # ($farm)
 
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
-		#~ &logfile('getL4ServerWithLowestPriority > server:'.Dumper($server));
 		if ( $$server{ status } eq 'up' )
 		{
-			#~ &logfile("getL4ServerWithLowestPriority: server:$server{id}");
 			# find the lowest priority server
 			$prio_server = $server if not defined $prio_server;
 			$prio_server = $server if $$prio_server{ priority } > $$server{ priority };
@@ -2211,9 +2211,15 @@ sub refreshL4FarmRules    # AlgorithmRules
 	my $farm = shift;     # input: reference to farm structure
 	my $prio_server;
 
-	## lock iptables use ##
-	open my $ipt_lockfile, '>', $iptlock;
-	&setIptLock( $ipt_lockfile );
+	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+	if ( $fg_enabled eq 'true' )
+	{
+		if ( $0 !~ /farmguardian/ )
+		{
+			&runFarmGuardianStop( $$farm{ name } );
+		}
+	}
 
 	$prio_server = &getL4ServerWithLowestPriority( $farm );
 
@@ -2286,9 +2292,13 @@ sub refreshL4FarmRules    # AlgorithmRules
 		}
 	}
 
-	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
-	close $ipt_lockfile;
+	if ( $fg_enabled eq 'true' )
+	{
+		if ( $0 !~ /farmguardian/ )
+		{
+			&runFarmGuardianStart( $$farm{ name } );
+		}
+	}
 
 	# apply new rules
 	return;
