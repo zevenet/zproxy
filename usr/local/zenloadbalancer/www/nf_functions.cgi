@@ -574,8 +574,8 @@ sub getIptRuleNumber
 	# define filter with or without index paramenter
 	if ( defined ( $index ) )
 	{
-		my $farm = &getL4FarmStruct( $farm_name );
-		$filter = $$farm{ servers }[$index]{ tag };
+		my @server_line = grep { /^$index;/ } &getFarmServers( $farm_name );
+		$filter = ( split ';', @server_line[0] )[3];
 	}
 	else
 	{
