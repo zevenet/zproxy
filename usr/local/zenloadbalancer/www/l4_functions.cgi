@@ -431,8 +431,16 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 		}
 		elsif ( -e $l4sd_pidfile )
 		{
+			## lock iptables use ##
+			open my $ipt_lockfile, '>', $iptlock;
+			&setIptLock( $ipt_lockfile );
+
 			my $num_lines = grep { /-m condition --condition/ }
 			  `iptables --numeric --table mangle --list PREROUTING`;
+
+			## unlock iptables use ##
+			&setIptUnlock( $ipt_lockfile );
+			close $ipt_lockfile;
 
 			if ( $num_lines == 0 )
 			{
@@ -470,15 +478,15 @@ sub getL4FarmAlgorithm    # ($farm_name)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
-	my $first         = "true";
+	my $first         = 'true';
 
 	open FI, "<$configdir/$farm_filename";
 
 	while ( my $line = <FI> )
 	{
-		if ( $line ne "" && $first eq "true" )
+		if ( $line ne '' && $first eq 'true' )
 		{
-			$first = "false";
+			$first = 'false';
 			my @line = split ( "\;", $line );
 			$output = $line[5];
 		}
@@ -1980,7 +1988,6 @@ sub getL4ServerActionRules
 	my $farm   = shift;    # input: farm reference
 	my $server = shift;    # input: server reference
 	my $switch = shift;    # input: on/off
-	     #~ my $rules  = shift;    # input/output: reference to rules hash structure
 
 	my $rules = &getIptRulesStruct();
 	my $rule;
@@ -2217,8 +2224,6 @@ sub refreshL4FarmRules    # AlgorithmRules
 	}
 
 	$prio_server = &getL4ServerWithLowestPriority( $farm );
-
-	&logfile( "refreshL4FarmRules >> prio_server:$$prio_server{id}" );
 
 	my @rules;
 
