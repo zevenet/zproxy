@@ -1123,7 +1123,7 @@ sub areClusterNodesDefined
 sub getClusterInfo()
 {
 	open FR, "<$filecluster";
-	my @file         = <FR>;
+	my @file = <FR>;
 	$cluster_msg  = "Not configured";
 	$cluster_icon = "fa-cog yellow";
 
