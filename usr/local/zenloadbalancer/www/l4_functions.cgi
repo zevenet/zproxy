@@ -510,14 +510,11 @@ sub setFarmProto    # ($proto,$farm_name)
 				}
 				if ( $proto eq "sip" )
 				{
-					#~ $args[3] = "5060";    # the port by default for sip protocol
 					$args[4] = "nat";
 				}
 				$line =
 				  "$args[0]\;$proto\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8]";
 				splice @configfile, $i, $line;
-
-				&logfile( "setFarmProto >> line:$line" );
 			}
 			$i++;
 		}
@@ -528,8 +525,6 @@ sub setFarmProto    # ($proto,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		&logfile( "setFarmProto >> farm is UP" );
-
 		# Load required modules
 		if ( $$farm{ vproto } =~ /sip|ftp/ )
 		{
@@ -1968,7 +1963,7 @@ sub doL4FarmProbability
 			$$farm{ prob } += $$server_ref{ weight };
 		}
 	}
-	&logfile( "doL4FarmProbability($$farm{ name }) => prob:$$farm{ prob }" ); ######
+	#~ &logfile( "doL4FarmProbability($$farm{ name }) => prob:$$farm{ prob }" ); ######
 }
 
 sub getL4ServerActionRules
