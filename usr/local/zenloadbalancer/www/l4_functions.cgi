@@ -340,10 +340,6 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		## lock iptables use ##
-		open my $ipt_lockfile, '>', $iptlock;
-		&setIptLock( $ipt_lockfile );
-
 		my @rules;
 
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
@@ -361,8 +357,8 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 				# every thing else stays the same way
 				$rule = &genIptMark( $farm, $server );
 				my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
-
 				$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
+
 				&applyIptRules( $rule );
 
 				if ( $$farm{ persist } ne 'none' )    # persistence
@@ -408,17 +404,15 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 				{
 					$rule = &genIptMark( $farm, $server );
 					my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
+					$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );
 
-					$rule = &applyIptRuleAction( $rule, 'replace', $rule_num );   # replace if found
 					&applyIptRules( $rule ) if defined ( $rule );
 				}
 				else
 				{
 					&_runL4ServerStop( $$farm{ name }, $$server{ id } );
-					$rule = undef;    # changes are already done
+					$rule = undef;                # changes are already done
 				}
-
-				#~ &applyIptRules( $rule ) if defined ( $rule );
 			}
 		}
 
@@ -460,15 +454,9 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 				}
 			}
 		}
-
-		## unlock iptables use ##
-		&setIptUnlock( $ipt_lockfile );
-		close $ipt_lockfile;
 	}
 
 	return;
-
-	#~ return $output;
 }
 
 #
