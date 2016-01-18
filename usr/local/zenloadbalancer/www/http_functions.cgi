@@ -2842,7 +2842,7 @@ sub getFarmServices
 
 			$pos++;
 			@line = split ( "\"", $line );
-			$service = @line[1];
+			my $service = @line[1];
 
 			#print "line is $line and service is $service";
 
