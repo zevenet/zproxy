@@ -23,6 +23,7 @@
 
 use Net::SSH qw(ssh sshopen2);
 use Net::SSH::Expect;
+use Sys::Hostname;
 
 #get real ip from cluster on this host
 sub getClusterRealIp
@@ -386,32 +387,19 @@ sub getClusterActiveNode
 
 	my ( $lhost, undef, $rhost, $rip, $vipcl ) = ( &getClusterConfig() )[0 .. 4];
 
-#( $lhost, $lip, $rhost, $rip, $vipcl, $ifname, $typecl, $clstatus, $cable, $idcluster, $deadratio )
-
-	#~ my @vipwhereis = `$ip_bin addr list`;
 	my @vipwhereis2 =
 	  `ssh -o \"ConnectTimeout=10\" -o \"StrictHostKeyChecking=no\" root\@$rip \"$ip_bin addr list\" 2>&1`;
 
-	print "Cluster VIP <b>$vipcl</b> is active on ";
-
 	# look for cluster vip in current ip addresses
-	#~ if ( grep ( /$vipcl/, @vipwhereis ) )
 	if ( grep ( /$vipcl/, `$ip_bin addr list` ) )
 	{
-		print "<b>$lhost</b> ";
 		$active_node = $lhost;
 	}
 
 	if ( grep ( /$vipcl/, @vipwhereis2 ) )
 	{
-		print ' and ' if $active_node ne 'false';
-		print "<b>$rhost</b>";
 		$active_node .= $rhost;
 	}
-
-	print $active_node eq 'false'
-	  ? " <img src=\"/img/icons/small/exclamation.png\">"
-	  : " <img src=\"/img/icons/small/accept.png\">";
 
 	return $active_node;
 }
@@ -1135,35 +1123,32 @@ sub areClusterNodesDefined
 sub getClusterInfo()
 {
 	open FR, "<$filecluster";
-	@file         = <FR>;
+	my @file         = <FR>;
 	$cluster_msg  = "Not configured";
 	$cluster_icon = "fa-cog yellow";
 
 	if ( -e $filecluster && ( grep ( /UP/, @file ) ) )
 	{
-		if ( &activenode() eq "true" )
+		my $host = hostname();
+		if ( &getClusterActiveNode() eq "$host" )
 		{
-
 			#print "Cluster: <b>this node is master</b>";
 			$cluster_msg  = "Master";
 			$cluster_icon = "fa-cog green";
 		}
 		elsif ( `ps aux | grep "ucarp" | grep "\\-k 100" | grep -v grep` )
 		{
-
 			#print "Cluster: <b>this node is on maintenance</b>";
 			$cluster_msg  = "Maintenance";
 			$cluster_icon = "fa-cog red";
 		}
 		else
 		{
-
 			#print "Cluster: <b>this node is backup</b>";
 			$cluster_msg  = "Backup";
 			$cluster_icon = "fa-cog green";
 		}
 	}
-
 }
 
 ###HTML Cluster status icons ### from ee branch
