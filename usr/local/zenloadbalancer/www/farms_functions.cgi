@@ -816,7 +816,6 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 	{
 		$status = &_runL4FarmStop( $farm_name, $writeconf );
 	}
-	&logfile( 'stopFarm: ' . $status );
 
 	if (    $writeconf eq "true"
 		 && $farm_type ne "datalink"
@@ -1318,7 +1317,7 @@ sub setFarmBackendStatus    # ($farm_name,$index,$stat)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $farm_type     = &getFarmType( $farm_name );
 
-	#	my $output = -1;
+	my $output = -1;
 
 	if ( $farm_type eq "datalink" )
 	{
@@ -1330,7 +1329,7 @@ sub setFarmBackendStatus    # ($farm_name,$index,$stat)
 		$output = &setL4FarmBackendStatus( $farm_name, $index, $stat );
 	}
 
-	#	return $output;
+	return $output;
 }
 
 #function that renames a farm

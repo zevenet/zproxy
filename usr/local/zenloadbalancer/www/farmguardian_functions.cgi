@@ -164,10 +164,11 @@ sub runFarmGuardianStop    # ($fname,$svice)
 		# Iterate over every farm service
 		my $services = &getFarmVS( $fname, "", "" );
 		my @servs = split ( " ", $services );
+
 		foreach $service ( @servs )
 		{
 			$stat = &runFarmGuardianStop( $fname, $service );
-			$status = $status + $stat;
+			$status |= $stat;
 		}
 	}
 	else
@@ -176,12 +177,14 @@ sub runFarmGuardianStop    # ($fname,$svice)
 		{
 			$sv = "${svice}_";
 		}
+
 		if ( $fgpid != -1 )
 		{
 			&logfile( "running 'kill 9, $fgpid' stopping FarmGuardian $fname $svice" );
 			kill 9, $fgpid;
-			$status = $?;
+			$status = $?;    # FIXME
 			unlink glob ( "/var/run/$fname\_${sv}guardian.pid" );
+
 			if ( $type eq "http" || $type eq "https" )
 			{
 				if ( -e "$configdir\/$fname\_status.cfg" )
@@ -190,9 +193,11 @@ sub runFarmGuardianStop    # ($fname,$svice)
 					my $idsv      = &getFarmVSI( $fname, $svice );
 					my $index     = -1;
 					tie @filelines, 'Tie::File', "$configdir\/$fname\_status.cfg";
+
 					for ( @filelines )
 					{
 						$index++;
+
 						if ( $_ =~ /fgDOWN/ )
 						{
 							$_ = "-B 0 $idsv $index active";
@@ -202,10 +207,12 @@ sub runFarmGuardianStop    # ($fname,$svice)
 					untie @filelines;
 				}
 			}
+
 			if ( $type eq "l4xnat" )
 			{
 				my @be = &getFarmBackendStatusCtl( $fname );
-				$i = -1;
+				my $i  = -1;
+
 				foreach my $line ( @be )
 				{
 					my @subbe = split ( ";", $line );
@@ -214,11 +221,10 @@ sub runFarmGuardianStop    # ($fname,$svice)
 					my $backendserv   = $subbe[2];
 					my $backendport   = $subbe[3];
 					my $backendstatus = $subbe[7];
+
 					if ( $backendstatus eq "fgDOWN" )
 					{
-						&_runFarmStop( $fname, "false" );
-						&setFarmBackendStatus( $fname, $i, "up" );
-						&_runFarmStart( $fname, "false" );
+						$status |= &setFarmBackendStatus( $fname, $i, "up" );
 					}
 				}
 			}
