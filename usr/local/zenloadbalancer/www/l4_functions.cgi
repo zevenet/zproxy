@@ -228,6 +228,19 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 	my $output        = 0;
 	my $i             = 0;
 
+	my $farm       = &getL4FarmStruct( $farm_name );
+	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+	if ( $$farm{ status } eq 'up' )
+	{
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStop( $$farm{ name } );
+		}
+	}
+
+	&zlog( "setL4FarmSessionType: SessionType" ) if &debug;
+
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	for my $line ( @configfile )
@@ -248,13 +261,6 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-
-		if ( $fg_enabled eq 'true' )
-		{
-			&runFarmGuardianStop( $$farm{ name } );
-		}
-
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 
@@ -319,6 +325,17 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 	my $i             = 0;
 	my $prev_alg      = getL4FarmAlgorithm( $farm_name );    # previous algorithm
 
+	my $farm       = &getL4FarmStruct( $farm_name );
+	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+	if ( $$farm{ status } eq 'up' )
+	{
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStop( $$farm{ name } );
+		}
+	}
+
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	for my $line ( @configfile )
@@ -329,12 +346,12 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 			$line =
 			  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$args[4]\;$algorithm\;$args[6]\;$args[7]\;$args[8]";
 			splice @configfile, $i, $line;
-			$output = $?;                                    # FIXME
+			$output = $?;    # FIXME
 		}
 		$i++;
 	}
 	untie @configfile;
-	$output = $?;                                            # FIXME
+	$output = $?;            # FIXME
 
 	my $farm = &getL4FarmStruct( $farm_name );
 
@@ -454,6 +471,11 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 				}
 			}
 		}
+
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStart( $$farm{ name } );
+		}
 	}
 
 	return;
@@ -495,6 +517,17 @@ sub setFarmProto    # ($proto,$farm_name)
 
 	&logfile( "setting 'Protocol $proto' for $farm_name farm $farm_type" );
 
+	my $farm       = &getL4FarmStruct( $farm_name );
+	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+	if ( $$farm{ status } eq 'up' )
+	{
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStop( $$farm{ name } );
+		}
+	}
+
 	if ( $farm_type eq "l4xnat" )
 	{
 		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename" or return $output;
@@ -532,9 +565,14 @@ sub setFarmProto    # ($proto,$farm_name)
 		}
 
 		$output = &refreshL4FarmRules( $farm );
+
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStart( $$farm{ name } );
+		}
 	}
 
-	return;    # $output;
+	return $output;
 }
 
 #
@@ -604,6 +642,20 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 	&logfile( "setting 'NAT type $nat' for $farm_name farm $farm_type" );
 
+	my $farm       = &getL4FarmStruct( $farm_name );
+	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+	if ( $$farm{ status } eq 'up' )
+	{
+		if ( $fg_enabled eq 'true' )
+		{
+			if ( $0 !~ /farmguardian/ )
+			{
+				&runFarmGuardianStop( $$farm{ name } );
+			}
+		}
+	}
+
 	if ( $farm_type eq "l4xnat" )
 	{
 		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
@@ -628,21 +680,13 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-
-		if ( $fg_enabled eq 'true' )
-		{
-			if ( $0 !~ /farmguardian/ )
-			{
-				&runFarmGuardianStop( $$farm{ name } );
-			}
-		}
-
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 
 		foreach my $server ( @{ $$farm{ servers } } )
 		{
+			&zlog( "server:$$server{id}" ) if &debug == 2;
+
 			next if $$server{ status } !~ /up|maintenance/;
 			next if $$farm{ lbalg } eq 'prio' && $$prio_server{ id } != $$server{ id };
 
@@ -680,8 +724,21 @@ sub setL4FarmPersistence    # ($persistence,$farm_name)
 	my ( $persistence, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
+	my $output        = 0;
 	my $i             = 0;
+
+	my $farm       = &getL4FarmStruct( $farm_name );
+	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+	if ( $$farm{ status } eq 'up' )
+	{
+		if ( $fg_enabled eq 'true' )
+		{
+			$output |= &runFarmGuardianStop( $$farm{ name } );
+		}
+	}
+
+	&zlog( "setL4FarmSessionType: Persistance" ) if &debug;
 
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
@@ -704,7 +761,12 @@ sub setL4FarmPersistence    # ($persistence,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		&refreshL4FarmRules( $farm );
+		$output |= &refreshL4FarmRules( $farm );
+
+		if ( $fg_enabled eq 'true' )
+		{
+			$output |= &runFarmGuardianStart( $$farm{ name } );
+		}
 	}
 
 	return $output;
@@ -744,6 +806,17 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 	my $output        = -1;
 	my $i             = 0;
 
+	my $farm       = &getL4FarmStruct( $farm_name );
+	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+	if ( $$farm{ status } eq 'up' )
+	{
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStop( $$farm{ name } );
+		}
+	}
+
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	for my $line ( @configfile )
@@ -765,13 +838,6 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 
 	if ( $$farm{ status } eq 'up' && $$farm{ persist } ne 'none' )
 	{
-		my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-
-		if ( $fg_enabled eq 'true' )
-		{
-			&runFarmGuardianStop( $$farm{ name } );
-		}
-
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 
@@ -1209,6 +1275,8 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	my $farm_name = shift;    # input
 	my $writeconf = shift;    # input
 
+	&zlog( "Stopping farm $farm_name" ) if &debug == 2;
+
 	my $status = 0;           # output
 
 	&logfile( "_runL4FarmStart << farm_name:$farm_name writeconf:$writeconf" )
@@ -1244,7 +1312,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	my $lowest_prio;
 	my $server_prio;    # reference to the selected server for prio algorithm
 
-	&logfile( "_runL4FarmStart :: farm:" . Dumper( $farm ) ) if &debug;
+	&logfile( "_runL4FarmStart :: farm:" . Dumper( $farm ) ) if &debug == 2;
 
 	# first insert the save rule, then insert on top the restore rule
 	&setIptConnmarkSave( 'true' );
@@ -1292,10 +1360,14 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		$rules = &getL4ServerActionRules( $farm, $server_prio, 'on' );
 	}
 
-	&applyIptRules( @{ $$rules{ t_mangle_p } } );
-	&applyIptRules( @{ $$rules{ t_mangle } } );
-	&applyIptRules( @{ $$rules{ t_nat } } );
-	&applyIptRules( @{ $$rules{ t_snat } } );
+	$status |= &applyIptRules( @{ $$rules{ t_mangle_p } } );
+	&zlog( "status:$status" ) if &debug == 2;
+	$status |= &applyIptRules( @{ $$rules{ t_mangle } } );
+	&zlog( "status:$status" ) if &debug == 2;
+	$status |= &applyIptRules( @{ $$rules{ t_nat } } );
+	&zlog( "status:$status" ) if &debug == 2;
+	$status |= &applyIptRules( @{ $$rules{ t_snat } } );
+	&zlog( "status:$status" ) if &debug == 2;
 
 	# Enable IP forwarding
 	&setIpForward( 'true' );
@@ -1314,6 +1386,8 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 sub _runL4FarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
+
+	&zlog( "Stopping farm $farm_name" ) if &debug == 2;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $status;       # output
@@ -1418,6 +1492,17 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	my $stat          = -1;
 	my $i             = 0;
 
+	my $farm       = &getL4FarmStruct( $farm_name );
+	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+	if ( $$farm{ status } eq 'up' )
+	{
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStop( $$farm{ name } );
+		}
+	}
+
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	for my $line ( @configfile )
@@ -1440,13 +1525,6 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	if ( $$farm{ status } eq 'up' )
 	{
 		my @rules;
-
-		my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-
-		if ( $fg_enabled eq 'true' )
-		{
-			&runFarmGuardianStop( $$farm{ name } ) if ( $fg_enabled eq 'true' );
-		}
 
 		foreach my $server ( @{ $$farm{ servers } } )
 		{
@@ -1493,6 +1571,17 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	my $found_server  = 'false';
 	my $i             = 0;                            # server ID
 	my $l             = 0;                            # line index
+
+	my $farm       = &getL4FarmStruct( $farm_name );
+	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+	if ( $$farm{ status } eq 'up' )
+	{
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStop( $$farm{ name } );
+		}
+	}
 
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
 
@@ -1542,6 +1631,11 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 		}
 
 		&refreshL4FarmRules( $farm );
+
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStart( $$farm{ name } );
+		}
 	}
 
 	return $output;    # FIXME
@@ -1630,13 +1724,31 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 
 	my %farm = %{ &getL4FarmStruct( $farm_name ) };
 
-	my $output   = -1;
+	my $output   = 0;
 	my $line_num = 0;         # line index tracker
 	my $serverid = 0;         # server index tracker
 
 	&logfile(
 		"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status)"
-	);                        ###
+	);
+
+	my $farm        = &getL4FarmStruct( $farm_name );
+	my $fg_enabled  = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+	my $caller      = ( caller ( 2 ) )[3];
+	my $stopping_fg = ( $caller =~ /runFarmGuardianStop/ );
+
+	#~ &zlog("(caller(2))[3]:$caller");
+
+	if ( $$farm{ status } eq 'up' )
+	{
+		if ( $fg_enabled eq 'true' && !$stopping_fg )
+		{
+			if ( $0 !~ /farmguardian/ )
+			{
+				$output |= &runFarmGuardianStop( $$farm{ name } );
+			}
+		}
+	}
 
 	# load farm configuration file
 	tie my @configfile, 'Tie::File', "$configdir\/$farm{filename}";
@@ -1665,7 +1777,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	# do no apply rules if the farm is not up
 	if ( $farm{ status } eq 'up' )
 	{
-		&refreshL4FarmRules( \%farm );
+		$output |= &refreshL4FarmRules( \%farm );
 
 		if ( $status eq 'fgDOWN' && $farm{ persist } eq 'ip' )
 		{
@@ -1679,6 +1791,14 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 			else
 			{
 				&logfile( "Could not open file $recent_file: $!" );
+			}
+		}
+
+		if ( $fg_enabled eq 'true' && !$stopping_fg )
+		{
+			if ( $0 !~ /farmguardian/ )
+			{
+				$output |= &runFarmGuardianStart( $$farm{ name } );
 			}
 		}
 	}
@@ -1743,11 +1863,22 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	my $farm_filename     = &getFarmFile( $farm_name );
 	my $farm_type         = &getFarmType( $farm_name );
 	my $new_farm_filename = "$new_farm_name\_$farm_type.cfg";
-	my $output            = -1;
+	my $output            = 0;
 	my $status            = &getFarmStatus( $farm_name );
 
 	# previous farm info
 	my $prev_farm = &getL4FarmStruct( $farm_name );
+
+	my $farm       = &getL4FarmStruct( $farm_name );
+	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
+
+	if ( $$farm{ status } eq 'up' )
+	{
+		if ( $fg_enabled eq 'true' )
+		{
+			&runFarmGuardianStop( $$farm{ name } );
+		}
+	}
 
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
@@ -1769,16 +1900,6 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
-		my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-
-		if ( $fg_enabled eq 'true' )
-		{
-			if ( $0 !~ /farmguardian/ )
-			{
-				&runFarmGuardianStop( $$farm{ name } );
-			}
-		}
-
 		my @rules;
 
 		my $prio_server = &getL4ServerWithLowestPriority( $$farm{ name } )
@@ -1868,11 +1989,12 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 				&runFarmGuardianStart( $$farm{ name } );
 			}
 		}
+
+		# apply new rules
+		$output = &applyIptRules( @rules );
 	}
 
-	# apply new rules
-	&applyIptRules( @rules );
-	return;
+	return $output;
 }
 
 sub getL4ProtocolTransportLayer
@@ -1963,7 +2085,8 @@ sub doL4FarmProbability
 			$$farm{ prob } += $$server_ref{ weight };
 		}
 	}
-	#~ &logfile( "doL4FarmProbability($$farm{ name }) => prob:$$farm{ prob }" ); ######
+
+ #~ &logfile( "doL4FarmProbability($$farm{ name }) => prob:$$farm{ prob }" ); ######
 }
 
 sub getL4ServerActionRules
@@ -2048,7 +2171,10 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 
 	my $fg_enabled = ( &getFarmGuardianConf( $farm_name ) )[3];
 
-	if ( $fg_enabled eq 'true' )
+	# if calling function is setL4FarmAlgorithm
+	my $is_changing_algorithm = ( caller ( 2 ) )[3] =~ /setL4FarmAlgorithm/;
+
+	if ( $fg_enabled eq 'true' && !$is_changing_algorithm )
 	{
 		&runFarmGuardianStop( $farm_name );
 	}
@@ -2069,7 +2195,7 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	&applyIptRules( @{ $$rules{ t_snat } } );
 	## End applying rules ##
 
-	if ( $fg_enabled eq 'true' )
+	if ( $fg_enabled eq 'true' && !$is_changing_algorithm )
 	{
 		&runFarmGuardianStart( $farm_name );
 	}
@@ -2088,7 +2214,10 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 
 	my $fg_enabled = ( &getFarmGuardianConf( $farm_name ) )[3];
 
-	if ( $fg_enabled eq 'true' )
+	# if calling function is setL4FarmAlgorithm
+	my $is_changing_algorithm = ( caller ( 2 ) )[3] =~ /setL4FarmAlgorithm/;
+
+	if ( $fg_enabled eq 'true' && !$is_changing_algorithm )
 	{
 		&runFarmGuardianStop( $farm_name );
 	}
@@ -2105,7 +2234,7 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	&applyIptRules( @{ $$rules{ t_snat } } );
 	## End applying rules ##
 
-	if ( $fg_enabled eq 'true' )
+	if ( $fg_enabled eq 'true' && !$is_changing_algorithm )
 	{
 		&runFarmGuardianStart( $farm_name );
 	}
@@ -2195,20 +2324,10 @@ sub refreshL4FarmRules    # AlgorithmRules
 {
 	my $farm = shift;     # input: reference to farm structure
 	my $prio_server;
-
-	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-
-	if ( $fg_enabled eq 'true' )
-	{
-		if ( $0 !~ /farmguardian/ )
-		{
-			&runFarmGuardianStop( $$farm{ name } );
-		}
-	}
+	my @rules;
+	my $return_code = 0;
 
 	$prio_server = &getL4ServerWithLowestPriority( $farm );
-
-	my @rules;
 
 	# refresh backends probability values
 	&getL4BackendsWeightProbability( $farm ) if ( $$farm{ lbalg } eq 'weight' );
@@ -2217,7 +2336,6 @@ sub refreshL4FarmRules    # AlgorithmRules
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
 		# skip cycle for servers not running
-
 		next if ( $$farm{ lbalg } eq 'prio' && $$server{ id } != $$prio_server{ id } );
 
 		my $rule;
@@ -2231,7 +2349,7 @@ sub refreshL4FarmRules    # AlgorithmRules
 		  ? &getIptRuleReplace( $farm, undef,   $rule )
 		  : &getIptRuleReplace( $farm, $server, $rule );
 
-		&applyIptRules( $rule );
+		$return_code |= &applyIptRules( $rule );
 
 		if ( $$farm{ persist } ne 'none' )    # persistence
 		{
@@ -2242,7 +2360,7 @@ sub refreshL4FarmRules    # AlgorithmRules
 			  ? &getIptRuleReplace( $farm, undef,   $rule )
 			  : &getIptRuleReplace( $farm, $server, $rule );
 
-			&applyIptRules( $rule );
+			$return_code |= &applyIptRules( $rule );
 		}
 
 		# redirect
@@ -2253,7 +2371,7 @@ sub refreshL4FarmRules    # AlgorithmRules
 		  ? &getIptRuleReplace( $farm, undef,   $rule )
 		  : &getIptRuleReplace( $farm, $server, $rule );
 
-		&applyIptRules( $rule );
+		$return_code |= &applyIptRules( $rule );
 
 		if ( $$farm{ nattype } eq 'nat' )    # nat type = nat
 		{
@@ -2271,20 +2389,12 @@ sub refreshL4FarmRules    # AlgorithmRules
 			  ? &getIptRuleReplace( $farm, undef,   $rule )
 			  : &getIptRuleReplace( $farm, $server, $rule );
 
-			&applyIptRules( $rule );
-		}
-	}
-
-	if ( $fg_enabled eq 'true' )
-	{
-		if ( $0 !~ /farmguardian/ )
-		{
-			&runFarmGuardianStart( $$farm{ name } );
+			$return_code |= &applyIptRules( $rule );
 		}
 	}
 
 	# apply new rules
-	return;
+	return $return_code;
 }
 
 # do not remove this

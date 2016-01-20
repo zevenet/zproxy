@@ -542,6 +542,12 @@ sub applyIptRuleAction
 	# applied for any accepted action
 	$rule =~ s/::ACTION_TAG::/$action/x;
 
+	# error control
+	if ( $rule =~ /::ACTION_TAG::/ )
+	{
+		&zlog( "Invalid action:$action (rulenum:$rulenum) in rule:$rule" );
+	}
+
 	return $rule;
 }
 
@@ -574,6 +580,7 @@ sub getIptRuleNumber
 	# define filter with or without index paramenter
 	if ( defined ( $index ) )
 	{
+		# get backend tag
 		my @server_line = grep { /^$index;/ } &getFarmServers( $farm_name );
 		$filter = ( split ';', @server_line[0] )[3];
 	}
@@ -588,6 +595,11 @@ sub getIptRuleNumber
 
 	# pick rule by farm and optionally server id
 	my @rules = grep { /$filter/ } `$ipt_cmd`;
+
+	if ( !defined @rules )
+	{
+		&zlog( "iptables command:$ipt_cmd" );
+	}
 
 	## unlock iptables use ##
 	&setIptUnlock( $ipt_lockfile );
@@ -613,6 +625,14 @@ sub getIptRuleNumber
 	# if no rule was found: return -1
 	$rule_num = ( split / +/, $rules[0] )[0] // -1;
 
+	# error control
+	if ( $rule_num == -1 )
+	{
+		&zlog(
+			"Invalid rule number:$rule_num for farm:$farm_name (backend:$index) with filter:$filter and rule:$rule"
+		);
+	}
+
 	return $rule_num;
 }
 
@@ -620,14 +640,14 @@ sub getIptRuleNumber
 sub applyIptRules
 {
 	my @rules       = @_;    # input: rule array
-	my $return_code = -1;    # output:
+	my $return_code = 0;     # output:
 
 	foreach my $rule ( @rules )
 	{
 		# skip cycle if $rule empty
 		next if not $rule or $rule !~ 'iptables';
 
-		$return_code = &iptSystem( $rule );
+		$return_code |= &iptSystem( $rule );
 	}
 
 	return $return_code;     # FIXME: make a proper return code control
@@ -729,11 +749,18 @@ sub getIptRuleDelete
 	my $rule = shift;    # input: iptables rule string
 
 	# some regex magic to extract farm name and backend index
-	$rule =~ m/ FARM_(.+)_(\d+)_ /;
+	$rule =~ m/ FARM_(.+)_(.+)_ /;
 	my $farm_name = $1;
 	my $index     = $2;
 
+	&zlog( "catched farm name:$farm_name and backend:$index for rule:$rule" )
+	  if ( !defined $farm_name || !defined $index );
+
 	my $rule_num = &getIptRuleNumber( $rule, $farm_name, $index );
+
+	&zlog(
+		"catched rule number:$rule_num farm name:$farm_name and backend:$index for rule:$rule"
+	) if ( !defined $farm_name || !defined $index );
 
 	# if the rule exist
 	if ( $rule_num != -1 )
@@ -743,9 +770,10 @@ sub getIptRuleDelete
 	else
 	{
 		&logfile( "Delete: rule not found: $rule" );
-		my @rule_args = split / +/, $rule;
-		my $table     = $rule_args[2];       # second argument of iptables is the table
-		my $chain     = $rule_args[4];       # forth argument of iptables is the chain
+
+	  #~ my @rule_args = split / +/, $rule;
+	  #~ my $table     = $rule_args[2];       # second argument of iptables is the table
+	  #~ my $chain     = $rule_args[4];       # forth argument of iptables is the chain
 	}
 
 	return $rule;
@@ -785,12 +813,13 @@ sub getIptRuleAppend       # $return_code (\%farm, \%server, $rule)
 	my $rule = shift;      # input: iptables rule string
 
 	# if the rule does not exist
-	if ( &setIptRuleCheck( $rule ) != 0 )
-	{
-		return &applyIptRuleAction( $rule, 'append' );
-	}
+	#~ if ( &setIptRuleCheck( $rule ) != 0 )
+	#~ {
+	return &applyIptRuleAction( $rule, 'append' );
 
-	return;
+	#~ }
+
+	#~ return;
 }
 
 sub getIptRulesStruct
@@ -810,7 +839,7 @@ sub setIptLock    # ($lockfile)
 
 	if ( flock ( $ipt_lockfile, LOCK_EX ) )
 	{
-		&logfile( "Success locking IPTABLES" ) if &debug;
+		&logfile( "Success locking IPTABLES" ) if &debug == 3;
 	}
 	else
 	{
@@ -825,7 +854,7 @@ sub setIptUnlock    # ($lockfile)
 
 	if ( flock ( $ipt_lockfile, LOCK_UN ) )
 	{
-		&logfile( "Success unlocking IPTABLES" ) if &debug;
+		&logfile( "Success unlocking IPTABLES" ) if &debug == 3;
 	}
 	else
 	{
@@ -839,10 +868,13 @@ sub iptSystem
 	my $command = shift;    # command string to log and run
 	my $return_code;
 
+	my $program = ( split '/', $0 )[-1];
+	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
+	$program .= ' ';
+
+	&logfile( $program . "Running: $command" );    # log
+
 	# $iptlock defined in global.conf
-
-	&logfile( "Running: $command" );    # log
-
 	## lock iptables use ##
 	my $open_rc = open ( my $ipt_lockfile, '>', $iptlock );
 	if ( $open_rc )
@@ -851,7 +883,7 @@ sub iptSystem
 	}
 	else
 	{
-		&logfile( "Cannot open $iptlock: $!" );
+		&logfile( $program . "Cannot open $iptlock: $!" );
 	}
 
 	$return_code = system ( "$command >/dev/null 2>&1" );    # run
@@ -867,12 +899,12 @@ sub iptSystem
 	{
 		if ( grep { /--check/ } $command )
 		{
-			&logfile( "Previous iptables line not found" )
-			  if &debug;    # show in logs if failed
+			&logfile( $program . "Previous iptables line not found" )
+			  if &debug == 2;    # show in logs if failed
 		}
 		else
 		{
-			&logfile( "Previous command failed!" );    # show in logs if failed
+			&logfile( $program . "Previous command failed!" );    # show in logs if failed
 		}
 	}
 
