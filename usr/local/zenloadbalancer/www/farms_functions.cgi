@@ -345,12 +345,12 @@ sub getFarmServers    # ($farm_name)
 
 	if ( $farm_type eq "datalink" )
 	{
-		@servers = &getL4FarmServers( $farm_name );
+		@servers = &getDatalinkFarmServers( $farm_name );
 	}
 
 	if ( $farm_type eq "l4xnat" )
 	{
-		@servers = &getDatalinkFarmServers( $farm_name );
+		@servers = &getL4FarmServers( $farm_name );
 	}
 
 	return @servers;
@@ -1340,11 +1340,37 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
+	my @fg_files;
+	my $fg_status;
+
 	if ( $new_farm_name =~ /^$/ )
 	{
 		&logfile( "error 'NewFarmName $new_farm_name' is empty" );
 		return -2;
 	}
+
+	# farmguardian renaming
+	if ( $farm_type =~ /http/ )
+	{
+		opendir ( my $dir, "$configdir" );
+		@fg_files = grep { /^$farm_name\_.+guardian\.conf/ } readdir ( $dir );
+		closedir $dir;
+	}
+	elsif ( $farm_type =~ /l4xnat|tcp|udp/ )
+	{
+		$fg_files[0] = &getFarmGuardianFile( $farm_name );
+		&zlog( "found farmguardian file:@fg_files" ) if &debug;
+	}
+
+	$fg_status = &getFarmGuardianStatus( $farm_name ) if @fg_files;
+
+	if ( @fg_files && $fg_status == 1 )
+	{
+		&zlog( "stopping farmguardian" ) if &debug;
+		&runFarmGuardianStop( $farm_name );
+	}
+
+	# end of farmguardian renaming
 
 	&logfile(
 			  "setting 'NewFarmName $new_farm_name' for $farm_name farm $farm_type" );
@@ -1373,6 +1399,30 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	{
 		$output = &setGSLBNewFarmName( $farm_name, $new_farm_name );
 	}
+
+	# farmguardian renaming
+	if ( $ouput == 0 && @fg_files )
+	{
+		#mv files
+		foreach my $filename ( @fg_files )
+		{
+			my $new_filename = $filename;
+			$new_filename =~ s/$farm_name/$new_farm_name/;
+
+			&zlog( "renaming $filename =>> $new_filename" ) if &debug;
+			rename ( "$configdir/$filename", "$configdir/$new_filename" );
+
+		   #~ rename ( "$farmguardian_logs/$filename", "$farmguardian_logs/$new_filename" );
+		}
+
+		if ( $fg_status == 1 )
+		{
+			&zlog( "restarting farmguardian" ) if &debug;
+			&runFarmGuardianStart( $new_farm_name );
+		}
+	}
+
+	# end of farmguardian renaming
 
 	# rename rrd
 	rename ( "$rrdap_dir$rrd_dir/$farm_name-farm.rrd",
