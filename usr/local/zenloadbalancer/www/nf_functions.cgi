@@ -583,6 +583,7 @@ sub getIptRuleNumber
 	{
 		# get backend tag
 		my @server_lines = &getL4FarmServers( $farm_name );
+
 		#~ &logfile("index:$index server_lines:@server_lines");
 		@server_line = grep { /^$index;/ } @server_lines;
 		$filter = ( split ';', $server_line[0] )[3];
@@ -599,9 +600,12 @@ sub getIptRuleNumber
 	# pick rule by farm and optionally server id
 	my @rules = grep { /$filter/ } `$ipt_cmd`;
 
-	if ( ! @rules )
+	if ( !@rules )
 	{
-		&zlog( "index:$index farm_name:$farm_name filter:$filter server:$server_line[0] server list:".&getFarmServers( $farm_name ) ) if not defined $filter;
+		&zlog(
+			"index:$index farm_name:$farm_name filter:$filter server:$server_line[0] server list:"
+			  . &getFarmServers( $farm_name ) )
+		  if not defined $filter;
 		&zlog( "filter:$filter iptables command:$ipt_cmd" );
 		&zlog( "rules:@rules" );
 	}
@@ -720,8 +724,9 @@ sub getIptRuleInsert
 
 				@rule_args = split / +/, $rule_list[-1];
 				my $recent_rule_num = $rule_args[0];
+
 				#~ $rule_num = $recent_rule_num if $recent_rule_num > $rule_num;
-				$rule_num = $recent_rule_num;#
+				$rule_num = $recent_rule_num;    #
 			}
 		}
 
@@ -729,12 +734,12 @@ sub getIptRuleInsert
 	}
 
 	# if the rule does not exist
-	if ( &setIptRuleCheck( $rule ) != 0 )    # 256
+	if ( &setIptRuleCheck( $rule ) != 0 )        # 256
 	{
 		$rule = &applyIptRuleAction( $rule, 'insert', $rule_num );
 		return $rule;
 	}
-	else                                     # if the rule exist replace it.
+	else                                         # if the rule exist replace it.
 	{
 		$rule = &setIptRuleReplace( $farm, $server, $rule );
 	}

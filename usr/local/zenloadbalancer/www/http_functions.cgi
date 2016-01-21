@@ -1413,7 +1413,7 @@ sub runHTTPFarmServerDelete    # ($ids,$farm_name,$service)
 		}
 	}
 	untie @contents;
-	
+
 	if ( $output != -1 )
 	{
 		&runRemovehttpBackend( $farm_name, $ids, $service );
@@ -2113,7 +2113,7 @@ sub deleteFarmService    # ($farm_name,$service)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $sw            = 0;
 	my $output        = -1;
-	
+
 	# Counter the Service's backends
 	my $sindex = &getFarmVSI( $farm_name, $service );
 	my $backendsvs = &getFarmVS( $farm_name, $service, "backends" );
@@ -2155,30 +2155,31 @@ sub deleteFarmService    # ($farm_name,$service)
 		}
 	}
 	untie @fileconf;
-	
+
 	# delete service's backends  in status file
-	if ($counter > -1)
+	if ( $counter > -1 )
 	{
-		while($counter > -1)
+		while ( $counter > -1 )
 		{
 			&runRemovehttpBackend( $farm_name, $counter, $service );
 			$counter--;
 		}
 	}
-	
-	# change the ID value of services with an ID higher than the service deleted (value - 1)
+
+# change the ID value of services with an ID higher than the service deleted (value - 1)
 	tie @contents, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
 	foreach $line ( @contents )
 	{
 		my @params = split ( "\ ", $line );
-		my $newval = @params[2] -1;
-		
-		&logfile("param2: @params[2] $newval");
-	
-		if (@params[2] > $sindex)
+		my $newval = @params[2] - 1;
+
+		&logfile( "param2: @params[2] $newval" );
+
+		if ( @params[2] > $sindex )
 		{
-			&logfile("linea $_");
-			$line =~ s/@params[0]\ @params[1]\ @params[2]\ @params[3]\ @params[4]/@params[0]\ @params[1]\ $newval\ @params[3]\ @params[4]/g;
+			&logfile( "linea $_" );
+			$line =~
+			  s/@params[0]\ @params[1]\ @params[2]\ @params[3]\ @params[4]/@params[0]\ @params[1]\ $newval\ @params[3]\ @params[4]/g;
 		}
 	}
 	untie @contents;
@@ -2191,7 +2192,7 @@ sub deleteFarmService    # ($farm_name,$service)
 sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 {
 	my ( $farm_name, $service, $tag ) = @_;
-	
+
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = "";
 
@@ -2432,7 +2433,7 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 				last;
 			}
 		}
-		
+
 		#backends
 		if ( $tag eq "backends" )
 		{
