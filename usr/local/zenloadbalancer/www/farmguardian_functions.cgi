@@ -31,7 +31,9 @@ sub getFarmGuardianFile    # ($fname,$svice)
 	  grep { /^$fname\_$svice.*guardian\.conf/ && -f "$configdir/$_" }
 	  readdir ( $dir );
 	closedir $dir;
+
 	my $nfiles = @files;
+
 	if ( $nfiles == 0 )
 	{
 		return -1;
@@ -53,14 +55,18 @@ sub getFarmGuardianStatus    # ($fname,$svice)
 	{
 		return -1;
 	}
+
 	open FR, "$configdir/$fgfile";
+
 	while ( $line = <FR> )
 	{
 		$lastline = $line;
 	}
+
 	my @line_s = split ( "\:\:\:", $lastline );
 	$value = $line_s[3];
 	close FR;
+
 	if ( $value =~ /true/ )
 	{
 		return 1;
@@ -77,18 +83,23 @@ sub getFarmGuardianLog    # ($fname,$svice)
 	my ( $fname, $svice ) = @_;
 
 	my $fgfile = &getFarmGuardianFile( $fname, $svice );
+
 	if ( $fgfile == -1 )
 	{
 		return -1;
 	}
+
 	open FR, "$configdir/$fgfile";
+
 	while ( $line = <FR> )
 	{
 		$lastline = $line;
 	}
+
 	my @line_s = split ( "\:\:\:", $lastline );
 	$value = $line_s[4];
 	close FR;
+
 	if ( $value =~ /true/ )
 	{
 		return 1;
