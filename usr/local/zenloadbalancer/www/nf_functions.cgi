@@ -574,6 +574,7 @@ sub getIptRuleNumber
 	my $table     = $rule_args[2];        # second argument of iptables is the table
 	my $chain     = $rule_args[4];        # forth argument of iptables is the chain
 
+	my $server_line;
 	my $filter;
 	my $ipt_cmd = "$iptables --numeric --line-number --table $table --list $chain";
 
@@ -581,8 +582,10 @@ sub getIptRuleNumber
 	if ( defined ( $index ) )
 	{
 		# get backend tag
-		my @server_line = grep { /^$index;/ } &getFarmServers( $farm_name );
-		$filter = ( split ';', @server_line[0] )[3];
+		my @server_lines = &getL4FarmServers( $farm_name );
+		#~ &logfile("index:$index server_lines:@server_lines");
+		@server_line = grep { /^$index;/ } @server_lines;
+		$filter = ( split ';', $server_line[0] )[3];
 	}
 	else
 	{
@@ -598,7 +601,9 @@ sub getIptRuleNumber
 
 	if ( ! @rules )
 	{
-		&zlog( "iptables command:$ipt_cmd" );
+		&zlog( "index:$index farm_name:$farm_name filter:$filter server:$server_line[0] server list:".&getFarmServers( $farm_name ) ) if not defined $filter;
+		&zlog( "filter:$filter iptables command:$ipt_cmd" );
+		&zlog( "rules:@rules" );
 	}
 
 	## unlock iptables use ##
@@ -712,11 +717,11 @@ sub getIptRuleInsert
 
 			if ( $table eq 'mangle' && $rule =~ /--match recent/ )
 			{
-				@rule_list = grep { /recent: CHECK/ } @rule_list;
 
-				@rule_args = split / +/, $rule_list[0];
+				@rule_args = split / +/, $rule_list[-1];
 				my $recent_rule_num = $rule_args[0];
-				$rule_num = $recent_rule_num if $recent_rule_num > $rule_num;
+				#~ $rule_num = $recent_rule_num if $recent_rule_num > $rule_num;
+				$rule_num = $recent_rule_num;#
 			}
 		}
 
