@@ -1342,6 +1342,7 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 
 	my @fg_files;
 	my $fg_status;
+	my $farm_status;
 
 	if ( $new_farm_name =~ /^$/ )
 	{
@@ -1362,12 +1363,16 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 		&zlog( "found farmguardian file:@fg_files" ) if &debug;
 	}
 
-	$fg_status = &getFarmGuardianStatus( $farm_name ) if @fg_files;
-
-	if ( @fg_files && $fg_status == 1 )
+	if ( @fg_files )
 	{
-		&zlog( "stopping farmguardian" ) if &debug;
-		&runFarmGuardianStop( $farm_name );
+		$fg_status = &getFarmGuardianStatus( $farm_name ) if @fg_files;
+		$farm_status = &getFarmStatus($farm_name);
+
+		if ( $fg_status == 1 && $farm_status eq 'up' )
+		{
+			&zlog( "stopping farmguardian" ) if &debug;
+			&runFarmGuardianStop( $farm_name );
+		}
 	}
 
 	# end of farmguardian renaming
@@ -1403,7 +1408,6 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	# farmguardian renaming
 	if ( $ouput == 0 && @fg_files )
 	{
-		#mv files
 		foreach my $filename ( @fg_files )
 		{
 			my $new_filename = $filename;
@@ -1412,10 +1416,10 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 			&zlog( "renaming $filename =>> $new_filename" ) if &debug;
 			rename ( "$configdir/$filename", "$configdir/$new_filename" );
 
-		   #~ rename ( "$farmguardian_logs/$filename", "$farmguardian_logs/$new_filename" );
+			#~ TODO: rename farmguardian logs
 		}
 
-		if ( $fg_status == 1 )
+		if ( $fg_status == 1 && $farm_status eq 'up' )
 		{
 			&zlog( "restarting farmguardian" ) if &debug;
 			&runFarmGuardianStart( $new_farm_name );
