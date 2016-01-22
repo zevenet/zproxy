@@ -451,7 +451,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 			&setIptLock( $ipt_lockfile );
 
 			my $num_lines = grep { /-m condition --condition/ }
-			  `iptables --numeric --table mangle --list PREROUTING`;
+			  `$iptables --numeric --table mangle --list PREROUTING`;
 
 			## unlock iptables use ##
 			&setIptUnlock( $ipt_lockfile );
