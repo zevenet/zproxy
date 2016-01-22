@@ -50,7 +50,7 @@ sub getL4FarmsPorts    # ($farm_type)
 			my $farm_type     = &getFarmType( $farm_name );
 			my $farm_protocol = &getFarmProto( $farm_name );
 
-			if ( $farm_type eq "l4xnat" && $farm_protocol eq $farm_type )
+			if ( $farm_type eq "l4xnat" )
 			{
 				my $farm_port = &getFarmVip( "vipp", $farm_name );
 
