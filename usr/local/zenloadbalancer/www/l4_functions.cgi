@@ -517,7 +517,7 @@ sub setFarmProto    # ($proto,$farm_name)
 
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
+	my $output        = 0;
 
 	&logfile( "setting 'Protocol $proto' for $farm_name farm $farm_type" );
 
@@ -556,7 +556,7 @@ sub setFarmProto    # ($proto,$farm_name)
 			}
 			$i++;
 		}
-		untie @configfile or return $output;
+		untie @configfile;
 	}
 
 	my $farm = &getL4FarmStruct( $farm_name );
