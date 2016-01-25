@@ -1,14 +1,10 @@
 Package: zenloadbalancer
-Version: 3.7
-Maintainer: ZenLB Team <zenloadbalancer-support@lists.sourceforge.net>
-Architecture: i386
+Version: 4.1
+Maintainer: Sofintel IT Engineering SL <support@sofintel.net>
+Architecture: amd64
 Section: admin
 Priority: optional
-Description: Multilayered load balancer with web GUI 
- Zen Load Balancer is a multilayered and high performance load balancer whith an easy configuration, usability and user-friendly web GUI.
-<<<<<<< HEAD
-Depends: rrdtool, libnet-netmask-perl, libnet-ssh-perl, libexpect-perl, expect, libnet-ssh-expect-perl, libproc-daemon-perl, libnetwork-ipv4addr-perl, librrds-perl, libio-interface-perl, libgd-3dbargrapher-perl, libfile-grep-perl, libdata-validate-ip-perl, rsync, libpcap0.8, ntpdate, liblinux-inotify2-perl, libfile-grep-perl, iputils-arping, openssl, netstat-nat, unzip, libev4, liburcu2, liburcu-dev, snmpd
-=======
-Depends: rrdtool, libnet-netmask-perl, libnet-ssh-perl, libexpect-perl, expect, libnet-ssh-expect-perl, libproc-daemon-perl, libnetwork-ipv4addr-perl, librrds-perl, libio-interface-perl, libgd-3dbargrapher-perl, libfile-grep-perl, libdata-validate-ip-perl, rsync, libpcap0.8, ntpdate, liblinux-inotify2-perl, libfile-grep-perl, iputils-arping, openssl, netstat-nat, unzip, libev4, liburcu2, liburcu-dev, snmpd, conntrack
->>>>>>> 65944a274fb7e4d38939a6172cdccdccb337e25e
+Description: Zen Load Balancer Enterprise Edition
+ Zen Load Balancer Enterprise Edition
+Depends: rrdtool, libnet-netmask-perl, libnet-ssh-perl, libexpect-perl, expect, libnet-ssh-expect-perl, libproc-daemon-perl, libnetwork-ipv4addr-perl, librrds-perl, libio-interface-perl, libgd-3dbargrapher-perl, libdata-validate-ip-perl, rsync, libpcap0.8, ntpdate, liblinux-inotify2-perl, libfile-grep-perl, iputils-arping, openssl, netstat-nat, unzip, libev4, xtables-addons-common, xtables-addons-dkms, libgoogle-perftools4, libjson-perl, libjson-xs-perl, libcgi-session-perl, libauthen-simple-perl, libauthen-simple-passwd-perl, conntrack, libcurses-perl, libcurses-ui-perl, liburi-perl, libtimedate-perl
 
