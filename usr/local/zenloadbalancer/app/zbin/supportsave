@@ -1,0 +1,98 @@
+#!/bin/sh
+###############################################################################
+#
+#     Zen Load Balancer Software License
+#     This file is part of the Zen Load Balancer software package.
+#
+#     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
+#
+#     This library is free software; you can redistribute it and/or modify it
+#     under the terms of the GNU Lesser General Public License as published
+#     by the Free Software Foundation; either version 2.1 of the License, or 
+#     (at your option) any later version.
+#
+#     This library is distributed in the hope that it will be useful, but 
+#     WITHOUT ANY WARRANTY; without even the implied warranty of 
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+#     General Public License for more details.
+#
+#     You should have received a copy of the GNU Lesser General Public License
+#     along with this library; if not, write to the Free Software Foundation,
+#     Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+#
+###############################################################################
+
+tmp_name=`/bin/date +%Y%m%d_%H%M`
+dir_backup="/tmp/supportsave_${tmp_name}"
+backup_to="/usr/local/zenloadbalancer/config /etc/iproute2/rt_tables /usr/local/zenloadbalancer/logs /var/log/messages* /var/log/syslog*";
+
+echo "Saving information for support in the path ${dir_backup}.tar.gz"
+/bin/mkdir $dir_backup
+
+echo "Saving network configuration"
+/sbin/ifconfig -a >> $dir_backup/ifconfig.txt
+
+echo "Saving netfilter rules"
+echo "Filter table " >> $dir_backup/netfilter.txt
+/sbin/iptables -nL -t filter >> $dir_backup/netfilter.txt
+echo "NAT table " >> $dir_backup/netfilter.txt
+/sbin/iptables -nL -t nat >> $dir_backup/netfilter.txt
+echo "Mangle table " >> $dir_backup/netfilter.txt
+/sbin/iptables -nL -t mangle >> $dir_backup/netfilter.txt
+
+echo "Saving process status"
+echo "ps -lefa" >> $dir_backup/ps.txt
+/bin/ps -lefa >> $dir_backup/ps.txt
+
+echo "Saving network status"
+echo "netstat -putan" >> $dir_backup/netstat.txt
+/bin/netstat -putan >> $dir_backup/netstat.txt
+
+echo "netstat -nr" >> $dir_backup/netstat.txt
+/bin/netstat -nr >> $dir_backup/netstat.txt
+
+/usr/sbin/dmidecode >> $dir_backup/dmi.txt
+/bin/hostname >> $dir_backup/dmi.txt
+
+/bin/cp /usr/local/zenloadbalancer/www/*.pem $dir_backup 2>/dev/null
+
+for i in `cat /etc/iproute2/rt_tables  | grep "table_" | awk {'print $2'}`
+do
+	echo "ip route list table $i" >> $dir_backup/route.txt
+	/sbin/ip route list table $i >> $dir_backup/route.txt
+done
+echo "ip route list table main" >> $dir_backup/route.txt
+/sbin/ip route list table main >> $dir_backup/route.txt
+echo "ip rule list" >> $dir_backup/route.txt
+/sbin/ip rule list >> $dir_backup/route.txt
+
+echo "Capturing nf_conntrack information"
+if [ -f /usr/sbin/conntrack ];
+then
+	/usr/sbin/conntrack -L >> $dir_backup/conntrack.txt
+fi
+
+if [ -e /proc/net/xt_recent/ ];
+then
+	echo "Capturing recent information"
+	for file in $(ls -1 /proc/net/xt_recent/); do
+		echo "Recent table for $file" >> $dir_backup/recent.txt
+		cat $file >> $dir_backup/recent.txt
+	done
+fi
+
+echo "Capturing system information"
+echo "--- Uptime information ---" >> $dir_backup/system_resources.txt
+/usr/bin/uptime >> $dir_backup/system_resources.txt
+echo "--- Memory information ---" >> $dir_backup/system_resources.txt
+/usr/bin/free -m >> $dir_backup/system_resources.txt
+echo "--- CPU information ---" >> $dir_backup/system_resources.txt
+cat /proc/cpuinfo >> $dir_backup/system_resources.txt
+echo "--- TOP information ---" >> $dir_backup/system_resources.txt
+/usr/bin/top -b -n1 >> $dir_backup/system_resources.txt
+
+echo "Saving config and logs" 
+/bin/tar zcf $dir_backup/config_logs.tzr.gz $backup_to 2>/dev/null
+/bin/tar zcf $dir_backup.tar.gz $dir_backup 2>/dev/null
+
+/bin/rm -rf $dir_backup
