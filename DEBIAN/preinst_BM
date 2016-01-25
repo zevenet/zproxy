@@ -1,0 +1,43 @@
+#!/usr/bin/perl 
+
+###############################################################################
+#
+#     This file is part of the Zen Load Balancer Enterprise Edition software
+#     package.
+#
+#     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
+#     All rights reserved
+#
+###############################################################################
+
+$openssl_bin="/usr/bin/openssl";
+
+require "/usr/local/zenloadbalancer/www/functions.cgi";
+require "/usr/local/zenloadbalancer/config/global.conf";
+
+# Reset the sysctl in order to establish the new parameters
+my @run = `cp /etc/sysctl.conf /etc/sysctl.conf.bck`;
+@run = `grep "^#" /etc/sysctl.conf > /etc/sysctl.conf 2> /dev/null`;
+
+use File::Copy 'move';
+#Move cherokee
+if ( -e "/usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf" ) {
+	move "/usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf", "/tmp/cherokee.conf";
+}
+#Check if exists mini_httpd conf and store the current port and interface
+if ( -e "/usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf" ) {
+	$port = `grep port= /usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf  | awk -F'=' '{printf \$2}'`;
+	$host = `grep host= /usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf  | awk -F'=' '{printf \$2}'`;
+	`echo "$port" > /tmp/zenport`;
+	`echo "$host" > /tmp/zenhost`;
+}
+
+# Create the new GUI system group
+my @run = `groupadd -f webgui`;
+my @run = `usermod -a -G webgui root`;
+
+# Create openssl DH keys
+print "Generating some SSL keys, just wait some seconds...\n";
+my @run=`$openssl_bin dhparam -5 2048 -out /usr/local/zenloadbalancer/app/pound/etc/dh2048.pem`;
+
+exit 0;

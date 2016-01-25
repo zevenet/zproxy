@@ -1,10 +1,174 @@
-#!/usr/bin/perl
+#!/usr/bin/perl 
 
-#Save .htpasswd file
+###############################################################################
+#
+#     This file is part of the Zen Load Balancer Enterprise Edition software
+#     package.
+#
+#     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
+#     All rights reserved
+#
+###############################################################################
+
+my $dmidecode_bin = "/usr/sbin/dmidecode";
+my $openssl_bin   = "/usr/bin/openssl";
+my $keyid = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
+
+my $hostname = `hostname`;
+
+sub keycert
+{
+	my @dmidec  = `$dmidecode_bin`;
+	my @dmidec2 = grep ( /UUID\:/, @dmidec );
+	my $dmi     = @dmidec2[0];
+	$dmi =~ s/\"//g;
+	$dmi =~ s/^\s+//;
+	$dmi =~ s/\s+$//;
+
+	$dmi =~ s/\ //g;
+	my @dmidec3 = split ( ":", $dmi );
+	$dmi = @dmidec3[1];
+	$hostname =~ s/\"//g;
+	$hostname =~ s/^\s+//;
+	$hostname =~ s/\s+$//;
+
+	$n = 2;
+
+	$encrypted_string  = crypt ( "${dmi}${hostname}", "93" );
+	$encrypted_string2 = crypt ( "${hostname}${dmi}", "a3" );
+	$encrypted_string3 = crypt ( "${dmi}${hostname}", "ZH" );
+	$encrypted_string4 = crypt ( "${hostname}${dmi}", "h7" );
+	$encrypted_string =~ s/^93//;
+	$encrypted_string2 =~ s/^a3//;
+	$encrypted_string3 =~ s/^ZH//;
+	$encrypted_string4 =~ s/^h7//;
+	$str =
+	  "${encrypted_string}-${encrypted_string2}-${encrypted_string3}-${encrypted_string4}";
+	$str =~ s/\"//g;
+	$str =~ s/^\s+//;
+	$str =~ s/\s+$//;
+
+	return $str;
+}
+
+sub certcontrol
+{
+	$swcert      = 0;
+	$zlbcertfile = "$basedir/zlbcertfile.pem";
+
+	#$key = &keycert();
+
+	my $notbefore;
+	my $nb;
+	my @notafter;
+	my $na;
+	if ( -e $zlbcertfile )
+	{
+		my @run = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
+		if (    ( !grep /$key/, @run )
+			 || ( !grep /keyid:$keyid/,   @run )
+			 || ( !grep /CN=$hostname\//, @run ) )
+		{
+	#&errormsg( "Zen Load Balancer activation certificate isn't valid, please request one");
+			$swcert = 2;
+		}
+
+		use Date::Parse;
+		use Time::localtime;
+		$now       = ctime();
+		@notbefore = grep /Not Before/i, @run;
+		$nb        = join '', @notbefore;
+		$nb =~ s/not before.*:\ //i;
+		$ini = str2time( $nb );
+		#
+		@notafter = grep /Not After/i, @run;
+		$na = join "", @notafter;
+		$na =~ s/not after.*:\ //i;
+		$end = str2time( $na );
+		my $totaldays = ( $end - $ini ) / 86400;
+		$totaldays =~ s/\-//g;
+		my $dayright = ( $end - time () ) / 86400;
+
+		#control errors
+		if ( $totaldays < 364 && $dayright < 0 && $swcert == 0 )
+		{
+			#it is working with test cert and cert is expired. It should goes down
+			$swcert = 3;
+		}
+
+		if ( $totaldays > 364 && $dayright < 0 && $swcert == 0 )
+		{
+#The contract support plan is expired you have to request a new contract support. Only message alert!
+			$swcert = -1;
+		}
+	}
+	else
+	{
+		#There isn't certificate in the machine
+		$swcert = 1;
+	}
+
+	#code errors
+	#swcert = 0 ==> OK
+	#swcert = 1 ==> There isn't certificate
+	#swcert = 2 ==> Cert isn't signed OK
+	#swcert = 3 ==> Cert test and it's expired
+
+	return $swcert;
+}
+
+require "/usr/local/zenloadbalancer/config/global.conf";
+
+if ( $ARGV[0] eq "install" || $ARGV[0] eq "upgrade" )
+{
+	my $key     = &keycert();
+	my $certerr = &certcontrol();
+	if ( $certerr != 0 )
+	{
+		print "Your certificate key is not valid\n";
+		exit 1;    #Abort deploy
+	}
+}
+else
+{
+	exit 1;        #Abort deploy
+}
+
+# Reset the sysctl in order to establish the new parameters
+system ( "cp /etc/sysctl.conf /etc/sysctl.conf.bck" );
+system ( qq{grep "^#" /etc/sysctl.conf > /etc/sysctl.conf 2> /dev/null} );
+
 use File::Copy 'move';
-my $orig = "$basedir\/\.htpasswd";
-my $dst = "\/tmp\/\.htpasswd";
-move $orig, $dst;
 
-#Move minihttpd configuration to persist interface configuration
-move "/usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf", "/tmp/mini_httpd.conf";
+#Move cherokee
+if ( -e "/usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf" )
+{
+	move "/usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf",
+	  "/tmp/cherokee.conf";
+}
+
+#Check if exists mini_httpd conf and store the current port and interface
+if ( -e "/usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf" )
+{
+	$port =
+	  `grep port= /usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf  | awk -F'=' '{printf \$2}'`;
+	$host =
+	  `grep host= /usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf  | awk -F'=' '{printf \$2}'`;
+	system ( qq{echo "$port" > /tmp/zenport} );
+	system ( qq{echo "$host" > /tmp/zenhost} );
+}
+
+# Create the new GUI system group
+system ( "groupadd -f webgui" );
+system ( "usermod -a -G webgui root" );
+
+# Create openssl DH keys
+my $dhparam_certfile = "/usr/local/zenloadbalancer/app/pound/etc/dh2048.pem";
+
+if ( ! -e $dhparam_certfile )
+{
+	print "Generating some SSL keys, just wait some seconds...\n";
+	system ( "$openssl_bin dhparam -5 2048 -out $dhparam_certfile" );
+}
+
+exit 0;

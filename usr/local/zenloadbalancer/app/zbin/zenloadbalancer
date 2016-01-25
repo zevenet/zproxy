@@ -1,0 +1,1021 @@
+#!/usr/bin/perl
+### BEGIN INIT INFO
+# Provides:          zenloadbalancer
+# Required-Start:
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: zenloadbalancer
+# Description:
+#
+### END INIT INFO
+
+###############################################################################
+#
+#     This file is part of the Zen Load Balancer Enterprise Edition software
+#     package.
+#
+#     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
+#
+#     This file cannot be distributed, released in public domain and/or for
+#     commercial purposes.
+#
+###############################################################################
+
+#~ use strict;
+#~ use warnings;
+
+use Sys::Hostname;
+use Date::Parse;
+use Time::localtime;
+use Tie::File;
+
+my $limitfile = "/etc/security/limits.conf";
+my $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
+require "/usr/local/zenloadbalancer/config/global.conf";
+require "/usr/local/zenloadbalancer/www/functions.cgi";
+require "/usr/local/zenloadbalancer/www/cluster_functions.cgi";
+
+$eject = $ARGV[0];
+
+if ( !$eject && $eject !~ /stop|start|status|startlocal|stoplocal/ )
+{
+	print
+	  "Usage: /etc/init.d/zenloadbalancer stop|start|status|startlocal|stoplocal\n";
+	exit;
+}
+
+# build local key
+sub keycert()
+{
+	# requires:
+	#~ use Sys::Hostname;
+
+	my $dmidecode_bin = "/usr/sbin/dmidecode";    # input
+	my $hostname      = hostname();               # input
+
+	my @dmidec  = `$dmidecode_bin`;
+	my @dmidec2 = grep ( /UUID\:/, @dmidec );
+	my $dmi     = $dmidec2[0];
+
+	$dmi =~ s/\"//g;     # remove doble quotes
+	$dmi =~ s/^\s+//;    # remove whitespaces at the begining
+	$dmi =~ s/\s+$//;    # remove whitespaces at the end
+	$dmi =~ s/\ //g;     # remove spaces
+
+	my @dmidec3 = split ( ":", $dmi );
+	$dmi = $dmidec3[1];
+
+	$hostname =~ s/\"//g;     # remove doble quotes
+	$hostname =~ s/^\s+//;    # remove whitespaces at the begining
+	$hostname =~ s/\s+$//;    # remove whitespaces at the end
+
+	my $encrypted_string  = crypt ( "${dmi}${hostname}", "93" );
+	my $encrypted_string2 = crypt ( "${hostname}${dmi}", "a3" );
+	my $encrypted_string3 = crypt ( "${dmi}${hostname}", "ZH" );
+	my $encrypted_string4 = crypt ( "${hostname}${dmi}", "h7" );
+	$encrypted_string =~ s/^93//;
+	$encrypted_string2 =~ s/^a3//;
+	$encrypted_string3 =~ s/^ZH//;
+	$encrypted_string4 =~ s/^h7//;
+
+	my $str =
+	  "${encrypted_string}-${encrypted_string2}-${encrypted_string3}-${encrypted_string4}";
+
+	$str =~ s/\"//g;     # remove doble quotes
+	$str =~ s/^\s+//;    # remove whitespaces at the begining
+	$str =~ s/\s+$//;    # remove whitespaces at the end
+
+	return $str;
+}
+
+# evaluate certificate
+sub certcontrol()
+{
+	# requires:
+	#~ use Sys::Hostname;
+	#~ use Date::Parse;
+	#~ use Time::localtime;
+
+	# input
+	my $hostname    = hostname();
+	my $zlbcertfile = "$basedir/zlbcertfile.pem";
+	my $openssl_bin = "/usr/bin/openssl";
+	my $keyid       = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
+
+	# output
+	my $swcert = 0;
+
+	if ( -e $zlbcertfile )
+	{
+		my @zen_cert = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
+
+		if (    ( !grep /$key/, @zen_cert )
+			 || ( !grep /keyid:$keyid/,   @zen_cert )
+			 || ( !grep /CN=$hostname\//, @zen_cert ) )
+		{
+			$swcert = 2;
+		}
+
+		my $now = ctime();
+
+		# Certificate validity date
+		my @notbefore = grep /Not Before/i, @zen_cert;
+		my $nb = join '', @notbefore;
+		$nb =~ s/not before.*:\ //i;
+		my $ini = str2time( $nb );
+
+		# Certificate expiring date
+		my @notafter = grep /Not After/i, @zen_cert;
+		my $na = join "", @notafter;
+		$na =~ s/not after.*:\ //i;
+		my $end = str2time( $na );
+
+		# Validity remaining
+		my $totaldays = ( $end - $ini ) / 86400;
+		$totaldays =~ s/\-//g;
+		my $dayright = ( $end - time () ) / 86400;
+
+		#control errors
+		if ( $totaldays < 364 && $dayright < 0 && $swcert == 0 )
+		{
+			# Policy: expired testing certificates would not stop zen service,
+			# but rebooting the service would not start the service,
+			# interfaces should always be available.
+			$swcert = 3;
+		}
+
+		if ( $totaldays > 364 && $dayright < 0 && $swcert == 0 )
+		{
+			# The contract support plan is expired you have to request a
+			# new contract support. Only message alert!
+			$swcert = -1;
+		}
+	}
+	else
+	{
+		#There isn't certificate in the machine
+		$swcert = 1;
+	}
+
+	# error codes
+	#swcert = 0 ==> OK
+	#swcert = 1 ==> There isn't certificate
+	#swcert = 2 ==> Cert isn't signed OK
+	#swcert = 3 ==> Cert test and it's expired
+	#swcert = -1 ==> Cert support and it's expired
+
+	#output
+	return $swcert;
+}
+
+sub configureDefaultGW()
+{
+	print "\n";
+	if ( $ARGV[0] =~ /^start.*/ )
+	{
+		chomp ( $defaultgwif );
+		if ( $defaultgw ne "" && $defaultgwif ne "" )
+		{
+			print "Default Gateway:$defaultgw Device:$defaultgwif\n";
+			&applyRoutes( "global", $defaultgwif, $defaultgw );
+		}
+	}
+}
+
+sub runhttpsgui()
+{
+	#print "Running HTTPS GUI";
+	if ( $pid = fork )
+	{
+		#$SIG{'CHLD'}='IGNORE';
+	}
+	elsif ( defined $pid )
+	{
+		system ( "/etc/init.d/cherokee start > /dev/null &" );
+		exit ( 0 );
+	}
+}
+
+if ( $eject eq "restart" )
+{
+	system ( '/etc/init.d/zenloadbalancer stop' );
+	system ( '/etc/init.d/zenloadbalancer start' );
+}
+
+if ( $eject eq "start" )
+{
+	system ( '/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi' );
+	require "/usr/local/zenloadbalancer/config/global.conf";
+
+	# Load required modules
+	system ( '/sbin/modprobe nf_conntrack 2>&1 >/dev/null' );
+	system ( '/sbin/modprobe ip_conntrack 2>&1 >/dev/null' );
+	system ( '/sbin/rmmod xt_recent 2>&1 >/dev/null' );
+	system (
+		"/sbin/modprobe xt_recent ip_list_tot=$recent_ip_list_tot ip_list_hash_size=$recent_ip_list_hash_size 2>&1 >/dev/null"
+	);
+
+	system ( 'echo "22500" > /sys/module/nf_conntrack/parameters/hashsize' );
+
+	# Set system tuning.
+	$sysctl = "/etc/sysctl.conf";
+
+	tie @sysctl, 'Tie::File', "$sysctl";
+	@sysctl = grep !/^net\.ipv4\.tcp_tw_recycle/, @sysctl;
+
+	if ( !grep ( /^fs\.file-max/, @sysctl ) )
+	{
+		push ( @sysctl, "fs.file-max = 100000" );
+	}
+	if ( !grep ( /^vm\.max_map_count/, @sysctl ) )
+	{
+		push ( @sysctl, "vm.max_map_count = 1048576" );
+	}
+	if ( !grep ( /^vm\.swappiness/, @sysctl ) )
+	{
+		push ( @sysctl, "vm.swappiness = 10" );
+	}
+	if ( !grep ( /^net\.ipv4\.conf\.all\.log_martians/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.conf.all.log_martians = 0" );
+	}
+	if ( !grep ( /^net\.ipv4\.ip_local_port_range/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.ip_local_port_range = 1024 65535" );
+	}
+	if ( !grep ( /^net\.ipv4\.tcp_max_tw_buckets/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.tcp_max_tw_buckets = 2000000" );
+	}
+	if ( !grep ( /^net\.ipv4\.tcp_max_syn_backlog/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.tcp_max_syn_backlog = 30000" );
+	}
+	if ( !grep ( /^net\.ipv4\.tcp_window_scaling/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.tcp_window_scaling = 1" );
+	}
+	if ( !grep ( /^net\.ipv4\.tcp_timestamps/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.tcp_timestamps = 0" );
+	}
+	if ( !grep ( /^net\.ipv4\.tcp_rmem/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.tcp_rmem = 4096 87380 16777216" );
+	}
+	if ( !grep ( /^net\.ipv4\.tcp_wmem/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.tcp_wmem = 4096 65536 16777216" );
+	}
+	if ( !grep ( /^net\.ipv4\.udp_rmem_min/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.udp_rmem_min = 8192" );
+	}
+	if ( !grep ( /^net\.ipv4\.udp_wmem_min/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.udp_wmem_min = 8192" );
+	}
+	if ( !grep ( /^net\.ipv4\.tcp_low_latency/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.tcp_low_latency = 1" );
+	}
+	if ( !grep ( /^net\.ipv4\.tcp_tw_reuse/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.tcp_tw_reuse = 1" );
+	}
+	if ( !grep ( /^net\.ipv4\.tcp_tw_recycle/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.tcp_tw_recycle = 0" );
+	}
+	if ( !grep ( /^net\.ipv4\.tcp_keepalive_time/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.tcp_keepalive_time = 512" );
+	}
+	if ( !grep ( /^net\.ipv4\.tcp_fin_timeout/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.tcp_fin_timeout = 5" );
+	}
+	if ( !grep ( /^net\.ipv4\.inet_peer_maxttl/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.inet_peer_maxttl = 5" );
+	}
+	if ( !grep ( /^net\.ipv4\.tcp_keepalive_probes/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.tcp_keepalive_probes = 5" );
+	}
+	if ( !grep ( /^net\.ipv4\.tcp_slow_start_after_idle/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.tcp_slow_start_after_idle = 0" );
+	}
+	if (
+		 !grep ( /^net\.ipv4\.netfilter\.ip_conntrack_udp_timeout_stream/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.netfilter.ip_conntrack_udp_timeout_stream = 10" );
+	}
+	if (
+		!grep ( /^net\.ipv4\.netfilter\.ip_conntrack_tcp_timeout_time_wait/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.netfilter.ip_conntrack_tcp_timeout_time_wait = 2" );
+	}
+	if (
+		!grep ( /^net\.ipv4\.netfilter\.ip_conntrack_tcp_timeout_established/, @sysctl )
+	  )
+	{
+		push ( @sysctl,
+			   "net.ipv4.netfilter.ip_conntrack_tcp_timeout_established = 86400" );
+	}
+	if ( !grep ( /^net\.netfilter\.nf_conntrack_tcp_timeout_time_wait/, @sysctl ) )
+	{
+		push ( @sysctl, "net.netfilter.nf_conntrack_tcp_timeout_time_wait = 2" );
+	}
+	if ( !grep ( /^net\.netfilter\.nf_conntrack_max/, @sysctl ) )
+	{
+		push ( @sysctl, "net.netfilter.nf_conntrack_max = 180000" );
+	}
+	if ( !grep ( /^net\.netfilter\.nf_conntrack_tcp_loose/, @sysctl ) )
+	{
+		push ( @sysctl, "net.netfilter.nf_conntrack_tcp_loose = 0" );
+	}
+	if ( !grep ( /^net\.core\.rmem_max/, @sysctl ) )
+	{
+		push ( @sysctl, "net.core.rmem_max = 16777216" );
+	}
+	if ( !grep ( /^net\.core\.wmem_max/, @sysctl ) )
+	{
+		push ( @sysctl, "net.core.wmem_max = 16777216" );
+	}
+	if ( !grep ( /^net\.core\.rmem_default/, @sysctl ) )
+	{
+		push ( @sysctl, "net.core.rmem_default = 16777216" );
+	}
+	if ( !grep ( /^net\.core\.wmem_default/, @sysctl ) )
+	{
+		push ( @sysctl, "net.core.wmem_default = 16777216" );
+	}
+	if ( !grep ( /^net\.core\.optmem_max/, @sysctl ) )
+	{
+		push ( @sysctl, "net.core.optmem_max = 40960" );
+	}
+	if ( !grep ( /^net\.ipv4\.tcp_keepalive_intvl/, @sysctl ) )
+	{
+		push ( @sysctl, "net.ipv4.tcp_keepalive_intvl = 15" );
+	}
+	if ( !grep ( /^net\.core\.netdev_max_backlog/, @sysctl ) )
+	{
+		push ( @sysctl, "net.core.netdev_max_backlog = 50000" );
+	}
+	if ( !grep ( /^net\.core\.somaxconn/, @sysctl ) )
+	{
+		push ( @sysctl, "net.core.somaxconn = 3000" );
+	}
+	untie @sysctl;
+
+	system ( 'sysctl -p > /dev/null' );
+
+	if ( -e $filecluster )
+	{
+		# get cluster configuration
+		my (
+			 $lhost,  $lip,      $rhost, $rip,       $vipcl, $ifname,
+			 $typecl, $clstatus, $cable, $idcluster, $deadratio
+		) = &getClusterConfig();
+
+		print "Cluster file exist\n";
+
+		if ( $clstatus =~ /UP/ )
+		{
+			print "UP status configured\n";
+			print "Cluster ID: $idcluster\n";
+			print "Cluster Deadratio: $deadratio\n";
+			print "Host:\t$lhost\n";
+			print "CL_LIP:\t$lip\n";
+			print "CL_RIP:\t$rip\n";
+			print "CL_IF:\t$ifname\n";
+			print "CL_IP:\t$vipcl\n";
+
+			#if real interface not configured, configured it
+			my ( $phys_iface ) = split ':', $ifname;
+			&createIf( $phys_iface );
+			&upIf( $phys_iface );
+
+			# read gateway
+			open my $fo, "<", "$configdir\/if\_$phys_iface\_conf";
+			chomp ( @fileif = <$fo> );
+			close $fo;
+
+			my $netmask = ( split ":", @fileif[0] )[3];
+
+			my $ifconfig_command = "$ifconfig_bin $phys_iface $lip netmask $netmask";
+			system ( $ifconfig_command);
+
+			$ifgw   = $phys_iface;
+			$ipifgw = &gwofif( $ifgw );
+			&writeRoutes( $ifgw );
+			&applyRoutes( "local", $phys_iface, $ipifgw );
+
+			if    ( $typecl =~ /^equal$/ )       { print "CL_TYPE: equal\n"; }
+			elsif ( $typecl =~ /$lhost-$rhost/ ) { print "CL_TYPE: M-B, Master node\n"; }
+			else                                 { print "CL_TYPE: M-B Backup node\n"; }
+
+			&setClusterNodeOffMaintenance( $cable,     $ifname, $deadratio, $lip,
+										   $idcluster, $vipcl,  $typecl );
+
+			#check the gui interface
+			print "Running GUI interface\n";
+			$filehttp = "";
+
+			open my $fh, "<", "$confhttp";
+			@filehttp = <$fh>;
+			close $fh;
+
+			$host   = @filehttp[0];
+			@host   = split ( "=", $host );
+			$iphttp = @host[1];
+
+			if ( $lip ne $iphttp )
+			{
+				opendir ( DIR, $configdir );
+				@files = grep ( /^if\_.*\_conf$/, readdir ( DIR ) );
+				closedir ( DIR );
+
+				foreach my $file ( @files )
+				{
+					if ( $file !~ /:/ )
+					{
+						open my $fr, "<", "$configdir\/$file";
+						@fif = <$fr>;
+						close $fr;
+
+						chomp ( $iphttp );
+						if ( $iphttp !~ /\*/ && ( grep ( /$iphttp/, @fif ) ) )
+						{
+							$filehttp = $file;
+						}
+					}
+				}
+
+				open my $fgui, "<", "$configdir/$filehttp";
+				$filehttp = <$fgui>;
+				close $fgui;
+
+				my @lastline = split ( ":", $filehttp );
+
+				if ( @lastline[4] eq "up" )
+				{
+					print "HTTPS GUI Interface:@lastline[0] Ip:@lastline[2] Netmask:@lastline[3]";
+
+					if ( @lastline[5] ne '' )
+					{
+						" Gateway:@lastline[5]";
+					}
+
+					my $run = `$ifconfig_bin @lastline[0] @lastline[2] netmask @lastline[3]`;
+					$ok = $?;
+					chomp ( @lastline[5] );
+					&applyRoutes( "local", @lastline[0], @lastline[5] );
+					&upIf( @lastline[0] );
+
+					if ( $ok == 0 )
+					{
+						print " \033[1;32m OK \033[0m \n";
+					}
+					else
+					{
+						print " \033[1;31m ERROR \033[0m \n";
+					}
+				}
+			}
+
+			sleep ( 5 );
+
+			if ( grep ( /$vipcl/, `$ifconfig_bin` ) )
+			{
+				#check if virtual interface cluster is up:
+				print "CL_IP: $vipcl\n";
+
+				print
+				  "Cluster is running on this node, running IPS and FARMS for Zen Load Balancer...\n";
+				$eject = 'startlocal';
+			}
+		}
+		else
+		{
+			$eject = 'startlocal';
+		}
+	}
+	else
+	{
+		$eject = 'startlocal';
+	}
+}
+
+if ( $eject eq "stop" )
+{
+	if ( -e $filecluster )
+	{
+		open $fo, "<", "$filecluster";
+		@file = <$fo>;
+		close $fo;
+
+		if ( grep ( /UP/, @file ) )
+		{
+			system ( 'pkill -9 ucarp' );
+			system ( 'pkill -9f zeninotify.pl' );
+			print "Stopping Zen Cluster on this node...\n";
+		}
+	}
+	sleep ( 5 );
+	$eject = 'stoplocal';
+}
+
+# no cluster configured
+if ( $eject eq 'startlocal' )
+{
+	$rsyslog = '/etc/rsyslog.conf';
+
+	open my $fr, '<', "$rsyslog";
+	my @filelog = <$fr>;
+	close $fr;
+
+	if ( !grep ( /ucarp/, @filelog ) )
+	{
+		system (
+				 "echo \"local6.* /usr/local/zenloadbalancer/logs/ucarp.log\">> $rsyslog" );
+		system ( '/etc/init.d/rsyslog restart' );
+	}
+
+	#check if repository is configured
+	#open FR, "</etc/apt/sources.list";
+	#my @repo = <FR>;
+	#close FR;
+	#if (! (grep(/zenloadbalancer\.sourceforge\.net\/apt\/x86\ v3\//,@repo)))
+	#	{
+	#	open FR, ">/etc/apt/sources.list";
+	#	print FR "#official repository for Debian\n";
+	#	print FR "deb http://ftp.debian.org/debian/ wheezy main non-free\n";
+	#	print FR "deb-src http://ftp.debian.org/debian/ wheezy main non-free\n";
+	#	print FR "deb http://security.debian.org/ wheezy/updates main\n";
+	#	print FR "deb-src http://security.debian.org/ wheezy/updates main\n";
+	#	print FR "#official repository for Zen Load Balancer Updates\n";
+	#	print FR "deb http://zenloadbalancer.sourceforge.net/apt/x86 v3/\n";
+	#	close FR;
+	#	}
+
+	#testing interface configured on the installation and gw
+	if ( -e '/etc/network/interfaces' )
+	{
+		open $fr, '/etc/network/interfaces';
+		@file = <$fr>;
+		close $fr;
+
+		if ( !grep ( /zenmodified/, @file ) )
+		{
+			foreach my $line ( @file )
+			{
+				chomp ( $line );
+
+				if ( $line =~ /iface.*inet static/i )
+				{
+					@iface = split ( " ", $line );
+					$ifname = $iface[1];
+					chomp ( $ifname );
+				}
+				if ( $line =~ /address/i )
+				{
+					@ip = split ( " ", $line );
+					$ip = $ip[1];
+					chomp ( $ip );
+				}
+				if ( $line =~ /netmask/i )
+				{
+					@netmask = split ( " ", $line );
+					$netmask = $netmask[1];
+					chomp ( $netmask );
+				}
+				if ( $line =~ /gateway/i )
+				{
+					@gateway = split ( " ", $line );
+					$gateway = $gateway[1];
+					chomp ( $gateway );
+				}
+			}
+
+			#deleting interfaces file
+			open FW, ">/etc/network/interfaces";
+			print FW "#zenmodified\n";
+			print FW "auto lo\n";
+			print FW "iface lo inet loopback\n";
+			close FW;
+
+			#creating configuration interface file:
+			open FW, ">$configdir\/if\_$ifname\_conf";
+			print FW "$ifname\:\:$ip\:$netmask\:up\:\:\n";
+			close FW;
+
+			#gw
+			tie @contents, 'Tie::File', "$globalcfg";
+			for ( @contents )
+			{
+				if ( grep /^\$defaultgw/, $_ )
+				{
+					s/^\$defaultgw=.*/\$defaultgw=\"$gateway\"\;/g;
+					s/^\$defaultgwif=.*/\$defaultgwif=\"$ifname\"\;/g;
+				}
+			}
+			untie @contents;
+
+			#routes
+			open FW, ">>/etc/iproute2/rt_tables";
+			print FW "200\ttable_$ifname\n";
+			close FW;
+		}
+	}
+
+	### Starting Network Interfaces
+	print "Starting Zen Load Balancer...\n";
+
+	opendir ( DIR, $configdir );
+	@interface_files = grep ( /^if\_.*\_conf$/, readdir ( DIR ) );
+	closedir ( DIR );
+
+	print "* Starting Interfaces:\n";
+
+	#first real interfaces
+	foreach my $interface_file ( @interface_files )
+	{
+		#interfaces as eth0 for example
+		if ( $interface_file !~ /:/ && $interface_file !~ /\./ )
+		{
+			my @file_s = split ( "\_", $interface_file );
+			print "  * Starting interface $file_s[1]\n";
+
+			open $fr, "$configdir/$interface_file";
+			while ( my $line = <$fr> )
+			{
+				$lastline = $line;
+			}
+			close $fr;
+
+			my @lastline = split ( ":", $lastline );
+
+			if ( $lastline[4] eq "up" )
+			{
+				print "    Interface:$lastline[0] Ip:$lastline[2] Netmask:$lastline[3]";
+
+				if ( $lastline[5] ne '' )
+				{
+					" Gateway:$lastline[5]";
+				}
+
+				my $run = `$ifconfig_bin $lastline[0] $lastline[2] netmask $lastline[3]`;
+				$ok = $?;
+
+				chomp ( $lastline[5] );
+				&writeRoutes( $lastline[0] );
+				&applyRoutes( "local", $lastline[0], $lastline[5] );
+				&upIf( $lastline[0] );
+
+				if ( $ok == 0 )
+				{
+					print " \033[1;32m OK \033[0m \n";
+				}
+				else
+				{
+					print " \033[1;31m ERROR \033[0m \n";
+				}
+
+				&sendGArp( @lastline[0], @lastline[2] );
+			}
+		}
+	}
+
+	#interfaces as eth0.20 for example
+	foreach my $interface_file ( @interface_files )
+	{
+		if ( $interface_file =~ /\./ && $interface_file !~ /:/ )
+		{
+			my @file_s = split ( "\_", $interface_file );
+
+			print "  * Starting interface $file_s[1]\n";
+
+			open $fr, "$configdir/$interface_file";
+			while ( $line = <$fr> )
+			{
+				$lastline = $line;
+			}
+			close $fr;
+
+			my @lastline = split ( ":", $lastline );
+
+			if ( $lastline[4] eq "up" )
+			{
+				print "    Interface:$lastline[0] Ip:$lastline[2] Netmask:$lastline[3]";
+
+				if ( $lastline[5] ne '' )
+				{
+					" Gateway:$lastline[5]";
+				}
+
+				&createIf( $lastline[0] );
+				&upIf( $lastline[0] );
+
+				my $run = `$ifconfig_bin $lastline[0] $lastline[2] netmask $lastline[3]`;
+				$ok = $?;
+
+				if ( $ok == 0 )
+				{
+					print " \033[1;32m OK \033[0m \n";
+				}
+				else
+				{
+					print " \033[1;31m ERROR \033[0m \n";
+				}
+
+				chomp ( $lastline[5] );
+				&writeRoutes( $lastline[0] );
+				&applyRoutes( "local", $lastline[0], $lastline[5] );
+				&sendGArp( $lastline[0], $lastline[2] );
+			}
+		}
+	}
+
+	#interfaces as eth0:20 || eth0.20:2 for example
+	foreach my $interface_file ( @interface_files )
+	{
+		if ( $interface_file =~ /:/ )
+		{
+			my @file_s = split ( "\_", $interface_file );
+
+			print "  * Starting interface $file_s[1]\n";
+
+			open $fr, "$configdir/$interface_file";
+			while ( $line = <$fr> )
+			{
+				$lastline = $line;
+			}
+			close $fr;
+
+			my @lastline = split ( ":", $lastline );
+
+			if ( $lastline[4] eq "up" )
+			{
+				print
+				  "    Interface:$lastline[0]:$lastline[1] Ip:$lastline[2] Netmask:$lastline[3]";
+
+				@iface = split ( /\./, $lastline[0] );
+				&upIf( "$lastline[0]:$lastline[1]" );
+
+				my $run =
+				  `$ifconfig_bin $lastline[0]\:$lastline[1] $lastline[2] netmask $lastline[3]`;
+				$ok = $?;
+
+				&applyRoutes( "local", "$lastline[0]:$lastline[1]", "" );
+
+				if ( $ok == 0 )
+				{
+					print " \033[1;32m OK \033[0m \n";
+				}
+				else
+				{
+					print " \033[1;31m ERROR \033[0m \n";
+				}
+				&sendGArp( $lastline[0], $lastline[2] );
+			}
+		}
+	}
+
+	my $key    = &keycert();
+	my $swcert = &certcontrol( $typecall );
+
+	# error codes:
+
+	# valid values for farms:
+	#swcert = -1 ==> Cert valid (>365) and it's expired
+	#swcert = 0 ==> OK
+
+	# not valid values for farms:
+	#swcert = 1 ==> There isn't certificate
+	#swcert = 2 ==> Cert isn't signed OK
+	#swcert = 3 ==> Cert test and it's expired
+
+	if ( $swcert < 1 )
+	{
+		### Starting Farms
+		print "* Starting Farms:\n";
+		@farmsf = &getFarmList();
+		foreach my $ffile ( @farmsf )
+		{
+			$farmname = &getFarmName( $ffile );
+			$bstatus  = &getFarmBootStatus( $farmname );
+			if ( $bstatus eq "up" )
+			{
+				print "  * Starting Farm $farmname:";
+				$status = &_runFarmStart( $farmname, "false" );
+				if ( $status == 0 )
+				{
+					print " \033[1;32m OK \033[0m \n";
+				}
+				else
+				{
+					print " \033[1;31m ERROR \033[0m \n";
+				}
+
+				#farmguardian configured and up?
+				$fgstatus = &getFarmGuardianStatus( $farmname );
+				if ( ( $status == 0 ) && ( $fgstatus == 1 ) )
+				{
+					print "  * Starting Farm Guardian for $farmname:";
+					$stat = &runFarmGuardianStart( $farmname, "" );
+					if ( $stat == 0 )
+					{
+						print " \033[1;32m OK \033[0m \n";
+					}
+					else
+					{
+						print " \033[1;31m ERROR \033[0m \n";
+					}
+				}
+			}
+			else
+			{
+				print "  Farm $farmname configured DOWN\n";
+			}
+		}
+
+		#At this point every zen interfaces and farms are running
+		#now a personalized script can be executed
+		my @ownscript = `$configdir/zlb-start`;
+		print "@ownscript";
+	}
+	else
+	{
+		print ( "No valid ZLB certificate was found, no farm started\n" );
+	}
+}
+
+if ( $eject eq "stoplocal" )
+{
+	print "Stopping Zen Load Balancer...\n";
+
+	### Stopping Farms
+	print "* Stopping Farms:\n";
+
+	@farmsf = &getFarmList();
+
+	foreach my $ffile ( @farmsf )
+	{
+		$farmname = &getFarmName( $ffile );
+		$status   = &getFarmStatus( $farmname );
+
+		if ( $status eq "up" )
+		{
+			#farmguardian configured and up?
+			$fgstatus = &getFarmGuardianPid( $farmname );
+
+			if ( $fgstatus != -1 )
+			{
+				print "  * Stopping Farm Guardian for $farmname:";
+				$stat = &runFarmGuardianStop( $farmname, "" );
+
+				if ( $stat == 0 )
+				{
+					print " \033[1;32m OK \033[0m \n";
+				}
+				else
+				{
+					print " \033[1;31m ERROR \033[0m \n";
+				}
+			}
+			print "  * Stopping Farm $farmname:";
+			$status = &_runFarmStop( $farmname, "false" );
+
+			if ( $status == 0 )
+			{
+				print " \033[1;32m OK \033[0m \n";
+			}
+			else
+			{
+				print " \033[1;31m ERROR \033[0m \n";
+			}
+		}
+	}
+
+	### Stopping Network Interfaces
+	opendir ( DIR, $configdir );
+	@files = grep ( /^if\_.*\_conf$/, readdir ( DIR ) );
+	closedir ( DIR );
+
+	print "* Stopping Interfaces:\n";
+
+	foreach my $file ( @files )
+	{
+		if ( $file =~ /:/ )
+		{
+			my @file_s = split ( "\_", $file );
+			print "  * Down interface $file_s[1]\n";
+
+			open $fr, "$configdir/$file";
+			while ( $line = <$fr> )
+			{
+				$lastline = $line;
+			}
+			close $fr;
+
+			my @lastline = split ( ":", $lastline );
+			print
+			  "    Interface:$lastline[0]:$lastline[1] Ip:$lastline[2] Netmask:$lastline[3]";
+
+			&delRoutes( "local", "$lastline[0]:$lastline[1]" );
+			&downIf( "$lastline[0]:$lastline[1]" );
+
+			if ( $? == 0 )
+			{
+				print " \033[1;32m OK \033[0m \n";
+			}
+			else
+			{
+				print " \033[1;31m ERROR \033[0m \n";
+			}
+		}
+	}
+
+	foreach my $file ( @files )
+	{
+		if ( $file !~ /:/ )
+		{
+			my @file_s = split ( "\_", $file );
+			print "  * Down interface $file_s[1]\n";
+
+			open my $fr, "$configdir/$file";
+			while ( my $line = <$fr> )
+			{
+				$lastline = $line;
+			}
+			close $fr;
+
+			my @lastline = split ( ":", $lastline );
+
+			print "    Interface:$lastline[0] Ip:$lastline[2] Netmask:$lastline[3]";
+
+			if ( -e $filecluster )
+			{
+				$gui = &GUIip();
+
+				open my $fo, "<", "$filecluster";
+				@filecl = <$fo>;
+				close $fo;
+
+				# if interface is not mentioned in cluster file _and_ this ip is not the gui ip
+				if ( !grep ( /$lastline[0]/, @filecl ) && $gui ne $lastline[2] )
+				{
+					&delRoutes( "local", $lastline[0] );
+					&downIf( $lastline[0] );
+
+					if ( $? == 0 )
+					{
+						print " \033[1;32m OK \033[0m \n";
+					}
+					else
+					{
+						print " \033[1;31m ERROR \033[0m \n";
+					}
+				}
+				else
+				{
+					print
+					  " \033[1;31m This interface is part of a cluster, it cannot be stopped while being part of the cluster.\033[0m \n";
+				}
+			}
+			else
+			{
+				$gui = &GUIip();
+				if ( $gui ne $lastline[2] )
+				{
+					&delRoutes( "local", $lastline[0] );
+					&downIf( $lastline[0] );
+					if ( $? == 0 )
+					{
+						print " \033[1;32m OK \033[0m \n";
+					}
+					else
+					{
+						print " \033[1;31m ERROR \033[0m \n";
+					}
+				}
+				else
+				{
+					print "  no DOWN, it is the Zen GUI\n";
+				}
+			}
+		}
+	}
+
+	#At this point every zen interfaces and farms are stopped
+	#now a personalized script can be executed
+	my @ownscript = `$configdir/zlb-stop`;
+	print "@ownscript";
+}
+
+&runhttpsgui();
+&configureDefaultGW();
