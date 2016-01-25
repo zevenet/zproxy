@@ -1,0 +1,58 @@
+#!/bin/bash
+#Version 0.1 
+#This script is part of Zen Load Balancer system
+#in Zen Load Balancer Networks 3300
+#
+#Copyright (C) 2010  Emilio Campos Martin / Laura Garcia Liebana
+#
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+# Parar todos los servicios de zen
+	#zenloadbalancer
+/etc/init.d/zenloadbalancer stop
+	#minihttpd
+/etc/init.d/minihttpd stop
+	#cron
+/etc/init.d/cron stop
+
+# Eliminar configuración actual
+	#Eliminar archivos
+		#Eliminar granjas
+		#Eliminar configuración global
+rm -fr /usr/local/zenloadbalancer/config/*
+		#Eliminar gráficas y rrd
+rm -f /usr/local/zenloadbalancer/app/zenrrd/rrd/*
+rm -f /usr/local/zenloadbalancer/www/img/graphs/*
+		#Eliminar logs
+rm -fr /var/log/*
+rm -fr /usr/local/zenloadbalancer/logs/*
+rm -fr /usr/local/zenloadbalancer/backup/*
+	#Eliminar certificado
+rm -f /usr/local/zenloadbalancer/www/zlbcertfile.pem
+
+# Renombrar a nombre por defecto
+hostname zennetworks3300
+# Restaurar la configuración inicial
+	#Configuración mgmt
+	#Configuración global
+	#Configuración rttables
+echo "root:admin" | chpasswd
+cd /
+tar -xzf /usr/local/zenloadbalancer/app/reset2factory/config/zlbdefault.tgz 
+# Colocar los tokens, limpiar el history y reiniciar
+if [ ! -f /etc/firstzlbboot ]; then
+    touch /etc/firstzlbboot
+fi
+if [ ! -f /etc/tokennetrules ]; then
+    touch /etc/tokennetrules
+fi
+
+rm -f /root/.bash_history && history -w && history -c && reboot
+exit 0

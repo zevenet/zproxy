@@ -1,0 +1,172 @@
+#!/usr/bin/perl 
+
+#This info script is part of Zen Load Balancer Networks 3300
+#
+#Copyright (C) 2010  Emilio Campos Martin / Laura Garcia Liebana
+#
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+#Created by Jose Garcia
+
+##displayzeninfo 1.0
+#this script is a service that ask all rellevants system info and
+#show them in the LCD display of Zen Networks 3300 device.
+
+use Proc::Daemon;
+#Proc::Daemon::Init;
+
+
+require '/usr/local/zenloadbalancer/config/global.conf';
+#require '/usr/local/zenloadbalancer/www/farms_functions.cgi';
+require '/usr/local/zenloadbalancer/www/functions.cgi';
+if ( $ARGV[0] ne "" ){
+	print "DisplayZenInfo V1.0. Display all rellevant system info for Zen Networks 3300\n";
+	print "	help: displayzeninfo\n";
+
+	exit 0;
+}
+
+#open STDERR, '>>', "/dev/null" or die;
+#open STDOUT, '>>', "/dev/null" or die;
+
+
+#my $pidfile=$ARGV[0].".pid";
+my $wait = 10;
+my $display = "/usr/local/zenloadbalancer/app/display/display";
+my $getkey = "/usr/local/zenloadbalancer/app/display/getdisplaykey";
+for (;;) {
+	my $tempc = `cat /sys/class/hwmon/hwmon0/temp1_input | awk '{printf int(\$1/1000)}'`;
+	my $tempf = (($tempc*9)/5)+32;
+	my $lavg = `cat /proc/loadavg | awk '{printf \$1 " " \$2 " " \$3}'`;
+
+	my $interval=1;
+	if (-f "/proc/stat"){
+		open FR,"/proc/stat";
+		foreach $line(<FR>){
+			if ($line =~ /^cpu\ /){
+				my @line_s = split ("\ ",$line);
+				$cpu_user1= @line_s[1];
+				$cpu_nice1= @line_s[2];
+				$cpu_sys1= @line_s[3];
+				$cpu_idle1= @line_s[4];
+				$cpu_iowait1= @line_s[5];
+				$cpu_irq1= @line_s[6];
+				$cpu_softirq1= @line_s[7];
+				$cpu_total1=$cpu_user1 + $cpu_nice1 + $cpu_sys1 + $cpu_idle1 + $cpu_iowait1 + $cpu_irq1 + $cpu_softirq1
+			}
+		}
+		close FR;
+		open FR,"/proc/stat";
+		sleep $interval;
+		foreach $line(<FR>){
+			if ($line =~ /^cpu\ /){
+				@line_s = split ("\ ",$line);
+				$cpu_user2= @line_s[1];
+                        	$cpu_nice2= @line_s[2];
+                        	$cpu_sys2= @line_s[3];
+                        	$cpu_idle2= @line_s[4];
+                        	$cpu_iowait2= @line_s[5];
+                        	$cpu_irq2= @line_s[6];
+                        	$cpu_softirq2= @line_s[7];
+                        	$cpu_total2=$cpu_user2 + $cpu_nice2 + $cpu_sys2 + $cpu_idle2 + $cpu_iowait2 + $cpu_irq2 + $cpu_softirq2
+			}
+
+		}
+		close FR;
+		$diff_cpu_user = $cpu_user2 - $cpu_user1;
+		$diff_cpu_nice = $cpu_nice2 - $cpu_nice1;
+		$diff_cpu_sys = $cpu_sys2 - $cpu_sys1;
+		$diff_cpu_idle = $cpu_idle2 - $cpu_idle1;
+		$diff_cpu_iowait = $cpu_iowait2 - $cpu_iowait1;
+		$diff_cpu_irq = $cpu_irq2 - $cpu_irq1;
+		$diff_cpu_softirq = $cpu_softirq2 - $cpu_softirq1;
+		$diff_cpu_total = $cpu_total2 - $cpu_total1;
+	
+		$cpu_user = (100*$diff_cpu_user)/$diff_cpu_total;
+		$cpu_nice = (100*$diff_cpu_nice)/$diff_cpu_total;
+		$cpu_sys = (100*$diff_cpu_sys)/$diff_cpu_total;
+		$cpu_idle = (100*$diff_cpu_idle)/$diff_cpu_total;
+		$cpu_iowait = (100*$diff_cpu_iowait)/$diff_cpu_total;
+		$cpu_irq = (100*$diff_cpu_irq)/$diff_cpu_total;
+		$cpu_softirq = (100*$diff_cpu_softirq)/$diff_cpu_total;
+#		$cpu_total = (100*$diff_cpu_total)/$diff_cpu_total;
+		$cpu_usage = $cpu_user + $cpu_nice + $cpu_sys + $cpu_iowait + $cpu_irq + $cpu_softirq;
+		
+	}
+	else{
+		print "File /proc/stat not exist ...\n";
+		exit 1;
+	
+	}
+	$cpu_user = sprintf("%.2f",$cpu_user);
+	$cpu_nice = sprintf("%.2f",$cpu_nice);
+	$cpu_sys = sprintf("%.2f",$cpu_sys);
+	$cpu_iowait = sprintf("%.2f",$cpu_iowait);
+	$cpu_irq = sprintf("%.2f",$cpu_irq);
+	$cpu_softirq = sprintf("%.2f",$cpu_softirq);
+	$cpu_idle = sprintf("%.2f",$cpu_idle);
+	$cpu_usage = sprintf("%.2f",$cpu_usage);
+	
+	$cpu_user =~ s/,/\./g;
+	$cpu_nice =~ s/,/\./g;
+	$cpu_sys =~ s/,/\./g;
+	$cpu_iowait =~ s/,/\./g;
+	$cpu_softirq =~ s/,/\./g;
+	$cpu_idle =~ s/,/\./g;
+        $cpu_usage =~ s/,/\./g;
+
+
+	my $mem  = `free | grep Mem: | awk '{printf int(\$3/1024) "MB/" int(\$2/1024) "MB"}'`;
+	my $ver	 = `grep version= /usr/local/zenloadbalancer/config/global.conf | awk -F'"' '{printf \$2}'`;
+	my @arguments = (["ZLB Temp:", $tempc." C / ".$tempf." F "],["ZLB Load Avg.:",$lavg." "],
+			 ["ZLB CPU used:",$cpu_usage." % "], ["ZLB Mem used:",$mem." "],["ZLB Version:",$ver." "]
+			);
+
+	my $run = `$display "ZenLoadBalancer" "Networks 3300 "`;
+	my $run = `$getkey -t $wait`;
+	if ( $? == 3328 ){
+		my $run=`$display "ZLB is going" "to be halted"`;
+		sleep($wait);
+		my $run=`$display "" ""`;
+		my $run=`poweroff`;
+	}
+	my $run = `$display "By Sofintel IT" "Engineering SL "`;
+	my $run = `$getkey -t $wait`;
+	if ( $? == 2560 ){
+		my $run = `$display "Enter to reset" "to factory"`;
+		my $run = `$getkey -t $wait`;
+		if ( $? == 0 ){
+			my $run = `$display "Sure restoring" "to factory?"`;
+			my $run = `$getkey -t $wait`;
+			if ( $? == 0 ){
+				my $run = `$display "Reseting to" "factory "`;
+				sleep($wait);
+				my $run = `/usr/local/zenloadbalancer/app/reset2factory/bin/reset2factory`;
+			}
+		}
+	}
+#	print "$display $arguments[0][0] $arguments[0][1]";
+	my $run = `$display "$arguments[0][0]" "$arguments[0][1]"`;
+	sleep($wait);
+#	print "$display $arguments[1][0] $arguments[1][1]";
+	my $run = `$display "$arguments[1][0]" "$arguments[1][1]"`;
+	sleep($wait);
+#	print "$display $arguments[2][0] $arguments[2][1]";
+	my $run = `$display "$arguments[2][0]" "$arguments[2][1]"`;
+	sleep($wait);
+#	print "$display $arguments[3][0] $arguments[3][1]";
+	my $run = `$display "$arguments[3][0]" "$arguments[3][1]"`;
+	sleep($wait);
+#	print "$display $arguments[4][0] $arguments[4][1]";
+	my $run = `$display "$arguments[4][0]" "$arguments[4][1]"`;
+	sleep($wait);
+}
+exit 0;
+

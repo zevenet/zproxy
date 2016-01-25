@@ -1,0 +1,37 @@
+#!/bin/bash
+#Version 0.1 
+#This script is part of Zen Load Balancer deploy system
+#in Zen Load Balancer Networks 3300
+#
+#Copyright (C) 2010  Emilio Campos Martin / Laura Garcia Liebana
+#
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+DIRECTORY="/usr/local/zenloadbalancer"
+display="${DIRECTORY}/app/display/display"
+getkey="${DIRECTORY}/app/display/getdisplaykey"
+rulesf="/etc/udev/rules.d/70-persistent-net.rules"
+tokenf="/etc/tokennetrules"
+timeout="0"
+
+if [ "`ifconfig -a | grep mgmt`" = "" ] && [ -f $tokenf ]
+then
+	if [ -f $rulesf ]; then
+		rm -f $rulesf
+	fi
+	[ ! -e /sys/class/net/eth0/uevent ] && sleep 5
+	[ -e /sys/class/net/eth0/uevent ] && echo add > /sys/class/net/eth0/uevent
+	rm -f $tokenf
+	[ -e $rulesf ] && $display "Completing" "initial setup "
+	sleep 2
+	$display "Rebooting" "ZLB system "
+	reboot
+fi
+exit 0
