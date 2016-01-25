@@ -4,15 +4,15 @@
 #     Zen Load Balancer Software License
 #     This file is part of the Zen Load Balancer software package.
 #
-#     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
+#     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, based in Sevilla (Spain)
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
-#     by the Free Software Foundation; either version 2.1 of the License, or 
+#     by the Free Software Foundation; either version 2.1 of the License, or
 #     (at your option) any later version.
 #
-#     This library is distributed in the hope that it will be useful, but 
-#     WITHOUT ANY WARRANTY; without even the implied warranty of 
+#     This library is distributed in the hope that it will be useful, but
+#     WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
 #     General Public License for more details.
 #
@@ -20,8 +20,7 @@
 #     along with this library; if not, write to the Free Software Foundation,
 #     Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #
-###############################################################################	
-
+###############################################################################
 */
 
 /* CSS Reset */
@@ -59,9 +58,9 @@ html {
 body {
 	font-size:75%;
 	color:#1a1a1a;
-	/*background:#f4f4f4;*/
+	background:transparent url('../img/back.png') repeat-x left top;
+	/*background:#fff;*/
 	/*background:#e8e8e8;*/
-	background:transparent url('../img/back.png') repeat left top;
 	font-family:"Helvetica Neue", Arial, Helvetica, sans-serif;
 }
 
@@ -193,9 +192,9 @@ address {
 	text-decoration:none;
 }
 .header-top {
-	/*background:#2c2c2c;*/
-	background:transparent url('../img/logo.png') no-repeat 0;
-	padding:6px 25px 2px;
+	/*background:#cbcbcb;*/
+	background:transparent url('../img/logo.png') no-repeat left;
+	padding:4px 25px 2px;
 	height:62px;
 }
 .header-middle {
@@ -225,18 +224,18 @@ address {
         /*border:1px solid #9d9d9d;*/
 	border:1px solid #585858;
         /*border-top:0;*/
-        margin:0px 15px;
+        margin:0px 0px;
         padding:0;
 	/*border-top:1px solid #545454;
 	border-bottom:1px solid #000;
 	padding:10px 25px;*/
 	color:#fff;
-        -moz-border-radius-topleft:5px;
-        -moz-border-radius-topright:5px;
+        /*-moz-border-radius-topleft:5px;
+        -moz-border-radius-topright:5px;*/
         /*-moz-border-radius-bottomleft:5px;
         -moz-border-radius-bottomright:5px;*/
-        -webkit-border-top-left-radius:5px;
-        -webkit-border-top-right-radius:5px;
+        /*-webkit-border-top-left-radius:5px;
+        -webkit-border-top-right-radius:5px;*/
         /*-webkit-border-bottom-left-radius:5px;
         -webkit-border-bottom-right-radius:5px;*/
 	text-align: center;
@@ -308,6 +307,8 @@ address {
 }
 .box.stats {
 	padding:30px 15px;
+	/*background:#fff url('../img/box-content.png') repeat-x top;*/
+	background:#f8f8f8;
 }
 
 
@@ -322,8 +323,10 @@ address {
         /*background:#cdcdcd url('../img/boxheader.gif') repeat-x top;*/
         /*background:#b2da42 url('../img/boxheader2.gif') repeat-x top;*/
         padding:30px 15px;
-        /*text-shadow: 1px 1px 1px #fff;*/
-	background:#fff;
+        text-shadow: 1px 1px 1px #fff;
+	/*background:#fff url('../img/box-content.png') repeat-x top;*/
+	/*background:#fff;*/
+	background:#f8f8f8;
 	border-bottom: 1px solid #DEDEDE;
 
 }

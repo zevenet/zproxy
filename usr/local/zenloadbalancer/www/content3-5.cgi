@@ -28,12 +28,24 @@ use Sys::Hostname;
 my $host = hostname();
 
 print "
-<!--Content INI-->
-<div id=\"page-content\">
+  <!--- CONTENT AREA -->
+  <div class=\"content container_12\">
+";
 
-<!--Content Header INI-->
-<h2>Settings::Backup</h2>
-<!--Content Header END-->";
+####################################
+# CLUSTER INFO
+####################################
+&getClusterInfo();
+
+###################################
+# BREADCRUMB
+###################################
+print "<div class=\"grid_6\"><h1>Settings :: Backup</h1></div>\n";
+
+####################################
+# CLUSTER STATUS
+####################################
+&getClusterStatus();
 
 if ( $action eq "apply" )
 {
@@ -57,17 +69,13 @@ if ( $action eq "apply" )
 
 if ( $action eq "Create Backup" )
 {
-	if ( $name !~ /^$/ && $name =~ /^[a-zA-Z0-9\-]*$/ )
+	if ( $name !~ /^$/ )
 	{
 		$name =~ s/\ //g;
 		my @eject = `$zenbackup $name -c 2> /dev/null`;
 		&successmsg( "Local system backup created <b>backup-$name.tar.gz</b>" );
 	}
-	else
-	{
-		&errormsg(
-			   "Backup name is not valid. Only numbers, letters and hyphens are allowed." );
-	}
+
 }
 
 if ( $action eq "del" )
@@ -106,36 +114,52 @@ if ( $action eq "del" )
 #close UPLOADFILE;
 #	}
 
-print "<div class=\"container_12\">";
-print "	<div class=\"grid_12\">";
-print "		<div class=\"box-header\">Backup</div>";
-print "		<div class=\"box stats\">";
+print "
+               <div class=\"box grid_6\">
+                 <div class=\"box-head\">
+                       <span class=\"box-icon-24 fugue-24 plus\"></span>         
+                       <h2>Create backup</h2>
+                 </div>
+                 <div class=\"box-content global-farm\">
+       ";
 
-print "<form method=\"get\" action=\"index.cgi\">";
-print
-  "<b>Description name: </b><input type=\"text\" name=\"name\" value=\"$lhost\">";
+print "<form method=\"post\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
+print "<div class=\"form-row\">\n";
+print "<p class=\"form-label\"><b>Description name</b></p>\n";
 print
-  "<input type=\"submit\" value=\"Create Backup\" name=\"action\" class=\"button small\">";
+  "<div class=\"form-item\"><input type=\"text\" name=\"name\" value=\"$lhost\" class=\"fixedwidth\"> <input type=\"submit\" value=\"Create Backup\" name=\"action\" class=\"button grey\"></div>\n";
+print "</div>\n";
 print "</form>";
-print "<br><br>";
 
-print "</div></div></div>";
-print "<br class=\"cl\">";
+print "</div></div>";
+print "<div class=\"clear\"></div>";
 
 #table
-print
-  "<div class=\"box-header\"> Backup files <a href=\"index.cgi?id=$id\"><img src=\"img/icons/small/arrow_refresh.png\" title=\"refresh\"></a></div>";
-print "<div class=\"box table\">";
+print "
+               <div class=\"box grid_12\">
+                 <div class=\"box-head\">
+                       <span class=\"box-icon-24 fugue-24 disk-black\"></span>   
+                       <h2>Backups table</h2>
+                 </div>
+                 <div class=\"box-content no-pad\">
+                 <ul class=\"table-toolbar\">
+            <li>";
 
-print "<table>";
+&upload();
+
+print "</li>
+          </ul>
+       ";
+
+print "<table id=\"backups-table\" class=\"display\">";
 print "<thead>";
 
 print "<tr>";
-print "<td>Description name</td>";
-print "<td>Date</td>";
-print "<td>Host</td>";
-print "<td>Action</td>";
+print "<th>Description name</th>";
+print "<th>Date</th>";
+print "<th>Host</th>";
+print "<th>Action</th>";
 print "</tr>";
 print "</thead>";
 print "<tbody>";
@@ -161,25 +185,40 @@ foreach $file ( @files )
 	print "</tr>";
 }
 
-print "<tr><td colspan=3></td><td>";
-
-&upload();
-
-print "</td></tr>";
 print "</tbody>";
 print "</table>";
-print "</div>";
+print "</div></div>";
 
-#print "		</div>";
-#print "<br>";
-#print "	</div>";
-#print "</div>";
+print "
+<script>
+\$(document).ready(function () {
+    \$(\".open-dialog\").click(function () {
+        \$(\"#dialog\").attr('src', \$(this).attr(\"href\"));
+        \$(\"#dialog-container\").dialog({
+            width: 350,
+            height: 350,
+            modal: true,
+            close: function () {
+                window.location.replace('index.cgi?id=3-5');
+            }
+        });
+        return false;
+    });
+});
+</script>
 
-print "<br class=\"cl\">";
-
-#content 3-4 END
-print " </div>
-    <!--Content END-->
-</div>
+<script>
+\$(document).ready(function() {
+    \$('#backups-table').DataTable( {
+        \"bJQueryUI\": true,     
+        \"sPaginationType\": \"full_numbers\",
+		\"aLengthMenu\": [
+			[10, 25, 50, 100, 200, -1],
+			[10, 25, 50, 100, 200, \"All\"]
+		],
+		\"iDisplayLength\": 10
+    });
+} );
+</script>
 ";
 

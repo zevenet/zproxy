@@ -21,38 +21,63 @@
 #
 ###############################################################################
 
-my $type = &getFarmType( $farmname );
+use Time::HiRes qw (sleep);
 
 print "
-    <!--Content INI-->
-        <div id=\"page-content\">
+  <!--- CONTENT AREA -->
+  <div class=\"content container_12\">
+";
 
-                <!--Content Header INI-->";
+####################################
+# CLUSTER INFO
+####################################
+&getClusterInfo();
 
-if ( $farmname !~ /^[a-zA-Z0-9\-]*$/ )
-{
-	&errormsg(
-			  "Farm name is not valid. Only numbers, letters and hyphens are allowed" );
-	$farmname = "";
-}
+###############################
+#BREADCRUMB
+############################
+my $type = &getFarmType( $farmname );
+$file = &getFarmFile( $farmname );    # do not 'my' this variable
 
+print "<div class=\"grid_6\">";
 if ( $farmname ne "" && $type != 1 )
 {
-	print "<h2>Manage::Farms\:\:$type\:\:$farmname</h2>";
+	if ( $action =~ "^editfarm" )
+	{
+		print
+		  "<h1>Manage :: <a href=\"index.cgi?id=1-2\">Farms</a> \:\: <span style=\"cursor: pointer;\" onClick=\"jQuery('#bcform').submit();\">Edit $type farm '$farmname'</span></h1>";
+
+		print
+		  "<form method=\"post\" id=\"bcform\" class=\"myform\" action=\"index.cgi\">";
+		print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
+		print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
+		print "<input type=\"hidden\" name=\"action\" value=\"editfarm\">";
+		print "</form>";
+
+	}
+	else
+	{
+		print
+		  "<h1>Manage :: <a href=\"index.cgi?id=1-2\">Farms</a> \:\: $type farm '$farmname'</h1>";
+	}
 }
 else
 {
 	if ( $farmname ne "" )
 	{
-		print "<h2>Manage::Farms::$farmname</h2>";
+		print "<h1>Manage :: <a href=\"index.cgi?id=1-2\">Farms</a> :: $farmname</h1>";
 	}
 	else
 	{
-		print "<h2>Manage::Farms</h2>";
+		print "<h1>Manage :: <a href=\"index.cgi?id=1-2\">Farms</a></h1>";
 	}
 }
+print "</div>";
 
-print "<!--Content Header END-->";
+####################################
+# CLUSTER STATUS
+####################################
+&getClusterStatus();
 
 #evaluate the $action variable, used for manage forms
 if ( $action eq "addfarm" || $action eq "Save" || $action eq "Save & continue" )
@@ -96,12 +121,19 @@ if ( $action eq "startfarm" )
 
 if ( $action eq "stopfarm" )
 {
-	&runFarmStop( $farmname, "true" ) == 0
-	  ? &successmsg( "The Farm $farmname is now disabled" )
-	  : &errormsg( "The Farm $farmname is not disabled" );
+	my $stat = &runFarmStop( $farmname, "true" );
+
+	if ( $stat == 0 )
+	{
+		&successmsg( "The Farm $farmname is now disabled" );
+	}
+	else
+	{
+		&errormsg( "The Farm $farmname is not disabled" );
+	}
 }
 
-if ( $action =~ "^editfarm" || $editfarm )
+if ( $action =~ "^editfarm" )
 {
 	if ( $type == 1 )
 	{
@@ -109,25 +141,29 @@ if ( $action =~ "^editfarm" || $editfarm )
 	}
 	else
 	{
-		$file = &getFarmFile( $farmname );
 		if ( $type eq "tcp" || $type eq "udp" )
 		{
+			require "./controller_tcp.cgi";
 			require "./content1-22.cgi";
 		}
 		if ( $type eq "http" || $type eq "https" )
 		{
+			require "./controller_http.cgi";
 			require "./content1-24.cgi";
 		}
 		if ( $type eq "datalink" )
 		{
+			require "./controller_datalink.cgi";
 			require "./content1-26.cgi";
 		}
 		if ( $type eq "l4xnat" )
 		{
+			require "./controller_l4xnat.cgi";
 			require "./content1-28.cgi";
 		}
 		if ( $type eq "gslb" )
 		{
+			require "./controller_gslb.cgi";
 			require "./content1-202.cgi";
 		}
 	}
@@ -135,14 +171,12 @@ if ( $action =~ "^editfarm" || $editfarm )
 
 if ( $action eq "managefarm" )
 {
-	$type = &getFarmType( $farmname );
 	if ( $type == 1 )
 	{
 		&errormsg( "Unknown farm type of $farmname" );
 	}
 	else
 	{
-		$file = &getFarmFile( $farmname );
 		if ( $type eq "tcp" || $type eq "udp" )
 		{
 			require "./content1-23.cgi";
@@ -159,249 +193,278 @@ if ( $action eq "managefarm" )
 		{
 			require "./content1-29.cgi";
 		}
-		if ( $type eq "gslb" )
-		{
-			require "./content1-203.cgi";
-		}
 	}
 }
 
-#check if the user is into a farm for editing or for modifying
+##########################################
+# LIST ALL FARMS CONFIGURATION AND STATUS
+##########################################
 
-#list all farms configuration and status
-#first list all configuration files
-@files = &getFarmList();
-$size  = $#files + 1;
-if ( $size == 0 )
+if ( $action !~ /editfarm/ && $action !~ /managefarm/ )
 {
-	$action   = "addfarm";
-	$farmname = "";
-	require "./content1-21.cgi";
-}
+	#first list all configuration files
+	@files = &getFarmList();
 
-#table that print the info
-print "<div class=\"box-header\">Farms table</div>";
-print "<div class=\"box table\">";
-
-my $thereisdl = "false";
-
-print "<table cellspacing=\"0\">";
-
-my $nodl_farms = "false";
-for $file ( @files )
-{
-	$name = &getFarmName( $file );
-	if (    $farmname eq $name
-		 || !( defined $farmname )
-		 || $farmname eq ""
-		 || $action eq "deletefarm"
-		 || $action =~ /^Save|^Cancel/ )
+	$size = $#files + 1;
+	if ( $size == 0 )
 	{
-		$type = &getFarmType( $name );
-		if ( $type ne "datalink" )
-		{
-			$nodl_farms = "true";
-			last;
-		}
+		$action   = 'addfarm';
+		$farmname = '';
+		require './content1-21.cgi';
 	}
-}
 
-if ( $nodl_farms eq "true" )
-{
-	print "<thead>";
-	print "<tr>";
-	print "<td width=85>Name</td>";
-	print "<td width=85>Virtual IP</td>";
-	print "<td>Virtual Port(s)</td>";
-	print "<td>Status</td>";
-	print "<td>Profile</td>";
-	print "<td>Actions</td>";
-	print "</tr>";
-	print "</thead>";
-	print "<tbody>";
-}
+	# If value is true there is at least one Datalink Farm
+	my $thereisdl;
 
-my $globalfarm = 0;
-foreach $file ( @files )
-{
-	$name = &getFarmName( $file );
-##########if farm is not the current farm then it doesn't print. only print for global view.
-	if (    $farmname eq $name
-		 || !( defined $farmname )
-		 || $farmname eq ""
-		 || $action eq "deletefarm"
-		 || $action =~ /^Save|^Cancel/ )
+	# If value is true there is at least one TCP, HTTP, HTTPS or Lx4NAT Farm
+	my $otherthandl;
 
-#~ if ( ( $action =~ /^editfarm/ && $farmname eq $name ) or ($action ne 'editfarm') )
-	{
-		$type = &getFarmType( $name );
-		$globalfarm++;
-		if ( $type ne "datalink" )
-		{
-
-			if (    $farmname eq $name
-				 && $action ne "addfarm"
-				 && $action ne "Cancel" )
-			{
-				print "<tr class=\"selected\">";
-			}
-			else
-			{
-				print "<tr>";
-			}
-
-			#print the farm description name
-			print "<td>$name</td>";
-
-			#print the virtual ip
-			$vip = &getFarmVip( "vip", $name );
-			print "<td>$vip</td>";
-
-			#print the virtual port where the vip is listening
-			$vipp = &getFarmVip( "vipp", $name );
-			print "<td>$vipp</td>";
-
-			#print global connections bar
-			$pid    = &getFarmPid( $name );
-			$status = &getFarmStatus( $name );
-
-			#print status of a farm
-			if ( $status ne "up" )
-			{
-				print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td>";
-			}
-			else
-			{
-				print "<td><img src=\"img/icons/small/start.png\" title=\"up\"></td>";
-			}
-
-			#type of farm
-			print "<td>$type</td>";
-
-			#menu
-			print "<td>";
-			if ( $type eq "tcp" || $type eq "udp" || $type eq "l4xnat" )
-			{
-				&createmenuvip( $name, $id, $status );
-			}
-			if ( $type eq "gslb" )
-			{
-				&createmenuviph( $name, $id, $type );
-			}
-			if ( $type =~ /http/ )
-			{
-				&createmenuviph( $name, $id, "HTTP" );
-			}
-			print "</td>";
-			print "</tr>";
-		}
-		else
-		{
-			$thereisdl = "true";
-		}
-	}
-}
-print "</tbody>";
-
-# DATALINK
-
-if ( $thereisdl eq "true" )
-{
-	print "<thead>";
-	print "<tr>";
-	print "<td width=85>Name</td>";
-	print "<td width=85 colspan=2>IP</td>";
-	print "<td>Status</td>";
-	print "<td>Profile</td>";
-	print "<td>Actions</td>";
-	print "</tr>";
-	print "</thead>";
-	print "<tbody>";
-	use Time::HiRes qw (sleep);
-
-	foreach $file ( @files )
+  NODL_LOOP:
+	foreach my $file ( @files )
 	{
 		$name = &getFarmName( $file );
+
+		## if farm is not the current farm then it isn't printed. only print for global view.
 		$type = &getFarmType( $name );
 
-		if ( $type eq "datalink" )
+		if ( $type eq 'datalink' )
 		{
+			$thereisdl = 'true';
+			next NODL_LOOP;
+		}
+
+		if ( !$otherthandl )
+		{
+			print "
+				<div class=\"box grid_12\">
+				<div class=\"box-head\">
+					<span class=\"box-icon-24 fugue-24 server\"></span>       
+					<h2>Farms table</h2>
+				</div>
+				<div class=\"box-content no-pad\">
+					<ul class=\"table-toolbar\">
+						<li>
+							<form method=\"post\" action=\"index.cgi\">
+							<button type=\"submit\" class=\"noborder\">
+							<img src=\"img/icons/basic/plus.png\" alt=\"Add\"> Add new Farm</button>
+							<input type=\"hidden\" name=\"id\" value=\"$id\">
+							<input type=\"hidden\" name=\"action\" value=\"addfarm\">
+							</form>
+						</li>
+					</ul>
+					<table class=\"display\" id=\"farms-table\">
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Virtual IP</th>
+							<th>Virtual Port(s)</th>
+							<th>Status</th>
+							<th>Profile</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+			                       ";
+			$otherthandl = 'true';
+		}
+
+		( $farmname eq $name && $action ne "addfarm" && $action ne "Cancel" )
+		  ? print "<tr class=\"selected\">"
+		  : print "<tr>";
+
+		print
+		  "<form method=\"post\" id=\"farm_$name\" class=\"myform\" action=\"index.cgi\">";
+		print "<input type=\"hidden\" name=\"id\" value=\"1-2\">";
+		print "<input type=\"hidden\" name=\"farmname\" value=\"$name\">";
+		print "<input type=\"hidden\" name=\"action\" value=\"editfarm\">";
+		print "</form>";
+		
+		#print global connections bar
+		$status = &getFarmStatus( $name );
+		
+		my $onClick;
+		if ($type eq "tcp" && $status eq "down") {
+			$onClick = "";
+		} else {
+			$onClick = "style=\"cursor: pointer;\" onClick=\"jQuery('#farm_$name').submit();\"";
+		}
+
+		#print the farm description name
+		print
+		  "<td $onClick>$name</td>";
+
+		#print the virtual ip
+		$vip = &getFarmVip( "vip", $name );
+		print
+		  "<td $onClick>$vip</td>";
+
+		#print the virtual port where the vip is listening
+		$vipp = &getFarmVip( "vipp", $name );
+		print
+		  "<td $onClick>$vipp</td>";
+
+		#print status of a farm
+		print
+		  "<td class=\"aligncenter\" $onClick>";
+		( $status ne "up" )
+		  ? print "<img src=\"img/icons/small/stop.png\" title=\"down\">"
+		  : print "<img src=\"img/icons/small/start.png\" title=\"up\">";
+		print "</td>";
+
+		#type of farm
+		print
+		  "<td $onClick>$type</td>";
+
+		#menu
+		print "<td>";
+		&createMenuVip_ext( $name );
+		print "</td>";
+		print "</tr>";
+	}
+
+	if ( $otherthandl )
+	{
+		print "
+	</tbody>
+	</table>
+	</div>
+	</div>";
+	}
+
+	# DATALINK
+	if ( $thereisdl )
+	{
+		print "
+		    <div class=\"box grid_12\">
+				<div class=\"box-head\">
+					<span class=\"box-icon-24 fugue-24 server\"></span>   
+					<h2>Datalink Farms table</h2>
+				</div>
+				<div class=\"box-content no-pad\">
+					<ul class=\"table-toolbar\">
+						<li>
+							<form method=\"post\" action=\"index.cgi\">
+							<button type=\"submit\" class=\"noborder\">
+							<img src=\"img/icons/basic/plus.png\" alt=\"Add\"> Add new Farm</button>
+							<input type=\"hidden\" name=\"id\" value=\"$id\">
+							<input type=\"hidden\" name=\"action\" value=\"addfarm\">
+							</form>
+						</li>
+					</ul>
+					<table class=\"display\" id=\"datalink-farms-table\">
+						<thead>
+			";
+
+		print "<tr>";
+		print "<th>Name</th>";
+		print "<th>IP</th>";
+		print "<th>Interface</th>";
+		print "<th>Status</th>";
+		print "<th>Profile</th>";
+		print "<th>Actions</th>";
+		print "</tr>";
+		print "</thead>";
+		print "<tbody>";
+
+	  DL_LOOP:
+		foreach my $file ( @files )
+		{
+			$name = &getFarmName( $file );
+			$type = &getFarmType( $name );
+
+			# skip to next farm if this is not datalink
+			next DL_LOOP if $type ne "datalink";
 
 			$vipp = &getFarmVip( "vipp", $name );
 			my @startdata = &getDevData( $vipp );
-
-			#print "@startdata<br>";
 			sleep ( 0.5 );
 			my @enddata = &getDevData( $vipp );
 
-			#print "@enddata<br>";
+			(     ( $farmname eq $name )
+			   && ( $action ne "addfarm" )
+			   && ( $action ne "Cancel" ) )
+			  ? print "<tr class=\"selected\">"
+			  : print "<tr>";
 
-			if (    $farmname eq $name
-				 && $action ne "addfarm"
-				 && $action ne "Cancel" )
-			{
-				print "<tr class=\"selected\">";
-			}
-			else
-			{
-				print "<tr>";
-			}
+			print
+			  "<form method=\"post\" id=\"farm_$name\" class=\"myform\" action=\"index.cgi\">";
+			print "<input type=\"hidden\" name=\"id\" value=\"1-2\">";
+			print "<input type=\"hidden\" name=\"farmname\" value=\"$name\">";
+			print "<input type=\"hidden\" name=\"action\" value=\"editfarm\">";
+			print "</form>";
 
 			#print the farm description name
-			print "<td>$name</td>";
+			print
+			  "<td style=\"cursor: pointer;\" onClick=\"jQuery('#farm_$name').submit();\">$name</td>";
 
 			#print the virtual ip
 			$vip = &getFarmVip( "vip", $name );
-			print "<td colspan=2>$vip</td>";
+			print
+			  "<td style=\"cursor: pointer;\" onClick=\"jQuery('#farm_$name').submit();\">$vip</td>";
 
 			#print the interface to be the defaut gw
-			#print "<td>$vipp</td>";
+			print
+			  "<td style=\"cursor: pointer;\" onClick=\"jQuery('#farm_$name').submit();\">$vipp</td>";
 
-			#print global packets
+			#print global connections bar
 			$status = &getFarmStatus( $name );
 
 			#print status of a farm
-			if ( $status ne "up" )
-			{
-				print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td>";
-			}
-			else
-			{
-				print "<td><img src=\"img/icons/small/start.png\" title=\"up\"></td>";
-			}
+			print
+			  "<td class=\"aligncenter\" style=\"cursor: pointer;\" onClick=\"jQuery('#farm_$name').submit();\">";
+			( $status ne "up" )
+			  ? print "<img src=\"img/icons/small/stop.png\" title=\"down\">"
+			  : print "<img src=\"img/icons/small/start.png\" title=\"up\">";
+			print "</td>";
 
 			#type of farm
-			print "<td>$type</td>";
+			print
+			  "<td style=\"cursor: pointer;\" onClick=\"jQuery('#farm_$name').submit();\">$type</td>";
 
 			#menu
 			print "<td>";
-			&createmenuvip( $name, $id, $status );
+			&createMenuVip_ext( $name );
 
 			print "</td>";
 			print "</tr>";
+
 		}
+		print "</tbody>";
+	}
+	## END DATALINK
+
+	print "</table>";
+	if ( $thereisdl )
+	{
+		print "</div>";
+		print "</div>";
 	}
 
-## END DATALINK
-
-	print "</tbody>";
+	print "
+		<script>
+		\$(document).ready(function() {
+		    \$('#datalink-farms-table').DataTable( {
+		        \"bJQueryUI\": true,     
+		        \"sPaginationType\": \"full_numbers\",
+				\"aLengthMenu\": [
+					[10, 25, 50, 100, 200, -1],
+					[10, 25, 50, 100, 200, \"All\"]
+				],
+				\"iDisplayLength\": 10
+		    });
+		       \$('#farms-table').DataTable( {
+		        \"bJQueryUI\": true,     
+		        \"sPaginationType\": \"full_numbers\",
+				\"aLengthMenu\": [
+					[10, 25, 50, 100, 200, -1],
+					[10, 25, 50, 100, 200, \"All\"]
+				],
+				\"iDisplayLength\": 10 
+		    });
+		} );
+		</script>";
 }
-print
-  "<tr><td colspan=\"5\"></td><td><a href=\"index.cgi?id=$id&action=addfarm\"><img src=\"img/icons/small/farm_add.png\" title=\"Add new Farm\"></a></td></tr>";
 
-print "</table>";
-print "</div>";
-
-if ( $globalfarm == 1 )
-{
-	print "<div id=\"page-header\"></div>";
-	print "<form method=\"get\" action=\"index.cgi\">";
-	print "<input type=\"hidden\" value=\"1-2\" name=\"id\">";
-	print
-	  "<input type=\"submit\" value=\"Return to all Farms\" name=\"action\" class=\"button small\">";
-	print "</form>";
-	print "<div id=\"page-header\"></div>";
-}
-
-print "<br class=\"cl\" >";
-print "</div>";
+# Must end with a true value.
+# DO NOT REMOVE NEXT LINE
+1;

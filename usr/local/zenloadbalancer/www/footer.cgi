@@ -22,12 +22,26 @@
 ###############################################################################
 
 #FOOTER
+
+use Time::localtime;
+$currentyear = localtime->year() + 1900;
+
 print "
 <!-- Start Footer -->
-<div class=\"footer\">Zen Load Balancer is created under GNU/LGPL License Copyright (C) 2014 SOFINTEL IT ENGINEERING SL </div>
+<div class=\"footer container_12\">
+<p class=\"grid_12\">Copyright &copy; $currentyear SOFINTEL IT ENGINEERING S.L. // Zen Load Balancer is created under GNU/LGPL License // <a href=\"http://www.zenloadbalancer.com\" target=\"_blank\">www.zenloadbalancer.com</a></p>
+</div>
 <!-- End Footer -->
-<!-- Close div class=\"container\"
-</div> -->
+
+<script>
+
+/* Spinner */
+\$(window).load(function(){
+    \$('#cover').fadeOut(1000);
+});
+
+</script>
+
 </body>
 </html>
 ";

@@ -25,8 +25,6 @@
 
 if ( $viewtableclients eq "" ) { $viewtableclients = "no"; }
 
-#if ($viewtableconn eq ""){ $viewtableconn = "no";}
-
 # Real Server Table
 my $nattype = &getFarmNatType( $farmname );
 my $proto   = &getFarmProto( $farmname );
@@ -52,14 +50,20 @@ foreach ( @backends )
 }
 
 &refreshstats();
-print "<br>";
 
-print
-  "<div class=\"box-header\">Real servers status<font size=1>&nbsp;&nbsp;&nbsp; $backendsize servers, $activebackends active </font></div>";
-print "<div class=\"box table\"><table cellspacing=\"0\">\n";
+print "
+    <div class=\"box container_12 grid_12\">
+      <div class=\"box-head\">
+           <span class=\"box-icon-24 fugue-24 server\"></span>   
+        <h2>Real servers status $backendsize servers, $activebackends active </h2>
+      </div>
+      <div class=\"box-content no-pad\">
+";
+
+print "<table class=\"display\">\n";
 print "<thead>\n";
 print
-  "<tr><td>Server</td><td>Address</td><td>Port(s)</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Weight</td><td>Priority</td>";
+  "<tr><th>Server</th><th>Address</th><th>Port(s)</th><th>Status</th><th>Pending Conns</th><th>Established Conns</th></tr>";
 print "</thead>\n";
 print "<tbody>";
 
@@ -103,15 +107,13 @@ foreach ( @backends )
 	  &getBackendEstConns( $farmname, ${ ip_backend }, $port_backend, @netstat );
 	my $nestab = @stabnetstatback;
 	print "<td>$nestab</td>";
-	print "<td> $backends_data[2] </td>";
-	print "<td> $backends_data[3] </td>";
 	print "</tr>";
 	$index++;
 }
 
 print "</tbody>";
 print "</table>";
-print "</div>\n\n";
+print "</div>\n</div>\n";
 
 if ( $proto eq "sip" )
 {
@@ -123,52 +125,56 @@ if ( $proto eq "sip" )
 
 	if ( $viewtableclients eq "yes" )
 	{
-		print
-		  "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=no&viewtableconn=$viewtableconn\" title=\"Minimize\"><img src=\"img/icons/small/bullet_toggle_minus.png\"></a>";
+		print "
+			<form method=\"post\" action=\"index.cgi\">
+			<input type=\"submit\" value=\"Dismiss clients table\" name=\"buttom\" class=\"button grey\">
+			<input type=\"hidden\" name=\"id\" value=\"1-2\">
+			<input type=\"hidden\" name=\"action\" value=\"managefarm\">
+			<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">
+			<input type=\"hidden\" name=\"viewtableclients\" value=\"no\">
+			<input type=\"hidden\" name=\"viewtableconn\" value=\"$viewtableconn\">
+			</form>";
 	}
 	else
 	{
-		print
-		  "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=yes&viewtableconn=$viewtableconn\" title=\"Maximize\"><img src=\"img/icons/small/bullet_toggle_plus.png\"></a>";
+		print "
+			<form method=\"post\" action=\"index.cgi\">
+			<input type=\"submit\" value=\"Show clients table\" name=\"buttom\" class=\"button grey\">
+			<input type=\"hidden\" name=\"id\" value=\"1-2\">
+			<input type=\"hidden\" name=\"action\" value=\"managefarm\">
+			<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">
+			<input type=\"hidden\" name=\"viewtableclients\" value=\"yes\">
+			<input type=\"hidden\" name=\"viewtableconn\" value=\"$viewtableconn\">
+			</form>";
 	}
 
-	print
-	  "Client sessions status <font size=1>&nbsp;&nbsp;&nbsp; $totalsessions active clients</font></div>\n";
-	print "<div class=\"box table\"><table cellspacing=\"0\">\n";
 	if ( $viewtableclients eq "yes" )
 	{
+		print "
+                       <div class=\"box container_12 grid_12\">
+                         <div class=\"box-head\">
+                               <span class=\"box-icon-24 fugue-24 server\"></span>       
+                               <h2>Client sessions status $totalsessions active clients</h2>
+                         </div>
+                         <div class=\"box-content no-pad\">
+               ";
+		print "<div class=\"box table\"><table class=\"display\">\n";
 		print "<thead>\n";
-		print "<tr><td>Client Address</td></tr>\n";
+		print "<tr><th>Client Address</th></tr>\n";
 		print "</thead>";
 		print "<tbody>";
 
 		foreach $session ( @csessions )
 		{
-
-#my @s_backend  = split("\t",$_);
-#if (@s_backend[0] =~ /^[0-9]/ && ($ftracking == 0 || @s_backend[2] <= $ftracking))
-#	{
-#	print "<tr><td>@s_backend[0]  </td><td>@s_backend[1]  </td><td>@s_backend[2] </td><td>@s_backend[3] </td><td>@s_backend[4] </td><td>@s_backend[5] </td><td>@s_backend[6] </td></tr>";
-#	}
-
 			print "<tr><td>$session</td></tr>";
 		}
 		print "</tbody>";
 	}
 
 	print "</table>";
-	print "</div>";
+	print "</div></div>";
 
 }
 
 print "<!--END MANAGE-->";
 
-print "<div id=\"page-header\"></div>";
-print "<form method=\"get\" action=\"index.cgi\">";
-print "<input type=\"hidden\" value=\"1-2\" name=\"id\">";
-print
-  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
-print "</form>";
-print "<div id=\"page-header\"></div>";
-
-#print "@run";

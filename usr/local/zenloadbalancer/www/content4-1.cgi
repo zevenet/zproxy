@@ -24,50 +24,54 @@
 use Tie::File;
 
 print "
-<!--Content INI-->
-<div id=\"page-content\">
+  <!--- CONTENT AREA -->
+  <div class=\"content container_12\">
+";
 
-<!--Content Header INI-->
-<h2>About::License</h2>
-<!--Content Header END-->";
+####################################
+# CLUSTER INFO
+####################################
+&getClusterInfo();
 
-# Print form if not a valid form
-##content 3-2 INI
-print "<div class=\"container_12\">";
-print "	<div class=\"grid_12\">";
-print "		<div class=\"box-header\">Zen Load Balancer license</div>";
-print "		<div class=\"box stats\">";
+##################################
+# BREADCRUMB
+##################################
+print "<div class=\"grid_6\"><h1>About :: License</h1></div>\n";
+
+###################################
+# CLUSTER STATUS
+###################################
+&getClusterStatus();
+
+print "
+               <div class=\"box grid_12\">
+                 <div class=\"box-head\">
+                       <span class=\"box-icon-24 fugue-24 document-text\"></span>        
+                       <h2>Zen Load Balancer license</h2>
+                 </div>
+                 <div class=\"box-content\">
+       ";
 
 #print content
-print "<div align=\"center\">";
-print "<form method=\"get\" action=\"index.cgi\">";
+print "<div class=\"aligncenter\">";
+print "<form method=\"post\" action=\"index.cgi\">";
 
 #print "<input type=\"hidden\" name=\"id\" value=\"$id\"
 print
-  "<textarea  name=\"license\" cols=\"80\" rows=\"20\" align=\"center\" readonly>";
+  "<textarea  name=\"license\" cols=\"85\" rows=\"20\" align=\"center\" readonly>";
 open FR, "/usr/local/zenloadbalancer/license.txt";
 while ( <FR> )
 {
 	print "$_";
 }
 close FR;
-print "</textarea>";
-print "<br>";
-print "<b>*If you use this program, you accept the GNU/LGPL license</b>";
+print "</textarea></div>";
+print
+  "<div class=\"aligncenter\"><p><b>*If you use this program, you accept the GNU/LGPL license</b></p></div>";
+
 print "</form>";
 print "</div>";
-print "		</div>";
-print "	</div>";
 print "</div>";
-
-print "<br class=\"cl\">";
-
-#content 3-4 END
-print "
-        <br><br><br>
-        </div>
-    <!--Content END-->
-  </div>
-</div>
-";
+print "</div>";
+print "</div>";
 

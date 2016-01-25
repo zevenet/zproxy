@@ -40,7 +40,7 @@ print "
 ####################################
 #BREADCRUMB
 ###################################
-print "<div class=\"grid_8\"><h1>Manage :: Certificates</h1></div>\n";
+print "<div class=\"grid_6\"><h1>Manage :: Certificates</h1></div>\n";
 
 ####################################
 # CLUSTER STATUS
@@ -62,7 +62,7 @@ if ( $action eq "changecert" )
 if ( $action eq "deletecert" )
 {
 	$status = &getFarmCertUsed( $certname );
-	if ( &getFarmCertUsed( $certname ) == 0 )
+	if ( $status == 0 )
 	{
 		&errormsg( "File can't be deleted because it's in use by a farm" );
 	}
@@ -142,8 +142,16 @@ print "
          <div class=\"box-content no-pad\">
                  <ul class=\"table-toolbar\">";
 
-print
-  "<li><a href=\"index.cgi?id=$id&action=Show_Form\"><img src=\"img/icons/basic/plus.png\" alt=\"Create CSR\" title=\"Create CSR\">Create CSR</a></li>";
+print "<li>";
+print "
+		<form method=\"post\" action=\"index.cgi\">
+		<button type=\"submit\" class=\"noborder\">
+		<img src=\"img/icons/basic/plus.png\" alt=\"Create CSR\">Create CSR</button>
+		<input type=\"hidden\" name=\"id\" value=\"$id\">
+		<input type=\"hidden\" name=\"action\" value=\"Show_Form\">
+		</form>
+";
+print "</li>";
 
 &uploadPEMCerts();
 
@@ -237,7 +245,7 @@ if ( $action eq "View_Cert" )
 		}
 	}
 	print "</textarea>";
-	print "         <form method=\"get\" action=\"index.cgi\">";
+	print "         <form method=\"post\" action=\"index.cgi\">";
 	print "         <input type=\"hidden\" name=\"id\" value=\"$id\">";
 	print
 	  "         <input type=\"submit\" value=\"Close\" name=\"button\" class=\"button grey left-margin\">";
@@ -260,7 +268,7 @@ if ( $action eq "Show_Form" )
 	print "<div class=\"grid_6\">\n";
 	print "<div class=\"form-row\">\n";
 	print
-	  "<p class=\"form-label\"><b>Certificate Name.<b> Descriptive text, this name will be used in the future to identify this certificate.</p>\n";
+	  "<p class=\"form-label\"><b>Certificate Name.</b> Descriptive text, this name will be used in the future to identify this certificate.</p>\n";
 	print
 	  "<div class=\"form-item\"><input type=\"text\" value=\"$cert_name\" class=\"fixedwidth\" size=\"60\" name=\"cert_name\"></div>\n";
 	print "</div>\n";
@@ -325,9 +333,9 @@ if ( $action eq "Show_Form" )
 	print "</div><div class=\"grid_6\">\n";
 	print "<div class=\"row\">";
 	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-	print "<input type=\"hidden\" name=\"actionpost\" value=\"Generate CSR\">";
+
 	print
-	  "<input type=\"submit\" value=\"Generate CSR\" name=\"button\" class=\"button grey\"> <input type=\"submit\" value=\"Cancel\" name=\"button\" class=\"button grey\" onClick=\"location.href='index.cgi'\">";
+	  "<input type=\"submit\" value=\"Generate CSR\" name=\"action\" class=\"button grey\"> <input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button grey\" onClick=\"location.href='index.cgi'\">";
 	print "</form>";
 	print "</div>";
 	print "</div>";

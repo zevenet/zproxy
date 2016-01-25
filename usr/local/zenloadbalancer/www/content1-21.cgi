@@ -29,51 +29,63 @@ if ( $action eq "Save" )
 	&setFarmName( $farmname );
 
 	#check ip is ok
-	$error = "false";
+	$error = 'false';
 	@fvip  = split ( " ", $vip );
-	$fdev  = @fvip[0];
-	$vip   = @fvip[1];
+	$fdev  = $fvip[0];
+	$vip   = $fvip[1];
 
-	if ( $vip eq "" )
+	if ( $vip eq '' )
 	{
-		$error = "true";
+		$error = 'true';
 		&errormsg(
 			"Please select a Virtual IP or add a new Virtual IP in \"Settings >> Interfaces\" Section"
 		);
-		$action = "addfarm";
+		$action = 'addfarm';
 	}
 
 	#check if vipp is a number and if vipp in the correct vip is not in use.
-	if ( $farmname =~ /^$/ )
+	if ( $farmname eq '' )
 	{
-		$error = "true";
+		$error = 'true';
 		&errormsg( "The farm name can't be empty" );
 		$action = "addfarm";
 	}
 
 	if ( $farmprotocol =~ /TCP|HTTP|UDP|HTTPS|GSLB/ )
 	{
-		if ( &isnumber( $vipp ) eq "true" )
+		if ( $farmprotocol eq 'TCP' )
+		{
+			&warnmsg( "This profile is deprecated, use L4xNAT instead" );
+		}
+		if ( &isnumber( $vipp ) eq 'true' && &isValidPortNumber( $vipp ) eq 'true' )
 		{
 			$inuse = &checkport( $vip, $vipp );
-			if ( $inuse eq "true" )
+			if ( $inuse eq 'true' )
 			{
-				$error = "true";
+				$error = 'true';
 				&errormsg(
 					"The Virtual Port $vipp in Virtual IP $vip is in use, select another port or add another Virtual IP"
 				);
-				$action = "addfarm";
+				$action = 'addfarm';
 			}
 		}
 		else
 		{
-			$error = "true";
-			&errormsg( "Invalid Virtual Port value, it must be numeric" );
-			$action = "addfarm";
+			$error = 'true';
+			&errormsg( 'Invalid Virtual Port value' );
+			$action = 'addfarm';
 		}
 	}
 
-	if ( $error eq "false" )
+	if ( $farmprotocol eq 'L4xNAT' && &GUIip() eq $vip )
+	{
+		&errormsg(
+			"Invalid Virtual IP $vip, it's the same VIP than the GUI access. Please choose another one."
+		);
+		$error = 'true';
+	}
+
+	if ( $error eq 'false' )
 	{
 		$error = 0;
 
@@ -98,68 +110,63 @@ if ( $action eq "Save" )
 		}
 		else
 		{
-			$action = "addfarm";
+			$action = 'addfarm';
 		}
 	}
 }
 
-if ( $action eq "addfarm" || $action eq "Save & continue" )
+if ( $action eq 'addfarm' || $action eq "Save & continue" )
 {
-	print "<div class=\"container_12\">";
-	print "<div class=\"box-header\">Configure a new Farm</div>";
-	print "<div class=\"box stats\">";
-	print "<div class=\"row\">";
-
-	print "<form method=\"get\" action=\"index.cgi\">";
-	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-
-	#farm name
-	print "<b>Farm Description Name: </b>";
-	if ( $farmname ne "" )
+	if ( $farmprotocol eq "TCP" )
 	{
-		print "<input type=\"text\" value=\"$farmname\" size=\"40\" name=\"farmname\">";
-	}
-	else
-	{
-		print "<input type=\"text\" value=\"\" size=\"40\" name=\"farmname\">";
+		&warnmsg( "This profile is deprecated, use L4xNAT instead" );
 	}
 
-	#farm profile
-	print "&nbsp;&nbsp;&nbsp;<b> Profile:<b>";
+	print "
+		<div class=\"box grid_5\">
+		  <div class=\"box-head\">
+			<span class=\"box-icon-24 fugue-24 plus\"></span>     
+			<h2>Configure a new Farm</h2>
+		  </div>
+		  <div class=\"box-content addfarm\">
+			<form method=\"post\" action=\"index.cgi\">
+			  <input type=\"hidden\" name=\"id\" value=\"$id\">
+			  <div class=\"form-row\">
+				<p class=\"form-label\">
+				  <b>Farm description name</b>
+				</p>
+				<div class=\"form-item\">
+				  <input type=\"text\" value=\"$farmname\" name=\"farmname\">
+				</div>
+			  </div>
+			  <div class=\"form-row\">
+				<p class=\"form-label\">
+				  <b>Profile</b>
+				</p>
+	";
+
 	if ( $farmprotocol eq "" || $farmname eq "" )
 	{
-		print "<select name=\"farmprotocol\">";
-		print "<option value=\"TCP\">TCP</option>\n";
-		print "<option value=\"HTTP\">HTTP</option>\n";
-		print "<option value=\"L4xNAT\">L4xNAT</option>\n";
-		print "<option value=\"DATALINK\">DATALINK</option>\n";
-
-		# Only one GSLB farm is possible
-		my $has_gslb = 0;
-		for my $farm_file ( &getFarmList() )
-		{
-			my $farm_name = &getFarmName( $farm_file );
-			my $farm_type = &getFarmType( $farm_name );
-			if ( $farm_type eq 'gslb' )
-			{
-				$has_gslb += 1;
-			}
-		}
-		if ( $has_gslb == 0 )
-		{
-			print "<option value=\"GSLB\">GSLB</option>\n";
-		}
-
-		print "</select>";
+		print "
+				<div class=\"form-item\">
+				  <select name=\"farmprotocol\">
+					<option value=\"L4xNAT\">L4xNAT (Default)</option>
+					<option value=\"HTTP\">HTTP</option>
+					<option value=\"DATALINK\">DATALINK</option>
+					<option value=\"GSLB\">GSLB</option>
+					<option value=\"TCP\">TCP</option>
+				  </select>
+				</div>
+		";
 	}
 	else
 	{
-		print
-		  "<input type=\"text\" value=\"$farmprotocol\" size=\"10\" name=\"farmprotocol\" disabled >";
-		print "<input type=\"hidden\" name=\"farmprotocol\" value=\"$farmprotocol\">";
+		print " <div class=\"form-item\">
+				  <input type=\"text\" name=\"farmprotocol\" value=\"$farmprotocol\" disabled >
+			    </div>
+				<input type=\"hidden\" name=\"farmprotocol\" value=\"$farmprotocol\">";
 	}
-	print "<br><br>";
-
+	print "	  </div>";
 	if ( $farmprotocol ne "" && $farmname ne "" )
 	{
 		my @vips =
@@ -168,44 +175,88 @@ if ( $action eq "addfarm" || $action eq "Save & continue" )
 		  : &listactiveips();
 
 		#eth interface selection
-		print "<b>Virtual IP: </b>";
-		print "<select name=\"vip\">\n";
-		print "<option value=\"\">-Select One-</option>\n";
+		print "
+			  <div class=\"form-row\">
+				<p class=\"form-label\">
+				  <b>Virtual IP</b>
+				</p>
+			  <div class=\"form-item\">
+				<select name=\"vip\">
+				  <option value=\"\">-Select One-</option>
+			";
+
 		for ( $i = 0 ; $i <= $#vips ; $i++ )
 		{
-			my @ip = split ( "->", @vips[$i] );
-			print "<option value=\"@ip[0] @ip[1]\">@vips[$i]</option>\n";
-		}
-		print "</select>";
-		if ( $farmprotocol ne "DATALINK" )
-		{
-			print "<b> or add <a href=\"index.cgi?id=3-2\">new VIP interface</a>.</b>";
+			my @ip = split ( "->", $vips[$i] );
+			print "<option value=\"$ip[0] $ip[1]\">$vips[$i]</option>\n";
 		}
 
-		if ( $farmprotocol ne "DATALINK" && $farmprotocol ne "L4xNAT" )
-		{
-			#vip port
-			print "<b> Virtual Port(s): </b>";
-			print "<input type=\"text\" value=\"\" size=\"10\" name=\"vipp\">";
+		print "
+				</select>
+			  </div>
+			</div>
+			<div class=\"form-row\">
+			  <p class=\"form-label\"></p>
+			  <div class=\"form-item\">
+			    <p>
+			      <b>Or add a
+					<a href=\"index.cgi?id=3-2\"> new VIP interface
+					</a>.
+				  </b>
+				</p>
+			  </div>
+			</div>
+		";
+
+		if ( $farmprotocol ne "DATALINK" )
+		{    #vip port
+			print "
+			<div class=\"form-row\">
+			  <p class=\"form-label\">
+			    <b>Virtual Port(s)</b>
+			  </p>
+			  <div class=\"form-item\"><input type=\"text\" value=\"\" size=\"10\" name=\"vipp\">
+			  </div>
+			</div>
+			";
 		}
-		print
-		  "<br><br><input type=\"submit\" value=\"Save\" name=\"action\" class=\"button small\">";
-		print
-		  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
+
+		print "
+			<div class=\"form-row\">
+			  <p class=\"form-label\"></p>
+			  <div class=\"form-item\">
+				<p>
+				  <input type=\"submit\" value=\"Save\" name=\"action\" class=\"button grey\">
+				</p>&nbsp;&nbsp;&nbsp;&nbsp;
+				<p>
+				  <input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button grey\">
+				</p>
+			  </div>
+			</div>
+		";
 	}
 	else
 	{
-		print
-		  "<input type=\"submit\" value=\"Save & continue\" name=\"action\" class=\"button small\">";
-		print
-		  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
+		print "
+			<div class=\"form-row\">
+			  <p class=\"form-label\"></p>
+			  <div class=\"form-item\">
+				<p>
+				  <input type=\"submit\" value=\"Save & continue\" name=\"action\" class=\"button grey\">
+				</p>
+				<p>
+				  <input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button grey\">
+				</p>
+			  </div>
+			</div>
+		";
 	}
 
-	print "</form>";
-	print "</div>";
-
-	print "</div></div>";
+	print "
+		  </form>
+		</div>
+	  </div>";
 }
 
-print "<br>";
+print "<div class=\"clear\">&nbsp;</div>";
 

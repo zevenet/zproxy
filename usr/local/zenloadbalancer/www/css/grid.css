@@ -24,12 +24,20 @@
 
 */
 
+
+/* =Containers
+--------------------------------------------------------------------------------*/
+
 .container_12,
 .container_16
 {
-	width: 100%;
+	width: 96%;
+	margin-left: 2%;
+	margin-right: 2%;
 }
 
+/* =Grid >> Global
+--------------------------------------------------------------------------------*/
 
 .grid_1,
 .grid_2,
@@ -50,7 +58,7 @@
 {
 	display: inline;
 	float: left;
-	margin-left: 0%;
+	margin-left: 1%;
 	margin-right: 1%;
 }
 
@@ -75,9 +83,11 @@
 .container_12 .grid_12,
 .container_16 .grid_16
 {
-	width: 100%;
+	width: 98%;
 }
 
+/* =Grid >> Children (Alpha ~ First, Omega ~ Last)
+--------------------------------------------------------------------------------*/
 
 .alpha
 {
@@ -89,11 +99,12 @@
 	margin-right: 0;
 }
 
-
+/* =Grid >> 12 Columns
+--------------------------------------------------------------------------------*/
 
 .container_12 .grid_1
 {
-	width: 66.333%;
+	width: 6.333%;
 }
 
 .container_12 .grid_2
@@ -131,6 +142,8 @@
 	width: 89.666%;
 }
 
+/* =Grid >> 16 Columns
+--------------------------------------------------------------------------------*/
 
 .container_16 .grid_1
 {
@@ -192,7 +205,8 @@
 	width: 91.75%;
 }
 
-
+/* =Prefix Extra Space >> Global
+--------------------------------------------------------------------------------*/
 
 .container_12 .prefix_3,
 .container_16 .prefix_4
@@ -212,6 +226,8 @@
 	padding-left: 75%;
 }
 
+/* =Prefix Extra Space >> 12 Columns
+--------------------------------------------------------------------------------*/
 
 .container_12 .prefix_1
 {
@@ -253,7 +269,8 @@
 	padding-left: 91.666%;
 }
 
-
+/* =Prefix Extra Space >> 16 Columns
+--------------------------------------------------------------------------------*/
 
 .container_16 .prefix_1
 {
@@ -315,6 +332,8 @@
 	padding-left: 93.75%;
 }
 
+/* =Suffix Extra Space >> Global
+--------------------------------------------------------------------------------*/
 
 .container_12 .suffix_3,
 .container_16 .suffix_4
@@ -334,7 +353,8 @@
 	padding-right: 75%;
 }
 
-
+/* =Suffix Extra Space >> 12 Columns
+--------------------------------------------------------------------------------*/
 
 .container_12 .suffix_1
 {
@@ -376,7 +396,8 @@
 	padding-right: 91.666%;
 }
 
-
+/* =Suffix Extra Space >> 16 Columns
+--------------------------------------------------------------------------------*/
 
 .container_16 .suffix_1
 {
@@ -438,6 +459,10 @@
 	padding-right: 93.75%;
 }
 
+/* =Clear Floated Elements
+--------------------------------------------------------------------------------*/
+
+/* http://sonspring.com/journal/clearing-floats */
 
 html body * span.clear,
 html body * div.clear,
@@ -458,6 +483,8 @@ html body * dd.clear
 	width: 0;
 	height: 0;
 }
+
+/* http://www.positioniseverything.net/easyclearing.html */
 
 .clearfix:after
 {

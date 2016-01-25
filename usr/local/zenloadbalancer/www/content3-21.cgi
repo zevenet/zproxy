@@ -73,44 +73,61 @@ else
 	untie @array;
 }
 
-print "<div class=\"container_12\">";
+print "
+               <div class=\"box grid_12\">
+                 <div class=\"box-head\">
+                       <span class=\"box-icon-24 fugue-24 server\"></span>       
+                       <h2>Edit a new network interface</h2>
+                 </div>
+                 <div class=\"box-content global-farm\">
+       ";
 
-#print "<div class=\"grid_12\">";
-print "<div class=\"box-header\">Edit a new network interface</div>";
-print "<div class=\"box stats\">";
-print "<div class=\"row\">";
-
-print "<form method=\"get\" action=\"index.cgi\">";
+print "<form method=\"post\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"if\" value=\"$if\">";
 print "<input type=\"hidden\" name=\"status\" value=\"$status\">";
-print "<div>$ifmsg<br><br></div>";
-print "<b>Interface Name: </b>";
-print "$if<br><br>";
-print "<b>HWaddr: </b>";
-print "$hwaddr<br><br>";
-print "<b>IP Addr: </b>";
+
+#print "<div class=\"form-row\"><p>$ifmsg</p></div>";
+print "<div class=\"form-row\">";
+print "<p class=\"form-label\">Interface Name:</p>";
+print "<div class=\"form-item\"><p class=\"form-label\">$if</p></div>";
+print "</div>";
+print "<div class=\"form-row\">";
+print "<p class=\"form-label\">HWaddr:</p>";
+print "<div class=\"form-item\"><p class=\"form-label\">$hwaddr</p></div>";
+print "</div>";
+print "<div class=\"form-row\">";
+print "<p class=\"form-label\">IP Addr:</p>";
 print
-  "<input type=\"text\" value=\"$ipaddr\" size=\"15\" name=\"newip\"><br><br>";
-print "<b>Netmask: </b>";
+  "<div class=\"form-item\"><input type=\"text\" value=\"$ipaddr\" size=\"15\" class=\"fixedwidth\" name=\"newip\"></div>";
+print "</div>";
+print "<div class=\"form-row\">";
+print "<p class=\"form-label\">Netmask:</p>";
 print
-  "<input type=\"text\" value=\"$netmask\" size=\"15\" name=\"netmask\"><br><br>";
-print "<b>Broadcast: </b>";
+  "<div class=\"form-item\"><input type=\"text\" value=\"$netmask\" size=\"15\" class=\"fixedwidth\" name=\"netmask\"></div>";
+print "</div>";
+print "<div class=\"form-row\">";
+print
+  "<p class=\"form-label\">Broadcast:</p><div class=\"form-item\"><p class=\"form-label\">";
 
 if ( $broadcast eq "" )
 {
-	print " -<br><br>";
+	print "-";
 }
 else
 {
-	print "$broadcast<br><br>";
+	print "$broadcast";
 }
-print "<b>Default Gateway: </b>";
+print "</p></div></div>";
+
+print "<div class=\"form-row\">";
+print "<p class=\"form-label\">Default Gateway:</p>";
+print "<div class=\"form-item\">";
 if ( $if =~ /\:/ )
 {
 	if ( $gwaddr eq "" )
 	{
-		print " -<br><br>";
+		print "-";
 	}
 	else
 	{
@@ -118,12 +135,12 @@ if ( $if =~ /\:/ )
 		my $ifused = &uplinkUsed( @splif[0] );
 		if ( $ifused eq "false" )
 		{
-			print "$gwaddr<br><br>";
+			print "$gwaddr";
 		}
 		else
 		{
 			print
-			  "<img src=\"img/icons/small/lock.png\" title=\"A datalink farm is locking the gateway of this interface\"><br><br>";
+			  "<i class=\"fa fa-lock action-icon fa-fw\" title=\"A datalink farm is locking the gateway of this interface\"></i>";
 		}
 	}
 }
@@ -133,35 +150,37 @@ else
 	if ( $ifused eq "false" )
 	{
 		print
-		  "<input type=\"text\" value=\"$gwaddr\" size=\"15\" name=\"gwaddr\"><br><br>";
+		  "<input type=\"text\" value=\"$gwaddr\" size=\"15\" class=\"fixedwidth\" name=\"gwaddr\">";
 	}
 	else
 	{
 		print
-		  "<img src=\"img/icons/small/lock.png\" title=\"A datalink farm is locking the gateway of this interface\"><br><br>";
+		  "<img src=\"img/icons/small/lock.png\" title=\"A datalink farm is locking the gateway of this interface\">";
 	}
 }
-print "<b>Vlan tag: </b>";
+print "</div></div>";
+
+print "<div class=\"form-row\">";
+print "<p class=\"form-label\">Vlan tag:</p>";
+print "<div class=\"form-item\"><p class=\"form-label\">";
 if ( $vlan eq "" )
 {
-	print " -<br><br>";
+	print "-";
 }
 else
 {
-	print "$vlan<br><br>";
+	print "$vlan";
 }
-print "</select><br>";
-
-#print "<input type=\"submit\" value=\"Save Config\" name=\"action\" class=\"button small\">";
+print "</p></div></div>";
+print "<div class=\"form-row\">";
+print "<p class=\"form-label\">&nbsp;</p>";
 print
-  "<input type=\"submit\" value=\"Save & Up!\" name=\"action\" class=\"button small\">";
+  "<div class=\"form-item\"><input type=\"submit\" value=\"Save & Up!\" name=\"action\" class=\"button grey\"> ";
 print
-  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
+  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button grey\"></div>";
 print "</form>";
 print "</div>";
 
-#print "</div></div></div>";
-print "</div></div>";
+print "</div>";
+print "</div>";
 
-#print "<br class=\"cl\">";
-print "<div id=\"page-header\"></div>";

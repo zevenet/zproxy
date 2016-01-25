@@ -22,54 +22,89 @@
 ###############################################################################
 
 print "
-<!--Content INI-->
-<div id=\"page-content\">
+  <!--- CONTENT AREA -->
+  <div class=\"content container_12\">
+";
 
-                <!--Content Header INI-->";
-print "<h2>Monitoring::Conns stats</h2>";
-print "<!--Content Header END-->";
+####################################
+# CLUSTER INFO
+####################################
+&getClusterInfo();
 
-print "<div class=\"box-header\">Farms table</div>";
-print "<div class=\"box table\">";
+###############################
+#BREADCRUMB
+############################
+my $type = &getFarmType( $farmname );
 
-print "<table cellspacing=\"0\">";
-print "<thead>";
-print "<tr>";
-print "<td width=85>Name</td>";
-print "<td width=85>Virtual IP</td>";
-print "<td>Virtual Port(s)</td>";
-print "<td>Pending Conns</td>";
-print "<td>Established Conns</td>";
-print "<td>Status</td>";
-print "<td>Profile</td>";
-print "<td>Actions</td>";
-print "</tr>";
-print "</thead>";
-print "<tbody>";
+print "<div class=\"grid_6\">";
+print "<h1>Monitoring :: <a href=\"index.cgi?id=1-2\">Conns stats</a></h1>";
+print "</div>";
 
-my @netstat;
-my $thereisdl  = "false";
-my $globalfarm = 0;
-my @files      = &getFarmList();
+####################################
+# CLUSTER STATUS
+####################################
+&getClusterStatus();
 
-foreach my $file ( @files )
+##########################################
+# LIST ALL FARMS CONFIGURATION AND STATUS
+##########################################
+
+if ( $action !~ /editfarm/ && $action !~ /managefarm/ )
 {
-	$name = &getFarmName( $file );
-##########if farm is not the current farm then it doesn't print. only print for global view.
-	if (    $farmname eq $name
-		 || !( defined $farmname )
-		 || $farmname eq ""
-		 || $action eq "deletefarm"
-		 || $action =~ /^Save|^Cancel/ )
+
+	#first list all configuration files
+	@files = &getFarmList();
+	$size  = $#files + 1;
+	if ( $size == 0 )
 	{
+		$action   = "addfarm";
+		$farmname = "";
+		require "./content1-21.cgi";
+	}
+
+	# If value is true there is at least one Datalink Farm
+	my $thereisdl = "false";
+
+	# If value is true there is at least one TCP, HTTP, HTTPS or Lx4NAT Farm
+	my $thereisother = "false";
+
+	foreach my $file ( @files )
+	{
+		$name = &getFarmName( $file );
+##########if farm is not the current farm then it doesn't print. only print for global view.
+#if ($farmname eq $name || !(defined $farmname) || $farmname eq "" || $action eq "deletefarm" || $action =~ /^Save|^Cancel/ ){
 		$type = &getFarmType( $name );
-		$globalfarm++;
 		if ( $type ne "datalink" )
 		{
 
-			if (    $farmname eq $name
-				 && $action ne "addfarm"
-				 && $action ne "Cancel" )
+			if ( $thereisother eq "false" )
+			{
+				print "
+                               <div class=\"box grid_12\">
+                                 <div class=\"box-head\">
+                                       <span class=\"box-icon-24 fugue-24 server\"></span>       
+                                       <h2>Conns Statistics</h2>
+                                 </div>
+                                 <div class=\"box-content no-pad\">
+                                         <table class=\"display\" id=\"farms-table\">
+                                         <thead>
+                                               <tr>
+                                                 <th>Name</th>
+                                                 <th>Virtual IP</th>
+                                                 <th>Virtual Port(s)</th>
+                                                 <th>Pending Conns</th>
+                                                 <th>Established Conns</th>
+                                                 <th>Status</th>
+                                                 <th>Profile</th>
+                                                 <th>Actions</th>
+                                               </tr>
+                                         </thead>
+                                         <tbody>
+                       ";
+				$thereisother = "true";
+			}
+
+			if ( $farmname eq $name && $action ne "addfarm" && $action ne "Cancel" )
 			{
 				print "<tr class=\"selected\">";
 			}
@@ -90,7 +125,6 @@ foreach my $file ( @files )
 			print "<td>$vipp</td>";
 
 			#print global connections bar
-			$pid    = &getFarmPid( $name );
 			$status = &getFarmStatus( $name );
 			if ( $status eq "up" )
 			{
@@ -121,11 +155,13 @@ foreach my $file ( @files )
 			#print status of a farm
 			if ( $status ne "up" )
 			{
-				print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td>";
+				print
+				  "<td class=\"aligncenter\"><img src=\"img/icons/small/stop.png\" title=\"down\"></td>";
 			}
 			else
 			{
-				print "<td><img src=\"img/icons/small/start.png\" title=\"up\"></td>";
+				print
+				  "<td class=\"aligncenter\"><img src=\"img/icons/small/start.png\" title=\"up\"></td>";
 			}
 
 			#type of farm
@@ -133,7 +169,10 @@ foreach my $file ( @files )
 
 			#menu
 			print "<td>";
-			&createmenuvipstats( $name, $id, $status, $type );
+			if ( $type eq "tcp" || $type eq "udp" || $type eq "l4xnat" || $type =~ /http/ )
+			{
+				&createmenuvipstats( $name, $id, $status, $type );
+			}
 			print "</td>";
 			print "</tr>";
 		}
@@ -141,119 +180,188 @@ foreach my $file ( @files )
 		{
 			$thereisdl = "true";
 		}
+
+		#}
 	}
-}
-print "</tbody>";
 
-# DATALINK
-
-if ( $thereisdl eq "true" )
-{
-	print "<thead>";
-	print "<tr>";
-	print "<td width=85>Name</td>";
-	print "<td width=85 colspan=2>IP</td>";
-	print "<td>Rx Bytes/sec</td>";
-	print "<td>Tx Bytes/sec</td>";
-	print "<td>Status</td>";
-	print "<td>Profile</td>";
-	print "<td></td>";
-	print "</tr>";
-	print "</thead>";
-	print "<tbody>";
-	use Time::HiRes qw (sleep);
-
-	foreach $file ( @files )
+	if ( $thereisother eq "true" )
 	{
-		$name = &getFarmName( $file );
-		$type = &getFarmType( $name );
-
-		if ( $type eq "datalink" )
-		{
-			$vipp = &getFarmVip( "vipp", $name );
-			my @startdata = &getDevData( $vipp );
-			sleep ( 0.5 );
-			my @enddata = &getDevData( $vipp );
-
-			if (    $farmname eq $name
-				 && $action ne "addfarm"
-				 && $action ne "Cancel" )
-			{
-				print "<tr class=\"selected\">";
-			}
-			else
-			{
-				print "<tr>";
-			}
-
-			#print the farm description name
-			print "<td>$name</td>";
-
-			#print the virtual ip
-			$vip = &getFarmVip( "vip", $name );
-			print "<td colspan=2>$vip</td>";
-
-			#print global packets
-			$status = &getFarmStatus( $name );
-
-			if ( $status eq "up" )
-			{
-				my $ncalc = ( @enddata[0] - @startdata[0] ) * 2;
-				print "<td> $ncalc B/s </td>";
-			}
-			else
-			{
-				print "<td>0</td>";
-			}
-
-			if ( $status eq "up" )
-			{
-				my $ncalc = ( @enddata[2] - @startdata[2] ) * 2;
-				print "<td> $ncalc B/s </td>";
-			}
-			else
-			{
-				print "<td>0</td>";
-			}
-
-			#print status of a farm
-			if ( $status ne "up" )
-			{
-				print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td>";
-			}
-			else
-			{
-				print "<td><img src=\"img/icons/small/start.png\" title=\"up\"></td>";
-			}
-
-			#type of farm
-			print "<td>$type</td>";
-
-			#menu
-			print "<td>";
-			print "</td>";
-			print "</tr>";
-		}
+		print "
+	</tbody>
+	</table>
+	</div>
+	</div>";
 	}
+
+	# DATALINK
+
+	if ( $thereisdl eq "true" )
+	{
+
+		print "
+    <div class=\"box grid_12\">
+      <div class=\"box-head\">
+           <span class=\"box-icon-24 fugue-24 server\"></span>   
+        <h2>Datalink Farms table</h2>
+      </div>
+      <div class=\"box-content no-pad\">
+         <table class=\"display\" id=\"datalink-farms-table\">
+          <thead>
+";
+
+		print "<tr>";
+		print "<th>Name</th>";
+		print "<th>IP</th>";
+		print "<th>Interface</th>";
+		print "<th>Rx Bytes/sec</th>";
+		print "<th>Rx Packets/sec</th>";
+		print "<th>Tx Bytes/sec</th>";
+		print "<th>Tx Packets/sec</th>";
+		print "<th>Status</th>";
+		print "<th>Profile</th>";
+		print "<th>Actions</th>";
+		print "</tr>";
+		print "</thead>";
+		print "<tbody>";
+		use Time::HiRes qw (sleep);
+
+		foreach my $file ( @files )
+		{
+			$name = &getFarmName( $file );
+			$type = &getFarmType( $name );
+
+			if ( $type eq "datalink" )
+			{
+
+				$vipp = &getFarmVip( "vipp", $name );
+				my @startdata = &getDevData( $vipp );
+				sleep ( 0.5 );
+				my @enddata = &getDevData( $vipp );
+
+				if ( $farmname eq $name && $action ne "addfarm" && $action ne "Cancel" )
+				{
+					print "<tr class=\"selected\">";
+				}
+				else
+				{
+					print "<tr>";
+				}
+
+				#print the farm description name
+				print "<td>$name</td>";
+
+				#print the virtual ip
+				$vip = &getFarmVip( "vip", $name );
+				print "<td>$vip</td>";
+
+				#print the interface to be the defaut gw
+				print "<td>$vipp</td>";
+
+				#print global packets
+				$status = &getFarmStatus( $name );
+
+				if ( $status eq "up" )
+				{
+					my $ncalc = ( @enddata[0] - @startdata[0] ) * 2;
+					print "<td> $ncalc B/s </td>";
+				}
+				else
+				{
+					print "<td>0</td>";
+				}
+
+				if ( $status eq "up" )
+				{
+					my $ncalc = ( @enddata[1] - @startdata[1] ) * 2;
+					print "<td> $ncalc Pkt/s </td>";
+				}
+				else
+				{
+					print "<td>0</td>";
+				}
+
+				if ( $status eq "up" )
+				{
+					my $ncalc = ( @enddata[2] - @startdata[2] ) * 2;
+					print "<td> $ncalc B/s </td>";
+				}
+				else
+				{
+					print "<td>0</td>";
+				}
+
+				if ( $status eq "up" )
+				{
+					my $ncalc = ( @enddata[3] - @startdata[3] ) * 2;
+					print "<td>$ncalc Pkt/s </td>";
+				}
+				else
+				{
+					print "<td>0</td>";
+				}
+
+				#print status of a farm
+
+				if ( $status ne "up" )
+				{
+					print
+					  "<td class=\"aligncenter\"><img src=\"img/icons/small/stop.png\" title=\"down\"></td>";
+				}
+				else
+				{
+					print
+					  "<td class=\"aligncenter\"><img src=\"img/icons/small/start.png\" title=\"up\"></td>";
+				}
+
+				#type of farm
+				print "<td>$type</td>";
+
+				#menu
+				print "<td>";
+				&createmenuvipstats( $name, $vipp, $status, $type );
+
+				print "</td>";
+				print "</tr>";
+			}
+		}
 
 ## END DATALINK
 
-	print "</tbody>";
+		print "</tbody>";
+	}
+
+	print "</table>";
+	if ( $thereisdl eq "true" )
+	{
+		print "</div>";
+		print "</div>";
+	}
+
+	print "
+<script>
+\$(document).ready(function() {
+    \$('#datalink-farms-table').DataTable( {
+        \"bJQueryUI\": true,     
+        \"sPaginationType\": \"full_numbers\",
+		\"aLengthMenu\": [
+			[10, 25, 50, 100, 200, -1],
+			[10, 25, 50, 100, 200, \"All\"]
+		],
+		\"iDisplayLength\": 10
+    });
+       \$('#farms-table').DataTable( {
+        \"bJQueryUI\": true,     
+        \"sPaginationType\": \"full_numbers\",
+		\"aLengthMenu\": [
+			[10, 25, 50, 100, 200, -1],
+			[10, 25, 50, 100, 200, \"All\"]
+		],
+		\"iDisplayLength\": 10
+    });
+} );
+</script>";
 }
 
-print "</table>";
-print "</div>";
+# Delete this and you'll be killed!
+print "";
 
-if ( $globalfarm == 1 )
-{
-	print "<div id=\"page-header\"></div>";
-	print "<form method=\"get\" action=\"index.cgi\">";
-	print "<input type=\"hidden\" value=\"2-2\" name=\"id\">";
-	print
-	  "<input type=\"submit\" value=\"Return to all Farms\" name=\"action\" class=\"button small\">";
-	print "</form>";
-	print "<div id=\"page-header\"></div>";
-}
-
-print "<br class=\"cl\" >";
-print "</div>";

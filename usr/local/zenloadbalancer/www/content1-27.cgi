@@ -58,16 +58,33 @@ foreach ( @backends )
 }
 
 &refreshstats();
-print "<br>";
 
-print
-  "<div class=\"box-header\">Real servers status<font size=1>&nbsp;&nbsp;&nbsp; $backendsize servers, $activebackends active </font></div>";
-print "<div class=\"box table\"><table cellspacing=\"0\">\n";
-print "<thead>\n";
-print
-  "<tr><td>Server</td><td>Address</td><td>Interface</td><td>Status</td><td>Rx Total Bytes</td><td>Rx Bytes/sec</td><td>Rx Total Packets</td><td>Rx Packets/sec</td><td>Tx Total Bytes</td><td>Tx Bytes/sec</td><td>Tx Total Packets</td><td>Tx Packets/sec</td><td>Weight</td><td>Priority</td></tr>";
-print "</thead>\n";
-print "<tbody>";
+print "
+    <div class=\"box grid_12\">
+      <div class=\"box-head\">
+           <span class=\"box-icon-24 fugue-24 server\"></span>   
+        <h2>Real servers status $backendsize servers, $activebackends active</h2>
+      </div>
+      <div class=\"box-content no-pad\">
+         <table class=\"display\">
+          <thead>
+            <tr>               
+              <th>Server</th>
+              <th>Address</th>
+              <th>Interface</th>
+                         <th>Status</th>
+                         <th>Rx Total Bytes</th>
+                         <th>Rx Bytes/sec</th>
+                         <th>Rx Total Packets</th>
+                         <th>Rx Packets/sec</th>
+                         <th>Tx Total Bytes</th>
+                         <th>Tx Bytes/sec</th>
+                         <th>Tx Total Packets</th>
+                         <th>Tx Packets/sec</th>
+            </tr>
+          </thead>
+          <tbody>
+";
 
 my $index = 0;
 
@@ -114,11 +131,13 @@ foreach ( @backends )
 
 	if ( $backends_data[4] eq "up" )
 	{
-		print "<td><img src=\"img/icons/small/start.png\" title=\"up\"></td> ";
+		print
+		  "<td class=\"aligncenter\"><img src=\"img/icons/small/start.png\" title=\"up\"></td> ";
 	}
 	else
 	{
-		print "<td><img src=\"img/icons/small/stop.png\" title=\"down\"></td> ";
+		print
+		  "<td class=\"aligncenter\"><img src=\"img/icons/small/stop.png\" title=\"down\"></td> ";
 	}
 	my $calc = @enddataout[0];
 	print "<td> $calc </td> ";
@@ -137,25 +156,19 @@ foreach ( @backends )
 	my $calc = ( @enddataout[3] - @startdataout[3] ) * 2;
 	print "<td> $calc </td> ";
 
-	print "<td> $backends_data[2] </td> ";
-	print "<td> $backends_data[3] </td> ";
-
 	print "</tr>";
 	$index++;
 }
 
 print "</tbody>";
 print "</table>";
-print "</div>";
+print "</div></div>\n\n";
 
 print "<!--END MANAGE-->";
 
-print "<div id=\"page-header\"></div>";
-print "<form method=\"get\" action=\"index.cgi\">";
+print "<form method=\"post\" action=\"index.cgi\">";
 print "<input type=\"hidden\" value=\"1-2\" name=\"id\">";
 print
-  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
+  "<p class=\"grid_12\"><input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button grey\"></p>";
 print "</form>";
-print "<div id=\"page-header\"></div>";
 
-#print "@run";

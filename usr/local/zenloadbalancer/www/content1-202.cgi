@@ -21,476 +21,42 @@
 #
 ###############################################################################
 
-### EDIT GSLB FARM ###
-
-#Farm restart
-if ( $action eq "editfarm-restart" )
-{
-	&runFarmStop( $farmname, "true" );
-	my $status = &runFarmStart( $farmname, "true" );
-	if ( $status == 0 )
-	{
-		&successmsg( "The $farmname farm has been restarted" );
-	}
-	else
-	{
-		&errormsg( "The $farmname farm hasn't been restarted" );
-	}
-}
-
-#Change health check port for a service
-if ( $action eq "editfarm-dpc" )
-{
-	if ( $service =~ /^$/ )
-	{
-		&errormsg( "Invalid service, please select a valid value" );
-		$error = 1;
-	}
-	if ( $farmname =~ /^$/ )
-	{
-		&errormsg( "Invalid farm name, please select a valid value" );
-		$error = 1;
-	}
-	if ( $string =~ /^$/ )
-	{
-		&errormsg( "Invalid default port health check, please select a valid value" );
-		$error = 1;
-	}
-	if ( $error == 0 )
-	{
-		&setFarmVS( $farmname, $service, "dpc", $string );
-		if ( $? eq 0 )
-		{
-			&successmsg(
-				"The default port health check for the service $service has been successfully changed"
-			);
-			&setFarmRestart( $farmname );
-		}
-		else
-		{
-			&errormsg(
-					   "The default port health check for the service $service has failed" );
-		}
-	}
-}
-
-if ( $action eq "editfarm-ns" )
-{
-	if ( $service =~ /^$/ )
-	{
-		&errormsg( "Invalid zone, please select a valid value" );
-		$error = 1;
-	}
-	if ( $farmname =~ /^$/ )
-	{
-		&errormsg( "Invalid farm name, please select a valid value" );
-		$error = 1;
-	}
-	if ( $string =~ /^$/ )
-	{
-		&errormsg( "Invalid name server, please select a valid value" );
-		$error = 1;
-	}
-	if ( $error == 0 )
-	{
-		&setFarmVS( $farmname, $service, "ns", $string );
-		if ( $? eq 0 )
-		{
-			&successmsg(
-						"The name server for the zone $service has been successfully changed" );
-			&runFarmReload( $farmname );
-		}
-		else
-		{
-			&errormsg( "The name server for the zone $service has failed" );
-		}
-	}
-}
-
-#editfarm delete service
-if ( $action eq "editfarm-deleteservice" )
-{
-	if ( $service_type =~ /^$/ )
-	{
-		&errormsg( "Invalid service type, please select a valid value" );
-		$error = 1;
-	}
-	if ( $error == 0 )
-	{
-		if ( $service_type eq "zone" )
-		{
-			&setGSLBFarmDeleteZone( $farmname, $service );
-			if ( $? eq 0 )
-			{
-				&successmsg( "Deleted zone $service in farm $farmname" );
-				&runFarmReload( $farmname );
-			}
-		}
-		else
-		{
-			if ( $service_type eq "service" )
-			{
-				&setGSLBFarmDeleteService( $farmname, $service );
-				if ( $? eq 0 )
-				{
-					&successmsg( "Deleted service $service in farm $farmname" );
-					&setFarmRestart( $farmname );
-				}
-			}
-		}
-	}
-}
-
-#change Farm's name
-if ( $action eq "editfarm-Name" )
-{
-	#Check if farmname has correct characters (letters, numbers and hyphens)
-	my $farmnameok = &checkFarmnameOK( $newfarmname );
-
-	#Check the farm's name change
-	if ( "$newfarmname" eq "$farmname" )
-	{
-		&errormsg(
-			"The new farm's name \"$newfarmname\" is the same as the old farm's name \"$farmname\". Nothing to do"
-		);
-	}
-	elsif ( $farmnameok ne 0 )
-	{
-		&errormsg(
-				   "Farm name is not valid, only allowed numbers, letters and hyphens" );
-	}
-	else
-	{
-		#Check if the new farm's name alredy exists
-		$newffile = &getFarmFile( $newfarmname );
-		if ( $newffile != -1 )
-		{
-			&errormsg( "The farm $newfarmname already exists, try another name" );
-		}
-		else
-		{
-			#Change farm name
-			$fnchange = &setNewFarmName( $farmname, $newfarmname );
-
-			if ( $fnchange == -1 )
-			{
-				&errormsg(
-					"The name of the Farm $farmname can't be modified, delete the farm and create a new one."
-				);
-			}
-			elsif ( $fnchange == -2 )
-			{
-				&errormsg(
-					 "The name of the Farm $farmname can't be modified, the new name can't be empty"
-				);
-			}
-			else
-			{
-				&successmsg( "The Farm $farmname has been just renamed to $newfarmname." );
-				$farmname = $newfarmname;
-			}
-		}
-	}
-	$action = "editfarm";
-}
-
-if ( $action eq "editfarm-changevipvipp" )
-{
-	if ( &isnumber( $vipp ) eq "false" )
-	{
-		&errormsg( "Invalid Virtual Port $vipp value, it must be a numeric value" );
-		$error = 1;
-	}
-	if ( &checkport( $vip, $vipp ) eq "true" )
-	{
-		&errormsg(
-				   "Virtual Port $vipp in Virtual IP $vip is in use, select another port" );
-		$error = 1;
-	}
-	if ( $error == 0 )
-	{
-		$status = &setFarmVirtualConf( $vip, $vipp, $farmname );
-		if ( $status != -1 )
-		{
-
-			#&runFarmReload($farmname);
-			&successmsg(
-				"Virtual IP and Virtual Port has been modified, the $farmname farm need be restarted"
-			);
-			&setFarmRestart( $farmname );
-		}
-		else
-		{
-			&errormsg(
-					   "It's not possible to change the $farmname farm virtual IP and port" );
-		}
-	}
-}
-
-#delete server
-if ( $action eq "editfarm-deleteserver" )
-{
-	$error = 0;
-	if ( $service =~ /^$/ )
-	{
-		&errormsg( "Invalid $service_type, please insert a valid value" );
-		$error = 1;
-	}
-	if ( $id_server =~ /^$/ )
-	{
-		&errormsg( "Invalid id server, please insert a valid value" );
-		$error = 1;
-	}
-	if ( $farmname =~ /^$/ )
-	{
-		&errormsg( "Invalid farmname, please insert a valid value" );
-		$error = 1;
-	}
-	if ( $service_type eq "zone" )
-	{
-		if ( $error == 0 )
-		{
-			$status = &remFarmZoneResource( $id_server, $farmname, $service );
-			if ( $status != -1 )
-			{
-				&runFarmReload( $farmname );
-				&successmsg(
-						  "The resource with ID $id_server in the zone $service has been deleted" );
-			}
-			else
-			{
-				&errormsg(
-					"It's not possible to delete the resource server with ID $id_server in the zone $service"
-				);
-			}
-		}
-		$service_type = "zone";
-	}
-	else
-	{
-		if ( $error == 0 )
-		{
-			$status = &remFarmServiceBackend( $id_server, $farmname, $service );
-			if ( $status != -1 )
-			{
-				if ( $status == -2 )
-				{
-					&errormsg(
-						"You need at least one bakcend in the service. It's not possible to delete the backend."
-					);
-				}
-				else
-				{
-
-					#&runFarmReload($farmname);
-					&successmsg(
-							"The backend with ID $id_server in the service $service has been deleted" );
-					&setFarmRestart( $farmname );
-				}
-			}
-			else
-			{
-				&errormsg(
-					"It's not possible to delete the backend with ID $id_server in the service $service"
-				);
-			}
-		}
-		$service_type = "service";
-	}
-}
-
-#save server
-if ( $action eq "editfarm-saveserver" )
-{
-	$error = 0;
-	if ( $service_type eq "zone" )
-	{
-		if ( $service =~ /^$/ )
-		{
-
-			#			&errormsg("Invalid zone, please insert a valid value");
-			$error = 1;
-		}
-		if ( $resource_server =~ /^$/ )
-		{
-
-			#			&errormsg("Invalid resource server, please insert a valid value");
-			$error = 1;
-		}
-		if ( $rdata_server =~ /^$/ )
-		{
-
-			#			&errormsg("Invalid RData, please insert a valid value");
-			$error = 1;
-		}
-		if ( $error == 0 )
-		{
-			if ( $type_server eq "A" && &ipisok( $rdata_server ) eq "false" )
-			{
-				&errormsg(
-					"If you choose A type, RDATA must be a valid IP address, $resource_server not modified for the zone $service"
-				);
-			}
-			else
-			{
-				$status =
-				  &setFarmZoneResource( $id_server, $resource_server, $ttl_server, $type_server,
-										$rdata_server, $farmname, $service );
-				if ( $status != -1 )
-				{
-					&runFarmReload( $farmname );
-					&successmsg(
-							"The resource name $resource_server for the zone $zone has been modified" );
-					$action = "";
-				}
-				else
-				{
-					&errormsg(
-						"It's not possible to modify the resource name $resource_server for the zone $zone"
-					);
-				}
-			}
-		}
-	}
-	else
-	{
-		if ( $service =~ /^$/ )
-		{
-			&errormsg( "Invalid service, please insert a valid value" );
-			$error = 1;
-		}
-		if ( $error == 0 )
-		{
-			$status =
-			  &setGSLBFarmNewBackend( $farmname, $service, $lb, $id_server, $rip_server );
-			if ( $status != -1 )
-			{
-				&successmsg(
-							 "The backend $rip_server for the service $service has been modified" );
-				&setFarmRestart( $farmname );
-			}
-			else
-			{
-				&errormsg(
-					  "It's not possible to modify the backend $rip_server for the service $service"
-				);
-			}
-		}
-	}
-}
-
-if ( $action eq "editfarm-addservice" )
-{
-	if ( $service_type eq "zone" )
-	{
-		if ( $zone !~ /.*\..*/ )
-		{
-			&errormsg(
-				"Wrong zone name. The name has to be like zonename.com, zonename.net, etc. The zone $zone can't be created"
-			);
-		}
-		else
-		{
-			my $result = &setGSLBFarmNewZone( $farmname, $zone );
-			if ( $result eq "0" )
-			{
-				&setFarmRestart( $farmname );
-				&successmsg( "Zone $zone has been added to the farm" );
-			}
-			else
-			{
-				&errormsg( "The zone $zone can't be created" );
-			}
-		}
-	}
-	else
-	{
-		if ( $service_type eq "service" )
-		{
-			if ( $service =~ /^$/ )
-			{
-				&errormsg( "Invalid service, please insert a valid value" );
-				$error = 1;
-			}
-			if ( $farmname =~ /^$/ )
-			{
-				&errormsg( "Invalid farm name, please insert a valid value" );
-				$error = 1;
-			}
-			if ( $lb =~ /^$/ )
-			{
-				&errormsg( "Invalid algorithm, please insert a valid value" );
-				$error = 1;
-			}
-			if ( $error == 0 )
-			{
-				$status = &setGSLBFarmNewService( $farmname, $service, $lb );
-				if ( $status != -1 )
-				{
-					&successmsg( "The service $service has been successfully created" );
-					&setFarmRestart( $farmname );
-				}
-				else
-				{
-					&errormsg( "It's not possible to create the service $service" );
-				}
-			}
-		}
-	}
-}
-
-#$service=$farmname;
-#check if the farm need a restart
-if ( -e "/tmp/$farmname.lock" )
-{
-	&tipmsg(
-		  "There're changes that need to be applied, stop and start farm to apply them!"
-	);
-}
+### VIEW GSLB FARM ###
 
 #global info for a farm
-print "<div class=\"container_12\">";
-print "<div class=\"grid_12\">";
-
-#paint a form to the global configuration
-print "<div class=\"box-header\">Edit $farmname Farm global parameters</div>";
-print "<div class=\"box stats\">";
-print "<div class=\"row\">";
-
-print "<div style=\"float:left;\">";
+print "
+    <div class=\"box container_12 grid_12\">
+      <div class=\"box-head\">
+           <span class=\"box-icon-24 fugue-24 globe\"></span>    
+        <h2>Edit $farmname Farm global parameters</h2>
+      </div>
+      <div class=\"box-content grid-demo-12 global-farm\">
+";
 
 #Change farm's name form
+print "<div class=\"form-row\">\n
+	<p class=\"form-label\"><b>Farm's name.</b> Service will be restarted.</p>
+	<form method=\"post\" action=\"index.cgi\">
+	<input type=\"hidden\" name=\"action\" value=\"editfarm-Parameters\">
+	<input type=\"hidden\" name=\"id\" value=\"$id\">
+	<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 print
-  "<b>Farm's name</b><font size=1> *service will be restarted</font><b>.</b><br>";
-print "<form method=\"get\" action=\"index.cgi\">";
-print "<input type=\"hidden\" name=\"action\" value=\"editfarm-Name\">";
-print
-  "<input type=\"text\" value=\"$farmname\" size=\"25\" name=\"newfarmname\">";
-print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-print "<input type=\"hidden\" name=\"done\" value=\"yes\">";
-print "<input type=\"hidden\" name=\"id_server\" value=\"@l_serv[0]\">";
-print
-  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
-print "<br>";
+  "<div class=\"form-item\"><input type=\"text\" value=\"$farmname\" size=\"25\" name=\"newfarmname\" class=\"fixedwidth\"> </div>";
+print "</div>\n";
 
-print "<b>Farm Virtual IP and Virtual port.</b>";
+#Change virtual IP and virtual Port
+print "<div class=\"form-row\">\n";
+print "<p class=\"form-label\"><b>Farm Virtual IP and Virtual port</b></p>";
 $vip   = &getFarmVip( "vip",  $farmname );
 $vport = &getFarmVip( "vipp", $farmname );
-print "<br>";
+
 @listinterfaces = &listallips();
 
-#print @listinterfaces;
 $clrip = &getClusterRealIp();
-print "<form method=\"get\" action=\"index.cgi\">";
-print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-print
-  "<input type=\"hidden\" name=\"action\" value=\"editfarm-changevipvipp\">";
-print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-print "<select name=\"vip\">";
+
+print "<div class=\"form-item\"><select name=\"vip\" class=\"fixedwidth\">";
 foreach $ip ( @listinterfaces )
 {
-
 	if ( $ip !~ $clrip )
 	{
 		if ( $vip eq $ip )
@@ -504,66 +70,75 @@ foreach $ip ( @listinterfaces )
 	}
 }
 print "</select>";
-print " <input type=\"text\" value=\"$vport\" size=\"4\" name=\"vipp\">";
 print
-  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\"></form>";
-
-#Add SERVICES
+  " <input type=\"number\" value=\"$vport\" size=\"4\" name=\"vipp\" class=\"fixedwidth\">";
+print "</div>\n";
+print "<div class=\"clear\"></div>";
 print "<br>";
 print
-  "<b>Add service and algorithm.</b> <font size=1>*manage services and backends</font>";
-print "<form method=\"get\" action=\"index.cgi\">";
+  " <input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button grey\"></div>";
+print "</form>\n";
+print "</div></div>\n";
+
+#Add SERVICES
+print "
+    <div class=\"box grid_6\">
+      <div class=\"box-head\">
+           <span class=\"box-icon-24 fugue-24 plus\"></span>     
+        <h2>Add service</h2>
+      </div>
+      <div class=\"box-content global-farm\">
+";
+print "<div class=\"form-row\">\n";
+print
+  "<p class=\"form-label\"><b>Add service and algorithm.</b> Manage services and backends.</p>";
+print "<form method=\"post\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-addservice\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 print "<input type=\"hidden\" name=\"service_type\" value=\"service\">";
-print "<input type=\"text\" value=\"\" size=\"25\" name=\"service\">";
 print
-  " <select name=\"lb\"><option value=\"roundrobin\" selected=\"selected\">Round Robin: equal sharing</option><option value=\"prio\">Priority: connections always to the most prio available</option></select>";
+  "<div class=\"form-item\"><input type=\"text\" value=\"\" size=\"25\" name=\"service\" class=\"fixedwidth\">";
 print
-  "<input type=\"submit\" value=\"Add\" name=\"buttom\" class=\"button small\"></form>";
+  " <select name=\"lb\" class=\"fixedwidth\"><option value=\"roundrobin\" selected=\"selected\">Round Robin: equal sharing</option><option value=\"prio\">Priority: connections always to the most prio available</option></select>";
 
-#Add ZONES
-print "<br>";
-print "<b>Add zone.</b> <font size=1>*manage DNS zones</font>";
-print "<form method=\"get\" action=\"index.cgi\">";
-print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-print "<input type=\"hidden\" name=\"action\" value=\"editfarm-addservice\">";
-print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-print "<input type=\"hidden\" name=\"service_type\" value=\"zone\">";
-print "<input type=\"text\" value=\"\" size=\"25\" name=\"zone\">";
-print
-  "<input type=\"submit\" value=\"Add\" name=\"buttom\" class=\"button small\"></form>";
-
-print "</div><div style=\"align:right; margin-left: 50%; \">";
-
+print "</div>\n";
 print "</div>";
-print "<div style=\"clear:both;\"></div>";
-
-#Services
-print "</div><br>";
+print
+  " <input type=\"submit\" value=\"Add\" name=\"buttom\" class=\"button grey\"></div>";
+print "</form>\n";
 print "</div>";
+print "<div class=\"clear\"></div>";
 
 ####end form for global parameters
 
 # SERVICES
-print "<a name=\"servicelist-$service\"></a>";
-print "<div id=\"page-header\"></div>\n";
-
 my $id_serverr = $id_server;
 
 # Manage every service
-my @services = &getFarmServices( $farmname );
+my @services = &getGSLBFarmServices( $farmname );
 foreach $srv ( @services )
 {
-	my @serv = split ( ".cfg", $srv );
-	my $srv  = @serv[0];
-	my $lb   = &getFarmVS( $farmname, $srv, "algorithm" );
-	print "<div class=\"box-header\">";
-
-	print
-	  "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service_type=service&service=$srv&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete service $srv\" onclick=\"return confirm('Are you sure you want to delete the Service $srv?')\" ></a> &nbsp;";
+	my $lb = &getFarmVS( $farmname, $srv, "algorithm" );
+	print "<div class=\"box grid_12\">\n";
+	print "<a name=\"servicelist-$srv\"></a>\n";
+	print "<div class=\"box-head\">\n";
+	print "<span class=\"box-icon-24 fugue-24 monitor\"></span>\n";
+	print "<h2 style=\"float: left; padding-left: 0px; padding-right: 0px;\">";
+	print "
+			<form method=\"post\" action=\"index.cgi\">
+			<button type=\"submit\" class=\"myicons\" title=\"Delete service $srv\" onclick=\"return confirm('Are you sure you want to delete the Service $srv?')\">
+			<span class=\"icon-24 fugue-24 cross-circle\"></span>
+			</button>
+			<input type=\"hidden\" name=\"id\" value=\"1-2\">
+			<input type=\"hidden\" name=\"action\" value=\"editfarm-deleteservice\">
+			<input type=\"hidden\" name=\"service_type\" value=\"service\">
+			<input type=\"hidden\" name=\"service\" value=\"$srv\">
+			<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">
+			</form>";
+	print "</h2><h2>";
 	print " Service \"$srv\" with ";
+
 	if ( $lb eq "roundrobin" )
 	{
 		print "Round Robin";
@@ -579,32 +154,43 @@ foreach $srv ( @services )
 			print "Unknown";
 		}
 	}
-	print " algorithm</div>";
+	print " algorithm</h2></div>";
 
-	print "<div class=\"box-content\">";
+	print "<div class=\"box-content global-farm\">";
 
 	# Default port health check
 	my $dpc = &getFarmVS( $farmname, $srv, "dpc" );
-	print "<form method=\"get\" action=\"index.cgi\">";
+	print "<div class=\"form-row\">\n";
+	print "<form method=\"post\" action=\"index.cgi\">";
 	print
-	  "<b>Default TCP port health check.</b>  <font size=1>*empty value disabled</font> <br><input type=\"text\" size=\"20\"  name=\"string\" value=\"$dpc\">";
+	  "<p class=\"form-label\"><b>Default TCP port health check.</b> Empty value disabled.</p>";
 	print "<input type=\"hidden\" name=\"action\" value=\"editfarm-dpc\">";
 	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 	print "<input type=\"hidden\" name=\"service\" value=\"$srv\">";
 	print "<input type=\"hidden\" name=\"service_type\" value=\"service\">";
 	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 	print
-	  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\">";
+	  "<div class=\"form-item\"><input type=\"number\" size=\"20\" name=\"dpc\" class=\"fixedwidth\" value=\"$dpc\"> ";
+	print
+	  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button grey\">";
 	print "</form>";
-	print "</div>";
+	print "</div>\n";
+	print "</div></div></div>";
+	print "
+			<div class=\"box grid_12\">
+				<div class=\"box-head\">
+					<span class=\"box-icon-24 fugue-24 server\"></span>       
+					<h2>Backends for service '$srv'</h2>
+				</div>
+				<div class=\"box-content no-pad\">
+				<table class=\"display\">";
 
 	# Maximize button
-	#if ($service_type eq "service" && $service eq "$srv"){
-	print "<div class=\"box table\"> <table cellpadding=0 >";
 	print
-	  "<thead><tr><td>ID</td><td>IP Address</td><td>Actions</td></tr></thead><tbody>";
+	  "<thead><tr><th>ID</th><th>IP Address</th><th>Actions</th></tr></thead><tbody>";
 	my $backendsvs = &getFarmVS( $farmname, $srv, "backends" );
 	my @be = split ( "\n", $backendsvs );
+	my $rowcounter = 1;
 	foreach $subline ( @be )
 	{
 		$subline =~ s/^\s+//;
@@ -619,16 +205,17 @@ foreach $srv ( @services )
 			 && $service eq "$srv"
 			 && $action eq "editfarm-editserver" )
 		{
-			print "<form method=\"get\" action=\"index.cgi\#servicelist-$srv\">";
+			print "<form method=\"post\" class=\"myform\" action=\"index.cgi\">"
+			  ;    #This form ends in createmenuserverfarm
 			print "<tr class=\"selected\">";
 
-#print "<td><input type=\"text\" size=\"20\"  name=\"id_server\" value=\"@subbe[0]\" disabled></td>";
 			if ( $lb eq "prio" )
 			{
 				print "<td><select name=\"id_server\" disabled>";
 				if ( @subbe[0] eq "primary" )
 				{
 					print "<option value=\"primary\" selected=\"selected\">primary</option>";
+
 					print "<option value=\"secondary\">secondary</option>";
 				}
 				else
@@ -645,40 +232,41 @@ foreach $srv ( @services )
 
 			print
 			  "<td><input type=\"text\" size=\"20\"  name=\"rip_server\" value=\"@subbe[1]\"></td>";
-			print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-			print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 			print "<input type=\"hidden\" name=\"service\" value=\"$service\">";
 			print "<input type=\"hidden\" name=\"lb\" value=\"$lb\">";
-			print "<input type=\"hidden\" name=\"id_server\" value=\"$id_serverr\">";
 			print "<input type=\"hidden\" name=\"service_type\" value=\"service\">";
 			$sv = $srv;
 			&createmenuserversfarm( "edit", $farmname, $id_serverr );
 			print "</tr>";
-			print "</form>";
+
 		}
 		else
 		{
-			print "<form method=\"get\" action=\"index.cgi\#servicelist-$srv\">";
-			print "<tr><td>@subbe[0]</td><td>@subbe[1]</td>";
+			if ( $rowcounter % 2 == 0 )
+			{
+				print "<tr class=\"even\">";
+			}
+			else
+			{
+				print "<tr class=\"odd\">";
+			}
+			$rowcounter++;
+
+			print "<td>$subbe[0]</td><td>$subbe[1]</td>";
 			$sv = $srv;
 			&createmenuserversfarm( "normal", $farmname, @subbe[0] );
 			print "</tr>";
-			print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-			print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-			print "<input type=\"hidden\" name=\"service\" value=\"$srv\">";
-			print "<input type=\"hidden\" name=\"lb\" value=\"$lb\">";
-			print "<input type=\"hidden\" name=\"id_server\" value=\"@subbe[0]\">";
-			print "<input type=\"hidden\" name=\"service_type\" value=\"service\">";
-			print "</form>";
+
 		}
 	}
 
 	# New backend form
-	print "<a name=\"servicelist-$srv\"></a>\n\n";
 	if ( $action eq "editfarm-addserver" && $service eq "$srv" )
 	{
+		print "<a name=\"servicelist-$srv\"></a>\n\n";
 		my $id_srv = "";
-		print "<form method=\"get\" action=\"index.cgi\#servicelist-$srv\">";
+		print "<form method=\"post\" class=\"myform\" action=\"index.cgi\">"
+		  ;    #This form ends in createmenuserverfarm
 		print "<tr class=\"selected\">";
 		if ( $lb eq "prio" )
 		{
@@ -704,43 +292,63 @@ foreach $srv ( @services )
 		print
 		  "<td><input type=\"text\" size=\"20\" name=\"rip_server\" value=\"\"></td>";
 		$sv = $srv;
-		&createmenuserversfarm( "add", $farmname, @l_serv[0] );
-		print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-		print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
+
 		print "<input type=\"hidden\" name=\"service\" value=\"$service\">";
 		print "<input type=\"hidden\" name=\"lb\" value=\"$lb\">";
 		print "<input type=\"hidden\" name=\"id_server\" value=\"$id_srv\">";
 		print "<input type=\"hidden\" name=\"service_type\" value=\"service\">";
-		print "</form>";
+
+		&createmenuserversfarm( "add", $farmname, @l_serv[0] );
+
 		print "</tr>";
 	}
 
 	# add backend button
 	if ( !( $lb eq "prio" && @be > 2 ) )
 	{
-		print "<tr><td colspan=\"2\"></td>";
-		print "<form method=\"get\" action=\"index.cgi\#servicelist-$service\">";
-		&createmenuserversfarm( "new", $farmname, "" );
-		print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-		print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-		print "<input type=\"hidden\" name=\"service_type\" value=\"service\">";
-		print "<input type=\"hidden\" name=\"service\" value=\"$srv\">";
-		print "<input type=\"hidden\" name=\"lb\" value=\"$lb\">";
+		print "<tr><td class='gray' colspan=\"2\"></td>";
 
-		#print "<input type=\"hidden\" name=\"action\" value=\"editfarm-addserver\">";
-		print "</form>";
+		&createmenuserversfarm( "new", $farmname, "" );
+
 		print "</tr>";
 	}
 	print "</tbody></table>";
 	print "</div>";
 
-	#}
-	print "<br>";
+	print "</div>";
 }
+
+#Add ZONES
+print "
+    <div class=\"box grid_6\">
+      <div class=\"box-head\">
+           <span class=\"box-icon-24 fugue-24 plus\"></span>     
+        <h2>Add zone</h2>
+      </div>
+      <div class=\"box-content global-farm\">
+";
+print "<div class=\"form-row\">\n";
+print "<p class=\"form-label\"><b>Add zone.</b> Manage DNS zones.</p>";
+print "<form method=\"post\" action=\"index.cgi\">";
+print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
+print "<input type=\"hidden\" name=\"action\" value=\"editfarm-addservice\">";
+print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
+print "<input type=\"hidden\" name=\"service_type\" value=\"zone\">";
+print
+  "<div class=\"form-item\"><input type=\"text\" value=\"\" size=\"25\" name=\"zone\" class=\"fixedwidth\"> ";
+
+print "</div>\n";
+print "</div>";
+print
+  "<input type=\"submit\" value=\"Add\" name=\"buttom\" class=\"button grey\"></div>";
+print "</form>\n";
+
+print "</div>";
+
+print "<div class=\"clear\"></div>";
 
 # ZONES
 print "<a name=\"zonelist-$zone\"></a>";
-print "<div id=\"page-header\"></div>\n";
 
 my @zones   = &getFarmZones( $farmname );
 my $first   = 0;
@@ -748,42 +356,64 @@ my $vserver = 0;
 my $pos     = 0;
 foreach $zone ( @zones )
 {
-
-	#if ($first == 0) {
 	$pos++;
 	$first = 1;
-	print "<div class=\"box-header\">";
-
-#print "<a href=index.cgi?id=1-2&action=editfarm&service_type=zone&service=$zone&farmname=$farmname><img src=\"img/icons/small/bullet_toggle_plus.png \" title=\"Maximize zone $zone\"></a>";
-	print
-	  "<a href=index.cgi?id=1-2&action=editfarm-deleteservice&service_type=zone&service=$zone&farmname=$farmname><img src=\"img/icons/small/cross_octagon.png \" title=\"Delete zone $zone\" onclick=\"return confirm('Are you sure you want to delete the Zone $zone?')\" ></a> &nbsp;";
+	print "<div class=\"box grid_12\">\n";
+	print "<div class=\"box-head\">\n";
+	print "<span class=\"box-icon-24 fugue-24 monitor\"></span>\n";
+	print "<h2 style=\"float: left; padding-left: 0px; padding-right: 0px;\">";
+	print "
+			<form method=\"post\" action=\"index.cgi\">
+			<button type=\"submit\" class=\"myicons\" title=\"Delete zone $zone\" onclick=\"return confirm('Are you sure you want to delete the Zone $zone?')\">
+			<span class=\"icon-24 fugue-24 cross-circle\"></span>
+			</button>
+			<input type=\"hidden\" name=\"id\" value=\"1-2\">
+			<input type=\"hidden\" name=\"action\" value=\"editfarm-deleteservice\">
+			<input type=\"hidden\" name=\"service_type\" value=\"zone\">
+			<input type=\"hidden\" name=\"service\" value=\"$zone\">
+			<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">
+			</form>";
+	print "</h2><h2>";
 	print " Zone \"$zone\"</div>";
+	print "</h2>";
 
 	#Maximize button
-	#if ($service_type eq "zone" && $service eq "$zone"){
-
-	print "<div class=\"box-content\">";
+	print "<div class=\"box-content global-farm\">";
 
 	# Default name server
 	my $ns = &getFarmVS( $farmname, $zone, "ns" );
-	print "<form method=\"get\" action=\"index.cgi\">";
+	print "<form method=\"post\" action=\"index.cgi\">";
+	print "<div class=\"form-row\">\n";
 	print
-	  "<b>Default Name Server.</b>  <font size=1>*empty value disabled</font> <br><input type=\"text\" size=\"20\"  name=\"string\" value=\"$ns\">";
+	  "<p class=\"form-label\"><b>Default Name Server.</b> Empty value disabled.</p>";
 	print "<input type=\"hidden\" name=\"action\" value=\"editfarm-ns\">";
 	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 	print "<input type=\"hidden\" name=\"service\" value=\"$zone\">";
 	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 	print "<input type=\"hidden\" name=\"service_type\" value=\"zone\">";
 	print
-	  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button small\">";
+	  "<div class=\"form-item\"><input type=\"text\" size=\"20\" class=\"fixedwidth\" name=\"ns\" value=\"$ns\"> ";
+	print
+	  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button grey\"></div>";
 	print "</form>";
 	print "</div>";
+	print "</div>";
+	print "</div>";
+	print "
+			<div class=\"box grid_12\">
+				<div class=\"box-head\">
+				<span class=\"box-icon-24 fugue-24 server\"></span>       
+				<h2>Resources for zone \"$zone\"</h2>
+			</div>
+			<div class=\"box-content no-pad\">
+			<table class=\"display\">";
 
-	print "<div class=\"box table\"> <table cellpadding=0 >";
 	print
-	  "<thead ><tr><td>Resource Name</td><td>TTL</td><td>Type</td><td>RData</td><td>Actions</td></tr></thead><tbody>";
+	  "<thead><tr><th>Resource Name</th><th>TTL</th><th>Type</th><th>RData</th><th>Actions</th></tr></thead><tbody>";
 	my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
+
 	my @be = split ( "\n", $backendsvs );
+	my $rowcounter = 1;
 	foreach $subline ( @be )
 	{
 		if ( $subline =~ /^$/ )
@@ -793,7 +423,7 @@ foreach $zone ( @zones )
 
 		my @subbe  = split ( "\;", $subline );
 		my @subbe1 = split ( "\t", @subbe[0] );
-		my @subbe2 = split ( "\_", @subbe[1] );
+		my @subbe2 = split ( "\_", @subbe[1] );    # index '#'
 		my $ztype  = @subbe1[1];
 		my $la_resource = @subbe1[0];
 		my $la_ttl      = @subbe1[1];
@@ -805,7 +435,13 @@ foreach $zone ( @zones )
 			 && $service eq "$zone"
 			 && $action eq "editfarm-editserver" )
 		{
-			print "<form method=\"get\" action=\"index.cgi\#zonelist-$zone\">";
+			#
+			# Edit server
+			#
+			my $zoneaux = $zone;
+			$zoneaux =~ s/\./\_/g;
+			print "<form method=\"post\" class=\"myform\" action=\"index.cgi\">"
+			  ;    #This form ends in createmenuserverfarm
 			print "<tr class=\"selected\">";
 			print
 			  "<td><input type=\"text\" size=\"10\"  name=\"resource_server\" value=\"$la_resource\"> </td>";
@@ -816,13 +452,13 @@ foreach $zone ( @zones )
 				 && @subbe1[1] ne "DYNC" )
 			{
 				print
-				  "<td><input type=\"text\" size=\"10\" name=\"ttl_server\" value=\"$la_ttl\"> </td>";
+				  "<td><input type=\"number\" size=\"10\" name=\"ttl_server\" value=\"$la_ttl\"> </td>";
 				$ztype = @subbe1[2];
 			}
 			else
 			{
 				print
-				  "<td><input type=\"text\" size=\"10\" name=\"ttl_server\" value=\"\"></td>";
+				  "<td><input type=\"number\" size=\"10\" name=\"ttl_server\" value=\"\"></td>";
 			}
 			my $la_type = $ztype;
 			if ( $type_server ne "" ) { $la_type = $type_server; }
@@ -838,6 +474,7 @@ foreach $zone ( @zones )
 			if ( $la_type eq "A" )
 			{
 				print "<option value=\"A\" selected=\"selected\">A</option>";
+
 			}
 			else
 			{
@@ -860,11 +497,6 @@ foreach $zone ( @zones )
 				print "<option value=\"DYNA\">DYNA</option>";
 			}
 
-			#if ($la_type eq "DYNC"){
-			#	print "<option value=\"DYNC\" selected=\"selected\">DYNC</option>";
-			#} else {
-			#	print "<option value=\"DYNC\">DYNC</option>";
-			#}
 			print "</select></td>";
 
 			print "<td>";
@@ -905,19 +537,36 @@ foreach $zone ( @zones )
 			}
 			print "</td>";
 			$nserv = @subbe2[1];
-			&createmenuserversfarm( "edit", $farmname, $nserv );
-			print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-			print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-			print "<input type=\"hidden\" name=\"id_server\" value=\"$subbe2[1]\">";
+
 			print "<input type=\"hidden\" name=\"service\" value=\"$zone\">";
 			print "<input type=\"hidden\" name=\"service_type\" value=\"zone\">";
+
+			&createmenuserversfarmz( "edit", $farmname, $nserv );
+
 			print "</tr>";
-			print "</form>";
 		}
 		else
 		{
-			print "<form method=\"get\" action=\"index.cgi\#zonelist-$zone\">";
-			print "<tr><td>@subbe1[0]</td>";
+			#
+			# Not editing server
+			#
+			my $zoneaux = $zone;
+			$zoneaux =~ s/\./\_/g;
+
+# print
+# "<form method=\"get\" name=\"zone_${zoneaux}_resource_${subbe2[1]}\" action=\"index.cgi\#zonelist-$zone\">";
+
+			if ( $rowcounter % 2 == 0 )
+			{
+				print "<tr class=\"even\">";
+			}
+			else
+			{
+				print "<tr class=\"odd\">";
+			}
+			$rowcounter++;
+
+			print "<td>@subbe1[0]</td>";
 			if (    @subbe1[1] ne "NS"
 				 && @subbe1[1] ne "A"
 				 && @subbe1[1] ne "CNAME"
@@ -947,29 +596,30 @@ foreach $zone ( @zones )
 
 			$nserv = @subbe2[1];
 			$sv    = $zone;
-			&createmenuserversfarm( "normal", $farmname, $nserv );
+			&createmenuserversfarmz( "normal", $farmname, $nserv );
 			print "</tr>";
-			print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-			print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-			print "<input type=\"hidden\" name=\"id_server\" value=\"@subbe2[1]\">";
-			print "<input type=\"hidden\" name=\"service\" value=\"$zone\">";
-			print "<input type=\"hidden\" name=\"service_type\" value=\"zone\">";
-			print "</form>";
 		}
 	}
 
 	# New backend form
 	print "<a name=\"zonelist-$zone\"></a>\n\n";
-	if ( ( $action =~ /editfarm-addserver/ || $action =~ /editfarm-saveserver/ )
-		 && $service eq "$zone" )
+
+	# if ( ( $action =~ /editfarm-addserver/ || $action =~ /editfarm-saveserver/ )
+	if ( $action =~ /editfarm-addserver/ && $service eq $zone )
 	{
-		print "<form method=\"get\" action=\"index.cgi\#zonelist-$zone\">";
+		my $zoneaux = $zone;
+		$zoneaour =~ s/\./\_/g;
+		print "<form method=\"post\" class=\"myform\" action=\"index.cgi\">"
+		  ;    #This form ends in createmenuserverfarm
+
 		print "<tr class=\"selected\">";
 		print
 		  "<td><input type=\"text\" size=\"10\" name=\"resource_server\" value=\"$resource_server\"> </td>";
 		print
-		  "<td><input type=\"text\" size=\"10\" name=\"ttl_server\" value=\"$ttl_server\"> </td>";
-		print "<td><select name=\"type_server\" onchange=\"this.form.submit()\">";
+		  "<td><input type=\"number\" size=\"10\" name=\"ttl_server\" value=\"$ttl_server\"> </td>";
+
+		# print "<td><select name=\"type_server\" onchange=\"this.form.submit()\">";
+		print "<td><select name=\"type_server\" onchange=\"chRTypeAdd(this)\">";
 		if ( $type_server eq "NS" )
 		{
 			print "<option value=\"NS\" selected=\"selected\">NS</option>";
@@ -997,17 +647,13 @@ foreach $zone ( @zones )
 		if ( $type_server eq "DYNA" )
 		{
 			print "<option value=\"DYNA\" selected=\"selected\">DYNA</option>";
+
 		}
 		else
 		{
 			print "<option value=\"DYNA\">DYNA</option>";
 		}
 
-		#if ($type_server eq "DYNC"){
-		#	print "<option value=\"DYNC\" selected=\"selected\">DYNC</option>";
-		#} else {
-		#	print "<option value=\"DYNC\">DYNC</option>";
-		#}
 		print "</select></td>";
 
 		print "<td>";
@@ -1028,31 +674,25 @@ foreach $zone ( @zones )
 			  "<input type=\"text\" size=\"10\" name=\"rdata_server\" value=\"$rdata_server\">";
 		}
 		print "</td>";
-		&createmenuserversfarm( "add", $farmname, @l_serv[0] );
-		print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-		print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 		print "<input type=\"hidden\" name=\"service\" value=\"$zone\">";
 		print "<input type=\"hidden\" name=\"service_type\" value=\"zone\">";
-		print "</form>";
+		&createmenuserversfarmz( "add", $farmname, @l_serv[0] );
+
 		print "</tr>";
 	}
 
 	# add backend button
-	print "<tr><td colspan=\"4\"></td>";
-	print "<form method=\"get\" action=\"index.cgi\#zonelist-$zone\">";
-	&createmenuserversfarm( "new", $farmname, @l_serv[0] );
-	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-	print "<input type=\"hidden\" name=\"id_server\" value=\"@l_serv[0]\">";
-	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-	print "<input type=\"hidden\" name=\"service_type\" value=\"zone\">";
-	print "<input type=\"hidden\" name=\"service\" value=\"$zone\">";
-	print "</form>";
+	print "<tr><td class='gray' colspan=\"4\"></td>";
+	my $zoneaux = $zone;
+	$zoneaux =~ s/\./_/g;
+
+	&createmenuserversfarmz( "new", $farmname, $zone );
+
 	print "</tr>";
 	print "</tbody></table>";
 	print "</div>";
 
-	#}
-	print "<div style=\"clear:both;\"></div>";
+	print "</div>";
 }
 
 #end table
@@ -1061,22 +701,16 @@ foreach $zone ( @zones )
 #BACKENDS:
 ##################################################################
 
-print "<br></div>";
-
-print "<div id=\"page-header\"></div>";
-print "<form method=\"get\" action=\"index.cgi\">";
-print "<input type=\"hidden\" value=\"1-2\" name=\"id\">";
-print
-  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
-print "</form>";
-print "<div id=\"page-header\"></div>";
-print "</div>";
-
 print "
  <script type=\"text/javascript\">
   function chRType(oSelect)
   {
     oSelect.form.action.value=\"editfarm-editserver\";
+    oSelect.form.submit();
+  }
+  function chRTypeAdd(oSelect)
+  {
+    oSelect.form.action.value=\"editfarm-addserver\";
     oSelect.form.submit();
   }
   </script>

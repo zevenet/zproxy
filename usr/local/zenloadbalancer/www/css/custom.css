@@ -1,0 +1,201 @@
+/*
+###############################################################################
+#
+#     Zen Load Balancer Software License
+#     This file is part of the Zen Load Balancer software package.
+#
+#     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, based in Sevilla (Spain)
+#
+#     This library is free software; you can redistribute it and/or modify it
+#     under the terms of the GNU Lesser General Public License as published
+#     by the Free Software Foundation; either version 2.1 of the License, or
+#     (at your option) any later version.
+#
+#     This library is distributed in the hope that it will be useful, but
+#     WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+#     General Public License for more details.
+#
+#     You should have received a copy of the GNU Lesser General Public License
+#     along with this library; if not, write to the Free Software Foundation,
+#     Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+#
+###############################################################################
+*/
+
+.content h1 {
+	font-size: 16px;
+	margin-bottom: 16px;
+}
+
+.monitoring-logs h6, .certificate-key h6 {
+	margin-top: 16px;
+	margin-bottom: 16px;
+}
+
+.left-margin {
+	margin-left: 16px;
+}
+
+.form-row .form-item p {
+	margin-right: 16px;
+}
+
+.graph {
+	max-width: 100%;
+	height: auto;
+	margin-top: 16px;
+	margin-bottom: 16px;
+}
+
+.aligncenter {
+	text-align: center;
+}
+
+.alignright {
+	text-align: right;
+}
+
+.alignleft {
+	text-align: left;
+}
+
+.display td {
+	vertical-align: top;
+}
+
+.display a, .display i.fa  {
+	color: rgb(84, 84, 84);
+}
+
+input[type="text"].fixedwidth, input[type="number"].fixedwidth, input[type="password"].fixedwidth, select.fixedwidth, textarea.fixedwidth {
+	width: 180px;
+}
+
+.iPhoneCheckContainer {
+	float: left;
+	margin-right: 116px;
+}
+
+.fixedwidth-medium {
+	width: 137px !important;
+}
+
+.fixedwidth-small {
+	width: 50px !important;
+}
+
+.global-farm .form-label {
+	width: 50%;
+}
+
+.addfarm .form-label {
+	width: 300px;
+}
+
+.content .global-farm .button.grey {
+	width: 150px;
+}
+
+.content .global-farm textarea.fixedwidth {
+	float: left;
+	margin-right: 5px;
+}
+
+.icon-24 {
+	margin: -5px 5px 0 5px;
+	float: left;
+}
+
+.form-row2 {
+	padding: 10px 8px 10px 0;
+}
+
+.form-row2 p{
+	margin-left: 16px;
+}
+
+.row {
+	padding: 16px 8px 16px 0;
+}
+
+.form-item span {
+	font-size: 12px;
+}
+
+.spacer {
+	clear: both;
+	margin-bottom: 16px;
+}
+
+.onlyclear {
+	clear: both;
+}
+
+#dialog-container {
+	width: 350px;
+	height: 350px;
+	padding: 0 0 0 0;
+	overflow: hidden;
+}
+
+h1 a {
+	color: #000;
+}
+
+.content #support a, .content #products a, .content #news a {
+	display: block;
+}
+
+.content a i.fa {
+	width: 26px;
+}
+
+.action-icon {
+	font-size: 18px !important;
+}
+
+.red {
+	color: #a10d0d !important;
+}
+
+.yellow {
+	color: #cbac00 !important;
+}
+
+.green {
+	color: #339933 !important;
+}
+
+.content .display tr.selected {
+	background-color: #ddd;;
+}
+
+.padding {
+	padding: 10px 10px !important;
+}
+
+.form-item  input[type="checkbox"] {
+    margin: 0;
+    padding: 0;
+    width: 14px;
+}
+
+/* Cluster status */
+
+.cluster {
+	font-size: 16px !important;
+	font-weight: 600 !important;
+	text-align: right;
+	margin-bottom: 16px;
+}
+
+
+
+#cover {
+    background: url("../img/preloader.gif") no-repeat scroll center center #fff;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+	z-index: 1000000000;
+}

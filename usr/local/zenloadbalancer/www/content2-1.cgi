@@ -22,44 +22,60 @@
 ###############################################################################
 
 print "
-    <!--Content INI-->
-        <div id=\"page-content\">
-
-                <!--Content Header INI-->
-                        <h2>Monitoring::Graphs</h2>
-                <!--Content Header END-->
+  <!--- CONTENT AREA -->
+  <div class=\"content container_12\">
 ";
 
-#opendir(DIR, "$basedir$img_dir");
-#@files = grep(/\_d.png$/,readdir(DIR));
-#closedir(DIR);
+####################################
+# CLUSTER INFO
+####################################
+&getClusterInfo();
 
-if ( $action && $action ne "Select Graph type" )
+#########################
+#BREADCRUMB
+########################
+print "<div class=\"grid_6\"><h1>Monitoring :: Graphs</h1></div>\n";
+
+####################################
+# CLUSTER STATUS
+####################################
+&getClusterStatus();
+
+if ( $action && $action ne "Go!" )
 {
-	print " <div class=\"container_12\">
-          <div class=\"grid_12\">
-          <div class=\"box-header\"> Graphs daily, weekly, monthly yearly </div>
-          <div class=\"box stats\">
+	print "
+               <div class=\"box grid_12\">
+                 <div class=\"box-head\">
+                       <span class=\"box-icon-24 fugue-24 system-monitor\"></span>       
+                       <h2>Daily, weekly, monthly and yearly graphs</h2>
+                 </div>
+               <div class=\"box-content\">
 	";
-	print '<center><img src="data:image/png;base64,'
+
+	print
+	  '<center><div class="row"><h6>Daily graph:</h6></div><img src="data:image/png;base64,'
 	  . &printGraph( $action, "d" )
 	  . '"/></center><br><br>';
-	print '<center><img src="data:image/png;base64,'
+	print
+	  '<center><div class="row"><h6>Weekly graph:</h6></div><img src="data:image/png;base64,'
 	  . &printGraph( $action, "w" )
 	  . '"/></center><br><br>';
-	print '<center><img src="data:image/png;base64,'
+	print
+	  '<center><div class="row"><h6>Monthly graph:</h6></div><img src="data:image/png;base64,'
 	  . &printGraph( $action, "m" )
 	  . '"/></center><br><br>';
-	print '<center><img src="data:image/png;base64,'
+	print
+	  '<center><div class="row"><h6>Yearly graph:</h6></div><img src="data:image/png;base64,'
 	  . &printGraph( $action, "y" )
 	  . '"/></center><br><br>';
-
-	print "</div></div></div>";
-	print "<form method=\"get\" action=\"index.cgi\">";
+	print "<form method=\"post\" action=\"index.cgi\">";
+	print "<p class=\"aligncenter\">";
 	print "<input type=\"hidden\" name=\"id\" value=\"2-1\">";
 	print
-	  "<input type=\"submit\" value=\"Return\" name=\"return\" class=\"button small\">";
+	  "<input type=\"submit\" value=\"Return\" name=\"return\" class=\"button grey\">";
+	print "</p>";
 	print "</form>";
+	print "</div></div>";
 }
 else
 {
@@ -91,14 +107,17 @@ else
 		@graphselected[2] = "";
 		@graphselected[3] = "";
 	}
-	print " <div class=\"container_12\">
-          <div class=\"grid_12\">
-          <div class=\"box-header\"> $graphtype Graphs daily </div>
-          <div class=\"box stats\">
+
+	print "
+               <div class=\"box grid_12\">
+                 <div class=\"box-head\">
+                       <span class=\"box-icon-24 fugue-24 system-monitor\"></span>       
+                       <h2>Daily graphs</h2>
+                 </div>
+                 <div class=\"box-content\">
 	";
-	print "<form method=\"get\" action=\"index.cgi\">";
-	print "<b>Select the type of Graphs to show</b>";
-	print "<br>";
+	print "<form method=\"post\" action=\"index.cgi\">";
+	print "<div class=\"aligncenter\">\n";
 	print "<select name=\"graphtype\">\n";
 	print "<option value=\"All\" @graphselected[0]>Show all Graphs</option>";
 	print
@@ -107,13 +126,15 @@ else
 	  "<option value=\"Network\" @graphselected[2]>Show network traffic type Graphs</option>";
 	print "<option value=\"Farm\" @graphselected[3]>Show farm type Graphs</option>";
 	print "</select>";
-	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-	print "<br>";
-	print "<br>";
+	print "<input type=\"hidden\" name=\"id\" value=\"$id\"> ";
 	print
-	  "<input type=\"submit\" value=\"Select Graph type\" name=\"action\" class=\"button small\">";
+	  "<input type=\"submit\" value=\"Go!\" name=\"action\" class=\"button grey\">";
+
+	print
+	  "<p align=\"center\">Click on graph to see daily, weekly, monthly and yearly graphs.</p></div>";
+
+	print "<div class=\"onlyclear\">&nbsp;</div>";
 	print "</form>";
-	print "<br>";
 
 	if ( $graphtype =~ /^$/ || $graphtype eq "All" )
 	{
@@ -123,10 +144,20 @@ else
 			@graphlist = &getGraphs2Show( $gtype );
 			foreach $graph ( @graphlist )
 			{
+				print "<form method=\"post\" action=\"index.cgi\">";
+				print "<input type=\"hidden\" name=\"id\" value=\"$id\"> ";
+				print "<input type=\"hidden\" name=\"action\" value=\"$graph\"> ";
+				print "<center>";
 				print
-				  "<a href=\"?id=$id&action=$graph\"><center><img src=\"img/icons/small/zoom_in.png\" title=\"More info\"></a>";
+				  "<button type=\"submit\" class=\"noborder\" title=\"Click on graph to see daily, weekly, monthly and yearly graphs\">";
 				print '<img src="data:image/png;base64,' . &printGraph( $graph, "d" ) . '"/>';
-				print "</center><br><br>";
+				print "</button></center><br><br>";
+				print "</form>";
+
+# print
+# "<a href=\"?id=$id&action=$graph\" title=\"Click on graph to see daily, weekly, monthly and yearly graphs\"><center>";
+# print '<img src="data:image/png;base64,' . &printGraph( $graph, "d" ) . '"/>';
+# print "</a></center><br><br>";
 			}
 		}
 	}
@@ -135,21 +166,22 @@ else
 		@graphlist = &getGraphs2Show( $graphtype );
 		foreach $graph ( @graphlist )
 		{
+			print "<form method=\"post\" action=\"index.cgi\">";
+			print "<input type=\"hidden\" name=\"id\" value=\"$id\"> ";
+			print "<input type=\"hidden\" name=\"action\" value=\"$graph\"> ";
+			print "<center>";
 			print
-			  "<a href=\"?id=$id&action=$graph\"><center><img src=\"img/icons/small/zoom_in.png\" title=\"More info\"></a>";
-
-			#print "<img src=\"img/graphs/$graph\"></center><br><br>";
+			  "<button type=\"submit\" class=\"noborder\" title=\"Click on graph to see daily, weekly, monthly and yearly graphs\">";
 			print '<img src="data:image/png;base64,' . &printGraph( $graph, "d" ) . '"/>';
-			print "</center><br><br>";
+			print "</button></center><br><br>";
+			print "</form>";
+
+# print
+# "<a href=\"?id=$id&action=$graph\" title=\"Click on graph to see daily, weekly, monthly and yearly graphs\"><center>";
+# print '<img src="data:image/png;base64,' . &printGraph( $graph, "d" ) . '"/>';
+# print "</a></center><br><br>";
 		}
 	}
 	print "</div></div></div>";
 }
 
-print "<br class=\"cl\" >";
-
-print "        </div>
-    <!--Content END-->
-  </div>
-</div>
-";

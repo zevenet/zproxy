@@ -23,32 +23,33 @@
 ###############################################################################
 
 require "/usr/local/zenloadbalancer/config/global.conf";
-require "/usr/local/zenloadbalancer/www/functions.cgi";
+require "./functions.cgi";
+require "./login_functions.cgi";
 use CGI qw(:standard escapeHTML);
+&login();
 print "Content-type: text/html\n\n";
 
 ##REQUIRES
 #require "help-content.cgi";
 
 print "
-<HTML>
+<!doctype html>
+<html lang=\"en\">
 <head>
-<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />
+<meta charset=\"utf-8\">
+<!---CSS Files-->
+<link rel=\"stylesheet\" href=\"css/master.css\">
+<link rel=\"stylesheet\" href=\"css/tables.css\">
+<link rel=\"stylesheet\" href=\"/font/font-aw/css/font-awesome.min.css\">
+<title>Upload certificate file</title></head>";
 
-<link type=\"text/css\" rel=\"stylesheet\" media=\"all\" href=\"css/base.css\" />
-<link type=\"text/css\" rel=\"stylesheet\" media=\"all\" href=\"css/grid.css\" />
-<title>Upload Certificates</title></head>";
+print "<body onUnload=\"opener.location=('index.cgi?id=1-3')\">";
 
-print "<BODY onunload=\"opener.location=('index.cgi?id=1-3')\">";
+print "<img src=\"img/logo.png\" alt=\"Logo\">";
 
-print "<div id=\"header\">
-	 <div class=\"header-top tr\">";
+print "<div class=\"container_12\">";
 
-print "<br><br><br>";
-print "<div id=\"page-header\"></div>
-
-	 </div>
-      </div>";
+print "<div class=\"grid_12\">";
 
 #print "<b>Upload Backup.</b>";
 #print "<div id=\"page-header\"></div>";
@@ -103,15 +104,19 @@ print
 #</div>
 #};
 
-print
-  "<b>Upload file on pem format. <font size=1> filename.pem</fon>:</b> <input   type=\"file\" name=\"fileup\" value=\"Ex\" >";
+print "<p><b>Upload certificate file.</b> Please use filename.pem format.</p>";
+print "<div class=\"spacer\"></div>";
+print "<input type=\"file\" name=\"fileup\" value=\"Ex\" >";
 print "<br>";
 print "<br>";
 print
-  "<input type=\"submit\" value=\"Upload\" name=\"action\" class=\"button small\">";
+  "<input type=\"submit\" value=\"Upload\" name=\"action\" class=\"button normal grey\">";
 print "</form>";
-print "<br>";
 
-print "</BODY>";
-print "</HTML>";
+print "</div>";
+
+print "</div>";
+
+print "</body>";
+print "</html>";
 

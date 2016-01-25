@@ -25,17 +25,33 @@ use File::stat;
 use Time::localtime;
 
 print "
-<!--Content INI-->
-<div id=\"page-content\">
+  <!--- CONTENT AREA -->
+  <div class=\"content container_12\">
+";
 
-<!--Content Header INI-->
-<h2>Monitoring::Logs</h2>
-<!--Content Header END-->";
+####################################
+# CLUSTER INFO
+####################################
+&getClusterInfo();
 
-print "<div class=\"container_12\">";
-print "	<div class=\"grid_12\">";
-print "		<div class=\"box-header\">System logs</div>";
-print "		<div class=\"box stats\">";
+####################################
+#BREADCRUMB
+####################################
+print "<div class=\"grid_6\"><h1>Monitoring :: Logs</h1></div>\n";
+
+####################################
+# CLUSTER STATUS
+####################################
+&getClusterStatus();
+
+print "
+               <div class=\"box grid_12\">
+                 <div class=\"box-head\">
+                       <span class=\"box-icon-24 fugue-24 magnifier\"></span>    
+                       <h2>System logs</h2>
+                 </div>
+                 <div class=\"box-content monitoring-logs\">
+       ";
 
 # Print form
 #search farm files
@@ -43,18 +59,17 @@ opendir ( DIR, $logdir );
 @files = grep ( /.*\.log$/, readdir ( DIR ) );
 closedir ( DIR );
 
-print "<form method=\"get\" action=\"index.cgi\">";
+print "<form method=\"post\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"2-3\">";
 
 foreach $file ( @files )
 {
-	print "<b>Log: $file</b><br>";
-	print "<table>";
+	print "<h6>Log: $file</h6>";
 	$filepath = "$logdir$file";
 	print
-	  "<tr ><td style=\"border: 0px\"><input type=\"radio\" name=\"filelog\" value=\"$filepath\"></td>";
+	  "<div class=\"form-row2\"><p><input type=\"radio\" name=\"filelog\" value=\"$filepath\"> ";
 	$datetime_string = ctime( stat ( $filepath )->mtime );
-	print "<td style=\"border: 0px\"> $filepath - $datetime_string</td></tr>\n";
+	print "$filepath - $datetime_string</p></div>\n";
 	@filen = split ( "\.log", $file );
 
 	#all files with same name:
@@ -67,22 +82,19 @@ foreach $file ( @files )
 		$filepath        = "$logdir$filegz";
 		$datetime_string = ctime( stat ( $filepath )->mtime );
 		print
-		  "<tr><td style=\"border: 0px\"><input type=\"radio\" name=\"filelog\" value=\"$filepath\"></td>";
-		print "<td style=\"border: 0px\">$filepath - $datetime_string</td></tr>";
+		  "<div class=\"form-row2\"><p><input type=\"radio\" name=\"filelog\" value=\"$filepath\"> ";
+		print "$filepath - $datetime_string</p></div>";
 	}
-	print "</table>";
-	print "<br><br>";
 }
 
+print "<div class=\"spacer\">&nbsp;</div>";
 print
-  "Tail the last <input type=\"text\" value=\"100\" name=\"nlines\" size=\"5\"> lines";
+  "<p><b>Tail the last</b> <input type=\"text\" value=\"100\" name=\"nlines\" size=\"5\"> <b>lines of selected file</b> ";
 print
-  "<input type=\"submit\" value=\"See logs\" name=\"action\" class=\"button small\">";
+  "<input type=\"submit\" value=\"See logs\" name=\"action\" class=\"button grey\"></p>";
 print "</form>";
 
-print "<br>";
-
-print "<div id=\"page-header\"></div>";
+print "<div class=\"spacer\">&nbsp;</div>";
 
 if ( $action eq "See logs" && $nlines !~ /^$/ && $filelog !~ /^$/ )
 {
@@ -90,7 +102,9 @@ if ( $action eq "See logs" && $nlines !~ /^$/ && $filelog !~ /^$/ )
 	{
 		if ( $nlines =~ m/^\d+$/ )
 		{
-			print "<b>file $filelog tail last $nlines lines</b><br>";
+			print "<hr></hr>";
+			print "<h6>Last $nlines lines from log file $filelog:</h6>";
+			print "<div class=\"form-row2\">";
 			my @eject;
 			if ( $filelog =~ /gz$/ )
 			{
@@ -102,18 +116,20 @@ if ( $action eq "See logs" && $nlines !~ /^$/ && $filelog !~ /^$/ )
 			}
 			foreach $line ( @eject )
 			{
-				print "$line<br>";
+				print "<p>$line</p>";
 			}
-			print "<form method=\"get\" action=\"index.cgi\">";
+			print "</div>\n";
+			print "<div class=\"form-row2\"><form method=\"post\" action=\"index.cgi\">";
 			print "<input type=\"hidden\" name=\"id\" value=\"2-3\">";
 			print
-			  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
-			print "</form>";
+			  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button grey\">";
+			print "</form></div>";
 		}
 		else
 		{
 			&errormsg( "The number of lines you want to tail must be a number" );
 		}
+
 	}
 	else
 	{
@@ -121,19 +137,5 @@ if ( $action eq "See logs" && $nlines !~ /^$/ && $filelog !~ /^$/ )
 	}
 }
 
-print "<div id=\"page-header\"></div>";
-
-print "		</div>";
-print "<br>";
-print "	</div>";
-print "</div>";
-
-print "<br class=\"cl\">";
-print "
-        <br><br><br>
-        </div>
-    <!--Content END-->
-  </div>
-</div>
-";
+print "</div></div></div>";
 

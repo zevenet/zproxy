@@ -21,6 +21,11 @@
 #
 ###############################################################################
 
+use Sys::Syslog;                          #use of syslog
+use Sys::Syslog qw(:standard :macros);    #standard functions for Syslog
+use Fcntl ':flock';                       #use of lock functions
+use Tie::File;                            #use tie
+
 $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
@@ -39,22 +44,17 @@ require "/usr/local/zenloadbalancer/www/datalink_functions.cgi";
 require "/usr/local/zenloadbalancer/www/http_functions.cgi";
 require "/usr/local/zenloadbalancer/www/tcpudp_functions.cgi";
 
-if ( -e "/usr/local/zenloadbalancer/www/zapi_functions.cgi" )
+if ( -e "/usr/local/zenloadbalancer/www/functions_ext.cgi" )
 {
-	require "/usr/local/zenloadbalancer/www/zapi_functions.cgi";
-}
-
-if ( -e "/usr/local/zenloadbalancer/www/login_functions.cgi" )
-{
-	require "/usr/local/zenloadbalancer/www/login_functions.cgi";
+	require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 }
 
 #function that check if variable is a number no float
-sub isnumber($num)
+sub isnumber    # ($num)
 {
-	my ( $num ) = @_;
+	my $num = shift;
 
-	if ( $num !~ /[^0-9]/ )
+	if ( $num =~ /^\d+$/ )    # \d = digit, equiv. to ([0-9])
 	{
 		return "true";
 	}
@@ -65,9 +65,9 @@ sub isnumber($num)
 }
 
 #check if the string is a valid multiport definition
-sub ismport($string)
+sub ismport                   # ($string)
 {
-	my ( $string ) = @_;
+	my $string = shift;
 
 	chomp ( $string );
 	if ( $string eq "*" )
@@ -85,9 +85,9 @@ sub ismport($string)
 }
 
 #check if the port has more than 1 port
-sub checkmport($port)
+sub checkmport    # ($port)
 {
-	my ( $port ) = @_;
+	my $port = shift;
 
 	if ( $port =~ /\,|\:|\*/ )
 	{
@@ -100,7 +100,7 @@ sub checkmport($port)
 }
 
 #function that paint a static progess bar
-sub progressbar($filename,$vbar)
+sub progressbar    # ($filename,$vbar)
 {
 	my ( $filename, $vbar ) = @_;
 	$max = "150";
@@ -138,12 +138,11 @@ sub progressbar($filename,$vbar)
 }
 
 #function that paint the date when started (uptime)
-sub uptime()
+sub uptime    # ()
 {
 	$timeseconds = time ();
 	open TIME, '/proc/uptime' or die $!;
 
-	#
 	while ( <TIME> )
 	{
 		my @time = split ( "\ ", $_ );
@@ -162,7 +161,6 @@ sub uptime()
 	my ( $sec, $min, $hour, $day, $month, $year ) =
 	  ( localtime ( $time ) )[0, 1, 2, 3, 4, 5, 6];
 
-#print "Unix time ".$time." converts to ".$months[$month]." ".$day.", ".($year+1900) ." ". $hour .":".$min.":".$sec."\n";
 	return
 	    @months[$month] . ", "
 	  . $day . " "
@@ -170,12 +168,11 @@ sub uptime()
 	  . $min . ":"
 	  . $sec . " "
 	  . ( $year + 1900 ) . "\n";
-
 }
 
 #function that configure the graphs apareance.
 #sub graphs(@data,$description)
-sub graphs($description,@data)
+sub graphs    # ($description,@data)
 {
 	my ( $description, @data ) = @_;
 	####graph configuration
@@ -193,7 +190,8 @@ sub graphs($description,@data)
 		midgreen   => { R => 143, G => 184, B => 32 },
 		midblue    => { R => 165, G => 192, B => 220 },
 		midgray    => { R => 156, G => 156, B => 156 },
-		background => { R => 244, G => 244, B => 244 },
+		background => { R => 238, G => 238, B => 238 },
+		graybg     => { R => 238, G => 238, B => 238 },
 
 		# file output details
 
@@ -208,7 +206,7 @@ sub graphs($description,@data)
 		imgh     => 250,            # preferred height in pixels
 		iplotpad => 8,              # padding between axis vals & plot area
 		ipadding => 14,             # padding between other items
-		ibgcol   => 'white',        # COLOUR NAME; background colour
+		ibgcol   => 'graybg',       # COLOUR NAME; background colour
 		iborder  => '',             # COLOUR NAME; border, if any
 
 		# plot area properties
@@ -255,10 +253,17 @@ sub graphs($description,@data)
 	);
 
 	my $imagemap = creategraph( \@data, \%options );
-
 }
 
-sub upload()
+sub upload                            # ()
+{
+	print
+	  "<a href=\"upload.cgi\" class=\"open-dialog\"><img src=\"img/icons/basic/up.png\" title=\"Upload backup\">Upload backup</a>";
+	print
+	  "<div id=\"dialog-container\" style=\"display: none;\"><iframe id=\"dialog\" width=\"350\" height=\"350\"></iframe></div>";
+}
+
+sub uploadcerts                       # ()
 {
 	print "<script language=\"javascript\">
                 var popupWindow = null;
@@ -270,36 +275,14 @@ sub upload()
         </script>";
 
 	#print the information icon with the popup with info.
-	print "<a "
-	  . "href=\"upload.cgi\" "
-	  . "onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\">";
-	print "<img src='img/icons/small/arrow_up.png' title=\"upload backup\"></a>";
-}
-
-sub uploadcerts()
-{
-	print "<script language=\"javascript\">
-                var popupWindow = null;
-                function positionedPopup(url,winName,w,h,t,l,scroll)
-                {
-                settings ='height='+h+',width='+w+',top='+t+',left='+l+',scrollbars='+scroll+',resizable'
-                popupWindow = window.open(url,winName,settings)
-                }
-        </script>";
-
-	#print the information icon with the popup with info.
-	print "<a "
-	  . "href=\"uploadcerts.cgi\" "
-	  . "onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\">";
-	print "<img src='img/icons/small/arrow_up.png' title=\"upload certificate\">";
-	print "</a>";
+	print
+	  "<a href=\"uploadcerts.cgi\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/arrow_up.png' title=\"upload certificate\"></a>";
 }
 
 #function that put a popup with help about the product
-sub help($cod)
+sub help    # ($code)
 {
-	#code
-	my ( $cod ) = @_;
+	my $code = shift;
 
 	#this is javascript emmbebed in perl
 	print "<script language=\"javascript\">
@@ -312,16 +295,16 @@ sub help($cod)
         </script>";
 
 	#print the information icon with the popup with info.
-	print "<a href=\"help.cgi?id=$cod\" "
+	print "<a href=\"help.cgi?id=$code\" "
 	  . "onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\">";
 	print "<img src='img/icons/small/information.png'>";
 	print "</a>";
 }
 
 #insert info in log file
-sub logfile($string)
+sub logfile    # ($string)
 {
-	my ( $string ) = @_;
+	my $string = shift;
 
 	my $date = `date`;
 	$date =~ s/\n//g;
@@ -331,6 +314,5 @@ sub logfile($string)
 	close FO;
 }
 
-#
-#no remove this
-1
+# do not remove this
+1;

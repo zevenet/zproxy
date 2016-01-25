@@ -59,98 +59,133 @@ foreach ( @backends )
 		$activebackends++;
 	}
 }
+
 &refreshstats();
-print "<br>";
 
-print
-  "<div class=\"box-header\">Real servers status<font size=1>&nbsp;&nbsp;&nbsp; $backendsize servers, $activebackends active </font></div>";
-print "<div class=\"box table\"><table cellspacing=\"0\">\n";
-print "<thead>\n";
-
-print
-  "<tr><td>Service<td>Server</td><td>Address</td><td>Port</td><td>Status</td><td>Pending Conns</td><td>Established Conns</td><td>Weight</td>";
-print "</thead>\n";
-print "<tbody>";
+print "
+    <div class=\"box grid_12\">
+      <div class=\"box-head\">
+           <span class=\"box-icon-24 fugue-24 server\"></span>   
+        <h2>Real servers status $backendsize servers, $activebackends current</h2>
+      </div>
+      <div class=\"box-content no-pad\">
+         <table id=\"backends-table\" class=\"display\">
+          <thead>
+            <tr>
+              <th>Service</th>                 
+              <th>Server</th>
+              <th>Address</th>
+              <th>Port</th>
+                         <th>Status</th>
+                         <th>Pending Conns</th>
+                         <th>Established Conns</th>
+            </tr>
+          </thead>
+          <tbody>
+";
 
 my $i = -1;
 foreach ( @backends )
 {
 	my @backends_data = split ( "\t", $_ );
 	$activesessions = $activesessions + $backends_data[6];
-
+	print "<tr>";
+	print "<td>";
 	if ( $backends_data[0] == 0 )
 	{
 		$i++;
 	}
+	print "@a_service[$i]";
 
-	$ip_backend   = $backends_data[1];
-	$port_backend = $backends_data[2];
-	@netstat      = &getConntrack( "", $ip_backend, "", "", "tcp" );
-	$npend =
-	  scalar &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
-	$nestab =
-	  scalar &getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
-
-	print "<tr>";
-	print "<td> @a_service[$i] </td>";        # Service
-	print "<td> $backends_data[0] </td> ";    # Server id#
-	print "<td> $backends_data[1] </td> ";    # Ip Address
-	print "<td> $backends_data[2] </td> ";    # Port #
+	print "</td>";
+	print "<td> $backends_data[0] </td> ";
+	print "<td> $backends_data[1] </td> ";
+	print "<td> $backends_data[2] </td> ";
 	if ( $backends_data[3] eq "maintenance" )
 	{
 		print
-		  "<td><img src=\"img/icons/small/warning.png\" title=\"Maintenance\"></td> ";
+		  "<td class=\"aligncenter\"><img src=\"img/icons/small/warning.png\" title=\"Maintenance\"></td> ";
 	}
 	elsif ( $backends_data[3] eq "up" )
 	{
-		print "<td><img src=\"img/icons/small/start.png\" title=\"Up\"></td> ";
+		print
+		  "<td class=\"aligncenter\"><img src=\"img/icons/small/start.png\" title=\"Up\"></td> ";
 	}
 	elsif ( $backends_data[3] eq "fgDOWN" )
 	{
 		print
-		  "<td><img src=\"img/icons/small/disconnect.png\" title=\"FarmGuardian down\"></td> ";
+		  "<td class=\"aligncenter\"><img src=\"img/icons/small/disconnect.png\" title=\"FarmGuardian down\"></td> ";
 	}
 	else
 	{
-		print "<td><img src=\"img/icons/small/stop.png\" title=\"Down\"></td> ";
+		print
+		  "<td class=\"aligncenter\"><img src=\"img/icons/small/stop.png\" title=\"Down\"></td> ";
 	}
-
+	$ip_backend   = $backends_data[1];
+	$port_backend = $backends_data[2];
+	@netstat      = &getConntrack( "", $ip_backend, "", "", "tcp" );
+	@synnetstatback =
+	  &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
+	$npend = @synnetstatback;
 	print "<td>$npend</td>";
+	@stabnetstatback =
+	  &getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
+	$nestab = @stabnetstatback;
 	print "<td>$nestab</td>";
-	print "<td> $backends_data[5] </td>";
+
+	#TODO count number of session by backend
+	#print "<td> $backends_data[5] </td>";
 	print "</tr>";
 }
 
 print "</tbody>";
 print "</table>";
-print "</div>";
+print "</div></div>\n\n";
 
 # Client Sessions Table
 print "<div class=\"box-header\">";
 
+print "<form method=\"post\" action=\"index.cgi\" class=\"myform\">";
 if ( $viewtableclients eq "yes" )
 {
 	print
-	  "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=no\" title=\"Minimize\"><img src=\"img/icons/small/bullet_toggle_minus.png\"></a>";
+	  "<p class=\"grid_12\"><input type=\"submit\" class=\"button grey\" value=\"Dismiss sessions status table\"></p>";
 }
 else
 {
 	print
-	  "<a href=\"index.cgi?id=1-2&action=managefarm&farmname=$farmname&viewtableclients=yes\" title=\"Maximize\"><img src=\"img/icons/small/bullet_toggle_plus.png\"></a>";
+	  "<p class=\"grid_12\"><input type=\"submit\" class=\"button grey\" value=\"Show sessions status table\"></p>";
 }
+print "<input type=\"hidden\" name=\"id\" value=\"1-2\">";
+print "<input type=\"hidden\" name=\"action\" value=\"managefarm\">";
+print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
+print
+  "<input type=\"hidden\" name=\"viewtableclients\" value=\"$viewtableclients\">";
+print "</form>";
 
 my @sessions = &getFarmBackendsClientsList( $farmname, @content );
 my $t_sessions = $#sessions + 1;
-print
-  "Client sessions status<font size=1>&nbsp;&nbsp;&nbsp; $t_sessions active sessions</font></div>\n";
 
 if ( $viewtableclients eq "yes" )
 {
-	print "<div class=\"box table\"><table cellspacing=\"0\">\n";
-	print "<thead>\n";
-	print "<tr><td>Service</td><td>Client</td><td>Session ID</td><td>Server</td>";
-	print "</thead>\n";
-	print "<tbody>";
+	print "
+               <div class=\"box grid_12\">
+                 <div class=\"box-head\">
+                       <span class=\"box-icon-24 fugue-24 user-business\"></span>        
+                       <h2>Client sessions status $t_sessions active sessions</h2>
+                 </div>
+                 <div class=\"box-content no-pad\">
+                         <table id=\"clients-table\" class=\"display\">
+                         <thead>
+                               <tr>
+                                 <th>Service</th>
+                                 <th>Client</th>
+                                 <th>Session ID</th>
+                                 <th>Server</th>
+                               </tr>
+                         </thead>
+                         <tbody>
+       ";
 
 	foreach ( @sessions )
 	{
@@ -165,17 +200,22 @@ if ( $viewtableclients eq "yes" )
 
 	print "</tbody>";
 	print "</table>";
-	print "</div>";
+	print "</div></div>\n\n";
 }
 
 print "<!--END MANAGE-->";
 
-print "<div id=\"page-header\"></div>";
-print "<form method=\"get\" action=\"index.cgi\">";
-print "<input type=\"hidden\" value=\"1-2\" name=\"id\">";
-print
-  "<input type=\"submit\" value=\"Cancel\" name=\"action\" class=\"button small\">";
-print "</form>";
-print "<div id=\"page-header\"></div>";
+print "
+<script>
+\$(document).ready(function() {
+    \$('#backends-table').DataTable( {
+        \"bJQueryUI\": true,     
+               \"sPaginationType\": \"full_numbers\"   
+    });
+       \$('#clients-table').DataTable( {
+        \"bJQueryUI\": true,     
+               \"sPaginationType\": \"full_numbers\"   
+    });
+} );
+</script>";
 
-#print "@run";
