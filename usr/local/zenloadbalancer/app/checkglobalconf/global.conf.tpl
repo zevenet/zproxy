@@ -15,7 +15,7 @@ $timeouterrors="60";
 #File configuration Zen Cluster
 $filecluster="/usr/local/zenloadbalancer/config/cluster.conf";
 #File configuration GUI
-$confhttp="/usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf";
+$confhttp="/usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf";#update
 #.<b>ntp server</b>
 $ntp="pool.ntp.org";
 #Do backup to
@@ -27,13 +27,17 @@ $rttables = "/etc/iproute2/rt_tables";
 #this file
 $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 #version ZEN
-$version="3.7";#update
+$version="4.1";#update
 #Cipher PCI
-$cipher_pci="DEFAULT";#update
+$cipher_pci="kEECDH+ECDSA+AES128:kEECDH+ECDSA+AES256:kEECDH+AES128:kEECDH+AES256:kEDH+AES128:kEDH+AES256:DES-CBC3-SHA:+SHA:!aNULL:!eNULL:!LOW:!kECDH:!DSS:!MD5:!EXP:!PSK:!SRP:!CAMELLIA:!SEED";#update
 #BUY SSL Certificates
 $buy_ssl="http://ecommerce.sofintel.net/ssl/ssl-certificate.aspx?ci=8347&prog_id=503889";
 #URL of dinamic content in global view
 $url="https://www.sofintel.net/json/eeinfo.php";
+#HTPASSWD file
+$htpass="/etc/passwd";#update
+#ZAPI KEY
+$zapikey="";
 
 #dns file server?
 $filedns="/etc/resolv.conf";
@@ -99,10 +103,10 @@ $netstatNat="/usr/bin/netstat-nat";
 $gdnsd="/usr/local/zenloadbalancer/app/gdnsd/sbin/gdnsd";
 #Where is l4sd?
 $l4sd="/usr/local/zenloadbalancer/app/l4s/bin/l4sd";
-#Where is conntrack?
+#Where is id binary?
+$bin_id="/usr/bin/id";
+#Where is conntrack binary?
 $conntrack="/usr/sbin/conntrack";
-#Where is insserv?
-$insserv="/sbin/insserv";
 
 #where is pound binary?
 $pound="/usr/local/zenloadbalancer/app/pound/sbin/pound";
@@ -114,7 +118,6 @@ $poundtpl="/usr/local/zenloadbalancer/app/pound/etc/poundtpl.cfg";
 $piddir="/var/run/";
 
 ## Network global configuration options ##
-$rttables = "/etc/iproute2/rt_tables";
 $fwmarksconf = "$configdir/fwmarks.conf";
 #System Default Gateway
 $defaultgw="";
@@ -122,6 +125,14 @@ $defaultgw="";
 $defaultgwif="";
 #Number of gratuitous pings
 $pingc="1";
+
+## L4xNat - netfilter
+# Maximum recent ip list
+$recent_ip_list_tot="500000";
+# Recent ip hash
+$recent_ip_list_hash_size="512000";
+# Iptables lock filename
+$iptlock = "/tmp/iptables.lock";
 
 #Directory where is check script. In this directory you can save your own check scripts. 
 $libexec_dir="/usr/local/zenloadbalancer/app/libexec";
@@ -159,9 +170,6 @@ $zenlatlog="/usr/local/zenloadbalancer/logs/zenlatency.log";
 
 #Zen backup
 $zenbackup="/usr/local/zenloadbalancer/app/zenbackup/zenbackup.pl";
-
-#SNMP service
-$snmpdconfig_file="/etc/snmp/snmpd.conf";
 #::END Global Section
 
 #!!!!NOT REMOVE NEXT LINE!!!!!!
