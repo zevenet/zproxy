@@ -12,13 +12,12 @@
 
 use File::Copy 'move';
 
-require "/usr/local/zenloadbalancer/config/global.conf";
-
 my $openssl_bin   = "/usr/bin/openssl";
 my $dmidecode_bin = "/usr/sbin/dmidecode";
 my $keyid = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
-
 my $hostname = `hostname`;
+
+require "/usr/local/zenloadbalancer/config/global.conf";
 
 sub keycert
 {
@@ -134,6 +133,17 @@ if ( $ARGV[0] eq "install" || $ARGV[0] eq "upgrade" )
 else
 {
 	exit 1;        #Abort deploy
+}
+
+#Check if exists mini_httpd conf and store the current port and interface
+if ( -e "/usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf" )
+{
+	$port =
+	  `grep port= /usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf  | awk -F'=' '{printf \$2}'`;
+	$host =
+	  `grep host= /usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf  | awk -F'=' '{printf \$2}'`;
+	system ( qq{echo "$port" > /tmp/zenport} );
+	system ( qq{echo "$host" > /tmp/zenhost} );
 }
 
 # Reset the sysctl in order to establish the new parameters
