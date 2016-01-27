@@ -1,15 +1,14 @@
 #!/bin/bash
 
 LOGFILE="/usr/local/zenloadbalancer/logs/zenloadbalancer.log"
-
-[ ! "$1" == "configure" ] && echo "Installation aborted $1 $2" | tee -a $LOGFILE && exit 1
-
-[ "$1" == "configure" ] && echo "Completing the ZLB installation..." | tee -a $LOGFILE
-
-MSCRIPT="/usr/local/zenloadbalancer/app/zbin/zlbmigration302to303.pl"
 GLOBALCF="/usr/local/zenloadbalancer/config/global.conf"
 GLOBALCFT="/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tpl"
 
+[ ! "$1" == "configure" ] && echo "Installation aborted $1 $2" | tee -a $LOGFILE && exit 1
+[ "$1" == "configure" ] && echo "Completing the ZLB installation..." | tee -a $LOGFILE
+
+# Migration script
+MSCRIPT="/usr/local/zenloadbalancer/app/zbin/zlbmigration302to303.pl"
 if [ -f $MSCRIPT -a -f $GLOBALCF ]; then
 	oldver=`cat $GLOBALCF | grep "version=" | awk -F'"' '{printf $2}'`
 	newver=`cat $GLOBALCFT | grep "version=" | awk -F'"' '{printf $2}'`
@@ -22,7 +21,7 @@ if [ -f /usr/local/zenloadbalancer/app/zennetname/write_net_rules ]; then
 	cp -f /usr/local/zenloadbalancer/app/zennetname/write_net_rules /lib/udev/
 fi
 
-# Check for compilation binaries
+# Check for binaries
 PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
 if [ -e "/usr/local/zenloadbalancer/www/index.cgi.${PERLVER}" ]; then
 	mv "/usr/local/zenloadbalancer/www/index.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/index.cgi"
@@ -154,42 +153,17 @@ rm -f /etc/rc*.d/*zenloadbalancer
 # Add ZenLB services to boot process including dependencies
 insserv zenloadbalancer
 
-# Change profile in order to launch ZenBui
-#if [ -f /usr/local/zenloadbalancer/app/zenbui/zenbui.pl -a "`grep zenbui /etc/profile`" = "" ];
+# Link zenbui
 if [ -f /usr/local/zenloadbalancer/app/zenbui/zenbui ];
 then
-#	echo "/usr/bin/perl /usr/local/zenloadbalancer/app/zenbui/zenbui &" >> /etc/profile
 	ln -sf /usr/local/zenloadbalancer/app/zenbui/zenbui /usr/bin/zenbui
 fi
 
-#Fix prompt color
+#Change prompt color
 sed -i "s/1;30m/0;37m/g" /etc/bash.bashrc 2> /dev/null
 
-# snmpd
-if [[ -f /usr/sbin/snmpd ]];
-then
-	grep zenlb /etc/snmp/snmpd.conf &> /dev/null
-	if [ $? -eq 0 ]
-	then
-			echo "SNMP currently configured by Zen"
-	else
-			#stop the SNMP service
-			/etc/init.d/snmpd stop
-			#reconfigure snmp service
-			cp /usr/local/zenloadbalancer/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
-			insserv -r snmpd
-			#modify SNMP service
-			# boot dependencies
-			sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$network \$remote_fs \$syslog zenloadbalancer/g' /etc/init.d/snmpd
-			sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$network \$remote_fs \$syslog zenloadbalancer/g' /etc/init.d/snmpd
-	fi
-fi
-
 #Flush apt sources
-if [ `dpkg --print-architecture` != "i386" ];
-then
-	echo > /etc/apt/sources.list
-	( (sleep 5; /usr/bin/apt-get update) 2> /dev/null ) &
-fi
+echo > /etc/apt/sources.list
+( (sleep 5; /usr/bin/apt-get update) 2> /dev/null ) &
 
-echo "Last version of Zen Load Balancer update completed..."
+echo "Zen Load Balancer update completed..."
