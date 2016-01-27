@@ -10,8 +10,12 @@
 #
 ###############################################################################
 
-my $dmidecode_bin = "/usr/sbin/dmidecode";
+use File::Copy 'move';
+
+require "/usr/local/zenloadbalancer/config/global.conf";
+
 my $openssl_bin   = "/usr/bin/openssl";
+my $dmidecode_bin = "/usr/sbin/dmidecode";
 my $keyid = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
 
 my $hostname = `hostname`;
@@ -117,8 +121,6 @@ sub certcontrol
 	return $swcert;
 }
 
-require "/usr/local/zenloadbalancer/config/global.conf";
-
 if ( $ARGV[0] eq "install" || $ARGV[0] eq "upgrade" )
 {
 	my $key     = &keycert();
@@ -138,24 +140,12 @@ else
 system ( "cp /etc/sysctl.conf /etc/sysctl.conf.bck" );
 system ( qq{grep "^#" /etc/sysctl.conf > /etc/sysctl.conf 2> /dev/null} );
 
-use File::Copy 'move';
-
 #Move cherokee
-if ( -e "/usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf" )
-{
-	move "/usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf",
-	  "/tmp/cherokee.conf";
-}
+my $chero_conf = "/usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf";
 
-#Check if exists mini_httpd conf and store the current port and interface
-if ( -e "/usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf" )
+if ( -e  $chero_conf )
 {
-	$port =
-	  `grep port= /usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf  | awk -F'=' '{printf \$2}'`;
-	$host =
-	  `grep host= /usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf  | awk -F'=' '{printf \$2}'`;
-	system ( qq{echo "$port" > /tmp/zenport} );
-	system ( qq{echo "$host" > /tmp/zenhost} );
+	move $chero_conf, "/tmp/cherokee.conf";
 }
 
 # Create the new GUI system group
