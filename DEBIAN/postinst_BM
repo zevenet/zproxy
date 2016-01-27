@@ -1,29 +1,34 @@
 #!/bin/bash
+
 LOGFILE="/usr/local/zenloadbalancer/logs/zenloadbalancer.log"
-[ ! "$1" == "configure" ] && echo "Installation aborted $1 $2" | tee -a $LOGFILE && exit 1
-[ "$1" == "configure" ] && echo "Completing the ZLB installation..." | tee -a $LOGFILE
 GLOBALCF="/usr/local/zenloadbalancer/config/global.conf"
 GLOBALCFT="/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tpl"
+
+[ ! "$1" == "configure" ] && echo "Installation aborted $1 $2" | tee -a $LOGFILE && exit 1
+[ "$1" == "configure" ] && echo "Completing the ZLB installation..." | tee -a $LOGFILE
 
 if [ -f /usr/local/zenloadbalancer/app/zennetname/write_net_rules ]; then
 	cp -f /usr/local/zenloadbalancer/app/zennetname/write_net_rules /lib/udev/
 fi
 
-# Check for compilation binaries
-#PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
-PERLVER="5.20"
-#if [ ! -e "/usr/local/zenloadbalancer/www/index.cgi" ]; then
-        mv "/usr/local/zenloadbalancer/www/index.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/index.cgi"
-        rm /usr/local/zenloadbalancer/www/index.cgi.*
-#fi
-#if [ ! -e "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi" ]; then
-        mv "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi"
-        rm /usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.*
-#fi
-#if [ ! -e "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer" ]; then
-        mv "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer.${PERLVER}" "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer"
-        rm /usr/local/zenloadbalancer/app/zbin/zenloadbalancer.*
-#fi
+# Check for binaries
+PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
+if [ -e "/usr/local/zenloadbalancer/www/index.cgi.${PERLVER}" ]; then
+	mv "/usr/local/zenloadbalancer/www/index.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/index.cgi"
+	rm /usr/local/zenloadbalancer/www/index.cgi.*
+fi
+if [ -e "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.${PERLVER}" ]; then
+	mv "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi"
+	rm /usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.*
+fi
+if [ -e "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.${PERLVER}" ]; then
+	mv "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi"
+	rm /usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.*
+fi
+if [ -e "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer.${PERLVER}" ]; then
+	mv "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer.${PERLVER}" "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer"
+	rm /usr/local/zenloadbalancer/app/zbin/zenloadbalancer.*
+fi
 
 
 # GSLB user management
@@ -44,12 +49,11 @@ sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$remote_fs \$syslog zenloadbal
 /sbin/modprobe nf_conntrack 2> /dev/null
 /sbin/modprobe ip_conntrack 2> /dev/null
 
-# Delete duplicated ZenLB link services
-if [ -f /etc/rc2.d/S02zenloadbalancer ];
-then
-	rm -f /etc/rc2.d/S01zenloadbalancer
-	rm -f /etc/rcS.d/S01zenloadbalancer
-fi
+# Delete manually setup ZenLB services
+rm -f /etc/rc*.d/*zenloadbalancer
+
+# Add ZenLB services to boot process including dependencies
+insserv zenloadbalancer
 
 # Link zenbui
 if [ -f /usr/local/zenloadbalancer/app/zenbui/zenbui ];
@@ -57,10 +61,10 @@ then
 	ln -sf /usr/local/zenloadbalancer/app/zenbui/zenbui /usr/bin/zenbui
 fi
 
-# Fix prompt color
+#Change prompt color
 sed -i "s/1;30m/0;37m/g" /etc/bash.bashrc 2> /dev/null
 
 #Flush apt sources
 echo > /etc/apt/sources.list
 
-echo "Last version of Zen Load Balancer installed..."
+echo "Zen Load Balancer installed..."
