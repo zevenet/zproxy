@@ -33,6 +33,41 @@ use Data::Dumper;
 #~ our ( $basedir, $configdir, $logdir, $logfile, $timeouterrors, $filecluster, $confhttp, $ntp, $backupfor, $backupdir, $rttables, $globalcfg, $version, $cipher_pci, $buy_ssl, $url, $htpass, $zapikey, $filedns, $fileapt, $tar, $ifconfig_bin, $ip_bin, $pen_bin, $pen_ctl, $fdisk_bin, $df_bin, $sshkeygen, $ssh, $scp, $rsync, $ucarp, $pidof, $ps, $tail, $zcat, $datentp, $arping_bin, $ping_bin, $openssl, $unzip, $mv, $ls, $cp, $iptables, $modprobe, $lsmod, $netstatNat, $gdnsd, $l4sd, $bin_id, $conntrack, $pound, $poundctl, $poundtpl, $piddir, $fwmarksconf, $defaultgw, $defaultgwif, $pingc, $libexec_dir, $farmguardian, $farmguardian_dir, $farmguardian_logs, $rrdap_dir, $img_dir, $rrd_dir, $log_rrd, $zenino, $zeninopid, $zeninolog, $zenrsync, $zenlatup, $zenlatdown, $zenlatlog, $zenbackup );
 # End Debug ###
 
+#check if the string is a valid multiport definition
+sub ismport                   # ($string)
+{
+	my $string = shift;
+
+	chomp ( $string );
+	if ( $string eq "*" )
+	{
+		return "true";
+	}
+	elsif ( $string =~ /^[0-9]+(,[0-9]+|[0-9]+\:[0-9]+)*$/ )
+	{
+		return "true";
+	}
+	else
+	{
+		return "false";
+	}
+}
+
+#check if the port has more than 1 port
+sub checkmport    # ($port)
+{
+	my $port = shift;
+
+	if ( $port =~ /\,|\:|\*/ )
+	{
+		return "true";
+	}
+	else
+	{
+		return "false";
+	}
+}
+
 #
 sub getL4FarmsPorts    # ($farm_type)
 {
