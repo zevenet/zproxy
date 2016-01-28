@@ -21,12 +21,12 @@
 #
 ###############################################################################
 
-use Sys::Syslog;                          #use of syslog
-use Sys::Syslog qw(:standard :macros);    #standard functions for Syslog
-use Fcntl ':flock';                       #use of lock functions
-use Tie::File;                            #use tie
+#~ use Sys::Syslog;                          #use of syslog
+#~ use Sys::Syslog qw(:standard :macros);    #standard functions for Syslog
+#~ use Fcntl ':flock';                       #use of lock functions
+#~ use Tie::File;                            #use tie
 
-$globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
+#~ $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
@@ -38,16 +38,12 @@ require "/usr/local/zenloadbalancer/www/l4_functions.cgi";
 require "/usr/local/zenloadbalancer/www/gslb_functions.cgi";
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 require "/usr/local/zenloadbalancer/www/gui_functions.cgi";
-require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
+#~ require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
 require "/usr/local/zenloadbalancer/www/farmguardian_functions.cgi";
 require "/usr/local/zenloadbalancer/www/datalink_functions.cgi";
 require "/usr/local/zenloadbalancer/www/http_functions.cgi";
 require "/usr/local/zenloadbalancer/www/tcpudp_functions.cgi";
-
-if ( -e "/usr/local/zenloadbalancer/www/functions_ext.cgi" )
-{
-	require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
-}
+require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 
 #function that check if variable is a number no float
 sub isnumber    # ($num)
@@ -171,7 +167,6 @@ sub uptime    # ()
 }
 
 #function that configure the graphs apareance.
-#sub graphs(@data,$description)
 sub graphs    # ($description,@data)
 {
 	my ( $description, @data ) = @_;
