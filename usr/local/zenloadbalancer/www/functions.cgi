@@ -60,79 +60,6 @@ sub isnumber    # ($num)
 	}
 }
 
-#check if the string is a valid multiport definition
-sub ismport                   # ($string)
-{
-	my $string = shift;
-
-	chomp ( $string );
-	if ( $string eq "*" )
-	{
-		return "true";
-	}
-	elsif ( $string =~ /^[0-9]+(,[0-9]+|[0-9]+\:[0-9]+)*$/ )
-	{
-		return "true";
-	}
-	else
-	{
-		return "false";
-	}
-}
-
-#check if the port has more than 1 port
-sub checkmport    # ($port)
-{
-	my $port = shift;
-
-	if ( $port =~ /\,|\:|\*/ )
-	{
-		return "true";
-	}
-	else
-	{
-		return "false";
-	}
-}
-
-#function that paint a static progess bar
-sub progressbar    # ($filename,$vbar)
-{
-	my ( $filename, $vbar ) = @_;
-	$max = "150";
-
-	# Create a new image
-	use GD;
-	$im = new GD::Image( $max, 12 );
-
-	$white      = $im->colorAllocate( 255, 255, 255 );
-	$blueborder = $im->colorAllocate( 77,  143, 204 );
-	$grayborder = $im->colorAllocate( 102, 102, 102 );
-	$blue       = $im->colorAllocate( 165, 192, 220 );
-	$gray       = $im->colorAllocate( 156, 156, 156 );
-
-	# Make the background transparent and interlaced
-	$im->transparent( $white );
-	$im->interlaced( 'true' );
-
-	# Draw a border
-	$im->rectangle( 0, 0, $max - 1, 11, $grayborder );
-
-	#rectangle
-	$im->filledRectangle( 1, 1, $vbar, 10, $grayborder );
-
-	# Open a file for writing
-	open ( PICTURE, ">$filename" ) or die ( "Cannot open file for writing" );
-
-	# Make sure we are writing to a binary stream
-	binmode PICTURE;
-
-	# Convert the image to PNG and print it to the file PICTURE
-	print PICTURE $im->png;
-	close PICTURE;
-
-}
-
 #function that paint the date when started (uptime)
 sub uptime    # ()
 {
@@ -272,28 +199,6 @@ sub uploadcerts                       # ()
 	#print the information icon with the popup with info.
 	print
 	  "<a href=\"uploadcerts.cgi\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/arrow_up.png' title=\"upload certificate\"></a>";
-}
-
-#function that put a popup with help about the product
-sub help    # ($code)
-{
-	my $code = shift;
-
-	#this is javascript emmbebed in perl
-	print "<script language=\"javascript\">
-                var popupWindow = null;
-                function positionedPopup(url,winName,w,h,t,l,scroll)
-                {
-                settings ='height='+h+',width='+w+',top='+t+',left='+l+',scrollbars='+scroll+',resizable'
-                popupWindow = window.open(url,winName,settings)
-                }
-        </script>";
-
-	#print the information icon with the popup with info.
-	print "<a href=\"help.cgi?id=$code\" "
-	  . "onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\">";
-	print "<img src='img/icons/small/information.png'>";
-	print "</a>";
 }
 
 #insert info in log file
