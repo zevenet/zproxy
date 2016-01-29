@@ -302,7 +302,7 @@ if ( $action eq "editfarm-Parameters" )
 			{
 				&successmsg(
 							 "The FarmGuardian service for the $farmname farm has been modified" );
-				if ( $usefarmguardian eq "true" && &getFarmStatus($farm_name) eq 'up' )
+				if ( $usefarmguardian eq "true" && &getFarmStatus($farmname) eq 'up' )
 				{
 					$status = &runFarmGuardianStart( $farmname, "" );
 					if ( $status != -1 )
