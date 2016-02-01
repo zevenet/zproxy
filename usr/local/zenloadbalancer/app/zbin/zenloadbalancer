@@ -369,6 +369,10 @@ if ( $eject eq "start" )
 	{
 		push ( @sysctl, "net.core.somaxconn = 3000" );
 	}
+	if ( !grep ( /^kernel\.threads-max/, @sysctl ) )
+	{
+		push ( @sysctl, "kernel.threads-max = 200000" );
+	}
 	untie @sysctl;
 
 	system ( 'sysctl -p > /dev/null' );
