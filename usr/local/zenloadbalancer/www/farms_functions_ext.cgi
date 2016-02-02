@@ -22,7 +22,7 @@
 ###############################################################################
 
 #
-sub getFarmCertificatesSNI($fname)
+sub getFarmCertificatesSNI    #($fname)
 {
 	my $fname = shift;
 
@@ -40,9 +40,9 @@ sub getFarmCertificatesSNI($fname)
 			if ( $line =~ /Cert/ && $line !~ /\#.*Cert/ )
 			{
 				my @partline = split ( '\"', $line );
-				@partline = split ( "\/", @partline[1] );
+				@partline = split ( "\/", $partline[1] );
 				my $lfile = @partline;
-				push ( @output, @partline[$lfile - 1] );
+				push ( @output, $partline[$lfile - 1] );
 
 			}
 		}
@@ -53,7 +53,7 @@ sub getFarmCertificatesSNI($fname)
 }
 
 #
-sub setFarmCertificateSNI($cfile,$fname)
+sub setFarmCertificateSNI    #($cfile,$fname)
 {
 	my ( $cfile, $fname ) = @_;
 
@@ -96,7 +96,7 @@ sub setFarmCertificateSNI($cfile,$fname)
 }
 
 #delete the selected certificate from HTTP farms
-sub setFarmDeleteCertSNI($certn,$fname)
+sub setFarmDeleteCertSNI    #($certn,$fname)
 {
 	my ( $certn, $fname ) = @_;
 
@@ -121,7 +121,7 @@ sub setFarmDeleteCertSNI($certn,$fname)
 			{
 				splice @array, $j, 1,;
 				$output = 0;
-				if ( @array[$j] !~ /Cert/ && @array[$j - 1] !~ /Cert/ )
+				if ( $array[$j] !~ /Cert/ && $array[$j - 1] !~ /Cert/ )
 				{
 					splice @array, $j, 0, "\tCert\ \"$configdir\/zencert.pem\"";
 					$output = 1;

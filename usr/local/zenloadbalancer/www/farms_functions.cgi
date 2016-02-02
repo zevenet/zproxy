@@ -549,7 +549,7 @@ sub getFarmType    # ($farm_name)
 	}
 	if ( $farm_filename =~ /$farm_name\_pound.cfg/ )
 	{
-		use File::Grep qw( fgrep fmap fdo );
+		use File::Grep qw( fgrep );
 		if ( fgrep { /ListenHTTPS/ } "$configdir/$farm_filename" )
 		{
 			return "https";
@@ -1366,7 +1366,7 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	if ( @fg_files )
 	{
 		$fg_status = &getFarmGuardianStatus( $farm_name ) if @fg_files;
-		$farm_status = &getFarmStatus($farm_name);
+		$farm_status = &getFarmStatus( $farm_name );
 
 		if ( $fg_status == 1 && $farm_status eq 'up' )
 		{

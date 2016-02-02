@@ -22,7 +22,7 @@
 ###############################################################################
 
 #get zapi status
-sub getZAPI($name,$value)
+sub getZAPI    #($name,$value)
 {
 
 	my ( $name, $value ) = @_;
@@ -60,7 +60,7 @@ sub getZAPI($name,$value)
 
 #set zapi values
 
-sub setZAPI($name,$value)
+sub setZAPI    #($name,$value)
 {
 
 	my ( $name, $value ) = @_;
@@ -148,7 +148,7 @@ sub setZAPI($name,$value)
 }
 
 #Generate random key for API user
-sub setZAPIKey()
+sub setZAPIKey    #()
 {
 	my $passwordsize = shift;
 	my @alphanumeric = ( 'a' .. 'z', 'A' .. 'Z', 0 .. 9 );
@@ -159,4 +159,4 @@ sub setZAPIKey()
 }
 
 # do not remove this
-1
+1;

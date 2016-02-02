@@ -38,6 +38,7 @@ require "/usr/local/zenloadbalancer/www/l4_functions.cgi";
 require "/usr/local/zenloadbalancer/www/gslb_functions.cgi";
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 require "/usr/local/zenloadbalancer/www/gui_functions.cgi";
+
 #~ require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
 require "/usr/local/zenloadbalancer/www/farmguardian_functions.cgi";
 require "/usr/local/zenloadbalancer/www/datalink_functions.cgi";
@@ -61,7 +62,7 @@ sub isnumber    # ($num)
 }
 
 #function that paint the date when started (uptime)
-sub uptime    # ()
+sub uptime                    # ()
 {
 	$timeseconds = time ();
 	open TIME, '/proc/uptime' or die $!;
@@ -69,7 +70,7 @@ sub uptime    # ()
 	while ( <TIME> )
 	{
 		my @time = split ( "\ ", $_ );
-		$uptimesec = @time[0];
+		$uptimesec = $time[0];
 	}
 
 	$totaltime = $timeseconds - $uptimesec;
@@ -85,7 +86,7 @@ sub uptime    # ()
 	  ( localtime ( $time ) )[0, 1, 2, 3, 4, 5, 6];
 
 	return
-	    @months[$month] . ", "
+	    $months[$month] . ", "
 	  . $day . " "
 	  . $hour . ":"
 	  . $min . ":"

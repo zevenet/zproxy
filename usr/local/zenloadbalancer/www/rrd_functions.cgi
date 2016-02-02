@@ -30,7 +30,7 @@ my $height = "150";
 $imagetype = "PNG";
 
 #
-sub printImgFile($file)
+sub printImgFile    #($file)
 {
 	my ( $file ) = @_;
 
@@ -49,7 +49,7 @@ sub printImgFile($file)
 }
 
 #
-sub printGraph($type,$time)
+sub printGraph    #($type,$time)
 {
 	my ( $type, $time ) = @_;
 	my $graph = $basedir . $img_dir . $type . "_" . $time . ".png";
@@ -92,7 +92,7 @@ sub printGraph($type,$time)
 }
 
 #
-sub genCpuGraph($type,$graph,$time)
+sub genCpuGraph    #($type,$graph,$time)
 {
 
 	my ( $type, $graph, $time ) = @_;
@@ -157,7 +157,7 @@ sub genCpuGraph($type,$graph,$time)
 }
 
 #
-sub genDiskGraph($type,$graph,$time)
+sub genDiskGraph    #($type,$graph,$time)
 {
 
 	my ( $type, $graph, $time ) = @_;
@@ -167,17 +167,17 @@ sub genDiskGraph($type,$graph,$time)
 	$dev =~ s/hd$//;
 	$dev =~ s/dev-//;
 
-	my $partition, $size, $mount;
+	my ( $partition, $size, $mount );
 
 	for $line_df ( @df_system )
 	{
 		if ( $line_df =~ /$dev/ )
 		{
 			my @s_line = split ( "\ ", $line_df );
-			chomp ( @s_line[0] );
-			$partition = @s_line[0];
-			$size      = @s_line[4];
-			$mount     = @s_line[5];
+			chomp ( $s_line[0] );
+			$partition = $s_line[0];
+			$size      = $s_line[4];
+			$mount     = $s_line[5];
 		}
 	}
 
@@ -224,7 +224,7 @@ sub genDiskGraph($type,$graph,$time)
 }
 
 #
-sub genLoadGraph($type,$graph,$time)
+sub genLoadGraph    #($type,$graph,$time)
 {
 
 	my ( $type, $graph, $time ) = @_;
@@ -269,7 +269,7 @@ sub genLoadGraph($type,$graph,$time)
 }
 
 #
-sub genMemGraph($type,$graph,$time)
+sub genMemGraph    #($type,$graph,$time)
 {
 
 	my ( $type, $graph, $time ) = @_;
@@ -321,7 +321,7 @@ sub genMemGraph($type,$graph,$time)
 }
 
 #
-sub genMemSwGraph($type,$graph,$time)
+sub genMemSwGraph    #($type,$graph,$time)
 {
 
 	my ( $type, $graph, $time ) = @_;
@@ -373,7 +373,7 @@ sub genMemSwGraph($type,$graph,$time)
 }
 
 #
-sub genNetGraph($type,$graph,$time)
+sub genNetGraph    #($type,$graph,$time)
 {
 
 	my ( $type, $graph, $time ) = @_;
@@ -424,7 +424,7 @@ sub genNetGraph($type,$graph,$time)
 }
 
 #
-sub genFarmGraph($type,$graph,$time)
+sub genFarmGraph    #($type,$graph,$time)
 {
 
 	my ( $type, $graph, $time ) = @_;
@@ -479,7 +479,7 @@ sub genFarmGraph($type,$graph,$time)
 }
 
 #function that returns the graph list to show
-sub getGraphs2Show($graphtype)
+sub getGraphs2Show    #($graphtype)
 {
 	my ( $graphtype ) = @_;
 	my @list = -1;

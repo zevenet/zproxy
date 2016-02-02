@@ -278,42 +278,41 @@ if ( $action !~ /editfarm/ && $action !~ /managefarm/ )
 		print "<input type=\"hidden\" name=\"farmname\" value=\"$name\">";
 		print "<input type=\"hidden\" name=\"action\" value=\"editfarm\">";
 		print "</form>";
-		
+
 		#print global connections bar
 		$status = &getFarmStatus( $name );
-		
+
 		my $onClick;
-		if ($type eq "tcp" && $status eq "down") {
+		if ( $type eq "tcp" && $status eq "down" )
+		{
 			$onClick = "";
-		} else {
-			$onClick = "style=\"cursor: pointer;\" onClick=\"jQuery('#farm_$name').submit();\"";
+		}
+		else
+		{
+			$onClick =
+			  "style=\"cursor: pointer;\" onClick=\"jQuery('#farm_$name').submit();\"";
 		}
 
 		#print the farm description name
-		print
-		  "<td $onClick>$name</td>";
+		print "<td $onClick>$name</td>";
 
 		#print the virtual ip
 		$vip = &getFarmVip( "vip", $name );
-		print
-		  "<td $onClick>$vip</td>";
+		print "<td $onClick>$vip</td>";
 
 		#print the virtual port where the vip is listening
 		$vipp = &getFarmVip( "vipp", $name );
-		print
-		  "<td $onClick>$vipp</td>";
+		print "<td $onClick>$vipp</td>";
 
 		#print status of a farm
-		print
-		  "<td class=\"aligncenter\" $onClick>";
+		print "<td class=\"aligncenter\" $onClick>";
 		( $status ne "up" )
 		  ? print "<img src=\"img/icons/small/stop.png\" title=\"down\">"
 		  : print "<img src=\"img/icons/small/start.png\" title=\"up\">";
 		print "</td>";
 
 		#type of farm
-		print
-		  "<td $onClick>$type</td>";
+		print "<td $onClick>$type</td>";
 
 		#menu
 		print "<td>";
