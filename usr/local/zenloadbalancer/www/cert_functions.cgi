@@ -164,7 +164,7 @@ sub getCertExpiration    # ($certfile)
 }
 
 # content 1-3 certificate-https
-sub getFarmCertUsed($cfile)
+sub getFarmCertUsed    #($cfile)
 {
 	my ( $cfile ) = @_;
 

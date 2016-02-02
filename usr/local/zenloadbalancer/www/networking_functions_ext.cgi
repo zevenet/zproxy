@@ -24,7 +24,7 @@
 my $routeparams = "initcwnd 10 initrwnd 10";
 
 # send gratuitous ICMP packets for L3 aware
-sub sendGPing($pif)
+sub sendGPing    #($pif)
 {
 	my ( $pif ) = @_;
 
@@ -37,7 +37,7 @@ sub sendGPing($pif)
 }
 
 # get conntrack sessions
-sub getConntrackExpect($args)
+sub getConntrackExpect    #($args)
 {
 	( $args ) = @_;
 	open CONNS, "</proc/net/nf_conntrack_expect";

@@ -177,7 +177,7 @@ sub tielock    # ()
 {
 	my $file = shift;    #parameters
 
-	$o = tie @array, "Tie::File", $file;
+	$o = tie my @array, "Tie::File", $file;
 	$o->flock;
 
 	return @array;
@@ -206,15 +206,15 @@ sub logAndRun
 	my $program = ( split '/', $0 )[-1];
 	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
 	$program .= ' ';
-	
+
 	#	&logfile( (caller (2))[3] . ' >>> ' . (caller (1))[3]);
-	&logfile( $program . "running: $command" );          # log
-	system ( "$command >/dev/null 2>&1" );    # run
+	&logfile( $program . "running: $command" );    # log
+	system ( "$command >/dev/null 2>&1" );         # run
 	$return_code = $?;
 
 	if ( $return_code )
 	{
-		&logfile( "last command failed!" );    # show in logs if failed
+		&logfile( "last command failed!" );        # show in logs if failed
 	}
 
 	# returning error code from execution
@@ -246,6 +246,14 @@ sub zlog
 			  . ( caller ( 1 ) )[3]
 			  . " => @message" );
 
+	return;
+}
+
+sub print_mem
+{
+	my $mem_string = `grep RSS /proc/$$/status`;
+	chomp ( $mem_string );
+	print ( "$mem_string >> @_\n" );
 	return;
 }
 

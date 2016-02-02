@@ -805,7 +805,7 @@ sub getIptRuleReplace      # $return_code ( \%farm, \%server, $rule)
 	my $rule_num;          # possition to insert the rule
 
 	# if the rule exist
-	my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
+	$rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
 
 	return &applyIptRuleAction( $rule, 'replace', $rule_num );
 }
