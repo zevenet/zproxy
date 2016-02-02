@@ -2171,15 +2171,15 @@ sub deleteFarmService    # ($farm_name,$service)
 	foreach $line ( @contents )
 	{
 		my @params = split ( "\ ", $line );
-		my $newval = @params[2] - 1;
+		my $newval = $params[2] - 1;
 
-		&logfile( "param2: @params[2] $newval" );
+		&logfile( "param2: $params[2] $newval" );
 
-		if ( @params[2] > $sindex )
+		if ( $params[2] > $sindex )
 		{
 			&logfile( "linea $_" );
 			$line =~
-			  s/@params[0]\ @params[1]\ @params[2]\ @params[3]\ @params[4]/@params[0]\ @params[1]\ $newval\ @params[3]\ @params[4]/g;
+			  s/$params[0]\ $params[1]\ $params[2]\ $params[3]\ $params[4]/$params[0]\ $params[1]\ $newval\ $params[3]\ $params[4]/g;
 		}
 	}
 	untie @contents;
@@ -2859,9 +2859,6 @@ sub getFarmVSI    # ($farm_name,$service)
 # Get an array containing services that are configured in a http farm
 sub getFarmServices
 {
-
-	#print "Content-type: text/javascript; charset=utf8\n\n";
-
 	my ( $farm_name ) = @_;
 	my @output;
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -2870,73 +2867,67 @@ sub getFarmServices
 	my @file = <FR>;
 	my $pos  = 0;
 
-  #print "farm filename is $farm_filename. Full path is $configdir\/$farm_filename";
-
 	foreach $line ( @file )
 	{
-		#print "line is $line";
-
 		if ( $line =~ /\tService\ \"/ )
 		{
-
 			$pos++;
 			@line = split ( "\"", $line );
-			my $service = @line[1];
-
-			#print "line is $line and service is $service";
+			my $service = $line[1];
 
 			push ( @output, $service );
 		}
 	}
-	return @output;
 
+	return @output;
 }
 
-# setFarmBackendsSessionsRemove not in use???
+# used by farmguardian
 #function that removes all the active sessions enabled to a backend in a given service
 #needed: farmname, serviceid, backendid
-#~ sub setFarmBackendsSessionsRemove($farm_name,$service,$backendid)
-#~ {
-#~ ( $farm_name, $service, $backendid ) = @_;
-#~
-#~ my @content = &getFarmBackendStatusCtl( $farm_name );
-#~ my @sessions = &getFarmBackendsClientsList( $farm_name, @content );
-#~ my @service;
-#~ my $sw = 0;
-#~ my $serviceid;
-#~ my @sessionid;
-#~ my $sessid;
-#~
-#~ &logfile(
-#~ "Deleting established sessions to a backend $backendid from farm $farm_name in service $service"
-#~ );
-#~
-#~ foreach ( @content )
-#~ {
-#~ if ( $_ =~ /Service/ && $sw eq 1 )
-#~ {
-#~ $sw = 0;
-#~ }
-#~
-#~ if ( $_ =~ /Service\ \"$service\"/ && $sw eq 0 )
-#~ {
-#~ $sw      = 1;
-#~ @service = split ( /\./, $_ );
-#~ $serviceid = $service[0];
-#~ }
-#~
-#~ if ( $_ =~ /Session.*->\ $backendid/ && $sw eq 1 )
-#~ {
-#~ @sessionid  = split ( /Session/, $_ );
-#~ $sessionid2 = @sessionid[1];
-#~ @sessionid  = split ( /\ /, $sessionid2 );
-#~ $sessid     = @sessionid[1];
-#~ @output     = `$poundctl -c  /tmp/$farm_name\_pound.socket -n 0 $serviceid $sessid`;
-#~ &logfile(
-#~ "Executing:  $poundctl -c /tmp/$farm_name\_pound.socket -n 0 $serviceid $sessid" );
-#~ }
-#~ }
-#~ }
+sub setFarmBackendsSessionsRemove($farm_name,$service,$backendid)
+{
+	my ( $farm_name, $service, $backendid ) = @_;
+
+	my @content = &getFarmBackendStatusCtl( $farm_name );
+	my @sessions = &getFarmBackendsClientsList( $farm_name, @content );
+	my @service;
+	my $sw = 0;
+	my $serviceid;
+	my @sessionid;
+	my $sessid;
+
+	&logfile(
+		"Deleting established sessions to a backend $backendid from farm $farm_name in service $service"
+	);
+
+	foreach ( @content )
+	{
+		if ( $_ =~ /Service/ && $sw eq 1 )
+		{
+			$sw = 0;
+		}
+
+		if ( $_ =~ /Service\ \"$service\"/ && $sw eq 0 )
+		{
+			$sw        = 1;
+			@service   = split ( /\./, $_ );
+			$serviceid = $service[0];
+		}
+
+		if ( $_ =~ /Session.*->\ $backendid/ && $sw eq 1 )
+		{
+			@sessionid  = split ( /Session/, $_ );
+			$sessionid2 = @sessionid[1];
+			@sessionid  = split ( /\ /, $sessionid2 );
+			$sessid     = @sessionid[1];
+			@output = `$poundctl -c  /tmp/$farm_name\_pound.socket -n 0 $serviceid $sessid`;
+			&logfile(
+				"Executing:  $poundctl -c /tmp/$farm_name\_pound.socket -n 0 $serviceid $sessid"
+			);
+		}
+	}
+}
 
 # do not remove this
-1
+1;

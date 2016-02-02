@@ -33,6 +33,43 @@ use Data::Dumper;
 #~ our ( $basedir, $configdir, $logdir, $logfile, $timeouterrors, $filecluster, $confhttp, $ntp, $backupfor, $backupdir, $rttables, $globalcfg, $version, $cipher_pci, $buy_ssl, $url, $htpass, $zapikey, $filedns, $fileapt, $tar, $ifconfig_bin, $ip_bin, $pen_bin, $pen_ctl, $fdisk_bin, $df_bin, $sshkeygen, $ssh, $scp, $rsync, $ucarp, $pidof, $ps, $tail, $zcat, $datentp, $arping_bin, $ping_bin, $openssl, $unzip, $mv, $ls, $cp, $iptables, $modprobe, $lsmod, $netstatNat, $gdnsd, $l4sd, $bin_id, $conntrack, $pound, $poundctl, $poundtpl, $piddir, $fwmarksconf, $defaultgw, $defaultgwif, $pingc, $libexec_dir, $farmguardian, $farmguardian_dir, $farmguardian_logs, $rrdap_dir, $img_dir, $rrd_dir, $log_rrd, $zenino, $zeninopid, $zeninolog, $zenrsync, $zenlatup, $zenlatdown, $zenlatlog, $zenbackup );
 # End Debug ###
 
+require "/usr/local/zenloadbalancer/www/nf_functions.cgi";
+
+#check if the string is a valid multiport definition
+sub ismport    # ($string)
+{
+	my $string = shift;
+
+	chomp ( $string );
+	if ( $string eq "*" )
+	{
+		return "true";
+	}
+	elsif ( $string =~ /^[0-9]+(,[0-9]+|[0-9]+\:[0-9]+)*$/ )
+	{
+		return "true";
+	}
+	else
+	{
+		return "false";
+	}
+}
+
+#check if the port has more than 1 port
+sub checkmport    # ($port)
+{
+	my $port = shift;
+
+	if ( $port =~ /\,|\:|\*/ )
+	{
+		return "true";
+	}
+	else
+	{
+		return "false";
+	}
+}
+
 #
 sub getL4FarmsPorts    # ($farm_type)
 {
@@ -258,7 +295,7 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 	}
 	untie @configfile;
 
-	my $farm = &getL4FarmStruct( $farm_name );
+	$farm = &getL4FarmStruct( $farm_name );
 
 	if ( $$farm{ status } eq 'up' )
 	{
@@ -357,7 +394,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 	untie @configfile;
 	$output = $?;            # FIXME
 
-	my $farm = &getL4FarmStruct( $farm_name );
+	$farm = &getL4FarmStruct( $farm_name );
 
 	if ( $$farm{ status } eq 'up' )
 	{
@@ -559,7 +596,7 @@ sub setFarmProto    # ($proto,$farm_name)
 		untie @configfile;
 	}
 
-	my $farm = &getL4FarmStruct( $farm_name );
+	$farm = &getL4FarmStruct( $farm_name );
 
 	if ( $$farm{ status } eq 'up' )
 	{
@@ -682,7 +719,7 @@ sub setFarmNatType    # ($nat,$farm_name)
 		$output = $?;            # FIXME
 	}
 
-	my $farm = &getL4FarmStruct( $farm_name );
+	$farm = &getL4FarmStruct( $farm_name );
 
 	if ( $$farm{ status } eq 'up' )
 	{
@@ -842,7 +879,7 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 	untie @configfile;
 	$output = $?;            # FIXME
 
-	my $farm = &getL4FarmStruct( $farm_name );
+	$farm = &getL4FarmStruct( $farm_name );
 
 	if ( $$farm{ status } eq 'up' && $$farm{ persist } ne 'none' )
 	{
@@ -1534,7 +1571,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	untie @configfile;
 	$stat = $?;            # FIXME
 
-	my $farm = &getL4FarmStruct( $farm_name );
+	$farm = &getL4FarmStruct( $farm_name );
 
 	if ( $$farm{ status } eq 'up' )
 	{
@@ -1632,7 +1669,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	untie @contents;
 	### end editing config file ###
 
-	my $farm = &getL4FarmStruct( $farm_name );    # FIXME: start using it earlier
+	$farm = &getL4FarmStruct( $farm_name );    # FIXME: start using it earlier
 
 	if ( $$farm{ status } eq 'up' )
 	{
@@ -1707,7 +1744,7 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 	}
 	untie @contents;
 
-	my $farm = &getL4FarmStruct( $farm_name );
+	$farm = &getL4FarmStruct( $farm_name );
 
 	# enabling new server
 	if ( $found_server eq 'true' && $$farm{ status } eq 'up' )
@@ -1807,6 +1844,9 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	}
 	untie @configfile;
 
+	$farm{ servers } = undef;
+	%farm = undef;
+
 	%farm   = %{ &getL4FarmStruct( $farm_name ) };
 	%server = %{ $farm{ servers }[$server_id] };
 
@@ -1838,6 +1878,11 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 			}
 		}
 	}
+
+	$farm{ servers }  = undef;
+	%farm             = undef;
+	$$farm{ servers } = undef;
+	$farm             = undef;
 
 	return $output;
 }
@@ -1879,13 +1924,12 @@ sub getFarmPortList    # ($fvipp)
 # returns backends lines
 sub getL4FarmBackendStatusCtl    # ($farm_name)
 {
-	my $farm_name = shift;
-
+	my $farm_name     = shift;
 	my $farm_filename = &getFarmFile( $farm_name );
 	my @output;
 
 	tie my @content, 'Tie::File', "$configdir\/$farm_filename";
-	@output = grep /^\;server\;/, @content;
+	@output = grep { /^\;server\;/ } @content;
 	untie @content;
 
 	return @output;
@@ -1933,7 +1977,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	# Rename fw marks for this farm
 	&renameMarks( $farm_name, $new_farm_name );
 
-	my $farm       = &getL4FarmStruct( $new_farm_name );
+	$farm = &getL4FarmStruct( $new_farm_name );
 	my $apply_farm = $farm;
 	$apply_farm = $prev_farm if $$farm{ lbalg } eq 'prio';
 
@@ -2054,17 +2098,17 @@ sub getL4FarmStruct
 
 	$farm{ filename } = &getFarmFile( $farm{ name } );
 	$farm{ nattype }  = &getFarmNatType( $farm{ name } );
-	$farm{ lbalg }    = &getFarmAlgorithm( $farm{ name } );
-	$farm{ vip }      = &getFarmVip( 'vip', $farm{ name } );
-	$farm{ vport }    = &getFarmVip( 'vipp', $farm{ name } );
+	$farm{ lbalg }    = &getL4FarmAlgorithm( $farm{ name } );
+	$farm{ vip }      = &getL4FarmVip( 'vip', $farm{ name } );
+	$farm{ vport }    = &getL4FarmVip( 'vipp', $farm{ name } );
 	$farm{ vproto }   = &getFarmProto( $farm{ name } );
-	$farm{ persist }  = &getFarmPersistence( $farm{ name } );
-	$farm{ ttl }      = ( &getFarmMaxClientTime( $farm{ name } ) )[0];
+	$farm{ persist }  = &getL4FarmPersistence( $farm{ name } );
+	$farm{ ttl }      = ( &getL4FarmMaxClientTime( $farm{ name } ) )[0];
 	$farm{ proto }    = &getL4ProtocolTransportLayer( $farm{ vproto } );
 	$farm{ status }   = &getFarmStatus( $farm{ name } );
 	$farm{ servers }  = [];
 
-	foreach my $server_line ( &getFarmServers( $farm{ name } ) )
+	foreach my $server_line ( &getL4FarmServers( $farm{ name } ) )
 	{
 		push ( @{ $farm{ servers } }, &getL4ServerStruct( \%farm, $server_line ) );
 	}
@@ -2206,6 +2250,7 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	my $server_id = shift;    # input: server id number
 
 	my $status = 0;
+	my $rules;
 
 	&logfile( "_runL4ServerStart << farm_name:$farm_name server_id:$server_id" )
 	  if &debug;
@@ -2228,9 +2273,6 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	# initialize a farm struct
 	my %farm   = %{ &getL4FarmStruct( $farm_name ) };
 	my %server = %{ $farm{ servers }[$server_id] };
-
-	my $rules;
-	my $status;
 
 	## Applying all rules ##
 	$rules = &getL4ServerActionRules( \%farm, \%server, 'on' );
