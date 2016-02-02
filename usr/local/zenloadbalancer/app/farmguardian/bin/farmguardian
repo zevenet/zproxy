@@ -36,103 +36,126 @@
 #[farmname]:::[timeout]:::[timetocheck]:::[script args]:::[logs]
 
 use Proc::Daemon;
-use POSIX( WNOHANG );
+use POSIX ":sys_wait_h";
 
 require '/usr/local/zenloadbalancer/config/global.conf';
 require '/usr/local/zenloadbalancer/www/functions.cgi';
 
 # print usage help if no argument was given
-if ( $ARGV[0] eq "" )
+if ( !defined $ARGV[0] )
 {
 	print
 	  "FarmGuardian V3.0. Check Backends Servers in a Farm and enable or disable the load balancing\n";
-	print "	help: farmguardian farmname [-s <service>] [-l]\n";
+	print "\thelp: farmguardian farmname [-s <service>] [-l]\n";
 	print
-	  "		-s <service>	: Launch FarmGuardian for a certain HTTP/S farm service\n";
-	print "		-l 		: Active logs in $farmguardian_logs directory\n";
+	  "\t\t-s <service>\t: Launch FarmGuardian for a certain HTTP/S farm service\n";
+	print "\t\t-l\t\t: Active logs in $farmguardian_logs directory\n";
 
 	exit 0;
 }
 
 # declare global variables
-my $service;
-my $fservice;
+my $farmname = "$ARGV[0]";
+my $service  = '';
+my $fservice = '';
 
 # handle service argument
 if ( $ARGV[1] eq "-s" )
 {
-	$service  = $ARGV[2];
+	$service  = "$ARGV[2]";
 	$fservice = "${service}_";
 }
 
 # declare config files/path
-my $pidfile    = $ARGV[0] . "_${fservice}guardian.pid";
-my $file       = $ARGV[0] . "_${fservice}guardian.conf";
+my $pidfile    = "${farmname}_${fservice}guardian.pid";
+my $file       = "${farmname}_${fservice}guardian.conf";
 my $fileconfig = "$configdir/$file";
 
-# handle log argument
-if ( $ARGV[1] eq "-l" || $ARGV[3] eq "-l" )
+### logging ###
+my $logfile = "/dev/null";
+my $logging = 'disabled';
+
+if ( "$ARGV[1]" eq '-l' || "$ARGV[3]" eq '-l' )
 {
-	open STDERR, '>>', "$farmguardian_logs/$ARGV[0]_${fservice}farmguardian.log"
-	  or die;
-	open STDOUT, '>>', "$farmguardian_logs/$ARGV[0]_${fservice}farmguardian.log"
-	  or die;
-}
-else
-{
-	open STDERR, '>>', "/dev/null" or die;
-	open STDOUT, '>>', "/dev/null" or die;
+	$logfile = "$farmguardian_logs/${farmname}_${fservice}farmguardian.log";
+	$logging = 'enabled';
 }
 
-# abort if $fileconfig does not exist
+open STDERR, '>>', "$logfile" or die;
+open STDOUT, '>>', "$logfile" or die;
+
+### check for farmguardian configuration file available ###
+my $timetocheck;
+my $check_cmd_tpl;
+my $enabled;
+
 if ( !-e $fileconfig )
 {
 	print "Abort: file $fileconfig not found\n";
 	exit -1;
 }
-
-# read configuration file
-open FI, "$fileconfig";
-while ( <FI> )
+else
 {
-	$line = $_;
-}
-close FI;
+	my $line;
 
-# $line have the last line in a file
-my @args          = split ( ":::", $line );
-my $farmname      = @args[0];
-my $timetocheck   = @args[1];
-my $check_cmd_tpl = @args[2];
-my $enabled       = @args[3];
+	open ( my $fi, '<', "$fileconfig" )
+	  or die "cannot open file $fileconfig: $!";
+
+	while ( <$fi> )
+	{
+		$line = $_;    # read last line
+	}
+
+	close $fi;
+
+	my @args = split ( ":::", $line );
+	$timetocheck   = $args[1];
+	$check_cmd_tpl = $args[2];
+	$enabled       = $args[3];
+}
 
 # check if the service is enabled in the current farm
-if ( $enabled ne "true" )
+if ( $enabled ne 'true' )
 {
-	print "FarmGuardian is $enabled in the farm $farm - $service\n";
+	print "FarmGuardian is disabled in the farm $farmname - $service\n";
 	exit 0;
 }
 
 # create farmgardian pidfile
 my $filepid = "/var/run/$pidfile";
-open FO, "> $filepid";
-print FO "$$";
-close FO;
+{
+	open ( my $fo, '>', "$filepid" )
+	  or die "cannot open file $fileconfig: $!";
+	print $fo "$$";
+	close $fo;
+}
 
 #Ask for the farm type
 my $type = &getFarmType( $farmname );
+$type = 'http' if $type eq 'https';
 
 #Get the admin port/socket about farm
-my $portadmin = &getFarmPort( $farmname );
+my $portadmin;
+$portadmin = &getFarmPort( $farmname ) if $type ne 'l4xnat';    # http or tcp
 
 #Get servers list
 while ( 1 )
 {
+	my @backendid;
+	my @backendserv;
+	my @backendport;
+	my @backendstatus;
+	my $blacklist;
+	my $timeout = '';
+	my $i       = 0;
+	my $j       = 0;
+
 	# Check if the log file exists
-	$filesize = -s "$farmguardian_logs/$ARGV[0]_${fservice}farmguardian.log";
+	my $filesize = -s "$farmguardian_logs/$ARGV[0]_${fservice}farmguardian.log";
+
 	if (
 		 (
-		   ( $ARGV[1] eq "-l" || $ARGV[3] eq -l )
+		   ( $logging == 'enabled' )
 		   && !( -e "$farmguardian_logs/$ARGV[0]_${fservice}farmguardian.log" )
 		 )
 		 || ( $filesize == 0 )
@@ -150,35 +173,45 @@ while ( 1 )
 	### Collect variable values for the diferent farm types ###
 
 	# Collect TCP/UDP farm variables values
-	if ( $type eq "tcp" || $type eq "udp" )
+	if ( $type eq 'tcp' || $type eq 'udp' )
 	{
 		my @run = `$pen_ctl 127.0.0.1:$portadmin servers`;
-		$errorcode = $?;
-		if ( $errorcode != 0 )
+
+		if ( $? != 0 )
 		{
 			print "Farm $farmname is down, abort.\n";
 			exit 1;
 		}
-		$i = 0;
-		foreach $line ( @run )
+
+		foreach my $line ( @run )
 		{
-			@lines = split ( "\ ", $line );
-			if ( @lines[2] ne "0.0.0.0" )
+			my @lines = split ( ' ', $line );
+
+			if ( $lines[2] ne '0.0.0.0' )
 			{
-				@backendid[$i]   = @lines[0];
-				@backendserv[$i] = @lines[2];
-				@backendport[$i] = @lines[4];
+				$backendid[$i]   = $lines[0];
+				$backendserv[$i] = $lines[2];
+				$backendport[$i] = $lines[4];
+
+				#~ $backendstatus[$i] = '';
 				$i++;
 			}
 		}
+
+		# get the farm's timeout
+		$timeout = `$pen_ctl 127.0.0.1:$portadmin timeout`;
+		chomp ( $timeout );
+
+		$blacklist = `$pen_ctl 127.0.0.1:$portadmin blacklist`;
+		chomp ( $blacklist );
 	}
 
 	# Collect HTTP/S farm variables values
-	elsif ( $type eq "http" || $type eq "https" )
+	elsif ( $type eq 'http' )
 	{
-		my @run = `$poundctl -c $portadmin`;
-		$errorcode = $?;
-		if ( $errorcode != 0 )
+		system ( "$poundctl -c $portadmin 2>&1 >/dev/null" );
+
+		if ( $? != 0 )
 		{
 			print "Farm $farmname is down, abort.\n";
 			exit 1;
@@ -186,219 +219,173 @@ while ( 1 )
 
 		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
 
-		#print "--> BACKENDS: \n$backendsvs";
-		my @be = split ( "\n", $backendsvs );
-		$i = 0;
+		foreach my $line ( split ( "\n", $backendsvs ) )
+		{
+			my @subbe = split ( ' ', $line );
+			$backendid[$i]     = $subbe[1];
+			$backendserv[$i]   = $subbe[3];
+			$backendport[$i]   = $subbe[5];
+			$backendstatus[$i] = &getHTTPBackendStatusFromFile( $farmname, $i, $service );
+			$i++;
+		}
+
+		# get the farm's timeout
+		#~ $timeout = &getFarmTimeout( $farmname );
+	}
+	elsif ( $type eq 'l4xnat' )    # Collect L4xNAT farm variables values
+	{
+		my @be = &getL4FarmBackendStatusCtl( $farmname );
+
 		foreach my $line ( @be )
 		{
-			my @subbe = split ( "\ ", $line );
-			@backendid[$i]     = @subbe[1];
-			@backendserv[$i]   = @subbe[3];
-			@backendport[$i]   = @subbe[5];
-			@backendstatus[$i] = &getHTTPBackendStatusFromFile( $farmname, $i, $service );
-
-#print "--> DATA:\n $i @backendid[$i] @backendserv[$i] @backendport[$i] @backendstatus[$i]\n";
+			my @subbe = split ( ';', $line );
+			$backendid[$i]     = $i;
+			$backendserv[$i]   = $subbe[2];
+			$backendport[$i]   = $subbe[3];
+			$backendstatus[$i] = $subbe[7];
 			$i++;
 		}
 	}
-
-	# Collect L4xNAT farm variables values
-	elsif ( $type eq "l4xnat" )
-	{
-		my @be = &getFarmBackendStatusCtl( $farmname );
-		$i = 0;
-		foreach my $line ( @be )
-		{
-			my @subbe = split ( ";", $line );
-			@backendid[$i]     = $i;
-			@backendserv[$i]   = @subbe[2];
-			@backendport[$i]   = @subbe[3];
-			@backendstatus[$i] = @subbe[7];
-			$i++;
-		}
-	}
-
-	# pick up the farm's timeout
-	if ( $type eq "tcp" || $type eq "udp" )
-	{
-		$timeout = `$pen_ctl 127.0.0.1:$portadmin timeout`;
-		chomp ( $timeout );
-
-		$blacklist = `$pen_ctl 127.0.0.1:$portadmin blacklist`;
-		chomp ( $blacklist );
-	}
-	elsif ( $type eq "http" || $type eq "https" )
-	{
-		$timeout = &getFarmTimeout( $farmname );
-	}
-
-	#~ elsif ( $type eq "l4xnat" )
-	#~ {
-	#~ 	# l4xnat does not have timeout check ¿?
-	#~ }
 
 	# Use the default timetocheck as the timeout for the backends response
-	if ( $timeout eq "" )
+	if ( $timeout eq '' )
 	{
 		$timeout = $timetocheck;
 	}
-	print "The servers timeout is: $timeout\n";
 
-	my $j = 0;
-
-	# print farmguardian parameters for this farm
-	if ( $ARGV[1] eq "-l" || $ARGV[3] eq "-l" )
+	# print farm check details
+	if ( $logging == 'enabled' )
 	{
-		print "	checking:\n";
-		print "		farmname: $farmname\n";
-		print "		timeout: $timeout\n";
-		print "		blacklist: $blacklist\n";
-		print "		timetocheck: $timetocheck\n";
-		print "		portadmin: $portadmin\n";
-
-		while ( $j < $i )    # $i is the NumberOfBackends-1
-		{
-			print "		server[@backendid[$j]]: @backendserv[$j]:@backendport[$j]\n";
-			$j++;
-		}
-
-		print "		check: $check_cmd_tpl\n";
-		print "\n";
 		my $now = localtime time;
-		print "execution in $now ::\n";
+		print "$now - ";
+		print "farm $farmname - ";
+		print "timeout $timeout - ";
+		print "timetocheck $timetocheck - ";
+		print "blacklist $blacklist - " if defined $blacklist;    # TCP
+		print "portadmin $portadmin - " if defined $portadmin;
+		print "command $check_cmd_tpl\n";
 	}
-
-	# initialize $j to prepare the backend's loop
-	my $j = 0;
 
 	# backend loop. checking every backend.
   BACKEND_IDX:
-	while ( $j < $i )    # $i is the NumberOfBackends-1
+	while ( $j < $i )
 	{
-		if ( $ARGV[1] eq "-l" || $ARGV[3] eq "-l" )
+		if ( $logging == 'enabled' )
 		{
-			print "		server[@backendid[$j]]: @backendserv[$j]:@backendport[$j]\n";
+			print "server[$backendid[$j]] $backendserv[$j]:$backendport[$j]";
+			print " - status $backendstatus[$j]" if defined $backendstatus[$j];
 		}
-		print "Backend status $j: @backendstatus[$j]\n";
 
 		# jump to next backend if this one is in maintenance
-		if ( @backendstatus[$j] =~ /maintenance/ )
+		if ( $backendstatus[$j] =~ /maintenance/ )
 		{
 			$j++;
 			next BACKEND_IDX;
 		}
 
-		my $check_cmd = $check_cmd_tpl;
+		my $command = $check_cmd_tpl;
 
 		# substitute HOST and PORT variables for this backend's values
-		$check_cmd =~ s/HOST/$backendserv[$j]/;
-		$check_cmd =~ s/PORT/$backendport[$j]/;
+		$command =~ s/HOST/$backendserv[$j]/;
+		$command =~ s/PORT/$backendport[$j]/;
 
 		#execute the binary to check
-		#my $command = "adb shell cd /data/app; ./iperf -u -s -p 5001";
-		my $command = "$libexec_dir/$check_cmd";
+		$command = "$libexec_dir/$command";
 
-		#print "executing: $command\n";
 		my @output;
-		my $timedout = 0;
+		my $timedout  = 0;
+		my $errorcode = '';
 
 		# run actual backend check
 		eval {
-			local $SIG{ ALRM } = sub { die "Timeout\n" };
-			alarm $timeout;
-			print "command: $command\n";
+			local $SIG{ ALRM } = sub { return; };
+
+			#~ alarm $timeout;
+			$timedout  = 1 if ( alarm $timeout ) != 0;
 			@output    = `$command`;
 			$errorcode = $?;
 			alarm 0;
-		};
-
-		# control check eval outcome if failed
-		if ( $@ )
+		  }
+		  or do
 		{
-			warn "$command timed out.\n";
+			my $kid;
 			$timedout = 1;
+
 			do
 			{
-				my $kid = waitpid ( -1, WNOHANG );
-
-				#print "pid $kid exited\n";
+				$kid = waitpid ( -1, WNOHANG );
 			} while $kid > 0;
-		}
+		};
 
 		# being verbose the check output
-		if ( $ARGV[1] eq "-l" )
+		if ( $logging == 'enabled' )
 		{
-			print "timedout: $timedout \n";
-			print "errorcode: $errorcode \n";
+			print " - timedout $timedout - errorcode $errorcode\n";
 		}
 
 		### Enable backend
-		if ( $timedout == 0 && $errorcode == 0 && @backendstatus[$j] =~ /down/i )
+		if ( $timedout == 0 && $errorcode == 0 && $backendstatus[$j] =~ /down/i )
 		{
-			if ( $ARGV[1] eq "-l" )
+			if ( $logging == 'enabled' )
 			{
 				print
-				  "**execution OK in server $j\nerrorcode: $errorcode\ntimedout: $timedout\nbackend state: @backendstatus[$j]\n";
+				  "**execution OK in server $j - nerrorcode:$errorcode - timedout:$timedout - backend state:$backendstatus[$j]\n";
 			}
 
 			# Enabling backend for every type of farm supported
-			if ( $type eq "tcp" || $type eq "udp" )
+			if ( $type eq 'tcp' || $type eq 'udp' )
 			{
-				my $run = `$pen_ctl 127.0.0.1:$portadmin server $j blacklist 0`;
+				system ( "$pen_ctl 127.0.0.1:$portadmin server $j blacklist 0" );
 			}
-			elsif ( $type eq "http" || $type eq "https" )
+			elsif ( $type eq 'http' )
 			{
 				my $idsv = &getFarmVSI( $farmname, $service );
-				my $run = `$poundctl -c $portadmin -B 0 $idsv $j`;
-				&getFarmHttpBackendStatus( $farmname, $j, "active", $idsv );
+				system ( "$poundctl -c $portadmin -B 0 $idsv $j" );
+				&getFarmHttpBackendStatus( $farmname, $j, 'active', $idsv );
 			}
-			elsif ( $type eq "l4xnat" )
+			elsif ( $type eq 'l4xnat' )
 			{
-				&setFarmBackendStatus( $farmname, $j, "up" );
+				&setL4FarmBackendStatus( $farmname, $j, 'up' );
 			}
 
-			@backendstatus[$j] = "active";
+			$backendstatus[$j] = 'active';
 		}
 		### Disable backend
 		elsif (
-				( ( $timedout != 0 || $errorcode != 0 ) && @backendstatus[$j] ne "fgDOWN" )
-				|| (    ( $timedout != 0 || $errorcode != 0 )
-					 && @backendstatus[$j] eq "fgDOWN"
-					 && $type eq "tcp" )
+				( ( $timedout == 1 || $errorcode != 0 ) && $backendstatus[$j] ne 'fgDOWN' )
+				|| (    ( $timedout == 1 || $errorcode != 0 )
+					 && @backendstatus[$j] eq 'fgDOWN'
+					 && $type eq 'tcp' )
 		  )
 		{
-			if ( $ARGV[1] eq "-l" || $ARGV[3] eq "-l" )
+			if ( $logging == 'enabled' )
 			{
 				print "**execution error in ' $command ', output::**\n", @output;
 			}
 
 			# Disabling backend for every type of farm supported
 			#if exec error put in blacklist the server
-			if ( $type eq "tcp" || $type eq "udp" )
+			if ( $type eq 'tcp' || $type eq 'udp' )
 			{
-				my $run = `$pen_ctl 127.0.0.1:$portadmin server $j blacklist $blacklist`;
+				system ( "$pen_ctl 127.0.0.1:$portadmin server $j blacklist $blacklist" );
 			}
-			elsif ( $type eq "http" || $type eq "https" )
+			elsif ( $type eq 'http' )
 			{
 				my $idsv = &getFarmVSI( $farmname, $service );
-				my $run = `$poundctl -c $portadmin -b 0 $idsv $j`;
-				&getFarmHttpBackendStatus( $farmname, $j, "fgDOWN", $idsv );
+				system ( "$poundctl -c $portadmin -b 0 $idsv $j" );
+				&getFarmHttpBackendStatus( $farmname, $j, 'fgDOWN', $idsv );
 				&setFarmBackendsSessionsRemove( $farmname, $service, $j );
 			}
-			elsif ( $type eq "l4xnat" )
+			elsif ( $type eq 'l4xnat' )
 			{
-				&setFarmBackendStatus( $farmname, $j, "fgDOWN" );
+				&setL4FarmBackendStatus( $farmname, $j, 'fgDOWN' );
 			}
 
-			@backendstatus[$j] = "fgDOWN";
-		}
-		else
-		{
-			print "No state changed for the backend.\n";
+			$backendstatus[$j] = 'fgDOWN';
 		}
 
 		$j++;
 	}
+
 	sleep ( $timetocheck );
 }
-
