@@ -138,7 +138,6 @@ sub getNewMark    # ($farm_name)
 		last if defined $found;
 
 		my $num = sprintf ( "0x%x", $i );
-		my $num = $i;
 		if ( !grep { /^$num/x } @contents )
 		{
 			$found   = 'true';
@@ -806,7 +805,7 @@ sub getIptRuleReplace      # $return_code ( \%farm, \%server, $rule)
 	my $rule_num;          # possition to insert the rule
 
 	# if the rule exist
-	my $rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
+	$rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );
 
 	return &applyIptRuleAction( $rule, 'replace', $rule_num );
 }

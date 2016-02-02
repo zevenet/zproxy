@@ -723,8 +723,8 @@ sub getFarmBlacklist    # ($farm_name)
 				{
 					$admin_ip = $line_a[12];
 				}
-				my @blacklist = `$pen_ctl $admin_ip blacklist 2> /dev/null`;
-				if   ( @blacklist =~ /^[1-9].*/ ) { $output = "@blacklist"; }
+				my $blacklist = `$pen_ctl $admin_ip blacklist 2> /dev/null`;
+				if   ( $blacklist =~ /^[1-9].*/ ) { $output = $blacklist; }
 				else                              { $output = "-"; }
 			}
 		}
@@ -762,11 +762,11 @@ sub getTcpUdpFarmMaxConn    # ( $farm_name )
 				$admin_ip = $line_a[12];
 			}
 
-			my @conn_max = `$pen_ctl $admin_ip conn_max 2> /dev/null`;
+			my $conn_max = `$pen_ctl $admin_ip conn_max 2> /dev/null`;
 
-			if ( @conn_max =~ /^[1-9].*/ )
+			if ( $conn_max =~ /^[1-9].*/ )
 			{
-				$output = "@conn_max";
+				$output = $conn_max;
 			}
 			else
 			{
@@ -861,11 +861,11 @@ sub getTcpUdpFarmPid    # ($farm_name)
 			my @line_a      = split ( "\ ", $line );
 			my @ip_and_port = split ( ":",  $line_a[-2] );
 			my $admin_ip    = "$ip_and_port[0]:$ip_and_port[1]";
-			my @pid         = `$pen_ctl $admin_ip pid 2> /dev/null`;
+			my $pid         = `$pen_ctl $admin_ip pid 2> /dev/null`;
 
-			if ( @pid =~ /^[1-9].*/ )
+			if ( $pid =~ /^[1-9].*/ )
 			{
-				$output = "@pid";
+				$output = $pid;
 			}
 			else
 			{
