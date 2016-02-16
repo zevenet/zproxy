@@ -138,7 +138,6 @@ sub getNewMark    # ($farm_name)
 		last if defined $found;
 
 		my $num = sprintf ( "0x%x", $i );
-		my $num = $i;
 		if ( !grep { /^$num/x } @contents )
 		{
 			$found   = 'true';

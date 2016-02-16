@@ -1662,7 +1662,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	# add a new backend if not found
 	if ( $found_server eq 'false' )
 	{
-		my $mark = sprintf ( "0x%x", &getNewMark( $farm_name ) );
+		my $mark = &getNewMark( $farm_name );
 		push ( @contents, "\;server\;$rip\;$port\;$mark\;$weight\;$priority\;up\n" );
 		$output = $?;    # FIXME
 	}
