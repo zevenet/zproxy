@@ -128,9 +128,9 @@ $pingc="1";
 
 ## L4xNat - netfilter
 # Maximum recent ip list
-$recent_ip_list_tot="500000";
+$recent_ip_list_tot="6000";
 # Recent ip hash
-$recent_ip_list_hash_size="512000";
+$recent_ip_list_hash_size="6000";
 # Iptables lock filename
 $iptlock = "/tmp/iptables.lock";
 
