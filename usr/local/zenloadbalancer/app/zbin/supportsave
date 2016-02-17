@@ -23,8 +23,9 @@
 ###############################################################################
 
 tmp_name=`/bin/date +%Y%m%d_%H%M`
+hostname
 dir_backup="/tmp/supportsave_${tmp_name}"
-backup_to="/usr/local/zenloadbalancer/config /etc/iproute2/rt_tables /usr/local/zenloadbalancer/logs /var/log/messages* /var/log/syslog*";
+backup_to="/usr/local/zenloadbalancer/config /usr/local/zenloadbalancer/app/zenrrd/rrd /etc/iproute2/rt_tables /usr/local/zenloadbalancer/logs /var/log/messages* /var/log/syslog*";
 
 echo "Saving information for support in the path ${dir_backup}.tar.gz"
 /bin/mkdir $dir_backup
@@ -90,6 +91,9 @@ echo "--- CPU information ---" >> $dir_backup/system_resources.txt
 cat /proc/cpuinfo >> $dir_backup/system_resources.txt
 echo "--- TOP information ---" >> $dir_backup/system_resources.txt
 /usr/bin/top -b -n1 >> $dir_backup/system_resources.txt
+
+echo "Package list"
+dpkg -l >> $dir_backup/package_list.txt
 
 echo "Saving config and logs" 
 /bin/tar zcf $dir_backup/config_logs.tzr.gz $backup_to 2>/dev/null
