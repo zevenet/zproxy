@@ -96,6 +96,11 @@ if [ -f /usr/local/zenloadbalancer/app/zbin/zlbmigrationto402.sh ]; then
 	/usr/local/zenloadbalancer/app/zbin/zlbmigrationto402.sh
 fi
 
+# Fix fwmarks for L4xNAT backends
+if [ -f /usr/local/zenloadbalancer/app/zbin/fwmark_tag_fix.pl ]; then
+	/usr/local/zenloadbalancer/app/zbin/fwmark_tag_fix.pl
+fi
+
 if [ `ls /usr/local/zenloadbalancer/config/if_eth* 2>/dev/null | wc -l` -gt 0 ];
 then
 	echo "Restarting Zen Load Balancer web GUI..."
