@@ -259,11 +259,12 @@ sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 			$svice = "${svice}_";
 		}
 		$fgfile = "${fname}_${svice}guardian.conf";
+
+		&logfile(
+			  "running 'Create FarmGuardian $ttcheck $script $usefg $fglog' for $fname farm"
+		);
 	}
 
-	&logfile(
-		  "running 'Create FarmGuardian $ttcheck $script $usefg $fglog' for $fname farm"
-	);
 	if ( ( $ttcheck eq "" || $script eq "" ) && $usefg eq "true" )
 	{
 		return $output;

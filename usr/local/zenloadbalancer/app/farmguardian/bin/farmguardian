@@ -23,7 +23,7 @@
 #
 ###############################################################################
 
-##farmguardian 1.0
+##farmguardian 4.0
 #this script is a service that check all Bakends or servers in a farm
 #using a script to monitorice the status of backends.  If the execution script return
 # <> 0 this script put in blacklist the backendserver. This script check
@@ -39,13 +39,14 @@ use Proc::Daemon;
 use POSIX ":sys_wait_h";
 
 require '/usr/local/zenloadbalancer/config/global.conf';
-require '/usr/local/zenloadbalancer/www/functions.cgi';
+require '/usr/local/zenloadbalancer/www/functions_ext.cgi';
+require '/usr/local/zenloadbalancer/www/farms_functions.cgi';
 
 # print usage help if no argument was given
 if ( !defined $ARGV[0] )
 {
 	print
-	  "FarmGuardian V3.0. Check Backends Servers in a Farm and enable or disable the load balancing\n";
+	  "FarmGuardian v4.0. Check Backends Servers in a Farm and enable or disable the load balancing\n";
 	print "\thelp: farmguardian farmname [-s <service>] [-l]\n";
 	print
 	  "\t\t-s <service>\t: Launch FarmGuardian for a certain HTTP/S farm service\n";
@@ -134,6 +135,10 @@ my $filepid = "/var/run/$pidfile";
 my $type = &getFarmType( $farmname );
 $type = 'http' if $type eq 'https';
 
+require '/usr/local/zenloadbalancer/www/l4_functions.cgi' if $type eq 'l4xnat';
+require '/usr/local/zenloadbalancer/www/http_functions.cgi' if $type eq 'http';
+require '/usr/local/zenloadbalancer/www/tcpudp_functions.cgi' if $type =~ /(tcp|udp)/;
+
 #Get the admin port/socket about farm
 my $portadmin;
 $portadmin = &getFarmPort( $farmname ) if $type ne 'l4xnat';    # http or tcp
@@ -155,7 +160,7 @@ while ( 1 )
 
 	if (
 		 (
-		   ( $logging == 'enabled' )
+		   ( $logging eq 'enabled' )
 		   && !( -e "$farmguardian_logs/$ARGV[0]_${fservice}farmguardian.log" )
 		 )
 		 || ( $filesize == 0 )
@@ -193,7 +198,7 @@ while ( 1 )
 				$backendserv[$i] = $lines[2];
 				$backendport[$i] = $lines[4];
 
-				#~ $backendstatus[$i] = '';
+				$backendstatus[$i] = '';
 				$i++;
 			}
 		}
@@ -254,7 +259,7 @@ while ( 1 )
 	}
 
 	# print farm check details
-	if ( $logging == 'enabled' )
+	if ( $logging eq 'enabled' )
 	{
 		my $now = localtime time;
 		print "$now - ";
@@ -270,10 +275,10 @@ while ( 1 )
   BACKEND_IDX:
 	while ( $j < $i )
 	{
-		if ( $logging == 'enabled' )
+		if ( $logging eq 'enabled' )
 		{
 			print "server[$backendid[$j]] $backendserv[$j]:$backendport[$j]";
-			print " - status $backendstatus[$j]" if defined $backendstatus[$j];
+			print " - status $backendstatus[$j]" if $type !~ /(tcp|udp)/;
 		}
 
 		# jump to next backend if this one is in maintenance
@@ -318,15 +323,16 @@ while ( 1 )
 		};
 
 		# being verbose the check output
-		if ( $logging == 'enabled' )
+		if ( $logging eq 'enabled' )
 		{
+			local $| = 1;
 			print " - timedout $timedout - errorcode $errorcode\n";
 		}
 
 		### Enable backend
 		if ( $timedout == 0 && $errorcode == 0 && $backendstatus[$j] =~ /down/i )
 		{
-			if ( $logging == 'enabled' )
+			if ( $logging eq 'enabled' )
 			{
 				print
 				  "**execution OK in server $j - nerrorcode:$errorcode - timedout:$timedout - backend state:$backendstatus[$j]\n";
@@ -354,11 +360,11 @@ while ( 1 )
 		elsif (
 				( ( $timedout == 1 || $errorcode != 0 ) && $backendstatus[$j] ne 'fgDOWN' )
 				|| (    ( $timedout == 1 || $errorcode != 0 )
-					 && @backendstatus[$j] eq 'fgDOWN'
+					 && $backendstatus[$j] eq 'fgDOWN'
 					 && $type eq 'tcp' )
 		  )
 		{
-			if ( $logging == 'enabled' )
+			if ( $logging eq 'enabled' )
 			{
 				print "**execution error in ' $command ', output::**\n", @output;
 			}

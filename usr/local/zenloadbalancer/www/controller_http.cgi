@@ -701,7 +701,7 @@ if ( $action eq "editfarm-Service" )
 		 or $actualfgttcheck ne $timetocheck
 		 or $actualfgscript ne $check_script )
 	{
-		$fguardianconf = &getFarmGuardianFile( $fname, $service );
+		$fguardianconf = &getFarmGuardianFile( $farmname, $service );
 
 		$usefarmguardian =
 		  defined ( $usefarmguardian )
@@ -728,7 +728,8 @@ if ( $action eq "editfarm-Service" )
 			$usefarmguardian =~ s/\n//g;
 			&runFarmGuardianStop( $farmname, $service );
 			&logfile(
-					  "creating $farmname farmguardian configuration file in  $fguardianconf" );
+					  "creating $farmname farmguardian configuration file in $fguardianconf" )
+			  if !-f "$configdir/$fguardianconf";
 			$check_script =~ s/\"/\'/g;
 			$status =
 			  &runFarmGuardianCreate( $farmname, $timetocheck, $check_script,

@@ -33,6 +33,7 @@ use Data::Dumper;
 #~ our ( $basedir, $configdir, $logdir, $logfile, $timeouterrors, $filecluster, $confhttp, $ntp, $backupfor, $backupdir, $rttables, $globalcfg, $version, $cipher_pci, $buy_ssl, $url, $htpass, $zapikey, $filedns, $fileapt, $tar, $ifconfig_bin, $ip_bin, $pen_bin, $pen_ctl, $fdisk_bin, $df_bin, $sshkeygen, $ssh, $scp, $rsync, $ucarp, $pidof, $ps, $tail, $zcat, $datentp, $arping_bin, $ping_bin, $openssl, $unzip, $mv, $ls, $cp, $iptables, $modprobe, $lsmod, $netstatNat, $gdnsd, $l4sd, $bin_id, $conntrack, $pound, $poundctl, $poundtpl, $piddir, $fwmarksconf, $defaultgw, $defaultgwif, $pingc, $libexec_dir, $farmguardian, $farmguardian_dir, $farmguardian_logs, $rrdap_dir, $img_dir, $rrd_dir, $log_rrd, $zenino, $zeninopid, $zeninolog, $zenrsync, $zenlatup, $zenlatdown, $zenlatlog, $zenbackup );
 # End Debug ###
 
+require "/usr/local/zenloadbalancer/www/farmguardian_functions.cgi";
 require "/usr/local/zenloadbalancer/www/nf_functions.cgi";
 
 #check if the string is a valid multiport definition
