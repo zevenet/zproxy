@@ -269,15 +269,15 @@ if ( $action eq "editfarm-Parameters" )
 
 		$usefarmguardian =
 		  defined ( $usefarmguardian )
-		  ? 'true'
-		  : 'false';
+		  ? "true"
+		  : "false";
 
 		$farmguardianlog =
 		  defined ( $farmguardianlog )
-		  ? 'true'
-		  : 'false';
+		  ? "true"
+		  : "false";
 
-		if ( &isnumber( $timetocheck ) eq 'false' )
+		if ( &isnumber( $timetocheck ) eq "false" )
 		{
 			&errormsg( "Invalid check interval value $timetocheck, it must be numeric" );
 		}
@@ -290,10 +290,11 @@ if ( $action eq "editfarm-Parameters" )
 		{
 			$status = -1;
 			$usefarmguardian =~ s/\n//g;
-			&runFarmGuardianStop( $farmname, '' )
+			&runFarmGuardianStop( $farmname, "" )
 			  if ( &getFarmStatus( $farmname ) eq 'up' );
 			&logfile(
-					  "creating $farmname farmguardian configuration file in  $fguardianconf" );
+					  "creating $farmname farmguardian configuration file in $fguardianconf" )
+			  if !-f "$configdir/$fguardianconf";
 			$check_script =~ s/\"/\'/g;
 			$status =
 			  &runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
@@ -302,10 +303,9 @@ if ( $action eq "editfarm-Parameters" )
 			{
 				&successmsg(
 							 "The FarmGuardian service for the $farmname farm has been modified" );
-
-				if ( $usefarmguardian eq 'true' && &getFarmStatus( $farmname ) eq 'up' )
+				if ( $usefarmguardian eq "true" && &getFarmStatus( $farmname ) eq 'up' )
 				{
-					$status = &runFarmGuardianStart( $farmname, '' );
+					$status = &runFarmGuardianStart( $farmname, "" );
 					if ( $status != -1 )
 					{
 						&successmsg(

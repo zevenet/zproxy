@@ -38,13 +38,18 @@ require "/usr/local/zenloadbalancer/www/l4_functions.cgi";
 require "/usr/local/zenloadbalancer/www/gslb_functions.cgi";
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 require "/usr/local/zenloadbalancer/www/gui_functions.cgi";
-
-#~ require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
 require "/usr/local/zenloadbalancer/www/farmguardian_functions.cgi";
 require "/usr/local/zenloadbalancer/www/datalink_functions.cgi";
 require "/usr/local/zenloadbalancer/www/http_functions.cgi";
 require "/usr/local/zenloadbalancer/www/tcpudp_functions.cgi";
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
+require "/usr/local/zenloadbalancer/www/zapi_functions.cgi";
+require "/usr/local/zenloadbalancer/www/login_functions.cgi";
+require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";
+require "/usr/local/zenloadbalancer/www/gui_functions_ext.cgi";
+
+#~ require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
+#~ require "/usr/local/zenloadbalancer/www/plugins_functions.cgi";
 
 #function that check if variable is a number no float
 sub isnumber    # ($num)
@@ -202,18 +207,4 @@ sub uploadcerts                       # ()
 	  "<a href=\"uploadcerts.cgi\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/arrow_up.png' title=\"upload certificate\"></a>";
 }
 
-#insert info in log file
-sub logfile    # ($string)
-{
-	my $string = shift;
-
-	my $date = `date`;
-	$date =~ s/\n//g;
-	open FO, ">> $logfile";
-	print FO
-	  "$date - $ENV{'SERVER_NAME'} - $ENV{'REMOTE_ADDR'} - $ENV{'REMOTE_USER'} - $string\n";
-	close FO;
-}
-
-# do not remove this
 1;

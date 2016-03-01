@@ -21,11 +21,18 @@
 #
 ###############################################################################
 
-require "/usr/local/zenloadbalancer/www/zapi_functions.cgi";
-require "/usr/local/zenloadbalancer/www/login_functions.cgi";
+#insert info in log file
+sub logfile    # ($string)
+{
+	my $string = shift;
 
-require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";
-require "/usr/local/zenloadbalancer/www/gui_functions_ext.cgi";
+	my $date = `date`;
+	$date =~ s/\n//g;
+	open FO, ">> $logfile";
+	print FO
+	  "$date - $ENV{'SERVER_NAME'} - $ENV{'REMOTE_ADDR'} - $ENV{'REMOTE_USER'} - $string\n";
+	close FO;
+}
 
 #function that insert info through syslog
 #

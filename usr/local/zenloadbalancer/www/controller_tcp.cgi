@@ -509,7 +509,7 @@ if ( $action eq "editfarm-Parameters" )
 		 or $actualfgttcheck ne $timetocheck
 		 or $actualfgscript ne $check_script )
 	{
-		$fguardianconf = &getFarmGuardianFile( $fname, "" );
+		$fguardianconf = &getFarmGuardianFile( $farmname, "" );
 
 		if ( defined ( $usefarmguardian ) )
 		{
@@ -544,7 +544,8 @@ if ( $action eq "editfarm-Parameters" )
 			$usefarmguardian =~ s/\n//g;
 			&runFarmGuardianStop( $farmname, "" );
 			&logfile(
-					  "creating $farmname farmguardian configuration file in  $fguardianconf" );
+					  "creating $farmname farmguardian configuration file in $fguardianconf" )
+			  if !-f "$configdir/$fguardianconf";
 			$check_script =~ s/\"/\'/g;
 			$status =
 			  &runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
