@@ -44,9 +44,10 @@ h1 {
 	margin: auto;
 }
 .logo {
-	height: 75px;
+	height: 100px;
 	width: 500px;
 	background: url(../img/logo.png) no-repeat;
+	background-position: center;
 }
 .lg-body {
 	margin-top: 10px;

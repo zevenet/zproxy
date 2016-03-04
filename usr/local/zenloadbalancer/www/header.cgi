@@ -84,6 +84,6 @@ print "
   <!--<div id=\"cover\"></div>-->
   <!--- HEADER -->
   <div class=\"header\">
-    <a href=\"/index.cgi\"><img src=\"img/logo.png\" alt=\"Logo\" /></a>
+    <a href=\"/index.cgi\"><img src=\"img/logo_240px.png\" alt=\"Logo\" /></a>
   </div>";
 
