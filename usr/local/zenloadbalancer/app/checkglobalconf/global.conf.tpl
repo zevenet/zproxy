@@ -27,7 +27,7 @@ $rttables = "/etc/iproute2/rt_tables";
 #this file
 $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 #version ZEN
-$version="4.1.3";#update
+$version="4.1.4";#update
 #Cipher PCI
 $cipher_pci="kEECDH+ECDSA+AES128:kEECDH+ECDSA+AES256:kEECDH+AES128:kEECDH+AES256:kEDH+AES128:kEDH+AES256:DES-CBC3-SHA:+SHA:!aNULL:!eNULL:!LOW:!kECDH:!DSS:!MD5:!EXP:!PSK:!SRP:!CAMELLIA:!SEED";#update
 #BUY SSL Certificates
@@ -128,9 +128,9 @@ $pingc="1";
 
 ## L4xNat - netfilter
 # Maximum recent ip list
-$recent_ip_list_tot="6000";
+$recent_ip_list_tot="6000";#update
 # Recent ip hash
-$recent_ip_list_hash_size="6000";
+$recent_ip_list_hash_size="6000";#update
 # Iptables lock filename
 $iptlock = "/tmp/iptables.lock";
 
