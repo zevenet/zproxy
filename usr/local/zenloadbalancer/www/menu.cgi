@@ -35,10 +35,10 @@ if (    $id eq "2-1"
 	 || $id eq "2-3"
 	 || ( $id eq "1-2" && $action eq "managefarm" ) )
 {
-	$manageicon     = "img/nav/dash.png";
-	$monitoringicon = "img/nav/anlt-active.png";
-	$settingsicon   = "img/nav/widgets.png";
-	$abouticon      = "img/nav/typ.png";
+	$manageiconclass     = "";
+	$monitoringiconclass = "active";
+	$settingsiconclass   = "";
+	$abouticonclass      = "";
 }
 elsif (    $id eq "3-1"
 		|| $id eq "3-2"
@@ -46,34 +46,34 @@ elsif (    $id eq "3-1"
 		|| $id eq "3-4"
 		|| $id eq "3-5" )
 {
-	$manageicon     = "img/nav/dash.png";
-	$monitoringicon = "img/nav/anlt.png";
-	$settingsicon   = "img/nav/widgets-active.png";
-	$abouticon      = "img/nav/typ.png";
+	$manageiconclass     = "";
+	$monitoringiconclass = "";
+	$settingsiconclass   = "active";
+	$abouticonclass      = "";
 }
 elsif ( $id eq "4-1" || $id eq "4-2" )
 {
-	$manageicon     = "img/nav/dash.png";
-	$monitoringicon = "img/nav/anlt.png";
-	$settingsicon   = "img/nav/widgets.png";
-	$abouticon      = "img/nav/typ-active.png";
+	$manageiconclass     = "";
+	$monitoringiconclass = "";
+	$settingsiconclass   = "";
+	$abouticonclass      = "active";
 }
 elsif (    $id eq ""
 		|| $id eq "1-1"
 		|| $id eq "1-2"
 		|| $id eq "1-3" && $action ne "managefarm" )
 {
-	$manageicon     = "img/nav/dash-active.png";
-	$monitoringicon = "img/nav/anlt.png";
-	$settingsicon   = "img/nav/widgets.png";
-	$abouticon      = "img/nav/typ.png";
+	$manageiconclass     = "active";
+	$monitoringiconclass = "";
+	$settingsiconclass   = "";
+	$abouticonclass      = "";
 }
 else
 {
-	$manageicon     = "img/nav/dash.png";
-	$monitoringicon = "img/nav/anlt.png";
-	$settingsicon   = "img/nav/widgets.png";
-	$abouticon      = "img/nav/typ.png";
+	$manageiconclass     = "";
+	$monitoringiconclass = "";
+	$settingsiconclass   = "";
+	$abouticonclass      = "";
 }
 
 print "
@@ -90,7 +90,7 @@ print "
       <li>
         <ul id=\"top-nav\">
           <li class=\"nav-item\">
-            <a href=\"#\"><img src=\"$manageicon\" class=\"manage\" alt=\"Manage\" /><p>Manage</p></a>
+            <a href=\"#\"><i class=\"fa fa-cogs $manageiconclass\"></i><p>Manage</p></a>
 		    <ul class=\"sub-nav\">
               <li><a href=\"index.cgi?id=1-1\">Global View</a></li>
               <li><a href=\"index.cgi?id=1-2\">Farms</a></li>
@@ -98,7 +98,7 @@ print "
             </ul>
           </li>
           <li class=\"nav-item\">
-            <a href=\"#\"><img src=\"$monitoringicon\" class=\"monitoring\" alt=\"Monitoring\" /><p>Monitoring</p></a>
+            <a href=\"#\"><i class=\"fa fa-dashboard $monitoringiconclass\"></i><p>Monitoring</p></a>
 		    <ul class=\"sub-nav\">
               <li><a href=\"index.cgi?id=2-1\">Graphs</a></li>
               <li><a href=\"index.cgi?id=2-2\">Conns stats</a></li>
@@ -106,7 +106,7 @@ print "
             </ul>
           </li>
           <li class=\"nav-item\">
-            <a href=\"#\"><img src=\"$settingsicon\" class=\"settings\" alt=\"Settings\" /><p>Settings</p></a>
+            <a href=\"#\"><i class=\"fa fa-sliders $settingsiconclass\"></i><p>Settings</p></a>
 		    <ul class=\"sub-nav\">
               <li><a href=\"index.cgi?id=3-1\">Server</a></li>
               <li><a href=\"index.cgi?id=3-2\">Interfaces</a></li>
@@ -116,7 +116,7 @@ print "
             </ul>
           </li>
           <li class=\"nav-item\">
-            <a href=\"#\"><img src=\"$abouticon\" class=\"about\" alt=\"About\" /><p>About</p></a>
+            <a href=\"#\"><i class=\"fa fa-life-buoy $abouticonclass\"></i><p>About</p></a>
 		    <ul class=\"sub-nav\">
               <li><a href=\"index.cgi?id=4-1\">License</a></li>
               <li><a href=\"index.cgi?id=4-2\">Certificate Key</a></li>
