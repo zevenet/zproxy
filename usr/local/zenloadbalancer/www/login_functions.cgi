@@ -24,7 +24,7 @@
 my $passfile = "/etc/shadow";
 
 #login user
-sub login()
+sub login    #()
 {
 
 	use CGI::Session;
@@ -84,7 +84,7 @@ sub login()
 
 }
 
-sub logout()
+sub logout    #()
 {
 	use CGI::Session;
 	use CGI;
@@ -103,7 +103,7 @@ sub logout()
 	}
 }
 
-sub username()
+sub username    #()
 {
 	use CGI::Session;
 	use CGI;
@@ -117,9 +117,13 @@ sub username()
 	}
 }
 
-sub changePassword($user, $newpass, $verifypass)
+sub changePassword    #($user, $newpass, $verifypass)
 {
 	my ( $user, $newpass, $verifypass ) = @_;
+
+	##write \$ instead $
+	$newpass =~ s/\$/\\\$/g;
+	$verifypass =~ s/\$/\\\$/g;
 
 	my $output = 0;
 	chomp ( $newpass );
@@ -134,10 +138,11 @@ EOF
 	`;
 
 	$output = $?;
+
 	return $output;
 }
 
-sub checkValidUser($user,$curpasswd)
+sub checkValidUser    #($user,$curpasswd)
 {
 	my ( $user, $curpasswd ) = @_;
 
@@ -152,7 +157,7 @@ sub checkValidUser($user,$curpasswd)
 	return $output;
 }
 
-sub verifyPasswd($newpass, $trustedpass)
+sub verifyPasswd    #($newpass, $trustedpass)
 {
 	my ( $newpass, $trustedpass ) = @_;
 	if ( $newpass !~ /^$|\s+/ && $trustedpass !~ /^$|\s+/ )
@@ -165,15 +170,15 @@ sub verifyPasswd($newpass, $trustedpass)
 	}
 }
 
-sub checkLoggedZapiUser()
+sub checkLoggedZapiUser    #()
 {
 	my $allowed  = 0;
 	my $userpass = $ENV{ HTTP_AUTHORIZATION };
 	$userpass =~ s/Basic\ //i;
 	my $userpass_dec = decode_base64( $userpass );
 	my @user         = split ( ":", $userpass_dec );
-	my $user         = @user[0];
-	my $pass         = @user[1];
+	my $user         = $user[0];
+	my $pass         = $user[1];
 
 	if ( &checkValidUser( "zapi", $pass ) )
 	{
@@ -183,5 +188,5 @@ sub checkLoggedZapiUser()
 }
 
 # do not remove this
-1
+1;
 
