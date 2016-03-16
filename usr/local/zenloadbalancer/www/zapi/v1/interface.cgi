@@ -51,6 +51,7 @@ if ($origin ne 1){
 sub new_vini() {
 
         my $fdev = @_[0];
+		my $if = $fdev;
 
         my $out_p = [];
 
@@ -143,6 +144,32 @@ sub new_vini() {
                 });
                 print $output;
                 exit;
+	}
+	
+	# Check new IP address is not in use
+	my @activeips = &listallips();
+	for my $ip ( @activeips )
+	{
+		if ( $ip eq $json_obj->{ ip } )
+		{
+			# Error
+			$error = "true";
+			print $q->header(
+							  -type    => 'text/plain',
+							  -charset => 'utf-8',
+							  -status  => '400 Bad Request'
+			);
+			$errormsg = "IP Address $json_obj->{ip} is already in use.";
+			my $output = $j->encode(
+									 {
+									   description => "IP Address $json_obj->{ip}",
+									   error       => "true",
+									   message     => $errormsg
+									 }
+			);
+			print $output;
+			exit;		
+		}
 	}
 	
 	# Check netmask errors
@@ -260,7 +287,7 @@ sub new_vini() {
                         } else {
 				$error = "true";
 			}
-                        if ( $if =~ /\:/ ) {
+                        if ( $ifn =~ /\:/ ) {
                                 &writeConfigIf($ifn,"$ifn\:$json_obj->{ip}\:$netmaskvi\:$status\:\:");
                         } else {
                                 &writeRoutes($ifn);
@@ -426,46 +453,72 @@ sub new_vlan() {
                 exit;
 	}
 
-        # Check network interface errors
-        my $ifn = "$fdev\.$json_obj->{name}";
+    # Check network interface errors
+    my $ifn = "$fdev\.$json_obj->{name}";
 
-        my $exists = &ifexist($ifn);
-        if ($exists eq "true"){
-                # Error
-                $error = "true";
-                print $q->header(
-                   -type=> 'text/plain',
-                   -charset=> 'utf-8',
-                   -status=> '400 Bad Request'
-                );
-                $errormsg = "Vlan network interface $ifn already exists.";
-                my $output = $j->encode({
-                        description => "Vlan network interface $ifn",
-                        error => "true",
-                        message => $errormsg
-                });
-                print $output;
-                exit;
-        }
+    my $exists = &ifexist($ifn);
+    if ($exists eq "true"){
+            # Error
+            $error = "true";
+            print $q->header(
+               -type=> 'text/plain',
+               -charset=> 'utf-8',
+               -status=> '400 Bad Request'
+            );
+            $errormsg = "Vlan network interface $ifn already exists.";
+            my $output = $j->encode({
+                    description => "Vlan network interface $ifn",
+                    error => "true",
+                    message => $errormsg
+            });
+            print $output;
+            exit;
+    }
 
-        # Check address errors
-        if (&ipisok($json_obj->{ip}) eq "false"){
-                # Error
-                $error = "true";
-                print $q->header(
-                   -type=> 'text/plain',
-                   -charset=> 'utf-8',
-                   -status=> '400 Bad Request'
-                );
-                $errormsg = "IP Address $json_obj->{ip} structure is not ok.";
-                my $output = $j->encode({
-                        description => "IP Address $json_obj->{ip}",
-                        error => "true",
-                        message => $errormsg
-                });
-                print $output;
-                exit;
-        }
+    # Check address errors
+    if (&ipisok($json_obj->{ip}) eq "false"){
+            # Error
+            $error = "true";
+            print $q->header(
+               -type=> 'text/plain',
+               -charset=> 'utf-8',
+               -status=> '400 Bad Request'
+            );
+            $errormsg = "IP Address $json_obj->{ip} structure is not ok.";
+            my $output = $j->encode({
+                    description => "IP Address $json_obj->{ip}",
+                    error => "true",
+                    message => $errormsg
+            });
+            print $output;
+            exit;
+    }
+	
+	# Check new IP address is not in use
+	my @activeips = &listallips();
+	for my $ip ( @activeips )
+	{
+		if ( $ip eq $json_obj->{ ip } )
+		{
+			# Error
+			$error = "true";
+			print $q->header(
+							  -type    => 'text/plain',
+							  -charset => 'utf-8',
+							  -status  => '400 Bad Request'
+			);
+			$errormsg = "IP Address $json_obj->{ip} is already in use.";
+			my $output = $j->encode(
+									 {
+									   description => "IP Address $json_obj->{ip}",
+									   error       => "true",
+									   message     => $errormsg
+									 }
+			);
+			print $output;
+			exit;		
+		}
+	}
 
 	# Check netmask errors
         if ( $json_obj->{netmask} !~ /^$/ && &ipisok($json_obj->{netmask}) eq "false") {
@@ -888,61 +941,68 @@ sub get_interface() {
 
 sub ifaction() {
 
-        my $fdev = @_[0];
+    my $fdev = @_[0];
 	my $out_p = [];
 
-        use CGI;
-        use JSON;
+    use CGI;
+    use JSON;
 
-        my $q = CGI->new;
-        my $json = JSON->new;
-        my $data = $q->param('POSTDATA');
-        my $json_obj = $json->decode($data);
+    my $q = CGI->new;
+    my $json = JSON->new;
+    my $data = $q->param('POSTDATA');
+    my $json_obj = $json->decode($data);
 
-        my $j = JSON::XS->new->utf8->pretty(1);
-        $j->canonical($enabled);
+    my $j = JSON::XS->new->utf8->pretty(1);
+    $j->canonical($enabled);
 
 	$error = "false";
 
 	# Check interface errors
-        if ($fdev =~ /^$/){
-                # Error
-                $error = "true";
-                print $q->header(
-                   -type=> 'text/plain',
-                   -charset=> 'utf-8',
-                   -status=> '400 Bad Request'
-                );
-                $errormsg = "Interface name can't be empty";
-                my $output = $j->encode({
-                        description => "Interface $fdev",
-                        error => "true",
-                        message => $errormsg
-                });
-                print $output;
-                exit;
+        if ($fdev =~ /^$/)
+		{
+            # Error
+            $error = "true";
+            print $q->header(
+               -type=> 'text/plain',
+               -charset=> 'utf-8',
+               -status=> '400 Bad Request'
+            );
+            $errormsg = "Interface name can't be empty";
+            my $output = $j->encode(
+				{
+						description => "Interface $fdev",
+						error => "true",
+						message => $errormsg
+				}
+			);
+            print $output;
+            exit;
         }
 
-        if ($fdev =~ /\s+/ ){
-                # Error
-                $error = "true";
-                print $q->header(
-                   -type=> 'text/plain',
-                   -charset=> 'utf-8',
-                   -status=> '400 Bad Request'
-                );
-                $errormsg = "Interface name is not valid";
-                my $output = $j->encode({
-                        description => "Interface $fdev",
-                        error => "true",
-                        message => $errormsg
-                });
-                print $output;
-                exit;
+        if ($fdev =~ /\s+/ )
+		{
+            # Error
+            $error = "true";
+            print $q->header(
+               -type=> 'text/plain',
+               -charset=> 'utf-8',
+               -status=> '400 Bad Request'
+            );
+            $errormsg = "Interface name is not valid";
+            my $output = $j->encode(
+				{
+						description => "Interface $fdev",
+						error => "true",
+						message => $errormsg
+				}
+			);
+            print $output;
+            exit;
         }
 	
 	# Check input errors
-	if ($json_obj->{action} !~ /^up|down/){
+	if ($json_obj->{action} !~ /^up|down/)
+	{
 		# Error
                 $error = "true";
                 print $q->header(
@@ -951,39 +1011,80 @@ sub ifaction() {
                    -status=> '400 Bad Request'
                 );
                 $errormsg = "Action value must be up or down";
-                my $output = $j->encode({
-                        description => "Action value $json_obj->{action}",
-                        error => "true",
-                        message => $errormsg
-                });
+                my $output = $j->encode(
+					{
+							description => "Action value $json_obj->{action}",
+							error => "true",
+							message => $errormsg
+					}
+				);
                 print $output;
                 exit;
 	}
 	
-	# Everything is ok
+	# Open conf file to get the interface parameters
 	my $if = $fdev;
+	tie @array, 'Tie::File', "$configdir/if_$if\_conf", recsep => ':';
+	
+	# Check if the ip is already in use
+	my @activeips = &listallips();
+	for my $ip ( @activeips )
+	{
+		if ( $ip eq @array[2] && $json_obj->{ action } ne "down" )
+		{
+			# Error
+			$error = "true";
+			print $q->header(
+							  -type    => 'text/plain',
+							  -charset => 'utf-8',
+							  -status  => '400 Bad Request'
+			);
+			$errormsg = "Interface $if cannot be UP, IP Address @array[2] is already in use";
+			my $output = $j->encode(
+									 {
+									   description => "Interface $fdev",
+									   error       => "true",
+									   message     => $errormsg
+									 }
+			);
+			print $output;
+			exit;
+		}
+	}
+	
+	# Everything is ok
 	$exists = &ifexist($if);
-        if ($exists eq "false"){
-        	&createIf($if);
-        }
-        tie @array, 'Tie::File', "$configdir/if_$if\_conf", recsep => ':';
-        &logfile("running '$ifconfig_bin $if @array[2] netmask @array[3]' ");
-        if ($json_obj->{action} eq "up"){
+    if ($exists eq "false")
+	{
+    	&createIf($if);
+    }
+    
+    if ($json_obj->{action} eq "up")
+	{
+		&logfile("running '$ifconfig_bin $if @array[2] netmask @array[3]' ");
 		@eject=`$ifconfig_bin $if @array[2] netmask @array[3] 2> /dev/null`;
-        	&upIf($if);
+		&upIf($if);
 		$state = $?;
-		if ($state == 0){
+		if ($state == 0)
+		{
 			@array[4] = "up";
-		} else {
+		} 
+		else 
+		{
 			$error = "true";
 		}
 		&applyRoutes("local",$if,@array[5]);
-	} elsif ($json_obj->{action} eq "down"){
+	} 
+	elsif ($json_obj->{action} eq "down")
+	{
 		&delRoutes("local",$if);
 		&downIf($if);
-		if ( $? == 0) {
+		if ( $? == 0) 
+		{
 			@array[4] = "down";
-		} else {
+		} 
+		else 
+		{
 			$error = "true";
 		}
 	}

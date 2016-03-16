@@ -53,6 +53,7 @@ sub new_vini()
 {
 
 	my $fdev = @_[0];
+	my $if = $fdev;
 
 	my $out_p = [];
 
@@ -157,6 +158,32 @@ sub new_vini()
 		);
 		print $output;
 		exit;
+	}
+	
+	# Check new IP address is not in use
+	my @activeips = &listallips();
+	for my $ip ( @activeips )
+	{
+		if ( $ip eq $json_obj->{ ip } )
+		{
+			# Error
+			$error = "true";
+			print $q->header(
+							  -type    => 'text/plain',
+							  -charset => 'utf-8',
+							  -status  => '400 Bad Request'
+			);
+			$errormsg = "IP Address $json_obj->{ip} is already in use.";
+			my $output = $j->encode(
+									 {
+									   description => "IP Address $json_obj->{ip}",
+									   error       => "true",
+									   message     => $errormsg
+									 }
+			);
+			print $output;
+			exit;		
+		}
 	}
 
 	# Check netmask errors
@@ -299,7 +326,7 @@ sub new_vini()
 		{
 			$error = "true";
 		}
-		if ( $if =~ /\:/ )
+		if ( $ifn =~ /\:/ )
 		{
 			&writeConfigIf( $ifn, "$ifn\:$json_obj->{ip}\:$netmaskvi\:$status\:\:" );
 		}
@@ -537,6 +564,32 @@ sub new_vlan()
 		);
 		print $output;
 		exit;
+	}
+	
+	# Check new IP address is not in use
+	my @activeips = &listallips();
+	for my $ip ( @activeips )
+	{
+		if ( $ip eq $json_obj->{ ip } )
+		{
+			# Error
+			$error = "true";
+			print $q->header(
+							  -type    => 'text/plain',
+							  -charset => 'utf-8',
+							  -status  => '400 Bad Request'
+			);
+			$errormsg = "IP Address $json_obj->{ip} is already in use.";
+			my $output = $j->encode(
+									 {
+									   description => "IP Address $json_obj->{ip}",
+									   error       => "true",
+									   message     => $errormsg
+									 }
+			);
+			print $output;
+			exit;		
+		}
 	}
 
 	# Check netmask errors
@@ -1126,17 +1179,47 @@ sub ifaction()
 		exit;
 	}
 
-	# Everything is ok
+	# Open conf file to get the interface parameters
 	my $if = $fdev;
+	tie @array, 'Tie::File', "$configdir/if_$if\_conf", recsep => ':';
+	
+	# Check if the ip is already in use
+	my @activeips = &listallips();
+	for my $ip ( @activeips )
+	{
+		if ( $ip eq @array[2] && $json_obj->{ action } ne "down" )
+		{
+			# Error
+			$error = "true";
+			print $q->header(
+							  -type    => 'text/plain',
+							  -charset => 'utf-8',
+							  -status  => '400 Bad Request'
+			);
+			$errormsg = "Interface $if cannot be UP, IP Address @array[2] is already in use";
+			my $output = $j->encode(
+									 {
+									   description => "Interface $fdev",
+									   error       => "true",
+									   message     => $errormsg
+									 }
+			);
+			print $output;
+			exit;
+		}
+	}
+	
+	# Everything is ok
 	$exists = &ifexist( $if );
 	if ( $exists eq "false" )
 	{
 		&createIf( $if );
 	}
-	tie @array, 'Tie::File', "$configdir/if_$if\_conf", recsep => ':';
-	&logfile( "running '$ifconfig_bin $if @array[2] netmask @array[3]' " );
+	
+	# Case action = up
 	if ( $json_obj->{ action } eq "up" )
 	{
+		&logfile( "running '$ifconfig_bin $if @array[2] netmask @array[3]' " );
 		@eject = `$ifconfig_bin $if @array[2] netmask @array[3] 2> /dev/null`;
 		&upIf( $if );
 		$state = $?;
@@ -1150,6 +1233,7 @@ sub ifaction()
 		}
 		&applyRoutes( "local", $if, @array[5] );
 	}
+	# Case action = down
 	elsif ( $json_obj->{ action } eq "down" )
 	{
 		&delRoutes( "local", $if );
