@@ -663,7 +663,7 @@ if ( ( $rhost && $lhost && $rip && $lip && $rip && $vipcl && $clstatus ) )
 	my @ucarppidr =
 	  `ssh -o \"ConnectTimeout=10\" -o \"StrictHostKeyChecking=no\" root\@$rip \"pidof -x ucarp \" 2>&1`;
 	print "Zen latency ";
-	if ( @ucarppidr )
+	if ( @ucarppidr[0] =~ /^[0-9]/ )
 	{
 		print "is <b>UP</b>\n";
 	}
@@ -731,7 +731,7 @@ if ( ( $rhost && $lhost && $rip && $lip && $rip && $vipcl && $clstatus ) )
 	$activeino1 = "false";
 	$activeino2 = "false";
 
-	if ( @zeninopidl )
+	if ( @zeninopidl[0] =~ /^[0-9]/ )
 	{
 		print "<b>$lhost</b>\n";
 		$zeninorun  = "true";
@@ -742,7 +742,7 @@ if ( ( $rhost && $lhost && $rip && $lip && $rip && $vipcl && $clstatus ) )
 	my @zeninopidr =
 	  `ssh -o \"ConnectTimeout=10\" -o \"StrictHostKeyChecking=no\" root\@$rip "pidof -x zeninotify.pl" `;
 
-	if ( @zeninopidr )
+	if ( @zeninopidr[0] =~ /^[0-9]/ )
 	{
 		print "<b>$rhost</b>\n";
 		$zeninorun  = "true";
@@ -755,7 +755,7 @@ if ( ( $rhost && $lhost && $rip && $lip && $rip && $vipcl && $clstatus ) )
 		$zeninorun = "false";
 	}
 
-	if ( @zeninopidr && @zeninopidl )
+	if ( @zeninopidr[0] =~ /^[0-9]/ && @zeninopidl[0] =~ /^[0-9]/ )
 	{
 		$error = "true";
 	}
