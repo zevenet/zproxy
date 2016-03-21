@@ -1437,6 +1437,8 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 	my ( $farm_name, @content ) = @_;
 
 	my @backends_data;
+	my @serviceline;
+	my $service;
 
 	if ( !@content )
 	{
@@ -1451,6 +1453,7 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 			@serviceline = split ( "\ ", $_ );
 			$serviceline[2] =~ s/"//g;
 			chomp ( $serviceline[2] );
+			$service = $serviceline[2];
 		}
 		if ( $_ =~ /Backend/ )
 		{
@@ -1472,7 +1475,7 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 			{
 				#Checkstatusfile
 				$status_backend =
-				  &getHTTPBackendStatusFromFile( $farm_name, $backends[0], $serviceline[2] );
+				  &getHTTPBackendStatusFromFile( $farm_name, $backends[0], $service );
 			}
 			elsif ( $status_backend eq "alive" )
 			{
@@ -1509,7 +1512,6 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
-
 	my $index;
 	my $line;
 	my $stfile = "$configdir\/$farm_name\_status.cfg";
