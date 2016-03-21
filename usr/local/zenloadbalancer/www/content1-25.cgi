@@ -150,17 +150,19 @@ if ( $viewtableclients eq "yes" )
 {
 	print
 	  "<p class=\"grid_12\"><input type=\"submit\" class=\"button grey\" value=\"Dismiss sessions status table\"></p>";
+	print
+	  "<input type=\"hidden\" name=\"viewtableclients\" value=\"no\">";
 }
 else
 {
 	print
 	  "<p class=\"grid_12\"><input type=\"submit\" class=\"button grey\" value=\"Show sessions status table\"></p>";
+	print
+	  "<input type=\"hidden\" name=\"viewtableclients\" value=\"yes\">";
 }
 print "<input type=\"hidden\" name=\"id\" value=\"1-2\">";
 print "<input type=\"hidden\" name=\"action\" value=\"managefarm\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-print
-  "<input type=\"hidden\" name=\"viewtableclients\" value=\"$viewtableclients\">";
 print "</form>";
 
 my @sessions = &getFarmBackendsClientsList( $farmname, @content );

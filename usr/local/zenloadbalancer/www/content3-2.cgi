@@ -159,6 +159,17 @@ elsif (    $action eq "Save & Up!"
 		&errormsg( "IP Address $newip structure is not ok" );
 		$swaddif = "false";
 	}
+	
+	# check if the new ip is already in use
+	my @activeips = &listallips();
+	for my $ip ( @activeips )
+	{
+		if ( $ip eq $newip )
+		{
+			&errormsg( "IP Address $newip is already in use, please insert a valid IP." );
+			$swaddif = "false";
+		}
+	}
 
 	# check if the new netmask is correct, if empty don't worry
 	if ( $netmask !~ /^$/ && &ipisok( $netmask ) eq "false" )
@@ -236,29 +247,49 @@ elsif ( $action eq "upif" )
 	if ( $if !~ /^$/ )
 	{
 		$exists = &ifexist( $if );
+		my $error = "false";
 
 		if ( $exists eq "false" )
 		{
 			&createIf( $if );
 		}
 
+		# open config file to get the interface parameters
 		tie @array, 'Tie::File', "$configdir/if_$if\_conf", recsep => ':';
-		&logfile( "running '$ifconfig_bin $if @array[2] netmask @array[3]' " );
-		@eject = `$ifconfig_bin $if @array[2] netmask @array[3] 2> /dev/null`;
-		&upIf( $if );
-		$state = $?;
-
-		if ( $state == 0 )
+		
+		# check if the ip is already in use
+		my @activeips = &listallips();
+		for my $ip ( @activeips )
 		{
-			@array[4] = "up";
-			&successmsg( "Network interface $if is now UP" );
+			if ( $ip eq @array[2] )
+			{
+				&errormsg( "Interface $if is not UP, IP Address @array[2] is already in use." );
+				$error = "true";
+			}
 		}
-		else
+		
+		# check there is no error
+		if ( $error eq "false" )
 		{
-			&errormsg( "Interface $if is not UP, bad configuration or duplicate ip" );
-		}
+			&logfile( "running '$ifconfig_bin $if @array[2] netmask @array[3]' " );
+			@eject = `$ifconfig_bin $if @array[2] netmask @array[3] 2> /dev/null`;
+			&upIf( $if );
+			$state = $?;
 
-		&applyRoutes( "local", $if, @array[5] );
+			if ( $state == 0 )
+			{
+				@array[4] = "up";
+				&successmsg( "Network interface $if is now UP" );
+			}
+			else
+			{
+				&errormsg( "Interface $if cannot be UP, bad configuration or duplicate ip" );
+			}
+
+			&applyRoutes( "local", $if, @array[5] );
+		}
+		
+		# close config file
 		untie @array;
 	}
 	else
