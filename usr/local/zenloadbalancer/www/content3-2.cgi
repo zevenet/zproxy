@@ -159,7 +159,7 @@ elsif (    $action eq "Save & Up!"
 		&errormsg( "IP Address $newip structure is not ok" );
 		$swaddif = "false";
 	}
-	
+
 	# check if the new ip is already in use
 	my @activeips = &listallips();
 	for my $ip ( @activeips )
@@ -256,7 +256,7 @@ elsif ( $action eq "upif" )
 
 		# open config file to get the interface parameters
 		tie @array, 'Tie::File', "$configdir/if_$if\_conf", recsep => ':';
-		
+
 		# check if the ip is already in use
 		my @activeips = &listallips();
 		for my $ip ( @activeips )
@@ -267,7 +267,7 @@ elsif ( $action eq "upif" )
 				$error = "true";
 			}
 		}
-		
+
 		# check there is no error
 		if ( $error eq "false" )
 		{
@@ -288,7 +288,7 @@ elsif ( $action eq "upif" )
 
 			&applyRoutes( "local", $if, @array[5] );
 		}
-		
+
 		# close config file
 		untie @array;
 	}
