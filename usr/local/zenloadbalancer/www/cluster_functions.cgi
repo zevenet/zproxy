@@ -538,7 +538,7 @@ sub setClusterNodeOnMaintenance
 
 sub setClusterNodeOffMaintenance
 {
-	my ( $cable, $ifname, $deadratio, $lip, $idcluster, $vipcl, $typecl ) = @_;
+	my ( $cable, $ifname, $deadratio, $lip, $idcluster, $vipcl, $typecl ,$lhost, $rhost ) = @_;
 
 	my $return_code;
 	my ( $rifname ) = split ( ":", $ifname );

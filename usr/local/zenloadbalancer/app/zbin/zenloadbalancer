@@ -384,7 +384,7 @@ if ( $eject eq "start" )
 			 $lhost,  $lip,      $rhost, $rip,       $vipcl, $ifname,
 			 $typecl, $clstatus, $cable, $idcluster, $deadratio
 		) = &getClusterConfig();
-
+		
 		print "Cluster file exist\n";
 
 		if ( $clstatus =~ /UP/ )
@@ -421,10 +421,10 @@ if ( $eject eq "start" )
 			if    ( $typecl =~ /^equal$/ )       { print "CL_TYPE: equal\n"; }
 			elsif ( $typecl =~ /$lhost-$rhost/ ) { print "CL_TYPE: M-B, Master node\n"; }
 			else                                 { print "CL_TYPE: M-B Backup node\n"; }
-
-			&setClusterNodeOffMaintenance( $cable,     $ifname, $deadratio, $lip,
-										   $idcluster, $vipcl,  $typecl );
-
+			
+			&setClusterNodeOffMaintenance( $cable, $ifname, $deadratio, $lip,
+										   $idcluster, $vipcl,  $typecl, $lhost, $rhost );
+			
 			#check the gui interface
 			print "Running GUI interface\n";
 			$filehttp = "";
