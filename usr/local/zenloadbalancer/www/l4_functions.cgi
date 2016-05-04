@@ -1503,6 +1503,8 @@ sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 		close FI;
 	}
 
+	&_runL4FarmStart( $farm_name );
+
 	return $output;    # FIXME
 }
 
