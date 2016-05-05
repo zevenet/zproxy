@@ -157,14 +157,19 @@ sub getNumberOfFarmTypeRunning
 	my $type    = shift;    # input value
 	my $counter = 0;        # return value
 
-	#
 	foreach my $farm_name ( &getFarmNameList() )
 	{
 		# count if requested farm type and running
-		$counter++ if ( &getFarmType( $farm_name ) eq $type && &getFarmStatus eq 'up' );
+		my $current_type = &getFarmType( $farm_name );
+		my $current_status = &getFarmStatus( $farm_name );
+
+		if ( $current_type eq $type && $current_status eq 'up' )
+		{
+			$counter++;
+		}
 	}
 
-	#~ &logfile( "getNumberOfFarmTypeRunning: $counter" );    ##################
+	#~ &logfile( "getNumberOfFarmTypeRunning: $type -> $counter" );  ########
 
 	return $counter;
 }

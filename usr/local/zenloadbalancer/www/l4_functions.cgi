@@ -1468,15 +1468,15 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	$status =
 	  &deleteIptRules( "farm", $farm_name, "nat", "POSTROUTING", @allrules );
 
-	&setIptConnmarkRestore();
-	&setIptConnmarkSave();
-
 	# Disable active l4xnat file
 	unlink ( "$piddir\/$farm_name\_l4xnat.pid" );
 	if ( -e "$piddir\/$farm_name\_l4xnat.pid" )
 	{
 		$status = -1;
 	}
+
+	&setIptConnmarkRestore();
+	&setIptConnmarkSave();
 
 	return $status;
 }
