@@ -2028,14 +2028,7 @@ sub modify_services()
 		if ( exists ( $json_obj->{ redirect } ) )
 		{
 			my $redirect = uri_unescape( $json_obj->{ redirect } );
-			if ( $redirect =~ /^$/ )
-			{
-				$error = "true";
-				&logfile(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid redirect, can't be blank."
-				);
-			}
-			elsif ( $redirect =~ /^http\:\/\//i || $redirect =~ /^https:\/\//i )
+			if ( $redirect =~ /^http\:\/\//i || $redirect =~ /^https:\/\//i || $redirect =~ /^$/ )
 			{
 				&setFarmVS( $farmname, $service, "redirect", $redirect );
 			}
