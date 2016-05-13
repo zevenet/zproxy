@@ -50,26 +50,31 @@ print "<p class=\"form-label\"><b>Farm Virtual IP and Virtual port</b></p>";
 $vip   = &getFarmVip( "vip",  $farmname );
 $vport = &getFarmVip( "vipp", $farmname );
 
-@listinterfaces = &listallips();
+# @listinterfaces = &listallips();
+my @interfaces_available = @{ &getActiveInterfaceList() };
 
-$clrip = &getClusterRealIp();
+my $clrip = &getClusterRealIp();
 
-print "<div class=\"form-item\"><select name=\"vip\" class=\"fixedwidth\">";
-foreach $ip ( @listinterfaces )
+#~ my @nvips = &getListActiveIps();
+print
+  "<div class=\"form-item\"><select name=\"vip\" class=\"fixedwidth monospace\">\n";
+print "<option value=\"\">-Select One-</option>\n";
+
+for my $iface ( @interfaces_available )
 {
-	if ( $ip !~ $clrip )
+	next if $$iface{ addr } eq $clrip;
+
+	my $selected = '';
+
+	if ( $$iface{ addr } eq $vip )
 	{
-		if ( $vip eq $ip )
-		{
-			print "<option value=\"$ip\" selected=\"selected\">$ip</option>";
-		}
-		else
-		{
-			print "<option value=\"$ip\">$ip</option>";
-		}
+		$selected = "selected=\"selected\"";
 	}
+
+	print
+	  "<option value=\"$$iface{addr}\" $selected>$$iface{dev_ip_padded}</option>\n";
 }
-print "</select>";
+
 print
   " <input type=\"number\" value=\"$vport\" size=\"4\" name=\"vipp\" class=\"fixedwidth\">";
 print "</div>\n";
@@ -580,6 +585,7 @@ foreach $zone ( @zones )
 			{
 				print "<td></td>";
 			}
+
 			print "<td>$ztype</td>";
 			if ( @subbe1 == 3 )
 			{
@@ -620,6 +626,7 @@ foreach $zone ( @zones )
 
 		# print "<td><select name=\"type_server\" onchange=\"this.form.submit()\">";
 		print "<td><select name=\"type_server\" onchange=\"chRTypeAdd(this)\">";
+
 		if ( $type_server eq "NS" )
 		{
 			print "<option value=\"NS\" selected=\"selected\">NS</option>";
@@ -628,6 +635,7 @@ foreach $zone ( @zones )
 		{
 			print "<option value=\"NS\">NS</option>";
 		}
+
 		if ( $type_server eq "A" )
 		{
 			print "<option value=\"A\" selected=\"selected\">A</option>";
@@ -636,6 +644,7 @@ foreach $zone ( @zones )
 		{
 			print "<option value=\"A\">A</option>";
 		}
+
 		if ( $type_server eq "CNAME" )
 		{
 			print "<option value=\"CNAME\" selected=\"selected\">CNAME</option>";
@@ -644,10 +653,10 @@ foreach $zone ( @zones )
 		{
 			print "<option value=\"CNAME\">CNAME</option>";
 		}
+
 		if ( $type_server eq "DYNA" )
 		{
 			print "<option value=\"DYNA\" selected=\"selected\">DYNA</option>";
-
 		}
 		else
 		{
@@ -655,17 +664,19 @@ foreach $zone ( @zones )
 		}
 
 		print "</select></td>";
-
 		print "<td>";
+
 		if ( $type_server eq "DYNA" || $type_server eq "DYNC" )
 		{
 			print "<select name=\"rdata_server\">";
-			foreach $sr ( @services )
+
+			foreach my $sr ( @services )
 			{
 				my @srv = split ( ".cfg", $sr );
 				my $srr = @srv[0];
 				print "<option value=\"$srr\">$srr</option>";
 			}
+
 			print "</select>";
 		}
 		else
@@ -673,6 +684,7 @@ foreach $zone ( @zones )
 			print
 			  "<input type=\"text\" size=\"10\" name=\"rdata_server\" value=\"$rdata_server\">";
 		}
+
 		print "</td>";
 		print "<input type=\"hidden\" name=\"service\" value=\"$zone\">";
 		print "<input type=\"hidden\" name=\"service_type\" value=\"zone\">";
@@ -716,3 +728,4 @@ print "
   </script>
 ";
 
+1;

@@ -123,7 +123,7 @@ if ( $action eq 'addfarm' || $action eq "Save & continue" )
 	}
 
 	print "
-		<div class=\"box grid_5\">
+		<div class=\"box grid_6\">
 		  <div class=\"box-head\">
 			<span class=\"box-icon-24 fugue-24 plus\"></span>     
 			<h2>Configure a new Farm</h2>
@@ -169,26 +169,32 @@ if ( $action eq 'addfarm' || $action eq "Save & continue" )
 	print "	  </div>";
 	if ( $farmprotocol ne "" && $farmname ne "" )
 	{
-		my @vips =
-		  ( $farmprotocol eq "DATALINK" )
-		  ? &listactiveips( "phvlan" )
-		  : &listactiveips();
+		my @interfaces_available = @{ &getActiveInterfaceList() };
 
 		#eth interface selection
 		print "
 			  <div class=\"form-row\">
-				<p class=\"form-label\">
-				  <b>Virtual IP</b>
+				<p class=\"form-label\">";
+
+		print "<b>Virtual IP</b>";
+
+		print "
 				</p>
 			  <div class=\"form-item\">
-				<select name=\"vip\">
+				<select name=\"vip\" class=\"monospace width-initial\">
 				  <option value=\"\">-Select One-</option>
 			";
 
-		for ( $i = 0 ; $i <= $#vips ; $i++ )
+		for my $iface ( @interfaces_available )
 		{
-			my @ip = split ( "->", $vips[$i] );
-			print "<option value=\"$ip[0] $ip[1]\">$vips[$i]</option>\n";
+			# skip IPv6 interfaces for TCP farms
+			next if $farmprotocol eq "TCP" && $$iface{ ip_v } == 6;
+
+			# skip virtual interfaces for DataLink farms
+			next if $farmprotocol eq "DATALINK" && $$iface{ vini } ne '';
+
+			print
+			  "<option value=\"$$iface{name} $$iface{addr}\">$$iface{dev_ip_padded}</option>\n";
 		}
 
 		print "
@@ -260,3 +266,4 @@ if ( $action eq 'addfarm' || $action eq "Save & continue" )
 
 print "<div class=\"clear\">&nbsp;</div>";
 
+1;

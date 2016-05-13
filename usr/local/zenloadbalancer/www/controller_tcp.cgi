@@ -585,11 +585,12 @@ if ( $action eq "editfarm-Parameters" )
 if ( $action eq "editfarm-saveserver" )
 {
 	$error = 0;
-	if ( &ipisok( $rip_server ) eq "false" )
+	if ( &ipversion( $rip_server ) != 4 )
 	{
 		&errormsg( "Invalid real server IP value, please insert a valid value" );
 		$error = 1;
 	}
+
 	if ( $rip_server =~ /^$/ || $port_server =~ /^$/ )
 	{
 		&errormsg( "Invalid IP address and port for a real server, it can't be blank" );
@@ -633,4 +634,4 @@ if ( $action eq "editfarm-deleteserver" )
 	}
 }
 
-1
+1;
