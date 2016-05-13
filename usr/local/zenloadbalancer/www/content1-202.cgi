@@ -788,6 +788,100 @@ foreach $zone ( @zones )
 		}
 	}
 
+	# New backend form
+	print "<a name=\"zonelist-$zone\"></a>\n\n";
+
+	# if ( ( $action =~ /editfarm-addserver/ || $action =~ /editfarm-saveserver/ )
+	if ( $action =~ /editfarm-addserver/ && $service eq $zone )
+	{
+		my $zoneaux = $zone;
+		$zoneaour =~ s/\./\_/g;
+		print "<form method=\"post\" class=\"myform\" action=\"index.cgi\">"
+		  ;    #This form ends in createmenuserverfarm
+
+		print "<tr class=\"selected\">";
+		print
+		  "<td><input type=\"text\" size=\"10\" name=\"resource_server\" value=\"$resource_server\"> </td>";
+		print
+		  "<td><input type=\"number\" size=\"10\" name=\"ttl_server\" value=\"$ttl_server\"> </td>";
+
+		# print "<td><select name=\"type_server\" onchange=\"this.form.submit()\">";
+		print "<td><select name=\"type_server\" onchange=\"chRTypeAdd(this)\">";
+
+		if ( $type_server eq "NS" )
+		{
+			print "<option value=\"NS\" selected=\"selected\">NS</option>";
+		}
+		else
+		{
+			print "<option value=\"NS\">NS</option>";
+		}
+
+		if ( $type_server eq "A" )
+		{
+			print "<option value=\"A\" selected=\"selected\">A</option>";
+		}
+		else
+		{
+			print "<option value=\"A\">A</option>";
+		}
+
+		if ( $type_server eq "CNAME" )
+		{
+			print "<option value=\"CNAME\" selected=\"selected\">CNAME</option>";
+		}
+		else
+		{
+			print "<option value=\"CNAME\">CNAME</option>";
+		}
+
+		if ( $type_server eq "DYNA" )
+		{
+			print "<option value=\"DYNA\" selected=\"selected\">DYNA</option>";
+		}
+		else
+		{
+			print "<option value=\"DYNA\">DYNA</option>";
+		}
+
+		print "</select></td>";
+		print "<td>";
+
+		if ( $type_server eq "DYNA" || $type_server eq "DYNC" )
+		{
+			print "<select name=\"rdata_server\">";
+
+			foreach my $sr ( @services )
+			{
+				my @srv = split ( ".cfg", $sr );
+				my $srr = @srv[0];
+				print "<option value=\"$srr\">$srr</option>";
+			}
+
+			print "</select>";
+		}
+		else
+		{
+			print
+			  "<input type=\"text\" size=\"10\" name=\"rdata_server\" value=\"$rdata_server\">";
+		}
+
+		print "</td>";
+		print "<input type=\"hidden\" name=\"service\" value=\"$zone\">";
+		print "<input type=\"hidden\" name=\"service_type\" value=\"zone\">";
+		&createmenuserversfarmz( "add", $farmname, @l_serv[0] );
+
+		print "</tr>";
+	}
+
+	# add backend button
+	print "<tr><td class='gray' colspan=\"4\"></td>";
+	my $zoneaux = $zone;
+	$zoneaux =~ s/\./_/g;
+
+	&createmenuserversfarmz( "new", $farmname, $zone );
+
+	print "</tr>";
 	print "</tbody></table>";
 	print "</div>";
 
@@ -849,4 +943,3 @@ jQuery(document).ready(function () {
 ";
 
 1;
-
