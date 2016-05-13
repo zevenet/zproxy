@@ -130,6 +130,7 @@ elsif (    $action eq "Save & Up!"
 	if ( $action eq "addvlan2" )
 	{
 		my $if_ref = &getInterfaceConfig( $interface{ name }, $interface{ ip_v } );
+<<<<<<< HEAD
 
 		if ( $if_ref )
 		{
@@ -164,18 +165,6 @@ elsif (    $action eq "Save & Up!"
 			);
 		}
 		$swaddif = "false";
-	}
-
-	# FIXME: only works with IPv4
-	# check if the new ip is already in use
-	my @activeips = &listallips();
-	for my $ip ( @activeips )
-	{
-		if ( $ip eq $newip )
-		{
-			&errormsg( "IP Address $newip is already in use, please insert a valid IP." );
-			$swaddif = "false";
-		}
 	}
 
 	# check if the new netmask for IPv4 is correct
@@ -422,6 +411,7 @@ elsif ( $action eq "upif" )
 		# FIXME: bug-prove this condition
 		if ( $parent_if_status eq 'up' && $error eq "false" )
 		{
+
 			my $state = &upIf( \%interface, 'writeconf' );
 
 			if ( $state == 0 )
@@ -664,7 +654,6 @@ for my $iface ( @interfaces )
 		}
 		elsif ( $action eq "addvlan" )
 		{
-
 			print "<td><input type=\"text\" size=\"16\" name=\"netmask\" value=\"\" ></td>";
 			print "<td><input type=\"text\" size=\"16\" name=\"gwaddr\" value=\"\" ></td>";
 		}
