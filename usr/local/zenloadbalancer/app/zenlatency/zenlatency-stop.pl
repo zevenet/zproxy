@@ -8,11 +8,11 @@
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
-#     by the Free Software Foundation; either version 2.1 of the License, or 
+#     by the Free Software Foundation; either version 2.1 of the License, or
 #     (at your option) any later version.
 #
-#     This library is distributed in the hope that it will be useful, but 
-#     WITHOUT ANY WARRANTY; without even the implied warranty of 
+#     This library is distributed in the hope that it will be useful, but
+#     WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
 #     General Public License for more details.
 #
@@ -22,88 +22,82 @@
 #
 ###############################################################################
 
-use Sys::Hostname;
-use Tie::File;
 require '/usr/local/zenloadbalancer/config/global.conf';
 
 open STDERR, '>>', "$zenlatlog" or die;
 open STDOUT, '>>', "$zenlatlog" or die;
 
-
-
 #start service
-$interface=@ARGV[0];
-$vip=@ARGV[1];
+my $interface = @ARGV[0];
+my $vip       = @ARGV[1];
 
 #pre run: if down:
-$date=`date +%y/%m/%d\\ %H-%M-%S`;
-chomp($date);
+my $date = `date +%y/%m/%d\\ %H-%M-%S`;
+chomp ( $date );
+
 #chomp($date);
 #print "$date: STARTING UP LATENCY SERVICE\n";
 #print "Running prestart commands:";
 #my @eject = `$ip_bin addr del $vip\/$nmask dev $rinterface label $rinterface:cluster`;
 #print "Running: $ip_bin addr del $vip\/$nmask dev $rinterface label $rinterface:cluster\n";
 
-
-
 print "$date Running start commands:\n";
-if (-e $filecluster)
-	{
-	open FR, "$filecluster";
-	while(<FR>)
-		{
-		if ($_ =~ /^IPCLUSTER/)
-			{
-			@line = split(":",$_);
-			$ifname = @line[2].":".@line[3];
-			}
-		}
 
-	} 
-	
-my @eject =`$ip_bin addr list`;
-foreach $line(@eject)
+# Get cluster interface name
+my $cl_vip;
+if ( -e $filecluster )
+{
+	open my $cluster_fh, '<', "$filecluster";
+	while ( <$cluster_fh> )
 	{
-	if ($line =~ /$interface$/)
+		if ( $_ =~ /^IPCLUSTER/ )
 		{
-		@line = split(" ",$line);
-		@nmask = split("\/",@line[1]);	
-		$nmask = @nmask[1];
-		chomp($nmask);
+			my @line = split ( ":", $_ );
+			$cl_vip = "$line[2]:$line[3]";
 		}
 	}
+	close $cluster_fh;
+}
 
+# Get cluster vip mask
+my $nmask;
+my @ip_addr_list = `$ip_bin addr list`;
+foreach my $line ( @ip_addr_list )
+{
+	# Example: "inet 192.168.101.16/24 brd 192.168.101.255 scope global eth2"
+	if ( $line =~ /$interface$/ )
+	{
+		my ( undef, $ip_and_mask ) = split ( " ", $line );
+		( undef, $nmask ) = split ( "\/", $ip_and_mask );
+		chomp ( $nmask );
+	}
+}
 
-#my @eject = `$ip_bin addr add $vip\/$nmask dev $rinterface label $rinterface:cluster`;
-my @eject = `$ip_bin addr del $vip\/$nmask dev $interface label $ifname`;
-#print "Running: $ip_bin addr add $vip\/$nmask dev $rinterface label $rinterface:cluster\n";
-print "Running: $ip_bin addr del $vip\/$nmask dev $interface label $ifname\n";
+# Remove cluster virtual interface from the system
+my $ip_cmd = "$ip_bin addr del $vip\/$nmask dev $interface label $cl_vip";
+system ( $ip_cmd );
+print "Running: $ip_cmd\n";
 
-
-
-
-tie @array, 'Tie::File', "$filecluster";
 #$line = @array[2];
 #chomp($line);
-#@array[2] = "$line\:DOWN\n";		
+#@array[2] = "$line\:DOWN\n";
 
-if (-e $zeninopid)
-        {
-        open FO, "<$zeninopid";
-        my @inopid = <FO>;
-        chomp(@inopid);
-        print "Stopping zeninotify with pid @inopid\n";
-        close FO;
-        kill(9,@inopid);
-        unlink($zeninopid);
-        #@array[2] =~ s/:DOWN//;
-        #@array[2] =~ s/:UP//;
-        #$line = @array[2];
-        #chomp($line);
-        #@array[2] = "$line\:DOWN\n";
-        }
-	
-untie @array;
+if ( -e $zeninopid )
+{
+	open my $zino_fh, "<", "$zeninopid";
+	my @inopid = <$zino_fh>;
+	chomp ( @inopid );
+	print "Stopping zeninotify with pid @inopid\n";
+	close $zino_fh;
+	kill ( 9, @inopid );
+	unlink ( $zeninopid );
 
-sleep(5);
-my @eject = `/etc/init.d/zenloadbalancer stoplocal`;
+	#@array[2] =~ s/:DOWN//;
+	#@array[2] =~ s/:UP//;
+	#$line = @array[2];
+	#chomp($line);
+	#@array[2] = "$line\:DOWN\n";
+}
+
+sleep ( 5 );
+exec ( "/etc/init.d/zenloadbalancer stoplocal" );
