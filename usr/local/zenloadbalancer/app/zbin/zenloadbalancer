@@ -22,9 +22,6 @@
 #
 ###############################################################################
 
-#~ use strict;
-#~ use warnings;
-
 use Sys::Hostname;
 use Date::Parse;
 use Time::localtime;

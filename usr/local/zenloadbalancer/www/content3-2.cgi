@@ -21,6 +21,13 @@
 #
 ###############################################################################
 
+use IO::Socket;
+use IO::Interface qw(:flags);
+use Tie::File;
+use Net::Netmask;
+use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
+
 print "
   <!--- CONTENT AREA -->
   <div class=\"content container_12\">
@@ -41,69 +48,44 @@ print "<div class=\"grid_6\"><h1>Settings :: Interfaces</h1></div>\n";
 ####################################
 &getClusterStatus();
 
-use IO::Socket;
-use IO::Interface qw(:flags);
-use Tie::File;
+my $socket = IO::Socket::INET->new( Proto => 'udp' );
+my @system_interfaces = $socket->if_list;
+
+my %interface;
+
+# temporal scope to initialize %interface
+{
+	if ( $action eq "addvip2" || $action eq "addvlan2" )
+	{
+		$if = $toif . $if;
+	}
+
+	$interface{ name }    = $if;
+	$interface{ addr }    = $newip;
+	$interface{ mask }    = $netmask;
+	$interface{ gateway } = $gwaddr;
+	$interface{ ip_v }    = $ipv;
+
+	my %if = %{ &getDevVlanVini( $interface{ name } ) };
+
+	$interface{ dev }  = $if{ dev };
+	$interface{ vlan } = $if{ vlan };
+	$interface{ vini } = $if{ vini };
+
+	my $if_flags = $socket->if_flags( $interface{ name } );
+
+	$interface{ status } = ( $if_flags & IFF_UP ) ? "up" : "down";
+	$interface{ mac } = $socket->if_hwaddr( $interface{ dev } );
+}
+
+chomp %interface;
+
+#~ &logfile("interface ".Dumper \%interface);
 
 # action edit interface
 if ( $action eq "editif" )
 {
 	require "./content3-21.cgi";
-}
-
-# action Save Config
-elsif ( $action eq "Save Config" )
-{
-	$swaddif = "true";
-
-	# check all possible errors
-	# check if the interface is empty
-	if ( $if =~ /^$/ )
-	{
-		&errormsg( "Interface name can not be empty" );
-		$swaddif = "false";
-	}
-
-	# check if the new newip is correct
-	if ( &ipisok( $newip ) eq "false" )
-	{
-		&errormsg( "IP Address $newip structure is not ok" );
-		$swaddif = "false";
-	}
-
-	# check if the new netmask is correct, if empty don't worry
-	if ( $netmask !~ /^$/ && &ipisok( $netmask ) eq "false" )
-	{
-		&errormsg( "Netmask address $netmask structure is not ok" );
-		$swaddif = "false";
-	}
-
-	# check if the new gateway is correct, if empty don't worry
-	if ( $gwaddr !~ /^$/ && &ipisok( $gwaddr ) eq "false" )
-	{
-		&errormsg( "Gateway address $gwaddr structure is not ok" );
-		$swaddif = "false";
-	}
-
-	# end check, if all is ok
-	if ( $swaddif eq "true" )
-	{
-		if ( $if =~ /\:/ )
-		{
-			&writeConfigIf( $if, "$if\:$newip\:$netmask\:$status\:\:" );
-		}
-		else
-		{
-			&writeRoutes( $if );
-			&writeConfigIf( $if, "$if\:\:$newip\:$netmask\:$status\:$gwaddr\:" );
-		}
-
-		&successmsg( "All is ok, saved $if interface config file" );
-	}
-	else
-	{
-		&errormsg( "A problem detected editing or saving $if interface" );
-	}
 }
 
 # action Save & Up!
@@ -115,19 +97,19 @@ elsif (    $action eq "Save & Up!"
 
 	# check all possible errors
 	# check if the interface is empty
-	if ( $if =~ /^$/ )
+	if ( $interface{ name } =~ /^$/ )
 	{
 		&errormsg( "Interface name can not be empty" );
 		$swaddif = "false";
 	}
 
-	if ( $if =~ /\s+/ )
+	if ( $interface{ name } =~ /\s+/ )
 	{
 		&errormsg( "Interface name is not valid" );
 		$swaddif = "false";
 	}
 
-	if ( $action eq "addvlan2" && &isnumber( $if ) eq "false" )
+	if ( $action eq "addvlan2" && &isnumber( $interface{ vlan } ) eq "false" )
 	{
 		&errormsg( "Invalid vlan tag value, it must be a numeric value" );
 		$swaddif = "false";
@@ -135,96 +117,231 @@ elsif (    $action eq "Save & Up!"
 
 	if ( $action eq "addvip2" )
 	{
-		$if = "$toif\:$if";
+		my $if_ref = &getInterfaceConfig( $interface{ name }, 4 );
+		$if_ref = &getInterfaceConfig( $interface{ name }, 6 ) if !if_ref;
+
+		if ( $if_ref )
+		{
+			&errormsg( "Network interface $interface{name} already exists." );
+			$swaddif = "false";
+		}
 	}
 
 	if ( $action eq "addvlan2" )
 	{
-		$if = "$toif\.$if";
-	}
+		my $if_ref = &getInterfaceConfig( $interface{ name }, $interface{ ip_v } );
 
-	if ( $action eq "addvip2" || $action eq "addvlan2" )
-	{
-		$exists = &ifexist( $if );
-		if ( $exists eq "true" )
+		if ( $if_ref )
 		{
-			&errormsg( "Network interface $if already exists." );
+			&errormsg( "Network interface $interface{name} already exists." );
 			$swaddif = "false";
 		}
 	}
 
 	# check if the new newip is correct
-	if ( &ipisok( $newip ) eq "false" )
+	if ( &ipisok( $interface{ addr } ) eq "false" )
 	{
-		&errormsg( "IP Address $newip structure is not ok" );
+		&errormsg( "IP Address $interface{addr} structure is not ok" );
 		$swaddif = "false";
 	}
 
-	# check if the new netmask is correct, if empty don't worry
-	if ( $netmask !~ /^$/ && &ipisok( $netmask ) eq "false" )
+	# check if the new newip is correct, check version ip
+	if ( $interface{ ip_v } != &ipversion( $interface{ addr } ) )
 	{
-		&errormsg( "Netmask address $netmask structure is not ok" );
+		&logfile( "interface{ ip_v }:$interface{ ip_v } ipversion:"
+				  . &ipversion( $interface{ addr } ) );
+
+		if ( $interface{ ip_v } == 4 )
+		{
+			&errormsg(
+				  "IP Address $interface{ addr } structure is not ok, must be an IPv4 structure"
+			);
+		}
+		elsif ( $interface{ ip_v } == 6 )
+		{
+			&errormsg(
+				  "IP Address $interface{ addr } structure is not ok, must be an IPv6 structure"
+			);
+		}
+		$swaddif = "false";
+	}
+
+	# FIXME: only works with IPv4
+	# check if the new ip is already in use
+	my @activeips = &listallips();
+	for my $ip ( @activeips )
+	{
+		if ( $ip eq $newip )
+		{
+			&errormsg( "IP Address $newip is already in use, please insert a valid IP." );
+			$swaddif = "false";
+		}
+	}
+
+	# check if the new netmask for IPv4 is correct
+	if (
+		$interface{ ip_v } == 4    # ipv4
+		&& (
+			$interface{ mask } eq ''    # empty
+			|| (
+				&ipisok( $interface{ mask }, 4 ) eq "false"    # is not ipv4 valid
+				&& (
+					 $interface{ mask } !~ /^\d+$/              # is not a number
+					 || $interface{ mask } > 32                 # greater than 32
+					 || $interface{ mask } < 0                  # lower than 0
+				)
+			)
+		)
+	  )
+	{
+		&errormsg(
+			"Netmask address $interface{mask} structure is not ok. Must be IPv4 structure or numeric [0-32]."
+		);
+		$swaddif = "false";
+	}
+
+	# check if the new netmask for IPv6 is correct
+	if (
+		 $interface{ ip_v } == 6
+		 && (    $interface{ mask } !~ /^\d+$/
+			  || $interface{ mask } > 128
+			  || $interface{ mask } < 0 )
+	  )
+	{
+		&errormsg(
+			"Netmask address $interface{mask} structure is not ok. Must be numeric [0-128]."
+		);
 		$swaddif = "false";
 	}
 
 	# check if the new gateway is correct, if empty don't worry
-	if ( $gwaddr !~ /^$/ && &ipisok( $gwaddr ) eq "false" )
+	if ( $interface{ gateway } && &ipisok( $interface{ gateway } ) eq "false" )
 	{
-		&errormsg( "Gateway address $gwaddr structure is not ok" );
+		&errormsg( "Gateway address $interface{gateway} structure is not ok" );
 		$swaddif = "false";
 	}
 
 	# end check, if all is ok
 	if ( $swaddif eq "true" )
 	{
-		$exists = &ifexist( $if );
+		# vlans need to be created if they don't already exist
+		my $exists = &ifexist( $interface{ name } );
 
 		if ( $exists eq "false" )
 		{
-			&createIf( $if );
+			&createIf( \%interface );    # create vlan if needed
 		}
 
-		&delRoutes( "local", $if );
-		&logfile( "running '$ifconfig_bin $if $newip netmask $netmask' " );
-		@eject = `$ifconfig_bin $if $newip netmask $netmask 2> /dev/null`;
-		&upIf( $if );
-		$state = $?;
+		my $old_iface_ref =
+		  &getInterfaceConfig( $interface{ name }, $interface{ ip_v } );
+
+		if ( $old_iface_ref )
+		{
+			# Delete old IP and Netmask
+			if ( $action eq "Save & Up!" )
+			{
+				# delete interface from system to be able to repace it
+				&delIp(
+						$$old_iface_ref{ name },
+						$$old_iface_ref{ addr },
+						$$old_iface_ref{ mask }
+				);
+			}
+
+			# Remove routes if the interface has its own route table: nic and vlan)
+			if ( $interface{ vini } eq '' )
+			{
+				&delRoutes( "local", $old_iface_ref );
+			}
+		}
+
+		&addIp( \%interface );
+
+		my $state = &upIf( \%interface, 'writeconf' );
 
 		if ( $state == 0 )
 		{
-			$status = "up";
-			&successmsg( "Network interface $if is now UP" );
+			$interface{ status } = "up";
+			&successmsg( "Network interface $interface{name} is now UP" );
 		}
 
-		if ( $if =~ /\:/ )
+		# Writing new parameters in configuration file
+		if ( $interface{ name } !~ /:/ )
 		{
-			&writeConfigIf( $if, "$if\:$newip\:$netmask\:$status\:\:" );
-		}
-		else
-		{
-			&writeRoutes( $if );
-			&writeConfigIf( $if, "$if\:\:$newip\:$netmask\:$status\:$gwaddr\:" );
+			&writeRoutes( $interface{ name } );
 		}
 
-		&applyRoutes( "local", $if, $gwaddr );
-		&successmsg( "All is ok, saved $if interface config file" );
+		&setInterfaceConfig( \%interface );
+		&applyRoutes( "local", \%interface );
+
+		&successmsg( "All is ok, saved $interface{name} interface config file" );
 	}
 	else
 	{
-		&errormsg( "A problem detected configurating $if interface" );
+		&errormsg( "A problem detected configuring $interface{name} interface" );
 	}
 }
 
 # action adddvip2 if ok add if not ok error and set variables
-#print "el bc es $bc, la nueva ip es $newip con la ip $toip y la netmask es $netmask";
 elsif ( $action eq "deleteif" )
 {
-	if ( $if !~ /^$/ )
+	if ( $interface{ name } && $interface{ ip_v } )
 	{
-		&delRoutes( "local", $if );
-		&downIf( $if );
-		&delIf( $if );
-		&successmsg( "Interface $if is now DELETED and DOWN" );
+		my %interface =
+		  %{ &getInterfaceConfig( $interface{ name }, $interface{ ip_v } ) };
+		my $hasvini = 0;
+		my $is_eth  = 0;
+
+		# remove child vinis if any
+		if ( $interface{ vini } eq '' )
+		{
+			my @configured_interfaces = @{ &getConfigInterfaceList() };
+			foreach my $iface ( @configured_interfaces )
+			{
+				next if $iface->{ name } !~ /$interface{name}:/;
+
+				&delRoutes( "local", $iface );
+				&downIf( $iface, 'writeconf' );
+				&delIf( $iface );
+				$hasvini = 1;
+			}
+
+			&logfile(
+				  "All the Virtual Network interfaces of $interface{name} have been deleted." );
+		}
+
+		&delRoutes( "local", \%interface );
+
+# If $if is a network interface (eth0, eth1...), don't shut down before delete the interface.
+		if ( $interface{ vlan } eq '' && $interface{ vini } eq '' )
+		{
+			$is_eth = 1;
+		}
+		else    # vlan, vini
+		{
+			&downIf( \%interface, 'writeconf' );
+		}
+
+		&delIf( \%interface );
+
+		# Success messages
+		if ( $hasvini == 0 )
+		{
+			if ( $is_eth == 0 )
+			{
+				&successmsg( "Interface $interface{name} is now DELETED and DOWN" );
+			}
+			else
+			{
+				&successmsg( "Interface $interface{name} is now DELETED" );
+			}
+		}
+		else
+		{
+			&successmsg(
+				"Interface $interface{name} and its Virtual Network Interfaces are now DELETED and DOWN"
+			);
+		}
 	}
 	else
 	{
@@ -233,53 +350,100 @@ elsif ( $action eq "deleteif" )
 }
 elsif ( $action eq "upif" )
 {
-	if ( $if !~ /^$/ )
+	if ( $interface{ name } )
 	{
-		$exists = &ifexist( $if );
 		my $error = "false";
+		my @stacks;
 
-		if ( $exists eq "false" )
+		for my $ip_v ( 4, 6 )
 		{
-			&createIf( $if );
+			$if_ref = &getInterfaceConfig( $interface{ name }, $ip_v );
+
+			if ( $$if_ref{ addr } )
+			{
+				#~ &logfile("stacks:$$if_ref{addr}");
+				push @stacks, $if_ref;
+			}
 		}
 
+		# create vlan if required
+		my $exists = &ifexist( $interface{ name } );
+		if ( $exists eq "false" && !$interface{ vini } )
+		{
+			&createIf( \%interface );
+		}
+
+		# FIXME: Check IPv6 compatibility
 		# open config file to get the interface parameters
-		tie @array, 'Tie::File', "$configdir/if_$if\_conf", recsep => ':';
+		tie my @array, 'Tie::File', "$configdir/if_$if\_conf", recsep => ':';
 
 		# check if the ip is already in use
 		my @activeips = &listallips();
 		for my $ip ( @activeips )
 		{
-			if ( $ip eq @array[2] )
+			if ( $ip eq $array[2] )
 			{
-				&errormsg( "Interface $if is not UP, IP Address @array[2] is already in use." );
+				&errormsg( "Interface $if is not UP, IP Address $array[2] is already in use." );
 				$error = "true";
 			}
 		}
 
-		# check there is no error
-		if ( $error eq "false" )
+		if ( $interface{ vini } eq '' )
 		{
-			&logfile( "running '$ifconfig_bin $if @array[2] netmask @array[3]' " );
-			@eject = `$ifconfig_bin $if @array[2] netmask @array[3] 2> /dev/null`;
-			&upIf( $if );
-			$state = $?;
+			for my $iface ( @stacks )
+			{
+				&delRoutes( "local", $iface );
+			}
+		}
+
+# Check if there are some Virtual Interfaces or Vlan with IPv6 and previous UP status to get it up.
+		&setIfacesUp( $interface{ name }, "vlan" );
+		&setIfacesUp( $interface{ name }, "vini" );
+
+		for my $iface ( @stacks )
+		{
+			&addIp( $iface );
+		}
+
+		my $if_status;
+		my $parent_if_name = &getParentInterfaceName( $interface{ name } );
+
+		if ( !$parent_if_name )
+		{
+			$parent_if_status = 'up';
+		}
+		else
+		{
+			my $parent_if_ref = &getInterfaceConfig( $parent_if_name, $interface{ ip_v } );
+			$parent_if_status =
+			  &getInterfaceSystemStatus( $parent_if_ref, $interface{ ip_v } );
+		}
+
+		# FIXME: bug-prove this condition
+		if ( $parent_if_status eq 'up' && $error eq "false" )
+		{
+			my $state = &upIf( \%interface, 'writeconf' );
 
 			if ( $state == 0 )
 			{
-				@array[4] = "up";
-				&successmsg( "Network interface $if is now UP" );
+				&successmsg( "Network interface $interface{name} is now UP" );
 			}
 			else
 			{
-				&errormsg( "Interface $if cannot be UP, bad configuration or duplicate ip" );
+				&errormsg(
+						"Interface $interface{name} is not UP, bad configuration or duplicate ip" );
 			}
 
-			&applyRoutes( "local", $if, @array[5] );
+			for my $iface ( @stacks )
+			{
+				&applyRoutes( "local", $iface );
+			}
 		}
-
-		# close config file
-		untie @array;
+		else
+		{
+			&errormsg(
+				  "$interface{name} has a parent interface DOWN, check the interfaces status" );
+		}
 	}
 	else
 	{
@@ -288,32 +452,38 @@ elsif ( $action eq "upif" )
 }
 elsif ( $action eq "downif" )
 {
-	tie @array, 'Tie::File', "$configdir/if_$if\_conf", recsep => ':';
-	&delRoutes( "local", $if );
-	&downIf( $if );
+	my $if_ref = &getInterfaceConfig( $interface{ name }, $interface{ ip_v } );
+	my $state = &downIf( $if_ref, 'writeconf' );
 
-	if ( $? == 0 )
+	if ( $state == 0 )
 	{
-		@array[4] = "down";
-		&successmsg( "Interface $if is now DOWN" );
+		&successmsg( "Interface $interface{name} is now DOWN" );
 	}
 	else
 	{
 		&errormsg(
-			  "Interface $if is not DOWN, check if any Farms is running over this interface"
+			"Interface $interface{name} is not DOWN, check if any Farms is running over this interface"
 		);
 	}
-
-	untie @array;
 }
-elsif ( $action eq "editgw" )
+
+# default gateway
+elsif ( $action =~ /editgw/ )
 {
 	if ( $gwaddr !~ /^$/ )
 	{
-		&applyRoutes( "global", $if, $gwaddr );
-		$state = $?;
+		my $ip_version =
+		    ( $action =~ /6/ ) ? 6
+		  : ( $action =~ /4/ ) ? 4
+		  :                      '';
+		my $if_ref = getInterfaceConfig( $if, $ip_version );
+
+		&logfile( "if:$if ip_version:$ip_version gwaddr:$gwaddr" );
+
+		my $state = &applyRoutes( "global", $if_ref, $gwaddr );
 
 		# TODO write def gw in file
+		# action variable must be reset to show the page in normal view mode
 		$action = "";
 
 		if ( $state == 0 )
@@ -326,10 +496,19 @@ elsif ( $action eq "editgw" )
 		}
 	}
 }
-elsif ( $action eq "deletegw" )
+elsif ( $action =~ /deletegw/ )
 {
-	&delRoutes( "global", $if );
-	$state  = $?;
+	my $ip_version =
+	    ( $action =~ /6/ ) ? 6
+	  : ( $action =~ /4/ ) ? 4
+	  :                      '';
+	my $if_ref = getInterfaceConfig( $defaultgwif6, $ip_version );
+
+	&logfile( "defaultgwif6:$defaultgwif6 ip_version:$ip_version gwaddr:$gwaddr" );
+
+	my $state = &delRoutes( "global", $if_ref );
+
+	# action variable must be reset to show the page in normal view mode
 	$action = "";
 
 	if ( $state == 0 )
@@ -342,10 +521,122 @@ elsif ( $action eq "deletegw" )
 	}
 }
 
-#list interfaces
-my $s = IO::Socket::INET->new( Proto => 'udp' );
-my @interfaces = $s->if_list;
-my @interfacesdw;
+# Calculate cluster and GUI ips
+$guiip = &GUIip();
+$clrip = &getClusterRealIp();
+$clvip = &getClusterVirtualIp();
+
+# Configured interfaces list
+#~ my @configured_interfaces = @{ &getConfigInterfaceList() };
+
+#~ @configured_interfaces = sort { $a->{name} cmp $b->{name} } @configured_interfaces;
+#~ $_->{status} = &getInterfaceSystemStatus( $_ ) for @configured_interfaces;
+#~ &logfile("$_->{name}:$_->{status}") for @configured_interfaces;
+
+## Build system device "tree"
+#~ my @interfaces;
+#~ for my $if_name ( @system_interfaces ) # list of interface names
+#~ {
+#~ # ignore loopback device, ipv6 tunnel, vlans and vinis
+#~ next if $if_name =~ /^lo$|^sit\d+$/;
+#~ next if $if_name =~ /\./;
+#~ next if $if_name =~ /:/;
+#~
+#~ my %if_parts = %{ &getDevVlanVini( $if_name ) };
+#~
+#~ my $if_ref;
+#~ my $socket = IO::Socket::INET->new( Proto => 'udp' );
+#~ my $if_flags = $socket->if_flags( $if_name );
+#~
+#~ # run for IPv4 and IPv6
+#~ for my $ip_stack (4, 6)
+#~ {
+#~ $if_ref = &getInterfaceConfig($if_name, $ip_stack);
+#~
+#~ if (!$$if_ref{addr})
+#~ {
+#~ # populate not configured interface
+#~ $$if_ref{ status } = ( $if_flags & IFF_UP ) ? "up" : "down";
+#~ $$if_ref{ mac }    = $socket->if_hwaddr( $if_name );
+#~ $$if_ref{ name }   = $if_name;
+#~ $$if_ref{ addr }   = '-';
+#~ $$if_ref{ mask }   = '-';
+#~ $$if_ref{ dev }    = $if_parts{ dev };
+#~ $$if_ref{ vlan }   = $if_parts{ vlan };
+#~ $$if_ref{ vini }   = $if_parts{ vini };
+#~ $$if_ref{ ip_v }   = $ip_stack;
+#~ }
+#~
+#~ # setup for configured and unconfigured interfaces
+#~ $$if_ref{ gateway } = '-' if ! $$if_ref{ gateway };
+#~
+#~ if ( !( $if_flags & IFF_RUNNING ) && ( $if_flags & IFF_UP ) )
+#~ {
+#~ $if_ref{link} = "off";
+#~ }
+#~
+#~ # add interface to the list
+#~ push (@interfaces, $if_ref);
+#~
+#~ # add vlans
+#~ for my $vlan_if_conf (@configured_interfaces)
+#~ {
+#~ next if $$vlan_if_conf{dev} ne $$if_ref{dev};
+#~ next if $$vlan_if_conf{vlan} eq '';
+#~ next if $$vlan_if_conf{vini} ne '';
+#~
+#~ if ($$vlan_if_conf{ip_v} == $ip_stack)
+#~ {
+#~ $$vlan_if_conf{ gateway } = '-' if ! $$vlan_if_conf{ gateway };
+#~ push (@interfaces, $vlan_if_conf);
+#~
+#~ # add vini of vlan
+#~ for my $vini_if_conf (@configured_interfaces)
+#~ {
+#~ next if $$vini_if_conf{dev} ne $$if_ref{dev};
+#~ next if $$vini_if_conf{vlan} ne $$vlan_if_conf{vlan};
+#~ next if $$vini_if_conf{vini} eq '';
+#~
+#~ if ($$vini_if_conf{ip_v} == $ip_stack)
+#~ {
+#~ $$vini_if_conf{ gateway } = '-' if ! $$vini_if_conf{ gateway };
+#~ push (@interfaces, $vini_if_conf);
+#~ }
+#~ }
+#~ }
+#~ }
+#~
+#~ # add vini of nic
+#~ for my $vini_if_conf (@configured_interfaces)
+#~ {
+#~ next if $$vini_if_conf{dev} ne $$if_ref{dev};
+#~ next if $$vini_if_conf{vlan} ne '';
+#~ next if $$vini_if_conf{vini} eq '';
+#~
+#~ if ($$vini_if_conf{ip_v} == $ip_stack)
+#~ {
+#~ $$vini_if_conf{ gateway } = '-' if ! $$vini_if_conf{ gateway };
+#~ push (@interfaces, $vini_if_conf);
+#~ }
+#~ }
+#~ }
+#~ }
+
+#~ @interfaces = sort { $a->{name} cmp $b->{name} } @interfaces;
+#~ $_->{status} = &getInterfaceSystemStatus( $_ ) for @interfaces;
+
+#~ my @interfaces = @{ &getSystemInterfaceList() };
+
+# Variable for get the IPv parameter when I want to add a vlan or a vini
+#~ my $ipvadd;
+
+# Don't loose the css of form
+#~ if ( $action eq "addvip" or $action eq "addvlan" )
+#~ {
+#~ $ipvadd = $ipv;
+#~ }
+
+my @interfaces = @{ &getSystemInterfaceList() };
 
 print "
                <div class=\"box grid_12\">
@@ -353,23 +644,15 @@ print "
                        <span class=\"box-icon-24 fugue-24 server\"></span>       
                        <h2>Interfaces table</h2>
                  </div>
-                 <div class=\"box-content no-pad\">
-		<ul class=\"table-toolbar\"></ul>
-       ";
-
-# dont loose the css of form
-if ( $action eq "addvip" or $action eq "addvlan" )
-{
-	print "<form method=\"post\" name=\"interfaces\" action=\"index.cgi\">";
-}
-
+                 <div class=\"box-content no-pad\">";
 print "<table id=\"interfaces-table\" class=\"display\">";
 print "<thead>";
 print "<tr>";
 print "<th>Name</th>";
+print "<th>IPv</th>";
 print "<th>Addr</th>";
 print "<th>HWaddr</th>";
-print "<th>Netmask</th>";
+print "<th>Netmask/Bitmask</th>";
 print "<th>Gateway</th>";
 print "<th>Status</th>";
 print "<th>Actions</th>";
@@ -377,299 +660,172 @@ print "</tr>";
 print "</thead>";
 print "<tbody>";
 
-# Calculate cluster and gui ips
-$clrip = &getClusterRealIp();
-$guiip = &GUIip();
-$clvip = &getClusterVirtualIp();
-
-#check interfaces status
-
-for my $if ( @interfaces )
+if ( $action eq "addvip" || $action eq "addvlan" )
 {
-	if ( $if !~ /^lo|sit0/ )
+	my $i = 0;
+
+	for my $if ( @interfaces )
 	{
-		my $flags = $s->if_flags( $if );
-		$hwaddr  = $s->if_hwaddr( $if );
-		$status  = "";
-		$ip      = "";
-		$netmask = "";
-		$gw      = "";
-		$link    = "on";
-
-		if ( $flags & IFF_UP )
+		if ( $$if{ name } eq $toif && $$if{ ip_v } eq $interface{ ip_v } )
 		{
-			$status  = "up";
-			$ip      = $s->if_addr( $if );
-			$netmask = $s->if_netmask( $if );
-			$bc      = $s->if_broadcast( $if );
-			$gw      = &getDefaultGW( $if );
-		}
-		else
-		{
-			$status = "down";
+			$i++;    # next to current position
 
-			if ( -e "$configdir/if_$if\_conf" )
-			{
-				tie @array, 'Tie::File', "$configdir/if_$if\_conf", recsep => ':';
-				$ip      = $array[2];
-				$netmask = $array[3];
-				$gw      = $array[5];
-				untie @array;
-			}
-		}
-
-		if ( !( $flags & IFF_RUNNING ) && ( $flags & IFF_UP ) )
-		{
-			$link = "off";
-		}
-
-		if ( !$netmask ) { $netmask = "-"; }
-		if ( !$ip )      { $ip      = "-"; }
-		if ( !$hwaddr )  { $hwaddr  = "-"; }
-		if ( !$gw )      { $gw      = "-"; }
-
-		# Physical interfaces are shown always, virtual or vlan interfaces
-		# only shows if are configured
-		if (    ( $if !~ /\:/ && $if !~ /\./ )
-			 || ( $status eq "up" )
-			 || ( -e "$configdir/if_$if\_conf" ) )
-		{
-			if ( ( $if eq $toif ) && ( $action eq "editif" ) )
-			{
-				print "<tr class=\"selected\">";
-			}
-			else
-			{
-				print "<tr>";
-			}
-
-			print "<td>$if";
-
-			if ( $ip eq $clrip || $ip eq $clvip )
-			{
-				print
-				  "&nbsp;&nbsp;<i class=\"fa fa-database action-icon fa-fw\" title=\"The cluster service interface has to be changed or disabled before to be able to modify this interface\"></i>";
-			}
-
-			if ( $ip eq $guiip )
-			{
-				print
-				  "&nbsp;&nbsp;<i class=\"fa fa-home action-icon fa-fw\" title=\"The GUI service interface has to be changed before to be able to modify this interface\"></i>";
-			}
-
-			print "</td>";
-			print "<td>$ip</td>";
-			print "<td>$hwaddr</td>";
-			print "<td>$netmask</td>";
-			my $phif = $if;
-
-			if ( $if =~ /\:/ )
-			{
-				my @splif = split ( ":", $if );
-				$phif = $splif[0];
-			}
-
-			my $ifused = &uplinkUsed( $phif );
-
-			if ( $ifused eq "false" )
-			{
-				print "<td class=\"aligncenter\">$gw</td>";
-			}
-			else
-			{
-				print
-				  "<td class=\"aligncenter\">&nbsp;&nbsp;<i class=\"fa fa-lock action-icon fa-fw\" title=\"A datalink farm is locking the gateway of this interface\"></td>";
-			}
-
-			if ( $status eq "up" )
-			{
-				print
-				  "<td class=\"aligncenter\"><img src=\"img/icons/small/start.png\" title=\"up\">";
-			}
-			else
-			{
-				print
-				  "<td class=\"aligncenter\"><img src=\"img/icons/small/stop.png\" title=\"down\">";
-			}
-
-			if ( $link eq "off" )
-			{
-				print
-				  "&nbsp;&nbsp;<img src=\"img/icons/small/disconnect.png\" title=\"No link\">";
-			}
-
-			print "</td>";
-			&createmenuif( $if, $id, $configured, $status );
-			print "</tr>";
-		}
-
-		if ( ( $action eq "addvip" || $action eq "addvlan" ) && ( $if eq $toif ) )
-		{
-			print "<tr class=\"selected\">";
+			my $if_separator =
+			    ( $action eq "addvip" )  ? ':'
+			  : ( $action eq "addvlan" ) ? '.'
+			  :                            '';
+			my $iface = {
+						  name     => "$$if{name}${if_separator}",
+						  ip_v     => $$if{ ip_v },
+						  mac      => $$if{ mac },
+						  edit_row => 'true',
+			};
 
 			if ( $action eq "addvip" )
 			{
-				print "<form method=\"post\" action=\"index.cgi\" class=\"myform\">";
-				print
-				  "<td>$if:<input type=\"text\" maxlength=\"10\" size=\"12\"  name=\"if\" value=\"$ifname\"></td>";
-			}
-			elsif ( $action eq "addvlan" )
-			{
-				print "<form method=\"post\" action=\"index.cgi\" class=\"myform\">";
-				print
-				  "<td>$if.<input type=\"text\" maxlength=\"10\" size=\"10\"  name=\"if\" value=\"$ifname\"></td>";
+				$$iface{ mask }    = $$if{ mask };
+				$$iface{ gateway } = $$if{ gateway };
 			}
 
-			print "<td><input type=\"text\" name=\"newip\" size=\"14\"> </td>";
-			print "<input type=\"hidden\" name=\"id\" value=\"3-2\">";
-			print "<input type=\"hidden\" name=\"toif\" value=\"$if\">";
-			print "<input type=\"hidden\" name=\"status\" value=\"$status\">";
-			print "<td>$hwaddr</td>";
+			splice @interfaces, $i, 0, $iface;
+		}
 
-			if ( $action eq "addvip" )
-			{
-				print "<input type=\"hidden\" name=\"netmask\" value=\"$netmask\" size=\"14\">";
-				print "<td>$netmask</td>";
-				my @splif = split ( ":", $if );
-				my $ifused = &uplinkUsed( $splif[0] );
+		$i++;
+	}
+}
 
-				if ( $ifused eq "false" )
-				{
-					print "<td>$gateway</td>";
-				}
-				else
-				{
-					print
-					  "<td class=\"aligncenter\">&nbsp;&nbsp;<i class=\"fa fa-lock action-icon fa-fw\" title=\"A datalink farm is locking the gateway of this interface\"></td>";
-				}
+for my $iface ( @interfaces )
+{
+	my $cluster_icon = '';
+	if (    ( $$iface{ addr } eq $clrip || $$iface{ addr } eq $clvip )
+		 && $clrip
+		 && $clvip )
+	{
+		$cluster_icon =
+		  "&nbsp;&nbsp;<i class=\"fa fa-database action-icon fa-fw\" title=\"The cluster service interface has to be changed or disabled before to be able to modify this interface\"></i>";
+	}
 
-				print "<input type=\"hidden\" name=\"action\" value=\"addvip2\">";
-			}
-			elsif ( $action eq "addvlan" )
-			{
-				print
-				  "<td><input type=\"text\" size=\"14\"  name=\"netmask\" value=\"\" ></td>";
-				print "<td><input type=\"text\" size=\"14\"  name=\"gwaddr\" value=\"\" ></td>";
-				print "<input type=\"hidden\" name=\"action\" value=\"addvlan2\">";
-			}
+	my $gui_icon = '';
+	if ( $$iface{ addr } eq $guiip )
+	{
+		$gui_icon =
+		  "&nbsp;&nbsp;<i class=\"fa fa-home action-icon fa-fw\" title=\"The GUI service interface has to be changed before to be able to modify this interface\"></i>";
+	}
 
-			print "<td class=\"aligncenter\">Adding</td>";
-			print "<td>";
+	# row selection
+	my $selected = '';
+	if (    ( $action eq "editif" )
+		 && ( $$iface{ name } eq $toif )
+		 && ( $$iface{ ip_v } ) == $interface{ ip_v } )
+	{
+		$selected = "class=\"selected\"";
+	}
 
-			if ( $action eq "addvip" )
-			{
-				print "
-				<button type=\"submit\" class=\"myicons\" title=\"save virtual interface\">
-					<i class=\"fa fa-floppy-o fa-fw action-icon\"></i>
-				</button>
-				</form>";
-			}
-			elsif ( $action eq "addvlan" )
-			{
-				print "
-				<button type=\"submit\" class=\"myicons\" title=\"save vlan interface\">
-					<i class=\"fa fa-floppy-o fa-fw action-icon\"></i>
-				</button>
-				</form>";
-			}
+	# Datalink interface
+	my ( $non_virtual_if ) = split ( ":", $$iface{ name } );
+	my $uplink = &uplinkUsed( $non_virtual_if );
+	my $gateway = $$iface{ gateway } // "-";
+	$$iface{ addr } = "-" if not $$iface{ addr };
+	$$iface{ mask } = "-" if not $$iface{ mask };
 
+	if ( $uplink eq "true" )
+	{
+		$gateway =
+		  "&nbsp;&nbsp;<i class=\"fa fa-lock action-icon fa-fw\" title=\"A datalink farm is locking the gateway of this interface\">";
+	}
+
+	# status
+	my $status_icon =
+	  ( $$iface{ status } eq "up" )
+	  ? "src=\"img/icons/small/start.png\" title=\"up\""
+	  : "src=\"img/icons/small/stop.png\" title=\"down\"";
+
+	# link
+	my $link_icon = '';
+	if ( $$iface{ link } eq "off" )
+	{
+		$link_icon =
+		  "&nbsp;&nbsp;<img src=\"img/icons/small/disconnect.png\" title=\"No link\">";
+	}
+
+	if ( $$iface{ edit_row } )
+	{
+		print "<tr $selected>";
+		print "<form method=\"post\" action=\"index.cgi\" class=\"myform\">";
+		print
+		  "<td>$$iface{name}<input type=\"text\" maxlength=\"10\" size=\"10\" name=\"if\" value=\"\"></td>";
+		print "<td><center>IPv$$iface{ip_v}</center></td>";
+		print "<td><input type=\"text\" name=\"newip\" size=\"14\"></td>";
+
+		print
+		  "<input type=\"hidden\" name=\"ipv\" value=\"$$iface{ip_v}\" size=\"14\">";
+		print "<input type=\"hidden\" name=\"id\" value=\"3-2\">";
+		print "<input type=\"hidden\" name=\"toif\" value=\"$$iface{name}\">";
+		print "<input type=\"hidden\" name=\"status\" value=\"$$iface{status}\">";
+
+		print "<td><center>$$iface{mac}</center></td>";
+
+		if ( $action eq "addvip" )
+		{
+			print "<td><center>$$iface{mask}</center></td>";
+			print "<td class=\"aligncenter\">$gateway</td>";
+			print
+			  "<input type=\"hidden\" name=\"netmask\" value=\"$$iface{mask}\" size=\"14\">";
+		}
+		elsif ( $action eq "addvlan" )
+		{
+
+			print "<td><input type=\"text\" size=\"16\" name=\"netmask\" value=\"\" ></td>";
+			print "<td><input type=\"text\" size=\"16\" name=\"gwaddr\" value=\"\" ></td>";
+		}
+
+		print "<td class=\"aligncenter\">Adding</td>";
+		print "<input type=\"hidden\" name=\"action\" value=\"${action}2\">";
+		print "<td>";
+
+		# edit row menu
+		if ( $action eq "addvip" )
+		{
 			print "
-			<form method=\"post\" action=\"index.cgi\" class=\"myform\">
+			<button type=\"submit\" class=\"myicons\" title=\"save virtual interface\">
+				<i class=\"fa fa-floppy-o fa-fw action-icon\"></i>
+			</button>
+			</form>";
+		}
+		elsif ( $action eq "addvlan" )
+		{
+			print "
+			<button type=\"submit\" class=\"myicons\" title=\"save vlan interface\">
+				<i class=\"fa fa-floppy-o fa-fw action-icon\"></i>
+			</button>
+			</form>";
+		}
+
+		# cancel edit row
+		print "
+		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
 			<button type=\"submit\" class=\"myicons\" title=\"cancel operation\">
 				<i class=\"fa fa-sign-out fa-fw action-icon\"></i>
 			</button>
 			<input type=\"hidden\" name=\"id\" value=\"$id\">
-			</form>";
-			print "</td>";
-			print "</tr>";
-		}
-
-		# List configured interfaces with down state
-		opendir ( DIR, "$configdir" );
-		@files = grep ( /^if\_$if.*\_conf$/, readdir ( DIR ) );
-		closedir ( DIR );
-
-		foreach my $file ( @files )
-		{
-			my @filename = split ( '_', $file );
-			$iff = $filename[1];
-
-			if ( !( grep $_ eq $iff, @interfaces ) && !( grep $_ eq $iff, @interfacesdw ) )
-			{
-				open FI, "$configdir/$file";
-
-				while ( my $line = <FI> )
-				{
-					my @s_line = split ( ':', $line );
-					$ifnamef = $s_line[1];
-					$toipv   = $s_line[2];
-					$netmask = $s_line[3];
-					$status  = "down";
-					$gw      = $s_line[5];
-					close FI;
-
-					if ( ( $iff eq $toif ) && ( $action eq "editif" ) )
-					{
-						print "<tr class=\"selected\">";
-					}
-					else
-					{
-						print "<tr>";
-					}
-
-					print "<td>$iff";
-
-					if ( $toipv eq $clrip || $toipv eq $clvip )
-					{
-						print
-						  "&nbsp;&nbsp;<i class=\"fa fa-database action-icon fa-fw\" title=\"The cluster service interface has to be changed or disabled before to be able to modify this interface\"></i>";
-					}
-
-					if ( $toipv eq $guiip )
-					{
-						print
-						  "&nbsp;&nbsp;<i class=\"fa fa-home action-icon fa-fw\" title=\"The GUI service interface has to be changed before to be able to modify this interface\"></i>";
-					}
-
-					print "</td>";
-					print "<td>$toipv</td>";
-					print "<input type=\"hidden\" name=\"id\" value=\"3-2\">";
-					print "<td>$hwaddr</td>";
-					print "<td>$netmask</td>";
-					print "<td class=\"aligncenter\">$gw</td>";
-
-					if ( $status eq "up" )
-					{
-						print
-						  "<td class=\"aligncenter\"><img src=\"img/icons/small/start.png\" title=\"up\">";
-					}
-					else
-					{
-						print
-						  "<td class=\"aligncenter\"><img src=\"img/icons/small/stop.png\" title=\"down\">";
-					}
-
-					if ( $link eq "off" )
-					{
-						print
-						  "&nbsp;&nbsp;<img src=\"img/icons/small/disconnect.png\" title=\"No link\">";
-					}
-
-					print "</td>";
-					&createmenuif( $iff, $id, $configured, $status );
-					print "</tr>";
-				}
-
-				# No show this interface again
-				push ( @interfacesdw, $iff );
-			}
-		}
+		</form>";
+		print "</td>";
+		print "</tr>";
 	}
-}
+	else
+	{
+		print "<tr $selected>";
+		print "<td>$$iface{name} $cluster_icon $gui_icon</td>";
+		print "<td><center>IPv$$iface{ip_v}</center></td>";
+		print "<td><center>$$iface{addr}</center></td>";
+		print "<td><center>$$iface{mac}</center></td>";
+		print "<td><center>$$iface{mask}</center></td>";
+		print "<td class=\"aligncenter\">$gateway</td>";
+		print "<td class=\"aligncenter\"><img $status_icon>$link_icon</td>";
+		&createmenuif( $iface, $id );    # $iface is a reference here
+	}
 
-if ( $action eq "addvip" or $action eq "addvlan" )
-{
-	print "</form>";
+	print "</tr>";
 }
 
 print "</tbody>";
@@ -678,12 +834,6 @@ print "</div></div>";
 
 #### Default GW section
 
-if ( $action eq "editgw" )
-{
-	print
-	  "<form name=\"gatewayform\" method=\"post\" action=\"index.cgi\" class=\"myform\">";
-}
-
 print "
                <div class=\"box grid_12\">
                  <div class=\"box-head\">
@@ -691,49 +841,66 @@ print "
                        <h2>Default gateway</h2>
                  </div>
                  <div class=\"box-content no-pad\">
-       ";
+";
+
+my %available_interfaces;
+
+if ( $action =~ /editgw/ )
+{
+	for my $iface ( @interfaces )
+	{
+		my $flags = $socket->if_flags( $$iface{ name } );
+
+		if ( ( $$iface{ name } !~ /^lo|sit|.*\:.*/ ) && ( $flags & IFF_RUNNING ) )
+		{
+			$available_interfaces{ $$iface{ name } } = "";
+		}
+	}
+}
 
 print "<table class=\"display\">";
 print "<thead>";
 print "<tr>";
 print "<th>Addr</th>";
 print "<th>Interface</th>";
+print "<th>IPv</th>";
 print "<th>Actions</th>";
 print "</tr>";
 print "</thead>";
 print "<tbody>";
 
-if ( $action eq "editgw" )
+# IPv4 default gateway
+if ( $action =~ /editgw4/ )
 {
+	print
+	  "<form name=\"gatewayform\" method=\"post\" action=\"index.cgi\" class=\"myform\">";
+
 	print "<tr class=\"selected\"><td>";
 	print "<input type=\"text\" size=\"14\" name=\"gwaddr\" value=\"";
 	print &getDefaultGW();
 	print "\">";
 	print "</td><td>";
 	print "<select name=\"if\">";
-	$iface   = &getIfDefaultGW();
-	$isfirst = "true";
 
-	for my $if ( @interfaces )
+	my $gw = &getIfDefaultGW();
+	if ( $gw )
 	{
-		my $flags = $s->if_flags( $if );
+		$available_interfaces{ $gw } = 'selected';
+	}
+	else
+	{
+		my ( $first_if ) = sort keys %available_interfaces;
+		$available_interfaces{ $first_if } = 'selected';
+	}
 
-		if ( ( $if !~ /^lo|sit|.*\:.*/ ) && ( $flags & IFF_RUNNING ) )
-		{
-			print "<option value=\"$if\" ";
-
-			if ( ( $iface eq "" && $isfirst eq "true" ) || $iface eq $if )
-			{
-				$isfirst = "false";
-				print "selected";
-			}
-
-			print ">$if</option>";
-		}
+	for my $if ( sort keys %available_interfaces )
+	{
+		print "<option value=\"$if\" $available_interfaces{$if}>$if</option>";
 	}
 
 	print "</select>";
-	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
+	print "</td><td>";
+	print "IPv4";
 }
 else
 {
@@ -741,11 +908,58 @@ else
 	print &getDefaultGW();
 	print "</td><td>";
 	print &getIfDefaultGW();
+	print "</td><td>";
+	print "IPv4";
 }
 print "</td><td>";
-&createmenuGW( $id, $action );
-
+&createmenuGW( $id, $action, 4 );
 print "</td></tr>";
+
+# IPv6 default gateway
+if ( $action =~ /editgw6/ )
+{
+	print
+	  "<form name=\"gatewayform\" method=\"post\" action=\"index.cgi\" class=\"myform\">";
+	print "<tr class=\"selected\"><td>";
+	print "<input type=\"text\" size=\"14\" name=\"gwaddr\" value=\"";
+	print &getIPv6DefaultGW();
+	print "\">";
+	print "</td><td>";
+	print "<select name=\"if\">";
+
+	my $gw = &getIPv6IfDefaultGW();
+	if ( $gw )
+	{
+		$available_interfaces{ $gw } = 'selected';
+	}
+	else
+	{
+		my ( $first_if ) = sort keys %available_interfaces;
+		$available_interfaces{ $first_if } = 'selected';
+	}
+
+	for my $if ( sort keys %available_interfaces )
+	{
+		print "<option value=\"$if\" $available_interfaces{$if}>$if</option>";
+	}
+
+	print "</select>";
+	print "</td><td>";
+	print "IPv6";
+}
+else
+{
+	print "<tr><td>";
+	print &getIPv6DefaultGW();
+	print "</td><td>";
+	print &getIPv6IfDefaultGW();
+	print "</td><td>";
+	print "IPv6";
+}
+print "</td><td>";
+&createmenuGW( $id, $action, 6 );
+print "</td></tr>";
+
 print "</tbody>";
 print "</table>";
 print "</div></div>";
@@ -760,9 +974,10 @@ print "
 			[10, 25, 50, 100, 200, -1],
 			[10, 25, 50, 100, 200, \"All\"]
 		],
-		\"iDisplayLength\": 10
+		\"iDisplayLength\": 25
     });
 } );
 </script>
 ";
 
+1;
