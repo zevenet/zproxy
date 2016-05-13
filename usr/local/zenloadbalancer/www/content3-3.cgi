@@ -630,10 +630,6 @@ print "
                  <div class=\"box-content global-farm\">
         ";
 
-opendir ( DIR, "$configdir" );
-@files = grep ( /^if.*\:.*$/, readdir ( DIR ) );
-closedir ( DIR );
-
 #vip cluster form
 #cluster information
 print
@@ -815,37 +811,34 @@ else
 print "<hr></hr>";
 print "<div class=\"form-row\">";
 
+my $cl_iface;
+
 #cluster form
 if ( $error eq "true" )
 {
 	print "<form method=\"post\" action=\"index.cgi\">";
 	print
 	  "<p class=\"form-label\"><b>Virtual IP for Cluster, or create new virtual IP <a href=\"index.cgi?id=3-2\">here</a>.</b> Only virtual IPs with UP status are listed.</p>";
-	print "<div class=\"form-item\"><select name=\"vipcl\" class=\"fixedwidth\">\n";
+	print
+	  "<div class=\"form-item\"><select name=\"vipcl\" class=\"monospace width-initial\">\n";
 
-	foreach my $file ( @files )
+	my @interfaces_available = @{ &getActiveInterfaceList() };
+
+	foreach my $iface ( @interfaces_available )
 	{
-		open FINT, "$configdir\/$file";
+		next if $$iface{ ip_v } == 6;
+		next if $$iface{ vini } eq '';
 
-		while ( <FINT> )
+		my $selected = '';
+
+		if ( $vipcl eq $$iface{ addr } )
 		{
-			@data = split ( ":", $_ );
-			chomp ( $vipcl );
-			chomp ( $data[2] );
-
-			if ( $vipcl eq $data[2] )
-			{
-				print
-				  "<option value=\"$data[2]:$data[0]:$data[1]\" selected=\"selected\">$data[0]:$data[1] $data[2]</option>";
-			}
-			else
-			{
-				print
-				  "<option value=\"$data[2]:$data[0]:$data[1]\">$data[0]:$data[1] $data[2]</option>";
-			}
+			$cl_iface = $iface;
+			$selected = "selected=\"selected\"";
 		}
 
-		close FINT;
+		print
+		  "<option value=\"$$iface{addr}:$$iface{name}\" $selected>$$iface{dev_ip_padded}</option>";
 	}
 
 	print "</select>";
@@ -858,42 +851,17 @@ if ( $error eq "true" )
 	print "</form>";
 	print "</div>";
 
-	#locate real interface for vipcl
-	opendir ( DIR, "$configdir" );
-	my @files = grep ( /^if.*\:.*$/, readdir ( DIR ) );
-	closedir ( DIR );
+	# Locate real interface for vipcl
+	my $parent_if_name = $$cl_iface{ dev };
+	$parent_if_name .= ".$$cl_iface{vlan}" if $$cl_iface{ vlan } ne '';
 
-	foreach my $file ( @files )
+	# Locate real interface for vipcl
+	foreach my $iface ( @interfaces_available )
 	{
-		open FINT, "$configdir\/$file";
+		next if $$iface{ name } ne $parent_if_name;
+		next if $$iface{ ip_v } ne 4;
 
-		while ( <FINT> )
-		{
-			my @line = split ( ":", $_ );
-
-			if ( $line[2] eq $vipcl )
-			{
-				my $ifnamet = $line[0];
-
-				foreach my $tips ( &listactiveips() )
-				{
-					if ( $tips =~ /^$ifnamet\-/ )
-					{
-						@iface = split ( "\-\>", $tips );
-						$iface = $iface[0];
-						chomp ( $ifnamet );
-
-						if ( $lip =~ /^$/ )
-						{
-							$lip = $iface[1];
-							chomp ( $lip );
-						}
-					}
-				}
-			}
-		}
-
-		close FINT;
+		$lip = $$iface{ addr };
 	}
 
 	if ( $lhost =~ /^$/ )
