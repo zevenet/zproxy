@@ -106,7 +106,6 @@ sub listActiveInterfaces    # ($class)
 
 #check if a ip is ok structure
 sub ipisok    # ($checkip ,$version)
-#~ <<<<<<< HEAD
 {
 	my $checkip = shift;
 	my $version = shift;
@@ -138,39 +137,6 @@ sub ipversion    # ($checkip)
 {
 	my $checkip = shift;
 	my $output  = "-";
-#~ =======
-{
-	my $checkip = shift;
-	my $version = shift;
-	my $return = "false";
-
-	use Data::Validate::IP;
-
-	if ( $version != 6 )
-	{
-		if ( is_ipv4( $checkip ) )
-		{
-			$return = "true";
-		}
-	}
-	
-	if ( $version != 4 )
-	{
-		if ( is_ipv6( $checkip ) )
-		{
-			$return = "true";
-		}
-	}
-	
-	return $return;
-}
-
-#check if a ip is IPv4 or IPv6
-sub ipversion    # ($checkip)
-{
-	my $checkip = shift;
-	my $output = "-";
-#~ >>>>>>> [New feature] IPv6 networking functionality
 
 	use Data::Validate::IP;
 
@@ -230,11 +196,11 @@ sub ifexist    # ($nif)
 			{
 				return "true";
 			}
-			
+
 			return "created";
 		}
 	}
-	
+
 	return "false";
 }
 
@@ -390,18 +356,19 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 		# &delRoutes( "global", $if );
 		#~ if ( $$if_ref{addr} !~ /\./ && $$if_ref{addr} !~ /\:/)
 		#~ {
-			#~ return 1;
+		#~ return 1;
 		#~ }
-		
-		my ($toif) = split ( /:/, $$if_ref{name} );
-		
+
+		my ( $toif ) = split ( /:/, $$if_ref{ name } );
+
 		if ( &isRule( $if_ref, $toif ) eq 0 )
 		{
-			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{addr} table table_$toif";
-			$status = &logAndRun("$ip_cmd");
+			my $ip_cmd =
+			  "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{addr} table table_$toif";
+			$status = &logAndRun( "$ip_cmd" );
 		}
 	}
-	
+
 	return $status;
 }
 
@@ -654,7 +621,7 @@ sub setIfacesUp    # ($if_name,$type)
 sub createIf    # ($if_ref)
 {
 	my $if_ref = shift;
-    
+
 	my $status = 0;
 
 	if ( $$if_ref{ vlan } ne '' )
