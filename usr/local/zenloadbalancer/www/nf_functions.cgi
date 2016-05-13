@@ -72,14 +72,17 @@ sub getIptFilter      # ($type, $desc, @iptables)
 #
 sub getIptList                              # ($table,$chain)
 {
-	my ( $table, $chain ) = @_;
+	my ( $farm_name, $table, $chain ) = @_;
 
 	if ( $table ne '' )
 	{
 		$table = "--table $table";
 	}
 
-	my $iptables_command = "$iptables $table -L $chain -n -v --line-numbers";
+	# Get the binary of iptables (iptables or ip6tables)
+	my $iptables_bin = &getBinVersion( $farm_name );
+
+	my $iptables_command = "$iptables_bin $table -L $chain -n -v --line-numbers";
 
 	&logfile( $iptables_command );
 
@@ -99,10 +102,13 @@ sub getIptList                              # ($table,$chain)
 #
 sub deleteIptRules    # ($type,$desc,$table,$chain,@allrules)
 {
-	my ( $type, $desc, $table, $chain, @allrules ) = @_;
+	my ( $farm_name, $type, $desc, $table, $chain, @allrules ) = @_;
 
 	my $status = 0;
 	my @rules = &getIptFilter( $type, $desc, @allrules );
+
+	# Get the binary of iptables (iptables or ip6tables)
+	my $iptables_bin = &getBinVersion( $farm_name );
 
 	# do not change rules id starting by the end
 	chomp ( @rules = reverse ( @rules ) );
@@ -113,7 +119,8 @@ sub deleteIptRules    # ($type,$desc,$table,$chain,@allrules)
 
 		if ( $type eq 'farm' )
 		{
-			my $iptables_command = "$iptables --table $table --delete $chain $sprule[0]";
+			my $iptables_command =
+			  "$iptables_bin --table $table --delete $chain $sprule[0]";
 
 			$status = iptSystem( $iptables_command );
 		}
@@ -227,7 +234,10 @@ sub genIptMarkPersist    # ($farm_name,$vip,$vport,$protocol,$ttl,$index,$mark)
 		$layer = "--protocol $$farm{ proto } -m multiport --dports $$farm{ vport }";
 	}
 
-	$rule = "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
+	# Get the binary of iptables (iptables or ip6tables)
+	my $iptables_bin = &getBinVersion( $farm_name );
+
+	$rule = "$iptables_bin --table mangle --::ACTION_TAG:: PREROUTING "
 	  . "--destination $$farm{ vip } "
 
 	  #~ . "$layer "
@@ -256,6 +266,11 @@ sub genIptMark # ($farm_name,$lbalg,$vip,$vport,$protocol,$index,$mark,$value,$p
 	my $server = shift;    # input: second argument should be a server reference
 	my $rule;              # output: iptables rule template string
 
+	if ( defined $farm )
+	{
+		$farm_name = $$farm{ name };
+	}
+
 	# for compatibility with previous function call
 	if ( defined $index )
 	{
@@ -269,9 +284,12 @@ sub genIptMark # ($farm_name,$lbalg,$vip,$vport,$protocol,$index,$mark,$value,$p
 		$layer = "--protocol $$farm{ proto } -m multiport --dports $$farm{ vport }";
 	}
 
+	# Get the binary of iptables (iptables or ip6tables)
+	my $iptables_bin = &getBinVersion( $farm_name );
+
 	# Every rule starts with:
 	# table, chain, destination(farm ip) and port(if required) definition
-	$rule = "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
+	$rule = "$iptables_bin --table mangle --::ACTION_TAG:: PREROUTING "
 
 	  #~ . "--destination $$farm{ vip } "
 	  #~ . "$layer "
@@ -321,6 +339,11 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 	my $server = shift;    # input: second argument can be a server reference
 	my $rule;              # output: iptables rule template string
 
+	if ( defined $farm )
+	{
+		$farm_name = $$farm{ name };
+	}
+
 	if ( defined $vip )
 	{
 		$farm   = &getL4FarmStruct( $farm_name );
@@ -328,12 +351,10 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 	}
 
 	my $layer = '';
-	my $rip   = $$farm{ vip };
 
 	if ( $$farm{ proto } ne "all" )
 	{
 		$layer = "--protocol $$farm{ proto }";
-		$rip   = "$rip:$$farm{ vport }";
 	}
 
 	my $persist_match = '';
@@ -343,8 +364,11 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 		  "--match recent --name \"\_$$farm{ name }\_$$server{ tag }\_sessions\" --set";
 	}
 
+	# Get the binary of iptables (iptables or ip6tables)
+	my $iptables_bin = &getBinVersion( $farm_name );
+
 	$rule =
-	    "$iptables --table nat --::ACTION_TAG:: PREROUTING "
+	    "$iptables_bin --table nat --::ACTION_TAG:: PREROUTING "
 	  . "--match mark --mark $$server{ tag } "
 	  . "$persist_match "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
@@ -365,11 +389,19 @@ sub genIptSourceNat    # ($farm_name,$vip,$index,$protocol,$mark)
 	my $server = shift;    # input: second argument can be a server reference
 	my $rule;              # output: iptables rule template string
 
+	if ( defined $farm )
+	{
+		$farm_name = $$farm{ name };
+	}
+
 	if ( defined $index )
 	{
 		$farm   = &getL4FarmStruct( $farm_name );
 		$server = $$farm{ servers }[$index];
 	}
+
+	# Get the binary of iptables (iptables or ip6tables)
+	my $iptables_bin = &getBinVersion( $farm_name );
 
 	my $layer = '';
 	if ( $$farm{ proto } ne "all" )
@@ -378,7 +410,7 @@ sub genIptSourceNat    # ($farm_name,$vip,$index,$protocol,$mark)
 	}
 
 	$rule =
-	    "$iptables --table nat --::ACTION_TAG:: POSTROUTING "
+	    "$iptables_bin --table nat --::ACTION_TAG:: POSTROUTING "
 	  . "--match mark --mark $$server{ tag } "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
 	  . "--jump SNAT $layer --to-source $$server{ vip } ";
@@ -398,6 +430,11 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 	my $server = shift;    # input: second argument can be a server reference
 	my $rule;              # output: iptables rule template string
 
+	if ( defined $farm )
+	{
+		$farm_name = $$farm{ name };
+	}
+
 	if ( defined $protocol )
 	{
 		$farm   = &getL4FarmStruct( $farm_name );
@@ -410,8 +447,11 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 		$layer = "--protocol $$farm{ proto }";
 	}
 
+	# Get the binary of iptables (iptables or ip6tables)
+	my $iptables_bin = &getBinVersion( $farm_name );
+
 	$rule =
-	    "$iptables --table nat --::ACTION_TAG:: POSTROUTING "
+	    "$iptables_bin --table nat --::ACTION_TAG:: POSTROUTING "
 	  . "$layer "
 	  . "--match mark --mark $$server{ tag } "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
@@ -446,7 +486,12 @@ sub getConntrack    # ($orig_src, $orig_dst, $reply_src, $reply_dst, $protocol)
 # insert restore mark on top of
 sub getIptStringConnmarkRestore
 {
-	return "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
+	my $farm_name = shift;    # farmname
+
+	# Get the binary of iptables (iptables or ip6tables)
+	my $iptables_bin = &getBinVersion( $farm_name );
+
+	return "$iptables_bin --table mangle --::ACTION_TAG:: PREROUTING "
 	  . "--jump CONNMARK --restore-mark ";
 
 	#~ . "--nfmask 0xffffffff --ctmask 0xffffffff "
@@ -455,21 +500,26 @@ sub getIptStringConnmarkRestore
 # append restore mark at the end of
 sub getIptStringConnmarkSave
 {
+	my $farm_name = shift;    # farmname
+
+	# Get the binary of iptables (iptables or ip6tables)
+	my $iptables_bin = &getBinVersion( $farm_name );
+
 	return
-	    "$iptables --table mangle --::ACTION_TAG:: PREROUTING "
+	    "$iptables_bin --table mangle --::ACTION_TAG:: PREROUTING "
 	  . "--match state --state NEW "
 	  . "--jump CONNMARK --save-mark ";
 
 	#~ . "--nfmask 0xffffffff --ctmask 0xffffffff "
-
 }
 
 sub setIptConnmarkRestore
 {
+	my $farm_name   = shift;    # farmname
 	my $switch      = shift;    # 'true' or not true value
 	my $return_code = -1;       # return value
 
-	my $rule = &getIptStringConnmarkRestore();
+	my $rule = &getIptStringConnmarkRestore( $farm_name );
 	my $restore_on = ( &iptSystem( &applyIptRuleAction( $rule, 'check' ) ) == 0 );
 
 	# if want to set it on but not already on
@@ -491,10 +541,11 @@ sub setIptConnmarkRestore
 
 sub setIptConnmarkSave
 {
+	my $farm_name   = shift;    # farmname
 	my $switch      = shift;    # 'true' or not true value
 	my $return_code = -1;       # return value
 
-	my $rule = &getIptStringConnmarkSave();
+	my $rule = &getIptStringConnmarkSave( $farm_name );
 	my $restore_on = ( &iptSystem( &applyIptRuleAction( $rule, 'check' ) ) == 0 );
 
 	# if want to set it on but not already on
@@ -575,7 +626,12 @@ sub getIptRuleNumber
 
 	my $server_line;
 	my $filter;
-	my $ipt_cmd = "$iptables --numeric --line-number --table $table --list $chain";
+
+	# Get the binary of iptables (iptables or ip6tables)
+	my $iptables_bin = &getBinVersion( $farm_name );
+
+	my $ipt_cmd =
+	  "$iptables_bin --numeric --line-number --table $table --list $chain";
 
 	# define filter with or without index paramenter
 	if ( defined ( $index ) )
@@ -653,7 +709,7 @@ sub applyIptRules
 	foreach my $rule ( @rules )
 	{
 		# skip cycle if $rule empty
-		next if not $rule or $rule !~ 'iptables';
+		next if not $rule or $rule !~ /ip6?tables/;
 
 		$return_code |= &iptSystem( $rule );
 	}
@@ -675,22 +731,17 @@ sub getIptRuleCheck
 	return &applyIptRuleAction( $rule, 'check' );
 }
 
-sub setIptRuleInsert
-{
-	my $farm     = shift;    # input: farm struc reference
-	my $server   = shift;    # input: server struc reference
-	my $rule     = shift;    # input: iptables rule string
-	my $rule_num = shift;    # input: possition to insert the rule
-
-	return &applyIptRules( &getIptRuleInsert( $rule, $rule_num ) );
-}
-
 sub getIptRuleInsert
 {
 	my $farm     = shift;    # input: farm struc reference
 	my $server   = shift;    # input: server struc reference
 	my $rule     = shift;    # input: iptables rule string
 	my $rule_num = shift;    # input(optional): possition to insert the rule
+
+	my $farm_name = $$farm{ name };
+
+	# Get the binary of iptables (iptables or ip6tables)
+	my $iptables_bin = &getBinVersion( $farm_name );
 
 	if ( ( not defined $rule_num ) || $rule_num eq '' )
 	{
@@ -700,8 +751,8 @@ sub getIptRuleInsert
 		# do not insert a rule on a position higher than this, iptable will fail
 		my $rule_max_position;
 
-		{                    # calculate rule_max_position
-			                 # read rule table and chain
+		{    # calculate rule_max_position
+			    # read rule table and chain
 			my @rule_args = split / +/, $rule;
 			my $table     = $rule_args[2];       # second argument of iptables is the table
 			my $chain     = $rule_args[4];       # forth argument of iptables is the chain
@@ -710,7 +761,7 @@ sub getIptRuleInsert
 			open my $ipt_lockfile, '>', $iptlock;
 			&setIptLock( $ipt_lockfile );
 
-			my @rule_list = `$iptables -n --line-number --table $table --list $chain`;
+			my @rule_list = `$iptables_bin -n --line-number --table $table --list $chain`;
 
 			## unlock iptables use ##
 			&setIptUnlock( $ipt_lockfile );
@@ -794,6 +845,7 @@ sub setIptRuleReplace    # $return_code ( \%farm, \%server, $rule)
 	my $server = shift;    # input: server struc reference
 	my $rule   = shift;    # input: iptables rule string
 
+	&zlog();
 	return &applyIptRules( &getIptRuleReplace( $farm, $server, $rule ) );
 }
 
@@ -839,6 +891,29 @@ sub getIptRulesStruct
 			 t_mangle_p => [],
 			 t_snat     => [],
 	};
+}
+
+# Get the binary of iptables (for IPv4 or IPv6)
+sub getBinVersion    # ($farm_name)
+{
+	# Variables
+	my $farm_name = shift;
+	my $binary;
+	my $vip = &getFarmVip( "vip", $farm_name );
+	my $ipv = &ipversion( $vip );
+
+	# Check the type of binary to use
+	if ( $ipv == 4 )
+	{
+		$binary = $iptables;
+	}
+	elsif ( $ipv == 6 )
+	{
+		$binary = $ip6tables;
+	}
+
+	# Return $iptables or $ip6tables
+	return $binary;
 }
 
 #lock iptables

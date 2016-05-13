@@ -43,7 +43,7 @@ sub logfile    # ($string)
 #&zenlog("err","Some errors happended.");
 #&zenlog("debug","testing debug mode");
 #
-sub zenlog    # ($string,$type,$level)
+sub zenlog    # ($type,$string)
 {
 	my $type   = shift;    # type   = type of message
 	my $string = shift;    # string = message
@@ -180,11 +180,11 @@ sub closelock    # ($filehandle)
 #@myarray = &tielock("test.dat");
 #@array = &tielock($filename);
 #
-sub tielock    # ()
+sub tielock    # ($file_name)
 {
-	my $file = shift;    #parameters
+	my $file_name = shift;    #parameters
 
-	$o = tie my @array, "Tie::File", $file;
+	$o = tie my @array, "Tie::File", $file_name;
 	$o->flock;
 
 	return @array;
@@ -205,23 +205,34 @@ sub untielock    # (@array)
 }
 
 # log and run the command string input parameter returning execution error code
-sub logAndRun
+sub logAndRun    # ($command)
 {
 	my $command = shift;    # command string to log and run
 	my $return_code;
-
+	my @cmd_output;
+	
 	my $program = ( split '/', $0 )[-1];
 	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
 	$program .= ' ';
 
-	#	&logfile( (caller (2))[3] . ' >>> ' . (caller (1))[3]);
+	# &logfile( (caller (2))[3] . ' >>> ' . (caller (1))[3]);
 	&logfile( $program . "running: $command" );    # log
-	system ( "$command >/dev/null 2>&1" );         # run
+
+	if ( &debug )
+	{
+		@cmd_output  = `$command 2>&1`;    # run
+	}
+	else
+	{
+		system ( "$command >/dev/null 2>&1" );	# run
+	}
+
 	$return_code = $?;
 
 	if ( $return_code )
 	{
-		&logfile( "last command failed!" );        # show in logs if failed
+		&logfile( "last command failed!" );		# show in logs if failed
+		&logfile( "@cmd_output" ) if &debug;
 	}
 
 	# returning error code from execution
@@ -229,7 +240,7 @@ sub logAndRun
 }
 
 # example of caller usage
-sub zlog
+sub zlog                                       # (@message)
 {
 	my @message = shift;
 
@@ -266,5 +277,4 @@ sub print_mem
 
 sub debug { return 0 }
 
-# do not remove this
 1;

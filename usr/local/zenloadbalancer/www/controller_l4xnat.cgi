@@ -303,6 +303,7 @@ if ( $action eq "editfarm-Parameters" )
 			{
 				&successmsg(
 							 "The FarmGuardian service for the $farmname farm has been modified" );
+							 
 				if ( $usefarmguardian eq "true" && &getFarmStatus( $farmname ) eq 'up' )
 				{
 					$status = &runFarmGuardianStart( $farmname, "" );
@@ -368,16 +369,31 @@ if ( $action eq "editfarm-deleteserver" )
 #save server
 if ( $action eq "editfarm-saveserver" )
 {
+	# Get IP Version of current farm
+	my $current_vip = &getFarmVip( "vip", $farmname );
+	my $ipv = &ipversion( $current_vip );
+
+	# Check if rip_server has a correct IP value (IPv4 or IPv6)
 	$error = 0;
 	if ( &ipisok( $rip_server ) eq "false" || $rip_server =~ /^$/ )
 	{
-		&errormsg( "Invalid real server IP value, please insert a valid value" );
+		&errormsg(
+			 "Invalid real server IP value, please insert a valid value with $ipv structure"
+		);
+		$error = 1;
+	}
+
+	# Check if rip_server structure is IPv4 or IPv6
+	if ( $ipv ne &ipversion( $rip_server ) && $error == 0 )
+	{
+		&errormsg(
+				  "IP Address $rip_server structure is not ok, must be an $ipv structure" );
 		$error = 1;
 	}
 
 	if ( &checkmport( $port_server ) eq "true" )
 	{
-		my $port = &getFarmVip( "vipp", $fname );
+		my $port = &getFarmVip( "vipp", $farmname );
 		if ( $port_server == $port || $port_server =~ /\*/ )
 		{
 			$port_server = "";

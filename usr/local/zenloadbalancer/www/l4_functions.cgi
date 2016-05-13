@@ -488,8 +488,11 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 			open my $ipt_lockfile, '>', $iptlock;
 			&setIptLock( $ipt_lockfile );
 
+			# Get the binary of iptables (iptables or ip6tables)
+			my $iptables_bin = &getBinVersion( $farm_name );
+
 			my $num_lines = grep { /-m condition --condition/ }
-			  `$iptables --numeric --table mangle --list PREROUTING`;
+			  `$iptables_bin --numeric --table mangle --list PREROUTING`;
 
 			## unlock iptables use ##
 			&setIptUnlock( $ipt_lockfile );
@@ -1364,8 +1367,8 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	&logfile( "_runL4FarmStart :: farm:" . Dumper( $farm ) ) if &debug == 2;
 
 	# first insert the save rule, then insert on top the restore rule
-	&setIptConnmarkSave( 'true' );
-	&setIptConnmarkRestore( 'true' );
+	&setIptConnmarkSave( $farm_name, 'true' );
+	&setIptConnmarkRestore( $farm_name, 'true' );
 
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
@@ -1457,16 +1460,19 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	# Disable rules
 	my @allrules;
 
-	@allrules = &getIptList( "mangle", "PREROUTING" );
+	@allrules = &getIptList( $farm_name, "mangle", "PREROUTING" );
 	$status =
-	  &deleteIptRules( "farm", $farm_name, "mangle", "PREROUTING", @allrules );
+	  &deleteIptRules( $farm_name,   "farm", $farm_name, "mangle",
+					   "PREROUTING", @allrules );
 
-	@allrules = &getIptList( "nat", "PREROUTING" );
-	$status = &deleteIptRules( "farm", $farm_name, "nat", "PREROUTING", @allrules );
+	@allrules = &getIptList( $farm_name, "nat", "PREROUTING" );
+	$status = &deleteIptRules( $farm_name,   "farm", $farm_name, "nat",
+							   "PREROUTING", @allrules );
 
-	@allrules = &getIptList( "nat", "POSTROUTING" );
+	@allrules = &getIptList( $farm_name, "nat", "POSTROUTING" );
 	$status =
-	  &deleteIptRules( "farm", $farm_name, "nat", "POSTROUTING", @allrules );
+	  &deleteIptRules( $farm_name, "farm", $farm_name, "nat", "POSTROUTING",
+					   @allrules );
 
 	# Disable active l4xnat file
 	unlink ( "$piddir\/$farm_name\_l4xnat.pid" );
@@ -2152,15 +2158,22 @@ sub getL4ServerStruct
 
 	if ( $server{ vport } ne '' && $$farm{ proto } ne 'all' )
 	{
-		chomp ( $server{ rip } = "$server{vip}\:$server{vport}" );
+		if ( &ipversion( $server{ rip } ) == 4 )
+		{
+			$server{ rip } = "$server{vip}\:$server{vport}";
+		}
+		elsif ( &ipversion( $server{ rip } ) == 6 )
+		{
+			$server{ rip } = "[$server{vip}]\:$server{vport}";
+		}
 	}
 
-	return \%server;                                   # return reference
+	return \%server;    # return reference
 }
 
 sub doL4FarmProbability
 {
-	my $farm = shift;                                  # input: farm reference
+	my $farm = shift;    # input: farm reference
 
 	$$farm{ prob } = 0;
 

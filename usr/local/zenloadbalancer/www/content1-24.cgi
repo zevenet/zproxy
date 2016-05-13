@@ -62,26 +62,30 @@ my $vip   = &getFarmVip( "vip",  $farmname );
 my $vport = &getFarmVip( "vipp", $farmname );
 print "<div class=\"form-row\">\n";
 print "<p class=\"form-label\"><b>Farm Virtual IP and Virtual port</b></p>\n";
-@listinterfaces = &listallips();
-$clrip          = &getClusterRealIp();
-print
-  "<div class=\"form-item\"><select name=\"vip\" class=\"fixedwidth-medium\">\n";
 
-foreach $ip ( @listinterfaces )
+$clrip = &getClusterRealIp();
+
+my @interfaces_available = @{ &getActiveInterfaceList() };
+
+print
+  "<div class=\"form-item\"><select name=\"vip\" class=\"fixedwidth monospace\">\n";
+print "<option value=\"\">-Select One-</option>\n";
+
+for my $iface ( @interfaces_available )
 {
-	if ( $ip !~ $clrip )
+	next if $$iface{ addr } eq $clrip;
+
+	my $selected = '';
+
+	if ( $$iface{ addr } eq $vip )
 	{
-		if ( $vip eq $ip )
-		{
-			print "<option value=\"$ip\" selected=\"selected\">$ip</option>\n";
-		}
-		else
-		{
-			print "<option value=\"$ip\">$ip</option>\n";
-		}
+		$selected = "selected=\"selected\"";
 	}
+
+	print
+	  "<option value=\"$$iface{addr}\" $selected>$$iface{dev_ip_padded}</option>\n";
 }
-print "</select>\n";
+
 print
   "<input type=\"number\" class=\"fixedwidth-small\" value=\"$vport\" size=\"4\" name=\"vipp\"> \n";
 print "</div>\n";
@@ -465,7 +469,7 @@ if ( $type eq "https" )
 	print
 	  "<div class=\"form-item\"><select name=\"certname\" size=\"4\" class=\"fixedwidth\">\n";
 
-	foreach $certname ( @certnames )
+	foreach my $certname ( @certnames )
 	{
 		$i++;
 		$certid = $i;
@@ -543,18 +547,17 @@ my $first   = 0;
 my $vserver = -1;
 my $pos     = 0;
 $id_serverr = $id_server;
+
 foreach $line ( @file )
 {
 
 	if ( $line !~ /Service "$service"/ && $line =~ /\tService\ \"/ )
 	{
-
-		#print "line is $line and service is $service";
-
 		if ( $first eq 1 )
 		{
 			print "</div></div>\n";
 		}
+
 		$pos++;
 		$first   = 1;
 		$vserver = 0;
@@ -577,7 +580,6 @@ foreach $line ( @file )
 	{
 		if ( $vserver == 0 )
 		{
-
 			#
 			# Virtual Server
 			#
@@ -1096,7 +1098,7 @@ print "<div class=\"box table\">  <table cellspacing=\"0\">";
 print
   "<thead><tr><td>Server</td><td>Address</td><td>Port</td><td>Timeout</td><td>Weight</td><td>Actions</td></tr></thead><tbody>";
 #
-tie @contents, 'Tie::File', "$configdir\/$file";
+tie my @contents, 'Tie::File', "$configdir\/$file";
 $nserv      = -1;
 $index      = -1;
 $be_section = 0;
@@ -1104,7 +1106,7 @@ $to_sw      = 0;
 $prio_sw    = 0;
 
 $id_serverr = $id_server;
-foreach $line ( @contents )
+foreach my $line ( @contents )
 {
 	$index++;
 	if ( $line =~ /#BackEnd/ )
@@ -1231,7 +1233,7 @@ if ( $action eq "editfarm-addserver" && $actualservice eq $service )
 	#Priority
 	print
 	  "<td><input type=\"text\" class=\"fixedwidth\" size=\"4\"  name=\"priority_server\" value=\"$priority_server\"> </td>";
-	&createmenuserversfarm( "add", $farmname, @l_serv[0] );
+	&createmenuserversfarm( "add", $farmname, $l_serv[0] );
 	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 	print "<input type=\"hidden\" name=\"service\" value=\"$service\">";
@@ -1242,10 +1244,10 @@ if ( $action eq "editfarm-addserver" && $actualservice eq $service )
 
 print "<tr><td colspan=\"5\"></td>";
 print "<form method=\"post\" action=\"index.cgi\#backendlist-$sv\">";
-&createmenuserversfarm( "new", $farmname, @l_serv[0] );
+&createmenuserversfarm( "new", $farmname, $l_serv[0] );
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-print "<input type=\"hidden\" name=\"id_server\" value=\"@l_serv[0]\">";
+print "<input type=\"hidden\" name=\"id_server\" value=\"$l_serv[0]\">";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 print "<input type=\"hidden\" name=\"service\" value=\"$service\">";
 print "</form>";
@@ -1268,5 +1270,4 @@ if ( $pos gt 0 )
 BACKENDS:
 ##################################################################
 
-# Don't remove it or you will be killed
 1;
