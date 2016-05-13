@@ -69,12 +69,15 @@
 }
 
 input[type="text"].fixedwidth, input[type="number"].fixedwidth, input[type="password"].fixedwidth, select.fixedwidth, textarea.fixedwidth {
-	width: 180px;
+	width: 200px;
 }
 
-.iPhoneCheckContainer {
-	float: left;
-	margin-right: 116px;
+.monospace {
+  font-family: Lucida Console, Monaco, monospace;
+}
+
+.width-initial {
+  width: initial !important;
 }
 
 .fixedwidth-medium {
