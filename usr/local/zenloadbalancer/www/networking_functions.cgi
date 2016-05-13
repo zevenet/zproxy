@@ -196,11 +196,11 @@ sub ifexist    # ($nif)
 			{
 				return "true";
 			}
-
+			
 			return "created";
 		}
 	}
-
+	
 	return "false";
 }
 
@@ -356,19 +356,18 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 		# &delRoutes( "global", $if );
 		#~ if ( $$if_ref{addr} !~ /\./ && $$if_ref{addr} !~ /\:/)
 		#~ {
-		#~ return 1;
+			#~ return 1;
 		#~ }
-
-		my ( $toif ) = split ( /:/, $$if_ref{ name } );
-
+		
+		my ($toif) = split ( /:/, $$if_ref{name} );
+		
 		if ( &isRule( $if_ref, $toif ) eq 0 )
 		{
-			my $ip_cmd =
-			  "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{addr} table table_$toif";
-			$status = &logAndRun( "$ip_cmd" );
+			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{addr} table table_$toif";
+			$status = &logAndRun("$ip_cmd");
 		}
 	}
-
+	
 	return $status;
 }
 
@@ -624,7 +623,7 @@ sub setIfacesUp    # ($if_name,$type)
 sub createIf    # ($if_ref)
 {
 	my $if_ref = shift;
-
+    
 	my $status = 0;
 
 	if ( defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '' )
@@ -676,6 +675,7 @@ sub upIf    # ($if_ref, $writeconf)
 	}
 
 	my $ip_cmd = "$ip_bin link set $$if_ref{name} up";
+
 	$status = &logAndRun( $ip_cmd );
 
 	return $status;
