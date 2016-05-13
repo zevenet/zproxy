@@ -26,6 +26,7 @@ use Sys::Hostname;
 use Date::Parse;
 use Time::localtime;
 use Tie::File;
+use Data::Dumper;
 
 my $limitfile = "/etc/security/limits.conf";
 my $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
@@ -33,7 +34,8 @@ require "/usr/local/zenloadbalancer/config/global.conf";
 require "/usr/local/zenloadbalancer/www/functions.cgi";
 require "/usr/local/zenloadbalancer/www/cluster_functions.cgi";
 
-$eject = $ARGV[0];
+my $eject                 = $ARGV[0];
+my @configured_interfaces = @{ &getConfigInterfaceList() };
 
 if ( !$eject && $eject !~ /stop|start|status|startlocal|stoplocal/ )
 {
@@ -43,7 +45,7 @@ if ( !$eject && $eject !~ /stop|start|status|startlocal|stoplocal/ )
 }
 
 # build local key
-sub keycert()
+sub keycert    #()
 {
 	# requires:
 	#~ use Sys::Hostname;
@@ -87,7 +89,7 @@ sub keycert()
 }
 
 # evaluate certificate
-sub certcontrol()
+sub certcontrol          #()
 {
 	# requires:
 	#~ use Sys::Hostname;
@@ -166,23 +168,35 @@ sub certcontrol()
 	return $swcert;
 }
 
-sub configureDefaultGW()
+sub configureDefaultGW    #()
 {
 	print "\n";
 	if ( $ARGV[0] =~ /^start.*/ )
 	{
-		chomp ( $defaultgwif );
-		if ( $defaultgw ne "" && $defaultgwif ne "" )
+		if ( $defaultgw ne '' && $defaultgwif ne '' )
 		{
-			print "Default Gateway:$defaultgw Device:$defaultgwif\n";
-			&applyRoutes( "global", $defaultgwif, $defaultgw );
+			my $if_ref = &getInterfaceConfig( $defaultgwif, 4 );
+			if ( $if_ref )
+			{
+				print "Default Gateway:$defaultgw Device:$defaultgwif\n";
+				&applyRoutes( "global", $if_ref, $defaultgw );
+			}
+		}
+
+		if ( $defaultgw6 ne '' && $defaultgwif6 ne '' )
+		{
+			my $if_ref = &getInterfaceConfig( $defaultgwif, 6 );
+			if ( $if_ref )
+			{
+				print "Default Gateway:$defaultgw6 Device:$defaultgwif6\n";
+				&applyRoutes( "global", $if_ref, $defaultgw6 );
+			}
 		}
 	}
 }
 
-sub runhttpsgui()
+sub runhttpsgui    #()
 {
-	#print "Running HTTPS GUI";
 	if ( $pid = fork )
 	{
 		#$SIG{'CHLD'}='IGNORE';
@@ -202,178 +216,98 @@ if ( $eject eq "restart" )
 
 if ( $eject eq "start" )
 {
+	&logfile( "Beginning start proccess" );
 	system ( '/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi' );
 	require "/usr/local/zenloadbalancer/config/global.conf";
 
 	# Load required modules
-	system ( '/sbin/modprobe nf_conntrack 2>&1 >/dev/null' );
-	system ( '/sbin/modprobe ip_conntrack 2>&1 >/dev/null' );
-	system ( '/sbin/rmmod xt_recent 2>&1 >/dev/null' );
+	system ( '/sbin/modprobe nf_conntrack >/dev/null 2>&1' );
+	system ( '/sbin/modprobe ip_conntrack >/dev/null 2>&1' );
+	system ( '/sbin/rmmod xt_recent >/dev/null 2>&1' );
 	system (
-		"/sbin/modprobe xt_recent ip_list_tot=$recent_ip_list_tot ip_list_hash_size=$recent_ip_list_hash_size 2>&1 >/dev/null"
+		"/sbin/modprobe xt_recent ip_list_tot=$recent_ip_list_tot ip_list_hash_size=$recent_ip_list_hash_size >/dev/null 2>&1"
 	);
 
 	system ( 'echo "22500" > /sys/module/nf_conntrack/parameters/hashsize' );
 
-	# Set system tuning.
+	# Set system tuning with sysctl
 	$sysctl = "/etc/sysctl.conf";
 
-	tie @sysctl, 'Tie::File', "$sysctl";
+	tie my @sysctl, 'Tie::File', "$sysctl";
 	@sysctl = grep !/^net\.ipv4\.tcp_tw_recycle/, @sysctl;
 
-	if ( !grep ( /^fs\.file-max/, @sysctl ) )
+	my %sysctl = (
+				   "fs.file-max"                        => "100000",
+				   "vm.max_map_count"                   => "1048576",
+				   "vm.swappiness"                      => "10",
+				   "net.ipv4.conf.all.log_martians"     => "0",
+				   "net.ipv4.ip_local_port_range"       => "1024 65535",
+				   "net.ipv4.tcp_max_tw_buckets"        => "2000000",
+				   "net.ipv4.tcp_max_syn_backlog"       => "30000",
+				   "net.ipv4.tcp_window_scaling"        => "1",
+				   "net.ipv4.tcp_timestamps"            => "0",
+				   "net.ipv4.tcp_rmem"                  => "4096 87380 16777216",
+				   "net.ipv4.tcp_wmem"                  => "4096 65536 16777216",
+				   "net.ipv4.udp_rmem_min"              => "8192",
+				   "net.ipv4.udp_wmem_min"              => "8192",
+				   "net.ipv4.tcp_low_latency"           => "1",
+				   "net.ipv4.tcp_tw_reuse"              => "1",
+				   "net.ipv4.tcp_tw_recycle"            => "0",
+				   "net.ipv4.tcp_keepalive_time"        => "512",
+				   "net.ipv4.tcp_fin_timeout"           => "5",
+				   "net.ipv4.inet_peer_maxttl"          => "5",
+				   "net.ipv4.tcp_keepalive_probes"      => "5",
+				   "net.ipv4.tcp_slow_start_after_idle" => "0",
+				   "net.ipv4.netfilter.ip_conntrack_udp_timeout_stream"      => "10",
+				   "net.ipv4.netfilter.ip_conntrack_tcp_timeout_time_wait"   => "2",
+				   "net.ipv4.netfilter.ip_conntrack_tcp_timeout_established" => "86400",
+				   "net.netfilter.nf_conntrack_tcp_timeout_time_wait"        => "2",
+				   "net.netfilter.nf_conntrack_max"       => "180000",
+				   "net.netfilter.nf_conntrack_tcp_loose" => "0",
+				   "net.core.rmem_max"                    => "16777216",
+				   "net.core.wmem_max"                    => "16777216",
+				   "net.core.rmem_default"                => "16777216",
+				   "net.core.wmem_default"                => "16777216",
+				   "net.core.optmem_max"                  => "40960",
+				   "net.ipv4.tcp_keepalive_intvl"         => "15",
+				   "net.core.netdev_max_backlog"          => "50000",
+				   "net.core.somaxconn"                   => "3000",
+	);
+
+	foreach my $key ( sort keys %sysctl )
 	{
-		push ( @sysctl, "fs.file-max = 100000" );
+		# escape dots for regular expression
+		my $quoted_key = quotemeta ( $key );
+
+		if ( !grep ( /^$quoted_key/, @sysctl ) )
+		{
+			push ( @sysctl, "$key = $sysctl{$key}" );
+		}
 	}
-	if ( !grep ( /^vm\.max_map_count/, @sysctl ) )
+
+	untie @sysctl;
+
+	my $sysctl_errno = system ( 'sysctl -p > /dev/null' );
+	my $sysclt_msg;
+
+	if ( $sysctl_errno )
 	{
-		push ( @sysctl, "vm.max_map_count = 1048576" );
+		$sysclt_msg = "An error happenend applying sysctl policies.";
 	}
-	if ( !grep ( /^vm\.swappiness/, @sysctl ) )
+	else
 	{
-		push ( @sysctl, "vm.swappiness = 10" );
+		$sysclt_msg = "Sysctl applied policies successfully.";
 	}
-	if ( !grep ( /^net\.ipv4\.conf\.all\.log_martians/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.conf.all.log_martians = 0" );
-	}
-	if ( !grep ( /^net\.ipv4\.ip_local_port_range/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.ip_local_port_range = 1024 65535" );
-	}
-	if ( !grep ( /^net\.ipv4\.tcp_max_tw_buckets/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.tcp_max_tw_buckets = 2000000" );
-	}
-	if ( !grep ( /^net\.ipv4\.tcp_max_syn_backlog/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.tcp_max_syn_backlog = 30000" );
-	}
-	if ( !grep ( /^net\.ipv4\.tcp_window_scaling/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.tcp_window_scaling = 1" );
-	}
-	if ( !grep ( /^net\.ipv4\.tcp_timestamps/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.tcp_timestamps = 0" );
-	}
-	if ( !grep ( /^net\.ipv4\.tcp_rmem/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.tcp_rmem = 4096 87380 16777216" );
-	}
-	if ( !grep ( /^net\.ipv4\.tcp_wmem/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.tcp_wmem = 4096 65536 16777216" );
-	}
-	if ( !grep ( /^net\.ipv4\.udp_rmem_min/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.udp_rmem_min = 8192" );
-	}
-	if ( !grep ( /^net\.ipv4\.udp_wmem_min/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.udp_wmem_min = 8192" );
-	}
-	if ( !grep ( /^net\.ipv4\.tcp_low_latency/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.tcp_low_latency = 1" );
-	}
-	if ( !grep ( /^net\.ipv4\.tcp_tw_reuse/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.tcp_tw_reuse = 1" );
-	}
-	if ( !grep ( /^net\.ipv4\.tcp_tw_recycle/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.tcp_tw_recycle = 0" );
-	}
-	if ( !grep ( /^net\.ipv4\.tcp_keepalive_time/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.tcp_keepalive_time = 512" );
-	}
-	if ( !grep ( /^net\.ipv4\.tcp_fin_timeout/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.tcp_fin_timeout = 5" );
-	}
-	if ( !grep ( /^net\.ipv4\.inet_peer_maxttl/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.inet_peer_maxttl = 5" );
-	}
-	if ( !grep ( /^net\.ipv4\.tcp_keepalive_probes/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.tcp_keepalive_probes = 5" );
-	}
-	if ( !grep ( /^net\.ipv4\.tcp_slow_start_after_idle/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.tcp_slow_start_after_idle = 0" );
-	}
-	if (
-		 !grep ( /^net\.ipv4\.netfilter\.ip_conntrack_udp_timeout_stream/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.netfilter.ip_conntrack_udp_timeout_stream = 10" );
-	}
-	if (
-		!grep ( /^net\.ipv4\.netfilter\.ip_conntrack_tcp_timeout_time_wait/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.netfilter.ip_conntrack_tcp_timeout_time_wait = 2" );
-	}
-	if (
-		!grep ( /^net\.ipv4\.netfilter\.ip_conntrack_tcp_timeout_established/, @sysctl )
-	  )
-	{
-		push ( @sysctl,
-			   "net.ipv4.netfilter.ip_conntrack_tcp_timeout_established = 86400" );
-	}
-	if ( !grep ( /^net\.netfilter\.nf_conntrack_tcp_timeout_time_wait/, @sysctl ) )
-	{
-		push ( @sysctl, "net.netfilter.nf_conntrack_tcp_timeout_time_wait = 2" );
-	}
-	if ( !grep ( /^net\.netfilter\.nf_conntrack_max/, @sysctl ) )
-	{
-		push ( @sysctl, "net.netfilter.nf_conntrack_max = 180000" );
-	}
-	if ( !grep ( /^net\.netfilter\.nf_conntrack_tcp_loose/, @sysctl ) )
-	{
-		push ( @sysctl, "net.netfilter.nf_conntrack_tcp_loose = 0" );
-	}
-	if ( !grep ( /^net\.core\.rmem_max/, @sysctl ) )
-	{
-		push ( @sysctl, "net.core.rmem_max = 16777216" );
-	}
-	if ( !grep ( /^net\.core\.wmem_max/, @sysctl ) )
-	{
-		push ( @sysctl, "net.core.wmem_max = 16777216" );
-	}
-	if ( !grep ( /^net\.core\.rmem_default/, @sysctl ) )
-	{
-		push ( @sysctl, "net.core.rmem_default = 16777216" );
-	}
-	if ( !grep ( /^net\.core\.wmem_default/, @sysctl ) )
-	{
-		push ( @sysctl, "net.core.wmem_default = 16777216" );
-	}
-	if ( !grep ( /^net\.core\.optmem_max/, @sysctl ) )
-	{
-		push ( @sysctl, "net.core.optmem_max = 40960" );
-	}
-	if ( !grep ( /^net\.ipv4\.tcp_keepalive_intvl/, @sysctl ) )
-	{
-		push ( @sysctl, "net.ipv4.tcp_keepalive_intvl = 15" );
-	}
-	if ( !grep ( /^net\.core\.netdev_max_backlog/, @sysctl ) )
-	{
-		push ( @sysctl, "net.core.netdev_max_backlog = 50000" );
-	}
-	if ( !grep ( /^net\.core\.somaxconn/, @sysctl ) )
-	{
-		push ( @sysctl, "net.core.somaxconn = 3000" );
-	}
+
 	if ( !grep ( /^kernel\.threads-max/, @sysctl ) )
 	{
 		push ( @sysctl, "kernel.threads-max = 200000" );
 	}
 	untie @sysctl;
 
-	system ( 'sysctl -p > /dev/null' );
+	&logfile( $sysclt_msg );
 
+	# Cluster
 	if ( -e $filecluster )
 	{
 		# get cluster configuration
@@ -395,89 +329,61 @@ if ( $eject eq "start" )
 			print "CL_IF:\t$ifname\n";
 			print "CL_IP:\t$vipcl\n";
 
-			#if real interface not configured, configured it
+			#if real interface not configured, configure it
 			my ( $phys_iface ) = split ':', $ifname;
-			&createIf( $phys_iface );
-			&upIf( $phys_iface );
 
-			# read gateway
-			open my $fo, "<", "$configdir\/if\_$phys_iface\_conf";
-			chomp ( @fileif = <$fo> );
-			close $fo;
+			# FIXME: Cluster with IPv6 support
+			my $if_ref = &getInterfaceConfig( $phys_iface, 4 );
 
-			my $netmask = ( split ":", @fileif[0] )[3];
+			&createIf( $if_ref ) if $$if_ref{ vlan } ne '';    # for vlans
+			&upIf( $if_ref );
 
-			my $ifconfig_command = "$ifconfig_bin $phys_iface $lip netmask $netmask";
-			system ( $ifconfig_command);
+			&addIp( $if_ref );
 
-			$ifgw   = $phys_iface;
-			$ipifgw = &gwofif( $ifgw );
-			&writeRoutes( $ifgw );
-			&applyRoutes( "local", $phys_iface, $ipifgw );
+			&writeRoutes( $$if_ref{ name } );
+			&applyRoutes( "local", $if_ref );
 
 			if    ( $typecl =~ /^equal$/ )       { print "CL_TYPE: equal\n"; }
 			elsif ( $typecl =~ /$lhost-$rhost/ ) { print "CL_TYPE: M-B, Master node\n"; }
 			else                                 { print "CL_TYPE: M-B Backup node\n"; }
-			
+
+			# Runs ucarp to set on/off the node
+			# setClusterNodeOffMaintenance > ucarp > zenlatency-(start|stop).pl
 			&setClusterNodeOffMaintenance( $cable, $ifname, $deadratio, $lip,
 										   $idcluster, $vipcl,  $typecl, $lhost, $rhost );
-			
+
 			#check the gui interface
 			print "Running GUI interface\n";
-			$filehttp = "";
+			my $mgmt_ip = GUIip();
+			my $mgmt_iface;
 
-			open my $fh, "<", "$confhttp";
-			@filehttp = <$fh>;
-			close $fh;
-
-			$host   = @filehttp[0];
-			@host   = split ( "=", $host );
-			$iphttp = @host[1];
-
-			if ( $lip ne $iphttp )
+			if ( $lip ne $mgmt_ip && &ipisok( $mgmt_ip ) == 'true' )
 			{
-				opendir ( DIR, $configdir );
-				@files = grep ( /^if\_.*\_conf$/, readdir ( DIR ) );
-				closedir ( DIR );
-
-				foreach my $file ( @files )
+				# Find management ip configuration
+				for my $iface ( @configured_interfaces )
 				{
-					if ( $file !~ /:/ )
+					if ( $mgmt_ip eq $$iface{ addr } )
 					{
-						open my $fr, "<", "$configdir\/$file";
-						@fif = <$fr>;
-						close $fr;
-
-						chomp ( $iphttp );
-						if ( $iphttp !~ /\*/ && ( grep ( /$iphttp/, @fif ) ) )
-						{
-							$filehttp = $file;
-						}
+						$mgmt_iface = $iface;
 					}
 				}
 
-				open my $fgui, "<", "$configdir/$filehttp";
-				$filehttp = <$fgui>;
-				close $fgui;
-
-				my @lastline = split ( ":", $filehttp );
-
-				if ( @lastline[4] eq "up" )
+				if ( $$mgmt_iface{ status } eq "up" )
 				{
-					print "HTTPS GUI Interface:@lastline[0] Ip:@lastline[2] Netmask:@lastline[3]";
+					print
+					  "HTTPS GUI Interface:$$mgmt_iface{name} Ip:$$mgmt_iface{addr} Netmask:$$mgmt_iface{mask}";
 
-					if ( @lastline[5] ne '' )
+					if ( $$mgmt_iface{ gateway } ne '' )
 					{
-						" Gateway:@lastline[5]";
+						print " Gateway:$$mgmt_iface{gateway}";
 					}
 
-					my $run = `$ifconfig_bin @lastline[0] @lastline[2] netmask @lastline[3]`;
-					$ok = $?;
-					chomp ( @lastline[5] );
-					&applyRoutes( "local", @lastline[0], @lastline[5] );
-					&upIf( @lastline[0] );
+					my $return_code = &addIp( $mgmt_iface );
 
-					if ( $ok == 0 )
+					&applyRoutes( "local", $mgmt_iface );
+					&upIf( $mgmt_iface );
+
+					if ( $return_code == 0 )
 					{
 						print " \033[1;32m OK \033[0m \n";
 					}
@@ -509,10 +415,14 @@ if ( $eject eq "start" )
 	{
 		$eject = 'startlocal';
 	}
+
+	&logfile( "start proccess finished" );
 }
 
 if ( $eject eq "stop" )
 {
+	&logfile( "Beginning stop proccess" );
+
 	if ( -e $filecluster )
 	{
 		open $fo, "<", "$filecluster";
@@ -525,14 +435,18 @@ if ( $eject eq "stop" )
 			system ( 'pkill -9f zeninotify.pl' );
 			print "Stopping Zen Cluster on this node...\n";
 		}
+
+		sleep ( 5 );
 	}
-	sleep ( 5 );
+
 	$eject = 'stoplocal';
+	&logfile( "stop proccess finished" );
 }
 
 # no cluster configured
 if ( $eject eq 'startlocal' )
 {
+	&logfile( "Beginning startlocal process..." );
 	$rsyslog = '/etc/rsyslog.conf';
 
 	open my $fr, '<', "$rsyslog";
@@ -546,57 +460,42 @@ if ( $eject eq 'startlocal' )
 		system ( '/etc/init.d/rsyslog restart' );
 	}
 
-	#check if repository is configured
-	#open FR, "</etc/apt/sources.list";
-	#my @repo = <FR>;
-	#close FR;
-	#if (! (grep(/zenloadbalancer\.sourceforge\.net\/apt\/x86\ v3\//,@repo)))
-	#	{
-	#	open FR, ">/etc/apt/sources.list";
-	#	print FR "#official repository for Debian\n";
-	#	print FR "deb http://ftp.debian.org/debian/ wheezy main non-free\n";
-	#	print FR "deb-src http://ftp.debian.org/debian/ wheezy main non-free\n";
-	#	print FR "deb http://security.debian.org/ wheezy/updates main\n";
-	#	print FR "deb-src http://security.debian.org/ wheezy/updates main\n";
-	#	print FR "#official repository for Zen Load Balancer Updates\n";
-	#	print FR "deb http://zenloadbalancer.sourceforge.net/apt/x86 v3/\n";
-	#	close FR;
-	#	}
-
 	#testing interface configured on the installation and gw
 	if ( -e '/etc/network/interfaces' )
 	{
 		open $fr, '/etc/network/interfaces';
-		@file = <$fr>;
+		my @file = <$fr>;
 		close $fr;
 
 		if ( !grep ( /zenmodified/, @file ) )
 		{
+			my ( $ifname, $ip, $netmask, $gateway );
+
 			foreach my $line ( @file )
 			{
 				chomp ( $line );
 
 				if ( $line =~ /iface.*inet static/i )
 				{
-					@iface = split ( " ", $line );
+					my @iface = split ( " ", $line );
 					$ifname = $iface[1];
 					chomp ( $ifname );
 				}
 				if ( $line =~ /address/i )
 				{
-					@ip = split ( " ", $line );
+					my @ip = split ( " ", $line );
 					$ip = $ip[1];
 					chomp ( $ip );
 				}
 				if ( $line =~ /netmask/i )
 				{
-					@netmask = split ( " ", $line );
+					my @netmask = split ( " ", $line );
 					$netmask = $netmask[1];
 					chomp ( $netmask );
 				}
 				if ( $line =~ /gateway/i )
 				{
-					@gateway = split ( " ", $line );
+					my @gateway = split ( " ", $line );
 					$gateway = $gateway[1];
 					chomp ( $gateway );
 				}
@@ -611,120 +510,119 @@ if ( $eject eq 'startlocal' )
 
 			#creating configuration interface file:
 			open FW, ">$configdir\/if\_$ifname\_conf";
-			print FW "$ifname\:\:$ip\:$netmask\:up\:\:\n";
+			print FW "$ifname;;$ip;$netmask;;\n";
 			close FW;
 
-			#gw
-			tie @contents, 'Tie::File', "$globalcfg";
-			for ( @contents )
+			#configure gateway
+			tie my @contents, 'Tie::File', "$globalcfg";
+
+			for my $line ( @contents )
 			{
-				if ( grep /^\$defaultgw/, $_ )
+				if ( grep /^\$defaultgw/, $line )    # FIXME: IPv6 gateway
 				{
-					s/^\$defaultgw=.*/\$defaultgw=\"$gateway\"\;/g;
-					s/^\$defaultgwif=.*/\$defaultgwif=\"$ifname\"\;/g;
+					$line =~ s/^\$defaultgw=.*/\$defaultgw="$gateway";/g;
+					$line =~ s/^\$defaultgwif=.*/\$defaultgwif="$ifname";/g;
 				}
 			}
+
 			untie @contents;
 
 			#routes
 			open FW, ">>/etc/iproute2/rt_tables";
 			print FW "200\ttable_$ifname\n";
 			close FW;
+
+			@configured_interfaces = @{ &getConfigInterfaceList() };
 		}
 	}
 
 	### Starting Network Interfaces
 	print "Starting Zen Load Balancer...\n";
-
-	opendir ( DIR, $configdir );
-	@interface_files = grep ( /^if\_.*\_conf$/, readdir ( DIR ) );
-	closedir ( DIR );
-
 	print "* Starting Interfaces:\n";
 
+	my $mgmt_ip = &GUIip();
+
 	#first real interfaces
-	foreach my $interface_file ( @interface_files )
+	foreach my $iface ( @configured_interfaces )
 	{
 		#interfaces as eth0 for example
-		if ( $interface_file !~ /:/ && $interface_file !~ /\./ )
+		if ( $$iface{ name } eq $$iface{ dev } )
 		{
-			my @file_s = split ( "\_", $interface_file );
-			print "  * Starting interface $file_s[1]\n";
-
-			open $fr, "$configdir/$interface_file";
-			while ( my $line = <$fr> )
+			if ( $$iface{ status } eq "up" )
 			{
-				$lastline = $line;
-			}
-			close $fr;
+				print "  * Starting interface $$iface{name}\n";
+				print "    Ip:$$iface{addr} Netmask:$$iface{mask}";
 
-			my @lastline = split ( ":", $lastline );
-
-			if ( $lastline[4] eq "up" )
-			{
-				print "    Interface:$lastline[0] Ip:$lastline[2] Netmask:$lastline[3]";
-
-				if ( $lastline[5] ne '' )
+				if ( $$iface{ gateway } ne '' )
 				{
-					" Gateway:$lastline[5]";
+					print " Gateway:$$iface{gateway}";
 				}
 
-				my $run = `$ifconfig_bin $lastline[0] $lastline[2] netmask $lastline[3]`;
-				$ok = $?;
+				my $socket   = &getIOSocket();
+				my $if_flags = $socket->if_flags( $$iface{ name } );
 
-				chomp ( $lastline[5] );
-				&writeRoutes( $lastline[0] );
-				&applyRoutes( "local", $lastline[0], $lastline[5] );
-				&upIf( $lastline[0] );
+				if ( !( $if_flags & IFF_UP ) )
+				{
+					my $return_code = &addIp( $iface );
 
-				if ( $ok == 0 )
+					if ( $return_code )
+					{
+						my @ip_output = `$ip_bin address show dev $$iface{name}`;
+						$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
+					}
+
+					&writeRoutes( $$iface{ name } );
+					&applyRoutes( "local", $iface );
+					&upIf( $iface );
+
+					if ( $return_code == 0 )
+					{
+						print " \033[1;32m OK \033[0m \n";
+					}
+					else
+					{
+						print " \033[1;31m ERROR \033[0m \n";
+					}
+
+					if ( $$iface{ ip_v } == 4 )
+					{
+						&sendGArp( $$iface{ name }, $$iface{ addr } );
+					}
+				}
+				elsif ( $$iface{ addr } eq $mgmt_ip && !( $if_flags & IFF_UP ) )
 				{
 					print " \033[1;32m OK \033[0m \n";
 				}
-				else
-				{
-					print " \033[1;31m ERROR \033[0m \n";
-				}
-
-				&sendGArp( @lastline[0], @lastline[2] );
 			}
 		}
 	}
 
 	#interfaces as eth0.20 for example
-	foreach my $interface_file ( @interface_files )
+	foreach my $iface ( @configured_interfaces )
 	{
-		if ( $interface_file =~ /\./ && $interface_file !~ /:/ )
+		if ( $$iface{ vlan } ne '' && $$iface{ vini } eq '' )
 		{
-			my @file_s = split ( "\_", $interface_file );
-
-			print "  * Starting interface $file_s[1]\n";
-
-			open $fr, "$configdir/$interface_file";
-			while ( $line = <$fr> )
+			if ( $$iface{ status } eq "up" )
 			{
-				$lastline = $line;
-			}
-			close $fr;
+				print "  * Starting interface $$iface{name}\n";
+				print "    Ip:$$iface{addr} Netmask:$$iface{mask}";
 
-			my @lastline = split ( ":", $lastline );
-
-			if ( $lastline[4] eq "up" )
-			{
-				print "    Interface:$lastline[0] Ip:$lastline[2] Netmask:$lastline[3]";
-
-				if ( $lastline[5] ne '' )
+				if ( $$iface{ gateway } ne '' )
 				{
-					" Gateway:$lastline[5]";
+					print " Gateway:$$iface{gateway}";
 				}
 
-				&createIf( $lastline[0] );
-				&upIf( $lastline[0] );
+				&createIf( $iface );
+				&upIf( $iface );
 
-				my $run = `$ifconfig_bin $lastline[0] $lastline[2] netmask $lastline[3]`;
-				$ok = $?;
+				my $return_code = &addIp( $iface );
+				if ( $return_code )
+				{
+					my @ip_output = `$ip_bin address show dev $$iface{name}`;
+					$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
+				}
 
-				if ( $ok == 0 )
+				if ( $return_code == 0 )
 				{
 					print " \033[1;32m OK \033[0m \n";
 				}
@@ -733,47 +631,44 @@ if ( $eject eq 'startlocal' )
 					print " \033[1;31m ERROR \033[0m \n";
 				}
 
-				chomp ( $lastline[5] );
-				&writeRoutes( $lastline[0] );
-				&applyRoutes( "local", $lastline[0], $lastline[5] );
-				&sendGArp( $lastline[0], $lastline[2] );
+				&writeRoutes( $$iface{ name } );
+				&applyRoutes( "local", $iface );
+
+				if ( $$iface{ ip_v } == 4 )
+				{
+					&sendGArp( $$iface{ name }, $$iface{ addr } );
+				}
 			}
 		}
 	}
 
 	#interfaces as eth0:20 || eth0.20:2 for example
-	foreach my $interface_file ( @interface_files )
+	foreach my $iface ( @configured_interfaces )
 	{
-		if ( $interface_file =~ /:/ )
+		if ( $$iface{ vini } ne '' )
 		{
-			my @file_s = split ( "\_", $interface_file );
-
-			print "  * Starting interface $file_s[1]\n";
-
-			open $fr, "$configdir/$interface_file";
-			while ( $line = <$fr> )
+			if ( $$iface{ status } eq "up" )
 			{
-				$lastline = $line;
-			}
-			close $fr;
+				print "  * Starting interface $$iface{name}\n";
+				print "    Ip:$$iface{addr} Netmask:$$iface{mask}";
 
-			my @lastline = split ( ":", $lastline );
+				my $return_code = &addIp( $iface );
 
-			if ( $lastline[4] eq "up" )
-			{
-				print
-				  "    Interface:$lastline[0]:$lastline[1] Ip:$lastline[2] Netmask:$lastline[3]";
+				#~ print("addIp: done");
+				if ( $return_code )
+				{
+					my $toif = &getParentInterfaceName( $$iface{ name } );
+					&logfile( "failed addIp" );
+					my @ip_output = `$ip_bin -$$iface{ip_v} address list dev $toif`;
+					$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
+				}
 
-				@iface = split ( /\./, $lastline[0] );
-				&upIf( "$lastline[0]:$lastline[1]" );
+				#~ print("applyRoutes: start");
+				&applyRoutes( "local", $iface );
 
-				my $run =
-				  `$ifconfig_bin $lastline[0]\:$lastline[1] $lastline[2] netmask $lastline[3]`;
-				$ok = $?;
+				#~ print("applyRoutes: done");
 
-				&applyRoutes( "local", "$lastline[0]:$lastline[1]", "" );
-
-				if ( $ok == 0 )
+				if ( $return_code == 0 )
 				{
 					print " \033[1;32m OK \033[0m \n";
 				}
@@ -781,7 +676,11 @@ if ( $eject eq 'startlocal' )
 				{
 					print " \033[1;31m ERROR \033[0m \n";
 				}
-				&sendGArp( $lastline[0], $lastline[2] );
+
+				if ( $$iface{ ip_v } == 4 )
+				{
+					&sendGArp( $$iface{ name }, $$iface{ addr } );
+				}
 			}
 		}
 	}
@@ -805,14 +704,17 @@ if ( $eject eq 'startlocal' )
 		### Starting Farms
 		print "* Starting Farms:\n";
 		@farmsf = &getFarmList();
+
 		foreach my $ffile ( @farmsf )
 		{
 			$farmname = &getFarmName( $ffile );
 			$bstatus  = &getFarmBootStatus( $farmname );
+
 			if ( $bstatus eq "up" )
 			{
 				print "  * Starting Farm $farmname:";
 				$status = &_runFarmStart( $farmname, "false" );
+
 				if ( $status == 0 )
 				{
 					print " \033[1;32m OK \033[0m \n";
@@ -824,10 +726,12 @@ if ( $eject eq 'startlocal' )
 
 				#farmguardian configured and up?
 				$fgstatus = &getFarmGuardianStatus( $farmname );
+
 				if ( ( $status == 0 ) && ( $fgstatus == 1 ) )
 				{
 					print "  * Starting Farm Guardian for $farmname:";
 					$stat = &runFarmGuardianStart( $farmname, "" );
+
 					if ( $stat == 0 )
 					{
 						print " \033[1;32m OK \033[0m \n";
@@ -853,31 +757,34 @@ if ( $eject eq 'startlocal' )
 	{
 		print ( "No valid ZLB certificate was found, no farm started\n" );
 	}
+
+	&logfile( "startlocal process finished..." );
 }
 
 if ( $eject eq "stoplocal" )
 {
+	&logfile( "Beginning stoplocal process..." );
 	print "Stopping Zen Load Balancer...\n";
 
 	### Stopping Farms
 	print "* Stopping Farms:\n";
 
-	@farmsf = &getFarmList();
+	my @farmsf = &getFarmList();
 
 	foreach my $ffile ( @farmsf )
 	{
-		$farmname = &getFarmName( $ffile );
-		$status   = &getFarmStatus( $farmname );
+		my $farmname = &getFarmName( $ffile );
+		my $status   = &getFarmStatus( $farmname );
 
 		if ( $status eq "up" )
 		{
 			#farmguardian configured and up?
-			$fgstatus = &getFarmGuardianPid( $farmname );
+			my $fgstatus = &getFarmGuardianPid( $farmname );
 
 			if ( $fgstatus != -1 )
 			{
 				print "  * Stopping Farm Guardian for $farmname:";
-				$stat = &runFarmGuardianStop( $farmname, "" );
+				my $stat = &runFarmGuardianStop( $farmname, "" );
 
 				if ( $stat == 0 )
 				{
@@ -889,7 +796,7 @@ if ( $eject eq "stoplocal" )
 				}
 			}
 			print "  * Stopping Farm $farmname:";
-			$status = &_runFarmStop( $farmname, "false" );
+			my $status = &_runFarmStop( $farmname, "false" );
 
 			if ( $status == 0 )
 			{
@@ -903,34 +810,19 @@ if ( $eject eq "stoplocal" )
 	}
 
 	### Stopping Network Interfaces
-	opendir ( DIR, $configdir );
-	@files = grep ( /^if\_.*\_conf$/, readdir ( DIR ) );
-	closedir ( DIR );
-
 	print "* Stopping Interfaces:\n";
 
-	foreach my $file ( @files )
+	# First Virtual Network Interfaces
+	foreach my $iface ( @configured_interfaces )
 	{
-		if ( $file =~ /:/ )
+		if ( $$iface{ vini } ne '' )
 		{
-			my @file_s = split ( "\_", $file );
-			print "  * Down interface $file_s[1]\n";
+			print "  * Down interface $$iface{name}\n";
+			print "    Ip:$$iface{addr} Netmask:$$iface{mask}";
 
-			open $fr, "$configdir/$file";
-			while ( $line = <$fr> )
-			{
-				$lastline = $line;
-			}
-			close $fr;
+			my $return_code = &stopIf( $iface );
 
-			my @lastline = split ( ":", $lastline );
-			print
-			  "    Interface:$lastline[0]:$lastline[1] Ip:$lastline[2] Netmask:$lastline[3]";
-
-			&delRoutes( "local", "$lastline[0]:$lastline[1]" );
-			&stopIf( "$lastline[0]:$lastline[1]" );
-
-			if ( $? == 0 )
+			if ( $return_code == 0 )
 			{
 				print " \033[1;32m OK \033[0m \n";
 			}
@@ -941,81 +833,97 @@ if ( $eject eq "stoplocal" )
 		}
 	}
 
-	foreach my $file ( @files )
+	# Second Vlans
+	foreach my $iface ( @configured_interfaces )
 	{
-		if ( $file !~ /:/ )
+		if ( $$iface{ vlan } ne '' && $$iface{ vini } eq '' )
 		{
-			my @file_s = split ( "\_", $file );
-			print "  * Down interface $file_s[1]\n";
-
-			open my $fr, "$configdir/$file";
-			while ( my $line = <$fr> )
+			if ( $$iface{ status } eq "up" )
 			{
-				$lastline = $line;
-			}
-			close $fr;
+				print "  * Down interface $$iface{name}\n";
+				print "    Ip:$$iface{addr} Netmask:$$iface{mask}";
 
-			my @lastline = split ( ":", $lastline );
+				my $return_code = &downIf( $iface );
 
-			print "    Interface:$lastline[0] Ip:$lastline[2] Netmask:$lastline[3]";
-
-			if ( -e $filecluster )
-			{
-				$gui = &GUIip();
-
-				open my $fo, "<", "$filecluster";
-				@filecl = <$fo>;
-				close $fo;
-
-				# if interface is not mentioned in cluster file _and_ this ip is not the gui ip
-				if ( !grep ( /$lastline[0]/, @filecl ) && $gui ne $lastline[2] )
+				if ( $return_code == 0 )
 				{
-					&delRoutes( "local", $lastline[0] );
-					&stopIf( "$lastline[0]" );
-
-					if ( $? == 0 )
-					{
-						print " \033[1;32m OK \033[0m \n";
-					}
-					else
-					{
-						print " \033[1;31m ERROR \033[0m \n";
-					}
+					print " \033[1;32m OK \033[0m \n";
 				}
 				else
 				{
-					print
-					  " \033[1;31m This interface is part of a cluster, it cannot be stopped while being part of the cluster.\033[0m \n";
-				}
-			}
-			else
-			{
-				$gui = &GUIip();
-				if ( $gui ne $lastline[2] )
-				{
-					&delRoutes( "local", $lastline[0] );
-					&stopIf( "$lastline[0]" );
-					if ( $? == 0 )
-					{
-						print " \033[1;32m OK \033[0m \n";
-					}
-					else
-					{
-						print " \033[1;31m ERROR \033[0m \n";
-					}
-				}
-				else
-				{
-					print "  no DOWN, it is the Zen GUI\n";
+					print " \033[1;31m ERROR \033[0m \n";
 				}
 			}
 		}
 	}
 
-	#At this point every zen interfaces and farms are stopped
+	my $mgmt_ip    = &GUIip();
+	my $mgmt_iface = &getInterfaceOfIp( $mgmt_ip );
+
+	# Finally Eth
+	foreach my $iface ( @configured_interfaces )
+	{
+		if ( $$iface{ vlan } eq '' && $$iface{ vini } eq '' )
+		{
+			if ( $$iface{ status } eq "up" )
+			{
+				next if $$iface{ name } eq $mgmt_iface;
+
+				print "  * Down interface $$iface{name}\n";
+				print "    Ip:$$iface{addr} Netmask:$$iface{mask}";
+
+				if ( -e $filecluster )
+				{
+					# if interface is not mentioned in cluster file _and_ this ip is not the gui ip
+					if ( !grep ( /$$iface{name}/, @filecl ) && $mgmt_ip ne $$iface{ addr } )
+					{
+						my $return_code = &stopIf( $iface );
+
+						if ( $return_code == 0 )
+						{
+							print " \033[1;32m OK \033[0m \n";
+						}
+						else
+						{
+							print " \033[1;31m ERROR \033[0m \n";
+						}
+					}
+					else
+					{
+						print
+						  " \033[1;31m This interface is part of a cluster, it cannot be stopped while being part of the cluster.\033[0m \n";
+					}
+				}
+				else
+				{
+					if ( $mgmt_ip ne $$iface{ addr } )
+					{
+						my $return_code = &stopIf( $iface );
+
+						if ( $return_code == 0 )
+						{
+							print " \033[1;32m OK \033[0m \n";
+						}
+						else
+						{
+							print " \033[1;31m ERROR \033[0m \n";
+						}
+					}
+					else
+					{
+						print "  no DOWN, it is the Zen GUI\n";
+					}
+				}
+			}
+		}
+	}
+
+	#At this point all zen interfaces and farms are stopped
 	#now a personalized script can be executed
 	my @ownscript = `$configdir/zlb-stop`;
 	print "@ownscript";
+
+	&logfile( "stoplocal process finished..." );
 }
 
 &runhttpsgui();
