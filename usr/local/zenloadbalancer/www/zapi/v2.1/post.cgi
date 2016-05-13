@@ -1781,7 +1781,7 @@ sub new_farm_service()
 		if ( $json_obj->{ id } =~ /^$/ )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, invalid service name."
+º				"ZAPI error, trying to create a new service in farm $farmname, invalid service name."
 			);
 
 			# Error

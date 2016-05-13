@@ -197,68 +197,23 @@ sub new_vini()
 		print $output;
 		exit;
 	}
-
-	# FIXME: check IPv6 compatibility
-	# Check new IP address is already used
-	my @activeips = &listallips();
-	for my $ip ( @activeips )
-	{
-		if ( $ip eq $json_obj->{ ip } )
-		{
-			# Error
-			$error = "true";
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
-			);
-
-			$errormsg = "IP Address $json_obj->{ip} is already in use.";
-
-			my $output = $j->encode(
-									 {
-									   description => "IP Address $json_obj->{ip}",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;		
-		}
-	}
-
+	
 	# Check network interface errors
-	# A virtual interface cannnot exist in two stacks
 	my $ifn = "$fdev\:$json_obj->{name}";
-	my $ip_v = &ipversion($json_obj->{ip});
+
 	my $if_ref = &getInterfaceConfig( $ifn, 4 );
 	$if_ref = &getInterfaceConfig( $ifn, 6 ) if !if_ref;
-	
-	if ( $if_ref )
-	{
-		# Error
-		$error = "true";
-		print $q->header(
-		  -type    => 'text/plain',
-		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
-		);
-		$errormsg = "Network interface $ifn already exists.";
-		my $output = $j->encode(
-		{
-		  description => "Network interface $ifn",
-		  error       => "true",
-		  message     => $errormsg
-		}
-		);
-		print $output;
-		exit;
-	}
-
+		
 	# Get params from parent interface
 	my $new_if_ref = &getInterfaceConfig( $fdev, $ip_v );
 	$error = 'true' if ! $new_if_ref;
 
+	my $ip_v = &ipversion($json_obj->{ip});
+
+	# Get params from parent interface
+	my $new_if_ref = &getInterfaceConfig( $fdev, $ip_v );
+
+	$error = 'true' if ! $new_if_ref;
 	$new_if_ref->{name} = $ifn;
 	$new_if_ref->{vini} = $json_obj->{name};
 	$new_if_ref->{addr} = $json_obj->{ip};
@@ -301,6 +256,7 @@ sub new_vini()
 		);
 
 		my $out_p = [];
+
 		push $out_p,
 		{
 			name => $new_if_ref->{name},
@@ -581,33 +537,6 @@ sub new_vlan()
 		);
 		print $output;
 		exit;
-	}
-
-	# FIXME: Check IPv6 compatibility
-	# Check new IP address is not in use
-	my @activeips = &listallips();
-	for my $ip ( @activeips )
-	{
-		if ( $ip eq $json_obj->{ ip } )
-		{
-			# Error
-			$error = "true";
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
-			);
-			$errormsg = "IP Address $json_obj->{ip} is already in use.";
-			my $output = $j->encode(
-									 {
-									   description => "IP Address $json_obj->{ip}",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;		
-		}
 	}
 
 	# Check netmask errors
@@ -1145,7 +1074,6 @@ sub ifaction()
 	$j->canonical( $enabled );
 
 	$error = "false";
-
 	# Check interface errors
 	if ( $fdev =~ /^$/ )
 	{
@@ -1244,35 +1172,6 @@ sub ifaction()
 		print $output;
 
 		exit;
-	}
-
-	# Open conf file to get the interface parameters
-	tie my @array, 'Tie::File', "$configdir/if_$fdev\_conf", recsep => ':';
-	
-	# Check if the ip is already in use
-	my @activeips = &listallips();
-	for my $ip ( @activeips )
-	{
-		if ( $ip eq @array[2] && $json_obj->{ action } ne "down" )
-		{
-			# Error
-			$error = "true";
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
-			);
-			$errormsg = "Interface $fdev cannot be UP, IP Address @array[2] is already in use";
-			my $output = $j->encode(
-									 {
-									   description => "Interface $fdev",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
-		}
 	}
 
 	# Everything is ok
@@ -1607,7 +1506,6 @@ sub modify_interface()
 		exit;
 	}
 
-
 	# Check address errors
 	if ( ipisok( $json_obj->{ ip } ) eq "false" )
 	{
@@ -1779,7 +1677,7 @@ sub modify_interface()
 		  -status  => '200 OK'
 		);
 
-	        my $out_p = [];
+        my $out_p = [];
 		foreach $key ( keys %$json_obj )
 		{
 			push $out_p, { $key => $json_obj->{ $key } };
