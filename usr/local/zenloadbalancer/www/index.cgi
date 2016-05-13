@@ -161,11 +161,7 @@ sub certcontrol()
 my $cgi = new CGI;
 
 #uncomment for debug
-<<<<<<< HEAD
 &zenlog( Dumper( \{ $cgi->Vars } ) );
-=======
-&logfile( "index.cgi cgi:" . Dumper( \{ $cgi->Vars } ) );
->>>>>>> [New feature] IPv6 changes in index.cgi
 
 #Global Parameters
 $id = $cgi->param( 'id' )

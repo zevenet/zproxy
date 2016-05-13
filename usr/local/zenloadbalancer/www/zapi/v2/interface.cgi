@@ -1187,7 +1187,7 @@ sub ifaction()
 	{
 		#~ &delRoutes( "local", $fdev );
 		my $state = &downIf( $if_ref, 'writeconf' );
-		
+
 		if ( $state != 0 )
 		{
 			$error = "true";
