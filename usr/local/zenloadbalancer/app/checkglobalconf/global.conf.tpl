@@ -93,6 +93,8 @@ $ls="/bin/ls";
 $cp="/bin/cp";
 #Where is iptables?
 $iptables="/sbin/iptables";
+#Where is ip6tables?
+$ip6tables="/sbin/ip6tables";
 #Where is modprobe?
 $modprobe="/sbin/modprobe";
 #Where is lsmod?
@@ -123,8 +125,14 @@ $fwmarksconf = "$configdir/fwmarks.conf";
 $defaultgw="";
 #Interface Default Gateway
 $defaultgwif="";
+#System Default IPv6 Gateway
+$defaultgw6="";
+#Interface Default IPv6 Gateway
+$defaultgwif6="";
 #Number of gratuitous pings
 $pingc="1";
+#routing options
+$routeparams="initcwnd 10 initrwnd 10";
 
 ## L4xNat - netfilter
 # Maximum recent ip list
