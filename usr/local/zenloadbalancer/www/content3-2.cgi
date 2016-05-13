@@ -130,6 +130,7 @@ elsif (    $action eq "Save & Up!"
 	if ( $action eq "addvlan2" )
 	{
 		my $if_ref = &getInterfaceConfig( $interface{ name }, $interface{ ip_v } );
+<<<<<<< HEAD
 
 		if ( $if_ref )
 		{
@@ -399,6 +400,7 @@ elsif ( $action eq "upif" )
 		# FIXME: bug-prove this condition
 		if ( $parent_if_status eq 'up' && $error eq "false" )
 		{
+
 			my $state = &upIf( \%interface, 'writeconf' );
 
 			if ( $state == 0 )
@@ -730,7 +732,6 @@ for my $iface ( @interfaces )
 		}
 		elsif ( $action eq "addvlan" )
 		{
-
 			print "<td><input type=\"text\" size=\"16\" name=\"netmask\" value=\"\" ></td>";
 			print "<td><input type=\"text\" size=\"16\" name=\"gwaddr\" value=\"\" ></td>";
 		}
