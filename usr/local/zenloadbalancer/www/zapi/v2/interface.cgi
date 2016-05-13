@@ -607,28 +607,6 @@ sub new_vlan()
 		}
 	}
 
-	# Check netmask errors
-	if ( ! $json_obj->{ netmask } )
-	{
-		# Error
-		$error = "true";
-		print $q->header(
-		  -type    => 'text/plain',
-		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
-		);
-		$errormsg = "Netmask parameter can't be empty";
-		my $output = $j->encode(
-		{
-		  description => "Interface $ifn",
-		  error       => "true",
-		  message     => $errormsg
-		}
-		);
-		print $output;
-		exit;
-	}
-
 	# Check netmask errors for IPv4
 	if (  $json_obj->{netmask} eq '' || ( $ip_v == 4 && &ipisok( $json_obj->{netmask}, 4 ) eq "false" && $json_obj->{netmask} !~ /^\d+$/ ) )
 	{
@@ -639,7 +617,7 @@ sub new_vlan()
 		  -charset => 'utf-8',
 		  -status  => '400 Bad Request'
 		);
-		$errormsg = "Netmask Address $json_obj->{netmask} structure is not ok.";
+		$errormsg = "Netmask parameter can't be empty";
 		my $output = $j->encode(
 		{
 		  description => "Netmask Address $json_obj->{netmask}",
@@ -652,7 +630,7 @@ sub new_vlan()
 	}
 	
 	# Check gateway errors
-    if ( $json_obj->{gateway} !~ /^$/ && &ipisok($json_obj->{gateway}, 4 ) eq "false") {
+    if ( $json_obj->{gateway} !~ /^$/ && &ipisok( $json_obj->{gateway}, 4 ) eq "false") {
         # Error
         $error = "true";
         print $q->header(
@@ -910,11 +888,14 @@ sub get_interface()
 	my $out = [];
 	use CGI;
 	my $q = CGI->new;
-
+	
 	# Configured interfaces list
-	my @interfaces = @{ &getSystemInterfaceList() };
-
-	for my $if_ref ( @interfaces )
+	my @configured_interfaces = @{ &getConfigInterfaceList() };
+	
+	my @sorted =  sort { $a->{name} cmp $b->{name} } @configured_interfaces;
+	$_->{status} = &getInterfaceSystemStatus( $_ ) for @configured_interfaces;
+	
+	for my $if_ref ( @sorted )
 	{
 		# Only IPv4
 		next if $if_ref->{ip_v} == 6;
@@ -948,7 +929,6 @@ sub get_interface()
 	$j->canonical( $enabled );
 	
 	my $output = $j->encode(
-		{
 			description => "List interfaces",
 			interfaces  => $out,
 		}
@@ -1187,7 +1167,7 @@ sub ifaction()
 	{
 		#~ &delRoutes( "local", $fdev );
 		my $state = &downIf( $if_ref, 'writeconf' );
-		
+
 		if ( $state != 0 )
 		{
 			$error = "true";
