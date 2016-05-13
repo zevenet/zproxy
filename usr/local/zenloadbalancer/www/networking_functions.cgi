@@ -624,7 +624,7 @@ sub setIfacesUp    # ($if_name,$type)
 sub createIf    # ($if_ref)
 {
 	my $if_ref = shift;
-    
+
 	my $status = 0;
 
 	if ( defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '' )
@@ -659,7 +659,7 @@ sub upIf    # ($if_ref, $writeconf)
 		{
 			my $found = 0;
 			tie my @if_lines, 'Tie::File', "$file";
-			
+
 			for my $line ( @if_lines )
 			{
 				if ( $line =~ /^status=/ )
