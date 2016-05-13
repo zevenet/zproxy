@@ -169,11 +169,10 @@ if ( $action eq "Modify Configuration" )
 	#action Save APT
 	# if ( $var eq "Save APT" )
 	# {
-	open FW, ">$fileapt";
-	print FW "$aptrepo";
-
+	# open FW, ">$fileapt";
+	# print FW "$aptrepo";
 	# &successmsg( "APT saved" );
-	close FW;
+	# close FW;
 
 	# }
 
@@ -185,10 +184,23 @@ if ( $action eq "Modify Configuration" )
 	if ( $ipgui =~ /^\*$/ )
 	{
 		@array[1] = "#server!bind!1!interface = \n";
+		&logfile( "The interface where is running is --All interfaces--" );
 	}
 	else
 	{
 		@array[1] = "server!bind!1!interface = $ipgui\n";
+		if ( &ipversion( $ipgui ) eq "IPv6" )
+		{
+			@array[4] = "server!ipv6 = 1\n";
+			&logfile(
+					  "The interface where is running the GUI service is: $ipgui with IPv6" );
+		}
+		elsif ( &ipversion( $ipgui ) eq "IPv4" )
+		{
+			@array[4] = "server!ipv6 = 0\n";
+			&logfile(
+					  "The interface where is running the GUI service is: $ipgui with IPv4" );
+		}
 	}
 	untie @array;
 
@@ -241,6 +253,8 @@ if ( $action eq "Restart GUI Service" )
 	}
 }
 
+print "<form method=\"post\" action=\"index.cgi\">";
+
 #open glogal file config
 $nextline = "false";
 open FR, "$globalcfg";
@@ -278,7 +292,6 @@ while ( <FR> )
 		chomp ( @linea[1] );
 		chomp ( @linea[0] );
 
-		print "<form method=\"post\" action=\"index.cgi\">";
 		print "<input type=\"hidden\" name=\"id\" value=\"3-1\">";
 		print "<div class=\"form-item\">";
 		if ( @linea[0] eq "timeouterrors" )
@@ -309,12 +322,13 @@ while ( <FR> )
 		print "<br>";
 		print
 		  "<input type=\"submit\" value=\"Modify\" name=\"action\" class=\"button grey\">";
-		print "</form>";
 		print "</div></div>";
 	}
 }
 
 close FR;
+
+print "</form>";
 
 #
 #Local configuration
@@ -333,122 +347,99 @@ print "
 # Physical interface
 #
 
-open FR, "<$confhttp";
-
-@file     = <FR>;
-$hosthttp = @file[1];
-close FR;
-
-print "<div class=\"form-row\">";
+print "<form method=\"post\" action=\"index.cgi\">\n";
+print "<div class=\"form-row\">\n";
+print "<p class=\"form-label\">\n";
+print "<b>Physical interface where is running GUI service. </b>\n";
 print
-  "<p class=\"form-label\"><b>Physical interface where is running GUI service. </b> If cluster is up you only can select \"--All interfaces--\" option, or \"the cluster interface\". Changes need restart GUI service.</p>";
-print "<form method=\"post\" action=\"index.cgi\">";
-print "<input type=\"hidden\" name=\"id\" value=\"3-1\">";
+  " If cluster is up you only can select \"--All interfaces--\" option, or \"the cluster interface\". Changes need restart GUI service.</p>\n";
+print "<input type=\"hidden\" name=\"id\" value=\"3-1\">\n";
 
-opendir ( DIR, "$configdir" );
-@files = grep ( /^if.*/, readdir ( DIR ) );
-closedir ( DIR );
+my $hosthttp = &GUIip();
 
-@ipguic = split ( "=", @file[1] );
-$hosthttp = @ipguic[1];
-$hosthttp =~ s/\ //g;
-chomp ( $hosthttp );
+&logfile( "management_ip:$hosthttp" );
 
-open FR, "<$filecluster";
-@filecluster = <FR>;
-close FR;
-$lclusterstatus = @filecluster[2];
-@lclustermember = split ( ":", @filecluster[0] );
-chomp ( @lclustermember );
-$lhost = @lclustermember[1];
-$rhost = @lclustermember[3];
-$lip   = @lclustermember[2];
-$rip   = @lclustermember[4];
-if ( $host eq $rhost )
+my (
+	 $lhost,  $lip,      $rhost, $rip,       $vipcl, $ifname,
+	 $typecl, $clstatus, $cable, $idcluster, $deadratio
+);
+
+if ( -e $filecluster )
 {
-	$thost = $rhost;
-	$rhost = $lhost;
-	$lhost = $thost;
-	$tip   = $rip;
-	$rip   = $lip;
-	$lip   = $tip;
+	(
+	   $lhost,  $lip,      $rhost, $rip,       $vipcl, $ifname,
+	   $typecl, $clstatus, $cable, $idcluster, $deadratio
+	) = &getClusterConfig();
 }
 
 # Print "Zen cluster service is UP, Zen GUI should works over ip $lip";
-print "<div class=\"form-item\">";
-print "<select name=\"ipgui\" class=\"fixedwidth\">\n";
+print "<div class=\"form-item\">\n";
+print "<select name=\"ipgui\" class=\"fixedwidth monospace\">\n";
 
-$existiphttp = "false";
-if ( $hosthttp =~ /\*/ )
+#~ $existiphttp = "false";
+if ( $hosthttp eq '*' )
 {
-	print "<option value=\"*\" selected=\"selected\">--All interfaces--</option>";
-	$existiphttp = "true";
+	print "<option value=\"*\" selected=\"selected\">--All interfaces--</option>\n";
+
+	#~ $existiphttp = "true";
 }
 else
 {
-	print "<option value=\"*\">--All interfaces--</option>";
+	print "<option value=\"*\">--All interfaces--</option>\n";
 }
 
 if ( grep ( /UP/, $lclusterstatus ) )
 {
-
 	#cluster active you only can use all interfaces or cluster real ip
-	if ( $hosthttp =~ /$lip/ )
+	if ( $hosthttp eq $lip )
 	{
-		print "<option value=\"$lip\" selected=\"selected\">*cluster $lip</option>";
-		$existiphttp = "true";
+		print "<option value=\"$lip\" selected>*cluster $lip</option>\n";
+
+		#~ $existiphttp = "true";
 	}
 	else
 	{
-		print "<option value=\"$lip\">*cluster $lip</option>";
+		print "<option value=\"$lip\">*cluster $lip</option>\n";
 	}
 }
 else
 {
-	foreach $file ( @files )
+	my @interfaces_available = @{ &getActiveInterfaceList() };
+
+	foreach my $iface ( @interfaces_available )
 	{
-		if ( $file !~ /:/ )
+		next if $$iface{ vini } ne '';
+
+		my $selected = '';
+
+		if ( $hosthttp eq $$iface{ addr } )
 		{
-			open FI, "$configdir\/$file";
-			@lines = <FI>;
-			@line = split ( ":", @lines[0] );
-			chomp ( @line );
-			if ( @line[4] =~ /up/i )
-			{
-				chomp ( @line[2] );
-				if ( $hosthttp =~ /@line[2]/ )
-				{
-					print
-					  "<option value=\"@line[2]\" selected=\"selected\">@line[0] @line[2]</option>";
-				}
-				else
-				{
-					print "<option value=\"@line[2]\">@line[0] @line[2]</option>";
-				}
-			}
-
-			close FI;
+			$selected = "selected=\"selected\"";
 		}
-	}
 
+		print
+		  "<option value=\"$$iface{addr}\" $selected>$$iface{dev_ip_padded}</option>\n";
+
+	}
 }
 
-print "</select> ";
+print "</select>\n";
 print "</div>\n";
 print "</div>\n";
 
 #
 # HTTPS port for GUI interface
 #
-$guiport = &getGuiPort( $confhttp );
+my $guiport = &getGuiPort();
 if ( $guiport =~ /^$/ )
 {
 	$guiport = 444;
 }
-else
-{
-	chomp ( $guiport );
-}
+
+#~ else
+#~ {
+#~ chomp ( $guiport );
+#~ }
 print "<div class=\"form-row\">";
 print
   "<p class=\"form-label\"><b>HTTPS Port where is running GUI service.</b> Default is 444. Changes need restart GUI service.</p>";
@@ -471,19 +462,25 @@ print
   "<textarea name=\"dnsserv\" cols=\"30\" rows=\"2\" align=\"center\" class=\"fixedwidth\">";
 open FR, "$filedns";
 print <FR>;
-print "</textarea> ";
+print "</textarea>\n";
 
 print "</div>\n";
 print "</div>\n";
 
 print
-  "<input type=\"submit\" value=\"Modify Configuration\" name=\"action\" class=\"button grey\">";
+  "<input type=\"submit\" value=\"Modify Configuration\" name=\"action\" class=\"button grey\">\n";
 print
-  "<input type=\"submit\" value=\"Restart GUI Service\" name=\"action\" class=\"button grey\">";
+  "<input type=\"submit\" value=\"Restart GUI Service\" name=\"action\" class=\"button grey\">\n";
 
-print "</form>";
-print "</div></div></div>";
+print "</form>\n";
+print "</div>\n";
+print "</div>\n";
+print "</div>\n";
 
-print "<br class=\"cl\">";
-print "</div><!--Content END--></div></div>";
+print "<br class=\"cl\">\n";
 
+#~ print "</div>\n";
+print "<!--Content END-->\n";
+
+#~ print "</div>\n";
+#~ print "</div>\n";
