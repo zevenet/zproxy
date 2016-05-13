@@ -52,6 +52,7 @@ sub printImgFile    #($file)
 sub printGraph    #($type,$time)
 {
 	my ( $type, $time ) = @_;
+
 	my $graph = $basedir . $img_dir . $type . "_" . $time . ".png";
 
 	if ( $type eq "cpu" )
@@ -94,13 +95,12 @@ sub printGraph    #($type,$time)
 #
 sub genCpuGraph    #($type,$graph,$time)
 {
-
 	my ( $type, $graph, $time ) = @_;
+
 	my $db_cpu = "$type.rrd";
 
 	if ( -e "$rrdap_dir/$rrd_dir/$db_cpu" )
 	{
-
 		RRDs::graph(
 					 "$graph",
 					 "--imgformat=$imagetype",
@@ -152,7 +152,6 @@ sub genCpuGraph    #($type,$graph,$time)
 		);
 
 		if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n" }
-
 	}
 }
 
@@ -191,8 +190,6 @@ sub genDiskGraph    #($type,$graph,$time)
 
 	if ( -e "$rrdap_dir/$rrd_dir/$db_hd" )
 	{
-		#~ &logfile("type:$type, partition:$partition, mount:$mount, size:$size");
-
 		RRDs::graph(
 					 "$graph",
 					 "--start=-1$time",
@@ -235,13 +232,12 @@ sub genDiskGraph    #($type,$graph,$time)
 #
 sub genLoadGraph    #($type,$graph,$time)
 {
-
 	my ( $type, $graph, $time ) = @_;
+
 	my $db_load = "$type.rrd";
 
 	if ( -e "$rrdap_dir/$rrd_dir/$db_load" )
 	{
-
 		RRDs::graph(
 					 "$graph",
 					 "--imgformat=$imagetype",
@@ -280,13 +276,12 @@ sub genLoadGraph    #($type,$graph,$time)
 #
 sub genMemGraph    #($type,$graph,$time)
 {
-
 	my ( $type, $graph, $time ) = @_;
+
 	my $db_mem = "$type.rrd";
 
 	if ( -e "$rrdap_dir/$rrd_dir/$db_mem" )
 	{
-
 		RRDs::graph(
 					 "$graph",
 					 "--imgformat=$imagetype",
@@ -325,20 +320,18 @@ sub genMemGraph    #($type,$graph,$time)
 		);
 
 		if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n" }
-
 	}
 }
 
 #
 sub genMemSwGraph    #($type,$graph,$time)
 {
-
 	my ( $type, $graph, $time ) = @_;
+
 	my $db_memsw = "$type.rrd";
 
 	if ( -e "$rrdap_dir/$rrd_dir/$db_memsw" )
 	{
-
 		RRDs::graph(
 					 "$graph",
 					 "--imgformat=$imagetype",
@@ -377,22 +370,20 @@ sub genMemSwGraph    #($type,$graph,$time)
 		);
 
 		if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n" }
-
 	}
 }
 
 #
 sub genNetGraph    #($type,$graph,$time)
 {
-
 	my ( $type, $graph, $time ) = @_;
+
 	my $db_if   = "$type.rrd";
 	my $if_name = $type;
 	$if_name =~ s/iface//g;
 
 	if ( -e "$rrdap_dir/$rrd_dir/$db_if" )
 	{
-
 		RRDs::graph(
 					 "$graph",
 					 "--start=-1$time",
@@ -428,22 +419,20 @@ sub genNetGraph    #($type,$graph,$time)
 		{
 			print "$0: unable to generate $if_name traffic graph: $ERROR\n";
 		}
-
 	}
 }
 
 #
 sub genFarmGraph    #($type,$graph,$time)
 {
-
 	my ( $type, $graph, $time ) = @_;
+
 	my $db_farm = "$type.rrd";
 	my $fname   = $type;
 	$fname =~ s/-farm$//g;
 
 	if ( -e "$rrdap_dir/$rrd_dir/$db_farm" )
 	{
-
 		RRDs::graph(
 			"$graph",
 			"--start=-1$time",
@@ -483,7 +472,6 @@ sub genFarmGraph    #($type,$graph,$time)
 		{
 			print "$0: unable to generate $farm farm graph: $ERROR\n";
 		}
-
 	}
 }
 
@@ -491,7 +479,9 @@ sub genFarmGraph    #($type,$graph,$time)
 sub getGraphs2Show    #($graphtype)
 {
 	my ( $graphtype ) = @_;
+
 	my @list = -1;
+
 	if ( $graphtype eq System )
 	{
 		opendir ( DIR, "$rrdap_dir/$rrd_dir" );
@@ -521,8 +511,8 @@ sub getGraphs2Show    #($graphtype)
 		closedir ( DIR );
 		for ( @list ) { s/.rrd//g };    # remove filenames .rrd trailing
 	}
+
 	return @list;
 }
 
-# do not remove this
 1;
