@@ -109,7 +109,7 @@ sub ipisok    # ($checkip ,$version)
 {
 	my $checkip = shift;
 	my $version = shift;
-	my $return = "false";
+	my $return  = "false";
 
 	use Data::Validate::IP;
 
@@ -120,7 +120,7 @@ sub ipisok    # ($checkip ,$version)
 			$return = "true";
 		}
 	}
-	
+
 	if ( $version != 4 )
 	{
 		if ( is_ipv6( $checkip ) )
@@ -128,7 +128,7 @@ sub ipisok    # ($checkip ,$version)
 			$return = "true";
 		}
 	}
-	
+
 	return $return;
 }
 
@@ -136,7 +136,7 @@ sub ipisok    # ($checkip ,$version)
 sub ipversion    # ($checkip)
 {
 	my $checkip = shift;
-	my $output = "-";
+	my $output  = "-";
 
 	use Data::Validate::IP;
 
@@ -148,7 +148,7 @@ sub ipversion    # ($checkip)
 	{
 		$output = 6;
 	}
-	
+
 	return $output;
 }
 
@@ -188,19 +188,19 @@ sub ifexist    # ($nif)
 		if ( $if eq $nif )
 		{
 			my $flags = $s->if_flags( $if );
-			
+
 			if   ( $flags & IFF_RUNNING ) { $status = "up"; }
 			else                          { $status = "down"; }
-			
+
 			if ( $status eq "up" || -e "$configdir/if_$nif\_conf" )
 			{
 				return "true";
 			}
-			
+
 			return "created";
 		}
 	}
-	
+
 	return "false";
 }
 
@@ -229,7 +229,7 @@ sub writeRoutes      # ($if_name)
 		# the table is already in the file, nothig to do
 		return;
 	}
-	
+
 	my $found = "false";
 	my $rtnumber;
 
@@ -241,7 +241,7 @@ sub writeRoutes      # ($if_name)
 		$found    = "true";
 		$rtnumber = $i;
 	}
-	
+
 	if ( $found eq "true" )
 	{
 		open ( ROUTINGFILE, ">>$rttables" );
@@ -256,12 +256,13 @@ sub addlocalnet    # ($if_ref)
 	my $if_ref = shift;
 
 	use NetAddr::IP;
-	my $ip = new NetAddr::IP ($$if_ref{addr}, $$if_ref{mask} );
+	my $ip = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
 	my $net = $ip->network();
 
-	my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route replace $net dev $$if_ref{name} src $$if_ref{addr} table table_$$if_ref{name} $routeparams";
-	
-	return &logAndRun($ip_cmd);
+	my $ip_cmd =
+	  "$ip_bin -$$if_ref{ip_v} route replace $net dev $$if_ref{name} src $$if_ref{addr} table table_$$if_ref{name} $routeparams";
+
+	return &logAndRun( $ip_cmd );
 }
 
 # ask for rules
@@ -269,10 +270,10 @@ sub isRule    # ($if_ref, $toif)
 {
 	my ( $if_ref, $toif ) = @_;
 
-	$toif = $$if_ref{name} if ! $toif;
+	$toif = $$if_ref{ name } if !$toif;
 
-	my $existRule = 0;
-	my @eject     = `$ip_bin -$$if_ref{ip_v} rule list`;
+	my $existRule  = 0;
+	my @eject      = `$ip_bin -$$if_ref{ip_v} rule list`;
 	my $expression = "from $$if_ref{addr} lookup table_$toif";
 
 	$existRule = grep /$expression/, @eject;
@@ -284,31 +285,36 @@ sub isRule    # ($if_ref, $toif)
 sub applyRoutes    # ($table,$if_ref,$gateway)
 {
 	my ( $table, $if_ref, $gateway ) = @_;
+
 	# $gateway: The 3rd argument, '$gateway', is only used for 'global' table,
 	#           to assign a default gateway.
 
 	my $status = 0;
 
-	&logfile("Appling $table routes in stack IPv$$if_ref{ip_v} to $$if_ref{name} with gateway \"$$if_ref{gateway}\"");
+	&logfile(
+		"Appling $table routes in stack IPv$$if_ref{ip_v} to $$if_ref{name} with gateway \"$$if_ref{gateway}\""
+	);
 
 	# not virtual interface
-	if ( $$if_ref{vini} eq '' )
+	if ( $$if_ref{ vini } eq '' )
 	{
 		if ( $table eq "local" )
 		{
 			# &delRoutes( "local", $if );
 			&addlocalnet( $if_ref );
-			
-			if ( $$if_ref{gateway} )
+
+			if ( $$if_ref{ gateway } )
 			{
-				my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route replace default via $$if_ref{gateway} dev $$if_ref{name} table table_$$if_ref{name} $routeparams";
-				$status = &logAndRun("$ip_cmd");
+				my $ip_cmd =
+				  "$ip_bin -$$if_ref{ip_v} route replace default via $$if_ref{gateway} dev $$if_ref{name} table table_$$if_ref{name} $routeparams";
+				$status = &logAndRun( "$ip_cmd" );
 			}
-			
+
 			if ( &isRule( $if_ref ) == 0 )
 			{
-				my $ip_cmd = "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{addr} table table_$$if_ref{name}";
-				$status = &logAndRun("$ip_cmd");
+				my $ip_cmd =
+				  "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{addr} table table_$$if_ref{name}";
+				$status = &logAndRun( "$ip_cmd" );
 			}
 		}
 		else
@@ -317,15 +323,16 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 			# &delRoutes( "global", $if );
 			if ( $gateway )
 			{
-				my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route replace default via $gateway dev $$if_ref{name} $routeparams";
-				$status = &logAndRun("$ip_cmd");
+				my $ip_cmd =
+				  "$ip_bin -$$if_ref{ip_v} route replace default via $gateway dev $$if_ref{name} $routeparams";
+				$status = &logAndRun( "$ip_cmd" );
 
 				tie my @contents, 'Tie::File', "$globalcfg";
 				for my $line ( @contents )
 				{
 					if ( grep /^\$defaultgw/, $line )
 					{
-						if ($$if_ref{ip_v} == 6)
+						if ( $$if_ref{ ip_v } == 6 )
 						{
 							$line =~ s/^\$defaultgw6=.*/\$defaultgw6=\"$gateway\"\;/g;
 							$line =~ s/^\$defaultgwif6=.*/\$defaultgwif6=\"$$if_ref{name}\"\;/g;
@@ -341,6 +348,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 			}
 		}
 	}
+
 	# virtual interface
 	else
 	{
@@ -348,18 +356,19 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 		# &delRoutes( "global", $if );
 		#~ if ( $$if_ref{addr} !~ /\./ && $$if_ref{addr} !~ /\:/)
 		#~ {
-			#~ return 1;
+		#~ return 1;
 		#~ }
-		
-		my ($toif) = split ( /:/, $$if_ref{name} );
-		
+
+		my ( $toif ) = split ( /:/, $$if_ref{ name } );
+
 		if ( &isRule( $if_ref, $toif ) eq 0 )
 		{
-			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{addr} table table_$toif";
-			$status = &logAndRun("$ip_cmd");
+			my $ip_cmd =
+			  "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{addr} table table_$toif";
+			$status = &logAndRun( "$ip_cmd" );
 		}
 	}
-	
+
 	return $status;
 }
 
@@ -370,38 +379,40 @@ sub delRoutes    # ($table,$if_ref)
 
 	my $status;
 
-	&logfile("Deleting $table routes for IPv$$if_ref{ip_v} in interface $$if_ref{name}");
+	&logfile(
+		   "Deleting $table routes for IPv$$if_ref{ip_v} in interface $$if_ref{name}" );
 
-	if ( $$if_ref{vini} eq '' )
+	if ( $$if_ref{ vini } eq '' )
 	{
 		if ( $table eq "local" )
 		{
 			# Delete routes on the interface table
-			if ( $$if_ref{vlan} eq '' )
+			if ( $$if_ref{ vlan } eq '' )
 			{
 				return 1;
 			}
-			
+
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route flush table table_$$if_ref{name}";
-			$status = &logAndRun("$ip_cmd");
-			
-			$ip_cmd = "$ip_bin -$$if_ref{ip_v} rule del from $$if_ref{addr} table table_$$if_ref{name}";
-			$status = &logAndRun("$ip_cmd");
-			
+			$status = &logAndRun( "$ip_cmd" );
+
+			$ip_cmd =
+			  "$ip_bin -$$if_ref{ip_v} rule del from $$if_ref{addr} table table_$$if_ref{name}";
+			$status = &logAndRun( "$ip_cmd" );
+
 			return $status;
 		}
 		else
 		{
 			# Delete routes on the global table
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route del default";
-			$status = &logAndRun("$ip_cmd");
-			
+			$status = &logAndRun( "$ip_cmd" );
+
 			tie my @contents, 'Tie::File', "$globalcfg";
 			for my $line ( @contents )
 			{
 				if ( grep /^\$defaultgw/, $line )
 				{
-					if ($$if_ref{ip_v} == 6)
+					if ( $$if_ref{ ip_v } == 6 )
 					{
 						$line =~ s/^\$defaultgw6=.*/\$defaultgw6=\"\"\;/g;
 						$line =~ s/^\$defaultgwif6=.*/\$defaultgwif6=\"\"\;/g;
@@ -414,112 +425,115 @@ sub delRoutes    # ($table,$if_ref)
 				}
 			}
 			untie @contents;
-			
+
 			return $status;
 		}
 	}
 
 	# Delete rules for virtual interfaces
-	my ($iface) = split (':', $$if_ref{name});
-	my $ip_cmd = "$ip_bin -$$if_ref{ip_v} rule del from $$if_ref{addr} table table_$iface";
-	$status = &logAndRun("$ip_cmd");
+	my ( $iface ) = split ( ':', $$if_ref{ name } );
+	my $ip_cmd =
+	  "$ip_bin -$$if_ref{ip_v} rule del from $$if_ref{addr} table table_$iface";
+	$status = &logAndRun( "$ip_cmd" );
 
 	return $status;
 }
 
 # Execute command line to delete an IP from an interface
-sub delIp 	 # 	($if, $ip ,$netmask)
+sub delIp    # 	($if, $ip ,$netmask)
 {
 	my ( $if, $ip, $netmask ) = @_;
 
-	&logfile("Deleting ip $ip/$netmask from interface $if");
+	&logfile( "Deleting ip $ip/$netmask from interface $if" );
 
 	# Vini
 	if ( $if =~ /\:/ )
 	{
-		($if) = split ( /\:/, $if );
+		( $if ) = split ( /\:/, $if );
 	}
 
 	my $ip_cmd = "$ip_bin addr del $ip/$netmask dev $if";
-	$status = &logAndRun($ip_cmd);
-	
+	$status = &logAndRun( $ip_cmd );
+
 	return $status;
 }
 
 # Execute command line to add an IPv4 to an Interface, Vlan or Vini
-sub addIp		# ($if_ref)
+sub addIp    # ($if_ref)
 {
 	my ( $if_ref ) = @_;
 
-	&logfile("Adding IP $$if_ref{addr}/$$if_ref{mask} to interface $$if_ref{name}");
+	&logfile(
+			  "Adding IP $$if_ref{addr}/$$if_ref{mask} to interface $$if_ref{name}" );
 
 	# finish if the address is already assigned
-	my $routed_iface = $$if_ref{dev};
-	$routed_iface .= ".$$if_ref{vlan}" if $$if_ref{vlan} ne '';
-
+	my $routed_iface = $$if_ref{ dev };
+	$routed_iface .= ".$$if_ref{vlan}" if $$if_ref{ vlan } ne '';
 
 	my $extra_params = '';
-	$extra_params = 'nodad' if $$if_ref{ip_v} == 6;
+	$extra_params = 'nodad' if $$if_ref{ ip_v } == 6;
 
-	
 	my @ip_output = `$ip_bin -$$if_ref{ip_v} addr show dev $routed_iface`;
-	
 
 	if ( grep /$$if_ref{addr}\//, @ip_output )
 	{
-	&logfile("@ip_output");
+		&logfile( "@ip_output" );
 		return 0;
 	}
 
 	my $ip_cmd;
-	
-	my $broadcast_opt = ($$if_ref{ip_v} == 4) ? 'broadcast +': '';
 
+	my $broadcast_opt = ( $$if_ref{ ip_v } == 4 ) ? 'broadcast +' : '';
 
 	# $if is a Virtual Network Interface
-	if ( $$if_ref{vini} ne '' )
+	if ( $$if_ref{ vini } ne '' )
 	{
-		my ($toif) = split ( ':', $$if_ref{name} );
+		my ( $toif ) = split ( ':', $$if_ref{ name } );
 
-		$ip_cmd = "$ip_bin addr add $$if_ref{addr}/$$if_ref{mask} $broadcast_opt dev $toif label $$if_ref{name} $extra_params";
+		$ip_cmd =
+		  "$ip_bin addr add $$if_ref{addr}/$$if_ref{mask} $broadcast_opt dev $toif label $$if_ref{name} $extra_params";
 	}
+
 	# $if is a Vlan
-	elsif ( $$if_ref{vlan} ne '' )
+	elsif ( $$if_ref{ vlan } ne '' )
 	{
-		$ip_cmd = "$ip_bin addr add $$if_ref{addr}/$$if_ref{mask} $broadcast_opt dev $$if_ref{name} $extra_params";
-	} 
-	# $if is a Network Interface 
+		$ip_cmd =
+		  "$ip_bin addr add $$if_ref{addr}/$$if_ref{mask} $broadcast_opt dev $$if_ref{name} $extra_params";
+	}
+
+	# $if is a Network Interface
 	else
 	{
-		$ip_cmd = "$ip_bin addr add $$if_ref{addr}/$$if_ref{mask} $broadcast_opt dev $$if_ref{name} $extra_params";
+		$ip_cmd =
+		  "$ip_bin addr add $$if_ref{addr}/$$if_ref{mask} $broadcast_opt dev $$if_ref{name} $extra_params";
 	}
 
-	my $status = &logAndRun($ip_cmd);
-	
+	my $status = &logAndRun( $ip_cmd );
+
 	return $status;
 }
 
 sub getConfigInterfaceList
 {
 	my @configured_interfaces;
-	
-	if (opendir my $dir, "$configdir")
+
+	if ( opendir my $dir, "$configdir" )
 	{
-		for my $filename (readdir $dir)
+		for my $filename ( readdir $dir )
 		{
-			if ($filename =~ /if_(.+)_conf/)
+			if ( $filename =~ /if_(.+)_conf/ )
 			{
 				my $if_name = $1;
 				my $if_ref;
-				
-				$if_ref = &getInterfaceConfig($if_name, 4);
-				if ($$if_ref{addr})
+
+				$if_ref = &getInterfaceConfig( $if_name, 4 );
+				if ( $$if_ref{ addr } )
 				{
 					push @configured_interfaces, $if_ref;
 				}
-				
-				$if_ref = &getInterfaceConfig($if_name, 6);
-				if ($$if_ref{addr})
+
+				$if_ref = &getInterfaceConfig( $if_name, 6 );
+				if ( $$if_ref{ addr } )
 				{
 					push @configured_interfaces, $if_ref;
 				}
@@ -530,45 +544,46 @@ sub getConfigInterfaceList
 	}
 	else
 	{
-		&logfile("Error reading directory $configdir: $!");
+		&logfile( "Error reading directory $configdir: $!" );
 	}
 
 	return \@configured_interfaces;
 }
 
 # Get List of Vinis or Vlans from an interface
-sub getIfacesFromIf		# ($if_name, $type)
+sub getIfacesFromIf    # ($if_name, $type)
 {
-	my $if_name = shift;		# Interface's Name
-	my $type = shift;			# Type: vini or vlan
+	my $if_name = shift;    # Interface's Name
+	my $type    = shift;    # Type: vini or vlan
 	my @ifaces;
 
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
-	
+
 	for my $interface ( @configured_interfaces )
 	{
-		next if $$interface{name} !~ /^$if_name.+/;
-		
+		next if $$interface{ name } !~ /^$if_name.+/;
+
 		# get vinis
-		if ( $type eq "vini" && $$interface{vini} )
+		if ( $type eq "vini" && $$interface{ vini } )
 		{
 			push @ifaces, $interface;
 		}
+
 		# get vlans (including vlan:vini)
-		elsif ( $type eq "vlan" && $$interface{vlan} )
+		elsif ( $type eq "vlan" && $$interface{ vlan } )
 		{
 			push @ifaces, $interface;
 		}
 	}
-	
+
 	return @ifaces;
 }
 
 # Check if there are some Virtual Interfaces or Vlan with IPv6 and previous UP status to get it up.
-sub setIfacesUp # ($if_name,$type)
+sub setIfacesUp    # ($if_name,$type)
 {
-	my $if_name = shift;		# Interface's Name
-	my $type = shift;			# Type: vini or vlan
+	my $if_name = shift;    # Interface's Name
+	my $type    = shift;    # Type: vini or vlan
 
 	my @ifaces = &getIfacesFromIf( $if_name, $type );
 
@@ -576,22 +591,26 @@ sub setIfacesUp # ($if_name,$type)
 	{
 		for my $iface ( @ifaces )
 		{
-			if ( $type eq "vini" || ( $type eq "vlan" && ! $$iface{vini} ) )
+			if ( $type eq "vini" || ( $type eq "vlan" && !$$iface{ vini } ) )
 			{
-				if( $$iface{status} eq 'up' && $$iface{ip_v} == 6 )
+				if ( $$iface{ status } eq 'up' && $$iface{ ip_v } == 6 )
 				{
 					&addIp( $iface );
 				}
 			}
-		}	
+		}
 
 		if ( $type eq "vini" )
 		{
-			&logfile("All the Virtual Network interfaces with IPv6 and status up of $if_name have been put in up status.");
+			&logfile(
+				"All the Virtual Network interfaces with IPv6 and status up of $if_name have been put in up status."
+			);
 		}
 		elsif ( $type eq "vini" )
 		{
-			&logfile("All the Vlan with IPv6 and status up of $if_name have been put in up status.");
+			&logfile(
+				  "All the Vlan with IPv6 and status up of $if_name have been put in up status."
+			);
 		}
 	}
 }
@@ -600,21 +619,22 @@ sub setIfacesUp # ($if_name,$type)
 sub createIf    # ($if_ref)
 {
 	my $if_ref = shift;
-    
+
 	my $status = 0;
 
-	if ( $$if_ref{vlan} ne '' )
+	if ( $$if_ref{ vlan } ne '' )
 	{
-		&logfile("Creating vlan $$if_ref{name}");
+		&logfile( "Creating vlan $$if_ref{name}" );
 
 		# enable the parent physical interface
-		my $parent_if = &getInterfaceConfig( $$if_ref{dev}, $$if_ref{ip_v} );
+		my $parent_if = &getInterfaceConfig( $$if_ref{ dev }, $$if_ref{ ip_v } );
 		$status = &upIf( $parent_if, 'writeconf' );
 
-		my $ip_cmd = "$ip_bin link add link $$if_ref{dev} name $$if_ref{name} type vlan id $$if_ref{vlan}";
-		$status = &logAndRun($ip_cmd);
+		my $ip_cmd =
+		  "$ip_bin link add link $$if_ref{dev} name $$if_ref{name} type vlan id $$if_ref{vlan}";
+		$status = &logAndRun( $ip_cmd );
 	}
-	
+
 	return $status;
 }
 
@@ -622,9 +642,9 @@ sub createIf    # ($if_ref)
 sub upIf    # ($if_ref, $writeconf)
 {
 	my ( $if_ref, $writeconf ) = @_;
-	
+
 	my $status = 0;
-	
+
 	if ( $writeconf )
 	{
 		my $file = "$configdir/if_$$if_ref{name}_conf";
@@ -632,7 +652,7 @@ sub upIf    # ($if_ref, $writeconf)
 		if ( -f $file )
 		{
 			tie my @if_lines, 'Tie::File', "$file";
-			for my $line (@if_lines)
+			for my $line ( @if_lines )
 			{
 				if ( $line =~ /^status=/ )
 				{
@@ -645,8 +665,8 @@ sub upIf    # ($if_ref, $writeconf)
 	}
 
 	my $ip_cmd = "$ip_bin link set $$if_ref{name} up";
-	$status = &logAndRun($ip_cmd);
-	
+	$status = &logAndRun( $ip_cmd );
+
 	return $status;
 }
 
@@ -656,14 +676,14 @@ sub downIf    # ($if_ref, $writeconf)
 	my ( $if_ref, $writeconf ) = @_;
 
 	my $ip_cmd;
-	
+
 	# Set down status in configuration file
 	if ( $writeconf )
 	{
 		my $file = "$configdir/if_$$if_ref{name}_conf";
 
 		tie my @if_lines, 'Tie::File', "$file";
-		for my $line (@if_lines)
+		for my $line ( @if_lines )
 		{
 			if ( $line =~ /^status=/ )
 			{
@@ -675,20 +695,21 @@ sub downIf    # ($if_ref, $writeconf)
 	}
 
 	# For Eth and Vlan
-	if ( $$if_ref{vini} eq '' )
+	if ( $$if_ref{ vini } eq '' )
 	{
 		$ip_cmd = "$ip_bin link set $$if_ref{name} down";
 	}
+
 	# For Vini
 	else
 	{
-		my ($routed_iface) = split ( ":", $$if_ref{name} );
-		
+		my ( $routed_iface ) = split ( ":", $$if_ref{ name } );
+
 		$ip_cmd = "$ip_bin addr del $$if_ref{addr}/$$if_ref{mask} dev $routed_iface";
 	}
 
-	$status = &logAndRun($ip_cmd);
-	
+	$status = &logAndRun( $ip_cmd );
+
 	return $status;
 }
 
@@ -696,23 +717,23 @@ sub downIf    # ($if_ref, $writeconf)
 sub delIf    # ($if_ref)
 {
 	my ( $if_ref ) = @_;
-	
+
 	my $status;
 	my $file = "$configdir/if_$$if_ref{name}\_conf";
 	my $has_more_ips;
 
 	# remove stack line
-	open (my $in_fh, '<', "$file");
-	open (my $out_fh, '>', "$file.new");
+	open ( my $in_fh,  '<', "$file" );
+	open ( my $out_fh, '>', "$file.new" );
 
-	if ($in_fh && $out_fh)
+	if ( $in_fh && $out_fh )
 	{
-		while (my $line = <$in_fh>)
+		while ( my $line = <$in_fh> )
 		{
-			if ($line !~ /$$if_ref{addr}/)
+			if ( $line !~ /$$if_ref{addr}/ )
 			{
 				print $out_fh $line;
-				$has_more_ips++ if $line =~ /;/; 
+				$has_more_ips++ if $line =~ /;/;
 			}
 		}
 
@@ -721,11 +742,11 @@ sub delIf    # ($if_ref)
 
 		rename "$file.new", "$file";
 
-		if (! $has_more_ips )
+		if ( !$has_more_ips )
 		{
 			# remove file only if not a nic interface
 			# nics need to store status even if not configured, for vlans
-			if ($$if_ref{name} ne $$if_ref{dev})
+			if ( $$if_ref{ name } ne $$if_ref{ dev } )
 			{
 				unlink ( $file ) or return 1;
 			}
@@ -733,7 +754,7 @@ sub delIf    # ($if_ref)
 	}
 	else
 	{
-		&logfile("Error opening $file: $!");
+		&logfile( "Error opening $file: $!" );
 		$status = 1;
 	}
 
@@ -743,32 +764,33 @@ sub delIf    # ($if_ref)
 	}
 
 	# If $if is Vini do nothing
-	if ( $$if_ref{vini} eq '' )
+	if ( $$if_ref{ vini } eq '' )
 	{
 		# If $if is a Interface, delete that IP
-		my $ip_cmd = "$ip_bin addr del $$if_ref{addr}/$$if_ref{mask} dev $$if_ref{name}";
-		$status = &logAndRun($ip_cmd);
-		
+		my $ip_cmd =
+		  "$ip_bin addr del $$if_ref{addr}/$$if_ref{mask} dev $$if_ref{name}";
+		$status = &logAndRun( $ip_cmd );
+
 		# If $if is a Vlan, delete Vlan
-		if ( $$if_ref{vlan} ne '' )
+		if ( $$if_ref{ vlan } ne '' )
 		{
 			$ip_cmd = "$ip_bin link delete $$if_ref{name} type vlan";
-			$status = &logAndRun($ip_cmd);
+			$status = &logAndRun( $ip_cmd );
 		}
 
 		# check if alternative stack is in use
-		my $ip_v_to_check = ( $$if_ref{ip_v} == 4 ) ? 6: 4;
-		my $interface = &getInterfaceConfig( $$if_ref{name}, $ip_v_to_check );
+		my $ip_v_to_check = ( $$if_ref{ ip_v } == 4 ) ? 6 : 4;
+		my $interface = &getInterfaceConfig( $$if_ref{ name }, $ip_v_to_check );
 
-		if ( ! $interface )
+		if ( !$interface )
 		{
 			# Delete routes table, complementing writeRoutes()
 			open ROUTINGFILE, '<', $rttables;
 			my @contents = <ROUTINGFILE>;
 			close ROUTINGFILE;
-			
+
 			@contents = grep !/^...\ttable_$$if_ref{name}$/, @contents;
-			
+
 			open ROUTINGFILE, '>', $rttables;
 			print ROUTINGFILE @contents;
 			close ROUTINGFILE;
@@ -784,7 +806,7 @@ sub delIf    # ($if_ref)
 # get default gw for interface
 sub getDefaultGW    # ($if)
 {
-	my $if = shift; # optional argument
+	my $if = shift;    # optional argument
 
 	if ( $if )
 	{
@@ -818,40 +840,41 @@ sub getDefaultGW    # ($if)
 	}
 }
 
-sub getIPv6DefaultGW # ()
+sub getIPv6DefaultGW    # ()
 {
 	my @routes = `$ip_bin -6 route list`;
-	my ($default_line) = grep {/^default/} @routes;
+	my ( $default_line ) = grep { /^default/ } @routes;
 
 	my $default_gw;
 	if ( $default_line )
 	{
-		$default_gw = ( split(' ', $default_line) )[2];
+		$default_gw = ( split ( ' ', $default_line ) )[2];
 	}
 
 	return $default_gw;
 }
 
-sub getIPv6IfDefaultGW # ()
+sub getIPv6IfDefaultGW    # ()
 {
 	my @routes = `$ip_bin -6 route list`;
-	my ($default_line) = grep {/^default/} @routes;
+	my ( $default_line ) = grep { /^default/ } @routes;
 
 	my $if_default_gw;
 	if ( $default_line )
 	{
-		$if_default_gw = ( split(' ', $default_line) )[4];
+		$if_default_gw = ( split ( ' ', $default_line ) )[4];
 	}
 
 	return $if_default_gw;
 }
+
 # get interface for default gw
 sub getIfDefaultGW    # ()
 {
 	my @routes = `$ip_bin route list`;
 	my @defgw  = grep ( /^default/, @routes );
 	my @line   = split ( / /, $defgw[0] );
-	
+
 	return $line[4];
 }
 
@@ -922,9 +945,9 @@ sub getNetstatFilter    # ($proto,$state,$ninfo,$fpid,@netstat)
 sub getDevData    # ($dev)
 {
 	my $dev = shift;
-	
+
 	open FI, "<", "/proc/net/dev";
-	
+
 	my $exit = "false";
 	my @dataout;
 
@@ -1043,7 +1066,7 @@ sub isValidPortNumber    # ($port)
 	return $valid;
 }
 
-sub getInterfaceList # ($socket)
+sub getInterfaceList    # ($socket)
 {
 	my $socket = shift;
 
@@ -1060,7 +1083,7 @@ sub getIOSocket
 	return IO::Socket::INET->new( Proto => 'udp' );
 }
 
-sub getVipOutputIp # ($vip)
+sub getVipOutputIp    # ($vip)
 {
 	my $vip = shift;
 
@@ -1098,7 +1121,7 @@ sub getVirtualInterfaceFilenameList
 	return @filenames;
 }
 
-sub getInterfaceOfIp # ($ip)
+sub getInterfaceOfIp    # ($ip)
 {
 	my $ip = shift;
 
