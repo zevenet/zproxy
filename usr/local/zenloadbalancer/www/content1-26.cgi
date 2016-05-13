@@ -60,28 +60,29 @@ my $vport = &getFarmVip( "vipp", $farmname );
 print "<div class=\"form-row\">\n";
 print
   "<p class=\"form-label\"><b>Farm Virtual IP and Interface.</b> Service will be restarted.</p>";
-my @listinterfaces = &listallips();
+
 $clrip = &getClusterRealIp();
 $guiip = &GUIip();
 
-my @nvips = &listactiveips( "phvlan" );
-print "<div class=\"form-item\"><select name=\"vip\" class=\"fixedwidth\">\n";
+my @interfaces_available = @{ &getActiveInterfaceList() };
+
+print
+  "<div class=\"form-item\"><select name=\"vip\" class=\"fixedwidth monospace\">\n";
 print "<option value=\"\">-Select One-</option>\n";
-for ( $i = 0 ; $i <= $#nvips ; $i++ )
+for my $iface ( @interfaces_available )
 {
-	my @ip = split ( "->", @nvips[$i] );
-	if ( @ip[1] ne $clrip && @ip[1] ne $guiip )
+	next if $$iface{ vini } ne '';
+	next if $$iface{ addr } eq $clrip;
+
+	my $selected = '';
+
+	if ( $$iface{ addr } eq $vip )
 	{
-		if ( $vip eq @ip[1] )
-		{
-			print
-			  "<option value=\"@ip[0] @ip[1]\" selected=\"selected\">@nvips[$i]</option>\n";
-		}
-		else
-		{
-			print "<option value=\"@ip[0] @ip[1]\">@nvips[$i]</option>\n";
-		}
+		$selected = "selected=\"selected\"";
 	}
+
+	print
+	  "<option value=\"$$iface{name} $$iface{addr}\" $selected>$$iface{dev_ip_padded}</option>\n";
 }
 
 print "</select> ";
@@ -309,3 +310,4 @@ print "</table>";
 
 print "</div>\n</div>\n";
 
+1;

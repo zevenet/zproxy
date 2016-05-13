@@ -23,10 +23,6 @@
 
 ### CONTROLLER DATALINK FARM ###
 
-#lateral menu
-
-$fstate = &getFarmStatus( $farmname );
-
 #Edit Global Parameters
 
 #Actual Parameters
@@ -39,11 +35,9 @@ if ( $actuallb == -1 )
 
 my $actualvip   = &getFarmVip( "vip",  $farmname );
 my $actualvport = &getFarmVip( "vipp", $farmname );
-my @fvip = split ( " ", $vip );
-my $fdev = $fvip[0];
-my $vip  = $fvip[1];
+my ( $fdev, $vip ) = split ( " ", $vip );
 
-if ( defined ( $vip ) )
+if ( $vip ne '' )
 {
 	#change vip and vipp
 	if ( $actualvip ne $vip )
@@ -83,7 +77,6 @@ if ( $newfarmname ne "" )
 	#change Farm's name
 	if ( $farmname ne $newfarmname )
 	{
-
 		#Check if farmname has correct characters (letters, numbers and hyphens)
 		my $farmnameok = &checkFarmnameOK( $newfarmname );
 
