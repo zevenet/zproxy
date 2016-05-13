@@ -106,6 +106,7 @@ sub listActiveInterfaces    # ($class)
 
 #check if a ip is ok structure
 sub ipisok    # ($checkip ,$version)
+#~ <<<<<<< HEAD
 {
 	my $checkip = shift;
 	my $version = shift;
@@ -137,6 +138,39 @@ sub ipversion    # ($checkip)
 {
 	my $checkip = shift;
 	my $output  = "-";
+#~ =======
+{
+	my $checkip = shift;
+	my $version = shift;
+	my $return = "false";
+
+	use Data::Validate::IP;
+
+	if ( $version != 6 )
+	{
+		if ( is_ipv4( $checkip ) )
+		{
+			$return = "true";
+		}
+	}
+	
+	if ( $version != 4 )
+	{
+		if ( is_ipv6( $checkip ) )
+		{
+			$return = "true";
+		}
+	}
+	
+	return $return;
+}
+
+#check if a ip is IPv4 or IPv6
+sub ipversion    # ($checkip)
+{
+	my $checkip = shift;
+	my $output = "-";
+#~ >>>>>>> [New feature] IPv6 networking functionality
 
 	use Data::Validate::IP;
 
@@ -196,11 +230,11 @@ sub ifexist    # ($nif)
 			{
 				return "true";
 			}
-
+			
 			return "created";
 		}
 	}
-
+	
 	return "false";
 }
 
@@ -356,19 +390,18 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 		# &delRoutes( "global", $if );
 		#~ if ( $$if_ref{addr} !~ /\./ && $$if_ref{addr} !~ /\:/)
 		#~ {
-		#~ return 1;
+			#~ return 1;
 		#~ }
-
-		my ( $toif ) = split ( /:/, $$if_ref{ name } );
-
+		
+		my ($toif) = split ( /:/, $$if_ref{name} );
+		
 		if ( &isRule( $if_ref, $toif ) eq 0 )
 		{
-			my $ip_cmd =
-			  "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{addr} table table_$toif";
-			$status = &logAndRun( "$ip_cmd" );
+			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{addr} table table_$toif";
+			$status = &logAndRun("$ip_cmd");
 		}
 	}
-
+	
 	return $status;
 }
 
@@ -613,13 +646,15 @@ sub setIfacesUp    # ($if_name,$type)
 			);
 		}
 	}
+	
+	return @ifaces;
 }
 
 # create network interface
 sub createIf    # ($if_ref)
 {
 	my $if_ref = shift;
-
+    
 	my $status = 0;
 
 	if ( $$if_ref{ vlan } ne '' )
@@ -665,6 +700,7 @@ sub upIf    # ($if_ref, $writeconf)
 	}
 
 	my $ip_cmd = "$ip_bin link set $$if_ref{name} up";
+
 	$status = &logAndRun( $ip_cmd );
 
 	return $status;
@@ -719,7 +755,8 @@ sub stopIf    # ($if)
 	my $if     = shift;
 	my $status = 0;
 
-	if ( $if !~ /\:/ )
+	# If $if is Vini do nothing
+	if ( $$if_ref{vini} eq '' )
 	{
 		&logfile( "running '$ip_bin address flush dev $if' " );
 		@eject  = `$ip_bin address flush dev $if 2> /dev/null`;
@@ -727,9 +764,8 @@ sub stopIf    # ($if)
 
 		if ( $if =~ /\./ )
 		{
-			&logfile( "running '$ip_bin link delete $if type vlan' " );
-			@eject  = `$ip_bin link delete $if type vlan 2> /dev/null`;
-			$status = $?;
+			$ip_cmd = "$ip_bin link delete $$if_ref{name} type vlan";
+			$status = &logAndRun($ip_cmd);
 		}
 		else
 		{
