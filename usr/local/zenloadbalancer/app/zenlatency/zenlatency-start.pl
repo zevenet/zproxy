@@ -31,6 +31,7 @@ my $vip       = $ARGV[1];
 #pre run: if down:
 my $date = `date +%y/%m/%d\\ %H-%M-%S`;
 chomp ( $date );
+<<<<<<< HEAD
 
 &zenlog( "$date Running start commands:" );
 
