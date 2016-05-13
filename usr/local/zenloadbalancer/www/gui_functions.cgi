@@ -27,53 +27,75 @@
 #get ip GUI
 sub GUIip    # ()
 {
-	my $ip_gui;    # output
+	my $gui_ip;    # output
 
-	open my $fo, "<", "$confhttp";
-	my @file = <$fo>;
-	close $fo;
+	open my $fh, "<", "$confhttp";
 
-	my $guiip = $file[1];
-	my @guiip = split ( "=", $guiip );
-	chomp ( @guiip );
+	# read line matching 'server!bind!1!interface = <IP>'
+	my $config_item = 'server!bind!1!interface';
 
-	if ( $guiip[0] =~ /^#/ )
+	while ( my $line = <$fh> )
 	{
-		$ip_gui = "*";
-	}
-	else
-	{
-		$guiip[1] =~ s/\ //g;
-		$ip_gui = $guiip[1];
+		if ( $line =~ /$config_item/ )
+		{
+			( undef, $gui_ip ) = split ( "=", $line );
+			last;
+		}
 	}
 
-	return $ip_gui;
+	close $fh;
+
+	chomp ( $gui_ip );
+	$gui_ip =~ s/\s//g;
+
+	if ( $gui_ip =~ /^#/ )
+	{
+		$gui_ip = "*";
+	}
+
+	return $gui_ip;
 }
 
 #function that read the https port for GUI
-sub getGuiPort    # ($minihttpdconf)
+sub getGuiPort    # ()
 {
-	my $confhttp = shift;
+	my $gui_port;    # output
 
-	open my $fr, "<", "$confhttp";
-	my @httpdconffile = <$fr>;
-	close $fr;
+	open my $fh, "<", "$confhttp";
 
-	my @guiportline = split ( "=", $httpdconffile[2] );
-	$guiportline[1] =~ s/\ //g;
+	# read line matching 'server!bind!1!port = <PORT>'
+	my $config_item = 'server!bind!1!port';
 
-	return $guiportline[1];
+	while ( my $line = <$fh> )
+	{
+		if ( $line =~ /$config_item/ )
+		{
+			( undef, $gui_port ) = split ( "=", $line );
+			last;
+		}
+	}
+
+	#~ my @httpdconffile = <$fr>;
+	close $fh;
+
+	chomp ( $gui_port );
+	$gui_port =~ s/\s//g;
+
+	return $gui_port;
 }
 
 #function that write the https port for GUI
-sub setGuiPort    # ($httpsguiport,$httpdconf)
+sub setGuiPort    # ($httpsguiport)
 {
-	my ( $httpsguiport, $httpdconf ) = @_;
+	my ( $httpsguiport ) = @_;
 
 	$httpsguiport =~ s/\ //g;
+
 	use Tie::File;
-	tie @array, 'Tie::File', "$httpdconf";
+	tie my @array, 'Tie::File', "$confhttp";
+
 	@array[2] = "server!bind!1!port = $httpsguiport\n";
+
 	untie @array;
 }
 
@@ -85,11 +107,14 @@ sub createmenuservice    # ($fname,$sv,$pos)
 	my $serv20   = $sv;
 	my $serv     = $sv;
 	my $filefarm = &getFarmFile( $fname );
+
 	use Tie::File;
 	tie @array, 'Tie::File', "$configdir/$filefarm";
 	my @output = grep { /Service/ } @array;
 	untie @array;
+
 	$serv20 =~ s/\ /%20/g;
+
 	print "
 		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
 		<button type=\"submit\" class=\"myicons\" title=\"Delete service $serv\" onclick=\"return confirm('Are you sure you want to delete the Service $serv?')\">
@@ -196,11 +221,12 @@ sub createmenuvipstats    # ($name,$id,$status,$type)
 }
 
 #
-sub createmenuGW    # ($id,$action)
+sub createmenuGW    # ($id,$action,$ipversion)
 {
-	my ( $id, $action ) = @_;
+	my ( $id, $action, $ipversion ) = @_;
 
-	if ( $action =~ /editgw/ )
+	# editing menu
+	if ( $action =~ /editgw$ipversion/ )
 	{
 		# Save GW (the beginning of form is in corresponding content)
 		print "
@@ -208,7 +234,7 @@ sub createmenuGW    # ($id,$action)
 			<i class=\"fa fa-floppy-o fa-fw action-icon\"></i>
 		</button>
 		<input type=\"hidden\" name=\"id\" value=\"$id\">
-		<input type=\"hidden\" name=\"action\" value=\"editgw\">
+		<input type=\"hidden\" name=\"action\" value=\"editgw$ipversion\">
 		</form>";
 
 		#Cancel
@@ -221,110 +247,130 @@ sub createmenuGW    # ($id,$action)
 		</form>";
 	}
 	else
-	{
+	{    # viewing menu
+		    # edit
 		print "
 		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
 		<button type=\"submit\" class=\"myicons\" title=\"Edit default GW\">
 			<i class=\"fa fa-pencil-square-o action-icon fa-fw\"></i>
 		</button>
 		<input type=\"hidden\" name=\"id\" value=\"$id\">
-		<input type=\"hidden\" name=\"action\" value=\"editgw\">
+		<input type=\"hidden\" name=\"action\" value=\"editgw$ipversion\">
 		</form>";
 
+		# delete
 		print "
 		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Cancel\" onclick=\"return confirm('Are you sure you wish to delete the default gateway?')\">
+		<button type=\"submit\" class=\"myicons\" title=\"Delete\" onclick=\"return confirm('Are you sure you wish to delete the default gateway?')\">
 			<i class=\"fa fa-times-circle action-icon fa-fw red\"></i>
 		</button>
 		<input type=\"hidden\" name=\"id\" value=\"$id\">
-		<input type=\"hidden\" name=\"action\" value=\"deletegw\">
+		<input type=\"hidden\" name=\"action\" value=\"deletegw$ipversion\">
 		</form>";
 	}
 }
 
 #function create menu for interfaces in id 3-2
-sub createmenuif    # ($if, $id, $configured, $status)
+sub createmenuif    # ($if_ref, $id)
 {
-	my ( $if, $id, $configured, $status ) = @_;
+	my ( $if_ref, $id ) = @_;
 
 	use IO::Socket;
 	use IO::Interface qw(:flags);
 
-	my $s = IO::Socket::INET->new( Proto => 'udp' );
-	my @interfaces = $s->if_list;
+	my $socket = IO::Socket::INET->new( Proto => 'udp' );
+	my @interfaces = $socket->if_list;
 
-	$clrip = &getClusterRealIp();
-	$guiip = &GUIip();
-	$clvip = &getClusterVirtualIp();
+	my $guiip      = &GUIip();
+	my $mgmt_iface = getInterfaceOfIp( $guiip );
+	my $clrip      = &getClusterRealIp();
+	my $clvip      = &getClusterVirtualIp();
 
-	print "<td>";
-	$ip     = $s->if_addr( $if );
-	$source = "";
-	$locked = "false";
+	#~ my $source = "";
+	my $locked;
 
 	if ( -e $filecluster )
 	{
-		open $fc, "<", "$filecluster";
-		@filecl = <$fc>;
+		open my $fc, "<", "$filecluster";
+		my @filecl = <$fc>;
 		close $fc;
-		if ( grep ( /$ip/, @filecl ) && $ip !~ /^$/ )
+
+		#~ &logfile("\n @filecl");
+		if ( &ipisok( $$if_ref{ addr } ) eq 'true'
+			 && grep ( /$$if_ref{addr}/, @filecl ) )
 		{
 			$locked = "true";
 		}
-		if ( grep ( /$if$/, @filecl ) )
+
+		if ( grep ( /$$if_ref{name}$/, @filecl ) )
 		{
 			$locked = "true";
 		}
 	}
 
-	if ( $ip !~ /^$/ && ( ( $ip eq $clrip ) || ( $ip eq $guiip ) ) )
+  #~ if ( ($$iface{addr} eq $clrip || $$iface{addr} eq $clvip) && $clrip && $clvip )
+	if (
+		 $$if_ref{ addr }
+		 && (    ( $$if_ref{ addr } eq $clrip )
+			  || ( $$if_ref{ addr } eq $guiip ) )
+	  )
 	{
 		$locked = "true";
 	}
 
-	if ( ( $status eq "up" ) && ( $ip ne $clrip ) && ( $ip ne $guiip ) )
+	print "<td>";
+
+	# set interface up or down
+	if (    ( $$if_ref{ status } eq "up" )
+		 && ( $$if_ref{ addr } ne $clrip )
+		 && ( $$if_ref{ addr } ne $guiip )
+		 && ( $$if_ref{ name } ne $mgmt_iface ) )
 	{
-		if ( $locked eq "false" )
+		if ( not $locked )
 		{
+			# link set down
 			print "
 			<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-			<button type=\"submit\" class=\"myicons\" title=\"down network interface\" onclick=\"return confirm('Are you sure you wish to shutdown the interface: $if?')\">
+			<button type=\"submit\" class=\"myicons\" title=\"down network interface\" onclick=\"return confirm('Are you sure you wish to shutdown the interface: $$if_ref{name}?')\">
 				<i class=\"fa fa-minus-circle action-icon fa-fw red\"></i>
 			</button>
 			<input type=\"hidden\" name=\"id\" value=\"$id\">
 			<input type=\"hidden\" name=\"action\" value=\"downif\">
-			<input type=\"hidden\" name=\"if\" value=\"$if\">
+			<input type=\"hidden\" name=\"if\" value=\"$$if_ref{name}\">
+			<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
 			</form>";
 
-			$source = "system";
+			#~ $source = "system";
 		}
 	}
-	else
+	elsif ( $$if_ref{ status } eq "down" )
 	{
-		if ( $status eq "down" )
+		if ( not $locked )
 		{
-			if ( $locked eq "false" )
-			{
-				print "
-				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"up network interface\">
-					<i class=\"fa fa-play-circle action-icon fa-fw green\"></i>
-				</button>
-				<input type=\"hidden\" name=\"id\" value=\"$id\">
-				<input type=\"hidden\" name=\"action\" value=\"upif\">
-				<input type=\"hidden\" name=\"if\" value=\"$if\">
-				</form>";
+			# link set up
+			print "
+			<form method=\"post\" action=\"index.cgi\" class=\"myform\">
+			<button type=\"submit\" class=\"myicons\" title=\"up network interface\">
+				<i class=\"fa fa-play-circle action-icon fa-fw green\"></i>
+			</button>
+			<input type=\"hidden\" name=\"id\" value=\"$id\">
+			<input type=\"hidden\" name=\"action\" value=\"upif\">
+			<input type=\"hidden\" name=\"if\" value=\"$$if_ref{name}\">
+			<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
+			</form>";
 
-				$source = "files";
-			}
+			#~ $source = "files";
 		}
 	}
 
-	if ( ( ( $ip ne $clrip ) && ( $ip ne $guiip ) )
-		 || !$ip )
+  # edit interface
+  #~ if ( ($$iface{addr} eq $clrip || $$iface{addr} eq $clvip) && $clrip && $clvip )
+	if ( ( ( $$if_ref{ addr } ne $clrip ) && ( $$if_ref{ addr } ne $guiip ) )
+		 || !$$if_ref{ addr } )
 	{
-		if ( $locked eq "false" )
+		if ( not $locked )
 		{
+			# edit
 			print "
 				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
 				<button type=\"submit\" class=\"myicons\" title=\"edit network interface\">
@@ -332,37 +378,41 @@ sub createmenuif    # ($if, $id, $configured, $status)
 				</button>
 				<input type=\"hidden\" name=\"id\" value=\"$id\">
 				<input type=\"hidden\" name=\"action\" value=\"editif\">
-				<input type=\"hidden\" name=\"if\" value=\"$if\">
-				<input type=\"hidden\" name=\"source\" value=\"$source\">
-				<input type=\"hidden\" name=\"status\" value=\"$status\">
-				<input type=\"hidden\" name=\"toif\" value=\"$if\">
+				<input type=\"hidden\" name=\"if\" value=\"$$if_ref{name}\">
+				<input type=\"hidden\" name=\"status\" value=\"$$if_ref{status}\">
+				<input type=\"hidden\" name=\"toif\" value=\"$$if_ref{name}\">
+				<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
 				</form>";
 		}
 	}
 
-	if ( $if =~ /\:/ )
+	# virtual interface
+	if ( $$if_ref{ name } =~ /:/ )
 	{
-		#virtual interface
-		if ( $locked eq "false" )
+		if ( not $locked )
 		{
 			print "
 				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"delete network interface\" onclick=\"return confirm('Are you sure you wish to delete the virtual interface: $if?')\">
+				<button type=\"submit\" class=\"myicons\" title=\"delete network interface\" onclick=\"return confirm('Are you sure you wish to delete the virtual interface: $$if_ref{name}?')\">
 					<i class=\"fa fa-times-circle fa-fw action-icon red\"></i>
 				</button>
 				<input type=\"hidden\" name=\"id\" value=\"$id\">
 				<input type=\"hidden\" name=\"action\" value=\"deleteif\">
-				<input type=\"hidden\" name=\"if\" value=\"$if\">
+				<input type=\"hidden\" name=\"if\" value=\"$$if_ref{name}\">
+				<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
+				<input type=\"hidden\" name=\"ip\" value=\"$$if_ref{addr}\">
+				<input type=\"hidden\" name=\"netmask\" value=\"$$if_ref{mask}\">
 				</form>";
 		}
 	}
 	else
 	{
 		# Physical interface
-		if ( $if =~ /\./ )
+		if ( $$if_ref{ name } =~ /\./ )
 		{
-			if ( $locked eq "false" )
+			if ( not $locked )
 			{
+				# add virtual ip
 				print "
 				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
 				<button type=\"submit\" class=\"myicons\" title=\"add virtual network interface\">
@@ -370,22 +420,28 @@ sub createmenuif    # ($if, $id, $configured, $status)
 				</button>
 				<input type=\"hidden\" name=\"id\" value=\"$id\">
 				<input type=\"hidden\" name=\"action\" value=\"addvip\">
-				<input type=\"hidden\" name=\"toif\" value=\"$if\">
+				<input type=\"hidden\" name=\"toif\" value=\"$$if_ref{name}\">
+				<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
 				</form>";
 
+				# delete interface
 				print "
 				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"delete network interface\" onclick=\"return confirm('Are you sure you wish to delete the physical interface: $if?')\">
+				<button type=\"submit\" class=\"myicons\" title=\"delete network interface\" onclick=\"return confirm('Are you sure you wish to delete the physical interface: $$if_ref{name}?')\">
 					<i class=\"fa fa-times-circle fa-fw action-icon red\"></i>
 				</button>
 				<input type=\"hidden\" name=\"id\" value=\"$id\">
 				<input type=\"hidden\" name=\"action\" value=\"deleteif\">
-				<input type=\"hidden\" name=\"if\" value=\"$if\">
+				<input type=\"hidden\" name=\"if\" value=\"$$if_ref{name}\">
+				<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
+				<input type=\"hidden\" name=\"ip\" value=\"$$if_ref{addr}\">
+				<input type=\"hidden\" name=\"netmask\" value=\"$$if_ref{mask}\">
 				</form>";
 			}
 		}
 		else
 		{
+			# add vini
 			print "
 				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
 				<button type=\"submit\" class=\"myicons\" title=\"add virtual network interface\">
@@ -393,9 +449,11 @@ sub createmenuif    # ($if, $id, $configured, $status)
 				</button>
 				<input type=\"hidden\" name=\"id\" value=\"$id\">
 				<input type=\"hidden\" name=\"action\" value=\"addvip\">
-				<input type=\"hidden\" name=\"toif\" value=\"$if\">
+				<input type=\"hidden\" name=\"toif\" value=\"$$if_ref{name}\">
+				<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
 				</form>";
 
+			# add vlan
 			print "
 				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
 				<button type=\"submit\" class=\"myicons\" title=\"add vlan network interface\">
@@ -403,25 +461,30 @@ sub createmenuif    # ($if, $id, $configured, $status)
 				</button>
 				<input type=\"hidden\" name=\"id\" value=\"$id\">
 				<input type=\"hidden\" name=\"action\" value=\"addvlan\">
-				<input type=\"hidden\" name=\"toif\" value=\"$if\">
+				<input type=\"hidden\" name=\"toif\" value=\"$$if_ref{name}\">
+				<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
 				</form>";
 
-			if ( $locked eq "false" )
+			if ( $$if_ref{ addr } ne '-' && not $locked )
 			{
+				# delete
 				print "
 				<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-				<button type=\"submit\" class=\"myicons\" title=\"delete network interface\" onclick=\"return confirm('Are you sure you wish to delete the physical interface: $if?')\">
+				<button type=\"submit\" class=\"myicons\" title=\"delete network interface\" onclick=\"return confirm('Are you sure you wish to delete the physical interface: $$if_ref{name}?')\">
 					<i class=\"fa fa-times-circle fa-fw action-icon red\"></i>
 				</button>
 				<input type=\"hidden\" name=\"id\" value=\"$id\">
 				<input type=\"hidden\" name=\"action\" value=\"deleteif\">
-				<input type=\"hidden\" name=\"if\" value=\"$if\">
+				<input type=\"hidden\" name=\"if\" value=\"$$if_ref{name}\">
+				<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
+				<input type=\"hidden\" name=\"ip\" value=\"$$if_ref{addr}\">
+				<input type=\"hidden\" name=\"netmask\" value=\"$$if_ref{mask}\">
 				</form>";
 			}
 		}
 	}
 
-	if ( $locked eq "true" )
+	if ( $locked )
 	{
 		print
 		  "<i class=\"fa fa-lock action-icon fa-fw\" title=\"some actions are locked\">";
@@ -490,7 +553,7 @@ sub createmenubackactions    # ($id_server)
 }
 
 # function that create a menu for configure servers in a farm
-sub createmenuserversfarm    # ($action,$name,$id_server)
+sub createmenuserversfarm    # ($actionmenu,$name,$id_server)
 {
 	my ( $actionmenu, $name, $id_server ) = @_;
 
@@ -712,7 +775,7 @@ sub createmenuserversfarm    # ($action,$name,$id_server)
 }
 
 #function that create a menu for configure zone resources in a gslb farm
-sub createmenuserversfarmz    # ($action,$name,$id_server)
+sub createmenuserversfarmz    # ($actionmenu,$name,$id_server)
 {
 	( $actionmenu, $name, $id_server ) = @_;
 
@@ -887,6 +950,4 @@ sub errormsg    # ($string)
 	&logfile( $string );
 }
 
-#
-#no remove this
-1
+1;
