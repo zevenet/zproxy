@@ -870,7 +870,7 @@ if ( $eject eq "stoplocal" )
 				print "  * Down interface $$iface{name}\n";
 				print "    Ip:$$iface{addr} Netmask:$$iface{mask}";
 
-				my $return_code = &downIf( $iface );
+				my $return_code = &stopIf( $iface );
 
 				if ( $return_code == 0 )
 				{
