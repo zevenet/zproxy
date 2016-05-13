@@ -198,35 +198,6 @@ sub new_vini()
 		exit;
 	}
 
-	# FIXME: check IPv6 compatibility
-	# Check new IP address is already used
-	my @activeips = &listallips();
-	for my $ip ( @activeips )
-	{
-		if ( $ip eq $json_obj->{ ip } )
-		{
-			# Error
-			$error = "true";
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
-			);
-
-			$errormsg = "IP Address $json_obj->{ip} is already in use.";
-
-			my $output = $j->encode(
-									 {
-									   description => "IP Address $json_obj->{ip}",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;		
-		}
-	}
-
 	# Check network interface errors
 	# A virtual interface cannnot exist in two stacks
 	my $ifn = "$fdev\:$json_obj->{name}";
@@ -584,33 +555,6 @@ sub new_vlan()
 		);
 		print $output;
 		exit;
-	}
-
-	# FIXME: Check IPv6 compatibility
-	# Check new IP address is not in use
-	my @activeips = &listallips();
-	for my $ip ( @activeips )
-	{
-		if ( $ip eq $json_obj->{ ip } )
-		{
-			# Error
-			$error = "true";
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
-			);
-			$errormsg = "IP Address $json_obj->{ip} is already in use.";
-			my $output = $j->encode(
-									 {
-									   description => "IP Address $json_obj->{ip}",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;		
-		}
 	}
 
 	# Check netmask errors
