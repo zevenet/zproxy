@@ -575,15 +575,15 @@ sub getIfacesFromIf    # ($if_name, $type)
 			push @ifaces, $interface;
 		}
 	}
-	
+
 	return @ifaces;
 }
 
 # Check if there are some Virtual Interfaces or Vlan with IPv6 and previous UP status to get it up.
-sub setIfacesUp # ($if_name,$type)
+sub setIfacesUp    # ($if_name,$type)
 {
-	my $if_name = shift;		# Interface's Name
-	my $type = shift;			# Type: vini or vlan
+	my $if_name = shift;    # Interface's Name
+	my $type    = shift;    # Type: vini or vlan
 
 	my @ifaces = &getIfacesFromIf( $if_name, $type );
 
@@ -591,22 +591,26 @@ sub setIfacesUp # ($if_name,$type)
 	{
 		for my $iface ( @ifaces )
 		{
-			if ( $type eq "vini" || ( $type eq "vlan" && ! $$iface{vini} ) )
+			if ( $type eq "vini" || ( $type eq "vlan" && !$$iface{ vini } ) )
 			{
-				if( $$iface{status} eq 'up' && $$iface{ip_v} == 6 )
+				if ( $$iface{ status } eq 'up' && $$iface{ ip_v } == 6 )
 				{
 					&addIp( $iface );
 				}
 			}
-		}	
+		}
 
 		if ( $type eq "vini" )
 		{
-			&logfile("All the Virtual Network interfaces with IPv6 and status up of $if_name have been put in up status.");
+			&logfile(
+				"All the Virtual Network interfaces with IPv6 and status up of $if_name have been put in up status."
+			);
 		}
 		elsif ( $type eq "vini" )
 		{
-			&logfile("All the Vlan with IPv6 and status up of $if_name have been put in up status.");
+			&logfile(
+				  "All the Vlan with IPv6 and status up of $if_name have been put in up status."
+			);
 		}
 	}
 }
@@ -615,7 +619,7 @@ sub setIfacesUp # ($if_name,$type)
 sub createIf    # ($if_ref)
 {
 	my $if_ref = shift;
-    
+
 	my $status = 0;
 
 	if ( $$if_ref{ vlan } ne '' )
