@@ -27,7 +27,7 @@ use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
 
 # send gratuitous ICMP packets for L3 aware
-sub sendGPing # ($pif)
+sub sendGPing    # ($pif)
 {
 	my ( $pif ) = @_;
 
@@ -40,7 +40,7 @@ sub sendGPing # ($pif)
 }
 
 # get conntrack sessions
-sub getConntrackExpect # ($args)
+sub getConntrackExpect    # ($args)
 {
 	my ( $args ) = @_;
 
@@ -63,7 +63,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 	$ip_version = 4 if !$ip_version;
 
-	if (open my $file, '<', "$config_filename")
+	if ( open my $file, '<', "$config_filename" )
 	{
 		my @lines = grep { !/^(\s*#|$)/ } <$file>;
 
@@ -93,8 +93,8 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		}
 		close $file;
 	}
-	
-	if ( ! $if_line || ! $if_status )
+
+	if ( !$if_line || !$if_status )
 	{
 		return undef;
 	}
@@ -181,7 +181,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 			if ( $$if_ref{ ip_v } eq &ipversion( $ip ) && !$ip_line_found )
 			{
 				# replace line
-				$line = $if_line;
+				$line          = $if_line;
 				$ip_line_found = 'true';
 			}
 			elsif ( $line =~ /^status=/ )
@@ -322,13 +322,14 @@ sub getActiveInterfaceList
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
 
 	# sort list
-	@configured_interfaces = sort { $a->{name} cmp $b->{name} } @configured_interfaces;
+	@configured_interfaces =
+	  sort { $a->{ name } cmp $b->{ name } } @configured_interfaces;
 
 	# apply device status heritage
-	$_->{status} = &getInterfaceSystemStatus( $_ ) for @configured_interfaces;
+	$_->{ status } = &getInterfaceSystemStatus( $_ ) for @configured_interfaces;
 
 	# discard interfaces down
-	@configured_interfaces = grep { $_->{status} eq 'up' } @configured_interfaces;
+	@configured_interfaces = grep { $_->{ status } eq 'up' } @configured_interfaces;
 
 	# find maximun lengths for padding
 	my $max_dev_length;
@@ -349,12 +350,13 @@ sub getActiveInterfaceList
 	# make padding
 	for my $iface ( @configured_interfaces )
 	{
-		my $dev_ip_padded = sprintf( "%-${max_dev_length}s -> %-${max_ip_length}s", $$iface{name}, $$iface{addr} );
+		my $dev_ip_padded = sprintf ( "%-${max_dev_length}s -> %-${max_ip_length}s",
+									  $$iface{ name }, $$iface{ addr } );
 		$dev_ip_padded =~ s/ +$//;
 		$dev_ip_padded =~ s/ /&nbsp;/g;
 
 		#~ &logfile("padded interface:$dev_ip_padded");
-		$iface->{dev_ip_padded} = $dev_ip_padded;
+		$iface->{ dev_ip_padded } = $dev_ip_padded;
 	}
 
 	return \@configured_interfaces;
@@ -362,14 +364,14 @@ sub getActiveInterfaceList
 
 sub getSystemInterfaceList
 {
-	my @interfaces; # output
+	my @interfaces;    # output
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
 
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
 	my @system_interfaces = $socket->if_list;
-	
+
 	## Build system device "tree"
-	for my $if_name ( @system_interfaces ) # list of interface names
+	for my $if_name ( @system_interfaces )    # list of interface names
 	{
 		# ignore loopback device, ipv6 tunnel, vlans and vinis
 		next if $if_name =~ /^lo$|^sit\d+$/;
@@ -462,17 +464,18 @@ sub getSystemInterfaceList
 	return \@interfaces;
 }
 
-sub getSystemInterface # ($if_name)
+sub getSystemInterface    # ($if_name)
 {
 	my $if_ref = {};
 	$$if_ref{ name } = shift;
+
 	#~ $$if_ref{ ip_v } = shift;
-	
+
 	my %if_parts = %{ &getDevVlanVini( $$if_ref{ name } ) };
-	my $socket = IO::Socket::INET->new( Proto => 'udp' );
+	my $socket   = IO::Socket::INET->new( Proto => 'udp' );
 	my $if_flags = $socket->if_flags( $$if_ref{ name } );
-	
-	$$if_ref{ mac }    = $socket->if_hwaddr( $$if_ref{ name } );
+
+	$$if_ref{ mac } = $socket->if_hwaddr( $$if_ref{ name } );
 
 	return undef if not $$if_ref{ mac };
 	$$if_ref{ status } = ( $if_flags & IFF_UP ) ? "up" : "down";
