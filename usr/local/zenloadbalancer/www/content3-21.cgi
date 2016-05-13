@@ -21,57 +21,61 @@
 #
 ###############################################################################
 
-my $s = IO::Socket::INET->new( Proto => 'udp' );
-my $flags = $s->if_flags( $if );
+my $socket = IO::Socket::INET->new( Proto => 'udp' );
 
-$hwaddr = $s->if_hwaddr( $if );
-if ( $flags & IFF_RUNNING )
+#~ use Devel::Size qw(size total_size);
+#~ &logfile(Dumper $socket);
+#~ &logfile(total_size($socket));
+
+my $iface = &getInterfaceConfig( $if, $ipv );
+
+$if_flags = $socket->if_flags( $$iface{ name } );
+
+if ( !$$iface{ addr } )
 {
-	$state = "up";
+	my %if = %{ &getDevVlanVini( $interface ) };
+
+	# populate not configured interface
+	$$iface{ status } = ( $if_flags & IFF_UP ) ? "up" : "down";
+	$$iface{ mac }    = $socket->if_hwaddr( $if );
+	$$iface{ name }   = $if;
+
+	#~ $$iface{ addr }   = '-';
+	#~ $$iface{ mask }   = '-';
+	$$iface{ dev }  = $if{ dev };
+	$$iface{ vlan } = $if{ vlan };
+	$$iface{ vini } = $if{ vini };
+	$$iface{ ip_v } = $ipv;
 }
-else
-{
-	$state = "down";
-}
 
-if ( $source eq "system" && $state eq "up" )
-{
+#~ &logfile(Dumper $iface);
 
+#~
+#~ my (
+#~ $ifmsg,
+#~ $state,
+#~ $ipaddr,
+#~ $netmask,
+#~ $broadcast,
+#~ $gwaddr,
+#~ $vlan,
+#~ $if
+#~ );
+
+# state is global, from cgi
+if ( $state eq "up" )
+{
 	# Reading from system
-	$ifmsg     = "The interface is running, getting config from system...";
-	$state     = "up";
-	$ipaddr    = $s->if_addr( $if );
-	$netmask   = $s->if_netmask( $if );
-	$broadcast = $s->if_broadcast( $if );
-
-	#	$iface = "eth0.50:2";
-	# Calculate VLAN
-	@fiface = split ( /:/,  $if );
-	@viface = split ( /\./, $fiface[0] );
-	$vlan   = $viface[1];
-	$gwaddr = &getDefaultGW( $if );
+	$$iface{ ifmsg } = "The interface is running, getting config from system...";
 }
 else
 {
-
-	# Reading from config files
-	$ifmsg = "The interface is down, getting config from system files...";
-	$state = "down";
-
-	# Calculate VLAN
-	@fiface = split ( /\:/, $if );
-	@viface = split ( /\./, $fiface[0] );
-	$vlan   = $viface[1];
-
-	# Reading Config File
-	$file = "$configdir/if_$if\_conf";
-	tie @array, 'Tie::File', "$file", recsep => ':';
-	$ipaddr  = $array[2];
-	$netmask = $array[3];
-	$state   = $array[4];
-	$gwaddr  = $array[5];
-	untie @array;
+	$$iface{ ifmsg } = "The interface is down, getting config from system files...";
 }
+
+$$iface{ bcast } = $socket->if_broadcast( $$iface{ name } );
+
+#~ &logfile(Dumper $iface);
 
 print "
                <div class=\"box grid_12\">
@@ -84,58 +88,98 @@ print "
 
 print "<form method=\"post\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-print "<input type=\"hidden\" name=\"if\" value=\"$if\">";
-print "<input type=\"hidden\" name=\"status\" value=\"$status\">";
+print "<input type=\"hidden\" name=\"if\" value=\"$$iface{name}\">";
+print "<input type=\"hidden\" name=\"toif\" value=\"$$iface{dev}\">";
+print "<input type=\"hidden\" name=\"status\" value=\"$$iface{status}\">";
 
 #print "<div class=\"form-row\"><p>$ifmsg</p></div>";
+
+# Interface name
 print "<div class=\"form-row\">";
 print "<p class=\"form-label\">Interface Name:</p>";
-print "<div class=\"form-item\"><p class=\"form-label\">$if</p></div>";
+print "<div class=\"form-item\">";
+print "<p class=\"form-label\">$$iface{name}</p></div>";
 print "</div>";
+
+# Hardware address
 print "<div class=\"form-row\">";
 print "<p class=\"form-label\">HWaddr:</p>";
-print "<div class=\"form-item\"><p class=\"form-label\">$hwaddr</p></div>";
+print "<div class=\"form-item\">";
+print "<p class=\"form-label\">$$iface{mac}</p></div>";
 print "</div>";
+
+# IP version
+print "<div class=\"form-row\">";
+print "<p class=\"form-label\">IPv:</p>";
+print "<div class=\"form-item\">";
+print "<p class=\"form-label\">$$iface{ip_v}</p>";
+print "</div>";
+
+print "<input type=\"hidden\" name=\"ipv\" value=\"$$iface{ip_v}\">";
+print "</div>";
+
+# Ip address
 print "<div class=\"form-row\">";
 print "<p class=\"form-label\">IP Addr:</p>";
+print "<div class=\"form-item\">";
 print
-  "<div class=\"form-item\"><input type=\"text\" value=\"$ipaddr\" size=\"15\" class=\"fixedwidth\" name=\"newip\"></div>";
+  "<input type=\"text\" value=\"$$iface{addr}\" size=\"15\" class=\"fixedwidth\" name=\"newip\">";
 print "</div>";
-print "<div class=\"form-row\">";
-print "<p class=\"form-label\">Netmask:</p>";
-print
-  "<div class=\"form-item\"><input type=\"text\" value=\"$netmask\" size=\"15\" class=\"fixedwidth\" name=\"netmask\"></div>";
 print "</div>";
-print "<div class=\"form-row\">";
-print
-  "<p class=\"form-label\">Broadcast:</p><div class=\"form-item\"><p class=\"form-label\">";
 
-if ( $broadcast eq "" )
+# Netmask/Bitmask
+print "<div class=\"form-row\">";
+print "<p class=\"form-label\">Netmask/Bitmask:</p>";
+if ( $if =~ /\:/ )
 {
-	print "-";
+	print "<div class=\"form-item\">";
+	print "<p class=\"form-label\">$$iface{mask}</p></div>";
+	print "<input type=\"hidden\" name=\"netmask\" value=\"$$iface{mask}\">";
 }
 else
 {
-	print "$broadcast";
+	print "<div class=\"form-item\">";
+	print
+	  "<input type=\"text\" value=\"$$iface{mask}\" size=\"15\" class=\"fixedwidth\" name=\"netmask\">";
+	print "</div>";
 }
-print "</p></div></div>";
+print "</div>";
 
-print "<div class=\"form-row\">";
-print "<p class=\"form-label\">Default Gateway:</p>";
-print "<div class=\"form-item\">";
-if ( $if =~ /\:/ )
+# Broadcast
+if ( !$$iface{ ip_v } )
 {
-	if ( $gwaddr eq "" )
+	print "<div class=\"form-row\">";
+	print "<p class=\"form-label\">Broadcast:</p>";
+	print "<div class=\"form-item\"><p class=\"form-label\">";
+
+	if ( !$$iface{ bcast } )
 	{
 		print "-";
 	}
 	else
 	{
-		my @splif = split ( "\:", $if );
-		my $ifused = &uplinkUsed( @splif[0] );
+		print "$$iface{bcast}";
+	}
+	print "</p></div></div>";
+}
+
+# Gateway
+print "<div class=\"form-row\">";
+print "<p class=\"form-label\">Default Gateway:</p>";
+print "<div class=\"form-item\">";
+if ( $$iface{ name } =~ /\:/ )
+{
+	if ( $$iface{ gateway } eq "" )
+	{
+		print "-";
+	}
+	else
+	{
+		my @splif = split ( "\:", $$iface{ name } );
+		my $ifused = &uplinkUsed( $splif[0] );
 		if ( $ifused eq "false" )
 		{
-			print "$gwaddr";
+			print "$$iface{gateway}";
 		}
 		else
 		{
@@ -146,11 +190,11 @@ if ( $if =~ /\:/ )
 }
 else
 {
-	my $ifused = &uplinkUsed( $if );
+	my $ifused = &uplinkUsed( $$iface{ name } );
 	if ( $ifused eq "false" )
 	{
 		print
-		  "<input type=\"text\" value=\"$gwaddr\" size=\"15\" class=\"fixedwidth\" name=\"gwaddr\">";
+		  "<input type=\"text\" value=\"$$iface{gateway}\" size=\"15\" class=\"fixedwidth\" name=\"gwaddr\">";
 	}
 	else
 	{
@@ -160,18 +204,21 @@ else
 }
 print "</div></div>";
 
+# VLAN tag
 print "<div class=\"form-row\">";
 print "<p class=\"form-label\">Vlan tag:</p>";
 print "<div class=\"form-item\"><p class=\"form-label\">";
-if ( $vlan eq "" )
+if ( !$$iface{ vlan } )
 {
 	print "-";
 }
 else
 {
-	print "$vlan";
+	print "$$iface{vlan}";
 }
 print "</p></div></div>";
+
+# Buttons row
 print "<div class=\"form-row\">";
 print "<p class=\"form-label\">&nbsp;</p>";
 print
