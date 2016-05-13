@@ -26,7 +26,7 @@ use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
 
 # send gratuitous ICMP packets for L3 aware
-sub sendGPing    # ($pif)
+sub sendGPing # ($pif)
 {
 	my ( $pif ) = @_;
 
@@ -39,7 +39,7 @@ sub sendGPing    # ($pif)
 }
 
 # get conntrack sessions
-sub getConntrackExpect    # ($args)
+sub getConntrackExpect # ($args)
 {
 	my ( $args ) = @_;
 	open CONNS, "</proc/net/nf_conntrack_expect";
@@ -57,6 +57,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	my $if_line;
 	my $if_status;
 	my $config_filename = "$configdir/if_${if_name}_conf";
+
 	$ip_version = 4 if !$ip_version;
 
 	if ( open my $file, '<', "$config_filename" )

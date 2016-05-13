@@ -575,15 +575,15 @@ sub getIfacesFromIf    # ($if_name, $type)
 			push @ifaces, $interface;
 		}
 	}
-
+	
 	return @ifaces;
 }
 
 # Check if there are some Virtual Interfaces or Vlan with IPv6 and previous UP status to get it up.
-sub setIfacesUp    # ($if_name,$type)
+sub setIfacesUp # ($if_name,$type)
 {
-	my $if_name = shift;    # Interface's Name
-	my $type    = shift;    # Type: vini or vlan
+	my $if_name = shift;		# Interface's Name
+	my $type = shift;			# Type: vini or vlan
 
 	my @ifaces = &getIfacesFromIf( $if_name, $type );
 
@@ -591,26 +591,22 @@ sub setIfacesUp    # ($if_name,$type)
 	{
 		for my $iface ( @ifaces )
 		{
-			if ( $type eq "vini" || ( $type eq "vlan" && !$$iface{ vini } ) )
+			if ( $type eq "vini" || ( $type eq "vlan" && ! $$iface{vini} ) )
 			{
-				if ( $$iface{ status } eq 'up' && $$iface{ ip_v } == 6 )
+				if( $$iface{status} eq 'up' && $$iface{ip_v} == 6 )
 				{
 					&addIp( $iface );
 				}
 			}
-		}
+		}	
 
 		if ( $type eq "vini" )
 		{
-			&zenlog(
-				"All the Virtual Network interfaces with IPv6 and status up of $if_name have been put in up status."
-			);
+			&logfile("All the Virtual Network interfaces with IPv6 and status up of $if_name have been put in up status.");
 		}
 		elsif ( $type eq "vini" )
 		{
-			&zenlog(
-				  "All the Vlan with IPv6 and status up of $if_name have been put in up status."
-			);
+			&logfile("All the Vlan with IPv6 and status up of $if_name have been put in up status.");
 		}
 	}
 }
@@ -619,7 +615,7 @@ sub setIfacesUp    # ($if_name,$type)
 sub createIf    # ($if_ref)
 {
 	my $if_ref = shift;
-
+    
 	my $status = 0;
 
 	if ( $$if_ref{ vlan } ne '' )
@@ -719,17 +715,18 @@ sub stopIf    # ($if)
 	my $if     = shift;
 	my $status = 0;
 
-	if ( $if !~ /\:/ )
+	# If $if is Vini do nothing
+	if ( $$if_ref{vini} eq '' )
 	{
-		&logfile( "running '$ip_bin address flush dev $if' " );
-		@eject  = `$ip_bin address flush dev $if 2> /dev/null`;
-		$status = $?;
-
-		if ( $if =~ /\./ )
+		# If $if is a Interface, delete that IP
+		my $ip_cmd = "$ip_bin addr del $$if_ref{addr}/$$if_ref{mask} dev $$if_ref{name}";
+		$status = &logAndRun($ip_cmd);
+		
+		# If $if is a Vlan, delete Vlan
+		if ( $$if_ref{vlan} ne '' )
 		{
-			&logfile( "running '$ip_bin link delete $if type vlan' " );
-			@eject  = `$ip_bin link delete $if type vlan 2> /dev/null`;
-			$status = $?;
+			$ip_cmd = "$ip_bin link delete $$if_ref{name} type vlan";
+			$status = &logAndRun($ip_cmd);
 		}
 		else
 		{
