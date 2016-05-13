@@ -612,13 +612,19 @@ sub setIfacesUp    # ($if_name,$type)
 			);
 		}
 	}
+	else
+	{
+		&logfile("Error reading directory $configdir: $!");
+	}
+
+	return \@configured_interfaces;
 }
 
 # create network interface
 sub createIf    # ($if_ref)
 {
 	my $if_ref = shift;
-
+    
 	my $status = 0;
 
 	if ( defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '' )
