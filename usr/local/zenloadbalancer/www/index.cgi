@@ -161,7 +161,7 @@ sub certcontrol()
 my $cgi = new CGI;
 
 #uncomment for debug
-#&logfile( "index.cgi cgi:" . Dumper( \{ $cgi->Vars } ) );
+&logfile( "index.cgi cgi:" . Dumper( \{ $cgi->Vars } ) );
 
 #Global Parameters
 $id = $cgi->param( 'id' )
@@ -390,10 +390,12 @@ $netmask = $cgi->param( 'netmask' )
   if ( defined ( $cgi->param( 'netmask' ) ) );
 $gwaddr = $cgi->param( 'gwaddr' )
   if ( defined ( $cgi->param( 'gwaddr' ) ) );
-$source = $cgi->param( 'source' )
-  if ( defined ( $cgi->param( 'source' ) ) );
 $status = $cgi->param( 'status' )
   if ( defined ( $cgi->param( 'status' ) ) );
+$ipv = $cgi->param( 'ipv' )
+  if ( defined ( $cgi->param( 'ipv' ) ) );
+$ip = $cgi->param( 'ip' )
+  if ( defined ( $cgi->param( 'ip' ) ) );
 
 #Content3-3
 $vipcl = $cgi->param( 'vipcl' )
