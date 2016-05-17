@@ -16,8 +16,7 @@ if [ ! -f $dhfile ]; then
 fi
 
 cd $confdir
-if [ "`ls *_pound.cfg 2>/dev/null`" != "" ]
-then
+if [ `ls *_pound_cfg 2>/dev/null` ]; then
 	for file in $(grep -l $dssl *_pound.cfg); do
 		sed -i "s/$dssl/Disable\ SSLv3/g" $file
 		echo "Directive $dssl migrated in the file $file"
