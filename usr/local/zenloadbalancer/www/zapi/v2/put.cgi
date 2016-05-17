@@ -2030,7 +2030,10 @@ sub modify_services()
 			my $redirect = uri_unescape( $json_obj->{ redirect } );
 			if ( $redirect =~ /^http\:\/\//i || $redirect =~ /^https:\/\//i || $redirect =~ /^$/ )
 			{
-				&setFarmVS( $farmname, $service, "redirect", $redirect );
+				if (!$redirect =~ /^$/)
+				{
+					&setFarmVS( $farmname, $service, "redirect", $redirect );
+				}
 			}
 			else
 			{
