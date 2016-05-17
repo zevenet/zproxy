@@ -110,6 +110,11 @@ do
 	fi
 done
 
+# Migrate interface configuration files to IPv6 ready format
+if [ -f /usr/local/zenloadbalancer/app/zbin/zlbmigrationtoipv6ready.pl ]; then
+	/usr/local/zenloadbalancer/app/zbin/zlbmigrationtoipv6ready.pl
+fi
+
 echo "Restarting Zen Load Balancer web GUI..."
 if [ -f /etc/init.d/cherokee ];
 then
