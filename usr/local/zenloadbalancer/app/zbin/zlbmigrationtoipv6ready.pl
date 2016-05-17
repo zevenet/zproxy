@@ -14,8 +14,7 @@
 # This script migrates interfaces configuration files to IPv6 ready version.
 # Only supported for Zen Load Balancer Enterprise Edition.
 
-#~ my $configdir="/usr/local/zenloadbalancer/config";
-my $configdir = "/usr/local/zenloadbalancer/test_config";
+my $configdir="/usr/local/zenloadbalancer/config";
 
 opendir my $config_dh, $configdir
   or die "Error opening $configdir directory: $!";
