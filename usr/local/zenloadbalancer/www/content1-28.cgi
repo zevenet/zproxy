@@ -56,10 +56,9 @@ print "</div>\n";
 print "<div class=\"form-row\">\n";
 print
   "<p class=\"form-label\"><b>Farm Virtual IP and Virtual port(s).</b>Specify a single port, several ports (i.e 80,8080), port range (i.e. 21:23) or all ports with '*'. Also a combination of them should work.</p>";
-$vip   = &getFarmVip( "vip",  $farmname );
-$vport = &getFarmVip( "vipp", $farmname );
-@listinterfaces = &listallips();
-$clrip          = &getClusterRealIp();
+my $vip   = &getFarmVip( "vip",  $farmname );
+my $vport = &getFarmVip( "vipp", $farmname );
+my $clrip = &getClusterRealIp();
 my $disabled = "";
 
 if ( $farmprotocol eq "all" )
@@ -67,25 +66,31 @@ if ( $farmprotocol eq "all" )
 	$disabled = "disabled";
 }
 
+# Get a available IP list of IPv4 or IPv6
+my @interfaces_available = @{ &getActiveInterfaceList() };
+
 print
-  "<div class=\"form-item\"><select name=\"vip\" class=\"fixedwidth-medium\">";
-foreach $ip ( @listinterfaces )
+  "<div class=\"form-item\"><select name=\"vip\" class=\"fixedwidth monospace\">\n";
+print "<option value=\"\">-Select One-</option>\n";
+
+for my $iface ( @interfaces_available )
 {
-	if ( $ip !~ $clrip )
+	next if $$iface{ addr } eq $clrip;
+
+	my $selected = '';
+
+	if ( $$iface{ addr } eq $vip )
 	{
-		if ( $vip eq $ip )
-		{
-			print "<option value=\"$ip\" selected=\"selected\">$ip</option>";
-		}
-		else
-		{
-			print "<option value=\"$ip\">$ip</option>";
-		}
+		$selected = "selected=\"selected\"";
 	}
+
+	print
+	  "<option value=\"$$iface{addr}\" $selected>$$iface{dev_ip_padded}</option>\n";
 }
-print "</select> ";
+
 print
   " <input type=\"text\" class=\"fixedwidth-small\" value=\"$vport\" size=\"20\" name=\"vipp\" $disabled>";
+
 if ( $disabled ne "" )
 {
 	print "<input type=\"hidden\" name=\"vipp\" value=\"$vport\">";
@@ -102,12 +107,14 @@ print "<br><br><br>";
 print "<div class=\"form-row\">\n";
 print "<p class=\"form-label\"><b>Load Balance Algorithm.</b></p>";
 $lbalg = &getFarmAlgorithm( $farmname );
+
 if ( $lbalg == -1 )
 {
 	$lbalg = "weight";
 }
 
 print "<div class=\"form-item\"><select name=\"lb\" class=\"fixedwidth\">";
+
 if ( $lbalg eq "weight" )
 {
 	print
@@ -496,3 +503,5 @@ print "</tbody>";
 print "</table>";
 print "</div>";
 print "</div>";
+
+1;
