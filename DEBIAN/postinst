@@ -101,6 +101,11 @@ if [ -f /usr/local/zenloadbalancer/app/zbin/fwmark_tag_fix.pl ]; then
 	/usr/local/zenloadbalancer/app/zbin/fwmark_tag_fix.pl
 fi
 
+# Migrate interface configuration files to IPv6 ready format
+if [ -f /usr/local/zenloadbalancer/app/zbin/zlbmigrationtoipv6ready.pl ]; then
+	/usr/local/zenloadbalancer/app/zbin/zlbmigrationtoipv6ready.pl
+fi
+
 if [ `ls /usr/local/zenloadbalancer/config/if_eth* 2>/dev/null | wc -l` -gt 0 ];
 then
 	echo "Restarting Zen Load Balancer web GUI..."
