@@ -514,116 +514,6 @@ $guiip = &GUIip();
 $clrip = &getClusterRealIp();
 $clvip = &getClusterVirtualIp();
 
-# Configured interfaces list
-#~ my @configured_interfaces = @{ &getConfigInterfaceList() };
-
-#~ @configured_interfaces = sort { $a->{name} cmp $b->{name} } @configured_interfaces;
-#~ $_->{status} = &getInterfaceSystemStatus( $_ ) for @configured_interfaces;
-#~ &logfile("$_->{name}:$_->{status}") for @configured_interfaces;
-
-## Build system device "tree"
-#~ my @interfaces;
-#~ for my $if_name ( @system_interfaces ) # list of interface names
-#~ {
-#~ # ignore loopback device, ipv6 tunnel, vlans and vinis
-#~ next if $if_name =~ /^lo$|^sit\d+$/;
-#~ next if $if_name =~ /\./;
-#~ next if $if_name =~ /:/;
-#~
-#~ my %if_parts = %{ &getDevVlanVini( $if_name ) };
-#~
-#~ my $if_ref;
-#~ my $socket = IO::Socket::INET->new( Proto => 'udp' );
-#~ my $if_flags = $socket->if_flags( $if_name );
-#~
-#~ # run for IPv4 and IPv6
-#~ for my $ip_stack (4, 6)
-#~ {
-#~ $if_ref = &getInterfaceConfig($if_name, $ip_stack);
-#~
-#~ if (!$$if_ref{addr})
-#~ {
-#~ # populate not configured interface
-#~ $$if_ref{ status } = ( $if_flags & IFF_UP ) ? "up" : "down";
-#~ $$if_ref{ mac }    = $socket->if_hwaddr( $if_name );
-#~ $$if_ref{ name }   = $if_name;
-#~ $$if_ref{ addr }   = '-';
-#~ $$if_ref{ mask }   = '-';
-#~ $$if_ref{ dev }    = $if_parts{ dev };
-#~ $$if_ref{ vlan }   = $if_parts{ vlan };
-#~ $$if_ref{ vini }   = $if_parts{ vini };
-#~ $$if_ref{ ip_v }   = $ip_stack;
-#~ }
-#~
-#~ # setup for configured and unconfigured interfaces
-#~ $$if_ref{ gateway } = '-' if ! $$if_ref{ gateway };
-#~
-#~ if ( !( $if_flags & IFF_RUNNING ) && ( $if_flags & IFF_UP ) )
-#~ {
-#~ $if_ref{link} = "off";
-#~ }
-#~
-#~ # add interface to the list
-#~ push (@interfaces, $if_ref);
-#~
-#~ # add vlans
-#~ for my $vlan_if_conf (@configured_interfaces)
-#~ {
-#~ next if $$vlan_if_conf{dev} ne $$if_ref{dev};
-#~ next if $$vlan_if_conf{vlan} eq '';
-#~ next if $$vlan_if_conf{vini} ne '';
-#~
-#~ if ($$vlan_if_conf{ip_v} == $ip_stack)
-#~ {
-#~ $$vlan_if_conf{ gateway } = '-' if ! $$vlan_if_conf{ gateway };
-#~ push (@interfaces, $vlan_if_conf);
-#~
-#~ # add vini of vlan
-#~ for my $vini_if_conf (@configured_interfaces)
-#~ {
-#~ next if $$vini_if_conf{dev} ne $$if_ref{dev};
-#~ next if $$vini_if_conf{vlan} ne $$vlan_if_conf{vlan};
-#~ next if $$vini_if_conf{vini} eq '';
-#~
-#~ if ($$vini_if_conf{ip_v} == $ip_stack)
-#~ {
-#~ $$vini_if_conf{ gateway } = '-' if ! $$vini_if_conf{ gateway };
-#~ push (@interfaces, $vini_if_conf);
-#~ }
-#~ }
-#~ }
-#~ }
-#~
-#~ # add vini of nic
-#~ for my $vini_if_conf (@configured_interfaces)
-#~ {
-#~ next if $$vini_if_conf{dev} ne $$if_ref{dev};
-#~ next if $$vini_if_conf{vlan} ne '';
-#~ next if $$vini_if_conf{vini} eq '';
-#~
-#~ if ($$vini_if_conf{ip_v} == $ip_stack)
-#~ {
-#~ $$vini_if_conf{ gateway } = '-' if ! $$vini_if_conf{ gateway };
-#~ push (@interfaces, $vini_if_conf);
-#~ }
-#~ }
-#~ }
-#~ }
-
-#~ @interfaces = sort { $a->{name} cmp $b->{name} } @interfaces;
-#~ $_->{status} = &getInterfaceSystemStatus( $_ ) for @interfaces;
-
-#~ my @interfaces = @{ &getSystemInterfaceList() };
-
-# Variable for get the IPv parameter when I want to add a vlan or a vini
-#~ my $ipvadd;
-
-# Don't loose the css of form
-#~ if ( $action eq "addvip" or $action eq "addvlan" )
-#~ {
-#~ $ipvadd = $ipv;
-#~ }
-
 my @interfaces = @{ &getSystemInterfaceList() };
 
 print "
@@ -694,7 +584,7 @@ for my $iface ( @interfaces )
 	}
 
 	my $gui_icon = '';
-	if ( $$iface{ addr } eq $guiip )
+	if ( $$iface{ addr } eq $guiip && $guiip )
 	{
 		$gui_icon =
 		  "&nbsp;&nbsp;<i class=\"fa fa-home action-icon fa-fw\" title=\"The GUI service interface has to be changed before to be able to modify this interface\"></i>";
