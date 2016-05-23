@@ -197,13 +197,43 @@ sub new_vini()
 		print $output;
 		exit;
 	}
-	
-	# Check network interface errors
-	my $ifn = "$fdev\:$json_obj->{name}";
 
+	# FIXME: check IPv6 compatibility
+	# Check new IP address is already used
+	my @activeips = &listallips();
+	for my $ip ( @activeips )
+	{
+		if ( $ip eq $json_obj->{ ip } )
+		{
+			# Error
+			$error = "true";
+			print $q->header(
+							  -type    => 'text/plain',
+							  -charset => 'utf-8',
+							  -status  => '400 Bad Request'
+			);
+
+			$errormsg = "IP Address $json_obj->{ip} is already in use.";
+
+			my $output = $j->encode(
+									 {
+									   description => "IP Address $json_obj->{ip}",
+									   error       => "true",
+									   message     => $errormsg
+									 }
+			);
+			print $output;
+			exit;		
+		}
+	}
+
+	# Check network interface errors
+	# A virtual interface cannnot exist in two stacks
+	my $ifn = "$fdev\:$json_obj->{name}";
+	my $ip_v = &ipversion($json_obj->{ip});
 	my $if_ref = &getInterfaceConfig( $ifn, 4 );
 	$if_ref = &getInterfaceConfig( $ifn, 6 ) if !if_ref;
-		
+	
 	if ( $if_ref )
 	{
 		# Error
@@ -229,8 +259,8 @@ sub new_vini()
 
 	# Get params from parent interface
 	my $new_if_ref = &getInterfaceConfig( $fdev, $ip_v );
-
 	$error = 'true' if ! $new_if_ref;
+
 	$new_if_ref->{name} = $ifn;
 	$new_if_ref->{vini} = $json_obj->{name};
 	$new_if_ref->{addr} = $json_obj->{ip};
@@ -554,6 +584,33 @@ sub new_vlan()
 		);
 		print $output;
 		exit;
+	}
+
+	# FIXME: Check IPv6 compatibility
+	# Check new IP address is not in use
+	my @activeips = &listallips();
+	for my $ip ( @activeips )
+	{
+		if ( $ip eq $json_obj->{ ip } )
+		{
+			# Error
+			$error = "true";
+			print $q->header(
+							  -type    => 'text/plain',
+							  -charset => 'utf-8',
+							  -status  => '400 Bad Request'
+			);
+			$errormsg = "IP Address $json_obj->{ip} is already in use.";
+			my $output = $j->encode(
+									 {
+									   description => "IP Address $json_obj->{ip}",
+									   error       => "true",
+									   message     => $errormsg
+									 }
+			);
+			print $output;
+			exit;		
+		}
 	}
 
 	# Check netmask errors
