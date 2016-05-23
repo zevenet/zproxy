@@ -607,6 +607,28 @@ sub new_vlan()
 		}
 	}
 
+	# Check netmask errors
+	if ( ! $json_obj->{ netmask } )
+	{
+		# Error
+		$error = "true";
+		print $q->header(
+		  -type    => 'text/plain',
+		  -charset => 'utf-8',
+		  -status  => '400 Bad Request'
+		);
+		$errormsg = "Netmask parameter can't be empty";
+		my $output = $j->encode(
+		{
+		  description => "Interface $ifn",
+		  error       => "true",
+		  message     => $errormsg
+		}
+		);
+		print $output;
+		exit;
+	}
+
 	# Check netmask errors for IPv4
 	if (  $json_obj->{netmask} eq '' || ( $ip_v == 4 && &ipisok( $json_obj->{netmask}, 4 ) eq "false" && $json_obj->{netmask} !~ /^\d+$/ ) )
 	{
@@ -630,7 +652,7 @@ sub new_vlan()
 	}
 	
 	# Check gateway errors
-    if ( $json_obj->{gateway} !~ /^$/ && &ipisok( $json_obj->{gateway}, 4 ) eq "false") {
+    if ( $json_obj->{gateway} !~ /^$/ && &ipisok($json_obj->{gateway}, 4 ) eq "false") {
         # Error
         $error = "true";
         print $q->header(
@@ -888,14 +910,11 @@ sub get_interface()
 	my $out = [];
 	use CGI;
 	my $q = CGI->new;
-	
+
 	# Configured interfaces list
-	my @configured_interfaces = @{ &getConfigInterfaceList() };
-	
-	my @sorted =  sort { $a->{name} cmp $b->{name} } @configured_interfaces;
-	$_->{status} = &getInterfaceSystemStatus( $_ ) for @configured_interfaces;
-	
-	for my $if_ref ( @sorted )
+	my @interfaces = @{ &getSystemInterfaceList() };
+
+	for my $if_ref ( @interfaces )
 	{
 		# Only IPv4
 		next if $if_ref->{ip_v} == 6;
@@ -929,6 +948,7 @@ sub get_interface()
 	$j->canonical( $enabled );
 	
 	my $output = $j->encode(
+		{
 			description => "List interfaces",
 			interfaces  => $out,
 		}
