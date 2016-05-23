@@ -52,7 +52,6 @@ if ( $origin ne 1 )
 sub new_vini()
 {
 	my $fdev = @_[0];
-	my $out_p = [];
 
 	use CGI;
 	use JSON;
@@ -155,27 +154,6 @@ sub new_vini()
 	}
 	
 	# Check address errors
-	if ( ! $json_obj->{ ip } )
-	{
-		# Error
-		$error = "true";
-		print $q->header(
-		  -type    => 'text/plain',
-		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
-		);
-		$errormsg = "IP Address parameter can't be empty";
-		my $output = $j->encode(
-		{
-		  description => "Interface $ifn",
-		  error       => "true",
-		  message     => $errormsg
-		}
-		);
-		print $output;
-		exit;
-	}
-	
 	if ( &ipisok( $json_obj->{ ip } ) eq "false" )
 	{
 		# Error
@@ -196,13 +174,66 @@ sub new_vini()
 		print $output;
 		exit;
 	}
-	
-	# Check network interface errors
-	my $ifn = "$fdev\:$json_obj->{name}";
 
+	if ( ! $json_obj->{ ip } )
+	{
+		# Error
+		$error = "true";
+		print $q->header(
+		  -type    => 'text/plain',
+		  -charset => 'utf-8',
+		  -status  => '400 Bad Request'
+		);
+
+		$errormsg = "IP Address parameter can't be empty";
+
+		my $output = $j->encode(
+		{
+		  description => "Interface $ifn",
+		  error       => "true",
+		  message     => $errormsg
+		}
+		);
+		print $output;
+		exit;
+	}
+
+	# FIXME: check IPv6 compatibility
+	# Check new IP address is already used
+	my @activeips = &listallips();
+	for my $ip ( @activeips )
+	{
+		if ( $ip eq $json_obj->{ ip } )
+		{
+			# Error
+			$error = "true";
+			print $q->header(
+							  -type    => 'text/plain',
+							  -charset => 'utf-8',
+							  -status  => '400 Bad Request'
+			);
+
+			$errormsg = "IP Address $json_obj->{ip} is already in use.";
+
+			my $output = $j->encode(
+									 {
+									   description => "IP Address $json_obj->{ip}",
+									   error       => "true",
+									   message     => $errormsg
+									 }
+			);
+			print $output;
+			exit;		
+		}
+	}
+
+	# Check network interface errors
+	# A virtual interface cannnot exist in two stacks
+	my $ifn = "$fdev\:$json_obj->{name}";
+	my $ip_v = &ipversion($json_obj->{ip});
 	my $if_ref = &getInterfaceConfig( $ifn, 4 );
 	$if_ref = &getInterfaceConfig( $ifn, 6 ) if !if_ref;
-		
+	
 	if ( $if_ref )
 	{
 		# Error
@@ -223,19 +254,17 @@ sub new_vini()
 		print $output;
 		exit;
 	}
-	
-	my $ip_v = &ipversion($json_obj->{ip});
 
 	# Get params from parent interface
 	my $new_if_ref = &getInterfaceConfig( $fdev, $ip_v );
-
 	$error = 'true' if ! $new_if_ref;
+
 	$new_if_ref->{name} = $ifn;
 	$new_if_ref->{vini} = $json_obj->{name};
 	$new_if_ref->{addr} = $json_obj->{ip};
 	$new_if_ref->{ip_v} = $ip_v;
 	$new_if_ref->{ gateway } = "" if ! $new_if_ref->{ gateway };
-	
+
 	# No errors
 	if ( $error eq "false" )
 	{
@@ -245,6 +274,10 @@ sub new_vini()
 		if ( $state == 0 )
 		{
 			$new_if_ref{status} = "up";
+		}
+		else
+		{
+			$error = "true";
 		}
 
 		# Writing new parameters in configuration file
@@ -266,6 +299,8 @@ sub new_vini()
 		  -charset => 'utf-8',
 		  -status  => '201 Created'
 		);
+
+		my $out_p = [];
 		push $out_p,
 		{
 			name => $new_if_ref->{name},
@@ -434,7 +469,6 @@ sub new_vlan()
 		exit;
 	}
 
-	# Check name errors. Must be numeric
 	if ( $json_obj->{ name } =~ /^$/ )
 	{
 		# Error
@@ -456,6 +490,7 @@ sub new_vlan()
 		exit;
 	}
 	
+	# Check name errors. Must be numeric
 	if ( $json_obj->{ name } !~ /^\d+$/ )
 	{
 		# Error
@@ -465,7 +500,7 @@ sub new_vlan()
 		  -charset => 'utf-8',
 		  -status  => '400 Bad Request'
 		);
-		$errormsg = "The name parameter for Vlan must be a number.";
+		$errormsg = "The name for Vlan must be a number.";
 		my $output = $j->encode(
 		{
 		  description => "Name $json_obj->{name} of Vlan",
@@ -483,6 +518,7 @@ sub new_vlan()
 	
 	# Check if interface already exists
 	my $new_if_ref = &getInterfaceConfig( $ifn, $ip_v );
+
 	if ( $new_if_ref )
 	{
 		# Error
@@ -505,6 +541,27 @@ sub new_vlan()
 	}
 
 	# Check address errors
+	if ( &ipisok( $json_obj->{ ip } ) eq "false" )
+	{
+		# Error
+		$error = "true";
+		print $q->header(
+		  -type    => 'text/plain',
+		  -charset => 'utf-8',
+		  -status  => '400 Bad Request'
+		);
+		$errormsg = "IP Address $json_obj->{ip} structure is not ok.";
+		my $output = $j->encode(
+		{
+		  description => "IP Address $json_obj->{ip}",
+		  error       => "true",
+		  message     => $errormsg
+		}
+		);
+		print $output;
+		exit;
+	}
+
 	if ( ! $json_obj->{ ip } )
 	{
 		# Error
@@ -525,26 +582,32 @@ sub new_vlan()
 		print $output;
 		exit;
 	}
-	
-	if ( &ipisok( $json_obj->{ ip } ) eq "false" )
+
+	# FIXME: Check IPv6 compatibility
+	# Check new IP address is not in use
+	my @activeips = &listallips();
+	for my $ip ( @activeips )
 	{
-		# Error
-		$error = "true";
-		print $q->header(
-		  -type    => 'text/plain',
-		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
-		);
-		$errormsg = "IP Address $json_obj->{ip} structure is not ok.";
-		my $output = $j->encode(
+		if ( $ip eq $json_obj->{ ip } )
 		{
-		  description => "IP Address $json_obj->{ip}",
-		  error       => "true",
-		  message     => $errormsg
+			# Error
+			$error = "true";
+			print $q->header(
+							  -type    => 'text/plain',
+							  -charset => 'utf-8',
+							  -status  => '400 Bad Request'
+			);
+			$errormsg = "IP Address $json_obj->{ip} is already in use.";
+			my $output = $j->encode(
+									 {
+									   description => "IP Address $json_obj->{ip}",
+									   error       => "true",
+									   message     => $errormsg
+									 }
+			);
+			print $output;
+			exit;		
 		}
-		);
-		print $output;
-		exit;
 	}
 
 	# Check netmask errors
@@ -568,7 +631,7 @@ sub new_vlan()
 		print $output;
 		exit;
 	}
-	
+
 	# Check netmask errors for IPv4
 	if ( $ip_v == 4 
 		&& ( $json_obj->{netmask} eq ''
@@ -585,7 +648,7 @@ sub new_vlan()
 		  -charset => 'utf-8',
 		  -status  => '400 Bad Request'
 		);
-		$errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric [0-32].";
+		$errormsg = "Netmask Address $json_obj->{netmask} structure is not ok.";
 		my $output = $j->encode(
 		{
 		  description => "Netmask Address $json_obj->{netmask}",
@@ -641,23 +704,22 @@ sub new_vlan()
 	# get params of fdev
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
 	my @system_interfaces = $socket->if_list;
-	
+
 	$new_if_ref->{name} = $ifn;
 	$new_if_ref->{dev} = $fdev;
 	$new_if_ref->{status} = "up";
 	$new_if_ref->{vlan} = $json_obj->{name};
 	$new_if_ref->{addr} = $json_obj->{ip};
 	$new_if_ref->{mask} = $json_obj->{netmask};
-	$new_if_ref->{gateway} = $json_obj->{gateway};	
+	$new_if_ref->{gateway} = $json_obj->{gateway} // '';
 	$new_if_ref->{ip_v} = $ip_v;
 	$new_if_ref->{mac} = $socket->if_hwaddr( $new_if_ref->{ dev } );
-	$new_if_ref->{ gateway } = "" if ! $new_if_ref->{ gateway };
 
 	# No errors
 	if ( $error eq "false" )
 	{
-		&createIf( $new_if_ref ); 	
-		&addIp( $new_if_ref );		
+		&createIf( $new_if_ref );
+		&addIp( $new_if_ref );
 		my $state = &upIf( $new_if_ref, 'writeconf' );
 
 		if ( $state == 0 )
@@ -823,7 +885,7 @@ sub delete_interface()
 		exit;
 	}
 	
-	$if_ref = &getInterfaceConfig( $if, $ip_v );
+	my $if_ref = &getInterfaceConfig( $if, $ip_v );
 	
 	if ( !$if_ref )
 	{
@@ -846,30 +908,12 @@ sub delete_interface()
 		exit;
 	}
 
-	my $guiip = &GUIip();
-	my $mgmt_iface = getInterfaceOfIp($guiip);
-	#~ my $clrip = &getClusterRealIp();
-	#~ my $clvip = &getClusterVirtualIp();
-
-	open my $fc, "<", "$filecluster";
-	my @filecl = <$fc>;
-	close $fc;
-	
-	#~ my $stopable = 		$$if_ref{dev} ne $$if_ref{name}
-					#~ && $$if_ref{name} ne $mgmt_iface
-					#~ && grep ( /:$$if_ref{addr}[$:]/, @filecl ) == 0;
-#~ 
-	#~ ####
-	#~ my $negative = 'not' if !$stopable;
-	#~ &logfile("$negative stoppable");
-	#~ ####
-	
-	&delRoutes( "local", $if_ref );
-	&downIf( $if_ref, 'writeconf' );
-	&delIf( $if_ref );
-
 	if ( $error eq "false" )
 	{
+		&delRoutes( "local", $if_ref );
+		&downIf( $if_ref, 'writeconf' );
+		&delIf( $if_ref );
+
 		# Success
 		print $q->header(
 		  -type    => 'text/plain',
@@ -889,7 +933,7 @@ sub delete_interface()
 		}
 		);
 		print $output;
-	}	
+	}
 	else
 	{
 		# Error
@@ -909,7 +953,6 @@ sub delete_interface()
 		print $output;
 		exit;
 	}
-
 }
 
 # GET Interface
@@ -999,36 +1042,32 @@ sub delete_interface()
 
 sub get_interface()
 {
-	my @out;
+	my $out = [];
 	use CGI;
 	my $q = CGI->new;
 
 	# Configured interfaces list
-	#~ my @configured_interfaces = @{ &getConfigInterfaceList() };
 	my @interfaces = @{ &getSystemInterfaceList() };
-	
-	#~ my @sorted =  sort { $a->{name} cmp $b->{name} } @configured_interfaces;
-	#~ $_->{status} = &getInterfaceSystemStatus( $_ ) for @configured_interfaces;
-	
-	for my $if_ref ( @interfaces )
-	{	
-		# Output for gateway must be a value or "" but no null 
-		if ( !$if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( !$if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( !$if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( !$if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( !$if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( !$if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
-		push @out,
+	for my $if_ref ( @interfaces )
+	{
+		# Any key must cotain a value or "" but can't be null
+		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+
+		push $out,
 		  {
-			name      => $if_ref->{ name },
-			  ip      => $if_ref->{ addr },
-			  netmask => $if_ref->{ mask },
-			  gateway => $if_ref->{ gateway },
-			  status  => $if_ref->{ status },
-			  HDWaddr => $if_ref->{ mac },
-			  ipv     => $if_ref->{ ip_v },
+			name    => $if_ref->{ name },
+			ip      => $if_ref->{ addr },
+			netmask => $if_ref->{ mask },
+			gateway => $if_ref->{ gateway },
+			status  => $if_ref->{ status },
+			HDWaddr => $if_ref->{ mac },
+			ipv     => $if_ref->{ ip_v },
 		  };
 	}
 
@@ -1044,7 +1083,7 @@ sub get_interface()
 	my $output = $j->encode(
 		{
 			description => "List interfaces",
-			interfaces  => \@out,
+			interfaces  => $out,
 		}
 	);
 	
@@ -1093,7 +1132,6 @@ sub get_interface()
 sub ifaction()
 {
 	my $fdev  = @_[0];
-	my $out_p = [];
 
 	use CGI;
 	use JSON;
@@ -1107,7 +1145,7 @@ sub ifaction()
 	$j->canonical( $enabled );
 
 	$error = "false";
-	
+
 	# Check interface errors
 	if ( $fdev =~ /^$/ )
 	{
@@ -1152,7 +1190,7 @@ sub ifaction()
 	}
 
 	# Check input errors
-	if ( $json_obj->{ action } !~ /^up|down/ )
+	if ( $json_obj->{ action } !~ /^(up|down)$/ )
 	{
 		# Error
 		$error = "true";
@@ -1200,14 +1238,43 @@ sub ifaction()
 		{
 		  description => "Action value $json_obj->{action}",
 		  error       => "true",
-		  message     => $errormsg
+		  message     => $errormsg,
 		}
 		);
 		print $output;
 
 		exit;
 	}
+
+	# Open conf file to get the interface parameters
+	tie my @array, 'Tie::File', "$configdir/if_$fdev\_conf", recsep => ':';
 	
+	# Check if the ip is already in use
+	my @activeips = &listallips();
+	for my $ip ( @activeips )
+	{
+		if ( $ip eq @array[2] && $json_obj->{ action } ne "down" )
+		{
+			# Error
+			$error = "true";
+			print $q->header(
+							  -type    => 'text/plain',
+							  -charset => 'utf-8',
+							  -status  => '400 Bad Request'
+			);
+			$errormsg = "Interface $fdev cannot be UP, IP Address @array[2] is already in use";
+			my $output = $j->encode(
+									 {
+									   description => "Interface $fdev",
+									   error       => "true",
+									   message     => $errormsg
+									 }
+			);
+			print $output;
+			exit;
+		}
+	}
+
 	# Everything is ok
 	if ( $json_obj->{action} eq "up" )
 	{
@@ -1300,7 +1367,7 @@ sub ifaction()
 		{
 			$if_ref = $stacks[0];
 		}
-		else # for unconfigured NICs
+		else # for unconfigured NICs, downIf requires only the interface name
 		{
 			$if_ref = { name => $fdev };
 		}
@@ -1311,13 +1378,6 @@ sub ifaction()
 		{
 			$error = "true";
 		}
-	
-		# &delRoutes("local",$if);
-		# &downIf($if);
-		# if ( $? != 0) 
-		# {
-			# $error = "true";
-		# }
 	}
 	else
 	{
@@ -1332,9 +1392,12 @@ sub ifaction()
 		  -charset => 'utf-8',
 		  -status  => '201 Created'
 		);
+
+		my $out_p = [];
 		push $out_p, { action => $json_obj->{ action } };
 		my $j = JSON::XS->new->utf8->pretty( 1 );
 		$j->canonical( $enabled );
+
 		my $output = $j->encode(
 		{
 		  description => "Action in interface $fdev",
@@ -1414,7 +1477,6 @@ sub modify_interface()
 {
 	my $fdev = @_[0];
 	my $ip_v;
-	my $out_p = [];
 
 	use CGI;
 	use JSON;
@@ -1464,7 +1526,7 @@ sub modify_interface()
 	}
 	
 	# If ip_v is empty, default value is 4
-	#~ if ( !$ip_v ) { $ip_v = 4; }
+	if ( !$ip_v ) { $ip_v = 4; }
 
 	# Check interface errors
 	if ( $fdev =~ /^$/ )
@@ -1481,24 +1543,13 @@ sub modify_interface()
 		{
 		  description => "Modify interface $fdev",
 		  error       => "true",
-		  message     => $errormsg
+		  message     => $errormsg,
 		}
 		);
 		print $output;
 		exit;
 	}
 
-	#~ my $socket = IO::Socket::INET->new( Proto => 'udp' );
-	#~ my @system_interfaces = $socket->if_list;
-
-	#~ my $if_ref = &getInterfaceConfig( $fdev, $ip_v );
-	#~ 
-	#~ if ( ! $if_ref && $fdev !~ /:|\./ )
-	#~ {
-		#~ $if_ref = &getSystemInterface( $fdev, $ip_v );
-	#~ }	
-
-	#~ if ( $fdev =~ /\s+/ || @system_interfaces !~ /^$fdev$/ )
 	if ( $fdev =~ /\s+/ )
 	{
 		# Error
@@ -1535,8 +1586,6 @@ sub modify_interface()
 			&logfile("fdev:$fdev system_interfaces:@system_interfaces");
 	}
 
-	&logfile(Dumper $if_ref);
-
 	if ( ! $$if_ref{mac} )
 	{
 		# Error
@@ -1558,31 +1607,27 @@ sub modify_interface()
 		exit;
 	}
 
-	&logfile("mac:$$if_ref{mac}");
-	
+
 	# Check address errors
-	if ( exists ( $json_obj->{ip} ) )
+	if ( ipisok( $json_obj->{ ip } ) eq "false" )
 	{
-		if ( &ipisok( $json_obj->{ ip } ) eq "false" )
+		# Error
+		$error = "true";
+		print $q->header(
+		  -type    => 'text/plain',
+		  -charset => 'utf-8',
+		  -status  => '400 Bad Request'
+		);
+		$errormsg = "IP Address $json_obj->{ip} structure is not ok.";
+		my $output = $j->encode(
 		{
-			# Error
-			$error = "true";
-			print $q->header(
-			  -type    => 'text/plain',
-			  -charset => 'utf-8',
-			  -status  => '400 Bad Request'
-			);
-			$errormsg = "IP Address $json_obj->{ip} structure is not ok.";
-			my $output = $j->encode(
-			{
-			  description => "IP Address $json_obj->{ip}",
-			  error       => "true",
-			  message     => $errormsg
-			}
-			);
-			print $output;
-			exit;
+		  description => "IP Address $json_obj->{ip}",
+		  error       => "true",
+		  message     => $errormsg
 		}
+		);
+		print $output;
+		exit;
 	}
 	
 	# Check netmask errors
@@ -1640,41 +1685,31 @@ sub modify_interface()
 	}
 
 	# Check gateway errors
-	if ( exists ( $json_obj->{gateway} ) )
+	if (    $json_obj->{ gateway } !~ /^$/
+		 && &ipisok( $json_obj->{ gateway } ) eq "false" )
 	{
-		if (    $json_obj->{ gateway } !~ /^$/
-			 && &ipisok( $json_obj->{ gateway } ) eq "false" )
+		# Error
+		$error = "true";
+		print $q->header(
+		  -type    => 'text/plain',
+		  -charset => 'utf-8',
+		  -status  => '400 Bad Request'
+		);
+		$errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
+		my $output = $j->encode(
 		{
-			# Error
-			$error = "true";
-			print $q->header(
-			  -type    => 'text/plain',
-			  -charset => 'utf-8',
-			  -status  => '400 Bad Request'
-			);
-			$errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
-			my $output = $j->encode(
-			{
-			  description => "Gateway Address $json_obj->{gateway}",
-			  error       => "true",
-			  message     => $errormsg
-			}
-			);
-			print $output;
-			exit;
+		  description => "Gateway Address $json_obj->{gateway}",
+		  error       => "true",
+		  message     => $errormsg
 		}
+		);
+		print $output;
+		exit;
 	}
 
+	# No errors found
 	if ( $error eq "false" )
 	{
-		# Get the current values
-		#~ my $if_ref = &getInterfaceConfig( $fdev, $ip_v );
-#~ 
-		#~ if (! $if_ref)
-		#~ {
-			#~ $if_ref = &getSystemInterface( $fdev, $ip_v );
-		#~ }
-		
 		# Vlans need to be created if they don't already exist
 		my $exists = &ifexist( $if_ref->{name} );
 		if ( $exists eq "false" )
@@ -1699,7 +1734,7 @@ sub modify_interface()
 				$if_ref->{gateway} = $json_obj->{gateway};
 			}
 		}
-		
+
 		# Delete old parameters
 		my $old_iface_ref = &getInterfaceConfig( $fdev, $ip_v );
 
@@ -1723,7 +1758,7 @@ sub modify_interface()
 		{
 			$if_ref->{status} = "up";
 		}
-		
+
 		# Writing new parameters in configuration file
 		if ( $if_ref->{name} !~ /:/ )
 		{
@@ -1733,7 +1768,7 @@ sub modify_interface()
 		&setInterfaceConfig( $if_ref );
 		&applyRoutes( "local", $if_ref );
 	}
-	
+
 	# Print params
 	if ( $error ne "true" )
 	{
@@ -1744,6 +1779,7 @@ sub modify_interface()
 		  -status  => '200 OK'
 		);
 
+	        my $out_p = [];
 		foreach $key ( keys %$json_obj )
 		{
 			push $out_p, { $key => $json_obj->{ $key } };
