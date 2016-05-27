@@ -184,7 +184,7 @@ if ( $action eq "Modify Configuration" )
 	if ( $ipgui =~ /^\*$/ )
 	{
 		@array[1] = "#server!bind!1!interface = \n";
-		&logfile( "The interface where is running is --All interfaces--" );
+		&zenlog( "The interface where is running is --All interfaces--" );
 	}
 	else
 	{
@@ -192,13 +192,13 @@ if ( $action eq "Modify Configuration" )
 		if ( &ipversion( $ipgui ) eq "IPv6" )
 		{
 			@array[4] = "server!ipv6 = 1\n";
-			&logfile(
+			&zenlog(
 					  "The interface where is running the GUI service is: $ipgui with IPv6" );
 		}
 		elsif ( &ipversion( $ipgui ) eq "IPv4" )
 		{
 			@array[4] = "server!ipv6 = 0\n";
-			&logfile(
+			&zenlog(
 					  "The interface where is running the GUI service is: $ipgui with IPv4" );
 		}
 	}
@@ -357,7 +357,7 @@ print "<input type=\"hidden\" name=\"id\" value=\"3-1\">\n";
 
 my $hosthttp = &GUIip();
 
-&logfile( "management_ip:$hosthttp" );
+&zenlog( "management_ip:$hosthttp" );
 
 my (
 	 $lhost,  $lip,      $rhost, $rip,       $vipcl, $ifname,

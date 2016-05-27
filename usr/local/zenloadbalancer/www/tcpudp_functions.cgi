@@ -63,20 +63,20 @@ sub setTcpUdpFarmBlacklistTime    # ($blacklist_time,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&logfile(
+	&zenlog(
 			"setting 'Blacklist time $blacklist_time' for $farm_name farm $farm_type" );
 
 	my $farm_port   = &getFarmPort( $farm_name );
 	my $fmaxservers = &getFarmMaxServers( $farm_name );
 
 	my $pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port blacklist $blacklist_time";
-	&logfile( "running '$pen_ctl_command'" );
+	&zenlog( "running '$pen_ctl_command'" );
 	system ( "$pen_ctl_command >/dev/null 2>&1" );
 	$output = $?;
 
 	my $pen_write_config_command =
 	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'";
-	&logfile( "running '$pen_write_config_command'" );
+	&zenlog( "running '$pen_write_config_command'" );
 	system ( "$pen_write_config_command >/dev/null 2>&1" );
 
 	$output = $? && $output;
@@ -95,7 +95,7 @@ sub getTcpUdpFarmBlacklistTime    # ($farm_name)
 	my $farm_port = &getFarmPort( $farm_name );
 
 	my $pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port blacklist";
-	&logfile( "running '$pen_ctl_command' for $farm_name farm" );
+	&zenlog( "running '$pen_ctl_command' for $farm_name farm" );
 	$blacklist_time = `$pen_ctl_command 2> /dev/null`;
 
 	return $blacklist_time;
@@ -112,13 +112,13 @@ sub setTcpUdpFarmTimeout    # ($timeout,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 
 	my $pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port timeout $timeout";
-	&logfile( "running '$pen_ctl_command' for $farm_name farm $farm_type" );
+	&zenlog( "running '$pen_ctl_command' for $farm_name farm $farm_type" );
 	system ( "$pen_ctl_command >/dev/null 2>&1" );
 	$output = $?;
 
 	my $pen_write_config_command =
 	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'";
-	&logfile(
+	&zenlog(
 			  "running '$pen_write_config_command' for $farm_name farm $farm_type" );
 	system ( "$pen_write_config_command >/dev/null 2>&1" );
 	$output = $? && $output;
@@ -138,7 +138,7 @@ sub getTcpUdpFarmTimeout    # ($farm_name)
 
 	$pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port timeout";
 	$output          = `$pen_ctl_command 2> /dev/null`;
-	&logfile( "running '$pen_ctl_command' for $farm_name farm $farm_type" );
+	&zenlog( "running '$pen_ctl_command' for $farm_name farm $farm_type" );
 
 	return $output;
 }
@@ -163,7 +163,7 @@ sub setTcpUdpFarmAlgorithm    # ($algorithm,$farm_name)
 	{
 		my $pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port $algorithm";
 
-		&logfile( "running '$pen_ctl_command'" );
+		&zenlog( "running '$pen_ctl_command'" );
 		system ( "$pen_ctl_command >/dev/null 2>&1" );
 		$output = $?;
 	}
@@ -171,7 +171,7 @@ sub setTcpUdpFarmAlgorithm    # ($algorithm,$farm_name)
 	my $pen_ctl_command =
 	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'";
 
-	&logfile( "runing '$pen_ctl_command'" );
+	&zenlog( "runing '$pen_ctl_command'" );
 	system ( $pen_ctl_command);
 
 	&setFarmMaxServers( $fmaxservers, $farm_name );
@@ -219,11 +219,11 @@ sub setTcpUdpFarmPersistence    # ($persistence,$farm_name)
 	my $fmaxservers   = &getFarmMaxServers( $farm_name );
 	my $output        = -1;
 
-	&logfile( "setting 'Persistence $persistence' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'Persistence $persistence' for $farm_name farm $farm_type" );
 
 	if ( $persistence eq "true" )
 	{
-		&logfile(
+		&zenlog(
 			"running '$pen_ctl 127.0.0.1:$farm_port no roundrobin' for $farm_name farm $farm_type"
 		);
 		my @run = `$pen_ctl 127.0.0.1:$farm_port no roundrobin 2> /dev/null`;
@@ -231,7 +231,7 @@ sub setTcpUdpFarmPersistence    # ($persistence,$farm_name)
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"running '$pen_ctl 127.0.0.1:$farm_port roundrobin' for $farm_name farm $farm_type"
 		);
 		my @run = `$pen_ctl 127.0.0.1:$farm_port roundrobin 2> /dev/null`;
@@ -302,7 +302,7 @@ sub getTcpUdpFarmMaxClientTime    # ($farm_name)
 	push ( @max_client_time, "" );
 	my $farm_port = &getFarmPort( $farm_name );
 
-	&logfile( "running '$pen_ctl 127.0.0.1:$farm_port clients_max' " );
+	&zenlog( "running '$pen_ctl 127.0.0.1:$farm_port clients_max' " );
 	@max_client_time[0] = `$pen_ctl 127.0.0.1:$farm_port clients_max 2> /dev/null`;
 	@max_client_time[1] = `$pen_ctl 127.0.01:$farm_port tracking 2> /dev/null`;
 
@@ -343,7 +343,7 @@ sub setFarmMaxServers    # ($maxs,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&logfile( "setting 'MaxServers $maxs' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'MaxServers $maxs' for $farm_name farm $farm_type" );
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
 		use Tie::File;
@@ -381,7 +381,7 @@ sub getFarmMaxServers    # ($farm_name)
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
 		my $farm_port = &getFarmPort( $farm_name );
-		&logfile( "running '$pen_ctl 127.0.0.1:$farm_port servers' " );
+		&zenlog( "running '$pen_ctl 127.0.0.1:$farm_port servers' " );
 		my @out = `$pen_ctl 127.0.0.1:$farm_port servers 2> /dev/null`;
 		$output = @out;
 	}
@@ -397,7 +397,7 @@ sub getTcpUdpFarmServers    # ($farm_name)
 	my @output;
 	my $farm_port = &getFarmPort( $farm_name );
 
-	&logfile( "running '$pen_ctl 127.0.0.1:$farm_port servers' " );
+	&zenlog( "running '$pen_ctl 127.0.0.1:$farm_port servers' " );
 
 	@output = `$pen_ctl 127.0.0.1:$farm_port servers 2> /dev/null`;
 
@@ -414,20 +414,20 @@ sub setFarmXForwFor    # ($isset,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&logfile( "setting 'XForwFor $isset' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'XForwFor $isset' for $farm_name farm $farm_type" );
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
 		my $farm_port   = &getFarmPort( $farm_name );
 		my $fmaxservers = &getFarmMaxServers( $farm_name );
 		if ( $isset eq "true" )
 		{
-			&logfile( "running '$pen_ctl 127.0.0.1:$farm_port http'" );
+			&zenlog( "running '$pen_ctl 127.0.0.1:$farm_port http'" );
 			my @run = `$pen_ctl 127.0.0.1:$farm_port http 2> /dev/null`;
 			$output = $?;
 		}
 		else
 		{
-			&logfile( "running '$pen_ctl 127.0.0.1:$farm_port no http'" );
+			&zenlog( "running '$pen_ctl 127.0.0.1:$farm_port no http'" );
 			my @run = `$pen_ctl 127.0.0.1:$farm_port no http 2> /dev/null`;
 			$output = $?;
 		}
@@ -435,7 +435,7 @@ sub setFarmXForwFor    # ($isset,$farm_name)
 		if ( $output != -1 )
 		{
 			my @run = `$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'`;
-			&logfile( "configuration saved in $configdir/$farm_filename file" );
+			&zenlog( "configuration saved in $configdir/$farm_filename file" );
 			&setFarmMaxServers( $fmaxservers, $farm_name );
 		}
 	}
@@ -616,7 +616,7 @@ sub _runTcpUdpFarmStart    # ($farm_name)
 	my $status   = -1;
 	my $run_farm = &getFarmCommand( $farm_name );
 
-	&logfile( "running $pen_bin $run_farm" );
+	&zenlog( "running $pen_bin $run_farm" );
 	zsystem( "$pen_bin $run_farm" );
 	$status = $?;
 
@@ -630,7 +630,7 @@ sub _runTcpUdpFarmStop    # ($farm_name)
 
 	my $pid = &getFarmPid( $farm_name );
 
-	&logfile( "running 'kill 15, $pid'" );
+	&zenlog( "running 'kill 15, $pid'" );
 	kill 15, $pid;
 
 	return $?;
@@ -647,20 +647,20 @@ sub runTcpFarmCreate    # ($vip,$vip_port,$farm_name)
 	# execute pen command
 	my $pen_command =
 	  "$pen_bin $vip:$vip_port -c 2049 -x 257 -S 10 -C 127.0.0.1:$farm_port";
-	&logfile( "running '$pen_command'" );
+	&zenlog( "running '$pen_command'" );
 	system ( "$pen_command >/dev/null 2>&1" );
 	$output = $?;
 
 	# execute pen_ctl command
 	my $pen_ctl_command =
 	  "$pen_ctl 127.0.0.1:$farm_port acl 9 deny 0.0.0.0 0.0.0.0";
-	&logfile( "running '$pen_ctl_command" );
+	&zenlog( "running '$pen_ctl_command" );
 	system ( "$pen_ctl_command >/dev/null 2>&1" );
 
 	# write configuration file
 	$pen_ctl_command =
 	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_name\_pen.cfg'";
-	&logfile( "running $pen_ctl_command" );
+	&zenlog( "running $pen_ctl_command" );
 	system ( "$pen_ctl_command >/dev/null 2>&1" );
 
 	return $output;
@@ -677,20 +677,20 @@ sub runUdpFarmCreate    # ($vip,$vip_port,$farm_name)
 	# execute pen command
 	my $pen_command =
 	  "$pen_bin $vip:$vip_port -U -t 1 -b 3 -c 2049 -x 257 -S 10 -C 127.0.0.1:$farm_port";
-	&logfile( "running '$pen_command'" );
+	&zenlog( "running '$pen_command'" );
 	system ( "$pen_command >/dev/null 2>&1" );
 	$output = $?;
 
 	# execute pen_ctl command
 	my $pen_ctl_command =
 	  "$pen_ctl 127.0.0.1:$farm_port acl 9 deny 0.0.0.0 0.0.0.0";
-	&logfile( "running '$pen_ctl_command" );
+	&zenlog( "running '$pen_ctl_command" );
 	system ( "$pen_ctl_command >/dev/null 2>&1" );
 
 	# write configuration file
 	$pen_ctl_command =
 	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_name\_pen\_udp.cfg'";
-	&logfile( "running $pen_ctl_command" );
+	&zenlog( "running $pen_ctl_command" );
 	system ( "$pen_ctl_command >/dev/null 2>&1" );
 
 	return $output;
@@ -954,7 +954,7 @@ sub setTcpUdpFarmServer    # ($ids,$rip,$port,$max,$weight,$priority,$farm_name)
 	my $pen_ctl_command =
 	  "$pen_ctl 127.0.0.1:$farm_port server $ids address $rip port $port $max $weight $priority";
 
-	&logfile( "running '$pen_ctl_command' in $farm_name farm" );
+	&zenlog( "running '$pen_ctl_command' in $farm_name farm" );
 	system ( "$pen_ctl_command >/dev/null 2>&1" );
 	$output = $?;
 
@@ -962,7 +962,7 @@ sub setTcpUdpFarmServer    # ($ids,$rip,$port,$max,$weight,$priority,$farm_name)
 	my $pen_write_config_command =
 	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'";
 
-	&logfile( "running '$pen_write_config_command'" );
+	&zenlog( "running '$pen_write_config_command'" );
 	system ( "$pen_write_config_command >/dev/null 2>&1" );
 
 	&setFarmMaxServers( $fmaxservers, $farm_name );
@@ -983,7 +983,7 @@ sub runTcpUdpFarmServerDelete    # ($ids,$farm_name)
 	my $pen_ctl_command =
 	  "$pen_ctl 127.0.0.1:$farm_port server $ids address 0 port 0 max 0 weight 0 prio 0";
 
-	&logfile(
+	&zenlog(
 			  "running '$pen_ctl_command' deleting server $ids in $farm_name farm" );
 	system ( "$pen_ctl_command >/dev/null 2>&1" );
 	$output = $?;
@@ -991,7 +991,7 @@ sub runTcpUdpFarmServerDelete    # ($ids,$farm_name)
 	my $pen_write_config_command =
 	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'";
 
-	&logfile( "running '$pen_write_config_command'" );
+	&zenlog( "running '$pen_write_config_command'" );
 	system ( "$pen_write_config_command >/dev/null 2>&1" );
 
 	&setFarmMaxServers( $fmaxservers, $farm_name );
@@ -1333,7 +1333,7 @@ sub setTcpUdpNewFarmName    # ($farm_name,$new_farm_name)
 	rename ( "$configdir\/$farm_filename", "$configdir\/$new_farm_filename" );
 	$output = $?;
 
-	&logfile( "configuration saved in $configdir/$new_farm_filename file" );
+	&zenlog( "configuration saved in $configdir/$new_farm_filename file" );
 
 	if ( -e "$configdir\/$farmguardian_filename" )
 	{
@@ -1353,7 +1353,7 @@ sub setTcpUdpNewFarmName    # ($farm_name,$new_farm_name)
 				 "$configdir\/$new_farmguardian_filename" );
 		$output = $?;
 
-		&logfile( "configuration saved in $configdir/$new_farmguardian_filename file" );
+		&zenlog( "configuration saved in $configdir/$new_farmguardian_filename file" );
 	}
 
 	return $output;
@@ -1392,18 +1392,18 @@ sub setTcpUdpFarmBackendMaintenance    # ($farm_name,$backend)
 	my $farm_port     = &getFarmPort( $farm_name );
 	my $output        = -1;
 
-	&logfile( "setting Maintenance mode for $farm_name backend $backend" );
+	&zenlog( "setting Maintenance mode for $farm_name backend $backend" );
 
 	my $pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port server $backend acl 9";
 
-	&logfile( "running '$pen_ctl_command'" );
+	&zenlog( "running '$pen_ctl_command'" );
 	system ( "$pen_ctl_command >/dev/null 2>&1" );
 	$output = $?;
 
 	my $pen_write_config_command =
 	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'";
 
-	&logfile( "running '$pen_write_config_command'" );
+	&zenlog( "running '$pen_write_config_command'" );
 	system ( "$pen_write_config_command >/dev/null 2>&1" );
 
 	&setFarmMaxServers( $fmaxservers, $farm_name );
@@ -1421,12 +1421,12 @@ sub setTcpUdpFarmBackendNoMaintenance    # ($farm_name,$backend)
 	my $fmaxservers   = &getFarmMaxServers( $farm_name );
 	my $output        = -1;
 
-	&logfile( "setting Disabled maintenance mode for $farm_name backend $backend" );
+	&zenlog( "setting Disabled maintenance mode for $farm_name backend $backend" );
 
 	#
 	my $pen_ctl_command = "$pen_ctl 127.0.0.1:$farm_port server $backend acl 0";
 
-	&logfile( "running '$pen_ctl_command'" );
+	&zenlog( "running '$pen_ctl_command'" );
 	system ( "$pen_ctl_command >/dev/null 2>&1" );
 	$output = $?;
 
@@ -1434,7 +1434,7 @@ sub setTcpUdpFarmBackendNoMaintenance    # ($farm_name,$backend)
 	my $pen_write_config_command =
 	  "$pen_ctl 127.0.0.1:$farm_port write '$configdir/$farm_filename'";
 
-	&logfile( "running '$pen_write_config_command'" );
+	&zenlog( "running '$pen_write_config_command'" );
 	system ( "$pen_write_config_command >/dev/null 2>&1" );
 
 	&setFarmMaxServers( $fmaxservers, $farm_name );

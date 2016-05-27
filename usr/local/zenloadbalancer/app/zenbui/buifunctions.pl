@@ -312,7 +312,7 @@ sub get_interface_stack_ip_mask_gateway    # ($if_name, $ip_version)
 	$mask    = $mask    // '';
 	$gateway = $gateway // '';
 
-	#~ &logfile("ip:$ip netmask:$mask gateway:$gateway");
+	#~ &zenlog("ip:$ip netmask:$mask gateway:$gateway");
 
 	return ( $ip, $mask, $gateway );
 }

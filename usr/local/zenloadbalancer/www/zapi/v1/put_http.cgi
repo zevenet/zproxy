@@ -359,7 +359,7 @@ if ($origin ne 1){
 			if ( $json_obj->{ ciphers } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify a http farm $farmname, invalid ciphers, can't be blank."
 				);
 			}
@@ -386,7 +386,7 @@ if ($origin ne 1){
 				else
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the ciphers."
 					);
 				}
@@ -394,7 +394,7 @@ if ($origin ne 1){
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 						  "ZAPI error, trying to modify a http farm $farmname, invalid ciphers." );
 			}
 		}
@@ -413,7 +413,7 @@ if ($origin ne 1){
 					if ( $json_obj->{ cipherc } =~ /^$/ )
 					{
 						$error = "true";
-						&logfile(
+						&zenlog(
 							"ZAPI error, trying to modify a http farm $farmname, invalid cipherc, can't be blank."
 						);
 					}
@@ -435,7 +435,7 @@ if ($origin ne 1){
 							else
 							{
 								$error = "true";
-								&logfile(
+								&zenlog(
 									"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the cipherc."
 								);
 							}
@@ -456,7 +456,7 @@ if ($origin ne 1){
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the certname."
 				);
 			}

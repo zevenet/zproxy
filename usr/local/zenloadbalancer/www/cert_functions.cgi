@@ -224,7 +224,7 @@ sub delCert    # ($certname)
 	closedir ( DIR );
 
 	unlink ( "$configdir\/$file[0]" )
-	  or &logfile( "Error removing certificate $configdir\/$file[0]" );
+	  or &zenlog( "Error removing certificate $configdir\/$file[0]" );
 }
 
 #Create CSR file
@@ -239,7 +239,7 @@ sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, 
 	##sustituir los espacios por guiones bajos en el nombre de archivo###
 	if ( $certpassword eq "" )
 	{
-		&logfile(
+		&zenlog(
 			"Creating CSR: $openssl req -nodes -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\""
 		);
 		my @opensslout =
@@ -249,7 +249,7 @@ sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, 
 	{
 		my @opensslout =
 		  `$openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out  $configdir/$certname.csr -batch -subj "/C=$certcountry/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail" 2> /dev/null`;
-		&logfile(
+		&zenlog(
 			"Creating CSR: $openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\""
 		);
 	}

@@ -295,7 +295,7 @@ sub createmenuif    # ($if_ref, $id)
 		my @filecl = <$fc>;
 		close $fc;
 
-		#~ &logfile("\n @filecl");
+		#~ &zenlog("\n @filecl");
 		if ( &ipisok( $$if_ref{ addr } ) eq 'true'
 			 && grep ( /$$if_ref{addr}/, @filecl ) )
 		{
@@ -899,7 +899,7 @@ sub successmsg    # ($string)
 
 	print "<div class=\"ad-notif-success grid_12 small-mg\"><p><b>SUCCESS!</b> $string</p></div>";
 
-	&logfile( $string );
+	&zenlog( $string );
 }
 
 #function that print a TIP message
@@ -909,7 +909,7 @@ sub tipmsg        # ($string)
 
 	print "<div class=\"ad-notif-info grid_12 small-mg ad-notif-restart\"><p><b>TIP!</b> $string</p></div>";
 
-	&logfile( $string );
+	&zenlog( $string );
 }
 
 #function that print a WARNING message
@@ -919,7 +919,7 @@ sub warnmsg    # ($string)
 
 	print "<div class=\"ad-notif-warn grid_12 small-mg ad-notif-restart\"><p><b>WARNING!</b> $string</p></div>";
 
-	&logfile( $string );
+	&zenlog( $string );
 }
 
 #function that print a ERROR message
@@ -929,7 +929,7 @@ sub errormsg    # ($string)
 
 	print "<div class=\"ad-notif-error grid_12 small-mg\"><p><b>ERROR!</b> $string</p></div>";
 
-	&logfile( $string );
+	&zenlog( $string );
 }
 
 1;

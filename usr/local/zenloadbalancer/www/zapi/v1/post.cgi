@@ -1187,7 +1187,7 @@ sub new_farm_zone() {
 	
 	if ( $json_obj->{ id } !~ /.*\..*/ )
         {
-                &logfile(
+                &zenlog(
                         "Wrong zone name. The name has to be like zonename.com, zonename.net, etc. The zone $zone can't be created"
                 );
 

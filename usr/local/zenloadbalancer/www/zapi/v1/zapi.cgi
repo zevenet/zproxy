@@ -153,7 +153,7 @@ if ($swcert != 0 ){
 	if ($swcert == 3){
 	        &errormsg("The ZLB certificate key you are using is for testing purposes and its expired, please request a new one");
 	        #stop appliance
-	        &logfile("ZLB is going down now");
+	        &zenlog("ZLB is going down now");
 		print "stop service ..."
 	        #system("/etc/init.d/zenloadbalancer stop > /dev/null &");
 	}

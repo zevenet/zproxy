@@ -44,7 +44,7 @@ sub setFarmClientTimeout    # ($client,$farm_name)
 
 			if ( $filefarmhttp[$i_f] =~ /^Client/ )
 			{
-				&logfile( "setting 'ClientTimeout $client' for $farm_name farm $farm_type" );
+				&zenlog( "setting 'ClientTimeout $client' for $farm_name farm $farm_type" );
 				$filefarmhttp[$i_f] = "Client\t\t $client";
 				$output             = $?;
 				$found              = "true";
@@ -93,7 +93,7 @@ sub setHTTPFarmSessionType    # ($session,$farm_name)
 	my $farm_type     = &getFarmType( $farm_name );
 	my $output        = -1;
 
-	&logfile( "setting 'Session type $session' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'Session type $session' for $farm_name farm $farm_type" );
 	tie @contents, 'Tie::File', "$configdir\/$farm_filename";
 	my $i     = -1;
 	my $found = "false";
@@ -204,7 +204,7 @@ sub getHTTPFarmSessionType    # ($farm_name)
 #$i_f++;
 #if ( $filefarmhttp[$i_f] =~ /ID/ )
 #{
-#&logfile( "setting 'Session id $sessionid' for $farm_name farm $farm_type" );
+#&zenlog( "setting 'Session id $sessionid' for $farm_name farm $farm_type" );
 #$filefarmhttp[$i_f] = "\t\t\tID \"$sessionid\"";
 #$output             = $?;
 #$found              = "true";
@@ -242,7 +242,7 @@ sub getHTTPFarmSessionType    # ($farm_name)
 #close FR;
 #}
 
-##&logfile("getting 'Session id $output' for $farm_name farm $farm_type");
+##&zenlog("getting 'Session id $output' for $farm_name farm $farm_type");
 #return $output;
 #}
 
@@ -265,7 +265,7 @@ sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 		$i_f++;
 		if ( $filefarmhttp[$i_f] =~ /^Alive/ )
 		{
-			&logfile(
+			&zenlog(
 					"setting 'Blacklist time $blacklist_time' for $farm_name farm $farm_type" );
 			$filefarmhttp[$i_f] = "Alive\t\t $blacklist_time";
 			$output             = $?;
@@ -318,7 +318,7 @@ sub setFarmHttpVerb    # ($verb,$farm_name)
 			$i_f++;
 			if ( $filefarmhttp[$i_f] =~ /xHTTP/ )
 			{
-				&logfile( "setting 'Http verb $verb' for $farm_name farm $farm_type" );
+				&zenlog( "setting 'Http verb $verb' for $farm_name farm $farm_type" );
 				$filefarmhttp[$i_f] = "\txHTTP $verb";
 				$output             = $?;
 				$found              = "true";
@@ -532,7 +532,7 @@ sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
-	&logfile( "setting 'Rewrite Location' for $farm_name to $rewritelocation" );
+	&zenlog( "setting 'Rewrite Location' for $farm_name to $rewritelocation" );
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -591,7 +591,7 @@ sub setFarmConnTO    # ($tout,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&logfile( "setting 'ConnTo timeout $tout' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'ConnTo timeout $tout' for $farm_name farm $farm_type" );
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -792,7 +792,7 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&logfile( "setting 'Certificate $cfile' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'Certificate $cfile' for $farm_name farm $farm_type" );
 	if ( $farm_type eq "https" )
 	{
 		use Tie::File;
@@ -893,7 +893,7 @@ sub setFarmErr    # ($farm_name,$content,$nerr)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	&logfile( "setting 'Err $nerr' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'Err $nerr' for $farm_name farm $farm_type" );
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		if ( -e "$configdir\/$farm_name\_Err$nerr.html" && $nerr != "" )
@@ -1033,12 +1033,12 @@ sub _runHTTPFarmStart    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $status        = -1;
 
-	&logfile(
+	&zenlog(
 		"Checking $farm_name farm configuration"
 	);
 	&getHTTPFarmConfigIsOK( $farm_name );
 
-	&logfile(
+	&zenlog(
 		"running $pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid"
 	);
 	zsystem(
@@ -1065,7 +1065,7 @@ sub _runHTTPFarmStop    # ($farm_name)
 	{
 		$pid = &getFarmPid( $farm_name );
 
-		&logfile( "running 'kill 15, $pid'" );
+		&zenlog( "running 'kill 15, $pid'" );
 		$run = kill 15, $pid;
 		$status = $?;
 
@@ -1093,7 +1093,7 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 
 	#copy template modyfing values
 	use File::Copy;
-	&logfile( "copying pound tpl file on $farm_name\_pound.cfg" );
+	&zenlog( "copying pound tpl file on $farm_name\_pound.cfg" );
 	copy( "$poundtpl", "$configdir/$farm_name\_pound.cfg" );
 
 	#modify strings with variables
@@ -1128,7 +1128,7 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 	close FERR;
 
 	#run farm
-	&logfile(
+	&zenlog(
 		"running $pound -f $configdir\/$farm_name\_pound.cfg -p $piddir\/$farm_name\_pound.pid"
 	);
 	zsystem(
@@ -1326,12 +1326,12 @@ sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 					if ( $contents[$i + 3] =~ /TimeOut/ )
 					{
 						$contents[$i + 3] = "\t\t\tTimeOut $timeout";
-						&logfile( "Modified current timeout" );
+						&zenlog( "Modified current timeout" );
 					}
 					if ( $contents[$i + 4] =~ /Priority/ )
 					{
 						$contents[$i + 4] = "\t\t\tPriority $priority";
-						&logfile( "Modified current priority" );
+						&zenlog( "Modified current priority" );
 						$p_m = 1;
 					}
 					if ( $contents[$i + 3] =~ /Priority/ )
@@ -1733,7 +1733,7 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 			rename ( "$farm_filename", "$new_farm_configfiles[0]" );
 			$output = $?;
 
-			&logfile( "configuration saved in $new_farm_configfiles[0] file" );
+			&zenlog( "configuration saved in $new_farm_configfiles[0] file" );
 		}
 		shift ( @new_farm_configfiles );
 	}
@@ -1857,7 +1857,7 @@ sub getHTTPFarmConfigIsOK    # ($farm_name)
 
 	&validateHTTPFarmDH( $farm_name );
 
-	&logfile( "running: $pound_command" );
+	&zenlog( "running: $pound_command" );
 
 	my $run = `$pound_command 2>&1`;
 	$output = $?;
@@ -1913,13 +1913,13 @@ sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	#find the service number
 	my $idsv = &getFarmVSI( $farm_name, $service );
 
-	&logfile(
+	&zenlog(
 		  "setting Maintenance mode for $farm_name service $service backend $backend" );
 
 	my $poundctl_command =
 	  "$poundctl -c /tmp/$farm_name\_pound.socket -b 0 $idsv $backend";
 
-	&logfile( "running '$poundctl_command'" );
+	&zenlog( "running '$poundctl_command'" );
 	my @run = `$poundctl_command`;
 	$output = $?;
 
@@ -1938,14 +1938,14 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 	#find the service number
 	my $idsv = &getFarmVSI( $farm_name, $service );
 
-	&logfile(
+	&zenlog(
 		"setting Disabled maintenance mode for $farm_name service $service backend $backend"
 	);
 
 	my $poundctl_command =
 	  "$poundctl -c /tmp/$farm_name\_pound.socket -B 0 $idsv $backend";
 
-	&logfile( "running '$poundctl_command'" );
+	&zenlog( "running '$poundctl_command'" );
 	@run    = `$poundctl_command`;
 	$output = $?;
 
@@ -2068,7 +2068,7 @@ sub setFarmHttpBackendStatus    # ($farm_name)
 	my $farm_name = shift;
 
 	my $line;
-	&logfile( "Setting backends status in farm $farm_name" );
+	&zenlog( "Setting backends status in farm $farm_name" );
 
 	open FR, "<$configdir\/$farm_name\_status.cfg";
 	while ( <FR> )
@@ -2260,11 +2260,11 @@ sub deleteFarmService    # ($farm_name,$service)
 		my @params = split ( "\ ", $line );
 		my $newval = $params[2] - 1;
 
-		&logfile( "param2: $params[2] $newval" );
+		&zenlog( "param2: $params[2] $newval" );
 
 		if ( $params[2] > $sindex )
 		{
-			&logfile( "linea $_" );
+			&zenlog( "linea $_" );
 			$line =~
 			  s/$params[0]\ $params[1]\ $params[2]\ $params[3]\ $params[4]/$params[0]\ $params[1]\ $newval\ $params[3]\ $params[4]/g;
 		}
@@ -2984,7 +2984,7 @@ sub setFarmBackendsSessionsRemove($farm_name,$service,$backendid)
 	my @sessionid;
 	my $sessid;
 
-	&logfile(
+	&zenlog(
 		"Deleting established sessions to a backend $backendid from farm $farm_name in service $service"
 	);
 
@@ -3009,7 +3009,7 @@ sub setFarmBackendsSessionsRemove($farm_name,$service,$backendid)
 			@sessionid  = split ( /\ /, $sessionid2 );
 			$sessid     = @sessionid[1];
 			@output = `$poundctl -c  /tmp/$farm_name\_pound.socket -n 0 $serviceid $sessid`;
-			&logfile(
+			&zenlog(
 				"Executing:  $poundctl -c /tmp/$farm_name\_pound.socket -n 0 $serviceid $sessid"
 			);
 		}

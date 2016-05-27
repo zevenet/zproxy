@@ -144,7 +144,7 @@ sub delete_certificate()
 	$status = &getFarmCertUsed( $1 );
 	if ( $status == 0 )
 	{
-		&logfile( "ZAPI error, file can't be deleted because it's in use by a farm." );
+		&zenlog( "ZAPI error, file can't be deleted because it's in use by a farm." );
 
 		# Error
 		print $q->header(
@@ -167,7 +167,7 @@ sub delete_certificate()
 	else
 	{
 		&delCert( $1 );
-		&logfile( "The certificate $1 has been deleted" );
+		&zenlog( "The certificate $1 has been deleted" );
 	}
 
 	# Success
@@ -261,7 +261,7 @@ sub add_farmcertificate()
 		$status = &setFarmCertificateSNI( $json_obj->{ file }, $farmname );
 		if ( $status == 0 )
 		{
-			&logfile( "ZAPI Success, trying to add a certificate to the SNI list." );
+			&zenlog( "ZAPI Success, trying to add a certificate to the SNI list." );
 
 			# Success
 			print $q->header(
@@ -285,7 +285,7 @@ sub add_farmcertificate()
 		}
 		else
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to add a certificate to the SNI list, it's not possible to add the certificate."
 			);
 
@@ -313,7 +313,7 @@ sub add_farmcertificate()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to add a certificate to the SNI list, invalid certificate name."
 		);
 
@@ -404,7 +404,7 @@ sub delete_farmcertificate()
 		$status = &setFarmDeleteCertSNI( $certfilename, $farmname );
 		if ( $status == 0 )
 		{
-			&logfile( "ZAPI Success, trying to delete a certificate to the SNI list." );
+			&zenlog( "ZAPI Success, trying to delete a certificate to the SNI list." );
 
 			# Success
 			print $q->header(
@@ -428,7 +428,7 @@ sub delete_farmcertificate()
 		{
 			if ( $status == -1 )
 			{
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to delete a certificate to the SNI list, it's not possible to delete the certificate."
 				);
 
@@ -453,7 +453,7 @@ sub delete_farmcertificate()
 			}
 			if ( $status == 1 )
 			{
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to delete a certificate to the SNI list, it's not possible to delete all certificates, at least one is required for HTTPS."
 				);
 
@@ -481,7 +481,7 @@ sub delete_farmcertificate()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete a certificate to the SNI list, invalid certificate id."
 		);
 
@@ -626,7 +626,7 @@ sub upload_certs()
 	}
 	else
 	{
-		&logfile( "ZAPI error, trying to upload a certificate." );
+		&zenlog( "ZAPI error, trying to upload a certificate." );
 
 		# Error
 		print $q->header(
