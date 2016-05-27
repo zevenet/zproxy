@@ -346,7 +346,7 @@ sub getActiveInterfaceList
 		$dev_ip_padded =~ s/ +$//;
 		$dev_ip_padded =~ s/ /&nbsp;/g;
 
-		#~ &logfile("padded interface:$dev_ip_padded");
+		#~ &zenlog("padded interface:$dev_ip_padded");
 		$iface->{ dev_ip_padded } = $dev_ip_padded;
 	}
 
