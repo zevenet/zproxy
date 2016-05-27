@@ -161,7 +161,7 @@ sub certcontrol()
 my $cgi = new CGI;
 
 #uncomment for debug
-&logfile( "index.cgi cgi:" . Dumper( \{ $cgi->Vars } ) );
+&zenlog( "index.cgi cgi:" . Dumper( \{ $cgi->Vars } ) );
 
 #Global Parameters
 $id = $cgi->param( 'id' )
@@ -470,7 +470,7 @@ $cert_key = $cgi->param( 'cert_key' )
 
 if ( $action eq "logout" )
 {
-	&logfile( "Session Logged out" );
+	&zenlog( "Session Logged out" );
 	&logout();
 }
 

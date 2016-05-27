@@ -1319,19 +1319,19 @@ sub ifaction()
 		my $parent_if_name = &getParentInterfaceName( $if_ref->{name} );
 		if ( !$parent_if_name )
 		{
-			# &logfile ("parent doesn't exist for $fdev");
+			# &zenlog ("parent doesn't exist for $fdev");
 			$parent_if_status = 'up';
 		}
 		else
 		{
-			# &logfile ("parent exists");
+			# &zenlog ("parent exists");
 			my $parent_if_ref = &getInterfaceConfig( $parent_if_name, $ip_v );
 			$parent_if_status = &getInterfaceSystemStatus( $parent_if_ref, $ip_v );
 		}
 		
 		if ( $parent_if_status eq 'up' )
 		{	
-			# &logfile ("GO UP!");
+			# &zenlog ("GO UP!");
 			my $state = &upIf( \%interface, 'writeconf' );
 			if ( $state != 0 )
 			{
@@ -1494,7 +1494,7 @@ sub modify_interface()
 	# If $fdev contain '/' means that we have received 2 parameters, interface_name and ip_version
 	if ( $fdev =~ /\// )
 	{
-		&logfile("modify_interface fdev:$fdev");
+		&zenlog("modify_interface fdev:$fdev");
 		
 		# Get interface_name and ip_version from $fdev
 		my @ifandipv = split ( '/', $fdev );
@@ -1583,7 +1583,7 @@ sub modify_interface()
 			$if_ref = &getSystemInterface( $fdev );
 			$$if_ref{ip_v} = $ip_v;
 		}
-			&logfile("fdev:$fdev system_interfaces:@system_interfaces");
+			&zenlog("fdev:$fdev system_interfaces:@system_interfaces");
 	}
 
 	if ( ! $$if_ref{mac} )

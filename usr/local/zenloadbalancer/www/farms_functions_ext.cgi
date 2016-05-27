@@ -48,7 +48,7 @@ sub getFarmCertificatesSNI    #($fname)
 		}
 	}
 
-	#&logfile("getting 'Certificate $output' for $fname farm $type");
+	#&zenlog("getting 'Certificate $output' for $fname farm $type");
 	return @output;
 }
 
@@ -67,7 +67,7 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 		return $output;
 	}
 
-	&logfile( "setting 'Certificate $cfile' for $fname farm $type" );
+	&zenlog( "setting 'Certificate $cfile' for $fname farm $type" );
 	if ( $type eq "https" )
 	{
 		use Tie::File;
@@ -106,7 +106,7 @@ sub setFarmDeleteCertSNI    #($certn,$fname)
 	my $i      = 0;
 	my $j      = 0;
 
-	&logfile( "deleting 'Certificate $certn' for $fname farm $type" );
+	&zenlog( "deleting 'Certificate $certn' for $fname farm $type" );
 	if ( $type eq "https" )
 	{
 		use Tie::File;
@@ -169,7 +169,7 @@ sub getNumberOfFarmTypeRunning
 		}
 	}
 
-	#~ &logfile( "getNumberOfFarmTypeRunning: $type -> $counter" );  ########
+	#~ &zenlog( "getNumberOfFarmTypeRunning: $type -> $counter" );  ########
 
 	return $counter;
 }

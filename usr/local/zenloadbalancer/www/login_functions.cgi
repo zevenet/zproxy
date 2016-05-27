@@ -44,20 +44,20 @@ sub login    #()
 	}
 
 	# FIXME: show user in log prefix
-	#~ &logfile( "Login attempt. User: $user, grouplist: $grouplist" );
+	#~ &zenlog( "Login attempt. User: $user, grouplist: $grouplist" );
 
 	my $passwd = Authen::Simple::Passwd->new( path => "$passfile" );
 
 	if ( !$session->param( 'root_logged_in' ) )
 	{
 		$grouplist = `$bin_id $user`;
-		&logfile( "grouplist is: $grouplist" );
+		&zenlog( "grouplist is: $grouplist" );
 		if ( $passwd->authenticate( $user, $passw ) && $grouplist =~ /\(webgui\)/ )
 		{
 
 			#if ( $passwd->authenticate($user,$passw) ) {
 			# successfull authentication
-			&logfile( "Login Successful for user $user" );
+			&zenlog( "Login Successful for user $user" );
 			$session->param( 'root_logged_in', 1 );
 			$session->param( 'username',       $user );
 		}
@@ -65,7 +65,7 @@ sub login    #()
 		{
 
 			#redirect to login web
-			&logfile( "Login failed for user $user" );
+			&zenlog( "Login failed for user $user" );
 
 			#$cgi->param('action') = "logout";
 			$cgi->param( -name => 'action', -value => 'logout' );
@@ -79,7 +79,7 @@ sub login    #()
 
 	}
 	###login & session management end
-	#&logfile("login Set-Cookie CGISESSID=".$session->id()."; path=/");
+	#&zenlog("login Set-Cookie CGISESSID=".$session->id()."; path=/");
 	print "Set-Cookie: CGISESSID=" . $session->id() . "; path=/\n";
 
 }
@@ -95,7 +95,7 @@ sub logout    #()
 	if ( $cgi->param( 'action' ) eq "logout" )
 	{
 		$session->param( -name => 'user_logged_in', -value => 0 );
-		&logfile(
+		&zenlog(
 				  "User logout. User: " . $session->param( -name => 'user_logged_in' ) );
 		$session->delete();
 		$session->flush();

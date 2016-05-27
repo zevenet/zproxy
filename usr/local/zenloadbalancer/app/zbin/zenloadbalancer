@@ -216,7 +216,7 @@ if ( $eject eq "restart" )
 
 if ( $eject eq "start" )
 {
-	&logfile( "Beginning start proccess" );
+	&zenlog( "Beginning start proccess" );
 	system ( '/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi' );
 	require "/usr/local/zenloadbalancer/config/global.conf";
 
@@ -305,7 +305,7 @@ if ( $eject eq "start" )
 	}
 	untie @sysctl;
 
-	&logfile( $sysclt_msg );
+	&zenlog( $sysclt_msg );
 
 	# Cluster
 	if ( -e $filecluster )
@@ -416,12 +416,12 @@ if ( $eject eq "start" )
 		$eject = 'startlocal';
 	}
 
-	&logfile( "start proccess finished" );
+	&zenlog( "start proccess finished" );
 }
 
 if ( $eject eq "stop" )
 {
-	&logfile( "Beginning stop proccess" );
+	&zenlog( "Beginning stop proccess" );
 
 	if ( -e $filecluster )
 	{
@@ -440,13 +440,13 @@ if ( $eject eq "stop" )
 	}
 
 	$eject = 'stoplocal';
-	&logfile( "stop proccess finished" );
+	&zenlog( "stop proccess finished" );
 }
 
 # no cluster configured
 if ( $eject eq 'startlocal' )
 {
-	&logfile( "Beginning startlocal process..." );
+	&zenlog( "Beginning startlocal process..." );
 	$rsyslog = '/etc/rsyslog.conf';
 
 	open my $fr, '<', "$rsyslog";
@@ -658,7 +658,7 @@ if ( $eject eq 'startlocal' )
 				if ( $return_code )
 				{
 					my $toif = &getParentInterfaceName( $$iface{ name } );
-					&logfile( "failed addIp" );
+					&zenlog( "failed addIp" );
 					my @ip_output = `$ip_bin -$$iface{ip_v} address list dev $toif`;
 					$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
 				}
@@ -758,12 +758,12 @@ if ( $eject eq 'startlocal' )
 		print ( "No valid ZLB certificate was found, no farm started\n" );
 	}
 
-	&logfile( "startlocal process finished..." );
+	&zenlog( "startlocal process finished..." );
 }
 
 if ( $eject eq "stoplocal" )
 {
-	&logfile( "Beginning stoplocal process..." );
+	&zenlog( "Beginning stoplocal process..." );
 	print "Stopping Zen Load Balancer...\n";
 
 	### Stopping Farms
@@ -923,7 +923,7 @@ if ( $eject eq "stoplocal" )
 	my @ownscript = `$configdir/zlb-stop`;
 	print "@ownscript";
 
-	&logfile( "stoplocal process finished..." );
+	&zenlog( "stoplocal process finished..." );
 }
 
 &runhttpsgui();

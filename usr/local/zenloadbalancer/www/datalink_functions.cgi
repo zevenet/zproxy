@@ -262,7 +262,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 		my $ip_command =
 		  "$ip_bin route add default scope global table table_$iface $routes";
 
-		&logfile( "running $ip_command" );
+		&zenlog( "running $ip_command" );
 		$status = system ( "$ip_command >/dev/null 2>&1" );
 	}
 	else
@@ -277,7 +277,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 	{
 		my $ipmask = &maskonif( $iface );
 		my ( $net, $mask ) = ipv4_network( "$ip / $ipmask" );
-		&logfile( "running $ip_bin rule add from $net/$mask lookup table_$iface" );
+		&zenlog( "running $ip_bin rule add from $net/$mask lookup table_$iface" );
 		my @eject = `$ip_bin rule add from $net/$mask lookup table_$iface 2> /dev/null`;
 	}
 
@@ -339,7 +339,7 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 			my $ipmask = &maskonif( $iface );
 			my ( $net, $mask ) = ipv4_network( "$ip / $ipmask" );
 
-			&logfile( "running $ip_bin rule del from $net/$mask lookup table_$iface" );
+			&zenlog( "running $ip_bin rule del from $net/$mask lookup table_$iface" );
 			my @eject = `$ip_bin rule del from $net/$mask lookup table_$iface 2> /dev/null`;
 		}
 

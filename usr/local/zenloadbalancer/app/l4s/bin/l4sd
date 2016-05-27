@@ -125,7 +125,7 @@ if ( -e "$pidfile" )
 
 	if ( $pidexist )
 	{
-		&logfile( "l4sd: Already launched. Exiting..." );
+		&zenlog( "l4sd: Already launched. Exiting..." );
 		exit 0;
 	}
 	else
@@ -139,7 +139,7 @@ if ( !-e "$pidfile" )
 	print $file "$pid";
 	close $file;
 
-	&logfile(
+	&zenlog(
 		"l4sd: Daemon launched with pid $pid -g $g_param -n $n_param -l $l_param -a $algorithm"
 	);
 }
@@ -165,7 +165,7 @@ sub min    #($value1,$value2,$value3)
 
 sub sigUSR1Handler
 {
-	&logfile( "l4sd: Signal sigUSR1 received..." );
+	&zenlog( "l4sd: Signal sigUSR1 received..." );
 	$init = 1;
 	kill ALRM => $pid;
 	return;
@@ -173,7 +173,7 @@ sub sigUSR1Handler
 
 sub sigTERMHandler
 {
-	&logfile( "l4sd: Signal sigTERM/sigINT received..." );
+	&zenlog( "l4sd: Signal sigTERM/sigINT received..." );
 	unlink $pidfile;
 	exit;
 }

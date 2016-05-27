@@ -291,7 +291,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 	my $status = 0;
 
-	&logfile(
+	&zenlog(
 		"Appling $table routes in stack IPv$$if_ref{ip_v} to $$if_ref{name} with gateway \"$$if_ref{gateway}\""
 	);
 
@@ -379,7 +379,7 @@ sub delRoutes    # ($table,$if_ref)
 
 	my $status;
 
-	&logfile(
+	&zenlog(
 		   "Deleting $table routes for IPv$$if_ref{ip_v} in interface $$if_ref{name}" );
 
 	if ( $$if_ref{ vini } eq '' )
@@ -444,7 +444,7 @@ sub delIp    # 	($if, $ip ,$netmask)
 {
 	my ( $if, $ip, $netmask ) = @_;
 
-	&logfile( "Deleting ip $ip/$netmask from interface $if" );
+	&zenlog( "Deleting ip $ip/$netmask from interface $if" );
 
 	# Vini
 	if ( $if =~ /\:/ )
@@ -463,7 +463,7 @@ sub addIp    # ($if_ref)
 {
 	my ( $if_ref ) = @_;
 
-	&logfile(
+	&zenlog(
 			  "Adding IP $$if_ref{addr}/$$if_ref{mask} to interface $$if_ref{name}" );
 
 	# finish if the address is already assigned
@@ -477,7 +477,7 @@ sub addIp    # ($if_ref)
 
 	if ( grep /$$if_ref{addr}\//, @ip_output )
 	{
-		&logfile( "@ip_output" );
+		&zenlog( "@ip_output" );
 		return 0;
 	}
 
@@ -544,7 +544,7 @@ sub getConfigInterfaceList
 	}
 	else
 	{
-		&logfile( "Error reading directory $configdir: $!" );
+		&zenlog( "Error reading directory $configdir: $!" );
 	}
 
 	return \@configured_interfaces;
@@ -602,13 +602,13 @@ sub setIfacesUp    # ($if_name,$type)
 
 		if ( $type eq "vini" )
 		{
-			&logfile(
+			&zenlog(
 				"All the Virtual Network interfaces with IPv6 and status up of $if_name have been put in up status."
 			);
 		}
 		elsif ( $type eq "vini" )
 		{
-			&logfile(
+			&zenlog(
 				  "All the Vlan with IPv6 and status up of $if_name have been put in up status."
 			);
 		}
@@ -624,7 +624,7 @@ sub createIf    # ($if_ref)
 
 	if ( $$if_ref{ vlan } ne '' )
 	{
-		&logfile( "Creating vlan $$if_ref{name}" );
+		&zenlog( "Creating vlan $$if_ref{name}" );
 
 		# enable the parent physical interface
 		my $parent_if = &getInterfaceConfig( $$if_ref{ dev }, $$if_ref{ ip_v } );
@@ -754,7 +754,7 @@ sub delIf    # ($if_ref)
 	}
 	else
 	{
-		&logfile( "Error opening $file: $!" );
+		&zenlog( "Error opening $file: $!" );
 		$status = 1;
 	}
 
@@ -991,7 +991,7 @@ sub sendGArp    # ($if,$ip)
 	my ( $if, $ip ) = @_;
 
 	my @iface = split ( ":.", $if );
-	&logfile( "sending '$arping_bin -c 2 -A -I $iface[0] $ip' " );
+	&zenlog( "sending '$arping_bin -c 2 -A -I $iface[0] $ip' " );
 	my @eject = `$arping_bin -c 2 -A -I $iface[0] $ip > /dev/null &`;
 
 	if ( $ext == 1 )
@@ -1011,7 +1011,7 @@ sub setIpForward    # ($arg)
 	  ? 1           # set switch on if arg == 'true'
 	  : 0;          # switch is off by default
 
-	&logfile( "setting $arg to IP forwarding " );
+	&zenlog( "setting $arg to IP forwarding " );
 
 	# switch forwarding as requested
 	system ( "echo $switch > /proc/sys/net/ipv4/conf/all/forwarding" );
@@ -1025,7 +1025,7 @@ sub setIpForward    # ($arg)
 # Flush cache routes
 sub flushCacheRoutes    # ()
 {
-	&logfile( "flushing routes cache" );
+	&zenlog( "flushing routes cache" );
 	system ( "$ip_bin route flush cache >/dev/null 2>$1" );
 }
 

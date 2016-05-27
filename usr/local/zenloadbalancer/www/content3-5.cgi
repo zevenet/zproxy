@@ -53,8 +53,8 @@ if ( $action eq "apply" )
 		"Backup will be decompressed and Zen Load Balancer will be restarted, Zen Cluster node could switch..."
 	);
 	my @eject = `$tar -xvzf $backupdir$file -C /`;
-	&logfile( "Restoring backup $backupdir$file" );
-	&logfile( "unpacking files: @eject" );
+	&zenlog( "Restoring backup $backupdir$file" );
+	&zenlog( "unpacking files: @eject" );
 	my @eject = `/etc/init.d/zenloadbalancer restart 2> /dev/null`;
 	if ( $? == 0 )
 	{

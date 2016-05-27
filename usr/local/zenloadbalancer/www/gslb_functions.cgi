@@ -36,7 +36,7 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 		return 0;
 	}
 
-	&logfile( "running 'Start write $writeconf' for $fname farm $type" );
+	&zenlog( "running 'Start write $writeconf' for $fname farm $type" );
 
 	if ( $writeconf eq "true" )
 	{
@@ -57,7 +57,7 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 	}
 	my $exec = &getGSLBStartCommand( $fname );
 
-	&logfile( "running $exec" );
+	&zenlog( "running $exec" );
 	zsystem( "$exec > /dev/null 2>&1" );
 	$output = $?;
 	if ( $output != 0 )
@@ -88,7 +88,7 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 	my $type = &getFarmType( $fname );
 	$status = $type;
 
-	&logfile( "running 'Stop write $writeconf' for $fname farm $type" );
+	&zenlog( "running 'Stop write $writeconf' for $fname farm $type" );
 
 	my $checkfarm = &getFarmConfigIsOK( $fname );
 	if ( $checkfarm == 0 )
@@ -111,7 +111,7 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 		}
 		my $exec    = &getGSLBStopCommand( $fname );
 		my $pidfile = &getGSLBFarmPidFile( $fname );
-		&logfile( "running $exec" );
+		&zenlog( "running $exec" );
 		zsystem( "$exec > /dev/null 2>&1" );
 		$status = $?;
 		if ( $status != 0 )
@@ -218,10 +218,10 @@ sub getGSLBFarmConfigIsOK    # ($farm_name)
 
 	my $gdnsd_command = "$gdnsd -c $configdir\/$ffile/etc checkconf";
 
-	&logfile( "running: $gdnsd_command" );
+	&zenlog( "running: $gdnsd_command" );
 	my $run = `$gdnsd_command 2>&1`;
 	$output = $?;
-	&logfile( "output: $run " );
+	&zenlog( "output: $run " );
 
 	return $output;
 }
@@ -539,7 +539,7 @@ sub runFarmReload    # ($farm_name)
 
 	my $gdnsd_command = "$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones";
 
-	&logfile( "running $gdnsd_command" );
+	&zenlog( "running $gdnsd_command" );
 	zsystem( "$gdnsd_command >/dev/null 2>&1" );
 	$output = $?;
 	if ( $output != 0 )
@@ -679,7 +679,7 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	}
 
 	my $farm_path = "$configdir/${fname}_${type}\.cfg";
-	&logfile( "running 'Create' for $fname farm $type in path $farm_path " );
+	&zenlog( "running 'Create' for $fname farm $type in path $farm_path " );
 
 	mkdir "$farm_path";
 	mkdir "$farm_path\/etc";
@@ -709,7 +709,7 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 
 		#run farm
 		my $exec = &getGSLBStartCommand( $fname );
-		&logfile( "running $exec" );
+		&zenlog( "running $exec" );
 		zsystem( "$exec > /dev/null 2>&1" );
 
 		#TODO
@@ -1148,7 +1148,7 @@ sub setGSLBFarmStatus    # ($farm_name, $status, $writeconf)
 		$command = &getGSLBStopCommand( $farm_name );
 	}
 
-	&logfile( "setGSLBFarmStatus(): Executing $command" );
+	&zenlog( "setGSLBFarmStatus(): Executing $command" );
 	zsystem( "$command > /dev/null 2>&1" );
 
 	#TODO
@@ -1299,7 +1299,7 @@ sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	my $type  = &getFarmType( $fname );
 	my $stat  = -1;
 
-	&logfile( "setting 'VirtualConf $vip $vipp' for $fname farm $type" );
+	&zenlog( "setting 'VirtualConf $vip $vipp' for $fname farm $type" );
 
 	my $index = 0;
 	my $found = 0;
@@ -1340,11 +1340,11 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 
 	if ( $newfname =~ /^$/ )
 	{
-		&logfile( "error 'NewFarmName $newfname' is empty" );
+		&zenlog( "error 'NewFarmName $newfname' is empty" );
 		return -2;
 	}
 
-	&logfile( "setting 'NewFarmName $newfname' for $fname farm $type" );
+	&zenlog( "setting 'NewFarmName $newfname' for $fname farm $type" );
 
 	my $newffile = "$newfname\_$type.cfg";
 	rename ( "$configdir\/$ffile", "$configdir\/$newffile" );

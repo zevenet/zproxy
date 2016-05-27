@@ -80,7 +80,7 @@ sub new_farm()
 
 	if ( $json_obj->{ vip } eq "" )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new farm $farmname, invalid virtual IP value, it can't be blank."
 		);
 
@@ -104,7 +104,7 @@ sub new_farm()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 				  "ZAPI error, trying to create a new farm $farmname, invalid farm name." );
 
 		# Error
@@ -132,7 +132,7 @@ sub new_farm()
 			$inuse = &checkport( $json_obj->{ vip }, $json_obj->{ vport } );
 			if ( $inuse eq "true" )
 			{
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to create a new farm $farmname, the virtual port $json_obj->{vport} in virtual IP .$json_obj->{vip}. is in use."
 				);
 
@@ -161,7 +161,7 @@ sub new_farm()
 		}
 		else
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new farm $farmname, invalid virtual port value, must be numeric."
 			);
 
@@ -192,7 +192,7 @@ sub new_farm()
 							  $farmname, $fdev );
 	if ( $status == -1 )
 	{
-		&logfile(
+		&zenlog(
 				  "ZAPI error, trying to create a new farm $farmname, can't be created." );
 
 		# Error
@@ -214,7 +214,7 @@ sub new_farm()
 	}
 	if ( $status == -2 )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new farm $farmname, the farm already exists, set a different farm name."
 		);
 
@@ -236,7 +236,7 @@ sub new_farm()
 		print $output;
 		exit;
 	}
-	&logfile( "ZAPI success, the farm $farmname has been created successfully." );
+	&zenlog( "ZAPI success, the farm $farmname has been created successfully." );
 
 	if ( $json_obj->{ vport } eq "" )
 	{
@@ -536,7 +536,7 @@ sub new_farm_backend()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new backend in farm $farmname, invalid farm name."
 		);
 
@@ -606,7 +606,7 @@ sub new_farm_backend()
 
 		if ( &ipisok( $json_obj->{ ip } ) eq "false" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new backend in farm $farmname, invalid real server IP value."
 			);
 
@@ -631,7 +631,7 @@ sub new_farm_backend()
 		}
 		if ( $json_obj->{ ip } =~ /^$/ || $json_obj->{ port } =~ /^$/ )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new backend in farm $farmname, invalid IP address and port for a real server, it can't be blank."
 			);
 
@@ -667,7 +667,7 @@ sub new_farm_backend()
 
 		if ( $status != -1 )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI success, a new backend has been created in farm $farmname with IP $json_obj->{ip}."
 			);
 
@@ -773,7 +773,7 @@ sub new_farm_backend()
 
 		if ( &ipisok( $json_obj->{ ip } ) eq "false" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new backend http in service $json_obj->{service} in farm $farmname, invalid real server IP value."
 			);
 
@@ -799,7 +799,7 @@ sub new_farm_backend()
 
 		if ( $json_obj->{ ip } =~ /^$/ || $json_obj->{ port } =~ /^$/ )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new backend http in service $json_obj->{service} in farm $farmname, invalid IP address and port for a real server, ir can't be blank."
 			);
 
@@ -825,7 +825,7 @@ sub new_farm_backend()
 		if ( $json_obj->{ priority }
 			 && ( $json_obj->{ priority } > 9 || $json_obj->{ priority } < 1 ) )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new backend http in service $json_obj->{service} in farm $farmname, invalid weight value for a real server, it must be 1-9."
 			);
 
@@ -862,7 +862,7 @@ sub new_farm_backend()
 
 		if ( $status != -1 )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI success, a new backend has been created in farm $farmname in service $json_obj->{service} with IP $json_obj->{ip}."
 			);
 
@@ -971,7 +971,7 @@ sub new_farm_backend()
 
 		if ( $json_obj->{ service } =~ /^$/ )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new backend gslb in service $json_obj->{service} farm $farmname, invalid service."
 			);
 
@@ -997,7 +997,7 @@ sub new_farm_backend()
 										  $lb, $id, $json_obj->{ ip } );
 		if ( $status != -1 )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI success, a new backend has been created in farm $farmname in service $json_obj->{service} with IP $json_obj->{ip}."
 			);
 
@@ -1052,7 +1052,7 @@ sub new_farm_backend()
 
 		if ( $farmname =~ /^$/ )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new backend l4xnat in farm $farmname, invalid farm name."
 			);
 
@@ -1099,7 +1099,7 @@ sub new_farm_backend()
 
 		if ( &ipisok( $json_obj->{ ip } ) eq "false" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new backend l4xnat in farm $farmname, invalid real server IP value."
 			);
 
@@ -1125,7 +1125,7 @@ sub new_farm_backend()
 
 		if ( $json_obj->{ ip } =~ /^$/ || $json_obj->{ port } =~ /^$/ )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new backend l4xnat in farm $farmname, invalid IP address and port for a real server, ir can't be blank."
 			);
 
@@ -1237,7 +1237,7 @@ sub new_farm_backend()
 								  "", $weight, $priority, "", $farmname );
 		if ( $status != -1 )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI success, a new backend has been created in farm $farmname with IP $json_obj->{ip}."
 			);
 
@@ -1331,7 +1331,7 @@ sub new_farm_backend()
 
 		if ( $farmname =~ /^$/ )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new backend datalink in farm $farmname, invalid farm name."
 			);
 
@@ -1377,7 +1377,7 @@ sub new_farm_backend()
 
 		if ( &ipisok( $json_obj->{ ip } ) eq "false" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new backend datalink in farm $farmname, invalid real server IP value."
 			);
 
@@ -1403,7 +1403,7 @@ sub new_farm_backend()
 
 		if ( $json_obj->{ ip } =~ /^$/ )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new backend datalink in farm $farmname, invalid farm name, it can't be blank."
 			);
 
@@ -1436,7 +1436,7 @@ sub new_farm_backend()
 		);
 		if ( $status != -1 )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI success, a new backend has been created in farm $farmname with IP $json_obj->{ip}."
 			);
 
@@ -1468,7 +1468,7 @@ sub new_farm_backend()
 		}
 		else
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new backend datalink in farm $farmname, it's not possible to create the real server."
 			);
 
@@ -1602,7 +1602,7 @@ sub new_farm_service()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new service in farm $farmname, invalid farm name."
 		);
 
@@ -1650,7 +1650,7 @@ sub new_farm_service()
 
 		if ( $json_obj->{ id } =~ /^$/ )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new service in farm $farmname, invalid service name."
 			);
 
@@ -1676,7 +1676,7 @@ sub new_farm_service()
 
 		if ( $result eq "0" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI success, a new service has been created in farm $farmname with id $json_obj->{id}."
 			);
 
@@ -1702,7 +1702,7 @@ sub new_farm_service()
 		}
 		if ( $result eq "2" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new service in farm $farmname, new service $json_obj->{id} can't be empty."
 			);
 
@@ -1726,7 +1726,7 @@ sub new_farm_service()
 		}
 		if ( $result eq "1" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new service in farm $farmname, the service $json_obj->{id} already exists."
 			);
 
@@ -1750,7 +1750,7 @@ sub new_farm_service()
 		}
 		if ( $result eq "3" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new service in farm $farmname, the service name $json_obj->{id} is not valid, only allowed numbers,letters and hyphens."
 			);
 
@@ -1780,7 +1780,7 @@ sub new_farm_service()
 
 		if ( $json_obj->{ id } =~ /^$/ )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new service in farm $farmname, invalid service name."
 			);
 
@@ -1804,7 +1804,7 @@ sub new_farm_service()
 
 		if ( $json_obj->{ algorithm } =~ /^$/ )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new service in farm $farmname, invalid algorithm."
 			);
 
@@ -1831,7 +1831,7 @@ sub new_farm_service()
 										  $json_obj->{ algorithm } );
 		if ( $status != -1 )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI success, a new service has been created in farm $farmname with id $json_obj->{id}."
 			);
 
@@ -1857,7 +1857,7 @@ sub new_farm_service()
 		}
 		else
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to create a new service in farm $farmname, it's not possible to create the service $json_obj->{id}."
 			);
 

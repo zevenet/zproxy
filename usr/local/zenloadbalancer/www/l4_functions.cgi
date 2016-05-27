@@ -250,7 +250,7 @@ sub sendL4ConfChange     # ($farm_name)
 	}
 	else
 	{
-		&logfile( "Running L4 restart for $farm_name" );
+		&zenlog( "Running L4 restart for $farm_name" );
 		&_runL4FarmRestart( $farm_name, "false", "" );
 	}
 
@@ -508,11 +508,11 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 
 					# close normally
 					kill 'TERM' => $pid;
-					&logfile( "l4sd ended" );
+					&zenlog( "l4sd ended" );
 				}
 				else
 				{
-					&logfile( "Error opening file l4sd_pidfile: $!" ) if !defined $pidfile;
+					&zenlog( "Error opening file l4sd_pidfile: $!" ) if !defined $pidfile;
 				}
 			}
 		}
@@ -560,7 +560,7 @@ sub setFarmProto    # ($proto,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = 0;
 
-	&logfile( "setting 'Protocol $proto' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'Protocol $proto' for $farm_name farm $farm_type" );
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
@@ -686,7 +686,7 @@ sub setFarmNatType    # ($nat,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&logfile( "setting 'NAT type $nat' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'NAT type $nat' for $farm_name farm $farm_type" );
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
@@ -949,7 +949,7 @@ sub getL4FarmServers    # ($farm_name)
 	my @servers;
 
 	open FI, "<$configdir/$farm_filename"
-	  or &logfile( "Error opening file $configdir/$farm_filename: $!" );
+	  or &zenlog( "Error opening file $configdir/$farm_filename: $!" );
 
 	while ( my $line = <FI> )
 	{
@@ -1331,7 +1331,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 
 	my $status = 0;           # output
 
-	&logfile( "_runL4FarmStart << farm_name:$farm_name writeconf:$writeconf" )
+	&zenlog( "_runL4FarmStart << farm_name:$farm_name writeconf:$writeconf" )
 	  if &debug;
 
 	# initialize a farm struct
@@ -1364,7 +1364,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	my $lowest_prio;
 	my $server_prio;    # reference to the selected server for prio algorithm
 
-	&logfile( "_runL4FarmStart :: farm:" . Dumper( $farm ) ) if &debug == 2;
+	&zenlog( "_runL4FarmStart :: farm:" . Dumper( $farm ) ) if &debug == 2;
 
 	# first insert the save rule, then insert on top the restore rule
 	&setIptConnmarkSave( $farm_name, 'true' );
@@ -1372,7 +1372,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
-		&logfile( "_runL4FarmStart :: server:$server" ) if &debug;
+		&zenlog( "_runL4FarmStart :: server:$server" ) if &debug;
 
 		my $backend_rules;
 
@@ -1622,7 +1622,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 {
 	my ( $ids, $rip, $port, $weight, $priority, $farm_name ) = @_;
 
-	&logfile(
+	&zenlog(
 		"setL4FarmServer << ids:$ids rip:$rip port:$port weight:$weight priority:$priority farm_name:$farm_name"
 	) if &debug;
 
@@ -1809,7 +1809,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	my $line_num = 0;         # line index tracker
 	my $serverid = 0;         # server index tracker
 
-	&logfile(
+	&zenlog(
 		"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status)"
 	);
 
@@ -1875,7 +1875,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 			}
 			else
 			{
-				&logfile( "Could not open file $recent_file: $!" );
+				&zenlog( "Could not open file $recent_file: $!" );
 			}
 		}
 
@@ -2185,7 +2185,7 @@ sub doL4FarmProbability
 		}
 	}
 
- #~ &logfile( "doL4FarmProbability($$farm{ name }) => prob:$$farm{ prob }" ); ######
+ #~ &zenlog( "doL4FarmProbability($$farm{ name }) => prob:$$farm{ prob }" ); ######
 }
 
 sub getL4ServerActionRules
@@ -2268,7 +2268,7 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	my $status = 0;
 	my $rules;
 
-	&logfile( "_runL4ServerStart << farm_name:$farm_name server_id:$server_id" )
+	&zenlog( "_runL4ServerStart << farm_name:$farm_name server_id:$server_id" )
 	  if &debug;
 
 	my $fg_enabled = ( &getFarmGuardianConf( $farm_name ) )[3];

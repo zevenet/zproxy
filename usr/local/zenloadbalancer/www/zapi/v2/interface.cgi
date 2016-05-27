@@ -1144,19 +1144,19 @@ sub ifaction()
 		my $parent_if_name = &getParentInterfaceName( $if_ref->{name} );
 		if ( !$parent_if_name )
 		{
-			# &logfile ("parent doesn't exist for $fdev");
+			# &zenlog ("parent doesn't exist for $fdev");
 			$parent_if_status = 'up';
 		}
 		else
 		{
-			# &logfile ("parent exists");
+			# &zenlog ("parent exists");
 			my $parent_if_ref = &getInterfaceConfig( $parent_if_name, 4 );
 			$parent_if_status = &getInterfaceSystemStatus( $parent_if_ref, 4 );
 		}
 		
 		if ( $parent_if_status eq 'up' )
 		{	
-			# &logfile ("GO UP!");
+			# &zenlog ("GO UP!");
 			my $state = &upIf( \%interface, 'writeconf' );
 			if ( $state != 0 )
 			{

@@ -292,7 +292,7 @@ if ( $action eq "editfarm-Parameters" )
 			$usefarmguardian =~ s/\n//g;
 			&runFarmGuardianStop( $farmname, "" )
 			  if ( &getFarmStatus( $farmname ) eq 'up' );
-			&logfile(
+			&zenlog(
 					  "creating $farmname farmguardian configuration file in $fguardianconf" )
 			  if !-f "$configdir/$fguardianconf";
 			$check_script =~ s/\"/\'/g;

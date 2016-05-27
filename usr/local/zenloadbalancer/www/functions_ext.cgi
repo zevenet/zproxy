@@ -21,18 +21,8 @@
 #
 ###############################################################################
 
-#insert info in log file
-sub logfile    # ($string)
-{
-	my $string = shift;
-
-	my $date = `date`;
-	$date =~ s/\n//g;
-	open FO, ">> $logfile";
-	print FO
-	  "$date - $ENV{'SERVER_NAME'} - $ENV{'REMOTE_ADDR'} - $ENV{'REMOTE_USER'} - $string\n";
-	close FO;
-}
+use Sys::Syslog;                          #use of syslog
+use Sys::Syslog qw(:standard :macros);    #standard functions for Syslog
 
 #function that insert info through syslog
 #
@@ -45,14 +35,18 @@ sub logfile    # ($string)
 #
 sub zenlog    # ($type,$string)
 {
-	my $type   = shift;    # type   = type of message
-	my $string = shift;    # string = message
+	my $string = shift;				# string = message
+	my $type   = shift // 'info';	# type   = log level (Default: info))
 
-	openlog( "zenlog", 'pid', 'local0' );    #open syslog
+	# Get the program name
+	my $program = ( split '/', $0 )[-1];
+	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
+
+	openlog( $program, 'pid', 'local0' );    #open syslog
 
 	if ( $type eq "info" || $type eq "notice" )
 	{                                        #info and notice priorities
-		syslog( $type, "(priority: " . $type . ") -> " . $string );
+		syslog( $type, "(" . uc ($type) . ") " . $string );
 	}
 	elsif ( $type eq "err" || $type eq "warning" )
 	{                                        #warning and err priorities
@@ -215,8 +209,8 @@ sub logAndRun    # ($command)
 	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
 	$program .= ' ';
 
-	# &logfile( (caller (2))[3] . ' >>> ' . (caller (1))[3]);
-	&logfile( $program . "running: $command" );    # log
+	# &zenlog( (caller (2))[3] . ' >>> ' . (caller (1))[3]);
+	&zenlog( $program . "running: $command" );    # log
 
 	if ( &debug )
 	{
@@ -231,8 +225,8 @@ sub logAndRun    # ($command)
 
 	if ( $return_code )
 	{
-		&logfile( "last command failed!" );		# show in logs if failed
-		&logfile( "@cmd_output" ) if &debug;
+		&zenlog( "last command failed!" );		# show in logs if failed
+		&zenlog( "@cmd_output" ) if &debug;
 	}
 
 	# returning error code from execution
@@ -258,7 +252,7 @@ sub zlog                                       # (@message)
 	#) = caller (1);	 # arg = number of suroutines back in the stack trace
 
 	use Data::Dumper;
-	&logfile(   '>>> '
+	&zenlog(   '>>> '
 			  . ( caller ( 3 ) )[3] . ' >>> '
 			  . ( caller ( 2 ) )[3] . ' >>> '
 			  . ( caller ( 1 ) )[3]

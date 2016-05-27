@@ -154,7 +154,7 @@ sub runFarmGuardianStart    # ($fname,$svice)
 	}
 	else
 	{
-		&logfile( "running $farmguardian $fname $sv $log &" );
+		&zenlog( "running $farmguardian $fname $sv $log &" );
 		zsystem( "$farmguardian $fname $sv $log &" );
 		$status = $?;
 	}
@@ -191,7 +191,7 @@ sub runFarmGuardianStop    # ($fname,$svice)
 
 		if ( $fgpid != -1 )
 		{
-			&logfile( "running 'kill 9, $fgpid' stopping FarmGuardian $fname $svice" );
+			&zenlog( "running 'kill 9, $fgpid' stopping FarmGuardian $fname $svice" );
 			kill 9, $fgpid;
 			$status = $?;    # FIXME
 			unlink glob ( "/var/run/$fname\_${sv}guardian.pid" );
@@ -260,7 +260,7 @@ sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 		}
 		$fgfile = "${fname}_${svice}guardian.conf";
 
-		&logfile(
+		&zenlog(
 			  "running 'Create FarmGuardian $ttcheck $script $usefg $fglog' for $fname farm"
 		);
 	}
@@ -311,7 +311,7 @@ sub getFarmGuardianConf    # ($fname,$svice)
 	my @line = split ( ":::", $lastline );
 	chomp ( @line );
 
-	#&logfile("getting 'FarmGuardianConf @line' for $fname farm");
+	#&zenlog("getting 'FarmGuardianConf @line' for $fname farm");
 	return @line;
 }
 
