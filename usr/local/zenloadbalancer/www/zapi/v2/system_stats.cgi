@@ -60,7 +60,7 @@ sub get_graphs()
 	if ( @rrdlist eq 0 )
 	{
 
-		&logfile( "ZAPI error, there is no rrd files in folder yet." );
+		&zenlog( "ZAPI error, there is no rrd files in folder yet." );
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
@@ -82,7 +82,7 @@ sub get_graphs()
 	# First parameter
 	if ( $gtype =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			 "ZAPI error, trying to get graphs, invalid first parameter, can't be blank." );
 		print $q->header(
 						  -type    => 'text/plain',
@@ -118,7 +118,7 @@ sub get_graphs()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to get graphs, invalid first parameter, the possible values are system, network and farm."
 		);
 		print $q->header(
@@ -168,14 +168,14 @@ sub get_graphs()
 		}
 	}
 
-	# &logfile("graphlist: @graphlist");
-	# &logfile("parameters:$gtype $gtype2 $frecuency");
+	# &zenlog("graphlist: @graphlist");
+	# &zenlog("parameters:$gtype $gtype2 $frecuency");
 
 	if ( $gtype2 =~ /^$/ )
 	{
 		if ( $gtype eq "System" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are cpu load mem memsw and your disks"
 			);
 			print $q->header(
@@ -197,7 +197,7 @@ sub get_graphs()
 		}
 		elsif ( $gtype eq "Network" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are any available interface"
 			);
 
@@ -220,7 +220,7 @@ sub get_graphs()
 		}
 		elsif ( $gtype eq "Farm" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are any created farm"
 			);
 
@@ -247,7 +247,7 @@ sub get_graphs()
 	{
 		if ( $gtype eq "System" )
 		{
-			&logfile( "ZAPI error, trying to get graphs, invalid second parameter." );
+			&zenlog( "ZAPI error, trying to get graphs, invalid second parameter." );
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
@@ -267,7 +267,7 @@ sub get_graphs()
 		}
 		elsif ( $gtype eq "Network" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are any available interface"
 			);
 
@@ -290,7 +290,7 @@ sub get_graphs()
 		}
 		elsif ( $gtype eq "Farm" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are any created farm"
 			);
 
@@ -317,7 +317,7 @@ sub get_graphs()
 	# Third parameter
 	if ( $frecuency =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to get graphs, invalid third parameter, the possible values are daily, weekly, monthly and yearly."
 		);
 		print $q->header(
@@ -360,7 +360,7 @@ sub get_graphs()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to get graphs, invalid third parameter, the possible values are daily, weekly, monthly and yearly."
 		);
 		print $q->header(
@@ -385,7 +385,7 @@ sub get_graphs()
 	my $graph = &printGraph( $gtype2, $frecuency );
 
 	# Print Success
-	&logfile( "ZAPI success, trying to get graphs." );
+	&zenlog( "ZAPI success, trying to get graphs." );
 
 	print $q->header(
 					  -type    => 'text/plain',

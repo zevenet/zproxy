@@ -30,7 +30,7 @@ $maxmaxclient = "3000000";
 $maxsimconn   = "32760";
 $maxbackend   = "10000";
 
-&logfile( "loading the $farmname Farm data" );
+&zenlog( "loading the $farmname Farm data" );
 if ( $farmname =~ /^$/ )
 {
 	&errormsg( "Unknown farm name" );
@@ -543,7 +543,7 @@ if ( $action eq "editfarm-Parameters" )
 			$status = -1;
 			$usefarmguardian =~ s/\n//g;
 			&runFarmGuardianStop( $farmname, "" );
-			&logfile(
+			&zenlog(
 					  "creating $farmname farmguardian configuration file in $fguardianconf" )
 			  if !-f "$configdir/$fguardianconf";
 			$check_script =~ s/\"/\'/g;

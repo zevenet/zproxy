@@ -41,7 +41,7 @@ sub modify_farm()
 	$j->canonical( $enabled );
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a farm $farmname, invalid farmname, can't be blank."
 		);
 
@@ -372,7 +372,7 @@ sub modify_backends()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify the backends in a farm $farmname, invalid farmname, can't be blank."
 		);
 
@@ -415,7 +415,7 @@ sub modify_backends()
 
 	if ( $id_server =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify the backends in a farm $farmname, invalid id_server, can't be blank."
 		);
 
@@ -454,7 +454,7 @@ sub modify_backends()
 			if ( $json_obj->{ ip } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid IP, can't be blank."
 				);
 			}
@@ -465,7 +465,7 @@ sub modify_backends()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					 "ZAPI error, trying to modify the backends in a farm $farmname, invalid IP." );
 			}
 		}
@@ -475,7 +475,7 @@ sub modify_backends()
 			if ( $json_obj->{ port } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid port, can't be blank."
 				);
 			}
@@ -486,7 +486,7 @@ sub modify_backends()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					  "ZAPI error, trying to modify the backends in a farm $farmname, invalid port."
 				);
 			}
@@ -497,7 +497,7 @@ sub modify_backends()
 			if ( $json_obj->{ interface } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid interface, can't be blank."
 				);
 			}
@@ -508,7 +508,7 @@ sub modify_backends()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid interface."
 				);
 			}
@@ -521,7 +521,7 @@ sub modify_backends()
 				if ( $json_obj->{ weight } =~ /^$/ )
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight, can't be blank."
 					);
 				}
@@ -532,7 +532,7 @@ sub modify_backends()
 				else
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight."
 					);
 				}
@@ -543,7 +543,7 @@ sub modify_backends()
 				if ( $json_obj->{ priority } =~ /^$/ )
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify the backends in a farm $farmname, invalid priority, can't be blank."
 					);
 				}
@@ -554,7 +554,7 @@ sub modify_backends()
 				else
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify the backends in a farm $farmname, invalid priority."
 					);
 				}
@@ -580,7 +580,7 @@ sub modify_backends()
 				if ( $status == -1 )
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the real server with ip $json_obj->{ip}."
 					);
 				}
@@ -593,7 +593,7 @@ sub modify_backends()
 				if ( $json_obj->{ weight } =~ /^$/ )
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight, can't be blank."
 					);
 				}
@@ -604,7 +604,7 @@ sub modify_backends()
 				else
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight."
 					);
 				}
@@ -615,7 +615,7 @@ sub modify_backends()
 				if ( $json_obj->{ priority } =~ /^$/ )
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify the backends in a farm $farmname, invalid priority, can't be blank."
 					);
 				}
@@ -626,7 +626,7 @@ sub modify_backends()
 				else
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify the backends in a farm $farmname, invalid priority."
 					);
 				}
@@ -640,7 +640,7 @@ sub modify_backends()
 				if ( $status == -1 )
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the real server with IP $json_obj->{ip} and interface $json_obj->{interface}."
 					);
 				}
@@ -663,7 +663,7 @@ sub modify_backends()
 			if ( $json_obj->{ ip } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid IP, can't be blank."
 				);
 			}
@@ -674,7 +674,7 @@ sub modify_backends()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					 "ZAPI error, trying to modify the backends in a farm $farmname, invalid IP." );
 			}
 		}
@@ -684,7 +684,7 @@ sub modify_backends()
 			if ( $json_obj->{ port } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid port, can't be blank."
 				);
 			}
@@ -695,7 +695,7 @@ sub modify_backends()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					  "ZAPI error, trying to modify the backends in a farm $farmname, invalid port."
 				);
 			}
@@ -706,7 +706,7 @@ sub modify_backends()
 			if ( $json_obj->{ maxcon } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid maxcon, can't be blank."
 				);
 			}
@@ -717,7 +717,7 @@ sub modify_backends()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid maxcon."
 				);
 			}
@@ -728,7 +728,7 @@ sub modify_backends()
 			if ( $json_obj->{ weight } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight, can't be blank."
 				);
 			}
@@ -739,7 +739,7 @@ sub modify_backends()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight."
 				);
 			}
@@ -750,7 +750,7 @@ sub modify_backends()
 			if ( $json_obj->{ priority } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid priority, can't be blank."
 				);
 			}
@@ -761,7 +761,7 @@ sub modify_backends()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid priority."
 				);
 			}
@@ -774,7 +774,7 @@ sub modify_backends()
 			if ( $status == -1 )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the real server with IP $json_obj->{ip}."
 				);
 			}
@@ -791,7 +791,7 @@ sub modify_backends()
 			if ( $json_obj->{ service } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid service, can't be blank."
 				);
 			}
@@ -803,7 +803,7 @@ sub modify_backends()
 		else
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the backends in a farm $farmname, it's necessary to insert the service parameter."
 			);
 		}
@@ -857,7 +857,7 @@ sub modify_backends()
 			if ( $json_obj->{ ip } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid IP, can't be blank."
 				);
 			}
@@ -868,7 +868,7 @@ sub modify_backends()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					 "ZAPI error, trying to modify the backends in a farm $farmname, invalid IP." );
 			}
 		}
@@ -878,7 +878,7 @@ sub modify_backends()
 			if ( $json_obj->{ port } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid port, can't be blank."
 				);
 			}
@@ -889,7 +889,7 @@ sub modify_backends()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					  "ZAPI error, trying to modify the backends in a farm $farmname, invalid port."
 				);
 			}
@@ -900,7 +900,7 @@ sub modify_backends()
 			if ( $json_obj->{ weight } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight, can't be blank."
 				);
 			}
@@ -911,7 +911,7 @@ sub modify_backends()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight."
 				);
 			}
@@ -922,7 +922,7 @@ sub modify_backends()
 			if ( $json_obj->{ timeout } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid timeout, can't be blank."
 				);
 			}
@@ -933,7 +933,7 @@ sub modify_backends()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid timeout."
 				);
 			}
@@ -949,7 +949,7 @@ sub modify_backends()
 			if ( $status == -1 )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the real server with IP $json_obj->{ip} in service $service."
 				);
 			}
@@ -969,7 +969,7 @@ sub modify_backends()
 			if ( $json_obj->{ service } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid service, can't be blank."
 				);
 			}
@@ -981,7 +981,7 @@ sub modify_backends()
 		else
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the backends in a farm $farmname, it's necessary to insert the service parameter."
 			);
 		}
@@ -1040,7 +1040,7 @@ sub modify_backends()
 			if ( $json_obj->{ ip } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, invalid IP, can't be blank."
 				);
 			}
@@ -1051,7 +1051,7 @@ sub modify_backends()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					 "ZAPI error, trying to modify the backends in a farm $farmname, invalid IP." );
 			}
 		}
@@ -1063,7 +1063,7 @@ sub modify_backends()
 			if ( $status == -1 )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the real server with IP $json_obj->{ip} in service $service."
 				);
 			}
@@ -1079,7 +1079,7 @@ sub modify_backends()
 	{
 		if ( $error ne "true" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI success, some parameters have been changed in the backend $id_server in service $service in farm $farmname."
 			);
 
@@ -1127,7 +1127,7 @@ sub modify_backends()
 		}
 		else
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the backend."
 			);
 
@@ -1155,7 +1155,7 @@ sub modify_backends()
 
 		if ( $error ne "true" )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI success, some parameters have been changed in the backend $id_server in farm $farmname."
 			);
 
@@ -1184,7 +1184,7 @@ sub modify_backends()
 		}
 		else
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the backend."
 			);
 
@@ -1285,7 +1285,7 @@ sub modify_resources()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify the resources in a farm $farmname, invalid farmname, can't be blank."
 		);
 
@@ -1334,7 +1334,7 @@ sub modify_resources()
 		if ( $json_obj->{ zone } =~ /^$/ )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the resources in a farm $farmname, invalid zone, can't be blank."
 			);
 		}
@@ -1345,7 +1345,7 @@ sub modify_resources()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify the resources in a farm $farmname, invalid zone, it's necessary to insert the zone parameter."
 		);
 
@@ -1390,7 +1390,7 @@ sub modify_resources()
 		if ( $json_obj->{ rname } =~ /^$/ )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the resources in a farm $farmname, invalid rname, can't be blank."
 			);
 		}
@@ -1405,7 +1405,7 @@ sub modify_resources()
 		if ( $json_obj->{ ttl } =~ /^$/ )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the resources in a farm $farmname, invalid ttl, can't be blank."
 			);
 		}
@@ -1416,7 +1416,7 @@ sub modify_resources()
 		else
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				  "ZAPI error, trying to modify the resources in a farm $farmname, invalid ttl."
 			);
 		}
@@ -1427,7 +1427,7 @@ sub modify_resources()
 		if ( $json_obj->{ type } =~ /^$/ )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the resources in a farm $farmname, invalid type, can't be blank."
 			);
 		}
@@ -1438,7 +1438,7 @@ sub modify_resources()
 		else
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				 "ZAPI error, trying to modify the resources in a farm $farmname, invalid type."
 			);
 		}
@@ -1449,7 +1449,7 @@ sub modify_resources()
 		if ( $json_obj->{ rdata } =~ /^$/ )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the resources in a farm $farmname, invalid rdata, can't be blank."
 			);
 		}
@@ -1469,7 +1469,7 @@ sub modify_resources()
 		if ( $status == -1 )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the resources in a farm $farmname, it's not possible to modify the resource $id_resource in zone $zone."
 			);
 		}
@@ -1494,7 +1494,7 @@ sub modify_resources()
 	# Print params
 	if ( $error ne "true" )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI success, some parameters have been changed in the resource $id_resource in zone $zone in farm $farmname."
 		);
 
@@ -1523,7 +1523,7 @@ sub modify_resources()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify the resources in a farm $farmname, it's not possible to modify the resource."
 		);
 
@@ -1607,7 +1607,7 @@ sub modify_zones()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify the zones in a farm $farmname, invalid farmname, can't be blank."
 		);
 
@@ -1654,7 +1654,7 @@ sub modify_zones()
 	if ( $json_obj->{ defnamesv } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify the zones in a farm $farmname, invalid defnamesv, can't be blank."
 		);
 	}
@@ -1668,7 +1668,7 @@ sub modify_zones()
 		else
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the zones in a farm $farmname, it's not possible to modify the zone $zone."
 			);
 		}
@@ -1677,7 +1677,7 @@ sub modify_zones()
 	# Print params
 	if ( $error ne "true" )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI success, some parameters have been changed  in zone $zone in farm $farmname."
 		);
 
@@ -1706,7 +1706,7 @@ sub modify_zones()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify the zones in a farm $farmname, it's not possible to modify the zone $zone."
 		);
 
@@ -1887,7 +1887,7 @@ sub modify_services()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify the services in a farm $farmname, invalid farmname, can't be blank."
 		);
 
@@ -1930,7 +1930,7 @@ sub modify_services()
 
 	if ( $service =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify the services in a farm $farmname, invalid farmname, can't be blank."
 		);
 
@@ -1998,7 +1998,7 @@ sub modify_services()
 			if ( $json_obj->{ vhost } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid vhost, can't be blank."
 				);
 			}
@@ -2013,7 +2013,7 @@ sub modify_services()
 			if ( $json_obj->{ urlp } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid urlp, can't be blank."
 				);
 			}
@@ -2031,7 +2031,7 @@ sub modify_services()
 			if ( $redirect =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid redirect, can't be blank."
 				);
 			}
@@ -2042,7 +2042,7 @@ sub modify_services()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid redirect."
 				);
 			}
@@ -2056,7 +2056,7 @@ sub modify_services()
 			if ( $redirecttype =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid redirecttype, can't be blank."
 				);
 			}
@@ -2071,7 +2071,7 @@ sub modify_services()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid redirecttype."
 				);
 			}
@@ -2082,7 +2082,7 @@ sub modify_services()
 			if ( $json_obj->{ persistence } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid persistence, can't be blank."
 				);
 			}
@@ -2094,7 +2094,7 @@ sub modify_services()
 				if ( $status != 0 )
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify the service $service in a farm $farmname, it's not possible to change the persistence parameter."
 					);
 				}
@@ -2106,7 +2106,7 @@ sub modify_services()
 			if ( $json_obj->{ ttl } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid ttl, can't be blank."
 				);
 			}
@@ -2116,7 +2116,7 @@ sub modify_services()
 				if ( $status != 0 )
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify the service $service in a farm $farmname, it's not possible to change the ttl parameter."
 					);
 				}
@@ -2124,7 +2124,7 @@ sub modify_services()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid ttl, must be numeric."
 				);
 			}
@@ -2135,7 +2135,7 @@ sub modify_services()
 			if ( $json_obj->{ sessionid } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid sessionid, can't be blank."
 				);
 			}
@@ -2150,7 +2150,7 @@ sub modify_services()
 			if ( $json_obj->{ leastresp } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid leastresp, can't be blank."
 				);
 			}
@@ -2168,7 +2168,7 @@ sub modify_services()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid leastresp."
 				);
 			}
@@ -2179,7 +2179,7 @@ sub modify_services()
 			if ( $json_obj->{ cookieinsert } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookieinsert, can't be blank."
 				);
 			}
@@ -2197,7 +2197,7 @@ sub modify_services()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookieinsert."
 				);
 			}
@@ -2208,7 +2208,7 @@ sub modify_services()
 			if ( $json_obj->{ cookiedomain } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookiedomain, can't be blank."
 				);
 			}
@@ -2224,7 +2224,7 @@ sub modify_services()
 			if ( $json_obj->{ cookiename } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookiename, can't be blank."
 				);
 			}
@@ -2239,7 +2239,7 @@ sub modify_services()
 			if ( $json_obj->{ cookiepath } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookiepath, can't be blank."
 				);
 			}
@@ -2254,7 +2254,7 @@ sub modify_services()
 			if ( $json_obj->{ cookiettl } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookiettl, can't be blank."
 				);
 			}
@@ -2269,7 +2269,7 @@ sub modify_services()
 			if ( $json_obj->{ httpsb } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid httpsb, can't be blank."
 				);
 			}
@@ -2287,7 +2287,7 @@ sub modify_services()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid httpsb."
 				);
 			}
@@ -2300,7 +2300,7 @@ sub modify_services()
 		if ( $json_obj->{ deftcpport } =~ /^$/ )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the service $service in a farm $farmname, invalid deftcpport, can't be blank."
 			);
 		}
@@ -2314,7 +2314,7 @@ sub modify_services()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the service $service in a farm $farmname, it's not possible to change the deftcpport parameter."
 				);
 			}
@@ -2326,7 +2326,7 @@ sub modify_services()
 	{
 		&setFarmRestart( $farmname );
 
-		&logfile(
+		&zenlog(
 			"ZAPI success, some parameters have been changed  in service $service in farm $farmname."
 		);
 
@@ -2357,7 +2357,7 @@ sub modify_services()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify the zones in a farm $farmname, it's not possible to modify the service $service."
 		);
 

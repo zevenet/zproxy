@@ -138,7 +138,7 @@ sub modify_farmguardian()
 	$j->canonical( $enabled );
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify the farm guardian in a farm $farmname, invalid farmname, can't be blank."
 		);
 
@@ -186,7 +186,7 @@ sub modify_farmguardian()
 	{
 		if ( $json_obj->{ service } =~ /^$/ )
 		{
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the farm guardian in a farm $farmname, invalid service, can't be blank."
 			);
 			$error = "true";
@@ -253,7 +253,7 @@ sub modify_farmguardian()
 		if ( $json_obj->{ fgtimecheck } =~ /^$/ )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the farm guardian in a farm $farmname, invalid fgtimecheck, can't be blank."
 			);
 		}
@@ -266,7 +266,7 @@ sub modify_farmguardian()
 		if ( $json_obj->{ fgscript } =~ /^$/ )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the farm guardian in a farm $farmname, invalid fgscript, can't be blank."
 			);
 		}
@@ -278,7 +278,7 @@ sub modify_farmguardian()
 		if ( $json_obj->{ fgenabled } =~ /^$/ )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the farm guardian in a farm $farmname, invalid fgenabled, can't be blank."
 			);
 		}
@@ -290,7 +290,7 @@ sub modify_farmguardian()
 		if ( $json_obj{ fglog } )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the farm guardian in a farm $farmname, invalid fglog, can't be blank."
 			);
 		}
@@ -311,7 +311,7 @@ sub modify_farmguardian()
 				if ( $status == -1 )
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify the farm guardian in a farm $farmname, an error ocurred while starting the FarmGuardian service."
 					);
 				}
@@ -319,7 +319,7 @@ sub modify_farmguardian()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the farm guardian in a farm $farmname, the parameter usefarmguardian must be true."
 				);
 			}
@@ -327,7 +327,7 @@ sub modify_farmguardian()
 		else
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the farm guardian in a farm $farmname, it's not possible to create the FarmGuardian configuration file."
 			);
 		}
@@ -346,7 +346,7 @@ sub modify_farmguardian()
 				$status = &runFarmGuardianStart( $farmname, $service );
 				if ( $status == -1 )
 				{
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify the farm guardian in a farm $farmname, an error ocurred while starting the FarmGuardian service."
 					);
 					$error = "true";
@@ -355,7 +355,7 @@ sub modify_farmguardian()
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify the farm guardian in a farm $farmname, the parameter usefarmguardian must be true."
 				);
 			}
@@ -363,7 +363,7 @@ sub modify_farmguardian()
 		else
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify the farm guardian in a farm $farmname, it's not possible to create the FarmGuardian configuration file."
 			);
 		}
@@ -373,7 +373,7 @@ sub modify_farmguardian()
 	# Print params
 	if ( $error ne "true" )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI success, some parameters have been changed in farm guardian in farm $farmname."
 		);
 
@@ -402,7 +402,7 @@ sub modify_farmguardian()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify the farm guardian in a farm $farmname, it's not possible to modify the farm guardian."
 		);
 

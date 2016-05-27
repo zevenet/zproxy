@@ -527,7 +527,7 @@ sub setClusterNodeOnMaintenance
 	  . "--downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl "
 	  . "-B "
 	  . "-f local6";
-	&logfile( $ucarp_command );
+	&zenlog( $ucarp_command );
 	system ( $ucarp_command );
 	$return_code = $?;
 
@@ -564,7 +564,7 @@ sub setClusterNodeOffMaintenance
 		  . "--downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl "
 		  . "-B "
 		  . "-f local6";
-		&logfile( $ucarp_command );
+		&zenlog( $ucarp_command );
 		system ( $ucarp_command );
 		$return_code = $?;
 	}
@@ -583,7 +583,7 @@ sub setClusterNodeOffMaintenance
 		  . "--downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl "
 		  . "-B "
 		  . "-f local6";
-		&logfile( $ucarp_command );
+		&zenlog( $ucarp_command );
 		system ( $ucarp_command );
 		$return_code = $?;
 	}
@@ -603,7 +603,7 @@ sub setClusterNodeOffMaintenance
 		  . "--downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl "
 		  . "-B "
 		  . "-f local6";
-		&logfile( $ucarp_command );
+		&zenlog( $ucarp_command );
 		system ( $ucarp_command );
 		$return_code = $?;
 	}
@@ -732,10 +732,10 @@ sub setClusterRsaConnection
 	{
 		&successmsg( "Running process for configure RSA comunication" );
 
-		&logfile( "Deleting old RSA key on $lhost ($lip)" );
+		&zenlog( "Deleting old RSA key on $lhost ($lip)" );
 		unlink glob ( "/root/.ssh/id_rsa*" );
 
-		&logfile( "Creating new RSA keys on $lhost ($lip)" );
+		&zenlog( "Creating new RSA keys on $lhost ($lip)" );
 
 		# includes -q for quiet
 		system ( qq{$sshkeygen -q -t rsa -f /root/.ssh/id_rsa -N ""} );
@@ -747,7 +747,7 @@ sub setClusterRsaConnection
 
 		# - now you know you're logged in - #
 		# run command
-		&logfile( "Copying new RSA key from $lhost ($lip) to $rhost ($rip)" );
+		&zenlog( "Copying new RSA key from $lhost ($lip) to $rhost ($rip)" );
 		my $eject = $ssh->exec(
 			"rm -f /root/.ssh/authorized_keys; mkdir -p /root/.ssh/; echo $rsa_pass \>\> /root/.ssh/authorized_keys"
 		);
@@ -797,16 +797,16 @@ sub setClusterRsaConnection
 		my $userNhost = qq{root\@$rip};
 
 		#deleting remote id_rsa key
-		&logfile( "Deleting old RSA key on $rhost" );
+		&zenlog( "Deleting old RSA key on $rhost" );
 		ssh( $userNhost, "rm -rf /root/.ssh/id_rsa*" );
 
 		#creating new remote id_rsa key
-		&logfile( "Creating new remote RSA key on $rhost" );
+		&zenlog( "Creating new remote RSA key on $rhost" );
 		ssh( $userNhost,
 			 "$sshkeygen -t rsa -f /root/.ssh/id_rsa -N \"\" &> /dev/null" );
 
 		#copying id_rsa remote key to local
-		&logfile( "Copying new RSA key from $rhost to $lhost" );
+		&zenlog( "Copying new RSA key from $rhost to $lhost" );
 		@eject = `$scp $userNhost:/root/.ssh/id_rsa.pub /tmp/`;
 
 		#open file
@@ -814,7 +814,7 @@ sub setClusterRsaConnection
 		move( "/tmp/id_rsa.pub", "/root/.ssh/authorized_keys" );
 
 		#open file and copy to other
-		&logfile( "Enabled RSA communication between cluster hosts" );
+		&zenlog( "Enabled RSA communication between cluster hosts" );
 		&successmsg( "Enabled RSA communication between cluster hosts" );
 
 		#run zeninotify for syncronization directories
@@ -879,7 +879,7 @@ sub setClusterType
 		&setClusterStatusUp();
 
 		# send configuration file to remote cluster host
-		&logfile( "Sending $filecluster to $rip" );
+		&zenlog( "Sending $filecluster to $rip" );
 		system ( qq{$scp $filecluster root\@$rip:$filecluster} );
 
 		if ( $typecl =~ /^equal$/ )
@@ -993,7 +993,7 @@ sub setClusterTypeEqual
 	  . "-B "
 	  . "-f local6";
 
-	&logfile( "running on local: $ucarp_local_command" );
+	&zenlog( "running on local: $ucarp_local_command" );
 	system ( $ucarp_local_command );
 	sleep ( 10 );
 
@@ -1012,7 +1012,7 @@ sub setClusterTypeEqual
 	  . "-B "
 	  . "-f local6";
 
-	&logfile( "running on remote: $ucarp_remote_command" );
+	&zenlog( "running on remote: $ucarp_remote_command" );
 	$ssh->exec( $ucarp_remote_command );
 	sleep ( 10 );
 
@@ -1040,7 +1040,7 @@ sub setClusterTypePreferedMaster
 	  . "-B "
 	  . "-f local6";
 
-	&logfile( "running on local: $ucarp_local_command" );
+	&zenlog( "running on local: $ucarp_local_command" );
 	system ( $ucarp_local_command );
 	sleep ( 5 );
 
@@ -1060,7 +1060,7 @@ sub setClusterTypePreferedMaster
 	  . "-B "
 	  . "-f local6";
 
-	&logfile( "running on remote: $ucarp_remote_command" );
+	&zenlog( "running on remote: $ucarp_remote_command" );
 	$ssh->exec( $ucarp_remote_command );
 	sleep ( 10 );
 

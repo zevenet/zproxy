@@ -99,7 +99,7 @@ if ( exists ( $json_obj->{ algorithm } ) )
 	if ( $json_obj->{ algorithm } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a datalink farm $farmname, invalid algorithm, can't be blank."
 		);
 	}
@@ -109,7 +109,7 @@ if ( exists ( $json_obj->{ algorithm } ) )
 		if ( $status == -1 )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify a datalink farm $farmname, some errors happened trying to modify the algorithm."
 			);
 		}
@@ -121,7 +121,7 @@ if ( exists ( $json_obj->{ algorithm } ) )
 	else
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			 "ZAPI error, trying to modify a datalink farm $farmname, invalid algorithm." );
 	}
 }
@@ -132,7 +132,7 @@ if ( exists ( $json_obj->{ interfacevip } ) )
 	if ( $json_obj->{ interfacevip } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a datalink farm $farmname, invalid interfacevip, can't be blank."
 		);
 	}
@@ -145,14 +145,14 @@ if ( exists ( $json_obj->{ interfacevip } ) )
 		if ( $fdev eq "" )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify a datalink farm $farmname, invalid Interface value."
 			);
 		}
 		elsif ( $vip eq "" )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify a datalink farm $farmname, invalid Virtual IP value."
 			);
 		}
@@ -166,7 +166,7 @@ if ( exists ( $json_obj->{ interfacevip } ) )
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify a datalink farm $farmname, it's not possible to change the farm virtual IP and interface."
 				);
 			}
@@ -176,7 +176,7 @@ if ( exists ( $json_obj->{ interfacevip } ) )
 	else
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			 "ZAPI error, trying to modify a datalink farm $farmname, invalid interfacevip."
 		);
 	}
@@ -188,7 +188,7 @@ if ( exists ( $json_obj->{ newfarmname } ) )
 	if ( $json_obj->{ newfarmname } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a datalink farm $farmname, invalid newfarmname, can't be blank."
 		);
 	}
@@ -204,7 +204,7 @@ if ( exists ( $json_obj->{ newfarmname } ) )
 				if ( $newffile != -1 )
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify a datalink farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
 					);
 				}
@@ -215,7 +215,7 @@ if ( exists ( $json_obj->{ newfarmname } ) )
 					if ( $fnchange == -1 )
 					{
 						&error = "true";
-						&logfile(
+						&zenlog(
 							"ZAPI error, trying to modify a datalink farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
 						);
 					}
@@ -229,7 +229,7 @@ if ( exists ( $json_obj->{ newfarmname } ) )
 			else
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					  "ZAPI error, trying to modify a datalink farm $farmname, invalid newfarmname."
 				);
 			}
@@ -247,7 +247,7 @@ if ( $restart_flag eq "true" )
 # Check errors and print JSON
 if ( $error ne "true" )
 {
-	&logfile(
+	&zenlog(
 			  "ZAPI success, some parameters have been changed in farm $farmname." );
 
 	# Success
@@ -275,7 +275,7 @@ if ( $error ne "true" )
 }
 else
 {
-	&logfile(
+	&zenlog(
 		"ZAPI error, trying to modify a datalink farm $farmname, it's not possible to modify the farm."
 	);
 

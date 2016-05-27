@@ -8,12 +8,12 @@ require "/usr/local/zenloadbalancer/config/global.conf";
 require "/usr/local/zenloadbalancer/www/functions.cgi";
 my $BASENAME = basename $0;
 
-&logfile("Running $BASENAME...");
+&zenlog("Running $BASENAME...");
 
 # check if fwmarks file exist
 if ( !-e $fwmarksconf )
 {
-	&logfile("$BASENAME: File $fwmarksconf not found. Nothing to be migrated.");
+	&zenlog("$BASENAME: File $fwmarksconf not found. Nothing to be migrated.");
 	exit 0;
 }
 
@@ -23,7 +23,7 @@ my $decimal_found = grep { !/^0x... \/\/ / } <$input_file>; # FIXME
 # check if there are decimal tags to be fixed
 if ( $decimal_found == 0 )
 {
-	&logfile("$BASENAME: File $fwmarksconf has no tags to be migrated.");
+	&zenlog("$BASENAME: File $fwmarksconf has no tags to be migrated.");
 	exit 0;
 }
 
@@ -80,11 +80,11 @@ foreach my $farm_name ( @l4_farmnames )
 		
 		if ( defined $status && $status == 0 )
 		{
-			&logfile("$BASENAME: $farm_name stopped");
+			&zenlog("$BASENAME: $farm_name stopped");
 		}
 		else
 		{
-			&logfile("$BASENAME: failed to stop $farm_name");
+			&zenlog("$BASENAME: failed to stop $farm_name");
 		}
 	}
 }
@@ -124,7 +124,7 @@ while ( my $line = <$input_file> )
 			$last_dec_tag++;
 			$last_hex_tag = sprintf ( "0x%x", $last_dec_tag );
 
-			&logfile("$BASENAME: Migrating tag $mark to $last_hex_tag for farm $farm_name.");
+			&zenlog("$BASENAME: Migrating tag $mark to $last_hex_tag for farm $farm_name.");
 
 			# Fix fwmarks line
 			#
@@ -166,13 +166,13 @@ foreach my $farm_name ( @l4_farmnames )
 		
 		if ( defined $status && $status == 0 )
 		{
-			&logfile("$BASENAME: $farm_name started");
+			&zenlog("$BASENAME: $farm_name started");
 		}
 		else
 		{
-			&logfile("$BASENAME: failed to start $farm_name");
+			&zenlog("$BASENAME: failed to start $farm_name");
 		}
 	}
 }
 
-&logfile("Finished running $BASENAME");
+&zenlog("Finished running $BASENAME");

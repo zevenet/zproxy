@@ -55,7 +55,7 @@ sub delete_farm()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 				  "ZAPI error, trying to delete the farm $farmname, invalid farm name." );
 
 		# Error
@@ -79,7 +79,7 @@ sub delete_farm()
 	my $newffile = &getFarmFile( $farmname );
 	if ( $newffile == -1 )
 	{
-		&logfile(
+		&zenlog(
 			 "ZAPI error, trying to delete the farm $farmname, the farm name doesn't exist."
 		);
 
@@ -111,7 +111,7 @@ sub delete_farm()
 
 	if ( $stat == 0 )
 	{
-		&logfile( "ZAPI success, the farm $farmname has been deleted." );
+		&zenlog( "ZAPI success, the farm $farmname has been deleted." );
 
 		# Success
 		print $q->header(
@@ -136,7 +136,7 @@ sub delete_farm()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the farm $farmname, the farm hasn't been deleted."
 		);
 
@@ -204,7 +204,7 @@ sub delete_service()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the service $service in farm $farmname, invalid farm name."
 		);
 
@@ -248,7 +248,7 @@ sub delete_service()
 	
 	if ( $service =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the service $service in farm $farmname, invalid service name."
 		);
 
@@ -321,7 +321,7 @@ sub delete_service()
 	
 	if ( $return eq -2 )
 	{
-		&logfile(
+		&zenlog(
 				 "ZAPI error, the service $service in farm $farmname hasn't been deleted. The service is used by a zone." );
 
 		# Error
@@ -347,7 +347,7 @@ sub delete_service()
 	}
 	elsif ( $return eq 0 )
 	{
-		&logfile(
+		&zenlog(
 				 "ZAPI success, the service $service in farm $farmname has been deleted." );
 
 		# Success
@@ -374,7 +374,7 @@ sub delete_service()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the service $service in farm $farmname, the service hasn't been deleted."
 		);
 
@@ -441,7 +441,7 @@ sub delete_backend()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the backend $id_server in farm $farmname, invalid farm name."
 		);
 
@@ -486,7 +486,7 @@ sub delete_backend()
 	
 	if ( $id_server =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the backend $id_server in farm $farmname, invalid backend id."
 		);
 
@@ -521,7 +521,7 @@ sub delete_backend()
 		# &sendL4ConfChange( $farmname );
 		# }
 		# }
-		&logfile(
+		&zenlog(
 			   "ZAPI success, the backend $id_server in farm $farmname has been deleted." );
 
 		# Success
@@ -548,7 +548,7 @@ sub delete_backend()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the backend $id_server in farm $farmname, it's not possible to delete the real server."
 		);
 
@@ -618,7 +618,7 @@ sub delete_service_backend()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the backend $id_server in service $service in farm $farmname, invalid farm name."
 		);
 
@@ -661,7 +661,7 @@ sub delete_service_backend()
 
 	if ( $service =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the backend $id_server in service $service in farm $farmname, invalid service name."
 		);
 
@@ -721,7 +721,7 @@ sub delete_service_backend()
 
 	if ( $id_server =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the backend $id_server in service $service in farm $farmname, invalid backend id."
 		);
 
@@ -755,7 +755,7 @@ sub delete_service_backend()
 
 	if ( $status != -1 )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI success, the backend $id_server in service $service in farm $farmname has been deleted."
 		);
 
@@ -785,7 +785,7 @@ sub delete_service_backend()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the backend $id_server in service $service in farm $farmname, it's not possible to delete the real server."
 		);
 

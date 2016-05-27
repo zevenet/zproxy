@@ -295,7 +295,7 @@ sub createmenuif    # ($if_ref, $id)
 		my @filecl = <$fc>;
 		close $fc;
 
-		#~ &logfile("\n @filecl");
+		#~ &zenlog("\n @filecl");
 		if ( &ipisok( $$if_ref{ addr } ) eq 'true'
 			 && grep ( /$$if_ref{addr}/, @filecl ) )
 		{
@@ -901,7 +901,7 @@ sub successmsg    # ($string)
 	print "<p><b>SUCCESS!</b> $string</p>";
 	print "</div>";
 
-	&logfile( $string );
+	&zenlog( $string );
 }
 
 #function that print a TIP message
@@ -923,7 +923,7 @@ sub tipmsg        # ($string)
 		</form>";
 	print "</div>";
 
-	&logfile( $string );
+	&zenlog( $string );
 }
 
 #function that print a WARNING message
@@ -935,7 +935,7 @@ sub warnmsg    # ($string)
 	print "<p><b>WARNING!</b> $string</p>";
 	print "</div>";
 
-	&logfile( $string );
+	&zenlog( $string );
 }
 
 #function that print a ERROR message
@@ -947,7 +947,7 @@ sub errormsg    # ($string)
 	print "<p><b>ERROR!</b> $string</p>";
 	print "</div>";
 
-	&logfile( $string );
+	&zenlog( $string );
 }
 
 1;

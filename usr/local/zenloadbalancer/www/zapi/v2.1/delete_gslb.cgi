@@ -56,7 +56,7 @@ sub delete_zone()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the zone $zone in farm $farmname, invalid farm name."
 		);
 
@@ -99,7 +99,7 @@ sub delete_zone()
 
 	if ( $zone =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the zone $zone in farm $farmname, invalid zone name."
 		);
 
@@ -125,7 +125,7 @@ sub delete_zone()
 
 	if ( $? eq 0 )
 	{
-		&logfile( "ZAPI success, the zone $zone in farm $farmname has been deleted." );
+		&zenlog( "ZAPI success, the zone $zone in farm $farmname has been deleted." );
 
 		# Success
 		&runFarmReload( $farmname );
@@ -151,7 +151,7 @@ sub delete_zone()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the zone $zone in farm $farmname, the zone hasn't been deleted."
 		);
 
@@ -219,7 +219,7 @@ sub delete_zone_resource()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the resource $id_server in zone $zone in farm $farmname, invalid farm name."
 		);
 
@@ -262,7 +262,7 @@ sub delete_zone_resource()
 
 	if ( $zone =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the resource $id_server in zone $zone in farm $farmname, invalid zone name."
 		);
 
@@ -286,7 +286,7 @@ sub delete_zone_resource()
 
 	if ( $id_server =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the resource $id_server in zone $zone in farm $farmname, invalid resource id."
 		);
 
@@ -311,7 +311,7 @@ sub delete_zone_resource()
 	$status = &remFarmZoneResource( $id_server, $farmname, $zone );
 	if ( $status != -1 )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI success, the resource $id_server in zone $zone in farm $farmname has been deleted."
 		);
 
@@ -341,7 +341,7 @@ sub delete_zone_resource()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to delete the resource $id_server in zone $zone in farm $farmname, it's not possible to delete the resource."
 		);
 

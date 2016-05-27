@@ -39,7 +39,7 @@ sub setSnmpdStatus    # ($snmpd_status)
 	}
 	else
 	{
-		&logfile( "SNMP requested state is invalid" );
+		&zenlog( "SNMP requested state is invalid" );
 		return $return_code;
 	}
 
@@ -165,14 +165,14 @@ sub setSnmpdService    # ($snmpd_enabled)
 	# verify valid input
 	if ( $snmpd_enabled ne 'true' && $snmpd_enabled ne 'false' )
 	{
-		&logfile( "SNMP Service: status not available" );
+		&zenlog( "SNMP Service: status not available" );
 		return $return_code;
 	}
 
 	# change snmpd status
 	if ( &setSnmpdStatus( $snmpd_enabled ) != 0 )
 	{
-		&logfile( "SNMP Status change failed" );
+		&zenlog( "SNMP Status change failed" );
 		return $return_code;
 	}
 
@@ -189,7 +189,7 @@ sub setSnmpdService    # ($snmpd_enabled)
 	# show message if failed
 	if ( $return_code != 0 )
 	{
-		&logfile( "SNMP runlevel setup failed" );
+		&zenlog( "SNMP runlevel setup failed" );
 	}
 	return $return_code;
 }
@@ -217,7 +217,7 @@ sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_sc
 	# check port
 	if ( !&isValidPortNumber( $snmpd_port ) )
 	{
-		&logfile( "SNMP: Port out of range" );
+		&zenlog( "SNMP: Port out of range" );
 		return $return_code;
 	}
 
@@ -225,12 +225,12 @@ sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_sc
 	my ( $ip, $subnet ) = split ( '/', $snmpd_scope );
 	if ( &ipisok( $ip ) eq 'false' )
 	{
-		&logfile( "SNMP: Invalid ip or subnet with access" );
+		&zenlog( "SNMP: Invalid ip or subnet with access" );
 		return $return_code;
 	}
 	if ( &isnumber( $subnet ) eq 'false' || $subnet < 0 || $subnet > 32 )
 	{
-		&logfile( "SNMP: Invalid subnet with access" );
+		&zenlog( "SNMP: Invalid subnet with access" );
 		return $return_code;
 	}
 
@@ -258,7 +258,7 @@ sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_sc
 	{
 		if ( &setSnmpdService( $snmpd_enabled ) )
 		{
-			&logfile( "SNMP failed setting the service" );
+			&zenlog( "SNMP failed setting the service" );
 			return $return_code;
 		}
 	}
@@ -270,7 +270,7 @@ sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_sc
 	{
 		if ( &setSnmpdStatus( 'false' ) || &setSnmpdStatus( 'true' ) )
 		{
-			&logfile( "SNMP failed restarting the server" );
+			&zenlog( "SNMP failed restarting the server" );
 			return $return_code;
 		}
 	}

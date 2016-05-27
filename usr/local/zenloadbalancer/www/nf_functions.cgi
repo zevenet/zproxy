@@ -36,7 +36,7 @@ sub loadNfModule    # ($modname,$params)
 	{
 		my $modprobe_command = "$modprobe $modname $params";
 
-		&logfile( "L4 loadNfModule: $modprobe_command" );
+		&zenlog( "L4 loadNfModule: $modprobe_command" );
 		system ( "$modprobe_command >/dev/null 2>&1" );
 		$status = $?;
 	}
@@ -51,7 +51,7 @@ sub removeNfModule    # ($modname)
 
 	my $modprobe_command = "$modprobe -r $modname";
 
-	&logfile( "L4 removeNfModule: $modprobe_command" );
+	&zenlog( "L4 removeNfModule: $modprobe_command" );
 
 	return system ( "$modprobe_command >/dev/null 2>&1" );
 }
@@ -84,7 +84,7 @@ sub getIptList                              # ($table,$chain)
 
 	my $iptables_command = "$iptables_bin $table -L $chain -n -v --line-numbers";
 
-	&logfile( $iptables_command );
+	&zenlog( $iptables_command );
 
 	## lock iptables use ##
 	open my $ipt_lockfile, '>', $iptlock;
@@ -250,7 +250,7 @@ sub genIptMarkPersist    # ($farm_name,$vip,$vport,$protocol,$ttl,$index,$mark)
 	  . "--jump MARK --set-xmark $$server{ tag } ";    # new
 	    #~ . "--jump MARK --set-mark $$server{ tag } ";	# old
 
-	#~ &logfile( $rule );
+	#~ &zenlog( $rule );
 	return $rule;
 }
 
@@ -324,7 +324,7 @@ sub genIptMark # ($farm_name,$lbalg,$vip,$vport,$protocol,$index,$mark,$value,$p
 	  . "--jump MARK --set-xmark $$server{ tag } ";    # new
 	    #~ . "--jump MARK --set-mark $$server{ tag } ";	# old
 
-	#~ &logfile( $rule );
+	#~ &zenlog( $rule );
 	return $rule;
 }
 
@@ -374,7 +374,7 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
 	  . "--jump DNAT $layer --to-destination $$server{ rip } ";
 
-	#~ &logfile( $rule );
+	#~ &zenlog( $rule );
 	return $rule;
 }
 
@@ -415,7 +415,7 @@ sub genIptSourceNat    # ($farm_name,$vip,$index,$protocol,$mark)
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
 	  . "--jump SNAT $layer --to-source $$server{ vip } ";
 
-	#~ &logfile( $rule );
+	#~ &zenlog( $rule );
 	return $rule;
 }
 
@@ -457,7 +457,7 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
 	  . "--jump MASQUERADE ";
 
-	#~ &logfile( $rule );
+	#~ &zenlog( $rule );
 	return $rule;
 }
 
@@ -479,7 +479,7 @@ sub getConntrack    # ($orig_src, $orig_dst, $reply_src, $reply_dst, $protocol)
 	my $conntrack_cmd =
 	  "$conntrack -L $orig_src $orig_dst $reply_src $reply_dst $protocol 2>/dev/null";
 
-	#~ &logfile( $conntrack_cmd );
+	#~ &zenlog( $conntrack_cmd );
 	return `$conntrack_cmd`;
 }
 
@@ -586,7 +586,7 @@ sub applyIptRuleAction
 	}
 	elsif ( $action eq 'replace' && !defined $rulenum )
 	{
-		&logfile( 'Error: Iptables \'replace\' action requires a rule number' );
+		&zenlog( 'Error: Iptables \'replace\' action requires a rule number' );
 	}
 
 	# applied for any accepted action
@@ -611,11 +611,11 @@ sub getIptRuleNumber
 
 	# debugging
 	( defined ( $rule ) && $rule ne '' )
-	  or &logfile( ( caller ( 0 ) )[3] . ' $rule invalid' );
+	  or &zenlog( ( caller ( 0 ) )[3] . ' $rule invalid' );
 	( defined ( $farm_name ) && !ref $farm_name )
-	  or &logfile( ( caller ( 0 ) )[3] . ' $farm_name invalid' );
+	  or &zenlog( ( caller ( 0 ) )[3] . ' $farm_name invalid' );
 	( defined ( $index ) && !ref $index )
-	  or &logfile( ( caller ( 0 ) )[3] . ' $index invalid' );
+	  or &zenlog( ( caller ( 0 ) )[3] . ' $index invalid' );
 
 	my $rule_num;      # output: rule number for requested rule
 
@@ -639,7 +639,7 @@ sub getIptRuleNumber
 		# get backend tag
 		my @server_lines = &getL4FarmServers( $farm_name );
 
-		#~ &logfile("index:$index server_lines:@server_lines");
+		#~ &zenlog("index:$index server_lines:@server_lines");
 		@server_line = grep { /^$index;/ } @server_lines;
 		$filter = ( split ';', $server_line[0] )[3];
 	}
@@ -829,7 +829,7 @@ sub getIptRuleDelete
 	}
 	else
 	{
-		&logfile( "Delete: rule not found: $rule" );
+		&zenlog( "Delete: rule not found: $rule" );
 
 	  #~ my @rule_args = split / +/, $rule;
 	  #~ my $table     = $rule_args[2];       # second argument of iptables is the table
@@ -923,11 +923,11 @@ sub setIptLock    # ($lockfile)
 
 	if ( flock ( $ipt_lockfile, LOCK_EX ) )
 	{
-		&logfile( "Success locking IPTABLES" ) if &debug == 3;
+		&zenlog( "Success locking IPTABLES" ) if &debug == 3;
 	}
 	else
 	{
-		&logfile( "Cannot lock iptables: $!" );
+		&zenlog( "Cannot lock iptables: $!" );
 	}
 }
 
@@ -938,11 +938,11 @@ sub setIptUnlock    # ($lockfile)
 
 	if ( flock ( $ipt_lockfile, LOCK_UN ) )
 	{
-		&logfile( "Success unlocking IPTABLES" ) if &debug == 3;
+		&zenlog( "Success unlocking IPTABLES" ) if &debug == 3;
 	}
 	else
 	{
-		&logfile( "Cannot unlock iptables: $!" );
+		&zenlog( "Cannot unlock iptables: $!" );
 	}
 }
 
@@ -956,7 +956,7 @@ sub iptSystem
 	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
 	$program .= ' ';
 
-	&logfile( $program . "Running: $command" );    # log
+	&zenlog( $program . "Running: $command" );    # log
 
 	# $iptlock defined in global.conf
 	## lock iptables use ##
@@ -967,7 +967,7 @@ sub iptSystem
 	}
 	else
 	{
-		&logfile( $program . "Cannot open $iptlock: $!" );
+		&zenlog( $program . "Cannot open $iptlock: $!" );
 	}
 
 	$return_code = system ( "$command >/dev/null 2>&1" );    # run
@@ -983,12 +983,12 @@ sub iptSystem
 	{
 		if ( grep { /--check/ } $command )
 		{
-			&logfile( $program . "Previous iptables line not found" )
+			&zenlog( $program . "Previous iptables line not found" )
 			  if &debug == 2;    # show in logs if failed
 		}
 		else
 		{
-			&logfile( $program . "Previous command failed!" );    # show in logs if failed
+			&zenlog( $program . "Previous command failed!" );    # show in logs if failed
 		}
 	}
 

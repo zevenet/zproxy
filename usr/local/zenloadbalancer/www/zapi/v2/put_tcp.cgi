@@ -154,7 +154,7 @@ if ( exists ( $json_obj->{ algorithm } ) )
 	if ( $json_obj->{ algorithm } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid algorithm, can't be blank."
 		);
 	}
@@ -164,7 +164,7 @@ if ( exists ( $json_obj->{ algorithm } ) )
 		if ( $status == -1 )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify a tcp farm $farmname, some errors happened trying to modify the algorithm."
 			);
 		}
@@ -172,7 +172,7 @@ if ( exists ( $json_obj->{ algorithm } ) )
 	else
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			   "ZAPI error, trying to modify a l4xnat farm $farmname, invalid algorithm." );
 	}
 }
@@ -182,7 +182,7 @@ if ( exists ( $json_obj->{ persistence } ) )
 	if ( $json_obj->{ persistence } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid persistence, can't be blank."
 		);
 	}
@@ -192,7 +192,7 @@ if ( exists ( $json_obj->{ persistence } ) )
 		if ( $status == -1 )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify a tcp farm $farmname, some errors happened trying to modify the persistence."
 			);
 		}
@@ -200,7 +200,7 @@ if ( exists ( $json_obj->{ persistence } ) )
 	else
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 				"ZAPI error, trying to modify a tcp farm $farmname, invalid persistence." );
 	}
 }
@@ -211,21 +211,21 @@ if ( exists ( $json_obj->{ timeout } ) )
 	if ( $json_obj->{ timeout } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid timeout, can't be blank."
 		);
 	}
 	elsif ( !$json_obj->{ timeout } =~ /^\d+$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid timeout, it must be a numeric value."
 		);
 	}
 	elsif ( !$json_obj->{ timeout } > $maxtimeout )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid timeout, the max timeout value is $maxtimeout."
 		);
 	}
@@ -235,7 +235,7 @@ if ( exists ( $json_obj->{ timeout } ) )
 		if ( $status == -1 )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify a tcp farm $farmname, some errors happened trying to modify the timeout."
 			);
 		}
@@ -252,7 +252,7 @@ if ( exists ( $json_obj->{ xforwardedfor } ) )
 	if ( $json_obj->{ xforwardedfor } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid xforwardedfor, can't be blank."
 		);
 	}
@@ -262,7 +262,7 @@ if ( exists ( $json_obj->{ xforwardedfor } ) )
 		if ( $status == -1 )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify a tcp farm $farmname, some errors happened trying to modify the xforwardedfor."
 			);
 		}
@@ -270,7 +270,7 @@ if ( exists ( $json_obj->{ xforwardedfor } ) )
 	else
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			  "ZAPI error, trying to modify a tcp farm $farmname, invalid xforwardedfor." );
 	}
 }
@@ -281,7 +281,7 @@ if ( exists ( $json_obj->{ blacklist } ) )
 	if ( $json_obj->{ blacklist } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid blacklist, can't be blank."
 		);
 	}
@@ -291,7 +291,7 @@ if ( exists ( $json_obj->{ blacklist } ) )
 		if ( $status == -1 )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify a tcp farm $farmname, some errors happened trying to modify the blacklist."
 			);
 		}
@@ -299,7 +299,7 @@ if ( exists ( $json_obj->{ blacklist } ) )
 	else
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 				  "ZAPI error, trying to modify a tcp farm $farmname, invalid blacklist." );
 	}
 }
@@ -324,21 +324,21 @@ if (    exists ( $json_obj->{ maxclients } )
 	if ( $json_obj->{ maxclients } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid maxclients, can't be blank."
 		);
 	}
 	elsif ( !$json_obj->{ maxclients } =~ /^\d+$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid maxclients, it must be a numeric value."
 		);
 	}
 	elsif ( $json_obj->{ maxclients } > $maxmaxclient )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid maxclients value, the max value is $maxmaxclient."
 		);
 	}
@@ -349,14 +349,14 @@ if (    exists ( $json_obj->{ maxclients } )
 			if ( $json_obj->{ tracking } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify a tcp farm $farmname, invalid tracking, can't be blank."
 				);
 			}
 			elsif ( !$json_obj->{ tracking } =~ /^\d+$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify a tcp farm $farmname, invalid tracking, it must be a numeric value."
 				);
 			}
@@ -369,7 +369,7 @@ if (    exists ( $json_obj->{ maxclients } )
 				if ( $status == -1 )
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify a tcp farm $farmname, some errors happened trying to modify the maxclients and the tracking."
 					);
 
@@ -390,21 +390,21 @@ if ( exists ( $json_obj->{ maxclients } )
 	if ( $json_obj->{ maxclients } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid maxclients, can't be blank."
 		);
 	}
 	elsif ( !$json_obj->{ maxclients } =~ /^\d+$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid maxclients, it must be a numeric value."
 		);
 	}
 	elsif ( $json_obj->{ maxclients } > $maxmaxclient )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid maxclients value, the max value is $maxmaxclient."
 		);
 	}
@@ -416,7 +416,7 @@ if ( exists ( $json_obj->{ maxclients } )
 		if ( $status == -1 )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify a tcp farm $farmname, some errors happened trying to modify the maxclients."
 			);
 		}
@@ -434,14 +434,14 @@ if (   !exists ( $json_obj->{ maxclients } )
 	if ( $json_obj->{ tracking } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid tracking, can't be blank."
 		);
 	}
 	elsif ( !$json_obj->{ tracking } =~ /^\d+$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid tracking, it must be a numeric value."
 		);
 	}
@@ -453,7 +453,7 @@ if (   !exists ( $json_obj->{ maxclients } )
 		if ( $status == -1 )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify a tcp farm $farmname, some errors happened trying to modify the tracking."
 			);
 		}
@@ -470,21 +470,21 @@ if ( exists ( $json_obj->{ connmax } ) )
 	if ( $json_obj->{ connmax } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid connmax, can't be blank."
 		);
 	}
 	elsif ( !$json_obj->{ connmax } =~ /^\d+$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid connmax, it must be a numeric value."
 		);
 	}
 	elsif ( !$json_obj->{ connmax } > $maxsimconn )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid connmax value, the max value is $maxsimconn."
 		);
 	}
@@ -494,7 +494,7 @@ if ( exists ( $json_obj->{ connmax } ) )
 		if ( $status == -1 )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify a tcp farm $farmname, some errors happened trying to modify the connmax."
 			);
 		}
@@ -511,21 +511,21 @@ if ( exists ( $json_obj->{ maxservers } ) )
 	if ( $json_obj->{ maxservers } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid maxservers, can't be blank."
 		);
 	}
 	elsif ( !$json_obj->{ maxservers } =~ /^\d+$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid maxservers, it must be a numeric value."
 		);
 	}
 	elsif ( !$json_obj->{ maxservers } > $maxbackend )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid maxservers value, the max value is $maxbackend."
 		);
 	}
@@ -535,7 +535,7 @@ if ( exists ( $json_obj->{ maxservers } ) )
 		if ( $status == -1 )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				"ZAPI error, trying to modify a tcp farm $farmname, some errors happened trying to modify the maxservers."
 			);
 		}
@@ -556,14 +556,14 @@ if ( exists ( $json_obj->{ vip } ) && exists ( $json_obj->{ vport } ) )
 	if ( $json_obj->{ vip } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid vip, can't be blank."
 		);
 	}
 	elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
 	{
 		$error = "true";
-		&logfile( "ZAPI error, trying to modify a tcp farm $farmname, invalid vip." );
+		&zenlog( "ZAPI error, trying to modify a tcp farm $farmname, invalid vip." );
 	}
 	else
 	{
@@ -572,14 +572,14 @@ if ( exists ( $json_obj->{ vip } ) && exists ( $json_obj->{ vport } ) )
 			if ( $json_obj->{ vport } =~ /^$/ )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify a tcp farm $farmname, invalid vport, can't be blank."
 				);
 			}
 			elsif ( !$json_obj->{ vport } =~ /^\d+$/ )
 			{
 				$error = "true";
-				&logfile( "ZAPI error, trying to modify a tcp farm $farmname, invalid vport." );
+				&zenlog( "ZAPI error, trying to modify a tcp farm $farmname, invalid vport." );
 			}
 			else
 			{
@@ -590,7 +590,7 @@ if ( exists ( $json_obj->{ vip } ) && exists ( $json_obj->{ vport } ) )
 				if ( $status == -1 )
 				{
 					$error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify a tcp farm $farmname, invalid vport or invalid vip."
 					);
 				}
@@ -609,14 +609,14 @@ if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
 	if ( $json_obj->{ vip } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid vip, can't be blank."
 		);
 	}
 	elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
 	{
 		$error = "true";
-		&logfile( "ZAPI error, trying to modify a tcp farm $farmname, invalid vip." );
+		&zenlog( "ZAPI error, trying to modify a tcp farm $farmname, invalid vip." );
 	}
 	else
 	{
@@ -625,7 +625,7 @@ if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
 		if ( $status == -1 )
 		{
 			$error = "true";
-			&logfile( "ZAPI error, trying to modify a tcp farm $farmname, invalid vip." );
+			&zenlog( "ZAPI error, trying to modify a tcp farm $farmname, invalid vip." );
 		}
 		else
 		{
@@ -640,14 +640,14 @@ if ( !exists ( $json_obj->{ vip } ) && exists ( $json_obj->{ vport } ) )
 	if ( $json_obj->{ vport } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid vport, can't be blank."
 		);
 	}
 	elsif ( !$json_obj->{ vport } =~ /^\d+$/ )
 	{
 		$error = "true";
-		&logfile( "ZAPI error, trying to modify a tcp farm $farmname, invalid vport." );
+		&zenlog( "ZAPI error, trying to modify a tcp farm $farmname, invalid vport." );
 	}
 	else
 	{
@@ -656,7 +656,7 @@ if ( !exists ( $json_obj->{ vip } ) && exists ( $json_obj->{ vport } ) )
 		if ( $status == -1 )
 		{
 			$error = "true";
-			&logfile( "ZAPI error, trying to modify a tcp farm $farmname, invalid vport." );
+			&zenlog( "ZAPI error, trying to modify a tcp farm $farmname, invalid vport." );
 		}
 		else
 		{
@@ -671,7 +671,7 @@ if ( exists ( $json_obj->{ newfarmname } ) )
 	if ( $json_obj->{ newfarmname } =~ /^$/ )
 	{
 		$error = "true";
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to modify a tcp farm $farmname, invalid newfarmname, can't be blank."
 		);
 	}
@@ -685,7 +685,7 @@ if ( exists ( $json_obj->{ newfarmname } ) )
 			if ( $newffile != -1 )
 			{
 				$error = "true";
-				&logfile(
+				&zenlog(
 					"ZAPI error, trying to modify a tcp farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
 				);
 			}
@@ -696,7 +696,7 @@ if ( exists ( $json_obj->{ newfarmname } ) )
 				if ( $fnchange == -1 )
 				{
 					&error = "true";
-					&logfile(
+					&zenlog(
 						"ZAPI error, trying to modify a tcp farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
 					);
 				}
@@ -710,7 +710,7 @@ if ( exists ( $json_obj->{ newfarmname } ) )
 		else
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 					"ZAPI error, trying to modify a tcp farm $farmname, invalid newfarmname." );
 		}
 	}
@@ -726,7 +726,7 @@ if ( $restart_flag eq "true" )
 # Print params
 if ( $error ne "true" )
 {
-	&logfile(
+	&zenlog(
 			  "ZAPI success, some parameters have been changed in farm $farmname." );
 
 	# Success
@@ -754,7 +754,7 @@ if ( $error ne "true" )
 }
 else
 {
-	&logfile(
+	&zenlog(
 		"ZAPI error, trying to modify a tcp farm $farmname, it's not possible to modify the farm."
 	);
 

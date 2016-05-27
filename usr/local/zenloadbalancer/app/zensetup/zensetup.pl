@@ -127,7 +127,7 @@ if ( $gwaddr !~ /^$/ && &ipisok($gwaddr) eq "false")
 
 	&createIf($if);
         &delRoutes("local",$if);
-        &logfile("running '$ifconfig_bin $if $newip netmask $netmask' ");
+        &zenlog("running '$ifconfig_bin $if $newip netmask $netmask' ");
         @eject = `$ifconfig_bin $if $newip netmask $netmask 2> /dev/null`;
         &upIf($if);
         $state = $?;
