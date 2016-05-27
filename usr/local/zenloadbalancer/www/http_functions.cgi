@@ -1862,6 +1862,8 @@ sub getHTTPFarmConfigIsOK    # ($farm_name)
 	my $run = `$pound_command 2>&1`;
 	$output = $?;
 
+	&zenlog( "output: $run " );
+
 	return $output;
 }
 

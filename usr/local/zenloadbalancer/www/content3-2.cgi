@@ -166,46 +166,6 @@ elsif (    $action eq "Save & Up!"
 		$swaddif = "false";
 	}
 
-	# FIXME: only works with IPv4
-	# check if the new ip is already in use
-	my @activeips = &listallips();
-	for my $ip ( @activeips )
-	{
-		if ( $ip eq $newip )
-		{
-			&errormsg( "IP Address $newip is already in use, please insert a valid IP." );
-			$swaddif = "false";
-		}
-	}
-
-	# check if the new newip is correct
-	if ( &ipisok( $interface{ addr } ) eq "false" )
-	{
-		&errormsg( "IP Address $interface{addr} structure is not ok" );
-		$swaddif = "false";
-	}
-
-	# check if the new newip is correct, check version ip
-	if ( $interface{ ip_v } != &ipversion( $interface{ addr } ) )
-	{
-		&logfile( "interface{ ip_v }:$interface{ ip_v } ipversion:"
-				  . &ipversion( $interface{ addr } ) );
-
-		if ( $interface{ ip_v } == 4 )
-		{
-			&errormsg(
-				  "IP Address $interface{ addr } structure is not ok, must be an IPv4 structure"
-			);
-		}
-		elsif ( $interface{ ip_v } == 6 )
-		{
-			&errormsg(
-				  "IP Address $interface{ addr } structure is not ok, must be an IPv6 structure"
-			);
-		}
-		$swaddif = "false";
-	}
-
 	# check if the new netmask for IPv4 is correct
 	if (
 		$interface{ ip_v } == 4    # ipv4

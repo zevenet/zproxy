@@ -602,13 +602,13 @@ sub setIfacesUp    # ($if_name,$type)
 
 		if ( $type eq "vini" )
 		{
-			&logfile(
+			&zenlog(
 				"All the Virtual Network interfaces with IPv6 and status up of $if_name have been put in up status."
 			);
 		}
 		elsif ( $type eq "vini" )
 		{
-			&logfile(
+			&zenlog(
 				  "All the Vlan with IPv6 and status up of $if_name have been put in up status."
 			);
 		}

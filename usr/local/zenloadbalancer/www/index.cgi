@@ -161,7 +161,7 @@ sub certcontrol()
 my $cgi = new CGI;
 
 #uncomment for debug
-&zenlog( Dumper( \{ $cgi->Vars } ) );
+&zenlog( "index.cgi cgi:" . Dumper( \{ $cgi->Vars } ) );
 
 #Global Parameters
 $id = $cgi->param( 'id' )
