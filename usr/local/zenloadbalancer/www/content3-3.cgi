@@ -168,18 +168,17 @@ if ( -e $filecluster )
 		}
 
 		@rifname = split ( ":", $ifname );
-		@eject = system ( "pkill -9 ucarp" );
+		system ( "pkill -9 ucarp" );
 		sleep ( 5 );
 
 		&successmsg(
 			"Demoting the node to backup for maintenance, please wait and don't stop the process"
 		);
-		&logfile(
-			"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl -k 100 --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-		);
-		@eject = system (
-			"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl -k 100 --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-		);
+
+		my $ucarp_cmd = "$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl -k 100 --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6";
+		
+		&zenlog( $ucarp_cmd );
+		system ( $ucarp_cmd );
 		sleep ( 10 );
 	}
 
@@ -195,7 +194,7 @@ if ( -e $filecluster )
 		}
 
 		@rifname = split ( ":", $ifname );
-		@eject = system ( "pkill -9 ucarp" );
+		system ( "pkill -9 ucarp" );
 		sleep ( 5 );
 
 		&successmsg(
@@ -203,30 +202,24 @@ if ( -e $filecluster )
 
 		if ( $typecl =~ /^equal$/ )
 		{
-			&logfile(
-				"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-			);
-			my @eject = system (
-				"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-			);
+			 my $ucarp_cmd = "$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6";
+			
+			&zenlog( $ucarp_cmd );
+			system ( $ucarp_cmd );
 		}
 		elsif ( $typecl =~ /$lhost-$rhost/ )
 		{
-			&logfile(
-				"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-			);
-			my @eject = system (
-				"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-			);
+			my $ucarp_cmd = "$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6";
+			
+			&zenlog( $ucarp_cmd );
+			system ( $ucarp_cmd );
 		}
 		else
 		{
-			&logfile(
-				"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] -k 50 --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-			);
-			my $eject = system (
-				"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] -k 50 --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-			);
+			my $ucarp_cmd = "$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] -k 50 --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6";
+			
+			&zenlog( $ucarp_cmd );
+			system ( $ucarp_cmd );
 		}
 		sleep ( 10 );
 	}
@@ -365,9 +358,9 @@ if ( -e $filecluster )
 		if ( $err_out =~ /^$/ && $error eq "false" )
 		{
 			&successmsg( "Running process for configure RSA comunication" );
-			&logfile( "Deleting old RSA key on $lhost ($lip)" );
+			&zenlog( "Deleting old RSA key on $lhost ($lip)" );
 			unlink glob ( "/root/.ssh/id_rsa*" );
-			&logfile( "Creating new RSA keys on $lhost ($lip)" );
+			&zenlog( "Creating new RSA keys on $lhost ($lip)" );
 			@eject = `$sshkeygen -t rsa -f /root/.ssh/id_rsa -N \"\"`;
 			open FR, "/root/.ssh/id_rsa.pub";
 
@@ -381,7 +374,7 @@ if ( -e $filecluster )
 
 			# - now you know you're logged in - #
 			# run command
-			&logfile( "Copying new RSA key from $lhost ($lip) to $rhost ($rip)" );
+			&zenlog( "Copying new RSA key from $lhost ($lip) to $rhost ($rip)" );
 			my $eject = $ssh->exec(
 				"rm -f /root/.ssh/authorized_keys; mkdir -p /root/.ssh/; echo $rsa_pass \>\> /root/.ssh/authorized_keys"
 			);
@@ -435,15 +428,15 @@ if ( -e $filecluster )
 			chomp ( $hosts );
 
 			#deleting remote id_rsa key
-			&logfile( "Deleting old RSA key on $rhost" );
+			&zenlog( "Deleting old RSA key on $rhost" );
 			ssh( $hosts, "rm -rf /root/.ssh/id_rsa*" );
 
 			#creating new remote id_rsa key
-			&logfile( "Creating new remote RSA key on $rhost" );
+			&zenlog( "Creating new remote RSA key on $rhost" );
 			ssh( $hosts, "$sshkeygen -t rsa -f /root/.ssh/id_rsa -N \"\" &> /dev/null" );
 
 			#copying id_rsa remote key to local
-			&logfile( "Copying new RSA key from $rhost to $lhost" );
+			&zenlog( "Copying new RSA key from $rhost to $lhost" );
 			@eject = `$scp $hosts:/root/.ssh/id_rsa.pub /tmp/`;
 
 			#open file
@@ -451,7 +444,7 @@ if ( -e $filecluster )
 			move( "/tmp/id_rsa.pub", "/root/.ssh/authorized_keys" );
 
 			#open file and copy to other
-			&logfile( "Enabled RSA communication between cluster hosts" );
+			&zenlog( "Enabled RSA communication between cluster hosts" );
 			&successmsg( "Enabled RSA communication between cluster hosts" );
 
 			#run zeninotify for syncronization directories
@@ -497,7 +490,7 @@ if ( -e $filecluster )
 
 			#set cluster to UP on cluster file
 			&setClusterStatusUp();
-			&logfile( "Sending $filecluster to $rip" );
+			&zenlog( "Sending $filecluster to $rip" );
 			@eject = `$scp $filecluster root\@$rip\:$filecluster`;
 
 			if ( $typecl =~ /^equal$/ )
@@ -505,23 +498,23 @@ if ( -e $filecluster )
 				&successmsg(
 					"Running Zen latency Service and Zen inotify Service, please wait and don't stop the process"
 				);
-				&logfile(
-					"running on local: $ucarp -r $deadratio $ignoreifstate $ucarp_param --interface=$ifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-				);
-				my @eject = system (
-					"$ucarp -r $deadratio $ignoreifstate $ucarp_param --interface=$ifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-				);
+
+				my $ucarp_cmd = "$ucarp -r $deadratio $ignoreifstate $ucarp_param --interface=$ifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6";
+
+				&zenlog( "running on local: $ucarp_cmd" );
+				system ( $ucarp_cmd );
+				
 				&successmsg( "Configuring $lhost, please wait and don't stop the process" );
 				sleep ( 10 );
 				&successmsg(
 					"Local node $lhost configured, configuring $rhost, please wait and don't stop the process"
 				);
-				&logfile(
-					"running on remote: $ucarp -r $deadratio $ignoreifstate $ucarp_param --interface=$ifname[0] --srcip=$rip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-				);
-				my $eject = $ssh->exec(
-					"$ucarp -r $deadratio $ignoreifstate $ucarp_param --interface=$ifname[0] --srcip=$rip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
-				);
+				
+				my $ucarp_cmd = "$ucarp -r $deadratio $ignoreifstate $ucarp_param --interface=$ifname[0] --srcip=$rip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6";
+
+				&zenlog( "running on remote: $ucarp_cmd" );
+				$ssh->exec( $ucarp_cmd );
+
 				&successmsg(
 					"Remote node $rhost configured, configuring cluster type, please wait and don't stop the process"
 				);

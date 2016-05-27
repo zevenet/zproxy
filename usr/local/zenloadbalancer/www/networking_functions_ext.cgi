@@ -33,7 +33,7 @@ sub sendGPing    # ($pif)
 	my $gw = &gwofif( $pif );
 	if ( $gw ne "" )
 	{
-		&logfile( "sending '$ping_bin -c $pingc $gw' " );
+		&zenlog( "sending '$ping_bin -c $pingc $gw' " );
 		my @eject = `$ping_bin -c $pingc $gw > /dev/null &`;
 	}
 }
@@ -134,11 +134,11 @@ sub setInterfaceConfig    # $bool ($if_ref)
 
 	if ( ref $if_ref ne 'HASH' )
 	{
-		&logfile( "Input parameter is not a hash reference" );
+		&zenlog( "Input parameter is not a hash reference" );
 		return undef;
 	}
 
-	&logfile( "setInterfaceConfig: " . Dumper $if_ref);
+	&zenlog( "setInterfaceConfig: " . Dumper $if_ref);
 	my @if_params = qw( name addr mask gateway );
 
 	#~ my $if_line = join (';', @if_params);
@@ -179,11 +179,11 @@ sub setInterfaceConfig    # $bool ($if_ref)
 			}
 		}
 
-		&logfile( "setInterfaceConfig: if_line:$if_line status:$$if_ref{status}" );
+		&zenlog( "setInterfaceConfig: if_line:$if_line status:$$if_ref{status}" );
 
 		if ( !$ip_line_found )
 		{
-			&logfile( "setInterfaceConfig: push  if_line:$if_line" );
+			&zenlog( "setInterfaceConfig: push  if_line:$if_line" );
 			push ( @file_lines, $if_line );
 		}
 
@@ -191,7 +191,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	}
 	else
 	{
-		&logfile( "$config_filename: $!" );
+		&zenlog( "$config_filename: $!" );
 
 		return 0;
 	}
@@ -223,7 +223,7 @@ sub getInterfaceSystemStatus     # ($if_ref)
 
 	$sw = $$if_ref{ name } eq 'eth0.3';
 
-	#~ &logfile("getInterfaceSystemStatus $$if_ref{name}:$$if_ref{status}");
+	#~ &zenlog("getInterfaceSystemStatus $$if_ref{name}:$$if_ref{status}");
 
 	my $parent_if_name = &getParentInterfaceName( $if_ref->{ name } );
 	my $status_if_name = $if_ref->{ name };
@@ -253,11 +253,11 @@ sub getInterfaceSystemStatus     # ($if_ref)
 		$if_ref->{ status } = $if_status;
 	}
 
-	#~ &logfile("getInterfaceSystemStatus $$if_ref{name}:$$if_ref{status}");
+	#~ &zenlog("getInterfaceSystemStatus $$if_ref{name}:$$if_ref{status}");
 
 	return $if_ref->{ status } if $if_ref->{ status } eq 'down';
 
-	#~ &logfile("getInterfaceSystemStatus parent_if_name:$parent_if_name");
+	#~ &zenlog("getInterfaceSystemStatus parent_if_name:$parent_if_name");
 
 	my $parent_if_ref = &getInterfaceConfig( $parent_if_name, $if_ref->{ ip_v } );
 
@@ -267,7 +267,7 @@ sub getInterfaceSystemStatus     # ($if_ref)
 		return $if_ref->{ status };
 	}
 
-#~ &logfile("getInterfaceSystemStatus $$parent_if_ref{name}:$$parent_if_ref{status}");
+#~ &zenlog("getInterfaceSystemStatus $$parent_if_ref{name}:$$parent_if_ref{status}");
 
 	return &getInterfaceSystemStatus( $parent_if_ref );
 }
@@ -303,7 +303,7 @@ sub getParentInterfaceName    # ($if_name)
 		$parent_if_name = undef;
 	}
 
-	#~ &logfile("if_name:$if_name parent_if_name:$parent_if_name");
+	#~ &zenlog("if_name:$if_name parent_if_name:$parent_if_name");
 
 	return $parent_if_name;
 }
@@ -346,7 +346,7 @@ sub getActiveInterfaceList
 		$dev_ip_padded =~ s/ +$//;
 		$dev_ip_padded =~ s/ /&nbsp;/g;
 
-		#~ &logfile("padded interface:$dev_ip_padded");
+		#~ &zenlog("padded interface:$dev_ip_padded");
 		$iface->{ dev_ip_padded } = $dev_ip_padded;
 	}
 

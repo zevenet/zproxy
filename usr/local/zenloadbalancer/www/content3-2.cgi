@@ -80,7 +80,7 @@ my %interface;
 
 chomp %interface;
 
-#~ &logfile("interface ".Dumper \%interface);
+#~ &zenlog("interface ".Dumper \%interface);
 
 # action edit interface
 if ( $action eq "editif" )
@@ -148,7 +148,7 @@ elsif (    $action eq "Save & Up!"
 	# check if the new newip is correct, check version ip
 	if ( $interface{ ip_v } != &ipversion( $interface{ addr } ) )
 	{
-		&logfile( "interface{ ip_v }:$interface{ ip_v } ipversion:"
+		&zenlog( "interface{ ip_v }:$interface{ ip_v } ipversion:"
 				  . &ipversion( $interface{ addr } ) );
 
 		if ( $interface{ ip_v } == 4 )
@@ -306,7 +306,7 @@ elsif ( $action eq "deleteif" )
 				$hasvini = 1;
 			}
 
-			&logfile(
+			&zenlog(
 				  "All the Virtual Network interfaces of $interface{name} have been deleted." );
 		}
 
@@ -361,7 +361,7 @@ elsif ( $action eq "upif" )
 
 			if ( $$if_ref{ addr } )
 			{
-				#~ &logfile("stacks:$$if_ref{addr}");
+				#~ &zenlog("stacks:$$if_ref{addr}");
 				push @stacks, $if_ref;
 			}
 		}
@@ -478,7 +478,7 @@ elsif ( $action =~ /editgw/ )
 		  :                      '';
 		my $if_ref = getInterfaceConfig( $if, $ip_version );
 
-		&logfile( "if:$if ip_version:$ip_version gwaddr:$gwaddr" );
+		&zenlog( "if:$if ip_version:$ip_version gwaddr:$gwaddr" );
 
 		my $state = &applyRoutes( "global", $if_ref, $gwaddr );
 
@@ -504,7 +504,7 @@ elsif ( $action =~ /deletegw/ )
 	  :                      '';
 	my $if_ref = getInterfaceConfig( $defaultgwif6, $ip_version );
 
-	&logfile( "defaultgwif6:$defaultgwif6 ip_version:$ip_version gwaddr:$gwaddr" );
+	&zenlog( "defaultgwif6:$defaultgwif6 ip_version:$ip_version gwaddr:$gwaddr" );
 
 	my $state = &delRoutes( "global", $if_ref );
 

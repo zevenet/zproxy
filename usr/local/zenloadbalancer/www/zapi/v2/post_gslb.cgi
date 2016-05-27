@@ -71,7 +71,7 @@ sub new_farm_zone()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			 "ZAPI error, trying to create a new zone in farm $farmname, invalid farm name."
 		);
 
@@ -114,7 +114,7 @@ sub new_farm_zone()
 
 	if ( $json_obj->{ id } =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			 "ZAPI error, trying to create a new zone in farm $farmname, invalid zone name."
 		);
 
@@ -138,7 +138,7 @@ sub new_farm_zone()
 
 	if ( $json_obj->{ id } !~ /.*\..*/ )
 	{
-		&logfile(
+		&zenlog(
 			"Wrong zone name. The name has to be like zonename.com, zonename.net, etc. The zone $zone can't be created"
 		);
 
@@ -164,7 +164,7 @@ sub new_farm_zone()
 	my $result = &setGSLBFarmNewZone( $farmname, $json_obj->{ id } );
 	if ( $result eq "0" )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI success, a new zone has been created in farm $farmname with id $json_obj->{id}."
 		);
 
@@ -190,7 +190,7 @@ sub new_farm_zone()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new zone in farm $farmname with id $json_obj->{id}, it's not possible to create the zone."
 		);
 
@@ -282,7 +282,7 @@ sub new_farm_zoneresource()
 
 	if ( $farmname =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, invalid farm name."
 		);
 
@@ -325,7 +325,7 @@ sub new_farm_zoneresource()
 
 	if ( !exists ( $json_obj->{ rname } ) )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, the parameter zone resource name (rname) doesn't exist."
 		);
 
@@ -350,7 +350,7 @@ sub new_farm_zoneresource()
 
 	if ( !exists ( $json_obj->{ rdata } ) )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, the parameter zone resource server (rdata) doesn't exist."
 		);
 
@@ -375,7 +375,7 @@ sub new_farm_zoneresource()
 
 	if ( !exists ( $json_obj->{ ttl } ) )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, the parameter time to live value (ttl) doesn't exist."
 		);
 
@@ -400,7 +400,7 @@ sub new_farm_zoneresource()
 
 	if ( !exists ( $json_obj->{ type } ) )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, the parameter DNS record type (type) doesn't exist."
 		);
 
@@ -425,7 +425,7 @@ sub new_farm_zoneresource()
 
 	if ( $json_obj->{ rname } =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, invalid zone resource name (rname)."
 		);
 
@@ -449,7 +449,7 @@ sub new_farm_zoneresource()
 
 	if ( $json_obj->{ rdata } =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, invalid zone resource server (rdata)."
 		);
 
@@ -474,7 +474,7 @@ sub new_farm_zoneresource()
 
 	if ( $json_obj->{ ttl } =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, invalid time to live value (ttl)."
 		);
 
@@ -498,7 +498,7 @@ sub new_farm_zoneresource()
 
 	if ( $json_obj->{ type } =~ /^$/ )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, invalid DNS record type (type)."
 		);
 
@@ -532,7 +532,7 @@ sub new_farm_zoneresource()
 
 	if ( $status != -1 )
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI success, a new resource has been created in zone $json_obj->{zone} in farm $farmname."
 		);
 
@@ -566,7 +566,7 @@ sub new_farm_zoneresource()
 	}
 	else
 	{
-		&logfile(
+		&zenlog(
 			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, it's not possible to create a new resource."
 		);
 

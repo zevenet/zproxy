@@ -118,7 +118,7 @@ sub setFarmTimeout    # ($timeout,$farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	&logfile( "setting 'Timeout $timeout' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'Timeout $timeout' for $farm_name farm $farm_type" );
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
@@ -162,7 +162,7 @@ sub setFarmAlgorithm    # ($algorithm,$farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	&logfile( "setting 'Algorithm $algorithm' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'Algorithm $algorithm' for $farm_name farm $farm_type" );
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
@@ -258,7 +258,7 @@ sub setFarmMaxClientTime    # ($max_client_time,$track,$farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	&logfile(
+	&zenlog(
 		"setting 'MaxClientTime $max_client_time $track' for $farm_name farm $farm_type"
 	);
 
@@ -315,7 +315,7 @@ sub setFarmMaxConn    # ($max_connections,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&logfile( "setting 'MaxConn $max_connections' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'MaxConn $max_connections' for $farm_name farm $farm_type" );
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
@@ -700,7 +700,7 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 
-	&logfile( "running 'Start write $writeconf' for $farm_name farm $farm_type" );
+	&zenlog( "running 'Start write $writeconf' for $farm_name farm $farm_type" );
 
 	if (    $writeconf eq "true"
 		 && $farm_type ne "datalink"
@@ -790,7 +790,7 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 	my $farm_type = &getFarmType( $farm_name );
 	$status = $farm_type;
 
-	&logfile( "running 'Stop write $writeconf' for $farm_name farm $farm_type" );
+	&zenlog( "running 'Stop write $writeconf' for $farm_name farm $farm_type" );
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
@@ -845,7 +845,7 @@ sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 		return $output;
 	}
 
-	&logfile( "running 'Create' for $farm_name farm $farm_type" );
+	&zenlog( "running 'Create' for $farm_name farm $farm_type" );
 
 	if ( $farm_type eq "TCP" )
 	{
@@ -1056,7 +1056,7 @@ sub runFarmDelete    # ($farm_name)
 
 	my $farm_type = &getFarmType( $farm_name );
 
-	&logfile( "running 'Delete' for $farm_name" );
+	&zenlog( "running 'Delete' for $farm_name" );
 	unlink glob ( "$configdir/$farm_name\_*\.cfg" );
 	$status = $?;
 	unlink glob ( "$configdir/$farm_name\_*\.html" );
@@ -1092,7 +1092,7 @@ sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $stat      = -1;
 
-	&logfile(
+	&zenlog(
 			  "setting 'VirtualConf $vip $vip_port' for $farm_name farm $farm_type" );
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
@@ -1134,7 +1134,7 @@ sub setFarmServer # $output ($ids,$rip,$port,$max,$weight,$priority,$timeout,$fa
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	&logfile(
+	&zenlog(
 		"setting 'Server $ids $rip $port max $max weight $weight prio $priority timeout $timeout' for $farm_name farm $farm_type"
 	);
 
@@ -1176,7 +1176,7 @@ sub runFarmServerDelete    # ($ids,$farm_name,$service)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	&logfile( "running 'ServerDelete $ids' for $farm_name farm $farm_type" );
+	&zenlog( "running 'ServerDelete $ids' for $farm_name farm $farm_type" );
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
@@ -1346,7 +1346,7 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 
 	if ( $new_farm_name =~ /^$/ )
 	{
-		&logfile( "error 'NewFarmName $new_farm_name' is empty" );
+		&zenlog( "error 'NewFarmName $new_farm_name' is empty" );
 		return -2;
 	}
 
@@ -1377,7 +1377,7 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 
 	# end of farmguardian renaming
 
-	&logfile(
+	&zenlog(
 			  "setting 'NewFarmName $new_farm_name' for $farm_name farm $farm_type" );
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )

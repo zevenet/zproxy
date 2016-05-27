@@ -85,7 +85,7 @@ sub actions()
 	}
 	else
 	{
-		&logfile( "ZAPI error, trying to set an action." );
+		&zenlog( "ZAPI error, trying to set an action." );
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
@@ -129,11 +129,11 @@ sub actions()
 		if ( $status != 0 )
 		{
 			$error = "true";
-			&logfile( "ZAPI error, trying to set the action stop in farm $farmname." );
+			&zenlog( "ZAPI error, trying to set the action stop in farm $farmname." );
 		}
 		else
 		{
-			&logfile(
+			&zenlog(
 					  "ZAPI success, the action stop has been established in farm $farmname." );
 		}
 	}
@@ -144,11 +144,11 @@ sub actions()
 		if ( $status != 0 )
 		{
 			$error = "true";
-			&logfile( "ZAPI error, trying to set the action stop in farm $farmname." );
+			&zenlog( "ZAPI error, trying to set the action stop in farm $farmname." );
 		}
 		else
 		{
-			&logfile(
+			&zenlog(
 					 "ZAPI success, the action start has been established in farm $farmname." );
 		}
 	}
@@ -159,7 +159,7 @@ sub actions()
 		if ( $status != 0 )
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				  "ZAPI error, trying to stop the farm in the action restart in farm $farmname."
 			);
 		}
@@ -172,13 +172,13 @@ sub actions()
 				&setFarmHttpBackendStatus( $farmname );
 			}
 			&setFarmNoRestart( $farmname );
-			&logfile(
+			&zenlog(
 				   "ZAPI success, the action restart has been established in farm $farmname." );
 		}
 		else
 		{
 			$error = "true";
-			&logfile(
+			&zenlog(
 				 "ZAPI error, trying to start the farm in the action restart in farm $farmname."
 			);
 		}
@@ -423,7 +423,7 @@ sub maintenance()
 	if ( $action eq "maintenance" )
 	{
 		$status = &setFarmBackendMaintenance( $farmname, $id, $service );
-		&logfile(
+		&zenlog(
 			"Changing status to maintenance of backend $id in service $service in farm $farmname"
 		);
 		if ( $? ne 0 )
@@ -449,7 +449,7 @@ sub maintenance()
 	elsif ( $action eq "up" )
 	{
 		&setFarmBackendNoMaintenance( $farmname, $id, $service );
-		&logfile(
+		&zenlog(
 			 "Changing status to up of backend $id in service $service in farm $farmname" );
 		if ( $? ne 0 )
 		{

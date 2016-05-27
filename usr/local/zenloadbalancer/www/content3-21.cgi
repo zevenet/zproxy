@@ -24,8 +24,8 @@
 my $socket = IO::Socket::INET->new( Proto => 'udp' );
 
 #~ use Devel::Size qw(size total_size);
-#~ &logfile(Dumper $socket);
-#~ &logfile(total_size($socket));
+#~ &zenlog(Dumper $socket);
+#~ &zenlog(total_size($socket));
 
 my $iface = &getInterfaceConfig( $if, $ipv );
 
@@ -48,7 +48,7 @@ if ( !$$iface{ addr } )
 	$$iface{ ip_v } = $ipv;
 }
 
-#~ &logfile(Dumper $iface);
+#~ &zenlog(Dumper $iface);
 
 #~
 #~ my (
@@ -75,7 +75,7 @@ else
 
 $$iface{ bcast } = $socket->if_broadcast( $$iface{ name } );
 
-#~ &logfile(Dumper $iface);
+#~ &zenlog(Dumper $iface);
 
 print "
                <div class=\"box grid_12\">
