@@ -1429,8 +1429,8 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	# end of farmguardian renaming
 
 	# rename rrd
-	rename ( "$rrdap_dir$rrd_dir/$farm_name-farm.rrd",
-			 "$rrdap_dir$rrd_dir/$new_farm_name-farm.rrd" );
+	rename ( "$rrdap_dir/$rrd_dir/$farm_name-farm.rrd",
+			 "$rrdap_dir/$rrd_dir/$new_farm_name-farm.rrd" );
 
 	# delete old graphs
 	unlink ( "img/graphs/bar$farm_name.png" );

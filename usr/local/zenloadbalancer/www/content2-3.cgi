@@ -56,31 +56,31 @@ print "
 # Print form
 #search farm files
 opendir ( DIR, $logdir );
-@files = grep ( /.*\.log$/, readdir ( DIR ) );
+my @files = grep ( /.*\.log$/, readdir ( DIR ) );
 closedir ( DIR );
 
 print "<form method=\"post\" action=\"index.cgi\">";
 print "<input type=\"hidden\" name=\"id\" value=\"2-3\">";
 
-foreach $file ( @files )
+foreach my $file ( @files )
 {
 	print "<h6>Log: $file</h6>";
-	$filepath = "$logdir$file";
+	my $filepath = "$logdir/$file";
 	print
 	  "<div class=\"form-row2\"><p><input type=\"radio\" name=\"filelog\" value=\"$filepath\"> ";
-	$datetime_string = ctime( stat ( $filepath )->mtime );
+	my $datetime_string = ctime( stat ( $filepath )->mtime );
 	print "$filepath - $datetime_string</p></div>\n";
-	@filen = split ( "\.log", $file );
+	my @filen = split ( "\.log", $file );
 
 	#all files with same name:
 	opendir ( DIR, $logdir );
-	@filesgz = grep ( /@filen[0].*gz$/, readdir ( DIR ) );
+	my @filesgz = grep ( /$filen[0].*gz$/, readdir ( DIR ) );
 	closedir ( DIR );
 	@filesgz = sort ( @filesgz );
-	foreach $filegz ( @filesgz )
+	foreach my $filegz ( @filesgz )
 	{
-		$filepath        = "$logdir$filegz";
-		$datetime_string = ctime( stat ( $filepath )->mtime );
+		my $filepath        = "$logdir/$filegz";
+		my $datetime_string = ctime( stat ( $filepath )->mtime );
 		print
 		  "<div class=\"form-row2\"><p><input type=\"radio\" name=\"filelog\" value=\"$filepath\"> ";
 		print "$filepath - $datetime_string</p></div>";
@@ -106,6 +106,7 @@ if ( $action eq "See logs" && $nlines !~ /^$/ && $filelog !~ /^$/ )
 			print "<h6>Last $nlines lines from log file $filelog:</h6>";
 			print "<div class=\"form-row2\">";
 			my @eject;
+			
 			if ( $filelog =~ /gz$/ )
 			{
 				@eject = `$zcat $filelog | $tail -$nlines`;
@@ -114,10 +115,12 @@ if ( $action eq "See logs" && $nlines !~ /^$/ && $filelog !~ /^$/ )
 			{
 				@eject = `$tail -$nlines $filelog`;
 			}
-			foreach $line ( @eject )
+			
+			foreach my $line ( @eject )
 			{
 				print "<p>$line</p>";
 			}
+			
 			print "</div>\n";
 			print "<div class=\"form-row2\"><form method=\"post\" action=\"index.cgi\">";
 			print "<input type=\"hidden\" name=\"id\" value=\"2-3\">";

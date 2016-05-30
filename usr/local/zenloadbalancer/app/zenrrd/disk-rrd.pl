@@ -54,10 +54,10 @@ foreach $line(@system)
 					$tot = @s_line[1]*1024;
 					$used = @s_line[2]*1024;
 					$free = @s_line[3]*1024;
-					if (! -f "$rrdap_dir$rrd_dir$partitions$db_hd")
+					if (! -f "$rrdap_dir/$rrd_dir/$partitions$db_hd")
 						{
-						print "Creating $partiton rrd database in $rrdap_dir$rrd_dir$partitions$db_hd ...\n";
-						RRDs::create "$rrdap_dir$rrd_dir$partitions$db_hd",
+						print "Creating $partiton rrd database in $rrdap_dir/$rrd_dir/$partitions$db_hd ...\n";
+						RRDs::create "$rrdap_dir/$rrd_dir/$partitions$db_hd",
 						"-s 300", 
 						"DS:tot:GAUGE:600:0:U",
 						"DS:used:GAUGE:600:0:U",
@@ -88,8 +88,8 @@ foreach $line(@system)
                 			print "                free: $free Bytes\n";
                 			##update rrd info
 					$size =~ s/%//g;
-					print "Updating Informatino in $rrdap_dir$rrd_dir$partitions$db_hd ...\n";
-					RRDs::update "$rrdap_dir$rrd_dir$partitions$db_hd",
+					print "Updating Informatino in $rrdap_dir/$rrd_dir/$partitions$db_hd ...\n";
+					RRDs::update "$rrdap_dir/$rrd_dir/$partitions$db_hd",
 						"-t", "tot:used:free",
 						"N:$tot:$used:$free";
 
