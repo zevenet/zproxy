@@ -38,7 +38,7 @@ sub zenlog    # ($type,$string)
 	my $string = shift;            # string = message
 	my $type = shift // 'info';    # type   = log level (Default: info))
 
-	# Get the program name
+	# Get the program name 
 	my $program = ( split '/', $0 )[-1];
 	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
 
