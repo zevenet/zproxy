@@ -50,7 +50,7 @@ if ( !defined $ARGV[0] )
 	print "\thelp: farmguardian farmname [-s <service>] [-l]\n";
 	print
 	  "\t\t-s <service>\t: Launch FarmGuardian for a certain HTTP/S farm service\n";
-	print "\t\t-l\t\t: Active logs in $farmguardian_logs directory\n";
+	print "\t\t-l\t\t: Enable logs\n";
 
 	exit 0;
 }
@@ -73,17 +73,12 @@ my $file       = "${farmname}_${fservice}guardian.conf";
 my $fileconfig = "$configdir/$file";
 
 ### logging ###
-my $logfile = "/dev/null";
 my $logging = 'disabled';
 
 if ( "$ARGV[1]" eq '-l' || "$ARGV[3]" eq '-l' )
 {
-	$logfile = "$farmguardian_logs/${farmname}_${fservice}farmguardian.log";
 	$logging = 'enabled';
 }
-
-open STDERR, '>>', "$logfile" or die;
-open STDOUT, '>>', "$logfile" or die;
 
 ### check for farmguardian configuration file available ###
 my $timetocheck;
@@ -92,15 +87,38 @@ my $enabled;
 
 if ( !-e $fileconfig )
 {
-	print "Abort: file $fileconfig not found\n";
+	my $msg = "Abort: file $fileconfig not found";
+	
+	if ( $logging eq 'enabled' )
+	{
+		&zenlog( $msg );
+	}
+	else
+	{
+		print "$msg\n";
+	}
+
 	exit -1;
 }
 else
 {
 	my $line;
 
-	open ( my $fi, '<', "$fileconfig" )
-	  or die "cannot open file $fileconfig: $!";
+	if ( ! open ( my $fi, '<', "$fileconfig" ) )
+	{
+		my $msg = "Cannot open file $fileconfig: $!";
+
+		if ( $logging eq 'enabled' )
+		{
+			&zenlog( $msg );
+		}
+		else
+		{
+			print "$msg\n";
+		}
+
+		die;
+	}
 
 	while ( <$fi> )
 	{
@@ -125,8 +143,22 @@ if ( $enabled ne 'true' )
 # create farmguardian pidfile
 my $filepid = "/var/run/$pidfile";
 {
-	open ( my $fo, '>', "$filepid" )
-	  or die "cannot open file $fileconfig: $!";
+	if ( ! open ( my $fo, '>', "$filepid" ) )
+	{
+		my $msg = "Cannot open file $filepid: $!";
+
+		if ( $logging eq 'enabled' )
+		{
+			&zenlog( $msg );
+		}
+		else
+		{
+			print "$msg\n";
+		}
+
+		die;
+	}
+	
 	print $fo "$$";
 	close $fo;
 }
@@ -155,26 +187,6 @@ while ( 1 )
 	my $i       = 0;
 	my $j       = 0;
 
-	# Check if the log file exists
-	my $filesize = -s "$farmguardian_logs/$ARGV[0]_${fservice}farmguardian.log";
-
-	if (
-		 (
-		   ( $logging eq 'enabled' )
-		   && !( -e "$farmguardian_logs/$ARGV[0]_${fservice}farmguardian.log" )
-		 )
-		 || ( $filesize == 0 )
-	  )
-	{
-		print "$farmguardian $fservice log doesn't exist, creating now...\n";
-		close STDERR;
-		close STDOUT;
-		open STDERR, '>>', "$farmguardian_logs/$ARGV[0]_${fservice}farmguardian.log"
-		  or die;
-		open STDOUT, '>>', "$farmguardian_logs/$ARGV[0]_${fservice}farmguardian.log"
-		  or die;
-	}
-
 	### Collect variable values for the diferent farm types ###
 
 	# Collect TCP/UDP farm variables values
@@ -184,7 +196,17 @@ while ( 1 )
 
 		if ( $? != 0 )
 		{
-			print "Farm $farmname is down, abort.\n";
+			my $msg = "Farm $farmname is down, abort.";
+			
+			if ( $logging eq 'enabled' )
+			{
+				&zenlog( $msg );
+			}
+			else
+			{
+				print "$msg\n";
+			}
+			
 			exit 1;
 		}
 
@@ -218,7 +240,17 @@ while ( 1 )
 
 		if ( $? != 0 )
 		{
-			print "Farm $farmname is down, abort.\n";
+			my $msg = "Farm $farmname is down, abort.";
+
+			if ( $logging eq 'enabled' )
+			{
+				&zenlog( $msg );
+			}
+			else
+			{
+				print "$msg\n";
+			}
+
 			exit 1;
 		}
 
@@ -261,14 +293,18 @@ while ( 1 )
 	# print farm check details
 	if ( $logging eq 'enabled' )
 	{
+		my $logline;
 		my $now = localtime time;
-		print "$now - ";
-		print "farm $farmname - ";
-		print "timeout $timeout - ";
-		print "timetocheck $timetocheck - ";
-		print "blacklist $blacklist - " if defined $blacklist;    # TCP
-		print "portadmin $portadmin - " if defined $portadmin;
-		print "command $check_cmd_tpl\n";
+
+		$logline .= "$now - ";
+		$logline .= "farm $farmname - ";
+		$logline .= "timeout $timeout - ";
+		$logline .= "timetocheck $timetocheck - ";
+		$logline .= "blacklist $blacklist - " if defined $blacklist;    # TCP
+		$logline .= "portadmin $portadmin - " if defined $portadmin;
+		$logline .= "command $check_cmd_tpl";
+
+		&zenlog( $logline );
 	}
 
 	# backend loop. checking every backend.
@@ -277,8 +313,12 @@ while ( 1 )
 	{
 		if ( $logging eq 'enabled' )
 		{
-			print "server[$backendid[$j]] $backendserv[$j]:$backendport[$j]";
-			print " - status $backendstatus[$j]" if $type !~ /(tcp|udp)/;
+			my $logline;
+			
+			$logline .= "server[$backendid[$j]] $backendserv[$j]:$backendport[$j]";
+			$logline .= " - status $backendstatus[$j]" if $type !~ /(tcp|udp)/;
+
+			&zenlog( $logline );
 		}
 
 		# jump to next backend if this one is in maintenance
@@ -325,8 +365,7 @@ while ( 1 )
 		# being verbose the check output
 		if ( $logging eq 'enabled' )
 		{
-			local $| = 1;
-			print " - timedout $timedout - errorcode $errorcode\n";
+			&zenlog( "timedout $timedout - errorcode $errorcode" );
 		}
 
 		### Enable backend
@@ -334,8 +373,8 @@ while ( 1 )
 		{
 			if ( $logging eq 'enabled' )
 			{
-				print
-				  "**execution OK in server $j - nerrorcode:$errorcode - timedout:$timedout - backend state:$backendstatus[$j]\n";
+				&zenlog(
+				  "**execution OK in server $j - nerrorcode:$errorcode - timedout:$timedout - backend state:$backendstatus[$j]");
 			}
 
 			# Enabling backend for every type of farm supported
@@ -366,7 +405,7 @@ while ( 1 )
 		{
 			if ( $logging eq 'enabled' )
 			{
-				print "**execution error in ' $command ', output::**\n", @output;
+				&zenlog("**execution error in ' $command ', output::**\n".@output);
 			}
 
 			# Disabling backend for every type of farm supported

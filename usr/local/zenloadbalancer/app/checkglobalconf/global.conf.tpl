@@ -7,9 +7,7 @@ $basedir="/usr/local/zenloadbalancer/www";
 #configuration directory.In this section all config files are saved.
 $configdir="/usr/local/zenloadbalancer/config";
 #Log directory
-$logdir="/usr/local/zenloadbalancer/logs/";
-#log filename for this Graphic user interface.Some action with this GUI will be saved here.
-$logfile="/usr/local/zenloadbalancer/logs/zenloadbalancer.log";
+$logdir="/var/log";#update
 #.<b>Time out execution ZEN GUI CGIs.</b> <font size=1>When timeout is exceded the cgi execution is killed automatically.</font>
 $timeouterrors="60";
 #File configuration Zen Cluster
@@ -148,8 +146,6 @@ $libexec_dir="/usr/local/zenloadbalancer/app/libexec";
 $farmguardian="/usr/local/zenloadbalancer/app/farmguardian/bin/farmguardian";
 #Directory where FarmGuardian save the configuration files
 $farmguardian_dir="/usr/local/zenloadbalancer/app/farmguardian/etc";
-#Directory where FarmGuadian save the logs
-$farmguardian_logs="/usr/local/zenloadbalancer/logs";
 
 #Where is ZenRRD Directory?. There is a perl script that create rrd database and images from Monitoring section
 $rrdap_dir="/usr/local/zenloadbalancer/app/zenrrd";#update
@@ -157,15 +153,11 @@ $rrdap_dir="/usr/local/zenloadbalancer/app/zenrrd";#update
 $img_dir="/img/graphs/";
 #Relative path where is rrd databases from ZenRRD * no modify
 $rrd_dir="rrd";#update
-#File log name  for ZenRRD. A lot of disk space is needed. If it is blank no loggin
-$log_rrd="";
 
 #Service for configure Zen directory replication
 $zenino="/usr/local/zenloadbalancer/app/zeninotify/zeninotify.pl"; 
 #Zen Inotify pid file 
 $zeninopid="/var/run/zeninotify.pid";
-#Zen inotify log file
-$zeninolog="/usr/local/zenloadbalancer/logs/zeninotify.log";
 #.<b>Rsync replication parameters</b>
 $zenrsync="-auzv --delete";
 
@@ -173,8 +165,6 @@ $zenrsync="-auzv --delete";
 $zenlatup="/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl";
 #Services for configure stop latency service
 $zenlatdown="/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl";
-#Zen latency log file
-$zenlatlog="/usr/local/zenloadbalancer/logs/zenlatency.log";
 
 #Zen backup
 $zenbackup="/usr/local/zenloadbalancer/app/zenbackup/zenbackup.pl";
@@ -184,4 +174,4 @@ $pluginsdir="/usr/local/zenloadbalancer/www/Plugins";#update
 #::END Global Section
 
 #!!!!NOT REMOVE NEXT LINE!!!!!!
-1
+1;

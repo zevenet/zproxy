@@ -24,24 +24,15 @@
 
 require '/usr/local/zenloadbalancer/config/global.conf';
 
-open STDERR, '>>', "$zenlatlog" or die;
-open STDOUT, '>>', "$zenlatlog" or die;
-
 #start service
-my $interface = @ARGV[0];
-my $vip       = @ARGV[1];
+my $interface = $ARGV[0];
+my $vip       = $ARGV[1];
 
 #pre run: if down:
 my $date = `date +%y/%m/%d\\ %H-%M-%S`;
 chomp ( $date );
 
-#chomp($date);
-#print "$date: STARTING UP LATENCY SERVICE\n";
-#print "Running prestart commands:";
-#my @eject = `$ip_bin addr del $vip\/$nmask dev $rinterface label $rinterface:cluster`;
-#print "Running: $ip_bin addr del $vip\/$nmask dev $rinterface label $rinterface:cluster\n";
-
-print "$date Running start commands:\n";
+&zenlog( "$date Running start commands:" );
 
 # Get cluster interface name
 my $cl_vip;
@@ -62,6 +53,7 @@ if ( -e $filecluster )
 # Get cluster vip mask
 my $nmask;
 my @ip_addr_list = `$ip_bin addr list`;
+
 foreach my $line ( @ip_addr_list )
 {
 	# Example: "inet 192.168.101.16/24 brd 192.168.101.255 scope global eth2"
@@ -75,8 +67,9 @@ foreach my $line ( @ip_addr_list )
 
 # Add cluster virtual interface to the system
 my $ip_cmd = "$ip_bin addr add $vip\/$nmask dev $interface label $cl_vip";
+
+&zenlog( "Running: $ip_cmd" );
 system ( $ip_cmd );
-print "Running: $ip_cmd\n";
 
 #if interface vipcl is up then run zininotify service
 @ip_addr_list = `$ip_bin addr list`;
@@ -93,7 +86,7 @@ if ( grep ( /$cl_vip/, @ip_addr_list ) )
 		{
 			$zeninopid = $_;
 			chomp ( $zeninopid );
-			print "Stoping zeninotify $zeninopid.\n";
+			&zenlog( "Stoping zeninotify $zeninopid." );
 			$run = kill 9, $zeninopid;
 		}
 		close $zino_fh;
@@ -101,15 +94,8 @@ if ( grep ( /$cl_vip/, @ip_addr_list ) )
 
 	# Start zeninotify
 	my @eject = `$zenino &`;
-	print "Running Zen inotify syncronization service\n";
-	print "$zenino &";
-
-	#@array[2] =~ s/:DOWN//;
-	#@array[2] =~ s/:UP//;
-	#$line = @array[2];
-	#chomp($line);
-	#@array[2]="";
-	#@array[2] = "$line\:UP\n";
+	&zenlog( "Running Zen inotify syncronization service" );
+	&zenlog( "$zenino &" );
 
 	# Force the first sync
 	system (
@@ -118,16 +104,8 @@ if ( grep ( /$cl_vip/, @ip_addr_list ) )
 }
 else
 {
-	print
-	  "Zen inotify is not running because Zen latency is not running over $ifname[6]";
-
-	#@array[2] =~ s/:DOWN//;
-	#@array[2] =~ s/:UP//;
-	#
-	#$line = @array[2];
-	#chomp($line);
-	#@array[2]="";
-	#@array[2] = "$line\:DOWN\n";
+	&zenlog(
+	  "Zen inotify is not running because Zen latency is not running over $ifname[6]" );
 }
 
 sleep ( 5 );

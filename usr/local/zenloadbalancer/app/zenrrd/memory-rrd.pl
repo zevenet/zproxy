@@ -178,6 +178,7 @@ print "$0: Info:	Cached Memory: $mcvalue Bytes\n";
 print "$0: Info:	Buffered Memory: $mbvalue Bytes\n";
 
 print "$0: Info: Updating data in $rrdap_dir/$rrd_dir/$db_mem ...\n";
+
 RRDs::update "$rrdap_dir/$rrd_dir/$db_mem",
 	"-t", "memt:memu:memf:memc",
 	"N:$mvalue:$mused:$mfvalue:". ($mcvalue + $mbvalue);
@@ -186,7 +187,6 @@ if ( $ERROR = RRDs::error )
 {
 	print "$0: Error: Unable to update the rrd database: $ERROR\n";
 }
-
 
 print "$0: Info: Swap Stats ...\n";
 print "$0: Info:	Total Memory Swap: $swtvalue Bytes\n";
@@ -203,4 +203,3 @@ if ( $ERROR = RRDs::error )
 {
 	print "$0: Error: Unable to update the rrd database: $ERROR\n";
 }
-

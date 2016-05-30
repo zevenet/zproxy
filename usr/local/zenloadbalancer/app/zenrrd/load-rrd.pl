@@ -97,6 +97,7 @@ print "$0: Info:	Last 5 minutes: $last5\n";
 print "$0: Info:	Last 15 minutes: $last15\n";
 
 print "$0: Info: Updating data in $rrdap_dir/$rrd_dir/$db_load ...\n";
+
 RRDs::update "$rrdap_dir/$rrd_dir/$db_load",
 	"-t", "load:load5:load15",
 	"N:$last:$last5:$last15";
@@ -105,4 +106,3 @@ if ( $ERROR = RRDs::error )
 {
 	print "$0: Error: Unable to update the rrd database: $ERROR\n";
 }
-

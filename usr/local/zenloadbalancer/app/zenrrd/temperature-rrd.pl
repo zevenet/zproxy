@@ -77,4 +77,3 @@ if ( $ERROR = RRDs::error )
 {
 	print "$0: Error: Unable to update the rrd database: $ERROR\n";
 }
-
