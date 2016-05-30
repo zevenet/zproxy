@@ -48,25 +48,6 @@ else
 	close LOCK;
 }
 
-<<<<<<< HEAD
-opendir(DIR, $rrdap_dir);
-@files = grep(/-rrd.pl$/,readdir(DIR));
-closedir(DIR);
-
-foreach $file(@files)
-	{
-	print "Executing $file...\n";
-	if ($log_rrd eq "")
-		{
-		my @system =`$rrdap_dir/$file`;
-		}
-
-	else
-		{
-		my @system =`$rrdap_dir/$file >> $rrdap_dir/$log_rrd`;
-		}
-	}
-=======
 opendir ( DIR, $rrdap_dir );
 my @rrd_scripts = grep ( /-rrd.pl$/, readdir ( DIR ) );
 closedir ( DIR );
@@ -74,7 +55,6 @@ closedir ( DIR );
 foreach my $script_rrd ( @rrd_scripts )
 {
 	print "Executing $script_rrd...\n";
->>>>>>> [Improvement] Remove global log variables and use.
 
 	system( "$rrdap_dir/$script_rrd" );
 }
