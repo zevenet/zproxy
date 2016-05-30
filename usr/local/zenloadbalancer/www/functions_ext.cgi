@@ -38,66 +38,16 @@ sub zenlog    # ($type,$string)
 	my $string = shift;				# string = message
 	my $type   = shift // 'info';	# type   = log level (Default: info))
 
-	# Get the program name
+	# Get the program name 
 	my $program = ( split '/', $0 )[-1];
 	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
 
 	openlog( $program, 'pid', 'local0' );    #open syslog
 
-	if ( $type eq "info" || $type eq "notice" )
-	{                                        #info and notice priorities
-		syslog( $type, "(" . uc ($type) . ") " . $string );
-	}
-	elsif ( $type eq "err" || $type eq "warning" )
-	{                                        #warning and err priorities
-		syslog(
-				$type,
-				"(priority: "
-				  . $type
-				  . ", process ID: "
-				  . $$
-				  . ", ERRNO output: %m, last state value: "
-				  . $? . ") -> "
-				  . $string
-		);
-	}
-	elsif ( $type eq "crit" || $type eq "alert" || $type eq "emerg" )
-	{    #crit, alert and emerg priorities
-		syslog(
-				$type,
-				"(priority: "
-				  . $type
-				  . " HIGH PRIORITY, process ID: "
-				  . $$
-				  . ", ERRNO output: %m, last state value: "
-				  . $? . ") -> "
-				  . $string
-		);
-	}
-	elsif ( $type eq "debug" )
-	{    #debug priority
-		syslog(
-				$type,
-				"(priority: "
-				  . $type
-				  . ", process ID: "
-				  . $$
-				  . ", real user id of process: "
-				  . $<
-				  . ", effective user id of process: "
-				  . $>
-				  . ", ERRNO output: %m, last state value: "
-				  . $?
-				  . ", list of command line args: "
-				  . @ARGV
-				  . ", perl executable name: "
-				  . $^X . ") -> "
-				  . $string
-		);
-	}
-	else
-	{    #other cases
-		syslog( $type, "(priority: " . $type . ") ->" . $string );
+	my @lines = split /\n/, $string;
+	
+	foreach my $line (@lines) {
+		syslog( $type, "(" . uc ($type) . ") " . $line );
 	}
 
 	closelog();    #close syslog
@@ -137,7 +87,7 @@ sub openlock    # ($filehandle,$mode,$expr)
 		if ( $mode =~ /</ )
 		{                                  #only reading
 			open ( $filehandle, $mode )
-			  || die "some problems happened reading the filehandle $filehanlde\n";
+			  || die "some problems happened reading the filehandle $filehandle\n";
 			flock $filehandle, LOCK_SH
 			  ; #other scripts with LOCK_SH can read the file. Writing scripts with LOCK_EX will be locked
 		}

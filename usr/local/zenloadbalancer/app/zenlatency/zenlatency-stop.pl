@@ -24,24 +24,15 @@
 
 require '/usr/local/zenloadbalancer/config/global.conf';
 
-open STDERR, '>>', "$zenlatlog" or die;
-open STDOUT, '>>', "$zenlatlog" or die;
-
 #start service
-my $interface = @ARGV[0];
-my $vip       = @ARGV[1];
+my $interface = $ARGV[0];
+my $vip       = $ARGV[1];
 
 #pre run: if down:
 my $date = `date +%y/%m/%d\\ %H-%M-%S`;
 chomp ( $date );
 
-#chomp($date);
-#print "$date: STARTING UP LATENCY SERVICE\n";
-#print "Running prestart commands:";
-#my @eject = `$ip_bin addr del $vip\/$nmask dev $rinterface label $rinterface:cluster`;
-#print "Running: $ip_bin addr del $vip\/$nmask dev $rinterface label $rinterface:cluster\n";
-
-print "$date Running start commands:\n";
+&zenlog( "$date Running start commands:" );
 
 # Get cluster interface name
 my $cl_vip;
@@ -75,28 +66,18 @@ foreach my $line ( @ip_addr_list )
 
 # Remove cluster virtual interface from the system
 my $ip_cmd = "$ip_bin addr del $vip\/$nmask dev $interface label $cl_vip";
+&zenlog( "Running: $ip_cmd" );
 system ( $ip_cmd );
-print "Running: $ip_cmd\n";
-
-#$line = @array[2];
-#chomp($line);
-#@array[2] = "$line\:DOWN\n";
 
 if ( -e $zeninopid )
 {
 	open my $zino_fh, "<", "$zeninopid";
 	my @inopid = <$zino_fh>;
 	chomp ( @inopid );
-	print "Stopping zeninotify with pid @inopid\n";
+	&zenlog( "Stopping zeninotify with pid @inopid" );
 	close $zino_fh;
 	kill ( 9, @inopid );
 	unlink ( $zeninopid );
-
-	#@array[2] =~ s/:DOWN//;
-	#@array[2] =~ s/:UP//;
-	#$line = @array[2];
-	#chomp($line);
-	#@array[2] = "$line\:DOWN\n";
 }
 
 sleep ( 5 );
