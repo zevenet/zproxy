@@ -243,7 +243,11 @@ sub genLoadGraph    #($type,$graph,$time)
 					 "--alt-autoscale-max",
 					 "--lower-limit=0",
 					 "--title=LOAD AVERAGE",
+<<<<<<< HEAD
 					 "--vertical-label=LOAD",
+=======
+					 "--vertical-label=LOAD AVERAGE",
+>>>>>>> [Improvement] Remove global log variables and use.
 					 "DEF:load=$rrdap_dir/$rrd_dir/$db_load:load:AVERAGE",
 					 "DEF:load5=$rrdap_dir/$rrd_dir/$db_load:load5:AVERAGE",
 					 "DEF:load15=$rrdap_dir/$rrd_dir/$db_load:load15:AVERAGE",
@@ -390,7 +394,11 @@ sub genNetGraph    #($type,$graph,$time)
 					 "-l 0",
 					 "--alt-autoscale-max",
 					 "--title=TRAFFIC ON $if_name",
+<<<<<<< HEAD
 					 "--vertical-label=BANDWIDTH",
+=======
+					 "-v TRAFFIC ON $if_name",
+>>>>>>> [Improvement] Remove global log variables and use.
 					 "DEF:in=$rrdap_dir/$rrd_dir/$db_if:in:AVERAGE",
 					 "DEF:out=$rrdap_dir/$rrd_dir/$db_if:out:AVERAGE",
 					 "CDEF:out_neg=out,-1,*",
