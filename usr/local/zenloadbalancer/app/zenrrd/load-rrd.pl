@@ -27,11 +27,11 @@ require ("/usr/local/zenloadbalancer/config/global.conf");
 
 $db_load="load.rrd";
 #create db memory if not exist
-if (! -f "$rrdap_dir$rrd_dir$db_load" )
+if (! -f "$rrdap_dir/$rrd_dir/$db_load" )
 
 	{
-	print "Creating load rrd data base $rrdap_dir$rrd_dir$db_load ...\n";
-	RRDs::create "$rrdap_dir$rrd_dir$db_load",
+	print "Creating load rrd data base $rrdap_dir/$rrd_dir/$db_load ...\n";
+	RRDs::create "$rrdap_dir/$rrd_dir/$db_load",
 		"-s 300",
 		"DS:load:GAUGE:600:0,00:100,00",
 		"DS:load5:GAUGE:600:0,00:100,00",
@@ -78,12 +78,12 @@ if (-f "/proc/loadavg")
 	}
 
 #update rrd info
-print "Updating Information in $rrdap_dir$rrd_dir$db_load ...\n";		
-RRDs::update "$rrdap_dir$rrd_dir$db_load",
+print "Updating Information in $rrdap_dir/$rrd_dir/$db_load ...\n";		
+RRDs::update "$rrdap_dir/$rrd_dir/$db_load",
 	"-t", "load:load5:load15",
 	"N:$last:$last5:$last15";
 
-#$last =  RRDs::last "$rrdap_dir$rrd_dir$db_load";
+#$last =  RRDs::last "$rrdap_dir/$rrd_dir/$db_load";
 
 
 

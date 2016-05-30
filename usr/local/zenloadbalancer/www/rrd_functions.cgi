@@ -99,7 +99,7 @@ sub genCpuGraph    #($type,$graph,$time)
 
 	my $db_cpu = "$type.rrd";
 
-	if ( -e "$rrdap_dir$rrd_dir$db_cpu" )
+	if ( -e "$rrdap_dir/$rrd_dir/$db_cpu" )
 	{
 		RRDs::graph(
 					 "$graph",
@@ -111,14 +111,14 @@ sub genCpuGraph    #($type,$graph,$time)
 					 "--lower-limit=0",
 					 "--title=CPU USAGE",
 					 "--vertical-label=%",
-					 "DEF:user=$rrdap_dir$rrd_dir$db_cpu:user:AVERAGE",
-					 "DEF:nice=$rrdap_dir$rrd_dir$db_cpu:nice:AVERAGE",
-					 "DEF:sys=$rrdap_dir$rrd_dir$db_cpu:sys:AVERAGE",
-					 "DEF:iowait=$rrdap_dir$rrd_dir$db_cpu:iowait:AVERAGE",
-					 "DEF:irq=$rrdap_dir$rrd_dir$db_cpu:irq:AVERAGE",
-					 "DEF:softirq=$rrdap_dir$rrd_dir$db_cpu:softirq:AVERAGE",
-					 "DEF:idle=$rrdap_dir$rrd_dir$db_cpu:idle:AVERAGE",
-					 "DEF:tused=$rrdap_dir$rrd_dir$db_cpu:tused:AVERAGE",
+					 "DEF:user=$rrdap_dir/$rrd_dir/$db_cpu:user:AVERAGE",
+					 "DEF:nice=$rrdap_dir/$rrd_dir/$db_cpu:nice:AVERAGE",
+					 "DEF:sys=$rrdap_dir/$rrd_dir/$db_cpu:sys:AVERAGE",
+					 "DEF:iowait=$rrdap_dir/$rrd_dir/$db_cpu:iowait:AVERAGE",
+					 "DEF:irq=$rrdap_dir/$rrd_dir/$db_cpu:irq:AVERAGE",
+					 "DEF:softirq=$rrdap_dir/$rrd_dir/$db_cpu:softirq:AVERAGE",
+					 "DEF:idle=$rrdap_dir/$rrd_dir/$db_cpu:idle:AVERAGE",
+					 "DEF:tused=$rrdap_dir/$rrd_dir/$db_cpu:tused:AVERAGE",
 					 "AREA:sys#DC374A:System\\t",
 					 "GPRINT:sys:LAST:Last\\:%8.2lf %%",
 					 "GPRINT:sys:MIN:Min\\:%8.2lf %%",
@@ -180,7 +180,7 @@ sub genDiskGraph    #($type,$graph,$time)
 		}
 	}
 
-	if ( -e "$rrdap_dir$rrd_dir$db_hd" )
+	if ( -e "$rrdap_dir/$rrd_dir/$db_hd" )
 	{
 		RRDs::graph(
 					 "$graph",
@@ -195,9 +195,9 @@ sub genDiskGraph    #($type,$graph,$time)
 					 "-l 0",
 					 "-a",
 					 "$imagetype",
-					 "DEF:tot=$rrdap_dir$rrd_dir$db_hd:tot:AVERAGE",
-					 "DEF:used=$rrdap_dir$rrd_dir$db_hd:used:AVERAGE",
-					 "DEF:free=$rrdap_dir$rrd_dir$db_hd:free:AVERAGE",
+					 "DEF:tot=$rrdap_dir/$rrd_dir/$db_hd:tot:AVERAGE",
+					 "DEF:used=$rrdap_dir/$rrd_dir/$db_hd:used:AVERAGE",
+					 "DEF:free=$rrdap_dir/$rrd_dir/$db_hd:free:AVERAGE",
 					 "CDEF:total=used,free,+",
 					 "AREA:used#595959:Used\\t",
 					 "GPRINT:used:LAST:Last\\:%8.2lf %s",
@@ -228,7 +228,7 @@ sub genLoadGraph    #($type,$graph,$time)
 
 	my $db_load = "$type.rrd";
 
-	if ( -e "$rrdap_dir$rrd_dir$db_load" )
+	if ( -e "$rrdap_dir/$rrd_dir/$db_load" )
 	{
 		RRDs::graph(
 					 "$graph",
@@ -240,9 +240,9 @@ sub genLoadGraph    #($type,$graph,$time)
 					 "--lower-limit=0",
 					 "--title=LOAD AVERAGE",
 					 "--vertical-label=LOAD AVERAGE",
-					 "DEF:load=$rrdap_dir$rrd_dir$db_load:load:AVERAGE",
-					 "DEF:load5=$rrdap_dir$rrd_dir$db_load:load5:AVERAGE",
-					 "DEF:load15=$rrdap_dir$rrd_dir$db_load:load15:AVERAGE",
+					 "DEF:load=$rrdap_dir/$rrd_dir/$db_load:load:AVERAGE",
+					 "DEF:load5=$rrdap_dir/$rrd_dir/$db_load:load5:AVERAGE",
+					 "DEF:load15=$rrdap_dir/$rrd_dir/$db_load:load15:AVERAGE",
 					 "AREA:load#729e00:last minute\\t\\t",
 					 "GPRINT:load:LAST:Last\\:%3.2lf",
 					 "GPRINT:load:MIN:Min\\:%3.2lf",
@@ -272,7 +272,7 @@ sub genMemGraph    #($type,$graph,$time)
 
 	my $db_mem = "$type.rrd";
 
-	if ( -e "$rrdap_dir$rrd_dir$db_mem" )
+	if ( -e "$rrdap_dir/$rrd_dir/$db_mem" )
 	{
 		RRDs::graph(
 					 "$graph",
@@ -285,10 +285,10 @@ sub genMemGraph    #($type,$graph,$time)
 					 "--title=RAM MEMORY",
 					 "--vertical-label=RAM MEMORY",
 					 "--base=1024",
-					 "DEF:memt=$rrdap_dir$rrd_dir$db_mem:memt:AVERAGE",
-					 "DEF:memu=$rrdap_dir$rrd_dir$db_mem:memu:AVERAGE",
-					 "DEF:memf=$rrdap_dir$rrd_dir$db_mem:memf:AVERAGE",
-					 "DEF:memc=$rrdap_dir$rrd_dir$db_mem:memc:AVERAGE",
+					 "DEF:memt=$rrdap_dir/$rrd_dir/$db_mem:memt:AVERAGE",
+					 "DEF:memu=$rrdap_dir/$rrd_dir/$db_mem:memu:AVERAGE",
+					 "DEF:memf=$rrdap_dir/$rrd_dir/$db_mem:memf:AVERAGE",
+					 "DEF:memc=$rrdap_dir/$rrd_dir/$db_mem:memc:AVERAGE",
 					 "AREA:memu#595959:Used\\t\\t",
 					 "GPRINT:memu:LAST:Last\\:%8.2lf %s",
 					 "GPRINT:memu:MIN:Min\\:%8.2lf %s",
@@ -322,7 +322,7 @@ sub genMemSwGraph    #($type,$graph,$time)
 
 	my $db_memsw = "$type.rrd";
 
-	if ( -e "$rrdap_dir$rrd_dir$db_memsw" )
+	if ( -e "$rrdap_dir/$rrd_dir/$db_memsw" )
 	{
 		RRDs::graph(
 					 "$graph",
@@ -335,10 +335,10 @@ sub genMemSwGraph    #($type,$graph,$time)
 					 "--title=SWAP MEMORY",
 					 "--vertical-label=SWAP MEMORY",
 					 "--base=1024",
-					 "DEF:swt=$rrdap_dir$rrd_dir$db_memsw:swt:AVERAGE",
-					 "DEF:swu=$rrdap_dir$rrd_dir$db_memsw:swu:AVERAGE",
-					 "DEF:swf=$rrdap_dir$rrd_dir$db_memsw:swf:AVERAGE",
-					 "DEF:swc=$rrdap_dir$rrd_dir$db_memsw:swc:AVERAGE",
+					 "DEF:swt=$rrdap_dir/$rrd_dir/$db_memsw:swt:AVERAGE",
+					 "DEF:swu=$rrdap_dir/$rrd_dir/$db_memsw:swu:AVERAGE",
+					 "DEF:swf=$rrdap_dir/$rrd_dir/$db_memsw:swf:AVERAGE",
+					 "DEF:swc=$rrdap_dir/$rrd_dir/$db_memsw:swc:AVERAGE",
 					 "AREA:swu#595959:Used\\t\\t",
 					 "GPRINT:swu:LAST:Last\\:%8.2lf %s",
 					 "GPRINT:swu:MIN:Min\\:%8.2lf %s",
@@ -374,7 +374,7 @@ sub genNetGraph    #($type,$graph,$time)
 	my $if_name = $type;
 	$if_name =~ s/iface//g;
 
-	if ( -e "$rrdap_dir$rrd_dir$db_if" )
+	if ( -e "$rrdap_dir/$rrd_dir/$db_if" )
 	{
 		RRDs::graph(
 					 "$graph",
@@ -389,8 +389,8 @@ sub genNetGraph    #($type,$graph,$time)
 					 "$imagetype",
 					 "--title=TRAFFIC ON $if_name",
 					 "-v TRAFFIC ON $if_name",
-					 "DEF:in=$rrdap_dir$rrd_dir$db_if:in:AVERAGE",
-					 "DEF:out=$rrdap_dir$rrd_dir$db_if:out:AVERAGE",
+					 "DEF:in=$rrdap_dir/$rrd_dir/$db_if:in:AVERAGE",
+					 "DEF:out=$rrdap_dir/$rrd_dir/$db_if:out:AVERAGE",
 					 "CDEF:out_neg=out,-1,*",
 					 "AREA:in#46b971:In ",
 					 "LINE1:in#000000",
@@ -423,7 +423,7 @@ sub genFarmGraph    #($type,$graph,$time)
 	my $fname   = $type;
 	$fname =~ s/-farm$//g;
 
-	if ( -e "$rrdap_dir$rrd_dir$db_farm" )
+	if ( -e "$rrdap_dir/$rrd_dir/$db_farm" )
 	{
 		RRDs::graph(
 			"$graph",
@@ -438,10 +438,10 @@ sub genFarmGraph    #($type,$graph,$time)
 			"$imagetype",
 			"--title=CONNECTIONS ON $fname farm",
 			"-v Connections",
-			"DEF:pending=$rrdap_dir$rrd_dir$db_farm:pending:AVERAGE",
-			"DEF:established=$rrdap_dir$rrd_dir$db_farm:established:AVERAGE",
+			"DEF:pending=$rrdap_dir/$rrd_dir/$db_farm:pending:AVERAGE",
+			"DEF:established=$rrdap_dir/$rrd_dir/$db_farm:established:AVERAGE",
 
-			# "DEF:closed=$rrdap_dir$rrd_dir$db_farm:closed:AVERAGE",
+			# "DEF:closed=$rrdap_dir/$rrd_dir/$db_farm:closed:AVERAGE",
 			"LINE2:pending#595959:Pending\\t",
 			"GPRINT:pending:LAST:Last\\:%6.0lf ",
 			"GPRINT:pending:MIN:Min\\:%6.0lf ",
@@ -476,7 +476,7 @@ sub getGraphs2Show    #($graphtype)
 
 	if ( $graphtype eq System )
 	{
-		opendir ( DIR, "$rrdap_dir$rrd_dir" );
+		opendir ( DIR, "$rrdap_dir/$rrd_dir" );
 		my @disk = grep ( /^dev-.*$/, readdir ( DIR ) );
 		closedir ( DIR );
 		for ( @disk ) { s/.rrd//g };    # remove filenames .rrd trailing
@@ -484,21 +484,21 @@ sub getGraphs2Show    #($graphtype)
 	}
 	elsif ( $graphtype eq Network )
 	{
-		opendir ( DIR, "$rrdap_dir$rrd_dir" );
+		opendir ( DIR, "$rrdap_dir/$rrd_dir" );
 		@list = grep ( /iface.rrd$/, readdir ( DIR ) );
 		closedir ( DIR );
 		for ( @list ) { s/.rrd//g };    # remove filenames .rrd trailing
 	}
 	elsif ( $graphtype eq Farm )
 	{
-		opendir ( DIR, "$rrdap_dir$rrd_dir" );
+		opendir ( DIR, "$rrdap_dir/$rrd_dir" );
 		@list = grep ( /farm.rrd$/, readdir ( DIR ) );
 		closedir ( DIR );
 		for ( @list ) { s/.rrd//g };    # remove filenames .rrd trailing
 	}
 	else
 	{
-		opendir ( DIR, "$rrdap_dir$rrd_dir" );
+		opendir ( DIR, "$rrdap_dir/$rrd_dir" );
 		@list = grep ( /.rrd$/, readdir ( DIR ) );
 		closedir ( DIR );
 		for ( @list ) { s/.rrd//g };    # remove filenames .rrd trailing

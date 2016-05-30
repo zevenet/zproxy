@@ -16,7 +16,7 @@
 #~ use strict;
 #~ use warnings;
 #~ require "/usr/local/zenloadbalancer/config/global.conf";
-#~ our ( $basedir, $configdir, $logdir, $logfile, $timeouterrors, $filecluster, $confhttp, $ntp, $backupfor, $backupdir, $rttables, $globalcfg, $version, $cipher_pci, $buy_ssl, $url, $htpass, $zapikey, $filedns, $fileapt, $tar, $ifconfig_bin, $ip_bin, $pen_bin, $pen_ctl, $fdisk_bin, $df_bin, $sshkeygen, $ssh, $scp, $rsync, $ucarp, $pidof, $ps, $tail, $zcat, $datentp, $arping_bin, $ping_bin, $openssl, $unzip, $mv, $ls, $cp, $iptables, $modprobe, $lsmod, $netstatNat, $gdnsd, $l4sd, $bin_id, $conntrack, $pound, $poundctl, $poundtpl, $piddir, $fwmarksconf, $defaultgw, $defaultgwif, $pingc, $libexec_dir, $farmguardian, $farmguardian_dir, $farmguardian_logs, $rrdap_dir, $img_dir, $rrd_dir, $log_rrd, $zenino, $zeninopid, $zeninolog, $zenrsync, $zenlatup, $zenlatdown, $zenlatlog, $zenbackup );
+#~ our ( $basedir, $configdir, $logdir, $timeouterrors, $filecluster, $confhttp, $ntp, $backupfor, $backupdir, $rttables, $globalcfg, $version, $cipher_pci, $buy_ssl, $url, $htpass, $zapikey, $filedns, $fileapt, $tar, $ifconfig_bin, $ip_bin, $pen_bin, $pen_ctl, $fdisk_bin, $df_bin, $sshkeygen, $ssh, $scp, $rsync, $ucarp, $pidof, $ps, $tail, $zcat, $datentp, $arping_bin, $ping_bin, $openssl, $unzip, $mv, $ls, $cp, $iptables, $modprobe, $lsmod, $netstatNat, $gdnsd, $l4sd, $bin_id, $conntrack, $pound, $poundctl, $poundtpl, $piddir, $fwmarksconf, $defaultgw, $defaultgwif, $pingc, $libexec_dir, $farmguardian, $farmguardian_dir, $rrdap_dir, $img_dir, $rrd_dir, $zenino, $zeninopid, $zenrsync, $zenlatup, $zenlatdown, $zenbackup );
 #~ use Data::Dumper;
 # End debugging
 
@@ -161,7 +161,7 @@ sub certcontrol()
 my $cgi = new CGI;
 
 #uncomment for debug
-&zenlog( "index.cgi cgi:" . Dumper( \{ $cgi->Vars } ) );
+&zenlog( Dumper( \{ $cgi->Vars } ) );
 
 #Global Parameters
 $id = $cgi->param( 'id' )

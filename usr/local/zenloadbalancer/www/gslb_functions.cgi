@@ -1351,8 +1351,8 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 	$output = 0;
 
 	# rename rrd
-	rename ( "$rrdap_dir$rrd_dir/$fname-farm.rrd",
-			 "$rrdap_dir$rrd_dir/$newfname-farm.rrd" );
+	rename ( "$rrdap_dir/$rrd_dir/$fname-farm.rrd",
+			 "$rrdap_dir/$rrd_dir/$newfname-farm.rrd" );
 
 	# delete old graphs
 	unlink ( "img/graphs/bar$fname.png" );

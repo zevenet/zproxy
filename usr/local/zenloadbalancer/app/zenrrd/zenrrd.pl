@@ -8,11 +8,11 @@
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
-#     by the Free Software Foundation; either version 2.1 of the License, or 
+#     by the Free Software Foundation; either version 2.1 of the License, or
 #     (at your option) any later version.
 #
-#     This library is distributed in the hope that it will be useful, but 
-#     WITHOUT ANY WARRANTY; without even the implied warranty of 
+#     This library is distributed in the hope that it will be useful, but
+#     WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
 #     General Public License for more details.
 #
@@ -22,7 +22,7 @@
 #
 ###############################################################################
 
-#this script run all pl files with -rrd.pl regexh in $rrdap_dir, 
+#this script run all pl files with -rrd.pl regexh in $rrdap_dir,
 #this -rrd.pl files will create the rrd graphs that zen load balancer gui
 #will paint in Monitoring section
 #USE:
@@ -33,38 +33,34 @@
 #name-rrd.pl, the system going to include automatically to execute
 #and viewing in Zen load balancer GUI (Monitoring secction)
 
-require ("/usr/local/zenloadbalancer/config/global.conf");
-$lockfile="/tmp/rrd.lock";
+require ( "/usr/local/zenloadbalancer/config/global.conf" );
+my $lockfile = "/tmp/rrd.lock";
 
-if ( -e $lockfile ){
-        print "RRD Locked by $lockfile, maybe other zenrrd in execution\n";
+if ( -e $lockfile )
+{
+	print "RRD Locked by $lockfile, maybe other zenrrd in execution\n";
 	exit;
-}else {
-   open LOCK, '>', $lockfile;
-   print LOCK "lock rrd";
-   close LOCK;
+}
+else
+{
+	open LOCK, '>', $lockfile;
+	print LOCK "lock rrd";
+	close LOCK;
 }
 
-opendir(DIR, $rrdap_dir);
-@files = grep(/-rrd.pl$/,readdir(DIR));
-closedir(DIR);
+opendir ( DIR, $rrdap_dir );
+my @rrd_scripts = grep ( /-rrd.pl$/, readdir ( DIR ) );
+closedir ( DIR );
 
-foreach $file(@files)
-	{
-	print "Executing $file...\n";
-	if ($log_rrd eq "")
-		{
-		my @system =`$rrdap_dir$file`;
-		}
+foreach my $script_rrd ( @rrd_scripts )
+{
+	print "Executing $script_rrd...\n";
 
-	else
-		{
-		my @system =`$rrdap_dir$file >> $rrdap_dir$log_rrd`;
-		}
-	}
-
-if ( -e $lockfile ){
-	unlink($lockfile);
+	system( "$rrdap_dir/$script_rrd" );
 }
 
+if ( -e $lockfile )
+{
+	unlink ( $lockfile );
+}
 
