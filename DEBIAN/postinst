@@ -70,7 +70,6 @@ adduser --system -q --home $GSLBHOME --shell $GSLBSHELL --disabled-password --in
 #upgrading global.conf
 /usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi
 
-<<<<<<< HEAD
 # Enable root access through SSH
 SSHDCONFIG="/etc/ssh/sshd_config"
 if [[ `grep -c "^PermitRootLogin.*yes" $SSHDCONFIG` == '0' ]]; then
@@ -78,8 +77,6 @@ if [[ `grep -c "^PermitRootLogin.*yes" $SSHDCONFIG` == '0' ]]; then
 	/etc/init.d/ssh reload 2> /dev/null
 fi
 
-=======
->>>>>>> [Improvement] Do not mount zenloadbalancer/logs in new sytems
 # Do not mount /usr/local/zenloadbalancer/logs for zlb 4000 series
 sed -i 's/^\/dev\/mapper\/zva64-log \/usr\/local\/zenloadbalancer\/logs        ext4    defaults        0       2//' /etc/fstab
 
