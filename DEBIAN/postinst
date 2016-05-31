@@ -90,6 +90,16 @@ then
 		fi
 		rm -f /tmp/zenhost
 	fi
+
+	# reduce cherokee memory usage
+	sed -i 's/^server!keepalive_max_requests = 500$/server!keepalive_max_requests = 5/' /tmp/cherokee.conf
+	sed -i 's/^vserver!1!logger!access!buffsize = 16384$/vserver!1!logger!access!buffsize = 512/' /tmp/cherokee.conf
+	# limit cherokee-worker to one thread
+	if [ `grep -c 'server!thread_number = 1' /tmp/cherokee.conf` == "0" ];
+	then
+		sed -i 's/^server!user = root$/server!user = root\nserver!thread_number = 1/' /tmp/cherokee.conf
+	fi
+
 	cat /tmp/cherokee.conf > /usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf
 	rm -f /tmp/cherokee.conf
 fi
