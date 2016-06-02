@@ -1995,32 +1995,12 @@ sub modify_services()
 		# Functions
 		if ( exists ( $json_obj->{ vhost } ) )
 		{
-			if ( $json_obj->{ vhost } =~ /^$/ )
-			{
-				$error = "true";
-				&logfile(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid vhost, can't be blank."
-				);
-			}
-			else
-			{
-				&setFarmVS( $farmname, $service, "vs", $json_obj->{ vhost } );
-			}
+			&setFarmVS( $farmname, $service, "vs", $json_obj->{ vhost } );
 		}
 
 		if ( exists ( $json_obj->{ urlp } ) )
 		{
-			if ( $json_obj->{ urlp } =~ /^$/ )
-			{
-				$error = "true";
-				&logfile(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid urlp, can't be blank."
-				);
-			}
-			else
-			{
-				&setFarmVS( $farmname, $service, "urlp", $json_obj->{ urlp } );
-			}
+			&setFarmVS( $farmname, $service, "urlp", $json_obj->{ urlp } );
 		}
 
 		$redirecttype = &getFarmVS( $farmname, $service, "redirecttype" );
@@ -2030,10 +2010,7 @@ sub modify_services()
 			my $redirect = uri_unescape( $json_obj->{ redirect } );
 			if ( $redirect =~ /^http\:\/\//i || $redirect =~ /^https:\/\//i || $redirect =~ /^$/ )
 			{
-				if (!$redirect =~ /^$/)
-				{
-					&setFarmVS( $farmname, $service, "redirect", $redirect );
-				}
+				&setFarmVS( $farmname, $service, "redirect", $redirect );
 			}
 			else
 			{
