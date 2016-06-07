@@ -1,4 +1,5 @@
 ###############################################################################
+###############################################################################
 #
 #     Zen Load Balancer Software License
 #     This file is part of the Zen Load Balancer software package.
@@ -22,13 +23,10 @@
 ###############################################################################
 
 use Sys::Hostname;
-my $host = hostname();
-my $now  = ctime();
 
+my $host     = hostname();
+my $now      = ctime();
 my $username = username();
-
-#print "<p>ID: $id</p>";
-#print "<p>Action: $action</p>";
 
 if (    $id eq "2-1"
 	 || $id eq "2-2"
@@ -51,13 +49,7 @@ elsif (    $id eq "3-1"
 	$settingsiconclass   = "active";
 	$abouticonclass      = "";
 }
-elsif ( $id eq "4-1" || $id eq "4-2" )
-{
-	$manageiconclass     = "";
-	$monitoringiconclass = "";
-	$settingsiconclass   = "";
-	$abouticonclass      = "active";
-}
+
 elsif (    $id eq ""
 		|| $id eq "1-1"
 		|| $id eq "1-2"
@@ -68,6 +60,15 @@ elsif (    $id eq ""
 	$settingsiconclass   = "";
 	$abouticonclass      = "";
 }
+
+elsif (    $id eq "4-1"
+		|| $id eq "4-2" )
+{
+	$manageiconclass     = "";
+	$monitoringiconclass = "";
+	$settingsiconclass   = "";
+	$abouticonclass      = "active";
+}
 else
 {
 	$manageiconclass     = "";
@@ -75,6 +76,9 @@ else
 	$settingsiconclass   = "";
 	$abouticonclass      = "";
 }
+
+my $pluginsmenulist =
+  ${ &plugins::getPluginsMenuList( $id, $version, $farmname ) };
 
 print "
   <div class=\"top-bar\">
@@ -92,9 +96,9 @@ print "
           <li class=\"nav-item\">
             <a href=\"#\"><i class=\"fa fa-cogs $manageiconclass\"></i><p>Manage</p></a>
 		    <ul class=\"sub-nav\">
-              <li><a href=\"index.cgi?id=1-1\">Global View</a></li>
-              <li><a href=\"index.cgi?id=1-2\">Farms</a></li>
-		  	<li><a href=\"index.cgi?id=1-3\">Certificates</a></li>
+				<li><a href=\"index.cgi?id=1-1\">Global View</a></li>
+				<li><a href=\"index.cgi?id=1-2\">Farms</a></li>
+				<li><a href=\"index.cgi?id=1-3\">Certificates</a></li>
             </ul>
           </li>
           <li class=\"nav-item\">
@@ -115,15 +119,37 @@ print "
 		  	<li><a href=\"index.cgi?id=3-5\">Backup</a></li>
             </ul>
           </li>
+          $pluginsmenulist
           <li class=\"nav-item\">
-            <a href=\"#\"><i class=\"fa fa-life-buoy $abouticonclass\"></i><p>About</p></a>
-		    <ul class=\"sub-nav\">
-              <li><a href=\"index.cgi?id=4-1\">License</a></li>
-              <li><a href=\"index.cgi?id=4-2\">Certificate Key</a></li>
-            </ul>
-          </li>
+			<a href=\"#\"><i class=\"fa fa-life-buoy $abouticonclass\"></i><p>About</p></a>
+			<ul class=\"sub-nav\">
+			<li>
+				<form action=\"index.cgi\" method=post name=\"changepage41\"> 
+					<input type=\"hidden\" name=\"id\" value=\"4-1\"/> 					
+					<a href=\"javascript:document.changepage41.submit()\">License</a>
+				</form>				
+			</li>
+			<li>
+				<form action=\"index.cgi\" method=post name=\"changepage42\"> 
+					<input type=\"hidden\" name=\"id\" value=\"4-2\"/> 					
+					<a href=\"javascript:document.changepage42.submit()\">Certificate Key</a>
+				</form>				
+			</li>	
+			</ul>
+			</li>
         </ul>
       </li>
     </ul>
   </div>
+  ";
+
+print "
+	<script type=\"text/javascript\">
+	function submitform()
+	{
+	  document.myform.submit();
+	}
+	</script>
 ";
+
+1;
