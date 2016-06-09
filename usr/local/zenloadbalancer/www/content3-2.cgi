@@ -160,17 +160,6 @@ elsif (    $action eq "Save & Up!"
 		$swaddif = "false";
 	}
 
-	# check if the new ip is already in use
-	my @activeips = &listallips();
-	for my $ip ( @activeips )
-	{
-		if ( $ip eq $newip )
-		{
-			&errormsg( "IP Address $newip is already in use, please insert a valid IP." );
-			$swaddif = "false";
-		}
-	}
-
 	# check if the new netmask is correct, if empty don't worry
 	if ( $netmask !~ /^$/ && &ipisok( $netmask ) eq "false" )
 	{
