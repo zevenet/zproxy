@@ -82,12 +82,13 @@ sub certcontrol(){
 $swcert = 0;
 $zlbcertfile = "$basedir/zlbcertfile.pem";
 
-#$key = &keycert();
+my $key = &keycert();
 
 my $notbefore;
 my $nb;
 my @notafter;
 my $na;
+
 if ( -e $zlbcertfile){
 	my @run = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
         if ( (!grep /$key/,@run) || (!grep /keyid:$keyid/,@run) || (!grep /CN=$hostname\//,@run) ){
@@ -123,7 +124,7 @@ if ( -e $zlbcertfile){
         	#The contract support plan is expired you have to request a new contract support. Only message alert!
                 $swcert = -1;
 
-	}
+		}
 
        }else{
                 #There isn't certificate in the machine
@@ -226,7 +227,7 @@ foreach $key (keys(%ENV)) {
 
 
 }
-$key = &keycert();
+
 my $certerr = &certcontrol();
 
 if ($not_allowed eq "0" || $certerr > 0){

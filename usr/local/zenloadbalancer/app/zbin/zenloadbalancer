@@ -789,7 +789,7 @@ if ( $eject eq 'startlocal' )
 		}
 	}
 
-	my $key    = &keycert();
+	$key    = &keycert();
 	my $swcert = &certcontrol( $typecall );
 
 	# error codes:

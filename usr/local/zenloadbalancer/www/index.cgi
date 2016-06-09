@@ -488,7 +488,7 @@ if ( !-f "$basedir/lock" )
 
 		alarm $timeouterrors;
 
-		my $key    = &keycert();
+		$key    = &keycert();
 		my $swcert = &certcontrol();
 		my $host   = hostname();
 

@@ -102,6 +102,7 @@ sub certcontrol()
 	my $zlbcertfile = "$basedir/zlbcertfile.pem";
 	my $openssl_bin = "/usr/bin/openssl";
 	my $keyid       = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
+	my $key    = &keycert();
 
 	# output
 	my $swcert = 0;
@@ -170,8 +171,6 @@ sub certcontrol()
 }
 
 {
-	# $key must be declared before calling certcontrol()
-	my $key    = &keycert();
 	my $swcert = &certcontrol();
 
 	# if $swcert is greater than 0 zapi should not work
