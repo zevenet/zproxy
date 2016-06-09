@@ -693,7 +693,7 @@ sub setClusterRsaConnection
 		else
 		{
 			#Check if can exec commands through ssh
-			my $checkcommand = "date > null";
+			my $checkcommand = "date > /dev/null";
 			$ssh->send( $checkcommand );    # using send() instead of exec()
 
 			my $line;
