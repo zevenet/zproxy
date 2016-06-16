@@ -701,7 +701,7 @@ if ( $action eq "editfarm-Service" )
 			$usefarmguardian =~ s/\n//g;
 			&runFarmGuardianStop( $farmname, $service );
 			&zenlog(
-					  "creating $farmname farmguardian configuration file in $fguardianconf" )
+					 "creating $farmname farmguardian configuration file in $fguardianconf" )
 			  if !-f "$configdir/$fguardianconf";
 			$check_script =~ s/\"/\'/g;
 			$status =
@@ -733,6 +733,45 @@ if ( $action eq "editfarm-Service" )
 					"It's not possible to create the FarmGuardian configuration file for the $farmname farm"
 				);
 			}
+		}
+	}
+}
+
+# Move services
+if ( $action eq "editfarm-moveservice" )
+{
+	#check if farm is up
+	my $farm_status = &getFarmStatus( $farmname );
+
+	if ( $farm_status ne 'up' )
+	{
+		#change configuration file
+		&moveServiceFarmStatus( $farmname, $moveservice, $service );
+		&moveService( $farmname, $moveservice, $service );
+	}
+	else
+	{
+		#Stop farm
+		if ( &runFarmStop( $farmname, "true" ) == 0 )
+		{
+			#change configuration file
+			&moveServiceFarmStatus( $farmname, $moveservice, $service );
+			&moveService( $farmname, $moveservice, $service );
+
+			my $status = &runFarmStart( $farmname, "true" );
+			if ( $status == 0 )
+			{
+				&successmsg( "The $farmname farm has been restarted" );
+				&setFarmHttpBackendStatus( $farmname );
+			}
+			else
+			{
+				&errormsg( "The $farmname farm hasn't been restarted" );
+			}
+		}
+		else
+		{
+			&errormsg( "The $farmname farm hasn't been restarted" );
 		}
 	}
 }
