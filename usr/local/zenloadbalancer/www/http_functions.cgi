@@ -2835,7 +2835,6 @@ sub getFarmServices
 			$pos++;
 			@line = split ( "\"", $line );
 			my $service = $line[1];
-
 			push ( @output, $service );
 		}
 	}
@@ -2888,6 +2887,168 @@ sub setFarmBackendsSessionsRemove($farm_name,$service,$backendid)
 			);
 		}
 	}
+}
+
+# -------------------- MOVE SERVICE FUNCTION --------------------------#
+sub moveService    # moveService ( $farmName, $move, $serviceSelect);
+{
+	# Params
+	my $farmName      = shift;
+	my $move          = shift;
+	my $serviceSelect = shift;
+
+	my $farm_filename = &getFarmFile( $farmName );
+	my $farm_filename = "$configdir\/$farm_filename";
+
+	my @file;
+	my @services = &getFarmServices( $farmName );
+	my @serviceIndex;
+	my $selectServiceInd;
+	my $size = scalar @services;
+	my @aux;
+
+	# loop
+	my $ind        = 0;
+	my $serviceNum = 0;
+	my $flag       = 0;
+	my @definition;    # Service definition
+
+	if (    ( ( $move eq 'up' ) && ( $services[0] ne $serviceSelect ) )
+		 || ( ( $move eq 'down' ) && ( $services[$size - 1] ne $serviceSelect ) ) )
+	{
+		tie @file, 'Tie::File', $farm_filename;
+
+		# Find service indexs
+		foreach my $line ( @file )
+		{
+			# Select service index
+			if ( $line =~ /^\tService \"$serviceSelect\"$/ )
+			{
+				$flag             = 1;
+				$selectServiceInd = $serviceNum;
+			}
+
+			# keep service definition and delete it from configuration file
+			if ( $flag == 1 )
+			{
+				push @definition, $line;
+
+				# end service definition
+				if ( $line =~ /^\tEnd$/ )
+				{
+					$flag = 0;
+					$ind -= 1;
+				}
+			}
+			else
+			{
+				push @aux, $line;
+			}
+
+			# add a new index to the index table
+			if ( $line =~ /^\tService \"$services[$serviceNum]\"$/ )
+			{
+				push @serviceIndex, $ind;
+				$serviceNum += 1;
+			}
+
+			if ( !$flag )
+			{
+				$ind += 1;
+			}
+		}
+		@file = @aux;
+
+		# move up service
+		if ( $move eq 'up' )
+		{
+			splice ( @file, $serviceIndex[$selectServiceInd - 1], 0, @definition );
+		}
+
+		# move down service
+		elsif ( $move eq 'down' )
+		{
+			if ( $selectServiceInd == ( $size - 2 ) )
+			{
+				push @file, @definition;
+			}
+			else
+			{
+				splice ( @file, $serviceIndex[$selectServiceInd + 2], 0, @definition );
+			}
+		}
+		untie @file;
+	}
+
+	return 0;
+}
+
+# Change farm_status.cfg file
+# &moveServiceFarmStatus($farmname, $moveService, $serviceSelect);
+sub moveServiceFarmStatus
+{
+	my ( $farmName, $moveService, $serviceSelect ) = @_;
+	my @fileTmp;
+
+	my $fileName    = "$configdir\/${farmName}_status.cfg";
+	my $fileNameTmp = "${fileName}.tmp";
+
+	my @services = &getFarmServices( $farmName );
+	my $size     = scalar @services;
+	my $ind      = -1;
+	my $auxInd;
+	my $serviceNum;
+
+	&main::zenlog( "numero de servicios $size" );
+
+	# Find service select index
+	foreach my $se ( @services )
+	{
+		$ind += 1;
+		last if ( $services[$ind] eq $serviceSelect );
+	}
+
+	# Open status file and copy it to tmp status file
+	system ( "cp $fileName $fileNameTmp" );
+	tie @fileTmp, 'Tie::File', $fileNameTmp;
+
+	# change server id
+	foreach my $line ( @fileTmp )
+	{
+
+		$line =~ /(^-[bB] 0 )(\d+)/;
+		$cad        = $1;
+		$serviceNum = $2;
+
+		#	&main::zenlog("$moveService::$ind::$serviceNum");
+		if ( ( $moveService eq 'up' ) && ( $serviceNum == $ind ) )
+		{
+			$auxInd = $serviceNum - 1;
+			$line =~ s/^-[bB] 0 (\d+)/${cad}$auxInd/;
+		}
+
+		if ( ( $moveService eq 'up' ) && ( $serviceNum == $ind - 1 ) )
+		{
+			$auxInd = $serviceNum + 1;
+			$line =~ s/^-[bB] 0 (\d+)/${cad}$auxInd/;
+		}
+
+		if ( ( $moveService eq 'down' ) && ( $serviceNum == $ind ) )
+		{
+			$auxInd = $serviceNum + 1;
+			$line =~ s/^-[bB] 0 (\d+)/${cad}$auxInd/;
+		}
+
+		if ( ( $moveService eq 'down' ) && ( $serviceNum == $ind + 1 ) )
+		{
+			$auxInd = $serviceNum - 1;
+			$line =~ s/^-[bB] 0 (\d+)/${cad}$auxInd/;
+		}
+	}
+
+	untie @fileTmp;
+
+	return 0;
 }
 
 # do not remove this
