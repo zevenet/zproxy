@@ -308,6 +308,8 @@ $ttlserv = $cgi->param( 'ttlserv' )
   if ( defined ( $cgi->param( 'ttlserv' ) ) );
 $sessionid = $cgi->param( 'sessionid' )
   if ( defined ( $cgi->param( 'sessionid' ) ) );
+$moveservice = $cgi->param( 'moveservice' )
+  if ( defined ( $cgi->param( 'moveservice' ) ) );
 
 #HTTP Server Parameters
 $timeout_server = $cgi->param( 'timeout_server' )

@@ -490,6 +490,7 @@ print "<div class=\"clear\"></div>\n";
 print
   "<input type=\"button\" value=\"Modify\" onClick=\"jQuery('#modify-param').submit()\" class=\"button grey\">\n"
   ;                    # button Modify
+
 print "</div>";
 print "</div>";
 
@@ -547,6 +548,7 @@ my $first   = 0;
 my $vserver = -1;
 my $pos     = 0;
 $id_serverr = $id_server;
+my $nService = 0;
 
 foreach $line ( @file )
 {
@@ -931,9 +933,55 @@ foreach $line ( @file )
 		print "<br>";
 		print
 		  " <input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button grey\">";
+
 		print "</form>\n";
 
-		print "</div></div>";
+		print " 
+		<div style=\"float:right\">
+			<div>
+				<p>Warning: This process restart the farm.</p>
+			</div>
+			<div>
+		";
+
+		if ( $nService != 0 )
+		{
+			# button to move the service up if this service it isn't the first
+			print " 
+			<div class=\"botonMove\">
+				<form action=\"index.cgi\" method=\"post\"> 
+					<input type=\"hidden\" name=\"moveservice\" value=\"up\"/> 			
+					<input type=\"hidden\" name=\"action\" value=\"editfarm-moveservice\"/> 							
+					<input type=\"hidden\" name=\"farmname\" value=\"$farmname\"/>
+					<input type=\"hidden\" name=\"service\" value=\"$service\"/>
+					<input type=\"hidden\" name=\"id\" value=\"$id\"/>
+					<input type=\"submit\" value=\"Move up\" name=\"buttom\" class=\"button grey\">
+				</form>	
+			</div>
+			";
+		}
+
+		# button to move the service down if this service it isn't the last
+		if ( $nService + 1 != scalar &getFarmServices( $farmname ) )
+		{
+			print "
+			<div style=\"float:right\" class=\"botonMove\">
+				<form action=\"index.cgi\" method=\"post\"> 
+					<input type=\"hidden\" name=\"moveservice\" value=\"down\"/> 					
+					<input type=\"hidden\" name=\"action\" value=\"editfarm-moveservice\"/> 					
+					<input type=\"hidden\" name=\"farmname\" value=\"$farmname\"/>
+					<input type=\"hidden\" name=\"service\" value=\"$service\"/>
+					<input type=\"hidden\" name=\"id\" value=\"$id\"/>
+					<input type=\"submit\" value=\"Move down\" name=\"buttom\" class=\"button grey\"/>
+				</form>	
+			</div>
+			";
+		}
+		$nService += 1;
+
+		print " </div>";
+
+		print "</div></div></div>";
 
 		#
 		# Service Backends
