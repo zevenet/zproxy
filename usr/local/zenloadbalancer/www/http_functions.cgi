@@ -3105,7 +3105,6 @@ sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 			{
 				$ind += 1;
 			}
-
 		}
 		@file = @aux;
 
@@ -3156,13 +3155,13 @@ sub moveServiceFarmStatus
 		last if ( $services[$ind] eq $serviceSelect );
 	}
 	
+	# Open status file and copy it to tmp status file
 	system ( "cp $fileName $fileName.bak" );
 
 	tie @file, 'Tie::File', $fileName;
 	# change server id
 	foreach my $line ( @file )
 	{
-
 		$line =~ /(^-[bB] 0 )(\d+)/;
 		$cad        = $1;
 		$serviceNum = $2;
