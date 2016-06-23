@@ -174,12 +174,17 @@ sub getDataHash
 
 	if ( @_ > 2 or @_ == 0 )
 	{
-		print "Error in number of parameters. Function: >getDataHash<.\n";
+		&logfile("Error in number of parameters. Function: >getDataHash<.\n");
 	}
 	else
 	{
-		tie @hf, 'Tie::File', $fileName
-		  or die "Error! Don\'t find the file $fileName.\n";
+		tie @hf, 'Tie::File', $fileName;
+
+		if ( ! @hf )
+		{
+			&logfile("Error! Don\'t find the file $fileName.\n");
+			return -1;
+		}
 
 		foreach my $iteration ( @hf )
 		{
