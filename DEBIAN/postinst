@@ -110,38 +110,24 @@ do
 	fi
 done
 
-
-if [ `ls /usr/local/zenloadbalancer/config/if_eth* 2>/dev/null | wc -l` -gt 0 ];
+echo "Restarting Zen Load Balancer web GUI..."
+if [ -f /etc/init.d/cherokee ];
 then
-	echo "Restarting Zen Load Balancer web GUI..."
-	if [ -f /etc/init.d/cherokee ];
+	if [ "`pidof mini_httpd`" != "" ];
 	then
-		if [ "`pidof mini_httpd`" != "" ];
-		then
-			kill -9 `pidof mini_httpd`
-		fi
-		/etc/init.d/cherokee stop
-		/etc/init.d/cherokee start
-	else
-		/etc/init.d/minihttpd stop
-		/etc/init.d/minihttpd start
+		kill -9 `pidof mini_httpd`
 	fi
-	
-	echo "ZLB will be unavailable meanwhile the service is restarting."
-	#echo "Now you need to restart zenloadbalancer service, so "
-	#echo "meanwhile ZLB will be unavailable."
-	echo -n "Do you want to proceed with the restart? (y/n) "
-	read response
-	#response = "y"
-	if [ "$response" == "y" -o "$response" == "Y" ]; then
-		/etc/init.d/zenloadbalancer stop
-		/etc/init.d/zenloadbalancer start
-	else
-		echo "Changes will not be available till next service restart."
-		echo "(/etc/init.d/zenloadbalancer stop)"
-		echo "(/etc/init.d/zenloadbalancer start)"
-	fi
+	/etc/init.d/cherokee stop
+	/etc/init.d/cherokee start
+else
+	/etc/init.d/minihttpd stop
+	/etc/init.d/minihttpd start
 fi
+
+# restarting zenloadbalancer service
+echo "ZLB will be unavailable while the service is restarting."
+/etc/init.d/zenloadbalancer stop
+/etc/init.d/zenloadbalancer start
 
 ###move .htpasswd from tmp to dst
 if [ -f /tmp/.htpasswd ];
