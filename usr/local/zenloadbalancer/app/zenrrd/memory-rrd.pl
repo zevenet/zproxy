@@ -26,11 +26,11 @@ use RRDs;
 require ("/usr/local/zenloadbalancer/config/global.conf");
 $db_mem="mem.rrd";
 #create db memory if not existS
-if (! -f "$rrdap_dir$rrd_dir$db_mem" )
+if (! -f "$rrdap_dir/$rrd_dir/$db_mem" )
 
 	{
-	print "Creating memory rrd data base $rrdap_dir$rrd_dir$db_mem ...\n";
-	RRDs::create "$rrdap_dir$rrd_dir$db_mem",
+	print "Creating memory rrd data base $rrdap_dir/$rrd_dir/$db_mem ...\n";
+	RRDs::create "$rrdap_dir/$rrd_dir/$db_mem",
 		"-s 300",
 		"DS:memt:GAUGE:600:0:U",
 		"DS:memu:GAUGE:600:0:U",
@@ -107,8 +107,8 @@ print "Information for Memory graph ...\n";
 	}
 
 #update rrd info
-print "Updating Information in $rrdap_dir$rrd_dir$db_mem ...\n";		
-RRDs::update "$rrdap_dir$rrd_dir$db_mem",
+print "Updating Information in $rrdap_dir/$rrd_dir/$db_mem ...\n";		
+RRDs::update "$rrdap_dir/$rrd_dir/$db_mem",
 	"-t", "memt:memu:memf:memc",
 	"N:$mvalue:$mused:$mfvalue:$mcvalue";
 

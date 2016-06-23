@@ -50,10 +50,10 @@ foreach $line(@system)
 		$out = @tx[0];
 		$is_if = 0;
 		#process if_name
-		if (! -f "$rrdap_dir$rrd_dir$if_name$db_if")		
+		if (! -f "$rrdap_dir/$rrd_dir/$if_name$db_if")		
 			{
-			print "Creating traffic rrd database for $if_name $rrdap_dir$rrd_dir$if_name$db_if ...\n";
-			RRDs::create "$rrdap_dir$rrd_dir$if_name$db_if",
+			print "Creating traffic rrd database for $if_name $rrdap_dir/$rrd_dir/$if_name$db_if ...\n";
+			RRDs::create "$rrdap_dir/$rrd_dir/$if_name$db_if",
                         	"-s 300",
                         	"DS:in:DERIVE:600:0:12500000",
                         	"DS:out:DERIVE:600:0:12500000",
@@ -80,8 +80,8 @@ foreach $line(@system)
 		print "		in: $in\n";
 		print "		out: $out\n";
 		#update rrd info
-		print "Updating Informatino in $rrdap_dir$rrd_dir$if_name$db_if ...\n";
-		RRDs::update "$rrdap_dir$rrd_dir$if_name$db_if",
+		print "Updating Informatino in $rrdap_dir/$rrd_dir/$if_name$db_if ...\n";
+		RRDs::update "$rrdap_dir/$rrd_dir/$if_name$db_if",
 			"-t", "in:out",
 			"N:$in:$out";
 		

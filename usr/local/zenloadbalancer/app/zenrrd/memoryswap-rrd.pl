@@ -26,11 +26,11 @@ use RRDs;
 require ("/usr/local/zenloadbalancer/config/global.conf");
 $db_memsw="memsw.rrd";
 #create db memory if not existS
-if (! -f "$rrdap_dir$rrd_dir$db_memsw" )
+if (! -f "$rrdap_dir/$rrd_dir/$db_memsw" )
 
 	{
-	print "Creating memory swap rrd data base $rrdap_dir$rrd_dir$db_memsw ...\n";
-	RRDs::create "$rrdap_dir$rrd_dir$db_memsw",
+	print "Creating memory swap rrd data base $rrdap_dir/$rrd_dir/$db_memsw ...\n";
+	RRDs::create "$rrdap_dir/$rrd_dir/$db_memsw",
 		"-s 300",
 		"DS:swt:GAUGE:600:0:U",
 		"DS:swu:GAUGE:600:0:U",
@@ -64,7 +64,7 @@ if (! -f "$rrdap_dir$rrd_dir$db_memsw" )
 		"RRA:MIN:0.5:288:372",		# yearly - every 1 day - 372 reg
 		"RRA:AVERAGE:0.5:288:372",	# yearly - every 1 day - 372 reg
 		"RRA:MAX:0.5:288:372";		# yearly - every 1 day - 372 reg
-	if ($ERROR = RRDs::error) { print "$0: unable to generate $rrdap_dir$rrd_dir$db_memsw: $ERROR\n"};
+	if ($ERROR = RRDs::error) { print "$0: unable to generate $rrdap_dir/$rrd_dir/$db_memsw: $ERROR\n"};
 	}
 
 #information
@@ -108,12 +108,12 @@ print "Information for swap memory graph ...\n";
 	}
 
 #update rrd info
-print "Updating Information in $rrdap_dir$rrd_dir$db_memsw ...\n";		
-RRDs::update "$rrdap_dir$rrd_dir$db_memsw",
+print "Updating Information in $rrdap_dir/$rrd_dir/$db_memsw ...\n";		
+RRDs::update "$rrdap_dir/$rrd_dir/$db_memsw",
 	"-t", "swt:swu:swf:swc",
 	"N:$mvalue:$mused:$mfvalue:$mcvalue";
 
-#$last =  RRDs::last "$rrdap_dir$rrd_dir$db_memsw";
+#$last =  RRDs::last "$rrdap_dir/$rrd_dir/$db_memsw";
 
 
 

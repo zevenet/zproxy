@@ -54,12 +54,12 @@ foreach $file(@files)
 	print "Executing $file...\n";
 	if ($log_rrd eq "")
 		{
-		my @system =`$rrdap_dir$file`;
+		my @system =`$rrdap_dir/$file`;
 		}
 
 	else
 		{
-		my @system =`$rrdap_dir$file >> $rrdap_dir$log_rrd`;
+		my @system =`$rrdap_dir/$file >> $rrdap_dir/$log_rrd`;
 		}
 	}
 
