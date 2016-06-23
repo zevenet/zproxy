@@ -124,8 +124,6 @@ print "
           <tbody>
 ";
 
-#my @netstat = &getNetstatNat();
-#my $conn_max = @netstat;
 my @files = &getFarmList();
 
 my $rowCounter = 1;
@@ -157,7 +155,6 @@ foreach $file ( @files )
 	$pc = "-";
 	print "<td>$farmname</td><td>$type</td>";
 
-#print "<td class=\"alignright\">@line[8]</td><td class=\"alignright\">@line[9]</td>";
 	$status = &getFarmStatus( $farmname );
 	if ( $status ne "up" )
 	{
@@ -328,4 +325,3 @@ print "
     });
 } );
 </script>";
-
