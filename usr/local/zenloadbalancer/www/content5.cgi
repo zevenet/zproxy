@@ -21,12 +21,9 @@
 #
 ###############################################################################
 
-my $basedir      = "/usr/local/zenloadbalancer/www";
-my $modules_path = "$basedir/Modules";
-
 print "
-  <!--- CONTENT AREA -->
-  <div class=\"content container_12\">
+<!--- CONTENT AREA -->
+<div class=\"content container_12\">
 ";
 
 ####################################
@@ -34,46 +31,28 @@ print "
 ####################################
 &getClusterInfo();
 
-###############################
+####################################
 #BREADCRUMB
-############################
-print "<div class=\"grid_6\"><h1>$action</h1></div>\n";
+####################################
+print "
+	<div class=\"grid_6\">
+		<h1>$action</h1>
+	</div>
+";
 
 ####################################
 # CLUSTER STATUS
 ####################################
 &getClusterStatus();
 
-##########################################
-# DO STUFF
-##########################################
+####################################
+# SHOW PLUGIN CONTENT
+####################################
 
-print "
-               <div class=\"box grid_12\">
-                 <div class=\"box-head\">
-                       <span class=\"box-icon-24 fugue-24 document-text\"></span>        
-                       <h2>$action</h2>
-                 </div>
-                 <div class=\"box-content\">
-       ";
-# $action = plugin name
-print "&plugins::triggerPlugin( $action, 'content' )";
+# $action is the plugin name
+print &plugins::triggerPlugin( $action, 'content' );
 
-print "<div class=\"aligncenter\">";
-print "<form method=\"post\" action=\"index.cgi\">";
-
-print
-  "<textarea  name=\"license\" cols=\"85\" rows=\"20\" align=\"center\" readonly>";
-
-print "</textarea></div>";
-print
-  "<div class=\"aligncenter\"><p><b>*If you use this program, you accept the GNU/LGPL license</b></p></div>";
-
-print "</form>";
-print "</div>";
-
-print "</div>";
-print "</div>";
+# END OF CONTENT AREA
 print "</div>";
 
 1;

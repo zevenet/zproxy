@@ -170,6 +170,9 @@ $zenlatlog="/usr/local/zenloadbalancer/logs/zenlatency.log";
 
 #Zen backup
 $zenbackup="/usr/local/zenloadbalancer/app/zenbackup/zenbackup.pl";
+
+#Plugins path
+$pluginsdir="/usr/local/zenloadbalancer/www/Plugins";#update
 #::END Global Section
 
 #!!!!NOT REMOVE NEXT LINE!!!!!!

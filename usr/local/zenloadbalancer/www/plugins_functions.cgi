@@ -29,17 +29,17 @@ our @EXPORT = qw(
   plugins
   triggerAllPlugins
   triggerPlugin
-  modules_path
+  plugins_path
 );
 
-our $modules_path = "$main::basedir/Modules";
+our $plugins_path = "$main::$pluginsdir";
 
 sub getPluginsList
 {
 	my @modules_list;
 
-	opendir ( my $dir, $modules_path )
-	  or die ( "Could not read directory $modules_path: $!" );
+	opendir ( my $dir, $plugins_path )
+	  or die ( "Could not read directory $plugins_path: $!" );
 
 	# catch the module name
 	foreach my $file ( readdir $dir )
@@ -101,15 +101,15 @@ sub plugins
 
 sub loadAllModules
 {
-	opendir ( my $dir, $modules_path )
-	  or die ( "Could not read directory $modules_path: $!" );
+	opendir ( my $dir, $plugins_path )
+	  or die ( "Could not read directory $plugins_path: $!" );
 
 	foreach my $file ( readdir $dir )
 	{
 		if ( $file =~ /.pm$/ )
 		{
 			# FIXME: eval module
-			require "$modules_path/$file";
+			require "$plugins_path/$file";
 		}
 	}
 
