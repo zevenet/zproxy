@@ -211,7 +211,7 @@ sub runFarmGuardianStop    # ($fname,$svice)
 
 						if ( $_ =~ /fgDOWN/ )
 						{
-							$_ = "-B 0 $idsv $index active";
+							splice ( @filelines, $index, 1, );
 							system ( "$poundctl -c $portadmin -B 0 $idsv $index >/dev/null 2>&1" );
 						}
 					}
