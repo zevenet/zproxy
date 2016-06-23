@@ -71,12 +71,12 @@ sub menu
 	$data{ name } =~ /^(\w.*)/;
 	$fatherModuleId = $1;
 
-	&main::zenlog( "1: >$idSession< eq >$fatherModuleId<" );
+	#~ &main::zenlog( "1: >$idSession< eq >$fatherModuleId<" );
 
 	$idSession =~ /^(\w.*)/;
 	$idSessionMain = $1;
 
-	&main::zenlog( "2: >$idSessionMain< eq >$fatherModuleId<" );
+	#~ &main::zenlog( "2: >$idSessionMain< eq >$fatherModuleId<" );
 
 	if ( $idSessionMain eq $fatherModuleId )
 	{

@@ -13,12 +13,12 @@ require "/usr/local/zenloadbalancer/www/functions.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/plugins_functions.cgi";
 
-#our $plugins::modules_path;
+#our $plugins::plugins_path;
 
 our %data = (
 	name => __PACKAGE__,
 
-	content    => \&content,
+	content    => undef,
 	menu       => \&menu,
 	zlbstart   => undef,
 	zlbstop    => undef,
@@ -31,8 +31,7 @@ our %data = (
 	position => \&position,
 );
 
-my $aux      = $plugins::modules_path;
-my $helpPath = "$aux/" . __PACKAGE__;
+my $helpPath = $plugins::plugins_path . "/" . __PACKAGE__;
 
 sub position
 {
@@ -106,12 +105,6 @@ sub menu
 	return $output;
 }
 
-sub content
-{
-
-	return;
-}
-
 # \params: idPage, versionZen
 sub forwardingToHelp
 {
@@ -119,7 +112,7 @@ sub forwardingToHelp
 	my ( $idPage, $versionZen ) = @_;
 
 	# Name for data storage file
-	my $fileName = "$helpPath/url.txt";
+	my $fileName = "$helpPath/url.conf";
 
 	# Keep url to forwarding
 	my $url = "";
