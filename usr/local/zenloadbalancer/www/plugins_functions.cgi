@@ -32,7 +32,7 @@ our @EXPORT = qw(
   plugins_path
 );
 
-our $plugins_path = "$main::$pluginsdir";
+our $plugins_path = "$main::pluginsdir";
 
 sub getPluginsList
 {
