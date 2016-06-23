@@ -3094,6 +3094,7 @@ sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 			{
 				$ind += 1;
 			}
+
 		}
 		@file = @aux;
 
@@ -3130,7 +3131,7 @@ sub moveServiceFarmStatus
 	my @fileTmp;
 
 	my $fileName    = "$configdir\/${farmName}_status.cfg";
-	my $fileNameTmp = "${fileName}.tmp";
+	my $fileNameTmp = "${fileName}";
 
 	my @services = &getFarmServices( $farmName );
 	my $size     = scalar @services;
