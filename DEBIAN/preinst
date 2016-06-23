@@ -65,6 +65,8 @@ sub certcontrol
 	my $nb;
 	my @notafter;
 	my $na;
+	my $key = &keycert();
+
 	if ( -e $zlbcertfile )
 	{
 		my @run = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
@@ -122,7 +124,6 @@ sub certcontrol
 
 if ( $ARGV[0] eq "install" || $ARGV[0] eq "upgrade" )
 {
-	my $key     = &keycert();
 	my $certerr = &certcontrol();
 	if ( $certerr != 0 )
 	{
