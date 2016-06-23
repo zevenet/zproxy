@@ -109,7 +109,7 @@ sub genCpuGraph    #($type,$graph,$time)
 					 "--height=$height",
 					 "--alt-autoscale-max",
 					 "--lower-limit=0",
-					 "--title=CPU USAGE",
+					 "--title=CPU",
 					 "--vertical-label=%",
 					 "DEF:user=$rrdap_dir/$rrd_dir/$db_cpu:user:AVERAGE",
 					 "DEF:nice=$rrdap_dir/$rrd_dir/$db_cpu:nice:AVERAGE",
@@ -159,22 +159,30 @@ sub genCpuGraph    #($type,$graph,$time)
 #
 sub genDiskGraph    #($type,$graph,$time)
 {
-
 	my ( $type, $graph, $time ) = @_;
+
 	my $db_hd     = "$type.rrd";
 	my @df_system = `$df_bin -k`;
 	my $dev       = $type;
 	$dev =~ s/hd$//;
 	$dev =~ s/dev-//;
+	$dev =~ s/-/\// if $dev !~ /dm-/;
+
+	#~ &logfile("type:$type, graph:$graph, time:$time, dev:$dev");
 
 	my ( $partition, $size, $mount );
 
 	for $line_df ( @df_system )
 	{
+		#~ &logfile("line_df:$line_df == dev:$dev");
+
 		if ( $line_df =~ /$dev/ )
 		{
 			my @s_line = split ( "\ ", $line_df );
-			chomp ( $s_line[0] );
+			chomp ( @s_line );
+
+			#~ &logfile("s_line:@s_line");
+
 			$partition = $s_line[0];
 			$size      = $s_line[4];
 			$mount     = $s_line[5];
@@ -183,12 +191,13 @@ sub genDiskGraph    #($type,$graph,$time)
 
 	if ( -e "$rrdap_dir/$rrd_dir/$db_hd" )
 	{
+		#~ &logfile("type:$type, partition:$partition, mount:$mount, size:$size");
 
 		RRDs::graph(
 					 "$graph",
 					 "--start=-1$time",
-					 "--title=$partition MOUNTED IN $mount (USED: $size)",
-					 "--vertical-label=%",
+					 "--title=PARTITON $mount",
+					 "--vertical-label=SPACE",
 					 "-h",
 					 "$height",
 					 "-w",
@@ -242,7 +251,7 @@ sub genLoadGraph    #($type,$graph,$time)
 					 "--alt-autoscale-max",
 					 "--lower-limit=0",
 					 "--title=LOAD AVERAGE",
-					 "--vertical-label=LOAD AVERAGE",
+					 "--vertical-label=LOAD",
 					 "DEF:load=$rrdap_dir/$rrd_dir/$db_load:load:AVERAGE",
 					 "DEF:load5=$rrdap_dir/$rrd_dir/$db_load:load5:AVERAGE",
 					 "DEF:load15=$rrdap_dir/$rrd_dir/$db_load:load15:AVERAGE",
@@ -286,8 +295,8 @@ sub genMemGraph    #($type,$graph,$time)
 					 "--height=$height",
 					 "--alt-autoscale-max",
 					 "--lower-limit=0",
-					 "--title=RAM MEMORY",
-					 "--vertical-label=RAM MEMORY",
+					 "--title=RAM",
+					 "--vertical-label=MEMORY",
 					 "--base=1024",
 					 "DEF:memt=$rrdap_dir/$rrd_dir/$db_mem:memt:AVERAGE",
 					 "DEF:memu=$rrdap_dir/$rrd_dir/$db_mem:memu:AVERAGE",
@@ -338,8 +347,8 @@ sub genMemSwGraph    #($type,$graph,$time)
 					 "--height=$height",
 					 "--alt-autoscale-max",
 					 "--lower-limit=0",
-					 "--title=SWAP MEMORY",
-					 "--vertical-label=SWAP MEMORY",
+					 "--title=SWAP",
+					 "--vertical-label=MEMORY",
 					 "--base=1024",
 					 "DEF:swt=$rrdap_dir/$rrd_dir/$db_memsw:swt:AVERAGE",
 					 "DEF:swu=$rrdap_dir/$rrd_dir/$db_memsw:swu:AVERAGE",
@@ -396,7 +405,7 @@ sub genNetGraph    #($type,$graph,$time)
 					 "-a",
 					 "$imagetype",
 					 "--title=TRAFFIC ON $if_name",
-					 "-v TRAFFIC ON $if_name",
+					 "--vertical-label=BANDWIDTH",
 					 "DEF:in=$rrdap_dir/$rrd_dir/$db_if:in:AVERAGE",
 					 "DEF:out=$rrdap_dir/$rrd_dir/$db_if:out:AVERAGE",
 					 "CDEF:out_neg=out,-1,*",
@@ -447,7 +456,7 @@ sub genFarmGraph    #($type,$graph,$time)
 			"-a",
 			"$imagetype",
 			"--title=CONNECTIONS ON $fname farm",
-			"-v Connections",
+			"--vertical-label=Connections",
 			"DEF:pending=$rrdap_dir/$rrd_dir/$db_farm:pending:AVERAGE",
 			"DEF:established=$rrdap_dir/$rrd_dir/$db_farm:established:AVERAGE",
 
