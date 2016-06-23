@@ -3105,6 +3105,7 @@ sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 			{
 				$ind += 1;
 			}
+
 		}
 		@file = @aux;
 
@@ -3193,6 +3194,10 @@ sub moveServiceFarmStatus
 	}
 
 	untie @file;
+
+	&zenlog(
+		"The service \"$serviceSelect\" from farm \"$farmName\" has been moved $moveService"
+	);
 
 	&zenlog(
 		"The service \"$serviceSelect\" from farm \"$farmName\" has been moved $moveService"
