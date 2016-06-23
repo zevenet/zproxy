@@ -35,41 +35,43 @@ use Sys::Syslog qw(:standard :macros);    #standard functions for Syslog
 #
 sub zenlog    # ($type,$string)
 {
-	my $string = shift;				# string = message
-	my $type   = shift // 'info';	# type   = log level (Default: info))
+	my $string = shift;            # string = message
+	my $type = shift // 'info';    # type   = log level (Default: info))
 
-	# Get the program name 
+	# Get the program name
 	my $program = ( split '/', $0 )[-1];
 	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
 
 	openlog( $program, 'pid', 'local0' );    #open syslog
 
 	my @lines = split /\n/, $string;
-	
-	foreach my $line (@lines) {
-		syslog( $type, "(" . uc ($type) . ") " . $line );
+
+	foreach my $line ( @lines )
+	{
+		syslog( $type, "(" . uc ( $type ) . ") " . $line );
 	}
 
-	closelog();    #close syslog
+	closelog();                              #close syslog
 }
 
 #open file with lock
 #
-#&openlock(filehandle, $mode, $expr);
-#&openlock($filehanlde, $mode);
+# $filehandle = &openlock($mode, $expr);
+# $filehandle = &openlock($mode);
 #
 #examples
-#&openlock(FILE,"<$fichero");
-#&openlock(FILE,">>","output.txt");
+# $filehandle = &openlock(">>","output.txt");
+# $filehandle = &openlock("<$fichero");
 #
-sub openlock    # ($filehandle,$mode,$expr)
+sub openlock    # ($mode,$expr)
 {
-	my ( $filehandle, $mode, $expr ) = @_;    #parameters
+	my ( $mode, $expr ) = @_;    #parameters
+	my $filehandle;
 
 	if ( $expr ne "" )
-	{                                         #3 parameters
+	{                            #3 parameters
 		if ( $mode =~ /</ )
-		{                                     #only reading
+		{                        #only reading
 			open ( $filehandle, $mode, $expr )
 			  || die "some problems happened reading the file $expr\n";
 			flock $filehandle, LOCK_SH
@@ -98,14 +100,15 @@ sub openlock    # ($filehandle,$mode,$expr)
 			flock $filehandle, LOCK_EX;    #other scripts cannot open the file
 		}
 	}
+	return $filehandle;
 }
 
 #close file with lock
 #
-#&closelock($filehandle);
+# &closelock($filehandle);
 #
 #examples
-#&closelock(FILE);
+# &closelock(FILE);
 #
 sub closelock    # ($filehandle)
 {
@@ -118,11 +121,11 @@ sub closelock    # ($filehandle)
 
 #tie aperture with lock
 #
-#@array = &tielock($file);
+# $handleArray = &tielock($file);
 #
 #examples
-#@myarray = &tielock("test.dat");
-#@array = &tielock($filename);
+# $handleArray = &tielock("test.dat");
+# $handleArray = &tielock($filename);
 #
 sub tielock    # ($file_name)
 {
@@ -131,21 +134,21 @@ sub tielock    # ($file_name)
 	$o = tie my @array, "Tie::File", $file_name;
 	$o->flock;
 
-	return @array;
+	return \@array;
 }
 
 #untie close file with lock
 #
-#&untielock(@array);
+# &untielock($array);
 #
 #examples
-#&untielock(@myarray);
+# &untielock($myarray);
 #
 sub untielock    # (@array)
 {
-	@array = @_;
+	$array = shift;
 
-	untie @array;
+	untie @{ $array };
 }
 
 # log and run the command string input parameter returning execution error code
@@ -154,7 +157,7 @@ sub logAndRun    # ($command)
 	my $command = shift;    # command string to log and run
 	my $return_code;
 	my @cmd_output;
-	
+
 	my $program = ( split '/', $0 )[-1];
 	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
 	$program .= ' ';
@@ -164,18 +167,18 @@ sub logAndRun    # ($command)
 
 	if ( &debug )
 	{
-		@cmd_output  = `$command 2>&1`;    # run
+		@cmd_output = `$command 2>&1`;            # run
 	}
 	else
 	{
-		system ( "$command >/dev/null 2>&1" );	# run
+		system ( "$command >/dev/null 2>&1" );    # run
 	}
 
 	$return_code = $?;
 
 	if ( $return_code )
 	{
-		&zenlog( "last command failed!" );		# show in logs if failed
+		&zenlog( "last command failed!" );        # show in logs if failed
 		&zenlog( "@cmd_output" ) if &debug;
 	}
 
@@ -184,7 +187,7 @@ sub logAndRun    # ($command)
 }
 
 # example of caller usage
-sub zlog                                       # (@message)
+sub zlog                                          # (@message)
 {
 	my @message = shift;
 
@@ -203,10 +206,10 @@ sub zlog                                       # (@message)
 
 	use Data::Dumper;
 	&zenlog(   '>>> '
-			  . ( caller ( 3 ) )[3] . ' >>> '
-			  . ( caller ( 2 ) )[3] . ' >>> '
-			  . ( caller ( 1 ) )[3]
-			  . " => @message" );
+			 . ( caller ( 3 ) )[3] . ' >>> '
+			 . ( caller ( 2 ) )[3] . ' >>> '
+			 . ( caller ( 1 ) )[3]
+			 . " => @message" );
 
 	return;
 }

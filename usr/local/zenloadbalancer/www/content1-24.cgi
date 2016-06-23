@@ -939,7 +939,7 @@ foreach $line ( @file )
 		print " 
 		<div style=\"float:right\">
 			<div>
-				<p>Warning: This process restart the farm.</p>
+				<p>Warning: This action will restart the farm.</p>
 			</div>
 			<div>
 		";
