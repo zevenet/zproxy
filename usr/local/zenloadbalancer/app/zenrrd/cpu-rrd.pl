@@ -111,10 +111,10 @@ if (-f "/proc/stat")
 use RRDs;
 require ("/usr/local/zenloadbalancer/config/global.conf");
 
-if (! -f "$rrdap_dir$rrd_dir$db_cpu" )
+if (! -f "$rrdap_dir/$rrd_dir/$db_cpu" )
 	{
-	print "Creating cpu rrd data base $rrdap_dir$rrd_dir$db_cpu ...\n";
-	RRDs::create "$rrdap_dir$rrd_dir$db_cpu",
+	print "Creating cpu rrd data base $rrdap_dir/$rrd_dir/$db_cpu ...\n";
+	RRDs::create "$rrdap_dir/$rrd_dir/$db_cpu",
 		"-s 300",
 		"DS:user:GAUGE:600:0,00:100,00",
 		"DS:nice:GAUGE:600:0,00:100,00",
@@ -164,8 +164,8 @@ print "Information for CPU graph ...\n";
 	print "		idle: $cpu_idle %\n";
 	print "		total used: $cpu_usage %\n";
 #update rrd info
-print "Updating Information in $rrdap_dir$rrd_dir$db_cpu ...\n";		
-RRDs::update "$rrdap_dir$rrd_dir$db_cpu",
+print "Updating Information in $rrdap_dir/$rrd_dir/$db_cpu ...\n";		
+RRDs::update "$rrdap_dir/$rrd_dir/$db_cpu",
 	"-t", "user:nice:sys:iowait:irq:softirq:idle:tused",
 	"N:$cpu_user:$cpu_nice:$cpu_sys:$cpu_iowait:$cpu_irq:$cpu_softirq:$cpu_idle:$cpu_usage";
 

@@ -54,9 +54,9 @@ foreach $farmfile ( &getFarmList() ){
 		}
 	
 		#process farm
-		if (! -f "$rrdap_dir$rrd_dir$db_if"){
-			print "Creating traffic rrd database for $farm $rrdap_dir$rrd_dir$db_if ...\n";
-			RRDs::create "$rrdap_dir$rrd_dir$db_if",
+		if (! -f "$rrdap_dir/$rrd_dir/$db_if"){
+			print "Creating traffic rrd database for $farm $rrdap_dir/$rrd_dir/$db_if ...\n";
+			RRDs::create "$rrdap_dir/$rrd_dir/$db_if",
         	               	"-s 300",
         	               	"DS:pending:GAUGE:600:0:12500000",
         	               	"DS:established:GAUGE:600:0:12500000",
@@ -84,8 +84,8 @@ foreach $farmfile ( &getFarmList() ){
 		print "		pending: $synconns\n";
 		print "		established: $globalconns\n";
 		#update rrd info
-		print "Updating Information in $rrdap_dir$rrd_dir$db_if ...\n";
-		RRDs::update "$rrdap_dir$rrd_dir$db_if",
+		print "Updating Information in $rrdap_dir/$rrd_dir/$db_if ...\n";
+		RRDs::update "$rrdap_dir/$rrd_dir/$db_if",
 			"-t", "pending:established",
 			"N:$synconns:$globalconns";
 	}

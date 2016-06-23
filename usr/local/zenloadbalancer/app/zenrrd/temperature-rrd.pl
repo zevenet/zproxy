@@ -26,10 +26,10 @@ use RRDs;
 require ("/usr/local/zenloadbalancer/config/global.conf");
 $db_temp="temp.rrd";
 #create db memory if not existS
-if (! -f "$rrdap_dir$rrd_dir$db_temp" )
+if (! -f "$rrdap_dir/$rrd_dir/$db_temp" )
 	{
-	print "Creating temperature rrd data base $rrdap_dir$rrd_dir$db_temp ...\n";
-	RRDs::create "$rrdap_dir$rrd_dir$db_temp",
+	print "Creating temperature rrd data base $rrdap_dir/$rrd_dir/$db_temp ...\n";
+	RRDs::create "$rrdap_dir/$rrd_dir/$db_temp",
 		"-s 300",
 		"DS:temp:GAUGE:600:0:100",
         #        "RRA:AVERAGE:0.5:1:288",
@@ -85,8 +85,8 @@ if (-f "/proc/acpi/thermal_zone/THRM/temperature")
 	exit 1;
 	}
 #update rrd info
-print "Updating Information in $rrdap_dir$rrd_dir$db_temp ...\n";		
-RRDs::update "$rrdap_dir$rrd_dir$db_temp",
+print "Updating Information in $rrdap_dir/$rrd_dir/$db_temp ...\n";		
+RRDs::update "$rrdap_dir/$rrd_dir/$db_temp",
 	"-t", "temp",
 	"N:$temp";
 
@@ -95,7 +95,7 @@ $weidth="500";
 $height="150";
 #create graphs
 #1 day
-$last =  RRDs::last "$rrdap_dir$rrd_dir$db_temp";
+$last =  RRDs::last "$rrdap_dir/$rrd_dir/$db_temp";
 
 
 @time=("d","w","m","y");
@@ -115,7 +115,7 @@ foreach $time_graph(@time)
 		"--alt-autoscale-max",
 		"--lower-limit=0",
 		"--vertical-label=CPU TEMPERATURE",
-		"DEF:temp=$rrdap_dir$rrd_dir$db_temp:temp:AVERAGE",
+		"DEF:temp=$rrdap_dir/$rrd_dir/$db_temp:temp:AVERAGE",
 		"AREA:temp#AAA8E4:CPU temperature", 
 				"GPRINT:temp:LAST:Last\\:%4.0lf C", 
 				"GPRINT:temp:MIN:Min\\:%4.0lf C",  

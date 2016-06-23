@@ -55,7 +55,7 @@ sub get_graphs()
 	my $frecuency = $3;
 
 	# Check RRD files are generated
-	opendir ( DIR, "$rrdap_dir$rrd_dir" );
+	opendir ( DIR, "$rrdap_dir/$rrd_dir" );
 	my @rrdlist = grep ( /^*.rrd$/, readdir ( DIR ) );
 	if ( @rrdlist eq 0 )
 	{
