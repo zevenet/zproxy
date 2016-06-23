@@ -36,7 +36,6 @@ if ( $action eq "editfarm-Parameters" )
 	my $actualalive           = &getFarmBlacklistTime( $farmname );
 	my $actualhttpverb        = &getFarmHttpVerb( $farmname );
 	my $actualclient          = &getFarmClientTimeout( $farmname );
-	my $actualconnmax         = &getFarmMaxConn( $farmname );
 	my $actualrewritelocation = &getFarmRewriteL( $farmname );
 	my $actualciphers         = &getFarmCipherSet( $farmname );
 	my $actualcipherc         = &getFarmCipherList( $farmname );
@@ -271,32 +270,6 @@ if ( $action eq "editfarm-Parameters" )
 			else
 			{
 				&errormsg( "It's not possible to change the $farmname farm client timeout" );
-			}
-		}
-	}
-
-	#Number of working threads
-	if ( $actualconnmax ne $conn_max )
-	{
-		my $error = 0;
-		if ( &isnumber( $conn_max ) eq "false" )
-		{
-			&errormsg( "Invalid $conn_max value, it must be a numeric value" );
-			$error = 1;
-		}
-		if ( $error == 0 )
-		{
-			my $status = &setFarmMaxConn( $conn_max, $farmname );
-			if ( $status != -1 )
-			{
-				&successmsg(
-					"The max number of connections has been modified, the farm $farmname has been restarted"
-				);
-				&setFarmRestart( $farmname );
-			}
-			else
-			{
-				&errormsg( "It's not possible to change the farm $farmname max connections" );
 			}
 		}
 	}
@@ -908,4 +881,4 @@ if ( -e "/tmp/$farmname.lock" )
 	);
 }
 
-1
+1;

@@ -252,8 +252,6 @@ $checkalive = $cgi->param( 'checkalive' )
   if ( defined ( $cgi->param( 'checkalive' ) ) );
 $clienttout = $cgi->param( 'clienttout' )
   if ( defined ( $cgi->param( 'clienttout' ) ) );
-$conn_max = $cgi->param( 'conn_max' )
-  if ( defined ( $cgi->param( 'conn_max' ) ) );
 $rewritelocation = $cgi->param( 'rewritelocation' )
   if ( defined ( $cgi->param( 'rewritelocation' ) ) );
 $httpverb = $cgi->param( 'httpverb' )

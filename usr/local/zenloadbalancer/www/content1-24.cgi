@@ -132,16 +132,6 @@ print
 print "</div>\n";
 
 ##########################################
-# MAX CLIENTS
-##########################################
-my $conn_max = &getFarmMaxConn( $farmname );
-print "<div class=\"form-row\">\n";
-print "<p class=\"form-label\"><b>Number of working threads</b></p>\n";
-print
-  "<div class=\"form-item\"><input type=\"number\" class=\"fixedwidth\" value=\"$conn_max\" size=\"4\" name=\"conn_max\"></div>\n";
-print "</div>\n";
-
-##########################################
 # REWRITE LOCATION
 ##########################################
 my $type0 = "disabled";

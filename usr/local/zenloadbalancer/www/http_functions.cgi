@@ -680,26 +680,7 @@ sub getHTTPFarmMaxClientTime    # ($farm_name)
 # set the max conn of a farm
 sub setHTTPFarmMaxConn    # ($max_connections,$farm_name)
 {
-	my ( $max_connections, $farm_name ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
-
-	use Tie::File;
-	tie my @array, 'Tie::File', "$configdir/$farm_filename";
-
-	for ( @array )
-	{
-		if ( $_ =~ "Threads" )
-		{
-			#s/^Threads.*/Threads   $maxc/g;
-			$_      = "Threads\t\t$max_connections";
-			$output = $?;
-		}
-	}
-	untie @array;
-
-	return $output;
+	return 0;
 }
 
 #
@@ -1035,29 +1016,7 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 # Returns farm max connections
 sub getHTTPFarmMaxConn    # ($farm_name)
 {
-	my ( $farm_name ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $farm_type     = &getFarmType( $farm_name );
-	my $output        = -1;
-
-	open FR, "<$configdir\/$farm_filename";
-	my @configfile = <FR>;
-	foreach my $line ( @configfile )
-	{
-		if ( $line =~ /^Threads/ )
-		{
-			@line = split ( "\ ", $line );
-			my $maxt = $line[1];
-
-			$maxt =~ s/\ //g;
-			chomp ( $maxt );
-			$output = $maxt;
-		}
-	}
-	close FR;
-
-	return $output;
+	return 0;
 }
 
 # Returns farm listen port

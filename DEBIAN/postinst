@@ -101,6 +101,16 @@ if [ -f /usr/local/zenloadbalancer/app/zbin/fwmark_tag_fix.pl ]; then
 	/usr/local/zenloadbalancer/app/zbin/fwmark_tag_fix.pl
 fi
 
+# Migrate HTTP farms to dynamic thread model, without tcmalloc
+for i in $(find /usr/local/zenloadbalancer/config/ -name *pound.cfg);
+do
+	if [[ `grep -c ThreadModel $i` == '0' ]]; then
+		echo Migrating $i
+		sed -i -e 's/Threads\t\t[0-9]*$/Threads\t\t1024\nThreadModel\tdynamic/' $i
+	fi
+done
+
+
 if [ `ls /usr/local/zenloadbalancer/config/if_eth* 2>/dev/null | wc -l` -gt 0 ];
 then
 	echo "Restarting Zen Load Balancer web GUI..."
