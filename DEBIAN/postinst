@@ -165,6 +165,6 @@ sed -i "s/1;30m/0;37m/g" /etc/bash.bashrc 2> /dev/null
 
 #Flush apt sources
 echo > /etc/apt/sources.list
-( (sleep 5; /usr/bin/apt-get update) 2> /dev/null ) &
+( (sleep 5; /usr/bin/apt-get update 2>&1 >/dev/null ) 2>/dev/null ) &
 
 echo "Zen Load Balancer update completed..."
