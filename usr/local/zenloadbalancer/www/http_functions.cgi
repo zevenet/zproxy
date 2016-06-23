@@ -1899,7 +1899,7 @@ sub getFarmHttpBackendStatus    # ($farm_name,$backend,$status,$idsv)
 				chomp $bw[0];
 				if ( $bw[3] eq "active" )
 				{
-					print FW "-B 0 $sw[0] $bw[0] active\n";
+					#~ print FW "-B 0 $sw[0] $bw[0] active\n";
 				}
 				else
 				{
@@ -1912,21 +1912,23 @@ sub getFarmHttpBackendStatus    # ($farm_name,$backend,$status,$idsv)
 	use Tie::File;
 	tie @filelines, 'Tie::File', "$statusfile";
 
-	for ( @filelines )
+	my $i;
+	foreach my $linea ( @filelines )
 	{
-		if ( $_ =~ /\ 0\ $idsv\ $backend/ )
+		if ( $linea =~ /\ 0\ $idsv\ $backend/ )
 		{
 			if ( $status =~ /maintenance/ || $status =~ /fgDOWN/ )
 			{
-				$_       = "-b 0 $idsv $backend $status";
+				$linea   = "-b 0 $idsv $backend $status";
 				$changed = "true";
 			}
 			else
 			{
-				$_       = "-B 0 $idsv $backend $status";
+				splice @filelines, $i, 1,;
 				$changed = "true";
 			}
 		}
+		$i++;
 	}
 	untie @filelines;
 
@@ -1939,10 +1941,11 @@ sub getFarmHttpBackendStatus    # ($farm_name,$backend,$status,$idsv)
 		}
 		else
 		{
-			print FW "-B 0 $idsv $backend active\n";
+			splice @filelines, $i, 1,;
 		}
 		close FW;
 	}
+
 }
 
 #Function that removes a backend from the status file
@@ -2947,6 +2950,7 @@ sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 	my $selectServiceInd;
 	my $size = scalar @services;
 	my @aux;
+	my $lastService;
 
 	# loop
 	my $ind        = 0;
@@ -2993,10 +2997,17 @@ sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 				$serviceNum += 1;
 			}
 
+			# index of last service
+			if ( $line =~ /^\tEnd$/ )
+			{
+				$lastService = $ind + 1;
+			}
+
 			if ( !$flag )
 			{
 				$ind += 1;
 			}
+
 		}
 		@file = @aux;
 
@@ -3011,7 +3022,8 @@ sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 		{
 			if ( $selectServiceInd == ( $size - 2 ) )
 			{
-				push @file, @definition;
+				unshift @definition, "\n";
+				splice ( @file, $lastService + 1, 0, @definition );
 			}
 			else
 			{
@@ -3025,14 +3037,14 @@ sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 }
 
 # Change farm_status.cfg file
-# &moveServiceFarmStatus($farmname, $moveService, $serviceSelect);
+# &moveServiceFarmStatus($farmName, $moveService, $serviceSelect);
 sub moveServiceFarmStatus
 {
 	my ( $farmName, $moveService, $serviceSelect ) = @_;
 	my @fileTmp;
 
 	my $fileName    = "$configdir\/${farmName}_status.cfg";
-	my $fileNameTmp = "${fileName}.tmp";
+	my $fileNameTmp = "${fileName}";
 
 	my @services = &getFarmServices( $farmName );
 	my $size     = scalar @services;
@@ -3088,6 +3100,10 @@ sub moveServiceFarmStatus
 	}
 
 	untie @fileTmp;
+
+	&zenlog(
+		"The service \"$serviceSelect\" from farm \"$farmName\" has been moved $moveService"
+	);
 
 	return 0;
 }
