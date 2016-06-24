@@ -529,7 +529,7 @@ print "<table id=\"interfaces-table\" class=\"display\">";
 print "<thead>";
 print "<tr>";
 print "<th>Name</th>";
-print "<th>IPv</th>";
+#~ print "<th>IPv</th>";
 print "<th>Addr</th>";
 print "<th>HWaddr</th>";
 print "<th>Netmask/Bitmask</th>";
@@ -576,6 +576,9 @@ if ( $action eq "addvip" || $action eq "addvlan" )
 
 for my $iface ( @interfaces )
 {
+	# Only IPv4
+	next if $$iface{ip_v} == 6;
+	
 	my $cluster_icon = '';
 	if (    ( $$iface{ addr } eq $clrip || $$iface{ addr } eq $clvip )
 		 && $clrip
@@ -634,7 +637,7 @@ for my $iface ( @interfaces )
 		print "<form method=\"post\" action=\"index.cgi\" class=\"myform\">";
 		print
 		  "<td>$$iface{name}<input type=\"text\" maxlength=\"10\" size=\"10\" name=\"if\" value=\"\"></td>";
-		print "<td><center>IPv$$iface{ip_v}</center></td>";
+		#~ print "<td><center>IPv$$iface{ip_v}</center></td>";
 		print "<td><input type=\"text\" name=\"newip\" size=\"14\"></td>";
 
 		print
@@ -695,7 +698,7 @@ for my $iface ( @interfaces )
 	{
 		print "<tr $selected>";
 		print "<td>$$iface{name} $cluster_icon $gui_icon</td>";
-		print "<td><center>IPv$$iface{ip_v}</center></td>";
+		#~ print "<td><center>IPv$$iface{ip_v}</center></td>";
 		print "<td><center>$$iface{addr}</center></td>";
 		print "<td><center>$$iface{mac}</center></td>";
 		print "<td><center>$$iface{mask}</center></td>";
@@ -742,7 +745,7 @@ print "<thead>";
 print "<tr>";
 print "<th>Addr</th>";
 print "<th>Interface</th>";
-print "<th>IPv</th>";
+#~ print "<th>IPv</th>";
 print "<th>Actions</th>";
 print "</tr>";
 print "</thead>";
@@ -778,8 +781,8 @@ if ( $action =~ /editgw4/ )
 	}
 
 	print "</select>";
-	print "</td><td>";
-	print "IPv4";
+	#~ print "</td><td>";
+	#~ print "IPv4";
 }
 else
 {
@@ -787,57 +790,57 @@ else
 	print &getDefaultGW();
 	print "</td><td>";
 	print &getIfDefaultGW();
-	print "</td><td>";
-	print "IPv4";
+	#~ print "</td><td>";
+	#~ print "IPv4";
 }
 print "</td><td>";
 &createmenuGW( $id, $action, 4 );
 print "</td></tr>";
 
-# IPv6 default gateway
-if ( $action =~ /editgw6/ )
-{
-	print
-	  "<form name=\"gatewayform\" method=\"post\" action=\"index.cgi\" class=\"myform\">";
-	print "<tr class=\"selected\"><td>";
-	print "<input type=\"text\" size=\"14\" name=\"gwaddr\" value=\"";
-	print &getIPv6DefaultGW();
-	print "\">";
-	print "</td><td>";
-	print "<select name=\"if\">";
-
-	my $gw = &getIPv6IfDefaultGW();
-	if ( $gw )
-	{
-		$available_interfaces{ $gw } = 'selected';
-	}
-	else
-	{
-		my ( $first_if ) = sort keys %available_interfaces;
-		$available_interfaces{ $first_if } = 'selected';
-	}
-
-	for my $if ( sort keys %available_interfaces )
-	{
-		print "<option value=\"$if\" $available_interfaces{$if}>$if</option>";
-	}
-
-	print "</select>";
-	print "</td><td>";
-	print "IPv6";
-}
-else
-{
-	print "<tr><td>";
-	print &getIPv6DefaultGW();
-	print "</td><td>";
-	print &getIPv6IfDefaultGW();
-	print "</td><td>";
-	print "IPv6";
-}
-print "</td><td>";
-&createmenuGW( $id, $action, 6 );
-print "</td></tr>";
+#~ # IPv6 default gateway
+#~ if ( $action =~ /editgw6/ )
+#~ {
+	#~ print
+	  #~ "<form name=\"gatewayform\" method=\"post\" action=\"index.cgi\" class=\"myform\">";
+	#~ print "<tr class=\"selected\"><td>";
+	#~ print "<input type=\"text\" size=\"14\" name=\"gwaddr\" value=\"";
+	#~ print &getIPv6DefaultGW();
+	#~ print "\">";
+	#~ print "</td><td>";
+	#~ print "<select name=\"if\">";
+#~ 
+	#~ my $gw = &getIPv6IfDefaultGW();
+	#~ if ( $gw )
+	#~ {
+		#~ $available_interfaces{ $gw } = 'selected';
+	#~ }
+	#~ else
+	#~ {
+		#~ my ( $first_if ) = sort keys %available_interfaces;
+		#~ $available_interfaces{ $first_if } = 'selected';
+	#~ }
+#~ 
+	#~ for my $if ( sort keys %available_interfaces )
+	#~ {
+		#~ print "<option value=\"$if\" $available_interfaces{$if}>$if</option>";
+	#~ }
+#~ 
+	#~ print "</select>";
+	#~ print "</td><td>";
+	#~ print "IPv6";
+#~ }
+#~ else
+#~ {
+	#~ print "<tr><td>";
+	#~ print &getIPv6DefaultGW();
+	#~ print "</td><td>";
+	#~ print &getIPv6IfDefaultGW();
+	#~ print "</td><td>";
+	#~ print "IPv6";
+#~ }
+#~ print "</td><td>";
+#~ &createmenuGW( $id, $action, 6 );
+#~ print "</td></tr>";
 
 print "</tbody>";
 print "</table>";
