@@ -685,6 +685,7 @@ sub delete_service_backend()
 	
 	# Check that the provided service is configured in the farm
 	my @services;
+	my $type = &getFarmType( $farmname );
 	if ($type eq "gslb"){
 		@services = &getGSLBFarmServices($farmname);
 	} else {
