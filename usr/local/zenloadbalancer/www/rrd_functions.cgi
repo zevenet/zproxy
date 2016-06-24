@@ -196,7 +196,7 @@ sub genDiskGraph    #($type,$graph,$time)
 		RRDs::graph(
 					 "$graph",
 					 "--start=-1$time",
-					 "--title=PARTITON $mount",
+					 "--title=PARTITION $mount",
 					 "--vertical-label=SPACE",
 					 "-h",
 					 "$height",
