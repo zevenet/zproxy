@@ -56,7 +56,7 @@ print "
 # Print form
 #search farm files
 opendir ( DIR, $logdir );
-my @files = grep ( /.*\.log$/, readdir ( DIR ) );
+my @files = grep ( /(.*\.log|syslog|messages)$/, readdir ( DIR ) );
 closedir ( DIR );
 
 print "<form method=\"post\" action=\"index.cgi\">";
