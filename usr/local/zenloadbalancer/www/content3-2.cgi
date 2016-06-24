@@ -130,7 +130,6 @@ elsif (    $action eq "Save & Up!"
 	if ( $action eq "addvlan2" )
 	{
 		my $if_ref = &getInterfaceConfig( $interface{ name }, $interface{ ip_v } );
-<<<<<<< HEAD
 
 		if ( $if_ref )
 		{
@@ -879,43 +878,43 @@ print "</td></tr>";
 #~ # IPv6 default gateway
 #~ if ( $action =~ /editgw6/ )
 #~ {
-#~ print
-#~ "<form name=\"gatewayform\" method=\"post\" action=\"index.cgi\" class=\"myform\">";
-#~ print "<tr class=\"selected\"><td>";
-#~ print "<input type=\"text\" size=\"14\" name=\"gwaddr\" value=\"";
-#~ print &getIPv6DefaultGW();
-#~ print "\">";
-#~ print "</td><td>";
-#~ print "<select name=\"if\">";
-#~
-#~ my $gw = &getIPv6IfDefaultGW();
-#~ if ( $gw )
-#~ {
-#~ $available_interfaces{ $gw } = 'selected';
+	#~ print
+	  #~ "<form name=\"gatewayform\" method=\"post\" action=\"index.cgi\" class=\"myform\">";
+	#~ print "<tr class=\"selected\"><td>";
+	#~ print "<input type=\"text\" size=\"14\" name=\"gwaddr\" value=\"";
+	#~ print &getIPv6DefaultGW();
+	#~ print "\">";
+	#~ print "</td><td>";
+	#~ print "<select name=\"if\">";
+#~ 
+	#~ my $gw = &getIPv6IfDefaultGW();
+	#~ if ( $gw )
+	#~ {
+		#~ $available_interfaces{ $gw } = 'selected';
+	#~ }
+	#~ else
+	#~ {
+		#~ my ( $first_if ) = sort keys %available_interfaces;
+		#~ $available_interfaces{ $first_if } = 'selected';
+	#~ }
+#~ 
+	#~ for my $if ( sort keys %available_interfaces )
+	#~ {
+		#~ print "<option value=\"$if\" $available_interfaces{$if}>$if</option>";
+	#~ }
+#~ 
+	#~ print "</select>";
+	#~ print "</td><td>";
+	#~ print "IPv6";
 #~ }
 #~ else
 #~ {
-#~ my ( $first_if ) = sort keys %available_interfaces;
-#~ $available_interfaces{ $first_if } = 'selected';
-#~ }
-#~
-#~ for my $if ( sort keys %available_interfaces )
-#~ {
-#~ print "<option value=\"$if\" $available_interfaces{$if}>$if</option>";
-#~ }
-#~
-#~ print "</select>";
-#~ print "</td><td>";
-#~ print "IPv6";
-#~ }
-#~ else
-#~ {
-#~ print "<tr><td>";
-#~ print &getIPv6DefaultGW();
-#~ print "</td><td>";
-#~ print &getIPv6IfDefaultGW();
-#~ print "</td><td>";
-#~ print "IPv6";
+	#~ print "<tr><td>";
+	#~ print &getIPv6DefaultGW();
+	#~ print "</td><td>";
+	#~ print &getIPv6IfDefaultGW();
+	#~ print "</td><td>";
+	#~ print "IPv6";
 #~ }
 #~ print "</td><td>";
 #~ &createmenuGW( $id, $action, 6 );
