@@ -430,7 +430,7 @@ sub manage_mgmt(){
 	$mgmtifinput->set_selection($mgmtindex);
 	$mgmtif = $mgmtifinput->get();
 	$mgmtip = `ifconfig $mgmtif | awk -F'inet addr:' '{print \$2}' | awk '{printf \$1}'`;
-	$mgmtmask = `ifconfig eth0 | awk -F'Mask:' '{printf \$2}'`;
+	$mgmtmask = `ifconfig $mgmtif | awk -F'Mask:' '{printf \$2}'`;
 	$mgmtgw =`ip route show | grep default | awk '{printf \$3}'`;
 
 
