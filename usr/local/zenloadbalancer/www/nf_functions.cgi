@@ -973,7 +973,7 @@ sub iptSystem
 	$return_code = system ( "$command >/dev/null 2>&1" );    # run
 
 	## unlock iptables use ##
-	if ( open_rc )
+	if ( $open_rc )
 	{
 		&setIptUnlock( $ipt_lockfile );
 		close $ipt_lockfile;
