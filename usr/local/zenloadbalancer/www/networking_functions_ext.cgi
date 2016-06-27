@@ -65,12 +65,17 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		for my $line ( @lines )
 		{
 			my ( undef, $ip ) = split ';', $line;
-			my $line_ipversion =
-			    ( $ip =~ /:/ )  ? 6
-			  : ( $ip =~ /\./ ) ? 4
-			  :                   undef;
+			my $line_ipversion;
 
-			if ( $ip_version == $line_ipversion && !$if_line )
+			if ( defined $ip )
+			{
+				$line_ipversion =
+					( $ip =~ /:/ )  ? 6
+				  : ( $ip =~ /\./ ) ? 4
+				  :                   undef;
+			}
+
+			if ( defined $line_ipversion && $ip_version == $line_ipversion && !$if_line )
 			{
 				$if_line = $line;
 			}
@@ -167,7 +172,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 
 			my ( undef, $ip ) = split ';', $line;
 
-			if ( $$if_ref{ ip_v } == &ipversion( $ip ) && !$ip_line_found )
+			if ( $$if_ref{ ip_v } eq &ipversion( $ip ) && !$ip_line_found )
 			{
 				# replace line
 				$line          = $if_line;
