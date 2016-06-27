@@ -143,7 +143,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	my @if_params = qw( name addr mask gateway );
 
 	#~ my $if_line = join (';', @if_params);
-	my $if_line = join ( ';', @{ $if_ref }{ name, addr, mask, gateway } ) . ';';
+	my $if_line = join ( ';', @{ $if_ref }{ 'name', 'addr', 'mask', 'gateway' } ) . ';';
 	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
 
 	if ( !-f $config_filename )
