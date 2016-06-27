@@ -2881,9 +2881,9 @@ sub setFarmBackendsSessionsRemove($farm_name,$service,$backendid)
 		if ( $_ =~ /Session.*->\ $backendid/ && $sw eq 1 )
 		{
 			@sessionid  = split ( /Session/, $_ );
-			$sessionid2 = @sessionid[1];
+			$sessionid2 = $sessionid[1];
 			@sessionid  = split ( /\ /, $sessionid2 );
-			$sessid     = @sessionid[1];
+			$sessid     = $sessionid[1];
 			@output = `$poundctl -c  /tmp/$farm_name\_pound.socket -n 0 $serviceid $sessid`;
 			&zenlog(
 				"Executing:  $poundctl -c /tmp/$farm_name\_pound.socket -n 0 $serviceid $sessid"
