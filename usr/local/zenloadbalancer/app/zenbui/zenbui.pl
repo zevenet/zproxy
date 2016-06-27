@@ -83,7 +83,8 @@ $zlbmenu = $win2->add(
 					   },
 					   -onchange => \&manage_sel,
 );
-$zlbmenu->focus();
+
+#~ $zlbmenu->focus();
 $zlbmenu->set_selection( 0 );
 $zlbmenu->focus();
 
@@ -420,6 +421,7 @@ sub manage_mgmt
 	$mgmt_if    = $mgmt_if    // $interfaces[0];
 	$mgmt_index = $mgmt_index // 0;                # default interface
 	$ip_version = $ip_version // 4;
+	$ipv_height = 4;
 
 	my $i = 0;
 
@@ -433,45 +435,34 @@ sub manage_mgmt
 		$i++;
 	}
 
-	my $ip_version_listbox = $win3->add(
-		'IPversion_select',
-		'Listbox',
-		-title  => 'IP version',
-		-height => 4,
-		-border => 1,
-		-bg     => 'black',
-		-tfg    => 'black',
-		-tbg    => 'white',
-		-values => [4, 6],
-		-labels => {
-					 4 => 'IPv4',
-					 6 => 'IPv6'
-		},
-		-selected => ( $ip_version == 6 ) ? 1 : 0,
-		-radio    => 1,
-		-onchange => sub {
-			my $listbox = shift;
-			$ip_version = $listbox->get;
+	#~ my $ip_version_listbox = $win3->add(
+		#~ 'IPversion_select',
+		#~ 'Listbox',
+		#~ -title  => 'IP version',
+		#~ -height => 4,
+		#~ -values => \@interfaces,
+		#~ -title => 'ZLB Available Interfaces List',
+		#~ -vscrollbar => 1,
+		#~ -onchange => sub {
+					#~ $mgmt_if = $mgmt_if_input->get();
+					#~ $mgmt_ip = `ifconfig $mgmt_if | awk -F'inet addr:' '{print \$2}' | awk '{printf \$1}'`;
+					#~ if ($mgmtipinput){
+						#~ $mgmtipinput->text($mgmt_ip);
+					#~ }
+					#~ $mgmt_mask = `ifconfig $mgmt_if | awk -F'Mask:' '{printf \$2}'`;
+					#~ if ($mgmtmaskinput){
+						#~ $mgmtmaskinput->text($mgmt_mask);
+					#~ }
+					#~ $mgmt_gw =`ip route show | grep default | awk '{printf \$3}'`;
+					#~ if ($mgmtgwinput){
+						#~ $mgmtgwinput->text($mgmt_gw);
+					#~ }
+				#~ },
+		#~ );
 
-			( $mgmt_ip, $mgmt_mask, $mgmt_gw ) =
-			  &get_interface_stack_ip_mask_gateway( $mgmt_if, $ip_version );
-
-			if ( $mgmt_ip_input )
-			{
-				$mgmt_ip_input->text( $mgmt_ip );
-			}
-
-			if ( $mgmt_mask_input )
-			{
-				$mgmt_mask_input->text( $mgmt_mask );
-			}
-
-			if ( $mgmt_gw_input )
-			{
-				$mgmt_gw_input->text( $mgmt_gw );
-			}
-		}
-	);
+	$mgmt_ip = `ifconfig $mgmt_if | awk -F'inet addr:' '{print \$2}' | awk '{printf \$1}'`;
+	$mgmt_mask = `ifconfig $mgmt_if | awk -F'Mask:' '{printf \$2}'`;
+	$mgmt_gw =`ip route show | grep default | awk '{printf \$3}'`;
 
 	$mgmt_if_input = $win3->add(
 		'win3id1',
@@ -481,7 +472,7 @@ sub manage_mgmt
 		-tbg        => 'white',
 		-border     => 1,
 		-vscrollbar => 1,
-		-y          => 4,
+		-y          => 4 - $ipv_height,
 		-height     => 4,
 		-values     => \@interfaces,
 		-title      => 'ZLB Available Interfaces List',
@@ -508,10 +499,106 @@ sub manage_mgmt
 			{
 				$mgmt_gw_input->text( $mgmt_gw );
 			}
+
+			#~ &zenlog("mgmt_index:$mgmt_index");
+			#~ &zenlog("mgmt_if:$mgmt_if");
+			#~ &zenlog("mgmt_ip:$mgmt_ip");
+			#~ &zenlog("mgmt_mask:$mgmt_mask");
+			#~ &zenlog("mgmt_gw:$mgmt_gw");
 		},
 	);
 
-	#~ $mgmt_if_input->focus();
+	$mgmt_if_input->focus();
+	$mgmt_if_input->set_selection($mgmt_index);
+	$mgmt_if = $mgmt_if_input->get();
+	#~ $mgmt_ip = `ifconfig $mgmt_if | awk -F'inet addr:' '{print \$2}' | awk '{printf \$1}'`;
+	#~ $mgmt_mask = `ifconfig $mgmt_if | awk -F'Mask:' '{printf \$2}'`;
+	#~ $mgmt_gw =`ip route show | grep default | awk '{printf \$3}'`;
+
+	&zenlog("mgmt_if:$mgmt_if");
+	&zenlog("mgmt_ip:$mgmt_ip");
+	&zenlog("mgmt_mask:$mgmt_mask");
+	&zenlog("mgmt_gw:$mgmt_gw");
+
+	#~ $mgmtipinput = $win3->add(
+        #~ 'win3id2', 'TextEntry',
+		#~ -bg => 'black',
+		#~ -tfg => 'black',
+		#~ -tbg => 'white',
+		#~ -border => 1,
+		#~ -bg     => 'black',
+		#~ -tfg    => 'black',
+		#~ -tbg    => 'white',
+		#~ -values => [4, 6],
+		#~ -labels => {
+					 #~ 4 => 'IPv4',
+					 #~ 6 => 'IPv6'
+		#~ },
+		#~ -selected => ( $ip_version == 6 ) ? 1 : 0,
+		#~ -radio    => 1,
+		#~ -onchange => sub {
+			#~ my $listbox = shift;
+			#~ $ip_version = $listbox->get;
+#~ 
+			#~ ( $mgmt_ip, $mgmt_mask, $mgmt_gw ) =
+			  #~ &get_interface_stack_ip_mask_gateway( $mgmt_if, $ip_version );
+#~ 
+			#~ if ( $mgmt_ip_input )
+			#~ {
+				#~ $mgmt_ip_input->text( $mgmt_ip );
+			#~ }
+#~ 
+			#~ if ( $mgmt_mask_input )
+			#~ {
+				#~ $mgmt_mask_input->text( $mgmt_mask );
+			#~ }
+#~ 
+			#~ if ( $mgmt_gw_input )
+			#~ {
+				#~ $mgmt_gw_input->text( $mgmt_gw );
+			#~ }
+		#~ }
+	#~ );
+
+	#~ $mgmt_if_input = $win3->add(
+		#~ 'win3id1',
+		#~ 'Listbox',
+		#~ -bg         => 'black',
+		#~ -tfg        => 'black',
+		#~ -tbg        => 'white',
+		#~ -border     => 1,
+		#~ -vscrollbar => 1,
+		#~ -y          => 4 - $ipv_height,
+		#~ -height     => 4,
+		#~ -values     => \@interfaces,
+		#~ -title      => 'ZLB Available Interfaces List',
+		#~ -selected   => $mgmt_index,
+		#~ -radio      => 1,
+		#~ -onchange   => sub {
+			#~ $mgmt_if    = $mgmt_if_input->get();
+			#~ $mgmt_index = $mgmt_if_input->get_active_id();
+#~ 
+			#~ ( $mgmt_ip, $mgmt_mask, $mgmt_gw ) =
+			  #~ &get_interface_stack_ip_mask_gateway( $mgmt_if, $ip_version );
+#~ 
+			#~ if ( defined $mgmt_ip_input )
+			#~ {
+				#~ $mgmt_ip_input->text( $mgmt_ip );
+			#~ }
+#~ 
+			#~ if ( defined $mgmt_mask_input )
+			#~ {
+				#~ $mgmt_mask_input->text( $mgmt_mask );
+			#~ }
+#~ 
+			#~ if ( defined $mgmt_gw_input )
+			#~ {
+				#~ $mgmt_gw_input->text( $mgmt_gw );
+			#~ }
+		#~ },
+	#~ );
+
+	$mgmt_if_input->focus();
 	$mgmt_if_input->set_selection( $mgmt_index );
 	$mgmt_if = $mgmt_if_input->get();
 
@@ -524,7 +611,7 @@ sub manage_mgmt
 	my $label1 = $win3->add(
 							 'IP', 'Label',
 							 -text => 'IP Address',
-							 -y    => 9,
+							 -y    => 9 - $ipv_height,
 	);
 
 	$mgmt_ip_input = $win3->add(
@@ -533,7 +620,7 @@ sub manage_mgmt
 								 -tfg        => 'black',
 								 -tbg        => 'white',
 								 -border     => 0,
-								 -y          => 9,
+								 -y          => 9 - $ipv_height,
 								 -title      => 'IP',
 								 -text       => $mgmt_ip,
 								 -singleline => 1,
@@ -544,7 +631,7 @@ sub manage_mgmt
 	my $label2 = $win3->add(
 							 'Netmask', 'Label',
 							 -text => 'Netmask',
-							 -y    => 10,
+							 -y    => 10 - $ipv_height,
 	);
 
 	$mgmt_mask_input = $win3->add(
@@ -553,7 +640,7 @@ sub manage_mgmt
 								   -tfg        => 'black',
 								   -tbg        => 'white',
 								   -border     => 0,
-								   -y          => 10,
+								   -y          => 10 - $ipv_height,
 								   -title      => 'Netmask',
 								   -text       => $mgmt_mask,
 								   -singleline => 1,
@@ -564,7 +651,7 @@ sub manage_mgmt
 	my $label3 = $win3->add(
 							 'Gateway', 'Label',
 							 -text => 'Gateway',
-							 -y    => 11,
+							 -y    => 11 - $ipv_height,
 	);
 
 	$mgmt_gw_input = $win3->add(
@@ -573,7 +660,7 @@ sub manage_mgmt
 								 -tfg        => 'black',
 								 -tbg        => 'white',
 								 -border     => 0,
-								 -y          => 11,
+								 -y          => 11 - $ipv_height,
 								 -title      => 'Gateway',
 								 -text       => $mgmt_gw,
 								 -singleline => 1,
@@ -587,7 +674,7 @@ sub manage_mgmt
 							  -bg       => 'black',
 							  -tfg      => 'black',
 							  -tbg      => 'white',
-							  -y        => 13,
+							  -y        => 13 - $ipv_height,
 							  -selected => 1,
 							  -buttons  => [
 										   {
@@ -624,7 +711,7 @@ sub set_net
 		$$if_ref{ ip_v }    = &ipversion( $$if_ref{ addr } );
 		$$if_ref{ status }  = 'up';
 
-		if ( &ipisok( $$if_ref{ addr } ) eq "false" )
+		if ( &ipisok( $$if_ref{ addr }, 4 ) eq "false" )
 		{
 			&error_dialog( "IP Address $$if_ref{addr} structure is not ok" );
 			$setchanges = 0;
@@ -632,7 +719,7 @@ sub set_net
 
 		# check if the new netmask is correct, if empty don't worry
 		if (    $$if_ref{ mask } ne ''
-			 && &ipisok( $$if_ref{ mask } ) eq "false"
+			 && &ipisok( $$if_ref{ mask }, 4 ) eq "false"
 			 && ( $$if_ref{ mask } < 0 || $$if_ref{ mask } > 128 ) )
 		{
 			&error_dialog( "Netmask address $$if_ref{ mask } structure is not ok" );
@@ -640,7 +727,7 @@ sub set_net
 		}
 
 		# check if the new gateway is correct, if empty don't worry
-		if ( $$if_ref{ gateway } !~ /^$/ && &ipisok( $$if_ref{ gateway } ) eq "false" )
+		if ( $$if_ref{ gateway } !~ /^$/ && &ipisok( $$if_ref{ gateway }, 4 ) eq "false" )
 		{
 			&inform_dialog(
 				"Gateway address $$if_ref{ gateway } structure is not ok, set it in the web GUI"
@@ -654,13 +741,23 @@ sub set_net
 			if ( $ret )
 			{
 				&createIf( $if_ref );
-				&delRoutes( "local", $if_ref );
-				&addIp( $if_ref );
+
+				# remove previous configuration
+				my $prev_iface = &getInterfaceConfig( $if_ref->{name}, 4 );
+
+				if ( 	$if_ref->{ addr } ne $prev_iface->{ addr }
+					||	$if_ref->{ mask } ne $prev_iface->{ mask } )
+				{
+					&delRoutes( "local", $prev_iface );
+					&delIp( $prev_iface->{name}, $prev_iface->{addr}, $prev_iface->{mask} );
+					&addIp( $if_ref );
+				}
+
 				my $state = &upIf( $if_ref, 'writeconf' );
 
 				if ( $state == 0 )
 				{
-					$status = "up";
+					#~ $status = "up";
 					&inform_dialog( "Network interface $$if_ref{name} is now UP" );
 					&writeRoutes( $$if_ref{ name } );
 
