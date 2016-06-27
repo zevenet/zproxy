@@ -304,7 +304,17 @@ sub get_interface_stack_ip_mask_gateway    # ($if_name, $ip_version)
 	{
 		$mask = `ifconfig $if_name | awk -F'Mask:' '{printf \$2}'`;
 		chomp ( $mask );
-		$gateway = $defaultgw if $defaultgwif eq $if_name;
+		my ( $default_gw_line ) = `$ip_bin route`;
+
+		$default_gw_line =~ /via (.+)? dev (\w+)? /;
+		my $gw_ip = $1;
+		my $gw_if = $2;
+
+		#~ &zenlog("default_gw_line:$default_gw_line");
+		#~ &zenlog("gw_ip:$gw_ip");
+		#~ &zenlog("gw_if:$gw_if");
+
+		$gateway = $gw_ip if $gw_if eq $if_name;
 	}
 
 	# required to get empty variables, so curses text_entry widget show empty
