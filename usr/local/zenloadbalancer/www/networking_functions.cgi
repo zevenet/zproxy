@@ -296,7 +296,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 	);
 
 	# not virtual interface
-	if ( $$if_ref{ vini } eq '' )
+	if ( ! defined $$if_ref{ vini } || $$if_ref{ vini } eq '' )
 	{
 		if ( $table eq "local" )
 		{
@@ -382,12 +382,12 @@ sub delRoutes    # ($table,$if_ref)
 	&zenlog(
 		   "Deleting $table routes for IPv$$if_ref{ip_v} in interface $$if_ref{name}" );
 
-	if ( $$if_ref{ vini } eq '' )
+	if ( ! defined $$if_ref{ vini } || $$if_ref{ vini } eq '' )
 	{
 		if ( $table eq "local" )
 		{
 			# Delete routes on the interface table
-			if ( $$if_ref{ vlan } eq '' )
+			if ( ! defined $$if_ref{ vlan } || $$if_ref{ vlan } eq '' )
 			{
 				return 1;
 			}
@@ -468,7 +468,7 @@ sub addIp    # ($if_ref)
 
 	# finish if the address is already assigned
 	my $routed_iface = $$if_ref{ dev };
-	$routed_iface .= ".$$if_ref{vlan}" if $$if_ref{ vlan } ne '';
+	$routed_iface .= ".$$if_ref{vlan}" if defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '';
 
 	my $extra_params = '';
 	$extra_params = 'nodad' if $$if_ref{ ip_v } == 6;
@@ -486,7 +486,7 @@ sub addIp    # ($if_ref)
 	my $broadcast_opt = ( $$if_ref{ ip_v } == 4 ) ? 'broadcast +' : '';
 
 	# $if is a Virtual Network Interface
-	if ( $$if_ref{ vini } ne '' )
+	if ( defined $$if_ref{ vini } && $$if_ref{ vini } ne '' )
 	{
 		my ( $toif ) = split ( ':', $$if_ref{ name } );
 
@@ -495,7 +495,7 @@ sub addIp    # ($if_ref)
 	}
 
 	# $if is a Vlan
-	elsif ( $$if_ref{ vlan } ne '' )
+	elsif ( defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '' )
 	{
 		$ip_cmd =
 		  "$ip_bin addr add $$if_ref{addr}/$$if_ref{mask} $broadcast_opt dev $$if_ref{name} $extra_params";
@@ -622,7 +622,7 @@ sub createIf    # ($if_ref)
 
 	my $status = 0;
 
-	if ( $$if_ref{ vlan } ne '' )
+	if ( defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '' )
 	{
 		&zenlog( "Creating vlan $$if_ref{name}" );
 
