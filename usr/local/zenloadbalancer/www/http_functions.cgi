@@ -2976,7 +2976,7 @@ sub getFarmServices
 # used by farmguardian
 #function that removes all the active sessions enabled to a backend in a given service
 #needed: farmname, serviceid, backendid
-sub setFarmBackendsSessionsRemove($farm_name,$service,$backendid)
+sub setFarmBackendsSessionsRemove #($farm_name,$service,$backendid)
 {
 	my ( $farm_name, $service, $backendid ) = @_;
 
@@ -3029,7 +3029,7 @@ sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 	my $serviceSelect = shift;
 
 	my $farm_filename = &getFarmFile( $farmName );
-	my $farm_filename = "$configdir\/$farm_filename";
+	$farm_filename = "$configdir\/$farm_filename";
 
 	my @file;
 	my @services = &getFarmServices( $farmName );
