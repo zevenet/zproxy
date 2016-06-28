@@ -42,11 +42,13 @@ sub sendGPing    # ($pif)
 sub getConntrackExpect    # ($args)
 {
 	my ( $args ) = @_;
+
 	open CONNS, "</proc/net/nf_conntrack_expect";
 
 	#open CONNS, "</proc/net/nf_conntrack";
 	my @expect = <CONNS>;
 	close CONNS;
+
 	return @expect;
 }
 
@@ -62,6 +64,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	if ( open my $file, '<', "$config_filename" )
 	{
 		my @lines = grep { !/^(\s*#|$)/ } <$file>;
+
 		for my $line ( @lines )
 		{
 			my ( undef, $ip ) = split ';', $line;
@@ -70,7 +73,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 			if ( defined $ip )
 			{
 				$line_ipversion =
-					( $ip =~ /:/ )  ? 6
+				    ( $ip =~ /:/ )  ? 6
 				  : ( $ip =~ /\./ ) ? 4
 				  :                   undef;
 			}
@@ -147,7 +150,8 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	my @if_params = qw( name addr mask gateway );
 
 	#~ my $if_line = join (';', @if_params);
-	my $if_line = join ( ';', @{ $if_ref }{ 'name', 'addr', 'mask', 'gateway' } ) . ';';
+	my $if_line =
+	  join ( ';', @{ $if_ref }{ 'name', 'addr', 'mask', 'gateway' } ) . ';';
 	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
 
 	if ( !-f $config_filename )
@@ -225,8 +229,6 @@ sub getDevVlanVini    # ($if_name)
 sub getInterfaceSystemStatus     # ($if_ref)
 {
 	my $if_ref = shift;
-
-	$sw = $$if_ref{ name } eq 'eth0.3';
 
 	#~ &zenlog("getInterfaceSystemStatus $$if_ref{name}:$$if_ref{status}");
 

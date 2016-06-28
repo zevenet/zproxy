@@ -188,28 +188,6 @@ elsif (    $action eq "Save & Up!"
 		$swaddif = "false";
 	}
 
-	# check if the new netmask for IPv4 is correct
-	if (
-		$interface{ ip_v } == 4    # ipv4
-		&& (
-			$interface{ mask } eq ''    # empty
-			|| (
-				&ipisok( $interface{ mask }, 4 ) eq "false"    # is not ipv4 valid
-				&& (
-					 $interface{ mask } !~ /^\d+$/              # is not a number
-					 || $interface{ mask } > 32                 # greater than 32
-					 || $interface{ mask } < 0                  # lower than 0
-				)
-			)
-		)
-	  )
-	{
-		&errormsg(
-			"Netmask address $interface{mask} structure is not ok. Must be IPv4 structure or numeric [0-32]."
-		);
-		$swaddif = "false";
-	}
-
 	# check if the new netmask for IPv6 is correct
 	if (
 		 $interface{ ip_v } == 6
@@ -389,14 +367,6 @@ elsif ( $action eq "upif" )
 
 		# check if the ip is already in use
 		my @activeips = &listallips();
-		for my $ip ( @activeips )
-		{
-			if ( $ip eq $array[2] )
-			{
-				&errormsg( "Interface $if is not UP, IP Address $array[2] is already in use." );
-				$error = "true";
-			}
-		}
 
 		if ( $interface{ vini } eq '' )
 		{
@@ -463,6 +433,21 @@ elsif ( $action eq "upif" )
 elsif ( $action eq "downif" )
 {
 	my $if_ref = &getInterfaceConfig( $interface{ name }, $interface{ ip_v } );
+
+	if ( ! $if_ref )
+	{
+		my @interfaces = @{ &getSystemInterfaceList() };
+
+		for my $iface ( @interfaces )
+		{
+			if ( $iface->{ name } eq $interface{ name } && $iface->{ ip_v } == 4)
+			{
+				$if_ref = $iface;
+				last;
+			}
+		}
+	}
+		
 	my $state = &downIf( $if_ref, 'writeconf' );
 
 	if ( $state == 0 )
