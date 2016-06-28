@@ -678,6 +678,12 @@ sub downIf    # ($if_ref, $writeconf)
 {
 	my ( $if_ref, $writeconf ) = @_;
 
+	if ( ref $if_ref ne 'HASH' )
+	{
+		&zenlog("Wrong argument putting down the interface");
+		return -1;
+	}
+
 	my $ip_cmd;
 
 	# Set down status in configuration file
