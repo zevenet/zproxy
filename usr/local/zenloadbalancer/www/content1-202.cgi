@@ -719,7 +719,8 @@ foreach $zone ( @zones )
 							style=\"display: block;\">";
 			}
 			else
-			{
+			{		
+			my $rdataPrint = "\'$rdata\'";
 				print
 				  "<input type=\"text\" name=\"rdata_server\" id=\"resourcerdata-input\" size=\"50\" value=\"$rdataPrint\" 
 							style=\"display: none;\">";
@@ -801,7 +802,7 @@ foreach $zone ( @zones )
 
 		print "<tr class=\"selected\">";
 		print
-		  "<td><input type=\"text\" size=\"10\" name=\"resource_server\" value=\"$resource_server\"> </td>";
+		  "<td><input type=\"text\" size=\"30\" name=\"resource_server\" value=\"$resource_server\"> </td>";
 		print
 		  "<td><input type=\"number\" size=\"10\" name=\"ttl_server\" value=\"$ttl_server\"> </td>";
 
@@ -809,40 +810,55 @@ foreach $zone ( @zones )
 		print "<td><select name=\"type_server\" onchange=\"chRTypeAdd(this)\">";
 
 		if ( $type_server eq "NS" )
-		{
-			print "<option value=\"NS\" selected=\"selected\">NS</option>";
-		}
+			{ print "<option value=\"NS\" selected=\"selected\">NS</option>"; }
 		else
-		{
-			print "<option value=\"NS\">NS</option>";
-		}
+			{ print "<option value=\"NS\">NS</option>"; }
 
 		if ( $type_server eq "A" )
-		{
-			print "<option value=\"A\" selected=\"selected\">A</option>";
-		}
+			{ print "<option value=\"A\" selected=\"selected\">A</option>"; }
 		else
-		{
-			print "<option value=\"A\">A</option>";
-		}
+			{ print "<option value=\"A\">A</option>"; }
+		
+		if ( $type_server eq "AAAA" )  
+			{ print "<option value=\"AAAA\" selected=\"selected\">AAAA</option>"; }
+		else
+			{ print "<option value=\"AAAA\">AAAA</option>";	}
 
 		if ( $type_server eq "CNAME" )
-		{
-			print "<option value=\"CNAME\" selected=\"selected\">CNAME</option>";
-		}
+			{ print "<option value=\"CNAME\" selected=\"selected\">CNAME</option>"; }
 		else
-		{
-			print "<option value=\"CNAME\">CNAME</option>";
-		}
+			{ print "<option value=\"CNAME\">CNAME</option>"; }
 
 		if ( $type_server eq "DYNA" )
-		{
-			print "<option value=\"DYNA\" selected=\"selected\">DYNA</option>";
-		}
+			{ print "<option value=\"DYNA\" selected=\"selected\">DYNA</option>"; }
 		else
-		{
-			print "<option value=\"DYNA\">DYNA</option>";
-		}
+			{ print "<option value=\"DYNA\">DYNA</option>"; }
+		
+		if ( $type_server eq "MX" )	
+			{ print "<option value=\"MX\" selected=\"selected\">MX</option>"; }
+		else
+			{ print "<option value=\"MX\">MX</option>"; }					
+		
+		if ( $type_server eq "SRV" )			
+			{ print "<option value=\"SRV\" selected=\"selected\">SRV</option>"; }
+		else
+			{ print "<option value=\"SRV\">SRV</option>"; }
+		
+		if ( $type_server eq "TXT" )		
+			{ print "<option value=\"TXT\" selected=\"selected\">TXT</option>"; }
+		else
+			{ print "<option value=\"TXT\">TXT</option>"; } 				
+		
+		if ( $type_server eq "PTR" )  
+			{ print "<option value=\"PTR\" selected=\"selected\">PTR</option>"; }
+		else
+			{ print "<option value=\"PTR\">PTR</option>";	}
+		
+		if ( $type_server eq "NAPTR" )  
+			{ print "<option value=\"NAPTR\" selected=\"selected\">NAPTR</option>"; }
+		else
+			{ print "<option value=\"NAPTR\">NAPTR</option>";	}
+			
 
 		print "</select></td>";
 		print "<td>";
@@ -862,8 +878,9 @@ foreach $zone ( @zones )
 		}
 		else
 		{
-			print
-			  "<input type=\"text\" size=\"10\" name=\"rdata_server\" value=\"$rdata_server\">";
+			my $rdataPrint = "\'$rdata_server\'";
+				print
+				  "<input type=\"text\" size=\"50\" name=\"rdata_server\" value=$rdataPrint>";
 		}
 
 		print "</td>";
