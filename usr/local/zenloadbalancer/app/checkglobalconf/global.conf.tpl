@@ -107,6 +107,8 @@ $l4sd="/usr/local/zenloadbalancer/app/l4s/bin/l4sd";
 $bin_id="/usr/bin/id";
 #Where is conntrack binary?
 $conntrack="/usr/sbin/conntrack";
+#systemctl
+$systemctl="/bin/systemctl";
 
 #where is pound binary?
 $pound="/usr/local/zenloadbalancer/app/pound/sbin/pound";
@@ -170,7 +172,10 @@ $zenlatdown="/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl";
 $zenbackup="/usr/local/zenloadbalancer/app/zenbackup/zenbackup.pl";
 
 #Plugins path
-$pluginsdir="/usr/local/zenloadbalancer/www/Plugins";#update
+$pluginsdir="/usr/local/zenloadbalancer/www/Plugins";
+
+#SNMP Service
+$snmpdconfig_file="/etc/snmp/snmpd.conf";
 #::END Global Section
 
 #!!!!NOT REMOVE NEXT LINE!!!!!!

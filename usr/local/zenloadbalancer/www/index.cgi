@@ -379,6 +379,15 @@ $dnsserv = $cgi->param( 'dnsserv' )
 $aptrepo = $cgi->param( 'aptrepo' )
   if ( defined ( $cgi->param( 'aptrepo' ) ) );
 
+$snmpd_enabled = $cgi->param( 'snmpd_enabled' )
+  if ( defined ( $cgi->param( 'snmpd_enabled' ) ) );
+$snmpd_port = $cgi->param( 'snmpd_port' )
+  if ( defined ( $cgi->param( 'snmpd_port' ) ) );
+$snmpd_community = $cgi->param( 'snmpd_community' )
+  if ( defined ( $cgi->param( 'snmpd_community' ) ) );
+$snmpd_scope = $cgi->param( 'snmpd_scope' )
+  if ( defined ( $cgi->param( 'snmpd_scope' ) ) );
+
 #Content3-21
 $if = $cgi->param( 'if' )
   if ( defined ( $cgi->param( 'if' ) ) );
