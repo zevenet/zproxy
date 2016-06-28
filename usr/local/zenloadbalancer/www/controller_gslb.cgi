@@ -321,6 +321,7 @@ if ( $action eq "editfarm-deleteserver" )
 if ( $action eq "editfarm-saveserver" )
 {
 	$error = 0;
+	my $forbittenName=0;
 
 	if ( $service_type eq "zone" )
 	{
@@ -329,19 +330,35 @@ if ( $action eq "editfarm-saveserver" )
 			&errormsg( "Invalid zone, please insert a valid value" );
 			$error = 1;
 		}
-		if ( $resource_server !~ /^[a-zA-Z1-9\-]*$/ )
+		
+		
+		# let character exceptions in resource name for PTR and SRV types
+		if ( $type_server eq 'SRV' || $type_server eq 'PTR' || $type_server eq 'NAPTR') 
 		{
-			&errormsg(
-				"Invalid resource name, please insert a valid value \(only letters, numbers and '-' character are allowed\)"
-			);
-			$error = 1;
+			if( $resource_server !~ /^[\@a-zA-Z1-9\-_\.]*$/ )
+			{
+				&errormsg(
+					"Invalid resource name, please for this farm insert a valid value \(only letters, numbers '-', '_' and '.' character are allowed\)"
+				);
+				$error = 1;
+			}
 		}
-
+		else
+		{
+			if ( $resource_server !~ /^[\@a-zA-Z1-9\-]*$/ )
+			{
+				&errormsg(
+					"Invalid resource name, please insert a valid value \(only letters, numbers and '-' character are allowed\)"
+				);
+				$error = 1;
+			}
+		}
 		if ( $resource_server =~ /^$/ )
 		{
 			&errormsg( "Invalid resource server, please insert a valid value" );
 			$error = 1;
 		}
+		
 		if ( $rdata_server =~ /^$/ )
 		{
 			&errormsg( "Invalid RData, please insert a valid value" );
@@ -349,10 +366,16 @@ if ( $action eq "editfarm-saveserver" )
 		}
 		if ( $error == 0 )
 		{
-			if ( $type_server eq "A" && &ipisok( $rdata_server ) eq "false" )
+			if ( ( $type_server eq "A" ) && &ipversion( $rdata_server ) != 4 )
 			{
 				&errormsg(
-					"If you choose A type, RDATA must be a valid IP address, $resource_server not modified for the zone $service"
+					"If you choose A type, RDATA must be a valid IPv4 address, $resource_server not modified for the zone $service"
+				);
+			}
+			elsif ( ( $type_server eq "AAAA" ) && &ipversion( $rdata_server ) != 6 )
+			{
+				&errormsg(
+					"If you choose AAAA type, RDATA must be a valid IPv6 address, $resource_server not modified for the zone $service"
 				);
 			}
 			else
