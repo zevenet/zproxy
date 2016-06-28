@@ -27,20 +27,39 @@ sub setSnmpdStatus    # ($snmpd_status)
 {
 	# get 'true' string to start, or a 'false' string to stop
 	my ( $snmpd_status ) = @_;
+
 	my $return_code = -1;
 
 	if ( $snmpd_status eq 'true' )
 	{
-		$return_code = system ( "/etc/init.d/snmpd start > /dev/null" );
+		&zenlog( "Starting snmp service" );
+
+		if ( -f $systemctl )
+		{
+			$return_code = system ( "$systemctl start snmpd > /dev/null" );
+		}
+		else
+		{
+			$return_code = system ( "/etc/init.d/snmpd start > /dev/null" );
+		}
 	}
 	elsif ( $snmpd_status eq 'false' )
 	{
-		$return_code = system ( "/etc/init.d/snmpd stop > /dev/null" );
+		&zenlog( "Stopping snmp service" );
+
+		if ( -f $systemctl )
+		{
+			$return_code = system ( "$systemctl stop snmpd > /dev/null" );
+		}
+		else
+		{
+			$return_code = system ( "/etc/init.d/snmpd stop > /dev/null" );
+		}
 	}
 	else
 	{
 		&zenlog( "SNMP requested state is invalid" );
-		return $return_code;
+		return -1;
 	}
 
 	# returns 0 = DONE SUCCESSFULLY
@@ -49,11 +68,11 @@ sub setSnmpdStatus    # ($snmpd_status)
 
 sub getSnmpdStatus    # ()
 {
-	my $status = `$pidof snmpd`;
-	my $return_code;
+	my $status      = `$pidof snmpd`;
+	my $return_code = $?;
 
 	# if not empty pid
-	if ( $status ne '' )
+	if ( $return_code == 0 )
 	{
 		$return_code = "true";
 	}
@@ -81,85 +100,53 @@ sub getSnmpdConfig    # ()
 	# Close file
 	untie @config_file;
 
-	return ( $snmpd_ip, $snmpd_port, $snmpd_community, $snmpd_scope );
+	my %snmpd_conf = (
+					   ip        => $snmpd_ip,
+					   port      => $snmpd_port,
+					   community => $snmpd_community,
+					   scope     => $snmpd_scope,
+	);
+
+	return ( \%snmpd_conf );
 }
 
-sub setSnmpdConfig    # ($snmpd_ip, $snmpd_port, $snmpd_community, $snmpd_scope)
+sub setSnmpdConfig    # ($snmpd_conf)
 {
-	my ( $snmpd_ip, $snmpd_port, $snmpd_community, $snmpd_scope ) = @_;
+	my ( $snmpd_conf ) = @_;
+
+	return -1 if ref $snmpd_conf ne 'HASH';
 
 	# Open config file
-	tie my @config_file, 'Tie::File', $snmpdconfig_file;
+	open my $config_file, '>', $snmpdconfig_file;
 
-	if ( $snmpd_ip eq '*' )
+	if ( !$config_file )
 	{
-		$snmpd_ip = '0.0.0.0';
+		&zenlog( "Colud not open $snmpdconfig_file: $!" );
+		return -1;
+	}
+
+	if ( $snmpd_conf->{ ip } eq '*' )
+	{
+		$snmpd_conf->{ ip } = '0.0.0.0';
 	}
 
 	# example: agentAddress  udp:127.0.0.1:161
-	$config_file[0] = "agentAddress udp:$snmpd_ip:$snmpd_port";
-
 	# example: rocommunity public  0.0.0.0/0
-	$config_file[1] = "rocommunity $snmpd_community $snmpd_scope";
+	print $config_file "agentAddress udp:$snmpd_conf->{ip}:$snmpd_conf->{port}\n";
+	print $config_file
+	  "rocommunity $snmpd_conf->{community} $snmpd_conf->{scope}\n";
+	print $config_file "#zenlb\n";
 
 	# Close config file
-	untie @config_file;
-}
+	close @config_file;
 
-sub setSnmpdIp    # ($snmpd_ip)
-{
-	my ( $snmpd_ip ) = @_;
-
-	# Open config file
-	tie my @config_file, 'Tie::File', $snmpdconfig_file;
-
-	# get port number from first line
-	my ( undef, undef, $port ) = split ( ':', $config_file[0] );
-
-	## rewrite agentAddress line ##
-	# example: agentAddress  udp:127.0.0.1:161
-	if ( $snmpd_ip eq '*' )
-	{
-		$snmpd_ip = '0.0.0.0';
-	}
-	$config_file[0] = "agentAddress udp:$snmpd_ip:$port";
-
-	# Close config file
-	untie @config_file;
-}
-
-sub getSnmpdIp    # ()
-{
-	# example: agentAddress  udp:127.0.0.1:161
-	# Open config file
-	tie my @config_file, 'Tie::File', $snmpdconfig_file;
-
-	# get snmp ip from the first line
-	my ( undef, $snmpd_ip, undef ) = split ( ':', $config_file[0] );
-
-	# Close config file
-	untie @config_file;
-
-	return $snmpd_ip;
-}
-
-sub getSnmpdPort    # ()
-{
-	tie my @config_file, 'Tie::File', $snmpdconfig_file;
-
-	# get snmp port from the first line
-	# example: agentAddress udp:127.0.0.1:161
-	my ( undef, undef, $port ) = split ( ':', $config_file[0] );
-
-	# Close file
-	untie @config_file;
-
-	return $port;
+	return 0;
 }
 
 sub setSnmpdService    # ($snmpd_enabled)
 {
 	my ( $snmpd_enabled ) = @_;
+
 	my $return_code = -1;
 
 	# verify valid input
@@ -170,7 +157,8 @@ sub setSnmpdService    # ($snmpd_enabled)
 	}
 
 	# change snmpd status
-	if ( &setSnmpdStatus( $snmpd_enabled ) != 0 )
+	$return_code = &setSnmpdStatus( $snmpd_enabled );
+	if ( $return_code != 0 )
 	{
 		&zenlog( "SNMP Status change failed" );
 		return $return_code;
@@ -179,11 +167,29 @@ sub setSnmpdService    # ($snmpd_enabled)
 	# perform runlevel change
 	if ( $snmpd_enabled eq 'true' )
 	{
-		$return_code = system ( "$insserv snmpd" );
+		&zenlog( "Enabling snmp service" );
+
+		if ( -f $systemctl )
+		{
+			$return_code = system ( "$systemctl enable snmpd > /dev/null" );
+		}
+		else
+		{
+			$return_code = system ( "$insserv snmpd" );
+		}
 	}
 	else
 	{
-		$return_code = system ( "$insserv -r snmpd" );
+		&zenlog( "Disabling snmp service" );
+
+		if ( -f $systemctl )
+		{
+			$return_code = system ( "$systemctl disable snmpd > /dev/null" );
+		}
+		else
+		{
+			$return_code = system ( "$insserv -r snmpd" );
+		}
 	}
 
 	# show message if failed
@@ -196,34 +202,42 @@ sub setSnmpdService    # ($snmpd_enabled)
 
 sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_scope)
 {
-	my ( $snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_scope ) = @_;
+	my ( $snmpd_new ) = @_;
+
 	my $return_code = -1;
+
+	if ( ref $snmpd_new ne 'HASH' )
+	{
+		&zenlog( "Wrong argument applying snmp changes." );
+		return $return_code;
+	}
 
 	## setting up valiables ##
 	# if checkbox not checked set as false instead of undefined
-	if ( !defined ( $snmpd_enabled ) )
+	if ( !defined $snmpd_new->{ status } )
 	{
 		$snmpd_enabled = 'false';
 	}
 
 	# read current management IP
-	my $snmpd_ip = &GUIip();
-	if ( $snmpd_ip eq '*' )
+	#~ my $snmpd_ip = &GUIip();
+	if ( $snmpd_new->{ ip } eq '*' )
 	{
 		$snmpd_ip = '0.0.0.0';
 	}
 
 	## validating some input values ##
 	# check port
-	if ( !&isValidPortNumber( $snmpd_port ) )
+	if ( !&isValidPortNumber( $snmpd_new->{ port } ) )
 	{
 		&zenlog( "SNMP: Port out of range" );
 		return $return_code;
 	}
 
 	# if $snmpd_scope is not a valid ip or subnet
-	my ( $ip, $subnet ) = split ( '/', $snmpd_scope );
-	if ( &ipisok( $ip ) eq 'false' )
+	my ( $ip, $subnet ) = split ( '/', $snmpd_new->{ scope } );
+
+	if ( &ipisok( $ip, 4 ) eq 'false' )
 	{
 		&zenlog( "SNMP: Invalid ip or subnet with access" );
 		return $return_code;
@@ -234,29 +248,33 @@ sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_sc
 		return $return_code;
 	}
 
+	# SNMP arguments validated
+
 	# get config values of snmp server
-	my (
-		 $cf_snmpd_enabled,   $cf_snmpd_ip, $cf_snmpd_port,
-		 $cf_snmpd_community, $cf_snmpd_scope
-	) = ( &getSnmpdStatus(), &getSnmpdConfig() );
+	my $snmpd_old = &getSnmpdConfig();
+	$snmpd_old->{ status } = &getSnmpdStatus();
 
 	my $conf_changed = 'false';
 
 	# configuration/service status logic
 	# setup config file if requested configuration changes
-	if (    $cf_snmpd_ip ne $snmpd_ip
-		 || $cf_snmpd_port ne $snmpd_port
-		 || $cf_snmpd_community ne $snmpd_community
-		 || $cf_snmpd_scope ne $snmpd_scope )
+	if (    $snmpd_old->{ ip } ne $snmpd_new->{ ip }
+		 || $snmpd_old->{ port } ne $snmpd_new->{ port }
+		 || $snmpd_old->{ community } ne $snmpd_new->{ community }
+		 || $snmpd_old->{ scope } ne $snmpd_new->{ scope } )
 	{
-		&setSnmpdConfig( $snmpd_ip, $snmpd_port, $snmpd_community, $snmpd_scope );
+		$return_code  = &setSnmpdConfig( $snmpd_new );
 		$conf_changed = 'true';
+
+		return $return_code if $return_code;
 	}
 
    # if the desired snmp status is different to the current status => switch service
-	if ( $snmpd_enabled ne $cf_snmpd_enabled )
+	if ( $snmpd_new->{ status } ne $snmpd_old->{ status } )
 	{
-		if ( &setSnmpdService( $snmpd_enabled ) )
+		$return_code = &setSnmpdService( $snmpd_new->{ status } );
+
+		if ( $return_code )
 		{
 			&zenlog( "SNMP failed setting the service" );
 			return $return_code;
@@ -264,18 +282,17 @@ sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_sc
 	}
 
 	# if snmp is on and want it on loading new configuration => restart server
-	elsif (    $snmpd_enabled eq 'true'
-			&& $cf_snmpd_enabled eq 'true'
+	elsif (    $snmpd_new->{ status } eq 'true'
+			&& $snmpd_old->{ status } eq 'true'
 			&& $conf_changed eq 'true' )
 	{
 		if ( &setSnmpdStatus( 'false' ) || &setSnmpdStatus( 'true' ) )
 		{
 			&zenlog( "SNMP failed restarting the server" );
-			return $return_code;
+			return -1;
 		}
 	}
 	return 0;
 }
 
-# do not remove this
-1
+1;

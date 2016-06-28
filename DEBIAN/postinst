@@ -51,6 +51,20 @@ adduser --system -q --home $GSLBHOME --shell $GSLBSHELL --disabled-password --in
 #upgrading global.conf
 /usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi
 
+# SNMP service
+if [ `grep -c '#zenlb' /etc/snmp/snmpd.conf` eq 0 ]
+then
+	cp /usr/local/zenloadbalancer/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
+	if [ -f /bin/systemctl ]
+	then
+		systemctl stop snmpd
+		systemctl disable snmpd
+	else
+		/etc/init.d/snmpd stop > /dev/null
+		insserv -r snmpd
+	fi
+fi
+
 # Do not mount /usr/local/zenloadbalancer/logs for zlb 4000 series
 sed -i 's/^\/dev\/mapper\/zva64-log \/usr\/local\/zenloadbalancer\/logs        ext4    defaults        0       2//' /etc/fstab
 

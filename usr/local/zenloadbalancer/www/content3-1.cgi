@@ -156,29 +156,11 @@ if ( $action =~ /^Modify$/ )
 if ( $action eq "Modify Configuration" )
 {
 	#action Save DNS
-	# if ( $var eq "Save DNS" )
-	# {
 	open FW, ">$filedns";
 	print FW "$dnsserv";
-
-	# &successmsg( "DNS saved" );
 	close FW;
 
-	# }
-
-	#action Save APT
-	# if ( $var eq "Save APT" )
-	# {
-	# open FW, ">$fileapt";
-	# print FW "$aptrepo";
-	# &successmsg( "APT saved" );
-	# close FW;
-
-	# }
-
 	#action save ip
-	# if ( $action eq "Save IP" )
-	# {
 	use Tie::File;
 	tie @array, 'Tie::File', "$confhttp";
 	if ( $ipgui =~ /^\*$/ )
@@ -189,29 +171,42 @@ if ( $action eq "Modify Configuration" )
 	else
 	{
 		@array[1] = "server!bind!1!interface = $ipgui\n";
-		if ( &ipversion( $ipgui ) eq "IPv6" )
-		{
-			@array[4] = "server!ipv6 = 1\n";
-			&zenlog(
-					  "The interface where is running the GUI service is: $ipgui with IPv6" );
-		}
-		elsif ( &ipversion( $ipgui ) eq "IPv4" )
-		{
-			@array[4] = "server!ipv6 = 0\n";
-			&zenlog(
-					  "The interface where is running the GUI service is: $ipgui with IPv4" );
-		}
+
+		#~ if ( &ipversion( $ipgui ) eq "IPv6" )
+		#~ {
+		#~ @array[4] = "server!ipv6 = 1\n";
+		#~ &zenlog(
+		#~ "The interface where is running the GUI service is: $ipgui with IPv6" );
+		#~ }
+		#~ elsif ( &ipversion( $ipgui ) eq "IPv4" )
+		#~ {
+		#~ @array[4] = "server!ipv6 = 0\n";
+		#~ &zenlog(
+		#~ "The interface where is running the GUI service is: $ipgui with IPv4" );
+		#~ }
 	}
 	untie @array;
 
-	# }
+	# save snmp ip
+	my $mgmt_ip = &GUIip();
+	my %snmp    = %{ &getSnmpdConfig() };
+
+	&zenlog( "mgmt_ip:$mgmt_ip" );
+
+	# if snmp ip is different to management ip
+	if ( $snmp{ ip } ne $mgmt_ip )
+	{
+		# with the exception of * in management, it is 0.0.0.0 for snmp server
+		if ( !( $mgmt_ip eq '*' && $snmp{ ip } eq '0.0.0.0' ) )
+		{
+			$snmp{ ip } = $mgmt_ip;
+			&setSnmpdConfig( \%snmp );
+		}
+	}
 
 	#Change GUI https port
-	# if ( $action eq "Change GUI https port" )
-	# {
 	&setGuiPort( $guiport, $confhttp );
 
-	# }
 	&successmsg( "Some changes were applied for Local configuration" );
 }
 
@@ -226,10 +221,13 @@ if ( $action eq "Restart GUI Service" )
 	}
 	elsif ( defined $pid )
 	{
+		# snmpd restart if running
+		if ( &getSnmpdStatus() eq 'true' )
+		{
+			&setSnmpdStatus( 'false' );    # stopping snmp
+			&setSnmpdStatus( 'true' );     # starting snmp
+		}
 
-		#$SIG{'CHLD'}=\&REAPER;
-		#child
-		#exec $MIGRASCRIPT,@args;
 		system ( "/etc/init.d/cherokee restart > /dev/null &" );
 		exit ( 0 );
 	}
@@ -252,6 +250,38 @@ if ( $action eq "Restart GUI Service" )
 		);
 	}
 }
+
+my %snmp;
+
+if ( $action eq "Apply" )
+{
+	%snmp = (
+			  status => $snmpd_enabled // 'false',
+			  port => $snmpd_port,
+			  community => $snmpd_community,
+			  scope     => $snmpd_scope,
+	);
+
+	$snmp{ ip } = &GUIip();
+
+	my $snmp_error = &applySnmpChanges( \%snmp );
+
+	if ( $snmp_error )
+	{
+		&errormsg( "SNMP service change could not be applied." );
+
+	}
+	else
+	{
+		&successmsg( "SNMP service change applied." );
+	}
+}
+
+%snmp = %{ &getSnmpdConfig() };
+$snmp{ status } = &getSnmpdStatus();
+my $snmp_check = 'checked' if $snmp{ status } eq 'true';
+
+#~ &zenlog( Dumper \%snmp );
 
 print "<form method=\"post\" action=\"index.cgi\">";
 
@@ -335,29 +365,29 @@ print "</form>";
 #
 
 print "
-       <div class=\"box grid_12\">
-         <div class=\"box-head\">
-               <span class=\"box-icon-24 fugue-24 server\"></span>       
-               <h2>Local configuration</h2>
-         </div>
-         <div class=\"box-content global-farm\">
+<div class=\"box grid_12\">
+	<div class=\"box-head\">
+		<span class=\"box-icon-24 fugue-24 server\"></span>
+		<h2>Local configuration</h2>
+	</div>
+	<div class=\"box-content global-farm\">
 ";
 
 #
 # Physical interface
 #
 
-print "<form method=\"post\" action=\"index.cgi\">\n";
-print "<div class=\"form-row\">\n";
-print "<p class=\"form-label\">\n";
-print "<b>Physical interface where is running GUI service. </b>\n";
-print
-  " If cluster is up you only can select \"--All interfaces--\" option, or \"the cluster interface\". Changes need restart GUI service.</p>\n";
-print "<input type=\"hidden\" name=\"id\" value=\"3-1\">\n";
+print "
+		<form method=\"post\" action=\"index.cgi\">
+			<div class=\"form-row\">
+				<p class=\"form-label\">
+					<b>Physical interface where is running GUI service. </b>
+					 If cluster is up you only can select \"--All interfaces--\" option, or \"the cluster interface\". Changes need restart GUI service.
+				</p>
+				<input type=\"hidden\" name=\"id\" value=\"3-1\">
+";
 
 my $hosthttp = &GUIip();
-
-&zenlog( "management_ip:$hosthttp" );
 
 my (
 	 $lhost,  $lip,      $rhost, $rip,       $vipcl, $ifname,
@@ -373,8 +403,10 @@ if ( -e $filecluster )
 }
 
 # Print "Zen cluster service is UP, Zen GUI should works over ip $lip";
-print "<div class=\"form-item\">\n";
-print "<select name=\"ipgui\" class=\"fixedwidth monospace\">\n";
+print "
+				<div class=\"form-item\">
+					<select name=\"ipgui\" class=\"fixedwidth monospace\">
+";
 
 #~ $existiphttp = "false";
 if ( $hosthttp eq '*' )
@@ -419,13 +451,14 @@ else
 
 		print
 		  "<option value=\"$$iface{addr}\" $selected>$$iface{dev_ip_padded}</option>\n";
-
 	}
 }
 
-print "</select>\n";
-print "</div>\n";
-print "</div>\n";
+print "
+					</select>
+				</div>
+			</div>
+";
 
 #
 # HTTPS port for GUI interface
@@ -436,51 +469,138 @@ if ( $guiport =~ /^$/ )
 	$guiport = 444;
 }
 
-#~ else
-#~ {
-#~ chomp ( $guiport );
-#~ }
-print "<div class=\"form-row\">";
-print
-  "<p class=\"form-label\"><b>HTTPS Port where is running GUI service.</b> Default is 444. Changes need restart GUI service.</p>";
+print "
+			<div class=\"form-row\">
+				<p class=\"form-label\">
+					<b>HTTPS Port where is running GUI service.</b>
+					Default is 444. Changes need restart GUI service.
+				</p>
+";
 
-print "<div class=\"form-item\">";
-print
-  "<input type=\"number\" name=\"guiport\" class=\"fixedwidth\" value=\"$guiport\" size=\"12\"> ";
-
-print "</div>\n";
-print "</div>\n";
+print "
+				<div class=\"form-item\">
+";
+print "
+					<input type=\"number\" name=\"guiport\" class=\"fixedwidth\" value=\"$guiport\" size=\"12\">
+				</div>
+			</div>
+";
 
 #
 # DNS servers
 #
-print "<div class=\"form-row\">";
-print "<p class=\"form-label\"><b>DNS servers</b></p>";
-
-print "<div class=\"form-item\">";
-print
-  "<textarea name=\"dnsserv\" cols=\"30\" rows=\"2\" align=\"center\" class=\"fixedwidth\">";
+print "
+			<div class=\"form-row\">
+				<p class=\"form-label\">
+					<b>DNS servers</b>
+				</p>
+				<div class=\"form-item\">
+					<textarea name=\"dnsserv\" cols=\"30\" rows=\"2\" align=\"center\" class=\"fixedwidth\">
+";
 open FR, "$filedns";
 print <FR>;
-print "</textarea>\n";
+print "
+					</textarea>
+				</div>
+			</div>
+";
 
-print "</div>\n";
-print "</div>\n";
+print "
+			<input type=\"submit\" value=\"Modify Configuration\" name=\"action\" class=\"button grey\">
+			<input type=\"submit\" value=\"Restart GUI Service\" name=\"action\" class=\"button grey\">
+";
 
-print
-  "<input type=\"submit\" value=\"Modify Configuration\" name=\"action\" class=\"button grey\">\n";
-print
-  "<input type=\"submit\" value=\"Restart GUI Service\" name=\"action\" class=\"button grey\">\n";
+print "
+		</form>
+	</div>
+</div>
+";
 
-print "</form>\n";
-print "</div>\n";
-print "</div>\n";
-print "</div>\n";
+#
+# Local configuration box
+#
 
-print "<br class=\"cl\">\n";
+print "
+<div class=\"box grid_12\">
+	<div class=\"box-head\">
+		<span class=\"box-icon-24 fugue-24 server\"></span>
+		<h2>SNMP</h2>
+	</div>
+	<div class=\"box-content global-farm\">
+";
 
-#~ print "</div>\n";
-print "<!--Content END-->\n";
+print "
+		<form method=\"post\" action=\"index.cgi\">
+			<input type=\"hidden\" name=\"id\" value=\"3-1\">
+";
 
-#~ print "</div>\n";
-#~ print "</div>\n";
+# HTTPS port for GUI interface
+#~ $guiport = 444;
+
+print "
+			<div class=\"form-row\">
+				<p class=\"form-label\">
+					<b>SNMP Service</b>
+				</p>
+				<div class=\"form-item\">
+					<input type=\"checkbox\" name=\"snmpd_enabled\" value=\"true\" $snmp_check>
+				</div>
+			</div>
+";
+
+# HTTPS port for GUI interface
+print "
+			<div class=\"form-row\">
+				<p class=\"form-label\">
+					<b>Port</b>
+				</p>
+				<div class=\"form-item\">
+					<input type=\"number\" name=\"snmpd_port\" class=\"fixedwidth\" value=\"$snmp{port}\" size=\"12\" required>
+				</div>
+			</div>
+";
+
+# HTTPS port for GUI interface
+print "
+			<div class=\"form-row\">
+				<p class=\"form-label\">
+					<b>Community name</b>
+				</p>
+				<div class=\"form-item\">
+					<input type=\"text\" name=\"snmpd_community\" class=\"fixedwidth\" value=\"$snmp{community}\" size=\"12\" required>
+				</div>
+			</div>
+";
+
+# HTTPS port for GUI interface
+print "
+			<div class=\"form-row\">
+				<p class=\"form-label\">
+					<b>IP or subnet with access (IP/bit)</b>
+				</p>
+				<div class=\"form-item\">
+					<input type=\"text\" name=\"snmpd_scope\" class=\"fixedwidth\" value=\"$snmp{scope}\" size=\"12\" required>
+				</div>
+			</div>
+";
+
+# Buttons
+print "
+			<input type=\"submit\" value=\"Apply\" name=\"action\" class=\"button grey\">
+";
+
+# Close box
+print "
+		</form>
+	</div>
+</div>
+";
+
+# Content END
+print "
+</div>
+<br class=\"cl\">
+<!--Content END-->
+";
+
+1;
