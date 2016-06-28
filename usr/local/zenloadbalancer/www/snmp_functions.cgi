@@ -59,7 +59,7 @@ sub setSnmpdStatus    # ($snmpd_status)
 	else
 	{
 		&zenlog( "SNMP requested state is invalid" );
-		return $return_code;
+		return -1;
 	}
 
 	# returns 0 = DONE SUCCESSFULLY
