@@ -77,7 +77,7 @@ if [[ `grep -c "^PermitRootLogin.*yes" $SSHDCONFIG` == '0' ]]; then
 	/etc/init.d/ssh reload 2> /dev/null
 
 # SNMP service
-if [ `grep -c '#zenlb' /etc/snmp/snmpd.conf` eq 0 ]
+if [ `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]
 then
 	cp /usr/local/zenloadbalancer/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
 	if [ -f /bin/systemctl ]
