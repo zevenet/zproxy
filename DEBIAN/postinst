@@ -52,7 +52,7 @@ adduser --system -q --home $GSLBHOME --shell $GSLBSHELL --disabled-password --in
 /usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi
 
 # SNMP service
-if [ `grep -c '#zenlb' /etc/snmp/snmpd.conf` eq 0 ]
+if [ `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]
 then
 	cp /usr/local/zenloadbalancer/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
 	if [ -f /bin/systemctl ]
