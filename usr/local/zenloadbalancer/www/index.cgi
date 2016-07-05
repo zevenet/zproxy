@@ -378,7 +378,6 @@ $dnsserv = $cgi->param( 'dnsserv' )
   if ( defined ( $cgi->param( 'dnsserv' ) ) );
 $aptrepo = $cgi->param( 'aptrepo' )
   if ( defined ( $cgi->param( 'aptrepo' ) ) );
-
 $snmpd_enabled = $cgi->param( 'snmpd_enabled' )
   if ( defined ( $cgi->param( 'snmpd_enabled' ) ) );
 $snmpd_port = $cgi->param( 'snmpd_port' )
@@ -407,6 +406,12 @@ $ipv = $cgi->param( 'ipv' )
   if ( defined ( $cgi->param( 'ipv' ) ) );
 $ip = $cgi->param( 'ip' )
   if ( defined ( $cgi->param( 'ip' ) ) );
+$bond_name = $cgi->param( 'bond_name' )
+  if ( defined ( $cgi->param( 'bond_name' ) ) );
+$bond_mode = $cgi->param( 'bond_mode' )
+  if ( defined ( $cgi->param( 'bond_mode' ) ) );
+@bond_slaves = $cgi->param( 'bond_slaves[]' )
+  if ( defined ( $cgi->param( 'bond_slaves[]' ) ) );
 
 #Content3-3
 $vipcl = $cgi->param( 'vipcl' )

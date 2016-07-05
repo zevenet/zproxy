@@ -21,7 +21,8 @@
 #
 ###############################################################################
 
-my $routeparams = "initcwnd 10 initrwnd 10";
+use Config::Tiny;
+
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
 
@@ -485,6 +486,469 @@ sub getSystemInterface    # ($if_name)
 	$$if_ref{ vini }   = $if_parts{ vini };
 
 	return $if_ref;
+}
+
+################################## Bonding ##################################
+
+# global variable for bonding modes names
+@bond_modes = (
+				'Round-robin policy',
+				'Active-backup policy',
+				'XOR policy',
+				'Broadcast policy',
+				'IEEE 802.3ad LACP',
+				'Adaptive transmit load balancing',
+				'Adaptive load balancing',
+);
+
+sub getBondList
+{
+	if ( !-f $bonding_masters_filename )
+	{
+		&zenlog( "Bonding module seems missing" );
+		return undef;
+	}
+
+	open ( my $bond_file, '<', $bonding_masters_filename );
+
+	if ( !$bond_file )
+	{
+		&zenlog( "Could not open file $bonding_masters_filename: $!" );
+		return undef;
+	}
+
+	my @bond_names = split ( ' ', <$bond_file> );
+	close $bondfile;
+	chomp ( @bond_names );
+
+	my @bonds;
+
+	for my $bond_name ( @bond_names )
+	{
+		my $mode = &getBondMode( $bond_name );
+		next if ( ref $mode ne 'ARRAY' );
+		$mode = @{ $mode }[1];    # get mode code
+
+		my $slaves = &getBondSlaves( $bond_name );
+		next if ( ref $slaves ne 'ARRAY' );
+
+		my %bond = (
+					 name   => $bond_name,
+					 mode   => $mode,
+					 slaves => $slaves,
+		);
+
+		push ( @bonds, \%bond );
+	}
+
+	return \@bonds;
+}
+
+sub getBondMode
+{
+	my $bond_master = shift;
+
+	my $bond_path = "$sys_net_dir/$bond_master";
+
+	if ( !-d $bond_path )
+	{
+		&zenlog( "Could not find bonding $bond_path" );
+		return undef;
+	}
+
+	open ( my $bond_mode_file, '<', "$bond_path/$bonding_mode_filename" );
+
+	if ( !$bond_mode_file )
+	{
+		&zenlog( "Could not open file $bond_path/$bonding_mode_filename: $!" );
+		return undef;
+	}
+
+	# input example: balance-rr 0
+	# input example: balance-xor 2
+	my @mode = split ( ' ', <$bond_mode_file> );
+	close $bond_mode_file;
+	chomp ( @mode );
+
+# $mode[0] == balance-rr|active-backup|balance-xor|broadcast|802.3ad|balance-tlb|balance-alb
+# $mode[1] == 0			| 1 			| 2 		| 3 	| 4 	| 5 		| 6
+	return \@mode;
+}
+
+sub getBondSlaves
+{
+	my $bond_master = shift;
+
+	my $bond_path = "$sys_net_dir/$bond_master";
+
+	if ( !-d $bond_path )
+	{
+		&zenlog( "Could not find bonding $bond_path" );
+		return undef;
+	}
+
+	open ( my $bond_slaves_file, '<', "$bond_path/$bonding_slaves_filename" );
+
+	if ( !$bond_slaves_file )
+	{
+		&zenlog( "Could not open file $bond_path/$bonding_slaves_filename: $!" );
+		return undef;
+	}
+
+	# input example: eth1 eth2
+	my @slaves = split ( ' ', <$bond_slaves_file> );
+	close $bond_slaves_file;
+	chomp ( @slaves );
+
+	# $slaves[0] == eth1
+	# $slaves[1] == eth2
+	return \@slaves;
+}
+
+sub applyBondChange
+{
+	my $bond      = shift;
+	my $writeconf = shift;    # bool: write config to disk
+
+	my $return_code = -1;
+
+	# validate $bond->{name}
+	return $return_code if ref $bond ne 'HASH';
+	return $return_code if !$bond->{ name };
+
+	# validate $bond->{mode}
+	return $return_code if $bond->{ mode } < 0 || $bond->{ mode } > 6;
+
+	# validate $bond->{slaves}
+	return $return_code if ref $bond->{ slaves } ne 'ARRAY';
+	return $return_code if scalar @{ $bond->{ slaves } } == 0;
+
+	my $bond_list = &getBondList();
+	my $sys_bond;
+
+	# look for bonding master if already configured
+	for my $bond_ref ( @{ $bond_list } )
+	{
+		$sys_bond = $bond_ref if ( $bond->{ name } eq $bond_ref->{ name } );
+	}
+
+	# verify every slave interface
+	my @interface_list = &getInterfaceList();
+	for my $slave ( @{ $bond->{ slaves } } )
+	{
+		if ( $slave =~ /(:|\.)/ )    # do not allow vlans or vinis
+		{
+			&zenlog( "$slave is not a NIC" );
+			return $return_code;
+		}
+		elsif (
+				grep ( /^$slave$/, @interface_list ) !=
+				1 )                  # only allow interfaces in the system
+		{
+			&zenlog( "Could not find $slave" );
+			return $return_code;
+		}
+		elsif ( ${ &getSystemInterface( $slave ) }{ status } ne 'down'
+				&& grep ( /^$slave$/, @{ $sys_bond->{ slaves } } ) == 0 )
+		{
+			# interface must be down
+			&zenlog( "$slave must be down" );
+			return $return_code;
+		}
+	}
+
+	# add bond master and set mode only if it is a new one
+	if ( !$sys_bond )
+	{
+		&zenlog( "Bonding not found, adding new master" );
+		&setBondMaster( $bond->{ name }, 'add' );
+		&setBondMode( $bond );
+	}
+
+	# auxiliar hash to remove unwanted slaves
+	my %sys_bond_slaves;
+	%sys_bond_slaves = map { $_ => $_ } @{ $sys_bond->{ slaves } } if $sys_bond;
+
+	for my $slave ( @{ $bond->{ slaves } } )
+	{
+		if ( !$sys_bond )
+		{
+			&zenlog( "adding $slave" );
+			&setBondSlave( $bond->{ name }, $slave, 'add' );
+		}
+		else
+		{
+			# add slave if not already configured
+			if ( grep ( /^$slave$/, @{ $sys_bond->{ slaves } } ) == 0 )
+			{
+				&zenlog( "adding $slave" );
+				&setBondSlave( $bond->{ name }, $slave, 'add' );
+			}
+
+			# discard all checked slaves
+			$sys_bond_slaves{ $slave } = undef;
+		}
+	}
+
+	for my $slave ( keys %sys_bond_slaves )
+	{
+		if ( $sys_bond_slaves{ $slave } )
+		{
+			&zenlog( "removing $slave" );
+			&setBondSlave( $bond->{ name }, $slave, 'del' );
+		}
+	}
+
+	# write bonding configuration
+	if ( $writeconf )
+	{
+		my $bond_conf = &getBondConfig();
+		$bond_conf->{ $bond->{ name } } = $bond;
+		&setBondConfig( $bond_conf );
+	}
+
+	$return_code = 0;
+
+	return $return_code;
+}
+
+sub setBondMaster
+{
+	my $bond_name = shift;
+	my $operation = shift;    # add || del
+	my $writeconf = shift;    # bool: write config to disk
+
+	my $operator;
+	my $return_code = 1;
+
+	if ( $operation eq 'add' )
+	{
+		$operator = '+';
+	}
+	elsif ( $operation eq 'del' )
+	{
+		$operator = '-';
+	}
+	else
+	{
+		&zenlog( "Wrong bonding master operation" );
+		return $return_code;
+	}
+
+	if ( !-f $bonding_masters_filename )
+	{
+		&zenlog( "Bonding module seems missing" );
+		return $return_code;
+	}
+
+	open ( my $bond_file, '>', $bonding_masters_filename );
+
+	if ( !$bond_file )
+	{
+		&zenlog( "Could not open file $bonding_masters_filename: $!" );
+		return $return_code;
+	}
+
+	print $bond_file "$operator$bond_name";
+	close $bond_file;
+
+	# miimon
+	my $miimon_filepath = "$sys_net_dir/$bond_name/$bonding_miimon_filename";
+	open ( my $miimon_file, '>', $miimon_filepath );
+
+	if ( !$miimon_file )
+	{
+		&zenlog( "Could not open file $miimon_filepath: $!" );
+	}
+	else
+	{
+		print $miimon_file "100";
+		close $miimon_file;
+	}    # end miimon
+
+	if ( $writeconf )
+	{
+		my $bond_conf = &getBondConfig();
+		delete $bond_conf->{ $bond_name };
+		&setBondConfig( $bond_conf );
+
+		unlink "$configdir/if_${bond_name}_conf";
+	}
+
+	$return_code = 0;
+
+	return $return_code;
+}
+
+sub setBondMode
+{
+	my $bond = shift;
+
+	my $bond_path   = "$sys_net_dir/$bond->{name}";
+	my $return_code = 1;
+
+	if ( !-d $bond_path )
+	{
+		&zenlog( "Could not find bonding $bond_path" );
+		return $return_code;
+	}
+
+	open ( my $bond_mode_file, '>', "$bond_path/$bonding_mode_filename" );
+
+	if ( !$bond_mode_file )
+	{
+		&zenlog( "Could not open file $bond_path/$bonding_mode_filename: $!" );
+		return $return_code;
+	}
+
+	print $bond_mode_file "$bond->{mode}";
+	close $bond_mode_file;
+
+	$return_code = 0;
+
+	return $return_code;
+}
+
+sub setBondSlave
+{
+	my $bond_name  = shift;
+	my $bond_slave = shift;
+	my $operation  = shift;    # add || del
+
+	my $bond_path = "$sys_net_dir/$bond_name";
+	my $operator;
+	my $return_code = 1;
+
+	if ( $operation eq 'add' )
+	{
+		$operator = '+';
+	}
+	elsif ( $operation eq 'del' )
+	{
+		$operator = '-';
+	}
+	else
+	{
+		&zenlog( "Wrong slave operation" );
+		return $return_code;
+	}
+
+	if ( !-d $bond_path )
+	{
+		&zenlog( "Could not find bonding $bond_name" );
+		return $return_code;
+	}
+
+	open ( my $bond_slaves_file, '>', "$bond_path/$bonding_slaves_filename" );
+
+	if ( !$bond_slaves_file )
+	{
+		&zenlog( "Could not open file $bond_path/$bonding_slaves_filename: $!" );
+		return $return_code;
+	}
+
+	print $bond_slaves_file "$operator$bond_slave";
+	close $bond_slaves_file;
+
+	$return_code = 0;
+
+	return $return_code;
+}
+
+sub getBondConfig
+{
+	# returns:	0 on failure
+	#			Config_tiny object on success
+
+	# requires:
+	#~ use Config::Tiny;
+
+	if ( !-f $bond_config_file )
+	{
+		&zenlog( "Creating bonding configuration file $bond_config_file" );
+		open my $bond_file, '>', $bond_config_file;
+
+		if ( !$bond_file )
+		{
+			&zenlog( "Could not create bonding configuration file $bond_config_file: $!" );
+			return 0;
+		}
+
+		close $bond_file;
+	}
+
+	# Open the config
+	my $bond_conf = Config::Tiny->read( $bond_config_file );
+
+	for my $bond ( keys %{ $bond_conf } )
+	{
+		next if $bond eq '_';
+
+		$bond_conf->{ $bond }->{ slaves } =
+		  [split ( ' ', $bond_conf->{ $bond }->{ slaves } )];
+	}
+
+	# FIXME: error handling?
+	return $bond_conf;
+}
+
+sub setBondConfig
+{
+	my $bond_conf = shift;
+
+	for my $bond ( keys %{ $bond_conf } )
+	{
+		next if $bond eq '_';
+
+		$bond_conf->{ $bond }->{ slaves } = "@{ $bond_conf->{ $bond }->{ slaves } }";
+	}
+
+	$bond_conf->write( $bond_config_file );
+
+	return;
+}
+
+sub getBondAvailableSlaves
+{
+	my @bond_list = ();
+
+	# get bonding interfaces
+	open my $bond_list_file, '<', $bonding_masters_filename;
+
+	if ( $bond_list_file )
+	{
+		@bond_list = split ' ', <$bond_list_file>;
+		close $bond_list_file;
+	}
+
+	# get list of all the interfaces
+	opendir my $dir_h, $sys_net_dir;
+
+	if ( !$dir_h )
+	{
+		&zenlog( "Could not open $sys_net_dir: $!" );
+		return -1;
+	}
+
+	my @avail_ifaces;
+
+	while ( my $dir_entry = readdir $dir_h )
+	{
+		next if $dir_entry eq '.';                      # not . dir
+		next if $dir_entry eq '..';                     # not .. dir
+		next if $dir_entry eq 'bonding_masters';        # not bonding_masters file
+		next if $dir_entry =~ /(:|\.)/;                 # not vlan nor vini
+		next if grep ( /^$dir_entry$/, @bond_list );    # not a bond
+		my $iface = &getSystemInterface( $dir_entry );
+		next if $iface->{ status } ne 'down';           # must be down
+		next if $iface->{ addr };                       # without address
+
+		push ( @avail_ifaces, $dir_entry );
+	}
+
+	close $dir_h;
+
+	return @avail_ifaces;
 }
 
 1;

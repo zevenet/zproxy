@@ -320,6 +320,19 @@ sub createmenuif    # ($if_ref, $id)
 
 	print "<td>";
 
+	# lock interfaces used bby bonds
+	for my $bond ( @{ &getBondList() } )
+	{
+		if ( grep( /^$if_ref->{name}$/, @{ $bond->{ slaves } } ) )
+		{
+			print
+			"<i class=\"fa fa-lock action-icon fa-fw\" title=\"In use by bonding interface $bond->{name}\">";
+
+			print "</td>";
+			return;
+		}
+	}
+
 	# set interface up or down
 	if (    ( $$if_ref{ status } eq "up" )
 		 && ( $$if_ref{ addr } ne $clrip )
@@ -422,7 +435,7 @@ sub createmenuif    # ($if_ref, $id)
 				<input type=\"hidden\" name=\"action\" value=\"addvip\">
 				<input type=\"hidden\" name=\"toif\" value=\"$$if_ref{name}\">
 				<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
-				</form>";
+				</form>" if $$if_ref{addr};
 
 				# delete interface
 				print "

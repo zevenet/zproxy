@@ -460,6 +460,27 @@ if ( $eject eq 'startlocal' )
 		system ( '/etc/init.d/rsyslog restart' );
 	}
 
+	my $bond_conf = &getBondConfig();
+	for my $bond_k ( keys %{ $bond_conf } )
+	{
+		next if $bond_k eq '_';
+
+		my $bond = $bond_conf->{ $bond_k };
+
+		print "  * Up bonding master $$bond{name} ";
+
+		my $error_code = &applyBondChange( $bond );
+
+		if ( $error_code == 0 )
+		{
+			print " \033[1;32m OK \033[0m \n";
+		}
+		else
+		{
+			print " \033[1;31m ERROR \033[0m \n";
+		}
+	}
+
 	#testing interface configured on the installation and gw
 	if ( -e '/etc/network/interfaces' )
 	{
@@ -915,6 +936,27 @@ if ( $eject eq "stoplocal" )
 					}
 				}
 			}
+		}
+	}
+
+	my $bond_conf = &getBondConfig();
+	for my $bond_k ( keys %{ $bond_conf } )
+	{
+		next if $bond_k eq '_';
+
+		my $bond = $bond_conf->{ $bond_k };
+
+		print "  * Down bonding master $$bond{name} ";
+
+		my $error_code = &setBondMaster( $$bond{name}, 'del' );
+
+		if ( $error_code == 0 )
+		{
+			print " \033[1;32m OK \033[0m \n";
+		}
+		else
+		{
+			print " \033[1;31m ERROR \033[0m \n";
 		}
 	}
 
