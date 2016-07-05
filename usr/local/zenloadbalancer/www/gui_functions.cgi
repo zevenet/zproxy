@@ -435,7 +435,7 @@ sub createmenuif    # ($if_ref, $id)
 				<input type=\"hidden\" name=\"action\" value=\"addvip\">
 				<input type=\"hidden\" name=\"toif\" value=\"$$if_ref{name}\">
 				<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
-				</form>";
+				</form>" if $$if_ref{addr};
 
 				# delete interface
 				print "
