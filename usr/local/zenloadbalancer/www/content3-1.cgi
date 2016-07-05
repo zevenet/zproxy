@@ -437,10 +437,17 @@ if ( grep ( /UP/, $lclusterstatus ) )
 else
 {
 	my @interfaces_available = @{ &getActiveInterfaceList() };
+	my @bond_ifaces;
+	for my $bond_k ( keys %{ &getBondConfig() } )
+	{
+		next if $bond_k eq '_';
+		push @bond_ifaces, $bond_k;
+	}
 
 	foreach my $iface ( @interfaces_available )
 	{
-		next if $$iface{ vini } ne '';
+		next if $$iface{ vini } ne '';	# exclude virtual interfaces
+		next if grep( /^$$iface{ name }$/, @bond_ifaces ); # exclude bond interfaces
 
 		my $selected = '';
 
