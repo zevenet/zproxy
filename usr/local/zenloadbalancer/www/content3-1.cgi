@@ -517,7 +517,7 @@ print "
 ";
 
 #
-# Local configuration box
+# SNMP service
 #
 
 print "
@@ -534,8 +534,7 @@ print "
 			<input type=\"hidden\" name=\"id\" value=\"3-1\">
 ";
 
-# HTTPS port for GUI interface
-#~ $guiport = 444;
+# SNMP enable
 
 print "
 			<div class=\"form-row\">
@@ -548,7 +547,7 @@ print "
 			</div>
 ";
 
-# HTTPS port for GUI interface
+# SNMP port
 print "
 			<div class=\"form-row\">
 				<p class=\"form-label\">
@@ -560,7 +559,7 @@ print "
 			</div>
 ";
 
-# HTTPS port for GUI interface
+# SNMP community
 print "
 			<div class=\"form-row\">
 				<p class=\"form-label\">
@@ -572,7 +571,7 @@ print "
 			</div>
 ";
 
-# HTTPS port for GUI interface
+# SNMP scope
 print "
 			<div class=\"form-row\">
 				<p class=\"form-label\">
