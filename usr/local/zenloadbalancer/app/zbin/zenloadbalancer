@@ -222,10 +222,10 @@ if ( $eject eq "start" )
 
 	# Load required modules
 	my $loaded_bonding = system ( 'lsmod | grep bonding >/dev/null 2>&1' );
-	if ( $loaded_bonding == 0 )
+	if ( ! $loaded_bonding )
 	{
 		system ( '/sbin/modprobe bonding >/dev/null 2>&1' );
-		system ( 'echo -bond0 > $bonding_masters_filename' );
+		system ( "echo -bond0 > $bonding_masters_filename" );
 	}
 	system ( '/sbin/modprobe nf_conntrack >/dev/null 2>&1' );
 	system ( '/sbin/modprobe ip_conntrack >/dev/null 2>&1' );
