@@ -966,9 +966,7 @@ if ( $action eq 'editBond' and not defined $bond_name )
 	}
 
 	my $if_checkbox_list;
-	my @bond_if_avail;
-	push ( @bond_if_avail, &getBondAvailableSlaves() );
-	for my $iface ( @bond_if_avail )
+	for my $iface ( sort &getBondAvailableSlaves() )
 	{
 		$if_checkbox_list .=
 		  "<input type=\"checkbox\" name=\"bond_slaves[]\" value=\"$iface\">$iface</i>";
@@ -1020,7 +1018,7 @@ for my $bond ( @{ &getBondList() } )
 		my $if_checkbox_list;
 		my @bond_if_avail;
 		push ( @bond_if_avail, @{ $bond->{ slaves } }, &getBondAvailableSlaves() );
-		for my $iface ( @bond_if_avail )
+		for my $iface ( sort @bond_if_avail )
 		{
 			my $check = '';
 			$check = 'checked' if grep /^$iface$/, @{ $bond->{ slaves } };
@@ -1054,11 +1052,12 @@ for my $bond ( @{ &getBondList() } )
 	}
 	else
 	{
+		my @sorted_slaves = sort @{ $bond->{ slaves } };
 		print "
 				<tr>
 					<td>$bond->{ name }</td>
 					<td>$bond_modes[ $bond->{ mode } ]</td>
-					<td>@{ $bond->{ slaves } }</td>
+					<td>@sorted_slaves</td>
 					<td>
 						<form method=\"post\" action=\"index.cgi\">
 							<button type=\"submit\" value=\"editBond\" name=\"action\" class=\"noborder\">
