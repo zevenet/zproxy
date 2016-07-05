@@ -88,6 +88,10 @@ then
 		/etc/init.d/snmpd stop > /dev/null
 		insserv -r snmpd
 	fi
+
+	if [ `grep -c 'Lsd' /etc/default/snmpd` == '1' ]; then
+		sed -i -e 's/Lsd/LS6d/' /etc/default/snmpd
+	fi
 fi
 
 # Do not mount /usr/local/zenloadbalancer/logs for zlb 4000 series
