@@ -221,8 +221,8 @@ if ( $eject eq "start" )
 	require "/usr/local/zenloadbalancer/config/global.conf";
 
 	# Load required modules
-	my $loaded_bonding = system ( 'lsmod | grep bonding >/dev/null 2>&1' );
-	if ( ! $loaded_bonding )
+	my $missing_bonding = system ( 'lsmod | grep bonding' );
+	if ( $missing_bonding )
 	{
 		system ( '/sbin/modprobe bonding >/dev/null 2>&1' );
 		system ( "echo -bond0 > $bonding_masters_filename" );
