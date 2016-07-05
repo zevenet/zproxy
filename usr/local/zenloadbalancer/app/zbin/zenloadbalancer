@@ -221,6 +221,7 @@ if ( $eject eq "start" )
 	require "/usr/local/zenloadbalancer/config/global.conf";
 
 	# Load required modules
+	system ( '/sbin/modprobe bonding >/dev/null 2>&1' );
 	system ( '/sbin/modprobe nf_conntrack >/dev/null 2>&1' );
 	system ( '/sbin/modprobe ip_conntrack >/dev/null 2>&1' );
 	system ( '/sbin/rmmod xt_recent >/dev/null 2>&1' );
