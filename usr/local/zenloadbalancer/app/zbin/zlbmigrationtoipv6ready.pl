@@ -35,7 +35,7 @@ foreach my $dir_entry ( readdir $config_dh )
 	my @file_content = <$input_fh>;
 	close $input_fh;
 
-	if ( @file_content && grep !/^status=(up|down)$/, @file_content )
+	if ( @file_content && grep( /^status=(up|down)/, @file_content ) == 0 )
 	{
 		print "Migrating interface $if_name\n";
 
