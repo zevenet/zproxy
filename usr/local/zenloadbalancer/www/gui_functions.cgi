@@ -420,7 +420,7 @@ sub createmenuif    # ($if_ref, $id)
 	}
 	else
 	{
-		# Physical interface
+		# vlan interface
 		if ( $$if_ref{ name } =~ /\./ )
 		{
 			if ( not $locked )
@@ -435,7 +435,7 @@ sub createmenuif    # ($if_ref, $id)
 				<input type=\"hidden\" name=\"action\" value=\"addvip\">
 				<input type=\"hidden\" name=\"toif\" value=\"$$if_ref{name}\">
 				<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
-				</form>" if $$if_ref{addr};
+				</form>";
 
 				# delete interface
 				print "
@@ -452,6 +452,7 @@ sub createmenuif    # ($if_ref, $id)
 				</form>";
 			}
 		}
+		# Physical interface
 		else
 		{
 			# add vini
@@ -464,7 +465,7 @@ sub createmenuif    # ($if_ref, $id)
 				<input type=\"hidden\" name=\"action\" value=\"addvip\">
 				<input type=\"hidden\" name=\"toif\" value=\"$$if_ref{name}\">
 				<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
-				</form>";
+				</form>" if &ipisok( $$if_ref{addr} ) eq 'true';
 
 			# add vlan
 			print "
