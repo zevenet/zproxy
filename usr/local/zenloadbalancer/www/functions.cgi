@@ -25,6 +25,7 @@
 #~ use Sys::Syslog qw(:standard :macros);    #standard functions for Syslog
 #~ use Fcntl ':flock';                       #use of lock functions
 #~ use Tie::File;                            #use tie
+#~ use Data::Dumper;
 
 #~ $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 

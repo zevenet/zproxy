@@ -149,9 +149,6 @@ elsif (    $action eq "Save & Up!"
 	# check if the new newip is correct, check version ip
 	if ( $interface{ ip_v } != &ipversion( $interface{ addr } ) )
 	{
-		&zenlog( "interface{ ip_v }:$interface{ ip_v } ipversion:"
-				  . &ipversion( $interface{ addr } ) );
-
 		if ( $interface{ ip_v } == 4 )
 		{
 			&errormsg(
@@ -414,20 +411,20 @@ elsif ( $action eq "downif" )
 {
 	my $if_ref = &getInterfaceConfig( $interface{ name }, $interface{ ip_v } );
 
-	if ( ! $if_ref )
+	if ( !$if_ref )
 	{
 		my @interfaces = @{ &getSystemInterfaceList() };
 
 		for my $iface ( @interfaces )
 		{
-			if ( $iface->{ name } eq $interface{ name } && $iface->{ ip_v } == 4)
+			if ( $iface->{ name } eq $interface{ name } && $iface->{ ip_v } == 4 )
 			{
 				$if_ref = $iface;
 				last;
 			}
 		}
 	}
-		
+
 	my $state = &downIf( $if_ref, 'writeconf' );
 
 	if ( $state == 0 )
@@ -495,6 +492,75 @@ elsif ( $action =~ /deletegw/ )
 		&errormsg( "The default gateway hasn't been deleted" );
 	}
 }
+elsif ( $action eq 'saveBond' )
+{
+	my $error_code = 0;
+
+	my %bond = (
+		name => $bond_name,
+		mode => $bond_mode,
+
+		#~ slaves => $bond_slaves,
+		slaves => \@bond_slaves,
+	);
+
+	if ( !@{ $bond{ slaves } } )
+	{
+		&errormsg( "At least one network interface is required." );
+		$error_code = 1;
+	}
+	else
+	{
+		$error_code = &applyBondChange( \%bond, 'writeconf' );
+	}
+
+	if ( $error_code )
+	{
+		&errormsg( "Could not apply bonding settings." );
+	}
+	else
+	{
+		&successmsg( "Bonding settings applied." );
+	}
+}
+elsif ( $action eq 'deleteBond' )
+{
+	my $error_code = 0;
+
+	my %bond = (
+				 name   => $bond_name,
+				 mode   => $bond_mode,
+				 slaves => \@bond_slaves,
+	);
+
+	my $bond_in_use = 0;
+	$bond_in_use = 1 if &getInterfaceConfig( $bond_name, 4 );
+	$bond_in_use = 1 if &getInterfaceConfig( $bond_name, 6 );
+	$bond_in_use = 1 if grep ( /^$bond_name(:|\.)/, &getInterfaceList() );
+	$bond_in_use = 1 if ${ &getSystemInterface( $bond_name ) }{ status } eq 'up';
+
+	if ( $bond_in_use )
+	{
+		&errormsg(
+			"This bonding interface is in use. To remove it: stop the interface and remove this bonding interface configuration and VLANs."
+		);
+		$error_code = 1;
+	}
+	else
+	{
+		#~ my $error_code = &applyBondChange( \%bond );
+		my $error_code = &setBondMaster( $bond_name, 'del', 'writeconf' );
+	}
+
+	if ( $error_code )
+	{
+		&errormsg( "Could not apply bonding settings." );
+	}
+	else
+	{
+		&successmsg( "Bonding settings applied." );
+	}
+}
 
 # Calculate cluster and GUI ips
 $guiip = &GUIip();
@@ -514,6 +580,7 @@ print "<table id=\"interfaces-table\" class=\"display\">";
 print "<thead>";
 print "<tr>";
 print "<th>Name</th>";
+
 #~ print "<th>IPv</th>";
 print "<th>Addr</th>";
 print "<th>HWaddr</th>";
@@ -562,8 +629,8 @@ if ( $action eq "addvip" || $action eq "addvlan" )
 for my $iface ( @interfaces )
 {
 	# Only IPv4
-	next if $$iface{ip_v} == 6;
-	
+	next if $$iface{ ip_v } == 6;
+
 	my $cluster_icon = '';
 	if (    ( $$iface{ addr } eq $clrip || $$iface{ addr } eq $clvip )
 		 && $clrip
@@ -622,6 +689,7 @@ for my $iface ( @interfaces )
 		print "<form method=\"post\" action=\"index.cgi\" class=\"myform\">";
 		print
 		  "<td>$$iface{name}<input type=\"text\" maxlength=\"10\" size=\"10\" name=\"if\" value=\"\"></td>";
+
 		#~ print "<td><center>IPv$$iface{ip_v}</center></td>";
 		print "<td><input type=\"text\" name=\"newip\" size=\"14\"></td>";
 
@@ -683,6 +751,7 @@ for my $iface ( @interfaces )
 	{
 		print "<tr $selected>";
 		print "<td>$$iface{name} $cluster_icon $gui_icon</td>";
+
 		#~ print "<td><center>IPv$$iface{ip_v}</center></td>";
 		print "<td><center>$$iface{addr}</center></td>";
 		print "<td><center>$$iface{mac}</center></td>";
@@ -730,6 +799,7 @@ print "<thead>";
 print "<tr>";
 print "<th>Addr</th>";
 print "<th>Interface</th>";
+
 #~ print "<th>IPv</th>";
 print "<th>Actions</th>";
 print "</tr>";
@@ -766,6 +836,7 @@ if ( $action =~ /editgw4/ )
 	}
 
 	print "</select>";
+
 	#~ print "</td><td>";
 	#~ print "IPv4";
 }
@@ -775,6 +846,7 @@ else
 	print &getDefaultGW();
 	print "</td><td>";
 	print &getIfDefaultGW();
+
 	#~ print "</td><td>";
 	#~ print "IPv4";
 }
@@ -785,43 +857,43 @@ print "</td></tr>";
 #~ # IPv6 default gateway
 #~ if ( $action =~ /editgw6/ )
 #~ {
-	#~ print
-	  #~ "<form name=\"gatewayform\" method=\"post\" action=\"index.cgi\" class=\"myform\">";
-	#~ print "<tr class=\"selected\"><td>";
-	#~ print "<input type=\"text\" size=\"14\" name=\"gwaddr\" value=\"";
-	#~ print &getIPv6DefaultGW();
-	#~ print "\">";
-	#~ print "</td><td>";
-	#~ print "<select name=\"if\">";
-#~ 
-	#~ my $gw = &getIPv6IfDefaultGW();
-	#~ if ( $gw )
-	#~ {
-		#~ $available_interfaces{ $gw } = 'selected';
-	#~ }
-	#~ else
-	#~ {
-		#~ my ( $first_if ) = sort keys %available_interfaces;
-		#~ $available_interfaces{ $first_if } = 'selected';
-	#~ }
-#~ 
-	#~ for my $if ( sort keys %available_interfaces )
-	#~ {
-		#~ print "<option value=\"$if\" $available_interfaces{$if}>$if</option>";
-	#~ }
-#~ 
-	#~ print "</select>";
-	#~ print "</td><td>";
-	#~ print "IPv6";
+#~ print
+#~ "<form name=\"gatewayform\" method=\"post\" action=\"index.cgi\" class=\"myform\">";
+#~ print "<tr class=\"selected\"><td>";
+#~ print "<input type=\"text\" size=\"14\" name=\"gwaddr\" value=\"";
+#~ print &getIPv6DefaultGW();
+#~ print "\">";
+#~ print "</td><td>";
+#~ print "<select name=\"if\">";
+#~
+#~ my $gw = &getIPv6IfDefaultGW();
+#~ if ( $gw )
+#~ {
+#~ $available_interfaces{ $gw } = 'selected';
 #~ }
 #~ else
 #~ {
-	#~ print "<tr><td>";
-	#~ print &getIPv6DefaultGW();
-	#~ print "</td><td>";
-	#~ print &getIPv6IfDefaultGW();
-	#~ print "</td><td>";
-	#~ print "IPv6";
+#~ my ( $first_if ) = sort keys %available_interfaces;
+#~ $available_interfaces{ $first_if } = 'selected';
+#~ }
+#~
+#~ for my $if ( sort keys %available_interfaces )
+#~ {
+#~ print "<option value=\"$if\" $available_interfaces{$if}>$if</option>";
+#~ }
+#~
+#~ print "</select>";
+#~ print "</td><td>";
+#~ print "IPv6";
+#~ }
+#~ else
+#~ {
+#~ print "<tr><td>";
+#~ print &getIPv6DefaultGW();
+#~ print "</td><td>";
+#~ print &getIPv6IfDefaultGW();
+#~ print "</td><td>";
+#~ print "IPv6";
 #~ }
 #~ print "</td><td>";
 #~ &createmenuGW( $id, $action, 6 );
@@ -831,11 +903,182 @@ print "</tbody>";
 print "</table>";
 print "</div></div>";
 
+### Bonding interfaces table ###
+
+print "
+<div class=\"box grid_12\">
+	<div class=\"box-head\">
+		<span class=\"box-icon-24 fugue-24 server\"></span>
+		<h2>Bond interfaces table</h2>
+	</div>
+	<div class=\"box-content no-pad\">
+		<ul class=\"table-toolbar\">
+			<li>
+				<form method=\"post\" action=\"index.cgi\">
+					<button type=\"submit\" class=\"noborder\">
+					<img src=\"img/icons/basic/plus.png\" alt=\"Add bonding\"> Add bonding</button>
+					<input type=\"hidden\" name=\"id\" value=\"$id\">
+					<input type=\"hidden\" name=\"action\" value=\"editBond\">
+				</form>
+			</li>
+		</ul>
+		<table id=\"bondings-table\" class=\"display\">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Mode</th>
+					<th>Members</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+";
+
+if ( $action eq 'editBond' and not defined $bond_name )
+{
+	my $bond_mode_options = '';
+
+	for my $mode_code ( 0 .. 6 )
+	{
+		$bond_mode_options .=
+		  "<option value=\"$mode_code\">$bond_modes[$mode_code]</option>";
+	}
+
+	my $if_checkbox_list;
+	my @bond_if_avail;
+	push ( @bond_if_avail, &getBondAvailableSlaves() );
+	for my $iface ( @bond_if_avail )
+	{
+		$if_checkbox_list .=
+		  "<input type=\"checkbox\" name=\"bond_slaves[]\" value=\"$iface\">$iface</i>";
+	}
+
+	print "
+				<tr>
+					<form method=\"post\" action=\"index.cgi\">
+						<td>
+							<input type=\"text\" maxlength=\"10\" size=\"20\" name=\"bond_name\" value=\"\">
+						</td>
+						<td>
+							<select name=\"bond_mode\">
+								$bond_mode_options
+							</select>
+						</td>
+						<td>
+							$if_checkbox_list
+						</td>
+						<td>
+							<button type=\"submit\" class=\"noborder\">
+								<i class=\"fa fa-floppy-o fa-fw action-icon\"></i>
+							</button>
+							<button type=\"submit\" value=\"\" name=\"action\" class=\"noborder\">
+								<i class=\"fa fa-sign-out fa-fw action-icon\"></i>
+							</button>
+							<input type=\"hidden\" name=\"id\" value=\"$id\">
+							<input type=\"hidden\" name=\"action\" value=\"saveBond\">
+						</td>
+					</form>
+				</tr>
+	";
+}
+
+for my $bond ( @{ &getBondList() } )
+{
+	if ( $action eq 'editBond' and $bond->{ name } eq $bond_name )
+	{
+		my $bond_mode_options = '';
+
+		for my $mode_code ( 0 .. 6 )
+		{
+			my $selected = '';
+			$selected = 'selected' if $bond->{ mode } == $mode_code;
+			$bond_mode_options .=
+			  "<option value=\"$mode_code\" $selected>$bond_modes[$mode_code]</option>";
+		}
+
+		my $if_checkbox_list;
+		my @bond_if_avail;
+		push ( @bond_if_avail, @{ $bond->{ slaves } }, &getBondAvailableSlaves() );
+		for my $iface ( @bond_if_avail )
+		{
+			my $check = '';
+			$check = 'checked' if grep /^$iface$/, @{ $bond->{ slaves } };
+
+			$if_checkbox_list .=
+			  "<input type=\"checkbox\" name=\"bond_slaves[]\" value=\"$iface\" $check>$iface</i>";
+		}
+
+		print "
+				<tr>
+					<form method=\"post\" action=\"index.cgi\">
+						<td>$bond->{ name }</td>
+						<td>$bond_modes[ $bond->{ mode } ]</td>
+						<td>
+							$if_checkbox_list
+						</td>
+						<td>
+							<button type=\"submit\" value=\"saveBond\" name=\"action\" class=\"noborder\">
+								<i class=\"fa fa-floppy-o fa-fw action-icon\"></i>
+							</button>
+							<button type=\"submit\" value=\"\" name=\"action\" class=\"noborder\">
+								<i class=\"fa fa-sign-out fa-fw action-icon\"></i>
+							</button>
+							<input type=\"hidden\" name=\"id\" value=\"$id\">
+							<input type=\"hidden\" name=\"bond_name\" value=\"$bond_name\">
+							<input type=\"hidden\" name=\"bond_mode\" value=\"$bond->{ mode }\">
+						</td>
+					</form>
+				</tr>
+		";
+	}
+	else
+	{
+		print "
+				<tr>
+					<td>$bond->{ name }</td>
+					<td>$bond_modes[ $bond->{ mode } ]</td>
+					<td>@{ $bond->{ slaves } }</td>
+					<td>
+						<form method=\"post\" action=\"index.cgi\">
+							<button type=\"submit\" value=\"editBond\" name=\"action\" class=\"noborder\">
+								<i class=\"fa fa-pencil-square-o action-icon fa-fw\"></i>
+							</button>
+							<button type=\"submit\" value=\"deleteBond\" name=\"action\" class=\"noborder\">
+								<i class=\"fa fa-times-circle action-icon fa-fw red\"></i>
+							</button>
+							<input type=\"hidden\" name=\"id\" value=\"$id\">
+							<input type=\"hidden\" name=\"action\" value=\"editBond\">
+							<input type=\"hidden\" name=\"bond_name\" value=\"$bond->{ name }\">
+							<input type=\"hidden\" name=\"bond_mode\" value=\"$bond->{ mode }\">
+						</form>
+					</td>
+				</tr>
+		";
+	}
+}
+
+# End of Bonding interfaces table
+print "
+			</tbody>
+		</table>
+	</div>
+</div>
+";
+
 print "
 <script>
 \$(document).ready(function() {
     \$('#interfaces-table').DataTable( {
-        \"bJQueryUI\": true,     
+        \"bJQueryUI\": true,
+        \"sPaginationType\": \"full_numbers\",
+		\"aLengthMenu\": [
+			[10, 25, 50, 100, 200, -1],
+			[10, 25, 50, 100, 200, \"All\"]
+		],
+		\"iDisplayLength\": 25
+    });
+    \$('#bondings-table').DataTable( {
+        \"bJQueryUI\": true,
         \"sPaginationType\": \"full_numbers\",
 		\"aLengthMenu\": [
 			[10, 25, 50, 100, 200, -1],

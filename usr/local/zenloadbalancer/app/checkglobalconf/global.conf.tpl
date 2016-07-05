@@ -176,6 +176,14 @@ $pluginsdir="/usr/local/zenloadbalancer/www/Plugins";
 
 #SNMP Service
 $snmpdconfig_file="/etc/snmp/snmpd.conf";
+
+#Bonding interfaces
+$bond_config_file="/usr/local/zenloadbalancer/config/bonding.conf";
+$sys_net_dir="/sys/class/net";
+$bonding_masters_filename="/sys/class/net/bonding_masters";
+$bonding_mode_filename="bonding/mode";
+$bonding_slaves_filename="bonding/slaves";
+$bonding_miimon_filename="bonding/miimon";
 #::END Global Section
 
 #!!!!NOT REMOVE NEXT LINE!!!!!!
