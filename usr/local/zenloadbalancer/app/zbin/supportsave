@@ -33,6 +33,7 @@ echo "Saving information for support in the path ${dir_backup}.tar.gz"
 
 echo "Saving network configuration"
 /sbin/ifconfig -a >> $dir_backup/ifconfig.txt
+/sbin/ip link show >> $dir_backup/ip_link.txt
 
 echo "Saving netfilter rules"
 echo "Filter table " >> $dir_backup/netfilter.txt
@@ -44,7 +45,7 @@ echo "Mangle table " >> $dir_backup/netfilter.txt
 
 echo "Saving process status"
 echo "ps -lefa" >> $dir_backup/ps.txt
-/bin/ps -lefa >> $dir_backup/ps.txt
+/bin/ps aux >> $dir_backup/ps.txt
 
 echo "Saving network status"
 echo "netstat -putan" >> $dir_backup/netstat.txt
