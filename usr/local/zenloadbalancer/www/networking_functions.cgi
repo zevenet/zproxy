@@ -659,7 +659,6 @@ sub upIf    # ($if_ref, $writeconf)
 		{
 			my $found = 0;
 			tie my @if_lines, 'Tie::File', "$file";
-
 			for my $line ( @if_lines )
 			{
 				if ( $line =~ /^status=/ )
