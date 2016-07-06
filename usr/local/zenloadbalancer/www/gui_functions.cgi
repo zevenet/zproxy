@@ -320,7 +320,7 @@ sub createmenuif    # ($if_ref, $id)
 
 	print "<td>";
 
-	# lock interfaces used bby bonds
+	# lock interfaces used by bonds
 	for my $bond ( @{ &getBondList() } )
 	{
 		if ( grep( /^$if_ref->{name}$/, @{ $bond->{ slaves } } ) )
