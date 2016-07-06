@@ -542,7 +542,7 @@ elsif ( $action eq 'deleteBond' )
 	if ( $bond_in_use )
 	{
 		&errormsg(
-			"This bonding interface is in use. To remove it: stop the interface and remove this bonding interface configuration and VLANs."
+			"This bonding interface is in use. To remove this bonding you need to remove any configuration related to the interface $bond_name and stop this interface in the interfaces table."
 		);
 		$error_code = 1;
 	}
@@ -1042,7 +1042,7 @@ for my $bond ( @{ &getBondList() } )
 							<button type=\"submit\" value=\"editBond\" name=\"action\" class=\"noborder\">
 								<i class=\"fa fa-pencil-square-o action-icon fa-fw\"></i>
 							</button>
-							<button type=\"submit\" value=\"deleteBond\" name=\"action\" class=\"noborder\">
+							<button type=\"submit\" value=\"deleteBond\" name=\"action\" class=\"noborder\" onclick=\"return confirm('Are you sure you want to remove the bonding $bond->{ name }?')\">
 								<i class=\"fa fa-times-circle action-icon fa-fw red\"></i>
 							</button>
 							<input type=\"hidden\" name=\"id\" value=\"$id\">
