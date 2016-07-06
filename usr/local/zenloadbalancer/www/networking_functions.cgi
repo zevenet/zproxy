@@ -477,7 +477,6 @@ sub addIp    # ($if_ref)
 
 	if ( grep /$$if_ref{addr}\//, @ip_output )
 	{
-		&zenlog( "@ip_output" );
 		return 0;
 	}
 
