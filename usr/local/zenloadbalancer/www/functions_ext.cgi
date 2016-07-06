@@ -24,6 +24,11 @@
 use Sys::Syslog;                          #use of syslog
 use Sys::Syslog qw(:standard :macros);    #standard functions for Syslog
 
+# Get the program name for zenlog
+my $run_cmd_name = ( split '/', $0 )[-1];
+$run_cmd_name = ( split '/', "$ENV{'SCRIPT_NAME'}" )[-1] if $run_cmd_name eq '-e';
+$run_cmd_name = ( split '/', $^X )[-1] if ! $run_cmd_name;
+
 #function that insert info through syslog
 #
 #&zenlog($priority,$text);
@@ -39,8 +44,7 @@ sub zenlog    # ($type,$string)
 	my $type = shift // 'info';    # type   = log level (Default: info))
 
 	# Get the program name
-	my $program = ( split '/', $0 )[-1];
-	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
+	my $program = $run_cmd_name;
 
 	openlog( $program, 'pid', 'local0' );    #open syslog
 
