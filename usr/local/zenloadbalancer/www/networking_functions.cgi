@@ -646,6 +646,7 @@ sub upIf    # ($if_ref, $writeconf)
 	my ( $if_ref, $writeconf ) = @_;
 
 	my $status = 0;
+	$if_ref->{ status } = 'up';
 
 	if ( $writeconf )
 	{
@@ -653,15 +654,20 @@ sub upIf    # ($if_ref, $writeconf)
 
 		if ( -f $file )
 		{
+			my $found = 0;
 			tie my @if_lines, 'Tie::File', "$file";
+			
 			for my $line ( @if_lines )
 			{
 				if ( $line =~ /^status=/ )
 				{
 					$line = "status=up";
+					$found = 1;
 					last;
 				}
 			}
+
+			unshift( @if_lines, 'status=up' ) if ! $found;
 			untie @if_lines;
 		}
 	}
