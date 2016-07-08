@@ -195,7 +195,6 @@ foreach $srv ( @services )
 	  "<thead><tr><th>ID</th><th>IP Address</th><th>Actions</th></tr></thead><tbody>";
 	my $backendsvs = &getFarmVS( $farmname, $srv, "backends" );
 	my @be = split ( "\n", $backendsvs );
-	my $rowcounter = 1;
 	foreach $subline ( @be )
 	{
 		$subline =~ s/^\s+//;
@@ -247,16 +246,6 @@ foreach $srv ( @services )
 		}
 		else
 		{
-			if ( $rowcounter % 2 == 0 )
-			{
-				print "<tr class=\"even\">";
-			}
-			else
-			{
-				print "<tr class=\"odd\">";
-			}
-			$rowcounter++;
-
 			print "<td>$subbe[0]</td><td>$subbe[1]</td>";
 			$sv = $srv;
 			&createmenuserversfarm( "normal", $farmname, @subbe[0] );
@@ -404,21 +393,152 @@ foreach $zone ( @zones )
 	print "</div>";
 	print "</div>";
 	print "</div>";
+
 	print "
-			<div class=\"box grid_12\">
-				<span class=\"box-icon-24 fugue-24 server\"></span>       
-				<div class=\"box-head\">
-				<h2>Resources for zone \"$zone\"</h2>
-			</div>
-			<div class=\"box-content no-pad\">
-			<table class=\"display\">";
+		<div class=\"box grid_12\">
+		<div class=\"box-head\">   
+			<span class=\"box-icon-24 fugue-24 server\"></span>    
+			<h2>Resources for zone \"$zone\"</h2>
+		</div>
+		<div class=\"box-content no-pad\">
+			<ul class=\"table-toolbar\">
+				<li>
+					<form method=\"post\" action=\"index.cgi\#zonelist-$zone\">
+						<button type=\"submit\" class=\"noborder\">
+						<img src=\"img/icons/basic/plus.png\" alt=\"Add\"> Add Resource</button>
+									
+						<input type=\"hidden\" name=\"id\" value=\"1-2\">
+						<input type=\"hidden\" name=\"action\" value=\"editfarm-addserver\">
+						<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">
+						<input type=\"hidden\" name=\"id_server\" value=\"$l_serv[0]\">
+						<input type=\"hidden\" name=\"service\" value=\"$zone\">
+						<input type=\"hidden\" name=\"service_type\" value=\"zone\">						
+					</form>
+				</li>
+			</ul>
+			<table id=\"dns-table\" class=\"display\">
+	";
 
 	print
-	  "<thead><tr><th>Resource Name</th><th>TTL</th><th>Type</th><th>RData</th><th>Actions</th></tr></thead><tbody>";
+	  "<thead><tr><th>Resource Name</th><th>TTL</th><th>Type</th><th>RData</th><th>Actions</th></tr></thead>
+	  <tbody>";
+
+	# New backend form
+	print "<a name=\"zonelist-$zone\"></a>\n\n";
+
+	# if ( ( $action =~ /editfarm-addserver/ || $action =~ /editfarm-saveserver/ )
+	if ( $action =~ /editfarm-addserver/ && $service eq $zone )
+	{
+		my $zoneaux = $zone;
+		$zoneaour =~ s/\./\_/g;
+		print "<form method=\"post\" class=\"myform\" action=\"index.cgi\">"
+		  ;    #This form ends in createmenuserverfarm
+
+		print "<tr class=\"selected\">";
+		print
+		  "<td><input type=\"text\" size=\"30\" name=\"resource_server\" value=\"$resource_server\"> </td>";
+		print
+		  "<td><input type=\"number\" size=\"10\" name=\"ttl_server\" value=\"$ttl_server\"> </td>";
+
+		# print "<td><select name=\"type_server\" onchange=\"this.form.submit()\">";
+		print "<td><select name=\"type_server\" onchange=\"chRTypeAdd(this)\">";
+
+		if ( $type_server eq "NS" )
+		{
+			print "<option value=\"NS\" selected=\"selected\">NS</option>";
+		}
+		else { print "<option value=\"NS\">NS</option>"; }
+
+		if ( $type_server eq "A" )
+		{
+			print "<option value=\"A\" selected=\"selected\">A</option>";
+		}
+		else { print "<option value=\"A\">A</option>"; }
+
+		if ( $type_server eq "AAAA" )
+		{
+			print "<option value=\"AAAA\" selected=\"selected\">AAAA</option>";
+		}
+		else { print "<option value=\"AAAA\">AAAA</option>"; }
+
+		if ( $type_server eq "CNAME" )
+		{
+			print "<option value=\"CNAME\" selected=\"selected\">CNAME</option>";
+		}
+		else { print "<option value=\"CNAME\">CNAME</option>"; }
+
+		if ( $type_server eq "DYNA" )
+		{
+			print "<option value=\"DYNA\" selected=\"selected\">DYNA</option>";
+		}
+		else { print "<option value=\"DYNA\">DYNA</option>"; }
+
+		if ( $type_server eq "MX" )
+		{
+			print "<option value=\"MX\" selected=\"selected\">MX</option>";
+		}
+		else { print "<option value=\"MX\">MX</option>"; }
+
+		if ( $type_server eq "SRV" )
+		{
+			print "<option value=\"SRV\" selected=\"selected\">SRV</option>";
+		}
+		else { print "<option value=\"SRV\">SRV</option>"; }
+
+		if ( $type_server eq "TXT" )
+		{
+			print "<option value=\"TXT\" selected=\"selected\">TXT</option>";
+		}
+		else { print "<option value=\"TXT\">TXT</option>"; }
+
+		if ( $type_server eq "PTR" )
+		{
+			print "<option value=\"PTR\" selected=\"selected\">PTR</option>";
+		}
+		else { print "<option value=\"PTR\">PTR</option>"; }
+
+		if ( $type_server eq "NAPTR" )
+		{
+			print "<option value=\"NAPTR\" selected=\"selected\">NAPTR</option>";
+		}
+		else { print "<option value=\"NAPTR\">NAPTR</option>"; }
+
+		print "</select></td>";
+		print "<td>";
+
+		if ( $type_server eq "DYNA" || $type_server eq "DYNC" )
+		{
+			print "<select name=\"rdata_server\">";
+
+			foreach my $sr ( @services )
+			{
+				my @srv = split ( ".cfg", $sr );
+				my $srr = @srv[0];
+				print "<option value=\"$srr\">$srr</option>";
+			}
+
+			print "</select>";
+		}
+		else
+		{
+			my $rdataPrint = "\'$rdata_server\'";
+			print
+			  "<input type=\"text\" size=\"50\" name=\"rdata_server\" value=$rdataPrint>";
+		}
+
+		print "</td>";
+		print "<input type=\"hidden\" name=\"service\" value=\"$zone\">";
+		print "<input type=\"hidden\" name=\"service_type\" value=\"zone\">";
+		&createmenuserversfarmz( "add", $farmname, @l_serv[0] );
+
+		print "</tr>";
+
+	}
+
 	my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
 
 	my @be = split ( "\n", $backendsvs );
-	my $rowcounter = 1;
+
 	foreach $subline ( @be )
 	{
 		if ( $subline =~ /^$/ )
@@ -445,7 +565,7 @@ foreach $zone ( @zones )
 			#
 			my $zoneaux = $zone;
 			$zoneaux =~ s/\./\_/g;
-			print "<form method=\"post\" class=\"myform\" action=\"index.cgi\">"
+			print "<form method=\"post\"  class=\"myform\" action=\"index.cgi\">"
 			  ;    #This form ends in createmenuserverfarm
 			print "<tr class=\"selected\">";
 			print
@@ -456,7 +576,7 @@ foreach $zone ( @zones )
 				 && $subbe1[1] ne "CNAME"
 				 && $subbe1[1] ne "DYNA"
 				 && $subbe1[1] ne "DYNC"
-				 && $subbe1[1] ne "MX" 
+				 && $subbe1[1] ne "MX"
 				 && $subbe1[1] ne "SRV"
 				 && $subbe1[1] ne "TXT"
 				 && $subbe1[1] ne "PTR"
@@ -472,60 +592,68 @@ foreach $zone ( @zones )
 				  "<td><input type=\"number\" size=\"10\" name=\"ttl_server\" value=\"\"></td>";
 			}
 			my $la_type = $ztype;
-			if ( $type_server ne "" ) 
-				{ $la_type = $type_server; }
+			if ( $type_server ne "" ) { $la_type = $type_server; }
 			print "<td><select name=\"type_server\" onchange=\"chRType(this)\">";
-		
-			if ( $la_type eq "NS" )
-				{ print "<option value=\"NS\" selected=\"selected\">NS</option>"; }
-			else
-				{ print "<option value=\"NS\">NS</option>"; }
-		
-			if ( $la_type eq "A" )
-				{ print "<option value=\"A\" selected=\"selected\">A</option>";	}
-			else
-				{ print "<option value=\"A\">A</option>"; }
-		
-			if ( $la_type eq "AAAA" )  
-				{ print "<option value=\"AAAA\" selected=\"selected\">AAAA</option>"; }
-			else
-				{ print "<option value=\"AAAA\">AAAA</option>";	}
-		
-			if ( $la_type eq "CNAME" )
-				{ print "<option value=\"CNAME\" selected=\"selected\">CNAME</option>"; }
-			else 
-				{ print "<option value=\"CNAME\">CNAME</option>"; }
-		
-			if ( $la_type eq "DYNA" )
-				{ print "<option value=\"DYNA\" selected=\"selected\">DYNA</option>"; }
-			else
-				{ print "<option value=\"DYNA\">DYNA</option>"; }
-		
-			if ( $la_type eq "MX" )  
-				{ print "<option value=\"MX\" selected=\"selected\">MX</option>"; }
-			else
-				{ print "<option value=\"MX\">MX</option>"; }
-		
-			if ( $la_type eq "SRV" )
-				{ print "<option value=\"SRV\" selected=\"selected\">SRV</option>"; }
-			else
-				{ print "<option value=\"SRV\">SRV</option>"; }						
-		
-			if ( $la_type eq "TXT" )  
-				{ print "<option value=\"TXT\" selected=\"selected\">TXT</option>"; }
-			else
-				{ print "<option value=\"TXT\">TXT</option>"; }									
-		
-			if ( $la_type eq "PTR" )  
-				{ print "<option value=\"PTR\" selected=\"selected\">PTR</option>"; }
-			else
-				{ print "<option value=\"PTR\">PTR</option>"; }					
 
-			if ( $la_type eq "NAPTR" )  
-				{ print "<option value=\"NAPTR\" selected=\"selected\">NAPTR</option>"; }
-			else
-				{ print "<option value=\"NAPTR\">NAPTR</option>"; }					
-			
+			if ( $la_type eq "NS" )
+			{
+				print "<option value=\"NS\" selected=\"selected\">NS</option>";
+			}
+			else { print "<option value=\"NS\">NS</option>"; }
+
+			if ( $la_type eq "A" )
+			{
+				print "<option value=\"A\" selected=\"selected\">A</option>";
+			}
+			else { print "<option value=\"A\">A</option>"; }
+
+			if ( $la_type eq "AAAA" )
+			{
+				print "<option value=\"AAAA\" selected=\"selected\">AAAA</option>";
+			}
+			else { print "<option value=\"AAAA\">AAAA</option>"; }
+
+			if ( $la_type eq "CNAME" )
+			{
+				print "<option value=\"CNAME\" selected=\"selected\">CNAME</option>";
+			}
+			else { print "<option value=\"CNAME\">CNAME</option>"; }
+
+			if ( $la_type eq "DYNA" )
+			{
+				print "<option value=\"DYNA\" selected=\"selected\">DYNA</option>";
+			}
+			else { print "<option value=\"DYNA\">DYNA</option>"; }
+
+			if ( $la_type eq "MX" )
+			{
+				print "<option value=\"MX\" selected=\"selected\">MX</option>";
+			}
+			else { print "<option value=\"MX\">MX</option>"; }
+
+			if ( $la_type eq "SRV" )
+			{
+				print "<option value=\"SRV\" selected=\"selected\">SRV</option>";
+			}
+			else { print "<option value=\"SRV\">SRV</option>"; }
+
+			if ( $la_type eq "TXT" )
+			{
+				print "<option value=\"TXT\" selected=\"selected\">TXT</option>";
+			}
+			else { print "<option value=\"TXT\">TXT</option>"; }
+
+			if ( $la_type eq "PTR" )
+			{
+				print "<option value=\"PTR\" selected=\"selected\">PTR</option>";
+			}
+			else { print "<option value=\"PTR\">PTR</option>"; }
+
+			if ( $la_type eq "NAPTR" )
+			{
+				print "<option value=\"NAPTR\" selected=\"selected\">NAPTR</option>";
+			}
+			else { print "<option value=\"NAPTR\">NAPTR</option>"; }
 
 			print "</select></td>";
 
@@ -561,8 +689,8 @@ foreach $zone ( @zones )
 				print "</select>";
 			}
 			else
-			{		
-			my $rdataPrint = "\'$rdata\'";
+			{
+				my $rdataPrint = "\'$rdata\'";
 				print
 				  "<input type=\"text\" size=\"50\" name=\"rdata_server\" value=$rdataPrint>";
 			}
@@ -581,21 +709,12 @@ foreach $zone ( @zones )
 			#
 			# Not editing server
 			#
+
 			my $zoneaux = $zone;
 			$zoneaux =~ s/\./\_/g;
 
 # print
 # "<form method=\"get\" name=\"zone_${zoneaux}_resource_${subbe2[1]}\" action=\"index.cgi\#zonelist-$zone\">";
-
-			if ( $rowcounter % 2 == 0 )
-			{
-				print "<tr class=\"even\">";
-			}
-			else
-			{
-				print "<tr class=\"odd\">";
-			}
-			$rowcounter++;
 
 			print "<td>$subbe1[0]</td>";
 			if (    $subbe1[1] ne "NS"
@@ -603,11 +722,11 @@ foreach $zone ( @zones )
 				 && $subbe1[1] ne "AAA"
 				 && $subbe1[1] ne "CNAME"
 				 && $subbe1[1] ne "DYNA"
-				 && $subbe1[1] ne "DYNC" 
-				 && $subbe1[1] ne "MX" 	
-				 && $subbe1[1] ne "SRV" 
-				 && $subbe1[1] ne "TXT" 
-				 && $subbe1[1] ne "PTR" 
+				 && $subbe1[1] ne "DYNC"
+				 && $subbe1[1] ne "MX"
+				 && $subbe1[1] ne "SRV"
+				 && $subbe1[1] ne "TXT"
+				 && $subbe1[1] ne "PTR"
 				 && $subbe1[1] ne "NAPTR" )
 			{
 				print "<td>$subbe1[1]</td>";
@@ -639,116 +758,14 @@ foreach $zone ( @zones )
 		}
 	}
 
-	# New backend form
-	print "<a name=\"zonelist-$zone\"></a>\n\n";
-
-	# if ( ( $action =~ /editfarm-addserver/ || $action =~ /editfarm-saveserver/ )
-	if ( $action =~ /editfarm-addserver/ && $service eq $zone )
-	{
-		my $zoneaux = $zone;
-		$zoneaour =~ s/\./\_/g;
-		print "<form method=\"post\" class=\"myform\" action=\"index.cgi\">"
-		  ;    #This form ends in createmenuserverfarm
-
-		print "<tr class=\"selected\">";
-		print
-		  "<td><input type=\"text\" size=\"30\" name=\"resource_server\" value=\"$resource_server\"> </td>";
-		print
-		  "<td><input type=\"number\" size=\"10\" name=\"ttl_server\" value=\"$ttl_server\"> </td>";
-
-		# print "<td><select name=\"type_server\" onchange=\"this.form.submit()\">";
-		print "<td><select name=\"type_server\" onchange=\"chRTypeAdd(this)\">";
-
-		if ( $type_server eq "NS" )
-			{ print "<option value=\"NS\" selected=\"selected\">NS</option>"; }
-		else
-			{ print "<option value=\"NS\">NS</option>"; }
-
-		if ( $type_server eq "A" )
-			{ print "<option value=\"A\" selected=\"selected\">A</option>"; }
-		else
-			{ print "<option value=\"A\">A</option>"; }
-		
-		if ( $type_server eq "AAAA" )  
-			{ print "<option value=\"AAAA\" selected=\"selected\">AAAA</option>"; }
-		else
-			{ print "<option value=\"AAAA\">AAAA</option>";	}
-
-		if ( $type_server eq "CNAME" )
-			{ print "<option value=\"CNAME\" selected=\"selected\">CNAME</option>"; }
-		else
-			{ print "<option value=\"CNAME\">CNAME</option>"; }
-
-		if ( $type_server eq "DYNA" )
-			{ print "<option value=\"DYNA\" selected=\"selected\">DYNA</option>"; }
-		else
-			{ print "<option value=\"DYNA\">DYNA</option>"; }
-		
-		if ( $type_server eq "MX" )	
-			{ print "<option value=\"MX\" selected=\"selected\">MX</option>"; }
-		else
-			{ print "<option value=\"MX\">MX</option>"; }					
-		
-		if ( $type_server eq "SRV" )			
-			{ print "<option value=\"SRV\" selected=\"selected\">SRV</option>"; }
-		else
-			{ print "<option value=\"SRV\">SRV</option>"; }
-		
-		if ( $type_server eq "TXT" )		
-			{ print "<option value=\"TXT\" selected=\"selected\">TXT</option>"; }
-		else
-			{ print "<option value=\"TXT\">TXT</option>"; } 				
-		
-		if ( $type_server eq "PTR" )  
-			{ print "<option value=\"PTR\" selected=\"selected\">PTR</option>"; }
-		else
-			{ print "<option value=\"PTR\">PTR</option>";	}
-		
-		if ( $type_server eq "NAPTR" )  
-			{ print "<option value=\"NAPTR\" selected=\"selected\">NAPTR</option>"; }
-		else
-			{ print "<option value=\"NAPTR\">NAPTR</option>";	}
-			
-
-		print "</select></td>";
-		print "<td>";
-
-		if ( $type_server eq "DYNA" || $type_server eq "DYNC" )
-		{
-			print "<select name=\"rdata_server\">";
-
-			foreach my $sr ( @services )
-			{
-				my @srv = split ( ".cfg", $sr );
-				my $srr = @srv[0];
-				print "<option value=\"$srr\">$srr</option>";
-			}
-
-			print "</select>";
-		}
-		else
-		{
-			my $rdataPrint = "\'$rdata_server\'";
-				print
-				  "<input type=\"text\" size=\"50\" name=\"rdata_server\" value=$rdataPrint>";
-		}
-
-		print "</td>";
-		print "<input type=\"hidden\" name=\"service\" value=\"$zone\">";
-		print "<input type=\"hidden\" name=\"service_type\" value=\"zone\">";
-		&createmenuserversfarmz( "add", $farmname, @l_serv[0] );
-
-		print "</tr>";
-	}
-
 	# add backend button
-	print "<tr><td class='gray' colspan=\"4\"></td>";
-	my $zoneaux = $zone;
-	$zoneaux =~ s/\./_/g;
+	#print "<tr><td class='gray' colspan=\"4\"></td>";
+	#~ my $zoneaux = $zone;
+	#~ $zoneaux =~ s/\./_/g;
 
-	&createmenuserversfarmz( "new", $farmname, $zone );
+	#&createmenuserversfarmz( "new", $farmname, $zone );
 
-	print "</tr>";
+	#print "</tr>";
 	print "</tbody></table>";
 	print "</div>";
 
@@ -774,6 +791,44 @@ print "
     oSelect.form.submit();
   }
   </script>
+  ";
+
+# scripts para actualizar js
+#~ print "<script src=\"https://code.jquery.com/jquery-1.12.3.js\"></script>";
+#~ print "<script src=\"https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js\"></script>";
+
+#~ print "
+#~ <script>
+#~ \$(document).ready(function() {
+#~ /*	var table = \$('#dns-table').DataTable( {
+#~ rowReorder: false
+
+#~ });
+
+#~ var form = \$(\'form\');
+#~ var td = \$(\'td\');*/
+#~ var g = \$(\'tr\');
+#~ });
+#~ </script>
+#~ ";
+
+print "
+<script>
+	\$(document).ready(function() {
+    \$('#dns-table').DataTable( {
+        \"bJQueryUI\": true,     
+        \"sPaginationType\": \"full_numbers\",
+		\"aLengthMenu\": [
+			[10, 25, 50, 100, 200, -1],
+			[10, 25, 50, 100, 200, \"All\"]
+		],
+		\"iDisplayLength\": 10,
+        \"aaSorting\": []
+    });
+} );
+</script>
+
 ";
 
 1;
+
