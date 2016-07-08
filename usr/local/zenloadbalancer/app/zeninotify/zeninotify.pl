@@ -42,13 +42,13 @@ while ( <FR> )
 	if ( $_ =~ /^MEMBERS/ )
 	{
 		@clusterconf = split ( ":", $_ );
-		if ( $clusterconf[1] eq $hostname )
+		if ( @clusterconf[1] eq $hostname )
 		{
-			$rip = $clusterconf[4];
+			$rip = @clusterconf[4];
 		}
 		else
 		{
-			$rip = $clusterconf[2];
+			$rip = @clusterconf[2];
 		}
 		chomp ( $rip );
 	}
@@ -56,11 +56,15 @@ while ( <FR> )
 close FR;
 
 #pid file
-open my $fo, ">", "$zeninopid";
-print $fo "$$";
-close $fo;
+open FO, ">$zeninopid";
+print FO "$$";
+close FO;
 
-&zenlog( "Running the first replication..." );
+#log file
+open STDERR, '>>', "$zeninolog" or die "Error creating log file";
+open STDOUT, '>>', "$zeninolog" or die "Error creating log file";
+
+print "Running the first replication...\n";
 $exclude = &cluster();
 if ( $exclude ne "1" )
 {
@@ -73,7 +77,7 @@ if ( $exclude ne "1" )
 	&zenlog( "$rsync_rttables_command" );
 	system ( $rsync_rttables_command);
 }
-&zenlog( "Terminated the first replication..." );
+print "Terminated the first replication...\n";
 
 for my $subdir ( &getSubdirectories( $configdir ) )
 {
@@ -87,6 +91,7 @@ my $inotify = new Linux::Inotify2();
 foreach ( @alert )
 {
 	$inotify->watch( $_, IN_MODIFY | IN_CREATE | IN_DELETE );
+
 }
 
 while ( 1 )
@@ -95,7 +100,7 @@ while ( 1 )
 	my @events = $inotify->read();
 	if ( scalar ( @events ) == 0 )
 	{
-		&zenlog( "read error: $!" );
+		print "read error: $!";
 		last;
 	}
 
@@ -118,6 +123,13 @@ while ( 1 )
 			if ( $action eq 256 )
 			{
 				$action = "CREATED";
+				if ( -d $event->fullname )
+				{
+					&zenlog("Watching $event_fullname");
+					push( @alert, $event->fullname );
+					$inotify->watch( $event->fullname, IN_MODIFY | IN_CREATE | IN_DELETE );
+				}
+				next;
 			}
 			if ( $action eq 1073742080 )    # create dir
 			{
@@ -135,7 +147,7 @@ while ( 1 )
 				#if ($fileif =~ "1")
 				if ( $exclude eq "1" )
 				{
-					&zenlog( "File cluster not configured, aborting..." );
+					print "File cluster not configured, aborting...\n";
 					exit 1;
 				}
 				&zenlog( "Exclude files: $exclude" );
@@ -163,11 +175,11 @@ sub cluster()
 	{
 		#exclude file with eth on https gui
 		$filehttp = "";
-		open FH, "<", $confhttp;
+		open FH, "<$confhttp";
 		@filehttp = <FH>;
-		$host     = $filehttp[0];
+		$host     = @filehttp[0];
 		@host     = split ( "=", $host );
-		$iphttp   = $host[1];
+		$iphttp   = @host[1];
 		close FH;
 
 		#exclude file with eth on cluster
@@ -176,10 +188,10 @@ sub cluster()
 		@file = <FO>;
 		if ( grep ( /UP/, @file ) )
 		{
-			$members = $file[0];
+			$members = @file[0];
 			@members = split ( ":", $members );
-			$ip1     = $members[2];
-			$ip2     = $members[4];
+			$ip1     = @members[2];
+			$ip2     = @members[4];
 			chomp ( $ip1 );
 			chomp ( $ip2 );
 
@@ -207,6 +219,7 @@ sub cluster()
 					}
 				}
 			}
+
 		}
 		close FO;
 	}
@@ -232,6 +245,7 @@ sub cluster()
 	}
 
 	return $stringtemp;
+
 }
 
 sub getSubdirectories
