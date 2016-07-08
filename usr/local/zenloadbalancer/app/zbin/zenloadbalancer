@@ -931,7 +931,7 @@ if ( $eject eq "stoplocal" )
 			  "    Interface:$lastline[0]:$lastline[1] Ip:$lastline[2] Netmask:$lastline[3]";
 
 			&delRoutes( "local", "$lastline[0]:$lastline[1]" );
-			&downIf( "$lastline[0]:$lastline[1]" );
+			&stopIf( "$lastline[0]:$lastline[1]" );
 
 			if ( $? == 0 )
 			{
@@ -974,7 +974,7 @@ if ( $eject eq "stoplocal" )
 				if ( !grep ( /$lastline[0]/, @filecl ) && $gui ne $lastline[2] )
 				{
 					&delRoutes( "local", $lastline[0] );
-					&downIf( $lastline[0] );
+					&stopIf( "$lastline[0]:$lastline[1]" );
 
 					if ( $? == 0 )
 					{
@@ -997,7 +997,7 @@ if ( $eject eq "stoplocal" )
 				if ( $gui ne $lastline[2] )
 				{
 					&delRoutes( "local", $lastline[0] );
-					&downIf( $lastline[0] );
+					&stopIf( "$lastline[0]:$lastline[1]" );
 					if ( $? == 0 )
 					{
 						print " \033[1;32m OK \033[0m \n";

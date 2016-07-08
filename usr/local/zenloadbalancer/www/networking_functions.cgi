@@ -497,6 +497,44 @@ sub downIf    # ($if)
 	return $status;
 }
 
+# stop network interface
+sub stopIf    # ($if)
+{
+	my $if     = shift;
+	my $status = 0;
+
+	if ( $if !~ /\:/ )
+	{
+		&logfile( "running '$ip_bin address flush dev $if' " );
+		@eject  = `$ip_bin address flush dev $if 2> /dev/null`;
+		$status = $?;
+
+		if ( $if =~ /\./ )
+		{
+			&logfile( "running '$ip_bin link delete $if type vlan' " );
+			@eject  = `$ip_bin link delete $if type vlan 2> /dev/null`;
+			$status = $?;
+		}
+		else
+		{
+			@eject = `$ip_bin link set dev $if up`;
+		}
+
+		# Delete routes table
+		open ROUTINGFILE, '<', $rttables;
+		my @contents = <ROUTINGFILE>;
+		close ROUTINGFILE;
+
+		@contents = grep !/^...\ttable_$if$/, @contents;
+
+		open ROUTINGFILE, '>', $rttables;
+		print ROUTINGFILE @contents;
+		close ROUTINGFILE;
+	}
+
+	return $status;
+}
+
 # delete network interface
 sub delIf    # ($if)
 {
