@@ -202,3 +202,12 @@ h1 a {
     width: 100%;
 	z-index: 1000000000;
 }
+
+#dns-table_wrapper .dataTables_filter, #dns-table_wrapper .dataTables_length {
+    color: #ddd;
+    text-shadow: 0 1px 0 #222;
+    font-size: 12px;
+    top: -57px;
+}
+
+
