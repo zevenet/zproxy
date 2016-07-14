@@ -25,6 +25,8 @@ use Net::SSH qw(ssh sshopen2);
 use Net::SSH::Expect;
 use Sys::Hostname;
 
+my $ucarp_param = "--upadvert=/usr/local/zenloadbalancer/app/zenlatency/zenadvrt.pl";
+
 my $host = hostname();
 
 print "
@@ -173,10 +175,10 @@ if ( -e $filecluster )
 			"Demoting the node to backup for maintenance, please wait and don't stop the process"
 		);
 		&logfile(
-			"$ucarp $ignoreifstate -r $deadratio --interface=$rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl -k 100 --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+			"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl -k 100 --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 		);
 		@eject = system (
-			"$ucarp $ignoreifstate -r $deadratio --interface=$rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl -k 100 --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+			"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl -k 100 --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 		);
 		sleep ( 10 );
 	}
@@ -202,28 +204,28 @@ if ( -e $filecluster )
 		if ( $typecl =~ /^equal$/ )
 		{
 			&logfile(
-				"$ucarp $ignoreifstate -r $deadratio --interface=$rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+				"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 			);
 			my @eject = system (
-				"$ucarp $ignoreifstate -r $deadratio --interface=$rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+				"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 			);
 		}
 		elsif ( $typecl =~ /$lhost-$rhost/ )
 		{
 			&logfile(
-				"$ucarp $ignoreifstate -r $deadratio --interface=$rifname[0] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+				"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 			);
 			my @eject = system (
-				"$ucarp $ignoreifstate -r $deadratio --interface=$rifname[0] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+				"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 			);
 		}
 		else
 		{
 			&logfile(
-				"$ucarp $ignoreifstate -r $deadratio --interface=$rifname[0] -k 50 --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+				"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] -k 50 --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 			);
 			my $eject = system (
-				"$ucarp $ignoreifstate -r $deadratio --interface=$rifname[0] -k 50 --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+				"$ucarp $ignoreifstate -r $deadratio $ucarp_param --interface=$rifname[0] -k 50 --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 			);
 		}
 		sleep ( 10 );
@@ -504,10 +506,10 @@ if ( -e $filecluster )
 					"Running Zen latency Service and Zen inotify Service, please wait and don't stop the process"
 				);
 				&logfile(
-					"running on local: $ucarp -r $deadratio $ignoreifstate --interface=$ifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+					"running on local: $ucarp -r $deadratio $ignoreifstate $ucarp_param --interface=$ifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 				);
 				my @eject = system (
-					"$ucarp -r $deadratio $ignoreifstate --interface=$ifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+					"$ucarp -r $deadratio $ignoreifstate $ucarp_param --interface=$ifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 				);
 				&successmsg( "Configuring $lhost, please wait and don't stop the process" );
 				sleep ( 10 );
@@ -515,10 +517,10 @@ if ( -e $filecluster )
 					"Local node $lhost configured, configuring $rhost, please wait and don't stop the process"
 				);
 				&logfile(
-					"running on remote: $ucarp -r $deadratio $ignoreifstate --interface=$ifname[0] --srcip=$rip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+					"running on remote: $ucarp -r $deadratio $ignoreifstate $ucarp_param --interface=$ifname[0] --srcip=$rip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 				);
 				my $eject = $ssh->exec(
-					"$ucarp -r $deadratio $ignoreifstate --interface=$ifname[0] --srcip=$rip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+					"$ucarp -r $deadratio $ignoreifstate $ucarp_param --interface=$ifname[0] --srcip=$rip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 				);
 				&successmsg(
 					"Remote node $rhost configured, configuring cluster type, please wait and don't stop the process"
@@ -535,7 +537,7 @@ if ( -e $filecluster )
 				&successmsg(
 							 "Running Zen latency Service and Zen inotify Service, please wait" );
 				my @eject = system (
-					"$ucarp -r $deadratio $ignoreifstate --interface=$ifname[0] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+					"$ucarp -r $deadratio $ignoreifstate $ucarp_param --interface=$ifname[0] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 				);
 				&successmsg( "Configuring $lhost, please wait and don't stop the process" );
 				sleep ( 5 );
@@ -543,7 +545,7 @@ if ( -e $filecluster )
 					"Local node $lhost configured, configuring $rhost, please wait and don't stop the process"
 				);
 				my $eject = $ssh->exec(
-					"$ucarp -r $deadratio $ignoreifstate --interface=$ifname[0] -k 50 --srcip=$rip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
+					"$ucarp -r $deadratio $ignoreifstate $ucarp_param --interface=$ifname[0] -k 50 --srcip=$rip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 				);
 				&successmsg(
 					"Remote node $rhost configured, configuring cluster type, please wait and don't stop the process"
