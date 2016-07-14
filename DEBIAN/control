@@ -1,5 +1,5 @@
 Package: zenloadbalancer
-Version: 4.1.10
+Version: 4.1.11
 Maintainer: Sofintel IT Engineering SL <support@sofintel.net>
 Architecture: amd64
 Section: admin
@@ -7,4 +7,3 @@ Priority: optional
 Description: Zen Load Balancer Enterprise Edition
  Zen Load Balancer Enterprise Edition
 Depends: rrdtool, libnet-netmask-perl, libnet-ssh-perl, libexpect-perl, expect, libnet-ssh-expect-perl, libproc-daemon-perl, libnetwork-ipv4addr-perl, librrds-perl, libio-interface-perl, libgd-3dbargrapher-perl, libdata-validate-ip-perl, rsync, libpcap0.8, ntpdate, liblinux-inotify2-perl, libfile-grep-perl, iputils-arping, openssl, netstat-nat, unzip, libev4, xtables-addons-common, xtables-addons-dkms, libgoogle-perftools4, libjson-perl, libjson-xs-perl, libcgi-session-perl, libauthen-simple-perl, libauthen-simple-passwd-perl, conntrack, libcurses-perl, libcurses-ui-perl, liburi-perl, libtimedate-perl
-
