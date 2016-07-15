@@ -42,9 +42,14 @@ echo "NAT table " >> $dir_backup/netfilter.txt
 echo "Mangle table " >> $dir_backup/netfilter.txt
 /sbin/iptables -nL -t mangle >> $dir_backup/netfilter.txt
 
+if [ -f /usr/local/zenloadbalancer/config/cluster.conf ]; then
+	echo "Saving time synchronization"
+	/usr/local/zenloadbalancer/app/zenntp/zenntp.pl > $dir_backup/ntp_test.txt 2>&1
+fi
+
 echo "Saving process status"
-echo "ps -lefa" >> $dir_backup/ps.txt
-/bin/ps -lefa >> $dir_backup/ps.txt
+echo "ps aux" >> $dir_backup/ps.txt
+/bin/ps aux >> $dir_backup/ps.txt
 
 echo "Saving network status"
 echo "netstat -putan" >> $dir_backup/netstat.txt
