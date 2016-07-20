@@ -3199,10 +3199,6 @@ sub moveServiceFarmStatus
 		"The service \"$serviceSelect\" from farm \"$farmName\" has been moved $moveService"
 	);
 
-	&zenlog(
-		"The service \"$serviceSelect\" from farm \"$farmName\" has been moved $moveService"
-	);
-
 	return 0;
 }
 
