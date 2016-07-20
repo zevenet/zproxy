@@ -380,6 +380,7 @@ foreach $zone ( @zones )
 	print "</div>";
 
 	print "
+	
 		<div class=\"box grid_12\">
 		<div class=\"box-head\">   
 			<span class=\"box-icon-24 fugue-24 server\"></span>    
@@ -409,8 +410,6 @@ foreach $zone ( @zones )
 	  <tbody>";
 
 	# New backend form
-	#~ print "<a name=\"zonelist-$zone\"></a>\n\n";
-
 	# if ( ( $action =~ /editfarm-addserver/ || $action =~ /editfarm-saveserver/ )
 	if ( $action =~ /editfarm-addserver/ && $service eq $zone )
 	{
@@ -720,7 +719,25 @@ foreach $zone ( @zones )
 			}
 			else
 			{
-				my $rdataPrint = "\'$rdata\'";
+				print "
+					<select name=\"rdata_server\" id=\"resourcerdata-select\"> ";
+			}
+
+			foreach $sr ( @services )
+			{
+				my @srv = split ( ".cfg", $sr );
+				my $srr = @srv[0];
+				print "<option value=\"$srr\" ";
+				if ( $rdata eq $srr ) { print " selected=\"selected\" "; }
+				print ">$srr</option>";
+			}
+			print "</select>";
+
+			my $rdataPrint = $rdata;
+			$rdataPrint =~ s/\"/&quot;/g;
+
+			if ( $la_type ne "DYNA" )
+			{
 				print
 				  "<input type=\"text\" name=\"rdata_server\" id=\"resourcerdata-input\" size=\"50\" value=\"$rdataPrint\" 
 							style=\"display: none;\">";
@@ -789,14 +806,6 @@ foreach $zone ( @zones )
 		}
 	}
 
-	# add backend button
-	#print "<tr><td class='gray' colspan=\"4\"></td>";
-	#~ my $zoneaux = $zone;
-	#~ $zoneaux =~ s/\./_/g;
-
-	#&createmenuserversfarmz( "new", $farmname, $zone );
-
-	#print "</tr>";
 	print "</tbody></table>";
 	print "</div>";
 
