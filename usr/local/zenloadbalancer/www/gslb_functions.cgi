@@ -1360,5 +1360,77 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 	return $output;
 }
 
+# translate dns service descriptor to service name
+# if the same backend is in several services, return all service names
+# e.j.   typeService = tcp_54
+sub dnsServiceType    #  dnsServiceType ( $farmname, $ip, $tcp_port )
+{
+	my ( $fname, $ip, $serviceType ) = @_;
+	my $name;
+	my @serviceNames;
+	my $ftype = &getFarmType( $fname );
+	my @file;
+	my $findePort = 0;    # var aux
+
+	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
+	my @pluginlist = readdir ( DIR );
+	closedir ( DIR );
+	foreach $plugin ( @pluginlist )
+	{
+
+		if ( $plugin !~ /^\./ )
+		{
+			@file = ();
+			tie @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+
+			foreach my $line ( @file )
+			{
+				$line =~ /^\t(\w+) => \{/;
+
+				# find potential name
+				if ( $1 )
+				{
+					$name      = $1;
+					$findePort = 0;
+				}
+
+				# find potential port
+				if ( $name && $line =~ /$serviceType/ )
+				{
+					$findePort = 1;
+				}
+
+				# find ip, add servername to array
+				if ( $findePort && $line =~ /$ip/ ) { push @serviceNames, $name; }
+			}
+
+			untie @file;
+		}
+	}
+	return @serviceNames;
+}
+
+# this function return one string with json format
+sub getGSLBGdnsdStats
+{
+	$gdnsdStats = `wget -qO- http://127.0.0.1:35060/json`;
+
+	return $gdnsdStats;
+}
+
+#
+sub getGSLBFarmEstConns    # ($farm_name,@netstat)
+{
+	my ( $farm_name, @netstat ) = @_;
+
+	my $vip      = &getFarmVip( "vip",  $farm_name );
+	my $vip_port = &getFarmVip( "vipp", $farm_name );
+
+	return
+	  &getNetstatFilter( "udp", "",
+						 "src=.* dst=$vip sport=.* dport=$vip_port .*src=.*",
+						 "", @netstat );
+}
+
 # do not remove this
 1;

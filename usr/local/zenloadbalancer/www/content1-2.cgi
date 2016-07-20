@@ -193,6 +193,10 @@ if ( $action eq "managefarm" )
 		{
 			require "./content1-29.cgi";
 		}
+		if ( $type eq "gslb" )
+		{
+			require "./content1-203.cgi";
+		}
 	}
 }
 
@@ -245,10 +249,10 @@ if ( $action !~ /editfarm/ && $action !~ /managefarm/ )
 					<ul class=\"table-toolbar\">
 						<li>
 							<form method=\"post\" action=\"index.cgi\">
-							<button type=\"submit\" class=\"noborder\">
-							<img src=\"img/icons/basic/plus.png\" alt=\"Add\"> Add new Farm</button>
-							<input type=\"hidden\" name=\"id\" value=\"$id\">
-							<input type=\"hidden\" name=\"action\" value=\"addfarm\">
+								<button type=\"submit\" class=\"noborder\">
+								<img src=\"img/icons/basic/plus.png\" alt=\"Add\"> Add new Farm</button>
+								<input type=\"hidden\" name=\"id\" value=\"$id\">
+								<input type=\"hidden\" name=\"action\" value=\"addfarm\">
 							</form>
 						</li>
 					</ul>

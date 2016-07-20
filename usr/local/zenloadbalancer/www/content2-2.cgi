@@ -169,7 +169,11 @@ if ( $action !~ /editfarm/ && $action !~ /managefarm/ )
 
 			#menu
 			print "<td>";
-			if ( $type eq "tcp" || $type eq "udp" || $type eq "l4xnat" || $type =~ /http/ )
+			if (    $type eq "tcp"
+				 || $type eq "udp"
+				 || $type eq "l4xnat"
+				 || $type =~ /http/
+				 || $type eq "gslb" )
 			{
 				&createmenuvipstats( $name, $id, $status, $type );
 			}
@@ -363,5 +367,5 @@ if ( $action !~ /editfarm/ && $action !~ /managefarm/ )
 }
 
 # Delete this and you'll be killed!
-print "";
+1;
 
