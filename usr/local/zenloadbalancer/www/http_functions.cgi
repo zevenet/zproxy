@@ -843,7 +843,8 @@ sub getHTTPFarmEstConns    # ($farm_name,@netstat)
 
 	return
 	  &getNetstatFilter( "tcp", "",
-			  "\.* ESTABLISHED src=\.* dst=$vip sport=\.* dport=$vip_port .*src=\.*",
+			  #~ "\.* ESTABLISHED src=\.* dst=$vip sport=\.* dport=$vip_port .*src=\.*",
+			  ".* ESTABLISHED src=.* dst=$vip sport=.* dport=$vip_port src=.*",
 			  "", @netstat );
 }
 
@@ -1516,7 +1517,7 @@ sub getHTTPFarmBackendStatusCtl    # ($farm_name)
 }
 
 #function that return the status information of a farm:
-#ip, port, backendstatus, weight, priority, clients
+#ip, port, backendstatus, weight, priority, clients, connections
 sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
@@ -1524,6 +1525,7 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 	my @backends_data;
 	my @serviceline;
 	my $service;
+	my $connections;
 
 	if ( !@content )
 	{
@@ -1552,7 +1554,7 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 			$ip_backend   = $backends_ip[0];
 			$port_backend = $backends_ip[1];
 			$line         = $line . "\t" . $ip_backend . "\t" . $port_backend;
-
+			
 			#status
 			$status_backend = $backends[7];
 			my $backend_disabled = $backends[3];
@@ -1585,6 +1587,13 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 			{
 				$line = $line . "\t-";
 			}
+			
+			$connections = $backends[8];
+			$connections =~ s/[\(\)]//g;			
+			if ( !($connections >= 0) )
+				{ $connections = 0; }
+			$line = $line . "\t" . $connections;
+
 			push ( @backends_data, $line );
 		}
 	}
@@ -3048,6 +3057,7 @@ sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 	if (    ( ( $move eq 'up' ) && ( $services[0] ne $serviceSelect ) )
 		 || ( ( $move eq 'down' ) && ( $services[$size - 1] ne $serviceSelect ) ) )
 	{
+		system ( "cp $fileName $fileName.bak" );
 		tie @file, 'Tie::File', $farm_filename;
 
 		# Find service indexs
@@ -3128,10 +3138,9 @@ sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 sub moveServiceFarmStatus
 {
 	my ( $farmName, $moveService, $serviceSelect ) = @_;
-	my @fileTmp;
+	my @file;
 
 	my $fileName    = "$configdir\/${farmName}_status.cfg";
-	my $fileNameTmp = "${fileName}";
 
 	my @services = &getFarmServices( $farmName );
 	my $size     = scalar @services;
@@ -3139,21 +3148,18 @@ sub moveServiceFarmStatus
 	my $auxInd;
 	my $serviceNum;
 
-	&main::zenlog( "numero de servicios $size" );
-
 	# Find service select index
 	foreach my $se ( @services )
 	{
 		$ind += 1;
 		last if ( $services[$ind] eq $serviceSelect );
 	}
+	
+	system ( "cp $fileName $fileName.bak" );
 
-	# Open status file and copy it to tmp status file
-	system ( "cp $fileName $fileNameTmp" );
-	tie @fileTmp, 'Tie::File', $fileNameTmp;
-
+	tie @file, 'Tie::File', $fileName;
 	# change server id
-	foreach my $line ( @fileTmp )
+	foreach my $line ( @file )
 	{
 
 		$line =~ /(^-[bB] 0 )(\d+)/;
@@ -3186,7 +3192,7 @@ sub moveServiceFarmStatus
 		}
 	}
 
-	untie @fileTmp;
+	untie @file;
 
 	&zenlog(
 		"The service \"$serviceSelect\" from farm \"$farmName\" has been moved $moveService"
