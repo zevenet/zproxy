@@ -198,11 +198,11 @@ sub createmenuvipstats    # ($name,$id,$status,$type)
 	{
 		print "
 		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Show connection graph for Farm $name\">
-			<i class=\"fa fa-bar-chart action-icon fa-fw gray\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"2-1\">
-		<input type=\"hidden\" name=\"action\" value=\"$name-farm\">
+			<button type=\"submit\" class=\"myicons\" title=\"Show connection graph for Farm $name\">
+				<i class=\"fa fa-bar-chart action-icon fa-fw gray\"></i>
+			</button>
+			<input type=\"hidden\" name=\"id\" value=\"2-1\">
+			<input type=\"hidden\" name=\"action\" value=\"$name-farm\">
 		</form>";
 	}
 
@@ -323,10 +323,10 @@ sub createmenuif    # ($if_ref, $id)
 	# lock interfaces used by bonds
 	for my $bond ( @{ &getBondList() } )
 	{
-		if ( grep( /^$if_ref->{name}$/, @{ $bond->{ slaves } } ) )
+		if ( grep ( /^$if_ref->{name}$/, @{ $bond->{ slaves } } ) )
 		{
 			print
-			"<i class=\"fa fa-lock action-icon fa-fw\" title=\"In use by bonding interface $bond->{name}\">";
+			  "<i class=\"fa fa-lock action-icon fa-fw\" title=\"In use by bonding interface $bond->{name}\">";
 
 			print "</td>";
 			return;
@@ -452,6 +452,7 @@ sub createmenuif    # ($if_ref, $id)
 				</form>";
 			}
 		}
+
 		# Physical interface
 		else
 		{
@@ -465,7 +466,7 @@ sub createmenuif    # ($if_ref, $id)
 				<input type=\"hidden\" name=\"action\" value=\"addvip\">
 				<input type=\"hidden\" name=\"toif\" value=\"$$if_ref{name}\">
 				<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
-				</form>" if &ipisok( $$if_ref{addr} ) eq 'true';
+				</form>" if &ipisok( $$if_ref{ addr } ) eq 'true';
 
 			# add vlan
 			print "
@@ -774,7 +775,7 @@ sub createmenuserversfarm    # ($actionmenu,$name,$id_server)
 
 		#Cancel
 		print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
+		<form method=\"post\" action=\"index.cgi#zonelist-sofintel.com\" class=\"myform\">
 		<button type=\"submit\" class=\"myicons\" title=\"Cancel\">
 			<i class=\"fa fa-sign-out fa-fw action-icon\"></i>
 		</button>
@@ -852,7 +853,7 @@ sub createmenuserversfarmz    # ($actionmenu,$name,$id_server)
 
 		#Cancel
 		print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
+		<form method=\"post\" action=\"index.cgi\#zonelist-$zone\" class=\"myform\">
 		<button type=\"submit\" class=\"myicons\" title=\"Cancel\">
 			<i class=\"fa fa-sign-out fa-fw action-icon\"></i>
 		</button>
@@ -894,7 +895,7 @@ sub createmenuserversfarmz    # ($actionmenu,$name,$id_server)
 
 		#Cancel
 		print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
+		<form method=\"post\" action=\"index.cgi\#zonelist-$zone\" class=\"myform\">
 		<button type=\"submit\" class=\"myicons\" title=\"Cancel\">
 			<i class=\"fa fa-sign-out fa-fw action-icon\"></i>
 		</button>

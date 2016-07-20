@@ -213,26 +213,7 @@ foreach $srv ( @services )
 			  ;    #This form ends in createmenuserverfarm
 			print "<tr class=\"selected\">";
 
-			if ( $lb eq "prio" )
-			{
-				print "<td><select name=\"id_server\" disabled>";
-				if ( @subbe[0] eq "primary" )
-				{
-					print "<option value=\"primary\" selected=\"selected\">primary</option>";
-
-					print "<option value=\"secondary\">secondary</option>";
-				}
-				else
-				{
-					print "<option value=\"primary\" >primary</option>";
-					print "<option value=\"secondary\" selected=\"selected\">secondary</option>";
-				}
-				print "</select></td>";
-			}
-			else
-			{
-				print "<td>@subbe[0]</td>";
-			}
+			print "<td>$subbe[0]</td>";
 
 			print
 			  "<td><input type=\"text\" size=\"20\"  name=\"rip_server\" value=\"@subbe[1]\"></td>";
@@ -342,7 +323,6 @@ print "</div>";
 print "<div class=\"clear\"></div>";
 
 # ZONES
-print "<a name=\"zonelist-$zone\"></a>";
 
 my @zones   = &getFarmZones( $farmname );
 my $first   = 0;
@@ -350,6 +330,7 @@ my $vserver = 0;
 my $pos     = 0;
 foreach $zone ( @zones )
 {
+
 	$pos++;
 	$first = 1;
 	print "<div class=\"box grid_12\">\n";
@@ -366,10 +347,14 @@ foreach $zone ( @zones )
 			<input type=\"hidden\" name=\"service_type\" value=\"zone\">
 			<input type=\"hidden\" name=\"service\" value=\"$zone\">
 			<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">
-			</form>";
-	print "</h2><h2>";
-	print " Zone \"$zone\"</div>";
+			</form>
+	";
 	print "</h2>";
+
+	# Anchor
+	print "<a name=\"zonelist-$zone\"></a>";
+
+	print "<h2> Zone \"$zone\"</h2></div>";
 
 	#Maximize button
 	print "<div class=\"box-content global-farm\">";
@@ -395,6 +380,7 @@ foreach $zone ( @zones )
 	print "</div>";
 
 	print "
+	
 		<div class=\"box grid_12\">
 		<div class=\"box-head\">   
 			<span class=\"box-icon-24 fugue-24 server\"></span>    
@@ -424,24 +410,25 @@ foreach $zone ( @zones )
 	  <tbody>";
 
 	# New backend form
-	print "<a name=\"zonelist-$zone\"></a>\n\n";
-
 	# if ( ( $action =~ /editfarm-addserver/ || $action =~ /editfarm-saveserver/ )
 	if ( $action =~ /editfarm-addserver/ && $service eq $zone )
 	{
 		my $zoneaux = $zone;
 		$zoneaour =~ s/\./\_/g;
+
+		print "<tr class=\"selected\">";
+
 		print "<form method=\"post\" class=\"myform\" action=\"index.cgi\">"
 		  ;    #This form ends in createmenuserverfarm
 
-		print "<tr class=\"selected\">";
 		print
 		  "<td><input type=\"text\" size=\"30\" name=\"resource_server\" value=\"$resource_server\"> </td>";
 		print
 		  "<td><input type=\"number\" size=\"10\" name=\"ttl_server\" value=\"$ttl_server\"> </td>";
 
 		# print "<td><select name=\"type_server\" onchange=\"this.form.submit()\">";
-		print "<td><select name=\"type_server\" onchange=\"chRTypeAdd(this)\">";
+		print
+		  "<td><select class=\"resource-type\" name=\"type_server\" onchange=\"chRTypeAdd(this)\">";
 
 		if ( $type_server eq "NS" )
 		{
@@ -504,29 +491,50 @@ foreach $zone ( @zones )
 		else { print "<option value=\"NAPTR\">NAPTR</option>"; }
 
 		print "</select></td>";
+
 		print "<td>";
 
-		if ( $type_server eq "DYNA" || $type_server eq "DYNC" )
+		if ( $rdata_server ne "" ) { $rdata = $rdata_server; }
+
+		if ( $type_server ne "DYNA" )
 		{
-			print "<select name=\"rdata_server\">";
-
-			foreach my $sr ( @services )
-			{
-				my @srv = split ( ".cfg", $sr );
-				my $srr = @srv[0];
-				print "<option value=\"$srr\">$srr</option>";
-			}
-
-			print "</select>";
+			print "
+				<select name=\"rdata_server\" id=\"resourcerdata-select\" disabled=\"\" style=\"display: none;\"> ";
 		}
 		else
 		{
-			my $rdataPrint = "\'$rdata_server\'";
+			print "
+				<select name=\"rdata_server\" id=\"resourcerdata-select\"> ";
+		}
+
+		foreach $sr ( @services )
+		{
+			my @srv = split ( ".cfg", $sr );
+			my $srr = @srv[0];
+			print "<option value=\"$srr\" ";
+			if ( $rdata eq $srr ) { print " selected=\"selected\" "; }
+			print ">$srr</option>";
+		}
+		print "</select>";
+
+		my $rdataPrint = $rdata;
+		$rdataPrint =~ s/\"/&quot;/g;
+
+		if ( $type_server ne "DYNA" )
+		{
 			print
-			  "<input type=\"text\" size=\"50\" name=\"rdata_server\" value=$rdataPrint>";
+			  "<input type=\"text\" name=\"rdata_server\" id=\"resourcerdata-input\" size=\"50\" value=\"$rdataPrint\" 
+						style=\"display: block;\">";
+		}
+		else
+		{
+			print
+			  "<input type=\"text\" name=\"rdata_server\" id=\"resourcerdata-input\" size=\"50\" value=\"$rdataPrint\" 
+						style=\"display: none;\">";
 		}
 
 		print "</td>";
+
 		print "<input type=\"hidden\" name=\"service\" value=\"$zone\">";
 		print "<input type=\"hidden\" name=\"service_type\" value=\"zone\">";
 		&createmenuserversfarmz( "add", $farmname, @l_serv[0] );
@@ -565,9 +573,12 @@ foreach $zone ( @zones )
 			#
 			my $zoneaux = $zone;
 			$zoneaux =~ s/\./\_/g;
+
+			print "<tr class=\"selected\">";
+
 			print "<form method=\"post\"  class=\"myform\" action=\"index.cgi\">"
 			  ;    #This form ends in createmenuserverfarm
-			print "<tr class=\"selected\">";
+
 			print
 			  "<td><input type=\"text\" size=\"30\"  name=\"resource_server\" value=\"$la_resource\"> </td>";
 			if (    $subbe1[1] ne "NS"
@@ -593,7 +604,8 @@ foreach $zone ( @zones )
 			}
 			my $la_type = $ztype;
 			if ( $type_server ne "" ) { $la_type = $type_server; }
-			print "<td><select name=\"type_server\" onchange=\"chRType(this)\">";
+			print
+			  "<td><select id=\"resource-type\" name=\"type_server\" onchange=\"chRType(this)\">";
 
 			if ( $la_type eq "NS" )
 			{
@@ -675,26 +687,46 @@ foreach $zone ( @zones )
 			chop ( $rdata );
 
 			if ( $rdata_server ne "" ) { $rdata = $rdata_server; }
-			if ( $la_type eq "DYNA" || $la_type eq "DYNC" )
+
+			if ( $la_type ne "DYNA" )
 			{
-				print "<select name=\"rdata_server\">";
-				foreach $sr ( @services )
-				{
-					my @srv = split ( ".cfg", $sr );
-					my $srr = @srv[0];
-					print "<option value=\"$srr\" ";
-					if ( $rdata eq $srr ) { print " selected=\"selected\" "; }
-					print ">$srr</option>";
-				}
-				print "</select>";
+				print "
+					<select name=\"rdata_server\" id=\"resourcerdata-select\" disabled=\"\" style=\"display: none;\"> ";
 			}
 			else
 			{
-				my $rdataPrint = "\'$rdata\'";
-				print
-				  "<input type=\"text\" size=\"50\" name=\"rdata_server\" value=$rdataPrint>";
+				print "
+					<select name=\"rdata_server\" id=\"resourcerdata-select\"> ";
 			}
+
+			foreach $sr ( @services )
+			{
+				my @srv = split ( ".cfg", $sr );
+				my $srr = @srv[0];
+				print "<option value=\"$srr\" ";
+				if ( $rdata eq $srr ) { print " selected=\"selected\" "; }
+				print ">$srr</option>";
+			}
+			print "</select>";
+
+			my $rdataPrint = $rdata;
+			$rdataPrint =~ s/\"/&quot;/g;
+
+			if ( $la_type ne "DYNA" )
+			{
+				print
+				  "<input type=\"text\" name=\"rdata_server\" id=\"resourcerdata-input\" size=\"50\" value=\"$rdataPrint\" 
+							style=\"display: block;\">";
+			}
+			else
+			{
+				print
+				  "<input type=\"text\" name=\"rdata_server\" id=\"resourcerdata-input\" size=\"50\" value=\"$rdataPrint\" 
+							style=\"display: none;\">";
+			}
+
 			print "</td>";
+
 			$nserv = $subbe2[1];
 
 			print "<input type=\"hidden\" name=\"service\" value=\"$zone\">";
@@ -713,9 +745,7 @@ foreach $zone ( @zones )
 			my $zoneaux = $zone;
 			$zoneaux =~ s/\./\_/g;
 
-# print
 # "<form method=\"get\" name=\"zone_${zoneaux}_resource_${subbe2[1]}\" action=\"index.cgi\#zonelist-$zone\">";
-
 			print "<td>$subbe1[0]</td>";
 			if (    $subbe1[1] ne "NS"
 				 && $subbe1[1] ne "A"
@@ -758,14 +788,6 @@ foreach $zone ( @zones )
 		}
 	}
 
-	# add backend button
-	#print "<tr><td class='gray' colspan=\"4\"></td>";
-	#~ my $zoneaux = $zone;
-	#~ $zoneaux =~ s/\./_/g;
-
-	#&createmenuserversfarmz( "new", $farmname, $zone );
-
-	#print "</tr>";
 	print "</tbody></table>";
 	print "</div>";
 
@@ -793,25 +815,6 @@ print "
   </script>
   ";
 
-# scripts para actualizar js
-#~ print "<script src=\"https://code.jquery.com/jquery-1.12.3.js\"></script>";
-#~ print "<script src=\"https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js\"></script>";
-
-#~ print "
-#~ <script>
-#~ \$(document).ready(function() {
-#~ /*	var table = \$('#dns-table').DataTable( {
-#~ rowReorder: false
-
-#~ });
-
-#~ var form = \$(\'form\');
-#~ var td = \$(\'td\');*/
-#~ var g = \$(\'tr\');
-#~ });
-#~ </script>
-#~ ";
-
 print "
 <script>
 	\$(document).ready(function() {
@@ -827,7 +830,22 @@ print "
     });
 } );
 </script>
+";
 
+print "
+<script>
+jQuery(document).ready(function () {
+	\$(\"#resource-type\").change(function() {
+		if (\$(this).val() == \"DYNA\") {
+			\$(\"#resourcerdata-input\").hide().prop(\"disabled\", \"true\");
+			\$(\"#resourcerdata-select\").show().prop(\"disabled\", \"false\");
+		} else {
+			\$(\"#resourcerdata-input\").show().prop(\"disabled\", \"false\");
+			\$(\"#resourcerdata-select\").hide().prop(\"disabled\", \"true\");
+		}
+	});
+});
+</script>
 ";
 
 1;

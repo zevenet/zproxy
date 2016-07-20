@@ -437,6 +437,11 @@ sub getFarmEstConns    # ($farm_name,@netstat)
 		@nets = &getL4FarmEstConns( $farm_name, @netstat );
 	}
 
+	if ( $farm_type eq "gslb" )
+	{
+		@nets = &getGSLBFarmEstConns( $farm_name, @netstat );
+	}
+
 	return @nets;
 }
 
@@ -1093,7 +1098,7 @@ sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	my $stat      = -1;
 
 	&zenlog(
-			  "setting 'VirtualConf $vip $vip_port' for $farm_name farm $farm_type" );
+			 "setting 'VirtualConf $vip $vip_port' for $farm_name farm $farm_type" );
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
@@ -1378,7 +1383,7 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	# end of farmguardian renaming
 
 	&zenlog(
-			  "setting 'NewFarmName $new_farm_name' for $farm_name farm $farm_type" );
+			 "setting 'NewFarmName $new_farm_name' for $farm_name farm $farm_type" );
 
 	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
 	{
@@ -1590,4 +1595,4 @@ sub setFarmName    # ($farm_name)
 }
 
 # do not remove this
-1
+1;
