@@ -69,6 +69,7 @@ foreach my $line ( @ip_addr_list )
 # Remove cluster virtual interface from the system
 my $ip_cmd = "$ip_bin addr del $vip\/$nmask dev $interface label $cl_vip";
 
+&zenlog( "Running: $ip_cmd" );
 system ( $ip_cmd );
 
 if ( -e $zeninopid )
