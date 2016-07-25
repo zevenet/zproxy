@@ -174,7 +174,7 @@ sub getDataHash
 
 	if ( @_ > 2 or @_ == 0 )
 	{
-		&logfile("Error in number of parameters. Function: >getDataHash<.\n");
+		&zenlog("Error in number of parameters. Function: >getDataHash<.\n");
 	}
 	else
 	{
@@ -182,7 +182,7 @@ sub getDataHash
 
 		if ( ! @hf )
 		{
-			&logfile("Error! Don\'t find the file $fileName.\n");
+			&zenlog("Error! Don\'t find the file $fileName.\n");
 			return -1;
 		}
 
