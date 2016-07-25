@@ -901,8 +901,10 @@ if ( $eject eq "stoplocal" )
 
 				if ( -e $filecluster )
 				{
+					open my $cluster_file, "<", "$filecluster";
+
 					# if interface is not mentioned in cluster file _and_ this ip is not the gui ip
-					if ( !grep ( /$$iface{name}/, @filecl ) && $mgmt_ip ne $$iface{ addr } )
+					if ( !grep ( /$$iface{name}/, <$cluster_file> ) && $mgmt_ip ne $$iface{ addr } )
 					{
 						my $return_code = &stopIf( $$iface{name} );
 
@@ -920,6 +922,8 @@ if ( $eject eq "stoplocal" )
 						print
 						  " \033[1;31m This interface is part of a cluster, it cannot be stopped while being part of the cluster.\033[0m \n";
 					}
+
+					close $cluster_file;
 				}
 				else
 				{
