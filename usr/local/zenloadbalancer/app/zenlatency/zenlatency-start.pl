@@ -23,6 +23,7 @@
 ###############################################################################
 
 require '/usr/local/zenloadbalancer/config/global.conf';
+require '/usr/local/zenloadbalancer/www/functions_ext.cgi';
 
 #start service
 my $interface = $ARGV[0];
