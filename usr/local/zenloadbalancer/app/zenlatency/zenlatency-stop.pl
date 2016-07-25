@@ -23,6 +23,7 @@
 ###############################################################################
 
 require '/usr/local/zenloadbalancer/config/global.conf';
+require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 
 #start service
 my $interface = $ARGV[0];
@@ -53,6 +54,7 @@ if ( -e $filecluster )
 # Get cluster vip mask
 my $nmask;
 my @ip_addr_list = `$ip_bin addr list`;
+
 foreach my $line ( @ip_addr_list )
 {
 	# Example: "inet 192.168.101.16/24 brd 192.168.101.255 scope global eth2"
@@ -66,6 +68,7 @@ foreach my $line ( @ip_addr_list )
 
 # Remove cluster virtual interface from the system
 my $ip_cmd = "$ip_bin addr del $vip\/$nmask dev $interface label $cl_vip";
+
 &zenlog( "Running: $ip_cmd" );
 system ( $ip_cmd );
 
