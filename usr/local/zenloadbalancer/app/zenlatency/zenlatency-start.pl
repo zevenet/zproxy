@@ -95,7 +95,7 @@ if ( grep ( /$cl_vip/, @ip_addr_list ) )
 	}
 
 	# Start zeninotify
-	my @eject = `$zenino &`;
+	system ( "$zenino &" );
 	&zenlog( "Running Zen inotify syncronization service" );
 	&zenlog( "$zenino &" );
 
@@ -107,7 +107,8 @@ if ( grep ( /$cl_vip/, @ip_addr_list ) )
 else
 {
 	&zenlog(
-	  "Zen inotify is not running because Zen latency is not running over $ifname[6]" );
+		 "Zen inotify is not running because Zen latency is not running over $ifname[6]"
+	);
 }
 
 sleep ( 5 );
