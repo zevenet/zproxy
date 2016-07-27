@@ -322,7 +322,7 @@ if ( $eject eq "start" )
 			 $typecl, $clstatus, $cable, $idcluster, $deadratio
 		) = &getClusterConfig();
 		
-		print "Cluster file exist\n";
+		print "Cluster file found\n";
 
 		if ( $clstatus =~ /UP/ )
 		{
