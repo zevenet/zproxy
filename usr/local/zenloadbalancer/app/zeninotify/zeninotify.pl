@@ -106,6 +106,7 @@ while ( 1 )
 			$action = sprintf ( "%d", $event->mask );
 			$name   = $event->fullname;
 			$file   = $event->name;
+
 			if ( $action eq 512 )
 			{
 				$action = "DELETED";
@@ -121,7 +122,7 @@ while ( 1 )
 			if ( $action eq 1073742080 )    # create dir
 			{
 				#~ $action = "CREATED";
-				&zenlog( "Watching $event_fullname" );
+				&zenlog( "Watching " . $event->fullname );
 				$inotify->watch( $event->fullname, IN_MODIFY | IN_CREATE | IN_DELETE );
 				next;
 			}
