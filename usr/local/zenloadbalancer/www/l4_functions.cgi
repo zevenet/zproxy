@@ -1481,8 +1481,8 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 		$status = -1;
 	}
 
-	&setIptConnmarkRestore();
-	&setIptConnmarkSave();
+	&setIptConnmarkRestore( $farm_name );
+	&setIptConnmarkSave( $farm_name );
 
 	return $status;
 }
