@@ -26,6 +26,7 @@ use Linux::Inotify2;
 use Sys::Hostname;
 
 require '/usr/local/zenloadbalancer/config/global.conf';
+require '/usr/local/zenloadbalancer/www/functions_ext.cgi';
 
 my $hostname = hostname();
 my $sync     = "firstime";
@@ -63,15 +64,22 @@ close $fo;
 $exclude = &cluster();
 if ( $exclude ne "1" )
 {
-	my $rsync_command = "$rsync $zenrsync $exclude $configdir\/ root\@$rip:$configdir\/";
+	my $rsync_command =
+	  "$rsync $zenrsync $exclude $configdir\/ root\@$rip:$configdir\/";
 	&zenlog( "$rsync_command" );
-	system($rsync_command);
+	system ( $rsync_command);
 
 	my $rsync_rttables_command = "$rsync $zenrsync $rttables root\@$rip:$rttables";
 	&zenlog( "$rsync_rttables_command" );
-	system($rsync_rttables_command);
+	system ( $rsync_rttables_command);
 }
 &zenlog( "Terminated the first replication..." );
+
+for my $subdir ( &getSubdirectories( $configdir ) )
+{
+	&zenlog( "Watching directory $subdir" );
+	push ( @alert, $subdir );
+}
 
 my $inotify = new Linux::Inotify2();
 
@@ -91,13 +99,13 @@ while ( 1 )
 		last;
 	}
 
-	foreach ( @events )
+	foreach my $event ( @events )
 	{
-		if ( $_->name !~ /^\..*/ && $_->name !~ /.*\~$/ )
+		if ( $event->name !~ /^\..*/ && $event->name !~ /.*\~$/ )
 		{
-			$action = sprintf ( "%d", $_->mask );
-			$name   = $_->fullname;
-			$file   = $_->name;
+			$action = sprintf ( "%d", $event->mask );
+			$name   = $event->fullname;
+			$file   = $event->name;
 			if ( $action eq 512 )
 			{
 				$action = "DELETED";
@@ -109,6 +117,13 @@ while ( 1 )
 			if ( $action eq 256 )
 			{
 				$action = "CREATED";
+			}
+			if ( $action eq 1073742080 )    # create dir
+			{
+				#~ $action = "CREATED";
+				&zenlog( "Watching $event_fullname" );
+				$inotify->watch( $event->fullname, IN_MODIFY | IN_CREATE | IN_DELETE );
+				next;
 			}
 			&zenlog( "File: $file; Action: $action Fullname: $name" );
 
@@ -126,14 +141,16 @@ while ( 1 )
 				my $eject = `$rsync $zenrsync $exclude $configdir\/ root\@$rip:$configdir\/`;
 				&zenlog( $eject );
 				&zenlog(
-				  "run replication process: $rsync $zenrsync $exclude $configdir\/ root\@$rip:$configdir\/" );
+					"run replication process: $rsync $zenrsync $exclude $configdir\/ root\@$rip:$configdir\/"
+				);
 			}
 
 			if ( $name =~ /iproute2/ )
 			{
 				my $eject = `$rsync $zenrsync $rttables root\@$rip:$rttables`;
 				&zenlog( $eject );
-				&zenlog( "run replication process: $rsync $zenrsync $rttables root\@$rip:$rttables" );
+				&zenlog(
+					   "run replication process: $rsync $zenrsync $rttables root\@$rip:$rttables" );
 			}
 		}
 	}
@@ -214,4 +231,40 @@ sub cluster()
 	}
 
 	return $stringtemp;
+}
+
+sub getSubdirectories
+{
+	my $dir_path = shift;
+
+	opendir my $dir_h, $dir_path;
+
+	if ( !$dir_h )
+	{
+		&zenlog( "Could not open directory $dir_path: $!" );
+		return 1;
+	}
+
+	my @dir_list;
+
+	while ( my $dir_entry = readdir $dir_h )
+	{
+		next if $dir_entry eq '.';
+		next if $dir_entry eq '..';
+
+		my $subdir = "$dir_path/$dir_entry";
+
+		if ( -d $subdir )
+		{
+			push ( @dir_list, $subdir );
+
+			my @subdirectories = &getSubdirectories( $subdir );
+
+			push ( @dir_list, @subdirectories );
+		}
+	}
+
+	closedir $dir_h;
+
+	return @dir_list;
 }
