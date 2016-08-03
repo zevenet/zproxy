@@ -740,6 +740,15 @@ if ( $action eq "editfarm-Service" )
 # Move services
 if ( $action eq "editfarm-moveservice" )
 {
+	if ( $moveservice =~ /up/i )
+	{
+		$moveservice = "up";
+	}
+	else
+	{
+		$moveservice = "down";
+	}
+
 	#check if farm is up
 	my $farm_status = &getFarmStatus( $farmname );
 
