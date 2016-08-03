@@ -122,7 +122,7 @@ if ( $enabled ne 'true' )
 	exit 0;
 }
 
-# create farmgardian pidfile
+# create farmguardian pidfile
 my $filepid = "/var/run/$pidfile";
 {
 	open ( my $fo, '>', "$filepid" )

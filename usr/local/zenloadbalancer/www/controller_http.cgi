@@ -693,7 +693,7 @@ if ( $action eq "editfarm-Service" )
 		elsif ( ( !defined ( $check_script ) or $check_script eq '' )
 				&& $usefarmguardian eq 'true' )
 		{
-			&warnmsg( "To enable FarmGardian a command to check must be defined" );
+			&warnmsg( "To enable FarmGuardian a command to check must be defined" );
 		}
 		else
 		{

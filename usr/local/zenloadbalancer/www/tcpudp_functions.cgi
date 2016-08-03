@@ -1340,14 +1340,14 @@ sub setTcpUdpNewFarmName    # ($farm_name,$new_farm_name)
 		my $new_farmguardian_filename = "$new_farm_name\_guardian.conf";
 
 		use Tie::File;
-		tie my @farmgardian_configfile, 'Tie::File',
+		tie my @farmguardian_configfile, 'Tie::File',
 		  "$configdir\/$farmguardian_filename";
 
-		for ( @farmgardian_configfile )
+		for ( @farmguardian_configfile )
 		{
 			s/$farm_name/$new_farm_name/g;
 		}
-		untie @farmgardian_configfile;
+		untie @farmguardian_configfile;
 
 		rename ( "$configdir\/$farmguardian_filename",
 				 "$configdir\/$new_farmguardian_filename" );
