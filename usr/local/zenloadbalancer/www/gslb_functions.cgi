@@ -149,7 +149,7 @@ sub getGSLBFarmServices    # ($farm_name)
 			@fileconf = ();
 			tie @fileconf, 'Tie::File',
 			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
-			my @srv = grep ( /^\t[a-zA-Z1-9].* => {/, @fileconf );
+			my @srv = grep ( /^\t[a-zA-Z1-9].* => \{/, @fileconf );
 			foreach $srvstring ( @srv )
 			{
 				my @srvstr = split ( ' => ', $srvstring );
