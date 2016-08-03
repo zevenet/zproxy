@@ -154,8 +154,9 @@ sub runFarmGuardianStart    # ($fname,$svice)
 	}
 	else
 	{
-		&zenlog( "running $farmguardian $fname $sv $log &" );
-		zsystem( "$farmguardian $fname $sv $log &" );
+		my $fg_cmd = "$farmguardian $fname $sv $log";
+		&zenlog( "running $fg_cmd" );
+		&zsystem( "$fg_cmd > /dev/null &" );
 		$status = $?;
 	}
 
