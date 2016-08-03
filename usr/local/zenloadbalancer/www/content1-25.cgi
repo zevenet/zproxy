@@ -76,9 +76,9 @@ print "
               <th>Server</th>
               <th>Address</th>
               <th>Port</th>
-                         <th>Status</th>
-                         <th>Pending Conns</th>
-                         <th>Established Conns</th>
+              <th>Status</th>
+              <th>Pending Conns</th>
+              <th>Established Conns</th>
             </tr>
           </thead>
           <tbody>
@@ -95,8 +95,7 @@ foreach ( @backends )
 	{
 		$i++;
 	}
-	print "@a_service[$i]";
-
+	print "$backends_data[8]";
 	print "</td>";
 	print "<td> $backends_data[0] </td> ";
 	print "<td> $backends_data[1] </td> ";
