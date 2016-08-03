@@ -944,43 +944,34 @@ foreach $line ( @file )
 			<div>
 		";
 
+		# button to move the service up if this service it isn't the first
+		print "
+		<div class=\"botonMove\">
+			<form action=\"index.cgi\" method=\"post\">
+				<input type=\"hidden\" name=\"action\" value=\"editfarm-moveservice\"/>
+				<input type=\"hidden\" name=\"farmname\" value=\"$farmname\"/>
+				<input type=\"hidden\" name=\"service\" value=\"$service\"/>
+				<input type=\"hidden\" name=\"id\" value=\"$id\"/>";
+
 		if ( $nService != 0 )
 		{
-			# button to move the service up if this service it isn't the first
-			print " 
-			<div class=\"botonMove\">
-				<form action=\"index.cgi\" method=\"post\"> 
-					<input type=\"hidden\" name=\"moveservice\" value=\"up\"/> 			
-					<input type=\"hidden\" name=\"action\" value=\"editfarm-moveservice\"/> 							
-					<input type=\"hidden\" name=\"farmname\" value=\"$farmname\"/>
-					<input type=\"hidden\" name=\"service\" value=\"$service\"/>
-					<input type=\"hidden\" name=\"id\" value=\"$id\"/>
-					<input type=\"submit\" value=\"Move up\" name=\"buttom\" class=\"button grey\">
-				</form>	
-			</div>
-			";
+			print
+			  "<input type=\"submit\" value=\"Move up\" name=\"moveservice\" class=\"button grey\">";
 		}
 
-		# button to move the service down if this service it isn't the last
 		if ( $nService + 1 != scalar &getFarmServices( $farmname ) )
 		{
-			print "
-			<div style=\"float:right\" class=\"botonMove\">
-				<form action=\"index.cgi\" method=\"post\"> 
-					<input type=\"hidden\" name=\"moveservice\" value=\"down\"/> 					
-					<input type=\"hidden\" name=\"action\" value=\"editfarm-moveservice\"/> 					
-					<input type=\"hidden\" name=\"farmname\" value=\"$farmname\"/>
-					<input type=\"hidden\" name=\"service\" value=\"$service\"/>
-					<input type=\"hidden\" name=\"id\" value=\"$id\"/>
-					<input type=\"submit\" value=\"Move down\" name=\"buttom\" class=\"button grey\"/>
-				</form>	
-			</div>
-			";
+			print
+			  "<input type=\"submit\" value=\"Move down\" name=\"moveservice\" class=\"button grey\">";
 		}
+
+		print "</form>
+		</div>
+		";
+
 		$nService += 1;
 
 		print " </div>";
-
 		print "</div></div></div>";
 
 		#
