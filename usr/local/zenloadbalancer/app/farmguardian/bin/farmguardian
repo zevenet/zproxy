@@ -104,7 +104,8 @@ else
 {
 	my $line;
 
-	if ( ! open ( my $fi, '<', "$fileconfig" ) )
+	open ( my $fi, '<', "$fileconfig" );
+	if ( ! $fi )
 	{
 		my $msg = "Cannot open file $fileconfig: $!";
 
@@ -136,14 +137,15 @@ else
 # check if the service is enabled in the current farm
 if ( $enabled ne 'true' )
 {
-	print "FarmGuardian is disabled in the farm $farmname - $service\n";
+	&zenlog( "FarmGuardian is disabled in the farm $farmname - $service\n" );
 	exit 0;
 }
 
 # create farmguardian pidfile
 my $filepid = "/var/run/$pidfile";
 {
-	if ( ! open ( my $fo, '>', "$filepid" ) )
+	open ( my $fo, '>', "$filepid" );
+	if ( !$fo )
 	{
 		my $msg = "Cannot open file $filepid: $!";
 
