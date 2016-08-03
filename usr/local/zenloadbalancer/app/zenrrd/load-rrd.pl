@@ -32,7 +32,7 @@ if (! -f "$rrdap_dir/$rrd_dir/$db_load" )
 	{
 	print "Creating load rrd data base $rrdap_dir/$rrd_dir/$db_load ...\n";
 	RRDs::create "$rrdap_dir/$rrd_dir/$db_load",
-		"-s 300",
+		"--step", "300",
 		"DS:load:GAUGE:600:0,00:100,00",
 		"DS:load5:GAUGE:600:0,00:100,00",
 		"DS:load15:GAUGE:600:0,00:100,00",

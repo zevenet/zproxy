@@ -31,7 +31,7 @@ if (! -f "$rrdap_dir/$rrd_dir/$db_mem" )
 	{
 	print "Creating memory rrd data base $rrdap_dir/$rrd_dir/$db_mem ...\n";
 	RRDs::create "$rrdap_dir/$rrd_dir/$db_mem",
-		"-s 300",
+		"--step", "300",
 		"DS:memt:GAUGE:600:0:U",
 		"DS:memu:GAUGE:600:0:U",
 		"DS:memf:GAUGE:600:0:U",

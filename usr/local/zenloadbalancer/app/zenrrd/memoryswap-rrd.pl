@@ -31,7 +31,7 @@ if (! -f "$rrdap_dir/$rrd_dir/$db_memsw" )
 	{
 	print "Creating memory swap rrd data base $rrdap_dir/$rrd_dir/$db_memsw ...\n";
 	RRDs::create "$rrdap_dir/$rrd_dir/$db_memsw",
-		"-s 300",
+		"--step", "300",
 		"DS:swt:GAUGE:600:0:U",
 		"DS:swu:GAUGE:600:0:U",
 		"DS:swf:GAUGE:600:0:U",

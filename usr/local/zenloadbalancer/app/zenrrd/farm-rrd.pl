@@ -57,7 +57,7 @@ foreach $farmfile ( &getFarmList() ){
 		if (! -f "$rrdap_dir/$rrd_dir/$db_if"){
 			print "Creating traffic rrd database for $farm $rrdap_dir/$rrd_dir/$db_if ...\n";
 			RRDs::create "$rrdap_dir/$rrd_dir/$db_if",
-        	               	"-s 300",
+							"--step", "300",
         	               	"DS:pending:GAUGE:600:0:12500000",
         	               	"DS:established:GAUGE:600:0:12500000",
 				"RRA:LAST:0.5:1:288",		# daily - every 5 min - 288 reg

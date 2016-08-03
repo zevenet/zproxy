@@ -115,7 +115,7 @@ if (! -f "$rrdap_dir/$rrd_dir/$db_cpu" )
 	{
 	print "Creating cpu rrd data base $rrdap_dir/$rrd_dir/$db_cpu ...\n";
 	RRDs::create "$rrdap_dir/$rrd_dir/$db_cpu",
-		"-s 300",
+		"--step", "300",
 		"DS:user:GAUGE:600:0,00:100,00",
 		"DS:nice:GAUGE:600:0,00:100,00",
 		"DS:sys:GAUGE:600:0,00:100,00",

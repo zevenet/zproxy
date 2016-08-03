@@ -30,7 +30,7 @@ if (! -f "$rrdap_dir/$rrd_dir/$db_temp" )
 	{
 	print "Creating temperature rrd data base $rrdap_dir/$rrd_dir/$db_temp ...\n";
 	RRDs::create "$rrdap_dir/$rrd_dir/$db_temp",
-		"-s 300",
+		"--step", "300",
 		"DS:temp:GAUGE:600:0:100",
         #        "RRA:AVERAGE:0.5:1:288",
         #        "RRA:AVERAGE:0.5:6:2016",

@@ -58,7 +58,7 @@ foreach $line(@system)
 						{
 						print "Creating $partiton rrd database in $rrdap_dir/$rrd_dir/$partitions$db_hd ...\n";
 						RRDs::create "$rrdap_dir/$rrd_dir/$partitions$db_hd",
-						"-s 300", 
+						"--step", "300",
 						"DS:tot:GAUGE:600:0:U",
 						"DS:used:GAUGE:600:0:U",
 						"DS:free:GAUGE:600:0:U",
