@@ -16,7 +16,7 @@ my $DEBUG = 0;
 if ( ! -e $filecluster )
 {
 	# cluster not configured
-	print "Not configured\n";
+	print "Not configured\n" if $DEBUG;
 	exit 2;
 }
 
@@ -27,7 +27,7 @@ my ( undef, $clstatus ) = &getClusterConfigTypeStatus( $filecluster );
 if ( $clstatus ne 'UP' )
 {
 	# cluster not configured
-	print "Not configured\n";
+	print "Not configured\n" if $DEBUG;
 	exit 2;
 }
 
@@ -36,45 +36,63 @@ if ( $clstatus ne 'UP' )
 
 # local zenlatency
 my $zlatency_local = `$pidof -x ucarp`;
+my $lat_loc_stat = $?;
 chomp $zlatency_local;
 # remote zenlatency
 my $zlatency_remote =
-  `ssh -o \"ConnectTimeout=10\" -o \"StrictHostKeyChecking=no\" root\@$cl_rip \"pidof -x ucarp \" 2>&1`;
+  `ssh -o \"ConnectTimeout=5\" -o \"StrictHostKeyChecking=no\" root\@$cl_rip \"pidof -x ucarp \" 2>&1`;
+my $lat_rem_stat = $?;
 chomp $zlatency_remote;
 
-my $zlatency_ok = ( $zlatency_local && $zlatency_remote );
+my $zlatency_ok = ( !$lat_loc_stat && !$lat_rem_stat && $zlatency_local && $zlatency_remote );
 
+if ( !$zlatency_ok ){
+	print "Latency NO OK\n" if $DEBUG;
+	exit 1;
+}
 
 ## Cluster interface
 
 my ( $vipcl ) = &getClusterConfigVipInterface( $filecluster );
+my $vip_loc_stat = $?;
 # local
 my $vip_local = grep ( / $vipcl\//, `$ip_bin addr list`);
 # remote
 my $vip_remote = grep ( / $vipcl\//,
-  `ssh -o \"ConnectTimeout=10\" -o \"StrictHostKeyChecking=no\" root\@$cl_rip \"$ip_bin addr list\" `);
-
+  `ssh -o \"ConnectTimeout=5\" -o \"StrictHostKeyChecking=no\" root\@$cl_rip \"$ip_bin addr list\" `);
+my $vip_rem_stat = $?;
 # ^ == xor
-my $vip_ok = &xor_op( $vip_local, $vip_remote );
+my $vip_ok = (!$vip_rem_stat && !$vip_loc_stat) && &xor_op( $vip_local, $vip_remote );
 
+if ( !$vip_ok ){
+	print "vip NO OK\n" if $DEBUG;
+	exit 1;
+}
 
 # ZenInotify
 
 # local zeninotify
 my $zenino_local = grep ( //, `$pidof -x zeninotify.pl`);
+my $zenino_loc_stat = $?;
 # local zeninotify
 my $zenino_remote = grep ( //,
-  `ssh -o \"ConnectTimeout=10\" -o \"StrictHostKeyChecking=no\" root\@$cl_rip "pidof -x zeninotify.pl" `);
+  `ssh -o \"ConnectTimeout=5\" -o \"StrictHostKeyChecking=no\" root\@$cl_rip "pidof -x zeninotify.pl" `);
+my $zenino_rem_stat = $?;
 
-my $zenino_ok = &xor_op( $zenino_local, $zenino_remote );
-
+my $zenino_loc_ok = (!$zenino_loc_stat) && $zenino_local;
+my $zenino_rem_ok = (!$zenino_rem_stat) && $zenino_remote;
 
 ## Check all
 my $master_local = ($vip_local && $zenino_local);
 my $master_remote = ($vip_remote && $zenino_remote);
 my $same_node = &xor_op( $master_local, $master_remote );
 
-if ( $zlatency_ok && $vip_ok && $zenino_ok && $same_node )
+if ( ($master_local && !$zenino_loc_ok) || ($master_remote && !$zenino_rem_ok) ){
+	print "zenino NO OK\n" if $DEBUG;
+	exit 1;
+}
+
+if ( $zlatency_ok && $vip_ok && $same_node )
 {
 	# all ok
 	print "Master\n" if $master_local;
@@ -87,7 +105,7 @@ if ( $same_node )
 {
 	if ( $master_local )
 	{
-		print "Master\n";
+		print "Master\n" if $DEBUG;
 	}
 	elsif ( $master_remote )
 	{
@@ -95,17 +113,17 @@ if ( $same_node )
 
 		if ( $maintenance )
 		{
-			print "Maintenance\n";
+			print "Maintenance\n" if $DEBUG;
 		}
 		else
 		{
-			print "Slave\n";
+			print "Slave\n" if $DEBUG;
 		}
 	}
 }
 else
 {
-	print "Error\n";
+	print "Error\n" if $DEBUG;
 }
 
 if ( $DEBUG )
@@ -128,7 +146,7 @@ if ( $DEBUG )
 	print "same_node:$same_node\n";
 	system("grep RSS /proc/$$/status");
 }
-
+print "Exit Error\n" if $DEBUG;
 exit 1;
 
 sub xor_op
