@@ -130,7 +130,6 @@ elsif (    $action eq "Save & Up!"
 	if ( $action eq "addvlan2" )
 	{
 		my $if_ref = &getInterfaceConfig( $interface{ name }, $interface{ ip_v } );
-<<<<<<< HEAD
 
 		if ( $if_ref )
 		{
@@ -161,6 +160,28 @@ elsif (    $action eq "Save & Up!"
 				  "IP Address $interface{ addr } structure is not ok, must be an IPv6 structure"
 			);
 		}
+		$swaddif = "false";
+	}
+
+	# check if the new netmask for IPv4 is correct
+	if (
+		$interface{ ip_v } == 4    # ipv4
+		&& (
+			$interface{ mask } eq ''    # empty
+			|| (
+				&ipisok( $interface{ mask }, 4 ) eq "false"    # is not ipv4 valid
+				&& (
+					 $interface{ mask } !~ /^\d+$/              # is not a number
+					 || $interface{ mask } > 32                 # greater than 32
+					 || $interface{ mask } < 0                  # lower than 0
+				)
+			)
+		)
+	  )
+	{
+		&errormsg(
+			"Netmask address $interface{mask} structure is not ok. Must be IPv4 structure or numeric [0-32]."
+		);
 		$swaddif = "false";
 	}
 
@@ -378,7 +399,6 @@ elsif ( $action eq "upif" )
 		# FIXME: bug-prove this condition
 		if ( $parent_if_status eq 'up' && $error eq "false" )
 		{
-
 			my $state = &upIf( \%interface, 'writeconf' );
 
 			if ( $state == 0 )

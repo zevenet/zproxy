@@ -639,7 +639,7 @@ sub new_vlan()
 		  -charset => 'utf-8',
 		  -status  => '400 Bad Request'
 		);
-		$errormsg = "Netmask parameter can't be empty";
+		$errormsg = "Netmask Address $json_obj->{netmask} structure is not ok.";
 		my $output = $j->encode(
 		{
 		  description => "Netmask Address $json_obj->{netmask}",
