@@ -23,6 +23,7 @@
 ###############################################################################
 
 use RRDs;
+
 require ("/usr/local/zenloadbalancer/config/global.conf");
 
 $db_load="load.rrd";
@@ -33,9 +34,9 @@ if (! -f "$rrdap_dir/$rrd_dir/$db_load" )
 	print "Creating load rrd data base $rrdap_dir/$rrd_dir/$db_load ...\n";
 	RRDs::create "$rrdap_dir/$rrd_dir/$db_load",
 		"--step", "300",
-		"DS:load:GAUGE:600:0,00:100,00",
-		"DS:load5:GAUGE:600:0,00:100,00",
-		"DS:load15:GAUGE:600:0,00:100,00",
+		"DS:load:GAUGE:600:0.00:100.00",
+		"DS:load5:GAUGE:600:0.00:100.00",
+		"DS:load15:GAUGE:600:0.00:100.00",
 		"RRA:LAST:0.5:1:288",		# daily - every 5 min - 288 reg
 		"RRA:MIN:0.5:1:288",		# daily - every 5 min - 288 reg
 		"RRA:AVERAGE:0.5:1:288",	# daily - every 5 min - 288 reg
@@ -53,6 +54,8 @@ if (! -f "$rrdap_dir/$rrd_dir/$db_load" )
 		"RRA:AVERAGE:0.5:288:372",	# yearly - every 1 day - 372 reg
 		"RRA:MAX:0.5:288:372";		# yearly - every 1 day - 372 reg
 	}
+$ERR=RRDs::error;
+die "ERROR while creating RRD: $ERR\n" if $ERR;
 
 #information
 if (-f "/proc/loadavg")
