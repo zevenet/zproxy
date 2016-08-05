@@ -37,18 +37,18 @@ CRYPTOVER=`find /usr/lib/ -name libcrypto.so.*.*.* | head -1 | awk -F'.' '{ prin
 # Check for cherokee version
 CRYPTOV="$CRYPTOVER"
 if [ ! -e "/usr/local/zenloadbalancer/app/cherokee.${CRYPTOV}" ]; then
-	$CRYPTOV="$CRYPTOVERDEF"
+	CRYPTOV="$CRYPTOVERDEF"
 fi
-cp -rpf "/usr/local/zenloadbalancer/app/cherokee.${CRYPTOV}/*" "/usr/local/zenloadbalancer/app/cherokee/"
-rm /usr/local/zenloadbalancer/app/cherokee.*
+cp -rpf /usr/local/zenloadbalancer/app/cherokee.${CRYPTOV}/* /usr/local/zenloadbalancer/app/cherokee/
+rm -rf /usr/local/zenloadbalancer/app/cherokee.*
 
 # Check for pound version
 CRYPTOV="$CRYPTOVER"
 if [ ! -e "/usr/local/zenloadbalancer/app/pound.${CRYPTOV}" ]; then
-	$CRYPTOV="$CRYPTOVERDEF"
+	CRYPTOV="$CRYPTOVERDEF"
 fi
-cp -rpf "/usr/local/zenloadbalancer/app/pound.${CRYPTOV}/*" "/usr/local/zenloadbalancer/app/pound/"
-rm /usr/local/zenloadbalancer/app/pound.*
+cp -rpf /usr/local/zenloadbalancer/app/pound.${CRYPTOV}/* /usr/local/zenloadbalancer/app/pound/
+rm -rf /usr/local/zenloadbalancer/app/pound.*
 
 # GSLB user management
 GSLBHOME="/var/run/gdnsd"
