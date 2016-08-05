@@ -104,7 +104,7 @@ sub genCpuGraph    #($type,$graph,$time)
 		RRDs::graph(
 					 "$graph",
 					 "--imgformat=$imagetype",
-					 "-s -1$time",
+					 "--start=-1$time",
 					 "--width=$width",
 					 "--height=$height",
 					 "--alt-autoscale-max",
@@ -395,15 +395,13 @@ sub genNetGraph    #($type,$graph,$time)
 
 		RRDs::graph(
 					 "$graph",
+					 "--imgformat=$imagetype",
 					 "--start=-1$time",
-					 "-h",
-					 "$height",
-					 "-w",
-					 "$width",
+					 "--height=$height",
+					 "--width=$width",
 					 "--lazy",
 					 "-l 0",
-					 "-a",
-					 "$imagetype",
+					 "--alt-autoscale-max",
 					 "--title=TRAFFIC ON $if_name",
 					 "--vertical-label=BANDWIDTH",
 					 "DEF:in=$rrdap_dir/$rrd_dir/$db_if:in:AVERAGE",
