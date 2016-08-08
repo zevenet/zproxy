@@ -4,7 +4,7 @@
 #     Zen Load Balancer Software License
 #     This file is part of the Zen Load Balancer software package.
 #
-#     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
+#     Copyright (C) 2014-2016 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
@@ -22,49 +22,35 @@
 #
 ###############################################################################
 
-#this script run all pl files with -rrd.pl regexh in $rrdap_dir, 
-#this -rrd.pl files will create the rrd graphs that zen load balancer gui
-#will paint in Monitoring section
-#USE:
-#you have to include in the cron user this next line for example:
-#execution over 2 minutes
-#*/2 * * * * /usr/local/zenloadbalancer/app/rrd/zenrrd.pl
-#Fell free to create next graphs, in files type
-#name-rrd.pl, the system going to include automatically to execute
-#and viewing in Zen load balancer GUI (Monitoring secction)
+# This script runs all te *-rrd.pl files included in the same folder
 
 require ("/usr/local/zenloadbalancer/config/global.conf");
 $lockfile="/tmp/rrd.lock";
 
-if ( -e $lockfile ){
-        print "RRD Locked by $lockfile, maybe other zenrrd in execution\n";
+if ( -e $lockfile ) {
+	print "$0: Warning: RRD Locked by $lockfile, maybe other zenrrd in is being executed\n";
 	exit;
-}else {
-   open LOCK, '>', $lockfile;
-   print LOCK "lock rrd";
-   close LOCK;
+} else {
+	open LOCK, '>', $lockfile;
+	print LOCK "lock rrd";
+	close LOCK;
 }
 
 opendir(DIR, $rrdap_dir);
 @files = grep(/-rrd.pl$/,readdir(DIR));
 closedir(DIR);
 
-foreach $file(@files)
-	{
-	print "Executing $file...\n";
-	if ($log_rrd eq "")
-		{
+foreach $file(@files) {
+	print "$0: Info: Executing $file...\n";
+
+	if ($log_rrd eq "") {
 		my @system =`$rrdap_dir/$file`;
-		}
-
-	else
-		{
+	} else {
 		my @system =`$rrdap_dir/$file >> $rrdap_dir/$log_rrd`;
-		}
 	}
-
-if ( -e $lockfile ){
-	unlink($lockfile);
 }
 
+if ( -e $lockfile ) {
+	unlink($lockfile);
+}
 

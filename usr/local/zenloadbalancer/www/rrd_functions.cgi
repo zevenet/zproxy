@@ -88,6 +88,12 @@ sub printGraph    #($type,$time)
 	{
 		&genFarmGraph( $type, $graph, $time );
 	}
+
+	if ( $type eq "temp" )
+	{
+		&genLoadGraph( $type, $graph, $time );
+	}
+
 	return &printImgFile( $graph );
 }
 
@@ -178,31 +184,10 @@ sub genDiskGraph    #($type,$graph,$time)
 	$dev =~ s/dev-//;
 	$dev =~ s/-/\// if $dev !~ /dm-/;
 
-	#~ &logfile("type:$type, graph:$graph, time:$time, dev:$dev");
-
-	my ( $partition, $size, $mount );
-
-	for $line_df ( @df_system )
-	{
-		#~ &logfile("line_df:$line_df == dev:$dev");
-
-		if ( $line_df =~ /$dev/ )
-		{
-			my @s_line = split ( "\ ", $line_df );
-			chomp ( @s_line );
-
-			#~ &logfile("s_line:@s_line");
-
-			$partition = $s_line[0];
-			$size      = $s_line[4];
-			$mount     = $s_line[5];
-		}
-	}
+	my $mount = &getDiskMountPoint($dev);
 
 	if ( -e "$rrdap_dir/$rrd_dir/$db_hd" )
 	{
-		#~ &logfile("type:$type, partition:$partition, mount:$mount, size:$size");
-
 		RRDs::graph(
 					 "$graph",
 					 "--start=-1$time",
@@ -237,8 +222,7 @@ sub genDiskGraph    #($type,$graph,$time)
 					 "GPRINT:total:MAX:Max\\:%8.2lf %s\\n"
 		);
 
-		if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n" }
-
+		if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n"; }
 	}
 }
 
@@ -322,7 +306,7 @@ sub genMemGraph    #($type,$graph,$time)
 					 "GPRINT:memf:MIN:Min\\:%8.2lf %s",
 					 "GPRINT:memf:AVERAGE:Avg\\:%8.2lf %s",
 					 "GPRINT:memf:MAX:Max\\:%8.2lf %s\\n",
-					 "LINE2:memc#46F2A2:Cached\\t",
+					 "LINE2:memc#46F2A2:Cache&Buffer\\t",
 					 "GPRINT:memc:LAST:Last\\:%8.2lf %s",
 					 "GPRINT:memc:MIN:Min\\:%8.2lf %s",
 					 "GPRINT:memc:AVERAGE:Avg\\:%8.2lf %s",
@@ -491,6 +475,36 @@ sub genFarmGraph    #($type,$graph,$time)
 		{
 			print "$0: unable to generate $farm farm graph: $ERROR\n";
 		}
+
+	}
+}
+
+#Generate the CPU temperature Graph
+sub genTempGraph    #($type,$graph,$time)
+{
+	my $db_temp = "$type.rrd";
+
+	if ( -e "$rrdap_dir/$rrd_dir/$db_temp" )
+	{
+		RRDs::graph(
+					 "$graph",
+					 "--imgformat=$imagetype",
+					 "--start=-1$time",
+					 "--width=$width",
+					 "--height=$height",
+					 "--alt-autoscale-max",
+					 "--lower-limit=0",
+					 "--title=CPU TEMPERATURE",
+					 "--vertical-label=LOAD",
+					 "DEF:temp=$rrdap_dir/$rrd_dir/$db_temp:temp:AVERAGE",
+					 "STACK:temp#46b971:CPU temperature\\t",
+					 "GPRINT:temp:LAST:Last\\:%4.2lf C",
+					 "GPRINT:temp:MIN:Min\\:%4.2lf C",
+					 "GPRINT:temp:AVERAGE:Avg\\:%4.2lf C",
+					 "GPRINT:temp:MAX:Max\\:%4.2lf C\\n"
+		);
+
+		if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n"; }
 
 	}
 }
