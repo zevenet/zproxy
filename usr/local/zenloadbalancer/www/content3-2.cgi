@@ -536,7 +536,6 @@ elsif ( $action eq 'deleteBond' )
 	$bond_in_use = 1 if &getInterfaceConfig( $bond_name, 4 );
 	$bond_in_use = 1 if &getInterfaceConfig( $bond_name, 6 );
 	$bond_in_use = 1 if grep ( /^$bond_name(:|\.)/, &getInterfaceList() );
-	$bond_in_use = 1 if ${ &getSystemInterface( $bond_name ) }{ status } eq 'up';
 
 	if ( $bond_in_use )
 	{
@@ -547,7 +546,11 @@ elsif ( $action eq 'deleteBond' )
 	}
 	else
 	{
-		#~ my $error_code = &applyBondChange( \%bond );
+		if ( ${ &getSystemInterface( $bond_name ) }{ status } eq 'up' )
+		{
+			&downIf( $bond_name, 'writeconf' );
+		}
+
 		my $error_code = &setBondMaster( $bond_name, 'del', 'writeconf' );
 	}
 
