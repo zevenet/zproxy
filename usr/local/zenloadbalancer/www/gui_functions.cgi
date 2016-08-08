@@ -282,7 +282,7 @@ sub createmenuif    # ($if_ref, $id)
 	my @interfaces = $socket->if_list;
 
 	my $guiip      = &GUIip();
-	my $mgmt_iface = getInterfaceOfIp( $guiip );
+	my $mgmt_iface = getInterfaceOfIp( $guiip ) if $guiip;
 	my $clrip      = &getClusterRealIp();
 	my $clvip      = &getClusterVirtualIp();
 
