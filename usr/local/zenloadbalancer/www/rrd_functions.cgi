@@ -167,20 +167,14 @@ sub genDiskGraph    #($type,$graph,$time)
 	$dev =~ s/dev-//;
 	$dev =~ s/-/\// if $dev !~ /dm-/;
 
-	#~ &logfile("type:$type, graph:$graph, time:$time, dev:$dev");
-
 	my ( $partition, $size, $mount );
 
 	for $line_df ( @df_system )
 	{
-		#~ &logfile("line_df:$line_df == dev:$dev");
-
 		if ( $line_df =~ /$dev/ )
 		{
 			my @s_line = split ( "\ ", $line_df );
 			chomp ( @s_line );
-
-			#~ &logfile("s_line:@s_line");
 
 			$partition = $s_line[0];
 			$size      = $s_line[4];
