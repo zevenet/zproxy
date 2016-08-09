@@ -736,7 +736,7 @@ sub stopIf    # ($if)
 	# If $if is Vini do nothing
 	if ( $$if_ref{vini} eq '' )
 	{
-		&logfile( "running '$ip_bin address flush dev $if' " );
+		&zenlog( "running '$ip_bin address flush dev $if' " );
 		@eject  = `$ip_bin address flush dev $if 2> /dev/null`;
 		$status = $?;
 
