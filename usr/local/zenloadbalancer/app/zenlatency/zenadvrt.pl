@@ -28,7 +28,7 @@ require '/usr/local/zenloadbalancer/www/functions_ext.cgi';
 require '/usr/local/zenloadbalancer/www/cluster_functions.cgi';
 my $interface;
 
-&logfile("Running local advertisement event");
+&zenlog("Running local advertisement event");
 
 foreach my $localip ( &listallips() ){
 
