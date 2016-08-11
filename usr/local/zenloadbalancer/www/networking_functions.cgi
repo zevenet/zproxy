@@ -731,9 +731,9 @@ sub downIf    # ($if_ref, $writeconf)
 }
 
 # stop network interface
-sub stopIf    # ($if)
+sub stopIf    # ($if_ref)
 {
-	my $if     = shift;
+	my $if_ref     = shift;
 	my $status = 0;
 
 	# If $if is Vini do nothing
@@ -749,9 +749,12 @@ sub stopIf    # ($if)
 			$ip_cmd = "$ip_bin link delete $$if_ref{name} type vlan";
 			$status = &logAndRun($ip_cmd);
 		}
-		else
+
+		#ensure Link Up
+		if ( $$if_ref{ status } eq 'up' )
 		{
-			@eject = `$ip_bin link set dev $if up`;
+			$ip_cmd = "$ip_bin link set $$if_ref{name} up";
+			$status = &logAndRun( $ip_cmd );
 		}
 
 		# Delete routes table
