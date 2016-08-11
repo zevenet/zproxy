@@ -396,7 +396,7 @@ sub getClusterActiveNode
 		$active_node = $lhost;
 	}
 
-	if ( grep ( /$vipcl/, @vipwhereis2 ) )
+	if ( grep ( /inet $vipcl\//, @vipwhereis2 ) )
 	{
 		$active_node .= $rhost;
 	}

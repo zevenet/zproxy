@@ -681,7 +681,7 @@ if ( ( $rhost && $lhost && $rip && $lip && $rip && $vipcl && $clstatus ) )
 	$activecl  = "false";
 	my @vipwhereis = `$ip_bin addr list`;
 
-	if ( grep ( /$vipcl/, @vipwhereis ) )
+	if ( grep ( /inet $vipcl\//, @vipwhereis ) )
 	{
 		$vipclrun = $lhost;
 		print "Cluster IP <b>$vipcl</b> is active on <b>$vipclrun</b> ";
@@ -694,7 +694,7 @@ if ( ( $rhost && $lhost && $rip && $lip && $rip && $vipcl && $clstatus ) )
 	if ( grep ( /$vipcl\//, @vipwhereis2 ) )
 	{
 		$vipclrun2 = $rhost;
-		print "Cluster is active on $vipclrun2</b>";
+		print "Cluster IP <b>$vipcl</b> is active on $vipclrun2</b>";
 		$activecl = $rhost;
 	}
 
