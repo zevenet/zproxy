@@ -165,8 +165,8 @@ sub cluster()
 		$filehttp = "";
 		open FH, "<", $confhttp;
 		@filehttp = <FH>;
-		$host     = $filehttp[0];
-		@host     = split ( "=", $host );
+		$host     = $filehttp[1];
+		@host     = split ( " = ", $host );
 		$iphttp   = $host[1];
 		close FH;
 
