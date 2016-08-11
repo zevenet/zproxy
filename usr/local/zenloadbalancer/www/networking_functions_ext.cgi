@@ -647,12 +647,11 @@ sub applyBondChange
 			&zenlog( "Could not find $slave" );
 			return $return_code;
 		}
-		elsif ( ${ &getSystemInterface( $slave ) }{ status } ne 'down'
-				&& grep ( /^$slave$/, @{ $sys_bond->{ slaves } } ) == 0 )
+
+		if ( ${ &getSystemInterface( $slave ) }{ status } ne 'down' )
 		{
-			# interface must be down
-			&zenlog( "$slave must be down" );
-			return $return_code;
+			my $if_ref = { name => $slave };
+			&downIf( $if_ref, '' );
 		}
 	}
 

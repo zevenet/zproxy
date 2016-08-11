@@ -216,7 +216,7 @@ if ( $eject eq "restart" )
 
 if ( $eject eq "start" )
 {
-	&zenlog( "Beginning start proccess" );
+	&zenlog( "start process started..." );
 	system ( '/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi' );
 	require "/usr/local/zenloadbalancer/config/global.conf";
 
@@ -305,13 +305,29 @@ if ( $eject eq "start" )
 		$sysclt_msg = "Sysctl applied policies successfully.";
 	}
 
-	if ( !grep ( /^kernel\.threads-max/, @sysctl ) )
-	{
-		push ( @sysctl, "kernel.threads-max = 200000" );
-	}
-	untie @sysctl;
-
 	&zenlog( $sysclt_msg );
+
+	#configuring bonding
+	my $bond_conf = &getBondConfig();
+	for my $bond_k ( keys %{ $bond_conf } )
+	{
+		next if $bond_k eq '_';
+
+		my $bond = $bond_conf->{ $bond_k };
+
+		print "  * Up bonding master $$bond{name} ";
+
+		my $error_code = &applyBondChange( $bond );
+
+		if ( $error_code == 0 )
+		{
+			print " \033[1;32m OK \033[0m \n";
+		}
+		else
+		{
+			print " \033[1;31m ERROR \033[0m \n";
+		}
+	}
 
 	# Cluster
 	if ( -e $filecluster )
@@ -409,7 +425,6 @@ if ( $eject eq "start" )
 
 				print
 				  "Cluster is running on this node, running IPS and FARMS for Zen Load Balancer...\n";
-				$eject = 'startlocal';
 			}
 		}
 		else
@@ -422,12 +437,12 @@ if ( $eject eq "start" )
 		$eject = 'startlocal';
 	}
 
-	&zenlog( "start proccess finished" );
+	&zenlog( "start process finished..." );
 }
 
 if ( $eject eq "stop" )
 {
-	&zenlog( "Beginning stop proccess" );
+	&zenlog( "stop process started..." );
 
 	if ( -e $filecluster )
 	{
@@ -445,14 +460,36 @@ if ( $eject eq "stop" )
 		sleep ( 5 );
 	}
 
+	#stopping bonding
+	my $bond_conf = &getBondConfig();
+	for my $bond_k ( keys %{ $bond_conf } )
+	{
+		next if $bond_k eq '_';
+
+		my $bond = $bond_conf->{ $bond_k };
+
+		print "  * Down bonding master $$bond{name} ";
+
+		my $error_code = &setBondMaster( $$bond{ name }, 'del' );
+
+		if ( $error_code == 0 )
+		{
+			print " \033[1;32m OK \033[0m \n";
+		}
+		else
+		{
+			print " \033[1;31m ERROR \033[0m \n";
+		}
+	}
+
 	$eject = 'stoplocal';
-	&zenlog( "stop proccess finished" );
+	&zenlog( "stop process finished..." );
 }
 
 # no cluster configured
 if ( $eject eq 'startlocal' )
 {
-	&zenlog( "Beginning startlocal process..." );
+	&zenlog( "startlocal process started..." );
 	$rsyslog = '/etc/rsyslog.conf';
 
 	open my $fr, '<', "$rsyslog";
@@ -464,27 +501,6 @@ if ( $eject eq 'startlocal' )
 		system (
 				 "echo \"local6.* /usr/local/zenloadbalancer/logs/ucarp.log\">> $rsyslog" );
 		system ( '/etc/init.d/rsyslog restart' );
-	}
-
-	my $bond_conf = &getBondConfig();
-	for my $bond_k ( keys %{ $bond_conf } )
-	{
-		next if $bond_k eq '_';
-
-		my $bond = $bond_conf->{ $bond_k };
-
-		print "  * Up bonding master $$bond{name} ";
-
-		my $error_code = &applyBondChange( $bond );
-
-		if ( $error_code == 0 )
-		{
-			print " \033[1;32m OK \033[0m \n";
-		}
-		else
-		{
-			print " \033[1;31m ERROR \033[0m \n";
-		}
 	}
 
 	#testing interface configured on the installation and gw
@@ -790,7 +806,7 @@ if ( $eject eq 'startlocal' )
 
 if ( $eject eq "stoplocal" )
 {
-	&zenlog( "Beginning stoplocal process..." );
+	&zenlog( "stoplocal process started..." );
 	print "Stopping Zen Load Balancer...\n";
 
 	### Stopping Farms
@@ -847,7 +863,7 @@ if ( $eject eq "stoplocal" )
 			print "  * Down interface $$iface{name}\n";
 			print "    Ip:$$iface{addr} Netmask:$$iface{mask}";
 
-			my $return_code = &stopIf( $$iface{name} );
+			my $return_code = &stopIf( $iface );
 
 			if ( $return_code == 0 )
 			{
@@ -901,12 +917,14 @@ if ( $eject eq "stoplocal" )
 
 				if ( -e $filecluster )
 				{
-					open my $cluster_file, "<", "$filecluster";
+					open(my $cluster_file, "<", "$filecluster");
 
 					# if interface is not mentioned in cluster file _and_ this ip is not the gui ip
-					if ( !grep ( /$$iface{name}/, <$cluster_file> ) && $mgmt_ip ne $$iface{ addr } )
+					my $used_in_cluster = grep(/:$$iface{name}:/, <$cluster_file>);
+
+					if ( not $used_in_cluster )
 					{
-						my $return_code = &stopIf( $$iface{name} );
+						my $return_code = &stopIf( $iface );
 
 						if ( $return_code == 0 )
 						{
@@ -919,8 +937,7 @@ if ( $eject eq "stoplocal" )
 					}
 					else
 					{
-						print
-						  " \033[1;31m This interface is part of a cluster, it cannot be stopped while being part of the cluster.\033[0m \n";
+						print " \033[1;31m This interface is part of a cluster, it cannot be stopped while being part of the cluster.\033[0m \n";
 					}
 
 					close $cluster_file;
@@ -929,7 +946,7 @@ if ( $eject eq "stoplocal" )
 				{
 					if ( $mgmt_ip ne $$iface{ addr } )
 					{
-						my $return_code = &stopIf( $$iface{name} );
+						my $return_code = &stopIf( $iface );
 
 						if ( $return_code == 0 )
 						{
@@ -946,27 +963,6 @@ if ( $eject eq "stoplocal" )
 					}
 				}
 			}
-		}
-	}
-
-	my $bond_conf = &getBondConfig();
-	for my $bond_k ( keys %{ $bond_conf } )
-	{
-		next if $bond_k eq '_';
-
-		my $bond = $bond_conf->{ $bond_k };
-
-		print "  * Down bonding master $$bond{name} ";
-
-		my $error_code = &setBondMaster( $$bond{name}, 'del' );
-
-		if ( $error_code == 0 )
-		{
-			print " \033[1;32m OK \033[0m \n";
-		}
-		else
-		{
-			print " \033[1;31m ERROR \033[0m \n";
 		}
 	}
 
