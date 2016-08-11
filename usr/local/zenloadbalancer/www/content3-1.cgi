@@ -447,7 +447,6 @@ else
 	foreach my $iface ( @interfaces_available )
 	{
 		next if $$iface{ vini } ne '';	# exclude virtual interfaces
-		next if grep( /^$$iface{ name }$/, @bond_ifaces ); # exclude bond interfaces
 
 		my $selected = '';
 
