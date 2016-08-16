@@ -193,6 +193,10 @@ if ( $action eq 'addfarm' || $action eq "Save & continue" )
 			# skip virtual interfaces for DataLink farms
 			next if $farmprotocol eq "DATALINK" && $$iface{ vini } ne '';
 
+			# skip local cluster IP
+			next if &getClusterRealIp() eq $$iface{ addr };
+			next if &GUIip eq $$iface{ addr } && (-e $filecluster);
+
 			print
 			  "<option value=\"$$iface{name} $$iface{addr}\">$$iface{dev_ip_padded}</option>\n";
 		}
