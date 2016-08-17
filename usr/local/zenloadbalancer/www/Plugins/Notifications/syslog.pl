@@ -1,3 +1,5 @@
+#!/usr/bin/perl
+
 ###############################################################################
 #
 #     Zen Load Balancer Software License
@@ -21,41 +23,40 @@
 #
 ###############################################################################
 
-require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
+use Sys::Syslog;                          #use of syslog
+use Sys::Syslog qw(:standard :macros);    #standard functions for Syslog
 
-use CGI;
-use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
+(my $msg) = @ARGV;
+&zenlog($msg);
 
-use feature 'state';
-
-# &getCgiData();
-#		return = \%cgiVars			// Object
-# &getCgiData( $variableName );
-#		return = $varValue
-sub getCgiData
+#function that insert info through syslog
+#
+#&zenlog($priority,$text);
+#
+#examples
+#&zenlog("info","This is test.");
+#&zenlog("err","Some errors happended.");
+#&zenlog("debug","testing debug mode");
+#
+sub zenlog    # ($type,$string)
 {
-	my ( $variable ) = @_;
-<<<<<<< HEAD
-	my $value;
-	state $cgi = new CGI;
+	my $string = shift;            # string = message
+	my $type = shift // 'info';    # type   = log level (Default: info))
 
-	if ( defined ( $cgi->param( $variable ) ) )
+	# Get the program name
+	my $program = "sec";
+
+	openlog( $program, 'pid', 'local0' );    #open syslog
+
+	my @lines = split /\n/, $string;
+
+	foreach my $line ( @lines )
 	{
-		$value = $cgi->param( $variable );
+		syslog( $type, "(" . uc ( $type ) . ") " . $line );
 	}
-	else
-	{
-		$value = $cgi->Vars;
-	}
-=======
-	state $cgi = new CGI;
-	my $value = $cgi->param( $variable )
-	  if ( defined ( $cgi->param( $variable ) ) );
 
-	$value = $cgi->Vars if ( $value eq "" );
->>>>>>> [Improvement]
-
-	return $value;
+	closelog();                              #close syslog
 }
+
 
 1;
