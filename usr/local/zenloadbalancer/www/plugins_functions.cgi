@@ -58,14 +58,13 @@ sub getPluginsList
 	@modules_list = sort @modules_list;
 
 	#~ print "@modules_list";
-	
+
 	return \@modules_list;    # returns an array reference
 }
 
-# $<tagHTML> = getPluginsMenuList ($id, $version);
+# $<tagHTML> = getPluginsMenuList
 sub getPluginsMenuList
 {
-	my ( $id, $version, $name ) = @_;
 	my $output;
 	my %outputhash;
 
@@ -75,7 +74,7 @@ sub getPluginsMenuList
 	foreach my $pi_name ( @plugin_list )
 	{
 		$outputhash{ &plugins::triggerPlugin( $pi_name, 'position' ) } .=
-		  &plugins::triggerPlugin( $pi_name, 'menu', $id, $version, $name );
+		  &plugins::triggerPlugin( $pi_name, 'menu' );
 	}
 
 	# Convert sort hash in string
@@ -85,6 +84,22 @@ sub getPluginsMenuList
 	}
 
 	return \$output;
+}
+
+# Execute start or stop from each modules
+# setPluginsProcess ( $option )
+# 	option = zlbstart | zlbstop
+sub setPluginsProcess
+{
+	my ( $option ) = @_;
+
+	my @plugin_list = @{ &getPluginsList() };
+
+	# Fill a hash with POSTION => OUTPUT from each plugin
+	foreach my $pi_name ( @plugin_list )
+	{
+		&plugins::triggerPlugin( $pi_name, $option );
+	}
 }
 
 use feature 'state';
@@ -150,6 +165,23 @@ sub triggerPlugin
 	}
 
 	return $output;
+}
+
+sub getIdModule    # idSubModule ( $id )
+{
+
+	$main::id =~ /^(\w+)-/;
+	my $idContent = $1;
+
+	return $idContent;
+}
+
+sub getIdSubModule    # idSubModule ( $id )
+{
+	$main::id =~ /-(\w+)$/;
+	my $idSubContent = $1;
+
+	return $idSubContent;
 }
 
 1;

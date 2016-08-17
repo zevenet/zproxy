@@ -1127,10 +1127,6 @@ goto BACKENDS;
 print "<br><br>";
 print "<div class=\"box-header\">Edit real IP servers configuration</div>";
 
-if ( $action eq "editfarm-editserver" || $action eq "editfarm-addserver" )
-{
-	print "<form method=\"post\" action=\"index.cgi\#backendlist-$sv\">";
-}
 print "<div class=\"box table\">  <table cellspacing=\"0\">";
 
 #header table
@@ -1304,6 +1300,7 @@ if ( $pos gt 0 )
 {
 	print "</div></div>";
 }
+
 
 #################################################################
 BACKENDS:

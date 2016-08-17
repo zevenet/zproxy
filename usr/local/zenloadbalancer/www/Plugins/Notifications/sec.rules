@@ -1,0 +1,85 @@
+#[Aux var]
+type=Single
+ptype=RegExp
+pattern=stoplocal process finished
+desc=stopping
+action=create BLOCK_CLUSTER 30; create BLOCK_NOTIF 30; shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/syslog.pl "Blocking notifications 30 seconds"
+
+type=Single
+ptype=RegExp
+pattern=(stopping FarmGuardian|The FarmGuardian service .* farm has been started|running /usr/local/zenloadbalancer/app/farmguardian/bin/farmguardian|pound: received signal 15 - exiting\.\.\.)
+desc=stopping
+action=create BLOCK_NOTIF 4; shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/syslog.pl "Blocking notifications 4 seconds"
+
+
+#[Backends]
+type=Single
+ptype=RegExp
+continue=takenext
+pattern=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:\d+) (dead|down)(?: \(\w+\))? in farm: '(\w+)', service: '(\w+)'
+context=!$1_$4_$5_$2_up_down && !farmguardian_$4_$5_$2_up_down && !BLOCK_NOTIF
+desc=MARK
+action=create $1_$4_$5_$2_down_up 2
+
+type=Single
+ptype=RegExp
+continue=takenext
+pattern=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:\d+) (resurrect)(?: \(\w+\))? in farm: '(\w+)', service: '(\w+)'
+context=!$1_$4_$5_$2_down_up && !farmguardian_$4_$5_$2_down_up && !BLOCK_NOTIF
+desc=MARK
+action=create $1_$4_$5_$2_up_down 2
+
+type=PairWithWindow
+continue=takenext
+ptype=RegExp
+pattern=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:\d+) (dead|down)(?: \(\w+\))? in farm: '(\w+)', service: '(\w+)'
+context=!$1_$4_$5_$2_up_down && !farmguardian_$4_$5_$2_up_down  && !BLOCK_NOTIF
+desc=$2_down
+action=shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/sendNotification.pl Backends "$0"; shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/syslog.pl "$1 notification sent"
+ptype2=RegExp
+pattern2=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:\d+) (resurrect)(?: \(\w+\))? in farm: '(\w+)', service: '(\w+)'
+context2=!$1_$4_$5_$2_up_down && !farmguardian_$4_$5_$2_up_down && !BLOCK_NOTIF
+desc2=$2_down
+action2=shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/syslog.pl "Backend $2 flapped"; delete $1_$4_$5_$2_down_up
+window=2
+
+type=PairWithWindow
+continue=takenext
+ptype=RegExp
+pattern=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:\d+) (resurrect)(?: \(\w+\))? in farm: '(\w+)', service: '(\w+)'
+context=!$1_$4_$5_$2_down_up && !farmguardian_$4_$5_$2_down_up && !BLOCK_NOTIF
+desc=$2_up
+action=shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/sendNotification.pl Backends "$0"; shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/syslog.pl "$1 notification sent"
+ptype2=RegExp
+pattern2=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:\d+) (dead|down)(?: \(\w+\))? in farm: '(\w+)', service: '(\w+)'
+context2=!$1_$4_$5_$2_down_up && !farmguardian_$4_$5_$2_down_up && !BLOCK_NOTIF
+desc2=$2_up
+action2=shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/syslog.pl "Backend $2 flapped"; delete $1_$4_$5_$2_up_down
+window=2
+
+
+#[Cluster]
+type=Single
+ptype=RegExp
+continue=takenext
+pattern=ucarp\[\d+\]: \[WARNING\] Switching to state:
+context=!BLOCK_CLUSTER
+desc=cluster_alert
+action=shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/sendNotification.pl Cluster "$0"; shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/syslog.pl "Cluster notification sent"
+
+
+#[examples]
+# sec --conf=/usr/local/zenloadbalancer/www/Plugins/Notifications/sec.rules --input=/var/log/syslog
+
+#  msg
+#~ backend caido:
+#~ Jul 28 11:16:46 maqvir pound: (7f4dccf24700) BackEnd 192.168.0.172:80 dead (killed)
+
+#~ backend up:
+#~ Jul 28 11:18:43 maqvir pound: BackEnd 192.168.0.172:80 resurrect
+
+#~ fg down:
+#~ Jul 26 12:45:04 node1 farmguardian[12795]: (INFO) BackEnd 192.168.0.172:80 down
+
+#~ fg up:
+#~ Jul 26 12:45:04 node1 farmguardian[12795]: (INFO) BackEnd 192.168.0.172:80 resurrect

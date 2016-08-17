@@ -41,18 +41,17 @@ sub position
 
 sub menu
 {
-	my ( $id, $version, $name ) = @_;
 	my $urlDocumentation;
 	my $output;
 
 	# icono marcado
 	my $monitoringiconclass = "";
-	my $idType              = $id;
+	my $idType              = $main::id;
 	my $type;
 
-	if ( $id eq "1-2" )
+	if ( $main::id eq "1-2" )
 	{
-		$type = &main::getFarmType( $name );
+		$type = &main::getFarmType( $main::farmname );
 
 		if ( $type eq "tcp" )
 		{
@@ -77,7 +76,7 @@ sub menu
 
 	}
 
-	$urlDocumentation = &forwardingToHelp( $idType, $version );
+	$urlDocumentation = &forwardingToHelp( $idType, $main::version );
 
 	if ( $urlDocumentation eq "" )
 	{
@@ -105,15 +104,14 @@ sub menu
 	return $output;
 }
 
-# \params: idPage, versionZen
 sub forwardingToHelp
 {
-	# Recolect params
-	my ( $idPage, $versionZen ) = @_;
-
+	# version
+	my $versionZen=$main::version;
+	
 	# Name for data storage file
 	my $fileName = "$helpPath/url.conf";
-
+	
 	# Keep url to forwarding
 	my $url = "";
 
@@ -128,10 +126,8 @@ sub forwardingToHelp
 
 	if ( $params == 2 )
 	{
-		if ( $urlEnd{ $idPage } )
+		if ( $urlEnd{ $main::id } )
 		{
-
-			# Get main zen version
 			$versionZen =~ s/^(\d+\.\d+).*$/$1/e;
 
 			$url =
@@ -139,7 +135,7 @@ sub forwardingToHelp
 			  . $versionZen
 			  . "-administration-guide/enterprise-edition-v"
 			  . $versionZen . "-"
-			  . $urlEnd{ $idPage };
+			  . $urlEnd{ $main::id };
 		}
 	}
 

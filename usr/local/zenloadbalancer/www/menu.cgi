@@ -78,7 +78,7 @@ else
 }
 
 my $pluginsmenulist =
-  ${ &plugins::getPluginsMenuList( $id, $version, $farmname ) };
+  ${ &plugins::getPluginsMenuList( ) };
 
 print "
   <div class=\"top-bar\">

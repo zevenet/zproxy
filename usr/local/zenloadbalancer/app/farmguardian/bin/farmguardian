@@ -34,7 +34,7 @@
 #
 #fileconfig_penguardian structure:
 #[farmname]:::[timeout]:::[timetocheck]:::[script args]:::[logs]
-
+	
 use Proc::Daemon;
 use POSIX ":sys_wait_h";
 
@@ -71,6 +71,7 @@ if ( $ARGV[1] eq "-s" )
 my $pidfile    = "${farmname}_${fservice}guardian.pid";
 my $file       = "${farmname}_${fservice}guardian.conf";
 my $fileconfig = "$configdir/$file";
+
 
 ### logging ###
 my $logging = 'disabled';
@@ -321,6 +322,7 @@ while ( 1 )
 			$logline .= " - status $backendstatus[$j]" if $type !~ /(tcp|udp)/;
 
 			&zenlog( $logline );
+			
 		}
 
 		# jump to next backend if this one is in maintenance
@@ -371,6 +373,7 @@ while ( 1 )
 		}
 
 		### Enable backend
+		my $auxLog;
 		if ( $timedout == 0 && $errorcode == 0 && $backendstatus[$j] =~ /down/i )
 		{
 			if ( $logging eq 'enabled' )
@@ -389,13 +392,16 @@ while ( 1 )
 				my $idsv = &getFarmVSI( $farmname, $service );
 				system ( "$poundctl -c $portadmin -B 0 $idsv $j" );
 				&getFarmHttpBackendStatus( $farmname, $j, 'active', $idsv );
+				$auxLog = " in farm: '$farmname', service: '$service'";
 			}
 			elsif ( $type eq 'l4xnat' )
 			{
 				&setL4FarmBackendStatus( $farmname, $j, 'up' );
+				$auxLog = " in farm: '$farmname'";
 			}
 
 			$backendstatus[$j] = 'active';
+			&zenlog("BackEnd $backendserv[$j]:$backendport[$j] resurrect$auxLog");
 		}
 		### Disable backend
 		elsif (
@@ -422,15 +428,17 @@ while ( 1 )
 				system ( "$poundctl -c $portadmin -b 0 $idsv $j" );
 				&getFarmHttpBackendStatus( $farmname, $j, 'fgDOWN', $idsv );
 				&setFarmBackendsSessionsRemove( $farmname, $service, $j );
+				$auxLog = " in farm: '$farmname', service: '$service'";
 			}
 			elsif ( $type eq 'l4xnat' )
 			{
 				&setL4FarmBackendStatus( $farmname, $j, 'fgDOWN' );
+				$auxLog = " in farm: '$farmname'";
 			}
 
 			$backendstatus[$j] = 'fgDOWN';
+			&zenlog("BackEnd $backendserv[$j]:$backendport[$j] down$auxLog");
 		}
-
 		$j++;
 	}
 

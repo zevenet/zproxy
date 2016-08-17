@@ -841,11 +841,13 @@ sub getHTTPFarmEstConns    # ($farm_name,@netstat)
 	my $vip      = &getFarmVip( "vip",  $farm_name );
 	my $vip_port = &getFarmVip( "vipp", $farm_name );
 
-	return
-	  &getNetstatFilter( "tcp", "",
-			  #~ "\.* ESTABLISHED src=\.* dst=$vip sport=\.* dport=$vip_port .*src=\.*",
-			  ".* ESTABLISHED src=.* dst=$vip sport=.* dport=$vip_port src=.*",
-			  "", @netstat );
+	return &getNetstatFilter(
+		"tcp", "",
+
+		#~ "\.* ESTABLISHED src=\.* dst=$vip sport=\.* dport=$vip_port .*src=\.*",
+		".* ESTABLISHED src=.* dst=$vip sport=.* dport=$vip_port src=.*",
+		"", @netstat
+	);
 }
 
 #
@@ -1147,7 +1149,7 @@ sub getHTTPFarmMaxConn    # ($farm_name)
 }
 
 # Returns farm listen port
-sub getHTTPFarmPort    # ($farm_name)
+sub getHTTPFarmPort       # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -1155,7 +1157,7 @@ sub getHTTPFarmPort    # ($farm_name)
 }
 
 # Returns farm PID
-sub getHTTPFarmPid     # ($farm_name)
+sub getHTTPFarmPid        # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 	my $output = -1;
@@ -1554,7 +1556,7 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 			$ip_backend   = $backends_ip[0];
 			$port_backend = $backends_ip[1];
 			$line         = $line . "\t" . $ip_backend . "\t" . $port_backend;
-			
+
 			#status
 			$status_backend = $backends[7];
 			my $backend_disabled = $backends[3];
@@ -1587,7 +1589,7 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 			{
 				$line = $line . "\t-";
 			}
-			
+
 			$connections = $backends[8];
 			$connections =~ s/[\(\)]//g;			
 			if ( !( $connections >= 0 ) )
@@ -2986,7 +2988,7 @@ sub getFarmServices
 # used by farmguardian
 #function that removes all the active sessions enabled to a backend in a given service
 #needed: farmname, serviceid, backendid
-sub setFarmBackendsSessionsRemove #($farm_name,$service,$backendid)
+sub setFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 {
 	my ( $farm_name, $service, $backendid ) = @_;
 
@@ -3030,6 +3032,39 @@ sub setFarmBackendsSessionsRemove #($farm_name,$service,$backendid)
 	}
 }
 
+# modify farm name
+sub setFarmNameParam    # &setFarmNameParam( $farm_name, $new_name );
+{
+	my ( $farmName, $newName ) = @_;
+
+	my $farmType     = &getFarmType( $farmName );
+	my $farmFilename = &getFarmFile( $farmName );
+	my $output       = -1;
+
+	&zenlog( "setting 'farm name $newName' for $farmName farm $farmType" );
+
+	if ( $farmType eq "http" || $farmType eq "https" )
+	{
+		tie @filefarmhttp, 'Tie::File', "$configdir/$farmFilename";
+		my $i_f        = -1;
+		my $arrayCount = @filefarmhttp;
+		my $found      = "false";
+		while ( $i_f <= $arrayCount && $found eq "false" )
+		{
+			$i_f++;
+			if ( $filefarmhttp[$i_f] =~ /^Name.*/ )
+			{
+				$filefarmhttp[$i_f] = "Name\t\t$newName";
+				$output             = $?;
+				$found              = "true";
+			}
+		}
+		untie @filefarmhttp;
+	}
+
+	return $output;
+}
+
 # -------------------- MOVE SERVICE FUNCTION --------------------------#
 sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 {
@@ -3058,7 +3093,7 @@ sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 	if (    ( ( $move eq 'up' ) && ( $services[0] ne $serviceSelect ) )
 		 || ( ( $move eq 'down' ) && ( $services[$size - 1] ne $serviceSelect ) ) )
 	{
-		system ( "cp $fileName $fileName.bak" );
+		#~ system ( "cp $farm_filename $farm_filename.bak" );
 		tie @file, 'Tie::File', $farm_filename;
 
 		# Find service indexs
@@ -3141,7 +3176,7 @@ sub moveServiceFarmStatus
 	my ( $farmName, $moveService, $serviceSelect ) = @_;
 	my @file;
 
-	my $fileName    = "$configdir\/${farmName}_status.cfg";
+	my $fileName = "$configdir\/${farmName}_status.cfg";
 
 	my @services = &getFarmServices( $farmName );
 	my $size     = scalar @services;
@@ -3160,6 +3195,7 @@ sub moveServiceFarmStatus
 	system ( "cp $fileName $fileName.bak" );
 
 	tie @file, 'Tie::File', $fileName;
+
 	# change server id
 	foreach my $line ( @file )
 	{

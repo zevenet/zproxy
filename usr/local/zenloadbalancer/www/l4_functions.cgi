@@ -35,6 +35,7 @@ use Data::Dumper;
 
 require "/usr/local/zenloadbalancer/www/farmguardian_functions.cgi";
 require "/usr/local/zenloadbalancer/www/nf_functions.cgi";
+require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
 
 #check if the string is a valid multiport definition
 sub ismport    # ($string)
