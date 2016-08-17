@@ -127,15 +127,14 @@ foreach ( @backends )
 	  &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
 	$npend = @synnetstatback;
 	print "<td>$npend</td>";
-	@stabnetstatback =
-	  &getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
-	$nestab = @stabnetstatback;
-	print "<td>$nestab</td>";
+
+	print "<td>$backends_data[7]</td>";
 
 	#TODO count number of session by backend
 	#print "<td> $backends_data[5] </td>";
 	print "</tr>";
 }
+
 
 print "</tbody>";
 print "</table>";

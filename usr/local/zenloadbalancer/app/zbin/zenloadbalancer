@@ -219,6 +219,7 @@ if ( $eject eq "start" )
 	&zenlog( "start process started..." );
 	system ( '/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi' );
 	require "/usr/local/zenloadbalancer/config/global.conf";
+	require "/usr/local/zenloadbalancer/www/plugins_functions.cgi";
 
 	# Load required modules
 	my $missing_bonding = system ( 'lsmod | grep bonding >/dev/null' );
@@ -437,12 +438,20 @@ if ( $eject eq "start" )
 		$eject = 'startlocal';
 	}
 
-	&zenlog( "start process finished..." );
+	# start all modules
+	&plugins::setPluginsProcess ( 'zlbstart' );
+
+	&zenlog( "start proccess finished" );
 }
 
 if ( $eject eq "stop" )
 {
-	&zenlog( "stop process started..." );
+	require "/usr/local/zenloadbalancer/www/plugins_functions.cgi";
+
+	&zenlog( "Beginning stop proccess" );
+
+	# stop all modules
+	&plugins::setPluginsProcess ( 'zlbstop' );
 
 	if ( -e $filecluster )
 	{

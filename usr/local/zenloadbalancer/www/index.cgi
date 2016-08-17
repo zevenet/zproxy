@@ -482,6 +482,24 @@ $cert_cpassword = $cgi->param( 'cert_cpassword' )
 $cert_key = $cgi->param( 'cert_key' )
   if ( defined ( $cgi->param( 'cert_key' ) ) );
 
+# Notifications
+$enable_alert = $cgi->param( 'enable_alert' )
+  if ( defined ( $cgi->param( 'enable_alert' ) ) );
+
+# mail sender (notifications)
+$server_smtp = $cgi->param( 'server_smtp' )
+  if ( defined ( $cgi->param( 'server_smtp' ) ) );
+$to_smtp = $cgi->param( 'to_smtp' )
+  if ( defined ( $cgi->param( 'to_smtp' ) ) );
+$from_smtp = $cgi->param( 'from_smtp' )
+  if ( defined ( $cgi->param( 'from_smtp' ) ) );
+$user_smtp = $cgi->param( 'user_smtp' )
+  if ( defined ( $cgi->param( 'user_smtp' ) ) );
+$pass_smtp = $cgi->param( 'pass_smtp' )
+  if ( defined ( $cgi->param( 'pass_smtp' ) ) );
+$tls_smtp = $cgi->param( 'tls_smtp' )
+  if ( defined ( $cgi->param( 'tls_smtp' ) ) );
+
 if ( $action eq "logout" )
 {
 	&zenlog( "Session Logged out" );
@@ -504,7 +522,7 @@ if ( !-f "$basedir/lock" )
 
 		alarm $timeouterrors;
 
-		$key    = &keycert();
+		$key = &keycert();
 		my $swcert = &certcontrol();
 		my $host   = hostname();
 
@@ -585,8 +603,16 @@ if ( !-f "$basedir/lock" )
 
 		if ( $swcert == 0 || $swcert == -1 )
 		{
-			require "/usr/local/zenloadbalancer/www/content" . $id . ".cgi";
+			if ( -e "/usr/local/zenloadbalancer/www/content$id.cgi" )
+			{
+				require "/usr/local/zenloadbalancer/www/content" . $id . ".cgi";
+			}
+			else
+			{
+				require "/usr/local/zenloadbalancer/www/contentPlugin.cgi";
+			}
 			alarm 0;
+
 		}
 	};
 

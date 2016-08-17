@@ -184,6 +184,12 @@ $bonding_masters_filename="/sys/class/net/bonding_masters";
 $bonding_mode_filename="bonding/mode";
 $bonding_slaves_filename="bonding/slaves";
 $bonding_miimon_filename="bonding/miimon";
+
+#Notifications Module
+$sec="/usr/bin/sec";
+$secConf="/usr/local/zenloadbalancer/www/Plugins/Notifications/sec.rules";
+$syslogFile="/var/log/syslog";
+
 #::END Global Section
 
 #!!!!NOT REMOVE NEXT LINE!!!!!!
