@@ -49,8 +49,8 @@ require "/usr/local/zenloadbalancer/www/login_functions.cgi";
 require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";
 require "/usr/local/zenloadbalancer/www/gui_functions_ext.cgi";
 require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
-require "/usr/local/zenloadbalancer/www/plugins_functions.cgi" if ( -f "/usr/local/zenloadbalancer/www/plugins_functions.cgi");
-require "/usr/local/zenloadbalancer/www/cgi_functions.cgi" if ( -f "/usr/local/zenloadbalancer/www/cgi_functions.cgi");
+require "/usr/local/zenloadbalancer/www/plugins_functions.cgi";
+require "/usr/local/zenloadbalancer/www/cgi_functions.cgi";
 
 #function that check if variable is a number no float
 sub isnumber    # ($num)
