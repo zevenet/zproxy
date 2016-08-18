@@ -402,7 +402,7 @@ foreach $zone ( @zones )
 					</form>
 				</li>
 			</ul>
-			<table id=\"dns-table\" class=\"display\">
+			<table class=\"dns-table display\">
 	";
 
 	print
@@ -837,7 +837,7 @@ print "
 print "
 <script>
 	\$(document).ready(function() {
-    \$('#dns-table').DataTable( {
+    \$('.dns-table').DataTable( {
         \"bJQueryUI\": true,     
         \"sPaginationType\": \"full_numbers\",
 		\"aLengthMenu\": [

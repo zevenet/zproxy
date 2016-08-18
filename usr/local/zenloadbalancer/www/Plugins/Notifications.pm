@@ -125,7 +125,7 @@ sub contentSenders
 
 					<div class=\"form-row\">
 						<div class=\"box grid_4\">
-							<p><b>Mail Server:</b><br> mail.example.com</p>\n
+							<p><b>Mail Server:</b><br> smtp.mail.com</p>\n
 						</div>
 						<div class=\"box grid_8\">
 							<input type=\"text\" name=\"server_smtp\" class=\"fixedwidth\" value=\"$serverName\"><br>
@@ -135,7 +135,7 @@ sub contentSenders
 	
 					<div class=\"form-row\">\n
 						<div class=\"box grid_4\">
-							<p><b>Mail User:</b><br> mail.example.com</p>\n
+							<p><b>Mail User:</b><br> userMail\@mail.com</p>\n
 						</div>
 						<div class=\"box grid_8\">
 							<input type=\"text\" name=\"user_smtp\" class=\"fixedwidth\" value=\"$user\">
@@ -154,7 +154,7 @@ sub contentSenders
 	
 					<div class=\"form-row\">\n
 						<div class=\"box grid_4\">\n
-							<p><b>From:</b> <br>fromName\@example.com</p>\n
+							<p><b>From:</b> <br>fromUser\@mail.com</p>\n
 						</div>
 						<div class=\"box grid_8\"><input type=\"text\" name=\"from_smtp\" class=\"fixedwidth\" value=\"$from\"></div>\n
 					</div>\n
@@ -162,7 +162,7 @@ sub contentSenders
 	
 						<div class=\"form-row\">\n
 						<div class=\"box grid_4\">\n
-							<p class=\"form-label\"><b>To:</b> toName\@example.com</p>\n
+							<p class=\"form-label\"><b>To:</b> <br>toUser\@mail.com</p>\n
 						</div>
 						<div class=\"box grid_4\">\n<input type=\"text\" name=\"to_smtp\" class=\"fixedwidth\" value=\"$to\"></div>\n
 					</div>\n
