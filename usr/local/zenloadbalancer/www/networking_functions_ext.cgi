@@ -648,12 +648,6 @@ sub applyBondChange
 			&zenlog( "Could not find $slave" );
 			return $return_code;
 		}
-
-		if ( ${ &getSystemInterface( $slave ) }{ status } ne 'down' )
-		{
-			my $if_ref = { name => $slave };
-			&downIf( $if_ref, '' );
-		}
 	}
 
 	# add bond master and set mode only if it is a new one
@@ -834,20 +828,22 @@ sub setBondSlave
 
 	if ( !-d $bond_path )
 	{
-		&zenlog( "Could not find bonding $bond_name" );
-		return $return_code;
+		&zenlog( "Could not find bonding $bond_name in path $bond_path" );
+	#	return $return_code;
 	}
 
-	open ( my $bond_slaves_file, '>', "$bond_path/$bonding_slaves_filename" );
+	#open ( my $bond_slaves_file, '>', "$bond_path/$bonding_slaves_filename" );
+	my $bond_slave_file = "${bond_path}\/${bonding_slaves_filename}";
+	my $bondslave = "$bond_path/$bonding_slaves_filename";
 
 	if ( !$bond_slaves_file )
 	{
-		&zenlog( "Could not open file $bond_path/$bonding_slaves_filename: $!" );
-		return $return_code;
+		&zenlog( "Could not open file $bondslave: $!" );
+		#return $return_code;
 	}
 
-	print $bond_slaves_file "$operator$bond_slave";
-	close $bond_slaves_file;
+	system("echo $operator$bond_slave > $bondslave");
+	#close $bond_slaves_file;
 
 	$return_code = 0;
 
@@ -946,7 +942,6 @@ sub getBondAvailableSlaves
 	}
 
 	close $dir_h;
-
 	return @avail_ifaces;
 }
 
