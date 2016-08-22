@@ -985,6 +985,51 @@ sub getFarmVip    # ($info,$farm_name)
 }
 
 # Generic function
+# Is Farm configuration locked?
+# Return the content in the lock, -1 if isn't locked
+sub getFarmLock    # ($farm_name)
+{
+	my $farm_name = shift;
+	my $output = -1;
+	my $lockfile = "/tmp/$farm_name.lock";
+
+	if ( -e "$lockfile" )
+	{
+		open FILE, "$lockfile";
+		read FILE, $output, 255;
+		close FILE;
+	}
+
+	return $output;
+
+}
+
+# Generic function
+# Set the lock status to "on" or "off"
+# If the new status in "on" it's possible to set a message inside
+sub setFarmLock    # ($farm_name, $status, $msg)
+{
+	my ( $farm_name, $status, $msg ) = @_;
+	my $output = 0;
+	my $lockfile = "/tmp/$farm_name.lock";
+	my $lockstatus = &getFarmLock( "$farm_name" );
+
+	if ( $status eq "on" && $lockstatus == -1 )
+	{
+		open FD, ">$lockfile";
+		print FD "$msg";
+		close FD;
+	}
+
+	if ( $status eq "off" )
+	{
+		unlink ( "$lockfile" ) if -e "$lockfile";
+	}
+
+	return $output;
+}
+
+# Generic function
 # this function creates a file to tell that the farm needs to be restarted to apply changes
 sub setFarmRestart    # ($farm_name)
 {
@@ -993,12 +1038,7 @@ sub setFarmRestart    # ($farm_name)
 	# do nothing if the farm is not running
 	return if &getFarmStatus( $farm_name ) ne 'up';
 
-	if ( !-e "/tmp/$farm_name.lock" )
-	{
-		open FILE, ">/tmp/$farm_name.lock";
-		print FILE "";
-		close FILE;
-	}
+	&setFarmLock( $farm_name, "on" );
 }
 
 # Generic function
@@ -1007,10 +1047,7 @@ sub setFarmNoRestart    # ($farm_name)
 {
 	my $farm_name = shift;
 
-	if ( -e "/tmp/$farm_name.lock" )
-	{
-		unlink ( "/tmp/$farm_name.lock" );
-	}
+	&setFarmLock( $farm_name, "off");
 }
 
 # Generic function
@@ -1065,6 +1102,10 @@ sub runFarmDelete    # ($farm_name)
 	unlink glob ( "$basedir/img/graphs/$farm_name-farm\_*" );
 	unlink glob ( "$rrdap_dir/$rrd_dir/$farm_name-farm*" );
 	unlink glob ( "${logdir}/${farm_name}\_*farmguardian*" );
+
+	# For HTTPS farms only
+	$dhfile = "$configdir\/$farm_name\_dh2048.pem";
+	unlink ( "$dhfile" ) if -e "$dhfile";
 
 	if ( $farm_type eq "gslb" )
 	{

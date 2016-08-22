@@ -834,9 +834,7 @@ sub successmsg    # ($string)
 {
 	my $string = shift;
 
-	print "<div class=\"ad-notif-success grid_12 small-mg\">";
-	print "<p><b>SUCCESS!</b> $string</p>";
-	print "</div>";
+	print "<div class=\"ad-notif-success grid_12 small-mg\"><p><b>SUCCESS!</b> $string</p></div>";
 
 	&logfile( $string );
 }
@@ -846,19 +844,7 @@ sub tipmsg        # ($string)
 {
 	my $string = shift;
 
-	print "<div class=\"ad-notif-info grid_12 small-mg ad-notif-restart\">";
-	print "<p>";
-	print "<b>TIP!</b> $string. Restart HERE!";
-	print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">		
-		<button type=\"submit\" class=\"myicons\" title=\"restart\">
-			<i class=\"fa fa-refresh action-icon fa-fw green\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"$id\">
-		<input type=\"hidden\" name=\"action\" value=\"editfarm-restart\">
-		<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">
-		</form>";
-	print "</div>";
+	print "<div class=\"ad-notif-info grid_12 small-mg ad-notif-restart\"><p><b>TIP!</b> $string</p></div>";
 
 	&logfile( $string );
 }
@@ -868,9 +854,7 @@ sub warnmsg    # ($string)
 {
 	my $string = shift;
 
-	print "<div class=\"ad-notif-warn grid_12 small-mg\">";
-	print "<p><b>WARNING!</b> $string</p>";
-	print "</div>";
+	print "<div class=\"ad-notif-warn grid_12 small-mg ad-notif-restart\"><p><b>WARNING!</b> $string</p></div>";
 
 	&logfile( $string );
 }
@@ -880,9 +864,7 @@ sub errormsg    # ($string)
 {
 	my $string = shift;
 
-	print "<div class=\"ad-notif-error grid_12 small-mg\">";
-	print "<p><b>ERROR!</b> $string</p>";
-	print "</div>";
+	print "<div class=\"ad-notif-error grid_12 small-mg\"><p><b>ERROR!</b> $string</p></div>";
 
 	&logfile( $string );
 }

@@ -285,6 +285,7 @@ if ( $action eq "editfarm-Parameters" )
 	#Farm listener
 	if ( $type ne $farmlisten )
 	{
+		&warnmsg( "SSL Diffie Hellman 2048 keys are being generated, it might take some minutes ... <a href=\"https://www.zenloadbalancer.com/knowledge-base/misc/diffie-hellman-keys-generation-important/\" target=\"_blank\">Why is it important?</a>" ) if $farmlisten eq "https";
 		&setFarmListen( $farmname, $farmlisten );
 		&successmsg( "HTTP listener modified" );
 		&setFarmRestart( $farmname );
@@ -874,11 +875,21 @@ if ( $action eq "editfarm-addservice" )
 $service = $farmname;
 
 #check if the farm need a restart
-if ( -e "/tmp/$farmname.lock" )
+my $lock = &getFarmLock( $farmname );
+if ( $lock != -1 )
 {
-	&tipmsg(
-		  "There're changes that need to be applied, stop and start farm to apply them!"
-	);
+	my $msg = "There are changes that need to be applied";
+
+	if ( $lock !~ /^$/ && &getHTTPFarmConfigIsOK( $farmname ) != 0 )
+	{
+		$msg = $msg . " but it's not possible to restart the farm yet due to: $lock. Still working, retry within some seconds <form method=\"post\" action=\"index.cgi\" class=\"myform\"><button type=\"submit\" class=\"myicons\" title=\"restart\"><i class=\"fa fa-refresh action-icon fa-fw green\"></i></button><input type=\"hidden\" name=\"id\" value=\"$id\"><input type=\"hidden\" name=\"action\" value=\"editfarm\"><input type=\"hidden\" name=\"farmname\" value=\"$farmname\"></form>";
+	&warnmsg( $msg );
+	}
+	else
+	{
+		$msg = $msg . ", please restart the farm to apply them. Restart here <form method=\"post\" action=\"index.cgi\" class=\"myform\"><button type=\"submit\" class=\"myicons\" title=\"restart\"><i class=\"fa fa-refresh action-icon fa-fw green\"></i></button><input type=\"hidden\" name=\"id\" value=\"$id\"><input type=\"hidden\" name=\"action\" value=\"editfarm-restart\"><input type=\"hidden\" name=\"farmname\" value=\"$farmname\"></form>";
+	&tipmsg( $msg );
+	}
 }
 
 1;

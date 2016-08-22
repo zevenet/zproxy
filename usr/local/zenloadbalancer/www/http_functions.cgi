@@ -357,7 +357,7 @@ sub getFarmHttpVerb    # ($farm_name)
 	return $output;
 }
 
-#change HTTP or HTTP listener
+#change to HTTP or HTTPS listener
 sub setFarmListen    # ( $farm_name, $farmlisten )
 {
 	my ( $farm_name, $flisten ) = @_;
@@ -444,6 +444,30 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 			$filefarmhttp[$i_f] =~ s/#//g;
 		}
 
+		# Check for ECDHCurve cyphers
+		if ( $filefarmhttp[$i_f] =~ /^\#*ECDHCurve/ && $flisten eq "http" )
+		{
+			$filefarmhttp[$i_f] =~ s/.*ECDHCurve/\#ECDHCurve/;
+		}
+		if ( $filefarmhttp[$i_f] =~ /^\#*ECDHCurve/ && $flisten eq "https" )
+		{
+			$filefarmhttp[$i_f] =~ s/.*ECDHCurve.*/ECDHCurve\t"prime256v1"/;
+		}
+
+		# Generate DH Keys if needed
+		my $dhfile = "$configdir\/$farm_name\_dh2048.pem";
+		if ( $filefarmhttp[$i_f] =~ /^\#*DHParams/ && $flisten eq "http" )
+		{
+			$filefarmhttp[$i_f] =~ s/.*DHParams/\#DHParams/;
+			#&setHTTPFarmDHStatus( $farm_name, "off" );
+		}
+		if ( $filefarmhttp[$i_f] =~ /^\#*DHParams/ && $flisten eq "https" )
+		{
+			$filefarmhttp[$i_f] =~ s/.*DHParams.*/DHParams\t"$dhfile"/;
+			#&setHTTPFarmDHStatus( $farm_name, "on" );
+			&genDHFile ( $farm_name );
+		}
+
 		if ( $filefarmhttp[$i_f] =~ /ZWACL-END/ )
 		{
 			$found = "true";
@@ -451,6 +475,53 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 
 	}
 	untie @filefarmhttp;
+}
+
+#Obtain the status of the DH file: on or off
+sub getHTTPFarmDHStatus    # ($farm_name)
+{
+	my ( $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = "off";
+
+	my $dhfile = "$configdir\/$farm_name\_dh2048.pem";
+	tie @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+	my $match =~ /^DHParams.*/, @filefarmhttp;
+	untie @filefarmhttp;
+
+	if ($match ne "" && -e "$dhfile"){
+		$output = "on";
+	}
+
+	return $output;
+}
+
+#Set the status of the DH file: on or off
+sub setHTTPFarmDHStatus    # ($farm_name, $newstatus)
+{
+	my ( $farm_name, $newstatus ) = @_;
+
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $dhfile = "$configdir\/$farm_name\_dh2048.pem";
+	my $output        = 0;
+
+	tie @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+	foreach my $row (@filefarmhttp)
+	{
+		if ($row =~ /.*DHParams.*/)
+		{
+			$row =~ s/.*DHParams.*/DHParams\t"$dhfile"/ if $newstatus eq "on";
+			$row =~ s/.*DHParams/\#DHParams/ if $newstatus eq "off";
+			$output = 1;
+		}
+	}
+	untie @filefarmhttp;
+
+	unlink ( "$dhfile" ) if -e "$dhfile" && $newstatus eq "off";
+
+	return $output;
 }
 
 #asign a RewriteLocation vaue to a farm HTTP or HTTPS
@@ -904,6 +975,56 @@ sub getHTTPFarmBootStatus    # ($farm_name)
 	return $output;
 }
 
+#Validate the farm Diffie Hellman configuration
+sub validateHTTPFarmDH    # ($farm_name)
+{
+	my ( $farm_name ) = @_;
+
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+
+	my $dhstatus = &getHTTPFarmDHStatus($farm_name);
+	if ( $farm_type eq "https" && $dhstatus ne "on" )
+	{
+		my $lockstatus = &getFarmLock( $farmname );
+		if ( $lockstatus !~ /Diffie-Hellman/ ) {
+			$output = &setHTTPFarmDHStatus( $farm_name, "on" );
+			&genDHFile( $farm_name );
+		}
+	}
+
+	if ( $farm_type eq "http" && $dhstatus ne "on" )
+	{
+		$output = &setHTTPFarmDHStatus( $farm_name, "off" );
+	}
+
+	return $output;
+}
+
+#Generate the Diffie Hellman keys file
+sub genDHFile    # ($farm_name)
+{
+	my ( $farm_name ) = @_;
+
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = 0;
+
+	my $dhfile = "$configdir\/$farm_name\_dh2048.pem";
+
+	if ( ! -e "$dhfile" )
+	{
+		&logfile( "Generating DH keys in $dhfile ..." );
+		&setFarmLock( $farm_name, "on", "<a href=\"https://www.zenloadbalancer.com/knowledge-base/misc/diffie-hellman-keys-generation-important/\" target=\"_blank\">Generating SSL Diffie-Hellman 2048 keys</a> <img src=\"img/loading.gif\"/>" );
+
+		system("$openssl dhparam -5 2048 -out $dhfile &");
+		$output = $?;
+	}
+
+	return $output
+}
+
 # Start Farm rutine
 sub _runHTTPFarmStart    # ($farm_name)
 {
@@ -911,6 +1032,11 @@ sub _runHTTPFarmStart    # ($farm_name)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $status        = -1;
+
+	&logfile(
+		"Checking $farm_name farm configuration"
+	);
+	&getHTTPFarmConfigIsOK( $farm_name );
 
 	&logfile(
 		"running $pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid"
@@ -935,7 +1061,7 @@ sub _runHTTPFarmStop    # ($farm_name)
 
 	&runFarmGuardianStop( $farm_name, "" );
 
-	if ( &getFarmConfigIsOK( $farm_name ) == 0 )
+	if ( &getHTTPFarmConfigIsOK( $farm_name ) == 0 )
 	{
 		$pid = &getFarmPid( $farm_name );
 
@@ -943,9 +1069,9 @@ sub _runHTTPFarmStop    # ($farm_name)
 		$run = kill 15, $pid;
 		$status = $?;
 
-		unlink ( "$piddir\/$farm_name\_pound.pid" );
-		unlink ( "\/tmp\/$farm_name\_pound.socket" );
-		unlink ( "/tmp/$farm_name.lock" );
+		unlink ( "$piddir\/$farm_name\_pound.pid" ) if -e "$piddir\/$farm_name\_pound.pid";
+		unlink ( "\/tmp\/$farm_name\_pound.socket" ) if -e "\/tmp\/$farm_name\_pound.socket";
+		&setFarmLock( $farm_name, "off" );
 	}
 	else
 	{
@@ -1729,12 +1855,12 @@ sub getHTTPFarmConfigIsOK    # ($farm_name)
 	my $pound_command = "$pound -f $configdir\/$farm_filename -c";
 	my $output        = -1;
 
+	&validateHTTPFarmDH( $farm_name );
+
 	&logfile( "running: $pound_command" );
 
 	my $run = `$pound_command 2>&1`;
 	$output = $?;
-
-	&logfile( "output: $run " );
 
 	return $output;
 }
