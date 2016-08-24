@@ -79,7 +79,7 @@ sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$remote_fs \$syslog zenloadbal
 rm -f /etc/rc*.d/*zenloadbalancer
 
 # Add ZenLB services to boot process including dependencies
-insserv zenloadbalancer
+update-rc.d zenloadbalancer defaults
 
 # Link zenbui
 if [ -f /usr/local/zenloadbalancer/app/zenbui/zenbui ];
