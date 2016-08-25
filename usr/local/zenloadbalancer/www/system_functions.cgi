@@ -239,11 +239,10 @@ sub getDate    # ()
 #get hostname
 sub getHostname    # ()
 {
+	my $hostname = `uname -n`;
+	chomp $hostname;
 
-	use Sys::Hostname;
-	my $host = hostname();
-	return $host;
-
+	return $hostname;
 }
 
 #get total CPU usage
@@ -463,4 +462,4 @@ sub zsystem    # (@exec)
 }
 
 #do not remove this
-1
+1;
