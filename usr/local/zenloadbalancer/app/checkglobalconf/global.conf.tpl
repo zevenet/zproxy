@@ -63,8 +63,6 @@ $ssh="/usr/bin/ssh";
 $scp="/usr/bin/scp";
 #Where is rsync binary?
 $rsync="/usr/bin/rsync";
-#Where is ucarp binary?
-$ucarp="/usr/local/zenloadbalancer/app/ucarp/sbin/ucarp";
 #Where is pidof binary?
 $pidof="/bin/pidof";
 #Where is ps binary?
@@ -162,11 +160,31 @@ $zenino="/usr/local/zenloadbalancer/app/zeninotify/zeninotify.pl";
 $zeninopid="/var/run/zeninotify.pid";
 #.<b>Rsync replication parameters</b>
 $zenrsync="-auzv --delete";
+#Arptables
+$arptables="/sbin/arptables";
 
-#Services for configure start latency service
-$zenlatup="/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl";
-#Services for configure stop latency service
-$zenlatdown="/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl";
+# keepalived configuration file
+$keepalived_conf="/etc/keepalived/keepalived.conf";
+# conntrackd configuration file
+$conntrackd_conf="/etc/conntrackd/conntrackd.conf";
+# cluster floating interfaces configuration file path
+$floatfile="/usr/local/zenloadbalancer/config/float.conf";
+# node_status file path
+$znode_status_file="/usr/local/zenloadbalancer/node_status";
+
+# zcluster-manager command path
+$zcluster_manager="/usr/local/zenloadbalancer/app/zbin/zcluster-manager";
+# ssh-copy-id file path
+$ssh_copy_id="/usr/local/zenloadbalancer/app/zbin/ssh-copy-id.sh";
+# primary-backup conntrackd script
+$primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
+
+# sshkey file path
+$key_path='/root/.ssh';
+# sshkey file path
+$key_id='id_rsa';
+# ssh keygen command
+$keygen_cmd="ssh-keygen -t rsa -f $key_path/$key_id -N \"\" -q";
 
 #Zen backup
 $zenbackup="/usr/local/zenloadbalancer/app/zenbackup/zenbackup.pl";

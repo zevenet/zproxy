@@ -32,7 +32,7 @@
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
 require "/usr/local/zenloadbalancer/www/nf_functions.cgi";
-require "/usr/local/zenloadbalancer/www/cluster_functions.cgi";
+require "/usr/local/zenloadbalancer/www/zcluster_functions.cgi";
 require "/usr/local/zenloadbalancer/www/rrd_functions.cgi";
 require "/usr/local/zenloadbalancer/www/cert_functions.cgi";
 require "/usr/local/zenloadbalancer/www/l4_functions.cgi";

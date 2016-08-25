@@ -16,9 +16,11 @@
 #~ use strict;
 #~ use warnings;
 #~ require "/usr/local/zenloadbalancer/config/global.conf";
-#~ our ( $basedir, $configdir, $logdir, $timeouterrors, $filecluster, $confhttp, $ntp, $backupfor, $backupdir, $rttables, $globalcfg, $version, $cipher_pci, $buy_ssl, $url, $htpass, $zapikey, $filedns, $fileapt, $tar, $ifconfig_bin, $ip_bin, $pen_bin, $pen_ctl, $fdisk_bin, $df_bin, $sshkeygen, $ssh, $scp, $rsync, $ucarp, $pidof, $ps, $tail, $zcat, $datentp, $arping_bin, $ping_bin, $openssl, $unzip, $mv, $ls, $cp, $iptables, $modprobe, $lsmod, $netstatNat, $gdnsd, $l4sd, $bin_id, $conntrack, $pound, $poundctl, $poundtpl, $piddir, $fwmarksconf, $defaultgw, $defaultgwif, $pingc, $libexec_dir, $farmguardian, $farmguardian_dir, $rrdap_dir, $img_dir, $rrd_dir, $zenino, $zeninopid, $zenrsync, $zenlatup, $zenlatdown, $zenbackup );
+#~ our ( $basedir, $configdir, $logdir, $timeouterrors, $filecluster, $confhttp, $ntp, $backupfor, $backupdir, $rttables, $globalcfg, $version, $cipher_pci, $buy_ssl, $url, $htpass, $zapikey, $filedns, $fileapt, $tar, $ifconfig_bin, $ip_bin, $pen_bin, $pen_ctl, $fdisk_bin, $df_bin, $sshkeygen, $ssh, $scp, $rsync, $pidof, $ps, $tail, $zcat, $datentp, $arping_bin, $ping_bin, $openssl, $unzip, $mv, $ls, $cp, $iptables, $modprobe, $lsmod, $netstatNat, $gdnsd, $l4sd, $bin_id, $conntrack, $pound, $poundctl, $poundtpl, $piddir, $fwmarksconf, $defaultgw, $defaultgwif, $pingc, $libexec_dir, $farmguardian, $farmguardian_dir, $rrdap_dir, $img_dir, $rrd_dir, $zenino, $zeninopid, $zenrsync, $zenbackup );
 #~ use Data::Dumper;
 # End debugging
+
+use threads;
 
 # Call external files
 require "/usr/local/zenloadbalancer/www/functions.cgi";
@@ -412,6 +414,8 @@ $bond_mode = $cgi->param( 'bond_mode' )
   if ( defined ( $cgi->param( 'bond_mode' ) ) );
 @bond_slaves = $cgi->param( 'bond_slaves[]' )
   if ( defined ( $cgi->param( 'bond_slaves[]' ) ) );
+@float_ifs = $cgi->param( 'float_ifs[]' )
+  if ( defined ( $cgi->param( 'float_ifs[]' ) ) );
 
 #Content3-3
 $vipcl = $cgi->param( 'vipcl' )
@@ -438,6 +442,18 @@ $ifname = $cgi->param( 'ifname' )
   if ( defined ( $cgi->param( 'ifname' ) ) );
 $cable = $cgi->param( 'cable' )
   if ( defined ( $cgi->param( 'cable' ) ) );
+
+#zcluster
+$deadratio = $cgi->param( 'deadratio' )
+  if ( defined ( $cgi->param( 'deadratio' ) ) );
+$interface = $cgi->param( 'interface' )
+  if ( defined ( $cgi->param( 'interface' ) ) );
+$primary = $cgi->param( 'primary' )
+  if ( defined ( $cgi->param( 'primary' ) ) );
+$rip = $cgi->param( 'rip' )
+  if ( defined ( $cgi->param( 'rip' ) ) );
+$pass = $cgi->param( 'pass' )
+  if ( defined ( $cgi->param( 'pass' ) ) );
 
 #Content3-4
 $enablepass = $cgi->param( 'enablepass' )
