@@ -258,8 +258,8 @@ sub createmenuGW    # ($id,$action,$ipversion)
 		</form>";
 	}
 	else
-	{    # viewing menu
-		    # edit
+	{   # viewing menu
+		# edit
 		print "
 		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
 		<button type=\"submit\" class=\"myicons\" title=\"Edit default GW\">
@@ -293,11 +293,9 @@ sub createmenuif    # ($if_ref, $id)
 	my @interfaces = $socket->if_list;
 
 	my $guiip      = &GUIip();
-	my $mgmt_iface = getInterfaceOfIp( $guiip ) if $guiip;
-	my $clrip      = &getClusterRealIp();
-	my $clvip      = &getClusterVirtualIp();
+	my $mgmt_iface = getInterfaceOfIp( $guiip );
+	my $clrip      = &getZClusterLocalIp();
 
-	#~ my $source = "";
 	my $locked;
 
 	if ( -e $filecluster )
@@ -319,7 +317,6 @@ sub createmenuif    # ($if_ref, $id)
 		}
 	}
 
-  #~ if ( ($$iface{addr} eq $clrip || $$iface{addr} eq $clvip) && $clrip && $clvip )
 	if (
 		 $$if_ref{ addr }
 		 && (    ( $$if_ref{ addr } eq $clrip )
@@ -363,8 +360,6 @@ sub createmenuif    # ($if_ref, $id)
 			<input type=\"hidden\" name=\"if\" value=\"$$if_ref{name}\">
 			<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
 			</form>";
-
-			#~ $source = "system";
 		}
 	}
 	elsif ( $$if_ref{ status } eq "down" )
@@ -382,13 +377,10 @@ sub createmenuif    # ($if_ref, $id)
 			<input type=\"hidden\" name=\"if\" value=\"$$if_ref{name}\">
 			<input type=\"hidden\" name=\"ipv\" value=\"$$if_ref{ip_v}\">
 			</form>";
-
-			#~ $source = "files";
 		}
 	}
 
   # edit interface
-  #~ if ( ($$iface{addr} eq $clrip || $$iface{addr} eq $clvip) && $clrip && $clvip )
 	if ( ( ( $$if_ref{ addr } ne $clrip ) && ( $$if_ref{ addr } ne $guiip ) )
 		 || !$$if_ref{ addr } )
 	{
@@ -934,6 +926,18 @@ sub tipmsg        # ($string)
 	my $string = shift;
 
 	print "<div class=\"ad-notif-info grid_12 small-mg ad-notif-restart\"><p><b>TIP!</b> $string</p></div>";
+
+	&zenlog( $string );
+}
+
+#function that print a TIP message
+sub tipsimplemsg        # ($string)
+{
+	my $string = shift;
+
+	print "<div class=\"ad-notif-info grid_12 small-mg\">";
+	print "<p><b>TIP!</b> $string</p>";
+	print "</div>";
 
 	&zenlog( $string );
 }

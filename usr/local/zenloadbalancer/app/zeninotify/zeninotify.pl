@@ -22,216 +22,268 @@
 #
 ###############################################################################
 
+# zeninotify version 2.0
+#~ use strict;
+use threads;
+use feature 'say';
+
 use Linux::Inotify2;
-use Sys::Hostname;
+#~ use Data::Dumper;
+use IO::Socket;
+use IO::Interface qw(:flags);
 
 require '/usr/local/zenloadbalancer/config/global.conf';
 require '/usr/local/zenloadbalancer/www/functions_ext.cgi';
 
-my $hostname = hostname();
-my $sync     = "firstime";
-my @alert;
-
-push ( @alert, $configdir );
-push ( @alert, $rttables );
-
-#open file cluster
-open FR, "$filecluster";
-while ( <FR> )
+if ( $ARGV[0] eq 'stop' && -e $zeninopid )
 {
-	if ( $_ =~ /^MEMBERS/ )
-	{
-		@clusterconf = split ( ":", $_ );
-		if ( $clusterconf[1] eq $hostname )
-		{
-			$rip = $clusterconf[4];
-		}
-		else
-		{
-			$rip = $clusterconf[2];
-		}
-		chomp ( $rip );
-	}
+	open my $pidfile, "<", "$zeninopid";
+	kill ( 'TERM', <$pidfile> );
+	close $pidfile;
+	exit 0;
 }
-close FR;
 
-#pid file
-open my $fo, ">", "$zeninopid";
-print $fo "$$";
-close $fo;
+#~ require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
+#~ require "/usr/local/zenloadbalancer/www/functions.cgi";
+require "/usr/local/zenloadbalancer/www/system_functions.cgi";
+require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
+require "/usr/local/zenloadbalancer/www/thread_functions.cgi";
+require "/usr/local/zenloadbalancer/www/zcluster_functions.cgi";
 
-&zenlog( "Running the first replication..." );
-$exclude = &cluster();
-if ( $exclude ne "1" )
+sub abort
 {
-	my $rsync_command =
-	  "$rsync $zenrsync $exclude $configdir\/ root\@$rip:$configdir\/";
-	&zenlog( "$rsync_command" );
-	system ( $rsync_command);
-
-	my $rsync_rttables_command = "$rsync $zenrsync $rttables root\@$rip:$rttables";
-	&zenlog( "$rsync_rttables_command" );
-	system ( $rsync_rttables_command);
+	my $msg = shift;
+	
+	&zenlog( $msg ) if $msg ;
+	&zenlog("Aborting zeninotify");
+	
+	exit 1;
 }
-&zenlog( "Terminated the first replication..." );
+
+sub leave_zeninotify
+{
+	unlink $zeninopid;
+	&zenlog( "Ending zeninotify" );
+	exit 0;
+}
+
+# read cluster configuration
+my $cl_conf = &getZClusterConfig();
+&abort("Could not load cluster configuration") if not $cl_conf;
+
+# handle pidfile
+&abort("zeninotify is already running") if ( -e $zeninopid );
+
+{
+	open my $pidfile, ">", "$zeninopid";
+	print $pidfile "$$";
+	close $pidfile;
+}
+
+
+$SIG{ HUP } = \&leave_zeninotify;	# terminate, Hangup
+$SIG{ INT } = \&leave_zeninotify;	# "interrupt", interactive attention request
+$SIG{ TERM } = \&leave_zeninotify; # termination request
+
+#### target files/directories to watch for changes ####3
+my @ino_targets = ( $configdir, $rttables );
+
+&zenlog( "ino_target:$_" ) for @ino_targets;
 
 for my $subdir ( &getSubdirectories( $configdir ) )
 {
-	&zenlog( "Watching directory $subdir" );
-	push ( @alert, $subdir );
+	&zenlog("Watching directory $subdir");
+	push( @ino_targets, $subdir );
 }
 
+#### First zeninotify replication ####
+&zenlog( "Running the first replication..." );
+&runSync( $configdir );
+&runSync( $rttables );
+&zenlog( "Terminated the first replication..." );
+
+#### Add watchers ####
 my $inotify = new Linux::Inotify2();
 
-#foreach ($configdir $rttable)
-foreach ( @alert )
+foreach my $path ( @ino_targets )
 {
-	$inotify->watch( $_, IN_MODIFY | IN_CREATE | IN_DELETE );
+	&zenlog("Watching $path");
+	$inotify->watch( $path, IN_CLOSE_WRITE | IN_CREATE | IN_DELETE);
 }
+
+# $event->w			The watcher object for this event.
+# $event->{w}	
+# $event->name		The path of the file system object, relative to the watched name.
+# $event->{name}
+# $event->fullname	Returns the "full" name of the relevant object, i.e. including the name
+#					member of the watcher (if the watch object is on a directory and a directory
+#					entry is affected), or simply the name member itself when the object is the
+#					watch object itself.
+# $event->mask		The received event mask.
+# $event->{mask}
+# $event->IN_xxx	Returns a boolean that returns true if the event mask contains
+#					any events specified by the mask. All of the IN_xxx constants
+#					can be used as methods.
+# $event->cookie	
+# $event->{cookie}	The event cookie to "synchronize two events". Normally zero,
+#					this value is set when two events relating to the same file are generated.
+#					As far as I know, this only happens for IN_MOVED_FROM and IN_MOVED_TO events,
+#					to identify the old and new name of a file.
+#
+#/* the following are legal, implemented events that user-space can watch for */
+#define IN_ACCESS			0x00000001	/* File was accessed */
+#define IN_MODIFY			0x00000002	/* File was modified */
+#define IN_ATTRIB			0x00000004	/* Metadata changed */
+#define IN_CLOSE_WRITE		0x00000008	/* Writtable file was closed */
+#define IN_CLOSE_NOWRITE	0x00000010	/* Unwrittable file closed */
+#define IN_OPEN				0x00000020	/* File was opened */
+#define IN_MOVED_FROM		0x00000040	/* File was moved from X */
+#define IN_MOVED_TO			0x00000080	/* File was moved to Y */
+#define IN_CREATE			0x00000100	/* Subfile was created */
+#define IN_DELETE			0x00000200	/* Subfile was deleted */
+#define IN_DELETE_SELF		0x00000400	/* Self was deleted */
+#
+#/* the following are legal events.  they are sent as needed to any watch */
+#define IN_UNMOUNT			0x00002000	/* Backing fs was unmounted */
+#define IN_Q_OVERFLOW		0x00004000	/* Event queued overflowed */
+#define IN_IGNORED			0x00008000	/* File was ignored */
+#
+#/* helper events */
+#define IN_CLOSE			(IN_CLOSE_WRITE | IN_CLOSE_NOWRITE) /* close */
+#define IN_MOVE				(IN_MOVED_FROM | IN_MOVED_TO) /* moves */
+#
+#/* special flags */
+#define IN_ISDIR			0x40000000	/* event occurred against dir */
+#define IN_ONESHOT			0x80000000	/* only send event once */
+#
+# using:
+# IN_CLOSE_WRITE	0x00000008
+# IN_CREATE			0x00000100
+# IN_DELETE			0x00000200
 
 while ( 1 )
 {
 	# By default this will block until something is read
 	my @events = $inotify->read();
+
 	if ( scalar ( @events ) == 0 )
 	{
-		&zenlog( "read error: $!" );
+		&zenlog( "File descriptor in non-blocking mode or error happened: $!" );
 		last;
 	}
 
-	foreach my $event ( @events )
+	for my $event ( @events )
 	{
-		if ( $event->name !~ /^\..*/ && $event->name !~ /.*\~$/ )
+		next if ( $event->name =~ /^\..*/ );	# skip hidden files
+		next if ( $event->name =~ /.*\~$/ );	# skip files ending with ~
+
+		my $event_fullname = $event->fullname;
+		my $event_name     = $event->name;
+		my $event_mask     = sprintf ( "%#.8x", $event->mask ); # hexadecimal string
+
+		&zenlog( "Event: $event_mask File: '$event_fullname'" );
+
+		# watch new subdirectories
+		if ( $event->IN_CREATE )
 		{
-			$action = sprintf ( "%d", $event->mask );
-			$name   = $event->fullname;
-			$file   = $event->name;
+			if ( -d $event->fullname )
+			{
+				&zenlog("Watching $event_fullname");
+				push( @ino_targets, $event->fullname );
+				$inotify->watch( $event->fullname, IN_CLOSE_WRITE | IN_CREATE | IN_DELETE );
+			}
+			next;
+		}
 
-			if ( $action eq 512 )
-			{
-				$action = "DELETED";
-			}
-			if ( $action eq 2 )
-			{
-				$action = "MODIFIED";
-			}
-			if ( $action eq 256 )
-			{
-				$action = "CREATED";
-			}
-			if ( $action eq 1073742080 )    # create dir
-			{
-				#~ $action = "CREATED";
-				&zenlog( "Watching " . $event->fullname );
-				$inotify->watch( $event->fullname, IN_MODIFY | IN_CREATE | IN_DELETE );
-				next;
-			}
-			&zenlog( "File: $file; Action: $action Fullname: $name" );
+		my ( undef, $local_name ) = split( "$configdir/", $event->fullname );
 
-			if ( $name =~ /config/ )
-			{
-				$exclude = &cluster();
+		if ( $event->fullname =~ /^$configdir/ )
+		{
+			my @excluded_patterns = (
+				"^$configdir\/lost\+found",
+				"^$configdir\/global\.conf",
+				"^$configdir\/if_.+_conf",
+				"^$configdir\/zencert-c\.key",
+				"^$configdir\/zencert\.pem",
+				"^$configdir\/zlb-start",
+				"^$configdir\/zlb-stop",
+			);
 
-				#if ($fileif =~ "1")
-				if ( $exclude eq "1" )
+			# run sync if it's not an excluded file
+			my $matched;
+			for my $pattern ( @excluded_patterns )
+			{
+				if ( $event->fullname =~ /$pattern/ )
 				{
-					&zenlog( "File cluster not configured, aborting..." );
-					exit 1;
+					if ( $event->fullname !~ /$configdir\/if.+:.+_conf/ )
+					{
+						&zenlog("matched pattern $pattern with $event_fullname");
+						$matched = 1;
+						last;
+					}
 				}
-				&zenlog( "Exclude files: $exclude" );
-				my $eject = `$rsync $zenrsync $exclude $configdir\/ root\@$rip:$configdir\/`;
-				&zenlog( $eject );
-				&zenlog(
-					"run replication process: $rsync $zenrsync $exclude $configdir\/ root\@$rip:$configdir\/"
-				);
 			}
+			&runSync( $configdir ) if ! $matched;
+		}
 
-			if ( $name =~ /iproute2/ )
-			{
-				my $eject = `$rsync $zenrsync $rttables root\@$rip:$rttables`;
-				&zenlog( $eject );
-				&zenlog(
-					   "run replication process: $rsync $zenrsync $rttables root\@$rip:$rttables" );
-			}
+		if ( $event->fullname =~ /^$rttables/ )
+		{
+			&runSync( $rttables );
 		}
 	}
+
+	#~ system("grep RSS /proc/$$/status");
 }
 
-sub cluster()
+sub getSubdirectories
 {
-	if ( -e $filecluster )
-	{
-		#exclude file with eth on https gui
-		$filehttp = "";
-		open FH, "<", $confhttp;
-		@filehttp = <FH>;
-		$host     = $filehttp[1];
-		@host     = split ( " = ", $host );
-		$iphttp   = $host[1];
-		close FH;
+	my $dir_path = shift;
 
-		#exclude file with eth on cluster
-		$filecl = "";
-		open FO, "<$filecluster";
-		@file = <FO>;
-		if ( grep ( /UP/, @file ) )
+	opendir my $dir_h, $dir_path;
+
+	if ( ! $dir_h )
+	{
+		&zenlog("Could not open directory $dir_path: $!");
+		return 1;
+	}
+
+	my @dir_list;
+	
+	while ( my $dir_entry = readdir $dir_h )
+	{
+		next if $dir_entry eq '.';
+		next if $dir_entry eq '..';
+
+		my $subdir = "$dir_path/$dir_entry";
+
+		if ( -d $subdir )
 		{
-			$members = $file[0];
-			@members = split ( ":", $members );
-			$ip1     = $members[2];
-			$ip2     = $members[4];
-			chomp ( $ip1 );
-			chomp ( $ip2 );
+			push( @dir_list, $subdir );
 
-			#the real ip for cluster member
-			opendir ( DIR, $configdir );
-			@files = grep ( /^if\_.*\_conf$/, readdir ( DIR ) );
-			closedir ( DIR );
+			my @subdirectories = &getSubdirectories( $subdir );
 
-			#first real interfaces
-			foreach $file ( @files )
-			{
-				if ( $file !~ /:/ )
-				{
-					open FR, "<$configdir\/$file";
-					@fif = <FR>;
-					close FR;
-					if ( ( grep ( /$ip1/, @fif ) ) || ( grep ( /$ip2/, @fif ) ) )
-					{
-						$filecl = $file;
-					}
-					chomp ( $iphttp );
-					if ( $iphttp !~ /\*/ && ( grep ( /$iphttp/, @fif ) ) )
-					{
-						$filehttp = $file;
-					}
-				}
-			}
+			push( @dir_list, @subdirectories );
 		}
-		close FO;
 	}
 
-	if ( $filecl ne "" && $filehttp ne "" && $filecl ne $filehttp )
-	{
-		$stringtemp = "--exclude=$filehttp --exclude=$filecl";
-	}
+	closedir $dir_h;
 
-	if ( $filecl ne "" && $filehttp ne "" && $filecl eq $filehttp )
-	{
-		$stringtemp = "--exclude=$filecl";
-	}
+	return @dir_list;
+}
 
-	if ( $filecl ne "" & $filehttp eq "" )
-	{
-		$stringtemp = "--exclude=$filecl";
-	}
+#know inteface and return ip
+sub iponif            # ($if)
+{
+	my $if = shift;
 
-	if ( $filecl =~ /^$/ )
-	{
-		$strikgtemp = "1";
-	}
+	#~ use IO::Socket;
+	#~ use IO::Interface qw(:flags);
 
-	return $stringtemp;
+	my $s = IO::Socket::INET->new( Proto => 'udp' );
+	#~ my @interfaces = $s->if_list;
+	my $iponif = $s->if_addr( $if );
+
+	return $iponif;
 }
 
 sub getSubdirectories

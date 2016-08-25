@@ -30,6 +30,8 @@ $maxmaxclient = "3000000";
 $maxsimconn   = "32760";
 $maxbackend   = "10000";
 
+my $farm_config_changed = 0;
+
 &zenlog( "loading the $farmname Farm data" );
 if ( $farmname =~ /^$/ )
 {
@@ -56,9 +58,9 @@ if ( $action eq "editfarm-maintenance" )
 	&setFarmBackendMaintenance( $farmname, $id_server );
 	if ( $? eq 0 )
 	{
+		$farm_config_changed = 1;
 		&successmsg( "Enabled maintenance mode for backend $id_server" );
 	}
-
 }
 
 #disable maintenance mode for servers
@@ -67,9 +69,9 @@ if ( $action eq "editfarm-nomaintenance" )
 	&setFarmBackendNoMaintenance( $farmname, $id_server );
 	if ( $? eq 0 )
 	{
+		$farm_config_changed = 1;
 		&successmsg( "Disabled maintenance mode for backend" );
 	}
-
 }
 
 #Edit Global parameters
@@ -137,6 +139,7 @@ if ( $action eq "editfarm-Parameters" )
 				&successmsg(
 					"Virtual IP and Virtual Port has been modified, the $farmname farm has been restarted"
 				);
+				$farm_config_changed = 1;
 			}
 			else
 			{
@@ -178,6 +181,9 @@ if ( $action eq "editfarm-Parameters" )
 				$oldfstat = &runFarmStop( $farmname, "true" );
 				if ( $oldfstat == 0 )
 				{
+					# zcluster: stop farm in remote node
+					&runZClusterRemoteManager( 'farm', 'stop', $farmname );
+
 					&successmsg( "The Farm $farmname is now disabled" );
 				}
 				else
@@ -187,6 +193,9 @@ if ( $action eq "editfarm-Parameters" )
 
 				#Change farm name
 				$fnchange = &setNewFarmName( $farmname, $newfarmname );
+
+				# zcluster: start farm in remote node
+				&runZClusterRemoteManager( 'farm', 'start', $farmname ) if $fnchange;
 
 				if ( $fnchange == -1 )
 				{
@@ -215,6 +224,7 @@ if ( $action eq "editfarm-Parameters" )
 				{
 					&successmsg( "The Farm $farmname has been just renamed to $newfarmname" );
 					$farmname = $newfarmname;
+					$farm_config_changed = 1;
 
 					#Start farm
 					my $newfstat = &runFarmStart( $farmname, "true" );
@@ -253,6 +263,7 @@ if ( $action eq "editfarm-Parameters" )
 			$status = &setFarmTimeout( $timeout, $farmname );
 			if ( $status != -1 )
 			{
+				$farm_config_changed = 1;
 				&successmsg( "The timeout for $farmname farm has been modified" );
 			}
 			else
@@ -276,6 +287,7 @@ if ( $action eq "editfarm-Parameters" )
 			$status = &setFarmBlacklistTime( $blacklist, $farmname );
 			if ( $status != -1 )
 			{
+				$farm_config_changed = 1;
 				&successmsg( "The blacklist time for $farmname farm is modified" );
 			}
 			else
@@ -300,6 +312,7 @@ if ( $action eq "editfarm-Parameters" )
 			$status = &setFarmAlgorithm( $lb, $farmname );
 			if ( $status != -1 )
 			{
+				$farm_config_changed = 1;
 				&successmsg( "The algorithm for $farmname Farm is modified" );
 			}
 			else
@@ -327,6 +340,7 @@ if ( $action eq "editfarm-Parameters" )
 			$status = &setFarmPersistence( $persistence, $farmname );
 			if ( $status != -1 )
 			{
+				$farm_config_changed = 1;
 				&successmsg( "The client persistence is enabled" );
 			}
 			else
@@ -340,6 +354,7 @@ if ( $action eq "editfarm-Parameters" )
 			$status = &setFarmPersistence( $persistence, $farmname );
 			if ( $status != -1 )
 			{
+				$farm_config_changed = 1;
 				&successmsg( "The client persistence is disabled" );
 			}
 			else
@@ -375,6 +390,7 @@ if ( $action eq "editfarm-Parameters" )
 				&successmsg(
 					"The max number of clients has been modified, the farm $farmname has been restarted"
 				);
+				$farm_config_changed = 1;
 			}
 			else
 			{
@@ -408,6 +424,7 @@ if ( $action eq "editfarm-Parameters" )
 				&successmsg(
 					"The max number of connections has been modified, the farm $farmname has been restarted"
 				);
+				$farm_config_changed = 1;
 			}
 			else
 			{
@@ -441,6 +458,7 @@ if ( $action eq "editfarm-Parameters" )
 				&successmsg(
 					"The max number of servers has been modified, the farm $farmname has been restarted"
 				);
+				$farm_config_changed = 1;
 			}
 			else
 			{
@@ -470,6 +488,7 @@ if ( $action eq "editfarm-Parameters" )
 				if ( $status != -1 )
 				{
 					&successmsg( "The X-Forwarded-For header is enabled" );
+					$farm_config_changed = 1;
 				}
 				else
 				{
@@ -484,6 +503,7 @@ if ( $action eq "editfarm-Parameters" )
 				if ( $status != -1 )
 				{
 					&successmsg( "The X-Forwarded-For header is disabled" );
+					$farm_config_changed = 1;
 				}
 				else
 				{
@@ -607,6 +627,7 @@ if ( $action eq "editfarm-saveserver" )
 			&successmsg(
 				"The real server with ip $rip_server and port $port_server for the $farmname farm has been modified"
 			);
+			$farm_config_changed = 1;
 		}
 		else
 		{
@@ -623,6 +644,7 @@ if ( $action eq "editfarm-deleteserver" )
 	$status = &runFarmServerDelete( $id_server, $farmname );
 	if ( $status != -1 )
 	{
+		$farm_config_changed = 1;
 		&successmsg(
 			  "The real server with ID $id_server of the $farmname farm has been deleted" );
 	}
@@ -632,6 +654,13 @@ if ( $action eq "editfarm-deleteserver" )
 			"It's not possible to delete the real server with ID $id_server of the $farmname farm"
 		);
 	}
+}
+
+# zcluster: apply remote changes
+if ( $farm_config_changed && &getFarmStatus( $farmname ) eq 'up' )
+{
+	# zcluster: restart farm in remote node
+	&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 }
 
 1;

@@ -53,7 +53,7 @@ $vport = &getFarmVip( "vipp", $farmname );
 # @listinterfaces = &listallips();
 my @interfaces_available = @{ &getActiveInterfaceList() };
 
-my $clrip = &getClusterRealIp();
+my $clrip = &getZClusterLocalIp();
 
 #~ my @nvips = &getListActiveIps();
 print

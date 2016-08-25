@@ -22,13 +22,15 @@
 ###############################################################################
 
 ### CONTROLLER L4xNAT FARM ###
+my $farm_config_changed = 0;
 
 # maintenance mode for servers
 if ( $action eq "editfarm-maintenance" )
 {
 	&setFarmBackendMaintenance( $farmname, $id_server );
-	if ( $? eq 0 )
+	if ( $? == 0 )
 	{
+		$farm_config_changed = 1;
 		&successmsg( "Enabled maintenance mode for backend $id_server" );
 	}
 }
@@ -37,8 +39,9 @@ if ( $action eq "editfarm-maintenance" )
 if ( $action eq "editfarm-nomaintenance" )
 {
 	&setFarmBackendNoMaintenance( $farmname, $id_server );
-	if ( $? eq 0 )
+	if ( $? == 0 )
 	{
+		$farm_config_changed = 1;
 		&successmsg( "Disabled maintenance mode for backend" );
 	}
 }
@@ -103,8 +106,14 @@ if ( $action eq "editfarm-Parameters" )
 			}
 			else
 			{
+				# zcluster: stop farm in remote node
+				&runZClusterRemoteManager( 'farm', 'stop', $farmname );
+			
 				#Change farm name
 				$fnchange = &setNewFarmName( $farmname, $newfarmname );
+
+				# zcluster: start farm in remote node
+				&runZClusterRemoteManager( 'farm', 'start', $farmname ) if $fnchange;
 
 				if ( $fnchange == -1 )
 				{
@@ -120,6 +129,7 @@ if ( $action eq "editfarm-Parameters" )
 				}
 				else
 				{
+					$farm_config_changed = 1;
 					&successmsg( "The Farm $farmname has been renamed to $newfarmname." );
 					$farmname = $newfarmname;
 				}
@@ -149,6 +159,7 @@ if ( $action eq "editfarm-Parameters" )
 			$status = &setFarmVirtualConf( $vip, $vipp, $farmname );
 			if ( $status != -1 )
 			{
+				$farm_config_changed = 1;
 				&successmsg(
 						   "Virtual IP and Virtual Port has been modified for the farm $farmname" );
 			}
@@ -166,7 +177,7 @@ if ( $action eq "editfarm-Parameters" )
 		$status = &setFarmSessionType( $session, $farmname );
 		if ( $status == 0 )
 		{
-
+			$farm_config_changed = 1;
 			&successmsg( "The session type for $farmname farm has been modified" );
 		}
 		else
@@ -189,6 +200,7 @@ if ( $action eq "editfarm-Parameters" )
 			$status = &setFarmAlgorithm( $lb, $farmname );
 			if ( $status != -1 )
 			{
+				$farm_config_changed = 1;
 				&successmsg( "The algorithm for $farmname Farm is modified" );
 			}
 			else
@@ -204,6 +216,7 @@ if ( $action eq "editfarm-Parameters" )
 		$status = &setFarmNatType( $nattype, $farmname );
 		if ( $status == 0 )
 		{
+			$farm_config_changed = 1;
 			&successmsg( "The NAT type for $farmname farm has been modified" );
 		}
 		else
@@ -218,6 +231,7 @@ if ( $action eq "editfarm-Parameters" )
 		$status = &setFarmProto( $farmprotocol, $farmname );
 		if ( $status == 0 )
 		{
+			$farm_config_changed = 1;
 			&successmsg( "The protocol type for $farmname farm has been modified" );
 		}
 		else
@@ -245,6 +259,7 @@ if ( $action eq "editfarm-Parameters" )
 
 			if ( $status == 0 )
 			{
+				$farm_config_changed = 1;
 				&successmsg( "The sessions TTL for $farmname farm has been modified" );
 			}
 
@@ -340,6 +355,7 @@ if ( $action eq "editfarm-restart" )
 	#$status = &runL4FarmRestart($farmname, "true", "cold");
 	if ( $status == 0 )
 	{
+		$farm_config_changed = 1;
 		&successmsg( "The $farmname farm has been restarted" );
 	}
 	else
@@ -354,6 +370,7 @@ if ( $action eq "editfarm-deleteserver" )
 	$status = &runFarmServerDelete( $id_server, $farmname );
 	if ( $status != -1 )
 	{
+		$farm_config_changed = 1;
 		#&runL4FarmRestart($farmname, "false", "hot");
 		&successmsg(
 			  "The real server with ID $id_server of the $farmname farm has been deleted" );
@@ -454,7 +471,7 @@ if ( $action eq "editfarm-saveserver" )
 		);
 		if ( $status != -1 )
 		{
-
+			$farm_config_changed = 1;
 			&successmsg(
 				"The real server with ID $id_server and IP $rip_server of the $farmname farm has been modified"
 			);
@@ -472,5 +489,12 @@ if ( $action eq "editfarm-saveserver" )
 #if (-e "/tmp/$farmname.lock"){
 #	&tipmsg("There're changes that need to be applied, stop and start farm to apply them!");
 #}
+
+# zcluster: apply remote changes
+if ( $farm_config_changed && &getFarmStatus( $farmname ) eq 'up' )
+{
+	# zcluster: restart farm in remote node
+	&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+}
 
 1;

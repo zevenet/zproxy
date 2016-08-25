@@ -104,6 +104,9 @@ if ( $action eq "Save" )
 		}
 		if ( $error == 0 )
 		{
+			# zcluster: start farm in remote node
+			&runZClusterRemoteManager( 'farm', 'start', $farmname );
+			
 			&successmsg(
 				"The $farmname farm has been added to VIP $vip over $fdev, now you can manage it"
 			);

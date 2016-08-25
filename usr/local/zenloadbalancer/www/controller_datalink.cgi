@@ -37,6 +37,8 @@ my $actualvip   = &getFarmVip( "vip",  $farmname );
 my $actualvport = &getFarmVip( "vipp", $farmname );
 my ( $fdev, $vip ) = split ( " ", $vip );
 
+my $farm_config_changed = 0;
+
 if ( $vip ne '' )
 {
 	#change vip and vipp
@@ -59,6 +61,7 @@ if ( $vip ne '' )
 			$status = &setFarmVirtualConf( $vip, $fdev, $farmname );
 			if ( $status != -1 )
 			{
+				$farm_config_changed = 1;
 				&successmsg(
 					"Virtual IP and Interface has been modified, the $farmname farm has been restarted"
 				);
@@ -72,56 +75,44 @@ if ( $vip ne '' )
 	}
 }
 
-if ( $newfarmname ne "" )
+#change Farm's name
+if ( $farmname ne $newfarmname )
 {
-	#change Farm's name
-	if ( $farmname ne $newfarmname )
-	{
-		#Check if farmname has correct characters (letters, numbers and hyphens)
-		my $farmnameok = &checkFarmnameOK( $newfarmname );
+	#Check if farmname has correct characters (letters, numbers and hyphens)
+	my $farmnameok = &checkFarmnameOK( $newfarmname );
 
-		#Check the farm's name change
-		if ( "$newfarmname" eq "$farmname" )
+	#Check the farm's name change
+	if ( $farmnameok ne 0 )
+	{
+		&errormsg( "Farm name isn't OK, only allowed numbers letters and hyphens" );
+	}
+	#Check if the new farm's name alredy exists
+	elsif ( &getFarmFile( $newfarmname ) != -1 )
+	{
+		&errormsg( "The farm $newfarmname already exists, try another name" );
+	}
+	else
+	{
+		# zcluster: stop farm in remote node
+		&runZClusterRemoteManager( 'farm', 'stop', $farmname );
+
+		#Change farm name
+		$fnchange = &setNewFarmName( $farmname, $newfarmname );
+
+		if ( $fnchange != 0 )
 		{
+			# zcluster: start farm in remote node
+			&runZClusterRemoteManager( 'farm', 'start', $farmname );
+			
 			&errormsg(
-				"The new farm's name \"$newfarmname\" is the same as the old farm's name \"$farmname\": nothing to do"
+				"The name of the Farm $farmname can't be modified, delete the farm and create a new one."
 			);
-		}
-		elsif ( $farmnameok ne 0 )
-		{
-			&errormsg( "Farm name isn't OK, only allowed numbers letters and hyphens" );
 		}
 		else
 		{
-			#Check if the new farm's name alredy exists
-			$newffile = &getFarmFile( $newfarmname );
-			if ( $newffile != -1 )
-			{
-				&errormsg( "The farm $newfarmname already exists, try another name" );
-			}
-			else
-			{
-				#Change farm name
-				$fnchange = &setNewFarmName( $farmname, $newfarmname );
-
-				if ( $fnchange == -1 )
-				{
-					&errormsg(
-						"The name of the Farm $farmname can't be modified, delete the farm and create a new one."
-					);
-				}
-				elsif ( $fnchange == -2 )
-				{
-					&errormsg(
-						 "The name of the Farm $farmname can't be modified, the new name can't be empty"
-					);
-				}
-				else
-				{
-					&successmsg( "The Farm $farmname has been just renamed to $newfarmname." );
-					$farmname = $newfarmname;
-				}
-			}
+			$farm_config_changed = 1;
+			&successmsg( "The Farm $farmname has been just renamed to $newfarmname." );
+			$farmname = $newfarmname;
 		}
 	}
 }
@@ -143,6 +134,7 @@ if ( defined ( $lb ) )
 
 			if ( $status != -1 )
 			{
+				$farm_config_changed = 1;
 				&successmsg( "The algorithm for $farmname Farm is modified" );
 			}
 			else
@@ -165,27 +157,26 @@ if ( $action eq "editfarm-saveserver" )
 		&errormsg( "Invalid real server IP value, please insert a valid value" );
 		$error = 1;
 	}
-	if ( $rip_server =~ /^$/ || $if =~ /^$/ )
+	elsif ( $rip_server =~ /^$/ || $if =~ /^$/ )
 	{
 		&errormsg(
 			 "Invalid IP address and network interface for a real server, it can't be blank"
 		);
 		$error = 1;
 	}
-	if ( $priority_server ne ""
+	elsif ( $priority_server ne ""
 		 && ( $priority_server <= 0 || $priority_server >= 10 ) )
 	{
 		&errormsg( "Invalid priority value for real server" );
 		$error = 1;
 	}
-	if ( $weight_server ne ""
+	elsif ( $weight_server ne ""
 		 && ( $weight_server <= 0 || $weight_server >= 10000 ) )
 	{
 		&errormsg( "Invalid weight value for real server" );
 		$error = 1;
 	}
-
-	if ( $error == 0 )
+	elsif ( $error == 0 )
 	{
 		$status =
 		  &setFarmServer( $id_server, $rip_server, $if, "", $weight_server,
@@ -193,6 +184,7 @@ if ( $action eq "editfarm-saveserver" )
 
 		if ( $status != -1 )
 		{
+			$farm_config_changed = 1;
 			&successmsg(
 				"The real server with ip $rip_server and local interface $if for the $farmname farm has been modified"
 			);
@@ -213,6 +205,7 @@ if ( $action eq "editfarm-deleteserver" )
 
 	if ( $status != -1 )
 	{
+		$farm_config_changed = 1;
 		&successmsg(
 			  "The real server with ID $id_server of the $farmname farm has been deleted" );
 	}
@@ -222,6 +215,13 @@ if ( $action eq "editfarm-deleteserver" )
 			"It's not possible to delete the real server with ID $id_server of the $farmname farm"
 		);
 	}
+}
+
+# zcluster: apply remote changes
+if ( $farm_config_changed && &getFarmStatus( $farmname ) eq 'up' )
+{
+	# zcluster: restart farm in remote node
+	&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 }
 
 1;

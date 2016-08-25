@@ -1390,12 +1390,6 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	my $fg_status;
 	my $farm_status;
 
-	if ( $new_farm_name =~ /^$/ )
-	{
-		&zenlog( "error 'NewFarmName $new_farm_name' is empty" );
-		return -2;
-	}
-
 	# farmguardian renaming
 	if ( $farm_type =~ /http/ )
 	{
@@ -1584,7 +1578,7 @@ sub checkFarmnameOK    # ($farm_name)
 {
 	my $farm_name = shift;
 
-	return ( $farm_name =~ /^[a-zA-Z0-9\-]*$/ )
+	return ( $farm_name =~ /^[a-zA-Z0-9\-]+$/ )
 	  ? 0
 	  : -1;
 }

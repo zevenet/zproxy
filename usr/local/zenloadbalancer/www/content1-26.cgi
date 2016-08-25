@@ -61,7 +61,7 @@ print "<div class=\"form-row\">\n";
 print
   "<p class=\"form-label\"><b>Farm Virtual IP and Interface.</b> Service will be restarted.</p>";
 
-$clrip = &getClusterRealIp();
+$clrip = &getZClusterLocalIp();
 $guiip = &GUIip();
 
 my @interfaces_available = @{ &getActiveInterfaceList() };

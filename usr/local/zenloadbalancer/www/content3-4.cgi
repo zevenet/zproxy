@@ -21,22 +21,19 @@
 #
 ###############################################################################
 
-use Tie::File;
-
 print "
-  <!--- CONTENT AREA -->
-  <div class=\"content container_12\">
+<!--- CONTENT AREA -->
+<div class=\"content container_12\">
 ";
-
-####################################
-# CLUSTER INFO
-####################################
-&getClusterInfo();
 
 ###################################
 # BREADCRUMB
 ###################################
-print "<div class=\"grid_6\"><h1>Settings :: Users Management</h1></div>\n";
+print "
+<div class=\"grid_6\">
+	<h1>Settings :: Users Management</h1>
+</div>
+";
 
 ####################################
 # CLUSTER STATUS
@@ -149,157 +146,207 @@ if ( $action eq "Apply" )
 # Change Root Password
 #
 print "
-               <div class=\"box grid_5\">
-                 <div class=\"box-head\">
-                       <span class=\"box-icon-24 fugue-24 user\"></span>         
-                       <h2>Change root password</h2>
-                 </div>
-                 <div class=\"box-content\">
-	";
+<div class=\"box grid_5\">
+	<div class=\"box-head\">
+		<span class=\"box-icon-24 fugue-24 user\"></span>         
+		<h2>Change root password</h2>
+	</div>
+	<div class=\"box-content\">
+";
 
 # Print form
-print "<form method=\"POST\" action=\"index.cgi\">\n
-        <input type=\"hidden\" name=\"id\" value=\"3-4\">\n
-		<input type=\"hidden\" name=\"action\" value=\"changepass-admin\">\n
-		<div class=\"form-row\">\n
-		<p class=\"form-label\"><b>Current password</b></p>\n
-		<div class=\"form-item\"><input type=\"password\" name=\"pass\" class=\"fixedwidth\"></div>\n
-		</div>\n
-		<div class=\"form-row\">\n
-		<p class=\"form-label\"><b>New password:</b></p>\n
-		<div class=\"form-item\"><input type=\"password\" name=\"newpass\" class=\"fixedwidth\"></div>\n
-		</div>\n
-		<div class=\"form-row\">\n
-		<p class=\"form-label\"><b>Verify password:</b></p>\n
-		<div class=\"form-item\"><input type=\"password\" name=\"trustedpass\" class=\"fixedwidth\"></div>\n
-		</div>\n
-		<br>\n
-		<input type=\"submit\" value=\"Apply\" name=\"action\" class=\"button normal grey\">\n
-		</form>
-		</div></div>
-		<div class=\"clear\"></div>
-	";
+print "
+		<form method=\"POST\" action=\"index.cgi\">
+			<input type=\"hidden\" name=\"id\" value=\"3-4\">
+			<input type=\"hidden\" name=\"action\" value=\"changepass-admin\">
 
+			<div class=\"form-row\">
+				<p class=\"form-label\">
+					<b>Current password</b>
+				</p>
+				<div class=\"form-item\">
+					<input type=\"password\" name=\"pass\" class=\"fixedwidth\">
+				</div>
+			</div>
+
+			<div class=\"form-row\">
+				<p class=\"form-label\">
+					<b>New password:</b>
+				</p>
+				<div class=\"form-item\">
+					<input type=\"password\" name=\"newpass\" class=\"fixedwidth\">
+				</div>
+			</div>
+
+			<div class=\"form-row\">
+				<p class=\"form-label\">
+					<b>Verify password:</b>
+				</p>
+				<div class=\"form-item\">
+					<input type=\"password\" name=\"trustedpass\" class=\"fixedwidth\">
+				</div>
+			</div>
+
+			<br>
+			<input type=\"submit\" value=\"Apply\" name=\"action\" class=\"button normal grey\">
+		</form>
+	</div>
+</div>
+";
+
+print "<div class=\"clear\"></div>";
 print "<br class=\"cl\">";
 
 #
 # Change Zapi User
 #
-print "<div class=\"box grid_5\">";
-print " <div class=\"box-head\">";
-print "		<span class=\"box-icon-24 fugue-24 user\"></span> ";
-print "         <h2>Change zapi user</h2>";
-print " </div>";
-print "         <div class=\"box-content\">";
+print "
+<div class=\"box grid_5\">
+	<div class=\"box-head\">
+		<span class=\"box-icon-24 fugue-24 user\"></span>
+		<h2>Change zapi user</h2>
+	</div>
+	<div class=\"box-content\">
+";
 
 $zapistatus = &getZAPI( "status",  "" );
 $zapikey    = &getZAPI( "keyzapi", "" );
 
 # Enable Zapi User
-print "		<div class=\"form-row\">\n";
-print "         <form method=\"post\" action=\"index.cgi\">";
-print "             <input type=\"hidden\" name=\"id\" value=\"3-4\">";
+print "
+		<div class=\"form-row\">
+			<form method=\"post\" action=\"index.cgi\">
+				<input type=\"hidden\" name=\"id\" value=\"3-4\">";
 
 # print
 # "                 <input type=\"hidden\" name=\"action\" value=\"edit-changezapiuser\">";
-print "		<div class=\"form-row\">\n";
-print "             <p class=\"form-label\"><b>Enable zapi user:</b> </p>";
+print "
+				<div class=\"form-row\">
+					<p class=\"form-label\">
+						<b>Enable zapi user:</b>
+					</p>
+";
+
 if ( $zapistatus eq "true" )
 {
-	print
-	  "<p class=\"form-label\"><input type=\"checkbox\" checked name=\"enablepass\" value=\"true\" class=\"fixedwidth\"> </p>";
+	print "
+					<p class=\"form-label\">
+						<input type=\"checkbox\" checked name=\"enablepass\" value=\"true\" class=\"fixedwidth\">
+					</p>
+	";
 }
 else
 {
-	print
-	  "<p class=\"form-label\"> <input type=\"checkbox\"  name=\"enablepass\" value=\"true\"> </p>";
+	print "
+					<p class=\"form-label\">
+						<input type=\"checkbox\" name=\"enablepass\" value=\"true\">
+					</p>
+	";
 }
-print "		</div>";
-print "                 <br><br>";
+print "			</div>";
+print "			<br><br>";
 
 # print "                 <p class=\"form-label\">&nbsp;</p>\n";
 # print "                 <div class=\"form-row\">\n";
 # print
 # "                 <p class=\"form-item\"><input type=\"submit\" value=\"Apply\" name=\"button\" class=\"button normal grey\"></p>";
 # print "                 </div>";
-print "                 <div style=\"clear:both;\"></div>";
+print "			<div style=\"clear:both;\">
+				</div>";
 
 # print "         </form>";
-print "</div>";
+#~ print "		</div>";
 
 if ( $zapistatus eq "true" )
 {
 	# New password
-	print "			<div class=\"form-row\">\n";
-	print "				<div class=\"form-row\">\n";
-	print "                 <p class=\"form-label\"><b>New password:</b> </p>";
-	print "                 <input type=\"hidden\" name=\"id\" value=\"3-4\">";
+
+	#~ print "		<div class=\"form-row\">\n";
+	print "		<div class=\"form-row\">\n";
+	print "			<p class=\"form-label\">
+						<b>New password:</b>
+					</p>";
+	print "			<input type=\"hidden\" name=\"id\" value=\"3-4\">";
 
 	# print "				<input type=\"hidden\" name=\"action\" value=\"changepass-zapi\">";
-	print
-	  "                 <div class=\"form-item\"><input type=\"password\"  name=\"newpass\" class=\"fixedwidth\"></div>";
-	print "				</div>";
-	print "             <div style=\"clear:both;\"></div>";
-	print "			<div class=\"form-row\">\n";
-	print "                 <p class=\"form-label\"><b>Verify password:</b> </p>";
-	print
-	  "                 	<p class=\"form-item\"><input type=\"password\" name=\"trustedpass\" class=\"fixedwidth\"></p>";
+	print "			<div class=\"form-item\">
+						<input type=\"password\" name=\"newpass\" class=\"fixedwidth\">
+					</div>
+	";
+	print "		</div>
+	";
+
+	
+	print "		<div style=\"clear:both;\">
+				</div>
+	";
+
+
+	print "		<div class=\"form-row\">\n";
+	print "			<p class=\"form-label\">
+						<b>Verify password:</b>
+					</p>
+	";
+	print "			<p class=\"form-item\">
+						<input type=\"password\" name=\"trustedpass\" class=\"fixedwidth\">
+					</p>";
 
 	# print "			</div>";
 	# print "			<p class=\"form-label\">&nbsp;</p>\n";
 	# print "			<div class=\"form-row\">\n";
-	print "			</div>";
-	print "			</div>";
-	print "                 <br><br>";
+	print "		</div>";
+	
+	print "		<br><br>";
+
 
 	# Key
+
+	#~ print "			<div class=\"form-row\">\n";
 	print "		<div class=\"form-row\">\n";
-	print "			<div class=\"form-row\">\n";
-	print "                 <p class=\"form-label\"><b>Key:</b> </p>";
-	print "                 <input type=\"hidden\" name=\"id\" value=\"3-4\">";
+	print "			<p class=\"form-label\">
+						<b>Key:</b>
+					</p>";
+	print "			<input type=\"hidden\" name=\"id\" value=\"3-4\">";
 
 #print "                <input type=\"hidden\" name=\"action\" value=\"edit-randomkeyzapi\">";
-	print
-	  "             <div class=\"form-item\"><input type=\"text\"  name=\"keyzapi\" value=\"$zapikey\" class=\"fixedwidth\"></div>";
-	print "			</div>";
+	print "			<div class=\"form-item\">
+						<input type=\"text\" name=\"keyzapi\" value=\"$zapikey\" class=\"fixedwidth\">
+					</div>";
+	print "		</div>";
 
-	print "			<div class=\"form-row\">\n";
-	print "				<p class=\"form-label\">&nbsp;</p>\n";
+
+	print "		<div class=\"form-row\">\n";
+	print "			<p class=\"form-label\">&nbsp;</p>\n";
 
 # print "           <p class=\"form-item\"><input type=\"submit\" value=\"Save Custom Key\" name=\"action\" class=\"button normal grey\"></p>";
 
-	print "			</div>";
-	print "			</div>";
-	print "         <div style=\"clear:both;\"></div>";
+	print "		</div>";
+
+	print "		<div style=\"clear:both;\">
+				</div>";
 
 	# Buttons
 	# print "                 <br><br>";
-	print
-	  "                 <input type=\"submit\" value=\"Apply\" name=\"action\" class=\"button normal grey\">";
-	print
-	  "                 <input type=\"submit\" value=\"Save Random Key\" name=\"action\" class=\"button normal grey\">";
-	print "             <div style=\"clear:both;\"></div>";
-	print "         </form>";
+	print "		<input type=\"submit\" value=\"Apply\" name=\"action\" class=\"button normal grey\">";
+	print "		<input type=\"submit\" value=\"Save Random Key\" name=\"action\" class=\"button normal grey\">";
+	print "		<div style=\"clear:both;\"></div>";
 }
 else
 {
-	print
-	  "                 <input type=\"submit\" value=\"Apply\" name=\"action\" class=\"button normal grey\">";
-	print "         </form>";
+	print "		<input type=\"submit\" value=\"Apply\" name=\"action\" class=\"button normal grey\">";
 }
 
-print "         </div>";
-print " </div>";
-print "</div>";
-
-#content 3-4 END
 print "
-        <br><br><br>
-        </div>
-    <!--Content END-->
-  </div>
-</div>
-</div>
+			</form>
+		</div>
+	</div>
 </div>
 ";
 
+print "
+<br><br><br>
+</div>
+<!--Content END-->
+";
+
+1;

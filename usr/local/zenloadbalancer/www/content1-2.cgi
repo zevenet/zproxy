@@ -28,11 +28,6 @@ print "
   <div class=\"content container_12\">
 ";
 
-####################################
-# CLUSTER INFO
-####################################
-&getClusterInfo();
-
 ###############################
 #BREADCRUMB
 ############################
@@ -90,12 +85,17 @@ if ( $action eq "deletefarm" )
 	my $stat = &runFarmStop( $farmname, "true" );
 	if ( $stat == 0 )
 	{
+		# zcluster: stop and delete farm in remote node
+		&runZClusterRemoteManager( 'farm', 'stop', $farmname );
+		
 		&successmsg( "The Farm $farmname is now disabled" );
 	}
 
 	$stat = &runFarmDelete( $farmname );
 	if ( $stat == 0 )
 	{
+		&runZClusterRemoteManager( 'farm', 'delete', $farmname );
+		
 		&successmsg( "The Farm $farmname is now deleted" );
 	}
 	else
@@ -109,6 +109,9 @@ if ( $action eq "startfarm" )
 	my $stat = &runFarmStart( $farmname, "true" );
 	if ( $stat == 0 )
 	{
+		# zcluster: start farm in remote node
+		&runZClusterRemoteManager( 'farm', 'start', $farmname );
+
 		&successmsg( "The Farm $farmname is now running" );
 	}
 	else
@@ -125,6 +128,9 @@ if ( $action eq "stopfarm" )
 
 	if ( $stat == 0 )
 	{
+		# zcluster: stop farm in remote node
+		&runZClusterRemoteManager( 'farm', 'stop', $farmname );
+
 		&successmsg( "The Farm $farmname is now disabled" );
 	}
 	else

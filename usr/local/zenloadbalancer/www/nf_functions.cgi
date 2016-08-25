@@ -403,6 +403,8 @@ sub genIptSourceNat    # ($farm_name,$vip,$index,$protocol,$mark)
 	# Get the binary of iptables (iptables or ip6tables)
 	my $iptables_bin = &getBinVersion( $farm_name );
 
+	my $float_if = &getFloatInterfaceForAddress( $$server{ vip } );
+
 	my $layer = '';
 	if ( $$farm{ proto } ne "all" )
 	{
@@ -411,9 +413,10 @@ sub genIptSourceNat    # ($farm_name,$vip,$index,$protocol,$mark)
 
 	$rule =
 	    "$iptables_bin --table nat --::ACTION_TAG:: POSTROUTING "
+	  . "$layer "
 	  . "--match mark --mark $$server{ tag } "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
-	  . "--jump SNAT $layer --to-source $$server{ vip } ";
+	  . "--jump SNAT --to-source $float_if->{ addr } ";
 
 	#~ &zenlog( $rule );
 	return $rule;
@@ -450,14 +453,15 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 	# Get the binary of iptables (iptables or ip6tables)
 	my $iptables_bin = &getBinVersion( $farm_name );
 
+	my $float_if = &getFloatInterfaceForAddress( $$server{ vip } );
+
 	$rule =
 	    "$iptables_bin --table nat --::ACTION_TAG:: POSTROUTING "
 	  . "$layer "
 	  . "--match mark --mark $$server{ tag } "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
-	  . "--jump MASQUERADE ";
-
-	#~ &zenlog( $rule );
+	  . "--jump SNAT --to-source $float_if->{ addr } ";
+	  
 	return $rule;
 }
 
@@ -845,7 +849,7 @@ sub setIptRuleReplace    # $return_code ( \%farm, \%server, $rule)
 	my $server = shift;    # input: server struc reference
 	my $rule   = shift;    # input: iptables rule string
 
-	&zlog();
+	#~ &zlog();
 	return &applyIptRules( &getIptRuleReplace( $farm, $server, $rule ) );
 }
 
@@ -854,7 +858,7 @@ sub getIptRuleReplace      # $return_code ( \%farm, \%server, $rule)
 	my $farm   = shift;    # input: farm struc reference
 	my $server = shift;    # input: server struc reference
 	my $rule   = shift;    # input: iptables rule string
-	my $rule_num;          # possition to insert the rule
+	my $rule_num;          # position to insert the rule
 
 	# if the rule exist
 	$rule_num = &getIptRuleNumber( $rule, $$farm{ name }, $$server{ id } );

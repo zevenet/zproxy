@@ -23,14 +23,6 @@
 
 use IO::Socket;
 
-my $ext = 0;
-
-if ( -e "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi" )
-{
-	require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";
-	$ext = 1;
-}
-
 #check if a port in a ip is up
 sub checkport    # ($host,$port)
 {
@@ -345,6 +337,8 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 					}
 				}
 				untie @contents;
+
+				&reloadL4FarmsSNAT() if $status == 0;
 			}
 		}
 	}
@@ -426,6 +420,8 @@ sub delRoutes    # ($table,$if_ref)
 			}
 			untie @contents;
 
+			&reloadL4FarmsSNAT() if $status == 0;
+			
 			return $status;
 		}
 	}
@@ -605,7 +601,7 @@ sub setIfacesUp    # ($if_name,$type)
 				"All the Virtual Network interfaces with IPv6 and status up of $if_name have been put in up status."
 			);
 		}
-		elsif ( $type eq "vini" )
+		elsif ( $type eq "vlan" )
 		{
 			&zenlog(
 				  "All the Vlan with IPv6 and status up of $if_name have been put in up status."
@@ -872,6 +868,10 @@ sub delIf    # ($if_ref)
 	}
 
 	# delete graphs
+	unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_d.png" );
+	unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_m.png" );
+	unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_w.png" );
+	unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_y.png" );
 	unlink ( "/usr/local/zenloadbalancer/app/zenrrd/rrd/$$if_ref{name}iface.rrd" );
 
 	return $status;
@@ -1064,14 +1064,14 @@ sub sendGArp    # ($if,$ip)
 {
 	my ( $if, $ip ) = @_;
 
-	my @iface = split ( ":.", $if );
-	&zenlog( "sending '$arping_bin -c 2 -A -I $iface[0] $ip' " );
-	my @eject = `$arping_bin -c 2 -A -I $iface[0] $ip > /dev/null &`;
+	my @iface = split ( ":", $if );
 
-	if ( $ext == 1 )
-	{
-		&sendGPing( $iface[0] );
-	}
+	my $arping_cmd = "$arping_bin -c 2 -A -I $iface[0] $ip";
+
+	&zenlog( "$arping_cmd" );
+	system( "$arping_cmd &" );
+
+	&sendGPing( $iface[0] );
 }
 
 # Enable(true) / Disable(false) IP Forwarding
