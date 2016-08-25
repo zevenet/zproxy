@@ -189,6 +189,9 @@ print "</tbody>";
 print "</table>";
 print "</div></div>";
 
+# Close content area
+print "</div>";
+
 print "
 <script>
 \$(document).ready(function () {
