@@ -1,0 +1,398 @@
+#!/usr/bin/perl 
+###############################################################################
+#
+#     Zen Load Balancer Software License
+#     This file is part of the Zen Load Balancer software package.
+#
+#     Copyright (C) 2016 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
+#
+#     This library is free software; you can redistribute it and/or modify it
+#     under the terms of the GNU Lesser General Public License as published
+#     by the Free Software Foundation; either version 2.1 of the License, or
+#     (at your option) any later version.
+#
+#     This library is distributed in the hope that it will be useful, but
+#     WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+#     General Public License for more details.
+#
+#     You should have received a copy of the GNU Lesser General Public License
+#     along with this library; if not, write to the Free Software Foundation,
+#     Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+#
+###############################################################################
+
+## zcluster-manager 1.0
+
+use feature 'say';
+#~ use Data::Dumper;
+
+require '/usr/local/zenloadbalancer/config/global.conf';
+require '/usr/local/zenloadbalancer/www/functions_ext.cgi';
+require '/usr/local/zenloadbalancer/www/functions.cgi';
+
+#~ my $primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
+
+&zenlog( "ARGV:@ARGV" );
+
+my $object = shift @ARGV;
+my $command = shift @ARGV;
+
+#~ if ( $object eq 'node' )
+#~ {
+if ( $object eq 'enableZCluster' )
+{
+	exit &enableZCluster();
+}
+elsif ( $object eq 'disableZCluster' )
+{
+	exit &disableZCluster();
+}
+elsif ( $object eq 'setKeepalivedConfig' )
+{
+	exit &setKeepalivedConfig();
+}
+elsif ( $object eq 'setConntrackdConfig' )
+{
+	exit &setConntrackdConfig();
+}
+elsif ( $object eq 'getZClusterRunning' )
+{
+	#~ say &getZClusterRunning();
+	say ( ( &getZClusterRunning() )? '1': '0' );
+	#~ say ( &getZClusterRunning() )? 'true': 'false';
+	exit 0;
+}
+elsif ( $object eq 'getZClusterNodeStatus' )
+{
+	say &getZClusterNodeStatus();
+	exit 0;
+}
+elsif ( $object eq 'getConntrackdRunning' )
+{
+	#~ say &getConntrackdRunning();
+	say ( ( &getConntrackdRunning() )? '1': '0' );
+	exit 0;
+}
+elsif ( $object eq 'getZClusterArpStatus' )
+{
+	my $status;
+
+	if ( ! &getZClusterRunning() )
+	{
+		say 'ko';
+		exit 0;
+	}
+
+	my $node_role = &getZClusterNodeStatus();
+	my @arptables_lines = `arptables -L INPUT`;
+	
+	for my $if_ref ( &getInterfaceList() )
+	{
+		next if $if_ref->{ vini } eq ''; # only virtual ips
+
+		if ( $node_role ne 'master' && @arptables_lines !~ /^-j DROP -d $if_ref->{ addr } $/ )
+		{
+			$status = 'ko';
+			last;
+		}
+		elsif ( $node_role eq 'master' && @arptables_lines =~ /^-j DROP -d $if_ref->{ addr } $/ )
+		{
+			$status = 'ko';
+			last;
+		}
+	}
+
+	if ( $status ne 'ko' )
+	{
+		$status = 'ok';
+	}
+	
+	say $status;
+	exit 0;
+}
+elsif ( $object eq 'sync' )
+{
+	&zenlog("Syncing $configdir");
+	&runSync( $configdir );
+
+	&zenlog("Syncing $rttables");
+	&runSync( $rttables );
+}
+elsif ( $object eq 'notify_master' )
+{
+	exit &setNodeStatusMaster();
+}
+elsif ( $object eq 'notify_backup' )
+{
+	exit &setNodeStatusBackup();
+
+}
+elsif ( $object eq 'notify_fault' )
+{
+	exit &setNodeStatusBackup();
+}
+#~ }
+
+
+# farm commands
+if ( $object eq 'farm' )
+{
+	if ( $command eq 'start' )
+	{
+		my $farm_name = shift @ARGV;
+		&quit("Missing farm name argument") if ! $farm_name;
+
+		exit &_runFarmStart( $farm_name );
+	}
+	elsif ( $command eq 'stop' )
+	{
+		my $farm_name = shift @ARGV;
+		&quit("Missing farm name argument") if ! $farm_name;
+
+		exit &_runFarmStop( $farm_name );
+	}
+	elsif ( $command eq 'restart' )
+	{
+		my $farm_name = shift @ARGV;
+		&quit("Missing farm name argument") if ! $farm_name;
+
+		&_runFarmStop( $farm_name );
+		exit &_runFarmStart( $farm_name );
+	}
+	elsif ( $command eq 'delete' )
+	{
+		my $farm_name = shift @ARGV;
+		&quit("Missing farm name argument") if ! $farm_name;
+
+		exit &runFarmDelete( $farm_name );
+	}
+	else
+	{
+		&quit("Unrecognized farm command");
+	}
+}
+
+# interface commands
+# WARNING: only virtual interfaces are handled
+if ( $object eq 'interface' )
+{
+	if ( $command eq 'float-update' )
+	{
+		&reloadL4FarmsSNAT();
+		exit 0;
+	}
+
+	# common interface initial tasks
+	my $if_name = shift @ARGV;		# virtual interface name
+	my $ip_v = shift @ARGV // 4;	# ip version: 4 or 6 (default: 4)
+
+	# must have an interface argument
+	&quit( "Interface action not defined." ) if ! $if_name;
+	&quit( "Only virtual interfaces are supported." ) if $if_name !~ /.+:.+/;	# only accept virtual interfaces
+
+	my $if_ref = &getInterfaceConfig( $if_name, $ip_v );
+
+	exit 1 if ! $if_ref;
+
+	my $status;
+
+	# define different interface actions
+
+	# configures ip
+	if ( $command eq 'start' )
+	{
+		&disableInterfaceDiscovery( $if_ref ); # backup node only
+		$status = &addIp( $if_ref );
+		$status = &applyRoutes( "local", $if_ref ) if $status == 0;
+		&reloadL4FarmsSNAT();
+		exit $status;
+	}
+	elsif ( $command eq 'stop' ) # flush ip
+	{
+		$status = &delIp( $$if_ref{ name }, $$if_ref{ addr }, $$if_ref{ mask } );
+		&reloadL4FarmsSNAT();
+		&enableInterfaceDiscovery( $if_ref );
+		exit $status;
+	}
+	elsif ( $command eq 'delete' ) # remove interface stats and other
+	{
+		$status = &delIf( $if_name );
+		exit $status;
+	}
+}
+
+if ( $object eq 'gateway' )
+{
+	my $iface_name = shift @ARGV;
+	my $ip_v = shift @ARGV;
+
+	my $status;
+	
+	if ( $command eq 'update' )
+	{
+		my $if_ref = getInterfaceConfig( $if, $ip_version );
+
+		exit 1 if ! $if_ref;
+		
+		$status = &applyRoutes( "global", $if_ref, $gwaddr );
+		&reloadL4FarmsSNAT();
+		
+		exit $status;
+	}
+	elsif ( $command eq 'delete' ) # remove interface stats and other
+	{
+		my $if_ref = getInterfaceConfig( $defaultgwif6, $ip_version );
+
+		exit 1 if ! $if_ref;
+
+		$status = &delRoutes( "global", $if_ref );
+		exit $status;
+	}
+
+}
+
+
+# "GROUP"|"INSTANCE"
+#~ elsif ( $ARGV[0] eq 'GROUP' || $ARGV[0] eq 'INSTANCE' )
+#~ {
+    #~ # $1 = "GROUP"|"INSTANCE"
+    #~ # $2 = name of the group or instance
+    #~ # $3 = target state of transition
+    #~ #     ("MASTER"|"BACKUP"|"FAULT")
+    #~ # $4 = Node priority
+#~ 
+	#~ my %notif = (
+				  #~ type   => $ARGV[0],
+				  #~ name   => $ARGV[1],
+				  #~ target => $ARGV[2],
+				  #~ prio   => $ARGV[3],
+	#~ );
+#~ 
+	#~ my $target_state = $ARGV[2];
+#~ 
+	#~ if ( $notif{ target } eq 'MASTER' )
+	#~ {
+		#~ # &setNodeStatusMaster();
+	#~ }
+	#~ elsif ( $notif{ target } eq 'BACKUP' )
+	#~ {
+		#~ # &setNodeStatusBackup();
+	#~ }
+	#~ elsif ( $notif{ target } eq 'FAULT' )
+	#~ {
+		#~ # &setNodeStatusBackup();
+	#~ }
+#~ }
+elsif ( @ARGV == 0 )
+{
+	# FIXME: do something??
+}
+
+
+
+sub setNodeStatusMaster
+{
+	if ( &getZClusterNodeStatus() eq 'master' )
+	{
+		&zenlog("Node is already master");
+		return 0;
+	}
+
+	&zenlog("Switching node to master");
+	&setZClusterNodeStatus('master');
+
+	system("$primary_backup primary");
+
+	# flush arp rules
+	my $rc = &enableAllInterfacesDiscovery();
+
+	# announce ips ( arp and neigh )
+	my @configured_interfaces = @{ &getConfigInterfaceList() };
+	#~ &zenlog("Found candidate for GArping $_->{ name }, $_->{ addr }") for @configured_interfaces;
+	
+	for my $if_ref ( @configured_interfaces )
+	{
+		next if $if_ref->{ vini } eq '';
+		
+		&broadcastInterfaceDiscovery( $if_ref );
+	}
+	
+	# start sync
+	system( "$zenino &" );
+
+	# start farmguardians
+	my @farmsf = &getFarmList();
+
+	foreach my $ffile ( @farmsf )
+	{
+		$farmname = &getFarmName( $ffile );
+		$bstatus  = &getFarmBootStatus( $farmname );
+
+		if ( $bstatus eq "up" )
+		{
+			#~ print "  * Starting Farm $farmname:";
+			#~ $status = &_runFarmStart( $farmname, "false" );
+
+			#farmguardian configured and up?
+			$fgstatus = &getFarmGuardianStatus( $farmname );
+
+			if ( ( $bstatus == 'up' ) && ( $fgstatus == 1 ) )
+			{
+				my $error_code = &runFarmGuardianStart( $farmname, "" );
+				if ( $error_code )
+				{
+					&zenlog("Some error happened starting farmguardian for farm $farmname");
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+sub setNodeStatusBackup
+{
+	if ( &getZClusterNodeStatus() eq 'backup' )
+	{
+		&zenlog("Node is already backup");
+		#~ return 0;
+	}
+	else
+	{
+		&zenlog("Switching node to backup");
+		&setZClusterNodeStatus('backup');
+	}
+
+	system("$primary_backup backup");
+
+	system( "$zenino stop &" );
+
+	# stop farmguardians
+	system("pkill `pgrep farmguardian`");
+
+	# block/disable ip announces ( arp and neigh )
+	my @configured_interfaces = @{ &getConfigInterfaceList() };
+	for my $if_ref ( @configured_interfaces )
+	{
+		next if $if_ref->{ vini } eq '';
+		&disableInterfaceDiscovery( $if_ref );
+	}
+
+	return 0;
+}
+
+sub quit
+{
+	my $msg = shift;
+
+	if ( $msg )
+	{
+		&zenlog( $msg );
+		print "$msg\n";
+	}
+
+	exit 1;
+}
+
+#~ &zenlog( `grep RSS /proc/$$/status` );
