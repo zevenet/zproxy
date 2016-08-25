@@ -33,11 +33,6 @@ print "
   <div class=\"content container_12\">
 ";
 
-####################################
-# CLUSTER INFO
-####################################
-&getClusterInfo();
-
 ###################################
 #BREADCRUMB
 ###################################
@@ -102,20 +97,17 @@ elsif (    $action eq "Save & Up!"
 		&errormsg( "Interface name can not be empty" );
 		$swaddif = "false";
 	}
-
-	if ( $interface{ name } =~ /\s+/ )
+	elsif ( $interface{ name } =~ /\s+/ )
 	{
 		&errormsg( "Interface name is not valid" );
 		$swaddif = "false";
 	}
-
-	if ( $action eq "addvlan2" && &isnumber( $interface{ vlan } ) eq "false" )
+	elsif ( $action eq "addvlan2" && &isnumber( $interface{ vlan } ) eq "false" )
 	{
 		&errormsg( "Invalid vlan tag value, it must be a numeric value" );
 		$swaddif = "false";
 	}
-
-	if ( $action eq "addvip2" )
+	elsif ( $action eq "addvip2" )
 	{
 		my $if_ref = &getInterfaceConfig( $interface{ name }, 4 );
 		$if_ref = &getInterfaceConfig( $interface{ name }, 6 ) if !if_ref;
@@ -126,8 +118,7 @@ elsif (    $action eq "Save & Up!"
 			$swaddif = "false";
 		}
 	}
-
-	if ( $action eq "addvlan2" )
+	elsif ( $action eq "addvlan2" )
 	{
 		my $if_ref = &getInterfaceConfig( $interface{ name }, $interface{ ip_v } );
 
@@ -222,7 +213,7 @@ elsif (    $action eq "Save & Up!"
 
 		if ( $old_iface_ref )
 		{
-			# Delete old IP and Netmask
+			# Delete old IP and Netmask (the interface was already configured)
 			if ( $action eq "Save & Up!" )
 			{
 				# delete interface from system to be able to repace it
@@ -231,6 +222,8 @@ elsif (    $action eq "Save & Up!"
 						$$old_iface_ref{ addr },
 						$$old_iface_ref{ mask }
 				);
+
+				&runZClusterRemoteManager( 'interface', 'stop', $interface{ name } );
 			}
 
 			# Remove routes if the interface has its own route table: nic and vlan)
@@ -247,7 +240,7 @@ elsif (    $action eq "Save & Up!"
 		if ( $state == 0 )
 		{
 			$interface{ status } = "up";
-			&successmsg( "Network interface $interface{name} is now UP" );
+			&zenlog( "Network interface $interface{name} is now UP" );
 		}
 
 		# Writing new parameters in configuration file
@@ -259,7 +252,15 @@ elsif (    $action eq "Save & Up!"
 		&setInterfaceConfig( \%interface );
 		&applyRoutes( "local", \%interface );
 
+		&reloadL4FarmsSNAT();
+
 		&successmsg( "All is ok, saved $interface{name} interface config file" );
+
+		# zcluster: restart farm in remote node
+		if ( $interface{ vini } ne '' )
+		{
+			&runZClusterRemoteManager( 'interface', 'start', $interface{ name } );
+		}
 	}
 	else
 	{
@@ -274,6 +275,7 @@ elsif ( $action eq "deleteif" )
 	{
 		my %interface =
 		  %{ &getInterfaceConfig( $interface{ name }, $interface{ ip_v } ) };
+
 		my $hasvini = 0;
 		my $is_eth  = 0;
 
@@ -287,6 +289,10 @@ elsif ( $action eq "deleteif" )
 
 				&delRoutes( "local", $iface );
 				&downIf( $iface, 'writeconf' );
+				# FIXME: force sync?
+				&runZClusterRemoteManager( 'interface', 'stop', $iface->{ name } );
+				# always remove on remote node before than the local node
+				&runZClusterRemoteManager( 'interface', 'delete', $iface->{ name } );
 				&delIf( $iface );
 				$hasvini = 1;
 			}
@@ -304,11 +310,25 @@ elsif ( $action eq "deleteif" )
 		}
 		else    # vlan, vini
 		{
+			# zcluster: stop interface in remote node
+			if ( $interface{ vini } ne '' )
+			{
+				&runZClusterRemoteManager( 'interface', 'stop', $interface{ name } );
+			}
+
 			&downIf( \%interface, 'writeconf' );
 		}
 
-		&delIf( \%interface );
+		# zcluster: delete interface in remote node
+		# always remove on remote node before than the local node
+		if ( $interface{ vini } ne '' )
+		{
+			&runZClusterRemoteManager( 'interface', 'delete', $interface{ name } );
+		}
 
+		&delIf( \%interface );
+		
+		# the variables $hasvini and $is_eth are only used for different success messages
 		# Success messages
 		if ( $hasvini == 0 )
 		{
@@ -383,6 +403,7 @@ elsif ( $action eq "upif" )
 		}
 
 		my $if_status;
+		my $parent_if_status;
 		my $parent_if_name = &getParentInterfaceName( $interface{ name } );
 
 		if ( !$parent_if_name )
@@ -404,6 +425,12 @@ elsif ( $action eq "upif" )
 			if ( $state == 0 )
 			{
 				&successmsg( "Network interface $interface{name} is now UP" );
+
+				# zcluster: restart farm in remote node
+				if ( $interface{ vini } ne '' )
+				{
+					&runZClusterRemoteManager( 'interface', 'start', $interface{ name } );
+				}
 			}
 			else
 			{
@@ -450,6 +477,12 @@ elsif ( $action eq "downif" )
 	if ( $state == 0 )
 	{
 		&successmsg( "Interface $interface{name} is now DOWN" );
+
+		# zcluster: put down interface in remote node
+		if ( $interface{ vini } ne '' )
+		{
+			&runZClusterRemoteManager( 'interface', 'stop', $interface{ name } );
+		}
 	}
 	else
 	{
@@ -470,8 +503,6 @@ elsif ( $action =~ /editgw/ )
 		  :                      '';
 		my $if_ref = getInterfaceConfig( $if, $ip_version );
 
-		&zenlog( "if:$if ip_version:$ip_version gwaddr:$gwaddr" );
-
 		my $state = &applyRoutes( "global", $if_ref, $gwaddr );
 
 		# TODO write def gw in file
@@ -480,6 +511,7 @@ elsif ( $action =~ /editgw/ )
 
 		if ( $state == 0 )
 		{
+			&runZClusterRemoteManager( 'gateway', 'update', $if, ip_version );
 			&successmsg( "The default gateway has been changed successfully" );
 		}
 		else
@@ -505,6 +537,7 @@ elsif ( $action =~ /deletegw/ )
 
 	if ( $state == 0 )
 	{
+		&runZClusterRemoteManager( 'gateway', 'delete', $if, $ip_version );
 		&successmsg( "The default gateway has been deleted successfully" );
 	}
 	else
@@ -585,10 +618,60 @@ elsif ( $action eq 'deleteBond' )
 	}
 }
 
+# floating ips
+elsif ( $action eq "Modify" )
+{
+	#~ use Config::Tiny;
+	
+	my @interfaces = @{ &getSystemInterfaceList() };
+	my $float_ifaces_conf = &getConfigTiny( $floatfile );
+
+	&zenlog("float_ifaces_conf: ". $float_ifaces_conf );
+	&zenlog("float_ifaces_conf reference type: ". ref $float_ifaces_conf );
+
+	for my $iface ( @interfaces )
+	{
+		next if $iface->{ vini } ne '';
+		next if $iface->{ addr } eq '';
+
+		$float_ifaces_conf->{_}->{ $iface->{name} } = '';
+
+		for my $float_if ( @float_ifs )
+		{
+			my ( $parent_if ) = split( ":", $float_if );
+
+			next if $iface->{name} ne $parent_if;
+
+			$float_ifaces_conf->{_}->{ $iface->{name} } = $float_if;
+			
+			last;
+		}
+
+		&zenlog("floating interface: $iface->{name}=$float_ifaces_conf->{_}->{ $iface->{name} }");
+
+		#~ $iface->{ float } = $float_ifaces_conf->{_}->{ $iface->{name} };
+		#~ &setInterfaceConfig( $iface );
+	}
+
+	my $rc = &setConfigTiny( $floatfile, $float_ifaces_conf );
+
+	if ( $rc )
+	{
+		&zenlog("setConfigTiny successed");
+	}
+	else
+	{
+		&zenlog("setConfigTiny failed");
+	}
+
+	# refresh l4xnat rules
+	&reloadL4FarmsSNAT();
+	&runZClusterRemoteManager( 'interface', 'float-update' );
+}
+
 # Calculate cluster and GUI ips
 $guiip = &GUIip();
-$clrip = &getClusterRealIp();
-$clvip = &getClusterVirtualIp();
+$clrip = &getZClusterLocalIp();
 
 my @interfaces = @{ &getSystemInterfaceList() };
 
@@ -655,9 +738,7 @@ for my $iface ( @interfaces )
 	next if $$iface{ ip_v } == 6;
 
 	my $cluster_icon = '';
-	if (    ( $$iface{ addr } eq $clrip || $$iface{ addr } eq $clvip )
-		 && $clrip
-		 && $clvip )
+	if ( $clrip && ( $$iface{ addr } eq $clrip ) )
 	{
 		$cluster_icon =
 		  "&nbsp;&nbsp;<i class=\"fa fa-database action-icon fa-fw\" title=\"The cluster service interface has to be changed or disabled before to be able to modify this interface\"></i>";
@@ -1086,6 +1167,98 @@ print "
 	</div>
 </div>
 ";
+
+
+## Box: Floating ip's
+print "
+<div class=\"box grid_12\">
+
+	<div class=\"box-head\">
+		<span class=\"box-icon-24 fugue-24 plus\"></span>
+		<h2>Floating IP addresses</h2>
+	</div>
+";
+
+# Box content
+print "
+	<div class=\"box-content global-farm\">
+		<form method=\"post\" action=\"index.cgi\">
+			<input type=\"hidden\" name=\"id\" value=\"$id\">
+";
+
+# Interfaces
+my @ifaces = @{ &getActiveInterfaceList() };
+for my $iface ( @ifaces )
+{
+	next unless $iface->{ vini } eq '';
+
+	#~ my @float_candidates;
+	#~ 
+	#~ for my $iface_opt ( @ifaces )
+	#~ {
+		#~ next if $iface->{ vini } ne '';
+		#~ # push( @float_candidates, $iface_opt );
+	#~ }
+	
+	my $fl_iface_options = "<option value=\"\" selected>Choose an interface</option>\n";
+
+	foreach my $fl_iface_opt ( @ifaces )
+	{
+		next if $$fl_iface_opt{ vini } eq '';
+
+		#~ &zenlog( "$$iface{ name } -> $$fl_iface_opt{ name }" );
+		next if $$fl_iface_opt{ dev } ne $$iface{ dev };
+		next if $$fl_iface_opt{ vlan } ne $$iface{ vlan };
+
+		#~ &zenlog( "Added $$fl_iface_opt{ name } to $$iface{ name }" );
+
+		my $selected = '';
+
+		if ( $fl_iface_opt->{ name } eq $$iface{ float } )
+		{
+			$selected = "selected";
+		}
+		
+		#~ &zenlog(Dumper $iface);
+
+		$fl_iface_options .=
+		  "<option value=\"$$iface{ name }:$$fl_iface_opt{vini}\" $selected>$$fl_iface_opt{dev_ip_padded}</option>\n";
+	}
+	
+	print "
+			<div class=\"form-row\">
+				<p class=\"form-label\">
+					<b>$iface->{name}</b>
+				</p>
+				<div class=\"form-item\">
+					<select name=\"float_ifs[]\" class=\"fixedwidth monospace\">
+						$fl_iface_options
+					</select>
+				</div>
+			</div>
+	";
+}
+
+
+# Button: Save
+print "
+			<br>
+			<input type=\"submit\" value=\"Modify\" name=\"action\" class=\"button grey\">
+";
+
+# Close form
+print "
+		</form>
+";
+
+# Close box
+print "
+	</div>
+</div>
+";
+
+# Close content area
+print "</div>";
 
 print "
 <script>

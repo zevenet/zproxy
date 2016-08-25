@@ -21,18 +21,12 @@
 #
 ###############################################################################
 
-use Sys::Hostname;
-my $host = hostname();
+my $host = getHostname();
 
 print "
   <!--- CONTENT AREA -->
   <div class=\"content container_12\">
 ";
-
-####################################
-# CLUSTER INFO
-####################################
-&getClusterInfo();
 
 ###################################
 #BREADCRUMB
@@ -389,19 +383,6 @@ print "
 
 my $hosthttp = &GUIip();
 
-my (
-	 $lhost,  $lip,      $rhost, $rip,       $vipcl, $ifname,
-	 $typecl, $clstatus, $cable, $idcluster, $deadratio
-);
-
-if ( -e $filecluster )
-{
-	(
-	   $lhost,  $lip,      $rhost, $rip,       $vipcl, $ifname,
-	   $typecl, $clstatus, $cable, $idcluster, $deadratio
-	) = &getClusterConfig();
-}
-
 # Print "Zen cluster service is UP, Zen GUI should works over ip $lip";
 print "
 				<div class=\"form-item\">
@@ -420,44 +401,23 @@ else
 	print "<option value=\"*\">--All interfaces--</option>\n";
 }
 
-if ( grep ( /UP/, $lclusterstatus ) )
+# management interface candidates
+my @interfaces_available = @{ &getActiveInterfaceList() };
+
+foreach my $iface ( @interfaces_available )
 {
-	#cluster active you only can use all interfaces or cluster real ip
-	if ( $hosthttp eq $lip )
-	{
-		print "<option value=\"$lip\" selected>*cluster $lip</option>\n";
+	next if $$iface{ vini } ne ''; # discard virtual interfaces
 
-		#~ $existiphttp = "true";
-	}
-	else
+	my $selected = '';
+
+	if ( $hosthttp eq $$iface{ addr } )
 	{
-		print "<option value=\"$lip\">*cluster $lip</option>\n";
-	}
-}
-else
-{
-	my @interfaces_available = @{ &getActiveInterfaceList() };
-	my @bond_ifaces;
-	for my $bond_k ( keys %{ &getBondConfig() } )
-	{
-		next if $bond_k eq '_';
-		push @bond_ifaces, $bond_k;
+		$selected = "selected=\"selected\"";
 	}
 
-	foreach my $iface ( @interfaces_available )
-	{
-		next if $$iface{ vini } ne '';	# exclude virtual interfaces
+	print
+	  "<option value=\"$$iface{addr}\" $selected>$$iface{dev_ip_padded}</option>\n";
 
-		my $selected = '';
-
-		if ( $hosthttp eq $$iface{ addr } )
-		{
-			$selected = "selected=\"selected\"";
-		}
-
-		print
-		  "<option value=\"$$iface{addr}\" $selected>$$iface{dev_ip_padded}</option>\n";
-	}
 }
 
 print "

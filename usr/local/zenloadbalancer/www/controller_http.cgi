@@ -26,6 +26,8 @@
 #maintenance mode for servers
 $actualservice = $service;
 
+my $farm_config_changed = 0;
+
 #Edit Global Parameters
 if ( $action eq "editfarm-Parameters" )
 {
@@ -82,12 +84,18 @@ if ( $action eq "editfarm-Parameters" )
 				}
 			}
 
+			# zcluster: stop farm in remote node
+			&runZClusterRemoteManager( 'farm', 'stop', $farmname );
+
 			#Change farm name in configuration file
 			$fnchange = &setFarmNameParam( $farmname, $newfarmname );
 			if ( $fnchange != -1 )
 			{
 				$fnchange = &setNewFarmName( $farmname, $newfarmname );
 			}
+
+			# zcluster: start farm in remote node
+			&runZClusterRemoteManager( 'farm', 'start', $farmname ) if $fnchange;
 
 			# handle farm rename errors
 			if ( $fnchange == -1 )
@@ -120,6 +128,7 @@ if ( $action eq "editfarm-Parameters" )
 			{
 				&successmsg( "The Farm $farmname has been just renamed to $newfarmname" );
 				$farmname = $newfarmname;
+				$farm_config_changed = 1;
 
 				if ( $farm_status eq 'up' )
 				{
@@ -795,6 +804,7 @@ if ( $action eq "editfarm-maintenance" )
 	&setFarmBackendMaintenance( $farmname, $id_server, $service );
 	if ( $? eq 0 )
 	{
+		$farm_config_changed = 1;
 		&successmsg(
 					"Enabled maintenance mode for backend $id_server in service $service" );
 	}
@@ -806,6 +816,7 @@ if ( $action eq "editfarm-nomaintenance" )
 	&setFarmBackendNoMaintenance( $farmname, $id_server, $service );
 	if ( $? eq 0 )
 	{
+		$farm_config_changed = 1;
 		&successmsg( "Disabled maintenance mode for backend" );
 	}
 }
@@ -828,6 +839,7 @@ if ( $action eq "editfarm-restart" )
 	my $status = &runFarmStart( $farmname, "true" );
 	if ( $status == 0 )
 	{
+		$farm_config_changed = 1;
 		&successmsg( "The $farmname farm has been restarted" );
 		&setFarmHttpBackendStatus( $farmname );
 	}
@@ -942,6 +954,13 @@ if ( $lock != -1 )
 		$msg = $msg . ", please restart the farm to apply them. Restart here <form method=\"post\" action=\"index.cgi\" class=\"myform\"><button type=\"submit\" class=\"myicons\" title=\"restart\"><i class=\"fa fa-refresh action-icon fa-fw green\"></i></button><input type=\"hidden\" name=\"id\" value=\"$id\"><input type=\"hidden\" name=\"action\" value=\"editfarm-restart\"><input type=\"hidden\" name=\"farmname\" value=\"$farmname\"></form>";
 	&tipmsg( $msg );
 	}
+}
+
+# zcluster: apply remote changes
+if ( $farm_config_changed && &getFarmStatus( $farmname ) eq 'up' )
+{
+	# zcluster: restart farm in remote node
+	&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 }
 
 1;

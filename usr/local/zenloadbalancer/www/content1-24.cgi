@@ -63,7 +63,7 @@ my $vport = &getFarmVip( "vipp", $farmname );
 print "<div class=\"form-row\">\n";
 print "<p class=\"form-label\"><b>Farm Virtual IP and Virtual port</b></p>\n";
 
-$clrip = &getClusterRealIp();
+$clrip = &getZClusterLocalIp();
 
 my @interfaces_available = @{ &getActiveInterfaceList() };
 

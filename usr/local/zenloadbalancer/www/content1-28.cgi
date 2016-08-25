@@ -58,7 +58,7 @@ print
   "<p class=\"form-label\"><b>Farm Virtual IP and Virtual port(s).</b>Specify a single port, several ports (i.e 80,8080), port range (i.e. 21:23) or all ports with '*'. Also a combination of them should work.</p>";
 my $vip   = &getFarmVip( "vip",  $farmname );
 my $vport = &getFarmVip( "vipp", $farmname );
-my $clrip = &getClusterRealIp();
+my $clrip = &getZClusterLocalIp();
 my $disabled = "";
 
 if ( $farmprotocol eq "all" )

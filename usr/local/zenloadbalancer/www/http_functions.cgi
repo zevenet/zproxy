@@ -1704,7 +1704,7 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $farm_name, $new_farm_name ) = @_;
 
-	my $output = -1;
+	my $output = 0;
 	my @farm_configfiles = (
 							 "$configdir\/$farm_name\_status.cfg",
 							 "$configdir\/$farm_name\_pound.cfg",
@@ -1742,8 +1742,7 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 			}
 			untie @configfile;
 
-			rename ( "$farm_filename", "$new_farm_configfiles[0]" );
-			$output = $?;
+			rename ( "$farm_filename", "$new_farm_configfiles[0]" ) or $output = -1;
 
 			&zenlog( "configuration saved in $new_farm_configfiles[0] file" );
 		}
@@ -2300,8 +2299,7 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = "";
 
-	use Tie::File;
-	tie my @fileconf, 'Tie::File', "$configdir/$farm_filename";
+	open my $fileconf, '<', "$configdir/$farm_filename";
 
 	my $sw         = 0;
 	my $be_section = 0;
@@ -2312,7 +2310,7 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 	my $output_pr  = "";
 	my @return;
 
-	foreach my $line ( @fileconf )
+	foreach my $line ( <$fileconf> )
 	{
 		if ( $line =~ /^\tService/ )
 		{
@@ -2603,7 +2601,7 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 			}
 		}
 	}
-	untie @fileconf;
+	close $fileconf;
 
 	return $output;
 }

@@ -31,14 +31,14 @@ $run_cmd_name = ( split '/', $^X )[-1] if ! $run_cmd_name;
 
 #function that insert info through syslog
 #
-#&zenlog($priority,$text);
+#&zenlog($text, $priority);
 #
 #examples
-#&zenlog("info","This is test.");
-#&zenlog("err","Some errors happended.");
-#&zenlog("debug","testing debug mode");
+#&zenlog("This is test.", "info");
+#&zenlog("Some errors happended.", "err");
+#&zenlog("testing debug mode", "debug");
 #
-sub zenlog    # ($type,$string)
+sub zenlog    # ($string, $type)
 {
 	my $string = shift;            # string = message
 	my $type = shift // 'info';    # type   = log level (Default: info))
@@ -227,5 +227,39 @@ sub print_mem
 }
 
 sub debug { return 0 }
+
+# find index of an array element
+sub indexOfElementInArray
+{
+	my $searched_element = shift;
+	my $array_ref = shift;
+
+	if ( ref $array_ref ne 'ARRAY' )
+	{
+		return -2;
+	}
+	
+	my @arrayOfElements = @{ $array_ref };
+	my $index = 0;
+	
+	for my $list_element ( @arrayOfElements )
+	{
+		if ( $list_element eq $searched_element )
+		{
+			last;
+		}
+
+		$index++;
+	}
+
+	# if $index is greater than the last element index
+	if ( $index > $#arrayOfElements )
+	{
+		# return an invalid index
+		$index = -1;
+	}
+
+	return $index;
+}
 
 1;

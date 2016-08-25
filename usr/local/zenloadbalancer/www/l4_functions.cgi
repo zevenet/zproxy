@@ -30,7 +30,7 @@ use Tie::File;
 use Data::Dumper;
 
 #~ require "/usr/local/zenloadbalancer/config/global.conf";
-#~ our ( $basedir, $configdir, $logdir, $timeouterrors, $filecluster, $confhttp, $ntp, $backupfor, $backupdir, $rttables, $globalcfg, $version, $cipher_pci, $buy_ssl, $url, $htpass, $zapikey, $filedns, $fileapt, $tar, $ifconfig_bin, $ip_bin, $pen_bin, $pen_ctl, $fdisk_bin, $df_bin, $sshkeygen, $ssh, $scp, $rsync, $ucarp, $pidof, $ps, $tail, $zcat, $datentp, $arping_bin, $ping_bin, $openssl, $unzip, $mv, $ls, $cp, $iptables, $modprobe, $lsmod, $netstatNat, $gdnsd, $l4sd, $bin_id, $conntrack, $pound, $poundctl, $poundtpl, $piddir, $fwmarksconf, $defaultgw, $defaultgwif, $pingc, $libexec_dir, $farmguardian, $farmguardian_dir, $rrdap_dir, $img_dir, $rrd_dir, $zenino, $zeninopid, $zenrsync, $zenlatup, $zenlatdown, $zenbackup );
+#~ our ( $basedir, $configdir, $logdir, $timeouterrors, $filecluster, $confhttp, $ntp, $backupfor, $backupdir, $rttables, $globalcfg, $version, $cipher_pci, $buy_ssl, $url, $htpass, $zapikey, $filedns, $fileapt, $tar, $ifconfig_bin, $ip_bin, $pen_bin, $pen_ctl, $fdisk_bin, $df_bin, $sshkeygen, $ssh, $scp, $rsync, $pidof, $ps, $tail, $zcat, $datentp, $arping_bin, $ping_bin, $openssl, $unzip, $mv, $ls, $cp, $iptables, $modprobe, $lsmod, $netstatNat, $gdnsd, $l4sd, $bin_id, $conntrack, $pound, $poundctl, $poundtpl, $piddir, $fwmarksconf, $defaultgw, $defaultgwif, $pingc, $libexec_dir, $farmguardian, $farmguardian_dir, $rrdap_dir, $img_dir, $rrd_dir, $zenino, $zeninopid, $zenrsync, $zenbackup );
 # End Debug ###
 
 require "/usr/local/zenloadbalancer/www/farmguardian_functions.cgi";
@@ -536,7 +536,7 @@ sub getL4FarmAlgorithm    # ($farm_name)
 	my $output        = -1;
 	my $first         = 'true';
 
-	open FI, "<$configdir/$farm_filename";
+	open FI, "<", "$configdir/$farm_filename";
 
 	while ( my $line = <FI> )
 	{
@@ -633,7 +633,7 @@ sub getFarmProto    # ($farm_name)
 
 	if ( $farm_type eq "l4xnat" )
 	{
-		open FI, "<$configdir/$farm_filename";
+		open FI, "<", "$configdir/$farm_filename";
 		my $first = "true";
 		while ( my $line = <FI> )
 		{
@@ -661,7 +661,7 @@ sub getFarmNatType    # ($farm_name)
 
 	if ( $farm_type eq "l4xnat" )
 	{
-		open FI, "<$configdir/$farm_filename";
+		open FI, "<", "$configdir/$farm_filename";
 		my $first = "true";
 		while ( my $line = <FI> )
 		{
@@ -830,7 +830,7 @@ sub getL4FarmPersistence    # ($farm_name)
 	my $persistence   = -1;
 	my $first         = "true";
 
-	open FI, "<$configdir/$farm_filename";
+	open FI, "<", "$configdir/$farm_filename";
 
 	while ( my $line = <FI> )
 	{
@@ -924,7 +924,7 @@ sub getL4FarmMaxClientTime    # ($farm_name)
 	my $first         = "true";
 	my @max_client_time;
 
-	open FI, "<$configdir/$farm_filename";
+	open FI, "<", "$configdir/$farm_filename";
 
 	while ( my $line = <FI> )
 	{
@@ -949,7 +949,7 @@ sub getL4FarmServers    # ($farm_name)
 	my $sindex        = 0;
 	my @servers;
 
-	open FI, "<$configdir/$farm_filename"
+	open FI, "<", "$configdir/$farm_filename"
 	  or &zenlog( "Error opening file $configdir/$farm_filename: $!" );
 
 	while ( my $line = <FI> )
@@ -1524,7 +1524,7 @@ sub getL4FarmVip       # ($info,$farm_name)
 	my $first         = 'true';
 	my $output        = -1;
 
-	open FI, "<$configdir/$farm_filename";
+	open FI, "<", "$configdir/$farm_filename";
 
 	while ( my $line = <FI> )
 	{
@@ -1938,9 +1938,9 @@ sub getL4FarmBackendStatusCtl    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my @output;
 
-	tie my @content, 'Tie::File', "$configdir\/$farm_filename";
-	@output = grep { /^\;server\;/ } @content;
-	untie @content;
+	open my $farm_file, '<', "$configdir\/$farm_filename";
+	@output = grep { /^\;server\;/ } <$farm_file>;
+	close $farm_file;
 
 	return @output;
 }
@@ -1979,10 +1979,9 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	}
 	untie @configfile;
 
-	rename ( "$configdir\/$farm_filename", "$configdir\/$new_farm_filename" );
+	rename ( "$configdir\/$farm_filename", "$configdir\/$new_farm_filename" ) or $output = -1;
 	rename ( "$piddir\/$farm_name\_$farm_type.pid",
-			 "$piddir\/$new_farm_name\_$farm_type.pid" );
-	$output = $?;    # FIXME
+			 "$piddir\/$new_farm_name\_$farm_type.pid" ) or $output = -1;
 
 	# Rename fw marks for this farm
 	&renameMarks( $farm_name, $new_farm_name );
@@ -2507,6 +2506,40 @@ sub refreshL4FarmRules    # AlgorithmRules
 
 	# apply new rules
 	return $return_code;
+}
+
+sub reloadL4FarmsSNAT
+{
+	for my $farm_name ( &getFarmNameList() )
+	{
+		my $farm_type = &getFarmType( $farm_name );
+
+		next if $farm_type ne 'l4xnat';
+		next if &getFarmStatus( $farm_name ) ne 'up';
+
+		my $l4f_conf = &getL4FarmStruct( $farm_name );
+
+		next if $$l4f_conf{ nattype } ne 'nat';
+		
+		foreach my $server ( @{ $$l4f_conf{ servers } } )
+		{
+			my $rule;
+			
+			if ( $$l4f_conf{ vproto } eq 'sip' )
+			{
+				$rule = &genIptSourceNat( $l4f_conf, $server );
+			}
+			else
+			{
+				$rule = &genIptMasquerade( $l4f_conf, $server );
+			}
+
+			$rule = &getIptRuleReplace( $l4f_conf, $server, $rule );
+
+			#~ push ( @{ $$rules{ t_snat } }, $rule );
+			&applyIptRules( $rule );
+		}
+	}
 }
 
 # do not remove this

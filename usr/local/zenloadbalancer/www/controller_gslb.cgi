@@ -23,13 +23,17 @@
 
 ### CONTROLLER GSLB FARM ###
 
+my $farm_config_changed = 0;
+
 #Farm restart
 if ( $action eq "editfarm-restart" )
 {
 	&runFarmStop( $farmname, "true" );
 	my $status = &runFarmStart( $farmname, "true" );
+	
 	if ( $status == 0 )
 	{
+		$farm_config_changed = 1;
 		&successmsg( "The $farmname farm has been restarted" );
 	}
 	else
@@ -46,21 +50,22 @@ if ( $action eq "editfarm-dpc" )
 		&errormsg( "Invalid service, please select a valid value" );
 		$error = 1;
 	}
-	if ( $farmname =~ /^$/ )
+	elsif ( $farmname =~ /^$/ )
 	{
 		&errormsg( "Invalid farm name, please select a valid value" );
 		$error = 1;
 	}
-	if ( $dpc =~ /^$/ )
+	elsif ( $dpc =~ /^$/ )
 	{
 		&errormsg( "Invalid default port health check, please select a valid value" );
 		$error = 1;
 	}
-	if ( $error == 0 )
+	elsif ( $error == 0 )
 	{
-		&setFarmVS( $farmname, $service, "dpc", $dpc );
-		if ( $? eq 0 )
+		my $status = &setFarmVS( $farmname, $service, "dpc", $dpc );
+		if ( $status == 0 )
 		{
+			$farm_config_changed = 1;
 			&successmsg(
 				"The default port health check for the service $service has been successfully changed"
 			);
@@ -83,21 +88,22 @@ if ( $action eq "editfarm-ns" )
 		&errormsg( "Invalid zone, please select a valid value" );
 		$error = 1;
 	}
-	if ( $farmname =~ /^$/ )
+	elsif ( $farmname =~ /^$/ )
 	{
 		&errormsg( "Invalid farm name, please select a valid value" );
 		$error = 1;
 	}
-	if ( $ns =~ /^$/ )
+	elsif ( $ns =~ /^$/ )
 	{
 		&errormsg( "Invalid name server, please select a valid value" );
 		$error = 1;
 	}
-	if ( $error == 0 )
+	elsif ( $error == 0 )
 	{
-		&setFarmVS( $farmname, $service, "ns", $ns );
-		if ( $? eq 0 )
+		my $status = &setFarmVS( $farmname, $service, "ns", $ns );
+		if ( $status == 0 )
 		{
+			$farm_config_changed = 1;
 			&successmsg(
 						"The name server for the zone $service has been successfully changed" );
 			&runFarmReload( $farmname );
@@ -117,12 +123,12 @@ if ( $action eq "editfarm-deleteservice" )
 		&errormsg( "Invalid service type, please select a valid value" );
 		$error = 1;
 	}
-	if ( $error == 0 )
+	elsif ( $error == 0 )
 	{
 		if ( $service_type eq "zone" )
 		{
-			&setGSLBFarmDeleteZone( $farmname, $service );
-			if ( $? == 0 )
+			my $status = &setGSLBFarmDeleteZone( $farmname, $service );
+			if ( $status == 0 )
 			{
 				&successmsg( "Deleted zone $service in farm $farmname" );
 				&runFarmReload( $farmname );
@@ -137,6 +143,7 @@ if ( $action eq "editfarm-deleteservice" )
 				# rc = return code
 				if ( $rc == 0 )
 				{
+					$farm_config_changed = 1;
 					&successmsg( "Deleted service $service in farm $farmname" );
 					&setFarmRestart( $farmname );
 				}
@@ -189,8 +196,14 @@ if ( $action eq "editfarm-Parameters" )
 			}
 			else
 			{
+				# zcluster: stop farm in remote node
+				&runZClusterRemoteManager( 'farm', 'stop', $farmname );
+
 				#Change farm name
 				$fnchange = &setNewFarmName( $farmname, $newfarmname );
+
+				# zcluster: start farm in remote node
+				&runZClusterRemoteManager( 'farm', 'start', $farmname ) if $fnchange;
 
 				if ( $fnchange == -1 )
 				{
@@ -206,6 +219,7 @@ if ( $action eq "editfarm-Parameters" )
 				}
 				else
 				{
+					$farm_config_changed = 1;
 					&successmsg( "The Farm $farmname has been just renamed to $newfarmname." );
 					$farmname = $newfarmname;
 				}
@@ -232,6 +246,7 @@ if ( $action eq "editfarm-Parameters" )
 			$status = &setFarmVirtualConf( $vip, $vipp, $farmname );
 			if ( $status != -1 )
 			{
+				$farm_config_changed = 1;
 				&successmsg(
 					"Virtual IP and Virtual Port has been modified, the $farmname farm need be restarted"
 				);
@@ -272,6 +287,7 @@ if ( $action eq "editfarm-deleteserver" )
 			$status = &remFarmZoneResource( $id_server, $farmname, $service );
 			if ( $status != -1 )
 			{
+				$farm_config_changed = 1;
 				&runFarmReload( $farmname );
 				&successmsg(
 						  "The resource with ID $id_server in the zone $service has been deleted" );
@@ -301,6 +317,7 @@ if ( $action eq "editfarm-deleteserver" )
 				}
 				else
 				{
+					$farm_config_changed = 1;
 					&successmsg(
 							"The backend with ID $id_server in the service $service has been deleted" );
 					&setFarmRestart( $farmname );
@@ -386,6 +403,7 @@ if ( $action eq "editfarm-saveserver" )
 
 				if ( $status != -1 )
 				{
+					$farm_config_changed = 1;
 					&runFarmReload( $farmname );
 					&successmsg(
 							"The resource name $resource_server for the zone $zone has been modified" );
@@ -413,6 +431,7 @@ if ( $action eq "editfarm-saveserver" )
 
 			if ( $status != -1 )
 			{
+				$farm_config_changed = 1;
 				&successmsg(
 							 "The backend $rip_server for the service $service has been modified" );
 				&setFarmRestart( $farmname );
@@ -443,6 +462,7 @@ if ( $action eq "editfarm-addservice" )
 
 			if ( $result == 0 )
 			{
+				$farm_config_changed = 1;
 				&setFarmRestart( $farmname );
 				&successmsg( "Zone $zone has been added to the farm" );
 			}
@@ -483,6 +503,7 @@ if ( $action eq "editfarm-addservice" )
 				$status = &setGSLBFarmNewService( $farmname, $service, $lb );
 				if ( $status != -1 )
 				{
+					$farm_config_changed = 1;
 					&successmsg( "The service $service has been successfully created" );
 					&setFarmRestart( $farmname );
 				}
@@ -502,6 +523,13 @@ if ( -e "/tmp/$farmname.lock" )
 	&tipmsg(
 		  "There're changes that need to be applied, stop and start farm to apply them!"
 	);
+}
+
+# zcluster: apply remote changes
+if ( $farm_config_changed && &getFarmStatus( $farmname ) eq 'up' )
+{
+	# zcluster: restart farm in remote node
+	&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 }
 
 1;

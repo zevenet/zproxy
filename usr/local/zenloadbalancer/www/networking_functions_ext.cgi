@@ -34,8 +34,10 @@ sub sendGPing    # ($pif)
 	my $gw = &gwofif( $pif );
 	if ( $gw ne "" )
 	{
-		&zenlog( "sending '$ping_bin -c $pingc $gw' " );
-		my @eject = `$ping_bin -c $pingc $gw > /dev/null &`;
+		my $ping_cmd = "$ping_bin -c $pingc $gw";
+
+		&zenlog( "$ping_cmd" );
+		system( "$ping_cmd &" );
 	}
 }
 
@@ -133,6 +135,14 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 	$iface{ mac } = $socket->if_hwaddr( $iface{ dev } );
 
+	if ( $iface{ vini } eq '' && $iface{ addr } )
+	{
+		use Config::Tiny;
+		my $float = Config::Tiny->read( $floatfile );
+
+		$iface{ float } = $float->{_}->{ $iface{ name } } // '';
+	}
+
 	return \%iface;
 }
 
@@ -148,12 +158,10 @@ sub setInterfaceConfig    # $bool ($if_ref)
 		return undef;
 	}
 
-	&zenlog( "setInterfaceConfig: " . Dumper $if_ref);
-	my @if_params = qw( name addr mask gateway );
+	&zenlog( "setInterfaceConfig: " . Dumper $if_ref) if &debug();
+	my @if_params = ( 'name', 'addr', 'mask', 'gateway' );
 
-	#~ my $if_line = join (';', @if_params);
-	my $if_line =
-	  join ( ';', @{ $if_ref }{ 'name', 'addr', 'mask', 'gateway' } ) . ';';
+	my $if_line = join ( ';', @{ $if_ref }{ @if_params } ) . ';';
 	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
 
 	if ( !-f $config_filename )
@@ -190,11 +198,8 @@ sub setInterfaceConfig    # $bool ($if_ref)
 			}
 		}
 
-		&zenlog( "setInterfaceConfig: if_line:$if_line status:$$if_ref{status}" );
-
 		if ( !$ip_line_found )
 		{
-			&zenlog( "setInterfaceConfig: push  if_line:$if_line" );
 			push ( @file_lines, $if_line );
 		}
 
@@ -943,6 +948,200 @@ sub getBondAvailableSlaves
 
 	close $dir_h;
 	return @avail_ifaces;
+}
+
+# get floating interface or output interface
+sub getFloatInterfaceForAddress
+{
+	my $remote_ip_address = shift;
+
+	my $subnet_interface;
+	my $gateway_interface;
+	my @interface_list = @{ &getConfigInterfaceList() };
+
+	use NetAddr::IP;
+	my $remote_ip = NetAddr::IP->new( $remote_ip_address );
+
+	# find interface in range
+	for my $iface ( @interface_list )
+	{
+		next if $iface->{ vini } ne '';
+
+		if ( $defaultgwif eq $iface->{ name } )
+		{
+			$gateway_interface = $iface;
+		}
+
+		my $network = NetAddr::IP->new( $iface->{ addr }, $iface->{ mask } );
+		
+		if ( $remote_ip->within( $network ) )
+		{
+			$subnet_interface = $iface;
+		}
+	}
+
+	# if no interface found get the interface to the default gateway
+	if ( ! $subnet_interface )
+	{
+		$subnet_interface = $gateway_interface;
+	}
+
+	my $output_interface;
+
+	if ( $subnet_interface->{ float } )
+	{
+		# find floating interface
+		for my $iface ( @interface_list )
+		{
+			next if $iface->{ vini } eq '';
+
+			if ( $iface->{ name } eq $subnet_interface->{ float } )
+			{
+				$output_interface = $iface;
+			}
+		}
+	}
+	else
+	{
+		$output_interface = $subnet_interface;
+	}
+
+	return $output_interface;
+}
+
+sub getConfigTiny
+{
+	my $file_path = shift;
+
+	if ( ! -f $file_path )
+	{
+		open my $fi, '>', $file_path;
+		&zenlog("Could not open file $file_path: $!") if ! $fi;
+		close $fi;
+	}
+	
+	use Config::Tiny;
+
+	# returns object on success or undef on error.
+	return Config::Tiny->read( $file_path );
+}
+
+sub setConfigTiny
+{
+	my $file_path = shift;
+	my $config_ref = shift;
+
+	&zenlog("setConfigTiny: setConfigTiny=$file_path") if 1;
+	&zenlog("setConfigTiny: config_ref=". ref $config_ref) if 1;
+	&zenlog("setConfigTiny: config_ref=". Dumper $config_ref) if 1;
+
+	if ( ! -f $file_path )
+	{
+		&zenlog("Could not find $file_path: $!");
+		return undef;
+	}
+
+	if ( ref $config_ref ne 'Config::Tiny' )
+	{
+		&zenlog("Ilegal configuration argument.");
+		return undef;
+	}
+
+	use Config::Tiny;
+
+	# returns true on success or undef on error,
+	return $config_ref->write( $file_path );
+}
+
+# configure interface reference in the system, and optionally save the configuration
+sub setInterfaceUp
+{
+	my $interface = shift;	# Interface reference
+	my $writeconf = shift;	# TRUE value to write configuration, FALSE otherwise
+
+	if ( ref $interface ne 'HASH' )
+	{
+		&zenlog("Argument must be a reference");
+		return 1;
+	}
+	
+	# vlans need to be created if they don't already exist
+	my $exists = &ifexist( $interface->{ name } );
+
+	if ( $exists eq "false" )
+	{
+		&createIf( $interface );    # create vlan if needed
+	}
+
+	if ( $writeconf )
+	{
+		my $old_iface_ref =
+		&getInterfaceConfig( $interface->{ name }, $interface->{ ip_v } );
+
+		if ( $old_iface_ref )
+		{
+			# Delete old IP and Netmask
+			# delete interface from system to be able to repace it
+			&delIp(
+					$$old_iface_ref{ name },
+					$$old_iface_ref{ addr },
+					$$old_iface_ref{ mask }
+			);
+
+			# Remove routes if the interface has its own route table: nic and vlan
+			if ( $interface->{ vini } eq '' )
+			{
+				&delRoutes( "local", $old_iface_ref );
+			}
+		}
+	}
+
+	&addIp( $interface );
+
+	my $state = &upIf( $interface, $writeconf );
+
+	if ( $state == 0 )
+	{
+		$interface->{ status } = "up";
+		&zenlog( "Network interface $interface->{name} is now UP" );
+	}
+
+	# Writing new parameters in configuration file
+	if ( $interface->{ name } !~ /:/ )
+	{
+		&writeRoutes( $interface->{ name } );
+	}
+
+	&setInterfaceConfig( $interface ) if $writeconf;
+	&applyRoutes( "local", $interface );
+
+	return 0; # FIXME
+}
+
+# from zbin/zenloadbalancer, almost exactly
+sub configureDefaultGW    #()
+{
+	# input: global variables $defaultgw and $defaultgwif
+	if ( $defaultgw ne '' && $defaultgwif ne '' )
+	{
+		my $if_ref = &getInterfaceConfig( $defaultgwif, 4 );
+		if ( $if_ref )
+		{
+			print "Default Gateway:$defaultgw Device:$defaultgwif\n";
+			&applyRoutes( "global", $if_ref, $defaultgw );
+		}
+	}
+
+	# input: global variables $$defaultgw6 and $defaultgwif6
+	if ( $defaultgw6 ne '' && $defaultgwif6 ne '' )
+	{
+		my $if_ref = &getInterfaceConfig( $defaultgwif, 6 );
+		if ( $if_ref )
+		{
+			print "Default Gateway:$defaultgw6 Device:$defaultgwif6\n";
+			&applyRoutes( "global", $if_ref, $defaultgw6 );
+		}
+	}
 }
 
 1;
