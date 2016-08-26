@@ -180,9 +180,9 @@ $ssh_copy_id="/usr/local/zenloadbalancer/app/zbin/ssh-copy-id.sh";
 $primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
 
 # sshkey file path
-$key_path='/root/.ssh';
+$key_path="/root/.ssh";
 # sshkey file path
-$key_id='id_rsa';
+$key_id="id_rsa";
 # ssh keygen command
 $keygen_cmd="ssh-keygen -t rsa -f $key_path/$key_id -N \"\" -q";
 
