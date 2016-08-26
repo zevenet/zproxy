@@ -275,6 +275,10 @@ This value can be overridden for specific listeners.
 Ignore case when matching URLs (default: 0). This value can be
 overridden for specific services.
 .TP
+\fBIgnore100continue\fR 0|1
+Ignore Header Expect: 100-continue (default: 1, Ignored). 
+If 0 pound manages Expect: 100-continue headers.
+.TP
 \fBDynScale\fR 0|1
 Enable or disable the dynamic rescaling code (default: 0). If enabled
 .B Pound
