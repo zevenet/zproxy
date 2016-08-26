@@ -532,6 +532,25 @@ sub stopIf    # ($if)
 		close ROUTINGFILE;
 	}
 
+	#if virtual interface
+	if ( $if =~ /\:/ )
+	{
+		my @ifphysic = split ( /:/, $if );
+
+		&logfile( "Stopping if $if" );
+		my $ip = &iponif( $if );
+		if ( $ip =~ /\./ )
+		{
+			$ipmask = &maskonif( $if );
+			my ( $net, $mask ) = ipv4_network( "$ip / $ipmask" );
+			&logfile(
+					 "running '$ip_bin addr del $ip/$mask brd + dev @ifphysic[0] label $if' " );
+			@eject = `$ip_bin addr del $ip/$mask brd + dev @ifphysic[0] label $if`;
+
+		}
+
+	}
+
 	return $status;
 }
 
