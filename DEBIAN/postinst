@@ -74,6 +74,7 @@ SSHDCONFIG="/etc/ssh/sshd_config"
 if [[ `grep -c "^PermitRootLogin.*yes" $SSHDCONFIG` == '0' ]]; then
 	sed -i -e 's/^PermitRootLogin.*/PermitRootLogin yes/' $SSHDCONFIG
 	/etc/init.d/ssh reload 2> /dev/null
+fi
 
 # SNMP service
 if [ `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]
