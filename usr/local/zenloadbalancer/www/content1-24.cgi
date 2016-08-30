@@ -552,7 +552,6 @@ my $nService = 0;
 
 foreach $line ( @file )
 {
-
 	if ( $line !~ /Service "$service"/ && $line =~ /\tService\ \"/ )
 	{
 		if ( $first eq 1 )
@@ -1044,7 +1043,6 @@ foreach $line ( @file )
 				&createmenuserversfarm( "normal", $farmname, $nserv );
 				print "</tr>";
 			}
-
 		}
 
 		print "<a name=\"backendlist-$sv\"></a>";
@@ -1102,11 +1100,6 @@ foreach $line ( @file )
 		$service = $farmname;
 		break;
 	}
-
-	if ( $vserver == 0 && $first == 1 )
-	{
-	}
-
 }
 
 # If there are services
