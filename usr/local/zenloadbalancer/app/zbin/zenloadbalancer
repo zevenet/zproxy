@@ -576,7 +576,6 @@ if ( $eject eq "start" )
 				next if ( $$iface{ vini } eq '' );
 				next if ( $$iface{ status } ne "up" );
 
-		&zenlog("Punto 4");
 				&disableInterfaceDiscovery( $iface );
 			}
 		}
