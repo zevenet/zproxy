@@ -1140,14 +1140,51 @@ sub isValidPortNumber    # ($port)
 	return $valid;
 }
 
-sub getInterfaceList    # ($socket)
+=begin nd
+	Function: getInterfaceList
+
+	Return a list of all network interfaces detected in the system.
+
+	Parameters:
+
+		None.
+
+	Returns:
+
+		array - list of network interface names.
+		array empty - if no network interface is detected.
+
+	See Also:
+
+		listActiveInterfaces
+=cut
+sub getInterfaceList
 {
-	my $socket = shift;
+	my @interfaces;
+	my $iface;
 
-	# udp for a basic socket
-	$socket = getIOSocket() if !defined ( $socket );
+	my @iplist = `ip addr list`;
+	foreach my $line ( @iplist )
+	{
+		if ( $line =~ /^.: / )
+		{
+			my @linelist = split /[:@,\s\/]+/, $line;
+			$iface = @linelist[1];
+			goto addiface;
+		}
+		if ( $iface ne "" && $line =~ /inet.*$iface.+/ )
+		{
+			my @linelist = split /[\s\/]+/, $line;
+			$iface = @linelist[$linelist - 1];
+			goto addiface;
+		}
+		next;
+	  addiface:
+		push ( @interfaces, $iface );
+		next;
+	}
 
-	return $socket->if_list;
+	return @interfaces;
 }
 
 # IO Socket is needed to get information about interfaces
