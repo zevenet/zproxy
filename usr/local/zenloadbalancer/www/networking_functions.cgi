@@ -612,12 +612,8 @@ sub setIfacesUp    # ($if_name,$type)
 			);
 		}
 	}
-	else
-	{
-		&logfile("Error reading directory $configdir: $!");
-	}
-
-	return \@configured_interfaces;
+	
+	return @ifaces;
 }
 
 # create network interface
@@ -740,7 +736,7 @@ sub stopIf    # ($if_ref)
 	if ( $$if_ref{vini} eq '' )
 	{
 		# If $if is a Interface, delete that IP
-		my $ip_cmd = "$ip_bin addr del $$if_ref{addr}/$$if_ref{mask} dev $$if_ref{name}";
+		my $ip_cmd = "$ip_bin address flush dev $$if_ref{name}";
 		$status = &logAndRun($ip_cmd);
 		
 		# If $if is a Vlan, delete Vlan

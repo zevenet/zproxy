@@ -226,8 +226,6 @@ sub new_vini()
 		exit;
 	}
 
-	my $ip_v = &ipversion($json_obj->{ip});
-
 	# Get params from parent interface
 	my $new_if_ref = &getInterfaceConfig( $fdev, $ip_v );
 	$error = 'true' if ! $new_if_ref;

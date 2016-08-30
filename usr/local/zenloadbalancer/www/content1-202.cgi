@@ -573,6 +573,7 @@ foreach $zone ( @zones )
 			#
 			my $zoneaux = $zone;
 			$zoneaux =~ s/\./\_/g;
+
 			print "<tr class=\"selected\">";
 
 			print "<form method=\"post\"  class=\"myform\" action=\"index.cgi\">"
