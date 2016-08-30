@@ -49,7 +49,7 @@ print "<div class=\"grid_6\"><h1>Settings :: Interfaces</h1></div>\n";
 &getClusterStatus();
 
 my $socket = IO::Socket::INET->new( Proto => 'udp' );
-my @system_interfaces = $socket->if_list;
+my @system_interfaces = &getInterfaceList();
 
 my %interface;
 
