@@ -43,7 +43,7 @@
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"profile":"TCP", "vip":"178.62.126.152", "vport":"80","interface":"eth0"}'
-#       https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/newfarmTCP
+#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/newfarmTCP
 #
 # @apiSampleRequest off
 #
@@ -339,7 +339,7 @@ sub new_farm()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"maxconnections":"1000", "ip":"192.168.0.1", "port":"80",
-#       "priority":"1", "weight":"1"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmTCP/backends
+#       "priority":"1", "weight":"1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmTCP/backends
 #
 # @apiSampleRequest off
 #
@@ -384,7 +384,7 @@ sub new_farm()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"timeout":"10", "ip":"192.168.0.1", "port":"80", "weight":"1",
-#       "service":"service1"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmHTTP/backends
+#       "service":"service1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP/backends
 #
 # @apiSampleRequest off
 #
@@ -423,7 +423,7 @@ sub new_farm()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"ip":"192.168.1.5", "service":"sev1"}'
-#       https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmGSLB/backends
+#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/backends
 #
 # @apiSampleRequest off
 #
@@ -465,7 +465,7 @@ sub new_farm()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"ip":"192.168.1.8", "port":"79", "priority":"3",
-#       "weight":"2"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/L4FARM/backends
+#       "weight":"2"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/L4FARM/backends
 #
 # @apiSampleRequest off
 #
@@ -507,7 +507,7 @@ sub new_farm()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"ip":"192.168.1.5", "interface":"eth0","weight":"2",
-#       "priority":"3"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/DATAFARM/backends
+#       "priority":"3"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/DATAFARM/backends
 #
 # @apiSampleRequest off
 #**
@@ -1538,7 +1538,7 @@ sub new_farm_backend()
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"id":"newserv"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmHTTP/services
+#       -u zapi:<password> -d '{"id":"newserv"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP/services
 #
 # @apiSampleRequest off
 #
@@ -1576,7 +1576,7 @@ sub new_farm_backend()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"algorithm":"roundrobin", "id":"newserv"}'
-#       https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmGSLB/services
+#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/services
 #
 # @apiSampleRequest off
 #

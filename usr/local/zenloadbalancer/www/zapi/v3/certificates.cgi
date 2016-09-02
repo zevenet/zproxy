@@ -41,7 +41,7 @@
 #
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password>  https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/certificates
+#       -u zapi:<password>  https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates
 #
 #@apiSampleRequest off
 #
@@ -123,7 +123,7 @@ sub certificates()
 #
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password>  https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/certificates/example.pem
+#       -u zapi:<password>  https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates/example.pem
 #
 #@apiSampleRequest off
 #
@@ -212,7 +212,7 @@ sub delete_certificate()
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"file":"example.pem"}'
-#       https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/httptest/addcertificate
+#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/httptest/addcertificate
 #
 #@apiSampleRequest off
 #
@@ -358,7 +358,7 @@ sub add_farmcertificate()
 #
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password>  https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/farmhttp/deletecertificate/2
+#       -u zapi:<password>  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/farmhttp/deletecertificate/2
 #
 #@apiSampleRequest off
 #
@@ -546,7 +546,7 @@ sub delete_farmcertificate()
 # *        issuer: C=ES; ST=Spain; L=Spain; O=Sofintel; OU=Telecommunications; CN=Zen Load Balancer; emailAddress=zenloadbalancer-support@lists.sourceforge.net
 # *        SSL certificate verify result: self signed certificate (18), continuing anyway.
 # * Server auth using Basic with user 'zapi'
-# > POST /zapi/v2.1/zapi.cgi/certificates HTTP/1.1
+# > POST /zapi/v3/zapi.cgi/certificates HTTP/1.1
 # > Authorization: Basic emFwaTpONk90M2pkdUZmZjRTbkU=
 # > User-Agent: curl/7.26.0
 # > Host: 46.101.60.162:444
@@ -576,7 +576,7 @@ sub delete_farmcertificate()
 #@apiExample {curl} Example Usage:
 #       curl -v --tcp-nodelay --tlsv1 -k -X POST -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -F fileupload=@newcert.pem -F filename=newcert.pem
-#        https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/certificates
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates
 #
 #@apiSampleRequest off
 #
@@ -589,7 +589,7 @@ sub upload_certs()
 #
 # Curl command:
 #
-# curl -v --tcp-nodelay --tlsv1 -X POST -k  -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -u zapi:admin  -F fileupload=@/opt/example.pem -F filename=example.pem https://46.101.46.14:444/zapi/v2.1/zapi.cgi/certificates
+# curl -v --tcp-nodelay --tlsv1 -X POST -k  -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -u zapi:admin  -F fileupload=@/opt/example.pem -F filename=example.pem https://46.101.46.14:444/zapi/v3/zapi.cgi/certificates
 #
 
 	use CGI;

@@ -12,11 +12,11 @@
 #
 ###############################################################################
 
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/get_tcp.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/get_http.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/get_gslb.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/get_l4.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/get_datalink.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/get_tcp.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/get_http.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/get_gslb.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/get_l4.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/get_datalink.cgi";
 
 our $origin;
 if ( $origin ne 1 )
@@ -45,7 +45,7 @@ if ( $origin ne 1 )
 #}
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	-u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms
+#	-u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms
 #
 #@apiSampleRequest off
 #**

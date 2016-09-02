@@ -44,7 +44,7 @@
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"id":"myzone.com"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmGSLB/zones
+#       -u zapi:<password> -d '{"id":"myzone.com"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones
 #
 # @apiSampleRequest off
 #
@@ -256,7 +256,7 @@ sub new_farm_zone()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"rname":"resource2", "rdata":"192.168.0.9", "ttl":"10", "type":"NS",
-#       "zone":"zone1.com"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmGSLB/zoneresources
+#       "zone":"zone1.com"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zoneresources
 #
 # @apiSampleRequest off
 #

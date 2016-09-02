@@ -63,7 +63,7 @@
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"algorithm":"weight","persistence":"none","newfarmname":"newfarmL4",
 #       "protocol":"tcp","nattype":"nat","ttl":"125","vip":"178.62.126.152","vport":"81"}'
-#        https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/L4FARM
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/L4FARM
 #
 # @apiSampleRequest off
 #

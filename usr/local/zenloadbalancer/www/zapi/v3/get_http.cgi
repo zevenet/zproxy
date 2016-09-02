@@ -94,7 +94,7 @@
 #
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password>  https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmHTTP
+#       -u zapi:<password>  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP
 #
 #@apiSampleRequest off
 #

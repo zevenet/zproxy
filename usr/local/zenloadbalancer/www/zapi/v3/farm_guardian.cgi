@@ -63,7 +63,7 @@
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"fgtimecheck":"5","fgscript":"Command of Farm Guardian",
-#       "fgenabled":"true","fglog":"true"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/L4FARM/fg
+#       "fgenabled":"true","fglog":"true"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/L4FARM/fg
 #
 # @apiSampleRequest off
 #
@@ -112,7 +112,7 @@
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"fgtimecheck":"5","fgscript":"Command of Farm Guardian","fgenabled":"true",
-#       "fglog":"true","service":"service1"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmHTTP/fg
+#       "fglog":"true","service":"service1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP/fg
 #
 # @apiSampleRequest off
 #

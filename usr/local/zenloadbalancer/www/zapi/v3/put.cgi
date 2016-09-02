@@ -86,27 +86,27 @@ sub modify_farm()
 
 	if ( $type eq "http" || $type eq "https" )
 	{
-		require "/usr/local/zenloadbalancer/www/zapi/v2.1/put_http.cgi";
+		require "/usr/local/zenloadbalancer/www/zapi/v3/put_http.cgi";
 	}
 
 	if ( $type eq "l4xnat" )
 	{
-		require "/usr/local/zenloadbalancer/www/zapi/v2.1/put_l4.cgi";
+		require "/usr/local/zenloadbalancer/www/zapi/v3/put_l4.cgi";
 	}
 
 	if ( $type eq "datalink" )
 	{
-		require "/usr/local/zenloadbalancer/www/zapi/v2.1/put_datalink.cgi";
+		require "/usr/local/zenloadbalancer/www/zapi/v3/put_datalink.cgi";
 	}
 
 	if ( $type eq "gslb" )
 	{
-		require "/usr/local/zenloadbalancer/www/zapi/v2.1/put_gslb.cgi";
+		require "/usr/local/zenloadbalancer/www/zapi/v3/put_gslb.cgi";
 	}
 
 	if ( $type eq "tcp" || $type eq "udp" )
 	{
-		require "/usr/local/zenloadbalancer/www/zapi/v2.1/put_tcp.cgi";
+		require "/usr/local/zenloadbalancer/www/zapi/v3/put_tcp.cgi";
 	}
 }
 
@@ -159,7 +159,7 @@ sub modify_farm()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"ip":"192.168.0.10","port":"88","maxcon":"1000","priority":"2",
-#       "weight":"1"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmTCP/backends/1
+#       "weight":"1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmTCP/backends/1
 #
 # @apiSampleRequest off
 #
@@ -209,7 +209,7 @@ sub modify_farm()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"ip":"192.168.0.10","port":"88","priority":"2",
-#       "weight":"1"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/L4FARM/backends/1
+#       "weight":"1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/L4FARM/backends/1
 #
 # @apiSampleRequest off
 #
@@ -255,7 +255,7 @@ sub modify_farm()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"ip":"192.168.0.10","interface":"eth0","priority":"2",
-#       "weight":"1"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/DATAFARM/backends/1
+#       "weight":"1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/DATAFARM/backends/1
 #
 # @apiSampleRequest off
 #
@@ -307,7 +307,7 @@ sub modify_farm()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"ip":"192.168.0.10","port":"88","timeout":"12","service":"sev2",
-#       "weight":"1"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmHTTP/backends/1
+#       "weight":"1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP/backends/1
 #
 # @apiSampleRequest off
 #
@@ -347,7 +347,7 @@ sub modify_farm()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"ip":"192.168.0.10","service":"sev2"}'
-#       https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmGSLB/backends/1
+#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/backends/1
 #
 # @apiSampleRequest off
 #
@@ -1260,7 +1260,7 @@ sub modify_backends()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"rname":"www","ttl":"8","type":"DYNA","rdata":"sev2",
-#       "zone":"zone1"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmGSLB/resources/3
+#       "zone":"zone1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/resources/3
 #
 # @apiSampleRequest off
 #
@@ -1582,7 +1582,7 @@ sub modify_resources()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"defnamesv":"ns1"}'
-#       https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmGSLB/zones/zone1
+#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones/zone1
 #
 # @apiSampleRequest off
 #
@@ -1767,7 +1767,7 @@ sub modify_zones()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"deftcpport":"80"}'
-#       https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmGSLB/services/sev2
+#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/services/sev2
 #
 # @apiSampleRequest off
 #
@@ -1861,7 +1861,7 @@ sub modify_zones()
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"vhost":"www.mywebserver.com","urlp":"^/myapp1$","persistence":"URL",
 #       "redirect":"http://zenloadbalancer.com","ttl":"125","sessionid":"sid","leastresp":"true",
-#       "httpsb":"true"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmHTTP/services/sev2
+#       "httpsb":"true"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP/services/sev2
 #
 # @apiSampleRequest off
 #

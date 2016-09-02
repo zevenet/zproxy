@@ -41,7 +41,7 @@
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"vip":"178.62.126.152","vport":"53",
-#       "newfarmname":"newFarmGSLB"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/newFarmGSLB
+#       "newfarmname":"newFarmGSLB"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/newFarmGSLB
 #
 # @apiSampleRequest off
 #

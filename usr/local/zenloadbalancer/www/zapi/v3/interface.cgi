@@ -37,7 +37,7 @@
 # @apiExample {curl} Example Usage:
 #	curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #	-u zapi:<password> -d '{"name":"new","ip":"192.168.0.150"}'
-#	https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/addvini/eth0
+#	https://<zenlb_server>:444/zapi/v3/zapi.cgi/addvini/eth0
 #
 # @apiSampleRequest off
 #
@@ -351,7 +351,7 @@ sub new_vini()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"name":"new","ip":"192.168.1.150","netmask":"255.255.255.0",
-#       "gateway":"192.168.1.0"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/addvlan/eth0
+#       "gateway":"192.168.1.0"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/addvlan/eth0
 #
 # @apiSampleRequest off
 #
@@ -783,7 +783,7 @@ sub new_vlan()
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/deleteif/eth0:test/6
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/deleteif/eth0:test/6
 #
 # @apiSampleRequest off
 #
@@ -1006,7 +1006,7 @@ sub delete_interface()
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/interfaces
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/interfaces
 #
 # @apiSampleRequest off
 #
@@ -1095,7 +1095,7 @@ sub get_interface()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"action":"down"}'
-#       https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/ifaction/eth0:new
+#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/ifaction/eth0:new
 #
 # @apiSampleRequest off
 #
@@ -1410,7 +1410,7 @@ sub ifaction()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"ip":"192.168.1.160","netmask":"255.255.255.0",
-#       "gateway":"192.168.1.0"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/modifyif/eth0:new/4
+#       "gateway":"192.168.1.0"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/modifyif/eth0:new/4
 #
 # @apiSampleRequest off
 #

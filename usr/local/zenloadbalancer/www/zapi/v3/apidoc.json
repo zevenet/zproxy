@@ -2,7 +2,7 @@
   "name": "zapi",
   "description": "Zen Load Balancer ZAPI documentation v2.1",
   "title": "ZAPI Doc",
-  "sampleUrl": "https://zenserver:444/zapi/v2.1",
+  "sampleUrl": "https://zenserver:444/zapi/v3",
   "header": {
     "title": "Zen Load Balancer ZAPI v2.1",
     "filename": "header.md"
