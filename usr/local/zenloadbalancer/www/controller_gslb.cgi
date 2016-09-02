@@ -38,7 +38,8 @@ if ( $action eq "editfarm-restart" )
 	}
 }
 
-#Change health check port for a service
+#Change health check port and
+#Change farm guardia configuration for a service
 if ( $action eq "editfarm-dpc" )
 {
 	if ( $service =~ /^$/ )
@@ -58,20 +59,101 @@ if ( $action eq "editfarm-dpc" )
 	}
 	if ( $error == 0 )
 	{
-		&setFarmVS( $farmname, $service, "dpc", $dpc );
-		if ( $? eq 0 )
-		{
-			&successmsg(
-				"The default port health check for the service $service has been successfully changed"
-			);
-			&setFarmRestart( $farmname );
+		# local variables
+		my ( $fgTime, $fgCmd ) = &getGSLBFarmGuardianParams( $farmname, $service );
+		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $service );
 
-			#&runFarmReload($farmname);
-		}
-		else
+		# cgi variables
+		my $gslbFgCmd  = &getCgiData( "gslbFgCmd_$service" );
+		my $gslbFgTime = &getCgiData( "gslbFgTime_$service" );
+
+		my $fgchanged = 0;
+		my $errormsg;
+
+		# enable farmguardian
+		if ( defined ( &getCgiData( "gslbFgStatus_$service" ) )
+			 and $fgStatus eq 'down' )
 		{
-			&errormsg(
-					   "The default port health check for the service $service has failed" );
+			&zenlog( "$fgCmd,$gslbFgCmd," );
+			if ( !$fgCmd && !$gslbFgCmd )
+			{
+				$errormsg = "It's necessary define a check command to active farm guardian.";
+				$error    = -1;
+			}
+			else
+			{
+				$error = &enableGSLBFarmGuardian( $farmname, $service, 'up' );
+			}
+			$fgchanged = 1;
+		}
+
+		# disable farmguardian
+		elsif ( !defined ( &getCgiData( "gslbFgStatus_$service" ) )
+				and $fgStatus eq 'up' )
+		{
+			$error = &enableGSLBFarmGuardian( $farmname, $service, 'down' );
+			$fgchanged = 1;
+		}
+
+		# error = 0 if all is successful
+		if ( $error > 0 )
+		{
+			$error = 0;
+		}
+
+		# change cmd
+		if ( $gslbFgCmd && !$error )
+		{
+			$error = &setGSLBFarmGuardianParams( $farmname, $service, 'cmd', $gslbFgCmd );
+			$fgchanged = 1;
+		}
+
+		# change time
+		if ( $gslbFgTime && !$error )
+		{
+			$error =
+			  &setGSLBFarmGuardianParams( $farmname, $service, 'interval', $gslbFgTime );
+			$fgchanged = 1;
+		}
+
+		if ( $fgchanged )
+		{
+			if ( !$error )
+			{
+				&successmsg( "Farm Guardian configuration was saved successful." );
+				&setFarmRestart( $farmname );
+			}
+			else
+			{
+				if ( !$errormsg )
+				{
+					$errormsg = "There was a error saving Farm Guardian configuration.";
+				}
+				&errormsg( $errormsg );
+			}
+		}
+
+		# Change port
+		if ( $dpc )
+		{
+			my $befPort = getFarmVS( $farmname, $service, "dpc" );
+			$error = &setFarmVS( $farmname, $service, "dpc", $dpc );
+			my $aftPort = getFarmVS( $farmname, $service, "dpc" );
+
+			if ( !$error && ( $befPort != $aftPort ) )
+			{
+				&successmsg(
+					"The default port health check for the service $service has been successfully changed"
+				);
+				&setFarmRestart( $farmname );
+
+				#&runFarmReload($farmname);
+			}
+			elsif ( $error < 0 )
+			{
+				&errormsg(
+						   "The default port health check for the service $service has failed" );
+			}
 		}
 	}
 }
@@ -147,6 +229,10 @@ if ( $action eq "editfarm-deleteservice" )
 				elsif ( $rc == -2 )
 				{
 					&errormsg( "Unable to remove a service in use by any zone" );
+				}
+				elsif ( $rc == -3 )
+				{
+					&errormsg( "Error config file" );
 				}
 			}
 		}
@@ -321,7 +407,7 @@ if ( $action eq "editfarm-deleteserver" )
 if ( $action eq "editfarm-saveserver" )
 {
 	$error = 0;
-	my $forbittenName=0;
+	my $forbittenName = 0;
 
 	if ( $service_type eq "zone" )
 	{
@@ -330,12 +416,11 @@ if ( $action eq "editfarm-saveserver" )
 			&errormsg( "Invalid zone, please insert a valid value" );
 			$error = 1;
 		}
-		
-		
+
 		# let character exceptions in resource name for PTR and SRV types
-		if ( $type_server eq 'SRV' || $type_server eq 'PTR' || $type_server eq 'NAPTR') 
+		if ( $type_server eq 'SRV' || $type_server eq 'PTR' || $type_server eq 'NAPTR' )
 		{
-			if( $resource_server !~ /^[\@a-zA-Z1-9\-_\.]*$/ )
+			if ( $resource_server !~ /^[\@a-zA-Z1-9\-_\.]*$/ )
 			{
 				&errormsg(
 					"Invalid resource name, please for this farm insert a valid value \(only letters, numbers '-', '_' and '.' character are allowed\)"
@@ -358,7 +443,7 @@ if ( $action eq "editfarm-saveserver" )
 			&errormsg( "Invalid resource server, please insert a valid value" );
 			$error = 1;
 		}
-		
+
 		if ( $rdata_server =~ /^$/ )
 		{
 			&errormsg( "Invalid RData, please insert a valid value" );
@@ -481,6 +566,7 @@ if ( $action eq "editfarm-addservice" )
 			if ( $error == 0 )
 			{
 				$status = &setGSLBFarmNewService( $farmname, $service, $lb );
+
 				if ( $status != -1 )
 				{
 					&successmsg( "The service $service has been successfully created" );

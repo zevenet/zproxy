@@ -125,23 +125,24 @@ my @services = &getGSLBFarmServices( $farmname );
 foreach $srv ( @services )
 {
 	my $lb = &getFarmVS( $farmname, $srv, "algorithm" );
-	print "<div class=\"box grid_12\">\n";
-	print "<a name=\"servicelist-$srv\"></a>\n";
-	print "<div class=\"box-head\">\n";
-	print "<span class=\"box-icon-24 fugue-24 monitor\"></span>\n";
-	print "<h2 style=\"float: left; padding-left: 0px; padding-right: 0px;\">";
 	print "
-			<form method=\"post\" action=\"index.cgi\">
-			<button type=\"submit\" class=\"myicons\" title=\"Delete service $srv\" onclick=\"return confirm('Are you sure you want to delete the Service $srv?')\">
-			<span class=\"icon-24 fugue-24 cross-circle\"></span>
-			</button>
-			<input type=\"hidden\" name=\"id\" value=\"1-2\">
-			<input type=\"hidden\" name=\"action\" value=\"editfarm-deleteservice\">
-			<input type=\"hidden\" name=\"service_type\" value=\"service\">
-			<input type=\"hidden\" name=\"service\" value=\"$srv\">
-			<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">
-			</form>";
-	print "</h2><h2>";
+		<div class=\"box grid_12\">
+			<a name=\"servicelist-$srv\"></a>\n
+			<div class=\"box-head\">\n
+				<span class=\"box-icon-24 fugue-24 monitor\"></span>\n
+				<h2 style=\"float: left; padding-left: 0px; padding-right: 0px;\">
+					<form method=\"post\" action=\"index.cgi\">
+						<button type=\"submit\" class=\"myicons\" title=\"Delete service $srv\" onclick=\"return confirm('Are you sure you want to delete the Service $srv?')\">
+							<span class=\"icon-24 fugue-24 cross-circle\"></span>
+						</button>
+						<input type=\"hidden\" name=\"id\" value=\"1-2\">
+						<input type=\"hidden\" name=\"action\" value=\"editfarm-deleteservice\">
+						<input type=\"hidden\" name=\"service_type\" value=\"service\">
+						<input type=\"hidden\" name=\"service\" value=\"$srv\">
+						<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">
+					</form>
+				</h2>
+				<h2>";
 	print " Service \"$srv\" with ";
 
 	if ( $lb eq "roundrobin" )
@@ -159,28 +160,102 @@ foreach $srv ( @services )
 			print "Unknown";
 		}
 	}
-	print " algorithm</h2></div>";
+	print " algorithm</h2>
+		</div>";
 
 	print "<div class=\"box-content global-farm\">";
 
 	# Default port health check
 	my $dpc = &getFarmVS( $farmname, $srv, "dpc" );
-	print "<div class=\"form-row\">\n";
-	print "<form method=\"post\" action=\"index.cgi\">";
-	print
-	  "<p class=\"form-label\"><b>Default TCP port health check.</b> Empty value disabled.</p>";
-	print "<input type=\"hidden\" name=\"action\" value=\"editfarm-dpc\">";
-	print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-	print "<input type=\"hidden\" name=\"service\" value=\"$srv\">";
-	print "<input type=\"hidden\" name=\"service_type\" value=\"service\">";
-	print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
-	print
-	  "<div class=\"form-item\"><input type=\"number\" size=\"20\" name=\"dpc\" class=\"fixedwidth\" value=\"$dpc\"> ";
-	print
-	  "<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button grey\">";
-	print "</form>";
-	print "</div>\n";
-	print "</div></div></div>";
+	print "
+		<form method=\"post\" action=\"index.cgi\">
+		<div class=\"form-row\">		
+		<p class=\"form-label\"><b>Default TCP port health check.</b> Empty value disabled.</p>
+		<input type=\"hidden\" name=\"action\" value=\"editfarm-dpc\">
+		<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">
+		<input type=\"hidden\" name=\"service\" value=\"$srv\">
+		<input type=\"hidden\" name=\"service_type\" value=\"service\">
+		<input type=\"hidden\" name=\"id\" value=\"$id\">
+		<div class=\"form-item\">
+			<input type=\"number\" size=\"20\" name=\"dpc\" class=\"fixedwidth\" value=\"$dpc\">
+		</div></div>";
+
+	print "
+		<br><br>
+		<h6>Farm Guardian</h6>\n
+		<hr></hr>
+		<div class=\"grid_6\">\n";    #div left
+
+	#
+	# FarmGuardian
+	#
+	my ( $fgTime, $fgCmd ) = &getGSLBFarmGuardianParams( $farmname, $srv );
+	my $fgStatus = &getGSLBFarmFGStatus( $farmname, $srv );
+
+	$fgCmd =~ s/\"/&quot;/g;
+
+	print "
+		<div class=\"form-row\">
+		<p class=\"form-label\"><b>Use FarmGuardian to check Backend Servers</b></p>
+		<div class=\"form-item mycheckbox\">\n";
+
+	# Enable FarmGuardian
+	if ( $fgStatus eq "up" )
+	{
+		print "<input type=\"checkbox\" checked name=\"gslbFgStatus_$srv\">";
+	}
+	else
+	{
+		print "<input type=\"checkbox\" name=\"gslbFgStatus_$srv\">";
+	}
+	print "</div>";
+	print "</div>";
+
+	# Enable FarmGuardian logs
+	#~ print "
+	#~ <div class=\"form-row\">
+	#~ <p class=\"form-label\"><b>Enable farmguardian logs</b></p>
+	#~ <div class=\"form-item mycheckbox\">\n
+	#~ </div>
+	#~ <div class=\"form-row\">";
+
+	#~ if ( $fglog eq "true" )
+	#~ {
+	#~ print "<input type=\"checkbox\" checked name=\"farmguardianlog\">";
+	#~ }
+	#~ else
+	#~ {
+	#~ print "<input type=\"checkbox\" name=\"farmguardianlog\">";
+	#~ }
+
+	#~ print "</div>";
+	#~ print "</div>";
+	print "</div>";                       #close div left
+	print "<div class=\"grid_6\">\n ";    #div right
+
+	# Check interval
+	print "
+		<div class=\"form-row\">
+			<p class=\"form-label\"><b>Check interval.</b> Time between checks in seconds.</p>
+			<div class=\"form-item\"><input type=\"number\" class=\"fixedwidth\" value=\"$fgTime\" size=\"1\" name=\"gslbFgTime_$srv\">
+			</div>
+		</div>";
+
+	# Command to check
+	print "
+		<div class=\"form-row\">
+		<p class=\"form-label\"><b>Command to check</b></p>
+		<div class=\"form-item\"><input type=\"text\" class=\"fixedwidth\" value=\"$fgCmd\" size=\"60\" name=\"gslbFgCmd_$srv\">
+ 		</div></div>";
+
+	print "</div>";    #close div grid right
+	print "	
+		<input type=\"submit\" value=\"Modify\" name=\"buttom\" class=\"button grey\">";
+
+	print "	
+		</form>
+		</div></div>";
+
 	print "
 			<div class=\"box grid_12\">
 				<div class=\"box-head\">

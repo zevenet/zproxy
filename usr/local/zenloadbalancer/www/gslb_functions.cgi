@@ -309,6 +309,7 @@ sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 		my $pluginfile = "";
 		opendir ( DIR, "$configdir\/$fname\_$type.cfg\/etc\/plugins\/" );
 		my @pluginlist = readdir ( DIR );
+
 		foreach $plugin ( @pluginlist )
 		{
 			tie @fileconf, 'Tie::File',
@@ -368,9 +369,12 @@ sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 				{
 					my @tmpline = split ( "=", $line );
 					$output = $tmpline[1];
-					$output =~ s/['\[''\]'' ']//g;
-					my @tmp = split ( "_", $output );
-					$output = $tmp[1];
+					$output =~ /_(\d+)(\s+)?$/;
+					$output = $1;
+
+					#~ $output =~ s/['\[''\]'' ']//g;
+					#~ my @tmp = split ( "_", $output );
+					#~ $output = $tmp[1];
 					last;
 				}
 				if ( $line =~ /\t$svice => / )
@@ -704,7 +708,8 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 		  . "   http_port = $httpport\n"
 		  . "   http_listen = 127.0.0.1\n" . "}\n\n";
 		print $file "service_types => { \n\n}\n\n";
-		print $file "plugins => { \n\n}\n\n";
+		print $file
+		  "plugins => { \n\textmon => { helper_path => \"/usr/local/zenloadbalancer/app/gdnsd/gdnsd_extmon_helper\" },\n}\n\n";
 		close $file;
 
 		#run farm
@@ -767,6 +772,7 @@ sub setGSLBFarmDeleteService    # ($farm_name,$service)
 	my $output     = -1;
 	my $ftype      = &getFarmType( $fname );
 	my $pluginfile = "";
+	my $srv_port;
 
 	#Find the plugin file
 	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
@@ -825,6 +831,10 @@ sub setGSLBFarmDeleteService    # ($farm_name,$service)
 			{
 				if ( $fileconf[$index] !~ /^\t\}\h*$/ )
 				{
+					if ( $fileconf[$index] =~ /service_types = tcp_(\d+)/ )
+					{
+						$srv_port = $1;
+					}
 					splice @fileconf, $index, 1;
 				}
 				else
@@ -853,6 +863,13 @@ sub setGSLBFarmDeleteService    # ($farm_name,$service)
 			untie @config_file;
 		}
 
+		&setGSLBDeleteFarmGuardian( $fname, $svice );
+
+		# Delete port configuration from config file
+		if ( !getCheckPort( $fname, $srv_port ) )
+		{
+			$output = &setGSLBRemoveTcpPort( $fname, $srv_port );
+		}
 		untie @fileconf;
 	}
 
@@ -1075,7 +1092,7 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 					}
 					if ( $found == 1 )
 					{
-						splice @fileconf, $index, 0, "     \$include{plugins\/$gsalg.cfg},";
+						splice @fileconf, $index, 0, "\t\$include{plugins\/$gsalg.cfg},";
 						last;
 					}
 					$index++;
@@ -1162,20 +1179,160 @@ sub setGSLBFarmStatus    # ($farm_name, $status, $writeconf)
 	return $output;
 }
 
+=begin nd
+        Function: setGSLBRemoveTcpPort
+
+        This functions removes tcp_port config from gdnsd config file
+
+        Parameters:
+
+                fname - farm name
+                port  - tcp_PORT to delete
+
+        Returns:
+        
+                0	- successful
+				-3	- error in config file format
+               
+=cut
+
+# &setGSLBRemoveTcpPort ($farmName,$port);
+sub setGSLBRemoveTcpPort
+{
+	my ( $fname, $port ) = @_;
+	my $ffile = &getFarmFile( $fname );
+	my $found = 0;
+	my $index = 1;
+
+	use Tie::File;
+	tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
+
+	while ( ( $fileconf[$index] !~ /^plugins => / ) && ( $found !~ 2 ) )
+	{
+		my $line = $fileconf[$index];
+
+		if ( $line =~ /tcp_$port => / )
+		{
+			$found = 1;
+		}
+
+		if ( $found == 1 )
+		{
+			my $rs = splice ( @fileconf, $index, 1 );
+
+			if ( $line =~ /\}/ )
+			{
+				$found = 2;
+			}
+		}
+
+		if ( !$found )
+		{
+			$index++;
+		}
+	}
+
+	untie @fileconf;
+
+	$found = -3 if ( $found == 1 );
+	$found = 0 if ( $found == 0 || $found == 2 );
+
+	return $found;
+}
+
+=begin nd
+        Function: getCheckPort
+
+        This function checks if some service uses this port
+
+        Parameters:
+
+                fname 	- farm name
+                checkport - port to check 
+
+        Returns:
+        
+                servicePorts  - number of services are using the port
+               
+=cut
+
+# &getCheckPort ( $fname, $checkPort );
+sub getCheckPort
+{
+	my ( $fname, $checkPort ) = @_;
+
+	my $ftype        = &getFarmType( $fname );
+	my $servicePorts = 0;
+
+	use Tie::File;
+
+	# select all ports used in plugins
+	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
+
+	#~ opendir ( DIR, "plugins\/" );
+	my @pluginlist = readdir ( DIR );
+	closedir ( DIR );
+	foreach my $plugin ( @pluginlist )
+	{
+		if ( $plugin !~ /^\./ )
+		{
+			my @fileconf = ();
+
+			tie @fileconf, 'Tie::File',
+			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+
+			#~ tie @fileconf, 'Tie::File', "plugins\/$plugin";
+			$servicePorts += grep ( /service_types = tcp_$checkPort/,   @fileconf );
+			$servicePorts += grep ( /service_types = .+_fg_$checkPort/, @fileconf );
+
+			untie @fileconf;
+		}
+	}
+	return $servicePorts;
+}
+
+=begin nd
+        Function: setGSLBFarmVS
+
+        This function can change name server or dpc
+
+        Parameters:
+
+                fname 	- farm name
+                service - service name
+                param	- param to modificate
+                value	- value for the param
+
+        Returns:
+        
+                newCmd  - command with extmon format
+                
+        See Also:
+                
+                
+        More info:
+
+                
+=cut
+
 #set values for a service
 sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 {
 	( $fname, $svice, $tag, $stri ) = @_;
 
 	my $output = "";
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
+
+	my $type  = &getFarmType( $fname );
+	my $ffile = &getFarmFile( $fname );
 
 	my @fileconf;
 	my $line;
 	my $param;
 	my @linesplt;
+	my $tcp_port;
+
 	use Tie::File;
+
 	if ( $tag eq "ns" )
 	{
 		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$svice";
@@ -1199,9 +1356,41 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 		untie @fileconf;
 		&setFarmZoneSerial( $fname, $svice );
 	}
+
 	if ( $tag eq "dpc" )
 	{
-		my $found = 0;
+		my $actualPort;
+		my $srvConf;
+		my @srvCp;
+		my $firstIndNew;
+		my $offsetIndNew;
+		my $firstIndOld;
+		my $offsetIndOld;
+		my $newPortFlag;
+		my $existPortFlag = &getCheckPort( $fname, $stri );
+		my $found         = 0;
+		my $existFG       = 0;
+		my $newTcp =
+		    "\ttcp_$stri => {\n"
+		  . "\t\tplugin = tcp_connect,\n"
+		  . "\t\tport = $stri,\n"
+		  . "\t\tup_thresh = 2,\n"
+		  . "\t\tok_thresh = 2,\n"
+		  . "\t\tdown_thresh = 2,\n"
+		  . "\t\tinterval = 5,\n"
+		  . "\t\ttimeout = 3,\n" . "\t}\n";
+		my $newFG =
+		    "\t${svice}_fg_$stri => {\n"
+		  . "\t\tplugin = extmon,\n"
+		  . "\t\tup_thresh = 2,\n"
+		  . "\t\tok_thresh = 2,\n"
+		  . "\t\tdown_thresh = 2,\n"
+		  . "\t\tinterval = 5,\n"
+		  . "\t\ttimeout = 3,\n"
+		  . "\t\tcmd = [1],\n" . "\t}\n";
+
+		# cmd = [1], it's a initial value for avoiding syntasis error in config file,
+		# but can't be active it with this value.
 
 		#Find the plugin file
 		opendir ( DIR, "$configdir\/$ffile\/etc\/plugins\/" );
@@ -1217,6 +1406,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 		}
 		closedir ( DIR );
 
+		# Change configuration in plugin file
 		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
 		foreach $line ( @fileconf )
 		{
@@ -1224,10 +1414,11 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 			{
 				last;
 			}
-			if ( $found == 1 && $line =~ /.*service_types.*/ )
+			if ( $found == 1 && $line =~ /service_types = (${svice}_fg_|tcp_)(\d+)/ )
 			{
-				$line   = "\t\tservice_types = tcp_$stri";
-				$output = "0";
+				$actualPort = $2;
+				$line       = "\t\tservice_types = $1$stri";
+				$output     = "0";
 				last;
 			}
 			if ( $line =~ /\t$svice => / )
@@ -1236,58 +1427,157 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 			}
 		}
 		untie @fileconf;
+
 		if ( $output eq "0" )
 		{
-			# Check if there is already an entry
-			my $found = 0;
-			my $index = 1;
+			my $srvAsocFlag = &getCheckPort( $fname, $actualPort );
+			my $found       = 0;
+			my $index       = 1;
+
+			# Checking if tcp_port is defined
 			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
-			while ( $fileconf[$index] !~ /plugins => / )
-			{
-				my $line = $fileconf[$index];
-				if ( $found == 2 && $line =~ /.*}.*/ )
-				{
-					splice @fileconf, $index, 1;
-					last;
-				}
-				if ( $found == 2 )
-				{
-					splice @fileconf, $index, 1;
-					next;
-				}
-				if ( $found == 1 && $line =~ /tcp_$stri => / )
-				{
-					splice @fileconf, $index, 1;
-					$found = 2;
-					next;
-				}
-				if ( $line =~ /service_types => / )
-				{
-					$found = 1;
-				}
-				$index++;
-			}
+			my $existTcp = grep ( /tcp_$actualPort =>/, @fileconf );
 			untie @fileconf;
 
-			# New service_types entry
-			$index = 0;
+			if ( !$existTcp )
+			{
+				$newPortFlag = 1;
+			}
+
+			else
+			{
+				tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
+				while ( $fileconf[$index] !~ /^plugins => / )
+				{
+					my $line = $fileconf[$index];
+
+					# Checking if exist conf block for the new port. Keeping its index
+					if ( $fileconf[$index] =~ s/(${svice}_fg_)\d+/$1$stri/ )
+					{
+						$existFG = 1;
+					}
+
+					if ( $found == 1 )
+					{
+						my $line2 = $line;
+						$line2 =~ s/port =.*,/port = $stri,/;
+						$line2 =~ s/cmd = \[(.+), "-p", "\d+"/cmd = \[$1, "-p", "$stri"/;
+						push @srvCp, $line2;
+						$offsetIndOld++;
+
+						# block finished
+						if ( $line =~ /.*}.*/ )
+						{
+							$found = 0;
+						}
+					}
+					if ( $line =~ /tcp_$actualPort => / )
+					{
+						my $line2 = $line;
+						$line2 =~ s/tcp_$actualPort => /tcp_$stri => /;
+						$found = 1;
+						push @srvCp, $line2;
+						$firstIndOld = $index;
+						$offsetIndOld++;
+					}
+
+					# keeping index for actual tcp_port
+					if ( $found == 2 )
+					{
+						$offsetIndNew++;
+
+						# conf block finished
+						if ( $line =~ /.*}.*/ )
+						{
+							$found = 0;
+						}
+					}
+					if ( ( $line =~ /tcp_$stri => / ) && ( $stri ne $actualPort ) )
+					{
+						$found = 2;
+						$offsetIndNew++;
+						$firstIndNew = $index;
+					}
+
+					$index++;
+				}
+				untie @fileconf;
+
+				# delete tcp_port if this is not used
+				tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
+				if ( ( $stri eq $actualPort ) && $existPortFlag )
+				{
+					splice ( @fileconf, $firstIndOld, $offsetIndOld );
+				}
+				else
+				{
+					if ( $firstIndNew > $firstIndOld )
+					{
+						if ( $existPortFlag )
+						{
+							splice ( @fileconf, $firstIndNew, $offsetIndNew );
+						}
+						if ( !$srvAsocFlag )
+						{
+							splice ( @fileconf, $firstIndOld, $offsetIndOld );
+						}
+					}
+					else
+					{
+						if ( !$srvAsocFlag )
+						{
+							splice ( @fileconf, $firstIndOld, $offsetIndOld );
+						}
+						if ( $existPortFlag )
+						{
+							splice ( @fileconf, $firstIndNew, $offsetIndNew );
+						}
+					}
+				}
+				untie @fileconf;
+
+			}
+
+			# create the new port configuration
+			my $index      = 0;
+			my $firstIndex = 0;
 			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
 			foreach $line ( @fileconf )
 			{
 				if ( $line =~ /service_types => / )
 				{
 					$index++;
-					splice @fileconf, $index, 0,
-					  "\ttcp_$stri => {\n\t\tplugin = tcp_connect,\n\t\tport = $stri,\n\t\tup_thresh = 2,\n\t\tok_thresh = 2,\n\t\tdown_thresh = 2,\n\t\tinterval = 5,\n\t\ttimeout = 3,\n\t}\n";
+					$firstIndex = $index;
+
+					# New port
+					if ( $newPortFlag )
+					{
+						splice @fileconf, $index, 0, $newTcp;
+					}
+					else
+					{
+						foreach my $confline ( @srvCp )
+						{
+							splice @fileconf, $index++, 0, $confline;
+						}
+					}
 					last;
 				}
 				$index++;
 			}
 			untie @fileconf;
+
+			# if it's a new service, it creates fg config
+			if ( !$existFG )
+			{
+				tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
+				splice @fileconf, $firstIndex, 0, $newFG;
+				untie @fileconf;
+			}
+
 		}
 	}
-
-	return @output;
+	return $output;
 }
 
 # Set farm virtual IP and virtual PORT
@@ -1304,6 +1594,7 @@ sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	my $index = 0;
 	my $found = 0;
 	tie @fileconf, 'Tie::File', "$configdir/$fconf/etc/config";
+
 	foreach $line ( @fileconf )
 	{
 		if ( $line =~ /options => / )
@@ -1411,9 +1702,10 @@ sub dnsServiceType    #  dnsServiceType ( $farmname, $ip, $tcp_port )
 }
 
 # this function return one string with json format
-sub getGSLBGdnsdStats
+sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ($wget_bin)
 {
-	$gdnsdStats = `wget -qO- http://127.0.0.1:35060/json`;
+	my ( $wget ) = @_;
+	$gdnsdStats = `$wget -qO- http://127.0.0.1:35060/json`;
 
 	return $gdnsdStats;
 }
@@ -1430,6 +1722,527 @@ sub getGSLBFarmEstConns    # ($farm_name,@netstat)
 	  &getNetstatFilter( "udp", "",
 						 "src=.* dst=$vip sport=.* dport=$vip_port .*src=.*",
 						 "", @netstat );
+}
+
+## GSLB FARMGUARDIAN FUNCTIONS
+
+=begin nd
+        Function: getGSLBCommandInExtmonFormat
+
+        Transform command with farm guardian format to command with extmon format,
+        this function is used to show the command in GUI.
+
+        Parameters:
+
+                cmd		- command with farm guardian format
+                port	- port where service is checking
+
+        Returns:
+        
+                newCmd  - command with extmon format
+                
+        See Also:
+                
+                changeCmdToFGFormat
+                
+        More info:
+
+			Farmguardian Fotmat	: bin -x option...
+			Extmon Format		: "bin", "-x", "option"...
+                
+=cut
+
+#	&getGSLBCommandInExtmonFormat( $cmd, $port );
+sub getGSLBCommandInExtmonFormat
+{
+	my ( $cmd, $port ) = @_;
+	my $newCmd;
+	my $stringArg;
+	my $flag;
+
+	@aux = split ( ' ', $cmd );
+
+	$newCmd .= "\"$libexec_dir/$aux[0]\"";
+	splice @aux, 0, 1;
+
+	foreach my $word ( @aux )
+	{
+		# Argument is between ""
+		if ( $word =~ /^".+"$/ )
+		{
+			$word =~ s/^"//;
+			$word =~ s/"$//;
+		}
+
+		# finish a string
+		if ( $word =~ /\"$/ && $flag )
+		{
+			$flag = 0;
+			chop $word;
+			$word = "$stringArg $word";
+		}
+
+		# part of a string
+		elsif ( $flag )
+		{
+			$stringArg .= " $word";
+			next;
+		}
+
+		# begin a string
+		elsif ( $word =~ /^"\w/ )
+		{
+			$flag = 1;
+			$word =~ s/^.//;
+			$stringArg = $word;
+			next;
+		}
+
+		if ( $word eq 'PORT' )
+		{
+			$word = $port;
+		}
+
+		$word =~ s/HOST/%%ITEM%%/;
+		if ( !$flag )
+		{
+			$newCmd .= ", \"$word\"";
+		}
+	}
+	$newCmd =~ s/^, //;
+
+	return $newCmd;
+}
+
+=begin nd
+        Function: getGSLBCommandInFGFormat
+
+        Transform command with extmon format to command with fg format,
+        this function is used to show the command in GUI.
+
+        Parameters:
+
+                cmd		- command with extmon format
+                port	- port where service is checking
+
+        Returns:
+        
+                newCmd  - command with farm guardian format
+                
+        See Also:
+                
+                changeCmdToExtmonFormat
+                
+        More info:
+
+			Farmguardian Fotmat	: bin -x option...
+			Extmon Format		: "bin", "-x", "option"...
+			
+=cut
+
+# &getGSLBCommandInFGFormat ( $cmd, $port );
+sub getGSLBCommandInFGFormat
+{
+	my ( $cmd, $port ) = @_;
+	my $newCmd;
+	my @aux = split ( ', ', $cmd );
+	my $flagPort;
+
+	$newCmd = $aux[0];
+	splice @aux, 0, 1;
+
+	$newCmd =~ s/$libexec_dir\///;
+	$newCmd =~ s/^"(.+)"$/$1/;
+
+	foreach my $word ( @aux )
+	{
+		if ( $word =~ '-p' )
+		{
+			$flagPort = 1;
+		}
+
+		# dns only can check one port
+		if ( $flagPort && $word =~ /^"$port"$/ )
+		{
+			$word     = "PORT";
+			$flagPort = 0;
+		}
+
+		# change HOST param from FG to %%ITEM%% from extmon
+		$word =~ s/%%ITEM%%/HOST/;
+
+		# remove " only if $word isn't a string
+		if ( $word !~ / / )
+		{
+			$word =~ s/^"(.+)"$/$1/;
+		}
+		$newCmd .= " $word";
+	}
+	return $newCmd;
+}
+
+=begin nd
+        Function: getGSLBFarmGuardianParams
+
+        Get farmguardian configuration
+
+        Parameters:
+
+                fname 	- farm name
+                service - service name
+
+        Returns:
+        
+                @output =
+					time  - interval time to repeat cmd
+					cmd	  - command to check backend
+
+=cut
+
+#	&getGSLBFarmGuardianParams( farmName, $service );
+sub getGSLBFarmGuardianParams
+{
+	my ( $fname, $service ) = @_;
+	my $ftype = &getFarmType( $fname );
+
+	my $cmd;
+	my $time;
+	my $flagSvc = 0;
+
+	my $port = &getFarmVS( $fname, $service, "dpc" );
+
+	tie my @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
+
+	foreach my $line ( @file )
+	{
+		# Begin service block
+		if ( $line =~ /^\t$service.+ =>/ )
+		{
+			$flagSvc = 1;
+		}
+		elsif ( $flagSvc )
+		{
+			# get interval time
+			if ( $line =~ /interval = (\d+),/ )
+			{
+				$time = $1;
+				next;
+			}
+
+			# get cmd
+			elsif ( $line =~ /cmd = \[(.+)\],/ )
+			{
+				$cmd = $1;
+				$cmd = getGSLBCommandInFGFormat( $cmd, $port );
+				next;
+			}
+		}
+		if ( $flagSvc && $line =~ /\t}/ )
+		{
+			last;
+		}
+	}
+
+	# $cmd it's initialized "1" for avoid systasis error
+	if ( $cmd eq "1" )
+	{
+		$cmd = "";
+	}
+
+	push my @config, $time, $cmd;
+	untie @file;
+
+	return @config;
+}
+
+=begin nd
+        Function: setGSLBFarmGuardianParams
+
+        Change gslb farm guardian params
+
+        Parameters:
+
+                fname 	- farm name
+                service - service name
+                param	- cmd / interval
+                value	- value for the param
+
+        Returns:
+        
+				-1  - error
+				0	- successful
+
+=cut
+
+# 	&setGSLBFarmGuardianParams( farmName, service, param, value );
+sub setGSLBFarmGuardianParams
+{
+	my ( $fname, $service, $param, $value ) = @_;
+	my $ftype = &getFarmType( $fname );
+	my @file;
+	my $flagSvc = 0;
+	my $err     = -1;
+
+	tie @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
+
+	foreach my $line ( @file )
+	{
+		# Begin service block
+		if ( $line =~ /${service}_fg_(\d+) =>/ )
+		{
+			$flagSvc = 1;
+			$port    = $1;
+		}
+
+		# End service block
+		elsif ( $flagSvc && $line =~ /^\t\}/ )
+		{
+			&zenlog( "GSLB FarmGuardian has corrupt fileconf", "Error" );
+		}
+		elsif ( $flagSvc && $line =~ /$param/ )
+		{
+			# change interval time
+			if ( $line =~ /interval/ )
+			{
+				$line =~ s/interval =.*,/interval = $value,/;
+				$err = 0;
+				next;
+			}
+
+			# change cmd
+			elsif ( $line =~ /cmd/ )
+			{
+				my $cmd = &getGSLBCommandInExtmonFormat( $value, $port );
+				$line =~ s/cmd =.*,/cmd = \[$cmd\],/;
+				$err = 0;
+				last;
+			}
+		}
+
+		# change timeout if we are changing interval. timeout = interval / 2
+		elsif ( $line =~ /timeout =/ && $flagSvc && $param =~ /interval/ )
+		{
+			my $timeout = int ( $value / 2 );
+			$line =~ s/timeout =.*,/timeout = $timeout,/;
+			$err = 0;
+			last;
+		}
+
+	}
+	untie @file;
+
+	return $err;
+}
+
+=begin nd
+        Function: setGSLBDeleteFarmGuardian
+
+        Delete Farm Guardian configuration from gslb farm configuration
+
+        Parameters:
+
+                fname 	- farm name
+                service - service name
+
+        Returns:
+        
+				-1  - error
+				0	- successful
+
+=cut
+
+# &setGSLBDeleteFarmGuardian ( $fname, $service );
+sub setGSLBDeleteFarmGuardian
+{
+	my ( $fname, $service ) = @_;
+	my $ftype   = &getFarmType( $fname );
+	my $err     = -1;
+	my $index   = 0;
+	my $flagSvc = 0;
+
+	tie my @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
+
+	my $start_i;
+	my $end_i;
+
+	foreach my $line ( @file )
+	{
+		# Begin service block
+		if ( $line =~ /^\t${service}_fg_.+ =>/ )
+		{
+			$flagSvc = 1;
+			$start_i = $index;
+		}
+		if ( $flagSvc )
+		{
+			if ( $line =~ /^\t}/ )
+			{
+				$err   = 0;
+				$end_i = $index;
+				last;
+			}
+		}
+		$index++;
+	}
+	splice @file, $start_i, $end_i - $start_i + 1;
+	untie @file;
+
+	return $err;
+}
+
+=begin nd
+        Function: getGSLBFarmFGStatus
+
+        Reading farmguardian status for a service
+
+        Parameters:
+
+                fname 	- farm name
+                service - service name
+
+        Returns:
+        
+                up	  - fg is up
+                down  - fg is down
+                -1 	  - error
+=cut
+
+# &getGSLBFarmFGStatus ( fname, service );
+sub getGSLBFarmFGStatus
+{
+	my ( $fname, $service ) = @_;
+
+	my $ftype  = &getFarmType( $fname );
+	my $output = -1;
+
+	use Tie::File;
+
+	# select all ports used in plugins
+	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
+	my @pluginlist = readdir ( DIR );
+	closedir ( DIR );
+
+	foreach my $plugin ( @pluginlist )
+	{
+		if ( $plugin !~ /^\./ )
+		{
+			my @fileconf = ();
+
+			tie @fileconf, 'Tie::File',
+			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+
+			# looking for in plugins
+			foreach my $line ( @fileconf )
+			{
+				# find service
+				if ( $line =~ /$service =>/ )
+				{
+					$output = 0;
+				}
+
+				# find line with status
+				if ( !$output && $line =~ /service_types/ )
+				{
+					# if service_type point to tpc_port, fg is down
+					if ( $line =~ /service_types = tcp_\d+/ )
+					{
+						$output = "down";
+					}
+
+					# if service_type point to fg, fg is up
+					elsif ( $line =~ /service_types = ${service}_fg_\d+/ )
+					{
+						$output = "up";
+					}
+					else
+					{
+						# file corrupt
+						$output = -1;
+					}
+					last;
+				}
+
+				# didn't find
+				if ( !$output && $line =~ /\}/ )
+				{
+					$output = -1;
+					last;
+				}
+			}
+			untie @fileconf;
+		}
+	}
+	return $output;
+}
+
+=begin nd
+        Function: enableGSLBFarmGuardian
+
+        Enable or disable a service farmguardian in gslb farms
+
+        Parameters:
+
+                fname 	- farm name
+                service - service name
+                option	- up / down
+
+        Returns:
+
+                port - port where service is listening
+                -1	 - error
+                0	 - don't modificate
+=cut
+
+#		&enableGSLBFarmGuardian ( $fname, $service, $option );
+sub enableGSLBFarmGuardian
+{
+	my ( $fname, $service, $option ) = @_;
+
+	my $ftype  = &getFarmType( $fname );
+	my $output = -1;
+
+	use Tie::File;
+
+	# select all ports used in plugins
+	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
+	my @pluginlist = readdir ( DIR );
+	closedir ( DIR );
+	foreach my $plugin ( @pluginlist )
+	{
+		if ( $plugin !~ /^\./ )
+		{
+			my @fileconf = ();
+
+			tie @fileconf, 'Tie::File',
+			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+
+			foreach my $line ( @fileconf )
+			{
+				if ( $line =~ /$service =>/ )
+				{
+					$output = 0;
+				}
+				if ( !$output )
+				{
+					if ( $option =~ /up/ && $line =~ /service_types = tcp_(\d+)/ )
+					{
+						$output = $1;
+						$line   = "\t\tservice_types = ${service}_fg_$output";
+						last;
+					}
+					elsif ( $option =~ /down/ && $line =~ /service_types = ${service}_fg_(\d+)/ )
+					{
+						$output = $1;
+						$line   = "\t\tservice_types = tcp_$output";
+						last;
+					}
+				}
+			}
+
+			untie @fileconf;
+		}
+	}
+	return $output;
 }
 
 # do not remove this

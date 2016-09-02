@@ -1627,7 +1627,7 @@ sub setFarmVS    # ($farm_name,$service,$tag,$string)
 		$output = &setGSLBFarmVS( $farm_name, $service, $tag, $string );
 	}
 
-	return @output;
+	return $output;
 }
 
 sub setFarmName    # ($farm_name)
