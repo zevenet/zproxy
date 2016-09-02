@@ -213,12 +213,31 @@ sub certcontrol()
 
 $not_allowed = 0;
 
-#my $userpass = $ENV{HTTP_AUTHORIZATION};
-#$userpass =~ s/Basic\ //i;
-#my $userpass_dec = decode_base64($userpass);
-#my @user = split(":",$userpass_dec);
-#my $user = @user[0];
-#my $pass = @user[1];
+my %headers = map { $_ => $q->http( $_ ) } $q->http();
+
+&zenlog( "REQUEST #################" );
+foreach $key ( keys ( %ENV ) )
+{
+	&zenlog( "REQUEST key is $key =>" . $ENV{ $key } );
+
+	if ( $key eq "REQUEST_METHOD" and $ENV{ $key } eq "OPTIONS" )
+	{
+		#Access-Control-Allow-Origin: http://test.org
+		#Access-Control-Allow-Methods: POST, GET, OPTIONS
+		#&zenlog("METHOD FOUND");
+		print $q->header(
+						-type                          => 'text/plain',
+						-charset                       => 'utf-8',
+						-status                        => '200 OK',
+						'Access-Control-Allow-Origin'  => '*',
+						'Access-Control-Allow-Methods' => 'POST, GET, PUT, DELETE, OPTIONS',
+						'Access-Control-Allow-Headers' => 'ZAPI_KEY, Authorization'
+		);
+
+		exit;
+	}
+}
+
 
 if ( !( &checkLoggedZapiUser() ) )
 {
@@ -237,8 +256,6 @@ if ( !( &checkLoggedZapiUser() ) )
 # Check ZAPI key
 #
 #########################################
-
-my %headers = map { $_ => $q->http( $_ ) } $q->http();
 
 foreach $key ( keys ( %ENV ) )
 {
@@ -279,6 +296,15 @@ sub GET($$)
 	exit;
 }
 
+sub OPTIONS($$)
+{
+        my ( $path, $code ) = @_;
+        return unless $q->request_method eq 'OPTIONS';
+        return unless $q->path_info =~ $path;
+        $code->();
+        exit;
+}
+
 sub POST($$)
 {
 	my ( $path, $code ) = @_;
@@ -307,6 +333,14 @@ sub DELETE($$)
 }
 
 eval {
+        #########################################
+        #
+        #  OPTIONS PreAuth
+        #
+        #########################################
+	OPTIONS qr{^.*} => sub {
+		&farms();
+	};
 
 	#########################################
 	#
