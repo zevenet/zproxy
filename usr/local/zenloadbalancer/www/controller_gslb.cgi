@@ -91,9 +91,9 @@ if ( $action eq "editfarm-dpc" )
 			$fgchanged = 1;
 		}
 
-		# if getCgiData return a hash, the variable doesn't exist
 		# disable farmguardian
-		elsif ( ( ref &getCgiData( "gslbFgStatus_$service" ) eq 'HASH') && $fgStatus eq 'up' )
+		elsif ( !defined ( &getCgiData( "gslbFgStatus_$service" ) )
+				and $fgStatus eq 'up' )
 		{
 			$error = &enableGSLBFarmGuardian( $farmname, $service, 'down' );
 			$fgchanged = 1;
