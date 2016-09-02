@@ -85,7 +85,7 @@
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"algorithm":"prio","persistence":"false","maxclients":"2000","tracking":"10",
 #       "newfarmname":"newFarmTCP2","connmax":"513",,"maxservers":"100","xforwardedfor":"false","vip":"178.62.126.152",
-#       "vport":"54321","timeout":"10","blacklist":"40"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/newFarmTCP
+#       "vport":"54321","timeout":"10","blacklist":"40"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/newFarmTCP
 #
 # @apiSampleRequest off
 #

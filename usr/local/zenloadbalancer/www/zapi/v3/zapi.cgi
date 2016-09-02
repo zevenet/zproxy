@@ -29,19 +29,19 @@ our $origin = 1;
 require "/usr/local/zenloadbalancer/www/functions.cgi";
 require "/usr/local/zenloadbalancer/www/cert_functions.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/global.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/certificates.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/global.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/certificates.cgi";
 require "/usr/local/zenloadbalancer/config/global.conf";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/get.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/post.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/put.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/delete.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/delete_gslb.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/interface.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/system_stats.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/farm_guardian.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/farm_actions.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2.1/post_gslb.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/get.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/post.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/put.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/delete.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/delete_gslb.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/interface.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/system_stats.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/farm_guardian.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/farm_actions.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/post_gslb.cgi";
 
 ### Verify Zen Cerfificate ###
 

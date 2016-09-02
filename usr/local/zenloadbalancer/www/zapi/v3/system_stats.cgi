@@ -33,7 +33,7 @@
 #
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password>  https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/graphs/system/cpu/daily
+#       -u zapi:<password>  https://<zenlb_server>:444/zapi/v3/zapi.cgi/graphs/system/cpu/daily
 #
 #@apiSampleRequest off
 #
@@ -473,7 +473,7 @@ sub get_graphs()
 #
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/graphs
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/graphs
 #
 #@apiSampleRequest off
 #**
@@ -562,7 +562,7 @@ sub possible_graphs()
 }
 
 ########### GET FARM STATS
-# curl --tlsv1 -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: l2ECjvrqitQZULPXbmwMV6luyooQ47SGJhn3LeX1KV6KNKa5uZfJqVVBnEJF4N2Cy" -u zapi:N6Ot3jduFff4SnE https://46.101.60.162:444/zapi/v2.1/zapi.cgi/farms/httptest1/stats
+# curl --tlsv1 -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: l2ECjvrqitQZULPXbmwMV6luyooQ47SGJhn3LeX1KV6KNKa5uZfJqVVBnEJF4N2Cy" -u zapi:N6Ot3jduFff4SnE https://46.101.60.162:444/zapi/v3/zapi.cgi/farms/httptest1/stats
 #
 #
 #####Documentation of GET L4XNAT####
@@ -592,7 +592,7 @@ sub possible_graphs()
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k --header 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server:444/zapi/v2.1/zapi.cgi/farms/farml4/stats
+#       -u zapi:<password> https://<zenlb_server:444/zapi/v3/zapi.cgi/farms/farml4/stats
 #
 # @apiSampleRequest off
 #
@@ -627,7 +627,7 @@ sub possible_graphs()
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k --header 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server:444/zapi/v2.1/zapi.cgi/farms/httpstest/stats
+#       -u zapi:<password> https://<zenlb_server:444/zapi/v3/zapi.cgi/farms/httpstest/stats
 #
 # @apiSampleRequest off
 #
@@ -709,7 +709,7 @@ sub possible_graphs()
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k --header 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server:444/zapi/v2.1/zapi.cgi/farms/tcptest/stats
+#       -u zapi:<password> https://<zenlb_server:444/zapi/v3/zapi.cgi/farms/tcptest/stats
 #
 # @apiSampleRequest off
 #
@@ -1199,7 +1199,7 @@ sub farm_stats()
 
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/stats
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/stats
 #
 #@apiSampleRequest off
 #**
@@ -1333,7 +1333,7 @@ sub stats()
 
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/stats/mem
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/stats/mem
 #
 #@apiSampleRequest off
 #**
@@ -1416,7 +1416,7 @@ sub stats_mem()
 
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/stats/load
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/stats/load
 #
 #@apiSampleRequest off
 #**
@@ -1514,7 +1514,7 @@ sub stats_load()
 
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/stats/cpu
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/stats/cpu
 #
 #@apiSampleRequest off
 #**
@@ -1604,7 +1604,7 @@ sub stats_cpu()
 
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/stats/network
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/stats/network
 #
 #@apiSampleRequest off
 #**

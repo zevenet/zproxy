@@ -37,7 +37,7 @@
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmGSLB/zones/myzone.com
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones/myzone.com
 #
 # @apiSampleRequest off
 #
@@ -200,7 +200,7 @@ sub delete_zone()
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmGSLB/zones/myzone.com/resources/2
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones/myzone.com/resources/2
 #
 # @apiSampleRequest off
 #

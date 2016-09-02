@@ -45,7 +45,7 @@
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"action":"stop"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmTCP/actions
+#       -u zapi:<password> -d '{"action":"stop"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmTCP/actions
 #
 # @apiSampleRequest off
 #
@@ -233,7 +233,7 @@ sub actions()
 
 # POST maintenance
 #
-# curl --tlsv1  -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -u zapi:admin -d '{"action":"up", "service":"service1", "id":"1"}' https://46.101.46.14:444/zapi/v2.1/zapi.cgi/farms/FarmHTTP/maintenance
+# curl --tlsv1  -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -u zapi:admin -d '{"action":"up", "service":"service1", "id":"1"}' https://46.101.46.14:444/zapi/v3/zapi.cgi/farms/FarmHTTP/maintenance
 #
 #
 #####Documentation of MAINTENANCE####
@@ -267,7 +267,7 @@ sub actions()
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #       -u zapi:<password> -d '{"action":"up", "service":"service1", "id":"0"}'
-#       https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmHTTP/maintenance
+#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP/maintenance
 #
 # @apiSampleRequest off
 #

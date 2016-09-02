@@ -36,7 +36,7 @@
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmTCP
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmTCP
 #
 # @apiSampleRequest off
 #
@@ -185,7 +185,7 @@ sub delete_farm()
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmGSLB/services/service1
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/services/service1
 #
 # @apiSampleRequest off
 #
@@ -422,7 +422,7 @@ sub delete_service()
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/L4FARM/backends/4
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/L4FARM/backends/4
 #
 # @apiSampleRequest off
 #
@@ -599,7 +599,7 @@ sub delete_backend()
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/newfarmHTTP/services/service1/backends/4
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/newfarmHTTP/services/service1/backends/4
 #
 # @apiSampleRequest off
 #

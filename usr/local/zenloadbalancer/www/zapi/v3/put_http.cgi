@@ -104,7 +104,7 @@
 #       "restimeout":"47","resurrectime":"12","reqtimeout":"32","rewritelocation":"enabled","httpverb":"standardHTTP",
 #       "error414":"Message error 414","error500":"Message error 500","error501":"Message error 501",
 #       "error503":"Message error 503","listener":"https","ciphers":"customsecurity","cipherc":"TLSv1+SSLv3+HIGH:-MEDIUM:-LOW*:-ADH*",
-#       "maxthreads":"259","certname":"zencert.pem"}' https://<zenlb_server>:444/zapi/v2.1/zapi.cgi/farms/FarmHTTP
+#       "maxthreads":"259","certname":"zencert.pem"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP
 #
 # @apiSampleRequest off
 #
