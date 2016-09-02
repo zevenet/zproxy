@@ -3,23 +3,24 @@ type=Single
 ptype=RegExp
 pattern=stoplocal process finished
 desc=stopping
-action=create BLOCK_CLUSTER 30; create BLOCK_NOTIF 30; shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/syslog.pl "Blocking notifications 30 seconds"
+action=create BLOCK_CLUSTER 30; create BLOCK_NOTIF 30; shellcmd logger "Blocking notifications 30 seconds" -i -t sec
 
 type=Single
 ptype=RegExp
-pattern=(stopping FarmGuardian|The FarmGuardian service .* farm has been started|running /usr/local/zenloadbalancer/app/farmguardian/bin/farmguardian|pound: received signal 15 - exiting\.\.\.)
+pattern=(gdnsd_extmon_helper exiting|gdnsd_extmon_helper running|stopping FarmGuardian|The FarmGuardian service .* farm has been started|running /usr/local/zenloadbalancer/app/farmguardian/bin/farmguardian|pound: received signal 15 - exiting\.\.\.)
 desc=stopping
-action=create BLOCK_NOTIF 4; shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/syslog.pl "Blocking notifications 4 seconds"
+action=create BLOCK_NOTIF 4; shellcmd logger "Blocking notifications 4 seconds" -i -t sec
 
 
 #[Backends]
+# rules for http farms
 type=Single
 ptype=RegExp
 continue=takenext
 pattern=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:\d+) (dead|down)(?: \(\w+\))? in farm: '(\w+)', service: '(\w+)'
 context=!$1_$4_$5_$2_up_down && !farmguardian_$4_$5_$2_up_down && !BLOCK_NOTIF
 desc=MARK
-action=create $1_$4_$5_$2_down_up 2
+action=create $1_$4_$5_$2_down_up 4
 
 type=Single
 ptype=RegExp
@@ -27,7 +28,7 @@ continue=takenext
 pattern=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:\d+) (resurrect)(?: \(\w+\))? in farm: '(\w+)', service: '(\w+)'
 context=!$1_$4_$5_$2_down_up && !farmguardian_$4_$5_$2_down_up && !BLOCK_NOTIF
 desc=MARK
-action=create $1_$4_$5_$2_up_down 2
+action=create $1_$4_$5_$2_up_down 4
 
 type=PairWithWindow
 continue=takenext
@@ -35,13 +36,13 @@ ptype=RegExp
 pattern=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:\d+) (dead|down)(?: \(\w+\))? in farm: '(\w+)', service: '(\w+)'
 context=!$1_$4_$5_$2_up_down && !farmguardian_$4_$5_$2_up_down  && !BLOCK_NOTIF
 desc=$2_down
-action=shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/sendNotification.pl Backends "$0"; shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/syslog.pl "$1 notification sent"
+action=shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/sendNotification.pl Backends "$0"; shellcmd logger "$1 notification sent" -i -t sec
 ptype2=RegExp
 pattern2=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:\d+) (resurrect)(?: \(\w+\))? in farm: '(\w+)', service: '(\w+)'
 context2=!$1_$4_$5_$2_up_down && !farmguardian_$4_$5_$2_up_down && !BLOCK_NOTIF
 desc2=$2_down
-action2=shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/syslog.pl "Backend $2 flapped"; delete $1_$4_$5_$2_down_up
-window=2
+action2=shellcmd logger "Backend $2 flapped" -i -t sec; delete $1_$4_$5_$2_down_up
+window=4
 
 type=PairWithWindow
 continue=takenext
@@ -49,13 +50,37 @@ ptype=RegExp
 pattern=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:\d+) (resurrect)(?: \(\w+\))? in farm: '(\w+)', service: '(\w+)'
 context=!$1_$4_$5_$2_down_up && !farmguardian_$4_$5_$2_down_up && !BLOCK_NOTIF
 desc=$2_up
-action=shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/sendNotification.pl Backends "$0"; shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/syslog.pl "$1 notification sent"
+action=shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/sendNotification.pl Backends "$0"; shellcmd logger "$1 notification sent" -i -t sec
 ptype2=RegExp
 pattern2=(farmguardian|pound).+ (BackEnd \d+\.\d+\.\d+\.\d+:\d+) (dead|down)(?: \(\w+\))? in farm: '(\w+)', service: '(\w+)'
 context2=!$1_$4_$5_$2_down_up && !farmguardian_$4_$5_$2_down_up && !BLOCK_NOTIF
 desc2=$2_up
-action2=shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/syslog.pl "Backend $2 flapped"; delete $1_$4_$5_$2_up_down
-window=2
+action2=shellcmd logger "Backend $2 flapped" -i -t sec; delete $1_$4_$5_$2_up_down
+window=4
+
+
+# rules for gdnsd farms
+type=Single
+ptype=RegExp
+continue=takenext
+pattern=state of \'(\d+\.\d+\.\d+\.\d+)\/.+_(\d+)\' changed from (DOWN|UP).+ to (DOWN|UP)
+context=!gdnsd_$1_$2_$4_$3 && !BLOCK_NOTIF
+desc=MARK
+action=create gdnsd_$1_$2_$3_$4 4
+
+type=PairWithWindow
+continue=takenext
+ptype=RegExp
+pattern=state of \'(\d+\.\d+\.\d+\.\d+)\/.+_(\d+)\' changed from (DOWN|UP).+ to (DOWN|UP)
+context=!gdnsd_$1_$2_$4_$3 && !BLOCK_NOTIF
+desc=$1_changed
+action=shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/sendNotification.pl Backends "$0"; shellcmd logger "gdnsd notification sent" -i -t sec
+ptype2=RegExp
+pattern2=state of \'(\d+\.\d+\.\d+\.\d+)\/.+_(\d+)\' changed from (DOWN|UP).+ to (DOWN|UP)
+context2=gdnsd_$1_$2_$4_$3 && !BLOCK_NOTIF
+desc2=$1_changed
+action2=shellcmd logger "Backend $1 flapped" -i -t sec; delete gdnsd_$1_$2_$3_$4
+window=4
 
 
 #[Cluster]
@@ -65,21 +90,21 @@ continue=takenext
 pattern=ucarp\[\d+\]: \[WARNING\] Switching to state:
 context=!BLOCK_CLUSTER
 desc=cluster_alert
-action=shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/sendNotification.pl Cluster "$0"; shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/syslog.pl "Cluster notification sent"
+action=shellcmd /usr/local/zenloadbalancer/www/Plugins/Notifications/sendNotification.pl Cluster "$0"; shellcmd logger "Cluster notification sent" -i -t sec
 
 
-#[examples]
+#[exec example]
 # sec --conf=/usr/local/zenloadbalancer/www/Plugins/Notifications/sec.rules --input=/var/log/syslog
 
-#  msg
-#~ backend caido:
-#~ Jul 28 11:16:46 maqvir pound: (7f4dccf24700) BackEnd 192.168.0.172:80 dead (killed)
 
-#~ backend up:
-#~ Jul 28 11:18:43 maqvir pound: BackEnd 192.168.0.172:80 resurrect
 
-#~ fg down:
-#~ Jul 26 12:45:04 node1 farmguardian[12795]: (INFO) BackEnd 192.168.0.172:80 down
+# Sep  1 15:57:04 maqvir gdnsd[18120]: state of '192.168.0.167/apache_fg_80' changed from UP/5 to DOWN/10
 
-#~ fg up:
-#~ Jul 26 12:45:04 node1 farmguardian[12795]: (INFO) BackEnd 192.168.0.172:80 resurrect
+# Sep  1 15:59:06 maqvir gdnsd[18513]: state of '192.168.0.167/tcp_80' changed from UP/5 to DOWN/10
+
+# stoping / running extmon
+#Sep  1 15:58:28 maqvir gdnsd_extmon_helper[18121]: gdnsd_extmon_helper exiting gracefully due to signal 15
+#Sep  1 16:15:23 maqvir gdnsd_extmon_helper[19274]: gdnsd_extmon_helper running
+
+
+
