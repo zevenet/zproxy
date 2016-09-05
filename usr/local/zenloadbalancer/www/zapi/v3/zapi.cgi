@@ -13,6 +13,7 @@
 ###############################################################################
 
 use CGI;
+use CGI::Session;
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use MIME::Base64;
 
@@ -20,18 +21,17 @@ use MIME::Base64;
 use Sys::Hostname;
 use Date::Parse;
 use Time::localtime;
-
-#print "Content-type: text/javascript; charset=utf8\n\n";
+use Data::Dumper;
 
 my $q = CGI->new;
 our $origin = 1;
 
+require "/usr/local/zenloadbalancer/config/global.conf";
 require "/usr/local/zenloadbalancer/www/functions.cgi";
 require "/usr/local/zenloadbalancer/www/cert_functions.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/global.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/certificates.cgi";
-require "/usr/local/zenloadbalancer/config/global.conf";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/post.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/put.cgi";
@@ -170,40 +170,234 @@ sub certcontrol()
 	return $swcert;
 }
 
+sub GET($$)
 {
-	my $swcert = &certcontrol();
+	my ( $path, $code ) = @_;
+	return unless $q->request_method eq 'GET' or $q->request_method eq 'HEAD';
+	return unless $q->path_info =~ $path;
+	$code->();
+	exit;
+}
 
-	# if $swcert is greater than 0 zapi should not work
-	if ( $swcert > 0 )
+sub POST($$)
+{
+	my ( $path, $code ) = @_;
+	return unless $q->request_method eq 'POST';
+	return unless $q->path_info =~ $path;
+	$code->();
+	exit;
+}
+
+sub PUT($$)
+{
+	my ( $path, $code ) = @_;
+	return unless $q->request_method eq 'PUT';
+	return unless $q->path_info =~ $path;
+	$code->();
+	exit;
+}
+
+sub DELETE($$)
+{
+	my ( $path, $code ) = @_;
+	return unless $q->request_method eq 'DELETE';
+	return unless $q->path_info =~ $path;
+	$code->();
+	exit;
+}
+
+sub OPTIONS($$)
+{
+	my ( $path, $code ) = @_;
+	return unless $q->request_method eq 'OPTIONS';
+	return unless $q->path_info =~ $path;
+	$code->();
+	exit;
+}
+
+sub validCGISession
+{
+	my $validSession = 0;
+
+	my $cgi = CGI->new;
+	my $session = new CGI::Session( $cgi );
+
+	if ( $session && $session->param( 'is_logged_in' ) == 1 )
 	{
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '403 Forbidden'
-		);
+		$validSession = 1;
+	}
 
-		if ( $swcert == 1 )
+	return $validSession;
+}
+
+sub validZapiKey
+{
+	my $validKey = 0;
+
+	foreach my $key ( keys ( %ENV ) )
+	{
+		next if ( $key ne "HTTP_ZAPI_KEY" );
+
+		if (    $ENV{ $key }	# exists
+			 && &getZAPI( "keyzapi" ) eq $ENV{ $key } # matches
+			 && &getZAPI( "status" ) eq "true" )	# zapi user enabled??
 		{
-			print
-			  "There isn't a valid Zen Load Balancer certificate file, please request a new one\n";
+			$validKey = 1;
 		}
-		elsif ( $swcert == 2 )
+	}
+
+	return $validKey;
+}
+
+sub getAuthorizationCredentials
+{
+	my $base64_digest;
+	my $username;
+	my $password;
+
+	if ( exists $ENV{ HTTP_AUTHORIZATION } )
+	{
+		# Expected header example: 'Authorization': 'Basic aHR0cHdhdGNoOmY='
+		$ENV{ HTTP_AUTHORIZATION } =~ /^Basic (.+)$/;
+		$base64_digest = $1;
+	}
+
+	if ( $base64_digest )
+	{
+		# $decoded_digest format: "username:password"
+		my $decoded_digest = decode_base64( $base64_digest );
+		chomp $decoded_digest;
+		( $username, $password ) = split ( ":", $decoded_digest );
+	}
+
+	return ( $username, $password );
+}
+
+sub unauthorized
+{
+	print $q->header(
+					  -type    => 'text/plain',
+					  -charset => 'utf-8',
+					  -status  => '401 Unauthorized'
+	);
+	print "Not authorized\n";
+	exit;
+}
+
+#~ my $params = $q->Vars;
+#~ my $post_data = $q->param('POSTDATA');
+#~ my $put_data = $q->param('PUTDATA');
+#~
+#~ #my $session = new CGI::Session( $cgi );
+#~
+#~ my $param_zapikey = $ENV{'HTTP_ZAPI_KEY'};
+#~ my $param_session = new CGI::Session( $q );
+#~
+#~ my $param_client = $q->param('client');
+#~
+#~ # log messages
+&zenlog("PERL ENV: " . Dumper \%ENV );
+#~
+#~ &zenlog("CGI OBJECT: " . Dumper $q );
+#~ &zenlog("CGI PARAMS: " . Dumper $params );
+#~ &zenlog("CGI POST DATA: " . $post_data );
+#~ &zenlog("CGI PUT DATA: " . $put_data );
+
+eval {
+
+	GET '/login' => sub {
+
+		my $session = new CGI::Session( $q );
+
+		if ( $session && ! $session->param( 'is_logged_in' ) )
 		{
-			print
-			  "The certificate file isn't signed by the Zen Load Balancer Certificate Authority, please request a new one\n";
-		}
-		elsif ( $swcert == 3 )
-		{
-			# Policy: expired testing certificates would not stop zen service,
-			# but rebooting the service would not start the service,
-			# interfaces should always be available.
-			print
-			  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one\n";
+			my @credentials = &getAuthorizationCredentials();
+
+			my ( $username, $password ) = @credentials;
+
+			&zenlog("credentials: @credentials<");
+
+			#~ use Authen::Simple;
+			#~ use Authen::Simple::Passwd;
+			#~ use Authen::Simple::PAM;
+			#~ use Log::Log4perl qw(:easy);
+			#~ Log::Log4perl->easy_init($DEBUG);
+			#~ Log::Log4perl::init('/etc/log4perl.conf');
+
+			#~ my $passfile = "/etc/shadow";
+
+			#~ my $simple = Authen::Simple->new(
+				#~ Authen::Simple::PAM->new(
+					#~ service => 'login'
+					#~ log => Log::Log4perl->get_logger('Authen::Simple::PAM')
+				#~ )
+				#~ Authen::Simple::Passwd->new(
+					#~ path => '/etc/shadow',
+					#~ log => Log::Log4perl->get_logger('Authen::Simple::Passwd')
+				#~ )
+			#~ );
+
+			# $passfile is a global variable
+			#~ my $passwd = Authen::Simple::Passwd->new(
+				##~ path => $passfile,
+				#~ path => '/etc/shadow',
+				#~ log => Log::Log4perl->get_logger('Authen::Simple::Passwd'),
+			#~ );
+
+			#~ &zenlog("passwd_obj: " . Dumper $passwd_obj );
+
+			sub authenticateCredentials    #($user,$curpasswd)
+			{
+				my ( $user, $curpasswd ) = @_;
+
+				my $passfile = "/etc/shadow";
+				my $output = 0;
+				use Authen::Simple::Passwd;
+				my $passwd = Authen::Simple::Passwd->new( path => "$passfile" );
+				if ( $passwd->authenticate( $user, $curpasswd ) )
+				{
+					$output = 1;
+				}
+
+				return $output;
+			}
+
+
+			# validated credentials?
+			#~ if ( 1 )
+			#~ if ( $simple->authenticate( $username, $password ) )
+			#~ if ( $passwd->authenticate( @credentials ) )
+			if ( &authenticateCredentials( $username, $password ) )
+			{
+				# successful authentication
+				&zenlog( "Login successful for username: $username" );
+
+				$session->param( 'is_logged_in', 1 );
+				$session->param( 'username', $username );
+				$session->expire('is_logged_in', '+30m');
+
+				print $q->header(
+								  -type    => 'text/plain',
+								  -charset => 'utf-8',
+								  -status  => '200 OK',
+				);
+
+				print $session->header();
+			}
+			else # not validated credentials
+			{
+				&zenlog( "Login failed for username: $username" );
+
+				$session->delete();
+				$session->flush();
+
+				&unauthorized();
+			}
 		}
 
 		exit;
-	}
-}
+	};
+};
 
 #########################################
 #
@@ -277,8 +471,46 @@ if ( $not_allowed eq "0" )
 					  -charset => 'utf-8',
 					  -status  => '401 Unauthorized'
 	);
-	print "Not authorized";
+	print "Not authorized\n";
+
 	exit;
+}
+
+##################################### Check certificate
+
+{
+	my $swcert = &certcontrol();
+
+	# if $swcert is greater than 0 zapi should not work
+	if ( $swcert > 0 )
+	{
+		print $q->header(
+						  -type    => 'text/plain',
+						  -charset => 'utf-8',
+						  -status  => '403 Forbidden'
+		);
+
+		if ( $swcert == 1 )
+		{
+			print
+			  "There isn't a valid Zen Load Balancer certificate file, please request a new one\n";
+		}
+		elsif ( $swcert == 2 )
+		{
+			print
+			  "The certificate file isn't signed by the Zen Load Balancer Certificate Authority, please request a new one\n";
+		}
+		elsif ( $swcert == 3 )
+		{
+			# Policy: expired testing certificates would not stop zen service,
+			# but rebooting the service would not start the service,
+			# interfaces should always be available.
+			print
+			  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one\n";
+		}
+
+		exit;
+	}
 }
 
 #####################################
@@ -286,51 +518,6 @@ if ( $not_allowed eq "0" )
 use JSON::XS;
 
 $enabled = 1;
-
-sub GET($$)
-{
-	my ( $path, $code ) = @_;
-	return unless $q->request_method eq 'GET' or $q->request_method eq 'HEAD';
-	return unless $q->path_info =~ $path;
-	$code->();
-	exit;
-}
-
-sub OPTIONS($$)
-{
-        my ( $path, $code ) = @_;
-        return unless $q->request_method eq 'OPTIONS';
-        return unless $q->path_info =~ $path;
-        $code->();
-        exit;
-}
-
-sub POST($$)
-{
-	my ( $path, $code ) = @_;
-	return unless $q->request_method eq 'POST';
-	return unless $q->path_info =~ $path;
-	$code->();
-	exit;
-}
-
-sub PUT($$)
-{
-	my ( $path, $code ) = @_;
-	return unless $q->request_method eq 'PUT';
-	return unless $q->path_info =~ $path;
-	$code->();
-	exit;
-}
-
-sub DELETE($$)
-{
-	my ( $path, $code ) = @_;
-	return unless $q->request_method eq 'DELETE';
-	return unless $q->path_info =~ $path;
-	$code->();
-	exit;
-}
 
 eval {
         #########################################
