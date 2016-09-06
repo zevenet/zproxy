@@ -16,14 +16,21 @@ use CGI;
 use CGI::Session;
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use MIME::Base64;
+use JSON::XS;
 
 # Certificate requrements
-use Sys::Hostname;
 use Date::Parse;
 use Time::localtime;
-use Data::Dumper;
 
-my $q = CGI->new;
+# Debugging
+use Data::Dumper;
+use Devel::Size qw(size total_size);
+
+package GLOBAL {
+	our $cgi = CGI->new;
+};
+
+my $q = $GLOBAL::cgi;
 our $origin = 1;
 
 require "/usr/local/zenloadbalancer/config/global.conf";
@@ -43,8 +50,6 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/farm_guardian.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/farm_actions.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/post_gslb.cgi";
 
-### Verify Zen Cerfificate ###
-
 # build local key
 sub keycert()
 {
@@ -52,7 +57,7 @@ sub keycert()
 	#~ use Sys::Hostname;
 
 	my $dmidecode_bin = "/usr/sbin/dmidecode";    # input
-	my $hostname      = hostname();               # input
+	my $hostname      = getHostname();               # input
 
 	my @dmidec  = `$dmidecode_bin`;
 	my @dmidec2 = grep ( /UUID\:/, @dmidec );
@@ -98,7 +103,7 @@ sub certcontrol()
 	#~ use Time::localtime;
 
 	# input
-	my $hostname    = hostname();
+	my $hostname    = &getHostname();
 	my $zlbcertfile = "$basedir/zlbcertfile.pem";
 	my $openssl_bin = "/usr/bin/openssl";
 	my $keyid       = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
@@ -232,18 +237,15 @@ sub validCGISession
 
 sub validZapiKey
 {
-	my $validKey = 0;
+	my $validKey = 0; # output
 
-	foreach my $key ( keys ( %ENV ) )
+	my $key = "HTTP_ZAPI_KEY";
+
+	if (  exists $ENV{ $key }	# exists
+		 && &getZAPI( "keyzapi" ) eq $ENV{ $key } # matches key
+		 && &getZAPI( "status" ) eq "true" )	# zapi user enabled??
 	{
-		next if ( $key ne "HTTP_ZAPI_KEY" );
-
-		if (    $ENV{ $key }	# exists
-			 && &getZAPI( "keyzapi" ) eq $ENV{ $key } # matches
-			 && &getZAPI( "status" ) eq "true" )	# zapi user enabled??
-		{
-			$validKey = 1;
-		}
+		$validKey = 1;
 	}
 
 	return $validKey;
@@ -270,19 +272,122 @@ sub getAuthorizationCredentials
 		( $username, $password ) = split ( ":", $decoded_digest );
 	}
 
+	return undef if ! $username or ! $password;
 	return ( $username, $password );
 }
 
-sub unauthorized
+sub authenticateCredentials    #($user,$curpasswd)
 {
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '401 Unauthorized'
-	);
-	print "Not authorized\n";
-	exit;
+	my ( $user, $curpasswd ) = @_;
+
+	use Authen::Simple::Passwd;
+	#~ use Authen::Simple::PAM;
+
+	my $passfile          = "/etc/shadow";
+	my $valid_credentials = 0;
+	my $passwd            = Authen::Simple::Passwd->new( path => "$passfile" );
+	#~ my $passwd            = Authen::Simple::PAM->new();
+
+	if ( $passwd->authenticate( $user, $curpasswd ) )
+	{
+		$valid_credentials = 1;
+	}
+
+	return $valid_credentials;
 }
+
+sub validAuthentication
+{
+	# zapi key
+	my $valid_key = &validZapiKey();
+
+	# credentials
+	my @credentials = &getAuthorizationCredentials();
+	my $valid_credentials = 0;
+
+	if ( @credentials )
+	{
+		$valid_credentials = &authenticateCredentials( @credentials );
+	}
+
+	return ( $valid_key || $valid_credentials );
+}
+
+package GLOBAL {
+	our $http_status_codes = {
+		# 2xx Success codes
+		200 => 'OK',
+		201 => 'Created',
+
+		# 4xx Client Error codes
+		400 => 'Bad Request',
+		401 => 'Unauthorized',
+		403 => 'Forbidden',
+		404 => 'Not Found',
+	};
+};
+
+# FIXME: Add extra headers
+sub httpResponse
+{
+	my $self = shift;
+
+	die if !defined $self or ref $self ne 'HASH';
+
+	#~ &zenlog( Dumper $self );
+	#~ &zenlog( "httpcode:". $self->{ http_code }  );
+
+	die
+	  if !defined $self->{ http_code }
+	  or !exists $GLOBAL::http_status_codes->{ $self->{ http_code } };
+
+	my $cgi = $GLOBAL::cgi;
+
+	my @CORS_headers = ( 'Access-Control-Allow-Origin' => '*' );
+
+	if ( $ENV{ 'REQUEST_METHOD' } eq 'OPTIONS' )
+	{
+		push @CORS_headers,
+		  'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+		  'Access-Control-Allow-Headers' => 'ZAPI_KEY, Authorization';
+	}
+
+	# header
+	my $output = $cgi->header(
+
+		# Standard headers
+		#~ -type    => 'text/plain',
+		#~ -type    => 'application/json',
+		-type    => 'application/json',
+		-charset => 'utf-8',
+		-status =>
+		  "$self->{ http_code } $GLOBAL::http_status_codes{ $self->{ http_code } }",
+
+		# CORS headers
+		@CORS_headers,
+	);
+
+	# body
+	#~ my ( $body_ref ) = shift @_; # opcional
+	if ( exists $self->{ body } && ref $self->{ body } eq 'HASH' )
+	{
+		my $json    = JSON::XS->new->utf8->pretty( 1 );
+		my $enabled = 1;
+		$json->canonical( [$enabled] );
+		$output .= $json->encode( $self->{ body } );
+	}
+
+	&zenlog( $output );
+	print $output;
+
+	return 0;
+}
+
+#########################################
+#
+# Debugging messages
+#
+#########################################
 
 #~ my $params = $q->Vars;
 #~ my $post_data = $q->param('POSTDATA');
@@ -298,16 +403,37 @@ sub unauthorized
 #~ # log messages
 &zenlog("PERL ENV: " . Dumper \%ENV );
 #~
-#~ &zenlog("CGI OBJECT: " . Dumper $q );
+&zenlog("CGI OBJECT: " . Dumper $GLOBAL::cgi );
 #~ &zenlog("CGI PARAMS: " . Dumper $params );
 #~ &zenlog("CGI POST DATA: " . $post_data );
 #~ &zenlog("CGI PUT DATA: " . $put_data );
 
+#####################################
+
+#use JSON::XS;
+$enabled = 1; # legacy
+
+my $certified_balancer;
+
 eval {
 
+	#########################################
+	#
+	#  OPTIONS PreAuth
+	#
+	#########################################
+	OPTIONS qr{^.*} => sub {
+		&httpResponse({ http_code => 200 });
+	};
+
+	#########################################
+	#
+	#  GET CGISESSID
+	#
+	#########################################
 	GET '/login' => sub {
 
-		my $session = new CGI::Session( $q );
+		my $session = new CGI::Session( $GLOBAL::cgi );
 
 		if ( $session && ! $session->param( 'is_logged_in' ) )
 		{
@@ -317,14 +443,11 @@ eval {
 
 			&zenlog("credentials: @credentials<");
 
-			#~ use Authen::Simple;
 			#~ use Authen::Simple::Passwd;
 			#~ use Authen::Simple::PAM;
 			#~ use Log::Log4perl qw(:easy);
 			#~ Log::Log4perl->easy_init($DEBUG);
 			#~ Log::Log4perl::init('/etc/log4perl.conf');
-
-			#~ my $passfile = "/etc/shadow";
 
 			#~ my $simple = Authen::Simple->new(
 				#~ Authen::Simple::PAM->new(
@@ -337,37 +460,8 @@ eval {
 				#~ )
 			#~ );
 
-			# $passfile is a global variable
-			#~ my $passwd = Authen::Simple::Passwd->new(
-				##~ path => $passfile,
-				#~ path => '/etc/shadow',
-				#~ log => Log::Log4perl->get_logger('Authen::Simple::Passwd'),
-			#~ );
 
-			#~ &zenlog("passwd_obj: " . Dumper $passwd_obj );
-
-			sub authenticateCredentials    #($user,$curpasswd)
-			{
-				my ( $user, $curpasswd ) = @_;
-
-				my $passfile = "/etc/shadow";
-				my $output = 0;
-				use Authen::Simple::Passwd;
-				my $passwd = Authen::Simple::Passwd->new( path => "$passfile" );
-				if ( $passwd->authenticate( $user, $curpasswd ) )
-				{
-					$output = 1;
-				}
-
-				return $output;
-			}
-
-
-			# validated credentials?
-			#~ if ( 1 )
-			#~ if ( $simple->authenticate( $username, $password ) )
-			#~ if ( $passwd->authenticate( @credentials ) )
-			if ( &authenticateCredentials( $username, $password ) )
+			if ( &authenticateCredentials( @credentials ) )
 			{
 				# successful authentication
 				&zenlog( "Login successful for username: $username" );
@@ -376,11 +470,7 @@ eval {
 				$session->param( 'username', $username );
 				$session->expire('is_logged_in', '+30m');
 
-				print $q->header(
-								  -type    => 'text/plain',
-								  -charset => 'utf-8',
-								  -status  => '200 OK',
-				);
+				&httpResponse({ http_code => 200 });
 
 				print $session->header();
 			}
@@ -391,142 +481,80 @@ eval {
 				$session->delete();
 				$session->flush();
 
-				&unauthorized();
+				&httpResponse({ http_code => 401 });
 			}
 		}
 
 		exit;
 	};
-};
 
-#########################################
-#
-# Check user authentication
-#
-#########################################
-
-$not_allowed = 0;
-
-my %headers = map { $_ => $q->http( $_ ) } $q->http();
-
-&zenlog( "REQUEST #################" );
-foreach $key ( keys ( %ENV ) )
-{
-	&zenlog( "REQUEST key is $key =>" . $ENV{ $key } );
-
-	if ( $key eq "REQUEST_METHOD" and $ENV{ $key } eq "OPTIONS" )
+	#########################################
+	# Above this part are calls allowed without authentication 
+	#########################################
+	if ( ! &validAuthentication() )
 	{
-		#Access-Control-Allow-Origin: http://test.org
-		#Access-Control-Allow-Methods: POST, GET, OPTIONS
-		#&zenlog("METHOD FOUND");
-		print $q->header(
-						-type                          => 'text/plain',
-						-charset                       => 'utf-8',
-						-status                        => '200 OK',
-						'Access-Control-Allow-Origin'  => '*',
-						'Access-Control-Allow-Methods' => 'POST, GET, PUT, DELETE, OPTIONS',
-						'Access-Control-Allow-Headers' => 'ZAPI_KEY, Authorization'
-		);
-
+		&httpResponse({ http_code => 401 });
 		exit;
 	}
-}
 
+	#########################################
+	#
+	#  POST activation certificate
+	#
+	#########################################
 
-if ( !( &checkLoggedZapiUser() ) )
-{
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '401 Unauthorized'
-	);
-	print "User not authorized";
+	POST qr{^/certificates/activation$} => sub {
 
-	exit;
-}
+		&upload_activation_certificate();
 
-#########################################
-#
-# Check ZAPI key
-#
-#########################################
+	};
 
-foreach $key ( keys ( %ENV ) )
-{
-	#chomp($key);
-	if ( $key eq "HTTP_ZAPI_KEY" )
+	#########################################
+	# Check activation certificate
+	#########################################
 	{
-		if (    $ENV{ $key } eq &getZAPI( "keyzapi", "" )
-			 && &getZAPI( "status", "" ) eq "true" )
+		my $swcert = &certcontrol();
+
+		# if $swcert is greater than 0 zapi should not work
+		if ( $swcert > 0 )
 		{
-			$not_allowed = 1;
+			my $message;
+
+			if ( $swcert == 1 )
+			{
+				$message =
+				  "There isn't a valid Zen Load Balancer certificate file, please request a new one";
+			}
+			elsif ( $swcert == 2 )
+			{
+				$message =
+				  "The certificate file isn't signed by the Zen Load Balancer Certificate Authority, please request a new one";
+			}
+			elsif ( $swcert == 3 )
+			{
+				# Policy: expired testing certificates would not stop zen service,
+				# but rebooting the service would not start the service,
+				# interfaces should always be available.
+				$message =
+				  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one";
+			}
+
+			&httpResponse({ http_code => 400, body => { message => $message } });
+
+			exit;
 		}
 	}
-}
 
-if ( $not_allowed eq "0" )
-{
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '401 Unauthorized'
-	);
-	print "Not authorized\n";
+	#########################################
+	#
+	#  POST certificates
+	#
+	#########################################
 
-	exit;
-}
+	POST qr{^/certificates$} => sub {
 
-##################################### Check certificate
+		&upload_certs();
 
-{
-	my $swcert = &certcontrol();
-
-	# if $swcert is greater than 0 zapi should not work
-	if ( $swcert > 0 )
-	{
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '403 Forbidden'
-		);
-
-		if ( $swcert == 1 )
-		{
-			print
-			  "There isn't a valid Zen Load Balancer certificate file, please request a new one\n";
-		}
-		elsif ( $swcert == 2 )
-		{
-			print
-			  "The certificate file isn't signed by the Zen Load Balancer Certificate Authority, please request a new one\n";
-		}
-		elsif ( $swcert == 3 )
-		{
-			# Policy: expired testing certificates would not stop zen service,
-			# but rebooting the service would not start the service,
-			# interfaces should always be available.
-			print
-			  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one\n";
-		}
-
-		exit;
-	}
-}
-
-#####################################
-
-use JSON::XS;
-
-$enabled = 1;
-
-eval {
-        #########################################
-        #
-        #  OPTIONS PreAuth
-        #
-        #########################################
-	OPTIONS qr{^.*} => sub {
-		&farms();
 	};
 
 	#########################################
