@@ -49,7 +49,8 @@ sub modify_farm()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid farm name, please insert a valid value.";
 		my $output = $j->encode(
@@ -69,7 +70,8 @@ sub modify_farm()
 		print $q->header(
 		-type=> 'text/plain',
 		-charset=> 'utf-8',
-		-status=> '404 Not Found'
+		-status=> '404 Not Found',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The farmname $farmname does not exists.";
 		my $output = $j->encode({
@@ -380,7 +382,8 @@ sub modify_backends()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid farm name, please insert a valid value.";
 		my $output = $j->encode(
@@ -400,7 +403,8 @@ sub modify_backends()
 		print $q->header(
 		-type=> 'text/plain',
 		-charset=> 'utf-8',
-		-status=> '404 Not Found'
+		-status=> '404 Not Found',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The farmname $farmname does not exists.";
 		my $output = $j->encode({
@@ -423,7 +427,8 @@ sub modify_backends()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid id server, please insert a valid value.";
 		my $output = $j->encode(
@@ -826,7 +831,8 @@ sub modify_backends()
 			print $q->header(
 			-type=> 'text/plain',
 			-charset=> 'utf-8',
-			-status=> '400 Bad Request'
+			-status=> '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid service name, please insert a valid value.";
 			my $output = $j->encode({
@@ -1003,7 +1009,8 @@ sub modify_backends()
 			print $q->header(
 			-type=> 'text/plain',
 			-charset=> 'utf-8',
-			-status=> '400 Bad Request'
+			-status=> '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid service name, please insert a valid value.";
 			my $output = $j->encode({
@@ -1087,7 +1094,8 @@ sub modify_backends()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '200 OK'
+							  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 
 			foreach $key ( keys %$json_obj )
@@ -1135,7 +1143,8 @@ sub modify_backends()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Errors found trying to modify farm $farmname";
 			my $output = $j->encode(
@@ -1163,7 +1172,8 @@ sub modify_backends()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '200 OK'
+							  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 
 			foreach $key ( keys %$json_obj )
@@ -1192,7 +1202,8 @@ sub modify_backends()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Errors found trying to modify farm $farmname";
 			my $output = $j->encode(
@@ -1293,7 +1304,8 @@ sub modify_resources()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid farm name, please insert a valid value.";
 		my $output = $j->encode(
@@ -1353,7 +1365,8 @@ sub modify_resources()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The zone parameter is empty, please insert a zone.";
 		my $output = $j->encode(
@@ -1478,7 +1491,8 @@ sub modify_resources()
                 print $q->header(
                    -type=> 'text/plain',
                    -charset=> 'utf-8',
-                   -status=> '404 Not Found'
+                   -status=> '404 Not Found',
+					  'Access-Control-Allow-Origin'  => '*'
                 );
                 $errormsg = "The resource with ID $id_resource does not exist.";
                 my $output = $j->encode({
@@ -1502,7 +1516,8 @@ sub modify_resources()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '200 OK'
+						  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		foreach $key ( keys %$json_obj )
@@ -1531,7 +1546,8 @@ sub modify_resources()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Errors found trying to modify farm $farmname";
 		my $output = $j->encode(
@@ -1615,7 +1631,8 @@ sub modify_zones()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid farm name, please insert a valid value.";
 		my $output = $j->encode(
@@ -1685,7 +1702,8 @@ sub modify_zones()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '200 OK'
+						  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		foreach $key ( keys %$json_obj )
@@ -1714,7 +1732,8 @@ sub modify_zones()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Errors found trying to modify farm $farmname";
 		my $output = $j->encode(
@@ -1895,7 +1914,8 @@ sub modify_services()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid farm name, please insert a valid value.";
 		my $output = $j->encode(
@@ -1938,7 +1958,8 @@ sub modify_services()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid service name, please insert a valid value.";
 		my $output = $j->encode(
@@ -2334,7 +2355,8 @@ sub modify_services()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '200 OK'
+						  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		foreach $key ( keys %$json_obj )
@@ -2365,7 +2387,8 @@ sub modify_services()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Errors found trying to modify farm $farmname";
 		my $output = $j->encode(

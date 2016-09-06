@@ -80,7 +80,8 @@ if ( &getFarmFile( $farmname ) == -1 ) {
 	print $q->header(
 	-type=> 'text/plain',
 	-charset=> 'utf-8',
-	-status=> '404 Not Found'
+	-status=> '404 Not Found',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 	$errormsg = "The farmname $farmname does not exists.";
 	my $output = $j->encode({
@@ -254,7 +255,8 @@ if ( $error ne "true" )
 	print $q->header(
 					  -type    => 'text/plain',
 					  -charset => 'utf-8',
-					  -status  => '200 OK'
+					  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 
 	foreach $key ( keys %$json_obj )
@@ -283,7 +285,8 @@ else
 	print $q->header(
 					  -type    => 'text/plain',
 					  -charset => 'utf-8',
-					  -status  => '400 Bad Request'
+					  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 	$errormsg = "Errors found trying to modify farm $farmname";
 	my $output = $j->encode(

@@ -64,7 +64,8 @@ sub get_graphs()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "There is no rrd files yet.";
 		my $output = $j->encode(
@@ -87,7 +88,8 @@ sub get_graphs()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "Invalid first parameter value; the possible values are system, network and farm";
@@ -124,7 +126,8 @@ sub get_graphs()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "Invalid first parameter value; the possible values are system, network and farm";
@@ -181,7 +184,8 @@ sub get_graphs()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg =
 			  "Invalid second parameter value; the possible values are cpu load mem memsw or any of your disks";
@@ -204,7 +208,8 @@ sub get_graphs()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg =
 			  "Invalid second parameter value; the possible values are any available interface";
@@ -227,7 +232,8 @@ sub get_graphs()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg =
 			  "Invalid second parameter value; the possible values are any created farm";
@@ -251,7 +257,8 @@ sub get_graphs()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg =
 			  "Invalid second parameter value; the possible values are cpu load mem memsw or any of your disks";
@@ -274,7 +281,8 @@ sub get_graphs()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg =
 			  "Invalid second parameter value; the possible values are any available interface";
@@ -297,7 +305,8 @@ sub get_graphs()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg =
 			  "Invalid second parameter value; the possible values are any created farm";
@@ -323,7 +332,8 @@ sub get_graphs()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "Invalid third parameter value; the possible values are daily, weekly, monthly and yearly";
@@ -366,7 +376,8 @@ sub get_graphs()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "Invalid third parameter value; the possible values are daily, weekly, monthly and yearly";
@@ -390,7 +401,8 @@ sub get_graphs()
 	print $q->header(
 					  -type    => 'text/plain',
 					  -charset => 'utf-8',
-					  -status  => '200 OK'
+					  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 
 	my $output = $j->encode(
@@ -543,7 +555,8 @@ sub possible_graphs()
 	print $q->header(
 					  -type    => 'text/plain',
 					  -charset => 'utf-8',
-					  -status  => '200 OK'
+					  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 
 	my $j = JSON::XS->new->utf8->pretty( 1 );
@@ -825,7 +838,8 @@ sub farm_stats()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '200 OK'
+						  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		my $j = JSON::XS->new->utf8->pretty( 1 );
@@ -915,7 +929,8 @@ sub farm_stats()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '200 OK'
+						  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		my $j = JSON::XS->new->utf8->pretty( 1 );
@@ -1071,7 +1086,8 @@ sub farm_stats()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '200 OK'
+						  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		my $j = JSON::XS->new->utf8->pretty( 1 );
@@ -1096,7 +1112,8 @@ sub farm_stats()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '200 OK'
+						  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		my $j = JSON::XS->new->utf8->pretty( 1 );
@@ -1271,7 +1288,8 @@ sub stats()
 	print $q->header(
 					  -type    => 'text/plain',
 					  -charset => 'utf-8',
-					  -status  => '200 OK'
+					  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 
 	my $j = JSON::XS->new->utf8->pretty( 1 );
@@ -1369,7 +1387,8 @@ sub stats_mem()
 	print $q->header(
 					  -type    => 'text/plain',
 					  -charset => 'utf-8',
-					  -status  => '200 OK'
+					  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 
 	my $j = JSON::XS->new->utf8->pretty( 1 );
@@ -1452,7 +1471,8 @@ sub stats_load()
 	print $q->header(
 					  -type    => 'text/plain',
 					  -charset => 'utf-8',
-					  -status  => '200 OK'
+					  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 
 	my $j = JSON::XS->new->utf8->pretty( 1 );
@@ -1548,7 +1568,8 @@ sub stats_cpu()
 	print $q->header(
 					  -type    => 'text/plain',
 					  -charset => 'utf-8',
-					  -status  => '200 OK'
+					  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 
 	my $j = JSON::XS->new->utf8->pretty( 1 );
@@ -1648,7 +1669,8 @@ sub stats_network()
 	print $q->header(
 					  -type    => 'text/plain',
 					  -charset => 'utf-8',
-					  -status  => '200 OK'
+					  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 
 	my $j = JSON::XS->new->utf8->pretty( 1 );

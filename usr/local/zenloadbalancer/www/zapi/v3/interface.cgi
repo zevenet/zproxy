@@ -74,7 +74,8 @@ sub new_vini()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Interface name can't be empty";
 		my $output = $j->encode(
@@ -95,7 +96,8 @@ sub new_vini()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Interface name is not valid";
 		my $output = $j->encode(
@@ -117,7 +119,8 @@ sub new_vini()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The parent interface $fdev doesn't exist.";
 		my $output = $j->encode(
@@ -139,7 +142,8 @@ sub new_vini()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The name parameter can't be empty";
 		my $output = $j->encode(
@@ -161,7 +165,8 @@ sub new_vini()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "IP Address $json_obj->{ip} structure is not ok.";
 		my $output = $j->encode(
@@ -182,7 +187,8 @@ sub new_vini()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		$errormsg = "IP Address parameter can't be empty";
@@ -212,7 +218,8 @@ sub new_vini()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Network interface $ifn already exists.";
 		my $output = $j->encode(
@@ -268,7 +275,8 @@ sub new_vini()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '201 Created'
+		  -status  => '201 Created',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		my $out_p = [];
@@ -297,7 +305,8 @@ sub new_vini()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The $ifn virtual network interface can't be created";
 		my $output = $j->encode(
@@ -384,7 +393,8 @@ sub new_vlan()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Interface name can't be empty";
 		my $output = $j->encode(
@@ -405,7 +415,8 @@ sub new_vlan()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Interface name is not valid";
 		my $output = $j->encode(
@@ -427,7 +438,8 @@ sub new_vlan()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The parent interface $fdev doesn't exist.";
 		my $output = $j->encode(
@@ -448,7 +460,8 @@ sub new_vlan()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The name parameter can't be empty";
 		my $output = $j->encode(
@@ -470,7 +483,8 @@ sub new_vlan()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The name for Vlan must be a number.";
 		my $output = $j->encode(
@@ -498,7 +512,8 @@ sub new_vlan()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Vlan network interface $ifn already exists.";
 		my $output = $j->encode(
@@ -520,7 +535,8 @@ sub new_vlan()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "IP Address $json_obj->{ip} structure is not ok.";
 		my $output = $j->encode(
@@ -541,7 +557,8 @@ sub new_vlan()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "IP Address parameter can't be empty";
 		my $output = $j->encode(
@@ -567,7 +584,8 @@ sub new_vlan()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "IP Address $json_obj->{ip} is already in use.";
 			my $output = $j->encode(
@@ -590,7 +608,8 @@ sub new_vlan()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Netmask parameter can't be empty";
 		my $output = $j->encode(
@@ -618,7 +637,8 @@ sub new_vlan()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Netmask Address $json_obj->{netmask} structure is not ok.";
 		my $output = $j->encode(
@@ -640,7 +660,8 @@ sub new_vlan()
         print $q->header(
            -type=> 'text/plain',
            -charset=> 'utf-8',
-           -status=> '400 Bad Request'
+           -status=> '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
         );
         $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric [0-128].";
         my $output = $j->encode(
@@ -661,7 +682,8 @@ sub new_vlan()
         print $q->header(
            -type=> 'text/plain',
            -charset=> 'utf-8',
-           -status=> '400 Bad Request'
+           -status=> '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
         );
         $errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
         my $output = $j->encode({
@@ -716,7 +738,8 @@ sub new_vlan()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '201 Created'
+		  -status  => '201 Created',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		push $out_p,
 		{
@@ -742,7 +765,8 @@ sub new_vlan()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The $ifn vlan network interface can't be created";
 		my $output = $j->encode(
@@ -818,7 +842,8 @@ sub delete_interface()
 			print $q->header(
 			  -type    => 'text/plain',
 			  -charset => 'utf-8',
-			  -status  => '400 Bad Request'
+			  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "The ip version value $ip_v must be 4 or 6";
 			my $output = $j->encode(
@@ -843,7 +868,8 @@ sub delete_interface()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Interface name $if can't be empty";
 		my $output = $j->encode(
@@ -866,7 +892,8 @@ sub delete_interface()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The stack IPv$ip_v in Network interface $if doesn't exist.";
 		my $output = $j->encode(
@@ -890,7 +917,8 @@ sub delete_interface()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '200 OK'
+		  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		my $j = JSON::XS->new->utf8->pretty( 1 );
@@ -912,7 +940,8 @@ sub delete_interface()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The stack IPv$ip_v in Network interface $if can't be deleted";
 		my $output = $j->encode(
@@ -1046,7 +1075,8 @@ sub get_interface()
 	print $q->header(
 	  -type    => 'text/plain',
 	  -charset => 'utf-8',
-	  -status  => '200 OK'
+	  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 
 	my $j = JSON::XS->new->utf8->pretty( 1 );
@@ -1126,7 +1156,8 @@ sub ifaction()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Interface name can't be empty";
 		my $output = $j->encode(
@@ -1147,7 +1178,8 @@ sub ifaction()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Interface name is not valid";
 		my $output = $j->encode(
@@ -1169,7 +1201,8 @@ sub ifaction()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Action value must be up or down";
 		my $output = $j->encode(
@@ -1203,7 +1236,8 @@ sub ifaction()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The Network interface $fdev doesn't exist.";
 		my $output = $j->encode(
@@ -1292,7 +1326,8 @@ sub ifaction()
 			print $q->header(
 			   -type=> 'text/plain',
 			   -charset=> 'utf-8',
-			   -status=> '400 Bad Request'
+			   -status=> '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "The interface $if_ref->{name} has a parent interface DOWN, check the interfaces status";
 			my $output = $j->encode({
@@ -1333,7 +1368,8 @@ sub ifaction()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '201 Created'
+		  -status  => '201 Created',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		my $out_p = [];
@@ -1355,7 +1391,8 @@ sub ifaction()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The action $json_obj->{action} is not set in interface $fdev";
 		my $output = $j->encode(
@@ -1453,7 +1490,8 @@ sub modify_interface()
 			print $q->header(
 			  -type    => 'text/plain',
 			  -charset => 'utf-8',
-			  -status  => '400 Bad Request'
+			  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "The ip version value $ip_v must be 4 or 6";
 			my $output = $j->encode(
@@ -1479,7 +1517,8 @@ sub modify_interface()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Interface name can't be empty";
 		my $output = $j->encode(
@@ -1500,7 +1539,8 @@ sub modify_interface()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Interface name is not valid";
 		my $output = $j->encode(
@@ -1536,7 +1576,8 @@ sub modify_interface()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The stack IPv$ip_v in Network interface $fdev doesn't exist.";
 		my $output = $j->encode(
@@ -1558,7 +1599,8 @@ sub modify_interface()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "IP Address $json_obj->{ip} structure is not ok.";
 		my $output = $j->encode(
@@ -1589,7 +1631,8 @@ sub modify_interface()
 			print $q->header(
 			  -type    => 'text/plain',
 			  -charset => 'utf-8',
-			  -status  => '400 Bad Request'
+			  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
 			my $output = $j->encode(
@@ -1611,7 +1654,8 @@ sub modify_interface()
 			print $q->header(
 			   -type=> 'text/plain',
 			   -charset=> 'utf-8',
-			   -status=> '400 Bad Request'
+			   -status=> '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric.";
 			my $output = $j->encode(
@@ -1635,7 +1679,8 @@ sub modify_interface()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
 		my $output = $j->encode(
@@ -1718,7 +1763,8 @@ sub modify_interface()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '200 OK'
+		  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
         my $out_p = [];
@@ -1745,7 +1791,8 @@ sub modify_interface()
 		print $q->header(
 		  -type    => 'text/plain',
 		  -charset => 'utf-8',
-		  -status  => '400 Bad Request'
+		  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Errors found trying to modify interface $if";
 		my $output = $j->encode(

@@ -64,7 +64,8 @@ sub delete_zone()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid farm name, please insert a valid value.";
 		my $output = $j->encode(
@@ -84,7 +85,8 @@ sub delete_zone()
 		print $q->header(
 		-type=> 'text/plain',
 		-charset=> 'utf-8',
-		-status=> '404 Not Found'
+		-status=> '404 Not Found',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The farmname $farmname does not exists.";
 		my $output = $j->encode({
@@ -107,7 +109,8 @@ sub delete_zone()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid zone name, please insert a valid value.";
 		my $output = $j->encode(
@@ -132,7 +135,8 @@ sub delete_zone()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '200 OK'
+						  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		my $j = JSON::XS->new->utf8->pretty( 1 );
@@ -159,7 +163,8 @@ sub delete_zone()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Zone $zone in farm $farmname hasn't been deleted.";
 		my $output = $j->encode(
@@ -227,7 +232,8 @@ sub delete_zone_resource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid farm name, please insert a valid value.";
 		my $output = $j->encode(
@@ -247,7 +253,8 @@ sub delete_zone_resource()
 		print $q->header(
 		-type=> 'text/plain',
 		-charset=> 'utf-8',
-		-status=> '404 Not Found'
+		-status=> '404 Not Found',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The farmname $farmname does not exists.";
 		my $output = $j->encode({
@@ -270,7 +277,8 @@ sub delete_zone_resource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid zone name, please insert a valid value.";
 		my $output = $j->encode(
@@ -294,7 +302,8 @@ sub delete_zone_resource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid resource id, please insert a valid value.";
 		my $output = $j->encode(
@@ -320,7 +329,8 @@ sub delete_zone_resource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '200 OK'
+						  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		my $j = JSON::XS->new->utf8->pretty( 1 );
@@ -349,7 +359,8 @@ sub delete_zone_resource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "It's not possible to delete the resource with id $id_server in the zone $zone of the farm $farmname.";

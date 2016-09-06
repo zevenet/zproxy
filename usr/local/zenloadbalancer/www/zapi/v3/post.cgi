@@ -88,7 +88,8 @@ sub new_farm()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Please especify a Virtual IP";
 		my $output = $j->encode(
@@ -111,7 +112,8 @@ sub new_farm()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The farm name can't be empty";
 		my $output = $j->encode(
@@ -140,7 +142,8 @@ sub new_farm()
 				print $q->header(
 								  -type    => 'text/plain',
 								  -charset => 'utf-8',
-								  -status  => '422 Unprocessable Entity'
+								  -status  => '422 Unprocessable Entity',
+					  'Access-Control-Allow-Origin'  => '*'
 				);
 				$errormsg =
 				    "The Virtual Port "
@@ -169,7 +172,8 @@ sub new_farm()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid Virtual Port value, it must be numeric";
 			my $output = $j->encode(
@@ -199,7 +203,8 @@ sub new_farm()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The $farmname farm can't be created";
 		my $output = $j->encode(
@@ -222,7 +227,8 @@ sub new_farm()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '422 Unprocessable Entity'
+						  -status  => '422 Unprocessable Entity',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "The $farmname farm already exists, please set a different farm name";
@@ -251,7 +257,8 @@ sub new_farm()
 	print $q->header(
 					  -type    => 'text/plain',
 					  -charset => 'utf-8',
-					  -status  => '201 Created'
+					  -status  => '201 Created',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 	if ( $json_obj->{ profile } eq "DATALINK" )
 	{
@@ -544,7 +551,8 @@ sub new_farm_backend()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid farm name, please insert a valid value.";
 		my $output = $j->encode(
@@ -615,7 +623,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid real server IP value, please insert a valid value.";
 			my $output = $j->encode(
@@ -639,7 +648,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid IP address and port for a real server, it can't be blank.";
 			my $output = $j->encode(
@@ -675,7 +685,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '201 Created'
+							  -status  => '201 Created',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			push $out_p,
 			  {
@@ -705,7 +716,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg =
 			    "It's not possible to create the real server with ip "
@@ -745,7 +757,8 @@ sub new_farm_backend()
 			print $q->header(
 			-type=> 'text/plain',
 			-charset=> 'utf-8',
-			-status=> '400 Bad Request'
+			-status=> '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid service name, please insert a valid value.";
 			my $output = $j->encode({
@@ -782,7 +795,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid real server IP value, please insert a valid value.";
 			my $output = $j->encode(
@@ -807,7 +821,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid IP address and port for a real server, it can't be blank.";
 			my $output = $j->encode(
@@ -833,7 +848,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid weight value for a real server, it must be 1-9.";
 			my $output = $j->encode(
@@ -871,7 +887,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '201 Created'
+							  -status  => '201 Created',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			push $out_p,
 			  {
@@ -901,7 +918,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg =
 			    "It's not possible to create the real server with ip "
@@ -956,7 +974,8 @@ sub new_farm_backend()
 			print $q->header(
 			   -type=> 'text/plain',
 			   -charset=> 'utf-8',
-			   -status=> '400 Bad Request'
+			   -status=> '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid service, please insert a valid value.";
 			my $output = $j->encode({
@@ -979,7 +998,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid service, please insert a valid value.";
 			my $output = $j->encode(
@@ -1006,7 +1026,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '201 Created'
+							  -status  => '201 Created',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			push $out_p,
 			  { id => $id, ip => $json_obj->{ ip }, service => $json_obj->{ service } };
@@ -1028,7 +1049,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg =
 			    "It's not possible to create the backend "
@@ -1060,7 +1082,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid farm name, please insert a valid value.";
 			my $output = $j->encode(
@@ -1108,7 +1131,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid real server IP value, please insert a valid value.";
 			my $output = $j->encode(
@@ -1133,7 +1157,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid IP address and port for a real server, it can't be blank.";
 			my $output = $j->encode(
@@ -1162,7 +1187,8 @@ sub new_farm_backend()
 				print $q->header(
 								  -type    => 'text/plain',
 								  -charset => 'utf-8',
-								  -status  => '400 Bad Request'
+								  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 				);
 				$errormsg =
 				  "Invalid real server priority value, please insert a value greater than or equal to 0.";
@@ -1182,7 +1208,8 @@ sub new_farm_backend()
 				print $q->header(
 								  -type    => 'text/plain',
 								  -charset => 'utf-8',
-								  -status  => '400 Bad Request'
+								  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 				);
 				$errormsg =
 				  "Invalid real server priority value, please insert a value less than or equal to 9.";
@@ -1212,7 +1239,8 @@ sub new_farm_backend()
 				print $q->header(
 								  -type    => 'text/plain',
 								  -charset => 'utf-8',
-								  -status  => '400 Bad Request'
+								  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 				);
 				$errormsg =
 				  "Invalid real server weight value, please insert a value greater than 0.";
@@ -1256,7 +1284,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '201 Created'
+							  -status  => '201 Created',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			push $out_p,
 			  {
@@ -1285,7 +1314,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg =
 			    "It's not possible to create the real server with ip "
@@ -1339,7 +1369,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid farm name, please insert a valid value.";
 			my $output = $j->encode(
@@ -1386,7 +1417,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid real server IP value, please insert a valid value.";
 			my $output = $j->encode(
@@ -1411,7 +1443,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid IP address for a real server, it can't be blank.";
 			my $output = $j->encode(
@@ -1444,7 +1477,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '201 Created'
+							  -status  => '201 Created',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			push $out_p,
 			  {
@@ -1476,7 +1510,8 @@ sub new_farm_backend()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg =
 			    "It's not possible to create the real server with ip "
@@ -1610,7 +1645,8 @@ sub new_farm_service()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid farm name, please insert a valid value.";
 		my $output = $j->encode(
@@ -1630,7 +1666,8 @@ sub new_farm_service()
 		print $q->header(
 		-type=> 'text/plain',
 		-charset=> 'utf-8',
-		-status=> '404 Not Found'
+		-status=> '404 Not Found',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The farmname $farmname does not exists.";
 		my $output = $j->encode({
@@ -1658,7 +1695,8 @@ sub new_farm_service()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid service, please insert a valid value.";
 			my $output = $j->encode(
@@ -1685,7 +1723,8 @@ sub new_farm_service()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '201 Created'
+							  -status  => '201 Created',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			push $out_p, { id => $json_obj->{ id } };
 
@@ -1710,7 +1749,8 @@ sub new_farm_service()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "New service can't be empty.";
 			my $output = $j->encode(
@@ -1734,7 +1774,8 @@ sub new_farm_service()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Service named " . $json_obj->{ id } . " already exists.";
 			my $output = $j->encode(
@@ -1758,7 +1799,8 @@ sub new_farm_service()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg =
 			  "Service name is not valid, only allowed numbers, letters and hyphens.";
@@ -1788,7 +1830,8 @@ sub new_farm_service()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid service, please insert a valid value.";
 			my $output = $j->encode(
@@ -1812,7 +1855,8 @@ sub new_farm_service()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Invalid algorithm, please insert a valid value.";
 			my $output = $j->encode(
@@ -1840,7 +1884,8 @@ sub new_farm_service()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '201 Created'
+							  -status  => '201 Created',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			push $out_p, { id => $json_obj->{ id }, algorithm => $json_obj->{ algorithm } };
 
@@ -1865,7 +1910,8 @@ sub new_farm_service()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "It's not possible to create the service " . $json_obj->{ id };
 			my $output = $j->encode(

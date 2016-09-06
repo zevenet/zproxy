@@ -89,7 +89,8 @@ sub actions()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid action; the possible actions are stop, start and restart";
 		my $output = $j->encode(
@@ -109,7 +110,8 @@ sub actions()
 		print $q->header(
 		-type=> 'text/plain',
 		-charset=> 'utf-8',
-		-status=> '404 Not Found'
+		-status=> '404 Not Found',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The farmname $farmname does not exists.";
 		my $output = $j->encode({
@@ -192,7 +194,8 @@ sub actions()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '200 OK'
+						  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		push $out_p, { action => $json_obj->{ action } };
@@ -213,7 +216,8 @@ sub actions()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "Errors found trying to execute the action $json_obj->{action} in farm $farmname";
@@ -304,7 +308,8 @@ sub maintenance()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid action; the possible actions are up and maintenance";
 		my $output = $j->encode(
@@ -324,7 +329,8 @@ sub maintenance()
 		print $q->header(
 		-type=> 'text/plain',
 		-charset=> 'utf-8',
-		-status=> '404 Not Found'
+		-status=> '404 Not Found',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The farmname $farmname does not exists.";
 		my $output = $j->encode({
@@ -342,7 +348,8 @@ sub maintenance()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid service; please, enter a active service";
 		my $output = $j->encode(
@@ -364,7 +371,8 @@ sub maintenance()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid service; please, enter a active service";
 		my $output = $j->encode(
@@ -383,7 +391,8 @@ sub maintenance()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid id; please, enter a active id of backend";
 		my $output = $j->encode(
@@ -405,7 +414,8 @@ sub maintenance()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid id; id value must be numeric";
 		my $output = $j->encode(
@@ -431,7 +441,8 @@ sub maintenance()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Errors found trying to change status backend to maintenance";
 			my $output = $j->encode(
@@ -456,7 +467,8 @@ sub maintenance()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg = "Errors found trying to change status backend to up";
 			my $output = $j->encode(
@@ -479,7 +491,8 @@ sub maintenance()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '200 OK'
+						  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 		push $out_p,
@@ -506,7 +519,8 @@ sub maintenance()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "Errors found trying to change status of backend $id in service $service in farm $farmname";
