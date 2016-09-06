@@ -72,7 +72,7 @@ sub getFarmClientTimeout    # ($farm_name)
 
 		foreach $line ( @file )
 		{
-			if ( $line =~ /Client/i )
+			if ( $line =~ /^Client\t\t.*\d+/ )
 			{
 				@line = split ( "\ ", $line );
 				$output = $line[1];
