@@ -413,618 +413,617 @@ sub httpResponse
 #use JSON::XS;
 $enabled = 1; # legacy
 
-my $certified_balancer;
+################################################################################
+#
+# Start [Method URI] calls
+#
+################################################################################
 
-eval {
+#########################################
+#
+#  OPTIONS PreAuth
+#
+#########################################
+OPTIONS qr{^.*} => sub {
+	&httpResponse({ http_code => 200 });
+};
 
-	#########################################
-	#
-	#  OPTIONS PreAuth
-	#
-	#########################################
-	OPTIONS qr{^.*} => sub {
-		&httpResponse({ http_code => 200 });
-	};
+#########################################
+#
+#  GET CGISESSID
+#
+#########################################
+GET '/login' => sub {
 
-	#########################################
-	#
-	#  GET CGISESSID
-	#
-	#########################################
-	GET '/login' => sub {
+	my $session = new CGI::Session( $GLOBAL::cgi );
 
-		my $session = new CGI::Session( $GLOBAL::cgi );
+	if ( $session && ! $session->param( 'is_logged_in' ) )
+	{
+		my @credentials = &getAuthorizationCredentials();
 
-		if ( $session && ! $session->param( 'is_logged_in' ) )
+		my ( $username, $password ) = @credentials;
+
+		&zenlog("credentials: @credentials<");
+
+		#~ use Authen::Simple::Passwd;
+		#~ use Authen::Simple::PAM;
+		#~ use Log::Log4perl qw(:easy);
+		#~ Log::Log4perl->easy_init($DEBUG);
+		#~ Log::Log4perl::init('/etc/log4perl.conf');
+
+		#~ my $simple = Authen::Simple->new(
+			#~ Authen::Simple::PAM->new(
+				#~ service => 'login'
+				#~ log => Log::Log4perl->get_logger('Authen::Simple::PAM')
+			#~ )
+			#~ Authen::Simple::Passwd->new(
+				#~ path => '/etc/shadow',
+				#~ log => Log::Log4perl->get_logger('Authen::Simple::Passwd')
+			#~ )
+		#~ );
+
+
+		if ( &authenticateCredentials( @credentials ) )
 		{
-			my @credentials = &getAuthorizationCredentials();
+			# successful authentication
+			&zenlog( "Login successful for username: $username" );
 
-			my ( $username, $password ) = @credentials;
+			$session->param( 'is_logged_in', 1 );
+			$session->param( 'username', $username );
+			$session->expire('is_logged_in', '+30m');
 
-			&zenlog("credentials: @credentials<");
+			&httpResponse({ http_code => 200 });
 
-			#~ use Authen::Simple::Passwd;
-			#~ use Authen::Simple::PAM;
-			#~ use Log::Log4perl qw(:easy);
-			#~ Log::Log4perl->easy_init($DEBUG);
-			#~ Log::Log4perl::init('/etc/log4perl.conf');
-
-			#~ my $simple = Authen::Simple->new(
-				#~ Authen::Simple::PAM->new(
-					#~ service => 'login'
-					#~ log => Log::Log4perl->get_logger('Authen::Simple::PAM')
-				#~ )
-				#~ Authen::Simple::Passwd->new(
-					#~ path => '/etc/shadow',
-					#~ log => Log::Log4perl->get_logger('Authen::Simple::Passwd')
-				#~ )
-			#~ );
-
-
-			if ( &authenticateCredentials( @credentials ) )
-			{
-				# successful authentication
-				&zenlog( "Login successful for username: $username" );
-
-				$session->param( 'is_logged_in', 1 );
-				$session->param( 'username', $username );
-				$session->expire('is_logged_in', '+30m');
-
-				&httpResponse({ http_code => 200 });
-
-				print $session->header();
-			}
-			else # not validated credentials
-			{
-				&zenlog( "Login failed for username: $username" );
-
-				$session->delete();
-				$session->flush();
-
-				&httpResponse({ http_code => 401 });
-			}
+			print $session->header();
 		}
-
-		exit;
-	};
-
-	#########################################
-	# Above this part are calls allowed without authentication 
-	#########################################
-	if ( ! &validAuthentication() )
-	{
-		&httpResponse({ http_code => 401 });
-		exit;
-	}
-
-	#########################################
-	#
-	#  POST activation certificate
-	#
-	#########################################
-
-	POST qr{^/certificates/activation$} => sub {
-
-		&upload_activation_certificate();
-
-	};
-
-	#########################################
-	# Check activation certificate
-	#########################################
-	{
-		my $swcert = &certcontrol();
-
-		# if $swcert is greater than 0 zapi should not work
-		if ( $swcert > 0 )
+		else # not validated credentials
 		{
-			my $message;
+			&zenlog( "Login failed for username: $username" );
 
-			if ( $swcert == 1 )
-			{
-				$message =
-				  "There isn't a valid Zen Load Balancer certificate file, please request a new one";
-			}
-			elsif ( $swcert == 2 )
-			{
-				$message =
-				  "The certificate file isn't signed by the Zen Load Balancer Certificate Authority, please request a new one";
-			}
-			elsif ( $swcert == 3 )
-			{
-				# Policy: expired testing certificates would not stop zen service,
-				# but rebooting the service would not start the service,
-				# interfaces should always be available.
-				$message =
-				  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one";
-			}
+			$session->delete();
+			$session->flush();
 
-			&httpResponse({ http_code => 400, body => { message => $message } });
-
-			exit;
+			&httpResponse({ http_code => 401 });
 		}
 	}
 
-	#########################################
-	#
-	#  POST certificates
-	#
-	#########################################
+	exit;
+};
+
+#########################################
+# Above this part are calls allowed without authentication 
+#########################################
+if ( ! &validAuthentication() )
+{
+	&httpResponse({ http_code => 401 });
+	exit;
+}
+
+#########################################
+#
+#  POST activation certificate
+#
+#########################################
+
+POST qr{^/certificates/activation$} => sub {
+
+	&upload_activation_certificate();
+
+};
+
+#########################################
+# Check activation certificate
+#########################################
+{
+	my $swcert = &certcontrol();
+
+	# if $swcert is greater than 0 zapi should not work
+	if ( $swcert > 0 )
+	{
+		my $message;
+
+		if ( $swcert == 1 )
+		{
+			$message =
+			  "There isn't a valid Zen Load Balancer certificate file, please request a new one";
+		}
+		elsif ( $swcert == 2 )
+		{
+			$message =
+			  "The certificate file isn't signed by the Zen Load Balancer Certificate Authority, please request a new one";
+		}
+		elsif ( $swcert == 3 )
+		{
+			# Policy: expired testing certificates would not stop zen service,
+			# but rebooting the service would not start the service,
+			# interfaces should always be available.
+			$message =
+			  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one";
+		}
+
+		&httpResponse({ http_code => 400, body => { message => $message } });
+
+		exit;
+	}
+}
+
+#########################################
+#
+#  POST certificates
+#
+#########################################
+
+POST qr{^/certificates$} => sub {
+
+	&upload_certs();
+
+};
+
+#########################################
+#
+#  GET List all farms
+#
+#########################################
+GET qr{^/farms$} => sub {
+
+	&farms();
+
+};
+
+#########################################
+#
+#  GET List SSL certificates
+#
+#########################################
+GET qr{^/certificates$} => sub {
+
+	&certificates();
 
-	POST qr{^/certificates$} => sub {
+};
 
-		&upload_certs();
+#########################################
+#
+#  GET stats
+#
+#########################################
 
-	};
+GET qr{^/stats$} => sub {
+	&stats();
 
-	#########################################
-	#
-	#  GET List all farms
-	#
-	#########################################
-	GET qr{^/farms$} => sub {
+};
 
-		&farms();
+#########################################
+#
+#  GET stats mem
+#
+#########################################
 
-	};
+GET qr{^/stats/mem$} => sub {
+	&stats_mem();
 
-	#########################################
-	#
-	#  GET List SSL certificates
-	#
-	#########################################
-	GET qr{^/certificates$} => sub {
+};
 
-		&certificates();
+#########################################
+#
+#  GET stats load
+#
+#########################################
 
-	};
+GET qr{^/stats/load$} => sub {
+	&stats_load();
 
-	#########################################
-	#
-	#  GET stats
-	#
-	#########################################
+};
 
-	GET qr{^/stats$} => sub {
-		&stats();
+#########################################
+#
+#  GET stats network
+#
+#########################################
 
-	};
+GET qr{^/stats/network$} => sub {
+	&stats_network();
 
-	#########################################
-	#
-	#  GET stats mem
-	#
-	#########################################
+};
 
-	GET qr{^/stats/mem$} => sub {
-		&stats_mem();
+#########################################
+#
+#  GET stats cpu
+#
+#########################################
 
-	};
+GET qr{^/stats/cpu$} => sub {
+	&stats_cpu();
 
-	#########################################
-	#
-	#  GET stats load
-	#
-	#########################################
+};
 
-	GET qr{^/stats/load$} => sub {
-		&stats_load();
+#########################################
+#
+#  GET get farm info
+#
+#########################################
+GET qr{^/farms/(\w+$)} => sub {
 
-	};
+	&farms_name();
 
-	#########################################
-	#
-	#  GET stats network
-	#
-	#########################################
+};
 
-	GET qr{^/stats/network$} => sub {
-		&stats_network();
+#########################################
+#
+#  POST new farm
+#
+#########################################
+POST qr{^/farms/(\w+$)} => sub {
 
-	};
+	&new_farm( $1 );
 
-	#########################################
-	#
-	#  GET stats cpu
-	#
-	#########################################
+};
 
-	GET qr{^/stats/cpu$} => sub {
-		&stats_cpu();
+#########################################
+#
+#  POST new service
+#
+#########################################
 
-	};
+POST qr{^/farms/(\w+)/services$} => sub {
 
-	#########################################
-	#
-	#  GET get farm info
-	#
-	#########################################
-	GET qr{^/farms/(\w+$)} => sub {
+	&new_farm_service( $1 );
 
-		&farms_name();
+};
 
-	};
+#########################################
+#
+#  POST new zone
+#
+#########################################
 
-	#########################################
-	#
-	#  POST new farm
-	#
-	#########################################
-	POST qr{^/farms/(\w+$)} => sub {
+POST qr{^/farms/(\w+)/zones$} => sub {
 
-		&new_farm( $1 );
+	&new_farm_zone( $1 );
 
-	};
+};
 
-	#########################################
-	#
-	#  POST new service
-	#
-	#########################################
+#########################################
+#
+#  POST new backend
+#
+#########################################
 
-	POST qr{^/farms/(\w+)/services$} => sub {
+POST qr{^/farms/(\w+)/backends$} => sub {
 
-		&new_farm_service( $1 );
+	&new_farm_backend( $1 );
 
-	};
+};
 
-	#########################################
-	#
-	#  POST new zone
-	#
-	#########################################
+#########################################
+#
+#  POST new zone resource
+#
+#########################################
 
-	POST qr{^/farms/(\w+)/zones$} => sub {
+POST qr{^/farms/(\w+)/zoneresources$} => sub {
 
-		&new_farm_zone( $1 );
+	&new_farm_zoneresource( $1 );
 
-	};
+};
 
-	#########################################
-	#
-	#  POST new backend
-	#
-	#########################################
+#########################################
+#
+#  POST farm actions
+#
+#########################################
 
-	POST qr{^/farms/(\w+)/backends$} => sub {
+POST qr{^/farms/(\w+)/actions$} => sub {
 
-		&new_farm_backend( $1 );
+	&actions( $1 );
 
-	};
+};
 
-	#########################################
-	#
-	#  POST new zone resource
-	#
-	#########################################
+#########################################
+#
+#  POST status backend actions
+#
+#########################################
 
-	POST qr{^/farms/(\w+)/zoneresources$} => sub {
+POST qr{^/farms/(\w+)/maintenance$} => sub {
 
-		&new_farm_zoneresource( $1 );
+	&maintenance( $1 );
 
-	};
+};
 
-	#########################################
-	#
-	#  POST farm actions
-	#
-	#########################################
+#########################################
+#
+#  DELETE farm
+#
+#########################################
+DELETE qr{^/farms/(\w+$)} => sub {
 
-	POST qr{^/farms/(\w+)/actions$} => sub {
+	&delete_farm( $1 );
 
-		&actions( $1 );
+};
 
-	};
+#########################################
+#
+#  DELETE certificate
+#
+#########################################
+DELETE qr{^/certificates/(\w+\.\w+$)} => sub {
 
-	#########################################
-	#
-	#  POST status backend actions
-	#
-	#########################################
+	&delete_certificate( $1 );
 
-	POST qr{^/farms/(\w+)/maintenance$} => sub {
+};
 
-		&maintenance( $1 );
+#########################################
+#
+#  DELETE farm certificate
+#
+#########################################
+DELETE qr{^/farms/(\w+)/deletecertificate/(\w+$)} => sub {
 
-	};
+	&delete_farmcertificate( $1, $2 );
 
-	#########################################
-	#
-	#  DELETE farm
-	#
-	#########################################
-	DELETE qr{^/farms/(\w+$)} => sub {
+};
 
-		&delete_farm( $1 );
+#########################################
+#
+#  DELETE service
+#
+#########################################
 
-	};
+DELETE qr{^/farms/(\w+)/services/(\w+$)} => sub {
 
-	#########################################
-	#
-	#  DELETE certificate
-	#
-	#########################################
-	DELETE qr{^/certificates/(\w+\.\w+$)} => sub {
+	&delete_service( $1, $2 );
 
-		&delete_certificate( $1 );
+};
 
-	};
+#########################################
+#
+#  DELETE zone
+#
+#########################################
 
-	#########################################
-	#
-	#  DELETE farm certificate
-	#
-	#########################################
-	DELETE qr{^/farms/(\w+)/deletecertificate/(\w+$)} => sub {
+#DELETE qr{^/farms/(\w+)/zones/(.*+$)} => sub {
+DELETE qr{^/farms/(\w+)/zones/(([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$)} => sub {
 
-		&delete_farmcertificate( $1, $2 );
+	&delete_zone( $1, $2 );
 
-	};
+};
 
-	#########################################
-	#
-	#  DELETE service
-	#
-	#########################################
+#########################################
+#
+#  DELETE backend (TCP/UDP/L4XNAT/DATALINK)
+#
+#########################################
 
-	DELETE qr{^/farms/(\w+)/services/(\w+$)} => sub {
+DELETE qr{^/farms/(\w+)/backends/(\w+$)} => sub {
 
-		&delete_service( $1, $2 );
+	&delete_backend( $1, $2 );
 
-	};
+};
 
-	#########################################
-	#
-	#  DELETE zone
-	#
-	#########################################
+#########################################
+#
+#  DELETE backend (HTTP/HTTPS/GSLB)
+#
+#########################################
 
-	#DELETE qr{^/farms/(\w+)/zones/(.*+$)} => sub {
-	DELETE qr{^/farms/(\w+)/zones/(([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$)} => sub {
+DELETE qr{^/farms/(\w+)/services/(\w+)/backends/(\w+$)} => sub {
 
-		&delete_zone( $1, $2 );
+	&delete_service_backend( $1, $2, $3 );
 
-	};
+};
 
-	#########################################
-	#
-	#  DELETE backend (TCP/UDP/L4XNAT/DATALINK)
-	#
-	#########################################
+#########################################
+#
+#  DELETE zone resource
+#
+#########################################
 
-	DELETE qr{^/farms/(\w+)/backends/(\w+$)} => sub {
+DELETE qr{^/farms/(\w+)/zones/([a-z0-9].*-*.*\.[a-z0-9].*)/resources/(\w+$)} =>
+  sub {
+	&delete_zone_resource( $1, $2, $3 );
 
-		&delete_backend( $1, $2 );
+  };
 
-	};
+#########################################
+#
+#  PUT farm
+#
+#########################################
 
-	#########################################
-	#
-	#  DELETE backend (HTTP/HTTPS/GSLB)
-	#
-	#########################################
+PUT qr{^/farms/(\w+$)} => sub {
 
-	DELETE qr{^/farms/(\w+)/services/(\w+)/backends/(\w+$)} => sub {
+	&modify_farm( $1 );
 
-		&delete_service_backend( $1, $2, $3 );
+};
 
-	};
+#########################################
+#
+#  PUT backend
+#
+#########################################
 
-	#########################################
-	#
-	#  DELETE zone resource
-	#
-	#########################################
+PUT qr{^/farms/(\w+)/backends/(\w+$)} => sub {
 
-	DELETE qr{^/farms/(\w+)/zones/([a-z0-9].*-*.*\.[a-z0-9].*)/resources/(\w+$)} =>
-	  sub {
-		&delete_zone_resource( $1, $2, $3 );
+	&modify_backends( $1, $2 );
 
-	  };
+};
 
-	#########################################
-	#
-	#  PUT farm
-	#
-	#########################################
+#########################################
+#
+#  PUT farmguardian
+#
+#########################################
 
-	PUT qr{^/farms/(\w+$)} => sub {
+PUT qr{^/farms/(\w+)/fg$} => sub {
+	&modify_farmguardian( $1 );
 
-		&modify_farm( $1 );
+};
 
-	};
+#########################################
+#
+#  PUT resources
+#
+#########################################
 
-	#########################################
-	#
-	#  PUT backend
-	#
-	#########################################
+PUT qr{^/farms/(\w+)/resources/(\w+$)} => sub {
+	&modify_resources( $1, $2 );
 
-	PUT qr{^/farms/(\w+)/backends/(\w+$)} => sub {
+};
 
-		&modify_backends( $1, $2 );
+#########################################
+#
+#  PUT zones
+#
+#########################################
 
-	};
+PUT qr{^/farms/(\w+)/zones/(.*+$)} => sub {
+	&modify_zones( $1, $2 );
 
-	#########################################
-	#
-	#  PUT farmguardian
-	#
-	#########################################
+};
 
-	PUT qr{^/farms/(\w+)/fg$} => sub {
-		&modify_farmguardian( $1 );
+#########################################
+#
+#  PUT services
+#
+#########################################
 
-	};
+PUT qr{^/farms/(\w+)/services/(\w+$)} => sub {
+	&modify_services( $1, $2 );
 
-	#########################################
-	#
-	#  PUT resources
-	#
-	#########################################
+};
 
-	PUT qr{^/farms/(\w+)/resources/(\w+$)} => sub {
-		&modify_resources( $1, $2 );
+#########################################
+#
+#  POST virtual interface
+#
+#########################################
 
-	};
+POST qr{^/addvini/(.*$)} => sub {
 
-	#########################################
-	#
-	#  PUT zones
-	#
-	#########################################
+	&new_vini( $1 );
 
-	PUT qr{^/farms/(\w+)/zones/(.*+$)} => sub {
-		&modify_zones( $1, $2 );
+};
 
-	};
+#########################################
+#
+#  POST vlan interface
+#
+#########################################
 
-	#########################################
-	#
-	#  PUT services
-	#
-	#########################################
+POST qr{^/addvlan/(.*$)} => sub {
 
-	PUT qr{^/farms/(\w+)/services/(\w+$)} => sub {
-		&modify_services( $1, $2 );
+	&new_vlan( $1 );
 
-	};
+};
 
-	#########################################
-	#
-	#  POST virtual interface
-	#
-	#########################################
+#########################################
+#
+#  POST action interface
+#
+#########################################
 
-	POST qr{^/addvini/(.*$)} => sub {
+POST qr{^/ifaction/(.*+$)} => sub {
 
-		&new_vini( $1 );
+	&ifaction( $1 );
 
-	};
+};
 
-	#########################################
-	#
-	#  POST vlan interface
-	#
-	#########################################
+#########################################
+#
+#  POST certificates
+#
+#########################################
 
-	POST qr{^/addvlan/(.*$)} => sub {
+POST qr{^/certificates$} => sub {
 
-		&new_vlan( $1 );
+	&upload_certs();
 
-	};
+};
 
-	#########################################
-	#
-	#  POST action interface
-	#
-	#########################################
+#########################################
+#
+#  POST add certificates
+#
+#########################################
 
-	POST qr{^/ifaction/(.*+$)} => sub {
+POST qr{^/farms/(\w+)/addcertificate$} => sub {
 
-		&ifaction( $1 );
+	&add_farmcertificate( $1 );
 
-	};
+};
 
-	#########################################
-	#
-	#  POST certificates
-	#
-	#########################################
+#########################################
+#
+#  PUT change certificates
+#
+#########################################
 
-	POST qr{^/certificates$} => sub {
+PUT qr{^/farms/(\w+)/changecertificate$} => sub {
 
-		&upload_certs();
+	&change_farmcertificate( $1 );
 
-	};
+};
 
-	#########################################
-	#
-	#  POST add certificates
-	#
-	#########################################
+#########################################
+#
+#  DELETE virtual interface (default)
+#
+#########################################
 
-	POST qr{^/farms/(\w+)/addcertificate$} => sub {
+DELETE qr{^/deleteif/(.*$)} => sub {
 
-		&add_farmcertificate( $1 );
+	&delete_interface( $1 );
 
-	};
+};
 
-	#########################################
-	#
-	#  PUT change certificates
-	#
-	#########################################
+#########################################
+#
+#  GET interfaces
+#
+#########################################
+GET qr{^/interfaces$} => sub {
+	&get_interface();
 
-	PUT qr{^/farms/(\w+)/changecertificate$} => sub {
+};
 
-		&change_farmcertificate( $1 );
+#########################################
+#
+#  PUT interface
+#
+#########################################
 
-	};
+PUT qr{^/modifyif/(.*$)} => sub {
 
-	#########################################
-	#
-	#  DELETE virtual interface (default)
-	#
-	#########################################
+	&modify_interface( $1 );
 
-	DELETE qr{^/deleteif/(.*$)} => sub {
+};
 
-		&delete_interface( $1 );
+#########################################
+#
+#  GET farm stats
+#
+#########################################
+GET qr{^/farms/(\w+)/stats$} => sub {
+	&farm_stats( $1 );
 
-	};
+};
 
-	#########################################
-	#
-	#  GET interfaces
-	#
-	#########################################
-	GET qr{^/interfaces$} => sub {
-		&get_interface();
+#########################################
+#
+#  GET graphs
+#
+#########################################
+GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
+	&get_graphs( $1, $2, $3 );
 
-	};
+};
 
-	#########################################
-	#
-	#  PUT interface
-	#
-	#########################################
+#########################################
+#
+#  GET possible graphs
+#
+#########################################
+GET qr{^/graphs} => sub {
+	&possible_graphs();
 
-	PUT qr{^/modifyif/(.*$)} => sub {
-
-		&modify_interface( $1 );
-
-	};
-
-	#########################################
-	#
-	#  GET farm stats
-	#
-	#########################################
-	GET qr{^/farms/(\w+)/stats$} => sub {
-		&farm_stats( $1 );
-
-	};
-
-	#########################################
-	#
-	#  GET graphs
-	#
-	#########################################
-	GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
-		&get_graphs( $1, $2, $3 );
-
-	};
-
-	#########################################
-	#
-	#  GET possible graphs
-	#
-	#########################################
-	GET qr{^/graphs} => sub {
-		&possible_graphs();
-
-	};
-
-	#end eval
 };
