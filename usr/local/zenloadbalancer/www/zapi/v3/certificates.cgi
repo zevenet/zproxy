@@ -663,5 +663,55 @@ sub upload_certs()
 
 }
 
+#upload .pem certs
+sub upload_activation_certificate
+{
+
+#
+# Curl command:
+#
+# curl -v --tcp-nodelay --tlsv1 -X POST -k  -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -u zapi:admin  -F fileupload=@/opt/example.pem https://46.101.46.14:444/zapi/v3/zapi.cgi/certificates/activation
+#
+
+	use CGI;
+
+	my $q = new CGI;
+
+	my $upload_dir = $basedir;
+	my $filename   = 'zlbcertfile.pem';
+
+	my $upload_data = $q->upload( "certificate" );
+
+	if ( $upload_data )
+	{
+		open ( my $uploadfile, '>', "$upload_dir/$filename" ) or die "$!";
+
+		binmode $uploadfile;
+		print { $uploadfile } $upload_data;
+
+		close $uploadfile;
+
+		&httpResponse({ http_code => 200 });
+	}
+	else
+	{
+		&zenlog( "ZAPI error, trying to upload activation certificate." );
+
+		# Error
+		my $errormsg = "Error uploading activation certificate file";
+
+		my $body = {
+					   description => "Upload activation certificate file.",
+					   error       => "true",
+					   message     => $errormsg,
+		};
+
+		&httpResponse({ http_code => 400, body => $body });
+	}
+
+	exit;
+
+}
+
 
 1
