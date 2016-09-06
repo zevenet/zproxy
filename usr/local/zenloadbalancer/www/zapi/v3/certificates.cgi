@@ -88,7 +88,8 @@ sub certificates()
 	print $q->header(
 					  -type    => 'text/plain',
 					  -charset => 'utf-8',
-					  -status  => '200 OK'
+					  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 
 	my $output = $j->encode(
@@ -150,7 +151,8 @@ sub delete_certificate()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "File can't be deleted because it's in use by a farm";
 
@@ -174,7 +176,8 @@ sub delete_certificate()
 	print $q->header(
 					  -type    => 'text/plain',
 					  -charset => 'utf-8',
-					  -status  => '200 OK'
+					  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 
 	$message = "The Certificate $1 has been deleted.";
@@ -242,7 +245,8 @@ sub add_farmcertificate()
 		print $q->header(
 		-type=> 'text/plain',
 		-charset=> 'utf-8',
-		-status=> '404 Not Found'
+		-status=> '404 Not Found',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The farmname $farmname does not exists.";
 		my $output = $j->encode({
@@ -267,7 +271,8 @@ sub add_farmcertificate()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '200 OK'
+							  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 
 			$message =
@@ -293,7 +298,8 @@ sub add_farmcertificate()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '400 Bad Request'
+							  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 			$errormsg =
 			  "It's not possible to add the certificate with name $json_obj->{file} for the $farmname farm";
@@ -321,7 +327,8 @@ sub add_farmcertificate()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid certificate name, please insert a valid value.";
 		my $output = $j->encode(
@@ -386,7 +393,8 @@ sub delete_farmcertificate()
 		print $q->header(
 		-type=> 'text/plain',
 		-charset=> 'utf-8',
-		-status=> '404 Not Found'
+		-status=> '404 Not Found',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The farmname $farmname does not exists.";
 		my $output = $j->encode({
@@ -410,7 +418,8 @@ sub delete_farmcertificate()
 			print $q->header(
 							  -type    => 'text/plain',
 							  -charset => 'utf-8',
-							  -status  => '200 OK'
+							  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 			);
 
 			$message = "The Certificate $certfilename has been deleted.";
@@ -436,7 +445,8 @@ sub delete_farmcertificate()
 				print $q->header(
 								  -type    => 'text/plain',
 								  -charset => 'utf-8',
-								  -status  => '400 Bad Request'
+								  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 				);
 				$errormsg =
 				  "It isn't possible to delete the selected certificate $certfilename from the SNI list";
@@ -461,7 +471,8 @@ sub delete_farmcertificate()
 				print $q->header(
 								  -type    => 'text/plain',
 								  -charset => 'utf-8',
-								  -status  => '400 Bad Request'
+								  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 				);
 				$errormsg =
 				  "It isn't possible to delete all certificates, at least one is required for HTTPS profiles";
@@ -489,7 +500,8 @@ sub delete_farmcertificate()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid certificate id, please insert a valid value.";
 		my $output = $j->encode(
@@ -620,7 +632,8 @@ sub upload_certs()
 		print $q->header(
 						  -type    => 'text/html',
 						  -charset => 'utf-8',
-						  -status  => '200 OK'
+						  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 
 	}
@@ -632,7 +645,8 @@ sub upload_certs()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Error uploading certificate file";
 		my $output = $j->encode(

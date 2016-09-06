@@ -79,7 +79,8 @@ sub new_farm_zone()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid farm name, please insert a valid value.";
 		my $output = $j->encode(
@@ -122,7 +123,8 @@ sub new_farm_zone()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid zone name, please insert a valid value.";
 		my $output = $j->encode(
@@ -146,7 +148,8 @@ sub new_farm_zone()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "Invalid zone name, please insert a valid value like zonename.com, zonename.net, etc. The zone $zone can't be created.";
@@ -173,7 +176,8 @@ sub new_farm_zone()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '201 Created'
+						  -status  => '201 Created',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		push $out_p, { id => $json_obj->{ id } };
 
@@ -198,7 +202,8 @@ sub new_farm_zone()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "It's not possible to create the zone " . $json_obj->{ id };
 		my $output = $j->encode(
@@ -290,7 +295,8 @@ sub new_farm_zoneresource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid farm name, please insert a valid value.";
 		my $output = $j->encode(
@@ -310,7 +316,8 @@ sub new_farm_zoneresource()
 		print $q->header(
 		-type=> 'text/plain',
 		-charset=> 'utf-8',
-		-status=> '404 Not Found'
+		-status=> '404 Not Found',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "The farmname $farmname does not exists.";
 		my $output = $j->encode({
@@ -333,7 +340,8 @@ sub new_farm_zoneresource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "The parameter zone resource name (rname) doesn't exist, please insert a valid value.";
@@ -358,7 +366,8 @@ sub new_farm_zoneresource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "The parameter zone resource server (rdata) doesn't exist, please insert a valid value.";
@@ -383,7 +392,8 @@ sub new_farm_zoneresource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "The parameter time to live value (ttl) doesn't exist, please insert a valid value.";
@@ -408,7 +418,8 @@ sub new_farm_zoneresource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "The parameter DNS record type (type) doesn't exist, please insert a valid value.";
@@ -433,7 +444,8 @@ sub new_farm_zoneresource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid zone resource name (rname), please insert a valid value.";
 		my $output = $j->encode(
@@ -457,7 +469,8 @@ sub new_farm_zoneresource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "Invalid zone resource server (rdata), please insert a valid value.";
@@ -482,7 +495,8 @@ sub new_farm_zoneresource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid time to live value (ttl), please insert a valid value.";
 		my $output = $j->encode(
@@ -506,7 +520,8 @@ sub new_farm_zoneresource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg = "Invalid DNS record type (type), please insert a valid value.";
 		my $output = $j->encode(
@@ -541,7 +556,8 @@ sub new_farm_zoneresource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '201 Created'
+						  -status  => '201 Created',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		push $out_p,
 		  {
@@ -574,7 +590,8 @@ sub new_farm_zoneresource()
 		print $q->header(
 						  -type    => 'text/plain',
 						  -charset => 'utf-8',
-						  -status  => '400 Bad Request'
+						  -status  => '400 Bad Request',
+					  'Access-Control-Allow-Origin'  => '*'
 		);
 		$errormsg =
 		  "It's not possible to create a new resource in the zone $json_obj->{zone} in farm $farmname.";

@@ -345,7 +345,8 @@ sub farms_name_http()
 	print $q->header(
 					  -type    => 'text/plain',
 					  -charset => 'utf-8',
-					  -status  => '200 OK'
+					  -status  => '200 OK',
+					  'Access-Control-Allow-Origin'  => '*'
 	);
 
 	my $j = JSON::XS->new->utf8->pretty( 1 );
