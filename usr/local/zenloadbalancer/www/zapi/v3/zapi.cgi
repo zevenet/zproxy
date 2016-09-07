@@ -24,7 +24,7 @@ use Time::localtime;
 
 # Debugging
 use Data::Dumper;
-use Devel::Size qw(size total_size);
+#~ use Devel::Size qw(size total_size);
 
 package GLOBAL {
 	our $cgi = CGI->new;
@@ -278,17 +278,20 @@ sub getAuthorizationCredentials
 
 sub authenticateCredentials    #($user,$curpasswd)
 {
-	my ( $user, $curpasswd ) = @_;
+	my ( $user, $pass ) = @_;
+
+	return undef if ! defined $user or ! defined $pass;
 
 	use Authen::Simple::Passwd;
 	#~ use Authen::Simple::PAM;
 
-	my $passfile          = "/etc/shadow";
-	my $valid_credentials = 0;
-	my $passwd            = Authen::Simple::Passwd->new( path => "$passfile" );
-	#~ my $passwd            = Authen::Simple::PAM->new();
+	my $valid_credentials = 0;	# output
 
-	if ( $passwd->authenticate( $user, $curpasswd ) )
+	my $passfile = "/etc/shadow";
+	my $simple   = Authen::Simple::Passwd->new( path => "$passfile" );
+	#~ my $simple   = Authen::Simple::PAM->new();
+
+	if ( $simple->authenticate( $user, $pass ) )
 	{
 		$valid_credentials = 1;
 	}
@@ -327,12 +330,28 @@ package GLOBAL {
 	};
 };
 
-# FIXME: Add extra headers
+=begin nd
+	Function: httpResponse
+
+	Render and print zapi response fron data input.
+
+	Parameters:
+
+		Hash reference with these key-value pairs:
+
+		http_code - HTTP status code digit
+		headers - optional hash reference of extra http headers to be included
+		body - optional hash reference with data to be sent as JSON
+
+	Returns:
+
+		Nothing useful.
+=cut
 sub httpResponse
 {
 	my $self = shift;
 
-	die if !defined $self or ref $self ne 'HASH';
+	die 'httpResponse: Bad input' if !defined $self or ref $self ne 'HASH';
 
 	#~ &zenlog( Dumper $self );
 	#~ &zenlog( "httpcode:". $self->{ http_code }  );
@@ -342,14 +361,19 @@ sub httpResponse
 	  or !exists $GLOBAL::http_status_codes->{ $self->{ http_code } };
 
 	my $cgi = $GLOBAL::cgi;
-
-	my @CORS_headers = ( 'Access-Control-Allow-Origin' => '*' );
+	my @headers = ( 'Access-Control-Allow-Origin' => '*' );
 
 	if ( $ENV{ 'REQUEST_METHOD' } eq 'OPTIONS' )
 	{
-		push @CORS_headers,
+		push @headers,
 		  'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
 		  'Access-Control-Allow-Headers' => 'ZAPI_KEY, Authorization';
+	}
+
+	# add possible extra headers
+	if ( exists $self->{ headers } && ref $self->{ headers } eq 'HASH' )
+	{
+		@headers = %{ $self->{ headers } };
 	}
 
 	# header
@@ -361,10 +385,10 @@ sub httpResponse
 		-type    => 'application/json',
 		-charset => 'utf-8',
 		-status =>
-		  "$self->{ http_code } $GLOBAL::http_status_codes{ $self->{ http_code } }",
+		  "$self->{ http_code } $GLOBAL::http_status_codes->{ $self->{ http_code } }",
 
-		# CORS headers
-		@CORS_headers,
+		# extra headers
+		@headers,
 	);
 
 	# body
@@ -444,24 +468,6 @@ GET '/login' => sub {
 		my ( $username, $password ) = @credentials;
 
 		&zenlog("credentials: @credentials<");
-
-		#~ use Authen::Simple::Passwd;
-		#~ use Authen::Simple::PAM;
-		#~ use Log::Log4perl qw(:easy);
-		#~ Log::Log4perl->easy_init($DEBUG);
-		#~ Log::Log4perl::init('/etc/log4perl.conf');
-
-		#~ my $simple = Authen::Simple->new(
-			#~ Authen::Simple::PAM->new(
-				#~ service => 'login'
-				#~ log => Log::Log4perl->get_logger('Authen::Simple::PAM')
-			#~ )
-			#~ Authen::Simple::Passwd->new(
-				#~ path => '/etc/shadow',
-				#~ log => Log::Log4perl->get_logger('Authen::Simple::Passwd')
-			#~ )
-		#~ );
-
 
 		if ( &authenticateCredentials( @credentials ) )
 		{
