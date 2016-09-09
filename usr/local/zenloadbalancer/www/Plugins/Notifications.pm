@@ -292,46 +292,49 @@ sub contentAlerts
 				</div>
 				<div class=\"box-content\">		
 					<form method=\"post\" action=\"index.cgi\">
-					<div>
-						<h6>Global Notifications</h6>
-					</div>		
-					<div>\n
-						<input type=\"hidden\" name=\"id\" value=\"$idModule-$idSubModule\">
-						<input type=\"hidden\" name=\"action\" value=\"edit-config\">
-						<div class=\"form-row\">\n
-							<div class=\"box grid_2\">
-								<p ><b>Enable notifications</b></p>
-							</div>
 	";
-	
-	if ( $status eq 'on' )
-	{
-		$output .= "
-							<div class=\"box grid_1\">
-								<p >
-									<input type=\"checkbox\" checked name=\"enable_alert_Notifications\" value=\"true\" class=\"fixedwidth\"> 
-								</p>
-							</div>";
-	}
-	else
-	{
-		$output .= "
-							<div class=\"box grid_1\">
-								<p > 
-									<input type=\"checkbox\" name=\"enable_alert_Notifications\" value=\"true\"> 
-								</p>
-							</div>";
+#					<div>
+#						<h6>Global Notifications</h6>
+#					</div>
+	$output .= "
+					<div>
+					<input type=\"hidden\" name=\"id\" value=\"$idModule-$idSubModule\">
+						<input type=\"hidden\" name=\"action\" value=\"edit-config\">
+	";
+#						<div class=\"form-row\">\n
+#							<div class=\"box grid_2\">
+#								<p ><b>Enable notifications</b></p>
+#							</div>
+
+
+#	if ( $status eq 'on' )
+#	{
+#		$output .= "
+#							<div class=\"box grid_1\">
+#								<p >
+#									<input type=\"checkbox\" checked name=\"enable_alert_Notifications\" value=\"true\" class=\"fixedwidth\"> 
+#								</p>
+#							</div>";
+#	}
+#	else
+#	{
+#		$output .= "
+#							<div class=\"box grid_1\">
+#								<p >
+#									<input type=\"checkbox\" name=\"enable_alert_Notifications\" value=\"true\"> 
+#								</p>
+#							</div>";
+#	}
+
+#	$output .= "
+#							<div class=\"box grid_3\">
+#								<p ><b>Description:</b><br>$description</p>
+#						</div>
+#							<div style=\"clear:both;\"></div>
+#							<br></div></div><hr/>
+#			";
 	}
 
-	$output .= "
-							<div class=\"box grid_3\">
-								<p ><b>Description:</b><br>$description</p>
-							</div>
-							<div style=\"clear:both;\"></div>
-							<br></div></div><hr/>
-			";			
-	}
-	
 	foreach my $notif ( sort keys ( %notificationHash ) )
 	{
 		$status = $notificationHash{$notif}->{ 'Status' };
@@ -351,7 +354,7 @@ sub contentAlerts
 						<p ><b>Enable $notif notifications</b></p>
 					</div>
 		";
-		
+
 		if ( $status eq 'on' )
 		{
 			$output .= 
@@ -387,7 +390,7 @@ sub contentAlerts
 			$output .= "
 				<div class=\"box grid_2\">
 					<p >			
-						<b>Delay Time</b>. In seconds.
+						<b>Delay time</b>. In seconds.
 						<input type=\"number\" name=\"switchTime_$notif\" value=\"$switchTime\">
 					</p>
 				</div> ";
@@ -440,7 +443,7 @@ sub controlAlerts
 				{
 					$errMsg = &setData ( $alertsFile, $notif, 'Status', 'off' );
 					&disableRule ( $notif );
-					$modify='true';					
+					$modify='true';
 				}
 			}
 			# add subject id
@@ -459,26 +462,61 @@ sub controlAlerts
 		}
 	
 		# global configuration
-		$notif = 'Notifications';
-		if ( $cgi->{"enable_alert_$notif"} eq 'true' )
+		#~ $notif = 'Notifications';
+		#~ if ( $cgi->{"enable_alert_$notif"} eq 'true' )
+		#~ {
+			#~ if (&getData ($alertsFile, $notif, 'Status') ne 'on')
+			#~ {
+				#~ $errMsg = &setData ( $alertsFile, $notif, 'Status', 'on' );
+				#~ if ( $errMsg eq "" ) { $errMsg = "0-Notification is enabled now"; }
+				#~ &runNotifications ();
+			#~ }
+		#~ }
+		#~ else
+		#~ {
+			#~ if ( &getData ($alertsFile, $notif, 'Status') ne 'off')
+			#~ {
+				#~ $errMsg = &setData ( $alertsFile, $notif, 'Status', 'off' );
+				#~ if ( $errMsg eq "" ) { $errMsg = "0-Notification is disabled now"; }
+				#~ &stopNotifications ();
+			#~ }
+		#~ }
+
+
+		my $flag = 0;
+		if (&getData ($alertsFile, 'Notifications', 'Status') eq 'off')
 		{
-			if (&getData ($alertsFile, $notif, 'Status') ne 'on')
+			foreach $notif ( sort keys ( %notificationHash ) )
 			{
-				$errMsg = &setData ( $alertsFile, $notif, 'Status', 'on' );
+				if ( &getData ($alertsFile, $notif, 'Status') eq 'on' )
+				{
+					$flag = 1;
+				}
+			}
+			if ( $flag )
+			{
+				$errMsg = &setData ( $alertsFile, 'Notifications', 'Status', 'on' );
 				if ( $errMsg eq "" ) { $errMsg = "0-Notification is enabled now"; }
 				&runNotifications ();
 			}
 		}
 		else
-		{ 
-			if ( &getData ($alertsFile, $notif, 'Status') ne 'off')
+		{
+			foreach $notif ( sort keys ( %notificationHash ) )
 			{
-				$errMsg = &setData ( $alertsFile, $notif, 'Status', 'off' ); 
+				if ( &getData ($alertsFile, $notif, 'Status') eq 'on' )
+				{
+					$flag = 1;
+				}
+			}
+			if ( !$flag )
+			{
+				$errMsg = &setData ( $alertsFile, 'Notifications', 'Status', 'off' );
 				if ( $errMsg eq "" ) { $errMsg = "0-Notification is disabled now"; }
 				&stopNotifications ();	
 			}
 		}
-	
+
 		# sucessful message and reset
 		if ( $errMsg eq "" && $modify eq 'true')
 		{
@@ -487,7 +525,7 @@ sub controlAlerts
 		}
 	}
 
-		
+
 	return $errMsg;
 }
 
