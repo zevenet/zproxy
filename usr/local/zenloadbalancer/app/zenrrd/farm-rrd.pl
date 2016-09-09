@@ -94,7 +94,6 @@ foreach $farmfile ( &getFarmList() )
 	RRDs::update "$rrdap_dir/$rrd_dir/$db_farm",
 		"-t", "pending:established",
 		"N:$synconns:$globalconns";
-	}
 
 	if ( $ERROR = RRDs::error )
 	{
