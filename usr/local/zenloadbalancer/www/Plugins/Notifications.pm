@@ -103,6 +103,8 @@ sub menu
 
 sub contentSenders
 {
+	open my $hand, "<", $sendersFile or system ( "cp $notificationsPath/templates/Senders.conf $sendersFile" );
+	close $hand;
 	my %server = %{ &getData( $sendersFile, 'Smtp' ) };	
 	my $serverName = $server{'server'};
 	my $user = $server{'auth-user'};
@@ -205,6 +207,8 @@ sub contentSenders
 # Check form data and configure mail server.
 sub controlSenders
 {
+	open my $hand, "<", $sendersFile or system ( "cp $notificationsPath/templates/Senders.conf $sendersFile" );
+	close $hand;
 	my $errMsg;
 	my $sender;
 	my $modify;
@@ -272,6 +276,8 @@ sub controlSenders
 
 sub contentAlerts
 {
+	open my $hand, "<", $alertsFile or system ( "cp $notificationsPath/templates/Alerts.conf $alertsFile" );
+	close $hand;
 	my $idSubModule = &plugins::getIdSubModule();
 	my $idModule = &plugins::getIdModule();
 	my $output;
@@ -374,7 +380,7 @@ sub contentAlerts
 				</div>";
 		}
 
-		# Delay time = switchTime
+		# Avoid flapping time = switchTime
 		$output .= "
 				<div class=\"box grid_3\">
 					<p><b>Description:</b><br>$description</p>
@@ -390,7 +396,7 @@ sub contentAlerts
 			$output .= "
 				<div class=\"box grid_2\">
 					<p >			
-						<b>Avoid Flapping time</b>. In seconds.
+						<b>Avoid flapping time</b>. In seconds.
 						<input type=\"number\" name=\"switchTime_$notif\" value=\"$switchTime\">
 					</p>
 				</div> ";
@@ -410,7 +416,9 @@ sub contentAlerts
 
 sub controlAlerts
 {
-	my $errMsg;
+	open my $hand, "<", $alertsFile or system ( "cp $notificationsPath/templates/Alerts.conf $alertsFile" );
+	close $hand;
+	#~ my $errMsg;
 	my $status;
 	my $idModule = &plugins::getIdModule();
 	my $modify;
