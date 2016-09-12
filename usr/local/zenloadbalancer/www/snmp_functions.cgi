@@ -135,6 +135,7 @@ sub setSnmpdConfig    # ($snmpd_conf)
 	print $config_file "agentAddress udp:$snmpd_conf->{ip}:$snmpd_conf->{port}\n";
 	print $config_file
 	  "rocommunity $snmpd_conf->{community} $snmpd_conf->{scope}\n";
+	print $config_file "includeAllDisks 10%\n";
 	print $config_file "#zenlb\n";
 
 	# Close config file
