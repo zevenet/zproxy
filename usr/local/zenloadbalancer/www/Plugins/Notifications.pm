@@ -390,7 +390,7 @@ sub contentAlerts
 			$output .= "
 				<div class=\"box grid_2\">
 					<p >			
-						<b>Delay time</b>. In seconds.
+						<b>Avoid Flapping time</b>. In seconds.
 						<input type=\"number\" name=\"switchTime_$notif\" value=\"$switchTime\">
 					</p>
 				</div> ";
