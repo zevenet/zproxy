@@ -24,7 +24,18 @@
 #~ use strict;
 #~ use warnings;
 
-#get ip GUI
+=begin nd
+	Function: GUIip
+
+	returns the GUI service ip address
+
+	Parameters: none
+
+	Returns:
+
+		scalar - GUI ip address or '*' for all local addresses
+
+=cut
 sub GUIip    # ()
 {
 	my $gui_ip;    # output
@@ -48,7 +59,7 @@ sub GUIip    # ()
 	chomp ( $gui_ip );
 	$gui_ip =~ s/\s//g;
 
-	if ( $gui_ip =~ /^#/ )
+	if ( &ipisok($gui_ip,4) ne "true" )
 	{
 		$gui_ip = "*";
 	}
