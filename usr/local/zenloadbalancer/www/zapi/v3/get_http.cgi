@@ -21,11 +21,11 @@
 #      {
 #         "certlist" : [
 #            {
-#               "certname" : "example.pem",
+#               "file" : "example.pem",
 #               "id" : 1
 #            },
 #            {
-#               "certname" : "zencert.pem",
+#               "file" : "zencert.pem",
 #               "id" : 2
 #            }
 #         ],
@@ -178,7 +178,7 @@ sub farms_name_http()
 		$elem     = @cnames;
 		for ( $i = 0 ; $i < $elem ; $i++ )
 		{
-			push $out_cn, { certname => $cnames[$i], id => $i + 1 };
+			push $out_cn, { file => $cnames[$i], id => $i + 1 };
 		}
 		$cipher  = &getFarmCipherList( $farmname );
 		$ciphers = &getFarmCipherSet( $farmname );
