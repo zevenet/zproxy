@@ -1018,7 +1018,7 @@ sub genDHFile    # ($farm_name)
 
 	if ( ! -e "$dhfile" )
 	{
-		&logfile( "Generating DH keys in $dhfile ..." );
+		&zenlog( "Generating DH keys in $dhfile ..." );
 		&setFarmLock( $farm_name, "on", "<a href=\"https://www.zenloadbalancer.com/knowledge-base/misc/diffie-hellman-keys-generation-important/\" target=\"_blank\">Generating SSL Diffie-Hellman 2048 keys</a> <img src=\"img/loading.gif\"/>" );
 
 		system("$openssl dhparam -5 2048 -out $dhfile &");
