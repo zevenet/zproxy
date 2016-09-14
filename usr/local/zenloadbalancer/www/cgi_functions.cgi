@@ -3,7 +3,7 @@
 #     Zen Load Balancer Software License
 #     This file is part of the Zen Load Balancer software package.
 #
-#     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
+#     Copyright (C) 2016 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
@@ -21,12 +21,18 @@
 #
 ###############################################################################
 
-require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
-
 use CGI;
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 
 use feature 'state';
+
+# getCGI returns a cgi object.
+# get a cgi object only once per http request and reuse the same object
+sub getCGI
+{
+	state $cgi = CGI->new();
+	return $cgi;
+}
 
 # &getCgiData();
 #		return = \%cgiVars			// Object
@@ -35,7 +41,9 @@ use feature 'state';
 sub getCgiData
 {
 	my ( $variable ) = @_;
-	state $cgi = new CGI;
+
+	my $cgi = getCGI();
+
 	my $value = $cgi->param( $variable )
 	  if ( defined ( $cgi->param( $variable ) ) );
 
