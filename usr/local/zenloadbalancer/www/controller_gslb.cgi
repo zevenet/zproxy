@@ -585,9 +585,19 @@ if ( $action eq "editfarm-addservice" )
 #check if the farm need a restart
 if ( -e "/tmp/$farmname.lock" )
 {
-	&tipmsg(
-		  "There're changes that need to be applied, stop and start farm to apply them!"
-	);
+	my $msg =  "There're changes that need to be applied, stop and start farm to apply them!";
+
+	$msg = $msg . ", please restart the farm to apply them. Restart here "
+	."<form method=\"post\" action=\"index.cgi\" class=\"myform\">
+		<button type=\"submit\" class=\"myicons\" title=\"restart\">
+			<i class=\"fa fa-refresh action-icon fa-fw green\"></i>
+		</button>
+		<input type=\"hidden\" name=\"id\" value=\"$id\">
+		<input type=\"hidden\" name=\"action\" value=\"editfarm-restart\">
+		<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">
+	</form>";
+
+	&tipmsg( $msg );
 }
 
 1;
