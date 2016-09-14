@@ -26,13 +26,6 @@ use Time::localtime;
 use Data::Dumper;
 #~ use Devel::Size qw(size total_size);
 
-package GLOBAL {
-	our $cgi = CGI->new;
-};
-
-my $q = $GLOBAL::cgi;
-our $origin = 1;
-
 require "/usr/local/zenloadbalancer/config/global.conf";
 require "/usr/local/zenloadbalancer/www/functions.cgi";
 require "/usr/local/zenloadbalancer/www/cert_functions.cgi";
@@ -50,6 +43,9 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/farm_guardian.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/farm_actions.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/post_gslb.cgi";
 
+my $q = &getCGI();
+our $origin = 1;
+
 # build local key
 sub keycert()
 {
@@ -57,7 +53,7 @@ sub keycert()
 	#~ use Sys::Hostname;
 
 	my $dmidecode_bin = "/usr/sbin/dmidecode";    # input
-	my $hostname      = getHostname();               # input
+	my $hostname      = &getHostname();               # input
 
 	my @dmidec  = `$dmidecode_bin`;
 	my @dmidec2 = grep ( /UUID\:/, @dmidec );
@@ -223,12 +219,15 @@ sub OPTIONS($$)
 sub validCGISession
 {
 	my $validSession = 0;
+	my $session = CGI::Session->load( $cgi );
 
-	my $cgi = CGI->new;
-	my $session = new CGI::Session( $cgi );
+	&zenlog( "CGI SESSION ID: ".$session->id );
+	#~ &zenlog( "session data: " . Dumper $session->dataref() ); # DEBUG
 
-	if ( $session && $session->param( 'is_logged_in' ) == 1 )
+	if ( $session && $session->param( 'is_logged_in' ) && ! $session->is_expired )
 	{
+		$session->expire('is_logged_in', '+30m');
+		#~ $session->expire('is_logged_in', '+5s'); # DEBUG
 		$validSession = 1;
 	}
 
@@ -299,23 +298,6 @@ sub authenticateCredentials    #($user,$curpasswd)
 	return $valid_credentials;
 }
 
-sub validAuthentication
-{
-	# zapi key
-	my $valid_key = &validZapiKey();
-
-	# credentials
-	my @credentials = &getAuthorizationCredentials();
-	my $valid_credentials = 0;
-
-	if ( @credentials )
-	{
-		$valid_credentials = &authenticateCredentials( @credentials );
-	}
-
-	return ( $valid_key || $valid_credentials );
-}
-
 package GLOBAL {
 	our $http_status_codes = {
 		# 2xx Success codes
@@ -351,47 +333,48 @@ sub httpResponse
 {
 	my $self = shift;
 
-	die 'httpResponse: Bad input' if !defined $self or ref $self ne 'HASH';
+	#~ &zenlog("DEBUG httpResponse input: " . Dumper $self ); # DEBUG
 
-	#~ &zenlog( Dumper $self );
-	#~ &zenlog( "httpcode:". $self->{ http_code }  );
+	die 'httpResponse: Bad input' if !defined $self or ref $self ne 'HASH';
 
 	die
 	  if !defined $self->{ http_code }
 	  or !exists $GLOBAL::http_status_codes->{ $self->{ http_code } };
 
-	my $cgi = $GLOBAL::cgi;
+	my $cgi = &getCGI();
 	my @headers = ( 'Access-Control-Allow-Origin' => '*' );
 
 	if ( $ENV{ 'REQUEST_METHOD' } eq 'OPTIONS' )
 	{
 		push @headers,
 		  'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
-		  'Access-Control-Allow-Headers' => 'ZAPI_KEY, Authorization';
+		  'Access-Control-Allow-Headers' => 'Authorization, Set-cookie, Content-Type';
 	}
 
 	# add possible extra headers
 	if ( exists $self->{ headers } && ref $self->{ headers } eq 'HASH' )
 	{
-		@headers = %{ $self->{ headers } };
+		push @headers, %{ $self->{ headers } };
 	}
 
 	# header
+
 	my $output = $cgi->header(
 
 		# Standard headers
-		#~ -type    => 'text/plain',
-		#~ -type    => 'application/json',
+		# -type    => 'text/plain',
+		# -type    => 'application/json',
+
 		-type    => 'application/json',
 		-charset => 'utf-8',
-		-status =>
-		  "$self->{ http_code } $GLOBAL::http_status_codes->{ $self->{ http_code } }",
+		-status  => "$self->{ http_code }",
 
 		# extra headers
 		@headers,
 	);
 
 	# body
+
 	#~ my ( $body_ref ) = shift @_; # opcional
 	if ( exists $self->{ body } && ref $self->{ body } eq 'HASH' )
 	{
@@ -401,10 +384,12 @@ sub httpResponse
 		$output .= $json->encode( $self->{ body } );
 	}
 
-	&zenlog( $output );
+	#~ &zenlog( "Response:$output<" ); # DEBUG
 	print $output;
 
-	return 0;
+	&zenlog( "STATUS:$self->{ http_code }" );
+
+	exit;
 }
 
 #########################################
@@ -413,7 +398,10 @@ sub httpResponse
 #
 #########################################
 
-#~ my $params = $q->Vars;
+&zenlog(">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<");
+&zenlog("HTTP HEADERS: " . join(', ', $cgi->http() ) );
+&zenlog("HTTP_AUTHORIZATION: <$ENV{HTTP_AUTHORIZATION}>") if exists $ENV{HTTP_AUTHORIZATION};
+&zenlog("HTTP_ZAPI_KEY: <$ENV{HTTP_ZAPI_KEY}>") if exists $ENV{HTTP_ZAPI_KEY};
 #~ my $post_data = $q->param('POSTDATA');
 #~ my $put_data = $q->param('PUTDATA');
 #~
@@ -424,11 +412,11 @@ sub httpResponse
 #~
 #~ my $param_client = $q->param('client');
 #~
-#~ # log messages
-&zenlog("PERL ENV: " . Dumper \%ENV );
 #~
-&zenlog("CGI OBJECT: " . Dumper $GLOBAL::cgi );
 #~ &zenlog("CGI PARAMS: " . Dumper $params );
+#~ &zenlog("CGI OBJECT: " . Dumper $cgi );
+#~ &zenlog("CGI VARS: " . Dumper $cgi->Vars() );
+#~ &zenlog("PERL ENV: " . Dumper \%ENV );
 #~ &zenlog("CGI POST DATA: " . $post_data );
 #~ &zenlog("CGI PUT DATA: " . $put_data );
 
@@ -443,23 +431,25 @@ $enabled = 1; # legacy
 #
 ################################################################################
 
-#########################################
-#
+#~ GET '/test' => sub {
+#~
+	#~ &httpResponse({
+		#~ http_code => 200,
+		#~ body => { msg => 'hola' }
+	#~ });
+	#~
+	#~ exit;
+#~ };
+
 #  OPTIONS PreAuth
-#
-#########################################
 OPTIONS qr{^.*} => sub {
 	&httpResponse({ http_code => 200 });
 };
 
-#########################################
-#
 #  GET CGISESSID
-#
-#########################################
-GET '/login' => sub {
+GET qr{^/session/login$} => sub {
 
-	my $session = new CGI::Session( $GLOBAL::cgi );
+	my $session = new CGI::Session( &getCGI() );
 
 	if ( $session && ! $session->param( 'is_logged_in' ) )
 	{
@@ -478,9 +468,13 @@ GET '/login' => sub {
 			$session->param( 'username', $username );
 			$session->expire('is_logged_in', '+30m');
 
-			&httpResponse({ http_code => 200 });
+			my ( $header ) = split( "\r\n", $session->header() );
+			my ( undef, $setcookie ) = split( ': ', $header );
 
-			print $session->header();
+			&httpResponse({
+				http_code => 200,
+				headers => { 'Set-cookie' => $setcookie },
+			});
 		}
 		else # not validated credentials
 		{
@@ -499,18 +493,13 @@ GET '/login' => sub {
 #########################################
 # Above this part are calls allowed without authentication 
 #########################################
-if ( ! &validAuthentication() )
+if ( not ( &validZapiKey() or &validCGISession() ) )
 {
 	&httpResponse({ http_code => 401 });
 	exit;
 }
 
-#########################################
-#
 #  POST activation certificate
-#
-#########################################
-
 POST qr{^/certificates/activation$} => sub {
 
 	&upload_activation_certificate();
@@ -520,6 +509,7 @@ POST qr{^/certificates/activation$} => sub {
 #########################################
 # Check activation certificate
 #########################################
+sub checkActivationCertificate
 {
 	my $swcert = &certcontrol();
 
@@ -551,485 +541,250 @@ POST qr{^/certificates/activation$} => sub {
 
 		exit;
 	}
+
+	return $swcert;
 }
 
-#########################################
-#
+&checkActivationCertificate();
+
 #  POST certificates
-#
-#########################################
-
 POST qr{^/certificates$} => sub {
-
 	&upload_certs();
-
 };
 
-#########################################
-#
 #  GET List all farms
-#
-#########################################
 GET qr{^/farms$} => sub {
-
 	&farms();
-
 };
 
-#########################################
-#
 #  GET List SSL certificates
-#
-#########################################
 GET qr{^/certificates$} => sub {
-
 	&certificates();
-
 };
 
-#########################################
-#
 #  GET stats
-#
-#########################################
-
 GET qr{^/stats$} => sub {
 	&stats();
-
 };
 
-#########################################
-#
 #  GET stats mem
-#
-#########################################
-
 GET qr{^/stats/mem$} => sub {
 	&stats_mem();
-
 };
 
-#########################################
-#
 #  GET stats load
-#
-#########################################
-
 GET qr{^/stats/load$} => sub {
 	&stats_load();
-
 };
 
-#########################################
-#
 #  GET stats network
-#
-#########################################
-
 GET qr{^/stats/network$} => sub {
 	&stats_network();
-
 };
 
-#########################################
-#
 #  GET stats cpu
-#
-#########################################
-
 GET qr{^/stats/cpu$} => sub {
 	&stats_cpu();
-
 };
 
-#########################################
-#
 #  GET get farm info
-#
-#########################################
 GET qr{^/farms/(\w+$)} => sub {
-
 	&farms_name();
-
 };
 
-#########################################
-#
 #  POST new farm
-#
-#########################################
 POST qr{^/farms/(\w+$)} => sub {
-
 	&new_farm( $1 );
-
 };
 
-#########################################
-#
 #  POST new service
-#
-#########################################
-
 POST qr{^/farms/(\w+)/services$} => sub {
-
 	&new_farm_service( $1 );
-
 };
 
-#########################################
-#
 #  POST new zone
-#
-#########################################
-
 POST qr{^/farms/(\w+)/zones$} => sub {
-
 	&new_farm_zone( $1 );
-
 };
 
-#########################################
-#
 #  POST new backend
-#
-#########################################
-
 POST qr{^/farms/(\w+)/backends$} => sub {
-
 	&new_farm_backend( $1 );
-
 };
 
-#########################################
-#
 #  POST new zone resource
-#
-#########################################
-
 POST qr{^/farms/(\w+)/zoneresources$} => sub {
-
 	&new_farm_zoneresource( $1 );
-
 };
 
-#########################################
-#
 #  POST farm actions
-#
-#########################################
-
 POST qr{^/farms/(\w+)/actions$} => sub {
-
 	&actions( $1 );
-
 };
 
-#########################################
-#
 #  POST status backend actions
-#
-#########################################
-
 POST qr{^/farms/(\w+)/maintenance$} => sub {
-
 	&maintenance( $1 );
-
 };
 
-#########################################
-#
 #  DELETE farm
-#
-#########################################
 DELETE qr{^/farms/(\w+$)} => sub {
-
 	&delete_farm( $1 );
-
 };
 
-#########################################
-#
 #  DELETE certificate
-#
-#########################################
 DELETE qr{^/certificates/(\w+\.\w+$)} => sub {
-
 	&delete_certificate( $1 );
-
 };
 
-#########################################
-#
 #  DELETE farm certificate
-#
-#########################################
 DELETE qr{^/farms/(\w+)/deletecertificate/(\w+$)} => sub {
-
 	&delete_farmcertificate( $1, $2 );
-
 };
 
-#########################################
-#
 #  DELETE service
-#
-#########################################
-
 DELETE qr{^/farms/(\w+)/services/(\w+$)} => sub {
-
 	&delete_service( $1, $2 );
-
 };
 
-#########################################
-#
 #  DELETE zone
-#
-#########################################
-
 #DELETE qr{^/farms/(\w+)/zones/(.*+$)} => sub {
 DELETE qr{^/farms/(\w+)/zones/(([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$)} => sub {
-
 	&delete_zone( $1, $2 );
-
 };
 
-#########################################
-#
 #  DELETE backend (TCP/UDP/L4XNAT/DATALINK)
-#
-#########################################
-
 DELETE qr{^/farms/(\w+)/backends/(\w+$)} => sub {
-
 	&delete_backend( $1, $2 );
-
 };
 
-#########################################
-#
 #  DELETE backend (HTTP/HTTPS/GSLB)
-#
-#########################################
-
 DELETE qr{^/farms/(\w+)/services/(\w+)/backends/(\w+$)} => sub {
-
 	&delete_service_backend( $1, $2, $3 );
-
 };
 
-#########################################
-#
 #  DELETE zone resource
-#
-#########################################
-
 DELETE qr{^/farms/(\w+)/zones/([a-z0-9].*-*.*\.[a-z0-9].*)/resources/(\w+$)} =>
   sub {
 	&delete_zone_resource( $1, $2, $3 );
-
   };
 
-#########################################
-#
 #  PUT farm
-#
-#########################################
-
 PUT qr{^/farms/(\w+$)} => sub {
-
 	&modify_farm( $1 );
-
 };
 
-#########################################
-#
 #  PUT backend
-#
-#########################################
-
 PUT qr{^/farms/(\w+)/backends/(\w+$)} => sub {
-
 	&modify_backends( $1, $2 );
-
 };
 
-#########################################
-#
 #  PUT farmguardian
-#
-#########################################
-
 PUT qr{^/farms/(\w+)/fg$} => sub {
 	&modify_farmguardian( $1 );
-
 };
 
-#########################################
-#
 #  PUT resources
-#
-#########################################
-
 PUT qr{^/farms/(\w+)/resources/(\w+$)} => sub {
 	&modify_resources( $1, $2 );
-
 };
 
-#########################################
-#
 #  PUT zones
-#
-#########################################
-
 PUT qr{^/farms/(\w+)/zones/(.*+$)} => sub {
 	&modify_zones( $1, $2 );
-
 };
 
-#########################################
-#
 #  PUT services
-#
-#########################################
-
 PUT qr{^/farms/(\w+)/services/(\w+$)} => sub {
 	&modify_services( $1, $2 );
-
 };
 
-#########################################
-#
 #  POST virtual interface
-#
-#########################################
-
 POST qr{^/addvini/(.*$)} => sub {
-
 	&new_vini( $1 );
-
 };
 
-#########################################
-#
 #  POST vlan interface
-#
-#########################################
-
 POST qr{^/addvlan/(.*$)} => sub {
-
 	&new_vlan( $1 );
-
 };
 
-#########################################
-#
 #  POST action interface
-#
-#########################################
-
 POST qr{^/ifaction/(.*+$)} => sub {
-
 	&ifaction( $1 );
-
 };
 
-#########################################
-#
 #  POST certificates
-#
-#########################################
-
 POST qr{^/certificates$} => sub {
-
 	&upload_certs();
-
 };
 
-#########################################
-#
 #  POST add certificates
-#
-#########################################
-
 POST qr{^/farms/(\w+)/addcertificate$} => sub {
-
 	&add_farmcertificate( $1 );
-
 };
 
-#########################################
-#
 #  PUT change certificates
-#
-#########################################
-
 PUT qr{^/farms/(\w+)/changecertificate$} => sub {
-
 	&change_farmcertificate( $1 );
-
 };
 
-#########################################
-#
 #  DELETE virtual interface (default)
-#
-#########################################
-
 DELETE qr{^/deleteif/(.*$)} => sub {
-
 	&delete_interface( $1 );
-
 };
 
-#########################################
-#
 #  GET interfaces
-#
-#########################################
 GET qr{^/interfaces$} => sub {
 	&get_interface();
-
 };
 
-#########################################
-#
 #  PUT interface
-#
-#########################################
-
 PUT qr{^/modifyif/(.*$)} => sub {
-
 	&modify_interface( $1 );
-
 };
 
-#########################################
-#
 #  GET farm stats
-#
-#########################################
 GET qr{^/farms/(\w+)/stats$} => sub {
 	&farm_stats( $1 );
-
 };
 
-#########################################
-#
 #  GET graphs
-#
-#########################################
 GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
 	&get_graphs( $1, $2, $3 );
-
 };
 
-#########################################
-#
 #  GET possible graphs
-#
-#########################################
 GET qr{^/graphs} => sub {
 	&possible_graphs();
+};
 
+#  LOGOUT session
+GET qr{^/session/logout$} => sub {
+	my $cgi = &getCGI();
+
+	if ( $cgi->http( 'Cookie' ) )
+	{
+		my $session = new CGI::Session( $cgi );
+
+		if ( $session && $session->param( 'is_logged_in' ) )
+		{
+			my $username = $session->param( username );
+			my $ip_addr  = $session->param( _SESSION_REMOTE_ADDR );
+
+			&zenlog( "Logged out user $username from $ip_addr" );
+
+			$session->delete();
+			#~ $session->close();
+			$session->flush();
+
+			&httpResponse( { http_code => 200 } );
+
+			exit;
+		}
+	}
+
+	# with ZAPI key or expired cookie session
+	&httpResponse( { http_code => 400 } );
+	exit;
 };
