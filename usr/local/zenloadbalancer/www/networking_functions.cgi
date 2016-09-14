@@ -1166,7 +1166,7 @@ sub getInterfaceList
 	my @iplist = `ip addr list`;
 	foreach my $line ( @iplist )
 	{
-		if ( $line =~ /^.: / )
+		if ( $line =~ /^\d+: / )
 		{
 			my @linelist = split /[:@,\s\/]+/, $line;
 			$iface = @linelist[1];
