@@ -50,40 +50,36 @@ if ( $origin ne 1 )
 #@apiSampleRequest off
 #**
 #GET /farms
-sub farms()
+sub farms # ()
 {
+	my $out   = [];
+	my @files = &getFarmList();
 
-	use CGI;
-	my $q = CGI->new;
-
-	my $out = [];
-	@files = &getFarmList();
-	foreach $file ( @files )
+	foreach my $file ( @files )
 	{
-		$name   = &getFarmName( $file );
-		$type   = &getFarmType( $name );
-		$status = &getFarmStatus( $name );
-		push $out, { farmname => $name, profile => $type, status => $status };
+		my $name   = &getFarmName( $file );
+		my $type   = &getFarmType( $name );
+		my $status = &getFarmStatus( $name );
 
+		# FIXME: Add ip and port
+		push $out,
+		  {
+			farmname => $name,
+			profile  => $type,
+			status   => $status
+		  };
 	}
 
 	# Success
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( [$enabled] );
-	my $output = $j->encode(
-							 {
+	&httpResponse(
+				   {
+					 http_code => 200,
+					 body      => {
 							   description => "List farms",
 							   params      => $out
-							 }
+					 }
+				   }
 	);
-	print $output;
 }
 
 #GET /farms/<name>
