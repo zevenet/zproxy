@@ -670,7 +670,7 @@ sub upload_activation_certificate
 #
 # Curl command:
 #
-# curl -v --tcp-nodelay --tlsv1 -X POST -k  -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -u zapi:admin  -F fileupload=@/opt/example.pem https://46.101.46.14:444/zapi/v3/zapi.cgi/certificates/activation
+# curl -v --tcp-nodelay --tlsv1 -X POST -k  -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -u zapi:admin  -F certificate=@/opt/example.pem https://46.101.46.14:444/zapi/v3/zapi.cgi/certificates/activation
 #
 
 	use CGI;
@@ -682,14 +682,16 @@ sub upload_activation_certificate
 
 	my $upload_data = $q->upload( "certificate" );
 
-	if ( $upload_data )
+	if ( <$upload_data> )
 	{
 		open ( my $uploadfile, '>', "$upload_dir/$filename" ) or die "$!";
 
 		binmode $uploadfile;
-		print { $uploadfile } $upload_data;
+		print { $uploadfile } <$upload_data>;
 
 		close $uploadfile;
+
+		&checkActivationCertificate();
 
 		&httpResponse({ http_code => 200 });
 	}
