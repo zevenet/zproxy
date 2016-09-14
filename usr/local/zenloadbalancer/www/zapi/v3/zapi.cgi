@@ -26,6 +26,20 @@ use Time::localtime;
 use Data::Dumper;
 #~ use Devel::Size qw(size total_size);
 
+package GLOBAL {
+	our $http_status_codes = {
+		# 2xx Success codes
+		200 => 'OK',
+		201 => 'Created',
+
+		# 4xx Client Error codes
+		400 => 'Bad Request',
+		401 => 'Unauthorized',
+		403 => 'Forbidden',
+		404 => 'Not Found',
+	};
+};
+
 require "/usr/local/zenloadbalancer/config/global.conf";
 require "/usr/local/zenloadbalancer/www/functions.cgi";
 require "/usr/local/zenloadbalancer/www/cert_functions.cgi";
@@ -171,6 +185,42 @@ sub certcontrol()
 	return $swcert;
 }
 
+sub checkActivationCertificate
+{
+	my $swcert = &certcontrol();
+
+	# if $swcert is greater than 0 zapi should not work
+	if ( $swcert > 0 )
+	{
+		my $message;
+
+		if ( $swcert == 1 )
+		{
+			$message =
+			  "There isn't a valid Zen Load Balancer certificate file, please request a new one";
+		}
+		elsif ( $swcert == 2 )
+		{
+			$message =
+			  "The certificate file isn't signed by the Zen Load Balancer Certificate Authority, please request a new one";
+		}
+		elsif ( $swcert == 3 )
+		{
+			# Policy: expired testing certificates would not stop zen service,
+			# but rebooting the service would not start the service,
+			# interfaces should always be available.
+			$message =
+			  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one";
+		}
+
+		&httpResponse({ http_code => 400, body => { message => $message } });
+
+		exit;
+	}
+
+	return $swcert;
+}
+
 sub GET($$)
 {
 	my ( $path, $code ) = @_;
@@ -297,20 +347,6 @@ sub authenticateCredentials    #($user,$curpasswd)
 
 	return $valid_credentials;
 }
-
-package GLOBAL {
-	our $http_status_codes = {
-		# 2xx Success codes
-		200 => 'OK',
-		201 => 'Created',
-
-		# 4xx Client Error codes
-		400 => 'Bad Request',
-		401 => 'Unauthorized',
-		403 => 'Forbidden',
-		404 => 'Not Found',
-	};
-};
 
 =begin nd
 	Function: httpResponse
@@ -449,7 +485,7 @@ OPTIONS qr{^.*} => sub {
 #  GET CGISESSID
 GET qr{^/session/login$} => sub {
 
-	my $session = new CGI::Session( &getCGI() );
+	my $session = new CGI::Session( $cgi );
 
 	if ( $session && ! $session->param( 'is_logged_in' ) )
 	{
@@ -490,101 +526,78 @@ GET qr{^/session/login$} => sub {
 	exit;
 };
 
-#########################################
-# Above this part are calls allowed without authentication 
-#########################################
+
+#	Above this part are calls allowed without authentication
+######################################################################
 if ( not ( &validZapiKey() or &validCGISession() ) )
 {
 	&httpResponse({ http_code => 401 });
 	exit;
 }
 
-#  POST activation certificate
-POST qr{^/certificates/activation$} => sub {
+#	SESSION LOGOUT
+#
 
-	&upload_activation_certificate();
-
-};
-
-#########################################
-# Check activation certificate
-#########################################
-sub checkActivationCertificate
-{
-	my $swcert = &certcontrol();
-
-	# if $swcert is greater than 0 zapi should not work
-	if ( $swcert > 0 )
+#  LOGOUT session
+GET qr{^/session/logout$} => sub {
+	if ( $cgi->http( 'Cookie' ) )
 	{
-		my $message;
+		my $session = new CGI::Session( $cgi );
 
-		if ( $swcert == 1 )
+		if ( $session && $session->param( 'is_logged_in' ) )
 		{
-			$message =
-			  "There isn't a valid Zen Load Balancer certificate file, please request a new one";
-		}
-		elsif ( $swcert == 2 )
-		{
-			$message =
-			  "The certificate file isn't signed by the Zen Load Balancer Certificate Authority, please request a new one";
-		}
-		elsif ( $swcert == 3 )
-		{
-			# Policy: expired testing certificates would not stop zen service,
-			# but rebooting the service would not start the service,
-			# interfaces should always be available.
-			$message =
-			  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one";
-		}
+			my $username = $session->param( username );
+			my $ip_addr  = $session->param( _SESSION_REMOTE_ADDR );
 
-		&httpResponse({ http_code => 400, body => { message => $message } });
+			&zenlog( "Logged out user $username from $ip_addr" );
 
-		exit;
+			$session->delete();
+			$session->flush();
+
+			&httpResponse( { http_code => 200 } );
+
+			exit;
+		}
 	}
 
-	return $swcert;
-}
+	# with ZAPI key or expired cookie session
+	&httpResponse( { http_code => 400 } );
+	exit;
+};
 
+#	CERTIFICATES
+#
+
+#  POST activation certificate
+POST qr{^/certificates/activation$} => sub {
+	&upload_activation_certificate();
+};
+
+#	Check activation certificate
+######################################################################
 &checkActivationCertificate();
-
-#  POST certificates
-POST qr{^/certificates$} => sub {
-	&upload_certs();
-};
-
-#  GET List all farms
-GET qr{^/farms$} => sub {
-	&farms();
-};
 
 #  GET List SSL certificates
 GET qr{^/certificates$} => sub {
 	&certificates();
 };
 
-#  GET stats
-GET qr{^/stats$} => sub {
-	&stats();
+#  POST certificates
+POST qr{^/certificates$} => sub {
+	&upload_certs();
 };
 
-#  GET stats mem
-GET qr{^/stats/mem$} => sub {
-	&stats_mem();
+#  DELETE certificate
+DELETE qr{^/certificates/(\w+\.\w+$)} => sub {
+	&delete_certificate( $1 );
 };
 
-#  GET stats load
-GET qr{^/stats/load$} => sub {
-	&stats_load();
-};
+#	FARMS
+#
 
-#  GET stats network
-GET qr{^/stats/network$} => sub {
-	&stats_network();
-};
-
-#  GET stats cpu
-GET qr{^/stats/cpu$} => sub {
-	&stats_cpu();
+#  GET List all farms
+GET qr{^/farms$} => sub {
+	&farms();
 };
 
 #  GET get farm info
@@ -630,11 +643,6 @@ POST qr{^/farms/(\w+)/maintenance$} => sub {
 #  DELETE farm
 DELETE qr{^/farms/(\w+$)} => sub {
 	&delete_farm( $1 );
-};
-
-#  DELETE certificate
-DELETE qr{^/certificates/(\w+\.\w+$)} => sub {
-	&delete_certificate( $1 );
 };
 
 #  DELETE farm certificate
@@ -699,6 +707,24 @@ PUT qr{^/farms/(\w+)/services/(\w+$)} => sub {
 	&modify_services( $1, $2 );
 };
 
+#  POST add certificates
+POST qr{^/farms/(\w+)/addcertificate$} => sub {
+	&add_farmcertificate( $1 );
+};
+
+#  PUT change certificates
+PUT qr{^/farms/(\w+)/changecertificate$} => sub {
+	&change_farmcertificate( $1 );
+};
+
+#	NETWORK INTERFACES
+#
+
+#  GET interfaces
+GET qr{^/interfaces$} => sub {
+	&get_interface();
+};
+
 #  POST virtual interface
 POST qr{^/addvini/(.*$)} => sub {
 	&new_vini( $1 );
@@ -714,29 +740,9 @@ POST qr{^/ifaction/(.*+$)} => sub {
 	&ifaction( $1 );
 };
 
-#  POST certificates
-POST qr{^/certificates$} => sub {
-	&upload_certs();
-};
-
-#  POST add certificates
-POST qr{^/farms/(\w+)/addcertificate$} => sub {
-	&add_farmcertificate( $1 );
-};
-
-#  PUT change certificates
-PUT qr{^/farms/(\w+)/changecertificate$} => sub {
-	&change_farmcertificate( $1 );
-};
-
 #  DELETE virtual interface (default)
 DELETE qr{^/deleteif/(.*$)} => sub {
 	&delete_interface( $1 );
-};
-
-#  GET interfaces
-GET qr{^/interfaces$} => sub {
-	&get_interface();
 };
 
 #  PUT interface
@@ -744,10 +750,41 @@ PUT qr{^/modifyif/(.*$)} => sub {
 	&modify_interface( $1 );
 };
 
+#	STATS
+#
+
+#  GET stats
+GET qr{^/stats$} => sub {
+	&stats();
+};
+
+#  GET stats mem
+GET qr{^/stats/mem$} => sub {
+	&stats_mem();
+};
+
+#  GET stats load
+GET qr{^/stats/load$} => sub {
+	&stats_load();
+};
+
+#  GET stats network
+GET qr{^/stats/network$} => sub {
+	&stats_network();
+};
+
+#  GET stats cpu
+GET qr{^/stats/cpu$} => sub {
+	&stats_cpu();
+};
+
 #  GET farm stats
 GET qr{^/farms/(\w+)/stats$} => sub {
 	&farm_stats( $1 );
 };
+
+#	GRAPHS
+#
 
 #  GET graphs
 GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
@@ -757,34 +794,4 @@ GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
 #  GET possible graphs
 GET qr{^/graphs} => sub {
 	&possible_graphs();
-};
-
-#  LOGOUT session
-GET qr{^/session/logout$} => sub {
-	my $cgi = &getCGI();
-
-	if ( $cgi->http( 'Cookie' ) )
-	{
-		my $session = new CGI::Session( $cgi );
-
-		if ( $session && $session->param( 'is_logged_in' ) )
-		{
-			my $username = $session->param( username );
-			my $ip_addr  = $session->param( _SESSION_REMOTE_ADDR );
-
-			&zenlog( "Logged out user $username from $ip_addr" );
-
-			$session->delete();
-			#~ $session->close();
-			$session->flush();
-
-			&httpResponse( { http_code => 200 } );
-
-			exit;
-		}
-	}
-
-	# with ZAPI key or expired cookie session
-	&httpResponse( { http_code => 400 } );
-	exit;
 };
