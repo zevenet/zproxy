@@ -795,3 +795,5 @@ GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
 GET qr{^/graphs} => sub {
 	&possible_graphs();
 };
+
+&httpResponse({ http_code => 400 });
