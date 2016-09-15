@@ -66,6 +66,11 @@ if [[ `grep -c "^PermitRootLogin.*yes" $SSHDCONFIG` == '0' ]]; then
 	/etc/init.d/ssh reload 2> /dev/null
 fi
 
+# Disable services
+
+# sec service
+systemctl disable sec.services
+
 # disable SNMP service
 cp /usr/local/zenloadbalancer/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
 systemctl stop snmpd

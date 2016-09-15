@@ -76,6 +76,11 @@ if [[ `grep -c "^PermitRootLogin.*yes" $SSHDCONFIG` == '0' ]]; then
 	/etc/init.d/ssh reload 2> /dev/null
 fi
 
+# Disable services
+
+# sec service
+systemctl disable sec.services
+
 # SNMP service
 if [ `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]
 then
@@ -93,6 +98,7 @@ then
 		sed -i -e 's/Lsd/LS6d/' /etc/default/snmpd
 	fi
 fi
+
 
 # Do not mount /usr/local/zenloadbalancer/logs for zlb 4000 series
 sed -i 's/^\/dev\/mapper\/zva64-log \/usr\/local\/zenloadbalancer\/logs        ext4    defaults        0       2//' /etc/fstab
