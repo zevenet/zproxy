@@ -29,6 +29,7 @@ sub getCertFiles    # ()
 {
 	opendir ( DIR, $configdir );
 	my @files = grep ( /.*\.pem$/, readdir ( DIR ) );
+	@files = grep ( !/_dh\d+\.pem$/, @files );
 	closedir ( DIR );
 
 	opendir ( DIR, $configdir );
