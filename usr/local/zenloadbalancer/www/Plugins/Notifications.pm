@@ -652,7 +652,7 @@ sub changeTimeSwitch		# &changeTimeSwitch ( $rule, $time )
 				else
 				{
 					$line =~ s/window=.*/window=$time/ if ( $line =~ /window=/ );
-					$line =~ s/\d+$/$time/ if ( $line =~ /action=create .+ \d+/ );
+					$line =~ s/\d+$/$time/ if ( $line =~ /action=.+ create .+ \d+/ );
 				}
 			}
 		}

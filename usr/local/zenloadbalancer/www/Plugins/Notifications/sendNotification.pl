@@ -122,7 +122,7 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 # (7f4dccf24700) BackEnd 192.168.0.172:80 dead (killed) in farm: 'test', service: 'srv1'
 	elsif ( ( $program =~ /pound/ || $program =~ /farmguardian/ )
 		&& $msg =~
-		/BackEnd (\d+\.\d+\.\d+\.\d+):(\d+) (\w+)(?: \(\w+\))? in farm: '(\w+)', service: '(\w+)'/
+		/BackEnd (\d+\.\d+\.\d+\.\d+):(\d+) (\w+)(?: \(\w+\))? in farm: '(\w+)'(, service: '(\w+)')?/
 	  )
 	{
 		$ip      = $1;
@@ -130,6 +130,8 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 		$status  = $3;
 		$farm    = $4;
 		$service = $5;
+
+		if    ( $service =~ /'(.+)'/ )        { $service = "$1"; }
 
 		if    ( $program =~ /pound/ )        { $program = "It has been"; }
 		elsif ( $program =~ /farmguardian/ ) { $program = "Farmguardian"; }
