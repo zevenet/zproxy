@@ -197,7 +197,7 @@ if ( $action eq 'addfarm' || $action eq "Save & continue" )
 			next if $farmprotocol eq "DATALINK" && $$iface{ vini } ne '';
 
 			# skip local cluster IP
-			next if &getClusterRealIp() eq $$iface{ addr };
+			next if &getZClusterLocalIp() eq $$iface{ addr };
 			next if &GUIip eq $$iface{ addr } && (-e $filecluster);
 
 			print
