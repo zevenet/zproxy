@@ -35,11 +35,17 @@ use feature 'state';
 sub getCgiData
 {
 	my ( $variable ) = @_;
+	my $value;
 	state $cgi = new CGI;
-	my $value = $cgi->param( $variable )
-	  if ( defined ( $cgi->param( $variable ) ) );
 
-	$value = $cgi->Vars if ( $value eq "" );
+	if ( defined ( $cgi->param( $variable ) ) )
+	{
+		$value = $cgi->param( $variable );
+	}
+	else
+	{
+		$value = $cgi->Vars;
+	}
 
 	return $value;
 }

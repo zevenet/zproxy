@@ -72,7 +72,7 @@ if ( $action eq "editfarm-dpc" )
 
 		# enable farmguardian
 		if ( defined ( &getCgiData( "gslbFgStatus_$service" ) )
-			 and $fgStatus eq 'down' )
+			 && $fgStatus eq 'down' )
 		{
 			&zenlog( "$fgCmd,$gslbFgCmd," );
 			if ( !$fgCmd && !$gslbFgCmd )
@@ -87,9 +87,9 @@ if ( $action eq "editfarm-dpc" )
 			$fgchanged = 1;
 		}
 
+		# if getCgiData return a hash, the variable doesn't exist
 		# disable farmguardian
-		elsif ( !defined ( &getCgiData( "gslbFgStatus_$service" ) )
-				and $fgStatus eq 'up' )
+		elsif ( ( ref &getCgiData( "gslbFgStatus_$service" ) eq 'HASH') && $fgStatus eq 'up' )
 		{
 			$error = &enableGSLBFarmGuardian( $farmname, $service, 'down' );
 			$fgchanged = 1;
