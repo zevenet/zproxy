@@ -60,13 +60,17 @@ sub farms # ()
 		my $name   = &getFarmName( $file );
 		my $type   = &getFarmType( $name );
 		my $status = &getFarmStatus( $name );
+		my $vip    = &getFarmVip( $name );
+		my $port   = &getFarmPort( $name );
 
 		# FIXME: Add ip and port
 		push $out,
 		  {
 			farmname => $name,
 			profile  => $type,
-			status   => $status
+			status   => $status,
+			vip      => $vip,
+			vport    => $port
 		  };
 	}
 
