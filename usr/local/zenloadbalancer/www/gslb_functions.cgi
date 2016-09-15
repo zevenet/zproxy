@@ -111,13 +111,12 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 		}
 		my $exec    = &getGSLBStopCommand( $fname );
 		my $pidfile = &getGSLBFarmPidFile( $fname );
-		&zenlog( "running $exec" );
 		zsystem( "$exec > /dev/null 2>&1" );
-		$status = $?;
-		if ( $status != 0 )
-		{
-			$status = -1;
-		}
+
+		#$exec returns 0 even when gslb stop fails, checked, so force TERM
+		my $pid_gslb = &getGSLBFarmPid( $fname );
+		&zenlog( "forcing stop to gslb with PID $pid_gslb" );
+		kill 'TERM' => $pid_gslb;
 		unlink ( $pidfile );
 	}
 	else
@@ -231,22 +230,17 @@ sub getGSLBFarmPid    # ($farm_name)
 {
 	my ( $fname ) = @_;
 
-	my $type   = &getFarmType( $fname );
-	my $file   = &getFarmFile( $fname );
-	my $output = -1;
+	my $type          = &getFarmType( $fname );
+	my $file          = &getFarmFile( $fname );
+	my $farm_filename = &getFarmFile( $fname );
+	my $output        = -1;
 
-	@fname = split ( /\_/, $file );
-	my $pidfile = &getGSLBFarmPidFile( $fname );
-	if ( -e $pidfile )
+	my @run =
+	  `$ps -ef | grep "$gdnsd -c $configdir\/$farm_filename" | grep -v grep | awk {'print \$2'}`;
+	chomp ( $run[0] );
+	if ( $run[0] > 0 )
 	{
-		open FPID, "<$pidfile";
-		@pid = <FPID>;
-		close FPID;
-		$pid_hprof = $pid[0];
-		chomp ( $pid_hprof );
-		my $exists = kill 0, $pid_hprof;
-		if   ( $pid_hprof =~ /^[1-9].*/ && $exists ) { $output = "$pid_hprof"; }
-		else                                         { $output = "-"; }
+		$output = $run[0];
 	}
 	else
 	{
