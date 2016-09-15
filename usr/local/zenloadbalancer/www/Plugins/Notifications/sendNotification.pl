@@ -98,6 +98,10 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 
 		if ( $service eq tcp )
 		{
+			$program = "It has been";
+		}
+		else
+		{
 			$program = "Farmguardian";
 		}
 

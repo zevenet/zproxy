@@ -670,6 +670,16 @@ sub zlbstart
 	my $status = &getData( $alertsFile, 'Notifications', 'Status');
 	my $output;
 	
+	my $sections = &getData ( $alertsFile );
+	foreach my $notif ( keys %{ $sections } )
+	{
+		if ( exists $sections->{$notif}->{'SwitchTime'} )
+		{
+			my $time = &getData ( $alertsFile, $notif, 'SwitchTime' );
+			&changeTimeSwitch ( $notif, $time );
+		}
+	}
+
 	if ( $status eq 'on' )
 	{
 		$output = &runNotifications;
@@ -681,7 +691,7 @@ sub zlbstart
 sub runNotifications
 {
 	my $idModule = &plugins::getIdModule();
-	my $pid = `$main::pidof -x sec`;	
+	my $pid = `$main::pidof -x sec`;
 
 	if ($pid eq "")
 	{ 
