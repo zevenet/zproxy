@@ -213,7 +213,7 @@ sub checkActivationCertificate
 			  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one";
 		}
 
-		&httpResponse({ http_code => 400, body => { message => $message } });
+		&httpResponse({ code => 400, body => { message => $message } });
 
 		exit;
 	}
@@ -357,7 +357,7 @@ sub authenticateCredentials    #($user,$curpasswd)
 
 		Hash reference with these key-value pairs:
 
-		http_code - HTTP status code digit
+		code - HTTP status code digit
 		headers - optional hash reference of extra http headers to be included
 		body - optional hash reference with data to be sent as JSON
 
@@ -374,8 +374,8 @@ sub httpResponse
 	die 'httpResponse: Bad input' if !defined $self or ref $self ne 'HASH';
 
 	die
-	  if !defined $self->{ http_code }
-	  or !exists $GLOBAL::http_status_codes->{ $self->{ http_code } };
+	  if !defined $self->{ code }
+	  or !exists $GLOBAL::http_status_codes->{ $self->{ code } };
 
 	my $cgi = &getCGI();
 	my @headers = ( 'Access-Control-Allow-Origin' => '*' );
@@ -403,7 +403,7 @@ sub httpResponse
 
 		-type    => 'application/json',
 		-charset => 'utf-8',
-		-status  => "$self->{ http_code }",
+		-status  => "$self->{ code }",
 
 		# extra headers
 		@headers,
@@ -423,7 +423,7 @@ sub httpResponse
 	#~ &zenlog( "Response:$output<" ); # DEBUG
 	print $output;
 
-	&zenlog( "STATUS:$self->{ http_code }" );
+	&zenlog( "STATUS:$self->{ code }" );
 
 	exit;
 }
@@ -470,7 +470,7 @@ $enabled = 1; # legacy
 #~ GET '/test' => sub {
 #~
 	#~ &httpResponse({
-		#~ http_code => 200,
+		#~ code => 200,
 		#~ body => { msg => 'hola' }
 	#~ });
 	#~
@@ -479,7 +479,7 @@ $enabled = 1; # legacy
 
 #  OPTIONS PreAuth
 OPTIONS qr{^.*} => sub {
-	&httpResponse({ http_code => 200 });
+	&httpResponse({ code => 200 });
 };
 
 #  GET CGISESSID
@@ -508,7 +508,7 @@ GET qr{^/session/login$} => sub {
 			my ( undef, $setcookie ) = split( ': ', $header );
 
 			&httpResponse({
-				http_code => 200,
+				code => 200,
 				headers => { 'Set-cookie' => $setcookie },
 			});
 		}
@@ -519,7 +519,7 @@ GET qr{^/session/login$} => sub {
 			$session->delete();
 			$session->flush();
 
-			&httpResponse({ http_code => 401 });
+			&httpResponse({ code => 401 });
 		}
 	}
 
@@ -531,7 +531,7 @@ GET qr{^/session/login$} => sub {
 ######################################################################
 if ( not ( &validZapiKey() or &validCGISession() ) )
 {
-	&httpResponse({ http_code => 401 });
+	&httpResponse({ code => 401 });
 	exit;
 }
 
@@ -554,14 +554,14 @@ GET qr{^/session/logout$} => sub {
 			$session->delete();
 			$session->flush();
 
-			&httpResponse( { http_code => 200 } );
+			&httpResponse( { code => 200 } );
 
 			exit;
 		}
 	}
 
 	# with ZAPI key or expired cookie session
-	&httpResponse( { http_code => 400 } );
+	&httpResponse( { code => 400 } );
 	exit;
 };
 
@@ -796,4 +796,4 @@ GET qr{^/graphs} => sub {
 	&possible_graphs();
 };
 
-&httpResponse({ http_code => 400 });
+&httpResponse({ code => 400 });

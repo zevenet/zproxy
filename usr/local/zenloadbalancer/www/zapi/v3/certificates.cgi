@@ -693,7 +693,7 @@ sub upload_activation_certificate
 
 		&checkActivationCertificate();
 
-		&httpResponse({ http_code => 200 });
+		&httpResponse({ code => 200 });
 	}
 	else
 	{
@@ -708,7 +708,7 @@ sub upload_activation_certificate
 					   message     => $errormsg,
 		};
 
-		&httpResponse({ http_code => 400, body => $body });
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	exit;
