@@ -924,6 +924,21 @@ sub getFarmPort    # ($farm_name)
 		$output = &getHTTPFarmPort( $farm_name );
 	}
 
+	if ( $farm_type eq "l4xnat" )
+	{
+		$output = &getL4FarmVip( 'vipp', $farm_name );
+	}
+
+	if ( $farm_type eq "gslb" )
+	{
+		$output = &getGSLBFarmVip( 'vipp', $farm_name );
+	}
+
+	if ( $farm_type eq "datalink" )
+	{
+		$output = &getDatalinkFarmVip( 'vipp', $farm_name );
+	}
+
 	return $output;
 }
 
