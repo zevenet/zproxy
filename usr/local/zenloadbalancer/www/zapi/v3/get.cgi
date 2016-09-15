@@ -77,7 +77,7 @@ sub farms # ()
 	# Success
 	&httpResponse(
 				   {
-					 http_code => 200,
+					 code => 200,
 					 body      => {
 							   description => "List farms",
 							   params      => $out
