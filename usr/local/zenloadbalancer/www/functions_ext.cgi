@@ -262,4 +262,68 @@ sub indexOfElementInArray
 	return $index;
 }
 
+sub getGlobalConfiguration
+{
+	my $parameter = shift;
+
+	my $global_conf_filepath = "/usr/local/zenloadbalancer/config/global.conf";
+
+	open ( my $global_conf_file, '<', $global_conf_filepath );
+
+	if ( !$global_conf_file )
+	{
+		my $msg = "Could not open $global_conf_filepath: $!";
+
+		&zenlog( $msg );
+		die $msg;
+	}
+
+	my $global_conf;
+
+	for my $conf_line ( <$global_conf_file> )
+	{
+		next if $conf_line !~ /^\$/;
+
+		#~ print "$conf_line"; # DEBUG
+
+		# capture
+		$conf_line =~ /\$(\w+)\s*=\s*(?:"(.*)"|\'(.*)\');\s*$/;
+
+		my $var_name  = $1;
+		my $var_value = $2;
+
+		my $has_var = 1;
+
+		# replace every variable used in the $var_value by its content
+		while ( $has_var )
+		{
+			if ( $var_value =~ /\$(\w+)/ )
+			{
+				my $found_var_name = $1;
+
+#~ print "'$var_name' \t => \t '$var_value'\n"; # DEBUG
+#~ print "\t\t found_var_name:$found_var_name \t => \t $global_conf->{ $found_var_name }\n"; # DEBUG
+
+				$var_value =~ s/\$$found_var_name/$global_conf->{ $found_var_name }/;
+
+				#~ print "'$var_name' \t => \t '$var_value'\n"; # DEBUG
+			}
+			else
+			{
+				$has_var = 0;
+			}
+		}
+
+		#~ print "'$var_name' \t => \t '$var_value'\n"; # DEBUG
+
+		$global_conf->{ $var_name } = $var_value;
+	}
+
+	close $global_conf_file;
+
+	return eval { $global_conf->{ $parameter } } if $parameter;
+
+	return $global_conf;
+}
+
 1;
