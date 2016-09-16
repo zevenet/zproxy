@@ -383,7 +383,7 @@ sub httpResponse
 	{
 		push @headers,
 		  'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
-		  'Access-Control-Allow-Headers' => 'Authorization, Set-cookie, Content-Type';
+		  'Access-Control-Allow-Headers' => 'ZAPI_KEY, Authorization, Set-cookie, Content-Type';
 	}
 
 	# add possible extra headers
