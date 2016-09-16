@@ -68,8 +68,8 @@ if ( $action eq "editfarm-dpc" )
 		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $service );
 
 		# cgi variables
-		my $gslbFgCmd  = &getCgiData( "gslbFgCmd_$service" );
-		my $gslbFgTime = &getCgiData( "gslbFgTime_$service" );
+		my $gslbFgCmd  = &getCgiParam( "gslbFgCmd_$service" );
+		my $gslbFgTime = &getCgiParam( "gslbFgTime_$service" );
 
 		my $fgchanged = 0;
 		my $errormsg;
@@ -92,7 +92,7 @@ if ( $action eq "editfarm-dpc" )
 		}
 
 		# disable farmguardian
-		elsif ( !defined ( &getCgiData( "gslbFgStatus_$service" ) )
+		elsif ( !defined ( &getCgiParam( "gslbFgStatus_$service" ) )
 				and $fgStatus eq 'up' )
 		{
 			$error = &enableGSLBFarmGuardian( $farmname, $service, 'down' );

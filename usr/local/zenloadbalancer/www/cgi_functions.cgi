@@ -34,22 +34,19 @@ sub getCGI
 	return $cgi;
 }
 
-# &getCgiData();
-#		return = \%cgiVars			// Object
-# &getCgiData( $variableName );
+# &getCgiParam();
+#		return = \%cgiVars			// Hash reference
+# &getCgiParam( $variableName );
 #		return = $varValue
-sub getCgiData
+sub getCgiParam
 {
-	my ( $variable ) = @_;
+	my $variable = shift;
 
 	my $cgi = getCGI();
 
-	my $value = $cgi->param( $variable )
-	  if ( defined ( $cgi->param( $variable ) ) );
+	return eval { $cgi->param( $variable ) } if $variable;
 
-	$value = $cgi->Vars if ( $value eq "" );
-
-	return $value;
+	return $cgi->Vars;
 }
 
 1;
