@@ -411,7 +411,7 @@ sub controlAlerts
 	my $status;
 	my $idModule = &plugins::getIdModule();
 	my $modify;
-	my $cgi = &main::getCgiData;
+	my $cgi = &main::getCgiParam;
 	my %notificationHash = %{ &getData( $alertsFile ) };
 	my $notif;	
 	
