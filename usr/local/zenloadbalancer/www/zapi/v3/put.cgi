@@ -16,12 +16,6 @@
 #
 #
 
-our $origin;
-if ( $origin ne 1 )
-{
-	exit;
-}
-
 sub modify_farm()
 {
 

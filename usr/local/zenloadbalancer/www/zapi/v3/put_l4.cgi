@@ -69,12 +69,6 @@
 #
 #**
 
-our $origin;
-if ( $origin ne 1 )
-{
-	exit;
-}
-
 ####### Params
 
 my $out_p = [];

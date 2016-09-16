@@ -43,12 +43,6 @@
 #
 #**
 
-our $origin;
-if ( $origin ne 1 )
-{
-	exit;
-}
-
 sub new_vini()
 {
 	my $fdev = @_[0];

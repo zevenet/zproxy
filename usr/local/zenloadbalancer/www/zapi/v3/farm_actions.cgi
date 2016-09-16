@@ -51,12 +51,6 @@
 #
 #**
 
-our $origin;
-if ( $origin ne 1 )
-{
-	exit;
-}
-
 sub actions()
 {
 

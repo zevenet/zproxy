@@ -91,12 +91,6 @@
 #
 #**
 
-our $origin;
-if ( $origin ne 1 )
-{
-	exit;
-}
-
 my $out_p = [];
 
 use CGI;
