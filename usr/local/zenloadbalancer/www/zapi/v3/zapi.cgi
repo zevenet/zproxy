@@ -796,4 +796,9 @@ GET qr{^/graphs} => sub {
 	&possible_graphs();
 };
 
-&httpResponse({ code => 400 });
+&httpResponse({
+	code => 400,
+	body => {
+		message => 'Request not recognized'
+		}
+	});
