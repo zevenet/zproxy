@@ -58,7 +58,6 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/farm_actions.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/post_gslb.cgi";
 
 my $q = &getCGI();
-our $origin = 1;
 
 # build local key
 sub keycert()

@@ -18,12 +18,6 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/get_gslb.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get_l4.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get_datalink.cgi";
 
-our $origin;
-if ( $origin ne 1 )
-{
-	exit;
-}
-
 #**
 #  @api {get} /farms Request farms list
 #  @apiGroup Farm Get

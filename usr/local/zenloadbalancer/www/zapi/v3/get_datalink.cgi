@@ -62,12 +62,6 @@
 #
 #**
 
-our $origin;
-if ( $origin ne 1 )
-{
-	exit;
-}
-
 sub farms_name_datalink()
 {
 
