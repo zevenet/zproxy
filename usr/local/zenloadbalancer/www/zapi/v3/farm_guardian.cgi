@@ -12,9 +12,9 @@
 #
 ###############################################################################
 
-# PUT /farms/FarmTCP/farmguardian
+# PUT /farms/FarmL4/farmguardian
 #
-# TCP/UDP/L4XNAT:
+# L4XNAT:
 #
 # curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"fgtimecheck":"5","fgscript":"eyy","fgenabled":"true","fglog":"true"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/L4FARM/fg
 #
@@ -29,7 +29,7 @@
 #  @apiGroup Farm Guardian
 #  @apiName PutFarmFG
 #  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Modify the parameters of the farm guardian in a Farm with tcp, udp or l4xnat profile
+#  @apiDescription Modify the parameters of the farm guardian in a Farm with l4xnat profile
 #  @apiVersion 2.1.0
 #
 #
@@ -234,7 +234,7 @@ sub modify_farmguardian()
 		}
 	}
 
-	if ( $type eq "tcp" || $type eq "udp" || $type eq "l4xnat" )
+	if ( $type eq "l4xnat" )
 	{
 		@fgconfig = &getFarmGuardianConf( $farmname, "" );
 	}
@@ -300,7 +300,7 @@ sub modify_farmguardian()
 		$farmguardianlog = $json_obj->{ fglog };
 	}
 
-	if ( $type eq "tcp" || $type eq "udp" || $type eq "l4xnat" )
+	if ( $type eq "l4xnat" )
 	{
 		&runFarmGuardianStop( $farmname, "" );
 		$status =

@@ -2,7 +2,7 @@
 
 # POST /farms/
 #
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"profile":"TCP","vip":"178.62.126.152","vport":"12345","interface":"eth0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/newfarmTCP
+# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"profile":"HTTP","vip":"178.62.126.152","vport":"12345","interface":"eth0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/newfarmHTTP
 #
 # HTTP status code reference: http://www.restapitutorial.com/httpstatuscodes.html
 #
@@ -20,21 +20,21 @@
 #
 #
 # @apiSuccess   {String}        interface                Interface where the farm will be created. Mandatory.
-# @apiSuccess	{Number}	vport			PORT of the farm, where is listening the virtual service. Only mandatory in TCP, UDP, HTTP and GSLB profile.
-# @apiSuccess	{String}	profile			The protocol of the created Farm. The options are: TCP, UDP, HTTP, L4xNAT, DATALINK and GSLB. Mandatory.
+# @apiSuccess	{Number}	vport			PORT of the farm, where is listening the virtual service. Only mandatory in HTTP and GSLB profile.
+# @apiSuccess	{String}	profile			The protocol of the created Farm. The options are: HTTP, L4xNAT, DATALINK and GSLB. Mandatory.
 # @apiSuccess   {String}        vip                      IP of the farm, where is listening the virtual service. Mandatory.
 #
 #
 #
 # @apiSuccessExample Success-Response:
 #{
-#   "description" : "New farm newfarmTCP",
+#   "description" : "New farm newfarmHTTP",
 #   "params" : [
 #      {
 #         "interface" : "eth0",
-#         "name" : "newfarmTCP",
+#         "name" : "newfarmHTTP",
 #         "vport" : 80,
-#         "profile" : "TCP",
+#         "profile" : "HTTP",
 #         "vip" : "178.62.126.152"
 #      }
 #   ]
@@ -42,8 +42,8 @@
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"profile":"TCP", "vip":"178.62.126.152", "vport":"80","interface":"eth0"}'
-#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/newfarmTCP
+#       -u zapi:<password> -d '{"profile":"HTTP", "vip":"178.62.126.152", "vport":"80","interface":"eth0"}'
+#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/newfarmHTTP
 #
 # @apiSampleRequest off
 #
@@ -121,7 +121,7 @@ sub new_farm()
 		exit;
 	}
 
-	if ( $farmprotocol =~ /TCP|HTTP|UDP|HTTPS|GSLB|L4XNAT|DATALINK/ )
+	if ( $farmprotocol =~ /HTTP|HTTPS|GSLB|L4XNAT|DATALINK/ )
 	{
 		if ( &isnumber( $json_obj->{ vport } ) eq "true" )
 		{
@@ -288,10 +288,6 @@ sub new_farm()
 }
 
 #
-# TCP:
-#
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"ip":"1.1.1.1","port":"80","maxconnections":"1000","weight":"1","priority":"1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/newfarmTCP12345679/backends
-#
 # HTTP:
 #
 # curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"ip":"1.1.1.1","port":"80","maxconnections":"1000","weight":"1","timeout":"10","priority":"1","service":"service1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/newfarmHTTP/backends
@@ -300,51 +296,6 @@ sub new_farm()
 #
 # curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"ip":"1.1.1.1","service":"servicio1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/backends
 #
-#
-#
-#####Documentation of POST BACKENDS TCP####
-#**
-#  @api {post} /farms/<farmname>/backends Create a new Backend in a tcp|udp Farm
-#  @apiGroup Farm Create
-#  @apiName PostFarmBackendTCP
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Create a new Backend of a given TCP Farm
-#  @apiVersion 2.1.0
-#
-#
-#
-# @apiSuccess   {String}        ip	                IP of the backend, where is listening the real service.
-# @apiSuccess   {Number}        maxconnections		It’s the max number of concurrent connections that the current real server will be able to receive.
-# @apiSuccess   {Number}        port                     PORT of the backend, where is listening the real service.
-# @apiSuccess   {Number}        priority			It’s the priority value for the current real server.
-# @apiSuccess   {Number}        weight			It's the weight value for the current real server.
-#
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "New backend 0",
-#   "params" : [
-#      {
-#         "id" : 0,
-#         "ip" : "192.168.0.1",
-#         "maxconnections" : 1000,
-#         "port" : 80,
-#         "priority" : 1,
-#         "weight" : 1
-#      }
-#   ]
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"maxconnections":"1000", "ip":"192.168.0.1", "port":"80",
-#       "priority":"1", "weight":"1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmTCP/backends
-#
-# @apiSampleRequest off
-#
-#**
 #
 #
 #####Documentation of POST BACKENDS HTTP####
@@ -581,156 +532,6 @@ sub new_farm_backend()
 
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq "tcp" || $type eq "udp" )
-	{
-
-		# ID = ID of the last backend server + 1
-		my $id     = 0;
-		my $server = "false";
-		my @run    = &getFarmServers( $farmname );
-
-		foreach $l_servers ( @run )
-		{
-			my @l_serv = split ( "\ ", $l_servers );
-			if ( @l_serv[2] ne "0.0.0.0" )
-			{
-				if ( @l_serv[0] + 0 >= $id )
-				{
-					$id     = @l_serv[0] + 0;
-					$server = "true";
-				}
-			}
-		}
-		if ( $server eq "true" )
-		{
-			$id++;
-		}
-
-		if ( &ipisok( $json_obj->{ ip } ) eq "false" )
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new backend in farm $farmname, invalid real server IP value."
-			);
-
-			# Error
-			$error = 1;
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid real server IP value, please insert a valid value.";
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
-
-		}
-		if ( $json_obj->{ ip } =~ /^$/ || $json_obj->{ port } =~ /^$/ )
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new backend in farm $farmname, invalid IP address and port for a real server, it can't be blank."
-			);
-
-			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid IP address and port for a real server, it can't be blank.";
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
-
-		}
-
-		$status = &setFarmServer(
-								  $id,
-								  $json_obj->{ ip },
-								  $json_obj->{ port },
-								  $json_obj->{ maxconnections },
-								  $json_obj->{ weight },
-								  $json_obj->{ priority },
-								  "",
-								  $farmname
-		);
-
-		if ( $status != -1 )
-		{
-			&zenlog(
-				"ZAPI success, a new backend has been created in farm $farmname with IP $json_obj->{ip}."
-			);
-
-			# Success
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '201 Created',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			push $out_p,
-			  {
-				id             => $id,
-				ip             => $json_obj->{ ip },
-				port           => $json_obj->{ port } + 0,
-				maxconnections => $json_obj->{ maxconnections } + 0,
-				weight         => $json_obj->{ weight } + 0,
-				priority       => $json_obj->{ priority } + 0
-			  };
-
-			my $j = JSON::XS->new->utf8->pretty( 1 );
-			$j->canonical( $enabled );
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   params      => $out_p
-									 }
-			);
-			print $output;
-
-		}
-		else
-		{
-
-			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg =
-			    "It's not possible to create the real server with ip "
-			  . $json_obj->{ ip }
-			  . " and port "
-			  . $json_obj->{ port }
-			  . " for the $farmname farm";
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
-
-		}
-	}
 	if ( $type eq "http" || $type eq "https" )
 	{
 	

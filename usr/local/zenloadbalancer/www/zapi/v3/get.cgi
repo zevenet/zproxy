@@ -12,7 +12,6 @@
 #
 ###############################################################################
 
-require "/usr/local/zenloadbalancer/www/zapi/v3/get_tcp.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get_http.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get_gslb.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get_l4.cgi";
@@ -114,7 +113,6 @@ sub farms_name()
 
 	switch ( $type )
 	{
-		case /tcp|udp/  { &farms_name_tcp() }
 		case /http.*/   { &farms_name_http() }
 		case /gslb/     { &farms_name_gslb() }
 		case /l4xnat/   { &farms_name_l4() }
