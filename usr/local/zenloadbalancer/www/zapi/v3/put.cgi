@@ -12,7 +12,7 @@
 #
 ###############################################################################
 
-# PUT /farms/FarmTCP
+# PUT /farms/FarmHTTP
 #
 #
 
@@ -99,70 +99,11 @@ sub modify_farm()
 	{
 		require "/usr/local/zenloadbalancer/www/zapi/v3/put_gslb.cgi";
 	}
-
-	if ( $type eq "tcp" || $type eq "udp" )
-	{
-		require "/usr/local/zenloadbalancer/www/zapi/v3/put_tcp.cgi";
-	}
 }
 
 # Modify Backends
 #
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"ip":"192.168.0.10","port":"88","maxcon":"1000","priority":"2","weight":"1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/TCP/backends/1
-#
-#####Documentation of PUT BACKEND TCP####
-#**
-#  @api {put} /farms/<farmname>/backends/<backendid> Modify a tcp|udp Backend
-#  @apiGroup Farm Modify
-#  @apiName PutBckTCP
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiParam {Number} backendid Backend ID, unique ID.
-#  @apiDescription Modify the params of a backend in a TCP|UDP Farm
-#  @apiVersion 2.1.0
-#
-#
-#
-# @apiSuccess	{String}		ip			IP of the backend, where is listening the real service.
-# @apiSuccess	{Number}		port			PORT of the backend, where is listening the real service.
-# @apiSuccess	{Number}		maxcon		It’s the max number of concurrent connections that the current real server will be able to receive.
-# @apiSuccess   {Number}        	priority		It’s the priority value for the current real server.
-# @apiSuccess   {Number}        	weight		It's the weight value for the current real server.
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Modify farm TCP",
-#   "params" : [
-#      {
-#         "priority" : "2"
-#      },
-#      {
-#         "ip" : "192.168.0.10"
-#      },
-#      {
-#         "weight" : "1"
-#      },
-#      {
-#         "maxcon" : "1000"
-#      },
-#      {
-#         "port" : "88"
-#      }
-#   ]
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"ip":"192.168.0.10","port":"88","maxcon":"1000","priority":"2",
-#       "weight":"1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmTCP/backends/1
-#
-# @apiSampleRequest off
-#
-#**
-#
-#
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"ip":"192.168.0.10","port":"88","priority":"2","weight":"1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/L4FARM/backends/1
+# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"ip":"192.168.0.10","port":"88","priority":"2","weight":"1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/L4XNAT/backends/1
 #
 #####Documentation of PUT BACKEND L4####
 #**
@@ -645,140 +586,6 @@ sub modify_backends()
 				}
 			}
 		}
-	}
-
-	if ( $type eq "tcp" || $type eq "udp" )
-	{
-
-		# Params
-		my @run = &getFarmServers( $farmname );
-		$serv_values = @run[$id_server];
-
-		my @l_serv = split ( "\ ", $serv_values );
-
-		# Functions
-		if ( exists ( $json_obj->{ ip } ) )
-		{
-			if ( $json_obj->{ ip } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid IP, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ ip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
-			{
-				@l_serv[2] = $json_obj->{ ip };
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					 "ZAPI error, trying to modify the backends in a farm $farmname, invalid IP." );
-			}
-		}
-
-		if ( exists ( $json_obj->{ port } ) )
-		{
-			if ( $json_obj->{ port } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid port, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ port } =~ /^\d+/ )
-			{
-				@l_serv[4] = $json_obj->{ port } + 0;
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					  "ZAPI error, trying to modify the backends in a farm $farmname, invalid port."
-				);
-			}
-		}
-
-		if ( exists ( $json_obj->{ maxcon } ) )
-		{
-			if ( $json_obj->{ maxcon } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid maxcon, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ maxcon } =~ /^\d+$/ )
-			{
-				@l_serv[8] = $json_obj->{ maxcon } + 0;
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid maxcon."
-				);
-			}
-		}
-
-		if ( exists ( $json_obj->{ weight } ) )
-		{
-			if ( $json_obj->{ weight } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ weight } =~ /^\d+$/ )
-			{
-				@l_serv[12] = $json_obj->{ weight } + 0;
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight."
-				);
-			}
-		}
-
-		if ( exists ( $json_obj->{ priority } ) )
-		{
-			if ( $json_obj->{ priority } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid priority, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ priority } =~ /^\d+$/ )
-			{
-				@l_serv[14] = $json_obj->{ priority } + 0;
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid priority."
-				);
-			}
-		}
-
-		if ( $error eq "false" )
-		{
-			$status = &setFarmServer( $id_server,  @l_serv[2],  $l_serv[4], $l_serv[8],
-									  $l_serv[12], $l_serv[14], "",         $farmname );
-			if ( $status == -1 )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the real server with IP $json_obj->{ip}."
-				);
-			}
-		}
-
 	}
 
 	if ( $type eq "http" || $type eq "https" )

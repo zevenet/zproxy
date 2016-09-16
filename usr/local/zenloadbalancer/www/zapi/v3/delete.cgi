@@ -28,15 +28,15 @@
 #
 # @apiSuccessExample Success-Response:
 #{
-#   "description" : "Delete farm FarmTCP",
-#   "message" : "The Farm FarmTCP has been deleted.",
+#   "description" : "Delete farm FarmHTTP",
+#   "message" : "The Farm FarmHTTP has been deleted.",
 #   "success" : "true"
 #}
 #
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmTCP
+#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP
 #
 # @apiSampleRequest off
 #
@@ -409,7 +409,7 @@ sub delete_service()
 }
 
 #
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmTCP/backends/0
+# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmHTTP/backends/0
 #
 #
 #####Documentation of DELETE BACKEND####
@@ -419,7 +419,7 @@ sub delete_service()
 #  @apiName DeleteBackend
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiParam {Number} backendid  Backend ID, unique ID.
-#  @apiDescription Delete a given backend of a tcp, udp, datalink or l4xnat Farm
+#  @apiDescription Delete a given backend of a datalink or l4xnat Farm
 #  @apiVersion 2.1.0
 #
 #
