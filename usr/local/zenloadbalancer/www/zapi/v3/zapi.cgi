@@ -402,7 +402,7 @@ sub httpResponse
 
 		-type    => 'application/json',
 		-charset => 'utf-8',
-		-status  => "$self->{ code }",
+		-status  => "$self->{ code } $GLOBAL::http_status_codes{ $self->{ code } }",
 
 		# extra headers
 		@headers,
