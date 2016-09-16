@@ -434,7 +434,7 @@ sub httpResponse
 #########################################
 
 &zenlog(">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<");
-&zenlog("HTTP HEADERS: " . join(', ', $cgi->http() ) );
+&zenlog("HTTP HEADERS: " . join(', ', $q->http() ) );
 &zenlog("HTTP_AUTHORIZATION: <$ENV{HTTP_AUTHORIZATION}>") if exists $ENV{HTTP_AUTHORIZATION};
 &zenlog("HTTP_ZAPI_KEY: <$ENV{HTTP_ZAPI_KEY}>") if exists $ENV{HTTP_ZAPI_KEY};
 #~ my $post_data = $q->param('POSTDATA');
