@@ -12,9 +12,11 @@
 #
 ###############################################################################
 
-use CGI;
+#~ use no warnings;
+
+#~ use CGI;
 use CGI::Session;
-use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
+#~ use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use MIME::Base64;
 use JSON::XS;
 
@@ -725,27 +727,28 @@ GET qr{^/interfaces$} => sub {
 };
 
 #  POST virtual interface
-POST qr{^/addvini/(.*$)} => sub {
+POST qr{^/interfaces/([a-zA-Z0-9\.]+:[a-zA-Z0-9]+)$} => sub {
 	&new_vini( $1 );
 };
 
 #  POST vlan interface
-POST qr{^/addvlan/(.*$)} => sub {
+POST qr{^/interfaces/([a-zA-Z0-9]+\.[0-9]+)$} => sub {
 	&new_vlan( $1 );
 };
 
+# FIXME: implement up/down in PUT method
 #  POST action interface
-POST qr{^/ifaction/(.*+$)} => sub {
-	&ifaction( $1 );
-};
+#~ PUT qr{^/interfaces/(.+)$} => sub {
+	#~ &ifaction( $1 );
+#~ };
 
 #  DELETE virtual interface (default)
-DELETE qr{^/deleteif/(.*$)} => sub {
+DELETE qr{^/interfaces/(.+)$} => sub {
 	&delete_interface( $1 );
 };
 
 #  PUT interface
-PUT qr{^/modifyif/(.*$)} => sub {
+PUT qr{^/interfaces/(.+)$} => sub {
 	&modify_interface( $1 );
 };
 
