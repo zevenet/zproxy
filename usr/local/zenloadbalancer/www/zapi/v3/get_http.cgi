@@ -161,8 +161,8 @@ sub farms_name_http()
 	}
 	$type     = &getFarmType( $farmname );
 	$certname = $na;
-	$cipher   = $na;
-	$ciphers  = $na;
+	$cipher   = '';
+	$ciphers  = 'all';
 
 	if ( $type eq "https" )
 	{
@@ -212,9 +212,8 @@ sub farms_name_http()
 	# push $out_certs, { filename => $file };
 	# }
 
-	push $out_p,
+	push @{ $out_p },
 	  {
-		certlist        => $out_cn,
 		status          => $status,
 		restimeout      => $timeout,
 		contimeout      => $connto,
@@ -224,8 +223,6 @@ sub farms_name_http()
 		rewritelocation => $rewritelocation,
 		httpverb        => $httpverb,
 		listener        => $type,
-		ciphers         => $ciphers,
-		cipherc         => $cipher,
 		vip             => $vip,
 		vport           => $vport,
 		error500        => @err500,
@@ -233,6 +230,15 @@ sub farms_name_http()
 		error501        => @err501,
 		error503        => @err503
 	  };
+
+	if ( $type eq "https" )
+	{
+		push @{ $out_p },
+		certlist        => $out_cn,
+		ciphers         => $ciphers,
+		cipherc         => $cipher,
+		;
+	}
 
 	#http services
 	my $services = &getFarmVS( $farmname, "", "" );
