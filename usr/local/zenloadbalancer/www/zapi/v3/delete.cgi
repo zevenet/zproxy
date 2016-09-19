@@ -23,7 +23,7 @@
 #  @apiName DeleteFarm
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Delete a given Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -176,7 +176,7 @@ sub delete_farm()
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiParam {String} servicename  Service name, unique ID.
 #  @apiDescription Delete a given zone of a http, https or gslb Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -420,7 +420,7 @@ sub delete_service()
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiParam {Number} backendid  Backend ID, unique ID.
 #  @apiDescription Delete a given backend of a datalink or l4xnat Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -602,7 +602,7 @@ sub delete_backend()
 #  @apiParam {String} servicename Service name, unique ID.
 #  @apiParam {Number} backendid  Backend ID, unique ID.
 #  @apiDescription Delete a given backend in a service of a http, https or gslb Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:

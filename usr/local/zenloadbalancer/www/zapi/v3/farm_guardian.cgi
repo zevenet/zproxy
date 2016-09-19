@@ -30,7 +30,7 @@
 #  @apiName PutFarmFG
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Modify the parameters of the farm guardian in a Farm with l4xnat profile
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -75,7 +75,7 @@
 #  @apiName PutFarmFGS
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Modify the parameters of the farm guardian in a Service http|https
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #

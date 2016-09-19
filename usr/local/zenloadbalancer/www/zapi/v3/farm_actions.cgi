@@ -25,7 +25,7 @@
 #  @apiName PostActions
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Set a given action in a Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -241,7 +241,7 @@ sub actions()
 #  @apiName PostMaintenance
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Set a given action in a backend of a HTTP farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccess   {String}        action                  Set the action desired. The actions are: up and maintenance.

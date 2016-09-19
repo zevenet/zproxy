@@ -12,7 +12,7 @@
 #  @apiName PutFarmHTTP
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Modify the params in a HTTP|HTTPS Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #

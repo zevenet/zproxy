@@ -22,7 +22,7 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/get_datalink.cgi";
 #  @apiGroup Farm Get
 #  @apiDescription Get the list of all Farms
 #  @apiName GetFarmList
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:

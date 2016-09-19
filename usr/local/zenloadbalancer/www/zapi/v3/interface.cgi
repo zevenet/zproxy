@@ -11,7 +11,7 @@
 #  @apiName PostVini
 #  @apiParam {String} interface  Interface name, unique ID.
 #  @apiDescription Create a new virtual network interface of a given interface
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -326,7 +326,7 @@ sub new_vini()
 #  @apiName PostVlan
 #  @apiParam {String} interface  Interface name, unique ID.
 #  @apiDescription Create a new vlan network interface of a given interface
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -788,7 +788,7 @@ sub new_vlan()
 #  @apiParam 	{String}	 interface	Interface name, unique ID.
 #  @apiParam 	{Number}	 ip_version	Stack to delete. Must be 6 for IPv6 and 4 for IPv4. In case that command ends with only the interface name, the ip version default value is IPv4.
 #  @apiDescription Delete a interface, a virtual network interface or a vlan
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -960,7 +960,7 @@ sub delete_interface()
 #  @apiGroup Interfaces
 #  @apiName GetInterfaces
 #  @apiDescription Gat all the params of the interfaces
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1097,7 +1097,7 @@ sub get_interface()
 #  @apiName Postifaction
 #  @apiParam {String} interface  Interface name, unique ID.
 #  @apiDescription Set an action in a interface, virtual network interface or vlan
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -1412,7 +1412,7 @@ sub ifaction()
 #  @apiName PutIf
 #  @apiParam {String} interface  Interface name, unique ID.
 #  @apiDescription Modify a interface, vlan or a virtual network interface
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
