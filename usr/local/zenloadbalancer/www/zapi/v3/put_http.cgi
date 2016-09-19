@@ -74,10 +74,9 @@
 
 ######## Params
 
-use CGI;
 use JSON;
 
-my $q        = CGI->new;
+my $q        = &getCGI();
 my $json     = JSON->new;
 my $data     = $q->param( 'PUTDATA' );
 my $json_obj = $json->decode( $data );
