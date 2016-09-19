@@ -38,63 +38,25 @@
 #
 # @apiSuccessExample Success-Response:
 #{
-#   "description" : "Modify farm FarmHTTP2",
-#   "params" : [
-#      {
-#         "ciphers" : "customsecurity"
-#      },
-#      {
-#         "error501" : "Message error 501"
-#      },
-#      {
-#         "cipherc" : "TLSv1+SSLv3+HIGH:-MEDIUM:-LOW*:-ADH*"
-#      },
-#      {
-#         "error414" : "Message error 414"
-#      },
-#      {
-#         "certname" : "zencert.pem"
-#      },
-#      {
-#         "restimeout" : "47"
-#      },
-#      {
-#         "vip" : "178.62.126.152"
-#      },
-#      {
-#         "reqtimeout" : "32"
-#      },
-#      {
-#         "conectimeout" : "22"
-#      },
-#      {
-#         "resurrectime" : "12"
-#      },
-#      {
-#         "maxthreads" : "259"
-#      },
-#      {
-#         "rewritelocation" : "enabled"
-#      },
-#      {
-#         "vport" : "88"
-#      },
-#      {
-#         "newfarmname" : "FarmHTTP2"
-#      },
-#      {
-#         "error500" : "Message error 500"
-#      },
-#      {
-#         "error503" : "Message error 503"
-#      },
-#      {
-#         "listener" : "https"
-#      },
-#      {
-#         "httpverb" : "standardHTTP"
-#      }
-#   ]
+#   "description" : "Modify farm testHttp",
+#   "info" : "There're changes that need to be applied, stop and start farm to apply them!",
+#   "params" : {
+#      "conectimeout" : "20",
+#      "error414" : "Message error 414",
+#      "error500" : "Message error 500",
+#      "error501" : "Message error 501",
+#      "error503" : "Message error 503",
+#      "httpverb" : "standardHTTP",
+#      "listener" : "http",
+#      "maxthreads" : "2",
+#      "newfarmname" : "testHttp",
+#      "reqtimeout" : "32",
+#      "restimeout" : "47",
+#      "resurrectime" : "12",
+#      "rewritelocation" : "enabled",
+#      "vip" : "192.168.10.30",
+#      "vport" : "88"
+#   }
 #}
 #
 #
@@ -111,8 +73,6 @@
 #**
 
 ######## Params
-
-my $out_p = [];
 
 use CGI;
 use JSON;
@@ -892,17 +852,12 @@ if ( $error ne "true" )
 					  'Access-Control-Allow-Origin'  => '*'
 			);
 
-			foreach $key ( keys %$json_obj )
-			{
-				push $out_p, { $key => $json_obj->{ $key } };
-			}
-
 			my $j = JSON::XS->new->utf8->pretty( 1 );
 			$j->canonical( $enabled );
 			my $output = $j->encode(
 				{
 				   description => "Modify farm $farmname",
-				   params      => $out_p,
+				   params      => $json_obj,
 				   info =>
 					 "There're changes that need to be applied, stop and start farm to apply them!"
 				}
@@ -922,17 +877,12 @@ if ( $error ne "true" )
 					  'Access-Control-Allow-Origin'  => '*'
 		);
 
-		foreach $key ( keys %$json_obj )
-		{
-			push $out_p, { $key => $json_obj->{ $key } };
-		}
-
 		my $j = JSON::XS->new->utf8->pretty( 1 );
 		$j->canonical( $enabled );
 		my $output = $j->encode(
 								 {
 								   description => "Modify farm $farmname",
-								   params      => $out_p
+								   params      => $json_obj
 								 }
 		);
 		print $output;
@@ -965,5 +915,4 @@ else
 	exit;
 }
 
-1
-
+1;
