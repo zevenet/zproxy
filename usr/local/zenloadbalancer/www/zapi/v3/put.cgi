@@ -113,7 +113,7 @@ sub modify_farm()
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiParam {Number} backendid Backend ID, unique ID.
 #  @apiDescription Modify the params of a backend in a L4XNAT Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -159,7 +159,7 @@ sub modify_farm()
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiParam {Number} backendid Backend ID, unique ID.
 #  @apiDescription Modify the params of a backend in a DATALINK Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -205,7 +205,7 @@ sub modify_farm()
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiParam {Number} backendid Backend ID, unique ID.
 #  @apiDescription Modify the params of a backend in a service of a HTTP|HTTPS Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -258,7 +258,7 @@ sub modify_farm()
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiParam {Number} backendid Backend ID, unique ID.
 #  @apiDescription Modify the params of a backend in a service of a GSLB Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -1034,7 +1034,7 @@ sub modify_backends()
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiParam {Number} resourceid Resource ID, unique ID.
 #  @apiDescription Modify the params of a resource of a zone in a GSLB Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -1376,7 +1376,7 @@ sub modify_resources()
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiParam {String} zoneid Zone name, unique ID.
 #  @apiDescription Modify the params of a Zone in a GSLB Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -1564,7 +1564,7 @@ sub modify_zones()
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiParam {String} serviceid Service name, unique ID.
 #  @apiDescription Modify the params of a service in a GSLB Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -1601,7 +1601,7 @@ sub modify_zones()
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiParam {String} serviceid Service name, unique ID.
 #  @apiDescription Modify the params of a service in a HTTP|HTTPS Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #

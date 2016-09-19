@@ -13,7 +13,7 @@
 #  @apiName PutFarmL4XNAT
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Modify the params in a L4XNAT Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #

@@ -24,7 +24,7 @@
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiParam {String} zonename  Zone name, unique ID.
 #  @apiDescription Delete a given zone of a gslb Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -192,7 +192,7 @@ sub delete_zone()
 #  @apiParam {String} zonename  Zone name, unique ID.
 #  @apiParam {Number} resourceid  Resource ID, unique ID.
 #  @apiDescription Delete a given resource in a zone of a gslb Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:

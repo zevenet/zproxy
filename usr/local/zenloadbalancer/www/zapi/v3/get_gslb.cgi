@@ -12,7 +12,7 @@
 #  @apiName GetFarmNameGSLB
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Get the Params of a given Farm <farmname> with GSLB profile
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:

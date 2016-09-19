@@ -11,7 +11,7 @@
 #  @apiName GetFarmNameHTTP
 #  @apiDescription Get the Params of a given Farm <farmname> with HTTP or HTTPS profile
 #  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:

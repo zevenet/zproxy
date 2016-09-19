@@ -12,7 +12,7 @@
 #  @apiName PutFarmGSLB
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Modify the params in a GSLB Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #

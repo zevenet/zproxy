@@ -15,7 +15,7 @@
 #  @apiName PostFarm
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Create a new Farm with a specific protocol
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -305,7 +305,7 @@ sub new_farm()
 #  @apiName PostFarmBackendHTTP
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Create a new Backend of a given HTTP|HTTPS Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -350,7 +350,7 @@ sub new_farm()
 #  @apiName PostFarmBackendGSLB
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Create a new Backend of a given GSLB Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -389,7 +389,7 @@ sub new_farm()
 #  @apiName PostFarmBackendL4XNAT
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Create a new Backend of a given L4XNAT Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -431,7 +431,7 @@ sub new_farm()
 #  @apiName PostFarmBackendDATALINK
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Create a new Backend of a given DATALINK Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -1347,7 +1347,7 @@ sub new_farm_backend()
 #  @apiName PostServiceHTTP
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Create a service in a given http|https Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -1382,7 +1382,7 @@ sub new_farm_backend()
 #  @apiName PostServiceGSLB
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Create a new service in a given gslb Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #

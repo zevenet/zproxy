@@ -23,7 +23,7 @@
 #  @apiName PostZoneGSLB
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Create a new zone in a given gslb Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -230,7 +230,7 @@ sub new_farm_zone()
 #  @apiName PostZoneResourceGSLB
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Create a new resource of a zone in a given gslb Farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #

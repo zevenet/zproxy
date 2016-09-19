@@ -21,7 +21,7 @@
 #  @apiParam {String} param2  Second parameter. The possible values if the first parameter is system are: cpu, disk, load, mem or memsw. The possible values if the first parameter is network are: eth0iface, eth0.1iface, eth1iface... The possible values if the first parameter is farm are: <farmname>-farm, for example httptest-farm.
 #  @apiParam {String} frecuency Third parameter. The possible values are: daily, weekly, monthly or yearly.
 #  @apiDescription Get a graph in base 64 data
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -420,7 +420,7 @@ sub get_graphs()
 #  @apiGroup System Stats
 #  @apiDescription Get all possible graphs
 #  @apiName GetPossibleFarms
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -582,7 +582,7 @@ sub possible_graphs()
 #  @apiName GetFarmStatsBackendsl4
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Get the backend stats of a given Farm <farmname> with L4XNAT profile
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -615,7 +615,7 @@ sub possible_graphs()
 #  @apiName GetFarmStatsBackendshttp
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Get the backend stats of a given Farm <farmname> with HTTP or HTTPS profile
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -891,7 +891,7 @@ sub farm_stats()
 #  @apiGroup System Stats
 #  @apiDescription Get the system's stats
 #  @apiName GetStats
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1065,7 +1065,7 @@ sub stats()
 #  @apiGroup System Stats
 #  @apiDescription Get the memory system's stats
 #  @apiName GetStatsMem
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1164,7 +1164,7 @@ sub stats_mem()
 #  @apiGroup System Stats
 #  @apiDescription Get the load system's stats
 #  @apiName GetStatsLoad
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1248,7 +1248,7 @@ sub stats_load()
 #  @apiGroup System Stats
 #  @apiDescription Get the cpu system's stats
 #  @apiName GetStatsCpu
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1345,7 +1345,7 @@ sub stats_cpu()
 #  @apiGroup System Stats
 #  @apiDescription Get the network system's stats
 #  @apiName GetStatsLoad
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:

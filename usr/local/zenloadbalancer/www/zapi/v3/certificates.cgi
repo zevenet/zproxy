@@ -20,7 +20,7 @@
 #  @apiGroup Certificates
 #  @apiName GetCertificates
 #  @apiDescription Get the Params of all certificates
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -111,7 +111,7 @@ sub certificates()
 #  @apiName DeleteCertificates
 #  @apiParam {String} certname  Certificate name, unique ID.
 #  @apiDescription Delete the certificate selected
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -199,7 +199,7 @@ sub delete_certificate()
 #  @apiName AddCertificates
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Add a certificate to the available certificate list of a farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccess   {String}        file                The certificate name.
@@ -352,7 +352,7 @@ sub add_farmcertificate()
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiParam {Number} certid  Certificate ID, unique ID.
 #  @apiDescription Delete the certificate selected of a available certificate list in a farm
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -524,7 +524,7 @@ sub delete_farmcertificate()
 #  @apiName UploadCertificates
 #  @apiParam {String} farmname  Farm name, unique ID.
 #  @apiDescription Upload a certificate
-#  @apiVersion 2.1.0
+#  @apiVersion 3.0.0
 #
 #
 #  @apiSuccess	{String}	fileupload	The name of the file that will be uploaded. It is important to insert the complete path of the file.
