@@ -93,21 +93,15 @@ my $flag         = "false";
 # Check that the farm exists
 if ( &getFarmFile( $farmname ) == -1 ) {
 	# Error
-	print $q->header(
-	-type=> 'text/plain',
-	-charset=> 'utf-8',
-	-status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
 	$errormsg = "The farmname $farmname does not exists.";
-	my $output = $j->encode({
+
+	my $body = {
 			description => "Modify farm",
 			error => "true",
 			message => $errormsg
-	});
-	print $output;
-	exit;
+	};
 
+	&httpResponse({ code => 404, body => $body });
 }
 
 # Get current vip & vport
@@ -604,30 +598,20 @@ if ( $farmtype eq "https" )
 }
 else
 {
-
 	if (    exists ( $json_obj->{ ciphers } )
 		 || exists ( $json_obj->{ cipherc } )
 		 || exists ( $json_obj->{ certname } ) )
 	{
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
 		$errormsg = "To modify ciphers, chiperc or certname, listener must be https.";
-		my $output = $j->encode(
-								 {
-								   description => "Modify farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
-	}
+		my $body = {
+					 description => "Modify farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 400, body => $body });
+	}
 }
 
 # Modify only vip
@@ -844,48 +828,25 @@ if ( $error ne "true" )
 			&setFarmRestart( $farmname );
 
 			# Success
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
+			my $body = {
+				description => "Modify farm $farmname",
+				params      => $json_obj,
+				info =>
+				  "There're changes that need to be applied, stop and start farm to apply them!"
+			};
 
-			my $j = JSON::XS->new->utf8->pretty( 1 );
-			$j->canonical( $enabled );
-			my $output = $j->encode(
-				{
-				   description => "Modify farm $farmname",
-				   params      => $json_obj,
-				   info =>
-					 "There're changes that need to be applied, stop and start farm to apply them!"
-				}
-			);
-			print $output;
-
+			&httpResponse({ code => 200, body => $body });
 		}
 	}
 	else
 	{
-
 		# Success
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
+		my $body = {
+					 description => "Modify farm $farmname",
+					 params      => $json_obj
+		};
 
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( $enabled );
-		my $output = $j->encode(
-								 {
-								   description => "Modify farm $farmname",
-								   params      => $json_obj
-								 }
-		);
-		print $output;
-
+		&httpResponse({ code => 200, body => $body });
 	}
 
 }
@@ -896,22 +857,14 @@ else
 	);
 
 	# Error
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
 	$errormsg = "Errors found trying to modify farm $farmname";
-	my $output = $j->encode(
-							 {
-							   description => "Modify farm $farmname",
-							   error       => "true",
-							   message     => $errormsg
-							 }
-	);
-	print $output;
-	exit;
+	my $body = {
+				 description => "Modify farm $farmname",
+				 error       => "true",
+				 message     => $errormsg
+	};
+
+	&httpResponse({ code => 400, body => $body });
 }
 
 1;
