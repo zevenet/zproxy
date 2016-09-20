@@ -68,11 +68,14 @@ fi
 
 # Disable services
 
-# sec service
+# disable sec service
+systemctl stop sec
 systemctl disable sec.services
 
 # disable SNMP service
-cp /usr/local/zenloadbalancer/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
+if [ `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]
+        cp /usr/local/zenloadbalancer/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
+fi
 systemctl stop snmpd
 systemctl disable snmpd
 
