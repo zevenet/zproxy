@@ -79,7 +79,7 @@ fi
 # Disable services
 
 # SNMP and sec services
-if [ `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]
+if [ `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]; then
 	cp /usr/local/zenloadbalancer/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
 fi
 if [ `grep -c 'Lsd' /etc/default/snmpd` == '1' ]; then
