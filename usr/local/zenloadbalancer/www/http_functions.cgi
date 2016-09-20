@@ -455,7 +455,7 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 		}
 
 		# Generate DH Keys if needed
-		my $dhfile = "$configdir\/$farm_name\_dh2048.pem";
+		#my $dhfile = "$configdir\/$farm_name\_dh2048.pem";
 		if ( $filefarmhttp[$i_f] =~ /^\#*DHParams/ && $flisten eq "http" )
 		{
 			$filefarmhttp[$i_f] =~ s/.*DHParams/\#DHParams/;
@@ -463,9 +463,10 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 		}
 		if ( $filefarmhttp[$i_f] =~ /^\#*DHParams/ && $flisten eq "https" )
 		{
-			$filefarmhttp[$i_f] =~ s/.*DHParams.*/DHParams\t"$dhfile"/;
+			$filefarmhttp[$i_f] =~ s/.*DHParams/DHParams/;
+			#$filefarmhttp[$i_f] =~ s/.*DHParams.*/DHParams\t"$dhfile"/;
 			#&setHTTPFarmDHStatus( $farm_name, "on" );
-			&genDHFile ( $farm_name );
+			#&genDHFile ( $farm_name );
 		}
 
 		if ( $filefarmhttp[$i_f] =~ /ZWACL-END/ )
@@ -992,14 +993,14 @@ sub validateHTTPFarmDH    # ($farm_name)
 	{
 		my $lockstatus = &getFarmLock( $farmname );
 		if ( $lockstatus !~ /Diffie-Hellman/ ) {
-			$output = &setHTTPFarmDHStatus( $farm_name, "on" );
+			#$output = &setHTTPFarmDHStatus( $farm_name, "on" );
 			&genDHFile( $farm_name );
 		}
 	}
 
 	if ( $farm_type eq "http" && $dhstatus ne "on" )
 	{
-		$output = &setHTTPFarmDHStatus( $farm_name, "off" );
+		#$output = &setHTTPFarmDHStatus( $farm_name, "off" );
 	}
 
 	return $output;

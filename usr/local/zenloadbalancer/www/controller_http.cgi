@@ -289,7 +289,7 @@ if ( $action eq "editfarm-Parameters" )
 	#Farm listener
 	if ( $type ne $farmlisten )
 	{
-		&warnmsg( "SSL Diffie Hellman 2048 keys are being generated, it might take some minutes ... <a href=\"https://www.zenloadbalancer.com/knowledge-base/misc/diffie-hellman-keys-generation-important/\" target=\"_blank\">Why is it important?</a>" ) if $farmlisten eq "https";
+		#&warnmsg( "SSL Diffie Hellman 2048 keys are being generated, it might take some minutes ... <a href=\"https://www.zenloadbalancer.com/knowledge-base/misc/diffie-hellman-keys-generation-important/\" target=\"_blank\">Why is it important?</a>" ) if $farmlisten eq "https";
 		&setFarmListen( $farmname, $farmlisten );
 		&successmsg( "HTTP listener modified" );
 		&setFarmRestart( $farmname );
@@ -830,6 +830,7 @@ if ( $action eq "editfarm-restart" )
 	{
 		&successmsg( "The $farmname farm has been restarted" );
 		&setFarmHttpBackendStatus( $farmname );
+		&setFarmLock( $farm_name, "off");
 	}
 	else
 	{
