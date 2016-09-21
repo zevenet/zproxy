@@ -243,39 +243,6 @@ if ( exists ( $json_obj->{ reqtimeout } ) )
 	}
 }
 
-# Modify Number Of Working Threads
-if ( exists ( $json_obj->{ maxthreads } ) )
-{
-	if ( $json_obj->{ maxthreads } =~ /^$/ )
-	{
-		$error = "true";
-		&zenlog(
-			"ZAPI error, trying to modify a http farm $farmname, invalid maxthreads, can't be blank."
-		);
-	}
-	elsif ( $json_obj->{ maxthreads } =~ /^\d+$/ )
-	{
-		$status = &setFarmMaxConn( $json_obj->{ maxthreads }, $farmname );
-		if ( $status != -1 )
-		{
-			$restart_flag = "true";
-		}
-		else
-		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the maxthreads."
-			);
-		}
-	}
-	else
-	{
-		$error = "true";
-		&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, invalid maxthreads." );
-	}
-}
-
 # Modify Rewrite Location Headers
 if ( exists ( $json_obj->{ rewritelocation } ) )
 {
