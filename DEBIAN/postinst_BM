@@ -75,7 +75,7 @@ fi
 
 # disable sec service
 systemctl stop sec
-systemctl disable sec.services
+systemctl disable sec
 
 # disable SNMP service
 if [ `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]; then

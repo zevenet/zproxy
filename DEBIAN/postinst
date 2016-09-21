@@ -96,7 +96,7 @@ then
 	systemctl stop snmpd
 	systemctl disable snmpd
 	systemctl stop sec
-	systemctl disable sec.services
+	systemctl disable sec
 else
 	/etc/init.d/snmpd stop > /dev/null
 	insserv -r snmpd
