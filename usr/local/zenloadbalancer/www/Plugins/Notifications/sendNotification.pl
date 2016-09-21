@@ -25,6 +25,8 @@
 
 use Config::Tiny;
 
+require "/usr/local/zenloadbalancer/config/global.conf";
+
 ( my $section, my $pattern ) = @ARGV;
 
 my $body;
