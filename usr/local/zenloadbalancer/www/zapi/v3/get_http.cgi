@@ -106,7 +106,7 @@ sub farms_name_http()
 	use CGI;
 	my $q = CGI->new;
 
-	my $out_p  = [];
+	my $output_params;
 	my $out_b  = [];
 	my $out_s  = [];
 	my $out_cn = [];
@@ -212,14 +212,12 @@ sub farms_name_http()
 	# push $out_certs, { filename => $file };
 	# }
 
-	push @{ $out_p },
-	  {
+	$output_params = {
 		status          => $status,
 		restimeout      => $timeout,
 		contimeout      => $connto,
 		resurrectime    => $alive,
 		reqtimeout      => $client,
-		maxthreads      => $conn_max,
 		rewritelocation => $rewritelocation,
 		httpverb        => $httpverb,
 		listener        => $type,
@@ -233,17 +231,15 @@ sub farms_name_http()
 
 	if ( $type eq "https" )
 	{
-		push @{ $out_p },
-		certlist        => $out_cn,
-		ciphers         => $ciphers,
-		cipherc         => $cipher,
-		;
+		$output_params->{ certlist } = $out_cn;
+		$output_params->{ ciphers }  = $ciphers;
+		$output_params->{ cipherc }  = $cipher;
 	}
 
 	#http services
 	my $services = &getFarmVS( $farmname, "", "" );
 	my @serv = split ( "\ ", $services );
-	foreach $s ( @serv )
+	foreach my $s ( @serv )
 	{
 		$vser         = &getFarmVS( $farmname, $s, "vs" );
 		$urlp         = &getFarmVS( $farmname, $s, "urlp" );
@@ -288,7 +284,7 @@ sub farms_name_http()
 		my $backendsvs = &getFarmVS( $farmname, $s, "backends" );
 		my @be         = split ( "\n", $backendsvs );
 
-		foreach $subl ( @be )
+		foreach my $subl ( @be )
 		{
 			my @subbe       = split ( "\ ", $subl );
 			my $id          = @subbe[1] + 0;
@@ -342,25 +338,13 @@ sub farms_name_http()
 	}
 
 	# Success
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
+	my $body = {
+				 description => "List farm $farmname",
+				 params      => $output_params,
+				 services    => $out_s
+	};
 
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-
-	#$j->canonical($enabled);
-	$j->canonical( 1 );
-	my $output = $j->encode(
-							 {
-							   description => "List farm $farmname",
-							   params      => $out_p,
-							   services    => $out_s
-							 }
-	);
-	print $output;
+	&httpResponse({ code => 200, body => $body });
 }
 
 1
