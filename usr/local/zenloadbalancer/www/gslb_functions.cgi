@@ -116,7 +116,9 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 		#$exec returns 0 even when gslb stop fails, checked, so force TERM
 		my $pid_gslb = &getGSLBFarmPid( $fname );
 		&zenlog( "forcing stop to gslb with PID $pid_gslb" );
-		kill 'TERM' => $pid_gslb;
+		if ( $pid_gslb ne "-"){
+			kill 'TERM' => $pid_gslb;
+		}
 		unlink ( $pidfile );
 	}
 	else
