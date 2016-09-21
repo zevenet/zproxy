@@ -151,6 +151,18 @@ if ( -e "/usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf" )
 system ( "cp /etc/sysctl.conf /etc/sysctl.conf.bck" );
 system ( qq{grep "^#" /etc/sysctl.conf > /etc/sysctl.conf 2> /dev/null} );
 
+#Move zlb-stop & zlb-start
+my $zlb_stop = "/usr/local/zenloadbalancer/config/zlb-stop";
+my $zlb_start = "/usr/local/zenloadbalancer/config/zlb-start";
+if ( -e $zlb_stop )
+{
+	move $zlb_stop, "/tmp/$zlb_stop";
+}
+if ( -e $zlb_start )
+{
+	move $zlb_sart, "/tmp/$zlb_start";
+}
+
 #Move cherokee
 my $chero_conf = "/usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf";
 
