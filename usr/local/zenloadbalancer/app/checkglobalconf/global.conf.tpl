@@ -189,6 +189,7 @@ $bonding_miimon_filename="bonding/miimon";
 $sec="/usr/bin/sec";
 $secConf="/usr/local/zenloadbalancer/www/Plugins/Notifications/sec.rules";
 $syslogFile="/var/log/syslog";
+$logger="/usr/bin/logger";
 
 #::END Global Section
 

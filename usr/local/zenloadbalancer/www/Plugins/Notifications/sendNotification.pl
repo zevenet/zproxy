@@ -33,6 +33,7 @@ my ( $subject, $bodycomp ) = &getSubjectBody( $pattern );
 
 if ( $subject eq "error" || !$bodycomp )
 {
+	system ("$logger \"Error creating body to alert: '$pattern'\" -i -t sec");
 	exit 1;
 }
 
@@ -56,8 +57,29 @@ $command .= " --body \"$body\"";
 #not print
 $command .= " 1>/dev/null";
 
-#~ print "$body";
+#~ print "$command\n";
 system ( $command );
+
+# print log
+my $logMsg;
+$logMsg .= &getData( 'bin' );
+$logMsg .= " --to " . &getData( 'to' );
+$logMsg .= " --from " . &getData( 'from' );
+$logMsg .= " --server " . &getData( 'server' );
+$logMsg .= " --auth " . &getData( 'auth' );
+$logMsg .= " --auth-user " . &getData( 'auth-user' );
+$logMsg .= " --auth-password ********* ";
+$logMsg .= " -tls" 	if ( 'true' eq &getData( 'tls' ) );
+
+$logMsg .= " --header \"Subject: "
+		.  &getData( 'PrefixSubject', $section )
+		.  " $subject\"";
+
+$logMsg .= " --body \"BODY\"";
+
+system ("$logger \"$logMsg\" -i -t sec");
+
+
 
 # return:   @array = [ $subject, $body ]
 # my ( $subject, $body ) = getSubjectBody( $msg )
@@ -74,7 +96,7 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 
 	# Keep date, host and program from log msg
 	# Sep  1 15:59:06 maqvir gdnsd[18513]:
-	if ( $msg =~ s/(\w+\s+\d+\s+\d+:\d+:\d+)\s+(\w+)\s+(\w+)(\[\d+\])?\: // )
+	if ( $msg =~ s/(\w+\s+\d+\s+\d+:\d+:\d+)\s+([\w-]+)\s+(\w+)(\[\d+\])?\: // )
 	{
 		$date    = $1;
 		$host    = $2;
@@ -126,7 +148,7 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 # (7f4dccf24700) BackEnd 192.168.0.172:80 dead (killed) in farm: 'test', service: 'srv1'
 	elsif ( ( $program =~ /pound/ || $program =~ /farmguardian/ )
 		&& $msg =~
-		/BackEnd (\d+\.\d+\.\d+\.\d+):(\d+) (\w+)(?: \(\w+\))? in farm: '(\w+)'(, service: '(\w+)')?/
+		/BackEnd (\d+\.\d+\.\d+\.\d+):(\d+) (\w+)(?: \(\w+\))? in farm: '([\w-]+)'(, service: '([\w-]+)')?/
 	  )
 	{
 		$ip      = $1;
