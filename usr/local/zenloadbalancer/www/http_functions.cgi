@@ -994,7 +994,7 @@ sub validateHTTPFarmDH    # ($farm_name)
 		my $lockstatus = &getFarmLock( $farmname );
 		if ( $lockstatus !~ /Diffie-Hellman/ ) {
 			#$output = &setHTTPFarmDHStatus( $farm_name, "on" );
-			&genDHFile( $farm_name );
+			#&genDHFile( $farm_name );
 		}
 	}
 
@@ -1868,7 +1868,7 @@ sub getHTTPFarmConfigIsOK    # ($farm_name)
 	my $pound_command = "$pound -f $configdir\/$farm_filename -c";
 	my $output        = -1;
 
-	&validateHTTPFarmDH( $farm_name );
+	#&validateHTTPFarmDH( $farm_name );
 
 	&zenlog( "running: $pound_command" );
 
