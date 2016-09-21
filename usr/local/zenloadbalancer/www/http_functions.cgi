@@ -903,7 +903,6 @@ sub setFarmErr    # ($farm_name,$content,$nerr)
 		{
 			$output = 0;
 			my @err = split ( "\n", "$content" );
-			print "<br><br>";
 			open FO, ">$configdir\/$farm_name\_Err$nerr.html";
 			foreach $line ( @err )
 			{
