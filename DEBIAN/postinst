@@ -76,6 +76,11 @@ if [[ `grep -c "^PermitRootLogin.*yes" $SSHDCONFIG` == '0' ]]; then
 	/etc/init.d/ssh reload 2> /dev/null
 fi
 
+#Check Cherokee PID
+if [ ! -f /usr/local/zenloadbalancer/app/cherokee/var/run/cherokee.pid ]; then
+	pgrep cherokee$ > /usr/local/zenloadbalancer/app/cherokee/var/run/cherokee.pid
+fi
+
 # Disable services
 
 # SNMP and sec services
