@@ -18,7 +18,6 @@
 
 sub modify_farm()
 {
-
 	$farmname = @_[0];
 
 	my $out_p = [];
@@ -75,7 +74,6 @@ sub modify_farm()
 		});
 		print $output;
 		exit;
-
 	}
 
 	my $type = &getFarmType( $farmname );
@@ -1689,21 +1687,14 @@ sub modify_zones()
 
 sub modify_services()
 {
-
 	my ( $farmname, $service ) = @_;
-	my $out_p = [];
 
-	use CGI;
+	my $output_params;
+
 	use JSON;
-	use URI::Escape;
 
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'PUTDATA' );
-	my $json_obj = $json->decode( $data );
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
+	my $data     = &getCgiParam( 'PUTDATA' );
+	my $json_obj = decode_json $data;
 
 	if ( $farmname =~ /^$/ )
 	{
@@ -1712,41 +1703,29 @@ sub modify_services()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid farm name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Modify service",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid farm name, please insert a valid value.";
+
+		my $body = {
+					 description => "Modify service",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 ) {
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "Modify service",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
 
+		my $body = {
+					 description => "Modify service",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	if ( $service =~ /^$/ )
@@ -1756,22 +1735,15 @@ sub modify_services()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid service name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Modify service",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid service name, please insert a valid value.";
+
+		my $body = {
+					 description => "Modify service",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	$error = "false";
@@ -1817,32 +1789,12 @@ sub modify_services()
 		# Functions
 		if ( exists ( $json_obj->{ vhost } ) )
 		{
-			if ( $json_obj->{ vhost } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid vhost, can't be blank."
-				);
-			}
-			else
-			{
-				&setFarmVS( $farmname, $service, "vs", $json_obj->{ vhost } );
-			}
+			&setFarmVS( $farmname, $service, "vs", $json_obj->{ vhost } );
 		}
 
 		if ( exists ( $json_obj->{ urlp } ) )
 		{
-			if ( $json_obj->{ urlp } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid urlp, can't be blank."
-				);
-			}
-			else
-			{
-				&setFarmVS( $farmname, $service, "urlp", $json_obj->{ urlp } );
-			}
+			&setFarmVS( $farmname, $service, "urlp", $json_obj->{ urlp } );
 		}
 
 		$redirecttype = &getFarmVS( $farmname, $service, "redirecttype" );
@@ -1850,14 +1802,8 @@ sub modify_services()
 		if ( exists ( $json_obj->{ redirect } ) )
 		{
 			my $redirect = uri_unescape( $json_obj->{ redirect } );
-			if ( $redirect =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid redirect, can't be blank."
-				);
-			}
-			elsif ( $redirect =~ /^http\:\/\//i || $redirect =~ /^https:\/\//i )
+
+			if ( $redirect =~ /^http\:\/\//i || $redirect =~ /^https:\/\//i || $redirect eq '' )
 			{
 				&setFarmVS( $farmname, $service, "redirect", $redirect );
 			}
@@ -1875,14 +1821,8 @@ sub modify_services()
 		if ( exists ( $json_obj->{ redirecttype } ) )
 		{
 			my $redirecttype = $json_obj->{ redirecttype };
-			if ( $redirecttype =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid redirecttype, can't be blank."
-				);
-			}
-			elsif ( $redirecttype eq "default" )
+
+			if ( $redirecttype eq "default" )
 			{
 				&setFarmVS( $farmname, $service, "redirect", $redirect );
 			}
@@ -1890,7 +1830,7 @@ sub modify_services()
 			{
 				&setFarmVS( $farmname, $service, "redirectappend", $redirect );
 			}
-			else
+			elsif ( exists $json_obj->{ redirect } && $json_obj->{ redirect } )
 			{
 				$error = "true";
 				&zenlog(
@@ -1901,14 +1841,7 @@ sub modify_services()
 
 		if ( exists ( $json_obj->{ persistence } ) )
 		{
-			if ( $json_obj->{ persistence } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid persistence, can't be blank."
-				);
-			}
-			elsif (
+			if (
 					$json_obj->{ persistence } =~ /^nothing|IP|BASIC|URL|PARM|COOKIE|HEADER$/ )
 			{
 				$session = $json_obj->{ persistence };
@@ -1954,17 +1887,7 @@ sub modify_services()
 
 		if ( exists ( $json_obj->{ sessionid } ) )
 		{
-			if ( $json_obj->{ sessionid } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid sessionid, can't be blank."
-				);
-			}
-			else
-			{
-				&setFarmVS( $farmname, $service, "sessionid", $json_obj->{ sessionid } );
-			}
+			&setFarmVS( $farmname, $service, "sessionid", $json_obj->{ sessionid } );
 		}
 
 		if ( exists ( $json_obj->{ leastresp } ) )
@@ -2025,64 +1948,41 @@ sub modify_services()
 			}
 		}
 
-		if ( exists ( $json_obj->{ cookiedomain } ) )
-		{
-			if ( $json_obj->{ cookiedomain } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookiedomain, can't be blank."
-				);
-			}
-			else
-			{
-				&setFarmVS( $farmname, $service, "cookieins-domain",
-							$json_obj->{ cookiedomain } );
-			}
-		}
+		#~ &zenlog("farmname:$farmname service:$service cookiedomain:$json_obj->{ cookiedomain } cookiename:$json_obj->{ cookiename } cookiepath:$json_obj->{ cookiepath } cookieinsert: $json_obj->{ cookieinsert } cookiettl:$json_obj->{ cookiettl }");
 
-		if ( exists ( $json_obj->{ cookiename } ) )
+		if ( $json_obj->{ cookieinsert } eq "true" )
 		{
-			if ( $json_obj->{ cookiename } =~ /^$/ )
+			if ( exists ( $json_obj->{ cookiedomain } ) )
 			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookiename, can't be blank."
-				);
+				#~ &zenlog("farmname:$farmname service:$service cookiedomain:$json_obj->{ cookiedomain }");
+				&setFarmVS( $farmname, $service, "cookieins-domain", $json_obj->{ cookiedomain } );
 			}
-			else
+
+			if ( exists ( $json_obj->{ cookiename } ) )
 			{
+				#~ &zenlog("farmname:$farmname service:$service cookiename:$json_obj->{ cookiename }");
 				&setFarmVS( $farmname, $service, "cookieins-name", $json_obj->{ cookiename } );
 			}
-		}
 
-		if ( exists ( $json_obj->{ cookiepath } ) )
-		{
-			if ( $json_obj->{ cookiepath } =~ /^$/ )
+			if ( exists ( $json_obj->{ cookiepath } ) )
 			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookiepath, can't be blank."
-				);
-			}
-			else
-			{
+				#~ &zenlog("farmname:$farmname service:$service cookiepath:$json_obj->{ cookiepath }");
 				&setFarmVS( $farmname, $service, "cookieins-path", $json_obj->{ cookiepath } );
 			}
-		}
 
-		if ( exists ( $json_obj->{ cookiettl } ) )
-		{
-			if ( $json_obj->{ cookiettl } =~ /^$/ )
+			if ( exists ( $json_obj->{ cookiettl } ) )
 			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookiettl, can't be blank."
-				);
-			}
-			else
-			{
-				&setFarmVS( $farmname, $service, "cookieins-ttlc", $json_obj->{ cookiettl } );
+				if ( $json_obj->{ cookiettl } =~ /^$/ )
+				{
+					$error = "true";
+					&zenlog(
+						"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookiettl, can't be blank."
+					);
+				}
+				else
+				{
+					&setFarmVS( $farmname, $service, "cookieins-ttlc", $json_obj->{ cookiettl } );
+				}
 			}
 		}
 
@@ -2114,6 +2014,8 @@ sub modify_services()
 				);
 			}
 		}
+
+		$ouput_params = &getHttpFarmService( $farmname, $service );
 	}
 
 	if ( $type eq "gslb" )
@@ -2141,6 +2043,9 @@ sub modify_services()
 				);
 			}
 		}
+
+		# FIXME: Read gslb configuration instead of returning input
+		$ouput_params = $json_obj;
 	}
 
 	# Print params
@@ -2149,34 +2054,18 @@ sub modify_services()
 		&setFarmRestart( $farmname );
 
 		&zenlog(
-			"ZAPI success, some parameters have been changed  in service $service in farm $farmname."
+			"ZAPI success, some parameters have been changed in service $service in farm $farmname."
 		);
 
 		# Success
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
+		my $body = {
+			description => "Modify service $service in farm $farmname",
+			params      => $ouput_params,
+			info =>
+			  "There're changes that need to be applied, stop and start farm to apply them!"
+		};
 
-		foreach $key ( keys %$json_obj )
-		{
-			push $out_p, { $key => $json_obj->{ $key } };
-		}
-
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( $enabled );
-		my $output = $j->encode(
-			{
-			   description => "Modify service $service in farm $farmname",
-			   params      => $out_p,
-			   info =>
-				 "There're changes that need to be applied, stop and start farm to apply them!"
-			}
-		);
-		print $output;
-
+		&httpResponse({ code => 200, body => $body });
 	}
 	else
 	{
@@ -2185,25 +2074,16 @@ sub modify_services()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
 		$errormsg = "Errors found trying to modify farm $farmname";
-		my $output = $j->encode(
-							  {
-								description => "Modify service $service in farm $farmname",
-								error       => "true",
-								message     => $errormsg
-							  }
-		);
-		print $output;
-		exit;
 
+		my $body = {
+					 description => "Modify service $service in farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
-
 }
 
-1
+1;
