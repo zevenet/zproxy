@@ -404,7 +404,7 @@ sub httpResponse
 
 		-type    => 'application/json',
 		-charset => 'utf-8',
-		-status  => "$self->{ code } $GLOBAL::http_status_codes{ $self->{ code } }",
+		-status  => "$self->{ code } $GLOBAL::http_status_codes->{ $self->{ code } }",
 
 		# extra headers
 		@headers,
@@ -416,8 +416,9 @@ sub httpResponse
 	if ( exists $self->{ body } && ref $self->{ body } eq 'HASH' )
 	{
 		my $json    = JSON::XS->new->utf8->pretty( 1 );
-		my $enabled = 1;
-		$json->canonical( [$enabled] );
+		my $json_canonical = 1;
+		$json->canonical( [$json_canonical] );
+
 		$output .= $json->encode( $self->{ body } );
 	}
 
