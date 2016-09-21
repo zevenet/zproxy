@@ -441,6 +441,7 @@ sub controlAlerts
 				{
 					$errMsg = &setData ( $alertsFile, $notif, 'Status', 'on' );
 					&enableRule ( $notif );
+					&main::zenlog( "Turn on $notif notifications." );
 					$modify='true';
 				}
 			}
@@ -451,6 +452,7 @@ sub controlAlerts
 				{
 					$errMsg = &setData ( $alertsFile, $notif, 'Status', 'off' );
 					&disableRule ( $notif );
+					&main::zenlog( "Turn off $notif notifications." );
 					$modify='true';
 				}
 			}
@@ -695,6 +697,7 @@ sub runNotifications
 
 	if ($pid eq "")
 	{ 
+		&main::zenlog( "$main::sec --conf=$main::secConf --input=$main::syslogFile" );
 		system ("$main::sec --conf=$main::secConf --input=$main::syslogFile 1>/dev/null &");
 		$pid = `$main::pidof -x sec`;
 		if ( $pid ) 
@@ -705,6 +708,10 @@ sub runNotifications
 		{
 			&main::zenlog( "SEC couldn't run" );
 		}
+	}
+	else
+	{
+		&main::zenlog( "SEC couldn't run because just exits a process $pid for this program" );
 	}
 }
 
@@ -717,7 +724,10 @@ sub stopNotifications
 
 	my $pid = `$main::pidof -x sec`;
 	if ( $pid ) 
-		{ kill 'KILL', $pid; }
+	{
+		kill 'KILL', $pid;
+		&main::zenlog( "SEC stoped." );
+	}
 }
 
 
@@ -748,6 +758,7 @@ sub setData	  #  &getData ( $file, $section, $key, $data )
 		$fileHandle = Config::Tiny->read( $fileName );
 		$fileHandle->{ $section }->{ $key } = $data;
 		$fileHandle->write( $fileName );
+		&main::zenlog( "'$key' was modificated in '$section' notifications to '$data'" );
 	}
 	return $errMsg;
 }
