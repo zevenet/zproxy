@@ -152,15 +152,15 @@ system ( "cp /etc/sysctl.conf /etc/sysctl.conf.bck" );
 system ( qq{grep "^#" /etc/sysctl.conf > /etc/sysctl.conf 2> /dev/null} );
 
 #Move zlb-stop & zlb-start
-my $zlb_stop = "/usr/local/zenloadbalancer/config/zlb-stop";
-my $zlb_start = "/usr/local/zenloadbalancer/config/zlb-start";
-if ( -e $zlb_stop )
+my $zlbstop = "/usr/local/zenloadbalancer/config/zlb-stop";
+my $zlbstart = "/usr/local/zenloadbalancer/config/zlb-start";
+if ( -e $zlbstop )
 {
-	move $zlb_stop, "/tmp/$zlb_stop";
+	move $zlbstop, "/tmp/zlb-stop";
 }
-if ( -e $zlb_start )
+if ( -e $zlbstart )
 {
-	move $zlb_sart, "/tmp/$zlb_start";
+	move $zlbstart, "/tmp/zlb-start";
 }
 
 #Move cherokee
