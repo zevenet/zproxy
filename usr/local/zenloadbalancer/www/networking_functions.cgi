@@ -1162,6 +1162,7 @@ sub getInterfaceList
 {
 	my @interfaces;
 	my $iface;
+	my $localiface;
 
 	my @iplist = `ip addr list`;
 	foreach my $line ( @iplist )
@@ -1170,17 +1171,18 @@ sub getInterfaceList
 		{
 			my @linelist = split /[:@,\s\/]+/, $line;
 			$iface = @linelist[1];
+			$localiface = $iface;
 			goto addiface;
 		}
 		if ( $iface ne "" && $line =~ /inet.*$iface.+/ )
 		{
 			my @linelist = split /[\s\/]+/, $line;
-			$iface = @linelist[$linelist - 1];
+			$localiface = @linelist[$linelist - 1];
 			goto addiface;
 		}
 		next;
 	  addiface:
-		push ( @interfaces, $iface );
+		push ( @interfaces, $localiface );
 		next;
 	}
 
@@ -1238,7 +1240,7 @@ sub getInterfaceOfIp    # ($ip)
 
 	foreach $iface ( &getInterfaceList() )
 	{
-		# return interface if fount in the list
+		# return interface if found in the list
 		return $iface if &iponif( $iface ) eq $ip;
 	}
 
