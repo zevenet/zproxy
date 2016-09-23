@@ -63,6 +63,7 @@ if ( "$action" eq "stoplocal"){
 if ( "$action" eq "startlocal"){
 
         my @run = `$zenbin startlocal > /dev/console`;
+	my @run = `/usr/local/zenloadbalancer/app/zenlatency/zenadvrt.pl`;
         exit;
 }
 
