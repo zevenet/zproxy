@@ -942,6 +942,44 @@ sub getFarmPort    # ($farm_name)
 	return $output;
 }
 
+# Returns farm protocol
+sub getFarmProto    # ($farm_name)
+{
+	my $farm_name = shift;
+
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+
+	if ( $farm_type eq "l4xnat" )
+	{
+		open FI, "<", "$configdir/$farm_filename";
+		my $first = "true";
+		while ( my $line = <FI> )
+		{
+			if ( $line ne "" && $first eq "true" )
+			{
+				$first = "false";
+				my @line = split ( "\;", $line );
+				$output = $line[1];
+			}
+		}
+		close FI;
+	}
+	
+	elsif ( $farm_type eq "gslb" )
+	{
+		$output = "UDP";
+	}
+	
+	elsif ( $farm_type eq "http" )
+	{
+		$output = "TCP";
+	}
+
+	return $output;
+}
+
 # Returns farm PID
 sub getFarmPid    # ($farm_name)
 {
