@@ -16,22 +16,11 @@
 #
 #
 
-sub modify_farm()
+sub modify_farm # ( $json_obj, $farmname )
 {
-	$farmname = @_[0];
+	my $json_obj = shift;
+	my $farmname = shift;
 
-	my $out_p = [];
-
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'PUTDATA' );
-	my $json_obj = $json->decode( $data );
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
 	if ( $farmname =~ /^$/ )
 	{
 		&zenlog(
@@ -39,41 +28,28 @@ sub modify_farm()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid farm name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Modify backend",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid farm name, please insert a valid value.";
+		my $body = {
+					 description => "Modify backend",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "Modify farm",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => "Modify farm",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	my $type = &getFarmType( $farmname );
@@ -81,21 +57,25 @@ sub modify_farm()
 	if ( $type eq "http" || $type eq "https" )
 	{
 		require "/usr/local/zenloadbalancer/www/zapi/v3/put_http.cgi";
+		&modify_http_farm( $json_obj, $farmname );
 	}
 
 	if ( $type eq "l4xnat" )
 	{
 		require "/usr/local/zenloadbalancer/www/zapi/v3/put_l4.cgi";
+		&modify_l4xnat_farm( $json_obj, $farmname );
 	}
 
 	if ( $type eq "datalink" )
 	{
 		require "/usr/local/zenloadbalancer/www/zapi/v3/put_datalink.cgi";
+		&modify_datalink_farm( $json_obj, $farmname );
 	}
 
 	if ( $type eq "gslb" )
 	{
 		require "/usr/local/zenloadbalancer/www/zapi/v3/put_gslb.cgi";
+		&modify_gslb_farm( $json_obj, $farmname );
 	}
 }
 
@@ -288,22 +268,9 @@ sub modify_farm()
 #
 #**
 
-sub modify_backends()
+sub modify_backends #( $json_obj, $farmname, $id_server )
 {
-
-	my ( $farmname, $id_server ) = @_;
-	my $out_p = [];
-
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'PUTDATA' );
-	my $json_obj = $json->decode( $data );
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
+	my ( $json_obj, $farmname, $id_server ) = @_;
 
 	if ( $farmname =~ /^$/ )
 	{
@@ -312,42 +279,28 @@ sub modify_backends()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid farm name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Modify backend",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid farm name, please insert a valid value.";
+		my $body = {
+					 description => "Modify backend",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "Modify backend",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => "Modify backend",
+					 error       => "true",
+					 message     => $errormsg,
+		};
 
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	if ( $id_server =~ /^$/ )
@@ -357,22 +310,14 @@ sub modify_backends()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid id server, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Modify backend",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid id server, please insert a valid value.";
+		my $body = {
+					 description => "Modify backend",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	$error = "false";
@@ -380,10 +325,9 @@ sub modify_backends()
 
 	if ( $type eq "l4xnat" || $type eq "datalink" )
 	{
-
 		# Params
 		my @run = &getFarmServers( $farmname );
-		$serv_values = @run[$id_server];
+		my $serv_values = @run[$id_server];
 		my @l_serv = split ( ";", $serv_values );
 
 		# Functions
@@ -627,27 +571,20 @@ sub modify_backends()
 		if ($found eq 0){
 			
 			# Error
-			print $q->header(
-			-type=> 'text/plain',
-			-charset=> 'utf-8',
-			-status=> '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid service name, please insert a valid value.";
-			my $output = $j->encode({
-					description => "Modify backend",
-					error => "true",
-					message => $errormsg
-			});
-			print $output;
-			exit;
-			
+			my $errormsg = "Invalid service name, please insert a valid value.";
+			my $body = {
+						 description => "Modify backend",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
-		
 
 		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
 		my @be = split ( "\n", $backendsvs );
-		foreach $subline ( @be )
+
+		foreach my $subline ( @be )
 		{
 			@subbe = split ( "\ ", $subline );
 			if ( @subbe[1] == $id_server )
@@ -767,7 +704,6 @@ sub modify_backends()
 
 	if ( $type eq "gslb" )
 	{
-
 		#Params
 		if ( exists ( $json_obj->{ service } ) )
 		{
@@ -795,36 +731,30 @@ sub modify_backends()
 		my @services = &getGSLBFarmServices($farmname);
 		
 		my $found = 0;
-		foreach $farmservice (@services) {
+		foreach my $farmservice (@services) {
 			#print "service: $farmservice";
-			if ($json_obj->{service} eq $farmservice) {
+			if ($json_obj->{service} eq $farmservice)
+			{
 				$found = 1;
-				break;
+				last;
 			}
 		}
-		if ($found eq 0){
-			
+		if ($found eq 0)
+		{
 			# Error
-			print $q->header(
-			-type=> 'text/plain',
-			-charset=> 'utf-8',
-			-status=> '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid service name, please insert a valid value.";
-			my $output = $j->encode({
-					description => "Modify backend",
-					error => "true",
-					message => $errormsg
-			});
-			print $output;
-			exit;
-			
+			my $errormsg = "Invalid service name, please insert a valid value.";
+			my $body = {
+						 description => "Modify backend",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 
 		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
 		my @be = split ( "\n", $backendsvs );
-		foreach $subline ( @be )
+		foreach my $subline ( @be )
 		{
 			$subline =~ s/^\s+//;
 			if ( $subline =~ /^$/ )
@@ -890,47 +820,28 @@ sub modify_backends()
 			);
 
 			# Success
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-
-			foreach $key ( keys %$json_obj )
-			{
-				push $out_p, { $key => $json_obj->{ $key } };
-			}
-
-			my $j = JSON::XS->new->utf8->pretty( 1 );
-			$j->canonical( $enabled );
-			
-			
 			# Get farm status. If farm is down the restart is not required.
 			my $status = &getFarmStatus( $farmname);
-			my $output;
-			if ($status eq "up") {
-			
-				$output = $j->encode(
-					{
-					   description => "Modify backend $id_server in farm $farmname",
-					   params      => $out_p,
-					   info =>
-						 "There're changes that need to be applied, stop and start farm to apply them!"
-					}
-				);
-			}
-			if ($status eq "down") {
-			
-				$output = $j->encode(
-					{
-					   description => "Modify backend $id_server in farm $farmname",
-					   params      => $out_p
-					}
-				);
-			}
-			print $output;
+			my $body;
 
+			if ( $status eq "up" )
+			{
+				$body = {
+					description => "Modify backend $id_server in farm $farmname",
+					params      => $json_obj,
+					info =>
+					  "There're changes that need to be applied, stop and start farm to apply them!"
+				};
+			}
+			if ( $status eq "down" )
+			{
+				$body = {
+						  description => "Modify backend $id_server in farm $farmname",
+						  params      => $json_obj,
+				};
+			}
+
+			&httpResponse({ code => 200, body => $body });
 		}
 		else
 		{
@@ -939,28 +850,18 @@ sub modify_backends()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Errors found trying to modify farm $farmname";
-			my $output = $j->encode(
-									 {
-									   description => "Modify farm $farmname",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Errors found trying to modify farm $farmname";
+			my $body = {
+						 description => "Modify farm $farmname",
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
 		}
 	}
 	else
 	{
-
 		if ( $error ne "true" )
 		{
 			&zenlog(
@@ -968,28 +869,12 @@ sub modify_backends()
 			);
 
 			# Success
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
+			my $body = {
+						 description => "Modify backend $id_server in farm $farmname",
+						 params      => $json_obj
+			};
 
-			foreach $key ( keys %$json_obj )
-			{
-				push $out_p, { $key => $json_obj->{ $key } };
-			}
-
-			my $j = JSON::XS->new->utf8->pretty( 1 );
-			$j->canonical( $enabled );
-			my $output = $j->encode(
-								{
-								  description => "Modify backend $id_server in farm $farmname",
-								  params      => $out_p
-								}
-			);
-			print $output;
-
+			&httpResponse({ code => 200, body => $body });
 		}
 		else
 		{
@@ -998,27 +883,16 @@ sub modify_backends()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Errors found trying to modify farm $farmname";
-			my $output = $j->encode(
-									 {
-									   description => "Modify farm $farmname",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Errors found trying to modify farm $farmname";
+			my $body = {
+						 description => "Modify farm $farmname",
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
 		}
-
 	}
-
 }
 
 #
@@ -1076,22 +950,9 @@ sub modify_backends()
 #
 #**
 
-sub modify_resources()
+sub modify_resources # ( $json_obj, $farmname, $id_resource )
 {
-
-	my ( $farmname, $id_resource ) = @_;
-	my $out_p = [];
-
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'PUTDATA' );
-	my $json_obj = $json->decode( $data );
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
+	my ( $json_obj, $farmname, $id_resource ) = @_;
 
 	if ( $farmname =~ /^$/ )
 	{
@@ -1100,41 +961,28 @@ sub modify_resources()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid farm name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Modify resource",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid farm name, please insert a valid value.";
+		my $body = {
+					 description => "Modify resource",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "Modify resource",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $output = {
+					   description => "Modify resource",
+					   error       => "true",
+					   message     => $errormsg
+		};
 
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	$error = "false";
@@ -1161,35 +1009,30 @@ sub modify_resources()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The zone parameter is empty, please insert a zone.";
-		my $output = $j->encode(
-								 {
-								   description => "Modify resource",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "The zone parameter is empty, please insert a zone.";
+		my $body = {
+					 description => "Modify resource",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
 	my @be = split ( "\n", $backendsvs );
-	foreach $subline ( @be )
+
+	foreach my $subline ( @be )
 	{
 		if ( $subline =~ /^$/ )
 		{
 			next;
 		}
+
 		@subbe  = split ( "\;", $subline );
 		@subbe1 = split ( "\t", @subbe[0] );
 		@subbe2 = split ( "\_", @subbe[1] );
+
 		if ( @subbe2[1] == $id_resource )
 		{
 			last;
@@ -1285,22 +1128,17 @@ sub modify_resources()
 				"ZAPI error, trying to modify the resources in a farm $farmname, it's not possible to modify the resource $id_resource in zone $zone."
 			);
 		}
-		elsif ($status == -2){
+		elsif ($status == -2)
+		{
 			# Error
-                print $q->header(
-                   -type=> 'text/plain',
-                   -charset=> 'utf-8',
-                   -status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-                );
-                $errormsg = "The resource with ID $id_resource does not exist.";
-                my $output = $j->encode({
-                        description => "Modify resource",
-                        error => "true",
-                        message => $errormsg
-                });
-                print $output;
-                exit;
+			my $errormsg = "The resource with ID $id_resource does not exist.";
+			my $body = {
+						 description => "Modify resource",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 404, body => $body });
 		}
 	}
 
@@ -1312,28 +1150,12 @@ sub modify_resources()
 		);
 
 		# Success
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
+		my $body = {
+					 description => "Modify resource $id_resource in farm $farmname",
+					 params      => $json_obj
+		};
 
-		foreach $key ( keys %$json_obj )
-		{
-			push $out_p, { $key => $json_obj->{ $key } };
-		}
-
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( $enabled );
-		my $output = $j->encode(
-						 {
-						   description => "Modify resource $id_resource in farm $farmname",
-						   params      => $out_p
-						 }
-		);
-		print $output;
-
+		&httpResponse({ code => 200, body => $body });
 	}
 	else
 	{
@@ -1342,25 +1164,15 @@ sub modify_resources()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Errors found trying to modify farm $farmname";
-		my $output = $j->encode(
-								 {
-								   description => "Modify farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Errors found trying to modify farm $farmname";
+		my $body = {
+					 description => "Modify farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 400, body => $body });
 	}
-
 }
 
 #
@@ -1403,22 +1215,9 @@ sub modify_resources()
 #
 #**
 
-sub modify_zones()
+sub modify_zones # ( $json_obj, $farmname, $zone )
 {
-
-	my ( $farmname, $zone ) = @_;
-	my $out_p = [];
-
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'PUTDATA' );
-	my $json_obj = $json->decode( $data );
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
+	my ( $json_obj, $farmname, $zone ) = @_;
 
 	if ( $farmname =~ /^$/ )
 	{
@@ -1427,41 +1226,27 @@ sub modify_zones()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid farm name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Modify zone",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid farm name, please insert a valid value.";
+		my $body = {
+					 description => "Modify zone",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 ) {
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "Modify zone",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => "Modify zone",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	$error = "false";
@@ -1474,6 +1259,7 @@ sub modify_zones()
 			"ZAPI error, trying to modify the zones in a farm $farmname, invalid defnamesv, can't be blank."
 		);
 	}
+
 	if ( $error eq "false" )
 	{
 		&setFarmVS( $farmname, $zone, "ns", $json_obj->{ defnamesv } );
@@ -1498,28 +1284,12 @@ sub modify_zones()
 		);
 
 		# Success
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
+		my $body = {
+					 description => "Modify zone $zone in farm $farmname",
+					 params      => $json_obj,
+		};
 
-		foreach $key ( keys %$json_obj )
-		{
-			push $out_p, { $key => $json_obj->{ $key } };
-		}
-
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( $enabled );
-		my $output = $j->encode(
-								 {
-								   description => "Modify zone $zone in farm $farmname",
-								   params      => $out_p
-								 }
-		);
-		print $output;
-
+		&httpResponse({ code => 200, body => $body });
 	}
 	else
 	{
@@ -1528,25 +1298,15 @@ sub modify_zones()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Errors found trying to modify farm $farmname";
-		my $output = $j->encode(
-								 {
-								   description => "Modify zone $zone in farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Errors found trying to modify farm $farmname";
+		my $body = {
+					 description => "Modify zone $zone in farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 400, body => $body });
 	}
-
 }
 
 # curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"vhost":"www.marca.com","urlp":"^/myapp$","redirect":"https://google.es","persistence":"URL","ttl":"120","sessionid":"sidd","leastrep":"false","httpsb":"false"}' https://178.62.126.152:444/zapi/v1/zapi.cgi/farms/FarmHTTP/services/sev1
@@ -1685,16 +1445,11 @@ sub modify_zones()
 #
 #**
 
-sub modify_services()
+sub modify_services # ( $json_obj, $farmname, $service )
 {
-	my ( $farmname, $service ) = @_;
+	my ( $json_obj, $farmname, $service ) = @_;
 
 	my $output_params;
-
-	use JSON;
-
-	my $data     = &getCgiParam( 'PUTDATA' );
-	my $json_obj = decode_json $data;
 
 	if ( $farmname =~ /^$/ )
 	{
@@ -1746,42 +1501,41 @@ sub modify_services()
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	$error = "false";
+	my $error = "false";
 	my $type = &getFarmType( $farmname );
 	
 	# Check that the provided service is configured in the farm
 	my @services;
-	if ($type eq "gslb"){
+	if ($type eq "gslb")
+	{
 		@services = &getGSLBFarmServices($farmname);
-	} else {
+	}
+	else
+	{
 		@services = &getFarmServices($farmname);
 	}
 
 	my $found = 0;
-	foreach $farmservice (@services) {
+	foreach my $farmservice (@services)
+	{
 		#print "service: $farmservice";
 		if ($service eq $farmservice) {
 			$found = 1;
 			break;
 		}
 	}
-	if ($found eq 0){
-		
+
+	if ($found eq 0)
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '400 Bad Request'
-		);
-		$errormsg = "Invalid service name, please insert a valid value.";
-		my $output = $j->encode({
-				description => "Modify service",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
-		
+		my $errormsg = "Invalid service name, please insert a valid value.";
+		my $body = {
+					 description => "Modify service",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( $type eq "http" || $type eq "https" )
@@ -2015,7 +1769,7 @@ sub modify_services()
 			}
 		}
 
-		$ouput_params = &getHttpFarmService( $farmname, $service );
+		$output_params = &getHttpFarmService( $farmname, $service );
 	}
 
 	if ( $type eq "gslb" )
@@ -2045,7 +1799,7 @@ sub modify_services()
 		}
 
 		# FIXME: Read gslb configuration instead of returning input
-		$ouput_params = $json_obj;
+		$output_params = $json_obj;
 	}
 
 	# Print params

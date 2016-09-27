@@ -50,24 +50,12 @@
 #
 #**
 
-sub new_farm_zone()
+sub new_farm_zone # ( $json_obj, $farmname )
 {
+	my $json_obj = shift;
+	my $farmname = shift;
 
-	$farmname = @_[0];
-
-	my $out_p = [];
-
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'POSTDATA' );
-	my $json_obj = $json->decode( $data );
-	my $zone     = $json_obj->{ id };
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
+	my $zone = $json_obj->{ id };
 
 	if ( $farmname =~ /^$/ )
 	{
@@ -76,41 +64,27 @@ sub new_farm_zone()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid farm name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "New zone",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid farm name, please insert a valid value.";
+		my $body = {
+					 description => "New zone",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 ) {
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "New zone",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => "New zone",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	if ( $json_obj->{ id } =~ /^$/ )
@@ -120,22 +94,14 @@ sub new_farm_zone()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid zone name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "New zone " . $json_obj->{ id },
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid zone name, please insert a valid value.";
+		my $body = {
+					 description => "New zone " . $json_obj->{ id },
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( $json_obj->{ id } !~ /.*\..*/ )
@@ -145,23 +111,15 @@ sub new_farm_zone()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+		my $errormsg =
 		  "Invalid zone name, please insert a valid value like zonename.com, zonename.net, etc. The zone $zone can't be created.";
-		my $output = $j->encode(
-								 {
+		my $body = {
 								   description => "New zone " . $json_obj->{ id },
 								   error       => "true",
 								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+								 };
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	my $result = &setGSLBFarmNewZone( $farmname, $json_obj->{ id } );
@@ -173,24 +131,13 @@ sub new_farm_zone()
 
 		# Success
 		&runFarmReload( $farmname );
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '201 Created',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		push $out_p, { id => $json_obj->{ id } };
 
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( $enabled );
-		my $output = $j->encode(
-								 {
-								   description => "New zone " . $json_obj->{ id },
-								   params      => $out_p
-								 }
-		);
-		print $output;
+		my $body = {
+					 description => "New zone " . $json_obj->{ id },
+					 params      => { id => $json_obj->{ id } },
+		};
 
+		&httpResponse({ code => 201, body => $body });
 	}
 	else
 	{
@@ -199,24 +146,15 @@ sub new_farm_zone()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "It's not possible to create the zone " . $json_obj->{ id };
-		my $output = $j->encode(
-								 {
+		my $errormsg = "It's not possible to create the zone " . $json_obj->{ id };
+		my $body = {
 								   description => "New zone " . $json_obj->{ id },
 								   error       => "true",
 								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
-	}
+								 };
 
+		&httpResponse({ code => 400, body => $body });
+	}
 }
 
 #
@@ -267,23 +205,10 @@ sub new_farm_zone()
 #
 #**
 
-sub new_farm_zoneresource()
+sub new_farm_zoneresource # ( $json_obj, $farmname )
 {
-
-	$farmname = @_[0];
-
-	my $out_p = [];
-
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'POSTDATA' );
-	my $json_obj = $json->decode( $data );
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
+	my $json_obj = shift;
+	my $farmname = shift;
 
 	if ( $farmname =~ /^$/ )
 	{
@@ -292,42 +217,28 @@ sub new_farm_zoneresource()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid farm name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "New zone resource",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid farm name, please insert a valid value.";
+		my $body = {
+					 description => "New zone resource",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "New zone resource",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => "New zone resource",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	if ( !exists ( $json_obj->{ rname } ) )
@@ -337,23 +248,15 @@ sub new_farm_zoneresource()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+		my $errormsg =
 		  "The parameter zone resource name (rname) doesn't exist, please insert a valid value.";
-		my $output = $j->encode(
-							  {
-								description => "New zone resource " . $json_obj->{ rname },
-								error       => "true",
-								message     => $errormsg
-							  }
-		);
-		print $output;
-		exit;
+		my $body = {
+					 description => "New zone resource " . $json_obj->{ rname },
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( !exists ( $json_obj->{ rdata } ) )
@@ -363,23 +266,15 @@ sub new_farm_zoneresource()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+		my $errormsg =
 		  "The parameter zone resource server (rdata) doesn't exist, please insert a valid value.";
-		my $output = $j->encode(
-							  {
-								description => "New zone resource " . $json_obj->{ rname },
-								error       => "true",
-								message     => $errormsg
-							  }
-		);
-		print $output;
-		exit;
+		my $body = {
+					 description => "New zone resource " . $json_obj->{ rname },
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( !exists ( $json_obj->{ ttl } ) )
@@ -389,23 +284,15 @@ sub new_farm_zoneresource()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+		my $errormsg =
 		  "The parameter time to live value (ttl) doesn't exist, please insert a valid value.";
-		my $output = $j->encode(
-							  {
-								description => "New zone resource " . $json_obj->{ rname },
-								error       => "true",
-								message     => $errormsg
-							  }
-		);
-		print $output;
-		exit;
+		my $body = {
+					 description => "New zone resource " . $json_obj->{ rname },
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( !exists ( $json_obj->{ type } ) )
@@ -415,23 +302,15 @@ sub new_farm_zoneresource()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+		my $errormsg =
 		  "The parameter DNS record type (type) doesn't exist, please insert a valid value.";
-		my $output = $j->encode(
-							  {
-								description => "New zone resource " . $json_obj->{ rname },
-								error       => "true",
-								message     => $errormsg
-							  }
-		);
-		print $output;
-		exit;
+		my $body = {
+					 description => "New zone resource " . $json_obj->{ rname },
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( $json_obj->{ rname } =~ /^$/ )
@@ -441,22 +320,15 @@ sub new_farm_zoneresource()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid zone resource name (rname), please insert a valid value.";
-		my $output = $j->encode(
-							  {
-								description => "New zone resource " . $json_obj->{ rname },
-								error       => "true",
-								message     => $errormsg
-							  }
-		);
-		print $output;
-		exit;
+		my $errormsg =
+		  "Invalid zone resource name (rname), please insert a valid value.";
+		my $body = {
+					 description => "New zone resource " . $json_obj->{ rname },
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( $json_obj->{ rdata } =~ /^$/ )
@@ -466,23 +338,15 @@ sub new_farm_zoneresource()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+		my $errormsg =
 		  "Invalid zone resource server (rdata), please insert a valid value.";
-		my $output = $j->encode(
-							  {
-								description => "New zone resource " . $json_obj->{ rname },
-								error       => "true",
-								message     => $errormsg
-							  }
-		);
-		print $output;
-		exit;
+		my $body = {
+					 description => "New zone resource " . $json_obj->{ rname },
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( $json_obj->{ ttl } =~ /^$/ )
@@ -492,22 +356,14 @@ sub new_farm_zoneresource()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid time to live value (ttl), please insert a valid value.";
-		my $output = $j->encode(
-							  {
-								description => "New zone resource " . $json_obj->{ rname },
-								error       => "true",
-								message     => $errormsg
-							  }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid time to live value (ttl), please insert a valid value.";
+		my $body = {
+					 description => "New zone resource " . $json_obj->{ rname },
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( $json_obj->{ type } =~ /^$/ )
@@ -517,22 +373,14 @@ sub new_farm_zoneresource()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid DNS record type (type), please insert a valid value.";
-		my $output = $j->encode(
-							  {
-								description => "New zone resource " . $json_obj->{ rname },
-								error       => "true",
-								message     => $errormsg
-							  }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid DNS record type (type), please insert a valid value.";
+		my $body = {
+					 description => "New zone resource " . $json_obj->{ rname },
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	$status = &setFarmZoneResource(
@@ -553,32 +401,19 @@ sub new_farm_zoneresource()
 
 		# Success
 		&runFarmReload( $farmname );
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '201 Created',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		push $out_p,
-		  {
-			rname => $json_obj->{ rname },
-			zone  =>,
-			$json_obj->{ zone },
-			ttl   => $json_obj->{ ttl },
-			type  => $json_obj->{ type },
-			rdata => $json_obj->{ rdata }
-		  };
 
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( $enabled );
-		my $output = $j->encode(
-							  {
-								description => "New zone resource " . $json_obj->{ rname },
-								params      => $out_p
-							  }
-		);
-		print $output;
+		my $body = {
+					 description => "New zone resource " . $json_obj->{ rname },
+					 params      => {
+								 rname => $json_obj->{ rname },
+								 zone  => $json_obj->{ zone },
+								 ttl   => $json_obj->{ ttl },
+								 type  => $json_obj->{ type },
+								 rdata => $json_obj->{ rdata },
+					 },
+		};
 
+		&httpResponse({ code => 201, body => $body });
 	}
 	else
 	{
@@ -587,25 +422,16 @@ sub new_farm_zoneresource()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+		my $errormsg =
 		  "It's not possible to create a new resource in the zone $json_obj->{zone} in farm $farmname.";
-		my $output = $j->encode(
-							  {
-								description => "New zone resource " . $json_obj->{ rname },
-								error       => "true",
-								message     => $errormsg
-							  }
-		);
-		print $output;
-		exit;
+		my $body = {
+					 description => "New zone resource " . $json_obj->{ rname },
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 }
 
-1
-
+1;

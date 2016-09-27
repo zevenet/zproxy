@@ -106,25 +106,19 @@
 #
 #**
 
-sub farms_name_gslb()
+sub farms_name_gslb # ( $farmname )
 {
+	my $farmname = shift;
 
-	use CGI;
-	my $q = CGI->new;
+	my @out_p;
+	my @out_s;
+	my @out_z;
 
-	my $out_p = [];
-	my $out_b = [];
-	my $out_s = [];
-	my $out_z = [];
-
-##
-
-###
-	$vip   = &getFarmVip( "vip",  $1 );
-	$vport = &getFarmVip( "vipp", $1 );
+	my $vip   = &getFarmVip( "vip",  $farmname );
+	my $vport = &getFarmVip( "vipp", $farmname );
 	$vport = $vport + 0;
 
-	if ( -e "/tmp/$1.lock" )
+	if ( -e "/tmp/$farmname.lock" )
 	{
 		$status = "needed restart";
 	}
@@ -133,33 +127,34 @@ sub farms_name_gslb()
 		$status = "ok";
 	}
 
-	push $out_p, { vip => $vip, vport => $vport, status => $status };
+	push @out_p, { vip => $vip, vport => $vport, status => $status };
 
 	#
 	# Services
 	#
 
-	my @services = &getGSLBFarmServices( $1 );
-	foreach $srv ( @services )
-	{
+	my @services = &getGSLBFarmServices( $farmname );
 
+	foreach my $srv ( @services )
+	{
 		my @serv = split ( ".cfg", $srv );
 		my $srv  = @serv[0];
-		my $lb   = &getFarmVS( $1, $srv, "algorithm" );
+		my $lb   = &getFarmVS( $farmname, $srv, "algorithm" );
 
 		# Default port health check
-		my $dpc        = &getFarmVS( $1, $srv, "dpc" );
-		my $backendsvs = &getFarmVS( $1, $srv, "backends" );
+		my $dpc        = &getFarmVS( $farmname, $srv, "dpc" );
+		my $backendsvs = &getFarmVS( $farmname, $srv, "backends" );
 		my @be = split ( "\n", $backendsvs );
 
 		#
 		# Backends
 		#
 
-		my $out_b      = [];
-		my $backendsvs = &getFarmVS( $1, $srv, "backends" );
+		my @out_b;
+		my $backendsvs = &getFarmVS( $farmname, $srv, "backends" );
 		my @be         = split ( "\n", $backendsvs );
-		foreach $subline ( @be )
+
+		foreach my $subline ( @be )
 		{
 			$subline =~ s/^\s+//;
 			if ( $subline =~ /^$/ )
@@ -169,33 +164,43 @@ sub farms_name_gslb()
 
 			my @subbe = split ( " => ", $subline );
 
-			push $out_b, { id => @subbe[0], ip => @subbe[1] };
+			push @out_b,
+			  {
+				id => @subbe[0],
+				ip => @subbe[1],
+			  };
 		}
 
-		push $out_s, { id => $srv, algorithm => $lb, port => $dpc, backends => $out_b };
+		push @out_s,
+		  {
+			id        => $srv,
+			algorithm => $lb,
+			port      => $dpc,
+			backends  => \@out_b,
+		  };
 	}
 
 	#
 	# Zones
 	#
 
-	my @zones   = &getFarmZones( $1 );
+	my @zones   = &getFarmZones( $farmname );
 	my $first   = 0;
 	my $vserver = 0;
 	my $pos     = 0;
-	foreach $zone ( @zones )
-	{
 
+	foreach my $zone ( @zones )
+	{
 		#if ($first == 0) {
 		$pos++;
 		$first = 1;
-		my $ns         = &getFarmVS( $1, $zone, "ns" );
-		my $backendsvs = &getFarmVS( $1, $zone, "resources" );
+		my $ns         = &getFarmVS( $farmname, $zone, "ns" );
+		my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
 		my @be = split ( "\n", $backendsvs );
 		my $out_re = [];
-		foreach $subline ( @be )
-		{
 
+		foreach my $subline ( @be )
+		{
 			if ( $subline =~ /^$/ )
 			{
 				next;
@@ -256,31 +261,25 @@ sub farms_name_gslb()
 			  };
 
 		}
-		my $ns = &getFarmVS( $1, $zone, "ns" );
+		my $ns = &getFarmVS( $farmname, $zone, "ns" );
 
-		push $out_z, { id => $zone, DefaultNameServer => $ns, resources => $out_re };
+		push @out_z,
+		  {
+			id                => $zone,
+			DefaultNameServer => $ns,
+			resources         => $out_re
+		  };
 	}
 
 	# Success
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
+	my $body = {
+				 description => "List farm $farmname",
+				 params      => \@out_p,
+				 services    => \@out_s,
+				 zones       => \@out_z,
+	};
 
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
-	my $output = $j->encode(
-							 {
-							   description => "List farm $1",
-							   params      => $out_p,
-							   services    => $out_s,
-							   zones       => $out_z,
-							 }
-	);
-	print $output;
-
+	&httpResponse({ code => 200, body => $body });
 }
 
-1
+1;

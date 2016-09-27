@@ -49,28 +49,16 @@
 #
 #**
 
-sub new_farm()
+sub new_farm # ( $json_obj, $farmname )
 {
-
-	$farmname = @_[0];
-
-	my $out_p = [];
-
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'POSTDATA' );
-	my $json_obj = $json->decode( $data );
+	my $json_obj = shift;
+	my $farmname = shift;
 
 	$farmname =~ s/\ //g;
 	$farmname =~ s/\_//g;
+
 	&setFarmName( $farmname );
 	$error = "false";
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
 
 	if ( $json_obj->{ vip } eq "" )
 	{
@@ -79,22 +67,15 @@ sub new_farm()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Please especify a Virtual IP";
-		my $output = $j->encode(
-								 {
-								   description => "New farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Please especify a Virtual IP";
+
+		my $body = {
+					 description => "New farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( $farmname =~ /^$/ )
@@ -103,29 +84,23 @@ sub new_farm()
 				  "ZAPI error, trying to create a new farm $farmname, invalid farm name." );
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The farm name can't be empty";
-		my $output = $j->encode(
-								 {
-								   description => "New farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "The farm name can't be empty";
+
+		my $body = {
+					 description => "New farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( $farmprotocol =~ /HTTP|HTTPS|GSLB|L4XNAT|DATALINK/ )
 	{
 		if ( &isnumber( $json_obj->{ vport } ) eq "true" )
 		{
-			$inuse = &checkport( $json_obj->{ vip }, $json_obj->{ vport } );
+			my $inuse = &checkport( $json_obj->{ vip }, $json_obj->{ vport } );
+
 			if ( $inuse eq "true" )
 			{
 				&zenlog(
@@ -133,27 +108,20 @@ sub new_farm()
 				);
 
 				# Error
-				print $q->header(
-								  -type    => 'text/plain',
-								  -charset => 'utf-8',
-								  -status  => '422 Unprocessable Entity',
-					  'Access-Control-Allow-Origin'  => '*'
-				);
-				$errormsg =
+				my $errormsg =
 				    "The Virtual Port "
 				  . $json_obj->{ vport }
 				  . " in Virtual IP "
 				  . $json_obj->{ vip }
 				  . " is in use, select another port or add another Virtual IP";
-				my $output = $j->encode(
-										 {
-										   description => "New farm $farmname",
-										   error       => "true",
-										   message     => $errormsg
-										 }
-				);
-				print $output;
-				exit;
+
+				my $body = {
+							 description => "New farm $farmname",
+							 error       => "true",
+							 message     => $errormsg
+				};
+
+				&httpResponse({ code => 422, body => $body });
 			}
 		}
 		else
@@ -163,22 +131,15 @@ sub new_farm()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid Virtual Port value, it must be numeric";
-			my $output = $j->encode(
-									 {
-									   description => "New farm $farmname",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Invalid Virtual Port value, it must be numeric";
+
+			my $body = {
+						 description => "New farm $farmname",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 	}
 
@@ -194,22 +155,15 @@ sub new_farm()
 				  "ZAPI error, trying to create a new farm $farmname, can't be created." );
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The $farmname farm can't be created";
-		my $output = $j->encode(
-								 {
-								   description => "New farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "The $farmname farm can't be created";
+
+		my $body = {
+					 description => "New farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	if ( $status == -2 )
 	{
@@ -218,23 +172,16 @@ sub new_farm()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '422 Unprocessable Entity',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+		my $errormsg =
 		  "The $farmname farm already exists, please set a different farm name";
-		my $output = $j->encode(
-								 {
-								   description => "New farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+
+		my $body = {
+					 description => "New farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 422, body => $body });
 	}
 	&zenlog( "ZAPI success, the farm $farmname has been created successfully." );
 
@@ -248,15 +195,11 @@ sub new_farm()
 	}
 
 	# Success
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '201 Created',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
+	my @out_p;
+
 	if ( $json_obj->{ profile } eq "DATALINK" )
 	{
-		push $out_p,
+		push @out_p,
 		  {
 			name      => $farmname,
 			profile   => $json_obj->{ profile },
@@ -266,7 +209,7 @@ sub new_farm()
 	}
 	else
 	{
-		push $out_p,
+		push @out_p,
 		  {
 			name      => $farmname,
 			profile   => $json_obj->{ profile },
@@ -275,16 +218,13 @@ sub new_farm()
 			interface => $fdev
 		  };
 	}
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
-	my $output = $j->encode(
-							 {
-							   description => "New farm $farmname",
-							   params      => $out_p
-							 }
-	);
-	print $output;
 
+	my $body = {
+				 description => "New farm $farmname",
+				 params      => \@out_p
+	};
+
+	&httpResponse({ code => 201, body => $body });
 }
 
 #
@@ -464,23 +404,10 @@ sub new_farm()
 # @apiSampleRequest off
 #**
 
-sub new_farm_backend()
+sub new_farm_backend # ( $json_obj, $farmname )
 {
-
-	$farmname = @_[0];
-
-	my $out_p = [];
-
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'POSTDATA' );
-	my $json_obj = $json->decode( $data );
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
+	my $json_obj = shift;
+	my $farmname = shift;
 
 	# Initial parameters
 	my $priority = 1;
@@ -493,82 +420,63 @@ sub new_farm_backend()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid farm name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "New backend",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
-	}
-	
-	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
-		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "New backend",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "Invalid farm name, please insert a valid value.";
+		my $body = {
+					 description => "New backend",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# Check that the farm exists
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
+		# Error
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => "New backend",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	my $type = &getFarmType( $farmname );
 
 	if ( $type eq "http" || $type eq "https" )
 	{
-	
 		# Check that the provided service is configured in the farm
 		my @services = &getFarmServices($farmname);
 
 		my $found = 0;
-		foreach $farmservice (@services) {
+		foreach my $farmservice (@services) {
 			#print "service: $farmservice";
 			if ($json_obj->{service} eq $farmservice) {
 				$found = 1;
 				break;
 			}
 		}
+
 		if ($found eq 0){
 			
 			# Error
-			print $q->header(
-			-type=> 'text/plain',
-			-charset=> 'utf-8',
-			-status=> '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid service name, please insert a valid value.";
-			my $output = $j->encode({
-					description => "Modify farm guardian",
-					error => "true",
-					message => $errormsg
-			});
-			print $output;
-			exit;
-			
+			my $errormsg = "Invalid service name, please insert a valid value.";
+			my $body = {
+						 description => "Modify farm guardian",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 
 		my $backendsvs = &getFarmVS( $farmname, $json_obj->{ service }, "backends" );
 		my @be = split ( "\n", $backendsvs );
-		foreach $subl ( @be )
+
+		foreach my $subl ( @be )
 		{
 			my @subbe = split ( "\ ", $subl );
 			$id = @subbe[1] + 1;
@@ -587,23 +495,14 @@ sub new_farm_backend()
 
 			# Error
 			$error = 1;
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid real server IP value, please insert a valid value.";
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Invalid real server IP value, please insert a valid value.";
+			my $body = {
+						 description => "New backend $id",
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
 		}
 
 		if ( $json_obj->{ ip } =~ /^$/ || $json_obj->{ port } =~ /^$/ )
@@ -613,23 +512,15 @@ sub new_farm_backend()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid IP address and port for a real server, it can't be blank.";
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg =
+			  "Invalid IP address and port for a real server, it can't be blank.";
+			my $body = {
+						 description => "New backend $id",
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
 		}
 
 		if ( $json_obj->{ priority }
@@ -640,22 +531,14 @@ sub new_farm_backend()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid weight value for a real server, it must be 1-9.";
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Invalid weight value for a real server, it must be 1-9.";
+			my $body = {
+						 description => "New backend $id",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 
 # First param ($id) is an empty string to let function autogenerate the id for the new backend
@@ -679,70 +562,48 @@ sub new_farm_backend()
 
 			# Success
 			&setFarmRestart( $farmname );
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '201 Created',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			push $out_p,
-			  {
-				id      => $id,
-				ip      => $json_obj->{ ip },
-				port    => $json_obj->{ port } + 0,
-				weight  => $json_obj->{ weight } + 0,
-				timeout => $json_obj->{ timeout } + 0,
-				service => $json_obj->{ service }
-			  };
+			my $body = {
+						 description => "New backend $id",
+						 params      => {
+									 id      => $id,
+									 ip      => $json_obj->{ ip },
+									 port    => $json_obj->{ port } + 0,
+									 weight  => $json_obj->{ weight } + 0,
+									 timeout => $json_obj->{ timeout } + 0,
+									 service => $json_obj->{ service }
+						 },
+			};
 
-			my $j = JSON::XS->new->utf8->pretty( 1 );
-			$j->canonical( $enabled );
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   params      => $out_p
-									 }
-			);
-			print $output;
-
+			&httpResponse({ code => 201, body => $body });
 		}
 		else
 		{
-
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg =
+			my $errormsg =
 			    "It's not possible to create the real server with ip "
 			  . $json_obj->{ ip }
 			  . " and port "
 			  . $json_obj->{ port }
 			  . " for the $farmname farm";
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $body = {
+						 description => "New backend $id",
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse( { code => 400, body => $body } );
 		}
 
 	}
+
 	if ( $type eq "gslb" )
 	{
-
 		$id = 1;
 		my $lb         = &getFarmVS( $farmname, $json_obj->{ service }, "algorithm" );
 		my $backendsvs = &getFarmVS( $farmname, $json_obj->{ service }, "backends" );
 		my @be = split ( "\n", $backendsvs );
-		foreach $subline ( @be )
+
+		foreach my $subline ( @be )
 		{
 			$subline =~ s/^\s+//;
 			if ( $subline =~ /^$/ )
@@ -751,37 +612,33 @@ sub new_farm_backend()
 			}
 			$id++;
 		}
-		
+
 		# Check that the provided service is configured in the farm
 		my @services = &getGSLBFarmServices($farmname);
 		
 		my $found = 0;
-		foreach $service (@services) {
+		foreach my $service (@services)
+		{
 			print "service: $service";
-			if ($json_obj->{service} eq $service) {
+			if ($json_obj->{service} eq $service)
+			{
 				$found = 1;
 				break;
 			}
 		}
-		if ($found eq 0){
-			
+
+		if ($found eq 0)
+		{
 			# Error
-			print $q->header(
-			   -type=> 'text/plain',
-			   -charset=> 'utf-8',
-			   -status=> '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid service, please insert a valid value.";
-			my $output = $j->encode({
-				description => "New backend $id",
-				error => "true",
-				message => $errormsg
-			});
-			print $output;
-			exit;
+			my $errormsg = "Invalid service, please insert a valid value.";
+			my $body = {
+						 description => "New backend $id",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
-		
 
 		if ( $json_obj->{ service } =~ /^$/ )
 		{
@@ -790,22 +647,14 @@ sub new_farm_backend()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid service, please insert a valid value.";
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Invalid service, please insert a valid value.";
+			my $body = {
+						 description => "New backend $id",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 
 		$status = &setGSLBFarmNewBackend( $farmname, $json_obj->{ service },
@@ -818,48 +667,31 @@ sub new_farm_backend()
 
 			# Success
 			&setFarmRestart( $farmname );
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '201 Created',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			push $out_p,
-			  { id => $id, ip => $json_obj->{ ip }, service => $json_obj->{ service } };
+			my $body = {
+						 description => "New backend $id",
+						 params      => {
+									 id      => $id,
+									 ip      => $json_obj->{ ip },
+									 service => $json_obj->{ service }
+						 },
+			};
 
-			my $j = JSON::XS->new->utf8->pretty( 1 );
-			$j->canonical( $enabled );
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   params      => $out_p
-									 }
-			);
-			print $output;
+			&httpResponse({ code => 201, body => $body });
 		}
 		else
 		{
-
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg =
+			my $errormsg =
 			    "It's not possible to create the backend "
 			  . $json_obj->{ ip }
 			  . " for the service $service.";
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $body = {
+						 description => "New backend $id",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse( { code => 400, body => $body } );
 		}
 	}
 
@@ -874,30 +706,23 @@ sub new_farm_backend()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid farm name, please insert a valid value.";
-			my $output = $j->encode(
-									 {
-									   description => "New service",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Invalid farm name, please insert a valid value.";
+			my $body = {
+						 description => "New service",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 
 		# Get ID of the new backend
 		my $id  = 0;
 		my @run = &getFarmServers( $farmname );
+
 		if ( @run > 0 )
 		{
-			foreach $l_servers ( @run )
+			foreach my $l_servers ( @run )
 			{
 				my @l_serv = split ( ";", $l_servers );
 				if ( @l_serv[1] ne "0.0.0.0" )
@@ -923,23 +748,14 @@ sub new_farm_backend()
 
 			# Error
 			$error = 1;
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid real server IP value, please insert a valid value.";
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Invalid real server IP value, please insert a valid value.";
+			my $body = {
+						 description => "New backend $id",
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
 		}
 
 		if ( $json_obj->{ ip } =~ /^$/ || $json_obj->{ port } =~ /^$/ )
@@ -949,23 +765,14 @@ sub new_farm_backend()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid IP address and port for a real server, it can't be blank.";
-			my $output = $j->encode(
-									 {
+			my $errormsg = "Invalid IP address and port for a real server, it can't be blank.";
+			my $body = {
 									   description => "New backend $id",
 									   error       => "true",
 									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+									 };
 
+			&httpResponse({ code => 400, body => $body });
 		}
 
 		if ( exists ( $json_obj->{ priority } ) )
@@ -979,44 +786,28 @@ sub new_farm_backend()
 			elsif ( $priority < 0 )
 			{
 				# Error
-				print $q->header(
-								  -type    => 'text/plain',
-								  -charset => 'utf-8',
-								  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-				);
-				$errormsg =
+				my $errormsg =
 				  "Invalid real server priority value, please insert a value greater than or equal to 0.";
-				my $output = $j->encode(
-										 {
-										   description => "New backend $id",
-										   error       => "true",
-										   message     => $errormsg
-										 }
-				);
-				print $output;
-				exit;
+				my $body = {
+							 description => "New backend $id",
+							 error       => "true",
+							 message     => $errormsg
+				};
+
+				&httpResponse({ code => 400, body => $body });
 			}
 			elsif ( $priority > 9 )
 			{
 				# Error
-				print $q->header(
-								  -type    => 'text/plain',
-								  -charset => 'utf-8',
-								  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-				);
-				$errormsg =
+				my $errormsg =
 				  "Invalid real server priority value, please insert a value less than or equal to 9.";
-				my $output = $j->encode(
-										 {
-										   description => "New backend $id",
-										   error       => "true",
-										   message     => $errormsg
-										 }
-				);
-				print $output;
-				exit;
+				my $body = {
+							 description => "New backend $id",
+							 error       => "true",
+							 message     => $errormsg
+				};
+
+				&httpResponse({ code => 400, body => $body });
 			}
 		}
 
@@ -1031,25 +822,16 @@ sub new_farm_backend()
 			elsif ( $weight < 1 )
 			{
 				# Error
-				print $q->header(
-								  -type    => 'text/plain',
-								  -charset => 'utf-8',
-								  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-				);
-				$errormsg =
+				my $errormsg =
 				  "Invalid real server weight value, please insert a value greater than 0.";
-				my $output = $j->encode(
-										 {
-										   description => "New backend $id",
-										   error       => "true",
-										   message     => $errormsg
-										 }
-				);
-				print $output;
-				exit;
-			}
+				my $body = {
+							 description => "New backend $id",
+							 error       => "true",
+							 message     => $errormsg
+				};
 
+				&httpResponse({ code => 400, body => $body });
+			}
 		}
 
 ####### Create backend
@@ -1064,95 +846,42 @@ sub new_farm_backend()
 				"ZAPI success, a new backend has been created in farm $farmname with IP $json_obj->{ip}."
 			);
 
-			# Changes must be applied in iptables
-			# my $type = &getFarmType($farmname);
-			# if ($type eq "l4xnat"){
-			# if ( &getFarmStatus( $farmname ) eq 'up' )
-			# {
-			# &runFarmStop( $farmname, "false" );
-			# &runFarmStart( $farmname, "false" );
-			# &sendL4ConfChange( $farmname );
-			# }
-			# }
-
 			# Success
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '201 Created',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			push $out_p,
-			  {
-				id       => $id,
-				ip       => $json_obj->{ ip },
-				port     => $json_obj->{ port } + 0,
-				weight   => $weight,
-				priority => $priority
-			  };
+			my $body = {
+						 description => "New backend $id",
+						 params      => {
+									 id       => $id,
+									 ip       => $json_obj->{ ip },
+									 port     => $json_obj->{ port } + 0,
+									 weight   => $weight,
+									 priority => $priority
+						 },
+			};
 
-			my $j = JSON::XS->new->utf8->pretty( 1 );
-			$j->canonical( $enabled );
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   params      => $out_p
-									 }
-			);
-			print $output;
-
+			&httpResponse({ code => 201, body => $body });
 		}
 		else
 		{
-
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg =
+			my $errormsg =
 			    "It's not possible to create the real server with ip "
 			  . $json_obj->{ ip }
 			  . " and port "
 			  . $json_obj->{ port }
 			  . " for the $farmname farm";
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $body = {
+						 description => "New backend $id",
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
 		}
-
 	}
 
 	if ( $type eq "datalink" )
 	{
-
-		######## Params
-
-		$farmname = @_[0];
-
-		my $out_p = [];
-
-		use CGI;
-		use JSON;
-
-		my $q        = CGI->new;
-		my $json     = JSON->new;
-		my $data     = $q->param( 'POSTDATA' );
-		my $json_obj = $json->decode( $data );
-
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( $enabled );
-
-######## Check errors
+		######## Check errors
 
 		if ( $farmname =~ /^$/ )
 		{
@@ -1161,22 +890,14 @@ sub new_farm_backend()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid farm name, please insert a valid value.";
-			my $output = $j->encode(
-									 {
-									   description => "New service",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Invalid farm name, please insert a valid value.";
+			my $body = {
+						 description => "New service",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 
 		my $id  = 0;
@@ -1209,23 +930,14 @@ sub new_farm_backend()
 
 			# Error
 			$error = 1;
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid real server IP value, please insert a valid value.";
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Invalid real server IP value, please insert a valid value.";
+			my $body = {
+						 description => "New backend $id",
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
 		}
 
 		if ( $json_obj->{ ip } =~ /^$/ )
@@ -1235,23 +947,14 @@ sub new_farm_backend()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid IP address for a real server, it can't be blank.";
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Invalid IP address for a real server, it can't be blank.";
+			my $body = {
+						 description => "New backend $id",
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
 		}
 
 ####### Create backend
@@ -1262,6 +965,7 @@ sub new_farm_backend()
 								  $json_obj->{ weight },    $json_obj->{ priority },
 								  "",                       $farmname
 		);
+
 		if ( $status != -1 )
 		{
 			&zenlog(
@@ -1269,31 +973,18 @@ sub new_farm_backend()
 			);
 
 			# Success
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '201 Created',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			push $out_p,
-			  {
-				id        => $id,
-				ip        => $json_obj->{ ip },
-				interface => $json_obj->{ interface },
-				weight    => $json_obj->{ weight } + 0,
-				priority  => $json_obj->{ priority } + 0
-			  };
+			my $body = {
+						 description => "New backend $id",
+						 params      => {
+									 id        => $id,
+									 ip        => $json_obj->{ ip },
+									 interface => $json_obj->{ interface },
+									 weight    => $json_obj->{ weight } + 0,
+									 priority  => $json_obj->{ priority } + 0
+						 },
+			};
 
-			my $j = JSON::XS->new->utf8->pretty( 1 );
-			$j->canonical( $enabled );
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   params      => $out_p
-									 }
-			);
-			print $output;
-
+			&httpResponse({ code => 201, body => $body });
 		}
 		else
 		{
@@ -1302,28 +993,20 @@ sub new_farm_backend()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg =
+			my $errormsg =
 			    "It's not possible to create the real server with ip "
 			  . $json_obj->{ ip }
 			  . " and port "
 			  . $json_obj->{ port }
 			  . " for the $farmname farm";
-			my $output = $j->encode(
-									 {
-									   description => "New backend $id",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
 
+			my $body = {
+						 description => "New backend $id",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 
 	}
@@ -1412,23 +1095,10 @@ sub new_farm_backend()
 #
 #**
 
-sub new_farm_service()
+sub new_farm_service # ( $json_obj, $farmname )
 {
-
-	$farmname = @_[0];
-
-	my $out_p = [];
-
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'POSTDATA' );
-	my $json_obj = $json->decode( $data );
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
+	my $json_obj = shift;
+	my $farmname = shift;
 
 	if ( $farmname =~ /^$/ )
 	{
@@ -1437,49 +1107,36 @@ sub new_farm_service()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid farm name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "New service",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid farm name, please insert a valid value.";
+
+		my $body = {
+					 description => "New service",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "New service",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
 
+		my $body = {
+					 description => "New service",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	my $type = &getFarmType( $farmname );
 
 	if ( $type eq "http" || $type eq "https" )
 	{
-
 		if ( $json_obj->{ id } =~ /^$/ )
 		{
 			&zenlog(
@@ -1487,22 +1144,15 @@ sub new_farm_service()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid service, please insert a valid value.";
-			my $output = $j->encode(
-									 {
-									   description => "New service",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Invalid service, please insert a valid value.";
+
+			my $body = {
+						 description => "New service",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 
 		my $result = &setFarmHTTPNewService( $farmname, $json_obj->{ id } );
@@ -1515,24 +1165,13 @@ sub new_farm_service()
 
 			# Success
 			&setFarmRestart( $farmname );
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '201 Created',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			push $out_p, { id => $json_obj->{ id } };
 
-			my $j = JSON::XS->new->utf8->pretty( 1 );
-			$j->canonical( $enabled );
-			my $output = $j->encode(
-									 {
-									   description => "New service " . $json_obj->{ id },
-									   params      => $out_p
-									 }
-			);
-			print $output;
+			my $body = {
+						 description => "New service " . $json_obj->{ id },
+						 params      => { id => $json_obj->{ id } },
+			};
 
+			&httpResponse({ code => 201, body => $body });
 		}
 		if ( $result eq "2" )
 		{
@@ -1541,23 +1180,14 @@ sub new_farm_service()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "New service can't be empty.";
-			my $output = $j->encode(
-									 {
-									   description => "New service " . $json_obj->{ id },
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "New service can't be empty.";
+			my $body = {
+						 description => "New service " . $json_obj->{ id },
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
 		}
 		if ( $result eq "1" )
 		{
@@ -1566,23 +1196,14 @@ sub new_farm_service()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Service named " . $json_obj->{ id } . " already exists.";
-			my $output = $j->encode(
-									 {
-									   description => "New service " . $json_obj->{ id },
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Service named " . $json_obj->{ id } . " already exists.";
+			my $body = {
+						 description => "New service " . $json_obj->{ id },
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
 		}
 		if ( $result eq "3" )
 		{
@@ -1591,30 +1212,20 @@ sub new_farm_service()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg =
+			my $errormsg =
 			  "Service name is not valid, only allowed numbers, letters and hyphens.";
-			my $output = $j->encode(
-									 {
-									   description => "New service " . $json_obj->{ id },
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
-		}
+			my $body = {
+						 description => "New service " . $json_obj->{ id },
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
+		}
 	}
 
 	if ( $type eq "gslb" )
 	{
-
 		if ( $json_obj->{ id } =~ /^$/ )
 		{
 			&zenlog(
@@ -1622,22 +1233,14 @@ sub new_farm_service()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid service, please insert a valid value.";
-			my $output = $j->encode(
-									 {
-									   description => "New service " . $json_obj->{ id },
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Invalid service, please insert a valid value.";
+			my $body = {
+						 description => "New service " . $json_obj->{ id },
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 
 		if ( $json_obj->{ algorithm } =~ /^$/ )
@@ -1647,22 +1250,14 @@ sub new_farm_service()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Invalid algorithm, please insert a valid value.";
-			my $output = $j->encode(
-									 {
-									   description => "New service " . $json_obj->{ id },
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "Invalid algorithm, please insert a valid value.";
+			my $body = {
+						 description => "New service " . $json_obj->{ id },
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 
 		$status = &setGSLBFarmNewService( $farmname,
@@ -1676,24 +1271,16 @@ sub new_farm_service()
 
 			# Success
 			&runFarmReload( $farmname );
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '201 Created',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			push $out_p, { id => $json_obj->{ id }, algorithm => $json_obj->{ algorithm } };
 
-			my $j = JSON::XS->new->utf8->pretty( 1 );
-			$j->canonical( $enabled );
-			my $output = $j->encode(
-									 {
-									   description => "New service " . $json_obj->{ id },
-									   params      => $out_p
-									 }
-			);
-			print $output;
+			my $body = {
+						 description => "New service " . $json_obj->{ id },
+						 params      => {
+									 id        => $json_obj->{ id },
+									 algorithm => $json_obj->{ algorithm }
+						 },
+			};
 
+			&httpResponse({ code => 201, body => $body });
 		}
 		else
 		{
@@ -1702,26 +1289,16 @@ sub new_farm_service()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "It's not possible to create the service " . $json_obj->{ id };
-			my $output = $j->encode(
-									 {
-									   description => "New service " . $json_obj->{ id },
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $errormsg = "It's not possible to create the service " . $json_obj->{ id };
+			my $body = {
+						 description => "New service " . $json_obj->{ id },
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
 		}
 	}
 }
 
-1
-
+1;

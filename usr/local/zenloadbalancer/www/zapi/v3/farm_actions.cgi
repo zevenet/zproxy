@@ -51,23 +51,10 @@
 #
 #**
 
-sub actions()
+sub actions # ( $json_obj, $farmname )
 {
-
-	# Params
-	$farmname = @_[0];
-
-	use CGI;
-	use JSON;
-	my $out_p = [];
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'POSTDATA' );
-	my $json_obj = $json->decode( $data );
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
+	my $json_obj = shift;
+	my $farmname = shift;
 
 	my $error  = "false";
 	my $action = "false";
@@ -80,42 +67,29 @@ sub actions()
 	else
 	{
 		&zenlog( "ZAPI error, trying to set an action." );
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid action; the possible actions are stop, start and restart";
-		my $output = $j->encode(
-								 {
-								   description => "Farm actions",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+
+		my $errormsg = "Invalid action; the possible actions are stop, start and restart";
+		my $body = {
+					 description => "Farm actions",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "Farm actions",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => "Farm actions",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	# Functions
@@ -183,50 +157,27 @@ sub actions()
 	# Print params
 	if ( $error ne "true" )
 	{
-
 		# Success
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
+		my $body = {
+					 description => "Set a new action in $farmname",
+					 params      => { action => $json_obj->{ action } },
+		};
 
-		push $out_p, { action => $json_obj->{ action } };
-
-		my $output = $j->encode(
-								 {
-								   description => "Set a new action in $farmname",
-								   params      => $out_p
-								 }
-		);
-		print $output;
-
+		&httpResponse({ code => 200, body => $body });
 	}
 	else
 	{
-
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+		my $errormsg =
 		  "Errors found trying to execute the action $json_obj->{action} in farm $farmname";
-		my $output = $j->encode(
-								 {
-								   description => "Set a new action in $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $body = {
+					 description => "Set a new action in $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 400, body => $body });
 	}
-
 }
 
 # POST maintenance
@@ -271,23 +222,10 @@ sub actions()
 #
 #**
 
-sub maintenance()
+sub maintenance # ( $json_obj, $farmname )
 {
-
-	# Params
-	$farmname = @_[0];
-
-	use CGI;
-	use JSON;
-	my $out_p = [];
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'POSTDATA' );
-	my $json_obj = $json->decode( $data );
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
+	my $json_obj = shift;
+	my $farmname = shift;
 
 	my $error  = "false";
 	my $action = "false";
@@ -299,62 +237,40 @@ sub maintenance()
 	}
 	else
 	{
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid action; the possible actions are up and maintenance";
-		my $output = $j->encode(
-								 {
-								   description => "Set a backend status in farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid action; the possible actions are up and maintenance";
+		my $body = {
+					 description => "Set a backend status in farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "Set backend Farm status",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => "Set backend Farm status",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	if ( $json_obj->{ service } =~ /^$/ )
 	{
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid service; please, enter a active service";
-		my $output = $j->encode(
-								 {
-								   description => "Set a backend status in farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid service; please, enter a active service";
+		my $body = {
+					 description => "Set a backend status in farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	elsif ( $json_obj->{ service } =~ /^\w+$/ )
 	{
@@ -362,42 +278,26 @@ sub maintenance()
 	}
 	else
 	{
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid service; please, enter a active service";
-		my $output = $j->encode(
-								 {
-								   description => "Set a backend status in farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid service; please, enter a active service";
+		my $body = {
+					 description => "Set a backend status in farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( $json_obj->{ id } =~ /^$/ )
 	{
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid id; please, enter a active id of backend";
-		my $output = $j->encode(
-								 {
-								   description => "Set a backend status in farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid id; please, enter a active id of backend";
+		my $body = {
+					 description => "Set a backend status in farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	elsif ( $json_obj->{ id } =~ /^\d+$/ )
 	{
@@ -405,23 +305,14 @@ sub maintenance()
 	}
 	else
 	{
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid id; id value must be numeric";
-		my $output = $j->encode(
-								 {
-								   description => "Set a backend status in farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid id; id value must be numeric";
+		my $body = {
+					 description => "Set a backend status in farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( $action eq "maintenance" )
@@ -430,108 +321,69 @@ sub maintenance()
 		&zenlog(
 			"Changing status to maintenance of backend $id in service $service in farm $farmname"
 		);
+
 		if ( $? ne 0 )
 		{
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Errors found trying to change status backend to maintenance";
-			my $output = $j->encode(
-									 {
-									   description => "Set a backend status in farm $farmname",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
-		}
+			my $errormsg = "Errors found trying to change status backend to maintenance";
+			my $body = {
+						 description => "Set a backend status in farm $farmname",
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
+		}
 	}
 	elsif ( $action eq "up" )
 	{
 		&setFarmBackendNoMaintenance( $farmname, $id, $service );
 		&zenlog(
 			 "Changing status to up of backend $id in service $service in farm $farmname" );
+
 		if ( $? ne 0 )
 		{
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg = "Errors found trying to change status backend to up";
-			my $output = $j->encode(
-									 {
+			my $errormsg = "Errors found trying to change status backend to up";
+			my $body = {
 									   description => "Set a backend status in farm $farmname",
 									   error       => "true",
 									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+									 };
+
+			&httpResponse({ code => 400, body => $body });
 		}
 	}
 
 	# Print params
 	if ( $error ne "true" )
 	{
-
 		# Success
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
+		my $body = {
+					description =>
+					  "Set an action in  backend $id in service $service in farm $farmname",
+					params => {
+								action  => $json_obj->{ action },
+								service => $json_obj->{ service },
+								id      => $json_obj->{ id },
+					},
+		};
 
-		push $out_p,
-		  {
-			action  => $json_obj->{ action },
-			service => $json_obj->{ service },
-			id      => $json_obj->{ id }
-		  };
-
-		my $output = $j->encode(
-				 {
-				   description =>
-					 "Set an action in  backend $id in service $service in farm $farmname",
-				   params => $out_p
-				 }
-		);
-		print $output;
-
+		&httpResponse({ code => 200, body => $body });
 	}
 	else
 	{
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+		my $errormsg =
 		  "Errors found trying to change status of backend $id in service $service in farm $farmname";
-		my $output = $j->encode(
-				 {
-				   description =>
-					 "Set an action in  backend $id in service $service in farm $farmname",
-				   error   => "true",
-				   message => $errormsg
-				 }
-		);
-		print $output;
-		exit;
+		my $body = {
+					description =>
+					  "Set an action in  backend $id in service $service in farm $farmname",
+					error   => "true",
+					message => $errormsg
+		};
 
+		&httpResponse({ code => 400, body => $body });
 	}
-
 }
 
-1
-
+1;

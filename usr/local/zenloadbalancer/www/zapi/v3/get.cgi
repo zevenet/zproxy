@@ -45,7 +45,7 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/get_datalink.cgi";
 #GET /farms
 sub farms # ()
 {
-	my $out   = [];
+	my @out;
 	my @files = &getFarmList();
 
 	foreach my $file ( @files )
@@ -53,11 +53,10 @@ sub farms # ()
 		my $name   = &getFarmName( $file );
 		my $type   = &getFarmType( $name );
 		my $status = &getFarmStatus( $name );
-		my $vip    = &getFarmVip( $name );
-		my $port   = &getFarmPort( $name );
+		my $vip    = &getFarmVip( 'vip', $name );
+		my $port   = &getFarmVip( 'vipp', $name );
 
-		# FIXME: Add ip and port
-		push $out,
+		push @out,
 		  {
 			farmname => $name,
 			profile  => $type,
@@ -67,58 +66,45 @@ sub farms # ()
 		  };
 	}
 
+	my $body = {
+				description => "List farms",
+				params      => \@out,
+	};
+
 	# Success
-	&httpResponse(
-				   {
-					 code => 200,
-					 body      => {
-							   description => "List farms",
-							   params      => $out
-					 }
-				   }
-	);
+	&httpResponse({ code => 200, body => $body });
 }
 
 #GET /farms/<name>
-sub farms_name()
+sub farms_name # ( $farmname )
 {
+	my $farmname = shift;
 	
 	use Switch;
-	use CGI;
-	my $q = CGI->new;
-	my $j = JSON::XS->new->utf8->pretty(1);
-	$j->canonical([$enabled]);
 
 	# Check that the farm exists
-	if ( &getFarmFile( $1 ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found',
-		'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The farmname $1 does not exist.";
-		my $output = $j->encode({
+		my $errormsg = "The farmname $farmname does not exist.";
+		my $body = {
 				description => "Get farm",
 				error => "true",
 				message => $errormsg
-		});
-		print $output;
-		exit;
+		};
 
+		&httpResponse({ code => 404, body => $body });
 	}
 	
-	my $type = &getFarmType( $1 );
+	my $type = &getFarmType( $farmname );
 
 	switch ( $type )
 	{
-		case /http.*/   { &farms_name_http() }
-		case /gslb/     { &farms_name_gslb() }
-		case /l4xnat/   { &farms_name_l4() }
-		case /datalink/ { &farms_name_datalink() }
-
+		case /http.*/   { &farms_name_http( $farmname ) }
+		case /gslb/     { &farms_name_gslb( $farmname ) }
+		case /l4xnat/   { &farms_name_l4( $farmname ) }
+		case /datalink/ { &farms_name_datalink( $farmname ) }
 	}
 }
 
-1
+1;
