@@ -61,34 +61,30 @@
 #
 #**
 
-sub farms_name_l4()
+sub farms_name_l4 # ( $farmname )
 {
+	my $farmname = shift;
 
-	########### params
-	use CGI;
-	my $q = CGI->new;
+	my @out_p;
+	my @out_b;
 
-	my $out_p = [];
-	my $out_b = [];
+	my $vip   = &getFarmVip( "vip",  $farmname );
+	my $vport = &getFarmVip( "vipp", $farmname );
 
-	my $farmname = $1;
-
-	my $vip   = &getFarmVip( "vip",  $1 );
-	my $vport = &getFarmVip( "vipp", $1 );
 	if ( $vport =~ /^\d+$/ )
 	{
 		$vport = $vport + 0;
 	}
 
-	@ttl = &getFarmMaxClientTime( $farmname, "" );
-	$timetolimit = $ttl[0] + 0;
+	my @ttl = &getFarmMaxClientTime( $farmname, "" );
+	my $timetolimit = $ttl[0] + 0;
 	
 	############ FG
-	@fgconfig    = &getFarmGuardianConf( $farmname, "" );
-	$fguse       = $fgconfig[3];
-	$fgcommand   = $fgconfig[2];
-	$fgtimecheck = $fgconfig[1];
-	$fglog       = $fgconfig[4];
+	my @fgconfig    = &getFarmGuardianConf( $farmname, "" );
+	my $fguse       = $fgconfig[3];
+	my $fgcommand   = $fgconfig[2];
+	my $fgtimecheck = $fgconfig[1];
+	my $fglog       = $fgconfig[4];
 	
 	if ( !$fgtimecheck ) { $fgtimecheck = 5; }
     if ( !$fguse ) { $fguse = "false"; }
@@ -104,7 +100,7 @@ sub farms_name_l4()
 		$status = "ok";
 	}
 
-	push $out_p,
+	push @out_p,
 	  {
 		status      => $status,
 		vip         => $vip,
@@ -122,21 +118,25 @@ sub farms_name_l4()
 
 	########### backends
 	my @run = &getFarmServers( $farmname );
-	foreach $l_servers ( @run )
+	foreach my $l_servers ( @run )
 	{
 		my @l_serv = split ( ";", $l_servers );
+
 		$l_serv[0] = $l_serv[0] + 0;
 		$l_serv[1] = $l_serv[1];
+
 		if ( !$l_serv[2] =~ /^$/ )
 		{
 			$l_serv[2] = $l_serv[2] + 0;
 		}
+
 		$l_serv[3] = $l_serv[3] + 0;
 		$l_serv[4] = $l_serv[4] + 0;
 		$l_serv[5] = $l_serv[5] + 0;
+
 		if ( $l_serv[1] ne "0.0.0.0" )
 		{
-			push $out_b,
+			push @out_b,
 			  {
 				id       => $l_serv[0],
 				ip       => $l_serv[1],
@@ -147,27 +147,13 @@ sub farms_name_l4()
 		}
 	}
 
-	########### print JSON
-	print $q->header(
-	  -type    => 'text/plain',
-	  -charset => 'utf-8',
-	  -status  => '200 OK',
-		'Access-Control-Allow-Origin'  => '*'
-	);
+	my $body = {
+				 description => "List farm $farmname",
+				 params      => \@out_p,
+				 backends    => \@out_b
+	};
 
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
-	my $output = $j->encode(
-	{
-	  description => "List farm $1",
-	  params      => $out_p,
-	  backends    => $out_b
-	}
-	);
-
-	print $output;
-
+	&httpResponse({ code => 200, body => $body });
 }
 
-1
-
+1;

@@ -100,31 +100,26 @@
 #
 #**
 
-sub farms_name_http()
+sub farms_name_http # ( $farmname )
 {
-
-	use CGI;
-	my $q = CGI->new;
+	my $farmname = shift;
 
 	my $output_params;
-	my $out_b  = [];
-	my $out_s  = [];
-	my $out_cn = [];
-##
-	$farmname        = $1;
-	$connto          = &getFarmConnTO( $farmname );
-	$connto          = $connto + 0;
-	$timeout         = &getFarmTimeout( $farmname );
-	$timeout         = $timeout + 0;
-	$alive           = &getFarmBlacklistTime( $farmname );
-	$alive           = $alive + 0;
-	$client          = &getFarmClientTimeout( $farmname );
-	$client          = $client + 0;
-	$conn_max        = &getFarmMaxConn( $farmname );
-	$conn_max        = $conn_max + 0;
-	$rewritelocation = &getFarmRewriteL( $farmname );
-	$rewritelocation = $rewritelocation + 0;
-	
+	my @out_s;
+	my @out_cn;
+	my $connto          = &getFarmConnTO( $farmname );
+	my $connto          = $connto + 0;
+	my $timeout         = &getFarmTimeout( $farmname );
+	my $timeout         = $timeout + 0;
+	my $alive           = &getFarmBlacklistTime( $farmname );
+	my $alive           = $alive + 0;
+	my $client          = &getFarmClientTimeout( $farmname );
+	my $client          = $client + 0;
+	my $conn_max        = &getFarmMaxConn( $farmname );
+	my $conn_max        = $conn_max + 0;
+	my $rewritelocation = &getFarmRewriteL( $farmname );
+	my $rewritelocation = $rewritelocation + 0;
+
 	if ( $rewritelocation == 0 )
 	{
 		$rewritelocation = "disabled";
@@ -137,8 +132,10 @@ sub farms_name_http()
 	{
 		$rewritelocation = "enabled-backends";
 	}
-	$httpverb = &getFarmHttpVerb( $farmname );
+
+	my $httpverb = &getFarmHttpVerb( $farmname );
 	$httpverb = $httpverb + 0;
+
 	if ( $httpverb == 0 )
 	{
 		$httpverb = "standardHTTP";
@@ -159,24 +156,27 @@ sub farms_name_http()
 	{
 		$httpverb = "MSRPCext";
 	}
-	$type     = &getFarmType( $farmname );
+
+	my $type     = &getFarmType( $farmname );
 	$certname = $na;
 	$cipher   = '';
 	$ciphers  = 'all';
 
 	if ( $type eq "https" )
 	{
-		##
 		$certname = &getFarmCertificate( $farmname );
 		@cnames   = &getFarmCertificatesSNI( $farmname );
 		$elem     = @cnames;
+
 		for ( $i = 0 ; $i < $elem ; $i++ )
 		{
-			push $out_cn, { file => $cnames[$i], id => $i + 1 };
+			push @out_cn, { file => $cnames[$i], id => $i + 1 };
 		}
+
 		$cipher  = &getFarmCipherList( $farmname );
 		$ciphers = &getFarmCipherSet( $farmname );
 		chomp ( $ciphers );
+
 		if ( $ciphers eq "cipherglobal" )
 		{
 			$ciphers = "all";
@@ -195,7 +195,6 @@ sub farms_name_http()
 	chomp(@err501);
 	@err503 = &getFarmErr( $farmname, "503" );
 	chomp(@err503);
-
 
 	if ( -e "/tmp/$farmname.lock" )
 	{
@@ -231,7 +230,7 @@ sub farms_name_http()
 
 	if ( $type eq "https" )
 	{
-		$output_params->{ certlist } = $out_cn;
+		$output_params->{ certlist } = @out_cn;
 		$output_params->{ ciphers }  = $ciphers;
 		$output_params->{ cipherc }  = $cipher;
 	}
@@ -239,6 +238,7 @@ sub farms_name_http()
 	#http services
 	my $services = &getFarmVS( $farmname, "", "" );
 	my @serv = split ( "\ ", $services );
+
 	foreach my $s ( @serv )
 	{
 		$vser         = &getFarmVS( $farmname, $s, "vs" );
@@ -251,14 +251,17 @@ sub farms_name_http()
 		$dyns         = &getFarmVS( $farmname, $s, "dynscale" );
 		$httpsbe      = &getFarmVS( $farmname, $s, "httpsbackend" );
 		$cookiei      = &getFarmVS( $farmname, $s, "cookieins" );
+
 		if ( $cookiei eq "" )
 		{
 			$cookiei = "false";
 		}
+
 		$cookieinsname = &getFarmVS( $farmname, $s, "cookieins-name" );
 		$domainname    = &getFarmVS( $farmname, $s, "cookieins-domain" );
 		$path          = &getFarmVS( $farmname, $s, "cookieins-path" );
 		$ttlc          = &getFarmVS( $farmname, $s, "cookieins-ttlc" );
+
 		if ( $dyns =~ /^$/ )
 		{
 			$dyns = "false";
@@ -267,6 +270,7 @@ sub farms_name_http()
 		{
 			$httpsbe = "false";
 		}
+
 		my @fgconfig  = &getFarmGuardianConf( $farmname, $s );
 		my $fgttcheck = @fgconfig[1];
 		my $fgscript  = @fgconfig[2];
@@ -275,12 +279,14 @@ sub farms_name_http()
 		my $fguse = @fgconfig[3];
 		$fguse =~ s/\n//g;
 		my $fglog      = @fgconfig[4];
+
 		# Default values for farm guardian parameters
 		if ( !$fgttcheck ) { $fgttcheck = 5; }
         if ( !$fguse ) { $fguse = "false"; }
         if ( !$fglog  ) { $fglog = "false"; }
         if ( !$fgscript ) { $fgscript = ""; }
-		my $out_ba     = [];
+
+		my @out_ba;
 		my $backendsvs = &getFarmVS( $farmname, $s, "backends" );
 		my @be         = split ( "\n", $backendsvs );
 
@@ -289,6 +295,7 @@ sub farms_name_http()
 			my @subbe       = split ( "\ ", $subl );
 			my $id          = @subbe[1] + 0;
 			my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $s );
+
 			if ( $maintenance != 0 )
 			{
 				$backendstatus = "up";
@@ -297,11 +304,13 @@ sub farms_name_http()
 			{
 				$backendstatus = "maintenance";
 			}
+
 			my $ip   = @subbe[3];
 			my $port = @subbe[5] + 0;
 			my $tout = @subbe[7] + 0;
 			my $prio = @subbe[9] + 0;
-			push $out_ba,
+
+			push @out_ba,
 			  {
 				id            => $id,
 				backendstatus => $backendstatus,
@@ -312,7 +321,7 @@ sub farms_name_http()
 			  };
 		}
 
-		push $out_s,
+		push @out_s,
 		  {
 			id           => $s,
 			vhost        => $vser,
@@ -333,7 +342,7 @@ sub farms_name_http()
 			fgscript     => $fgscript,
 			fgenabled    => $fguse,
 			fglog        => $fglog,
-			backends     => $out_ba
+			backends     => \@out_ba,
 		  };
 	}
 
@@ -341,10 +350,10 @@ sub farms_name_http()
 	my $body = {
 				 description => "List farm $farmname",
 				 params      => $output_params,
-				 services    => $out_s
+				 services    => \@out_s,
 	};
 
 	&httpResponse({ code => 200, body => $body });
 }
 
-1
+1;

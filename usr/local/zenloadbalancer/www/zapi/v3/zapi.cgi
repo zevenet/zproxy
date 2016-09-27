@@ -39,6 +39,8 @@ package GLOBAL {
 		401 => 'Unauthorized',
 		403 => 'Forbidden',
 		404 => 'Not Found',
+		406 => 'Not Acceptable',
+		422 => 'Unprocessable Entity',
 	};
 };
 
@@ -62,7 +64,7 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/post_gslb.cgi";
 my $q = &getCGI();
 
 # build local key
-sub keycert()
+sub keycert # ()
 {
 	# requires:
 	#~ use Sys::Hostname;
@@ -106,7 +108,7 @@ sub keycert()
 }
 
 # evaluate certificate
-sub certcontrol()
+sub certcontrol # ()
 {
 	# requires:
 	#~ use Sys::Hostname;
@@ -225,52 +227,103 @@ sub checkActivationCertificate
 sub GET($$)
 {
 	my ( $path, $code ) = @_;
+
 	return unless $q->request_method eq 'GET' or $q->request_method eq 'HEAD';
-	return unless $q->path_info =~ $path;
-	$code->();
+
+	my @captures = $q->path_info =~ $path;
+	return unless @captures;
+
+	$code->( @captures );
+
 	exit;
 }
 
 sub POST($$)
 {
 	my ( $path, $code ) = @_;
+
 	return unless $q->request_method eq 'POST';
-	return unless $q->path_info =~ $path;
-	$code->();
+
+	my @captures = $q->path_info =~ $path;
+	return unless @captures;
+
+	my $data = &getCgiParam( 'POSTDATA' );
+	my $input_ref = eval{ decode_json( $data ) };
+
+	&httpResponse({ code => 406 }) if ! $input_ref;
+
+	$code->( $input_ref, @captures );
+
 	exit;
 }
 
 sub PUT($$)
 {
 	my ( $path, $code ) = @_;
+
 	return unless $q->request_method eq 'PUT';
-	return unless $q->path_info =~ $path;
-	$code->();
+
+	my @captures = $q->path_info =~ $path;
+	return unless @captures;
+
+	my $data = &getCgiParam( 'PUTDATA' );
+	my $input_ref = eval{ decode_json( $data ) };
+
+	&httpResponse({ code => 406 }) if ! $input_ref;
+
+	$code->( $input_ref, @captures );
+
 	exit;
 }
 
 sub DELETE($$)
 {
 	my ( $path, $code ) = @_;
+
 	return unless $q->request_method eq 'DELETE';
-	return unless $q->path_info =~ $path;
-	$code->();
+
+	my @captures = $q->path_info =~ $path;
+	return unless @captures;
+
+	$code->( @captures );
+
 	exit;
 }
 
 sub OPTIONS($$)
 {
 	my ( $path, $code ) = @_;
+
 	return unless $q->request_method eq 'OPTIONS';
-	return unless $q->path_info =~ $path;
-	$code->();
+
+	my @captures = $q->path_info =~ $path;
+	return unless @captures;
+
+	$code->( @captures );
+
 	exit;
 }
 
-sub validCGISession
+POST qr{^/test$} => sub {
+	&logInput( @_ );
+};
+
+PUT qr{^/test$} => sub {
+	&logInput( @_ );
+};
+
+sub logInput
 {
+	&zenlog("Input:(".join(', ', @_).")");
+	&httpResponse({ code => 200 });
+}
+
+sub validCGISession # ()
+{
+	use CGI::Session;
+
 	my $validSession = 0;
-	my $session = CGI::Session->load( $cgi );
+	my $session = CGI::Session->load( &getCGI() );
 
 	&zenlog( "CGI SESSION ID: ".$session->id );
 	#~ &zenlog( "session data: " . Dumper $session->dataref() ); # DEBUG
@@ -285,7 +338,7 @@ sub validCGISession
 	return $validSession;
 }
 
-sub validZapiKey
+sub validZapiKey # ()
 {
 	my $validKey = 0; # output
 
@@ -301,7 +354,7 @@ sub validZapiKey
 	return $validKey;
 }
 
-sub getAuthorizationCredentials
+sub getAuthorizationCredentials # ()
 {
 	my $base64_digest;
 	my $username;
@@ -364,9 +417,9 @@ sub authenticateCredentials    #($user,$curpasswd)
 
 	Returns:
 
-		Nothing useful.
+		This function exits the execution uf the current process.
 =cut
-sub httpResponse
+sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 {
 	my $self = shift;
 
@@ -397,11 +450,6 @@ sub httpResponse
 	# header
 
 	my $output = $cgi->header(
-
-		# Standard headers
-		# -type    => 'text/plain',
-		# -type    => 'application/json',
-
 		-type    => 'application/json',
 		-charset => 'utf-8',
 		-status  => "$self->{ code } $GLOBAL::http_status_codes->{ $self->{ code } }",
@@ -458,11 +506,6 @@ sub httpResponse
 #~ &zenlog("CGI POST DATA: " . $post_data );
 #~ &zenlog("CGI PUT DATA: " . $put_data );
 
-#####################################
-
-#use JSON::XS;
-$enabled = 1; # legacy
-
 ################################################################################
 #
 # Start [Method URI] calls
@@ -480,14 +523,58 @@ $enabled = 1; # legacy
 #~ };
 
 #  OPTIONS PreAuth
-OPTIONS qr{^.*} => sub {
+OPTIONS qr{.*} => sub {
 	&httpResponse({ code => 200 });
 };
 
 #  GET CGISESSID
-GET qr{^/session/login$} => sub {
+#GET qr{^/session/login$} => sub {
+#
+#	my $session = new CGI::Session( &getCGI() );
+#
+#	if ( $session && ! $session->param( 'is_logged_in' ) )
+#	{
+#		my @credentials = &getAuthorizationCredentials();
+#
+#		my ( $username, $password ) = @credentials;
+#
+#		&zenlog("credentials: @credentials<");
+#
+#		if ( &authenticateCredentials( @credentials ) )
+#		{
+#			# successful authentication
+#			&zenlog( "Login successful for username: $username" );
+#
+#			$session->param( 'is_logged_in', 1 );
+#			$session->param( 'username', $username );
+#			$session->expire('is_logged_in', '+30m');
+#
+#			my ( $header ) = split( "\r\n", $session->header() );
+#			my ( undef, $setcookie ) = split( ': ', $header );
+#
+#			&httpResponse({
+#				code => 200,
+#				headers => { 'Set-cookie' => $setcookie },
+#			});
+#		}
+#		else # not validated credentials
+#		{
+#			&zenlog( "Login failed for username: $username" );
+#
+#			$session->delete();
+#			$session->flush();
+#
+#			&httpResponse({ code => 401 });
+#		}
+#	}
+#
+#	exit;
+#};
 
-	my $session = new CGI::Session( $cgi );
+#  POST CGISESSID
+POST qr{^/session$} => sub {
+
+	my $session = new CGI::Session( &getCGI() );
 
 	if ( $session && ! $session->param( 'is_logged_in' ) )
 	{
@@ -534,17 +621,43 @@ GET qr{^/session/login$} => sub {
 if ( not ( &validZapiKey() or &validCGISession() ) )
 {
 	&httpResponse({ code => 401 });
-	exit;
 }
 
 #	SESSION LOGOUT
 #
 
 #  LOGOUT session
-GET qr{^/session/logout$} => sub {
+#GET qr{^/session/logout$} => sub {
+#	if ( $cgi->http( 'Cookie' ) )
+#	{
+#		my $session = new CGI::Session( &getCGI() );
+#
+#		if ( $session && $session->param( 'is_logged_in' ) )
+#		{
+#			my $username = $session->param( username );
+#			my $ip_addr  = $session->param( _SESSION_REMOTE_ADDR );
+#
+#			&zenlog( "Logged out user $username from $ip_addr" );
+#
+#			$session->delete();
+#			$session->flush();
+#
+#			&httpResponse( { code => 200 } );
+#
+#			exit;
+#		}
+#	}
+#
+#	# with ZAPI key or expired cookie session
+#	&httpResponse( { code => 400 } );
+#	exit;
+#};
+
+#  DELETE session
+DELETE qr{^/session$} => sub {
 	if ( $cgi->http( 'Cookie' ) )
 	{
-		my $session = new CGI::Session( $cgi );
+		my $session = new CGI::Session( &getCGI() );
 
 		if ( $session && $session->param( 'is_logged_in' ) )
 		{
@@ -557,14 +670,11 @@ GET qr{^/session/logout$} => sub {
 			$session->flush();
 
 			&httpResponse( { code => 200 } );
-
-			exit;
 		}
 	}
 
 	# with ZAPI key or expired cookie session
 	&httpResponse( { code => 400 } );
-	exit;
 };
 
 #	CERTIFICATES
@@ -572,7 +682,7 @@ GET qr{^/session/logout$} => sub {
 
 #  POST activation certificate
 POST qr{^/certificates/activation$} => sub {
-	&upload_activation_certificate();
+	&upload_activation_certificate( @_ );
 };
 
 #	Check activation certificate
@@ -591,7 +701,7 @@ POST qr{^/certificates$} => sub {
 
 #  DELETE certificate
 DELETE qr{^/certificates/(\w+\.\w+$)} => sub {
-	&delete_certificate( $1 );
+	&delete_certificate( @_ );
 };
 
 #	FARMS
@@ -604,119 +714,119 @@ GET qr{^/farms$} => sub {
 
 #  GET get farm info
 GET qr{^/farms/(\w+$)} => sub {
-	&farms_name();
+	&farms_name( @_ );
 };
 
 #  POST new farm
 POST qr{^/farms/(\w+$)} => sub {
-	&new_farm( $1 );
+	&new_farm( @_ );
 };
 
 #  POST new service
 POST qr{^/farms/(\w+)/services$} => sub {
-	&new_farm_service( $1 );
+	&new_farm_service( @_ );
 };
 
 #  POST new zone
 POST qr{^/farms/(\w+)/zones$} => sub {
-	&new_farm_zone( $1 );
+	&new_farm_zone( @_ );
 };
 
 #  POST new backend
 POST qr{^/farms/(\w+)/backends$} => sub {
-	&new_farm_backend( $1 );
+	&new_farm_backend( @_ );
 };
 
 #  POST new zone resource
 POST qr{^/farms/(\w+)/zoneresources$} => sub {
-	&new_farm_zoneresource( $1 );
+	&new_farm_zoneresource( @_ );
 };
 
 #  POST farm actions
 POST qr{^/farms/(\w+)/actions$} => sub {
-	&actions( $1 );
+	&actions( @_ );
 };
 
 #  POST status backend actions
 POST qr{^/farms/(\w+)/maintenance$} => sub {
-	&maintenance( $1 );
+	&maintenance( @_ );
 };
 
 #  DELETE farm
 DELETE qr{^/farms/(\w+$)} => sub {
-	&delete_farm( $1 );
+	&delete_farm( @_ );
 };
 
 #  DELETE farm certificate
 DELETE qr{^/farms/(\w+)/deletecertificate/(\w+$)} => sub {
-	&delete_farmcertificate( $1, $2 );
+	&delete_farmcertificate( @_ );
 };
 
 #  DELETE service
 DELETE qr{^/farms/(\w+)/services/(\w+$)} => sub {
-	&delete_service( $1, $2 );
+	&delete_service( @_ );
 };
 
 #  DELETE zone
 #DELETE qr{^/farms/(\w+)/zones/(.*+$)} => sub {
 DELETE qr{^/farms/(\w+)/zones/(([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$)} => sub {
-	&delete_zone( $1, $2 );
+	&delete_zone( @_ );
 };
 
 #  DELETE backend (TCP/UDP/L4XNAT/DATALINK)
 DELETE qr{^/farms/(\w+)/backends/(\w+$)} => sub {
-	&delete_backend( $1, $2 );
+	&delete_backend( @_ );
 };
 
 #  DELETE backend (HTTP/HTTPS/GSLB)
 DELETE qr{^/farms/(\w+)/services/(\w+)/backends/(\w+$)} => sub {
-	&delete_service_backend( $1, $2, $3 );
+	&delete_service_backend( @_ );
 };
 
 #  DELETE zone resource
 DELETE qr{^/farms/(\w+)/zones/([a-z0-9].*-*.*\.[a-z0-9].*)/resources/(\w+$)} =>
   sub {
-	&delete_zone_resource( $1, $2, $3 );
+	&delete_zone_resource( @_ );
   };
 
 #  PUT farm
 PUT qr{^/farms/(\w+$)} => sub {
-	&modify_farm( $1 );
+	&modify_farm( @_ );
 };
 
 #  PUT backend
 PUT qr{^/farms/(\w+)/backends/(\w+$)} => sub {
-	&modify_backends( $1, $2 );
+	&modify_backends( @_ );
 };
 
 #  PUT farmguardian
 PUT qr{^/farms/(\w+)/fg$} => sub {
-	&modify_farmguardian( $1 );
+	&modify_farmguardian( @_ );
 };
 
 #  PUT resources
 PUT qr{^/farms/(\w+)/resources/(\w+$)} => sub {
-	&modify_resources( $1, $2 );
+	&modify_resources( @_ );
 };
 
 #  PUT zones
 PUT qr{^/farms/(\w+)/zones/(.*+$)} => sub {
-	&modify_zones( $1, $2 );
+	&modify_zones( @_ );
 };
 
 #  PUT services
 PUT qr{^/farms/(\w+)/services/(\w+$)} => sub {
-	&modify_services( $1, $2 );
+	&modify_services( @_ );
 };
 
 #  POST add certificates
 POST qr{^/farms/(\w+)/addcertificate$} => sub {
-	&add_farmcertificate( $1 );
+	&add_farmcertificate( @_ );
 };
 
 #  PUT change certificates
-PUT qr{^/farms/(\w+)/changecertificate$} => sub {
-	&change_farmcertificate( $1 );
+PUT qr{^/farms/(\w+)/changecertificate$} => sub { # FIXME: find change_farmcertificate function
+	&change_farmcertificate( @_ );
 };
 
 #	NETWORK INTERFACES
@@ -729,12 +839,12 @@ GET qr{^/interfaces$} => sub {
 
 #  POST virtual interface
 POST qr{^/interfaces/([a-zA-Z0-9\.]+:[a-zA-Z0-9]+)$} => sub {
-	&new_vini( $1 );
+	&new_vini( @_ );
 };
 
 #  POST vlan interface
 POST qr{^/interfaces/([a-zA-Z0-9]+\.[0-9]+)$} => sub {
-	&new_vlan( $1 );
+	&new_vlan( @_ );
 };
 
 # FIXME: implement up/down in PUT method
@@ -745,12 +855,12 @@ POST qr{^/interfaces/([a-zA-Z0-9]+\.[0-9]+)$} => sub {
 
 #  DELETE virtual interface (default)
 DELETE qr{^/interfaces/(.+)$} => sub {
-	&delete_interface( $1 );
+	&delete_interface( @_ );
 };
 
 #  PUT interface
 PUT qr{^/interfaces/(.+)$} => sub {
-	&modify_interface( $1 );
+	&modify_interface( @_ );
 };
 
 #	STATS
@@ -783,7 +893,7 @@ GET qr{^/stats/cpu$} => sub {
 
 #  GET farm stats
 GET qr{^/farms/(\w+)/stats$} => sub {
-	&farm_stats( $1 );
+	&farm_stats( @_ );
 };
 
 #	GRAPHS
@@ -791,7 +901,7 @@ GET qr{^/farms/(\w+)/stats$} => sub {
 
 #  GET graphs
 GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
-	&get_graphs( $1, $2, $3 );
+	&get_graphs( @_ );
 };
 
 #  GET possible graphs
@@ -799,9 +909,12 @@ GET qr{^/graphs} => sub {
 	&possible_graphs();
 };
 
+# Reply status code 400 when the requested URI does not match.
+# This should be the last sentence in this file.
 &httpResponse({
 	code => 400,
 	body => {
-		message => 'Request not recognized'
+		message => 'Request not recognized',
+		error => 'true',
 		}
 	});

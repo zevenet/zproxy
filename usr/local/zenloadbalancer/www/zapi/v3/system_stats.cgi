@@ -42,41 +42,26 @@
 #Get Graphs
 sub get_graphs()
 {
-
-	use CGI;
-	my $q = CGI->new;
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
-
-	# My parameters
-	my $gtype     = $1;
-	my $gtype2    = $2;
-	my $frecuency = $3;
+	my $gtype     = shift;
+	my $gtype2    = shift;
+	my $frecuency = shift;
 
 	# Check RRD files are generated
 	opendir ( DIR, "$rrdap_dir/$rrd_dir" );
 	my @rrdlist = grep ( /^*.rrd$/, readdir ( DIR ) );
+
 	if ( @rrdlist eq 0 )
 	{
-
 		&zenlog( "ZAPI error, there is no rrd files in folder yet." );
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "There is no rrd files yet.";
-		my $output = $j->encode(
-								 {
-								   description => "Get graphs",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+
+		my $errormsg = "There is no rrd files yet.";
+		my $body = {
+					 description => "Get graphs",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	# Error handling
@@ -85,23 +70,16 @@ sub get_graphs()
 	{
 		&zenlog(
 			 "ZAPI error, trying to get graphs, invalid first parameter, can't be blank." );
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+
+		my $errormsg =
 		  "Invalid first parameter value; the possible values are system, network and farm";
-		my $output = $j->encode(
-								 {
-								   description => "Get graphs",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $body = {
+					 description => "Get graphs",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	if ( $gtype =~ /^system|network|farm$/ )
 	{
@@ -123,23 +101,16 @@ sub get_graphs()
 		&zenlog(
 			"ZAPI error, trying to get graphs, invalid first parameter, the possible values are system, network and farm."
 		);
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+
+		my $errormsg =
 		  "Invalid first parameter value; the possible values are system, network and farm";
-		my $output = $j->encode(
-								 {
-								   description => "Get graphs",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $body = {
+					 description => "Get graphs",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	# Second parameter
@@ -163,7 +134,8 @@ sub get_graphs()
 
 	my $flag      = 0;
 	my @graphlist = &getGraphs2Show( $gtype );
-	foreach $graphlist ( @graphlist )
+
+	foreach my $graphlist ( @graphlist )
 	{
 		if ( $gtype2 eq $graphlist )
 		{
@@ -181,23 +153,16 @@ sub get_graphs()
 			&zenlog(
 				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are cpu load mem memsw and your disks"
 			);
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg =
+
+			my $errormsg =
 			  "Invalid second parameter value; the possible values are cpu load mem memsw or any of your disks";
-			my $output = $j->encode(
-									 {
-									   description => "Get graphs",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $body = {
+						 description => "Get graphs",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 		elsif ( $gtype eq "Network" )
 		{
@@ -205,23 +170,15 @@ sub get_graphs()
 				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are any available interface"
 			);
 
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg =
+			my $errormsg =
 			  "Invalid second parameter value; the possible values are any available interface";
-			my $output = $j->encode(
-									 {
-									   description => "Get graphs",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $body = {
+						 description => "Get graphs",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 		elsif ( $gtype eq "Farm" )
 		{
@@ -229,23 +186,15 @@ sub get_graphs()
 				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are any created farm"
 			);
 
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg =
+			my $errormsg =
 			  "Invalid second parameter value; the possible values are any created farm";
-			my $output = $j->encode(
-									 {
-									   description => "Get graphs",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $body = {
+						 description => "Get graphs",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 	}
 
@@ -254,23 +203,16 @@ sub get_graphs()
 		if ( $gtype eq "System" )
 		{
 			&zenlog( "ZAPI error, trying to get graphs, invalid second parameter." );
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg =
+
+			my $errormsg =
 			  "Invalid second parameter value; the possible values are cpu load mem memsw or any of your disks";
-			my $output = $j->encode(
-									 {
-									   description => "Get graphs",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $body = {
+						 description => "Get graphs",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 		elsif ( $gtype eq "Network" )
 		{
@@ -278,23 +220,15 @@ sub get_graphs()
 				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are any available interface"
 			);
 
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg =
+			my $errormsg =
 			  "Invalid second parameter value; the possible values are any available interface";
-			my $output = $j->encode(
-									 {
-									   description => "Get graphs",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $body = {
+						 description => "Get graphs",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 		elsif ( $gtype eq "Farm" )
 		{
@@ -302,25 +236,16 @@ sub get_graphs()
 				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are any created farm"
 			);
 
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg =
+			my $errormsg =
 			  "Invalid second parameter value; the possible values are any created farm";
-			my $output = $j->encode(
-									 {
-									   description => "Get graphs",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
-		}
+			my $body = {
+						 description => "Get graphs",
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
+		}
 	}
 
 	# Third parameter
@@ -329,67 +254,40 @@ sub get_graphs()
 		&zenlog(
 			"ZAPI error, trying to get graphs, invalid third parameter, the possible values are daily, weekly, monthly and yearly."
 		);
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+
+		my $errormsg =
 		  "Invalid third parameter value; the possible values are daily, weekly, monthly and yearly";
-		my $output = $j->encode(
-								 {
-								   description => "Get graphs",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $body = {
+					 description => "Get graphs",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( $frecuency =~ /^daily|weekly|monthly|yearly$/ )
 	{
-		if ( $frecuency eq "daily" )
-		{
-			$frecuency = "d";
-		}
-		if ( $frecuency eq "weekly" )
-		{
-			$frecuency = "w";
-		}
-		if ( $frecuency eq "monthly" )
-		{
-			$frecuency = "m";
-		}
-		if ( $frecuency eq "yearly" )
-		{
-			$frecuency = "y";
-		}
-
+		if ( $frecuency eq "daily" )   { $frecuency = "d"; }
+		if ( $frecuency eq "weekly" )  { $frecuency = "w"; }
+		if ( $frecuency eq "monthly" ) { $frecuency = "m"; }
+		if ( $frecuency eq "yearly" )  { $frecuency = "y"; }
 	}
 	else
 	{
 		&zenlog(
 			"ZAPI error, trying to get graphs, invalid third parameter, the possible values are daily, weekly, monthly and yearly."
 		);
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+
+		my $errormsg =
 		  "Invalid third parameter value; the possible values are daily, weekly, monthly and yearly";
-		my $output = $j->encode(
-								 {
-								   description => "Get graphs",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $body = {
+					 description => "Get graphs",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	# Print Graph Function
@@ -398,21 +296,12 @@ sub get_graphs()
 	# Print Success
 	&zenlog( "ZAPI success, trying to get graphs." );
 
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
+	my $body = {
+				 description => "Graphs",
+				 graph       => $graph,
+	};
 
-	my $output = $j->encode(
-							 {
-							   description => "Graphs",
-							   graph       => $graph,
-							 }
-	);
-	print $output;
-
+	&httpResponse({ code => 200, body => $body });
 }
 
 #**
@@ -490,33 +379,29 @@ sub get_graphs()
 #GET disk
 sub possible_graphs()
 {
-
 	# Variables
-	use CGI;
-	my $q     = CGI->new;
-	my $out   = [];
-	my $sys   = [];
-	my $disks = [];
-	my $net   = [];
-	my $iface = [];
-	my $farm  = [];
-	my $val   = [];
+	my @sys;
+	my @disks;
+	my @net;
+	my @iface;
+	my @farm;
+	my @val;
 
 	# System values
 	my @graphlist = &getGraphs2Show( "System" );
-	foreach $graphlist ( @graphlist )
+	foreach my $graphlist ( @graphlist )
 	{
 		if ( $graphlist =~ /dev/ )
 		{
 			$graphlist =~ s/hd$//g;
-			push $disks, { disk => $graphlist };
+			push @disks, { disk => $graphlist };
 		}
 	}
 
-	push $sys,
+	push @sys,
 	  {
 		cpu_usage    => "cpu",
-		disks        => $disks,
+		disks        => @disks,
 		load_average => "load",
 		ram_memory   => "ram",
 		swap_memory  => "memsw"
@@ -524,51 +409,40 @@ sub possible_graphs()
 
 	# Network values
 	@graphlist = &getGraphs2Show( "Network" );
-	foreach $graphlist ( @graphlist )
+	foreach my $graphlist ( @graphlist )
 	{
 		if ( $graphlist =~ /iface/ )
 		{
 			$graphlist =~ s/iface//g;
-			push $iface, { iface => $graphlist };
+			push @iface, { iface => $graphlist };
 		}
 	}
 
-	push $net, { interfaces => $iface, };
+	push @net, { interfaces => \@iface };
 
 	# Farm values
 	@graphlist = &getGraphs2Show( "Farm" );
-	foreach $graphlist ( @graphlist )
+	foreach my $graphlist ( @graphlist )
 	{
 		if ( $graphlist =~ /-farm/ )
 		{
 			$graphlist =~ s/-farm//g;
-			push $val, { farmname => $graphlist };
+			push @val, { farmname => $graphlist };
 		}
 	}
 
-	push $farm, { farms => $val, };
+	push @farm, { farms => @val };
 
 	# Success
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
+	my $body = {
+		description =>
+		  "These are the possible graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
+		system  => \@sys,
+		network => \@net,
+		farm    => \@farm
+	};
 
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( [$enabled] );
-	my $output = $j->encode(
-		{
-		   description =>
-			 "These are the possible graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
-		   system  => $sys,
-		   network => $net,
-		   farm    => $farm
-		}
-	);
-	print $output;
-
+	&httpResponse({ code => 200, body => $body });
 }
 
 ########### GET FARM STATS
@@ -644,19 +518,16 @@ sub possible_graphs()
 #**
 
 #Get Farm Stats
-sub farm_stats()
+sub farm_stats # ( $farmname )
 {
+	my $farmname = shift;
 
-	use CGI;
-	my $q        = CGI->new;
-	my $farmname = $1;
-
-	my $type = &getFarmType( $1 );
+	my $type = &getFarmType( $farmname );
 
 	if ( $type eq "http" || $type eq "https" )
 	{
-		my $out_rss = [];
-		my $out_css = [];
+		my @out_rss;
+		my @out_css;
 
 		# Real Server Table, from content1-25.cgi
 		my @netstat;
@@ -720,7 +591,7 @@ sub farm_stats()
 				$backends_data[3] = "down";
 			}
 
-			push $out_rss,
+			push @out_rss,
 			  {
 				Service          => $a_service[$i],
 				Server           => $backends_data[0],
@@ -740,7 +611,7 @@ sub farm_stats()
 		{
 			my @sessions_data = split ( "\t", $_ );
 
-			push $out_css,
+			push @out_css,
 			  {
 				Service   => $sessions_data[0],
 				Client    => $sessions_data[1],
@@ -750,29 +621,21 @@ sub farm_stats()
 		}
 
 		# Print Success
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( [$enabled] );
 		my $output = $j->encode(
 								 {
 								   description         => "List farm stats",
-								   realserversstatus   => $out_rss,
-								   clientsessionstatus => $out_css,
+								   realserversstatus   => \@out_rss,
+								   clientsessionstatus => \@out_css,
 								 }
 		);
-		print $output;
+
+		&httpResponse({ code => 200, body => $body });
 	}
 
 	if ( $type eq "l4xnat" )
 	{
 		# Parameters
-		my $out_rss = [];
+		my @out_rss;
 
 		my @args;
 		my $nattype = &getFarmNatType( $farmname );
@@ -826,7 +689,7 @@ sub farm_stats()
 				$backends_data[4] = "down";
 			}
 
-			push $out_rss,
+			push @out_rss,
 			  {
 				Server           => $index,
 				Address          => $ip_backend,
@@ -837,27 +700,15 @@ sub farm_stats()
 			  };
 
 			$index = $index + 1;
-
 		}
 
 		# Print Success
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
+		my $body = {
+					 description       => "List farm stats",
+					 realserversstatus => \@out_rss,
+		};
 
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( [$enabled] );
-		my $output = $j->encode(
-								 {
-								   description       => "List farm stats",
-								   realserversstatus => $out_rss,
-								 }
-		);
-		print $output;
-
+		&httpResponse({ code => 200, body => $body });
 	}
 
 	if ( $type eq "gslb" )
@@ -865,25 +716,13 @@ sub farm_stats()
 		my $out_rss = "There are no stats for GSLB farms yet. We are working on it!";
 
 		# Print Success
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
+		my $body = {
+					 description       => "List farm stats",
+					 realserversstatus => $out_rss,
+		};
 
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( [$enabled] );
-		my $output = $j->encode(
-								 {
-								   description       => "List farm stats",
-								   realserversstatus => $out_rss,
-								 }
-		);
-		print $output;
-
+		&httpResponse({ code => 200, body => $body });
 	}
-
 }
 
 #**
@@ -978,86 +817,61 @@ sub farm_stats()
 #**
 
 #GET /stats
-sub stats()
+sub stats # ()
 {
-
-	use CGI;
-	my $q = CGI->new;
-
-	my $out = [];
-	my ( $x, $y );
-
 	my @data_mem  = &getMemStats();
 	my @data_load = &getLoadStats();
 	my @data_net  = &getNetworkStats();
 	my @data_cpu  = &getCPU();
 
-	#date
-	push $out, { 'hostname' => &getHostname() };
-	push $out, { 'date'     => &getDate() };
+	my $out = {
+		'hostname' => &getHostname(),
+		'date'     => &getDate(),
+	};
 
-	#splice $out, $#out, 0, { 'date' => &getDate()};
-
-	foreach $x ( 0 .. @data_mem - 1 )
+	foreach my $x ( 0 .. @data_mem - 1 )
 	{
-
-		$name  = $data_mem[$x][0];
-		$value = $data_mem[$x][1] + 0;
-		push $out, { $name => $value };
-
+		my $name  = $data_mem[$x][0];
+		my $value = $data_mem[$x][1] + 0;
+		$out->{ memory }->{ $name } = $value;
 	}
 
-	foreach $x ( 0 .. @data_load - 1 )
+	foreach my $x ( 0 .. @data_load - 1 )
 	{
-
-		$name  = $data_load[$x][0];
-		$value = $data_load[$x][1] + 0;
-		push $out, { $name => $value };
-
+		my $name  = $data_load[$x][0];
+		my $value = $data_load[$x][1] + 0;
+		$out->{ load }->{ $name } = $value;
 	}
 
-	foreach $x ( 0 .. @data_cpu - 1 )
+	foreach my $x ( 0 .. @data_cpu - 1 )
 	{
-		$name  = $data_cpu[$x][0];
-		$value = $data_cpu[$x][1] + 0;
-		push $out, { $name => $value };
+		my $name  = $data_cpu[$x][0];
+		my $value = $data_cpu[$x][1] + 0;
+		$out->{ cpu }->{ $name } = $value;
 	}
 
-	foreach $x ( 0 .. @data_net - 1 )
+	foreach my $x ( 0 .. @data_net - 1 )
 	{
-
+		my $name;
 		if ( $x % 2 == 0 )
 		{
 			$name = $data_net[$x][0] . ' in';
-
 		}
 		else
 		{
 			$name = $data_net[$x][0] . ' out';
-
 		}
-		$value = $data_net[$x][1] + 0;
-		push $out, { $name => $value };
+		my $value = $data_net[$x][1] + 0;
+		$out->{ network }->{ $name } = $value;
 	}
 
 	# Success
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
+	my $body = {
+				 description => "System stats",
+				 params      => $out
+	};
 
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( [$enabled] );
-	my $output = $j->encode(
-							 {
-							   description => "System stats",
-							   params      => $out
-							 }
-	);
-	print $output;
-
+	&httpResponse({ code => 200, body => $body });
 }
 
 #**
@@ -1112,51 +926,30 @@ sub stats()
 #@apiSampleRequest off
 #**
 
-#GET /stats mem
-sub stats_mem()
+#GET /stats/mem
+sub stats_mem # ()
 {
-
-	use CGI;
-	my $q = CGI->new;
-
-	my $out = [];
-	my ( $x, $y );
-
 	my @data_mem = &getMemStats();
 
-	#date
-	push $out, { 'hostname' => &getHostname() };
-	push $out, { 'date'     => &getDate() };
+	my $out = {
+		'hostname' => &getHostname(),
+		'date'     => &getDate(),
+	};
 
-	#splice $out, $#out, 0, { 'date' => &getDate()};
-
-	foreach $x ( 0 .. @data_mem - 1 )
+	foreach my $x ( 0 .. @data_mem - 1 )
 	{
-
-		$name  = $data_mem[$x][0];
-		$value = $data_mem[$x][1] + 0;
-		push $out, { $name => $value };
-
+		my $name  = $data_mem[$x][0];
+		my $value = $data_mem[$x][1] + 0;
+		$out->{ $name } = $value;
 	}
 
 	# Success
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
+	my $body = {
+				 description => "System stats",
+				 params      => $out
+	};
 
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( [$enabled] );
-	my $output = $j->encode(
-							 {
-							   description => "System stats",
-							   params      => $out
-							 }
-	);
-	print $output;
-
+	&httpResponse({ code => 200, body => $body });
 }
 
 #**
@@ -1196,51 +989,30 @@ sub stats_mem()
 #@apiSampleRequest off
 #**
 
-#GET /stats load
-sub stats_load()
+#GET /stats/load
+sub stats_load # ()
 {
-
-	use CGI;
-	my $q = CGI->new;
-
-	my $out = [];
-	my ( $x, $y );
-
 	my @data_load = &getLoadStats();
 
-	#date
-	push $out, { 'hostname' => &getHostname() };
-	push $out, { 'date'     => &getDate() };
+	my $out = {
+		'hostname' => &getHostname(),
+		'date'     => &getDate(),
+	};
 
-	#splice $out, $#out, 0, { 'date' => &getDate()};
-
-	foreach $x ( 0 .. @data_load - 1 )
+	foreach my $x ( 0 .. @data_load - 1 )
 	{
-
-		$name  = $data_load[$x][0];
-		$value = $data_load[$x][1] + 0;
-		push $out, { $name => $value };
-
+		my $name  = $data_load[$x][0];
+		my $value = $data_load[$x][1] + 0;
+		$out->{ $name } = $value;
 	}
 
 	# Success
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
+	my $body = {
+				 description => "System stats",
+				 params      => $out
+	};
 
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( [$enabled] );
-	my $output = $j->encode(
-							 {
-							   description => "System stats",
-							   params      => $out
-							 }
-	);
-	print $output;
-
+	&httpResponse({ code => 200, body => $body });
 }
 
 #**
@@ -1295,49 +1067,30 @@ sub stats_load()
 #@apiSampleRequest off
 #**
 
-#GET /stats cpu
-sub stats_cpu()
+#GET /stats/cpu
+sub stats_cpu # ()
 {
-
-	use CGI;
-	my $q = CGI->new;
-
-	my $out = [];
-	my ( $x, $y );
-
 	my @data_cpu = &getCPU();
 
-	#date
-	push $out, { 'hostname' => &getHostname() };
-	push $out, { 'date'     => &getDate() };
+	my $out = {
+		'hostname' => &getHostname(),
+		'date'     => &getDate(),
+	};
 
-	#splice $out, $#out, 0, { 'date' => &getDate()};
-
-	foreach $x ( 0 .. @data_cpu - 1 )
+	foreach my $x ( 0 .. @data_cpu - 1 )
 	{
-		$name  = $data_cpu[$x][0];
-		$value = $data_cpu[$x][1] + 0;
-		push $out, { $name => $value };
+		my $name  = $data_cpu[$x][0];
+		my $value = $data_cpu[$x][1] + 0;
+		$out->{ $name } = $value;
 	}
 
 	# Success
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
+	my $body = {
+				 description => "System stats",
+				 params      => $out
+	};
 
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( [$enabled] );
-	my $output = $j->encode(
-							 {
-							   description => "System stats",
-							   params      => $out
-							 }
-	);
-	print $output;
-
+	&httpResponse({ code => 200, body => $body });
 }
 
 #**
@@ -1386,60 +1139,38 @@ sub stats_cpu()
 #@apiSampleRequest off
 #**
 
-#GET /stats network
-sub stats_network()
+#GET /stats/network
+sub stats_network # ()
 {
-
-	use CGI;
-	my $q = CGI->new;
-
-	my $out = [];
-	my ( $x, $y );
-
 	my @data_net = &getNetworkStats();
 
-	#date
-	push $out, { 'hostname' => &getHostname() };
-	push $out, { 'date'     => &getDate() };
+	my $out = {
+		'hostname' => &getHostname(),
+		'date'     => &getDate(),
+	};
 
-	#splice $out, $#out, 0, { 'date' => &getDate()};
-
-	foreach $x ( 0 .. @data_net - 1 )
+	foreach my $x ( 0 .. @data_net - 1 )
 	{
-
+		my $name;
 		if ( $x % 2 == 0 )
 		{
-			$name = $data_net[$x][0] . ' in';
-
+			my $name = $data_net[$x][0] . ' in';
 		}
 		else
 		{
-			$name = $data_net[$x][0] . ' out';
-
+			my $name = $data_net[$x][0] . ' out';
 		}
-		$value = $data_net[$x][1] + 0;
-		push $out, { $name => $value };
+		my $value = $data_net[$x][1] + 0;
+		$out->{ $name } = $value;
 	}
 
 	# Success
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
+	my $body = {
+				 description => "System stats",
+				 params      => $out
+	};
 
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( [$enabled] );
-	my $output = $j->encode(
-							 {
-							   description => "System stats",
-							   params      => $out
-							 }
-	);
-	print $output;
-
+	&httpResponse({ code => 200, body => $body });
 }
 
-1
-
+1;

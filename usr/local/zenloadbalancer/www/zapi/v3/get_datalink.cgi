@@ -62,33 +62,35 @@
 #
 #**
 
-sub farms_name_datalink()
+sub farms_name_datalink # ( $farmname )
 {
+	my $farmname = shift;
 
-########### params
-	use CGI;
-	my $q = CGI->new;
+	my @out_p;
+	my @out_b;
 
-	my $out_p = [];
-	my $out_b = [];
+	my $vip = &getFarmVip( "vip", $farmname );
 
-	$vip = &getFarmVip( "vip", $1 );
-
-	push $out_p, { vip => $vip, algorithm => &getFarmAlgorithm( $1 ) };
+	push @out_p, {
+		vip => $vip,
+		algorithm => &getFarmAlgorithm( $farmname ),
+	};
 
 ########### backends
+	my @run = &getFarmServers( $farmname );
 
-	my @run = &getFarmServers( $1 );
-	foreach $l_servers ( @run )
+	foreach my $l_servers ( @run )
 	{
 		my @l_serv = split ( ";", $l_servers );
+
 		$l_serv[0] = $l_serv[0] + 0;
 		$l_serv[3] = $l_serv[3] + 0;
 		$l_serv[4] = $l_serv[4] + 0;
 		$l_serv[5] = $l_serv[5] + 0;
+
 		if ( $l_serv[1] ne "0.0.0.0" )
 		{
-			push $out_b,
+			push @out_b,
 			  {
 				id        => $l_serv[0],
 				ip        => $l_serv[1],
@@ -99,26 +101,13 @@ sub farms_name_datalink()
 		}
 	}
 
-########### print JSON
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
+	my $body = {
+				 description => "List farm $farmname",
+				 params      => \@out_p,
+				 backends    => \@out_b
+	};
 
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
-	my $output = $j->encode(
-							 {
-							   description => "List farm $1",
-							   params      => $out_p,
-							   backends    => $out_b
-							 }
-	);
-
-	print $output;
-
+	&httpResponse({ code => 200, body => $body });
 }
 
-1
+1;

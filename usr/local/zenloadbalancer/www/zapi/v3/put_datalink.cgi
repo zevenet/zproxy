@@ -47,252 +47,211 @@
 #
 #**
 
-####### Params
-
-my $out_p = [];
-
-use CGI;
-use JSON;
-
-my $q        = CGI->new;
-my $json     = JSON->new;
-my $data     = $q->param( 'PUTDATA' );
-my $json_obj = $json->decode( $data );
-
-my $j = JSON::XS->new->utf8->pretty( 1 );
-$j->canonical( $enabled );
-
-my $reload_flag  = "false";
-my $restart_flag = "false";
-my $error        = "false";
-
-####### Functions
-
-# Check that the farm exists
-if ( &getFarmFile( $farmname ) == -1 ) {
-	# Error
-	print $q->header(
-	-type=> 'text/plain',
-	-charset=> 'utf-8',
-	-status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
-	$errormsg = "The farmname $farmname does not exists.";
-	my $output = $j->encode({
-			description => "Modify farm",
-			error => "true",
-			message => $errormsg
-	});
-	print $output;
-	exit;
-
-}
-
-# Modify Load Balance Algorithm
-if ( exists ( $json_obj->{ algorithm } ) )
+sub modify_datalink_farm # ( $json_obj, $farmname )
 {
-	if ( $json_obj->{ algorithm } =~ /^$/ )
-	{
-		$error = "true";
-		&zenlog(
-			"ZAPI error, trying to modify a datalink farm $farmname, invalid algorithm, can't be blank."
-		);
-	}
-	if ( $json_obj->{ algorithm } =~ /^weight|prio$/ )
-	{
-		$status = &setFarmAlgorithm( $json_obj->{ algorithm }, $farmname );
-		if ( $status == -1 )
-		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a datalink farm $farmname, some errors happened trying to modify the algorithm."
-			);
-		}
-		else
-		{
-			$restart_flag = "true";
-		}
-	}
-	else
-	{
-		$error = "true";
-		&zenlog(
-			 "ZAPI error, trying to modify a datalink farm $farmname, invalid algorithm." );
-	}
-}
+	my $json_obj = shift;
+	my $farmname = shift;
 
-# Modify Virtual IP and Interface
-if ( exists ( $json_obj->{ interfacevip } ) )
-{
-	if ( $json_obj->{ interfacevip } =~ /^$/ )
-	{
-		$error = "true";
-		&zenlog(
-			"ZAPI error, trying to modify a datalink farm $farmname, invalid interfacevip, can't be blank."
-		);
-	}
-	elsif ( $json_obj->{ interfacevip } =~ /^[a-zA-Z0-9.]+/ )
-	{
-		my @fvip = split ( " ", $json_obj->{ interfacevip } );
-		my $fdev = @fvip[0];
-		my $vip  = @fvip[1];
+	my $reload_flag  = "false";
+	my $restart_flag = "false";
+	my $error        = "false";
 
-		if ( $fdev eq "" )
+	####### Functions
+
+	# Check that the farm exists
+	if ( &getFarmFile( $farmname ) == -1 ) {
+		# Error
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $output = {
+					   description => "Modify farm",
+					   error       => "true",
+					   message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# Modify Load Balance Algorithm
+	if ( exists ( $json_obj->{ algorithm } ) )
+	{
+		if ( $json_obj->{ algorithm } =~ /^$/ )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a datalink farm $farmname, invalid Interface value."
+				"ZAPI error, trying to modify a datalink farm $farmname, invalid algorithm, can't be blank."
 			);
 		}
-		elsif ( $vip eq "" )
+		if ( $json_obj->{ algorithm } =~ /^weight|prio$/ )
 		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a datalink farm $farmname, invalid Virtual IP value."
-			);
-		}
-		else
-		{
-			$status = &setFarmVirtualConf( $vip, $fdev, $farmname );
-			if ( $status != -1 )
-			{
-				$restart_flag = "true";
-			}
-			else
+			$status = &setFarmAlgorithm( $json_obj->{ algorithm }, $farmname );
+			if ( $status == -1 )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify a datalink farm $farmname, it's not possible to change the farm virtual IP and interface."
+					"ZAPI error, trying to modify a datalink farm $farmname, some errors happened trying to modify the algorithm."
 				);
 			}
-		}
-
-	}
-	else
-	{
-		$error = "true";
-		&zenlog(
-			 "ZAPI error, trying to modify a datalink farm $farmname, invalid interfacevip."
-		);
-	}
-}
-
-# Modify Farm's Name
-if ( exists ( $json_obj->{ newfarmname } ) )
-{
-	if ( $json_obj->{ newfarmname } =~ /^$/ )
-	{
-		$error = "true";
-		&zenlog(
-			"ZAPI error, trying to modify a datalink farm $farmname, invalid newfarmname, can't be blank."
-		);
-	}
-	else
-	{
-		if ($json_obj->{newfarmname} ne $farmname)
-		{
-			#Check if farmname has correct characters (letters, numbers and hyphens)
-			if ( $json_obj->{ newfarmname } =~ /^[a-zA-Z0-9\-]*$/ )
+			else
 			{
-				#Check if the new farm's name alredy exists
-				my $newffile = &getFarmFile( $json_obj->{ newfarmname } );
-				if ( $newffile != -1 )
+				$restart_flag = "true";
+			}
+		}
+		else
+		{
+			$error = "true";
+			&zenlog(
+				 "ZAPI error, trying to modify a datalink farm $farmname, invalid algorithm." );
+		}
+	}
+
+	# Modify Virtual IP and Interface
+	if ( exists ( $json_obj->{ interfacevip } ) )
+	{
+		if ( $json_obj->{ interfacevip } =~ /^$/ )
+		{
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify a datalink farm $farmname, invalid interfacevip, can't be blank."
+			);
+		}
+		elsif ( $json_obj->{ interfacevip } =~ /^[a-zA-Z0-9.]+/ )
+		{
+			my @fvip = split ( " ", $json_obj->{ interfacevip } );
+			my $fdev = @fvip[0];
+			my $vip  = @fvip[1];
+
+			if ( $fdev eq "" )
+			{
+				$error = "true";
+				&zenlog(
+					"ZAPI error, trying to modify a datalink farm $farmname, invalid Interface value."
+				);
+			}
+			elsif ( $vip eq "" )
+			{
+				$error = "true";
+				&zenlog(
+					"ZAPI error, trying to modify a datalink farm $farmname, invalid Virtual IP value."
+				);
+			}
+			else
+			{
+				$status = &setFarmVirtualConf( $vip, $fdev, $farmname );
+				if ( $status != -1 )
 				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify a datalink farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
-					);
+					$restart_flag = "true";
 				}
 				else
 				{
-					#Change farm name
-					my $fnchange = &setNewFarmName( $farmname, $json_obj->{ newfarmname } );
-					if ( $fnchange == -1 )
+					$error = "true";
+					&zenlog(
+						"ZAPI error, trying to modify a datalink farm $farmname, it's not possible to change the farm virtual IP and interface."
+					);
+				}
+			}
+
+		}
+		else
+		{
+			$error = "true";
+			&zenlog(
+				 "ZAPI error, trying to modify a datalink farm $farmname, invalid interfacevip."
+			);
+		}
+	}
+
+	# Modify Farm's Name
+	if ( exists ( $json_obj->{ newfarmname } ) )
+	{
+		if ( $json_obj->{ newfarmname } =~ /^$/ )
+		{
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify a datalink farm $farmname, invalid newfarmname, can't be blank."
+			);
+		}
+		else
+		{
+			if ($json_obj->{newfarmname} ne $farmname)
+			{
+				#Check if farmname has correct characters (letters, numbers and hyphens)
+				if ( $json_obj->{ newfarmname } =~ /^[a-zA-Z0-9\-]*$/ )
+				{
+					#Check if the new farm's name alredy exists
+					my $newffile = &getFarmFile( $json_obj->{ newfarmname } );
+					if ( $newffile != -1 )
 					{
-						&error = "true";
+						$error = "true";
 						&zenlog(
-							"ZAPI error, trying to modify a datalink farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
+							"ZAPI error, trying to modify a datalink farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
 						);
 					}
 					else
 					{
-						$restart_flag = "true";
-						$farmname     = $json_obj->{ newfarmname };
+						#Change farm name
+						my $fnchange = &setNewFarmName( $farmname, $json_obj->{ newfarmname } );
+						if ( $fnchange == -1 )
+						{
+							&error = "true";
+							&zenlog(
+								"ZAPI error, trying to modify a datalink farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
+							);
+						}
+						else
+						{
+							$restart_flag = "true";
+							$farmname     = $json_obj->{ newfarmname };
+						}
 					}
 				}
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					  "ZAPI error, trying to modify a datalink farm $farmname, invalid newfarmname."
-				);
+				else
+				{
+					$error = "true";
+					&zenlog(
+						  "ZAPI error, trying to modify a datalink farm $farmname, invalid newfarmname."
+					);
+				}
 			}
 		}
 	}
-}
 
-# Restart Farm
-if ( $restart_flag eq "true" )
-{
-	&runFarmStop( $farmname, "true" );
-	&runFarmStart( $farmname, "true" );
-}
-
-# Check errors and print JSON
-if ( $error ne "true" )
-{
-	&zenlog(
-			  "ZAPI success, some parameters have been changed in farm $farmname." );
-
-	# Success
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
-
-	foreach $key ( keys %$json_obj )
+	# Restart Farm
+	if ( $restart_flag eq "true" )
 	{
-		push $out_p, { $key => $json_obj->{ $key } };
+		&runFarmStop( $farmname, "true" );
+		&runFarmStart( $farmname, "true" );
 	}
 
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
-	my $output = $j->encode(
-							 {
-							   description => "Modify farm $farmname",
-							   params      => $out_p
-							 }
-	);
-	print $output;
+	# Check errors and print JSON
+	if ( $error ne "true" )
+	{
+		&zenlog(
+				  "ZAPI success, some parameters have been changed in farm $farmname." );
 
-}
-else
-{
-	&zenlog(
-		"ZAPI error, trying to modify a datalink farm $farmname, it's not possible to modify the farm."
-	);
+		# Success
+		my $body = {
+					 description => "Modify farm $farmname",
+					 params      => $json_obj
+		};
 
-	# Error
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
-	$errormsg = "Errors found trying to modify farm $farmname";
-	my $output = $j->encode(
-							 {
-							   description => "Modify farm $farmname",
-							   error       => "true",
-							   message     => $errormsg
-							 }
-	);
-	print $output;
-	exit;
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		&zenlog(
+			"ZAPI error, trying to modify a datalink farm $farmname, it's not possible to modify the farm."
+		);
+
+		# Error
+		my $errormsg = "Errors found trying to modify farm $farmname";
+		my $body = {
+					 description => "Modify farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
 }
 
-1
-
+1;

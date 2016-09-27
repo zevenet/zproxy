@@ -42,16 +42,9 @@
 #
 #**
 
-sub delete_farm()
+sub delete_farm # ( $farmname )
 {
-
-	$farmname = @_[0];
-
-	use CGI;
-	my $q = CGI->new;
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
+	my $farmname = shift;
 
 	if ( $farmname =~ /^$/ )
 	{
@@ -59,22 +52,14 @@ sub delete_farm()
 				  "ZAPI error, trying to delete the farm $farmname, invalid farm name." );
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid farm name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Delete farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid farm name, please insert a valid value.";
+		my $body = {
+					 description => "Delete farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	my $newffile = &getFarmFile( $farmname );
@@ -85,22 +70,14 @@ sub delete_farm()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The farm $farmname doesn't exist, try another name.";
-		my $output = $j->encode(
-								 {
-								   description => "Delete farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "The farm $farmname doesn't exist, try another name.";
+		my $body = {
+					 description => "Delete farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	my $stat = &runFarmStop( $farmname, "true" );
@@ -116,26 +93,14 @@ sub delete_farm()
 		&zenlog( "ZAPI success, the farm $farmname has been deleted." );
 
 		# Success
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
+		my $message = "The Farm $farmname has been deleted.";
+		my $body = {
+					 description => "Delete farm $farmname",
+					 success     => "true",
+					 message     => $message
+		};
 
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( $enabled );
-
-		$message = "The Farm $farmname has been deleted.";
-		my $output = $j->encode(
-								 {
-								   description => "Delete farm $farmname",
-								   success     => "true",
-								   message     => $message
-								 }
-		);
-		print $output;
-
+		&httpResponse({ code => 200, body => $body });
 	}
 	else
 	{
@@ -144,23 +109,14 @@ sub delete_farm()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The Farm $farmname hasn't been deleted";
-		my $output = $j->encode(
-								 {
-								   description => "Delete farm $farmname",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "The Farm $farmname hasn't been deleted";
+		my $body = {
+					 description => "Delete farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 400, body => $body });
 	}
 }
 
@@ -195,16 +151,9 @@ sub delete_farm()
 #
 #**
 
-sub delete_service()
+sub delete_service # ( $farmname, $service )
 {
-
 	my ( $farmname, $service ) = @_;
-
-	use CGI;
-	my $q = CGI->new;
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
 
 	if ( $farmname =~ /^$/ )
 	{
@@ -213,45 +162,30 @@ sub delete_service()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid farm name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Delete service",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid farm name, please insert a valid value.";
+		my $body = {
+					 description => "Delete service",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "Delete service",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => "Delete service",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 404, body => $body });
 	}
-	
-	
+
 	if ( $service =~ /^$/ )
 	{
 		&zenlog(
@@ -259,60 +193,51 @@ sub delete_service()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid service name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Delete service",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid service name, please insert a valid value.";
+		my $output = {
+					   description => "Delete service",
+					   error       => "true",
+					   message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	my $type = &getFarmType( $farmname );
 	
 	# Check that the provided service is configured in the farm
 	my @services;
-	if ($type eq "gslb"){
+	if ($type eq "gslb")
+	{
 		@services = &getGSLBFarmServices($farmname);
-	} else {
+	}
+	else
+	{
 		@services = &getFarmServices($farmname);
 	}
 
 	my $found = 0;
-	foreach $farmservice (@services) {
+	foreach my $farmservice (@services)
+	{
 		#print "service: $farmservice";
-		if ($service eq $farmservice) {
+		if ($service eq $farmservice)
+		{
 			$found = 1;
-			break;
+			last;
 		}
 	}
-	if ($found eq 0){
-		
+
+	if ($found eq 0)
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid service name, please insert a valid value.";
-		my $output = $j->encode({
+		my $errormsg = "Invalid service name, please insert a valid value.";
+		my $body = {
 				description => "Delete service",
 				error => "true",
 				message => $errormsg
-		});
-		print $output;
-		exit;
-		
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	
@@ -324,35 +249,21 @@ sub delete_service()
 	{
 		$return = &setGSLBFarmDeleteService( $farmname, $service );
 	}
-	
-	
-	
+
 	if ( $return eq -2 )
 	{
 		&zenlog(
 				 "ZAPI error, the service $service in farm $farmname hasn't been deleted. The service is used by a zone." );
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
+		my $message = "The service $service in farm $farmname hasn't been deleted. The service is used by a zone.";
+		my $body = {
+					 description => "Delete service $service in farm $farmname.",
+					 error       => "true",
+					 message     => $message
+		};
 
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( $enabled );
-
-		$message = "The service $service in farm $farmname hasn't been deleted. The service is used by a zone.";
-		my $output = $j->encode(
-							 {
-							   description => "Delete service $service in farm $farmname.",
-							   error     => "true",
-							   message     => $message
-							 }
-		);
-		print $output;
-
+		&httpResponse({ code => 400, body => $body });
 	}
 	elsif ( $return eq 0 )
 	{
@@ -361,26 +272,14 @@ sub delete_service()
 
 		# Success
 		&setFarmRestart( $farmname );
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
+		my $message = "The service $service in farm $farmname has been deleted.";
+		my $body = {
+					 description => "Delete service $service in farm $farmname.",
+					 success     => "true",
+					 message     => $message
+		};
 
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( $enabled );
-
-		$message = "The service $service in farm $farmname has been deleted.";
-		my $output = $j->encode(
-							 {
-							   description => "Delete service $service in farm $farmname.",
-							   success     => "true",
-							   message     => $message
-							 }
-		);
-		print $output;
-
+		&httpResponse({ code => 200, body => $body });
 	}
 	else
 	{
@@ -389,22 +288,14 @@ sub delete_service()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Service $service in farm $farmname hasn't been deleted.";
-		my $output = $j->encode(
-							  {
-								description => "Delete service $service in farm $farmname",
-								error       => "true",
-								message     => $errormsg
-							  }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Service $service in farm $farmname hasn't been deleted.";
+		my $body = {
+					 description => "Delete service $service in farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 }
 
@@ -439,16 +330,9 @@ sub delete_service()
 #
 #**
 
-sub delete_backend()
+sub delete_backend # ( $farmname, $id_server )
 {
-
 	my ( $farmname, $id_server ) = @_;
-
-	use CGI;
-	my $q = CGI->new;
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
 
 	if ( $farmname =~ /^$/ )
 	{
@@ -457,46 +341,30 @@ sub delete_backend()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid farm name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Delete backend",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid farm name, please insert a valid value.";
+		my $body = {
+					 description => "Delete backend",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "Delete backend",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => "Delete backend",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 404, body => $body });
 	}
-	
-	
-	
+
 	if ( $id_server =~ /^$/ )
 	{
 		&zenlog(
@@ -504,25 +372,18 @@ sub delete_backend()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid backend id, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Delete backend",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid backend id, please insert a valid value.";
+		my $body = {
+					 description => "Delete backend",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
-	$status = &runFarmServerDelete( $id_server, $farmname );
+	my $status = &runFarmServerDelete( $id_server, $farmname );
+
 	if ( $status != -1 )
 	{
 		# Changes must be applied in iptables
@@ -539,27 +400,15 @@ sub delete_backend()
 			   "ZAPI success, the backend $id_server in farm $farmname has been deleted." );
 
 		# Success
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( $enabled );
-
-		$message =
+		my $message =
 		  "The real server with ID $id_server of the $farmname farm has been deleted.";
-		my $output = $j->encode(
-						   {
-							 description => "Delete backend $id_server in farm $farmname.",
-							 success     => "true",
-							 message     => $message
-						   }
-		);
-		print $output;
+		my $body = {
+					 description => "Delete backend $id_server in farm $farmname.",
+					 success     => "true",
+					 message     => $message
+		};
 
+		&httpResponse({ code => 200, body => $body });
 	}
 	else
 	{
@@ -568,24 +417,15 @@ sub delete_backend()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+		my $errormsg =
 		  "It's not possible to delete the real server with ID $id_server of the $farmname farm.";
-		my $output = $j->encode(
-						   {
-							 description => "Delete backend $id_server in farm $farmname.",
-							 error       => "true",
-							 message     => $errormsg
-						   }
-		);
-		print $output;
-		exit;
+		my $body = {
+					 description => "Delete backend $id_server in farm $farmname.",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 400, body => $body });
 	}
 }
 
@@ -621,16 +461,9 @@ sub delete_backend()
 #
 #**
 
-sub delete_service_backend()
+sub delete_service_backend # ( $farmname, $service, $id_server )
 {
-
 	my ( $farmname, $service, $id_server ) = @_;
-
-	use CGI;
-	my $q = CGI->new;
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
 
 	if ( $farmname =~ /^$/ )
 	{
@@ -639,42 +472,28 @@ sub delete_service_backend()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid farm name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Delete service backend",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid farm name, please insert a valid value.";
+		my $body = {
+					 description => "Delete service backend",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "Delete service backend",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => "Delete service backend",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	if ( $service =~ /^$/ )
@@ -684,58 +503,49 @@ sub delete_service_backend()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid service name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Delete service backend",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid service name, please insert a valid value.";
+		my $body = {
+					 description => "Delete service backend",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 	
 	# Check that the provided service is configured in the farm
 	my @services;
-	if ($type eq "gslb"){
+	if ($type eq "gslb")
+	{
 		@services = &getGSLBFarmServices($farmname);
-	} else {
+	}
+	else
+	{
 		@services = &getFarmServices($farmname);
 	}
 
 	my $found = 0;
-	foreach $farmservice (@services) {
+	foreach my $farmservice (@services)
+	{
 		#print "service: $farmservice";
-		if ($service eq $farmservice) {
+		if ($service eq $farmservice)
+		{
 			$found = 1;
-			break;
+			last;
 		}
 	}
-	if ($found eq 0){
-		
+
+	if ($found eq 0)
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid service name, please insert a valid value.";
-		my $output = $j->encode({
-				description => "Delete service backend",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
-		
+		my $errormsg = "Invalid service name, please insert a valid value.";
+		my $body = {
+					 description => "Delete service backend",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	if ( $id_server =~ /^$/ )
@@ -745,22 +555,14 @@ sub delete_service_backend()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid backend id, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Delete service backend",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid backend id, please insert a valid value.";
+		my $body = {
+					 description => "Delete service backend",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	my $type = &getFarmType( $farmname );
@@ -781,28 +583,16 @@ sub delete_service_backend()
 
 		# Success
 		&setFarmRestart( $farmname );
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( $enabled );
-
-		$message =
+		my $message =
 		  "The real server with ID $id_server in the service $service of the farm $farmname has been deleted.";
-		my $output = $j->encode(
-			{
+		my $body = {
 			   description =>
 				 "Delete backend with ID $id_server in the service $service of the farm $farmname.",
 			   success => "true",
 			   message => $message
-			}
-		);
-		print $output;
+			};
 
+		&httpResponse({ code => 200, body => $body });
 	}
 	else
 	{
@@ -811,27 +601,17 @@ sub delete_service_backend()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg =
+		my $errormsg =
 		  "It's not possible to delete the real server with ID $id_server of the $farmname farm.";
-		my $output = $j->encode(
-			{
+		my $body = {
 			   description =>
 				 "Delete backend $id_server in the service $service of the farm $farmname.",
 			   error   => "true",
 			   message => $errormsg
-			}
-		);
-		print $output;
-		exit;
+		};
 
+		&httpResponse({ code => 400, body => $body });
 	}
 }
 
-1
-
+1;

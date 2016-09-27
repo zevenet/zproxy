@@ -47,72 +47,47 @@
 #
 #**
 
-######## Params
-
-my $out_p = [];
-
-use CGI;
-use JSON;
-
-my $q        = CGI->new;
-my $json     = JSON->new;
-my $data     = $q->param( 'PUTDATA' );
-my $json_obj = $json->decode( $data );
-
-my $j = JSON::XS->new->utf8->pretty( 1 );
-$j->canonical( $enabled );
-
-# Flags
-my $reload_flag  = "false";
-my $restart_flag = "false";
-my $error        = "false";
-
-# Check that the farm exists
-if ( &getFarmFile( $farmname ) == -1 ) {
-	# Error
-	print $q->header(
-	-type=> 'text/plain',
-	-charset=> 'utf-8',
-	-status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
-	$errormsg = "The farmname $farmname does not exists.";
-	my $output = $j->encode({
-			description => "Modify farm",
-			error => "true",
-			message => $errormsg
-	});
-	print $output;
-	exit;
-
-}
-
-# Get current vip & vport
-$vip   = &getFarmVip( "vip",  $farmname );
-$vport = &getFarmVip( "vipp", $farmname );
-
-######## Functions
-
-# Modify only vip
-if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
+sub modify_datalink_farm # ( $json_obj,	$farmname )
 {
-	if ( $json_obj->{ vip } =~ /^$/ )
+	my $json_obj = shift;
+	my $farmname = shift;
+
+	# Flags
+	my $reload_flag  = "false";
+	my $restart_flag = "false";
+	my $error        = "false";
+
+	# Check that the farm exists
+	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		$error = "true";
-		&zenlog(
-			"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip, can't be blank."
-		);
+		# Error
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $output = {
+					   description => "Modify farm",
+					   error       => "true",
+					   message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
 	}
-	elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
+
+	# Get current vip & vport
+	my $vip   = &getFarmVip( "vip",  $farmname );
+	my $vport = &getFarmVip( "vipp", $farmname );
+
+	######## Functions
+
+	# Modify only vip
+	if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
 	{
-		$error = "true";
-		&zenlog(
-				  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip." );
-	}
-	else
-	{
-		$status = &setFarmVirtualConf( $json_obj->{ vip }, $vport, $farmname );
-		if ( $status == -1 )
+		if ( $json_obj->{ vip } =~ /^$/ )
+		{
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip, can't be blank."
+			);
+		}
+		elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
 		{
 			$error = "true";
 			&zenlog(
@@ -120,31 +95,31 @@ if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
 		}
 		else
 		{
-			$restart_flag = "true";
+			$status = &setFarmVirtualConf( $json_obj->{ vip }, $vport, $farmname );
+			if ( $status == -1 )
+			{
+				$error = "true";
+				&zenlog(
+						  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip." );
+			}
+			else
+			{
+				$restart_flag = "true";
+			}
 		}
 	}
-}
 
-# Modify only vport
-if ( exists ( $json_obj->{ vport } ) && !exists ( $json_obj->{ vip } ) )
-{
-	if ( $json_obj->{ vport } =~ /^$/ )
+	# Modify only vport
+	if ( exists ( $json_obj->{ vport } ) && !exists ( $json_obj->{ vip } ) )
 	{
-		$error = "true";
-		&zenlog(
-			"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport, can't be blank."
-		);
-	}
-	elsif ( !$json_obj->{ vport } =~ /^\d+$/ )
-	{
-		$error = "true";
-		&zenlog(
-				  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport." );
-	}
-	else
-	{
-		$status = &setFarmVirtualConf( $vip, $json_obj->{ vport }, $farmname );
-		if ( $status == -1 )
+		if ( $json_obj->{ vport } =~ /^$/ )
+		{
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport, can't be blank."
+			);
+		}
+		elsif ( !$json_obj->{ vport } =~ /^\d+$/ )
 		{
 			$error = "true";
 			&zenlog(
@@ -152,39 +127,8 @@ if ( exists ( $json_obj->{ vport } ) && !exists ( $json_obj->{ vip } ) )
 		}
 		else
 		{
-			$restart_flag = "true";
-		}
-	}
-}
-
-# Modify both vip & vport
-if ( exists ( $json_obj->{ vip } ) && exists ( $json_obj->{ vport } ) )
-{
-	if ( $json_obj->{ vip } =~ /^$/ )
-	{
-		$error = "true";
-		&zenlog(
-			"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip, can't be blank."
-		);
-	}
-	elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
-	{
-		$error = "true";
-		&zenlog(
-				  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip." );
-	}
-	else
-	{
-		if ( exists ( $json_obj->{ vport } ) )
-		{
-			if ( $json_obj->{ vport } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport, can't be blank."
-				);
-			}
-			elsif ( !$json_obj->{ vport } =~ /^\d+$/ )
+			$status = &setFarmVirtualConf( $vip, $json_obj->{ vport }, $farmname );
+			if ( $status == -1 )
 			{
 				$error = "true";
 				&zenlog(
@@ -192,313 +136,275 @@ if ( exists ( $json_obj->{ vip } ) && exists ( $json_obj->{ vport } ) )
 			}
 			else
 			{
-				$status =
-				  &setFarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname );
-				if ( $status == -1 )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport or invalid vip."
-					);
-				}
-				else
-				{
-					$restart_flag = "true";
-				}
+				$restart_flag = "true";
 			}
 		}
 	}
-}
 
-# Modify Farm's Name
-#if(exists($json_obj->{newfarmname})){
-#        if($json_obj->{newfarmname} =~ /^$/){
-#                $error = "true";
-#        } else {
-#                #Check if farmname has correct characters (letters, numbers and hyphens)
-#                if($json_obj->{newfarmname} =~ /^[a-zA-Z0-9\-]*$/){
-#                        #Check if the new farm's name alredy exists
-#                        my $newffile = &getFarmFile($json_obj->{newfarmname});
-#                        if ($newffile != -1){
-#                                $error = "true";
-#                        } else {
-#                                #Change farm name
-#                                my $fnchange = &setNewFarmName($farmname,$json_obj->{newfarmname});
-#                                if ($fnchange == -1){
-#                                        &error = "true";
-#                                } else {
-#                                        $restart_flag = "true";
-#										  $farmname = $json_obj->{newfarmname};
-#                                }
-#                        }
-#                } else {
-#                        $error = "true";
-#                }
-#        }
-#}
-
-# Restart Farm
-#if($restart_flag eq "true"){
-#        &runFarmStop($farmname,"true");
-#        &runFarmStart($farmname,"true");
-#}
-
-# Modify Farm's Name
-if ( exists ( $json_obj->{ newfarmname } ) )
-{
-	if ( $json_obj->{ newfarmname } =~ /^$/ )
+	# Modify both vip & vport
+	if ( exists ( $json_obj->{ vip } ) && exists ( $json_obj->{ vport } ) )
 	{
-		$error = "true";
-		&zenlog(
-			"ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname, can't be blank."
-		);
-	}
-	else
-	{
-		# Check if farmname has correct characters (letters, numbers and hyphens)
-		if ( $json_obj->{ newfarmname } =~ /^[a-zA-Z0-9\-]*$/ )
-		{
-			if ($json_obj->{newfarmname} ne $farmname)
-			{
-		
-				#Check if the new farm's name alredy exists
-				my $newffile = &getFarmFile( $json_obj->{ newfarmname } );
-				if ( $newffile != -1 )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify a gslb farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
-					);
-				}
-				else
-				{
-					$oldfstat = &runFarmStop( $farmname, "true" );
-					if ( $oldfstat != 0 )
-					{
-						$error = "true";
-						&zenlog(
-							"ZAPI error, trying to modify a gslb farm $farmname,the farm is not disabled, are you sure it's running?"
-						);
-
-					}
-					else
-					{
-						#Change farm name
-						my $fnchange = &setNewFarmName( $farmname, $json_obj->{ newfarmname } );
-						$changedname = "true";
-						if ( $fnchange == -1 )
-						{
-							&error = "true";
-							&zenlog(
-								"ZAPI error, trying to modify a gslb farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
-							);
-						}
-						elsif ( $fnchange == -2 )
-						{
-							$error = "true";
-							&zenlog(
-								"ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname, the new name can't be empty."
-							);
-							$newfstat = &runFarmStart( $farmname, "true" );
-							if ( $newfstat != 0 )
-							{
-								$error = "true";
-								&zenlog(
-									"ZAPI error, trying to modify a gslb farm $farmname, the farm isn't running, chick if the IP address is up and the PORT is in use."
-								);
-							}
-						}
-						else
-						{
-							$farmname = $json_obj->{ newfarmname };
-							$newfstat = &runFarmStart( $farmname, "true" );
-							if ( $newfstat != 0 )
-							{
-								$error = "true";
-								&zenlog(
-									"ZAPI error, trying to modify a gslb farm $farmname, the farm isn't running, chick if the IP address is up and the PORT is in use."
-								);
-							}
-						}
-					}
-				}
-			}
-		}
-		else
+		if ( $json_obj->{ vip } =~ /^$/ )
 		{
 			$error = "true";
 			&zenlog(
-					   "ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname." );
+				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip, can't be blank."
+			);
+		}
+		elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
+		{
+			$error = "true";
+			&zenlog(
+					  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip." );
+		}
+		else
+		{
+			if ( exists ( $json_obj->{ vport } ) )
+			{
+				if ( $json_obj->{ vport } =~ /^$/ )
+				{
+					$error = "true";
+					&zenlog(
+						"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport, can't be blank."
+					);
+				}
+				elsif ( !$json_obj->{ vport } =~ /^\d+$/ )
+				{
+					$error = "true";
+					&zenlog(
+							  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport." );
+				}
+				else
+				{
+					$status =
+					  &setFarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname );
+					if ( $status == -1 )
+					{
+						$error = "true";
+						&zenlog(
+							"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport or invalid vip."
+						);
+					}
+					else
+					{
+						$restart_flag = "true";
+					}
+				}
+			}
 		}
 	}
-}
 
-# Check errors and print JSON
-#if ($error ne "true") {
-#
-#        if($changedname ne "true"){
-#                if($restart_flag eq "true"){
-#                        &setFarmRestart($farmname);
-#
-#                        # Success
-#                        print $q->header(
-#                           -type=> 'text/plain',
-#                           -charset=> 'utf-8',
-#                           -status=> '200 OK'
-#                        );
-#
-#                        foreach $key (keys %$json_obj) {
-#                                push $out_p, { $key =>$json_obj->{$key}}
-#                        }
-#
-#                        my $j = JSON::XS->new->utf8->pretty(1);
-#                        $j->canonical($enabled);
-#                        my $output = $j->encode({
-#                                description => "Modify farm $farmname",
-#                                params => $out_p,
-#                                info => "There're changes that need to be applied, stop and start farm to apply them!"
-#                        });
-#                        print $output;
-#
-#                }
-#        } else {
-#
-#                # Success
-#                        print $q->header(
-#                           -type=> 'text/plain',
-#                           -charset=> 'utf-8',
-#                           -status=> '200 OK'
-#                        );
-#
-#                        foreach $key (keys %$json_obj) {
-#                                push $out_p, { $key =>$json_obj->{$key}}
-#                        }
-#
-#                        my $j = JSON::XS->new->utf8->pretty(1);
-#                        $j->canonical($enabled);
-#                        my $output = $j->encode({
-#                                description => "Modify farm $farmname",
-#                                params => $out_p
-#                        });
-#                        print $output;
-#
-#        }
-#
-#} else {
-#
-#        # Error
-#        print $q->header(
-#           -type=> 'text/plain',
-#           -charset=> 'utf-8',
-#           -status=> '400 Bad Request'
-#        );
-#        $errormsg = "Errors found trying to modify farm $farmname";
-#        my $output = $j->encode({
-#                description => "Modify farm $farmname",
-#                error => "true",
-#                message => $errormsg
-#        });
-#        print $output;
-#        exit;
-#}
+	# Modify Farm's Name
+	#if(exists($json_obj->{newfarmname})){
+	#        if($json_obj->{newfarmname} =~ /^$/){
+	#                $error = "true";
+	#        } else {
+	#                #Check if farmname has correct characters (letters, numbers and hyphens)
+	#                if($json_obj->{newfarmname} =~ /^[a-zA-Z0-9\-]*$/){
+	#                        #Check if the new farm's name alredy exists
+	#                        my $newffile = &getFarmFile($json_obj->{newfarmname});
+	#                        if ($newffile != -1){
+	#                                $error = "true";
+	#                        } else {
+	#                                #Change farm name
+	#                                my $fnchange = &setNewFarmName($farmname,$json_obj->{newfarmname});
+	#                                if ($fnchange == -1){
+	#                                        &error = "true";
+	#                                } else {
+	#                                        $restart_flag = "true";
+	#										  $farmname = $json_obj->{newfarmname};
+	#                                }
+	#                        }
+	#                } else {
+	#                        $error = "true";
+	#                }
+	#        }
+	#}
 
-# Check errors and print JSON
-if ( $error ne "true" )
-{
-	&zenlog(
-			  "ZAPI success, some parameters have been changed in farm $farmname." );
+	# Restart Farm
+	#if($restart_flag eq "true"){
+	#        &runFarmStop($farmname,"true");
+	#        &runFarmStart($farmname,"true");
+	#}
 
-	if ( $changedname ne "true" )
+	# Modify Farm's Name
+	if ( exists ( $json_obj->{ newfarmname } ) )
 	{
-		&setFarmRestart( $farmname );
-
-		# Success
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-
-		foreach $key ( keys %$json_obj )
+		if ( $json_obj->{ newfarmname } =~ /^$/ )
 		{
-			push $out_p, { $key => $json_obj->{ $key } };
-
-			#print "out: $out_p[1]\n";
-			#$line = $out_p;
-			#$out_p = "$line, $key => $json_obj->{$key}";
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname, can't be blank."
+			);
 		}
-
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( $enabled );
-		my $output = $j->encode(
+		else
+		{
+			# Check if farmname has correct characters (letters, numbers and hyphens)
+			if ( $json_obj->{ newfarmname } =~ /^[a-zA-Z0-9\-]*$/ )
 			{
-			   description => "Modify farm $farmname",
-			   params      => $out_p,
-			   info =>
-				 "There're changes that need to be applied, stop and start farm to apply them!"
-			}
-		);
-		print $output;
+				if ($json_obj->{newfarmname} ne $farmname)
+				{
+					#Check if the new farm's name alredy exists
+					my $newffile = &getFarmFile( $json_obj->{ newfarmname } );
+					if ( $newffile != -1 )
+					{
+						$error = "true";
+						&zenlog(
+							"ZAPI error, trying to modify a gslb farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
+						);
+					}
+					else
+					{
+						$oldfstat = &runFarmStop( $farmname, "true" );
+						if ( $oldfstat != 0 )
+						{
+							$error = "true";
+							&zenlog(
+								"ZAPI error, trying to modify a gslb farm $farmname,the farm is not disabled, are you sure it's running?"
+							);
+						}
+						else
+						{
+							#Change farm name
+							my $fnchange = &setNewFarmName( $farmname, $json_obj->{ newfarmname } );
+							$changedname = "true";
 
+							if ( $fnchange == -1 )
+							{
+								&error = "true";
+								&zenlog(
+									"ZAPI error, trying to modify a gslb farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
+								);
+							}
+							elsif ( $fnchange == -2 )
+							{
+								$error = "true";
+								&zenlog(
+									"ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname, the new name can't be empty."
+								);
+								$newfstat = &runFarmStart( $farmname, "true" );
+								if ( $newfstat != 0 )
+								{
+									$error = "true";
+									&zenlog(
+										"ZAPI error, trying to modify a gslb farm $farmname, the farm isn't running, chick if the IP address is up and the PORT is in use."
+									);
+								}
+							}
+							else
+							{
+								$farmname = $json_obj->{ newfarmname };
+								$newfstat = &runFarmStart( $farmname, "true" );
+								if ( $newfstat != 0 )
+								{
+									$error = "true";
+									&zenlog(
+										"ZAPI error, trying to modify a gslb farm $farmname, the farm isn't running, chick if the IP address is up and the PORT is in use."
+									);
+								}
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				$error = "true";
+				&zenlog(
+						   "ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname." );
+			}
+		}
+	}
+
+	# Check errors and print JSON
+	#if ($error ne "true")
+	#{
+	#        if($changedname ne "true")
+	#		 {
+	#                if($restart_flag eq "true")
+	#				 {
+	#                        &setFarmRestart($farmname);
+	#
+	#                        my $body = {
+	#                                description => "Modify farm $farmname",
+	#                                params => $json_obj,
+	#                                info => "There're changes that need to be applied, stop and start farm to apply them!"
+	#                        };
+	#
+	#						 &httpResponse({ code => 200, body => $body });
+	#                }
+	#        }
+	#		 else
+	#		 {
+	#                # Success
+	#                        my $body = {
+	#                                description => "Modify farm $farmname",
+	#                                params => $json_obj,
+	#                        };
+	#
+	#						 &httpResponse({ code => 200, body => $body });
+	#        }
+	#}
+	#else
+	#{
+	#        # Error
+	#        my $errormsg = "Errors found trying to modify farm $farmname";
+	#        my $body = {
+	#                description => "Modify farm $farmname",
+	#                error => "true",
+	#                message => $errormsg
+	#        };
+	#
+	#		 &httpResponse({ code => 400, body => $body });
+	#}
+
+	# Check errors and print JSON
+	if ( $error ne "true" )
+	{
+		&zenlog(
+				  "ZAPI success, some parameters have been changed in farm $farmname." );
+
+		if ( $changedname ne "true" )
+		{
+			&setFarmRestart( $farmname );
+
+			# Success
+			my $output = {
+				description => "Modify farm $farmname",
+				params      => $json_obj,
+				info =>
+				  "There're changes that need to be applied, stop and start farm to apply them!"
+			};
+
+			&httpResponse({ code => 200, body => $body });
+		}
+		else
+		{
+			# Success
+			my $body = {
+						 description => "Modify farm $farmname",
+						 params      => $json_obj,
+			};
+
+			&httpResponse({ code => 200, body => $body });
+		}
 	}
 	else
 	{
-
-		# Success
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
+		&zenlog(
+			"ZAPI error, trying to modify a gslb farm $farmname, it's not possible to modify the farm."
 		);
 
-		foreach $key ( keys %$json_obj )
-		{
-			push $out_p, { $key => $json_obj->{ $key } };
+		# Error
+		my $errormsg = "Errors found trying to modify farm $farmname";
+		my $body = {
+					 description => "Modify farm $farmname",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
-			#print "out: $out_p[1]\n";
-			#$line = $out_p;
-			#$out_p = "$line, $key => $json_obj->{$key}";
-		}
-
-		my $j = JSON::XS->new->utf8->pretty( 1 );
-		$j->canonical( $enabled );
-		my $output = $j->encode(
-								 {
-								   description => "Modify farm $farmname",
-								   params      => $out_p
-								 }
-		);
-		print $output;
-
+		&httpResponse({ code => 400, body => $body });
 	}
-
-}
-else
-{
-	&zenlog(
-		"ZAPI error, trying to modify a gslb farm $farmname, it's not possible to modify the farm."
-	);
-
-	# Error
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
-	$errormsg = "Errors found trying to modify farm $farmname";
-	my $output = $j->encode(
-							 {
-							   description => "Modify farm $farmname",
-							   error       => "true",
-							   message     => $errormsg
-							 }
-	);
-	print $output;
-	exit;
 }
 
-1
-
+1;

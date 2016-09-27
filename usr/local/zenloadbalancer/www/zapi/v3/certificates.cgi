@@ -47,23 +47,14 @@
 #
 #**
 
-sub certificates()
+sub certificates # ()
 {
-
-	use JSON;
-	use CGI;
-
-	my $q = CGI->new;
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
-
 	my @certificates = &getCertFiles();
-	my $out          = [];
+	my @out;
 
-	foreach $certificate ( @certificates )
+	foreach my $certificate ( @certificates )
 	{
-
-		$certificateFile = "$configdir\/$certificate";
+		my $certificateFile = "$configdir\/$certificate";
 
 		my $type       = &getCertType( $certificateFile );
 		my $cn         = &getCertCN( $certificateFile );
@@ -73,7 +64,7 @@ sub certificates()
 		my $expiration = &getCertExpiration( $certificateFile );
 		chomp($expiration);
 
-		push $out,
+		push @out,
 		  {
 			"file"       => "$certificate",
 			"type"       => "$type",
@@ -85,21 +76,12 @@ sub certificates()
 	}
 
 	# Success
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
+	my $body = {
+				 description => "List certificates",
+				 params      => \@out,
+	};
 
-	my $output = $j->encode(
-							 {
-							   description => "List certificates",
-							   params      => $out,
-							 }
-	);
-	print $output;
-
+	&httpResponse({ code => 200, body => $body });
 }
 
 # DELETE Certificate
@@ -130,66 +112,41 @@ sub certificates()
 #
 #**
 
-sub delete_certificate()
+sub delete_certificate # ( $cert_filename )
 {
-	
-	use JSON;
-	use CGI;
+	my $cert_filename = shift;
 
-	my $q = CGI->new;
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
+	my $status = &getFarmCertUsed( $cert_filename );
 
-	# my @certificates = &getCertFiles();
-
-	$status = &getFarmCertUsed( $1 );
 	if ( $status == 0 )
 	{
 		&zenlog( "ZAPI error, file can't be deleted because it's in use by a farm." );
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "File can't be deleted because it's in use by a farm";
+		my $errormsg = "File can't be deleted because it's in use by a farm";
+		my $body = {
+					 description => "Delete certificate",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
-		my $output = $j->encode(
-								 {
-								   description => "Delete certificate",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		&httpResponse({ code => 400, body => $body });
 	}
 	else
 	{
-		&delCert( $1 );
-		&zenlog( "The certificate $1 has been deleted" );
+		&delCert( $cert_filename );
+		&zenlog( "The certificate $cert_filename has been deleted" );
 	}
 
 	# Success
-	print $q->header(
-					  -type    => 'text/plain',
-					  -charset => 'utf-8',
-					  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-	);
+	my $message = "The Certificate $cert_filename has been deleted.";
+	my $body = {
+				 description => "Delete certificate $cert_filename",
+				 success     => "true",
+				 message     => $message
+	};
 
-	$message = "The Certificate $1 has been deleted.";
-	my $output = $j->encode(
-							 {
-							   description => "Delete certificate $1",
-							   success     => "true",
-							   message     => $message
-							 }
-	);
-	print $output;
-
+	&httpResponse({ code => 200, body => $body });
 }
 
 #####Documentation of POST Add Certificates####
@@ -223,70 +180,43 @@ sub delete_certificate()
 
 # POST Add Farm Certificate
 
-sub add_farmcertificate()
+sub add_farmcertificate # ( $json_obj, $farmname )
 {
+	my $json_obj = shift;
+	my $farmname = shift;
 
-	$farmname = $1;
-
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'POSTDATA' );
-	my $json_obj = $json->decode( $data );
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
-	
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "Add certificate",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => "Add certificate",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	if ( $json_obj->{ file } !~ /^$/ && $json_obj->{ file } =~ /^\w+\.\w{3}$/ )
 	{
-
 		$status = &setFarmCertificateSNI( $json_obj->{ file }, $farmname );
 		if ( $status == 0 )
 		{
 			&zenlog( "ZAPI Success, trying to add a certificate to the SNI list." );
 
 			# Success
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-
-			$message =
+			my $message =
 			  "The certificate $json_obj->{file} has been added to the SNI list of farm $farmname, you need restart the farm to apply";
 
-			my $output = $j->encode(
-									 {
-									   description => "Add certificate $json_obj->{file}",
-									   success     => "true",
-									   message     => $message
-									 }
-			);
-			print $output;
+			my $body = {
+						 description => "Add certificate $json_obj->{file}",
+						 success     => "true",
+						 message     => $message
+			};
 
+			&httpResponse({ code => 200, body => $body });
 		}
 		else
 		{
@@ -295,27 +225,17 @@ sub add_farmcertificate()
 			);
 
 			# Error
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
-			$errormsg =
+			my $errormsg =
 			  "It's not possible to add the certificate with name $json_obj->{file} for the $farmname farm";
 
-			my $output = $j->encode(
-									 {
-									   description => "Add certificate",
-									   error       => "true",
-									   message     => $errormsg
-									 }
-			);
-			print $output;
-			exit;
+			my $body = {
+						 description => "Add certificate",
+						 error       => "true",
+						 message     => $errormsg
+			};
 
+			&httpResponse({ code => 400, body => $body });
 		}
-
 	}
 	else
 	{
@@ -324,23 +244,14 @@ sub add_farmcertificate()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid certificate name, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Add certificate",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid certificate name, please insert a valid value.";
+		my $body = {
+					 description => "Add certificate",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 400, body => $body });
 	}
 }
 
@@ -373,38 +284,23 @@ sub add_farmcertificate()
 
 # DELETE Farm Certificate
 
-sub delete_farmcertificate()
+sub delete_farmcertificate # ( $farmname, $certfilename )
 {
+	my $farmname     = shift;
+	my $certfilename = shift;
 
-	$farmname     = $1;
-	$certfilename = $2;
-
-	use CGI;
-	use JSON;
-
-	my $q = CGI->new;
-
-	my $j = JSON::XS->new->utf8->pretty( 1 );
-	$j->canonical( $enabled );
-	
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
-		print $q->header(
-		-type=> 'text/plain',
-		-charset=> 'utf-8',
-		-status=> '404 Not Found',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "The farmname $farmname does not exists.";
-		my $output = $j->encode({
-				description => "Delete certificate",
-				error => "true",
-				message => $errormsg
-		});
-		print $output;
-		exit;
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => "Delete certificate",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	if ( $certfilename !~ /^$/ && $certfilename =~ /^\d+$/ )
@@ -415,23 +311,14 @@ sub delete_farmcertificate()
 			&zenlog( "ZAPI Success, trying to delete a certificate to the SNI list." );
 
 			# Success
-			print $q->header(
-							  -type    => 'text/plain',
-							  -charset => 'utf-8',
-							  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-			);
+			my $message = "The Certificate $certfilename has been deleted.";
+			my $body = {
+						 description => "Delete certificate $certfilename",
+						 success     => "true",
+						 message     => $message
+			};
 
-			$message = "The Certificate $certfilename has been deleted.";
-			my $output = $j->encode(
-									 {
-									   description => "Delete certificate $certfilename",
-									   success     => "true",
-									   message     => $message
-									 }
-			);
-			print $output;
-
+			&httpResponse({ code => 200, body => $body });
 		}
 		else
 		{
@@ -442,24 +329,15 @@ sub delete_farmcertificate()
 				);
 
 				# Error
-				print $q->header(
-								  -type    => 'text/plain',
-								  -charset => 'utf-8',
-								  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-				);
-				$errormsg =
+				my $errormsg =
 				  "It isn't possible to delete the selected certificate $certfilename from the SNI list";
-				my $output = $j->encode(
-										 {
-										   description => "Delete certificate",
-										   error       => "true",
-										   message     => $errormsg
-										 }
-				);
-				print $output;
-				exit;
+				my $body = {
+							 description => "Delete certificate",
+							 error       => "true",
+							 message     => $errormsg
+				};
 
+				&httpResponse({ code => 400, body => $body });
 			}
 			if ( $status == 1 )
 			{
@@ -468,27 +346,17 @@ sub delete_farmcertificate()
 				);
 
 				# Error
-				print $q->header(
-								  -type    => 'text/plain',
-								  -charset => 'utf-8',
-								  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-				);
-				$errormsg =
+				my $errormsg =
 				  "It isn't possible to delete all certificates, at least one is required for HTTPS profiles";
-				my $output = $j->encode(
-										 {
-										   description => "Delete certificate",
-										   error       => "true",
-										   message     => $errormsg
-										 }
-				);
-				print $output;
-				exit;
+				my $body = {
+							 description => "Delete certificate",
+							 error       => "true",
+							 message     => $errormsg
+				};
 
+				&httpResponse({ code => 400, body => $body });
 			}
 		}
-
 	}
 	else
 	{
@@ -497,23 +365,14 @@ sub delete_farmcertificate()
 		);
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Invalid certificate id, please insert a valid value.";
-		my $output = $j->encode(
-								 {
-								   description => "Delete certificate",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
-		exit;
+		my $errormsg = "Invalid certificate id, please insert a valid value.";
+		my $body = {
+					 description => "Delete certificate",
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 400, body => $body });
 	}
 }
 
@@ -595,18 +454,16 @@ sub delete_farmcertificate()
 #**
 
 #upload .pem certs
-sub upload_certs()
+sub upload_certs # ()
 {
 
 #
 # Curl command:
 #
-# curl -v --tcp-nodelay --tlsv1 -X POST -k  -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -u zapi:admin  -F fileupload=@/opt/example.pem -F filename=example.pem https://46.101.46.14:444/zapi/v3/zapi.cgi/certificates
+# curl -v --tcp-nodelay --tlsv1 -X POST -k -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -F fileupload=@/opt/example.pem -F filename=example.pem https://46.101.46.14:444/zapi/v3/zapi.cgi/certificates
 #
 
-	use CGI;
-
-	my $q = new CGI;
+	my $q = &getCGI();
 
 	my $upload_dir = $configdir;
 	my $filename   = $q->param( "filename" );
@@ -629,53 +486,35 @@ sub upload_certs()
 		}
 		close UPLOADFILE;
 
-		print $q->header(
-						  -type    => 'text/html',
-						  -charset => 'utf-8',
-						  -status  => '200 OK',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-
+		&httpResponse({ code => 200, body => $body });
 	}
 	else
 	{
 		&zenlog( "ZAPI error, trying to upload a certificate." );
 
 		# Error
-		print $q->header(
-						  -type    => 'text/plain',
-						  -charset => 'utf-8',
-						  -status  => '400 Bad Request',
-					  'Access-Control-Allow-Origin'  => '*'
-		);
-		$errormsg = "Error uploading certificate file";
-		my $output = $j->encode(
-								 {
-								   description => "Upload certificate file.",
-								   error       => "true",
-								   message     => $errormsg
-								 }
-		);
-		print $output;
+		my $errormsg = "Error uploading certificate file";
+		my $body = {
+					 description => "Upload certificate file.",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
-
-	exit;
-
 }
 
 #upload .pem certs
-sub upload_activation_certificate
+sub upload_activation_certificate # ()
 {
 
 #
 # Curl command:
 #
-# curl -v --tcp-nodelay --tlsv1 -X POST -k  -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -u zapi:admin  -F certificate=@/opt/example.pem https://46.101.46.14:444/zapi/v3/zapi.cgi/certificates/activation
+# curl -v --tcp-nodelay --tlsv1 -X POST -k -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -F certificate=@/example.pem https://46.101.46.14:444/zapi/v3/zapi.cgi/certificates/activation
 #
 
-	use CGI;
-
-	my $q = new CGI;
+	my $q = &getCGI();
 
 	my $upload_dir = $basedir;
 	my $filename   = 'zlbcertfile.pem';
@@ -685,10 +524,8 @@ sub upload_activation_certificate
 	if ( <$upload_data> )
 	{
 		open ( my $uploadfile, '>', "$upload_dir/$filename" ) or die "$!";
-
 		binmode $uploadfile;
 		print { $uploadfile } <$upload_data>;
-
 		close $uploadfile;
 
 		&checkActivationCertificate();
@@ -710,10 +547,6 @@ sub upload_activation_certificate
 
 		&httpResponse({ code => 400, body => $body });
 	}
-
-	exit;
-
 }
 
-
-1
+1;
