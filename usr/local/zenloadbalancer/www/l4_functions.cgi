@@ -36,6 +36,7 @@ use Data::Dumper;
 require "/usr/local/zenloadbalancer/www/farmguardian_functions.cgi";
 require "/usr/local/zenloadbalancer/www/nf_functions.cgi";
 require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
+require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 
 #check if the string is a valid multiport definition
 sub ismport    # ($string)
@@ -622,33 +623,6 @@ sub setFarmProto    # ($proto,$farm_name)
 	return $output;
 }
 
-#
-sub getFarmProto    # ($farm_name)
-{
-	my $farm_name = shift;
-
-	my $farm_type     = &getFarmType( $farm_name );
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
-
-	if ( $farm_type eq "l4xnat" )
-	{
-		open FI, "<", "$configdir/$farm_filename";
-		my $first = "true";
-		while ( my $line = <FI> )
-		{
-			if ( $line ne "" && $first eq "true" )
-			{
-				$first = "false";
-				my @line = split ( "\;", $line );
-				$output = $line[1];
-			}
-		}
-		close FI;
-	}
-
-	return $output;
-}
 
 #
 sub getFarmNatType    # ($farm_name)

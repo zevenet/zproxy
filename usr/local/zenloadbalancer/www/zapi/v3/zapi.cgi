@@ -60,6 +60,10 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/system_stats.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/farm_guardian.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/farm_actions.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/post_gslb.cgi";
+require "/usr/local/zenloadbalancer/www/functions_ext.cgi";   
+require "/usr/local/zenloadbalancer/www/check_functions.cgi";  
+require "/usr/local/zenloadbalancer/www/zapi/v3/ipds.cgi";  
+
 
 my $q = &getCGI();
 
@@ -909,8 +913,63 @@ GET qr{^/graphs} => sub {
 	&possible_graphs();
 };
 
-# Reply status code 400 when the requested URI does not match.
-# This should be the last sentence in this file.
+
+#	IPDS
+#
+ipds:
+
+#  GET all rbl lists
+GET qr{^/ipds/rbl$} => sub {
+	&get_rbl_all_lists;
+};
+
+#  GET rbl lists
+GET qr{^/ipds/rbl/(\w+)$} => sub {
+	&get_rbl_list ($1);
+};
+
+#  POST rbl list
+POST qr{^/ipds/rbl/(\w+)$} => sub {
+	&add_rbl_list ($1);
+};
+
+#  PUT rbl list
+PUT qr{^/ipds/rbl/(\w+)$} => sub {
+	&set_rbl_list ($1);
+};
+
+#  DELETE rbl list
+DELETE qr{^/ipds/rbl/(\w+)$} => sub {
+	&del_rbl_list ($1);
+};
+
+#  POST a source from a rbl list
+POST qr{^/ipds/rbl/(.+)/list} => sub {
+	&add_rbl_source ($1);
+};
+
+#  PUT a source from a rbl list
+PUT qr{^/ipds/rbl/(.+)/list/(.+$)} => sub {
+	&set_rbl_source ($1, $2);
+};
+
+#  DELETE a source from a rbl list
+DELETE qr{^/ipds/rbl/(.+)/list/(.+$)} => sub {
+	&del_rbl_source ($1, $2);
+};
+
+#  POST list to farm
+POST qr{^/farms/(.+)/ipds/rbl$} => sub {
+	&add_rbl_to_farm ( $1 );
+};
+
+#  DELETE list from farm
+DELETE qr{^/farms/(.+)/ipds/rbl/(.+)$} => sub {
+	&del_rbl_from_farm ( $1, $2 );
+};
+
+
+
 &httpResponse({
 	code => 400,
 	body => {
@@ -918,3 +977,4 @@ GET qr{^/graphs} => sub {
 		error => 'true',
 		}
 	});
+

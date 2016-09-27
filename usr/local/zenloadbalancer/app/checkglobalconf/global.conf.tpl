@@ -209,6 +209,13 @@ $secConf="/usr/local/zenloadbalancer/www/Plugins/Notifications/sec.rules";
 $syslogFile="/var/log/syslog";
 $logger="/usr/bin/logger";
 
+#IPDS Module
+$rblConfPath = "/usr/local/zenloadbalancer/www/Plugins/ipds/rbl";
+$rblLocalConf = "$rblConfPath/local_lists.conf";
+$rblRemoteConf = "$rblConfPath/remote_lists.conf";
+$ipset = "/sbin/ipset";
+$touch = "/usr/bin/touch";
+
 #::END Global Section
 
 #!!!!NOT REMOVE NEXT LINE!!!!!!
