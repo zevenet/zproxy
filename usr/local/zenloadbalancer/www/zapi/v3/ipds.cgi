@@ -13,7 +13,7 @@
 ###############################################################################
 
 
-require "/usr/local/zenloadbalancer/www/Plugins/rbl.pm";
+require "/usr/local/zenloadbalancer/www/Plugins/rbl.pl";
 
 rbl:
 
@@ -142,7 +142,7 @@ sub get_rbl_list
 	
 	my %listHash;
 	my $err = &getRBLListLocalitation ( $listName );
-	
+
 	if ( $err != '-1' )
 	{
 		my @ipList;
@@ -160,7 +160,7 @@ sub get_rbl_list
 			location => &getRBLListLocalitation ( $listName )
 		);
 		
-		if ( $listHash{ 'type' } eq 'remote' )
+		if ( $err eq 'remote' )
 		{
 			$listHash{'url'} = &getRBLListParam ($listName,'url');
 			$listHash{'status'} = &getRBLListParam ($listName,'status');
@@ -234,16 +234,9 @@ sub get_rbl_list
 #  POST /ipds/rbl/<listname>
 sub add_rbl_list
 {
+	my $json_obj = shift;
 	my $listName = shift;
 	
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'POSTDATA' );
-	my $json_obj = $json->decode( $data );
-
 	my $errormsg;
 	if ( &getCheckParam ( 'rbl_list_name', $listName ) == -1 )
 	{
@@ -355,15 +348,8 @@ sub add_rbl_list
 #  PUT /ipds/rbl/<listname>
 sub set_rbl_list 
 {
+	my $json_obj = shift;
 	my $listName = shift;
-
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'PUTDATA' );
-	my $json_obj = $json->decode( $data );
 
 	my $err;
 	my $flag;
@@ -372,7 +358,7 @@ sub set_rbl_list
 	if ( &getRBLListLocalitation ( $listName ) != -1 )
 	{
 		# delete all keys don't defined
-		foreach my $key ( keys $json_obj )
+		foreach my $key ( keys %{ $json_obj } )
 		{
 			if ( $key eq 'list' || $key eq 'status' || $key eq 'url' || $key eq 'type' )
 			{
@@ -527,16 +513,9 @@ sub del_rbl_list
 #  POST /ipds/rbl/<listname>/list
 sub add_rbl_source 
 {
+	my $json_obj = shift;
 	my $listName = shift;
 
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'POSTDATA' );
-	my $json_obj = $json->decode( $data );
-	
 	my $errormsg;
 	
 	if ( &getRBLListLocalitation ( $listName ) == -1 )
@@ -611,16 +590,9 @@ sub add_rbl_source
 #  PUT /ipds/rbl/<listname>/list/<id>
 sub set_rbl_source
 {
+	my $json_obj = shift;
 	my $listName = shift;
 	my $id = shift;
-
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'PUTDATA' );
-	my $json_obj = $json->decode( $data );
 
 	my $errormsg;
 
@@ -769,16 +741,9 @@ sub del_rbl_source
 #  POST /farms/<farmname>/ipds/rbl
 sub add_rbl_to_farm
 {
+	my $json_obj = shift;
 	my $farmName = shift;
 	
-	use CGI;
-	use JSON;
-
-	my $q        = CGI->new;
-	my $json     = JSON->new;
-	my $data     = $q->param( 'POSTDATA' );
-	my $json_obj = $json->decode( $data );
-
 	my $err;
 	my @rules = &getIptList( $farmName, 'raw', 'PREROUTING' );
 	

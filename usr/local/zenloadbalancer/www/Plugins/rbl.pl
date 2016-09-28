@@ -157,6 +157,8 @@ sub setRBLCreateRemoteList
 	}
 	else
 	{
+		&zenlog ("rem:$rblRemoteConf, cmd:$ipset create $name hash:net"); # ???
+		
 		$fileHandle->{ $name }->{ 'url' } = $url;
 		$fileHandle->{ $name }->{ 'status' } = "up";
 		$fileHandle->{ $name }->{ 'farms' } = "";
@@ -666,6 +668,9 @@ sub setRBLRefreshList
 sub getRBLListNames
 {
 	my @listNames;
+	
+	
+	&zenlog ("GLOBAL $ipset");
 	
 	my @cmd = `$ipset list`;
 	
