@@ -197,7 +197,7 @@ sub farms_name_gslb # ( $farmname )
 		my $ns         = &getFarmVS( $farmname, $zone, "ns" );
 		my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
 		my @be = split ( "\n", $backendsvs );
-		my $out_re = [];
+		my @out_re;
 
 		foreach my $subline ( @be )
 		{
@@ -251,7 +251,7 @@ sub farms_name_gslb # ( $farmname )
 				$ztype = @subbe1[2];
 			}
 
-			push $out_re,
+			push @out_re,
 			  {
 				id    => @subbe2[1] + 0,
 				rname => $la_resource,
@@ -267,7 +267,7 @@ sub farms_name_gslb # ( $farmname )
 		  {
 			id                => $zone,
 			DefaultNameServer => $ns,
-			resources         => $out_re
+			resources         => \@out_re
 		  };
 	}
 

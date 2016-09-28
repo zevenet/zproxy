@@ -12,7 +12,9 @@
 #
 ###############################################################################
 
+
 #~ use no warnings;
+use strict;
 
 #~ use CGI;
 use CGI::Session;
@@ -60,8 +62,6 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/system_stats.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/farm_guardian.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/farm_actions.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/post_gslb.cgi";
-require "/usr/local/zenloadbalancer/www/functions_ext.cgi";   
-require "/usr/local/zenloadbalancer/www/check_functions.cgi";  
 require "/usr/local/zenloadbalancer/www/zapi/v3/ipds.cgi";  
 
 
@@ -118,6 +118,8 @@ sub certcontrol # ()
 	#~ use Sys::Hostname;
 	#~ use Date::Parse;
 	#~ use Time::localtime;
+	
+	my $basedir = &getGlobalConfiguration( 'basedir' );
 
 	# input
 	my $hostname    = &getHostname();
@@ -576,48 +578,48 @@ OPTIONS qr{.*} => sub {
 #};
 
 #  POST CGISESSID
-POST qr{^/session$} => sub {
+#~ POST qr{^/session$} => sub {
 
-	my $session = new CGI::Session( &getCGI() );
+	#~ my $session = new CGI::Session( &getCGI() );
 
-	if ( $session && ! $session->param( 'is_logged_in' ) )
-	{
-		my @credentials = &getAuthorizationCredentials();
+	#~ if ( $session && ! $session->param( 'is_logged_in' ) )
+	#~ {
+		#~ my @credentials = &getAuthorizationCredentials();
 
-		my ( $username, $password ) = @credentials;
+		#~ my ( $username, $password ) = @credentials;
 
-		&zenlog("credentials: @credentials<");
+		#~ &zenlog("credentials: @credentials<");
 
-		if ( &authenticateCredentials( @credentials ) )
-		{
-			# successful authentication
-			&zenlog( "Login successful for username: $username" );
+		#~ if ( &authenticateCredentials( @credentials ) )
+		#~ {
+			#~ # successful authentication
+			#~ &zenlog( "Login successful for username: $username" );
 
-			$session->param( 'is_logged_in', 1 );
-			$session->param( 'username', $username );
-			$session->expire('is_logged_in', '+30m');
+			#~ $session->param( 'is_logged_in', 1 );
+			#~ $session->param( 'username', $username );
+			#~ $session->expire('is_logged_in', '+30m');
 
-			my ( $header ) = split( "\r\n", $session->header() );
-			my ( undef, $setcookie ) = split( ': ', $header );
+			#~ my ( $header ) = split( "\r\n", $session->header() );
+			#~ my ( undef, $setcookie ) = split( ': ', $header );
 
-			&httpResponse({
-				code => 200,
-				headers => { 'Set-cookie' => $setcookie },
-			});
-		}
-		else # not validated credentials
-		{
-			&zenlog( "Login failed for username: $username" );
+			#~ &httpResponse({
+				#~ code => 200,
+				#~ headers => { 'Set-cookie' => $setcookie },
+			#~ });
+		#~ }
+		#~ else # not validated credentials
+		#~ {
+			#~ &zenlog( "Login failed for username: $username" );
 
-			$session->delete();
-			$session->flush();
+			#~ $session->delete();
+			#~ $session->flush();
 
-			&httpResponse({ code => 401 });
-		}
-	}
+			#~ &httpResponse({ code => 401 });
+		#~ }
+	#~ }
 
-	exit;
-};
+	#~ exit;
+#~ };
 
 
 #	Above this part are calls allowed without authentication
@@ -658,28 +660,29 @@ if ( not ( &validZapiKey() or &validCGISession() ) )
 #};
 
 #  DELETE session
-DELETE qr{^/session$} => sub {
-	if ( $cgi->http( 'Cookie' ) )
-	{
-		my $session = new CGI::Session( &getCGI() );
+#~ DELETE qr{^/session$} => sub {
+	#~ my $cgi = &getCGI();
+	#~ if ( $cgi->http( 'Cookie' ) )
+	#~ {
+		#~ my $session = new CGI::Session( $cgi );
 
-		if ( $session && $session->param( 'is_logged_in' ) )
-		{
-			my $username = $session->param( username );
-			my $ip_addr  = $session->param( _SESSION_REMOTE_ADDR );
+		#~ if ( $session && $session->param( 'is_logged_in' ) )
+		#~ {
+			#~ my $username = $session->param( 'username' );
+			#~ my $ip_addr  = $session->param( '_SESSION_REMOTE_ADDR' );
 
-			&zenlog( "Logged out user $username from $ip_addr" );
+			#~ &zenlog( "Logged out user $username from $ip_addr" );
 
-			$session->delete();
-			$session->flush();
+			#~ $session->delete();
+			#~ $session->flush();
 
-			&httpResponse( { code => 200 } );
-		}
-	}
+			#~ &httpResponse( { code => 200 } );
+		#~ }
+	#~ }
 
-	# with ZAPI key or expired cookie session
-	&httpResponse( { code => 400 } );
-};
+	#~ # with ZAPI key or expired cookie session
+	#~ &httpResponse( { code => 400 } );
+#~ };
 
 #	CERTIFICATES
 #
@@ -916,7 +919,7 @@ GET qr{^/graphs} => sub {
 
 #	IPDS
 #
-ipds:
+#~ ipds:
 
 #  GET all rbl lists
 GET qr{^/ipds/rbl$} => sub {
@@ -925,47 +928,47 @@ GET qr{^/ipds/rbl$} => sub {
 
 #  GET rbl lists
 GET qr{^/ipds/rbl/(\w+)$} => sub {
-	&get_rbl_list ($1);
+	&get_rbl_list ( @_ );
 };
 
 #  POST rbl list
 POST qr{^/ipds/rbl/(\w+)$} => sub {
-	&add_rbl_list ($1);
+	&add_rbl_list ( @_ );
 };
 
 #  PUT rbl list
 PUT qr{^/ipds/rbl/(\w+)$} => sub {
-	&set_rbl_list ($1);
+	&set_rbl_list ( @_ );
 };
 
 #  DELETE rbl list
 DELETE qr{^/ipds/rbl/(\w+)$} => sub {
-	&del_rbl_list ($1);
+	&del_rbl_list ( @_ );
 };
 
 #  POST a source from a rbl list
 POST qr{^/ipds/rbl/(.+)/list} => sub {
-	&add_rbl_source ($1);
+	&add_rbl_source ( @_ );
 };
 
 #  PUT a source from a rbl list
 PUT qr{^/ipds/rbl/(.+)/list/(.+$)} => sub {
-	&set_rbl_source ($1, $2);
+	&set_rbl_source ( @_ );
 };
 
 #  DELETE a source from a rbl list
 DELETE qr{^/ipds/rbl/(.+)/list/(.+$)} => sub {
-	&del_rbl_source ($1, $2);
+	&del_rbl_source ( @_ );
 };
 
 #  POST list to farm
 POST qr{^/farms/(.+)/ipds/rbl$} => sub {
-	&add_rbl_to_farm ( $1 );
+	&add_rbl_to_farm ( @_ );
 };
 
 #  DELETE list from farm
 DELETE qr{^/farms/(.+)/ipds/rbl/(.+)$} => sub {
-	&del_rbl_from_farm ( $1, $2 );
+	&del_rbl_from_farm ( @_ );
 };
 
 

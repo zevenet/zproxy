@@ -761,7 +761,7 @@ sub get_interfaces # ()
 		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
 		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
-		push $out,
+		push @out,
 		  {
 			name    => $if_ref->{ name },
 			ip      => $if_ref->{ addr },
