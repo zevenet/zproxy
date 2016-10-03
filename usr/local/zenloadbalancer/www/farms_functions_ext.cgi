@@ -111,12 +111,14 @@ sub setFarmDeleteCertSNI    #($certn,$fname)
 	{
 		use Tie::File;
 		tie @array, 'Tie::File', "$configdir/$ffile";
+
 		for ( @array )
 		{
 			if ( $_ =~ /Cert/ )
 			{
 				$i++;
 			}
+
 			if ( $_ =~ /Cert/ && $i eq "$certn" )
 			{
 				splice @array, $j, 1,;
@@ -126,6 +128,45 @@ sub setFarmDeleteCertSNI    #($certn,$fname)
 					splice @array, $j, 0, "\tCert\ \"$configdir\/zencert.pem\"";
 					$output = 1;
 
+				}
+				last;
+			}
+			$j++;
+		}
+		untie @array;
+	}
+
+	return $output;
+}
+
+#delete the selected certificate from HTTP farms
+sub setFarmDeleteCertNameSNI    #($certn,$fname)
+{
+	my ( $certname, $fname ) = @_;
+
+	my $type   = &getFarmType( $fname );
+	my $ffile  = &getFarmFile( $fname );
+	my $output = -1;
+	my $j      = 0;
+
+	&zenlog( "deleting 'Certificate $certname' for $fname farm $type" );
+
+	if ( $type eq "https" )
+	{
+		use Tie::File;
+		tie @array, 'Tie::File', "$configdir/$ffile";
+
+		for ( @array )
+		{
+			if ( $_ =~ /Cert "$configdir\/$certname"/ )
+			{
+				splice @array, $j, 1,;
+				$output = 0;
+
+				if ( $array[$j] !~ /Cert/ && $array[$j - 1] !~ /Cert/ )
+				{
+					splice @array, $j, 0, "\tCert\ \"$configdir\/zencert.pem\"";
+					$output = 1;
 				}
 				last;
 			}
