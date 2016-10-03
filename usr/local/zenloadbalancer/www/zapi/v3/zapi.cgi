@@ -764,7 +764,7 @@ DELETE qr{^/farms/(\w+$)} => sub {
 };
 
 #  DELETE farm certificate
-DELETE qr{^/farms/(\w+)/deletecertificate/([\w\.-_]+)$} => sub {
+DELETE qr{^/farms/(\w+)/certificates/([\w\.-_]+)$} => sub {
 	&delete_farmcertificate( @_ );
 };
 
@@ -826,12 +826,12 @@ PUT qr{^/farms/(\w+)/services/(\w+$)} => sub {
 };
 
 #  POST add certificates
-POST qr{^/farms/(\w+)/addcertificate$} => sub {
+POST qr{^/farms/(\w+)/certificates$} => sub {
 	&add_farmcertificate( @_ );
 };
 
 #  PUT change certificates
-PUT qr{^/farms/(\w+)/changecertificate$} => sub { # FIXME: find change_farmcertificate function
+PUT qr{^/farms/(\w+)/certificates$} => sub { # FIXME: find change_farmcertificate function
 	&change_farmcertificate( @_ );
 };
 
