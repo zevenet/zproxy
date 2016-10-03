@@ -463,28 +463,20 @@ sub upload_certs # ()
 # curl -v --tcp-nodelay --tlsv1 -X POST -k -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -F fileupload=@/opt/example.pem -F filename=example.pem https://46.101.46.14:444/zapi/v3/zapi.cgi/certificates
 #
 
-	my $q = &getCGI();
+	my $upload_filehandle = shift;
+	my $filename = shift;
 
-	my $upload_dir = $configdir;
-	my $filename   = $q->param( "filename" );
-
-	my $upload_filehandle = $q->upload( "fileupload" );
-
-	if ( $filename !~ /^$/ && $filename =~ /\.pem$/ )
+	if ( $filename =~ /^\w.+\.pem$/ && ! -f "$configdir/$filename" )
 	{
 		if ( $filename =~ /\\/ )
 		{
-			@filen = split ( /\\/, $filename );
+			my @filen = split ( /\\/, $filename );
 			$filename = $filen[-1];
 		}
 
-		open ( UPLOADFILE, ">$upload_dir/$filename" ) or die "$!";
-		binmode UPLOADFILE;
-		while ( <$upload_filehandle> )
-		{
-			print UPLOADFILE;
-		}
-		close UPLOADFILE;
+		open ( my $cert_filehandle, '>', "$configdir/$filename" ) or die "$!";
+		print $cert_filehandle $upload_filehandle;
+		close $cert_filehandle;
 
 		&httpResponse({ code => 200, body => $body });
 	}
@@ -515,15 +507,12 @@ sub upload_activation_certificate # ()
 #
 
 	my $q = &getCGI();
-
-	my $upload_dir = $basedir;
 	my $filename   = 'zlbcertfile.pem';
-
 	my $upload_data = $q->upload( "certificate" );
 
 	if ( <$upload_data> )
 	{
-		open ( my $uploadfile, '>', "$upload_dir/$filename" ) or die "$!";
+		open ( my $uploadfile, '>', "$basedir/$filename" ) or die "$!";
 		binmode $uploadfile;
 		print { $uploadfile } <$upload_data>;
 		close $uploadfile;

@@ -239,8 +239,6 @@ sub GET($$)
 	return unless @captures;
 
 	$code->( @captures );
-
-	exit;
 }
 
 sub POST($$)
@@ -255,11 +253,9 @@ sub POST($$)
 	my $data = &getCgiParam( 'POSTDATA' );
 	my $input_ref = eval{ decode_json( $data ) };
 
-	&httpResponse({ code => 406 }) if ! $input_ref;
+	$input_ref = $data if ! $input_ref;
 
 	$code->( $input_ref, @captures );
-
-	exit;
 }
 
 sub PUT($$)
@@ -274,11 +270,9 @@ sub PUT($$)
 	my $data = &getCgiParam( 'PUTDATA' );
 	my $input_ref = eval{ decode_json( $data ) };
 
-	&httpResponse({ code => 406 }) if ! $input_ref;
+	$input_ref = $data if ! $input_ref;
 
 	$code->( $input_ref, @captures );
-
-	exit;
 }
 
 sub DELETE($$)
@@ -291,8 +285,6 @@ sub DELETE($$)
 	return unless @captures;
 
 	$code->( @captures );
-
-	exit;
 }
 
 sub OPTIONS($$)
@@ -305,8 +297,6 @@ sub OPTIONS($$)
 	return unless @captures;
 
 	$code->( @captures );
-
-	exit;
 }
 
 POST qr{^/test$} => sub {
@@ -701,8 +691,8 @@ GET qr{^/certificates$} => sub {
 };
 
 #  POST certificates
-POST qr{^/certificates$} => sub {
-	&upload_certs();
+POST qr{^/certificates/([\w\.-_]+)$} => sub {
+	&upload_certs( @_ );
 };
 
 #  DELETE certificate
@@ -969,7 +959,6 @@ POST qr{^/farms/(.+)/ipds/rbl$} => sub {
 DELETE qr{^/farms/(.+)/ipds/rbl/(.+)$} => sub {
 	&del_rbl_from_farm ( @_ );
 };
-
 
 
 # Reply status code 400 when the requested URI does not match.
