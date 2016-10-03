@@ -303,9 +303,9 @@ sub delete_farmcertificate # ( $farmname, $certfilename )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( $certfilename !~ /^$/ && $certfilename =~ /^\d+$/ )
+	if ( $certfilename !~ /^$/ && $certfilename =~ /^[\w\.-_]+$/ )
 	{
-		$status = &setFarmDeleteCertSNI( $certfilename, $farmname );
+		$status = &setFarmDeleteCertNameSNI( $certfilename, $farmname );
 		if ( $status == 0 )
 		{
 			&zenlog( "ZAPI Success, trying to delete a certificate to the SNI list." );

@@ -13,6 +13,8 @@
 ###############################################################################
 
 #~ use no warnings;
+#~ use warnings;
+#~ use strict;
 
 #~ use CGI;
 use CGI::Session;
@@ -762,7 +764,7 @@ DELETE qr{^/farms/(\w+$)} => sub {
 };
 
 #  DELETE farm certificate
-DELETE qr{^/farms/(\w+)/deletecertificate/(\w+$)} => sub {
+DELETE qr{^/farms/(\w+)/deletecertificate/([\w\.-_]+)$} => sub {
 	&delete_farmcertificate( @_ );
 };
 
