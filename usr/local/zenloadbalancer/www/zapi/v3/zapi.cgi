@@ -12,9 +12,7 @@
 #
 ###############################################################################
 
-
 #~ use no warnings;
-use strict;
 
 #~ use CGI;
 use CGI::Session;
@@ -63,7 +61,6 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/farm_guardian.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/farm_actions.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/post_gslb.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/ipds.cgi";  
-
 
 my $q = &getCGI();
 
@@ -118,7 +115,7 @@ sub certcontrol # ()
 	#~ use Sys::Hostname;
 	#~ use Date::Parse;
 	#~ use Time::localtime;
-	
+
 	my $basedir = &getGlobalConfiguration( 'basedir' );
 
 	# input
@@ -841,7 +838,7 @@ PUT qr{^/farms/(\w+)/changecertificate$} => sub { # FIXME: find change_farmcerti
 
 #  GET interfaces
 GET qr{^/interfaces$} => sub {
-	&get_interface();
+	&get_interfaces();
 };
 
 #  POST virtual interface
@@ -973,6 +970,8 @@ DELETE qr{^/farms/(.+)/ipds/rbl/(.+)$} => sub {
 
 
 
+# Reply status code 400 when the requested URI does not match.
+# This should be the last sentence in this file.
 &httpResponse({
 	code => 400,
 	body => {
@@ -980,4 +979,3 @@ DELETE qr{^/farms/(.+)/ipds/rbl/(.+)$} => sub {
 		error => 'true',
 		}
 	});
-

@@ -230,7 +230,7 @@ sub farms_name_http # ( $farmname )
 
 	if ( $type eq "https" )
 	{
-		$output_params->{ certlist } = @out_cn;
+		$output_params->{ certlist } = \@out_cn;
 		$output_params->{ ciphers }  = $ciphers;
 		$output_params->{ cipherc }  = $cipher;
 	}
