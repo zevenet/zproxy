@@ -84,6 +84,51 @@ sub certificates # ()
 	&httpResponse({ code => 200, body => $body });
 }
 
+sub download_certificate # ()
+{
+	my $cert_filename = shift;
+
+	my $cert_dir = $configdir;
+	$cert_dir = $basedir if $cert_filename eq 'zlbcertfile.pem';
+
+	open ( my $download_fh, '<', "$cert_dir/$cert_filename" );
+
+	if ( $cert_filename =~ /\.(pem|csr)$/ && -f "$cert_dir\/$cert_filename" && $download_fh )
+	{
+		my $cgi = &getCGI();
+		print $cgi->header(
+						  -type            => 'application/x-download',
+						  -attachment      => $cert_filename,
+						  'Content-length' => -s "$cert_dir/$cert_filename",
+		);
+
+		binmode $download_fh;
+		print while <$download_fh>;
+		close $download_fh;
+		exit;
+
+		#~ # Success
+		#~ my $body = {
+					 #~ description => "List certificates",
+					 #~ params      => \@out,
+		#~ };
+
+		#~ &httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "Could not send such certificate";
+		my $body = {
+					 description => "Download certificate",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+}
+
 # GET certificate info
 sub get_certificate_info # ()
 {
