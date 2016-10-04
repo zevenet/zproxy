@@ -443,9 +443,11 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 	}
 
 	# header
+	my $content_type = 'application/json';
+	$content_type = $self->{ type } if $self->{ type } && $self->{ body };
 
 	my $output = $cgi->header(
-		-type    => 'application/json',
+		-type    => $content_type,
 		-charset => 'utf-8',
 		-status  => "$self->{ code } $GLOBAL::http_status_codes->{ $self->{ code } }",
 
@@ -456,13 +458,20 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 	# body
 
 	#~ my ( $body_ref ) = shift @_; # opcional
-	if ( exists $self->{ body } && ref $self->{ body } eq 'HASH' )
+	if ( exists $self->{ body } )
 	{
-		my $json    = JSON::XS->new->utf8->pretty( 1 );
-		my $json_canonical = 1;
-		$json->canonical( [$json_canonical] );
+		if ( ref $self->{ body } eq 'HASH' )
+		{
+			my $json = JSON::XS->new->utf8->pretty( 1 );
+			my $json_canonical = 1;
+			$json->canonical( [$json_canonical] );
 
-		$output .= $json->encode( $self->{ body } );
+			$output .= $json->encode( $self->{ body } );
+		}
+		else
+		{
+			$output .= $self->{ body };
+		}
 	}
 
 	#~ &zenlog( "Response:$output<" ); # DEBUG
@@ -688,6 +697,11 @@ POST qr{^/certificates/activation$} => sub {
 #  GET List SSL certificates
 GET qr{^/certificates$} => sub {
 	&certificates();
+};
+
+#  GET List SSL certificates
+GET qr{^/certificates/([\w\.-_]+)/info$} => sub {
+	&get_certificate_info( @_ );
 };
 
 #  POST certificates
