@@ -532,7 +532,6 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 	if ( $type eq "http" || $type eq "https" )
 	{
-
 		#Params
 		if ( exists ( $json_obj->{ service } ) )
 		{
@@ -555,21 +554,23 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 				"ZAPI error, trying to modify the backends in a farm $farmname, it's necessary to insert the service parameter."
 			);
 		}
-		
-		
+
 		# Check that the provided service is configured in the farm
 		my @services = &getFarmServices($farmname);
 		
 		my $found = 0;
-		foreach $farmservice (@services) {
+		foreach $farmservice (@services)
+		{
 			#print "service: $farmservice";
-			if ($json_obj->{service} eq $farmservice) {
+			if ($json_obj->{service} eq $farmservice)
+			{
 				$found = 1;
-				break;
+				last;
 			}
 		}
-		if ($found eq 0){
-			
+
+		if ($found eq 0)
+		{
 			# Error
 			my $errormsg = "Invalid service name, please insert a valid value.";
 			my $body = {
@@ -731,7 +732,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 		my @services = &getGSLBFarmServices($farmname);
 		
 		my $found = 0;
-		foreach my $farmservice (@services) {
+		foreach my $farmservice (@services)
+		{
 			#print "service: $farmservice";
 			if ($json_obj->{service} eq $farmservice)
 			{
@@ -1519,9 +1521,10 @@ sub modify_services # ( $json_obj, $farmname, $service )
 	foreach my $farmservice (@services)
 	{
 		#print "service: $farmservice";
-		if ($service eq $farmservice) {
+		if ($service eq $farmservice)
+		{
 			$found = 1;
-			break;
+			last;
 		}
 	}
 
