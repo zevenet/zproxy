@@ -699,7 +699,12 @@ GET qr{^/certificates$} => sub {
 	&certificates();
 };
 
-#  GET List SSL certificates
+#  Download SSL certificate
+GET qr{^/certificates/([\w\.-_]+)$} => sub {
+	&download_certificate( @_ );
+};
+
+#  GET SSL certificate information
 GET qr{^/certificates/([\w\.-_]+)/info$} => sub {
 	&get_certificate_info( @_ );
 };
