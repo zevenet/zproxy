@@ -29,7 +29,7 @@ require ("/usr/local/zenloadbalancer/www/functions.cgi");
 my $synconns = 0;
 my $globalconns = 0;
 
-foreach $farmfile ( &getFarmList() )
+foreach my $farmfile ( &getFarmList() )
 {
 	my $farm = &getFarmName($farmfile);
 	my $ftype = &getFarmType($farm);
@@ -94,7 +94,6 @@ foreach $farmfile ( &getFarmList() )
 	RRDs::update "$rrdap_dir/$rrd_dir/$db_farm",
 		"-t", "pending:established",
 		"N:$synconns:$globalconns";
-	}
 
 	if ( $ERROR = RRDs::error )
 	{
