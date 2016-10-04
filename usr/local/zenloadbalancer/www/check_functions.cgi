@@ -5,7 +5,7 @@
 #     Zen Load Balancer Software License
 #     This file is part of the Zen Load Balancer software package.
 #
-#     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
+#     Copyright (C) 2016 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
 #
 #     This library is free software; you can redistribute it and/or modify it
 #     under the terms of the GNU Lesser General Public License as published
@@ -23,52 +23,75 @@
 #
 ###############################################################################
 
+# Notes about regular expressions:
+#
+# \w matches the 63 characters [a-zA-Z0-9_] (most of the time)
+#
 
+my %format_re = (
+	'farm_name'     => qr{[a-zA-Z0-9\-]+},
+	'rbl_list_name' => qr{[a-zA-Z0-9]+},
+
+	# certificates filenames
+	'certificate' => qr{\w[\w\.-]*\.(?:pem|csr)},
+	'cert_pem'    => qr{\w[\w\.-]*\.pem},
+	'cert_csr'    => qr{\w[\w\.-]*\.csr},
+
+	#'' => qr{},
+);
 
 =begin nd
-        Function: getCheckParam
+        Function: getValidFormat
 
-        check if a param has correct format
+        Validates a data format matching a value with a regular expression.
+        If no value is passed as an argument the regular expression is returned.
+
+        Usage:
+			# validate exact data
+			if ( ! &getValidFormat( "farm_name", $input_farmname ) ) {
+				print "error";
+			}
+
+			# use the regular expression as a component for another regular expression 
+			my $file_regex = &getValidFormat( "certificate" );
+			if ( $file_path =~ /$configdir\/$file_regex/ ) { ... }
 
         Parameters:
-				param	- type param
-				value	- new value
+				format_name	- type of format
+				value		- value to be validated (optional)
 				
         Returns:
-				-1	- error
-				0	- successful
+				false	- If value failed to be validated
+				true	- If value was successfuly validated
+				regex	- If no value was passed to be matched
 
 =cut
-# &getCheckParam ( $param, $value );
-sub getCheckParam
+# &getValidFormat ( $format_name, $value );
+sub getValidFormat
 {
-	my ( $param, $value ) = @_;
-	my $err = -1;
-	
-	if ( $param eq 'farm_name' &&
-		$value =~ /^[a-zA-Z0-9\-]+$/ )
+	my ( $format_name, $value ) = @_;
+
+	#~ print "getValidFormat type:$format_name value:$value\n"; # DEBUG
+
+	if ( exists $format_re{ $format_name } )
 	{
-		$err = 0;
+		if ( defined $value )
+		{
+			#~ print "$format_re{ $format_name }\n"; # DEBUG
+			return $value =~ /^$format_re{ $format_name }$/;
+		}
+		else
+		{
+			#~ print "$format_re{ $format_name }\n"; # DEBUG
+			return $format_re{ $format_name };
+		}
 	}
-	
-	if ( $param eq 'rbl_list_name' &&
-		$value =~ /^[a-zA-Z0-9]+$/ )
+	else
 	{
-		$err = 0;
+		my $message = "getValidFormat: format $format_name not found.";
+		&zenlog( $message );
+		die ( $message );
 	}
-	
-	return $err;
 }
 
-
-
 1;
-
-
-
-
-
-
-
-
-

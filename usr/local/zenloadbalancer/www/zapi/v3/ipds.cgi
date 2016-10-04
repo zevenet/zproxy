@@ -238,7 +238,7 @@ sub add_rbl_list
 	my $listName = shift;
 	
 	my $errormsg;
-	if ( &getCheckParam ( 'rbl_list_name', $listName ) == -1 )
+	if ( ! &getValidFormat ( 'rbl_list_name', $listName ) )
 	{
 		$errormsg = "In list name only is allowed alphanumeric characters.";
 	}
