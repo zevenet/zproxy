@@ -452,16 +452,18 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		my @services = &getFarmServices($farmname);
 
 		my $found = 0;
-		foreach my $farmservice (@services) {
+		foreach my $farmservice (@services)
+		{
 			#print "service: $farmservice";
-			if ($json_obj->{service} eq $farmservice) {
+			if ($json_obj->{service} eq $farmservice)
+			{
 				$found = 1;
-				break;
+				last;
 			}
 		}
 
-		if ($found eq 0){
-			
+		if ($found eq 0)
+		{
 			# Error
 			my $errormsg = "Invalid service name, please insert a valid value.";
 			my $body = {
@@ -623,7 +625,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			if ($json_obj->{service} eq $service)
 			{
 				$found = 1;
-				break;
+				last;
 			}
 		}
 

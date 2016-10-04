@@ -182,12 +182,13 @@ sub modify_farmguardian # ( $json_obj, $farmname )
 
 			my $found = 0;
 
-			foreach my $farmservice (@services) {
+			foreach my $farmservice (@services)
+			{
 				#print "service: $farmservice";
 				if ($json_obj->{service} eq $farmservice)
 				{
 					$found = 1;
-					break;
+					last;
 				}
 			}
 
