@@ -296,13 +296,6 @@ sub modify_farmguardian # ( $json_obj, $farmname )
 					);
 				}
 			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the farm guardian in a farm $farmname, the parameter usefarmguardian must be true."
-				);
-			}
 		}
 		else
 		{
@@ -330,13 +323,6 @@ sub modify_farmguardian # ( $json_obj, $farmname )
 					);
 					$error = "true";
 				}
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the farm guardian in a farm $farmname, the parameter usefarmguardian must be true."
-				);
 			}
 		}
 		else
