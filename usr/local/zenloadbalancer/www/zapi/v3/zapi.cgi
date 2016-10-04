@@ -912,7 +912,12 @@ GET qr{^/stats/cpu$} => sub {
 };
 
 #  GET farm stats
-GET qr{^/farms/(\w+)/stats$} => sub {
+GET qr{^/stats/farms$} => sub {
+	&all_farms_stats( @_ );
+};
+
+#  GET farm stats
+GET qr{^/stats/farms/([\w-]+)$} => sub {
 	&farm_stats( @_ );
 };
 
