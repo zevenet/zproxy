@@ -346,7 +346,7 @@ sub getCertData    # ($certfile)
 {
 	my ( $certfile ) = @_;
 	my $filepath     = "$configdir\/$certfile";
-	my @eject        = ( "" );
+	my @eject;
 
 	if ( &getCertType( $filepath ) eq "Certificate" )
 	{

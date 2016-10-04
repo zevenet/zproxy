@@ -84,6 +84,40 @@ sub certificates # ()
 	&httpResponse({ code => 200, body => $body });
 }
 
+# GET certificate info
+sub get_certificate_info # ()
+{
+	my $cert_filename = shift;
+
+	my $cert_dir = $configdir;
+	$cert_dir = $basedir if $cert_filename eq 'zlbcertfile.pem';
+
+	if ( $cert_filename =~ /\.(pem|csr)$/ && -f "$cert_dir\/$cert_filename" )
+	{
+		my @cert_info = &getCertData( $cert_filename );
+		my $body;
+
+		# Success
+		foreach my $line ( @cert_info )
+		{
+			$body .= $line;
+		}
+
+		&httpResponse({ code => 200, body => $body, type => 'text/plain' });
+	}
+	else
+	{
+		my $errormsg = "Could not get such certificate information";
+		my $body = {
+					 description => "Get Certificate Information",
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
 # DELETE Certificate
 
 #####Documentation of DELETE Certificate####
