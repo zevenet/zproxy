@@ -711,7 +711,7 @@ GET qr{^/certificates/([\w\.-_]+)/info$} => sub {
 
 #  POST CSR certificates
 POST qr{^/certificates/$} => sub { # ([\w\.-_]+.csr)
-	&upload_certs( @_ );
+	&create_csr( @_ );
 };
 
 #  POST certificates
