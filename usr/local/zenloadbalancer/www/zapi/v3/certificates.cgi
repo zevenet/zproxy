@@ -455,6 +455,85 @@ sub delete_farmcertificate # ( $farmname, $certfilename )
 	}
 }
 
+#
+sub create_csr
+{
+	my $json_obj = shift;
+
+	my $description = 'Create CSR';
+
+	$json_obj->{ name }         = &getCleanBlanc( $json_obj->{ name } );
+	$json_obj->{ issuer }       = &getCleanBlanc( $json_obj->{ issuer } );
+	$json_obj->{ fqdn }         = &getCleanBlanc( $json_obj->{ fqdn } );
+	$json_obj->{ division }     = &getCleanBlanc( $json_obj->{ division } );
+	$json_obj->{ organization } = &getCleanBlanc( $json_obj->{ organization } );
+	$json_obj->{ locality }     = &getCleanBlanc( $json_obj->{ locality } );
+	$json_obj->{ state }        = &getCleanBlanc( $json_obj->{ state } );
+	$json_obj->{ country }      = &getCleanBlanc( $json_obj->{ country } );
+	$json_obj->{ mail }         = &getCleanBlanc( $json_obj->{ mail } );
+
+	if (    $json_obj->{ name } =~ /^$/
+		 || $json_obj->{ issuer } =~ /^$/
+		 || $json_obj->{ fqdn } =~ /^$/
+		 || $json_obj->{ division } =~ /^$/
+		 || $json_obj->{ organization } =~ /^$/
+		 || $json_obj->{ locality } =~ /^$/
+		 || $json_obj->{ state } =~ /^$/
+		 || $json_obj->{ country } =~ /^$/
+		 || $json_obj->{ mail } =~ /^$/
+		 || $json_obj->{ key } =~ /^$/ )
+	{
+		my $errormsg = "Fields can not be empty. Try again.";
+		&errormsg( $errormsg );
+
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+	elsif ( &checkFQDN( $json_obj->{ fqdn } ) eq "false" )
+	{
+		my $errormsg = "FQDN is not valid. It must be as these examples: domain.com, mail.domain.com, or *.domain.com. Try again.";
+		&errormsg( $errormsg );
+
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+	elsif ( $json_obj->{ name } !~ /^[a-zA-Z0-9\-]*$/ )
+	{
+		my $errormsg = "Certificate Name is not valid. Only letters, numbers and '-' chararter are allowed. Try again.";
+		&errormsg( $errormsg );
+
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+	else
+	{
+		&createCSR(
+					$json_obj->{ name },     $json_obj->{ fqdn },     $json_obj->{ country },
+					$json_obj->{ state },    $json_obj->{ locality }, $json_obj->{ organization },
+					$json_obj->{ division }, $json_obj->{ mail },     $json_obj->{ key },
+					""
+		);
+		&successmsg( "Cert $json_obj->{ name } created" );
+
+		&httpResponse({ code => 200 });
+	}
+}
+
 #####Documentation of POST Upload Certificates####
 #**
 #  @api {post} /certificates Upload a certificate

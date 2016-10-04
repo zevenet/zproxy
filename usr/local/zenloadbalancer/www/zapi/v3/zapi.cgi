@@ -709,8 +709,13 @@ GET qr{^/certificates/([\w\.-_]+)/info$} => sub {
 	&get_certificate_info( @_ );
 };
 
+#  POST CSR certificates
+POST qr{^/certificates/$} => sub { # ([\w\.-_]+.csr)
+	&upload_certs( @_ );
+};
+
 #  POST certificates
-POST qr{^/certificates/([\w\.-_]+)$} => sub {
+POST qr{^/certificates/([\w\.-_]+.pem)$} => sub {
 	&upload_certs( @_ );
 };
 
