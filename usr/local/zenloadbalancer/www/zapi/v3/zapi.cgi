@@ -21,6 +21,7 @@ use CGI::Session;
 #~ use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use MIME::Base64;
 use JSON::XS;
+use URI::Escape;
 
 # Certificate requrements
 use Date::Parse;
