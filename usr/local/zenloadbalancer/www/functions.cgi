@@ -50,8 +50,8 @@ require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";
 require "/usr/local/zenloadbalancer/www/gui_functions_ext.cgi";
 require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
 require "/usr/local/zenloadbalancer/www/plugins_functions.cgi";
-require "/usr/local/zenloadbalancer/www/cgi_functions.cgi";
 require "/usr/local/zenloadbalancer/www/check_functions.cgi";  
+require "/usr/local/zenloadbalancer/www/cgi_functions.cgi" if defined $ENV{GATEWAY_INTERFACE};
 
 #function that check if variable is a number no float
 sub isnumber    # ($num)
