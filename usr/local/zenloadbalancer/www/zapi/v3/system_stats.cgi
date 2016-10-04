@@ -564,7 +564,6 @@ sub farm_stats # ( $farmname )
 				$activebackends++;
 			}
 		}
-		&refreshstats();
 
 		my $i = -1;
 		foreach ( @backends )
@@ -621,13 +620,11 @@ sub farm_stats # ( $farmname )
 		}
 
 		# Print Success
-		my $output = $j->encode(
-								 {
-								   description         => "List farm stats",
-								   realserversstatus   => \@out_rss,
-								   clientsessionstatus => \@out_css,
-								 }
-		);
+		my $body = {
+					 description         => "List farm stats",
+					 backends => \@out_rss,
+					 sessions => \@out_css,
+		};
 
 		&httpResponse({ code => 200, body => $body });
 	}
@@ -661,7 +658,6 @@ sub farm_stats # ( $farmname )
 				$activebackends++;
 			}
 		}
-		&refreshstats();
 
 		my $index = 0;
 		foreach ( @backends )
@@ -723,6 +719,53 @@ sub farm_stats # ( $farmname )
 
 		&httpResponse({ code => 200, body => $body });
 	}
+}
+
+#Get Farms Stats
+sub all_farms_stats # ()
+{
+	my @files = &getFarmList();
+	my @farms;
+
+	# FIXME: Verify stats are working with every type of farm
+
+	foreach my $file ( @files )
+	{
+		my $name   = &getFarmName( $file );
+		my $type   = &getFarmType( $name );
+		my $status = &getFarmStatus( $name );
+		my $vip    = &getFarmVip( 'vip', $name );
+		my $port   = &getFarmVip( 'vipp', $name );
+		my $established = 0;
+		my $pending     = 0;
+
+		if ( $status eq "up" )
+		{
+			my @netstat = &getConntrack( "", $vip, "", "", "" );
+
+			$established = scalar &getFarmSYNConns( $name, @netstat );
+			$pending = scalar &getFarmEstConns( $name, @netstat );
+		}
+
+		push @farms,
+		  {
+			farmname    => $name,
+			profile     => $type,
+			status      => $status,
+			vip         => $vip,
+			vport       => $port,
+			established => $established,
+			pending     => $pending,
+		  };
+	}
+
+	# Print Success
+	my $body = {
+				 description       => "List all farms stats",
+				 farms => \@farms,
+	};
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 #**
