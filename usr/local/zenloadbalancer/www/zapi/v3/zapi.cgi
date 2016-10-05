@@ -700,28 +700,31 @@ GET qr{^/certificates$} => sub {
 	&certificates();
 };
 
+my $cert_re = &getValidFormat('certificate');
+my $cert_pem_re = &getValidFormat('cert_pem');
+
 #  Download SSL certificate
-GET qr{^/certificates/([\w\.-_]+)$} => sub {
+GET qr{^/certificates/($cert_re)$} => sub {
 	&download_certificate( @_ );
 };
 
 #  GET SSL certificate information
-GET qr{^/certificates/([\w\.-_]+)/info$} => sub {
+GET qr{^/certificates/($cert_re)/info$} => sub {
 	&get_certificate_info( @_ );
 };
 
 #  POST CSR certificates
-POST qr{^/certificates/$} => sub { # ([\w\.-_]+.csr)
+POST qr{^/certificates/$} => sub {
 	&create_csr( @_ );
 };
 
 #  POST certificates
-POST qr{^/certificates/([\w\.-_]+.pem)$} => sub {
+POST qr{^/certificates/($cert_pem_re)$} => sub {
 	&upload_certs( @_ );
 };
 
 #  DELETE certificate
-DELETE qr{^/certificates/(\w+\.\w+$)} => sub {
+DELETE qr{^/certificates/($cert_re)$} => sub {
 	&delete_certificate( @_ );
 };
 
