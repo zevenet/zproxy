@@ -52,6 +52,9 @@ sub certificates # ()
 	my @certificates = &getCertFiles();
 	my @out;
 
+	my $cert_dh2048_re = &getValidFormat('cert_dh2048');
+	@certificates = grep {! /$cert_dh2048_re/ } @certificates;
+
 	foreach my $certificate ( @certificates )
 	{
 		my $certificateFile = "$configdir\/$certificate";
