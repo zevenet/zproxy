@@ -36,6 +36,7 @@ my %format_re = (
 	'certificate' => qr{\w[\w\.-]*\.(?:pem|csr)},
 	'cert_pem'    => qr{\w[\w\.-]*\.pem},
 	'cert_csr'    => qr{\w[\w\.-]*\.csr},
+	'cert_dh2048' => qr{\w[\w\.-]*_dh2048\.pem},
 
 	#'' => qr{},
 );
