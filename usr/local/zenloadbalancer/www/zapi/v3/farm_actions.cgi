@@ -114,7 +114,7 @@ sub actions # ( $json_obj, $farmname )
 		if ( $status != 0 )
 		{
 			$error = "true";
-			&zenlog( "ZAPI error, trying to set the action stop in farm $farmname." );
+			&zenlog( "ZAPI error, trying to set the action start in farm $farmname." );
 		}
 		else
 		{
