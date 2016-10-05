@@ -781,11 +781,6 @@ DELETE qr{^/farms/(\w+$)} => sub {
 	&delete_farm( @_ );
 };
 
-#  DELETE farm certificate
-DELETE qr{^/farms/(\w+)/certificates/([\w\.-_]+)$} => sub {
-	&delete_farmcertificate( @_ );
-};
-
 #  DELETE service
 DELETE qr{^/farms/(\w+)/services/(\w+$)} => sub {
 	&delete_service( @_ );
@@ -843,14 +838,16 @@ PUT qr{^/farms/(\w+)/services/(\w+$)} => sub {
 	&modify_services( @_ );
 };
 
+#		FARMS CERTIFICATES (HTTPS)
+
+#  DELETE farm certificate
+DELETE qr{^/farms/(\w+)/certificates/($cert_pem_re)$} => sub {
+	&delete_farmcertificate( @_ );
+};
+
 #  POST add certificates
 POST qr{^/farms/(\w+)/certificates$} => sub {
 	&add_farmcertificate( @_ );
-};
-
-#  PUT change certificates
-PUT qr{^/farms/(\w+)/certificates$} => sub { # FIXME: find change_farmcertificate function
-	&change_farmcertificate( @_ );
 };
 
 #	NETWORK INTERFACES
