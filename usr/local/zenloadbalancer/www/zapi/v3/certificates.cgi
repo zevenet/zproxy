@@ -487,7 +487,7 @@ sub create_csr
 		 || $json_obj->{ key } =~ /^$/ )
 	{
 		my $errormsg = "Fields can not be empty. Try again.";
-		&errormsg( $errormsg );
+		&zenlog( $errormsg );
 
 		my $body = {
 					 description => $description,
@@ -500,7 +500,7 @@ sub create_csr
 	elsif ( &checkFQDN( $json_obj->{ fqdn } ) eq "false" )
 	{
 		my $errormsg = "FQDN is not valid. It must be as these examples: domain.com, mail.domain.com, or *.domain.com. Try again.";
-		&errormsg( $errormsg );
+		&zenlog( $errormsg );
 
 		my $body = {
 					 description => $description,
@@ -513,7 +513,7 @@ sub create_csr
 	elsif ( $json_obj->{ name } !~ /^[a-zA-Z0-9\-]*$/ )
 	{
 		my $errormsg = "Certificate Name is not valid. Only letters, numbers and '-' chararter are allowed. Try again.";
-		&errormsg( $errormsg );
+		&zenlog( $errormsg );
 
 		my $body = {
 					 description => $description,
@@ -531,7 +531,7 @@ sub create_csr
 					$json_obj->{ division }, $json_obj->{ mail },     $json_obj->{ key },
 					""
 		);
-		&successmsg( "Cert $json_obj->{ name } created" );
+		&zenlog( "Cert $json_obj->{ name } created" );
 
 		&httpResponse({ code => 200 });
 	}
