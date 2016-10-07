@@ -36,6 +36,7 @@ package GLOBAL {
 		# 2xx Success codes
 		200 => 'OK',
 		201 => 'Created',
+		204 => 'No Content',
 
 		# 4xx Client Error codes
 		400 => 'Bad Request',
@@ -528,7 +529,7 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 #~ };
 
 #  OPTIONS PreAuth
-OPTIONS qr{.*} => sub {
+OPTIONS qr{^/.*$} => sub {
 	&httpResponse({ code => 200 });
 };
 
@@ -714,7 +715,7 @@ GET qr{^/certificates/($cert_re)/info$} => sub {
 };
 
 #  POST CSR certificates
-POST qr{^/certificates/$} => sub {
+POST qr{^/certificates$} => sub {
 	&create_csr( @_ );
 };
 
@@ -730,6 +731,7 @@ DELETE qr{^/certificates/($cert_re)$} => sub {
 
 #	FARMS
 #
+my $farm_re = &getValidFormat('farm_name');
 
 #  GET List all farms
 GET qr{^/farms$} => sub {
@@ -737,116 +739,116 @@ GET qr{^/farms$} => sub {
 };
 
 #  GET get farm info
-GET qr{^/farms/(\w+$)} => sub {
+GET qr{^/farms/($farm_re)$} => sub {
 	&farms_name( @_ );
 };
 
 #  POST new farm
-POST qr{^/farms/(\w+$)} => sub {
+POST qr{^/farms/($farm_re)$} => sub {
 	&new_farm( @_ );
 };
 
 #  POST new service
-POST qr{^/farms/(\w+)/services$} => sub {
+POST qr{^/farms/($farm_re)/services$} => sub {
 	&new_farm_service( @_ );
 };
 
 #  POST new zone
-POST qr{^/farms/(\w+)/zones$} => sub {
+POST qr{^/farms/($farm_re)/zones$} => sub {
 	&new_farm_zone( @_ );
 };
 
 #  POST new backend
-POST qr{^/farms/(\w+)/backends$} => sub {
+POST qr{^/farms/($farm_re)/backends$} => sub {
 	&new_farm_backend( @_ );
 };
 
 #  POST new zone resource
-POST qr{^/farms/(\w+)/zoneresources$} => sub {
+POST qr{^/farms/($farm_re)/zoneresources$} => sub {
 	&new_farm_zoneresource( @_ );
 };
 
 #  POST farm actions
-POST qr{^/farms/(\w+)/actions$} => sub {
+POST qr{^/farms/($farm_re)/actions$} => sub {
 	&actions( @_ );
 };
 
 #  POST status backend actions
-POST qr{^/farms/(\w+)/maintenance$} => sub {
+POST qr{^/farms/($farm_re)/maintenance$} => sub {
 	&maintenance( @_ );
 };
 
 #  DELETE farm
-DELETE qr{^/farms/(\w+$)} => sub {
+DELETE qr{^/farms/($farm_re)$} => sub {
 	&delete_farm( @_ );
 };
 
 #  DELETE service
-DELETE qr{^/farms/(\w+)/services/(\w+$)} => sub {
+DELETE qr{^/farms/($farm_re)/services/(\w+)$} => sub {
 	&delete_service( @_ );
 };
 
 #  DELETE zone
 #DELETE qr{^/farms/(\w+)/zones/(.*+$)} => sub {
-DELETE qr{^/farms/(\w+)/zones/(([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$)} => sub {
+DELETE qr{^/farms/($farm_re)/zones/(([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,})$} => sub {
 	&delete_zone( @_ );
 };
 
 #  DELETE backend (TCP/UDP/L4XNAT/DATALINK)
-DELETE qr{^/farms/(\w+)/backends/(\w+$)} => sub {
+DELETE qr{^/farms/($farm_re)/backends/(\w+)$} => sub {
 	&delete_backend( @_ );
 };
 
 #  DELETE backend (HTTP/HTTPS/GSLB)
-DELETE qr{^/farms/(\w+)/services/(\w+)/backends/(\w+$)} => sub {
+DELETE qr{^/farms/($farm_re)/services/(\w+)/backends/(\w+)$} => sub {
 	&delete_service_backend( @_ );
 };
 
 #  DELETE zone resource
-DELETE qr{^/farms/(\w+)/zones/([a-z0-9].*-*.*\.[a-z0-9].*)/resources/(\w+$)} =>
+DELETE qr{^/farms/($farm_re)/zones/([a-z0-9].*-*.*\.[a-z0-9].*)/resources/(\w+)$} =>
   sub {
 	&delete_zone_resource( @_ );
   };
 
 #  PUT farm
-PUT qr{^/farms/(\w+$)} => sub {
+PUT qr{^/farms/($farm_re)$} => sub {
 	&modify_farm( @_ );
 };
 
 #  PUT backend
-PUT qr{^/farms/(\w+)/backends/(\w+$)} => sub {
+PUT qr{^/farms/($farm_re)/backends/(\w+)$} => sub {
 	&modify_backends( @_ );
 };
 
 #  PUT farmguardian
-PUT qr{^/farms/(\w+)/fg$} => sub {
+PUT qr{^/farms/($farm_re)/fg$} => sub {
 	&modify_farmguardian( @_ );
 };
 
 #  PUT resources
-PUT qr{^/farms/(\w+)/resources/(\w+$)} => sub {
+PUT qr{^/farms/($farm_re)/resources/(\w+)$} => sub {
 	&modify_resources( @_ );
 };
 
 #  PUT zones
-PUT qr{^/farms/(\w+)/zones/(.*+$)} => sub {
+PUT qr{^/farms/($farm_re)/zones/(.*+)$} => sub {
 	&modify_zones( @_ );
 };
 
 #  PUT services
-PUT qr{^/farms/(\w+)/services/(\w+$)} => sub {
+PUT qr{^/farms/($farm_re)/services/(\w+)$} => sub {
 	&modify_services( @_ );
 };
 
 #		FARMS CERTIFICATES (HTTPS)
 
 #  DELETE farm certificate
-DELETE qr{^/farms/(\w+)/certificates/($cert_pem_re)$} => sub {
+DELETE qr{^/farms/($farm_re)/certificates/($cert_pem_re)$} => sub {
 	&delete_farmcertificate( @_ );
 };
 
 #  POST add certificates
-POST qr{^/farms/(\w+)/certificates$} => sub {
+POST qr{^/farms/($farm_re)/certificates$} => sub {
 	&add_farmcertificate( @_ );
 };
 
@@ -918,7 +920,7 @@ GET qr{^/stats/farms$} => sub {
 };
 
 #  GET farm stats
-GET qr{^/stats/farms/([\w-]+)$} => sub {
+GET qr{^/stats/farms/($farm_re)$} => sub {
 	&farm_stats( @_ );
 };
 
@@ -981,12 +983,12 @@ DELETE qr{^/ipds/rbl/(.+)/list/(.+$)} => sub {
 };
 
 #  POST list to farm
-POST qr{^/farms/(.+)/ipds/rbl$} => sub {
+POST qr{^/farms/($farm_re)/ipds/rbl$} => sub {
 	&add_rbl_to_farm ( @_ );
 };
 
 #  DELETE list from farm
-DELETE qr{^/farms/(.+)/ipds/rbl/(.+)$} => sub {
+DELETE qr{^/farms/($farm_re)/ipds/rbl/(.+)$} => sub {
 	&del_rbl_from_farm ( @_ );
 };
 
