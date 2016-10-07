@@ -14,6 +14,8 @@
 
 
 require "/usr/local/zenloadbalancer/www/Plugins/rbl.pl";
+require "/usr/local/zenloadbalancer/www/Plugins/ddos.pl";
+
 
 rbl:
 
@@ -173,7 +175,7 @@ sub get_rbl_list
 	}
 	else
 	{
-		my $errormsg = "List request don't exist.";
+		my $errormsg = "Request list doesn't exist.";
 		my $body = {
 					   description => "Get rbl list '$listName'",
 					   error       => "true",
@@ -238,7 +240,7 @@ sub add_rbl_list
 	my $listName = shift;
 	
 	my $errormsg;
-	if ( ! &getValidFormat ( 'rbl_list_name', $listName ) )
+	if ( &getCheckParam ( 'rbl_list_name', $listName ) == -1 )
 	{
 		$errormsg = "In list name only is allowed alphanumeric characters.";
 	}
@@ -383,7 +385,7 @@ sub set_rbl_list
 	}
 	else
 	{
-		$errormsg = "$listName don't exist.";
+		$errormsg = "$listName doesn't exist.";
 	}
 	
 	
@@ -447,7 +449,7 @@ sub del_rbl_list
 	}
 	else
 	{
-		$errormsg = "$listName don't exist.";	
+		$errormsg = "$listName doesn't exist.";	
 	}
 	
 	if ( !$err )
@@ -520,7 +522,7 @@ sub add_rbl_source
 	
 	if ( &getRBLListLocalitation ( $listName ) == -1 )
 	{
-		$errormsg = "$listName don't exist.";
+		$errormsg = "$listName doesn't exist.";
 	}
 	
 	if ( $json_obj->{'source'} !~ /((?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?)/ )
@@ -599,7 +601,7 @@ sub set_rbl_source
 	# check list exists and source is successful
 	if ( &getRBLListLocalitation ( $listName ) == -1 )
 	{
-		$errormsg = "$listName don't found";
+		$errormsg = "$listName doesn't found";
 	}
 		
 	if ( !$errormsg )
@@ -617,12 +619,12 @@ sub set_rbl_source
 	
 	if ( !$errormsg )
 	{	
-		&httpResponse({ code => 200, body => { description => "Post source to $listName", params => &getRBLListParam ( $listName, 'list' ) } });
+		&httpResponse({ code => 200, body => { description => "Put source from $listName", params => &getRBLListParam ( $listName, 'list' ) } });
 	}
 	else
 	{
 		my $body = {
-		   description => "Put source to $listName",
+		   description => "Put source from $listName",
 		   error       => "true",
 		   message     => $errormsg,
 		};
@@ -667,12 +669,12 @@ sub del_rbl_source
 	
 	if ( &getRBLListLocalitation ( $listName ) == -1 )
 	{
-		$errormsg = "$listName don't exist.";
+		$errormsg = "$listName doesn't exist.";
 	}
 		
 	if ( @{ &getRBLListParam ( $listName, 'list' ) } <= $id )
 	{
-		$errormsg = "ID $id don't exist in $listName.";
+		$errormsg = "ID $id doesn't exist in $listName.";
 	}
 		
 	if ( !$errormsg )
@@ -845,6 +847,221 @@ sub del_rbl_from_farm
 			message		 => $errormsg,
 		};
 		
+		&httpResponse({ code => 400, body => $body });
+	}
+	
+};
+
+
+ddos:
+
+#GET /ipds/ddos
+sub get_ddos
+{
+	my $confFile = &getGlobalConfiguration( 'ddosConf' );
+	my $output;
+	
+	if ( -e $confFile )
+	{
+		my $fileHandle = Config::Tiny->read( $confFile );
+		$output = $fileHandle->{ '_' };
+	}
+		
+	my $body = {
+		description => "Get DDoS settings.",
+		params => $output
+	};
+	
+	&httpResponse({ code => 200, body => $body });
+}
+
+
+#PUT /ipds/ddos
+sub set_ddos
+{
+	my $json_obj = shift;
+	my $key = shift;
+	my $status = shift;
+	my $output;
+	
+	$key = $json_obj->{'param'};
+	if ( $key eq 'ssh_bruteForce' )
+	{
+		&setDDOSCreateRule ( $key ) if ( $status eq 'up' );
+		&setDDOSDeleteRule ( $key ) if ( $status eq 'down' );
+		
+		my $confFile = &getGlobalConfiguration( 'ddosConf' );
+		
+		if ( -e $confFile )
+		{
+			my $fileHandle = Config::Tiny->read( $confFile );
+			$output = $fileHandle->{ '_' };
+		}
+		&httpResponse({ code => 200, body => { description => "Put DDoS settings", params => $output } });
+		
+	}
+	else
+	{
+		my $errormsg = "Wrong param";
+		my $body = {
+			description => "Put source to $listName",
+			error       => "true",
+			message     => $errormsg,
+		};
+		&httpResponse({ code => 400, body => $body });
+	}
+	
+	
+};
+
+
+#  GET /farms/<farmname>/ipds/ddos
+sub get_ddos_farm
+{
+	my $farmName = shift;
+	my $confFile = &getGlobalConfiguration( 'ddosConf' );
+	my $output;
+	
+	if ( -e $confFile )
+	{
+		my $fileHandle = Config::Tiny->read( $confFile );
+		my $farmsString = $fileHandle->{ '_' }->{ 'farms' };
+		my @farmsArray = split ( ' ', $farmsString );
+		
+		if ( $farmsString =~ /$farmName/ )
+		{
+			$output = 'up';
+		}
+		else
+		{	
+			$output = 'down';
+		}
+	}
+
+	my $body = {
+		description => "Get status DDoS $farmName.",
+		params => &getRBLListParam ( $listName, 'list' )
+	};
+	
+	&httpResponse({ code => 200, body => $body });
+
+};
+
+
+#  POST /farms/<farmname>/ipds/ddos
+sub add_ddos_to_farm
+{
+	my $json_obj = shift;
+	my $farmName = shift;
+	my $errormsg;
+
+	if ( grep ( /$farmName/, &getFarmList() ) )
+	{
+		my $fileHandle = Config::Tiny->read( $confFile );
+		if ( $fileHandle->{ '_' }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+		{
+			$errormsg = "Just is enabled DDoS in $farmName.";
+		}
+		else
+		{
+			&setDDOSCreateRule ( 'farms', $farmName );
+			
+			my $confFile = &getGlobalConfiguration( 'ddosConf' );
+			my $output;
+			
+			# check output
+			if ( -e $confFile )
+			{
+				my $fileHandle = Config::Tiny->read( $confFile );
+				my $farmsString = $fileHandle->{ '_' }->{ 'farms' };
+				my @farmsArray = split ( ' ', $farmsString );
+			
+				if ( $farmsString =~ /$farmName/ )
+				{
+					$output = 'up';
+				}
+				else
+				{	
+					$output = 'down';
+				}
+			}
+			if ( $output eq 'up' )
+			{
+				&httpResponse({ code => 200, body => { description => "Post DDoS to $farmName.", params => $output } });
+			}
+			else
+			{
+				$errormsg = "There was a error enabling DDoS in $farmName.";
+			}
+		}
+	}
+	else
+	{
+		$errormsg = "$farmName doesn't exist";
+	}
+	
+	if ( $errormsg )
+	{ 
+		my $body = {
+		   description => "Post DDoS to $farmName",
+		   error       => "true",
+		   message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+	
+};
+
+
+# DELETE /farms/<farmname>/ipds/ddos
+sub del_ddos_from_farm
+{
+	my $farmName = shift;
+	my $confFile = &getGlobalConfiguration( 'ddosConf' );
+	my $errormsg;
+
+	if ( -e $confFile )
+	{
+		my $fileHandle = Config::Tiny->read( $confFile );
+		my $farmsString = $fileHandle->{ '_' }->{ 'farms' };
+		$errormsg = "DDoS for $farmName just is disable." if ( $farmsString !~ /( |^)$farmName( |$)/ );
+	}
+	else
+	{
+		$errormsg = "DDoS for $farmName just is disable.";
+	}
+	
+	if ( !$errormsg )
+	{
+		if ( grep ( /$farmName/, &getFarmList ) )
+		{
+			&setDDOSDeleteRule ( 'farms', $farmName );
+			
+			my $errormsg = "DDoS was desactived successful from farm $farmName.";
+			
+			my $body = {
+				description => "Delete DDoS form farm $farmName",
+				success     => "true",
+				message     => $errormsg,
+			};
+					
+			&httpResponse({ code => 200, body => $body });
+		}
+		else
+		{
+			$errormsg = "$farmName doesn't exist";
+		}
+	}
+	
+	if( $errormsg )
+	{
+		my $body = {
+			description => "Delete DDoS form farm $farmName",
+			error       => "true",
+			message     => $errormsg,
+		};
+
 		&httpResponse({ code => 400, body => $body });
 	}
 	

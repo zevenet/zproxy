@@ -940,65 +940,98 @@ GET qr{^/graphs} => sub {
 
 #	IPDS
 #
-#~ ipds:
+ipds:
 
+my $rbl_list = &getValidFormat('rbl_list_name');
+my $rbl_source = &getValidFormat('rbl_source');
+
+my $farm_name = &getValidFormat('farm_name');
+
+# RBL
 #  GET all rbl lists
 GET qr{^/ipds/rbl$} => sub {
 	&get_rbl_all_lists;
 };
 
 #  GET rbl lists
-GET qr{^/ipds/rbl/(\w+)$} => sub {
+GET qr{^/ipds/rbl/($rbl_list)$} => sub {
 	&get_rbl_list ( @_ );
 };
 
 #  POST rbl list
-POST qr{^/ipds/rbl/(\w+)$} => sub {
+POST qr{^/ipds/rbl/($rbl_list)$} => sub {
 	&add_rbl_list ( @_ );
 };
 
 #  PUT rbl list
-PUT qr{^/ipds/rbl/(\w+)$} => sub {
+PUT qr{^/ipds/rbl/($rbl_list)$} => sub {
 	&set_rbl_list ( @_ );
 };
 
 #  DELETE rbl list
-DELETE qr{^/ipds/rbl/(\w+)$} => sub {
+DELETE qr{^/ipds/rbl/($rbl_list)$} => sub {
 	&del_rbl_list ( @_ );
 };
 
 #  POST a source from a rbl list
-POST qr{^/ipds/rbl/(.+)/list} => sub {
+POST qr{^/ipds/rbl/($rbl_list)/list} => sub {
 	&add_rbl_source ( @_ );
 };
 
 #  PUT a source from a rbl list
-PUT qr{^/ipds/rbl/(.+)/list/(.+$)} => sub {
+PUT qr{^/ipds/rbl/($rbl_list)/list/($rbl_source$)} => sub {
 	&set_rbl_source ( @_ );
 };
 
 #  DELETE a source from a rbl list
-DELETE qr{^/ipds/rbl/(.+)/list/(.+$)} => sub {
+DELETE qr{^/ipds/rbl/($rbl_list)/list/($rbl_source$)} => sub {
 	&del_rbl_source ( @_ );
 };
 
 #  POST list to farm
-POST qr{^/farms/($farm_re)/ipds/rbl$} => sub {
+POST qr{^/farms/($farm_name)/ipds/rbl$} => sub {
 	&add_rbl_to_farm ( @_ );
 };
 
 #  DELETE list from farm
-DELETE qr{^/farms/($farm_re)/ipds/rbl/(.+)$} => sub {
+DELETE qr{^/farms/($farm_name)/ipds/rbl/($rbl_list$)} => sub {
 	&del_rbl_from_farm ( @_ );
 };
 
 
-# Reply status code 400 when the requested URI does not match.
-# This should be the last sentence in this file.
+# DDoS
+#  GET ddos settings
+GET qr{^/ipds/ddos$} => sub {
+	&get_ddos ( @_ );
+};
+
+#  PUT ddos settings
+PUT qr{^/ipds/ddos$} => sub {
+	&set_ddos ( @_ );
+};
+
+#  GET status ddos for a farm
+GET qr{^/farms/($farm_name)/ipds/ddos$} => sub {
+	&get_ddos_farm ( @_ );
+};
+
+#  POST DDoS to a farm
+POST qr{^/farms/($farm_name)/ipds/ddos$} => sub {
+	&add_ddos_to_farm ( @_ );
+};
+
+#  DELETE DDoS from a farm
+DELETE qr{^/farms/($farm_name)/ipds/ddos$} => sub {
+	&del_ddos_from_farm ( @_ );
+};
+
+
+
 &httpResponse({
 	code => 400,
 	body => {
 		message => 'Request not recognized',
-		error => 'true',
+		error => 'true', 
 		}
 	});
+
