@@ -30,7 +30,11 @@
 
 my %format_re = (
 	'farm_name'     => qr{[a-zA-Z0-9\-]+},
+
+	# ipds
 	'rbl_list_name' => qr{[a-zA-Z0-9]+},
+	'rbl_source'	=> qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
+
 
 	# certificates filenames
 	'certificate' => qr{\w[\w\.-]*\.(?:pem|csr)},
