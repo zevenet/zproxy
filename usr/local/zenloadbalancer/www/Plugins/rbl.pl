@@ -28,14 +28,13 @@ use Config::Tiny;
 use Tie::File;
 
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
-require "/usr/local/zenloadbalancer/www/functions_ext.cgi"; 
+require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 require "/usr/local/zenloadbalancer/config/global.conf";
 
 #~ ------ lists -------
 
 # The lists will be always created and updated although these aren't used at the moment
 # When a list is applied to a farm, a ip rule will be created with port and ip where farm is working.
-
 
 =begin nd
         Function: setRBLCreateLocalList
@@ -56,36 +55,45 @@ require "/usr/local/zenloadbalancer/config/global.conf";
                 != 0	- error
                 
 =cut
+
 #	&setRBLCreateLocalList ( $listName, $type );
 sub setRBLCreateLocalList
 {
 	my ( $listName, $type ) = @_;
 	my $output;
 
+	my $rblLocalConf  = &getGlobalConfiguration( 'rblLocalConf' );
+	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
+	my $touch         = &getGlobalConfiguration( 'touch' );
+	my $ipset         = &getGlobalConfiguration( 'ipset' );
+	my $rblConfPath   = &getGlobalConfiguration( 'rblConfPath' );
+
 	# create local_lists.conf if it doesn't exit
-	if ( ! -e $rblLocalConf )
+	if ( !-e $rblLocalConf )
 	{
-		system ("$touch $rblLocalConf");
-		&zenlog ( "Created $rblLocalConf file." );
+		system ( "$touch $rblLocalConf" );
+		&zenlog( "Created $rblLocalConf file." );
 	}
-		
+
 	# check if a list exists with same name
 	my $fileHandle = Config::Tiny->read( $rblLocalConf );
 	my $fileRemote = Config::Tiny->read( $rblRemoteConf );
 	if ( exists $fileHandle->{ $listName } || exists $fileRemote->{ $listName } )
 	{
-		&zenlog ( "'$listName' list just exists" );
+		&zenlog( "'$listName' list just exists" );
 		return -1;
 	}
 
 	if ( $type ne 'deny' && $type ne 'allow' )
 	{
-		&zenlog ( "Parameter 'type' only accpet 'allow | deny', in 'setRBLCreateLocalList' function." );
+		&zenlog(
+			"Parameter 'type' only accpet 'allow | deny', in 'setRBLCreateLocalList' function."
+		);
 		$output = -1;
 	}
-		
+
 	else
-	{		
+	{
 		# add section to local lists conf
 		my %aux = ( 'farms' => "", 'type' => "$type", 'action' => "" );
 		if ( $type eq 'deny' )
@@ -100,16 +108,15 @@ sub setRBLCreateLocalList
 		$fileHandle->write( $rblLocalConf );
 
 		#~ # create list.txt
-		system ("$touch $rblConfPath/${type}_lists/$listName.txt");
+		system ( "$touch $rblConfPath/${type}_lists/$listName.txt" );
 
 		# create ipset rule
 		my $output = system ( "$ipset create $listName hash:net" );
-		&zenlog ( "'$listName' list was created successful" );
+		&zenlog( "'$listName' list was created successful" );
 	}
-	
+
 	return $output;
 }
-
 
 =begin nd
         Function: setRBLCreateRemoteList
@@ -132,49 +139,54 @@ sub setRBLCreateLocalList
                 != 0	- error
                 
 =cut
+
 # &setRBLCreateRemoteList ( $name, $type, $url );
 sub setRBLCreateRemoteList
 {
 	my ( $name, $type, $url ) = @_;
 	my $output = -1;
 
+	my $rblLocalConf  = &getGlobalConfiguration( 'rblLocalConf' );
+	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
+	my $touch         = &getGlobalConfiguration( 'touch' );
+	my $ipset         = &getGlobalConfiguration( 'ipset' );
+
 	if ( $type ne 'allow' && $type ne 'deny' )
 	{
 		return -1;
 	}
 
-	if ( ! -e $rblRemoteConf )
+	if ( !-e $rblRemoteConf )
 	{
-		system ("$touch $rblRemoteConf");
-		&zenlog ( "Created $rblRemoteConf file." );
+		system ( "$touch $rblRemoteConf" );
+		&zenlog( "Created $rblRemoteConf file." );
 	}
-	
+
 	my $fileHandle = Config::Tiny->read( $rblRemoteConf );
-	my $fileLocal = Config::Tiny->read( $rblLocalConf );
+	my $fileLocal  = Config::Tiny->read( $rblLocalConf );
 	if ( exists $fileHandle->{ $name } || exists $fileLocal->{ $name } )
 	{
-		&zenlog ( "'$name' list just exists." );
+		&zenlog( "'$name' list just exists." );
 	}
 	else
 	{
-		&zenlog ("rem:$rblRemoteConf, cmd:$ipset create $name hash:net"); # ???
-		
-		$fileHandle->{ $name }->{ 'url' } = $url;
+		&zenlog( "rem:$rblRemoteConf, cmd:$ipset create $name hash:net" );    # ???
+
+		$fileHandle->{ $name }->{ 'url' }    = $url;
 		$fileHandle->{ $name }->{ 'status' } = "up";
-		$fileHandle->{ $name }->{ 'farms' } = "";
-		$fileHandle->{ $name }->{ 'type' } = $type;
+		$fileHandle->{ $name }->{ 'farms' }  = "";
+		$fileHandle->{ $name }->{ 'type' }   = $type;
 		$fileHandle->write( $rblRemoteConf );
 		$output = system ( "$ipset create $name hash:net" );
 		if ( !$output )
 		{
-			$output = &setRBLRefreshList ( $name );
+			$output = &setRBLRefreshList( $name );
 		}
-		&zenlog ( "'$name' list was created successful." );
+		&zenlog( "'$name' list was created successful." );
 	}
-	
+
 	return $output;
 }
-
 
 =begin nd
         Function: setRBLDeleteList
@@ -192,6 +204,7 @@ sub setRBLCreateRemoteList
 				!=0 - error
                 
 =cut
+
 # &setRBLDeleteList ( $listName )
 sub setRBLDeleteList
 {
@@ -199,33 +212,41 @@ sub setRBLDeleteList
 	my $fileHandle;
 	my $output;
 
-	my @farms = &getFarmNameList;
-	
+	my $rblLocalConf  = &getGlobalConfiguration( 'rblLocalConf' );
+	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
+	my $ipset         = &getGlobalConfiguration( 'ipset' );
+	my $rblConfPath   = &getGlobalConfiguration( 'rblConfPath' );
+	my @farms         = &getFarmNameList;
+
 	foreach my $farmName ( @farms )
 	{
 		my @rules = &getIptList( $farmName, 'raw', 'PREROUTING' );
 		if ( grep /.+match-set $listName src .+RBL_$farmName/, @rules )
 		{
-			&zenlog ("Deleting $listName rules for farm $farmName");
-			my $error = &setRBLDeleteRule ( $farmName, $listName );
+			&zenlog( "Deleting $listName rules for farm $farmName" );
+			my $error = &setRBLDeleteRule( $farmName, $listName );
 			$output++ if ( $error != 0 );
 		}
 	}
-	
+
 	if ( !$output )
 	{
-		my $loc = &getRBLListLocalitation ( $listName );
+		my $loc = &getRBLListLocalitation( $listName );
+
 		# local list
 		if ( $loc eq 'local' )
 		{
 			$fileHandle = Config::Tiny->read( $rblLocalConf );
 			my $type = $fileHandle->{ $listName }->{ 'type' };
-			# delete the list file	
+
+			# delete the list file
 			system ( "rm $rblConfPath/${type}_lists/$listName.txt" );
+
 			# delete from config file
 			delete $fileHandle->{ $listName };
 			$fileHandle->write( $rblLocalConf );
 		}
+
 		# remote list
 		elsif ( $loc eq 'remote' )
 		{
@@ -233,26 +254,26 @@ sub setRBLDeleteList
 			delete $fileHandle->{ $listName };
 			$fileHandle->write( $rblRemoteConf );
 		}
-		# list don't find
+
+		# list doesn't find
 		else
 		{
 			return -1;
 		}
-		$output = system ( "$ipset destroy $listName" );	
+		$output = system ( "$ipset destroy $listName" );
 		if ( $output != 0 )
 		{
-			&zenlog ( "Error deleting list '$listName'." );
+			&zenlog( "Error deleting list '$listName'." );
 			$output = -1;
 		}
 		else
 		{
-			&zenlog ( "List '$listName' was deleted successful." );
+			&zenlog( "List '$listName' was deleted successful." );
 		}
 	}
 
 	return $output;
 }
-
 
 =begin nd
         Function: setRBLLocalListConfig
@@ -271,42 +292,48 @@ sub setRBLDeleteList
                 !=0	- error
                 
 =cut
+
 # &setRBLLocalListConfig ( $name , $key,  $value, $opt )
-sub setRBLLocalListConfig 
+sub setRBLLocalListConfig
 {
-	my ( $name , $key,  $value, $opt ) = @_;
+	my ( $name, $key, $value, $opt ) = @_;
 	my $output;
-	my $fileHandle = Config::Tiny->read( $rblLocalConf );
-	
-	if ( ! exists $fileHandle->{ $name } )
+
+	my $rblLocalConf = &getGlobalConfiguration( 'rblLocalConf' );
+	my $fileHandle   = Config::Tiny->read( $rblLocalConf );
+
+	if ( !exists $fileHandle->{ $name } )
 	{
 		return -1;
 	}
-	
+
 	# change name of url
 	if ( 'name' eq $key )
 	{
 		my @listNames = &getRBLListNames;
-		if ( grep (/$value/, @listNames) )
+		if ( grep ( /$value/, @listNames ) )
 		{
-			&zenlog ( "List '$value' just exists." );
+			&zenlog( "List '$value' just exists." );
 			$output = -1;
 		}
 		else
 		{
 			# get conf
-			my @farmList = @{ &getRBLListParam ( $name, 'farms' ) };
-			my $ipList = &getRBLIpList( $name );
-			my $type = $fileHandle->{ $name }->{ 'type' };
+			my @farmList = @{ &getRBLListParam( $name, 'farms' ) };
+			my $ipList   = &getRBLIpList( $name );
+			my $type     = $fileHandle->{ $name }->{ 'type' };
+
 			# crete new list
-			$output = &setRBLCreateLocalList ( $value, $type );
-			$output = &setRBLListParam ( $value , 'list', $ipList );
+			$output = &setRBLCreateLocalList( $value, $type );
+			$output = &setRBLListParam( $value, 'list', $ipList );
+
 			# delete list and all rules applied to farms
-			$output = &setRBLDeleteList ( $name );
+			$output = &setRBLDeleteList( $name );
+
 			# apply rules to farms
 			foreach my $farm ( @farmList )
 			{
-				&setRBLCreateRule ( $farm, $value );
+				&setRBLCreateRule( $farm, $value );
 			}
 			return $output;
 		}
@@ -314,24 +341,27 @@ sub setRBLLocalListConfig
 	elsif ( 'type' eq $key )
 	{
 		# get configuration
-		my @farmList = @{ &getRBLListParam ( $name, 'farms' ) };
+		my @farmList = @{ &getRBLListParam( $name, 'farms' ) };
 		my $ipList = &getRBLIpList( $name );
+
 		# delete list and all rules applied to farms
-		$output = &setRBLDeleteList ( $name );
+		$output = &setRBLDeleteList( $name );
+
 		# crete new list
-		$output = &setRBLCreateLocalList ( $name, $value );
-		$output = &setRBLListParam ( $name , 'list', $ipList );
+		$output = &setRBLCreateLocalList( $name, $value );
+		$output = &setRBLListParam( $name, 'list', $ipList );
+
 		# apply rules to farms
 		foreach my $farm ( @farmList )
 		{
-			$output = &setRBLCreateRule ( $farm, $name );
-		}	
+			$output = &setRBLCreateRule( $farm, $name );
+		}
 		return $output;
 	}
 	elsif ( 'list' eq $key )
 	{
-		&setRBLAddToList  ( $name, $value );
-		&setRBLRefreshList ( $name );
+		&setRBLAddToList( $name, $value );
+		&setRBLRefreshList( $name );
 	}
 	elsif ( 'farms' eq $key )
 	{
@@ -349,20 +379,22 @@ sub setRBLLocalListConfig
 		}
 		else
 		{
-			&zenlog ( "Parameter 'farm' only accept 'add / del' options, in 'setRBLLocalListConfig' function." );
+			&zenlog(
+				"Parameter 'farm' only accept 'add / del' options, in 'setRBLLocalListConfig' function."
+			);
 			$output = -1;
 		}
 	}
 	else
 	{
-		&zenlog ( "Wrong parameter '$key' for key in 'setRBLLocalListConfig' function." );
+		&zenlog(
+				 "Wrong parameter '$key' for key in 'setRBLLocalListConfig' function." );
 		$output = -1;
 	}
 	$fileHandle->write( $rblLocalConf );
-	
+
 	return $output;
 }
-
 
 =begin nd
         Function: setRBLRemoteListConfig
@@ -381,29 +413,32 @@ sub setRBLLocalListConfig
                 !=0	- error
                 
 =cut
+
 # &setRBLRemoteListConfig ( $name , $key,  $value, $opt )
-sub setRBLRemoteListConfig 
+sub setRBLRemoteListConfig
 {
-	my ( $name , $key, $value, $opt ) = @_;
+	my ( $name, $key, $value, $opt ) = @_;
 	my $output = 0;
-	my $fileHandle = Config::Tiny->read( $rblRemoteConf );
-	
-	if ( ! exists $fileHandle->{ $name } )
+
+	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
+	my $fileHandle    = Config::Tiny->read( $rblRemoteConf );
+
+	if ( !exists $fileHandle->{ $name } )
 	{
 		return -1;
 	}
-	
+
 	# change list name
 	if ( 'name' eq $key )
 	{
-		my @farmList = @{ &getRBLListParam ( $name, 'farms' ) };
-		my $url = $fileHandle->{ $name }->{'url'};
-		my $type = $fileHandle->{ $name }->{'type'};
-		$output = &setRBLDeleteList ( $name );
-		$output = &setRBLCreateRemoteList ( $value, $type, $url );
+		my @farmList = @{ &getRBLListParam( $name, 'farms' ) };
+		my $url      = $fileHandle->{ $name }->{ 'url' };
+		my $type     = $fileHandle->{ $name }->{ 'type' };
+		$output = &setRBLDeleteList( $name );
+		$output = &setRBLCreateRemoteList( $value, $type, $url );
 		foreach my $farm ( @farmList )
 		{
-			&setRBLCreateRule ( $farm, $value );
+			&setRBLCreateRule( $farm, $value );
 		}
 		return $output;
 	}
@@ -420,13 +455,17 @@ sub setRBLRemoteListConfig
 		}
 		else
 		{
-			&zenlog ( "Parameter 'farm' only accept 'add / del' options, in 'setRBLRemoteListConfig' function." );
+			&zenlog(
+				"Parameter 'farm' only accept 'add / del' options, in 'setRBLRemoteListConfig' function."
+			);
 			$output = -1;
 		}
 	}
-	elsif ( 'status' eq $key && ( $value ne 'up' && $value ne 'down' && $value ne 'dis' ) )
+	elsif ( 'status' eq $key
+			&& ( $value ne 'up' && $value ne 'down' && $value ne 'dis' ) )
 	{
-		&zenlog ( "Wrong parameter 'value' to 'status' in 'setRBLRemoteListConfig' function." );
+		&zenlog(
+			  "Wrong parameter 'value' to 'status' in 'setRBLRemoteListConfig' function." );
 		$output = -1;
 	}
 	elsif ( 'status' eq $key )
@@ -436,33 +475,35 @@ sub setRBLRemoteListConfig
 	elsif ( 'type' eq $key )
 	{
 		my $url = $fileHandle->{ $name }->{ 'url' };
-		my @farmList = @{ &getRBLListParam ( $name, 'farms' ) };
+		my @farmList = @{ &getRBLListParam( $name, 'farms' ) };
+
 		# delete list and all rules applied to farms
-		$output = &setRBLDeleteList ( $name );
+		$output = &setRBLDeleteList( $name );
+
 		# crete new list
-		$output = &setRBLCreateRemoteList ( $name, $value, $url );
+		$output = &setRBLCreateRemoteList( $name, $value, $url );
+
 		# apply rules to farms
 		foreach my $farm ( @farmList )
 		{
-			$output = &setRBLCreateRule ( $farm, $name );
+			$output = &setRBLCreateRule( $farm, $name );
 		}
 		return $output;
-	} 
+	}
 	elsif ( 'url' eq $key )
 	{
 		$fileHandle->{ $name }->{ $key } = $value;
-		&setRBLRefreshList ( $name );
+		&setRBLRefreshList( $name );
 	}
 	else
 	{
-		&zenlog ( "Wrong parameter 'key' in 'setRBLRemoteListConfig' function." );
+		&zenlog( "Wrong parameter 'key' in 'setRBLRemoteListConfig' function." );
 		$output = -1;
 	}
 	$fileHandle->write( $rblRemoteConf );
-	
+
 	return $output;
 }
-
 
 =begin nd
         Function: setRBLListParam
@@ -487,31 +528,31 @@ sub setRBLRemoteListConfig
                 !=0	- error
                 
 =cut
+
 # &setRBLListParam ( $listName, $key,  $value, $opt )
-sub setRBLListParam 
+sub setRBLListParam
 {
-	my ( $listName, $key,  $value, $opt ) = @_;
+	my ( $listName, $key, $value, $opt ) = @_;
 	my $output;
-	my $file = &getRBLListLocalitation ( $listName );
+	my $file = &getRBLListLocalitation( $listName );
 	my $fileHandle;
-	
+
 	if ( $file eq "local" )
 	{
-		$output = &setRBLLocalListConfig ( $listName , $key,  $value, $opt )
+		$output = &setRBLLocalListConfig( $listName, $key, $value, $opt );
 	}
 	elsif ( $file eq "remote" )
 	{
-		$output = &setRBLRemoteListConfig ( $listName , $key,  $value, $opt )
+		$output = &setRBLRemoteListConfig( $listName, $key, $value, $opt );
 	}
 	else
 	{
 		$output = -1;
 	}
-		
+
 	return $output;
 }
-	
-	
+
 =begin nd
         Function: getRBLListParam
 
@@ -535,17 +576,21 @@ sub setRBLListParam
                 !=0	- error
                 
 =cut	
+
 # &getRBLListParam ( $listName, $key )
-sub getRBLListParam 
+sub getRBLListParam
 {
 	my ( $listName, $key ) = @_;
 	my $output;
-	my $file = &getRBLListLocalitation ( $listName );
+	my $file = &getRBLListLocalitation( $listName );
 	my $fileHandle;
-	
+
+	my $rblLocalConf  = &getGlobalConfiguration( 'rblLocalConf' );
+	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
+
 	if ( $key eq 'list' )
 	{
-		$output = &getRBLIpList ( $listName );
+		$output = &getRBLIpList( $listName );
 	}
 	elsif ( $file eq "local" )
 	{
@@ -557,10 +602,10 @@ sub getRBLListParam
 	}
 	else
 	{
-		&zenlog ("List '$listName' don't exist.");
+		&zenlog( "List '$listName' doesn't exist." );
 		$output = -1;
 	}
-	
+
 	if ( !$output )
 	{
 		$output = $fileHandle->{ $listName }->{ $key };
@@ -569,10 +614,9 @@ sub getRBLListParam
 			my @farm = split ( ' ', $output );
 			$output = \@farm;
 		}
-	}	
+	}
 	return $output;
 }
-
 
 =begin nd
         Function: getRBLListLocalitation
@@ -590,12 +634,17 @@ sub getRBLListParam
                 !=0	- error
                 
 =cut
+
 # &getRBLListLocalitation ( $listName );
 sub getRBLListLocalitation
 {
 	my ( $listName ) = @_;
 	my $output = -1;
-	my $fileLocal = Config::Tiny->read( $rblLocalConf );
+
+	my $rblLocalConf  = &getGlobalConfiguration( 'rblLocalConf' );
+	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
+
+	my $fileLocal  = Config::Tiny->read( $rblLocalConf );
 	my $fileRemote = Config::Tiny->read( $rblRemoteConf );
 
 	if ( exists $fileLocal->{ $listName } )
@@ -606,16 +655,15 @@ sub getRBLListLocalitation
 	{
 		$output = "remote";
 	}
-	else 
+	else
 	{
 		$output = -1;
-		&zenlog ( "List '$listName' don't exist" );
+		&zenlog( "List '$listName' doesn't exist" );
 	}
-	
-	return $output
+
+	return $output;
 }
 
-	
 =begin nd
         Function: setRBLRefreshList
 
@@ -631,25 +679,27 @@ sub getRBLListLocalitation
                 != 0	- error
                 
 =cut
+
 #	&setRBLRefreshList ( $listName )
 sub setRBLRefreshList
-{	
+{
 	my ( $listName ) = @_;
-	my $ipListRef = &getRBLIpList ($listName); 
-	my @ipList = @{ $ipListRef };
-	my $output; 
-	&zenlog ("refreshing '$listName'... "); 
-	$ouput = system( "$ipset flush $listName" );
-	if (!$output)
+	my $ipListRef    = &getRBLIpList( $listName );
+	my @ipList       = @{ $ipListRef };
+	my $output;
+	my $ipset = &getGlobalConfiguration( 'ipset' );
+
+	&zenlog( "refreshing '$listName'... " );
+	$ouput = system ( "$ipset flush $listName" );
+	if ( !$output )
 	{
 		foreach my $ip ( @ipList )
 		{
-			$output = system( "$ipset add $listName $ip" );
+			$output = system ( "$ipset add $listName $ip" );
 		}
 	}
 	return $output;
 }
-
 
 =begin nd
         Function: getRBLListNames
@@ -664,16 +714,17 @@ sub setRBLRefreshList
 				@listNames	- all lists active
                 
 =cut
+
 # &getRBLListNames
 sub getRBLListNames
 {
 	my @listNames;
-	
-	
-	&zenlog ("GLOBAL $ipset");
-	
+	my $ipset = &getGlobalConfiguration( 'ipset' );
+
+	&zenlog( "GLOBAL $ipset" );
+
 	my @cmd = `$ipset list`;
-	
+
 	foreach my $line ( @cmd )
 	{
 		if ( $line =~ /Name: (.+)$/ )
@@ -681,10 +732,9 @@ sub getRBLListNames
 			push @listNames, $1;
 		}
 	}
-	
+
 	return \@listNames;
 }
-
 
 =begin nd
         Function: getRBLIpList
@@ -700,39 +750,46 @@ sub getRBLListNames
                 \@ipList	- successful
                 
 =cut
-# &getRBLIpList ( $listName ) 
-sub getRBLIpList 
+
+# &getRBLIpList ( $listName )
+sub getRBLIpList
 {
 	my ( $listName ) = @_;
 	my @ipList;
 	my $output = -1;
-	my $fileHandle; 
-		
-	my $from = &getRBLListLocalitation ( $listName );
-	
+	my $fileHandle;
+
+	my $rblLocalConf  = &getGlobalConfiguration( 'rblLocalConf' );
+	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
+	my $rblConfPath   = &getGlobalConfiguration( 'rblConfPath' );
+
+	my $from          = &getRBLListLocalitation( $listName );
+	my $source_format = &getValidFormat( 'rbl_source' );
+
 	if ( $from eq 'remote' )
 	{
 		$fileHandle = Config::Tiny->read( $rblRemoteConf );
 
 		my @ipList;
-		
+
 		if ( $fileHandle->{ $listName }->{ 'status' } ne 'dis' )
 		{
-			my $url = $fileHandle->{ $listName }->{ 'url' } ;
+			my $url = $fileHandle->{ $listName }->{ 'url' };
 			my @web = `curl \"$url\"`;
-			
+
 			foreach my $line ( @web )
 			{
-				if ( $line =~ /((?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?)/ )
+				if ( $line =~ /($source_format)/ )
 				{
 					push @ipList, $1;
 				}
 			}
+
 			# set URL down if it doesn't have any ip
-			if ( ! @ipList )
+			if ( !@ipList )
 			{
 				$fileHandle->{ $listName }->{ 'status' } = "down";
-				&zenlog ("$url marked down");
+				&zenlog( "$url marked down" );
 			}
 			else
 			{
@@ -742,34 +799,25 @@ sub getRBLIpList
 		$fileHandle->write( $rblRemoteConf );
 		$output = \@ipList;
 	}
-	
+
 	elsif ( $from eq 'local' )
 	{
 		$fileHandle = Config::Tiny->read( $rblLocalConf );
-		my $type = $fileHandle->{ $listName }->{ 'type' };
+		my $type     = $fileHandle->{ $listName }->{ 'type' };
 		my $fileList = "$rblConfPath/${type}_lists/$listName.txt";
-		
-	    tie my @list, 'Tie::File', $fileList;
-		@ipList = @list; 
+
+		tie my @list, 'Tie::File', $fileList;
+		@ipList = @list;
 		untie @list;
+
 		# ip list format wrong
 		# get only correct format lines
-		@ipList = grep ( /((?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?)/, @ipList );
-		#~ if (  ! @ipList )
-		#~ {
-			#~ $ouput = -1;
-			#~ &zenlog ("Ip list format wrong.");
-		#~ }
-		#~ # successful
-		#~ else
-		#~ {
-			$output = \@ipList;
-		#~ }
+		@ipList = grep ( /($source_format)/, @ipList );
+		$output = \@ipList;
 	}
 
 	return $output;
 }
-
 
 =begin nd
         Function: getRBLCheckLocalLists
@@ -784,43 +832,47 @@ sub getRBLIpList
 				==0 	- all lists active
                 
 =cut
+
 sub getRBLCheckLocalLists
 {
 	my $fileHandle = Config::Tiny->read( $rblLocalConf );
-	my %listConf = %{ $fileHandle };
-	my $whLists = 0;
-	my $blLists = 0;
-	
+	my %listConf   = %{ $fileHandle };
+	my $whLists    = 0;
+	my $blLists    = 0;
+
+	my $rblConfPath = &getGlobalConfiguration( 'rblConfPath' );
+
 	# check local config file and list directory are agree.
-	foreach my $listName (  keys %listConf  ) 
+	foreach my $listName ( keys %listConf )
 	{
-		if ($fileHandle->{ $listName }->{ 'type' } eq 'allow' )
+		if ( $fileHandle->{ $listName }->{ 'type' } eq 'allow' )
 		{
-			$whLists ++;
+			$whLists++;
 		}
 		else
 		{
-			$blLists ++;
+			$blLists++;
 		}
 	}
+
 	# check directory
-	$whListsTxt = `ls allow_lists/*.txt | wc -l`;
+	$whListsTxt = `ls $rblConfPath/allow_lists/*.txt | wc -l`;
 	chop ( $whListsTxt );
-	$blListsTxt = `ls deny_lists/*.txt | wc -l`;
+	$blListsTxt = `ls $rblConfPath/deny_lists/*.txt | wc -l`;
 	chop ( $blListsTxt );
+
 	#~ compare both
 	if ( scalar $whListsTxt != $whLists )
 	{
-		&zenlog ("Configurations and number of allow lists don't agree.");
+		&zenlog( "Configurations and number of allow lists don't agree." );
 		$output = -1;
 	}
 	if ( scalar $blListsTxt != $blLists )
 	{
-		&zenlog ("Configurations and number of deny lists don't agree.");
+		&zenlog( "Configurations and number of deny lists don't agree." );
 		$output = -1;
 	}
 }
-
 
 =begin nd
         Function: setRBLRefreshAllLists
@@ -835,26 +887,28 @@ sub getRBLCheckLocalLists
                 !=0	- error in some list 
                 
 =cut				
+
 # &setRBLRefreshAllLists
 sub setRBLRefreshAllLists
 {
 	my $output;
 	my @lists = @{ &getRBLListNames };
 	my $err;
-	
+
 	# update lists
 	foreach my $listName ( @lists )
 	{
 		# get ip list
-		my $ipList = &getRBLIpList ( $listName);
+		my $ipList = &getRBLIpList( $listName );
 		if ( $ipList == -1 )
 		{
 			$output++;
 			&zenlog( "Error getting ip list for '$listName' list." );
 			next;
 		}
+
 		# refresh list
-		$err = &setRBLRefreshList ( $listName );
+		$err = &setRBLRefreshList( $listName );
 		if ( $err != 0 )
 		{
 			$output++;
@@ -863,13 +917,12 @@ sub setRBLRefreshAllLists
 	}
 
 	return $output;
-}		
-
+}
 
 #~ --------
 #~ farms -> modificate iptables
 #~ --------
-	
+
 =begin nd
         Function: setRBLCreateIptableCmd
 
@@ -885,6 +938,7 @@ sub setRBLRefreshAllLists
                 -1		- error
 
 =cut
+
 # &setRBLCreateIptableCmd ( $farmName, $list, $action );
 sub setRBLCreateIptableCmd
 {
@@ -895,47 +949,47 @@ sub setRBLCreateIptableCmd
 	if ( $action eq "allow" )
 	{
 		$action = "ACCEPT";
-		$add = "-I";
-		
+		$add    = "-I";
+
 	}
 	elsif ( $action eq "deny" )
 	{
 		$action = "DROP";
-		$add = "-A";
+		$add    = "-A";
 	}
 	else
 	{
 		$output = -1;
-		&zenlog ("Bad parameter 'action' in 'setRBLCreateIptableCmd' function.");
+		&zenlog( "Bad parameter 'action' in 'setRBLCreateIptableCmd' function." );
 	}
-	
+
 	if ( !$output )
 	{
 		# -d farmIP, -p PROTOCOL --dport farmPORT
-		my $vip = &getFarmVip ('vip',$farmName);
-		my $vport = &getFarmVip ('vipp',$farmName);
-		my $farmOpt = "-d $vip";
-		my $protocol = &getFarmProto ($farmName);
-		
+		my $vip   = &getFarmVip( 'vip',  $farmName );
+		my $vport = &getFarmVip( 'vipp', $farmName );
+		my $farmOpt  = "-d $vip";
+		my $protocol = &getFarmProto( $farmName );
+
 		if ( $protocol =~ /UDP/i || $protocol =~ /TFTP/i || $protocol =~ /SIP/i )
 		{
 			$protocol = 'udp';
-			$farmOpt = "$farmOpt -p $protocol --dport $vport";
+			$farmOpt  = "$farmOpt -p $protocol --dport $vport";
 		}
-		
-		if ( $protocol =~ /TCP/i || $protocol =~ /TCP/i )
+
+		if ( $protocol =~ /TCP/i || $protocol =~ /FTP/i )
 		{
 			$protocol = 'tcp';
-			$farmOpt = "$farmOpt -p $protocol --dport $vport";
+			$farmOpt  = "$farmOpt -p $protocol --dport $vport";
 		}
-		
-		# 		iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "RBL_farmname"
-		$output = &getGlobalConfiguration('iptables'). " $add PREROUTING -t raw -m set --match-set $list src $farmOpt -j $action -m comment --comment \"RBL_$farmName\"";
+
+# 		iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "RBL_farmname"
+		$output = &getGlobalConfiguration( 'iptables' )
+		  . " $add PREROUTING -t raw -m set --match-set $list src $farmOpt -j $action -m comment --comment \"RBL_$farmName\"";
 	}
 
 	return $output;
 }
-
 
 =begin nd
         Function: setRBLCreateRule
@@ -951,28 +1005,28 @@ sub setRBLCreateIptableCmd
                 != 0	- error
 
 =cut
+
 # setRBLCreateRule  ( $farmName, $listName );
-sub setRBLCreateRule 
+sub setRBLCreateRule
 {
 	my ( $farmName, $listName ) = @_;
 	my $output;
-	
-	# create cmd
-	my $action = &getRBLListParam ( $listName, 'type' );
 
-	my $cmd = &setRBLCreateIptableCmd ( $farmName, $listName, $action );
-	$output = &iptSystem ( $cmd );
-	
+	# create cmd
+	my $action = &getRBLListParam( $listName, 'type' );
+
+	my $cmd = &setRBLCreateIptableCmd( $farmName, $listName, $action );
+	$output = &iptSystem( $cmd );
+
 	# mod configuration file
 	if ( !$output )
 	{
-		&setRBLListParam ( $listName , 'farms',  $farmName, 'add' );
-		&zenlog ("List '$listName' was applied to farm '$farmName'.");
+		&setRBLListParam( $listName, 'farms', $farmName, 'add' );
+		&zenlog( "List '$listName' was applied to farm '$farmName'." );
 	}
-	
+
 	return $output;
 }
-
 
 =begin nd
         Function: getRBLRules
@@ -986,16 +1040,17 @@ sub setRBLCreateRule
 				== 0	- error
 
 =cut
-# &getRBLRules 
+
+# &getRBLRules
 sub getRBLRules
 {
 	my @rlbRules;
-	
+
 	my @farms = &getFarmNameList;
 	foreach my $farmName ( @farms )
 	{
 		my @rules = &getIptList( $farmName, 'raw', 'PREROUTING' );
-		
+
 		my $lineNum = 0;
 		foreach my $rule ( @rules )
 		{
@@ -1007,7 +1062,6 @@ sub getRBLRules
 	}
 	return \@rlbRules;
 }
-
 
 =begin nd
         Function: setRBLDeleteRule
@@ -1023,15 +1077,16 @@ sub getRBLRules
                 != 0	- error
 
 =cut
+
 # &setRBLDeleteRule ( $farmName, $listName )
 sub setRBLDeleteRule
 {
 	my ( $farmName, $listName ) = @_;
 	my $output;
-	
+
 	# Get line number
 	my @rules = &getIptList( $farmName, 'raw', 'PREROUTING' );
-	
+
 	my $lineNum = 0;
 	foreach my $rule ( @rules )
 	{
@@ -1043,33 +1098,32 @@ sub setRBLDeleteRule
 	}
 	if ( !$lineNum )
 	{
-		&zenlog ( "Don't find rule for farm '$farmName' and list '$listName'." );
+		&zenlog( "Don't find rule for farm '$farmName' and list '$listName'." );
 		return -1;
-	}	
-		
+	}
+
 	# Delete
 	#	iptables -D PREROUTING -t raw 3
-	my $cmd = &getGlobalConfiguration('iptables') . " --table raw -D PREROUTING $lineNum";
-	$output = &iptSystem ( $cmd );
-	
+	my $cmd =
+	  &getGlobalConfiguration( 'iptables' ) . " --table raw -D PREROUTING $lineNum";
+	$output = &iptSystem( $cmd );
+
 	# mod config file
 	if ( !$output )
 	{
-		$output = &setRBLListParam ( $listName , 'farms',  $farmName, 'del' );
+		$output = &setRBLListParam( $listName, 'farms', $farmName, 'del' );
 		if ( $output != 0 )
-			{
-			&zenlog ( "Error deleting rule for farm '$farmName' and list '$listName'." );
+		{
+			&zenlog( "Error deleting rule for farm '$farmName' and list '$listName'." );
 		}
 		else
 		{
-			&zenlog ( "'$listName' rbl rule was deleted" );
+			&zenlog( "'$listName' rbl rule was deleted" );
 		}
 	}
-	
 
 	return $output;
 }
-
 
 =begin nd
         Function: setRBLAddToList
@@ -1083,19 +1137,20 @@ sub setRBLDeleteRule
         Returns:
 
 =cut			
+
 # &setRBLAddToList  ( $listName, \@ipList );
-sub setRBLAddToList 
+sub setRBLAddToList
 {
 	my ( $listName, $listRef ) = @_;
-	
-	my $type = &getRBLListParam ( $listName, 'type' );
+	my $rblConfPath = &getGlobalConfiguration( 'rblConfPath' );
+
+	my $type = &getRBLListParam( $listName, 'type' );
 	tie my @list, 'Tie::File', "$rblConfPath/${type}_lists/$listName.txt";
 	@list = @{ $listRef };
 	untie @list;
-	&zenlog ("IPs of '$listName' was modificated.");
-	
-}
+	&zenlog( "IPs of '$listName' was modificated." );
 
+}
 
 =begin nd
         Function: setRBLDeleteSource
@@ -1109,22 +1164,25 @@ sub setRBLAddToList
         Returns:
 
 =cut
+
 # &setRBLDeleteSource  ( $listName, $id );
 sub setRBLDeleteSource
 {
-	my ( $listName, $id ) = @_;	
-	my $type = &getRBLListParam ( $listName, 'type' );
-	
+	my ( $listName, $id ) = @_;
+	my $type = &getRBLListParam( $listName, 'type' );
+
+	my $ipset       = &getGlobalConfiguration( 'ipset' );
+	my $rblConfPath = &getGlobalConfiguration( 'rblConfPath' );
+
 	tie my @list, 'Tie::File', "$rblConfPath/${type}_lists/$listName.txt";
 	my $source = splice @list, $id, 1;
-	untie @list;	
-	
-	my $err = system ("$ipset del $listName $source");
-	&zenlog ("$source deleted from $listName") if ( ! $err ); 
-	
+	untie @list;
+
+	my $err = system ( "$ipset del $listName $source" );
+	&zenlog( "$source deleted from $listName" ) if ( !$err );
+
 	return $err;
 }
-
 
 =begin nd
         Function: setRBLAddSource
@@ -1138,21 +1196,27 @@ sub setRBLDeleteSource
         Returns:
 
 =cut
+
 # &setRBLAddSource  ( $listName, $source );
 sub setRBLAddSource
 {
-	my ( $listName, $source ) = @_;	
-	my $type = &getRBLListParam ( $listName, 'type' );
-	
+	my ( $listName, $source ) = @_;
+	my $type = &getRBLListParam( $listName, 'type' );
+
+	my $ipset       = &getGlobalConfiguration( 'ipset' );
+	my $rblConfPath = &getGlobalConfiguration( 'rblConfPath' );
+
+	my $ipset       = &getGlobalConfiguration( 'ipset' );
+	my $rblConfPath = &getGlobalConfiguration( 'rblConfPath' );
+
 	tie my @list, 'Tie::File', "$rblConfPath/${type}_lists/$listName.txt";
 	push @list, $source;
-	untie @list;	
-	
-	my $err = system ("$ipset add $listName $source");
-	&zenlog ("$source added to $listName") if ( ! $error );
+	untie @list;
+
+	my $err = system ( "$ipset add $listName $source" );
+	&zenlog( "$source added to $listName" ) if ( !$error );
 	return $error;
 }
-
 
 =begin nd
         Function: setRBLModifSource
@@ -1167,21 +1231,26 @@ sub setRBLAddSource
         Returns:
 
 =cut
+
 # &setRBLModifSource  ( $listName, $id, $source );
 sub setRBLModifSource
 {
-	my ( $listName, $id, $source ) = @_;	
-	my $type = &getRBLListParam ( $listName, 'type' );
+	my ( $listName, $id, $source ) = @_;
+	my $type        = &getRBLListParam( $listName, 'type' );
+	my $ipset       = &getGlobalConfiguration( 'ipset' );
+	my $rblConfPath = &getGlobalConfiguration( 'rblConfPath' );
+
 	my $err;
-	
+
 	tie my @list, 'Tie::File', "$rblConfPath/${type}_lists/$listName.txt";
 	my $oldSource = splice @list, $id, 1, $source;
 	untie @list;
-	
-	$err = system ("$ipset del $listName $oldSource");
-	$err = system ("$ipset add $listName $source") if ( !$err);
-	&zenlog ("$oldSource was modificated to $source in $listName list") if ( !$err);
-	
+
+	$err = system ( "$ipset del $listName $oldSource" );
+	$err = system ( "$ipset add $listName $source" ) if ( !$err );
+	&zenlog( "$oldSource was modificated to $source in $listName list" )
+	  if ( !$err );
+
 	return $err;
 }
 

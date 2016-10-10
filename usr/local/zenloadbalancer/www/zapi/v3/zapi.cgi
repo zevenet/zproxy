@@ -854,6 +854,8 @@ POST qr{^/farms/($farm_re)/certificates$} => sub {
 
 #	NETWORK INTERFACES
 #
+my $virt_interface = &getValidFormat ('virt_interfaces');
+my $vlan_interface = &getValidFormat ('vlan_interfaces');
 
 #  GET interfaces
 GET qr{^/interfaces$} => sub {
@@ -861,12 +863,12 @@ GET qr{^/interfaces$} => sub {
 };
 
 #  POST virtual interface
-POST qr{^/interfaces/([a-zA-Z0-9\.]+:[a-zA-Z0-9]+)$} => sub {
+POST qr{^/interfaces/($virt_interface)$} => sub {
 	&new_vini( @_ );
 };
 
 #  POST vlan interface
-POST qr{^/interfaces/([a-zA-Z0-9]+\.[0-9]+)$} => sub {
+POST qr{^/interfaces/($vlan_interface)$} => sub {
 	&new_vlan( @_ );
 };
 
@@ -877,12 +879,12 @@ POST qr{^/interfaces/([a-zA-Z0-9]+\.[0-9]+)$} => sub {
 #~ };
 
 #  DELETE virtual interface (default)
-DELETE qr{^/interfaces/(.+)$} => sub {
+DELETE qr{^/interfaces/($vlan_interface|$virt_interface)$} => sub {
 	&delete_interface( @_ );
 };
 
 #  PUT interface
-PUT qr{^/interfaces/(.+)$} => sub {
+PUT qr{^/interfaces/($vlan_interface|$virt_interface)$} => sub {
 	&modify_interface( @_ );
 };
 
@@ -945,8 +947,6 @@ ipds:
 my $rbl_list = &getValidFormat('rbl_list_name');
 my $rbl_source = &getValidFormat('rbl_source');
 
-my $farm_name = &getValidFormat('farm_name');
-
 # RBL
 #  GET all rbl lists
 GET qr{^/ipds/rbl$} => sub {
@@ -989,12 +989,12 @@ DELETE qr{^/ipds/rbl/($rbl_list)/list/($rbl_source$)} => sub {
 };
 
 #  POST list to farm
-POST qr{^/farms/($farm_name)/ipds/rbl$} => sub {
+POST qr{^/farms/($farm_re)/ipds/rbl$} => sub {
 	&add_rbl_to_farm ( @_ );
 };
 
 #  DELETE list from farm
-DELETE qr{^/farms/($farm_name)/ipds/rbl/($rbl_list$)} => sub {
+DELETE qr{^/farms/($farm_re)/ipds/rbl/($rbl_list$)} => sub {
 	&del_rbl_from_farm ( @_ );
 };
 
@@ -1011,17 +1011,17 @@ PUT qr{^/ipds/ddos$} => sub {
 };
 
 #  GET status ddos for a farm
-GET qr{^/farms/($farm_name)/ipds/ddos$} => sub {
+GET qr{^/farms/($farm_re)/ipds/ddos$} => sub {
 	&get_ddos_farm ( @_ );
 };
 
 #  POST DDoS to a farm
-POST qr{^/farms/($farm_name)/ipds/ddos$} => sub {
+POST qr{^/farms/($farm_re)/ipds/ddos$} => sub {
 	&add_ddos_to_farm ( @_ );
 };
 
 #  DELETE DDoS from a farm
-DELETE qr{^/farms/($farm_name)/ipds/ddos$} => sub {
+DELETE qr{^/farms/($farm_re)/ipds/ddos$} => sub {
 	&del_ddos_from_farm ( @_ );
 };
 
