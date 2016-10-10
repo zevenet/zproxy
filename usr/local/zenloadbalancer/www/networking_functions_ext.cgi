@@ -246,6 +246,21 @@ sub getInterfaceSystemStatus     # ($if_ref)
 	$ip_output =~ / state (\w+) /;
 	my $if_status = lc $1;
 
+	if ( $if_status !~ /^(?:up|down)$/ ) # if not up or down, ex: UNKNOWN
+	{
+		my $flags = $ip_output =~ /<(.+)>/;
+		my @flags = split( ',', $flags );
+
+		if ( grep( /^UP$/, @flags ) )
+		{
+			$if_status = 'up';
+		}
+		else
+		{
+			$if_status = 'down';
+		}
+	}
+
 	# Set as down vinis not available
 	$ip_output = `$ip_bin addr show $status_if_name`;
 
