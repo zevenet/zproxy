@@ -243,7 +243,7 @@ sub add_rbl_list
 	my $listName = shift;
 
 	my $errormsg;
-	if ( &getCheckParam( 'rbl_list_name', $listName ) == -1 )
+	if ( &getValidFormat( 'rbl_list_name', $listName ) == -1 )
 	{
 		$errormsg = "In list name only is allowed alphanumeric characters.";
 	}
@@ -966,7 +966,6 @@ sub set_ddos
 	my $status   = $json_obj->{ 'status' };
 	my $output;
 
-	&zenlog( ">>key:$key" );
 	if ( $key eq 'ssh_bruteForce' )
 	{
 		&setDDOSCreateRule( $key ) if ( $status eq 'up' );
@@ -1029,6 +1028,7 @@ sub get_ddos_farm
 	my $confFile = &getGlobalConfiguration( 'ddosConf' );
 	my $output;
 
+	$output = 'down';
 	if ( -e $confFile )
 	{
 		my $fileHandle  = Config::Tiny->read( $confFile );
@@ -1038,10 +1038,6 @@ sub get_ddos_farm
 		if ( $farmsString =~ /$farmName/ )
 		{
 			$output = 'up';
-		}
-		else
-		{
-			$output = 'down';
 		}
 	}
 
@@ -1086,6 +1082,11 @@ sub add_ddos_to_farm
 	my $farmName = shift;
 	my $errormsg;
 
+	my $confFile = &getGlobalConfiguration( 'ddosConf' );
+	my $output = "down";
+
+	system ( &getGlobalConfiguration('ddosConf') . " $confFile" ) if ( ! -e $confFile );
+			
 	if ( grep ( /$farmName/, &getFarmList() ) )
 	{
 		my $fileHandle = Config::Tiny->read( $confFile );
@@ -1101,23 +1102,12 @@ sub add_ddos_to_farm
 			my $output;
 
 			# check output
-			if ( -e $confFile )
-			{
-				my $fileHandle  = Config::Tiny->read( $confFile );
-				my $farmsString = $fileHandle->{ '_' }->{ 'farms' };
-				my @farmsArray  = split ( ' ', $farmsString );
+			my $fileHandle  = Config::Tiny->read( $confFile );
+			my $farmsString = $fileHandle->{ '_' }->{ 'farms' };
 
-				if ( $farmsString =~ /$farmName/ )
-				{
-					$output = 'up';
-				}
-				else
-				{
-					$output = 'down';
-				}
-			}
-			if ( $output eq 'up' )
+			if ( $farmsString =~ /( |^)$farmName( |$)/ )
 			{
+				$output = 'up';
 				&httpResponse(
 						  {
 							code => 200,

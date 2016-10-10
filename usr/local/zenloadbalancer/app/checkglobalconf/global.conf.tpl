@@ -215,6 +215,7 @@ $rblLocalConf = "$rblConfPath/local_lists.conf";
 $rblRemoteConf = "$rblConfPath/remote_lists.conf";
 $ipset = "/sbin/ipset";
 $touch = "/usr/bin/touch";
+$ddosConf = "/usr/local/zenloadbalancer/www/Plugins/ipds/ddos/ddos.conf";
 
 #::END Global Section
 
