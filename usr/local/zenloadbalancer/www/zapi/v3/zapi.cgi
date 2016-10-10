@@ -430,7 +430,10 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 	  or !exists $GLOBAL::http_status_codes->{ $self->{ code } };
 
 	my $cgi = &getCGI();
-	my @headers = ( 'Access-Control-Allow-Origin' => '*' );
+	my @headers = (
+		'Access-Control-Allow-Origin' => '*',
+		'Access-Control-Expose-Headers' => 'Set-Cookie'
+	);
 
 	if ( $ENV{ 'REQUEST_METHOD' } eq 'OPTIONS' )
 	{
