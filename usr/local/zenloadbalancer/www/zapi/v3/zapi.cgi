@@ -44,6 +44,7 @@ package GLOBAL {
 		403 => 'Forbidden',
 		404 => 'Not Found',
 		406 => 'Not Acceptable',
+		415 => 'Unsupported Media Type',
 		422 => 'Unprocessable Entity',
 	};
 };
@@ -254,9 +255,20 @@ sub POST($$)
 	return unless @captures;
 
 	my $data = &getCgiParam( 'POSTDATA' );
-	my $input_ref = eval{ decode_json( $data ) };
+	my $input_ref;
 
-	$input_ref = $data if ! $input_ref;
+	if ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/json' )
+	{
+		$input_ref = eval{ decode_json( $data ) };
+	}
+	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
+	{
+		$input_ref = $data;
+	}
+	else
+	{
+		&httpResponse({ code => 415 });
+	}
 
 	$code->( $input_ref, @captures );
 }
@@ -271,9 +283,20 @@ sub PUT($$)
 	return unless @captures;
 
 	my $data = &getCgiParam( 'PUTDATA' );
-	my $input_ref = eval{ decode_json( $data ) };
+	my $input_ref;
 
-	$input_ref = $data if ! $input_ref;
+	if ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/json' )
+	{
+		$input_ref = eval{ decode_json( $data ) };
+	}
+	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
+	{
+		$input_ref = $data;
+	}
+	else
+	{
+		&httpResponse({ code => 415 });
+	}
 
 	$code->( $input_ref, @captures );
 }
@@ -501,7 +524,7 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 #~ my $post_data = $q->param('POSTDATA');
 #~ my $put_data = $q->param('PUTDATA');
 #~
-#~ #my $session = new CGI::Session( $cgi );
+#~ #my $session = new CGI::Session( $q );
 #~
 #~ my $param_zapikey = $ENV{'HTTP_ZAPI_KEY'};
 #~ my $param_session = new CGI::Session( $q );
@@ -510,8 +533,8 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 #~
 #~
 #~ &zenlog("CGI PARAMS: " . Dumper $params );
-#~ &zenlog("CGI OBJECT: " . Dumper $cgi );
-#~ &zenlog("CGI VARS: " . Dumper $cgi->Vars() );
+#~ &zenlog("CGI OBJECT: " . Dumper $q );
+#~ &zenlog("CGI VARS: " . Dumper $q->Vars() );
 #~ &zenlog("PERL ENV: " . Dumper \%ENV );
 #~ &zenlog("CGI POST DATA: " . $post_data );
 #~ &zenlog("CGI PUT DATA: " . $put_data );
