@@ -606,9 +606,9 @@ sub create_csr
 # * SSLv3, TLS alert, Client hello (1):
 #
 #@apiExample {curl} Example Usage:
-#       curl -v --tcp-nodelay --tlsv1 -k -X POST -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -F fileupload=@newcert.pem -F filename=newcert.pem
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates
+#       curl -v --tcp-nodelay -k -X POST -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#       -H 'Content-Type: text/plain' --data-binary @/path/to/example.pem
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates/example.pem
 #
 #@apiSampleRequest off
 #
@@ -621,7 +621,7 @@ sub upload_certs # ()
 #
 # Curl command:
 #
-# curl -v --tcp-nodelay --tlsv1 -X POST -k -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -F fileupload=@/opt/example.pem -F filename=example.pem https://46.101.46.14:444/zapi/v3/zapi.cgi/certificates
+# curl -kis -X POST -H "ZAPI_KEY: 2bJUd" --tcp-nodelay -H 'Content-Type: text/plain' https://192.168.101.20:444/zapi/v3/zapi.cgi/certificates/test.pem --data-binary @/usr/local/zenloadbalancer/config/zencert.pem
 #
 
 	my $upload_filehandle = shift;
