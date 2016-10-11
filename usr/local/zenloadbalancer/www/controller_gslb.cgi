@@ -75,8 +75,8 @@ if ( $action eq "editfarm-dpc" )
 		my $errormsg;
 
 		# enable farmguardian
-		if ( defined ( &getCgiData( "gslbFgStatus_$service" ) )
-			 && $fgStatus eq 'down' )
+		if ( defined ( &getCgiParam( "gslbFgStatus_$service" ) )
+			 and $fgStatus eq 'down' )
 		{
 			&zenlog( "$fgCmd,$gslbFgCmd," );
 			if ( !$fgCmd && !$gslbFgCmd )
@@ -618,6 +618,13 @@ if ( -e "/tmp/$farmname.lock" )
 	</form>";
 
 	&tipmsg( $msg );
+}
+
+# zcluster: apply remote changes
+if ( $farm_config_changed && &getFarmStatus( $farmname ) eq 'up' )
+{
+	# zcluster: restart farm in remote node
+	&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 }
 
 # zcluster: apply remote changes
