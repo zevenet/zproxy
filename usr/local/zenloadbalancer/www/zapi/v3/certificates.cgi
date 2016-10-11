@@ -41,7 +41,7 @@
 #
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password>  https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates
+#         https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates
 #
 #@apiSampleRequest off
 #
@@ -188,7 +188,7 @@ sub get_certificate_info # ()
 #
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password>  https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates/example.pem
+#         https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates/example.pem
 #
 #@apiSampleRequest off
 #
@@ -253,7 +253,7 @@ sub delete_certificate # ( $cert_filename )
 #
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"file":"example.pem"}'
+#        -d '{"file":"example.pem"}'
 #       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/httptest/addcertificate
 #
 #@apiSampleRequest off
@@ -358,7 +358,7 @@ sub add_farmcertificate # ( $json_obj, $farmname )
 #
 #@apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password>  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/farmhttp/deletecertificate/2
+#         https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/farmhttp/deletecertificate/2
 #
 #@apiSampleRequest off
 #

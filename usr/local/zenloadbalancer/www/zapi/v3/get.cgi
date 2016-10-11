@@ -38,7 +38,7 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/get_datalink.cgi";
 #}
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	-u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms
 #
 #@apiSampleRequest off
 #**

@@ -16,11 +16,11 @@
 #
 # L4XNAT:
 #
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"fgtimecheck":"5","fgscript":"eyy","fgenabled":"true","fglog":"true"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/L4FARM/fg
+# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"fgtimecheck":"5","fgscript":"eyy","fgenabled":"true","fglog":"true"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/L4FARM/fg
 #
 # HTTP/HTTPS
 #
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"fgtimecheck":"5","fgscript":"eyy","fgenabled":"true","fglog":"false","service":"sev1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmHTTP/fg
+# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"fgtimecheck":"5","fgscript":"eyy","fgenabled":"true","fglog":"false","service":"sev1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmHTTP/fg
 #
 #
 #####Documentation of PUT FARMGUARDIAN####
@@ -62,7 +62,7 @@
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"fgtimecheck":"5","fgscript":"Command of Farm Guardian",
+#        -d '{"fgtimecheck":"5","fgscript":"Command of Farm Guardian",
 #       "fgenabled":"true","fglog":"true"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/L4FARM/fg
 #
 # @apiSampleRequest off
@@ -111,7 +111,7 @@
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"fgtimecheck":"5","fgscript":"Command of Farm Guardian","fgenabled":"true",
+#        -d '{"fgtimecheck":"5","fgscript":"Command of Farm Guardian","fgenabled":"true",
 #       "fglog":"true","service":"service1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP/fg
 #
 # @apiSampleRequest off

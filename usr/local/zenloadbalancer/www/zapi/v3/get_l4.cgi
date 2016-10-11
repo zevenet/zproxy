@@ -2,7 +2,7 @@
 
 ########### GET L4XNAT
 #
-# curl --tlsv1 -k --header 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/L4FARM
+# curl --tlsv1 -k --header 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/L4FARM
 #
 #
 #
@@ -55,7 +55,7 @@
 #
 # @apiExample {curl} Example Usage:
 #	curl --tlsv1 -k --header 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	-u zapi:<password> https://<zenlb_server:444/zapi/v3/zapi.cgi/farms/L4FARM
+#	 https://<zenlb_server:444/zapi/v3/zapi.cgi/farms/L4FARM
 #
 # @apiSampleRequest off
 #

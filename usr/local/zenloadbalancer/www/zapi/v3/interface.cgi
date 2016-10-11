@@ -2,7 +2,7 @@
 
 # POST Virtual Network Interface
 #
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"name":"new2","ip":"1.1.1.3","netmask":"255.255.192.0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/addvini/eth0
+# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"name":"new2","ip":"1.1.1.3","netmask":"255.255.192.0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/addvini/eth0
 #
 #####Documentation of POST VINI####
 #**
@@ -36,7 +36,7 @@
 #
 # @apiExample {curl} Example Usage:
 #	curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	-u zapi:<password> -d '{"name":"new","ip":"192.168.0.150"}'
+#	 -d '{"name":"new","ip":"192.168.0.150"}'
 #	https://<zenlb_server>:444/zapi/v3/zapi.cgi/addvini/eth0
 #
 # @apiSampleRequest off
@@ -220,7 +220,7 @@ sub new_vini # ( $json_obj, $fdev )
 
 # POST Vlan Network Interface
 #
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"name":"3","ip":"1.1.1.3","netmask":"255.255.192.0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/addvlan/eth0
+# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"name":"3","ip":"1.1.1.3","netmask":"255.255.192.0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/addvlan/eth0
 #
 #####Documentation of POST VLAN####
 #**
@@ -256,7 +256,7 @@ sub new_vini # ( $json_obj, $fdev )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"name":"new","ip":"192.168.1.150","netmask":"255.255.255.0",
+#        -d '{"name":"new","ip":"192.168.1.150","netmask":"255.255.255.0",
 #       "gateway":"192.168.1.0"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/addvlan/eth0
 #
 # @apiSampleRequest off
@@ -535,7 +535,7 @@ sub new_vlan # ( $json_obj, $fdev )
 
 # DELETE Virtual Network Interface
 #
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin https://178.62.126.152:445/zapi/v1/zapi.cgi/deleteif/eth0:new
+# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/deleteif/eth0:new
 #
 #
 #####Documentation of DELETE INTERFACE####
@@ -559,7 +559,7 @@ sub new_vlan # ( $json_obj, $fdev )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/deleteif/eth0:test/6
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/deleteif/eth0:test/6
 #
 # @apiSampleRequest off
 #
@@ -661,7 +661,7 @@ sub delete_interface # ( $if )
 
 # GET Interface
 #
-# curl --tlsv1 -k -X GET -H 'Content- Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin https://178.62.126.152:445/zapi/v1/zapi.cgi/interfaces
+# curl --tlsv1 -k -X GET -H 'Content- Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/interfaces
 #
 #####Documentation of GET INTERFACES####
 #**
@@ -738,7 +738,7 @@ sub delete_interface # ( $if )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/interfaces
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/interfaces
 #
 # @apiSampleRequest off
 #
@@ -783,7 +783,7 @@ sub get_interfaces # ()
 
 # POST Interface actions
 #
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"action":"down"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/ifaction/eth0
+# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"action":"down"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/ifaction/eth0
 #
 #####Documentation of POST INTERFACE ACTION####
 #**
@@ -813,7 +813,7 @@ sub get_interfaces # ()
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"action":"down"}'
+#        -d '{"action":"down"}'
 #       https://<zenlb_server>:444/zapi/v3/zapi.cgi/ifaction/eth0:new
 #
 # @apiSampleRequest off
@@ -1022,7 +1022,7 @@ sub ifaction # ( $fdev )
 
 # PUT Interface
 #
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"gateway":"1.1.1.0","ip":"1.1.1.3","netmask":"255.255.192.0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/modifyif/eth0:n1
+# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"gateway":"1.1.1.0","ip":"1.1.1.3","netmask":"255.255.192.0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/modifyif/eth0:n1
 #
 #####Documentation of PUT INTERFACE####
 #**
@@ -1059,7 +1059,7 @@ sub ifaction # ( $fdev )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"ip":"192.168.1.160","netmask":"255.255.255.0",
+#        -d '{"ip":"192.168.1.160","netmask":"255.255.255.0",
 #       "gateway":"192.168.1.0"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/modifyif/eth0:new/4
 #
 # @apiSampleRequest off

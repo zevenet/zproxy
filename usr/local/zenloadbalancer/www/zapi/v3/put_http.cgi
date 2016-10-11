@@ -2,7 +2,7 @@
 
 ######### PUT HTTP
 #
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"conectimeout":"22","newfarmname":"FarmHTTP2","vip":"178.62.126.152","vport":"88"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmHTTP
+# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"conectimeout":"22","newfarmname":"FarmHTTP2","vip":"178.62.126.152","vport":"88"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmHTTP
 #
 #
 #####Documentation of PUT HTTP####
@@ -62,7 +62,7 @@
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"conectimeout":"22","newfarmname":"FarmHTTP2","vip":"178.62.126.152","vport":"88",
+#        -d '{"conectimeout":"22","newfarmname":"FarmHTTP2","vip":"178.62.126.152","vport":"88",
 #       "restimeout":"47","resurrectime":"12","reqtimeout":"32","rewritelocation":"enabled","httpverb":"standardHTTP",
 #       "error414":"Message error 414","error500":"Message error 500","error501":"Message error 501",
 #       "error503":"Message error 503","listener":"https","ciphers":"customsecurity","cipherc":"TLSv1+SSLv3+HIGH:-MEDIUM:-LOW*:-ADH*",

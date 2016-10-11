@@ -13,7 +13,7 @@
 ###############################################################################
 
 #
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"id":"zone123.com"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zones
+# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"id":"zone123.com"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zones
 #
 #
 #####Documentation of POST ZONES GSLB####
@@ -44,7 +44,7 @@
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"id":"myzone.com"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones
+#        -d '{"id":"myzone.com"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones
 #
 # @apiSampleRequest off
 #
@@ -158,7 +158,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 }
 
 #
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"zone":"zone123","rname":"resource1","ttl":"10","type":"NS","rdata":"1.1.1.1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zoneresources
+# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"zone":"zone123","rname":"resource1","ttl":"10","type":"NS","rdata":"1.1.1.1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zoneresources
 #
 #
 #####Documentation of POST RESOURCES GSLB####
@@ -198,7 +198,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"rname":"resource2", "rdata":"192.168.0.9", "ttl":"10", "type":"NS",
+#        -d '{"rname":"resource2", "rdata":"192.168.0.9", "ttl":"10", "type":"NS",
 #       "zone":"zone1.com"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zoneresources
 #
 # @apiSampleRequest off

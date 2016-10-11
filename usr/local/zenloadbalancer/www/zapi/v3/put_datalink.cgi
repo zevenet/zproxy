@@ -2,7 +2,7 @@
 
 ######### PUT DATALINK
 #
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"algorithm": "prio", "newfarmname":"newDATAFARM","interfacevip":"eth0 178.62.126.152"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/DATAFARM
+# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"algorithm": "prio", "newfarmname":"newDATAFARM","interfacevip":"eth0 178.62.126.152"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/DATAFARM
 #
 #
 #####Documentation of PUT DATALINK####
@@ -40,7 +40,7 @@
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"algorithm":"prio","interfacevip":"eth0 178.62.126.152",
+#        -d '{"algorithm":"prio","interfacevip":"eth0 178.62.126.152",
 #       "newfarmname":"newDATAFARM"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/newDATAFARM
 #
 # @apiSampleRequest off

@@ -14,7 +14,7 @@
 
 # POST action
 #
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"action":"stop"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmTCP/actions
+# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"action":"stop"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmTCP/actions
 #
 #
 #
@@ -45,7 +45,7 @@
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"action":"stop"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmTCP/actions
+#        -d '{"action":"stop"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmTCP/actions
 #
 # @apiSampleRequest off
 #
@@ -182,7 +182,7 @@ sub actions # ( $json_obj, $farmname )
 
 # POST maintenance
 #
-# curl --tlsv1  -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -u zapi:admin -d '{"action":"up", "service":"service1", "id":"1"}' https://46.101.46.14:444/zapi/v3/zapi.cgi/farms/FarmHTTP/maintenance
+# curl --tlsv1  -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -d '{"action":"up", "service":"service1", "id":"1"}' https://46.101.46.14:444/zapi/v3/zapi.cgi/farms/FarmHTTP/maintenance
 #
 #
 #####Documentation of MAINTENANCE####
@@ -215,7 +215,7 @@ sub actions # ( $json_obj, $farmname )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"action":"up", "service":"service1", "id":"0"}'
+#        -d '{"action":"up", "service":"service1", "id":"0"}'
 #       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP/maintenance
 #
 # @apiSampleRequest off

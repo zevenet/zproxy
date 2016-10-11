@@ -62,7 +62,7 @@ rbl:
 #}
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	-u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl
 #
 #@apiSampleRequest off
 #**
@@ -131,7 +131,7 @@ sub get_rbl_all_lists
 #}
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	-u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/<listname>
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/<listname>
 #
 #@apiSampleRequest off
 #**
@@ -194,7 +194,7 @@ sub get_rbl_list
 	return \%listHash;
 }
 
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"profile":"HTTP","vip":"178.62.126.152","vport":"12345","interface":"eth0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/newfarmHTTP
+# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"profile":"HTTP","vip":"178.62.126.152","vport":"12345","interface":"eth0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/newfarmHTTP
 #
 # HTTP status code reference: http://www.restapitutorial.com/httpstatuscodes.html
 #
@@ -231,7 +231,7 @@ sub get_rbl_list
 #
 # @apiExample {curl} Example Usage:
 #		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"type":"deny", "location":"local"}' -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/newList
+#		-d '{"type":"deny", "location":"local"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/newList
 #
 # @apiSampleRequest off
 #
@@ -351,7 +351,7 @@ sub add_rbl_list
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"type":"allow","list":["192.168.100.240","21.5.6.4"],
+#        -d '{"type":"allow","list":["192.168.100.240","21.5.6.4"],
 #       "name":"newNameList"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/list
 #
 # @apiSampleRequest off
@@ -448,7 +448,7 @@ sub set_rbl_list
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/listname
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/listname
 #
 # @apiSampleRequest off
 #
@@ -522,7 +522,7 @@ sub del_rbl_list
 #
 # @apiExample {curl} Example Usage:
 #		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"source":"16.31.0.223"}' -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/list
+#		-d '{"source":"16.31.0.223"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/list
 #
 # @apiSampleRequest off
 #
@@ -608,7 +608,7 @@ sub add_rbl_source
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"source":"10.12.55.3" https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/list/1
+#        -d '{"source":"10.12.55.3" https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/list/1
 #
 # @apiSampleRequest off
 #
@@ -686,7 +686,7 @@ sub set_rbl_source
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/list/list/1
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/list/list/1
 #
 # @apiSampleRequest off
 #
@@ -765,7 +765,7 @@ sub del_rbl_source
 #
 # @apiExample {curl} Example Usage:
 #		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"listname":"listName"}' -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/dns/ipds/rbl
+#		-d '{"listname":"listName"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/dns/ipds/rbl
 #
 # @apiSampleRequest off
 #
@@ -840,7 +840,7 @@ sub add_rbl_to_farm
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/dns/ipds/rbl/listName
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/dns/ipds/rbl/listName
 #
 # @apiSampleRequest off
 #
@@ -904,7 +904,7 @@ ddos:
 #}
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	-u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/ddos
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/ddos
 #
 #@apiSampleRequest off
 #**
@@ -953,7 +953,7 @@ sub get_ddos
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"id":"ssh_bruteForce","status":"down"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/ddos
+#        -d '{"id":"ssh_bruteForce","status":"down"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/ddos
 #
 # @apiSampleRequest off
 #
@@ -1017,7 +1017,7 @@ sub set_ddos
 #
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	-u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/ddos
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/ddos
 #
 #@apiSampleRequest off
 #**
@@ -1070,7 +1070,7 @@ sub get_ddos_farm
 #
 # @apiExample {curl} Example Usage:
 #		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"listname":"listName"}' -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/ddos
+#		-d '{"listname":"listName"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/ddos
 #
 # @apiSampleRequest off
 #
@@ -1159,7 +1159,7 @@ sub add_ddos_to_farm
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/ddos
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/ddos
 #
 # @apiSampleRequest off
 #
