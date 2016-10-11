@@ -13,7 +13,7 @@
 ###############################################################################
 
 #
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmBORRAME
+# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmBORRAME
 #
 #
 #####Documentation of DELETE FARM####
@@ -36,7 +36,7 @@
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP
 #
 # @apiSampleRequest off
 #
@@ -121,7 +121,7 @@ sub delete_farm # ( $farmname )
 }
 
 #
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmHTTP/services/service1
+# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmHTTP/services/service1
 #
 #
 #####Documentation of DELETE SERVICE####
@@ -145,7 +145,7 @@ sub delete_farm # ( $farmname )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/services/service1
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/services/service1
 #
 # @apiSampleRequest off
 #
@@ -300,7 +300,7 @@ sub delete_service # ( $farmname, $service )
 }
 
 #
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmHTTP/backends/0
+# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmHTTP/backends/0
 #
 #
 #####Documentation of DELETE BACKEND####
@@ -324,7 +324,7 @@ sub delete_service # ( $farmname, $service )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/L4FARM/backends/4
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/L4FARM/backends/4
 #
 # @apiSampleRequest off
 #
@@ -430,7 +430,7 @@ sub delete_backend # ( $farmname, $id_server )
 }
 
 #
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/newfarmHTTP/services/service1/backends/0
+# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/newfarmHTTP/services/service1/backends/0
 #
 #
 #####Documentation of DELETE BACKEND in a SERVICE####
@@ -455,7 +455,7 @@ sub delete_backend # ( $farmname, $id_server )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/newfarmHTTP/services/service1/backends/4
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/newfarmHTTP/services/service1/backends/4
 #
 # @apiSampleRequest off
 #

@@ -81,7 +81,7 @@ sub modify_farm # ( $json_obj, $farmname )
 
 # Modify Backends
 #
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"ip":"192.168.0.10","port":"88","priority":"2","weight":"1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/L4XNAT/backends/1
+# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"ip":"192.168.0.10","port":"88","priority":"2","weight":"1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/L4XNAT/backends/1
 #
 #####Documentation of PUT BACKEND L4####
 #**
@@ -123,7 +123,7 @@ sub modify_farm # ( $json_obj, $farmname )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"ip":"192.168.0.10","port":"88","priority":"2",
+#        -d '{"ip":"192.168.0.10","port":"88","priority":"2",
 #       "weight":"1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/L4FARM/backends/1
 #
 # @apiSampleRequest off
@@ -169,7 +169,7 @@ sub modify_farm # ( $json_obj, $farmname )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"ip":"192.168.0.10","interface":"eth0","priority":"2",
+#        -d '{"ip":"192.168.0.10","interface":"eth0","priority":"2",
 #       "weight":"1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/DATAFARM/backends/1
 #
 # @apiSampleRequest off
@@ -221,7 +221,7 @@ sub modify_farm # ( $json_obj, $farmname )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"ip":"192.168.0.10","port":"88","timeout":"12","service":"sev2",
+#        -d '{"ip":"192.168.0.10","port":"88","timeout":"12","service":"sev2",
 #       "weight":"1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP/backends/1
 #
 # @apiSampleRequest off
@@ -261,7 +261,7 @@ sub modify_farm # ( $json_obj, $farmname )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"ip":"192.168.0.10","service":"sev2"}'
+#        -d '{"ip":"192.168.0.10","service":"sev2"}'
 #       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/backends/1
 #
 # @apiSampleRequest off
@@ -898,7 +898,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 }
 
 #
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"rname":"ww2","ttl":"8","type":"DYNA","rdata":"sev2","zone":"zone1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/resources/3
+# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"rname":"ww2","ttl":"8","type":"DYNA","rdata":"sev2","zone":"zone1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/resources/3
 #
 #####Documentation of PUT RESOURCES####
 #**
@@ -945,7 +945,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"rname":"www","ttl":"8","type":"DYNA","rdata":"sev2",
+#        -d '{"rname":"www","ttl":"8","type":"DYNA","rdata":"sev2",
 #       "zone":"zone1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/resources/3
 #
 # @apiSampleRequest off
@@ -1178,7 +1178,7 @@ sub modify_resources # ( $json_obj, $farmname, $id_resource )
 }
 
 #
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"defnamesv":"ns1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zones/zone1
+# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"defnamesv":"ns1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zones/zone1
 #
 #####Documentation of PUT ZONE####
 #**
@@ -1210,7 +1210,7 @@ sub modify_resources # ( $json_obj, $farmname, $id_resource )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"defnamesv":"ns1"}'
+#        -d '{"defnamesv":"ns1"}'
 #       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones/zone1
 #
 # @apiSampleRequest off
@@ -1311,7 +1311,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 	}
 }
 
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"vhost":"www.marca.com","urlp":"^/myapp$","redirect":"https://google.es","persistence":"URL","ttl":"120","sessionid":"sidd","leastrep":"false","httpsb":"false"}' https://178.62.126.152:444/zapi/v1/zapi.cgi/farms/FarmHTTP/services/sev1
+# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"vhost":"www.marca.com","urlp":"^/myapp$","redirect":"https://google.es","persistence":"URL","ttl":"120","sessionid":"sidd","leastrep":"false","httpsb":"false"}' https://178.62.126.152:444/zapi/v1/zapi.cgi/farms/FarmHTTP/services/sev1
 
 #
 #
@@ -1346,7 +1346,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"deftcpport":"80"}'
+#        -d '{"deftcpport":"80"}'
 #       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/services/sev2
 #
 # @apiSampleRequest off
@@ -1439,7 +1439,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"vhost":"www.mywebserver.com","urlp":"^/myapp1$","persistence":"URL",
+#        -d '{"vhost":"www.mywebserver.com","urlp":"^/myapp1$","persistence":"URL",
 #       "redirect":"http://zenloadbalancer.com","ttl":"125","sessionid":"sid","leastresp":"true",
 #       "httpsb":"true"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP/services/sev2
 #

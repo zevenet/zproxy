@@ -13,7 +13,7 @@
 ###############################################################################
 
 #
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zones/myzone.com
+# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zones/myzone.com
 #
 #
 #####Documentation of DELETE ZONE####
@@ -37,7 +37,7 @@
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones/myzone.com
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones/myzone.com
 #
 # @apiSampleRequest off
 #
@@ -132,7 +132,7 @@ sub delete_zone # ( $farmname, $zone )
 }
 
 #
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zones/myzone.com/resources/0
+# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zones/myzone.com/resources/0
 #
 #
 #####Documentation of DELETE RESOURCE in a ZONE####
@@ -157,7 +157,7 @@ sub delete_zone # ( $farmname, $zone )
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones/myzone.com/resources/2
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones/myzone.com/resources/2
 #
 # @apiSampleRequest off
 #

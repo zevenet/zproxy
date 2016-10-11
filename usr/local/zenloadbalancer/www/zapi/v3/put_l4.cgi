@@ -2,7 +2,7 @@
 
 ######### PUT L4XNAT
 #
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -u zapi:admin -d '{"algorithm":"weight","persistence":"none","newfarmname":"newfarmEUL4","protocol":"tcp","nattype":"nat","ttl":"125","vip":"178.62.126.152","vport":"81"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/L4FARM
+# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"algorithm":"weight","persistence":"none","newfarmname":"newfarmEUL4","protocol":"tcp","nattype":"nat","ttl":"125","vip":"178.62.126.152","vport":"81"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/L4FARM
 #
 #
 #
@@ -61,7 +61,7 @@
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -u zapi:<password> -d '{"algorithm":"weight","persistence":"none","newfarmname":"newfarmL4",
+#        -d '{"algorithm":"weight","persistence":"none","newfarmname":"newfarmL4",
 #       "protocol":"tcp","nattype":"nat","ttl":"125","vip":"178.62.126.152","vport":"81"}'
 #        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/L4FARM
 #
