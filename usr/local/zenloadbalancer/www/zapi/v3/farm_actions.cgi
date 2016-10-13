@@ -58,6 +58,7 @@ sub actions # ( $json_obj, $farmname )
 
 	my $error  = "false";
 	my $action = "false";
+	my $description = "Farm actions";
 
 	# Check input errors
 	if ( $json_obj->{ action } =~ /^stop|start|restart$/ )
@@ -70,9 +71,9 @@ sub actions # ( $json_obj, $farmname )
 
 		my $errormsg = "Invalid action; the possible actions are stop, start and restart";
 		my $body = {
-					 description => "Farm actions",
+					 description => $description,
 					 error       => "true",
-					 message     => $errormsg
+					 message     => $errormsg,
 		};
 
 		&httpResponse({ code => 400, body => $body });
@@ -84,9 +85,9 @@ sub actions # ( $json_obj, $farmname )
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
-					 description => "Farm actions",
+					 description => $description,
 					 error       => "true",
-					 message     => $errormsg
+					 message     => $errormsg,
 		};
 
 		&httpResponse({ code => 404, body => $body });
@@ -98,8 +99,16 @@ sub actions # ( $json_obj, $farmname )
 		my $status = &runFarmStop( $farmname, "true" );
 		if ( $status != 0 )
 		{
-			$error = "true";
-			&zenlog( "ZAPI error, trying to set the action stop in farm $farmname." );
+			my $errormsg = "Error trying to set the action stop in farm $farmname.";
+			&zenlog( $errormsg );
+
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg,
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 		else
 		{
@@ -113,8 +122,16 @@ sub actions # ( $json_obj, $farmname )
 		my $status = &runFarmStart( $farmname, "true" );
 		if ( $status != 0 )
 		{
-			$error = "true";
-			&zenlog( "ZAPI error, trying to set the action start in farm $farmname." );
+			my $errormsg = "Error trying to set the action start in farm $farmname.";
+			&zenlog( $errormsg );
+
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg,
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 		else
 		{
@@ -128,11 +145,18 @@ sub actions # ( $json_obj, $farmname )
 		my $status = &runFarmStop( $farmname, "true" );
 		if ( $status != 0 )
 		{
-			$error = "true";
-			&zenlog(
-				  "ZAPI error, trying to stop the farm in the action restart in farm $farmname."
-			);
+			my $errormsg = "Error trying to stop the farm in the action restart in farm $farmname.";
+			&zenlog( $errormsg );
+
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg,
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
+
 		my $status = &runFarmStart( $farmname, "true" );
 		if ( $status == 0 )
 		{
@@ -147,15 +171,21 @@ sub actions # ( $json_obj, $farmname )
 		}
 		else
 		{
-			$error = "true";
-			&zenlog(
-				 "ZAPI error, trying to start the farm in the action restart in farm $farmname."
-			);
+			my $errormsg = "ZAPI error, trying to start the farm in the action restart in farm $farmname.";
+			&zenlog( $errormsg );
+
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg,
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 	}
 
 	# Print params
-	if ( $error ne "true" )
+	#~ if ( $error ne "true" )
 	{
 		# Success
 		my $body = {
@@ -165,19 +195,19 @@ sub actions # ( $json_obj, $farmname )
 
 		&httpResponse({ code => 200, body => $body });
 	}
-	else
-	{
-		# Error
-		my $errormsg =
-		  "Errors found trying to execute the action $json_obj->{action} in farm $farmname";
-		my $body = {
-					 description => "Set a new action in $farmname",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
+#	else
+#	{
+#		# Error
+#		my $errormsg =
+#		  "Errors found trying to execute the action $json_obj->{action} in farm $farmname";
+#		my $body = {
+#					 description => "Set a new action in $farmname",
+#					 error       => "true",
+#					 message     => $errormsg
+#		};
+#
+#		&httpResponse({ code => 400, body => $body });
+#	}
 }
 
 # POST maintenance
