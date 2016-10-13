@@ -325,14 +325,6 @@ sub OPTIONS($$)
 	$code->( @captures );
 }
 
-POST qr{^/test$} => sub {
-	&logInput( @_ );
-};
-
-PUT qr{^/test$} => sub {
-	&logInput( @_ );
-};
-
 sub logInput
 {
 	&zenlog("Input:(".join(', ', @_).")");
