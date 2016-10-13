@@ -531,9 +531,17 @@ sub create_csr
 					$json_obj->{ division }, $json_obj->{ mail },     $json_obj->{ key },
 					""
 		);
-		&zenlog( "Cert $json_obj->{ name } created" );
 
-		&httpResponse({ code => 200 });
+		my $message = "Certificate $json_obj->{ name } created";
+		&zenlog( $message );
+
+		my $body = {
+					 description => $description,
+					 success     => "true",
+					 message     => $message
+		};
+
+		&httpResponse({ code => 200, body => $body });
 	}
 }
 
