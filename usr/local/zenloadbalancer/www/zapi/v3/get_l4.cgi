@@ -113,6 +113,7 @@ sub farms_name_l4 # ( $farmname )
 			   fgtimecheck => $fgtimecheck + 0,
 			   fgscript    => $fgcommand,
 			   fglog       => $fglog
+			   listener    => 'L4xNAT'
 	};
 
 	########### backends
