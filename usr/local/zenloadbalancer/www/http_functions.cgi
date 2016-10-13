@@ -2083,14 +2083,13 @@ sub setFarmHttpBackendStatus    # ($farm_name)
 {
 	my $farm_name = shift;
 
-	my $line;
 	&zenlog( "Setting backends status in farm $farm_name" );
 
-	open FR, "<$configdir\/$farm_name\_status.cfg";
+	open FR, "<", "$configdir\/$farm_name\_status.cfg";
 	while ( <FR> )
 	{
-		@line = split ( "\ ", $_ );
-		@run =
+		my @line = split ( "\ ", $_ );
+		my @run =
 		  `$poundctl -c /tmp/$farm_name\_pound.socket $line[0] $line[1] $line[2] $line[3]`;
 	}
 	close FR;
