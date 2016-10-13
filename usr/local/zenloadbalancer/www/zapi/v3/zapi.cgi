@@ -455,15 +455,22 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 	my $cgi = &getCGI();
 	my @headers = (
 		# Headers included in _ALL_ the responses, any method, any URI, sucess or error
-		'Access-Control-Allow-Origin' => '*',
-		'Access-Control-Expose-Headers' => 'Set-Cookie'
 	);
 
 	if ( $ENV{ 'REQUEST_METHOD' } eq 'OPTIONS' )
 	{
-		push @headers,
+		push ( @headers,
+		  'Access-Control-Allow-Origin'  => $ENV{ HTTP_ORIGIN },
 		  'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
-		  'Access-Control-Allow-Headers' => 'ZAPI_KEY, Authorization, Set-cookie, Content-Type';
+		  'Access-Control-Allow-Credentials' => 'true'
+		  'Access-Control-Allow-Headers' =>
+		  'ZAPI_KEY, Authorization, Set-cookie, Content-Type, X-Requested-With',
+		  );
+
+		if ( &validCGISession() )
+		{
+			push @headers, 'Access-Control-Expose-Headers' => 'Set-Cookie';
+		}
 	}
 
 	if ( &validCGISession() )
@@ -545,7 +552,7 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 #~ &zenlog("CGI PARAMS: " . Dumper $params );
 #~ &zenlog("CGI OBJECT: " . Dumper $q );
 #~ &zenlog("CGI VARS: " . Dumper $q->Vars() );
-&zenlog("PERL ENV: " . Dumper \%ENV );
+#~ &zenlog("PERL ENV: " . Dumper \%ENV );
 #~ &zenlog("CGI POST DATA: " . $post_data );
 #~ &zenlog("CGI PUT DATA: " . $put_data );
 
