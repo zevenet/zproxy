@@ -65,7 +65,7 @@ sub farms_name_l4 # ( $farmname )
 {
 	my $farmname = shift;
 
-	my @out_p;
+	my $out_p;
 	my @out_b;
 
 	my $vip   = &getFarmVip( "vip",  $farmname );
@@ -100,21 +100,20 @@ sub farms_name_l4 # ( $farmname )
 		$status = "ok";
 	}
 
-	push @out_p,
-	  {
-		status      => $status,
-		vip         => $vip,
-		vport       => $vport,
-		algorithm   => &getFarmAlgorithm( $farmname ),
-		nattype     => &getFarmNatType( $farmname ),
-		persistence => &getFarmPersistence( $farmname ),
-		protocol    => &getFarmProto( $farmname ),
-		ttl         => $timetolimit,
-		fgenabled   => $fguse,
-		fgtimecheck => $fgtimecheck + 0,
-		fgscript    => $fgcommand,
-		fglog       => $fglog
-	  };
+	$out_p = {
+			   status      => $status,
+			   vip         => $vip,
+			   vport       => $vport,
+			   algorithm   => &getFarmAlgorithm( $farmname ),
+			   nattype     => &getFarmNatType( $farmname ),
+			   persistence => &getFarmPersistence( $farmname ),
+			   protocol    => &getFarmProto( $farmname ),
+			   ttl         => $timetolimit,
+			   fgenabled   => $fguse,
+			   fgtimecheck => $fgtimecheck + 0,
+			   fgscript    => $fgcommand,
+			   fglog       => $fglog
+	};
 
 	########### backends
 	my @run = &getFarmServers( $farmname );
@@ -149,7 +148,7 @@ sub farms_name_l4 # ( $farmname )
 
 	my $body = {
 				 description => "List farm $farmname",
-				 params      => \@out_p,
+				 params      => $out_p,
 				 backends    => \@out_b
 	};
 
