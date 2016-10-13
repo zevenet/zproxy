@@ -70,6 +70,12 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/ipds.cgi";
 
 my $q = &getCGI();
 
+################################################################################
+#
+# Subroutines and HTTP methods
+#
+################################################################################
+
 # build local key
 sub keycert # ()
 {
@@ -553,16 +559,6 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 # Start [Method URI] calls
 #
 ################################################################################
-
-#~ GET '/test' => sub {
-#~
-	#~ &httpResponse({
-		#~ code => 200,
-		#~ body => { msg => 'hola' }
-	#~ });
-	#~
-	#~ exit;
-#~ };
 
 #  OPTIONS PreAuth
 OPTIONS qr{^/.*$} => sub {
