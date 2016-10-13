@@ -454,6 +454,7 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 
 	my $cgi = &getCGI();
 	my @headers = (
+		# Headers included in _ALL_ the responses, any method, any URI, sucess or error
 		'Access-Control-Allow-Origin' => '*',
 		'Access-Control-Expose-Headers' => 'Set-Cookie'
 	);
@@ -463,6 +464,15 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 		push @headers,
 		  'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
 		  'Access-Control-Allow-Headers' => 'ZAPI_KEY, Authorization, Set-cookie, Content-Type';
+	}
+
+	if ( &validCGISession() )
+	{
+		my $cgi = &getCGI();
+		my $session = CGI::Session->load( $cgi );
+		my $session_cookie = $cgi->cookie(CGISESSID => $session->id);
+		#~ &zenlog("cookie:$session_cookie");
+		push @headers, 'Set-Cookie' => $session_cookie;
 	}
 
 	# add possible extra headers
@@ -535,7 +545,7 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 #~ &zenlog("CGI PARAMS: " . Dumper $params );
 #~ &zenlog("CGI OBJECT: " . Dumper $q );
 #~ &zenlog("CGI VARS: " . Dumper $q->Vars() );
-#~ &zenlog("PERL ENV: " . Dumper \%ENV );
+&zenlog("PERL ENV: " . Dumper \%ENV );
 #~ &zenlog("CGI POST DATA: " . $post_data );
 #~ &zenlog("CGI PUT DATA: " . $put_data );
 
@@ -627,11 +637,11 @@ POST qr{^/session$} => sub {
 			$session->expire('is_logged_in', '+30m');
 
 			my ( $header ) = split( "\r\n", $session->header() );
-			my ( undef, $setcookie ) = split( ': ', $header );
+			my ( undef, $session_cookie ) = split( ': ', $header );
 
 			&httpResponse({
 				code => 200,
-				headers => { 'Set-cookie' => $setcookie },
+				headers => { 'Set-cookie' => $session_cookie },
 			});
 		}
 		else # not validated credentials
@@ -741,7 +751,7 @@ GET qr{^/certificates/($cert_re)/info$} => sub {
 	&get_certificate_info( @_ );
 };
 
-#  POST CSR certificates
+#  Create CSR certificates
 POST qr{^/certificates$} => sub {
 	&create_csr( @_ );
 };
