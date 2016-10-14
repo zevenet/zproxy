@@ -763,6 +763,7 @@ DELETE qr{^/certificates/($cert_re)$} => sub {
 
 #	FARMS
 #
+
 my $farm_re = &getValidFormat('farm_name');
 
 #  GET List all farms
@@ -826,7 +827,7 @@ DELETE qr{^/farms/($farm_re)/zones/(([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,})$} => s
 	&delete_zone( @_ );
 };
 
-#  DELETE backend (TCP/UDP/L4XNAT/DATALINK)
+#  DELETE backend (L4XNAT/DATALINK)
 DELETE qr{^/farms/($farm_re)/backends/(\w+)$} => sub {
 	&delete_backend( @_ );
 };
