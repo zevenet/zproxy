@@ -753,6 +753,9 @@ sub get_interfaces # ()
 
 	for my $if_ref ( @interfaces )
 	{
+		# Exclude IPv6
+		next if $if_ref->{ ip_v } == 6 && &getGlobalConfiguration( 'ipv6_enabled' ) ne 'true';
+
 		# Any key must cotain a value or "" but can't be null
 		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
 		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }

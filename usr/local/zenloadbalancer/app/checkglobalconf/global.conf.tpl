@@ -131,6 +131,8 @@ $defaultgwif6="";
 $pingc="1";
 #routing options
 $routeparams="initcwnd 10 initrwnd 10";
+#IPv6
+$ipv6_enabled="false";
 
 ## L4xNat - netfilter
 # Maximum recent ip list
