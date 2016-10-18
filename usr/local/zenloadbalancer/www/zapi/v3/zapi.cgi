@@ -344,7 +344,7 @@ sub validCGISession # ()
 	my $validSession = 0;
 	my $session = CGI::Session->load( &getCGI() );
 
-	&zenlog( "CGI SESSION ID: ".$session->id );
+	&zenlog( "CGI SESSION ID: ".$session->id ) if $session->id;
 	#~ &zenlog( "session data: " . Dumper $session->dataref() ); # DEBUG
 
 	if ( $session && $session->param( 'is_logged_in' ) && ! $session->is_expired )
@@ -778,6 +778,11 @@ GET qr{^/farms/($farm_re)$} => sub {
 
 #  POST new farm
 POST qr{^/farms/($farm_re)$} => sub {
+	&new_farm( @_ );
+};
+
+#  POST new farm
+POST qr{^/farms$} => sub {
 	&new_farm( @_ );
 };
 
