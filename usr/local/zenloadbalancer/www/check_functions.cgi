@@ -100,4 +100,33 @@ sub getValidFormat
 	}
 }
 
+# validate port format and check if available when possible
+sub getValidPort # ( $ip, $port, $profile )
+{
+	my $ip = shift; # mandatory for HTTP, GSLB or no profile
+	my $port = shift;
+	my $profile = shift; # farm profile, optional
+
+	if ( $profile eq 'HTTP' || $profile eq 'GSLB' )
+	{
+		return &isValidPortNumber( $port ) eq 'true' && &checkport( $ip, $port) eq 'true';
+	}
+	elsif ( $profile eq 'L4xNAT' )
+	{
+		return &ismport( $port ) eq 'true';
+	}
+	elsif ( $profile eq 'DATALINK' )
+	{
+		return $port eq undef;
+	}
+	elsif ( ! defined $profile )
+	{
+		return &isValidPortNumber( $port ) eq 'true' && &checkport( $ip, $port) eq 'true';
+	}
+	else # profile not supported
+	{
+		return 0;
+	}
+}
+
 1;
