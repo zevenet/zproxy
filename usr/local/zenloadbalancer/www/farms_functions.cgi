@@ -544,15 +544,15 @@ sub getFarmType    # ($farm_name)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 
-	if ( $farm_filename =~ /$farm_name\_pen\_udp.cfg/ )
+	if ( $farm_filename =~ /^$farm_name\_pen\_udp.cfg/ )
 	{
 		return "udp";
 	}
-	if ( $farm_filename =~ /$farm_name\_pen.cfg/ )
+	if ( $farm_filename =~ /^$farm_name\_pen.cfg/ )
 	{
 		return "tcp";
 	}
-	if ( $farm_filename =~ /$farm_name\_pound.cfg/ )
+	if ( $farm_filename =~ /^$farm_name\_pound.cfg/ )
 	{
 		use File::Grep qw( fgrep );
 		if ( fgrep { /ListenHTTPS/ } "$configdir/$farm_filename" )
@@ -564,15 +564,15 @@ sub getFarmType    # ($farm_name)
 			return "http";
 		}
 	}
-	if ( $farm_filename =~ /$farm_name\_datalink.cfg/ )
+	if ( $farm_filename =~ /^$farm_name\_datalink.cfg/ )
 	{
 		return "datalink";
 	}
-	if ( $farm_filename =~ /$farm_name\_l4xnat.cfg/ )
+	if ( $farm_filename =~ /^$farm_name\_l4xnat.cfg/ )
 	{
 		return "l4xnat";
 	}
-	if ( $farm_filename =~ /$farm_name\_gslb.cfg/ )
+	if ( $farm_filename =~ /^$farm_name\_gslb.cfg/ )
 	{
 		return "gslb";
 	}
