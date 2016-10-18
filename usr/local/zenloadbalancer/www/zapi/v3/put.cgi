@@ -831,6 +831,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 				$body = {
 					description => "Modify backend $id_server in farm $farmname",
 					params      => $json_obj,
+					status      => 'needed restart',
 					info =>
 					  "There're changes that need to be applied, stop and start farm to apply them!"
 				};
@@ -1817,7 +1818,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		# Success
 		my $body = {
 			description => "Modify service $service in farm $farmname",
-			params      => $ouput_params,
+			params      => $output_params,
+			status      => 'needed restart',
 			info =>
 			  "There're changes that need to be applied, stop and start farm to apply them!"
 		};

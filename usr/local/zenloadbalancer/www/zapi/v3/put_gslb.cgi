@@ -328,6 +328,7 @@ sub modify_datalink_farm # ( $json_obj,	$farmname )
 	#                        my $body = {
 	#                                description => "Modify farm $farmname",
 	#                                params => $json_obj,
+	#                                status => 'needed restart',
 	#                                info => "There're changes that need to be applied, stop and start farm to apply them!"
 	#                        };
 	#
@@ -372,6 +373,7 @@ sub modify_datalink_farm # ( $json_obj,	$farmname )
 			my $output = {
 				description => "Modify farm $farmname",
 				params      => $json_obj,
+				status      => 'needed restart',
 				info =>
 				  "There're changes that need to be applied, stop and start farm to apply them!"
 			};
