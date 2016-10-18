@@ -39,6 +39,17 @@ if [ -e "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer.${PERLVER}" ]; then
 	rm /usr/local/zenloadbalancer/app/zbin/zenloadbalancer.*
 fi
 
+#Check for libexec commands
+LIBC6VER=`dpkg -l | grep libc6:amd | awk {'print $3'} | cut -d"+" -f1`
+
+if [ -e "/usr/local/zenloadbalancer/app/libexec_${LIBC6VER}" ]; then
+	mv "/usr/local/zenloadbalancer/app/libexec_${LIBC6VER}" "/usr/local/zenloadbalancer/app/libexec"
+	rm "/usr/local/zenloadbalancer/app/libexec_*"
+else 
+	mv "/usr/local/zenloadbalancer/app/libexec_2.all" "/usr/local/zenloadbalancer/app/libexec"
+	rm "/usr/local/zenloadbalancer/app/libexec_*"
+fi
+
 # cryptolib
 CRYPTOVERDEF="1.0.0"
 CRYPTOVER=`find /usr/lib/ -name libcrypto.so.*.*.* | head -1 | awk -F'.' '{ printf $3 "." $4 "." $5}'`
