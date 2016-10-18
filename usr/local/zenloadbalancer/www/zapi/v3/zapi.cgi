@@ -806,6 +806,11 @@ POST qr{^/farms/($farm_re)/backends$} => sub {
 	&new_farm_backend( @_ );
 };
 
+#  GET backends (HTTP/HTTPS/GSLB)
+GET qr{^/farms/($farm_re)/services/(\w+)/backends$} => sub {
+	&service_backends( @_ );
+};
+
 #  POST new zone resource
 POST qr{^/farms/($farm_re)/zoneresources$} => sub {
 	&new_farm_zoneresource( @_ );

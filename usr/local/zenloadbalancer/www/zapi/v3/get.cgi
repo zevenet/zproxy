@@ -203,4 +203,144 @@ sub backends
 	}
 }
 
+#GET /farms/<name>/services/<service>/backends
+sub service_backends
+{
+	my ( $farmname, $service ) = @_;
+
+	my $description = "List service backends";
+
+	# Check that the farm exists
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
+		# Error
+		my $errormsg = "The farmname $farmname does not exist.";
+		my $body = {
+				description => $description,
+				error => "true",
+				message => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	my $type = &getFarmType( $farmname );
+
+	if ( $type eq 'http' || $type eq 'http' )
+	{
+		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
+
+		if ( ! $backendsvs )
+		{
+			# Error
+			my $errormsg = "The service $service does not exist.";
+			my $body = {
+					description => $description,
+					error => "true",
+					message => $errormsg
+			};
+
+			&httpResponse({ code => 404, body => $body });
+		}
+
+		my @be         = split ( "\n", $backendsvs );
+		my @backends;
+
+		foreach my $subl ( @be )
+		{
+			my @subbe       = split ( "\ ", $subl );
+			my $id          = @subbe[1] + 0;
+			my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $s );
+
+			if ( $maintenance != 0 )
+			{
+				$backendstatus = "up";
+			}
+			else
+			{
+				$backendstatus = "maintenance";
+			}
+
+			my $ip   = @subbe[3];
+			my $port = @subbe[5] + 0;
+			my $tout = @subbe[7] + 0;
+			my $prio = @subbe[9] + 0;
+
+			push @backends,
+			  {
+				id            => $id,
+				backendstatus => $backendstatus,
+				ip            => $ip,
+				port          => $port,
+				timeout       => $tout,
+				weight        => $prio,
+			  };
+		}
+
+		my $body = {
+					description => $description,
+					params      => \@backends,
+		};
+
+		# Success
+		&httpResponse({ code => 200, body => $body });
+	}
+	elsif ( $type eq 'gslb' )
+	{
+		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
+
+		if ( ! $backendsvs )
+		{
+			# Error
+			my $errormsg = "The service $service does not exist.";
+			my $body = {
+					description => $description,
+					error => "true",
+					message => $errormsg
+			};
+
+			&httpResponse({ code => 404, body => $body });
+		}
+
+		my @be = split ( "\n", $backendsvs );
+		my @backends;
+
+		foreach my $subline ( @be )
+		{
+			$subline =~ s/^\s+//;
+			if ( $subline =~ /^$/ )
+			{
+				next;
+			}
+
+			my @subbe = split ( " => ", $subline );
+
+			push @backends,
+			  {
+				id => @subbe[0],
+				ip => @subbe[1],
+			  };
+		}
+
+		my $body = {
+					 description => $description,
+					 params      => \@backends,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The farm $farmname with profile $type does not support this request.";
+		my $body = {
+				description => $description,
+				error => "true",
+				message => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
 1;
