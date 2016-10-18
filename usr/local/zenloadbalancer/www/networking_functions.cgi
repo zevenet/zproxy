@@ -63,7 +63,8 @@ sub listallips    # ()
 
 		if ( $flags & IFF_RUNNING && $ip !~ /127.0.0.1/ && $ip !~ /0.0.0.0/ )
 		{
-			push ( @listinterfaces, $ip );
+			# if $ip: skip an empty element in the array
+			push ( @listinterfaces, $ip ) if $ip;
 		}
 	}
 	return @listinterfaces;
@@ -1128,7 +1129,7 @@ sub isValidPortNumber    # ($port)
 	my $port = shift;
 	my $valid;
 
-	if ( defined ( $port ) && $port >= 1 && $port <= 65535 )
+	if ( $port >= 1 && $port <= 65535 )
 	{
 		$valid = 'true';
 	}
