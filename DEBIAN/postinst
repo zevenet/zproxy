@@ -49,10 +49,10 @@ fi
 
 if [ -e "/usr/local/zenloadbalancer/app/libexec_${LIBC6VER}" ]; then
         mv "/usr/local/zenloadbalancer/app/libexec_${LIBC6VER}" "/usr/local/zenloadbalancer/app/libexec"
-        rm -rf "/usr/local/zenloadbalancer/app/libexec_*"
+        rm -rf /usr/local/zenloadbalancer/app/libexec_*
 else
         mv "/usr/local/zenloadbalancer/app/libexec_2.all" "/usr/local/zenloadbalancer/app/libexec"
-        rm -rf "/usr/local/zenloadbalancer/app/libexec_*"
+        rm -rf /usr/local/zenloadbalancer/app/libexec_*
 fi
 
 # cryptolib
