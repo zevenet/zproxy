@@ -796,6 +796,11 @@ POST qr{^/farms/($farm_re)/zones$} => sub {
 	&new_farm_zone( @_ );
 };
 
+#  GET backends list
+GET qr{^/farms/($farm_re)/backends$} => sub {
+	&backends( @_ );
+};
+
 #  POST new backend
 POST qr{^/farms/($farm_re)/backends$} => sub {
 	&new_farm_backend( @_ );
