@@ -268,7 +268,7 @@ sub getInterfaceSystemStatus     # ($if_ref)
 
 	if ( $if_status !~ /^(?:up|down)$/ ) # if not up or down, ex: UNKNOWN
 	{
-		my $flags = $ip_output =~ /<(.+)>/;
+		my ($flags) = $ip_output =~ /<(.+)>/;
 		my @flags = split( ',', $flags );
 
 		if ( grep( /^UP$/, @flags ) )
