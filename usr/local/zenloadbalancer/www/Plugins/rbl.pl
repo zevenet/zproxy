@@ -170,7 +170,6 @@ sub setRBLCreateRemoteList
 	}
 	else
 	{
-		&zenlog( "rem:$rblRemoteConf, cmd:$ipset create $name hash:net" );    # ???
 
 		$fileHandle->{ $name }->{ 'url' }    = $url;
 		$fileHandle->{ $name }->{ 'status' } = "up";
@@ -1231,7 +1230,6 @@ sub setRBLAddSource
         Returns:
 
 =cut
-
 # &setRBLModifSource  ( $listName, $id, $source );
 sub setRBLModifSource
 {
@@ -1253,5 +1251,95 @@ sub setRBLModifSource
 
 	return $err;
 }
+
+
+=begin nd
+        Function: setRBLStart
+
+        Enable all rbl rules
+
+        Parameters:
+				
+        Returns:
+
+=cut
+# &setRBLStart
+sub setRBLStart
+{
+	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
+	my $rblLocalConf = &getGlobalConfiguration( 'rblLocalConf' );
+	my $ipset = &getGlobalConfiguration( 'ipset' );
+	my @rules = @{ &getRBLRules () };
+
+	my $remLists = Config::Tiny->read( $rblRemoteConf );
+	# load remote lists
+	foreach my $list ( keys %{ $remLists } )
+	{
+		my $output = system ( "$ipset create $list hash:net" );
+		my @farms = @{ &getRBLListParam ( $list, "farms" ) };
+		foreach my $farm ( @farms )
+		{
+			if ( ! grep ( /^.+match-set $list src .+RBL_$farm/, @rules ) )
+			{
+				# create cmd
+				my $action = &getRBLListParam( $list, 'type' );
+			
+				my $cmd = &setRBLCreateIptableCmd( $farm, $list, $action );
+				$output = &iptSystem( $cmd );
+			}
+		}
+	}
+
+	my $localLists = Config::Tiny->read( $rblLocalConf );
+	# load local lists
+	foreach my $list ( keys %{ $localLists } )
+	{
+		my $output = system ( "$ipset create $list hash:net" );
+		my @farms = @{ &getRBLListParam ( $list, "farms" ) };
+		foreach my $farm ( @farms )
+		{
+			if ( ! grep ( /^.+match-set $list src .+RBL_$farm/, @rules ) )
+			{
+				# create cmd
+				my $action = &getRBLListParam( $list, 'type' );
+				
+				my $cmd = &setRBLCreateIptableCmd( $farm, $list, $action );
+				$output = &iptSystem( $cmd );
+
+			}
+		}
+	}
+}
+
+
+=begin nd
+        Function: setRBLStop
+
+        Disable all rbl rules
+        
+        Parameters:
+				
+        Returns:
+
+=cut
+# &setRBLStop
+sub setRBLStop 
+{
+	my @rules = @{ &getRBLRules () };
+	my $rbl_list = &getValidFormat('rbl_list_name');
+	my $farm_name = &getValidFormat('farm_name');
+	
+	foreach my $rule ( @rules )
+	{
+		if ( $rule =~ /^(\d+) .+match-set $rbl_list src .+RBL_$farm_name/ )
+		{
+			my $cmd =
+				&getGlobalConfiguration( 'iptables' ) . " --table raw -D PREROUTING $1";
+			&iptSystem( $cmd );
+		}
+	}
+	
+}
+
 
 1;
