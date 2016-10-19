@@ -59,7 +59,7 @@ sub certcontrol
 	$swcert      = 0;
 	$zlbcertfile = "$basedir/zlbcertfile.pem";
 
-	#$key = &keycert();
+	$key = &keycert();
 
 	my $notbefore;
 	my $nb;
