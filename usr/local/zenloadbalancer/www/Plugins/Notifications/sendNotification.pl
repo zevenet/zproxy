@@ -42,10 +42,46 @@ if ( $subject eq "error" || !$bodycomp )
 
 my $error = &sendByMail ( $subject, $bodycomp, $section );
 
-if ( $error )
+$command .= &getData( 'bin' );
+$command .= " --to " . &getData( 'to' );
+$command .= " --from " . &getData( 'from' );
+$command .= " --server " . &getData( 'server' );
+if ( &getData( 'auth-user' ) || &getData( 'auth-password' ) )
 {
-	system ("$logger \"Error, sending the mail notification\" -i -t sec");
+	$command .= " --auth " . &getData( 'auth' );
+	$command .= " --auth-user " . &getData( 'auth-user' ) if ( &getData( 'auth-user' ) );
+	$command .= " --auth-password " . &getData( 'auth-password' ) if ( &getData( 'auth-password' ) );
 }
+if ( 'true' eq &getData( 'tls' ) ) { $command .= " -tls"; }
+$command .=
+    " --header \"Subject: "
+  . &getData( 'PrefixSubject', $section )
+  . " $subject\"";
+$command .= " --body \"$body\"";
+
+#not print
+$command .= " 1>/dev/null";
+
+#~ print "$command\n";
+system ( $command );
+
+# print log
+my $logMsg;
+$logMsg .= &getData( 'bin' );
+$logMsg .= " --to " . &getData( 'to' );
+$logMsg .= " --from " . &getData( 'from' );
+$logMsg .= " --server " . &getData( 'server' );
+if ( &getData( 'auth-user' ) || &getData( 'auth-password' ) )
+{
+	$logMsg .= " --auth " . &getData( 'auth' );
+	$logMsg .= " --auth-user " . &getData( 'auth-user' ) if ( &getData( 'auth-user' ) );
+	$logMsg .= " --auth-password ********* " if ( &getData( 'auth-password' ) );
+}
+$logMsg .= " -tls" 	if ( 'true' eq &getData( 'tls' ) );
+
+$logMsg .= " --header \"Subject: "
+		.  &getData( 'PrefixSubject', $section )
+		.  " $subject\"";
 
 exit $error;
 
