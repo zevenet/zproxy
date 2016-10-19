@@ -46,9 +46,12 @@ $command .= &getData( 'bin' );
 $command .= " --to " . &getData( 'to' );
 $command .= " --from " . &getData( 'from' );
 $command .= " --server " . &getData( 'server' );
-$command .= " --auth " . &getData( 'auth' );
-$command .= " --auth-user " . &getData( 'auth-user' );
-$command .= " --auth-password " . &getData( 'auth-password' );
+if ( &getData( 'auth-user' ) || &getData( 'auth-password' ) )
+{
+	$command .= " --auth " . &getData( 'auth' );
+	$command .= " --auth-user " . &getData( 'auth-user' ) if ( &getData( 'auth-user' ) );
+	$command .= " --auth-password " . &getData( 'auth-password' ) if ( &getData( 'auth-password' ) );
+}
 if ( 'true' eq &getData( 'tls' ) ) { $command .= " -tls"; }
 $command .=
     " --header \"Subject: "
@@ -68,9 +71,12 @@ $logMsg .= &getData( 'bin' );
 $logMsg .= " --to " . &getData( 'to' );
 $logMsg .= " --from " . &getData( 'from' );
 $logMsg .= " --server " . &getData( 'server' );
-$logMsg .= " --auth " . &getData( 'auth' );
-$logMsg .= " --auth-user " . &getData( 'auth-user' );
-$logMsg .= " --auth-password ********* ";
+if ( &getData( 'auth-user' ) || &getData( 'auth-password' ) )
+{
+	$logMsg .= " --auth " . &getData( 'auth' );
+	$logMsg .= " --auth-user " . &getData( 'auth-user' ) if ( &getData( 'auth-user' ) );
+	$logMsg .= " --auth-password ********* " if ( &getData( 'auth-password' ) );
+}
 $logMsg .= " -tls" 	if ( 'true' eq &getData( 'tls' ) );
 
 $logMsg .= " --header \"Subject: "
