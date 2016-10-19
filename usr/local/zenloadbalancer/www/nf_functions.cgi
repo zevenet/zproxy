@@ -228,6 +228,10 @@ sub genIptMarkPersist    # ($farm_name,$vip,$vport,$protocol,$ttl,$index,$mark)
 	my $farm   = shift;    # input: first argument can be a farm reference
 	my $server = shift;    # input: second argument can be a server reference
 	my $rule;              # output: iptables rule template string
+   	if ( defined $farm )
+    	{
+        	$farm_name = $$farm{ name };
+    	}
 
 	if ( defined $index )
 	{
@@ -912,7 +916,7 @@ sub getBinVersion    # ($farm_name)
 {
 	# Variables
 	my $farm_name = shift;
-	my $binary;
+	my $binary = $iptables;
 	my $vip = &getFarmVip( "vip", $farm_name );
 	my $ipv = &ipversion( $vip );
 
