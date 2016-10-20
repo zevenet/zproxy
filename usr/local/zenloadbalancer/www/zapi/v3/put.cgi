@@ -272,30 +272,15 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 {
 	my ( $json_obj, $farmname, $id_server ) = @_;
 
-	if ( $farmname =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to modify the backends in a farm $farmname, invalid farmname, can't be blank."
-		);
+	my $description = "Modify backend";
 
-		# Error
-		my $errormsg = "Invalid farm name, please insert a valid value.";
-		my $body = {
-					 description => "Modify backend",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
-					 description => "Modify backend",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg,
 		};
@@ -303,353 +288,70 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( $id_server =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to modify the backends in a farm $farmname, invalid id_server, can't be blank."
-		);
-
-		# Error
-		my $errormsg = "Invalid id server, please insert a valid value.";
-		my $body = {
-					 description => "Modify backend",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	$error = "false";
+	my $error;
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq "l4xnat" || $type eq "datalink" )
+	if ( $type eq "l4xnat" )
 	{
 		# Params
-		my @run = &getFarmServers( $farmname );
-		my $serv_values = @run[$id_server];
-		my @l_serv = split ( ";", $serv_values );
+		my $l4_farm = &getL4FarmStruct( $farmname );
+		my $backend;
 
-		# Functions
-		if ( exists ( $json_obj->{ ip } ) )
+		for my $be ( @{ $l4_farm->{'servers'} } )
 		{
-			if ( $json_obj->{ ip } =~ /^$/ )
+			if ( $be->{'id'} eq $id_server )
 			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid IP, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ ip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
-			{
-				@l_serv[1] = $json_obj->{ ip };
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					 "ZAPI error, trying to modify the backends in a farm $farmname, invalid IP." );
+				$backend = $be;
 			}
 		}
 
-		if ( exists ( $json_obj->{ port } ) )
-		{
-			if ( $json_obj->{ port } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid port, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ port } =~ /^\d+/ )
-			{
-				@l_serv[2] = $json_obj->{ port } + 0;
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					  "ZAPI error, trying to modify the backends in a farm $farmname, invalid port."
-				);
-			}
-		}
-
-		if ( exists ( $json_obj->{ interface } ) )
-		{
-			if ( $json_obj->{ interface } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid interface, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ interface } =~ /^eth\d+/ )
-			{
-				@l_serv[2] = $json_obj->{ interface };
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid interface."
-				);
-			}
-		}
-
-		if ( $type eq "l4xnat" )
-		{
-			if ( exists ( $json_obj->{ weight } ) )
-			{
-				if ( $json_obj->{ weight } =~ /^$/ )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight, can't be blank."
-					);
-				}
-				elsif ( $json_obj->{ weight } =~ /^\d+$/ )
-				{
-					@l_serv[4] = $json_obj->{ weight } + 0;
-				}
-				else
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight."
-					);
-				}
-			}
-
-			if ( exists ( $json_obj->{ priority } ) )
-			{
-				if ( $json_obj->{ priority } =~ /^$/ )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the backends in a farm $farmname, invalid priority, can't be blank."
-					);
-				}
-				elsif ( $json_obj->{ priority } =~ /^\d+$/ )
-				{
-					@l_serv[5] = $json_obj->{ priority } + 0;
-				}
-				else
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the backends in a farm $farmname, invalid priority."
-					);
-				}
-			}
-
-			if ( $error eq "false" )
-			{
-				$status =
-				  &setFarmServer( $id_server, @l_serv[1], $l_serv[2], "", $l_serv[4],
-								  $l_serv[5], "", $farmname );
-
-				# Changes must be applied in iptables
-				# my $type = &getFarmType($farmname);
-				# if ($type eq "l4xnat"){
-				# if ( &getFarmStatus( $farmname ) eq 'up' )
-				# {
-				# &runFarmStop( $farmname, "false" );
-				# &runFarmStart( $farmname, "false" );
-				# &sendL4ConfChange( $farmname );
-				# }
-				# }
-
-				if ( $status == -1 )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the real server with ip $json_obj->{ip}."
-					);
-				}
-			}
-		}
-		elsif ( $type eq "datalink" )
-		{
-			if ( exists ( $json_obj->{ weight } ) )
-			{
-				if ( $json_obj->{ weight } =~ /^$/ )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight, can't be blank."
-					);
-				}
-				elsif ( $json_obj->{ weight } =~ /^\d+$/ )
-				{
-					@l_serv[3] = $json_obj->{ weight } + 0;
-				}
-				else
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight."
-					);
-				}
-			}
-
-			if ( exists ( $json_obj->{ priority } ) )
-			{
-				if ( $json_obj->{ priority } =~ /^$/ )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the backends in a farm $farmname, invalid priority, can't be blank."
-					);
-				}
-				elsif ( $json_obj->{ priority } =~ /^\d+$/ )
-				{
-					@l_serv[4] = $json_obj->{ priority } + 0;
-				}
-				else
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the backends in a farm $farmname, invalid priority."
-					);
-				}
-			}
-
-			if ( $error eq "false" )
-			{
-				$status =
-				  &setFarmServer( $id_server, @l_serv[1], $l_serv[2], "", $l_serv[3],
-								  $l_serv[4], "", $farmname );
-				if ( $status == -1 )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the real server with IP $json_obj->{ip} and interface $json_obj->{interface}."
-					);
-				}
-			}
-		}
-	}
-
-	if ( $type eq "http" || $type eq "https" )
-	{
-		#Params
-		if ( exists ( $json_obj->{ service } ) )
-		{
-			if ( $json_obj->{ service } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid service, can't be blank."
-				);
-			}
-			else
-			{
-				$service = $json_obj->{ service };
-			}
-		}
-		else
-		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify the backends in a farm $farmname, it's necessary to insert the service parameter."
-			);
-		}
-
-		# Check that the provided service is configured in the farm
-		my @services = &getFarmServices($farmname);
-		
-		my $found = 0;
-		foreach $farmservice (@services)
-		{
-			#print "service: $farmservice";
-			if ($json_obj->{service} eq $farmservice)
-			{
-				$found = 1;
-				last;
-			}
-		}
-
-		if ($found eq 0)
+		if ( ! $backend )
 		{
 			# Error
-			my $errormsg = "Invalid service name, please insert a valid value.";
+			my $errormsg = "Could not find a backend with such id.";
 			my $body = {
-						 description => "Modify backend",
+						 description => $description,
 						 error       => "true",
-						 message     => $errormsg
+						 message     => $errormsg,
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse({ code => 404, body => $body });
 		}
 
-		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
-		my @be = split ( "\n", $backendsvs );
-
-		foreach my $subline ( @be )
-		{
-			@subbe = split ( "\ ", $subline );
-			if ( @subbe[1] == $id_server )
-			{
-				last;
-			}
-		}
-
-		# Functions
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( $json_obj->{ ip } =~ /^$/ )
+			if ( &getValidFormat('IPv4', $json_obj->{ ip } ) )
 			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid IP, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ ip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
-			{
-				@subbe[3] = $json_obj->{ ip };
+				$backend->{ vip } = $json_obj->{ ip };
 			}
 			else
 			{
 				$error = "true";
 				&zenlog(
-					 "ZAPI error, trying to modify the backends in a farm $farmname, invalid IP." );
+						 "Error trying to modify the backend in the farm $farmname, invalid IP." );
 			}
 		}
 
-		if ( exists ( $json_obj->{ port } ) )
+		if ( !$error && exists ( $json_obj->{ port } ) )
 		{
-			if ( $json_obj->{ port } =~ /^$/ )
+			if ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' || $json_obj->{ port } eq '' )
 			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid port, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ port } =~ /^\d+/ )
-			{
-				@subbe[5] = $json_obj->{ port } + 0;
+				$backend->{ vport } = $json_obj->{ port };
 			}
 			else
 			{
 				$error = "true";
 				&zenlog(
-					  "ZAPI error, trying to modify the backends in a farm $farmname, invalid port."
+					  "Error trying to modify the backend in the farm $farmname, invalid port number."
 				);
 			}
 		}
 
-		if ( exists ( $json_obj->{ weight } ) )
+		if ( !$error && exists ( $json_obj->{ weight } ) )
 		{
-			if ( $json_obj->{ weight } =~ /^$/ )
+			if ( $json_obj->{ weight } =~ /^\d*[1-9]$/ ) # 1 or higher
 			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ weight } =~ /^\d+$/ )
-			{
-				@subbe[9] = $json_obj->{ weight } + 0;
+				$backend->{ weight } = $json_obj->{ weight };
 			}
 			else
 			{
@@ -660,18 +362,341 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			}
 		}
 
-		if ( exists ( $json_obj->{ timeout } ) )
+		if ( !$error && exists ( $json_obj->{ priority } ) )
 		{
-			if ( $json_obj->{ timeout } =~ /^$/ )
+			if ( $json_obj->{ priority } =~ /^\d$/ ) # (0-9)
+			{
+				$backend->{ priority } = $json_obj->{ priority };
+			}
+			else
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid timeout, can't be blank."
+					"ZAPI error, trying to modify the backends in the farm $farmname, invalid priority."
 				);
 			}
-			elsif ( $json_obj->{ timeout } =~ /^\d+$/ )
+		}
+
+		if ( !$error )
+		{
+			my $status = &setL4FarmServer(
+										   $backend->{ id },
+										   $backend->{ vip },
+										   $backend->{ vport },
+										   $backend->{ weight },
+										   $backend->{ priority },
+										   $farmname,
+			);
+
+			if ( $status == -1 )
 			{
-				@subbe[7] = $json_obj->{ timeout } + 0;
+				$error = "true";
+				&zenlog(
+					"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the real server with ip $json_obj->{ip}."
+				);
+			}
+		}
+	}
+	if ( $type eq "datalink" )
+	{
+		my @run = &getFarmServers( $farmname );
+		my $serv_values = @run[$id_server];
+		my $be;
+
+		if ( ! $serv_values )
+		{
+			# Error
+			my $errormsg = "Could not find a backend with such id.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg,
+			};
+
+			&httpResponse({ code => 404, body => $body });
+		}
+
+		( undef, $be->{ip}, $be->{interface}, $be->{weight}, $be->{priority}, $be->{status} ) = split ( ";", $serv_values );
+
+		# Functions
+		if ( exists ( $json_obj->{ ip } ) )
+		{
+			if ( &getValidFormat('IPv4', $json_obj->{ ip } ) )
+			{
+				$be->{ ip } = $json_obj->{ ip };
+			}
+			else
+			{
+				$error = "true";
+				&zenlog(
+					 "ZAPI error, trying to modify the backends in the farm $farmname, invalid IP." );
+			}
+		}
+
+		if ( !$error && exists ( $json_obj->{ interface } ) )
+		{
+			my $valid_interface;
+
+			for my $iface ( &getActiveInterfaceList() )
+			{
+				next if $iface->{ vini }; # discard virtual interfaces
+				next if !$iface->{ addr }; # discard interfaces without address
+
+				if ( $iface->{ name } eq $json_obj->{ interface } )
+				{
+					$valid_interface = 'true';
+				}
+			}
+
+			if ( $valid_interface )
+			{
+				$be->{ interface } = $json_obj->{ interface };
+			}
+			else
+			{
+				$error = "true";
+				&zenlog(
+					"ZAPI error, trying to modify the backends in the farm $farmname, invalid interface."
+				);
+			}
+		}
+
+		if ( !$error && exists ( $json_obj->{ weight } ) )
+		{
+			if ( $json_obj->{ weight } =~ /^\d*[1-9]$/ ) # 1 or higher
+			{
+				$be->{ weight } = $json_obj->{ weight };
+			}
+			else
+			{
+				$error = "true";
+				&zenlog(
+					"ZAPI error, trying to modify the backends in the farm $farmname, invalid weight."
+				);
+			}
+		}
+
+		if ( !$error && exists ( $json_obj->{ priority } ) )
+		{
+			if ( $json_obj->{ priority } =~ /^[1-9]$/ ) # (1-9)
+			{
+				$be->{ priority } = $json_obj->{ priority };
+			}
+			else
+			{
+				$error = "true";
+				&zenlog(
+					"ZAPI error, trying to modify the backends in the farm $farmname, invalid priority."
+				);
+			}
+		}
+
+		if ( !$error )
+		{
+			my $status =
+			  &setFarmServer( $id_server,
+							  $be->{ ip },
+							  $be->{ interface },
+							  "",
+							  $be->{ weight },
+							  $be->{ priority },
+							  "", $farmname );
+			if ( $status == -1 )
+			{
+				$error = "true";
+				&zenlog(
+					"ZAPI error, trying to modify the backends in the farm $farmname, it's not possible to modify the real server with IP $json_obj->{ip} and interface $json_obj->{interface}."
+				);
+			}
+		}
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The $type farm profile has backends only in services.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# Print params
+	if ( !$error )
+	{
+		&zenlog(
+			"ZAPI success, some parameters have been changed in the backend $id_server in farm $farmname."
+		);
+
+		# Success
+		my $body = {
+					 description => $description,
+					 params      => $json_obj
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		&zenlog(
+			"Error trying to modify the backend in the farm $farmname, it's not possible to modify the backend."
+		);
+
+		# Error
+		my $errormsg = "Errors found trying to modify farm $farmname";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
+sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
+{
+	my ( $json_obj, $farmname, $service, $id_server ) = @_;
+
+	my $description = "Modify service backend";
+
+	# Check that the farm exists
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
+		# Error
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	my $error;
+	my $type = &getFarmType( $farmname );
+
+	if ( $type eq "http" || $type eq "https" )
+	{
+		# validate SERVICE
+		{
+			my @services = &getFarmServices($farmname);
+			my $found_service;
+
+			foreach my $service ( @services )
+			{
+				if ( $json_obj->{ service } eq $service )
+				{
+					$found_service = 1;
+					last;
+				}
+			}
+
+			if ( !$found_service )
+			{
+				# Error
+				my $errormsg = "Could not find the requested service.";
+				my $body = {
+							 description => $description,
+							 error       => "true",
+							 message     => $errormsg
+				};
+
+				&httpResponse({ code => 404, body => $body });
+			}
+		}
+
+		# validate BACKEND
+		my $be;
+		{
+			my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
+			my @be_list = split ( "\n", $backendsvs );
+
+			foreach my $be_line ( @be_list )
+			{
+				my @current_be = split ( " ", $be_line );
+
+				if ( $current_be[1] == $id_server )
+				{
+					$be = {
+							id       => $current_be[1],
+							ip       => $current_be[3],
+							port     => $current_be[5],
+							timeout  => $current_be[7],
+							priority => $current_be[9],
+					};
+
+					last;
+				}
+			}
+
+			if ( !$be )
+			{
+				# Error
+				my $errormsg = "Could not find a service backend with such id.";
+				my $body = {
+							 description => $description,
+							 error       => "true",
+							 message     => $errormsg,
+				};
+
+				&httpResponse({ code => 404, body => $body });
+			}
+		}
+
+		# Functions
+		if ( exists ( $json_obj->{ ip } ) )
+		{
+			if ( &getValidFormat('IPv4', $json_obj->{ ip } ) )
+			{
+				$be->{ ip } = $json_obj->{ ip };
+			}
+			else
+			{
+				$error = "true";
+				&zenlog(
+					 "ZAPI error, trying to modify the backends in a farm $farmname, invalid IP." );
+			}
+		}
+
+		if ( !$error && exists ( $json_obj->{ port } ) )
+		{
+			if ( &isValidPortNumber( $json_obj->{ port } ) )
+			{
+				$be->{ port } = $json_obj->{ port };
+			}
+			else
+			{
+				$error = "true";
+				&zenlog(
+					  "ZAPI error, trying to modify the backends in a farm $farmname, invalid port."
+				);
+			}
+		}
+
+		if ( !$error && exists ( $json_obj->{ weight } ) )
+		{
+			if ( $json_obj->{ weight } =~ /^\d+$/ ) # FIXME?
+			{
+				$be->{ priority } = $json_obj->{ weight };
+			}
+			else
+			{
+				$error = "true";
+				&zenlog(
+					"ZAPI error, trying to modify the backends in a farm $farmname, invalid weight."
+				);
+			}
+		}
+
+		if ( !$error && exists ( $json_obj->{ timeout } ) )
+		{
+			if ( $json_obj->{ timeout } =~ /^\d+$/ ) # FIXME?
+			{
+				$be->{ timeout } = $json_obj->{ timeout };
 			}
 			else
 			{
@@ -682,13 +707,16 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			}
 		}
 
-		if ( $error eq "false" )
+		if ( !$error )
 		{
-			$status = &setFarmServer(
-									  $id_server, @subbe[3], $subbe[5], "",
-									  "",         $subbe[9], $subbe[7], $farmname,
-									  $service
+			my $status = &setFarmServer(
+										 $id_server,       $be->{ ip },
+										 $be->{ port },    "",
+										 "",               $be->{ priority },
+										 $be->{ timeout }, $farmname,
+										 $service
 			);
+
 			if ( $status == -1 )
 			{
 				$error = "true";
@@ -702,89 +730,85 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			}
 		}
 	}
-
-	if ( $type eq "gslb" )
+	elsif ( $type eq "gslb" )
 	{
-		#Params
-		if ( exists ( $json_obj->{ service } ) )
+		# validate SERVICE
 		{
-			if ( $json_obj->{ service } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid service, can't be blank."
-				);
-			}
-			else
-			{
-				$service = $json_obj->{ service };
-			}
-		}
-		else
-		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify the backends in a farm $farmname, it's necessary to insert the service parameter."
-			);
-		}
-		
-		# Check that the provided service is configured in the farm
-		my @services = &getGSLBFarmServices($farmname);
-		
-		my $found = 0;
-		foreach my $farmservice (@services)
-		{
-			#print "service: $farmservice";
-			if ($json_obj->{service} eq $farmservice)
-			{
-				$found = 1;
-				last;
-			}
-		}
-		if ($found eq 0)
-		{
-			# Error
-			my $errormsg = "Invalid service name, please insert a valid value.";
-			my $body = {
-						 description => "Modify backend",
-						 error       => "true",
-						 message     => $errormsg
-			};
+			my @services = &getFarmServices($farmname);
+			my $found_service;
 
-			&httpResponse({ code => 400, body => $body });
-		}
-
-		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
-		my @be = split ( "\n", $backendsvs );
-		foreach my $subline ( @be )
-		{
-			$subline =~ s/^\s+//;
-			if ( $subline =~ /^$/ )
+			foreach my $service ( @services )
 			{
-				next;
+				if ( $json_obj->{ service } eq $service )
+				{
+					$found_service = 1;
+					last;
+				}
 			}
 
-			@subbe = split ( " => ", $subline );
-			if ( @subbe[0] == $id_server )
+			if ( !$found_service )
 			{
-				last;
+				# Error
+				my $errormsg = "Could not find the requested service.";
+				my $body = {
+							 description => $description,
+							 error       => "true",
+							 message     => $errormsg
+				};
+
+				&httpResponse({ code => 404, body => $body });
 			}
 		}
+
+		# validate BACKEND
+		my $be;
+		{
+			my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
+			my @be_list = split ( "\n", $backendsvs );
+
+			foreach my $be_line ( @be_list )
+			{
+				$be_line =~ s/^\s+//;
+				next if !$be_line;
+
+				my @current_be = split ( " => ", $be_line );
+
+				if ( $current_be[0] == $id_server )
+				{
+					$be = {
+							id       => $current_be[1],
+							ip       => $current_be[3],
+							port     => $current_be[5],
+							timeout  => $current_be[7],
+							priority => $current_be[9],
+					};
+
+					last;
+				}
+			}
+
+			if ( !$be )
+			{
+				# Error
+				my $errormsg = "Could not find a service backend with such id.";
+				my $body = {
+							 description => $description,
+							 error       => "true",
+							 message     => $errormsg,
+				};
+
+				&httpResponse({ code => 404, body => $body });
+			}
+		}
+
 		my $lb = &getFarmVS( $farmname, $service, "algorithm" );
 
 		# Functions
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( $json_obj->{ ip } =~ /^$/ )
+			if ( &getValidFormat('IPv4', $json_obj->{ ip } ) )
 			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, invalid IP, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ ip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
-			{
-				@subbe[1] = $json_obj->{ ip };
+				$be->{ ip } = $json_obj->{ ip };
 			}
 			else
 			{
@@ -794,10 +818,11 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			}
 		}
 
-		if ( $error eq "false" )
+		if ( !$error )
 		{
-			$status =
+			my $status =
 			  &setGSLBFarmNewBackend( $farmname, $service, $lb, $id_server, @subbe[1] );
+
 			if ( $status == -1 )
 			{
 				$error = "true";
@@ -811,90 +836,66 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			}
 		}
 	}
+	else
+	{
+		# Error
+		my $errormsg = "The $type farm profile does not support services.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
 
 	# Print params
-	if ( $type eq "http" || $type eq "https" || $type eq "gslb" )
+	if ( !$error )
 	{
-		if ( $error ne "true" )
+		&zenlog(
+			"ZAPI success, some parameters have been changed in the backend $id_server in service $service in farm $farmname."
+		);
+
+		# Success
+		# Get farm status. If farm is down the restart is not required.
+		my $status = &getFarmStatus( $farmname);
+		my $body;
+
+		if ( $status eq "up" )
 		{
-			&zenlog(
-				"ZAPI success, some parameters have been changed in the backend $id_server in service $service in farm $farmname."
-			);
-
-			# Success
-			# Get farm status. If farm is down the restart is not required.
-			my $status = &getFarmStatus( $farmname);
-			my $body;
-
-			if ( $status eq "up" )
-			{
-				$body = {
-					description => "Modify backend $id_server in farm $farmname",
-					params      => $json_obj,
-					status      => 'needed restart',
-					info =>
-					  "There're changes that need to be applied, stop and start farm to apply them!"
-				};
-			}
-			if ( $status eq "down" )
-			{
-				$body = {
-						  description => "Modify backend $id_server in farm $farmname",
-						  params      => $json_obj,
-				};
-			}
-
-			&httpResponse({ code => 200, body => $body });
-		}
-		else
-		{
-			&zenlog(
-				"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the backend."
-			);
-
-			# Error
-			my $errormsg = "Errors found trying to modify farm $farmname";
-			my $body = {
-						 description => "Modify farm $farmname",
-						 error       => "true",
-						 message     => $errormsg
+			$body = {
+				description => $description,
+				params      => $json_obj,
+				status      => 'needed restart',
+				info =>
+				  "There're changes that need to be applied, stop and start farm to apply them!"
 			};
-
-			&httpResponse({ code => 400, body => $body });
 		}
+		if ( $status eq "down" )
+		{
+			$body = {
+					  description => "Modify backend $id_server in farm $farmname",
+					  params      => $json_obj,
+			};
+		}
+
+		&httpResponse({ code => 200, body => $body });
 	}
 	else
 	{
-		if ( $error ne "true" )
-		{
-			&zenlog(
-				"ZAPI success, some parameters have been changed in the backend $id_server in farm $farmname."
-			);
+		&zenlog(
+			"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the backend."
+		);
 
-			# Success
-			my $body = {
-						 description => "Modify backend $id_server in farm $farmname",
-						 params      => $json_obj
-			};
+		# Error
+		my $errormsg = "Errors found trying to modify farm $farmname";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
 
-			&httpResponse({ code => 200, body => $body });
-		}
-		else
-		{
-			&zenlog(
-				"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the backend."
-			);
-
-			# Error
-			my $errormsg = "Errors found trying to modify farm $farmname";
-			my $body = {
-						 description => "Modify farm $farmname",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
+		&httpResponse({ code => 400, body => $body });
 	}
 }
 

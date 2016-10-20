@@ -99,6 +99,7 @@ sub getDatalinkFarmServers    # ($farm_name)
 		if ( $line ne "" && $line =~ /^\;server\;/ && $first ne "true" )
 		{
 			$line =~ s/^\;server/$sindex/g;    #, $line;
+			chomp( $line );
 			push ( @servers, $line );
 			$sindex = $sindex + 1;
 		}

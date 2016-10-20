@@ -816,12 +816,12 @@ POST qr{^/farms/($farm_re)/backends$} => sub {
 ##### /farms/FARM/backends/BACKEND
 
 #  PUT backend
-PUT qr{^/farms/($farm_re)/backends/(\w+)$} => sub {
+PUT qr{^/farms/($farm_re)/backends/(\d+)$} => sub {
 	&modify_backends( @_ );
 };
 
 #  DELETE backend (L4XNAT/DATALINK)
-DELETE qr{^/farms/($farm_re)/backends/(\w+)$} => sub {
+DELETE qr{^/farms/($farm_re)/backends/(\d+)$} => sub {
 	&delete_backend( @_ );
 };
 
@@ -854,8 +854,13 @@ GET qr{^/farms/($farm_re)/services/(\w+)/backends$} => sub {
 
 ##### /farms/FARM/services/SERVICE/backends/BACKEND
 
+#  PUT backend (HTTP/HTTPS/GSLB)
+PUT qr{^/farms/($farm_re)/services/(\w+)/backends/(\d+)$} => sub {
+	&modify_service_backends( @_ );
+};
+
 #  DELETE backend (HTTP/HTTPS/GSLB)
-DELETE qr{^/farms/($farm_re)/services/(\w+)/backends/(\w+)$} => sub {
+DELETE qr{^/farms/($farm_re)/services/(\w+)/backends/(\d+)$} => sub {
 	&delete_service_backend( @_ );
 };
 
