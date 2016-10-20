@@ -889,14 +889,14 @@ DELETE qr{^/farms/($farm_re)/zones/(([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,})$} => s
 
 #  POST new zone resource
 POST qr{^/farms/($farm_re)/zones/($zone_re)/resources$} => sub {
-	&new_farm_zoneresource( @_ );
+	&new_farm_zone_resource( @_ );
 };
 
 ##### /farms/FARM/zones/ZONE/resources/RESOURCE
 
 #  PUT zone resources
 PUT qr{^/farms/($farm_re)/zones/($zone_re)/resources/(\w+)$} => sub {
-	&modify_resources( @_ );
+	&modify_zone_resource( @_ );
 };
 
 #  DELETE zone resource

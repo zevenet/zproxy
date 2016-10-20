@@ -205,7 +205,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 #
 #**
 
-sub new_farm_zoneresource # ( $json_obj, $farmname )
+sub new_farm_zone_resource # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;

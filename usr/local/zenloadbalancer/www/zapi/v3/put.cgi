@@ -900,11 +900,11 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 }
 
 #
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"rname":"ww2","ttl":"8","type":"DYNA","rdata":"sev2","zone":"zone1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/resources/3
+# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"rname":"ww2","ttl":"8","type":"DYNA","rdata":"sev2","zone":"zone1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zones/zone1/resources/3
 #
 #####Documentation of PUT RESOURCES####
 #**
-#  @api {put} /farms/<farmname>/resources/<resourceid> Modify a gslb Resource
+#  @api {put} /farms/<farmname>/zones/<zoneid>/resources/<resourceid> Modify a gslb Resource
 #  @apiGroup Farm Modify
 #  @apiName PutResource
 #  @apiParam {String} farmname  Farm name, unique ID.
@@ -948,13 +948,13 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #        -d '{"rname":"www","ttl":"8","type":"DYNA","rdata":"sev2",
-#       "zone":"zone1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/resources/3
+#       "zone":"zone1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones/zone1/resources/3
 #
 # @apiSampleRequest off
 #
 #**
 
-sub modify_resources # ( $json_obj, $farmname, $id_resource )
+sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 {
 	my ( $json_obj, $farmname, $id_resource ) = @_;
 
@@ -974,7 +974,7 @@ sub modify_resources # ( $json_obj, $farmname, $id_resource )
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	
+
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
