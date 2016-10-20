@@ -34,23 +34,28 @@ sub keycert
 	$hostname =~ s/\"//g;
 	$hostname =~ s/^\s+//;
 	$hostname =~ s/\s+$//;
+	print "Hostname=$hostname<--\n";
 
 	$n = 2;
-
+	print "DMI is -->$dmi<--\n";
 	$encrypted_string  = crypt ( "${dmi}${hostname}", "93" );
-	$encrypted_string2 = crypt ( "${hostname}${dmi}", "a3" );
-	$encrypted_string3 = crypt ( "${dmi}${hostname}", "ZH" );
-	$encrypted_string4 = crypt ( "${hostname}${dmi}", "h7" );
 	$encrypted_string =~ s/^93//;
+	print "STR1 -->$encrypted_string<--\n";
+	$encrypted_string2 = crypt ( "${hostname}${dmi}", "a3" );
 	$encrypted_string2 =~ s/^a3//;
+	print "STR2 -->$encrypted_string2<--\n";
+	$encrypted_string3 = crypt ( "${dmi}${hostname}", "ZH" );
 	$encrypted_string3 =~ s/^ZH//;
+	print "STR3 -->$encrypted_string3<--\n";
+	$encrypted_string4 = crypt ( "${hostname}${dmi}", "h7" );
 	$encrypted_string4 =~ s/^h7//;
+	print "STR4 -->$encrypted_string4<--\n";
 	$str =
 	  "${encrypted_string}-${encrypted_string2}-${encrypted_string3}-${encrypted_string4}";
 	$str =~ s/\"//g;
 	$str =~ s/^\s+//;
 	$str =~ s/\s+$//;
-
+	print "STRING CRYPT is $str\n";
 	return $str;
 }
 
@@ -59,7 +64,7 @@ sub certcontrol
 	$swcert      = 0;
 	$zlbcertfile = "$basedir/zlbcertfile.pem";
 
-	$key = &keycert();
+	#$key = &keycert();
 
 	my $notbefore;
 	my $nb;
@@ -76,6 +81,9 @@ sub certcontrol
 		{
 	#&errormsg( "Zen Load Balancer activation certificate isn't valid, please request one");
 			$swcert = 2;
+			print "keyid:$keyid<--\n";
+			print "CN=$hostname<--\n";
+			print "key=$key<--\n";
 		}
 
 		use Date::Parse;
@@ -93,12 +101,13 @@ sub certcontrol
 		my $totaldays = ( $end - $ini ) / 86400;
 		$totaldays =~ s/\-//g;
 		my $dayright = ( $end - time () ) / 86400;
-
+		print "totaldays = $totaldays, day = $dayright\n";
 		#control errors
 		if ( $totaldays < 364 && $dayright < 0 && $swcert == 0 )
 		{
 			#it is working with test cert and cert is expired. It should goes down
 			$swcert = 3;
+			print "Cert expired, $totaldays < 364 && $dayright < 0 && $swcert == 0\n";
 		}
 
 		if ( $totaldays > 364 && $dayright < 0 && $swcert == 0 )
@@ -127,7 +136,7 @@ if ( $ARGV[0] eq "install" || $ARGV[0] eq "upgrade" )
 	my $certerr = &certcontrol();
 	if ( $certerr != 0 )
 	{
-		print "Your certificate key is not valid\n";
+		print "Your certificate key is not valid, error code $certerr\n";
 		exit 1;    #Abort deploy
 	}
 }
