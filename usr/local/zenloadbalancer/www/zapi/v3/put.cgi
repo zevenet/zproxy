@@ -1455,25 +1455,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 	my $output_params;
 
-	if ( $farmname =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to modify the services in a farm $farmname, invalid farmname, can't be blank."
-		);
-
-		# Error
-		my $errormsg = "Invalid farm name, please insert a valid value.";
-
-		my $body = {
-					 description => "Modify service",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
-	# Check that the farm exists
+	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 ) {
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -1487,17 +1469,14 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( $service =~ /^$/ )
+	# validate FARM TYPE
+	my $type = &getFarmType( $farmname );
+	unless ( $type eq 'gslb' || $type eq 'http' || $type eq 'https' )
 	{
-		&zenlog(
-			"ZAPI error, trying to modify the services in a farm $farmname, invalid farmname, can't be blank."
-		);
-
 		# Error
-		my $errormsg = "Invalid service name, please insert a valid value.";
-
+		my $errormsg = "The $type farm profile does not support services.";
 		my $body = {
-					 description => "Modify service",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -1505,43 +1484,45 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	my $error = "false";
-	my $type = &getFarmType( $farmname );
-	
-	# Check that the provided service is configured in the farm
-	my @services;
-	if ($type eq "gslb")
+	# validate SERVICE
 	{
-		@services = &getGSLBFarmServices($farmname);
-	}
-	else
-	{
-		@services = &getFarmServices($farmname);
-	}
+		my @services;
 
-	my $found = 0;
-	foreach my $farmservice (@services)
-	{
-		#print "service: $farmservice";
-		if ($service eq $farmservice)
+		if ($type eq "gslb")
 		{
-			$found = 1;
-			last;
+			@services = &getGSLBFarmServices($farmname);
+		}
+		else
+		{
+			@services = &getFarmServices($farmname);
+		}
+
+		my $found_service;
+
+		foreach my $service ( @services )
+		{
+			if ( $json_obj->{ service } eq $service )
+			{
+				$found_service = 1;
+				last;
+			}
+		}
+
+		if ( !$found_service )
+		{
+			# Error
+			my $errormsg = "Could not find the requested service.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 404, body => $body });
 		}
 	}
 
-	if ($found eq 0)
-	{
-		# Error
-		my $errormsg = "Invalid service name, please insert a valid value.";
-		my $body = {
-					 description => "Modify service",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
+	my $error = "false";
 
 	if ( $type eq "http" || $type eq "https" )
 	{
