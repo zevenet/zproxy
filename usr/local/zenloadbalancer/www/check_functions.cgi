@@ -27,9 +27,12 @@
 # \w matches the 63 characters [a-zA-Z0-9_] (most of the time)
 #
 
+my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/; # (0-255)
+
 my %format_re = (
 	'farm_name'     => qr{[a-zA-Z0-9\-]+},
-	
+
+	# interfaces
 	'vlan_interfaces'   => qr{[a-zA-Z0-9]+\.[0-9]+},
 	'virt_interfaces'	=> qr{[a-zA-Z0-9\.]+:[a-zA-Z0-9]+},
 	
@@ -42,6 +45,9 @@ my %format_re = (
 	'cert_pem'    => qr{\w[\w\.-]*\.pem},
 	'cert_csr'    => qr{\w[\w\.-]*\.csr},
 	'cert_dh2048' => qr{\w[\w\.-]*_dh2048\.pem},
+
+	# ips
+	'IPv4' => qr{(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS},
 
 	#'' => qr{},
 );
