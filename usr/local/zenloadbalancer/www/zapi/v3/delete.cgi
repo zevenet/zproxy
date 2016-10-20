@@ -334,30 +334,15 @@ sub delete_backend # ( $farmname, $id_server )
 {
 	my ( $farmname, $id_server ) = @_;
 
-	if ( $farmname =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to delete the backend $id_server in farm $farmname, invalid farm name."
-		);
+	my $description = "Delete backend";
 
-		# Error
-		my $errormsg = "Invalid farm name, please insert a valid value.";
-		my $body = {
-					 description => "Delete backend",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
-	# Check that the farm exists
+	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
-					 description => "Delete backend",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -365,16 +350,14 @@ sub delete_backend # ( $farmname, $id_server )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( $id_server =~ /^$/ )
+	# validate FARM TYPE
+	my $type = &getFarmType( $farmname );
+	unless ( $type eq 'l4xnat' || $type eq 'datalink' )
 	{
-		&zenlog(
-			"ZAPI error, trying to delete the backend $id_server in farm $farmname, invalid backend id."
-		);
-
 		# Error
-		my $errormsg = "Invalid backend id, please insert a valid value.";
+		my $errormsg = "The $type farm profile has backends only in services.";
 		my $body = {
-					 description => "Delete backend",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -382,20 +365,26 @@ sub delete_backend # ( $farmname, $id_server )
 		&httpResponse({ code => 400, body => $body });
 	}
 
+	my @backends = &getFarmServers( $farmname );
+	my $backend_line = $backends[$id_server];
+
+	if ( !$backend_line )
+	{
+		# Error
+		my $errormsg = "Could not find a backend with such id.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
 	my $status = &runFarmServerDelete( $id_server, $farmname );
 
 	if ( $status != -1 )
 	{
-		# Changes must be applied in iptables
-		# my $type = &getFarmType($farmname);
-		# if ($type eq "l4xnat"){
-		# if ( &getFarmStatus( $farmname ) eq 'up' )
-		# {
-		# &runFarmStop( $farmname, "false" );
-		# &runFarmStart( $farmname, "false" );
-		# &sendL4ConfChange( $farmname );
-		# }
-		# }
 		&zenlog(
 			   "ZAPI success, the backend $id_server in farm $farmname has been deleted." );
 
@@ -403,7 +392,7 @@ sub delete_backend # ( $farmname, $id_server )
 		my $message =
 		  "The real server with ID $id_server of the $farmname farm has been deleted.";
 		my $body = {
-					 description => "Delete backend $id_server in farm $farmname.",
+					 description => $description,
 					 success     => "true",
 					 message     => $message
 		};
@@ -420,7 +409,7 @@ sub delete_backend # ( $farmname, $id_server )
 		my $errormsg =
 		  "It's not possible to delete the real server with ID $id_server of the $farmname farm.";
 		my $body = {
-					 description => "Delete backend $id_server in farm $farmname.",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -465,30 +454,15 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 {
 	my ( $farmname, $service, $id_server ) = @_;
 
-	if ( $farmname =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to delete the backend $id_server in service $service in farm $farmname, invalid farm name."
-		);
+	my $description = "Delete service backend";
 
-		# Error
-		my $errormsg = "Invalid farm name, please insert a valid value.";
-		my $body = {
-					 description => "Delete service backend",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
-	# Check that the farm exists
+	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
-					 description => "Delete service backend",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -496,76 +470,61 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( $service =~ /^$/ )
+	# validate FARM TYPE
+	my $type = &getFarmType( $farmname );
+	unless ( $type eq 'l4xnat' || $type eq 'datalink' )
 	{
-		&zenlog(
-			"ZAPI error, trying to delete the backend $id_server in service $service in farm $farmname, invalid service name."
-		);
-
 		# Error
-		my $errormsg = "Invalid service name, please insert a valid value.";
+		my $errormsg = "The $type farm profile has backends only in services.";
 		my $body = {
-					 description => "Delete service backend",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	
-	# Check that the provided service is configured in the farm
-	my @services;
-	if ($type eq "gslb")
-	{
-		@services = &getGSLBFarmServices($farmname);
-	}
-	else
-	{
-		@services = &getFarmServices($farmname);
-	}
 
-	my $found = 0;
-	foreach my $farmservice (@services)
+	# validate SERVICE
 	{
-		#print "service: $farmservice";
-		if ($service eq $farmservice)
+		my @services;
+
+		if ($type eq "gslb")
 		{
-			$found = 1;
-			last;
+			@services = &getGSLBFarmServices($farmname);
+		}
+		else
+		{
+			@services = &getFarmServices($farmname);
+		}
+
+		my $found_service;
+
+		foreach my $service ( @services )
+		{
+			if ( $json_obj->{ service } eq $service )
+			{
+				$found_service = 1;
+				last;
+			}
+		}
+
+		if ( !$found_service )
+		{
+			# Error
+			my $errormsg = "Could not find the requested service.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 404, body => $body });
 		}
 	}
 
-	if ($found eq 0)
-	{
-		# Error
-		my $errormsg = "Invalid service name, please insert a valid value.";
-		my $body = {
-					 description => "Delete service backend",
-					 error       => "true",
-					 message     => $errormsg
-		};
+	my $status;
 
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	if ( $id_server =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to delete the backend $id_server in service $service in farm $farmname, invalid backend id."
-		);
-
-		# Error
-		my $errormsg = "Invalid backend id, please insert a valid value.";
-		my $body = {
-					 description => "Delete service backend",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	my $type = &getFarmType( $farmname );
 	if ( $type eq "http" || $type eq "https" )
 	{
 		$status = &runFarmServerDelete( $id_server, $farmname, $service );
@@ -586,8 +545,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 		my $message =
 		  "The real server with ID $id_server in the service $service of the farm $farmname has been deleted.";
 		my $body = {
-			   description =>
-				 "Delete backend with ID $id_server in the service $service of the farm $farmname.",
+			   description => $description,
 			   success => "true",
 			   message => $message
 			};
@@ -602,15 +560,14 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 
 		# Error
 		my $errormsg =
-		  "It's not possible to delete the real server with ID $id_server of the $farmname farm.";
+		  "Could not find the backend with ID $id_server of the $farmname farm.";
 		my $body = {
-			   description =>
-				 "Delete backend $id_server in the service $service of the farm $farmname.",
+			   description => $description,
 			   error   => "true",
 			   message => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse({ code => 404, body => $body });
 	}
 }
 

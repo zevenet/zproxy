@@ -397,7 +397,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			}
 		}
 	}
-	if ( $type eq "datalink" )
+	elsif ( $type eq "datalink" )
 	{
 		my @run = &getFarmServers( $farmname );
 		my $serv_values = @run[$id_server];
