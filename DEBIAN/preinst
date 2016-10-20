@@ -34,28 +34,24 @@ sub keycert
 	$hostname =~ s/\"//g;
 	$hostname =~ s/^\s+//;
 	$hostname =~ s/\s+$//;
-	print "Hostname=$hostname<--\n";
+	print "Hostname=$hostname\n";
 
 	$n = 2;
-	print "DMI is -->$dmi<--\n";
+	print "DMI=$dmi\n";
 	$encrypted_string  = crypt ( "${dmi}${hostname}", "93" );
 	$encrypted_string =~ s/^93//;
-	print "STR1 -->$encrypted_string<--\n";
 	$encrypted_string2 = crypt ( "${hostname}${dmi}", "a3" );
 	$encrypted_string2 =~ s/^a3//;
-	print "STR2 -->$encrypted_string2<--\n";
 	$encrypted_string3 = crypt ( "${dmi}${hostname}", "ZH" );
 	$encrypted_string3 =~ s/^ZH//;
-	print "STR3 -->$encrypted_string3<--\n";
 	$encrypted_string4 = crypt ( "${hostname}${dmi}", "h7" );
 	$encrypted_string4 =~ s/^h7//;
-	print "STR4 -->$encrypted_string4<--\n";
 	$str =
 	  "${encrypted_string}-${encrypted_string2}-${encrypted_string3}-${encrypted_string4}";
 	$str =~ s/\"//g;
 	$str =~ s/^\s+//;
 	$str =~ s/\s+$//;
-	print "STRING CRYPT is $str\n";
+	print "System Certificate Key=$str\n";
 	return $str;
 }
 
@@ -81,9 +77,7 @@ sub certcontrol
 		{
 	#&errormsg( "Zen Load Balancer activation certificate isn't valid, please request one");
 			$swcert = 2;
-			print "keyid:$keyid<--\n";
-			print "CN=$hostname<--\n";
-			print "key=$key<--\n";
+			print "File Certificate key=$keyid\n";
 		}
 
 		use Date::Parse;
@@ -101,7 +95,7 @@ sub certcontrol
 		my $totaldays = ( $end - $ini ) / 86400;
 		$totaldays =~ s/\-//g;
 		my $dayright = ( $end - time () ) / 86400;
-		print "totaldays = $totaldays, day = $dayright\n";
+		print "Certificate total day=$totaldays, used=$dayright\n";
 		#control errors
 		if ( $totaldays < 364 && $dayright < 0 && $swcert == 0 )
 		{
@@ -180,6 +174,15 @@ if ( -e  $chero_conf )
 	move $chero_conf, "/tmp/cherokee.conf";
 }
 
+#Move Alerts conf files #TO BE FIXED
+if ( -e "/usr/local/zenloadbalancer/www/Plugins/Notifications/Alerts.conf" )
+{
+	system ( "mv /usr/local/zenloadbalancer/www/Plugins/Notifications/Alerts.conf /tmp/Alerts.conf" );
+}
+if ( -e "/usr/local/zenloadbalancer/www/Plugins/Notifications/Senders.conf" )
+{
+	system ( "mv /usr/local/zenloadbalancer/www/Plugins/Notifications/Senders.conf /tmp/Senders.conf" );
+}
 # Create the new GUI system group
 system ( "groupadd -f webgui" );
 system ( "usermod -a -G webgui root" );

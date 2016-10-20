@@ -137,6 +137,17 @@ then
 	mv /tmp/zlb-start /usr/local/zenloadbalancer/config/
 fi
 
+#move Alerts files #TO BE FIXED
+if [ -f /tmp/Alerts.conf ];
+then
+        mv /tmp/Alerts.conf /usr/local/zenloadbalancer/www/Plugins/Notifications/Alerts.conf
+fi
+if [ -f /tmp/Senders.conf ];
+then
+        mv /tmp/Senders.conf /usr/local/zenloadbalancer/www/Plugins/Notifications/Senders.conf
+fi
+
+
 #move old web server configuration
 if [ -f /tmp/mini_httpd.conf ];
 then
