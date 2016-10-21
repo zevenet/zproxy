@@ -225,7 +225,7 @@ sub new_farm # ( $json_obj )
 # @apiSuccess   {Number}        port                     PORT of the backend, where is listening the real service.
 # @apiSuccess	{String}	service			Service's name which the backend will be created.
 # @apiSuccess	{Number}	timeout			It’s the backend timeout to respond a certain request.
-# @apiSuccess   {Number}        weight                   It's the weight value for the current real server.
+# @apiSuccess   {Number}        weight                   It's the weight value for the current backend.
 #
 #
 #
@@ -307,8 +307,8 @@ sub new_farm # ( $json_obj )
 #
 # @apiSuccess   {String}        ip               IP of the backend, where is listening the real service.
 # @apiSuccess   {Number}        port                    PORT of the backend, where is listening the real service.
-# @apiSuccess   {Number}        priority                 It’s the priority value for the current real server.
-# @apiSuccess   {Number}        weight                   It's the weight value for the current real server.
+# @apiSuccess   {Number}        priority                 It’s the priority value for the current backend.
+# @apiSuccess   {Number}        weight                   It's the weight value for the current backend.
 #
 #
 #
@@ -349,8 +349,8 @@ sub new_farm # ( $json_obj )
 #
 # @apiSuccess   {String}        interface               It’s the local network interface where the backend is connected to.
 # @apiSuccess   {String}        ip                      IP of the backend, where is listening the real service.
-# @apiSuccess   {Number}        priority                        It’s the priority value for the current real server.
-# @apiSuccess   {Number}        weight                   It's the weight value for the current real server.
+# @apiSuccess   {Number}        priority                        It’s the priority value for the current backend.
+# @apiSuccess   {Number}        weight                   It's the weight value for the current backend.
 #
 #
 #
@@ -433,12 +433,12 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		if ( ! &getValidFormat('IPv4', $json_obj->{ ip }) )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend l4xnat in farm $farmname, invalid real server IP value."
+				"ZAPI error, trying to create a new backend l4xnat in farm $farmname, invalid backend IP value."
 			);
 
 			# Error
 			$error = 1;
-			my $errormsg = "Invalid real server IP value, please insert a valid value.";
+			my $errormsg = "Invalid backend IP value, please insert a valid value.";
 			my $body = {
 						 description => $description,
 						 error       => "true",
@@ -452,11 +452,11 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		unless ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' || $json_obj->{ port } eq '' )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend l4xnat in farm $farmname, invalid IP address and port for a real server, ir can't be blank."
+				"ZAPI error, trying to create a new backend l4xnat in farm $farmname, invalid IP address and port for a backend, ir can't be blank."
 			);
 
 			# Error
-			my $errormsg = "Invalid IP address and port for a real server, it can't be blank.";
+			my $errormsg = "Invalid IP address and port for a backend, it can't be blank.";
 			my $body = {
 									   description => $description,
 									   error       => "true",
@@ -473,7 +473,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		{
 			# Error
 			my $errormsg =
-			  "Invalid real server priority value, please insert a value within the range 0-9.";
+			  "Invalid backend priority value, please insert a value within the range 0-9.";
 			my $body = {
 						 description => $description,
 						 error       => "true",
@@ -490,7 +490,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		{
 			# Error
 			my $errormsg =
-			  "Invalid real server weight value, please insert a value greater than 0.";
+			  "Invalid backend weight value, please insert a value greater than 0.";
 			my $body = {
 						 description => $description,
 						 error       => "true",
@@ -533,7 +533,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		{
 			# Error
 			my $errormsg =
-			    "It's not possible to create the real server with ip "
+			    "It's not possible to create the backend with ip "
 			  . $json_obj->{ ip }
 			  . " and port "
 			  . $json_obj->{ port }
@@ -576,11 +576,11 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		if ( ! &getValidFormat('IPv4', $json_obj->{ ip }) )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend datalink in farm $farmname, invalid real server IP value."
+				"ZAPI error, trying to create a new backend datalink in farm $farmname, invalid backend IP value."
 			);
 
 			# Error
-			my $errormsg = "Invalid real server IP value, please insert a valid value.";
+			my $errormsg = "Invalid backend IP value, please insert a valid value.";
 			my $body = {
 						 description => $description,
 						 error       => "true",
@@ -690,12 +690,12 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		else
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend datalink in farm $farmname, it's not possible to create the real server."
+				"ZAPI error, trying to create a new backend datalink in farm $farmname, it's not possible to create the backend."
 			);
 
 			# Error
 			my $errormsg =
-			    "It's not possible to create the real server with ip "
+			    "It's not possible to create the backend with ip "
 			  . $json_obj->{ ip }
 			  . " and port "
 			  . $json_obj->{ port }
@@ -865,7 +865,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 			);
 
 			# Error
-			my $errormsg = "Invalid timeout value for a real server, it must be empty or greater than 0.";
+			my $errormsg = "Invalid timeout value for a backend, it must be empty or greater than 0.";
 			my $body = {
 						 description => $description,
 						 error       => "true",
@@ -914,7 +914,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		{
 			# Error
 			my $errormsg =
-			    "It's not possible to create the real server with ip "
+			    "It's not possible to create the backend with ip "
 			  . $json_obj->{ ip }
 			  . " and port "
 			  . $json_obj->{ port }

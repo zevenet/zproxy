@@ -97,8 +97,8 @@ sub modify_farm # ( $json_obj, $farmname )
 #
 # @apiSuccess	{String}		ip			IP of the backend, where is listening the real service.
 # @apiSuccess	{Number}		port			PORT of the backend, where is listening the real service.
-# @apiSuccess   {Number}        priority		It’s the priority value for the current real server.
-# @apiSuccess   {Number}        weight		It's the weight value for the current real server.
+# @apiSuccess   {Number}        priority		It’s the priority value for the current backend.
+# @apiSuccess   {Number}        weight		It's the weight value for the current backend.
 #
 #
 # @apiSuccessExample Success-Response:
@@ -143,8 +143,8 @@ sub modify_farm # ( $json_obj, $farmname )
 #
 # @apiSuccess   {String}        ip                       IP of the backend, where is listening the real service.
 # @apiSuccess   {String}        interface	It’s the local network interface where the backend is connected to.
-# @apiSuccess   {Number}        priority         It’s the priority value for the current real server.
-# @apiSuccess   {Number}        weight           It's the weight value for the current real server.
+# @apiSuccess   {Number}        priority         It’s the priority value for the current backend.
+# @apiSuccess   {Number}        weight           It's the weight value for the current backend.
 #
 #
 # @apiSuccessExample Success-Response:
@@ -191,7 +191,7 @@ sub modify_farm # ( $json_obj, $farmname )
 # @apiSuccess   {String}        port	        PORT of the backend, where is listening the real service.
 # @apiSuccess   {String}        service		The service where the backend belongs.
 # @apiSuccess	{Number}	timeout		It’s the backend timeout to respond a certain request.
-# @apiSuccess   {Number}        weight           It's the weight value for the current real server.
+# @apiSuccess   {Number}        weight           It's the weight value for the current backend.
 #
 #
 # @apiSuccessExample Success-Response:
@@ -392,7 +392,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the real server with ip $json_obj->{ip}."
+					"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the backend with ip $json_obj->{ip}."
 				);
 			}
 		}
@@ -505,7 +505,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the backends in the farm $farmname, it's not possible to modify the real server with IP $json_obj->{ip} and interface $json_obj->{interface}."
+					"ZAPI error, trying to modify the backends in the farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} and interface $json_obj->{interface}."
 				);
 			}
 		}
@@ -721,7 +721,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the real server with IP $json_obj->{ip} in service $service."
+					"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} in service $service."
 				);
 			}
 			else
@@ -827,7 +827,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the real server with IP $json_obj->{ip} in service $service."
+					"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} in service $service."
 				);
 			}
 			else

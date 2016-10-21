@@ -317,7 +317,7 @@ sub delete_service # ( $farmname, $service )
 # @apiSuccessExample Success-Response:
 #{
 #   "description" : "Delete backend 4 in farm L4FARM.",
-#   "message" : "The real server with ID 4 of the L4FARM farm has been deleted.",
+#   "message" : "The backend with ID 4 of the L4FARM farm has been deleted.",
 #   "success" : "true"
 #}
 #
@@ -390,7 +390,7 @@ sub delete_backend # ( $farmname, $id_server )
 
 		# Success
 		my $message =
-		  "The real server with ID $id_server of the $farmname farm has been deleted.";
+		  "The backend with ID $id_server of the $farmname farm has been deleted.";
 		my $body = {
 					 description => $description,
 					 success     => "true",
@@ -402,12 +402,12 @@ sub delete_backend # ( $farmname, $id_server )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to delete the backend $id_server in farm $farmname, it's not possible to delete the real server."
+			"ZAPI error, trying to delete the backend $id_server in farm $farmname, it's not possible to delete the backend."
 		);
 
 		# Error
 		my $errormsg =
-		  "It's not possible to delete the real server with ID $id_server of the $farmname farm.";
+		  "It's not possible to delete the backend with ID $id_server of the $farmname farm.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -437,7 +437,7 @@ sub delete_backend # ( $farmname, $id_server )
 # @apiSuccessExample Success-Response:
 #{
 #   "description" : "Delete backend with ID 5 in the service service1 of the farm newfarmHTTP.",
-#   "message" : "The real server with ID 5 in the service service1 of the farm newfarmHTTP has been deleted.",
+#   "message" : "The backend with ID 5 in the service service1 of the farm newfarmHTTP has been deleted.",
 #   "success" : "true"
 #}
 #
@@ -543,7 +543,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 		# Success
 		&setFarmRestart( $farmname );
 		my $message =
-		  "The real server with ID $id_server in the service $service of the farm $farmname has been deleted.";
+		  "The backend with ID $id_server in the service $service of the farm $farmname has been deleted.";
 		my $body = {
 			   description => $description,
 			   success => "true",
@@ -555,7 +555,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to delete the backend $id_server in service $service in farm $farmname, it's not possible to delete the real server."
+			"ZAPI error, trying to delete the backend $id_server in service $service in farm $farmname, it's not possible to delete the backend."
 		);
 
 		# Error

@@ -18,7 +18,7 @@
 #
 # @apiSuccess	{Number}		contimeout	This value indicates how long the farm is going to wait for a connection to the backend in seconds.
 # @apiSuccess	{Number}		restimeout	This value indicates how long the farm is going to wait for a response from the backends in seconds.
-# @apiSuccess	{Number}		resurrectime	This value in seconds is the period to get out a blacklisted real server and checks if is alive.
+# @apiSuccess	{Number}		resurrectime	This value in seconds is the period to get out a blacklisted backend and checks if is alive.
 # @apiSuccess	{Number}		reqtimeout	This value indicates how long the farm is going to wait for a client request in seconds.
 # @apiSuccess	{Number}		maxthreads		This value indicates the number of working threads.
 # @apiSuccess	{String}		rewritelocation	If enabled, the farm is forced to modify the Location: and Content-location: headers in responses to clients. The options are: enabled, disabled or enabled-backends.
