@@ -382,16 +382,17 @@ sub new_farm_backend # ( $json_obj, $farmname )
 	my $farmname = shift;
 
 	# Initial parameters
-	my $priority = 1;
-	my $weight   = 1;
+	my $description = "New farm backend";
+	my $default_priority = 1;
+	my $default_weight   = 1;
 
-	# Check that the farm exists
+	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
-					 description => "New backend",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -399,280 +400,11 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		&httpResponse({ code => 404, body => $body });
 	}
 
+	# validate FARM TYPE
 	my $type = &getFarmType( $farmname );
-
-	if ( $type eq "http" || $type eq "https" )
-	{
-		# Check that the provided service is configured in the farm
-		my @services = &getFarmServices($farmname);
-
-		my $found = 0;
-		foreach my $farmservice (@services)
-		{
-			#print "service: $farmservice";
-			if ($json_obj->{service} eq $farmservice)
-			{
-				$found = 1;
-				last;
-			}
-		}
-
-		if ($found eq 0)
-		{
-			# Error
-			my $errormsg = "Invalid service name, please insert a valid value.";
-			my $body = {
-						 description => "Modify farm guardian",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
-
-		my $backendsvs = &getFarmVS( $farmname, $json_obj->{ service }, "backends" );
-		my @be = split ( "\n", $backendsvs );
-
-		foreach my $subl ( @be )
-		{
-			my @subbe = split ( "\ ", $subl );
-			$id = @subbe[1] + 1;
-		}
-
-		if ( $id =~ /^$/ )
-		{
-			$id = 0;
-		}
-
-		if ( &ipisok( $json_obj->{ ip } ) eq "false" )
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new backend http in service $json_obj->{service} in farm $farmname, invalid real server IP value."
-			);
-
-			# Error
-			$error = 1;
-			my $errormsg = "Invalid real server IP value, please insert a valid value.";
-			my $body = {
-						 description => "New backend $id",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
-
-		if ( $json_obj->{ ip } =~ /^$/ || $json_obj->{ port } =~ /^$/ )
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new backend http in service $json_obj->{service} in farm $farmname, invalid IP address and port for a real server, ir can't be blank."
-			);
-
-			# Error
-			my $errormsg =
-			  "Invalid IP address and port for a real server, it can't be blank.";
-			my $body = {
-						 description => "New backend $id",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
-
-		if ( $json_obj->{ priority }
-			 && ( $json_obj->{ priority } > 9 || $json_obj->{ priority } < 1 ) )
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new backend http in service $json_obj->{service} in farm $farmname, invalid weight value for a real server, it must be 1-9."
-			);
-
-			# Error
-			my $errormsg = "Invalid weight value for a real server, it must be 1-9.";
-			my $body = {
-						 description => "New backend $id",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
-
-# First param ($id) is an empty string to let function autogenerate the id for the new backend
-		$status = &setFarmServer(
-								  "",
-								  $json_obj->{ ip },
-								  $json_obj->{ port },
-								  "",
-								  "",
-								  $json_obj->{ weight },
-								  $json_obj->{ timeout },
-								  $farmname,
-								  $json_obj->{ service }
-		);
-
-		if ( $status != -1 )
-		{
-			&zenlog(
-				"ZAPI success, a new backend has been created in farm $farmname in service $json_obj->{service} with IP $json_obj->{ip}."
-			);
-
-			# Success
-			&setFarmRestart( $farmname );
-			my $body = {
-						 description => "New backend $id",
-						 params      => {
-									 id      => $id,
-									 ip      => $json_obj->{ ip },
-									 port    => $json_obj->{ port } + 0,
-									 weight  => $json_obj->{ weight } + 0,
-									 timeout => $json_obj->{ timeout } + 0,
-									 service => $json_obj->{ service }
-						 },
-			};
-
-			&httpResponse({ code => 201, body => $body });
-		}
-		else
-		{
-			# Error
-			my $errormsg =
-			    "It's not possible to create the real server with ip "
-			  . $json_obj->{ ip }
-			  . " and port "
-			  . $json_obj->{ port }
-			  . " for the $farmname farm";
-			my $body = {
-						 description => "New backend $id",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse( { code => 400, body => $body } );
-		}
-
-	}
-
-	if ( $type eq "gslb" )
-	{
-		$id = 1;
-		my $lb         = &getFarmVS( $farmname, $json_obj->{ service }, "algorithm" );
-		my $backendsvs = &getFarmVS( $farmname, $json_obj->{ service }, "backends" );
-		my @be = split ( "\n", $backendsvs );
-
-		foreach my $subline ( @be )
-		{
-			$subline =~ s/^\s+//;
-			if ( $subline =~ /^$/ )
-			{
-				next;
-			}
-			$id++;
-		}
-
-		# Check that the provided service is configured in the farm
-		my @services = &getGSLBFarmServices($farmname);
-		
-		my $found = 0;
-		foreach my $service (@services)
-		{
-			print "service: $service";
-			if ($json_obj->{service} eq $service)
-			{
-				$found = 1;
-				last;
-			}
-		}
-
-		if ($found eq 0)
-		{
-			# Error
-			my $errormsg = "Invalid service, please insert a valid value.";
-			my $body = {
-						 description => "New backend $id",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
-
-		if ( $json_obj->{ service } =~ /^$/ )
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new backend gslb in service $json_obj->{service} farm $farmname, invalid service."
-			);
-
-			# Error
-			my $errormsg = "Invalid service, please insert a valid value.";
-			my $body = {
-						 description => "New backend $id",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
-
-		$status = &setGSLBFarmNewBackend( $farmname, $json_obj->{ service },
-										  $lb, $id, $json_obj->{ ip } );
-		if ( $status != -1 )
-		{
-			&zenlog(
-				"ZAPI success, a new backend has been created in farm $farmname in service $json_obj->{service} with IP $json_obj->{ip}."
-			);
-
-			# Success
-			&setFarmRestart( $farmname );
-			my $body = {
-						 description => "New backend $id",
-						 params      => {
-									 id      => $id,
-									 ip      => $json_obj->{ ip },
-									 service => $json_obj->{ service }
-						 },
-			};
-
-			&httpResponse({ code => 201, body => $body });
-		}
-		else
-		{
-			# Error
-			my $errormsg =
-			    "It's not possible to create the backend "
-			  . $json_obj->{ ip }
-			  . " for the service $service.";
-			my $body = {
-						 description => "New backend $id",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse( { code => 400, body => $body } );
-		}
-	}
 
 	if ( $type eq "l4xnat" )
 	{
-		######## Check errors
-
-		if ( $farmname =~ /^$/ )
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new backend l4xnat in farm $farmname, invalid farm name."
-			);
-
-			# Error
-			my $errormsg = "Invalid farm name, please insert a valid value.";
-			my $body = {
-						 description => "New service",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
-
 		# Get ID of the new backend
 		my $id  = 0;
 		my @run = &getFarmServers( $farmname );
@@ -697,7 +429,8 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			}
 		}
 
-		if ( &ipisok( $json_obj->{ ip } ) eq "false" )
+		# validate IP
+		if ( ! &getValidFormat('IPv4', $json_obj->{ ip }) )
 		{
 			&zenlog(
 				"ZAPI error, trying to create a new backend l4xnat in farm $farmname, invalid real server IP value."
@@ -707,7 +440,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			$error = 1;
 			my $errormsg = "Invalid real server IP value, please insert a valid value.";
 			my $body = {
-						 description => "New backend $id",
+						 description => $description,
 						 error       => "true",
 						 message     => $errormsg
 			};
@@ -715,7 +448,8 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		if ( $json_obj->{ ip } =~ /^$/ || $json_obj->{ port } =~ /^$/ )
+		# validate PORT
+		unless ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' || $json_obj->{ port } eq '' )
 		{
 			&zenlog(
 				"ZAPI error, trying to create a new backend l4xnat in farm $farmname, invalid IP address and port for a real server, ir can't be blank."
@@ -724,7 +458,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			# Error
 			my $errormsg = "Invalid IP address and port for a real server, it can't be blank.";
 			my $body = {
-									   description => "New backend $id",
+									   description => $description,
 									   error       => "true",
 									   message     => $errormsg
 									 };
@@ -732,71 +466,49 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		if ( exists ( $json_obj->{ priority } ) )
+		# validate PRIORITY
+		$json_obj->{ priority } = $default_priority if ! exists $json_obj->{ priority };
+
+		if ( $json_obj->{ priority } !~ /^\d$/ ) # (0-9)
 		{
-			$priority = $json_obj->{ priority };
+			# Error
+			my $errormsg =
+			  "Invalid real server priority value, please insert a value within the range 0-9.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
 
-			if ( $priority =~ /^$/ )
-			{
-				$priority = 1;
-			}
-			elsif ( $priority < 0 )
-			{
-				# Error
-				my $errormsg =
-				  "Invalid real server priority value, please insert a value greater than or equal to 0.";
-				my $body = {
-							 description => "New backend $id",
-							 error       => "true",
-							 message     => $errormsg
-				};
-
-				&httpResponse({ code => 400, body => $body });
-			}
-			elsif ( $priority > 9 )
-			{
-				# Error
-				my $errormsg =
-				  "Invalid real server priority value, please insert a value less than or equal to 9.";
-				my $body = {
-							 description => "New backend $id",
-							 error       => "true",
-							 message     => $errormsg
-				};
-
-				&httpResponse({ code => 400, body => $body });
-			}
+			&httpResponse({ code => 400, body => $body });
 		}
 
-		if ( exists ( $json_obj->{ weight } ) )
+		# validate WEIGHT
+		$json_obj->{ weight } = $default_weight if ! exists $json_obj->{ weight };
+
+		if ( $json_obj->{ weight } !~ /^\d*[1-9]$/ ) # 1 or higher
 		{
-			$weight = $json_obj->{ weight };
+			# Error
+			my $errormsg =
+			  "Invalid real server weight value, please insert a value greater than 0.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
 
-			if ( $weight =~ /^$/ )
-			{
-				$weight = 1;
-			}
-			elsif ( $weight < 1 )
-			{
-				# Error
-				my $errormsg =
-				  "Invalid real server weight value, please insert a value greater than 0.";
-				my $body = {
-							 description => "New backend $id",
-							 error       => "true",
-							 message     => $errormsg
-				};
-
-				&httpResponse({ code => 400, body => $body });
-			}
+			&httpResponse({ code => 400, body => $body });
 		}
 
 ####### Create backend
 
-		$status = &setFarmServer( $id,
-								  $json_obj->{ ip },
-								  $json_obj->{ port },
-								  "", $weight, $priority, "", $farmname );
+		my $status = &setFarmServer(
+									 $id,                   $json_obj->{ ip },
+									 $json_obj->{ port },   "",
+									 $json_obj->{ weight }, $json_obj->{ priority },
+									 "",                    $farmname
+		);
+
 		if ( $status != -1 )
 		{
 			&zenlog(
@@ -805,13 +517,13 @@ sub new_farm_backend # ( $json_obj, $farmname )
 
 			# Success
 			my $body = {
-						 description => "New backend $id",
+						 description => $description,
 						 params      => {
 									 id       => $id,
 									 ip       => $json_obj->{ ip },
 									 port     => $json_obj->{ port } + 0,
-									 weight   => $weight,
-									 priority => $priority
+									 weight   => $json_obj->{ weight },
+									 priority => $json_obj->{ priority },
 						 },
 			};
 
@@ -827,7 +539,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			  . $json_obj->{ port }
 			  . " for the $farmname farm";
 			my $body = {
-						 description => "New backend $id",
+						 description => $description,
 						 error       => "true",
 						 message     => $errormsg
 			};
@@ -835,28 +547,9 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			&httpResponse({ code => 400, body => $body });
 		}
 	}
-
-	if ( $type eq "datalink" )
+	elsif ( $type eq "datalink" )
 	{
-		######## Check errors
-
-		if ( $farmname =~ /^$/ )
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new backend datalink in farm $farmname, invalid farm name."
-			);
-
-			# Error
-			my $errormsg = "Invalid farm name, please insert a valid value.";
-			my $body = {
-						 description => "New service",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
-
+		# get an ID
 		my $id  = 0;
 		my @run = &getFarmServers( $farmname );
 		if ( @run > 0 )
@@ -879,17 +572,17 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			}
 		}
 
-		if ( &ipisok( $json_obj->{ ip } ) eq "false" )
+		# validate IP
+		if ( ! &getValidFormat('IPv4', $json_obj->{ ip }) )
 		{
 			&zenlog(
 				"ZAPI error, trying to create a new backend datalink in farm $farmname, invalid real server IP value."
 			);
 
 			# Error
-			$error = 1;
 			my $errormsg = "Invalid real server IP value, please insert a valid value.";
 			my $body = {
-						 description => "New backend $id",
+						 description => $description,
 						 error       => "true",
 						 message     => $errormsg
 			};
@@ -897,18 +590,69 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		if ( $json_obj->{ ip } =~ /^$/ )
+		# validate INTERFACE
+		my $valid_interface;
+
+		for my $iface ( &getActiveInterfaceList() )
+		{
+			next if $iface->{ vini }; # discard virtual interfaces
+			next if !$iface->{ addr }; # discard interfaces without address
+
+			if ( $iface->{ name } eq $json_obj->{ interface } )
+			{
+				$valid_interface = 'true';
+			}
+		}
+
+		if ( ! $valid_interface )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend datalink in farm $farmname, invalid farm name, it can't be blank."
+				"ZAPI error, trying to create a new backend in the farm $farmname, invalid interface."
 			);
 
-			# Error
-			my $errormsg = "Invalid IP address for a real server, it can't be blank.";
+			my $errormsg = "Invalid interface value, please insert any non-virtual interface.";
 			my $body = {
-						 description => "New backend $id",
+						 description => $description,
 						 error       => "true",
-						 message     => $errormsg
+						 message     => $errormsg,
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		# validate WEIGHT
+		$json_obj->{ weight } = $default_weight if ! exists $json_obj->{ weight };
+
+		if ( $json_obj->{ weight } !~ /^\d+$/ && $json_obj->{ weight } != 1 ) # 1 or higher
+		{
+			&zenlog(
+				"ZAPI error, trying to create a new backend in the farm $farmname, invalid weight."
+			);
+
+			my $errormsg = "Invalid weight value, please insert a valid weight value.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg,
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		# validate PRIORITY
+		$json_obj->{ priority } = $default_priority if ! exists $json_obj->{ priority };
+
+		if ( $json_obj->{ priority } !~ /^[1-9]$/ ) # (1-9)
+		{
+			&zenlog(
+				"ZAPI error, trying to create a new backend in the farm $farmname, invalid priority."
+			);
+
+			my $errormsg = "Invalid priority value, please insert a valid priority value.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg,
 			};
 
 			&httpResponse({ code => 400, body => $body });
@@ -916,11 +660,11 @@ sub new_farm_backend # ( $json_obj, $farmname )
 
 ####### Create backend
 
-		$status = &setFarmServer(
-								  $id,                      $json_obj->{ ip },
-								  $json_obj->{ interface }, "",
-								  $json_obj->{ weight },    $json_obj->{ priority },
-								  "",                       $farmname
+		my $status = &setFarmServer(
+									 $id,                      $json_obj->{ ip },
+									 $json_obj->{ interface }, "",
+									 $json_obj->{ weight },    $json_obj->{ priority },
+									 "",                       $farmname
 		);
 
 		if ( $status != -1 )
@@ -931,7 +675,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 
 			# Success
 			my $body = {
-						 description => "New backend $id",
+						 description => $description,
 						 params      => {
 									 id        => $id,
 									 ip        => $json_obj->{ ip },
@@ -958,7 +702,80 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			  . " for the $farmname farm";
 
 			my $body = {
-						 description => "New backend $id",
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The $type farm profile can have backends in services only.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
+sub new_service_backend # ( $json_obj, $farmname, $service )
+{
+	my $json_obj = shift;
+	my $farmname = shift;
+	my $service  = shift;
+
+	# Initial parameters
+	my $description = "New service backend";
+
+	# Check that the farm exists
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
+		# Error
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# validate FARM TYPE
+	my $type = &getFarmType( $farmname );
+
+	if ( $type eq "http" || $type eq "https" )
+	{
+		my $default_weight = 5;
+		my $default_timeout = '';
+
+		# validate SERVICE
+		# Check that the provided service is configured in the farm
+		my @services = &getFarmServices($farmname);
+
+		my $found = 0;
+		foreach my $farmservice (@services)
+		{
+			#print "service: $farmservice";
+			if ($service eq $farmservice)
+			{
+				$found = 1;
+				last;
+			}
+		}
+
+		if ($found eq 0)
+		{
+			# Error
+			my $errormsg = "Invalid service name, please insert a valid value.";
+			my $body = {
+						 description => $description,
 						 error       => "true",
 						 message     => $errormsg
 			};
@@ -966,6 +783,263 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			&httpResponse({ code => 400, body => $body });
 		}
 
+		# get an ID
+		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
+		my @be = split ( "\n", $backendsvs );
+
+		foreach my $subl ( @be )
+		{
+			my @subbe = split ( "\ ", $subl );
+			$id = @subbe[1] + 1;
+		}
+
+		if ( $id =~ /^$/ )
+		{
+			$id = 0;
+		}
+
+		# validate IP
+		if ( ! &getValidFormat('IPv4', $json_obj->{ ip }) )
+		{
+			&zenlog(
+				"ZAPI error, trying to create a new backend http in service $json_obj->{service} in farm $farmname, invalid backend IP value."
+			);
+
+			# Error
+			my $errormsg = "Invalid backend IP value, please insert a valid value.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		# validate PORT
+		if ( ! &isValidPortNumber( $json_obj->{ port } ) )
+		{
+			&zenlog(
+				"ZAPI error, trying to create a new backend http in service $json_obj->{service} in farm $farmname, invalid IP address and port for a backend, ir can't be blank."
+			);
+
+			# Error
+			my $errormsg =
+			  "Invalid port for a backend.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		# validate WEIGHT
+		$json_obj->{ weight } = $default_weight if ! exists $json_obj->{ weight };
+
+		if ( $json_obj->{ weight } !~ /^[1-9]$/ )
+		{
+			&zenlog(
+				"ZAPI error, trying to create a new backend http in service $json_obj->{service} in farm $farmname, invalid weight value for a backend, it must be 1-9."
+			);
+
+			# Error
+			my $errormsg = "Invalid weight value for a backend, it must be 1-9.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		# validate TIMEOUT
+		$json_obj->{ timeout } = $default_timeout if ! exists $json_obj->{ timeout };
+
+		unless ( $json_obj->{ timeout } eq '' || ( $json_obj->{ timeout } =~ /^\d+$/ && $json_obj->{ timeout } != 0 ) )
+		{
+			&zenlog(
+				"ZAPI error, trying to modify the backends in a farm $farmname, invalid timeout."
+			);
+
+			# Error
+			my $errormsg = "Invalid timeout value for a real server, it must be empty or greater than 0.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+# First param ($id) is an empty string to let function autogenerate the id for the new backend
+		$status = &setFarmServer(
+								  "",
+								  $json_obj->{ ip },
+								  $json_obj->{ port },
+								  "",
+								  "",
+								  $json_obj->{ weight },
+								  $json_obj->{ timeout },
+								  $farmname,
+								  $service,
+		);
+
+		if ( $status != -1 )
+		{
+			&zenlog(
+				"ZAPI success, a new backend has been created in farm $farmname in service $json_obj->{service} with IP $json_obj->{ip}."
+			);
+
+			# Success
+			&setFarmRestart( $farmname );
+			my $body = {
+						 description => $description,
+						 params      => {
+									 id      => $id,
+									 ip      => $json_obj->{ ip },
+									 port    => $json_obj->{ port } + 0,
+									 weight  => $json_obj->{ weight } + 0,
+									 timeout => $json_obj->{ timeout } + 0,
+									 service => $json_obj->{ service }
+						 },
+			};
+
+			&httpResponse({ code => 201, body => $body });
+		}
+		else
+		{
+			# Error
+			my $errormsg =
+			    "It's not possible to create the real server with ip "
+			  . $json_obj->{ ip }
+			  . " and port "
+			  . $json_obj->{ port }
+			  . " for the $farmname farm";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse( { code => 400, body => $body } );
+		}
+	}
+	elsif ( $type eq "gslb" )
+	{
+		# validate SERVICE
+		{
+			my @services = &getFarmServices($farmname);
+			my $found_service;
+
+			foreach my $service ( @services )
+			{
+				if ( $json_obj->{ service } eq $service )
+				{
+					$found_service = 1;
+					last;
+				}
+			}
+
+			if ( !$found_service )
+			{
+				# Error
+				my $errormsg = "Could not find the requested service.";
+				my $body = {
+							 description => $description,
+							 error       => "true",
+							 message     => $errormsg
+				};
+
+				&httpResponse({ code => 404, body => $body });
+			}
+		}
+
+		# Get an ID
+		my $id = 1;
+		my $lb         = &getFarmVS( $farmname, $json_obj->{ service }, "algorithm" );
+		my $backendsvs = &getFarmVS( $farmname, $json_obj->{ service }, "backends" );
+		my @be = split ( "\n", $backendsvs );
+
+		foreach my $subline ( @be )
+		{
+			$subline =~ s/^\s+//;
+			if ( $subline =~ /^$/ )
+			{
+				next;
+			}
+			$id++;
+		}
+
+		# validate IP
+		if ( ! &getValidFormat('IPv4', $json_obj->{ ip } ) )
+		{
+			$error = "true";
+			&zenlog(
+				 "ZAPI error, trying to create a new backend in the service $service of the farm $farmname, invalid IP." );
+
+			# Error
+			my $errormsg = "Could not find the requested service.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		#Adding the backend
+		my $status = &setGSLBFarmNewBackend( $farmname, $json_obj->{ service },
+										  $lb, $id, $json_obj->{ ip } );
+		if ( $status != -1 )
+		{
+			&zenlog(
+				"ZAPI success, a new backend has been created in farm $farmname in service $json_obj->{service} with IP $json_obj->{ip}."
+			);
+
+			# Success
+			&setFarmRestart( $farmname );
+			my $body = {
+						 description => $description,
+						 params      => {
+									 id      => $id,
+									 ip      => $json_obj->{ ip },
+						 },
+			};
+
+			&httpResponse({ code => 201, body => $body });
+		}
+		else
+		{
+			# Error
+			my $errormsg =
+			    "It's not possible to create the backend "
+			  . $json_obj->{ ip }
+			  . " for the service $service.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse( { code => 400, body => $body } );
+		}
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The $type farm profile does not support services.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 }
 

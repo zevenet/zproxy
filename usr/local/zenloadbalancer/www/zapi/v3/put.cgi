@@ -463,7 +463,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( !$error && exists ( $json_obj->{ weight } ) )
 		{
-			if ( $json_obj->{ weight } =~ /^\d*[1-9]$/ ) # 1 or higher
+			if ( $json_obj->{ weight } !~ /^\d+$/ && $json_obj->{ weight } != 1 ) # 1 or higher
 			{
 				$be->{ weight } = $json_obj->{ weight };
 			}
@@ -679,7 +679,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 		if ( !$error && exists ( $json_obj->{ weight } ) )
 		{
-			if ( $json_obj->{ weight } =~ /^\d+$/ ) # FIXME?
+			if ( $json_obj->{ weight } =~ /^[1-9]$/ )
 			{
 				$be->{ priority } = $json_obj->{ weight };
 			}
@@ -694,7 +694,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 		if ( !$error && exists ( $json_obj->{ timeout } ) )
 		{
-			if ( $json_obj->{ timeout } =~ /^\d+$/ ) # FIXME?
+			if ( $json_obj->{ timeout } eq '' || ( $json_obj->{ timeout } =~ /^\d+$/ && $json_obj->{ timeout } != 0 ) )
 			{
 				$be->{ timeout } = $json_obj->{ timeout };
 			}

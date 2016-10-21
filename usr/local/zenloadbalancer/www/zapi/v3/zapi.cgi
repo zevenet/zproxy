@@ -856,7 +856,7 @@ GET qr{^/farms/($farm_re)/services/($service_re)/backends$} => sub {
 
 #  POST service backends (HTTP/HTTPS/GSLB)
 POST qr{^/farms/($farm_re)/services/($service_re)/backends$} => sub {
-	&service_backends( @_ );
+	&new_service_backend( @_ );
 };
 
 ##### /farms/FARM/services/SERVICE/backends/BACKEND
