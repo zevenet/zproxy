@@ -814,14 +814,15 @@ POST qr{^/farms/($farm_re)/backends$} => sub {
 };
 
 ##### /farms/FARM/backends/BACKEND
+my $be_re = &getValidFormat('backend');
 
 #  PUT backend
-PUT qr{^/farms/($farm_re)/backends/(\d+)$} => sub {
+PUT qr{^/farms/($farm_re)/backends/($be_re)$} => sub {
 	&modify_backends( @_ );
 };
 
 #  DELETE backend (L4XNAT/DATALINK)
-DELETE qr{^/farms/($farm_re)/backends/(\d+)$} => sub {
+DELETE qr{^/farms/($farm_re)/backends/($be_re)$} => sub {
 	&delete_backend( @_ );
 };
 
@@ -834,33 +835,39 @@ POST qr{^/farms/($farm_re)/services$} => sub {
 };
 
 ##### /farms/FARM/services/SERVICE
+my $service_re = &getValidFormat('service');
 
 #  PUT service
-PUT qr{^/farms/($farm_re)/services/(\w+)$} => sub {
+PUT qr{^/farms/($farm_re)/services/($service_re)$} => sub {
 	&modify_services( @_ );
 };
 
 #  DELETE service
-DELETE qr{^/farms/($farm_re)/services/(\w+)$} => sub {
+DELETE qr{^/farms/($farm_re)/services/($service_re)$} => sub {
 	&delete_service( @_ );
 };
 
 ##### /farms/FARM/services/SERVICE/backends
 
 #  GET service backends (HTTP/HTTPS/GSLB)
-GET qr{^/farms/($farm_re)/services/(\w+)/backends$} => sub {
+GET qr{^/farms/($farm_re)/services/($service_re)/backends$} => sub {
+	&service_backends( @_ );
+};
+
+#  POST service backends (HTTP/HTTPS/GSLB)
+POST qr{^/farms/($farm_re)/services/($service_re)/backends$} => sub {
 	&service_backends( @_ );
 };
 
 ##### /farms/FARM/services/SERVICE/backends/BACKEND
 
 #  PUT backend (HTTP/HTTPS/GSLB)
-PUT qr{^/farms/($farm_re)/services/(\w+)/backends/(\d+)$} => sub {
+PUT qr{^/farms/($farm_re)/services/($service_re)/backends/($be_re)$} => sub {
 	&modify_service_backends( @_ );
 };
 
 #  DELETE backend (HTTP/HTTPS/GSLB)
-DELETE qr{^/farms/($farm_re)/services/(\w+)/backends/(\d+)$} => sub {
+DELETE qr{^/farms/($farm_re)/services/($service_re)/backends/($be_re)$} => sub {
 	&delete_service_backend( @_ );
 };
 
@@ -873,15 +880,16 @@ POST qr{^/farms/($farm_re)/zones$} => sub {
 };
 
 ##### /farms/FARM/zones/ZONE
+my $zone_re = &getValidFormat('zone');
 
 #  PUT zones
-PUT qr{^/farms/($farm_re)/zones/(.+)$} => sub {
+PUT qr{^/farms/($farm_re)/zones/($zone_re)$} => sub {
 	&modify_zones( @_ );
 };
 
 #  DELETE zone
 #DELETE qr{^/farms/(\w+)/zones/(.*+$)} => sub {
-DELETE qr{^/farms/($farm_re)/zones/(([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,})$} => sub {
+DELETE qr{^/farms/($farm_re)/zones/($zone_re)$} => sub {
 	&delete_zone( @_ );
 };
 
@@ -893,17 +901,17 @@ POST qr{^/farms/($farm_re)/zones/($zone_re)/resources$} => sub {
 };
 
 ##### /farms/FARM/zones/ZONE/resources/RESOURCE
+my $resource_re = &getValidFormat('resource');
 
 #  PUT zone resources
-PUT qr{^/farms/($farm_re)/zones/($zone_re)/resources/(\w+)$} => sub {
+PUT qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_re)$} => sub {
 	&modify_zone_resource( @_ );
 };
 
 #  DELETE zone resource
-DELETE qr{^/farms/($farm_re)/zones/([a-z0-9].*-*.*\.[a-z0-9].*)/resources/(\w+)$} =>
-  sub {
+DELETE qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_re)$} => sub {
 	&delete_zone_resource( @_ );
-  };
+};
 
 
 ##### /farms/FARM/actions

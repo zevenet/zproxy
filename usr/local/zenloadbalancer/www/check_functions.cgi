@@ -30,15 +30,23 @@
 my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/; # (0-255)
 
 my %format_re = (
-	'farm_name'     => qr{[a-zA-Z0-9\-]+},
+	'farm_name' => qr{[a-zA-Z0-9\-]+},
+	'backend'   => qr{\d+},
+	#~ 'service'   => qr{\w+},
+	'service' => qr/[a-zA-Z1-9\-]+/,
+	#~ 'zone'      => qr{\w+},
+	'zone' => qr/(?:[a-z][a-z0-9\-]{0,250}[a-z0-9]\.)+[a-z]{2,}/,
+	#~ 'zone' = qr/([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}/,
+	#~ 'zone' = qr/[a-z0-9].*-*.*\.[a-z0-9].*/,
+	'resource' => qr{\d+},
 
 	# interfaces
-	'vlan_interfaces'   => qr{[a-zA-Z0-9]+\.[0-9]+},
-	'virt_interfaces'	=> qr{[a-zA-Z0-9\.]+:[a-zA-Z0-9]+},
-	
+	'vlan_interfaces' => qr{[a-zA-Z0-9]+\.[0-9]+},
+	'virt_interfaces' => qr{[a-zA-Z0-9\.]+:[a-zA-Z0-9]+},
+
 	# ipds
 	'rbl_list_name' => qr{[a-zA-Z0-9]+},
-	'rbl_source'	=> qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
+	'rbl_source'    => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
 
 	# certificates filenames
 	'certificate' => qr{\w[\w\.-]*\.(?:pem|csr)},
