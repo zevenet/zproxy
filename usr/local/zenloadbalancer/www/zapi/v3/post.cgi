@@ -385,23 +385,6 @@ sub new_farm_backend # ( $json_obj, $farmname )
 	my $priority = 1;
 	my $weight   = 1;
 
-	if ( $farmname =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to create a new backend in farm $farmname, invalid farm name."
-		);
-
-		# Error
-		my $errormsg = "Invalid farm name, please insert a valid value.";
-		my $body = {
-					 description => "New backend",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
