@@ -241,7 +241,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	}
 
 	# validate ZONE
-	if ( ! scalar grep { $_ eq $zone } &getFarmZones() )
+	if ( ! scalar grep { $_ eq $zone } &getFarmZones( $farmname ) )
 	{
 		my $errormsg = "Could not find the requested zone.";
 		my $body = {
