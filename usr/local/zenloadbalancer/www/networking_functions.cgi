@@ -773,7 +773,8 @@ sub stopIf    # ($if_ref)
 {
 	my $if_ref = shift;
 	my $status = 0;
-
+	
+	$if = $$if_ref{name};
 	# If $if is Vini do nothing
 	if ( $$if_ref{ vini } eq '' )
 	{
