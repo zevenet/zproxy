@@ -168,6 +168,7 @@ sub cluster()
 		$host     = $filehttp[1];
 		@host     = split ( " = ", $host );
 		$iphttp   = $host[1];
+		$iphttp   =~ s/;//g;
 		close FH;
 
 		#exclude file with eth on cluster
