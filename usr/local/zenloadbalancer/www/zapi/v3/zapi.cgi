@@ -901,15 +901,15 @@ POST qr{^/farms/($farm_re)/zones/($zone_re)/resources$} => sub {
 };
 
 ##### /farms/FARM/zones/ZONE/resources/RESOURCE
-my $resource_re = &getValidFormat('resource');
+my $resource_id_re = &getValidFormat('resource_id');
 
 #  PUT zone resources
-PUT qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_re)$} => sub {
+PUT qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => sub {
 	&modify_zone_resource( @_ );
 };
 
 #  DELETE zone resource
-DELETE qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_re)$} => sub {
+DELETE qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => sub {
 	&delete_zone_resource( @_ );
 };
 

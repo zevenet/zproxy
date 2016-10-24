@@ -205,35 +205,21 @@ sub new_farm_zone # ( $json_obj, $farmname )
 #
 #**
 
-sub new_farm_zone_resource # ( $json_obj, $farmname )
+sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
+	my $zone     = shift;
 
-	if ( $farmname =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, invalid farm name."
-		);
+	my $description = "New zone resource";
+	my $default_ttl = '';
 
-		# Error
-		my $errormsg = "Invalid farm name, please insert a valid value.";
-		my $body = {
-					 description => "New zone resource",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
-	# Check that the farm exists
+	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
-					 description => "New zone resource",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -241,17 +227,44 @@ sub new_farm_zone_resource # ( $json_obj, $farmname )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( !exists ( $json_obj->{ rname } ) )
+	# validate FARM TYPE
+	if ( &getFarmType( $farmname ) ne 'gslb' )
+	{
+		my $errormsg = "Only GSLB profile is supported for this request.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# validate ZONE
+	if ( ! scalar grep { $_ eq $zone } &getFarmZones() )
+	{
+		my $errormsg = "Could not find the requested zone.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# validate RESOURCE NAME
+	if ( ! &getValidFormat( 'resource_name', $json_obj->{ rname } ) )
 	{
 		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, the parameter zone resource name (rname) doesn't exist."
+			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter zone resource name (rname) doesn't exist."
 		);
 
 		# Error
 		my $errormsg =
 		  "The parameter zone resource name (rname) doesn't exist, please insert a valid value.";
 		my $body = {
-					 description => "New zone resource " . $json_obj->{ rname },
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -259,35 +272,20 @@ sub new_farm_zone_resource # ( $json_obj, $farmname )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	if ( !exists ( $json_obj->{ rdata } ) )
+	# validate RESOURCE TTL
+	$json_obj->{ ttl } = $default_ttl if ! exists $json_obj->{ ttl };
+
+	unless ( $json_obj->{ ttl } eq '' || ( &getValidFormat( 'resource_ttl', $json_obj->{ ttl } ) && $json_obj->{ ttl } != 0 ) ) # (1second-1year)
 	{
 		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, the parameter zone resource server (rdata) doesn't exist."
-		);
-
-		# Error
-		my $errormsg =
-		  "The parameter zone resource server (rdata) doesn't exist, please insert a valid value.";
-		my $body = {
-					 description => "New zone resource " . $json_obj->{ rname },
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	if ( !exists ( $json_obj->{ ttl } ) )
-	{
-		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, the parameter time to live value (ttl) doesn't exist."
+			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter time to live value (ttl) doesn't exist."
 		);
 
 		# Error
 		my $errormsg =
 		  "The parameter time to live value (ttl) doesn't exist, please insert a valid value.";
 		my $body = {
-					 description => "New zone resource " . $json_obj->{ rname },
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -295,17 +293,18 @@ sub new_farm_zone_resource # ( $json_obj, $farmname )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	if ( !exists ( $json_obj->{ type } ) )
+	# validate RESOURCE TYPE
+	unless ( &getValidFormat( 'resource_type', $json_obj->{ type } ) )
 	{
 		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, the parameter DNS record type (type) doesn't exist."
+			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter DNS record type (type) doesn't exist."
 		);
 
 		# Error
 		my $errormsg =
 		  "The parameter DNS record type (type) doesn't exist, please insert a valid value.";
 		my $body = {
-					 description => "New zone resource " . $json_obj->{ rname },
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -313,17 +312,18 @@ sub new_farm_zone_resource # ( $json_obj, $farmname )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	if ( $json_obj->{ rname } =~ /^$/ )
+	# validate RESOURCE DATA
+	unless ( &getValidFormat( 'resource_data', $json_obj->{ rdata } ) )
 	{
 		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, invalid zone resource name (rname)."
+			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter zone resource server (rdata) doesn't exist."
 		);
 
 		# Error
 		my $errormsg =
-		  "Invalid zone resource name (rname), please insert a valid value.";
+		  "The parameter zone resource server (rdata) doesn't exist, please insert a valid value.";
 		my $body = {
-					 description => "New zone resource " . $json_obj->{ rname },
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -331,82 +331,30 @@ sub new_farm_zone_resource # ( $json_obj, $farmname )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	if ( $json_obj->{ rdata } =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, invalid zone resource server (rdata)."
-		);
-
-		# Error
-		my $errormsg =
-		  "Invalid zone resource server (rdata), please insert a valid value.";
-		my $body = {
-					 description => "New zone resource " . $json_obj->{ rname },
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	if ( $json_obj->{ ttl } =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, invalid time to live value (ttl)."
-		);
-
-		# Error
-		my $errormsg = "Invalid time to live value (ttl), please insert a valid value.";
-		my $body = {
-					 description => "New zone resource " . $json_obj->{ rname },
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	if ( $json_obj->{ type } =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, invalid DNS record type (type)."
-		);
-
-		# Error
-		my $errormsg = "Invalid DNS record type (type), please insert a valid value.";
-		my $body = {
-					 description => "New zone resource " . $json_obj->{ rname },
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	$status = &setFarmZoneResource(
-									"",
-									$json_obj->{ rname },
-									$json_obj->{ ttl },
-									$json_obj->{ type },
-									$json_obj->{ rdata },
-									$farmname,
-									$json_obj->{ zone }
+	my $status = &setFarmZoneResource(
+									   "",
+									   $json_obj->{ rname },
+									   $json_obj->{ ttl },
+									   $json_obj->{ type },
+									   $json_obj->{ rdata },
+									   $farmname,
+									   $zone,
 	);
 
 	if ( $status != -1 )
 	{
 		&zenlog(
-			"ZAPI success, a new resource has been created in zone $json_obj->{zone} in farm $farmname."
+			"ZAPI success, a new resource has been created in zone $zone in farm $farmname."
 		);
 
 		# Success
 		&runFarmReload( $farmname );
 
 		my $body = {
-					 description => "New zone resource " . $json_obj->{ rname },
+					 description => $description,
 					 params      => {
 								 rname => $json_obj->{ rname },
-								 zone  => $json_obj->{ zone },
+								 zone  => $zone,
 								 ttl   => $json_obj->{ ttl },
 								 type  => $json_obj->{ type },
 								 rdata => $json_obj->{ rdata },
@@ -418,14 +366,14 @@ sub new_farm_zone_resource # ( $json_obj, $farmname )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $json_obj->{zone} in farm $farmname, it's not possible to create a new resource."
+			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, it's not possible to create a new resource."
 		);
 
 		# Error
 		my $errormsg =
-		  "It's not possible to create a new resource in the zone $json_obj->{zone} in farm $farmname.";
+		  "It's not possible to create a new resource in the zone $zone in farm $farmname.";
 		my $body = {
-					 description => "New zone resource " . $json_obj->{ rname },
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
