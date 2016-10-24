@@ -956,32 +956,18 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 {
-	my ( $json_obj, $farmname, $id_resource ) = @_;
+	my ( $json_obj, $farmname, $zone, $id_resource ) = @_;
 
-	if ( $farmname =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to modify the resources in a farm $farmname, invalid farmname, can't be blank."
-		);
+	my $description = "Modify zone resource";
+	my $error;
 
-		# Error
-		my $errormsg = "Invalid farm name, please insert a valid value.";
-		my $body = {
-					 description => "Modify resource",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	# Check that the farm exists
+	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $output = {
-					   description => "Modify resource",
+					   description => $description,
 					   error       => "true",
 					   message     => $errormsg
 		};
@@ -989,33 +975,12 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	$error = "false";
-
-	#Params
-	if ( exists ( $json_obj->{ zone } ) )
+	# validate FARM TYPE
+	if ( &getFarmType( $farmname ) ne 'gslb' )
 	{
-		if ( $json_obj->{ zone } =~ /^$/ )
-		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify the resources in a farm $farmname, invalid zone, can't be blank."
-			);
-		}
-		else
-		{
-			$zone = $json_obj->{ zone };
-		}
-	}
-	else
-	{
-		&zenlog(
-			"ZAPI error, trying to modify the resources in a farm $farmname, invalid zone, it's necessary to insert the zone parameter."
-		);
-
-		# Error
-		my $errormsg = "The zone parameter is empty, please insert a zone.";
+		my $errormsg = "Only GSLB profile is supported for this request.";
 		my $body = {
-					 description => "Modify resource",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -1023,54 +988,63 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		&httpResponse({ code => 400, body => $body });
 	}
 
+	# validate ZONE
+	if ( ! scalar grep { $_ eq $zone } &getFarmZones( $farmname ) )
+	{
+		my $errormsg = "Could not find the requested zone.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
 	my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
 	my @be = split ( "\n", $backendsvs );
+	my ( $resource_line ) = grep { /;index_$id_resource$/ } @be;
 
-	foreach my $subline ( @be )
+	# validate RESOURCE
+	if ( ! $resource_line )
 	{
-		if ( $subline =~ /^$/ )
-		{
-			next;
-		}
+		my $errormsg = "Could not find the requested resource.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
 
-		@subbe  = split ( "\;", $subline );
-		@subbe1 = split ( "\t", @subbe[0] );
-		@subbe2 = split ( "\_", @subbe[1] );
-
-		if ( @subbe2[1] == $id_resource )
-		{
-			last;
-		}
+		&httpResponse({ code => 404, body => $body });
 	}
+
+	# read resource
+	my $rsc;
+
+	( $rsc->{ name }, $rsc->{ ttl }, $rsc->{ type }, $rsc->{ data }, $rsc->{ id } )
+	  = split ( /(?:\t| ;index_)/, $resource_line );
 
 	# Functions
 	if ( exists ( $json_obj->{ rname } ) )
 	{
-		if ( $json_obj->{ rname } =~ /^$/ )
+		if ( &getValidFormat( 'resource_name', $json_obj->{ rname } ) )
+		{
+			$rsc->{ name } = $json_obj->{ rname };
+		}
+		else
 		{
 			$error = "true";
 			&zenlog(
 				"ZAPI error, trying to modify the resources in a farm $farmname, invalid rname, can't be blank."
 			);
 		}
-		else
-		{
-			@subbe1[0] = $json_obj->{ rname };
-		}
 	}
 
-	if ( exists ( $json_obj->{ ttl } ) )
+	if ( !$error && exists ( $json_obj->{ ttl } ) )
 	{
-		if ( $json_obj->{ ttl } =~ /^$/ )
+		if ( $json_obj->{ ttl } eq '' || ( &getValidFormat( 'resource_ttl', $json_obj->{ ttl } ) && $json_obj->{ ttl } != 0 ) )
 		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify the resources in a farm $farmname, invalid ttl, can't be blank."
-			);
-		}
-		elsif ( $json_obj->{ ttl } =~ /^\d+/ )
-		{
-			@subbe1[1] = $json_obj->{ ttl };
+			$rsc->{ ttl } = $json_obj->{ ttl };
 		}
 		else
 		{
@@ -1081,18 +1055,11 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		}
 	}
 
-	if ( exists ( $json_obj->{ type } ) )
+	if ( !$error && exists ( $json_obj->{ type } ) )
 	{
-		if ( $json_obj->{ type } =~ /^$/ )
+		if ( &getValidFormat( 'resource_type', $json_obj->{ type } ) )
 		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify the resources in a farm $farmname, invalid type, can't be blank."
-			);
-		}
-		elsif ( $json_obj->{ type } =~ /^NS|A|CNAME|DYNA$/ )
-		{
-			@subbe1[2] = $json_obj->{ type };
+			$rsc->{ type } = $json_obj->{ type };
 		}
 		else
 		{
@@ -1103,28 +1070,33 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		}
 	}
 
-	if ( exists ( $json_obj->{ rdata } ) )
+	if ( !$error && exists ( $json_obj->{ rdata } ) )
 	{
-		if ( $json_obj->{ rdata } =~ /^$/ )
+		if ( &getValidFormat( 'resource_type', $json_obj->{ rdata } ) )
+		{
+			$rsc->{ data } = $json_obj->{ rdata };
+		}
+		else
 		{
 			$error = "true";
 			&zenlog(
 				"ZAPI error, trying to modify the resources in a farm $farmname, invalid rdata, can't be blank."
 			);
 		}
-		else
-		{
-			@subbe1[3] = $json_obj->{ rdata };
-		}
 	}
 
-	if ( $error eq "false" )
+	if ( !$error )
 	{
-		$status = &setFarmZoneResource(
-										$id_resource, @subbe1[0], @subbe1[1],
-										@subbe1[2],   @subbe1[3], $farmname,
-										$zone
+		my $status = &setFarmZoneResource(
+										   $id_resource,
+										   $rsc->{ name },
+										   $rsc->{ ttl },
+										   $rsc->{ type },
+										   $rsc->{ data },
+										   $farmname,
+										   $zone,
 		);
+
 		if ( $status == -1 )
 		{
 			$error = "true";
@@ -1137,7 +1109,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 			# Error
 			my $errormsg = "The resource with ID $id_resource does not exist.";
 			my $body = {
-						 description => "Modify resource",
+						 description => $description,
 						 error       => "true",
 						 message     => $errormsg
 			};
@@ -1147,16 +1119,18 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	}
 
 	# Print params
-	if ( $error ne "true" )
+	if ( !$error )
 	{
 		&zenlog(
 			"ZAPI success, some parameters have been changed in the resource $id_resource in zone $zone in farm $farmname."
 		);
 
 		# Success
+		my $message = "Resource modified sucessfully.";
 		my $body = {
-					 description => "Modify resource $id_resource in farm $farmname",
-					 params      => $json_obj
+					 description => $description,
+					 success       => "true",
+					 message      => $message,
 		};
 
 		&httpResponse({ code => 200, body => $body });
@@ -1170,7 +1144,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		# Error
 		my $errormsg = "Errors found trying to modify farm $farmname";
 		my $body = {
-					 description => "Modify farm $farmname",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
