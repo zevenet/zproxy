@@ -570,7 +570,7 @@ sub disableRule		# &disableRule ( $rule )
 					{ last; }
 				else
 				{
-					if ( $line ne "" )
+					if ( $line ne "" && $line !~ /^#/ )
 						{ $line = "#$line"; }
 				}
 			}
@@ -669,6 +669,21 @@ sub changeTimeSwitch		# &changeTimeSwitch ( $rule, $time )
 # Check sec status and boot it if was on
 sub zlbstart
 {
+	# check status from alerts before than update
+	my $fileHandle = Config::Tiny->read( $alertsFile );
+	foreach my $notif ( keys %{ $fileHandle } ) 
+	{
+		next if ( $notif eq 'Notifications' );
+		if ( $fileHandle->{ $notif }->{ 'Status' } eq 'on' )
+		{
+			&enableRule ( $notif );
+		}
+		else
+		{
+			&disableRule ( $notif );
+		}
+	}
+	
 	my $status = &getData( $alertsFile, 'Notifications', 'Status');
 	my $output;
 	
