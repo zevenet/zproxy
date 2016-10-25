@@ -899,6 +899,11 @@ GET qr{^/interfaces$} => sub {
 	&get_interfaces();
 };
 
+#  GET interfaces nic
+GET qr{^/interfaces/nic$} => sub {
+	&get_interfaces_nic();
+};
+
 #  POST virtual interface
 POST qr{^/interfaces/($virt_interface)$} => sub {
 	&new_vini( @_ );

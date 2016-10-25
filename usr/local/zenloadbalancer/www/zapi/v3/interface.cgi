@@ -746,7 +746,9 @@ sub delete_interface # ( $if )
 
 sub get_interfaces # ()
 {
-	my @out;
+	my @output_list;
+
+	my $description = "List interfaces";
 
 	# Configured interfaces list
 	my @interfaces = @{ &getSystemInterfaceList() };
@@ -764,7 +766,7 @@ sub get_interfaces # ()
 		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
 		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
-		push @out,
+		push @output_list,
 		  {
 			name    => $if_ref->{ name },
 			ip      => $if_ref->{ addr },
@@ -772,15 +774,144 @@ sub get_interfaces # ()
 			gateway => $if_ref->{ gateway },
 			status  => $if_ref->{ status },
 			HDWaddr => $if_ref->{ mac },
-			ipv     => $if_ref->{ ip_v },
+			#~ ipv     => $if_ref->{ ip_v },
 		  };
 	}
 
 	my $body = {
-			description => "List interfaces",
-			interfaces  => \@out,
+			description => $description,
+			interfaces  => \@output_list,
 		};
-	
+
+	&httpResponse({ code => 200, body => $body });
+}
+
+# GET Interface NIC
+#
+# curl --tlsv1 -k -X GET -H 'Content- Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/interfaces
+#
+#####Documentation of GET INTERFACES####
+#**
+#  @api {get} /interfaces Get params of the interfaces
+#  @apiGroup Interfaces
+#  @apiName GetInterfaces
+#  @apiDescription Gat all the params of the interfaces
+#  @apiVersion 3.0.0
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "List interfaces",
+#   "interfaces" : [
+#      {
+#         "HDWaddr" : "0e:1f:c6:69:a1:97",
+#         "gateway" : "192.168.101.5",
+#         "ip" : "192.168.101.120",
+#         "name" : "eth0",
+#         "netmask" : "255.255.255.0",
+#         "status" : "up"
+#      },
+#      {
+#         "HDWaddr" : "0e:1f:c6:69:a1:97",
+#         "gateway" : "",
+#         "ip" : "192.168.101.122",
+#         "name" : "eth0:cluster",
+#         "netmask" : "255.255.255.0",
+#         "status" : "up"
+#      },
+#      {
+#         "HDWaddr" : "ee:7f:26:4c:e2:b0",
+#         "gateway" : "192.168.100.5",
+#         "ip" : "192.168.100.15",
+#         "name" : "eth1",
+#         "netmask" : "255.255.255.0",
+#         "status" : "up"
+#      },
+#      {
+#         "HDWaddr" : "ee:7f:26:4c:e2:b0",
+#         "gateway" : "",
+#         "ip" : "fe80:99::180",
+#         "name" : "eth1",
+#         "netmask" : "64",
+#         "status" : "up"
+#      },
+#      {
+#         "HDWaddr" : "0a:d0:2b:ae:61:62",
+#         "gateway" : "",
+#         "ip" : "192.168.101.16",
+#         "name" : "eth2",
+#         "netmask" : "255.255.255.0",
+#         "status" : "up"
+#      },
+#      {
+#         "HDWaddr" : "0a:d0:2b:ae:61:62",
+#         "gateway" : "",
+#         "ip" : "fe80::120",
+#         "name" : "eth2",
+#         "netmask" : "64",
+#         "status" : "up"
+#      },
+#      {
+#         "HDWaddr" : "0a:d0:2b:ae:61:62",
+#         "gateway" : "192.168.12.5",
+#         "ip" : "192.168.12.25",
+#         "name" : "eth2.12",
+#         "netmask" : "255.255.255.0",
+#         "status" : "up"
+#      }
+#   ]
+#}
+#
+#
+# @apiExample {curl} Example Usage:
+#       curl --tlsv1 -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/interfaces
+#
+# @apiSampleRequest off
+#
+#**
+
+sub get_interfaces_nic # ()
+{
+	my @output_list;
+
+	my $description = "List NIC interfaces";
+
+	# Configured interfaces list
+	my @interfaces = @{ &getSystemInterfaceList() };
+
+	for my $if_ref ( @interfaces )
+	{
+		# Exclude IPv6
+		next if $if_ref->{ ip_v } == 6 && &getGlobalConfiguration( 'ipv6_enabled' ) ne 'true';
+		next if defined $if_ref->{ vlan };
+		next if defined $if_ref->{ vini };
+
+		# Any key must cotain a value or "" but can't be null
+		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+
+		push @output_list,
+		  {
+			name    => $if_ref->{ name },
+			ip      => $if_ref->{ addr },
+			netmask => $if_ref->{ mask },
+			gateway => $if_ref->{ gateway },
+			status  => $if_ref->{ status },
+			HDWaddr => $if_ref->{ mac },
+			#~ ipv     => $if_ref->{ ip_v },
+		  };
+	}
+
+	my $body = {
+			description => $description,
+			interfaces  => \@output_list,
+		};
+
 	&httpResponse({ code => 200, body => $body });
 }
 
