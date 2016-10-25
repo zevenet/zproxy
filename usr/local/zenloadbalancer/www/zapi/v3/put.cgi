@@ -437,7 +437,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 		{
 			my $valid_interface;
 
-			for my $iface ( &getActiveInterfaceList() )
+			for my $iface ( @{ &getActiveInterfaceList() } )
 			{
 				next if $iface->{ vini }; # discard virtual interfaces
 				next if !$iface->{ addr }; # discard interfaces without address

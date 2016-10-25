@@ -593,7 +593,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		# validate INTERFACE
 		my $valid_interface;
 
-		for my $iface ( &getActiveInterfaceList() )
+		for my $iface ( @{ &getActiveInterfaceList() } )
 		{
 			next if $iface->{ vini }; # discard virtual interfaces
 			next if !$iface->{ addr }; # discard interfaces without address
