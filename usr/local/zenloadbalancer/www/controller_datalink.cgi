@@ -76,7 +76,7 @@ if ( $vip ne '' )
 }
 
 #change Farm's name
-if ( $farmname ne $newfarmname )
+if ( $farmname && $newfarmname && $farmname ne $newfarmname )
 {
 	#Check if farmname has correct characters (letters, numbers and hyphens)
 	my $farmnameok = &checkFarmnameOK( $newfarmname );
