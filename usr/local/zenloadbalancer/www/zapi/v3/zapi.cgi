@@ -1065,9 +1065,9 @@ DELETE qr{^/farms/($farm_re)/ipds/ddos$} => sub {
 
 
 &httpResponse({
-	code => 400,
+	code => 404,
 	body => {
-		message => 'Request not recognized',
+		message => 'Request not found',
 		error => 'true', 
 		}
 	});
