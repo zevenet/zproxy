@@ -451,33 +451,39 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 	  or !exists $GLOBAL::http_status_codes->{ $self->{ code } };
 
 	my $cgi = &getCGI();
-	my @headers = (
-		# Headers included in _ALL_ the responses, any method, any URI, sucess or error
-	);
 
-	if ( $ENV{ 'REQUEST_METHOD' } eq 'OPTIONS' )
+	# Headers included in _ALL_ the responses, any method, any URI, sucess or error
+	my @headers = ( 'Access-Control-Allow-Origin' => $ENV{ HTTP_ORIGIN } );
+
+	if ( $ENV{ 'REQUEST_METHOD' } eq 'OPTIONS' )    # no session info received
 	{
-		push ( @headers,
-		  'Access-Control-Allow-Origin'  => $ENV{ HTTP_ORIGIN },
-		  'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+		push @headers,
+		  'Access-Control-Allow-Methods'     => 'GET, POST, PUT, DELETE, OPTIONS',
 		  'Access-Control-Allow-Credentials' => 'true',
 		  'Access-Control-Allow-Headers' =>
 		  'ZAPI_KEY, Authorization, Set-cookie, Content-Type, X-Requested-With',
-		  );
-
-		if ( &validCGISession() )
-		{
-			push @headers, 'Access-Control-Expose-Headers' => 'Set-Cookie';
-		}
+		  ;
 	}
 
 	if ( &validCGISession() )
 	{
-		my $cgi = &getCGI();
-		my $session = CGI::Session->load( $cgi );
-		my $session_cookie = $cgi->cookie(CGISESSID => $session->id);
-		#~ &zenlog("cookie:$session_cookie");
-		push @headers, 'Set-Cookie' => $session_cookie;
+		my $cgi            = &getCGI();
+		my $session        = CGI::Session->load( $cgi );
+		my $session_cookie = $cgi->cookie( CGISESSID => $session->id );
+
+		push @headers,
+		  'Set-Cookie'                       => $session_cookie,
+		  'Access-Control-Allow-Credentials' => 'true',
+		  'Access-Control-Expose-Headers'    => 'Set-Cookie',
+		  ;
+	}
+
+	if ( $q->path_info =~ '/session' )
+	{
+		push @headers,
+		  'Access-Control-Allow-Credentials' => 'true',
+		  'Access-Control-Expose-Headers'    => 'Set-Cookie',
+		  ;
 	}
 
 	# add possible extra headers
