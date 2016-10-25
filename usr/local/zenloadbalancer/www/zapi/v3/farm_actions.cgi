@@ -265,7 +265,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	}
 
 	# validate FARM TYPE
-	if ( &getFarmType( $farmname ) !~ /^http(?:s?)$/ )
+	if ( &getFarmType( $farmname ) !~ /^(?:http|https)$/ )
 	{
 		# Error
 		my $errormsg = "Only HTTP farm profile supports this feature.";
