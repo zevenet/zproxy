@@ -565,50 +565,6 @@ OPTIONS qr{^/.*$} => sub {
 	&httpResponse({ code => 200 });
 };
 
-#  GET CGISESSID
-#GET qr{^/session/login$} => sub {
-#
-#	my $session = new CGI::Session( &getCGI() );
-#
-#	if ( $session && ! $session->param( 'is_logged_in' ) )
-#	{
-#		my @credentials = &getAuthorizationCredentials();
-#
-#		my ( $username, $password ) = @credentials;
-#
-#		&zenlog("credentials: @credentials<");
-#
-#		if ( &authenticateCredentials( @credentials ) )
-#		{
-#			# successful authentication
-#			&zenlog( "Login successful for username: $username" );
-#
-#			$session->param( 'is_logged_in', 1 );
-#			$session->param( 'username', $username );
-#			$session->expire('is_logged_in', '+30m');
-#
-#			my ( $header ) = split( "\r\n", $session->header() );
-#			my ( undef, $setcookie ) = split( ': ', $header );
-#
-#			&httpResponse({
-#				code => 200,
-#				headers => { 'Set-cookie' => $setcookie },
-#			});
-#		}
-#		else # not validated credentials
-#		{
-#			&zenlog( "Login failed for username: $username" );
-#
-#			$session->delete();
-#			$session->flush();
-#
-#			&httpResponse({ code => 401 });
-#		}
-#	}
-#
-#	exit;
-#};
-
 #  POST CGISESSID
 POST qr{^/session$} => sub {
 
@@ -663,33 +619,6 @@ if ( not ( &validZapiKey() or &validCGISession() ) )
 
 #	SESSION LOGOUT
 #
-
-#  LOGOUT session
-#GET qr{^/session/logout$} => sub {
-#	if ( $cgi->http( 'Cookie' ) )
-#	{
-#		my $session = new CGI::Session( &getCGI() );
-#
-#		if ( $session && $session->param( 'is_logged_in' ) )
-#		{
-#			my $username = $session->param( username );
-#			my $ip_addr  = $session->param( _SESSION_REMOTE_ADDR );
-#
-#			&zenlog( "Logged out user $username from $ip_addr" );
-#
-#			$session->delete();
-#			$session->flush();
-#
-#			&httpResponse( { code => 200 } );
-#
-#			exit;
-#		}
-#	}
-#
-#	# with ZAPI key or expired cookie session
-#	&httpResponse( { code => 400 } );
-#	exit;
-#};
 
 #  DELETE session
 DELETE qr{^/session$} => sub {
