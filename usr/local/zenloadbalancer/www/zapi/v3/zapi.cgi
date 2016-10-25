@@ -923,7 +923,7 @@ DELETE qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => s
 ##### /farms/FARM/maintenance
 
 #  POST farm actions
-POST qr{^/farms/($farm_re)/actions$} => sub {
+PUT qr{^/farms/($farm_re)/actions$} => sub {
 	&farm_actions( @_ );
 };
 
