@@ -1159,4 +1159,131 @@ sub configureDefaultGW    #()
 	}
 }
 
+# Source in bash translated to perl:
+# http://stackoverflow.com/questions/4475420/detect-network-connection-type-in-linux
+#
+# Interface types: nic, virtual, vlan, bond
+sub getInterfaceType
+{
+	my $if_name = shift;
+
+	my $type;
+
+	return undef if $if_name eq '' || ! defined $if_name;
+
+	if ( ! -d "/sys/class/net/$if_name" )
+	{
+		my ( $parent_if ) = split( ':', $if_name );
+		my $quoted_if = quotemeta $if_name;
+		my $found = grep( /inet .+ $quoted_if$/, `$ip_bin addr show $parent_if 2>/dev/null` );
+
+		if ( $found )
+		{
+			return 'virtual';
+		}
+		else
+		{
+			return undef;
+		}
+	}
+
+	my $code; # read type code
+	{
+		my $if_type_filename = "/sys/class/net/$if_name/type";
+
+		open( my $type_file, '<', $if_type_filename )
+			or die "Could not open file $if_type_filename: $!";
+		chomp( $code = <$type_file> );
+		close $type_file;
+	}
+
+	if ( $code == 1 )
+	{
+		$type='nic';
+
+		# Ethernet, may also be wireless, ...
+		if ( -f "/proc/net/vlan/$if_name" )
+		{
+			$type = 'vlan';
+		}
+		elsif ( -d "/sys/class/net/$if_name/bonding" )
+		{
+			$type = 'bond';
+		}
+		#elsif ( -d "/sys/class/net/$if_name/wireless" || -l "/sys/class/net/$if_name/phy80211" )
+		#{
+		#	$type = 'wlan';
+		#}
+		#elsif ( -d "/sys/class/net/$if_name/bridge" )
+		#{
+		#	$type = 'bridge';
+		#}
+		#elsif ( -f "/sys/class/net/$if_name/tun_flags" )
+		#{
+		#	$type = 'tap';
+		#}
+		#elsif ( -d "/sys/devices/virtual/net/$if_name" )
+		#{
+		#	$type = 'dummy' if $if_name =~ /^dummy/;
+		#}
+	}
+	elsif ( $code == 24 )
+	{
+		$type = 'nic';    # firewire ;; # IEEE 1394 IPv4 - RFC 2734
+	}
+	elsif ( $code == 32 )
+	{
+		if ( -d "/sys/class/net/$if_name/bonding" )
+		{
+			$type = 'bond';
+		}
+		#elsif ( -d "/sys/class/net/$if_name/create_child" )
+		#{
+		#	$type = 'ib';
+		#}
+		#else
+		#{
+		#	$type = 'ibchild';
+		#}
+	}
+	#elsif ( $code == 512 ) { $type = 'ppp'; }
+	#elsif ( $code == 768 )
+	#{
+	#	$type = 'ipip';    # IPIP tunnel
+	#}
+	#elsif ( $code == 769 )
+	#{
+	#	$type = 'ip6tnl';    # IP6IP6 tunnel
+	#}
+	#elsif ( $code == 772 ) { $type = 'lo'; }
+	#elsif ( $code == 776 )
+	#{
+	#	$type = 'sit';       # sit0 device - IPv6-in-IPv4
+	#}
+	#elsif ( $code == 778 )
+	#{
+	#	$type = 'gre';       # GRE over IP
+	#}
+	#elsif ( $code == 783 )
+	#{
+	#	$type = 'irda';      # Linux-IrDA
+	#}
+	#elsif ( $code == 801 )   { $type = 'wlan_aux'; }
+	#elsif ( $code == 65534 ) { $type = 'tun'; }
+
+	# The following case statement still has to be replaced by something
+	# which does not rely on the interface names.
+	# case $if_name in
+	# 	ippp*|isdn*) type=isdn;;
+	# 	mip6mnha*)   type=mip6mnha;;
+	# esac
+
+	return $type if defined $type;
+
+	my $msg = "Could not recognize the type of the interface $if_name.";
+
+	&zenlog( $msg );
+	die ( $msg ); # This should not happen
+}
+
 1;
