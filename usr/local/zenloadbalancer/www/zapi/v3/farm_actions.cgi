@@ -241,38 +241,22 @@ sub farm_actions # ( $json_obj, $farmname )
 #
 #**
 
-sub maintenance # ( $json_obj, $farmname )
+sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id )
 {
-	my $json_obj = shift;
-	my $farmname = shift;
+	my $json_obj   = shift;
+	my $farmname   = shift;
+	my $service    = shift;
+	my $backend_id = shift;
 
-	my $error  = "false";
-	my $action = "false";
+	my $description = "Set backend status";
 
-	# Check input errors
-	if ( $json_obj->{ action } =~ /^up|maintenance$/ )
-	{
-		$action = $json_obj->{ action };
-	}
-	else
-	{
-		my $errormsg = "Invalid action; the possible actions are up and maintenance";
-		my $body = {
-					 description => "Set a backend status in farm $farmname",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
-	# Check that the farm exists
+	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
-					 description => "Set backend Farm status",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -280,72 +264,100 @@ sub maintenance # ( $json_obj, $farmname )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( $json_obj->{ service } =~ /^$/ )
+	# validate FARM TYPE
+	if ( &getFarmType( $farmname ) !~ /^http(?:s?)$/ )
 	{
-		my $errormsg = "Invalid service; please, enter a active service";
+		# Error
+		my $errormsg = "Only HTTP farm profile supports this feature.";
 		my $body = {
-					 description => "Set a backend status in farm $farmname",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
-	}
-	elsif ( $json_obj->{ service } =~ /^\w+$/ )
-	{
-		$service = $json_obj->{ service };
-	}
-	else
-	{
-		my $errormsg = "Invalid service; please, enter a active service";
-		my $body = {
-					 description => "Set a backend status in farm $farmname",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( $json_obj->{ id } =~ /^$/ )
+	# validate SERVICE
 	{
-		my $errormsg = "Invalid id; please, enter a active id of backend";
-		my $body = {
-					 description => "Set a backend status in farm $farmname",
-					 error       => "true",
-					 message     => $errormsg
-		};
+		my @services = &getFarmServices($farmname);
+		my $found_service;
 
-		&httpResponse({ code => 400, body => $body });
-	}
-	elsif ( $json_obj->{ id } =~ /^\d+$/ )
-	{
-		$id = $json_obj->{ id };
-	}
-	else
-	{
-		my $errormsg = "Invalid id; id value must be numeric";
-		my $body = {
-					 description => "Set a backend status in farm $farmname",
-					 error       => "true",
-					 message     => $errormsg
-		};
+		foreach my $service_name ( @services )
+		{
+			if ( $service eq $service_name )
+			{
+				$found_service = 1;
+				last;
+			}
+		}
 
-		&httpResponse({ code => 400, body => $body });
+		if ( !$found_service )
+		{
+			# Error
+			my $errormsg = "Could not find the requested service.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 404, body => $body });
+		}
 	}
 
-	if ( $action eq "maintenance" )
+	# validate BACKEND
+	my $be;
 	{
-		$status = &setFarmBackendMaintenance( $farmname, $id, $service );
+		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
+		my @be_list = split ( "\n", $backendsvs );
+
+		foreach my $be_line ( @be_list )
+		{
+			my @current_be = split ( " ", $be_line );
+
+			if ( $current_be[1] == $backend_id )
+			{
+				$be = {
+						id       => $current_be[1],
+						ip       => $current_be[3],
+						port     => $current_be[5],
+						timeout  => $current_be[7],
+						priority => $current_be[9],
+				};
+
+				last;
+			}
+		}
+
+		if ( !$be )
+		{
+			# Error
+			my $errormsg = "Could not find a service backend with such id.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg,
+			};
+
+			&httpResponse({ code => 404, body => $body });
+		}
+	}
+
+	# validate STATUS
+	if ( $json_obj->{ action } eq "maintenance" )
+	{
+		my $status = &setFarmBackendMaintenance( $farmname, $backend_id, $service );
+
 		&zenlog(
-			"Changing status to maintenance of backend $id in service $service in farm $farmname"
+			"Changing status to maintenance of backend $backend_id in service $service in farm $farmname"
 		);
 
 		if ( $? ne 0 )
 		{
 			my $errormsg = "Errors found trying to change status backend to maintenance";
 			my $body = {
-						 description => "Set a backend status in farm $farmname",
+						 description => $description,
 						 error       => "true",
 						 message     => $errormsg
 			};
@@ -353,56 +365,44 @@ sub maintenance # ( $json_obj, $farmname )
 			&httpResponse({ code => 400, body => $body });
 		}
 	}
-	elsif ( $action eq "up" )
+	elsif ( $json_obj->{ action } eq "up" )
 	{
-		&setFarmBackendNoMaintenance( $farmname, $id, $service );
+		my $status = &setFarmBackendNoMaintenance( $farmname, $backend_id, $service );
+
 		&zenlog(
-			 "Changing status to up of backend $id in service $service in farm $farmname" );
+			 "Changing status to up of backend $backend_id in service $service in farm $farmname" );
 
 		if ( $? ne 0 )
 		{
 			my $errormsg = "Errors found trying to change status backend to up";
 			my $body = {
-									   description => "Set a backend status in farm $farmname",
-									   error       => "true",
-									   message     => $errormsg
-									 };
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
 
 			&httpResponse({ code => 400, body => $body });
 		}
 	}
-
-	# Print params
-	if ( $error ne "true" )
-	{
-		# Success
-		my $body = {
-					description =>
-					  "Set an action in  backend $id in service $service in farm $farmname",
-					params => {
-								action  => $json_obj->{ action },
-								service => $json_obj->{ service },
-								id      => $json_obj->{ id },
-					},
-		};
-
-		&httpResponse({ code => 200, body => $body });
-	}
 	else
 	{
-
-		# Error
-		my $errormsg =
-		  "Errors found trying to change status of backend $id in service $service in farm $farmname";
+		my $errormsg = "Invalid action; the possible actions are up and maintenance";
 		my $body = {
-					description =>
-					  "Set an action in  backend $id in service $service in farm $farmname",
-					error   => "true",
-					message => $errormsg
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
 		};
 
 		&httpResponse({ code => 400, body => $body });
 	}
+
+	# Success
+	my $body = {
+				 description => $description,
+				 params      => { action => $json_obj->{ action } },
+	};
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 1;

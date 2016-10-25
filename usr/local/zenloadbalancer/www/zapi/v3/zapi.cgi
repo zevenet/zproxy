@@ -922,7 +922,7 @@ DELETE qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => s
 ##### /farms/FARM/fg
 ##### /farms/FARM/maintenance
 
-#  POST farm actions
+#  PUT farm actions
 PUT qr{^/farms/($farm_re)/actions$} => sub {
 	&farm_actions( @_ );
 };
@@ -932,9 +932,9 @@ PUT qr{^/farms/($farm_re)/fg$} => sub {
 	&modify_farmguardian( @_ );
 };
 
-#  POST status backend actions
-POST qr{^/farms/($farm_re)/maintenance$} => sub {
-	&maintenance( @_ );
+#  PUT status backend actions (for HTTP only)
+PUT qr{^/farms/($farm_re)/services/($service_re)/backends/($be_re)/maintenance$} => sub {
+	&service_backend_maintenance( @_ );
 };
 
 
