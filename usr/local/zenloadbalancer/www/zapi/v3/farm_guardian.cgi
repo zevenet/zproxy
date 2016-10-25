@@ -123,30 +123,16 @@ sub modify_farmguardian # ( $json_obj, $farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
-	if ( $farmname =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to modify the farm guardian in a farm $farmname, invalid farmname, can't be blank."
-		);
+	my $description = "Modify farm guardian";
+	my $error = "false";
 
-		# Error
-		my $errormsg = "Invalid farm name, please insert a valid value.";
-		my $body = {
-					 description => "Modify farm guardian",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
-	# Check that the farm exists
+	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $output = {
-					   description => "Modify farm guardian",
+					   description => $description,
 					   error       => "true",
 					   message     => $errormsg
 		};
@@ -154,8 +140,20 @@ sub modify_farmguardian # ( $json_obj, $farmname )
 		&httpResponse({ code => 404, body => $body });
 	}
 
+	# validate FARM TYPE
 	my $type = &getFarmType( $farmname );
-	$error = "false";
+
+	if ( $type !~ /^(?:http|https|l4xnat)$/ )
+	{
+		my $errormsg = "Farm guardian is not supported for the requested farm profile.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
 
 	if ( exists ( $json_obj->{ service } ) )
 	{
