@@ -924,7 +924,7 @@ DELETE qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => s
 
 #  POST farm actions
 POST qr{^/farms/($farm_re)/actions$} => sub {
-	&actions( @_ );
+	&farm_actions( @_ );
 };
 
 #  PUT farmguardian

@@ -51,17 +51,30 @@
 #
 #**
 
-sub actions # ( $json_obj, $farmname )
+sub farm_actions # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
 
-	my $error  = "false";
-	my $action = "false";
 	my $description = "Farm actions";
+	my $action;
+
+	# calidate FARM NAME
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
+		# Error
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
 
 	# Check input errors
-	if ( $json_obj->{ action } =~ /^stop|start|restart$/ )
+	if ( $json_obj->{ action } =~ /^(?:stop|start|restart)$/ )
 	{
 		$action = $json_obj->{ action };
 	}
@@ -79,24 +92,11 @@ sub actions # ( $json_obj, $farmname )
 		&httpResponse({ code => 400, body => $body });
 	}
 	
-	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
-	{
-		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 404, body => $body });
-	}
-
 	# Functions
 	if ( $action eq "stop" )
 	{
 		my $status = &runFarmStop( $farmname, "true" );
+
 		if ( $status != 0 )
 		{
 			my $errormsg = "Error trying to set the action stop in farm $farmname.";
@@ -120,6 +120,7 @@ sub actions # ( $json_obj, $farmname )
 	if ( $action eq "start" )
 	{
 		my $status = &runFarmStart( $farmname, "true" );
+
 		if ( $status != 0 )
 		{
 			my $errormsg = "Error trying to set the action start in farm $farmname.";
@@ -143,6 +144,7 @@ sub actions # ( $json_obj, $farmname )
 	if ( $action eq "restart" )
 	{
 		my $status = &runFarmStop( $farmname, "true" );
+
 		if ( $status != 0 )
 		{
 			my $errormsg = "Error trying to stop the farm in the action restart in farm $farmname.";
@@ -158,13 +160,16 @@ sub actions # ( $json_obj, $farmname )
 		}
 
 		my $status = &runFarmStart( $farmname, "true" );
+
 		if ( $status == 0 )
 		{
 			my $type = &getFarmType( $farmname );
+
 			if ( $type eq "http" || $type eq "http" )
 			{
 				&setFarmHttpBackendStatus( $farmname );
 			}
+
 			&setFarmNoRestart( $farmname );
 			&zenlog(
 				   "ZAPI success, the action restart has been established in farm $farmname." );
@@ -185,29 +190,13 @@ sub actions # ( $json_obj, $farmname )
 	}
 
 	# Print params
-	#~ if ( $error ne "true" )
-	{
-		# Success
-		my $body = {
-					 description => "Set a new action in $farmname",
-					 params      => { action => $json_obj->{ action } },
-		};
+	# Success
+	my $body = {
+				 description => "Set a new action in $farmname",
+				 params      => { action => $json_obj->{ action } },
+	};
 
-		&httpResponse({ code => 200, body => $body });
-	}
-#	else
-#	{
-#		# Error
-#		my $errormsg =
-#		  "Errors found trying to execute the action $json_obj->{action} in farm $farmname";
-#		my $body = {
-#					 description => "Set a new action in $farmname",
-#					 error       => "true",
-#					 message     => $errormsg
-#		};
-#
-#		&httpResponse({ code => 400, body => $body });
-#	}
+	&httpResponse({ code => 200, body => $body });
 }
 
 # POST maintenance
