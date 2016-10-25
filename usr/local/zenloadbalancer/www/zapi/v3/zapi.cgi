@@ -814,6 +814,7 @@ POST qr{^/farms/($farm_re)/backends$} => sub {
 };
 
 ##### /farms/FARM/backends/BACKEND
+
 my $be_re = &getValidFormat('backend');
 
 #  PUT backend
@@ -835,6 +836,7 @@ POST qr{^/farms/($farm_re)/services$} => sub {
 };
 
 ##### /farms/FARM/services/SERVICE
+
 my $service_re = &getValidFormat('service');
 
 #  PUT service
@@ -880,6 +882,7 @@ POST qr{^/farms/($farm_re)/zones$} => sub {
 };
 
 ##### /farms/FARM/zones/ZONE
+
 my $zone_re = &getValidFormat('zone');
 
 #  PUT zones
@@ -901,6 +904,7 @@ POST qr{^/farms/($farm_re)/zones/($zone_re)/resources$} => sub {
 };
 
 ##### /farms/FARM/zones/ZONE/resources/RESOURCE
+
 my $resource_id_re = &getValidFormat('resource_id');
 
 #  PUT zone resources

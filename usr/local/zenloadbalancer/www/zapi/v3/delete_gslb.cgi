@@ -163,34 +163,19 @@ sub delete_zone # ( $farmname, $zone )
 #
 #**
 
-sub delete_zone_resource # ( $farmname, $zone, $id_server )
+sub delete_zone_resource # ( $farmname, $zone, $resource )
 {
-	my ( $farmname, $zone, $id_server ) = @_;
+	my ( $farmname, $zone, $resource ) = @_;
 
-	if ( $farmname =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to delete the resource $id_server in zone $zone in farm $farmname, invalid farm name."
-		);
+	my $description = "Delete zone resource";
 
-		# Error
-		my $errormsg = "Invalid farm name, please insert a valid value.";
-		my $body = {
-					 description => "Delete zone resource",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
-	# Check that the farm exists
+	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
-					 description => "Delete zone resource",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -198,56 +183,75 @@ sub delete_zone_resource # ( $farmname, $zone, $id_server )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( $zone =~ /^$/ )
+	# validate FARM TYPE
+	if ( &getFarmType( $farmname ) ne 'gslb' )
+	{
+		my $errormsg = "Only GSLB profile is supported for this request.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# validate ZONE
+	if ( ! scalar grep { $_ eq $zone } &getFarmZones( $farmname ) )
 	{
 		&zenlog(
-			"ZAPI error, trying to delete the resource $id_server in zone $zone in farm $farmname, invalid zone name."
+			"ZAPI error, trying to delete the resource $resource in zone $zone in farm $farmname, invalid zone name."
 		);
 
 		# Error
 		my $errormsg = "Invalid zone name, please insert a valid value.";
 		my $body = {
-					 description => "Delete zone resource",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( $id_server =~ /^$/ )
+	my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
+	my @be = split ( "\n", $backendsvs );
+	my ( $resource_line ) = grep { /;index_$id_resource$/ } @be;
+
+	# validate RESOURCE
+	if ( ! $resource_line )
 	{
 		&zenlog(
-			"ZAPI error, trying to delete the resource $id_server in zone $zone in farm $farmname, invalid resource id."
+			"ZAPI error, trying to delete the resource $resource in zone $zone in farm $farmname, invalid resource id."
 		);
 
 		# Error
 		my $errormsg = "Invalid resource id, please insert a valid value.";
 		my $body = {
-					 description => "Delete zone resource",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse({ code => 404, body => $body });
 	}
 
-	$status = &remFarmZoneResource( $id_server, $farmname, $zone );
+	my $status = &remFarmZoneResource( $resource, $farmname, $zone );
+
 	if ( $status != -1 )
 	{
 		&zenlog(
-			"ZAPI success, the resource $id_server in zone $zone in farm $farmname has been deleted."
+			"ZAPI success, the resource $resource in zone $zone in farm $farmname has been deleted."
 		);
 
 		# Success
 		&runFarmReload( $farmname );
 		my $message =
-		  "The resource with id $id_server in the zone $zone of the farm $farmnamehas been deleted.";
+		  "The resource with id $resource in the zone $zone of the farm $farmnamehas been deleted.";
 		my $body = {
-			description =>
-			  "Delete resource with id $id_server in the zone $zone of the farm $farmname.",
-			success => "true",
-			message => $message
+					 description => $description,
+					 success     => "true",
+					 message     => $message,
 		};
 
 		&httpResponse({ code => 200, body => $body });
@@ -255,20 +259,17 @@ sub delete_zone_resource # ( $farmname, $zone, $id_server )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to delete the resource $id_server in zone $zone in farm $farmname, it's not possible to delete the resource."
+			"ZAPI error, trying to delete the resource $resource in zone $zone in farm $farmname, it's not possible to delete the resource."
 		);
 
 		# Error
 		my $errormsg =
-		  "It's not possible to delete the resource with id $id_server in the zone $zone of the farm $farmname.";
-		my $output = $j->encode(
-			{
-			   description =>
-				 "Delete resource with id $id_server in the zone $zone of the farm $farmname.",
-			   error   => "true",
-			   message => $errormsg
-			}
-		);
+		  "It's not possible to delete the resource with id $resource in the zone $zone of the farm $farmname.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
 
 		&httpResponse({ code => 400, body => $body });
 	}
