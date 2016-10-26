@@ -266,6 +266,7 @@ sub POST($$)
 	if ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/json' )
 	{
 		$input_ref = eval{ decode_json( $data ) };
+		&zenlog("json: ". Dumper $input_ref );
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
 	{
@@ -294,6 +295,7 @@ sub PUT($$)
 	if ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/json' )
 	{
 		$input_ref = eval{ decode_json( $data ) };
+		&zenlog("json: ". Dumper $input_ref );
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
 	{
