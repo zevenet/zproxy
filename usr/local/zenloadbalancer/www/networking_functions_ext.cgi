@@ -121,6 +121,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	$iface{ vini }    = undef;
 	$iface{ vlan }    = undef;
 	$iface{ mac }     = undef;
+	$iface{ type }    = &getInterfaceType( $iface{ name } );
 
 	if ( $iface{ dev } =~ /:/ )
 	{
