@@ -135,7 +135,7 @@ sub getValidPort # ( $ip, $port, $profile )
 
 	if ( $profile eq 'HTTP' || $profile eq 'GSLB' )
 	{
-		return &isValidPortNumber( $port ) eq 'true' && &checkport( $ip, $port) eq 'true';
+		return &isValidPortNumber( $port ) eq 'true' && &checkport( $ip, $port ) eq 'false';
 	}
 	elsif ( $profile eq 'L4xNAT' )
 	{
@@ -147,7 +147,7 @@ sub getValidPort # ( $ip, $port, $profile )
 	}
 	elsif ( ! defined $profile )
 	{
-		return &isValidPortNumber( $port ) eq 'true' && &checkport( $ip, $port) eq 'true';
+		return &isValidPortNumber( $port ) eq 'true' && &checkport( $ip, $port ) eq 'false';
 	}
 	else # profile not supported
 	{
