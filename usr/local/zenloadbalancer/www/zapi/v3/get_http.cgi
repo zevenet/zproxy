@@ -307,8 +307,11 @@ sub farms_name_http # ( $farmname )
 
 			my $ip   = @subbe[3];
 			my $port = @subbe[5] + 0;
-			my $tout = @subbe[7] + 0;
-			my $prio = @subbe[9] + 0;
+			my $tout = @subbe[7];
+			my $prio = @subbe[9];
+
+			$tout = $tout eq '-' ? '': $tout+0;
+			$prio = $prio eq '-' ? '': $prio+0;
 
 			push @out_ba,
 			  {
