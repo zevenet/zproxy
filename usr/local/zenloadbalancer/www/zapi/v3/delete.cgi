@@ -472,7 +472,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 
 	# validate FARM TYPE
 	my $type = &getFarmType( $farmname );
-	unless ( $type eq 'l4xnat' || $type eq 'datalink' )
+	unless ( $type eq 'http' || $type eq 'https' || $type eq 'gslb' )
 	{
 		# Error
 		my $errormsg = "The $type farm profile has backends only in services.";
@@ -498,16 +498,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 			@services = &getFarmServices($farmname);
 		}
 
-		my $found_service;
-
-		foreach my $service ( @services )
-		{
-			if ( $json_obj->{ service } eq $service )
-			{
-				$found_service = 1;
-				last;
-			}
-		}
+		my $found_service = grep { $service eq $_ } @services;
 
 		if ( !$found_service )
 		{

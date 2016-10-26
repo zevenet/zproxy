@@ -584,16 +584,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		# validate SERVICE
 		{
 			my @services = &getFarmServices($farmname);
-			my $found_service;
-
-			foreach my $service ( @services )
-			{
-				if ( $json_obj->{ service } eq $service )
-				{
-					$found_service = 1;
-					last;
-				}
-			}
+			my $found_service = grep { $service eq $_ } @services;
 
 			if ( !$found_service )
 			{
@@ -735,16 +726,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		# validate SERVICE
 		{
 			my @services = &getFarmServices($farmname);
-			my $found_service;
-
-			foreach my $service ( @services )
-			{
-				if ( $json_obj->{ service } eq $service )
-				{
-					$found_service = 1;
-					last;
-				}
-			}
+			my $found_service = grep { $service eq $_ } @services;
 
 			if ( !$found_service )
 			{
@@ -1471,16 +1453,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			@services = &getFarmServices($farmname);
 		}
 
-		my $found_service;
-
-		foreach my $service ( @services )
-		{
-			if ( $json_obj->{ service } eq $service )
-			{
-				$found_service = 1;
-				last;
-			}
-		}
+		my $found_service = grep { $service eq $_ } @services;
 
 		if ( !$found_service )
 		{
