@@ -896,6 +896,8 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 
 			# Success
 			&setFarmRestart( $farmname );
+			$json_obj->{ timeout } = $json_obj->{ timeout } ? $json_obj->{ timeout } + 0: $json_obj->{ timeout };
+
 			my $body = {
 						 description => $description,
 						 params      => {
@@ -903,8 +905,8 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 									 ip      => $json_obj->{ ip },
 									 port    => $json_obj->{ port } + 0,
 									 weight  => $json_obj->{ weight } + 0,
-									 timeout => $json_obj->{ timeout } + 0,
-									 service => $json_obj->{ service }
+									 timeout => $json_obj->{ timeout },
+									 #~ service => $json_obj->{ service }
 						 },
 			};
 
