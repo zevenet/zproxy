@@ -56,6 +56,7 @@ my %format_re = (
 	# interfaces
 	'vlan_interfaces' => qr{[a-zA-Z0-9]+\.[0-9]+},
 	'virt_interfaces' => qr{[a-zA-Z0-9\.]+:[a-zA-Z0-9]+},
+	'interface_type'  => qr{(?:nic|vlan|virtual|bond)},
 
 	# ipds
 	'rbl_list_name' => qr{[a-zA-Z0-9]+},

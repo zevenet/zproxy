@@ -904,6 +904,21 @@ GET qr{^/interfaces/nic$} => sub {
 	&get_interfaces_nic();
 };
 
+#  GET interfaces bonding
+GET qr{^/interfaces/bonding$} => sub {
+	&get_interfaces_bond();
+};
+
+#  GET interfaces vlan
+GET qr{^/interfaces/vlan$} => sub {
+	&get_interfaces_vlan();
+};
+
+#  GET interfaces virtual
+GET qr{^/interfaces/virtual$} => sub {
+	&get_interfaces_virtual();
+};
+
 #  POST virtual interface
 POST qr{^/interfaces/($virt_interface)$} => sub {
 	&new_vini( @_ );

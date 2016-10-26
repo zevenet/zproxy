@@ -877,16 +877,116 @@ sub get_interfaces_nic # ()
 
 	my $description = "List NIC interfaces";
 
-	# Configured interfaces list
-	my @interfaces = @{ &getSystemInterfaceList() };
-
-	for my $if_ref ( @interfaces )
+	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
 	{
-		# Exclude IPv6
-		next if $if_ref->{ ip_v } == 6 && &getGlobalConfiguration( 'ipv6_enabled' ) ne 'true';
-		next if defined $if_ref->{ vlan };
-		next if defined $if_ref->{ vini };
+		# Any key must cotain a value or "" but can't be null
+		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
+		push @output_list,
+		  {
+			name    => $if_ref->{ name },
+			ip      => $if_ref->{ addr },
+			netmask => $if_ref->{ mask },
+			gateway => $if_ref->{ gateway },
+			status  => $if_ref->{ status },
+			HDWaddr => $if_ref->{ mac },
+			#~ ipv     => $if_ref->{ ip_v },
+		  };
+	}
+
+	my $body = {
+			description => $description,
+			interfaces  => \@output_list,
+		};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
+sub get_interfaces_vlan # ()
+{
+	my @output_list;
+
+	my $description = "List VLAN interfaces";
+
+	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
+	{
+		# Any key must cotain a value or "" but can't be null
+		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+
+		push @output_list,
+		  {
+			name    => $if_ref->{ name },
+			ip      => $if_ref->{ addr },
+			netmask => $if_ref->{ mask },
+			gateway => $if_ref->{ gateway },
+			status  => $if_ref->{ status },
+			HDWaddr => $if_ref->{ mac },
+			#~ ipv     => $if_ref->{ ip_v },
+		  };
+	}
+
+	my $body = {
+			description => $description,
+			interfaces  => \@output_list,
+		};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
+sub get_interfaces_bond # ()
+{
+	my @output_list;
+
+	my $description = "List bonding interfaces";
+
+	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )
+	{
+		# Any key must cotain a value or "" but can't be null
+		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+
+		push @output_list,
+		  {
+			name    => $if_ref->{ name },
+			ip      => $if_ref->{ addr },
+			netmask => $if_ref->{ mask },
+			gateway => $if_ref->{ gateway },
+			status  => $if_ref->{ status },
+			HDWaddr => $if_ref->{ mac },
+			#~ ipv     => $if_ref->{ ip_v },
+		  };
+	}
+
+	my $body = {
+			description => $description,
+			interfaces  => \@output_list,
+		};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
+sub get_interfaces_virtual # ()
+{
+	my @output_list;
+
+	my $description = "List virtual interfaces";
+
+	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
+	{
 		# Any key must cotain a value or "" but can't be null
 		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
 		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }

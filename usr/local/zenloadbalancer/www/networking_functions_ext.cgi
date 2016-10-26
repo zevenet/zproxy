@@ -121,7 +121,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	$iface{ vini }    = undef;
 	$iface{ vlan }    = undef;
 	$iface{ mac }     = undef;
-	$iface{ type }    = &getInterfaceType( $iface{ name } );
+	$iface{ type }    = &getInterfaceType( $if_name );
 
 	if ( $iface{ dev } =~ /:/ )
 	{
@@ -421,6 +421,7 @@ sub getSystemInterfaceList
 				$$if_ref{ vlan }   = $if_parts{ vlan };
 				$$if_ref{ vini }   = $if_parts{ vini };
 				$$if_ref{ ip_v }   = $ip_stack;
+				$$if_ref{ type }   = &getInterfaceType( $if_name );
 			}
 
 			# setup for configured and unconfigured interfaces
@@ -505,6 +506,7 @@ sub getSystemInterface    # ($if_name)
 	$$if_ref{ dev }    = $if_parts{ dev };
 	$$if_ref{ vlan }   = $if_parts{ vlan };
 	$$if_ref{ vini }   = $if_parts{ vini };
+	$$if_ref{ type }   = &getInterfaceType( $$if_ref{ name } );
 
 	return $if_ref;
 }
@@ -1256,7 +1258,7 @@ sub getInterfaceType
 	#{
 	#	$type = 'ip6tnl';    # IP6IP6 tunnel
 	#}
-	#elsif ( $code == 772 ) { $type = 'lo'; }
+	elsif ( $code == 772 ) { $type = 'lo'; }
 	#elsif ( $code == 776 )
 	#{
 	#	$type = 'sit';       # sit0 device - IPv6-in-IPv4
@@ -1285,6 +1287,45 @@ sub getInterfaceType
 
 	&zenlog( $msg );
 	die ( $msg ); # This should not happen
+}
+
+sub getInterfaceTypeList
+{
+	my $list_type = shift;
+
+	my @interfaces;
+	my $socket = IO::Socket::INET->new( Proto => 'udp' );
+	my @system_interfaces = $socket->if_list;
+
+	if ( $list_type =~ /^(?:nic|bond|vlan)$/ )
+	{
+		for my $if_name ( @system_interfaces )
+		{
+			if ( $list_type eq &getInterfaceType( $if_name ) )
+			{
+				push ( @interfaces, &getInterfaceConfig( $if_name ) // &getSystemInterface( $if_name ) );
+			}
+		}
+	}
+	elsif ( $list_type eq 'virtual' )
+	{
+		&zenlog( "getInterfaceTypeList( 'virtual' ): Pending to be implemented." );
+		#~ for my $if_name ( @system_interfaces )
+		#~ {
+			#~ if ( $list_type eq &getInterfaceType( $if_name ) )
+			#~ {
+				#~ push ( @interfaces, &getInterfaceConfig( $if_name ) // &getSystemInterface( $if_name ) );
+			#~ }
+		#~ }
+	}
+	else
+	{
+		my $msg = "Interface type '$list_type' is not supported.";
+		&zenlog( $msg );
+		die( $msg );
+	}
+
+	return @interfaces;
 }
 
 1;
