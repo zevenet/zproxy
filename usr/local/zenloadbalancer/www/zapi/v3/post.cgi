@@ -802,7 +802,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		unless ( defined $json_obj->{ ip } && &getValidFormat('IPv4', $json_obj->{ ip }) )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend http in service $json_obj->{service} in farm $farmname, invalid backend IP value."
+				"ZAPI error, trying to create a new backend http in service $service in farm $farmname, invalid backend IP value."
 			);
 
 			# Error
@@ -820,12 +820,11 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		unless ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend http in service $json_obj->{service} in farm $farmname, invalid IP address and port for a backend, ir can't be blank."
+				"ZAPI error, trying to create a new backend http in service $service in farm $farmname, invalid IP address and port for a backend, ir can't be blank."
 			);
 
 			# Error
-			my $errormsg =
-			  "Invalid port for a backend.";
+			my $errormsg = "Invalid port for a backend.";
 			my $body = {
 						 description => $description,
 						 error       => "true",
@@ -841,7 +840,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		if ( $json_obj->{ weight } !~ /^[1-9]$/ )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend http in service $json_obj->{service} in farm $farmname, invalid weight value for a backend, it must be 1-9."
+				"ZAPI error, trying to create a new backend http in service $service in farm $farmname, invalid weight value for a backend, it must be 1-9."
 			);
 
 			# Error
@@ -891,7 +890,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		if ( $status != -1 )
 		{
 			&zenlog(
-				"ZAPI success, a new backend has been created in farm $farmname in service $json_obj->{service} with IP $json_obj->{ip}."
+				"ZAPI success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}."
 			);
 
 			# Success
