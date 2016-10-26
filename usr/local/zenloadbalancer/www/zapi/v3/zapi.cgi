@@ -455,13 +455,15 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 	my $cgi = &getCGI();
 
 	# Headers included in _ALL_ the responses, any method, any URI, sucess or error
-	my @headers = ( 'Access-Control-Allow-Origin' => $ENV{ HTTP_ORIGIN } );
+	my @headers = (
+					'Access-Control-Allow-Origin'      => $ENV{ HTTP_ORIGIN },
+					'Access-Control-Allow-Credentials' => 'true',
+	);
 
 	if ( $ENV{ 'REQUEST_METHOD' } eq 'OPTIONS' )    # no session info received
 	{
 		push @headers,
 		  'Access-Control-Allow-Methods'     => 'GET, POST, PUT, DELETE, OPTIONS',
-		  'Access-Control-Allow-Credentials' => 'true',
 		  'Access-Control-Allow-Headers' =>
 		  'ZAPI_KEY, Authorization, Set-cookie, Content-Type, X-Requested-With',
 		  ;
@@ -475,7 +477,6 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 
 		push @headers,
 		  'Set-Cookie'                       => $session_cookie,
-		  'Access-Control-Allow-Credentials' => 'true',
 		  'Access-Control-Expose-Headers'    => 'Set-Cookie',
 		  ;
 	}
@@ -483,7 +484,6 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 	if ( $q->path_info =~ '/session' )
 	{
 		push @headers,
-		  'Access-Control-Allow-Credentials' => 'true',
 		  'Access-Control-Expose-Headers'    => 'Set-Cookie',
 		  ;
 	}
