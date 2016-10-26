@@ -655,7 +655,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 		if ( !$error && exists ( $json_obj->{ port } ) )
 		{
-			if ( &isValidPortNumber( $json_obj->{ port } ) )
+			if ( &isValidPortNumber( $json_obj->{ port } eq 'true' ) )
 			{
 				$be->{ port } = $json_obj->{ port };
 			}

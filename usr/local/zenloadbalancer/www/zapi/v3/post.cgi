@@ -799,7 +799,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		}
 
 		# validate IP
-		if ( ! &getValidFormat('IPv4', $json_obj->{ ip }) )
+		unless ( defined $json_obj->{ ip } && &getValidFormat('IPv4', $json_obj->{ ip }) )
 		{
 			&zenlog(
 				"ZAPI error, trying to create a new backend http in service $json_obj->{service} in farm $farmname, invalid backend IP value."
@@ -817,7 +817,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		}
 
 		# validate PORT
-		if ( ! &isValidPortNumber( $json_obj->{ port } ) )
+		unless ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' )
 		{
 			&zenlog(
 				"ZAPI error, trying to create a new backend http in service $json_obj->{service} in farm $farmname, invalid IP address and port for a backend, ir can't be blank."
