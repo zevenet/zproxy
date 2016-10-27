@@ -28,7 +28,7 @@
 #
 
 my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/;         # (0-255)
-my $ipv4          = qr{(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS};
+my $ipv4          = qr/(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS/;
 
 my $hostname = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
 my $zone     = qr/(?:$hostname\.)+[a-z]{2,}/;
@@ -38,35 +38,37 @@ my %format_re = (
 	'hostname' => $hostname,
 
 	# farms
-	'farm_name' => qr{[a-zA-Z0-9\-]+},
-	'backend'   => qr{\d+},
+	'farm_name' => qr/[a-zA-Z0-9\-]+/,
+	'backend'   => qr/\d+/,
 	#~ 'service'   => qr{\w+},
 	'service' => qr/[a-zA-Z1-9\-]+/,
 	#~ 'zone'      => qr{\w+},
 	'zone' => qr/(?:$hostname\.)+[a-z]{2,}/,
 	#~ 'zone' = qr/([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}/,
 	#~ 'zone' = qr/[a-z0-9].*-*.*\.[a-z0-9].*/,
-	'resource_id'   => qr{\d+},
-	'resource_name' => qr{(?:[a-zA-Z0-9\-]+|\@)},
-	'resource_ttl'  => qr{\d+},                     # except zero
-	'resource_type' => qr{(?:NS|A|AAAA|CNAME|DYNA|MX|SRV|TXT|PTR|NAPTR)},
-	'resource_data' => qr{.+}, # alow anything (becouse of TXT type)
-	#~ 'resource_data' => qr{(?:$hostname|$zone|$ipv4)}, # hostname or IP
+	'resource_id'   => qr/\d+/,
+	'resource_name' => qr/(?:[a-zA-Z0-9\-]+|\@)/,
+	'resource_ttl'  => qr/\d+/,                     # except zero
+	'resource_type' => qr/(?:NS|A|AAAA|CNAME|DYNA|MX|SRV|TXT|PTR|NAPTR)/,
+	'resource_data' => qr/.+/, # alow anything (becouse of TXT type)
+	#~ 'resource_data' => qr/(?:$hostname|$zone|$ipv4)/, # hostname or IP
 
-	# interfaces
-	'vlan_interfaces' => qr{[a-zA-Z0-9]+\.[0-9]+},
-	'virt_interfaces' => qr{[a-zA-Z0-9\.]+:[a-zA-Z0-9]+},
-	'interface_type'  => qr{(?:nic|vlan|virtual|bond)},
+	# interfaces ( WARNING: lenght in characters < 16 )
+	'nic_interface'  => qr/[a-zA-Z0-9]{1,15}/,
+	'bond_interface' => qr/[a-zA-Z0-9]{1,15}/,
+	'vlan_interface' => qr/[a-zA-Z0-9]{1,13}\.[0-9]{1,4}/,
+	'virt_interface' => qr/[a-zA-Z0-9]{1,13}(?:\.[a-zA-Z0-9]{1,4})?:[a-zA-Z0-9]{1,13}/,
+	'interface_type' => qr/(?:nic|vlan|virtual|bond)/,
 
 	# ipds
-	'rbl_list_name' => qr{[a-zA-Z0-9]+},
-	'rbl_source'    => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
+	'rbl_list_name' => qr/[a-zA-Z0-9]+/,
+	'rbl_source'    => qr/(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?/,
 
 	# certificates filenames
-	'certificate' => qr{\w[\w\.-]*\.(?:pem|csr)},
-	'cert_pem'    => qr{\w[\w\.-]*\.pem},
-	'cert_csr'    => qr{\w[\w\.-]*\.csr},
-	'cert_dh2048' => qr{\w[\w\.-]*_dh2048\.pem},
+	'certificate' => qr/\w[\w\.-]*\.(?:pem|csr)/,
+	'cert_pem'    => qr/\w[\w\.-]*\.pem/,
+	'cert_csr'    => qr/\w[\w\.-]*\.csr/,
+	'cert_dh2048' => qr/\w[\w\.-]*_dh2048\.pem/,
 
 	# ips
 	'IPv4' => $ipv4,
