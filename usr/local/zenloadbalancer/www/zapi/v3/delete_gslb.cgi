@@ -216,7 +216,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 
 	my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
 	my @be = split ( "\n", $backendsvs );
-	my ( $resource_line ) = grep { /;index_$id_resource$/ } @be;
+	my ( $resource_line ) = grep { /;index_$resource$/ } @be;
 
 	# validate RESOURCE
 	if ( ! $resource_line )

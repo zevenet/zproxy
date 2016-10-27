@@ -59,6 +59,7 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/certificates.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/post.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/put.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/put_gslb.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/delete.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/delete_gslb.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/interface.cgi";

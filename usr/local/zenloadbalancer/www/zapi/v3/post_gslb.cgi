@@ -253,6 +253,31 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 		&httpResponse({ code => 404, body => $body });
 	}
 
+	my $existResource;
+	foreach my $resourceCheck ( @{ &getGSLBResources  ( $farmname, $zone ) } )
+	{
+		$existResource = 1 if ( $resourceCheck->{rname} eq $json_obj->{ rname } );
+	}
+	
+	# validate RESOURCE NAME exist
+	if (  $existResource ) 
+	{
+		&zenlog(
+			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter zone resource just exist."
+		);
+
+		# Error
+		my $errormsg =
+		  "The parameter zone resource name (rname) just exist, please insert a valid value.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
 	# validate RESOURCE NAME
 	if ( ! &getValidFormat( 'resource_name', $json_obj->{ rname } ) )
 	{
@@ -313,15 +338,27 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	}
 
 	# validate RESOURCE DATA
-	unless ( &getValidFormat( 'resource_data', $json_obj->{ rdata } ) )
+	unless ( ! grep ( /$json_obj->{ rdata }/, &getGSLBFarmServices ( $farmname ) && $json_obj->{ type } eq 'DYNA' ) && 
+						&getValidFormat( "resource_data_$json_obj->{ type }", $json_obj->{ rdata } ) )
 	{
-		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter zone resource server (rdata) doesn't exist."
-		);
+		my $errormsg = "If you choose $json_obj->{ type } type, ";
+		
+		$errormsg .= "RDATA must be a valid IPv4 address," 		if ($json_obj->{ type } eq "A" ); 
+		$errormsg .= "RDATA must be a valid IPv6 address,"		if ($json_obj->{ type } eq "AAAA" ); 
+		$errormsg .= "RDATA format is not valid,"						if ($json_obj->{ type } eq "NS" ); 
+		$errormsg .= "RDATA must be a valid format ( foo.bar.com ),"		if ($json_obj->{ type } eq "CNAME" );
+		$errormsg .= "RDATA must be a valid service,"									if ( $json_obj->{ type } eq 'DYNA' ); 
+		$errormsg .= "RDATA must be a valid format ( mail.example.com ),"		if ( $json_obj->{ type } eq 'MX' ); 
+		$errormsg .= "RDATA must be a valid format ( 10 60 5060 host.example.com ),"		if ( $json_obj->{ type } eq 'SRV' ); 
+		$errormsg .= "RDATA must be a valid format ( foo.bar.com ),"			if ( $json_obj->{ type } eq 'PTR' ); 
+		# TXT and NAPTR input let all characters
+		
+		$errormsg .= " $json_obj->{ rname } not added to zone $zone";
+		&zenlog( $errormsg );
 
 		# Error
-		my $errormsg =
-		  "The parameter zone resource server (rdata) doesn't exist, please insert a valid value.";
+		$errormsg =
+		  "The parameter zone resource server (rdata) doesn't correct format, please insert a valid value.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -360,6 +397,12 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 								 rdata => $json_obj->{ rdata },
 					 },
 		};
+		my $checkConf = &getGSLBCheckConf  ( $farmname );
+		 if ( $checkConf =~ /^(.+?)\s/ )
+		 {
+			 $checkConf = "The resource $1 gslb farm break the configuration. Please check the configuration";
+			 $body->{ params }->{ warning }  =  $checkConf;
+		 }
 
 		&httpResponse({ code => 201, body => $body });
 	}

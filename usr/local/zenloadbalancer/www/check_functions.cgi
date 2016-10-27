@@ -47,10 +47,19 @@ my %format_re = (
 	#~ 'zone' = qr/([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}/,
 	#~ 'zone' = qr/[a-z0-9].*-*.*\.[a-z0-9].*/,
 	'resource_id'   => qr/\d+/,
-	'resource_name' => qr/(?:[a-zA-Z0-9\-]+|\@)/,
+	'resource_name' => qr/(?:[a-zA-Z0-9\-\.\_]+|\@)/,
 	'resource_ttl'  => qr/\d+/,                     # except zero
 	'resource_type' => qr/(?:NS|A|AAAA|CNAME|DYNA|MX|SRV|TXT|PTR|NAPTR)/,
 	'resource_data' => qr/.+/, # alow anything (becouse of TXT type)
+	'resource_data_A' => $ipv4, 
+	'resource_data_AAAA' => $ipv6, 
+	'resource_data_NS' => qr/[a-zA-Z0-9\-]+/, 
+	'resource_data_CNAME' => qr/[a-z\.]+/, 
+	'resource_data_MX' => qr/[a-z\.]+/, 
+	'resource_data_TXT' => qr/.+/, 			# all characters allow 
+	'resource_data_SRV' => qr/[a-z0-9 \.]/, 
+	'resource_data_PTR' => qr/[a-z\.]+/, 
+	'resource_data_NAPTR' => qr/.+/,		# all characters allow
 	#~ 'resource_data' => qr/(?:$hostname|$zone|$ipv4)/, # hostname or IP
 
 	# interfaces ( WARNING: lenght in characters < 16 )

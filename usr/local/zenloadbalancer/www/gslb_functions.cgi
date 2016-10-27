@@ -2241,5 +2241,73 @@ sub enableGSLBFarmGuardian
 	return $output;
 }
 
+ #&getGSLBCheckConf  ( $farmname );
+sub getGSLBCheckConf 
+{
+	my $farmname = shift;
+	
+	my $errormsg = system ( "$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf > /dev/null 2>&1" );
+	if ( $errormsg )
+	{
+		my @run = `$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf 2>&1 > /dev/null `;
+
+		@run = grep ( /# error:/, @run );
+		$errormsg = $run[0];
+		
+		
+		if ( $errormsg =~ /Zone ([\w\.]+).: Zonefile parse error at line (\d+)/ )
+		{
+			my $fileZone = "$configdir\/$farmname\_gslb.cfg/etc/zones/$1";
+			my $numLine = $2-1;
+			
+			use Tie::File;
+			tie @filelines, 'Tie::File', $fileZone;
+			$errormsg = $filelines[ $numLine ];
+			untie @filelines;
+		}
+	}
+	
+	return $errormsg;
+}
+
+
+ # Get hash array with all resources for a farm and service
+ # &getGSLBResources ( $farmname, $zone )
+sub getGSLBResources
+{
+	my ( $farmname, $zone ) = @_;
+	my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
+	my @resourcesArray; 
+	
+	my @be = split ( "\n", $backendsvs );
+
+	foreach $subline ( @be )
+	{
+		$ind++;
+		my %resources;
+
+		if ( $subline =~ /^$/ )
+		{
+			next;
+		}
+
+		my @subbe  = split ( "\;", $subline );
+		my @subbe1 = split ( "\t", $subbe[0] );
+		my @subbe2 = split ( "_", $subbe[1] );
+		
+		$resources { rname } = $subbe1[0]; 
+		$resources { id } = $subbe2[1] + 0; 
+		$resources { ttl } = $subbe1[1]; 
+		$resources { type } = $subbe1[2]; 
+		$resources { rdata } = $subbe1[3]; 
+
+		push @resourcesArray, \%resources;
+	}
+	
+	return \@resourcesArray;
+ }
+
+	
+
 # do not remove this
 1;

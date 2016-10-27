@@ -199,76 +199,16 @@ sub farms_name_gslb # ( $farmname )
 		my @be = split ( "\n", $backendsvs );
 		my @out_re;
 
-		foreach my $subline ( @be )
-		{
-			if ( $subline =~ /^$/ )
-			{
-				next;
-			}
-
-			my @subbe  = split ( "\;", $subline );
-			my @subbe1 = split ( "\t", @subbe[0] );
-			my @subbe2 = split ( "\_", @subbe[1] );
-			my $ztype  = @subbe1[1];
-			my $la_resource = @subbe1[0];
-			my $la_ttl      = @subbe1[1];
-
-			if ( $resource_server ne "" ) { $la_resource = $resource_server; }
-			if ( $ttl_server ne "" )      { $la_ttl      = $ttl_server; }
-
-			if (    @subbe1[1] ne "NS"
-				 && @subbe1[1] ne "A"
-				 && @subbe1[1] ne "CNAME"
-				 && @subbe1[1] ne "DYNA"
-				 && @subbe1[1] ne "DYNC" )
-			{
-				$ztype = @subbe1[2];
-			}
-			my $la_type = $ztype;
-			if ( $type_server ne "" ) { $la_type = $type_server; }
-
-			my $rdata = "";
-			if ( @subbe1 == 3 )
-			{
-				$rdata = @subbe1[2];
-			}
-			elsif ( @subbe1 == 4 )
-			{
-				$rdata = @subbe1[3];
-			}
-			elsif ( @subbe1 == 5 )
-			{
-				$rdata = @subbe1[4];
-			}
-			chop ( $rdata );
-
-			if (    @subbe1[1] ne "NS"
-				 && @subbe1[1] ne "A"
-				 && @subbe1[1] ne "CNAME"
-				 && @subbe1[1] ne "DYNA"
-				 && @subbe1[1] ne "DYNC" )
-			{
-				$ztype = @subbe1[2];
-			}
-
-			push @out_re,
-			  {
-				id    => @subbe2[1] + 0,
-				rname => $la_resource,
-				ttl   => $la_ttl,
-				type  => $ztype,
-				rdata => $rdata
-			  };
-
-		}
+		my $resources = &getGSLBResources  ( $farmname, $zone );
 		my $ns = &getFarmVS( $farmname, $zone, "ns" );
 
 		push @out_z,
 		  {
 			id                => $zone,
 			DefaultNameServer => $ns,
-			resources         => \@out_re
+			resources         => $resources
 		  };
+		  
 	}
 
 	# Success
