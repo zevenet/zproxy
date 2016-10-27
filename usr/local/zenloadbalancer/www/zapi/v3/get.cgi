@@ -266,8 +266,8 @@ sub service_backends
 			my $tout = @subbe[7];
 			my $prio = @subbe[9];
 
-			$tout = $tout eq '-' ? '': $tout+0;
-			$prio = $prio eq '-' ? '': $prio+0;
+			$tout = $tout eq '-' ? undef: $tout+0;
+			$prio = $prio eq '-' ? undef: $prio+0;
 
 			push @backends,
 			  {
