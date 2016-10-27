@@ -28,7 +28,7 @@
 #
 
 my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/;         # (0-255)
-my $ipv4          = qr/(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS/;
+my $ipv4_addr     = qr/(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS/;
 
 my $hostname = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
 my $zone     = qr/(?:$hostname\.)+[a-z]{2,}/;
@@ -80,7 +80,8 @@ my %format_re = (
 	'cert_dh2048' => qr/\w[\w\.-]*_dh2048\.pem/,
 
 	# ips
-	'IPv4' => $ipv4,
+	'IPv4_addr' => qr/$ipv4_addr/,
+	'IPv4_mask' => qr/(?:$ipv4_addr|3[0-2]|[1-2][0-9]|[0-9])/,
 );
 
 =begin nd

@@ -430,7 +430,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		}
 
 		# validate IP
-		if ( ! &getValidFormat('IPv4', $json_obj->{ ip }) )
+		if ( ! &getValidFormat('IPv4_addr', $json_obj->{ ip }) )
 		{
 			&zenlog(
 				"ZAPI error, trying to create a new backend l4xnat in farm $farmname, invalid backend IP value."
@@ -573,7 +573,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		}
 
 		# validate IP
-		if ( ! &getValidFormat('IPv4', $json_obj->{ ip }) )
+		if ( ! &getValidFormat('IPv4_addr', $json_obj->{ ip }) )
 		{
 			&zenlog(
 				"ZAPI error, trying to create a new backend datalink in farm $farmname, invalid backend IP value."
@@ -796,7 +796,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		}
 
 		# validate IP
-		unless ( defined $json_obj->{ ip } && &getValidFormat('IPv4', $json_obj->{ ip }) )
+		unless ( defined $json_obj->{ ip } && &getValidFormat('IPv4_addr', $json_obj->{ ip }) )
 		{
 			&zenlog(
 				"ZAPI error, trying to create a new backend http in service $service in farm $farmname, invalid backend IP value."
@@ -969,7 +969,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		}
 
 		# validate IP
-		if ( ! &getValidFormat('IPv4', $json_obj->{ ip } ) )
+		if ( ! &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
 		{
 			$error = "true";
 			&zenlog(

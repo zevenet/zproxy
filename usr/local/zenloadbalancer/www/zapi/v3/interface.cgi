@@ -1548,4 +1548,145 @@ sub modify_interface # ( $json_obj, $fdev )
 	}
 }
 
+sub modify_interface_nic # ( $json_obj, $nic )
+{
+	my $json_obj = shift;
+	my $nic = shift;
+
+	my $description = "Configure nic interface";
+	my $ip_v = 4;
+
+	# validate NIC NAME
+	my $socket = IO::Socket::INET->new( Proto => 'udp' );
+	my @system_interfaces = $socket->if_list;
+	my $type = &getInterfaceType( $nic );
+
+	unless ( grep( { $nic eq $_ } @system_interfaces ) && $type eq 'nic' )
+	{
+		# Error
+		my $errormsg = "Nic interface not found.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# Check address errors
+	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+	{
+		# Error
+		my $errormsg = "IP Address is not valid.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# Check netmask errors
+	unless ( defined( $json_obj->{ netmask } ) && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
+	{
+		# Error
+		my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# Check gateway errors
+	unless ( ! defined( $json_obj->{ gateway } ) || &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) )
+	{
+		# Error
+		my $errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# Delete old interface configuration
+	my $if_ref = &getInterfaceConfig( $nic, $ip_v );
+
+	if ( $if_ref )
+	{
+		# Delete old IP and Netmask from system to replace it
+		&delIp( $if_ref->{name}, $if_ref->{addr}, $if_ref->{mask} );
+
+		# Remove routes if the interface has its own route table: nic and vlan
+		&delRoutes( "local", $if_ref );
+
+		$if_ref = undef;
+	}
+
+	# Setup new interface configuration structure
+	$if_ref              = &getSystemInterface( $nic );
+	$if_ref->{ addr }    = $json_obj->{ ip };
+	$if_ref->{ mask }    = $json_obj->{ netmask };
+	$if_ref->{ gateway } = $json_obj->{ gateway };
+	$if_ref->{ ip_v }    = 4;
+
+	eval {
+
+		# Add new IP, netmask and gateway
+		die if &addIp( $if_ref );
+
+		# Writing new parameters in configuration file
+		die if &writeRoutes( $if_ref->{ name } );
+
+		# Put the interface up
+		{
+			my $previous_status = $if_ref->{ status };
+			my $state = &upIf( $if_ref, 'writeconf' );
+
+			if ( $state == 0 )
+			{
+				$if_ref->{ status } = "up";
+				&applyRoutes( "local", $if_ref );
+			}
+			else
+			{
+				$if_ref->{ status } = $previous_status;
+			}
+		}
+
+		&setInterfaceConfig( $if_ref ) or die;
+	};
+
+	# Print params
+	if ( ! $@ )
+	{
+		# Success
+		my $body = {
+					 description => $description,
+					 params      => $json_obj,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "Errors found trying to modify interface $nic";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
 1;

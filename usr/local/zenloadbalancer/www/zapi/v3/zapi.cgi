@@ -897,25 +897,48 @@ DELETE qr{^/farms/($farm_re)/certificates/($cert_pem_re)$} => sub {
 my $virt_interface = &getValidFormat ('virt_interface');
 my $vlan_interface = &getValidFormat ('vlan_interface');
 
+##### /interfaces
+
 #  GET interfaces
 GET qr{^/interfaces$} => sub {
 	&get_interfaces();
 };
+
+##### /interfaces/nic
 
 #  GET interfaces nic
 GET qr{^/interfaces/nic$} => sub {
 	&get_interfaces_nic();
 };
 
+##### /interfaces/nic/NIC
+my $nic_re = &getValidFormat ('nic_interface');
+
+#  PUT interfaces nic
+PUT qr{^/interfaces/nic/($nic_re)$} => sub {
+	&modify_interface_nic( @_ );
+};
+
+##### /interfaces/bonding
+
 #  GET interfaces bonding
 GET qr{^/interfaces/bonding$} => sub {
 	&get_interfaces_bond();
 };
 
+##### /interfaces/vlan
+
 #  GET interfaces vlan
 GET qr{^/interfaces/vlan$} => sub {
 	&get_interfaces_vlan();
 };
+
+#  POST vlan interface
+POST qr{^/interfaces/vlan/($vlan_interface)$} => sub {
+	&new_vlan( @_ );
+};
+
+##### /interfaces/virtual
 
 #  GET interfaces virtual
 GET qr{^/interfaces/virtual$} => sub {
@@ -923,13 +946,8 @@ GET qr{^/interfaces/virtual$} => sub {
 };
 
 #  POST virtual interface
-POST qr{^/interfaces/($virt_interface)$} => sub {
+POST qr{^/interfaces/virtual/($virt_interface)$} => sub {
 	&new_vini( @_ );
-};
-
-#  POST vlan interface
-POST qr{^/interfaces/($vlan_interface)$} => sub {
-	&new_vlan( @_ );
 };
 
 # FIXME: implement up/down in PUT method

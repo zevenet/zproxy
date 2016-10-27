@@ -320,7 +320,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( &getValidFormat('IPv4', $json_obj->{ ip } ) )
+			if ( &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
 			{
 				$backend->{ vip } = $json_obj->{ ip };
 			}
@@ -421,7 +421,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 		# Functions
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( &getValidFormat('IPv4', $json_obj->{ ip } ) )
+			if ( &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
 			{
 				$be->{ ip } = $json_obj->{ ip };
 			}
@@ -641,7 +641,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		# Functions
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( &getValidFormat('IPv4', $json_obj->{ ip } ) )
+			if ( &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
 			{
 				$be->{ ip } = $json_obj->{ ip };
 			}
@@ -788,7 +788,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		# Functions
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( &getValidFormat('IPv4', $json_obj->{ ip } ) )
+			if ( &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
 			{
 				$be->{ ip } = $json_obj->{ ip };
 			}
