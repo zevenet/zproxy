@@ -752,9 +752,6 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 
 	if ( $type eq "http" || $type eq "https" )
 	{
-		my $default_weight = 5;
-		my $default_timeout = '';
-
 		# validate SERVICE
 		# Check that the provided service is configured in the farm
 		my @services = &getFarmServices($farmname);
@@ -835,9 +832,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		}
 
 		# validate WEIGHT
-		$json_obj->{ weight } = $default_weight if ! exists $json_obj->{ weight };
-
-		if ( $json_obj->{ weight } !~ /^[1-9]$/ )
+		unless ( ! defined( $json_obj->{ weight } ) || $json_obj->{ weight } =~ /^[1-9]$/ )
 		{
 			&zenlog(
 				"ZAPI error, trying to create a new backend http in service $service in farm $farmname, invalid weight value for a backend, it must be 1-9."
@@ -855,9 +850,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		}
 
 		# validate TIMEOUT
-		$json_obj->{ timeout } = $default_timeout if ! exists $json_obj->{ timeout };
-
-		unless ( $json_obj->{ timeout } eq '' || ( $json_obj->{ timeout } =~ /^\d+$/ && $json_obj->{ timeout } != 0 ) )
+		unless ( ! defined( $json_obj->{ timeout } ) || ( $json_obj->{ timeout } =~ /^\d+$/ && $json_obj->{ timeout } != 0 ) )
 		{
 			&zenlog(
 				"ZAPI error, trying to modify the backends in a farm $farmname, invalid timeout."
@@ -875,7 +868,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		}
 
 # First param ($id) is an empty string to let function autogenerate the id for the new backend
-		$status = &setFarmServer(
+		my $status = &setFarmServer(
 								  "",
 								  $json_obj->{ ip },
 								  $json_obj->{ port },
