@@ -250,7 +250,7 @@ sub service_backends
 		{
 			my @subbe       = split ( "\ ", $subl );
 			my $id          = @subbe[1] + 0;
-			my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $s );
+			my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $service );
 
 			if ( $maintenance != 0 )
 			{
