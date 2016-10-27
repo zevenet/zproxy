@@ -1294,11 +1294,12 @@ sub getInterfaceTypeList
 	my $list_type = shift;
 
 	my @interfaces;
-	my $socket = IO::Socket::INET->new( Proto => 'udp' );
-	my @system_interfaces = $socket->if_list;
 
 	if ( $list_type =~ /^(?:nic|bond|vlan)$/ )
 	{
+		my $socket = IO::Socket::INET->new( Proto => 'udp' );
+		my @system_interfaces = $socket->if_list;
+
 		for my $if_name ( @system_interfaces )
 		{
 			if ( $list_type eq &getInterfaceType( $if_name ) )
@@ -1309,14 +1310,18 @@ sub getInterfaceTypeList
 	}
 	elsif ( $list_type eq 'virtual' )
 	{
-		&zenlog( "getInterfaceTypeList( 'virtual' ): Pending to be implemented." );
-		#~ for my $if_name ( @system_interfaces )
-		#~ {
-			#~ if ( $list_type eq &getInterfaceType( $if_name ) )
-			#~ {
-				#~ push ( @interfaces, &getInterfaceConfig( $if_name ) // &getSystemInterface( $if_name ) );
-			#~ }
-		#~ }
+		opendir my $conf_dir, &getGlobalConfiguration('configdir');
+		my $virt_if_re = &getValidFormat('virt_interface');
+
+		for my $file_name ( readdir $conf_dir )
+		{
+			if ( $file_name =~ /^if_($virt_if_re)_conf$/ )
+			{
+				my $iface = &getInterfaceConfig( $1 );
+				$iface->{ status } = &getInterfaceSystemStatus( $iface );
+				push ( @interfaces, $iface );
+			}
+		}
 	}
 	else
 	{
