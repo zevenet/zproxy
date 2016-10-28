@@ -943,6 +943,18 @@ POST qr{^/interfaces/vlan$} => sub {
 	&new_vlan( @_ );
 };
 
+##### /interfaces/vlan/VLAN
+
+#  PUT interface
+PUT qr{^/interfaces/vlan/($vlan_interface)$} => sub {
+	&modify_interface_vlan( @_ );
+};
+
+#  DELETE virtual interface (default)
+DELETE qr{^/interfaces/vlan/($vlan_interface)$} => sub {
+	&delete_interface_vlan( @_ );
+};
+
 ##### /interfaces/virtual
 
 #  GET interfaces virtual

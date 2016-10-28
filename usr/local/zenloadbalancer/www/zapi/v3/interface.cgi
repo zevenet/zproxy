@@ -658,6 +658,60 @@ sub delete_interface_nic # ( $nic )
 	}
 }
 
+sub delete_interface_vlan # ( $vlan )
+{
+	my $vlan = shift;
+
+	my $description => "Delete VLAN interface";
+	my $ip_v = 4;
+	my $if_ref = &getInterfaceConfig( $vlan, $ip_v );
+
+	# validate VLAN interface
+	if ( !$if_ref )
+	{
+		# Error
+		my $errormsg = "The VLAN interface $vlan doesn't exist.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	eval {
+		die if &delRoutes( "local", $if_ref );
+		die if &downIf( $if_ref, 'writeconf' );
+		die if &delIf( $if_ref );
+	};
+
+	if ( ! $@ )
+	{
+		# Success
+		my $message = "The VLAN interface $vlan has been deleted.";
+		my $body = {
+					 description => $description,
+					 success     => "true",
+					 message     => $message,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The VLAN interface $vlan can't be deleted";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
 # GET Interface
 #
 # curl --tlsv1 -k -X GET -H 'Content- Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/interfaces
@@ -1678,6 +1732,162 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	{
 		# Error
 		my $errormsg = "Errors found trying to modify interface $nic";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
+sub modify_interface_vlan # ( $json_obj, $vlan )
+{
+	my $json_obj = shift;
+	my $vlan = shift;
+
+	my $description = "Modify VLAN interface";
+	my $ip_v = 4;
+	my $error = "false";
+	my $if_ref = &getInterfaceConfig( $vlan, $ip_v );
+
+	# Check interface errors
+	unless ( $if_ref )
+	{
+		# Error
+		my $errormsg = "VLAN not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	unless ( exists $json_obj->{ ip } || exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
+	{
+		# Error
+		my $errormsg = "No parameter received to be configured";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# Check address errors
+	if ( exists $json_obj->{ ip } )
+	{
+		unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+		{
+			# Error
+			my $errormsg = "IP Address $json_obj->{ip} structure is not ok.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+
+	# Check netmask errors
+	if ( exists $json_obj->{ netmask } )
+	{
+		unless ( defined( $json_obj->{ netmask } ) && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
+		{
+			# Error
+			my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+
+	## Check netmask errors for IPv6
+	#if ( $ip_v == 6 && ( $json_obj->{netmask} !~ /^\d+$/ || $json_obj->{netmask} > 128 || $json_obj->{netmask} < 0 ) )
+	#{
+	#	# Error
+	#	my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric.";
+	#	my $body = {
+	#				 description => $description,
+	#				 error       => "true",
+	#				 message     => $errormsg
+	#	};
+    #
+	#	&httpResponse({ code => 400, body => $body });
+	#}
+
+	# Check gateway errors
+	if ( exists $json_obj->{ gateway } )
+	{
+		unless ( exists( $json_obj->{ gateway } ) || &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) )
+		{
+			# Error
+			my $errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+
+	# Delete old parameters
+	if ( $if_ref )
+	{
+		# Delete old IP and Netmask from system to replace it
+		&delIp( $$if_ref{name}, $$if_ref{addr}, $$if_ref{mask} );
+
+		# Remove routes if the interface has its own route table: nic and vlan
+		&delRoutes( "local", $if_ref );
+	}
+
+	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
+	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
+	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
+
+	eval {
+		# Add new IP, netmask and gateway
+		die if &addIp( $if_ref );
+		die if &writeRoutes( $if_ref->{name} );
+
+		my $state = &upIf( $if_ref, 'writeconf' );
+
+		if ( $state == 0 )
+		{
+			$if_ref->{status} = "up";
+			die if &applyRoutes( "local", $if_ref );
+		}
+
+		&setInterfaceConfig( $if_ref ) or die;
+	};
+
+	if ( ! $@ )
+	{
+		# Success
+		my $body = {
+					 description => $description,
+					 params      => $json_obj,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "Errors found trying to modify interface $if";
 		my $body = {
 					 description => $description,
 					 error       => "true",
