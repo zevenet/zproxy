@@ -32,6 +32,7 @@ my $ipv4_addr     = qr/(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS/;
 
 my $hostname = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
 my $zone     = qr/(?:$hostname\.)+[a-z]{2,}/;
+my $vlan_tag = qr/\d{1,4}/;
 
 my %format_re = (
 	# hostname
@@ -65,9 +66,10 @@ my %format_re = (
 	# interfaces ( WARNING: lenght in characters < 16 )
 	'nic_interface'  => qr/[a-zA-Z0-9]{1,15}/,
 	'bond_interface' => qr/[a-zA-Z0-9]{1,15}/,
-	'vlan_interface' => qr/[a-zA-Z0-9]{1,13}\.[0-9]{1,4}/,
+	'vlan_interface' => qr/[a-zA-Z0-9]{1,13}\.$vlan_tag/,
 	'virt_interface' => qr/[a-zA-Z0-9]{1,13}(?:\.[a-zA-Z0-9]{1,4})?:[a-zA-Z0-9]{1,13}/,
 	'interface_type' => qr/(?:nic|vlan|virtual|bond)/,
+	'vlan_tag' => qr/$vlan_tag/,
 
 	# ipds
 	'rbl_list_name' => qr/[a-zA-Z0-9]+/,

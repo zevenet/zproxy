@@ -263,33 +263,28 @@ sub new_vini # ( $json_obj, $fdev )
 #
 #**
 
-sub new_vlan # ( $json_obj, $fdev )
+sub new_vlan # ( $json_obj )
 {
 	my $json_obj = shift;
-	my $fdev = shift;
 
+	my $description = "Add a vlan interface";
 	my $error = "false";
 
-	# Check interface errors
-	if ( $fdev =~ /^$/ )
+	# validate VLAN NAME
+	my $nic_re = &getValidFormat( 'nic_interface' );
+	my $vlan_tag_re = &getValidFormat( 'vlan_tag' );
+
+	if ( $json_obj->{ name } =~ /^($nic_re)\.($vlan_tag_re)$/ )
 	{
-		# Error
-		my $errormsg = "Interface name can't be empty";
-		my $body = {
-					 description => "Interface $fdev",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		$json_obj->{ parent } = $1;
+		$json_obj->{ tag } = $2;
 	}
-
-	if ( $fdev =~ /\s+/ )
+	else
 	{
 		# Error
 		my $errormsg = "Interface name is not valid";
 		my $body = {
-					 description => "Interface $fdev",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -297,13 +292,14 @@ sub new_vlan # ( $json_obj, $fdev )
 		&httpResponse({ code => 400, body => $body });
 	}
 	
-	my $parent_exist = &ifexist($fdev);
-	if ( $parent_exist eq "false" )
+	# validate PARENT
+	my $parent_exist = &ifexist($json_obj->{ parent });
+	unless ( $parent_exist eq "true" )
 	{
 		# Error
-		my $errormsg = "The parent interface $fdev doesn't exist.";
+		my $errormsg = "The parent interface $json_obj->{ parent } doesn't exist";
 		my $body = {
-					 description => "Interface $fdev",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -311,26 +307,27 @@ sub new_vlan # ( $json_obj, $fdev )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	if ( $json_obj->{ name } =~ /^$/ )
+	# validate VLAN TAG
+	unless ( $json_obj->{ tag } >= 1 && $json_obj->{ tag } <= 4094 )
 	{
 		# Error
-		my $errormsg = "The name parameter can't be empty";
-		my $output = {
-					   description => "Interface $fdev",
+		my $errormsg = "The vlan tag must be in the range 1-4094, both included";
+		my $body = {
+					   description => $description,
 					   error       => "true",
 					   message     => $errormsg
 		};
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	
-	# Check name errors. Must be numeric
-	if ( $json_obj->{ name } !~ /^\d+$/ )
+
+	# validate IP
+	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 	{
 		# Error
-		my $errormsg = "The name for Vlan must be a number.";
+		my $errormsg = "IP Address is not valid.";
 		my $body = {
-					 description => "Name $json_obj->{name} of Vlan",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -338,46 +335,17 @@ sub new_vlan # ( $json_obj, $fdev )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	# Check network interface errors
-	my $ifn = "$fdev\.$json_obj->{name}";
-	my $ip_v = &ipversion($json_obj->{ip});
-	
+	$json_obj->{ ip_v } = ipversion( $json_obj->{ ip } );
+
 	# Check if interface already exists
-	my $new_if_ref = &getInterfaceConfig( $ifn, $ip_v );
+	my $if_ref = &getInterfaceConfig( $json_obj->{ name }, $json_obj->{ ip_v } );
 
-	if ( $new_if_ref )
+	if ( $if_ref )
 	{
 		# Error
-		my $errormsg = "Vlan network interface $ifn already exists.";
+		my $errormsg = "Vlan network interface $json_obj->{ name } already exists.";
 		my $body = {
-					 description => "Vlan network interface $ifn",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	# Check address errors
-	if ( &ipisok( $json_obj->{ ip } ) eq "false" )
-	{
-		# Error
-		my $errormsg = "IP Address $json_obj->{ip} structure is not ok.";
-		my $body = {
-					 description => "IP Address $json_obj->{ip}",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	if ( ! $json_obj->{ ip } )
-	{
-		# Error
-		my $errormsg = "IP Address parameter can't be empty";
-		my $body = {
-					 description => "Interface $ifn",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -395,7 +363,7 @@ sub new_vlan # ( $json_obj, $fdev )
 			# Error
 			my $errormsg = "IP Address $json_obj->{ip} is already in use.";
 			my $body = {
-						 description => "IP Address $json_obj->{ip}",
+						 description => $description,
 						 error       => "true",
 						 message     => $errormsg
 			};
@@ -405,12 +373,12 @@ sub new_vlan # ( $json_obj, $fdev )
 	}
 
 	# Check netmask errors
-	if ( ! $json_obj->{ netmask } )
+	if ( $json_obj->{ ip_v } == 4 && ($json_obj->{ netmask } == undef || ! &getValidFormat( 'IPv4_mask', $json_obj->{ ip } )) )
 	{
 		# Error
-		my $errormsg = "Netmask parameter can't be empty";
+		my $errormsg = "Netmask parameter not valid";
 		my $body = {
-					 description => "Interface $ifn",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -418,47 +386,27 @@ sub new_vlan # ( $json_obj, $fdev )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	# Check netmask errors for IPv4
-	if ( $ip_v == 4 
-		&& ( $json_obj->{netmask} eq ''
-			|| ( &ipisok( $json_obj->{netmask}, 4 ) eq "false"
-				&& ( $json_obj->{netmask} !~ /^\d+$/ || $json_obj->{netmask} > 32 || $json_obj->{netmask} < 0 )
-				) 
-			)
-		)
-	{
-		# Error
-		my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok.";
-		my $body = {
-					 description => "Netmask Address $json_obj->{netmask}",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	# Check netmask errors for IPv6
-	if ( $ip_v == 6 && ( $json_obj->{netmask} !~ /^\d+$/ || $json_obj->{netmask} > 128 || $json_obj->{netmask} < 0 ) )
-	{
-		# Error
-        my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric [0-128].";
-		my $body = {
-					 description => "Netmask Address $json_obj->{netmask}",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-        &httpResponse({ code => 400, body => $body });
-	}
+	## Check netmask errors for IPv6
+	#if ( $json_obj->{ ip_v } == 6 && ( $json_obj->{netmask} !~ /^\d+$/ || $json_obj->{netmask} > 128 || $json_obj->{netmask} < 0 ) )
+	#{
+	#	# Error
+    #    my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric [0-128].";
+	#	my $body = {
+	#				 description => $description,
+	#				 error       => "true",
+	#				 message     => $errormsg
+	#	};
+    #
+    #    &httpResponse({ code => 400, body => $body });
+	#}
 	
 	# Check gateway errors
-	if ( $json_obj->{gateway} !~ /^$/ && &ipisok($json_obj->{gateway}) eq "false")
+	unless ( ! defined( $json_obj->{ gateway } ) || &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) )
 	{
 		# Error
 		my $errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
 		my $body = {
-					 description => "Gateway Address $json_obj->{gateway}",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -466,54 +414,50 @@ sub new_vlan # ( $json_obj, $fdev )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	# get params of fdev
+	# setup parameters of vlan
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
-	my @system_interfaces = $socket->if_list;
+	#~ my @system_interfaces = $socket->if_list;
 
-	$new_if_ref->{name} = $ifn;
-	$new_if_ref->{dev} = $fdev;
-	$new_if_ref->{status} = "up";
-	$new_if_ref->{vlan} = $json_obj->{name};
-	$new_if_ref->{addr} = $json_obj->{ip};
-	$new_if_ref->{mask} = $json_obj->{netmask};
-	$new_if_ref->{gateway} = $json_obj->{gateway} // '';
-	$new_if_ref->{ip_v} = $ip_v;
-	$new_if_ref->{mac} = $socket->if_hwaddr( $new_if_ref->{ dev } );
+	$if_ref = {
+				name    => $json_obj->{ name },
+				dev     => $json_obj->{ parent },
+				status  => "up",
+				vlan    => $json_obj->{ tag },
+				addr    => $json_obj->{ ip },
+				mask    => $json_obj->{ netmask },
+				gateway => $json_obj->{ gateway } // '',
+				ip_v    => $json_obj->{ ip_v },
+				mac     => $socket->if_hwaddr( $if_ref->{ dev } ),
+	};
 
 	# No errors
-	if ( $error eq "false" )
-	{
-		&createIf( $new_if_ref );
-		&addIp( $new_if_ref );
-		my $state = &upIf( $new_if_ref, 'writeconf' );
+	eval {
+		die if &createIf( $if_ref );
+		die if &addIp( $if_ref );
+		&writeRoutes( $if_ref->{name} );
+
+		my $state = &upIf( $if_ref, 'writeconf' );
 
 		if ( $state == 0 )
 		{
-			$new_if_ref->{status} = "up";
+			$if_ref->{status} = "up";
+			&applyRoutes( "local", $if_ref );
 		}
 
-		# Writing new parameters in configuration file
-		# virtual interface ipv4
-		if ( $new_if_ref->{name} !~ /:/ )
-		{
-			&writeRoutes( $new_if_ref->{name} );
-		}
-		
-		&setInterfaceConfig( $new_if_ref );
-		&applyRoutes( "local", $new_if_ref );
-	}
+		&setInterfaceConfig( $if_ref );
+	};
 
-	if ( $error eq "false" )
+	if ( ! $@ )
 	{
 		# Success
 		my $body = {
-					 description => "New vlan network interface $ifn",
+					 description => $description,
 					 params      => {
-								 name    => $new_if_ref->{ name },
-								 ip      => $new_if_ref->{ addr },
-								 netmask => $new_if_ref->{ mask },
-								 gateway => $new_if_ref->{ gateway },
-								 HWaddr  => $new_if_ref->{ mac },
+								 name    => $if_ref->{ name },
+								 ip      => $if_ref->{ addr },
+								 netmask => $if_ref->{ mask },
+								 gateway => $if_ref->{ gateway },
+								 HWaddr  => $if_ref->{ mac },
 					 },
 		};
 
@@ -522,9 +466,9 @@ sub new_vlan # ( $json_obj, $fdev )
 	else
 	{
 		# Error
-		my $errormsg = "The $ifn vlan network interface can't be created";
+		my $errormsg = "The $json_obj->{ name } vlan network interface can't be created";
 		my $body = {
-					 description => "New vlan network interface $ifn",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
