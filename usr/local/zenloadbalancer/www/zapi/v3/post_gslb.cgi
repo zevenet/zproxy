@@ -175,7 +175,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 # @apiSuccess   {String}        rname                     Resource's name.
 # @apiSuccess   {rdata}         rdata                   It’s the real data needed by the record type.
 # @apiSuccess   {Number}        ttl                     The Time to Live value for the current record.
-# @apiSuccess   {String}        type                    DNS record type. The options are: NS, A, CNAME and DYNA.
+# @apiSuccess   {String}        type                    DNS record type. The options are: NS, A, AAAA, CNAME, DYNA, SRV, PTR,NAPTR, TXT and MX.
 # @apiSuccess   {String}        zone                    It's the zone where the resource will be created.
 #
 #

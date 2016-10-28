@@ -428,7 +428,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 #
 # @apiSuccess   {String}        zone                     It's the zone where the resource will be created.
 # @apiSuccess   {Number}	ttl		The Time to Live value for the current record.
-# @apiSuccess   {String}        type		DNS record type. The options are: NS, A, CNAME and DYNA.
+# @apiSuccess   {String}        type		DNS record type. The options are: NS, A, AAAA, CNAME, DYNA, SRV, PTR,NAPTR, TXT and MX.
 # @apiSuccess   {String}        rdata		It’s the real data needed by the record type.
 # @apiSuccess	{String}	rname		Resource's name.
 #
@@ -685,12 +685,14 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 					 message      => $message,
 		};
 		
-		my $checkConf = &getGSLBCheckConf  ( $farmname );
-		 if ( $checkConf =~ /^(.+?)\s/ )
-		 {
-			 $checkConf = "The resource $1 gslb farm break the configuration. Please check the configuration";
-			 $body->{ params }->{ warning }  =  $checkConf;
-		 }
+		if(  $checkConf = &getGSLBCheckConf  ( $farmname ) )
+		{	
+			if ( $checkConf =~ /^(.+?)\s/ )
+			{
+				$checkConf = "The resource $1 gslb farm break the configuration. Please check the configuration";
+			}
+			$body->{ params }->{ warning }  =  $checkConf;
+		}
 
 		&httpResponse({ code => 200, body => $body });
 	}

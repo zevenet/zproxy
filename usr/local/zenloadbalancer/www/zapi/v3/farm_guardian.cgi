@@ -37,7 +37,7 @@
 # @apiSuccess   {Number}                fgtimecheck     The farm guardian will check each 'timetocheck' seconds.
 # @apiSuccess   {String}                fgscript        The command that farm guardian will check.
 # @apiSuccess   {String}                fgenabled       Enabled the use of farm guardian. The options are: true and false.
-# @apiSuccess   {String}                fglog           Enabled the use of logs in farm guardian. The options are: true and false.
+# @apiSuccess   {String}                fglog           Enabled the use of logs in farm guardian. The options are: true and false. This option is not let it in gslb farms
 #
 #
 # @apiSuccessExample Success-Response:
@@ -118,13 +118,15 @@
 #
 #**
 
-sub modify_farmguardian # ( $json_obj, $farmname )
+sub modify_farmguardian    # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
 
 	my $description = "Modify farm guardian";
-	my $error = "false";
+	my $error       = "false";
+	my $needRestart;
+	my $service;
 
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
@@ -137,13 +139,13 @@ sub modify_farmguardian # ( $json_obj, $farmname )
 					   message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# validate FARM TYPE
 	my $type = &getFarmType( $farmname );
 
-	if ( $type !~ /^(?:http|https|l4xnat)$/ )
+	if ( !&getValidFormat( 'fg_type', $type ) )
 	{
 		my $errormsg = "Farm guardian is not supported for the requested farm profile.";
 		my $body = {
@@ -152,7 +154,7 @@ sub modify_farmguardian # ( $json_obj, $farmname )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	if ( exists ( $json_obj->{ service } ) )
@@ -178,19 +180,10 @@ sub modify_farmguardian # ( $json_obj, $farmname )
 				@services = &getFarmServices( $farmname );
 			}
 
-			my $found = 0;
+			$service = $json_obj->{ 'service' };
+			my $found = grep ( /^$service$/, @services );
 
-			foreach my $farmservice (@services)
-			{
-				#print "service: $farmservice";
-				if ($json_obj->{service} eq $farmservice)
-				{
-					$found = 1;
-					last;
-				}
-			}
-
-			if ($found eq 0)
+			if ( !$found )
 			{
 				# Error
 				my $errormsg = "Invalid service name, please insert a valid value.";
@@ -200,36 +193,44 @@ sub modify_farmguardian # ( $json_obj, $farmname )
 							 message     => $errormsg
 				};
 
-				&httpResponse({ code => 400, body => $body });
-			}
-			else
-			{
-				$service = $json_obj->{ service };
+				&httpResponse( { code => 400, body => $body } );
 			}
 		}
 	}
 
-	if ( $type eq "l4xnat" )
-	{
-		@fgconfig = &getFarmGuardianConf( $farmname, "" );
-	}
-	elsif ( $type eq "http" || $type eq "https" )
-	{
-		@fgconfig = &getFarmGuardianConf( $farmname, $service );
-	}
+	my $timetocheck;
+	my $check_script;
+	my $usefarmguardian;
+	my $farmguardianlog;
 
-	my $timetocheck = @fgconfig[1];
-	$timetocheck = $timetocheck + 0;
-	my $check_script = @fgconfig[2];
-	$check_script =~ s/\n//g;
-	$check_script =~ s/\"/\'/g;
-	my $usefarmguardian = @fgconfig[3];
-	$usefarmguardian =~ s/\n//g;
-	my $farmguardianlog = @fgconfig[4];
+	if ( $type eq "gslb" )
+	{
+		( $timetocheck, $check_script ) =
+		  &getGSLBFarmGuardianParams( $farmname, $service );
+		$usefarmguardian = &getGSLBFarmFGStatus( $farmname, $service );
+	}
+	else
+	{
+		if ( $type eq "l4xnat" )
+		{
+			@fgconfig = &getFarmGuardianConf( $farmname, "" );
+		}
+		elsif ( $type eq "http" || $type eq "https" )
+		{
+			@fgconfig = &getFarmGuardianConf( $farmname, $service );
+		}
+		$timetocheck  = @fgconfig[1] + 0;
+		$check_script = @fgconfig[2];
+		$check_script =~ s/\n//g;
+		$check_script =~ s/\"/\'/g;
+		$usefarmguardian = @fgconfig[3];
+		$usefarmguardian =~ s/\n//g;
+		$farmguardianlog = @fgconfig[4];
+	}
 
 	if ( exists ( $json_obj->{ fgtimecheck } ) )
 	{
-		if ( $json_obj->{ fgtimecheck } =~ /^$/ )
+		if ( !&getValidFormat( 'fg_time', $json_obj->{ fgtimecheck } ) )
 		{
 			$error = "true";
 			&zenlog(
@@ -254,7 +255,7 @@ sub modify_farmguardian # ( $json_obj, $farmname )
 
 	if ( exists ( $json_obj->{ fgenabled } ) )
 	{
-		if ( $json_obj->{ fgenabled } =~ /^$/ )
+		if ( !&getValidFormat( 'fg_enabled', $json_obj->{ fgenabled } ) )
 		{
 			$error = "true";
 			&zenlog(
@@ -264,9 +265,9 @@ sub modify_farmguardian # ( $json_obj, $farmname )
 		$usefarmguardian = $json_obj->{ fgenabled };
 	}
 
-	if ( exists ( $json_obj->{ fglog } ) )
+	if ( exists ( $json_obj->{ fglog } ) && $type ne 'gslb' )
 	{
-		if ( $json_obj{ fglog } )
+		if ( !&getValidFormat( 'fg_log', $json_obj->{ fglog } ) )
 		{
 			$error = "true";
 			&zenlog(
@@ -304,6 +305,85 @@ sub modify_farmguardian # ( $json_obj, $farmname )
 			);
 		}
 	}
+	if ( $type eq "gslb" )
+	{
+		# local variables
+		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $service );
+		my ( $fgTime, $fgCmd ) = &getGSLBFarmGuardianParams( $farmname, $service );
+
+		# enable farmguardian
+		if ( exists $json_obj->{ fgenabled } eq 'true' && $fgStatus eq 'false' )
+		{
+			if ( $fgCmd )
+			{
+				$error = &enableGSLBFarmGuardian( $farmname, $service, 'true' );
+				if ( $error )
+				{
+					$error = 'true';
+					&zenlog(
+						"ZAPI error, trying to enable farm guardian in farm $farmname, service $service"
+					);
+				}
+			}
+			else
+			{
+				$error = 'true';
+				&zenlog( "ZAPI error, it's necesary add a script to enable farm guardian" );
+			}
+		}
+
+		# disable farmguardian
+		if (    !$error
+			 && exists $json_obj->{ fgenabled } eq 'false'
+			 && $fgStatus eq 'true' )
+		{
+			$error = &enableGSLBFarmGuardian( $farmname, $service, 'false' );
+			if ( $error )
+			{
+				$error = 'true';
+				&zenlog(
+					"ZAPI error, trying to disable farm guardian in farm $farmname, service $service"
+				);
+			}
+		}
+
+		# Change check script
+		if ( !$error && exists $json_obj->{ fgscript } )
+		{
+			$error =
+			  &setGSLBFarmGuardianParams( $farmname, $service, 'cmd',
+										  $json_obj->{ fgscript } );
+			if ( $error )
+			{
+				$error = 'true';
+				&zenlog(
+					"ZAPI error, trying to modify farm guardian script in farm $farmname, service $service"
+				);
+			}
+		}
+
+		# Change check time
+		if ( !$error && exists $json_obj->{ fgtimecheck } )
+		{
+			$error =
+			  &setGSLBFarmGuardianParams( $farmname, $service, 'interval',
+										  $json_obj->{ fgtimecheck } );
+			if ( $error )
+			{
+				$error = 'true';
+				&zenlog(
+					"ZAPI error, found trying to enable farm guardian check time in farm $farmname, service $service"
+				);
+			}
+		}
+
+		# if not error, the farm needs restart
+		if ( $error eq 'false' )
+		{
+			$needRestart = 1;
+		}
+	}
+
 	elsif ( $type eq "http" || $type eq "https" )
 	{
 		&runFarmGuardianStop( $farmname, $service );
@@ -345,8 +425,9 @@ sub modify_farmguardian # ( $json_obj, $farmname )
 					 description => "Modify farm $farmname",
 					 params      => $json_obj
 		};
+		$body->{ params }->{ status } = 'needed restart' if ( "$needRestart" );
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
@@ -362,7 +443,7 @@ sub modify_farmguardian # ( $json_obj, $farmname )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 

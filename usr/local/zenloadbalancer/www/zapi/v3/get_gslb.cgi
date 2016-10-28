@@ -171,11 +171,18 @@ sub farms_name_gslb # ( $farmname )
 			  };
 		}
 
+		# farm guardian 
+		my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $srv );
+		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $srv );
+		
 		push @out_s,
 		  {
 			id        => $srv,
 			algorithm => $lb,
 			port      => $dpc,
+			fgenabled => $fgStatus,
+			fgscript => $fgScrip,
+			fgtimecheck => $fgTime,
 			backends  => \@out_b,
 		  };
 	}

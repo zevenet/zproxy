@@ -116,7 +116,8 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 		#$exec returns 0 even when gslb stop fails, checked, so force TERM
 		my $pid_gslb = &getGSLBFarmPid( $fname );
 		&zenlog( "forcing stop to gslb with PID $pid_gslb" );
-		if ( $pid_gslb ne "-"){
+		if ( $pid_gslb ne "-" )
+		{
 			kill 'TERM' => $pid_gslb;
 		}
 		unlink ( $pidfile );
@@ -2098,9 +2099,9 @@ sub setGSLBDeleteFarmGuardian
 
         Returns:
         
-                up	  - fg is up
-                down  - fg is down
-                -1 	  - error
+                true	  	- fg is enabled
+                false  	- fg is disabled
+                -1 	  		- error
 =cut
 
 # &getGSLBFarmFGStatus ( fname, service );
@@ -2142,13 +2143,13 @@ sub getGSLBFarmFGStatus
 					# if service_type point to tpc_port, fg is down
 					if ( $line =~ /service_types = tcp_\d+/ )
 					{
-						$output = "down";
+						$output = "false";
 					}
 
 					# if service_type point to fg, fg is up
 					elsif ( $line =~ /service_types = ${service}_fg_\d+/ )
 					{
-						$output = "up";
+						$output = "true";
 					}
 					else
 					{
@@ -2220,13 +2221,13 @@ sub enableGSLBFarmGuardian
 				}
 				if ( !$output )
 				{
-					if ( $option =~ /up/ && $line =~ /service_types = tcp_(\d+)/ )
+					if ( $option =~ /true/ && $line =~ /service_types = tcp_(\d+)/ )
 					{
 						$output = $1;
 						$line   = "\t\tservice_types = ${service}_fg_$output";
 						last;
 					}
-					elsif ( $option =~ /down/ && $line =~ /service_types = ${service}_fg_(\d+)/ )
+					elsif ( $option =~ /false/ && $line =~ /service_types = ${service}_fg_(\d+)/ )
 					{
 						$output = $1;
 						$line   = "\t\tservice_types = tcp_$output";
@@ -2241,44 +2242,44 @@ sub enableGSLBFarmGuardian
 	return $output;
 }
 
- #&getGSLBCheckConf  ( $farmname );
-sub getGSLBCheckConf 
+#&getGSLBCheckConf  ( $farmname );
+sub getGSLBCheckConf
 {
 	my $farmname = shift;
-	
-	my $errormsg = system ( "$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf > /dev/null 2>&1" );
+
+	my $errormsg = system (
+		   "$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf > /dev/null 2>&1" );
 	if ( $errormsg )
 	{
-		my @run = `$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf 2>&1 > /dev/null `;
+		my @run =
+		  `$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf 2>&1 > /dev/null `;
 
 		@run = grep ( /# error:/, @run );
 		$errormsg = $run[0];
-		
-		
+
 		if ( $errormsg =~ /Zone ([\w\.]+).: Zonefile parse error at line (\d+)/ )
 		{
 			my $fileZone = "$configdir\/$farmname\_gslb.cfg/etc/zones/$1";
-			my $numLine = $2-1;
-			
+			my $numLine  = $2 - 1;
+
 			use Tie::File;
 			tie @filelines, 'Tie::File', $fileZone;
-			$errormsg = $filelines[ $numLine ];
+			$errormsg = $filelines[$numLine];
 			untie @filelines;
 		}
 	}
-	
+
 	return $errormsg;
 }
 
-
- # Get hash array with all resources for a farm and service
- # &getGSLBResources ( $farmname, $zone )
+# Get hash array with all resources for a farm and service
+# &getGSLBResources ( $farmname, $zone )
 sub getGSLBResources
 {
 	my ( $farmname, $zone ) = @_;
 	my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
-	my @resourcesArray; 
-	
+	my @resourcesArray;
+
 	my @be = split ( "\n", $backendsvs );
 
 	foreach $subline ( @be )
@@ -2293,21 +2294,19 @@ sub getGSLBResources
 
 		my @subbe  = split ( "\;", $subline );
 		my @subbe1 = split ( "\t", $subbe[0] );
-		my @subbe2 = split ( "_", $subbe[1] );
-		
-		$resources { rname } = $subbe1[0]; 
-		$resources { id } = $subbe2[1] + 0; 
-		$resources { ttl } = $subbe1[1]; 
-		$resources { type } = $subbe1[2]; 
-		$resources { rdata } = $subbe1[3]; 
+		my @subbe2 = split ( "_",  $subbe[1] );
+
+		$resources{ rname } = $subbe1[0];
+		$resources{ id }    = $subbe2[1] + 0;
+		$resources{ ttl }   = $subbe1[1];
+		$resources{ type }  = $subbe1[2];
+		$resources{ rdata } = $subbe1[3];
 
 		push @resourcesArray, \%resources;
 	}
-	
-	return \@resourcesArray;
- }
 
-	
+	return \@resourcesArray;
+}
 
 # do not remove this
 1;
