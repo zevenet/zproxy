@@ -919,6 +919,11 @@ PUT qr{^/interfaces/nic/($nic_re)$} => sub {
 	&modify_interface_nic( @_ );
 };
 
+#  DELETE interfaces nic
+DELETE qr{^/interfaces/nic/($nic_re)$} => sub {
+	&delete_interface_nic( @_ );
+};
+
 ##### /interfaces/bonding
 
 #  GET interfaces bonding

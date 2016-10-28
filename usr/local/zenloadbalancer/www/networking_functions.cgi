@@ -382,10 +382,10 @@ sub delRoutes    # ($table,$if_ref)
 		if ( $table eq "local" )
 		{
 			# Delete routes on the interface table
-			if ( ! defined $$if_ref{ vlan } || $$if_ref{ vlan } eq '' )
-			{
-				return 1;
-			}
+			#~ if ( ! defined $$if_ref{ vlan } || $$if_ref{ vlan } eq '' )
+			#~ {
+				#~ return 1;
+			#~ }
 
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route flush table table_$$if_ref{name}";
 			$status = &logAndRun( "$ip_cmd" );

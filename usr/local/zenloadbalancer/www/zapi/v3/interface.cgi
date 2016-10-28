@@ -659,6 +659,61 @@ sub delete_interface # ( $if )
 	}
 }
 
+sub delete_interface_nic # ( $nic )
+{
+	my $nic = shift;
+
+	my $description = "Delete nic interface";
+	my $ip_v = 4;
+	my $if_ref = &getInterfaceConfig( $nic, $ip_v );
+
+	if ( !$if_ref )
+	{
+		# Error
+		my $errormsg = "There is no configuration for the network interface.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	&zenlog( Dumper $if_ref );
+
+	eval {
+		die if &delRoutes( "local", $if_ref );
+		die if &downIf( $if_ref, 'writeconf' ); # FIXME: To be removed
+		die if &delIf( $if_ref );
+	};
+
+	if ( ! $@ )
+	{
+		# Success
+		my $message = "The configuration for the network interface $nic has been deleted.";
+		my $body = {
+					 description => $description,
+					 success     => "true",
+					 message     => $message,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The configuration for the network interface $nic can't be deleted: $@";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
 # GET Interface
 #
 # curl --tlsv1 -k -X GET -H 'Content- Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/interfaces
