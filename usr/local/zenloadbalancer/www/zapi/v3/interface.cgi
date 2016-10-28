@@ -444,7 +444,7 @@ sub new_vlan # ( $json_obj )
 			&applyRoutes( "local", $if_ref );
 		}
 
-		&setInterfaceConfig( $if_ref );
+		&setInterfaceConfig( $if_ref ) or die;
 	};
 
 	if ( ! $@ )
