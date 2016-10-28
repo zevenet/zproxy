@@ -939,7 +939,7 @@ GET qr{^/interfaces/vlan$} => sub {
 };
 
 #  POST vlan interface
-POST qr{^/interfaces/vlan/($vlan_interface)$} => sub {
+POST qr{^/interfaces/vlan$} => sub {
 	&new_vlan( @_ );
 };
 
@@ -951,7 +951,7 @@ GET qr{^/interfaces/virtual$} => sub {
 };
 
 #  POST virtual interface
-POST qr{^/interfaces/virtual/($virt_interface)$} => sub {
+POST qr{^/interfaces/virtual$} => sub {
 	&new_vini( @_ );
 };
 
