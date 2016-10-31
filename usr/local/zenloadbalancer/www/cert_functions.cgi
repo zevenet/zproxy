@@ -27,6 +27,8 @@ use Time::localtime;
 #Return all certificate files in config directory
 sub getCertFiles    # ()
 {
+	my $configdir = &getGlobalConfiguration('configdir');
+
 	opendir ( DIR, $configdir );
 	my @files = grep ( /.*\.pem$/, readdir ( DIR ) );
 	@files = grep ( !/_dh\d+\.pem$/, @files );
@@ -169,6 +171,7 @@ sub getFarmCertUsed    #($cfile)
 {
 	my ( $cfile ) = @_;
 
+	my $configdir = &getGlobalConfiguration('configdir');
 	my @farms  = &getFarmsByType( "https" );
 	my $output = -1;
 
@@ -218,6 +221,7 @@ sub delCert    # ($certname)
 
 	# escaping special caracters
 	$certname = quotemeta $certname;
+	my $configdir = &getGlobalConfiguration('configdir');
 
 	# verify existance in config directory for security reasons
 	opendir ( DIR, $configdir );
@@ -236,6 +240,8 @@ sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, 
 		 $certlocality, $certorganization, $certdivision, $certmail,
 		 $certkey,      $certpassword
 	) = @_;
+
+	my $configdir = &getGlobalConfiguration('configdir');
 
 	##sustituir los espacios por guiones bajos en el nombre de archivo###
 	if ( $certpassword eq "" )
@@ -346,6 +352,8 @@ sub downloadCert      # ($certfile)
 sub getCertData    # ($certfile)
 {
 	my ( $certfile ) = @_;
+
+	my $configdir = &getGlobalConfiguration('configdir');
 	my $filepath     = "$configdir\/$certfile";
 	my @eject;
 
@@ -365,7 +373,7 @@ sub createPemFromKeyCRT    # ($keyfile,$crtfile,$certautfile,$tmpdir)
 {
 	my ( $keyfile, $crtfile, $certautfile, $tmpdir ) = @_;
 
-	my $path    = $configdir;
+	my $path    = &getGlobalConfiguration('configdir');
 	my $buff    = "";
 	my $pemfile = $keyfile;
 	$pemfile =~ s/\.key$/\.pem/;

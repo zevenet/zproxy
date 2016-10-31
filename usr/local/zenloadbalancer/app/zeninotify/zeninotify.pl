@@ -35,6 +35,8 @@ use IO::Interface qw(:flags);
 require '/usr/local/zenloadbalancer/config/global.conf';
 require '/usr/local/zenloadbalancer/www/functions_ext.cgi';
 
+my $configdir = &getGlobalConfiguration('configdir');
+
 if ( $ARGV[0] eq 'stop' && -e $zeninopid )
 {
 	open my $pidfile, "<", "$zeninopid";

@@ -21,6 +21,8 @@
 #
 ###############################################################################
 
+my $configdir = &getGlobalConfiguration('configdir');
+
 #asign a port for manage a pen Farm
 sub setFarmPort    # ()
 {

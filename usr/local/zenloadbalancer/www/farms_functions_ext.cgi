@@ -21,6 +21,8 @@
 #
 ###############################################################################
 
+my $configdir = &getGlobalConfiguration('configdir');
+
 #
 sub getFarmCertificatesSNI    #($fname)
 {

@@ -12,7 +12,7 @@ if ($count eq ""){
 
 my $filename = &getFarmFile($farmname);
 my $type = &getFarmType($farmname);
-
+my $configdir = &getGlobalConfiguration('configdir');
 
 if (-e "$configdir/$filename" && $type eq "datalink"){
 	my @backends = &getFarmServers($farmname);

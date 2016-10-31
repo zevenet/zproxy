@@ -61,6 +61,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 	my $if_line;
 	my $if_status;
+	my $configdir = &getGlobalConfiguration('configdir');
 	my $config_filename = "$configdir/if_${if_name}_conf";
 
 	$ip_version = 4 if !$ip_version;
@@ -163,6 +164,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	my @if_params = ( 'name', 'addr', 'mask', 'gateway' );
 
 	my $if_line = join ( ';', @{ $if_ref }{ @if_params } ) . ';';
+	my $configdir = &getGlobalConfiguration('configdir');
 	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
 
 	if ( !-f $config_filename )
@@ -787,6 +789,8 @@ sub setBondMaster
 		my $bond_conf = &getBondConfig();
 		delete $bond_conf->{ $bond_name };
 		&setBondConfig( $bond_conf );
+
+		my $configdir = &getGlobalConfiguration('configdir');
 
 		unlink "$configdir/if_${bond_name}_conf";
 	}

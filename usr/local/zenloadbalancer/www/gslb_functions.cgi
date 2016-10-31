@@ -21,6 +21,8 @@
 #
 ###############################################################################
 
+my $configdir = &getGlobalConfiguration('configdir');
+
 # Start Farm rutine
 sub _runGSLBFarmStart    # ($fname,$writeconf)
 {

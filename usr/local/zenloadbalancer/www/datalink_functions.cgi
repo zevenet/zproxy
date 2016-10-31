@@ -21,6 +21,8 @@
 #
 ###############################################################################
 
+my $configdir = &getGlobalConfiguration('configdir');
+
 #
 sub getDatalinkFarmAlgorithm    # ($farm_name)
 {

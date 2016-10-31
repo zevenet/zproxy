@@ -57,6 +57,7 @@ sub certificates # ()
 
 	foreach my $certificate ( @certificates )
 	{
+		my $configdir = &getGlobalConfiguration('configdir');
 		my $certificateFile = "$configdir\/$certificate";
 
 		my $type       = &getCertType( $certificateFile );
@@ -91,7 +92,7 @@ sub download_certificate # ()
 {
 	my $cert_filename = shift;
 
-	my $cert_dir = $configdir;
+	my $cert_dir = &getGlobalConfiguration('configdir');
 	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
 
 	open ( my $download_fh, '<', "$cert_dir/$cert_filename" );
@@ -137,7 +138,7 @@ sub get_certificate_info # ()
 {
 	my $cert_filename = shift;
 
-	my $cert_dir = $configdir;
+	my $cert_dir = &getGlobalConfiguration('configdir');
 	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
 
 	if ( $cert_filename =~ /\.(pem|csr)$/ && -f "$cert_dir\/$cert_filename" )
@@ -634,6 +635,8 @@ sub upload_certs # ()
 
 	my $upload_filehandle = shift;
 	my $filename = shift;
+
+	my $configdir = &getGlobalConfiguration('configdir');
 
 	if ( $filename =~ /^\w.+\.pem$/ && ! -f "$configdir/$filename" )
 	{

@@ -34,6 +34,8 @@ require "/usr/local/zenloadbalancer/config/global.conf";
 require "/usr/local/zenloadbalancer/www/functions.cgi";
 
 my $basedir = &getGlobalConfiguration('basedir');
+my $configdir = &getGlobalConfiguration('configdir');
+
 my $eject                 = $ARGV[0];
 my @configured_interfaces = @{ &getConfigInterfaceList() };
 

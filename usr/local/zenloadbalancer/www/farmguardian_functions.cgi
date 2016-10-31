@@ -21,6 +21,8 @@
 #
 ###############################################################################
 
+my $configdir = &getGlobalConfiguration('configdir');
+
 # Returns FarmGuardian config file for this farm
 sub getFarmGuardianFile    # ($fname,$svice)
 {

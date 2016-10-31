@@ -26,6 +26,7 @@ if ( -e "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi" )
 	require "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi";
 }
 
+my $configdir = &getGlobalConfiguration('configdir');
 
 #
 sub setFarmBlacklistTime    # ($blacklist_time,$farm_name)

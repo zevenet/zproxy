@@ -175,6 +175,7 @@ sub ifexist    # ($nif)
 	use IO::Interface qw(:flags);
 	my $s = IO::Socket::INET->new( Proto => 'udp' );
 	my @interfaces = $s->if_list;
+	my $configdir = &getGlobalConfiguration('configdir');
 
 	for my $if ( @interfaces )
 	{
@@ -202,7 +203,9 @@ sub writeConfigIf    # ($if,$string)
 {
 	my ( $if, $string ) = @_;
 
-	open CONFFILE, "> $configdir/if\_$if\_conf";
+	my $configdir = &getGlobalConfiguration('configdir');
+
+	open CONFFILE, ">", "$configdir/if\_$if\_conf";
 	print CONFFILE "$string\n";
 	close CONFFILE;
 	return $?;
@@ -512,6 +515,7 @@ sub addIp    # ($if_ref)
 sub getConfigInterfaceList
 {
 	my @configured_interfaces;
+	my $configdir = &getGlobalConfiguration('configdir');
 
 	if ( opendir my $dir, "$configdir" )
 	{
@@ -641,6 +645,7 @@ sub upIf    # ($if_ref, $writeconf)
 {
 	my ( $if_ref, $writeconf ) = @_;
 
+	my $configdir = &getGlobalConfiguration('configdir');
 	my $status = 0;
 	$if_ref->{ status } = 'up';
 
@@ -690,6 +695,7 @@ sub downIf    # ($if_ref, $writeconf)
 	# Set down status in configuration file
 	if ( $writeconf )
 	{
+		my $configdir = &getGlobalConfiguration('configdir');
 		my $file = "$configdir/if_$$if_ref{name}_conf";
 
 		tie my @if_lines, 'Tie::File', "$file";
@@ -790,6 +796,7 @@ sub delIf    # ($if_ref)
 	my ( $if_ref ) = @_;
 
 	my $status;
+	my $configdir = &getGlobalConfiguration('configdir');
 	my $file = "$configdir/if_$$if_ref{name}\_conf";
 	my $has_more_ips;
 
@@ -986,10 +993,12 @@ sub gwofif    # ($if)
 {
 	my $if = shift;
 
-	open FGW, "<$configdir\/if\_$if\_conf";
-	@gw_if = <FGW>;
+	my $configdir = &getGlobalConfiguration('configdir');
+
+	open FGW, "<", "$configdir\/if\_$if\_conf";
+	my @gw_if = <FGW>;
 	close FGW;
-	@gw_ifspt = split ( /:/, $gw_if[0] );
+	my @gw_ifspt = split ( /:/, $gw_if[0] );
 	chomp ( $gw_ifspt[5] );
 	return $gw_ifspt[5];
 }
@@ -1226,7 +1235,7 @@ sub getVipOutputIp    # ($vip)
 
 sub getVirtualInterfaceFilenameList
 {
-	opendir ( DIR, "$configdir" );
+	opendir ( DIR, &getGlobalConfiguration('configdir') );
 
 	my @filenames = grep ( /^if.*\:.*$/, readdir ( DIR ) );
 

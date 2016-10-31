@@ -38,6 +38,8 @@ require "/usr/local/zenloadbalancer/www/nf_functions.cgi";
 require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 
+my $configdir = &getGlobalConfiguration('configdir');
+
 #check if the string is a valid multiport definition
 sub ismport    # ($string)
 {

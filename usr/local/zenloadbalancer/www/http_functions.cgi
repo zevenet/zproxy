@@ -21,6 +21,8 @@
 #
 ###############################################################################
 
+my $configdir = &getGlobalConfiguration('configdir');
+
 # Only used in http content
 sub setFarmClientTimeout    # ($client,$farm_name)
 {

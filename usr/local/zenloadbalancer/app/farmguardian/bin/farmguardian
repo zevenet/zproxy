@@ -68,6 +68,7 @@ if ( $ARGV[1] eq "-s" )
 }
 
 # declare config files/path
+my $configdir  = &getGlobalConfiguration( 'configdir' );
 my $pidfile    = "${farmname}_${fservice}guardian.pid";
 my $file       = "${farmname}_${fservice}guardian.conf";
 my $fileconfig = "$configdir/$file";
