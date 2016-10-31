@@ -6,9 +6,10 @@
 use Sys::Hostname;
 
 require '/usr/local/zenloadbalancer/config/global.conf';
-#~ require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
+require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 
 my $DEBUG = 0;
+my $filecluster = &getGlobalConfiguration('filecluster');
 
 
 ## Cluster configured

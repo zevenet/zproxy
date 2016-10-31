@@ -84,7 +84,7 @@ sub getZClusterLocalIp
 sub getZClusterStatus
 {
 	# case filecuster does not exist
-	return undef if ! -f $filecluster;
+	return undef if ! -f &getGlobalConfiguration('filecluster');
 	
 	my $zcl_conf = &getZClusterConfig();
 
@@ -97,6 +97,7 @@ sub getZClusterStatus
 sub getZClusterConfig
 {
 	use Config::Tiny;
+	my $filecluster = &getGlobalConfiguration('filecluster');
 
 	if ( ! -f $filecluster )
 	{
@@ -122,7 +123,7 @@ sub setZClusterConfig
 	my $config = shift;
 
 	# returns true on success or undef on error,
-	return $config->write( $filecluster );
+	return $config->write( &getGlobalConfiguration('filecluster') );
 }
 
 sub getZClusterRunning
@@ -785,7 +786,7 @@ sub getZCusterStatusInfo
 	my $status;
 
 	# check zcluster configuration
-	if ( ! -f $filecluster )
+	if ( ! -f &getGlobalConfiguration('filecluster') )
 	{
 		$status->{ cl_conf } = 'ko';
 		return $status;
