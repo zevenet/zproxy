@@ -59,7 +59,6 @@ sub new_vini # ( $json_obj )
 		$json_obj->{ vini } = $2;
 
 		my $vlan_tag_re = &getValidFormat( 'vlan_tag' );
-		local $2 = undef;
 		$json_obj->{ parent } =~ /^($nic_re)(?:\.($vlan_tag_re))?$/;
 		$json_obj->{ dev } = $1;
 		$json_obj->{ vlan } = $2;
@@ -642,7 +641,7 @@ sub delete_interface_vlan # ( $vlan )
 {
 	my $vlan = shift;
 
-	my $description => "Delete VLAN interface";
+	my $description = "Delete VLAN interface";
 	my $ip_v = 4;
 	my $if_ref = &getInterfaceConfig( $vlan, $ip_v );
 
@@ -682,6 +681,59 @@ sub delete_interface_vlan # ( $vlan )
 	{
 		# Error
 		my $errormsg = "The VLAN interface $vlan can't be deleted";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
+sub delete_interface_virtual # ( $virtual )
+{
+	my $virtual = shift;
+
+	my $description = "Delete virtual interface";
+	my $ip_v = 4;
+	my $if_ref = &getInterfaceConfig( $virtual, $ip_v );
+
+	if ( !$if_ref )
+	{
+		# Error
+		my $errormsg = "The virtual interface $virtual doesn't exist.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	eval {
+		die if &delRoutes( "local", $if_ref );
+		die if &downIf( $if_ref, 'writeconf' );
+		die if &delIf( $if_ref );
+	};
+
+	if ( ! $@ )
+	{
+		# Success
+		my $message = "The virtual interface $virtual has been deleted.";
+		my $body = {
+					 description => $description,
+					 success     => "true",
+					 message     => $message,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The virtual interface $virtual can't be deleted";
 		my $body = {
 					 description => $description,
 					 error       => "true",

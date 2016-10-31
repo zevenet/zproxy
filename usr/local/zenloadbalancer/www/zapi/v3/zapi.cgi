@@ -967,21 +967,23 @@ POST qr{^/interfaces/virtual$} => sub {
 	&new_vini( @_ );
 };
 
+##### /interfaces/virtual/VIRTUAL
+
+#  PUT interface
+PUT qr{^/interfaces/virtual/($virt_interface)$} => sub {
+	&modify_interface_virtual( @_ );
+};
+
+#  DELETE virtual interface (default)
+DELETE qr{^/interfaces/virtual/($virt_interface)$} => sub {
+	&delete_interface_virtual( @_ );
+};
+
 # FIXME: implement up/down in PUT method
 #  POST action interface
 #~ PUT qr{^/interfaces/(.+)$} => sub {
 	#~ &ifaction( $1 );
 #~ };
-
-#  DELETE virtual interface (default)
-DELETE qr{^/interfaces/($vlan_interface|$virt_interface)$} => sub {
-	&delete_interface( @_ );
-};
-
-#  PUT interface
-PUT qr{^/interfaces/($vlan_interface|$virt_interface)$} => sub {
-	&modify_interface( @_ );
-};
 
 #	STATS
 #
