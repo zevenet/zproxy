@@ -292,9 +292,9 @@ sub service_backends
 	}
 	elsif ( $type eq 'gslb' )
 	{
-		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
+		my @services_list = &getGSLBFarmServices( $farmname );
 
-		if ( ! $backendsvs )
+		unless ( grep { $service eq $_ } @services_list )
 		{
 			# Error
 			my $errormsg = "The service $service does not exist.";
@@ -307,7 +307,7 @@ sub service_backends
 			&httpResponse({ code => 404, body => $body });
 		}
 
-		my @be = split ( "\n", $backendsvs );
+		my @be = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
 		my @backends;
 
 		foreach my $subline ( @be )
