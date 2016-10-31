@@ -29,6 +29,7 @@
 
 #~ $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 
+require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
 require "/usr/local/zenloadbalancer/www/nf_functions.cgi";
@@ -43,7 +44,6 @@ require "/usr/local/zenloadbalancer/www/farmguardian_functions.cgi";
 require "/usr/local/zenloadbalancer/www/datalink_functions.cgi";
 require "/usr/local/zenloadbalancer/www/http_functions.cgi";
 require "/usr/local/zenloadbalancer/www/tcpudp_functions.cgi";
-require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 require "/usr/local/zenloadbalancer/www/zapi_functions.cgi";
 require "/usr/local/zenloadbalancer/www/login_functions.cgi";
 require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";
