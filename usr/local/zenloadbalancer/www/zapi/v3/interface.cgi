@@ -43,173 +43,154 @@
 #
 #**
 
-sub new_vini # ( $json_obj, $fdev )
+sub new_vini # ( $json_obj )
 {
 	my $json_obj = shift;
-	my $fdev = shift;
 
-	my $error = "false";
+	my $description = "Add a virtual interface";
 
-	# Check interface errors
-	if ( $fdev =~ /^$/ )
+	my $nic_re = &getValidFormat( 'nic_interface' );
+	my $vlan_re = &getValidFormat( 'vlan_interface' );
+	my $virtual_tag_re = &getValidFormat( 'virtual_tag' );
+
+	if ( $json_obj->{ name } =~ /^($nic_re|$vlan_re):($virtual_tag_re)$/ )
 	{
-		# Error
-		my $errormsg = "Interface name can't be empty";
-		my $body = {
-					 description => "Interface $fdev",
-					 error       => "true",
-					 message     => $errormsg
-		};
+		$json_obj->{ parent } = $1;
+		$json_obj->{ vini } = $2;
 
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	if ( $fdev =~ /\s+/ )
-	{
-		# Error
-		my $errormsg = "Interface name is not valid";
-		my $body = {
-					 description => "Interface $fdev",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	my $parent_exist = &ifexist($fdev);
-	if ( $parent_exist eq "false" )
-	{
-		# Error
-		my $errormsg = "The parent interface $fdev doesn't exist.";
-		my $body = {
-					 description => "Interface $fdev",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
-	# Check name errors.
-	if ( $json_obj->{ name } =~ /^$/ )
-	{
-		# Error
-		my $errormsg = "The name parameter can't be empty";
-		my $body = {
-					 description => "Interface $fdev",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
-	# Check address errors
-	if ( &ipisok( $json_obj->{ ip } ) eq "false" )
-	{
-		# Error
-		my $errormsg = "IP Address $json_obj->{ip} structure is not ok.";
-		my $body = {
-					 description => "IP Address $json_obj->{ip}",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	if ( ! $json_obj->{ ip } )
-	{
-		# Error
-		my $errormsg = "IP Address parameter can't be empty";
-		my $output = {
-					   description => "Interface $ifn",
-					   error       => "true",
-					   message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	# Check network interface errors
-	# A virtual interface cannnot exist in two stacks
-	my $ifn = "$fdev\:$json_obj->{name}";
-	my $ip_v = &ipversion($json_obj->{ip});
-	my $if_ref = &getInterfaceConfig( $ifn, 4 );
-	$if_ref = &getInterfaceConfig( $ifn, 6 ) if !if_ref;
-	
-	if ( $if_ref )
-	{
-		# Error
-		my $errormsg = "Network interface $ifn already exists.";
-		my $body = {
-					 description => "Network interface $ifn",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	# Get params from parent interface
-	my $new_if_ref = &getInterfaceConfig( $fdev, $ip_v );
-	$error = 'true' if ! $new_if_ref;
-
-	$new_if_ref->{name} = $ifn;
-	$new_if_ref->{vini} = $json_obj->{name};
-	$new_if_ref->{addr} = $json_obj->{ip};
-	$new_if_ref->{ip_v} = $ip_v;
-	$new_if_ref->{ gateway } = "" if ! $new_if_ref->{ gateway };
-
-	# No errors
-	if ( $error eq "false" )
-	{
-		&addIp( $new_if_ref );		
-		my $state = &upIf( $new_if_ref, 'writeconf' );
-
-		if ( $state == 0 )
-		{
-			$new_if_ref{status} = "up";
-		}
-		else
-		{
-			$error = "true";
-		}
-
-		# Writing new parameters in configuration file
-		# virtual interface ipv4
-		if ( $new_if_ref{name} !~ /:/ )
-		{
-			&writeRoutes( $new_if_ref{name} );
-		}
-		
-		&setInterfaceConfig( $new_if_ref );
-		&applyRoutes( "local", $new_if_ref );
-	}
-
-	if ( $error eq "false" )
-	{
-		# Success
-		my $body = {
-					 description => "New virtual network interface $ifn",
-					 params      => {
-								 name    => $new_if_ref->{ name },
-								 ip      => $new_if_ref->{ addr },
-								 netmask => $new_if_ref->{ mask },
-								 gateway => $new_if_ref->{ gateway },
-								 HWaddr  => $new_if_ref->{ mac },
-					 },
-		};
-
-		&httpResponse({ code => 201, body => $body });
+		my $vlan_tag_re = &getValidFormat( 'vlan_tag' );
+		local $2 = undef;
+		$json_obj->{ parent } =~ /^($nic_re)(?:\.($vlan_tag_re))?$/;
+		$json_obj->{ dev } = $1;
+		$json_obj->{ vlan } = $2;
 	}
 	else
 	{
 		# Error
-		my $errormsg = "The $ifn virtual network interface can't be created";
+		my $errormsg = "Interface name is not valid";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# validate IP
+	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+	{
+		# Error
+		my $errormsg = "IP Address is not valid.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	$json_obj->{ ip_v } = ipversion( $json_obj->{ ip } );
+
+	# validate PARENT
+	# virtual interfaces require a configured parent interface
+	my $parent_exist = &ifexist( $json_obj->{ parent } );
+	unless ( $parent_exist eq "true" && &getInterfaceConfig( $json_obj->{ parent }, $json_obj->{ ip_v } ) )
+	{
+		# Error
+		my $errormsg = "The parent interface $json_obj->{ parent } doesn't exist.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+	
+	# Check network interface errors
+	# A virtual interface cannnot exist in two stacks
+	my $if_ref = &getInterfaceConfig( $json_obj->{ name }, $json_obj->{ ip_v } );
+	
+	if ( $if_ref )
+	{
+		# Error
+		my $errormsg = "Network interface $json_obj->{ name } already exists.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# Check new IP address is not in use
+	my @activeips = &listallips();
+	for my $ip ( @activeips )
+	{
+		if ( $ip eq $json_obj->{ ip } )
+		{
+			# Error
+			my $errormsg = "IP Address $json_obj->{ip} is already in use.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+
+	# setup parameters of virtual interface
+	$if_ref = &getInterfaceConfig( $json_obj->{ parent }, $json_obj->{ ip_v } );
+
+	$if_ref->{ status } = &getInterfaceSystemStatus( $json_obj );
+	$if_ref->{ name } = $json_obj->{ name };
+	$if_ref->{ vini } = $json_obj->{ vini };
+	$if_ref->{ addr } = $json_obj->{ ip };
+	$if_ref->{ gateway } = "" if ! $if_ref->{ gateway };
+	$if_ref->{ type } = 'virtual';
+
+	# No errors
+	eval {
+		die if &addIp( $if_ref );
+
+		my $state = &upIf( $if_ref, 'writeconf' );
+
+		if ( $state == 0 )
+		{
+			$if_ref{ status } = "up";
+			&applyRoutes( "local", $if_ref );
+		}
+
+		&setInterfaceConfig( $if_ref ) or die;
+	}
+
+	if ( !$@ )
+	{
+		# Success
+		my $body = {
+					 description => $description,
+					 params      => {
+								 name    => $if_ref->{ name },
+								 ip      => $if_ref->{ addr },
+								 netmask => $if_ref->{ mask },
+								 gateway => $if_ref->{ gateway },
+								 HWaddr  => $if_ref->{ mac },
+					 },
+		};
+
+		&httpResponse( { code => 201, body => $body } );
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The $json_obj->{ name } virtual network interface can't be created";
 		my $output = {
-					   description => "New virtual network interface $ifn",
+					   description => $description,
 					   error       => "true",
 					   message     => $errormsg
 		};
@@ -268,7 +249,6 @@ sub new_vlan # ( $json_obj )
 	my $json_obj = shift;
 
 	my $description = "Add a vlan interface";
-	my $error = "false";
 
 	# validate VLAN NAME
 	my $nic_re = &getValidFormat( 'nic_interface' );
@@ -1627,46 +1607,74 @@ sub modify_interface_nic # ( $json_obj, $nic )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	# Check address errors
-	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+	unless ( exists $json_obj->{ ip } || exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
 	{
 		# Error
-		my $errormsg = "IP Address is not valid.";
+		my $errormsg = "No parameter received to be configured";
 		my $body = {
 					 description => $description,
 					 error       => "true",
-					 message     => $errormsg
+					 message     => $errormsg,
 		};
 
 		&httpResponse({ code => 400, body => $body });
+	}
+
+	# Check address errors
+	if ( exists $json_obj->{ ip } )
+	{
+		unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) || $json_obj->{ ip } eq '' )
+		{
+			# Error
+			my $errormsg = "IP Address is not valid.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		if ( $json_obj->{ ip } eq '' )
+		{
+			$json_obj->{ netmask } = '';
+			$json_obj->{ gateway } = '';
+		}
 	}
 
 	# Check netmask errors
-	unless ( defined( $json_obj->{ netmask } ) && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
+	if ( exists $json_obj->{ netmask } )
 	{
-		# Error
-		my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
+		unless ( defined( $json_obj->{ netmask } ) && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
+		{
+			# Error
+			my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
 
-		&httpResponse({ code => 400, body => $body });
+			&httpResponse({ code => 400, body => $body });
+		}
 	}
 
 	# Check gateway errors
-	unless ( ! defined( $json_obj->{ gateway } ) || &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) )
+	if ( exists $json_obj->{ netmask } )
 	{
-		# Error
-		my $errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
+		unless ( defined( $json_obj->{ gateway } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) || $json_obj->{ gateway } eq '' )
+		{
+			# Error
+			my $errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
 
-		&httpResponse({ code => 400, body => $body });
+			&httpResponse({ code => 400, body => $body });
+		}
 	}
 
 	# Delete old interface configuration

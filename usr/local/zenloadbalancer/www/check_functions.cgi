@@ -30,48 +30,49 @@
 my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/;         # (0-255)
 my $ipv4_addr     = qr/(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS/;
 my $ipv6_addr     = qr/(?:[\: \.a-f0-9]+)/;
-my $boolean		= qr/(?:true|false)/;
+my $boolean       = qr/(?:true|false)/;
 
-my $hostname = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
-my $zone     = qr/(?:$hostname\.)+[a-z]{2,}/;
-my $vlan_tag = qr/\d{1,4}/;
+my $hostname    = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
+my $zone        = qr/(?:$hostname\.)+[a-z]{2,}/;
+my $vlan_tag    = qr/\d{1,4}/;
+my $virtual_tag = qr/[a-zA-Z0-9]{1,13}/;
 
 my %format_re = (
+
 	# hostname
 	'hostname' => $hostname,
 
 	# farms
 	'farm_name' => qr/[a-zA-Z0-9\-]+/,
 	'backend'   => qr/\d+/,
-	#~ 'service'   => qr{\w+},
 	'service' => qr/[a-zA-Z1-9\-]+/,
-	#~ 'zone'      => qr{\w+},
+
+	# gslb
 	'zone' => qr/(?:$hostname\.)+[a-z]{2,}/,
-	#~ 'zone' = qr/([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}/,
-	#~ 'zone' = qr/[a-z0-9].*-*.*\.[a-z0-9].*/,
 	'resource_id'   => qr/\d+/,
 	'resource_name' => qr/(?:[a-zA-Z0-9\-\.\_]+|\@)/,
-	'resource_ttl'  => qr/\d+/,                     # except zero
+	'resource_ttl'  => qr/[1-9]\d*/,                         # except zero
 	'resource_type' => qr/(?:NS|A|AAAA|CNAME|DYNA|MX|SRV|TXT|PTR|NAPTR)/,
-	'resource_data' => qr/.+/, # alow anything (becouse of TXT type)
-	'resource_data_A' => $ipv4_addr, 
-	'resource_data_AAAA' => $ipv6_addr, 
-	'resource_data_NS' => qr/[a-zA-Z0-9\-]+/, 
-	'resource_data_CNAME' => qr/[a-z\.]+/, 
-	'resource_data_MX' => qr/[a-z\.]+/, 
-	'resource_data_TXT' => qr/.+/, 			# all characters allow 
-	'resource_data_SRV' => qr/[a-z0-9 \.]/, 
-	'resource_data_PTR' => qr/[a-z\.]+/, 
-	'resource_data_NAPTR' => qr/.+/,		# all characters allow
-	#~ 'resource_data' => qr/(?:$hostname|$zone|$ipv4)/, # hostname or IP
+	'resource_data'      => qr/.+/,            # alow anything (because of TXT type)
+	'resource_data_A'    => $ipv4_addr,
+	'resource_data_AAAA' => $ipv6_addr,
+	'resource_data_NS'   => qr/[a-zA-Z0-9\-]+/,
+	'resource_data_CNAME' => qr/[a-z\.]+/,
+	'resource_data_MX'    => qr/[a-z\.]+/,
+	'resource_data_TXT'   => qr/.+/,            # all characters allow
+	'resource_data_SRV'   => qr/[a-z0-9 \.]/,
+	'resource_data_PTR'   => qr/[a-z\.]+/,
+	'resource_data_NAPTR' => qr/.+/,            # all characters allow
+	#'resource_data' => qr/(?:$hostname|$zone|$ipv4)/, # hostname or IP
 
-	# interfaces ( WARNING: lenght in characters < 16 )
+	# interfaces ( WARNING: length in characters < 16  )
 	'nic_interface'  => qr/[a-zA-Z0-9]{1,15}/,
 	'bond_interface' => qr/[a-zA-Z0-9]{1,15}/,
 	'vlan_interface' => qr/[a-zA-Z0-9]{1,13}\.$vlan_tag/,
-	'virt_interface' => qr/[a-zA-Z0-9]{1,13}(?:\.[a-zA-Z0-9]{1,4})?:[a-zA-Z0-9]{1,13}/,
+	'virt_interface' => qr/[a-zA-Z0-9]{1,13}(?:\.[a-zA-Z0-9]{1,4})?:$virtual_tag/,
 	'interface_type' => qr/(?:nic|vlan|virtual|bond)/,
-	'vlan_tag' => qr/$vlan_tag/,
+	'vlan_tag'       => qr/$vlan_tag/,
+	'virtual_tag'    => qr/$virtual_tag/,
 
 	# ipds
 	'rbl_list_name' => qr/[a-zA-Z0-9]+/,
@@ -86,13 +87,13 @@ my %format_re = (
 	# ips
 	'IPv4_addr' => qr/$ipv4_addr/,
 	'IPv4_mask' => qr/(?:$ipv4_addr|3[0-2]|[1-2][0-9]|[0-9])/,
-	
+
 	# farm guardian
-	'fg_type' => qr/(?:http|https|l4xnat|gslb)/,
-	'fg_enabled'  => $boolean,
-	'fg_log'  => $boolean,
-	'fg_time'  => qr/[1-9]\d*/,		# this value can't be 0
-	
+	'fg_type'    => qr/(?:http|https|l4xnat|gslb)/,
+	'fg_enabled' => $boolean,
+	'fg_log'     => $boolean,
+	'fg_time'    => qr/[1-9]\d*/,                     # this value can't be 0
+
 );
 
 =begin nd
