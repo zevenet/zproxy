@@ -23,10 +23,13 @@
 ###############################################################################
 
 require '/usr/local/zenloadbalancer/config/global.conf';
+require '/usr/local/zenloadbalancer/www/functions_ext.cgi';
 
-if ($datentp !~ /^$/)
-	{
+my $ntp = &getGlobalConfiguration('ntp');
+my $datentp = &getGlobalConfiguration('datentp');
+
+if ( $datentp !~ /^$/ )
+{
 	my @conf = `$datentp $ntp`;
 	print @conf;
-	}
-
+}

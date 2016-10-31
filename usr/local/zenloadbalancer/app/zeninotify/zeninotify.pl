@@ -35,7 +35,8 @@ use IO::Interface qw(:flags);
 require '/usr/local/zenloadbalancer/config/global.conf';
 require '/usr/local/zenloadbalancer/www/functions_ext.cgi';
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
+my $rttables  = &getGlobalConfiguration( 'rttables' );
 
 if ( $ARGV[0] eq 'stop' && -e $zeninopid )
 {

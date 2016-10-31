@@ -114,6 +114,7 @@ elsif ( $object eq 'getZClusterArpStatus' )
 elsif ( $object eq 'sync' )
 {
 	my $configdir = &getGlobalConfiguration('configdir');
+	my $rttables = &getGlobalConfiguration('rttables');
 
 	&zenlog("Syncing $configdir");
 	&runSync( $configdir );

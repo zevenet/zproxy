@@ -216,6 +216,8 @@ sub writeRoutes      # ($if_name)
 {
 	my $if_name = shift;
 
+	my $rttables = &getGlobalConfiguration('rttables');
+
 	open ROUTINGFILE, '<', $rttables;
 	my @contents = <ROUTINGFILE>;
 	close ROUTINGFILE;
@@ -240,7 +242,7 @@ sub writeRoutes      # ($if_name)
 
 	if ( $found eq "true" )
 	{
-		open ( ROUTINGFILE, ">>$rttables" );
+		open ( ROUTINGFILE, ">>", "$rttables" );
 		print ROUTINGFILE "$rtnumber\ttable_$if_name\n";
 		close ROUTINGFILE;
 	}
@@ -756,6 +758,8 @@ sub stopIf    # ($if_ref)
 			$status = &logAndRun( $ip_cmd );
 		}
 
+		my $rttables = &getGlobalConfiguration('rttables');
+
 		# Delete routes table
 		open ROUTINGFILE, '<', $rttables;
 		my @contents = <ROUTINGFILE>;
@@ -862,6 +866,8 @@ sub delIf    # ($if_ref)
 
 		if ( !$interface )
 		{
+			my $rttables = &getGlobalConfiguration('rttables');
+
 			# Delete routes table, complementing writeRoutes()
 			open ROUTINGFILE, '<', $rttables;
 			my @contents = <ROUTINGFILE>;
@@ -900,11 +906,14 @@ sub getDefaultGW    # ($if)
 		}
 
 		@routes = "";
-		open ( ROUTINGFILE, $rttables );
+
+		open ( ROUTINGFILE, &getGlobalConfiguration('rttables') );
+
 		if ( grep { /^...\ttable_$cif$/ } <ROUTINGFILE> )
 		{
 			@routes = `$ip_bin route list table table_$cif`;
 		}
+
 		close ROUTINGFILE;
 		@defgw = grep ( /^default/, @routes );
 		@line = split ( / /, $defgw[0] );

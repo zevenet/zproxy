@@ -23,19 +23,22 @@
 ###############################################################################
 
 require '/usr/local/zenloadbalancer/config/global.conf';
+require '/usr/local/zenloadbalancer/www/functions_ext.cgi';
 
-$name = $ARGV[0];
+my $name   = $ARGV[0];
+my $action = $ARGV[1];
 
-$action = $ARGV[1];
+my $backupdir = &getGlobalConfiguration( 'backupdir' );
 
+if ( $action eq "-c" )
+{
+	my $backupfor = &getGlobalConfiguration( 'backupfor' );
 
-if ($action eq "-c")
-	{
 	my @eject = `$tar -czvf $backupdir\/backup-$name.tar.gz $backupfor`;
-	}
+}
 
-if ($action eq "-d")
-	{
+if ( $action eq "-d" )
+{
 	my @eject = `$tar -xzvf $backupdir\/backup-$name.tar.gz -C /`;
-	}
+}
 
