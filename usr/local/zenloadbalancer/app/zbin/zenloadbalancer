@@ -287,7 +287,7 @@ if ( $eject eq "start" )
 		# escape dots for regular expression
 		my $quoted_key = quotemeta ( $key );
 
-		if ( !grep ( /^$quoted_key/, @sysctl ) )
+		if ( !grep ( /^$key = $sysctl{$key}/, @sysctl ) )
 		{
 			push ( @sysctl, "$key = $sysctl{$key}" );
 		}
