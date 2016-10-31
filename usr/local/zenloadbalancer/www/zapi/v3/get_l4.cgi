@@ -136,6 +136,8 @@ sub farms_name_l4 # ( $farmname )
 
 		if ( $l_serv[1] ne "0.0.0.0" )
 		{
+			$l_serv[2] = $l_serv[2] eq '' ? undef: $tout+0;
+
 			push @out_b,
 			  {
 				id       => $l_serv[0],

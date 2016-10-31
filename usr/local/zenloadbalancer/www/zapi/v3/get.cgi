@@ -135,15 +135,17 @@ sub backends
 		my $l4_farm = &getL4FarmStruct( $farmname );
 		my @backends;
 
-		for my $be ( @{ $l4_farm->{'servers'} } )
+		for my $be ( @{ $l4_farm->{ 'servers' } } )
 		{
+			$be->{ 'vport' } = $be->{ 'vport' } eq '' ? undef : $be->{ 'vport' } + 0;
+
 			push @backends,
 			  {
-				id       => $be->{ 'id' },
+				id       => $be->{ 'id' } + 0,
 				ip       => $be->{ 'vip' },
 				port     => $be->{ 'vport' },
-				priority => $be->{ 'priority' },
-				weight   => $be->{ 'weight' },
+				priority => $be->{ 'priority' } + 0,
+				weight   => $be->{ 'weight' } + 0,
 			  };
 		}
 
