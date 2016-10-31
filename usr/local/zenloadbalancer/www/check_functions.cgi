@@ -63,7 +63,6 @@ my %format_re = (
 	'resource_data_SRV'   => qr/[a-z0-9 \.]/,
 	'resource_data_PTR'   => qr/[a-z\.]+/,
 	'resource_data_NAPTR' => qr/.+/,            # all characters allow
-	#'resource_data' => qr/(?:$hostname|$zone|$ipv4)/, # hostname or IP
 
 	# interfaces ( WARNING: length in characters < 16  )
 	'nic_interface'  => qr/[a-zA-Z0-9]{1,15}/,

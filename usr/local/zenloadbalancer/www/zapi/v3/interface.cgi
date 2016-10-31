@@ -167,7 +167,7 @@ sub new_vini # ( $json_obj )
 		}
 
 		&setInterfaceConfig( $if_ref ) or die;
-	}
+	};
 
 	if ( !$@ )
 	{
@@ -1757,7 +1757,6 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 
 	my $description = "Modify VLAN interface";
 	my $ip_v = 4;
-	my $error = "false";
 	my $if_ref = &getInterfaceConfig( $vlan, $ip_v );
 
 	# Check interface errors
@@ -1882,6 +1881,89 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 		&setInterfaceConfig( $if_ref ) or die;
 	};
 
+	if ( ! $@ )
+	{
+		# Success
+		my $body = {
+					 description => $description,
+					 params      => $json_obj,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "Errors found trying to modify interface $if";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
+sub modify_interface_virtual # ( $json_obj, $virtual )
+{
+	my $json_obj = shift;
+	my $virtual = shift;
+
+	my $description => "Modify virtual interface",
+	my $ip_v = 4;
+	my $if_ref = &getInterfaceConfig( $virtual, $ip_v );
+
+	unless ( $if_ref )
+	{
+		# Error
+		my $errormsg = "Virtual interface not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# Check address errors
+	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+	{
+		# Error
+		my $errormsg = "IP Address $json_obj->{ip} structure is not ok.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# No errors found
+	eval {
+		# Delete old IP and Netmask from system to replace it
+		die if &delIp( $$if_ref{name}, $$if_ref{addr}, $$if_ref{mask} );
+
+		# Set the new params
+		$if_ref->{addr} = $json_obj->{ip};
+
+		# Add new IP, netmask and gateway
+		die if &addIp( $if_ref );
+
+		my $state = &upIf( $if_ref, 'writeconf' );
+
+		if ( $state == 0 )
+		{
+			$if_ref->{status} = "up";
+			&applyRoutes( "local", $if_ref );
+		}
+
+		&setInterfaceConfig( $if_ref ) or die;
+	};
+
+	# Print params
 	if ( ! $@ )
 	{
 		# Success
