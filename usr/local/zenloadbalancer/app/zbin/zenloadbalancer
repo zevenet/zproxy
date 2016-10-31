@@ -290,6 +290,8 @@ if ( $eject eq "start" )
 		if ( !grep ( /^$key = $sysctl{$key}/, @sysctl ) )
 		{
 			push ( @sysctl, "$key = $sysctl{$key}" );
+		} else {
+			s/^$quoted_key .*/$key = $sysctl{$key}/ for @sysctl;
 		}
 	}
 
