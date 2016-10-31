@@ -1,8 +1,7 @@
 #!/usr/bin/env perl
 
-$base="/usr/local/zenloadbalancer";
-require "$base/config/global.conf";
-require "$basedir/functions.cgi";
+require "/usr/local/zenloadbalancer/config/global.conf";
+require "/usr/local/zenloadbalancer/www/functions.cgi";
 
 $farmname = $ARGV[0];
 $count = $ARGV[1];

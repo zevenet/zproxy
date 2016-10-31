@@ -25,6 +25,7 @@ use RRDs;
 use MIME::Base64;
 require ( "/usr/local/zenloadbalancer/config/global.conf" );
 
+my $basedir = &getGlobalConfiguration('basedir');
 my $width  = "600";
 my $height = "150";
 $imagetype = "PNG";

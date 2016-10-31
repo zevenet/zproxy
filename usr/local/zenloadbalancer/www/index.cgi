@@ -16,7 +16,6 @@
 #~ use strict;
 #~ use warnings;
 #~ require "/usr/local/zenloadbalancer/config/global.conf";
-#~ our ( $basedir, $configdir, $logdir, $timeouterrors, $filecluster, $confhttp, $ntp, $backupfor, $backupdir, $rttables, $globalcfg, $version, $cipher_pci, $buy_ssl, $url, $htpass, $zapikey, $filedns, $fileapt, $tar, $ifconfig_bin, $ip_bin, $pen_bin, $pen_ctl, $fdisk_bin, $df_bin, $sshkeygen, $ssh, $scp, $rsync, $pidof, $ps, $tail, $zcat, $datentp, $arping_bin, $ping_bin, $openssl, $unzip, $mv, $ls, $cp, $iptables, $modprobe, $lsmod, $netstatNat, $gdnsd, $l4sd, $bin_id, $conntrack, $pound, $poundctl, $poundtpl, $piddir, $fwmarksconf, $defaultgw, $defaultgwif, $pingc, $libexec_dir, $farmguardian, $farmguardian_dir, $rrdap_dir, $img_dir, $rrd_dir, $zenino, $zeninopid, $zenrsync, $zenbackup );
 #~ use Data::Dumper;
 # End debugging
 
@@ -86,6 +85,7 @@ sub certcontrol()
 	#~ use Time::localtime;
 
 	# input
+	my $basedir     = &getGlobalConfiguration( 'basedir' );
 	my $hostname    = hostname();
 	my $zlbcertfile = "$basedir/zlbcertfile.pem";
 	my $openssl_bin = "/usr/bin/openssl";
@@ -530,6 +530,7 @@ if ( !$id )
 ##HEADER
 require "/usr/local/zenloadbalancer/www/header.cgi";
 require "/usr/local/zenloadbalancer/www/menu.cgi";
+my $basedir = &getGlobalConfiguration('basedir');
 
 if ( !-f "$basedir/lock" )
 {

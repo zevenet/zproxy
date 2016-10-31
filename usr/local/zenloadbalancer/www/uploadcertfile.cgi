@@ -39,7 +39,7 @@ print "<div class=\"container_12\">";
 print "<div class=\"grid_12\">";
 
 my $query      = new CGI;
-my $upload_dir = $basedir;
+my $upload_dir = &getGlobalConfiguration('basedir');
 my $action     = $query->param( "action" );
 my $filename   = $query->param( "fileup" );
 

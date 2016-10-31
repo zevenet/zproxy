@@ -26,6 +26,7 @@ if ( -e "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi" )
 	require "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi";
 }
 
+
 #
 sub setFarmBlacklistTime    # ($blacklist_time,$farm_name)
 {
@@ -1149,6 +1150,7 @@ sub runFarmDelete    # ($farm_name)
 {
 	my $farm_name = shift;
 
+	my $basedir = &getGlobalConfiguration('basedir');
 	my $farm_type = &getFarmType( $farm_name );
 
 	&zenlog( "running 'Delete' for $farm_name" );

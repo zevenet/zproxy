@@ -30,7 +30,7 @@ use Tie::File;
 use Data::Dumper;
 
 #~ require "/usr/local/zenloadbalancer/config/global.conf";
-#~ our ( $basedir, $configdir, $logdir, $timeouterrors, $filecluster, $confhttp, $ntp, $backupfor, $backupdir, $rttables, $globalcfg, $version, $cipher_pci, $buy_ssl, $url, $htpass, $zapikey, $filedns, $fileapt, $tar, $ifconfig_bin, $ip_bin, $pen_bin, $pen_ctl, $fdisk_bin, $df_bin, $sshkeygen, $ssh, $scp, $rsync, $pidof, $ps, $tail, $zcat, $datentp, $arping_bin, $ping_bin, $openssl, $unzip, $mv, $ls, $cp, $iptables, $modprobe, $lsmod, $netstatNat, $gdnsd, $l4sd, $bin_id, $conntrack, $pound, $poundctl, $poundtpl, $piddir, $fwmarksconf, $defaultgw, $defaultgwif, $pingc, $libexec_dir, $farmguardian, $farmguardian_dir, $rrdap_dir, $img_dir, $rrd_dir, $zenino, $zeninopid, $zenrsync, $zenbackup );
+
 # End Debug ###
 
 require "/usr/local/zenloadbalancer/www/farmguardian_functions.cgi";

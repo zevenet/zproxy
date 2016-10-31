@@ -92,7 +92,7 @@ sub download_certificate # ()
 	my $cert_filename = shift;
 
 	my $cert_dir = $configdir;
-	$cert_dir = $basedir if $cert_filename eq 'zlbcertfile.pem';
+	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
 
 	open ( my $download_fh, '<', "$cert_dir/$cert_filename" );
 
@@ -138,7 +138,7 @@ sub get_certificate_info # ()
 	my $cert_filename = shift;
 
 	my $cert_dir = $configdir;
-	$cert_dir = $basedir if $cert_filename eq 'zlbcertfile.pem';
+	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
 
 	if ( $cert_filename =~ /\.(pem|csr)$/ && -f "$cert_dir\/$cert_filename" )
 	{
@@ -681,6 +681,7 @@ sub upload_activation_certificate # ()
 
 	if ( <$upload_data> )
 	{
+		my $basedir = &getGlobalConfiguration('basedir');
 		open ( my $uploadfile, '>', "$basedir/$filename" ) or die "$!";
 		binmode $uploadfile;
 		print { $uploadfile } <$upload_data>;
