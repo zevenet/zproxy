@@ -28,84 +28,68 @@ use Config::Tiny;
 use Tie::File;
 
 
+require "/usr/local/zenloadbalancer/www/Plugins/ipds.pl";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 
-
+# &getDDOSParam( $key, $param );
 sub getDDOSParam
 {
 		my $key = shift;
 		my $param = shift;
+		my $output; 
 		
 		my $confFile = &getGlobalConfiguration( 'ddosConf' );
 		my $fileHandle = Config::Tiny->read( $confFile );
 		
-		return $fileHandle->{ $key } -> { $param };
-}
-
-
-# & setDDOSParam ($key,$param,$value)
-sub setDDOSParam
-{
-		my $key = shift;
-		my $param = shift;
-		my $output;
-		
-		my $confFile = &getGlobalConfiguration( 'ddosConf' );
-		my $fileHandle = Config::Tiny->read( $confFile );
-		$fileHandle->{ $key } ->  { $param } = $value;
-		$fileHandle->write( $confFile );
-		
-		#~ eliminar estas reglas
-		&getDDOSLookForRule ( $key, $farmName );
-		&setDDOSDeleteRule ( $key, $farmName );
-		&setDDOSCreateRule( $key, $farmName );
-		#¡'''???'''
-		#~ crear estas reglas
-
+		if ( $param )
+		{
+			$output = $fileHandle->{ $key } -> { $param };
+		}
+		else 
+		{
+			$output = $fileHandle->{ $key };
+		}
 		return $output;
 }
 
 
-=begin nd
-        Function: getIptListV4
-
-        Obtein IPv4 iptables rules for a couple table-chain
-
-        Parameters:
-				table - 
-				chain - 
-				
-        Returns:
-				== 0	- don't find any rule
-             @out	- Array with rules
-
-=cut
-sub getIptListV4
+# &setDDOSParam ($key,$param,$value)
+sub setDDOSParam
 {
-	my ( $table, $chain ) = @_;
-
-	if ( $table ne '' )
+	my $key = shift;
+	my $param = shift;
+	my $value = shift;
+	my $flagRst;
+	my $farmsString;
+	
+	my $confFile = &getGlobalConfiguration( 'ddosConf' );
+	my $fileHandle = Config::Tiny->read( $confFile );
+	
+	$flagRst = 1	if ( $fileHandle->{ $key } -> { 'status' } eq "up" );
+	$farmsString = $fileHandle->{ $key } -> { 'farms' }	if ( $fileHandle->{ $key } -> { 'farms' } );
+	
+	#Stop related rules
+	my @rules = @{ &getDDOSLookForRule ( $key ) };
+	&setDDOSStopRule ( $key );
+	
+	$fileHandle = Config::Tiny->read( $confFile );
+	$fileHandle->{ $key } -> { $param } = $value;
+	$fileHandle->write( $confFile );
+	
+	#~ # Rule global for the balancer
+	if ( $flagRst )
 	{
-		$table = "--table $table";
+		&setDDOSRunRule( $key );
 	}
-
-	my $iptables_command = &getGlobalConfiguration( 'iptables' )
-	  . " $table -L $chain -n -v --line-numbers";
-
-	&zenlog( $iptables_command );
-
-	## lock iptables use ##
-	open my $ipt_lockfile, '>', $iptlock;
-	&setIptLock( $ipt_lockfile );
-
-	my @ipt_output = `$iptables_command`;
-
-	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
-	close $ipt_lockfile;
-
-	return @ipt_output;
+	# Rule applied to farm
+	elsif ( $farmsString )
+	{
+		foreach my $farm  ( split ( ' ', $farmsString) )
+		{
+			&setDDOSRunRule( $key, $farm );
+		}
+	}
 }
 
 =begin nd
@@ -136,6 +120,7 @@ sub getDDOSLookForRule
 	# table and chain where there are keep ddos rules
 	my @table = ( 'raw'					, 'filter'	, 'filter'			, 'raw'							, 'mangle' );
 	my @chain = ( 'PREROUTING', 'INPUT'	, 'FORWARD'	, 'PORT_SCANNING'	, 'PREROUTING' );
+	my $farmNameRule;
 
 	my @output;
 	$ind = -1;
@@ -168,11 +153,12 @@ sub getDDOSLookForRule
 			# Look for global rule
 			else
 			{
-
+				my $farmNameFormat = &getValidFormat ( 'farm_name' );
 				if ( $rule =~ /^(\d+) .+DDOS_$key/ )
 				{
 					$lineNum = $1;
 					$flag    = 1;
+					$farmNameRule = $2;
 				}
 			}
 			push @output, { line => $lineNum, table => $table[$ind], chain => $chain[$ind] }
@@ -207,7 +193,7 @@ sub setDDOSRunRule
 		%hash = (
 					 farmName => $farmName,
 					 vip      => "-d " . &getFarmVip( 'vip', $farmName ),
-					 vport    => "--dport " . &getFarmVip( 'vpp', $farmName ),
+					 vport    => "--dport " . &getFarmVip( 'vipp', $farmName ),
 		);
 
 		# -d farmIP -p PROTOCOL --dport farmPORT
@@ -228,9 +214,12 @@ sub setDDOSRunRule
 		$output = &setDDOSSshBruteForceRule() ;
 	}elsif ( $key eq 'DROPICMP' ){
 		$output = &setDDOSDropIcmpRule();
+	}elsif ( $key eq 'PORTSCANNING' ){
+		$output = &setDDOSPortScanningRule( );
+	}
 		
 	# rules for farms
-	}elsif ( $key eq 'INVALID' ){
+	elsif ( $key eq 'INVALID' ){
 		$output = &setDDOSInvalidPacketRule( \%hash );
 	}elsif ( $key eq 'BLOCKSPOOFED' ){
 		$output = &setDDOSBlockSpoofedRule( \%hash );
@@ -241,9 +230,7 @@ sub setDDOSRunRule
 						
 	# rules for tcp farms
 	}elsif ( $protocol =~ /TCP/i || $protocol =~ /FTP/i ){
-		if ( $key eq 'PORTSCANNING' ){
-			$output = &setDDOSPortScanningRule( \%hash );
-		}elsif ( $key eq 'DROPFRAGMENTS' ){
+		if ( $key eq 'DROPFRAGMENTS' ){
 			$output = &setDDOSDropFragmentsRule( \%hash );
 		}elsif ( $key eq 'NEWNOSYN' ){
 			$output = &setDDOSNewNoSynRule( \%hash ) ;
@@ -415,9 +402,6 @@ sub setDDOSCreateRule
 	}
 
 	my $fileHandle = Config::Tiny->read( $confFile );
-	my $farmList   = $fileHandle->{ $key }->{ 'farms' };
-
-print "key:$key,farm:$farmName\n"; # ????
 
 	if ( $farmName )
 	{
@@ -428,8 +412,13 @@ print "key:$key,farm:$farmName\n"; # ????
 			
 			if ( $output != -2 )
 			{
+				$fileHandle = Config::Tiny->read( $confFile );
 				$fileHandle->{ $key }->{ 'farms' } = "$farmList $farmName";
 				$fileHandle->write( $confFile );
+			}
+			else
+			{
+				&zenlog ("ID $key only is available for TCP protocol");
 			}
 		}
 	}
@@ -501,7 +490,7 @@ sub setDDOSInvalidPacketRule
 	# /sbin/iptables -t raw -A PREROUTING -m conntrack --ctstate INVALID -j DROP
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "-m conntrack --ctstate INVALID "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -530,7 +519,7 @@ sub setDDOSNewNoSynRule
 # sbin/iptables -t raw -A PREROUTING -p tcp ! --syn -m conntrack --ctstate NEW -j DROP
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "! --syn -m conntrack --ctstate NEW "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -558,7 +547,7 @@ sub setDDOSSynWithMssRule
 # /sbin/iptables -t raw -A PREROUTING -p tcp -m conntrack --ctstate NEW -m tcpmss ! --mss 536:65535 -j DROP
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "-m conntrack --ctstate NEW -m tcpmss ! --mss 536:65535 "  # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -585,7 +574,7 @@ sub setDDOSBogusTcpFlagsRule
 # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE -j DROP
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -598,7 +587,7 @@ sub setDDOSBogusTcpFlagsRule
  # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,SYN FIN,SYN -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,SYN FIN,SYN "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -611,7 +600,7 @@ sub setDDOSBogusTcpFlagsRule
  # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags SYN,RST SYN,RST -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags SYN,RST SYN,RST "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -624,7 +613,7 @@ sub setDDOSBogusTcpFlagsRule
  # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags SYN,FIN SYN,FIN -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags SYN,FIN SYN,FIN "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -637,7 +626,7 @@ sub setDDOSBogusTcpFlagsRule
  # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,RST FIN,RST -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,RST FIN,RST "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -650,7 +639,7 @@ sub setDDOSBogusTcpFlagsRule
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,ACK FIN -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,ACK FIN "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -663,7 +652,7 @@ sub setDDOSBogusTcpFlagsRule
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ACK,URG URG -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ACK,URG URG "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -676,7 +665,7 @@ sub setDDOSBogusTcpFlagsRule
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ACK,FIN FIN -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ACK,FIN FIN "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -689,7 +678,7 @@ sub setDDOSBogusTcpFlagsRule
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ACK,PSH PSH -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ACK,PSH PSH "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -702,7 +691,7 @@ sub setDDOSBogusTcpFlagsRule
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL ALL -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL ALL "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -715,7 +704,7 @@ sub setDDOSBogusTcpFlagsRule
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL NONE -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL NONE "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -728,7 +717,7 @@ sub setDDOSBogusTcpFlagsRule
  # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL FIN,PSH,URG -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL FIN,PSH,URG "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -741,7 +730,7 @@ sub setDDOSBogusTcpFlagsRule
 # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL SYN,FIN,PSH,URG -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL SYN,FIN,PSH,URG "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -754,7 +743,7 @@ sub setDDOSBogusTcpFlagsRule
 # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL SYN,RST,ACK,FIN,URG -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL SYN,RST,ACK,FIN,URG "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -781,7 +770,7 @@ sub setDDOSBlockSpoofedRule
 	# /sbin/iptables -t raw -A PREROUTING -s 224.0.0.0/3 -j DROP
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "-s 192.0.2.0/24,192.168.0.0/16,10.0.0.0/8,0.0.0.0/8,240.0.0.0/5 " # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";     # comment
 
@@ -794,7 +783,7 @@ sub setDDOSBlockSpoofedRule
 	# /sbin/iptables -t raw -A PREROUTING -s 127.0.0.0/8 ! -i lo -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "-s 127.0.0.0/8 ! -i lo "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -850,7 +839,7 @@ sub setDDOSDropFragmentsRule
 	# /sbin/iptables -t raw -A PREROUTING -f -j DROP
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "-f "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -863,8 +852,7 @@ sub setDDOSDropFragmentsRule
 	return $output;
 }
 
-# Only TCP farms
-### Limit connections per source IP ###
+ ### Limit connections per source IP ###
 # &setDDOSLimitConnsRule ( ruleOpt )
 sub setDDOSLimitConnsRule
 {
@@ -873,21 +861,56 @@ sub setDDOSLimitConnsRule
 
 	my $key = "LIMITCONNS";
 	my $logMsg = "[Blocked by rule $key]";
+	my $chain = "INPUT";			# default, this chain is for L7 apps
+	my $dest = $ruleOpt{ 'vip' };
+	my $port = $ruleOpt{ 'vport' };
 	
 	my $limitConns = &getDDOSParam( $key, 'limitConns');
-
-# SOLO DISPONIBLE EN TABLA FILTER, EVALUAR SI INSERTAR EN FORWARD O INPUT  ???
-# /sbin/iptables -A PREROUTING -t INPUT -p tcp -m connlimit --connlimit-above 111 -j REJECT --reject-with tcp-reset
-	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -A INPUT -t filter "         # select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
-	  . "-m connlimit --connlimit-above $limitConns "    # rules for block
-	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
-
-	my $output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
-
-	$output = &iptSystem( "$cmd -j REJECT --reject-with tcp-reset" );
+	if ( ! $limitConns )
+	{
+		$limitConns = 50 ;
+		&setDDOSParam ( $key, 'limitConns', $limitConns );
+	}
 	
+	# especific values to L4 farm
+	 if ( &getFarmType ( $ruleOpt{ 'farmName' } ) eq "l4xnat" )
+	 {
+		$chain = "FORWARD";	
+		 my @run = &getFarmServers( $ruleOpt{ 'farmName' } );
+		 for my $l4Backends ( @run )
+		 {
+			my @l_serv = split ( "\;", $l4Backends );
+			$dest = "-d $l_serv[1]";
+			$port = "--dport $l_serv[2]";
+		
+			# /sbin/iptables -A FORWARD -t filter -d 1.1.1.1,54.12.1.1 -p tcp --dport 5 -m connlimit --connlimit-above 5 -m comment --comment "DDOS_LIMITCONNS_aa" -j REJECT --reject-with tcp-reset
+			my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
+			#~ . " -A INPUT -t filter "         # select iptables struct
+			. " -A $chain -t filter "         # select iptables struct
+			. "$dest $ruleOpt{ 'protocol' } $port " # who is destined
+			. "-m connlimit --connlimit-above $limitConns "    # rules for block
+			. "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
+		
+			my $output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
+		
+			$output = &iptSystem( "$cmd -j REJECT --reject-with tcp-reset" );
+		}
+	 }
+	
+	else
+	{
+		# /sbin/iptables -A FORWARD -t filter -d 1.1.1.1,54.12.1.1 -p tcp --dport 5 -m connlimit --connlimit-above 5 -m comment --comment "DDOS_LIMITCONNS_aa" -j REJECT --reject-with tcp-reset
+		my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
+		#~ . " -A INPUT -t filter "         # select iptables struct
+		. " -A $chain -t filter "         # select iptables struct
+		. "$dest $ruleOpt{ 'protocol' } $port " # who is destined
+		. "-m connlimit --connlimit-above $limitConns "    # rules for block
+		. "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
+	
+		my $output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
+	
+		$output = &iptSystem( "$cmd -j REJECT --reject-with tcp-reset" );
+	}
 	if ( $output != 0 )
 	{
 		&zenlog( "Error appling '$key' rule to farm '$ruleOpt{ 'farmName' }'." );
@@ -908,11 +931,21 @@ sub setDDOSLimitRstRule
 	my $logMsg = "[Blocked by rule $key]";
 	my $limit = &getDDOSParam( $key, 'limit');
 	my $limitBurst = &getDDOSParam( $key, 'limitBurst');
+	if ( ! $limit )
+	{
+		$limit = 2 ;
+		&setDDOSParam ( $key, 'limit', $limit);
+	}
+	if ( ! $limitBurst )
+	{
+		$limitBurst = 2;
+		&setDDOSParam ( $key, 'limitBurst', $limitBurst);
+	}
 
 # /sbin/iptables -A PREROUTING -t mangle -p tcp --tcp-flags RST RST -m limit --limit 2/s --limit-burst 2 -j ACCEPT
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -A PREROUTING -t mangle "       # select iptables struct
-	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags RST RST -m limit --limit $limit/s --limit-burst $limitBurst " # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";             # comment
 
@@ -925,8 +958,8 @@ sub setDDOSLimitRstRule
 	{
 		# /sbin/iptables -I PREROUTING -t mangle -p tcp --tcp-flags RST RST -j DROP
 		$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-		  . " -I PREROUTING -t mangle "    # select iptables struct
-		  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+		  . " -A PREROUTING -t mangle "    # select iptables struct
+		  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 		  . "--tcp-flags RST RST "    # rules for block
 		  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -948,14 +981,25 @@ sub setDDOSLimitSecRule
 
 	my $key = "LIMITSEC";
 	my $logMsg = "[Blocked by rule $key]";
-	my $limitNew = &getDDOSParam( $key, 'limit');
-	my $limitBurstNew = &getDDOSParam( $key, 'limitBurst');
+	my $limit = &getDDOSParam( $key, 'limit');
+	my $limitBurst = &getDDOSParam( $key, 'limitBurst');
+	
+	if ( ! $limit )
+	{
+		$limit = 2 ;
+		&setDDOSParam ( $key, 'limit', $limit);
+	}
+	if ( ! $limitBurst )
+	{
+		$limitBurst = 2;
+		&setDDOSParam ( $key, 'limitBurst', $limitBurst);
+	}
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp -m conntrack --ctstate NEW -m limit --limit 60/s --limit-burst 20 -j ACCEPT
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -I PREROUTING -t mangle "           # select iptables struct
-	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
-	  . "-m conntrack --ctstate NEW -m limit --limit $limitBurstNew/s --limit-burst $limitBurstNew " # rules for block
+	  . " -A PREROUTING -t mangle "           # select iptables struct
+	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
+	  . "-m conntrack --ctstate NEW -m limit --limit $limit/s --limit-burst $limitBurst " # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";                               # comment
 
 	my $output = &iptSystem( $cmd );
@@ -967,8 +1011,8 @@ sub setDDOSLimitSecRule
 	{
 		# /sbin/iptables -I PREROUTING -t mangle -p tcp -m conntrack --ctstate NEW -j DROP
 		$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-		  . " -I PREROUTING -t mangle "    # select iptables struct
-		  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+		  . " -A PREROUTING -t mangle "    # select iptables struct
+		  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 		  . "-m conntrack --ctstate NEW "    # rules for block
 		  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
@@ -986,12 +1030,38 @@ sub setDDOSLimitSecRule
 #~ # &setDDOSPortScanningRule ( ruleOpt )
 sub setDDOSPortScanningRule
 {
-	my ( $ruleOptRef ) = @_;
-	my %ruleOpt = %{ $ruleOptRef };
+	#~ my ( $ruleOptRef ) = @_;
+	#~ my %ruleOpt = %{ $ruleOptRef };
 
 	my $key = "PORTSCANNING";
 	my $logMsg = "[Blocked by rule $key]";
 	my $output;
+	
+	my $portScan = &getDDOSParam( $key, 'portScan');
+	my $blTime = &getDDOSParam( $key, 'blTime');
+	my $time = &getDDOSParam( $key, 'time');
+	my $hits = &getDDOSParam( $key, 'hits');
+	if ( ! portScan )
+	{
+		$portScan = 15;
+		&setDDOSParam ( $key, 'portScan', $portScan);
+	}
+	if ( ! $$blTime )
+	{
+		$blTime = 500;
+		&setDDOSParam ( $key, 'blTime', $blTime);
+	}
+	if ( ! $time )
+	{
+		$time = 100;
+		&setDDOSParam ( $key, 'time', $time);
+	}
+	if ( ! $hits )
+	{
+		$hits = 3;
+		&setDDOSParam ( $key, 'hits', $hits);
+	}
+	
 	
 	my $cmd = &getGlobalConfiguration( 'iptables' )
 	  . " -N PORT_SCANNING -t raw ";   
@@ -1000,7 +1070,7 @@ sub setDDOSPortScanningRule
 	# iptables -A PREROUTING -t raw -p tcp --tcp-flags SYN,ACK,FIN,RST RST -j PORT_SCANNING
 	$cmd = &getGlobalConfiguration( 'iptables' )
 				. " -A PREROUTING --table raw "     # select iptables struct
-				#~ . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " # who is destined
+				#~ . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 				. "-j PORT_SCANNING " 
 				. "-p tcp --tcp-flags SYN,ACK,FIN,RST RST "    # rules for block
 				#~ . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
@@ -1011,7 +1081,7 @@ sub setDDOSPortScanningRule
 	$cmd = &getGlobalConfiguration( 'iptables' )
 				. " -A PORT_SCANNING -t raw "     # select iptables struct
 				. "-j RETURN "
-				. "-p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit 1/s --limit-burst 2 "    # rules for block
+				. "-p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit $time/s --limit-burst $hits "    # rules for block
 				. "-m comment --comment \"DDOS_${key}\"";    # comment
 	$output = &iptSystem( $cmd );
 
@@ -1025,6 +1095,51 @@ sub setDDOSPortScanningRule
 	{
 		&zenlog( "Error appling '$key' rule." );
 	}
+
+	
+	# /sbin/iptables -A PREROUTING -t mangle -m recent --name portscan --rcheck --seconds $blTime 
+	$cmd = &getGlobalConfiguration( 'iptables' )
+				 . " -A PREROUTING -t mangle " # select iptables struct
+				 . "-m recent --name portscan --rcheck --seconds $blTime "
+				 . "-m comment --comment \"DDOS_${key}\"";    # comment
+	$output = &setIPDSDropAndLog ( $cmd, $logMsg );
+
+	# /sbin/iptables -A OUTPUT -t mangle -m recent --name portscan --rcheck --seconds $blTime 
+	$cmd = &getGlobalConfiguration( 'iptables' )
+				 . " -A OUTPUT -t mangle "    # select iptables struct
+				 . "-m recent --name portscan --rcheck --seconds $blTime "
+				 . "-m comment --comment \"DDOS_${key}\"";    # comment
+	$output = &setIPDSDropAndLog ( $cmd, $logMsg );
+
+
+	# /sbin/iptables -A PREROUTING -t mangle -m recent --name portscan --remove
+	$cmd = &getGlobalConfiguration( 'iptables' )
+				 . " -A PREROUTING -t mangle " # select iptables struct
+				 . "-m recent --name portscan --remove "
+				 . "-m comment --comment \"DDOS_${key}\"";    # comment
+	$output = &iptSystem( $cmd );
+
+	# /sbin/iptables -A OUTPUT -t mangle -m recent --name portscan --remove
+	$cmd = &getGlobalConfiguration( 'iptables' )
+				 . " -A OUTPUT -t mangle "    # select iptables struct
+				 . "-m recent --name portscan --remove "
+				 . "-m comment --comment \"DDOS_${key}\"";    # comment
+	$output = &iptSystem( $cmd );
+
+
+	# /sbin/iptables -A PREROUTING -t mangle -p tcp -m tcp --dport $portScan -m recent --name portscan --set -j DROP
+	$cmd = &getGlobalConfiguration( 'iptables' )
+				 . " -A PREROUTING -t mangle " # select iptables struct
+				 . "-p tcp -m tcp --dport $portScan -m recent --name portscan --set "
+				 . "-m comment --comment \"DDOS_${key}\"";    # comment
+	$output = &setIPDSDropAndLog ( $cmd, $logMsg );
+
+	# /sbin/iptables -A OUTPUT -t mangle -p tcp -m tcp --dport $portScan -m recent --name portscan --set -j DROP
+	$cmd = &getGlobalConfiguration( 'iptables' )
+				 . " -A OUTPUT -t mangle "    # select iptables struct
+				 . "-p tcp -m tcp --dport $portScan -m recent --name portscan --set "
+				 . "-m comment --comment \"DDOS_${key}\"";    # comment
+	$output = &setIPDSDropAndLog ( $cmd, $logMsg );
 
 	return $output;
 }
@@ -1053,11 +1168,26 @@ sub setDDOSSshBruteForceRule
 	my $time = &getDDOSParam( $key, 'time');
 	my $port = &getDDOSParam( $key, 'port');
 	my $logMsg = "[Blocked by rule $key]";
+	
+	if ( ! $hits )
+	{
+		$hits = 5 ;
+		&setDDOSParam ( $key, 'hits', $hits);
+	}
+	if ( ! $port )
+	{
+		$port = 22;
+		&setDDOSParam ( $key, 'port', $port);
+	}
+	if ( ! $time )
+	{
+		$time = 180;
+		&setDDOSParam ( $key, 'time', $time);
+	}
 
-
-# /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --set
+	# /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --set
 	my $cmd =
-	  &getGlobalConfiguration( 'iptables' ) . " -I PREROUTING -t mangle "  # select iptables struct
+	  &getGlobalConfiguration( 'iptables' ) . " -A PREROUTING -t mangle "  # select iptables struct
 	  . "-p tcp --dport $port "                               # who is destined
 	  . "-m conntrack --ctstate NEW -m recent --set "       # rules for block
 	  . "-m comment --comment \"DDOS_$key\"";               # comment
@@ -1070,7 +1200,7 @@ sub setDDOSSshBruteForceRule
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --update --seconds 60 --hitcount 10 -j DROP
 	my $cmd =
-	  &getGlobalConfiguration( 'iptables' ) . " -I PREROUTING -t mangle "  # select iptables struct
+	  &getGlobalConfiguration( 'iptables' ) . " -A PREROUTING -t mangle "  # select iptables struct
 	  . "-p tcp --dport $port "                       # who is destined
 	  . "-m conntrack --ctstate NEW -m recent --update --seconds $time --hitcount $hits " # rules for block
 	  . "-m comment --comment \"DDOS_$key\"";                                             # comment
@@ -1104,11 +1234,21 @@ sub setDDOSynProxyRule
 	my $logMsg = "[Blocked by rule $key]";
 	my $scale = getDDOSParam ( $key, 'scale' );
 	my $mss = getDDOSParam ( $key, 'mss' );
+	if ( ! $mss )
+	{
+		$mss = 1460;
+		&setDDOSParam ( $key, 'mss', $mss );
+	}
+	if ( ! $scale )
+	{
+		$scale = 7;
+		&setDDOSParam ( $key, 'scale', $scale );
+	}
 
 # iptables -t raw -A PREROUTING -p tcp -m tcp --syn -j CT
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -A PREROUTING -t raw "           																			# select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " 						# who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " 						# who is destined
 	  . "-m tcp --syn " 																										# rules for block
 	  . "-j CT "																													# action
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
@@ -1117,7 +1257,7 @@ sub setDDOSynProxyRule
 # iptables -I INPUT -p tcp -m tcp -m conntrack --ctstate NEW -j SYNPROXY --sack-perm --timestamp --wscale 7 --mss 1460
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -A INPUT "           																								# select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " 					# who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " 					# who is destined
 	  . "-j SYNPROXY --sack-perm --timestamp --wscale $scale --mss $mss "	# action
 	  . "-m conntrack --ctstate NEW "														 				# rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
@@ -1126,7 +1266,7 @@ sub setDDOSynProxyRule
 # iptables -I FORWARD -p tcp -m tcp -m conntrack --ctstate NEW -j SYNPROXY --sack-perm --timestamp --wscale 7 --mss 1460
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -A FORWARD "           																						# select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " 					# who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " 					# who is destined
 	  . "-j SYNPROXY --sack-perm --timestamp --wscale $scale --mss $mss "	# action
 	  . "-m conntrack --ctstate NEW "														 				# rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
@@ -1135,7 +1275,7 @@ sub setDDOSynProxyRule
 # iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -A INPUT "           																				# select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " 	# who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " 	# who is destined
 	  . "-m conntrack --ctstate INVALID " 													# rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
 	$output = &setIPDSDropAndLog ( $cmd, $logMsg );
@@ -1143,7 +1283,7 @@ sub setDDOSynProxyRule
 # iptables -A FORWARD -m conntrack --ctstate INVALID -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -A FORWARD "           																				# select iptables struct
-	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vpp' } " 	# who is destined
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " 	# who is destined
 	  . "-m conntrack --ctstate INVALID " 													# rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
 	$output = &setIPDSDropAndLog ( $cmd, $logMsg );
@@ -1158,93 +1298,5 @@ sub setDDOSynProxyRule
 }
 
 
-# LOGS
-# &setIPDSDropAndLog ( $cmd, $logMsg );
-sub setIPDSDropAndLog
-{
-	my ( $cmd, $logMsg ) = @_;
-
-	my $output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
-	$output = &iptSystem( "$cmd -j DROP" );
-
-	return $output;
-}
-
-
 1;
 
-
-
-=begin nd
-
-### 1: Drop invalid packets ###
-/sbin/iptables -t mangle -A PREROUTING -m conntrack --ctstate INVALID -j DROP
-
-### 2: Drop TCP packets that are new and are not SYN ###
-/sbin/iptables -t mangle -A PREROUTING -p tcp ! --syn -m conntrack --ctstate NEW -j DROP
-
-### 3: Drop SYN packets with suspicious MSS value ###
-/sbin/iptables -t mangle -A PREROUTING -p tcp -m conntrack --ctstate NEW -m tcpmss ! --mss 536:65535 -j DROP
-
-### 4: Block packets with bogus TCP flags ###
-/sbin/iptables -t mangle -A PREROUTING -p tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE -j DROP
-/sbin/iptables -t mangle -A PREROUTING -p tcp --tcp-flags FIN,SYN FIN,SYN -j DROP
-/sbin/iptables -t mangle -A PREROUTING -p tcp --tcp-flags SYN,RST SYN,RST -j DROP
-/sbin/iptables -t mangle -A PREROUTING -p tcp --tcp-flags SYN,FIN SYN,FIN -j DROP
-/sbin/iptables -t mangle -A PREROUTING -p tcp --tcp-flags FIN,RST FIN,RST -j DROP
-/sbin/iptables -t mangle -A PREROUTING -p tcp --tcp-flags FIN,ACK FIN -j DROP
-/sbin/iptables -t mangle -A PREROUTING -p tcp --tcp-flags ACK,URG URG -j DROP
-/sbin/iptables -t mangle -A PREROUTING -p tcp --tcp-flags ACK,FIN FIN -j DROP
-/sbin/iptables -t mangle -A PREROUTING -p tcp --tcp-flags ACK,PSH PSH -j DROP
-/sbin/iptables -t mangle -A PREROUTING -p tcp --tcp-flags ALL ALL -j DROP
-/sbin/iptables -t mangle -A PREROUTING -p tcp --tcp-flags ALL NONE -j DROP
-/sbin/iptables -t mangle -A PREROUTING -p tcp --tcp-flags ALL FIN,PSH,URG -j DROP
-/sbin/iptables -t mangle -A PREROUTING -p tcp --tcp-flags ALL SYN,FIN,PSH,URG -j DROP
-/sbin/iptables -t mangle -A PREROUTING -p tcp --tcp-flags ALL SYN,RST,ACK,FIN,URG -j DROP
-
-### 5: Block spoofed packets ###
-/sbin/iptables -t mangle -A PREROUTING -s 224.0.0.0/3 -j DROP
-/sbin/iptables -t mangle -A PREROUTING -s 169.254.0.0/16 -j DROP
-/sbin/iptables -t mangle -A PREROUTING -s 172.16.0.0/12 -j DROP
-/sbin/iptables -t mangle -A PREROUTING -s 192.0.2.0/24 -j DROP
-/sbin/iptables -t mangle -A PREROUTING -s 192.168.0.0/16 -j DROP
-/sbin/iptables -t mangle -A PREROUTING -s 10.0.0.0/8 -j DROP
-/sbin/iptables -t mangle -A PREROUTING -s 0.0.0.0/8 -j DROP
-/sbin/iptables -t mangle -A PREROUTING -s 240.0.0.0/5 -j DROP
-/sbin/iptables -t mangle -A PREROUTING -s 127.0.0.0/8 ! -i lo -j DROP
-
-### 6: Drop ICMP (you usually don't need this protocol) ###
-/sbin/iptables -t mangle -A PREROUTING -p icmp -j DROP
-
-### 7: Drop fragments in all chains ###
-/sbin/iptables -t mangle -A PREROUTING -f -j DROP
-
-### 8: Limit connections per source IP ###
-/sbin/iptables -A INPUT -p tcp -m connlimit --connlimit-above 111 -j REJECT --reject-with tcp-reset
-
-### 9: Limit RST packets ###
-/sbin/iptables -A INPUT -p tcp --tcp-flags RST RST -m limit --limit 2/s --limit-burst 2 -j ACCEPT
-/sbin/iptables -A INPUT -p tcp --tcp-flags RST RST -j DROP
-
-### 10: Limit new TCP connections per second per source IP ###
-/sbin/iptables -A INPUT -p tcp -m conntrack --ctstate NEW -m limit --limit 60/s --limit-burst 20 -j ACCEPT
-/sbin/iptables -A INPUT -p tcp -m conntrack --ctstate NEW -j DROP
-
-### 11: Use SYNPROXY on all ports (disables connection limiting rule) ###
-#/sbin/iptables -t raw -D PREROUTING -p tcp -m tcp --syn -j CT --notrack
-#/sbin/iptables -D INPUT -p tcp -m tcp -m conntrack --ctstate INVALID,UNTRACKED -j SYNPROXY --sack-perm --timestamp --wscale 7 --mss 1460
-#/sbin/iptables -D INPUT -m conntrack --ctstate INVALID -j DROP
-iptables -t raw -I PREROUTING -p tcp -m tcp --syn -j CT --notrack
-iptables -I INPUT -p tcp -m tcp -m conntrack --ctstate INVALID,UNTRACKED -j SYNPROXY --sack-perm --timestamp --wscale 7 --mss 1460
-iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
-
-### SSH brute-force protection ###
-/sbin/iptables -A INPUT -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --set
-/sbin/iptables -A INPUT -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --update --seconds 60 --hitcount 10 -j DROP
-
-### Protection against port scanning ###
-/sbin/iptables -N port-scanning
-/sbin/iptables -A port-scanning -p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit 1/s --limit-burst 2 -j RETURN
-/sbin/iptables -A port-scanning -j DROP
-
-=cut

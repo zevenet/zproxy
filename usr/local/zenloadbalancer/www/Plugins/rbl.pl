@@ -27,14 +27,80 @@
 use Config::Tiny;
 use Tie::File;
 
+require "/usr/local/zenloadbalancer/www/Plugins/ipds.pl";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 require "/usr/local/zenloadbalancer/config/global.conf";
+
 
 #~ ------ lists -------
 
 # The lists will be always created and updated although these aren't used at the moment
 # When a list is applied to a farm, a ip rule will be created with port and ip where farm is working.
+
+
+=begin nd
+        Function: getRBLGeolocationLists
+
+        This function return all geolocation lists available or 
+        the source list of ones of this
+
+        Parameters:
+        
+				country		- this param is optional, with this param, the function return the 
+										source list of lan segment for a counry
+				
+        Returns:
+
+                array ref	- availabe counrties or source list
+                
+                
+=cut
+# if funtcion recive country, 	return the country list
+# else 									return all country lists availabes
+# &getRBLGeolocationLists ( country );
+sub getRBLGeolocationLists
+{
+	my $countryList = shift;
+	my $rblGeolocation = &getGlobalConfiguration( 'rblGeolocation' );
+	my @geoLists;
+	my @geoListsAux;
+	my $output; 
+		
+	opendir ( DIR, "$rblGeolocation/" );
+	my @geoLists = readdir ( DIR );
+	closedir ( DIR );
+	
+	foreach my $list ( @geoLists )
+	{
+		if ( $list =~ s/.txt$// )
+		{
+			push @geoListsAux, $list;
+		}
+	}
+	
+	$output = \@geoListsAux;
+	
+	if ( defined $countryList )
+	{
+		my $fileName = "$rblGeolocation/$countryList.txt" ;
+		
+		if ( -e $fileName )
+		{
+			tie my @list, 'Tie::File', $fileName;
+			@geoListsAux = @list;
+			untie @list;
+			$output = \@geoListsAux;
+		}
+		else
+		{
+			$output = -1;
+		}
+	}
+	
+	return $output;
+}
+
 
 =begin nd
         Function: setRBLCreateLocalList
@@ -55,7 +121,6 @@ require "/usr/local/zenloadbalancer/config/global.conf";
                 != 0	- error
                 
 =cut
-
 #	&setRBLCreateLocalList ( $listName, $type );
 sub setRBLCreateLocalList
 {
@@ -63,7 +128,6 @@ sub setRBLCreateLocalList
 	my $output;
 
 	my $rblLocalConf  = &getGlobalConfiguration( 'rblLocalConf' );
-	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
 	my $touch         = &getGlobalConfiguration( 'touch' );
 	my $ipset         = &getGlobalConfiguration( 'ipset' );
 	my $rblConfPath   = &getGlobalConfiguration( 'rblConfPath' );
@@ -77,8 +141,7 @@ sub setRBLCreateLocalList
 
 	# check if a list exists with same name
 	my $fileHandle = Config::Tiny->read( $rblLocalConf );
-	my $fileRemote = Config::Tiny->read( $rblRemoteConf );
-	if ( exists $fileHandle->{ $listName } || exists $fileRemote->{ $listName } )
+	if ( &getRBLListLocalitation ( $listName ) != -1 )
 	{
 		&zenlog( "'$listName' list just exists" );
 		return -1;
@@ -119,6 +182,89 @@ sub setRBLCreateLocalList
 }
 
 =begin nd
+        Function: setRBLCreateLocalList
+
+        create a new local list. 
+        Add:	new section to local_lists.conf with list configuration
+        Create: ipset list
+				list.txt	- where it saves IPs
+
+        Parameters:
+        
+				$listName 	
+				$type		- allow / deny	
+				
+        Returns:
+
+                == 0	- successful
+                != 0	- error
+                
+=cut
+#	&setRBLCreateGeolocationList ( $country, $type,  );
+sub setRBLCreateGeolocationList
+{
+	my ( $listName, $type ) = @_;
+	my $output;
+
+	my $rblGeolocationConf  = &getGlobalConfiguration( 'rblGeolocationConf' );
+	my $touch         = &getGlobalConfiguration( 'touch' );
+	my $ipset         = &getGlobalConfiguration( 'ipset' );
+	my $rblConfPath   = &getGlobalConfiguration( 'rblConfPath' );
+
+	# create local_lists.conf if it doesn't exit
+	if ( !-e $rblGeolocationConf )
+	{
+		system ( "$touch $rblGeolocationConf" );
+		&zenlog( "Created $rblGeolocationConf file." );
+	}
+
+	# check if a list exists with same name
+	my $fileHandle = Config::Tiny->read( $rblGeolocationConf );
+	if ( &getRBLListLocalitation ( $listName ) != -1 )
+	{
+		&zenlog( "'$listName' list just exists" );
+		return -1;
+	}
+
+	if ( $type ne 'deny' && $type ne 'allow' )
+	{
+		&zenlog(
+			"Parameter 'type' only accpet 'allow | deny', in 'setRBLCreateLocalList' function."
+		);
+		$output = -1;
+	}
+
+	else
+	{
+		# add section to local lists conf
+		my %aux = ( 'farms' => "", 'type' => "$type", 'action' => "" );
+		if ( $type eq 'deny' )
+		{
+			$aux{ 'action' } = "DROP";
+		}
+		else
+		{
+			$aux{ 'action' } = "ACCEPT";
+		}
+		$fileHandle->{ $listName } = \%aux;
+		$fileHandle->write( $rblGeolocationConf );
+
+		# create ipset rule
+		my $output = system ( "$ipset create $listName hash:net" );
+		# fill list
+		&setRBLRefreshList( $listName );
+		
+		&zenlog( "'$listName' list was created successful" );
+	}
+
+	return $output;
+}
+
+
+
+
+
+=begin nd
         Function: setRBLCreateRemoteList
 
         create a new remote
@@ -146,7 +292,6 @@ sub setRBLCreateRemoteList
 	my ( $name, $type, $url ) = @_;
 	my $output = -1;
 
-	my $rblLocalConf  = &getGlobalConfiguration( 'rblLocalConf' );
 	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
 	my $touch         = &getGlobalConfiguration( 'touch' );
 	my $ipset         = &getGlobalConfiguration( 'ipset' );
@@ -163,7 +308,6 @@ sub setRBLCreateRemoteList
 	}
 
 	my $fileHandle = Config::Tiny->read( $rblRemoteConf );
-	my $fileLocal  = Config::Tiny->read( $rblLocalConf );
 	if ( exists $fileHandle->{ $name } || exists $fileLocal->{ $name } )
 	{
 		&zenlog( "'$name' list just exists." );
@@ -212,6 +356,7 @@ sub setRBLDeleteList
 	my $output;
 
 	my $rblLocalConf  = &getGlobalConfiguration( 'rblLocalConf' );
+	my $rblLocalConf  = &getGlobalConfiguration( 'rblGeolocationConf' );
 	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
 	my $ipset         = &getGlobalConfiguration( 'ipset' );
 	my $rblConfPath   = &getGlobalConfiguration( 'rblConfPath' );
@@ -244,6 +389,15 @@ sub setRBLDeleteList
 			# delete from config file
 			delete $fileHandle->{ $listName };
 			$fileHandle->write( $rblLocalConf );
+		}
+
+		# local list
+		elsif ( $loc eq 'geolocation' )
+		{
+			$fileHandle = Config::Tiny->read( $rblGeolocationConf );
+			# delete from config file
+			delete $fileHandle->{ $listName };
+			$fileHandle->write( $rblGeolocationConf );
 		}
 
 		# remote list
@@ -300,11 +454,6 @@ sub setRBLLocalListConfig
 
 	my $rblLocalConf = &getGlobalConfiguration( 'rblLocalConf' );
 	my $fileHandle   = Config::Tiny->read( $rblLocalConf );
-
-	if ( !exists $fileHandle->{ $name } )
-	{
-		return -1;
-	}
 
 	# change name of url
 	if ( 'name' eq $key )
@@ -395,6 +544,91 @@ sub setRBLLocalListConfig
 	return $output;
 }
 
+
+=begin nd
+        Function: setRBLGeolocationListConfig
+
+				Modificate local config file 
+
+        Parameters:
+        
+				name	- section name
+				key		- field to modificate
+				value	- value for the field
+				opt		- add / del		when key = farms
+
+        Returns:
+                0	- successful
+                !=0	- error
+                
+=cut
+
+# &setRBLGeolocationListConfig ( $name , $key,  $value, $opt )
+sub setRBLGeolocationListConfig
+{
+	my ( $name, $key, $value, $opt ) = @_;
+	my $output;
+
+	my $rblGeolocationConf = &getGlobalConfiguration( 'rblGeolocationConf' );
+	my $fileHandle   = Config::Tiny->read( $rblGeolocationConf );
+
+	if ( 'type' eq $key )
+	{
+		# get configuration
+		my @farmList = @{ &getRBLListParam( $name, 'farms' ) };
+		if ( $key eq 'deny' )
+		{
+			$fileHandle->{$name}->{'type'}=$key;
+			$fileHandle->{$name}->{'action'}='DROP';
+		}
+		elsif ( $key eq 'allow' )
+		{
+			$fileHandle->{$name}->{'type'}=$key;
+			$fileHandle->{$name}->{'action'}='ACCEPT';
+		 }
+		$fileHandle->write( $rblGeolocationConf );
+
+		# apply rules to farms
+		foreach my $farm ( @farmList )
+		{
+			&setRBLDeleteRule ( $farm, $name );
+			$output = &setRBLCreateRule( $farm, $name );
+		}
+		return $output;
+	}
+	elsif ( 'farms' eq $key )
+	{
+		if ( $opt eq 'del' )
+		{
+			$fileHandle->{ $name }->{ $key } =~ s/(^| )$value( |$)/ /;
+		}
+		elsif ( $opt eq 'add' )
+		{
+			if ( $fileHandle->{ $name }->{ $key } !~ /(^| )$value( |$)/ )
+			{
+				my $farmList = $fileHandle->{ $name }->{ $key };
+				$fileHandle->{ $name }->{ $key } = "$farmList $value";
+			}
+		}
+		else
+		{
+			&zenlog(
+				"Parameter 'farm' only accept 'add / del' options, in 'setRBLGeolocationListConfig' function."
+			);
+			$output = -1;
+		}
+		$fileHandle->write( $rblGeolocationConf );
+	}
+	else
+	{
+		&zenlog(
+				 "Wrong parameter '$key' for key in 'setRBLGeolocationListConfig' function." );
+		$output = -1;
+	}
+
+	return $output;
+}
+
 =begin nd
         Function: setRBLRemoteListConfig
 
@@ -421,11 +655,6 @@ sub setRBLRemoteListConfig
 
 	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
 	my $fileHandle    = Config::Tiny->read( $rblRemoteConf );
-
-	if ( !exists $fileHandle->{ $name } )
-	{
-		return -1;
-	}
 
 	# change list name
 	if ( 'name' eq $key )
@@ -544,6 +773,10 @@ sub setRBLListParam
 	{
 		$output = &setRBLRemoteListConfig( $listName, $key, $value, $opt );
 	}
+	elsif ( $file eq "geolocation" )
+	{
+		$output = &setRBLGeolocationListConfig( $listName, $key, $value, $opt );
+	}
 	else
 	{
 		$output = -1;
@@ -584,7 +817,9 @@ sub getRBLListParam
 	my $file = &getRBLListLocalitation( $listName );
 	my $fileHandle;
 
+	my $rblGeolocationConf  = &getGlobalConfiguration( 'rblGeolocationConf' );
 	my $rblLocalConf  = &getGlobalConfiguration( 'rblLocalConf' );
+	my $rblGeolocationConf  = &getGlobalConfiguration( 'rblGeolocationConf' );
 	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
 
 	if ( $key eq 'list' )
@@ -598,6 +833,10 @@ sub getRBLListParam
 	elsif ( $file eq "remote" )
 	{
 		$fileHandle = Config::Tiny->read( $rblRemoteConf );
+	}
+	elsif ( $file eq "geolocation" )
+	{
+		$fileHandle = Config::Tiny->read( $rblGeolocationConf );
 	}
 	else
 	{
@@ -629,7 +868,7 @@ sub getRBLListParam
 
         Returns:
 
-                local / remote	
+                local | remote | geolocation
                 !=0	- error
                 
 =cut
@@ -642,9 +881,11 @@ sub getRBLListLocalitation
 
 	my $rblLocalConf  = &getGlobalConfiguration( 'rblLocalConf' );
 	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
+	my $rblGeolocationConf = &getGlobalConfiguration( 'rblGeolocationConf' );
 
 	my $fileLocal  = Config::Tiny->read( $rblLocalConf );
 	my $fileRemote = Config::Tiny->read( $rblRemoteConf );
+	my $fileGeolocation = Config::Tiny->read( $rblGeolocationConf );
 
 	if ( exists $fileLocal->{ $listName } )
 	{
@@ -653,6 +894,10 @@ sub getRBLListLocalitation
 	elsif ( exists $fileRemote->{ $listName } )
 	{
 		$output = "remote";
+	}
+	elsif ( exists $fileGeolocation->{ $listName } ) 
+	{
+		$output = "geolocation";
 	}
 	else
 	{
@@ -719,8 +964,6 @@ sub getRBLListNames
 {
 	my @listNames;
 	my $ipset = &getGlobalConfiguration( 'ipset' );
-
-	&zenlog( "GLOBAL $ipset" );
 
 	my @cmd = `$ipset list`;
 
@@ -815,9 +1058,27 @@ sub getRBLIpList
 		$output = \@ipList;
 	}
 
+	elsif ( $from eq 'geolocation' )
+	{
+		my $GeolocationPath  = &getGlobalConfiguration( 'rblGeolocation' );
+		my $fileList = "$GeolocationPath/$listName.txt";
+		
+		tie my @list, 'Tie::File', $fileList;
+		@ipList = @list;
+		untie @list;
+
+		# ip list format wrong
+		# get only correct format lines
+		@ipList = grep ( /($source_format)/, @ipList );
+		$output = \@ipList;
+	}
+
+
 	return $output;
 }
 
+
+## NOT USED
 =begin nd
         Function: getRBLCheckLocalLists
 
@@ -831,47 +1092,48 @@ sub getRBLIpList
 				==0 	- all lists active
                 
 =cut
+#~ sub getRBLCheckLocalLists
+#~ {
+	#~ my $fileHandle = Config::Tiny->read( $rblLocalConf );
+	#~ my %listConf   = %{ $fileHandle };
+	#~ my $whLists    = 0;
+	#~ my $blLists    = 0;
 
-sub getRBLCheckLocalLists
-{
-	my $fileHandle = Config::Tiny->read( $rblLocalConf );
-	my %listConf   = %{ $fileHandle };
-	my $whLists    = 0;
-	my $blLists    = 0;
+	#~ my $rblConfPath = &getGlobalConfiguration( 'rblConfPath' );
 
-	my $rblConfPath = &getGlobalConfiguration( 'rblConfPath' );
+	#~ # check local config file and list directory are agree.
+	#~ foreach my $listName ( keys %listConf )
+	#~ {
+		#~ if ( $fileHandle->{ $listName }->{ 'type' } eq 'allow' )
+		#~ {
+			#~ $whLists++;
+		#~ }
+		#~ else
+		#~ {
+			#~ $blLists++;
+		#~ }
+	#~ }
 
-	# check local config file and list directory are agree.
-	foreach my $listName ( keys %listConf )
-	{
-		if ( $fileHandle->{ $listName }->{ 'type' } eq 'allow' )
-		{
-			$whLists++;
-		}
-		else
-		{
-			$blLists++;
-		}
-	}
+	#~ # check directory
+	#~ $whListsTxt = `ls $rblConfPath/allow_lists/*.txt | wc -l`;
+	#~ chop ( $whListsTxt );
+	#~ $blListsTxt = `ls $rblConfPath/deny_lists/*.txt | wc -l`;
+	#~ chop ( $blListsTxt );
 
-	# check directory
-	$whListsTxt = `ls $rblConfPath/allow_lists/*.txt | wc -l`;
-	chop ( $whListsTxt );
-	$blListsTxt = `ls $rblConfPath/deny_lists/*.txt | wc -l`;
-	chop ( $blListsTxt );
+	#compare both
+	#~ if ( scalar $whListsTxt != $whLists )
+	#~ {
+		#~ &zenlog( "Configurations and number of allow lists don't agree." );
+		#~ $output = -1;
+	#~ }
+	#~ if ( scalar $blListsTxt != $blLists )
+	#~ {
+		#~ &zenlog( "Configurations and number of deny lists don't agree." );
+		#~ $output = -1;
+	#~ }
+#~ }
 
-	#~ compare both
-	if ( scalar $whListsTxt != $whLists )
-	{
-		&zenlog( "Configurations and number of allow lists don't agree." );
-		$output = -1;
-	}
-	if ( scalar $blListsTxt != $blLists )
-	{
-		&zenlog( "Configurations and number of deny lists don't agree." );
-		$output = -1;
-	}
-}
+
 
 =begin nd
         Function: setRBLRefreshAllLists
@@ -947,13 +1209,11 @@ sub setRBLCreateIptableCmd
 
 	if ( $action eq "allow" )
 	{
-		$action = "ACCEPT";
 		$add    = "-I";
 
 	}
 	elsif ( $action eq "deny" )
 	{
-		$action = "DROP";
 		$add    = "-A";
 	}
 	else
@@ -984,7 +1244,7 @@ sub setRBLCreateIptableCmd
 
 # 		iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "RBL_farmname"
 		$output = &getGlobalConfiguration( 'iptables' )
-		  . " $add PREROUTING -t raw -m set --match-set $list src $farmOpt -j $action -m comment --comment \"RBL_$farmName\"";
+		  . " $add PREROUTING -t raw -m set --match-set $list src $farmOpt -m comment --comment \"RBL_$farmName\"";
 	}
 
 	return $output;
@@ -1015,7 +1275,16 @@ sub setRBLCreateRule
 	my $action = &getRBLListParam( $listName, 'type' );
 
 	my $cmd = &setRBLCreateIptableCmd( $farmName, $listName, $action );
-	$output = &iptSystem( $cmd );
+	my $logMsg = "[Blocked by RBL rule]";
+
+	if ( $action eq "deny" )
+	{	
+		$output = &setIPDSDropAndLog ( $cmd, $logMsg ); 
+	}
+	else
+	{
+		$output = &iptSystem( "$cmd -j ACCEPT" );
+	}
 
 	# mod configuration file
 	if ( !$output )
@@ -1092,7 +1361,6 @@ sub setRBLDeleteRule
 		if ( $rule =~ /^(\d+) .+match-set $listName src .+RBL_$farmName/ )
 		{
 			$lineNum = $1;
-			last;
 		}
 	}
 	if ( !$lineNum )
@@ -1268,6 +1536,7 @@ sub setRBLStart
 {
 	my $rblRemoteConf = &getGlobalConfiguration( 'rblRemoteConf' );
 	my $rblLocalConf = &getGlobalConfiguration( 'rblLocalConf' );
+	my $rblLocalConf = &getGlobalConfiguration( 'rblGeolocationConf' );
 	my $ipset = &getGlobalConfiguration( 'ipset' );
 	my @rules = @{ &getRBLRules () };
 
@@ -1293,6 +1562,26 @@ sub setRBLStart
 	my $localLists = Config::Tiny->read( $rblLocalConf );
 	# load local lists
 	foreach my $list ( keys %{ $localLists } )
+	{
+		my $output = system ( "$ipset create $list hash:net" );
+		my @farms = @{ &getRBLListParam ( $list, "farms" ) };
+		foreach my $farm ( @farms )
+		{
+			if ( ! grep ( /^.+match-set $list src .+RBL_$farm/, @rules ) )
+			{
+				# create cmd
+				my $action = &getRBLListParam( $list, 'type' );
+				
+				my $cmd = &setRBLCreateIptableCmd( $farm, $list, $action );
+				$output = &iptSystem( $cmd );
+
+			}
+		}
+	}
+	
+	my $geolocationLists = Config::Tiny->read( $geolocationConf );
+	# load geolocation lists
+	foreach my $list ( keys %{ $geolocationLists } )
 	{
 		my $output = system ( "$ipset create $list hash:net" );
 		my @farms = @{ &getRBLListParam ( $list, "farms" ) };

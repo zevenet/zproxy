@@ -194,12 +194,6 @@ sub get_rbl_list
 	return \%listHash;
 }
 
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"profile":"HTTP","vip":"178.62.126.152","vport":"12345","interface":"eth0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/newfarmHTTP
-#
-# HTTP status code reference: http://www.restapitutorial.com/httpstatuscodes.html
-#
-#
-#
 #####Documentation of POST RBL list####
 #**
 #  @api {post} /ipds/rbl/<listname> Create a new rbl list
@@ -269,6 +263,18 @@ sub add_rbl_list
 		if ( $json_obj->{ 'location' } eq 'local' )
 		{
 			$error = &setRBLCreateLocalList( $listName, $json_obj->{ 'type' } );
+		}
+		
+		elsif ( $json_obj->{ 'location' } eq 'geolocation' )
+		{
+			if ( &getRBLGeolocationLists ( $listName ) != -1 )
+			{
+				$error = &setRBLCreateGeolocationList( $listName, $json_obj->{ 'type' } );
+			}
+			else
+			{
+				$errormsg = "Not exist a geolist with this name.";
+			}
 		}
 
 		elsif ( $json_obj->{ 'location' } eq 'remote' )
@@ -784,6 +790,7 @@ sub add_rbl_to_farm
 				  @rules ) )
 	{
 		$err = 1;
+		&zenlog ("$json_obj->{ 'listname' } just is applied");
 	}
 	else
 	{
@@ -912,21 +919,67 @@ ddos:
 sub get_ddos
 {
 	my $confFile = &getGlobalConfiguration( 'ddosConf' );
-	my $output;
+	my @output;
 
 	if ( -e $confFile )
 	{
 		my $fileHandle = Config::Tiny->read( $confFile );
-		$output = $fileHandle->{ '_' };
+		foreach my $key ( keys %{ $fileHandle } )
+		{
+			# get status of all rules enabled
+			#~ if ( $fileHandle->{ $key }->{'status'} =~ /up/ || 
+				  #~ $fileHandle->{ $key }->{'farms'} )
+				  
+			# get status only balancer rules
+			if ( $fileHandle->{ $key }->{'status'} =~ /up/ )
+			{
+				push @output, $key;
+			}
+		}
 	}
 
 	my $body = {
 				 description => "Get DDoS settings.",
-				 params      => $output
+				 params      => \@output
 	};
 
 	&httpResponse( { code => 200, body => $body } );
 }
+
+
+
+# ???
+sub get_ddos_key
+{
+	my $key = shift; 
+	
+	$output = &getDDOSParam ( $key );
+
+	# don't exit this key
+	if ( !$output )
+	{
+		my $errormsg = "$key don't is a valid ID DDoS rule";
+		my $body = {
+					 description => "Get DDoS $key settings",
+					 error       => "true",
+					 message     => $errormsg,
+		};
+		&httpResponse( { code => 400, body => $body } );
+	}
+	# successful
+	else
+	{
+		my $body = {
+				 description => "$key settings.",
+				 params      => $output,
+			 };
+		&httpResponse( { code => 200, body => $body } );
+	}
+	
+}
+
+
+
 
 #**
 #  @api {put} /ipds/ddos Modify ddos settings
@@ -963,38 +1016,89 @@ sub set_ddos
 {
 	my $json_obj = shift;
 	my $key      = $json_obj->{ 'id' };
-	my $status   = $json_obj->{ 'status' };
-	my $output;
+	my $errormsg;
 
-	if ( $key eq 'ssh_bruteForce' )
+	
+	if ( $key eq 'DROPICMP' )
 	{
-		&setDDOSCreateRule( $key ) if ( $status eq 'up' );
-		&setDDOSDeleteRule( $key ) if ( $status eq 'down' );
-
-		my $confFile = &getGlobalConfiguration( 'ddosConf' );
-
-		if ( -e $confFile )
+		if ( $json_obj->{ 'status' } eq 'up' )
 		{
-			my $fileHandle = Config::Tiny->read( $confFile );
-			$output = $fileHandle->{ '_' };
+			&setDDOSCreateRule( $key );
 		}
-		&httpResponse(
-					   {
-						 code => 200,
-						 body => { description => "Put DDoS settings", params => $output }
-					   }
-		);
-
+		elsif ( $json_obj->{ 'status' } eq 'down' )
+		{
+			&setDDOSDeleteRule( $key );
+		}
 	}
+
+	elsif ( $key eq 'SSHBRUTEFORCE' )
+	{
+		&setDDOSParam ( $key, 'time', $json_obj->{ 'time' } ) if ( exists $json_obj->{ 'time' } );
+		&setDDOSParam ( $key, 'hits', $json_obj->{ 'hits' } ) if ( exists $json_obj->{ 'hits' } );
+		&setDDOSParam ( $key, 'port', $json_obj->{ 'port' } ) if ( exists $json_obj->{ 'port' } );
+		
+		&setDDOSCreateRule( $key ) if ( $json_obj->{ 'status' } eq 'up' );
+		&setDDOSDeleteRule( $key ) if ( $json_obj->{ 'status' } eq 'down' );
+	}
+
+	elsif ( $key eq 'PORTSCANNING' )
+	{
+		&setDDOSParam ( $key, 'blTime', $json_obj->{ 'blTime' } ) if ( exists $json_obj->{ 'blTime' } );
+		&setDDOSParam ( $key, 'time', $json_obj->{ 'time' } ) if ( exists $json_obj->{ 'time' } );
+		&setDDOSParam ( $key, 'hits', $json_obj->{ 'hits' } ) if ( exists $json_obj->{ 'hits' } );
+		&setDDOSParam ( $key, 'portScan', $json_obj->{ 'portScan' } ) if ( exists $json_obj->{ 'portScan' } );
+		
+		&setDDOSCreateRule( $key ) if ( $json_obj->{ 'status' } eq 'up' );
+		&setDDOSDeleteRule( $key ) if ( $json_obj->{ 'status' } eq 'down' );
+	}
+
+	elsif ( $key eq 'SYNPROXY' )
+	{
+		&setDDOSParam ( $key, 'mss', $json_obj->{ 'mss' } ) if ( exists $json_obj->{ 'mss' } );
+		&setDDOSParam ( $key, 'scale', $json_obj->{ 'scale' } ) if ( exists $json_obj->{ 'scale' } );
+	}
+
+	elsif ( $key eq 'LIMITSEC' )
+	{
+		&setDDOSParam ( $key, 'limit', $json_obj->{ 'limit' } ) if ( exists $json_obj->{ 'limit' } );
+		&setDDOSParam ( $key, 'limitBurst', $json_obj->{ 'limitBurst' } ) if ( exists $json_obj->{ 'limitBurst' } );
+	}
+
+	elsif ( $key eq 'LIMITRST' )
+	{
+		&setDDOSParam ( $key, 'limit', $json_obj->{ 'limit' } ) if ( exists $json_obj->{ 'limit' } );
+		&setDDOSParam ( $key, 'limitBurst', $json_obj->{ 'limitBurst' } ) if ( exists $json_obj->{ 'limitBurst' } );
+	}
+
+	elsif ( $key eq 'LIMITCONNS' )
+	{
+		&setDDOSParam ( $key, 'limitConns', $json_obj->{ 'limitConns' } ) if ( exists $json_obj->{ 'limitConns' } );
+	}
+	
 	else
 	{
-		my $errormsg = "Wrong param";
+		$errormsg = "Wrong param ID";
+	}
+
+	# output
+	if ( $errormsg )
+	{
 		my $body = {
-					 description => "Put DDoS settings",
-					 error       => "true",
-					 message     => $errormsg,
+			description => "Put DDoS settings",
+			error       => "true",
+			message     => $errormsg,
 		};
 		&httpResponse( { code => 400, body => $body } );
+	}
+	
+	else
+	 {
+		&httpResponse(
+			{
+			code => 200,
+			bdy => { description => "Put DDoS $key settings", "successful" => "true" }
+			}
+		);
 	}
 
 }
@@ -1011,7 +1115,7 @@ sub set_ddos
 # @apiSuccessExample Success-Response:
 #{
 #   "description" : "Get status DDoS gslbFarm.",
-#   "params" : "up"
+#   "params" : ???
 #}
 #
 #
@@ -1026,24 +1130,25 @@ sub get_ddos_farm
 {
 	my $farmName = shift;
 	my $confFile = &getGlobalConfiguration( 'ddosConf' );
-	my $output;
+	my @output;
 
 	$output = 'down';
 	if ( -e $confFile )
 	{
 		my $fileHandle  = Config::Tiny->read( $confFile );
-		my $farmsString = $fileHandle->{ '_' }->{ 'farms' };
-		my @farmsArray  = split ( ' ', $farmsString );
-
-		if ( $farmsString =~ /$farmName/ )
+		
+		foreach my $key ( keys %{ $fileHandle } )
 		{
-			$output = 'up';
+			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			{
+				push @output , $key;
+			}
 		}
 	}
 
 	my $body = {
 				 description => "Get status DDoS $farmName.",
-				 params      => $output
+				 params      => \@output
 	};
 
 	&httpResponse( { code => 200, body => $body } );
@@ -1070,7 +1175,7 @@ sub get_ddos_farm
 #
 # @apiExample {curl} Example Usage:
 #		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"listname":"listName"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/ddos
+#		-d '{"id":"NEWNOSYN"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/ddos
 #
 # @apiSampleRequest off
 #
@@ -1080,30 +1185,39 @@ sub add_ddos_to_farm
 {
 	my $json_obj = shift;
 	my $farmName = shift;
+	my $key = $json_obj->{'id'};
 	my $errormsg;
+	my @vaildKeys = (
+				'INVALID', 'BLOCKSPOOFED', 'LIMITCONNS', 'LIMITSEC',     # all farms
+				'DROPFRAGMENTS', 'NEWNOSYN', 'SYNWITHMSS',   # farms based in TCP protcol
+				'BOGUSTCPFLAGS', 'LIMITRST', 'SYNPROXY'
+				 );
 
 	my $confFile = &getGlobalConfiguration( 'ddosConf' );
 	my $output = "down";
 
 	system ( &getGlobalConfiguration('ddosConf') . " $confFile" ) if ( ! -e $confFile );
-			
-	if ( grep ( /$farmName/, &getFarmList() ) )
+	if ( ! grep ( /^$key$/, @vaildKeys ) )
+	{
+		$errormsg = "Key $key is not a valid value.";
+	}		
+	elsif ( grep ( /$farmName/, &getFarmList() ) )
 	{
 		my $fileHandle = Config::Tiny->read( $confFile );
-		if ( $fileHandle->{ '_' }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+		if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 		{
 			$errormsg = "Just is enabled DDoS in $farmName.";
 		}
 		else
 		{
-			&setDDOSCreateRule( 'farms', $farmName );
+			&setDDOSCreateRule( $key, $farmName );
 
 			my $confFile = &getGlobalConfiguration( 'ddosConf' );
 			my $output;
 
 			# check output
 			my $fileHandle  = Config::Tiny->read( $confFile );
-			my $farmsString = $fileHandle->{ '_' }->{ 'farms' };
+			my $farmsString = $fileHandle->{ $key }->{ 'farms' };
 
 			if ( $farmsString =~ /( |^)$farmName( |$)/ )
 			{
@@ -1164,17 +1278,28 @@ sub add_ddos_to_farm
 # @apiSampleRequest off
 #
 #**
-# DELETE /farms/<farmname>/ipds/ddos
+# DELETE /farms/<farmname>/ipds/ddos/<id>
 sub del_ddos_from_farm
 {
 	my $farmName = shift;
+	my $key = shift;
 	my $confFile = &getGlobalConfiguration( 'ddosConf' );
 	my $errormsg;
 
-	if ( -e $confFile )
+	my @vaildKeys = (
+			'INVALID', 'BLOCKSPOOFED', 'LIMITCONNS', 'LIMITSEC',     # all farms
+			'DROPFRAGMENTS', 'NEWNOSYN', 'SYNWITHMSS',   # farms based in TCP protcol
+			'BOGUSTCPFLAGS', 'LIMITRST', 'SYNPROXY'
+			 );
+
+	if ( ! grep ( /^$key$/, @vaildKeys ) )
+	{
+		$errormsg = "Key $key is not a valid value.";
+	}		
+	elsif ( -e $confFile )
 	{
 		my $fileHandle  = Config::Tiny->read( $confFile );
-		my $farmsString = $fileHandle->{ '_' }->{ 'farms' };
+		my $farmsString = $fileHandle->{ $key }->{ 'farms' };
 		$errormsg = "DDoS for $farmName just is disable."
 		  if ( $farmsString !~ /( |^)$farmName( |$)/ );
 	}
@@ -1187,7 +1312,7 @@ sub del_ddos_from_farm
 	{
 		if ( grep ( /$farmName/, &getFarmList ) )
 		{
-			&setDDOSDeleteRule( 'farms', $farmName );
+			&setDDOSDeleteRule( $key, $farmName );
 
 			my $errormsg = "DDoS was desactived successful from farm $farmName.";
 

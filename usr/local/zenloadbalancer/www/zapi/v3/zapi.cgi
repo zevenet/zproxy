@@ -1060,7 +1060,7 @@ GET qr{^/graphs} => sub {
 ipds:
 
 my $rbl_list = &getValidFormat('rbl_list_name');
-my $rbl_source = &getValidFormat('rbl_source');
+my $rbl_source_id = &getValidFormat('rbl_source_id');
 
 # RBL
 #  GET all rbl lists
@@ -1094,12 +1094,12 @@ POST qr{^/ipds/rbl/($rbl_list)/list} => sub {
 };
 
 #  PUT a source from a rbl list
-PUT qr{^/ipds/rbl/($rbl_list)/list/($rbl_source$)} => sub {
+PUT qr{^/ipds/rbl/($rbl_list)/list/($rbl_source_id)$} => sub {
 	&set_rbl_source ( @_ );
 };
 
 #  DELETE a source from a rbl list
-DELETE qr{^/ipds/rbl/($rbl_list)/list/($rbl_source$)} => sub {
+DELETE qr{^/ipds/rbl/($rbl_list)/list/($rbl_source_id)$} => sub {
 	&del_rbl_source ( @_ );
 };
 
@@ -1109,15 +1109,21 @@ POST qr{^/farms/($farm_re)/ipds/rbl$} => sub {
 };
 
 #  DELETE list from farm
-DELETE qr{^/farms/($farm_re)/ipds/rbl/($rbl_list$)} => sub {
+DELETE qr{^/farms/($farm_re)/ipds/rbl/($rbl_list)$} => sub {
 	&del_rbl_from_farm ( @_ );
 };
 
 
 # DDoS
+my $ddos_key = &getValidFormat ( 'ddos_key' );
 #  GET ddos settings
 GET qr{^/ipds/ddos$} => sub {
 	&get_ddos ( @_ );
+};
+
+#  GET ddos configuration
+GET qr{^/ipds/ddos/($ddos_key)$} => sub {
+	&get_ddos_key ( @_ );
 };
 
 #  PUT ddos settings
@@ -1136,7 +1142,7 @@ POST qr{^/farms/($farm_re)/ipds/ddos$} => sub {
 };
 
 #  DELETE DDoS from a farm
-DELETE qr{^/farms/($farm_re)/ipds/ddos$} => sub {
+DELETE qr{^/farms/($farm_re)/ipds/ddos/($ddos_key)$} => sub {
 	&del_ddos_from_farm ( @_ );
 };
 

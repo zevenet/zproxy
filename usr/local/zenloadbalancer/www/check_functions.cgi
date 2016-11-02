@@ -79,8 +79,10 @@ my %format_re = (
 	'bond_mode_short'  => qr/(?:balance-rr|active-backup|balance-xor|broadcast|802.3ad|balance-tlb|balance-alb)/,
 
 	# ipds
-	'rbl_list_name' => qr/[a-zA-Z0-9]+/,
-	'rbl_source'    => qr/(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?/,
+	'rbl_list_name' => qr{[a-zA-Z0-9]+},
+	'rbl_source'	=> qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
+	'rbl_source_id'	=> qr{\d+},
+	'ddos_key' => '[A-Z]+',
 
 	# certificates filenames
 	'certificate' => qr/\w[\w\.-]*\.(?:pem|csr)/,
