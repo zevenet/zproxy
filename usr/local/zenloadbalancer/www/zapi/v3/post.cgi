@@ -898,7 +898,6 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 									 port    => $json_obj->{ port } + 0,
 									 weight  => $json_obj->{ weight } + 0,
 									 timeout => $json_obj->{ timeout },
-									 #~ service => $json_obj->{ service }
 						 },
 			};
 
@@ -926,19 +925,9 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 	{
 		# validate SERVICE
 		{
-			my @services = &getFarmServices($farmname);
-			my $found_service;
+			my @services_list = &getGSLBFarmServices( $farmname );
 
-			foreach my $service ( @services )
-			{
-				if ( $json_obj->{ service } eq $service )
-				{
-					$found_service = 1;
-					last;
-				}
-			}
-
-			if ( !$found_service )
+			unless ( grep { $service eq $_ } @services_list )
 			{
 				# Error
 				my $errormsg = "Could not find the requested service.";
@@ -954,8 +943,8 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 
 		# Get an ID
 		my $id = 1;
-		my $lb         = &getFarmVS( $farmname, $json_obj->{ service }, "algorithm" );
-		my $backendsvs = &getFarmVS( $farmname, $json_obj->{ service }, "backends" );
+		my $lb         = &getFarmVS( $farmname, $service, "algorithm" );
+		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
 		my @be = split ( "\n", $backendsvs );
 
 		# validate ALGORITHM
@@ -965,7 +954,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 				 "ZAPI error, this service algorithm does not support adding new backends." );
 
 			# Error
-			my $errormsg = "Could not find the requested service.";
+			my $errormsg = "This service algorithm does not support adding new backends.";
 			my $body = {
 						 description => $description,
 						 error       => "true",
@@ -986,7 +975,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		}
 
 		# validate IP
-		if ( ! &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
+		unless ( &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
 		{
 			&zenlog(
 				 "ZAPI error, trying to create a new backend in the service $service of the farm $farmname, invalid IP." );
@@ -1003,12 +992,11 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		}
 
 		#Adding the backend
-		my $status = &setGSLBFarmNewBackend( $farmname, $json_obj->{ service },
-										  $lb, $id, $json_obj->{ ip } );
+		my $status = &setGSLBFarmNewBackend( $farmname, $service, $lb, $id, $json_obj->{ ip } );
 		if ( $status != -1 )
 		{
 			&zenlog(
-				"ZAPI success, a new backend has been created in farm $farmname in service $json_obj->{service} with IP $json_obj->{ip}."
+				"ZAPI success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}."
 			);
 
 			# Success
