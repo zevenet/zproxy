@@ -2294,7 +2294,7 @@ sub getGSLBResources
 			next;
 		}
 
-		my @subbe  = split ( "\;", $subline );
+		my @subbe  = split ( " \;", $subline );
 		my @subbe1 = split ( "\t", $subbe[0] );
 		my @subbe2 = split ( "_",  $subbe[1] );
 

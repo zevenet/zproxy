@@ -213,6 +213,11 @@ sub farms_name_gslb # ( $farmname )
 		my $resources = &getGSLBResources  ( $farmname, $zone );
 		my $ns = &getFarmVS( $farmname, $zone, "ns" );
 
+		for my $resource ( @{ $resources } )
+		{
+			$resource->{ ttl } = undef if ! $resource->{ ttl };
+		}
+
 		push @out_z,
 		  {
 			id                => $zone,
@@ -284,6 +289,11 @@ sub gslb_zone_resources # ( $farmname, $zone )
 	#
 
 	my $resources = &getGSLBResources  ( $farmname, $zone );
+
+	for my $resource ( @{ $resources } )
+	{
+		$resource->{ ttl } = undef if ! $resource->{ ttl };
+	}
 
 	# Success
 	my $body = {
