@@ -812,7 +812,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		if ( !$error )
 		{
 			my $status =
-			  &setGSLBFarmNewBackend( $farmname, $service, $lb, $backend_id, @subbe[1] );
+			  &setGSLBFarmNewBackend( $farmname, $service, $lb, $backend_id, $json_obj->{ ip } );
 
 			if ( $status == -1 )
 			{
