@@ -531,6 +531,7 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 	print $output;
 
 	&zenlog( "STATUS:$self->{ code }" );
+	&zenlog( "MEMORY: " . &getMemoryUsage );
 
 	exit;
 }
@@ -724,7 +725,7 @@ GET qr{^/farms/($farm_re)$} => sub {
 };
 
 #  POST new farm
-POST qr{^/farms/($farm_re)$} => sub {
+POST qr{^/farms/($farm_re)$} => sub { # DEPRECATED. TO BE REMOVED
 	&new_farm( @_ );
 };
 
@@ -924,13 +925,6 @@ DELETE qr{^/interfaces/nic/($nic_re)$} => sub {
 	&delete_interface_nic( @_ );
 };
 
-##### /interfaces/bonding
-
-#  GET interfaces bonding
-GET qr{^/interfaces/bonding$} => sub {
-	&get_interfaces_bond();
-};
-
 ##### /interfaces/vlan
 
 #  GET interfaces vlan
@@ -977,6 +971,44 @@ PUT qr{^/interfaces/virtual/($virt_interface)$} => sub {
 #  DELETE virtual interface (default)
 DELETE qr{^/interfaces/virtual/($virt_interface)$} => sub {
 	&delete_interface_virtual( @_ );
+};
+
+##### /interfaces/bonding
+
+#  GET interfaces bonding
+GET qr{^/interfaces/bonding$} => sub {
+	&get_interfaces_bond();
+};
+
+#  POST interfaces bonding
+POST qr{^/interfaces/bonding$} => sub {
+	&new_bond( @_ );
+};
+
+##### /interfaces/bonding/BOND
+
+#  PUT interfaces bonding
+PUT qr{^/interfaces/bonding/($nic_re)$} => sub {
+	&modify_interface_bond( @_ );
+};
+
+#  DELETE virtual interface (default)
+DELETE qr{^/interfaces/bonding/($nic_re)$} => sub {
+	&delete_bond( @_ );
+};
+
+##### /interfaces/bonding/BOND/slaves
+
+#  POST interfaces bonding
+POST qr{^/interfaces/bonding/($nic_re)/slaves$} => sub {
+	&new_bond_slave( @_ );
+};
+
+##### /interfaces/bonding/BOND/slaves/SLAVE
+
+#  DELETE virtual interface (default)
+DELETE qr{^/interfaces/bonding/($nic_re)/slaves/($nic_re)$} => sub {
+	&delete_bond_slave( @_ );
 };
 
 # FIXME: implement up/down in PUT method

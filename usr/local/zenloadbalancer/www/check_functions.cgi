@@ -72,6 +72,8 @@ my %format_re = (
 	'interface_type' => qr/(?:nic|vlan|virtual|bond)/,
 	'vlan_tag'       => qr/$vlan_tag/,
 	'virtual_tag'    => qr/$virtual_tag/,
+	'bond_mode_num'    => qr/[0-6]/,
+	'bond_mode_short'  => qr/(?:balance-rr|active-backup|balance-xor|broadcast|802.3ad|balance-tlb|balance-alb)/,
 
 	# ipds
 	'rbl_list_name' => qr/[a-zA-Z0-9]+/,

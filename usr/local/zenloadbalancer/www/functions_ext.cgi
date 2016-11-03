@@ -218,12 +218,14 @@ sub zlog                                          # (@message)
 	return;
 }
 
-sub print_mem
+sub getMemoryUsage
 {
 	my $mem_string = `grep RSS /proc/$$/status`;
+
 	chomp ( $mem_string );
-	print ( "$mem_string >> @_\n" );
-	return;
+	$mem_string =~ s/:.\s+/:    /;
+
+	return $mem_string;
 }
 
 sub debug { return 0 }

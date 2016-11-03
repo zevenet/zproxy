@@ -1,5 +1,15 @@
 #!/usr/bin/perl -w
 
+my @bond_modes_short = (
+				'balance-rr',
+				'active-backup',
+				'balance-xor',
+				'broadcast',
+				'802.3ad',
+				'balance-tlb',
+				'balance-alb',
+);
+
 # POST Virtual Network Interface
 #
 # curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"name":"new2","ip":"1.1.1.3","netmask":"255.255.192.0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/addvini/eth0
@@ -456,6 +466,187 @@ sub new_vlan # ( $json_obj )
 	}
 }
 
+sub new_bond # ( $json_obj )
+{
+	my $json_obj = shift;
+
+	my $description = "Add a bond interface";
+
+	# validate BOND NAME
+	my $nic_re = &getValidFormat( 'nic_interface' );
+
+	unless ( $json_obj->{ name } =~ /^$nic_re$/ && &ifexist($json_obj->{ name }) eq 'false' )
+	{
+		# Error
+		my $errormsg = "Interface name is not valid";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# validate BOND MODE
+	unless ( $json_obj->{ mode } && &getValidFormat( 'bond_mode_short', $json_obj->{ mode } ) )
+	{
+		# Error
+		my $errormsg = "Bond mode is not valid";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	$json_obj->{ mode } = &indexOfElementInArray( $json_obj->{ mode }, \@bond_modes_short );
+
+	# validate SLAVES
+	my $missing_slave;
+	for my $slave ( @{ $json_obj->{slaves} } )
+	{
+		unless ( grep { $slave eq $_ } &getBondAvailableSlaves() )
+		{
+			$missing_slave = $slave;
+			last;
+		}
+	}
+
+	if ( $missing_slave || !@{ $json_obj->{ slaves } } )
+	{
+		&zenlog("missing_slave:$missing_slave slaves:@{ $json_obj->{ slaves } }");
+		# Error
+		my $errormsg = "Error loading the slave interfaces list";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	eval {
+		die if &applyBondChange( $json_obj, 'writeconf' );
+	};
+
+	if ( ! $@ )
+	{
+		my $if_ref = getSystemInterface( $json_obj->{ name } );
+
+		# Success
+		my $body = {
+					 description => $description,
+					 params      => {
+								 name   => $json_obj->{ name },
+								 mode   => $bond_modes_short[$json_obj->{ mode }],
+								 slaves => $json_obj->{ slaves },
+								 status => $if_ref->{ status },
+								 HWaddr => $if_ref->{ mac },
+					 },
+		};
+
+		&httpResponse({ code => 201, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The $json_obj->{ name } bonding network interface can't be created";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
+# POST bond slave
+# slave: nic
+sub new_bond_slave # ( $json_obj, $bond )
+{
+	my $json_obj = shift;
+	my $bond     = shift;
+
+	my $description = "Add a slave to a bond interface";
+
+	# validate BOND NAME
+	my $bonds = &getBondConfig();
+
+	unless ( $bonds->{ $bond } )
+	{
+		# Error
+		my $errormsg = "Bond interface name not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# validate SLAVE
+	eval {
+		$json_obj->{ slave } or die;
+		&getValidFormat( 'nic_interface', $json_obj->{ slave } ) or die;
+		grep ( { $json_obj->{ slave } eq $_ } &getBondAvailableSlaves() ) or die;
+		die if grep ( { $json_obj->{ slave } eq $_ } @{ $bonds->{ $bond }->{ slaves } } );
+	};
+	if ( $@ )
+	{
+		# Error
+		my $errormsg = "Could not add the slave interface to this bonding";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	push @{ $bonds->{ $bond }->{ slaves } }, $json_obj->{slave};
+
+	eval {
+		die if &applyBondChange( $bonds->{ $bond }, 'writeconf' );
+	};
+	if ( ! $@ )
+	{
+		my $if_ref = getSystemInterface( $bond );
+
+		# Success
+		my $body = {
+					 description => $description,
+					 params      => {
+								 name   => $bond,
+								 mode   => $bond_modes_short[$bonds->{ $bond }->{ mode }],
+								 slaves => $bonds->{ $bond }->{ slaves },
+								 status => $if_ref->{ status },
+								 HWaddr => $if_ref->{ mac },
+					 },
+		};
+
+		&httpResponse({ code => 201, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The $json_obj->{ name } bonding network interface can't be created";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
 # DELETE Virtual Network Interface
 #
 # curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/deleteif/eth0:new
@@ -734,6 +925,145 @@ sub delete_interface_virtual # ( $virtual )
 	{
 		# Error
 		my $errormsg = "The virtual interface $virtual can't be deleted";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
+sub delete_bond # ( $bond )
+{
+	my $bond = shift;
+
+	my $description = "Remove bonding interface";
+	my $bonds = &getBondConfig();
+
+	# validate BOND
+	unless ( $bonds->{ $bond } )
+	{
+		# Error
+		my $errormsg = "Bonding interface name not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	my $bond_in_use = 0;
+	$bond_in_use = 1 if &getInterfaceConfig( $bond_name, 4 );
+	$bond_in_use = 1 if &getInterfaceConfig( $bond_name, 6 );
+	$bond_in_use = 1 if grep ( /^$bond_name(:|\.)/, &getInterfaceList() );
+
+	if ( $bond_in_use )
+	{
+		# Error
+		my $errormsg = "Bonding interface is being used";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	eval {
+		if ( ${ &getSystemInterface( $bond ) }{ status } eq 'up' )
+		{
+			die if &downIf( $bond, 'writeconf' );
+		}
+
+		 die if &setBondMaster( $bond, 'del', 'writeconf' );
+	};
+	if ( ! $@ )
+	{
+		# Success
+		my $message = "The bonding interface $virtual has been deleted.";
+		my $body = {
+					 description => $description,
+					 success     => "true",
+					 message     => $message,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The bonding interface $virtual could not be deleted";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
+sub delete_bond_slave # ( $bond, $slave )
+{
+	my $bond  = shift;
+	my $slave = shift;
+
+	my $description = "Remove bonding slave interface";
+	my $bonds = &getBondConfig();
+
+	# validate BOND
+	unless ( $bonds->{ $bond } )
+	{
+		# Error
+		my $errormsg = "Bonding interface not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# validate SLAVE
+	unless ( grep ( { $slave eq $_ } @{ $bonds->{ $bond }->{ slaves } } ) )
+	{
+		# Error
+		my $errormsg = "Bonding slave interface not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	eval {
+		@{ $bonds->{ $bond }->{ slaves } } = grep ( { $slave ne $_ } @{ $bonds->{ $bond }->{ slaves } } );
+		die if &applyBondChange( $bonds->{ $bond }, 'writeconf' );
+	};
+	if ( ! $@ )
+	{
+		# Success
+		my $message = "The bonding slave interface $slave has been removed.";
+		my $body = {
+					 description => $description,
+					 success     => "true",
+					 message     => $message,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The bonding slave interface $virtual could not be removed";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -1033,6 +1363,7 @@ sub get_interfaces_bond # ()
 	my @output_list;
 
 	my $description = "List bonding interfaces";
+	my $bond_conf = &getBondConfig();
 
 	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )
 	{
@@ -1052,6 +1383,9 @@ sub get_interfaces_bond # ()
 			gateway => $if_ref->{ gateway },
 			status  => $if_ref->{ status },
 			HDWaddr => $if_ref->{ mac },
+
+			slaves => $bond_conf->{ $if_ref->{ name } }->{ slaves },
+			mode => $bond_modes_short[$bond_conf->{ $if_ref->{ name } }->{ mode }],
 			#~ ipv     => $if_ref->{ ip_v },
 		  };
 	}
@@ -1963,6 +2297,89 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 	my $virtual = shift;
 
 	my $description => "Modify virtual interface",
+	my $ip_v = 4;
+	my $if_ref = &getInterfaceConfig( $virtual, $ip_v );
+
+	unless ( $if_ref )
+	{
+		# Error
+		my $errormsg = "Virtual interface not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# Check address errors
+	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+	{
+		# Error
+		my $errormsg = "IP Address $json_obj->{ip} structure is not ok.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# No errors found
+	eval {
+		# Delete old IP and Netmask from system to replace it
+		die if &delIp( $$if_ref{name}, $$if_ref{addr}, $$if_ref{mask} );
+
+		# Set the new params
+		$if_ref->{addr} = $json_obj->{ip};
+
+		# Add new IP, netmask and gateway
+		die if &addIp( $if_ref );
+
+		my $state = &upIf( $if_ref, 'writeconf' );
+
+		if ( $state == 0 )
+		{
+			$if_ref->{status} = "up";
+			&applyRoutes( "local", $if_ref );
+		}
+
+		&setInterfaceConfig( $if_ref ) or die;
+	};
+
+	# Print params
+	if ( ! $@ )
+	{
+		# Success
+		my $body = {
+					 description => $description,
+					 params      => $json_obj,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "Errors found trying to modify interface $if";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
+sub modify_bond_address # ( $json_obj, $bond )
+{
+	my $json_obj = shift;
+	my $bond = shift;
+
+	my $description => "Modify bond address",
 	my $ip_v = 4;
 	my $if_ref = &getInterfaceConfig( $virtual, $ip_v );
 

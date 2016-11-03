@@ -526,6 +526,16 @@ sub getSystemInterface    # ($if_name)
 				'Adaptive load balancing',
 );
 
+@bond_modes_short = (
+				'balance-rr',
+				'active-backup',
+				'balance-xor',
+				'broadcast',
+				'802.3ad',
+				'balance-tlb',
+				'balance-alb',
+);
+
 sub getBondList
 {
 	if ( !-f $bonding_masters_filename )
@@ -963,7 +973,7 @@ sub getBondAvailableSlaves
 		next if grep ( /^$dir_entry$/, @bond_list );    # not a bond
 		my $iface = &getSystemInterface( $dir_entry );
 		next if $iface->{ status } ne 'down';           # must be down
-		next if $iface->{ addr };                       # without address
+		#~ next if $iface->{ addr };                       # without address
 
 		push ( @avail_ifaces, $dir_entry );
 	}
