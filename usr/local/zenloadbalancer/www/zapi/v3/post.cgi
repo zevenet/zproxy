@@ -958,6 +958,23 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		my $backendsvs = &getFarmVS( $farmname, $json_obj->{ service }, "backends" );
 		my @be = split ( "\n", $backendsvs );
 
+		# validate ALGORITHM
+		unless ( $lb eq 'roundrobin' )
+		{
+			&zenlog(
+				 "ZAPI error, this service algorithm does not support adding new backends." );
+
+			# Error
+			my $errormsg = "Could not find the requested service.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
 		foreach my $subline ( @be )
 		{
 			$subline =~ s/^\s+//;
@@ -971,7 +988,6 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		# validate IP
 		if ( ! &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
 		{
-			$error = "true";
 			&zenlog(
 				 "ZAPI error, trying to create a new backend in the service $service of the farm $farmname, invalid IP." );
 

@@ -744,9 +744,18 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 		# validate BACKEND
 		my $be;
+		my $backend_id = $id_server;
 		{
 			my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
 			my @be_list = split ( "\n", $backendsvs );
+
+			# convert backend_id for prio algorithm
+			my $algorithm = &getFarmVS( $farmname, $service, "algorithm" );
+			if ( $algorithm eq 'prio' )
+			{
+				$backend_id = 'primary' if $id_server == 1;
+				$backend_id = 'secondary' if $id_server == 2;
+			}
 
 			foreach my $be_line ( @be_list )
 			{
@@ -755,7 +764,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 				my @current_be = split ( " => ", $be_line );
 
-				if ( $current_be[0] == $id_server )
+				if ( $current_be[0] == $backend_id )
 				{
 					$be = {
 							id       => $current_be[1],
@@ -803,7 +812,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		if ( !$error )
 		{
 			my $status =
-			  &setGSLBFarmNewBackend( $farmname, $service, $lb, $id_server, @subbe[1] );
+			  &setGSLBFarmNewBackend( $farmname, $service, $lb, $backend_id, @subbe[1] );
 
 			if ( $status == -1 )
 			{

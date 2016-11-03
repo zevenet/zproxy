@@ -512,6 +512,23 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 
 			&httpResponse({ code => 404, body => $body });
 		}
+
+		# validate ALGORITHM
+		unless ( &getFarmVS( $farmname, $service, "algorithm" ) eq 'roundrobin' )
+		{
+			&zenlog(
+				 "ZAPI error, this service algorithm does not support removing backends." );
+
+			# Error
+			my $errormsg = "Could not find the requested service.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
 	}
 
 	my $status;

@@ -320,9 +320,12 @@ sub service_backends
 
 			my @subbe = split ( " => ", $subline );
 
+			@subbe[0] =~ s/^primary$/1/;
+			@subbe[0] =~ s/^secondary$/2/;
+
 			push @backends,
 			  {
-				id => @subbe[0],
+				id => @subbe[0]+0,
 				ip => @subbe[1],
 			  };
 		}

@@ -164,9 +164,13 @@ sub farms_name_gslb # ( $farmname )
 
 			my @subbe = split ( " => ", $subline );
 
+			@subbe[0] =~ s/^primary$/1/;
+			@subbe[0] =~ s/^secondary$/2/;
+			#~ @subbe[0]+0 if @subbe[0] =~ /^\d+$/;
+
 			push @out_b,
 			  {
-				id => @subbe[0],
+				id => @subbe[0]+0,
 				ip => @subbe[1],
 			  };
 		}
