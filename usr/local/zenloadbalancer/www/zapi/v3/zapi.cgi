@@ -724,11 +724,6 @@ GET qr{^/farms/($farm_re)$} => sub {
 	&farms_name( @_ );
 };
 
-#  POST new farm
-POST qr{^/farms/($farm_re)$} => sub { # DEPRECATED. TO BE REMOVED
-	&new_farm( @_ );
-};
-
 #  PUT farm
 PUT qr{^/farms/($farm_re)$} => sub {
 	&modify_farm( @_ );
