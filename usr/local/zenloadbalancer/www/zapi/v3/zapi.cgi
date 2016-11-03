@@ -986,28 +986,29 @@ POST qr{^/interfaces/bonding$} => sub {
 };
 
 ##### /interfaces/bonding/BOND
+my $bond_re = &getValidFormat ('bond_interface');
 
 #  PUT interfaces bonding
-PUT qr{^/interfaces/bonding/($nic_re)$} => sub {
+PUT qr{^/interfaces/bonding/($bond_re)$} => sub {
 	&modify_interface_bond( @_ );
 };
 
 #  DELETE virtual interface (default)
-DELETE qr{^/interfaces/bonding/($nic_re)$} => sub {
-	&delete_bond( @_ );
+DELETE qr{^/interfaces/bonding/($bond_re)$} => sub {
+	&delete_interface_bond( @_ );
 };
 
 ##### /interfaces/bonding/BOND/slaves
 
 #  POST interfaces bonding
-POST qr{^/interfaces/bonding/($nic_re)/slaves$} => sub {
+POST qr{^/interfaces/bonding/($bond_re)/slaves$} => sub {
 	&new_bond_slave( @_ );
 };
 
 ##### /interfaces/bonding/BOND/slaves/SLAVE
 
 #  DELETE virtual interface (default)
-DELETE qr{^/interfaces/bonding/($nic_re)/slaves/($nic_re)$} => sub {
+DELETE qr{^/interfaces/bonding/($bond_re)/slaves/($nic_re)$} => sub {
 	&delete_bond_slave( @_ );
 };
 

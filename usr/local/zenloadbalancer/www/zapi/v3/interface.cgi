@@ -935,6 +935,61 @@ sub delete_interface_virtual # ( $virtual )
 	}
 }
 
+sub delete_interface_bond # ( $bond )
+{
+	my $bond = shift;
+
+	my $description = "Delete bonding network configuration";
+	my $ip_v = 4;
+	my $if_ref = &getInterfaceConfig( $bond, $ip_v );
+
+	if ( !$if_ref )
+	{
+		# Error
+		my $errormsg = "There is no configuration for the network interface.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	&zenlog( Dumper $if_ref );
+
+	eval {
+		die if &delRoutes( "local", $if_ref );
+		die if &downIf( $if_ref, 'writeconf' ); # FIXME: To be removed
+		die if &delIf( $if_ref );
+	};
+
+	if ( ! $@ )
+	{
+		# Success
+		my $message = "The configuration for the bonding interface $bond has been deleted.";
+		my $body = {
+					 description => $description,
+					 success     => "true",
+					 message     => $message,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The configuration for the bonding interface $bond can't be deleted: $@";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
 sub delete_bond # ( $bond )
 {
 	my $bond = shift;
@@ -2374,59 +2429,171 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 	}
 }
 
-sub modify_bond_address # ( $json_obj, $bond )
+sub modify_interface_bond # ( $json_obj, $bond )
 {
 	my $json_obj = shift;
 	my $bond = shift;
 
-	my $description => "Modify bond address",
+	my $description = "Modify bond address";
 	my $ip_v = 4;
-	my $if_ref = &getInterfaceConfig( $virtual, $ip_v );
 
-	unless ( $if_ref )
+	# validate BOND NAME
+	my $socket = IO::Socket::INET->new( Proto => 'udp' );
+	my @system_interfaces = $socket->if_list;
+	my $type = &getInterfaceType( $bond );
+
+	unless ( grep( { $bond eq $_ } @system_interfaces ) && $type eq 'bond' )
 	{
 		# Error
-		my $errormsg = "Virtual interface not found";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 404, body => $body });
-	}
-
-	# Check address errors
-	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
-	{
-		# Error
-		my $errormsg = "IP Address $json_obj->{ip} structure is not ok.";
+		my $errormsg = "Nic interface not found.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
 
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	if ( grep { !/^(?:ip|netmask|gateway)$/ } keys $json_obj )
+	{
+		# Error
+		my $errormsg = "Parameter not recognized";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	# No errors found
-	eval {
-		# Delete old IP and Netmask from system to replace it
-		die if &delIp( $$if_ref{name}, $$if_ref{addr}, $$if_ref{mask} );
+	unless ( exists $json_obj->{ ip } || exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
+	{
+		# Error
+		my $errormsg = "No parameter received to be configured";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
 
-		# Set the new params
-		$if_ref->{addr} = $json_obj->{ip};
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# Check address errors
+	if ( exists $json_obj->{ ip } )
+	{
+		unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) || $json_obj->{ ip } eq '' )
+		{
+			# Error
+			my $errormsg = "IP Address is not valid.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		if ( $json_obj->{ ip } eq '' )
+		{
+			$json_obj->{ netmask } = '';
+			$json_obj->{ gateway } = '';
+		}
+	}
+
+	# Check netmask errors
+	if ( exists $json_obj->{ netmask } )
+	{
+		unless ( defined( $json_obj->{ netmask } ) && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
+		{
+			# Error
+			my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+
+	# Check gateway errors
+	if ( exists $json_obj->{ netmask } )
+	{
+		unless ( defined( $json_obj->{ gateway } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) || $json_obj->{ gateway } eq '' )
+		{
+			# Error
+			my $errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+
+	# Delete old interface configuration
+	my $if_ref = &getInterfaceConfig( $bond, $ip_v );
+
+	if ( $if_ref )
+	{
+		# Delete old IP and Netmask from system to replace it
+		&delIp( $if_ref->{name}, $if_ref->{addr}, $if_ref->{mask} );
+
+		# Remove routes if the interface has its own route table: nic and vlan
+		&delRoutes( "local", $if_ref );
+
+		$if_ref = undef;
+	}
+
+	# Setup new interface configuration structure
+	$if_ref              = &getSystemInterface( $bond );
+	$if_ref->{ addr }    = $json_obj->{ ip } // $if_ref->{ addr };
+	$if_ref->{ mask }    = $json_obj->{ netmask } // $if_ref->{ mask };
+	$if_ref->{ gateway } = $json_obj->{ gateway } // $if_ref->{ gateway };
+	$if_ref->{ ip_v }    = 4;
+
+	if ( $if_ref->{ addr } xor $if_ref->{ mask } )
+	{
+		# Error
+		my $errormsg = "Cannot configure the interface without address or without netmask.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	eval {
 
 		# Add new IP, netmask and gateway
 		die if &addIp( $if_ref );
 
-		my $state = &upIf( $if_ref, 'writeconf' );
+		# Writing new parameters in configuration file
+		die if &writeRoutes( $if_ref->{ name } );
 
-		if ( $state == 0 )
+		# Put the interface up
 		{
-			$if_ref->{status} = "up";
-			&applyRoutes( "local", $if_ref );
+			my $previous_status = $if_ref->{ status };
+			my $state = &upIf( $if_ref, 'writeconf' );
+
+			if ( $state == 0 )
+			{
+				$if_ref->{ status } = "up";
+				&applyRoutes( "local", $if_ref );
+			}
+			else
+			{
+				$if_ref->{ status } = $previous_status;
+			}
 		}
 
 		&setInterfaceConfig( $if_ref ) or die;
@@ -2446,7 +2613,7 @@ sub modify_bond_address # ( $json_obj, $bond )
 	else
 	{
 		# Error
-		my $errormsg = "Errors found trying to modify interface $if";
+		my $errormsg = "Errors found trying to modify interface $bond";
 		my $body = {
 					 description => $description,
 					 error       => "true",
