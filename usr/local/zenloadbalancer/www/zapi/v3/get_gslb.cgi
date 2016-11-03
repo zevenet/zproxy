@@ -232,4 +232,66 @@ sub farms_name_gslb # ( $farmname )
 	&httpResponse({ code => 200, body => $body });
 }
 
+sub gslb_zone_resources # ( $farmname, $zone )
+{
+	my $farmname = shift;
+	my $zone = shift;
+
+	my $description = "List zone resources";
+
+	# validate FARM NAME
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
+		# Error
+		my $errormsg = "Farm name not found";
+		my $body = {
+				description => $description,
+				error => "true",
+				message => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# validate FARM TYPE
+	if ( &getFarmType( $farmname ) ne 'gslb' )
+	{
+		my $errormsg = "Only GSLB profile is supported for this request.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# validate ZONE
+	if ( ! scalar grep { $_ eq $zone } &getFarmZones( $farmname ) )
+	{
+		my $errormsg = "Could not find the requested zone.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	#
+	# Zones
+	#
+
+	my $resources = &getGSLBResources  ( $farmname, $zone );
+
+	# Success
+	my $body = {
+				 description => $description,
+				 params      => $resources,
+	};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
 1;

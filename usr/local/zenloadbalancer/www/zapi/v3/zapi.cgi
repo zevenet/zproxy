@@ -837,6 +837,11 @@ DELETE qr{^/farms/($farm_re)/zones/($zone_re)$} => sub {
 
 ##### /farms/FARM/zones/ZONE/resources
 
+#  GET new zone resource
+GET qr{^/farms/($farm_re)/zones/($zone_re)/resources$} => sub {
+	&gslb_zone_resources( @_ );
+};
+
 #  POST new zone resource
 POST qr{^/farms/($farm_re)/zones/($zone_re)/resources$} => sub {
 	&new_farm_zone_resource( @_ );
