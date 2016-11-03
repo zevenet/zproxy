@@ -127,11 +127,7 @@ sub farms_name_gslb # ( $farmname )
 		$status = "ok";
 	}
 
-	$farm_ref = {
-				  vip    => $vip,
-				  vport  => $vport,
-				  status => $status,
-	};
+	$farm_ref = { vip => $vip, vport => $vport, status => $status };
 
 	#
 	# Services
@@ -183,15 +179,15 @@ sub farms_name_gslb # ( $farmname )
 		my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $srv );
 		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $srv );
 		
-		push @{ $farm_ref->{ services } },
+		push @out_s,
 		  {
-			id          => $srv,
-			algorithm   => $lb,
-			port        => $dpc,
-			fgenabled   => $fgStatus,
-			fgscript    => $fgScrip,
+			id        => $srv,
+			algorithm => $lb,
+			port      => $dpc,
+			fgenabled => $fgStatus,
+			fgscript => $fgScrip,
 			fgtimecheck => $fgTime,
-			backends    => \@out_b,
+			backends  => \@out_b,
 		  };
 	}
 
@@ -217,7 +213,7 @@ sub farms_name_gslb # ( $farmname )
 		my $resources = &getGSLBResources  ( $farmname, $zone );
 		my $ns = &getFarmVS( $farmname, $zone, "ns" );
 
-		push @{ $farm_ref->{ zones } },
+		push @out_z,
 		  {
 			id                => $zone,
 			DefaultNameServer => $ns,
@@ -229,6 +225,8 @@ sub farms_name_gslb # ( $farmname )
 	my $body = {
 				 description => "List farm $farmname",
 				 params      => $farm_ref,
+				 services    => \@out_s,
+				 zones       => \@out_z,
 	};
 
 	&httpResponse({ code => 200, body => $body });
