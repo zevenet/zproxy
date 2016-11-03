@@ -501,7 +501,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	}
 
 	# validate ZONE
-	if ( ! scalar grep { $_ eq $zone } &getFarmZones( $farmname ) )
+	unless ( grep { $_ eq $zone } &getFarmZones( $farmname ) )
 	{
 		my $errormsg = "Could not find the requested zone.";
 		my $body = {
@@ -518,7 +518,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	my ( $resource_line ) = grep { /;index_$id_resource$/ } @be;
 
 	# validate RESOURCE
-	if ( ! $resource_line )
+	unless ( $resource_line )
 	{
 		my $errormsg = "Could not find the requested resource.";
 		my $body = {
@@ -554,9 +554,16 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 
 	if ( !$error && exists ( $json_obj->{ ttl } ) )
 	{
-		if ( $json_obj->{ ttl } eq '' || ( &getValidFormat( 'resource_ttl', $json_obj->{ ttl } ) && $json_obj->{ ttl } != 0 ) )
+		if ( $json_obj->{ ttl } == undef || ( &getValidFormat( 'resource_ttl', $json_obj->{ ttl } ) && $json_obj->{ ttl } ) )
 		{
-			$rsc->{ ttl } = $json_obj->{ ttl };
+			if ( $json_obj->{ ttl } == undef )
+			{
+				$rsc->{ ttl } = '';
+			}
+			else
+			{
+				$rsc->{ ttl } = $json_obj->{ ttl };
+			}
 		}
 		else
 		{

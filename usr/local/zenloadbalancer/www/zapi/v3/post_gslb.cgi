@@ -228,7 +228,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	}
 
 	# validate FARM TYPE
-	if ( &getFarmType( $farmname ) ne 'gslb' )
+	unless ( &getFarmType( $farmname ) eq 'gslb' )
 	{
 		my $errormsg = "Only GSLB profile is supported for this request.";
 		my $body = {
@@ -241,7 +241,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	}
 
 	# validate ZONE
-	if ( ! scalar grep { $_ eq $zone } &getFarmZones( $farmname ) )
+	unless ( grep { $_ eq $zone } &getFarmZones( $farmname ) )
 	{
 		my $errormsg = "Could not find the requested zone.";
 		my $body = {
@@ -253,14 +253,8 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	my $existResource;
-	foreach my $resourceCheck ( @{ &getGSLBResources  ( $farmname, $zone ) } )
-	{
-		$existResource = 1 if ( $resourceCheck->{rname} eq $json_obj->{ rname } );
-	}
-	
 	# validate RESOURCE NAME exist
-	if (  $existResource ) 
+	if ( grep { $_->{ rname } eq $json_obj->{ rname } } @{ &getGSLBResources ( $farmname, $zone ) } )
 	{
 		&zenlog(
 			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter zone resource just exist."
@@ -279,7 +273,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	}
 
 	# validate RESOURCE NAME
-	if ( ! &getValidFormat( 'resource_name', $json_obj->{ rname } ) )
+	unless ( $json_obj->{ rname } && &getValidFormat( 'resource_name', $json_obj->{ rname } ) )
 	{
 		&zenlog(
 			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter zone resource name (rname) doesn't exist."
@@ -343,14 +337,14 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	{
 		my $errormsg = "If you choose $json_obj->{ type } type, ";
 		
-		$errormsg .= "RDATA must be a valid IPv4 address," 		if ($json_obj->{ type } eq "A" ); 
-		$errormsg .= "RDATA must be a valid IPv6 address,"		if ($json_obj->{ type } eq "AAAA" ); 
-		$errormsg .= "RDATA format is not valid,"						if ($json_obj->{ type } eq "NS" ); 
-		$errormsg .= "RDATA must be a valid format ( foo.bar.com ),"		if ($json_obj->{ type } eq "CNAME" );
-		$errormsg .= "RDATA must be a valid service,"									if ( $json_obj->{ type } eq 'DYNA' ); 
-		$errormsg .= "RDATA must be a valid format ( mail.example.com ),"		if ( $json_obj->{ type } eq 'MX' ); 
-		$errormsg .= "RDATA must be a valid format ( 10 60 5060 host.example.com ),"		if ( $json_obj->{ type } eq 'SRV' ); 
-		$errormsg .= "RDATA must be a valid format ( foo.bar.com ),"			if ( $json_obj->{ type } eq 'PTR' ); 
+		$errormsg .= "RDATA must be a valid IPv4 address," 							if ( $json_obj->{ type } eq "A" );
+		$errormsg .= "RDATA must be a valid IPv6 address,"							if ( $json_obj->{ type } eq "AAAA" );
+		$errormsg .= "RDATA format is not valid,"									if ( $json_obj->{ type } eq "NS" );
+		$errormsg .= "RDATA must be a valid format ( foo.bar.com ),"				if ( $json_obj->{ type } eq "CNAME" );
+		$errormsg .= "RDATA must be a valid service,"								if ( $json_obj->{ type } eq 'DYNA' );
+		$errormsg .= "RDATA must be a valid format ( mail.example.com ),"			if ( $json_obj->{ type } eq 'MX' );
+		$errormsg .= "RDATA must be a valid format ( 10 60 5060 host.example.com )," if ( $json_obj->{ type } eq 'SRV' );
+		$errormsg .= "RDATA must be a valid format ( foo.bar.com ),"				if ( $json_obj->{ type } eq 'PTR' );
 		# TXT and NAPTR input let all characters
 		
 		$errormsg .= " $json_obj->{ rname } not added to zone $zone";
@@ -386,6 +380,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 
 		# Success
 		&runFarmReload( $farmname );
+		$json_obj->{ ttl } = undef if ! $json_obj->{ ttl };
 
 		my $body = {
 					 description => $description,
