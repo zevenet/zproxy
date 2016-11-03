@@ -370,7 +370,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 			&setFarmRestart( $farmname );
 
 			# Success
-			my $output = {
+			my $body = {
 				description => "Modify farm $farmname",
 				params      => $json_obj,
 				status      => 'needed restart',
