@@ -44,6 +44,7 @@ my %format_re = (
 
 	# farms
 	'farm_name' => qr/[a-zA-Z0-9\-]+/,
+	'farm_profile' => qr/HTTP|GSLB|L4XNAT|DATALINK/,
 	'backend'   => qr/\d+/,
 	'service' => qr/[a-zA-Z1-9\-]+/,
 
@@ -158,11 +159,13 @@ sub getValidPort # ( $ip, $port, $profile )
 	my $port = shift;
 	my $profile = shift; # farm profile, optional
 
+	#~ &zenlog("getValidPort( ip:$ip, port:$port, profile:$profile )");# if &debug;
+
 	if ( $profile eq 'HTTP' || $profile eq 'GSLB' )
 	{
 		return &isValidPortNumber( $port ) eq 'true' && &checkport( $ip, $port ) eq 'false';
 	}
-	elsif ( $profile eq 'L4xNAT' )
+	elsif ( $profile eq 'L4XNAT' )
 	{
 		return &ismport( $port ) eq 'true';
 	}
