@@ -707,29 +707,24 @@ my $farm_re = &getValidFormat('farm_name');
 
 ##### /farms
 
-#  GET List all farms
 GET qr{^/farms$} => sub {
 	&farms();
 };
 
-#  POST new farm
 POST qr{^/farms$} => sub {
 	&new_farm( @_ );
 };
 
 ##### /farms/FARM
 
-#  GET get farm info
 GET qr{^/farms/($farm_re)$} => sub {
 	&farms_name( @_ );
 };
 
-#  PUT farm
 PUT qr{^/farms/($farm_re)$} => sub {
 	&modify_farm( @_ );
 };
 
-#  DELETE farm
 DELETE qr{^/farms/($farm_re)$} => sub {
 	&delete_farm( @_ );
 };
@@ -737,12 +732,10 @@ DELETE qr{^/farms/($farm_re)$} => sub {
 
 ##### /farms/FARM/backends
 
-#  GET backends list
 GET qr{^/farms/($farm_re)/backends$} => sub {
 	&backends( @_ );
 };
 
-#  POST new backend
 POST qr{^/farms/($farm_re)/backends$} => sub {
 	&new_farm_backend( @_ );
 };
@@ -751,12 +744,10 @@ POST qr{^/farms/($farm_re)/backends$} => sub {
 
 my $be_re = &getValidFormat('backend');
 
-#  PUT backend
 PUT qr{^/farms/($farm_re)/backends/($be_re)$} => sub {
 	&modify_backends( @_ );
 };
 
-#  DELETE backend (L4XNAT/DATALINK)
 DELETE qr{^/farms/($farm_re)/backends/($be_re)$} => sub {
 	&delete_backend( @_ );
 };
@@ -764,7 +755,6 @@ DELETE qr{^/farms/($farm_re)/backends/($be_re)$} => sub {
 
 ##### /farms/FARM/services
 
-#  POST new service
 POST qr{^/farms/($farm_re)/services$} => sub {
 	&new_farm_service( @_ );
 };
@@ -773,36 +763,30 @@ POST qr{^/farms/($farm_re)/services$} => sub {
 
 my $service_re = &getValidFormat('service');
 
-#  PUT service
 PUT qr{^/farms/($farm_re)/services/($service_re)$} => sub {
 	&modify_services( @_ );
 };
 
-#  DELETE service
 DELETE qr{^/farms/($farm_re)/services/($service_re)$} => sub {
 	&delete_service( @_ );
 };
 
 ##### /farms/FARM/services/SERVICE/backends
 
-#  GET service backends (HTTP/HTTPS/GSLB)
 GET qr{^/farms/($farm_re)/services/($service_re)/backends$} => sub {
 	&service_backends( @_ );
 };
 
-#  POST service backends (HTTP/HTTPS/GSLB)
 POST qr{^/farms/($farm_re)/services/($service_re)/backends$} => sub {
 	&new_service_backend( @_ );
 };
 
 ##### /farms/FARM/services/SERVICE/backends/BACKEND
 
-#  PUT backend (HTTP/HTTPS/GSLB)
 PUT qr{^/farms/($farm_re)/services/($service_re)/backends/($be_re)$} => sub {
 	&modify_service_backends( @_ );
 };
 
-#  DELETE backend (HTTP/HTTPS/GSLB)
 DELETE qr{^/farms/($farm_re)/services/($service_re)/backends/($be_re)$} => sub {
 	&delete_service_backend( @_ );
 };
@@ -810,7 +794,6 @@ DELETE qr{^/farms/($farm_re)/services/($service_re)/backends/($be_re)$} => sub {
 
 ##### /farms/FARM/zones
 
-#  POST new zone
 POST qr{^/farms/($farm_re)/zones$} => sub {
 	&new_farm_zone( @_ );
 };
@@ -819,25 +802,20 @@ POST qr{^/farms/($farm_re)/zones$} => sub {
 
 my $zone_re = &getValidFormat('zone');
 
-#  PUT zones
 PUT qr{^/farms/($farm_re)/zones/($zone_re)$} => sub {
 	&modify_zones( @_ );
 };
 
-#  DELETE zone
-#DELETE qr{^/farms/(\w+)/zones/(.*+$)} => sub {
 DELETE qr{^/farms/($farm_re)/zones/($zone_re)$} => sub {
 	&delete_zone( @_ );
 };
 
 ##### /farms/FARM/zones/ZONE/resources
 
-#  GET new zone resource
 GET qr{^/farms/($farm_re)/zones/($zone_re)/resources$} => sub {
 	&gslb_zone_resources( @_ );
 };
 
-#  POST new zone resource
 POST qr{^/farms/($farm_re)/zones/($zone_re)/resources$} => sub {
 	&new_farm_zone_resource( @_ );
 };
@@ -846,12 +824,10 @@ POST qr{^/farms/($farm_re)/zones/($zone_re)/resources$} => sub {
 
 my $resource_id_re = &getValidFormat('resource_id');
 
-#  PUT zone resources
 PUT qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => sub {
 	&modify_zone_resource( @_ );
 };
 
-#  DELETE zone resource
 DELETE qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => sub {
 	&delete_zone_resource( @_ );
 };
@@ -861,33 +837,29 @@ DELETE qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => s
 ##### /farms/FARM/fg
 ##### /farms/FARM/maintenance
 
-#  PUT farm actions
 PUT qr{^/farms/($farm_re)/actions$} => sub {
 	&farm_actions( @_ );
 };
 
-#  PUT farmguardian
 PUT qr{^/farms/($farm_re)/fg$} => sub {
 	&modify_farmguardian( @_ );
 };
 
-#  PUT status backend actions (for HTTP only)
 PUT qr{^/farms/($farm_re)/services/($service_re)/backends/($be_re)/maintenance$} => sub {
 	&service_backend_maintenance( @_ );
-};
+}; #  (HTTP only)
 
 
 ##### FARMS CERTIFICATES (HTTPS)
+
 ##### /farms/FARM/certificates
 
-#  POST add certificates
 POST qr{^/farms/($farm_re)/certificates$} => sub {
 	&add_farmcertificate( @_ );
 };
 
 ##### /farms/FARM/certificates/CERTIFICATE
 
-#  DELETE farm certificate
 DELETE qr{^/farms/($farm_re)/certificates/($cert_pem_re)$} => sub {
 	&delete_farmcertificate( @_ );
 };
@@ -900,14 +872,12 @@ my $vlan_interface = &getValidFormat ('vlan_interface');
 
 ##### /interfaces
 
-#  GET interfaces
 GET qr{^/interfaces$} => sub {
 	&get_interfaces();
 };
 
 ##### /interfaces/nic
 
-#  GET interfaces nic
 GET qr{^/interfaces/nic$} => sub {
 	&get_interfaces_nic();
 };
@@ -915,72 +885,60 @@ GET qr{^/interfaces/nic$} => sub {
 ##### /interfaces/nic/NIC
 my $nic_re = &getValidFormat ('nic_interface');
 
-#  PUT interfaces nic
 PUT qr{^/interfaces/nic/($nic_re)$} => sub {
 	&modify_interface_nic( @_ );
 };
 
-#  DELETE interfaces nic
 DELETE qr{^/interfaces/nic/($nic_re)$} => sub {
 	&delete_interface_nic( @_ );
 };
 
 ##### /interfaces/vlan
 
-#  GET interfaces vlan
 GET qr{^/interfaces/vlan$} => sub {
 	&get_interfaces_vlan();
 };
 
-#  POST vlan interface
 POST qr{^/interfaces/vlan$} => sub {
 	&new_vlan( @_ );
 };
 
 ##### /interfaces/vlan/VLAN
 
-#  PUT interface
 PUT qr{^/interfaces/vlan/($vlan_interface)$} => sub {
 	&modify_interface_vlan( @_ );
 };
 
-#  DELETE virtual interface (default)
 DELETE qr{^/interfaces/vlan/($vlan_interface)$} => sub {
 	&delete_interface_vlan( @_ );
 };
 
 ##### /interfaces/virtual
 
-#  GET interfaces virtual
 GET qr{^/interfaces/virtual$} => sub {
 	&get_interfaces_virtual();
 };
 
-#  POST virtual interface
 POST qr{^/interfaces/virtual$} => sub {
 	&new_vini( @_ );
 };
 
 ##### /interfaces/virtual/VIRTUAL
 
-#  PUT interface
 PUT qr{^/interfaces/virtual/($virt_interface)$} => sub {
 	&modify_interface_virtual( @_ );
 };
 
-#  DELETE virtual interface (default)
 DELETE qr{^/interfaces/virtual/($virt_interface)$} => sub {
 	&delete_interface_virtual( @_ );
 };
 
 ##### /interfaces/bonding
 
-#  GET interfaces bonding
 GET qr{^/interfaces/bonding$} => sub {
 	&get_interfaces_bond();
 };
 
-#  POST interfaces bonding
 POST qr{^/interfaces/bonding$} => sub {
 	&new_bond( @_ );
 };
@@ -988,31 +946,28 @@ POST qr{^/interfaces/bonding$} => sub {
 ##### /interfaces/bonding/BOND
 my $bond_re = &getValidFormat ('bond_interface');
 
-#  PUT interfaces bonding
 PUT qr{^/interfaces/bonding/($bond_re)$} => sub {
 	&modify_interface_bond( @_ );
 };
 
-#  DELETE virtual interface (default)
 DELETE qr{^/interfaces/bonding/($bond_re)$} => sub {
 	&delete_interface_bond( @_ );
 };
 
 ##### /interfaces/bonding/BOND/slaves
 
-#  POST interfaces bonding
 POST qr{^/interfaces/bonding/($bond_re)/slaves$} => sub {
 	&new_bond_slave( @_ );
 };
 
 ##### /interfaces/bonding/BOND/slaves/SLAVE
 
-#  DELETE virtual interface (default)
 DELETE qr{^/interfaces/bonding/($bond_re)/slaves/($nic_re)$} => sub {
 	&delete_bond_slave( @_ );
 };
 
-#  POST action interface
+##### /interfaces/bonding/BOND/actions
+
 POST qr{^/interfaces/bonding/($bond_re)/actions$} => sub {
 	&interface_bond_action( @_ );
 };
@@ -1021,6 +976,7 @@ POST qr{^/interfaces/bonding/($bond_re)/actions$} => sub {
 #~ POST qr{^/interfaces/(.+)$} => sub {
    #~ &ifaction( @_ );
 #~ };
+
 
 #	STATS
 #
