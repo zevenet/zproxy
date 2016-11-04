@@ -33,6 +33,7 @@ my $ipv6_addr     = qr/(?:[\: \.a-f0-9]+)/;
 my $boolean       = qr/(?:true|false)/;
 
 my $hostname    = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
+my $service     = qr/[a-zA-Z1-9\-]+/;
 my $zone        = qr/(?:$hostname\.)+[a-z]{2,}/;
 my $vlan_tag    = qr/\d{1,4}/;
 my $virtual_tag = qr/[a-zA-Z0-9]{1,13}/;
@@ -43,10 +44,10 @@ my %format_re = (
 	'hostname' => $hostname,
 
 	# farms
-	'farm_name' => qr/[a-zA-Z0-9\-]+/,
+	'farm_name'    => qr/[a-zA-Z0-9\-]+/,
 	'farm_profile' => qr/HTTP|GSLB|L4XNAT|DATALINK/,
-	'backend'   => qr/\d+/,
-	'service' => qr/[a-zA-Z1-9\-]+/,
+	'backend'      => qr/\d+/,
+	'service'      => $service,
 
 	# gslb
 	'zone' => qr/(?:$hostname\.)+[a-z]{2,}/,
@@ -57,6 +58,7 @@ my %format_re = (
 	'resource_data'      => qr/.+/,            # alow anything (because of TXT type)
 	'resource_data_A'    => $ipv4_addr,
 	'resource_data_AAAA' => $ipv6_addr,
+	'resource_data_DYNA' => $service,
 	'resource_data_NS'   => qr/[a-zA-Z0-9\-]+/,
 	'resource_data_CNAME' => qr/[a-z\.]+/,
 	'resource_data_MX'    => qr/[a-z\.]+/,
