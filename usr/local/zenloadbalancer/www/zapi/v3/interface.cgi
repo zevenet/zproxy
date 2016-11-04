@@ -1728,6 +1728,117 @@ sub ifaction # ( $fdev )
 	}
 }
 
+sub interface_bond_action # ( $json_obj, $bond )
+{
+	my $json_obj = shift;
+	my $bond 	 = shift;
+
+	my $description = "Action on bond interface";
+	my $ip_v = 4;
+
+	unless ( grep { $bond eq $_->{ name } } &getInterfaceTypeList( 'bond' ) )
+	{
+		# Error
+		my $errormsg = "Bond interface not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	if ( grep { $_ ne 'action' } keys $json_obj )
+	{
+		# Error
+		my $errormsg = "Only the parameter 'action' is accepted";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# validate action parameter
+	if ( $json_obj->{ action } eq 'destroy' )
+	{
+		&delete_bond( $bond ); # doesn't return
+	}
+	elsif ( $json_obj->{ action } eq "up" )
+	{
+		my $if_ref = &getInterfaceConfig( $bond, $ip_v );
+
+		# Delete routes in case that it is not a vini
+		&delRoutes( "local", $if_ref ) if $if_ref;
+
+		# Check if there are some Virtual Interfaces or Vlan with IPv6 and previous UP status to get it up.
+		&setIfacesUp( $bond, "vlan" );
+		&setIfacesUp( $bond, "vini" );
+
+		# Add IP
+		&addIp( $if_ref ) if $if_ref;
+
+		my $state = &upIf( { name => $bond }, 'writeconf' );
+
+		if ( ! $state )
+		{
+			&applyRoutes( "local", $bond );
+		}
+		else
+		{
+			# Error
+			my $errormsg = "The interface could not be set UP";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+	elsif ( $json_obj->{ action } eq "down" )
+	{
+		my $state = &downIf( { name => $bond }, 'writeconf' );
+
+		if ( $state )
+		{
+			# Error
+			my $errormsg = "The interface could not be set UP";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+	else
+	{
+		# Error
+		my $errormsg = "Action accepted values are: up, down or destroy";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# Success
+	my $body = {
+				 description => $description,
+				 params      =>  { action => $json_obj->{ action } },
+	};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
 # PUT Interface
 #
 # curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"gateway":"1.1.1.0","ip":"1.1.1.3","netmask":"255.255.192.0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/modifyif/eth0:n1

@@ -1012,10 +1012,14 @@ DELETE qr{^/interfaces/bonding/($bond_re)/slaves/($nic_re)$} => sub {
 	&delete_bond_slave( @_ );
 };
 
-# FIXME: implement up/down in PUT method
 #  POST action interface
-#~ PUT qr{^/interfaces/(.+)$} => sub {
-	#~ &ifaction( $1 );
+POST qr{^/interfaces/bonding/($bond_re)/actions$} => sub {
+	&interface_bond_action( @_ );
+};
+
+#  POST action interface
+#~ POST qr{^/interfaces/(.+)$} => sub {
+   #~ &ifaction( @_ );
 #~ };
 
 #	STATS
