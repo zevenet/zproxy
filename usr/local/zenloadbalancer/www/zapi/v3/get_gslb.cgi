@@ -216,6 +216,7 @@ sub farms_name_gslb # ( $farmname )
 		for my $resource ( @{ $resources } )
 		{
 			$resource->{ ttl } = undef if ! $resource->{ ttl };
+			$resource->{ ttl } += 0 if $resource->{ ttl };
 		}
 
 		push @out_z,
@@ -293,6 +294,7 @@ sub gslb_zone_resources # ( $farmname, $zone )
 	for my $resource ( @{ $resources } )
 	{
 		$resource->{ ttl } = undef if ! $resource->{ ttl };
+		$resource->{ ttl } += 0 if $resource->{ ttl };
 	}
 
 	# Success
