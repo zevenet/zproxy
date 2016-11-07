@@ -248,7 +248,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	my $service    = shift;
 	my $backend_id = shift;
 
-	my $description = "Set backend status";
+	my $description = "Set service backend status";
 
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
@@ -371,6 +371,122 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 
 		&zenlog(
 			 "Changing status to up of backend $backend_id in service $service in farm $farmname" );
+
+		if ( $? ne 0 )
+		{
+			my $errormsg = "Errors found trying to change status backend to up";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+	else
+	{
+		my $errormsg = "Invalid action; the possible actions are up and maintenance";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# Success
+	my $body = {
+				 description => $description,
+				 params      => { action => $json_obj->{ action } },
+	};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
+sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
+{
+	my $json_obj   = shift;
+	my $farmname   = shift;
+	my $backend_id = shift;
+
+	my $description = "Set backend status";
+
+	# validate FARM NAME
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
+		# Error
+		my $errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# validate FARM TYPE
+	unless ( &getFarmType( $farmname ) eq 'l4xnat' )
+	{
+		# Error
+		my $errormsg = "Only L4xNAT farm profile supports this feature.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	#~ my $l4_farm = &getL4FarmStruct( $farmname );
+
+	# validate BACKEND
+	my @backends = &getFarmServers( $farmname );
+	my $backend_line = $backends[$id_server];
+
+	if ( !$backend_line )
+	{
+		# Error
+		my $errormsg = "Could not find a backend with such id.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# validate STATUS
+	if ( $json_obj->{ action } eq "maintenance" )
+	{
+		my $status = &setFarmBackendMaintenance( $farmname, $backend_id );
+
+		&zenlog(
+			"Changing status to maintenance of backend $backend_id in farm $farmname"
+		);
+
+		if ( $? ne 0 )
+		{
+			my $errormsg = "Errors found trying to change status backend to maintenance";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+	elsif ( $json_obj->{ action } eq "up" )
+	{
+		my $status = &setFarmBackendNoMaintenance( $farmname, $backend_id );
+
+		&zenlog(
+			 "Changing status to up of backend $backend_id in farm $farmname" );
 
 		if ( $? ne 0 )
 		{

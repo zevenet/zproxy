@@ -863,6 +863,10 @@ PUT qr{^/farms/($farm_re)/services/($service_re)/backends/($be_re)/maintenance$}
 	&service_backend_maintenance( @_ );
 }; #  (HTTP only)
 
+PUT qr{^/farms/($farm_re)/backends/($be_re)/maintenance$} => sub {
+	&backend_maintenance( @_ );
+}; #  (L4xNAT only)
+
 
 ##### FARMS CERTIFICATES (HTTPS)
 
