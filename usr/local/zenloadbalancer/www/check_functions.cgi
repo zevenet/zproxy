@@ -29,7 +29,7 @@
 
 my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/;         # (0-255)
 my $ipv4_addr     = qr/(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS/;
-my $ipv6_addr     = qr/(?:[\: \.a-f0-9]+)/;
+my $ipv6_addr     = qr/(?:[\:\.a-f0-9]+)/;
 my $boolean       = qr/(?:true|false)/;
 
 my $hostname    = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
