@@ -63,12 +63,26 @@ sub new_farm # ( $json_obj )
 	my $error = "false";
 	my $description = "Creating farm '$json_obj->{ farmname }'";
 
-	# FARMNAME validation
-	# Valid name and doesn't exist already
-	if (   !&getValidFormat( 'farm_name', $json_obj->{ farmname } )
-		 || &getFarmType( $json_obj->{ farmname } ) != 1 )
+	# validate FARM NAME
+	unless ( $json_obj->{ farmname } && &getValidFormat( 'farm_name', $json_obj->{ farmname } ) )
 	{
 		my $errormsg = "Error trying to create a new farm, the farm name is required to have alphabet letters, numbers or hypens (-) only.";
+		&zenlog( $errormsg );
+
+		# Error
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# check if FARM NAME already exists
+	unless ( &getFarmType( $json_obj->{ farmname } ) == 1 )
+	{
+		my $errormsg = "Error trying to create a new farm, the farm name already exists.";
 		&zenlog( $errormsg );
 
 		# Error
