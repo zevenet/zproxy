@@ -75,6 +75,105 @@ sub farms # ()
 	&httpResponse({ code => 200, body => $body });
 }
 
+sub farms_lslb # ()
+{
+	my @out;
+	my @files = &getFarmList();
+
+	foreach my $file ( @files )
+	{
+		my $name   = &getFarmName( $file );
+		my $type   = &getFarmType( $name );
+		next unless $type =~ /^(?:http|https|l4xnat)$/;
+		my $status = &getFarmStatus( $name );
+		my $vip    = &getFarmVip( 'vip', $name );
+		my $port   = &getFarmVip( 'vipp', $name );
+
+		push @out,
+		  {
+			farmname => $name,
+			profile  => $type,
+			status   => $status,
+			vip      => $vip,
+			vport    => $port
+		  };
+	}
+
+	my $body = {
+				description => "List LSLB farms",
+				params      => \@out,
+	};
+
+	# Success
+	&httpResponse({ code => 200, body => $body });
+}
+
+sub farms_gslb # ()
+{
+	my @out;
+	my @files = &getFarmList();
+
+	foreach my $file ( @files )
+	{
+		my $name   = &getFarmName( $file );
+		my $type   = &getFarmType( $name );
+		next unless $type eq 'gslb';
+		my $status = &getFarmStatus( $name );
+		my $vip    = &getFarmVip( 'vip', $name );
+		my $port   = &getFarmVip( 'vipp', $name );
+
+		push @out,
+		  {
+			farmname => $name,
+			#~ profile  => $type,
+			status   => $status,
+			vip      => $vip,
+			vport    => $port
+		  };
+	}
+
+	my $body = {
+				description => "List GSLB farms",
+				params      => \@out,
+	};
+
+	# Success
+	&httpResponse({ code => 200, body => $body });
+}
+
+sub farms_dslb # ()
+{
+	my @out;
+	my @files = &getFarmList();
+
+	foreach my $file ( @files )
+	{
+		my $name   = &getFarmName( $file );
+		my $type   = &getFarmType( $name );
+		next unless $type eq 'datalink';
+		my $status = &getFarmStatus( $name );
+		my $vip    = &getFarmVip( 'vip', $name );
+		my $port   = &getFarmVip( 'vipp', $name );
+
+		push @out,
+		  {
+			farmname => $name,
+			#~ profile  => $type,
+			status   => $status,
+			vip      => $vip,
+			vport    => $port
+		  };
+	}
+
+	my $body = {
+				description => "List DSLB farms",
+				params      => \@out,
+	};
+
+	# Success
+	&httpResponse({ code => 200, body => $body });
+}
+
 #GET /farms/<name>
 sub farms_name # ( $farmname )
 {

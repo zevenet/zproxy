@@ -715,6 +715,20 @@ POST qr{^/farms$} => sub {
 	&new_farm( @_ );
 };
 
+##### /farms
+
+GET qr{^/farms/modules/lslb$} => sub {
+	&farms_lslb();
+};
+
+GET qr{^/farms/modules/gslb$} => sub {
+	&farms_gslb();
+};
+
+GET qr{^/farms/modules/dslb$} => sub {
+	&farms_dslb();
+};
+
 ##### /farms/FARM
 
 GET qr{^/farms/($farm_re)$} => sub {
