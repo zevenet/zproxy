@@ -977,41 +977,48 @@ POST qr{^/interfaces/bonding/($bond_re)/actions$} => sub {
    #~ &ifaction( @_ );
 #~ };
 
+##### /interfaces/gateway
+
+GET qr{^/interfaces/gateway$} => sub {
+	&get_gateway( @_ );
+};
+
+PUT qr{^/interfaces/gateway$} => sub {
+	&modify_gateway( @_ );
+};
+
+DELETE qr{^/interfaces/gateway$} => sub {
+	&delete_gateway( @_ );
+};
+
 
 #	STATS
 #
 
-#  GET stats
 GET qr{^/stats$} => sub {
 	&stats();
 };
 
-#  GET stats mem
 GET qr{^/stats/mem$} => sub {
 	&stats_mem();
 };
 
-#  GET stats load
 GET qr{^/stats/load$} => sub {
 	&stats_load();
 };
 
-#  GET stats network
 GET qr{^/stats/network$} => sub {
 	&stats_network();
 };
 
-#  GET stats cpu
 GET qr{^/stats/cpu$} => sub {
 	&stats_cpu();
 };
 
-#  GET farm stats
 GET qr{^/stats/farms$} => sub {
 	&all_farms_stats( @_ );
 };
 
-#  GET farm stats
 GET qr{^/stats/farms/($farm_re)$} => sub {
 	&farm_stats( @_ );
 };

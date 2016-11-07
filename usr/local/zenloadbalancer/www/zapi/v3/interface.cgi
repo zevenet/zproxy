@@ -2735,4 +2735,168 @@ sub modify_interface_bond # ( $json_obj, $bond )
 	}
 }
 
+sub get_gateway
+{
+	my $description = "Default gateway";
+
+	my $body = {
+		description => $description,
+		params      => {
+			address   => &getDefaultGW(),
+			interface => &getIfDefaultGW(),
+
+		},
+	};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
+sub modify_gateway # ( $json_obj )
+{
+	my $json_obj = shift;
+
+	my $description = "Modify default gateway";
+
+	# verify ONLY ACCEPTED parameters received
+	if ( grep { $_ !~ /^(?:address|interface)$/ } keys $json_obj )
+	{
+		# Error
+		my $errormsg = "Parameter received not recognized";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# verify AT LEAST ONE parameter received
+	unless ( exists $json_obj->{ address } || exists $json_obj->{ interface } )
+	{
+		# Error
+		my $errormsg = "No parameter received to be configured";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# validate ADDRESS
+	if ( exists $json_obj->{ address } )
+	{
+		unless ( defined( $json_obj->{ address } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ address } ) )
+		{
+			# Error
+			my $errormsg = "Gateway address is not valid.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+
+	# validate INTERFACE
+	if ( exists $json_obj->{ interface } )
+	{
+		my $socket = IO::Socket::INET->new( Proto => 'udp' );
+		my @system_interfaces = $socket->if_list;
+		#~ my $type = &getInterfaceType( $nic );
+
+		unless ( grep( { $json_obj->{ interface } eq $_ } @system_interfaces ) )
+		{
+			# Error
+			my $errormsg = "Gateway interface not found.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 404, body => $body });
+		}
+	}
+
+	my $ip_version = 4;
+	my $interface = $json_obj->{ interface } // &getDefaultGW();
+	my $address = $json_obj->{ address } // &getIfDefaultGW();
+
+	my $if_ref = getInterfaceConfig( $interface, $ip_version );
+
+	&zenlog("applyRoutes interface:$interface address:$address if_ref:$if_ref");
+	my $state = &applyRoutes( "global", $if_ref, $address );
+
+	if ( $state == 0 )
+	{
+		#~ &runZClusterRemoteManager( 'gateway', 'update', $json_obj->{ interface }, ip_version );
+
+		# Success
+		my $message = "The default gateway has been changed successfully";
+		my $body = {
+					 description => $description,
+					 success     => "true",
+					 message     => $message,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The default gateway hasn't been changed";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+}
+
+sub delete_gateway
+{
+	my $description = "Remove default gateway";
+
+	my $ip_version = 4;
+	my $if_ref = getInterfaceConfig( $defaultgwif, $ip_version );
+
+	my $state = &delRoutes( "global", $if_ref );
+
+	if ( $state == 0 )
+	{
+		#~ &runZClusterRemoteManager( 'gateway', 'delete', $if, $ip_version );
+		my $message = "The default gateway has been deleted successfully";
+
+		my $body = {
+			description => $description,
+			message => $message,
+			params      => {
+				address   => &getDefaultGW(),
+				interface => &getIfDefaultGW(),
+
+			},
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		my $errormsg = "The default gateway hasn't been deleted";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
 1;
