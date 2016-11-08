@@ -35,8 +35,12 @@ my $boolean       = qr/(?:true|false)/;
 my $hostname    = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
 my $service     = qr/[a-zA-Z1-9\-]+/;
 my $zone        = qr/(?:$hostname\.)+[a-z]{2,}/;
+
 my $vlan_tag    = qr/\d{1,4}/;
 my $virtual_tag = qr/[a-zA-Z0-9]{1,13}/;
+my $nic_if = qr/[a-zA-Z0-9]{1,15}/;
+my $bond_if = qr/[a-zA-Z0-9]{1,15}/;
+my $vlan_if = qr/[a-zA-Z0-9]{1,13}\.$vlan_tag/;
 
 my %format_re = (
 
@@ -68,10 +72,11 @@ my %format_re = (
 	'resource_data_NAPTR' => qr/.+/,            # all characters allow
 
 	# interfaces ( WARNING: length in characters < 16  )
-	'nic_interface'  => qr/[a-zA-Z0-9]{1,15}/,
-	'bond_interface' => qr/[a-zA-Z0-9]{1,15}/,
-	'vlan_interface' => qr/[a-zA-Z0-9]{1,13}\.$vlan_tag/,
+	'nic_interface'  => $nic_if,
+	'bond_interface' => $bond_if,
+	'vlan_interface' => $vlan_if,
 	'virt_interface' => qr/[a-zA-Z0-9]{1,13}(?:\.[a-zA-Z0-9]{1,4})?:$virtual_tag/,
+	'routed_interface' => qr/(?:$nic_if|$bond_if|$vlan_if)/,
 	'interface_type' => qr/(?:nic|vlan|virtual|bond)/,
 	'vlan_tag'       => qr/$vlan_tag/,
 	'virtual_tag'    => qr/$virtual_tag/,

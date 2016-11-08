@@ -1118,7 +1118,64 @@ sub delete_bond_slave # ( $bond, $slave )
 	else
 	{
 		# Error
-		my $errormsg = "The bonding slave interface $virtual could not be removed";
+		my $errormsg = "The bonding slave interface $slave could not be removed";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
+sub delete_interface_floating # ( $floating )
+{
+	my $floating = shift;
+
+	my $description = "Remove floating interface";
+	#~ my $if_ref = &getInterfaceConfig( $floating );
+	my $float_ifaces_conf = &getConfigTiny( $floatfile );
+
+	# validate BOND
+	unless ( $float_ifaces_conf->{_}->{ $floating } )
+	{
+		# Error
+		my $errormsg = "Floating interface not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	eval {
+		delete $float_ifaces_conf->{_}->{ $floating };
+
+		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
+
+		# refresh l4xnat rules
+		&reloadL4FarmsSNAT();
+		#~ &runZClusterRemoteManager( 'interface', 'float-update' );
+	};
+	if ( ! $@ )
+	{
+		# Success
+		my $message = "The floating interface has been removed.";
+		my $body = {
+					 description => $description,
+					 success     => "true",
+					 message     => $message,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "The floating interface could not be removed";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -2735,6 +2792,170 @@ sub modify_interface_bond # ( $json_obj, $bond )
 	}
 }
 
+# address or interface
+sub modify_interface_floating # ( $json_obj, $floating )
+{
+	my $json_obj = shift;
+	my $floating = shift;
+
+	my $description = "Modify floating interface";
+
+	#~ &zenlog("modify_interface_floating floating:$floating json_obj:".Dumper $json_obj );
+
+	if ( grep { ! /^(?:address|interface)$/ } keys %{$json_obj} )
+	{
+		# Error
+		my $errormsg = "Parameter not recognized";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	unless ( scalar( keys $json_obj ) == 1 && grep( { /^(?:address|interface)$/ } keys %{$json_obj} ) )
+	{
+		# Error
+		my $errormsg = "Need to use address or interface parameter, and not both at the same time";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	my $if_ref = &getInterfaceConfig( $floating, $ip_v );
+
+	unless ( $if_ref )
+	{
+		# Error
+		my $errormsg = "Floating interface not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	$if_ref = udef;
+
+	if ( exists $json_obj->{ interface } )
+	{
+		# validate INTERFACE NAME format
+		unless ( $json_obj->{ interface } && &getValidFormat( 'virt_interface', $json_obj->{ interface } ) )
+		{
+			# Error
+			my $errormsg = "Invalid floating interface name";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		$if_ref = &getInterfaceConfig( $json_obj->{ interface }, $ip_v );
+
+		# validate INTERFACE
+		unless ( $if_ref )
+		{
+			# Error
+			my $errormsg = "Floating interface not found";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 404, body => $body });
+		}
+	}
+
+	if ( exists $json_obj->{ address } )
+	{
+		# validate ADDRESS format
+		unless ( $json_obj->{ address } && &getValidFormat( 'IPv4_addr', $json_obj->{ address } ) )
+		{
+			# Error
+			my $errormsg = "Invalid floating address format";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		my @interfaces = @{ &getSystemInterfaceList() };
+		( $if_ref ) = grep( { $_->{ name } =~ /^$floating/ && $json_obj->{ address } eq $_->{ addr } } @interfaces );
+
+		# validate ADDRESS in system
+		unless ( $if_ref )
+		{
+			# Error
+			my $errormsg = "Floating address not found";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 404, body => $body });
+		}
+
+		$json_obj->{ interface } = $if_ref->{ name };
+	}
+
+	eval {
+		my $float_ifaces_conf = &getConfigTiny( $floatfile );
+
+		$float_ifaces_conf->{ _ }->{ $floating } = $if_ref->{ name };
+
+		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
+
+		# refresh l4xnat rules
+		&reloadL4FarmsSNAT();
+		#~ &runZClusterRemoteManager( 'interface', 'float-update' );
+	};
+
+	unless ( $@ )
+	{
+		&zenlog("setConfigTiny successed");
+
+		# Error
+		my $message = "Floating interface modification done";
+		my $body = {
+					 description => $description,
+					 success       => "true",
+					 message     => $message
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		&zenlog("setConfigTiny failed");
+
+		# Error
+		my $errormsg = "Floating interface modification failed";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
 sub get_gateway
 {
 	my $description = "Default gateway";
@@ -2746,6 +2967,45 @@ sub get_gateway
 			interface => &getIfDefaultGW(),
 
 		},
+	};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
+sub get_interfaces_floating
+{
+	my $description = "List floating interfaces";
+
+	# Interfaces
+	my %output;
+	my @ifaces = @{ &getSystemInterfaceList() };
+	my $float_ifaces_conf = &getConfigTiny( $floatfile );
+
+	for my $iface ( @ifaces )
+	{
+		#~ &zenlog( "getActiveInterfaceList: $iface->{ name }" );
+		next unless $iface->{ ip_v } == 4;
+		next if $iface->{ type } eq 'virtual';
+		next unless $iface->{ addr };
+
+		$output{ $iface->{ name } } = undef;
+
+		if ( exists $float_ifaces_conf->{_}->{ $iface->{ name } } )
+		{
+			my $if_ref = &getInterfaceConfig( $iface->{ name } );
+			$output{ $iface->{ name } } = {
+											interface => $if_ref->{ name },
+											address   => $if_ref->{ addr },
+			};
+
+		}
+
+		#~ $output{ $iface->{name} } = $iface->{name} unless $output{ $iface->{name} };
+	}
+
+	my $body = {
+				 description => $description,
+				 params      => \%output,
 	};
 
 	&httpResponse({ code => 200, body => $body });

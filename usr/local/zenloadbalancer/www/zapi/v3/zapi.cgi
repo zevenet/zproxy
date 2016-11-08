@@ -1002,6 +1002,22 @@ POST qr{^/interfaces/bonding/($bond_re)/actions$} => sub {
 #~ &ifaction( $1 );
 #~ };
 
+##### /interfaces/floating
+
+GET qr{^/interfaces/floating$} => sub {
+	&get_interfaces_floating( @_ );
+};
+
+##### /interfaces/floating/FLOATING
+
+PUT qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_interface)$} => sub {
+	&modify_interface_floating( @_ );
+};
+
+DELETE qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_interface)$} => sub {
+	&delete_interface_floating( @_ );
+};
+
 ##### /interfaces/gateway
 
 GET qr{^/interfaces/gateway$} => sub {
