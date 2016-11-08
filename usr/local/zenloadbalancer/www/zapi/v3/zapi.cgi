@@ -270,12 +270,8 @@ sub POST($$)
 
 	if ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/json' )
 	{
-<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 		$input_ref = eval{ decode_json( $data ) };
 		&zenlog("json: ". Dumper $input_ref );
-=======
-		$input_ref = eval { decode_json( $data ) };
->>>>>>> [Improvement] Simplify rbl module
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
 	{
@@ -303,12 +299,8 @@ sub PUT($$)
 
 	if ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/json' )
 	{
-<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 		$input_ref = eval{ decode_json( $data ) };
 		&zenlog("json: ". Dumper $input_ref );
-=======
-		$input_ref = eval { decode_json( $data ) };
->>>>>>> [Improvement] Simplify rbl module
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
 	{
@@ -472,44 +464,21 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 	  if !defined $self->{ code }
 	  or !exists $GLOBAL::http_status_codes->{ $self->{ code } };
 
-<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 	my $cgi = &getCGI();
 
 	# Headers included in _ALL_ the responses, any method, any URI, sucess or error
 	my @headers = (
 					'Access-Control-Allow-Origin'      => $ENV{ HTTP_ORIGIN },
 					'Access-Control-Allow-Credentials' => 'true',
-=======
-	my $cgi     = &getCGI();
-	my @headers = (
-
-		# Headers included in _ALL_ the responses, any method, any URI, sucess or error
->>>>>>> [Improvement] Simplify rbl module
 	);
 
 	if ( $ENV{ 'REQUEST_METHOD' } eq 'OPTIONS' )    # no session info received
 	{
-<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 		push @headers,
 		  'Access-Control-Allow-Methods'     => 'GET, POST, PUT, DELETE, OPTIONS',
 		  'Access-Control-Allow-Headers' =>
 		  'ZAPI_KEY, Authorization, Set-cookie, Content-Type, X-Requested-With',
 		  ;
-=======
-		push (
-			   @headers,
-			   'Access-Control-Allow-Origin'      => $ENV{ HTTP_ORIGIN },
-			   'Access-Control-Allow-Methods'     => 'GET, POST, PUT, DELETE, OPTIONS',
-			   'Access-Control-Allow-Credentials' => 'true',
-			   'Access-Control-Allow-Headers' =>
-				 'ZAPI_KEY, Authorization, Set-cookie, Content-Type, X-Requested-With',
-		);
-
-		if ( &validCGISession() )
-		{
-			push @headers, 'Access-Control-Expose-Headers' => 'Set-Cookie';
-		}
->>>>>>> [Improvement] Simplify rbl module
 	}
 
 	if ( &validCGISession() )
@@ -518,7 +487,6 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 		my $session        = CGI::Session->load( $cgi );
 		my $session_cookie = $cgi->cookie( CGISESSID => $session->id );
 
-<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 		push @headers,
 		  'Set-Cookie'                       => $session_cookie,
 		  'Access-Control-Expose-Headers'    => 'Set-Cookie',
@@ -530,10 +498,6 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 		push @headers,
 		  'Access-Control-Expose-Headers'    => 'Set-Cookie',
 		  ;
-=======
-		#~ &zenlog("cookie:$session_cookie");
-		push @headers, 'Set-Cookie' => $session_cookie;
->>>>>>> [Improvement] Simplify rbl module
 	}
 
 	# add possible extra headers
@@ -868,14 +832,7 @@ PUT qr{^/farms/($farm_re)/zones/($zone_re)$} => sub {
 	&modify_zones( @_ );
 };
 
-<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 DELETE qr{^/farms/($farm_re)/zones/($zone_re)$} => sub {
-=======
-#  DELETE zone
-#DELETE qr{^/farms/(\w+)/zones/(.*+$)} => sub {
-DELETE qr{^/farms/($farm_re)/zones/(([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,})$} =>
-  sub {
->>>>>>> [Improvement] Simplify rbl module
 	&delete_zone( @_ );
   };
 
@@ -897,14 +854,7 @@ PUT qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => sub 
 	&modify_zone_resource( @_ );
 };
 
-<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 DELETE qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => sub {
-=======
-#  DELETE zone resource
-DELETE
-  qr{^/farms/($farm_re)/zones/([a-z0-9].*-*.*\.[a-z0-9].*)/resources/(\w+)$} =>
-  sub {
->>>>>>> [Improvement] Simplify rbl module
 	&delete_zone_resource( @_ );
 };
 
@@ -944,15 +894,8 @@ DELETE qr{^/farms/($farm_re)/certificates/($cert_pem_re)$} => sub {
 
 #	NETWORK INTERFACES
 #
-<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
-my $virt_interface = &getValidFormat ('virt_interface');
-my $vlan_interface = &getValidFormat ('vlan_interface');
-
-##### /interfaces
-=======
 my $virt_interface = &getValidFormat( 'virt_interfaces' );
 my $vlan_interface = &getValidFormat( 'vlan_interfaces' );
->>>>>>> [Improvement] Simplify rbl module
 
 GET qr{^/interfaces$} => sub {
 	&get_interfaces();
