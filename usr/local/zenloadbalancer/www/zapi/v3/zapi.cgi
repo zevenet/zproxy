@@ -18,6 +18,7 @@
 
 #~ use CGI;
 use CGI::Session;
+
 #~ use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use MIME::Base64;
 use JSON::XS;
@@ -29,10 +30,13 @@ use Time::localtime;
 
 # Debugging
 use Data::Dumper;
+
 #~ use Devel::Size qw(size total_size);
 
-package GLOBAL {
+package GLOBAL
+{
 	our $http_status_codes = {
+
 		# 2xx Success codes
 		200 => 'OK',
 		201 => 'Created',
@@ -67,7 +71,7 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/system_stats.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/farm_guardian.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/farm_actions.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/post_gslb.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v3/ipds.cgi";  
+require "/usr/local/zenloadbalancer/www/zapi/v3/ipds.cgi";
 
 my $q = &getCGI();
 
@@ -78,13 +82,13 @@ my $q = &getCGI();
 ################################################################################
 
 # build local key
-sub keycert # ()
+sub keycert    # ()
 {
 	# requires:
 	#~ use Sys::Hostname;
 
 	my $dmidecode_bin = "/usr/sbin/dmidecode";    # input
-	my $hostname      = &getHostname();               # input
+	my $hostname      = &getHostname();           # input
 
 	my @dmidec  = `$dmidecode_bin`;
 	my @dmidec2 = grep ( /UUID\:/, @dmidec );
@@ -122,7 +126,7 @@ sub keycert # ()
 }
 
 # evaluate certificate
-sub certcontrol # ()
+sub certcontrol          # ()
 {
 	# requires:
 	#~ use Sys::Hostname;
@@ -232,7 +236,7 @@ sub checkActivationCertificate
 			  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one";
 		}
 
-		&httpResponse({ code => 400, body => { message => $message } });
+		&httpResponse( { code => 400, body => { message => $message } } );
 
 		exit;
 	}
@@ -266,8 +270,12 @@ sub POST($$)
 
 	if ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/json' )
 	{
+<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 		$input_ref = eval{ decode_json( $data ) };
 		&zenlog("json: ". Dumper $input_ref );
+=======
+		$input_ref = eval { decode_json( $data ) };
+>>>>>>> [Improvement] Simplify rbl module
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
 	{
@@ -275,7 +283,7 @@ sub POST($$)
 	}
 	else
 	{
-		&httpResponse({ code => 415 });
+		&httpResponse( { code => 415 } );
 	}
 
 	$code->( $input_ref, @captures );
@@ -295,8 +303,12 @@ sub PUT($$)
 
 	if ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/json' )
 	{
+<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 		$input_ref = eval{ decode_json( $data ) };
 		&zenlog("json: ". Dumper $input_ref );
+=======
+		$input_ref = eval { decode_json( $data ) };
+>>>>>>> [Improvement] Simplify rbl module
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
 	{
@@ -304,7 +316,7 @@ sub PUT($$)
 	}
 	else
 	{
-		&httpResponse({ code => 415 });
+		&httpResponse( { code => 415 } );
 	}
 
 	$code->( $input_ref, @captures );
@@ -336,23 +348,25 @@ sub OPTIONS($$)
 
 sub logInput
 {
-	&zenlog("Input:(".join(', ', @_).")");
-	&httpResponse({ code => 200 });
+	&zenlog( "Input:(" . join ( ', ', @_ ) . ")" );
+	&httpResponse( { code => 200 } );
 }
 
-sub validCGISession # ()
+sub validCGISession    # ()
 {
 	use CGI::Session;
 
 	my $validSession = 0;
-	my $session = CGI::Session->load( &getCGI() );
+	my $session      = CGI::Session->load( &getCGI() );
 
-	&zenlog( "CGI SESSION ID: ".$session->id ) if $session->id;
+	&zenlog( "CGI SESSION ID: " . $session->id ) if $session->id;
+
 	#~ &zenlog( "session data: " . Dumper $session->dataref() ); # DEBUG
 
-	if ( $session && $session->param( 'is_logged_in' ) && ! $session->is_expired )
+	if ( $session && $session->param( 'is_logged_in' ) && !$session->is_expired )
 	{
-		$session->expire('is_logged_in', '+30m');
+		$session->expire( 'is_logged_in', '+30m' );
+
 		#~ $session->expire('is_logged_in', '+5s'); # DEBUG
 		$validSession = 1;
 	}
@@ -360,15 +374,17 @@ sub validCGISession # ()
 	return $validSession;
 }
 
-sub validZapiKey # ()
+sub validZapiKey    # ()
 {
-	my $validKey = 0; # output
+	my $validKey = 0;    # output
 
 	my $key = "HTTP_ZAPI_KEY";
 
-	if (  exists $ENV{ $key }	# exists
-		 && &getZAPI( "keyzapi" ) eq $ENV{ $key } # matches key
-		 && &getZAPI( "status" ) eq "true" )	# zapi user enabled??
+	if (
+		 exists $ENV{ $key }                         # exists
+		 && &getZAPI( "keyzapi" ) eq $ENV{ $key }    # matches key
+		 && &getZAPI( "status" ) eq "true"
+	  )                                             # zapi user enabled??
 	{
 		$validKey = 1;
 	}
@@ -376,7 +392,7 @@ sub validZapiKey # ()
 	return $validKey;
 }
 
-sub getAuthorizationCredentials # ()
+sub getAuthorizationCredentials                     # ()
 {
 	my $base64_digest;
 	my $username;
@@ -397,7 +413,7 @@ sub getAuthorizationCredentials # ()
 		( $username, $password ) = split ( ":", $decoded_digest );
 	}
 
-	return undef if ! $username or ! $password;
+	return undef if !$username or !$password;
 	return ( $username, $password );
 }
 
@@ -405,15 +421,17 @@ sub authenticateCredentials    #($user,$curpasswd)
 {
 	my ( $user, $pass ) = @_;
 
-	return undef if ! defined $user or ! defined $pass;
+	return undef if !defined $user or !defined $pass;
 
 	use Authen::Simple::Passwd;
+
 	#~ use Authen::Simple::PAM;
 
-	my $valid_credentials = 0;	# output
+	my $valid_credentials = 0;    # output
 
 	my $passfile = "/etc/shadow";
-	my $simple   = Authen::Simple::Passwd->new( path => "$passfile" );
+	my $simple = Authen::Simple::Passwd->new( path => "$passfile" );
+
 	#~ my $simple   = Authen::Simple::PAM->new();
 
 	if ( $simple->authenticate( $user, $pass ) )
@@ -441,7 +459,8 @@ sub authenticateCredentials    #($user,$curpasswd)
 
 		This function exits the execution uf the current process.
 =cut
-sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
+
+sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 {
 	my $self = shift;
 
@@ -453,21 +472,44 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 	  if !defined $self->{ code }
 	  or !exists $GLOBAL::http_status_codes->{ $self->{ code } };
 
+<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 	my $cgi = &getCGI();
 
 	# Headers included in _ALL_ the responses, any method, any URI, sucess or error
 	my @headers = (
 					'Access-Control-Allow-Origin'      => $ENV{ HTTP_ORIGIN },
 					'Access-Control-Allow-Credentials' => 'true',
+=======
+	my $cgi     = &getCGI();
+	my @headers = (
+
+		# Headers included in _ALL_ the responses, any method, any URI, sucess or error
+>>>>>>> [Improvement] Simplify rbl module
 	);
 
 	if ( $ENV{ 'REQUEST_METHOD' } eq 'OPTIONS' )    # no session info received
 	{
+<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 		push @headers,
 		  'Access-Control-Allow-Methods'     => 'GET, POST, PUT, DELETE, OPTIONS',
 		  'Access-Control-Allow-Headers' =>
 		  'ZAPI_KEY, Authorization, Set-cookie, Content-Type, X-Requested-With',
 		  ;
+=======
+		push (
+			   @headers,
+			   'Access-Control-Allow-Origin'      => $ENV{ HTTP_ORIGIN },
+			   'Access-Control-Allow-Methods'     => 'GET, POST, PUT, DELETE, OPTIONS',
+			   'Access-Control-Allow-Credentials' => 'true',
+			   'Access-Control-Allow-Headers' =>
+				 'ZAPI_KEY, Authorization, Set-cookie, Content-Type, X-Requested-With',
+		);
+
+		if ( &validCGISession() )
+		{
+			push @headers, 'Access-Control-Expose-Headers' => 'Set-Cookie';
+		}
+>>>>>>> [Improvement] Simplify rbl module
 	}
 
 	if ( &validCGISession() )
@@ -476,6 +518,7 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 		my $session        = CGI::Session->load( $cgi );
 		my $session_cookie = $cgi->cookie( CGISESSID => $session->id );
 
+<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 		push @headers,
 		  'Set-Cookie'                       => $session_cookie,
 		  'Access-Control-Expose-Headers'    => 'Set-Cookie',
@@ -487,6 +530,10 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 		push @headers,
 		  'Access-Control-Expose-Headers'    => 'Set-Cookie',
 		  ;
+=======
+		#~ &zenlog("cookie:$session_cookie");
+		push @headers, 'Set-Cookie' => $session_cookie;
+>>>>>>> [Improvement] Simplify rbl module
 	}
 
 	# add possible extra headers
@@ -515,7 +562,7 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 	{
 		if ( ref $self->{ body } eq 'HASH' )
 		{
-			my $json = JSON::XS->new->utf8->pretty( 1 );
+			my $json           = JSON::XS->new->utf8->pretty( 1 );
 			my $json_canonical = 1;
 			$json->canonical( [$json_canonical] );
 
@@ -542,10 +589,13 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 #
 #########################################
 
-&zenlog(">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<");
-&zenlog("HTTP HEADERS: " . join(', ', $q->http() ) );
-&zenlog("HTTP_AUTHORIZATION: <$ENV{HTTP_AUTHORIZATION}>") if exists $ENV{HTTP_AUTHORIZATION};
-&zenlog("HTTP_ZAPI_KEY: <$ENV{HTTP_ZAPI_KEY}>") if exists $ENV{HTTP_ZAPI_KEY};
+&zenlog( ">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<" );
+&zenlog( "HTTP HEADERS: " . join ( ', ', $q->http() ) );
+&zenlog( "HTTP_AUTHORIZATION: <$ENV{HTTP_AUTHORIZATION}>" )
+  if exists $ENV{ HTTP_AUTHORIZATION };
+&zenlog( "HTTP_ZAPI_KEY: <$ENV{HTTP_ZAPI_KEY}>" )
+  if exists $ENV{ HTTP_ZAPI_KEY };
+
 #~ my $post_data = $q->param('POSTDATA');
 #~ my $put_data = $q->param('PUTDATA');
 #~
@@ -572,7 +622,7 @@ sub httpResponse # ( \%hash ) hash_keys->( code, headers, body )
 
 #  OPTIONS PreAuth
 OPTIONS qr{^/.*$} => sub {
-	&httpResponse({ code => 200 });
+	&httpResponse( { code => 200 } );
 };
 
 #  POST CGISESSID
@@ -580,13 +630,13 @@ POST qr{^/session$} => sub {
 
 	my $session = new CGI::Session( &getCGI() );
 
-	if ( $session && ! $session->param( 'is_logged_in' ) )
+	if ( $session && !$session->param( 'is_logged_in' ) )
 	{
 		my @credentials = &getAuthorizationCredentials();
 
 		my ( $username, $password ) = @credentials;
 
-		&zenlog("credentials: @credentials<");
+		&zenlog( "credentials: @credentials<" );
 
 		if ( &authenticateCredentials( @credentials ) )
 		{
@@ -594,37 +644,38 @@ POST qr{^/session$} => sub {
 			&zenlog( "Login successful for username: $username" );
 
 			$session->param( 'is_logged_in', 1 );
-			$session->param( 'username', $username );
-			$session->expire('is_logged_in', '+30m');
+			$session->param( 'username',     $username );
+			$session->expire( 'is_logged_in', '+30m' );
 
-			my ( $header ) = split( "\r\n", $session->header() );
-			my ( undef, $session_cookie ) = split( ': ', $header );
+			my ( $header ) = split ( "\r\n", $session->header() );
+			my ( undef, $session_cookie ) = split ( ': ', $header );
 
-			&httpResponse({
-				code => 200,
-				headers => { 'Set-cookie' => $session_cookie },
-			});
+			&httpResponse(
+						   {
+							 code    => 200,
+							 headers => { 'Set-cookie' => $session_cookie },
+						   }
+			);
 		}
-		else # not validated credentials
+		else    # not validated credentials
 		{
 			&zenlog( "Login failed for username: $username" );
 
 			$session->delete();
 			$session->flush();
 
-			&httpResponse({ code => 401 });
+			&httpResponse( { code => 401 } );
 		}
 	}
 
 	exit;
 };
 
-
 #	Above this part are calls allowed without authentication
 ######################################################################
 if ( not ( &validZapiKey() or &validCGISession() ) )
 {
-	&httpResponse({ code => 401 });
+	&httpResponse( { code => 401 } );
 }
 
 #	SESSION LOGOUT
@@ -672,8 +723,8 @@ GET qr{^/certificates$} => sub {
 	&certificates();
 };
 
-my $cert_re = &getValidFormat('certificate');
-my $cert_pem_re = &getValidFormat('cert_pem');
+my $cert_re     = &getValidFormat( 'certificate' );
+my $cert_pem_re = &getValidFormat( 'cert_pem' );
 
 #  Download SSL certificate
 GET qr{^/certificates/($cert_re)$} => sub {
@@ -703,7 +754,7 @@ DELETE qr{^/certificates/($cert_re)$} => sub {
 #	FARMS
 #
 
-my $farm_re = &getValidFormat('farm_name');
+my $farm_re = &getValidFormat( 'farm_name' );
 
 ##### /farms
 
@@ -743,7 +794,6 @@ DELETE qr{^/farms/($farm_re)$} => sub {
 	&delete_farm( @_ );
 };
 
-
 ##### /farms/FARM/backends
 
 GET qr{^/farms/($farm_re)/backends$} => sub {
@@ -765,7 +815,6 @@ PUT qr{^/farms/($farm_re)/backends/($be_re)$} => sub {
 DELETE qr{^/farms/($farm_re)/backends/($be_re)$} => sub {
 	&delete_backend( @_ );
 };
-
 
 ##### /farms/FARM/services
 
@@ -805,7 +854,6 @@ DELETE qr{^/farms/($farm_re)/services/($service_re)/backends/($be_re)$} => sub {
 	&delete_service_backend( @_ );
 };
 
-
 ##### /farms/FARM/zones
 
 POST qr{^/farms/($farm_re)/zones$} => sub {
@@ -820,9 +868,16 @@ PUT qr{^/farms/($farm_re)/zones/($zone_re)$} => sub {
 	&modify_zones( @_ );
 };
 
+<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 DELETE qr{^/farms/($farm_re)/zones/($zone_re)$} => sub {
+=======
+#  DELETE zone
+#DELETE qr{^/farms/(\w+)/zones/(.*+$)} => sub {
+DELETE qr{^/farms/($farm_re)/zones/(([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,})$} =>
+  sub {
+>>>>>>> [Improvement] Simplify rbl module
 	&delete_zone( @_ );
-};
+  };
 
 ##### /farms/FARM/zones/ZONE/resources
 
@@ -842,10 +897,16 @@ PUT qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => sub 
 	&modify_zone_resource( @_ );
 };
 
+<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 DELETE qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => sub {
+=======
+#  DELETE zone resource
+DELETE
+  qr{^/farms/($farm_re)/zones/([a-z0-9].*-*.*\.[a-z0-9].*)/resources/(\w+)$} =>
+  sub {
+>>>>>>> [Improvement] Simplify rbl module
 	&delete_zone_resource( @_ );
 };
-
 
 ##### /farms/FARM/actions
 ##### /farms/FARM/fg
@@ -867,7 +928,6 @@ PUT qr{^/farms/($farm_re)/backends/($be_re)/maintenance$} => sub {
 	&backend_maintenance( @_ );
 }; #  (L4xNAT only)
 
-
 ##### FARMS CERTIFICATES (HTTPS)
 
 ##### /farms/FARM/certificates
@@ -882,13 +942,17 @@ DELETE qr{^/farms/($farm_re)/certificates/($cert_pem_re)$} => sub {
 	&delete_farmcertificate( @_ );
 };
 
-
 #	NETWORK INTERFACES
 #
+<<<<<<< 3de2f0d9a876f2776a1a1f7319aed5abadc32edb
 my $virt_interface = &getValidFormat ('virt_interface');
 my $vlan_interface = &getValidFormat ('vlan_interface');
 
 ##### /interfaces
+=======
+my $virt_interface = &getValidFormat( 'virt_interfaces' );
+my $vlan_interface = &getValidFormat( 'vlan_interfaces' );
+>>>>>>> [Improvement] Simplify rbl module
 
 GET qr{^/interfaces$} => sub {
 	&get_interfaces();
@@ -991,8 +1055,8 @@ POST qr{^/interfaces/bonding/($bond_re)/actions$} => sub {
 };
 
 #  POST action interface
-#~ POST qr{^/interfaces/(.+)$} => sub {
-   #~ &ifaction( @_ );
+#~ PUT qr{^/interfaces/(.+)$} => sub {
+#~ &ifaction( $1 );
 #~ };
 
 ##### /interfaces/gateway
@@ -1054,13 +1118,12 @@ GET qr{^/graphs} => sub {
 	&possible_graphs();
 };
 
-
 #	IPDS
 #
 ipds:
 
-my $rbl_list = &getValidFormat('rbl_list_name');
-my $rbl_source_id = &getValidFormat('rbl_source_id');
+my $rbl_list      = &getValidFormat( 'rbl_list' );
+my $rbl_source_id = &getValidFormat( 'rbl_source_id' );
 
 # RBL
 #  GET all rbl lists
@@ -1068,77 +1131,82 @@ GET qr{^/ipds/rbl$} => sub {
 	&get_rbl_all_lists;
 };
 
-#  GET rbl lists
-GET qr{^/ipds/rbl/($rbl_list)$} => sub {
-	&get_rbl_list ( @_ );
+#  POST rbl list
+POST qr{^/ipds/rbl$} => sub {
+	&add_rbl_list( @_ );
 };
 
-#  POST rbl list
-POST qr{^/ipds/rbl/($rbl_list)$} => sub {
-	&add_rbl_list ( @_ );
+#  GET rbl lists
+GET qr{^/ipds/rbl/($rbl_list)$} => sub {
+	&get_rbl_list( @_ );
 };
 
 #  PUT rbl list
 PUT qr{^/ipds/rbl/($rbl_list)$} => sub {
-	&set_rbl_list ( @_ );
+	&set_rbl_list( @_ );
 };
 
 #  DELETE rbl list
 DELETE qr{^/ipds/rbl/($rbl_list)$} => sub {
-	&del_rbl_list ( @_ );
+	&del_rbl_list( @_ );
+};
+
+#  GET a source from a rbl list
+GET qr{^/ipds/rbl/($rbl_list)/source$} => sub {
+	&get_rbl_source( @_ );
 };
 
 #  POST a source from a rbl list
-POST qr{^/ipds/rbl/($rbl_list)/list} => sub {
-	&add_rbl_source ( @_ );
+POST qr{^/ipds/rbl/($rbl_list)/source$} => sub {
+	&add_rbl_source( @_ );
 };
 
 #  PUT a source from a rbl list
-PUT qr{^/ipds/rbl/($rbl_list)/list/($rbl_source_id)$} => sub {
-	&set_rbl_source ( @_ );
+PUT qr{^/ipds/rbl/($rbl_list)/source/($rbl_source_id)$} => sub {
+	&set_rbl_source( @_ );
 };
 
 #  DELETE a source from a rbl list
-DELETE qr{^/ipds/rbl/($rbl_list)/list/($rbl_source_id)$} => sub {
-	&del_rbl_source ( @_ );
+DELETE qr{^/ipds/rbl/($rbl_list)/source/($rbl_source_id)$} => sub {
+	&del_rbl_source( @_ );
 };
 
 #  POST list to farm
 POST qr{^/farms/($farm_re)/ipds/rbl$} => sub {
-	&add_rbl_to_farm ( @_ );
+	&add_rbl_to_farm( @_ );
 };
 
 #  DELETE list from farm
 DELETE qr{^/farms/($farm_re)/ipds/rbl/($rbl_list)$} => sub {
-	&del_rbl_from_farm ( @_ );
+	&del_rbl_from_farm( @_ );
 };
 
-
 # DDoS
-my $ddos_key = &getValidFormat ( 'ddos_key' );
+my $ddos_key = &getValidFormat( 'ddos_key' );
+
 #  GET ddos settings
 GET qr{^/ipds/ddos$} => sub {
-	&get_ddos ( @_ );
+	&get_ddos( @_ );
 };
 
 #  GET ddos configuration
 GET qr{^/ipds/ddos/($ddos_key)$} => sub {
-	&get_ddos_key ( @_ );
+	&get_ddos_key( @_ );
 };
 
 #  PUT ddos settings
 PUT qr{^/ipds/ddos$} => sub {
-	&set_ddos ( @_ );
+	&set_ddos( @_ );
 };
 
 #  GET status ddos for a farm
 GET qr{^/farms/($farm_re)/ipds/ddos$} => sub {
-	&get_ddos_farm ( @_ );
+	&get_ddos_farm( @_ );
 };
 
 #  POST DDoS to a farm
 POST qr{^/farms/($farm_re)/ipds/ddos$} => sub {
-	&add_ddos_to_farm ( @_ );
+	&add_ddos_to_farm( @_ );
 };
 
 #  DELETE DDoS from a farm

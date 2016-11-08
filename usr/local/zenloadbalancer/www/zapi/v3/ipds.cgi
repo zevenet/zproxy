@@ -69,31 +69,22 @@ rbl:
 # GET /ipds/rbl
 sub get_rbl_all_lists
 {
-	my $listNames = &getRBLListNames;
+	my $listNames   = &getRBLExists();
+	my $description = "Get rbl lists";
 	my @lists;
-
 	foreach my $list ( @{ $listNames } )
 	{
-		my @ipList;
-		my $index = 0;
-		foreach my $source ( @{ &getRBLListParam( $list, 'list' ) } )
-		{
-			push @ipList, { id => $index++, source => $source };
-		}
-
 		my %listHash = (
-						 name     => $list,
-						 ips      => \@ipList,
+						 list     => $list,
 						 farms    => &getRBLListParam( $list, 'farms' ),
 						 type     => &getRBLListParam( $list, 'type' ),
-						 location => &getRBLListLocalitation( $list )
+						 location => &getRBLListParam( $list, "location" )
 		);
 		push @lists, \%listHash;
 	}
 
 	&httpResponse(
-		  { code => 200, body => { description => "Get rbl lists", params => \@lists } }
-	);
+		  { code => 200, body => { description => $description, params => \@lists } } );
 }
 
 #**
@@ -138,42 +129,38 @@ sub get_rbl_all_lists
 #GET /ipds/rbl/<listname>
 sub get_rbl_list
 {
-	my $listName = shift;
-	my $blockOut = shift;    # if ( $blockOut ) no httpResponse
-
+	my $listName    = shift;
+	my $description = "Get list $listName";
 	my %listHash;
-	my $err = &getRBLListLocalitation( $listName );
+	my $err = &getRBLExists( $listName );
 
-	if ( $err != '-1' )
+	if ( $err == 0 )
 	{
 		my @ipList;
 		my $index = 0;
-		foreach my $source ( @{ &getRBLListParam( $listName, 'list' ) } )
+		foreach my $source ( @{ &getRBLListParam( $listName, 'sources' ) } )
 		{
 			push @ipList, { id => $index++, source => $source };
 		}
-
 		%listHash = (
 					  name     => $listName,
 					  sources  => \@ipList,
 					  farms    => &getRBLListParam( $listName, 'farms' ),
 					  type     => &getRBLListParam( $listName, 'type' ),
-					  location => &getRBLListLocalitation( $listName )
+					  location => &getRBLListParam( $listName, 'location' )
 		);
 
-		if ( $err eq 'remote' )
+		if ( &getRBLListParam( $listName, 'url' ) )
 		{
-			$listHash{ 'url' }    = &getRBLListParam( $listName, 'url' );
-			$listHash{ 'status' } = &getRBLListParam( $listName, 'status' );
-		}
+			$listHash{ 'url' }     = &getRBLListParam( $listName, 'url' );
+			$listHash{ 'status' }  = &getRBLListParam( $listName, 'status' );
+			$listHash{ 'refresh' } = &getRBLListParam( $listName, 'refresh' );
 
-		if ( !$blockOut )
-		{
 			&httpResponse(
-						{
-						  code => 200,
-						  body => { description => "Get list $listName", params => \%listHash }
-						}
+						   {
+							 code => 200,
+							 body => { description => $description, params => \%listHash }
+						   }
 			);
 		}
 	}
@@ -185,12 +172,9 @@ sub get_rbl_list
 					 error       => "true",
 					 message     => $errormsg,
 		};
-
-		if ( !$blockOut )
-		{
-			&httpResponse( { code => 400, body => $body } );
-		}
+		&httpResponse( { code => 404, body => $body } );
 	}
+
 	return \%listHash;
 }
 
@@ -234,86 +218,100 @@ sub get_rbl_list
 sub add_rbl_list
 {
 	my $json_obj = shift;
-	my $listName = shift;
-
 	my $errormsg;
-	if ( &getValidFormat( 'rbl_list_name', $listName ) == -1 )
-	{
-		$errormsg = "In list name only is allowed alphanumeric characters.";
-	}
+	my $listParams;
+	my $listName    = $json_obj->{ 'list' };
+	my $description = "Add list '$listName'";
 
-	if ( &getRBLListLocalitation( $listName ) != -1 )
-	{
-		$errormsg = "A list with name '$listName' just exists";
-	}
+	my @requiredParams = ( "list", "location" );
+	my @optionalParams = ( "type", "url", "refresh" );
 
-	if ( !exists $json_obj->{ 'type' } )
-	{
-		$errormsg = "It's neccesary pass 'type' parameter";
-	}
-
-	if ( !exists $json_obj->{ 'location' } )
-	{
-		$errormsg = "It's neccesary pass 'location' parameter";
-	}
-
+	$errormsg =
+	  &getValidPostParams( $json_obj, \@requiredParams, \@optionalParams );
+	# $errormsg == 0, no error
 	if ( !$errormsg )
 	{
-		my $error;
-		if ( $json_obj->{ 'location' } eq 'local' )
+		# A list with this name just exist
+		if ( &getRBLExists( $listName ) != -1 )
 		{
-			$error = &setRBLCreateLocalList( $listName, $json_obj->{ 'type' } );
+			$errormsg = "A list with name '$listName' just exists.";
 		}
-		
-		elsif ( $json_obj->{ 'location' } eq 'geolocation' )
+
+		# Check key format
+		foreach my $key ( keys $json_obj )
 		{
-			if ( &getRBLGeolocationLists ( $listName ) != -1 )
+			if ( ! &getValidFormat( "rbl_$key", $json_obj->{ $key } ) )
 			{
-				$error = &setRBLCreateGeolocationList( $listName, $json_obj->{ 'type' } );
+				$errormsg = "$key hasn't a correct format.";
+				last;
+			}
+		}
+		if ( !$errormsg )
+		{
+			# Check format list refresh
+			if ( exists $json_obj->{ 'refresh' } )
+			{
+				if ( $json_obj->{ 'location' } ne 'remote' )
+				{
+					$errormsg = "Refresh time only is available to remote lists.";
+				}
+				else
+				{
+					$listParams->{ 'refresh' } = $json_obj->{ 'refresh' };
+				}
+			}
+			if ( !$errormsg && exists $json_obj->{ 'url' } )
+			{
+				if ( $json_obj->{ 'location' } ne 'remote' )
+				{
+					$errormsg = "Url only is available to remote lists.";
+				}
+				else
+				{
+					$listParams->{ 'url' } = $json_obj->{ 'url' };
+				}
 			}
 			else
 			{
-				$errormsg = "Not exist a geolist with this name.";
+				if ( $json_obj->{ 'location' } eq 'remote' )
+				{
+					$errormsg = "It's necesary add a url where is allocated the list.";
+				}
+			}
+
+			if ( !$errormsg )
+			{
+				$listParams->{ 'location' } = $json_obj->{ 'location' };
+				$listParams->{ 'type' }     = $json_obj->{ 'type' }
+				  if ( exists $json_obj->{ 'type' } );
+
+				if ( &setRBLCreateList( $listName, $listParams ) )
+				{
+					$errormsg = "There was a error creating a new list. Check the logs.";
+				}
+
+				# All successful
+				else
+				{
+					my $listHash = &getRBLListParam( $listName );
+					delete $listHash->{ 'sources' };
+					delete $listHash->{ 'preload' };
+					&httpResponse(
+								{
+								  code => 200,
+								  body => { description => "Post list $listName", params => $listHash }
+								}
+					);
+				}
 			}
 		}
-
-		elsif ( $json_obj->{ 'location' } eq 'remote' )
-		{
-			if ( exists $json_obj->{ 'url' } )
-			{
-				$error = &setRBLCreateRemoteList( $listName,
-												  $json_obj->{ 'type' },
-												  $json_obj->{ 'url' } );
-			}
-			else
-			{
-				$errormsg = "It's neccesary add 'url' parameter in 'remote' lists";
-			}
-		}
-		$errormsg = "There was a error creating a new list. Check the logs."
-		  if ( $error );
 	}
-
-	if ( !$errormsg )
-	{
-		my $listHash = &get_rbl_list( $listName, 1 );
-		&httpResponse(
-					{
-					  code => 200,
-					  body => { description => "Post list $listName", params => $listHash }
-					}
-		);
-	}
-	else
-	{
-		my $body = {
-					 description => "Post list '$listName'",
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse( { code => 400, body => $body } );
-	}
+	my $body = {
+				 description => $description,
+				 error       => "true",
+				 message     => $errormsg,
+	};
+	&httpResponse( { code => 400, body => $body } );
 }
 
 #####Documentation of PUT rbl list####
@@ -366,72 +364,95 @@ sub add_rbl_list
 #  PUT /ipds/rbl/<listname>
 sub set_rbl_list
 {
-	my $json_obj = shift;
-	my $listName = shift;
-
-	my $err;
-	my $flag;
+	my $json_obj    = shift;
+	my $listName    = shift;
+	my $description = "Modify list $listName.";
 	my $errormsg;
 
-	if ( &getRBLListLocalitation( $listName ) != -1 )
-	{
-		# delete all keys don't defined
-		foreach my $key ( keys %{ $json_obj } )
-		{
-			if ( $key eq 'list' || $key eq 'status' || $key eq 'url' || $key eq 'type' )
-			{
-				if ( $key eq 'list' )
-				{
-					my @ipList = grep ( /((?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?)/,
-										@{ $json_obj->{ 'list' } } );
-					$json_obj->{ 'list' } = \@ipList;
-				}
-				$err = &setRBLListParam( $listName, $key, $json_obj->{ $key } );
-			}
+	my @allowParams = ( "type", "url", "refresh", "sources" );
 
-			# rename will done last
-			if ( $key eq 'name' )
-			{
-				$flag = 1;
-			}
-		}
-
-		if ( $flag )
-		{
-			$err = &setRBLListParam( $listName, 'name', $json_obj->{ 'name' } )
-			  if ( $listName ne $json_obj->{ 'name' } );
-		}
-	}
-	else
+	if ( &getRBLExists( $listName ) == -1 )
 	{
-		$errormsg = "$listName doesn't exist.";
-	}
-
-	if ( !$err && !$errormsg )
-	{
-		$newListName = $listName;
-		$newListName = $json_obj->{ 'name' } if ( exists $json_obj->{ 'name' } );
-
-		my $listHash = &get_rbl_list( $newListName, 1 );
-		&httpResponse(
-					 {
-					   code => 200,
-					   body => { description => "Put list $listName", params => $listHash }
-					 }
-		);
-	}
-	else
-	{
-		$errormsg = "There was a error putting list $listName" if ( !$errormsg );
+		$errormsg = "The list '$listName' don't exists.";
 		my $body = {
-					 description => "Put list '$listName'",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg,
 		};
-
-		&httpResponse( { code => 400, body => $body } );
+		&httpResponse( { code => 404, body => $body } );
 	}
 
+	my $location = &getRBLListParam( $listName, 'location' );
+
+	my $listHash = &getRBLListParam( $listName );
+	$errormsg = &getValidPutParams( $json_obj, \@allowParams );
+	if ( !$errormsg )
+	{
+		# Check key format
+		foreach my $key ( keys $json_obj )
+		{
+			if ( ! &getValidFormat( "rbl_$key", $json_obj->{ $key } ) )
+			{
+				$errormsg = "$key hasn't a correct format.";
+				last;
+			}
+		}
+		if ( !$errormsg )
+		{
+			# Check format list refresh
+			if ( ( exists $json_obj->{ 'refresh' } || exists $json_obj->{ 'url' } )
+				 && $location ne 'remote' )
+			{
+				$errormsg = "Refresh time and url only are available to remote lists.";
+			}
+			elsif ( exists $json_obj->{ 'sources' }
+					&& $location ne 'local' )
+			{
+				$errormsg = "Sources only is available to local lists.";
+			}
+			else
+			{
+				foreach my $key ( keys %{ $json_obj } )
+				{
+					$errormsg = &setRBLListParam( $listName, $key, $json_obj->{ $key } );
+					$errormsg = "Error found modify $key in $listName." if ( $errormsg );
+
+					if ( $key eq 'sources' )
+					{
+						my $source_format = &getValidFormat( 'rbl_source' );
+						my $noPush = grep ( !/$source_format)/, @{ $json_obj->{ 'list' } } );
+						&zenlog( "$noPush sources couldn't be added" ) if ( $noPush );
+					}
+					if ( $key eq 'list' )
+					{
+						$listName = $json_obj->{ 'list' };
+					}
+
+					last if ( $errormsg );
+				}
+				if ( !$errormsg )
+				{
+					my $listHash = &getRBLListParam( $listName );
+					&httpResponse(
+								   {
+									 code => 200,
+									 body => { description => $description, params => $listHash }
+								   }
+					);
+				}
+				else
+				{
+					$errormsg = "Error, modifying $listName.";
+				}
+			}
+		}
+	}
+	my $body = {
+				 description => $description,
+				 error       => "true",
+				 message     => $errormsg,
+	};
+	&httpResponse( { code => 400, body => $body } );
 }
 
 #####Documentation of DELETE RBL list####
@@ -462,43 +483,121 @@ sub set_rbl_list
 sub del_rbl_list
 {
 	my $listName = shift;
-
 	my $errormsg;
-	my $err = &getRBLListLocalitation( $listName );
-	if ( $err != -1 )
-	{
-		$err = &setRBLDeleteList( $listName );
-	}
-	else
+	my $description = "Delete list '$listName'",
+
+	  my $errormsg = &getRBLExists( $listName );
+	if ( $errormsg == -1 )
 	{
 		$errormsg = "$listName doesn't exist.";
-	}
-
-	if ( !$err )
-	{
-		$errormsg = "The list $listName has been deleted";
-
 		my $body = {
-					 description => "Delete list '$listName'",
-					 success     => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse( { code => 200, body => $body } );
-	}
-	else
-	{
-		$errormsg = "There was a error deleting list $listName" if ( !$errormsg );
-
-		my $body = {
-					 description => "Delete list '$listName'",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg,
 		};
-
 		&httpResponse( { code => 400, body => $body } );
 	}
+	else
+	{
+		$errormsg = &setRBLDeleteList( $listName );
+		if ( $errormsg )
+		{
+			$errormsg = "The list $listName has been deleted successful.";
+			my $body = {
+						 description => $description,
+						 success     => "true",
+						 message     => $errormsg,
+			};
+			&httpResponse( { code => 200, body => $body } );
+		}
+		else
+		{
+			$errormsg = "There was a error deleting list $listName.";
+		}
+	}
+	my $body = {
+				 description => $description,
+				 error       => "true",
+				 message     => $errormsg,
+	};
+	&httpResponse( { code => 400, body => $body } );
+}
 
+#**
+#  @api {get} /ipds/rbl/<listname> Request a rbl list
+#  @apiGroup IPDS
+#  @apiDescription Get a rbl list description
+#  @apiName GetRblList
+#  @apiParam {String} listname  Rbl list name, unique ID.
+#  @apiVersion 3.0
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "rbl lists",
+#   "params" : [
+#      {
+#         "farms" : [
+#            "gslbFarm",
+#            "httpFarm"
+#         ],
+#         "ips" : [
+#            {
+#               "id" : 0,
+#               "source" : "17.63.203.20"
+#            },
+#            {
+#               "id" : 1,
+#               "source" : "21.5.6.4"
+#            }
+#         ],
+#         "name" : "blackList",
+#         "type" : "deny"
+#      }
+#   ]
+#}
+#@apiExample {curl} Example Usage:
+#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/<listname>
+#
+#@apiSampleRequest off
+#**
+#GET /ipds/rbl/<listname>
+sub get_rbl_source
+{
+	my $listName    = shift;
+	my $description = "Get $listName sources";
+	my %listHash;
+	my $err = &getRBLExists( $listName );
+
+	if ( $err == 0 )
+	{
+		my @ipList;
+		my $index = 0;
+		foreach my $source ( @{ &getRBLListParam( $listName, 'sources' ) } )
+		{
+			push @ipList, { id => $index++, source => $source };
+		}
+
+		&httpResponse(
+					   {
+						 code => 200,
+						 body => { description => $description, params => \@ipList }
+					   }
+		);
+	}
+	else
+	{
+		my $errormsg = "Request list doesn't exist.";
+		my $body = {
+					 description => "$description",
+					 error       => "true",
+					 message     => $errormsg,
+		};
+		&httpResponse( { code => 404, body => $body } );
+	}
+
+	return \%listHash;
 }
 
 #####Documentation of POST a RBL list source####
@@ -538,54 +637,70 @@ sub add_rbl_source
 {
 	my $json_obj = shift;
 	my $listName = shift;
-
 	my $errormsg;
+	my $description    = "Post source to $listName.";
+	my @requiredParams = ( "source" );
+	my @optionalParams;
 
-	if ( &getRBLListLocalitation( $listName ) == -1 )
+	if ( &getRBLExists( $listName ) == -1 )
 	{
 		$errormsg = "$listName doesn't exist.";
-	}
-
-	if ( $json_obj->{ 'source' } !~ /((?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?)/ )
-	{
-		$errormsg = "source format is incorrect.";
-	}
-
-	if (
-		 grep ( /$json_obj->{'source'}/, @{ &getRBLListParam( $listName, 'list' ) } ) )
-	{
-		$errormsg = "$json_obj->{'source'} just exist in $listName.";
-	}
-
-	if ( !$errormsg )
-	{
-		$errormsg = &setRBLAddSource( $listName, $json_obj->{ 'source' } );
-		my $errormsg = "There was a error posting a new source in $listName."
-		  if ( $errormsg != 0 );
-	}
-
-	if ( !$errormsg )
-	{
-		&httpResponse(
-					   {
-						 code => 200,
-						 body => {
-								   description => "Post source to $listName.",
-								   params      => &getRBLListParam( $listName, 'list' )
-						 }
-					   }
-		);
-	}
-	else
-	{
 		my $body = {
-					 description => "Post source to $listName",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg,
 		};
-
-		&httpResponse( { code => 400, body => $body } );
+		&httpResponse( { code => 404, body => $body } );
 	}
+	else
+	{
+		$errormsg =
+		  &getValidPostParams( $json_obj, \@requiredParams, \@optionalParams );
+		if ( !$errormsg )
+		{
+			if ( ! &getValidFormat( 'rbl_source', $json_obj->{ 'source' } )  )
+			{
+				$errormsg = "It's necessary introduce a correct source.";
+			}
+			elsif (
+					grep ( /^$json_obj->{'source'}$/,
+						   @{ &getRBLListParam( $listName, 'sources' ) } ) )
+			{
+				$errormsg = "$json_obj->{'source'} just exist in $listName.";
+			}
+			else
+			{
+				$errormsg = &setRBLAddSource( $listName, $json_obj->{ 'source' } );
+				if ( !$errormsg )
+				{
+					my @ipList;
+					my $index = 0;
+					foreach my $source ( @{ &getRBLListParam( $listName, 'sources' ) } )
+					{
+						push @ipList, { id => $index++, source => $source };
+					}
+
+					$errormsg = "Added $json_obj->{'source'} successful.";
+					my $body = {
+								 description => $description,
+								 params      => \@ipList,
+								 message     => $errormsg,
+					};
+					&httpResponse( { code => 200, body => $body } );
+				}
+				else
+				{
+					$errormsg = "Error, adding source to $listName.";
+				}
+			}
+		}
+	}
+	my $body = {
+				 description => $description,
+				 error       => "true",
+				 message     => $errormsg,
+	};
+	&httpResponse( { code => 400, body => $body } );
 }
 
 #####Documentation of PUT a RBL list source####
@@ -622,53 +737,68 @@ sub add_rbl_source
 #  PUT /ipds/rbl/<listname>/list/<id>
 sub set_rbl_source
 {
-	my $json_obj = shift;
-	my $listName = shift;
-	my $id       = shift;
-
+	my $json_obj    = shift;
+	my $listName    = shift;
+	my $id          = shift;
+	my $description = "Put source from $listName";
 	my $errormsg;
+	my @allowParams = ( "source" );
 
-	# check list exists and source is successful
-	if ( &getRBLListLocalitation( $listName ) == -1 )
+	# check list exists
+	if ( &getRBLExists( $listName ) == -1 )
 	{
 		$errormsg = "$listName doesn't found";
-	}
-
-	if ( !$errormsg )
-	{
-		if ( $json_obj->{ 'source' } !~ /((?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?)/ )
-		{
-			$errormsg = "Wrong format to source.";
-		}
-
-		if ( &setRBLModifSource( $listName, $id, $json_obj->{ 'source' } ) != 0 )
-		{
-			$errormsg = "There was a error putting a source in $listName.";
-		}
-	}
-
-	if ( !$errormsg )
-	{
-		&httpResponse(
-					   {
-						 code => 200,
-						 body => {
-								   description => "Put source from $listName",
-								   params      => &getRBLListParam( $listName, 'list' )
-						 }
-					   }
-		);
-	}
-	else
-	{
 		my $body = {
-					 description => "Put source from $listName",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg,
 		};
-		&httpResponse( { code => 400, body => $body } );
+		&httpResponse( { code => 404, body => $body } );
 	}
 
+	# check source id exists
+	elsif ( @{ &getRBLListParam( $listName, 'sources' ) } <= $id )
+	{
+		$errormsg = "source id $id doesn't found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+		&httpResponse( { code => 404, body => $body } );
+	}
+	else
+	{
+		$errormsg = &getValidPutParams( $json_obj, \@allowParams );
+		if ( !$errormsg )
+		{
+
+			if ( ! &getValidFormat( 'rbl_source', $json_obj->{ 'source' } ) )
+			{
+				$errormsg = "Wrong format to source.";
+			}
+
+			elsif ( &setRBLModifSource( $listName, $id, $json_obj->{ 'source' } ) != 0 )
+			{
+				$errormsg = "There was a error putting a source in $listName.";
+			}
+			else
+			{
+				params => &getRBLListParam( $listName, 'sources' );
+				my $body = {
+							 description => $description,
+							 params      => $sources
+				};
+				&httpResponse( { code => 200, body => $body } );
+			}
+		}
+	}
+	my $body = {
+				 description => $description,
+				 error       => "true",
+				 message     => $errormsg,
+	};
+	&httpResponse( { code => 400, body => $body } );
 }
 
 #####Documentation of DELETE a RBL list source####
@@ -701,49 +831,52 @@ sub del_rbl_source
 {
 	my $listName = shift;
 	my $id       = shift;
-
 	my $errormsg;
+	my $description = "Delete source from '$listName'";
 
-	if ( &getRBLListLocalitation( $listName ) == -1 )
+	if ( &getRBLExists( $listName ) == -1 )
 	{
 		$errormsg = "$listName doesn't exist.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+		&httpResponse( { code => 404, body => $body } );
 	}
-
-	if ( @{ &getRBLListParam( $listName, 'list' ) } <= $id )
+	elsif ( @{ &getRBLListParam( $listName, 'sources' ) } <= $id )
 	{
-		$errormsg = "ID $id doesn't exist in $listName.";
+		$errormsg = "id $id doesn't exist in $listName.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+		&httpResponse( { code => 404, body => $body } );
 	}
-
-	if ( !$errormsg )
+	else
 	{
 		if ( &setRBLDeleteSource( $listName, $id ) != 0 )
 		{
 			$errormsg = "There was a error deleting source $id";
 		}
+		else
+		{
+			my $errormsg = "Source $id has been deleted successful.";
+			my $body = {
+						 description => $description,
+						 success     => "true",
+						 message     => $errormsg,
+			};
+			&httpResponse( { code => 200, body => $body } );
+		}
 	}
-
-	if ( !$errormsg )
-	{
-		my $errormsg = "Source $id has been deleted.";
-
-		my $body = {
-					 description => "Delete source from '$listName'",
-					 success     => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse( { code => 200, body => $body } );
-	}
-	else
-	{
-		my $body = {
-					 description => "Delete source from '$listName'",
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse( { code => 400, body => $body } );
-	}
+	my $body = {
+				 description => $description,
+				 error       => "true",
+				 message     => $errormsg,
+	};
+	&httpResponse( { code => 400, body => $body } );
 }
 
 #####Documentation of POST a RBL list source####
@@ -781,49 +914,61 @@ sub add_rbl_to_farm
 {
 	my $json_obj = shift;
 	my $farmName = shift;
+	my $listName = $json_obj->{ 'list' };
+	my $errormsg;
+	my $description = "Apply list $listName to farm $farmName";
 
-	my $err;
-	my @rules = &getIptList( $farmName, 'raw', 'PREROUTING' );
-
-	if ( &getRBLListLocalitation( $json_obj->{ 'listname' } ) == -1
-		|| grep ( /^\s*(\d+).+match-set $json_obj->{'listname'} src .+RBL_$farmName/,
-				  @rules ) )
+	if ( &getFarmFile( $farmName ) == -1 )
 	{
-		$err = 1;
-		&zenlog ("$json_obj->{ 'listname' } just is applied");
-	}
-	else
-	{
-		$err = &setRBLCreateRule( $farmName, $json_obj->{ 'listname' } );
-	}
-
-	if ( !$err )
-	{
-		my $errormsg =
-		  "List $json_obj->{'listname'} was applied successful to farm $farmName.";
-
+		$errormsg = "$farmName doesn't exist.";
 		my $body = {
-					 description => "Apply list $json_obj->{'listname'} to farm $farmName",
-					 success     => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse( { code => 200, body => $body } );
-	}
-	else
-	{
-		my $errormsg =
-		  "There was a error applying $json_obj->{'listname'} to $farmName.";
-
-		my $body = {
-					 description => "Apply list $json_obj->{'listname'} to farm $farmName",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg,
 		};
-
-		&httpResponse( { code => 400, body => $body } );
+		&httpResponse( { code => 404, body => $body } );
 	}
-
+	elsif ( &getRBLExists( $listName ) == -1 )
+	{
+		$errormsg = "$listName doesn't exist.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+		&httpResponse( { code => 404, body => $body } );
+	}
+	else
+	{
+		if ( grep ( /^$listName$/, @{ &getRBLListParam( $listName, 'farms' ) } ) )
+		{
+			$errormsg = "$listName just is applied to $farmName.";
+		}
+		else
+		{
+			$errormsg = &setRBLApplyToFarm( $farmName, $listName );
+			if ( !$errormsg )
+			{
+				my $errormsg = "List $listName was applied successful to farm $farmName.";
+				my $body = {
+							 description => $description,
+							 success     => "true",
+							 message     => $errormsg,
+				};
+				&httpResponse( { code => 200, body => $body } );
+			}
+			else
+			{
+				$errormsg = "Error, applying $listName to $farmName";
+			}
+		}
+	}
+	my $body = {
+				 description => $description,
+				 error       => "true",
+				 message     => $errormsg,
+	};
+	&httpResponse( { code => 400, body => $body } );
 }
 
 #####Documentation of DELETE a RBL rule for a farm####
@@ -857,38 +1002,63 @@ sub del_rbl_from_farm
 {
 	my $farmName = shift;
 	my $listName = shift;
+	my $errormsg;
+	my $description = "Delete list $listName form farm $farmName";
 
-	my $err = &getRBLListLocalitation( $listName );
-	if ( $err != -1 )
+	if ( &getFarmFile( $farmName ) == -1 )
 	{
-		$err = &setRBLDeleteRule( $farmName, $listName );
-	}
-
-	if ( !$err )
-	{
-		my $errormsg = "List $listName was removed successful from farm $farmName.";
-
+		$errormsg = "$farmName doesn't exist.";
 		my $body = {
-					 description => "Delete list $listName form farm $farmName",
-					 success     => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse( { code => 200, body => $body } );
-	}
-	else
-	{
-		my $errormsg = "There was a error removing $listName from $farmName.";
-
-		my $body = {
-					 description => "Delete list $listName form farm $farmName",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg,
 		};
-
-		&httpResponse( { code => 400, body => $body } );
+		&httpResponse( { code => 404, body => $body } );
 	}
-
+	elsif ( &getRBLExists( $listName ) == -1 )
+	{
+		$errormsg = "$listName doesn't exist.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+		&httpResponse( { code => 404, body => $body } );
+	}
+	elsif ( ! grep( /^$farmName$/, @{ &getRBLListParam( $listName, 'farms' ) } ) )
+	{
+		$errormsg = "Don't foud a rule associated to $listName and $farmName.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+		&httpResponse( { code => 404, body => $body } );
+	}
+	else
+	{
+		$errormsg = &setRBLRemFromFarm( $farmName, $listName );
+		if ( !$errormsg )
+		{
+			$errormsg = "List $listName was removed successful from farm $farmName.";
+			my $body = {
+						 description => $description,
+						 success     => "true",
+						 message     => $errormsg,
+			};
+			&httpResponse( { code => 200, body => $body } );
+		}
+		else
+		{
+			$errormsg = "There was a error removing $listName from $farmName.";
+		}
+	}
+	my $body = {
+				 description => $description,
+				 error       => "true",
+				 message     => $errormsg,
+	};
+	&httpResponse( { code => 400, body => $body } );
 }
 
 ddos:
@@ -927,11 +1097,11 @@ sub get_ddos
 		foreach my $key ( keys %{ $fileHandle } )
 		{
 			# get status of all rules enabled
-			#~ if ( $fileHandle->{ $key }->{'status'} =~ /up/ || 
-				  #~ $fileHandle->{ $key }->{'farms'} )
-				  
-			# get status only balancer rules
-			if ( $fileHandle->{ $key }->{'status'} =~ /up/ )
+			if (    $fileHandle->{ $key }->{ 'status' } =~ /up/
+				 || $fileHandle->{ $key }->{ 'farms' } )
+
+			  # get status only balancer rules
+			  #~ if ( $fileHandle->{ $key }->{'status'} =~ /up/ )
 			{
 				push @output, $key;
 			}
@@ -946,14 +1116,12 @@ sub get_ddos
 	&httpResponse( { code => 200, body => $body } );
 }
 
-
-
 # ???
 sub get_ddos_key
 {
-	my $key = shift; 
-	
-	$output = &getDDOSParam ( $key );
+	my $key = shift;
+
+	$output = &getDDOSParam( $key );
 
 	# don't exit this key
 	if ( !$output )
@@ -966,20 +1134,18 @@ sub get_ddos_key
 		};
 		&httpResponse( { code => 400, body => $body } );
 	}
+
 	# successful
 	else
 	{
 		my $body = {
-				 description => "$key settings.",
-				 params      => $output,
-			 };
+					 description => "$key settings.",
+					 params      => $output,
+		};
 		&httpResponse( { code => 200, body => $body } );
 	}
-	
+
 }
-
-
-
 
 #**
 #  @api {put} /ipds/ddos Modify ddos settings
@@ -1018,7 +1184,6 @@ sub set_ddos
 	my $key      = $json_obj->{ 'id' };
 	my $errormsg;
 
-	
 	if ( $key eq 'DROPICMP' )
 	{
 		if ( $json_obj->{ 'status' } eq 'up' )
@@ -1033,48 +1198,62 @@ sub set_ddos
 
 	elsif ( $key eq 'SSHBRUTEFORCE' )
 	{
-		&setDDOSParam ( $key, 'time', $json_obj->{ 'time' } ) if ( exists $json_obj->{ 'time' } );
-		&setDDOSParam ( $key, 'hits', $json_obj->{ 'hits' } ) if ( exists $json_obj->{ 'hits' } );
-		&setDDOSParam ( $key, 'port', $json_obj->{ 'port' } ) if ( exists $json_obj->{ 'port' } );
-		
+		&setDDOSParam( $key, 'time', $json_obj->{ 'time' } )
+		  if ( exists $json_obj->{ 'time' } );
+		&setDDOSParam( $key, 'hits', $json_obj->{ 'hits' } )
+		  if ( exists $json_obj->{ 'hits' } );
+		&setDDOSParam( $key, 'port', $json_obj->{ 'port' } )
+		  if ( exists $json_obj->{ 'port' } );
+
 		&setDDOSCreateRule( $key ) if ( $json_obj->{ 'status' } eq 'up' );
 		&setDDOSDeleteRule( $key ) if ( $json_obj->{ 'status' } eq 'down' );
 	}
 
 	elsif ( $key eq 'PORTSCANNING' )
 	{
-		&setDDOSParam ( $key, 'blTime', $json_obj->{ 'blTime' } ) if ( exists $json_obj->{ 'blTime' } );
-		&setDDOSParam ( $key, 'time', $json_obj->{ 'time' } ) if ( exists $json_obj->{ 'time' } );
-		&setDDOSParam ( $key, 'hits', $json_obj->{ 'hits' } ) if ( exists $json_obj->{ 'hits' } );
-		&setDDOSParam ( $key, 'portScan', $json_obj->{ 'portScan' } ) if ( exists $json_obj->{ 'portScan' } );
-		
+		&setDDOSParam( $key, 'blTime', $json_obj->{ 'blTime' } )
+		  if ( exists $json_obj->{ 'blTime' } );
+		&setDDOSParam( $key, 'time', $json_obj->{ 'time' } )
+		  if ( exists $json_obj->{ 'time' } );
+		&setDDOSParam( $key, 'hits', $json_obj->{ 'hits' } )
+		  if ( exists $json_obj->{ 'hits' } );
+		&setDDOSParam( $key, 'portScan', $json_obj->{ 'portScan' } )
+		  if ( exists $json_obj->{ 'portScan' } );
+
 		&setDDOSCreateRule( $key ) if ( $json_obj->{ 'status' } eq 'up' );
 		&setDDOSDeleteRule( $key ) if ( $json_obj->{ 'status' } eq 'down' );
 	}
 
 	elsif ( $key eq 'SYNPROXY' )
 	{
-		&setDDOSParam ( $key, 'mss', $json_obj->{ 'mss' } ) if ( exists $json_obj->{ 'mss' } );
-		&setDDOSParam ( $key, 'scale', $json_obj->{ 'scale' } ) if ( exists $json_obj->{ 'scale' } );
+		&setDDOSParam( $key, 'mss', $json_obj->{ 'mss' } )
+		  if ( exists $json_obj->{ 'mss' } );
+		&setDDOSParam( $key, 'scale', $json_obj->{ 'scale' } )
+		  if ( exists $json_obj->{ 'scale' } );
 	}
 
 	elsif ( $key eq 'LIMITSEC' )
 	{
-		&setDDOSParam ( $key, 'limit', $json_obj->{ 'limit' } ) if ( exists $json_obj->{ 'limit' } );
-		&setDDOSParam ( $key, 'limitBurst', $json_obj->{ 'limitBurst' } ) if ( exists $json_obj->{ 'limitBurst' } );
+		&setDDOSParam( $key, 'limit', $json_obj->{ 'limit' } )
+		  if ( exists $json_obj->{ 'limit' } );
+		&setDDOSParam( $key, 'limitBurst', $json_obj->{ 'limitBurst' } )
+		  if ( exists $json_obj->{ 'limitBurst' } );
 	}
 
 	elsif ( $key eq 'LIMITRST' )
 	{
-		&setDDOSParam ( $key, 'limit', $json_obj->{ 'limit' } ) if ( exists $json_obj->{ 'limit' } );
-		&setDDOSParam ( $key, 'limitBurst', $json_obj->{ 'limitBurst' } ) if ( exists $json_obj->{ 'limitBurst' } );
+		&setDDOSParam( $key, 'limit', $json_obj->{ 'limit' } )
+		  if ( exists $json_obj->{ 'limit' } );
+		&setDDOSParam( $key, 'limitBurst', $json_obj->{ 'limitBurst' } )
+		  if ( exists $json_obj->{ 'limitBurst' } );
 	}
 
 	elsif ( $key eq 'LIMITCONNS' )
 	{
-		&setDDOSParam ( $key, 'limitConns', $json_obj->{ 'limitConns' } ) if ( exists $json_obj->{ 'limitConns' } );
+		&setDDOSParam( $key, 'limitConns', $json_obj->{ 'limitConns' } )
+		  if ( exists $json_obj->{ 'limitConns' } );
 	}
-	
+
 	else
 	{
 		$errormsg = "Wrong param ID";
@@ -1084,20 +1263,20 @@ sub set_ddos
 	if ( $errormsg )
 	{
 		my $body = {
-			description => "Put DDoS settings",
-			error       => "true",
-			message     => $errormsg,
+					 description => "Put DDoS settings",
+					 error       => "true",
+					 message     => $errormsg,
 		};
 		&httpResponse( { code => 400, body => $body } );
 	}
-	
+
 	else
-	 {
+	{
 		&httpResponse(
-			{
-			code => 200,
-			bdy => { description => "Put DDoS $key settings", "successful" => "true" }
-			}
+			   {
+				 code => 200,
+				 bdy  => { description => "Put DDoS $key settings", "successful" => "true" }
+			   }
 		);
 	}
 
@@ -1135,13 +1314,13 @@ sub get_ddos_farm
 	$output = 'down';
 	if ( -e $confFile )
 	{
-		my $fileHandle  = Config::Tiny->read( $confFile );
-		
+		my $fileHandle = Config::Tiny->read( $confFile );
+
 		foreach my $key ( keys %{ $fileHandle } )
 		{
 			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
-				push @output , $key;
+				push @output, $key;
 			}
 		}
 	}
@@ -1185,22 +1364,23 @@ sub add_ddos_to_farm
 {
 	my $json_obj = shift;
 	my $farmName = shift;
-	my $key = $json_obj->{'id'};
+	my $key      = $json_obj->{ 'id' };
 	my $errormsg;
 	my @vaildKeys = (
-				'INVALID', 'BLOCKSPOOFED', 'LIMITCONNS', 'LIMITSEC',     # all farms
-				'DROPFRAGMENTS', 'NEWNOSYN', 'SYNWITHMSS',   # farms based in TCP protcol
-				'BOGUSTCPFLAGS', 'LIMITRST', 'SYNPROXY'
-				 );
+		'INVALID', 'BLOCKSPOOFED', 'LIMITCONNS', 'LIMITSEC',    # all farms
+		'DROPFRAGMENTS', 'NEWNOSYN', 'SYNWITHMSS',    # farms based in TCP protcol
+		'BOGUSTCPFLAGS', 'LIMITRST', 'SYNPROXY'
+	);
 
 	my $confFile = &getGlobalConfiguration( 'ddosConf' );
-	my $output = "down";
+	my $output   = "down";
 
-	system ( &getGlobalConfiguration('ddosConf') . " $confFile" ) if ( ! -e $confFile );
-	if ( ! grep ( /^$key$/, @vaildKeys ) )
+	system ( &getGlobalConfiguration( 'ddosConf' ) . " $confFile" )
+	  if ( !-e $confFile );
+	if ( !grep ( /^$key$/, @vaildKeys ) )
 	{
 		$errormsg = "Key $key is not a valid value.";
-	}		
+	}
 	elsif ( grep ( /$farmName/, &getFarmList() ) )
 	{
 		my $fileHandle = Config::Tiny->read( $confFile );
@@ -1282,20 +1462,20 @@ sub add_ddos_to_farm
 sub del_ddos_from_farm
 {
 	my $farmName = shift;
-	my $key = shift;
+	my $key      = shift;
 	my $confFile = &getGlobalConfiguration( 'ddosConf' );
 	my $errormsg;
 
 	my @vaildKeys = (
-			'INVALID', 'BLOCKSPOOFED', 'LIMITCONNS', 'LIMITSEC',     # all farms
-			'DROPFRAGMENTS', 'NEWNOSYN', 'SYNWITHMSS',   # farms based in TCP protcol
-			'BOGUSTCPFLAGS', 'LIMITRST', 'SYNPROXY'
-			 );
+		'INVALID', 'BLOCKSPOOFED', 'LIMITCONNS', 'LIMITSEC',    # all farms
+		'DROPFRAGMENTS', 'NEWNOSYN', 'SYNWITHMSS',    # farms based in TCP protcol
+		'BOGUSTCPFLAGS', 'LIMITRST', 'SYNPROXY'
+	);
 
-	if ( ! grep ( /^$key$/, @vaildKeys ) )
+	if ( !grep ( /^$key$/, @vaildKeys ) )
 	{
 		$errormsg = "Key $key is not a valid value.";
-	}		
+	}
 	elsif ( -e $confFile )
 	{
 		my $fileHandle  = Config::Tiny->read( $confFile );
@@ -1344,3 +1524,4 @@ sub del_ddos_from_farm
 }
 
 1;
+

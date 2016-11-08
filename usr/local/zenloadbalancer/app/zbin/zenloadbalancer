@@ -240,6 +240,7 @@ if ( $eject eq "start" )
 	system ( '/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi' );
 	require "/usr/local/zenloadbalancer/config/global.conf";
 	require "/usr/local/zenloadbalancer/www/plugins_functions.cgi";
+	require "/usr/local/zenloadbalancer/www/Plugins/rbl.pl";
 
 	#### Starts node tuning ####
 
@@ -442,6 +443,7 @@ if ( $eject eq "start" )
 
 	# start all modules
 	&plugins::setPluginsProcess ( 'zlbstart' );
+	&setRBLStart();
 
 	### Starting Network Interfaces
 	&printAndLog( "Starting Zen Load Balancer...\n" );
@@ -714,6 +716,10 @@ if ( $eject eq "start" )
 if ( $eject eq "stop" )
 {
 	&zenlog( "Beginning stop proccess" );
+
+	# stop all modules
+	&plugins::setPluginsProcess ( 'zlbstop' );
+	&setRBLStop();
 
 	if ( &getZClusterStatus() )
 	{

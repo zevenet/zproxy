@@ -79,9 +79,13 @@ my %format_re = (
 	'bond_mode_short'  => qr/(?:balance-rr|active-backup|balance-xor|broadcast|802.3ad|balance-tlb|balance-alb)/,
 
 	# ipds
-	'rbl_list_name' => qr{[a-zA-Z0-9]+},
+	'rbl_list' => qr{[a-zA-Z0-9]+},
 	'rbl_source'	=> qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
 	'rbl_source_id'	=> qr{\d+},
+	'rbl_location'		=> qr{(?:local|remote)},
+	'rbl_type'		=> qr{(?:allow|deny)},
+	'rbl_url'		=> qr{.+},
+	'rbl_refresh'		=> qr{\d+},
 	'ddos_key' => '[A-Z]+',
 
 	# certificates filenames
@@ -186,5 +190,86 @@ sub getValidPort # ( $ip, $port, $profile )
 		return 0;
 	}
 }
+
+# Check almost a param exists and all params are correct
+sub getValidPutParams   # ( \%json_obj, \@allowParams )
+{
+	my $params = shift;
+	my $allowParamsRef = shift;
+	my @allowParams = @{ $allowParamsRef };
+	my $output = "Don't found any param.";
+	my $pattern;
+	
+	# Almost a param was sent
+	foreach my $param ( @allowParams )
+	{
+		if ( exists $params->{ $param } )
+		{
+			$output = 0;
+			last;
+		}
+	}
+	
+	# Check if any param isn't for this call
+	if ( ! $output )
+	{
+		$output = "";
+		$pattern .= "$_|" for ( @allowParams );
+		chop ( $pattern );
+		my @errorParams = grep { !/^(?:$pattern)$/ } keys %{ $params };
+		if ( @errorParams )
+		{
+			$output .= "$_, " for ( @errorParams );
+			chop ( $output ) ;
+			chop ( $output ) ;
+			$output = "The param(s) $output are not correct for this call.";
+		}
+	}
+		
+	return $output;
+}
+
+# Check all required params exist and all params are correct
+sub getValidPostParams   # ( \%json_obj, \@requiredParams, \@optionalParams )
+{
+	my $params = shift;
+	my $requiredParamsRef = shift;
+	my $allowParamsRef = shift;
+	my @allowParams = @{ $allowParamsRef };
+	my @requiredParams = @{ $requiredParamsRef };
+	push @allowParams, @requiredParams;
+	my $output;
+	my $pattern;
+	
+	# Check all required params are in called
+	$pattern .= "$_|" for ( @requiredParams );
+
+	chop ( $pattern );
+	my $aux = grep { /^(?:$pattern)$/ } keys %{ $params };
+	if ( $aux != scalar @requiredParams )
+	{
+		$output = "Missing required parameters. $aux";
+	}
+	# Check if any param isn't for this call
+	if ( ! $output )
+	{
+		$output = "";
+		$pattern = "";
+		$pattern .= "$_|" for ( @allowParams );
+		chop ( $pattern );
+		my @errorParams = grep { !/^(?:$pattern)$/ } keys %{ $params };
+		if ( @errorParams )
+		{
+			$output .= "$_, " for ( @errorParams );
+			chop ( $output ) ;
+			chop ( $output ) ;
+			$output = "The param(s) $output are not correct for this call.";
+		}
+	}
+		
+	return $output;
+}
+
+
 
 1;

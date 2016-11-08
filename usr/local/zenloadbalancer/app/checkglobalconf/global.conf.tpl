@@ -212,14 +212,13 @@ $syslogFile="/var/log/syslog";
 $logger="/usr/bin/logger";
 
 #IPDS Module
-$rblConfPath = "/usr/local/zenloadbalancer/www/Plugins/ipds/rbl";
-$rblLocalConf = "$rblConfPath/local_lists.conf";
-$rblRemoteConf = "$rblConfPath/remote_lists.conf";
-$rblGeolocation = "$rblConfPath/geolocation";
-$rblGeolocationConf = "$rblConfPath/geolocation_lists.conf";
+$rblListsPath = "/usr/local/zenloadbalancer/config/ipds/rbl/lists";
+$rblConf = "/usr/local/zenloadbalancer/config/ipds/rbl/lists.conf";
+$rblLocalPreload = "/usr/local/zenloadbalancer/www/Plugins/ipds/rbl/local";
+$rblRemotePreload = "/usr/local/zenloadbalancer/www/Plugins/ipds/rbl/remote_lists.conf";
 $ipset = "/sbin/ipset";
 $touch = "/usr/bin/touch";
-$ddosConf = "/usr/local/zenloadbalancer/www/Plugins/ipds/ddos/ddos.conf";
+$ddosConf = "/usr/local/zenloadbalancer/config/ipds/ddos/ddos.conf";
 
 #::END Global Section
 
