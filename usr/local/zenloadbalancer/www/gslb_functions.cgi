@@ -2219,20 +2219,20 @@ sub enableGSLBFarmGuardian
 			{
 				if ( $line =~ /$service =>/ )
 				{
-					$output = 0;
+					$output = 1;
 				}
-				if ( !$output )
+				if ( $output == 1 )
 				{
 					if ( $option =~ /true/ && $line =~ /service_types = tcp_(\d+)/ )
 					{
-						$output = $1;
-						$line   = "\t\tservice_types = ${service}_fg_$output";
+						$line   = "\t\tservice_types = ${service}_fg_$1";
+						$output = 0;
 						last;
 					}
 					elsif ( $option =~ /false/ && $line =~ /service_types = ${service}_fg_(\d+)/ )
 					{
-						$output = $1;
-						$line   = "\t\tservice_types = tcp_$output";
+						$line   = "\t\tservice_types = tcp_$1";
+						$output = 0;
 						last;
 					}
 				}

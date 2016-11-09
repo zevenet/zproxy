@@ -311,44 +311,8 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $service );
 		my ( $fgTime, $fgCmd ) = &getGSLBFarmGuardianParams( $farmname, $service );
 
-		# enable farmguardian
-		if ( exists $json_obj->{ fgenabled } eq 'true' && $fgStatus eq 'false' )
-		{
-			if ( $fgCmd )
-			{
-				$error = &enableGSLBFarmGuardian( $farmname, $service, 'true' );
-				if ( $error )
-				{
-					$error = 'true';
-					&zenlog(
-						"ZAPI error, trying to enable farm guardian in farm $farmname, service $service"
-					);
-				}
-			}
-			else
-			{
-				$error = 'true';
-				&zenlog( "ZAPI error, it's necesary add a script to enable farm guardian" );
-			}
-		}
-
-		# disable farmguardian
-		if (    !$error
-			 && exists $json_obj->{ fgenabled } eq 'false'
-			 && $fgStatus eq 'true' )
-		{
-			$error = &enableGSLBFarmGuardian( $farmname, $service, 'false' );
-			if ( $error )
-			{
-				$error = 'true';
-				&zenlog(
-					"ZAPI error, trying to disable farm guardian in farm $farmname, service $service"
-				);
-			}
-		}
-
 		# Change check script
-		if ( !$error && exists $json_obj->{ fgscript } )
+		if ( $error  eq 'false' && exists $json_obj->{ fgscript } )
 		{
 			$error =
 			  &setGSLBFarmGuardianParams( $farmname, $service, 'cmd',
@@ -363,7 +327,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 		}
 
 		# Change check time
-		if ( !$error && exists $json_obj->{ fgtimecheck } )
+		if ( $error eq 'false' && exists $json_obj->{ fgtimecheck } )
 		{
 			$error =
 			  &setGSLBFarmGuardianParams( $farmname, $service, 'interval',
@@ -374,6 +338,51 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 				&zenlog(
 					"ZAPI error, found trying to enable farm guardian check time in farm $farmname, service $service"
 				);
+			}
+		}
+
+		if ( exists $json_obj->{ fgenabled } )
+		{
+			# enable farmguardian
+			if ( $error eq 'false' && ( $json_obj->{ fgenabled } eq 'true' && $fgStatus eq 'false' ) )
+			{
+				if ( $fgCmd )
+				{
+					$error = &enableGSLBFarmGuardian( $farmname, $service, 'true' );
+					if ( $error )
+					{
+								&zenlog ( "error :: $error" ); # ???
+	
+						$error = 'true';
+						&zenlog(
+							"ZAPI error, trying to enable farm guardian in farm $farmname, service $service"
+						);
+					}
+				}
+				else
+				{
+					$error = 'true';
+					&zenlog( "ZAPI error, it's necesary add a script to enable farm guardian" );
+				}
+			}
+			else
+			{
+					&zenlog(
+						"ZAPI warning, farm guardian in farm $farmname, service $service just is applicated"
+					);
+			}
+	
+			# disable farmguardian
+			if ( $error eq 'false' && ( $json_obj->{ fgenabled } eq 'false' && $fgStatus eq 'true' ) )
+			{
+				$error = &enableGSLBFarmGuardian( $farmname, $service, 'false' );
+				if ( $error )
+				{
+					$error = 'true';
+					&zenlog(
+						"ZAPI error, trying to disable farm guardian in farm $farmname, service $service"
+					);
+				}
 			}
 		}
 
