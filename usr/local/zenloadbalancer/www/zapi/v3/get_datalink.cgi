@@ -84,8 +84,8 @@ sub farms_name_datalink # ( $farmname )
 		my @l_serv = split ( ";", $l_servers );
 
 		$l_serv[0] = $l_serv[0] + 0;
-		$l_serv[3] = $l_serv[3] + 0;
-		$l_serv[4] = $l_serv[4] + 0;
+		$l_serv[3] = ($l_serv[3]) ? $l_serv[3]+0: undef;
+		$l_serv[4] = ($l_serv[4]) ? $l_serv[4]+0: undef;
 		$l_serv[5] = $l_serv[5] + 0;
 
 		if ( $l_serv[1] ne "0.0.0.0" )
