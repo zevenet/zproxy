@@ -100,13 +100,16 @@ sub farms_name_l4 # ( $farmname )
 		$status = "ok";
 	}
 
+	my $persistence = &getFarmPersistence( $farmname );
+	$persistence = "" if $persistence eq 'none';
+
 	$out_p = {
 			   status      => $status,
 			   vip         => $vip,
 			   vport       => $vport,
 			   algorithm   => &getFarmAlgorithm( $farmname ),
 			   nattype     => &getFarmNatType( $farmname ),
-			   persistence => &getFarmPersistence( $farmname ),
+			   persistence => $persistence,
 			   protocol    => &getFarmProto( $farmname ),
 			   ttl         => $timetolimit,
 			   fgenabled   => $fguse,

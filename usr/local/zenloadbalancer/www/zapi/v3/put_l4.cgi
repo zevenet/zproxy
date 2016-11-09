@@ -135,18 +135,14 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# Modify Persistence Mode
 	if ( exists ( $json_obj->{ persistence } ) )
 	{
-		if ( $json_obj->{ persistence } =~ /^$/ )
+		if ( $json_obj->{ persistence } =~ /^(?:ip|)$/ )
 		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid persistence, can't be blank."
-			);
-		}
-		if ( $json_obj->{ persistence } =~ /^none|ip$/ )
-		{
-			if (&getFarmPersistence($farmname) ne $json_obj->{persistence})
+			my $persistence = $json_obj->{ persistence };
+			$persistence = '' if $json_obj->{ persistence } eq 'none';
+
+			if (&getFarmPersistence($farmname) ne $persistence)
 			{
-				$statusp = &setFarmSessionType( $json_obj->{ persistence }, $farmname, "" );
+				$statusp = &setFarmSessionType( $persistence, $farmname, "" );
 				if ( $statusp != 0 )
 				{
 					$error = "true";

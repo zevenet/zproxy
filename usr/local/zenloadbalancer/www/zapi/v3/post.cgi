@@ -154,6 +154,7 @@ sub new_farm # ( $json_obj )
 	}
 
 	$json_obj->{ 'interface' } = &getInterfaceOfIp( $json_obj->{ 'vip' } );
+	$json_obj->{ profile } = 'L4xNAT' if $json_obj->{ profile } eq 'L4XNAT';
 
 	$status = &runFarmCreate( $json_obj->{ profile },
 							  $json_obj->{ vip },
