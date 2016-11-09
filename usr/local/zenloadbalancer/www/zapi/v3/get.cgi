@@ -56,6 +56,8 @@ sub farms # ()
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
 
+		$status = "needed restart" if $status eq 'up' && ! &getFarmLock($name);
+
 		push @out,
 		  {
 			farmname => $name,
@@ -89,6 +91,8 @@ sub farms_lslb # ()
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
 
+		$status = "needed restart" if $status eq 'up' && ! &getFarmLock($name);
+
 		push @out,
 		  {
 			farmname => $name,
@@ -121,6 +125,8 @@ sub farms_gslb # ()
 		my $status = &getFarmStatus( $name );
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
+
+		$status = "needed restart" if $status eq 'up' && ! &getFarmLock($name);
 
 		push @out,
 		  {
