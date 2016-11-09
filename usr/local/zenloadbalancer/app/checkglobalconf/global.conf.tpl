@@ -83,6 +83,8 @@ $openssl="/usr/bin/openssl";
 $unzip="/usr/bin/unzip";
 #Where is mv?
 $mv="/bin/mv";
+#Where is mkdir?
+$mkdir="/bin/mkdir";
 #Where is ls?
 $ls="/bin/ls";
 #Where is cp?

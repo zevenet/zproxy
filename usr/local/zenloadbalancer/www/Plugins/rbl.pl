@@ -93,6 +93,13 @@ sub setRBLStart
 	my $rblConf = &getGlobalConfiguration( 'rblConf' );
 	my $ipset = &getGlobalConfiguration( 'ipset' );
 	my @rules = @{ &getRBLRules () };
+	my $rblListsPath = &getGlobalConfiguration( 'rblListsPath' );
+	
+	if ( ! -d $rblListsPath )
+	{
+		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $rblListsPath" );
+		&zenlog( "Created $rblListsPath directory." );
+	}
 
 	# create list config if doesn't exist
 	if ( !-e $rblConf )

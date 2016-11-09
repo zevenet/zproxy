@@ -715,6 +715,8 @@ if ( $eject eq "start" )
 
 if ( $eject eq "stop" )
 {
+	require "/usr/local/zenloadbalancer/www/Plugins/rbl.pl";
+
 	&zenlog( "Beginning stop proccess" );
 
 	# stop all modules
