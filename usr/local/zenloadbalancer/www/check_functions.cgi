@@ -174,15 +174,15 @@ sub getValidPort # ( $ip, $port, $profile )
 
 	#~ &zenlog("getValidPort( ip:$ip, port:$port, profile:$profile )");# if &debug;
 
-	if ( $profile eq 'HTTP' || $profile eq 'GSLB' )
+	if ( $profile =~ /^(?:HTTP|GSLB)$/i )
 	{
 		return &isValidPortNumber( $port ) eq 'true' && &checkport( $ip, $port ) eq 'false';
 	}
-	elsif ( $profile eq 'L4XNAT' )
+	elsif ( $profile =~ /^(?:L4XNAT)$/i )
 	{
 		return &ismport( $port ) eq 'true';
 	}
-	elsif ( $profile eq 'DATALINK' )
+	elsif ( $profile =~ /^(?:DATALINK)$/i )
 	{
 		return $port eq undef;
 	}

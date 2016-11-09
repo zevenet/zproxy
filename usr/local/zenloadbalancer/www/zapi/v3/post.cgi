@@ -96,7 +96,7 @@ sub new_farm # ( $json_obj )
 	}
 
 	# Farm PROFILE validation
-	if ( $json_obj->{ profile } !~ /^(:?HTTP|GSLB|L4XNAT|DATALINK)$/ )
+	if ( $json_obj->{ profile } !~ /^(:?HTTP|GSLB|L4XNAT|DATALINK)$/i )
 	{
 		my $errormsg = "Error trying to create a new farm, the farm's profile is not supported.";
 		&zenlog( $errormsg );
@@ -154,7 +154,7 @@ sub new_farm # ( $json_obj )
 	}
 
 	$json_obj->{ 'interface' } = &getInterfaceOfIp( $json_obj->{ 'vip' } );
-	$json_obj->{ profile } = 'L4xNAT' if $json_obj->{ profile } eq 'L4XNAT';
+	#~ $json_obj->{ profile } = 'L4xNAT' if $json_obj->{ profile } eq 'L4XNAT';
 
 	$status = &runFarmCreate( $json_obj->{ profile },
 							  $json_obj->{ vip },
@@ -185,7 +185,7 @@ sub new_farm # ( $json_obj )
 		# Success
 		my $out_p;
 
-		if ( $json_obj->{ profile } eq "DATALINK" )
+		if ( $json_obj->{ profile } =~ /^DATALINK$/i )
 		{
 			$out_p = {
 				name      => $json_obj->{ farmname },

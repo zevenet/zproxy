@@ -854,32 +854,32 @@ sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 
 	&zenlog( "running 'Create' for $farm_name farm $farm_type" );
 
-	if ( $farm_type eq "TCP" )
+	if ( $farm_type =~ /^TCP$/i )
 	{
 		$output = &runTcpFarmCreate( $vip, $vip_port, $farm_name );
 	}
 
-	if ( $farm_type eq "UDP" )
+	if ( $farm_type =~ /^UDP$/i )
 	{
 		$output = &runUdpFarmCreate( $vip, $vip_port, $farm_name );
 	}
 
-	if ( $farm_type eq "HTTP" || $farm_type eq "HTTPS" )
+	if ( $farm_type =~ /^HTTP[S]?$/i )
 	{
 		$output = &runHTTPFarmCreate( $vip, $vip_port, $farm_name, $farm_type );
 	}
 
-	if ( $farm_type eq "DATALINK" )
+	if ( $farm_type =~ /^DATALINK$/i )
 	{
 		$output = &runDatalinkFarmCreate( $farm_name, $vip, $fdev );
 	}
 
-	if ( $farm_type eq "L4xNAT" )
+	if ( $farm_type =~ /^L4xNAT$/i )
 	{
 		$output = &runL4FarmCreate( $vip, $farm_name, $vip_port );
 	}
 
-	if ( $farm_type eq "GSLB" )
+	if ( $farm_type =~ /^GSLB$/i )
 	{
 		$output = &runGSLBFarmCreate( $vip, $vip_port, $farm_name );
 	}
