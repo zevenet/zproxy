@@ -320,7 +320,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
+			if ( $json_obj->{ ip } && &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
 			{
 				$backend->{ vip } = $json_obj->{ ip };
 			}
@@ -334,7 +334,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( !$error && exists ( $json_obj->{ port } ) )
 		{
-			if ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' || $json_obj->{ port } eq '' )
+			if ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' || $json_obj->{ port } == undef )
 			{
 				$backend->{ vport } = $json_obj->{ port };
 			}
@@ -349,7 +349,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( !$error && exists ( $json_obj->{ weight } ) )
 		{
-			if ( $json_obj->{ weight } =~ /^\d*[1-9]$/ ) # 1 or higher
+			if ( $json_obj->{ weight } =~ /^\d*[1-9]$/ || $json_obj->{ weight } == undef ) # 1 or higher
 			{
 				$backend->{ weight } = $json_obj->{ weight };
 			}
@@ -364,7 +364,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( !$error && exists ( $json_obj->{ priority } ) )
 		{
-			if ( $json_obj->{ priority } =~ /^\d$/ ) # (0-9)
+			if ( $json_obj->{ priority } =~ /^\d$/ || $json_obj->{ priority } == undef ) # (0-9)
 			{
 				$backend->{ priority } = $json_obj->{ priority };
 			}
@@ -421,7 +421,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 		# Functions
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
+			if ( $json_obj->{ ip } && &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
 			{
 				$be->{ ip } = $json_obj->{ ip };
 			}
@@ -463,7 +463,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( !$error && exists ( $json_obj->{ weight } ) )
 		{
-			if ( $json_obj->{ weight } !~ /^\d+$/ && $json_obj->{ weight } != 1 ) # 1 or higher
+			if ( $json_obj->{ weight } =~ /^\d+$/ && $json_obj->{ weight } != 1 || $json_obj->{ weight } == undef ) # 1 or higher
 			{
 				$be->{ weight } = $json_obj->{ weight };
 			}
@@ -478,7 +478,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( !$error && exists ( $json_obj->{ priority } ) )
 		{
-			if ( $json_obj->{ priority } =~ /^[1-9]$/ ) # (1-9)
+			if ( $json_obj->{ priority } =~ /^[1-9]$/ || $json_obj->{ priority } == undef ) # (1-9)
 			{
 				$be->{ priority } = $json_obj->{ priority };
 			}
@@ -641,7 +641,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		# Functions
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
+			if ( $json_obj->{ ip } && &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
 			{
 				$be->{ ip } = $json_obj->{ ip };
 			}
@@ -655,7 +655,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 		if ( !$error && exists ( $json_obj->{ port } ) )
 		{
-			if ( &isValidPortNumber( $json_obj->{ port } eq 'true' ) )
+			if ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' )
 			{
 				$be->{ port } = $json_obj->{ port };
 			}
@@ -797,7 +797,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		# Functions
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
+			if ( $json_obj->{ ip } && &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
 			{
 				$be->{ ip } = $json_obj->{ ip };
 			}

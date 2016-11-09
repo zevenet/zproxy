@@ -398,8 +398,6 @@ sub new_farm_backend # ( $json_obj, $farmname )
 
 	# Initial parameters
 	my $description = "New farm backend";
-	my $default_priority = 1;
-	my $default_weight   = 1;
 
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
@@ -482,9 +480,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		}
 
 		# validate PRIORITY
-		$json_obj->{ priority } = $default_priority if ! exists $json_obj->{ priority };
-
-		if ( $json_obj->{ priority } !~ /^\d$/ ) # (0-9)
+		unless ( $json_obj->{ priority } =~ /^\d$/ || $json_obj->{ priority } == undef ) # (0-9)
 		{
 			# Error
 			my $errormsg =
@@ -499,9 +495,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		}
 
 		# validate WEIGHT
-		$json_obj->{ weight } = $default_weight if ! exists $json_obj->{ weight };
-
-		if ( $json_obj->{ weight } !~ /^\d*[1-9]$/ ) # 1 or higher
+		unless ( $json_obj->{ weight } !~ /^\d*[1-9]$/ || $json_obj->{ weight } == undef ) # 1 or higher
 		{
 			# Error
 			my $errormsg =
@@ -530,13 +524,17 @@ sub new_farm_backend # ( $json_obj, $farmname )
 				"ZAPI success, a new backend has been created in farm $farmname with IP $json_obj->{ip}."
 			);
 
+			$json_obj->{ port } += 0 if $json_obj->{ port };
+			$json_obj->{ weight } += 0 if $json_obj->{ weight };
+			$json_obj->{ priority } += 0 if $json_obj->{ priority };
+
 			# Success
 			my $body = {
 						 description => $description,
 						 params      => {
 									 id       => $id,
 									 ip       => $json_obj->{ ip },
-									 port     => $json_obj->{ port } + 0,
+									 port     => $json_obj->{ port },
 									 weight   => $json_obj->{ weight },
 									 priority => $json_obj->{ priority },
 						 },
@@ -636,9 +634,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		}
 
 		# validate WEIGHT
-		$json_obj->{ weight } = $default_weight if ! exists $json_obj->{ weight };
-
-		if ( $json_obj->{ weight } !~ /^\d+$/ && $json_obj->{ weight } != 1 ) # 1 or higher
+		unless ( $json_obj->{ weight } =~ /^\d+$/ && $json_obj->{ weight } != 1 || $json_obj->{ weight } == undef ) # 1 or higher or undef
 		{
 			&zenlog(
 				"ZAPI error, trying to create a new backend in the farm $farmname, invalid weight."
@@ -655,9 +651,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		}
 
 		# validate PRIORITY
-		$json_obj->{ priority } = $default_priority if ! exists $json_obj->{ priority };
-
-		if ( $json_obj->{ priority } !~ /^[1-9]$/ ) # (1-9)
+		unless ( $json_obj->{ priority } =~ /^[1-9]$/ || $json_obj->{ priority } == undef ) # (1-9)
 		{
 			&zenlog(
 				"ZAPI error, trying to create a new backend in the farm $farmname, invalid priority."
@@ -695,8 +689,8 @@ sub new_farm_backend # ( $json_obj, $farmname )
 									 id        => $id,
 									 ip        => $json_obj->{ ip },
 									 interface => $json_obj->{ interface },
-									 weight    => $json_obj->{ weight } + 0,
-									 priority  => $json_obj->{ priority } + 0
+									 weight    => ($json_obj->{ weight } eq '')? $json_obj->{ weight }+0: undef,
+									 priority  => ($json_obj->{ priority } eq '')? $json_obj->{ priority }+0: undef,
 						 },
 			};
 

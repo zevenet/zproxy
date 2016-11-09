@@ -237,14 +237,16 @@ sub backends
 		for my $be ( @{ $l4_farm->{ 'servers' } } )
 		{
 			$be->{ 'vport' } = $be->{ 'vport' } eq '' ? undef : $be->{ 'vport' } + 0;
+			$be->{ 'priority' } = $be->{ 'priority' }? $be->{ 'priority' }+0: undef;
+			$be->{ 'weight' } = $be->{ 'weight' }? $be->{ 'weight' }+0: undef;
 
 			push @backends,
 			  {
 				id       => $be->{ 'id' } + 0,
 				ip       => $be->{ 'vip' },
 				port     => $be->{ 'vport' },
-				priority => $be->{ 'priority' } + 0,
-				weight   => $be->{ 'weight' } + 0,
+				priority => $be->{ 'priority' },
+				weight   => $be->{ 'weight' },
 			  };
 		}
 

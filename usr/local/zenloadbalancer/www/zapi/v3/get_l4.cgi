@@ -134,8 +134,9 @@ sub farms_name_l4 # ( $farmname )
 		}
 
 		$l_serv[3] = $l_serv[3] + 0;
-		$l_serv[4] = $l_serv[4] + 0;
-		$l_serv[5] = $l_serv[5] + 0;
+		$l_serv[2] = $l_serv[2]? $l_serv[2]+0: undef;
+		$l_serv[4] = $l_serv[4]? $l_serv[4]+0: undef;
+		$l_serv[5] = $l_serv[5]? $l_serv[5]+0: undef;
 
 		if ( $l_serv[1] ne "0.0.0.0" )
 		{
