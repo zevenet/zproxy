@@ -30,6 +30,7 @@
 my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/;         # (0-255)
 my $ipv4_addr     = qr/(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS/;
 my $ipv6_addr     = qr/(?:[\:\.a-f0-9]+)/;
+my $ipv4v6		= qr/(?:$ipv4_addr|$ipv6_addr)/;
 my $boolean       = qr/(?:true|false)/;
 
 my $hostname    = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
@@ -41,11 +42,23 @@ my $virtual_tag = qr/[a-zA-Z0-9]{1,13}/;
 my $nic_if = qr/[a-zA-Z0-9]{1,15}/;
 my $bond_if = qr/[a-zA-Z0-9]{1,15}/;
 my $vlan_if = qr/[a-zA-Z0-9]{1,13}\.$vlan_tag/;
+my $port_range = qr/(?:[1-5]?\d{1,4}|6[0-4]\d{3}|65[1-4]\d{2}|655[1-2]\d{1}|6553[1-5])/;
 
 my %format_re = (
 
 	# hostname
 	'hostname' => $hostname,
+	
+	# system
+	'dns_nameserver' => $ipv4_addr,
+	'dns'  => qr/(?:primary|secondary)/,
+	'ssh_port'	=> $port_range,
+	'ssh_listen'	=> $ipv4v6,
+	'snmp_status'	=> $boolean, 
+	'snmp_ip'			=> $ipv4_addr, 
+	'snmp_port'			=> $port_range, 
+	'snmp_community'	=> qr{[\w\_]+},
+	'snmp_scope'	=> qr{(?:\d{1,3}\.){3}\d{1,3}\/\d{1,2}},			# ip/mask
 
 	# farms
 	'farm_name'    => qr/[a-zA-Z0-9\-]+/,
@@ -202,35 +215,26 @@ sub getValidPutParams   # ( \%json_obj, \@allowParams )
 	my $params = shift;
 	my $allowParamsRef = shift;
 	my @allowParams = @{ $allowParamsRef };
-	my $output = "Don't found any param.";
+	my $output;
 	my $pattern;
 	
-	# Almost a param was sent
-	foreach my $param ( @allowParams )
+	if ( ! keys %{ $params } )
 	{
-		if ( exists $params->{ $param } )
-		{
-			$output = 0;
-			last;
-		}
+		return "Don't found any param.";
 	}
 	
 	# Check if any param isn't for this call
-	if ( ! $output )
+	$pattern .= "$_|" for ( @allowParams );
+	chop ( $pattern );
+	my @errorParams = grep { !/^(?:$pattern)$/ } keys %{ $params };
+	if ( @errorParams )
 	{
-		$output = "";
-		$pattern .= "$_|" for ( @allowParams );
-		chop ( $pattern );
-		my @errorParams = grep { !/^(?:$pattern)$/ } keys %{ $params };
-		if ( @errorParams )
-		{
-			$output .= "$_, " for ( @errorParams );
-			chop ( $output ) ;
-			chop ( $output ) ;
-			$output = "The param(s) $output are not correct for this call.";
-		}
+		$output .= "$_, " for ( @errorParams );
+		chop ( $output ) ;
+		chop ( $output ) ;
+		$output = "The param(s) $output are not correct for this call.";
 	}
-		
+	
 	return $output;
 }
 
