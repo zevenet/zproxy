@@ -1194,6 +1194,12 @@ sub getInterfaceType
 		my $quoted_if = quotemeta $if_name;
 		my $found = grep( /inet .+ $quoted_if$/, `$ip_bin addr show $parent_if 2>/dev/null` );
 
+		if ( ! $found )
+		{
+			my $configdir = &getGlobalConfiguration('configdir');
+			$found = ( -f "$configdir/if_${if_name}_conf" && $if_name =~ /^.+\:.+$/ );
+		}
+
 		if ( $found )
 		{
 			return 'virtual';

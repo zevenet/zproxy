@@ -1301,6 +1301,7 @@ sub get_interfaces # ()
 			gateway => $if_ref->{ gateway },
 			status  => $if_ref->{ status },
 			HDWaddr => $if_ref->{ mac },
+			type    => $if_ref->{ type },
 			#~ ipv     => $if_ref->{ ip_v },
 		  };
 	}

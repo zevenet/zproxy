@@ -894,8 +894,8 @@ DELETE qr{^/farms/($farm_re)/certificates/($cert_pem_re)$} => sub {
 
 #	NETWORK INTERFACES
 #
-my $virt_interface = &getValidFormat( 'virt_interfaces' );
-my $vlan_interface = &getValidFormat( 'vlan_interfaces' );
+my $virt_interface = &getValidFormat( 'virt_interface' );
+my $vlan_interface = &getValidFormat( 'vlan_interface' );
 
 GET qr{^/interfaces$} => sub {
 	&get_interfaces();
