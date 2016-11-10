@@ -35,7 +35,7 @@
 #            }
 #         ],
 #         "id" : "sev1",
-#         "port" : "80"
+#         "deftcpport" : "80"
 #      }
 #   ],
 #   "zones" : [
@@ -183,7 +183,7 @@ sub farms_name_gslb # ( $farmname )
 		  {
 			id        => $srv,
 			algorithm => $lb,
-			port      => $dpc,
+			deftcpport      => $dpc,
 			fgenabled => $fgStatus,
 			fgscript => $fgScrip,
 			fgtimecheck => $fgTime,
