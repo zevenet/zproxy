@@ -1285,6 +1285,8 @@ sub get_interfaces # ()
 		# Exclude IPv6
 		next if $if_ref->{ ip_v } == 6 && &getGlobalConfiguration( 'ipv6_enabled' ) ne 'true';
 
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
 		# Any key must cotain a value or "" but can't be null
 		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
 		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
@@ -1407,6 +1409,8 @@ sub get_interfaces_nic # ()
 
 	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
 	{
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
 		# Any key must cotain a value or "" but can't be null
 		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
 		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
@@ -1443,6 +1447,8 @@ sub get_interfaces_vlan # ()
 
 	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
 	{
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
 		# Any key must cotain a value or "" but can't be null
 		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
 		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
@@ -1480,6 +1486,8 @@ sub get_interfaces_bond # ()
 
 	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )
 	{
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
 		# Any key must cotain a value or "" but can't be null
 		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
 		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
@@ -1519,6 +1527,8 @@ sub get_interfaces_virtual # ()
 
 	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
 	{
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
 		# Any key must cotain a value or "" but can't be null
 		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
 		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
@@ -1786,7 +1796,257 @@ sub ifaction # ( $fdev )
 	}
 }
 
-sub interface_bond_action # ( $json_obj, $bond )
+sub actions_interface_nic # ( $json_obj, $nic )
+{
+	my $json_obj = shift;
+	my $nic 	 = shift;
+
+	my $description = "Action on nic interface";
+	my $ip_v = 4;
+
+	# validate NIC
+	unless ( grep { $nic eq $_->{ name } } &getInterfaceTypeList( 'nic' ) )
+	{
+		# Error
+		my $errormsg = "Nic interface not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# reject not accepted parameters
+	if ( grep { $_ ne 'action' } keys $json_obj )
+	{
+		# Error
+		my $errormsg = "Only the parameter 'action' is accepted";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# validate action parameter
+	if ( $json_obj->{ action } eq "up" )
+	{
+		my $if_ref = &getInterfaceConfig( $nic, $ip_v );
+
+		# Delete routes in case that it is not a vini
+		&delRoutes( "local", $if_ref ) if $if_ref;
+
+		# Add IP
+		&addIp( $if_ref ) if $if_ref;
+
+		my $state = &upIf( { name => $nic }, 'writeconf' );
+
+		if ( ! $state )
+		{
+			&applyRoutes( "local", $if_ref ) if $if_ref;
+
+			# put all dependant interfaces up
+			&setIfacesUp( $nic, "vlan" );
+			&setIfacesUp( $nic, "vini" ) if $if_ref;
+		}
+		else
+		{
+			# Error
+			my $errormsg = "The interface could not be set UP";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+	elsif ( $json_obj->{ action } eq "down" )
+	{
+		my $state = &downIf( { name => $nic }, 'writeconf' );
+
+		if ( $state )
+		{
+			# Error
+			my $errormsg = "The interface could not be set DOWN";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+	else
+	{
+		# Error
+		my $errormsg = "Action accepted values are: up or down";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# Success
+	my $body = {
+				 description => $description,
+				 params      =>  { action => $json_obj->{ action } },
+	};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
+sub actions_interface_vlan # ( $json_obj, $vlan )
+{
+	my $json_obj = shift;
+	my $vlan     = shift;
+
+	my $description = "Action on vlan interface";
+	my $ip_v = 4;
+
+	# validate VLAN
+	unless ( grep { $vlan eq $_->{ name } } &getInterfaceTypeList( 'vlan' ) )
+	{
+		# Error
+		my $errormsg = "VLAN interface not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# reject not accepted parameters
+	if ( grep { $_ ne 'action' } keys $json_obj )
+	{
+		# Error
+		my $errormsg = "Only the parameter 'action' is accepted";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# validate action parameter
+	if ( $json_obj->{action} eq "up" )
+	{
+		my $if_ref = &getInterfaceConfig( $vlan, $ip_v );
+
+		# Create vlan if required if it doesn't exist
+		my $exists = &ifexist( $if_ref->{ name } );
+		if ( $exists eq "false" )
+		{
+			&createIf( $if_ref );
+		}
+
+		# Delete routes in case that it is not a vini
+		&delRoutes( "local", $if_ref );
+
+		# Add IP
+		&addIp( $if_ref );
+
+		# Check the parent's status before up the interface
+		my $parent_if_name = &getParentInterfaceName( $if_ref->{ name } );
+		my $parent_if_status = 'up';
+
+		if ( $parent_if_name )
+		{
+			#~ &zenlog ("parent exists parent_if_name:$parent_if_name");
+			my $parent_if_ref = &getSystemInterface( $parent_if_name );
+			$parent_if_status = &getInterfaceSystemStatus( $parent_if_ref );
+			#~ &zenlog ("parent exists parent_if_ref:$parent_if_ref parent_if_status:$parent_if_status");
+		}
+
+		# validate PARENT INTERFACE STATUS
+		unless ( $parent_if_status eq 'up' )
+		{
+			# Error
+			my $errormsg = "The interface $if_ref->{name} has a parent interface DOWN, check the interfaces status";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		my $state = &upIf( $if_ref, 'writeconf' );
+
+		if ( ! $state )
+		{
+			&applyRoutes( "local", $if_ref );
+
+			# put all dependant interfaces up
+			&setIfacesUp( $if_ref->{ name }, "vini" );
+		}
+		else
+		{
+			# Error
+			my $errormsg = "The interface could not be set UP";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+	elsif ( $json_obj->{action} eq "down" )
+	{
+		my $state = &downIf( { name => $vlan }, 'writeconf' );
+
+		if ( $state )
+		{
+			# Error
+			my $errormsg = "The interface could not be set DOWN";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+	else
+	{
+		# Error
+		my $errormsg = "Action accepted values are: up or down";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# Success
+	my $body = {
+				 description => $description,
+				 params      =>  { action => $json_obj->{ action } },
+	};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
+sub actions_interface_bond # ( $json_obj, $bond )
 {
 	my $json_obj = shift;
 	my $bond 	 = shift;
@@ -1832,10 +2092,6 @@ sub interface_bond_action # ( $json_obj, $bond )
 		# Delete routes in case that it is not a vini
 		&delRoutes( "local", $if_ref ) if $if_ref;
 
-		# Check if there are some Virtual Interfaces or Vlan with IPv6 and previous UP status to get it up.
-		&setIfacesUp( $bond, "vlan" );
-		&setIfacesUp( $bond, "vini" );
-
 		# Add IP
 		&addIp( $if_ref ) if $if_ref;
 
@@ -1843,7 +2099,11 @@ sub interface_bond_action # ( $json_obj, $bond )
 
 		if ( ! $state )
 		{
-			&applyRoutes( "local", $bond );
+			&applyRoutes( "local", $if_ref ) if $if_ref;
+
+			# put all dependant interfaces up
+			&setIfacesUp( $bond, "vlan" );
+			&setIfacesUp( $bond, "vini" ) if $if_ref;
 		}
 		else
 		{
@@ -1896,6 +2156,132 @@ sub interface_bond_action # ( $json_obj, $bond )
 
 	&httpResponse({ code => 200, body => $body });
 }
+
+sub actions_interface_virtual # ( $json_obj, $virtual )
+{
+	my $json_obj = shift;
+	my $virtual  = shift;
+
+	my $description = "Action on virtual interface";
+	my $ip_v = 4;
+
+	# validate VLAN
+	unless ( grep { $virtual eq $_->{ name } } &getInterfaceTypeList( 'virtual' ) )
+	{
+		# Error
+		my $errormsg = "Virtual interface not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	# reject not accepted parameters
+	if ( grep { $_ ne 'action' } keys $json_obj )
+	{
+		# Error
+		my $errormsg = "Only the parameter 'action' is accepted";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	my $if_ref = &getInterfaceConfig( $virtual, $ip_v );
+
+	# Everything is ok
+	if ( $json_obj->{ action } eq "up" )
+	{
+		# Add IP
+		&addIp( $if_ref );
+
+		# Check the parent's status before up the interface
+		my $parent_if_name = &getParentInterfaceName( $if_ref->{name} );
+		my $parent_if_status = 'up';
+		if ( $parent_if_name )
+		{
+			#~ &zenlog ("parent exists parent_if_name:$parent_if_name");
+			my $parent_if_ref = &getSystemInterface( $parent_if_name );
+			$parent_if_status = &getInterfaceSystemStatus( $parent_if_ref );
+			#~ &zenlog ("parent exists parent_if_ref:$parent_if_ref parent_if_status:$parent_if_status");
+		}
+
+		unless ( $parent_if_status eq 'up' )
+		{
+			# Error
+			my $errormsg = "The interface $if_ref->{name} has a parent interface DOWN, check the interfaces status";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		my $state = &upIf( $if_ref, 'writeconf' );
+		if ( ! $state )
+		{
+			&applyRoutes( "local", $if_ref );
+		}
+		else
+		{
+			# Error
+			my $errormsg = "The interface could not be set UP";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+	elsif ( $json_obj->{action} eq "down" )
+	{
+		my $state = &downIf( $if_ref, 'writeconf' );
+
+		if ( $state )
+		{
+			# Error
+			my $errormsg = "The interface could not be set DOWN";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+	else
+	{
+		# Error
+		my $errormsg = "Action accepted values are: up or down";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# Success
+	my $body = {
+				 description => $description,
+				 params      =>  { action => $json_obj->{ action } },
+	};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
 
 # PUT Interface
 #

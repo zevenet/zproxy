@@ -566,13 +566,13 @@ sub getIfacesFromIf    # ($if_name, $type)
 		next if $$interface{ name } !~ /^$if_name.+/;
 
 		# get vinis
-		if ( $type eq "vini" && $$interface{ vini } )
+		if ( $type eq "vini" && $$interface{ vini } ne '' )
 		{
 			push @ifaces, $interface;
 		}
 
 		# get vlans (including vlan:vini)
-		elsif ( $type eq "vlan" && $$interface{ vlan } )
+		elsif ( $type eq "vlan" && $$interface{ vlan } ne '' && $$interface{ vini } eq '' )
 		{
 			push @ifaces, $interface;
 		}
@@ -587,32 +587,27 @@ sub setIfacesUp    # ($if_name,$type)
 	my $if_name = shift;    # Interface's Name
 	my $type    = shift;    # Type: vini or vlan
 
+	die("setIfacesUp: type variable must be 'vlan' or 'vini'") if $type !~ /^(?:vlan|vini)$/;
+
 	my @ifaces = &getIfacesFromIf( $if_name, $type );
 
 	if ( @ifaces )
 	{
 		for my $iface ( @ifaces )
 		{
-			if ( $type eq "vini" || ( $type eq "vlan" && !$$iface{ vini } ) )
+			if ( $iface->{ status } eq 'up' )
 			{
-				if ( $$iface{ status } eq 'up' && $$iface{ ip_v } == 6 )
-				{
-					&addIp( $iface );
-				}
+				&addIp( $iface );
 			}
 		}
 
 		if ( $type eq "vini" )
 		{
-			&zenlog(
-				"All the Virtual Network interfaces with IPv6 and status up of $if_name have been put in up status."
-			);
+			&zenlog( "Virtual interfaces of $if_name have been put up." );
 		}
 		elsif ( $type eq "vlan" )
 		{
-			&zenlog(
-				  "All the Vlan with IPv6 and status up of $if_name have been put in up status."
-			);
+			&zenlog( "VLAN interfaces of $if_name have been put up." );
 		}
 	}
 	

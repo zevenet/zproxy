@@ -922,6 +922,12 @@ DELETE qr{^/interfaces/nic/($nic_re)$} => sub {
 	&delete_interface_nic( @_ );
 };
 
+##### /interfaces/nic/NIC/actions
+
+POST qr{^/interfaces/nic/($nic_re)/actions$} => sub {
+	&actions_interface_nic( @_ );
+};
+
 ##### /interfaces/vlan
 
 GET qr{^/interfaces/vlan$} => sub {
@@ -942,6 +948,12 @@ DELETE qr{^/interfaces/vlan/($vlan_interface)$} => sub {
 	&delete_interface_vlan( @_ );
 };
 
+##### /interfaces/vlan/VLAN/actions
+
+POST qr{^/interfaces/vlan/($vlan_interface)/actions$} => sub {
+	&actions_interface_vlan( @_ );
+};
+
 ##### /interfaces/virtual
 
 GET qr{^/interfaces/virtual$} => sub {
@@ -960,6 +972,12 @@ PUT qr{^/interfaces/virtual/($virt_interface)$} => sub {
 
 DELETE qr{^/interfaces/virtual/($virt_interface)$} => sub {
 	&delete_interface_virtual( @_ );
+};
+
+##### /interfaces/virtual/VIRTUAL/actions
+
+POST qr{^/interfaces/virtual/($virt_interface)/actions$} => sub {
+	&actions_interface_virtual( @_ );
 };
 
 ##### /interfaces/bonding
@@ -998,7 +1016,7 @@ DELETE qr{^/interfaces/bonding/($bond_re)/slaves/($nic_re)$} => sub {
 ##### /interfaces/bonding/BOND/actions
 
 POST qr{^/interfaces/bonding/($bond_re)/actions$} => sub {
-	&interface_bond_action( @_ );
+	&actions_interface_bond( @_ );
 };
 
 #  POST action interface
