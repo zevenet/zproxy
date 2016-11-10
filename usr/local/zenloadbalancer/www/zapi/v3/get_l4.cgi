@@ -141,6 +141,7 @@ sub farms_name_l4 # ( $farmname )
 		if ( $l_serv[1] ne "0.0.0.0" )
 		{
 			$l_serv[2] = $l_serv[2] eq '' ? undef: $tout+0;
+			chomp $l_serv[6];
 
 			push @out_b,
 			  {
@@ -148,7 +149,8 @@ sub farms_name_l4 # ( $farmname )
 				ip       => $l_serv[1],
 				port     => $l_serv[2],
 				weight   => $l_serv[4],
-				priority => $l_serv[5]
+				priority => $l_serv[5],
+				status   => $l_serv[6],
 			  };
 		}
 	}

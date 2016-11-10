@@ -253,6 +253,7 @@ sub backends
 				port     => $be->{ 'vport' },
 				priority => $be->{ 'priority' },
 				weight   => $be->{ 'weight' },
+				status   => $be->{ 'status' },
 			  };
 		}
 
