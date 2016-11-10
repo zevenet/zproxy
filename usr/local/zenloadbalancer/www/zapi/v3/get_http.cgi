@@ -315,12 +315,12 @@ sub farms_name_http # ( $farmname )
 
 			push @out_ba,
 			  {
-				id            => $id,
-				backendstatus => $backendstatus,
-				ip            => $ip,
-				port          => $port,
-				timeout       => $tout,
-				weight        => $prio
+				id      => $id,
+				status  => $backendstatus,
+				ip      => $ip,
+				port    => $port,
+				timeout => $tout,
+				weight  => $prio
 			  };
 		}
 

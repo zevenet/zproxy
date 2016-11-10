@@ -381,12 +381,12 @@ sub service_backends
 
 			push @backends,
 			  {
-				id            => $id,
-				backendstatus => $backendstatus,
-				ip            => $ip,
-				port          => $port,
-				timeout       => $tout,
-				weight        => $prio,
+				id      => $id,
+				status  => $backendstatus,
+				ip      => $ip,
+				port    => $port,
+				timeout => $tout,
+				weight  => $prio,
 			  };
 		}
 
