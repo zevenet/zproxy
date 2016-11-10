@@ -66,14 +66,11 @@ sub farms_name_datalink # ( $farmname )
 {
 	my $farmname = shift;
 
-	my @out_p;
 	my @out_b;
-
 	my $vip = &getFarmVip( "vip", $farmname );
-
-	push @out_p, {
-		vip => $vip,
-		algorithm => &getFarmAlgorithm( $farmname ),
+	my $out_p = {
+				  vip       => $vip,
+				  algorithm => &getFarmAlgorithm( $farmname ),
 	};
 
 ########### backends
@@ -103,7 +100,7 @@ sub farms_name_datalink # ( $farmname )
 
 	my $body = {
 				 description => "List farm $farmname",
-				 params      => \@out_p,
+				 params      => $out_p,
 				 backends    => \@out_b
 	};
 
