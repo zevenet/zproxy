@@ -191,7 +191,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 
 	if ( ! $errormsg )
 	{
-		$errormsg = &getValidPutParams( $json_obj, \@allowParams );
+		$errormsg = &getValidOptParams( $json_obj, \@allowParams );
 	}
 	if ( ! $errormsg )
 	{

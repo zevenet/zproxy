@@ -36,6 +36,8 @@ $url="https://www.sofintel.net/json/eeinfo.php";
 $htpass="/etc/passwd";#update
 #ZAPI KEY
 $zapikey="";
+# Zen license 
+$licenseFile="/usr/local/zenloadbalancer/license.txt";
 
 #dns file server?
 $filedns="/etc/resolv.conf";
@@ -183,6 +185,10 @@ $ssh_copy_id="/usr/local/zenloadbalancer/app/zbin/ssh-copy-id.sh";
 # primary-backup conntrackd script
 $primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
 
+# sshd file
+$sshConf="/etc/ssh/sshd_config";
+# ssh service
+$sshService="/etc/init.d/ssh";
 # sshkey file path
 $key_path="/root/.ssh";
 # sshkey file path

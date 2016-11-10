@@ -72,6 +72,7 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/farm_guardian.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/farm_actions.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/post_gslb.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/ipds.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/system.cgi";
 
 my $q = &getCGI();
 
@@ -717,6 +718,7 @@ DELETE qr{^/certificates/($cert_re)$} => sub {
 
 #	FARMS
 #
+farms:
 
 my $farm_re = &getValidFormat( 'farm_name' );
 
@@ -894,6 +896,8 @@ DELETE qr{^/farms/($farm_re)/certificates/($cert_pem_re)$} => sub {
 
 #	NETWORK INTERFACES
 #
+interfaces:
+
 my $virt_interface = &getValidFormat( 'virt_interface' );
 my $vlan_interface = &getValidFormat( 'vlan_interface' );
 
@@ -1035,6 +1039,7 @@ DELETE qr{^/interfaces/gateway$} => sub {
 
 #	STATS
 #
+stats:
 
 GET qr{^/stats$} => sub {
 	&stats();
@@ -1066,6 +1071,7 @@ GET qr{^/stats/farms/($farm_re)$} => sub {
 
 #	GRAPHS
 #
+graphs:
 
 #  GET graphs
 GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
@@ -1076,6 +1082,57 @@ GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
 GET qr{^/graphs} => sub {
 	&possible_graphs();
 };
+
+
+# SYSTEM
+#
+system_label:
+
+#  GET dns 
+GET qr{^/system/dns$} => sub {
+	&get_dns;
+};
+
+#  POST dns
+POST qr{^/system/dns$} => sub {
+	&set_dns( @_ );
+};
+
+#  GET dns 
+GET qr{^/system/ssh$} => sub {
+	&get_ssh;
+};
+
+#  POST dns
+POST qr{^/system/ssh$} => sub {
+	&set_ssh( @_ );
+};
+
+#  GET dns 
+GET qr{^/system/snmp$} => sub {
+	&get_snmp;
+};
+
+#  POST dns
+POST qr{^/system/snmp$} => sub {
+	&set_snmp( @_ );
+};
+
+#  GET license
+GET qr{^/system/license$} => sub {
+	&get_license();
+};
+
+#  GET ntp
+GET qr{^/system/ntp$} => sub {
+	&get_ntp;
+};
+
+#  POST ntp
+POST qr{^/system/ntp$} => sub {
+	&set_ntp( @_ );
+};
+
 
 #	IPDS
 #

@@ -59,6 +59,7 @@ my %format_re = (
 	'snmp_port'			=> $port_range, 
 	'snmp_community'	=> qr{[\w\_]+},
 	'snmp_scope'	=> qr{(?:\d{1,3}\.){3}\d{1,3}\/\d{1,2}},			# ip/mask
+	'ntp'	=> qr{[\w\.]+},
 
 	# farms
 	'farm_name'    => qr/[a-zA-Z0-9\-]+/,
@@ -209,8 +210,9 @@ sub getValidPort # ( $ip, $port, $profile )
 	}
 }
 
-# Check almost a param exists and all params are correct
-sub getValidPutParams   # ( \%json_obj, \@allowParams )
+# check parameters when all params are optional
+# before called:	getValidPutParams
+sub getValidOptParams   # ( \%json_obj, \@allowParams )
 {
 	my $params = shift;
 	my $allowParamsRef = shift;
@@ -238,8 +240,10 @@ sub getValidPutParams   # ( \%json_obj, \@allowParams )
 	return $output;
 }
 
-# Check all required params exist and all params are correct
-sub getValidPostParams   # ( \%json_obj, \@requiredParams, \@optionalParams )
+
+# check parameters when there are required params
+# before called:	getValidPostParams
+sub getValidReqParams   # ( \%json_obj, \@requiredParams, \@optionalParams )
 {
 	my $params = shift;
 	my $requiredParamsRef = shift;

@@ -461,5 +461,179 @@ sub zsystem    # (@exec)
 	return $?;
 }
 
+dns:
+
+# return a hash ref = {
+#		primary => "value",
+#		secundary => "value",
+#		}
+sub getDns
+{
+	my $dns;
+	my $dnsFile = &getGlobalConfiguration( 'filedns' );
+
+	if ( !-e $dnsFile )
+	{
+		return undef;
+	}
+	tie my @dnsArr, 'Tie::File', $dnsFile;
+
+	#primary
+	my @aux = split ( ' ', $dnsArr[0] );
+	$dns->{ 'primary' } = $aux[1];
+
+	# secondary
+	if ( defined $dnsArr[1] )
+	{
+		@aux = split ( ' ', $dnsArr[1] );
+		$dns->{ 'secundary' } = $aux[1];
+	}
+	else
+	{
+		$dns->{ 'secundary' } = "";
+	}
+	untie @dnsArr;
+
+	return $dns;
+}
+
+# dns = primary|secondary;
+# &setDns( $dns, $value );
+sub setDns
+{
+	my ( $dns, $value ) = @_;
+	my $dnsFile = &getGlobalConfiguration( 'filedns' );
+	my $output;
+
+	if ( !-e $dnsFile )
+	{
+		$output = system ( &getGlobalConfiguration( 'touch' ) . " $dnsFile" );
+	}
+
+	tie my @dnsArr, 'Tie::File', $dnsFile;
+	my $line;
+
+	if ( $dns eq 'primary' )
+	{
+		$line = 0;
+	}
+
+	# secondary:   $dns eq 'secondary'
+	else
+	{
+		$line = 1;
+	}
+	$dnsArr[$line] = "nameserver $value";
+
+	untie @dnsArr;
+	return $output;
+}
+
+ssh:
+
+# return ssh port
+sub getSsh
+{
+	my $sshFile = &getGlobalConfiguration( 'sshConf' );
+	my $ssh     = {                                       # conf
+				'port'   => 22,
+				'listen' => "0.0.0.0",
+	};
+	my $listen_format = &getValidFormat( 'ssh_listen' );
+
+	if ( !-e $sshFile )
+	{
+		return undef;
+	}
+	else
+	{
+		tie my @file, 'Tie::File', $sshFile;
+		foreach my $line ( @file )
+		{
+			if ( $line =~ /^Port\s+(\d+)/ )
+			{
+				$ssh->{ 'port' } = $1;
+			}
+			elsif ( $line =~ /^ListenAddress\s+($listen_format)/ )
+			{
+				$ssh->{ 'listen' } = $1;
+			}
+		}
+
+		untie @file;
+	}
+	return $ssh;
+}
+
+# &setSsh( $hashRef );
+sub setSsh
+{
+	my ( $sshConf ) = @_;
+	my $sshFile     = &getGlobalConfiguration( 'sshConf' );
+	my $output      = 1;
+	my $index       = 5
+	  ; # default, it is the line where will add port and listen if one of this doesn't exist
+
+	# create flag to check all params are changed
+	my $portFlag;
+	my $listenFlag;
+	$portFlag   = 1 if ( exists $sshConf->{ 'port' } );
+	$listenFlag = 1 if ( exists $sshConf->{ 'listen' } );
+
+	if ( !-e $sshFile )
+	{
+		&zenlog( "SSH configuration file doesn't exist." );
+		return -1;
+	}
+
+	tie my @file, 'Tie::File', $sshFile;
+	foreach my $line ( @file )
+	{
+		if ( exists $sshConf->{ 'port' } )
+		{
+			if ( $line =~ /^Port\s+/ )
+			{
+				$line     = "Port $sshConf->{ 'port' }";
+				$output   = 0;
+				$portFlag = 0;
+			}
+		}
+		if ( exists $sshConf->{ 'listen' } )
+		{
+			if ( $line =~ /^ListenAddress\s+/ )
+			{
+				$line       = "ListenAddress $sshConf->{ 'listen' }";
+				$listenFlag = 0;
+			}
+		}
+	}
+
+	# Didn't find port and required a change
+	if ( $portFlag )
+	{
+		splice @file, $index, 0, "Port $sshConf->{ 'port' }";
+	}
+
+	# Didn't find listen and required a change
+	if ( $listenFlag )
+	{
+		splice @file, $index, 0, "ListenAddress $sshConf->{ 'listen' }";
+	}
+	untie @file;
+
+	# restart service to apply changes
+	$output = system ( &getGlobalConfiguration( 'sshService' ) . " restart" );
+
+	return $output;
+}
+
+# get ntp settings
+sub getGuiconf
+{
+	my $guiConf;
+
+	return $guiConf;
+}
+
 #do not remove this
 1;

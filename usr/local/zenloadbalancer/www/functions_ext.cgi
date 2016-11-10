@@ -328,4 +328,25 @@ sub getGlobalConfiguration
 	return $global_conf;
 }
 
+
+sub setGlobalConfiguration		# ( parameter, value )
+{
+	my ( $param, $value ) = @_;
+	my $global_conf_file = &getGlobalConfiguration ( 'globalcfg' );
+	my $output = -1;
+	
+	tie my @global_hf, 'Tie::File', $global_conf_file;
+	foreach my $line ( @global_hf )
+	{
+		if ( $line=~ /^\$$param\s*=/ )
+		{
+			$line = "\$$param = \"$value\";";
+			$output = 0;
+		}
+	}
+	untie @gloabl_hf;
+	
+	return $output;
+}
+
 1;
