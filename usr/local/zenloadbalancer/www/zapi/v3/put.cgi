@@ -612,6 +612,9 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 				if ( $current_be[1] == $id_server )
 				{
+					$current_be[7] = undef if $current_be[7] eq '-';
+					$current_be[9] = undef if $current_be[9] eq '-';
+
 					$be = {
 							id       => $current_be[1],
 							ip       => $current_be[3],
