@@ -55,7 +55,7 @@ sub getAllFarmStats
 }
 
 
-
+graphs:
 #####Documentation of Graphs####
 #**
 #  @api {get} /graphs/<param1>/<param2>/<frecuency> Request graphs
@@ -84,269 +84,270 @@ sub getAllFarmStats
 #**
 
 #Get Graphs
-sub get_graphs()
-{
-	my $gtype     = shift;
-	my $gtype2    = shift;
-	my $frecuency = shift;
+#~ sub get_graphs()
+#~ {
+	#~ my $gtype     = shift;
+	#~ my $gtype2    = shift;
+	#~ my $frecuency = shift;
 
-	# Check RRD files are generated
-	opendir ( DIR, "$rrdap_dir/$rrd_dir" );
-	my @rrdlist = grep ( /^*.rrd$/, readdir ( DIR ) );
+	#~ # Check RRD files are generated
+	#~ opendir ( DIR, "$rrdap_dir/$rrd_dir" );
+	#~ my @rrdlist = grep ( /^*.rrd$/, readdir ( DIR ) );
+	#~ closedir DIR;
 
-	if ( @rrdlist eq 0 )
-	{
-		&zenlog( "ZAPI error, there is no rrd files in folder yet." );
+	#~ if ( @rrdlist eq 0 )
+	#~ {
+		#~ &zenlog( "ZAPI error, there is no rrd files in folder yet." );
 
-		my $errormsg = "There is no rrd files yet.";
-		my $body = {
-					 description => "Get graphs",
-					 error       => "true",
-					 message     => $errormsg
-		};
+		#~ my $errormsg = "There is no rrd files yet.";
+		#~ my $body = {
+					 #~ description => "Get graphs",
+					 #~ error       => "true",
+					 #~ message     => $errormsg
+		#~ };
 
-		&httpResponse({ code => 400, body => $body });
-	}
+		#~ &httpResponse({ code => 400, body => $body });
+	#~ }
 
-	# Error handling
-	# First parameter
-	if ( $gtype =~ /^$/ )
-	{
-		&zenlog(
-			 "ZAPI error, trying to get graphs, invalid first parameter, can't be blank." );
+	#~ # Error handling
+	#~ # First parameter
+	#~ if ( $gtype =~ /^$/ )
+	#~ {
+		#~ &zenlog(
+			 #~ "ZAPI error, trying to get graphs, invalid first parameter, can't be blank." );
 
-		my $errormsg =
-		  "Invalid first parameter value; the possible values are system, network and farm";
-		my $body = {
-					 description => "Get graphs",
-					 error       => "true",
-					 message     => $errormsg
-		};
+		#~ my $errormsg =
+		  #~ "Invalid first parameter value; the possible values are system, network and farm";
+		#~ my $body = {
+					 #~ description => "Get graphs",
+					 #~ error       => "true",
+					 #~ message     => $errormsg
+		#~ };
 
-		&httpResponse({ code => 400, body => $body });
-	}
-	if ( $gtype =~ /^system|network|farm$/ )
-	{
-		if ( $gtype eq "system" )
-		{
-			$gtype = "System";
-		}
-		if ( $gtype eq "network" )
-		{
-			$gtype = "Network";
-		}
-		if ( $gtype eq "farm" )
-		{
-			$gtype = "Farm";
-		}
-	}
-	else
-	{
-		&zenlog(
-			"ZAPI error, trying to get graphs, invalid first parameter, the possible values are system, network and farm."
-		);
+		#~ &httpResponse({ code => 400, body => $body });
+	#~ }
+	#~ if ( $gtype =~ /^system|network|farm$/ )
+	#~ {
+		#~ if ( $gtype eq "system" )
+		#~ {
+			#~ $gtype = "System";
+		#~ }
+		#~ if ( $gtype eq "network" )
+		#~ {
+			#~ $gtype = "Network";
+		#~ }
+		#~ if ( $gtype eq "farm" )
+		#~ {
+			#~ $gtype = "Farm";
+		#~ }
+	#~ }
+	#~ else
+	#~ {
+		#~ &zenlog(
+			#~ "ZAPI error, trying to get graphs, invalid first parameter, the possible values are system, network and farm."
+		#~ );
 
-		my $errormsg =
-		  "Invalid first parameter value; the possible values are system, network and farm";
-		my $body = {
-					 description => "Get graphs",
-					 error       => "true",
-					 message     => $errormsg
-		};
+		#~ my $errormsg =
+		  #~ "Invalid first parameter value; the possible values are system, network and farm";
+		#~ my $body = {
+					 #~ description => "Get graphs",
+					 #~ error       => "true",
+					 #~ message     => $errormsg
+		#~ };
 
-		&httpResponse({ code => 400, body => $body });
-	}
+		#~ &httpResponse({ code => 400, body => $body });
+	#~ }
 
-	# Second parameter
-	if ( $gtype eq "System" )
-	{
-		if ( $gtype2 =~ /dev/ )
-		{
-			$gtype2 = $gtype2 . "hd";
-		}
-	}
+	#~ # Second parameter
+	#~ if ( $gtype eq "System" )
+	#~ {
+		#~ if ( $gtype2 =~ /dev/ )
+		#~ {
+			#~ $gtype2 = $gtype2 . "hd";
+		#~ }
+	#~ }
 
-	if ( $gtype eq "Network" )
-	{
-		$gtype2 = $gtype2 . "iface";
-	}
+	#~ if ( $gtype eq "Network" )
+	#~ {
+		#~ $gtype2 = $gtype2 . "iface";
+	#~ }
 
-	if ( $gtype eq "Farm" )
-	{
-		$gtype2 = $gtype2 . "-farm";
-	}
+	#~ if ( $gtype eq "Farm" )
+	#~ {
+		#~ $gtype2 = $gtype2 . "-farm";
+	#~ }
 
-	my $flag      = 0;
-	my @graphlist = &getGraphs2Show( $gtype );
+	#~ my $flag      = 0;
+	#~ my @graphlist = &getGraphs2Show( $gtype );
 
-	foreach my $graphlist ( @graphlist )
-	{
-		if ( $gtype2 eq $graphlist )
-		{
-			$flag = 1;
-		}
-	}
+	#~ foreach my $graphlist ( @graphlist )
+	#~ {
+		#~ if ( $gtype2 eq $graphlist )
+		#~ {
+			#~ $flag = 1;
+		#~ }
+	#~ }
 
-	# &zenlog("graphlist: @graphlist");
-	# &zenlog("parameters:$gtype $gtype2 $frecuency");
+	#~ # &zenlog("graphlist: @graphlist");
+	#~ # &zenlog("parameters:$gtype $gtype2 $frecuency");
 
-	if ( $gtype2 =~ /^$/ )
-	{
-		if ( $gtype eq "System" )
-		{
-			&zenlog(
-				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are cpu load mem memsw and your disks"
-			);
+	#~ if ( $gtype2 =~ /^$/ )
+	#~ {
+		#~ if ( $gtype eq "System" )
+		#~ {
+			#~ &zenlog(
+				#~ "ZAPI error, trying to get graphs, invalid second parameter, the possible values are cpu load mem memsw and your disks"
+			#~ );
 
-			my $errormsg =
-			  "Invalid second parameter value; the possible values are cpu load mem memsw or any of your disks";
-			my $body = {
-						 description => "Get graphs",
-						 error       => "true",
-						 message     => $errormsg
-			};
+			#~ my $errormsg =
+			  #~ "Invalid second parameter value; the possible values are cpu load mem memsw or any of your disks";
+			#~ my $body = {
+						 #~ description => "Get graphs",
+						 #~ error       => "true",
+						 #~ message     => $errormsg
+			#~ };
 
-			&httpResponse({ code => 400, body => $body });
-		}
-		elsif ( $gtype eq "Network" )
-		{
-			&zenlog(
-				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are any available interface"
-			);
+			#~ &httpResponse({ code => 400, body => $body });
+		#~ }
+		#~ elsif ( $gtype eq "Network" )
+		#~ {
+			#~ &zenlog(
+				#~ "ZAPI error, trying to get graphs, invalid second parameter, the possible values are any available interface"
+			#~ );
 
-			my $errormsg =
-			  "Invalid second parameter value; the possible values are any available interface";
-			my $body = {
-						 description => "Get graphs",
-						 error       => "true",
-						 message     => $errormsg
-			};
+			#~ my $errormsg =
+			  #~ "Invalid second parameter value; the possible values are any available interface";
+			#~ my $body = {
+						 #~ description => "Get graphs",
+						 #~ error       => "true",
+						 #~ message     => $errormsg
+			#~ };
 
-			&httpResponse({ code => 400, body => $body });
-		}
-		elsif ( $gtype eq "Farm" )
-		{
-			&zenlog(
-				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are any created farm"
-			);
+			#~ &httpResponse({ code => 400, body => $body });
+		#~ }
+		#~ elsif ( $gtype eq "Farm" )
+		#~ {
+			#~ &zenlog(
+				#~ "ZAPI error, trying to get graphs, invalid second parameter, the possible values are any created farm"
+			#~ );
 
-			my $errormsg =
-			  "Invalid second parameter value; the possible values are any created farm";
-			my $body = {
-						 description => "Get graphs",
-						 error       => "true",
-						 message     => $errormsg
-			};
+			#~ my $errormsg =
+			  #~ "Invalid second parameter value; the possible values are any created farm";
+			#~ my $body = {
+						 #~ description => "Get graphs",
+						 #~ error       => "true",
+						 #~ message     => $errormsg
+			#~ };
 
-			&httpResponse({ code => 400, body => $body });
-		}
-	}
+			#~ &httpResponse({ code => 400, body => $body });
+		#~ }
+	#~ }
 
-	if ( $flag == 0 )
-	{
-		if ( $gtype eq "System" )
-		{
-			&zenlog( "ZAPI error, trying to get graphs, invalid second parameter." );
+	#~ if ( $flag == 0 )
+	#~ {
+		#~ if ( $gtype eq "System" )
+		#~ {
+			#~ &zenlog( "ZAPI error, trying to get graphs, invalid second parameter." );
 
-			my $errormsg =
-			  "Invalid second parameter value; the possible values are cpu load mem memsw or any of your disks";
-			my $body = {
-						 description => "Get graphs",
-						 error       => "true",
-						 message     => $errormsg
-			};
+			#~ my $errormsg =
+			  #~ "Invalid second parameter value; the possible values are cpu load mem memsw or any of your disks";
+			#~ my $body = {
+						 #~ description => "Get graphs",
+						 #~ error       => "true",
+						 #~ message     => $errormsg
+			#~ };
 
-			&httpResponse({ code => 400, body => $body });
-		}
-		elsif ( $gtype eq "Network" )
-		{
-			&zenlog(
-				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are any available interface"
-			);
+			#~ &httpResponse({ code => 400, body => $body });
+		#~ }
+		#~ elsif ( $gtype eq "Network" )
+		#~ {
+			#~ &zenlog(
+				#~ "ZAPI error, trying to get graphs, invalid second parameter, the possible values are any available interface"
+			#~ );
 
-			my $errormsg =
-			  "Invalid second parameter value; the possible values are any available interface";
-			my $body = {
-						 description => "Get graphs",
-						 error       => "true",
-						 message     => $errormsg
-			};
+			#~ my $errormsg =
+			  #~ "Invalid second parameter value; the possible values are any available interface";
+			#~ my $body = {
+						 #~ description => "Get graphs",
+						 #~ error       => "true",
+						 #~ message     => $errormsg
+			#~ };
 
-			&httpResponse({ code => 400, body => $body });
-		}
-		elsif ( $gtype eq "Farm" )
-		{
-			&zenlog(
-				"ZAPI error, trying to get graphs, invalid second parameter, the possible values are any created farm"
-			);
+			#~ &httpResponse({ code => 400, body => $body });
+		#~ }
+		#~ elsif ( $gtype eq "Farm" )
+		#~ {
+			#~ &zenlog(
+				#~ "ZAPI error, trying to get graphs, invalid second parameter, the possible values are any created farm"
+			#~ );
 
-			my $errormsg =
-			  "Invalid second parameter value; the possible values are any created farm";
-			my $body = {
-						 description => "Get graphs",
-						 error       => "true",
-						 message     => $errormsg
-			};
+			#~ my $errormsg =
+			  #~ "Invalid second parameter value; the possible values are any created farm";
+			#~ my $body = {
+						 #~ description => "Get graphs",
+						 #~ error       => "true",
+						 #~ message     => $errormsg
+			#~ };
 
-			&httpResponse({ code => 400, body => $body });
-		}
-	}
+			#~ &httpResponse({ code => 400, body => $body });
+		#~ }
+	#~ }
 
-	# Third parameter
-	if ( $frecuency =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to get graphs, invalid third parameter, the possible values are daily, weekly, monthly and yearly."
-		);
+	#~ # Third parameter
+	#~ if ( $frecuency =~ /^$/ )
+	#~ {
+		#~ &zenlog(
+			#~ "ZAPI error, trying to get graphs, invalid third parameter, the possible values are daily, weekly, monthly and yearly."
+		#~ );
 
-		my $errormsg =
-		  "Invalid third parameter value; the possible values are daily, weekly, monthly and yearly";
-		my $body = {
-					 description => "Get graphs",
-					 error       => "true",
-					 message     => $errormsg
-		};
+		#~ my $errormsg =
+		  #~ "Invalid third parameter value; the possible values are daily, weekly, monthly and yearly";
+		#~ my $body = {
+					 #~ description => "Get graphs",
+					 #~ error       => "true",
+					 #~ message     => $errormsg
+		#~ };
 
-		&httpResponse({ code => 400, body => $body });
-	}
+		#~ &httpResponse({ code => 400, body => $body });
+	#~ }
 
-	if ( $frecuency =~ /^daily|weekly|monthly|yearly$/ )
-	{
-		if ( $frecuency eq "daily" )   { $frecuency = "d"; }
-		if ( $frecuency eq "weekly" )  { $frecuency = "w"; }
-		if ( $frecuency eq "monthly" ) { $frecuency = "m"; }
-		if ( $frecuency eq "yearly" )  { $frecuency = "y"; }
-	}
-	else
-	{
-		&zenlog(
-			"ZAPI error, trying to get graphs, invalid third parameter, the possible values are daily, weekly, monthly and yearly."
-		);
+	#~ if ( $frecuency =~ /^daily|weekly|monthly|yearly$/ )
+	#~ {
+		#~ if ( $frecuency eq "daily" )   { $frecuency = "d"; }
+		#~ if ( $frecuency eq "weekly" )  { $frecuency = "w"; }
+		#~ if ( $frecuency eq "monthly" ) { $frecuency = "m"; }
+		#~ if ( $frecuency eq "yearly" )  { $frecuency = "y"; }
+	#~ }
+	#~ else
+	#~ {
+		#~ &zenlog(
+			#~ "ZAPI error, trying to get graphs, invalid third parameter, the possible values are daily, weekly, monthly and yearly."
+		#~ );
 
-		my $errormsg =
-		  "Invalid third parameter value; the possible values are daily, weekly, monthly and yearly";
-		my $body = {
-					 description => "Get graphs",
-					 error       => "true",
-					 message     => $errormsg
-		};
+		#~ my $errormsg =
+		  #~ "Invalid third parameter value; the possible values are daily, weekly, monthly and yearly";
+		#~ my $body = {
+					 #~ description => "Get graphs",
+					 #~ error       => "true",
+					 #~ message     => $errormsg
+		#~ };
 
-		&httpResponse({ code => 400, body => $body });
-	}
+		#~ &httpResponse({ code => 400, body => $body });
+	#~ }
 
-	# Print Graph Function
-	my $graph = &printGraph( $gtype2, $frecuency );
+	#~ # Print Graph Function
+	#~ my $graph = &printGraph( $gtype2, $frecuency );
 
-	# Print Success
-	&zenlog( "ZAPI success, trying to get graphs." );
+	#~ # Print Success
+	#~ &zenlog( "ZAPI success, trying to get graphs." );
 
-	my $body = {
-				 description => "Graphs",
-				 graph       => $graph,
-	};
+	#~ my $body = {
+				 #~ description => "Graphs",
+				 #~ graph       => $graph,
+	#~ };
 
-	&httpResponse({ code => 200, body => $body });
-}
+	#~ &httpResponse({ code => 200, body => $body });
+#~ }
 
 #**
 #  @api {get} /graphs Get all possible graphs
@@ -421,7 +422,7 @@ sub get_graphs()
 #**
 
 #GET disk
-sub possible_graphs()
+sub possible_graphs	#()
 {
 	# Variables
 	my @sys;
@@ -489,6 +490,320 @@ sub possible_graphs()
 	&httpResponse({ code => 200, body => $body });
 }
 
+
+# GET all system graphs
+sub get_all_sys_graphs	 #()
+{
+	my @sys;
+	# System values
+	my @graphlist = &getGraphs2Show( "System" );
+	foreach my $graphlist ( @graphlist )
+	{
+		if ( $graphlist =~ /dev/ )
+		{
+			$graphlist =~ s/hd$//g;
+			push @disks, { disk => $graphlist };
+		}
+	}
+
+	push @sys,
+	  {
+		cpu_usage    => "cpu",
+		disks        => @disks,
+		load_average => "load",
+		ram_memory   => "ram",
+		swap_memory  => "memsw"
+	  };
+
+	my $body = {
+		description =>
+		  "These are the possible system graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph", 
+		  system    => \@sys
+	};
+	&httpResponse({ code => 200, body => $body });
+}
+
+
+# GET system graphs
+sub get_sys_graphs	#()
+{
+	my $key = shift;
+	
+	$key = 'mem' if ( $key eq 'ram' );
+	$key = 'memsw' if ( $key eq 'swap' );
+	
+	# Print Success
+	&zenlog( "ZAPI success, trying to get graphs." );
+	
+	# Print Graph Function
+	my @output;
+	my $graph = &printGraph( $key, 'd' );
+	push @output, { frecuency => 'daily', graph => $graph };
+	$graph = &printGraph( $key, 'w' );
+	push @output, { frecuency => 'weekly', graph => $graph };
+	$graph = &printGraph( $key, 'm' );
+	push @output, { frecuency => 'monthly', graph => $graph };
+	$graph = &printGraph( $key, 'y' );
+	push @output, { frecuency => 'yearly', graph => $graph };
+
+	my $body = { description => $description, graphs => \@output };
+	&httpResponse({ code => 200, body => $body });
+}
+
+# GET frecuency system graphs
+sub get_frec_sys_graphs	#()
+{	
+	my $key = shift;
+	my $frecuency = shift;
+	
+	$key = 'mem' if ( $key eq 'ram' );
+	$key = 'memsw' if ( $key eq 'swap' );
+	
+	 # take initial idenfiticative letter 
+	$frecuency = $1  if ( $frecuency =~ /^(\w)/ );
+	
+	# Print Success
+	&zenlog( "ZAPI success, trying to get graphs." );
+	
+	# Print Graph Function
+	my @output;
+	my $graph = &printGraph( $key, $frecuency );
+
+	my $body = { description => $description, graphs => $graph };
+	&httpResponse({ code => 200, body => $body });
+}
+
+
+# GET all interface graphs
+sub get_all_iface_graphs	#()
+{
+	my @iface = grep ( s/iface//, &getGraphs2Show( "Network" ) );
+	my $body = {
+		description =>
+		  "These are the possible interface graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
+		  interfaces    => \@iface
+	};
+	&httpResponse({ code => 200, body => $body });
+}
+
+# GET interface graphs
+sub get_iface_graphs	#()
+{
+	my $iface = shift;
+	my $description = "Get interface graphs";
+	my $errormsg;
+	# validate NIC NAME
+	my $socket = IO::Socket::INET->new( Proto => 'udp' );
+	my @system_interfaces = $socket->if_list;
+
+	if ( ! grep( /^$iface$/, @system_interfaces ) )
+	{
+		# Error
+		my $errormsg = "Nic interface not found.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+	# graph for this farm doesn't exist
+	elsif ( ! grep ( /${iface}iface/, &getGraphs2Show( "Network" ) ) )
+	{
+		$errormsg = "There is no rrd files yet.";
+	}
+	else
+	{
+		# Print Success
+		&zenlog( "ZAPI success, trying to get graphs." );
+		
+		# Print Graph Function
+		my @output;
+		my $graph = &printGraph( "${iface}iface", 'd' );
+		push @output, { frecuency => 'daily', graph => $graph };
+		$graph = &printGraph( "${iface}iface", 'w' );
+		push @output, { frecuency => 'weekly', graph => $graph };
+		$graph = &printGraph( "${iface}iface", 'm' );
+		push @output, { frecuency => 'monthly', graph => $graph };
+		$graph = &printGraph( "${iface}iface", 'y' );
+		push @output, { frecuency => 'yearly', graph => $graph };
+
+		my $body = { description => $description, graphs => \@output };
+		&httpResponse({ code => 200, body => $body });
+	}
+	
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+}
+
+
+# GET frecuency interface graphs
+sub get_frec_iface_graphs	#()
+{
+	my $iface = shift;
+	my $description = "Get interface graphs";
+	my $errormsg;
+	# validate NIC NAME
+	my $socket = IO::Socket::INET->new( Proto => 'udp' );
+	my @system_interfaces = $socket->if_list;
+
+	if ( ! grep( /^$iface$/, @system_interfaces ) )
+	{
+		# Error
+		my $errormsg = "Nic interface not found.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+	elsif ( ! grep ( /${iface}iface/, &getGraphs2Show( "Network" ) ) )
+	{
+		$errormsg = "There is no rrd files yet.";
+	}
+	else
+	{
+		if ( $frecuency =~ /^daily|weekly|monthly|yearly$/ )
+		{
+			if ( $frecuency eq "daily" )   { $frecuency = "d"; }
+			if ( $frecuency eq "weekly" )  { $frecuency = "w"; }
+			if ( $frecuency eq "monthly" ) { $frecuency = "m"; }
+			if ( $frecuency eq "yearly" )  { $frecuency = "y"; }
+		}
+		# Print Success
+		&zenlog( "ZAPI success, trying to get graphs." );
+		
+		# Print Graph Function
+		my $graph = &printGraph( "${iface}iface", $frecuency );				
+		my $body = { description => $description, graph => $graph };
+		&httpResponse({ code => 200, body => $body });
+	}
+	
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+}
+
+
+# GET all farm graphs
+sub get_all_farm_graphs	#()
+{
+	my @farms = grep ( s/-farm//, &getGraphs2Show( "Farm" ) );
+	my $body = {
+		description =>
+		  "These are the possible farm graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph", 
+		  farms    => \@farms
+	};
+	&httpResponse({ code => 200, body => $body });
+}
+
+# GET farm graphs
+sub get_farm_graphs	#()
+{
+	my $farmName = shift;
+	my $description = "Get farm graphs";
+	my $errormsg;
+
+	# this farm doesn't exist
+	if ( &getFarmFile( $farmName ) == -1 )
+	{
+		$errormsg = "$farmName doesn't exist.";
+		my $body = { description => $description, error => "true", message => $errormsg, };
+		&httpResponse( { code => 404, body => $body } );
+	}	
+	# graph for this farm doesn't exist
+	elsif ( ! grep ( /$farmName-farm/, &getGraphs2Show( "Farm" ) ) )
+	{
+		$errormsg = "There is no rrd files yet.";
+	}
+	else
+	{
+		# Print Success
+		&zenlog( "ZAPI success, trying to get graphs." );
+		
+		# Print Graph Function
+		my @output;
+		my $graph = &printGraph( "$farmName-farm", 'd' );
+		push @output, { frecuency => 'daily', graph => $graph };
+		$graph = &printGraph( "$farmName-farm", 'w' );
+		push @output, { frecuency => 'weekly', graph => $graph };
+		$graph = &printGraph( "$farmName-farm", 'm' );
+		push @output, { frecuency => 'monthly', graph => $graph };
+		$graph = &printGraph( "$farmName-farm", 'y' );
+		push @output, { frecuency => 'yearly', graph => $graph };
+
+		my $body = { description => $description, graphs => \@output };
+		&httpResponse({ code => 200, body => $body });
+	}
+	
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+}
+
+# GET frecuency farm graphs
+sub get_frec_farm_graphs	#()
+{
+	my $farmName = shift;
+	my $frecuency = shift;
+	my $description = "Get farm graphs";
+	my $errormsg;
+
+	# this farm doesn't exist
+	if ( &getFarmFile( $farmName ) == -1 )
+	{
+		$errormsg = "$farmName doesn't exist.";
+		my $body = { description => $description, error => "true", message => $errormsg, };
+		&httpResponse( { code => 404, body => $body } );
+	}	
+	# graph for this farm doesn't exist
+	elsif ( ! grep ( /$farmName-farm/, &getGraphs2Show( "Farm" ) ) )
+	{
+		$errormsg = "There is no rrd files yet.";
+	}
+	else
+	{
+		if ( $frecuency =~ /^daily|weekly|monthly|yearly$/ )
+		{
+			if ( $frecuency eq "daily" )   { $frecuency = "d"; }
+			if ( $frecuency eq "weekly" )  { $frecuency = "w"; }
+			if ( $frecuency eq "monthly" ) { $frecuency = "m"; }
+			if ( $frecuency eq "yearly" )  { $frecuency = "y"; }
+		}
+		# Print Success
+		&zenlog( "ZAPI success, trying to get graphs." );
+		
+		# Print Graph Function
+		my $graph = &printGraph( "$farmName-farm", $frecuency );				
+		my $body = { description => $description, graph => $graph };
+		&httpResponse({ code => 200, body => $body });
+	}
+	
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+stats:
 ########### GET FARM STATS
 # curl --tlsv1 -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: l2ECjvrqitQZULPXbmwMV6luyooQ47SGJhn3LeX1KV6KNKa5uZfJqVVBnEJF4N2Cy" https://46.101.60.162:444/zapi/v3/zapi.cgi/farms/httptest1/stats
 #
@@ -791,6 +1106,7 @@ sub all_farms_stats # ()
 	&httpResponse({ code => 200, body => $body });
 }
 
+
 #Get lslb|gslb|dslb Farm Stats
 sub module_stats # ()
 {
@@ -811,7 +1127,6 @@ sub module_stats # ()
 	};
 	&httpResponse({ code => 200, body => $body });
 }
-
 
 
 #**

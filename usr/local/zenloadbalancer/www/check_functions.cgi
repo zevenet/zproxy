@@ -43,6 +43,7 @@ my $nic_if = qr/[a-zA-Z0-9]{1,15}/;
 my $bond_if = qr/[a-zA-Z0-9]{1,15}/;
 my $vlan_if = qr/[a-zA-Z0-9]{1,13}\.$vlan_tag/;
 my $port_range = qr/(?:[1-5]?\d{1,4}|6[0-4]\d{3}|65[1-4]\d{2}|655[1-2]\d{1}|6553[1-5])/;
+my $graphsFrecuency = qr/(?:daily|weekly|monthly|yearly)/;
 
 my %format_re = (
 
@@ -67,7 +68,12 @@ my %format_re = (
 	'backend'      => qr/\d+/,
 	'service'      => $service,
 	'farm_modules'      => qr/(?:gslb|dslb|lslb)/,
-
+	
+	# graphs
+	'graphs_frecuency' => $graphsFrecuency,
+	'graphs_system_id' => qr/(?:cpu|load|ram|swap)/,
+	'mount_disk' => qr/root[\w\/]*[^(?:$graphsFrecuency)]$/,
+	
 	# gslb
 	'zone' => qr/(?:$hostname\.)+[a-z]{2,}/,
 	'resource_id'   => qr/\d+/,

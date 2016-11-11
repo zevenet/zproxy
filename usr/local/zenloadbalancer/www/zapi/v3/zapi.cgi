@@ -900,6 +900,7 @@ interfaces:
 
 my $virt_interface = &getValidFormat( 'virt_interface' );
 my $vlan_interface = &getValidFormat( 'vlan_interface' );
+my $nic_re = &getValidFormat ('nic_interface');
 
 GET qr{^/interfaces$} => sub {
 	&get_interfaces();
@@ -912,7 +913,6 @@ GET qr{^/interfaces/nic$} => sub {
 };
 
 ##### /interfaces/nic/NIC
-my $nic_re = &getValidFormat ('nic_interface');
 
 PUT qr{^/interfaces/nic/($nic_re)$} => sub {
 	&modify_interface_nic( @_ );
@@ -1102,15 +1102,89 @@ GET qr{^/stats/farms/($farm_re)$} => sub {
 #
 graphs:
 
+my $frecuency_re = &getValidFormat ( 'graphs_frecuency' );
+my $system_id_re = &getValidFormat ( 'graphs_system_id' );
+my $disk_re = &getValidFormat ( 'mount_disk' );
+
 #  GET graphs
-GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
-	&get_graphs( @_ );
-};
+#~ GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
+	#~ &get_graphs( @_ );
+#~ };
 
 #  GET possible graphs
-GET qr{^/graphs} => sub {
+GET qr{^/graphs$} => sub {
 	&possible_graphs();
 };
+
+
+
+
+#  GET all possible system graphs
+GET qr{^/graphs/system$} => sub {
+	&get_all_sys_graphs();
+};
+
+#  GET system graphs
+GET qr{^/graphs/system/($system_id_re)$} => sub {
+	&get_sys_graphs( @_ );
+};
+
+#  GET frecuency system graphs
+GET qr{^/graphs/system/($system_id_re)/($frecuency_re)$} => sub {
+	&get_frec_sys_graphs( @_ );
+};
+
+#~ #  GET disk system graphs
+#~ GET qr{^/graphs/system/disk$} => sub {
+	#~ &get_all_sys_disk_graphs( @_ );
+#~ };
+
+#~ #  GET disk system graphs
+#~ GET qr{^/graphs/system/disk/($disk_re)$} => sub {
+	#~ &get_sys_disk_graphs( @_ );
+#~ };
+
+#~ #  GET frecuency disk system graphs
+#~ GET qr{^/graphs/system/disk/($disk_re)/($frecuency_re)$} => sub {
+	#~ &get_frec_sys_disk_graphs( @_ );
+#~ };
+
+
+
+
+#  GET all posible interfaces graphs
+GET qr{^/graphs/interfaces$} => sub {
+	&get_all_iface_graphs( @_ );
+};
+
+#  GET interfaces graphs
+GET qr{^/graphs/interfaces/($nic_re)$} => sub {
+	&get_iface_graphs( @_ );
+};
+
+#  GET frecuency interfaces graphs
+GET qr{^/graphs/interfaces/($nic_re)/($frecuency_re)$} => sub {
+	&get_frec_iface_graphs( @_ );
+};
+
+
+
+
+#  GET all posible farm graphs
+GET qr{^/graphs/farms$} => sub {
+	&get_all_farm_graphs( @_ );
+};
+
+#  GET farm graphs
+GET qr{^/graphs/farms/($farm_re)$} => sub {
+	&get_farm_graphs( @_ );
+};
+
+#  GET frecuency farm graphs
+GET qr{^/graphs/farms/($farm_re)/($frecuency_re)$} => sub {
+	&get_frec_farm_graphs( @_ );
+};
+
 
 
 # SYSTEM
