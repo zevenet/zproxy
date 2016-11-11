@@ -1703,10 +1703,11 @@ sub dnsServiceType    #  dnsServiceType ( $farmname, $ip, $tcp_port )
 # this function return one string with json format
 sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ($wget_bin)
 {
-	my ( $wget ) = @_;
+	my $wget = &getGlobalConfiguration ( 'wget' );
 	$gdnsdStats = `$wget -qO- http://127.0.0.1:35060/json`;
-
-	return $gdnsdStats;
+	
+	my $stats  = decode_json ( $gdnsdStats );
+	return $stats;
 }
 
 #

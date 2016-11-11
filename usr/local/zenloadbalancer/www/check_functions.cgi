@@ -66,6 +66,7 @@ my %format_re = (
 	'farm_profile' => qr/HTTP|GSLB|L4XNAT|DATALINK/,
 	'backend'      => qr/\d+/,
 	'service'      => $service,
+	'farm_modules'      => qr/(?:gslb|dslb|lslb)/,
 
 	# gslb
 	'zone' => qr/(?:$hostname\.)+[a-z]{2,}/,

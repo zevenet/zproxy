@@ -199,11 +199,12 @@ if ( $action eq "managefarm" )
 		{
 			require "./content1-29.cgi";
 		}
-		if ( $type eq "gslb" )
-		{
-			require "./content1-203.cgi";
-		}
+		#~ if ( $type eq "gslb" )
+		#~ {
+			#~ require "./content1-203.cgi";
+		#~ }
 	}
+	require "./content1-203.cgi";
 }
 
 ##########################################

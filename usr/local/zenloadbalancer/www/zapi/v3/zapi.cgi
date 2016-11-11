@@ -1059,6 +1059,7 @@ DELETE qr{^/interfaces/gateway$} => sub {
 #
 stats:
 
+# System stats
 GET qr{^/stats$} => sub {
 	&stats();
 };
@@ -1079,13 +1080,23 @@ GET qr{^/stats/cpu$} => sub {
 	&stats_cpu();
 };
 
+# Farm stats
+my $modules_re = &getValidFormat( 'farm_modules' );
 GET qr{^/stats/farms$} => sub {
 	&all_farms_stats( @_ );
+};
+
+GET qr{^/stats/farms/modules/($modules_re)$} => sub {
+	&module_stats( @_ );
 };
 
 GET qr{^/stats/farms/($farm_re)$} => sub {
 	&farm_stats( @_ );
 };
+
+
+
+
 
 #	GRAPHS
 #

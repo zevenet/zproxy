@@ -107,6 +107,8 @@ $gdnsd="/usr/local/zenloadbalancer/app/gdnsd/sbin/gdnsd";
 $l4sd="/usr/local/zenloadbalancer/app/l4s/bin/l4sd";
 #Where is id binary?
 $bin_id="/usr/bin/id";
+#Where is wget binary?
+$wget="/usr/bin/wget";
 #Where is conntrack binary?
 $conntrack="/usr/sbin/conntrack";
 #systemctl

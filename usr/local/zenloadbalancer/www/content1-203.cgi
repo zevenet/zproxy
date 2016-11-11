@@ -26,10 +26,7 @@ use JSON;
 
 &refreshstats();
 
-my $dnsJsonStats = &getGSLBGdnsdStats;
-my $jsonObj      = from_json( $dnsJsonStats );
-##~ my $json = JSON->new;
-#~ my $jsonObj= $json->decode( $dnsJsonOutput );
+my $jsonObj = &getGSLBGdnsdStats();
 
 my @services = @{ $jsonObj->{ 'services' } };
 my @serviceDescriptors;
