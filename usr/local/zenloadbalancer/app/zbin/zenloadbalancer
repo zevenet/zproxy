@@ -35,14 +35,19 @@ require "/usr/local/zenloadbalancer/www/functions.cgi";
 require "/usr/local/zenloadbalancer/www/cluster_functions.cgi";
 
 my $eject                 = $ARGV[0];
-my @configured_interfaces = @{ &getConfigInterfaceList() };
-
 if ( !$eject && $eject !~ /stop|start|status|startlocal|stoplocal/ )
 {
 	print
 	  "Usage: /etc/init.d/zenloadbalancer stop|start|status|startlocal|stoplocal\n";
 	exit;
 }
+
+if ($eject eq "start"){
+        system ( '/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi' );
+}
+my @configured_interfaces = @{ &getConfigInterfaceList() };
+
+	
 
 # build local key
 sub keycert    #()
@@ -217,7 +222,6 @@ if ( $eject eq "restart" )
 if ( $eject eq "start" )
 {
 	&zenlog( "start process started..." );
-	system ( '/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi' );
 	require "/usr/local/zenloadbalancer/config/global.conf";
 	require "/usr/local/zenloadbalancer/www/plugins_functions.cgi";
 
