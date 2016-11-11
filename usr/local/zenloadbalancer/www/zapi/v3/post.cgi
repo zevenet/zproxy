@@ -529,6 +529,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			$json_obj->{ priority } += 0 if $json_obj->{ priority };
 
 			# Success
+			my $message = "Backend added";
 			my $body = {
 						 description => $description,
 						 params      => {
@@ -538,6 +539,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 									 weight   => $json_obj->{ weight },
 									 priority => $json_obj->{ priority },
 						 },
+						 message => $message,
 			};
 
 			&httpResponse({ code => 201, body => $body });
@@ -683,6 +685,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			);
 
 			# Success
+			my $message = "Backend added";
 			my $body = {
 						 description => $description,
 						 params      => {
@@ -692,6 +695,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 									 weight    => ($json_obj->{ weight } eq '')? $json_obj->{ weight }+0: undef,
 									 priority  => ($json_obj->{ priority } eq '')? $json_obj->{ priority }+0: undef,
 						 },
+						 message => $message,
 			};
 
 			&httpResponse({ code => 201, body => $body });
@@ -899,7 +903,8 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 			&setFarmRestart( $farmname );
 			$json_obj->{ timeout } = $json_obj->{ timeout } ? $json_obj->{ timeout } + 0: $json_obj->{ timeout };
 
-			my $body = {
+		my $message = "Added backend to service succesfully";
+		my $body = {
 						 description => $description,
 						 params      => {
 									 id      => $id,
@@ -908,6 +913,8 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 									 weight  => $json_obj->{ weight } + 0,
 									 timeout => $json_obj->{ timeout },
 						 },
+						 status = 'needed restart',
+						 message => $message,
 			};
 
 			&httpResponse({ code => 201, body => $body });
@@ -1010,12 +1017,15 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 
 			# Success
 			&setFarmRestart( $farmname );
+			my $message = "Added backend to service succesfully";
 			my $body = {
 						 description => $description,
 						 params      => {
 									 id      => $id,
 									 ip      => $json_obj->{ ip },
 						 },
+						 status = 'needed restart',
+						 message => $message,
 			};
 
 			&httpResponse({ code => 201, body => $body });
@@ -1207,6 +1217,7 @@ sub new_farm_service # ( $json_obj, $farmname )
 			my $body = {
 						 description => "New service " . $json_obj->{ id },
 						 params      => { id => $json_obj->{ id } },
+						 status = 'needed restart',
 			};
 
 			&httpResponse({ code => 201, body => $body });
@@ -1316,6 +1327,7 @@ sub new_farm_service # ( $json_obj, $farmname )
 									 id        => $json_obj->{ id },
 									 algorithm => $json_obj->{ algorithm }
 						 },
+						 status = 'needed restart',
 			};
 
 			&httpResponse({ code => 201, body => $body });

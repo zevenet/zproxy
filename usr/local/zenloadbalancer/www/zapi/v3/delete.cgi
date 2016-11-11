@@ -389,8 +389,9 @@ sub delete_backend # ( $farmname, $id_server )
 			   "ZAPI success, the backend $id_server in farm $farmname has been deleted." );
 
 		# Success
-		my $message =
-		  "The backend with ID $id_server of the $farmname farm has been deleted.";
+		#~ my $message = "The backend with ID $id_server of the $farmname farm has been deleted.";
+		my $message = "Backend removed";
+
 		my $body = {
 					 description => $description,
 					 success     => "true",
@@ -550,8 +551,8 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 
 		# Success
 		&setFarmRestart( $farmname );
-		my $message =
-		  "The backend with ID $id_server in the service $service of the farm $farmname has been deleted.";
+		#~ my $message = "The backend with ID $id_server in the service $service of the farm $farmname has been deleted.";
+		my $message = "Backend removed";
 		my $body = {
 			   description => $description,
 			   success => "true",

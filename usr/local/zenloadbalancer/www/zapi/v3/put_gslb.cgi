@@ -685,7 +685,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		);
 
 		# Success
-		my $message = "Resource modified sucessfully.";
+		my $message = "Resource modified";
 		my $body = {
 					 description => $description,
 					 success       => "true",

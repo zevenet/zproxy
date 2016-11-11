@@ -382,6 +382,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 		&runFarmReload( $farmname );
 		$json_obj->{ ttl } = undef if ! $json_obj->{ ttl };
 
+		my $message = "Resource added";
 		my $body = {
 					 description => $description,
 					 params      => {
@@ -391,6 +392,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 								 type  => $json_obj->{ type },
 								 rdata => $json_obj->{ rdata },
 					 },
+					 message => $message,
 		};
 		my $checkConf = &getGSLBCheckConf  ( $farmname );
 		 if ( $checkConf =~ /^(.+?)\s/ )

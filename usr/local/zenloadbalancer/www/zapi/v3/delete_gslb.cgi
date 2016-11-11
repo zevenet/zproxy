@@ -246,8 +246,8 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 
 		# Success
 		&runFarmReload( $farmname );
-		my $message =
-		  "The resource with id $resource in the zone $zone of the farm $farmnamehas been deleted.";
+		#~ my $message = "The resource with id $resource in the zone $zone of the farm $farmnamehas been deleted.";
+		my $message = "Resource removed";
 		my $body = {
 					 description => $description,
 					 success     => "true",

@@ -531,9 +531,11 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 		);
 
 		# Success
+		my $message = "Backend modified";
 		my $body = {
 					 description => $description,
-					 params      => $json_obj
+					 params      => $json_obj,
+					 message => $message,
 		};
 
 		&httpResponse({ code => 200, body => $body });
@@ -873,6 +875,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			};
 		}
 
+		$body->{ message } = "Backend modified";
 		&httpResponse({ code => 200, body => $body });
 	}
 	else
