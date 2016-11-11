@@ -34,6 +34,7 @@ sub sendGPing    # ($pif)
 	my $gw = &gwofif( $pif );
 	if ( $gw ne "" )
 	{
+		my $ping_bin = &getGlobalConfiguration('ping_bin');
 		my $ping_cmd = "$ping_bin -c $pingc $gw";
 
 		&zenlog( "$ping_cmd" );
@@ -250,6 +251,7 @@ sub getInterfaceSystemStatus     # ($if_ref)
 		$status_if_name = $parent_if_name;
 	}
 
+	my $ip_bin = &getGlobalConfiguration('ip_bin');
 	my $ip_output = `$ip_bin link show $status_if_name`;
 	$ip_output =~ / state (\w+) /;
 	my $if_status = lc $1;
@@ -1192,6 +1194,7 @@ sub getInterfaceType
 	{
 		my ( $parent_if ) = split( ':', $if_name );
 		my $quoted_if = quotemeta $if_name;
+		my $ip_bin = &getGlobalConfiguration('ip_bin');
 		my $found = grep( /inet .+ $quoted_if$/, `$ip_bin addr show $parent_if 2>/dev/null` );
 
 		if ( ! $found )

@@ -50,6 +50,7 @@ sub login    #()
 
 	if ( !$session->param( 'root_logged_in' ) )
 	{
+		my $bin_id = &getGlobalConfiguration('bin_id');
 		$grouplist = `$bin_id $user`;
 		&zenlog( "grouplist is: $grouplist" );
 		if ( $passwd->authenticate( $user, $passw ) && $grouplist =~ /\(webgui\)/ )

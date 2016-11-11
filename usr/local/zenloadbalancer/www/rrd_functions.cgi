@@ -178,6 +178,7 @@ sub genDiskGraph    #($type,$graph,$time)
 	my ( $type, $graph, $time ) = @_;
 
 	my $db_hd     = "$type.rrd";
+	my $df_bin    = &getGlobalConfiguration('df_bin');
 	my @df_system = `$df_bin -k`;
 	my $dev       = $type;
 	$dev =~ s/hd$//;

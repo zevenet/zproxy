@@ -24,6 +24,8 @@
 use File::stat;
 use Time::localtime;
 
+my $openssl = &getGlobalConfiguration('openssl');
+
 #Return all certificate files in config directory
 sub getCertFiles    # ()
 {

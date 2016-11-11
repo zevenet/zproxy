@@ -23,6 +23,8 @@
 
 use IO::Socket;
 
+my $ip_bin = &getGlobalConfiguration('ip_bin');
+
 #check if a port in a ip is up
 sub checkport    # ($host,$port)
 {
@@ -325,7 +327,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 				  "$ip_bin -$$if_ref{ip_v} route replace default via $gateway dev $$if_ref{name} $routeparams";
 				$status = &logAndRun( "$ip_cmd" );
 
-				tie my @contents, 'Tie::File', "$globalcfg";
+				tie my @contents, 'Tie::File', &getGlobalConfiguration('globalcfg');
 				for my $line ( @contents )
 				{
 					if ( grep /^\$defaultgw/, $line )
@@ -407,7 +409,7 @@ sub delRoutes    # ($table,$if_ref)
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route del default";
 			$status = &logAndRun( "$ip_cmd" );
 
-			tie my @contents, 'Tie::File', "$globalcfg";
+			tie my @contents, 'Tie::File', &getGlobalConfiguration('globalcfg');
 			for my $line ( @contents )
 			{
 				if ( grep /^\$defaultgw/, $line )
@@ -1079,7 +1081,7 @@ sub sendGArp    # ($if,$ip)
 	my ( $if, $ip ) = @_;
 
 	my @iface = split ( ":", $if );
-
+	my $arping_bin = &getGlobalConfiguration('arping_bin');
 	my $arping_cmd = "$arping_bin -c 2 -A -I $iface[0] $ip";
 
 	&zenlog( "$arping_cmd" );

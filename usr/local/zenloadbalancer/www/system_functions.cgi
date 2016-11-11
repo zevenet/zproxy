@@ -365,6 +365,7 @@ sub getDiskSpace    # ()
 	my $used;
 	my $free;
 
+	my $df_bin = &getGlobalConfiguration('df_bin');
 	my @system = `$df_bin -h`;
 
 	foreach $line(@system) {
@@ -406,6 +407,7 @@ sub getDiskMountPoint    # ($dev)
 {
 	( $dev ) = @_;
 
+	my $df_bin = &getGlobalConfiguration('df_bin');
 	my @df_system = `$df_bin -k`;
 	my $mount;
 

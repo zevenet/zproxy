@@ -215,6 +215,7 @@ sub runFarmGuardianStop    # ($fname,$svice)
 						if ( $_ =~ /fgDOWN/ )
 						{
 							splice ( @filelines, $index, 1, );
+							my $poundctl = &getGlobalConfiguration('poundctl');
 							system ( "$poundctl -c $portadmin -B 0 $idsv $index >/dev/null 2>&1" );
 						}
 					}
@@ -324,6 +325,7 @@ sub getFarmGuardianPid    # ($fname,$svice)
 	my ( $fname, $svice ) = @_;
 
 	my $pidfile = "";
+	my $piddir = &getGlobalConfiguration('piddir');
 
 	opendir ( my $dir, "$piddir" ) || return -1;
 	@files =

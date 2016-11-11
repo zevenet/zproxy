@@ -818,6 +818,8 @@ sub getHTTPFarmGlobalStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
+	my $poundctl = &getGlobalConfiguration('poundctl');
+
 	return `$poundctl -c "/tmp/$farm_name\_pound.socket"`;
 }
 
@@ -1023,6 +1025,7 @@ sub genDHFile    # ($farm_name)
 		&zenlog( "Generating DH keys in $dhfile ..." );
 		&setFarmLock( $farm_name, "on", "<a href=\"https://www.zenloadbalancer.com/knowledge-base/misc/diffie-hellman-keys-generation-important/\" target=\"_blank\">Generating SSL Diffie-Hellman 2048 keys</a> <img src=\"img/loading.gif\"/>" );
 
+		my $openssl = &getGlobalConfiguration('openssl');
 		system("$openssl dhparam -5 2048 -out $dhfile &");
 		$output = $?;
 	}
@@ -1037,10 +1040,10 @@ sub _runHTTPFarmStart    # ($farm_name)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $status        = -1;
+	my $pound = &getGlobalConfiguration('pound');
+	my $piddir = &getGlobalConfiguration('piddir');
 
-	&zenlog(
-		"Checking $farm_name farm configuration"
-	);
+	&zenlog( "Checking $farm_name farm configuration" );
 	&getHTTPFarmConfigIsOK( $farm_name );
 
 	&zenlog(
@@ -1069,6 +1072,7 @@ sub _runHTTPFarmStop    # ($farm_name)
 	if ( &getHTTPFarmConfigIsOK( $farm_name ) == 0 )
 	{
 		$pid = &getFarmPid( $farm_name );
+		my $piddir = &getGlobalConfiguration('piddir');
 
 		&zenlog( "running 'kill 15, $pid'" );
 		$run = kill 15, $pid;
@@ -1099,6 +1103,7 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 	#copy template modyfing values
 	use File::Copy;
 	&zenlog( "copying pound tpl file on $farm_name\_pound.cfg" );
+	my $poundtpl = &getGlobalConfiguration('poundtpl');
 	copy( "$poundtpl", "$configdir/$farm_name\_pound.cfg" );
 
 	#modify strings with variables
@@ -1132,6 +1137,9 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 	print FERR "The service is not available. Please try again later.\n";
 	close FERR;
 
+	my $pound = &getGlobalConfiguration('pound');
+	my $piddir = &getGlobalConfiguration('piddir');
+
 	#run farm
 	&zenlog(
 		"running $pound -f $configdir\/$farm_name\_pound.cfg -p $piddir\/$farm_name\_pound.pid"
@@ -1162,7 +1170,9 @@ sub getHTTPFarmPort       # ($farm_name)
 sub getHTTPFarmPid        # ($farm_name)
 {
 	my ( $farm_name ) = @_;
+
 	my $output = -1;
+	my $piddir = &getGlobalConfiguration('piddir');
 
 	my $pidfile = "$piddir\/$farm_name\_pound.pid";
 	if ( -e $pidfile )
@@ -1517,6 +1527,8 @@ sub getHTTPFarmBackendStatusCtl    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
+	my $poundctl = &getGlobalConfiguration('poundctl');
+
 	return `$poundctl -c  /tmp/$farm_name\_pound.socket`;
 }
 
@@ -1781,6 +1793,7 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 		}
 		elsif ( $ciphers eq "cipherpci" )
 		{
+			my $cipher_pci = &getGlobalConfiguration('cipher_pci');
 			$line =~ s/#//g;
 			$line   = "\tCiphers \"$cipher_pci\"";
 			$output = 0;
@@ -1847,7 +1860,7 @@ sub getFarmCipherSet    # ($farm_name)
 	{
 		$output = "cipherglobal";
 	}
-	elsif ( $cipher_list eq $cipher_pci )
+	elsif ( $cipher_list eq &getGlobalConfiguration('cipher_pci') )
 	{
 		$output = "cipherpci";
 	}
@@ -1885,6 +1898,7 @@ sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
 
+	my $poundctl = &getGlobalConfiguration('poundctl');
 	my @run    = `$poundctl -c "/tmp/$farm_name\_pound.socket"`;
 	my $output = -1;
 	my $sw     = 0;
@@ -1931,6 +1945,7 @@ sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	&zenlog(
 		  "setting Maintenance mode for $farm_name service $service backend $backend" );
 
+	my $poundctl = &getGlobalConfiguration('poundctl');
 	my $poundctl_command =
 	  "$poundctl -c /tmp/$farm_name\_pound.socket -b 0 $idsv $backend";
 
@@ -1957,6 +1972,7 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 		"setting Disabled maintenance mode for $farm_name service $service backend $backend"
 	);
 
+	my $poundctl = &getGlobalConfiguration('poundctl');
 	my $poundctl_command =
 	  "$poundctl -c /tmp/$farm_name\_pound.socket -B 0 $idsv $backend";
 
@@ -1980,6 +1996,7 @@ sub getFarmHttpBackendStatus    # ($farm_name,$backend,$status,$idsv)
 	if ( !-e $statusfile )
 	{
 		open FW, ">$statusfile";
+		my $poundctl = &getGlobalConfiguration('poundctl');
 		@run = `$poundctl -c /tmp/$farm_name\_pound.socket`;
 		my @sw;
 		my @bw;
@@ -2088,6 +2105,7 @@ sub setFarmHttpBackendStatus    # ($farm_name)
 	&zenlog( "Setting backends status in farm $farm_name" );
 
 	open FR, "<", "$configdir\/$farm_name\_status.cfg";
+	my $poundctl = &getGlobalConfiguration('poundctl');
 	while ( <FR> )
 	{
 		my @line = split ( "\ ", $_ );
@@ -2125,6 +2143,7 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 		my @newservice;
 		my $sw    = 0;
 		my $count = 0;
+		my $poundtpl = &getGlobalConfiguration('poundtpl');
 		tie @poundtpl, 'Tie::File', "$poundtpl";
 		my $countend = 0;
 		foreach $line ( @poundtpl )
@@ -2998,6 +3017,7 @@ sub setFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 	my $serviceid;
 	my @sessionid;
 	my $sessid;
+	my $poundctl = &getGlobalConfiguration('poundctl');
 
 	&zenlog(
 		"Deleting established sessions to a backend $backendid from farm $farm_name in service $service"

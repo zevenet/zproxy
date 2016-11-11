@@ -481,6 +481,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 
 		# manage l4sd
 		my $l4sd_pidfile = '/var/run/l4sd.pid';
+		my $l4sd = &getGlobalConfiguration('l4sd');
 
 		if ( $$farm{ lbalg } eq 'leastconn' && -e "$l4sd" )
 		{
@@ -1325,6 +1326,8 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		untie @configfile;
 	}
 
+	my $l4sd = &getGlobalConfiguration('l4sd');
+
 	# Load L4 scheduler if needed
 	if ( $$farm{ lbalg } eq 'leastconn' && -e "$l4sd" )
 	{
@@ -1406,6 +1409,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	# Enable active l4 file
 	if ( $status != -1 )
 	{
+		my $piddir = &getGlobalConfiguration('piddir');
 		open $fi, '>', "$piddir\/$$farm{name}\_l4xnat.pid";
 		close $fi;
 	}
@@ -1452,6 +1456,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 					   @allrules );
 
 	# Disable active l4xnat file
+	my $piddir = &getGlobalConfiguration('piddir');
 	unlink ( "$piddir\/$farm_name\_l4xnat.pid" );
 	if ( -e "$piddir\/$farm_name\_l4xnat.pid" )
 	{
@@ -1479,6 +1484,7 @@ sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 	close FO;
 	$output = $?;      # FIXME
 
+	my $piddir = &getGlobalConfiguration('piddir');
 	if ( !-e "$piddir/${farm_name}_$farm_type.pid" )
 	{
 		# Enable active l4xnat file
@@ -1955,6 +1961,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	}
 	untie @configfile;
 
+	my $piddir = &getGlobalConfiguration('piddir');
 	rename ( "$configdir\/$farm_filename", "$configdir\/$new_farm_filename" ) or $output = -1;
 	rename ( "$piddir\/$farm_name\_$farm_type.pid",
 			 "$piddir\/$new_farm_name\_$farm_type.pid" ) or $output = -1;

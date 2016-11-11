@@ -14,6 +14,7 @@ require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/plugins_functions.cgi";
 
 #our $plugins::plugins_path;
+my $version = &main::getGlobalConfiguration('version');
 
 our %data = (
 	name => __PACKAGE__,

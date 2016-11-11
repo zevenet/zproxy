@@ -212,6 +212,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 
 	# Set default uplinks as gateways
 	my $iface     = &getFarmInterface( $farm_name );
+	my $ip_bin    = &getGlobalConfiguration('ip_bin');
 	my @eject     = `$ip_bin route del default table table_$iface 2> /dev/null`;
 	my @servers   = &getFarmServers( $farm_name );
 	my $algorithm = &getFarmAlgorithm( $farm_name );
@@ -260,6 +261,8 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 		}
 	}
 
+	my $ip_bin = &getGlobalConfiguration('ip_bin');
+
 	if ( $routes ne "" )
 	{
 		my $ip_command =
@@ -288,6 +291,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 	&setIpForward( "true" );
 
 	# Enable active datalink file
+	my $piddir = &getGlobalConfiguration('piddir');
 	open FI, ">$piddir\/$farm_name\_datalink.pid";
 	close FI;
 
@@ -334,6 +338,7 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 	if ( $status != -1 )
 	{
 		my $iface = &getFarmInterface( $farm_name );
+		my $ip_bin = &getGlobalConfiguration('ip_bin');
 
 		# Disable policies to the local network
 		my $ip = &iponif( $iface );
@@ -350,6 +355,7 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 		my @eject = `$ip_bin route del default table table_$iface 2> /dev/null`;
 
 		# Disable active datalink file
+		my $piddir = &getGlobalConfiguration('piddir');
 		unlink ( "$piddir\/$farm_name\_datalink.pid" );
 		if ( -e "$piddir\/$farm_name\_datalink.pid" )
 		{
@@ -370,6 +376,7 @@ sub runDatalinkFarmCreate    # ($farm_name,$vip,$fdev)
 	close FO;
 	$output = $?;
 
+	my $piddir = &getGlobalConfiguration('piddir');
 	if ( !-e "$piddir/${farm_name}_datalink.pid" )
 	{
 		# Enable active datalink file
@@ -620,6 +627,7 @@ sub setDatalinkNewFarmName    # ($farm_name,$new_farm_name)
 	}
 	untie @configfile;
 
+	my $piddir = &getGlobalConfiguration('piddir');
 	rename ( "$configdir\/$farm_filename", "$configdir\/$newffile" );
 	rename ( "$piddir\/$farm_name\_$farm_type.pid",
 			 "$piddir\/$new_farm_name\_$farm_type.pid" );

@@ -29,6 +29,7 @@ my $name   = $ARGV[0];
 my $action = $ARGV[1];
 
 my $backupdir = &getGlobalConfiguration( 'backupdir' );
+my $tar = &getGlobalConfiguration( 'tar' );
 
 if ( $action eq "-c" )
 {

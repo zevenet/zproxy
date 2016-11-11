@@ -304,6 +304,7 @@ sub get_interface_stack_ip_mask_gateway    # ($if_name, $ip_version)
 	{
 		$mask = `ifconfig $if_name | awk -F'Mask:' '{printf \$2}'`;
 		chomp ( $mask );
+		my $ip_bin = &getGlobalConfiguration('ip_bin');
 		my ( $default_gw_line ) = `$ip_bin route`;
 
 		$default_gw_line =~ /via (.+)? dev (\w+)? /;

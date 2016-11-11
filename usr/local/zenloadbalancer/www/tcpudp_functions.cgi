@@ -22,6 +22,8 @@
 ###############################################################################
 
 my $configdir = &getGlobalConfiguration('configdir');
+my $pen_bin = &getGlobalConfiguration('pen_bin');
+my $pen_ctl = &getGlobalConfiguration('pen_ctl');
 
 #asign a port for manage a pen Farm
 sub setFarmPort    # ()

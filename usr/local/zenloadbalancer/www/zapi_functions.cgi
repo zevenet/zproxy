@@ -32,7 +32,7 @@ sub getZAPI    #($name,$value)
 	if ( $name eq "status" )
 	{
 		use File::Grep qw( fgrep fmap fdo );
-		if ( fgrep { /^zapi/ } "$htpass" )
+		if ( fgrep { /^zapi/ } &getGlobalConfiguration('htpass') )
 		{
 			$result = "true";
 		}
@@ -40,7 +40,7 @@ sub getZAPI    #($name,$value)
 	if ( $name eq "keyzapi" )
 	{
 
-		tie my @contents, 'Tie::File', "$globalcfg";
+		tie my @contents, 'Tie::File', &getGlobalConfiguration('globalcfg');
 		foreach $line ( @contents )
 		{
 			if ( $line =~ /^\$zapikey/ )
@@ -65,6 +65,8 @@ sub setZAPI    #($name,$value)
 
 	my ( $name, $value ) = @_;
 	my $result = "false";
+
+	my $globalcfg = &getGlobalConfiguration('globalcfg');
 
 	#Enable ZAPI
 	if ( $name eq "enable" )

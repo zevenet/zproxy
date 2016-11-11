@@ -10,6 +10,7 @@ require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 
 my $DEBUG = 0;
 my $filecluster = &getGlobalConfiguration('filecluster');
+my $pidof = &getGlobalConfiguration('pidof');
 
 
 ## Cluster configured
@@ -54,6 +55,7 @@ if ( !$zlatency_ok ){
 
 ## Cluster interface
 
+my $ip_bin = &getGlobalConfiguration('ip_bin');
 my ( $vipcl ) = &getClusterConfigVipInterface( $filecluster );
 my $vip_loc_stat = $?;
 # local

@@ -235,6 +235,7 @@ if ( $eject eq "restart" )
 
 if ( $eject eq "start" )
 {
+	my $version = &getGlobalConfiguration('version');
 	&zenlog( "Starting Zen Load Balancer v$version" );
 	&zenlog( "Beginning start proccess" );
 	system ( '/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi' );
@@ -450,6 +451,7 @@ if ( $eject eq "start" )
 	&printAndLog( "* Starting Interfaces:\n" );
 
 	my $mgmt_ip = &GUIip();
+	my $ip_bin = &getGlobalConfiguration('ip_bin');
 
 	#first real interfaces
 	foreach my $iface ( @configured_interfaces )

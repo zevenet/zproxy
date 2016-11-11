@@ -218,7 +218,8 @@ sub getGSLBFarmConfigIsOK    # ($farm_name)
 	my ( $fname ) = @_;
 
 	my $ffile = &getFarmFile( $fname );
-	$output = -1;
+	my $output = -1;
+	my $gdnsd = &getGlobalConfiguration('gdnsd');
 
 	my $gdnsd_command = "$gdnsd -c $configdir\/$ffile/etc checkconf";
 
@@ -239,6 +240,8 @@ sub getGSLBFarmPid    # ($farm_name)
 	my $file          = &getFarmFile( $fname );
 	my $farm_filename = &getFarmFile( $fname );
 	my $output        = -1;
+	my $ps = &getGlobalConfiguration('ps');
+	my $gdnsd = &getGlobalConfiguration('gdnsd');
 
 	my @run =
 	  `$ps -ef | grep "$gdnsd -c $configdir\/$farm_filename" | grep -v grep | awk {'print \$2'}`;
@@ -429,6 +432,7 @@ sub getGSLBStartCommand    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
+	my $gdnsd = &getGlobalConfiguration('gdnsd');
 	return "$gdnsd -c $configdir\/$farm_name\_gslb.cfg/etc start";
 }
 
@@ -437,6 +441,7 @@ sub getGSLBStopCommand     # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
+	my $gdnsd = &getGlobalConfiguration('gdnsd');
 	return "$gdnsd -c $configdir\/$farm_name\_gslb.cfg/etc stop";
 }
 
@@ -539,6 +544,7 @@ sub runFarmReload    # ($farm_name)
 
 	my $type = &getFarmType( $fname );
 	my $output;
+	my $gdnsd = &getGlobalConfiguration('gdnsd');
 
 	my $gdnsd_command = "$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones";
 
@@ -2250,6 +2256,7 @@ sub getGSLBCheckConf
 {
 	my $farmname = shift;
 
+	my $gdnsd = &getGlobalConfiguration('gdnsd');
 	my $errormsg = system (
 		   "$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf > /dev/null 2>&1" );
 	if ( $errormsg )

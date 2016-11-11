@@ -1052,7 +1052,7 @@ sub show_status_system
 	my $loadavgstring = &set_data_string( @loadavgdata );
 	my @cpudata       = &get_system_cpu();
 	my $cpustring     = &set_data_string( @cpudata );
-	my $zlbversion    = $version;
+	my $zlbversion    = &getGlobalConfiguration('version');
 	my $zaversion     = `dpkg -l | grep zen | awk '{printf \$3}'`;
 	my $ncores = 1 + `grep processor /proc/cpuinfo | tail -1 | awk '{printf \$3}'`;
 	$zlbhostname = `hostname`;

@@ -46,6 +46,7 @@ require "/usr/local/zenloadbalancer/www/functions.cgi";
 
 use Time::HiRes qw(ualarm usleep clock_gettime CLOCK_REALTIME);
 
+my $conntrack = &getGlobalConfiguration('conntrack');
 my $fcondition = "/proc/net/nf_condition";
 my $pidfile    = "/var/run/l4sd.pid";
 my $algorithm  = "leastconn";

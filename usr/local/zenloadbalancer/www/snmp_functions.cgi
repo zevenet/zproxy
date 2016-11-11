@@ -29,6 +29,7 @@ sub setSnmpdStatus    # ($snmpd_status)
 	my ( $snmpd_status ) = @_;
 
 	my $return_code = -1;
+	my $systemctl = &getGlobalConfiguration('systemctl');
 
 	if ( $snmpd_status eq 'true' )
 	{
@@ -68,6 +69,7 @@ sub setSnmpdStatus    # ($snmpd_status)
 
 sub getSnmpdStatus    # ()
 {
+	my $pidof = &getGlobalConfiguration('pidof');
 	my $status      = `$pidof snmpd`;
 	my $return_code = $?;
 
@@ -164,6 +166,8 @@ sub setSnmpdService    # ($snmpd_enabled)
 		&zenlog( "SNMP Status change failed" );
 		return $return_code;
 	}
+
+	my $systemctl = &getGlobalConfiguration('systemctl');
 
 	# perform runlevel change
 	if ( $snmpd_enabled eq 'true' )

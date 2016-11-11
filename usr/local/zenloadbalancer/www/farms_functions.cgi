@@ -616,6 +616,7 @@ sub getFarmStatus    # ($farm_name)
 	return $output if !defined ( $farm_name );    # farm name cannot be empty
 
 	my $farm_type = &getFarmType( $farm_name );
+	my $piddir = &getGlobalConfiguration('piddir');
 
 	# for every farm type but datalink or l4xnat
 	if ( $farm_type ne "datalink" && $farm_type ne "l4xnat" )

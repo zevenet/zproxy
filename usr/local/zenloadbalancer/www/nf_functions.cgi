@@ -30,10 +30,12 @@ sub loadNfModule    # ($modname,$params)
 	my ( $modname, $params ) = @_;
 
 	my $status  = 0;
+	my $lsmod = &getGlobalConfiguration('lsmod');
 	my @modules = `$lsmod`;
 
 	if ( !grep { /^$modname /x } @modules )
 	{
+		my $modprobe = &getGlobalConfiguration('modprobe');
 		my $modprobe_command = "$modprobe $modname $params";
 
 		&zenlog( "L4 loadNfModule: $modprobe_command" );
@@ -49,6 +51,7 @@ sub removeNfModule    # ($modname)
 {
 	my $modname = shift;
 
+	my $modprobe = &getGlobalConfiguration('modprobe');
 	my $modprobe_command = "$modprobe -r $modname";
 
 	&zenlog( "L4 removeNfModule: $modprobe_command" );
@@ -136,6 +139,7 @@ sub getNewMark    # ($farm_name)
 
 	my $found;
 	my $marknum = 0x200;
+	my $fwmarksconf = &getGlobalConfiguration('fwmarksconf');
 
 	tie my @contents, 'Tie::File', "$fwmarksconf";
 
@@ -170,6 +174,7 @@ sub delMarks    # ($farm_name,$mark)
 	my ( $farm_name, $mark ) = @_;
 
 	my $status = 0;
+	my $fwmarksconf = &getGlobalConfiguration('fwmarksconf');
 
 	if ( $farm_name ne "" )
 	{
@@ -199,6 +204,7 @@ sub renameMarks        # ($farm_name,$newfname)
 
 	if ( $farm_name ne "" )
 	{
+		my $fwmarksconf = &getGlobalConfiguration('fwmarksconf');
 		tie my @contents, 'Tie::File', "$fwmarksconf";
 		foreach my $line ( @contents )
 		{
@@ -480,6 +486,7 @@ sub getConntrack    # ($orig_src, $orig_dst, $reply_src, $reply_dst, $protocol)
 	$reply_dst = "-q $reply_dst" if ( $reply_dst );
 	$protocol  = "-p $protocol"  if ( $protocol );
 
+	my $conntrack = &getGlobalConfiguration('conntrack');
 	my $conntrack_cmd =
 	  "$conntrack -L $orig_src $orig_dst $reply_src $reply_dst $protocol 2>/dev/null";
 
@@ -909,11 +916,11 @@ sub getBinVersion    # ($farm_name)
 	# Check the type of binary to use
 	if ( $ipv == 4 )
 	{
-		$binary = $iptables;
+		$binary = &getGlobalConfiguration('iptables');
 	}
 	elsif ( $ipv == 6 )
 	{
-		$binary = $ip6tables;
+		$binary = &getGlobalConfiguration('ip6tables');
 	}
 
 	# Return $iptables or $ip6tables

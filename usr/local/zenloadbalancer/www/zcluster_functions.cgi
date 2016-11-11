@@ -452,6 +452,7 @@ sub runRemotely # `output` ( $cmd, $ip_addr [, $port ] )
 	$ssh_options .= '-o "StrictHostKeyChecking=no" ';
 
 	# log the command to be run
+	my $ssh = &getGlobalConfiguration('ssh');
 	my $ssh_cmd = "$ssh $ssh_options root\@$ip_address '$cmd'";
 	&zenlog("Running remotely: \@$ip_address: $cmd");
 	&zenlog("Running remotely: $ssh_cmd");
@@ -552,7 +553,8 @@ sub zsync
 	my $src = "$path";
 	$src .= '/' if -d $path;
 	my $dest = "$user\@$host:$path";
-	
+
+	my $rsync = &getGlobalConfiguration('rsync');
 	my $rsync_cmd = "$rsync $zenrsync $include $exclude $src $dest";
 
 	&zenlog( "Running: $rsync_cmd" );

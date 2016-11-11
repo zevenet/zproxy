@@ -6,6 +6,7 @@ use File::Basename;
 use constant BASENAME => basename $0;
 require "/usr/local/zenloadbalancer/config/global.conf";
 require "/usr/local/zenloadbalancer/www/functions.cgi";
+my $fwmarksconf = &getGlobalConfiguration('fwmarksconf');
 my $BASENAME = basename $0;
 
 &zenlog("Running $BASENAME...");
@@ -89,6 +90,7 @@ foreach my $farm_name ( @l4_farmnames )
 	}
 }
 # flush mangle and nat tables to make sure they are clean
+my $iptables = &getGlobalConfiguration('iptables');
 system("$iptables -t nat -F");
 system("$iptables -t mangle -F");
 
