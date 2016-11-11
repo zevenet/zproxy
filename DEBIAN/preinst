@@ -37,7 +37,6 @@ sub keycert
 	print "Hostname=$hostname\n";
 
 	$n = 2;
-	print "DMI=$dmi\n";
 	$encrypted_string  = crypt ( "${dmi}${hostname}", "93" );
 	$encrypted_string =~ s/^93//;
 	$encrypted_string2 = crypt ( "${hostname}${dmi}", "a3" );
@@ -95,7 +94,6 @@ sub certcontrol
 		my $totaldays = ( $end - $ini ) / 86400;
 		$totaldays =~ s/\-//g;
 		my $dayright = ( $end - time () ) / 86400;
-		print "Certificate total day=$totaldays, used=$dayright\n";
 		#control errors
 		if ( $totaldays < 364 && $dayright < 0 && $swcert == 0 )
 		{
