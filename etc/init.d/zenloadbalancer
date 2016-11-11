@@ -34,9 +34,11 @@
 
 
 $zenbin="/usr/local/zenloadbalancer/app/zbin/zenloadbalancer";
+$checkcfg="/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi";
 $action=$ARGV[0];
 
 if ( "$action" eq "start"){
+        my @run = `$checkcfg > /dev/console`;
         my @run = `$zenbin start > /dev/console`;
         exit;
 }

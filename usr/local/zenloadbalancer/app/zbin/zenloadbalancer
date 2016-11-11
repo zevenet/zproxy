@@ -42,9 +42,6 @@ if ( !$eject && $eject !~ /stop|start|status|startlocal|stoplocal/ )
 	exit;
 }
 
-if ($eject eq "start"){
-        system ( '/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi' );
-}
 my @configured_interfaces = @{ &getConfigInterfaceList() };
 
 	
