@@ -1154,35 +1154,49 @@ sub runFarmDelete    # ($farm_name)
 
 	my $basedir = &getGlobalConfiguration('basedir');
 	my $farm_type = &getFarmType( $farm_name );
+	my $status = 1;
 
 	&zenlog( "running 'Delete' for $farm_name" );
-	unlink glob ( "$configdir/$farm_name\_*\.cfg" );
-	$status = $?;
-	unlink glob ( "$configdir/$farm_name\_*\.html" );
+
+	if ( $farm_type eq "gslb" )
+	{
+		use File::Path 'rmtree';
+		$status = 0
+		  if rmtree( ["$configdir/$farm_name\_gslb.cfg"] );
+	}
+	else
+	{
+		$status = 0
+		  if unlink glob ( "$configdir/$farm_name\_*\.cfg" );
+
+		if ( $farm_type eq "http" || $farm_type eq "https" )
+		{
+			unlink glob ( "$configdir/$farm_name\_*\.html" );
+
+			# For HTTPS farms only
+			$dhfile = "$configdir\/$farm_name\_dh2048.pem";
+			unlink ( "$dhfile" ) if -e "$dhfile";
+		}
+		elsif ( $farm_type eq "datalink" )
+		{
+			# delete cron task to check backends
+			use Tie::File;
+			tie my @filelines, 'Tie::File', "/etc/cron.d/zenloadbalancer";
+			@filelines = grep !/\# \_\_$farm_name\_\_/, @filelines;
+			untie @filelines;
+		}
+		elsif ( $farm_type eq "l4xnat" )
+		{
+			# delete nf marks
+			delMarks( $farm_name, "" );
+		}
+	}
+
 	unlink glob ( "$configdir/$farm_name\_*\.conf" );
 	unlink glob ( "$basedir/img/graphs/bar$farm_name*" );
 	unlink glob ( "$basedir/img/graphs/$farm_name-farm\_*" );
 	unlink glob ( "$rrdap_dir/$rrd_dir/$farm_name-farm*" );
 	unlink glob ( "${logdir}/${farm_name}\_*farmguardian*" );
-
-	# For HTTPS farms only
-	$dhfile = "$configdir\/$farm_name\_dh2048.pem";
-	unlink ( "$dhfile" ) if -e "$dhfile";
-
-	if ( $farm_type eq "gslb" )
-	{
-		use File::Path 'rmtree';
-		rmtree( ["$configdir/$farm_name\_gslb.cfg"] );
-	}
-
-	# delete cron task to check backends
-	use Tie::File;
-	tie @filelines, 'Tie::File', "/etc/cron.d/zenloadbalancer";
-	my @filelines = grep !/\# \_\_$farm_name\_\_/, @filelines;
-	untie @filelines;
-
-	# delete nf marks
-	delMarks( $farm_name, "" );
 
 	return $status;
 }
