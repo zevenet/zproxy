@@ -913,7 +913,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 									 weight  => $json_obj->{ weight } + 0,
 									 timeout => $json_obj->{ timeout },
 						 },
-						 status = 'needed restart',
+						 status => 'needed restart',
 						 message => $message,
 			};
 
@@ -1024,7 +1024,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 									 id      => $id,
 									 ip      => $json_obj->{ ip },
 						 },
-						 status = 'needed restart',
+						 status => 'needed restart',
 						 message => $message,
 			};
 
@@ -1217,7 +1217,7 @@ sub new_farm_service # ( $json_obj, $farmname )
 			my $body = {
 						 description => "New service " . $json_obj->{ id },
 						 params      => { id => $json_obj->{ id } },
-						 status = 'needed restart',
+						 status => 'needed restart',
 			};
 
 			&httpResponse({ code => 201, body => $body });
@@ -1327,7 +1327,7 @@ sub new_farm_service # ( $json_obj, $farmname )
 									 id        => $json_obj->{ id },
 									 algorithm => $json_obj->{ algorithm }
 						 },
-						 status = 'needed restart',
+						 status => 'needed restart',
 			};
 
 			&httpResponse({ code => 201, body => $body });
