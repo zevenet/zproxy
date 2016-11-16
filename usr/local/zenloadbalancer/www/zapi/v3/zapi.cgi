@@ -1064,20 +1064,25 @@ GET qr{^/stats$} => sub {
 	&stats();
 };
 
-GET qr{^/stats/mem$} => sub {
+GET qr{^/stats/system/memory$} => sub {
 	&stats_mem();
 };
 
-GET qr{^/stats/load$} => sub {
+GET qr{^/stats/system/load$} => sub {
 	&stats_load();
 };
 
-GET qr{^/stats/network$} => sub {
+GET qr{^/stats/system/network$} => sub {
 	&stats_network();
 };
 
-GET qr{^/stats/cpu$} => sub {
+GET qr{^/stats/system/cpu$} => sub {
 	&stats_cpu();
+};
+
+# Interfaces stats
+GET qr{^/stats/interfaces$} => sub {
+	&stats_network();
 };
 
 # Farm stats
@@ -1094,6 +1099,14 @@ GET qr{^/stats/farms/($farm_re)$} => sub {
 	&farm_stats( @_ );
 };
 
+GET qr{^/stats/farms/($farm_re)/backends$} => sub {
+	&farm_stats( @_ );
+};
+
+GET qr{^/stats/farms/($farm_re)/service/($service_re)/backends$} => sub {
+	&farm_stats( @_ );
+};
+
 
 
 
@@ -1104,7 +1117,6 @@ graphs:
 
 my $frecuency_re = &getValidFormat ( 'graphs_frecuency' );
 my $system_id_re = &getValidFormat ( 'graphs_system_id' );
-my $disk_re = &getValidFormat ( 'mount_disk' );
 
 #  GET graphs
 #~ GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
@@ -1117,7 +1129,7 @@ GET qr{^/graphs$} => sub {
 };
 
 
-
+##### /graphs/system
 
 #  GET all possible system graphs
 GET qr{^/graphs/system$} => sub {
@@ -1134,23 +1146,26 @@ GET qr{^/graphs/system/($system_id_re)/($frecuency_re)$} => sub {
 	&get_frec_sys_graphs( @_ );
 };
 
-#~ #  GET disk system graphs
-#~ GET qr{^/graphs/system/disk$} => sub {
-	#~ &get_all_sys_disk_graphs( @_ );
-#~ };
 
-#~ #  GET disk system graphs
-#~ GET qr{^/graphs/system/disk/($disk_re)$} => sub {
-	#~ &get_sys_disk_graphs( @_ );
-#~ };
+##### /graphs/system/disk
 
-#~ #  GET frecuency disk system graphs
-#~ GET qr{^/graphs/system/disk/($disk_re)/($frecuency_re)$} => sub {
-	#~ &get_frec_sys_disk_graphs( @_ );
-#~ };
+# $disk_re includes 'root' at the beginning
+my $disk_re = &getValidFormat( 'mount_point' );
+
+GET qr{^/graphs/system/disk$} => sub {
+	&list_disks( @_ );
+};
+
+GET qr{^/graphs/system/disk/($disk_re)$} => sub {
+	&graphs_disk_mount_point_all( @_ );
+};
+
+GET qr{^/graphs/system/disk/($disk_re)/($frecuency_re)$} => sub {
+	&graph_disk_mount_point_freq( @_ );
+};
 
 
-
+##### /graphs/interfaces
 
 #  GET all posible interfaces graphs
 GET qr{^/graphs/interfaces$} => sub {
@@ -1168,7 +1183,7 @@ GET qr{^/graphs/interfaces/($nic_re)/($frecuency_re)$} => sub {
 };
 
 
-
+##### /graphs/farms
 
 #  GET all posible farm graphs
 GET qr{^/graphs/farms$} => sub {
