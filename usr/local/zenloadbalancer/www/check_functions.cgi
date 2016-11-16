@@ -49,7 +49,7 @@ my %format_re = (
 
 	# hostname
 	'hostname' => $hostname,
-	
+
 	# system
 	'dns_nameserver' => $ipv4_addr,
 	'dns'  => qr/(?:primary|secondary)/,
@@ -68,12 +68,12 @@ my %format_re = (
 	'backend'      => qr/\d+/,
 	'service'      => $service,
 	'farm_modules'      => qr/(?:gslb|dslb|lslb)/,
-	
+
 	# graphs
 	'graphs_frecuency' => $graphsFrecuency,
 	'graphs_system_id' => qr/(?:cpu|load|ram|swap)/,
-	'mount_disk' => qr/root[\w\/]*[^(?:$graphsFrecuency)]$/,
-	
+	'mount_point' => qr/root[\w\-\.\/]*/,
+
 	# gslb
 	'zone' => qr/(?:$hostname\.)+[a-z]{2,}/,
 	'resource_id'   => qr/\d+/,
