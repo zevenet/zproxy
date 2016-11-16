@@ -12,6 +12,16 @@
 #
 ###############################################################################
 
+require "/usr/local/zenloadbalancer/www/system_functions.cgi";
+require "/usr/local/zenloadbalancer/www/rrd_functions.cgi";
+
+# Supported graphs periods
+my $graph_period = {
+					 'daily'   => 'd',
+					 'weekly'  => 'w',
+					 'monthly' => 'm',
+					 'yearly'  => 'y',
+};
 
 # Get all farm stats
 sub getAllFarmStats
@@ -788,19 +798,108 @@ sub get_frec_farm_graphs	#()
 	&httpResponse( { code => 400, body => $body } );
 }
 
+#GET mount points list
+sub list_disks	#()
+{
+	my @mount_points;
+	my $partitions = &getDiskPartitionsInfo();
 
+	for my $key ( keys %{ $partitions } )
+	{
+		push( @mount_points, $partitions->{ $key }->{ mount_point } );
+	}
 
+	sort @mount_points;
 
+	my $body = {
+		description => "List disk partitions",
+		params => \@mount_points,
+	};
 
+	&httpResponse({ code => 200, body => $body });
+}
 
+#GET disk graphs for all periods
+sub graphs_disk_mount_point_all	#()
+{
+	my $mount_point = shift;
 
+	$mount_point =~ s/^root[\/]?/\//;
 
+	my $description = "Disk partition usage graphs";
+	my $parts = &getDiskPartitionsInfo();
 
+	my ( $part_key ) = grep { $parts->{ $_ }->{ mount_point } eq $mount_point } keys %{ $parts };
 
+	unless ( $part_key )
+	{
+		# Error
+		my $errormsg = "Mount point not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 404, body => $body });
+	}
 
+	my $dev_id = $parts->{ $part_key }->{ rrd_id };
 
+	# Success
+	my @graphs = (
+				   { frequency => 'daily',   graph => &printGraph( $dev_id, 'd' ) },
+				   { frequency => 'weekly',  graph => &printGraph( $dev_id, 'w' ) },
+				   { frequency => 'monthly', graph => &printGraph( $dev_id, 'm' ) },
+				   { frequency => 'yearly',  graph => &printGraph( $dev_id, 'y' ) },
+	);
 
+	my $body = {
+				 description => $description,
+				 graphs      => \@graphs,
+	};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
+#GET disk graph for a single period
+sub graph_disk_mount_point_freq	#()
+{
+	my $mount_point = shift;
+	my $frequency = shift;
+
+	$mount_point =~ s/^root[\/]?/\//;
+
+	my $description = "Disk partition usage graph";
+	my $parts = &getDiskPartitionsInfo();
+
+	my ( $part_key ) = grep { $parts->{ $_ }->{ mount_point } eq $mount_point } keys %{ $parts };
+
+	unless ( $part_key )
+	{
+		# Error
+		my $errormsg = "Mount point not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+	my $dev_id = $parts->{ $part_key }->{ rrd_id };
+	my $freq = $graph_period->{ $frequency };
+
+	# Success
+	my $body = {
+				 description => $description,
+				 frequency      => $frequency,
+				 graph      => &printGraph( $dev_id, $freq ),
+	};
+
+	&httpResponse({ code => 200, body => $body });
+}
 
 
 stats:
@@ -1086,8 +1185,6 @@ sub farm_stats # ( $farmname )
 	
 			&httpResponse({ code => 200, body => $body });
 		}
-
-	
 	}
 }
 
@@ -1349,7 +1446,7 @@ sub stats_mem # ()
 
 	# Success
 	my $body = {
-				 description => "System stats",
+				 description => "Memory usage",
 				 params      => $out
 	};
 
@@ -1412,7 +1509,7 @@ sub stats_load # ()
 
 	# Success
 	my $body = {
-				 description => "System stats",
+				 description => "System load",
 				 params      => $out
 	};
 
@@ -1490,7 +1587,7 @@ sub stats_cpu # ()
 
 	# Success
 	my $body = {
-				 description => "System stats",
+				 description => "System CPU usage",
 				 params      => $out
 	};
 
@@ -1553,24 +1650,14 @@ sub stats_network # ()
 		'date'     => &getDate(),
 	};
 
-	foreach my $x ( 0 .. @data_net - 1 )
+	foreach my $array_pair ( @data_net )
 	{
-		my $name;
-		if ( $x % 2 == 0 )
-		{
-			my $name = $data_net[$x][0] . ' in';
-		}
-		else
-		{
-			my $name = $data_net[$x][0] . ' out';
-		}
-		my $value = $data_net[$x][1] + 0;
-		$out->{ $name } = $value;
+		$out->{ $array_pair->[0] } = $array_pair->[1] + 0;
 	}
 
 	# Success
 	my $body = {
-				 description => "System stats",
+				 description => "Network interefaces usage",
 				 params      => $out
 	};
 
