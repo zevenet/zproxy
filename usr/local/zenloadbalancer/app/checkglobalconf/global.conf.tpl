@@ -216,6 +216,8 @@ $bonding_slaves_filename="bonding/slaves";
 $bonding_miimon_filename="bonding/miimon";
 
 #Notifications Module
+$alerts = "/usr/local/zenloadbalancer/www/Plugins/Notifications/Alerts.conf";
+$senders = "/usr/local/zenloadbalancer/www/Plugins/Notifications/Senders.conf";
 $sec="/usr/bin/sec";
 $secConf="/usr/local/zenloadbalancer/www/Plugins/Notifications/sec.rules";
 $syslogFile="/var/log/syslog";
@@ -228,7 +230,8 @@ $rblLocalPreload = "/usr/local/zenloadbalancer/www/Plugins/ipds/rbl/local";
 $rblRemotePreload = "/usr/local/zenloadbalancer/www/Plugins/ipds/rbl/remote_lists.conf";
 $ipset = "/sbin/ipset";
 $touch = "/usr/bin/touch";
-$ddosConf = "/usr/local/zenloadbalancer/config/ipds/ddos/ddos.conf";
+$ddosConf = "/usr/local/zenloadbalancer/www/Plugins/ipds/ddos/ddos.conf";
+
 
 #::END Global Section
 

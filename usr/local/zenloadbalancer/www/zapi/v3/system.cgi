@@ -15,6 +15,8 @@
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
 
+require "/usr/local/zenloadbalancer/www/Plugins/notifications.cgi";
+
 dns:
 
 #**
@@ -504,6 +506,360 @@ sub set_ntp
 			}
 		}
 	}
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+}
+
+notifications:
+
+#**
+#  @api {get} /system/notifications/methods/METHOD Request method info
+#  @apiGroup SYSTEM
+#  @apiDescription Get description of method to send notifications
+#  @apiName GetNotificationsMethods
+#  @apiParam {String} method  type of method to send notifications. Only email available.
+#  @apiVersion 3.0
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Get notifications email methods",
+#   "params" : {
+#      "from" : "",
+#      "method" : "email",
+#      "password" : "******",
+#      "server" : "smtp.foo.bar",
+#      "tls" : "true",
+#      "to" : "admin@mail.com",
+#      "user" : "user@mail.com"
+#   }
+#}
+#
+#@apiExample {curl} Example Usage:
+#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/methods/email
+#
+#@apiSampleRequest off
+#**
+# GET /system/notifications/methods/METHOD
+sub get_notif_methods
+{
+	my $key = shift;
+	$key = 'Smtp' if ( $key eq 'email' );
+	my $description = "Get notifications email methods";
+	my $methods     = &getNotifSendersSmtp();
+
+	&httpResponse(
+		 { code => 200, body => { description => $description, params => $methods } } );
+}
+
+#####Documentation of POST notification methods####
+#**
+#  @api {post} /system/notifications/methods/METHOD Modify the notification methods
+#  @apiGroup SYSTEM
+#  @apiName PostNotificationsMethods
+#  @apiParam {String} method  type method to send notifications. Only email available.
+#  @apiDescription Modify notification methods
+#  @apiVersion 3.0
+#
+#
+# @apiSuccess	{string}		server		SMTP server
+# @apiSuccess	{string}		user			user for the SMTP server
+# @apiSuccess	{string}		password		Password for the SMTP server
+# @apiSuccess	{string}		from		origin email direction
+# @apiSuccess	{string}		to				destine email direction
+# @apiSuccess	{boolean}	tls			Define if TLS
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Set notifications email methods",
+#   "params" : {
+#      "password" : "password",
+#      "server" : "smtp.foo.bar",
+#      "tls" : "true",
+#      "to" : "admin@mail.com",
+#      "user" : "user@mail.com"
+#   }
+#}
+#
+#
+# @apiExample {curl} Example Usage:
+#		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#		-d '{"tls":"true","server":"smtp.foo.bar","user":"user@mail.com", "password":"password", "to":"admin@mail.com"}'
+#		https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/methods/email
+#
+# @apiSampleRequest off
+#
+#**
+#  POST /system/notifications/methods/METHOD
+sub set_notif_methods
+{
+	my $json_obj = shift;
+	my $key      = shift;
+	$key = 'Smtp' if ( $key eq 'email' );
+	my $description = "Set notifications email methods";
+	my $errormsg;
+	my @allowParams;
+
+	if ( $key eq 'Smtp' )
+	{
+		@allowParams = ( "user", "server", "password", "from", "to", "tls" );
+		$errormsg = &getValidOptParams( $json_obj, \@allowParams );
+		if ( !$errormsg )
+		{
+			if ( !&getValidFormat( "notif_tls", $json_obj->{ 'tls' } ) )
+			{
+				$errormsg = "TLS only can be true or false.";
+			}
+			else
+			{
+				$errormsg = &setNotifSenders( $key, $json_obj );
+				if ( !$errormsg )
+				{
+					&httpResponse(
+						{ code => 200, body => { description => $description, params => $json_obj } } );
+				}
+				else
+				{
+					$errormsg = "There was a error modifying $key.";
+				}
+			}
+		}
+	}
+
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+}
+
+#**
+#  @api {get} /system/notifications/alerts Request status of all alerts
+#  @apiGroup SYSTEM
+#  @apiDescription Get if alert status is enabled or disabled
+#  @apiName GetNotificationsAlertsStatus
+#  @apiVersion 3.0
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Get notifications alert status",
+#   "params" : [
+#      {
+#         "alert" : "backends",
+#         "status" : "enabled"
+#      },
+#      {
+#         "alert" : "cluster",
+#         "status" : "disabled"
+#      }
+#   ]
+#}
+#
+#@apiExample {curl} Example Usage:
+#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/alerts
+#
+#@apiSampleRequest off
+#**
+# GET /system/notifications/alerts
+sub get_notif_alert_status
+{
+	my $description = "Get notifications alert status";
+	my @output;
+	my $status = &getNotifData( 'alerts', 'Backend', 'Status' );
+	$status = 'disabled' if ( $status eq 'off' );
+	$status = 'enabled'  if ( $status eq 'on' );
+
+	push @output, { 'alert' => 'backends', 'status' => $status };
+	$status = &getNotifData( 'alerts', 'Cluster', 'Status' );
+	$status = 'disabled' if ( $status eq 'off' );
+	$status = 'enabled'  if ( $status eq 'on' );
+	push @output, { 'alert' => 'cluster', 'status' => $status };
+
+	&httpResponse(
+		 { code => 200, body => { description => $description, params => \@output } } );
+}
+
+#**
+#  @api {get} /system/notifications/alerts/ALERT Request alert info
+#  @apiGroup SYSTEM
+#  @apiDescription Get description of alert to send notifications
+#  @apiName GetNotificationsAlerts
+#  @apiParam {String} alert  type of alert to send notifications. Options are: backends or cluster
+#  @apiVersion 3.0
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Get notifications alert backends settings",
+#   "params" : {
+#      "avoidFlappingTime" : "4",
+#      "prefix" : "[Backend notifications]",
+#      "status" : "enabled"
+#   }
+#}
+#
+#@apiExample {curl} Example Usage:
+#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/alerts/backends
+#
+#@apiSampleRequest off
+#**
+# GET /system/notifications/alerts/ALERT
+sub get_notif_alert
+{
+	my $alert       = shift;
+	my $description = "Get notifications alert $alert settings";
+	my $param       = &getNotifAlert( $alert );
+
+	&httpResponse(
+		   { code => 200, body => { description => $description, params => $param } } );
+}
+
+#####Documentation of POST notification alerts####
+#**
+#  @api {post} /system/notifications/alerts/ALERT Modify alert settings
+#  @apiGroup SYSTEM
+#  @apiName PostNotificationsAlerts
+#  @apiParam {String} alert  type alert to configure. Value can be backends or cluster.
+#  @apiDescription Modify alert settings
+#  @apiVersion 3.0
+#
+#
+#
+# @apiSuccess	{number}	flapTime		During this time doesn't send notification if there are service flaps. Not available in cluster notifications
+# @apiSuccess	{string}		prefix			Prefix to add to the mail subject
+#
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Set notifications alert backends",
+#   "params" : {
+#      "flapTime" : 4,
+#      "prefix" : "[Backend notifications]"
+#   }
+#}
+#
+#
+# @apiExample {curl} Example Usage:
+#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#		  -d '{"flapTime":4,"prefix":"[Backend notifications]"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/alerts/backends
+#
+# @apiSampleRequest off
+#
+#**
+#  POST /system/notifications/alerts/ALERT
+sub set_notif_alert
+{
+	my $json_obj    = shift;
+	my $alert       = shift;
+	my $description = "Set notifications alert $alert";
+
+	my @allowParams = ( "flapTime", "prefix" );
+	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
+	if ( !$errormsg )
+	{
+		if ( !&getValidFormat( 'notif_time', $json_obj->{ 'flapTime' } ) )
+		{
+			$errormsg = "Error, it's necessary add a valid action.";
+		}
+		elsif ( exists $json_obj->{ 'flapTime' } && $alert eq 'cluster' )
+		{
+			$errormsg = "Avoid flapping time is not configurable in cluster alerts.";
+		}
+		else
+		{
+			my $params;
+			$params->{ 'PrefixSubject' } = $json_obj->{ 'prefix' }
+			  if ( $json_obj->{ 'prefix' } );
+			$params->{ 'SwitchTime' } = $json_obj->{ 'flapTime' }
+			  if ( $json_obj->{ 'flapTime' } );
+			$errormsg = &setNotifAlerts( $alert, $params );
+			if ( !$errormsg )
+			{
+				&httpResponse(
+					{ code => 200, body => { description => $description, params => $json_obj } } );
+			}
+			else
+			{
+				$errormsg = "There was a error modifiying $alert.";
+			}
+		}
+	}
+
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+}
+
+#####Documentation of POST notification alerts status####
+#**
+#  @api {post} /system/notifications/alerts/ALERT/action Modify alert status
+#  @apiGroup SYSTEM
+#  @apiName PostNotificationsAlertsActions
+#  @apiParam {String} alert  type alert to configure. Value can be backends or cluster.
+#  @apiDescription Modify alert status
+#  @apiVersion 3.0
+#
+#
+#
+# @apiSuccess	{string}		action		Enable or disable this type of alert. Options: enable or disable
+#
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Set notifications alert backends actions",
+#   "params" : {
+#      "action" : "enabled"
+#   }
+#}
+#
+#
+# @apiExample {curl} Example Usage:
+#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#		  -d '{"action":"enabled"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/alerts/backends/actions
+#
+# @apiSampleRequest off
+#
+#**
+#  POST /system/notifications/alerts/ALERT/actions
+sub set_notif_alert_actions
+{
+	my $json_obj    = shift;
+	my $alert       = shift;
+	my $description = "Set notifications alert $alert actions";
+
+	my @allowParams = ( "action" );
+	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
+	if ( !$errormsg )
+	{
+		if ( !&getValidFormat( 'notif_action', $json_obj->{ 'action' } ) )
+		{
+			$errormsg = "Error, it's necessary add a valid action";
+		}
+		else
+		{
+			$errormsg = &setNotifAlertsAction( $alert, $json_obj->{ 'action' } );
+			if ( !$errormsg )
+			{
+				&httpResponse(
+					{ code => 200, body => { description => $description, params => $json_obj } } );
+			}
+			elsif ( $errormsg == -2 )
+			{
+				$errormsg = "$alert just is $json_obj->{action}.";
+			}
+			else
+			{
+				$errormsg = "There was a error in $alert action.";
+			}
+		}
+	}
+
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
 	&httpResponse( { code => 400, body => $body } );

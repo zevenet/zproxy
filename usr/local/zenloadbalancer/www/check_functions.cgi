@@ -30,19 +30,21 @@
 my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/;         # (0-255)
 my $ipv4_addr     = qr/(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS/;
 my $ipv6_addr     = qr/(?:[\:\.a-f0-9]+)/;
-my $ipv4v6		= qr/(?:$ipv4_addr|$ipv6_addr)/;
+my $ipv4v6        = qr/(?:$ipv4_addr|$ipv6_addr)/;
 my $boolean       = qr/(?:true|false)/;
+my $enabled       = qr/(?:enabled|disabled)/;
 
-my $hostname    = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
-my $service     = qr/[a-zA-Z1-9\-]+/;
-my $zone        = qr/(?:$hostname\.)+[a-z]{2,}/;
+my $hostname = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
+my $service  = qr/[a-zA-Z1-9\-]+/;
+my $zone     = qr/(?:$hostname\.)+[a-z]{2,}/;
 
 my $vlan_tag    = qr/\d{1,4}/;
 my $virtual_tag = qr/[a-zA-Z0-9]{1,13}/;
-my $nic_if = qr/[a-zA-Z0-9]{1,15}/;
-my $bond_if = qr/[a-zA-Z0-9]{1,15}/;
-my $vlan_if = qr/[a-zA-Z0-9]{1,13}\.$vlan_tag/;
-my $port_range = qr/(?:[1-5]?\d{1,4}|6[0-4]\d{3}|65[1-4]\d{2}|655[1-2]\d{1}|6553[1-5])/;
+my $nic_if      = qr/[a-zA-Z0-9]{1,15}/;
+my $bond_if     = qr/[a-zA-Z0-9]{1,15}/;
+my $vlan_if     = qr/[a-zA-Z0-9]{1,13}\.$vlan_tag/;
+my $port_range =
+  qr/(?:[1-5]?\d{1,4}|6[0-4]\d{3}|65[1-4]\d{2}|655[1-2]\d{1}|6553[1-5])/;
 my $graphsFrecuency = qr/(?:daily|weekly|monthly|yearly)/;
 
 my %format_re = (
@@ -52,15 +54,15 @@ my %format_re = (
 
 	# system
 	'dns_nameserver' => $ipv4_addr,
-	'dns'  => qr/(?:primary|secondary)/,
-	'ssh_port'	=> $port_range,
-	'ssh_listen'	=> $ipv4v6,
-	'snmp_status'	=> $boolean, 
-	'snmp_ip'			=> $ipv4_addr, 
-	'snmp_port'			=> $port_range, 
-	'snmp_community'	=> qr{[\w\_]+},
-	'snmp_scope'	=> qr{(?:\d{1,3}\.){3}\d{1,3}\/\d{1,2}},			# ip/mask
-	'ntp'	=> qr{[\w\.]+},
+	'dns'            => qr/(?:primary|secondary)/,
+	'ssh_port'       => $port_range,
+	'ssh_listen'     => $ipv4v6,
+	'snmp_status'    => $boolean,
+	'snmp_ip'        => $ipv4_addr,
+	'snmp_port'      => $port_range,
+	'snmp_community' => qr{[\w\_]+},
+	'snmp_scope'     => qr{(?:\d{1,3}\.){3}\d{1,3}\/\d{1,2}},    # ip/mask
+	'ntp'            => qr{[\w\.]+},
 
 	# farms
 	'farm_name'    => qr/[a-zA-Z0-9\-]+/,
@@ -73,12 +75,13 @@ my %format_re = (
 	'graphs_frecuency' => $graphsFrecuency,
 	'graphs_system_id' => qr/(?:cpu|load|ram|swap)/,
 	'mount_point' => qr/root[\w\-\.\/]*/,
+	# 'mount_point'       => qr/root[\w\/]*[^(?:$graphsFrecuency)]$/,
 
 	# gslb
-	'zone' => qr/(?:$hostname\.)+[a-z]{2,}/,
+	'zone'          => qr/(?:$hostname\.)+[a-z]{2,}/,
 	'resource_id'   => qr/\d+/,
 	'resource_name' => qr/(?:[a-zA-Z0-9\-\.\_]+|\@)/,
-	'resource_ttl'  => qr/[1-9]\d*/,                         # except zero
+	'resource_ttl'  => qr/[1-9]\d*/,                    # except zero
 	'resource_type' => qr/(?:NS|A|AAAA|CNAME|DYNA|MX|SRV|TXT|PTR|NAPTR)/,
 	'resource_data'      => qr/.+/,            # alow anything (because of TXT type)
 	'resource_data_A'    => $ipv4_addr,
@@ -93,26 +96,34 @@ my %format_re = (
 	'resource_data_NAPTR' => qr/.+/,            # all characters allow
 
 	# interfaces ( WARNING: length in characters < 16  )
-	'nic_interface'  => $nic_if,
-	'bond_interface' => $bond_if,
-	'vlan_interface' => $vlan_if,
-	'virt_interface' => qr/[a-zA-Z0-9]{1,13}(?:\.[a-zA-Z0-9]{1,4})?:$virtual_tag/,
+	'nic_interface'    => $nic_if,
+	'bond_interface'   => $bond_if,
+	'vlan_interface'   => $vlan_if,
+	'virt_interface'   => qr/[a-zA-Z0-9]{1,13}(?:\.[a-zA-Z0-9]{1,4})?:$virtual_tag/,
 	'routed_interface' => qr/(?:$nic_if|$bond_if|$vlan_if)/,
-	'interface_type' => qr/(?:nic|vlan|virtual|bond)/,
-	'vlan_tag'       => qr/$vlan_tag/,
-	'virtual_tag'    => qr/$virtual_tag/,
+	'interface_type'   => qr/(?:nic|vlan|virtual|bond)/,
+	'vlan_tag'         => qr/$vlan_tag/,
+	'virtual_tag'      => qr/$virtual_tag/,
 	'bond_mode_num'    => qr/[0-6]/,
-	'bond_mode_short'  => qr/(?:balance-rr|active-backup|balance-xor|broadcast|802.3ad|balance-tlb|balance-alb)/,
+	'bond_mode_short' =>
+	  qr/(?:balance-rr|active-backup|balance-xor|broadcast|802.3ad|balance-tlb|balance-alb)/,
+
+	# notifications
+	'notif_alert'  => qr/(?:backends|cluster)/,
+	'notif_method' => qr/(?:email)/,
+	'notif_tls'    => $boolean,
+	'notif_action' => $enabled,
+	'notif_time'   => qr/[1-9]\d*/,               # this value can't be 0
 
 	# ipds
-	'rbl_list' => qr{[a-zA-Z0-9]+},
-	'rbl_source'	=> qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
-	'rbl_source_id'	=> qr{\d+},
-	'rbl_location'		=> qr{(?:local|remote)},
-	'rbl_type'		=> qr{(?:allow|deny)},
-	'rbl_url'		=> qr{.+},
-	'rbl_refresh'		=> qr{\d+},
-	'ddos_key' => '[A-Z]+',
+	'rbl_list'      => qr{[a-zA-Z0-9]+},
+	'rbl_source'    => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
+	'rbl_source_id' => qr{\d+},
+	'rbl_location'  => qr{(?:local|remote)},
+	'rbl_type'      => qr{(?:allow|deny)},
+	'rbl_url'       => qr{.+},
+	'rbl_refresh'   => qr{\d+},
+	'ddos_key'      => '[A-Z]+',
 
 	# certificates filenames
 	'certificate' => qr/\w[\w\.-]*\.(?:pem|csr)/,
@@ -158,6 +169,7 @@ my %format_re = (
 				regex	- If no value was passed to be matched
 
 =cut
+
 # &getValidFormat ( $format_name, $value );
 sub getValidFormat
 {
@@ -187,17 +199,18 @@ sub getValidFormat
 }
 
 # validate port format and check if available when possible
-sub getValidPort # ( $ip, $port, $profile )
+sub getValidPort    # ( $ip, $port, $profile )
 {
-	my $ip = shift; # mandatory for HTTP, GSLB or no profile
-	my $port = shift;
-	my $profile = shift; # farm profile, optional
+	my $ip      = shift;    # mandatory for HTTP, GSLB or no profile
+	my $port    = shift;
+	my $profile = shift;    # farm profile, optional
 
 	#~ &zenlog("getValidPort( ip:$ip, port:$port, profile:$profile )");# if &debug;
 
 	if ( $profile =~ /^(?:HTTP|GSLB)$/i )
 	{
-		return &isValidPortNumber( $port ) eq 'true' && &checkport( $ip, $port ) eq 'false';
+		return &isValidPortNumber( $port ) eq 'true'
+		  && &checkport( $ip, $port ) eq 'false';
 	}
 	elsif ( $profile =~ /^(?:L4XNAT)$/i )
 	{
@@ -207,11 +220,12 @@ sub getValidPort # ( $ip, $port, $profile )
 	{
 		return $port eq undef;
 	}
-	elsif ( ! defined $profile )
+	elsif ( !defined $profile )
 	{
-		return &isValidPortNumber( $port ) eq 'true' && &checkport( $ip, $port ) eq 'false';
+		return &isValidPortNumber( $port ) eq 'true'
+		  && &checkport( $ip, $port ) eq 'false';
 	}
-	else # profile not supported
+	else    # profile not supported
 	{
 		return 0;
 	}
@@ -219,19 +233,19 @@ sub getValidPort # ( $ip, $port, $profile )
 
 # check parameters when all params are optional
 # before called:	getValidPutParams
-sub getValidOptParams   # ( \%json_obj, \@allowParams )
+sub getValidOptParams    # ( \%json_obj, \@allowParams )
 {
-	my $params = shift;
+	my $params         = shift;
 	my $allowParamsRef = shift;
-	my @allowParams = @{ $allowParamsRef };
+	my @allowParams    = @{ $allowParamsRef };
 	my $output;
 	my $pattern;
-	
-	if ( ! keys %{ $params } )
+
+	if ( !keys %{ $params } )
 	{
-		return "Don't found any param.";
+		return "Not found any param.";
 	}
-	
+
 	# Check if any param isn't for this call
 	$pattern .= "$_|" for ( @allowParams );
 	chop ( $pattern );
@@ -239,28 +253,27 @@ sub getValidOptParams   # ( \%json_obj, \@allowParams )
 	if ( @errorParams )
 	{
 		$output .= "$_, " for ( @errorParams );
-		chop ( $output ) ;
-		chop ( $output ) ;
+		chop ( $output );
+		chop ( $output );
 		$output = "The param(s) $output are not correct for this call.";
 	}
-	
+
 	return $output;
 }
 
-
 # check parameters when there are required params
 # before called:	getValidPostParams
-sub getValidReqParams   # ( \%json_obj, \@requiredParams, \@optionalParams )
+sub getValidReqParams    # ( \%json_obj, \@requiredParams, \@optionalParams )
 {
-	my $params = shift;
+	my $params            = shift;
 	my $requiredParamsRef = shift;
-	my $allowParamsRef = shift;
-	my @allowParams = @{ $allowParamsRef };
-	my @requiredParams = @{ $requiredParamsRef };
+	my $allowParamsRef    = shift;
+	my @allowParams       = @{ $allowParamsRef };
+	my @requiredParams    = @{ $requiredParamsRef };
 	push @allowParams, @requiredParams;
 	my $output;
 	my $pattern;
-	
+
 	# Check all required params are in called
 	$pattern .= "$_|" for ( @requiredParams );
 
@@ -270,10 +283,11 @@ sub getValidReqParams   # ( \%json_obj, \@requiredParams, \@optionalParams )
 	{
 		$output = "Missing required parameters. $aux";
 	}
+
 	# Check if any param isn't for this call
-	if ( ! $output )
+	if ( !$output )
 	{
-		$output = "";
+		$output  = "";
 		$pattern = "";
 		$pattern .= "$_|" for ( @allowParams );
 		chop ( $pattern );
@@ -281,15 +295,13 @@ sub getValidReqParams   # ( \%json_obj, \@requiredParams, \@optionalParams )
 		if ( @errorParams )
 		{
 			$output .= "$_, " for ( @errorParams );
-			chop ( $output ) ;
-			chop ( $output ) ;
+			chop ( $output );
+			chop ( $output );
 			$output = "The param(s) $output are not correct for this call.";
 		}
 	}
-		
+
 	return $output;
 }
-
-
 
 1;

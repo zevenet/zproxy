@@ -58,6 +58,7 @@ require "/usr/local/zenloadbalancer/www/functions.cgi";
 require "/usr/local/zenloadbalancer/www/cert_functions.cgi";
 require "/usr/local/zenloadbalancer/www/cgi_functions.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
+
 #~ require "/usr/local/zenloadbalancer/www/zapi/v3/global.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/certificates.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get.cgi";
@@ -271,8 +272,8 @@ sub POST($$)
 
 	if ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/json' )
 	{
-		$input_ref = eval{ decode_json( $data ) };
-		&zenlog("json: ". Dumper $input_ref );
+		$input_ref = eval { decode_json( $data ) };
+		&zenlog( "json: " . Dumper $input_ref );
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
 	{
@@ -300,8 +301,8 @@ sub PUT($$)
 
 	if ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/json' )
 	{
-		$input_ref = eval{ decode_json( $data ) };
-		&zenlog("json: ". Dumper $input_ref );
+		$input_ref = eval { decode_json( $data ) };
+		&zenlog( "json: " . Dumper $input_ref );
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
 	{
@@ -476,7 +477,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 	if ( $ENV{ 'REQUEST_METHOD' } eq 'OPTIONS' )    # no session info received
 	{
 		push @headers,
-		  'Access-Control-Allow-Methods'     => 'GET, POST, PUT, DELETE, OPTIONS',
+		  'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
 		  'Access-Control-Allow-Headers' =>
 		  'ZAPI_KEY, Authorization, Set-cookie, Content-Type, X-Requested-With',
 		  ;
@@ -489,15 +490,15 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 		my $session_cookie = $cgi->cookie( CGISESSID => $session->id );
 
 		push @headers,
-		  'Set-Cookie'                       => $session_cookie,
-		  'Access-Control-Expose-Headers'    => 'Set-Cookie',
+		  'Set-Cookie'                    => $session_cookie,
+		  'Access-Control-Expose-Headers' => 'Set-Cookie',
 		  ;
 	}
 
 	if ( $q->path_info =~ '/session' )
 	{
 		push @headers,
-		  'Access-Control-Expose-Headers'    => 'Set-Cookie',
+		  'Access-Control-Expose-Headers' => 'Set-Cookie',
 		  ;
 	}
 
@@ -772,7 +773,7 @@ POST qr{^/farms/($farm_re)/backends$} => sub {
 
 ##### /farms/FARM/backends/BACKEND
 
-my $be_re = &getValidFormat('backend');
+my $be_re = &getValidFormat( 'backend' );
 
 PUT qr{^/farms/($farm_re)/backends/($be_re)$} => sub {
 	&modify_backends( @_ );
@@ -790,7 +791,7 @@ POST qr{^/farms/($farm_re)/services$} => sub {
 
 ##### /farms/FARM/services/SERVICE
 
-my $service_re = &getValidFormat('service');
+my $service_re = &getValidFormat( 'service' );
 
 PUT qr{^/farms/($farm_re)/services/($service_re)$} => sub {
 	&modify_services( @_ );
@@ -828,7 +829,7 @@ POST qr{^/farms/($farm_re)/zones$} => sub {
 
 ##### /farms/FARM/zones/ZONE
 
-my $zone_re = &getValidFormat('zone');
+my $zone_re = &getValidFormat( 'zone' );
 
 PUT qr{^/farms/($farm_re)/zones/($zone_re)$} => sub {
 	&modify_zones( @_ );
@@ -836,7 +837,7 @@ PUT qr{^/farms/($farm_re)/zones/($zone_re)$} => sub {
 
 DELETE qr{^/farms/($farm_re)/zones/($zone_re)$} => sub {
 	&delete_zone( @_ );
-  };
+};
 
 ##### /farms/FARM/zones/ZONE/resources
 
@@ -850,15 +851,17 @@ POST qr{^/farms/($farm_re)/zones/($zone_re)/resources$} => sub {
 
 ##### /farms/FARM/zones/ZONE/resources/RESOURCE
 
-my $resource_id_re = &getValidFormat('resource_id');
+my $resource_id_re = &getValidFormat( 'resource_id' );
 
-PUT qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => sub {
+PUT qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} =>
+  sub {
 	&modify_zone_resource( @_ );
-};
+  };
 
-DELETE qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => sub {
+DELETE qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} =>
+  sub {
 	&delete_zone_resource( @_ );
-};
+  };
 
 ##### /farms/FARM/actions
 ##### /farms/FARM/fg
@@ -872,13 +875,14 @@ PUT qr{^/farms/($farm_re)/fg$} => sub {
 	&modify_farmguardian( @_ );
 };
 
-PUT qr{^/farms/($farm_re)/services/($service_re)/backends/($be_re)/maintenance$} => sub {
+PUT qr{^/farms/($farm_re)/services/($service_re)/backends/($be_re)/maintenance$}
+  => sub {
 	&service_backend_maintenance( @_ );
-}; #  (HTTP only)
+  };    #  (HTTP only)
 
 PUT qr{^/farms/($farm_re)/backends/($be_re)/maintenance$} => sub {
 	&backend_maintenance( @_ );
-}; #  (L4xNAT only)
+};      #  (L4xNAT only)
 
 ##### FARMS CERTIFICATES (HTTPS)
 
@@ -900,7 +904,7 @@ interfaces:
 
 my $virt_interface = &getValidFormat( 'virt_interface' );
 my $vlan_interface = &getValidFormat( 'vlan_interface' );
-my $nic_re = &getValidFormat ('nic_interface');
+my $nic_re         = &getValidFormat( 'nic_interface' );
 
 GET qr{^/interfaces$} => sub {
 	&get_interfaces();
@@ -991,7 +995,7 @@ POST qr{^/interfaces/bonding$} => sub {
 };
 
 ##### /interfaces/bonding/BOND
-my $bond_re = &getValidFormat ('bond_interface');
+my $bond_re = &getValidFormat( 'bond_interface' );
 
 PUT qr{^/interfaces/bonding/($bond_re)$} => sub {
 	&modify_interface_bond( @_ );
@@ -1054,7 +1058,6 @@ DELETE qr{^/interfaces/gateway$} => sub {
 	&delete_gateway( @_ );
 };
 
-
 #	STATS
 #
 stats:
@@ -1108,9 +1111,6 @@ GET qr{^/stats/farms/($farm_re)/service/($service_re)/backends$} => sub {
 };
 
 
-
-
-
 #	GRAPHS
 #
 graphs:
@@ -1120,7 +1120,7 @@ my $system_id_re = &getValidFormat ( 'graphs_system_id' );
 
 #  GET graphs
 #~ GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
-	#~ &get_graphs( @_ );
+#~ &get_graphs( @_ );
 #~ };
 
 #  GET possible graphs
@@ -1130,7 +1130,6 @@ GET qr{^/graphs$} => sub {
 
 
 ##### /graphs/system
-
 #  GET all possible system graphs
 GET qr{^/graphs/system$} => sub {
 	&get_all_sys_graphs();
@@ -1200,13 +1199,11 @@ GET qr{^/graphs/farms/($farm_re)/($frecuency_re)$} => sub {
 	&get_frec_farm_graphs( @_ );
 };
 
-
-
 # SYSTEM
 #
 system_label:
 
-#  GET dns 
+#  GET dns
 GET qr{^/system/dns$} => sub {
 	&get_dns;
 };
@@ -1216,7 +1213,7 @@ POST qr{^/system/dns$} => sub {
 	&set_dns( @_ );
 };
 
-#  GET dns 
+#  GET dns
 GET qr{^/system/ssh$} => sub {
 	&get_ssh;
 };
@@ -1226,7 +1223,7 @@ POST qr{^/system/ssh$} => sub {
 	&set_ssh( @_ );
 };
 
-#  GET dns 
+#  GET dns
 GET qr{^/system/snmp$} => sub {
 	&get_snmp;
 };
@@ -1251,6 +1248,39 @@ POST qr{^/system/ntp$} => sub {
 	&set_ntp( @_ );
 };
 
+# NOTIFICATIONS
+my $alert_re  = &getValidFormat( 'notif_alert' );
+my $method_re = &getValidFormat( 'notif_method' );
+
+#  GET notification methods
+GET qr{^/system/notifications/methods/($method_re)$} => sub {
+	&get_notif_methods( @_ );
+};
+
+#  POST notification methods
+POST qr{^/system/notifications/methods/($method_re)$} => sub {
+	&set_notif_methods( @_ );
+};
+
+#  GET notification alert status
+GET qr{^/system/notifications/alerts$} => sub {
+	&get_notif_alert_status( @_ );
+};
+
+#  GET notification alerts
+GET qr{^/system/notifications/alerts/($alert_re)$} => sub {
+	&get_notif_alert( @_ );
+};
+
+#  POST notification alerts
+POST qr{^/system/notifications/alerts/($alert_re)$} => sub {
+	&set_notif_alert( @_ );
+};
+
+#  POST notification alert actions
+POST qr{^/system/notifications/alerts/($alert_re)/actions$} => sub {
+	&set_notif_alert_actions( @_ );
+};
 
 #	IPDS
 #
@@ -1345,16 +1375,16 @@ POST qr{^/farms/($farm_re)/ipds/ddos$} => sub {
 
 #  DELETE DDoS from a farm
 DELETE qr{^/farms/($farm_re)/ipds/ddos/($ddos_key)$} => sub {
-	&del_ddos_from_farm ( @_ );
+	&del_ddos_from_farm( @_ );
 };
 
-
-
-&httpResponse({
-	code => 404,
-	body => {
-		message => 'Request not found',
-		error => 'true', 
-		}
-	});
+&httpResponse(
+			   {
+				 code => 404,
+				 body => {
+						   message => 'Request not found',
+						   error   => 'true',
+				 }
+			   }
+);
 

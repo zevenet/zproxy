@@ -25,13 +25,15 @@
 
 use Config::Tiny;
 
-require "/usr/local/zenloadbalancer/config/global.conf";
+require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 
 ( my $section, my $pattern ) = @ARGV;
 
 my $body;
 my $command;
 my ( $subject, $bodycomp ) = &getSubjectBody( $pattern );
+my $logger = &getGlobalConfiguration ( 'logger' );
+
 
 if ( $subject eq "error" || !$bodycomp )
 {
@@ -194,7 +196,6 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 		  . "Current Status: $status\n";
 
 		$subject = "Zen server \"$host\" switched to $status";
-
 	}
 
 	else
