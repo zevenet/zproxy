@@ -24,46 +24,31 @@
 
 use RRDs;
 
-require ("/usr/local/zenloadbalancer/config/global.conf");
+require ("/usr/local/zenloadbalancer/www/functions_ext.cgi");
 require ("/usr/local/zenloadbalancer/www/system_functions.cgi");
 
-$db_hd = "hd.rrd";
+my $rrdap_dir = &getGlobalConfiguration( 'rrdap_dir' );
+my $rrd_dir = &getGlobalConfiguration( 'rrd_dir' );
+my $db_hd = "hd.rrd";
 
 my @disks = getDiskSpace();
 
-foreach ( @disks )
+while ( @disks )
 {
-	my $row = shift @disks;
-	my @rowi = split("\ ",$row->[0]);
+	my $total_ref = shift @disks;
+	my $used_ref = shift @disks;
+	my $free_ref = shift @disks;
 
-	my $partition = $rowi[0];
-	my $tot;
-	my $used;
-	my $free;
+	my ($partition) = split("\ ",$total_ref->[0]);
 
-	if ( $rowi[1] eq "Total" )
-	{
-		$tot = $row->[1];
-		$row = shift @disks;
-	}
-
-	my @rowi = split("\ ",$row->[0]);
-	if ( $partition eq $rowi[0] && $rowi[1] eq "Used" )
-	{
-		$used = $row->[1];
-		$row = shift @disks;
-	}
-
-	my @rowi = split("\ ",$row->[0]);
-	if ( $partition eq $rowi[0] && $rowi[1] eq "Free" )
-	{
-		$free = $row->[1];
-		$row = shift @disks;
-	}
+	my $tot = $total_ref->[1];
+	my $used = $used_ref->[1];
+	my $free = $free_ref->[1];
 
 	if ( $tot =~ /^$/ || $used =~ /^$/ || $free =~ /^$/ )
 	{
 		print "$0: Error: Unable to get the data for partition $partition\n";
+		print "$0: tot:$tot used:$used free:$free\n";
 		next;
 	}
 
@@ -114,5 +99,3 @@ foreach ( @disks )
 		print "$0: Error: Unable to update the rrd database for partition $partition: $ERROR\n";
 	}
 }
-
-

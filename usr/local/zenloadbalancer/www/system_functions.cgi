@@ -27,7 +27,7 @@
 #	name,value
 sub getMemStats    # ()
 {
-	( $format ) = @_;
+	my ( $format ) = @_;
 	my @data;
 	my ( $mvalue, $mfvalue, $mused, $mbvalue, $mcvalue, $swtvalue, $swfvalue, $swused, $swcvalue );
 	my ( $mname, $mfname, $mbname, $mcname, $swtname, $swfname, $swcname );
@@ -141,30 +141,27 @@ sub getMemStats    # ()
 #       name,value
 sub getLoadStats    # ()
 {
-
-	#my @datan;
 	my $last;
 	my $last5;
 	my $last15;
 
 	if ( -f "/proc/loadavg" )
 	{
+		my $lastline;
+
 		open FR, "/proc/loadavg";
 		while ( $line = <FR> )
 		{
 			$lastline = $line;
 		}
-		my @splitline = split ( " ", $lastline );
-		$last   = $splitline[0];
-		$last5  = $splitline[1];
-		$last15 = $splitline[2];
+		close FR;
 
+		( $last, $last5, $last15 ) = split ( " ", $lastline );
 	}
-	@data = ( ['Last', $last], ['Last 5', $last5], ['Last 15', $last15], );
 
-	close FR;
+	my @data = ( ['Last', $last], ['Last 5', $last5], ['Last 15', $last15], );
+
 	return @data;
-
 }
 
 sub getNetworkStats    # ()
@@ -360,46 +357,69 @@ sub getCPU         # ()
 #       name,value
 sub getDiskSpace    # ()
 {
+	my @data;	# output
 
-	my $tot;
-	my $used;
-	my $free;
+	my $df_bin = &getGlobalConfiguration( 'df_bin' );
+	my @system = `$df_bin -k`;
+	chomp ( @system );
+	my @df_system = @system;
 
-	my $df_bin = &getGlobalConfiguration('df_bin');
-	my @system = `$df_bin -h`;
+	foreach my $line ( @system )
+	{
+		next if $line !~ /^\/dev/;
 
-	foreach $line(@system) {
-		chomp($line);
-		if ($line !~ /^\/dev/) {
-			next;
-		}
+		my @dd_name = split ( ' ', $line );
+		my $dd_name = $dd_name[0];
 
-		my @dd_name = split("\ ",$line);
-		chomp($dd_name[0]);
-		my $dd_name =~ s/"\/"/" "/g, $dd_name[0];
-		my @df_system = `$df_bin -k`;
+		my ( $line_df ) = grep( { /^$dd_name\s/ } @df_system );
+		my @s_line = split ( /\s+/, $line_df );
 
-		for $line_df(@df_system) {
-			if ($line_df =~ /$dd_name/) {
-				my @s_line = split("\ ",$line_df);
-				chomp(@s_line[0]);
-				$partition = @s_line[0];
-				$size= @s_line[4];
-				$mount = @s_line[5];
-				$partitions = @s_line[0];
-				$partitions =~ s/\///;
-				$partitions =~ s/\//-/g;
+		my $partitions = @s_line[0];
+		$partitions =~ s/\///;
+		$partitions =~ s/\//-/g;
 
-				$tot = @s_line[1]*1024;
-				$used = @s_line[2]*1024;
-				$free = @s_line[3]*1024;
-			}
-		}
+		my $tot  = @s_line[1] * 1024;
+		my $used = @s_line[2] * 1024;
+		my $free = @s_line[3] * 1024;
 
-		push @data, [$partitions . ' Total', $tot], [$partitions . ' Used', $used], [$partitions . ' Free', $free];
+		push ( @data,
+			   [$partitions . ' Total', $tot],
+			   [$partitions . ' Used',  $used],
+			   [$partitions . ' Free',  $free] );
 	}
 
 	return @data;
+}
+
+sub getDiskPartitionsInfo	#()
+{
+	my $partitions; # output
+
+	my $df_bin = &getGlobalConfiguration( 'df_bin' );
+	my $rrdap_dir = &getGlobalConfiguration( 'rrdap_dir' );
+	my $rrd_dir = &getGlobalConfiguration( 'rrd_dir' );
+	my $db_hd = "hd.rrd";
+
+	my @df_lines = grep { /^\/dev/ } `$df_bin -k`;
+	chomp ( @df_lines );
+
+	foreach my $line ( @df_lines )
+	{
+		my @df_line = split ( /\s+/, $line );
+
+		my $mount_point = @df_line[5];
+		my $partition = @df_line[0];
+		my $part_id = @df_line[0];
+		$part_id =~ s/\///;
+		$part_id =~ s/\//-/g;
+
+		$partitions->{ $partition } = {
+										mount_point => $mount_point,
+										rrd_id => "${part_id}hd",
+		};
+	}
+
+	return $partitions;
 }
 
 #Obtain disk mount point from a device
