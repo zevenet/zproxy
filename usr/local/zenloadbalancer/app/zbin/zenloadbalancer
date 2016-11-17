@@ -68,10 +68,6 @@ sub printAndLog
 	#~ &zenlog( @input );
 }
 
-my @configured_interfaces = @{ &getConfigInterfaceList() };
-
-	
-
 # build local key
 sub keycert    #()
 {
@@ -489,9 +485,10 @@ if ( $eject eq "start" )
 
 				my $socket   = &getIOSocket();
 				my $if_flags = $socket->if_flags( $$iface{ name } );
-
 				if ( !( $if_flags & IFF_UP ) )
 				{
+					
+					&upIf( $iface );
 					my $return_code = &addIp( $iface );
 
 					if ( $return_code )
@@ -501,8 +498,8 @@ if ( $eject eq "start" )
 					}
 
 					&writeRoutes( $$iface{ name } );
+					my $if_flags = $socket->if_flags( $$iface{ name } );
 					&applyRoutes( "local", $iface );
-					&upIf( $iface );
 
 					if ( $return_code == 0 )
 					{
