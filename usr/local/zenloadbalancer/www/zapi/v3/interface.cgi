@@ -3403,11 +3403,11 @@ sub modify_interface_bond # ( $json_obj, $bond )
 sub modify_interface_floating # ( $json_obj, $floating )
 {
 	my $json_obj = shift;
-	my $floating = shift;
+	my $interface = shift;
 
 	my $description = "Modify floating interface";
 
-	#~ &zenlog("modify_interface_floating floating:$floating json_obj:".Dumper $json_obj );
+	#~ &zenlog("modify_interface_floating interface:$interface json_obj:".Dumper $json_obj );
 
 	if ( grep { $_ ne 'floating_ip' } keys %{$json_obj} )
 	{
@@ -3435,7 +3435,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	my $if_ref = &getInterfaceConfig( $floating, $ip_v );
+	my $if_ref = &getInterfaceConfig( $interface, $ip_v );
 
 	unless ( $if_ref )
 	{
@@ -3469,7 +3469,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 		}
 
 		my @interfaces = &getInterfaceTypeList( 'virtual' );
-		( $if_ref ) = grep ( { $json_obj->{ floating_ip } eq $_->{ addr } } @interfaces );
+		( $if_ref ) = grep { $json_obj->{ floating_ip } eq $_->{ addr } && $_->{ parent } eq $interface } @interfaces;
 
 		# validate ADDRESS in system
 		unless ( $if_ref )
@@ -3489,7 +3489,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 	eval {
 		my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
-		$float_ifaces_conf->{ _ }->{ $floating } = $if_ref->{ name };
+		$float_ifaces_conf->{ _ }->{ $interface } = $if_ref->{ name };
 
 		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
 
