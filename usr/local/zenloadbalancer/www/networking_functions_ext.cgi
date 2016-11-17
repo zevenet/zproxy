@@ -124,6 +124,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	$iface{ vlan }    = undef;
 	$iface{ mac }     = undef;
 	$iface{ type }    = &getInterfaceType( $if_name );
+	$iface{ parent }  = &getParentInterfaceName( $iface{ name } );
 
 	if ( $iface{ dev } =~ /:/ )
 	{
@@ -517,6 +518,7 @@ sub getSystemInterface    # ($if_name)
 	$$if_ref{ vlan }   = $if_parts{ vlan };
 	$$if_ref{ vini }   = $if_parts{ vini };
 	$$if_ref{ type }   = &getInterfaceType( $$if_ref{ name } );
+	$$if_ref{ parent } = &getParentInterfaceName( $$if_ref{ name } );
 
 	if ( $$if_ref{ type } eq 'nic' )
 	{

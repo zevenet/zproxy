@@ -1426,6 +1426,7 @@ sub get_nic_list # ()
 			status  => $if_ref->{ status },
 			HDWaddr => $if_ref->{ mac },
 			is_slave => $if_ref->{ is_slave },
+			parent  => $if_ref->{ parent },
 		  };
 	}
 
@@ -1518,7 +1519,7 @@ sub get_vlan_list # ()
 			gateway => $if_ref->{ gateway },
 			status  => $if_ref->{ status },
 			HDWaddr => $if_ref->{ mac },
-			#~ ipv     => $if_ref->{ ip_v },
+			parent  => $if_ref->{ parent },
 		  };
 	}
 
@@ -1710,7 +1711,7 @@ sub get_virtual_list # ()
 			gateway => $if_ref->{ gateway },
 			status  => $if_ref->{ status },
 			HDWaddr => $if_ref->{ mac },
-			#~ ipv     => $if_ref->{ ip_v },
+			parent  => $if_ref->{ parent },
 		  };
 	}
 
@@ -3408,7 +3409,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 
 	#~ &zenlog("modify_interface_floating floating:$floating json_obj:".Dumper $json_obj );
 
-	if ( grep { ! /^(?:address|interface)$/ } keys %{$json_obj} )
+	if ( grep { $_ ne 'floating_ip' } keys %{$json_obj} )
 	{
 		# Error
 		my $errormsg = "Parameter not recognized";
@@ -3421,10 +3422,10 @@ sub modify_interface_floating # ( $json_obj, $floating )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	unless ( scalar( keys %$json_obj ) == 1 && grep( { /^(?:address|interface)$/ } keys %{$json_obj} ) )
+	unless ( keys %{ $json_obj } )
 	{
 		# Error
-		my $errormsg = "Need to use address or interface parameter, and not both at the same time";
+		my $errormsg = "Need to use floating_ip parameter";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -3449,45 +3450,12 @@ sub modify_interface_floating # ( $json_obj, $floating )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	$if_ref = udef;
+	$if_ref = undef;
 
-	if ( exists $json_obj->{ interface } )
-	{
-		# validate INTERFACE NAME format
-		unless ( $json_obj->{ interface } && &getValidFormat( 'virt_interface', $json_obj->{ interface } ) )
-		{
-			# Error
-			my $errormsg = "Invalid floating interface name";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
-
-		$if_ref = &getInterfaceConfig( $json_obj->{ interface }, $ip_v );
-
-		# validate INTERFACE
-		unless ( $if_ref )
-		{
-			# Error
-			my $errormsg = "Floating interface not found";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 404, body => $body });
-		}
-	}
-
-	if ( exists $json_obj->{ address } )
+	if ( exists $json_obj->{ floating_ip } )
 	{
 		# validate ADDRESS format
-		unless ( $json_obj->{ address } && &getValidFormat( 'IPv4_addr', $json_obj->{ address } ) )
+		unless ( $json_obj->{ floating_ip } && &getValidFormat( 'IPv4_addr', $json_obj->{ floating_ip } ) )
 		{
 			# Error
 			my $errormsg = "Invalid floating address format";
@@ -3500,14 +3468,14 @@ sub modify_interface_floating # ( $json_obj, $floating )
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		my @interfaces = @{ &getSystemInterfaceList() };
-		( $if_ref ) = grep( { $_->{ name } =~ /^$floating/ && $json_obj->{ address } eq $_->{ addr } } @interfaces );
+		my @interfaces = &getInterfaceTypeList( 'virtual' );
+		( $if_ref ) = grep ( { $json_obj->{ floating_ip } eq $_->{ addr } } @interfaces );
 
 		# validate ADDRESS in system
 		unless ( $if_ref )
 		{
 			# Error
-			my $errormsg = "Floating address not found";
+			my $errormsg = "Virtual interface with such address not found";
 			my $body = {
 						 description => $description,
 						 error       => "true",
@@ -3516,8 +3484,6 @@ sub modify_interface_floating # ( $json_obj, $floating )
 
 			&httpResponse({ code => 404, body => $body });
 		}
-
-		$json_obj->{ interface } = $if_ref->{ name };
 	}
 
 	eval {
@@ -3583,7 +3549,7 @@ sub get_interfaces_floating
 	my $description = "List floating interfaces";
 
 	# Interfaces
-	my %output;
+	my @output;
 	my @ifaces = @{ &getSystemInterfaceList() };
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
@@ -3594,24 +3560,27 @@ sub get_interfaces_floating
 		next if $iface->{ type } eq 'virtual';
 		next unless $iface->{ addr };
 
-		$output{ $iface->{ name } } = undef;
+		my $floating_ip = undef;
 
-		if ( exists $float_ifaces_conf->{_}->{ $iface->{ name } } )
+		if ( $float_ifaces_conf->{_}->{ $iface->{ name } } )
 		{
-			my $if_ref = &getInterfaceConfig( $iface->{ name } );
-			$output{ $iface->{ name } } = {
-											interface => $if_ref->{ name },
-											address   => $if_ref->{ addr },
-			};
-
+			my $floating_interface = $float_ifaces_conf->{_}->{ $iface->{ name } };
+			my $if_ref = &getInterfaceConfig( $floating_interface );
+			$floating_ip = $if_ref->{ addr };
 		}
+
+		push @output,
+		  {
+			interface   => $iface->{ name },
+			floating_ip => $floating_ip,
+		  };
 
 		#~ $output{ $iface->{name} } = $iface->{name} unless $output{ $iface->{name} };
 	}
 
 	my $body = {
 				 description => $description,
-				 params      => \%output,
+				 params      => \@output,
 	};
 
 	&httpResponse({ code => 200, body => $body });
