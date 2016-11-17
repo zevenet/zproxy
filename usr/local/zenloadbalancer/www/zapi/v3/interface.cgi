@@ -3586,6 +3586,64 @@ sub get_interfaces_floating
 	&httpResponse({ code => 200, body => $body });
 }
 
+sub get_floating
+{
+	my $floating = shift;
+
+	my $description = "Show floating interface";
+
+	# Interfaces
+	my $output;
+	my @ifaces = @{ &getSystemInterfaceList() };
+	my $float_ifaces_conf = &getConfigTiny( $floatfile );
+
+	for my $iface ( @ifaces )
+	{
+		#~ &zenlog( "getActiveInterfaceList: $iface->{ name }" );
+		next unless $iface->{ ip_v } == 4;
+		next if $iface->{ type } eq 'virtual';
+		next unless $iface->{ name } eq $floating;
+
+		my $floating_ip = undef;
+
+		unless ( $iface->{ addr } )
+		{
+			# Error
+			my $errormsg = "This interface has no address configured";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg,
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		my $floating_ip = undef;
+
+		if ( $float_ifaces_conf->{_}->{ $iface->{ name } } )
+		{
+			my $floating_interface = $float_ifaces_conf->{_}->{ $iface->{ name } };
+			my $if_ref = &getInterfaceConfig( $floating_interface );
+			$floating_ip = $if_ref->{ addr };
+		}
+
+		$output = {
+					interface   => $iface->{ name },
+					floating_ip => $floating_ip,
+		};
+
+		#~ $output{ $iface->{name} } = $iface->{name} unless $output{ $iface->{name} };
+	}
+
+	my $body = {
+				 description => $description,
+				 params      => $output,
+	};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
 sub modify_gateway # ( $json_obj )
 {
 	my $json_obj = shift;

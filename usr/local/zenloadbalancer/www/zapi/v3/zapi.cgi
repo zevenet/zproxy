@@ -1048,6 +1048,10 @@ GET qr{^/interfaces/floating$} => sub {
 
 ##### /interfaces/floating/FLOATING
 
+GET qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_interface)$} => sub {
+	&get_floating( @_ );
+};
+
 PUT qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_interface)$} => sub {
 	&modify_interface_floating( @_ );
 };
