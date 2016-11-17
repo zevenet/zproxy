@@ -913,10 +913,14 @@ GET qr{^/interfaces$} => sub {
 ##### /interfaces/nic
 
 GET qr{^/interfaces/nic$} => sub {
-	&get_interfaces_nic();
+	&get_nic_list();
 };
 
 ##### /interfaces/nic/NIC
+
+GET qr{^/interfaces/nic/($nic_re)$} => sub {
+	&get_nic( @_ );
+};
 
 PUT qr{^/interfaces/nic/($nic_re)$} => sub {
 	&modify_interface_nic( @_ );
@@ -935,7 +939,7 @@ POST qr{^/interfaces/nic/($nic_re)/actions$} => sub {
 ##### /interfaces/vlan
 
 GET qr{^/interfaces/vlan$} => sub {
-	&get_interfaces_vlan();
+	&get_vlan_list();
 };
 
 POST qr{^/interfaces/vlan$} => sub {
@@ -943,6 +947,10 @@ POST qr{^/interfaces/vlan$} => sub {
 };
 
 ##### /interfaces/vlan/VLAN
+
+GET qr{^/interfaces/vlan/($vlan_interface)$} => sub {
+	&get_vlan( @_ );
+};
 
 PUT qr{^/interfaces/vlan/($vlan_interface)$} => sub {
 	&modify_interface_vlan( @_ );
@@ -961,7 +969,7 @@ POST qr{^/interfaces/vlan/($vlan_interface)/actions$} => sub {
 ##### /interfaces/virtual
 
 GET qr{^/interfaces/virtual$} => sub {
-	&get_interfaces_virtual();
+	&get_virtual_list();
 };
 
 POST qr{^/interfaces/virtual$} => sub {
@@ -969,6 +977,10 @@ POST qr{^/interfaces/virtual$} => sub {
 };
 
 ##### /interfaces/virtual/VIRTUAL
+
+GET qr{^/interfaces/virtual/($virt_interface)$} => sub {
+	&get_virtual( @_ );
+};
 
 PUT qr{^/interfaces/virtual/($virt_interface)$} => sub {
 	&modify_interface_virtual( @_ );
@@ -987,7 +999,7 @@ POST qr{^/interfaces/virtual/($virt_interface)/actions$} => sub {
 ##### /interfaces/bonding
 
 GET qr{^/interfaces/bonding$} => sub {
-	&get_interfaces_bond();
+	&get_bond_list();
 };
 
 POST qr{^/interfaces/bonding$} => sub {
@@ -996,6 +1008,10 @@ POST qr{^/interfaces/bonding$} => sub {
 
 ##### /interfaces/bonding/BOND
 my $bond_re = &getValidFormat( 'bond_interface' );
+
+GET qr{^/interfaces/bonding/($bond_re)$} => sub {
+	&get_bond( @_ );
+};
 
 PUT qr{^/interfaces/bonding/($bond_re)$} => sub {
 	&modify_interface_bond( @_ );
@@ -1023,10 +1039,6 @@ POST qr{^/interfaces/bonding/($bond_re)/actions$} => sub {
 	&actions_interface_bond( @_ );
 };
 
-#  POST action interface
-#~ PUT qr{^/interfaces/(.+)$} => sub {
-#~ &ifaction( $1 );
-#~ };
 
 ##### /interfaces/floating
 
@@ -1155,12 +1167,13 @@ GET qr{^/graphs/system/disk$} => sub {
 	&list_disks( @_ );
 };
 
-GET qr{^/graphs/system/disk/($disk_re)$} => sub {
-	&graphs_disk_mount_point_all( @_ );
-};
-
+# keep before next request
 GET qr{^/graphs/system/disk/($disk_re)/($frecuency_re)$} => sub {
 	&graph_disk_mount_point_freq( @_ );
+};
+
+GET qr{^/graphs/system/disk/($disk_re)$} => sub {
+	&graphs_disk_mount_point_all( @_ );
 };
 
 

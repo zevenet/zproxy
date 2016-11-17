@@ -146,6 +146,12 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		$iface{ float } = $float->{_}->{ $iface{ name } } // '';
 	}
 
+	if ( $iface{ type } eq 'nic' )
+	{
+		$iface{ is_slave } =
+		  ( grep { $iface{ name } eq $_ } &getAllBondsSlaves ) ? 'true' : 'false';
+	}
+
 	return \%iface;
 }
 
@@ -511,6 +517,12 @@ sub getSystemInterface    # ($if_name)
 	$$if_ref{ vlan }   = $if_parts{ vlan };
 	$$if_ref{ vini }   = $if_parts{ vini };
 	$$if_ref{ type }   = &getInterfaceType( $$if_ref{ name } );
+
+	if ( $$if_ref{ type } eq 'nic' )
+	{
+		$$if_ref{ is_slave } =
+		  ( grep { $$if_ref{ name } eq $_ } &getAllBondsSlaves ) ? 'true' : 'false';
+	}
 
 	return $if_ref;
 }
@@ -1354,6 +1366,18 @@ sub getInterfaceTypeList
 	}
 
 	return @interfaces;
+}
+
+sub getAllBondsSlaves
+{
+	my @slaves; # output
+
+	for my $bond ( @{ &getBondList() } )
+	{
+		push @slaves, @{ &getBondSlaves( $bond->{ name } ) };
+	}
+
+	return @slaves;
 }
 
 1;

@@ -238,7 +238,7 @@ sub add_rbl_list
 		}
 
 		# Check key format
-		foreach my $key ( keys $json_obj )
+		foreach my $key ( keys %$json_obj )
 		{
 			if ( ! &getValidFormat( "rbl_$key", $json_obj->{ $key } ) )
 			{
@@ -389,7 +389,7 @@ sub set_rbl_list
 	if ( !$errormsg )
 	{
 		# Check key format
-		foreach my $key ( keys ${ $json_obj } )
+		foreach my $key ( keys %{ $json_obj } )
 		{
 			if ( ! &getValidFormat( "rbl_$key", $json_obj->{ $key } ) )
 			{

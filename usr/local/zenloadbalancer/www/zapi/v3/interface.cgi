@@ -794,8 +794,6 @@ sub delete_interface_nic # ( $nic )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	&zenlog( Dumper $if_ref );
-
 	eval {
 		die if &delRoutes( "local", $if_ref );
 		die if &downIf( $if_ref, 'writeconf' ); # FIXME: To be removed
@@ -1401,7 +1399,7 @@ sub get_interfaces # ()
 #
 #**
 
-sub get_interfaces_nic # ()
+sub get_nic_list # ()
 {
 	my @output_list;
 
@@ -1427,7 +1425,7 @@ sub get_interfaces_nic # ()
 			gateway => $if_ref->{ gateway },
 			status  => $if_ref->{ status },
 			HDWaddr => $if_ref->{ mac },
-			#~ ipv     => $if_ref->{ ip_v },
+			is_slave => $if_ref->{ is_slave },
 		  };
 	}
 
@@ -1439,7 +1437,62 @@ sub get_interfaces_nic # ()
 	&httpResponse({ code => 200, body => $body });
 }
 
-sub get_interfaces_vlan # ()
+sub get_nic # ()
+{
+	my $nic = shift;
+
+	my $description = "Show NIC interface";
+	my $interface;
+
+	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
+	{
+		next unless $if_ref->{ name } eq $nic;
+
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
+		# Any key must cotain a value or "" but can't be null
+		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+
+		$interface = {
+			name    => $if_ref->{ name },
+			ip      => $if_ref->{ addr },
+			netmask => $if_ref->{ mask },
+			gateway => $if_ref->{ gateway },
+			status  => $if_ref->{ status },
+			HDWaddr => $if_ref->{ mac },
+			is_slave => $if_ref->{ is_slave },
+		};
+	}
+
+	if ( $interface )
+	{
+		my $body = {
+				description => $description,
+				interface  => $interface,
+			};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "Nic interface not found.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+}
+
+sub get_vlan_list # ()
 {
 	my @output_list;
 
@@ -1477,7 +1530,62 @@ sub get_interfaces_vlan # ()
 	&httpResponse({ code => 200, body => $body });
 }
 
-sub get_interfaces_bond # ()
+sub get_vlan # ()
+{
+	my $vlan = shift;
+
+	my $interface;
+
+	my $description = "Show VLAN interface";
+
+	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
+	{
+		next unless $if_ref->{ name } eq $vlan;
+
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
+		# Any key must cotain a value or "" but can't be null
+		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+
+		$interface = {
+					   name    => $if_ref->{ name },
+					   ip      => $if_ref->{ addr },
+					   netmask => $if_ref->{ mask },
+					   gateway => $if_ref->{ gateway },
+					   status  => $if_ref->{ status },
+					   HDWaddr => $if_ref->{ mac },
+		};
+	}
+
+	if ( $interface )
+	{
+		my $body = {
+					 description => $description,
+					 interface   => $interface,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		# Error
+		my $errormsg = "VLAN interface not found.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+}
+
+sub get_bond_list # ()
 {
 	my @output_list;
 
@@ -1519,7 +1627,64 @@ sub get_interfaces_bond # ()
 	&httpResponse({ code => 200, body => $body });
 }
 
-sub get_interfaces_virtual # ()
+sub get_bond # ()
+{
+	my $bond = shift;
+
+	my $interface; # output
+	my $description = "Show bonding interface";
+	my $bond_conf = &getBondConfig();
+
+	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )
+	{
+		next unless $if_ref->{ name } eq $bond;
+
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
+		# Any key must cotain a value or "" but can't be null
+		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+
+		$interface = {
+					 name    => $if_ref->{ name },
+					 ip      => $if_ref->{ addr },
+					 netmask => $if_ref->{ mask },
+					 gateway => $if_ref->{ gateway },
+					 status  => $if_ref->{ status },
+					 HDWaddr => $if_ref->{ mac },
+					 slaves  => $bond_conf->{ $if_ref->{ name } }->{ slaves },
+					 mode => $bond_modes_short[$bond_conf->{ $if_ref->{ name } }->{ mode }],
+		};
+	}
+
+	if ( $interface )
+	{
+		my $body = {
+					 description => $description,
+					 interface   => $interface,
+		};
+
+		&httpResponse( { code => 200, body => $body } );
+	}
+	else
+	{
+		# Error
+		my $errormsg = "Bonding interface not found.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse( { code => 404, body => $body } );
+	}
+}
+
+sub get_virtual_list # ()
 {
 	my @output_list;
 
@@ -1555,6 +1720,60 @@ sub get_interfaces_virtual # ()
 		};
 
 	&httpResponse({ code => 200, body => $body });
+}
+
+sub get_virtual # ()
+{
+	my $virtual = shift;
+
+	my $interface; # output
+	my $description = "Show virtual interface";
+
+	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
+	{
+		next unless $if_ref->{ name } eq $virtual;
+
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
+		# Any key must cotain a value or "" but can't be null
+		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+
+		$interface = {
+			name    => $if_ref->{ name },
+			ip      => $if_ref->{ addr },
+			netmask => $if_ref->{ mask },
+			gateway => $if_ref->{ gateway },
+			status  => $if_ref->{ status },
+			HDWaddr => $if_ref->{ mac },
+		};
+	}
+
+	if ( $interface )
+	{
+		my $body = {
+					 description => $description,
+					 interface   => $interface,
+		};
+
+		&httpResponse( { code => 200, body => $body } );
+	}
+	else
+	{
+		# Error
+		my $errormsg = "Virtual interface not found.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse( { code => 404, body => $body } );
+	}
 }
 
 # POST Interface actions
@@ -1819,7 +2038,7 @@ sub actions_interface_nic # ( $json_obj, $nic )
 	}
 
 	# reject not accepted parameters
-	if ( grep { $_ ne 'action' } keys $json_obj )
+	if ( grep { $_ ne 'action' } keys %$json_obj )
 	{
 		# Error
 		my $errormsg = "Only the parameter 'action' is accepted";
@@ -1928,7 +2147,7 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 	}
 
 	# reject not accepted parameters
-	if ( grep { $_ ne 'action' } keys $json_obj )
+	if ( grep { $_ ne 'action' } keys %$json_obj )
 	{
 		# Error
 		my $errormsg = "Only the parameter 'action' is accepted";
@@ -2067,7 +2286,7 @@ sub actions_interface_bond # ( $json_obj, $bond )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( grep { $_ ne 'action' } keys $json_obj )
+	if ( grep { $_ ne 'action' } keys %$json_obj )
 	{
 		# Error
 		my $errormsg = "Only the parameter 'action' is accepted";
@@ -2180,7 +2399,7 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 	}
 
 	# reject not accepted parameters
-	if ( grep { $_ ne 'action' } keys $json_obj )
+	if ( grep { $_ ne 'action' } keys %$json_obj )
 	{
 		# Error
 		my $errormsg = "Only the parameter 'action' is accepted";
@@ -3010,7 +3229,7 @@ sub modify_interface_bond # ( $json_obj, $bond )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( grep { !/^(?:ip|netmask|gateway)$/ } keys $json_obj )
+	if ( grep { !/^(?:ip|netmask|gateway)$/ } keys %$json_obj )
 	{
 		# Error
 		my $errormsg = "Parameter not recognized";
@@ -3202,7 +3421,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	unless ( scalar( keys $json_obj ) == 1 && grep( { /^(?:address|interface)$/ } keys %{$json_obj} ) )
+	unless ( scalar( keys %$json_obj ) == 1 && grep( { /^(?:address|interface)$/ } keys %{$json_obj} ) )
 	{
 		# Error
 		my $errormsg = "Need to use address or interface parameter, and not both at the same time";
@@ -3405,7 +3624,7 @@ sub modify_gateway # ( $json_obj )
 	my $description = "Modify default gateway";
 
 	# verify ONLY ACCEPTED parameters received
-	if ( grep { $_ !~ /^(?:address|interface)$/ } keys $json_obj )
+	if ( grep { $_ !~ /^(?:address|interface)$/ } keys %$json_obj )
 	{
 		# Error
 		my $errormsg = "Parameter received not recognized";
