@@ -1434,7 +1434,6 @@ sub get_nic_list # ()
 			status  => $if_ref->{ status },
 			mac     => $if_ref->{ mac },
 			is_slave => $if_ref->{ is_slave },
-			parent  => $if_ref->{ parent },
 		  };
 	}
 
