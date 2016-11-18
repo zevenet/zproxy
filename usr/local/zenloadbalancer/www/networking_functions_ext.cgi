@@ -1385,9 +1385,12 @@ sub getAllBondsSlaves
 {
 	my @slaves; # output
 
-	for my $bond ( @{ &getBondList() } )
+	if ( @{ &getBondList() } )
 	{
-		push @slaves, @{ &getBondSlaves( $bond->{ name } ) };
+		for my $bond ( @{ &getBondList() } )
+		{
+			push @slaves, @{ &getBondSlaves( $bond->{ name } ) };
+		}
 	}
 
 	return @slaves;
