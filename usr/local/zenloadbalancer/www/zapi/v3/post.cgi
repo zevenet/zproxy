@@ -636,7 +636,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		}
 
 		# validate WEIGHT
-		unless ( $json_obj->{ weight } =~ /^\d+$/ && $json_obj->{ weight } != 1 || $json_obj->{ weight } == undef ) # 1 or higher or undef
+		unless ( $json_obj->{ weight } =~ &getValidFormat('natural') || $json_obj->{ weight } == undef ) # 1 or higher or undef
 		{
 			&zenlog(
 				"ZAPI error, trying to create a new backend in the farm $farmname, invalid weight."

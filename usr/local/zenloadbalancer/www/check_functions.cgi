@@ -33,6 +33,7 @@ my $ipv6_addr     = qr/(?:[\:\.a-f0-9]+)/;
 my $ipv4v6        = qr/(?:$ipv4_addr|$ipv6_addr)/;
 my $boolean       = qr/(?:true|false)/;
 my $enabled       = qr/(?:enabled|disabled)/;
+my $natural		  = qr/[1-9]\d*/;	# natural number = {1, 2, 3, ...}
 
 my $hostname = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
 my $service  = qr/[a-zA-Z1-9\-]+/;
@@ -48,6 +49,9 @@ my $port_range =
 my $graphsFrecuency = qr/(?:daily|weekly|monthly|yearly)/;
 
 my %format_re = (
+
+	# generic types
+	'natural_num' => $natural,
 
 	# hostname
 	'hostname' => $hostname,
@@ -81,7 +85,7 @@ my %format_re = (
 	'zone'          => qr/(?:$hostname\.)+[a-z]{2,}/,
 	'resource_id'   => qr/\d+/,
 	'resource_name' => qr/(?:[a-zA-Z0-9\-\.\_]+|\@)/,
-	'resource_ttl'  => qr/[1-9]\d*/,                    # except zero
+	'resource_ttl'  => qr/$natural/,                    # except zero
 	'resource_type' => qr/(?:NS|A|AAAA|CNAME|DYNA|MX|SRV|TXT|PTR|NAPTR)/,
 	'resource_data'      => qr/.+/,            # alow anything (because of TXT type)
 	'resource_data_A'    => $ipv4_addr,
@@ -113,7 +117,7 @@ my %format_re = (
 	'notif_method' => qr/(?:email)/,
 	'notif_tls'    => $boolean,
 	'notif_action' => $enabled,
-	'notif_time'   => qr/[1-9]\d*/,               # this value can't be 0
+	'notif_time'   => qr/$natural/,               # this value can't be 0
 
 	# ipds
 	'rbl_list'      => qr{[a-zA-Z0-9]+},
@@ -139,7 +143,7 @@ my %format_re = (
 	'fg_type'    => qr/(?:http|https|l4xnat|gslb)/,
 	'fg_enabled' => $boolean,
 	'fg_log'     => $boolean,
-	'fg_time'    => qr/[1-9]\d*/,                     # this value can't be 0
+	'fg_time'    => qr/$natural/,                     # this value can't be 0
 
 );
 
