@@ -592,10 +592,10 @@ sub new_bond_slave # ( $json_obj, $bond )
 
 	# validate SLAVE
 	eval {
-		$json_obj->{ slave } or die;
-		&getValidFormat( 'nic_interface', $json_obj->{ slave } ) or die;
-		grep ( { $json_obj->{ slave } eq $_ } &getBondAvailableSlaves() ) or die;
-		die if grep ( { $json_obj->{ slave } eq $_ } @{ $bonds->{ $bond }->{ slaves } } );
+		$json_obj->{ name } or die;
+		&getValidFormat( 'nic_interface', $json_obj->{ name } ) or die;
+		grep ( { $json_obj->{ name } eq $_ } &getBondAvailableSlaves() ) or die;
+		die if grep ( { $json_obj->{ name } eq $_ } @{ $bonds->{ $bond }->{ slaves } } );
 	};
 	if ( $@ )
 	{
@@ -610,7 +610,7 @@ sub new_bond_slave # ( $json_obj, $bond )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	push @{ $bonds->{ $bond }->{ slaves } }, $json_obj->{slave};
+	push @{ $bonds->{ $bond }->{ slaves } }, $json_obj->{ name };
 
 	eval {
 		die if &applyBondChange( $bonds->{ $bond }, 'writeconf' );
@@ -620,12 +620,16 @@ sub new_bond_slave # ( $json_obj, $bond )
 		my $if_ref = getSystemInterface( $bond );
 
 		# Success
+		my @bond_slaves = @{ $bonds->{ $bond }->{ slaves } };
+		my @output_slaves;
+		push( @output_slaves, { name => $_ } ) for @bond_slaves;
+
 		my $body = {
 					 description => $description,
 					 params      => {
 								 name   => $bond,
 								 mode   => $bond_modes_short[$bonds->{ $bond }->{ mode }],
-								 slaves => $bonds->{ $bond }->{ slaves },
+								 slaves => \@output_slaves,
 								 status => $if_ref->{ status },
 								 HWaddr => $if_ref->{ mac },
 					 },
@@ -1605,6 +1609,10 @@ sub get_bond_list # ()
 		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
 		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
+		my @bond_slaves = @{ $bond_conf->{ $if_ref->{ name } }->{ slaves } };
+		my @output_slaves;
+		push( @output_slaves, { name => $_ } ) for @bond_slaves;
+
 		push @output_list,
 		  {
 			name    => $if_ref->{ name },
@@ -1614,7 +1622,7 @@ sub get_bond_list # ()
 			status  => $if_ref->{ status },
 			HDWaddr => $if_ref->{ mac },
 
-			slaves => $bond_conf->{ $if_ref->{ name } }->{ slaves },
+			slaves => \@output_slaves,
 			mode => $bond_modes_short[$bond_conf->{ $if_ref->{ name } }->{ mode }],
 			#~ ipv     => $if_ref->{ ip_v },
 		  };
@@ -1650,6 +1658,10 @@ sub get_bond # ()
 		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
 		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
+		my @bond_slaves = @{ $bond_conf->{ $if_ref->{ name } }->{ slaves } };
+		my @output_slaves;
+		push( @output_slaves, { name => $_ } ) for @bond_slaves;
+
 		$interface = {
 					 name    => $if_ref->{ name },
 					 ip      => $if_ref->{ addr },
@@ -1657,7 +1669,7 @@ sub get_bond # ()
 					 gateway => $if_ref->{ gateway },
 					 status  => $if_ref->{ status },
 					 HDWaddr => $if_ref->{ mac },
-					 slaves  => $bond_conf->{ $if_ref->{ name } }->{ slaves },
+					 slaves  => \@output_slaves,
 					 mode => $bond_modes_short[$bond_conf->{ $if_ref->{ name } }->{ mode }],
 		};
 	}
@@ -3297,7 +3309,7 @@ sub modify_interface_bond # ( $json_obj, $bond )
 	}
 
 	# Check gateway errors
-	if ( exists $json_obj->{ netmask } )
+	if ( exists $json_obj->{ gateway } )
 	{
 		unless ( defined( $json_obj->{ gateway } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) || $json_obj->{ gateway } eq '' )
 		{

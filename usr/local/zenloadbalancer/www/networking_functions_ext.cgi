@@ -928,6 +928,7 @@ sub getBondConfig
 	# Open the config
 	my $bond_conf = Config::Tiny->read( $bond_config_file );
 
+	# put slaves as array elements
 	for my $bond ( keys %{ $bond_conf } )
 	{
 		next if $bond eq '_';
@@ -944,6 +945,7 @@ sub setBondConfig
 {
 	my $bond_conf = shift;
 
+	# store slaves as a string
 	for my $bond ( keys %{ $bond_conf } )
 	{
 		next if $bond eq '_';
@@ -952,6 +954,15 @@ sub setBondConfig
 	}
 
 	$bond_conf->write( $bond_config_file );
+
+	# put slaves back as array elements
+	for my $bond ( keys %{ $bond_conf } )
+	{
+		next if $bond eq '_';
+
+		$bond_conf->{ $bond }->{ slaves } =
+		  [split ( ' ', $bond_conf->{ $bond }->{ slaves } )];
+	}
 
 	return;
 }
