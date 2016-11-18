@@ -463,7 +463,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( !$error && exists ( $json_obj->{ weight } ) )
 		{
-			if ( $json_obj->{ weight } =~ &getValidFormat('natural') || $json_obj->{ weight } == undef ) # 1 or higher
+			if ( $json_obj->{ weight } =~ &getValidFormat('natural_num') || $json_obj->{ weight } == undef ) # 1 or higher
 			{
 				$be->{ weight } = $json_obj->{ weight };
 			}
