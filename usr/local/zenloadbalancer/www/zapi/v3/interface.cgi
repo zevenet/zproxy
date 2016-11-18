@@ -473,9 +473,9 @@ sub new_bond # ( $json_obj )
 	my $description = "Add a bond interface";
 
 	# validate BOND NAME
-	my $nic_re = &getValidFormat( 'nic_interface' );
+	my $bond_re = &getValidFormat( 'bond_interface' );
 
-	unless ( $json_obj->{ name } =~ /^$nic_re$/ && &ifexist($json_obj->{ name }) eq 'false' )
+	unless ( $json_obj->{ name } =~ /^$bond_re$/ && &ifexist($json_obj->{ name }) eq 'false' )
 	{
 		# Error
 		my $errormsg = "Interface name is not valid";
@@ -538,12 +538,16 @@ sub new_bond # ( $json_obj )
 		my $if_ref = getSystemInterface( $json_obj->{ name } );
 
 		# Success
+		my @bond_slaves = @{ $json_obj->{ slaves } };
+		my @output_slaves;
+		push( @output_slaves, { name => $_ } ) for @bond_slaves;
+
 		my $body = {
 					 description => $description,
 					 params      => {
 								 name   => $json_obj->{ name },
 								 mode   => $bond_modes_short[$json_obj->{ mode }],
-								 slaves => $json_obj->{ slaves },
+								 slaves => \@output_slaves,
 								 status => $if_ref->{ status },
 								 HWaddr => $if_ref->{ mac },
 					 },
