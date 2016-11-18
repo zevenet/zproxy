@@ -35,7 +35,7 @@ my @bond_modes_short = (
 #   "description" : "New virtual network interface eth0:new2",
 #   "params" : [
 #      {
-#         "HWaddr" : "04:01:41:01:86:01",
+#         "mac" : "04:01:41:01:86:01",
 #         "gateway" : "",
 #         "ip" : "192.168.0.150",
 #         "name" : "eth0:new",
@@ -188,7 +188,7 @@ sub new_vini # ( $json_obj )
 								 ip      => $if_ref->{ addr },
 								 netmask => $if_ref->{ mask },
 								 gateway => $if_ref->{ gateway },
-								 HWaddr  => $if_ref->{ mac },
+								 mac     => $if_ref->{ mac },
 					 },
 		};
 
@@ -235,7 +235,7 @@ sub new_vini # ( $json_obj )
 #   "description" : "New vlan network interface eth0.3",
 #   "params" : [
 #      {
-#         "HWaddr" : "04:01:41:01:86:01",
+#         "mac" : "04:01:41:01:86:01",
 #         "gateway" : "192.168.1.0",
 #         "ip" : "192.168.1.150",
 #         "name" : "eth0.3",
@@ -415,7 +415,7 @@ sub new_vlan # ( $json_obj )
 				addr    => $json_obj->{ ip },
 				mask    => $json_obj->{ netmask },
 				gateway => $json_obj->{ gateway } // '',
-				ip_v    => $json_obj->{ ip_v },
+				#~ ip_v    => $json_obj->{ ip_v },
 				mac     => $socket->if_hwaddr( $if_ref->{ dev } ),
 	};
 
@@ -446,7 +446,7 @@ sub new_vlan # ( $json_obj )
 								 ip      => $if_ref->{ addr },
 								 netmask => $if_ref->{ mask },
 								 gateway => $if_ref->{ gateway },
-								 HWaddr  => $if_ref->{ mac },
+								 mac     => $if_ref->{ mac },
 					 },
 		};
 
@@ -549,7 +549,7 @@ sub new_bond # ( $json_obj )
 								 mode   => $bond_modes_short[$json_obj->{ mode }],
 								 slaves => \@output_slaves,
 								 status => $if_ref->{ status },
-								 HWaddr => $if_ref->{ mac },
+								 mac    => $if_ref->{ mac },
 					 },
 		};
 
@@ -635,7 +635,7 @@ sub new_bond_slave # ( $json_obj, $bond )
 								 mode   => $bond_modes_short[$bonds->{ $bond }->{ mode }],
 								 slaves => \@output_slaves,
 								 status => $if_ref->{ status },
-								 HWaddr => $if_ref->{ mac },
+								 mac    => $if_ref->{ mac },
 					 },
 		};
 
@@ -1210,7 +1210,7 @@ sub delete_interface_floating # ( $floating )
 #   "description" : "List interfaces",
 #   "interfaces" : [
 #      {
-#         "HDWaddr" : "0e:1f:c6:69:a1:97",
+#         "mac" : "0e:1f:c6:69:a1:97",
 #         "gateway" : "192.168.101.5",
 #         "ip" : "192.168.101.120",
 #         "name" : "eth0",
@@ -1218,7 +1218,7 @@ sub delete_interface_floating # ( $floating )
 #         "status" : "up"
 #      },
 #      {
-#         "HDWaddr" : "0e:1f:c6:69:a1:97",
+#         "mac" : "0e:1f:c6:69:a1:97",
 #         "gateway" : "",
 #         "ip" : "192.168.101.122",
 #         "name" : "eth0:cluster",
@@ -1226,7 +1226,7 @@ sub delete_interface_floating # ( $floating )
 #         "status" : "up"
 #      },
 #      {
-#         "HDWaddr" : "ee:7f:26:4c:e2:b0",
+#         "mac" : "ee:7f:26:4c:e2:b0",
 #         "gateway" : "192.168.100.5",
 #         "ip" : "192.168.100.15",
 #         "name" : "eth1",
@@ -1234,7 +1234,7 @@ sub delete_interface_floating # ( $floating )
 #         "status" : "up"
 #      },
 #      {
-#         "HDWaddr" : "ee:7f:26:4c:e2:b0",
+#         "mac" : "ee:7f:26:4c:e2:b0",
 #         "gateway" : "",
 #         "ip" : "fe80:99::180",
 #         "name" : "eth1",
@@ -1242,7 +1242,7 @@ sub delete_interface_floating # ( $floating )
 #         "status" : "up"
 #      },
 #      {
-#         "HDWaddr" : "0a:d0:2b:ae:61:62",
+#         "mac" : "0a:d0:2b:ae:61:62",
 #         "gateway" : "",
 #         "ip" : "192.168.101.16",
 #         "name" : "eth2",
@@ -1250,7 +1250,7 @@ sub delete_interface_floating # ( $floating )
 #         "status" : "up"
 #      },
 #      {
-#         "HDWaddr" : "0a:d0:2b:ae:61:62",
+#         "mac" : "0a:d0:2b:ae:61:62",
 #         "gateway" : "",
 #         "ip" : "fe80::120",
 #         "name" : "eth2",
@@ -1258,7 +1258,7 @@ sub delete_interface_floating # ( $floating )
 #         "status" : "up"
 #      },
 #      {
-#         "HDWaddr" : "0a:d0:2b:ae:61:62",
+#         "mac" : "0a:d0:2b:ae:61:62",
 #         "gateway" : "192.168.12.5",
 #         "ip" : "192.168.12.25",
 #         "name" : "eth2.12",
@@ -1308,7 +1308,7 @@ sub get_interfaces # ()
 			netmask => $if_ref->{ mask },
 			gateway => $if_ref->{ gateway },
 			status  => $if_ref->{ status },
-			HDWaddr => $if_ref->{ mac },
+			mac     => $if_ref->{ mac },
 			type    => $if_ref->{ type },
 			#~ ipv     => $if_ref->{ ip_v },
 		  };
@@ -1340,7 +1340,7 @@ sub get_interfaces # ()
 #   "description" : "List interfaces",
 #   "interfaces" : [
 #      {
-#         "HDWaddr" : "0e:1f:c6:69:a1:97",
+#         "mac" : "0e:1f:c6:69:a1:97",
 #         "gateway" : "192.168.101.5",
 #         "ip" : "192.168.101.120",
 #         "name" : "eth0",
@@ -1348,7 +1348,7 @@ sub get_interfaces # ()
 #         "status" : "up"
 #      },
 #      {
-#         "HDWaddr" : "0e:1f:c6:69:a1:97",
+#         "mac" : "0e:1f:c6:69:a1:97",
 #         "gateway" : "",
 #         "ip" : "192.168.101.122",
 #         "name" : "eth0:cluster",
@@ -1356,7 +1356,7 @@ sub get_interfaces # ()
 #         "status" : "up"
 #      },
 #      {
-#         "HDWaddr" : "ee:7f:26:4c:e2:b0",
+#         "mac" : "ee:7f:26:4c:e2:b0",
 #         "gateway" : "192.168.100.5",
 #         "ip" : "192.168.100.15",
 #         "name" : "eth1",
@@ -1364,7 +1364,7 @@ sub get_interfaces # ()
 #         "status" : "up"
 #      },
 #      {
-#         "HDWaddr" : "ee:7f:26:4c:e2:b0",
+#         "mac" : "ee:7f:26:4c:e2:b0",
 #         "gateway" : "",
 #         "ip" : "fe80:99::180",
 #         "name" : "eth1",
@@ -1372,7 +1372,7 @@ sub get_interfaces # ()
 #         "status" : "up"
 #      },
 #      {
-#         "HDWaddr" : "0a:d0:2b:ae:61:62",
+#         "mac" : "0a:d0:2b:ae:61:62",
 #         "gateway" : "",
 #         "ip" : "192.168.101.16",
 #         "name" : "eth2",
@@ -1380,7 +1380,7 @@ sub get_interfaces # ()
 #         "status" : "up"
 #      },
 #      {
-#         "HDWaddr" : "0a:d0:2b:ae:61:62",
+#         "mac" : "0a:d0:2b:ae:61:62",
 #         "gateway" : "",
 #         "ip" : "fe80::120",
 #         "name" : "eth2",
@@ -1388,7 +1388,7 @@ sub get_interfaces # ()
 #         "status" : "up"
 #      },
 #      {
-#         "HDWaddr" : "0a:d0:2b:ae:61:62",
+#         "mac" : "0a:d0:2b:ae:61:62",
 #         "gateway" : "192.168.12.5",
 #         "ip" : "192.168.12.25",
 #         "name" : "eth2.12",
@@ -1432,7 +1432,7 @@ sub get_nic_list # ()
 			netmask => $if_ref->{ mask },
 			gateway => $if_ref->{ gateway },
 			status  => $if_ref->{ status },
-			HDWaddr => $if_ref->{ mac },
+			mac     => $if_ref->{ mac },
 			is_slave => $if_ref->{ is_slave },
 			parent  => $if_ref->{ parent },
 		  };
@@ -1473,7 +1473,7 @@ sub get_nic # ()
 			netmask => $if_ref->{ mask },
 			gateway => $if_ref->{ gateway },
 			status  => $if_ref->{ status },
-			HDWaddr => $if_ref->{ mac },
+			mac     => $if_ref->{ mac },
 			is_slave => $if_ref->{ is_slave },
 		};
 	}
@@ -1526,7 +1526,7 @@ sub get_vlan_list # ()
 			netmask => $if_ref->{ mask },
 			gateway => $if_ref->{ gateway },
 			status  => $if_ref->{ status },
-			HDWaddr => $if_ref->{ mac },
+			mac     => $if_ref->{ mac },
 			parent  => $if_ref->{ parent },
 		  };
 	}
@@ -1567,7 +1567,7 @@ sub get_vlan # ()
 					   netmask => $if_ref->{ mask },
 					   gateway => $if_ref->{ gateway },
 					   status  => $if_ref->{ status },
-					   HDWaddr => $if_ref->{ mac },
+					   mac     => $if_ref->{ mac },
 		};
 	}
 
@@ -1624,7 +1624,7 @@ sub get_bond_list # ()
 			netmask => $if_ref->{ mask },
 			gateway => $if_ref->{ gateway },
 			status  => $if_ref->{ status },
-			HDWaddr => $if_ref->{ mac },
+			mac     => $if_ref->{ mac },
 
 			slaves => \@output_slaves,
 			mode => $bond_modes_short[$bond_conf->{ $if_ref->{ name } }->{ mode }],
@@ -1672,7 +1672,7 @@ sub get_bond # ()
 					 netmask => $if_ref->{ mask },
 					 gateway => $if_ref->{ gateway },
 					 status  => $if_ref->{ status },
-					 HDWaddr => $if_ref->{ mac },
+					 mac     => $if_ref->{ mac },
 					 slaves  => \@output_slaves,
 					 mode => $bond_modes_short[$bond_conf->{ $if_ref->{ name } }->{ mode }],
 		};
@@ -1726,7 +1726,7 @@ sub get_virtual_list # ()
 			netmask => $if_ref->{ mask },
 			gateway => $if_ref->{ gateway },
 			status  => $if_ref->{ status },
-			HDWaddr => $if_ref->{ mac },
+			mac     => $if_ref->{ mac },
 			parent  => $if_ref->{ parent },
 		  };
 	}
@@ -1766,7 +1766,7 @@ sub get_virtual # ()
 			netmask => $if_ref->{ mask },
 			gateway => $if_ref->{ gateway },
 			status  => $if_ref->{ status },
-			HDWaddr => $if_ref->{ mac },
+			mac     => $if_ref->{ mac },
 		};
 	}
 
