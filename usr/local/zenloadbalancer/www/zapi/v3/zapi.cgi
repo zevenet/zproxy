@@ -641,7 +641,7 @@ POST qr{^/session$} => sub {
 ######################################################################
 if ( not ( &validZapiKey() or &validCGISession() ) )
 {
-	&httpResponse( { code => 401 } );
+	&httpResponse( { code => 401, body => { message => 'Authorization required' } } );
 }
 
 #	SESSION LOGOUT
