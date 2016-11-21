@@ -450,7 +450,7 @@ if ( $eject eq "start" )
 	&printAndLog( "Starting Zen Load Balancer...\n" );
 	&printAndLog( "* Starting Interfaces:\n" );
 
-	my $mgmt_ip = &GUIip();
+	my $mgmt_ip = &getHttpServerIp();
 	my $ip_bin = &getGlobalConfiguration('ip_bin');
 
 	#first real interfaces
