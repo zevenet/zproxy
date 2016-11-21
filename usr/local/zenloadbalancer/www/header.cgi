@@ -77,7 +77,7 @@ print "
   <!--[if lte IE 8]>
   <script language=\"javascript\" type=\"text/javascript\" src=\"js/flot/excanvas.min.js\"></script>
   <![endif]-->
-  <title>ZEN Load Balancer GUI v$version on $host</title>
+  <title>ZEVENET GUI v$version on $host</title>
   <link href=\"/img/favicon.ico\" rel=\"icon\" type=\"image/x-icon\" />
 </head>
 <body>

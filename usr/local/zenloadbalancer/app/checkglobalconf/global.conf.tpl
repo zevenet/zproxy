@@ -7,8 +7,10 @@ $basedir="/usr/local/zenloadbalancer/www";
 #configuration directory.In this section all config files are saved.
 $configdir="/usr/local/zenloadbalancer/config";
 #Log directory
-$logdir="/var/log";#update
-#.<b>Time out execution ZEN GUI CGIs.</b> <font size=1>When timeout is exceded the cgi execution is killed automatically.</font>
+$logdir="/usr/local/zenloadbalancer/logs/";
+#log filename for this Graphic user interface.Some action with this GUI will be saved here.
+$logfile="/usr/local/zenloadbalancer/logs/zenloadbalancer.log";
+#.<b>Time out execution ZEVENET GUI CGIs.</b> <font size=1>When timeout is exceded the cgi execution is killed automatically.</font>
 $timeouterrors="60";
 #File configuration Zen Cluster
 $filecluster="/usr/local/zenloadbalancer/config/cluster.conf";
@@ -91,8 +93,6 @@ $ls="/bin/ls";
 $cp="/bin/cp";
 #Where is iptables?
 $iptables="/sbin/iptables";
-#Where is ip6tables?
-$ip6tables="/sbin/ip6tables";
 #Where is modprobe?
 $modprobe="/sbin/modprobe";
 #Where is lsmod?
@@ -107,8 +107,6 @@ $l4sd="/usr/local/zenloadbalancer/app/l4s/bin/l4sd";
 $bin_id="/usr/bin/id";
 #Where is conntrack binary?
 $conntrack="/usr/sbin/conntrack";
-#systemctl
-$systemctl="/bin/systemctl";
 
 #where is pound binary?
 $pound="/usr/local/zenloadbalancer/app/pound/sbin/pound";
@@ -125,14 +123,8 @@ $fwmarksconf = "$configdir/fwmarks.conf";
 $defaultgw="";
 #Interface Default Gateway
 $defaultgwif="";
-#System Default IPv6 Gateway
-$defaultgw6="";
-#Interface Default IPv6 Gateway
-$defaultgwif6="";
 #Number of gratuitous pings
 $pingc="1";
-#routing options
-$routeparams="initcwnd 10 initrwnd 10";
 
 ## L4xNat - netfilter
 # Maximum recent ip list
@@ -148,6 +140,8 @@ $libexec_dir="/usr/local/zenloadbalancer/app/libexec";
 $farmguardian="/usr/local/zenloadbalancer/app/farmguardian/bin/farmguardian";
 #Directory where FarmGuardian save the configuration files
 $farmguardian_dir="/usr/local/zenloadbalancer/app/farmguardian/etc";
+#Directory where FarmGuadian save the logs
+$farmguardian_logs="/usr/local/zenloadbalancer/logs";
 
 #Where is ZenRRD Directory?. There is a perl script that create rrd database and images from Monitoring section
 $rrdap_dir="/usr/local/zenloadbalancer/app/zenrrd";#update
@@ -155,11 +149,15 @@ $rrdap_dir="/usr/local/zenloadbalancer/app/zenrrd";#update
 $img_dir="/img/graphs/";
 #Relative path where is rrd databases from ZenRRD * no modify
 $rrd_dir="rrd";#update
+#File log name  for ZenRRD. A lot of disk space is needed. If it is blank no loggin
+$log_rrd="";
 
 #Service for configure Zen directory replication
 $zenino="/usr/local/zenloadbalancer/app/zeninotify/zeninotify.pl"; 
 #Zen Inotify pid file 
 $zeninopid="/var/run/zeninotify.pid";
+#Zen inotify log file
+$zeninolog="/usr/local/zenloadbalancer/logs/zeninotify.log";
 #.<b>Rsync replication parameters</b>
 $zenrsync="-auzv --delete";
 
@@ -167,31 +165,15 @@ $zenrsync="-auzv --delete";
 $zenlatup="/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl";
 #Services for configure stop latency service
 $zenlatdown="/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl";
+#Zen latency log file
+$zenlatlog="/usr/local/zenloadbalancer/logs/zenlatency.log";
 
 #Zen backup
 $zenbackup="/usr/local/zenloadbalancer/app/zenbackup/zenbackup.pl";
 
 #Plugins path
-$pluginsdir="/usr/local/zenloadbalancer/www/Plugins";
-
-#SNMP Service
-$snmpdconfig_file="/etc/snmp/snmpd.conf";
-
-#Bonding interfaces
-$bond_config_file="/usr/local/zenloadbalancer/config/bonding.conf";
-$sys_net_dir="/sys/class/net";
-$bonding_masters_filename="/sys/class/net/bonding_masters";
-$bonding_mode_filename="bonding/mode";
-$bonding_slaves_filename="bonding/slaves";
-$bonding_miimon_filename="bonding/miimon";
-
-#Notifications Module
-$sec="/usr/bin/sec";
-$secConf="/usr/local/zenloadbalancer/www/Plugins/Notifications/sec.rules";
-$syslogFile="/var/log/syslog";
-$logger="/usr/bin/logger";
-
+$pluginsdir="/usr/local/zenloadbalancer/www/Plugins";#update
 #::END Global Section
 
 #!!!!NOT REMOVE NEXT LINE!!!!!!
-1;
+1

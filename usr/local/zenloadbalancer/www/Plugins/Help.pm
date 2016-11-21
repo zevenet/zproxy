@@ -41,17 +41,18 @@ sub position
 
 sub menu
 {
+	my ( $id, $version, $name ) = @_;
 	my $urlDocumentation;
 	my $output;
 
 	# icono marcado
 	my $monitoringiconclass = "";
-	my $idType              = $main::id;
+	my $idType              = $id;
 	my $type;
 
-	if ( $main::id eq "1-2" )
+	if ( $id eq "1-2" )
 	{
-		$type = &main::getFarmType( $main::farmname );
+		$type = &main::getFarmType( $name );
 
 		if ( $type eq "tcp" )
 		{
@@ -76,7 +77,7 @@ sub menu
 
 	}
 
-	$urlDocumentation = &forwardingToHelp( $idType, $main::version );
+	$urlDocumentation = &forwardingToHelp( $idType, $version );
 
 	if ( $urlDocumentation eq "" )
 	{
@@ -104,14 +105,15 @@ sub menu
 	return $output;
 }
 
+# \params: idPage, versionZen
 sub forwardingToHelp
 {
-	# version
-	my $versionZen=$main::version;
-	
+	# Recolect params
+	my ( $idPage, $versionZen ) = @_;
+
 	# Name for data storage file
 	my $fileName = "$helpPath/url.conf";
-	
+
 	# Keep url to forwarding
 	my $url = "";
 
@@ -126,16 +128,18 @@ sub forwardingToHelp
 
 	if ( $params == 2 )
 	{
-		if ( $urlEnd{ $main::id } )
+		if ( $urlEnd{ $idPage } )
 		{
+
+			# Get main zen version
 			$versionZen =~ s/^(\d+\.\d+).*$/$1/e;
 
 			$url =
-			    "https://www.zenloadbalancer.com/knowledge-base/enterprise-edition-v"
+			    "https://www.zevenet.com/knowledge-base/enterprise-edition-v"
 			  . $versionZen
 			  . "-administration-guide/enterprise-edition-v"
 			  . $versionZen . "-"
-			  . $urlEnd{ $main::id };
+			  . $urlEnd{ $idPage };
 		}
 	}
 
@@ -170,7 +174,7 @@ sub getDataHash
 
 	if ( @_ > 2 or @_ == 0 )
 	{
-		&zenlog("Error in number of parameters. Function: >getDataHash<.\n");
+		&logfile("Error in number of parameters. Function: >getDataHash<.\n");
 	}
 	else
 	{
@@ -178,7 +182,7 @@ sub getDataHash
 
 		if ( ! @hf )
 		{
-			&zenlog("Error! Don\'t find the file $fileName.\n");
+			&logfile("Error! Don\'t find the file $fileName.\n");
 			return -1;
 		}
 

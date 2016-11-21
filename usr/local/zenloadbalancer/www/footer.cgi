@@ -29,7 +29,7 @@ $currentyear = localtime->year() + 1900;
 print "
 <!-- Start Footer -->
 <div class=\"footer container_12\">
-<p class=\"grid_12\">Copyright &copy; $currentyear SOFINTEL IT ENGINEERING S.L. // Zen Load Balancer is created under GNU/LGPL License // <a href=\"http://www.zenloadbalancer.com\" target=\"_blank\">www.zenloadbalancer.com</a></p>
+<p class=\"grid_12\">Copyright &copy; 2010-$currentyear SOFINTEL IT ENGINEERING S.L. // ZEVENET is created under GNU/LGPL License // <a href=\"https://www.zevenet.com\" target=\"_blank\">www.zevenet.com</a></p>
 </div>
 <!-- End Footer -->
 

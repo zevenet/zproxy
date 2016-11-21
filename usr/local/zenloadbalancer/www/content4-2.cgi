@@ -58,7 +58,7 @@ if ( $action eq "Delete ZLB Certificate Key" )
 print "<div class=\"box grid_12\">
                  <div class=\"box-head\">
                        <span class=\"box-icon-24 fugue-24 lock\"></span>         
-                       <h2>Zen Load Balancer Certificate key</h2>
+                       <h2>ZEVENET Certificate key</h2>
                  </div>
                  <div class=\"box-content certificate-key no-pad\">
 		<ul class=\"table-toolbar\">

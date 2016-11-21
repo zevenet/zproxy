@@ -79,7 +79,7 @@ print "
     <div class=\"box grid_12\">
       <div class=\"box-head\">
            <span class=\"box-icon-24 fugue-24 globe\"></span>
-        <h2>Zen Load Balancer Professional Products &amp; Services</h2>
+        <h2>ZEVENET Professional Products &amp; Services</h2>
       </div>
       <div class=\"box-content no-pad\">
          <table class=\"display\">

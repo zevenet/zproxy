@@ -47,7 +47,7 @@ print "
                <div class=\"box grid_12\">
                  <div class=\"box-head\">
                        <span class=\"box-icon-24 fugue-24 document-text\"></span>        
-                       <h2>Zen Load Balancer license</h2>
+                       <h2>ZEVENET license</h2>
                  </div>
                  <div class=\"box-content\">
        ";
