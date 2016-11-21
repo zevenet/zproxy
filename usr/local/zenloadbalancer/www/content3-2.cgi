@@ -670,7 +670,7 @@ elsif ( $action eq "Modify" )
 }
 
 # Calculate cluster and GUI ips
-$guiip = &GUIip();
+$guiip = &getHttpServerIp();
 $clrip = &getZClusterLocalIp();
 
 my @interfaces = @{ &getSystemInterfaceList() };

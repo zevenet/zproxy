@@ -24,91 +24,7 @@
 #~ use strict;
 #~ use warnings;
 
-=begin nd
-	Function: GUIip
 
-	returns the GUI service ip address
-
-	Parameters: none
-
-	Returns:
-
-		scalar - GUI ip address or '*' for all local addresses
-
-=cut
-sub GUIip    # ()
-{
-	my $gui_ip;    # output
-
-	open my $fh, "<", "$confhttp";
-
-	# read line matching 'server!bind!1!interface = <IP>'
-	my $config_item = 'server!bind!1!interface';
-
-	while ( my $line = <$fh> )
-	{
-		if ( $line =~ /$config_item/ )
-		{
-			( undef, $gui_ip ) = split ( "=", $line );
-			last;
-		}
-	}
-
-	close $fh;
-
-	chomp ( $gui_ip );
-	$gui_ip =~ s/\s//g;
-
-	if ( &ipisok($gui_ip,4) ne "true" )
-	{
-		$gui_ip = "*";
-	}
-
-	return $gui_ip;
-}
-
-#function that read the https port for GUI
-sub getGuiPort    # ()
-{
-	my $gui_port;    # output
-
-	open my $fh, "<", "$confhttp";
-
-	# read line matching 'server!bind!1!port = <PORT>'
-	my $config_item = 'server!bind!1!port';
-
-	while ( my $line = <$fh> )
-	{
-		if ( $line =~ /$config_item/ )
-		{
-			( undef, $gui_port ) = split ( "=", $line );
-			last;
-		}
-	}
-
-	#~ my @httpdconffile = <$fr>;
-	close $fh;
-
-	chomp ( $gui_port );
-	$gui_port =~ s/\s//g;
-
-	return $gui_port;
-}
-
-#function that write the https port for GUI
-sub setGuiPort    # ($httpsguiport)
-{
-	my ( $httpsguiport ) = @_;
-
-	$httpsguiport =~ s/\ //g;
-
-	use Tie::File;
-	tie my @array, 'Tie::File', "$confhttp";
-
-	@array[2] = "server!bind!1!port = $httpsguiport\n";
-
-	untie @array;
-}
 
 #function that create the menu for delete, move a service in a http[s] farm
 sub createmenuservice    # ($fname,$sv,$pos)
@@ -292,7 +208,7 @@ sub createmenuif    # ($if_ref, $id)
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
 	my @interfaces = $socket->if_list;
 
-	my $guiip      = &GUIip();
+	my $guiip      = &getHttpServerIp();
 	my $mgmt_iface = getInterfaceOfIp( $guiip );
 	my $clrip      = &getZClusterLocalIp();
 

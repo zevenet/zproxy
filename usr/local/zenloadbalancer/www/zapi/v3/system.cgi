@@ -421,13 +421,13 @@ ntp:
 #  @api {get} /system/ntp Request ntp
 #  @apiGroup SYSTEM
 #  @apiDescription Get description of ntp
-#  @apiName GetSnmp
+#  @apiName GetNtp
 #  @apiVersion 3.0
 #
 #
 # @apiSuccessExample Success-Response:
 #{
-#   "description" : "Get snmp",
+#   "description" : "Get ntp",
 #   "params" : "pool.ntp.or"
 #}
 #
@@ -440,7 +440,7 @@ ntp:
 # GET /system/ntp
 sub get_ntp
 {
-	my $description = "Get snmp";
+	my $description = "Get ntp";
 	my $ntp         = &getGlobalConfiguration( 'ntp' );
 
 	&httpResponse(
@@ -506,6 +506,521 @@ sub set_ntp
 			}
 		}
 	}
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+}
+
+http:
+
+#**
+#  @api {get} /system/http Request http
+#  @apiGroup SYSTEM
+#  @apiDescription Get description of http
+#  @apiName GetHttp
+#  @apiVersion 3.0
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Get http",
+#   "params" : {
+#      "interface" : {
+#         "dev" : "eth0",
+#         "ip" : "192.168.100.240"
+#      },
+#      "port" : "443"
+#   }
+#}
+#
+#@apiExample {curl} Example Usage:
+#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/http
+#
+#@apiSampleRequest off
+#**
+# GET /system/http
+sub get_http
+{
+	my $description       = "Get http";
+	my $httpIp            = &getHttpServerIp();
+	my $allInterfaces_aux = &getActiveInterfaceList();
+	my @interfaces;
+	my $interface;
+
+	# add all interfaces
+	push @interfaces, { 'dev' => '*', 'ip' => '*' };
+
+	foreach my $iface ( @{ $allInterfaces_aux } )
+	{
+		push @interfaces, { 'dev' => $iface->{ 'dev' }, 'ip' => $iface->{ 'addr' } };
+		if ( $iface->{ 'addr' } eq $httpIp )
+		{
+			$interface = { 'dev' => $iface->{ 'dev' }, 'ip' => $iface->{ 'addr' } };
+		}
+	}
+
+	# http is enabled in all interfaces
+	$interface = '*' if ( !$interface );
+
+	my $http;
+	$http->{ 'port' } = &getHttpServerPort;
+
+	#~ $http->{ 'availableInterfaces' } = \@interfaces;
+	$http->{ 'ip' } = $interface;
+
+	&httpResponse(
+			{ code => 200, body => { description => $description, params => $http } } );
+}
+
+#####Documentation of POST http####
+#**
+#  @api {post} /system/http Modify the parameters to connect with http server
+#  @apiGroup SYSTEM
+#  @apiName PostHttp
+#  @apiDescription Modify http server settings
+#  @apiVersion 3.0
+#
+#
+#
+# @apiSuccess	{string}			ip			this ip has to exist in some interface. This interface can't be virtual. Set '*' character if you want to listen in all available interfaces
+# @apiSuccess	{number}		port		port to connect with http service
+#
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#	"description" : "Post http",
+#	"params" : {
+#		"ip" : "192.168.6.32",
+#		"port" : "444"
+#	}
+#}
+#
+# @apiExample {curl} Example Usage:
+#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#        -d '{"ip":"192.168.6.32", "port":"444"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/http
+#
+# @apiSampleRequest off
+#
+#**
+# POST /system/http
+sub set_http
+{
+	my $json_obj    = shift;
+	my $description = "Post http";
+	my $errormsg;
+	my @allowParams = ( "ip", "port" );
+	my $httpIp = $json_obj->{ 'ip' } if ( exists $json_obj->{ 'ip' } );
+	my $interfaz;
+
+	$errormsg = &getValidOptParams( $json_obj, \@allowParams );
+	if ( !$errormsg )
+	{
+		if ( !&getValidFormat( "port", $json_obj->{ 'port' } ) )
+		{
+			$errormsg = "Port hasn't a correct format.";
+		}
+		else
+		{
+			if ( exists $json_obj->{ 'ip' } )
+			{
+				if ( $json_obj->{ 'ip' } ne '*' )
+				{
+					my $flag;
+					foreach my $iface ( @{ &getActiveInterfaceList() } )
+					{
+						if ( $httpIp eq $iface->{ addr } )
+						{
+							$flag = 1;
+							if ( $iface->{ vini } ne '' )    # discard virtual interfaces
+							{
+								$errormsg = "Virtual interface canot be configurate as http interface.";
+							}
+							else
+							{
+								$interface = $iface;
+							}
+							last;
+						}
+					}
+					$errormsg = "Ip not found in system." if ( !$flag );
+				}
+			}
+			if ( !$errormsg )
+			{
+				&setHttpServerPort( $json_obj->{ 'port' } ) if ( exists $json_obj->{ 'port' } );
+				&setHttpServerIp( $httpIp ) if ( exists $json_obj->{ 'ip' } );
+				&httpResponse(
+					{ code => 200, body => { description => $description, params => $json_obj } } );
+			}
+		}
+	}
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+}
+
+backup:
+
+#**
+#  @api {get} /system/backup Request existent backups
+#  @apiGroup SYSTEM
+#  @apiDescription Get existent backups
+#  @apiName GetBackup
+#  @apiVersion 3.0
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Get backups",
+#   "params" : [
+#      {
+#         "date" : "Fri Nov 18 11:24:13 2016",
+#         "file" : "back_2"
+#      },
+#      {
+#         "date" : "Fri Nov 18 12:40:06 2016",
+#         "file" : "back_1"
+#      },
+#      {
+#         "date" : "Thu Nov 17 18:14:47 2016",
+#         "file" : "first_conf"
+#      }
+#   ]
+#}
+#@apiExample {curl} Example Usage:
+#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/backup
+#
+#@apiSampleRequest off
+#**
+#	GET	/system/backup
+sub get_backup
+{
+	my $description = "Get backups";
+
+	my $backups = &getBackup;
+
+	&httpResponse(
+		 { code => 200, body => { description => $description, params => $backups } } );
+}
+
+#####Documentation of POST backup####
+#**
+#  @api {post} /system/backup Create a backup of configuration files
+#  @apiGroup SYSTEM
+#  @apiName PostBackup
+#  @apiDescription Create a backup of configuration files
+#  @apiVersion 3.0
+#
+#
+# @apiSuccess	{string}			name			name for backup
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Create a backups",
+#   "message" : "Backup zen_bak was created successful.",
+#   "params" : "zen_bak"
+#}
+#
+# @apiExample {curl} Example Usage:
+#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#        -d '{"name":"zen_bak"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/backup
+#
+# @apiSampleRequest off
+#
+#**
+#	POST  /system/backup
+sub create_backup
+{
+	my $json_obj       = shift;
+	my $description    = "Create a backups";
+	my @requiredParams = ( "name" );
+	my $errormsg;
+
+	$errormsg = getValidReqParams( \%json_obj, \@requiredParams );
+	if ( &getExistsBackup( $json_obj->{ 'name' } ) )
+	{
+		$errormsg = "A backup just exists with this name.";
+	}
+	elsif ( !&getValidFormat( 'backup', $json_obj->{ 'name' } ) )
+	{
+		$errormsg = "The backup name has invalid characters.";
+	}
+	else
+	{
+		$errormsg = &createBackup( $json_obj->{ 'name' } );
+		if ( !$errormsg )
+		{
+			$errormsg = "Backup $json_obj->{ 'name' } was created successful.";
+			my $body = {
+						 description => $description,
+						 params      => $json_obj->{ 'name' },
+						 message     => $errormsg
+			};
+			&httpResponse( { code => 200, body => $body } );
+		}
+		else
+		{
+			$errormsg = "Error creating backup.";
+		}
+	}
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+}
+
+#**
+#  @api {get} /system/backup/BACKUP Download a backup
+#  @apiGroup SYSTEM
+#  @apiDescription Download a backup
+#  @apiName GetBackupDownload
+#  @apiVersion 3.0
+#
+#
+# @apiSuccessExample Success-Response:
+#
+#
+#@apiExample {curl} Example Usage:
+#	curl -o <PATH/FILE.tar.gz> --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/backup/BACKUP
+#
+#@apiSampleRequest off
+#**
+#	GET	/system/backup/BACKUP
+sub download_backup
+{
+	my $backup      = shift;
+	my $description = "Download a backup";
+	my $errormsg    = "$backup was download successful.";
+
+	if ( !&getExistsBackup( $backup ) )
+	{
+		$errormsg = "Not found $backup backup.";
+		my $body =
+		  { description => $description, error => "true", message => $errormsg };
+		&httpResponse( { code => 404, body => $body } );
+	}
+	else
+	{
+# Download function ends communication if itself finishes successful. It is not necessary send "200 OK" msg
+		$errormsg = &downloadBackup( $backup );
+		if ( $errormsg )
+		{
+			$errormsg = "Error, downloading backup.";
+		}
+	}
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 404, body => $body } );
+}
+
+#####Documentation of PUT snmp####
+#**
+#  @api {post} /system/backup/BACKUP Upload a zen backup
+#  @apiGroup SYSTEM
+#  @apiName PutBackup
+#  @apiDescription Upload a backup
+#  @apiParam {String} backup  Name to save the backup
+#  @apiVersion 3.0
+#
+#
+# @apiSuccess	{string}		data-binary 	backup file to upload
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Upload a backup",
+#   "message" : "Backup backup_1 was created successful.",
+#   "params" : "backup_1"
+#}
+#
+#
+# @apiExample {curl} Example Usage:
+#       curl --tlsv1 -k -X PUT -H 'Content-Type: text/plain' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#        --data-binary @/opt/backup.tar.gz https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/backup/BACKUP
+#
+# @apiSampleRequest off
+#
+#**
+# curl -kis -X PUT -H "ZAPI_KEY: 2bJUd" --tcp-nodelay -H 'Content-Type: text/plain' https://192.168.101.20:444/zapi/v3/zapi.cgi/system/backup/backup_1 --data-binary @/opt/backup.tar.gz
+#	PUT	/system/backup/BACKUP
+sub upload_backup
+{
+	my $upload_filehandle = shift;
+	my $name              = shift;
+
+	my $description = "Upload a backup";
+	my $errormsg;
+
+	if ( !$upload_filehandle || !$name )
+	{
+		$errormsg = "It's necessary add a data binary file.";
+	}
+	elsif ( &getExistsBackup( $name ) )
+	{
+		$errormsg = "Backup just exists with this name.";
+	}
+	elsif ( !&getValidFormat( 'backup', $name ) )
+	{
+		$errormsg = "The backup name has invalid characters.";
+	}
+	else
+	{
+		$errormsg = &uploadBackup( $name, $upload_filehandle );
+		if ( !$errormsg )
+		{
+			$errormsg = "Backup $name was created successful.";
+			my $body =
+			  { description => $description, params => $name, message => $errormsg };
+			&httpResponse( { code => 200, body => $body } );
+		}
+		else
+		{
+			$errormsg = "Error creating backup.";
+		}
+	}
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+}
+
+#####Documentation of DELETE a backup####
+#**
+#  @api {delete} /system/backup/BACKUP	Delete a backup from zen balancer
+#  @apiGroup SYSTEM
+#  @apiName DeleteBackup
+#  @apiParam	{String}	Backup	Backup name
+#  @apiDescription Delete a backup from balancer
+#  @apiVersion 3.0
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Delete backup backup_1'",
+#   "message" : "The list backup_1 has been deleted successful.",
+#   "success" : "true"
+#}
+#
+#
+# @apiExample {curl} Example Usage:
+#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/backup/BACKUP
+#
+# @apiSampleRequest off
+#
+#**
+#	DELETE /system/backup/BACKUP
+sub del_backup
+{
+	my $backup = shift;
+	my $errormsg;
+	my $description = "Delete backup $backup'";
+
+	if ( !&getExistsBackup( $backup ) )
+	{
+		$errormsg = "$backup doesn't exist.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+		&httpResponse( { code => 404, body => $body } );
+	}
+	else
+	{
+		$errormsg = &deleteBackup( $backup );
+		if ( !$errormsg )
+		{
+			$errormsg = "The list $backup has been deleted successful.";
+			my $body = {
+						 description => $description,
+						 success     => "true",
+						 message     => $errormsg,
+			};
+			&httpResponse( { code => 200, body => $body } );
+		}
+		else
+		{
+			$errormsg = "There was a error deleting list $backup.";
+		}
+	}
+	my $body = {
+				 description => $description,
+				 error       => "true",
+				 message     => $errormsg,
+	};
+	&httpResponse( { code => 400, body => $body } );
+}
+
+#####Documentation of POST apply a backup to the system####
+#**
+#  @api {post} /system/backup/BACKUP/action Apply a backup to the system
+#  @apiGroup SYSTEM
+#  @apiName PostBackupAction
+#  @apiParam {String} backup  Backup name to apply to system
+#  @apiDescription Apply a backup to the system
+#  @apiVersion 3.0
+#
+#
+# @apiSuccess	{string}		action		The action param only has the option: apply.
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Apply a backup to the system",
+#   "params" : {
+#      "action" : "apply"
+#   }
+#}
+#
+#
+# @apiExample {curl} Example Usage:
+#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#		  -d '{"action":"apply"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/backup/BACKUP/action
+#
+# @apiSampleRequest off
+#
+#**
+#	PUT /system/backup/BACKUP/actions
+sub apply_backup
+{
+	my $json_obj    = shift;
+	my $backup      = shift;
+	my $description = "Apply a backup to the system";
+
+	my @allowParams = ( "action" );
+	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
+	if ( !$errormsg )
+	{
+		if ( !&getExistsBackup( $backup ) )
+		{
+			$errormsg = "Not found $backup backup.";
+			my $body =
+			  { description => $description, error => "true", message => $errormsg };
+			&httpResponse( { code => 404, body => $body } );
+		}
+		elsif ( !&getValidFormat( 'backup_action', $json_obj->{ 'action' } ) )
+		{
+			$errormsg = "Error, it's necessary add a valid action";
+		}
+		else
+		{
+			$errormsg = &applyBackup( $backup );
+			if ( !$errormsg )
+			{
+				&httpResponse(
+					{ code => 200, body => { description => $description, params => $json_obj } } );
+			}
+			else
+			{
+				$errormsg = "There was a error applying the backup.";
+			}
+		}
+	}
+
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
 	&httpResponse( { code => 400, body => $body } );
@@ -866,4 +1381,3 @@ sub set_notif_alert_actions
 }
 
 1;
-

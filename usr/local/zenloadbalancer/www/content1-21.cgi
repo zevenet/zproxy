@@ -77,7 +77,7 @@ if ( $action eq "Save" )
 		}
 	}
 
-	if ( $farmprotocol eq 'L4xNAT' && &GUIip() eq $vip )
+	if ( $farmprotocol eq 'L4xNAT' && &getHttpServerIp() eq $vip )
 	{
 		&errormsg(
 			"Invalid Virtual IP $vip, it's the same VIP than the GUI access. Please choose another one."
@@ -198,7 +198,7 @@ if ( $action eq 'addfarm' || $action eq "Save & continue" )
 
 			# skip local cluster IP
 			next if &getZClusterLocalIp() eq $$iface{ addr };
-			next if &GUIip eq $$iface{ addr } && (-e $filecluster);
+			next if &getHttpServerIp eq $$iface{ addr } && (-e $filecluster);
 
 			print
 			  "<option value=\"$$iface{name} $$iface{addr}\">$$iface{dev_ip_padded}</option>\n";

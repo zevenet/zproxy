@@ -225,7 +225,7 @@ sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_sc
 	}
 
 	# read current management IP
-	#~ my $snmpd_ip = &GUIip();
+	#~ my $snmpd_ip = &getHttpServerIp();
 	if ( $snmpd_new->{ ip } eq '*' )
 	{
 		$snmpd_ip = '0.0.0.0';

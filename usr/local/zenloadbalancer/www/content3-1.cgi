@@ -182,7 +182,7 @@ if ( $action eq "Modify Configuration" )
 	untie @array;
 
 	# save snmp ip
-	my $mgmt_ip = &GUIip();
+	my $mgmt_ip = &getHttpServerIp();
 	my %snmp    = %{ &getSnmpdConfig() };
 
 	&zenlog( "mgmt_ip:$mgmt_ip" );
@@ -199,7 +199,7 @@ if ( $action eq "Modify Configuration" )
 	}
 
 	#Change GUI https port
-	&setGuiPort( $guiport, $confhttp );
+	&setHttpServerPort( $guiport, $confhttp );
 
 	&successmsg( "Some changes were applied for Local configuration" );
 }
@@ -227,11 +227,11 @@ if ( $action eq "Restart GUI Service" )
 	}
 	if ( $ipgui =~ /^$/ )
 	{
-		$ipgui = &GUIip();
+		$ipgui = &getHttpServerIp();
 	}
 	if ( $guiport =~ /^$/ )
 	{
-		$guiport = &getGuiPort( $confhttp );
+		$guiport = &getHttpServerPort( $confhttp );
 	}
 	if ( $ipgui =~ /\*/ )
 	{
@@ -256,7 +256,7 @@ if ( $action eq "Apply" )
 			  scope     => $snmpd_scope,
 	);
 
-	$snmp{ ip } = &GUIip();
+	$snmp{ ip } = &getHttpServerIp();
 
 	my $snmp_error = &applySnmpChanges( \%snmp );
 
@@ -381,7 +381,7 @@ print "
 				<input type=\"hidden\" name=\"id\" value=\"3-1\">
 ";
 
-my $hosthttp = &GUIip();
+my $hosthttp = &getHttpServerIp();
 
 # Print "Zen cluster service is UP, Zen GUI should works over ip $lip";
 print "
@@ -429,7 +429,7 @@ print "
 #
 # HTTPS port for GUI interface
 #
-my $guiport = &getGuiPort();
+my $guiport = &getHttpServerPort();
 if ( $guiport =~ /^$/ )
 {
 	$guiport = 444;

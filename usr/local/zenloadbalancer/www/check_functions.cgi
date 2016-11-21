@@ -46,7 +46,7 @@ my $bond_if     = qr/[a-zA-Z0-9]{1,15}/;
 my $vlan_if     = qr/[a-zA-Z0-9]{1,13}\.$vlan_tag/;
 my $port_range =
   qr/(?:[1-5]?\d{1,4}|6[0-4]\d{3}|65[1-4]\d{2}|655[1-2]\d{1}|6553[1-5])/;
-my $graphsFrecuency = qr/(?:daily|weekly|monthly|yearly)/;
+my $graphsFrequency = qr/(?:daily|weekly|monthly|yearly)/;
 
 my %format_re = (
 
@@ -55,6 +55,9 @@ my %format_re = (
 
 	# hostname
 	'hostname' => $hostname,
+
+	# common
+	'port' => $port_range,
 
 	# system
 	'dns_nameserver' => $ipv4_addr,
@@ -73,13 +76,16 @@ my %format_re = (
 	'farm_profile' => qr/HTTP|GSLB|L4XNAT|DATALINK/,
 	'backend'      => qr/\d+/,
 	'service'      => $service,
-	'farm_modules'      => qr/(?:gslb|dslb|lslb)/,
+	'farm_modules' => qr/(?:gslb|dslb|lslb)/,
+
+	# backup
+	'backup'        => qr/[\w]+/,
+	'backup_action' => qr/apply/,
 
 	# graphs
-	'graphs_frecuency' => $graphsFrecuency,
+	'graphs_frequency' => $graphsFrequency,
 	'graphs_system_id' => qr/(?:cpu|load|ram|swap)/,
-	'mount_point' => qr/root[\w\-\.\/]*/,
-	# 'mount_point'       => qr/root[\w\/]*[^(?:$graphsFrecuency)]$/,
+	'mount_point'      => qr/root[\w\-\.\/]*/,
 
 	# gslb
 	'zone'          => qr/(?:$hostname\.)+[a-z]{2,}/,

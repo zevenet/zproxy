@@ -674,6 +674,7 @@ DELETE qr{^/session$} => sub {
 
 #	CERTIFICATES
 #
+certificates:
 
 #  POST activation certificate
 POST qr{^/certificates/activation$} => sub {
@@ -684,13 +685,13 @@ POST qr{^/certificates/activation$} => sub {
 ######################################################################
 &checkActivationCertificate();
 
+my $cert_re     = &getValidFormat( 'certificate' );
+my $cert_pem_re = &getValidFormat( 'cert_pem' );
+
 #  GET List SSL certificates
 GET qr{^/certificates$} => sub {
 	&certificates();
 };
-
-my $cert_re     = &getValidFormat( 'certificate' );
-my $cert_pem_re = &getValidFormat( 'cert_pem' );
 
 #  Download SSL certificate
 GET qr{^/certificates/($cert_re)$} => sub {
@@ -1126,13 +1127,12 @@ GET qr{^/stats/farms/($farm_re)/service/($service_re)/backends$} => sub {
 	&farm_stats( @_ );
 };
 
-
 #	GRAPHS
 #
 graphs:
 
-my $frecuency_re = &getValidFormat ( 'graphs_frecuency' );
-my $system_id_re = &getValidFormat ( 'graphs_system_id' );
+my $frequency_re = &getValidFormat( 'graphs_frequency' );
+my $system_id_re = &getValidFormat( 'graphs_system_id' );
 
 #  GET graphs
 #~ GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
@@ -1143,7 +1143,6 @@ my $system_id_re = &getValidFormat ( 'graphs_system_id' );
 GET qr{^/graphs$} => sub {
 	&possible_graphs();
 };
-
 
 ##### /graphs/system
 #  GET all possible system graphs
@@ -1156,11 +1155,10 @@ GET qr{^/graphs/system/($system_id_re)$} => sub {
 	&get_sys_graphs( @_ );
 };
 
-#  GET frecuency system graphs
-GET qr{^/graphs/system/($system_id_re)/($frecuency_re)$} => sub {
+#  GET frequency system graphs
+GET qr{^/graphs/system/($system_id_re)/($frequency_re)$} => sub {
 	&get_frec_sys_graphs( @_ );
 };
-
 
 ##### /graphs/system/disk
 
@@ -1180,7 +1178,6 @@ GET qr{^/graphs/system/disk/($disk_re)$} => sub {
 	&graphs_disk_mount_point_all( @_ );
 };
 
-
 ##### /graphs/interfaces
 
 #  GET all posible interfaces graphs
@@ -1193,11 +1190,10 @@ GET qr{^/graphs/interfaces/($nic_re)$} => sub {
 	&get_iface_graphs( @_ );
 };
 
-#  GET frecuency interfaces graphs
-GET qr{^/graphs/interfaces/($nic_re)/($frecuency_re)$} => sub {
+#  GET frequency interfaces graphs
+GET qr{^/graphs/interfaces/($nic_re)/($frequency_re)$} => sub {
 	&get_frec_iface_graphs( @_ );
 };
-
 
 ##### /graphs/farms
 
@@ -1211,8 +1207,8 @@ GET qr{^/graphs/farms/($farm_re)$} => sub {
 	&get_farm_graphs( @_ );
 };
 
-#  GET frecuency farm graphs
-GET qr{^/graphs/farms/($farm_re)/($frecuency_re)$} => sub {
+#  GET frequency farm graphs
+GET qr{^/graphs/farms/($farm_re)/($frequency_re)$} => sub {
 	&get_frec_farm_graphs( @_ );
 };
 
@@ -1263,6 +1259,49 @@ GET qr{^/system/ntp$} => sub {
 #  POST ntp
 POST qr{^/system/ntp$} => sub {
 	&set_ntp( @_ );
+};
+
+#  GET http
+GET qr{^/system/http$} => sub {
+	&get_http;
+};
+
+#  POST http
+POST qr{^/system/http$} => sub {
+	&set_http( @_ );
+};
+
+# BACKUPS
+my $backup_re = &getValidFormat( 'backup' );
+
+#  GET list backups
+GET qr{^/system/backup$} => sub {
+	&get_backup( @_ );
+};
+
+#  POST create backups
+POST qr{^/system/backup$} => sub {
+	&create_backup( @_ );
+};
+
+#  GET download backups
+GET qr{^/system/backup/($backup_re)$} => sub {
+	&download_backup( @_ );
+};
+
+#  PUT  upload backups
+PUT qr{^/system/backup/($backup_re)$} => sub {
+	&upload_backup( @_ );
+};
+
+#  DELETE  backups
+DELETE qr{^/system/backup/($backup_re)$} => sub {
+	&del_backup( @_ );
+};
+
+#  PUT  apply backups
+PUT qr{^/system/backup/($backup_re)/actions$} => sub {
+	&apply_backup( @_ );
 };
 
 # NOTIFICATIONS

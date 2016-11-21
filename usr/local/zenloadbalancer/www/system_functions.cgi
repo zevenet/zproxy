@@ -29,10 +29,13 @@ sub getMemStats    # ()
 {
 	my ( $format ) = @_;
 	my @data;
-	my ( $mvalue, $mfvalue, $mused, $mbvalue, $mcvalue, $swtvalue, $swfvalue, $swused, $swcvalue );
+	my (
+		 $mvalue,   $mfvalue,  $mused,  $mbvalue, $mcvalue,
+		 $swtvalue, $swfvalue, $swused, $swcvalue
+	);
 	my ( $mname, $mfname, $mbname, $mcname, $swtname, $swfname, $swcname );
 
-	if ( ! -f "/proc/meminfo" )
+	if ( !-f "/proc/meminfo" )
 	{
 		print "$0: Error: File /proc/meminfo not exist ...\n";
 		exit 1;
@@ -101,7 +104,7 @@ sub getMemStats    # ()
 		}
 		if ( $line =~ /swapcached/i )
 		{
-			my @swcached = split /[:\ ]+/, $line ;
+			my @swcached = split /[:\ ]+/, $line;
 			$swcvalue = @swcached[1];
 			$swcvalue = $swcvalue / 1024 if $format eq "mb";
 			$swcvalue = $swcvalue * 1024 if $format eq "b";
@@ -168,7 +171,8 @@ sub getNetworkStats    # ()
 {
 	( $format ) = @_;
 
-	if ( ! -f "/proc/net/dev" ) {
+	if ( !-f "/proc/net/dev" )
+	{
 		print "$0: Error: File /proc/net/dev not exist ...\n";
 		exit 1;
 	}
@@ -197,7 +201,7 @@ sub getNetworkStats    # ()
 				( $in, $out ) = ( split )[0, 8];
 				$in = ( split /:/, $in )[1];
 			}
-			if ($format ne "raw")
+			if ( $format ne "raw" )
 			{
 				$in  = ( ( $in / 1024 ) / 1024 );
 				$out = ( ( $out / 1024 ) / 1024 );
@@ -248,14 +252,17 @@ sub getCPU         # ()
 	my @data;
 	my $interval = 1;
 
-	if ( ! -f "/proc/stat" ) {
+	if ( !-f "/proc/stat" )
+	{
 		print "$0: Error: File /proc/stat not exist ...\n";
 		exit 1;
 	}
 
 	open FR, "/proc/stat";
-	foreach $line ( <FR> ) {
-		if ( $line =~ /^cpu\ / ) {
+	foreach $line ( <FR> )
+	{
+		if ( $line =~ /^cpu\ / )
+		{
 			my @line_s = split ( "\ ", $line );
 			$cpu_user1    = $line_s[1];
 			$cpu_nice1    = $line_s[2];
@@ -279,8 +286,10 @@ sub getCPU         # ()
 	sleep $interval;
 
 	open FR, "/proc/stat";
-	foreach $line ( <FR> ) {
-		if ( $line =~ /^cpu\ / ) {
+	foreach $line ( <FR> )
+	{
+		if ( $line =~ /^cpu\ / )
+		{
 			@line_s       = split ( "\ ", $line );
 			$cpu_user2    = $line_s[1];
 			$cpu_nice2    = $line_s[2];
@@ -357,7 +366,7 @@ sub getCPU         # ()
 #       name,value
 sub getDiskSpace    # ()
 {
-	my @data;	# output
+	my @data;       # output
 
 	my $df_bin = &getGlobalConfiguration( 'df_bin' );
 	my @system = `$df_bin -k`;
@@ -371,7 +380,7 @@ sub getDiskSpace    # ()
 		my @dd_name = split ( ' ', $line );
 		my $dd_name = $dd_name[0];
 
-		my ( $line_df ) = grep( { /^$dd_name\s/ } @df_system );
+		my ( $line_df ) = grep ( { /^$dd_name\s/ } @df_system );
 		my @s_line = split ( /\s+/, $line_df );
 
 		my $partitions = @s_line[0];
@@ -391,14 +400,14 @@ sub getDiskSpace    # ()
 	return @data;
 }
 
-sub getDiskPartitionsInfo	#()
+sub getDiskPartitionsInfo    #()
 {
-	my $partitions; # output
+	my $partitions;          # output
 
-	my $df_bin = &getGlobalConfiguration( 'df_bin' );
+	my $df_bin    = &getGlobalConfiguration( 'df_bin' );
 	my $rrdap_dir = &getGlobalConfiguration( 'rrdap_dir' );
-	my $rrd_dir = &getGlobalConfiguration( 'rrd_dir' );
-	my $db_hd = "hd.rrd";
+	my $rrd_dir   = &getGlobalConfiguration( 'rrd_dir' );
+	my $db_hd     = "hd.rrd";
 
 	my @df_lines = grep { /^\/dev/ } `$df_bin -k`;
 	chomp ( @df_lines );
@@ -408,14 +417,14 @@ sub getDiskPartitionsInfo	#()
 		my @df_line = split ( /\s+/, $line );
 
 		my $mount_point = @df_line[5];
-		my $partition = @df_line[0];
-		my $part_id = @df_line[0];
+		my $partition   = @df_line[0];
+		my $part_id     = @df_line[0];
 		$part_id =~ s/\///;
 		$part_id =~ s/\//-/g;
 
 		$partitions->{ $partition } = {
 										mount_point => $mount_point,
-										rrd_id => "${part_id}hd",
+										rrd_id      => "${part_id}hd",
 		};
 	}
 
@@ -427,7 +436,7 @@ sub getDiskMountPoint    # ($dev)
 {
 	( $dev ) = @_;
 
-	my $df_bin = &getGlobalConfiguration('df_bin');
+	my $df_bin    = &getGlobalConfiguration( 'df_bin' );
 	my @df_system = `$df_bin -k`;
 	my $mount;
 
@@ -438,7 +447,7 @@ sub getDiskMountPoint    # ($dev)
 			my @s_line = split ( "\ ", $line_df );
 			chomp ( @s_line );
 
-			$mount     = $s_line[5];
+			$mount = $s_line[5];
 		}
 	}
 
@@ -451,20 +460,20 @@ sub getCPUTemp    # ()
 	$file = "/proc/acpi/thermal_zone/THRM/temperature";
 	my $lastline;
 
-	if ( ! -f "$file" )
+	if ( !-f "$file" )
 	{
 		print "$0: Error: File $file not exist ...\n";
 		exit 1;
 	}
 
-	open FT,"$file";
-	while ( $line=<FT> )
+	open FT, "$file";
+	while ( $line = <FT> )
 	{
 		$lastline = $line;
 	}
 	close FT;
 
-	my @lastlines = split("\:", $lastline);
+	my @lastlines = split ( "\:", $lastline );
 
 	$temp = @lastlines[1];
 	$temp =~ s/\ //g;
@@ -649,12 +658,293 @@ sub setSsh
 	return $output;
 }
 
-# get ntp settings
-sub getGuiconf
-{
-	my $guiConf;
+#function that read the https port for http server
+sub getHttpServerPort
 
-	return $guiConf;
+  #~ sub getGuiPort    # ()
+{
+	my $gui_port;    # output
+
+	open my $fh, "<", "$confhttp";
+
+	# read line matching 'server!bind!1!port = <PORT>'
+	my $config_item = 'server!bind!1!port';
+
+	while ( my $line = <$fh> )
+	{
+		if ( $line =~ /$config_item/ )
+		{
+			( undef, $gui_port ) = split ( "=", $line );
+			last;
+		}
+	}
+
+	#~ my @httpdconffile = <$fr>;
+	close $fh;
+
+	chomp ( $gui_port );
+	$gui_port =~ s/\s//g;
+	$gui_port = 444 if ( !$gui_port );
+
+	return $gui_port;
+}
+
+#function that write the https port for GUI
+#~ sub setGuiPort    # ($httpport)
+sub setHttpServerPort    # ($httpport)
+{
+	my ( $httpport ) = @_;
+	$httpport =~ s/\ //g;
+
+	my $confhttp = &getGlobalConfiguration( 'confhttp' );
+	use Tie::File;
+	tie my @array, 'Tie::File', "$confhttp";
+	@array[2] = "server!bind!1!port = $httpport\n";
+	untie @array;
+}
+
+=begin nd
+	Function: getHttpServerIp
+
+	returns the GUI service ip address
+
+	Parameters: none
+
+	Returns:
+
+		scalar - GUI ip address or '*' for all local addresses
+
+=cut
+
+#~ sub GUIip    # ()
+sub getHttpServerIp    # ()
+{
+	my $gui_ip;        # output
+
+	open my $fh, "<", "$confhttp";
+
+	# read line matching 'server!bind!1!interface = <IP>'
+	my $config_item = 'server!bind!1!interface';
+
+	while ( my $line = <$fh> )
+	{
+		if ( $line =~ /$config_item/ )
+		{
+			( undef, $gui_ip ) = split ( "=", $line );
+			last;
+		}
+	}
+
+	close $fh;
+
+	chomp ( $gui_ip );
+	$gui_ip =~ s/\s//g;
+
+	if ( &ipisok( $gui_ip, 4 ) ne "true" )
+	{
+		$gui_ip = "*";
+	}
+
+	return $gui_ip;
+}
+
+## ????
+
+# &setHttpInterface ( ipHttp )
+sub setHttpServerIp
+{
+	my $ip = shift;
+
+	my $confhttp = &getGlobalConfiguration( 'confhttp' );
+
+	#action save ip
+	use Tie::File;
+	tie @array, 'Tie::File', "$confhttp";
+	if ( $ip =~ /^\*$/ )
+	{
+		@array[1] = "#server!bind!1!interface = \n";
+		&zenlog( "The interface where is running is --All interfaces--" );
+	}
+	else
+	{
+		@array[1] = "server!bind!1!interface = $ip\n";
+
+		#~ if ( &ipversion( $ipgui ) eq "IPv6" )
+		#~ {
+		#~ @array[4] = "server!ipv6 = 1\n";
+		#~ &zenlog(
+		#~ "The interface where is running the GUI service is: $ipgui with IPv6" );
+		#~ }
+		#~ elsif ( &ipversion( $ipgui ) eq "IPv4" )
+		#~ {
+		#~ @array[4] = "server!ipv6 = 0\n";
+		#~ &zenlog(
+		#~ "The interface where is running the GUI service is: $ipgui with IPv4" );
+		#~ }
+	}
+	untie @array;
+}
+
+backup:
+
+use File::stat;
+use File::Basename;
+
+#	&getBackup ()
+# list the backups in the system
+sub getBackup
+{
+	my @backups;
+	my $backupdir = &getGlobalConfiguration( 'backupdir' );
+	my $backup_re = &getValidFormat( 'backup' );
+
+	opendir ( DIR, $backupdir );
+	my @files = grep ( /^backup.*/, readdir ( DIR ) );
+	closedir ( DIR );
+
+	foreach my $line ( @files )
+	{
+		my $filepath = "$backupdir$line";
+		chomp ( $filepath );
+
+		$line =~ s/backup-($backup_re).tar.gz/$1/;
+
+		my $datetime_string = ctime( stat ( $filepath )->mtime );
+		push @backups, { 'file' => $line, 'date' => $datetime_string };
+
+#~ push @backups, { 'file' => $line, 'date' => $datetime_string, 'host' => $host };     #  $host;   in web gui said host
+	}
+
+	return \@backups;
+}
+
+# return if a backup file exists
+# &getExistsBackup ( $name );
+sub getExistsBackup
+{
+	my $name = shift;
+	my $find;
+
+	foreach my $backup ( @{ &getBackup } )
+	{
+		if ( $backup->{ 'file' } =~ /^$name/, )
+		{
+			$find = 1;
+			last;
+		}
+	}
+	return $find;
+}
+
+#	&createBackup ( BackupName );
+sub createBackup
+{
+	my $name      = shift;
+	my $zenbackup = &getGlobalConfiguration( 'zenbackup' );
+	my $error     = system ( "$zenbackup $name -c 2> /dev/null" );
+
+	return $error;
+}
+
+#	&downloadBackup ( backupName )
+sub downloadBackup
+{
+	my $backup = shift;
+	my $error;
+
+	$backup = "backup-$backup.tar.gz";
+	my $backupdir = &getGlobalConfiguration( 'backupdir' );
+	open ( my $download_fh, '<', "$backupdir/$backup" );
+
+	if ( -f "$backupdir\/$backup" && $download_fh )
+	{
+		my $cgi = &getCGI();
+		print $cgi->header(
+							-type            => 'application/x-download',
+							-attachment      => $backup,
+							'Content-length' => -s "$backupdir/$backup",
+		);
+
+		binmode $download_fh;
+		print while <$download_fh>;
+		close $download_fh;
+		exit;
+	}
+	else
+	{
+		$error = 1;
+	}
+	return $error;
+}
+
+# &uploadBackup ( fileName, file_handle );
+sub uploadBackup
+{
+	my $filename          = shift;
+	my $upload_filehandle = shift;
+	my $error;
+	my $configdir = &getGlobalConfiguration( 'backupdir' );
+	$filename = "backup-$filename.tar.gz";
+
+	if ( !-f "$configdir/$filename" )
+	{
+		open ( my $filehandle, '>', "$configdir/$filename" ) or die "$!";
+		print $filehandle $upload_filehandle;
+		close $filehandle;
+	}
+	else
+	{
+		$error = 1;
+	}
+	return $error;
+}
+
+#	&deleteBackup ( $fileName )
+sub deleteBackup
+{
+	my $file      = shift;
+	my $file      = "backup-$file.tar.gz";
+	my $backupdir = &getGlobalConfiguration( "backupdir" );
+	my $filepath  = "$backupdir$file";
+	my $error;
+
+	if ( -e $filepath )
+	{
+		unlink ( $filepath );
+		&zenlog( "Deleted backup file $file" );
+	}
+	else
+	{
+		&zenlog( "File $file not found" );
+		$error = 1;
+	}
+
+	return $error;
+}
+
+# &applyBackup ( backup );
+sub applyBackup
+{
+	my $backup = shift;
+	my $error;
+	my $tar  = &getGlobalConfiguration( 'tar' );
+	my $file = &getGlobalConfiguration( 'backupdir' ) . "/backup-$backup.tar.gz";
+
+	my @eject = `$tar -xvzf $file -C /`;
+
+	&zenlog( "Restoring backup $file" );
+	&zenlog( "unpacking files: @eject" );
+	$error = system ( "/etc/init.d/zenloadbalancer restart 2> /dev/null" );
+	if ( !$error )
+	{
+		&successmsg( "Backup applied and Zen Load Balancer restarted..." );
+	}
+	else
+	{
+		&errormsg( "Problem restarting Zen Load Balancer service" );
+	}
+
+	return $error;
 }
 
 #do not remove this
