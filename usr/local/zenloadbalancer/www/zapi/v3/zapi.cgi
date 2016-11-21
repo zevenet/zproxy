@@ -1299,8 +1299,8 @@ DELETE qr{^/system/backup/($backup_re)$} => sub {
 	&del_backup( @_ );
 };
 
-#  PUT  apply backups
-PUT qr{^/system/backup/($backup_re)/actions$} => sub {
+#  POST  apply backups
+POST qr{^/system/backup/($backup_re)/actions$} => sub {
 	&apply_backup( @_ );
 };
 

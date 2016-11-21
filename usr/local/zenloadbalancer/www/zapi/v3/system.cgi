@@ -984,7 +984,7 @@ sub del_backup
 # @apiSampleRequest off
 #
 #**
-#	PUT /system/backup/BACKUP/actions
+#	POST /system/backup/BACKUP/actions
 sub apply_backup
 {
 	my $json_obj    = shift;
