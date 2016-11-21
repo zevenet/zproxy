@@ -1,7 +1,7 @@
 ###############################################################################
 #
-#     Zen Load Balancer Software License
-#     This file is part of the Zen Load Balancer software package.
+#     ZEVENET Software License
+#     This file is part of the ZEVENET software package.
 #
 #     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
 #
