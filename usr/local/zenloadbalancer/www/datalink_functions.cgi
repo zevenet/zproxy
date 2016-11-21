@@ -76,8 +76,8 @@ sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 	# Apply changes online
 	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
-		&runFarmStop( $farmname, "true" );
-		&runFarmStart( $farmname, "true" );
+		&runFarmStop( $farm_name, "true" );
+		&runFarmStart( $farm_name, "true" );
 	}
 
 	return;    # $output;
@@ -489,8 +489,8 @@ sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 	# Apply changes online
 	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
-		&runFarmStop( $farmname, "true" );
-		&runFarmStart( $farmname, "true" );
+		&runFarmStop( $farm_name, "true" );
+		&runFarmStart( $farm_name, "true" );
 	}
 
 	return;
@@ -531,8 +531,8 @@ sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 	# Apply changes online
 	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
-		&runFarmStop( $farmname, "true" );
-		&runFarmStart( $farmname, "true" );
+		&runFarmStop( $farm_name, "true" );
+		&runFarmStart( $farm_name, "true" );
 	}
 
 	return $output;
@@ -586,8 +586,8 @@ sub setDatalinkFarmBackendStatus    # ($farm_name,$index,$stat)
 	# Apply changes online
 	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
-		&runFarmStop( $farmname, "true" );
-		&runFarmStart( $farmname, "true" );
+		&runFarmStop( $farm_name, "true" );
+		&runFarmStart( $farm_name, "true" );
 	}
 
 	return;
