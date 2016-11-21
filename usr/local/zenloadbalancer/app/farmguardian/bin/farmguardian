@@ -60,6 +60,15 @@ my $farmname = "$ARGV[0]";
 my $service  = '';
 my $fservice = '';
 
+# validate FARM TYPE
+my $type = &getFarmType( $farmname );
+unless ( $type =~ /^(?:http|https|tcp|udp|l4xnat)$/ )
+{
+	my $msg = "FarmGuardian does not support $type farm profile";
+	&zenlog( $msg );
+	exit -1;
+}
+
 # handle service argument
 if ( $ARGV[1] eq "-s" )
 {
@@ -168,7 +177,6 @@ my $filepid = "/var/run/$pidfile";
 }
 
 #Ask for the farm type
-my $type = &getFarmType( $farmname );
 $type = 'http' if $type eq 'https';
 
 require '/usr/local/zenloadbalancer/www/l4_functions.cgi' if $type eq 'l4xnat';

@@ -116,6 +116,7 @@ sub getFarmGuardianLog    # ($fname,$svice)
 sub runFarmGuardianStart    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
+
 	my $status = 0;
 	my $log;
 	my $sv;
@@ -154,12 +155,17 @@ sub runFarmGuardianStart    # ($fname,$svice)
 			$status = $status + $stat;
 		}
 	}
-	else
+	elsif ( $ftype eq 'l4xnat' || $ftype eq 'udp' || $ftype eq 'tcp' )
 	{
 		my $fg_cmd = "$farmguardian $fname $sv $log";
 		&zenlog( "running $fg_cmd" );
 		&zsystem( "$fg_cmd > /dev/null &" );
 		$status = $?;
+	}
+	else
+	{
+		# WARNING: farm types not supported by farmguardian return 0.
+		$status = 0;
 	}
 
 	return $status;
