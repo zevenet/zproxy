@@ -106,7 +106,7 @@ sub setNotifAlertsAction
 
 	my $status = &getNotifData( 'alerts', $notif, 'Status' );
 	# enable rule
-	if ( $status eq 'off' && $action eq 'enabled' )
+	if ( $status eq 'off' && $action eq 'enable' )
 	{
 		$errMsg = &setNotifData( 'alerts', $notif, 'Status', 'on' );
 		$errMsg = &enableRule( $notif );
@@ -114,7 +114,7 @@ sub setNotifAlertsAction
 	}
 
 	# disable rule
-	elsif ( $status eq 'on' && $action eq 'disabled' )
+	elsif ( $status eq 'on' && $action eq 'disable' )
 	{
 		$errMsg = &setNotifData( 'alerts', $notif, 'Status', 'off' );
 		$errMsg = &disableRule( $notif );
@@ -129,7 +129,7 @@ sub setNotifAlertsAction
 	{
 		# enable sec process
 		if (    &getNotifData( 'alerts', 'Notifications', 'Status' ) eq 'off'
-			 && $action eq 'enabled' )
+			 && $action eq 'enable' )
 		{
 			$errMsg = &setNotifData( 'alerts', 'Notifications', 'Status', 'on' );
 			&runNotifications();

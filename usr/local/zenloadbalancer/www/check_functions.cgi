@@ -32,8 +32,8 @@ my $ipv4_addr     = qr/(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS/;
 my $ipv6_addr     = qr/(?:[\:\.a-f0-9]+)/;
 my $ipv4v6        = qr/(?:$ipv4_addr|$ipv6_addr)/;
 my $boolean       = qr/(?:true|false)/;
-my $enabled       = qr/(?:enabled|disabled)/;
-my $natural		  = qr/[1-9]\d*/;	# natural number = {1, 2, 3, ...}
+my $enable        = qr/(?:enable|disable)/;
+my $natural = qr/[1-9]\d*/;    # natural number = {1, 2, 3, ...}
 
 my $hostname = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
 my $service  = qr/[a-zA-Z1-9\-]+/;
@@ -56,18 +56,25 @@ my %format_re = (
 	# hostname
 	'hostname' => $hostname,
 
+	#zapi
+	'zapi_key'      => qr/[a-zA-Z0-9]+/,
+	'zapi_status'   => $enable,
+	'zapi_password' => qr/.+/,
+
 	# common
-	'port' => $port_range,
+	'port'     => $port_range,
+	'user'     => qr/[\w]+/,
+	'password' => qr/.+/,
 
 	# system
 	'dns_nameserver' => $ipv4_addr,
 	'dns'            => qr/(?:primary|secondary)/,
 	'ssh_port'       => $port_range,
-	'ssh_listen'     => $ipv4v6,
+	'ssh_listen'     => qr/(?:$ipv4v6|\*)/,
 	'snmp_status'    => $boolean,
 	'snmp_ip'        => $ipv4_addr,
 	'snmp_port'      => $port_range,
-	'snmp_community' => qr{[\w\_]+},
+	'snmp_community' => qr{[\w]+},
 	'snmp_scope'     => qr{(?:\d{1,3}\.){3}\d{1,3}\/\d{1,2}},    # ip/mask
 	'ntp'            => qr{[\w\.]+},
 
@@ -90,7 +97,7 @@ my %format_re = (
 	# gslb
 	'zone'          => qr/(?:$hostname\.)+[a-z]{2,}/,
 	'resource_id'   => qr/\d+/,
-	'resource_name' => qr/(?:[a-zA-Z0-9\-\.\_]+|\@)/,
+	'resource_name' => qr/(?:[\w\-\.]+|\@)/,
 	'resource_ttl'  => qr/$natural/,                    # except zero
 	'resource_type' => qr/(?:NS|A|AAAA|CNAME|DYNA|MX|SRV|TXT|PTR|NAPTR)/,
 	'resource_data'      => qr/.+/,            # alow anything (because of TXT type)
@@ -122,7 +129,7 @@ my %format_re = (
 	'notif_alert'  => qr/(?:backends|cluster)/,
 	'notif_method' => qr/(?:email)/,
 	'notif_tls'    => $boolean,
-	'notif_action' => $enabled,
+	'notif_action' => $enable,
 	'notif_time'   => qr/$natural/,               # this value can't be 0
 
 	# ipds
@@ -291,7 +298,7 @@ sub getValidReqParams    # ( \%json_obj, \@requiredParams, \@optionalParams )
 	my $aux = grep { /^(?:$pattern)$/ } keys %{ $params };
 	if ( $aux != scalar @requiredParams )
 	{
-		$output = "Missing required parameters. $aux";
+		$output = "Missing required parameters. Parameters missed: $aux.";
 	}
 
 	# Check if any param isn't for this call

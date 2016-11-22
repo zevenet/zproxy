@@ -17,7 +17,7 @@ require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
 
 require "/usr/local/zenloadbalancer/www/Plugins/notifications.cgi";
 
-dns:
+_dns:
 
 #**
 #  @api {get} /system/dns Request dns
@@ -123,7 +123,7 @@ sub set_dns
 	&httpResponse( { code => 400, body => $body } );
 }
 
-ssh:
+_ssh:
 
 #**
 #  @api {get} /system/ssh Request ssh
@@ -137,7 +137,7 @@ ssh:
 #{
 #   "description" : "Get ssh",
 #   "params" : {
-#      "listen" : "0.0.0.0",
+#      "listen" : "*",
 #      "port" : "22"
 #   }
 #}
@@ -168,7 +168,7 @@ sub get_ssh
 #
 #
 # @apiSuccess	{Number}	port		Port where listen ssh server.
-# @apiSuccess	{string}	listen		Mask of allowed IPs. Available IP version 4 and version 6.
+# @apiSuccess	{string}		listen	IP where is listening the ssh server. Use '*' character to listen in all IPs
 #
 #
 # @apiSuccessExample Success-Response:
@@ -195,31 +195,52 @@ sub set_ssh
 	my $description = "Post ssh";
 	my $errormsg;
 	my @allowParams = ( "port", "listen" );
+	my $sshIp = $json_obj->{ 'listen' } if ( exists $json_obj->{ 'listen' } );
 
 	$errormsg = &getValidOptParams( $json_obj, \@allowParams );
 	if ( !$errormsg )
 	{
-		# Check key format
-		foreach my $key ( keys %{ $json_obj } )
+		if ( !&getValidFormat( "port", $json_obj->{ 'port' } ) )
 		{
-			if ( !&getValidFormat( "ssh_$key", $json_obj->{ $key } ) )
-			{
-				$errormsg = "$key hasn't a correct format.";
-				last;
-			}
+			$errormsg = "Port hasn't a correct format.";
 		}
-		if ( !$errormsg )
+		else
 		{
-			$errormsg = &setSsh( $json_obj );
+			# check if listen exists
+			if ( exists $json_obj->{ 'listen' } && $json_obj->{ 'listen' } ne '*' )
+			{
+				my $flag;
+				foreach my $iface ( @{ &getActiveInterfaceList() } )
+				{
+					if ( $sshIp eq $iface->{ addr } )
+					{
+						$flag = 1;
+						if ( $iface->{ vini } ne '' )    # discard virtual interfaces
+						{
+							$errormsg = "Virtual interface canot be configurate as http interface.";
+						}
+						else
+						{
+							$interface = $iface;
+						}
+						last;
+					}
+				}
+				$errormsg = "Ip $json_obj->{ 'listen' } not found in system." if ( !$flag );
+			}
 			if ( !$errormsg )
 			{
-				my $dns = &getSsh();
-				&httpResponse(
-						 { code => 200, body => { description => $description, params => $dns } } );
-			}
-			else
-			{
-				$errormsg = "There was a error modifying ssh.";
+				$errormsg = &setSsh( $json_obj );
+				if ( !$errormsg )
+				{
+					my $dns = &getSsh();
+					&httpResponse(
+							 { code => 200, body => { description => $description, params => $dns } } );
+				}
+				else
+				{
+					$errormsg = "There was a error modifying ssh.";
+				}
 			}
 		}
 	}
@@ -228,7 +249,7 @@ sub set_ssh
 	&httpResponse( { code => 400, body => $body } );
 }
 
-snmp:
+_snmp:
 
 #**
 #  @api {get} /system/snmp Request snmp
@@ -276,7 +297,7 @@ sub get_snmp
 #
 #
 #
-# @apiSuccess	{string}		status		Enabled or disable snmp service. The options are true or false.
+# @apiSuccess	{string}		status		Enable or disable snmp service. The options are true or false.
 # @apiSuccess	{Number}	port			Port where listen snmp server.
 # @apiSuccess	{scope}		ip				snmp ip
 # @apiSuccess	{string}		scope		snmp scope
@@ -369,7 +390,7 @@ sub set_snmp
 	&httpResponse( { code => 400, body => $body } );
 }
 
-license:
+_license:
 
 #**
 #  @api {get} /system/license Request license
@@ -415,7 +436,7 @@ sub get_license
 	}
 }
 
-ntp:
+_ntp:
 
 #**
 #  @api {get} /system/ntp Request ntp
@@ -511,7 +532,7 @@ sub set_ntp
 	&httpResponse( { code => 400, body => $body } );
 }
 
-http:
+_http:
 
 #**
 #  @api {get} /system/http Request http
@@ -661,7 +682,278 @@ sub set_http
 	&httpResponse( { code => 400, body => $body } );
 }
 
-backup:
+_users:
+
+#**
+#  @api {get} /system/users Request existent users
+#  @apiGroup SYSTEM
+#  @apiDescription Get existent users
+#  @apiName GetUsers
+#  @apiVersion 3.0
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Get users",
+#   "params" : [
+#      "root",
+#      "zapi"
+#   ]
+#}
+#@apiExample {curl} Example Usage:
+#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/users
+#
+#@apiSampleRequest off
+#**
+#	GET	/system/users
+sub get_all_users
+{
+	my $description = "Get users";
+	my @users = ( "root", "zapi" );
+
+	&httpResponse(
+		  { code => 200, body => { description => $description, params => \@users } } );
+}
+
+#**
+#  @api {get} /system/users/zapi		Request zapi settings
+#  @apiGroup SYSTEM
+#  @apiDescription Get the zapi settings
+#  @apiName GetUsersZapi
+#  @apiVersion 3.0
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Zapi user configuration.",
+#   "params" : {
+#      "key" : "root",
+#      "status" : "true"
+#   }
+#}
+#@apiExample {curl} Example Usage:
+#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/users/zapi
+#
+#@apiSampleRequest off
+#**
+#	GET	/system/users/zapi
+sub get_user
+{
+	my $user        = shift;
+	my $description = "Zapi user configuration.";
+	my $errormsg;
+
+	if ( $user ne 'zapi' )
+	{
+		$errormsg = "Actually only is available zapi user info";
+	}
+	else
+	{
+		my $zapi->{ 'key' } = &getZAPI( "keyzapi", "" );
+		$zapi->{ 'status' } = &getZAPI( "status", "" );
+		&httpResponse(
+				{ code => 200, body => { description => $description, params => $zapi } } );
+	}
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 404, body => $body } );
+}
+
+#####Documentation of POST zapi configuration####
+#**
+#  @api {post} /system/users/zapi Modify the zapi parameters
+#  @apiGroup SYSTEM
+#  @apiName PostUsersZapi
+#  @apiDescription Modify zapi settings
+#  @apiVersion 3.0
+#
+#
+# @apiSuccess	{string}			key			key to connect with zapi. Using 'randomkey' value, a random key will be generated
+# @apiSuccess	{string}			new-password			new password for the zapi user
+# @apiSuccess	{string}			status			enable or disable the zapi. The options are: enable or disable
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Zapi user settings.",
+#   "message" : "Settings was changed successful.",
+#   "params" : {
+#      "key" : "yPh2vM20SyQudI9azEuPoHVB3lt35FqSTLSdDC7hYB98fIUH44GIQaurQeYoI8y6j",
+#      "new-password" : "brla23v",
+#      "status" : "enable"
+#   }
+#}
+#
+# @apiExample {curl} Example Usage:
+#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#         -d '{"key":"randomkey","new-password":"brla23v","status":"enable"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/users/zapi
+#
+# @apiSampleRequest off
+#
+#**
+# POST /system/users/zapi
+sub set_user_zapi
+{
+	my $json_obj    = shift;
+	my $description = "Zapi user settings.";
+
+	#~ my @requiredParams = ( "key", "status", "password", "new-password" );
+	my @requiredParams = ( "key", "status", "new-password" );
+	my $errormsg;
+
+	$errormsg = &getValidOptParams( $json_obj, \@requiredParams );
+	if ( !$errormsg )
+	{
+		if ( !&getValidFormat( "zapi_key", $json_obj->{ 'key' } ) )
+		{
+			$errormsg = "Error, character incorrect in key zapi.";
+		}
+		elsif ( !&getValidFormat( "zapi_password", $json_obj->{ 'new-password' } ) )
+		{
+			$errormsg = "Error, character incorrect in password zapi.";
+		}
+
+		#~ elsif ( $json_obj->{ 'new-password' } && ! $json_obj->{ 'password' } )
+		#~ {
+		#~ $errormsg = "Error, it's necessary check the current password.";
+		#~ }
+		elsif ( !&getValidFormat( "zapi_status", $json_obj->{ 'status' } ) )
+		{
+			$errormsg = "Error, character incorrect in status zapi.";
+		}
+		else
+		{
+			if (    $json_obj->{ 'status' } eq 'enable'
+				 && &getZAPI( "status", "" ) eq 'false' )
+			{
+				&setZAPI( "enable" );
+			}
+			elsif (    $json_obj->{ 'status' } eq 'disable'
+					&& &getZAPI( "status", "" ) eq 'true' )
+			{
+				&setZAPI( "disable" );
+			}
+			if ( exists $json_obj->{ 'key' } )
+			{
+				if ( $json_obj->{ 'key' } eq 'randomkey' )
+				{
+					&setZAPI( 'randomkey' );
+					$json_obj->{ 'key' } = &getZAPI( 'keyzapi' );
+				}
+				else
+				{
+					&setZAPI( 'key', $json_obj->{ 'key' } );
+				}
+			}
+
+			&changePassword( 'zapi',
+							 $json_obj->{ 'new-password' },
+							 $json_obj->{ 'new-password' } )
+			  if ( exists $json_obj->{ 'new-password' } );
+
+			$errormsg = "Settings was changed successful.";
+			&httpResponse(
+				 {
+				   code => 200,
+				   body =>
+					 { description => $description, params => $json_obj, message => $errormsg }
+				 }
+			);
+		}
+	}
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+}
+
+#####Documentation of POST user configuration####
+#**
+#  @api {post} /system/users/zapi Modify the user password
+#  @apiGroup SYSTEM
+#  @apiName PostUsersZapi
+#  @apiDescription Modify user password
+#  @apiVersion 3.0
+#
+#
+# @apiSuccess	{string}			new-password		new password for the user
+# @apiSuccess	{string}			password				current password for the user
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "User settings.",
+#   "message" : "Settings was changed succesful.",
+#   "params" : {
+#      "new-password" : "passwd12e",
+#      "password" : "admin"
+#   }
+#}
+#
+# @apiExample {curl} Example Usage:
+#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#         -d '{"new-password" : "passwd12e", "password" : "admin"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/users/root
+#
+# @apiSampleRequest off
+#
+#**
+# POST /system/users/root
+sub set_user
+{
+	my $json_obj       = shift;
+	my $user           = shift;
+	my $description    = "User settings.";
+	my @requiredParams = ( "password", "new-password" );
+	my $errormsg;
+
+	$errormsg = &getValidReqParams( $json_obj, \@requiredParams, \@requiredParams );
+	if ( !$errormsg )
+	{
+		if ( $user ne 'root' )
+		{
+			$errormsg =
+			  "Error, actually only is available to change password in root user.";
+		}
+		else
+		{
+			if ( !&getValidFormat( 'password', $json_obj->{ 'new-password' } ) )
+			{
+				$errormsg = "Error, character incorrect in password.";
+			}
+			elsif ( !&checkValidUser( $user, $json_obj->{ 'password' } ) )
+			{
+				$errormsg = "Error, invalid current password.";
+			}
+			else
+			{
+				$errormsg = &changePassword( $user,
+											 $json_obj->{ 'new-password' },
+											 $json_obj->{ 'new-password' } );
+				if ( $errormsg )
+				{
+					$errormsg = "Error, changing $user password.";
+				}
+				else
+				{
+					$errormsg = "Settings was changed succesful.";
+					&httpResponse(
+						 {
+						   code => 200,
+						   body =>
+							 { description => $description, params => $json_obj, message => $errormsg }
+						 }
+					);
+				}
+			}
+		}
+	}
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+}
+
+_backup:
 
 #**
 #  @api {get} /system/backup Request existent backups
@@ -1026,7 +1318,7 @@ sub apply_backup
 	&httpResponse( { code => 400, body => $body } );
 }
 
-notifications:
+_notifications:
 
 #**
 #  @api {get} /system/notifications/methods/METHOD Request method info
@@ -1329,7 +1621,7 @@ sub set_notif_alert
 #{
 #   "description" : "Set notifications alert backends actions",
 #   "params" : {
-#      "action" : "enabled"
+#      "action" : "enable"
 #   }
 #}
 #

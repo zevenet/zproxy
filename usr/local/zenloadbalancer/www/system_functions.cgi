@@ -562,13 +562,14 @@ sub setDns
 
 ssh:
 
+# return '*' character when ssh server is listening in all ips
 # return ssh port
 sub getSsh
 {
 	my $sshFile = &getGlobalConfiguration( 'sshConf' );
 	my $ssh     = {                                       # conf
 				'port'   => 22,
-				'listen' => "0.0.0.0",
+				'listen' => "*",
 	};
 	my $listen_format = &getValidFormat( 'ssh_listen' );
 
@@ -590,12 +591,14 @@ sub getSsh
 				$ssh->{ 'listen' } = $1;
 			}
 		}
-
 		untie @file;
 	}
+
+	$ssh->{ 'listen' } = '*' if ( $ssh->{ 'listen' } eq '0.0.0.0' );
 	return $ssh;
 }
 
+# to listen in all ip, the value is '*'
 # &setSsh( $hashRef );
 sub setSsh
 {
@@ -606,10 +609,9 @@ sub setSsh
 	  ; # default, it is the line where will add port and listen if one of this doesn't exist
 
 	# create flag to check all params are changed
-	my $portFlag;
-	my $listenFlag;
-	$portFlag   = 1 if ( exists $sshConf->{ 'port' } );
-	$listenFlag = 1 if ( exists $sshConf->{ 'listen' } );
+	my $portFlag   = 1 if ( exists $sshConf->{ 'port' } );
+	my $listenFlag = 1 if ( exists $sshConf->{ 'listen' } );
+	$sshConf->{ 'listen' } = '0.0.0.0' if ( $sshConf->{ 'listen' } eq '*' );
 
 	if ( !-e $sshFile )
 	{
@@ -620,7 +622,7 @@ sub setSsh
 	tie my @file, 'Tie::File', $sshFile;
 	foreach my $line ( @file )
 	{
-		if ( exists $sshConf->{ 'port' } )
+		if ( $portFlag )
 		{
 			if ( $line =~ /^Port\s+/ )
 			{
@@ -629,7 +631,7 @@ sub setSsh
 				$portFlag = 0;
 			}
 		}
-		if ( exists $sshConf->{ 'listen' } )
+		if ( $listenFlag )
 		{
 			if ( $line =~ /^ListenAddress\s+/ )
 			{
@@ -747,8 +749,6 @@ sub getHttpServerIp    # ()
 
 	return $gui_ip;
 }
-
-## ????
 
 # &setHttpInterface ( ipHttp )
 sub setHttpServerIp

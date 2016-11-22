@@ -641,7 +641,8 @@ POST qr{^/session$} => sub {
 ######################################################################
 if ( not ( &validZapiKey() or &validCGISession() ) )
 {
-	&httpResponse( { code => 401, body => { message => 'Authorization required' } } );
+	&httpResponse(
+				   { code => 401, body => { message => 'Authorization required' } } );
 }
 
 #	SESSION LOGOUT
@@ -674,7 +675,7 @@ DELETE qr{^/session$} => sub {
 
 #	CERTIFICATES
 #
-certificates:
+_certificates:
 
 #  POST activation certificate
 POST qr{^/certificates/activation$} => sub {
@@ -720,7 +721,7 @@ DELETE qr{^/certificates/($cert_re)$} => sub {
 
 #	FARMS
 #
-farms:
+_farms:
 
 my $farm_re = &getValidFormat( 'farm_name' );
 
@@ -901,7 +902,7 @@ DELETE qr{^/farms/($farm_re)/certificates/($cert_pem_re)$} => sub {
 
 #	NETWORK INTERFACES
 #
-interfaces:
+_interfaces:
 
 my $virt_interface = &getValidFormat( 'virt_interface' );
 my $vlan_interface = &getValidFormat( 'vlan_interface' );
@@ -1040,7 +1041,6 @@ POST qr{^/interfaces/bonding/($bond_re)/actions$} => sub {
 	&actions_interface_bond( @_ );
 };
 
-
 ##### /interfaces/floating
 
 GET qr{^/interfaces/floating$} => sub {
@@ -1077,7 +1077,7 @@ DELETE qr{^/interfaces/gateway$} => sub {
 
 #	STATS
 #
-stats:
+_stats:
 
 # System stats
 GET qr{^/stats$} => sub {
@@ -1129,7 +1129,7 @@ GET qr{^/stats/farms/($farm_re)/service/($service_re)/backends$} => sub {
 
 #	GRAPHS
 #
-graphs:
+_graphs:
 
 my $frequency_re = &getValidFormat( 'graphs_frequency' );
 my $system_id_re = &getValidFormat( 'graphs_system_id' );
@@ -1214,7 +1214,7 @@ GET qr{^/graphs/farms/($farm_re)/($frequency_re)$} => sub {
 
 # SYSTEM
 #
-system_label:
+_system:
 
 #  GET dns
 GET qr{^/system/dns$} => sub {
@@ -1271,6 +1271,30 @@ POST qr{^/system/http$} => sub {
 	&set_http( @_ );
 };
 
+my $user_re = &getValidFormat( 'user' );
+
+#  GET users
+GET qr{^/system/users$} => sub {
+	&get_all_users;
+};
+
+#  GET user settings
+GET qr{^/system/users/($user_re)$} => sub {
+	&get_user;
+};
+
+#  POST zapi user
+POST qr{^/system/users/zapi$} => sub {
+	&set_user_zapi( @_ );
+};
+
+#  POST other user
+POST qr{^/system/users/($user_re)$} => sub {
+	&set_user( @_ );
+};
+
+_system_backup:
+
 # BACKUPS
 my $backup_re = &getValidFormat( 'backup' );
 
@@ -1303,6 +1327,8 @@ DELETE qr{^/system/backup/($backup_re)$} => sub {
 POST qr{^/system/backup/($backup_re)/actions$} => sub {
 	&apply_backup( @_ );
 };
+
+_system_notifications:
 
 # NOTIFICATIONS
 my $alert_re  = &getValidFormat( 'notif_alert' );
@@ -1340,7 +1366,7 @@ POST qr{^/system/notifications/alerts/($alert_re)/actions$} => sub {
 
 #	IPDS
 #
-ipds:
+_ipds:
 
 my $rbl_list      = &getValidFormat( 'rbl_list' );
 my $rbl_source_id = &getValidFormat( 'rbl_source_id' );
