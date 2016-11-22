@@ -465,7 +465,7 @@ sub get_ntp
 	my $ntp         = &getGlobalConfiguration( 'ntp' );
 
 	&httpResponse(
-			 { code => 200, body => { description => $description, params => $ntp } } );
+			 { code => 200, body => { description => $description, params => { "server" => $ntp } } } );
 }
 
 #####Documentation of POST ntp####
@@ -680,6 +680,96 @@ sub set_http
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
 	&httpResponse( { code => 400, body => $body } );
+}
+
+_logs:
+#**
+#  @api {get} /system/backup Request existent backups
+#  @apiGroup SYSTEM
+#  @apiDescription Get existent backups
+#  @apiName GetBackup
+#  @apiVersion 3.0
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Get backups",
+#   "params" : [
+#      {
+#         "date" : "Fri Nov 18 11:24:13 2016",
+#         "file" : "back_2"
+#      },
+#      {
+#         "date" : "Fri Nov 18 12:40:06 2016",
+#         "file" : "back_1"
+#      },
+#      {
+#         "date" : "Thu Nov 17 18:14:47 2016",
+#         "file" : "first_conf"
+#      }
+#   ]
+#}
+#@apiExample {curl} Example Usage:
+#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/backup
+#
+#@apiSampleRequest off
+#**
+#	GET	/system/backup
+sub get_logs
+{
+	my $description = "Get logs";
+	my $backups = &getLogs;
+
+	&httpResponse(
+		 { code => 200, body => { description => $description, params => $backups } } );
+}
+
+#**
+#  @api {get} /system/logs/LOG 	Dowload a log file
+#  @apiGroup SYSTEM
+#  @apiDescription Download a log file
+#  @apiParam {String} log  file to download
+#  @apiName GetLogsDownload
+#  @apiVersion 3.0
+#
+#
+# @apiSuccessExample Success-Response:
+#
+#
+#@apiExample {curl} Example Usage:
+#	curl -o <PATH/FILE.tar.gz> --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/logs/LOG
+#
+#@apiSampleRequest off
+#**
+#	GET	/system/logs/LOG
+sub download_logs
+{
+	my $logFile      = shift;
+	my $description = "Download a log file";
+	my $errormsg    = "$logFile was download successful.";
+	my $logPath = &getGlobalConfiguration( 'logdir') . "/$logFile";
+
+	if ( ! -f $logPath )
+	{
+		$errormsg = "Not found $logFile file.";
+		my $body =
+		  { description => $description, error => "true", message => $errormsg };
+		&httpResponse( { code => 404, body => $body } );
+	}
+	else
+	{
+# Download function ends communication if itself finishes successful. It is not necessary send "200 OK" msg
+		$errormsg = &downloadLog( $logFile );
+		if ( $errormsg )
+		{
+			$errormsg = "Error, downloading backup.";
+		}
+	}
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 404, body => $body } );
 }
 
 _users:
@@ -1069,6 +1159,7 @@ sub create_backup
 #  @apiGroup SYSTEM
 #  @apiDescription Download a backup
 #  @apiName GetBackupDownload
+#  @apiParam {String} backup  Backup name to download
 #  @apiVersion 3.0
 #
 #

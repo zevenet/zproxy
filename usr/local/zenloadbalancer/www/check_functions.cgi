@@ -55,6 +55,9 @@ my %format_re = (
 
 	# hostname
 	'hostname' => $hostname,
+	
+	# log
+	'log' => qr/[\.\-\w]+/,
 
 	#zapi
 	'zapi_key'      => qr/[a-zA-Z0-9]+/,

@@ -947,5 +947,56 @@ sub applyBackup
 	return $error;
 }
 
+# list all available logs 
+sub getLogs
+{
+	my @logs;
+	my $logdir = &getGlobalConfiguration( 'logdir' );
+
+	opendir ( DIR, $logdir );
+	my @files = grep ( /^syslog/, readdir ( DIR ) );
+	closedir ( DIR );
+
+	foreach my $line ( @files )
+	{
+		my $filepath = "$logdir/$line";
+		chomp ( $filepath );
+		my $datetime_string = ctime( stat ( $filepath )->mtime );
+		push @logs, { 'file' => $line, 'date' => $datetime_string };
+	}
+
+	return \@logs;
+}
+
+# download a log file
+sub downloadLog
+{
+	my $logFile = shift;
+	my $error;
+
+	my $backupdir = &getGlobalConfiguration( 'logdir' );
+	open ( my $download_fh, '<', "$logdir/$logFile" );
+
+	if ( -f "$logdir\/$logFile" && $download_fh )
+	{
+		my $cgi = &getCGI();
+		print $cgi->header(
+							-type            => 'application/x-download',
+							-attachment      => $backup,
+							'Content-length' => -s "$logdir/$logFile",
+		);
+
+		binmode $download_fh;
+		print while <$download_fh>;
+		close $download_fh;
+		exit;
+	}
+	else
+	{
+		$error = 1;
+	}
+	return $error;
+}
+
 #do not remove this
 1;

@@ -1293,6 +1293,20 @@ POST qr{^/system/users/($user_re)$} => sub {
 	&set_user( @_ );
 };
 
+
+my $logs_re = &getValidFormat ( 'log' );
+
+#  GET logs
+GET qr{^/system/logs$} => sub {
+	&get_logs;
+};
+
+#  GET download log file
+GET qr{^/system/logs/($logs_re)$} => sub {
+	&download_logs;
+};
+
+
 _system_backup:
 
 # BACKUPS
