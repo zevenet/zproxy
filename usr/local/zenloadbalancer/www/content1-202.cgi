@@ -40,8 +40,18 @@ print "<div class=\"form-row\">\n
 	<input type=\"hidden\" name=\"action\" value=\"editfarm-Parameters\">
 	<input type=\"hidden\" name=\"id\" value=\"$id\">
 	<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
-print
-  "<div class=\"form-item\"><input type=\"text\" value=\"$farmname\" size=\"25\" name=\"newfarmname\" class=\"fixedwidth\"> </div>";
+
+if ( &getFarmStatus( $farmname ) eq 'up' )
+{
+	print "<div class=\"form-item\"><p class=\"form-label\">$farmname</p> ";
+}
+else
+{
+	print
+	  "<div class=\"form-item\"><input type=\"text\" class=\"fixedwidth\" value=\"$farmname\" size=\"25\" name=\"newfarmname\"> ";
+}
+
+print "</div>\n";
 print "</div>\n";
 
 #Change virtual IP and virtual Port

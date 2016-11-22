@@ -46,8 +46,17 @@ print "<form method=\"post\" action=\"index.cgi\">\n";
 print "<input type=\"hidden\" name=\"action\" value=\"editfarm-Parameters\">\n";
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">\n";
 print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">\n";
-print
-  "<div class=\"form-item\"><input type=\"text\" class=\"fixedwidth\" value=\"$farmname\" size=\"25\" name=\"newfarmname\"> \n";
+
+if ( &getFarmStatus( $farmname ) eq 'up' )
+{
+	print "<div class=\"form-item\"><p class=\"form-label\">$farmname</p> ";
+}
+else
+{
+	print
+	  "<div class=\"form-item\"><input type=\"text\" class=\"fixedwidth\" value=\"$farmname\" size=\"25\" name=\"newfarmname\"> ";
+}
+
 print "</div>\n";
 print "</div>\n";
 

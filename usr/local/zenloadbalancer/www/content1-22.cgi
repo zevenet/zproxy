@@ -53,9 +53,18 @@ print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">\n";
 
 print
   "<p class=\"form-label\"><b>Farm's name.</b> Service will be restarted.</p>\n";
-print
-  "<div class=\"form-item\"><input type=\"text\" class=\"fixedwidth\" value=\"$farmname\" size=\"25\" name=\"newfarmname\"></div>\n";
 
+if ( &getFarmStatus( $farmname ) eq 'up' )
+{
+	print "<div class=\"form-item\"><p class=\"form-label\">$farmname</p> ";
+}
+else
+{
+	print
+	  "<div class=\"form-item\"><input type=\"text\" class=\"fixedwidth\" value=\"$farmname\" size=\"25\" name=\"newfarmname\"> ";
+}
+
+print "</div>\n";
 print "</div>\n";
 
 ##########################################
