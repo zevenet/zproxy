@@ -281,8 +281,9 @@ sub get_snmp
 {
 	my $description = "Get snmp";
 	my %snmp        = %{ &getSnmpdConfig() };
-	$snmp{ status } = &getSnmpdStatus();
-
+	$snmp{ 'status' } = &getSnmpdStatus();
+	
+	
 	&httpResponse(
 		   { code => 200, body => { description => $description, params => \%snmp } } );
 }
@@ -346,15 +347,41 @@ sub set_snmp
 				last;
 			}
 		}
+		#~ # check if listen exists
+		#~ if ( exists $json_obj->{ 'ip' } && $json_obj->{ 'ip' } ne '*'
+				#~ && !$errormsg )
+		#~ {
+			#~ my $flag;
+			#~ foreach my $iface ( @{ &getActiveInterfaceList() } )
+			#~ {
+				#~ if ( $json_obj->{ 'ip' } eq $iface->{ addr } )
+				#~ {
+					#~ $flag = 1;
+					#~ if ( $iface->{ vini } ne '' )    # discard virtual interfaces
+					#~ {
+						#~ $errormsg = "Virtual interface canot be configurate as http interface.";
+					#~ }
+					#~ else
+					#~ {
+						#~ $interface = $iface;
+					#~ }
+					#~ last;
+				#~ }
+			#~ }
+			#~ $errormsg = "Ip $json_obj->{ 'ip' } not found in system." if ( !$flag );
+		#~ }
+		
 		if ( !$errormsg )
 		{
 			my $status = $json_obj->{ 'status' };
 			delete $json_obj->{ 'status' };
 			my $snmp = &getSnmpdConfig();
+			
 			foreach my $key ( keys %{ $json_obj } )
 			{
 				$snmp->{ $key } = $json_obj->{ $key };
 			}
+			
 			$errormsg = &setSnmpdConfig( $snmp );
 			if ( !$errormsg )
 			{
@@ -374,7 +401,6 @@ sub set_snmp
 				if ( !$errormsg )
 				{
 					$snmp->{ status } = &getSnmpdStatus();
-
 					&httpResponse(
 							{ code => 200, body => { description => $description, params => $snmp } } );
 				}
@@ -881,7 +907,7 @@ sub get_user
 #  @apiVersion 3.0
 #
 #
-# @apiSuccess	{string}			key			key to connect with zapi. Using 'randomkey' value, a random key will be generated
+# @apiSuccess	{string}			key			key to connect with zapi
 # @apiSuccess	{string}			new-password			new password for the zapi user
 # @apiSuccess	{string}			status			enable or disable the zapi. The options are: enable or disable
 #
@@ -918,18 +944,13 @@ sub set_user_zapi
 	if ( !$errormsg )
 	{
 		if ( !&getValidFormat( "zapi_key", $json_obj->{ 'key' } ) )
-		{
+		{ 
 			$errormsg = "Error, character incorrect in key zapi.";
 		}
 		elsif ( !&getValidFormat( "zapi_password", $json_obj->{ 'new-password' } ) )
 		{
 			$errormsg = "Error, character incorrect in password zapi.";
 		}
-
-		#~ elsif ( $json_obj->{ 'new-password' } && ! $json_obj->{ 'password' } )
-		#~ {
-		#~ $errormsg = "Error, it's necessary check the current password.";
-		#~ }
 		elsif ( !&getValidFormat( "zapi_status", $json_obj->{ 'status' } ) )
 		{
 			$errormsg = "Error, character incorrect in status zapi.";
@@ -948,15 +969,7 @@ sub set_user_zapi
 			}
 			if ( exists $json_obj->{ 'key' } )
 			{
-				if ( $json_obj->{ 'key' } eq 'randomkey' )
-				{
-					&setZAPI( 'randomkey' );
-					$json_obj->{ 'key' } = &getZAPI( 'keyzapi' );
-				}
-				else
-				{
-					&setZAPI( 'key', $json_obj->{ 'key' } );
-				}
+				&setZAPI( 'key', $json_obj->{ 'key' } );
 			}
 
 			&changePassword( 'zapi',
@@ -1614,7 +1627,7 @@ sub get_notif_alert_status
 #{
 #   "description" : "Get notifications alert backends settings",
 #   "params" : {
-#      "avoidFlappingTime" : "4",
+#      "avoidflappingtime" : "4",
 #      "prefix" : "[Backend notifications]",
 #      "status" : "enabled"
 #   }
@@ -1648,7 +1661,7 @@ sub get_notif_alert
 #
 #
 #
-# @apiSuccess	{number}	avoidFlappingTime		During this time doesn't send notification if there are service flaps. Not available in cluster notifications
+# @apiSuccess	{number}	avoidflappingtime		During this time doesn't send notification if there are service flaps. Not available in cluster notifications
 # @apiSuccess	{string}		prefix			Prefix to add to the mail subject
 #
 #
@@ -1657,7 +1670,7 @@ sub get_notif_alert
 #{
 #   "description" : "Set notifications alert backends",
 #   "params" : {
-#      "avoidFlappingTime" : 4,
+#      "avoidflappingtime" : 4,
 #      "prefix" : "[Backend notifications]"
 #   }
 #}
@@ -1665,7 +1678,7 @@ sub get_notif_alert
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		  -d '{"avoidFlappingTime":4,"prefix":"[Backend notifications]"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/alerts/backends
+#		  -d '{"avoidflappingtime":4,"prefix":"[Backend notifications]"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/alerts/backends
 #
 # @apiSampleRequest off
 #
@@ -1677,15 +1690,15 @@ sub set_notif_alert
 	my $alert       = shift;
 	my $description = "Set notifications alert $alert";
 
-	my @allowParams = ( "avoidFlappingTime", "prefix" );
+	my @allowParams = ( "avoidflappingtime", "prefix" );
 	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
 	if ( !$errormsg )
 	{
-		if ( !&getValidFormat( 'notif_time', $json_obj->{ 'avoidFlappingTime' } ) )
+		if ( !&getValidFormat( 'notif_time', $json_obj->{ 'avoidflappingtime' } ) )
 		{
 			$errormsg = "Error, it's necessary add a valid action.";
 		}
-		elsif ( exists $json_obj->{ 'avoidFlappingTime' } && $alert eq 'cluster' )
+		elsif ( exists $json_obj->{ 'avoidflappingtime' } && $alert eq 'cluster' )
 		{
 			$errormsg = "Avoid flapping time is not configurable in cluster alerts.";
 		}
@@ -1694,8 +1707,8 @@ sub set_notif_alert
 			my $params;
 			$params->{ 'PrefixSubject' } = $json_obj->{ 'prefix' }
 			  if ( $json_obj->{ 'prefix' } );
-			$params->{ 'SwitchTime' } = $json_obj->{ 'avoidFlappingTime' }
-			  if ( $json_obj->{ 'avoidFlappingTime' } );
+			$params->{ 'SwitchTime' } = $json_obj->{ 'avoidflappingtime' }
+			  if ( $json_obj->{ 'avoidflappingtime' } );
 			$errormsg = &setNotifAlerts( $alert, $params );
 			if ( !$errormsg )
 			{

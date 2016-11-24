@@ -99,6 +99,7 @@ sub getSnmpdConfig    # ()
 	my ( undef, $snmpd_community, $snmpd_scope ) =
 	  split ( /\s+/, $config_file[1] );
 
+	$snmpd_ip = '*' if ( $snmpd_ip eq '0.0.0.0' );
 	# Close file
 	untie @config_file;
 
@@ -115,6 +116,8 @@ sub getSnmpdConfig    # ()
 sub setSnmpdConfig    # ($snmpd_conf)
 {
 	my ( $snmpd_conf ) = @_;
+	my $ip = $snmpd_conf->{ ip };
+	$ip = '0.0.0.0' if ( $snmpd_conf->{ ip } eq '*' );
 
 	return -1 if ref $snmpd_conf ne 'HASH';
 
@@ -127,14 +130,9 @@ sub setSnmpdConfig    # ($snmpd_conf)
 		return -1;
 	}
 
-	if ( $snmpd_conf->{ ip } eq '*' )
-	{
-		$snmpd_conf->{ ip } = '0.0.0.0';
-	}
-
 	# example: agentAddress  udp:127.0.0.1:161
 	# example: rocommunity public  0.0.0.0/0
-	print $config_file "agentAddress udp:$snmpd_conf->{ip}:$snmpd_conf->{port}\n";
+	print $config_file "agentAddress udp:$ip:$snmpd_conf->{port}\n";
 	print $config_file
 	  "rocommunity $snmpd_conf->{community} $snmpd_conf->{scope}\n";
 	print $config_file "includeAllDisks 10%\n";
