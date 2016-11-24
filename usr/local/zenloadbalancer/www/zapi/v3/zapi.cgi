@@ -238,7 +238,16 @@ sub checkActivationCertificate
 			  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one";
 		}
 
-		&httpResponse( { code => 400, body => { message => $message } } );
+		&httpResponse(
+					   {
+						 code => 400,
+						 body => {
+								   message         => $message,
+								   certificate_key => &keycert(),
+								   hostname        => &getHostname(),
+						 }
+					   }
+		);
 
 		exit;
 	}
