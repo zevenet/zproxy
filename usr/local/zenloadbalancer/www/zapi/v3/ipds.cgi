@@ -12,8 +12,8 @@
 #
 ###############################################################################
 
-require "/usr/local/zenloadbalancer/www/Plugins/rbl.pl";
-require "/usr/local/zenloadbalancer/www/Plugins/ddos.pl";
+require "/usr/local/zenloadbalancer/www/Plugins/rbl.cgi";
+require "/usr/local/zenloadbalancer/www/Plugins/ddos.cgi";
 
 rbl:
 
@@ -80,6 +80,10 @@ sub get_rbl_all_lists
 						 type     => &getRBLListParam( $list, 'type' ),
 						 location => &getRBLListParam( $list, "location" )
 		);
+		if ( &getRBLListParam( $listName, 'preload' ) eq 'true' )
+		{
+			$listHash{ 'preload' } = 'true';
+		}
 		push @lists, \%listHash;
 	}
 
@@ -132,9 +136,9 @@ sub get_rbl_list
 	my $listName    = shift;
 	my $description = "Get list $listName";
 	my %listHash;
-	my $err = &getRBLExists( $listName );
+	my $errormsg;
 
-	if ( $err == 0 )
+	if ( ! &getRBLExists( $listName ) )
 	{
 		my @ipList;
 		my $index = 0;
@@ -149,30 +153,25 @@ sub get_rbl_list
 					  type     => &getRBLListParam( $listName, 'type' ),
 					  location => &getRBLListParam( $listName, 'location' )
 		);
-
+		if ( &getRBLListParam( $listName, 'preload' ) eq 'true' )
+		{
+			$listHash{ 'preload' } = 'true';
+		}
 		if ( &getRBLListParam( $listName, 'url' ) )
 		{
 			$listHash{ 'url' }     = &getRBLListParam( $listName, 'url' );
 			$listHash{ 'status' }  = &getRBLListParam( $listName, 'status' );
 			$listHash{ 'refresh' } = &getRBLListParam( $listName, 'refresh' );
-
-			&httpResponse(
-						   {
-							 code => 200,
-							 body => { description => $description, params => \%listHash }
-						   }
-			);
 		}
+		&httpResponse(
+			{ code => 200, body => { description => $description, params => \%listHash } }
+		);
 	}
 	else
 	{
-		my $errormsg = "Request list doesn't exist.";
-		my $body = {
-					 description => "Get rbl list '$listName'",
-					 error       => "true",
-					 message     => $errormsg,
-		};
-		&httpResponse( { code => 404, body => $body } );
+		$errormsg = "Requested list doesn't exist.";
+		my $body = { description => $description, error => "true", message => $errormsg };
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	return \%listHash;
@@ -183,16 +182,14 @@ sub get_rbl_list
 #  @api {post} /ipds/rbl/<listname> Create a new rbl list
 #  @apiGroup IPDS
 #  @apiName PostRblList
-#  @apiParam {String} listname  Rbl list name, unique ID.
 #  @apiDescription Create a new rbl list
 #  @apiVersion 3.0
 #
 #
-#
-# @apiSuccess   {String}	type		The list will be white or black. The options are: allow or deny.
+# @apiSuccess   {String}	type		The list will be white or black. The options are: allow or deny (default)
 # @apiSuccess	{string}	location	Specify where the list is keep it. The options are: local or remote.
-# @apiSuccess	{string}	url			when list is in remote location, it's necesary add url where is keep it.
-#
+# @apiSuccess	{string}	url			when list is in remote location, it's rry add url where is keep it.
+# @apiSuccess	{number}	refresh	time to refresh the remote list.
 #
 #
 #@apiSuccessExample Success-Response:
@@ -214,7 +211,7 @@ sub get_rbl_list
 # @apiSampleRequest off
 #
 #**
-#  POST /ipds/rbl/<listname>
+#  POST /ipds/rbl
 sub add_rbl_list
 {
 	my $json_obj = shift;
@@ -227,7 +224,7 @@ sub add_rbl_list
 	my @optionalParams = ( "type", "url", "refresh" );
 
 	$errormsg =
-	  &getValidPostParams( $json_obj, \@requiredParams, \@optionalParams );
+	  &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
 	# $errormsg == 0, no error
 	if ( !$errormsg )
 	{
@@ -253,7 +250,7 @@ sub add_rbl_list
 			{
 				if ( $json_obj->{ 'location' } ne 'remote' )
 				{
-					$errormsg = "Refresh time only is available to remote lists.";
+					$errormsg = "Refresh time only is available in remote lists.";
 				}
 				else
 				{
@@ -264,7 +261,7 @@ sub add_rbl_list
 			{
 				if ( $json_obj->{ 'location' } ne 'remote' )
 				{
-					$errormsg = "Url only is available to remote lists.";
+					$errormsg = "Url only is available in remote lists.";
 				}
 				else
 				{
@@ -275,7 +272,7 @@ sub add_rbl_list
 			{
 				if ( $json_obj->{ 'location' } eq 'remote' )
 				{
-					$errormsg = "It's necesary add a url where is allocated the list.";
+					$errormsg = "It's necessary to add the url where is allocated the list.";
 				}
 			}
 
@@ -287,7 +284,7 @@ sub add_rbl_list
 
 				if ( &setRBLCreateList( $listName, $listParams ) )
 				{
-					$errormsg = "There was a error creating a new list. Check the logs.";
+					$errormsg = "Error, creating a new list.";
 				}
 
 				# All successful
@@ -369,11 +366,11 @@ sub set_rbl_list
 	my $description = "Modify list $listName.";
 	my $errormsg;
 
-	my @allowParams = ( "type", "url", "refresh", "sources" );
+	my @allowParams = ( "type", "url", "refresh", "sources","list" );
 
 	if ( &getRBLExists( $listName ) == -1 )
 	{
-		$errormsg = "The list '$listName' don't exists.";
+		$errormsg = "The list '$listName' doesn't exist.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -383,9 +380,7 @@ sub set_rbl_list
 	}
 
 	my $location = &getRBLListParam( $listName, 'location' );
-
-	my $listHash = &getRBLListParam( $listName );
-	$errormsg = &getValidPutParams( $json_obj, \@allowParams );
+	$errormsg = &getValidOptParams( $json_obj, \@allowParams );
 	if ( !$errormsg )
 	{
 		# Check key format
@@ -399,40 +394,50 @@ sub set_rbl_list
 		}
 		if ( !$errormsg )
 		{
-			# Check format list refresh
+			# Refresh and url only is used in remote lists
 			if ( ( exists $json_obj->{ 'refresh' } || exists $json_obj->{ 'url' } )
 				 && $location ne 'remote' )
 			{
-				$errormsg = "Refresh time and url only are available to remote lists.";
+				$errormsg = "Refresh time and url only are available in remote lists.";
 			}
+			# Sources only is used in local lists 
 			elsif ( exists $json_obj->{ 'sources' }
 					&& $location ne 'local' )
 			{
-				$errormsg = "Sources only is available to local lists.";
+				$errormsg = "Sources parameter only is available in local lists.";
 			}
 			else
 			{
 				foreach my $key ( keys %{ $json_obj } )
 				{
-					$errormsg = &setRBLListParam( $listName, $key, $json_obj->{ $key } );
-					$errormsg = "Error found modify $key in $listName." if ( $errormsg );
-
+					# add only the sources with a correct format
+					# no correct format sources are ignored
 					if ( $key eq 'sources' )
 					{
 						my $source_format = &getValidFormat( 'rbl_source' );
 						my $noPush = grep ( !/$source_format)/, @{ $json_obj->{ 'list' } } );
+						# error
 						&zenlog( "$noPush sources couldn't be added" ) if ( $noPush );
 					}
+
+					# set params 
+					$errormsg = &setRBLListParam( $listName, $key, $json_obj->{ $key } );
+					$errormsg = "Error, modifying $key in $listName." if ( $errormsg );
+					
+					# once changed list, update de list name
 					if ( $key eq 'list' )
 					{
 						$listName = $json_obj->{ 'list' };
 					}
-
+					
+					# not continue if there was a error
 					last if ( $errormsg );
 				}
 				if ( !$errormsg )
 				{
+					# all successful
 					my $listHash = &getRBLListParam( $listName );
+					delete $listHash->{ 'action' };
 					&httpResponse(
 								   {
 									 code => 200,
@@ -442,6 +447,7 @@ sub set_rbl_list
 				}
 				else
 				{
+					# almost one parameter couldn't be changed
 					$errormsg = "Error, modifying $listName.";
 				}
 			}
@@ -486,55 +492,49 @@ sub del_rbl_list
 	my $errormsg;
 	my $description = "Delete list '$listName'",
 
-	  my $errormsg = &getRBLExists( $listName );
+	my $errormsg = &getRBLExists( $listName );
 	if ( $errormsg == -1 )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
+			description => $description,  error => "true", message => $errormsg,
 		};
-		&httpResponse( { code => 400, body => $body } );
+		&httpResponse( { code => 404, body => $body } );
 	}
 	else
 	{
 		$errormsg = &setRBLDeleteList( $listName );
-		if ( $errormsg )
+		if ( !$errormsg )
 		{
 			$errormsg = "The list $listName has been deleted successful.";
 			my $body = {
-						 description => $description,
-						 success     => "true",
-						 message     => $errormsg,
+				description => $description, successful => "true", message => $errormsg,
 			};
 			&httpResponse( { code => 200, body => $body } );
 		}
 		else
 		{
-			$errormsg = "There was a error deleting list $listName.";
+			$errormsg = "Error, deleting the list $listName.";
 		}
 	}
 	my $body = {
-				 description => $description,
-				 error       => "true",
-				 message     => $errormsg,
+		description => $description,  error => "true", message => $errormsg,
 	};
 	&httpResponse( { code => 400, body => $body } );
 }
 
 #**
-#  @api {get} /ipds/rbl/<listname> Request a rbl list
+#  @api {get} /ipds/rbl/<listname> Request the sources of a list
 #  @apiGroup IPDS
-#  @apiDescription Get a rbl list description
-#  @apiName GetRblList
+#  @apiDescription Get the sources of a list
+#  @apiName GetRblSource
 #  @apiParam {String} listname  Rbl list name, unique ID.
 #  @apiVersion 3.0
 #
 #
 # @apiSuccessExample Success-Response:
 #{
-#   "description" : "rbl lists",
+#   "description" : "rbl sources",
 #   "params" : [
 #      {
 #         "farms" : [
@@ -558,11 +558,11 @@ sub del_rbl_list
 #}
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/<listname>
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/<listname>/source
 #
 #@apiSampleRequest off
 #**
-#GET /ipds/rbl/<listname>
+#GET /ipds/rbl/<listname>/source
 sub get_rbl_source
 {
 	my $listName    = shift;
@@ -588,7 +588,7 @@ sub get_rbl_source
 	}
 	else
 	{
-		my $errormsg = "Request list doesn't exist.";
+		my $errormsg = "Requested list doesn't exist.";
 		my $body = {
 					 description => "$description",
 					 error       => "true",
@@ -600,24 +600,24 @@ sub get_rbl_source
 	return \%listHash;
 }
 
-#####Documentation of POST a RBL list source####
+#####Documentation of POST a source to a list####
 #**
-#  @api {post} /ipds/rbl/<listname>/list Create a new rbl list source
+#  @api {post} /ipds/rbl/<listname>/source Create a new source for a list
 #  @apiGroup IPDS
-#  @apiName PostRblListSource
+#  @apiName PostRblSource
 #  @apiParam {String} listname  Rbl list name, unique ID.
-#  @apiDescription Add a source to specific list
+#  @apiDescription Add a source to a specific list
 #  @apiVersion 3.0
 #
 #
 #
-# @apiSuccess   {String}	source		New IP or net segment to add a list.
+# @apiSuccess   {String}	source		New IP or net segment to add to a list.
 #
 #
 #
 #@apiSuccessExample Success-Response:
 #{
-#   "description" : "Post source to list",
+#   "description" : "Post a source in a list",
 #   "params" : [
 #      "192.168.100.240",
 #      "21.5.6.4",
@@ -627,12 +627,12 @@ sub get_rbl_source
 #
 # @apiExample {curl} Example Usage:
 #		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"source":"16.31.0.223"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/list
+#		-d '{"source":"16.31.0.223"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/source
 #
 # @apiSampleRequest off
 #
 #**
-#  POST /ipds/rbl/<listname>/list
+#  POST /ipds/rbl/<listname>/source
 sub add_rbl_source
 {
 	my $json_obj = shift;
@@ -655,18 +655,18 @@ sub add_rbl_source
 	else
 	{
 		$errormsg =
-		  &getValidPostParams( $json_obj, \@requiredParams, \@optionalParams );
+		  &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
 		if ( !$errormsg )
 		{
 			if ( ! &getValidFormat( 'rbl_source', $json_obj->{ 'source' } )  )
 			{
-				$errormsg = "It's necessary introduce a correct source.";
+				$errormsg = "It's necessary to introduce a correct source.";
 			}
 			elsif (
 					grep ( /^$json_obj->{'source'}$/,
 						   @{ &getRBLListParam( $listName, 'sources' ) } ) )
 			{
-				$errormsg = "$json_obj->{'source'} just exist in $listName.";
+				$errormsg = "$json_obj->{'source'} just exists in the list.";
 			}
 			else
 			{
@@ -703,14 +703,14 @@ sub add_rbl_source
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of PUT a RBL list source####
+#####Documentation of PUT a source of a RBL list####
 #**
-#  @api {put} /ipds/rbl/<listname>/list/<id> Modify a source from a rbl list
+#  @api {put} /ipds/rbl/<listname>/source/<id> Modify a source of a rbl list
 #  @apiGroup IPDS
-#  @apiName PutRblListSource
+#  @apiName PutRblSource
 #  @apiParam	{String}	listname	RBL list name, unique ID.
 #  @apiParam	{number}	id			Source ID to modificate.
-#  @apiDescription Modify a source from a RBL list
+#  @apiDescription Modify a source of a RBL list
 #  @apiVersion 3.0
 #
 #
@@ -719,7 +719,7 @@ sub add_rbl_source
 #
 # @apiSuccessExample Success-Response:
 #{
-#   "description" : "Post source to list",
+#   "description" : "Put a source of a list",
 #   "params" : [
 #      "192.168.100.240",
 #      "10.12.55.3"
@@ -729,12 +729,12 @@ sub add_rbl_source
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"source":"10.12.55.3" https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/list/1
+#        -d '{"source":"10.12.55.3" https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/source/1
 #
 # @apiSampleRequest off
 #
 #**
-#  PUT /ipds/rbl/<listname>/list/<id>
+#  PUT /ipds/rbl/<listname>/source/<id>
 sub set_rbl_source
 {
 	my $json_obj    = shift;
@@ -747,7 +747,7 @@ sub set_rbl_source
 	# check list exists
 	if ( &getRBLExists( $listName ) == -1 )
 	{
-		$errormsg = "$listName doesn't found";
+		$errormsg = "$listName not found";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -759,7 +759,7 @@ sub set_rbl_source
 	# check source id exists
 	elsif ( @{ &getRBLListParam( $listName, 'sources' ) } <= $id )
 	{
-		$errormsg = "source id $id doesn't found";
+		$errormsg = "Source id $id not found";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -769,22 +769,20 @@ sub set_rbl_source
 	}
 	else
 	{
-		$errormsg = &getValidPutParams( $json_obj, \@allowParams );
+		$errormsg = &getValidOptParams( $json_obj, \@allowParams );
 		if ( !$errormsg )
 		{
-
 			if ( ! &getValidFormat( 'rbl_source', $json_obj->{ 'source' } ) )
 			{
-				$errormsg = "Wrong format to source.";
+				$errormsg = "Wrong source format.";
 			}
-
 			elsif ( &setRBLModifSource( $listName, $id, $json_obj->{ 'source' } ) != 0 )
 			{
-				$errormsg = "There was a error putting a source in $listName.";
+				$errormsg = "Error, putting the source to the list.";
 			}
 			else
 			{
-				params => &getRBLListParam( $listName, 'sources' );
+				my $sources = &getRBLListParam( $listName, 'sources' );
 				my $body = {
 							 description => $description,
 							 params      => $sources
@@ -801,14 +799,14 @@ sub set_rbl_source
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of DELETE a RBL list source####
+#####Documentation of DELETE a source of a RBL list####
 #**
-#  @api {delete} /ipds/rbl/<listname>/list/<id>	Delete a source from a rbl list
+#  @api {delete} /ipds/rbl/<listname>/source/<id>	Delete a source from a rbl list
 #  @apiGroup IPDS
-#  @apiName DeleteRblList
+#  @apiName DeleteRblSource
 #  @apiParam	{String}	listname	rbl list name, unique ID.
 #  @apiParam	{number}	id			Source ID to delete.
-#  @apiDescription Delete a given rbl list source
+#  @apiDescription Delete a source of alist
 #  @apiVersion 3.0
 #
 #
@@ -822,7 +820,7 @@ sub set_rbl_source
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/list/list/1
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/list/source/1
 #
 # @apiSampleRequest off
 #
@@ -832,7 +830,7 @@ sub del_rbl_source
 	my $listName = shift;
 	my $id       = shift;
 	my $errormsg;
-	my $description = "Delete source from '$listName'";
+	my $description = "Delete source from the list $listName";
 
 	if ( &getRBLExists( $listName ) == -1 )
 	{
@@ -846,7 +844,7 @@ sub del_rbl_source
 	}
 	elsif ( @{ &getRBLListParam( $listName, 'sources' ) } <= $id )
 	{
-		$errormsg = "id $id doesn't exist in $listName.";
+		$errormsg = "ID $id doesn't exist in the list $listName.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -858,7 +856,7 @@ sub del_rbl_source
 	{
 		if ( &setRBLDeleteSource( $listName, $id ) != 0 )
 		{
-			$errormsg = "There was a error deleting source $id";
+			$errormsg = "Error deleting source $id";
 		}
 		else
 		{
@@ -879,32 +877,29 @@ sub del_rbl_source
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of POST a RBL list source####
+#####Documentation of POST enable a list in a farm####
 #**
-#  @api {post} /farms/<farmname>/ipds/rbl	Create a new rbl rule to a farm
+#  @api {post} /farms/<farmname>/ipds/rbl	Enable a list in a farm
 #  @apiGroup IPDS
 #  @apiName PostRblListToFarm
 #  @apiParam {String} farmname	farm name, unique ID.
-#  @apiDescription Add a rbl rule to a farm
+#  @apiDescription Add a list rule to a farm
 #  @apiVersion 3.0
 #
 #
-#
-# @apiSuccess   {String}	listname		Existing rbl list.
-#
-#
+# @apiSuccess   {String}	list		Existing rbl list.
 #
 #@apiSuccessExample Success-Response:
 #{
-#   "description" : "Apply list listName to farm dns",
-#   "message" : "List listName was applied successful to farm dns.",
-#   "success" : "true"
+#   "description" : "Apply a list to a farm",
+#   "error" : "true",
+#   "message" : "blackList just is applied to prueba."
 #}
 #
 #
 # @apiExample {curl} Example Usage:
 #		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"listname":"listName"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/dns/ipds/rbl
+#		-d '{"list":"blackList"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/dns/ipds/rbl
 #
 # @apiSampleRequest off
 #
@@ -916,31 +911,25 @@ sub add_rbl_to_farm
 	my $farmName = shift;
 	my $listName = $json_obj->{ 'list' };
 	my $errormsg;
-	my $description = "Apply list $listName to farm $farmName";
+	my $description = "Apply a list to a farm";
 
 	if ( &getFarmFile( $farmName ) == -1 )
 	{
 		$errormsg = "$farmName doesn't exist.";
 		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
+			description => $description, error => "true", message => $errormsg };
 		&httpResponse( { code => 404, body => $body } );
 	}
 	elsif ( &getRBLExists( $listName ) == -1 )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
+			description => $description, error => "true", message => $errormsg };
 		&httpResponse( { code => 404, body => $body } );
 	}
 	else
 	{
-		if ( grep ( /^$listName$/, @{ &getRBLListParam( $listName, 'farms' ) } ) )
+		if ( grep ( /^$farmName$/, @{ &getRBLListParam( $listName, 'farms' ) } ) )
 		{
 			$errormsg = "$listName just is applied to $farmName.";
 		}
@@ -949,12 +938,9 @@ sub add_rbl_to_farm
 			$errormsg = &setRBLApplyToFarm( $farmName, $listName );
 			if ( !$errormsg )
 			{
-				my $errormsg = "List $listName was applied successful to farm $farmName.";
+				my $errormsg = "List $listName was applied successful to the farm $farmName.";
 				my $body = {
-							 description => $description,
-							 success     => "true",
-							 message     => $errormsg,
-				};
+					description => $description, succes => "true", message => $errormsg };
 				&httpResponse( { code => 200, body => $body } );
 			}
 			else
@@ -964,14 +950,11 @@ sub add_rbl_to_farm
 		}
 	}
 	my $body = {
-				 description => $description,
-				 error       => "true",
-				 message     => $errormsg,
-	};
+			description => $description, error => "true", message => $errormsg };
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of DELETE a RBL rule for a farm####
+#####Documentation of DELETE disable a list in a farm####
 #**
 #  @api {delete} /farms/<farmname>/ipds/rbl/<listname>	Delete a rbl rule from a farm
 #  @apiGroup IPDS
@@ -1003,36 +986,27 @@ sub del_rbl_from_farm
 	my $farmName = shift;
 	my $listName = shift;
 	my $errormsg;
-	my $description = "Delete list $listName form farm $farmName";
+	my $description = "Delete a list form a farm";
 
 	if ( &getFarmFile( $farmName ) == -1 )
 	{
 		$errormsg = "$farmName doesn't exist.";
 		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
+			description => $description, error => "true", message => $errormsg };
 		&httpResponse( { code => 404, body => $body } );
 	}
 	elsif ( &getRBLExists( $listName ) == -1 )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
+			description => $description, error => "true", message => $errormsg };
 		&httpResponse( { code => 404, body => $body } );
 	}
 	elsif ( ! grep( /^$farmName$/, @{ &getRBLListParam( $listName, 'farms' ) } ) )
 	{
-		$errormsg = "Don't foud a rule associated to $listName and $farmName.";
+		$errormsg = "Not found a rule associated to $listName and $farmName.";
 		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
+			description => $description, error => "true", message => $errormsg };
 		&httpResponse( { code => 404, body => $body } );
 	}
 	else
@@ -1040,7 +1014,7 @@ sub del_rbl_from_farm
 		$errormsg = &setRBLRemFromFarm( $farmName, $listName );
 		if ( !$errormsg )
 		{
-			$errormsg = "List $listName was removed successful from farm $farmName.";
+			$errormsg = "List $listName was removed successful from the farm $farmName.";
 			my $body = {
 						 description => $description,
 						 success     => "true",
@@ -1050,14 +1024,11 @@ sub del_rbl_from_farm
 		}
 		else
 		{
-			$errormsg = "There was a error removing $listName from $farmName.";
+			$errormsg = "Error, removing $listName from $farmName.";
 		}
 	}
 	my $body = {
-				 description => $description,
-				 error       => "true",
-				 message     => $errormsg,
-	};
+			description => $description, error => "true", message => $errormsg };
 	&httpResponse( { code => 400, body => $body } );
 }
 
@@ -1123,10 +1094,10 @@ sub get_ddos_key
 
 	$output = &getDDOSParam( $key );
 
-	# don't exit this key
+	# not exit this key
 	if ( !$output )
 	{
-		my $errormsg = "$key don't is a valid ID DDoS rule";
+		my $errormsg = "$key isn't a valid ID DDoS rule";
 		my $body = {
 					 description => "Get DDoS $key settings",
 					 error       => "true",

@@ -241,7 +241,7 @@ if ( $eject eq "start" )
 	system ( '/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi' );
 	require "/usr/local/zenloadbalancer/config/global.conf";
 	require "/usr/local/zenloadbalancer/www/Plugins/notifications.cgi";
-	require "/usr/local/zenloadbalancer/www/Plugins/rbl.pl";
+	require "/usr/local/zenloadbalancer/www/Plugins/rbl.cgi";
 
 	#### Starts node tuning ####
 
@@ -717,7 +717,7 @@ if ( $eject eq "start" )
 
 if ( $eject eq "stop" )
 {
-	require "/usr/local/zenloadbalancer/www/Plugins/rbl.pl";
+	require "/usr/local/zenloadbalancer/www/Plugins/rbl.cgi";
 	require "/usr/local/zenloadbalancer/www/Plugins/notifications.cgi";
 
 	&zenlog( "Beginning stop proccess" );
