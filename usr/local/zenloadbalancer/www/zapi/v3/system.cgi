@@ -391,6 +391,34 @@ sub set_snmp
 }
 
 _license:
+# DOWNLOAD
+# GET /system/license
+#~ sub get_license
+#~ {
+	#~ my $description = "Get license";
+	#~ my $licenseFile = &getGlobalConfiguration( 'licenseFile' );
+	#~ open ( my $license_fh, '<', "$licenseFile" );
+	#~ if ( $license_fh )
+	#~ {
+		#~ my $cgi = &getCGI();
+		#~ print $cgi->header(
+							#~ -type            => 'application/x-download',
+							#~ -attachment      => 'license',
+							#~ 'Content-length' => -s "$licenseFile",
+		#~ );
+		#~ binmode $license_fh;
+		#~ print while <$license_fh>;
+		#~ close $license_fh;
+		#~ exit;
+	#~ }
+	#~ else
+	#~ {
+		#~ my $errormsg = "Don't find license.";
+		#~ my $body =
+		  #~ { description => $description, error => "true", message => $errormsg };
+		#~ &httpResponse( { code => 404, body => $body } );
+	#~ }
+#~ }
 
 #**
 #  @api {get} /system/license Request license
@@ -405,31 +433,24 @@ _license:
 #
 #@apiSampleRequest off
 #**
-# GET /system/license
+# show license
 sub get_license
 {
 	my $description = "Get license";
 	my $licenseFile = &getGlobalConfiguration( 'licenseFile' );
+	my $file;
 
-	open ( my $license_fh, '<', "$licenseFile" );
-
-	if ( $license_fh )
+	if ( $licenseFile )
 	{
-		my $cgi = &getCGI();
-		print $cgi->header(
-							-type            => 'application/x-download',
-							-attachment      => 'license',
-							'Content-length' => -s "$licenseFile",
-		);
-
-		binmode $license_fh;
-		print while <$license_fh>;
+		open ( my $license_fh, '<', "$licenseFile" );
+		$file .= $_ while ( <$license_fh> );
+		# Close this particular file.
 		close $license_fh;
-		exit;
+		&httpResponse({ code => 200, body => $file, type => 'text/plain' });
 	}
 	else
 	{
-		my $errormsg = "Don't find license.";
+		my $errormsg = "Not found license.";
 		my $body =
 		  { description => $description, error => "true", message => $errormsg };
 		&httpResponse( { code => 404, body => $body } );
@@ -1627,7 +1648,7 @@ sub get_notif_alert
 #
 #
 #
-# @apiSuccess	{number}	flapTime		During this time doesn't send notification if there are service flaps. Not available in cluster notifications
+# @apiSuccess	{number}	avoidFlappingTime		During this time doesn't send notification if there are service flaps. Not available in cluster notifications
 # @apiSuccess	{string}		prefix			Prefix to add to the mail subject
 #
 #
@@ -1636,7 +1657,7 @@ sub get_notif_alert
 #{
 #   "description" : "Set notifications alert backends",
 #   "params" : {
-#      "flapTime" : 4,
+#      "avoidFlappingTime" : 4,
 #      "prefix" : "[Backend notifications]"
 #   }
 #}
@@ -1644,7 +1665,7 @@ sub get_notif_alert
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		  -d '{"flapTime":4,"prefix":"[Backend notifications]"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/alerts/backends
+#		  -d '{"avoidFlappingTime":4,"prefix":"[Backend notifications]"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/alerts/backends
 #
 # @apiSampleRequest off
 #
@@ -1656,15 +1677,15 @@ sub set_notif_alert
 	my $alert       = shift;
 	my $description = "Set notifications alert $alert";
 
-	my @allowParams = ( "flapTime", "prefix" );
+	my @allowParams = ( "avoidFlappingTime", "prefix" );
 	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
 	if ( !$errormsg )
 	{
-		if ( !&getValidFormat( 'notif_time', $json_obj->{ 'flapTime' } ) )
+		if ( !&getValidFormat( 'notif_time', $json_obj->{ 'avoidFlappingTime' } ) )
 		{
 			$errormsg = "Error, it's necessary add a valid action.";
 		}
-		elsif ( exists $json_obj->{ 'flapTime' } && $alert eq 'cluster' )
+		elsif ( exists $json_obj->{ 'avoidFlappingTime' } && $alert eq 'cluster' )
 		{
 			$errormsg = "Avoid flapping time is not configurable in cluster alerts.";
 		}
@@ -1673,8 +1694,8 @@ sub set_notif_alert
 			my $params;
 			$params->{ 'PrefixSubject' } = $json_obj->{ 'prefix' }
 			  if ( $json_obj->{ 'prefix' } );
-			$params->{ 'SwitchTime' } = $json_obj->{ 'flapTime' }
-			  if ( $json_obj->{ 'flapTime' } );
+			$params->{ 'SwitchTime' } = $json_obj->{ 'avoidFlappingTime' }
+			  if ( $json_obj->{ 'avoidFlappingTime' } );
 			$errormsg = &setNotifAlerts( $alert, $params );
 			if ( !$errormsg )
 			{
