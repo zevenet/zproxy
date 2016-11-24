@@ -806,8 +806,15 @@ if ( $eject eq 'startlocal' )
 
 		#At this point every zen interfaces and farms are running
 		#now a personalized script can be executed
-		my @ownscript = `$configdir/zlb-start`;
-		print "@ownscript";
+		my @ownscript = `$configdir/zlb-start 2>&1`;
+
+		&zenlog("Starting $configdir/zlb-start...");
+		if ( @ownscript )
+		{
+			print "@ownscript";
+			&zenlog("@ownscript");
+		}
+		&zenlog("End of $configdir/zlb-start...");
 	}
 	else
 	{
@@ -981,8 +988,15 @@ if ( $eject eq "stoplocal" )
 
 	#At this point all zen interfaces and farms are stopped
 	#now a personalized script can be executed
-	my @ownscript = `$configdir/zlb-stop`;
-	print "@ownscript";
+	my @ownscript = `$configdir/zlb-stop 2>&1`;
+
+	&zenlog("Starting $configdir/zlb-stop...");
+	if ( @ownscript )
+	{
+		print "@ownscript";
+		&zenlog("@ownscript");
+	}
+	&zenlog("End of $configdir/zlb-stop...");
 
 	&zenlog( "stoplocal process finished..." );
 }

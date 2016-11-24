@@ -137,6 +137,9 @@ then
 	mv /tmp/zlb-start /usr/local/zenloadbalancer/config/
 fi
 
+chmod +x /usr/local/zenloadbalancer/config/zlb-start
+chmod +x /usr/local/zenloadbalancer/config/zlb-stop
+
 #move Alerts files #TO BE FIXED
 if [ -f /tmp/Alerts.conf ];
 then
