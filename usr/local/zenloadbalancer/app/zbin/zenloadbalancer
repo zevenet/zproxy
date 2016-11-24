@@ -718,8 +718,15 @@ if ( $eject eq "start" )
 
 		#At this point every zen interfaces and farms are running
 		#now a personalized script can be executed
-		my @ownscript = `$configdir/zlb-start`;
-		&printAndLog( "@ownscript" );
+		my @ownscript = `$configdir/zlb-start 2>&1`;
+
+		&zenlog("Starting $configdir/zlb-start...");
+		if ( @ownscript )
+		{
+			print "@ownscript";
+			&zenlog("@ownscript");
+		}
+		&zenlog("End of $configdir/zlb-start...");
 	}
 	else
 	{
@@ -836,8 +843,15 @@ if ( $eject eq "stop" )
 
 	#At this point all zen interfaces and farms are stopped
 	#now a personalized script can be executed
-	my @ownscript = `$configdir/zlb-stop`;
-	&printAndLog( "@ownscript" );
+	my @ownscript = `$configdir/zlb-stop 2>&1`;
+
+	&zenlog("Starting $configdir/zlb-stop...");
+	if ( @ownscript )
+	{
+		print "@ownscript";
+		&zenlog("@ownscript");
+	}
+	&zenlog("End of $configdir/zlb-stop...");
 
 	&zenlog( "Stop process finished..." );
 }
