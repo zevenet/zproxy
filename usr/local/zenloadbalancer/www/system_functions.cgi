@@ -21,6 +21,10 @@
 #
 ###############################################################################
 
+
+use warnings;
+use strict;
+
 #get Memory usage of the System.
 #input $format Parameter format could be "b" for bytes, "kb" for KBytes and "mb" for MBytes (default: mb)
 #return @array
@@ -44,6 +48,7 @@ sub getMemStats    # ()
 	$format = "mb" if $format eq "";
 
 	open FR, "/proc/meminfo";
+	my $line;
 	while ( $line = <FR> )
 	{
 		if ( $line =~ /memtotal/i )
@@ -105,7 +110,7 @@ sub getMemStats    # ()
 		if ( $line =~ /swapcached/i )
 		{
 			my @swcached = split /[:\ ]+/, $line;
-			$swcvalue = @swcached[1];
+			$swcvalue = $swcached[1];
 			$swcvalue = $swcvalue / 1024 if $format eq "mb";
 			$swcvalue = $swcvalue * 1024 if $format eq "b";
 			$swcname  = $swcached[0];
@@ -151,7 +156,8 @@ sub getLoadStats    # ()
 	if ( -f "/proc/loadavg" )
 	{
 		my $lastline;
-
+		
+		my $line;
 		open FR, "/proc/loadavg";
 		while ( $line = <FR> )
 		{
@@ -169,7 +175,7 @@ sub getLoadStats    # ()
 
 sub getNetworkStats    # ()
 {
-	( $format ) = @_;
+	my ( $format ) = @_;
 
 	if ( !-f "/proc/net/dev" )
 	{
@@ -180,16 +186,18 @@ sub getNetworkStats    # ()
 	open DEV, '/proc/net/dev' or die $!;
 	my ( $in, $out );
 	my @data;
-	my $interface;
+	my @interface;
+	my @interfacein;
+	my @interfaceout;
 
-	$i = -1;
+	my $i = -1;
 	while ( <DEV> )
 	{
 		if ( $_ =~ /\:/ && $_ !~ /lo/ )
 		{
 			$i++;
 			my @iface = split ( ":", $_ );
-			$if =~ s/\ //g;
+			my $if =~ s/\ //g;
 			$if = $iface[0];
 
 			if ( $_ =~ /:\ / )
@@ -210,14 +218,14 @@ sub getNetworkStats    # ()
 			}
 			$if =~ s/\ //g;
 
-			$interface[$i]    = $if;
-			$interfacein[$i]  = $in;
-			$interfaceout[$i] = $out;
+			push @interface, $if;
+			push @interfacein, $in;
+			push @interfaceout, $out;
 		}
 
 	}
 
-	for ( $j = 0 ; $j <= $i ; $j++ )
+	for ( my $j = 0 ; $j <= $i ; $j++ )
 	{
 		push @data, [$interface[$j] . ' in', $interfacein[$j]],
 		  [$interface[$j] . ' out', $interfaceout[$j]];
@@ -232,7 +240,7 @@ sub getDate    # ()
 {
 
 	#$timeseconds = time();
-	$now = ctime();
+	my $now = ctime();
 	return $now;
 
 }
@@ -257,13 +265,33 @@ sub getCPU         # ()
 		print "$0: Error: File /proc/stat not exist ...\n";
 		exit 1;
 	}
+	
+	my $cpu_user1;
+	my $cpu_nice1;
+	my $cpu_sys1;
+	my $cpu_idle1;
+	my $cpu_iowait1;
+	my $cpu_irq1;
+	my $cpu_softirq1; 
+	my $cpu_total1;
 
+	my $cpu_user2;
+	my $cpu_nice2;
+	my $cpu_sys2;
+	my $cpu_idle2;
+	my $cpu_iowait2;
+	my $cpu_irq2;
+	my $cpu_softirq2; 
+	my $cpu_total2;
+
+	my @line_s;
+	my $line;
 	open FR, "/proc/stat";
 	foreach $line ( <FR> )
 	{
 		if ( $line =~ /^cpu\ / )
 		{
-			my @line_s = split ( "\ ", $line );
+			@line_s = split ( "\ ", $line );
 			$cpu_user1    = $line_s[1];
 			$cpu_nice1    = $line_s[2];
 			$cpu_sys1     = $line_s[3];
@@ -310,24 +338,24 @@ sub getCPU         # ()
 	}
 	close FR;
 
-	$diff_cpu_user    = $cpu_user2 - $cpu_user1;
-	$diff_cpu_nice    = $cpu_nice2 - $cpu_nice1;
-	$diff_cpu_sys     = $cpu_sys2 - $cpu_sys1;
-	$diff_cpu_idle    = $cpu_idle2 - $cpu_idle1;
-	$diff_cpu_iowait  = $cpu_iowait2 - $cpu_iowait1;
-	$diff_cpu_irq     = $cpu_irq2 - $cpu_irq1;
-	$diff_cpu_softirq = $cpu_softirq2 - $cpu_softirq1;
-	$diff_cpu_total   = $cpu_total2 - $cpu_total1;
+	my $diff_cpu_user    = $cpu_user2 - $cpu_user1;
+	my $diff_cpu_nice    = $cpu_nice2 - $cpu_nice1;
+	my $diff_cpu_sys     = $cpu_sys2 - $cpu_sys1;
+	my $diff_cpu_idle    = $cpu_idle2 - $cpu_idle1;
+	my $diff_cpu_iowait  = $cpu_iowait2 - $cpu_iowait1;
+	my $diff_cpu_irq     = $cpu_irq2 - $cpu_irq1;
+	my $diff_cpu_softirq = $cpu_softirq2 - $cpu_softirq1;
+	my $diff_cpu_total   = $cpu_total2 - $cpu_total1;
 
-	$cpu_user    = ( 100 * $diff_cpu_user ) / $diff_cpu_total;
-	$cpu_nice    = ( 100 * $diff_cpu_nice ) / $diff_cpu_total;
-	$cpu_sys     = ( 100 * $diff_cpu_sys ) / $diff_cpu_total;
-	$cpu_idle    = ( 100 * $diff_cpu_idle ) / $diff_cpu_total;
-	$cpu_iowait  = ( 100 * $diff_cpu_iowait ) / $diff_cpu_total;
-	$cpu_irq     = ( 100 * $diff_cpu_irq ) / $diff_cpu_total;
-	$cpu_softirq = ( 100 * $diff_cpu_softirq ) / $diff_cpu_total;
+	my $cpu_user    = ( 100 * $diff_cpu_user ) / $diff_cpu_total;
+	my $cpu_nice    = ( 100 * $diff_cpu_nice ) / $diff_cpu_total;
+	my $cpu_sys     = ( 100 * $diff_cpu_sys ) / $diff_cpu_total;
+	my $cpu_idle    = ( 100 * $diff_cpu_idle ) / $diff_cpu_total;
+	my $cpu_iowait  = ( 100 * $diff_cpu_iowait ) / $diff_cpu_total;
+	my $cpu_irq     = ( 100 * $diff_cpu_irq ) / $diff_cpu_total;
+	my $cpu_softirq = ( 100 * $diff_cpu_softirq ) / $diff_cpu_total;
 
-	$cpu_usage =
+	my $cpu_usage =
 	  $cpu_user + $cpu_nice + $cpu_sys + $cpu_iowait + $cpu_irq + $cpu_softirq;
 
 	$cpu_user    = sprintf ( "%.2f", $cpu_user );
@@ -383,13 +411,13 @@ sub getDiskSpace    # ()
 		my ( $line_df ) = grep ( { /^$dd_name\s/ } @df_system );
 		my @s_line = split ( /\s+/, $line_df );
 
-		my $partitions = @s_line[0];
+		my $partitions = $s_line[0];
 		$partitions =~ s/\///;
 		$partitions =~ s/\//-/g;
 
-		my $tot  = @s_line[1] * 1024;
-		my $used = @s_line[2] * 1024;
-		my $free = @s_line[3] * 1024;
+		my $tot  = $s_line[1] * 1024;
+		my $used = $s_line[2] * 1024;
+		my $free = $s_line[3] * 1024;
 
 		push ( @data,
 			   [$partitions . ' Total', $tot],
@@ -416,9 +444,9 @@ sub getDiskPartitionsInfo    #()
 	{
 		my @df_line = split ( /\s+/, $line );
 
-		my $mount_point = @df_line[5];
-		my $partition   = @df_line[0];
-		my $part_id     = @df_line[0];
+		my $mount_point = $df_line[5];
+		my $partition   = $df_line[0];
+		my $part_id     = $df_line[0];
 		$part_id =~ s/\///;
 		$part_id =~ s/\//-/g;
 
@@ -434,13 +462,13 @@ sub getDiskPartitionsInfo    #()
 #Obtain disk mount point from a device
 sub getDiskMountPoint    # ($dev)
 {
-	( $dev ) = @_;
+	my ( $dev ) = @_;
 
 	my $df_bin    = &getGlobalConfiguration( 'df_bin' );
 	my @df_system = `$df_bin -k`;
 	my $mount;
 
-	for $line_df ( @df_system )
+	for my $line_df ( @df_system )
 	{
 		if ( $line_df =~ /$dev/ )
 		{
@@ -457,7 +485,7 @@ sub getDiskMountPoint    # ($dev)
 #Obtain the CPU temperature
 sub getCPUTemp    # ()
 {
-	$file = "/proc/acpi/thermal_zone/THRM/temperature";
+	my $file = &getGlobalConfiguration( "temperatureFile" );
 	my $lastline;
 
 	if ( !-f "$file" )
@@ -466,7 +494,8 @@ sub getCPUTemp    # ()
 		exit 1;
 	}
 
-	open FT, "$file";
+	my $line;
+	open FT, $file;
 	while ( $line = <FT> )
 	{
 		$lastline = $line;
@@ -475,7 +504,7 @@ sub getCPUTemp    # ()
 
 	my @lastlines = split ( "\:", $lastline );
 
-	$temp = @lastlines[1];
+	my $temp = $lastlines[1];
 	$temp =~ s/\ //g;
 	$temp =~ s/\n//g;
 	$temp =~ s/C//g;
@@ -486,7 +515,7 @@ sub getCPUTemp    # ()
 #
 sub zsystem    # (@exec)
 {
-	( @exec ) = @_;
+	my ( @exec ) = @_;
 
 	system ( ". /etc/profile && @exec" );
 	return $?;
@@ -667,6 +696,7 @@ sub getHttpServerPort
 {
 	my $gui_port;    # output
 
+	my $confhttp = &getGlobalConfiguration( 'confhttp' );
 	open my $fh, "<", "$confhttp";
 
 	# read line matching 'server!bind!1!port = <PORT>'
@@ -723,6 +753,7 @@ sub getHttpServerIp    # ()
 {
 	my $gui_ip;        # output
 
+	my $confhttp = &getGlobalConfiguration( 'confhttp' );
 	open my $fh, "<", "$confhttp";
 
 	# read line matching 'server!bind!1!interface = <IP>'
@@ -759,7 +790,7 @@ sub setHttpServerIp
 
 	#action save ip
 	use Tie::File;
-	tie @array, 'Tie::File', "$confhttp";
+	tie my @array, 'Tie::File', "$confhttp";
 	if ( $ip =~ /^\*$/ )
 	{
 		@array[1] = "#server!bind!1!interface = \n";
@@ -903,7 +934,7 @@ sub uploadBackup
 sub deleteBackup
 {
 	my $file      = shift;
-	my $file      = "backup-$file.tar.gz";
+	$file      = "backup-$file.tar.gz";
 	my $backupdir = &getGlobalConfiguration( "backupdir" );
 	my $filepath  = "$backupdir$file";
 	my $error;
@@ -974,7 +1005,7 @@ sub downloadLog
 	my $logFile = shift;
 	my $error;
 
-	my $backupdir = &getGlobalConfiguration( 'logdir' );
+	my $logdir = &getGlobalConfiguration( 'logdir' );
 	open ( my $download_fh, '<', "$logdir/$logFile" );
 
 	if ( -f "$logdir\/$logFile" && $download_fh )
@@ -982,7 +1013,7 @@ sub downloadLog
 		my $cgi = &getCGI();
 		print $cgi->header(
 							-type            => 'application/x-download',
-							-attachment      => $backup,
+							-attachment      => $logFile,
 							'Content-length' => -s "$logdir/$logFile",
 		);
 

@@ -113,6 +113,11 @@ $wget="/usr/bin/wget";
 $conntrack="/usr/sbin/conntrack";
 #systemctl
 $systemctl="/bin/systemctl";
+#Where is insserv?
+$insserv="/sbin/insserv";
+#Where is temperature file?
+$temperatureFile="/proc/acpi/thermal_zone/THRM/temperature";
+
 
 #where is pound binary?
 $pound="/usr/local/zenloadbalancer/app/pound/sbin/pound";

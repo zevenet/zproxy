@@ -14,8 +14,12 @@
 
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
-
 require "/usr/local/zenloadbalancer/www/Plugins/notifications.cgi";
+
+
+#~ use warnings;
+#~ use strict;
+
 
 _dns:
 
@@ -218,10 +222,6 @@ sub set_ssh
 						if ( $iface->{ vini } ne '' )    # discard virtual interfaces
 						{
 							$errormsg = "Virtual interface canot be configurate as http interface.";
-						}
-						else
-						{
-							$interface = $iface;
 						}
 						last;
 					}
@@ -554,7 +554,7 @@ sub set_ntp
 	$errormsg = &getValidOptParams( $json_obj, \@allowParams );
 	if ( !$errormsg )
 	{
-		if ( !&getValidFormat( "ntp", $json_obj->{ $key } ) )
+		if ( !&getValidFormat( "ntp", $json_obj->{ 'server' } ) )
 		{
 			$errormsg = "NTP hasn't a correct format.";
 		}
@@ -680,7 +680,6 @@ sub set_http
 	my $errormsg;
 	my @allowParams = ( "ip", "port" );
 	my $httpIp = $json_obj->{ 'ip' } if ( exists $json_obj->{ 'ip' } );
-	my $interfaz;
 
 	$errormsg = &getValidOptParams( $json_obj, \@allowParams );
 	if ( !$errormsg )
@@ -704,10 +703,6 @@ sub set_http
 							if ( $iface->{ vini } ne '' )    # discard virtual interfaces
 							{
 								$errormsg = "Virtual interface canot be configurate as http interface.";
-							}
-							else
-							{
-								$interface = $iface;
 							}
 							last;
 						}
@@ -916,7 +911,7 @@ sub get_user
 #
 #
 # @apiSuccess	{string}			key			key to connect with zapi
-# @apiSuccess	{string}			new-password			new password for the zapi user
+# @apiSuccess	{string}			newpassword			new password for the zapi user
 # @apiSuccess	{string}			status			enable or disable the zapi. The options are: enable or disable
 #
 #
@@ -926,14 +921,14 @@ sub get_user
 #   "message" : "Settings was changed successful.",
 #   "params" : {
 #      "key" : "yPh2vM20SyQudI9azEuPoHVB3lt35FqSTLSdDC7hYB98fIUH44GIQaurQeYoI8y6j",
-#      "new-password" : "brla23v",
+#      "newpassword" : "brla23v",
 #      "status" : "enable"
 #   }
 #}
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#         -d '{"key":"randomkey","new-password":"brla23v","status":"enable"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/users/zapi
+#         -d '{"key":"randomkey","newpassword":"brla23v","status":"enable"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/users/zapi
 #
 # @apiSampleRequest off
 #
@@ -944,8 +939,8 @@ sub set_user_zapi
 	my $json_obj    = shift;
 	my $description = "Zapi user settings.";
 
-	#~ my @requiredParams = ( "key", "status", "password", "new-password" );
-	my @requiredParams = ( "key", "status", "new-password" );
+	#~ my @requiredParams = ( "key", "status", "password", "newpassword" );
+	my @requiredParams = ( "key", "status", "newpassword" );
 	my $errormsg;
 
 	$errormsg = &getValidOptParams( $json_obj, \@requiredParams );
@@ -955,7 +950,7 @@ sub set_user_zapi
 		{ 
 			$errormsg = "Error, character incorrect in key zapi.";
 		}
-		elsif ( !&getValidFormat( "zapi_password", $json_obj->{ 'new-password' } ) )
+		elsif ( !&getValidFormat( "zapi_password", $json_obj->{ 'newpassword' } ) )
 		{
 			$errormsg = "Error, character incorrect in password zapi.";
 		}
@@ -981,9 +976,9 @@ sub set_user_zapi
 			}
 
 			&changePassword( 'zapi',
-							 $json_obj->{ 'new-password' },
-							 $json_obj->{ 'new-password' } )
-			  if ( exists $json_obj->{ 'new-password' } );
+							 $json_obj->{ 'newpassword' },
+							 $json_obj->{ 'newpassword' } )
+			  if ( exists $json_obj->{ 'newpassword' } );
 
 			$errormsg = "Settings was changed successful.";
 			&httpResponse(
@@ -1009,7 +1004,7 @@ sub set_user_zapi
 #  @apiVersion 3.0
 #
 #
-# @apiSuccess	{string}			new-password		new password for the user
+# @apiSuccess	{string}			newpassword		new password for the user
 # @apiSuccess	{string}			password				current password for the user
 #
 #
@@ -1018,14 +1013,14 @@ sub set_user_zapi
 #   "description" : "User settings.",
 #   "message" : "Settings was changed succesful.",
 #   "params" : {
-#      "new-password" : "passwd12e",
+#      "newpassword" : "passwd12e",
 #      "password" : "admin"
 #   }
 #}
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#         -d '{"new-password" : "passwd12e", "password" : "admin"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/users/root
+#         -d '{"newpassword" : "passwd12e", "password" : "admin"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/users/root
 #
 # @apiSampleRequest off
 #
@@ -1036,7 +1031,7 @@ sub set_user
 	my $json_obj       = shift;
 	my $user           = shift;
 	my $description    = "User settings.";
-	my @requiredParams = ( "password", "new-password" );
+	my @requiredParams = ( "password", "newpassword" );
 	my $errormsg;
 
 	$errormsg = &getValidReqParams( $json_obj, \@requiredParams, \@requiredParams );
@@ -1049,7 +1044,7 @@ sub set_user
 		}
 		else
 		{
-			if ( !&getValidFormat( 'password', $json_obj->{ 'new-password' } ) )
+			if ( !&getValidFormat( 'password', $json_obj->{ 'newpassword' } ) )
 			{
 				$errormsg = "Error, character incorrect in password.";
 			}
@@ -1060,8 +1055,8 @@ sub set_user
 			else
 			{
 				$errormsg = &changePassword( $user,
-											 $json_obj->{ 'new-password' },
-											 $json_obj->{ 'new-password' } );
+											 $json_obj->{ 'newpassword' },
+											 $json_obj->{ 'newpassword' } );
 				if ( $errormsg )
 				{
 					$errormsg = "Error, changing $user password.";
@@ -1164,7 +1159,7 @@ sub create_backup
 	my @requiredParams = ( "name" );
 	my $errormsg;
 
-	$errormsg = getValidReqParams( \%json_obj, \@requiredParams );
+	$errormsg = getValidReqParams( $json_obj, \@requiredParams );
 	if ( &getExistsBackup( $json_obj->{ 'name' } ) )
 	{
 		$errormsg = "A backup just exists with this name.";

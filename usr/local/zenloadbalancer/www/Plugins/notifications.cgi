@@ -21,12 +21,16 @@
 #
 ###############################################################################
 
-#~ use Exporter qw(import);
-#~ our @EXPORT = qw(data);
+
+#~ use warnings FATAL => 'all';
+#~ use warnings;
+#~ use strict;
+
 
 #~ require "/usr/local/zenloadbalancer/www/functions.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
-require "/usr/local/zenloadbalancer/www/plugins_functions.cgi";
+#~ require "/usr/local/zenloadbalancer/www/plugins_functions.cgi";
+
 
 # Check form data and configure mail server.
 # &setNotifSenders ( $sender, $params );
@@ -37,7 +41,7 @@ sub setNotifSenders
 	my $sendersFile = &getGlobalConfiguration( 'senders' );
 	my $errMsg;
 
-	foreach $key ( keys %{ $params } )
+	foreach my $key ( keys %{ $params } )
 	{
 		if ( $key eq 'password' )
 		{
@@ -185,7 +189,7 @@ sub disableRule    # &disableRule ( $rule )
 			}
 		}
 
-		untie @file;
+		untie @handle;
 	}
 
 	return $errMsg;
@@ -197,11 +201,12 @@ sub enableRule    # &enableRule ( $rule )
 	my ( $rule ) = @_;
 	my $fileConf = &getGlobalConfiguration( 'secConf' );
 	my $flag = 0;    # $flag = 0 rule don't find, $flag = 1 changing rule
-	my $errMsg;
+	my $output;
 
 	if ( !-f $fileConf )
 	{
-		$errMsg = "don't find $fileConf file";
+		$output = 1;
+		&zenlog ("don't find $fileConf file");
 	}
 	else
 	{
@@ -225,10 +230,10 @@ sub enableRule    # &enableRule ( $rule )
 			}
 		}
 
-		untie @file;
+		untie @handle;
 	}
 
-	return $errMsg;
+	return $output;
 }
 
 # Change the switch time. This is the time server wait a state change to avoid do spam
@@ -263,7 +268,7 @@ sub changeTimeSwitch    # &changeTimeSwitch ( $rule, $time )
 			}
 		}
 
-		untie @file;
+		untie @handle;
 	}
 	return $errMsg;
 }
@@ -282,7 +287,7 @@ sub zlbstartNotifications
 	close $hand if ( $hand );
 	
 	# create conf file if don't exists  
-	open my $hand, "<", $alertFile
+	open $hand, "<", $alertFile
 	  or system ( "cp $notificationsPath/templates/Alerts.conf $alertFile" );
 	close $hand if ( $hand );
 	
@@ -334,8 +339,8 @@ sub runNotifications
 	if ( $pid eq "" )
 	{
 		# Fix inconguity between sec.rules and alert conf file
-		$errMsg = &enableRule( 'Backend' )	if ( &getNotifData( 'alerts', 'Backend', 'Status' ) eq 'on');
-		$errMsg = &enableRule( 'Cluster' )	if ( &getNotifData( 'alerts', 'Cluster', 'Status' ) eq 'on');
+		&enableRule( 'Backend' )	if ( &getNotifData( 'alerts', 'Backend', 'Status' ) eq 'on');
+		&enableRule( 'Cluster' )	if ( &getNotifData( 'alerts', 'Cluster', 'Status' ) eq 'on');
 		
 		# start sec process
 		&zenlog( "$sec --conf=$secConf --input=$syslogFile" );
@@ -438,7 +443,7 @@ sub getNotifAlert
 	if ( $alert =~ /Backends/i )
 	{
 		$alert = 'Backend';
-		$method->{ 'avoidFlappingTime' } =
+		$method->{ 'avoidflappingtime' } =
 		  &getNotifData( 'alerts', $alert, 'SwitchTime' );
 		$method->{ 'prefix' } = &getNotifData( 'alerts', $alert, 'PrefixSubject' );
 		if ( &getNotifData( 'alerts', $alert, 'Status' ) eq 'on' )

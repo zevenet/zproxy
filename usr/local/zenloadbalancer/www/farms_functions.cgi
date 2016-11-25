@@ -26,6 +26,9 @@ if ( -e "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi" )
 	require "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi";
 }
 
+#~ use warnings;
+#~ use strict;
+
 my $configdir = &getGlobalConfiguration('configdir');
 
 #
@@ -716,7 +719,7 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 		 && $farm_type ne "gslb" )
 	{
 		use Tie::File;
-		tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 		@configfile = grep !/^\#down/, @configfile;
 		untie @configfile;
 	}
@@ -1152,7 +1155,14 @@ sub runFarmDelete    # ($farm_name)
 {
 	my $farm_name = shift;
 
+	# global variables
 	my $basedir = &getGlobalConfiguration('basedir');
+	my $configdir = &getGlobalConfiguration('configdir');
+	my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
+	my $logdir = &getGlobalConfiguration('logdir');
+	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
+	
+	
 	my $farm_type = &getFarmType( $farm_name );
 	my $status = 1;
 
@@ -1174,7 +1184,7 @@ sub runFarmDelete    # ($farm_name)
 			unlink glob ( "$configdir/$farm_name\_*\.html" );
 
 			# For HTTPS farms only
-			$dhfile = "$configdir\/$farm_name\_dh2048.pem";
+			my $dhfile = "$configdir\/$farm_name\_dh2048.pem";
 			unlink ( "$dhfile" ) if -e "$dhfile";
 		}
 		elsif ( $farm_type eq "datalink" )
@@ -1454,6 +1464,10 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $farm_name, $new_farm_name ) = @_;
 
+	my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
+	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
+
+
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
@@ -1517,7 +1531,7 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	}
 
 	# farmguardian renaming
-	if ( $ouput == 0 && @fg_files )
+	if ( $output == 0 && @fg_files )
 	{
 		foreach my $filename ( @fg_files )
 		{
@@ -1697,6 +1711,7 @@ sub setFarmVS    # ($farm_name,$service,$tag,$string)
 
 sub setFarmName    # ($farm_name)
 {
+	my $farm_name = shift;
 	$farm_name =~ s/[^a-zA-Z0-9]//g;
 }
 

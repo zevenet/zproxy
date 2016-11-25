@@ -23,7 +23,6 @@
 #
 ###############################################################################
 
-#~ use strict;
 use Config::Tiny;
 use Tie::File;
 
@@ -31,6 +30,11 @@ use Tie::File;
 require "/usr/local/zenloadbalancer/www/Plugins/ipds.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
+
+#~ use warnings;
+#~ use warnings FATAL => 'all';
+#~ use strict;
+
 
 # &getDDOSParam( $key, $param );
 sub getDDOSParam

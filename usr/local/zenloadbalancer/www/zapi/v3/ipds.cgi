@@ -15,6 +15,9 @@
 require "/usr/local/zenloadbalancer/www/Plugins/rbl.cgi";
 require "/usr/local/zenloadbalancer/www/Plugins/ddos.cgi";
 
+#~ use warnings;
+#~ use strict;
+
 rbl:
 
 #**
@@ -80,7 +83,7 @@ sub get_rbl_all_lists
 						 type     => &getRBLListParam( $list, 'type' ),
 						 location => &getRBLListParam( $list, "location" )
 		);
-		if ( &getRBLListParam( $listName, 'preload' ) eq 'true' )
+		if ( &getRBLListParam( $list, 'preload' ) eq 'true' )
 		{
 			$listHash{ 'preload' } = 'true';
 		}
@@ -489,7 +492,6 @@ sub set_rbl_list
 sub del_rbl_list
 {
 	my $listName = shift;
-	my $errormsg;
 	my $description = "Delete list '$listName'",
 
 	my $errormsg = &getRBLExists( $listName );
@@ -1092,7 +1094,7 @@ sub get_ddos_key
 {
 	my $key = shift;
 
-	$output = &getDDOSParam( $key );
+	my $output = &getDDOSParam( $key );
 
 	# not exit this key
 	if ( !$output )
@@ -1282,7 +1284,6 @@ sub get_ddos_farm
 	my $confFile = &getGlobalConfiguration( 'ddosConf' );
 	my @output;
 
-	$output = 'down';
 	if ( -e $confFile )
 	{
 		my $fileHandle = Config::Tiny->read( $confFile );

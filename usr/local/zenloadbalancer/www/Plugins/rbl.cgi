@@ -31,6 +31,8 @@ require "/usr/local/zenloadbalancer/www/Plugins/ipds.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 
+#~ use warnings;
+#~ use strict;
 
 actions:
 
@@ -105,6 +107,7 @@ sub setRBLStart
 {
 	my $rblConf = &getGlobalConfiguration( 'rblConf' );
 	my $ipset = &getGlobalConfiguration( 'ipset' );
+	my $touch = &getGlobalConfiguration( 'touch' ); 
 	my @rules = @{ &getRBLRules () };
 	my $rblListsPath = &getGlobalConfiguration( 'rblListsPath' );
 	
@@ -161,17 +164,27 @@ sub setRBLStop
 	my $rbl_list = &getValidFormat('rbl_list');
 	my $farm_name = &getValidFormat('farm_name');
 	
+	my @allLists;
+	
 	foreach my $rule ( @rules )
 	{
-		if ( $rule =~ /^(\d+) .+match-set $rbl_list src .+RBL_$farm_name/ )
+		
+		if ( $rule =~ /^(\d+) .+match-set ($rbl_list) src .+RBL_$farm_name/ )
 		{
+			my $list = $2;
 			my $cmd =
 				&getGlobalConfiguration( 'iptables' ) . " --table raw -D PREROUTING $1";
 			&iptSystem( $cmd );
+			# note the list to delete it late
+			push @allLists, $list	if ( ! grep ( /^$list$/, @allLists ) );
 		}
+		
 	}
 	
-	&setRBLDestroyList ( $listName );
+	foreach my $listName ( @allLists )
+	{
+		&setRBLDestroyList ( $listName );
+	}
 	
 }
 
@@ -278,21 +291,22 @@ sub setRBLDeleteRule
 {
 	my ( $farmName, $listName ) = @_;
 	my $output;
-
+	
 	# Get line number
 	my @rules = &getIptList( $farmName, 'raw', 'PREROUTING' );
 	@rules = grep ( /^(\d+) .+match-set $listName src .+RBL_$farmName/, @rules);
 
 	my $lineNum = 0;
-	$size = scalar @rules -1;
-	for ( $size; $size >= 0; $size-- )
+	my $size = scalar @rules -1;
+	my $cmd;
+	for ( ; $size >= 0; $size-- )
 	{
 		if ( $rules[ $size ] =~ /^(\d+) / )
 		{
 			$lineNum = $1;
 			# Delete
 			#	iptables -D PREROUTING -t raw 3
-			my $cmd = &getGlobalConfiguration( 'iptables' ) . " --table raw -D PREROUTING $lineNum";
+			$cmd = &getGlobalConfiguration( 'iptables' ) . " --table raw -D PREROUTING $lineNum";
 			&iptSystem( $cmd );
 		}
 	}
@@ -632,7 +646,7 @@ sub setRBLListParam
 	if ( 'list' eq $key )
 	{
 		my @listNames = keys %{ $fileHandle };
-		if ( ! &getRBLExists ( $listName ) )
+		if ( ! &getRBLExists ( $name ) )
 		{
 			&zenlog( "List '$value' just exists." );
 			$output = -1;
@@ -936,7 +950,7 @@ sub setRBLRefreshList
 	my $ipset = &getGlobalConfiguration( 'ipset' );
 
 	&zenlog( "refreshing '$listName'... " );
-	$ouput = system ( "$ipset flush $listName" );
+	$output = system ( "$ipset flush $listName" );
 	if ( !$output )
 	{
 		foreach my $ip ( @ipList )
@@ -985,7 +999,7 @@ sub setRBLRefreshAllLists
 		{
 			&setRBLRefreshList ( $listName );
 		}
-		&zenlog( "The preload list '$list' was update." ); 
+		&zenlog( "The preload list '$listName' was update." ); 
 	}
 	return $output;
 }
@@ -1007,7 +1021,7 @@ sub setRBLRefreshAllLists
 sub setRBLAddToList
 {
 	my ( $listName, $listRef ) = @_;
-	my $rblPath = &getGlobalConfiguration( 'rblListsPath' );
+	my $rblListsPath = &getGlobalConfiguration( 'rblListsPath' );
 	my $source_format = &getValidFormat ('rbl_source');
 	my @ipList = grep ( /$source_format/,	@{ $listRef } );
 	my $output = -1;
@@ -1043,7 +1057,7 @@ sub setRBLDeleteSource
 	my $type = &getRBLListParam( $listName, 'type' );
 
 	my $ipset       = &getGlobalConfiguration( 'ipset' );
-	my $rblConfPath = &getGlobalConfiguration( 'rblConfPath' );
+	my $rblListsPath = &getGlobalConfiguration( 'rblListsPath' );
 
 	tie my @list, 'Tie::File', "$rblListsPath/$listName.txt";
 	my $source = splice @list, $id, 1;
@@ -1079,10 +1093,7 @@ sub setRBLAddSource
 	my $type = &getRBLListParam( $listName, 'type' );
 
 	my $ipset       = &getGlobalConfiguration( 'ipset' );
-	my $rblConfPath = &getGlobalConfiguration( 'rblConfPath' );
-
-	my $ipset       = &getGlobalConfiguration( 'ipset' );
-	my $rblConfPath = &getGlobalConfiguration( 'rblConfPath' );
+	my $rblListsPath = &getGlobalConfiguration( 'rblListsPath' );
 
 	tie my @list, 'Tie::File', "$rblListsPath/$listName.txt";
 	push @list, $source;
@@ -1117,7 +1128,7 @@ sub setRBLModifSource
 	my ( $listName, $id, $source ) = @_;
 	my $type        = &getRBLListParam( $listName, 'type' );
 	my $ipset       = &getGlobalConfiguration( 'ipset' );
-	my $rblConfPath = &getGlobalConfiguration( 'rblConfPath' );
+	my $rblListsPath = &getGlobalConfiguration( 'rblListsPath' );
 	my $err;
 
 	&zenlog( "list::$listName, id::$id, source::$source" );

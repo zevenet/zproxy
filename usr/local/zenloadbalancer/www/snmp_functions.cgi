@@ -23,6 +23,10 @@
 
 #require "/usr/local/zenloadbalancer/www/functions.cgi";
 
+#~ use warnings;
+#~ use strict;
+
+
 sub setSnmpdStatus    # ($snmpd_status)
 {
 	# get 'true' string to start, or a 'false' string to stop
@@ -88,6 +92,8 @@ sub getSnmpdStatus    # ()
 
 sub getSnmpdConfig    # ()
 {
+	my $snmpdconfig_file = &getGlobalConfiguration('snmpdconfig_file');
+	
 	tie my @config_file, 'Tie::File', $snmpdconfig_file;
 
 	## agentAddress line ##
@@ -116,6 +122,8 @@ sub getSnmpdConfig    # ()
 sub setSnmpdConfig    # ($snmpd_conf)
 {
 	my ( $snmpd_conf ) = @_;
+	my $snmpdconfig_file = &getGlobalConfiguration('snmpdconfig_file');
+	
 	my $ip = $snmpd_conf->{ ip };
 	$ip = '0.0.0.0' if ( $snmpd_conf->{ ip } eq '*' );
 
@@ -139,7 +147,7 @@ sub setSnmpdConfig    # ($snmpd_conf)
 	print $config_file "#zenlb\n";
 
 	# Close config file
-	close @config_file;
+	close $config_file;
 
 	return 0;
 }
@@ -149,6 +157,7 @@ sub setSnmpdService    # ($snmpd_enabled)
 	my ( $snmpd_enabled ) = @_;
 
 	my $return_code = -1;
+	my $insserv = &getGlobalConfiguration('insserv');
 
 	# verify valid input
 	if ( $snmpd_enabled ne 'true' && $snmpd_enabled ne 'false' )
@@ -203,6 +212,11 @@ sub setSnmpdService    # ($snmpd_enabled)
 	return $return_code;
 }
 
+
+
+# GLOBALCGI This function only is used in content
+#	$snmpd_new = {   }
+#
 sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_scope)
 {
 	my ( $snmpd_new ) = @_;
@@ -219,11 +233,11 @@ sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_sc
 	# if checkbox not checked set as false instead of undefined
 	if ( !defined $snmpd_new->{ status } )
 	{
-		$snmpd_enabled = 'false';
+		$snmpd_enabled = 'false';			# GLOBALCGI
 	}
 
 	# read current management IP
-	#~ my $snmpd_ip = &getHttpServerIp();
+	my $snmpd_ip;
 	if ( $snmpd_new->{ ip } eq '*' )
 	{
 		$snmpd_ip = '0.0.0.0';
