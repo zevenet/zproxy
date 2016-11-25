@@ -220,9 +220,11 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	{
 		&zenlog( "$config_filename: $!" );
 
+		# returns zero on failure
 		return 0;
 	}
 
+	# returns a true value on success
 	return 1;
 }
 

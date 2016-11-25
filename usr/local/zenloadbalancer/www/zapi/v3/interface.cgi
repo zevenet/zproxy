@@ -2866,12 +2866,6 @@ sub modify_interface_nic # ( $json_obj, $nic )
 
 			&httpResponse({ code => 400, body => $body });
 		}
-
-		if ( $json_obj->{ ip } eq '' )
-		{
-			$json_obj->{ netmask } = '';
-			$json_obj->{ gateway } = '';
-		}
 	}
 
 	# Check netmask errors
@@ -2892,7 +2886,7 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	}
 
 	# Check gateway errors
-	if ( exists $json_obj->{ netmask } )
+	if ( exists $json_obj->{ gateway } )
 	{
 		unless ( defined( $json_obj->{ gateway } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) || $json_obj->{ gateway } eq '' )
 		{
@@ -2923,16 +2917,31 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	}
 
 	# Setup new interface configuration structure
-	$if_ref              = &getSystemInterface( $nic );
-	$if_ref->{ addr }    = $json_obj->{ ip };
-	$if_ref->{ mask }    = $json_obj->{ netmask };
-	$if_ref->{ gateway } = $json_obj->{ gateway };
+	$if_ref              = &getInterfaceConfig( $nic ) // &getSystemInterface( $nic );
+	$if_ref->{ addr }    = $json_obj->{ ip } if exists $json_obj->{ ip };
+	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
+	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
 	$if_ref->{ ip_v }    = 4;
 
-	eval {
+	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
+	{
+		# Error
+		my $errormsg = "Cannot configure the interface without address or without netmask.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
 
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	eval {
 		# Add new IP, netmask and gateway
-		die if &addIp( $if_ref );
+		#~ die if &addIp( $if_ref );
+
+		# sometimes there are expected erros pending to be controlled
+		&addIp( $if_ref );
 
 		# Writing new parameters in configuration file
 		die if &writeRoutes( $if_ref->{ name } );
@@ -3343,13 +3352,13 @@ sub modify_interface_bond # ( $json_obj, $bond )
 	}
 
 	# Setup new interface configuration structure
-	$if_ref              = &getSystemInterface( $bond );
-	$if_ref->{ addr }    = $json_obj->{ ip } // $if_ref->{ addr };
-	$if_ref->{ mask }    = $json_obj->{ netmask } // $if_ref->{ mask };
-	$if_ref->{ gateway } = $json_obj->{ gateway } // $if_ref->{ gateway };
+	$if_ref              = &getInterfaceConfig( $bond ) // &getSystemInterface( $bond );
+	$if_ref->{ addr }    = $json_obj->{ ip } if exists $json_obj->{ ip };
+	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
+	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
 	$if_ref->{ ip_v }    = 4;
 
-	if ( $if_ref->{ addr } xor $if_ref->{ mask } )
+	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
 	{
 		# Error
 		my $errormsg = "Cannot configure the interface without address or without netmask.";
