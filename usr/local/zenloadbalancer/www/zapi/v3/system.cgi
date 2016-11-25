@@ -833,10 +833,17 @@ _users:
 #{
 #   "description" : "Get users",
 #   "params" : [
-#      "root",
-#      "zapi"
+#      {
+#         "status" : "true",
+#         "user" : "root"
+#      },
+#      {
+#         "status" : "true",
+#         "user" : "zapi"
+#      }
 #   ]
 #}
+#
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/users
@@ -848,7 +855,7 @@ sub get_all_users
 {
 	my $description = "Get users";
 	my $zapiStatus = &getZAPI( "status", "" );
-	my @users = ( { "user":"root", "status":"true" }, { "user":"zapi","status":"$zapiStatus" } );
+	my @users = ( { "user"=>"root", "status"=>"true" }, { "user"=>"zapi","status"=>"$zapiStatus" } );
 	
 	&httpResponse(
 		  { code => 200, body => { description => $description, params => \@users } } );
