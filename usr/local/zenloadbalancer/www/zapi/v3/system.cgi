@@ -847,8 +847,9 @@ _users:
 sub get_all_users
 {
 	my $description = "Get users";
-	my @users = ( "root", "zapi" );
-
+	my $zapiStatus = &getZAPI( "status", "" );
+	my @users = ( { "user":"root", "status":"true" }, { "user":"zapi","status":"$zapiStatus" } );
+	
 	&httpResponse(
 		  { code => 200, body => { description => $description, params => \@users } } );
 }
