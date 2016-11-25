@@ -24,7 +24,7 @@ $backupdir="/usr/local/zenloadbalancer/backups/";
 $rttables = "/etc/iproute2/rt_tables";
 #this file
 $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
-#version ZEN
+#version ZEVENET
 $version="5.0";#update
 #appliance version file
 $applianceVersionFile="/etc/zevenet_version";
