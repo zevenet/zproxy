@@ -1179,7 +1179,7 @@ GET qr{^/graphs/system/disk$} => sub {
 };
 
 # keep before next request
-GET qr{^/graphs/system/disk/($disk_re)/($frecuency_re)$} => sub {
+GET qr{^/graphs/system/disk/($disk_re)/($frequency_re)$} => sub {
 	&graph_disk_mount_point_freq( @_ );
 };
 
