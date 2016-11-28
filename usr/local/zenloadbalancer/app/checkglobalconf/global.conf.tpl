@@ -25,7 +25,7 @@ $rttables = "/etc/iproute2/rt_tables";
 #this file
 $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 #version ZEN
-$version="4.2.3";#update
+$version="4.2.4";#update
 #Cipher PCI
 $cipher_pci="kEECDH+ECDSA+AES128:kEECDH+ECDSA+AES256:kEECDH+AES128:kEECDH+AES256:kEDH+AES128:kEDH+AES256:DES-CBC3-SHA:+SHA:!aNULL:!eNULL:!LOW:!kECDH:!DSS:!MD5:!EXP:!PSK:!SRP:!CAMELLIA:!SEED";#update
 #BUY SSL Certificates
