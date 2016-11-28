@@ -49,6 +49,7 @@ print "<input type=\"hidden\" name=\"farmname\" value=\"$farmname\">";
 if ( &getFarmStatus( $farmname ) eq 'up' )
 {
 	print "<div class=\"form-item\"><p class=\"form-label\">$farmname</p> ";
+	print "<input type=\"hidden\" name=\"newfarmname\" value=\"$farmname\">";
 }
 else
 {
