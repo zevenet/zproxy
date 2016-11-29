@@ -48,6 +48,11 @@ my $port_range =
   qr/(?:[1-5]?\d{1,4}|6[0-4]\d{3}|65[1-4]\d{2}|655[1-2]\d{1}|6553[1-5])/;
 my $graphsFrequency = qr/(?:daily|weekly|monthly|yearly)/;
 
+my $ddos_global= qr/(?:SSHBRUTEFORCE|DROPICMP|PORTSCANNING)/;
+my $ddos_all 	=	qr/(?:INVALID|BLOCKSPOOFED|LIMITCONNS|LIMITSEC)/;
+my $ddos_tcp	= qr/(?:DROPFRAGMENTS|NEWNOSYN|SYNWITHMSS|BOGUSTCPFLAGS|LIMITRST|SYNPROXY)/;
+
+
 my %format_re = (
 
 	# generic types
@@ -143,7 +148,11 @@ my %format_re = (
 	'rbl_type'      => qr{(?:allow|deny)},
 	'rbl_url'       => qr{.+},
 	'rbl_refresh'   => qr{\d+},
-	'ddos_key'      => '[A-Z]+',
+	'ddos_key'      => qr/(?:$ddos_global|$ddos_all|$ddos_tcp)/,
+	'ddos_key_farm' => qr/(?:$ddos_all|$ddos_tcp)/,
+	'ddos_key_global' => $ddos_global,
+	'ddos_key_all'       => $ddos_all,
+	'ddos_key_tcp'      => $ddos_tcp,
 
 	# certificates filenames
 	'certificate' => qr/\w[\w\.-]*\.(?:pem|csr)/,
@@ -301,6 +310,7 @@ sub getValidReqParams    # ( \%json_obj, \@requiredParams, \@optionalParams )
 	my $aux = grep { /^(?:$pattern)$/ } keys %{ $params };
 	if ( $aux != scalar @requiredParams )
 	{
+		$aux = scalar @requiredParams - $aux;
 		$output = "Missing required parameters. Parameters missed: $aux.";
 	}
 

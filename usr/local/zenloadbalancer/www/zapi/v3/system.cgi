@@ -887,7 +887,7 @@ sub get_user
 
 	if ( $user ne 'zapi' )
 	{
-		$errormsg = "Actually only is available zapi user info";
+		$errormsg = "Actually only is available information about 'zapi' user";
 	}
 	else
 	{

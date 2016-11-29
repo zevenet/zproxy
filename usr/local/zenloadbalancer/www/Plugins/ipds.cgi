@@ -22,6 +22,10 @@
 ###############################################################################
 
 
+use warnings;
+use strict;
+
+
 =begin nd
         Function: getIptListV4
 
@@ -39,6 +43,7 @@
 sub getIptListV4
 {
 	my ( $table, $chain ) = @_;
+	my $iptlock = &getGlobalConfiguration ( 'iptlock' );
 
 	if ( $table ne '' )
 	{

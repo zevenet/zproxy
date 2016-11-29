@@ -530,7 +530,7 @@ sub setRBLCreateList
 		&setRBLListParam ( $listName, 'url', $listParams->{ 'url' } );
 		$def_refresh = $listParams->{'refresh'} 	if ( exists $listParams->{'refresh'} );
 		&setRBLListParam ( $listName, 'refresh', $def_refresh );
-		&setRBLDownloadRemoteList ( $listName );
+		#~ &setRBLDownloadRemoteList ( $listName );
 	}
 	# specific to local lists
 	elsif ( $location eq 'local' )
@@ -853,9 +853,11 @@ sub setRBLDownloadRemoteList
 {
 	my ( $listName ) = @_;
 	my $url = &getRBLListParam ( $listName, 'url' ); 
+	my $timeout = 10;
+	
 	
 	# if ( $fileHandle->{ $listName }->{ 'status' } ne 'dis' )
-	my @web = `curl \"$url\" 2>/dev/null`; 
+	my @web = `curl --connect-timeout $timeout \"$url\" 2>/dev/null`; 
 	my $source_format = &getValidFormat( 'rbl_source' );
 	
 	my @ipList;

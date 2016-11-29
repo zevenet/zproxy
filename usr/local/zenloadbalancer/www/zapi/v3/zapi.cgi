@@ -1451,7 +1451,8 @@ DELETE qr{^/farms/($farm_re)/ipds/rbl/($rbl_list)$} => sub {
 };
 
 # DDoS
-my $ddos_key = &getValidFormat( 'ddos_key' );
+my $ddos_key_global = &getValidFormat( 'ddos_key_global' );
+my $ddos_key_farm = &getValidFormat( 'ddos_key_farm' );
 
 #  GET ddos settings
 GET qr{^/ipds/ddos$} => sub {
@@ -1459,7 +1460,7 @@ GET qr{^/ipds/ddos$} => sub {
 };
 
 #  GET ddos configuration
-GET qr{^/ipds/ddos/($ddos_key)$} => sub {
+GET qr{^/ipds/ddos/($ddos_key_global)$} => sub {
 	&get_ddos_key( @_ );
 };
 
@@ -1479,7 +1480,7 @@ POST qr{^/farms/($farm_re)/ipds/ddos$} => sub {
 };
 
 #  DELETE DDoS from a farm
-DELETE qr{^/farms/($farm_re)/ipds/ddos/($ddos_key)$} => sub {
+DELETE qr{^/farms/($farm_re)/ipds/ddos/($ddos_key_farm)$} => sub {
 	&del_ddos_from_farm( @_ );
 };
 

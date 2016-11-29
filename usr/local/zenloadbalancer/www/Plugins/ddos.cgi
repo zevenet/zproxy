@@ -31,10 +31,85 @@ require "/usr/local/zenloadbalancer/www/Plugins/ipds.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 
-#~ use warnings;
-#~ use warnings FATAL => 'all';
-#~ use strict;
+use warnings;
+use strict;
 
+sub setDDOSCreateFileConf
+{
+	my $confFile = &getGlobalConfiguration( 'confFile' );
+	my $ddosConfDir = &getGlobalConfiguration( 'ddosConfDir' );
+	my $ipdsConfDir = &getGlobalConfiguration( 'ipdsConfDir' );
+	my $output;
+	
+	return 0 if ( -e $confFile );
+	
+	# create ipds directory if it doesn't exist
+	if ( ! -d $ipdsConfDir )
+	{
+		$output = system ( &getGlobalConfiguration( 'mkdir' ) . " $ipdsConfDir" );
+	}
+	
+	# create ddos directory if it doesn't exist
+	if ( ! -d $ddosConfDir )
+	{
+		$output = system ( &getGlobalConfiguration( 'mkdir' ) . " $ddosConfDir" );
+		&zenlog ( "Created ipds configuration directory: $ipdsConfDir" );
+	}
+	else
+	{
+		&zenlog ( "Error, creating ipds configuration directory: $ipdsConfDir" );
+	}
+	
+	# create file conf if doesn't exist
+	if ( ! $output )
+	{
+		&zenlog ( "Created ddos configuration directory: $ddosConfDir" );
+		$output = system ( &getGlobalConfiguration( 'touch' ) . " $confFile" );
+	}
+	else
+	{
+		&zenlog ( "Error, creating ddos configuration directory: $ddosConfDir" );
+	}
+	
+	if ( ! $output )
+	{
+		&zenlog ( "Created ddos configuration file: $confFile" );
+	}
+	else
+	{
+		&zenlog ( "Error, creating ddos configuration file: $confFile" );
+	}
+	
+	return $output;
+}
+
+sub getDDOSInitialParams
+{
+	my $key = shift;
+	my $param = shift;
+	my $output;
+	
+	my %initial = 
+		(
+			'BOGUSTCPFLAGS' 	=> { 'farms' => '' },
+			'DROPFRAGMENTS' => { 'farms' => '' },
+			'DROPICMP' 			=> { 'status' => 'down' },
+			'INVALID' 				=> { 'farms' => '' },
+			'LIMITCONNS' 			=> { 'farms' => '', 'limitConns' => 10 },
+			'LIMITRST' 				=> { 'farms' => '', 'limit' => 2, 'limitBurst' => 2, },
+			'LIMITSEC' 				=> { 'farms' => '', 'limit' => 2, 'limitBurst' => 2, },
+			'NEWNOSYN' 			=> { 'farms' => '' },
+			'SSHBRUTEFORCE' 	=> { 'status' => 'down', 'hits' =>5, 'port' => 22, 'time' => 180 },
+			'SYNPROXY' 			=> { 'farms' => '', 'mss' =>1460, 'scale' => 7 },
+			'NEWNOSYN' 			=> { 'farms' => '' },
+			'SYNWITHMSS' 		=> { 'farms' => '' },
+			'PORTSCANNING' 	=> { 'farms' => '', 'portScan' => 15, 'blTime' => 500, 'time' => 100, 'hits' => 3, },
+		);
+		
+	$output = $initial{ $key }->{ $param };	
+	
+	return $output;
+}
 
 # &getDDOSParam( $key, $param );
 sub getDDOSParam
@@ -49,6 +124,10 @@ sub getDDOSParam
 		if ( $param )
 		{
 			$output = $fileHandle->{ $key } -> { $param };
+			if ( ! $output )
+			{
+				$output = &getDDOSInitialParams ( $key, $param );
+			}
 		}
 		else 
 		{
@@ -127,7 +206,7 @@ sub getDDOSLookForRule
 	my $farmNameRule;
 
 	my @output;
-	$ind = -1;
+	my $ind = -1;
 	for ( @table )
 	{
 		$ind++;
@@ -349,7 +428,8 @@ sub setDDOSBoot
 sub setDDOSStop
 {
 	my $output;
-
+	my $confFile = &getGlobalConfiguration( 'ddosConf' );
+	
 	if ( -e $confFile )
 	{
 		my $fileHandle = Config::Tiny->read( $confFile );
@@ -791,7 +871,7 @@ sub setDDOSBlockSpoofedRule
 	  . "-s 127.0.0.0/8 ! -i lo "    # rules for block
 	  . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
-	my $output = &setIPDSDropAndLog ( $cmd, $logMsg );
+	$output = &setIPDSDropAndLog ( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
 		&zenlog( "Error appling '${key}_2' rule to farm '$ruleOpt{ 'farmName' }'." );
@@ -868,13 +948,8 @@ sub setDDOSLimitConnsRule
 	my $chain = "INPUT";			# default, this chain is for L7 apps
 	my $dest = $ruleOpt{ 'vip' };
 	my $port = $ruleOpt{ 'vport' };
-	
+	my $output;
 	my $limitConns = &getDDOSParam( $key, 'limitConns');
-	if ( ! $limitConns )
-	{
-		$limitConns = 50 ;
-		&setDDOSParam ( $key, 'limitConns', $limitConns );
-	}
 	
 	# especific values to L4 farm
 	 if ( &getFarmType ( $ruleOpt{ 'farmName' } ) eq "l4xnat" )
@@ -895,7 +970,7 @@ sub setDDOSLimitConnsRule
 			. "-m connlimit --connlimit-above $limitConns "    # rules for block
 			. "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 		
-			my $output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
+			$output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
 		
 			$output = &iptSystem( "$cmd -j REJECT --reject-with tcp-reset" );
 		}
@@ -935,16 +1010,7 @@ sub setDDOSLimitRstRule
 	my $logMsg = "[Blocked by rule $key]";
 	my $limit = &getDDOSParam( $key, 'limit');
 	my $limitBurst = &getDDOSParam( $key, 'limitBurst');
-	if ( ! $limit )
-	{
-		$limit = 2 ;
-		&setDDOSParam ( $key, 'limit', $limit);
-	}
-	if ( ! $limitBurst )
-	{
-		$limitBurst = 2;
-		&setDDOSParam ( $key, 'limitBurst', $limitBurst);
-	}
+
 
 # /sbin/iptables -A PREROUTING -t mangle -p tcp --tcp-flags RST RST -m limit --limit 2/s --limit-burst 2 -j ACCEPT
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
@@ -988,16 +1054,6 @@ sub setDDOSLimitSecRule
 	my $limit = &getDDOSParam( $key, 'limit');
 	my $limitBurst = &getDDOSParam( $key, 'limitBurst');
 	
-	if ( ! $limit )
-	{
-		$limit = 2 ;
-		&setDDOSParam ( $key, 'limit', $limit);
-	}
-	if ( ! $limitBurst )
-	{
-		$limitBurst = 2;
-		&setDDOSParam ( $key, 'limitBurst', $limitBurst);
-	}
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp -m conntrack --ctstate NEW -m limit --limit 60/s --limit-burst 20 -j ACCEPT
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
@@ -1045,27 +1101,6 @@ sub setDDOSPortScanningRule
 	my $blTime = &getDDOSParam( $key, 'blTime');
 	my $time = &getDDOSParam( $key, 'time');
 	my $hits = &getDDOSParam( $key, 'hits');
-	if ( ! portScan )
-	{
-		$portScan = 15;
-		&setDDOSParam ( $key, 'portScan', $portScan);
-	}
-	if ( ! $$blTime )
-	{
-		$blTime = 500;
-		&setDDOSParam ( $key, 'blTime', $blTime);
-	}
-	if ( ! $time )
-	{
-		$time = 100;
-		&setDDOSParam ( $key, 'time', $time);
-	}
-	if ( ! $hits )
-	{
-		$hits = 3;
-		&setDDOSParam ( $key, 'hits', $hits);
-	}
-	
 	
 	my $cmd = &getGlobalConfiguration( 'iptables' )
 	  . " -N PORT_SCANNING -t raw ";   
@@ -1172,22 +1207,6 @@ sub setDDOSSshBruteForceRule
 	my $time = &getDDOSParam( $key, 'time');
 	my $port = &getDDOSParam( $key, 'port');
 	my $logMsg = "[Blocked by rule $key]";
-	
-	if ( ! $hits )
-	{
-		$hits = 5 ;
-		&setDDOSParam ( $key, 'hits', $hits);
-	}
-	if ( ! $port )
-	{
-		$port = 22;
-		&setDDOSParam ( $key, 'port', $port);
-	}
-	if ( ! $time )
-	{
-		$time = 180;
-		&setDDOSParam ( $key, 'time', $time);
-	}
 
 	# /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --set
 	my $cmd =
@@ -1203,13 +1222,13 @@ sub setDDOSSshBruteForceRule
 	}
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --update --seconds 60 --hitcount 10 -j DROP
-	my $cmd =
+	$cmd =
 	  &getGlobalConfiguration( 'iptables' ) . " -A PREROUTING -t mangle "  # select iptables struct
 	  . "-p tcp --dport $port "                       # who is destined
 	  . "-m conntrack --ctstate NEW -m recent --update --seconds $time --hitcount $hits " # rules for block
 	  . "-m comment --comment \"DDOS_$key\"";                                             # comment
 
-	my $output = &setIPDSDropAndLog ( $cmd, $logMsg );
+	$output = &setIPDSDropAndLog ( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
 		&zenlog( "Error appling '${key}_2' rule." );
@@ -1238,16 +1257,6 @@ sub setDDOSynProxyRule
 	my $logMsg = "[Blocked by rule $key]";
 	my $scale = getDDOSParam ( $key, 'scale' );
 	my $mss = getDDOSParam ( $key, 'mss' );
-	if ( ! $mss )
-	{
-		$mss = 1460;
-		&setDDOSParam ( $key, 'mss', $mss );
-	}
-	if ( ! $scale )
-	{
-		$scale = 7;
-		&setDDOSParam ( $key, 'scale', $scale );
-	}
 
 # iptables -t raw -A PREROUTING -p tcp -m tcp --syn -j CT
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )

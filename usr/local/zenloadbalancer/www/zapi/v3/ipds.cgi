@@ -15,8 +15,8 @@
 require "/usr/local/zenloadbalancer/www/Plugins/rbl.cgi";
 require "/usr/local/zenloadbalancer/www/Plugins/ddos.cgi";
 
-#~ use warnings;
-#~ use strict;
+use warnings;
+use strict;
 
 rbl:
 
@@ -915,39 +915,43 @@ sub add_rbl_to_farm
 	my $errormsg;
 	my $description = "Apply a list to a farm";
 
-	if ( &getFarmFile( $farmName ) == -1 )
+	$errormsg = &getValidReqParams ( $json_obj, [ "list" ] );
+	if ( !$errormsg )
 	{
-		$errormsg = "$farmName doesn't exist.";
-		my $body = {
-			description => $description, error => "true", message => $errormsg };
-		&httpResponse( { code => 404, body => $body } );
-	}
-	elsif ( &getRBLExists( $listName ) == -1 )
-	{
-		$errormsg = "$listName doesn't exist.";
-		my $body = {
-			description => $description, error => "true", message => $errormsg };
-		&httpResponse( { code => 404, body => $body } );
-	}
-	else
-	{
-		if ( grep ( /^$farmName$/, @{ &getRBLListParam( $listName, 'farms' ) } ) )
+		if ( &getFarmFile( $farmName ) == -1 )
 		{
-			$errormsg = "$listName just is applied to $farmName.";
+			$errormsg = "$farmName doesn't exist.";
+			my $body = {
+				description => $description, error => "true", message => $errormsg };
+			&httpResponse( { code => 404, body => $body } );
+		}
+		elsif ( &getRBLExists( $listName ) == -1 )
+		{
+			$errormsg = "$listName doesn't exist.";
+			my $body = {
+				description => $description, error => "true", message => $errormsg };
+			&httpResponse( { code => 404, body => $body } );
 		}
 		else
 		{
-			$errormsg = &setRBLApplyToFarm( $farmName, $listName );
-			if ( !$errormsg )
+			if ( grep ( /^$farmName$/, @{ &getRBLListParam( $listName, 'farms' ) } ) )
 			{
-				my $errormsg = "List $listName was applied successful to the farm $farmName.";
-				my $body = {
-					description => $description, succes => "true", message => $errormsg };
-				&httpResponse( { code => 200, body => $body } );
+				$errormsg = "$listName just is applied to $farmName.";
 			}
 			else
 			{
-				$errormsg = "Error, applying $listName to $farmName";
+				$errormsg = &setRBLApplyToFarm( $farmName, $listName );
+				if ( !$errormsg )
+				{
+					my $errormsg = "List $listName was applied successful to the farm $farmName.";
+					my $body = {
+						description => $description, succes => "true", message => $errormsg };
+					&httpResponse( { code => 200, body => $body } );
+				}
+				else
+				{
+					$errormsg = "Error, applying $listName to $farmName";
+				}
 			}
 		}
 	}
@@ -1063,29 +1067,23 @@ sub get_ddos
 {
 	my $confFile = &getGlobalConfiguration( 'ddosConf' );
 	my @output;
+	my $description = "Get DDoS settings.";
 
-	if ( -e $confFile )
+	my $fileHandle = Config::Tiny->read( $confFile );
+	foreach my $key ( keys %{ $fileHandle } )
 	{
-		my $fileHandle = Config::Tiny->read( $confFile );
-		foreach my $key ( keys %{ $fileHandle } )
-		{
-			# get status of all rules enabled
-			if (    $fileHandle->{ $key }->{ 'status' } =~ /up/
-				 || $fileHandle->{ $key }->{ 'farms' } )
+		# get status of all rules enabled
+		if (   $fileHandle->{ $key }->{ 'status' } =~ /up/
+			 || $fileHandle->{ $key }->{ 'farms' } )
 
-			  # get status only balancer rules
-			  #~ if ( $fileHandle->{ $key }->{'status'} =~ /up/ )
-			{
-				push @output, $key;
-			}
+		  # get status only balancer rules
+		  #~ if ( $fileHandle->{ $key }->{'status'} =~ /up/ )
+		{
+			push @output, $key;
 		}
 	}
 
-	my $body = {
-				 description => "Get DDoS settings.",
-				 params      => \@output
-	};
-
+	my $body = { description => $description, params => \@output };
 	&httpResponse( { code => 200, body => $body } );
 }
 
@@ -1093,30 +1091,12 @@ sub get_ddos
 sub get_ddos_key
 {
 	my $key = shift;
-
+	my $description = "Get DDoS $key settings";
 	my $output = &getDDOSParam( $key );
 
-	# not exit this key
-	if ( !$output )
-	{
-		my $errormsg = "$key isn't a valid ID DDoS rule";
-		my $body = {
-					 description => "Get DDoS $key settings",
-					 error       => "true",
-					 message     => $errormsg,
-		};
-		&httpResponse( { code => 400, body => $body } );
-	}
-
 	# successful
-	else
-	{
-		my $body = {
-					 description => "$key settings.",
-					 params      => $output,
-		};
-		&httpResponse( { code => 200, body => $body } );
-	}
+	my $body = { description => $description, params => $output, };
+	&httpResponse( { code => 200, body => $body } );
 
 }
 
@@ -1156,6 +1136,7 @@ sub set_ddos
 	my $json_obj = shift;
 	my $key      = $json_obj->{ 'id' };
 	my $errormsg;
+	my $description = "Put DDoS $key settings";
 
 	if ( $key eq 'DROPICMP' )
 	{
@@ -1235,11 +1216,7 @@ sub set_ddos
 	# output
 	if ( $errormsg )
 	{
-		my $body = {
-					 description => "Put DDoS settings",
-					 error       => "true",
-					 message     => $errormsg,
-		};
+		my $body = { description => $description, error => "true", message => $errormsg, };
 		&httpResponse( { code => 400, body => $body } );
 	}
 
@@ -1248,7 +1225,7 @@ sub set_ddos
 		&httpResponse(
 			   {
 				 code => 200,
-				 bdy  => { description => "Put DDoS $key settings", "successful" => "true" }
+				 bdy  => { description => $description, success => "true" }
 			   }
 		);
 	}
@@ -1283,6 +1260,7 @@ sub get_ddos_farm
 	my $farmName = shift;
 	my $confFile = &getGlobalConfiguration( 'ddosConf' );
 	my @output;
+	my $description = "Get status DDoS $farmName.";
 
 	if ( -e $confFile )
 	{
@@ -1297,13 +1275,8 @@ sub get_ddos_farm
 		}
 	}
 
-	my $body = {
-				 description => "Get status DDoS $farmName.",
-				 params      => \@output
-	};
-
+	my $body = { description => $description, params => \@output };
 	&httpResponse( { code => 200, body => $body } );
-
 }
 
 #####Documentation of POST ddos to farm####
@@ -1336,29 +1309,26 @@ sub add_ddos_to_farm
 {
 	my $json_obj = shift;
 	my $farmName = shift;
+	my $description = "Post DDoS to $farmName";
 	my $key      = $json_obj->{ 'id' };
 	my $errormsg;
-	my @vaildKeys = (
-		'INVALID', 'BLOCKSPOOFED', 'LIMITCONNS', 'LIMITSEC',    # all farms
-		'DROPFRAGMENTS', 'NEWNOSYN', 'SYNWITHMSS',    # farms based in TCP protcol
-		'BOGUSTCPFLAGS', 'LIMITRST', 'SYNPROXY'
-	);
 
 	my $confFile = &getGlobalConfiguration( 'ddosConf' );
 	my $output   = "down";
 
-	system ( &getGlobalConfiguration( 'ddosConf' ) . " $confFile" )
-	  if ( !-e $confFile );
-	if ( !grep ( /^$key$/, @vaildKeys ) )
+	if ( &getFarmFile( $farmName ) == -1 )
 	{
-		$errormsg = "Key $key is not a valid value.";
+		$errormsg = "$farmName doesn't exist.";
+		my $body = {
+			description => $description, error => "true", message => $errormsg };
+		&httpResponse( { code => 404, body => $body } );
 	}
 	elsif ( grep ( /$farmName/, &getFarmList() ) )
 	{
 		my $fileHandle = Config::Tiny->read( $confFile );
 		if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 		{
-			$errormsg = "Just is enabled DDoS in $farmName.";
+			$errormsg = "This rule Just is enabled DDoS in $farmName.";
 		}
 		else
 		{
@@ -1377,32 +1347,16 @@ sub add_ddos_to_farm
 				&httpResponse(
 						  {
 							code => 200,
-							body => { description => "Post DDoS to $farmName.", params => $output }
+							body => { description => $description, params => $output }
 						  }
 				);
 			}
-			else
-			{
-				$errormsg = "There was a error enabling DDoS in $farmName.";
-			}
 		}
 	}
-	else
-	{
-		$errormsg = "$farmName doesn't exist";
-	}
 
-	if ( $errormsg )
-	{
-		my $body = {
-					 description => "Post DDoS to $farmName",
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse( { code => 400, body => $body } );
-	}
-
+	$errormsg = "There was a error enabling DDoS in $farmName.";
+	my $body = { description => $description, error => "true", message => $errormsg, };
+	&httpResponse( { code => 400, body => $body } );
 }
 
 #####Documentation of DELETE ddos from a farm####
@@ -1425,7 +1379,7 @@ sub add_ddos_to_farm
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/ddos
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/ddos/KEY
 #
 # @apiSampleRequest off
 #
@@ -1437,6 +1391,7 @@ sub del_ddos_from_farm
 	my $key      = shift;
 	my $confFile = &getGlobalConfiguration( 'ddosConf' );
 	my $errormsg;
+	my $description = "Delete DDoS form farm $farmName";
 
 	my @vaildKeys = (
 		'INVALID', 'BLOCKSPOOFED', 'LIMITCONNS', 'LIMITSEC',    # all farms
@@ -1452,12 +1407,18 @@ sub del_ddos_from_farm
 	{
 		my $fileHandle  = Config::Tiny->read( $confFile );
 		my $farmsString = $fileHandle->{ $key }->{ 'farms' };
-		$errormsg = "DDoS for $farmName just is disable."
-		  if ( $farmsString !~ /( |^)$farmName( |$)/ );
+		
+		if ( $farmsString !~ /( |^)$farmName( |$)/ )
+		{
+			$errormsg = "DDoS for $farmName just is disabled.";
+			my $body = {
+			description => $description,  error => "true", message => $errormsg, };
+			&httpResponse( { code => 404, body => $body } );
+		}
 	}
 	else
 	{
-		$errormsg = "DDoS for $farmName just is disable.";
+		$errormsg = "DDoS for $farmName just is disabled.";
 	}
 
 	if ( !$errormsg )
@@ -1466,14 +1427,8 @@ sub del_ddos_from_farm
 		{
 			&setDDOSDeleteRule( $key, $farmName );
 
-			my $errormsg = "DDoS was desactived successful from farm $farmName.";
-
-			my $body = {
-						 description => "Delete DDoS form farm $farmName",
-						 success     => "true",
-						 message     => $errormsg,
-			};
-
+			$errormsg = "DDoS was desactived successful from farm $farmName.";
+			my $body = { description => $description, success => "true", message => $errormsg, };
 			&httpResponse( { code => 200, body => $body } );
 		}
 		else
@@ -1482,17 +1437,8 @@ sub del_ddos_from_farm
 		}
 	}
 
-	if ( $errormsg )
-	{
-		my $body = {
-					 description => "Delete DDoS form farm $farmName",
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse( { code => 400, body => $body } );
-	}
-
+	my $body = { description => $description, error => "true", message => $errormsg, };
+	&httpResponse( { code => 400, body => $body } );
 }
 
 1;
