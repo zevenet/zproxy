@@ -30,43 +30,44 @@ use Tie::File;
 require "/usr/local/zenloadbalancer/www/Plugins/ipds.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
+require "/usr/local/zenloadbalancer/www/check_functions.cgi";
 
 #~ use warnings;
 #~ use strict;
 
 actions:
 
-#  &getRBLLoadList ( $listName );
-sub getRBLLoadList
+#  &getBLLoadList ( $listName );
+sub getBLLoadList
 {
 	my $listName = shift;
 	my $ipset = &getGlobalConfiguration( 'ipset' );
-	my $output = system ( "$ipset list $listName" );
+	my $output = system ( "$ipset list $listName 2>/dev/null" );
 
 	return $output;
 }
 
 
-# &setRBLRunList ( $listName );
-sub setRBLRunList
+# &setBLRunList ( $listName );
+sub setBLRunList
 {
 	my $listName = shift;
 	my $ipset = &getGlobalConfiguration( 'ipset' );
 	my $output;
 	
-	if ( system ( "$ipset -L $listName" ) )
+	if ( system ( "$ipset -L $listName 2>/dev/null" ) )
 	{
-		$output = system ( "$ipset create $listName hash:net" );
+		$output = system ( "$ipset create $listName hash:net 2>/dev/null" );
 		&zenlog ( "Creating ipset table" );
 	}
-	if ( !$output && &getRBLListParam( $listName, 'location' ) eq 'remote' )
+	if ( !$output && &getBLParam( $listName, 'location' ) eq 'remote' )
 	{
-		$output = &setRBLDownloadRemoteList ( $listName ) ;
+		$output = &setBLDownloadRemoteList ( $listName ) ;
 		&zenlog ( "Downloading remote list" );
 	}
 	if ( !$output )
 	{
-		$output = &setRBLRefreshList ( $listName );
+		$output = &setBLRefreshList ( $listName );
 		&zenlog ( "Setting refreshing list" );
 	}
 	
@@ -75,17 +76,17 @@ sub setRBLRunList
 }
 
 
-#  &setRBLDestroyList ( $listName );
-sub setRBLDestroyList
+#  &setBLDestroyList ( $listName );
+sub setBLDestroyList
 {
 	my $listName = shift;
 	my $ipset = &getGlobalConfiguration( 'ipset' );
 	my $output;
 	
-	if ( ! system ( "$ipset -L $listName" ) )
+	if ( ! system ( "$ipset -L $listName 2>/dev/null" ) )
 	{
 		&zenlog ( "Destroying list" );
-		$output = system ( "$ipset destroy $listName" );
+		$output = system ( "$ipset destroy $listName 2>/dev/null" );
 	}
 
 	return $output;
@@ -93,75 +94,75 @@ sub setRBLDestroyList
 
 
 =begin nd
-        Function: setRBLStart
+        Function: setBLStart
 
-        Enable all rbl rules
+        Enable all blacklists rules
 
         Parameters:
 				
         Returns:
 
 =cut
-#  &setRBLStart
-sub setRBLStart
+#  &setBLStart
+sub setBLStart
 {
-	my $rblConf = &getGlobalConfiguration( 'rblConf' );
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $ipset = &getGlobalConfiguration( 'ipset' );
 	my $touch = &getGlobalConfiguration( 'touch' ); 
-	my @rules = @{ &getRBLRules () };
-	my $rblListsPath = &getGlobalConfiguration( 'rblListsPath' );
+	my @rules = @{ &getBLRules () };
+	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	
-	if ( ! -d $rblListsPath )
+	if ( ! -d $blacklistsPath )
 	{
-		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $rblListsPath" );
-		&zenlog( "Created $rblListsPath directory." );
+		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $blacklistsPath" );
+		&zenlog( "Created $blacklistsPath directory." );
 	}
 
 	# create list config if doesn't exist
-	if ( !-e $rblConf )
+	if ( !-e $blacklistsConf )
 	{
-		system ( "$touch $rblConf" );
-		&zenlog( "Created $rblConf file." );
+		system ( "$touch $blacklistsConf" );
+		&zenlog( "Created $blacklistsConf file." );
 	}
 
 	# load preload lists
-	&setRBLAddPreloadLists();
+	&setBLAddPreloadLists();
 	
-	my $allLists = Config::Tiny->read( $rblConf );
+	my $allLists = Config::Tiny->read( $blacklistsConf );
 
 	# load lists
 	foreach my $list ( keys %{ $allLists } )
 	{
-		my @farms = @{ &getRBLListParam ( $list, "farms" ) };
+		my @farms = @{ &getBLParam ( $list, "farms" ) };
 		if ( @farms )
 		{
-			&setRBLRunList ( $list );
+			&setBLRunList ( $list );
 		}
 		# create cmd  for all farms where are applied the list
 		foreach my $farm ( @farms )
 		{
 			&zenlog ("Creating rules for the list $list and farm $farm.");
-			&setRBLCreateRule  ( $farm, $list );
+			&setBLCreateRule  ( $farm, $list );
 		}
 	}
 }
 
 
 =begin nd
-        Function: setRBLStop
+        Function: setBLStop
 
-        Disable all rbl rules
+        Disable all blacklists rules
         
         Parameters:
 				
         Returns:
 
 =cut
-# &setRBLStop
-sub setRBLStop 
+# &setBLStop
+sub setBLStop 
 {
-	my @rules = @{ &getRBLRules () };
-	my $rbl_list = &getValidFormat('rbl_list');
+	my @rules = @{ &getBLRules () };
+	my $blacklists_list = &getValidFormat('blacklists_list');
 	my $farm_name = &getValidFormat('farm_name');
 	
 	my @allLists;
@@ -169,7 +170,7 @@ sub setRBLStop
 	foreach my $rule ( @rules )
 	{
 		
-		if ( $rule =~ /^(\d+) .+match-set ($rbl_list) src .+RBL_$farm_name/ )
+		if ( $rule =~ /^(\d+) .+match-set ($blacklists_list) src .+BL_$farm_name/ )
 		{
 			my $list = $2;
 			my $cmd =
@@ -183,14 +184,14 @@ sub setRBLStop
 	
 	foreach my $listName ( @allLists )
 	{
-		&setRBLDestroyList ( $listName );
+		&setBLDestroyList ( $listName );
 	}
 	
 }
 
 
 =begin nd
-        Function: setRBLCreateRule
+        Function: setBLCreateRule
 
         block / accept connections from a ip list for a determinate farm.
 
@@ -204,15 +205,15 @@ sub setRBLStop
                 -1		- error
 
 =cut
-# &setRBLCreateRule ( $farmName, $list );
-sub setRBLCreateRule
+# &setBLCreateRule ( $farmName, $list );
+sub setBLCreateRule
 {
 	my ( $farmName, $listName ) = @_;
 	my $add;
 	my $cmd;
 	my $output;
-	my $logMsg = "[Blocked by RBL rule]";
-	my $action = &getRBLListParam( $listName, 'type' );
+	my $logMsg = "[Blocked by BL rule]";
+	my $action = &getBLParam( $listName, 'type' );
 	
 	if ( $action eq "allow" )
 	{
@@ -226,7 +227,7 @@ sub setRBLCreateRule
 	else
 	{
 		$output = -1;
-		&zenlog( "The parameter 'action' isn't valid in function 'setRBLCreateIptableCmd'." );
+		&zenlog( "The parameter 'action' isn't valid in function 'setBLCreateIptableCmd'." );
 	}
 
 	if ( !$output )
@@ -249,9 +250,9 @@ sub setRBLCreateRule
 			$farmOpt  = "$farmOpt -p $protocol --dport $vport";
 		}
 
-# 		iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "RBL_farmname"
+# 		iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "BL_farmname"
 		$cmd = &getGlobalConfiguration( 'iptables' )
-		  . " $add PREROUTING -t raw -m set --match-set $listName src $farmOpt -m comment --comment \"RBL_$farmName\"";
+		  . " $add PREROUTING -t raw -m set --match-set $listName src $farmOpt -m comment --comment \"BL_$farmName\"";
 	}
 
 	if ( $action eq "deny" )
@@ -273,7 +274,7 @@ sub setRBLCreateRule
 
 
 =begin nd
-        Function: setRBLDeleteRule
+        Function: setBLDeleteRule
 
         Delete a iptables rule 
 
@@ -286,15 +287,15 @@ sub setRBLCreateRule
                 != 0	- error
 
 =cut
-# &setRBLDeleteRule ( $farmName, $listName )
-sub setRBLDeleteRule
+# &setBLDeleteRule ( $farmName, $listName )
+sub setBLDeleteRule
 {
 	my ( $farmName, $listName ) = @_;
 	my $output;
 	
 	# Get line number
 	my @rules = &getIptList( $farmName, 'raw', 'PREROUTING' );
-	@rules = grep ( /^(\d+) .+match-set $listName src .+RBL_$farmName/, @rules);
+	@rules = grep ( /^(\d+) .+match-set $listName src .+BL_$farmName/, @rules);
 
 	my $lineNum = 0;
 	my $size = scalar @rules -1;
@@ -313,7 +314,7 @@ sub setRBLDeleteRule
 
 	# check if proccess was successful:
 	@rules = &getIptList( $farmName, 'raw', 'PREROUTING' );
-	if ( grep ( /^(\d+) .+match-set $listName src .+RBL_$farmName/, @rules) )
+	if ( grep ( /^(\d+) .+match-set $listName src .+BL_$farmName/, @rules) )
 	{
 		&zenlog( "Error, deleting '$farmName' from the list '$listName'." );		
 		$output = -1;
@@ -323,44 +324,44 @@ sub setRBLDeleteRule
 }
 
 
-# setRBLApplyToFarm ( $farmName, $list );
-sub setRBLApplyToFarm 
+# setBLApplyToFarm ( $farmName, $list );
+sub setBLApplyToFarm 
 {
 	my ( $farmName, $listName ) =  @_;
 	my $output;
 	
-	if ( !@{ &getRBLListParam ( $listName, 'farms' ) } )
+	if ( !@{ &getBLParam ( $listName, 'farms' ) } )
 	{
-		$output = &setRBLRunList ( $listName );
+		$output = &setBLRunList ( $listName );
 	}
 	if ( ! $output )
 	{
-		$output = &setRBLCreateRule ( $farmName, $listName ); 
+		$output = &setBLCreateRule ( $farmName, $listName ); 
 	}
 	if ( ! $output )
 	{
-		$output = &setRBLListParam( $listName, 'farms-add', $farmName );
+		$output = &setBLParam( $listName, 'farms-add', $farmName );
 	}
 
 	return $output;
  }
 
 
-# &setRBLRemFromFarm ( $farmName, $listName );
-sub setRBLRemFromFarm 
+# &setBLRemFromFarm ( $farmName, $listName );
+sub setBLRemFromFarm 
 {	
 	my ( $farmName, $listName ) =  @_;
-	my $output = &setRBLDeleteRule ( $farmName, $listName ); 
+	my $output = &setBLDeleteRule ( $farmName, $listName ); 
 	
 	if ( ! $output )
 	{
-		$output = &setRBLListParam( $listName, 'farms-del', $farmName );
+		$output = &setBLParam( $listName, 'farms-del', $farmName );
 	}
 	
 	# delete list if it isn't used. This has to be the last call.
-	if ( ! $output && ! @{ &getRBLListParam ( $listName, 'farms' ) } )
+	if ( ! $output && ! @{ &getBLParam ( $listName, 'farms' ) } )
 	{
-		&setRBLDestroyList ( $listName );
+		&setBLDestroyList ( $listName );
 	}
 
 	return $output;
@@ -375,7 +376,7 @@ lists:
 # -------------------
 
 =begin nd
-        Function: setRBLPreloadLists
+        Function: setBLPreloadLists
 
         This function return all preload lists available or 
         the source list of ones of this
@@ -390,20 +391,20 @@ lists:
                 array ref	- availabe counrties or source list
                 
 =cut
-# &getRBLPreloadLists;
-sub setRBLAddPreloadLists
+# &getBLPreloadLists;
+sub setBLAddPreloadLists
 {
-	my $rblLocalPreload = &getGlobalConfiguration( 'rblLocalPreload' );
-	my $rblRemotePreload = &getGlobalConfiguration( 'rblRemotePreload' );
-	my $rblConf = &getGlobalConfiguration( 'rblConf' );
-	my $rblListsPath =  &getGlobalConfiguration( 'rblListsPath' );
+	my $blacklistsLocalPreload = &getGlobalConfiguration( 'blacklistsLocalPreload' );
+	my $blacklistsRemotePreload = &getGlobalConfiguration( 'blacklistsRemotePreload' );
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my $blacklistsPath =  &getGlobalConfiguration( 'blacklistsPath' );
 		
 	# Local preload lists
-	opendir ( DIR, "$rblLocalPreload/" );
+	opendir ( DIR, "$blacklistsLocalPreload/" );
 	my @preloadLists = readdir ( DIR );
 	closedir ( DIR );
 	
-	my $fileHandle = Config::Tiny->read( $rblConf );
+	my $fileHandle = Config::Tiny->read( $blacklistsConf );
 	foreach my $list ( @preloadLists )
 	{
 		if ( $list =~ s/.txt$// )
@@ -415,15 +416,15 @@ sub setRBLAddPreloadLists
 				$listHash->{ 'location' } = 'local';
 				$listHash->{ 'preload' } = 'true';
 	
-				&setRBLCreateList ( $list, $listHash );
+				&setBLCreateList ( $list, $listHash );
 				&zenlog( "The preload list '$list' was created." ); 
 			
-				system ( "cp $rblLocalPreload/$list.txt $rblListsPath/$list.txt" );
+				system ( "cp $blacklistsLocalPreload/$list.txt $blacklistsPath/$list.txt" );
 				&zenlog( "The preload list '$list' was created." ); 
 			}
 			elsif ( $fileHandle->{ $list }->{ 'preload' } eq 'true' )
 			{
-				system ( "cp $rblLocalPreload/$list.txt $rblListsPath/$list.txt" );
+				system ( "cp $blacklistsLocalPreload/$list.txt $blacklistsPath/$list.txt" );
 				&zenlog( "The preload list '$list' was updated." ); 
 			}
 			else
@@ -433,7 +434,7 @@ sub setRBLAddPreloadLists
 		}
 	}
 		
-	my $remoteFile = Config::Tiny->read( $rblRemotePreload );
+	my $remoteFile = Config::Tiny->read( $blacklistsRemotePreload );
 	# Remote preload lists
 	foreach my $list ( keys %{ $remoteFile } )
 	{
@@ -444,13 +445,13 @@ sub setRBLAddPreloadLists
 			$listHash->{ 'location' } = 'remote';
 			$listHash->{ 'preload' } = 'true';
 
-			&setRBLCreateList ( $list, $listHash );
+			&setBLCreateList ( $list, $listHash );
 			&zenlog( "The preload list '$list' was created." ); 
 		}
-		elsif ( &getRBLListParam ( $list, 'preload' ) eq 'true' )
+		elsif ( &getBLParam ( $list, 'preload' ) eq 'true' )
 		{
 			&zenlog ("Update list $list");
-			&setRBLListParam ( $list, 'url', $remoteFile->{ $list }->{ 'url' } );
+			&setBLParam ( $list, 'url', $remoteFile->{ $list }->{ 'url' } );
 		}
 		else
 		{
@@ -458,7 +459,7 @@ sub setRBLAddPreloadLists
 		}
 		
 		# Download lists and load it
-		&setRBLDownloadRemoteList ( $list );
+		&setBLDownloadRemoteList ( $list );
 		&zenlog( "The preload list '$list' was updated." );
 	}
 	
@@ -466,8 +467,8 @@ sub setRBLAddPreloadLists
 
 
 # $listParams = \ %paramsRef;
-# &setRBLCreateList ( $listName, $paramsRef );
-sub setRBLCreateList
+# &setBLCreateList ( $listName, $paramsRef );
+sub setBLCreateList
 {
 	my $listName = shift;
 	my $listParams = shift;
@@ -476,15 +477,15 @@ sub setRBLCreateList
 	my $def_preload = 'false';
 	my $output;
 
-	my $rblConf = &getGlobalConfiguration( 'rblConf' );
-	my $rblListsPath   = &getGlobalConfiguration( 'rblListsPath' );
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my $blacklistsPath   = &getGlobalConfiguration( 'blacklistsPath' );
 	my $touch         = &getGlobalConfiguration( 'touch' );
 	my $location = $listParams->{ 'location' };
 	
-	if ( ! -e $rblConf )
+	if ( ! -e $blacklistsConf )
 	{
-		$output = system ( "$touch $rblConf" );
-		&zenlog ( "rbl configuration file was created." );
+		$output = system ( "$touch $blacklistsConf" );
+		&zenlog ( "blacklists configuration file was created." );
 	}
 	
 	if ( $listParams->{ 'location' } eq 'remote' && ! exists $listParams->{ 'url' } )
@@ -494,7 +495,7 @@ sub setRBLCreateList
 	}	
 
 	# share params
-	my $fileHandle = Config::Tiny->read( $rblConf );
+	my $fileHandle = Config::Tiny->read( $blacklistsConf );
 	$fileHandle->{ $listName }->{ 'location' } = $listParams->{ 'location' };
 	$fileHandle->{ $listName }->{ 'farms' } = "";
 	 if ( exists $listParams->{ 'preload' } )
@@ -522,20 +523,20 @@ sub setRBLCreateList
 	{
 		$fileHandle->{ $listName }->{ 'action' } = "DROP";
 	}
-	$fileHandle->write( $rblConf );
+	$fileHandle->write( $blacklistsConf );
 	
 	# specific to remote lists
 	if ( $location eq 'remote' )
 	{
-		&setRBLListParam ( $listName, 'url', $listParams->{ 'url' } );
+		&setBLParam ( $listName, 'url', $listParams->{ 'url' } );
 		$def_refresh = $listParams->{'refresh'} 	if ( exists $listParams->{'refresh'} );
-		&setRBLListParam ( $listName, 'refresh', $def_refresh );
-		#~ &setRBLDownloadRemoteList ( $listName );
+		&setBLParam ( $listName, 'refresh', $def_refresh );
+		#~ &setBLDownloadRemoteList ( $listName );
 	}
 	# specific to local lists
 	elsif ( $location eq 'local' )
 	{
-		$output = system ( "$touch $rblListsPath/$listName.txt" );
+		$output = system ( "$touch $blacklistsPath/$listName.txt" );
 	}
 	
 	if ( ! $output )
@@ -548,7 +549,7 @@ sub setRBLCreateList
 
 
 =begin nd
-        Function: setRBLDeleteList
+        Function: setBLDeleteList
 
         delete a list from iptables, ipset and configuration file
 			
@@ -563,41 +564,41 @@ sub setRBLCreateList
 				!=0 - error
                 
 =cut
-# &setRBLDeleteList ( $listName )
-sub setRBLDeleteList
+# &setBLDeleteList ( $listName )
+sub setBLDeleteList
 {
 	my ( $listName ) = @_;
 	my $fileHandle;
 	my $output;
 	my $error; 
 	
-	my $rblConf  = &getGlobalConfiguration( 'rblConf' );
-	my $rblListsPath   = &getGlobalConfiguration( 'rblListsPath' );
+	my $blacklistsConf  = &getGlobalConfiguration( 'blacklistsConf' );
+	my $blacklistsPath   = &getGlobalConfiguration( 'blacklistsPath' );
 	my $ipset         = &getGlobalConfiguration( 'ipset' );
-	my @farms         = &getRBLListParam ( $listName, 'farms' );
+	my @farms         = &getBLParam ( $listName, 'farms' );
 
 	# delete associated farms
 	foreach my $farmName ( @farms )
 	{
-		$output = &setRBLDeleteRule ( $farmName, $listName );
+		$output = &setBLDeleteRule ( $farmName, $listName );
 		last if $output;
 	}
 
-	if ( ! $output && &getRBLListParam( $listName, 'preload' ) eq 'false'  )
+	if ( ! $output && &getBLParam( $listName, 'preload' ) eq 'false'  )
 	{
 		# delete from config file
-		$fileHandle = Config::Tiny->read( $rblConf );
+		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		delete $fileHandle->{ $listName };
-		$fileHandle->write( $rblConf );
+		$fileHandle->write( $blacklistsConf );
 	
-		if ( -f "$rblListsPath/$listName.txt" )
+		if ( -f "$blacklistsPath/$listName.txt" )
 		{
-			$output =  system ( "rm $rblListsPath/$listName.txt" );
+			$output =  system ( "rm $blacklistsPath/$listName.txt" );
 		}
 	}
 
 	# delete list from ipset
-	$output = &setRBLDestroyList ( $listName );
+	$output = &setBLDestroyList ( $listName );
 	if ( $output != 0 )
 	{
 		&zenlog( "Error deleting the list '$listName'." );
@@ -612,7 +613,7 @@ sub setRBLDeleteList
 }
 
 =begin nd
-        Function: setRBLListParam
+        Function: setBLParam
 
 				Modificate local config file 
 
@@ -628,25 +629,25 @@ sub setRBLDeleteList
                 !=0	- error
                 
 =cut
-# &setRBLListParam ( $name , $key,  $value )
-sub setRBLListParam
+# &setBLParam ( $name , $key,  $value )
+sub setBLParam
 {
 	my ( $name, $key, $value ) = @_;
 	my $output;
 
 	# get conf
-	my $location = &getRBLListParam( $name, 'location' );
-	my $rblConf = &getGlobalConfiguration( 'rblConf' );
-	my $fileHandle   = Config::Tiny->read( $rblConf );
+	my $location = &getBLParam( $name, 'location' );
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my $fileHandle   = Config::Tiny->read( $blacklistsConf );
 	my $conf = $fileHandle->{ $name };
-	my @farmList = @{ &getRBLListParam( $name, 'farms' ) };
-	my $ipList   = &getRBLListParam( $name, 'sources' );
+	my @farmList = @{ &getBLParam( $name, 'farms' ) };
+	my $ipList   = &getBLParam( $name, 'sources' );
 			
 	# change name of the list
 	if ( 'list' eq $key )
 	{
 		my @listNames = keys %{ $fileHandle };
-		if ( ! &getRBLExists ( $name ) )
+		if ( ! &getBLExists ( $name ) )
 		{
 			&zenlog( "List '$value' just exists." );
 			$output = -1;
@@ -654,18 +655,18 @@ sub setRBLListParam
 		else
 		{
 			# delete list and all rules applied to the farms
-			$output = &setRBLDeleteList( $name );
+			$output = &setBLDeleteList( $name );
 			
 			# crete new list
-			$output = &setRBLCreateList( $value, $conf )		 if ( ! $output );
-			$output = &setRBLListParam( $value, 'sources', $ipList ) if ( ! $output );
+			$output = &setBLCreateList( $value, $conf )		 if ( ! $output );
+			$output = &setBLParam( $value, 'sources', $ipList ) if ( ! $output );
 
 			# apply rules to farms
 			if ( ! $output )
 			{
 				foreach my $farm ( @farmList )
 				{
-					&setRBLCreateRule( $farm, $value );
+					&setBLCreateRule( $farm, $value );
 				}
 			}
 			return $output;
@@ -674,19 +675,19 @@ sub setRBLListParam
 	elsif ( 'type' eq $key )
 	{
 		$conf->{ 'type' } = $value;
-		$fileHandle->write( $rblConf );
+		$fileHandle->write( $blacklistsConf );
 		
 		# delete list and all rules applied to farms
-		$output = &setRBLDeleteList( $name );
+		$output = &setBLDeleteList( $name );
 
 		# crete new list
-		$output = &setRBLCreateList( $name, $conf );
-		$output = &setRBLListParam( $name, 'sources', $ipList );
+		$output = &setBLCreateList( $name, $conf );
+		$output = &setBLParam( $name, 'sources', $ipList );
 
 		# apply rules to farms
 		foreach my $farm ( @farmList )
 		{
-			$output = &setRBLCreateRule( $farm, $name );
+			$output = &setBLCreateRule( $farm, $name );
 		}
 		return $output;
 	}
@@ -696,8 +697,8 @@ sub setRBLListParam
 		if ( $conf->{ 'location' } eq 'local' 
 		&& $conf->{ 'preload' } eq 'false' )
 		{
-			$output = &setRBLAddToList( $name, $value );
-			$output = &setRBLRefreshList( $name ) if ( !$output );
+			$output = &setBLAddToList( $name, $value );
+			$output = &setBLRefreshList( $name ) if ( !$output );
 		}
 	}
 	elsif ( 'farms-add' eq $key )
@@ -706,26 +707,26 @@ sub setRBLListParam
 		{
 			my $farmList = $fileHandle->{ $name }->{ 'farms' };
 			$fileHandle->{ $name }->{ 'farms' } = "$farmList $value";
-			$fileHandle->write( $rblConf );
+			$fileHandle->write( $blacklistsConf );
 		}
 	}
 	elsif ( 'farms-del' eq $key )
 	{
 		$fileHandle->{ $name }->{ 'farms' } =~ s/(^| )$value( |$)/ /;
-		$fileHandle->write( $rblConf );
+		$fileHandle->write( $blacklistsConf );
 	}
 	elsif ( 'status' eq $key
 			&& ( $value ne 'up' && $value ne 'down' && $value ne 'dis' ) )
 	{
 		&zenlog(
-			  "Wrong parameter 'value' for 'status' key in 'setRBLRemoteListConfig' function." );
+			  "Wrong parameter 'value' for 'status' key in 'setBLRemoteListConfig' function." );
 		$output = -1;
 	}
 	# other value  of the file conf
 	else
 	{
 		$fileHandle->{ $name }->{ $key } = $value;
-		$fileHandle->write( $rblConf );
+		$fileHandle->write( $blacklistsConf );
 	}
 	
 
@@ -734,7 +735,7 @@ sub setRBLListParam
 
 
 =begin nd
-        Function: getRBLListParam
+        Function: getBLParam
 
 				Get list config 
 
@@ -755,25 +756,25 @@ sub setRBLListParam
                 !=0	- error
                 
 =cut
-# &getRBLListParam ( $listName, $key )
-sub getRBLListParam
+# &getBLParam ( $listName, $key )
+sub getBLParam
 {
 	my ( $listName, $key ) = @_;
 	my $output;
 	my $fileHandle;
 
-	my $rblConf = &getGlobalConfiguration( 'rblConf' );
-	$fileHandle = Config::Tiny->read( $rblConf );
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	$fileHandle = Config::Tiny->read( $blacklistsConf );
 	
 	if ( ! $key ) 
 	{
 		$output = $fileHandle->{ $listName };
 		$output->{ 'list' } =  $listName;
-		$output->{ 'sources' } = &getRBLIpList( $listName );
+		$output->{ 'sources' } = &getBLIpList( $listName );
 	}
 	elsif ( $key eq 'sources' )
 	{
-		$output = &getRBLIpList( $listName );
+		$output = &getBLIpList( $listName );
 	}
 	else 
 	{
@@ -798,7 +799,7 @@ sub getRBLListParam
 
 
 =begin nd
-        Function: getRBLExists
+        Function: getBLExists
 
 		get if a list exists o all available lists
 
@@ -813,13 +814,13 @@ sub getRBLListParam
                 -1  - list doesn't exist
                 
 =cut
-# &getRBLExists ( $listName );
-sub getRBLExists
+# &getBLExists ( $listName );
+sub getBLExists
 {
 	my $listName = shift;
 	my $output = -1;
-	my $rblConf = &getGlobalConfiguration( 'rblConf' );
-	my $fileHandle = Config::Tiny->read( $rblConf );
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my $fileHandle = Config::Tiny->read( $blacklistsConf );
 	my @aux;
 	
 	if ( $listName )
@@ -837,7 +838,7 @@ sub getRBLExists
 
 
 =begin nd
-        Function: getRBLIpList
+        Function: getBLIpList
 
 		Download a list from url and keep it in file
 
@@ -848,17 +849,17 @@ sub getRBLExists
         Returns:
                 
 =cut
-# &setRBLDownloadRemoteList ( $listName );
-sub setRBLDownloadRemoteList
+# &setBLDownloadRemoteList ( $listName );
+sub setBLDownloadRemoteList
 {
 	my ( $listName ) = @_;
-	my $url = &getRBLListParam ( $listName, 'url' ); 
+	my $url = &getBLParam ( $listName, 'url' ); 
 	my $timeout = 10;
 	
 	
 	# if ( $fileHandle->{ $listName }->{ 'status' } ne 'dis' )
 	my @web = `curl --connect-timeout $timeout \"$url\" 2>/dev/null`; 
-	my $source_format = &getValidFormat( 'rbl_source' );
+	my $source_format = &getValidFormat( 'blacklists_source' );
 	
 	my @ipList;
 
@@ -872,64 +873,24 @@ sub setRBLDownloadRemoteList
 	# set URL down if it doesn't have any ip
 	if ( ! @ipList )
 	{
-		&setRBLListParam ( $listName, 'status', 'down' );
+		&setBLParam ( $listName, 'status', 'down' );
 		&zenlog( "$url was marked as down" );
 	}
 	else
 	{
-		my $path = &getGlobalConfiguration ( 'rblListsPath' );
+		my $path = &getGlobalConfiguration ( 'blacklistsPath' );
 		my $fileList = "$path/$listName.txt";
 		tie my @list, 'Tie::File', $fileList;
 		@list = @ipList;
 		untie @list;
-		&setRBLListParam ( $listName, 'status', 'up' );
+		&setBLParam ( $listName, 'status', 'up' );
 	}
 	
 }
 
 
 =begin nd
-        Function: getRBLIpList
-
-				get list of IPs from a local or remote list
-
-        Parameters:
-        
-                listName - local listname / remote url, where find list of IPs
-
-        Returns:
-                -1		 	- error
-                \@ipList	- successful
-                
-=cut
-# &getRBLIpList ( $listName )
-sub getRBLIpList
-{
-	my ( $listName ) = @_;
-	my @ipList;
-	my $output = -1;
-	my $fileHandle;
-
-	my $rblPath   = &getGlobalConfiguration( 'rblListsPath' );
-	my $source_format = &getValidFormat( 'rbl_source' );
-
-	#~ my $fileList = "$PreloadPath/$listName.txt";
-	
-	tie my @list, 'Tie::File', "$rblPath/$listName.txt";
-	@ipList = @list;
-	untie @list;
-
-	# ip list format wrong
-	# get only correct format lines
-	@ipList = grep ( /($source_format)/, @ipList );
-	$output = \@ipList;
-
-	return $output;
-}
-
-
-=begin nd
-        Function: setRBLRefreshList
+        Function: setBLRefreshList
 
         Update IPs from a list
 
@@ -943,21 +904,21 @@ sub getRBLIpList
                 != 0	- error
                 
 =cut
-#	&setRBLRefreshList ( $listName )
-sub setRBLRefreshList
+#	&setBLRefreshList ( $listName )
+sub setBLRefreshList
 {
 	my ( $listName ) = @_;
-	my @ipList = @{ &getRBLIpList( $listName ) };
+	my @ipList = @{ &getBLIpList( $listName ) };
 	my $output;
 	my $ipset = &getGlobalConfiguration( 'ipset' );
 
 	&zenlog( "refreshing '$listName'... " );
-	$output = system ( "$ipset flush $listName" );
+	$output = system ( "$ipset flush $listName 2>/dev/null" );
 	if ( !$output )
 	{
 		foreach my $ip ( @ipList )
 		{
-			$output = system ( "$ipset add $listName $ip" );
+			$output = system ( "$ipset add $listName $ip 2>/dev/null" );
 			if ( $output  )
 			{
 				&zenlog ( "Error, adding $ip source" );
@@ -970,7 +931,7 @@ sub setRBLRefreshList
 
 
 =begin nd
-        Function: setRBLRefreshAllLists
+        Function: setBLRefreshAllLists
 
 				Check if config file data and list directories are coherent
 				Refresh all lists, locals and remotes.
@@ -982,24 +943,24 @@ sub setRBLRefreshList
                 !=0	- error in some list 
                 
 =cut				
-# &setRBLRefreshAllLists
-sub setRBLRefreshAllLists
+# &setBLRefreshAllLists
+sub setBLRefreshAllLists
 {
 	my $output;
-	my @lists = @{ &getRBLExists };
+	my @lists = @{ &getBLExists };
 
 	# update lists
 	foreach my $listName ( @lists )
 	{
 		# Download the remote lists 
-		if ( &getRBLListParam ( $listName, 'location' ) eq 'remote' )
+		if ( &getBLParam ( $listName, 'location' ) eq 'remote' )
 		{
-			&setRBLDownloadRemoteList ( $listName );
+			&setBLDownloadRemoteList ( $listName );
 		}
 		# Refresh list if is running 
-		if ( &getRBLLoadList ( $listName ) )
+		if ( &getBLLoadList ( $listName ) )
 		{
-			&setRBLRefreshList ( $listName );
+			&setBLRefreshList ( $listName );
 		}
 		&zenlog( "The preload list '$listName' was update." ); 
 	}
@@ -1008,7 +969,47 @@ sub setRBLRefreshAllLists
 
 
 =begin nd
-        Function: setRBLAddToList
+        Function: getBLIpList
+
+				get list of IPs from a local or remote list
+
+        Parameters:
+        
+                listName - local listname / remote url, where find list of IPs
+
+        Returns:
+                -1		 	- error
+                \@ipList	- successful
+                
+=cut
+# &getBLIpList ( $listName )
+sub getBLIpList
+{
+	my ( $listName ) = @_;
+	my @ipList;
+	my $output = -1;
+	my $fileHandle;
+
+	my $blacklistsPath   = &getGlobalConfiguration( 'blacklistsPath' );
+	my $source_format = &getValidFormat( 'blacklists_source' );
+
+	#~ my $fileList = "$PreloadPath/$listName.txt";
+	
+	tie my @list, 'Tie::File', "$blacklistsPath/$listName.txt";
+	@ipList = @list;
+	untie @list;
+
+	# ip list format wrong
+	# get only correct format lines
+	@ipList = grep ( /($source_format)/, @ipList );
+	$output = \@ipList;
+
+	return $output;
+}
+
+
+=begin nd
+        Function: setBLAddToList
 
 		Change ip list for a list
 
@@ -1019,18 +1020,18 @@ sub setRBLRefreshAllLists
         Returns:
 
 =cut			
-# &setRBLAddToList  ( $listName, \@ipList );
-sub setRBLAddToList
+# &setBLAddToList  ( $listName, \@ipList );
+sub setBLAddToList
 {
 	my ( $listName, $listRef ) = @_;
-	my $rblListsPath = &getGlobalConfiguration( 'rblListsPath' );
-	my $source_format = &getValidFormat ('rbl_source');
+	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
+	my $source_format = &getValidFormat ('blacklists_source');
 	my @ipList = grep ( /$source_format/,	@{ $listRef } );
 	my $output = -1;
 	
-	if ( -f "$rblListsPath/$listName.txt" )
+	if ( -f "$blacklistsPath/$listName.txt" )
 	{
-		tie my @list, 'Tie::File', "$rblListsPath/$listName.txt";
+		tie my @list, 'Tie::File', "$blacklistsPath/$listName.txt";
 		@list = @ipList;
 		untie @list;
 		&zenlog( "IPs of '$listName' was modificated." );
@@ -1041,7 +1042,7 @@ sub setRBLAddToList
 
 
 =begin nd
-        Function: setRBLDeleteSource
+        Function: setBLDeleteSource
 
         Delete a source from a list
 
@@ -1052,23 +1053,23 @@ sub setRBLAddToList
         Returns:
 
 =cut
-# &setRBLDeleteSource  ( $listName, $id );
-sub setRBLDeleteSource
+# &setBLDeleteSource  ( $listName, $id );
+sub setBLDeleteSource
 {
 	my ( $listName, $id ) = @_;
-	my $type = &getRBLListParam( $listName, 'type' );
+	my $type = &getBLParam( $listName, 'type' );
 
 	my $ipset       = &getGlobalConfiguration( 'ipset' );
-	my $rblListsPath = &getGlobalConfiguration( 'rblListsPath' );
+	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 
-	tie my @list, 'Tie::File', "$rblListsPath/$listName.txt";
+	tie my @list, 'Tie::File', "$blacklistsPath/$listName.txt";
 	my $source = splice @list, $id, 1;
 	untie @list;
 
 	my $err;
-	if ( @{ &getRBLListParam( $listName, 'farms' ) } )
+	if ( @{ &getBLParam( $listName, 'farms' ) } )
 	{
-		$err = system ( "$ipset del $listName $source" );
+		$err = system ( "$ipset del $listName $source 2>/dev/null" );
 	}
 	&zenlog( "$source was deleted from $listName" ) if ( !$err );
 
@@ -1077,7 +1078,7 @@ sub setRBLDeleteSource
 
 
 =begin nd
-        Function: setRBLAddSource
+        Function: setBLAddSource
 
         Add a source from a list
 
@@ -1088,23 +1089,23 @@ sub setRBLDeleteSource
         Returns:
 
 =cut
-# &setRBLAddSource  ( $listName, $source );
-sub setRBLAddSource
+# &setBLAddSource  ( $listName, $source );
+sub setBLAddSource
 {
 	my ( $listName, $source ) = @_;
-	my $type = &getRBLListParam( $listName, 'type' );
+	my $type = &getBLParam( $listName, 'type' );
 
 	my $ipset       = &getGlobalConfiguration( 'ipset' );
-	my $rblListsPath = &getGlobalConfiguration( 'rblListsPath' );
+	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 
-	tie my @list, 'Tie::File', "$rblListsPath/$listName.txt";
+	tie my @list, 'Tie::File', "$blacklistsPath/$listName.txt";
 	push @list, $source;
 	untie @list;
 
 	my $error;
-	if ( @{ &getRBLListParam( $listName, 'farms' ) } )
+	if ( @{ &getBLParam( $listName, 'farms' ) } )
 	{
-		$error = system ( "$ipset add $listName $source" );
+		$error = system ( "$ipset add $listName $source 2>/dev/null" );
 	}
 	&zenlog( "$source was added to $listName" ) if ( ! $error );
 	return $error;
@@ -1112,7 +1113,7 @@ sub setRBLAddSource
 
 
 =begin nd
-        Function: setRBLModifSource
+        Function: setBLModifSource
 
         Modify a source from a list
 
@@ -1124,25 +1125,23 @@ sub setRBLAddSource
         Returns:
 
 =cut
-# &setRBLModifSource  ( $listName, $id, $source );
-sub setRBLModifSource
+# &setBLModifSource  ( $listName, $id, $source );
+sub setBLModifSource
 {
 	my ( $listName, $id, $source ) = @_;
-	my $type        = &getRBLListParam( $listName, 'type' );
+	my $type        = &getBLParam( $listName, 'type' );
 	my $ipset       = &getGlobalConfiguration( 'ipset' );
-	my $rblListsPath = &getGlobalConfiguration( 'rblListsPath' );
+	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $err;
 
-	&zenlog( "list::$listName, id::$id, source::$source" );
-
-	tie my @list, 'Tie::File', "$rblListsPath/$listName.txt";
+	tie my @list, 'Tie::File', "$blacklistsPath/$listName.txt";
 	my $oldSource = splice @list, $id, 1, $source;
 	untie @list;
 
-	if ( @{ &getRBLListParam( $listName, 'farms' ) } )
+	if ( @{ &getBLParam( $listName, 'farms' ) } )
 	{
-		$err = system ( "$ipset del $listName $oldSource" );
-		$err = system ( "$ipset add $listName $source" ) if ( !$err );
+		$err = system ( "$ipset del $listName $oldSource 2>/dev/null" );
+		$err = system ( "$ipset add $listName $source 2>/dev/null" ) if ( !$err );
 	}
 	&zenlog( "$oldSource was replaced for $source in the list $listName" )
 	  if ( !$err );
@@ -1158,19 +1157,19 @@ farms:
 #~ --------
 
 =begin nd
-        Function: getRBLRules
+        Function: getBLRules
 
-        list all RBL applied rules
+        list all BL applied rules
 
         Parameters:
 				
         Returns:
-				@array  - RBL applied rules 
+				@array  - BL applied rules 
 				== 0	- error
 
 =cut
-# &getRBLRules
-sub getRBLRules
+# &getBLRules
+sub getBLRules
 {
 	my @rlbRules;
 
@@ -1182,7 +1181,7 @@ sub getRBLRules
 		my $lineNum = 0;
 		foreach my $rule ( @rules )
 		{
-			if ( $rule =~ /RBL_/ )
+			if ( $rule =~ /BL_/ )
 			{
 				push @rlbRules, $rule;
 			}
@@ -1191,4 +1190,74 @@ sub getRBLRules
 	return \@rlbRules;
 }
 
+
+# &setBLCronTask ( $list, $time );
+sub setBLCronTask
+{
+	my ( $listName, $time ) = @_;
+	
+	$time->{ 'min' }='*' 		if ( ! $time->{ 'min' } );
+	$time->{ 'hour' }='*' 	if ( ! $time->{ 'hour' } );
+	$time->{ 'dom' }='*' 	if ( ! $time->{ 'dom' } );	# day of month
+	$time->{ 'month' }='*'	if ( ! $time->{ 'month' } );
+	$time->{ 'dow' }='*' 	if ( ! $time->{ 'dow' } );  # day of week
+	
+	my $blacklistsCronFile = &getGlobalConfiguration ( 'blacklistsCronFile' );
+
+	# */5 * * * *	root	/usr/local/zenloadbalancer/app/zenrrd/zenrrd.pl &>/dev/null
+	my $cmd = "$time->{ 'min' } $time->{ 'hour' } $time->{ 'dom' } $time->{ 'month' } $time->{ 'dow' }\t" . 
+		"root\t/usr/local/zenloadbalancer/www/Plugins/ipds/rbl/updateRemoteList.pl $listName &>/dev/null";
+	
+	tie my @list, 'Tie::File', $blacklistsCronFile;
+	push @list, $cmd;
+	untie @list;
+	
+}
+
+
+sub delBLCronTast
+{
+	my $listName = shift;
+	my $blacklistsCronFile = &getGlobalConfiguration ( 'blacklistsCronFile' );
+
+	tie my @list, 'Tie::File', $blacklistsCronFile;
+
+	foreach my $line ( @list  )
+	{
+		if ( $line =~ /\s$listName\s/ )
+		{
+			splice @list, $line, 1;
+			last;
+		}
+	}
+	
+	untie @list;
+	
+}
+
+
+sub getBLCronTast
+{
+	my $listName = shift;
+	my $blacklistsConf = &getGlobalConfiguration ( 'blacklistsConf' );
+	
+	my $file = Config::Tiny->read( $blacklistsConf );
+	my %conf = %{ $file->{ $listname } };
+	
+	
+	return \%conf;
+}
+
+
 1;
+
+
+
+
+
+
+
+
+
+
+
