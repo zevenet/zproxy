@@ -137,6 +137,10 @@ else
 	exit 1;        #Abort deploy
 }
 
+#Rename zenloadbalancer package to zevenet
+sed -i 's/Package: zenloadbalancer/Package: zevenet/' "/var/lib/dpkg/status"
+
+
 #Check if exists mini_httpd conf and store the current port and interface
 if ( -e "/usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf" )
 {
