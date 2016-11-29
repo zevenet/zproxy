@@ -141,13 +141,13 @@ my %format_re = (
 	'notif_time'   => qr/$natural/,               # this value can't be 0
 
 	# ipds
-	'rbl_list'      => qr{[a-zA-Z0-9]+},
-	'rbl_source'    => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
-	'rbl_source_id' => qr{\d+},
-	'rbl_location'  => qr{(?:local|remote)},
-	'rbl_type'      => qr{(?:allow|deny)},
-	'rbl_url'       => qr{.+},
-	'rbl_refresh'   => qr{\d+},
+	'blacklists_list'      => qr{[a-zA-Z0-9]+},
+	'blacklists_source'    => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
+	'blacklists_source_id' => qr{\d+},
+	'blacklists_location'  => qr{(?:local|remote)},
+	'blacklists_type'      => qr{(?:allow|deny)},
+	'blacklists_url'       => qr{.+},
+	'blacklists_refresh'   => qr{\d+},
 	'ddos_key'      => qr/(?:$ddos_global|$ddos_all|$ddos_tcp)/,
 	'ddos_key_farm' => qr/(?:$ddos_all|$ddos_tcp)/,
 	'ddos_key_global' => $ddos_global,

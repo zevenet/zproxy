@@ -1391,63 +1391,63 @@ POST qr{^/system/notifications/alerts/($alert_re)/actions$} => sub {
 #
 _ipds:
 
-my $rbl_list      = &getValidFormat( 'rbl_list' );
-my $rbl_source_id = &getValidFormat( 'rbl_source_id' );
+my $blacklists_list      = &getValidFormat( 'blacklists_list' );
+my $blacklists_source_id = &getValidFormat( 'blacklists_source_id' );
 
-# RBL
-#  GET all rbl lists
-GET qr{^/ipds/rbl$} => sub {
-	&get_rbl_all_lists;
+# BLACKLISTS
+#  GET all blacklists lists
+GET qr{^/ipds/blacklists$} => sub {
+	&get_blacklists_all_lists;
 };
 
-#  POST rbl list
-POST qr{^/ipds/rbl$} => sub {
-	&add_rbl_list( @_ );
+#  POST blacklists list
+POST qr{^/ipds/blacklists$} => sub {
+	&add_blacklists_list( @_ );
 };
 
-#  GET rbl lists
-GET qr{^/ipds/rbl/($rbl_list)$} => sub {
-	&get_rbl_list( @_ );
+#  GET blacklists lists
+GET qr{^/ipds/blacklists/($blacklists_list)$} => sub {
+	&get_blacklists_list( @_ );
 };
 
-#  PUT rbl list
-PUT qr{^/ipds/rbl/($rbl_list)$} => sub {
-	&set_rbl_list( @_ );
+#  PUT blacklists list
+PUT qr{^/ipds/blacklists/($blacklists_list)$} => sub {
+	&set_blacklists_list( @_ );
 };
 
-#  DELETE rbl list
-DELETE qr{^/ipds/rbl/($rbl_list)$} => sub {
-	&del_rbl_list( @_ );
+#  DELETE blacklists list
+DELETE qr{^/ipds/blacklists/($blacklists_list)$} => sub {
+	&del_blacklists_list( @_ );
 };
 
-#  GET a source from a rbl list
-GET qr{^/ipds/rbl/($rbl_list)/source$} => sub {
-	&get_rbl_source( @_ );
+#  GET a source from a blacklists list
+GET qr{^/ipds/blacklists/($blacklists_list)/source$} => sub {
+	&get_blacklists_source( @_ );
 };
 
-#  POST a source from a rbl list
-POST qr{^/ipds/rbl/($rbl_list)/source$} => sub {
-	&add_rbl_source( @_ );
+#  POST a source from a blacklists list
+POST qr{^/ipds/blacklists/($blacklists_list)/source$} => sub {
+	&add_blacklists_source( @_ );
 };
 
-#  PUT a source from a rbl list
-PUT qr{^/ipds/rbl/($rbl_list)/source/($rbl_source_id)$} => sub {
-	&set_rbl_source( @_ );
+#  PUT a source from a blacklists list
+PUT qr{^/ipds/blacklists/($blacklists_list)/source/($blacklists_source_id)$} => sub {
+	&set_blacklists_source( @_ );
 };
 
-#  DELETE a source from a rbl list
-DELETE qr{^/ipds/rbl/($rbl_list)/source/($rbl_source_id)$} => sub {
-	&del_rbl_source( @_ );
+#  DELETE a source from a blacklists list
+DELETE qr{^/ipds/blacklists/($blacklists_list)/source/($blacklists_source_id)$} => sub {
+	&del_blacklists_source( @_ );
 };
 
 #  POST list to farm
-POST qr{^/farms/($farm_re)/ipds/rbl$} => sub {
-	&add_rbl_to_farm( @_ );
+POST qr{^/farms/($farm_re)/ipds/blacklists$} => sub {
+	&add_blacklists_to_farm( @_ );
 };
 
 #  DELETE list from farm
-DELETE qr{^/farms/($farm_re)/ipds/rbl/($rbl_list)$} => sub {
-	&del_rbl_from_farm( @_ );
+DELETE qr{^/farms/($farm_re)/ipds/blacklists/($blacklists_list)$} => sub {
+	&del_blacklists_from_farm( @_ );
 };
 
 # DDoS

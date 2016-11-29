@@ -87,6 +87,10 @@ $unzip="/usr/bin/unzip";
 $mv="/bin/mv";
 #Where is mkdir?
 $mkdir="/bin/mkdir";
+#Where is ipset?
+$ipset = "/sbin/ipset";
+#Where is touch?
+$touch = "/usr/bin/touch";
 #Where is ls?
 $ls="/bin/ls";
 #Where is cp?
@@ -229,13 +233,13 @@ $syslogFile="/var/log/syslog";
 $logger="/usr/bin/logger";
 
 #IPDS Module
-$rblListsPath = "/usr/local/zenloadbalancer/config/ipds/rbl/lists";
-$rblConf = "/usr/local/zenloadbalancer/config/ipds/rbl/lists.conf";
-$rblLocalPreload = "/usr/local/zenloadbalancer/www/Plugins/ipds/rbl/local";
-$rblRemotePreload = "/usr/local/zenloadbalancer/www/Plugins/ipds/rbl/remote_lists.conf";
-$ipset = "/sbin/ipset";
-$touch = "/usr/bin/touch";
+$blacklistsPath = "/usr/local/zenloadbalancer/config/ipds/blacklists/lists";
+$blacklistsConf = "/usr/local/zenloadbalancer/config/ipds/blacklists/lists.conf";
+$blacklistsLocalPreload = "/usr/local/zenloadbalancer/www/Plugins/ipds/blacklists/local";
+$blacklistsRemotePreload = "/usr/local/zenloadbalancer/www/Plugins/ipds/blacklists/remote_lists.conf";
+$blacklistsCronFile = "/etc/cron.d/blacklists";
 $ddosConf = "/usr/local/zenloadbalancer/www/Plugins/ipds/ddos/ddos.conf";
+
 
 
 #::END Global Section

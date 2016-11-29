@@ -12,25 +12,25 @@
 #
 ###############################################################################
 
-require "/usr/local/zenloadbalancer/www/Plugins/rbl.cgi";
+require "/usr/local/zenloadbalancer/www/Plugins/blacklists.cgi";
 require "/usr/local/zenloadbalancer/www/Plugins/ddos.cgi";
 
 use warnings;
 use strict;
 
-rbl:
+blacklists:
 
 #**
-#  @api {get} /ipds/rbl Request all rbl lists
+#  @api {get} /ipds/blacklists Request all black lists
 #  @apiGroup IPDS
-#  @apiDescription Get description of all rbl lists
-#  @apiName GetAllRblLists
+#  @apiDescription Get description of all blackl lists
+#  @apiName GetAllBlacklistsLists
 #  @apiVersion 3.0
 #
 #
 # @apiSuccessExample Success-Response:
 #{
-#   "description" : "rbl lists",
+#   "description" : "black lists",
 #   "lists" : [
 #      {
 #         "farms" : [
@@ -65,25 +65,25 @@ rbl:
 #}
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists
 #
 #@apiSampleRequest off
 #**
-# GET /ipds/rbl
-sub get_rbl_all_lists
+# GET /ipds/blacklists
+sub get_blacklists_all_lists
 {
-	my $listNames   = &getRBLExists();
-	my $description = "Get rbl lists";
+	my $listNames   = &getBLExists();
+	my $description = "Get black lists";
 	my @lists;
 	foreach my $list ( @{ $listNames } )
 	{
 		my %listHash = (
 						 list     => $list,
-						 farms    => &getRBLListParam( $list, 'farms' ),
-						 type     => &getRBLListParam( $list, 'type' ),
-						 location => &getRBLListParam( $list, "location" )
+						 farms    => &getBLParam( $list, 'farms' ),
+						 type     => &getBLParam( $list, 'type' ),
+						 location => &getBLParam( $list, "location" )
 		);
-		if ( &getRBLListParam( $list, 'preload' ) eq 'true' )
+		if ( &getBLParam( $list, 'preload' ) eq 'true' )
 		{
 			$listHash{ 'preload' } = 'true';
 		}
@@ -95,17 +95,17 @@ sub get_rbl_all_lists
 }
 
 #**
-#  @api {get} /ipds/rbl/<listname> Request a rbl list
+#  @api {get} /ipds/blacklists/<listname> Request a black list
 #  @apiGroup IPDS
-#  @apiDescription Get a rbl list description
-#  @apiName GetRblList
-#  @apiParam {String} listname  Rbl list name, unique ID.
+#  @apiDescription Get a black list description
+#  @apiName GetBlacklistsList
+#  @apiParam {String} listname  Black list name, unique ID.
 #  @apiVersion 3.0
 #
 #
 # @apiSuccessExample Success-Response:
 #{
-#   "description" : "rbl lists",
+#   "description" : "black lists",
 #   "params" : [
 #      {
 #         "farms" : [
@@ -129,42 +129,42 @@ sub get_rbl_all_lists
 #}
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/<listname>
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/<listname>
 #
 #@apiSampleRequest off
 #**
-#GET /ipds/rbl/<listname>
-sub get_rbl_list
+#GET /ipds/blacklists/<listname>
+sub get_blacklists_list
 {
 	my $listName    = shift;
 	my $description = "Get list $listName";
 	my %listHash;
 	my $errormsg;
 
-	if ( ! &getRBLExists( $listName ) )
+	if ( ! &getBLExists( $listName ) )
 	{
 		my @ipList;
 		my $index = 0;
-		foreach my $source ( @{ &getRBLListParam( $listName, 'sources' ) } )
+		foreach my $source ( @{ &getBLParam( $listName, 'sources' ) } )
 		{
 			push @ipList, { id => $index++, source => $source };
 		}
 		%listHash = (
 					  name     => $listName,
 					  sources  => \@ipList,
-					  farms    => &getRBLListParam( $listName, 'farms' ),
-					  type     => &getRBLListParam( $listName, 'type' ),
-					  location => &getRBLListParam( $listName, 'location' )
+					  farms    => &getBLParam( $listName, 'farms' ),
+					  type     => &getBLParam( $listName, 'type' ),
+					  location => &getBLParam( $listName, 'location' )
 		);
-		if ( &getRBLListParam( $listName, 'preload' ) eq 'true' )
+		if ( &getBLParam( $listName, 'preload' ) eq 'true' )
 		{
 			$listHash{ 'preload' } = 'true';
 		}
-		if ( &getRBLListParam( $listName, 'url' ) )
+		if ( &getBLParam( $listName, 'url' ) )
 		{
-			$listHash{ 'url' }     = &getRBLListParam( $listName, 'url' );
-			$listHash{ 'status' }  = &getRBLListParam( $listName, 'status' );
-			$listHash{ 'refresh' } = &getRBLListParam( $listName, 'refresh' );
+			$listHash{ 'url' }     = &getBLParam( $listName, 'url' );
+			$listHash{ 'status' }  = &getBLParam( $listName, 'status' );
+			$listHash{ 'refresh' } = &getBLParam( $listName, 'refresh' );
 		}
 		&httpResponse(
 			{ code => 200, body => { description => $description, params => \%listHash } }
@@ -180,12 +180,12 @@ sub get_rbl_list
 	return \%listHash;
 }
 
-#####Documentation of POST RBL list####
+#####Documentation of POST BL list####
 #**
-#  @api {post} /ipds/rbl/<listname> Create a new rbl list
+#  @api {post} /ipds/blacklists/<listname> Create a new black list
 #  @apiGroup IPDS
-#  @apiName PostRblList
-#  @apiDescription Create a new rbl list
+#  @apiName PostBlacklistsList
+#  @apiDescription Create a new black list
 #  @apiVersion 3.0
 #
 #
@@ -209,13 +209,13 @@ sub get_rbl_list
 #
 # @apiExample {curl} Example Usage:
 #		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"type":"deny", "location":"local"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/newList
+#		-d '{"type":"deny", "location":"local"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/newList
 #
 # @apiSampleRequest off
 #
 #**
-#  POST /ipds/rbl
-sub add_rbl_list
+#  POST /ipds/blacklists
+sub add_blacklists_list
 {
 	my $json_obj = shift;
 	my $errormsg;
@@ -232,7 +232,7 @@ sub add_rbl_list
 	if ( !$errormsg )
 	{
 		# A list with this name just exist
-		if ( &getRBLExists( $listName ) != -1 )
+		if ( &getBLExists( $listName ) != -1 )
 		{
 			$errormsg = "A list with name '$listName' just exists.";
 		}
@@ -240,7 +240,7 @@ sub add_rbl_list
 		# Check key format
 		foreach my $key ( keys %$json_obj )
 		{
-			if ( ! &getValidFormat( "rbl_$key", $json_obj->{ $key } ) )
+			if ( ! &getValidFormat( "blacklists_$key", $json_obj->{ $key } ) )
 			{
 				$errormsg = "$key hasn't a correct format.";
 				last;
@@ -285,7 +285,7 @@ sub add_rbl_list
 				$listParams->{ 'type' }     = $json_obj->{ 'type' }
 				  if ( exists $json_obj->{ 'type' } );
 
-				if ( &setRBLCreateList( $listName, $listParams ) )
+				if ( &setBLCreateList( $listName, $listParams ) )
 				{
 					$errormsg = "Error, creating a new list.";
 				}
@@ -293,7 +293,7 @@ sub add_rbl_list
 				# All successful
 				else
 				{
-					my $listHash = &getRBLListParam( $listName );
+					my $listHash = &getBLParam( $listName );
 					delete $listHash->{ 'sources' };
 					delete $listHash->{ 'preload' };
 					&httpResponse(
@@ -314,13 +314,13 @@ sub add_rbl_list
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of PUT rbl list####
+#####Documentation of PUT black list####
 #**
-#  @api {put} /ipds/rbl/<listname> Modify a rbl list
+#  @api {put} /ipds/blacklists/<listname> Modify a black list
 #  @apiGroup IPDS
-#  @apiName PutRblList
-#  @apiParam {String} listname  RBL list name, unique ID.
-#  @apiDescription Modify the params in a RBL list
+#  @apiName PutBlacklistsList
+#  @apiParam {String} listname  BL list name, unique ID.
+#  @apiDescription Modify the params in a BL list
 #  @apiVersion 3.0
 #
 #
@@ -356,13 +356,13 @@ sub add_rbl_list
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
 #        -d '{"type":"allow","list":["192.168.100.240","21.5.6.4"],
-#       "name":"newNameList"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/list
+#       "name":"newNameList"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/list
 #
 # @apiSampleRequest off
 #
 #**
-#  PUT /ipds/rbl/<listname>
-sub set_rbl_list
+#  PUT /ipds/blacklists/<listname>
+sub set_blacklists_list
 {
 	my $json_obj    = shift;
 	my $listName    = shift;
@@ -371,7 +371,7 @@ sub set_rbl_list
 
 	my @allowParams = ( "type", "url", "refresh", "sources","list" );
 
-	if ( &getRBLExists( $listName ) == -1 )
+	if ( &getBLExists( $listName ) == -1 )
 	{
 		$errormsg = "The list '$listName' doesn't exist.";
 		my $body = {
@@ -382,14 +382,14 @@ sub set_rbl_list
 		&httpResponse( { code => 404, body => $body } );
 	}
 
-	my $location = &getRBLListParam( $listName, 'location' );
+	my $location = &getBLParam( $listName, 'location' );
 	$errormsg = &getValidOptParams( $json_obj, \@allowParams );
 	if ( !$errormsg )
 	{
 		# Check key format
 		foreach my $key ( keys %{ $json_obj } )
 		{
-			if ( ! &getValidFormat( "rbl_$key", $json_obj->{ $key } ) )
+			if ( ! &getValidFormat( "blacklists_$key", $json_obj->{ $key } ) )
 			{
 				$errormsg = "$key hasn't a correct format.";
 				last;
@@ -417,14 +417,14 @@ sub set_rbl_list
 					# no correct format sources are ignored
 					if ( $key eq 'sources' )
 					{
-						my $source_format = &getValidFormat( 'rbl_source' );
+						my $source_format = &getValidFormat( 'blacklists_source' );
 						my $noPush = grep ( !/$source_format)/, @{ $json_obj->{ 'list' } } );
 						# error
 						&zenlog( "$noPush sources couldn't be added" ) if ( $noPush );
 					}
 
 					# set params 
-					$errormsg = &setRBLListParam( $listName, $key, $json_obj->{ $key } );
+					$errormsg = &setBLParam( $listName, $key, $json_obj->{ $key } );
 					$errormsg = "Error, modifying $key in $listName." if ( $errormsg );
 					
 					# once changed list, update de list name
@@ -439,7 +439,7 @@ sub set_rbl_list
 				if ( !$errormsg )
 				{
 					# all successful
-					my $listHash = &getRBLListParam( $listName );
+					my $listHash = &getBLParam( $listName );
 					delete $listHash->{ 'action' };
 					&httpResponse(
 								   {
@@ -464,13 +464,13 @@ sub set_rbl_list
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of DELETE RBL list####
+#####Documentation of DELETE BL list####
 #**
-#  @api {delete} /ipds/rbl/<listname> Delete a Farm
+#  @api {delete} /ipds/blacklists/<listname> Delete a Farm
 #  @apiGroup IPDS
-#  @apiName DeleteRblList
-#  @apiParam {String} listname	rbl list name, unique ID.
-#  @apiDescription Delete a given rbl list
+#  @apiName DeleteBlacklistsList
+#  @apiParam {String} listname	black list name, unique ID.
+#  @apiDescription Delete a given black list
 #  @apiVersion 3.0
 #
 #
@@ -484,17 +484,17 @@ sub set_rbl_list
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/listname
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/listname
 #
 # @apiSampleRequest off
 #
 #**
-sub del_rbl_list
+sub del_blacklists_list
 {
 	my $listName = shift;
 	my $description = "Delete list '$listName'",
 
-	my $errormsg = &getRBLExists( $listName );
+	my $errormsg = &getBLExists( $listName );
 	if ( $errormsg == -1 )
 	{
 		$errormsg = "$listName doesn't exist.";
@@ -505,7 +505,7 @@ sub del_rbl_list
 	}
 	else
 	{
-		$errormsg = &setRBLDeleteList( $listName );
+		$errormsg = &setBLDeleteList( $listName );
 		if ( !$errormsg )
 		{
 			$errormsg = "The list $listName has been deleted successful.";
@@ -526,17 +526,17 @@ sub del_rbl_list
 }
 
 #**
-#  @api {get} /ipds/rbl/<listname> Request the sources of a list
+#  @api {get} /ipds/blacklists/<listname> Request the sources of a list
 #  @apiGroup IPDS
 #  @apiDescription Get the sources of a list
-#  @apiName GetRblSource
-#  @apiParam {String} listname  Rbl list name, unique ID.
+#  @apiName GetBlacklistsSource
+#  @apiParam {String} listname  black list name, unique ID.
 #  @apiVersion 3.0
 #
 #
 # @apiSuccessExample Success-Response:
 #{
-#   "description" : "rbl sources",
+#   "description" : "blacklists sources",
 #   "params" : [
 #      {
 #         "farms" : [
@@ -560,23 +560,23 @@ sub del_rbl_list
 #}
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/<listname>/source
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/<listname>/source
 #
 #@apiSampleRequest off
 #**
-#GET /ipds/rbl/<listname>/source
-sub get_rbl_source
+#GET /ipds/blacklists/<listname>/source
+sub get_blacklists_source
 {
 	my $listName    = shift;
 	my $description = "Get $listName sources";
 	my %listHash;
-	my $err = &getRBLExists( $listName );
+	my $err = &getBLExists( $listName );
 
 	if ( $err == 0 )
 	{
 		my @ipList;
 		my $index = 0;
-		foreach my $source ( @{ &getRBLListParam( $listName, 'sources' ) } )
+		foreach my $source ( @{ &getBLParam( $listName, 'sources' ) } )
 		{
 			push @ipList, { id => $index++, source => $source };
 		}
@@ -604,10 +604,10 @@ sub get_rbl_source
 
 #####Documentation of POST a source to a list####
 #**
-#  @api {post} /ipds/rbl/<listname>/source Create a new source for a list
+#  @api {post} /ipds/blacklists/<listname>/source Create a new source for a list
 #  @apiGroup IPDS
-#  @apiName PostRblSource
-#  @apiParam {String} listname  Rbl list name, unique ID.
+#  @apiName PostBlacklistsSource
+#  @apiParam {String} listname  Black list name, unique ID.
 #  @apiDescription Add a source to a specific list
 #  @apiVersion 3.0
 #
@@ -629,13 +629,13 @@ sub get_rbl_source
 #
 # @apiExample {curl} Example Usage:
 #		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"source":"16.31.0.223"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/source
+#		-d '{"source":"16.31.0.223"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/source
 #
 # @apiSampleRequest off
 #
 #**
-#  POST /ipds/rbl/<listname>/source
-sub add_rbl_source
+#  POST /ipds/blacklists/<listname>/source
+sub add_blacklists_source
 {
 	my $json_obj = shift;
 	my $listName = shift;
@@ -644,7 +644,7 @@ sub add_rbl_source
 	my @requiredParams = ( "source" );
 	my @optionalParams;
 
-	if ( &getRBLExists( $listName ) == -1 )
+	if ( &getBLExists( $listName ) == -1 )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
@@ -660,24 +660,24 @@ sub add_rbl_source
 		  &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
 		if ( !$errormsg )
 		{
-			if ( ! &getValidFormat( 'rbl_source', $json_obj->{ 'source' } )  )
+			if ( ! &getValidFormat( 'blacklists_source', $json_obj->{ 'source' } )  )
 			{
 				$errormsg = "It's necessary to introduce a correct source.";
 			}
 			elsif (
 					grep ( /^$json_obj->{'source'}$/,
-						   @{ &getRBLListParam( $listName, 'sources' ) } ) )
+						   @{ &getBLParam( $listName, 'sources' ) } ) )
 			{
 				$errormsg = "$json_obj->{'source'} just exists in the list.";
 			}
 			else
 			{
-				$errormsg = &setRBLAddSource( $listName, $json_obj->{ 'source' } );
+				$errormsg = &setBLAddSource( $listName, $json_obj->{ 'source' } );
 				if ( !$errormsg )
 				{
 					my @ipList;
 					my $index = 0;
-					foreach my $source ( @{ &getRBLListParam( $listName, 'sources' ) } )
+					foreach my $source ( @{ &getBLParam( $listName, 'sources' ) } )
 					{
 						push @ipList, { id => $index++, source => $source };
 					}
@@ -705,18 +705,18 @@ sub add_rbl_source
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of PUT a source of a RBL list####
+#####Documentation of PUT a source of a black list####
 #**
-#  @api {put} /ipds/rbl/<listname>/source/<id> Modify a source of a rbl list
+#  @api {put} /ipds/blacklists/<listname>/source/<id> Modify a source of a black list
 #  @apiGroup IPDS
-#  @apiName PutRblSource
-#  @apiParam	{String}	listname	RBL list name, unique ID.
+#  @apiName PutBlacklistsSource
+#  @apiParam	{String}	listname	Black list name, unique ID.
 #  @apiParam	{number}	id			Source ID to modificate.
-#  @apiDescription Modify a source of a RBL list
+#  @apiDescription Modify a source of a Black list
 #  @apiVersion 3.0
 #
 #
-#  @apiSuccess	{String}	source		IP or net segment to modificate in a rbl list.
+#  @apiSuccess	{String}	source		IP or net segment to modificate in a black list.
 #
 #
 # @apiSuccessExample Success-Response:
@@ -731,13 +731,13 @@ sub add_rbl_source
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"source":"10.12.55.3" https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/source/1
+#        -d '{"source":"10.12.55.3" https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/source/1
 #
 # @apiSampleRequest off
 #
 #**
-#  PUT /ipds/rbl/<listname>/source/<id>
-sub set_rbl_source
+#  PUT /ipds/blacklists/<listname>/source/<id>
+sub set_blacklists_source
 {
 	my $json_obj    = shift;
 	my $listName    = shift;
@@ -747,7 +747,7 @@ sub set_rbl_source
 	my @allowParams = ( "source" );
 
 	# check list exists
-	if ( &getRBLExists( $listName ) == -1 )
+	if ( &getBLExists( $listName ) == -1 )
 	{
 		$errormsg = "$listName not found";
 		my $body = {
@@ -759,7 +759,7 @@ sub set_rbl_source
 	}
 
 	# check source id exists
-	elsif ( @{ &getRBLListParam( $listName, 'sources' ) } <= $id )
+	elsif ( @{ &getBLParam( $listName, 'sources' ) } <= $id )
 	{
 		$errormsg = "Source id $id not found";
 		my $body = {
@@ -774,17 +774,17 @@ sub set_rbl_source
 		$errormsg = &getValidOptParams( $json_obj, \@allowParams );
 		if ( !$errormsg )
 		{
-			if ( ! &getValidFormat( 'rbl_source', $json_obj->{ 'source' } ) )
+			if ( ! &getValidFormat( 'blacklists_source', $json_obj->{ 'source' } ) )
 			{
 				$errormsg = "Wrong source format.";
 			}
-			elsif ( &setRBLModifSource( $listName, $id, $json_obj->{ 'source' } ) != 0 )
+			elsif ( &setBLModifSource( $listName, $id, $json_obj->{ 'source' } ) != 0 )
 			{
 				$errormsg = "Error, putting the source to the list.";
 			}
 			else
 			{
-				my $sources = &getRBLListParam( $listName, 'sources' );
+				my $sources = &getBLParam( $listName, 'sources' );
 				my $body = {
 							 description => $description,
 							 params      => $sources
@@ -801,12 +801,12 @@ sub set_rbl_source
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of DELETE a source of a RBL list####
+#####Documentation of DELETE a source of a black list####
 #**
-#  @api {delete} /ipds/rbl/<listname>/source/<id>	Delete a source from a rbl list
+#  @api {delete} /ipds/blacklists/<listname>/source/<id>	Delete a source from a black list
 #  @apiGroup IPDS
-#  @apiName DeleteRblSource
-#  @apiParam	{String}	listname	rbl list name, unique ID.
+#  @apiName DeleteBlacklistsSource
+#  @apiParam	{String}	listname	Black list name, unique ID.
 #  @apiParam	{number}	id			Source ID to delete.
 #  @apiDescription Delete a source of alist
 #  @apiVersion 3.0
@@ -822,19 +822,19 @@ sub set_rbl_source
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/rbl/list/source/1
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/list/source/1
 #
 # @apiSampleRequest off
 #
 #**
-sub del_rbl_source
+sub del_blacklists_source
 {
 	my $listName = shift;
 	my $id       = shift;
 	my $errormsg;
 	my $description = "Delete source from the list $listName";
 
-	if ( &getRBLExists( $listName ) == -1 )
+	if ( &getBLExists( $listName ) == -1 )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
@@ -844,7 +844,7 @@ sub del_rbl_source
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( @{ &getRBLListParam( $listName, 'sources' ) } <= $id )
+	elsif ( @{ &getBLParam( $listName, 'sources' ) } <= $id )
 	{
 		$errormsg = "ID $id doesn't exist in the list $listName.";
 		my $body = {
@@ -856,7 +856,7 @@ sub del_rbl_source
 	}
 	else
 	{
-		if ( &setRBLDeleteSource( $listName, $id ) != 0 )
+		if ( &setBLDeleteSource( $listName, $id ) != 0 )
 		{
 			$errormsg = "Error deleting source $id";
 		}
@@ -881,15 +881,15 @@ sub del_rbl_source
 
 #####Documentation of POST enable a list in a farm####
 #**
-#  @api {post} /farms/<farmname>/ipds/rbl	Enable a list in a farm
+#  @api {post} /farms/<farmname>/ipds/blacklists	Enable a list in a farm
 #  @apiGroup IPDS
-#  @apiName PostRblListToFarm
+#  @apiName PostBlacklistsListToFarm
 #  @apiParam {String} farmname	farm name, unique ID.
 #  @apiDescription Add a list rule to a farm
 #  @apiVersion 3.0
 #
 #
-# @apiSuccess   {String}	list		Existing rbl list.
+# @apiSuccess   {String}	list		Existing black list.
 #
 #@apiSuccessExample Success-Response:
 #{
@@ -901,13 +901,13 @@ sub del_rbl_source
 #
 # @apiExample {curl} Example Usage:
 #		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"list":"blackList"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/dns/ipds/rbl
+#		-d '{"list":"blackList"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/dns/ipds/blacklists
 #
 # @apiSampleRequest off
 #
 #**
-#  POST /farms/<farmname>/ipds/rbl
-sub add_rbl_to_farm
+#  POST /farms/<farmname>/ipds/blacklists
+sub add_blacklists_to_farm
 {
 	my $json_obj = shift;
 	my $farmName = shift;
@@ -925,7 +925,7 @@ sub add_rbl_to_farm
 				description => $description, error => "true", message => $errormsg };
 			&httpResponse( { code => 404, body => $body } );
 		}
-		elsif ( &getRBLExists( $listName ) == -1 )
+		elsif ( &getBLExists( $listName ) == -1 )
 		{
 			$errormsg = "$listName doesn't exist.";
 			my $body = {
@@ -934,13 +934,13 @@ sub add_rbl_to_farm
 		}
 		else
 		{
-			if ( grep ( /^$farmName$/, @{ &getRBLListParam( $listName, 'farms' ) } ) )
+			if ( grep ( /^$farmName$/, @{ &getBLParam( $listName, 'farms' ) } ) )
 			{
 				$errormsg = "$listName just is applied to $farmName.";
 			}
 			else
 			{
-				$errormsg = &setRBLApplyToFarm( $farmName, $listName );
+				$errormsg = &setBLApplyToFarm( $farmName, $listName );
 				if ( !$errormsg )
 				{
 					my $errormsg = "List $listName was applied successful to the farm $farmName.";
@@ -962,12 +962,12 @@ sub add_rbl_to_farm
 
 #####Documentation of DELETE disable a list in a farm####
 #**
-#  @api {delete} /farms/<farmname>/ipds/rbl/<listname>	Delete a rbl rule from a farm
+#  @api {delete} /farms/<farmname>/ipds/blacklists/<listname>	Delete a black rule from a farm
 #  @apiGroup IPDS
-#  @apiName DeleteRblListFromFarm
+#  @apiName DeleteBlacklistsFromFarm
 #  @apiParam	{String}	farmname	farm name, unique ID.
-#  @apiParam	{String}	listname	rbl list name, unique ID.
-#  @apiDescription Delete a given rbl list from a farm
+#  @apiParam	{String}	listname	black list name, unique ID.
+#  @apiDescription Delete a given black list from a farm
 #  @apiVersion 3.0
 #
 #
@@ -981,13 +981,13 @@ sub add_rbl_to_farm
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/dns/ipds/rbl/listName
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/dns/ipds/blacklists/listName
 #
 # @apiSampleRequest off
 #
 #**
-# DELETE /farms/<farmname>/ipds/rbl/<listname>
-sub del_rbl_from_farm
+# DELETE /farms/<farmname>/ipds/blacklists/<listname>
+sub del_blacklists_from_farm
 {
 	my $farmName = shift;
 	my $listName = shift;
@@ -1001,14 +1001,14 @@ sub del_rbl_from_farm
 			description => $description, error => "true", message => $errormsg };
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( &getRBLExists( $listName ) == -1 )
+	elsif ( &getBLExists( $listName ) == -1 )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
 			description => $description, error => "true", message => $errormsg };
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( ! grep( /^$farmName$/, @{ &getRBLListParam( $listName, 'farms' ) } ) )
+	elsif ( ! grep( /^$farmName$/, @{ &getBLParam( $listName, 'farms' ) } ) )
 	{
 		$errormsg = "Not found a rule associated to $listName and $farmName.";
 		my $body = {
@@ -1017,7 +1017,7 @@ sub del_rbl_from_farm
 	}
 	else
 	{
-		$errormsg = &setRBLRemFromFarm( $farmName, $listName );
+		$errormsg = &setBLRemFromFarm( $farmName, $listName );
 		if ( !$errormsg )
 		{
 			$errormsg = "List $listName was removed successful from the farm $farmName.";
@@ -1236,7 +1236,7 @@ sub set_ddos
 #  @api {get} /farms/<farmname>/ipds/ddos Request DDoS status of a farm
 #  @apiGroup IPDS
 #  @apiDescription Get DDoS status of a farm
-#  @apiName GetRblList
+#  @apiName GetBlacklistsList
 #  @apiParam {String} farmname  farm name, unique ID.
 #  @apiVersion 3.0
 #

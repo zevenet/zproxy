@@ -183,6 +183,8 @@ sub getNetworkStats    # ()
 		exit 1;
 	}
 
+	my @outHash;
+
 	open DEV, '/proc/net/dev' or die $!;
 	my ( $in, $out );
 	my @data;
@@ -221,6 +223,8 @@ sub getNetworkStats    # ()
 			push @interface, $if;
 			push @interfacein, $in;
 			push @interfaceout, $out;
+			
+			push @outHash, { 'interface' => $if, 'in' => $in, 'out' => $out  };
 		}
 
 	}
@@ -232,6 +236,9 @@ sub getNetworkStats    # ()
 	}
 
 	close DEV;
+	
+	@data = @outHash if ( $format eq 'hash' );
+	
 	return @data;
 }
 

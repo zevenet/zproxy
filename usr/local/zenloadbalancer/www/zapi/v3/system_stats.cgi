@@ -1643,22 +1643,18 @@ sub stats_cpu # ()
 #GET /stats/network
 sub stats_network # ()
 {
-	my @data_net = &getNetworkStats();
+	my @interfaces = &getNetworkStats( 'hash' );
 
-	my $out = {
-		'hostname' => &getHostname(),
-		'date'     => &getDate(),
-	};
-
-	foreach my $array_pair ( @data_net )
-	{
-		$out->{ $array_pair->[0] } = $array_pair->[1] + 0;
-	}
+	my $output;
+	$output->{ 'hostname'} = &getHostname();
+	$output->{ 'date' } 		= &getDate();
+	$output->{ 'interfaces' } = \@interfaces;
+	
 
 	# Success
 	my $body = {
 				 description => "Network interefaces usage",
-				 params      => $out
+				 params      => $output
 	};
 
 	&httpResponse({ code => 200, body => $body });
