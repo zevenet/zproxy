@@ -138,7 +138,7 @@ else
 }
 
 #Rename zenloadbalancer package to zevenet
-sed -i 's/Package: zenloadbalancer/Package: zevenet/' "/var/lib/dpkg/status"
+my @run = `sed -i 's/Package: zenloadbalancer/Package: zevenet/' "/var/lib/dpkg/status"`
 
 
 #Check if exists mini_httpd conf and store the current port and interface
