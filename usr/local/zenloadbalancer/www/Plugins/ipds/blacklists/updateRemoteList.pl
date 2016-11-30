@@ -44,7 +44,7 @@ if ( ! system ( "ipset -L $listName 2>/dev/null" ) )
 		system ("$logger \"Error, updatign $listName.\" -i -t updatelist");
 	}	
 }
-#~ else 
+else 
 {
 	$output = -2;
 	system ("$logger \"Error, updatign $listName.\" -i -t updatelist");

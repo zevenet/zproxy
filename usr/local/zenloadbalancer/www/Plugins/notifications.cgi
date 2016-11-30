@@ -22,22 +22,97 @@
 ###############################################################################
 
 
-#~ use warnings FATAL => 'all';
-#~ use warnings;
-#~ use strict;
+use warnings;
+use strict;
 
 
 #~ require "/usr/local/zenloadbalancer/www/functions.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
+require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 #~ require "/usr/local/zenloadbalancer/www/plugins_functions.cgi";
+
+
+
+sub setNotifCreateConfFile
+{
+	my $confdir = &getGlobalConfiguration( 'notifConfDir' );
+	my $hostname = &getHostname();
+	my $senderFile = "$confdir/sender.conf";
+	my $alertsFile = "$confdir/alert_$hostname.conf";
+	my $fileHandle;
+	my $output;
+	
+	# create config directory
+	if ( ! -d $confdir )
+	{
+		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $confdir" );
+		&zenlog( "Created $confdir directory." );
+	}
+
+	# restore old config files
+	my $mv = &getGlobalConfiguration( "mv" );
+	my $alertsOld = "/usr/local/zenloadbalancer/www/Plugins/Notifications/Alerts.conf";
+	my $sendersOld = "/usr/local/zenloadbalancer/www/Plugins/Notifications/Senders.conf";
+	if ( -e $alertsOld )	
+	{
+		system ( "$mv $alertsOld $alertsFile" );
+		&zenlog( "Alert config file was moved to $confdir." );
+	}
+	if ( -e $sendersOld )
+	{
+		system ( "$mv $sendersOld $senderFile" );
+		&zenlog( "Sender config file was moved to $confdir." );
+	}
+	
+	# Create sender configuration file
+	if ( ! -e $senderFile )
+	{
+		my $senderConf =
+			"[Smtp]\n"
+		 . "auth=LOGIN\n"
+		 . "auth-password=\n"
+		 . "auth-user=\n"
+		 . "bin=/usr/local/zenloadbalancer/app/swaks/swaks\n"
+		 . "from=\n"
+		 . "server=\n"
+		 . "tls=false\n"
+		 . "to=\n";
+		open my $fileHandle, '>', $senderFile;
+		print $fileHandle $senderConf;
+		close $fileHandle;
+		&zenlog( "Sender config file created." );
+	}
+	
+	# Create alert configuration file. It's different in each host
+	if ( ! -e $alertsFile )
+	{
+		my $alertConf =
+			"[Backend]\n"
+		 . "PrefixSubject=\n"
+		 . "SwitchTime=5\n"
+		 . "Status=off\n\n"
+		 . "[Cluster]\n"
+		 . "PrefixSubject=\n"
+		 . "Status=off\n\n"
+		 . "[Notifications]\n"
+		 . "Status=off\n\n";
+		open my $fileHandle, '>', $alertsFile;
+		print $fileHandle $alertConf;
+		close $fileHandle;
+		&zenlog( "Alert config file created." );
+	}
+	
+	return $output;
+}
+
 
 
 # Check form data and configure mail server.
 # &setNotifSenders ( $sender, $params );
 sub setNotifSenders
 {
-	my $sender      = shift;
-	my $params      = shift;
+	my $sender  = shift;
+	my $params = shift;
 	my $sendersFile = &getGlobalConfiguration( 'senders' );
 	my $errMsg;
 
@@ -276,20 +351,10 @@ sub changeTimeSwitch    # &changeTimeSwitch ( $rule, $time )
 # Check sec status and boot it if was on
 sub zlbstartNotifications
 {
-	my $notificationsPath =
-	  &getGlobalConfiguration( 'pluginsdir' ) . "/Notifications";
-	my $sendersFile = &getGlobalConfiguration( 'senders' );
-	my $alertFile = &getGlobalConfiguration( 'alerts' );
+	my $notificationsPath = &getGlobalConfiguration( 'notifConfDir' ) ;
 	
 	# create conf file if don't exists
-	open my $hand, "<", $sendersFile
-	  or system ( "cp $notificationsPath/templates/Senders.conf $sendersFile" );
-	close $hand if ( $hand );
-	
-	# create conf file if don't exists  
-	open $hand, "<", $alertFile
-	  or system ( "cp $notificationsPath/templates/Alerts.conf $alertFile" );
-	close $hand if ( $hand );
+	&setNotifCreateConfFile();
 	
 	# check last state before stop service
 	my $status = &getNotifData( 'alerts', 'Notifications', 'Status' );
@@ -379,8 +444,19 @@ sub setNotifData
 	my ( $name, $section, $key, $data ) = @_;
 	my $errMsg;
 	my $fileHandle;
+	my $fileName;
+	
+	my $confdir = getGlobalConfiguration( 'notifConfDir' );
+	if ( $name eq 'senders' )
+	{
+		$fileName = "$confdir/sender.conf";
+	}
+	elsif ( $name eq 'alerts' )
+	{
+		my $hostname = &getHostname();
+		$fileName = "$confdir/alert_$hostname.conf";
+	}
 
-	my $fileName = &getGlobalConfiguration( $name );
 	if ( !-f $fileName )
 	{
 		$errMsg = -1;
@@ -403,7 +479,18 @@ sub getNotifData
 	my $arguments = scalar @_;
 	my $data;
 	my $fileHandle;
-	my $fileName = &getGlobalConfiguration( $name );
+	my $fileName;
+	
+	my $confdir = getGlobalConfiguration( 'notifConfDir' );
+	if ( $name eq 'senders' )
+	{
+		$fileName = "$confdir/sender.conf";
+	}
+	elsif ( $name eq 'alerts' )
+	{
+		my $hostname = &getHostname();
+		$fileName = "$confdir/alert_$hostname.conf";
+	}
 
 	if ( !-f $fileName ) { $data = -1; }
 	else
@@ -422,15 +509,17 @@ sub getNotifData
 
 sub getNotifSendersSmtp
 {
-
 	my $method;
 	$method->{ 'method' }   = 'email';
 	$method->{ 'server' }   = &getNotifData( 'senders', 'Smtp', 'server' );
 	$method->{ 'user' }     = &getNotifData( 'senders', 'Smtp', 'auth-user' );
-	$method->{ 'password' } = '******';
 	$method->{ 'from' }     = &getNotifData( 'senders', 'Smtp', 'from' );
 	$method->{ 'to' }       = &getNotifData( 'senders', 'Smtp', 'to' );
 	$method->{ 'tls' }      = &getNotifData( 'senders', 'Smtp', 'tls' );
+	if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
+		{ $method->{ 'password' } = '******'; }
+	else
+		{ $method->{ 'password' } = ''; }
 
 	return $method;
 }

@@ -26,14 +26,12 @@
 use Config::Tiny;
 
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
+require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 
 ( my $section, my $pattern ) = @ARGV;
 
-my $body;
-my $command;
 my ( $subject, $bodycomp ) = &getSubjectBody( $pattern );
 my $logger = &getGlobalConfiguration ( 'logger' );
-
 
 if ( $subject eq "error" || !$bodycomp )
 {
@@ -41,48 +39,62 @@ if ( $subject eq "error" || !$bodycomp )
 	exit 1;
 }
 
-$body = "\n***** Notifications *****\n\n" . "Alerts: $section Notification\n";
-$body .= $bodycomp;
+&sendByMail ( $subject, $bodycomp );
+exit 0;
 
-$command .= &getData( 'bin' );
-$command .= " --to " . &getData( 'to' );
-$command .= " --from " . &getData( 'from' );
-$command .= " --server " . &getData( 'server' );
-$command .= " --auth " . &getData( 'auth' );
-$command .= " --auth-user " . &getData( 'auth-user' );
-$command .= " --auth-password " . &getData( 'auth-password' );
-if ( 'true' eq &getData( 'tls' ) ) { $command .= " -tls"; }
-$command .=
-    " --header \"Subject: "
-  . &getData( 'PrefixSubject', $section )
-  . " $subject\"";
-$command .= " --body \"$body\"";
 
-#not print
-$command .= " 1>/dev/null";
 
-#~ print "$command\n";
-system ( $command );
 
-# print log
-my $logMsg;
-$logMsg .= &getData( 'bin' );
-$logMsg .= " --to " . &getData( 'to' );
-$logMsg .= " --from " . &getData( 'from' );
-$logMsg .= " --server " . &getData( 'server' );
-$logMsg .= " --auth " . &getData( 'auth' );
-$logMsg .= " --auth-user " . &getData( 'auth-user' );
-$logMsg .= " --auth-password ********* ";
-$logMsg .= " -tls" 	if ( 'true' eq &getData( 'tls' ) );
+# &sendByMail ( $subject, $bodycomp );
+sub sendByMail
+{
+	my ( $subject, $bodycomp ) = @_;
+	my $body;
+	my $command;
+	my $logger = &getGlobalConfiguration ( 'logger' );
 
-$logMsg .= " --header \"Subject: "
-		.  &getData( 'PrefixSubject', $section )
-		.  " $subject\"";
-
-$logMsg .= " --body \"BODY\"";
-
-system ("$logger \"$logMsg\" -i -t sec");
-
+	$body = "\n***** Notifications *****\n\n" . "Alerts: $section Notification\n";
+	$body .= $bodycomp;
+	
+	$command .= &getData( 'senders', 'Smtp', 'bin' );
+	$command .= " --to " . &getData( 'senders', 'Smtp', 'to' );
+	$command .= " --from " . &getData( 'senders', 'Smtp', 'from' );
+	$command .= " --server " . &getData( 'senders', 'Smtp', 'server' );
+	$command .= " --auth " . &getData( 'senders', 'Smtp', 'auth' );
+	$command .= " --auth-user " . &getData( 'senders', 'Smtp', 'auth-user' );
+	$command .= " --auth-password " . &getData( 'senders', 'Smtp', 'auth-password' );
+	if ( 'true' eq &getData( 'senders', 'Smtp', 'tls' ) ) { $command .= " -tls"; }
+	$command .=
+		" --header \"Subject: "
+	. &getData( 'alerts', 'PrefixSubject', $section )
+	. " $subject\"";
+	$command .= " --body \"$body\"";
+	
+	#not print
+	$command .= " 1>/dev/null";
+	
+	#~ print "$command\n";
+	system ( $command );
+	
+	# print log
+	my $logMsg;
+	$logMsg .= &getData( 'senders', 'Smtp', 'bin' );
+	$logMsg .= " --to " . &getData( 'senders', 'Smtp', 'to' );
+	$logMsg .= " --from " . &getData( 'senders', 'Smtp', 'from' );
+	$logMsg .= " --server " . &getData( 'senders', 'Smtp', 'server' );
+	$logMsg .= " --auth " . &getData( 'senders', 'Smtp', 'auth' );
+	$logMsg .= " --auth-user " . &getData( 'senders', 'Smtp', 'auth-user' );
+	$logMsg .= " --auth-password " . &getData( 'senders', 'Smtp', 'auth-password' );
+	$logMsg .= " -tls" 	if ( 'true' eq &getData( 'senders', 'Smtp', 'tls' ) );
+	
+	$logMsg .= " --header \"Subject: "
+			.  &getData( 'alerts', 'PrefixSubject', $section )
+			.  " $subject\"";
+	
+	$logMsg .= " --body \"BODY\"";
+	
+	system ("$logger \"$logMsg\" -i -t sec");
+}
 
 
 # return:   @array = [ $subject, $body ]
@@ -209,38 +221,45 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 	return @output;
 }
 
-#  &getData ( $key, $section )
-#  &getData ( $key )
+
+#  &getData ( $file, $section, $key )
 sub getData
 {
-	my ( $key, $section ) = @_;
-	my $argumentos = scalar @_;
+	my ( $name, $section, $key ) = @_;
+	my $params = scalar @_;
 	my $data;
 	my $fileHandle;
 	my $fileName;
+	my $confdir = getGlobalConfiguration( 'notifConfDir' );
 
-	if ( $argumentos == 1 )
+	if ( $name eq 'senders' )
 	{
-		$section  = 'Smtp';
-		$fileName = "/usr/local/zenloadbalancer/www/Plugins/Notifications/Senders.conf";
+		$fileName = "$confdir/sender.conf";
 	}
-	else
+	elsif ( $name eq 'alerts' )
 	{
-		$fileName = "/usr/local/zenloadbalancer/www/Plugins/Notifications/Alerts.conf";
+		my $hostname = &getHostname();
+		$fileName = "$confdir/alert_$hostname.conf";
 	}
 
-	if ( !-f $fileName )
-	{
-		print "don't find $fileName.";
+	if ( !-f $fileName ) 
+	{ 
+		system ("$logger \"Error, not found $name config file\" -i -t notifications");
+		exit 1;
 	}
+		
 	else
 	{
 		$fileHandle = Config::Tiny->read( $fileName );
-		$data       = $fileHandle->{ $section }->{ $key };
+		if ( $params == 3 ) 
+			{ $data = $fileHandle->{ $section }->{ $key }; }
+		else 
+			{ system ("$logger \"Error getting data from file $name \" -i -t notifications"); }
 	}
-
+	
 	return $data;
 }
+
 
 #   &getGSLBFarm ( $pid )
 sub getGSLBFarm

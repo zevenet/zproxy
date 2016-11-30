@@ -87,6 +87,10 @@ $unzip="/usr/bin/unzip";
 $mv="/bin/mv";
 #Where is mkdir?
 $mkdir="/bin/mkdir";
+#Where is logger?
+$logger="/usr/bin/logger";
+#Where is sec?
+$sec="/usr/bin/sec";
 #Where is ipset?
 $ipset = "/sbin/ipset";
 #Where is touch?
@@ -225,12 +229,9 @@ $bonding_slaves_filename="bonding/slaves";
 $bonding_miimon_filename="bonding/miimon";
 
 #Notifications Module
-$alerts = "/usr/local/zenloadbalancer/www/Plugins/Notifications/Alerts.conf";
-$senders = "/usr/local/zenloadbalancer/www/Plugins/Notifications/Senders.conf";
-$sec="/usr/bin/sec";
+$notifConfDir = "/usr/local/zenloadbalancer/config/notifications";
 $secConf="/usr/local/zenloadbalancer/www/Plugins/Notifications/sec.rules";
 $syslogFile="/var/log/syslog";
-$logger="/usr/bin/logger";
 
 #IPDS Module
 $blacklistsPath = "/usr/local/zenloadbalancer/config/ipds/blacklists/lists";
