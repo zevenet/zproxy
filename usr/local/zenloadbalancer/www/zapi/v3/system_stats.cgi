@@ -504,7 +504,6 @@ sub possible_graphs	#()
 # GET all system graphs
 sub get_all_sys_graphs	 #()
 {
-	my @sys;
 	# System values
 	my @graphlist = &getGraphs2Show( "System" );
 	foreach my $graphlist ( @graphlist )
@@ -512,18 +511,11 @@ sub get_all_sys_graphs	 #()
 		if ( $graphlist =~ /dev/ )
 		{
 			$graphlist =~ s/hd$//g;
-			push @disks, { disk => $graphlist };
+			push @disks, $graphlist;
 		}
 	}
-
-	push @sys,
-	  {
-		cpu_usage    => "cpu",
-		disks        => @disks,
-		load_average => "load",
-		ram_memory   => "ram",
-		swap_memory  => "memsw"
-	  };
+	my @sys = ( "cpu", "load", "ram", "swap" );
+	push @sys, { disks => \@disks };
 
 	my $body = {
 		description =>

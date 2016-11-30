@@ -1211,7 +1211,7 @@ GET qr{^/graphs/interfaces$} => sub {
 };
 
 #  GET interfaces graphs
-GET qr{^/graphs/interfaces/($nic_re)$} => sub {
+GET qr{^/graphs/interfaces/($nic_re|$vlan_interface)$} => sub {
 	&get_iface_graphs( @_ );
 };
 
