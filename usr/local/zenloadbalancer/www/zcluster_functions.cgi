@@ -343,7 +343,7 @@ sub generateIdKey # $rc ()
 	{
 		mkdir $key_path;
 	}
-	
+
 	my $gen_output = `$keygen_cmd 2>&1`;
 	my $error_code = $?;
 
@@ -360,9 +360,9 @@ sub copyIdKey # $rc ( $ip_addr, $pass )
 	my $ip_address = shift;
 	my $password = shift;
 	
-	my $copyId_cmd = "/usr/local/zenloadbalancer/app/zbin/ssh-copy-id.sh $password root@$ip_address";
+	my $copyId_cmd = "HOME=\"/root\" /usr/local/zenloadbalancer/app/zbin/ssh-copy-id.sh $password root\@$ip_address";
 
-	my $copy_output = `$copyId_cmd`;
+	my $copy_output = `$copyId_cmd`; # WARNING: Do not redirect stderr to stdout
 	my $error_code = $?;
 
 	if ( $error_code != 0 )
@@ -376,29 +376,33 @@ sub copyIdKey # $rc ( $ip_addr, $pass )
 sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 {
 	my $ip_address = shift;
-	my $password = shift; 
+	my $password = shift;
 
-	# generate id key if it doesn't exist
+	#### Check for local key ID ####
+
+	# 1) generate id key if it doesn't exist
 	if ( ! -e "$key_path/$key_id" )
 	{
 		my $return_code = &generateIdKey();
 
-		return 1 if ( $return_code != 0 );
+		if ( $return_code || ! -f "$key_path/$key_id" )
+		{
+			&zenlog("Key ID $key_path/$key_id does not exist, aborting.");
+			return 1;
+		}
 	}
 
-	# install the key in the remote node
+	# 2) install the key in the remote node
 	my $error_code = &copyIdKey( $ip_address, $password );
 
 	return 1 if ( $error_code != 0 );
 
-	# Reload remote sshd??
-	
-	# Now we can run commands remotely
+	#### Check for remote key ID ####
 
-	# generate id key in remote node if it doesn't exist
-	&runRemotely("ls $key_path/$key_id", $ip_address );
+	# 1) generate id key in remote node if it doesn't exist
+	&runRemotely("ls $key_path/$key_id 2>/dev/null", $ip_address );
 	$error_code = $?;
-	
+
 	if ( $error_code != 0 )
 	{
 		my $gen_output = &runRemotely("$keygen_cmd 2>&1", $ip_address);
@@ -410,9 +414,8 @@ sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 			return 1;
 		}
 	}
-	
-	# install remote key in the localhost
-	my $local_if = &getInterfaceConfig('eth0', 4); # FIXME: choose the cluster interface
+
+	# 2) install remote key in the localhost
 	my $key_id_pub = &runRemotely("cat $key_path/$key_id.pub 2>&1", $ip_address );
 	$error_code = $?;
 
@@ -438,6 +441,7 @@ sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 		close $auth_keys;
 	}
 
+	# ended successfully
 	return 0;
 }
 
@@ -455,7 +459,7 @@ sub runRemotely # `output` ( $cmd, $ip_addr [, $port ] )
 	my $ssh = &getGlobalConfiguration('ssh');
 	my $ssh_cmd = "$ssh $ssh_options root\@$ip_address '$cmd'";
 	&zenlog("Running remotely: \@$ip_address: $cmd");
-	&zenlog("Running remotely: $ssh_cmd");
+	&zenlog("Running: $ssh_cmd");
 
 	# capture output and return it
 	return `$ssh_cmd`;

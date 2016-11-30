@@ -74,6 +74,8 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/farm_actions.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/post_gslb.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/ipds.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/system.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v3/cluster.cgi";
+
 
 my $q = &getCGI();
 
@@ -288,8 +290,15 @@ sub POST($$)
 	{
 		$input_ref = $data;
 	}
+	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } =~ qr!^multipart/form-data! )
+	{
+		# uploading activation certificate
+		# WARNING: Do not remove this case, need to skip the 415 status code
+		&zenlog("File upload request");
+	}
 	else
 	{
+		&zenlog( "Content-Type: $ENV{ CONTENT_TYPE }" );
 		&httpResponse( { code => 415 } );
 	}
 
@@ -317,8 +326,15 @@ sub PUT($$)
 	{
 		$input_ref = $data;
 	}
+	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } =~ qr!^multipart/form-data! )
+	{
+		# uploading activation certificate
+		# WARNING: Do not remove this case, need to skip the 415 status code
+		&zenlog("File upload request");
+	}
 	else
 	{
+		&zenlog( "Content-Type: $ENV{ CONTENT_TYPE }" );
 		&httpResponse( { code => 415 } );
 	}
 
@@ -1387,6 +1403,25 @@ POST qr{^/system/notifications/alerts/($alert_re)$} => sub {
 POST qr{^/system/notifications/alerts/($alert_re)/actions$} => sub {
 	&set_notif_alert_actions( @_ );
 };
+
+#### /system/cluster
+
+GET qr{^/system/cluster/status$} => sub {
+	&get_cluster_status( @_ );
+};
+
+GET qr{^/system/cluster$} => sub {
+	&get_cluster( @_ );
+};
+
+POST qr{^/system/cluster$} => sub {
+	&set_cluster( @_ );
+};
+
+POST qr{^/system/cluster/actions$} => sub {
+	&set_cluster_actions( @_ );
+};
+
 
 #	IPDS
 #
