@@ -137,7 +137,7 @@ sub forwardingToHelp
 			  . $versionZen
 			  . "-administration-guide/enterprise-edition-v"
 			  . $versionZen . "-"	
-			  . $urlEnd{ $idPage };
+			  . $urlEnd{ $main::id };
 		}
 	}
 
