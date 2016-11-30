@@ -17,8 +17,8 @@ require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
 require "/usr/local/zenloadbalancer/www/Plugins/notifications.cgi";
 
 
-#~ use warnings;
-#~ use strict;
+use warnings;
+use strict;
 
 
 _dns:
@@ -462,17 +462,27 @@ _license:
 # show license
 sub get_license
 {
+	my $format = shift;
 	my $description = "Get license";
-	my $licenseFile = &getGlobalConfiguration( 'licenseFile' );
 	my $file;
 
-	if ( $licenseFile )
+	if ( $format eq 'txt' )
 	{
+		my $licenseFile = &getGlobalConfiguration( 'licenseFileTxt' );
 		open ( my $license_fh, '<', "$licenseFile" );
 		$file .= $_ while ( <$license_fh> );
 		# Close this particular file.
 		close $license_fh;
 		&httpResponse({ code => 200, body => $file, type => 'text/plain' });
+	}
+	elsif ( $format eq 'html' )
+	{
+		my $licenseFile = &getGlobalConfiguration( 'licenseFileHtml' );
+		open ( my $license_fh, '<', "$licenseFile" );
+		$file .= $_ while ( <$license_fh> );
+		# Close this particular file.
+		close $license_fh;
+		&httpResponse({ code => 200, body => $file, type => 'text/html' });
 	}
 	else
 	{

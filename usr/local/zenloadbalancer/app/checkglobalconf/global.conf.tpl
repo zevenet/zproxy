@@ -37,7 +37,9 @@ $htpass="/etc/passwd";#update
 #ZAPI KEY
 $zapikey="";
 # Zen license 
-$licenseFile="/usr/local/zenloadbalancer/license.txt";
+$licenseFileTxt="/usr/local/zenloadbalancer/license.txt";
+# Zen license 
+$licenseFileHtml="/usr/local/zenloadbalancer/license.html";
 
 #dns file server?
 $filedns="/etc/resolv.conf";

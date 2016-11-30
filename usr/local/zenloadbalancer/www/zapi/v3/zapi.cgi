@@ -1255,9 +1255,10 @@ POST qr{^/system/snmp$} => sub {
 	&set_snmp( @_ );
 };
 
+my $license_re = &getValidFormat ( 'license_format' );
 #  GET license
-GET qr{^/system/license$} => sub {
-	&get_license();
+GET qr{^/system/license/($license_re)$} => sub {
+	&get_license( @_ );
 };
 
 #  GET ntp

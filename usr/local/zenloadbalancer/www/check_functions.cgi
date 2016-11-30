@@ -61,6 +61,9 @@ my %format_re = (
 	# hostname
 	'hostname' => $hostname,
 	
+	# license
+	'license_format' => qr/(?:txt|html)/,
+	
 	# log
 	'log' => qr/[\.\-\w]+/,
 
