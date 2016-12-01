@@ -248,7 +248,7 @@ sub getGSLBFarmPid    # ($farm_name)
 
 	my @run =
 	  `$ps -ef | grep "$gdnsd -c $configdir\/$farm_filename" | grep -v grep | awk {'print \$2'}`;
-	chomp ( $run[0] );
+	chomp ( @run );
 	
 	if ( $run[0] > 0 )
 	{
@@ -1775,15 +1775,13 @@ sub getGSLBFarmEstConns    # ($farm_name,@netstat)
 sub getGSLBCommandInExtmonFormat
 {
 	my ( $cmd, $port ) = @_;
+
 	my $libexec_dir = &getGlobalConfiguration ( 'libexec_dir' );
-	my $newCmd;
+	my @aux = split ( ' ', $cmd );
+	my $newCmd = "\"$libexec_dir/$aux[0]\"";
 	my $stringArg;
 	my $flag;
 
-	my @aux = split ( ' ', $cmd );
-
-	my $libexec_dir = &getGlobalConfiguration('libexec_dir');
-	$newCmd .= "\"$libexec_dir/$aux[0]\"";
 	splice @aux, 0, 1;
 
 	foreach my $word ( @aux )
@@ -1865,15 +1863,14 @@ sub getGSLBCommandInExtmonFormat
 sub getGSLBCommandInFGFormat
 {
 	my ( $cmd, $port ) = @_;
+
 	my $libexec_dir = &getGlobalConfiguration ( 'libexec_dir' );
-	my $newCmd;
 	my @aux = split ( ', ', $cmd );
 	my $flagPort;
+	my $newCmd = $aux[0];
 
-	$newCmd = $aux[0];
 	splice @aux, 0, 1;
 
-	my $libexec_dir = &getGlobalConfiguration('libexec_dir');
 	$newCmd =~ s/$libexec_dir\///;
 	$newCmd =~ s/^"(.+)"$/$1/;
 
