@@ -437,67 +437,28 @@ graphs:
 #GET disk
 sub possible_graphs	#()
 {
-	# Variables
-	my @sys;
-	my @disks;
-	my @net;
-	my @iface;
-	my @farm;
-	my @val;
-
-	# System values
-	my @graphlist = &getGraphs2Show( "System" );
-	foreach my $graphlist ( @graphlist )
+	my @farms = grep ( s/-farm//, &getGraphs2Show( "Farm" ) );
+	my @net = grep ( s/iface//, &getGraphs2Show( "Network" ) );
+	my @sys = ( "cpu", "load", "ram", "swap" );
+	
+	# Get mount point of disks
+	my @mount_points;
+	my $partitions = &getDiskPartitionsInfo();
+	for my $key ( keys %{ $partitions } )
 	{
-		if ( $graphlist =~ /dev/ )
-		{
-			$graphlist =~ s/hd$//g;
-			push @disks, { disk => $graphlist };
-		}
+		# mount point : root/mount_point
+		push( @mount_points, "root$partitions->{ $key }->{ mount_point }" );
 	}
-
-	push @sys,
-	  {
-		cpu_usage    => "cpu",
-		disks        => @disks,
-		load_average => "load",
-		ram_memory   => "ram",
-		swap_memory  => "memsw"
-	  };
-
-	# Network values
-	@graphlist = &getGraphs2Show( "Network" );
-	foreach my $graphlist ( @graphlist )
-	{
-		if ( $graphlist =~ /iface/ )
-		{
-			$graphlist =~ s/iface//g;
-			push @iface, { iface => $graphlist };
-		}
-	}
-
-	push @net, { interfaces => \@iface };
-
-	# Farm values
-	@graphlist = &getGraphs2Show( "Farm" );
-	foreach my $graphlist ( @graphlist )
-	{
-		if ( $graphlist =~ /-farm/ )
-		{
-			$graphlist =~ s/-farm//g;
-			push @val, { farmname => $graphlist };
-		}
-	}
-
-	push @farm, { farms => @val };
+	@mount_points = sort @mount_points;
+	push @sys, { disks => \@mount_points };
 
 	# Success
 	my $body = {
 		description =>
 		  "These are the possible graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
 		system  => \@sys,
-		network => \@net,
-		farm    => \@farm
+		interfaces => \@net,
+		farms    => \@farms
 	};
 
 	&httpResponse({ code => 200, body => $body });

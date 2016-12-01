@@ -242,6 +242,7 @@ $blacklistsLocalPreload = "/usr/local/zenloadbalancer/www/Plugins/ipds/blacklist
 $blacklistsRemotePreload = "/usr/local/zenloadbalancer/www/Plugins/ipds/blacklists/remote_lists.conf";
 $blacklistsCronFile = "/etc/cron.d/blacklists";
 $ddosConf = "/usr/local/zenloadbalancer/www/Plugins/ipds/ddos/ddos.conf";
+$ddosConfDir = "/usr/local/zenloadbalancer/www/Plugins/ipds/ddos";
 
 
 

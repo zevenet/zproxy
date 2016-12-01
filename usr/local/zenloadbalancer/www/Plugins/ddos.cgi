@@ -38,26 +38,25 @@ sub setDDOSCreateFileConf
 {
 	my $confFile = &getGlobalConfiguration( 'confFile' );
 	my $ddosConfDir = &getGlobalConfiguration( 'ddosConfDir' );
-	my $ipdsConfDir = &getGlobalConfiguration( 'ipdsConfDir' );
 	my $output;
 	
 	return 0 if ( -e $confFile );
 	
 	# create ipds directory if it doesn't exist
-	if ( ! -d $ipdsConfDir )
+	if ( ! -d $ddosConfDir )
 	{
-		$output = system ( &getGlobalConfiguration( 'mkdir' ) . " $ipdsConfDir" );
+		$output = system ( &getGlobalConfiguration( 'mkdir' ) . " $ddosConfDir" );
 	}
 	
 	# create ddos directory if it doesn't exist
 	if ( ! -d $ddosConfDir )
 	{
 		$output = system ( &getGlobalConfiguration( 'mkdir' ) . " $ddosConfDir" );
-		&zenlog ( "Created ipds configuration directory: $ipdsConfDir" );
+		&zenlog ( "Created ipds configuration directory: $ddosConfDir" );
 	}
 	else
 	{
-		&zenlog ( "Error, creating ipds configuration directory: $ipdsConfDir" );
+		&zenlog ( "Error, creating ipds configuration directory: $ddosConfDir" );
 	}
 	
 	# create file conf if doesn't exist
