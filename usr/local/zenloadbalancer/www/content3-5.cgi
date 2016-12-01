@@ -50,7 +50,7 @@ print "<div class=\"grid_6\"><h1>Settings :: Backup</h1></div>\n";
 if ( $action eq "apply" )
 {
 	&successmsg(
-		"Backup will be decompressed and Zen Load Balancer will be restarted, Zen Cluster node could switch..."
+		"Backup will be decompressed and ZEVENET will be restarted, Cluster node could switch..."
 	);
 	my @eject = `$tar -xvzf $backupdir$file -C /`;
 	&zenlog( "Restoring backup $backupdir$file" );
@@ -58,11 +58,11 @@ if ( $action eq "apply" )
 	my @eject = `/etc/init.d/zenloadbalancer restart 2> /dev/null`;
 	if ( $? == 0 )
 	{
-		&successmsg( "Backup applied and Zen Load Balancer restarted..." );
+		&successmsg( "Backup applied and ZEVENET restarted..." );
 	}
 	else
 	{
-		&errormsg( "Problem restarting Zen Load Balancer service" );
+		&errormsg( "Problem restarting ZEVENET service" );
 	}
 
 }

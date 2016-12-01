@@ -496,7 +496,7 @@ if ( -e $filecluster )
 			if ( $typecl =~ /^equal$/ )
 			{
 				&successmsg(
-					"Running Zen latency Service and Zen inotify Service, please wait and don't stop the process"
+					"Running latency Service and inotify Service, please wait and don't stop the process"
 				);
 
 				my $ucarp_cmd = "$ucarp -r $deadratio $ignoreifstate $ucarp_param --interface=$ifname[0] --srcip=$lip --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6";
@@ -528,7 +528,7 @@ if ( -e $filecluster )
 			if ( $typecl =~ /$lhost-$rhost/ )
 			{
 				&successmsg(
-							 "Running Zen latency Service and Zen inotify Service, please wait" );
+							 "Running latency Service and inotify Service, please wait" );
 				my @eject = system (
 					"$ucarp -r $deadratio $ignoreifstate $ucarp_param --interface=$ifname[0] --srcip=$lip -P --vhid=$idcluster --pass=secret --addr=$vipcl --upscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-start.pl --downscript=/usr/local/zenloadbalancer/app/zenlatency/zenlatency-stop.pl -B -f local6"
 				);
@@ -555,7 +555,7 @@ if ( -e $filecluster )
 			if ( $typecl =~ /Disabled/ )
 			{
 				&successmsg(
-							 "Disabling Zen latency Service and Zen inotify Service, please wait" );
+							 "Disabling latency Service and inotify Service, please wait" );
 				my $eject = $ssh->exec( "pkill -9f zeninotify.pl" );
 				my @eject = `pkill -9f zeninotify.pl`;
 				$eject = $ssh->exec( "pkill -9 ucarp" );
@@ -579,7 +579,7 @@ if ( -e $filecluster )
 			if ( $typecl =~ /Disabled/ )
 			{
 				&successmsg(
-							 "Disabling Zen latency Service and Zen inotify Service, please wait" );
+							 "Disabling latency Service and inotify Service, please wait" );
 
 				#remote execution
 				my $ssh = Net::SSH::Expect->new(
@@ -636,7 +636,7 @@ if ( ( $rhost && $lhost && $rip && $lip && $rip && $vipcl && $clstatus ) )
 {
 	#zenlatency is running on local:
 	my @ucarppidl = `$pidof -x ucarp`;
-	print "Zen latency ";
+	print "latency ";
 	if ( @ucarppidl )
 	{
 		print "is <b>UP</b>\n";
@@ -653,7 +653,7 @@ if ( ( $rhost && $lhost && $rip && $lip && $rip && $vipcl && $clstatus ) )
 	#zenlatency is running on remote?:
 	my @ucarppidr =
 	  `ssh -o \"ConnectTimeout=10\" -o \"StrictHostKeyChecking=no\" root\@$rip \"pidof -x ucarp \" 2>&1`;
-	print "Zen latency ";
+	print "latency ";
 	if ( @ucarppidr[0] =~ /^[0-9]/ )
 	{
 		print "is <b>UP</b>\n";
@@ -715,7 +715,7 @@ if ( ( $rhost && $lhost && $rip && $lip && $rip && $vipcl && $clstatus ) )
 
 	#where is zeninotify
 	my @zeninopidl = `$pidof -x zeninotify.pl`;
-	print "Zen Inotify is running on ";
+	print "Inotify is running on ";
 	$zeninorun  = "false";
 	$zeninorun2 = "false";
 	$activeino  = "false";

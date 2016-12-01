@@ -172,7 +172,7 @@ sub refreshstats    # ()
 	  ? print "<option value=\"120\" selected>120 seconds</option>\n"
 	  : print "<option value=\"120\">120 seconds</option>\n";
 
-	print "</select> NOTE: It can overload the Zen server.</p>";
+	print "</select> NOTE: It can overload the server.</p>";
 
 	print "</form>";
 	print "<div class=\"onlyclear\">&nbsp;</div>";
@@ -541,7 +541,7 @@ sub createmenubackup    # ($file)
 	# Apply
 	print "
 		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Apply $file backup and restart Zen Load Balancer service\">
+		<button type=\"submit\" class=\"myicons\" title=\"Apply $file backup and restart ZEVENET service\">
 			<i class=\"fa fa-check-circle action-icon fa-fw green\"></i>
 		</button>
 		<input type=\"hidden\" name=\"id\" value=\"$id\">
