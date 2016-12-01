@@ -12,7 +12,7 @@
 
 ###############################################################################
 #
-#     This file is part of the Zen Load Balancer Enterprise Edition software
+#     This file is part of the ZEVENET Load Balancer Enterprise Edition software
 #     package.
 #
 #     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
@@ -436,7 +436,7 @@ if ( $eject eq "start" )
 				print "CL_IP: $vipcl\n";
 
 				print
-				  "Cluster is running on this node, running IPS and FARMS for Zen Load Balancer...\n";
+				  "Cluster is running on this node, running IPS and FARMS for ZEVENET Load Balancer...\n";
 			}
 		}
 		else
@@ -474,7 +474,7 @@ if ( $eject eq "stop" )
 		{
 			system ( 'pkill -9 ucarp' );
 			system ( 'pkill -9f zeninotify.pl' );
-			print "Stopping Zen Cluster on this node...\n";
+			print "Stopping Cluster on this node...\n";
 		}
 
 		sleep ( 5 );
@@ -601,7 +601,7 @@ if ( $eject eq 'startlocal' )
 	}
 
 	### Starting Network Interfaces
-	print "Starting Zen Load Balancer...\n";
+	print "Starting ZEVENET Load Balancer...\n";
 	print "* Starting Interfaces:\n";
 
 	my $mgmt_ip = &GUIip();
@@ -836,7 +836,7 @@ if ( $eject eq 'startlocal' )
 if ( $eject eq "stoplocal" )
 {
 	&zenlog( "stoplocal process started..." );
-	print "Stopping Zen Load Balancer...\n";
+	print "Stopping ZEVENET Load Balancer...\n";
 
 	### Stopping Farms
 	print "* Stopping Farms:\n";
@@ -988,7 +988,7 @@ if ( $eject eq "stoplocal" )
 					}
 					else
 					{
-						print "  no DOWN, it is the Zen GUI\n";
+						print "  no DOWN, it is the ZEVENET GUI\n";
 					}
 				}
 			}
