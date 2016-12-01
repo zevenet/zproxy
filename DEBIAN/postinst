@@ -93,10 +93,10 @@ fi
 
 if [ -f /bin/systemctl ]
 then
-	systemctl -q stop snmpd
-	systemctl -q disable snmpd
-	systemctl -q stop sec
-	systemctl -q disable sec
+	systemctl stop snmpd 2>/dev/null
+	systemctl disable snmpd 2>/dev/null
+	systemctl stop sec 2>/dev/null
+	systemctl disable sec 2>/dev/null
 else
 	/etc/init.d/snmpd stop > /dev/null
 	insserv -r snmpd
