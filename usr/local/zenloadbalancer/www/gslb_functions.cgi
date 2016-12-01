@@ -1638,9 +1638,10 @@ sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $fname, $newfname ) = @_;
-	my $rrdap_dir = &getGlobalConfiguration ( "rrdap_dir" );
-	my $rrd_dir = &getGlobalConfiguration ( "rrd_dir" );
-	my $configdir = &getGlobalConfiguration ( "configdir" );
+
+	my $rrdap_dir = &getGlobalConfiguration( "rrdap_dir" );
+	my $rrd_dir   = &getGlobalConfiguration( "rrd_dir" );
+	my $configdir = &getGlobalConfiguration( "configdir" );
 	
 	my $type   = &getFarmType( $fname );
 	my $ffile  = &getFarmFile( $fname );
@@ -1659,9 +1660,6 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 	$output = 0;
 
 	# rename rrd
-	my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
-	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
-
 	rename ( "$rrdap_dir/$rrd_dir/$fname-farm.rrd",
 			 "$rrdap_dir/$rrd_dir/$newfname-farm.rrd" );
 
