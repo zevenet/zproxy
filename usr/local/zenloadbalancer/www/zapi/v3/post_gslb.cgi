@@ -1,5 +1,11 @@
 #!/usr/bin/perl -w
 
+
+
+use warnings;
+use strict;
+
+
 ##############################################################################
 #
 #     This file is part of the Zen Load Balancer Enterprise Edition software

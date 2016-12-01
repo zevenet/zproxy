@@ -12,6 +12,9 @@
 #
 ###############################################################################
 
+use warnings;
+use strict;
+
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 require "/usr/local/zenloadbalancer/www/rrd_functions.cgi";
 
@@ -506,6 +509,8 @@ sub get_all_sys_graphs	 #()
 {
 	# System values
 	my @graphlist = &getGraphs2Show( "System" );
+	my @disks; 
+	
 	foreach my $graphlist ( @graphlist )
 	{
 		if ( $graphlist =~ /dev/ )
@@ -530,6 +535,7 @@ sub get_all_sys_graphs	 #()
 sub get_sys_graphs	#()
 {
 	my $key = shift;
+	my $description = "Get $key graphs";
 	
 	$key = 'mem' if ( $key eq 'ram' );
 	$key = 'memsw' if ( $key eq 'swap' );
@@ -557,6 +563,7 @@ sub get_frec_sys_graphs	#()
 {	
 	my $key = shift;
 	my $frecuency = shift;
+	my $description = "Get $frecuency $key graphs";
 	
 	$key = 'mem' if ( $key eq 'ram' );
 	$key = 'memsw' if ( $key eq 'swap' );
@@ -645,6 +652,7 @@ sub get_iface_graphs	#()
 sub get_frec_iface_graphs	#()
 {
 	my $iface = shift;
+	my $frecuency = shift;
 	my $description = "Get interface graphs";
 	my $errormsg;
 	# validate NIC NAME
@@ -801,7 +809,7 @@ sub list_disks	#()
 		push( @mount_points, $partitions->{ $key }->{ mount_point } );
 	}
 
-	sort @mount_points;
+	@mount_points = sort @mount_points;
 
 	my $body = {
 		description => "List disk partitions",
@@ -961,7 +969,7 @@ stats:
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k --header 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server:444/zapi/v3/zapi.cgi/farms/httpstest/stats
+#        https://<zenlb_server:444/zapi/v3/zapi.cgi/stats/farms/FARM
 #
 # @apiSampleRequest off
 #
@@ -970,11 +978,13 @@ stats:
 sub farm_stats # ( $farmname )
 {
 	my $farmname = shift;
+	my $errormsg;
+	my $description = "Get farm stats";
 
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		$errormsg = "The farmname $farmname does not exist.";
-		my $body = { description => $description, error       => "true", message     => $errormsg };
+		my $body = { description => $description, error  => "true", message => $errormsg };
 		&httpResponse( { code => 404, body => $body } );		
 	}
 	else
@@ -995,14 +1005,14 @@ sub farm_stats # ( $farmname )
 			my @backends = &getFarmBackendsStatus( $farmname, @content );
 	
 			# List of services
-			my @a_services;
+			my @a_service;
 			my $sv;
 			foreach ( @content )
 			{
 				if ( $_ =~ /Service/ )
 				{
 					my @l = split ( "\ ", $_ );
-					$sv = @l[2];
+					$sv = $l[2];
 					$sv =~ s/"//g;
 					chomp ( $sv );
 					push ( @a_service, $sv );
@@ -1031,16 +1041,16 @@ sub farm_stats # ( $farmname )
 				{
 					$i++;
 				}
-				$ip_backend   = $backends_data[1];
-				$port_backend = $backends_data[2];
+				my $ip_backend   = $backends_data[1];
+				my $port_backend = $backends_data[2];
 	
 				@netstat = &getConntrack( "$fvip", $ip_backend, "", "", "tcp" );
-				@synnetstatback =
+				my @synnetstatback =
 				&getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
-				$npend = @synnetstatback;
-				@stabnetstatback =
+				my $npend = @synnetstatback;
+				my @stabnetstatback =
 				&getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
-				$nestab = @stabnetstatback;
+				my $nestab = @stabnetstatback;
 	
 				if ( $backends_data[3] == -1 )
 				{
@@ -1120,13 +1130,14 @@ sub farm_stats # ( $farmname )
 			foreach ( @backends )
 			{
 				my @backends_data = split ( ";", $_ );
-				$activesessions = $activesessions + $backends_data[6];
+				#~ $activesessions = $activesessions + $backends_data[6];   # replace by next line
+				my $activesessions = $backends_data[6];
 				my $ip_backend   = $backends_data[0];
 				my $port_backend = $backends_data[1];
 	
 				# Pending Conns
 				my @synnetstatback;
-				@netstat = &getConntrack( "", $fvip, $ip_backend, "", "" );
+				my @netstat = &getConntrack( "", $fvip, $ip_backend, "", "" );
 				@synnetstatback =
 				&getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
 				my $npend = @synnetstatback;

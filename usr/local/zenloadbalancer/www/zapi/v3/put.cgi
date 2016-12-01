@@ -21,22 +21,6 @@ sub modify_farm # ( $json_obj, $farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
-	if ( $farmname =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to modify a farm $farmname, invalid farmname, can't be blank."
-		);
-
-		# Error
-		my $errormsg = "Invalid farm name, please insert a valid value.";
-		my $body = {
-					 description => "Modify backend",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
 	
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )

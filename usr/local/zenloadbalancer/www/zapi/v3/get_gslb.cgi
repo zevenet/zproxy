@@ -1,5 +1,8 @@
 #!/usr/bin/perl -w
 
+use warnings;
+use strict;
+
 ########### GET GSLB
 # curl --tlsv1 -k --header 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB
 #
@@ -114,6 +117,7 @@ sub farms_name_gslb # ( $farmname )
 	my @out_s;
 	my @out_z;
 
+	my $status;
 	my $vip   = &getFarmVip( "vip",  $farmname );
 	my $vport = &getFarmVip( "vipp", $farmname );
 	$vport = $vport + 0;
@@ -135,10 +139,10 @@ sub farms_name_gslb # ( $farmname )
 
 	my @services = &getGSLBFarmServices( $farmname );
 
-	foreach my $srv ( @services )
+	foreach my $srv_it ( @services )
 	{
-		my @serv = split ( ".cfg", $srv );
-		my $srv  = @serv[0];
+		my @serv = split ( ".cfg", $srv_it );
+		my $srv  = $serv[0];
 		my $lb   = &getFarmVS( $farmname, $srv, "algorithm" );
 
 		# Default port health check
@@ -151,8 +155,8 @@ sub farms_name_gslb # ( $farmname )
 		#
 
 		my @out_b;
-		my $backendsvs = &getFarmVS( $farmname, $srv, "backends" );
-		my @be         = split ( "\n", $backendsvs );
+		$backendsvs = &getFarmVS( $farmname, $srv, "backends" );
+		@be         = split ( "\n", $backendsvs );
 
 		foreach my $subline ( @be )
 		{
@@ -164,14 +168,14 @@ sub farms_name_gslb # ( $farmname )
 
 			my @subbe = split ( " => ", $subline );
 
-			@subbe[0] =~ s/^primary$/1/;
-			@subbe[0] =~ s/^secondary$/2/;
+			$subbe[0] =~ s/^primary$/1/;
+			$subbe[0] =~ s/^secondary$/2/;
 			#~ @subbe[0]+0 if @subbe[0] =~ /^\d+$/;
 
 			push @out_b,
 			  {
-				id => @subbe[0]+0,
-				ip => @subbe[1],
+				id => $subbe[0]+0,
+				ip => $subbe[1],
 			  };
 		}
 
@@ -209,9 +213,7 @@ sub farms_name_gslb # ( $farmname )
 		my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
 		my @be = split ( "\n", $backendsvs );
 		my @out_re;
-
 		my $resources = &getGSLBResources  ( $farmname, $zone );
-		my $ns = &getFarmVS( $farmname, $zone, "ns" );
 
 		for my $resource ( @{ $resources } )
 		{

@@ -1,5 +1,8 @@
 #!/usr/bin/perl -w
 
+use warnings;
+use strict;
+
 ######### PUT GSLB
 #
 # curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"newfarmname":"newFarmGSLB","vip":"178.62.126.152","vport":"53"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB
@@ -56,13 +59,15 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	my $reload_flag  = "false";
 	my $restart_flag = "false";
 	my $error        = "false";
+	my $status;
+	my $changedname = "false";
 
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
-		my $output = {
+		my $body = {
 					   description => "Modify farm",
 					   error       => "true",
 					   message     => $errormsg
@@ -230,6 +235,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	# Modify Farm's Name
 	if ( exists ( $json_obj->{ newfarmname } ) )
 	{
+		my $newfstat;
 		if ( $json_obj->{ newfarmname } =~ /^$/ )
 		{
 			$error = "true";
@@ -255,7 +261,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 					}
 					else
 					{
-						$oldfstat = &runFarmStop( $farmname, "true" );
+						my $oldfstat = &runFarmStop( $farmname, "true" );
 						if ( $oldfstat != 0 )
 						{
 							$error = "true";
@@ -478,7 +484,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
-		my $output = {
+		my $body = {
 					   description => $description,
 					   error       => "true",
 					   message     => $errormsg
@@ -692,7 +698,8 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 					 message      => $message,
 		};
 		
-		if(  $checkConf = &getGSLBCheckConf  ( $farmname ) )
+		my $checkConf = &getGSLBCheckConf  ( $farmname );
+		if( $checkConf )
 		{	
 			if ( $checkConf =~ /^(.+?)\s/ )
 			{
@@ -765,6 +772,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 {
 	my ( $json_obj, $farmname, $zone ) = @_;
 
+	my $error;
 	if ( $farmname =~ /^$/ )
 	{
 		&zenlog(

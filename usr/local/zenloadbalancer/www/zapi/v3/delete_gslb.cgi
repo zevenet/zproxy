@@ -1,5 +1,9 @@
 #!/usr/bin/perl -w
 
+
+use warnings;
+use strict;
+
 ##############################################################################
 #
 #     This file is part of the Zen Load Balancer Enterprise Edition software
@@ -86,7 +90,7 @@ sub delete_zone # ( $farmname, $zone )
 
 		# Error
 		my $errormsg = "Invalid zone name, please insert a valid value.";
-		my $output = {
+		my $body = {
 					   description => "Delete zone",
 					   error       => "true",
 					   message     => $errormsg

@@ -21,6 +21,9 @@
 #
 ###############################################################################
 
+use warnings;
+use strict;
+
 my $configdir = &getGlobalConfiguration('configdir');
 
 # Start Farm rutine
@@ -28,6 +31,7 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 {
 	my ( $fname, $writeconf ) = @_;
 
+	my $output;
 	my $status = &getFarmStatus( $fname );
 	my $type   = &getFarmType( $fname );
 	my $file   = &getFarmFile( $fname );
@@ -44,7 +48,7 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 	{
 		unlink ( "/tmp/$fname.lock" );
 		use Tie::File;
-		tie @filelines, 'Tie::File', "$configdir\/$file\/etc\/config";
+		tie my @filelines, 'Tie::File', "$configdir\/$file\/etc\/config";
 		my $first = 1;
 		foreach ( @filelines )
 		{
@@ -98,7 +102,7 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 		if ( $writeconf eq "true" )
 		{
 			use Tie::File;
-			tie @filelines, 'Tie::File', "$configdir\/$filename\/etc\/config";
+			tie my @filelines, 'Tie::File', "$configdir\/$filename\/etc\/config";
 			my $first = 1;
 			foreach ( @filelines )
 			{
@@ -146,15 +150,14 @@ sub getGSLBFarmServices    # ($farm_name)
 	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
 	my @pluginlist = readdir ( DIR );
 	closedir ( DIR );
-	foreach $plugin ( @pluginlist )
+	foreach my $plugin ( @pluginlist )
 	{
 		if ( $plugin !~ /^\./ )
 		{
-			@fileconf = ();
-			tie @fileconf, 'Tie::File',
+			tie my @fileconf, 'Tie::File',
 			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
 			my @srv = grep ( /^\t[a-zA-Z1-9].* => \{/, @fileconf );
-			foreach $srvstring ( @srv )
+			foreach my $srvstring ( @srv )
 			{
 				my @srvstr = split ( ' => ', $srvstring );
 				$srvstring = $srvstr[0];
@@ -246,6 +249,7 @@ sub getGSLBFarmPid    # ($farm_name)
 	my @run =
 	  `$ps -ef | grep "$gdnsd -c $configdir\/$farm_filename" | grep -v grep | awk {'print \$2'}`;
 	chomp ( $run[0] );
+	
 	if ( $run[0] > 0 )
 	{
 		$output = $run[0];
@@ -312,7 +316,7 @@ sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 		opendir ( DIR, "$configdir\/$fname\_$type.cfg\/etc\/plugins\/" );
 		my @pluginlist = readdir ( DIR );
 
-		foreach $plugin ( @pluginlist )
+		foreach my $plugin ( @pluginlist )
 		{
 			tie @fileconf, 'Tie::File',
 			  "$configdir\/$fname\_$type.cfg\/etc\/plugins\/$plugin";
@@ -404,7 +408,7 @@ sub getGSLBFarmVip    # ($info,$farm_name)
 	my @file = <FI>;
 	close FI;
 
-	foreach $line ( @file )
+	foreach my $line ( @file )
 	{
 		if ( $line =~ /^options =>/ )
 		{
@@ -458,11 +462,12 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 	my $index      = 0;
 	my $pluginfile = "";
 	use Tie::File;
+	my $found;
 
 	#Find the plugin file
 	opendir ( DIR, "$configdir\/$ffile\/etc\/plugins\/" );
 	my @pluginlist = readdir ( DIR );
-	foreach $plugin ( @pluginlist )
+	foreach my $plugin ( @pluginlist )
 	{
 		tie @fileconf, 'Tie::File', "$configdir\/$ffile\/etc\/plugins\/$plugin";
 		if ( grep ( /^\t$srv => /, @fileconf ) )
@@ -655,7 +660,8 @@ sub setFarmZoneSerial    # ($farm_name,$zone)
 	my @fileconf;
 	use Tie::File;
 	tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$zone";
-	foreach $line ( @fileconf )
+	my $index; 
+	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /@\tSOA / )
 		{
@@ -744,9 +750,10 @@ sub setGSLBFarmBootStatus    # ($farm_name, $status)
 	my ( $farm_name, $status ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-
+	my $output; 
+	
 	use Tie::File;
-	tie @filelines, 'Tie::File', "$configdir\/$farm_filename\/etc\/config";
+	tie my @filelines, 'Tie::File', "$configdir\/$farm_filename\/etc\/config";
 	my $first = 1;
 	foreach ( @filelines )
 	{
@@ -915,7 +922,7 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 	#Find the plugin file
 	opendir ( DIR, "$configdir\/$ffile\/etc\/plugins\/" );
 	my @pluginlist = readdir ( DIR );
-	foreach $plugin ( @pluginlist )
+	foreach my $plugin ( @pluginlist )
 	{
 		tie @fileconf, 'Tie::File', "$configdir\/$ffile\/etc\/plugins\/$plugin";
 		if ( grep ( /^\t$srv => /, @fileconf ) )
@@ -1033,7 +1040,7 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 		else
 		{
 			# Include the service in the plugin file
-			tie @fileconf, 'Tie::File',
+			tie my @fileconf, 'Tie::File',
 			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$gsalg.cfg";
 			if ( grep ( /^\t$svice =>.*/, @fileconf ) )
 			{
@@ -1043,7 +1050,7 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 			{
 				my $found = 0;
 				my $index = 0;
-				foreach $line ( @fileconf )
+				foreach my $line ( @fileconf )
 				{
 					if ( $line =~ /$gsalg => / )
 					{
@@ -1083,12 +1090,12 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 		if ( $output == 0 )
 		{
 			# Include the plugin file in the main configuration
-			tie @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
+			tie my @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
 			if ( ( grep ( /include{plugins\/$gsalg\.cfg}/, @fileconf ) ) == 0 )
 			{
 				my $found = 0;
 				my $index = 0;
-				foreach $line ( @fileconf )
+				foreach my $line ( @fileconf )
 				{
 					if ( $line =~ /plugins => / )
 					{
@@ -1174,7 +1181,7 @@ sub setGSLBFarmStatus    # ($farm_name, $status, $writeconf)
 	zsystem( "$command > /dev/null 2>&1" );
 
 	#TODO
-	$output = 0;
+	my $output = 0;
 
 	if ( $output != 0 )
 	{
@@ -1210,7 +1217,7 @@ sub setGSLBRemoveTcpPort
 	my $index = 1;
 
 	use Tie::File;
-	tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
+	tie my @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
 
 	while ( ( $fileconf[$index] !~ /^plugins => / ) && ( $found !~ 2 ) )
 	{
@@ -1323,13 +1330,14 @@ sub getCheckPort
 #set values for a service
 sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 {
-	( $fname, $svice, $tag, $stri ) = @_;
+	my ( $fname, $svice, $tag, $stri ) = @_;
 
 	my $output = "";
 
 	my $type  = &getFarmType( $fname );
 	my $ffile = &getFarmFile( $fname );
 
+	my $pluginfile;
 	my @fileconf;
 	my $line;
 	my $param;
@@ -1400,7 +1408,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 		#Find the plugin file
 		opendir ( DIR, "$configdir\/$ffile\/etc\/plugins\/" );
 		my @pluginlist = readdir ( DIR );
-		foreach $plugin ( @pluginlist )
+		foreach my $plugin ( @pluginlist )
 		{
 			tie @fileconf, 'Tie::File', "$configdir\/$ffile\/etc\/plugins\/$plugin";
 			if ( grep ( /^\t$svice => /, @fileconf ) )
@@ -1544,7 +1552,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 			}
 
 			# create the new port configuration
-			my $index      = 0;
+			$index      = 0;
 			my $firstIndex = 0;
 			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
 			foreach $line ( @fileconf )
@@ -1598,9 +1606,9 @@ sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 
 	my $index = 0;
 	my $found = 0;
-	tie @fileconf, 'Tie::File', "$configdir/$fconf/etc/config";
+	tie my @fileconf, 'Tie::File', "$configdir/$fconf/etc/config";
 
-	foreach $line ( @fileconf )
+	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /options => / )
 		{
@@ -1630,6 +1638,10 @@ sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $fname, $newfname ) = @_;
+	my $rrdap_dir = &getGlobalConfiguration ( "rrdap_dir" );
+	my $rrd_dir = &getGlobalConfiguration ( "rrd_dir" );
+	my $configdir = &getGlobalConfiguration ( "configdir" );
+	
 	my $type   = &getFarmType( $fname );
 	my $ffile  = &getFarmFile( $fname );
 	my $output = -1;
@@ -1671,7 +1683,7 @@ sub dnsServiceType    #  dnsServiceType ( $farmname, $ip, $tcp_port )
 	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
 	my @pluginlist = readdir ( DIR );
 	closedir ( DIR );
-	foreach $plugin ( @pluginlist )
+	foreach my $plugin ( @pluginlist )
 	{
 
 		if ( $plugin !~ /^\./ )
@@ -1710,7 +1722,7 @@ sub dnsServiceType    #  dnsServiceType ( $farmname, $ip, $tcp_port )
 sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ($wget_bin)
 {
 	my $wget = &getGlobalConfiguration ( 'wget' );
-	$gdnsdStats = `$wget -qO- http://127.0.0.1:35060/json`;
+	my $gdnsdStats = `$wget -qO- http://127.0.0.1:35060/json`;
 	
 	my $stats  = decode_json ( $gdnsdStats );
 	return $stats;
@@ -1762,11 +1774,12 @@ sub getGSLBFarmEstConns    # ($farm_name,@netstat)
 sub getGSLBCommandInExtmonFormat
 {
 	my ( $cmd, $port ) = @_;
+	my $libexec_dir = &getGlobalConfiguration ( 'libexec_dir' );
 	my $newCmd;
 	my $stringArg;
 	my $flag;
 
-	@aux = split ( ' ', $cmd );
+	my @aux = split ( ' ', $cmd );
 
 	$newCmd .= "\"$libexec_dir/$aux[0]\"";
 	splice @aux, 0, 1;
@@ -1850,6 +1863,7 @@ sub getGSLBCommandInExtmonFormat
 sub getGSLBCommandInFGFormat
 {
 	my ( $cmd, $port ) = @_;
+	my $libexec_dir = &getGlobalConfiguration ( 'libexec_dir' );
 	my $newCmd;
 	my @aux = split ( ', ', $cmd );
 	my $flagPort;
@@ -1955,7 +1969,8 @@ sub getGSLBFarmGuardianParams
 		$cmd = "";
 	}
 
-	push my @config, $time, $cmd;
+	my @config;
+	push @config, $time, $cmd;
 	untie @file;
 
 	return @config;
@@ -1988,6 +2003,7 @@ sub setGSLBFarmGuardianParams
 	my @file;
 	my $flagSvc = 0;
 	my $err     = -1;
+	my $port;
 
 	tie @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
 
@@ -2273,7 +2289,7 @@ sub getGSLBCheckConf
 			my $numLine  = $2 - 1;
 
 			use Tie::File;
-			tie @filelines, 'Tie::File', $fileZone;
+			tie my @filelines, 'Tie::File', $fileZone;
 			$errormsg = $filelines[$numLine];
 			untie @filelines;
 		}
@@ -2292,7 +2308,8 @@ sub getGSLBResources
 
 	my @be = split ( "\n", $backendsvs );
 
-	foreach $subline ( @be )
+	my $ind;
+	foreach my $subline ( @be )
 	{
 		$ind++;
 		my %resources;
