@@ -93,15 +93,15 @@ fi
 
 if [ -f /bin/systemctl ]
 then
-	systemctl stop snmpd
-	systemctl disable snmpd
-	systemctl stop sec
-	systemctl disable sec
+	systemctl -q stop snmpd
+	systemctl -q disable snmpd
+	systemctl -q stop sec
+	systemctl -q disable sec
 else
 	/etc/init.d/snmpd stop > /dev/null
-	insserv -r snmpd > /dev/null
+	insserv -r snmpd
 	/etc/init.d/sec stop > /dev/null
-	insserv -r sec > /dev/null
+	insserv -r sec
 fi
 
 # Do not mount /usr/local/zenloadbalancer/logs for zlb 4000 series
