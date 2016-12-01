@@ -290,16 +290,16 @@ sub POST($$)
 	{
 		$input_ref = $data;
 	}
-	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } =~ qr!^multipart/form-data! )
+	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/x-pem-file' )
 	{
-		# uploading activation certificate
-		# WARNING: Do not remove this case, need to skip the 415 status code
-		&zenlog("File upload request");
+		$input_ref = $data;
 	}
 	else
 	{
-		&zenlog( "Content-Type: $ENV{ CONTENT_TYPE }" );
-		&httpResponse( { code => 415 } );
+		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }" );
+		my $body = { message => 'Content-Type not supported', error => 'true' };
+
+		&httpResponse( { code => 415, body => $body } );
 	}
 
 	$code->( $input_ref, @captures );
@@ -326,16 +326,16 @@ sub PUT($$)
 	{
 		$input_ref = $data;
 	}
-	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } =~ qr!^multipart/form-data! )
+	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/x-pem-file' )
 	{
-		# uploading activation certificate
-		# WARNING: Do not remove this case, need to skip the 415 status code
-		&zenlog("File upload request");
+		$input_ref = $data;
 	}
 	else
 	{
-		&zenlog( "Content-Type: $ENV{ CONTENT_TYPE }" );
-		&httpResponse( { code => 415 } );
+		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }" );
+		my $body = { message => 'Content-Type not supported', error => 'true' };
+
+		&httpResponse( { code => 415, body => $body } );
 	}
 
 	$code->( $input_ref, @captures );

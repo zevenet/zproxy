@@ -630,12 +630,13 @@ sub upload_certs # ()
 #
 # Curl command:
 #
-# curl -kis -X POST -H "ZAPI_KEY: 2bJUd" --tcp-nodelay -H 'Content-Type: text/plain' https://192.168.101.20:444/zapi/v3/zapi.cgi/certificates/test.pem --data-binary @/usr/local/zenloadbalancer/config/zencert.pem
+# curl -kis -X POST -H "ZAPI_KEY: 2bJUd" --tcp-nodelay -H 'Content-Type: application/x-pem-file' https://192.168.101.20:444/zapi/v3/zapi.cgi/certificates/test.pem --data-binary @/usr/local/zenloadbalancer/config/zencert.pem
 #
 
 	my $upload_filehandle = shift;
 	my $filename = shift;
 
+	my $description = "Upload certificate file.";
 	my $configdir = &getGlobalConfiguration('configdir');
 
 	if ( $filename =~ /^\w.+\.pem$/ && ! -f "$configdir/$filename" )
@@ -650,6 +651,13 @@ sub upload_certs # ()
 		print $cert_filehandle $upload_filehandle;
 		close $cert_filehandle;
 
+		my $message = "Certificate file uploaded";
+		my $body = {
+					 description => $description,
+					 success       => "true",
+					 message     => $message
+		};
+
 		&httpResponse({ code => 200, body => $body });
 	}
 	else
@@ -659,7 +667,7 @@ sub upload_certs # ()
 		# Error
 		my $errormsg = "Error uploading certificate file";
 		my $body = {
-					 description => "Upload certificate file.",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -675,24 +683,33 @@ sub upload_activation_certificate # ()
 #
 # Curl command:
 #
-# curl -v --tcp-nodelay --tlsv1 -X POST -k -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -F certificate=@/example.pem https://46.101.46.14:444/zapi/v3/zapi.cgi/certificates/activation
+# curl -kis --tcp-nodelay -X POST -H "ZAPI_KEY: 2bJUd" -H 'Content-Type: application/x-pem-file' https://46.101.46.14:444/zapi/v3/zapi.cgi/certificates/activation --data-binary @hostmane.pem
 #
 
-	my $q = &getCGI();
-	my $filename   = 'zlbcertfile.pem';
-	my $upload_data = $q->upload( "certificate" );
+	my $upload_filehandle = shift;
 
-	if ( <$upload_data> )
+	my $description = "Upload activation certificate file";
+	my $filename = 'zlbcertfile.pem';
+
+	if ( $upload_filehandle )
 	{
 		my $basedir = &getGlobalConfiguration('basedir');
-		open ( my $uploadfile, '>', "$basedir/$filename" ) or die "$!";
-		binmode $uploadfile;
-		print { $uploadfile } <$upload_data>;
-		close $uploadfile;
+
+		open ( my $cert_filehandle, '>', "$basedir/$filename" ) or die "$!";
+		binmode $cert_filehandle;
+		print { $cert_filehandle } $upload_filehandle;
+		close $cert_filehandle;
 
 		&checkActivationCertificate();
 
-		&httpResponse({ code => 200 });
+		my $message = "Activation certificate file uploaded";
+		my $body = {
+					 description => $description,
+					 success     => "true",
+					 message     => $message
+		};
+
+		&httpResponse({ code => 200, body => $body });
 	}
 	else
 	{
@@ -702,7 +719,7 @@ sub upload_activation_certificate # ()
 		my $errormsg = "Error uploading activation certificate file";
 
 		my $body = {
-					   description => "Upload activation certificate file.",
+					   description => $description,
 					   error       => "true",
 					   message     => $errormsg,
 		};
