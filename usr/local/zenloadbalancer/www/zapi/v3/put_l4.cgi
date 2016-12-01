@@ -99,6 +99,80 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 
 	####### Functions
 
+	# Modify Farm's Name
+	if ( exists ( $json_obj->{ newfarmname } ) )
+	{
+		unless ( &getFarmStatus( $farmname ) eq 'up' )
+		{
+			&zenlog(
+				"ZAPI error, trying to modify a l4xnat farm $farmname, cannot change the farm name while running"
+			);
+
+			my $errormsg = 'Cannot change the farm name while running';
+
+			my $body = {
+						 description => "Modify farm",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		if ( $json_obj->{ newfarmname } =~ /^$/ )
+		{
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid newfarmname, can't be blank."
+			);
+		}
+		else
+		{
+			if ($json_obj->{newfarmname} ne $farmname)
+			{
+				#Check if farmname has correct characters (letters, numbers and hyphens)
+				if ( $json_obj->{ newfarmname } =~ /^[a-zA-Z0-9\-]*$/ )
+				{
+					if ($json_obj->{newfarmname} ne $farmname)
+					{
+						#Check if the new farm's name alredy exists
+						my $newffile = &getFarmFile( $json_obj->{ newfarmname } );
+						if ( $newffile != -1 )
+						{
+							$error = "true";
+							&zenlog(
+								"ZAPI error, trying to modify a l4xnat farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
+							);
+						}
+						else
+						{
+							#Change farm name
+							my $fnchange = &setNewFarmName( $farmname, $json_obj->{ newfarmname } );
+							if ( $fnchange == -1 )
+							{
+								&error = "true";
+								&zenlog(
+									"ZAPI error, trying to modify a l4xnat farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
+								);
+							}
+							else
+							{
+								$restart_flag = "true";
+								$farmname     = $json_obj->{ newfarmname };
+							}
+						}
+					}
+				}
+				else
+				{
+					$error = "true";
+					&zenlog(
+						 "ZAPI error, trying to modify a l4xnat farm $farmname, invalid newfarmname." );
+				}
+			}
+		}
+	}
+
 	# Modify Load Balance Algorithm
 	if ( exists ( $json_obj->{ algorithm } ) )
 	{
@@ -384,63 +458,6 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 					{
 						$restart_flag = "true";
 					}
-				}
-			}
-		}
-	}
-
-	# Modify Farm's Name
-	if ( exists ( $json_obj->{ newfarmname } ) )
-	{
-		if ( $json_obj->{ newfarmname } =~ /^$/ )
-		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid newfarmname, can't be blank."
-			);
-		}
-		else
-		{
-			if ($json_obj->{newfarmname} ne $farmname)
-			{
-				#Check if farmname has correct characters (letters, numbers and hyphens)
-				if ( $json_obj->{ newfarmname } =~ /^[a-zA-Z0-9\-]*$/ )
-				{
-					if ($json_obj->{newfarmname} ne $farmname)
-					{
-						#Check if the new farm's name alredy exists
-						my $newffile = &getFarmFile( $json_obj->{ newfarmname } );
-						if ( $newffile != -1 )
-						{
-							$error = "true";
-							&zenlog(
-								"ZAPI error, trying to modify a l4xnat farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
-							);
-						}
-						else
-						{
-							#Change farm name
-							my $fnchange = &setNewFarmName( $farmname, $json_obj->{ newfarmname } );
-							if ( $fnchange == -1 )
-							{
-								&error = "true";
-								&zenlog(
-									"ZAPI error, trying to modify a l4xnat farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
-								);
-							}
-							else
-							{
-								$restart_flag = "true";
-								$farmname     = $json_obj->{ newfarmname };
-							}
-						}
-					}
-				}
-				else
-				{
-					$error = "true";
-					&zenlog(
-						 "ZAPI error, trying to modify a l4xnat farm $farmname, invalid newfarmname." );
 				}
 			}
 		}

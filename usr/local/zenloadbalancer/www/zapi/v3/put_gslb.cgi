@@ -82,6 +82,113 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 
 	######## Functions
 
+	# Modify Farm's Name
+	if ( exists ( $json_obj->{ newfarmname } ) )
+	{
+		unless ( &getFarmStatus( $farmname ) eq 'up' )
+		{
+			&zenlog(
+				"ZAPI error, trying to modify a gslb farm $farmname, cannot change the farm name while running"
+			);
+
+			my $errormsg = 'Cannot change the farm name while running';
+
+			my $body = {
+						 description => "Modify farm",
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		my $newfstat;
+		if ( $json_obj->{ newfarmname } =~ /^$/ )
+		{
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname, can't be blank."
+			);
+		}
+		else
+		{
+			# Check if farmname has correct characters (letters, numbers and hyphens)
+			if ( $json_obj->{ newfarmname } =~ /^[a-zA-Z0-9\-]*$/ )
+			{
+				if ($json_obj->{newfarmname} ne $farmname)
+				{
+					#Check if the new farm's name alredy exists
+					my $newffile = &getFarmFile( $json_obj->{ newfarmname } );
+					if ( $newffile != -1 )
+					{
+						$error = "true";
+						&zenlog(
+							"ZAPI error, trying to modify a gslb farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
+						);
+					}
+					else
+					{
+						my $oldfstat = &runFarmStop( $farmname, "true" );
+						if ( $oldfstat != 0 )
+						{
+							$error = "true";
+							&zenlog(
+								"ZAPI error, trying to modify a gslb farm $farmname,the farm is not disabled, are you sure it's running?"
+							);
+						}
+						else
+						{
+							#Change farm name
+							my $fnchange = &setNewFarmName( $farmname, $json_obj->{ newfarmname } );
+							$changedname = "true";
+
+							if ( $fnchange == -1 )
+							{
+								&error = "true";
+								&zenlog(
+									"ZAPI error, trying to modify a gslb farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
+								);
+							}
+							elsif ( $fnchange == -2 )
+							{
+								$error = "true";
+								&zenlog(
+									"ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname, the new name can't be empty."
+								);
+								$newfstat = &runFarmStart( $farmname, "true" );
+								if ( $newfstat != 0 )
+								{
+									$error = "true";
+									&zenlog(
+										"ZAPI error, trying to modify a gslb farm $farmname, the farm isn't running, chick if the IP address is up and the PORT is in use."
+									);
+								}
+							}
+							else
+							{
+								$farmname = $json_obj->{ newfarmname };
+								$newfstat = &runFarmStart( $farmname, "true" );
+								if ( $newfstat != 0 )
+								{
+									$error = "true";
+									&zenlog(
+										"ZAPI error, trying to modify a gslb farm $farmname, the farm isn't running, chick if the IP address is up and the PORT is in use."
+									);
+								}
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				$error = "true";
+				&zenlog(
+						   "ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname." );
+			}
+		}
+	}
+
 	# Modify only vip
 	if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
 	{
@@ -231,96 +338,6 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	#        &runFarmStop($farmname,"true");
 	#        &runFarmStart($farmname,"true");
 	#}
-
-	# Modify Farm's Name
-	if ( exists ( $json_obj->{ newfarmname } ) )
-	{
-		my $newfstat;
-		if ( $json_obj->{ newfarmname } =~ /^$/ )
-		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname, can't be blank."
-			);
-		}
-		else
-		{
-			# Check if farmname has correct characters (letters, numbers and hyphens)
-			if ( $json_obj->{ newfarmname } =~ /^[a-zA-Z0-9\-]*$/ )
-			{
-				if ($json_obj->{newfarmname} ne $farmname)
-				{
-					#Check if the new farm's name alredy exists
-					my $newffile = &getFarmFile( $json_obj->{ newfarmname } );
-					if ( $newffile != -1 )
-					{
-						$error = "true";
-						&zenlog(
-							"ZAPI error, trying to modify a gslb farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
-						);
-					}
-					else
-					{
-						my $oldfstat = &runFarmStop( $farmname, "true" );
-						if ( $oldfstat != 0 )
-						{
-							$error = "true";
-							&zenlog(
-								"ZAPI error, trying to modify a gslb farm $farmname,the farm is not disabled, are you sure it's running?"
-							);
-						}
-						else
-						{
-							#Change farm name
-							my $fnchange = &setNewFarmName( $farmname, $json_obj->{ newfarmname } );
-							$changedname = "true";
-
-							if ( $fnchange == -1 )
-							{
-								&error = "true";
-								&zenlog(
-									"ZAPI error, trying to modify a gslb farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
-								);
-							}
-							elsif ( $fnchange == -2 )
-							{
-								$error = "true";
-								&zenlog(
-									"ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname, the new name can't be empty."
-								);
-								$newfstat = &runFarmStart( $farmname, "true" );
-								if ( $newfstat != 0 )
-								{
-									$error = "true";
-									&zenlog(
-										"ZAPI error, trying to modify a gslb farm $farmname, the farm isn't running, chick if the IP address is up and the PORT is in use."
-									);
-								}
-							}
-							else
-							{
-								$farmname = $json_obj->{ newfarmname };
-								$newfstat = &runFarmStart( $farmname, "true" );
-								if ( $newfstat != 0 )
-								{
-									$error = "true";
-									&zenlog(
-										"ZAPI error, trying to modify a gslb farm $farmname, the farm isn't running, chick if the IP address is up and the PORT is in use."
-									);
-								}
-							}
-						}
-					}
-				}
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-						   "ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname." );
-			}
-		}
-	}
 
 	# Check errors and print JSON
 	#if ($error ne "true")
