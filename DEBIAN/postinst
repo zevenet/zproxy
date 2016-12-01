@@ -99,9 +99,9 @@ then
 	systemctl disable sec
 else
 	/etc/init.d/snmpd stop > /dev/null
-	insserv -r snmpd
+	insserv -r snmpd > /dev/null
 	/etc/init.d/sec stop > /dev/null
-	insserv -r sec
+	insserv -r sec > /dev/null
 fi
 
 # Do not mount /usr/local/zenloadbalancer/logs for zlb 4000 series
