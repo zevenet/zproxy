@@ -29,19 +29,19 @@ our $origin = 1;
 require "/usr/local/zenloadbalancer/www/functions.cgi";
 require "/usr/local/zenloadbalancer/www/cert_functions.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2/global.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2/certificates.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v2.1/global.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v2.1/certificates.cgi";
 require "/usr/local/zenloadbalancer/config/global.conf";
-require "/usr/local/zenloadbalancer/www/zapi/v2/get.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2/post.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2/put.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2/delete.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2/delete_gslb.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2/interface.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2/system_stats.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2/farm_guardian.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2/farm_actions.cgi";
-require "/usr/local/zenloadbalancer/www/zapi/v2/post_gslb.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v2.1/get.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v2.1/post.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v2.1/put.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v2.1/delete.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v2.1/delete_gslb.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v2.1/interface.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v2.1/system_stats.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v2.1/farm_guardian.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v2.1/farm_actions.cgi";
+require "/usr/local/zenloadbalancer/www/zapi/v2.1/post_gslb.cgi";
 
 ### Verify Zen Cerfificate ###
 
@@ -102,7 +102,7 @@ sub certcontrol()
 	my $zlbcertfile = "$basedir/zlbcertfile.pem";
 	my $openssl_bin = "/usr/bin/openssl";
 	my $keyid       = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
-	my $key    = &keycert();
+	my $key         = &keycert();
 
 	# output
 	my $swcert = 0;
@@ -185,12 +185,12 @@ sub certcontrol()
 		if ( $swcert == 1 )
 		{
 			print
-			  "There isn't a valid Zen Load Balancer certificate file, please request a new one\n";
+			  "There isn't a valid ZEVENET certificate file, please request a new one\n";
 		}
 		elsif ( $swcert == 2 )
 		{
 			print
-			  "The certificate file isn't signed by the Zen Load Balancer Certificate Authority, please request a new one\n";
+			  "The certificate file isn't signed by the ZEVENET Certificate Authority, please request a new one\n";
 		}
 		elsif ( $swcert == 3 )
 		{
@@ -198,7 +198,7 @@ sub certcontrol()
 			# but rebooting the service would not start the service,
 			# interfaces should always be available.
 			print
-			  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one\n";
+			  "The ZEVENET certificate file you are using is for testing purposes and its expired, please request a new one\n";
 		}
 
 		exit;
@@ -647,7 +647,7 @@ eval {
 	#
 	#########################################
 
-	POST qr{^/addvini/(.*+$)} => sub {
+	POST qr{^/addvini/(.*$)} => sub {
 
 		&new_vini( $1 );
 
@@ -659,7 +659,7 @@ eval {
 	#
 	#########################################
 
-	POST qr{^/addvlan/(\w+$)} => sub {
+	POST qr{^/addvlan/(.*$)} => sub {
 
 		&new_vlan( $1 );
 
@@ -715,11 +715,11 @@ eval {
 
 	#########################################
 	#
-	#  DELETE virtual interface
+	#  DELETE virtual interface (default)
 	#
 	#########################################
 
-	DELETE qr{^/deleteif/(.*+$)} => sub {
+	DELETE qr{^/deleteif/(.*$)} => sub {
 
 		&delete_interface( $1 );
 
@@ -741,7 +741,7 @@ eval {
 	#
 	#########################################
 
-	PUT qr{^/modifyif/(.*+$)} => sub {
+	PUT qr{^/modifyif/(.*$)} => sub {
 
 		&modify_interface( $1 );
 
