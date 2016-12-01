@@ -250,7 +250,7 @@ sub getGSLBFarmPid    # ($farm_name)
 	  `$ps -ef | grep "$gdnsd -c $configdir\/$farm_filename" | grep -v grep | awk {'print \$2'}`;
 	chomp ( @run );
 	
-	if ( $run[0] > 0 )
+	if ( $run[0] )
 	{
 		$output = $run[0];
 	}
