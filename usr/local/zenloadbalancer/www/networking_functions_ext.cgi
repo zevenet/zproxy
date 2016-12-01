@@ -35,6 +35,7 @@ sub sendGPing    # ($pif)
 	if ( $gw ne "" )
 	{
 		my $ping_bin = &getGlobalConfiguration('ping_bin');
+		my $pingc = &getGlobalConfiguration('pingc');
 		my $ping_cmd = "$ping_bin -c $pingc $gw";
 
 		&zenlog( "$ping_cmd" );
@@ -142,7 +143,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	if ( $iface{ vini } eq '' && $iface{ addr } )
 	{
 		use Config::Tiny;
-		my $float = Config::Tiny->read( $floatfile );
+		my $float = Config::Tiny->read( &getGlobalConfiguration('floatfile') );
 
 		$iface{ float } = $float->{_}->{ $iface{ name } } // '';
 	}
@@ -556,6 +557,8 @@ sub getSystemInterface    # ($if_name)
 
 sub getBondList
 {
+	my $bonding_masters_filename = &getGlobalConfiguration('bonding_masters_filename');
+
 	if ( !-f $bonding_masters_filename )
 	{
 		&zenlog( "Bonding module seems missing" );
@@ -601,6 +604,7 @@ sub getBondMode
 {
 	my $bond_master = shift;
 
+	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
 	my $bond_path = "$sys_net_dir/$bond_master";
 
 	if ( !-d $bond_path )
@@ -608,6 +612,8 @@ sub getBondMode
 		&zenlog( "Could not find bonding $bond_path" );
 		return undef;
 	}
+
+	my $bonding_mode_filename = &getGlobalConfiguration('bonding_mode_filename');
 
 	open ( my $bond_mode_file, '<', "$bond_path/$bonding_mode_filename" );
 
@@ -632,6 +638,7 @@ sub getBondSlaves
 {
 	my $bond_master = shift;
 
+	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
 	my $bond_path = "$sys_net_dir/$bond_master";
 
 	if ( !-d $bond_path )
@@ -639,6 +646,8 @@ sub getBondSlaves
 		&zenlog( "Could not find bonding $bond_path" );
 		return undef;
 	}
+
+	my $bonding_slaves_filename = &getGlobalConfiguration('bonding_slaves_filename');
 
 	open ( my $bond_slaves_file, '<', "$bond_path/$bonding_slaves_filename" );
 
@@ -781,6 +790,8 @@ sub setBondMaster
 		return $return_code;
 	}
 
+	my $bonding_masters_filename = &getGlobalConfiguration('bonding_masters_filename');
+
 	if ( !-f $bonding_masters_filename )
 	{
 		&zenlog( "Bonding module seems missing" );
@@ -799,7 +810,10 @@ sub setBondMaster
 	close $bond_file;
 
 	# miimon
+	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
+	my $bonding_miimon_filename = &getGlobalConfiguration('bonding_miimon_filename');
 	my $miimon_filepath = "$sys_net_dir/$bond_name/$bonding_miimon_filename";
+
 	open ( my $miimon_file, '>', $miimon_filepath );
 
 	if ( !$miimon_file )
@@ -832,6 +846,7 @@ sub setBondMode
 {
 	my $bond = shift;
 
+	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
 	my $bond_path   = "$sys_net_dir/$bond->{name}";
 	my $return_code = 1;
 
@@ -840,6 +855,8 @@ sub setBondMode
 		&zenlog( "Could not find bonding $bond_path" );
 		return $return_code;
 	}
+
+	my $bonding_mode_filename = &getGlobalConfiguration('bonding_mode_filename');
 
 	open ( my $bond_mode_file, '>', "$bond_path/$bonding_mode_filename" );
 
@@ -863,6 +880,7 @@ sub setBondSlave
 	my $bond_slave = shift;
 	my $operation  = shift;    # add || del
 
+	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
 	my $bond_path = "$sys_net_dir/$bond_name";
 	my $operator;
 	my $return_code = 1;
@@ -886,6 +904,8 @@ sub setBondSlave
 		&zenlog( "Could not find bonding $bond_name in path $bond_path" );
 	#	return $return_code;
 	}
+
+	my $bonding_slaves_filename = &getGlobalConfiguration('bonding_slaves_filename');
 
 	#open ( my $bond_slaves_file, '>', "$bond_path/$bonding_slaves_filename" );
 	my $bond_slave_file = "${bond_path}\/${bonding_slaves_filename}";
@@ -912,6 +932,7 @@ sub getBondConfig
 
 	# requires:
 	#~ use Config::Tiny;
+	my $bond_config_file = &getGlobalConfiguration('bond_config_file');
 
 	if ( !-f $bond_config_file )
 	{
@@ -955,6 +976,7 @@ sub setBondConfig
 		$bond_conf->{ $bond }->{ slaves } = "@{ $bond_conf->{ $bond }->{ slaves } }";
 	}
 
+	my $bond_config_file = &getGlobalConfiguration('bond_config_file');
 	$bond_conf->write( $bond_config_file );
 
 	# put slaves back as array elements
@@ -972,6 +994,7 @@ sub setBondConfig
 sub getBondAvailableSlaves
 {
 	my @bond_list = ();
+	my $bonding_masters_filename = &getGlobalConfiguration('bonding_masters_filename');
 
 	# get bonding interfaces
 	open my $bond_list_file, '<', $bonding_masters_filename;
@@ -983,6 +1006,7 @@ sub getBondAvailableSlaves
 	}
 
 	# get list of all the interfaces
+	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
 	opendir my $dir_h, $sys_net_dir;
 
 	if ( !$dir_h )
@@ -1027,6 +1051,8 @@ sub getFloatInterfaceForAddress
 	for my $iface ( @interface_list )
 	{
 		next if $iface->{ vini } ne '';
+
+		my $defaultgwif = &getGlobalConfiguration('defaultgwif');
 
 		if ( $defaultgwif eq $iface->{ name } )
 		{
@@ -1182,6 +1208,11 @@ sub setInterfaceUp
 # from zbin/zenloadbalancer, almost exactly
 sub configureDefaultGW    #()
 {
+	my $defaultgw = &getGlobalConfiguration('defaultgw');
+	my $defaultgwif = &getGlobalConfiguration('defaultgwif');
+	my $defaultgw6 = &getGlobalConfiguration('defaultgw6');
+	my $defaultgwif6 = &getGlobalConfiguration('defaultgwif6');
+
 	# input: global variables $defaultgw and $defaultgwif
 	if ( $defaultgw ne '' && $defaultgwif ne '' )
 	{

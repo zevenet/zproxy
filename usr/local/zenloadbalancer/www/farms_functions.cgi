@@ -1467,7 +1467,6 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
 	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
 
-
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 

@@ -157,6 +157,7 @@ sub runFarmGuardianStart    # ($fname,$svice)
 	}
 	elsif ( $ftype eq 'l4xnat' || $ftype eq 'udp' || $ftype eq 'tcp' )
 	{
+		my $farmguardian = &getGlobalConfiguration('farmguardian');
 		my $fg_cmd = "$farmguardian $fname $sv $log";
 		&zenlog( "running $fg_cmd" );
 		&zsystem( "$fg_cmd > /dev/null &" );

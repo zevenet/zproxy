@@ -26,8 +26,11 @@ use RRDs;
 
 require ("/usr/local/zenloadbalancer/config/global.conf");
 require ("/usr/local/zenloadbalancer/www/system_functions.cgi");
+require ("/usr/local/zenloadbalancer/www/functions_ext.cgi");
 
-$db_if = "iface.rrd";
+my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
+my $rrd_dir = &getGlobalConfiguration('rrd_dir');
+my $db_if = "iface.rrd";
 
 my $if_name;
 my $is_if = 0;

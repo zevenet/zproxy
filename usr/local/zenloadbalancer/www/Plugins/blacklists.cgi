@@ -35,6 +35,9 @@ require "/usr/local/zenloadbalancer/www/check_functions.cgi";
 #~ use warnings;
 #~ use strict;
 
+my $blacklistsPath = &getGlobalConfiguration('blacklistsPath');
+my $blacklistsConf = &getGlobalConfiguration('blacklistsConf');
+
 actions:
 
 #  &getBLLoadList ( $listName );

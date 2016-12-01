@@ -34,6 +34,9 @@
 #and viewing in Zen load balancer GUI (Monitoring secction)
 
 require ( "/usr/local/zenloadbalancer/config/global.conf" );
+require ("/usr/local/zenloadbalancer/www/functions_ext.cgi");
+
+my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
 my $lockfile = "/tmp/rrd.lock";
 
 if ( -e $lockfile )

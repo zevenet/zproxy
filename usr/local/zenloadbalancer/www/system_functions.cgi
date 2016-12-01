@@ -440,9 +440,6 @@ sub getDiskPartitionsInfo    #()
 	my $partitions;          # output
 
 	my $df_bin    = &getGlobalConfiguration( 'df_bin' );
-	my $rrdap_dir = &getGlobalConfiguration( 'rrdap_dir' );
-	my $rrd_dir   = &getGlobalConfiguration( 'rrd_dir' );
-	my $db_hd     = "hd.rrd";
 
 	my @df_lines = grep { /^\/dev/ } `$df_bin -k`;
 	chomp ( @df_lines );

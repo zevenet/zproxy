@@ -158,7 +158,7 @@ sub enableZCluster
 	}
 
 	# conntrackd
-	if ( -f $conntrackd_conf )
+	if ( -f &getGlobalConfiguration('conntrackd_conf') )
 	{
 		if ( &getConntrackdRunning() )
 		{
@@ -191,6 +191,7 @@ sub setKeepalivedConfig
 	&zenlog("Setting keepalived configuration file");
 	
 	my $zcl_conf = &getZClusterConfig();
+	my $keepalived_conf = &getGlobalConfiguration('keepalived_conf');
 
 	open my $ka_file, '>', $keepalived_conf;
 
@@ -339,6 +340,9 @@ sub parallel_run # `output` ( $cmd )
 
 sub generateIdKey # $rc ()
 {
+	my $key_path = &getGlobalConfiguration('key_path');
+	my $keygen_cmd = &getGlobalConfiguration('keygen_cmd');
+
 	if ( ! -e $key_path )
 	{
 		mkdir $key_path;
@@ -378,6 +382,9 @@ sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 	my $ip_address = shift;
 	my $password = shift;
 
+	my $key_path = &getGlobalConfiguration('key_path');
+	my $key_id = &getGlobalConfiguration('key_id');
+
 	#### Check for local key ID ####
 
 	# 1) generate id key if it doesn't exist
@@ -405,6 +412,7 @@ sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 
 	if ( $error_code != 0 )
 	{
+		my $keygen_cmd = &getGlobalConfiguration('keygen_cmd');
 		my $gen_output = &runRemotely("$keygen_cmd 2>&1", $ip_address);
 		my $error_code = $?;
 
@@ -559,6 +567,7 @@ sub zsync
 	my $dest = "$user\@$host:$path";
 
 	my $rsync = &getGlobalConfiguration('rsync');
+	my $zenrsync = &getGlobalConfiguration('zenrsync');
 	my $rsync_cmd = "$rsync $zenrsync $include $exclude $src $dest";
 
 	&zenlog( "Running: $rsync_cmd" );
@@ -647,6 +656,7 @@ sub runSync
 
 sub getZClusterNodeStatus
 {
+	my $znode_status_file = &getGlobalConfiguration('znode_status_file');
 	open my $znode_status, '<', $znode_status_file;
 
 	if ( ! $znode_status )
@@ -670,7 +680,8 @@ sub setZClusterNodeStatus
 		&zenlog("\"$node_status\" is not an accepted node status");
 		return 1;
 	}
-	
+
+	my $znode_status_file = &getGlobalConfiguration('znode_status_file');
 	open my $znode_status, '>', $znode_status_file;
 
 	if ( ! $znode_status )
@@ -692,6 +703,7 @@ sub disableInterfaceDiscovery
 
 	if ( $iface->{ ip_v } == 4 )
 	{
+		my $arptables = &getGlobalConfiguration('arptables');
 		return &logAndRun( "$arptables -A INPUT -d $iface->{ addr } -j DROP" );
 	}
 	elsif ( $iface->{ ip_v } == 6 )
@@ -712,6 +724,7 @@ sub enableInterfaceDiscovery
 
 	if ( $iface->{ ip_v } == 4 )
 	{
+		my $arptables = &getGlobalConfiguration('arptables');
 		return &logAndRun( "$arptables -D INPUT -d $iface->{ addr } -j DROP" );
 	}
 	elsif ( $iface->{ ip_v } == 6 )
@@ -729,6 +742,7 @@ sub enableInterfaceDiscovery
 sub enableAllInterfacesDiscovery
 {
 	# IPv4
+	my $arptables = &getGlobalConfiguration('arptables');
 	my $rc = &logAndRun( "$arptables -F" );
 
 	# IPv6
@@ -772,6 +786,7 @@ sub runZClusterRemoteManager
 	{
 		my $zcl_conf = &getZClusterConfig();
 		my $remote_hostname = &getZClusterRemoteHost();
+		my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
 
 		# start remote interfaces, farms and cluster
 		my $cl_output = &runRemotely(
@@ -887,6 +902,8 @@ sub getZCusterStatusInfo
 	### Remotehost ###
 
 	# check remote keepalived
+	my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
+
 	if ( &runRemotely( "$zcluster_manager getZClusterRunning", $zcl_conf->{$remotehost}->{ip} ) == 1 )
 	{
 		$status->{ $remotehost }->{ keepalived } = 'ok';

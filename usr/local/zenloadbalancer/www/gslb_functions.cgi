@@ -1659,6 +1659,9 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 	$output = 0;
 
 	# rename rrd
+	my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
+	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
+
 	rename ( "$rrdap_dir/$rrd_dir/$fname-farm.rrd",
 			 "$rrdap_dir/$rrd_dir/$newfname-farm.rrd" );
 
@@ -1781,6 +1784,7 @@ sub getGSLBCommandInExtmonFormat
 
 	my @aux = split ( ' ', $cmd );
 
+	my $libexec_dir = &getGlobalConfiguration('libexec_dir');
 	$newCmd .= "\"$libexec_dir/$aux[0]\"";
 	splice @aux, 0, 1;
 
@@ -1871,6 +1875,7 @@ sub getGSLBCommandInFGFormat
 	$newCmd = $aux[0];
 	splice @aux, 0, 1;
 
+	my $libexec_dir = &getGlobalConfiguration('libexec_dir');
 	$newCmd =~ s/$libexec_dir\///;
 	$newCmd =~ s/^"(.+)"$/$1/;
 

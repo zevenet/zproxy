@@ -26,6 +26,9 @@ use RRDs;
 require ("/usr/local/zenloadbalancer/config/global.conf");
 require ("/usr/local/zenloadbalancer/www/functions.cgi");
 
+my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
+my $rrd_dir = &getGlobalConfiguration('rrd_dir');
+
 my $synconns = 0;
 my $globalconns = 0;
 

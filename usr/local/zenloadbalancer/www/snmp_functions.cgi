@@ -122,6 +122,7 @@ sub getSnmpdConfig    # ()
 sub setSnmpdConfig    # ($snmpd_conf)
 {
 	my ( $snmpd_conf ) = @_;
+
 	my $snmpdconfig_file = &getGlobalConfiguration('snmpdconfig_file');
 	
 	my $ip = $snmpd_conf->{ ip };
@@ -134,7 +135,7 @@ sub setSnmpdConfig    # ($snmpd_conf)
 
 	if ( !$config_file )
 	{
-		&zenlog( "Colud not open $snmpdconfig_file: $!" );
+		&zenlog( "Could not open $snmpdconfig_file: $!" );
 		return -1;
 	}
 

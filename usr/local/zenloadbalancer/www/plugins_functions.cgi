@@ -21,6 +21,8 @@
 #
 ###############################################################################
 
+#~ require ("/usr/local/zenloadbalancer/www/functions_ext.cgi");
+
 package plugins;
 
 use Exporter qw(import);
@@ -32,7 +34,7 @@ our @EXPORT = qw(
   plugins_path
 );
 
-our $plugins_path = "$main::pluginsdir";
+our $plugins_path = &main::getGlobalConfiguration('pluginsdir');
 
 sub getPluginsList
 {

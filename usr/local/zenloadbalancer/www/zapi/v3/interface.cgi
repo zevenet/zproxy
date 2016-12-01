@@ -1140,7 +1140,7 @@ sub delete_interface_floating # ( $floating )
 	my $floating = shift;
 
 	my $description = "Remove floating interface";
-	#~ my $if_ref = &getInterfaceConfig( $floating );
+	my $floatfile = &getGlobalConfiguration('floatfile');
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
 	# validate BOND
@@ -3511,6 +3511,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 	}
 
 	eval {
+		my $floatfile = &getGlobalConfiguration('floatfile');
 		my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
 		$float_ifaces_conf->{ _ }->{ $interface } = $if_ref->{ name };
@@ -3575,6 +3576,7 @@ sub get_interfaces_floating
 	# Interfaces
 	my @output;
 	my @ifaces = @{ &getSystemInterfaceList() };
+	my $floatfile = &getGlobalConfiguration('floatfile');
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
 	for my $iface ( @ifaces )
@@ -3619,6 +3621,7 @@ sub get_floating
 	# Interfaces
 	my $output;
 	my @ifaces = @{ &getSystemInterfaceList() };
+	my $floatfile = &getGlobalConfiguration('floatfile');
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
 	for my $iface ( @ifaces )

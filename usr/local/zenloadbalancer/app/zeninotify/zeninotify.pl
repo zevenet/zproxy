@@ -37,6 +37,7 @@ require '/usr/local/zenloadbalancer/www/functions_ext.cgi';
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 my $rttables  = &getGlobalConfiguration( 'rttables' );
+my $zeninopid = &getGlobalConfiguration( 'zeninopid' );
 
 if ( $ARGV[0] eq 'stop' && -e $zeninopid )
 {

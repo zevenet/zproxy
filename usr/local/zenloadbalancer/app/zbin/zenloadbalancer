@@ -22,7 +22,8 @@
 #
 ###############################################################################
 
-use Sys::Hostname;
+#~ use strict;
+
 use Date::Parse;
 use Time::localtime;
 use Tie::File;
@@ -35,6 +36,10 @@ require "/usr/local/zenloadbalancer/www/functions.cgi";
 
 my $basedir = &getGlobalConfiguration('basedir');
 my $configdir = &getGlobalConfiguration('configdir');
+my $defaultgw = &getGlobalConfiguration('defaultgw');
+my $defaultgwif = &getGlobalConfiguration('defaultgwif');
+my $defaultgw6 = &getGlobalConfiguration('defaultgw6');
+my $defaultgwif6 = &getGlobalConfiguration('defaultgwif6');
 
 my $eject                 = $ARGV[0];
 my @configured_interfaces = @{ &getConfigInterfaceList() };
@@ -43,7 +48,7 @@ my @configured_interfaces = @{ &getConfigInterfaceList() };
 my $zcl_configured = &getZClusterStatus();
 
 my $master_node;
-if ( $zcl_configured && -f $znode_status_file )
+if ( $zcl_configured && -f &getGlobalConfiguration('znode_status_file') )
 {
 	$master_node = ( &getZClusterNodeStatus() eq 'master' );
 }
@@ -70,7 +75,7 @@ sub keycert    #()
 	#~ use Sys::Hostname;
 
 	my $dmidecode_bin = "/usr/sbin/dmidecode";    # input
-	my $hostname      = hostname();               # input
+	my $hostname      = &getHostname();               # input
 
 	my @dmidec  = `$dmidecode_bin`;
 	my @dmidec2 = grep ( /UUID\:/, @dmidec );
@@ -116,7 +121,7 @@ sub certcontrol          #()
 	#~ use Time::localtime;
 
 	# input
-	my $hostname    = hostname();
+	my $hostname    = &getHostname();
 	my $zlbcertfile = "$basedir/zlbcertfile.pem";
 	my $openssl_bin = "/usr/bin/openssl";
 	my $keyid       = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
@@ -127,6 +132,7 @@ sub certcontrol          #()
 	if ( -e $zlbcertfile )
 	{
 		my @zen_cert = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
+		my $key = &keycert();
 
 		if (    ( !grep /$key/, @zen_cert )
 			 || ( !grep /keyid:$keyid/,   @zen_cert )
@@ -216,6 +222,8 @@ sub configureDefaultGW    #()
 
 sub runhttpsgui    #()
 {
+	my $pid;
+
 	if ( $pid = fork )
 	{
 		#$SIG{'CHLD'}='IGNORE';
@@ -250,11 +258,14 @@ if ( $eject eq "start" )
 	if ( $missing_bonding )
 	{
 		system ( '/sbin/modprobe bonding >/dev/null 2>&1' );
+		my $bonding_masters_filename = &getGlobalConfiguration('bonding_masters_filename');
 		system ( "echo -bond0 > $bonding_masters_filename" );
 	}
 	system ( '/sbin/modprobe nf_conntrack >/dev/null 2>&1' );
 	system ( '/sbin/modprobe ip_conntrack >/dev/null 2>&1' );
 	system ( '/sbin/rmmod xt_recent >/dev/null 2>&1' );
+	my $recent_ip_list_tot = &getGlobalConfiguration('recent_ip_list_tot');
+	my $recent_ip_list_hash_size = &getGlobalConfiguration('recent_ip_list_hash_size');
 	system (
 		"/sbin/modprobe xt_recent ip_list_tot=$recent_ip_list_tot ip_list_hash_size=$recent_ip_list_hash_size >/dev/null 2>&1"
 	);
@@ -262,7 +273,7 @@ if ( $eject eq "start" )
 	system ( 'echo "22500" > /sys/module/nf_conntrack/parameters/hashsize' );
 
 	# Set system tuning with sysctl
-	$sysctl_conffile = "/etc/sysctl.conf";
+	my $sysctl_conffile = "/etc/sysctl.conf";
 
 	tie my @sysctl_file, 'Tie::File', "$sysctl_conffile";
 	@sysctl_file = grep !/^net\.ipv4\.tcp_tw_recycle/, @sysctl_file;
@@ -321,10 +332,11 @@ if ( $eject eq "start" )
 	untie @sysctl_file;
 
 	my $sysctl_errno = system ( 'sysctl -p > /dev/null' );
+	my $sysclt_msg;
 
 	if ( $sysctl_errno )
 	{
-		&zenlog( "An error happenend applying sysctl policies." );
+		$sysclt_msg = "An error happenend applying sysctl policies.";
 	}
 	else
 	{
@@ -459,6 +471,8 @@ if ( $eject eq "start" )
 		#interfaces as eth0 for example
 		if ( $$iface{ name } eq $$iface{ dev } )
 		{
+			use IO::Interface ':flags';
+
 			if ( $$iface{ status } eq "up" )
 			{
 				&printAndLog( "  * Starting interface $$iface{name}\n" );
@@ -557,6 +571,8 @@ if ( $eject eq "start" )
 	{
 		&zenlog( "Cluster configuration found" );
 
+		my $znode_status_file = &getGlobalConfiguration('znode_status_file');
+
 		my $zcl_conf = &getZClusterConfig();
 
 		# detect master node
@@ -569,6 +585,8 @@ if ( $eject eq "start" )
 		if ( $remote_node_status eq 'master' )
 		{
 			# force remote sync
+			my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
+
 			&runRemotely( "$zcluster_manager sync", $remote_ip );
 			&enableZCluster( 10 );
 			&zenlog("enableZCluster returned");
@@ -632,8 +650,7 @@ if ( $eject eq "start" )
 		}
 	}
 
-	$key    = &keycert();
-	my $swcert = &certcontrol( $typecall );
+	my $swcert = &certcontrol();
 
 	# error codes:
 	#
@@ -654,13 +671,13 @@ if ( $eject eq "start" )
 
 		foreach my $ffile ( @farmsf )
 		{
-			$farmname = &getFarmName( $ffile );
-			$bstatus  = &getFarmBootStatus( $farmname );
+			my $farmname = &getFarmName( $ffile );
+			my $bstatus  = &getFarmBootStatus( $farmname );
 
 			if ( $bstatus eq "up" )
 			{
 				&printAndLog( "  * Starting Farm $farmname:" );
-				$status = &_runFarmStart( $farmname, "false" );
+				my $status = &_runFarmStart( $farmname, "false" );
 
 				if ( $status == 0 )
 				{
@@ -672,12 +689,12 @@ if ( $eject eq "start" )
 				}
 
 				#farmguardian configured and up?
-				$fgstatus = &getFarmGuardianStatus( $farmname );
+				my $fgstatus = &getFarmGuardianStatus( $farmname );
 
 				if ( ( $status == 0 ) && ( $fgstatus == 1 ) && $allow_fg )
 				{
 					&printAndLog( "  * Starting Farm Guardian for $farmname:" );
-					$stat = &runFarmGuardianStart( $farmname, "" );
+					my $stat = &runFarmGuardianStart( $farmname, "" );
 
 					if ( $stat == 0 )
 					{
@@ -732,6 +749,7 @@ if ( $eject eq "stop" )
 
 		if ( `pgrep zeninotify` )
 		{
+			my $zenino = &getGlobalConfiguration('zenino');
 			system ( "$zenino stop" );
 		}
 

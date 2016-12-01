@@ -305,6 +305,7 @@ sub setNodeStatusMaster
 	&zenlog("Switching node to master");
 	&setZClusterNodeStatus('master');
 
+	my $primary_backup = &getGlobalConfiguration('primary_backup');
 	system("$primary_backup primary");
 
 	# flush arp rules
@@ -322,6 +323,7 @@ sub setNodeStatusMaster
 	}
 	
 	# start sync
+	my $zenino = &getGlobalConfiguration('zenino');
 	system( "$zenino &" );
 
 	# start farmguardians
@@ -367,8 +369,10 @@ sub setNodeStatusBackup
 		&setZClusterNodeStatus('backup');
 	}
 
+	my $primary_backup = &getGlobalConfiguration('primary_backup');
 	system("$primary_backup backup");
 
+	my $zenino = &getGlobalConfiguration('zenino');
 	system( "$zenino stop &" );
 
 	# stop farmguardians

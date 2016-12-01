@@ -490,6 +490,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 		elsif ( -e $l4sd_pidfile )
 		{
 			## lock iptables use ##
+			my $iptlock = &getGlobalConfiguration('iptlock');
 			open my $ipt_lockfile, '>', $iptlock;
 			&setIptLock( $ipt_lockfile );
 

@@ -189,6 +189,8 @@ my $poundctl = &getGlobalConfiguration('poundctl');
 my $portadmin;
 $portadmin = &getFarmPort( $farmname ) if $type ne 'l4xnat';    # http or tcp
 
+my $libexec_dir = &getGlobalConfiguration('libexec_dir');
+
 #Get servers list
 while ( 1 )
 {

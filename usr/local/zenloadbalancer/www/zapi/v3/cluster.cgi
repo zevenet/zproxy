@@ -194,6 +194,7 @@ sub set_cluster
 		{
 			### cluster Re-configuration ###
 			my $rhost = &getZClusterRemoteHost();
+			my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
 			
 			system( "scp $filecluster root\@$zcl_conf->{$rhost}->{ip}:$filecluster" );
 
@@ -386,16 +387,20 @@ sub set_cluster_actions
 			## Starting cluster services ##
 
 			# first synchronization
-			&runSync( $configdir ); # FIXME: Global variable
+			my $configdir = &getGlobalConfiguration('configdir');
+			&runSync( $configdir );
 
 			# generate cluster config and start cluster service
 			die if &enableZCluster();
 
 			# force cluster file sync
+			my $filecluster = &getGlobalConfiguration('filecluster');
 			system( "scp $filecluster root\@$zcl_conf->{$remote_hostname}->{ip}:$filecluster" );
 
 			# local conntrackd configuration
 			&setConntrackdConfig();
+
+			my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
 
 			# remote conntrackd configuration
 			my $cl_output = &runRemotely(
@@ -464,6 +469,7 @@ sub set_cluster_actions
 
 		# handle remote host when disabling cluster
 		my $rhost = &getZClusterRemoteHost();
+		my $zenino = &getGlobalConfiguration('zenino');
 
 		### Stop cluster services ###
 		if ( &getZClusterNodeStatus() eq 'master' )
@@ -494,6 +500,8 @@ sub set_cluster_actions
 
 			# 2 stop slave zenloadbalancer
 			system( "/etc/init.d/zenloadbalancer stop >/dev/null 2>&1" );
+
+			my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
 			
 			# 3 stop master cluster service
 			&zenlog(
@@ -508,6 +516,11 @@ sub set_cluster_actions
 		# remove cluster configuration file
 		# remove keepalived configuration file
 		# remove zcluster node status file
+		my $filecluster       = &getGlobalConfiguration( 'filecluster' );
+		my $keepalived_conf   = &getGlobalConfiguration( 'keepalived_conf' );
+		my $znode_status_file = &getGlobalConfiguration( 'znode_status_file' );
+		my $conntrackd_conf   = &getGlobalConfiguration( 'conntrackd_conf' );
+
 		for my $cl_file ( $filecluster, $keepalived_conf, $znode_status_file, $conntrackd_conf ) # FIXME: Global variables
 		{
 			unlink $cl_file;

@@ -26,6 +26,9 @@ use MIME::Base64;
 require ( "/usr/local/zenloadbalancer/config/global.conf" );
 
 my $basedir = &getGlobalConfiguration('basedir');
+my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
+my $rrd_dir = &getGlobalConfiguration('rrd_dir');
+
 my $width  = "600";
 my $height = "150";
 $imagetype = "PNG";
@@ -54,6 +57,7 @@ sub printGraph    #($type,$time)
 {
 	my ( $type, $time ) = @_;
 
+	my $img_dir = &getGlobalConfiguration('img_dir');
 	my $graph = $basedir . $img_dir . $type . "_" . $time . ".png";
 
 	if ( $type eq "cpu" )

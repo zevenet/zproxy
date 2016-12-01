@@ -90,6 +90,7 @@ sub getIptList                              # ($table,$chain)
 	&zenlog( $iptables_command );
 
 	## lock iptables use ##
+	my $iptlock = &getGlobalConfiguration('iptlock');
 	open my $ipt_lockfile, '>', $iptlock;
 	&setIptLock( $ipt_lockfile );
 
@@ -660,6 +661,7 @@ sub getIptRuleNumber
 	}
 
 	## lock iptables use ##
+	my $iptlock = &getGlobalConfiguration('iptlock');
 	open my $ipt_lockfile, '>', $iptlock;
 	&setIptLock( $ipt_lockfile );
 
@@ -769,6 +771,7 @@ sub getIptRuleInsert
 			my $chain     = $rule_args[4];       # forth argument of iptables is the chain
 
 			## lock iptables use ##
+			my $iptlock = &getGlobalConfiguration('iptlock');
 			open my $ipt_lockfile, '>', $iptlock;
 			&setIptLock( $ipt_lockfile );
 
@@ -969,9 +972,10 @@ sub iptSystem
 
 	&zenlog( $program . "Running: $command" );    # log
 
-	# $iptlock defined in global.conf
 	## lock iptables use ##
+	my $iptlock = &getGlobalConfiguration('iptlock');
 	my $open_rc = open ( my $ipt_lockfile, '>', $iptlock );
+
 	if ( $open_rc )
 	{
 		&setIptLock( $ipt_lockfile );

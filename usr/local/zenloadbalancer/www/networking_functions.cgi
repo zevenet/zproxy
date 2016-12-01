@@ -258,6 +258,7 @@ sub addlocalnet    # ($if_ref)
 	use NetAddr::IP;
 	my $ip = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
 	my $net = $ip->network();
+	my $routeparams = &getGlobalConfiguration('routeparams');
 
 	my $ip_cmd =
 	  "$ip_bin -$$if_ref{ip_v} route replace $net dev $$if_ref{name} src $$if_ref{addr} table table_$$if_ref{name} $routeparams";
@@ -305,6 +306,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 			if ( $$if_ref{ gateway } )
 			{
+				my $routeparams = &getGlobalConfiguration('routeparams');
 				my $ip_cmd =
 				  "$ip_bin -$$if_ref{ip_v} route replace default via $$if_ref{gateway} dev $$if_ref{name} table table_$$if_ref{name} $routeparams";
 				$status = &logAndRun( "$ip_cmd" );
@@ -323,6 +325,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 			# &delRoutes( "global", $if );
 			if ( $gateway )
 			{
+				my $routeparams = &getGlobalConfiguration('routeparams');
 				my $ip_cmd =
 				  "$ip_bin -$$if_ref{ip_v} route replace default via $gateway dev $$if_ref{name} $routeparams";
 				$status = &logAndRun( "$ip_cmd" );

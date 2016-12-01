@@ -26,6 +26,7 @@ sub setConntrackdConfig
 	&zenlog("Setting conntrackd configuration file");
 	
 	my $zcl_conf = &getZClusterConfig();
+	my $conntrackd_conf = &getGlobalConfiguration('conntrackd_conf');
 
 	open my $ct_file, '>', $conntrackd_conf;
 
