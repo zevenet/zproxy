@@ -509,18 +509,19 @@ sub get_all_sys_graphs	 #()
 {
 	# System values
 	my @graphlist = &getGraphs2Show( "System" );
-	my @disks; 
 	
-	foreach my $graphlist ( @graphlist )
-	{
-		if ( $graphlist =~ /dev/ )
-		{
-			$graphlist =~ s/hd$//g;
-			push @disks, $graphlist;
-		}
-	}
 	my @sys = ( "cpu", "load", "ram", "swap" );
-	push @sys, { disks => \@disks };
+	
+	# Get mount point of disks
+	my @mount_points;
+	my $partitions = &getDiskPartitionsInfo();
+	for my $key ( keys %{ $partitions } )
+	{
+		# mount point : root/mount_point
+		push( @mount_points, "root$partitions->{ $key }->{ mount_point }" );
+	}
+	@mount_points = sort @mount_points;
+	push @sys, { disks => \@mount_points };
 
 	my $body = {
 		description =>
@@ -806,7 +807,8 @@ sub list_disks	#()
 
 	for my $key ( keys %{ $partitions } )
 	{
-		push( @mount_points, $partitions->{ $key }->{ mount_point } );
+		# mount point : root/mount_point
+		push( @mount_points, "root$partitions->{ $key }->{ mount_point }" );
 	}
 
 	@mount_points = sort @mount_points;

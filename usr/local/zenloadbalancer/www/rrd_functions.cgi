@@ -21,9 +21,13 @@
 #
 ###############################################################################
 
+use warnings;
+use strict;
+
 use RRDs;
 use MIME::Base64;
-require ( "/usr/local/zenloadbalancer/config/global.conf" );
+#~ require ( "/usr/local/zenloadbalancer/config/global.conf" );
+require ( "/usr/local/zenloadbalancer/www/check_functions.cgi" );
 
 my $basedir = &getGlobalConfiguration('basedir');
 my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
@@ -31,7 +35,12 @@ my $rrd_dir = &getGlobalConfiguration('rrd_dir');
 
 my $width  = "600";
 my $height = "150";
-$imagetype = "PNG";
+my $imagetype = "PNG";
+
+my $img_dir = &getGlobalConfiguration ( 'img_dir' );
+my $rrdap_dir = &getGlobalConfiguration ( 'rrdap_dir' );
+my $rrd_dir = &getGlobalConfiguration ( 'rrd_dir' );
+
 
 #
 sub printImgFile    #($file)
@@ -40,8 +49,8 @@ sub printImgFile    #($file)
 
 	if ( open PNG, "<$file" )
 	{
-		$raw_string = do { local $/ = undef; <PNG>; };
-		$encoded = encode_base64( $raw_string );
+		my $raw_string = do { local $/ = undef; <PNG>; };
+		my $encoded = encode_base64( $raw_string );
 		close PNG;
 		unlink ( $file );
 		return "$encoded";
@@ -172,7 +181,8 @@ sub genCpuGraph    #($type,$graph,$time)
 					 "GPRINT:tused:MAX:Max\\:%8.2lf %%\\n"
 		);
 
-		if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n" }
+		my $rrdError = RRDs::error;
+		print "$0: unable to generate $graph: $rrdError\n" if ( $rrdError );
 	}
 }
 
@@ -227,7 +237,8 @@ sub genDiskGraph    #($type,$graph,$time)
 					 "GPRINT:total:MAX:Max\\:%8.2lf %s\\n"
 		);
 
-		if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n"; }
+		my $rrdError = RRDs::error;
+		print "$0: unable to generate $graph: $rrdError\n" if ( $rrdError );
 	}
 }
 
@@ -270,7 +281,8 @@ sub genLoadGraph    #($type,$graph,$time)
 					 "GPRINT:load15:MAX:Max\\:%3.2lf\\n"
 		);
 
-		if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n" }
+		my $rrdError = RRDs::error;
+		print "$0: unable to generate $graph: $rrdError\n" if ( $rrdError );
 
 	}
 }
@@ -320,8 +332,8 @@ sub genMemGraph    #($type,$graph,$time)
 					 "GPRINT:memt:AVERAGE:Avg\\:%8.2lf %s",
 					 "GPRINT:memt:MAX:Max\\:%8.2lf %s\\n"
 		);
-
-		if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n" }
+		my $rrdError = RRDs::error;
+		print "$0: unable to generate $graph: $rrdError\n" if ( $rrdError );
 	}
 }
 
@@ -371,7 +383,8 @@ sub genMemSwGraph    #($type,$graph,$time)
 					 "GPRINT:swt:MAX:Max\\:%8.2lf %s\\n",
 		);
 
-		if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n" }
+		my $rrdError = RRDs::error;
+		print "$0: unable to generate $graph: $rrdError\n" if ( $rrdError );
 	}
 }
 
@@ -415,10 +428,8 @@ sub genNetGraph    #($type,$graph,$time)
 					 "HRULE:0#000000"
 		);
 
-		if ( $ERROR = RRDs::error )
-		{
-			print "$0: unable to generate $if_name traffic graph: $ERROR\n";
-		}
+		my $rrdError = RRDs::error;
+		print "$0: unable to generate $graph: $rrdError\n" if ( $rrdError );
 	}
 }
 
@@ -468,42 +479,41 @@ sub genFarmGraph    #($type,$graph,$time)
 			  # "GPRINT:closed:MAX:Max\\:%6.0lf \\n"
 		);
 
-		if ( $ERROR = RRDs::error )
-		{
-			print "$0: unable to generate $farm farm graph: $ERROR\n";
-		}
+		my $rrdError = RRDs::error;
+		print "$0: unable to generate $graph: $rrdError\n" if ( $rrdError );
 	}
 }
 
-#Generate the CPU temperature Graph
-sub genTempGraph    #($type,$graph,$time)
-{
-	my $db_temp = "$type.rrd";
+#~ #Generate the CPU temperature Graph
+#~ sub genTempGraph    #($type,$graph,$time)
+#~ {
+	#~ my $db_temp = "$type.rrd";
 
-	if ( -e "$rrdap_dir/$rrd_dir/$db_temp" )
-	{
-		RRDs::graph(
-					 "$graph",
-					 "--imgformat=$imagetype",
-					 "--start=-1$time",
-					 "--width=$width",
-					 "--height=$height",
-					 "--alt-autoscale-max",
-					 "--lower-limit=0",
-					 "--title=CPU TEMPERATURE",
-					 "--vertical-label=LOAD",
-					 "DEF:temp=$rrdap_dir/$rrd_dir/$db_temp:temp:AVERAGE",
-					 "STACK:temp#46b971:CPU temperature\\t",
-					 "GPRINT:temp:LAST:Last\\:%4.2lf C",
-					 "GPRINT:temp:MIN:Min\\:%4.2lf C",
-					 "GPRINT:temp:AVERAGE:Avg\\:%4.2lf C",
-					 "GPRINT:temp:MAX:Max\\:%4.2lf C\\n"
-		);
+	#~ if ( -e "$rrdap_dir/$rrd_dir/$db_temp" )
+	#~ {
+		#~ RRDs::graph(
+					 #~ "$graph",
+					 #~ "--imgformat=$imagetype",
+					 #~ "--start=-1$time",
+					 #~ "--width=$width",
+					 #~ "--height=$height",
+					 #~ "--alt-autoscale-max",
+					 #~ "--lower-limit=0",
+					 #~ "--title=CPU TEMPERATURE",
+					 #~ "--vertical-label=LOAD",
+					 #~ "DEF:temp=$rrdap_dir/$rrd_dir/$db_temp:temp:AVERAGE",
+					 #~ "STACK:temp#46b971:CPU temperature\\t",
+					 #~ "GPRINT:temp:LAST:Last\\:%4.2lf C",
+					 #~ "GPRINT:temp:MIN:Min\\:%4.2lf C",
+					 #~ "GPRINT:temp:AVERAGE:Avg\\:%4.2lf C",
+					 #~ "GPRINT:temp:MAX:Max\\:%4.2lf C\\n"
+		#~ );
 
-		if ( $ERROR = RRDs::error ) { print "$0: unable to generate $graph: $ERROR\n"; }
+		#~ my $rrdError = RRDs::error;
+		#~ print "$0: unable to generate $graph: $rrdError\n" if ( $rrdError );
 
-	}
-}
+	#~ }
+#~ }
 
 #function that returns the graph list to show
 sub getGraphs2Show    #($graphtype)
@@ -512,7 +522,7 @@ sub getGraphs2Show    #($graphtype)
 
 	my @list = -1;
 
-	if ( $graphtype eq System )
+	if ( $graphtype eq 'System' )
 	{
 		opendir ( DIR, "$rrdap_dir/$rrd_dir" );
 		my @disk = grep ( /^dev-.*$/, readdir ( DIR ) );
@@ -520,14 +530,14 @@ sub getGraphs2Show    #($graphtype)
 		for ( @disk ) { s/.rrd//g };    # remove filenames .rrd trailing
 		@list = ( "cpu", @disk, "load", "mem", "memsw" );
 	}
-	elsif ( $graphtype eq Network )
+	elsif ( $graphtype eq 'Network' )
 	{
 		opendir ( DIR, "$rrdap_dir/$rrd_dir" );
 		@list = grep ( /iface.rrd$/, readdir ( DIR ) );
 		closedir ( DIR );
 		for ( @list ) { s/.rrd//g };    # remove filenames .rrd trailing
 	}
-	elsif ( $graphtype eq Farm )
+	elsif ( $graphtype eq 'Farm' )
 	{
 		opendir ( DIR, "$rrdap_dir/$rrd_dir" );
 		@list = grep ( /farm.rrd$/, readdir ( DIR ) );
