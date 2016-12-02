@@ -97,8 +97,16 @@ sub startConntrackd
 
 sub stopConntrackd
 {
-	&zenlog("Starting conntrackd");
-	return system("/etc/init.d/conntrackd stop");
+	&zenlog("Stopping conntrackd");
+	system("/etc/init.d/conntrackd stop");
+
+	if ( getConntrackdRunning() )
+	{
+		&zenlog("Forcing conntrackd to stop");
+		system("pkill conntrackd >/dev/null 2>&1");
+	}
+
+	return 0;
 }
 
 sub getConntrackdRunning

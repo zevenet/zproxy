@@ -158,15 +158,18 @@ sub enableZCluster
 	}
 
 	# conntrackd
-	if ( -f &getGlobalConfiguration('conntrackd_conf') )
+	#~ if ( -f &getGlobalConfiguration('conntrackd_conf') )
+	unless ( -f &getGlobalConfiguration('conntrackd_conf') )
 	{
-		if ( &getConntrackdRunning() )
-		{
-			&stopConntrackd();
-		}
-
-		&startConntrackd();
+		&setConntrackdConfig();
 	}
+
+	if ( &getConntrackdRunning() )
+	{
+		&stopConntrackd();
+	}
+
+	&startConntrackd();
 
 	return $error_code;
 }

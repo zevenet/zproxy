@@ -14,7 +14,7 @@
 
 #~ use no warnings;
 #~ use warnings;
-#~ use strict;
+use strict;
 
 #~ use CGI;
 use CGI::Session;
@@ -1406,10 +1406,6 @@ POST qr{^/system/notifications/alerts/($alert_re)/actions$} => sub {
 
 #### /system/cluster
 
-GET qr{^/system/cluster/status$} => sub {
-	&get_cluster_status( @_ );
-};
-
 GET qr{^/system/cluster$} => sub {
 	&get_cluster( @_ );
 };
@@ -1420,6 +1416,14 @@ POST qr{^/system/cluster$} => sub {
 
 POST qr{^/system/cluster/actions$} => sub {
 	&set_cluster_actions( @_ );
+};
+
+GET qr{^/system/cluster/nodes$} => sub {
+	&get_cluster_nodes_status( @_ );
+};
+
+GET qr{^/system/cluster/nodes/localhost$} => sub {
+	&get_cluster_localhost_status( @_ );
 };
 
 

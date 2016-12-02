@@ -24,6 +24,7 @@
 
 ## zcluster-manager 1.0
 
+use strict;
 use feature 'say';
 #~ use Data::Dumper;
 
@@ -228,24 +229,25 @@ if ( $object eq 'interface' )
 if ( $object eq 'gateway' )
 {
 	my $iface_name = shift @ARGV;
-	my $ip_v = shift @ARGV;
+	my $ip_version = shift @ARGV;
 
 	my $status;
 	
 	if ( $command eq 'update' )
 	{
-		my $if_ref = getInterfaceConfig( $if, $ip_version );
+		my $if_ref = getInterfaceConfig( $iface_name, $ip_version );
 
 		exit 1 if ! $if_ref;
 		
-		$status = &applyRoutes( "global", $if_ref, $gwaddr );
+		$status = &applyRoutes( "global", $if_ref, $if_ref->{ gateway } );
 		&reloadL4FarmsSNAT();
 		
 		exit $status;
 	}
 	elsif ( $command eq 'delete' ) # remove interface stats and other
 	{
-		my $if_ref = getInterfaceConfig( $defaultgwif6, $ip_version );
+		my $defaultgwif = &getGlobalConfiguration('defaultgwif');
+		my $if_ref = getInterfaceConfig( $defaultgwif, $ip_version );
 
 		exit 1 if ! $if_ref;
 
@@ -331,8 +333,8 @@ sub setNodeStatusMaster
 
 	foreach my $ffile ( @farmsf )
 	{
-		$farmname = &getFarmName( $ffile );
-		$bstatus  = &getFarmBootStatus( $farmname );
+		my $farmname = &getFarmName( $ffile );
+		my $bstatus  = &getFarmBootStatus( $farmname );
 
 		if ( $bstatus eq "up" )
 		{
@@ -340,7 +342,7 @@ sub setNodeStatusMaster
 			#~ $status = &_runFarmStart( $farmname, "false" );
 
 			#farmguardian configured and up?
-			$fgstatus = &getFarmGuardianStatus( $farmname );
+			my $fgstatus = &getFarmGuardianStatus( $farmname );
 
 			if ( ( $bstatus == 'up' ) && ( $fgstatus == 1 ) )
 			{
@@ -373,7 +375,7 @@ sub setNodeStatusBackup
 	system("$primary_backup backup");
 
 	my $zenino = &getGlobalConfiguration('zenino');
-	system( "$zenino stop &" );
+	system( "$zenino stop &" ) unless system('pgrep zeninotify.pl');
 
 	# stop farmguardians
 	system("pkill `pgrep farmguardian`");
