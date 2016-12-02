@@ -1132,7 +1132,7 @@ sub farm_stats # ( $farmname )
 			# Print Success
 			my $body = {
 						description       => "List farm stats",
-						realserversstatus => \@out_rss,
+						backends => \@out_rss,
 			};
 	
 			&httpResponse({ code => 200, body => $body });
@@ -1141,7 +1141,57 @@ sub farm_stats # ( $farmname )
 		if ( $type eq "gslb" )
 		{
 			#~ my $out_rss = "There are no stats for GSLB farms yet. We are working on it!";
-			my $out_rss = &getGSLBGdnsdStats( $farmname );
+			my $out_rss;
+			my $gslb_stats = &getGSLBGdnsdStats( $farmname );
+			
+			
+			my @backendStats;
+			my @services = &getGSLBFarmServices( $farmname );
+			foreach my $srv(@services){
+			
+				my @serv = split(".cfg",$srv);
+				#~ my $srv = @serv[0];
+				my $lb = &getFarmVS($1,$srv,"algorithm");
+				# Default port health check
+				my $port = &getFarmVS($1,$srv,"dpc");
+				
+				#
+				# Backends
+				#
+				my $out_b = [];
+				my $backendsvs = &getFarmVS($1,$srv,"backends");
+				my @be = split("\n",$backendsvs);
+
+				foreach my $subline(@be){
+					$subline =~ s/^\s+//;
+					if ($subline =~ /^$/){
+						next;
+					}
+					# ID and IP
+					my @subbe = split(" => ",$subline);
+					my $id = $subbe[0];
+					my $addr = $subbe[1];
+					
+					my $status;					
+					# look for backend status in stats
+					foreach my $st_srv ( @{ $gslb_stats->{ 'services' } } )
+					{
+						if ( $st_srv->{ 'service' } =~ /^$addr\/[\w]+$port$/ )
+						{
+							$status = $st_srv->{ 'real_state' };
+							last;
+						}
+					}
+					
+					push @backendStats, { server => $id, address => $addr, service => $srv, port => $port, status => $status };
+				}
+						
+			}
+			
+			$out_rss->{ 'backends' } = \@backendStats;
+			$out_rss->{ 'client' } = $gslb_stats->{ 'udp' };
+			$out_rss->{ 'server' } = $gslb_stats->{ 'tcp' };
+			$out_rss->{ 'extended' } = $gslb_stats->{ 'stats' };
 	
 			# Print Success
 			my $body = {
