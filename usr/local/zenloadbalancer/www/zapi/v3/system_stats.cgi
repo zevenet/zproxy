@@ -1188,15 +1188,18 @@ sub farm_stats # ( $farmname )
 						
 			}
 			
-			$out_rss->{ 'backends' } = \@backendStats;
-			$out_rss->{ 'client' } = $gslb_stats->{ 'udp' };
-			$out_rss->{ 'server' } = $gslb_stats->{ 'tcp' };
-			$out_rss->{ 'extended' } = $gslb_stats->{ 'stats' };
+			#~ $out_rss->{ 'backends' } = \@backendStats;
+			#~ $out_rss->{ 'client' } = $gslb_stats->{ 'udp' };
+			#~ $out_rss->{ 'server' } = $gslb_stats->{ 'tcp' };
+			#~ $out_rss->{ 'extended' } = $gslb_stats->{ 'stats' };
 	
 			# Print Success
 			my $body = {
 						description       => "List farm stats",
-						realserversstatus => $out_rss,
+						backends => \@backendStats,
+						client => $gslb_stats->{ 'udp' },
+						server => $gslb_stats->{ 'tcp' },
+						extended => $gslb_stats->{ 'stats' },
 			};
 	
 			&httpResponse({ code => 200, body => $body });
