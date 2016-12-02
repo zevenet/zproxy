@@ -24,7 +24,9 @@
 use warnings;
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
+
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 # Start Farm rutine
 sub _runGSLBFarmStart    # ($fname,$writeconf)
@@ -43,6 +45,8 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 	}
 
 	&zenlog( "running 'Start write $writeconf' for $fname farm $type" );
+
+	&setGSLBControlPort( $fname );
 
 	if ( $writeconf eq "true" )
 	{
@@ -65,6 +69,7 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 
 	&zenlog( "running $exec" );
 	zsystem( "$exec > /dev/null 2>&1" );
+
 	$output = $?;
 	if ( $output != 0 )
 	{
@@ -220,9 +225,9 @@ sub getGSLBFarmConfigIsOK    # ($farm_name)
 {
 	my ( $fname ) = @_;
 
-	my $ffile = &getFarmFile( $fname );
+	my $ffile  = &getFarmFile( $fname );
 	my $output = -1;
-	my $gdnsd = &getGlobalConfiguration('gdnsd');
+	my $gdnsd  = &getGlobalConfiguration( 'gdnsd' );
 
 	my $gdnsd_command = "$gdnsd -c $configdir\/$ffile/etc checkconf";
 
@@ -243,11 +248,12 @@ sub getGSLBFarmPid    # ($farm_name)
 	my $file          = &getFarmFile( $fname );
 	my $farm_filename = &getFarmFile( $fname );
 	my $output        = -1;
-	my $ps = &getGlobalConfiguration('ps');
-	my $gdnsd = &getGlobalConfiguration('gdnsd');
+	my $ps            = &getGlobalConfiguration( 'ps' );
+	my $gdnsd         = &getGlobalConfiguration( 'gdnsd' );
 
 	my @run =
 	  `$ps -ef | grep "$gdnsd -c $configdir\/$farm_filename" | grep -v grep | awk {'print \$2'}`;
+
 	chomp ( @run );
 	
 	if ( $run[0] )
@@ -436,7 +442,7 @@ sub getGSLBStartCommand    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $gdnsd = &getGlobalConfiguration('gdnsd');
+	my $gdnsd = &getGlobalConfiguration( 'gdnsd' );
 	return "$gdnsd -c $configdir\/$farm_name\_gslb.cfg/etc start";
 }
 
@@ -445,7 +451,7 @@ sub getGSLBStopCommand     # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $gdnsd = &getGlobalConfiguration('gdnsd');
+	my $gdnsd = &getGlobalConfiguration( 'gdnsd' );
 	return "$gdnsd -c $configdir\/$farm_name\_gslb.cfg/etc stop";
 }
 
@@ -549,7 +555,7 @@ sub runFarmReload    # ($farm_name)
 
 	my $type = &getFarmType( $fname );
 	my $output;
-	my $gdnsd = &getGlobalConfiguration('gdnsd');
+	my $gdnsd = &getGlobalConfiguration( 'gdnsd' );
 
 	my $gdnsd_command = "$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones";
 
@@ -660,7 +666,7 @@ sub setFarmZoneSerial    # ($farm_name,$zone)
 	my @fileconf;
 	use Tie::File;
 	tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$zone";
-	my $index; 
+	my $index;
 	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /@\tSOA / )
@@ -681,11 +687,10 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 {
 	my ( $fvip, $fvipp, $fname ) = @_;
 
-	my $httpport = 35060;
+	my $httpport = &getRandomPort();
 	my $type     = "gslb";
 	my $ffile    = &getFarmFile( $fname );
 	my $output   = -1;
-
 	if ( $ffile != -1 )
 	{
 		# the farm name already exists
@@ -701,47 +706,76 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	mkdir "$farm_path\/etc\/zones";
 	mkdir "$farm_path\/etc\/plugins";
 
-	while ( $httpport < 35160 && &checkport( "127.0.0.1", $httpport ) eq "true" )
-	{
-		$httpport++;
-	}
-	if ( $httpport == 35160 )
-	{
-		$output = -1;    # No room for a new farm
-	}
-	else
-	{
-		open ( my $file, ">", "$configdir\/$fname\_$type.cfg\/etc\/config" );
-		print $file ";up\n"
-		  . "options => {\n"
-		  . "   listen = $fvip\n"
-		  . "   dns_port = $fvipp\n"
-		  . "   http_port = $httpport\n"
-		  . "   http_listen = 127.0.0.1\n" . "}\n\n";
-		print $file "service_types => { \n\n}\n\n";
-		print $file
-		  "plugins => { \n\textmon => { helper_path => \"/usr/local/zenloadbalancer/app/gdnsd/gdnsd_extmon_helper\" },\n}\n\n";
-		close $file;
+	open ( my $file, ">", "$configdir\/$fname\_$type.cfg\/etc\/config" );
+	print $file ";up\n"
+	  . "options => {\n"
+	  . "   listen = $fvip\n"
+	  . "   dns_port = $fvipp\n"
+	  . "   http_port = $httpport\n"
+	  . "   http_listen = 127.0.0.1\n" . "}\n\n";
+	print $file "service_types => { \n\n}\n\n";
+	print $file
+	  "plugins => { \n\textmon => { helper_path => \"/usr/local/zenloadbalancer/app/gdnsd/gdnsd_extmon_helper\" },\n}\n\n";
+	close $file;
 
-		#run farm
-		my $exec = &getGSLBStartCommand( $fname );
-		&zenlog( "running $exec" );
-		zsystem( "$exec > /dev/null 2>&1" );
+	#run farm
+	my $exec = &getGSLBStartCommand( $fname );
+	&zenlog( "running $exec" );
+	zsystem( "$exec > /dev/null 2>&1" );
 
-		#TODO
-		#$output = $?;
-		$output = 0;
+	#TODO
+	#$output = $?;
+	$output = 0;
 
-		if ( $output != 0 )
-		{
-			$output = -1;
-		}
-	}
 	if ( $output != 0 )
 	{
 		&runFarmDelete( $fname );
 	}
 	return $output;
+}
+
+# Get http port  where is the gslb stats
+sub getGSLBControlPort    # ( $farm_name )
+{
+	my $farmName = shift;
+	my $port     = -1;
+	my $ffile    = &getFarmFile( $farmName );
+	$ffile = "$configdir/$ffile/etc/config";
+
+	tie my @file, 'Tie::File', $ffile;
+	foreach my $line ( @file )
+	{
+		if ( $line =~ /http_port =\s*(\d+)/ )
+		{
+			$port = $1 + 0;
+			last;
+		}
+	}
+	untie @file;
+	return $port;
+}
+
+# Set http port  where is the gslb stats
+sub setGSLBControlPort    # ( $farm_name )
+{
+	my $farmName = shift;
+
+	# set random port
+	my $port  = &getRandomPort();
+	my $ffile = &getFarmFile( $farmName );
+	$ffile = "$configdir/$ffile/etc/config";
+
+	tie my @file, 'Tie::File', $ffile;
+	foreach my $line ( @file )
+	{
+		if ( $line =~ /http_port =/ )
+		{
+			$line = "   http_port = $port\n";
+			last;
+		}
+	}
+	untie @file;
+	return $port;
 }
 
 #
@@ -750,8 +784,8 @@ sub setGSLBFarmBootStatus    # ($farm_name, $status)
 	my ( $farm_name, $status ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $output; 
-	
+	my $output;
+
 	use Tie::File;
 	tie my @filelines, 'Tie::File', "$configdir\/$farm_filename\/etc\/config";
 	my $first = 1;
@@ -1552,7 +1586,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 			}
 
 			# create the new port configuration
-			$index      = 0;
+			$index = 0;
 			my $firstIndex = 0;
 			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
 			foreach $line ( @fileconf )
@@ -1642,7 +1676,6 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 	my $rrdap_dir = &getGlobalConfiguration( "rrdap_dir" );
 	my $rrd_dir   = &getGlobalConfiguration( "rrd_dir" );
 	my $configdir = &getGlobalConfiguration( "configdir" );
-	
 	my $type   = &getFarmType( $fname );
 	my $ffile  = &getFarmFile( $fname );
 	my $output = -1;
@@ -1720,12 +1753,18 @@ sub dnsServiceType    #  dnsServiceType ( $farmname, $ip, $tcp_port )
 }
 
 # this function return one string with json format
-sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ($wget_bin)
+sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ( )
 {
-	my $wget = &getGlobalConfiguration ( 'wget' );
-	my $gdnsdStats = `$wget -qO- http://127.0.0.1:35060/json`;
-	
-	my $stats  = decode_json ( $gdnsdStats );
+	my $farmName   = shift;
+	my $wget       = &getGlobalConfiguration( 'wget' );
+	my $httpPort   = &getGSLBControlPort( $farmName );
+	my $gdnsdStats = `$wget -qO- http://127.0.0.1:$httpPort/json`;
+
+	my $stats;
+	if ( $gdnsdStats )
+	{
+		$stats = decode_json( $gdnsdStats );
+	}
 	return $stats;
 }
 
@@ -1865,6 +1904,7 @@ sub getGSLBCommandInFGFormat
 	my ( $cmd, $port ) = @_;
 
 	my $libexec_dir = &getGlobalConfiguration ( 'libexec_dir' );
+	my $newCmd;
 	my @aux = split ( ', ', $cmd );
 	my $flagPort;
 	my $newCmd = $aux[0];
@@ -2272,7 +2312,7 @@ sub getGSLBCheckConf
 {
 	my $farmname = shift;
 
-	my $gdnsd = &getGlobalConfiguration('gdnsd');
+	my $gdnsd = &getGlobalConfiguration( 'gdnsd' );
 	my $errormsg = system (
 		   "$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf > /dev/null 2>&1" );
 	if ( $errormsg )
@@ -2320,8 +2360,8 @@ sub getGSLBResources
 		}
 
 		my @subbe  = split ( " \;", $subline );
-		my @subbe1 = split ( "\t", $subbe[0] );
-		my @subbe2 = split ( "_",  $subbe[1] );
+		my @subbe1 = split ( "\t",  $subbe[0] );
+		my @subbe2 = split ( "_",   $subbe[1] );
 
 		$resources{ rname } = $subbe1[0];
 		$resources{ id }    = $subbe2[1] + 0;

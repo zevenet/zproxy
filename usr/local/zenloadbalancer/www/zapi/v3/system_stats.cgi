@@ -1141,7 +1141,7 @@ sub farm_stats # ( $farmname )
 		if ( $type eq "gslb" )
 		{
 			#~ my $out_rss = "There are no stats for GSLB farms yet. We are working on it!";
-			my $out_rss = &getGSLBGdnsdStats();
+			my $out_rss = &getGSLBGdnsdStats( $farmname );
 	
 			# Print Success
 			my $body = {

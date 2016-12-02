@@ -23,30 +23,63 @@
 
 use IO::Socket;
 
-my $ip_bin = &getGlobalConfiguration('ip_bin');
+my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+
+#get a random available port
+sub getRandomPort    # ()
+{
+	#down limit
+	my $min = "35060";
+
+	#up limit
+	my $max = "35160";
+
+	my $random_port;
+	do
+	{
+		$random_port = int ( rand ( $max - $min ) ) + $min;
+	} while ( &checkport( '127.0.0.1', $random_port ) eq 'false' );
+	my $check = &checkport( '127.0.0.1', $random_port );
+
+	return $random_port;
+}
 
 #check if a port in a ip is up
 sub checkport    # ($host,$port)
 {
 	my ( $host, $port ) = @_;
 
-	#use strict;
-	use IO::Socket;
-	my $sock = new IO::Socket::INET(
-									 PeerAddr => $host,
-									 PeerPort => $port,
-									 Proto    => 'tcp'
-	);
-
-	if ( $sock )
+	# check local ports;
+	if ( $host eq '127.0.0.1' || $host =~ /local/ )
 	{
-		close ( $sock );
-		return "true";
+		my $flag = system ( "netstat -putan | grep $port" );
+		if ( $flag )
+		{
+			return "true";
+		}
 	}
+
+	# check remote ports
 	else
 	{
-		return "false";
+		use IO::Socket;
+		my $sock = new IO::Socket::INET(
+										 PeerAddr => $host,
+										 PeerPort => $port,
+										 Proto    => 'tcp'
+		);
+
+		if ( $sock )
+		{
+			close ( $sock );
+			return "true";
+		}
+		else
+		{
+			return "false";
+		}
 	}
+	return "false";
 }
 
 #list ALL IPS UP
@@ -175,9 +208,9 @@ sub ifexist    # ($nif)
 
 	use IO::Socket;
 	use IO::Interface qw(:flags);
-	my $s = IO::Socket::INET->new( Proto => 'udp' );
+	my $s          = IO::Socket::INET->new( Proto => 'udp' );
 	my @interfaces = $s->if_list;
-	my $configdir = &getGlobalConfiguration('configdir');
+	my $configdir  = &getGlobalConfiguration( 'configdir' );
 
 	for my $if ( @interfaces )
 	{
@@ -205,7 +238,7 @@ sub writeConfigIf    # ($if,$string)
 {
 	my ( $if, $string ) = @_;
 
-	my $configdir = &getGlobalConfiguration('configdir');
+	my $configdir = &getGlobalConfiguration( 'configdir' );
 
 	open CONFFILE, ">", "$configdir/if\_$if\_conf";
 	print CONFFILE "$string\n";
@@ -214,11 +247,11 @@ sub writeConfigIf    # ($if,$string)
 }
 
 # create table route identification, complemented in delIf()
-sub writeRoutes      # ($if_name)
+sub writeRoutes    # ($if_name)
 {
 	my $if_name = shift;
 
-	my $rttables = &getGlobalConfiguration('rttables');
+	my $rttables = &getGlobalConfiguration( 'rttables' );
 
 	open ROUTINGFILE, '<', $rttables;
 	my @contents = <ROUTINGFILE>;
@@ -297,7 +330,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 	);
 
 	# not virtual interface
-	if ( ! defined $$if_ref{ vini } || $$if_ref{ vini } eq '' )
+	if ( !defined $$if_ref{ vini } || $$if_ref{ vini } eq '' )
 	{
 		if ( $table eq "local" )
 		{
@@ -330,7 +363,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 				  "$ip_bin -$$if_ref{ip_v} route replace default via $gateway dev $$if_ref{name} $routeparams";
 				$status = &logAndRun( "$ip_cmd" );
 
-				tie my @contents, 'Tie::File', &getGlobalConfiguration('globalcfg');
+				tie my @contents, 'Tie::File', &getGlobalConfiguration( 'globalcfg' );
 				for my $line ( @contents )
 				{
 					if ( grep /^\$defaultgw/, $line )
@@ -387,14 +420,14 @@ sub delRoutes    # ($table,$if_ref)
 	&zenlog(
 		   "Deleting $table routes for IPv$$if_ref{ip_v} in interface $$if_ref{name}" );
 
-	if ( ! defined $$if_ref{ vini } || $$if_ref{ vini } eq '' )
+	if ( !defined $$if_ref{ vini } || $$if_ref{ vini } eq '' )
 	{
 		if ( $table eq "local" )
 		{
 			# Delete routes on the interface table
 			#~ if ( ! defined $$if_ref{ vlan } || $$if_ref{ vlan } eq '' )
 			#~ {
-				#~ return 1;
+			#~ return 1;
 			#~ }
 
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route flush table table_$$if_ref{name}";
@@ -412,7 +445,7 @@ sub delRoutes    # ($table,$if_ref)
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route del default";
 			$status = &logAndRun( "$ip_cmd" );
 
-			tie my @contents, 'Tie::File', &getGlobalConfiguration('globalcfg');
+			tie my @contents, 'Tie::File', &getGlobalConfiguration( 'globalcfg' );
 			for my $line ( @contents )
 			{
 				if ( grep /^\$defaultgw/, $line )
@@ -432,7 +465,7 @@ sub delRoutes    # ($table,$if_ref)
 			untie @contents;
 
 			&reloadL4FarmsSNAT() if $status == 0;
-			
+
 			return $status;
 		}
 	}
@@ -471,11 +504,12 @@ sub addIp    # ($if_ref)
 	my ( $if_ref ) = @_;
 
 	&zenlog(
-			  "Adding IP $$if_ref{addr}/$$if_ref{mask} to interface $$if_ref{name}" );
+			 "Adding IP $$if_ref{addr}/$$if_ref{mask} to interface $$if_ref{name}" );
 
 	# finish if the address is already assigned
 	my $routed_iface = $$if_ref{ dev };
-	$routed_iface .= ".$$if_ref{vlan}" if defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '';
+	$routed_iface .= ".$$if_ref{vlan}"
+	  if defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '';
 
 	my $extra_params = '';
 	$extra_params = 'nodad' if $$if_ref{ ip_v } == 6;
@@ -522,7 +556,7 @@ sub addIp    # ($if_ref)
 sub getConfigInterfaceList
 {
 	my @configured_interfaces;
-	my $configdir = &getGlobalConfiguration('configdir');
+	my $configdir = &getGlobalConfiguration( 'configdir' );
 
 	if ( opendir my $dir, "$configdir" )
 	{
@@ -577,7 +611,9 @@ sub getIfacesFromIf    # ($if_name, $type)
 		}
 
 		# get vlans (including vlan:vini)
-		elsif ( $type eq "vlan" && $$interface{ vlan } ne '' && $$interface{ vini } eq '' )
+		elsif (    $type eq "vlan"
+				&& $$interface{ vlan } ne ''
+				&& $$interface{ vini } eq '' )
 		{
 			push @ifaces, $interface;
 		}
@@ -592,7 +628,8 @@ sub setIfacesUp    # ($if_name,$type)
 	my $if_name = shift;    # Interface's Name
 	my $type    = shift;    # Type: vini or vlan
 
-	die("setIfacesUp: type variable must be 'vlan' or 'vini'") if $type !~ /^(?:vlan|vini)$/;
+	die ( "setIfacesUp: type variable must be 'vlan' or 'vini'" )
+	  if $type !~ /^(?:vlan|vini)$/;
 
 	my @ifaces = &getIfacesFromIf( $if_name, $type );
 
@@ -615,7 +652,7 @@ sub setIfacesUp    # ($if_name,$type)
 			&zenlog( "VLAN interfaces of $if_name have been put up." );
 		}
 	}
-	
+
 	return @ifaces;
 }
 
@@ -647,8 +684,8 @@ sub upIf    # ($if_ref, $writeconf)
 {
 	my ( $if_ref, $writeconf ) = @_;
 
-	my $configdir = &getGlobalConfiguration('configdir');
-	my $status = 0;
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $status    = 0;
 	$if_ref->{ status } = 'up';
 
 	if ( $writeconf )
@@ -663,13 +700,13 @@ sub upIf    # ($if_ref, $writeconf)
 			{
 				if ( $line =~ /^status=/ )
 				{
-					$line = "status=up";
+					$line  = "status=up";
 					$found = 1;
 					last;
 				}
 			}
 
-			unshift( @if_lines, 'status=up' ) if ! $found;
+			unshift ( @if_lines, 'status=up' ) if !$found;
 			untie @if_lines;
 		}
 	}
@@ -688,7 +725,7 @@ sub downIf    # ($if_ref, $writeconf)
 
 	if ( ref $if_ref ne 'HASH' )
 	{
-		&zenlog("Wrong argument putting down the interface");
+		&zenlog( "Wrong argument putting down the interface" );
 		return -1;
 	}
 
@@ -697,8 +734,8 @@ sub downIf    # ($if_ref, $writeconf)
 	# Set down status in configuration file
 	if ( $writeconf )
 	{
-		my $configdir = &getGlobalConfiguration('configdir');
-		my $file = "$configdir/if_$$if_ref{name}_conf";
+		my $configdir = &getGlobalConfiguration( 'configdir' );
+		my $file      = "$configdir/if_$$if_ref{name}_conf";
 
 		tie my @if_lines, 'Tie::File', "$file";
 		for my $line ( @if_lines )
@@ -734,21 +771,21 @@ sub downIf    # ($if_ref, $writeconf)
 # stop network interface
 sub stopIf    # ($if_ref)
 {
-	my $if_ref     = shift;
+	my $if_ref = shift;
 	my $status = 0;
 
 	# If $if is Vini do nothing
-	if ( $$if_ref{vini} eq '' )
+	if ( $$if_ref{ vini } eq '' )
 	{
 		# If $if is a Interface, delete that IP
 		my $ip_cmd = "$ip_bin address flush dev $$if_ref{name}";
-		$status = &logAndRun($ip_cmd);
-		
+		$status = &logAndRun( $ip_cmd );
+
 		# If $if is a Vlan, delete Vlan
-		if ( $$if_ref{vlan} ne '' )
+		if ( $$if_ref{ vlan } ne '' )
 		{
 			$ip_cmd = "$ip_bin link delete $$if_ref{name} type vlan";
-			$status = &logAndRun($ip_cmd);
+			$status = &logAndRun( $ip_cmd );
 		}
 
 		#ensure Link Up
@@ -758,7 +795,7 @@ sub stopIf    # ($if_ref)
 			$status = &logAndRun( $ip_cmd );
 		}
 
-		my $rttables = &getGlobalConfiguration('rttables');
+		my $rttables = &getGlobalConfiguration( 'rttables' );
 
 		# Delete routes table
 		open ROUTINGFILE, '<', $rttables;
@@ -800,8 +837,8 @@ sub delIf    # ($if_ref)
 	my ( $if_ref ) = @_;
 
 	my $status;
-	my $configdir = &getGlobalConfiguration('configdir');
-	my $file = "$configdir/if_$$if_ref{name}\_conf";
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $file      = "$configdir/if_$$if_ref{name}\_conf";
 	my $has_more_ips;
 
 	# remove stack line
@@ -866,7 +903,7 @@ sub delIf    # ($if_ref)
 
 		if ( !$interface )
 		{
-			my $rttables = &getGlobalConfiguration('rttables');
+			my $rttables = &getGlobalConfiguration( 'rttables' );
 
 			# Delete routes table, complementing writeRoutes()
 			open ROUTINGFILE, '<', $rttables;
@@ -907,7 +944,7 @@ sub getDefaultGW    # ($if)
 
 		@routes = "";
 
-		open ( ROUTINGFILE, &getGlobalConfiguration('rttables') );
+		open ( ROUTINGFILE, &getGlobalConfiguration( 'rttables' ) );
 
 		if ( grep { /^...\ttable_$cif$/ } <ROUTINGFILE> )
 		{
@@ -1002,7 +1039,7 @@ sub gwofif    # ($if)
 {
 	my $if = shift;
 
-	my $configdir = &getGlobalConfiguration('configdir');
+	my $configdir = &getGlobalConfiguration( 'configdir' );
 
 	open FGW, "<", "$configdir\/if\_$if\_conf";
 	my @gw_if = <FGW>;
@@ -1083,12 +1120,12 @@ sub sendGArp    # ($if,$ip)
 {
 	my ( $if, $ip ) = @_;
 
-	my @iface = split ( ":", $if );
-	my $arping_bin = &getGlobalConfiguration('arping_bin');
+	my @iface      = split ( ":", $if );
+	my $arping_bin = &getGlobalConfiguration( 'arping_bin' );
 	my $arping_cmd = "$arping_bin -c 2 -A -I $iface[0] $ip";
 
 	&zenlog( "$arping_cmd" );
-	system( "$arping_cmd &" );
+	system ( "$arping_cmd &" );
 
 	&sendGPing( $iface[0] );
 }
@@ -1177,6 +1214,7 @@ sub isValidPortNumber    # ($port)
 
 		listActiveInterfaces
 =cut
+
 sub getInterfaceList
 {
 	my @interfaces;
@@ -1189,7 +1227,7 @@ sub getInterfaceList
 		if ( $line =~ /^\d+: / )
 		{
 			my @linelist = split /[:@,\s\/]+/, $line;
-			$iface = @linelist[1];
+			$iface      = @linelist[1];
 			$localiface = $iface;
 			goto addiface;
 		}
@@ -1244,7 +1282,7 @@ sub getVipOutputIp    # ($vip)
 
 sub getVirtualInterfaceFilenameList
 {
-	opendir ( DIR, &getGlobalConfiguration('configdir') );
+	opendir ( DIR, &getGlobalConfiguration( 'configdir' ) );
 
 	my @filenames = grep ( /^if.*\:.*$/, readdir ( DIR ) );
 

@@ -1275,7 +1275,7 @@ sub download_backup
 # @apiSampleRequest off
 #
 #**
-# curl -kis -X PUT -H "ZAPI_KEY: 2bJUd" --tcp-nodelay -H 'Content-Type: text/plain' https://192.168.101.20:444/zapi/v3/zapi.cgi/system/backup/backup_1 --data-binary @/opt/backup.tar.gz
+# curl -kis -X PUT -H "ZAPI_KEY: 2bJUd" --tcp-nodelay -H 'Content-Type: text/gzip' https://192.168.101.20:444/zapi/v3/zapi.cgi/system/backup/backup_1 --data-binary @/opt/backup.tar.gz
 #	PUT	/system/backup/BACKUP
 sub upload_backup
 {

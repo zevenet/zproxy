@@ -1075,11 +1075,8 @@ sub get_ddos
 		# get status of all rules enabled
 		if (   $fileHandle->{ $key }->{ 'status' } =~ /up/
 			 || $fileHandle->{ $key }->{ 'farms' } )
-
-		  # get status only balancer rules
-		  #~ if ( $fileHandle->{ $key }->{'status'} =~ /up/ )
 		{
-			push @output, $key;
+			push @output, $key; 
 		}
 	}
 

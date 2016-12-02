@@ -25,38 +25,7 @@ my $configdir = &getGlobalConfiguration('configdir');
 my $pen_bin = &getGlobalConfiguration('pen_bin');
 my $pen_ctl = &getGlobalConfiguration('pen_ctl');
 
-#asign a port for manage a pen Farm
-sub setFarmPort    # ()
-{
-	#down limit
-	my $min = "10000";
 
-	#up limit
-	my $max = "20000";
-
-	my $lock = "true";
-	do
-	{
-		$random_port = int ( rand ( $max - $min ) ) + $min;
-		use IO::Socket;
-		my $host = "127.0.0.1";
-		my $socket = new IO::Socket::INET(
-										   PeerAddr => $host,
-										   PeerPort => $random_port,
-										   Proto    => 'tcp'
-		);
-		if ( $socket )
-		{
-			close ( $socket );
-		}
-		else
-		{
-			$lock = "false";
-		}
-	} while ( $lock eq "true" );
-
-	return $random_port;
-}
 
 #
 sub setTcpUdpFarmBlacklistTime    # ($blacklist_time,$farm_name)
@@ -646,7 +615,7 @@ sub runTcpFarmCreate    # ($vip,$vip_port,$farm_name)
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
 	my $output    = -1;
-	my $farm_port = &setFarmPort();
+	my $farm_port = &getRandomPort();
 
 	# execute pen command
 	my $pen_command =
@@ -676,7 +645,7 @@ sub runUdpFarmCreate    # ($vip,$vip_port,$farm_name)
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
 	my $output    = -1;
-	my $farm_port = &setFarmPort();
+	my $farm_port = &getRandomPort();
 
 	# execute pen command
 	my $pen_command =
