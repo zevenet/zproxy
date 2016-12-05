@@ -68,9 +68,12 @@ sub farms_name_datalink # ( $farmname )
 
 	my @out_b;
 	my $vip = &getFarmVip( "vip", $farmname );
+	my $status = &getFarmStatus( $farmname );
+
 	my $out_p = {
 				  vip       => $vip,
 				  algorithm => &getFarmAlgorithm( $farmname ),
+				  status    => $status,
 	};
 
 ########### backends

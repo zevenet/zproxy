@@ -91,14 +91,7 @@ sub farms_name_l4 # ( $farmname )
     if ( !$fglog  ) { $fglog = "false"; }
     if ( !$fgcommand ) { $fgcommand = ""; }
 
-	if ( -e "/tmp/$farmname.lock" )
-	{
-		$status = "needed restart";
-	}
-	else
-	{
-		$status = "ok";
-	}
+	my $status = &getFarmStatus( $farmname );
 
 	my $persistence = &getFarmPersistence( $farmname );
 	$persistence = "" if $persistence eq 'none';
