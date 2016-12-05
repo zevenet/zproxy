@@ -1522,6 +1522,8 @@ sub stats_load # ()
 	foreach my $x ( 0 .. @data_load - 1 )
 	{
 		my $name  = $data_load[$x][0];
+		$name =~ s/ /_/;
+		$name = 'Last_1' if $name eq 'Last';
 		my $value = $data_load[$x][1] + 0;
 		$out->{ $name } = $value;
 	}
