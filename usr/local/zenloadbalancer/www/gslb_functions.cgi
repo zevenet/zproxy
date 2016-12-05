@@ -1904,10 +1904,9 @@ sub getGSLBCommandInFGFormat
 	my ( $cmd, $port ) = @_;
 
 	my $libexec_dir = &getGlobalConfiguration ( 'libexec_dir' );
-	my $newCmd;
 	my @aux = split ( ', ', $cmd );
-	my $flagPort;
 	my $newCmd = $aux[0];
+	my $flagPort;
 
 	splice @aux, 0, 1;
 

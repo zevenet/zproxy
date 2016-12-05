@@ -37,11 +37,6 @@ my $width  = "600";
 my $height = "150";
 my $imagetype = "PNG";
 
-my $img_dir = &getGlobalConfiguration ( 'img_dir' );
-my $rrdap_dir = &getGlobalConfiguration ( 'rrdap_dir' );
-my $rrd_dir = &getGlobalConfiguration ( 'rrd_dir' );
-
-
 #
 sub printImgFile    #($file)
 {
