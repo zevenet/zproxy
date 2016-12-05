@@ -223,15 +223,27 @@ sub delCert    # ($certname)
 
 	# escaping special caracters
 	$certname = quotemeta $certname;
-	my $configdir = &getGlobalConfiguration('configdir');
+	my $certdir;
+
+	if ( $certname eq 'zlbcertfile.pem' )
+	{
+		$certdir = &getGlobalConfiguration('configdir');
+	}
+	else
+	{
+		$certdir = &getGlobalConfiguration('basedir');
+	}
 
 	# verify existance in config directory for security reasons
-	opendir ( DIR, $configdir );
+	opendir ( DIR, $certdir );
 	my @file = grep ( /^$certname$/, readdir ( DIR ) );
 	closedir ( DIR );
 
-	unlink ( "$configdir\/$file[0]" )
-	  or &zenlog( "Error removing certificate $configdir\/$file[0]" );
+	my $files_removed = unlink ( "$certdir\/$file[0]" );
+
+	&zenlog( "Error removing certificate $certdir\/$file[0]" ) if ! $files_removed;
+
+	return $files_removed;
 }
 
 #Create CSR file
@@ -358,6 +370,12 @@ sub getCertData    # ($certfile)
 	my $configdir = &getGlobalConfiguration('configdir');
 	my $filepath     = "$configdir\/$certfile";
 	my @eject;
+
+	if ( $certfile eq "zlbcertfile.pem" )
+	{
+		my $basedir = &getGlobalConfiguration('basedir');
+		$filepath = "$basedir\/$certfile";
+	}
 
 	if ( &getCertType( $filepath ) eq "Certificate" )
 	{

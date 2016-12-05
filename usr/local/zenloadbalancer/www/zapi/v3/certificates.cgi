@@ -167,6 +167,39 @@ sub get_certificate_info # ()
 	}
 }
 
+# GET activation certificate info
+sub get_activation_certificate_info # ()
+{
+	my $description = "Activation certificate information";
+	my $cert_filename = 'zlbcertfile.pem';
+	my $cert_dir = &getGlobalConfiguration('basedir');
+
+	if ( -f "$cert_dir\/$cert_filename" )
+	{
+		my @cert_info = &getCertData( $cert_filename );
+		my $body;
+
+		# Success
+		foreach my $line ( @cert_info )
+		{
+			$body .= $line;
+		}
+
+		&httpResponse({ code => 200, body => $body, type => 'text/plain' });
+	}
+	else
+	{
+		my $errormsg = "There is no activation certificate installed";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+}
+
 # DELETE Certificate
 
 #####Documentation of DELETE Certificate####
@@ -230,6 +263,36 @@ sub delete_certificate # ( $cert_filename )
 	};
 
 	&httpResponse({ code => 200, body => $body });
+}
+
+sub delete_activation_certificate # ( $cert_filename )
+{
+	my $description = "Remove activation certificate";
+	my $cert_filename = 'zlbcertfile.pem';
+
+	if ( &delCert( $cert_filename ) )
+	{
+		# Success
+		my $message = "The activation certificate has been removed";
+		my $body = {
+					 description => $description,
+					 success     => "true",
+					 message     => $message
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		my $errormsg = "An error happened removing the activation certificate";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
 }
 
 #####Documentation of POST Add Certificates####

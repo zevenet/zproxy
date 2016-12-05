@@ -719,6 +719,11 @@ GET qr{^/certificates$} => sub {
 	&certificates();
 };
 
+#  GET activation certificate
+GET qr{^/certificates/activation$} => sub {
+	&get_activation_certificate_info( @_ );
+};
+
 #  Download SSL certificate
 GET qr{^/certificates/($cert_re)$} => sub {
 	&download_certificate( @_ );
@@ -737,6 +742,11 @@ POST qr{^/certificates$} => sub {
 #  POST certificates
 POST qr{^/certificates/($cert_pem_re)$} => sub {
 	&upload_certs( @_ );
+};
+
+#  DELETE activation certificate
+DELETE qr{^/certificates/activation$} => sub {
+	&delete_activation_certificate( @_ );
 };
 
 #  DELETE certificate
