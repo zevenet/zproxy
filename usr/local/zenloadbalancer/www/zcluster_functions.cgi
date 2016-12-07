@@ -24,7 +24,7 @@
 require "/usr/local/zenloadbalancer/www/thread_functions.cgi";
 require "/usr/local/zenloadbalancer/www/conntrackd_functions.cgi";
 
-my $maint_if = 'cl_maint';
+my $maint_if = 'cl_maintenance';
 
 sub getClusterInfo
 {
@@ -150,24 +150,28 @@ sub enableZCluster
 	# create dummy interface
 	unless ( &getSystemInterface( $maint_if ) )
 	{
-		my $ip_bin = &getGlobalConfiguration('ip');
+		my $ip_bin = &getGlobalConfiguration('ip_bin');
+
+		&zenlog("Starting cluster maintenance interface");
 
 		# create the interface and put it up
-		system("$ip_bin link add name $maint_if type dummy");
-		system("$ip_bin link set $maint_if up");
+		my $ip_cmd = "$ip_bin link add name $maint_if type dummy";
+		&logAndRun( $ip_cmd );
+
+		if ( &getSystemInterface( 'dummy0' ) )
+		{
+			# remove interface auto-created loading dummy-interface module
+			my $ip_cmd = "$ip_bin link del name dummy0 type dummy";
+			&logAndRun( $ip_cmd );
+		}
+
+		$ip_cmd = "$ip_bin link set $maint_if up";
+		&logAndRun( $ip_cmd );
 	}
 
 	# start or reload keepalived
-	if ( &getZClusterRunning() )
-	{
-		&zenlog("Reloading keepalived service");
-		$error_code = system("/etc/init.d/keepalived reload >/dev/null 2>&1");
-	}
-	else
-	{
-		&zenlog("Starting keepalived service");
-		$error_code = system("/etc/init.d/keepalived start >/dev/null 2>&1");
-	}
+	&zenlog("Starting/reloading keepalived service");
+	$error_code = system("/etc/init.d/keepalived reload >/dev/null 2>&1");
 
 	# conntrackd
 	#~ if ( -f &getGlobalConfiguration('conntrackd_conf') )
@@ -199,7 +203,7 @@ sub disableZCluster
 	# remove dummy interface
 	if ( &getSystemInterface( $maint_if ) )
 	{
-		my $ip_bin = &getGlobalConfiguration('ip');
+		my $ip_bin = &getGlobalConfiguration('ip_bin');
 
 		# create the interface and put it up
 		system("$ip_bin link delete name $maint_if type dummy");
