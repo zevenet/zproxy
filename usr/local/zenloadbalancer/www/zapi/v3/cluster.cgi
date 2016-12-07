@@ -25,6 +25,7 @@
 #};
 
 my $DEFAULT_DEADRATIO = 5; # FIXME: MAKE GLOBAL VARIABLE
+my $maint_if = 'cl_maint';
 
 sub get_cluster
 {
@@ -536,6 +537,89 @@ sub set_cluster_actions
 
 		&httpResponse({ code => 200, body => $body });
 	}
+	elsif ( $json_obj->{ action } eq 'maintenance' )
+	{
+		my $description = "Setting maintenance mode";
+
+		# make sure the cluster is enabled
+		unless ( &getZClusterStatus() )
+		{
+			my $errormsg = "The cluster is not enabled";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		# validate parameters
+		my @cl_opts = ('action','status');
+		unless ( grep { @cl_opts !~ /^(?:$_)$/ } keys %$json_obj )
+		{
+			my $errormsg = "Unrecognized parameter received";
+			my $body = {
+						 description => $description,
+						 params       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		if ( $json_obj->{ status } eq 'enable' )
+		{
+			# make sure the node is not already under maintenance
+			my $if_ref = getSystemInterface( $maint_if );
+
+			if ( $if_ref->{ status } eq 'down' )
+			{
+				my $errormsg = "The node is already under maintenance";
+				my $body = {
+							 description => $description,
+							 error       => "true",
+							 message     => $errormsg
+				};
+
+				&httpResponse({ code => 400, body => $body });
+			}
+
+			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+			system("$ip_bin link set $maint_if down");
+		}
+		elsif ( $json_obj->{ status } eq 'disable' )
+		{
+			# make sure the node is under maintenance
+			my $if_ref = getSystemInterface( $maint_if );
+
+			if ( $if_ref->{ status } eq 'up' )
+			{
+				my $errormsg = "The node is not under maintenance";
+				my $body = {
+							 description => $description,
+							 error       => "true",
+							 message     => $errormsg
+				};
+
+				&httpResponse({ code => 400, body => $body });
+			}
+
+			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+			system("$ip_bin link set $maint_if up");
+		}
+		else
+		{
+			my $errormsg = "Status parameter not recognized";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
 	else
 	{
 		my $errormsg = "Cluster action not recognized";
@@ -601,24 +685,24 @@ sub get_cluster_localhost_status
 				$node->{ message } .= join ', ', @services;
 			}
 		}
-		#~ elsif ( $node->{ role } eq 'maintenance' )
-		#~ {
-			#~ if ( !$n->{ ka } && !$n->{ zi } && !$n->{ ct } )
-			#~ {
-				#~ $node->{ status } = 'ok';
-				#~ $node->{ message } = 'Node offline';
-			#~ }
-			#~ else
-			#~ {
-				#~ $node->{ status }  = 'failure';
-				#~ $node->{ message } = 'Services not running: ';
-				#~ my @services;
-				#~ push ( @services, 'keepalived' )    if $n->{ ka };
-				#~ push ( @services, 'zeninotify.pl' ) if $n->{ zi };
-				#~ push ( @services, 'conntrackd' )    if $n->{ ct };
-				#~ $node->{ message } .= join ', ', @services;
-			#~ }
-		#~ }
+		elsif ( $node->{ role } eq 'maintenance' )
+		{
+			if ( !$n->{ ka } && $n->{ zi } && !$n->{ ct } )
+			{
+				$node->{ status } = 'ok';
+				$node->{ message } = 'Node offline';
+			}
+			else
+			{
+				$node->{ status }  = 'failure';
+				$node->{ message } = 'Failed services: ';
+				my @services;
+				push ( @services, 'keepalived' )    if $n->{ ka };
+				push ( @services, 'zeninotify.pl' ) if $n->{ zi };
+				push ( @services, 'conntrackd' )    if $n->{ ct };
+				$node->{ message } .= join ', ', @services;
+			}
+		}
 		else
 		{
 			$node->{ role }    = 'error';

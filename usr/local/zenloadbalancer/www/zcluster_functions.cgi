@@ -24,6 +24,8 @@
 require "/usr/local/zenloadbalancer/www/thread_functions.cgi";
 require "/usr/local/zenloadbalancer/www/conntrackd_functions.cgi";
 
+my $maint_if = 'cl_maint';
+
 sub getClusterInfo
 {
 	my $cluster_msg  = "Not configured";
@@ -145,6 +147,16 @@ sub enableZCluster
 		return 1;
 	}
 
+	# create dummy interface
+	unless ( &getSystemInterface( $maint_if ) )
+	{
+		my $ip_bin = &getGlobalConfiguration('ip');
+
+		# create the interface and put it up
+		system("$ip_bin link add name $maint_if type dummy");
+		system("$ip_bin link set $maint_if up");
+	}
+
 	# start or reload keepalived
 	if ( &getZClusterRunning() )
 	{
@@ -183,6 +195,16 @@ sub disableZCluster
 	{
 		&stopConntrackd();
 	}
+
+	# remove dummy interface
+	if ( &getSystemInterface( $maint_if ) )
+	{
+		my $ip_bin = &getGlobalConfiguration('ip');
+
+		# create the interface and put it up
+		system("$ip_bin link delete name $maint_if type dummy");
+	}
+
 
 	return $error_code;
 }
@@ -228,7 +250,7 @@ vrrp_instance ZCluster {
 \tadvert_int $zcl_conf->{_}->{deadratio}
 \tgarp_master_delay 1
 
-\t#track_interface { #eth0 #eth1	#}
+\ttrack_interface { $maint_if }
 \t#authentication {	#}
 
 \tunicast_src_ip $zcl_conf->{$localhost}->{ip}

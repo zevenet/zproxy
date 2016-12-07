@@ -134,7 +134,7 @@ elsif ( $object eq 'notify_backup' )
 }
 elsif ( $object eq 'notify_fault' )
 {
-	exit &setNodeStatusBackup();
+	exit &setNodeStatusMaintenance();
 }
 #~ }
 
@@ -369,6 +369,39 @@ sub setNodeStatusBackup
 	{
 		&zenlog("Switching node to backup");
 		&setZClusterNodeStatus('backup');
+	}
+
+	my $primary_backup = &getGlobalConfiguration('primary_backup');
+	system("$primary_backup backup");
+
+	my $zenino = &getGlobalConfiguration('zenino');
+	system( "$zenino stop &" ) unless system('pgrep zeninotify.pl');
+
+	# stop farmguardians
+	system("pkill `pgrep farmguardian`");
+
+	# block/disable ip announces ( arp and neigh )
+	my @configured_interfaces = @{ &getConfigInterfaceList() };
+	for my $if_ref ( @configured_interfaces )
+	{
+		next if $if_ref->{ vini } eq '';
+		&disableInterfaceDiscovery( $if_ref );
+	}
+
+	return 0;
+}
+
+sub setNodeStatusMaintenance
+{
+	if ( &getZClusterNodeStatus() eq 'maintenance' )
+	{
+		&zenlog("Node is already under maintenance");
+		return 0;
+	}
+	else
+	{
+		&zenlog("Switching node to under maintenance");
+		&setZClusterNodeStatus('maintenance');
 	}
 
 	my $primary_backup = &getGlobalConfiguration('primary_backup');
