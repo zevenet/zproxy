@@ -858,16 +858,4 @@ sub getZClusterNodeStatusInfo
 	return $node;
 }
 
-sub pgrep
-{
-	my $cmd = shift;
-
-	# return_code
-	my $rc = system("pgrep $cmd >/dev/null");
-
-	&zenlog("$cmd not found running") if $rc;
-
-	return $rc;
-}
-
 1;

@@ -172,25 +172,35 @@ sub enableZCluster
 	# start or reload keepalived
 	if ( &getZClusterRunning() )
 	{
-			&zenlog("Reloading keepalived service");
+		&zenlog("Reloading keepalived service");
 
-			#~ my $ka_cmd = "/etc/init.d/keepalived reload >/dev/null 2>&1";
-			my $ka_cmd = "/etc/init.d/keepalived reload";
-			$error_code = &logAndRun( $ka_cmd );
+		#~ my $ka_cmd = "/etc/init.d/keepalived reload >/dev/null 2>&1";
+		my $ka_cmd = "/etc/init.d/keepalived reload";
+		$error_code = &logAndRun( $ka_cmd );
+
+		&zenlog("Reloading keepalived service output: $error_code");
 	}
 	else
 	{
-			&zenlog("Starting keepalived service");
+		&zenlog("Starting keepalived service");
 
-			#~ my $ka_cmd = "/etc/init.d/keepalived start >/dev/null 2>&1";
-			my $ka_cmd = "/etc/init.d/keepalived start";
-			$error_code = &logAndRun( $ka_cmd );
+		# WARNING: Sometimes keepalived needs to be stopped before it can be started
+		my $ka_cmd = "/etc/init.d/keepalived stop >/dev/null 2>&1";
+		#~ my $ka_cmd = "/etc/init.d/keepalived stop";
+		$error_code = &logAndRun( $ka_cmd );
+
+		$ka_cmd = "/etc/init.d/keepalived start >/dev/null 2>&1";
+		#~ $ka_cmd = "/etc/init.d/keepalived start";
+		$error_code = &logAndRun( $ka_cmd );
+
+		if ( &pgrep( "keepalived" ) )
+		{
+			&zenlog("Error starting Keepalived service");
+			return 1;
+		}
 	}
-	#~ &zenlog("Starting/reloading keepalived service");
-	#~ $error_code = system("/etc/init.d/keepalived reload >/dev/null 2>&1");
 
 	# conntrackd
-	#~ if ( -f &getGlobalConfiguration('conntrackd_conf') )
 	unless ( -f &getGlobalConfiguration('conntrackd_conf') )
 	{
 		&setConntrackdConfig();
@@ -219,12 +229,14 @@ sub disableZCluster
 	# remove dummy interface
 	if ( &getSystemInterface( $maint_if ) )
 	{
+		&zenlog("Removing cluster maintenance interface");
+
 		my $ip_bin = &getGlobalConfiguration('ip_bin');
 
 		# create the interface and put it up
-		system("$ip_bin link delete $maint_if type dummy");
+		my $ip_cmd = "$ip_bin link delete $maint_if type dummy";
+		&logAndRun( $ip_cmd );
 	}
-
 
 	return $error_code;
 }
@@ -270,7 +282,9 @@ vrrp_instance ZCluster {
 \tadvert_int $zcl_conf->{_}->{deadratio}
 \tgarp_master_delay 1
 
-\ttrack_interface { $maint_if }
+\ttrack_interface {
+\t\t$maint_if
+\t}
 \t#authentication {	#}
 
 \tunicast_src_ip $zcl_conf->{$localhost}->{ip}
@@ -1007,6 +1021,18 @@ sub getZCusterStatusInfo
 	# FIXME
 
 	return $status;
+}
+
+sub pgrep
+{
+	my $cmd = shift;
+
+	# return_code
+	my $rc = system("/usr/bin/pgrep $cmd >/dev/null");
+
+	&zenlog("$cmd not found running") if $rc;
+
+	return $rc;
 }
 
 1;
