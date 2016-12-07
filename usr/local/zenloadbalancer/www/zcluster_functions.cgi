@@ -161,7 +161,7 @@ sub enableZCluster
 		if ( &getSystemInterface( 'dummy0' ) )
 		{
 			# remove interface auto-created loading dummy-interface module
-			my $ip_cmd = "$ip_bin link del name dummy0 type dummy";
+			my $ip_cmd = "$ip_bin link delete dummy0 type dummy";
 			&logAndRun( $ip_cmd );
 		}
 
@@ -216,7 +216,7 @@ sub disableZCluster
 		my $ip_bin = &getGlobalConfiguration('ip_bin');
 
 		# create the interface and put it up
-		system("$ip_bin link delete name $maint_if type dummy");
+		system("$ip_bin link delete $maint_if type dummy");
 	}
 
 
