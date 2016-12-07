@@ -15,6 +15,9 @@ if [ "$PS1" ]; then
     if [ -f /etc/bash.bashrc ]; then
       . /etc/bash.bashrc
     fi
+    if [ -f ~/.bashrc ]; then
+      . ~/.bashrc
+    fi
   else
     if [ "`id -u`" -eq 0 ]; then
       PS1='# '
