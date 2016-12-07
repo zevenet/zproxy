@@ -170,8 +170,18 @@ sub enableZCluster
 	}
 
 	# start or reload keepalived
-	&zenlog("Starting/reloading keepalived service");
-	$error_code = system("/etc/init.d/keepalived reload >/dev/null 2>&1");
+	if ( &getZClusterRunning() )
+	{
+			&zenlog("Reloading keepalived service");
+			$error_code = system("/etc/init.d/keepalived reload >/dev/null 2>&1");
+	}
+	else
+	{
+			&zenlog("Starting keepalived service");
+			$error_code = system("/etc/init.d/keepalived start >/dev/null 2>&1");
+	}
+	#~ &zenlog("Starting/reloading keepalived service");
+	#~ $error_code = system("/etc/init.d/keepalived reload >/dev/null 2>&1");
 
 	# conntrackd
 	#~ if ( -f &getGlobalConfiguration('conntrackd_conf') )
