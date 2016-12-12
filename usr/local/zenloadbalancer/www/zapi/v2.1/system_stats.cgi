@@ -887,10 +887,7 @@ sub farm_stats()
 			my $npend = @synnetstatback;
 
 			# Established Conns
-			my @stabnetstatback;
-			@stabnetstatback =
-			  &getBackendEstConns( $farmname, ${ ip_backend }, $port_backend, @netstat );
-			my $nestab = @stabnetstatback;
+                        my $nestab = $backends_data[7];
 
 			if ( $backends_data[4] == -1 )
 			{
