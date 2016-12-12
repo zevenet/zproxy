@@ -107,7 +107,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	# Modify Farm's Name
 	if ( exists ( $json_obj->{ newfarmname } ) )
 	{
-		unless ( &getFarmStatus( $farmname ) eq 'up' )
+		unless ( &getFarmStatus( $farmname ) eq 'down' )
 		{
 			&zenlog(
 				"ZAPI error, trying to modify a http farm $farmname, cannot change the farm name while running"

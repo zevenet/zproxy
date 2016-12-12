@@ -102,7 +102,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# Modify Farm's Name
 	if ( exists ( $json_obj->{ newfarmname } ) )
 	{
-		unless ( &getFarmStatus( $farmname ) eq 'up' )
+		unless ( &getFarmStatus( $farmname ) eq 'down' )
 		{
 			&zenlog(
 				"ZAPI error, trying to modify a l4xnat farm $farmname, cannot change the farm name while running"
