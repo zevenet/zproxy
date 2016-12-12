@@ -1603,6 +1603,7 @@ sub stats_cpu # ()
 	{
 		my $name  = $data_cpu[$x][0];
 		my $value = $data_cpu[$x][1] + 0;
+		(undef, $name) = split( 'CPU', $name );
 		$out->{ $name } = $value;
 	}
 
