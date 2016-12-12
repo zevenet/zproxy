@@ -40,16 +40,6 @@ sub get_cluster
 	my $cluster = {
 					check_interval => $zcl_conf->{ _ }->{ deadratio } // $DEFAULT_DEADRATIO,
 					failback       => $zcl_conf->{ _ }->{ primary }   // $local_hn,
-					#~ nodes          => [
-							  #~ {
-								#~ hostname => $local_hn,
-								#~ ip       => $zcl_conf->{ $local_hn }->{ ip },
-							  #~ },
-							  #~ {
-								#~ hostname => $remote_hn,
-								#~ ip       => $zcl_conf->{ $remote_hn }->{ ip },
-							  #~ },
-					#~ ],
 	};
 
 	my $body = {
@@ -68,7 +58,8 @@ sub set_cluster
 	my @cl_opts = ('check_interval','failback');
 
 	# validate CLUSTER parameters
-	if ( grep { @cl_opts !~ /^(?:$_)$/ } keys %$json_obj )
+	no warnings "experimental::smartmatch";
+	if ( grep { ! ( @cl_opts ~~ /^$_$/ ) } keys %$json_obj )
 	{
 		my $errormsg = "Cluster parameter not recognized";
 		my $body = {
@@ -79,6 +70,7 @@ sub set_cluster
 
 		&httpResponse({ code => 400, body => $body });
 	}
+	use warnings "experimental::smartmatch";
 
 	# do not allow request without parameters
 	unless ( scalar keys %$json_obj )
@@ -137,10 +129,10 @@ sub set_cluster
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		my @failback_opts = ( 'any' );
-		push( @failback_opts, $local_hostname, $remote_hostname );
+		my @failback_opts = ( 'any', $local_hostname, $remote_hostname );
 
-		unless( @failback_opts =~ /^(?:$json_obj->{ primary_node })$/ )
+		no warnings "experimental::smartmatch";
+		unless( @failback_opts ~~ /^$json_obj->{ failback }$/ )
 		{
 			my $errormsg = "Primary node value not recognized";
 			my $body = {
@@ -151,6 +143,7 @@ sub set_cluster
 
 			&httpResponse({ code => 400, body => $body });
 		}
+		use warnings "experimental::smartmatch";
 
 		if ( $zcl_conf->{_}->{ primary } ne $json_obj->{ failback } )
 		{
@@ -180,7 +173,7 @@ sub set_cluster
 			### cluster Re-configuration ###
 			my $rhost = &getZClusterRemoteHost();
 			my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
-			
+
 			system( "scp $filecluster root\@$zcl_conf->{$rhost}->{ip}:$filecluster" );
 
 			# reconfigure local conntrackd
@@ -196,12 +189,13 @@ sub set_cluster
 
 			# reload keepalived configuration local and remotely
 			$error_code = &enableZCluster();
-			
+
 			&zenlog(
 				&runRemotely(
 					"$zcluster_manager enableZCluster",
 					$zcl_conf->{$rhost}->{ip}
 				)
+				. "" # forcing string output
 			);
 		}
 	};
@@ -213,6 +207,8 @@ sub set_cluster
 						failback       => $zcl_conf->{ _ }->{ primary }   // $local_hn,
 		};
 
+		$cluster->{ check_interval } + 0;
+
 		my $body = {
 					 description => $description,
 					 params      => $cluster,
@@ -223,6 +219,8 @@ sub set_cluster
 	else
 	{
 		# Error
+		&zenlog( $@ );
+
 		my $errormsg = "Error configuring the cluster";
 		my $body = {
 					 description => $description,
