@@ -399,6 +399,23 @@ sub getCPU         # ()
 	return @data;
 }
 
+sub getCpuCores
+{
+	my $cores = 1;
+
+	open my $stat_file, "/proc/stat";
+
+	while( my $line = <$stat_file> )
+	{
+		next unless $line =~ /^cpu(\d) /;
+		$cores = $1 + 1;
+	}
+
+	close $stat_file;
+
+	return $cores;
+}
+
 #Obtain system disk usage
 #return @array
 #       name,value

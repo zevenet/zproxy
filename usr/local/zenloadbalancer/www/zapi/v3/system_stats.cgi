@@ -1607,6 +1607,8 @@ sub stats_cpu # ()
 		$out->{ $name } = $value;
 	}
 
+	$out->{ cores } = &getCpuCores();
+
 	# Success
 	my $body = {
 				 description => "System CPU usage",
