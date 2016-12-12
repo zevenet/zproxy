@@ -1810,4 +1810,46 @@ sub set_notif_alert_actions
 	&httpResponse( { code => 400, body => $body } );
 }
 
+sub get_supportsave
+{
+	my $description = "Get supportsave file";
+	my @ss_output = `/usr/local/zenloadbalancer/app/zbin/supportsave 2>&1`;
+
+	# get the last "word" from the first line
+	my $first_line = shift @ss_output;
+	my $last_word = ( split ( ' ', $first_line ) )[-1];
+
+	my $ss_path = $last_word;
+	my ( undef, $ss_filename ) = split ( '/tmp', $ss_path );
+
+	open ( my $ss_fh, '<', $ss_path );
+
+	if ( -f $ss_path && $ss_fh )
+	{
+		my $cgi = &getCGI();
+		print $cgi->header(
+							-type            => 'application/x-download',
+							-attachment      => $ss_filename,
+							'Content-length' => -s $ss_path,
+		);
+
+		binmode $ss_fh;
+		print while <$ss_fh>;
+		close $ss_fh;
+		unlink $ss_path;
+		exit;
+	}
+	else
+	{
+		# Error
+		my $errormsg = "Error getting a supportsave file";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+		&httpResponse( { code => 400, body => $body } );
+	}
+}
+
 1;

@@ -1436,6 +1436,12 @@ GET qr{^/system/cluster/nodes/localhost$} => sub {
 	&get_cluster_localhost_status( @_ );
 };
 
+#### /system/supportsave
+
+GET qr{^/system/supportsave$} => sub {
+	&get_supportsave( @_ );
+};
+
 
 #	IPDS
 #
