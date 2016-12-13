@@ -25,6 +25,7 @@
 #};
 
 my $DEFAULT_DEADRATIO = 5; # FIXME: MAKE GLOBAL VARIABLE
+my $DEFAULT_FAILBACK = 'disabled'; # FIXME: MAKE GLOBAL VARIABLE
 my $maint_if = 'cl_maintenance';
 
 sub get_cluster
@@ -166,7 +167,7 @@ sub modify_cluster
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		my @failback_opts = ( 'any', $local_hostname, $remote_hostname );
+		my @failback_opts = ( 'disabled', $local_hostname, $remote_hostname );
 
 		no warnings "experimental::smartmatch";
 		unless( @failback_opts ~~ /^$json_obj->{ failback }$/ )
@@ -527,7 +528,8 @@ sub enable_cluster
 
 	# validate parameters
 	my @cl_opts = ('local_ip','remote_ip','remote_password');
-	unless ( grep { @cl_opts !~ /^(?:$_)$/ } keys %$json_obj )
+	no warnings "experimental::smartmatch";
+	if ( grep { ! ( @cl_opts ~~ /^$_$/ ) } keys %$json_obj )
 	{
 		my $errormsg = "Unrecognized parameter received";
 		my $body = {
@@ -538,6 +540,7 @@ sub enable_cluster
 
 		&httpResponse({ code => 400, body => $body });
 	}
+	use warnings "experimental::smartmatch";
 
 	# the cluster cannot be already enabled
 	if ( &getZClusterStatus() )
@@ -610,14 +613,29 @@ sub enable_cluster
 		chomp $remote_hostname;
 		chomp $local_hostname;
 
-		$zcl_conf->{ _ }->{ deadratio } = $DEFAULT_DEADRATIO unless $zcl_conf->{ _ }->{ deadratio };
+		$zcl_conf->{ _ }->{ deadratio } = $DEFAULT_DEADRATIO;
 		$zcl_conf->{ _ }->{ interface } = &getInterfaceOfIp( $json_obj->{ local_ip } );
-		$zcl_conf->{ _ }->{ primary } = $local_hostname;
+		$zcl_conf->{ _ }->{ primary }   = $DEFAULT_FAILBACK;
 
 		if ( $local_hostname && $remote_hostname )
 		{
 			$zcl_conf->{ $local_hostname }->{ ip } = $json_obj->{ local_ip };
 			$zcl_conf->{ $remote_hostname }->{ ip } = $json_obj->{ remote_ip };
+		}
+
+		# verify the cluster interface is the same in both nodes
+		my $ip_bin = &getGlobalConfiguration('ip_bin');
+		my $cl_if = $zcl_conf->{ _ }->{ interface };
+		my $rm_ip = $json_obj->{ remote_ip };
+		my @remote_ips = &runRemotely( "$ip_bin -o addr show $cl_if", $json_obj->{ remote_ip } );
+
+		unless ( scalar grep( { /^\d+: $cl_if\s+inet? $rm_ip\// } @remote_ips ) )
+		{
+			my $msg = "Remote address does not match the cluster interface";
+			&zenlog( "@remote_ips" );
+			&zenlog( $msg );
+			$@ .= "\n" . $msg;
+			die $msg;
 		}
 
 		&setZClusterConfig( $zcl_conf ) or die;
