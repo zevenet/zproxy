@@ -91,7 +91,7 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 	}
 
 	my $filename = &getFarmFile( $fname );
-	if ( $filename == -1 )
+	if ( $filename eq '-1' )
 	{
 		return -1;
 	}
