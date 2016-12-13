@@ -211,7 +211,7 @@ $key_path="/root/.ssh";
 # sshkey file path
 $key_id="id_rsa";
 # ssh keygen command
-$keygen_cmd="ssh-keygen -t rsa -f $key_path/$key_id -N \"\" -q";
+$keygen_cmd="ssh-keygen -t rsa -f $key_path/$key_id -N '' -q";#update
 
 #Zen backup
 $zenbackup="/usr/local/zenloadbalancer/app/zenbackup/zenbackup.pl";
