@@ -404,19 +404,6 @@ sub disable_cluster
 
 	my $description = "Disabling cluster";
 
-	# do not allow requests without parameters
-	unless ( scalar keys %$json_obj )
-	{
-		my $errormsg = "Cluster actions requires at least the action parameter";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
 	# make sure the cluster is enabled
 	unless ( &getZClusterStatus() )
 	{
@@ -817,7 +804,7 @@ sub get_cluster_nodes_status
 						 keepalived => $n->{ ka },
 						 zeninotify => $n->{ zi },
 						 conntrackd => $n->{ ct },
-						 node => ( $node_name eq $localhost )? 'local': 'remote';
+						 node => ( $node_name eq $localhost )? 'local': 'remote',
 			};
 
 			if ( $node->{ role } eq 'master' )
