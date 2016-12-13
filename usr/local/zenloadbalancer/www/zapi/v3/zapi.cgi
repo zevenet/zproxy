@@ -698,9 +698,12 @@ DELETE qr{^/session$} => sub {
 	&httpResponse( { code => 400 } );
 };
 
+
+
 #	CERTIFICATES
 #
 _certificates:
+
 
 #  POST activation certificate
 POST qr{^/certificates/activation$} => sub {
@@ -754,9 +757,12 @@ DELETE qr{^/certificates/($cert_re)$} => sub {
 	&delete_certificate( @_ );
 };
 
+
+
 #	FARMS
 #
 _farms:
+
 
 my $farm_re = &getValidFormat( 'farm_name' );
 
@@ -935,9 +941,12 @@ DELETE qr{^/farms/($farm_re)/certificates/($cert_pem_re)$} => sub {
 	&delete_farmcertificate( @_ );
 };
 
+
+
 #	NETWORK INTERFACES
 #
 _interfaces:
+
 
 my $virt_interface = &getValidFormat( 'virt_interface' );
 my $vlan_interface = &getValidFormat( 'vlan_interface' );
@@ -1110,9 +1119,12 @@ DELETE qr{^/interfaces/gateway$} => sub {
 	&delete_gateway( @_ );
 };
 
+
+
 #	STATS
 #
 _stats:
+
 
 # System stats
 GET qr{^/stats$} => sub {
@@ -1162,9 +1174,12 @@ GET qr{^/stats/farms/($farm_re)/service/($service_re)/backends$} => sub {
 	&farm_stats( @_ );
 };
 
+
+
 #	GRAPHS
 #
 _graphs:
+
 
 my $frequency_re = &getValidFormat( 'graphs_frequency' );
 my $system_id_re = &getValidFormat( 'graphs_system_id' );
@@ -1247,9 +1262,12 @@ GET qr{^/graphs/farms/($farm_re)/($frequency_re)$} => sub {
 	&get_frec_farm_graphs( @_ );
 };
 
+
+
 # SYSTEM
 #
 _system:
+
 
 #  GET dns
 GET qr{^/system/dns$} => sub {
@@ -1421,7 +1439,15 @@ GET qr{^/system/cluster$} => sub {
 };
 
 POST qr{^/system/cluster$} => sub {
-	&set_cluster( @_ );
+	&enable_cluster( @_ );
+};
+
+PUT qr{^/system/cluster$} => sub {
+	&modify_cluster( @_ );
+};
+
+DELETE qr{^/system/cluster$} => sub {
+	&disable_cluster( @_ );
 };
 
 POST qr{^/system/cluster/actions$} => sub {
@@ -1443,9 +1469,11 @@ GET qr{^/system/supportsave$} => sub {
 };
 
 
+
 #	IPDS
 #
 _ipds:
+
 
 my $blacklists_list      = &getValidFormat( 'blacklists_list' );
 my $blacklists_source_id = &getValidFormat( 'blacklists_source_id' );
