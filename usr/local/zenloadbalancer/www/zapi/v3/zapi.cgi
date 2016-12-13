@@ -510,7 +510,6 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 
 	if ( &validCGISession() )
 	{
-		my $cgi            = &getCGI();
 		my $session        = CGI::Session->load( $cgi );
 		my $session_cookie = $cgi->cookie( CGISESSID => $session->id );
 
@@ -587,8 +586,8 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 &zenlog( "HTTP_ZAPI_KEY: <$ENV{HTTP_ZAPI_KEY}>" )
   if exists $ENV{ HTTP_ZAPI_KEY };
 
-#~ my $post_data = $q->param('POSTDATA');
-#~ my $put_data = $q->param('PUTDATA');
+my $post_data = $q->param('POSTDATA');
+my $put_data = $q->param('PUTDATA');
 #~
 #~ #my $session = new CGI::Session( $q );
 #~
@@ -602,8 +601,8 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 #~ &zenlog("CGI OBJECT: " . Dumper $q );
 #~ &zenlog("CGI VARS: " . Dumper $q->Vars() );
 #~ &zenlog("PERL ENV: " . Dumper \%ENV );
-#~ &zenlog("CGI POST DATA: " . $post_data );
-#~ &zenlog("CGI PUT DATA: " . $put_data );
+&zenlog("CGI POST DATA: " . $post_data ) if $post_data;
+&zenlog("CGI PUT DATA: " . $put_data ) if $put_data;
 
 ################################################################################
 #

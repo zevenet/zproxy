@@ -39,7 +39,7 @@ sub get_cluster
 					 message     => "There is no cluster configured on this node.",
 		};
 
-		&httpResponse({ code => 204, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 
 	my $zcl_conf  = &getZClusterConfig();
