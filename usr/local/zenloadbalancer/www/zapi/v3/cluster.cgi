@@ -809,7 +809,7 @@ sub get_cluster_nodes_status
 		my $cl_conf = &getZClusterConfig();
 		my $localhost = &getHostname();
 
-		for my $node_name ( keys %{ $cl_conf } )
+		for my $node_name ( sort keys %{ $cl_conf } )
 		{
 			next if $node_name eq '_';
 
