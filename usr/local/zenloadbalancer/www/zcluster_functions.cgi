@@ -472,6 +472,8 @@ sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 	if ( $error_code != 0 )
 	{
 		my $keygen_cmd = &getGlobalConfiguration('keygen_cmd');
+		$keygen_cmd =~ s/'/"/g; # change included quotes for remote execution
+
 		my $gen_output = &runRemotely("$keygen_cmd 2>&1", $ip_address);
 		my $error_code = $?;
 
