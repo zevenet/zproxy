@@ -1189,12 +1189,16 @@ sub farm_stats # ( $farmname )
 					}
 				}
 
+				$id =~ s/^primary$/1/;
+				$id =~ s/^secondary$/2/;
+				$status = lc $status if defined $status;
+
 				push @backendStats,
 				  {
-					server  => $id,
-					address => $addr,
+					id      => $id + 0,
+					ip      => $addr,
 					service => $srv,
-					port    => $port,
+					port    => $port + 0,
 					status  => $status
 				  };
 			}
