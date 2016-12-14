@@ -1111,8 +1111,6 @@ sub farm_stats # ( $farmname )
 			&getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
 			my $npend = @synnetstatback;
 
-			# Established Conns
-                        my $nestab = $backends_data[7];
 
 			if ( $backends_data[4] == -1 )
 			{
@@ -1126,7 +1124,7 @@ sub farm_stats # ( $farmname )
 				port        => $port_backend,
 				status      => $backends_data[4],
 				pending     => $npend,
-				established => $nestab
+				established => $backends_data[7]
 			  };
 
 			$index = $index + 1;

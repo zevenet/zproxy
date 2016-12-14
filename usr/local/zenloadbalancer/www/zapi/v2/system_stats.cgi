@@ -889,9 +889,6 @@ sub farm_stats()
 			  &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
 			my $npend = @synnetstatback;
 
-			# Established Conns
-			my $nestab = $backends_data[7];
-
 			if ( $backends_data[4] == -1 )
 			{
 				$backends_data[4] = "down";
@@ -904,7 +901,7 @@ sub farm_stats()
 				Port             => $port_backend,
 				Status           => $backends_data[4],
 				PendingConns     => $npend,
-				EstablishedConns => $nestab
+				EstablishedConns => $backends_data[7]
 			  };
 
 			$index = $index + 1;
