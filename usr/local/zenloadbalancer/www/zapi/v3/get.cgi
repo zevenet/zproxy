@@ -336,7 +336,7 @@ sub service_backends
 
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq 'http' || $type eq 'http' )
+	if ( $type eq 'http' || $type eq 'https' )
 	{
 		my @services_list = split ' ', &getFarmVS( $farmname );
 

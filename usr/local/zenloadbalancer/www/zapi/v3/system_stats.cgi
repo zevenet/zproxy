@@ -941,6 +941,7 @@ stats:
 sub farm_stats # ( $farmname )
 {
 	my $farmname = shift;
+
 	my $errormsg;
 	my $description = "Get farm stats";
 
@@ -950,260 +951,265 @@ sub farm_stats # ( $farmname )
 		my $body = { description => $description, error  => "true", message => $errormsg };
 		&httpResponse( { code => 404, body => $body } );		
 	}
-	else
-	{
-		my $type = &getFarmType( $farmname );
-	
-		if ( $type eq "http" || $type eq "https" )
-		{
-			my @out_rss;
-			my @out_css;
-	
-			# Real Server Table, from content1-25.cgi
-			my @netstat;
-			my $fvip = &getFarmVip( "vip", $farmname );
-			my $fpid = &getFarmChildPid( $farmname );
-	
-			my @content = &getFarmBackendStatusCtl( $farmname );
-			my @backends = &getFarmBackendsStatus( $farmname, @content );
-	
-			# List of services
-			my @a_service;
-			my $sv;
-			foreach ( @content )
-			{
-				if ( $_ =~ /Service/ )
-				{
-					my @l = split ( "\ ", $_ );
-					$sv = $l[2];
-					$sv =~ s/"//g;
-					chomp ( $sv );
-					push ( @a_service, $sv );
-				}
-			}
-	
-			# List of backends
-			my $backendsize    = @backends;
-			my $activebackends = 0;
-			my $activesessions = 0;
-			foreach ( @backends )
-			{
-				my @backends_data = split ( "\t", $_ );
-				if ( $backends_data[3] eq "up" )
-				{
-					$activebackends++;
-				}
-			}
-	
-			my $i = -1;
-			foreach ( @backends )
-			{
-				my @backends_data = split ( "\t", $_ );
-				$activesessions = $activesessions + $backends_data[6];
-				if ( $backends_data[0] == 0 )
-				{
-					$i++;
-				}
-				my $ip_backend   = $backends_data[1];
-				my $port_backend = $backends_data[2];
-	
-				@netstat = &getConntrack( "$fvip", $ip_backend, "", "", "tcp" );
-				my @synnetstatback =
-				&getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
-				my $npend = @synnetstatback;
-				my @stabnetstatback =
-				&getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
-				my $nestab = @stabnetstatback;
-	
-				if ( $backends_data[3] == -1 )
-				{
-					$backends_data[3] = "down";
-				}
-	
-				push @out_rss,
-				{
-					Service          => $a_service[$i],
-					Server           => $backends_data[0],
-					Address          => $backends_data[1],
-					Port             => $backends_data[2],
-					Status           => $backends_data[3],
-					PendingConns     => $npend,
-					EstablishedConns => $nestab
-				};
-			}
-	
-			# Client Session Table
-			my @sessions = &getFarmBackendsClientsList( $farmname, @content );
-			my $t_sessions = $#sessions + 1;
-	
-			foreach ( @sessions )
-			{
-				my @sessions_data = split ( "\t", $_ );
-	
-				push @out_css,
-				{
-					Service   => $sessions_data[0],
-					Client    => $sessions_data[1],
-					SessionID => $sessions_data[2],
-					Server    => $sessions_data[3]
-				};
-			}
-	
-			# Print Success
-			my $body = {
-						description         => "List farm stats",
-						backends => \@out_rss,
-						sessions => \@out_css,
-			};
-	
-			&httpResponse({ code => 200, body => $body });
-		}
-	
-		if ( $type eq "l4xnat" )
-		{
-			# Parameters
-			my @out_rss;
-	
-			my @args;
-			my $nattype = &getFarmNatType( $farmname );
-			my $proto   = &getFarmProto( $farmname );
-			if ( $proto eq "all" )
-			{
-				$proto = "";
-			}
-	
-			# my @netstat = &getNetstatNat($args);
-			my $fvip     = &getFarmVip( "vip", $farmname );
-			my @content  = &getFarmBackendStatusCtl( $farmname );
-			my @backends = &getFarmBackendsStatus( $farmname, @content );
-	
-			# List of backends
-			my $backendsize    = @backends;
-			my $activebackends = 0;
-			foreach ( @backends )
-			{
-				my @backends_data = split ( ";", $_ );
-				if ( $backends_data[4] eq "up" )
-				{
-					$activebackends++;
-				}
-			}
-	
-			my $index = 0;
-			foreach ( @backends )
-			{
-				my @backends_data = split ( ";", $_ );
-				#~ $activesessions = $activesessions + $backends_data[6];   # replace by next line
-				my $activesessions = $backends_data[6];
-				my $ip_backend   = $backends_data[0];
-				my $port_backend = $backends_data[1];
-	
-				# Pending Conns
-				my @synnetstatback;
-				my @netstat = &getConntrack( "", $fvip, $ip_backend, "", "" );
-				@synnetstatback =
-				&getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
-				my $npend = @synnetstatback;
-	
-				# Established Conns
-				my @stabnetstatback;
-				@stabnetstatback =
-				&getBackendEstConns( $farmname, ${ ip_backend }, $port_backend, @netstat );
-				my $nestab = @stabnetstatback;
-	
-				if ( $backends_data[4] == -1 )
-				{
-					$backends_data[4] = "down";
-				}
-	
-				push @out_rss,
-				{
-					Server           => $index,
-					Address          => $ip_backend,
-					Port             => $port_backend,
-					Status           => $backends_data[4],
-					PendingConns     => $npend,
-					EstablishedConns => $nestab
-				};
-	
-				$index = $index + 1;
-			}
-	
-			# Print Success
-			my $body = {
-						description       => "List farm stats",
-						backends => \@out_rss,
-			};
-	
-			&httpResponse({ code => 200, body => $body });
-		}
-	
-		if ( $type eq "gslb" )
-		{
-			#~ my $out_rss = "There are no stats for GSLB farms yet. We are working on it!";
-			my $out_rss;
-			my $gslb_stats = &getGSLBGdnsdStats( $farmname );
-			
-			
-			my @backendStats;
-			my @services = &getGSLBFarmServices( $farmname );
-			foreach my $srv(@services){
-			
-				my @serv = split(".cfg",$srv);
-				#~ my $srv = @serv[0];
-				my $lb = &getFarmVS($1,$srv,"algorithm");
-				# Default port health check
-				my $port = &getFarmVS($1,$srv,"dpc");
-				
-				#
-				# Backends
-				#
-				my $out_b = [];
-				my $backendsvs = &getFarmVS($1,$srv,"backends");
-				my @be = split("\n",$backendsvs);
 
-				foreach my $subline(@be){
-					$subline =~ s/^\s+//;
-					if ($subline =~ /^$/){
-						next;
-					}
-					# ID and IP
-					my @subbe = split(" => ",$subline);
-					my $id = $subbe[0];
-					my $addr = $subbe[1];
-					
-					my $status;					
-					# look for backend status in stats
-					foreach my $st_srv ( @{ $gslb_stats->{ 'services' } } )
-					{
-						if ( $st_srv->{ 'service' } =~ /^$addr\/[\w]+$port$/ )
-						{
-							$status = $st_srv->{ 'real_state' };
-							last;
-						}
-					}
-					
-					push @backendStats, { server => $id, address => $addr, service => $srv, port => $port, status => $status };
-				}
-						
+	my $type = &getFarmType( $farmname );
+
+	if ( $type eq "http" || $type eq "https" )
+	{
+		my @out_rss;
+		my @out_css;
+
+		# Real Server Table, from content1-25.cgi
+		my @netstat;
+		my $fvip = &getFarmVip( "vip", $farmname );
+		my $fpid = &getFarmChildPid( $farmname );
+
+		my @content = &getFarmBackendStatusCtl( $farmname );
+		my @backends = &getFarmBackendsStatus( $farmname, @content );
+
+		# List of services
+		my @a_service;
+		my $sv;
+
+		foreach ( @content )
+		{
+			if ( $_ =~ /Service/ )
+			{
+				my @l = split ( "\ ", $_ );
+				$sv = $l[2];
+				$sv =~ s/"//g;
+				chomp ( $sv );
+				push ( @a_service, $sv );
 			}
-			
-			#~ $out_rss->{ 'backends' } = \@backendStats;
-			#~ $out_rss->{ 'client' } = $gslb_stats->{ 'udp' };
-			#~ $out_rss->{ 'server' } = $gslb_stats->{ 'tcp' };
-			#~ $out_rss->{ 'extended' } = $gslb_stats->{ 'stats' };
-	
-			# Print Success
-			my $body = {
-						description       => "List farm stats",
-						backends => \@backendStats,
-						client => $gslb_stats->{ 'udp' },
-						server => $gslb_stats->{ 'tcp' },
-						extended => $gslb_stats->{ 'stats' },
-			};
-	
-			&httpResponse({ code => 200, body => $body });
 		}
+
+		# List of backends
+		my $backendsize    = @backends;
+		my $activebackends = 0;
+		my $activesessions = 0;
+
+		foreach ( @backends )
+		{
+			my @backends_data = split ( "\t", $_ );
+			if ( $backends_data[3] eq "up" )
+			{
+				$activebackends++;
+			}
+		}
+
+		my $i = -1;
+
+		foreach ( @backends )
+		{
+			my @backends_data = split ( "\t", $_ );
+			$activesessions = $activesessions + $backends_data[6];
+			if ( $backends_data[0] == 0 )
+			{
+				$i++;
+			}
+			my $ip_backend   = $backends_data[1];
+			my $port_backend = $backends_data[2];
+
+			@netstat = &getConntrack( "$fvip", $ip_backend, "", "", "tcp" );
+			my @synnetstatback =
+			&getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
+			my $npend = @synnetstatback;
+			my @stabnetstatback =
+			&getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
+			my $nestab = @stabnetstatback;
+
+			if ( $backends_data[3] == -1 )
+			{
+				$backends_data[3] = "down";
+			}
+
+			push @out_rss,
+			  {
+				service     => $a_service[$i],
+				id          => $backends_data[0]+0,
+				ip          => $backends_data[1],
+				port        => $backends_data[2]+0,
+				status      => $backends_data[3],
+				pending     => $npend,
+				established => $nestab
+			  };
+		}
+
+		# Client Session Table
+		my @sessions = &getFarmBackendsClientsList( $farmname, @content );
+		my $t_sessions = $#sessions + 1;
+
+		foreach ( @sessions )
+		{
+			my @sessions_data = split ( "\t", $_ );
+
+			push @out_css,
+			  {
+				service => $sessions_data[0],
+				client  => $sessions_data[1],
+				session => $sessions_data[2],
+				server  => $sessions_data[3]
+			  };
+		}
+
+		# Print Success
+		my $body = {
+					description         => "List farm stats",
+					backends => \@out_rss,
+					sessions => \@out_css,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+
+	if ( $type eq "l4xnat" )
+	{
+		# Parameters
+		my @out_rss;
+
+		my @args;
+		my $nattype = &getFarmNatType( $farmname );
+		my $proto   = &getFarmProto( $farmname );
+		if ( $proto eq "all" )
+		{
+			$proto = "";
+		}
+
+		# my @netstat = &getNetstatNat($args);
+		my $fvip     = &getFarmVip( "vip", $farmname );
+		my @content  = &getFarmBackendStatusCtl( $farmname );
+		my @backends = &getFarmBackendsStatus( $farmname, @content );
+
+		# List of backends
+		my $backendsize    = @backends;
+		my $activebackends = 0;
+
+		foreach ( @backends )
+		{
+			my @backends_data = split ( ";", $_ );
+			if ( $backends_data[4] eq "up" )
+			{
+				$activebackends++;
+			}
+		}
+
+		my $index = 0;
+
+		foreach ( @backends )
+		{
+			my @backends_data = split ( ";", $_ );
+			chomp @backends_data;
+			#~ $activesessions = $activesessions + $backends_data[6];   # replace by next line
+			my $activesessions = $backends_data[6];
+			my $ip_backend   = $backends_data[0];
+			my $port_backend = $backends_data[1];
+
+			# Pending Conns
+			my @synnetstatback;
+			my @netstat = &getConntrack( "", $fvip, $ip_backend, "", "" );
+			@synnetstatback =
+			&getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
+			my $npend = @synnetstatback;
+
+			# Established Conns
+			my @stabnetstatback;
+			@stabnetstatback =
+			&getBackendEstConns( $farmname, ${ ip_backend }, $port_backend, @netstat );
+			my $nestab = @stabnetstatback;
+
+			if ( $backends_data[4] == -1 )
+			{
+				$backends_data[4] = "down";
+			}
+
+			push @out_rss,
+			  {
+				id          => $index,
+				ip          => $ip_backend,
+				port        => $port_backend,
+				status      => $backends_data[4],
+				pending     => $npend,
+				established => $nestab
+			  };
+
+			$index = $index + 1;
+		}
+
+		# Print Success
+		my $body = {
+					description       => "List farm stats",
+					backends => \@out_rss,
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+
+	if ( $type eq "gslb" )
+	{
+		my $out_rss;
+		my $gslb_stats = &getGSLBGdnsdStats( $farmname );
+		my @backendStats;
+		my @services = &getGSLBFarmServices( $farmname );
+
+		foreach my $srv ( @services )
+		{
+			# Default port health check
+			my $port       = &getFarmVS( $farmname, $srv, "dpc" );
+			my $lb         = &getFarmVS( $farmname, $srv, "algorithm" );
+			my $backendsvs = &getFarmVS( $farmname, $srv, "backends" );
+			my @be = split ( "\n", $backendsvs );
+			my $out_b = [];
+
+			#
+			# Backends
+			#
+
+			foreach my $subline ( @be )
+			{
+				$subline =~ s/^\s+//;
+
+				if ($subline =~ /^$/)
+				{
+					next;
+				}
+
+				# ID and IP
+				my @subbe = split(" => ",$subline);
+				my $id = $subbe[0];
+				my $addr = $subbe[1];
+				my $status;
+
+				# look for backend status in stats
+				foreach my $st_srv ( @{ $gslb_stats->{ 'services' } } )
+				{
+					if ( $st_srv->{ 'service' } =~ /^$addr\/[\w]+$port$/ )
+					{
+						$status = $st_srv->{ 'real_state' };
+						last;
+					}
+				}
+
+				push @backendStats,
+				  {
+					server  => $id,
+					address => $addr,
+					service => $srv,
+					port    => $port,
+					status  => $status
+				  };
+			}
+		}
+
+		# Print Success
+		my $body = {
+					 description => "List farm stats",
+					 backends    => \@backendStats,
+					 client      => $gslb_stats->{ 'udp' },
+					 server      => $gslb_stats->{ 'tcp' },
+					 extended    => $gslb_stats->{ 'stats' },
+		};
+
+		&httpResponse({ code => 200, body => $body });
 	}
 }
 
@@ -1211,7 +1217,7 @@ sub farm_stats # ( $farmname )
 #Get Farm Stats
 sub all_farms_stats # ()
 {
-	my $farms = &getAllFarmStats ();
+	my $farms = &getAllFarmStats();
 
 	# Print Success
 	my $body = {
