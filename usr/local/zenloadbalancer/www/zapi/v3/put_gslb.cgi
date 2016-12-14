@@ -390,16 +390,19 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 
 		if ( $changedname ne "true" )
 		{
-			&setFarmRestart( $farmname );
-
 			# Success
 			my $body = {
 				description => "Modify farm $farmname",
 				params      => $json_obj,
-				status      => 'needed restart',
 				info =>
 				  "There're changes that need to be applied, stop and start farm to apply them!"
 			};
+
+			if ( &getFarmStatus( $farmname ) eq 'up' )
+			{
+				&setFarmRestart( $farmname );
+				$body->{ status } = 'needed restart';
+			}
 
 			&httpResponse({ code => 200, body => $body });
 		}

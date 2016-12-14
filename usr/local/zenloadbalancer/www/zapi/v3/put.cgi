@@ -1351,8 +1351,6 @@ sub modify_services # ( $json_obj, $farmname, $service )
 	# Print params
 	if ( $error ne "true" )
 	{
-		&setFarmRestart( $farmname );
-
 		&zenlog(
 			"ZAPI success, some parameters have been changed in service $service in farm $farmname."
 		);
@@ -1361,10 +1359,14 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		my $body = {
 			description => "Modify service $service in farm $farmname",
 			params      => $output_params,
-			status      => 'needed restart',
-			info =>
-			  "There're changes that need to be applied, stop and start farm to apply them!"
 		};
+
+		if ( &getFarmStatus( $farmname ) eq 'up' )
+		{
+			&setFarmRestart( $farmname );
+			$body->{ status } = 'needed restart';
+			$body->{ info } = "There're changes that need to be applied, stop and start farm to apply them!";
+		}
 
 		&httpResponse({ code => 200, body => $body });
 	}

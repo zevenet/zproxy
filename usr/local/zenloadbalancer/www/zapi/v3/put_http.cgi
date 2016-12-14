@@ -797,34 +797,20 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		&zenlog(
 				  "ZAPI success, some parameters have been changed in farm $farmname." );
 
-		if ( $changedname ne "true" )
+		# Success
+		my $body = {
+			description => "Modify farm $farmname",
+			params      => $json_obj,
+		};
+
+		if ( $restart_flag eq "true" && &getFarmStatus( $farmname ) eq 'up' )
 		{
-			if ( $restart_flag eq "true" )
-			{
-				&setFarmRestart( $farmname );
-
-				# Success
-				my $body = {
-					description => "Modify farm $farmname",
-					params      => $json_obj,
-					status      => 'needed restart',
-					info =>
-					  "There're changes that need to be applied, stop and start farm to apply them!"
-				};
-
-				&httpResponse({ code => 200, body => $body });
-			}
+			&setFarmRestart( $farmname );
+			$body->{ status } = 'needed restart';
+			$body->{ info } = "There're changes that need to be applied, stop and start farm to apply them!";
 		}
-		else
-		{
-			# Success
-			my $body = {
-						 description => "Modify farm $farmname",
-						 params      => $json_obj
-			};
 
-			&httpResponse({ code => 200, body => $body });
-		}
+		&httpResponse({ code => 200, body => $body });
 	}
 	else
 	{

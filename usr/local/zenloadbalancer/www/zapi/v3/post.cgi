@@ -900,11 +900,10 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 			);
 
 			# Success
-			&setFarmRestart( $farmname );
-			$json_obj->{ timeout } = $json_obj->{ timeout } ? $json_obj->{ timeout } + 0: $json_obj->{ timeout };
+			$json_obj->{ timeout } = $json_obj->{ timeout } + 0 if $json_obj->{ timeout };
 
-		my $message = "Added backend to service succesfully";
-		my $body = {
+			my $message = "Added backend to service succesfully";
+			my $body = {
 						 description => $description,
 						 params      => {
 									 id      => $id,
@@ -913,9 +912,14 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 									 weight  => $json_obj->{ weight } + 0,
 									 timeout => $json_obj->{ timeout },
 						 },
-						 status => 'needed restart',
 						 message => $message,
 			};
+
+			if ( &getFarmStatus( $farmname ) eq 'up' )
+			{
+				&setFarmRestart( $farmname );
+				$body->{ status } = 'needed restart';
+			}
 
 			&httpResponse({ code => 201, body => $body });
 		}
@@ -928,6 +932,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 			  . " and port "
 			  . $json_obj->{ port }
 			  . " for the $farmname farm";
+
 			my $body = {
 						 description => $description,
 						 error       => "true",
@@ -1009,6 +1014,7 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 
 		#Adding the backend
 		my $status = &setGSLBFarmNewBackend( $farmname, $service, $lb, $id, $json_obj->{ ip } );
+
 		if ( $status != -1 )
 		{
 			&zenlog(
@@ -1016,7 +1022,6 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 			);
 
 			# Success
-			&setFarmRestart( $farmname );
 			my $message = "Added backend to service succesfully";
 			my $body = {
 						 description => $description,
@@ -1024,9 +1029,14 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 									 id      => $id,
 									 ip      => $json_obj->{ ip },
 						 },
-						 status => 'needed restart',
 						 message => $message,
 			};
+
+			if ( &getFarmStatus( $farmname ) eq 'up' )
+			{
+				&setFarmRestart( $farmname );
+				$body->{ status } = 'needed restart';
+			}
 
 			&httpResponse({ code => 201, body => $body });
 		}
@@ -1212,13 +1222,16 @@ sub new_farm_service # ( $json_obj, $farmname )
 			);
 
 			# Success
-			&setFarmRestart( $farmname );
-
 			my $body = {
 						 description => "New service " . $json_obj->{ id },
 						 params      => { id => $json_obj->{ id } },
-						 status => 'needed restart',
 			};
+
+			if ( &getFarmStatus( $farmname ) eq 'up' )
+			{
+				&setFarmRestart( $farmname );
+				$body->{ status } = 'needed restart';
+			}
 
 			&httpResponse({ code => 201, body => $body });
 		}
@@ -1319,16 +1332,19 @@ sub new_farm_service # ( $json_obj, $farmname )
 			);
 
 			# Success
-			&runFarmReload( $farmname );
-
 			my $body = {
 						 description => "New service " . $json_obj->{ id },
 						 params      => {
 									 id        => $json_obj->{ id },
 									 algorithm => $json_obj->{ algorithm }
 						 },
-						 status => 'needed restart',
 			};
+
+			if ( &getFarmStatus( $farmname ) eq 'up' )
+			{
+				&setFarmRestart( $farmname );
+				$body->{ status } = 'needed restart';
+			}
 
 			&httpResponse({ code => 201, body => $body });
 		}
