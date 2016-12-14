@@ -632,9 +632,7 @@ sub enable_cluster
 		unless ( scalar grep( { /^\d+: $cl_if\s+inet? $rm_ip\// } @remote_ips ) )
 		{
 			my $msg = "Remote address does not match the cluster interface";
-			&zenlog( "@remote_ips" );
 			&zenlog( $msg );
-			$@ .= "\n" . $msg;
 			die $msg;
 		}
 
@@ -694,6 +692,8 @@ sub enable_cluster
 	else
 	{
 		my $errormsg = "An error happened configuring the cluster: $@";
+		$errormsg =~ s/ at \/.+//;
+		$errormsg =~ s/\n//;
 		my $body = {
 					 description => $description,
 					 error       => "true",
