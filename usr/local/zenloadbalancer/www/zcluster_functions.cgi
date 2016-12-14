@@ -736,7 +736,7 @@ sub setZClusterNodeStatus
 {
 	my $node_status = shift;
 
-	if ( $node_status !~ /^(master|backup)$/ )
+	if ( $node_status !~ /^(master|backup|maintenance)$/ )
 	{
 		&zenlog("\"$node_status\" is not an accepted node status");
 		return 1;
