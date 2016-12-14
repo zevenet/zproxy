@@ -559,4 +559,176 @@ sub getNotifAlert
 	return $method;
 }
 
+
+#~ # &sendByMail ( $subject, $bodycomp );
+#~ sub sendByMail
+#~ {
+	#~# my ( $subject, $bodycomp, $section ) = @_;
+	#~ my $paramsRef = shift;
+	#~ my $params = %{ $paramsRef };
+	#~ my $body;
+	#~ my $logger = &getGlobalConfiguration ( 'logger' );
+	#~ my $error;
+	#~ my $command;		# keep command with pass
+	#~ my $passCmd;		# keep pass command
+	#~ my $finalCmd;		# keep the final command
+
+	#~ $body = "\n***** Notifications *****\n\n";
+	
+	#~ # Add section if exsists
+	#~ if ( $params{ 'section' } )
+	#~ {
+		#~ my $section = $params{ 'section' };
+		#~ $body .= "Alerts: $section Notification\n";
+	#~ }
+	
+	#~ # Add body if exists or test body
+	#~ if ( $params{ 'body' } )
+	#~ {
+		#~ $body .= $params{ 'body' };
+	#~ }
+	#~ else
+	#~ {
+		#~ $body .= "Zen notification service.\n\nThis mail confirms that the configuration is correct.";
+	#~ }
+	
+	#~ # Add server params
+	#~ $command .= &getNotifData( 'senders', 'Smtp', 'bin' );
+	#~ $command .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
+	#~ $command .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
+	#~ $command .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
+	#~ $command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
+	#~ $command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' );
+	#~ $passCmd = " --auth-password " . &getNotifData( 'senders', 'Smtp', 'auth-password' );
+	
+	#~ if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) ) 
+	#~ { 
+		#~ $command .= " -tls";
+	#~ }
+
+	#~ # add subfix	
+	#~ $command .=	" --header \"Subject: ";
+	#~ if ( exists $params{ 'section' } && exists $params{ 'subject' } )
+	#~ {
+		#~ $body .= &getNotifData( 'alerts', 'PrefixSubject', $params{ 'section' } ) . " $params{ 'subject' }\"";
+	#~ }
+	#~ else
+	#~ {
+		#~ $body .= " Test mail\"";
+	#~ }
+	
+	#~ $finalCmd = "$command $passCmd --body \"$body\" 1>/dev/null";
+	#~ $error = system ( $command );
+	
+	#~ # print log
+	#~ $finalCmd = "$command  --auth-password ******** --body \"BODY\"";
+	#~ system ("$logger \"$finalCmd\" -i -t sec");
+	
+	#~ return $error;
+#~ }
+
+# &sendByMail ( $subject, $bodycomp );
+sub sendByMail
+{
+	my ( $subject, $bodycomp, $section ) = @_;
+	my $body;
+	my $command;
+	my $logger = &getGlobalConfiguration ( 'logger' );
+	my $error;
+
+	$body = "\n***** Notifications *****\n\n" . "Alerts: $section Notification\n";
+	$body .= $bodycomp;
+	
+	$command .= &getNotifData( 'senders', 'Smtp', 'bin' );
+	$command .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
+	$command .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
+	$command .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
+	$command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
+	$command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' );
+	$command .= " --auth-password " . &getNotifData( 'senders', 'Smtp', 'auth-password' );
+	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) ) { $command .= " -tls"; }
+	$command .=
+		" --header \"Subject: "
+	. &getNotifData( 'alerts', 'PrefixSubject', $section )
+	. " $subject\"";
+	$command .= " --body \"$body\"";
+	
+	#not print
+	$command .= " 1>/dev/null";
+	
+	$error = system ( $command );
+	
+	# print log
+	my $logMsg;
+	$logMsg .= &getNotifData( 'senders', 'Smtp', 'bin' );
+	$logMsg .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
+	$logMsg .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
+	$logMsg .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
+	$logMsg .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
+	$logMsg .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' );
+	$logMsg .= " --auth-password ********";
+	$logMsg .= " -tls" 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) );
+	
+	$logMsg .= " --header \"Subject: "
+			.  &getNotifData( 'alerts', 'PrefixSubject', $section )
+			.  " $subject\"";
+	
+	$logMsg .= " --body \"BODY\"";
+	
+	system ("$logger \"$logMsg\" -i -t sec");
+	
+	return $error;
+}
+
+
+# &sendByMail ( $subject, $bodycomp );
+sub sendTestMail
+{
+	my $bodycomp = "Zen notification service.\n\nThis mail confirms that the configuration is correct.";
+	my $subject = "Test mail";
+	my $command;
+	my $logger = &getGlobalConfiguration ( 'logger' );
+	my $error;
+
+	my $body = "\n***** Notifications *****\n\n";
+	$body .= $bodycomp;
+	
+	$command .= &getNotifData( 'senders', 'Smtp', 'bin' );
+	$command .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
+	$command .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
+	$command .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
+	$command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
+	$command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' );
+	$command .= " --auth-password " . &getNotifData( 'senders', 'Smtp', 'auth-password' );
+	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) ) { $command .= " -tls"; }
+	$command .=
+		" --header \"Subject: $subject\"";
+	$command .= " --body \"$body\"";
+	
+	#not print
+	$command .= " 1>/dev/null";
+	
+	#~ print "$command\n";
+	$error = system ( $command );
+	
+	# print log
+	my $logMsg;
+	$logMsg .= &getNotifData( 'senders', 'Smtp', 'bin' );
+	$logMsg .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
+	$logMsg .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
+	$logMsg .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
+	$logMsg .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
+	$logMsg .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' );
+	$logMsg .= " --auth-password ********";
+	$logMsg .= " -tls" 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) );
+	
+	$logMsg .= " --header \"Subject: $subject\"";
+	
+	$logMsg .= " --body \"BODY\"";
+	
+	system ("$logger \"$logMsg\" -i -t sec");
+	
+	return $error;
+}
+
 1;

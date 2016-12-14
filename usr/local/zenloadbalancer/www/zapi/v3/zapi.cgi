@@ -1431,6 +1431,11 @@ POST qr{^/system/notifications/alerts/($alert_re)/actions$} => sub {
 	&set_notif_alert_actions( @_ );
 };
 
+#  POST  notifications test
+POST qr{^/system/notifications/methods/email/actions$} => sub {
+	&send_test_mail( @_ );
+};
+
 #### /system/cluster
 
 GET qr{^/system/cluster$} => sub {

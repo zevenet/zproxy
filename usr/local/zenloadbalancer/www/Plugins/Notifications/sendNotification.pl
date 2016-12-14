@@ -27,6 +27,7 @@ use Config::Tiny;
 
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
+require "/usr/local/zenloadbalancer/www/Plugins/notifications.cgi";
 
 ( my $section, my $pattern ) = @ARGV;
 
@@ -39,62 +40,16 @@ if ( $subject eq "error" || !$bodycomp )
 	exit 1;
 }
 
-&sendByMail ( $subject, $bodycomp );
-exit 0;
+my $error = &sendByMail ( $subject, $bodycomp, $section );
 
-
-
-
-# &sendByMail ( $subject, $bodycomp );
-sub sendByMail
+if ( $error )
 {
-	my ( $subject, $bodycomp ) = @_;
-	my $body;
-	my $command;
-	my $logger = &getGlobalConfiguration ( 'logger' );
-
-	$body = "\n***** Notifications *****\n\n" . "Alerts: $section Notification\n";
-	$body .= $bodycomp;
-	
-	$command .= &getData( 'senders', 'Smtp', 'bin' );
-	$command .= " --to " . &getData( 'senders', 'Smtp', 'to' );
-	$command .= " --from " . &getData( 'senders', 'Smtp', 'from' );
-	$command .= " --server " . &getData( 'senders', 'Smtp', 'server' );
-	$command .= " --auth " . &getData( 'senders', 'Smtp', 'auth' );
-	$command .= " --auth-user " . &getData( 'senders', 'Smtp', 'auth-user' );
-	$command .= " --auth-password " . &getData( 'senders', 'Smtp', 'auth-password' );
-	if ( 'true' eq &getData( 'senders', 'Smtp', 'tls' ) ) { $command .= " -tls"; }
-	$command .=
-		" --header \"Subject: "
-	. &getData( 'alerts', 'PrefixSubject', $section )
-	. " $subject\"";
-	$command .= " --body \"$body\"";
-	
-	#not print
-	$command .= " 1>/dev/null";
-	
-	#~ print "$command\n";
-	system ( $command );
-	
-	# print log
-	my $logMsg;
-	$logMsg .= &getData( 'senders', 'Smtp', 'bin' );
-	$logMsg .= " --to " . &getData( 'senders', 'Smtp', 'to' );
-	$logMsg .= " --from " . &getData( 'senders', 'Smtp', 'from' );
-	$logMsg .= " --server " . &getData( 'senders', 'Smtp', 'server' );
-	$logMsg .= " --auth " . &getData( 'senders', 'Smtp', 'auth' );
-	$logMsg .= " --auth-user " . &getData( 'senders', 'Smtp', 'auth-user' );
-	$logMsg .= " --auth-password " . &getData( 'senders', 'Smtp', 'auth-password' );
-	$logMsg .= " -tls" 	if ( 'true' eq &getData( 'senders', 'Smtp', 'tls' ) );
-	
-	$logMsg .= " --header \"Subject: "
-			.  &getData( 'alerts', 'PrefixSubject', $section )
-			.  " $subject\"";
-	
-	$logMsg .= " --body \"BODY\"";
-	
-	system ("$logger \"$logMsg\" -i -t sec");
+	system ("$logger \"Error, sending the mail notification\" -i -t sec");
 }
+
+exit $error;
+
+
 
 
 # return:   @array = [ $subject, $body ]
@@ -222,43 +177,43 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 }
 
 
-#  &getData ( $file, $section, $key )
-sub getData
-{
-	my ( $name, $section, $key ) = @_;
-	my $params = scalar @_;
-	my $data;
-	my $fileHandle;
-	my $fileName;
-	my $confdir = getGlobalConfiguration( 'notifConfDir' );
+#~ #  &getData ( $file, $section, $key )
+#~ sub getData
+#~ {
+	#~ my ( $name, $section, $key ) = @_;
+	#~ my $params = scalar @_;
+	#~ my $data;
+	#~ my $fileHandle;
+	#~ my $fileName;
+	#~ my $confdir = getGlobalConfiguration( 'notifConfDir' );
 
-	if ( $name eq 'senders' )
-	{
-		$fileName = "$confdir/sender.conf";
-	}
-	elsif ( $name eq 'alerts' )
-	{
-		my $hostname = &getHostname();
-		$fileName = "$confdir/alert_$hostname.conf";
-	}
+	#~ if ( $name eq 'senders' )
+	#~ {
+		#~ $fileName = "$confdir/sender.conf";
+	#~ }
+	#~ elsif ( $name eq 'alerts' )
+	#~ {
+		#~ my $hostname = &getHostname();
+		#~ $fileName = "$confdir/alert_$hostname.conf";
+	#~ }
 
-	if ( !-f $fileName ) 
-	{ 
-		system ("$logger \"Error, not found $name config file\" -i -t notifications");
-		exit 1;
-	}
+	#~ if ( !-f $fileName ) 
+	#~ { 
+		#~ system ("$logger \"Error, not found $name config file\" -i -t notifications");
+		#~ exit 1;
+	#~ }
 		
-	else
-	{
-		$fileHandle = Config::Tiny->read( $fileName );
-		if ( $params == 3 ) 
-			{ $data = $fileHandle->{ $section }->{ $key }; }
-		else 
-			{ system ("$logger \"Error getting data from file $name \" -i -t notifications"); }
-	}
+	#~ else
+	#~ {
+		#~ $fileHandle = Config::Tiny->read( $fileName );
+		#~ if ( $params == 3 ) 
+			#~ { $data = $fileHandle->{ $section }->{ $key }; }
+		#~ else 
+			#~ { system ("$logger \"Error getting data from file $name \" -i -t notifications"); }
+	#~ }
 	
-	return $data;
-}
+	#~ return $data;
+#~ }
 
 
 #   &getGSLBFarm ( $pid )

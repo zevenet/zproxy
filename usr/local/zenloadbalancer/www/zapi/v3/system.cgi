@@ -1810,6 +1810,44 @@ sub set_notif_alert_actions
 	&httpResponse( { code => 400, body => $body } );
 }
 
+
+sub send_test_mail
+{
+	my $json_obj    = shift;
+	my $description = "Send test mail";
+
+	my @allowParams = ( "action" );
+	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
+	if ( !$errormsg )
+	{
+		if ( $json_obj->{ 'action' } ne "test" )
+		{
+			$errormsg = "Error, it's necessary add a valid action";
+		}
+		else
+		{
+			$errormsg = &sendTestMail;
+			if ( ! $errormsg )
+			{
+				$errormsg = "Test mail sended successful.";
+				&httpResponse(
+					{ code => 200, body => { description => $description, success => "true", message => $errormsg } } );
+			}
+			else
+			{
+				$errormsg = "Test mail sended but it hasn't reached the destination.";
+			}
+		}
+	}
+
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+	
+}
+
+
+
 sub get_supportsave
 {
 	my $description = "Get supportsave file";
