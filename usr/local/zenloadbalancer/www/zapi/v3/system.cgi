@@ -1505,7 +1505,7 @@ sub get_notif_methods
 #  @apiGroup SYSTEM
 #  @apiName PostNotificationsMethods
 #  @apiParam {String} method  type method to send notifications. Only email available.
-#  @apiDescription Modify notification methods
+#  @apiDescription Modify notification methods. Remember enable mail sends from less secure applications if it is necessary
 #  @apiVersion 3.0
 #
 #
@@ -1809,6 +1809,7 @@ sub set_notif_alert_actions
 	  { description => $description, error => "true", message => $errormsg };
 	&httpResponse( { code => 400, body => $body } );
 }
+
 
 
 sub send_test_mail

@@ -1483,7 +1483,7 @@ my $blacklists_list      = &getValidFormat( 'blacklists_list' );
 my $blacklists_source_id = &getValidFormat( 'blacklists_source_id' );
 
 # BLACKLISTS
-#  GET all blacklists lists
+#  GET all blacklists
 GET qr{^/ipds/blacklists$} => sub {
 	&get_blacklists_all_lists;
 };
@@ -1508,22 +1508,27 @@ DELETE qr{^/ipds/blacklists/($blacklists_list)$} => sub {
 	&del_blacklists_list( @_ );
 };
 
-#  GET a source from a blacklists list
+#  UPDATE a remote blacklists
+POST qr{^/ipds/blacklists/($blacklists_list)/actions$} => sub {
+	&update_remote_blacklists( @_ );
+};
+
+#  GET a source from a blacklists
 GET qr{^/ipds/blacklists/($blacklists_list)/source$} => sub {
 	&get_blacklists_source( @_ );
 };
 
-#  POST a source from a blacklists list
+#  POST a source from a blacklists
 POST qr{^/ipds/blacklists/($blacklists_list)/source$} => sub {
 	&add_blacklists_source( @_ );
 };
 
-#  PUT a source from a blacklists list
+#  PUT a source from a blacklists
 PUT qr{^/ipds/blacklists/($blacklists_list)/source/($blacklists_source_id)$} => sub {
 	&set_blacklists_source( @_ );
 };
 
-#  DELETE a source from a blacklists list
+#  DELETE a source from a blacklists
 DELETE qr{^/ipds/blacklists/($blacklists_list)/source/($blacklists_source_id)$} => sub {
 	&del_blacklists_source( @_ );
 };

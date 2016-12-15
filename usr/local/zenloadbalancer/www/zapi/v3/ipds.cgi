@@ -369,8 +369,8 @@ sub set_blacklists_list
 	my $description = "Modify list $listName.";
 	my $errormsg;
 
-	my @allowParams = ( "type", "url", "refresh", "sources","list" );
-
+	my @allowParams = ( "type", "url", "sources","list","min","hour","dom","month","dow" );
+	
 	if ( &getBLExists( $listName ) == -1 )
 	{
 		$errormsg = "The list '$listName' doesn't exist.";
@@ -398,10 +398,11 @@ sub set_blacklists_list
 		if ( !$errormsg )
 		{
 			# Refresh and url only is used in remote lists
-			if ( ( exists $json_obj->{ 'refresh' } || exists $json_obj->{ 'url' } )
+			if ( ( exists $json_obj->{ 'url' }|| exists $json_obj->{ 'min' } || exists $json_obj->{ 'hour' } ||
+					exists $json_obj->{ 'dom' } || exists $json_obj->{ 'month' } || exists $json_obj->{ 'dow' } )
 				 && $location ne 'remote' )
 			{
-				$errormsg = "Refresh time and url only are available in remote lists.";
+				$errormsg = "Time options and url only are available in remote lists.";
 			}
 			# Sources only is used in local lists 
 			elsif ( exists $json_obj->{ 'sources' }
@@ -411,6 +412,7 @@ sub set_blacklists_list
 			}
 			else
 			{
+				my $cronFlag;
 				foreach my $key ( keys %{ $json_obj } )
 				{
 					# add only the sources with a correct format
@@ -433,9 +435,18 @@ sub set_blacklists_list
 						$listName = $json_obj->{ 'list' };
 					}
 					
+					# rewrite cron task if exists some of the next keys
+					$cronFlag =1 if ( $key eq "min" ||  $key eq "hour" ||  $key eq "month" ||  $key eq "dow" ||  $key eq "dom" );
+					
 					# not continue if there was a error
 					last if ( $errormsg );
 				}
+				
+				if ( $cronFlag && @{ &getBLParam( $listName, 'farms' ) } )
+				{
+					&setBLCronTask ( $listName );
+				}
+				
 				if ( !$errormsg )
 				{
 					# all successful
@@ -524,6 +535,45 @@ sub del_blacklists_list
 	};
 	&httpResponse( { code => 400, body => $body } );
 }
+
+
+sub update_remote_blacklists
+{
+	my $json_obj    = shift;
+	my $listName	  = shift;
+	my $description = "Update a remote list";
+
+	my @allowParams = ( "action" );
+	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
+	if ( !$errormsg )
+	{
+		if ( $json_obj->{ 'action' } ne "update" )
+		{
+			$errormsg = "Error, the action available is 'update'.";
+			my $body =
+			  { description => $description, error => "true", message => $errormsg };
+			&httpResponse( { code => 404, body => $body } );
+		}
+		else
+		{
+			&setBLDownloadRemoteList ( $listName );
+			if ( @{ &getBLParam( $listName, 'farms' ) } )
+			{
+				&setBLRefreshList ( $listName );
+			}
+			&httpResponse(
+				{ code => 200, body => { description => $description, params => $json_obj } } );
+		}
+	}
+
+	my $body =
+	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+}
+
+
+
+
 
 #**
 #  @api {get} /ipds/blacklists/<listname> Request the sources of a list
@@ -918,7 +968,7 @@ sub add_blacklists_to_farm
 	$errormsg = &getValidReqParams ( $json_obj, [ "list" ] );
 	if ( !$errormsg )
 	{
-		if ( &getFarmFile( $farmName ) == -1 )
+		if ( &getFarmFile( $farmName ) eq "-1" )
 		{
 			$errormsg = "$farmName doesn't exist.";
 			my $body = {
