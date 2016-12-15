@@ -1048,7 +1048,7 @@ sub farm_stats # ( $farmname )
 				service => $sessions_data[0],
 				client  => $sessions_data[1],
 				session => $sessions_data[2],
-				server  => $sessions_data[3]
+				id      => $sessions_data[3]
 			  };
 		}
 

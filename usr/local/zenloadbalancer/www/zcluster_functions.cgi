@@ -521,7 +521,7 @@ sub runRemotely # `output` ( $cmd, $ip_addr [, $port ] )
 	my $port = shift // '22';
 
 	my $ssh_options = '';
-	$ssh_options .= '-o "ConnectTimeout=10" ';
+	$ssh_options .= '-o "ConnectTimeout=2" '; # ssh-connect timeout
 	$ssh_options .= '-o "StrictHostKeyChecking=no" ';
 
 	# log the command to be run
@@ -564,7 +564,7 @@ sub checkZClusterInterfaces # @inmatched_ifaces ( $cl_conf, $nodeIP )
 		# remove attached tags
 		my ( undef, $remote_ip ) = split( 'addr:', $remote_ip );
 		my ( undef, $remote_mask ) = split( 'Mask:', $remote_mask );
-		
+
 		#~ print "remote_ip:$remote_ip\n";
 		#~ print "remote_mask:$remote_mask\n";
 

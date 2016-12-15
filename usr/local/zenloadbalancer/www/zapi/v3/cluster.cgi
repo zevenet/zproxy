@@ -761,7 +761,7 @@ sub get_cluster_localhost_status
 			if ( !$n->{ ka } && $n->{ zi } && !$n->{ ct } )
 			{
 				$node->{ status } = 'ok';
-				$node->{ message } = 'Node offline';
+				$node->{ message } = 'Node in maintenance mode';
 			}
 			else
 			{
@@ -798,9 +798,9 @@ sub get_cluster_nodes_status
 	if ( ! &getZClusterStatus() )
 	{
 		my $node = {
-			role => 'not configured',
-			status => 'not configured',
-			message => 'Cluster not configured',
+					 role    => 'not configured',
+					 status  => 'not configured',
+					 message => 'Cluster not configured',
 		};
 		push @cluster, $node;
 	}
@@ -816,20 +816,20 @@ sub get_cluster_nodes_status
 			my $ip = $cl_conf->{ $node_name }->{ ip };
 			my $n = &getZClusterNodeStatusInfo( $ip );
 			my $node = {
-						 name => $node_name,
-						 ip   => $ip,
-						 role => $n->{ role },
-						 keepalived => $n->{ ka },
-						 zeninotify => $n->{ zi },
-						 conntrackd => $n->{ ct },
-						 node => ( $node_name eq $localhost )? 'local': 'remote',
+						 name       => $node_name,
+						 ip         => $ip,
+						 role       => $n->{ role },
+						 #~ keepalived => $n->{ ka },
+						 #~ zeninotify => $n->{ zi },
+						 #~ conntrackd => $n->{ ct },
+						 node       => ( $node_name eq $localhost ) ? 'local' : 'remote',
 			};
 
 			if ( $node->{ role } eq 'master' )
 			{
 				if ( !$n->{ ka } && !$n->{ zi } && !$n->{ ct } )
 				{
-					$node->{ status } = 'ok';
+					$node->{ status }  = 'ok';
 					$node->{ message } = 'Node online and active';
 				}
 				else
@@ -865,8 +865,8 @@ sub get_cluster_nodes_status
 			{
 				unless ( $n->{ ka } || !$n->{ zi } || $n->{ ct } )
 				{
-					$node->{ status } = 'ok';
-					$node->{ message } = 'Node offline';
+					$node->{ status }  = 'ok';
+					$node->{ message } = 'Node in maintenance mode';
 				}
 				else
 				{
@@ -878,6 +878,12 @@ sub get_cluster_nodes_status
 					push ( @services, 'conntrackd' )    if $n->{ ct };
 					$node->{ message } .= join ', ', @services;
 				}
+			}
+			elsif ( $node->{ role } eq '' )
+			{
+				$node->{ role }    = 'unreachable';
+				$node->{ status }  = 'unreachable';
+				$node->{ message } = 'Node unreachable';
 			}
 			else
 			{
@@ -926,7 +932,7 @@ sub getZClusterNodeStatusInfo
 		chomp $node->{ role };
 	}
 
-	&zenlog( "Node $ip: " . Dumper $node );
+	#~ &zenlog( "Node $ip: " . Dumper $node );
 
 	return $node;
 }
