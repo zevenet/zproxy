@@ -25,7 +25,7 @@ blacklists:
 #  @apiGroup IPDS
 #  @apiDescription Get description of all blackl lists
 #  @apiName GetAllBlacklistsLists
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -100,7 +100,7 @@ sub get_blacklists_all_lists
 #  @apiDescription Get a black list description
 #  @apiName GetBlacklistsList
 #  @apiParam {String} listname  Black list name, unique ID.
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -186,7 +186,7 @@ sub get_blacklists_list
 #  @apiGroup IPDS
 #  @apiName PostBlacklistsList
 #  @apiDescription Create a new black list
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccess   {String}	type		The list will be white or black. The options are: allow or deny (default)
@@ -321,7 +321,7 @@ sub add_blacklists_list
 #  @apiName PutBlacklistsList
 #  @apiParam {String} listname  BL list name, unique ID.
 #  @apiDescription Modify the params in a BL list
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -482,7 +482,7 @@ sub set_blacklists_list
 #  @apiName DeleteBlacklistsList
 #  @apiParam {String} listname	black list name, unique ID.
 #  @apiDescription Delete a given black list
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -581,7 +581,7 @@ sub update_remote_blacklists
 #  @apiDescription Get the sources of a list
 #  @apiName GetBlacklistsSource
 #  @apiParam {String} listname  black list name, unique ID.
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -659,7 +659,7 @@ sub get_blacklists_source
 #  @apiName PostBlacklistsSource
 #  @apiParam {String} listname  Black list name, unique ID.
 #  @apiDescription Add a source to a specific list
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -763,7 +763,7 @@ sub add_blacklists_source
 #  @apiParam	{String}	listname	Black list name, unique ID.
 #  @apiParam	{number}	id			Source ID to modificate.
 #  @apiDescription Modify a source of a Black list
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 #  @apiSuccess	{String}	source		IP or net segment to modificate in a black list.
@@ -859,7 +859,7 @@ sub set_blacklists_source
 #  @apiParam	{String}	listname	Black list name, unique ID.
 #  @apiParam	{number}	id			Source ID to delete.
 #  @apiDescription Delete a source of alist
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -936,7 +936,7 @@ sub del_blacklists_source
 #  @apiName PostBlacklistsListToFarm
 #  @apiParam {String} farmname	farm name, unique ID.
 #  @apiDescription Add a list rule to a farm
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccess   {String}	list		Existing black list.
@@ -1018,7 +1018,7 @@ sub add_blacklists_to_farm
 #  @apiParam	{String}	farmname	farm name, unique ID.
 #  @apiParam	{String}	listname	black list name, unique ID.
 #  @apiDescription Delete a given black list from a farm
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1095,7 +1095,7 @@ ddos:
 #  @apiGroup IPDS
 #  @apiDescription Get ddos configuraton.
 #  @apiName GetDdos
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1152,7 +1152,7 @@ sub get_ddos_key
 #  @apiGroup IPDS
 #  @apiName PutDdosSettings
 #  @apiDescription Modify the params to DDoS
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -1285,7 +1285,7 @@ sub set_ddos
 #  @apiDescription Get DDoS status of a farm
 #  @apiName GetBlacklistsList
 #  @apiParam {String} farmname  farm name, unique ID.
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1333,7 +1333,7 @@ sub get_ddos_farm
 #  @apiName PostDdosToFarm
 #  @apiParam {String} farmname	farm name, unique ID.
 #  @apiDescription Add ddos protection to a farm
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -1413,7 +1413,7 @@ sub add_ddos_to_farm
 #  @apiName DeleteDdosFromFarm
 #  @apiParam	{String}	farmname	farm name, unique ID.
 #  @apiDescription Delete ddos rules from a farm.
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:

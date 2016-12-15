@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 
 ##############################################################################
 #
@@ -28,7 +28,7 @@ _dns:
 #  @apiGroup SYSTEM
 #  @apiDescription Get description of dns
 #  @apiName GetDns
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -61,7 +61,7 @@ sub get_dns
 #  @apiGroup SYSTEM
 #  @apiName PostDns
 #  @apiDescription Modify primary and secondary dns
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccess	{string}	primary			DNS IP
@@ -134,7 +134,7 @@ _ssh:
 #  @apiGroup SYSTEM
 #  @apiDescription Get description of ssh
 #  @apiName GetSsh
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -167,7 +167,7 @@ sub get_ssh
 #  @apiGroup SYSTEM
 #  @apiName PostSsh
 #  @apiDescription Modify the port and ip mask where is listening ssh server
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -256,7 +256,7 @@ _snmp:
 #  @apiGroup SYSTEM
 #  @apiDescription Get description of snmp
 #  @apiName GetSnmp
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -294,7 +294,7 @@ sub get_snmp
 #  @apiGroup SYSTEM
 #  @apiName PostSnmp
 #  @apiDescription Modify snmp server settings
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -451,7 +451,7 @@ _license:
 #  @apiGroup SYSTEM
 #  @apiDescription Get license
 #  @apiName GetLicense
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
@@ -500,7 +500,7 @@ _ntp:
 #  @apiGroup SYSTEM
 #  @apiDescription Get description of ntp
 #  @apiName GetNtp
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -531,7 +531,7 @@ sub get_ntp
 #  @apiGroup SYSTEM
 #  @apiName PostSnmp
 #  @apiDescription Modify ntp server settings
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -596,7 +596,7 @@ _http:
 #  @apiGroup SYSTEM
 #  @apiDescription Get description of http
 #  @apiName GetHttp
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -657,7 +657,7 @@ sub get_http
 #  @apiGroup SYSTEM
 #  @apiName PostHttp
 #  @apiDescription Modify http server settings
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -740,7 +740,7 @@ _logs:
 #  @apiGroup SYSTEM
 #  @apiDescription Get existent backups
 #  @apiName GetBackup
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -783,7 +783,7 @@ sub get_logs
 #  @apiDescription Download a log file
 #  @apiParam {String} log  file to download
 #  @apiName GetLogsDownload
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -831,7 +831,7 @@ _users:
 #  @apiGroup SYSTEM
 #  @apiDescription Get existent users
 #  @apiName GetUsers
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -871,7 +871,7 @@ sub get_all_users
 #  @apiGroup SYSTEM
 #  @apiDescription Get the zapi settings
 #  @apiName GetUsersZapi
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -917,7 +917,7 @@ sub get_user
 #  @apiGroup SYSTEM
 #  @apiName PostUsersZapi
 #  @apiDescription Modify zapi settings
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccess	{string}			key			key to connect with zapi
@@ -1011,7 +1011,7 @@ sub set_user_zapi
 #  @apiGroup SYSTEM
 #  @apiName PostUsersZapi
 #  @apiDescription Modify user password
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccess	{string}			newpassword		new password for the user
@@ -1097,7 +1097,7 @@ _backup:
 #  @apiGroup SYSTEM
 #  @apiDescription Get existent backups
 #  @apiName GetBackup
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1141,7 +1141,7 @@ sub get_backup
 #  @apiGroup SYSTEM
 #  @apiName PostBackup
 #  @apiDescription Create a backup of configuration files
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccess	{string}			name			name for backup
@@ -1207,7 +1207,7 @@ sub create_backup
 #  @apiDescription Download a backup
 #  @apiName GetBackupDownload
 #  @apiParam {String} backup  Backup name to download
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1254,7 +1254,7 @@ sub download_backup
 #  @apiName PutBackup
 #  @apiDescription Upload a backup
 #  @apiParam {String} backup  Name to save the backup
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccess	{string}		data-binary 	backup file to upload
@@ -1324,7 +1324,7 @@ sub upload_backup
 #  @apiName DeleteBackup
 #  @apiParam	{String}	Backup	Backup name
 #  @apiDescription Delete a backup from balancer
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1392,7 +1392,7 @@ sub del_backup
 #  @apiName PostBackupAction
 #  @apiParam {String} backup  Backup name to apply to system
 #  @apiDescription Apply a backup to the system
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccess	{string}		action		The action param only has the option: apply.
@@ -1464,7 +1464,7 @@ _notifications:
 #  @apiDescription Get description of method to send notifications
 #  @apiName GetNotificationsMethods
 #  @apiParam {String} method  type of method to send notifications. Only email available.
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1507,6 +1507,7 @@ sub get_notif_methods
 #  @apiParam {String} method  type method to send notifications. Only email available.
 #  @apiDescription Modify notification methods. Remember enable mail sends from less secure applications if it is necessary
 #  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccess	{string}		server		SMTP server
@@ -1584,7 +1585,7 @@ sub set_notif_methods
 #  @apiGroup SYSTEM
 #  @apiDescription Get if alert status is enabled or disabled
 #  @apiName GetNotificationsAlertsStatus
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1633,7 +1634,7 @@ sub get_notif_alert_status
 #  @apiDescription Get description of alert to send notifications
 #  @apiName GetNotificationsAlerts
 #  @apiParam {String} alert  type of alert to send notifications. Options are: backends or cluster
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1670,7 +1671,7 @@ sub get_notif_alert
 #  @apiName PostNotificationsAlerts
 #  @apiParam {String} alert  type alert to configure. Value can be backends or cluster.
 #  @apiDescription Modify alert settings
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 #
@@ -1747,7 +1748,7 @@ sub set_notif_alert
 #  @apiName PostNotificationsAlertsActions
 #  @apiParam {String} alert  type alert to configure. Value can be backends or cluster.
 #  @apiDescription Modify alert status
-#  @apiVersion 3.0
+#  @apiVersion 3.0.0
 #
 #
 #
