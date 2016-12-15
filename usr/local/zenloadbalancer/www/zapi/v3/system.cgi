@@ -1506,7 +1506,6 @@ sub get_notif_methods
 #  @apiName PostNotificationsMethods
 #  @apiParam {String} method  type method to send notifications. Only email available.
 #  @apiDescription Modify notification methods. Remember enable mail sends from less secure applications if it is necessary
-#  @apiVersion 3.0
 #  @apiVersion 3.0.0
 #
 #
