@@ -533,7 +533,7 @@ sub getNotifAlert
 	{
 		$alert = 'Backend';
 		$method->{ 'avoidflappingtime' } =
-		  &getNotifData( 'alerts', $alert, 'SwitchTime' );
+		  &getNotifData( 'alerts', $alert, 'SwitchTime' ) + 0;
 		$method->{ 'prefix' } = &getNotifData( 'alerts', $alert, 'PrefixSubject' );
 		if ( &getNotifData( 'alerts', $alert, 'Status' ) eq 'on' )
 		{
