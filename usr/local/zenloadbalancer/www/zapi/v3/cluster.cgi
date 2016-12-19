@@ -707,80 +707,8 @@ sub enable_cluster
 sub get_cluster_localhost_status
 {
 	my $description = "Cluster status for localhost";
-	my $node = { role => undef, status => undef, message => undef };
 
-	if ( ! &getZClusterStatus() )
-	{
-		$node->{ role } = 'not configured';
-		$node->{ status } = 'not configured';
-		$node->{ message } = 'Cluster not configured';
-	}
-	else
-	{
-		my $n = &getZClusterNodeStatusInfo();
-		$node->{ role } = $n->{ role };
-
-		if ( $node->{ role } eq 'master' )
-		{
-			if ( !$n->{ ka } && !$n->{ zi } && !$n->{ ct } )
-			{
-				$node->{ status } = 'ok';
-				$node->{ message } = 'Node online and active';
-			}
-			else
-			{
-				$node->{ status }  = 'failure';
-				$node->{ message } = 'Failed services: ';
-				my @services;
-				push ( @services, 'keepalived' )    if $n->{ ka };
-				push ( @services, 'zeninotify.pl' ) if $n->{ zi };
-				push ( @services, 'conntrackd' )    if $n->{ ct };
-				$node->{ message } .= join ', ', @services;
-			}
-		}
-		elsif ( $node->{ role } eq 'backup' )
-		{
-			if ( !$n->{ ka } && $n->{ zi } && !$n->{ ct } )
-			{
-				$node->{ status } = 'ok';
-				$node->{ message } = 'Node online and passive';
-			}
-			else
-			{
-				$node->{ status }  = 'failure';
-				$node->{ message } = 'Failed services: ';
-				my @services;
-				push ( @services, 'keepalived' )    if $n->{ ka };
-				push ( @services, 'zeninotify.pl' ) if $n->{ zi };
-				push ( @services, 'conntrackd' )    if $n->{ ct };
-				$node->{ message } .= join ', ', @services;
-			}
-		}
-		elsif ( $node->{ role } eq 'maintenance' )
-		{
-			if ( !$n->{ ka } && $n->{ zi } && !$n->{ ct } )
-			{
-				$node->{ status } = 'ok';
-				$node->{ message } = 'Node in maintenance mode';
-			}
-			else
-			{
-				$node->{ status }  = 'failure';
-				$node->{ message } = 'Failed services: ';
-				my @services;
-				push ( @services, 'keepalived' )    if $n->{ ka };
-				push ( @services, 'zeninotify.pl' ) if $n->{ zi };
-				push ( @services, 'conntrackd' )    if $n->{ ct };
-				$node->{ message } .= join ', ', @services;
-			}
-		}
-		else
-		{
-			$node->{ role }    = 'error';
-			$node->{ status }  = 'error';
-			$node->{ message } = 'error';
-		}
-	}
+	my $node = &getZClusterNodeStatusDigest();
 
 	my $body = {
 				 description => $description,
@@ -813,84 +741,18 @@ sub get_cluster_nodes_status
 		{
 			next if $node_name eq '_';
 
-			my $ip = $cl_conf->{ $node_name }->{ ip };
-			my $n = &getZClusterNodeStatusInfo( $ip );
-			my $node = {
-						 name       => $node_name,
-						 ip         => $ip,
-						 role       => $n->{ role },
-						 #~ keepalived => $n->{ ka },
-						 #~ zeninotify => $n->{ zi },
-						 #~ conntrackd => $n->{ ct },
-						 node       => ( $node_name eq $localhost ) ? 'local' : 'remote',
-			};
+			my $ip;
 
-			if ( $node->{ role } eq 'master' )
+			if ( $node_name ne $localhost )
 			{
-				if ( !$n->{ ka } && !$n->{ zi } && !$n->{ ct } )
-				{
-					$node->{ status }  = 'ok';
-					$node->{ message } = 'Node online and active';
-				}
-				else
-				{
-					$node->{ status }  = 'failure';
-					$node->{ message } = 'Failed services: ';
-					my @services;
-					push ( @services, 'keepalived' )    if $n->{ ka };
-					push ( @services, 'zeninotify.pl' ) if $n->{ zi };
-					push ( @services, 'conntrackd' )    if $n->{ ct };
-					$node->{ message } .= join ', ', @services;
-				}
+				$ip = $cl_conf->{ $node_name }->{ ip };
 			}
-			elsif ( $node->{ role } eq 'backup' )
-			{
-				if ( !$n->{ ka } && $n->{ zi } && !$n->{ ct } )
-				{
-					$node->{ status } = 'ok';
-					$node->{ message } = 'Node online and passive';
-				}
-				else
-				{
-					$node->{ status }  = 'failure';
-					$node->{ message } = 'Failed services: ';
-					my @services;
-					push ( @services, 'keepalived' )    if $n->{ ka };
-					push ( @services, 'zeninotify.pl' ) if !$n->{ zi };
-					push ( @services, 'conntrackd' )    if $n->{ ct };
-					$node->{ message } .= join ', ', @services;
-				}
-			}
-			elsif ( $node->{ role } eq 'maintenance' )
-			{
-				unless ( $n->{ ka } || !$n->{ zi } || $n->{ ct } )
-				{
-					$node->{ status }  = 'ok';
-					$node->{ message } = 'Node in maintenance mode';
-				}
-				else
-				{
-					$node->{ status }  = 'failure';
-					$node->{ message } = 'Services not running: ';
-					my @services;
-					push ( @services, 'keepalived' )    if $n->{ ka };
-					push ( @services, 'zeninotify.pl' ) if !$n->{ zi };
-					push ( @services, 'conntrackd' )    if $n->{ ct };
-					$node->{ message } .= join ', ', @services;
-				}
-			}
-			elsif ( $node->{ role } eq '' )
-			{
-				$node->{ role }    = 'unreachable';
-				$node->{ status }  = 'unreachable';
-				$node->{ message } = 'Node unreachable';
-			}
-			else
-			{
-				$node->{ role }    = 'error';
-				$node->{ status }  = 'error';
-				$node->{ message } = 'error';
-			}
+
+			my $node = &getZClusterNodeStatusDigest( $ip );
+
+			$node->{ name } = $node_name;
+			$node->{ ip } = $ip;
+			$node->{ node } = ( $node_name eq $localhost ) ? 'local' : 'remote';
 
 			push @cluster, $node;
 		}
@@ -902,39 +764,6 @@ sub get_cluster_nodes_status
 	};
 
 	&httpResponse({ code => 200, body => $body });
-}
-
-sub getZClusterNodeStatusInfo
-{
-	my $ip = shift;
-
-	my $node; # output
-
-	if ( $ip eq &getZClusterLocalIp() || ! $ip )
-	{
-		$node->{ ka } = pgrep('keepalived');
-		$node->{ zi } = pgrep('zeninotify.pl');
-		$node->{ ct } = pgrep('conntrackd');
-		$node->{ role } = &getZClusterNodeStatus();
-	}
-	else
-	{
-		&runRemotely("pgrep keepalived", $ip );
-		$node->{ ka } = $?;
-
-		&runRemotely("pgrep zeninotify.pl", $ip );
-		$node->{ zi } = $?;
-
-		&runRemotely("pgrep conntrackd", $ip );
-		$node->{ ct } = $?;
-
-		$node->{ role } = &runRemotely("$zcluster_manager getZClusterNodeStatus", $ip );
-		chomp $node->{ role };
-	}
-
-	#~ &zenlog( "Node $ip: " . Dumper $node );
-
-	return $node;
 }
 
 1;
