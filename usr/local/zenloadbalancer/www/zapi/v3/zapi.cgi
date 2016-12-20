@@ -242,7 +242,7 @@ sub checkActivationCertificate
 
 		&httpResponse(
 					   {
-						 code => 400,
+						 code => 403,
 						 body => {
 								   message         => $message,
 								   certificate_key => &keycert(),
