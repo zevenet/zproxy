@@ -1544,8 +1544,7 @@ DELETE qr{^/farms/($farm_re)/ipds/blacklists/($blacklists_list)$} => sub {
 };
 
 # DDoS
-my $ddos_key_global = &getValidFormat( 'ddos_key_global' );
-my $ddos_key_farm = &getValidFormat( 'ddos_key_farm' );
+my $ddos_rule = &getValidFormat( 'ddos_rule' );
 
 #  GET ddos settings
 GET qr{^/ipds/ddos$} => sub {
@@ -1553,19 +1552,29 @@ GET qr{^/ipds/ddos$} => sub {
 };
 
 #  GET ddos configuration
-GET qr{^/ipds/ddos/($ddos_key_global)$} => sub {
-	&get_ddos_key( @_ );
+GET qr{^/ipds/ddos/($ddos_rule)$} => sub {
+	&get_ddos_rule( @_ );
 };
 
-#  PUT ddos settings
-PUT qr{^/ipds/ddos$} => sub {
-	&set_ddos( @_ );
+#  POST ddos settings
+POST qr{^/ipds/ddos$} => sub {
+	&create_ddos_rule( @_ );
+};
+
+#  PUT ddos rule
+PUT qr{^/ipds/ddos/($ddos_rule)$} => sub {
+	&set_ddos_rule( @_ );
+};
+
+#  DELETE ddos rule
+DELETE qr{^/ipds/ddos/($ddos_rule)$} => sub {
+	&del_ddos_rule( @_ );
 };
 
 #  GET status ddos for a farm
-GET qr{^/farms/($farm_re)/ipds/ddos$} => sub {
-	&get_ddos_farm( @_ );
-};
+#~ GET qr{^/farms/($farm_re)/ipds/ddos$} => sub {
+	#~ &get_ddos_farm( @_ );
+#~ };
 
 #  POST DDoS to a farm
 POST qr{^/farms/($farm_re)/ipds/ddos$} => sub {
@@ -1573,7 +1582,7 @@ POST qr{^/farms/($farm_re)/ipds/ddos$} => sub {
 };
 
 #  DELETE DDoS from a farm
-DELETE qr{^/farms/($farm_re)/ipds/ddos/($ddos_key_farm)$} => sub {
+DELETE qr{^/farms/($farm_re)/ipds/ddos/($ddos_rule)$} => sub {
 	&del_ddos_from_farm( @_ );
 };
 
@@ -1586,4 +1595,5 @@ DELETE qr{^/farms/($farm_re)/ipds/ddos/($ddos_key_farm)$} => sub {
 				 }
 			   }
 );
+
 

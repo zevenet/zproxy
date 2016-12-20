@@ -56,6 +56,38 @@ sub printImgFile    #($file)
 	}
 }
 
+
+sub delGraph	#($name, type)
+{
+	my $name = shift;
+	my $type = shift;
+	my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
+	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
+
+	if ( $type =~ /iface/ )
+	{
+		&zenlog( "Delete graph file: /usr/local/zenloadbalancer/app/zenrrd/rrd/${name}iface.rrd" );
+		unlink ( "/usr/local/zenloadbalancer/app/zenrrd/rrd/${name}iface.rrd" );
+		# old versions
+		unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$name\_d.png" );
+		unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$name\_m.png" );
+		unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$name\_w.png" );
+		unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$name\_y.png" );
+	}
+
+	if ( $type =~ /farm/ )
+	{
+		&zenlog( "Delete graph file: $rrdap_dir/$rrd_dir/$name-farm.rrd" );
+		unlink glob ( "$rrdap_dir/$rrd_dir/$name-farm*" );
+		# old versions
+		unlink glob ( "$basedir/img/graphs/bar$name*" );
+		unlink glob ( "$basedir/img/graphs/$name-farm\_*" );
+	}
+
+}
+
+	
+	
 #
 sub printGraph    #($type,$time)
 {

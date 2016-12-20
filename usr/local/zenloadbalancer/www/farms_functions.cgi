@@ -26,6 +26,8 @@ if ( -e "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi" )
 	require "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi";
 }
 
+require "/usr/local/zenloadbalancer/www/rrd_functions.cgi";
+	
 #~ use warnings;
 #~ use strict;
 
@@ -1203,11 +1205,10 @@ sub runFarmDelete    # ($farm_name)
 	}
 
 	unlink glob ( "$configdir/$farm_name\_*\.conf" );
-	unlink glob ( "$basedir/img/graphs/bar$farm_name*" );
-	unlink glob ( "$basedir/img/graphs/$farm_name-farm\_*" );
-	unlink glob ( "$rrdap_dir/$rrd_dir/$farm_name-farm*" );
 	unlink glob ( "${logdir}/${farm_name}\_*farmguardian*" );
-
+	
+	&delGraph( $farm_name, "farm" );
+	
 	return $status;
 }
 

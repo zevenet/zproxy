@@ -141,7 +141,7 @@ sub get_blacklists_list
 	my %listHash;
 	my $errormsg;
 
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		my @ipList;
 		my $index = 0;
@@ -167,13 +167,14 @@ sub get_blacklists_list
 			$listHash{ 'refresh' } = &getBLParam( $listName, 'refresh' );
 		}
 		&httpResponse(
-			{ code => 200, body => { description => $description, params => \%listHash } }
+			  { code => 200, body => { description => $description, params => \%listHash } }
 		);
 	}
 	else
 	{
 		$errormsg = "Requested list doesn't exist.";
-		my $body = { description => $description, error => "true", message => $errormsg };
+		my $body =
+		  { description => $description, error => "true", message => $errormsg };
 		&httpResponse( { code => 400, body => $body } );
 	}
 
@@ -221,13 +222,13 @@ sub add_blacklists_list
 	my $errormsg;
 	my $listParams;
 	my $listName    = $json_obj->{ 'list' };
-	my $description = "Add list '$listName'";
+	my $description = "Create a blacklist.";
 
 	my @requiredParams = ( "list", "location" );
-	my @optionalParams = ( "type", "url", "refresh" );
+	my @optionalParams = ( "type", "url" );
 
-	$errormsg =
-	  &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
+	$errormsg = &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
+
 	# $errormsg == 0, no error
 	if ( !$errormsg )
 	{
@@ -240,7 +241,7 @@ sub add_blacklists_list
 		# Check key format
 		foreach my $key ( keys %$json_obj )
 		{
-			if ( ! &getValidFormat( "blacklists_$key", $json_obj->{ $key } ) )
+			if ( !&getValidFormat( "blacklists_$key", $json_obj->{ $key } ) )
 			{
 				$errormsg = "$key hasn't a correct format.";
 				last;
@@ -369,8 +370,9 @@ sub set_blacklists_list
 	my $description = "Modify list $listName.";
 	my $errormsg;
 
-	my @allowParams = ( "type", "url", "sources","list","min","hour","dom","month","dow" );
-	
+	my @allowParams =
+	  ( "type", "url", "sources", "list", "min", "hour", "dom", "month", "dow" );
+
 	if ( &getBLExists( $listName ) == -1 )
 	{
 		$errormsg = "The list '$listName' doesn't exist.";
@@ -389,7 +391,7 @@ sub set_blacklists_list
 		# Check key format
 		foreach my $key ( keys %{ $json_obj } )
 		{
-			if ( ! &getValidFormat( "blacklists_$key", $json_obj->{ $key } ) )
+			if ( !&getValidFormat( "blacklists_$key", $json_obj->{ $key } ) )
 			{
 				$errormsg = "$key hasn't a correct format.";
 				last;
@@ -398,13 +400,22 @@ sub set_blacklists_list
 		if ( !$errormsg )
 		{
 			# Refresh and url only is used in remote lists
-			if ( ( exists $json_obj->{ 'url' }|| exists $json_obj->{ 'min' } || exists $json_obj->{ 'hour' } ||
-					exists $json_obj->{ 'dom' } || exists $json_obj->{ 'month' } || exists $json_obj->{ 'dow' } )
-				 && $location ne 'remote' )
+			if (
+				 (
+				      exists $json_obj->{ 'url' }
+				   || exists $json_obj->{ 'min' }
+				   || exists $json_obj->{ 'hour' }
+				   || exists $json_obj->{ 'dom' }
+				   || exists $json_obj->{ 'month' }
+				   || exists $json_obj->{ 'dow' }
+				 )
+				 && $location ne 'remote'
+			  )
 			{
 				$errormsg = "Time options and url only are available in remote lists.";
 			}
-			# Sources only is used in local lists 
+
+			# Sources only is used in local lists
 			elsif ( exists $json_obj->{ 'sources' }
 					&& $location ne 'local' )
 			{
@@ -421,32 +432,38 @@ sub set_blacklists_list
 					{
 						my $source_format = &getValidFormat( 'blacklists_source' );
 						my $noPush = grep ( !/$source_format)/, @{ $json_obj->{ 'list' } } );
+
 						# error
 						&zenlog( "$noPush sources couldn't be added" ) if ( $noPush );
 					}
 
-					# set params 
+					# set params
 					$errormsg = &setBLParam( $listName, $key, $json_obj->{ $key } );
 					$errormsg = "Error, modifying $key in $listName." if ( $errormsg );
-					
+
 					# once changed list, update de list name
 					if ( $key eq 'list' )
 					{
 						$listName = $json_obj->{ 'list' };
 					}
-					
+
 					# rewrite cron task if exists some of the next keys
-					$cronFlag =1 if ( $key eq "min" ||  $key eq "hour" ||  $key eq "month" ||  $key eq "dow" ||  $key eq "dom" );
-					
+					$cronFlag = 1
+					  if (    $key eq "min"
+						   || $key eq "hour"
+						   || $key eq "month"
+						   || $key eq "dow"
+						   || $key eq "dom" );
+
 					# not continue if there was a error
 					last if ( $errormsg );
 				}
-				
+
 				if ( $cronFlag && @{ &getBLParam( $listName, 'farms' ) } )
 				{
-					&setBLCronTask ( $listName );
+					&setBLCronTask( $listName );
 				}
-				
+
 				if ( !$errormsg )
 				{
 					# all successful
@@ -502,15 +519,17 @@ sub set_blacklists_list
 #**
 sub del_blacklists_list
 {
-	my $listName = shift;
+	my $listName    = shift;
 	my $description = "Delete list '$listName'",
 
-	my $errormsg = &getBLExists( $listName );
+	  my $errormsg = &getBLExists( $listName );
 	if ( $errormsg == -1 )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
-			description => $description,  error => "true", message => $errormsg,
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
@@ -521,7 +540,9 @@ sub del_blacklists_list
 		{
 			$errormsg = "The list $listName has been deleted successful.";
 			my $body = {
-				description => $description, successful => "true", message => $errormsg,
+						 description => $description,
+						 successful  => "true",
+						 message     => $errormsg,
 			};
 			&httpResponse( { code => 200, body => $body } );
 		}
@@ -531,16 +552,17 @@ sub del_blacklists_list
 		}
 	}
 	my $body = {
-		description => $description,  error => "true", message => $errormsg,
+				 description => $description,
+				 error       => "true",
+				 message     => $errormsg,
 	};
 	&httpResponse( { code => 400, body => $body } );
 }
 
-
 sub update_remote_blacklists
 {
 	my $json_obj    = shift;
-	my $listName	  = shift;
+	my $listName    = shift;
 	my $description = "Update a remote list";
 
 	my @allowParams = ( "action" );
@@ -556,10 +578,10 @@ sub update_remote_blacklists
 		}
 		else
 		{
-			&setBLDownloadRemoteList ( $listName );
+			&setBLDownloadRemoteList( $listName );
 			if ( @{ &getBLParam( $listName, 'farms' ) } )
 			{
-				&setBLRefreshList ( $listName );
+				&setBLRefreshList( $listName );
 			}
 			&httpResponse(
 				{ code => 200, body => { description => $description, params => $json_obj } } );
@@ -570,10 +592,6 @@ sub update_remote_blacklists
 	  { description => $description, error => "true", message => $errormsg };
 	&httpResponse( { code => 400, body => $body } );
 }
-
-
-
-
 
 #**
 #  @api {get} /ipds/blacklists/<listname> Request the sources of a list
@@ -706,17 +724,15 @@ sub add_blacklists_source
 	}
 	else
 	{
-		$errormsg =
-		  &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
+		$errormsg = &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
 		if ( !$errormsg )
 		{
-			if ( ! &getValidFormat( 'blacklists_source', $json_obj->{ 'source' } )  )
+			if ( !&getValidFormat( 'blacklists_source', $json_obj->{ 'source' } ) )
 			{
 				$errormsg = "It's necessary to introduce a correct source.";
 			}
 			elsif (
-					grep ( /^$json_obj->{'source'}$/,
-						   @{ &getBLParam( $listName, 'sources' ) } ) )
+				  grep ( /^$json_obj->{'source'}$/, @{ &getBLParam( $listName, 'sources' ) } ) )
 			{
 				$errormsg = "$json_obj->{'source'} just exists in the list.";
 			}
@@ -824,7 +840,7 @@ sub set_blacklists_source
 		$errormsg = &getValidOptParams( $json_obj, \@allowParams );
 		if ( !$errormsg )
 		{
-			if ( ! &getValidFormat( 'blacklists_source', $json_obj->{ 'source' } ) )
+			if ( !&getValidFormat( 'blacklists_source', $json_obj->{ 'source' } ) )
 			{
 				$errormsg = "Wrong source format.";
 			}
@@ -965,21 +981,27 @@ sub add_blacklists_to_farm
 	my $errormsg;
 	my $description = "Apply a list to a farm";
 
-	$errormsg = &getValidReqParams ( $json_obj, [ "list" ] );
+	$errormsg = &getValidReqParams( $json_obj, ["list"] );
 	if ( !$errormsg )
 	{
 		if ( &getFarmFile( $farmName ) eq "-1" )
 		{
 			$errormsg = "$farmName doesn't exist.";
 			my $body = {
-				description => $description, error => "true", message => $errormsg };
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
 			&httpResponse( { code => 404, body => $body } );
 		}
 		elsif ( &getBLExists( $listName ) == -1 )
 		{
 			$errormsg = "$listName doesn't exist.";
 			my $body = {
-				description => $description, error => "true", message => $errormsg };
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
 			&httpResponse( { code => 404, body => $body } );
 		}
 		else
@@ -995,7 +1017,10 @@ sub add_blacklists_to_farm
 				{
 					my $errormsg = "List $listName was applied successful to the farm $farmName.";
 					my $body = {
-						description => $description, succes => "true", message => $errormsg };
+								 description => $description,
+								 succes      => "true",
+								 message     => $errormsg
+					};
 					&httpResponse( { code => 200, body => $body } );
 				}
 				else
@@ -1006,7 +1031,10 @@ sub add_blacklists_to_farm
 		}
 	}
 	my $body = {
-			description => $description, error => "true", message => $errormsg };
+				 description => $description,
+				 error       => "true",
+				 message     => $errormsg
+	};
 	&httpResponse( { code => 400, body => $body } );
 }
 
@@ -1048,21 +1076,30 @@ sub del_blacklists_from_farm
 	{
 		$errormsg = "$farmName doesn't exist.";
 		my $body = {
-			description => $description, error => "true", message => $errormsg };
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
 		&httpResponse( { code => 404, body => $body } );
 	}
 	elsif ( &getBLExists( $listName ) == -1 )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
-			description => $description, error => "true", message => $errormsg };
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( ! grep( /^$farmName$/, @{ &getBLParam( $listName, 'farms' ) } ) )
+	elsif ( !grep ( /^$farmName$/, @{ &getBLParam( $listName, 'farms' ) } ) )
 	{
 		$errormsg = "Not found a rule associated to $listName and $farmName.";
 		my $body = {
-			description => $description, error => "true", message => $errormsg };
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
 		&httpResponse( { code => 404, body => $body } );
 	}
 	else
@@ -1084,7 +1121,10 @@ sub del_blacklists_from_farm
 		}
 	}
 	my $body = {
-			description => $description, error => "true", message => $errormsg };
+				 description => $description,
+				 error       => "true",
+				 message     => $errormsg
+	};
 	&httpResponse( { code => 400, body => $body } );
 }
 
@@ -1120,35 +1160,130 @@ sub get_ddos
 	my $description = "Get DDoS settings.";
 
 	my $fileHandle = Config::Tiny->read( $confFile );
+	my $output;
+	my @farmType;
+	my @systemType;
+
 	foreach my $key ( keys %{ $fileHandle } )
 	{
-		# get status of all rules enabled
-		if (   $fileHandle->{ $key }->{ 'status' } =~ /up/
-			 || $fileHandle->{ $key }->{ 'farms' } )
+		if ( $fileHandle->{ $key }->{ 'type' } eq 'farm' )
 		{
-			push @output, $key; 
+			push @farmType, $fileHandle->{ $key };
+		}
+		elsif ( $fileHandle->{ $key }->{ 'type' } eq 'system' )
+		{
+			push @systemType, $fileHandle->{ $key };
 		}
 	}
 
-	my $body = { description => $description, params => \@output };
+	$output->{ 'farm' }   = \@farmType;
+	$output->{ 'system' } = \@systemType;
+
+	my $body = { description => $description, params => $output };
 	&httpResponse( { code => 200, body => $body } );
 }
 
-# ???
-sub get_ddos_key
+#  POST /ipds/ddos
+sub create_ddos_rule
 {
-	my $key = shift;
-	my $description = "Get DDoS $key settings";
-	my $output = &getDDOSParam( $key );
+	my $json_obj       = shift;
+	my $description    = "Post a DDoS rule";
+	my $key            = $json_obj->{ 'id' };
+	my @requiredParams = ( "rule", "id" );
+	my $confFile       = &getGlobalConfiguration( 'ddosConf' );
 
-	# successful
-	my $body = { description => $description, params => $output, };
-	&httpResponse( { code => 200, body => $body } );
+	my $errormsg = &getValidReqParams( $json_obj, \@requiredParams );
+	if ( !$errormsg )
+	{
+		if ( &getDDOSExists( $json_obj->{ 'rule' } ) eq "0" )
+		{
+			$errormsg = "$json_obj->{ 'rule' } already exists.";
+		}
+		elsif ( !&getValidFormat( 'ddos_rule', $json_obj->{ 'rule' } ) )
+		{
+			$errormsg = "rule name hasn't a correct format.";
+		}
+		elsif ( !&getValidFormat( "ddos_key_farm", $json_obj->{ 'id' } ) )
+		{
+			$errormsg = "ID rule isn't correct.";
+		}
+		else
+		{
+			$errormsg = &createDDOSRule( $json_obj->{ 'rule' }, $key );
+			if ( $errormsg )
+			{
+				$errormsg = "There was a error enabling DDoS in $json_obj->{ 'rule' }.";
+			}
+			else
+			{
+				my $output = &getDDOSParam( $json_obj->{ 'rule' } );
+				&httpResponse(
+							   {
+								 code => 200,
+								 body => { description => $description, params => $output }
+							   }
+				);
+			}
+		}
+	}
 
+	my $body =
+	  { description => $description, error => "true", message => $errormsg, };
+	&httpResponse( { code => 400, body => $body } );
 }
 
 #**
-#  @api {put} /ipds/ddos Modify ddos settings
+#  @api {get} /ipds/ddos/RULE Request ddos rule settings
+#  @apiGroup IPDS
+#  @apiDescription Get ddos configuraton.for a rule
+#  @apiName GetDdos
+#  @apiVersion 3.0
+#
+#
+# @apiSuccessExample Success-Response:
+#{
+#   "description" : "Get DDoS example_rule settings",
+#   "params" : {
+#      "farms" : "",
+#      "key" : "LIMITSEC",
+#      "limit" : "2",
+#      "limitBurst" : "2"
+#   }
+#}
+#@apiExample {curl} Example Usage:
+#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/ddos/RULE
+#
+#@apiSampleRequest off
+#**
+#GET /ipds/ddos/RULE
+sub get_ddos_rule
+{
+	my $rule        = shift;
+	my $description = "Get DDoS $rule settings";
+	my $refRule     = &getDDOSParam( $rule );
+	my $output;
+
+	if ( ref ( $refRule ) eq 'HASH' )
+	{
+		# successful
+		my $body = { description => $description, params => $refRule, };
+		&httpResponse( { code => 200, body => $body } );
+	}
+	else
+	{
+		$output = "$rule doesn't exist.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $output
+		};
+		&httpResponse( { code => 404, body => $body } );
+	}
+}
+
+#**
+#  @api {put} /ipds/ddos/RULE Modify ddos settings
 #  @apiGroup IPDS
 #  @apiName PutDdosSettings
 #  @apiDescription Modify the params to DDoS
@@ -1178,105 +1313,129 @@ sub get_ddos_key
 #
 #**
 #PUT /ipds/ddos
-sub set_ddos
+sub set_ddos_rule
 {
-	my $json_obj = shift;
-	my $key      = $json_obj->{ 'id' };
+	my $json_obj    = shift;
+	my $rule        = shift;
+	my $description = "Put DDoS rule settings";
+	my @requiredParams;
 	my $errormsg;
-	my $description = "Put DDoS $key settings";
 
-	if ( $key eq 'DROPICMP' )
+	if ( &getDDOSExists( $rule ) )
 	{
-		if ( $json_obj->{ 'status' } eq 'up' )
-		{
-			&setDDOSCreateRule( $key );
-		}
-		elsif ( $json_obj->{ 'status' } eq 'down' )
-		{
-			&setDDOSDeleteRule( $key );
-		}
+		$errormsg = "$rule not found";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+		&httpResponse( { code => 404, body => $body } );
 	}
-
-	elsif ( $key eq 'SSHBRUTEFORCE' )
-	{
-		&setDDOSParam( $key, 'time', $json_obj->{ 'time' } )
-		  if ( exists $json_obj->{ 'time' } );
-		&setDDOSParam( $key, 'hits', $json_obj->{ 'hits' } )
-		  if ( exists $json_obj->{ 'hits' } );
-		&setDDOSParam( $key, 'port', $json_obj->{ 'port' } )
-		  if ( exists $json_obj->{ 'port' } );
-
-		&setDDOSCreateRule( $key ) if ( $json_obj->{ 'status' } eq 'up' );
-		&setDDOSDeleteRule( $key ) if ( $json_obj->{ 'status' } eq 'down' );
-	}
-
-	elsif ( $key eq 'PORTSCANNING' )
-	{
-		&setDDOSParam( $key, 'blTime', $json_obj->{ 'blTime' } )
-		  if ( exists $json_obj->{ 'blTime' } );
-		&setDDOSParam( $key, 'time', $json_obj->{ 'time' } )
-		  if ( exists $json_obj->{ 'time' } );
-		&setDDOSParam( $key, 'hits', $json_obj->{ 'hits' } )
-		  if ( exists $json_obj->{ 'hits' } );
-		&setDDOSParam( $key, 'portScan', $json_obj->{ 'portScan' } )
-		  if ( exists $json_obj->{ 'portScan' } );
-
-		&setDDOSCreateRule( $key ) if ( $json_obj->{ 'status' } eq 'up' );
-		&setDDOSDeleteRule( $key ) if ( $json_obj->{ 'status' } eq 'down' );
-	}
-
-	elsif ( $key eq 'SYNPROXY' )
-	{
-		&setDDOSParam( $key, 'mss', $json_obj->{ 'mss' } )
-		  if ( exists $json_obj->{ 'mss' } );
-		&setDDOSParam( $key, 'scale', $json_obj->{ 'scale' } )
-		  if ( exists $json_obj->{ 'scale' } );
-	}
-
-	elsif ( $key eq 'LIMITSEC' )
-	{
-		&setDDOSParam( $key, 'limit', $json_obj->{ 'limit' } )
-		  if ( exists $json_obj->{ 'limit' } );
-		&setDDOSParam( $key, 'limitBurst', $json_obj->{ 'limitBurst' } )
-		  if ( exists $json_obj->{ 'limitBurst' } );
-	}
-
-	elsif ( $key eq 'LIMITRST' )
-	{
-		&setDDOSParam( $key, 'limit', $json_obj->{ 'limit' } )
-		  if ( exists $json_obj->{ 'limit' } );
-		&setDDOSParam( $key, 'limitBurst', $json_obj->{ 'limitBurst' } )
-		  if ( exists $json_obj->{ 'limitBurst' } );
-	}
-
-	elsif ( $key eq 'LIMITCONNS' )
-	{
-		&setDDOSParam( $key, 'limitConns', $json_obj->{ 'limitConns' } )
-		  if ( exists $json_obj->{ 'limitConns' } );
-	}
-
 	else
 	{
-		$errormsg = "Wrong param ID";
-	}
+		# Get allowed params for a determinated key
+		my $key = &getDDOSParam( $rule, 'key' );
+		my %hashRuleConf = %{ &getDDOSInitialParams( $key ) };
 
-	# output
-	if ( $errormsg )
+		# delete 'type' key
+		delete $hashRuleConf{ 'type' };
+
+		# delete 'key' key
+		delete $hashRuleConf{ 'key' };
+
+		# delete 'farms' key
+		if ( exists $hashRuleConf{ 'farms' } )
+		{
+			delete $hashRuleConf{ 'farms' };
+		}
+
+		@requiredParams = keys %hashRuleConf;
+		$errormsg = &getValidOptParams( $json_obj, \@requiredParams );
+		if ( !$errormsg )
+		{
+			# check input format
+			foreach my $param ( keys %{ $json_obj } )
+			{
+				if ( !&getValidFormat( "ddos_$param", $json_obj->{ $param } ) )
+				{
+					$errormsg = "Error, $param format is wrong.";
+					last;
+				}
+			}
+
+			# output
+			if ( !$errormsg )
+			{
+				foreach my $param ( keys %{ $json_obj } )
+				{
+					&setDDOSParam( $rule, $param, $json_obj->{ $param } );
+				}
+				if ( !$errormsg )
+				{
+					my $refRule = &getDDOSParam( $rule );
+					&httpResponse(
+						{
+						   code => 200,
+						   body => { description => $description, success => "true", params => $refRule }
+						}
+					);
+				}
+			}
+		}
+	}
+	my $body = {
+				 description => $description,
+				 error       => "true",
+				 message     => $errormsg
+	};
+	&httpResponse( { code => 400, body => $body } );
+}
+
+# DELETE /ipds/ddos/RULE
+sub del_ddos_rule
+{
+	#~ my $json_obj = shift;
+	my $rule = shift;
+	my $errormsg;
+	my $description = "Delete DDoS rule";
+
+	if ( &getDDOSExists( $rule ) == -1 )
 	{
-		my $body = { description => $description, error => "true", message => $errormsg, };
-		&httpResponse( { code => 400, body => $body } );
+		$errormsg = "$rule not found.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+		&httpResponse( { code => 404, body => $body } );
 	}
-
+	elsif ( &getDDOSParam( $rule, 'type' ) eq 'system' )
+	{
+		$errormsg =
+		  "Error, system rules not is possible to delete it, try to disable it.";
+	}
+	elsif ( &getDDOSParam( $rule, 'farms' ) )
+	{
+		$errormsg = "Error, disable this rule from all farms before than delete it.";
+	}
 	else
 	{
-		&httpResponse(
-			   {
-				 code => 200,
-				 bdy  => { description => $description, success => "true" }
-			   }
-		);
+		&deleteDDOSRule( $rule );
+		$errormsg = "Deleted $rule successful.";
+		my $body = {
+					 description => $description,
+					 success     => "true",
+					 message     => $errormsg
+		};
+		&httpResponse( { code => 200, body => $body } );
 	}
 
+	my $body = {
+				 description => $description,
+				 error       => "true",
+				 message     => $errormsg
+	};
+	&httpResponse( { code => 400, body => $body } );
 }
 
 #**
@@ -1354,55 +1513,72 @@ sub get_ddos_farm
 #  POST /farms/<farmname>/ipds/ddos
 sub add_ddos_to_farm
 {
-	my $json_obj = shift;
-	my $farmName = shift;
-	my $description = "Post DDoS to $farmName";
-	my $key      = $json_obj->{ 'id' };
+	my $json_obj    = shift;
+	my $farmName    = shift;
+	my $description = "Post a DDoS rule to a farm";
+	my $rule        = $json_obj->{ 'rule' };
 	my $errormsg;
 
 	my $confFile = &getGlobalConfiguration( 'ddosConf' );
 	my $output   = "down";
 
-	if ( &getFarmFile( $farmName ) == -1 )
+	if ( &getFarmFile( $farmName ) eq '-1' )
 	{
 		$errormsg = "$farmName doesn't exist.";
 		my $body = {
-			description => $description, error => "true", message => $errormsg };
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( grep ( /$farmName/, &getFarmList() ) )
+	elsif ( &getDDOSExists( $rule ) == -1 )
+	{
+		$errormsg = "$rule not found.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+		&httpResponse( { code => 404, body => $body } );
+	}
+	elsif ( &getDDOSParam( $rule, 'type' ) eq 'system' )
+	{
+		$errormsg = "system rules not is possible apply to farm.";
+	}
+	else
 	{
 		my $fileHandle = Config::Tiny->read( $confFile );
-		if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+		if ( $fileHandle->{ $rule }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 		{
-			$errormsg = "This rule Just is enabled DDoS in $farmName.";
+			$errormsg = "This rule already is enabled in $farmName.";
 		}
 		else
 		{
-			&setDDOSCreateRule( $key, $farmName );
+			&setDDOSCreateRule( $rule, $farmName );
 
 			my $confFile = &getGlobalConfiguration( 'ddosConf' );
 			my $output;
 
 			# check output
 			my $fileHandle  = Config::Tiny->read( $confFile );
-			my $farmsString = $fileHandle->{ $key }->{ 'farms' };
+			my $farmsString = $fileHandle->{ $rule }->{ 'farms' };
 
 			if ( $farmsString =~ /( |^)$farmName( |$)/ )
 			{
-				$output = 'up';
+				$errormsg = "$rule was enabled successful in $farmName.";
 				&httpResponse(
-						  {
-							code => 200,
-							body => { description => $description, params => $output }
-						  }
+					{
+					   code => 200,
+					   body => { description => $description, params => $output, message => $errormsg }
+					}
 				);
 			}
 		}
 	}
 
-	$errormsg = "There was a error enabling DDoS in $farmName.";
-	my $body = { description => $description, error => "true", message => $errormsg, };
+	my $body =
+	  { description => $description, error => "true", message => $errormsg, };
 	&httpResponse( { code => 400, body => $body } );
 }
 
@@ -1434,57 +1610,68 @@ sub add_ddos_to_farm
 # DELETE /farms/<farmname>/ipds/ddos/<id>
 sub del_ddos_from_farm
 {
-	my $farmName = shift;
-	my $key      = shift;
-	my $confFile = &getGlobalConfiguration( 'ddosConf' );
+	my $farmName    = shift;
+	my $rule        = shift;
+	my $description = "Delete DDoS rule from a farm";
 	my $errormsg;
-	my $description = "Delete DDoS form farm $farmName";
 
-	my @vaildKeys = (
-		'INVALID', 'BLOCKSPOOFED', 'LIMITCONNS', 'LIMITSEC',    # all farms
-		'DROPFRAGMENTS', 'NEWNOSYN', 'SYNWITHMSS',    # farms based in TCP protcol
-		'BOGUSTCPFLAGS', 'LIMITRST', 'SYNPROXY'
-	);
+	my $confFile = &getGlobalConfiguration( 'ddosConf' );
 
-	if ( !grep ( /^$key$/, @vaildKeys ) )
+	if ( &getFarmFile( $farmName ) eq "-1" )
 	{
-		$errormsg = "Key $key is not a valid value.";
+		$errormsg = "$farmName doesn't exist.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( -e $confFile )
+	elsif ( &getDDOSExists( $rule ) == -1 )
 	{
-		my $fileHandle  = Config::Tiny->read( $confFile );
-		my $farmsString = $fileHandle->{ $key }->{ 'farms' };
-		
-		if ( $farmsString !~ /( |^)$farmName( |$)/ )
-		{
-			$errormsg = "DDoS for $farmName just is disabled.";
-			my $body = {
-			description => $description,  error => "true", message => $errormsg, };
-			&httpResponse( { code => 404, body => $body } );
-		}
+		$errormsg = "$rule not found.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+		&httpResponse( { code => 404, body => $body } );
+	}
+	elsif ( &getDDOSParam( $rule, 'type' ) eq 'system' )
+	{
+		$errormsg = "system rules not is possible delete from a farm.";
 	}
 	else
 	{
-		$errormsg = "DDoS for $farmName just is disabled.";
-	}
-
-	if ( !$errormsg )
-	{
-		if ( grep ( /$farmName/, &getFarmList ) )
+		my $fileHandle = Config::Tiny->read( $confFile );
+		if ( $fileHandle->{ $rule }->{ 'farms' } !~ /( |^)$farmName( |$)/ )
 		{
-			&setDDOSDeleteRule( $key, $farmName );
-
-			$errormsg = "DDoS was desactived successful from farm $farmName.";
-			my $body = { description => $description, success => "true", message => $errormsg, };
-			&httpResponse( { code => 200, body => $body } );
+			$errormsg = "This rule no is enabled in $farmName.";
 		}
 		else
 		{
-			$errormsg = "$farmName doesn't exist";
+			&setDDOSDeleteRule( $rule, $farmName );
+
+			# check output
+			my $confFile    = &getGlobalConfiguration( 'ddosConf' );
+			my $fileHandle  = Config::Tiny->read( $confFile );
+			my $farmsString = $fileHandle->{ $rule }->{ 'farms' };
+
+			if ( $farmsString !~ /( |^)$farmName( |$)/ )
+			{
+				$errormsg = "$rule was disabled in $farmName successful.";
+				&httpResponse(
+					{
+					   code => 200,
+					   body => { description => $description, success => "true", message => $errormsg }
+					}
+				);
+			}
 		}
 	}
 
-	my $body = { description => $description, error => "true", message => $errormsg, };
+	my $body =
+	  { description => $description, error => "true", message => $errormsg, };
 	&httpResponse( { code => 400, body => $body } );
 }
 

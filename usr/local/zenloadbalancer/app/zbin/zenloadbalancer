@@ -250,6 +250,7 @@ if ( $eject eq "start" )
 	require "/usr/local/zenloadbalancer/config/global.conf";
 	require "/usr/local/zenloadbalancer/www/Plugins/notifications.cgi";
 	require "/usr/local/zenloadbalancer/www/Plugins/blacklists.cgi";
+	require "/usr/local/zenloadbalancer/www/Plugins/ddos.cgi";
 
 	#### Starts node tuning ####
 
@@ -460,6 +461,7 @@ if ( $eject eq "start" )
 	# start all modules
 	&zlbstartNotifications();
 	&setBLStart();
+	&setDDOSBoot();
 
 	### Starting Network Interfaces
 	&printAndLog( "Starting Zen Load Balancer...\n" );
@@ -747,12 +749,14 @@ if ( $eject eq "stop" )
 {
 	require "/usr/local/zenloadbalancer/www/Plugins/blacklists.cgi";
 	require "/usr/local/zenloadbalancer/www/Plugins/notifications.cgi";
+	require "/usr/local/zenloadbalancer/www/Plugins/ddos.cgi";
 
 	&zenlog( "Beginning stop proccess" );
 
 	# stop all modules
 	&zlbstopNotifications( );
 	&setBLStop();
+	&setDDOSStop();
 
 	if ( &getZClusterStatus() )
 	{

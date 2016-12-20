@@ -920,11 +920,12 @@ sub delIf    # ($if_ref)
 	}
 
 	# delete graphs
-	unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_d.png" );
-	unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_m.png" );
-	unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_w.png" );
-	unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_y.png" );
-	unlink ( "/usr/local/zenloadbalancer/app/zenrrd/rrd/$$if_ref{name}iface.rrd" );
+	&delGraph ( $$if_ref{name}, "iface" );
+	#~ unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_d.png" );
+	#~ unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_m.png" );
+	#~ unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_w.png" );
+	#~ unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_y.png" );
+	#~ unlink ( "/usr/local/zenloadbalancer/app/zenrrd/rrd/$$if_ref{name}iface.rrd" );
 
 	return $status;
 }

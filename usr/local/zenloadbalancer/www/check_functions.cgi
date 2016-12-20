@@ -141,7 +141,7 @@ my %format_re = (
 	'notif_method' => qr/(?:email)/,
 	'notif_tls'    => $boolean,
 	'notif_action' => $enable,
-	'notif_time'   => qr/$natural/,               # this value can't be 0
+	'notif_time'   => $natural,               # this value can't be 0
 
 	# ipds
 	'blacklists_list'      => qr{[a-zA-Z0-9]+},
@@ -155,11 +155,20 @@ my %format_re = (
 	'blacklists_month'   => qr{\d+},
 	'blacklists_dow'   => qr{\d+},
 	'blacklists_dom'   => qr{\d+},
+	'ddos_rule'      => qr/[\w]+/,
 	'ddos_key'      => qr/(?:$ddos_global|$ddos_all|$ddos_tcp)/,
 	'ddos_key_farm' => qr/(?:$ddos_all|$ddos_tcp)/,
 	'ddos_key_global' => $ddos_global,
 	'ddos_key_all'       => $ddos_all,
 	'ddos_key_tcp'      => $ddos_tcp,
+	# ddos params
+	'ddos_time'      => $natural,
+	'ddos_limitConns'      => $natural,
+	'ddos_limit'      => $natural,
+	'ddos_limitBurst'      => $natural,
+	'ddos_status'      => qr/(?:down|up)/,
+	'ddos_port'      => $port_range,
+	'ddos_hits'      => $natural,	
 
 	# certificates filenames
 	'certificate' => qr/\w[\w\.-]*\.(?:pem|csr)/,

@@ -482,7 +482,7 @@ sub get_all_sys_graphs	 #()
 		push( @mount_points, "root$partitions->{ $key }->{ mount_point }" );
 	}
 	@mount_points = sort @mount_points;
-	push @sys, { disks => \@mount_points };
+	push @sys, { disk => \@mount_points };
 
 	my $body = {
 		description =>
