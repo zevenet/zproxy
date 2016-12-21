@@ -69,8 +69,6 @@ sub getIptListV4
 }
 
 
-
-
 # LOGS
 # &setIPDSDropAndLog ( $cmd, $logMsg );
 sub setIPDSDropAndLog
@@ -84,5 +82,52 @@ sub setIPDSDropAndLog
 }
 
 
+# Get all IPDS rules applied to a farm
+sub getIPDSfarmsRules
+{
+	my $farmName = shift;
+	my $rules;
+	my @ddosRules;
+	my @blacklistsRules;
+	my $fileHandle;
+	
+	my $ddosConf = &getGlobalConfiguration( 'ddosConf' );
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	if ( -e $ddosConf )
+	{
+		$fileHandle = Config::Tiny->read( $ddosConf );
+		foreach my $key ( keys %{ $fileHandle } )
+		{
+			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			{
+				push @ddosRules, $key;
+			}
+		}
+	}
+	
+	if ( -e $blacklistsConf )
+	{
+		$fileHandle = Config::Tiny->read( $blacklistsConf );
+		foreach my $key ( keys %{ $fileHandle } )
+		{
+			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			{
+				push @blacklistsRules, $key;
+			}
+		}
+	}
+	
+	$rules = { ddos => \@ddosRules, blacklists => \@blacklistsRules };
+	return $rules;
+}
 
 1;
+
+
+
+
+
+
+
+
+

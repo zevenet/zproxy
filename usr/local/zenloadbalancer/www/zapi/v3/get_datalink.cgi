@@ -100,11 +100,14 @@ sub farms_name_datalink # ( $farmname )
 			  };
 		}
 	}
+	
+	my $ipds = &getIPDSfarmsRules( $farmname );
 
 	my $body = {
 				 description => "List farm $farmname",
 				 params      => $out_p,
-				 backends    => \@out_b
+				 backends    => \@out_b,
+				 ipds			=> $ipds,
 	};
 
 	&httpResponse({ code => 200, body => $body });

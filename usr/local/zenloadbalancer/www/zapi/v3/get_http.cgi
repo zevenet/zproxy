@@ -346,12 +346,14 @@ sub farms_name_http # ( $farmname )
 			backends     => \@out_ba,
 		  };
 	}
+	my $ipds = &getIPDSfarmsRules( $farmname );
 
 	# Success
 	my $body = {
 				 description => "List farm $farmname",
 				 params      => $output_params,
-				 services    => \@out_s,
+				 services    	=> \@out_s,
+				 ipds			=> $ipds,
 	};
 
 	&httpResponse({ code => 200, body => $body });

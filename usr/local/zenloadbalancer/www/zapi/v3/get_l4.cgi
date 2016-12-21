@@ -147,11 +147,13 @@ sub farms_name_l4 # ( $farmname )
 			status   => $l_serv[6],
 		  };
 	}
+	my $ipds = &getIPDSfarmsRules( $farmname );
 
 	my $body = {
 				 description => "List farm $farmname",
 				 params      => $out_p,
-				 backends    => \@out_b
+				 backends   => \@out_b,
+				 ipds 			=>  $ipds,
 	};
 
 	&httpResponse({ code => 200, body => $body });

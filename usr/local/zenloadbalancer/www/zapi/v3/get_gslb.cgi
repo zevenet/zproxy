@@ -225,12 +225,15 @@ sub farms_name_gslb # ( $farmname )
 		  };
 	}
 
+	my $ipds = &getIPDSfarmsRules( $farmname );
+
 	# Success
 	my $body = {
 				 description => "List farm $farmname",
 				 params      => $farm_ref,
 				 services    => \@out_s,
 				 zones       => \@out_z,
+				 ipds			=>  $ipds,
 	};
 
 	&httpResponse({ code => 200, body => $body });
