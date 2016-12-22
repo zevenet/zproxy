@@ -464,23 +464,17 @@ sub set_blacklists_list
 					&setBLCronTask( $listName );
 				}
 
-				if ( !$errormsg )
-				{
-					# all successful
-					my $listHash = &getBLParam( $listName );
-					delete $listHash->{ 'action' };
-					&httpResponse(
-								   {
-									 code => 200,
-									 body => { description => $description, params => $listHash }
-								   }
-					);
-				}
-				else
-				{
-					# almost one parameter couldn't be changed
-					$errormsg = "Error, modifying $listName.";
-				}
+				# all successful
+				my $listHash = &getBLParam( $listName );
+				delete $listHash->{ 'action' };
+				&httpResponse(
+							   {
+								 code => 200,
+								 body => { description => $description, params => $listHash }
+							   }
+				);
+				# almost one parameter couldn't be changed
+				#~ $errormsg = "Error, modifying $listName.";
 			}
 		}
 	}

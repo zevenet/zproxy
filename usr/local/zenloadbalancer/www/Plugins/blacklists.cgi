@@ -729,10 +729,14 @@ sub setBLParam
 		$output = &setBLCreateList( $name, $conf );
 		$output = &setBLParam( $name, 'sources', $ipList );
 
+		&zenlog ("??? farm:$_") for (@farmList);
+
 		# apply rules to farms
 		foreach my $farm ( @farmList )
 		{
+			&setBLDeleteRule ( $farm, $name );
 			$output = &setBLCreateRule( $farm, $name );
+			$output = &setBLParam( $name, 'farms-add', $farm );
 		}
 		return $output;
 	}
