@@ -1437,7 +1437,7 @@ POST qr{^/system/notifications/methods/email/actions$} => sub {
 };
 
 #### /system/cluster
-
+_cluster:
 GET qr{^/system/cluster$} => sub {
 	&get_cluster( @_ );
 };
@@ -1514,22 +1514,22 @@ POST qr{^/ipds/blacklists/($blacklists_list)/actions$} => sub {
 };
 
 #  GET a source from a blacklists
-GET qr{^/ipds/blacklists/($blacklists_list)/source$} => sub {
+GET qr{^/ipds/blacklists/($blacklists_list)/sources$} => sub {
 	&get_blacklists_source( @_ );
 };
 
 #  POST a source from a blacklists
-POST qr{^/ipds/blacklists/($blacklists_list)/source$} => sub {
+POST qr{^/ipds/blacklists/($blacklists_list)/sources$} => sub {
 	&add_blacklists_source( @_ );
 };
 
 #  PUT a source from a blacklists
-PUT qr{^/ipds/blacklists/($blacklists_list)/source/($blacklists_source_id)$} => sub {
+PUT qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$} => sub {
 	&set_blacklists_source( @_ );
 };
 
 #  DELETE a source from a blacklists
-DELETE qr{^/ipds/blacklists/($blacklists_list)/source/($blacklists_source_id)$} => sub {
+DELETE qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$} => sub {
 	&del_blacklists_source( @_ );
 };
 

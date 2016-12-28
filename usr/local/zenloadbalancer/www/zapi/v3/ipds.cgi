@@ -81,12 +81,9 @@ sub get_blacklists_all_lists
 						 list     => $list,
 						 farms    => &getBLParam( $list, 'farms' ),
 						 type     => &getBLParam( $list, 'type' ),
-						 location => &getBLParam( $list, "location" )
+						 location => &getBLParam( $list, "location" ),
+						 preload => &getBLParam( $list, "preload" )
 		);
-		if ( &getBLParam( $list, 'preload' ) eq 'true' )
-		{
-			$listHash{ 'preload' } = 'true';
-		}
 		push @lists, \%listHash;
 	}
 
@@ -150,7 +147,7 @@ sub get_blacklists_list
 			push @ipList, { id => $index++, source => $source };
 		}
 		%listHash = (
-					  name     => $listName,
+					  list     => $listName,
 					  sources  => \@ipList,
 					  farms    => &getBLParam( $listName, 'farms' ),
 					  type     => &getBLParam( $listName, 'type' ),
@@ -164,7 +161,6 @@ sub get_blacklists_list
 		{
 			$listHash{ 'url' }     = &getBLParam( $listName, 'url' );
 			$listHash{ 'status' }  = &getBLParam( $listName, 'status' );
-			$listHash{ 'refresh' } = &getBLParam( $listName, 'refresh' );
 		}
 		&httpResponse(
 			  { code => 200, body => { description => $description, params => \%listHash } }
@@ -249,18 +245,6 @@ sub add_blacklists_list
 		}
 		if ( !$errormsg )
 		{
-			# Check format list refresh
-			if ( exists $json_obj->{ 'refresh' } )
-			{
-				if ( $json_obj->{ 'location' } ne 'remote' )
-				{
-					$errormsg = "Refresh time only is available in remote lists.";
-				}
-				else
-				{
-					$listParams->{ 'refresh' } = $json_obj->{ 'refresh' };
-				}
-			}
 			if ( !$errormsg && exists $json_obj->{ 'url' } )
 			{
 				if ( $json_obj->{ 'location' } ne 'remote' )
@@ -371,7 +355,7 @@ sub set_blacklists_list
 	my $errormsg;
 
 	my @allowParams =
-	  ( "type", "url", "sources", "list", "min", "hour", "dom", "month", "dow" );
+	  ( "type", "url", "source", "list", "min", "hour", "dom", "month", "dow" );
 
 	if ( &getBLExists( $listName ) == -1 )
 	{
@@ -391,6 +375,7 @@ sub set_blacklists_list
 		# Check key format
 		foreach my $key ( keys %{ $json_obj } )
 		{
+			next if ( $key eq 'source' );
 			if ( !&getValidFormat( "blacklists_$key", $json_obj->{ $key } ) )
 			{
 				$errormsg = "$key hasn't a correct format.";
@@ -399,7 +384,7 @@ sub set_blacklists_list
 		}
 		if ( !$errormsg )
 		{
-			# Refresh and url only is used in remote lists
+			# Cron params and url only is used in remote lists
 			if (
 				 (
 				      exists $json_obj->{ 'url' }
@@ -577,8 +562,9 @@ sub update_remote_blacklists
 			{
 				&setBLRefreshList( $listName );
 			}
+			my $statusUpd = &getBLParam( $listName, 'status' );
 			&httpResponse(
-				{ code => 200, body => { description => $description, params => $json_obj } } );
+				{ code => 200, body => { description => $description, update => $statusUpd } } );
 		}
 	}
 

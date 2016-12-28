@@ -63,7 +63,8 @@ sub setBLRunList
 		&zenlog( "Creating ipset table" );
 	}
 
-	# Discomment to download the remote list  whe is applied
+	# ???
+	# Discomment to download the remote list  when is applied
 	# if ( !$output && &getBLParam( $listName, 'location' ) eq 'remote' )
 	# {
 	# $output = &setBLDownloadRemoteList ( $listName ) ;
@@ -251,39 +252,47 @@ sub setBLCreateRule
 	{
 		# -d farmIP, -p PROTOCOL --dport farmPORT
 		my $vip   = &getFarmVip( 'vip',  $farmName );
-		my $vport = &getFarmVip( 'vipp', $farmName );
-		my $farmOpt  = "-d $vip";
+		my $vport_str = &getFarmVip( 'vipp', $farmName );
+		
+		$vip  = "-d $vip";
 		my $protocol = &getFarmProto( $farmName );
 
-		if ( $protocol =~ /UDP/i || $protocol =~ /TFTP/i || $protocol =~ /SIP/i )
+		# multiport		
+		my @ports = split ( ',', $vport_str );
+			
+		foreach my $vport ( @ports )
 		{
-			$protocol = 'udp';
-			$farmOpt  = "$farmOpt -p $protocol --dport $vport";
+			my $farmOpt;
+			if ( $protocol =~ /UDP/i || $protocol =~ /TFTP/i || $protocol =~ /SIP/i )
+			{
+				$protocol = 'udp';
+				$farmOpt  = "$vip -p $protocol --dport $vport";
+			}
+	
+			if ( $protocol =~ /TCP/i || $protocol =~ /FTP/i )
+			{
+				$protocol = 'tcp';
+				$farmOpt  = "$vip -p $protocol --dport $vport";
+			}
+	
+	# 		iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "BL_farmname"
+			$cmd = &getGlobalConfiguration( 'iptables' )
+			. " $add PREROUTING -t raw -m set --match-set $listName src $farmOpt -m comment --comment \"BL_$farmName\"";
+	
+			if ( $action eq "deny" )
+			{
+				$output = &setIPDSDropAndLog( $cmd, $logMsg );
+			}
+			else
+			{
+				$output = &iptSystem( "$cmd -j ACCEPT" );
+			}
+		
+			if ( !$output )
+			{
+				&zenlog( "List '$listName' was applied successful to the farm '$farmName'." );
+			}
 		}
-
-		if ( $protocol =~ /TCP/i || $protocol =~ /FTP/i )
-		{
-			$protocol = 'tcp';
-			$farmOpt  = "$farmOpt -p $protocol --dport $vport";
-		}
-
-# 		iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "BL_farmname"
-		$cmd = &getGlobalConfiguration( 'iptables' )
-		  . " $add PREROUTING -t raw -m set --match-set $listName src $farmOpt -m comment --comment \"BL_$farmName\"";
-	}
-
-	if ( $action eq "deny" )
-	{
-		$output = &setIPDSDropAndLog( $cmd, $logMsg );
-	}
-	else
-	{
-		$output = &iptSystem( "$cmd -j ACCEPT" );
-	}
-
-	if ( !$output )
-	{
-		&zenlog( "List '$listName' was applied successful to the farm '$farmName'." );
 	}
 
 	return $output;
@@ -341,6 +350,31 @@ sub setBLDeleteRule
 
 	return $output;
 }
+
+
+sub setBLReloadFarmRules
+{
+	my $farmName = shift;
+	# get all lists
+	my $allListsRef = Config::Tiny->read( $blacklistsConf );
+	my %allLists = %{ $allListsRef };
+
+	foreach my $list ( keys %allLists )
+	{
+		my @farms = @{ &getBLParam( $list, "farms" ) };
+		if ( grep ( /^$farmName$/, @farms ) )
+		{
+			&setBLDeleteRule ( $farmName, $list );
+			&setBLCreateRule ( $farmName, $list );
+		}
+	}
+
+	return $output;
+}
+
+
+	
+
 
 # setBLApplyToFarm ( $farmName, $list );
 sub setBLApplyToFarm
@@ -495,7 +529,6 @@ sub setBLAddPreloadLists
 				"The preload list '$list' can't be loaded because other list exists with the same name."
 			);
 		}
-
 	}
 
 }
@@ -548,20 +581,15 @@ sub setBLCreateList
 		$fileHandle->{ $listName }->{ 'type' } = $def_type;
 	}
 
-	if ( $listParams->{ 'type' } eq 'allow' )
-	{
-		$fileHandle->{ $listName }->{ 'action' } = "ACCEPT";
-	}
-	else
-	{
-		$fileHandle->{ $listName }->{ 'action' } = "DROP";
-	}
 	$fileHandle->write( $blacklistsConf );
+
 
 	# specific to remote lists
 	if ( $location eq 'remote' )
 	{
 		&setBLParam( $listName, 'url', $listParams->{ 'url' } );
+		&setBLParam( $listName, 'status', "This list isn't downloaded yet." );
+		
 		&setBLParam( $listName, 'min', $listParams->{ 'min' } )
 		  if ( exists $listParams->{ 'min' } );
 		&setBLParam( $listName, 'hour', $listParams->{ 'hour' } )
@@ -679,7 +707,6 @@ sub setBLParam
 {
 	my ( $name, $key, $value ) = @_;
 	my $output;
-
 	# get conf
 	my $location       = &getBLParam( $name, 'location' );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
@@ -729,7 +756,6 @@ sub setBLParam
 		$output = &setBLCreateList( $name, $conf );
 		$output = &setBLParam( $name, 'sources', $ipList );
 
-		&zenlog ("??? farm:$_") for (@farmList);
 
 		# apply rules to farms
 		foreach my $farm ( @farmList )
@@ -764,13 +790,22 @@ sub setBLParam
 		$fileHandle->{ $name }->{ 'farms' } =~ s/(^| )$value( |$)/ /;
 		$fileHandle->write( $blacklistsConf );
 	}
-	elsif ( 'status' eq $key
-			&& ( $value ne 'up' && $value ne 'down' && $value ne 'dis' ) )
+	elsif ( 'status' eq $key )
 	{
-		&zenlog(
-			 "Wrong parameter 'value' for 'status' key in 'setBLRemoteListConfig' function."
-		);
-		$output = -1;
+		my $date = &getBLlastUptdate ( $name );
+		if ( $value eq 'up' )
+		{
+			$fileHandle->{ $name }->{ $key } = "Sync OK. Last update: $date";
+		}
+		elsif ( $value eq 'down' )
+		{
+			$fileHandle->{ $name }->{ $key } = "Sync fail. Last update: $date";
+		}
+		else
+		{
+			$fileHandle->{ $name }->{ $key } = $value;
+		}
+		$fileHandle->write( $blacklistsConf );
 	}
 
 	# other value  of the file conf
@@ -927,7 +962,7 @@ sub setBLDownloadRemoteList
 	if ( !@ipList )
 	{
 		&setBLParam( $listName, 'status', 'down' );
-		&zenlog( "$url was marked as down" );
+		&zenlog( "Fail, downloading $listName from url '$url'. Not found any source." );
 	}
 	else
 	{
@@ -936,11 +971,45 @@ sub setBLDownloadRemoteList
 		tie my @list, 'Tie::File', $fileList;
 		@list = @ipList;
 		untie @list;
+		
 		&setBLParam( $listName, 'status', 'up' );
-		&zenlog( "$listName was download" );
+		&zenlog( "$listName was downloaded successful." );
 	}
 
 }
+
+
+
+
+# &getBLlastUptdate ( list );
+sub getBLlastUptdate
+{
+	my $listName = shift;
+	my $date;
+	my $listFile = &getGlobalConfiguration ( 'blacklistsPath' ) . "/$listName.txt";
+	my $stat = &getGlobalConfiguration ( 'stat' );
+	
+	# only update remote lists
+	return -1 if ( &getBLParam( $listName, 'location' ) eq 'local' );
+	
+	 # comand
+	my $outCmd = `$stat -c %y $listFile`;
+
+	# 2016-12-22 10:21:07.000000000 -0500
+	if ( $outCmd =~ /^(.+)\./ )
+	{
+		$date = $1;
+		&zenlog ( "Last list update: $date" );
+	}
+	else
+	{
+		&zenlog ("Not found $listFile.");
+		$date = -2;
+	}
+	
+	return $date;
+}
+
 
 =begin nd
         Function: setBLRefreshList
@@ -1271,7 +1340,7 @@ sub setBLCronTask
 {
 	my ( $listName ) = @_;
 	my $time;
-
+	
 	# default values
 	$time->{ 'min' }   = '0';
 	$time->{ 'hour' }  = '0';
@@ -1310,7 +1379,7 @@ sub setBLCronTask
 	}
 	untie @list;
 
-	&zenlog( "Create a cron task for the list $listName" );
+	&zenlog( "Created a cron task for the list $listName" );
 }
 
 sub delBLCronTask

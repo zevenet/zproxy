@@ -99,6 +99,8 @@ $ipset = "/sbin/ipset";
 $touch = "/usr/bin/touch";
 #Where is ls?
 $ls="/bin/ls";
+#Where is stat?
+$stat="/usr/bin/stat";
 #Where is cp?
 $cp="/bin/cp";
 #Where is iptables?
@@ -242,7 +244,7 @@ $blacklistsLocalPreload = "/usr/local/zenloadbalancer/www/Plugins/ipds/blacklist
 $blacklistsRemotePreload = "/usr/local/zenloadbalancer/www/Plugins/ipds/blacklists/remote_lists.conf";
 $blacklistsCronFile = "/etc/cron.d/blacklists";
 $ddosConf = "/usr/local/zenloadbalancer/www/Plugins/ipds/ddos/ddos.conf";
-$ddosConfDir = "/usr/local/zenloadbalancer/www/Plugins/ipds/ddos";
+$ddosConfDir = "/usr/local/zenloadbalancer/config/ipds/ddos";
 
 
 

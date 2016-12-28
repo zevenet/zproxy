@@ -44,7 +44,7 @@ sub setDDOSCreateFileConf
 	# create ddos directory if it doesn't exist
 	if ( !-d $ddosConfDir )
 	{
-		$output = system ( &getGlobalConfiguration( 'mkdir' ) . " $ddosConfDir" );
+		$output = system ( &getGlobalConfiguration( 'mkdir' ) . " -p $ddosConfDir" );
 		&zenlog( "Created ipds configuration directory: $ddosConfDir" );
 	}
 
