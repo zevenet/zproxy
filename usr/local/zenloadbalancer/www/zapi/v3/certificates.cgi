@@ -12,20 +12,71 @@
 #
 ###############################################################################
 
-# GET Certificates
+my $CSR_KEY_SIZE = 2048;
 
-#####Documentation of GET Certificates####
 #**
-#  @api {get} /certificates Request info of all certificates
+# @apiDefine Request Request
+#**
+
+#**
+# @apiDefine RequestParams Request parameters
+#**
+
+#**
+# @apiDefine ResponseParams Response parameters
+#**
+
+#**
+# @apiDefine Response Response
+#**
+
+#**
+# @apiDefine ResponseHeader Response Headers
+#**
+
+#**
+# @apiDefine RequestHeader Request Headers
+#**
+
+#**
+# @apiDefine URI URI variables
+#**
+
+#**
+# @apiDefine RequestPostData Request Post Data
+#**
+
+# GET /certificates
+
+#**
+# @apiDefine CertObj Certificate Object
+#**
+
+#**
+#  @api {get} /certificates List all Certificates
 #  @apiGroup Certificates
 #  @apiName GetCertificates
-#  @apiDescription Get the Params of all certificates
+#
 #  @apiVersion 3.0.0
+#  @apiDescription List all CSR and PEM certificates installed, which can be used with HTTPS farms.
 #
+#  The response will be a JSON object with a key set to params. The value of this will be an array of certificate objects, each of which contain the key attributes below.
 #
-# @apiSuccessExample Success-Response:
+# @apiExample {curl} Request example:
+# curl -k -X GET -H "ZAPI_KEY: <ZAPI_KEY_STRING>" https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates
+#
+# @apiSuccess (ResponseParams) {Object[]} params List of certificate objects.
+#
+# @apiSuccess (CertObj) {String} CN Domain common name.
+# @apiSuccess (CertObj) {String} creation Creation date.
+# @apiSuccess (CertObj) {String} expiration Expiration date.
+# @apiSuccess (CertObj) {String} file Filename of the certificate.
+# @apiSuccess (CertObj) {String} issuer Certified Authority signing the certificate.
+# @apiSuccess (CertObj) {String} type CSR or Certificate.
+#
+# @apiSuccessExample Response example:
 #{
-#   "description" : "List certificates",
+#   "description" : "List all certificates",
 #   "params" : [
 #      {
 #         "CN" : "Zen Load Balancer",
@@ -37,11 +88,6 @@
 #      }
 #   ]
 #}
-#
-#
-#@apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#         https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates
 #
 #@apiSampleRequest off
 #
@@ -88,6 +134,39 @@ sub certificates # ()
 	&httpResponse({ code => 200, body => $body });
 }
 
+# GET /certificates/CERTIFICATE
+
+#**
+#  @api {get} /certificates/<file> Download Certificate
+#  @apiGroup Certificates
+#  @apiName DownloadCertificate
+#
+#  @apiVersion 3.0.0
+#  @apiDescription Download a certificate installed on the load balancer, using the file name in the request to identify it.
+#
+#  The response will include the headers indicated below with information about the file. The body of the response will be the content of the file.
+#
+# @apiExample {curl} Request example:
+# curl -k -X GET -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+# https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates/example.pem
+#
+# @apiHeader (Uri) {String} file Certificate file name as shown in the certificate list.
+#
+# @apiHeader (ResponseHeader) {String} Content-Disposition Includes the certificate file name.
+# @apiHeader (ResponseHeader) {String} Content-Type Includes MIME type <code>application/x-download</code> to download the file. 
+# @apiHeader (ResponseHeader) {Number} Content-Length Size of the body in bytes.
+#
+# @apiHeaderExample Response Headers
+# HTTP/1.1 200 OK
+# Date: Thu, 22 Dec 2016 09:27:47 GMT
+# Content-Disposition: attachment; filename="example.pem"
+# Content-Type: application/x-download; charset=ISO-8859-1
+# Content-Length: 2359
+#
+# @apiSampleRequest off
+#
+#**
+
 sub download_certificate # ()
 {
 	my $cert_filename = shift;
@@ -110,14 +189,6 @@ sub download_certificate # ()
 		print while <$download_fh>;
 		close $download_fh;
 		exit;
-
-		#~ # Success
-		#~ my $body = {
-					 #~ description => "List certificates",
-					 #~ params      => \@out,
-		#~ };
-
-		#~ &httpResponse({ code => 200, body => $body });
 	}
 	else
 	{
@@ -129,11 +200,47 @@ sub download_certificate # ()
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse({ code => 400, body => $body });
 	}
 }
 
-# GET certificate info
+# GET /certificates/CERTIFICATE/info
+
+#**
+#  @api {get} /certificates/<file>/info Show Certificate details
+#  @apiGroup Certificates
+#  @apiName CertificateDetails
+#
+#  @apiVersion 3.0.0
+#  @apiDescription Show all the information included in the certificate, including signatures.
+#
+# @apiExample {curl} Request example:
+# curl -k -X GET -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+# https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates/example.pem/info
+#
+# @apiHeader (URI) {String} file Certificate file name as shown in the certificate list.
+#
+# @apiSuccessExample Response example:
+# Certificate:
+#     Data:
+#         Version: 3 (0x2)
+#         Serial Number: 14346016480403539444 (0xc71749fb005a45f4)
+#     Signature Algorithm: sha1WithRSAEncryption
+#         Issuer: C=ES, ST=Spain, L=Spain, O=Sofintel, OU=Telecommunications, CN=Zen Load Balancer/emailAddress=zenloadbalancer-support@lists.sourceforge.net
+#         Validity
+#             Not Before: Jan 12 14:49:03 2011 GMT
+#             Not After : Jan  9 14:49:03 2021 GMT
+#         Subject: C=ES, ST=Spain, L=Spain, O=Sofintel, OU=Telecommunications, CN=Zen Load Balancer/emailAddress=zenloadbalancer-support@lists.sourceforge.net
+#         Subject Public Key Info:
+#             Public Key Algorithm: rsaEncryption
+#                 Public-Key: (1024 bit)
+#                 Modulus:
+# ...
+#
+# @apiSampleRequest off
+#
+#**
+
 sub get_certificate_info # ()
 {
 	my $cert_filename = shift;
@@ -167,7 +274,24 @@ sub get_certificate_info # ()
 	}
 }
 
-# GET activation certificate info
+# GET /certificates/activation
+
+#**
+# @api {get} /certificates/activation Show activation Certificate details
+# @apiGroup Certificates
+# @apiName ActivationCertificateDetails
+#
+# @apiVersion 3.0.0
+# @apiDescription Show all the information included in the activation certificate, including signatures.
+#
+# @apiExample {curl} Request example:
+# curl -k -X GET -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+# https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates/activation
+#
+# @apiSampleRequest off
+#
+#**
+
 sub get_activation_certificate_info # ()
 {
 	my $description = "Activation certificate information";
@@ -200,31 +324,31 @@ sub get_activation_certificate_info # ()
 	}
 }
 
-# DELETE Certificate
+# DELETE /certificates/CERTIFICATE
 
 #####Documentation of DELETE Certificate####
 #**
-#  @api {delete} /certificates/<certname> Delete a certificate
-#  @apiGroup Certificates
-#  @apiName DeleteCertificates
-#  @apiParam {String} certname  Certificate name, unique ID.
-#  @apiDescription Delete the certificate selected
-#  @apiVersion 3.0.0
+# @api {delete} /certificates/<file> Delete a Certificate
+# @apiGroup Certificates
+# @apiName DeleteCertificate
 #
+# @apiVersion 3.0.0
+# @apiDescription Deletes a certificate by file name in the load balancer.
 #
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Delete certificate example.pem",
-#   "message" : "The Certificate example.pem has been deleted.",
-#   "success" : "true"
-#}
+# @apiExample {curl} Request example:
+# curl -k -X DELETE -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+# https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates/example.pem
 #
+# @apiHeader (URI) {String} file Certificate file name, unique ID.
 #
-#@apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#         https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates/example.pem
+# @apiSuccessExample Response example:
+# {
+#    "description" : "Delete certificate",
+#    "message" : "The Certificate example.pem has been deleted.",
+#    "success" : "true"
+# }
 #
-#@apiSampleRequest off
+# @apiSampleRequest off
 #
 #**
 
@@ -232,6 +356,7 @@ sub delete_certificate # ( $cert_filename )
 {
 	my $cert_filename = shift;
 
+	my $description = "Delete certificate";
 	my $status = &getFarmCertUsed( $cert_filename );
 
 	if ( $status == 0 )
@@ -241,23 +366,22 @@ sub delete_certificate # ( $cert_filename )
 		# Error
 		my $errormsg = "File can't be deleted because it's in use by a farm";
 		my $body = {
-					 description => "Delete certificate",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	else
-	{
-		&delCert( $cert_filename );
-		&zenlog( "The certificate $cert_filename has been deleted" );
-	}
+
+	my $message = "The Certificate $cert_filename has been deleted";
+
+	&delCert( $cert_filename );
+	&zenlog( $message );
 
 	# Success
-	my $message = "The Certificate $cert_filename has been deleted.";
 	my $body = {
-				 description => "Delete certificate $cert_filename",
+				 description => $description,
 				 success     => "true",
 				 message     => $message
 	};
@@ -265,15 +389,40 @@ sub delete_certificate # ( $cert_filename )
 	&httpResponse({ code => 200, body => $body });
 }
 
+# DELETE /certificates/activation
+
+#**
+# @api {delete} /certificates/activation Delete the activation Certificate
+# @apiGroup Certificates
+# @apiName DeleteActivationCertificate
+#
+# @apiVersion 3.0.0
+# @apiDescription Deletes the activation certificate installed in the load balancer.
+#
+# @apiExample {curl} Request example:
+# curl -k -X DELETE -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+# https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates/activation
+#
+# @apiSuccessExample Response example:
+# {
+#    "description" : "Delete activation certificate",
+#    "message" : "The activation certificate has been deleted",
+#    "success" : "true"
+# }
+#
+# @apiSampleRequest off
+#
+#**
+
 sub delete_activation_certificate # ( $cert_filename )
 {
-	my $description = "Remove activation certificate";
+	my $description = "Delete activation certificate";
 	my $cert_filename = 'zlbcertfile.pem';
 
 	if ( &delCert( $cert_filename ) )
 	{
 		# Success
-		my $message = "The activation certificate has been removed";
+		my $message = "The activation certificate has been deleted";
 		my $body = {
 					 description => $description,
 					 success     => "true",
@@ -284,7 +433,7 @@ sub delete_activation_certificate # ( $cert_filename )
 	}
 	else
 	{
-		my $errormsg = "An error happened removing the activation certificate";
+		my $errormsg = "An error happened deleting the activation certificate";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -295,49 +444,50 @@ sub delete_activation_certificate # ( $cert_filename )
 	}
 }
 
+# POST /farms/FARM/certificates (Add certificate to farm)
+
 #####Documentation of POST Add Certificates####
 #**
-#  @api {post} /farms/<farmname>/addcertificate Add a certificate to the SNI list of a farm
-#  @apiGroup Certificates
-#  @apiName AddCertificates
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Add a certificate to the available certificate list of a farm
-#  @apiVersion 3.0.0
+# @api {post} /farms/<farmname>/certificates Add a Certificate to a farm
+# @apiGroup Certificates
+# @apiName AddFarmCertificate
 #
+# @apiVersion 3.0.0
+# @apiDescription Include an installed PEM Certificate to the SNI list or <code>certlist</code> array of an HTTP farm with an HTTPS listener.
 #
-# @apiSuccess   {String}        file                The certificate name.
+# @apiExample {curl} Request example:
+# curl -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+# -d '{"file":"example.pem"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/httpFarm/addcertificate
 #
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Add certificate example.pem",
-#   "message" : "The certificate example.pem has been added tothe SNI list of farm httptest1, you need restart the farm to apply",
-#   "success" : "true"
-#}
+# @apiHeader (URI) {String} farmname Farm name, unique ID. Must be an HTTP farm with HTTPS listener configured.
 #
+# @apiSuccess (RequestParams) {String} file PEM Certificate file name.
 #
-#@apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"file":"example.pem"}'
-#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/httptest/addcertificate
+# @apiSuccessExample Response example:
+# {
+#    "description" : "Add certificate",
+#    "message" : "The certificate example.pem has been added to the SNI list of farm httpFarm, you need restart the farm to apply",
+#    "success" : "true"
+# }
 #
 #@apiSampleRequest off
 #
 #**
 
-# POST Add Farm Certificate
-
-sub add_farmcertificate # ( $json_obj, $farmname )
+sub add_farm_certificate # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
+
+	my $description = "Add certificate";
 
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		my $errormsg = "Farm not found";
 		my $body = {
-					 description => "Add certificate",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -345,45 +495,11 @@ sub add_farmcertificate # ( $json_obj, $farmname )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( $json_obj->{ file } !~ /^$/ && $json_obj->{ file } =~ /^\w+\.\w{3}$/ )
-	{
-		$status = &setFarmCertificateSNI( $json_obj->{ file }, $farmname );
-		if ( $status == 0 )
-		{
-			&zenlog( "ZAPI Success, trying to add a certificate to the SNI list." );
+	my $configdir = &getGlobalConfiguration('configdir');
+	my $cert_pem_re = &getValidFormat('cert_pem');
 
-			# Success
-			my $message =
-			  "The certificate $json_obj->{file} has been added to the SNI list of farm $farmname, you need restart the farm to apply";
-
-			my $body = {
-						 description => "Add certificate $json_obj->{file}",
-						 success     => "true",
-						 message     => $message
-			};
-
-			&httpResponse({ code => 200, body => $body });
-		}
-		else
-		{
-			&zenlog(
-				"ZAPI error, trying to add a certificate to the SNI list, it's not possible to add the certificate."
-			);
-
-			# Error
-			my $errormsg =
-			  "It's not possible to add the certificate with name $json_obj->{file} for the $farmname farm";
-
-			my $body = {
-						 description => "Add certificate",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
-	}
-	else
+	unless ( -f $configdir . "/" . $json_obj->{ file }
+			 && &getValidFormat( 'cert_pem', $json_obj->{ file } ) )
 	{
 		&zenlog(
 			"ZAPI error, trying to add a certificate to the SNI list, invalid certificate name."
@@ -392,7 +508,46 @@ sub add_farmcertificate # ( $json_obj, $farmname )
 		# Error
 		my $errormsg = "Invalid certificate name, please insert a valid value.";
 		my $body = {
-					 description => "Add certificate",
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# FIXME: Show error if the certificate is already in the list
+
+	my $status = &setFarmCertificateSNI( $json_obj->{ file }, $farmname );
+
+	if ( $status == 0 )
+	{
+		&zenlog( "ZAPI Success, trying to add a certificate to the SNI list." );
+
+		# Success
+		my $message =
+		  "The certificate $json_obj->{file} has been added to the SNI list of farm $farmname, you need restart the farm to apply";
+
+		my $body = {
+					 description => $description,
+					 success     => "true",
+					 message     => $message
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		&zenlog(
+			"ZAPI error, trying to add a certificate to the SNI list, it's not possible to add the certificate."
+		);
+
+		# Error
+		my $errormsg =
+		  "It's not possible to add the certificate with name $json_obj->{file} for the $farmname farm";
+
+		my $body = {
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -401,47 +556,49 @@ sub add_farmcertificate # ( $json_obj, $farmname )
 	}
 }
 
+# DELETE /farms/FARM/certificates/CERTIFICATE
+
 #####Documentation of DELETE Certificate of a list in a farm####
 #**
-#  @api {delete} /farms/<farmname>/deletecertificate/<certid> Delete a certificate of the SNI list of a farm
-#  @apiGroup Certificates
-#  @apiName DeleteCertificateslist
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiParam {Number} certid  Certificate ID, unique ID.
-#  @apiDescription Delete the certificate selected of a available certificate list in a farm
-#  @apiVersion 3.0.0
+# @api {delete} /farms/<farmname>/certificates/<file> Delete a Certificate from a farm
+# @apiGroup Certificates
+# @apiName DeleteFarmCertificate
 #
+# @apiVersion 3.0.0
+# @apiDescription Delete the certificate with the selected file name from the certlist of an HTTP farm with HTTPS listener.
 #
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Delete certificate 2",
-#   "message" : "The Certificate 2 has been deleted.",
-#   "success" : "true"
-#}
+# @apiExample {curl} Request example:
+# curl -k -X DELETE -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
+# https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/MyHttpFarm/certificates/example.pem
 #
+# @apiHeader (URI) {String} farmname  Farm name, unique ID.
+# @apiHeader (URI) {Number} file  Certificate file name in such farm.
 #
-#@apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#         https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/farmhttp/deletecertificate/2
+# @apiSuccessExample Response example:
+# {
+#    "description" : "Delete farm certificate",
+#    "message" : "The Certificate example.pem has been deleted.",
+#    "success" : "true"
+# }
 #
-#@apiSampleRequest off
+# @apiSampleRequest off
 #
 #**
 
-# DELETE Farm Certificate
-
-sub delete_farmcertificate # ( $farmname, $certfilename )
+sub delete_farm_certificate # ( $farmname, $certfilename )
 {
 	my $farmname     = shift;
 	my $certfilename = shift;
+
+	my $description = "Delete farm certificate";
 
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		my $errormsg = "The farmname $farmname does not exists";
 		my $body = {
-					 description => "Delete certificate",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -452,56 +609,56 @@ sub delete_farmcertificate # ( $farmname, $certfilename )
 	if ( $certfilename !~ /^$/ && $certfilename =~ /^[\w\.-_]+$/ )
 	{
 		$status = &setFarmDeleteCertNameSNI( $certfilename, $farmname );
+
 		if ( $status == 0 )
 		{
 			&zenlog( "ZAPI Success, trying to delete a certificate to the SNI list." );
 
 			# Success
-			my $message = "The Certificate $certfilename has been deleted.";
+			my $message = "The Certificate $certfilename has been deleted";
 			my $body = {
-						 description => "Delete certificate $certfilename",
+						 description => $description,
 						 success     => "true",
 						 message     => $message
 			};
 
 			&httpResponse({ code => 200, body => $body });
 		}
-		else
+
+		if ( $status == -1 )
 		{
-			if ( $status == -1 )
-			{
-				&zenlog(
-					"ZAPI error, trying to delete a certificate to the SNI list, it's not possible to delete the certificate."
-				);
+			&zenlog(
+				"ZAPI error, trying to delete a certificate to the SNI list, it's not possible to delete the certificate."
+			);
 
-				# Error
-				my $errormsg =
-				  "It isn't possible to delete the selected certificate $certfilename from the SNI list";
-				my $body = {
-							 description => "Delete certificate",
-							 error       => "true",
-							 message     => $errormsg
-				};
+			# Error
+			my $errormsg =
+			  "It isn't possible to delete the selected certificate $certfilename from the SNI list";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
 
-				&httpResponse({ code => 400, body => $body });
-			}
-			if ( $status == 1 )
-			{
-				&zenlog(
-					"ZAPI error, trying to delete a certificate to the SNI list, it's not possible to delete all certificates, at least one is required for HTTPS."
-				);
+			&httpResponse({ code => 400, body => $body });
+		}
 
-				# Error
-				my $errormsg =
-				  "It isn't possible to delete all certificates, at least one is required for HTTPS profiles";
-				my $body = {
-							 description => "Delete certificate",
-							 error       => "true",
-							 message     => $errormsg
-				};
+		if ( $status == 1 )
+		{
+			&zenlog(
+				"ZAPI error, trying to delete a certificate to the SNI list, it's not possible to delete all certificates, at least one is required for HTTPS."
+			);
 
-				&httpResponse({ code => 400, body => $body });
-			}
+			# Error
+			my $errormsg =
+			  "It isn't possible to delete all certificates, at least one is required for HTTPS profiles";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
 		}
 	}
 	else
@@ -513,7 +670,7 @@ sub delete_farmcertificate # ( $farmname, $certfilename )
 		# Error
 		my $errormsg = "Invalid certificate id, please insert a valid value.";
 		my $body = {
-					 description => "Delete certificate",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -522,7 +679,43 @@ sub delete_farmcertificate # ( $farmname, $certfilename )
 	}
 }
 
+# POST /certificates (Create CSR)
+
+#**
+# @api {post} /certificates Create a CSR certificate
+# @apiGroup Certificates
+# @apiName CreateCsrCertificate
 #
+# @apiVersion 3.0.0
+# @apiDescription Create a CSR Certificate
+#
+# @apiExample {curl} Request example:
+# curl -k -X POST -H "ZAPI_KEY: <ZAPI_KEY_STRING>" -H 'Content-Type: application/json'
+# -d '{"name":"NewCSR","fqdn":"host.domain.com","division":"IT","organization":"Example Corp.",
+# "locality":"Madrid","state":"Madrid","country":"Spain","mail":"info@domain.com"}'
+# https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates
+#
+# @apiParam (RequestParams) {String} name		Certificate Name. Descriptive text, this name will be used to identify this certificate.
+# @apiParam (RequestParams) {String} fqdn		Common Name or FQDN of the server. Example: domain.com, mail.domain.com, or *.domain.com.
+# @apiParam (RequestParams) {String} division	Division or department name.
+# @apiParam (RequestParams) {String} organization	Organization name.
+# @apiParam (RequestParams) {String} locality	City where your organization is located.
+# @apiParam (RequestParams) {String} state		State or Province.
+# @apiParam (RequestParams) {String} country	Country.
+# @apiParam (RequestParams) {String} mail		Contact e-mail address.
+#
+# @apiSuccessExample Response example:
+# {
+#    "description" : "Create CSR",
+#    "message" : "Certificate NewCSR created",
+#    "success" : "true"
+# }
+
+#
+#@apiSampleRequest off
+#
+#**
+
 sub create_csr
 {
 	my $json_obj = shift;
@@ -530,7 +723,7 @@ sub create_csr
 	my $description = 'Create CSR';
 
 	$json_obj->{ name }         = &getCleanBlanc( $json_obj->{ name } );
-	$json_obj->{ issuer }       = &getCleanBlanc( $json_obj->{ issuer } );
+	#~ $json_obj->{ issuer }       = &getCleanBlanc( $json_obj->{ issuer } );
 	$json_obj->{ fqdn }         = &getCleanBlanc( $json_obj->{ fqdn } );
 	$json_obj->{ division }     = &getCleanBlanc( $json_obj->{ division } );
 	$json_obj->{ organization } = &getCleanBlanc( $json_obj->{ organization } );
@@ -540,7 +733,7 @@ sub create_csr
 	$json_obj->{ mail }         = &getCleanBlanc( $json_obj->{ mail } );
 
 	if (    $json_obj->{ name } =~ /^$/
-		 || $json_obj->{ issuer } =~ /^$/
+		 #~ || $json_obj->{ issuer } =~ /^$/
 		 || $json_obj->{ fqdn } =~ /^$/
 		 || $json_obj->{ division } =~ /^$/
 		 || $json_obj->{ organization } =~ /^$/
@@ -548,7 +741,8 @@ sub create_csr
 		 || $json_obj->{ state } =~ /^$/
 		 || $json_obj->{ country } =~ /^$/
 		 || $json_obj->{ mail } =~ /^$/
-		 || $json_obj->{ key } =~ /^$/ )
+		 #~ || $json_obj->{ key } =~ /^$/
+		 )
 	{
 		my $errormsg = "Fields can not be empty. Try again.";
 		&zenlog( $errormsg );
@@ -561,7 +755,8 @@ sub create_csr
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	elsif ( &checkFQDN( $json_obj->{ fqdn } ) eq "false" )
+
+	if ( &checkFQDN( $json_obj->{ fqdn } ) eq "false" )
 	{
 		my $errormsg = "FQDN is not valid. It must be as these examples: domain.com, mail.domain.com, or *.domain.com. Try again.";
 		&zenlog( $errormsg );
@@ -574,7 +769,8 @@ sub create_csr
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	elsif ( $json_obj->{ name } !~ /^[a-zA-Z0-9\-]*$/ )
+
+	if ( $json_obj->{ name } !~ /^[a-zA-Z0-9\-]*$/ )
 	{
 		my $errormsg = "Certificate Name is not valid. Only letters, numbers and '-' chararter are allowed. Try again.";
 		&zenlog( $errormsg );
@@ -587,107 +783,58 @@ sub create_csr
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	else
-	{
-		&createCSR(
-					$json_obj->{ name },     $json_obj->{ fqdn },     $json_obj->{ country },
-					$json_obj->{ state },    $json_obj->{ locality }, $json_obj->{ organization },
-					$json_obj->{ division }, $json_obj->{ mail },     $json_obj->{ key },
-					""
-		);
 
-		my $message = "Certificate $json_obj->{ name } created";
-		&zenlog( $message );
+	&createCSR(
+				$json_obj->{ name },     $json_obj->{ fqdn },     $json_obj->{ country },
+				$json_obj->{ state },    $json_obj->{ locality }, $json_obj->{ organization },
+				$json_obj->{ division }, $json_obj->{ mail },     $CSR_KEY_SIZE,
+				""
+	);
 
-		my $body = {
-					 description => $description,
-					 success     => "true",
-					 message     => $message
-		};
+	my $message = "Certificate $json_obj->{ name } created";
+	&zenlog( $message );
 
-		&httpResponse({ code => 200, body => $body });
-	}
+	my $body = {
+				 description => $description,
+				 success     => "true",
+				 message     => $message
+	};
+
+	&httpResponse({ code => 200, body => $body });
 }
+
+# POST /certificates/CERTIFICATE (Upload PEM)
 
 #####Documentation of POST Upload Certificates####
 #**
-#  @api {post} /certificates Upload a certificate
-#  @apiGroup Certificates
-#  @apiName UploadCertificates
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Upload a certificate
-#  @apiVersion 3.0.0
+# @api {post} /certificates/<file> Upload a Certificate
+# @apiGroup Certificates
+# @apiName UploadCertificate
 #
+# @apiVersion 3.0.0
+# @apiDescription Upload a PEM certificate for HTTP farms with HTTPS listener.
 #
-#  @apiSuccess	{String}	fileupload	The name of the file that will be uploaded. It is important to insert the complete path of the file.
-#  @apiSuccess	{String}	filename	The name that will have the file.
+# Requires the parameter <code>--tcp-nodelay</code>, and <code>--data-binary</code> to upload the file in binary mode.
 #
+# @apiExample {curl} Request example:
+# curl -k -X POST -H "ZAPI_KEY: <ZAPI_KEY_STRING>" -H 'Content-Type: text/plain'
+# --tcp-nodelay --data-binary @/path/to/example.pem
+# https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates/example.pem
 #
-# @apiSuccessExample Success-Response:
-# * About to connect() to 46.101.60.162 port 444 (#0)
-# *   Trying 46.101.60.162...
-# * TCP_NODELAY set
-# * connected
-# * Connected to 46.101.60.162 (46.101.60.162) port 444 (#0)
-# * successfully set certificate verify locations:
-# *   CAfile: none
-#   CApath: /etc/ssl/certs
-# * SSLv3, TLS handshake, Client hello (1):
-# * SSLv3, TLS handshake, Server hello (2):
-# * SSLv3, TLS handshake, CERT (11):
-# * SSLv3, TLS handshake, Server key exchange (12):
-# * SSLv3, TLS handshake, Server finished (14):
-# * SSLv3, TLS handshake, Client key exchange (16):
-# * SSLv3, TLS change cipher, Client hello (1):
-# * SSLv3, TLS handshake, Finished (20):
-# * SSLv3, TLS change cipher, Client hello (1):
-# * SSLv3, TLS handshake, Finished (20):
-# * SSL connection using ECDHE-RSA-AES256-SHA
-# * Server certificate:
-# *        subject: C=ES; ST=Spain; L=Spain; O=Sofintel; OU=Telecommunications; CN=Zen Load Balancer; emailAddress=zenloadbalancer-support@lists.sourceforge.net
-# *        start date: 2011-01-12 14:49:03 GMT
-# *        expire date: 2021-01-09 14:49:03 GMT
-# *        issuer: C=ES; ST=Spain; L=Spain; O=Sofintel; OU=Telecommunications; CN=Zen Load Balancer; emailAddress=zenloadbalancer-support@lists.sourceforge.net
-# *        SSL certificate verify result: self signed certificate (18), continuing anyway.
-# * Server auth using Basic with user 'zapi'
-# > POST /zapi/v3/zapi.cgi/certificates HTTP/1.1
-# > Authorization: Basic emFwaTpONk90M2pkdUZmZjRTbkU=
-# > User-Agent: curl/7.26.0
-# > Host: 46.101.60.162:444
-# > Accept: */*
-# > ZAPI_KEY: l2ECjvrqitQZULPXbmwMV6luyooQ47SGJhn3LeX1KV6KNKa5uZfJqVVBnEJF4N2Cy
-# > Content-Length: 2676
-# > Expect: 100-continue
-# > Content-Type: multipart/form-data; boundary=----------------------------c44e4423a51c
-# >
-# * HTTP 1.1 or later with persistent connection, pipelining supported
-# < HTTP/1.1 100 Continue
-# * additional stuff not fine transfer.c:1037: 0 0
-# * additional stuff not fine transfer.c:1037: 0 0
-# * additional stuff not fine transfer.c:1037: 0 0
-# * additional stuff not fine transfer.c:1037: 0 0
-# * HTTP 1.1 or later with persistent connection, pipelining supported
-# < HTTP/1.1 200 OK
-# < Transfer-Encoding: chunked
-# < Date: Fri, 28 Aug 2015 08:36:46 GMT
-# < Server: Cherokee/1.2.104 (UNIX)
-# < Content-Type: text/html; charset=utf-8
-# <
-# * Connection #0 to host 46.101.60.162 left intact
-# * Closing connection #0
-# * SSLv3, TLS alert, Client hello (1):
+# @apiParam (URI) {String} file File name to be given to the Certificate in the load balancer, unique ID.
 #
-#@apiExample {curl} Example Usage:
-#       curl -v --tcp-nodelay -k -X POST -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#       -H 'Content-Type: text/plain' --data-binary @/path/to/example.pem
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates/example.pem
+# @apiSuccessExample Response example:
+# {
+#    "description" : "Upload PEM certificate",
+#    "message" : "Certificate uploaded",
+#    "success" : "true"
+# }
 #
-#@apiSampleRequest off
+# @apiSampleRequest off
 #
 #**
 
-#upload .pem certs
-sub upload_certs # ()
+sub upload_certificate # ()
 {
 
 #
@@ -699,7 +846,7 @@ sub upload_certs # ()
 	my $upload_filehandle = shift;
 	my $filename = shift;
 
-	my $description = "Upload certificate file.";
+	my $description = "Upload PEM certificate";
 	my $configdir = &getGlobalConfiguration('configdir');
 
 	if ( $filename =~ /^\w.+\.pem$/ && ! -f "$configdir/$filename" )
@@ -714,7 +861,7 @@ sub upload_certs # ()
 		print $cert_filehandle $upload_filehandle;
 		close $cert_filehandle;
 
-		my $message = "Certificate file uploaded";
+		my $message = "Certificate uploaded";
 		my $body = {
 					 description => $description,
 					 success       => "true",
@@ -739,7 +886,32 @@ sub upload_certs # ()
 	}
 }
 
-#upload .pem certs
+# POST /certificates/activation
+
+#**
+# @api {post} /certificates/activation Upload an activation Certificate
+# @apiGroup Certificates
+# @apiName UploadActivationCertificate
+#
+# @apiVersion 3.0.0
+# @apiDescription Upload an activation certificate with PEM format.
+#
+# @apiExample {curl} Request example
+# curl -k -X POST -H "ZAPI_KEY: <ZAPI_KEY_STRING>" -H 'Content-Type: text/plain'
+# --tcp-nodelay --data-binary @/path/to/example.pem
+# https://<zenlb_server>:444/zapi/v3/zapi.cgi/certificates/activation
+#
+# @apiSuccessExample Response example:
+# {
+#    "description" : "Upload activation certificate",
+#    "message" : "Activation certificate uploaded",
+#    "success" : "true"
+# }
+#
+#@apiSampleRequest off
+#
+#**
+
 sub upload_activation_certificate # ()
 {
 
@@ -751,7 +923,7 @@ sub upload_activation_certificate # ()
 
 	my $upload_filehandle = shift;
 
-	my $description = "Upload activation certificate file";
+	my $description = "Upload activation certificate";
 	my $filename = 'zlbcertfile.pem';
 
 	if ( $upload_filehandle )
@@ -765,7 +937,7 @@ sub upload_activation_certificate # ()
 
 		&checkActivationCertificate();
 
-		my $message = "Activation certificate file uploaded";
+		my $message = "Activation certificate uploaded";
 		my $body = {
 					 description => $description,
 					 success     => "true",
