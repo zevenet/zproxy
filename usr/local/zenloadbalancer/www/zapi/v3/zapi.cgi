@@ -1479,7 +1479,7 @@ GET qr{^/system/supportsave$} => sub {
 _ipds:
 
 
-my $blacklists_list      = &getValidFormat( 'blacklists_list' );
+my $blacklists_list      = &getValidFormat( 'blacklists_name' );
 my $blacklists_source_id = &getValidFormat( 'blacklists_source_id' );
 
 # BLACKLISTS
@@ -1543,47 +1543,47 @@ DELETE qr{^/farms/($farm_re)/ipds/blacklists/($blacklists_list)$} => sub {
 	&del_blacklists_from_farm( @_ );
 };
 
-# DDoS
-my $ddos_rule = &getValidFormat( 'ddos_rule' );
+# DoS
+my $dos_rule = &getValidFormat( 'dos_name' );
 
-#  GET ddos settings
-GET qr{^/ipds/ddos$} => sub {
-	&get_ddos( @_ );
+#  GET dos settings
+GET qr{^/ipds/dos$} => sub {
+	&get_dos( @_ );
 };
 
-#  GET ddos configuration
-GET qr{^/ipds/ddos/($ddos_rule)$} => sub {
-	&get_ddos_rule( @_ );
+#  GET dos configuration
+GET qr{^/ipds/dos/($dos_rule)$} => sub {
+	&get_dos_rule( @_ );
 };
 
-#  POST ddos settings
-POST qr{^/ipds/ddos$} => sub {
-	&create_ddos_rule( @_ );
+#  POST dos settings
+POST qr{^/ipds/dos$} => sub {
+	&create_dos_rule( @_ );
 };
 
-#  PUT ddos rule
-PUT qr{^/ipds/ddos/($ddos_rule)$} => sub {
-	&set_ddos_rule( @_ );
+#  PUT dos rule
+PUT qr{^/ipds/dos/($dos_rule)$} => sub {
+	&set_dos_rule( @_ );
 };
 
-#  DELETE ddos rule
-DELETE qr{^/ipds/ddos/($ddos_rule)$} => sub {
-	&del_ddos_rule( @_ );
+#  DELETE dos rule
+DELETE qr{^/ipds/dos/($dos_rule)$} => sub {
+	&del_dos_rule( @_ );
 };
 
-#  GET status ddos for a farm
-#~ GET qr{^/farms/($farm_re)/ipds/ddos$} => sub {
-	#~ &get_ddos_farm( @_ );
+#  GET status dos for a farm
+#~ GET qr{^/farms/($farm_re)/ipds/dos$} => sub {
+	#~ &get_dos_farm( @_ );
 #~ };
 
-#  POST DDoS to a farm
-POST qr{^/farms/($farm_re)/ipds/ddos$} => sub {
-	&add_ddos_to_farm( @_ );
+#  POST DoS to a farm
+POST qr{^/farms/($farm_re)/ipds/dos$} => sub {
+	&add_dos_to_farm( @_ );
 };
 
-#  DELETE DDoS from a farm
-DELETE qr{^/farms/($farm_re)/ipds/ddos/($ddos_rule)$} => sub {
-	&del_ddos_from_farm( @_ );
+#  DELETE DoS from a farm
+DELETE qr{^/farms/($farm_re)/ipds/dos/($dos_rule)$} => sub {
+	&del_dos_from_farm( @_ );
 };
 
 &httpResponse(

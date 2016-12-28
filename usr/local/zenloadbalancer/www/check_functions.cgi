@@ -48,9 +48,9 @@ my $port_range =
   qr/(?:[1-5]?\d{1,4}|6[0-4]\d{3}|65[1-4]\d{2}|655[1-2]\d{1}|6553[1-5])/;
 my $graphsFrequency = qr/(?:daily|weekly|monthly|yearly)/;
 
-my $ddos_global= qr/(?:SSHBRUTEFORCE|DROPICMP|PORTSCANNING)/;
-my $ddos_all 	=	qr/(?:INVALID|BLOCKSPOOFED|LIMITCONNS|LIMITSEC)/;
-my $ddos_tcp	= qr/(?:DROPFRAGMENTS|NEWNOSYN|SYNWITHMSS|BOGUSTCPFLAGS|LIMITRST|SYNPROXY)/;
+my $dos_global= qr/(?:sshbruteforce|dropicmp)/;
+my $dos_all 	=	qr/(?:limitconns|limitsec)/;
+my $dos_tcp	= qr/(?:bogustcpflags|limitrst)/;
 
 
 my %format_re = (
@@ -144,7 +144,7 @@ my %format_re = (
 	'notif_time'   => $natural,               # this value can't be 0
 
 	# ipds
-	'blacklists_list'      => qr{[a-zA-Z0-9]+},
+	'blacklists_name'      => qr{[a-zA-Z0-9]+},
 	'blacklists_source'    => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
 	'blacklists_source_id' => qr{\d+},
 	'blacklists_location'  => qr{(?:local|remote)},
@@ -155,20 +155,20 @@ my %format_re = (
 	'blacklists_month'   => qr{\d+},
 	'blacklists_dow'   => qr{\d+},
 	'blacklists_dom'   => qr{\d+},
-	'ddos_rule'      => qr/[\w]+/,
-	'ddos_key'      => qr/(?:$ddos_global|$ddos_all|$ddos_tcp)/,
-	'ddos_key_farm' => qr/(?:$ddos_all|$ddos_tcp)/,
-	'ddos_key_global' => $ddos_global,
-	'ddos_key_all'       => $ddos_all,
-	'ddos_key_tcp'      => $ddos_tcp,
-	# ddos params
-	'ddos_time'      => $natural,
-	'ddos_limitConns'      => $natural,
-	'ddos_limit'      => $natural,
-	'ddos_limitBurst'      => $natural,
-	'ddos_status'      => qr/(?:down|up)/,
-	'ddos_port'      => $port_range,
-	'ddos_hits'      => $natural,	
+	'dos_name'      => qr/[\w]+/,
+	'dos_key'      => qr/(?:$dos_global|$dos_all|$dos_tcp)/,
+	'dos_rule_farm' => qr/(?:$dos_all|$dos_tcp)/,
+	'dos_rule_global' => $dos_global,
+	'dos_rule_all'       => $dos_all,
+	'dos_rule_tcp'      => $dos_tcp,
+	# dos params
+	'dos_time'      => $natural,
+	'dos_limitConns'      => $natural,
+	'dos_limit'      => $natural,
+	'dos_limitBurst'      => $natural,
+	'dos_status'      => qr/(?:down|up)/,
+	'dos_port'      => $port_range,
+	'dos_hits'      => $natural,	
 
 	# certificates filenames
 	'certificate' => qr/\w[\w\.-]*\.(?:pem|csr)/,

@@ -65,7 +65,7 @@ sub setBLRunList
 
 	# ???
 	# Discomment to download the remote list  when is applied
-	# if ( !$output && &getBLParam( $listName, 'location' ) eq 'remote' )
+	# if ( !$output && &getBLParam( $listName, 'type' ) eq 'remote' )
 	# {
 	# $output = &setBLDownloadRemoteList ( $listName ) ;
 	# &zenlog ( "Downloading remote list" );
@@ -77,7 +77,7 @@ sub setBLRunList
 		&zenlog( "Setting refreshing list" );
 	}
 
-	if ( &getBLParam( $listName, 'location' ) eq 'remote' )
+	if ( &getBLParam( $listName, 'type' ) eq 'remote' )
 	{
 		&setBLCronTask( $listName );
 	}
@@ -93,7 +93,7 @@ sub setBLDestroyList
 	my $output;
 
 	# delete task from cron
-	if ( &getBLParam( $listName, 'location' ) eq 'remote' )
+	if ( &getBLParam( $listName, 'type' ) eq 'remote' )
 	{
 		&delBLCronTask( $listName );
 	}
@@ -178,7 +178,7 @@ sub setBLStart
 sub setBLStop
 {
 	my @rules           = @{ &getBLRules() };
-	my $blacklists_list = &getValidFormat( 'blacklists_list' );
+	my $blacklists_name = &getValidFormat( 'blacklists_name' );
 	my $farm_name       = &getValidFormat( 'farm_name' );
 
 	my @allLists;
@@ -186,7 +186,7 @@ sub setBLStop
 	foreach my $rule ( @rules )
 	{
 
-		if ( $rule =~ /^(\d+) .+match-set ($blacklists_list) src .+BL_$farm_name/ )
+		if ( $rule =~ /^(\d+) .+match-set ($blacklists_name) src .+BL_$farm_name/ )
 		{
 			my $list = $2;
 			my $cmd =
@@ -213,8 +213,7 @@ sub setBLStop
 
         Parameters:
 				farmName - farm where rules will be applied
-				list	 - ip list name
-				action	 - list type: deny / allow
+				name	 - ip list name
 				
         Returns:
 				$cmd	- Command
@@ -222,7 +221,7 @@ sub setBLStop
 
 =cut
 
-# &setBLCreateRule ( $farmName, $list );
+# &setBLCreateRule ( $farmName, $name );
 sub setBLCreateRule
 {
 	my ( $farmName, $listName ) = @_;
@@ -230,7 +229,7 @@ sub setBLCreateRule
 	my $cmd;
 	my $output;
 	my $logMsg = "[Blocked by BL rule]";
-	my $action = &getBLParam( $listName, 'type' );
+	my $action = &getBLParam( $listName, 'policity' );
 
 	if ( $action eq "allow" )
 	{
@@ -468,7 +467,7 @@ sub setBLAddPreloadLists
 			if ( !exists $fileHandle->{ $list } )
 			{
 				my $listHash;
-				$listHash->{ 'location' } = 'local';
+				$listHash->{ 'type' } = 'local';
 				$listHash->{ 'preload' }  = 'true';
 
 				&setBLCreateList( $list, $listHash );
@@ -501,7 +500,7 @@ sub setBLAddPreloadLists
 		{
 			my $listHash;
 			$listHash->{ 'url' }      = $remoteFile->{ $list }->{ 'url' };
-			$listHash->{ 'location' } = 'remote';
+			$listHash->{ 'type' } = 'remote';
 			$listHash->{ 'preload' }  = 'true';
 
 			&setBLCreateList( $list, $listHash );
@@ -539,14 +538,14 @@ sub setBLCreateList
 {
 	my $listName    = shift;
 	my $listParams  = shift;
-	my $def_type    = 'deny';
+	my $def_policity    = 'deny';
 	my $def_preload = 'false';
 	my $output;
 
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $touch          = &getGlobalConfiguration( 'touch' );
-	my $location       = $listParams->{ 'location' };
+	my $type       = $listParams->{ 'type' };
 
 	if ( !-e $blacklistsConf )
 	{
@@ -554,7 +553,7 @@ sub setBLCreateList
 		&zenlog( "blacklists configuration file was created." );
 	}
 
-	if ( $listParams->{ 'location' } eq 'remote' && !exists $listParams->{ 'url' } )
+	if ( $listParams->{ 'type' } eq 'remote' && !exists $listParams->{ 'url' } )
 	{
 		&zenlog( "Remote lists need a url" );
 		return -1;
@@ -562,7 +561,7 @@ sub setBLCreateList
 
 	# share params
 	my $fileHandle = Config::Tiny->read( $blacklistsConf );
-	$fileHandle->{ $listName }->{ 'location' } = $listParams->{ 'location' };
+	$fileHandle->{ $listName }->{ 'type' } = $listParams->{ 'type' };
 	$fileHandle->{ $listName }->{ 'farms' }    = "";
 	if ( exists $listParams->{ 'preload' } )
 	{
@@ -572,20 +571,20 @@ sub setBLCreateList
 	{
 		$fileHandle->{ $listName }->{ 'preload' } = $def_preload;
 	}
-	if ( exists $listParams->{ 'type' } )
+	if ( exists $listParams->{ 'policity' } )
 	{
-		$fileHandle->{ $listName }->{ 'type' } = $listParams->{ 'type' };
+		$fileHandle->{ $listName }->{ 'policity' } = $listParams->{ 'policity' };
 	}
 	else
 	{
-		$fileHandle->{ $listName }->{ 'type' } = $def_type;
+		$fileHandle->{ $listName }->{ 'policity' } = $def_policity;
 	}
 
 	$fileHandle->write( $blacklistsConf );
 
 
 	# specific to remote lists
-	if ( $location eq 'remote' )
+	if ( $type eq 'remote' )
 	{
 		&setBLParam( $listName, 'url', $listParams->{ 'url' } );
 		&setBLParam( $listName, 'status', "This list isn't downloaded yet." );
@@ -605,7 +604,7 @@ sub setBLCreateList
 	}
 
 	# specific to local lists
-	elsif ( $location eq 'local' )
+	elsif ( $type eq 'local' )
 	{
 		$output = system ( "$touch $blacklistsPath/$listName.txt" );
 	}
@@ -708,15 +707,15 @@ sub setBLParam
 	my ( $name, $key, $value ) = @_;
 	my $output;
 	# get conf
-	my $location       = &getBLParam( $name, 'location' );
+	my $type       = &getBLParam( $name, 'type' );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $fileHandle     = Config::Tiny->read( $blacklistsConf );
 	my $conf           = $fileHandle->{ $name };
 	my @farmList       = @{ &getBLParam( $name, 'farms' ) };
-	my $ipList         = &getBLParam( $name, 'sources' );
+	my $ipList         = &getBLParam( $name, 'source' );
 
 	# change name of the list
-	if ( 'list' eq $key )
+	if ( 'name' eq $key )
 	{
 		my @listNames = keys %{ $fileHandle };
 		if ( !&getBLExists( $name ) )
@@ -731,7 +730,7 @@ sub setBLParam
 
 			# crete new list
 			$output = &setBLCreateList( $value, $conf ) if ( !$output );
-			$output = &setBLParam( $value, 'sources', $ipList ) if ( !$output );
+			$output = &setBLParam( $value, 'source', $ipList ) if ( !$output );
 
 			# apply rules to farms
 			if ( !$output )
@@ -744,9 +743,9 @@ sub setBLParam
 			return $output;
 		}
 	}
-	elsif ( 'type' eq $key )
+	elsif ( 'policity' eq $key )
 	{
-		$conf->{ 'type' } = $value;
+		$conf->{ 'policity' } = $value;
 		$fileHandle->write( $blacklistsConf );
 
 		# delete list and all rules applied to farms
@@ -754,7 +753,7 @@ sub setBLParam
 
 		# crete new list
 		$output = &setBLCreateList( $name, $conf );
-		$output = &setBLParam( $name, 'sources', $ipList );
+		$output = &setBLParam( $name, 'source', $ipList );
 
 
 		# apply rules to farms
@@ -766,10 +765,10 @@ sub setBLParam
 		}
 		return $output;
 	}
-	elsif ( 'sources' eq $key )
+	elsif ( 'source' eq $key )
 	{
 		# only can be modificated local lists not preloaded
-		if (    $conf->{ 'location' } eq 'local'
+		if (    $conf->{ 'type' } eq 'local'
 			 && $conf->{ 'preload' } eq 'false' )
 		{
 			$output = &setBLAddToList( $name, $value );
@@ -854,10 +853,10 @@ sub getBLParam
 	if ( !$key )
 	{
 		$output                = $fileHandle->{ $listName };
-		$output->{ 'list' }    = $listName;
-		$output->{ 'sources' } = &getBLIpList( $listName );
+		$output->{ 'name' }    = $listName;
+		$output->{ 'source' } = &getBLIpList( $listName );
 	}
-	elsif ( $key eq 'sources' )
+	elsif ( $key eq 'source' )
 	{
 		$output = &getBLIpList( $listName );
 	}
@@ -990,7 +989,7 @@ sub getBLlastUptdate
 	my $stat = &getGlobalConfiguration ( 'stat' );
 	
 	# only update remote lists
-	return -1 if ( &getBLParam( $listName, 'location' ) eq 'local' );
+	return -1 if ( &getBLParam( $listName, 'type' ) eq 'local' );
 	
 	 # comand
 	my $outCmd = `$stat -c %y $listFile`;
@@ -1097,7 +1096,7 @@ sub setBLRefreshAllLists
 	foreach my $listName ( @lists )
 	{
 		# Download the remote lists
-		if ( &getBLParam( $listName, 'location' ) eq 'remote' )
+		if ( &getBLParam( $listName, 'type' ) eq 'remote' )
 		{
 			&setBLDownloadRemoteList( $listName );
 		}
@@ -1202,7 +1201,7 @@ sub setBLAddToList
 sub setBLDeleteSource
 {
 	my ( $listName, $id ) = @_;
-	my $type = &getBLParam( $listName, 'type' );
+	my $policity = &getBLParam( $listName, 'policity' );
 
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
@@ -1238,7 +1237,7 @@ sub setBLDeleteSource
 sub setBLAddSource
 {
 	my ( $listName, $source ) = @_;
-	my $type = &getBLParam( $listName, 'type' );
+	my $policity = &getBLParam( $listName, 'policity' );
 
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
@@ -1274,7 +1273,7 @@ sub setBLAddSource
 sub setBLModifSource
 {
 	my ( $listName, $id, $source ) = @_;
-	my $type           = &getBLParam( $listName, 'type' );
+	my $policity           = &getBLParam( $listName, 'policity' );
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $err;

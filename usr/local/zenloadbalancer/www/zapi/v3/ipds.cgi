@@ -13,7 +13,7 @@
 ###############################################################################
 
 require "/usr/local/zenloadbalancer/www/Plugins/blacklists.cgi";
-require "/usr/local/zenloadbalancer/www/Plugins/ddos.cgi";
+require "/usr/local/zenloadbalancer/www/Plugins/dos.cgi";
 
 use warnings;
 use strict;
@@ -47,9 +47,9 @@ blacklists:
 #               "source" : "21.5.6.4"
 #            }
 #         ],
-#         "location" : "local",
+#         "type" : "local",
 #         "name" : "blackList",
-#         "type" : "deny"
+#         "policity" : "deny"
 #      },
 #      {
 #         "farms" : [],
@@ -57,9 +57,9 @@ blacklists:
 #               "id" : 0,
 #               "source" : "1.155.63.14"
 #		  ],
-#         "location" : "local",
+#         "type" : "local",
 #         "name" : "whiteList",
-#         "type" : "allow"
+#         "policity" : "allow"
 #      }
 #   ]
 #}
@@ -78,10 +78,10 @@ sub get_blacklists_all_lists
 	foreach my $list ( @{ $listNames } )
 	{
 		my %listHash = (
-						 list     => $list,
+						 name     => $list,
 						 farms    => &getBLParam( $list, 'farms' ),
-						 type     => &getBLParam( $list, 'type' ),
-						 location => &getBLParam( $list, "location" ),
+						 policity     => &getBLParam( $list, 'policity' ),
+						 type => &getBLParam( $list, "type" ),
 						 preload => &getBLParam( $list, "preload" )
 		);
 		push @lists, \%listHash;
@@ -120,7 +120,7 @@ sub get_blacklists_all_lists
 #            }
 #         ],
 #         "name" : "blackList",
-#         "type" : "deny"
+#         "policity" : "deny"
 #      }
 #   ]
 #}
@@ -142,16 +142,16 @@ sub get_blacklists_list
 	{
 		my @ipList;
 		my $index = 0;
-		foreach my $source ( @{ &getBLParam( $listName, 'sources' ) } )
+		foreach my $source ( @{ &getBLParam( $listName, 'source' ) } )
 		{
 			push @ipList, { id => $index++, source => $source };
 		}
 		%listHash = (
-					  list     => $listName,
-					  sources  => \@ipList,
+					  name     => $listName,
+					  source  => \@ipList,
 					  farms    => &getBLParam( $listName, 'farms' ),
-					  type     => &getBLParam( $listName, 'type' ),
-					  location => &getBLParam( $listName, 'location' )
+					  policity     => &getBLParam( $listName, 'policity' ),
+					  type => &getBLParam( $listName, 'type' )
 		);
 		if ( &getBLParam( $listName, 'preload' ) eq 'true' )
 		{
@@ -186,9 +186,9 @@ sub get_blacklists_list
 #  @apiVersion 3.0.0
 #
 #
-# @apiSuccess   {String}	type		The list will be white or black. The options are: allow or deny (default)
-# @apiSuccess	{string}	location	Specify where the list is keep it. The options are: local or remote.
-# @apiSuccess	{string}	url			when list is in remote location, it's rry add url where is keep it.
+# @apiSuccess   {String}	policity		The list will be white or black. The options are: allow or deny (default)
+# @apiSuccess	{string}	type	Specify where the list is keep it. The options are: local or remote.
+# @apiSuccess	{string}	url			when list is in remote type, it's rry add url where is keep it.
 # @apiSuccess	{number}	refresh	time to refresh the remote list.
 #
 #
@@ -197,16 +197,16 @@ sub get_blacklists_list
 #   "description" : "Post list newList",
 #   "params" : {
 #      "farms" : [],
-#      "location" : "local",
+#      "type" : "local",
 #      "name" : "newList",
-#      "sources" : [],
-#      "type" : "deny"
+#      "source" : [],
+#      "policity" : "deny"
 #   }
 #}
 #
 # @apiExample {curl} Example Usage:
 #		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"type":"deny", "location":"local"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/newList
+#		-d '{"policity":"deny", "type":"local"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/newList
 #
 # @apiSampleRequest off
 #
@@ -217,11 +217,11 @@ sub add_blacklists_list
 	my $json_obj = shift;
 	my $errormsg;
 	my $listParams;
-	my $listName    = $json_obj->{ 'list' };
+	my $listName    = $json_obj->{ 'name' };
 	my $description = "Create a blacklist.";
 
-	my @requiredParams = ( "list", "location" );
-	my @optionalParams = ( "type", "url" );
+	my @requiredParams = ( "name", "type" );
+	my @optionalParams = ( "policity", "url" );
 
 	$errormsg = &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
 
@@ -247,7 +247,7 @@ sub add_blacklists_list
 		{
 			if ( !$errormsg && exists $json_obj->{ 'url' } )
 			{
-				if ( $json_obj->{ 'location' } ne 'remote' )
+				if ( $json_obj->{ 'type' } ne 'remote' )
 				{
 					$errormsg = "Url only is available in remote lists.";
 				}
@@ -258,7 +258,7 @@ sub add_blacklists_list
 			}
 			else
 			{
-				if ( $json_obj->{ 'location' } eq 'remote' )
+				if ( $json_obj->{ 'type' } eq 'remote' )
 				{
 					$errormsg = "It's necessary to add the url where is allocated the list.";
 				}
@@ -266,9 +266,9 @@ sub add_blacklists_list
 
 			if ( !$errormsg )
 			{
-				$listParams->{ 'location' } = $json_obj->{ 'location' };
-				$listParams->{ 'type' }     = $json_obj->{ 'type' }
-				  if ( exists $json_obj->{ 'type' } );
+				$listParams->{ 'type' } = $json_obj->{ 'type' };
+				$listParams->{ 'policity' }     = $json_obj->{ 'policity' }
+				  if ( exists $json_obj->{ 'policity' } );
 
 				if ( &setBLCreateList( $listName, $listParams ) )
 				{
@@ -279,7 +279,7 @@ sub add_blacklists_list
 				else
 				{
 					my $listHash = &getBLParam( $listName );
-					delete $listHash->{ 'sources' };
+					delete $listHash->{ 'source' };
 					delete $listHash->{ 'preload' };
 					&httpResponse(
 								{
@@ -311,8 +311,8 @@ sub add_blacklists_list
 #
 #
 # @apiSuccess	{String}	name	The new list name.
-# @apiSuccess   {String}	type	The list will be white or black. The options are: allow or deny.
-# @apiSuccess	{list}		list	Replace sources ( IP's or network segment ) from list. Only local lists.
+# @apiSuccess   {String}	policity	The list will be white or black. The options are: allow or deny.
+# @apiSuccess	{source}		list	Replace sources ( IP's or network segment ) from list. Only local lists.
 # @apiSuccess	{string}	url		Change url where are allocated sources. Only remote lists.
 #
 #
@@ -321,9 +321,9 @@ sub add_blacklists_list
 #   "description" : "Put list list",
 #   "params" : {
 #      "farms" : [],
-#      "location" : "local",
+#      "type" : "local",
 #      "name" : "newNameList",
-#      "sources" : [
+#      "source" : [
 #         {
 #            "id" : 0,
 #            "source" : "192.168.100.240"
@@ -333,14 +333,14 @@ sub add_blacklists_list
 #            "source" : "21.5.6.4"
 #         }
 #      ],
-#      "type" : "allow"
+#      "policity" : "allow"
 #   }
 #}
 #
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"type":"allow","list":["192.168.100.240","21.5.6.4"],
+#        -d '{"policity":"allow","list":["192.168.100.240","21.5.6.4"],
 #       "name":"newNameList"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/list
 #
 # @apiSampleRequest off
@@ -355,7 +355,7 @@ sub set_blacklists_list
 	my $errormsg;
 
 	my @allowParams =
-	  ( "type", "url", "source", "list", "min", "hour", "dom", "month", "dow" );
+	  ( "policity", "url", "source", "name", "min", "hour", "dom", "month", "dow" );
 
 	if ( &getBLExists( $listName ) == -1 )
 	{
@@ -368,7 +368,7 @@ sub set_blacklists_list
 		&httpResponse( { code => 404, body => $body } );
 	}
 
-	my $location = &getBLParam( $listName, 'location' );
+	my $type = &getBLParam( $listName, 'type' );
 	$errormsg = &getValidOptParams( $json_obj, \@allowParams );
 	if ( !$errormsg )
 	{
@@ -394,15 +394,15 @@ sub set_blacklists_list
 				   || exists $json_obj->{ 'month' }
 				   || exists $json_obj->{ 'dow' }
 				 )
-				 && $location ne 'remote'
+				 && $type ne 'remote'
 			  )
 			{
 				$errormsg = "Time options and url only are available in remote lists.";
 			}
 
 			# Sources only is used in local lists
-			elsif ( exists $json_obj->{ 'sources' }
-					&& $location ne 'local' )
+			elsif ( exists $json_obj->{ 'source' }
+					&& $type ne 'local' )
 			{
 				$errormsg = "Sources parameter only is available in local lists.";
 			}
@@ -413,10 +413,10 @@ sub set_blacklists_list
 				{
 					# add only the sources with a correct format
 					# no correct format sources are ignored
-					if ( $key eq 'sources' )
+					if ( $key eq 'source' )
 					{
 						my $source_format = &getValidFormat( 'blacklists_source' );
-						my $noPush = grep ( !/$source_format)/, @{ $json_obj->{ 'list' } } );
+						my $noPush = grep ( !/$source_format)/, @{ $json_obj->{ 'name' } } );
 
 						# error
 						&zenlog( "$noPush sources couldn't be added" ) if ( $noPush );
@@ -427,9 +427,9 @@ sub set_blacklists_list
 					$errormsg = "Error, modifying $key in $listName." if ( $errormsg );
 
 					# once changed list, update de list name
-					if ( $key eq 'list' )
+					if ( $key eq 'name' )
 					{
-						$listName = $json_obj->{ 'list' };
+						$listName = $json_obj->{ 'name' };
 					}
 
 					# rewrite cron task if exists some of the next keys
@@ -574,7 +574,7 @@ sub update_remote_blacklists
 }
 
 #**
-#  @api {get} /ipds/blacklists/<listname> Request the sources of a list
+#  @api {get} /ipds/blacklists/<listname>/sources Request the sources of a list
 #  @apiGroup IPDS
 #  @apiDescription Get the sources of a list
 #  @apiName GetBlacklistsSource
@@ -602,17 +602,17 @@ sub update_remote_blacklists
 #            }
 #         ],
 #         "name" : "blackList",
-#         "type" : "deny"
+#         "policity" : "deny"
 #      }
 #   ]
 #}
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/<listname>/source
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/<listname>/sources
 #
 #@apiSampleRequest off
 #**
-#GET /ipds/blacklists/<listname>/source
+#GET /ipds/blacklists/<listname>/sources
 sub get_blacklists_source
 {
 	my $listName    = shift;
@@ -624,7 +624,7 @@ sub get_blacklists_source
 	{
 		my @ipList;
 		my $index = 0;
-		foreach my $source ( @{ &getBLParam( $listName, 'sources' ) } )
+		foreach my $source ( @{ &getBLParam( $listName, 'source' ) } )
 		{
 			push @ipList, { id => $index++, source => $source };
 		}
@@ -652,7 +652,7 @@ sub get_blacklists_source
 
 #####Documentation of POST a source to a list####
 #**
-#  @api {post} /ipds/blacklists/<listname>/source Create a new source for a list
+#  @api {post} /ipds/blacklists/<listname>/sources Create a new source for a list
 #  @apiGroup IPDS
 #  @apiName PostBlacklistsSource
 #  @apiParam {String} listname  Black list name, unique ID.
@@ -712,7 +712,7 @@ sub add_blacklists_source
 				$errormsg = "It's necessary to introduce a correct source.";
 			}
 			elsif (
-				  grep ( /^$json_obj->{'source'}$/, @{ &getBLParam( $listName, 'sources' ) } ) )
+				  grep ( /^$json_obj->{'source'}$/, @{ &getBLParam( $listName, 'source' ) } ) )
 			{
 				$errormsg = "$json_obj->{'source'} just exists in the list.";
 			}
@@ -723,7 +723,7 @@ sub add_blacklists_source
 				{
 					my @ipList;
 					my $index = 0;
-					foreach my $source ( @{ &getBLParam( $listName, 'sources' ) } )
+					foreach my $source ( @{ &getBLParam( $listName, 'source' ) } )
 					{
 						push @ipList, { id => $index++, source => $source };
 					}
@@ -753,7 +753,7 @@ sub add_blacklists_source
 
 #####Documentation of PUT a source of a black list####
 #**
-#  @api {put} /ipds/blacklists/<listname>/source/<id> Modify a source of a black list
+#  @api {put} /ipds/blacklists/<listname>/sources/<id> Modify a source of a black list
 #  @apiGroup IPDS
 #  @apiName PutBlacklistsSource
 #  @apiParam	{String}	listname	Black list name, unique ID.
@@ -777,12 +777,12 @@ sub add_blacklists_source
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"source":"10.12.55.3" https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/source/1
+#        -d '{"source":"10.12.55.3" https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/sources/1
 #
 # @apiSampleRequest off
 #
 #**
-#  PUT /ipds/blacklists/<listname>/source/<id>
+#  PUT /ipds/blacklists/<listname>/sources/<id>
 sub set_blacklists_source
 {
 	my $json_obj    = shift;
@@ -805,7 +805,7 @@ sub set_blacklists_source
 	}
 
 	# check source id exists
-	elsif ( @{ &getBLParam( $listName, 'sources' ) } <= $id )
+	elsif ( @{ &getBLParam( $listName, 'source' ) } <= $id )
 	{
 		$errormsg = "Source id $id not found";
 		my $body = {
@@ -830,10 +830,10 @@ sub set_blacklists_source
 			}
 			else
 			{
-				my $sources = &getBLParam( $listName, 'sources' );
+				my $source = &getBLParam( $listName, 'source' );
 				my $body = {
 							 description => $description,
-							 params      => $sources
+							 params      => $source
 				};
 				&httpResponse( { code => 200, body => $body } );
 			}
@@ -849,7 +849,7 @@ sub set_blacklists_source
 
 #####Documentation of DELETE a source of a black list####
 #**
-#  @api {delete} /ipds/blacklists/<listname>/source/<id>	Delete a source from a black list
+#  @api {delete} /ipds/blacklists/<listname>/sources/<id>	Delete a source from a black list
 #  @apiGroup IPDS
 #  @apiName DeleteBlacklistsSource
 #  @apiParam	{String}	listname	Black list name, unique ID.
@@ -868,7 +868,7 @@ sub set_blacklists_source
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/list/source/1
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/list/sources/1
 #
 # @apiSampleRequest off
 #
@@ -890,7 +890,7 @@ sub del_blacklists_source
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( @{ &getBLParam( $listName, 'sources' ) } <= $id )
+	elsif ( @{ &getBLParam( $listName, 'source' ) } <= $id )
 	{
 		$errormsg = "ID $id doesn't exist in the list $listName.";
 		my $body = {
@@ -957,11 +957,11 @@ sub add_blacklists_to_farm
 {
 	my $json_obj = shift;
 	my $farmName = shift;
-	my $listName = $json_obj->{ 'list' };
+	my $listName = $json_obj->{ 'name' };
 	my $errormsg;
 	my $description = "Apply a list to a farm";
 
-	$errormsg = &getValidReqParams( $json_obj, ["list"] );
+	$errormsg = &getValidReqParams( $json_obj, ["name"] );
 	if ( !$errormsg )
 	{
 		if ( &getFarmFile( $farmName ) eq "-1" )
@@ -1108,19 +1108,19 @@ sub del_blacklists_from_farm
 	&httpResponse( { code => 400, body => $body } );
 }
 
-ddos:
+dos:
 
 #**
-#  @api {get} /ipds/ddos Request ddos settings
+#  @api {get} /ipds/dos Request dos settings
 #  @apiGroup IPDS
-#  @apiDescription Get ddos configuraton.
-#  @apiName GetDdos
+#  @apiDescription Get dos configuraton.
+#  @apiName GetDos
 #  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
 #{
-#   "description" : "Get DDoS settings.",
+#   "description" : "Get DoS settings.",
 #   "params" : {
 #      "farms" : "testFarm gslbFarm",
 #      "ssh_bruteForce" : "down"
@@ -1128,75 +1128,57 @@ ddos:
 #}
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/ddos
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/dos
 #
 #@apiSampleRequest off
 #**
-#GET /ipds/ddos
-sub get_ddos
+#GET /ipds/dos
+sub get_dos
 {
-	my $confFile = &getGlobalConfiguration( 'ddosConf' );
-	my @output;
-	my $description = "Get DDoS settings.";
+	my $confFile = &getGlobalConfiguration( 'dosConf' );
+	my $description = "Get DoS settings.";
 
 	my $fileHandle = Config::Tiny->read( $confFile );
-	my $output;
-	my @farmType;
-	my @systemType;
+	my %output = %{ $fileHandle };
 
-	foreach my $key ( keys %{ $fileHandle } )
-	{
-		if ( $fileHandle->{ $key }->{ 'type' } eq 'farm' )
-		{
-			push @farmType, $fileHandle->{ $key };
-		}
-		elsif ( $fileHandle->{ $key }->{ 'type' } eq 'system' )
-		{
-			push @systemType, $fileHandle->{ $key };
-		}
-	}
-
-	$output->{ 'farm' }   = \@farmType;
-	$output->{ 'system' } = \@systemType;
-
-	my $body = { description => $description, params => $output };
+	my $body = { description => $description, params => \%output };
 	&httpResponse( { code => 200, body => $body } );
 }
 
-#  POST /ipds/ddos
-sub create_ddos_rule
+#  POST /ipds/dos
+sub create_dos_rule
 {
 	my $json_obj       = shift;
-	my $description    = "Post a DDoS rule";
-	my $key            = $json_obj->{ 'id' };
-	my @requiredParams = ( "rule", "id" );
-	my $confFile       = &getGlobalConfiguration( 'ddosConf' );
+	my $description    = "Post a DoS rule";
+	my $rule            = $json_obj->{ 'rule' };
+	my @requiredParams = ( "name", "rule" );
+	my $confFile       = &getGlobalConfiguration( 'dosConf' );
 
 	my $errormsg = &getValidReqParams( $json_obj, \@requiredParams );
 	if ( !$errormsg )
 	{
-		if ( &getDDOSExists( $json_obj->{ 'rule' } ) eq "0" )
+		if ( &getDOSExists( $json_obj->{ 'name' } ) eq "0" )
 		{
-			$errormsg = "$json_obj->{ 'rule' } already exists.";
+			$errormsg = "$json_obj->{ 'name' } already exists.";
 		}
-		elsif ( !&getValidFormat( 'ddos_rule', $json_obj->{ 'rule' } ) )
+		elsif ( !&getValidFormat( 'dos_name', $json_obj->{ 'name' } ) )
 		{
 			$errormsg = "rule name hasn't a correct format.";
 		}
-		elsif ( !&getValidFormat( "ddos_key_farm", $json_obj->{ 'id' } ) )
+		elsif ( !&getValidFormat( "dos_rule_farm", $json_obj->{ 'rule' } ) )
 		{
 			$errormsg = "ID rule isn't correct.";
 		}
 		else
 		{
-			$errormsg = &createDDOSRule( $json_obj->{ 'rule' }, $key );
+			$errormsg = &createDOSRule( $json_obj->{ 'name' }, $rule );
 			if ( $errormsg )
 			{
-				$errormsg = "There was a error enabling DDoS in $json_obj->{ 'rule' }.";
+				$errormsg = "There was a error enabling DoS in $json_obj->{ 'name' }.";
 			}
 			else
 			{
-				my $output = &getDDOSParam( $json_obj->{ 'rule' } );
+				my $output = &getDOSParam( $json_obj->{ 'name' } );
 				&httpResponse(
 							   {
 								 code => 200,
@@ -1213,35 +1195,35 @@ sub create_ddos_rule
 }
 
 #**
-#  @api {get} /ipds/ddos/RULE Request ddos rule settings
+#  @api {get} /ipds/dos/RULE Request dos rule settings
 #  @apiGroup IPDS
-#  @apiDescription Get ddos configuraton.for a rule
-#  @apiName GetDdos
+#  @apiDescription Get dos configuraton.for a rule
+#  @apiName GetDos
 #  @apiVersion 3.0
 #
 #
 # @apiSuccessExample Success-Response:
 #{
-#   "description" : "Get DDoS example_rule settings",
+#   "description" : "Get DoS example_rule settings",
 #   "params" : {
 #      "farms" : "",
-#      "key" : "LIMITSEC",
+#      "rule" : "LIMITSEC",
 #      "limit" : "2",
 #      "limitBurst" : "2"
 #   }
 #}
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/ddos/RULE
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/dos/RULE
 #
 #@apiSampleRequest off
 #**
-#GET /ipds/ddos/RULE
-sub get_ddos_rule
+#GET /ipds/dos/RULE
+sub get_dos_rule
 {
-	my $rule        = shift;
-	my $description = "Get DDoS $rule settings";
-	my $refRule     = &getDDOSParam( $rule );
+	my $name        = shift;
+	my $description = "Get DoS $name settings";
+	my $refRule     = &getDOSParam( $name );
 	my $output;
 
 	if ( ref ( $refRule ) eq 'HASH' )
@@ -1252,7 +1234,7 @@ sub get_ddos_rule
 	}
 	else
 	{
-		$output = "$rule doesn't exist.";
+		$output = "$name doesn't exist.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -1263,21 +1245,21 @@ sub get_ddos_rule
 }
 
 #**
-#  @api {put} /ipds/ddos/RULE Modify ddos settings
+#  @api {put} /ipds/dos/RULE Modify dos settings
 #  @apiGroup IPDS
-#  @apiName PutDdosSettings
-#  @apiDescription Modify the params to DDoS
+#  @apiName PutDosSettings
+#  @apiDescription Modify the params to DoS
 #  @apiVersion 3.0.0
 #
 #
 #
-# @apiSuccess	{String}	id		identify a DDoS rule. The options are: ssh_bruteforce
-# @apiSuccess   {String}	status	enable or disable a DDoS option.
+# @apiSuccess	{String}	rule		identify a DoS rule. The options are: ssh_bruteforce
+# @apiSuccess   {String}	status	enable or disable a DoS option.
 #
 #
 # @apiSuccessExample Success-Response:
 #{
-#   "description" : "Put DDoS settings",
+#   "description" : "Put DoS settings",
 #   "params" : {
 #      "farms" : "httpFarm gslbFarm",
 #      "ssh_bruteForce" : "down"
@@ -1287,23 +1269,23 @@ sub get_ddos_rule
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"id":"ssh_bruteForce","status":"down"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/ddos
+#        -d '{"rule":"ssh_bruteForce","status":"down"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/dos
 #
 # @apiSampleRequest off
 #
 #**
-#PUT /ipds/ddos
-sub set_ddos_rule
+#PUT /ipds/dos
+sub set_dos_rule
 {
 	my $json_obj    = shift;
-	my $rule        = shift;
-	my $description = "Put DDoS rule settings";
+	my $name        = shift;
+	my $description = "Put DoS rule settings";
 	my @requiredParams;
 	my $errormsg;
 
-	if ( &getDDOSExists( $rule ) )
+	if ( &getDOSExists( $name ) )
 	{
-		$errormsg = "$rule not found";
+		$errormsg = "$name not found";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -1313,15 +1295,15 @@ sub set_ddos_rule
 	}
 	else
 	{
-		# Get allowed params for a determinated key
-		my $key = &getDDOSParam( $rule, 'key' );
-		my %hashRuleConf = %{ &getDDOSInitialParams( $key ) };
+		# Get allowed params for a determinated rule
+		my $rule = &getDOSParam( $name, 'rule' );
+		my %hashRuleConf = %{ &getDOSInitialParams( $rule ) };
 
 		# delete 'type' key
 		delete $hashRuleConf{ 'type' };
 
 		# delete 'key' key
-		delete $hashRuleConf{ 'key' };
+		delete $hashRuleConf{ 'rule' };
 
 		# delete 'farms' key
 		if ( exists $hashRuleConf{ 'farms' } )
@@ -1336,7 +1318,7 @@ sub set_ddos_rule
 			# check input format
 			foreach my $param ( keys %{ $json_obj } )
 			{
-				if ( !&getValidFormat( "ddos_$param", $json_obj->{ $param } ) )
+				if ( !&getValidFormat( "dos_$param", $json_obj->{ $param } ) )
 				{
 					$errormsg = "Error, $param format is wrong.";
 					last;
@@ -1348,11 +1330,11 @@ sub set_ddos_rule
 			{
 				foreach my $param ( keys %{ $json_obj } )
 				{
-					&setDDOSParam( $rule, $param, $json_obj->{ $param } );
+					&setDOSParam( $name, $param, $json_obj->{ $param } );
 				}
 				if ( !$errormsg )
 				{
-					my $refRule = &getDDOSParam( $rule );
+					my $refRule = &getDOSParam( $name );
 					&httpResponse(
 						{
 						   code => 200,
@@ -1371,17 +1353,17 @@ sub set_ddos_rule
 	&httpResponse( { code => 400, body => $body } );
 }
 
-# DELETE /ipds/ddos/RULE
-sub del_ddos_rule
+# DELETE /ipds/dos/RULE
+sub del_dos_rule
 {
 	#~ my $json_obj = shift;
-	my $rule = shift;
+	my $name = shift;
 	my $errormsg;
-	my $description = "Delete DDoS rule";
+	my $description = "Delete DoS rule";
 
-	if ( &getDDOSExists( $rule ) == -1 )
+	if ( &getDOSExists( $name ) == -1 )
 	{
-		$errormsg = "$rule not found.";
+		$errormsg = "$name not found.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -1389,19 +1371,19 @@ sub del_ddos_rule
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( &getDDOSParam( $rule, 'type' ) eq 'system' )
+	elsif ( &getDOSParam( $name, 'type' ) eq 'system' )
 	{
 		$errormsg =
 		  "Error, system rules not is possible to delete it, try to disable it.";
 	}
-	elsif ( &getDDOSParam( $rule, 'farms' ) )
+	elsif ( &getDOSParam( $name, 'farms' ) )
 	{
 		$errormsg = "Error, disable this rule from all farms before than delete it.";
 	}
 	else
 	{
-		&deleteDDOSRule( $rule );
-		$errormsg = "Deleted $rule successful.";
+		&deleteDOSRule( $name );
+		$errormsg = "Deleted $name successful.";
 		my $body = {
 					 description => $description,
 					 success     => "true",
@@ -1419,9 +1401,9 @@ sub del_ddos_rule
 }
 
 #**
-#  @api {get} /farms/<farmname>/ipds/ddos Request DDoS status of a farm
+#  @api {get} /farms/<farmname>/ipds/dos Request DoS status of a farm
 #  @apiGroup IPDS
-#  @apiDescription Get DDoS status of a farm
+#  @apiDescription Get DoS status of a farm
 #  @apiName GetBlacklistsList
 #  @apiParam {String} farmname  farm name, unique ID.
 #  @apiVersion 3.0.0
@@ -1429,34 +1411,34 @@ sub del_ddos_rule
 #
 # @apiSuccessExample Success-Response:
 #{
-#   "description" : "Get status DDoS gslbFarm.",
+#   "description" : "Get status DoS gslbFarm.",
 #   "params" : ???
 #}
 #
 #
 #@apiExample {curl} Example Usage:
 #	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/ddos
+#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/dos
 #
 #@apiSampleRequest off
 #**
-#  GET /farms/<farmname>/ipds/ddos
-sub get_ddos_farm
+#  GET /farms/<farmname>/ipds/dos
+sub get_dos_farm
 {
 	my $farmName = shift;
-	my $confFile = &getGlobalConfiguration( 'ddosConf' );
+	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my @output;
-	my $description = "Get status DDoS $farmName.";
+	my $description = "Get status DoS $farmName.";
 
 	if ( -e $confFile )
 	{
 		my $fileHandle = Config::Tiny->read( $confFile );
 
-		foreach my $key ( keys %{ $fileHandle } )
+		foreach my $ruleName ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( $fileHandle->{ $ruleName }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
-				push @output, $key;
+				push @output, $ruleName;
 			}
 		}
 	}
@@ -1465,41 +1447,41 @@ sub get_ddos_farm
 	&httpResponse( { code => 200, body => $body } );
 }
 
-#####Documentation of POST ddos to farm####
+#####Documentation of POST dos to farm####
 #**
-#  @api {post} /farms/<farmname>/ipds/ddos	Add ddos to a farm
+#  @api {post} /farms/<farmname>/ipds/dos	Add dos to a farm
 #  @apiGroup IPDS
-#  @apiName PostDdosToFarm
+#  @apiName PostDosToFarm
 #  @apiParam {String} farmname	farm name, unique ID.
-#  @apiDescription Add ddos protection to a farm
+#  @apiDescription Add dos protection to a farm
 #  @apiVersion 3.0.0
 #
 #
 #
 #@apiSuccessExample Success-Response:
 #{
-#   "description" : "Post DDoS to httpFarm.",
+#   "description" : "Post DoS to httpFarm.",
 #   "params" : "up"
 #}
 #
 #
 # @apiExample {curl} Example Usage:
 #		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"id":"NEWNOSYN"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/ddos
+#		-d '{"rule":"NEWNOSYN"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/dos
 #
 # @apiSampleRequest off
 #
 #**
-#  POST /farms/<farmname>/ipds/ddos
-sub add_ddos_to_farm
+#  POST /farms/<farmname>/ipds/dos
+sub add_dos_to_farm
 {
 	my $json_obj    = shift;
 	my $farmName    = shift;
-	my $description = "Post a DDoS rule to a farm";
-	my $rule        = $json_obj->{ 'rule' };
+	my $description = "Post a DoS rule to a farm";
+	my $name        = $json_obj->{ 'name' };
 	my $errormsg;
 
-	my $confFile = &getGlobalConfiguration( 'ddosConf' );
+	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $output   = "down";
 
 	if ( &getFarmFile( $farmName ) eq '-1' )
@@ -1512,9 +1494,9 @@ sub add_ddos_to_farm
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( &getDDOSExists( $rule ) == -1 )
+	elsif ( &getDOSExists( $name ) == -1 )
 	{
-		$errormsg = "$rule not found.";
+		$errormsg = "$name not found.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -1522,31 +1504,31 @@ sub add_ddos_to_farm
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( &getDDOSParam( $rule, 'type' ) eq 'system' )
+	elsif ( &getDOSParam( $name, 'type' ) eq 'system' )
 	{
 		$errormsg = "system rules not is possible apply to farm.";
 	}
 	else
 	{
 		my $fileHandle = Config::Tiny->read( $confFile );
-		if ( $fileHandle->{ $rule }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+		if ( $fileHandle->{ $name }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 		{
 			$errormsg = "This rule already is enabled in $farmName.";
 		}
 		else
 		{
-			&setDDOSCreateRule( $rule, $farmName );
+			&setDOSCreateRule( $name, $farmName );
 
-			my $confFile = &getGlobalConfiguration( 'ddosConf' );
+			my $confFile = &getGlobalConfiguration( 'dosConf' );
 			my $output;
 
 			# check output
 			my $fileHandle  = Config::Tiny->read( $confFile );
-			my $farmsString = $fileHandle->{ $rule }->{ 'farms' };
+			my $farmsString = $fileHandle->{ $name }->{ 'farms' };
 
 			if ( $farmsString =~ /( |^)$farmName( |$)/ )
 			{
-				$errormsg = "$rule was enabled successful in $farmName.";
+				$errormsg = "$name was enabled successful in $farmName.";
 				&httpResponse(
 					{
 					   code => 200,
@@ -1562,40 +1544,40 @@ sub add_ddos_to_farm
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of DELETE ddos from a farm####
+#####Documentation of DELETE dos from a farm####
 #**
-#  @api {delete} /farms/<farmname>/ipds/ddos	Delete ddos rules from a farm
+#  @api {delete} /farms/<farmname>/ipds/dos	Delete dos rules from a farm
 #  @apiGroup IPDS
-#  @apiName DeleteDdosFromFarm
+#  @apiName DeleteDosFromFarm
 #  @apiParam	{String}	farmname	farm name, unique ID.
-#  @apiDescription Delete ddos rules from a farm.
+#  @apiDescription Delete dos rules from a farm.
 #  @apiVersion 3.0.0
 #
 #
 # @apiSuccessExample Success-Response:
 #{
-#   "description" : "Delete DDoS form farm prueba",
-#   "message" : "DDoS was desactived successful from farm prueba.",
+#   "description" : "Delete DoS form farm prueba",
+#   "message" : "DoS was desactived successful from farm prueba.",
 #   "success" : "true"
 #}
 #
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/ddos/KEY
+#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/dos/KEY
 #
 # @apiSampleRequest off
 #
 #**
-# DELETE /farms/<farmname>/ipds/ddos/<id>
-sub del_ddos_from_farm
+# DELETE /farms/<farmname>/ipds/dos/<ruleName>
+sub del_dos_from_farm
 {
 	my $farmName    = shift;
-	my $rule        = shift;
-	my $description = "Delete DDoS rule from a farm";
+	my $name        = shift;
+	my $description = "Delete DoS rule from a farm";
 	my $errormsg;
 
-	my $confFile = &getGlobalConfiguration( 'ddosConf' );
+	my $confFile = &getGlobalConfiguration( 'dosConf' );
 
 	if ( &getFarmFile( $farmName ) eq "-1" )
 	{
@@ -1607,9 +1589,9 @@ sub del_ddos_from_farm
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( &getDDOSExists( $rule ) == -1 )
+	elsif ( &getDOSExists( $name ) == -1 )
 	{
-		$errormsg = "$rule not found.";
+		$errormsg = "$name not found.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -1617,29 +1599,29 @@ sub del_ddos_from_farm
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( &getDDOSParam( $rule, 'type' ) eq 'system' )
+	elsif ( &getDOSParam( $name, 'type' ) eq 'system' )
 	{
 		$errormsg = "system rules not is possible delete from a farm.";
 	}
 	else
 	{
 		my $fileHandle = Config::Tiny->read( $confFile );
-		if ( $fileHandle->{ $rule }->{ 'farms' } !~ /( |^)$farmName( |$)/ )
+		if ( $fileHandle->{ $name }->{ 'farms' } !~ /( |^)$farmName( |$)/ )
 		{
 			$errormsg = "This rule no is enabled in $farmName.";
 		}
 		else
 		{
-			&setDDOSDeleteRule( $rule, $farmName );
+			&setDOSDeleteRule( $name, $farmName );
 
 			# check output
-			my $confFile    = &getGlobalConfiguration( 'ddosConf' );
+			my $confFile    = &getGlobalConfiguration( 'dosConf' );
 			my $fileHandle  = Config::Tiny->read( $confFile );
-			my $farmsString = $fileHandle->{ $rule }->{ 'farms' };
+			my $farmsString = $fileHandle->{ $name }->{ 'farms' };
 
 			if ( $farmsString !~ /( |^)$farmName( |$)/ )
 			{
-				$errormsg = "$rule was disabled in $farmName successful.";
+				$errormsg = "$name was disabled in $farmName successful.";
 				&httpResponse(
 					{
 					   code => 200,

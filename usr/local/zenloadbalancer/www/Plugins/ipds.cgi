@@ -87,20 +87,20 @@ sub getIPDSfarmsRules
 {
 	my $farmName = shift;
 	my $rules;
-	my @ddosRules;
+	my @dosRules;
 	my @blacklistsRules;
 	my $fileHandle;
 	
-	my $ddosConf = &getGlobalConfiguration( 'ddosConf' );
+	my $dosConf = &getGlobalConfiguration( 'dosConf' );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
-	if ( -e $ddosConf )
+	if ( -e $dosConf )
 	{
-		$fileHandle = Config::Tiny->read( $ddosConf );
+		$fileHandle = Config::Tiny->read( $dosConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
 			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
-				push @ddosRules, $key;
+				push @dosRules, $key;
 			}
 		}
 	}
@@ -117,7 +117,7 @@ sub getIPDSfarmsRules
 		}
 	}
 	
-	$rules = { ddos => \@ddosRules, blacklists => \@blacklistsRules };
+	$rules = { dos => \@dosRules, blacklists => \@blacklistsRules };
 	return $rules;
 }
 

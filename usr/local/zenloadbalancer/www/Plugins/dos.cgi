@@ -33,72 +33,72 @@ require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 use warnings;
 use strict;
 
-sub setDDOSCreateFileConf
+sub setDOSCreateFileConf
 {
-	my $confFile    = &getGlobalConfiguration( 'ddosConf' );
-	my $ddosConfDir = &getGlobalConfiguration( 'ddosConfDir' );
+	my $confFile    = &getGlobalConfiguration( 'dosConf' );
+	my $dosConfDir = &getGlobalConfiguration( 'dosConfDir' );
 	my $output;
 
 	return 0 if ( -e $confFile );
 
-	# create ddos directory if it doesn't exist
-	if ( !-d $ddosConfDir )
+	# create dos directory if it doesn't exist
+	if ( !-d $dosConfDir )
 	{
-		$output = system ( &getGlobalConfiguration( 'mkdir' ) . " -p $ddosConfDir" );
-		&zenlog( "Created ipds configuration directory: $ddosConfDir" );
+		$output = system ( &getGlobalConfiguration( 'mkdir' ) . " -p $dosConfDir" );
+		&zenlog( "Created ipds configuration directory: $dosConfDir" );
 	}
 
 	# create file conf if doesn't exist
 	if ( !$output )
 	{
-		&zenlog( "Created ddos configuration directory: $ddosConfDir" );
+		&zenlog( "Created dos configuration directory: $dosConfDir" );
 		$output = system ( &getGlobalConfiguration( 'touch' ) . " $confFile" );
 		if ( $output )
 		{
-			&zenlog( "Error, creating ddos configuration directory: $ddosConfDir" );
+			&zenlog( "Error, creating dos configuration directory: $dosConfDir" );
 		}
 		else
 		{
-			&zenlog( "Created ddos configuration file: $confFile" );
+			&zenlog( "Created dos configuration file: $confFile" );
 		}
 	}
 
 	if ( !$output )
 	{
-		$output = &createDDOSRule( 'drop_icmp', 'DROPICMP' )
-		  if ( &getDDOSExists( 'drop_icmp' ) ne "0" );
-		$output = &createDDOSRule( 'ssh_brute_force', 'SSHBRUTEFORCE' )
-		  if ( &getDDOSExists( 'ssh_brute_force' ) ne "0" );
+		$output = &createDOSRule( 'drop_icmp', 'dropicmp' )
+		  if ( &getDOSExists( 'drop_icmp' ) ne "0" );
+		$output = &createDOSRule( 'ssh_brute_force', 'sshbruteforce' )
+		  if ( &getDOSExists( 'ssh_brute_force' ) ne "0" );
 	}
 	else
 	{
-		&zenlog( "Error, creating ddos configuration file: $confFile" );
+		&zenlog( "Error, creating dos configuration file: $confFile" );
 	}
 
 	return $output;
 }
 
-sub getDDOSInitialParams
+sub getDOSInitialParams
 {
-	my $key = shift;
+	my $rule = shift;
 
 	#~ my $param = shift;
 
 	my %initial = (
-		'BOGUSTCPFLAGS' => { 'farms' => '', 'type'       => 'farm' },
-		'LIMITCONNS'    => { 'farms' => '', 'limitConns' => 10, 'type' => 'farm' },
-		'LIMITRST' =>
+		'bogustcpflags' => { 'farms' => '', 'type'       => 'farm' },
+		'limitconns'    => { 'farms' => '', 'limitConns' => 10, 'type' => 'farm' },
+		'limitrst' =>
 		  { 'farms' => '', 'limit' => 2, 'limitBurst' => 2, 'type' => 'farm' },
-		'LIMITSEC' =>
+		'limitsec' =>
 		  { 'farms' => '', 'limit' => 2, 'limitBurst' => 2, 'type' => 'farm' },
-		'DROPICMP' => { 'status' => 'down', 'type' => 'system', 'rule' => 'drop_icmp' },
-		'SSHBRUTEFORCE' => {
+		'dropicmp' => { 'status' => 'down', 'type' => 'system', 'name' => 'drop_icmp' },
+		'sshbruteforce' => {
 							 'status' => 'down',
 							 'hits'   => 5,
 							 'port'   => 22,
 							 'time'   => 180,
 							 'type'   => 'system',
-							 'rule'   => 'ssh_brute_force'
+							 'name'   => 'ssh_brute_force'
 		},
 
 		#					'NEWNOSYN' => { 'farms' => '' },
@@ -117,25 +117,25 @@ sub getDDOSInitialParams
 
 	#~ if ( $param )
 	#~ {
-	#~ $output = $initial{ $key }->{ $param };
+	#~ $output = $initial{ $rule }->{ $param };
 	#~ }
 	#~ else
 	#~ {
-	my $output = $initial{ $key };
+	my $output = $initial{ $rule };
 
 	#~ }
 
 	return $output;
 }
 
-# &getDDOSParam( $ruleName, $param );
-sub getDDOSParam
+# &getDOSParam( $ruleName, $param );
+sub getDOSParam
 {
 	my $ruleName = shift;
 	my $param    = shift;
 	my $output;
 
-	my $confFile   = &getGlobalConfiguration( 'ddosConf' );
+	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 
 	if ( $param )
@@ -149,50 +149,50 @@ sub getDDOSParam
 	return $output;
 }
 
-# &setDDOSParam ($name,$param,$value)
-sub setDDOSParam
+# &setDOSParam ($name,$param,$value)
+sub setDOSParam
 {
-	my $rule  = shift;
+	my $name  = shift;
 	my $param = shift;
 	my $value = shift;
 
-	my $key = &getDDOSParam( $rule, 'key' );
+	my $rule = &getDOSParam( $name, 'rule' );
 
 	#Stop related rules
-	&setDDOSStopRule( $rule );
+	&setDOSStopRule( $name );
 
-	my $confFile   = &getGlobalConfiguration( 'ddosConf' );
+	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 	$fileHandle = Config::Tiny->read( $confFile );
 
-	$fileHandle->{ $rule }->{ $param } = $value;
+	$fileHandle->{ $name }->{ $param } = $value;
 	$fileHandle->write( $confFile );
 
 	#~ # Rule global for the balancer
-	if ( &getDDOSParam( $rule, 'type' ) eq 'system' )
+	if ( &getDOSParam( $name, 'type' ) eq 'system' )
 	{
-		if ( &getDDOSParam( $rule, 'status' ) eq 'up' )
+		if ( &getDOSParam( $name, 'status' ) eq 'up' )
 		{
-			&setDDOSRunRule( $rule );
+			&setDOSRunRule( $name );
 		}
 	}
 
 	# Rule applied to farm
-	elsif ( &getDDOSParam( $rule, 'farms' ) )
+	elsif ( &getDOSParam( $name, 'farms' ) )
 	{
-		my $farmsString = &getDDOSParam( $rule, 'farms' );
+		my $farmsString = &getDOSParam( $name, 'farms' );
 		foreach my $farm ( split ( ' ', $farmsString ) )
 		{
-			&setDDOSRunRule( $rule, $farm );
+			&setDOSRunRule( $name, $farm );
 		}
 	}
 }
 
 =begin nd
-        Function: getDDOSLookForRule
+        Function: getDOSLookForRule
 
         Look for a:
-			- global rule 				( key )
+			- global name 				( key )
 			- set of rules applied a farm 	( key, farmName )
         
         Parameters:
@@ -210,11 +210,11 @@ sub setDDOSParam
 
 =cut
 
-sub getDDOSLookForRule
+sub getDOSLookForRule
 {
 	my ( $ruleName, $farmName ) = @_;
 
-	# table and chain where there are keep ddos rules
+	# table and chain where there are keep dos rules
 
  # active this when port scanning rule will be available
  #~ my @table = ( 'raw', 'filter', 'filter', 'raw', 'mangle' );
@@ -236,7 +236,7 @@ sub getDDOSLookForRule
 		# Reverse @rules to delete first last rules
 		@rules = reverse ( @rules );
 
-		# Delete DDoS global conf
+		# Delete DoS global conf
 		foreach my $rule ( @rules )
 		{
 			my $flag = 0;
@@ -245,7 +245,7 @@ sub getDDOSLookForRule
 			# Look for farm rule
 			if ( $farmName )
 			{
-				if ( $rule =~ /^(\d+) .+DDOS_${ruleName}_$farmName \*/ )
+				if ( $rule =~ /^(\d+) .+DOS_${ruleName}_$farmName \*/ )
 				{
 					$lineNum = $1;
 					$flag    = 1;
@@ -256,7 +256,7 @@ sub getDDOSLookForRule
 			else
 			{
 				my $farmNameFormat = &getValidFormat( 'farm_name' );
-				if ( $rule =~ /^(\d+) .+DDOS_$ruleName/ )
+				if ( $rule =~ /^(\d+) .+DOS_$ruleName/ )
 				{
 					$lineNum      = $1;
 					$flag         = 1;
@@ -273,18 +273,18 @@ sub getDDOSLookForRule
 # return -1 if not exists
 # return  0 if exists
 # return  array with all rules if the function not receive params
-# &getDDOSExists ( $rule );
-sub getDDOSExists
+# &getDOSExists ( $rule );
+sub getDOSExists
 {
-	my $rule       = shift;
+	my $name       = shift;
 	my $output     = -1;
-	my $confFile   = &getGlobalConfiguration( 'ddosConf' );
+	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 	my @aux;
 
-	if ( $rule )
+	if ( $name )
 	{
-		$output = 0 if ( exists $fileHandle->{ $rule } );
+		$output = 0 if ( exists $fileHandle->{ $name } );
 	}
 	else
 	{
@@ -296,14 +296,14 @@ sub getDDOSExists
 }
 
 # key is the rule identifier
-# &createDDOSRule( $rule, $key );
-sub createDDOSRule
+# &createDOSRule( $rule, $rule );
+sub createDOSRule
 {
 	my $ruleName = shift;
-	my $key      = shift;
+	my $rule      = shift;
 	my $params;
 
-	my $confFile   = &getGlobalConfiguration( 'ddosConf' );
+	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 	$fileHandle = Config::Tiny->read( $confFile );
 
@@ -312,7 +312,7 @@ sub createDDOSRule
 		&zenlog( "$ruleName rule already exists." );
 		return -1;
 	}
-	$params = &getDDOSInitialParams( $key );
+	$params = &getDOSInitialParams( $rule );
 
 	if ( !$params )
 	{
@@ -321,7 +321,7 @@ sub createDDOSRule
 	}
 
 	$fileHandle->{ $ruleName } = $params;
-	$fileHandle->{ $ruleName }->{ 'key' } = $key;
+	$fileHandle->{ $ruleName }->{ 'rule' } = $rule;
 	if ( $params->{ 'type' } eq 'farm' )
 	{
 		$fileHandle->{ $ruleName }->{ 'rule' } = $ruleName;
@@ -332,11 +332,11 @@ sub createDDOSRule
 	return 0;
 }
 
-sub deleteDDOSRule
+sub deleteDOSRule
 {
 	my $name = shift;
 
-	my $confFile   = &getGlobalConfiguration( 'ddosConf' );
+	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 	$fileHandle = Config::Tiny->read( $confFile );
 
@@ -353,19 +353,19 @@ sub deleteDDOSRule
 }
 
 =begin nd
-        Function: setDDOSRunRule
+        Function: setDOSRunRule
 
         Apply iptables rules to a farm or all balancer
 
         Parameters:
-				key		 - id that indetify a rule, ( key = 'farms' to apply rules to farm )
+				rule		 - id that indetify a rule, ( rule = 'farms' to apply rules to farm )
 				farmname - farm name
 				
         Returns:
 
 =cut
 
-sub setDDOSRunRule
+sub setDOSRunRule
 {
 	my ( $ruleName, $farmName ) = @_;
 	my %hash;
@@ -373,7 +373,7 @@ sub setDDOSRunRule
 	my $protocol;
 
 	# return if this rule already is applied
-	if ( @{ &getDDOSLookForRule( $ruleName, $farmName ) } )
+	if ( @{ &getDOSLookForRule( $ruleName, $farmName ) } )
 	{
 		&zenlog( "This rule already is applied." );
 		return -1;
@@ -401,62 +401,62 @@ sub setDDOSRunRule
 		}
 	}
 
-	my $key = &getDDOSParam( $ruleName, 'key' );
+	my $rule = &getDOSParam( $ruleName, 'rule' );
 
-	if (    ( $key eq 'DROPFRAGMENTS' )
-		 || ( $key eq 'NEWNOSYN' )
-		 || ( $key eq 'SYNWITHMSS' )
-		 || ( $key eq 'BOGUSTCPFLAGS' )
-		 || ( $key eq 'LIMITRST' )
-		 || ( $key eq 'SYNPROXY' ) )
+	if (    ( $rule eq 'DROPFRAGMENTS' )
+		 || ( $rule eq 'NEWNOSYN' )
+		 || ( $rule eq 'SYNWITHMSS' )
+		 || ( $rule eq 'bogustcpflags' )
+		 || ( $rule eq 'limitrst' )
+		 || ( $rule eq 'SYNPROXY' ) )
 	{
 		if ( $protocol !~ /TCP/i && $protocol !~ /FTP/i )
 		{
-			&zenlog( "$key rule is only available in farms based in protocol TCP or FTP." );
+			&zenlog( "$rule rule is only available in farms based in protocol TCP or FTP." );
 			return -1;
 		}
 	}
 
 	use Switch;
-	switch ( $key )
+	switch ( $rule )
 	{
 		# comented rules aren't finished
 		# global rules
-		case 'SSHBRUTEFORCE' { $output = &setDDOSSshBruteForceRule(); }
-		case 'DROPICMP'      { $output = &setDDOSDropIcmpRule(); }
+		case 'sshbruteforce' { $output = &setDOSSshBruteForceRule(); }
+		case 'dropicmp'      { $output = &setDOSDropIcmpRule(); }
 
-		#~ case 'PORTSCANNING'		{ $output = &setDDOSPortScanningRule();		}
+		#~ case 'PORTSCANNING'		{ $output = &setDOSPortScanningRule();		}
 
 		# rules for farms
-		case 'LIMITCONNS' { $output = &setDDOSLimitConnsRule( $ruleName, \%hash ); }
-		case 'LIMITSEC' { $output = &setDDOSLimitSecRule( $ruleName, \%hash ); }
+		case 'limitconns' { $output = &setDOSLimitConnsRule( $ruleName, \%hash ); }
+		case 'limitsec' { $output = &setDOSLimitSecRule( $ruleName, \%hash ); }
 
-		#~ case 'INVALID'				{ $output = &setDDOSInvalidPacketRule();	}
-		#~ case 'BLOCKSPOOFED'	{ $output = &setDDOSBlockSpoofedRule();	}
+		#~ case 'INVALID'				{ $output = &setDOSInvalidPacketRule();	}
+		#~ case 'BLOCKSPOOFED'	{ $output = &setDOSBlockSpoofedRule();	}
 
 		# rules for tcp farms
-		case 'BOGUSTCPFLAGS'
+		case 'bogustcpflags'
 		{
-			$output = &setDDOSBogusTcpFlagsRule( $ruleName, \%hash );
+			$output = &setDOSBogusTcpFlagsRule( $ruleName, \%hash );
 		}
-		case 'LIMITRST' { $output = &setDDOSLimitRstRule( $ruleName, \%hash ); }
+		case 'limitrst' { $output = &setDOSLimitRstRule( $ruleName, \%hash ); }
 
-		#~ case 'DROPFRAGMENTS'	{ $output = &setDDOSDropFragmentsRule(); }
-		#~ case 'NEWNOSYN'				{ $output = &setDDOSNewNoSynRule();		 }
-		#~ case 'SYNWITHMSS'			{ $output = &setDDOSSynWithMssRule();	 }
-		#~ case 'SYNPROXY'				{ $output = &setDDOSynProxyRule();			 }
+		#~ case 'DROPFRAGMENTS'	{ $output = &setDOSDropFragmentsRule(); }
+		#~ case 'NEWNOSYN'				{ $output = &setDOSNewNoSynRule();		 }
+		#~ case 'SYNWITHMSS'			{ $output = &setDOSSynWithMssRule();	 }
+		#~ case 'SYNPROXY'				{ $output = &setDOSynProxyRule();			 }
 	}
 
 	return $output;
 }
 
 =begin nd
-        Function: setDDOSStopRule
+        Function: setDOSStopRule
 
         Remove iptables rules
 
         Parameters:
-				ruleName		- id that indetify a rule, ( key = 'farms' to remove rules from farm )
+				ruleName		- id that indetify a rule, ( rule = 'farms' to remove rules from farm )
 				farmname 	- farm name
 				
         Returns:
@@ -465,13 +465,13 @@ sub setDDOSRunRule
 
 =cut
 
-sub setDDOSStopRule
+sub setDOSStopRule
 {
 	my ( $ruleName, $farmName ) = @_;
 	my $output = 0;
 
 	my $ind++;
-	foreach my $rule ( @{ &getDDOSLookForRule( $ruleName, $farmName ) } )
+	foreach my $rule ( @{ &getDOSLookForRule( $ruleName, $farmName ) } )
 	{
 		my $cmd = &getGlobalConfiguration( 'iptables' )
 		  . " --table $rule->{'table'} -D $rule->{'chain'} $rule->{'line'}";
@@ -491,9 +491,9 @@ sub setDDOSStopRule
 }
 
 =begin nd
-        Function: setDDOSBoot
+        Function: setDOSBoot
 
-        Boot all DDoS rules
+        Boot all DoS rules
 
         Parameters:
 				
@@ -503,13 +503,13 @@ sub setDDOSStopRule
 
 =cut
 
-sub setDDOSBoot
+sub setDOSBoot
 {
-	my $confFile = &getGlobalConfiguration( 'ddosConf' );
+	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $output;
 
-	&zenlog( "Booting ddos system... " );
-	&setDDOSCreateFileConf();
+	&zenlog( "Booting dos system... " );
+	&setDOSCreateFileConf();
 
 	#create  PORT_SCANNING chain
 	# /sbin/iptables -N PORT_SCANNING
@@ -525,14 +525,14 @@ sub setDDOSBoot
 				my @farms = split ( ' ', $farmList );
 				foreach my $farmName ( @farms )
 				{
-					$output++ if ( &setDDOSRunRule( $ruleName, $farmName ) != 0 );
+					$output++ if ( &setDOSRunRule( $ruleName, $farmName ) != 0 );
 				}
 			}
 			elsif ( $fileHandle->{ $ruleName }->{ 'type' } eq 'system' )
 			{
 				if ( $fileHandle->{ $ruleName }->{ 'status' } eq "up" )
 				{
-					$output++ if ( &setDDOSRunRule( $ruleName, 'status' ) != 0 );
+					$output++ if ( &setDOSRunRule( $ruleName, 'status' ) != 0 );
 				}
 			}
 		}
@@ -541,9 +541,9 @@ sub setDDOSBoot
 }
 
 =begin nd
-        Function: setDDOSStop
+        Function: setDOSStop
 
-        Stop all DDoS rules
+        Stop all DoS rules
 
         Parameters:
 				
@@ -553,10 +553,10 @@ sub setDDOSBoot
 
 =cut
 
-sub setDDOSStop
+sub setDOSStop
 {
 	my $output   = 0;
-	my $confFile = &getGlobalConfiguration( 'ddosConf' );
+	my $confFile = &getGlobalConfiguration( 'dosConf' );
 
 	if ( -e $confFile )
 	{
@@ -572,7 +572,7 @@ sub setDDOSStop
 					my @farms = split ( ' ', $farmList );
 					foreach my $farmName ( @farms )
 					{
-						$output++ if ( &setDDOSStopRule( $rule, $farmName ) != 0 );
+						$output++ if ( &setDOSStopRule( $rule, $farmName ) != 0 );
 					}
 				}
 			}
@@ -582,7 +582,7 @@ sub setDDOSStop
 			{
 				if ( $fileHandle->{ $rule }->{ 'status' } eq 'up' )
 				{
-					$output++ if ( &setDDOSStopRule( $rule ) != 0 );
+					$output++ if ( &setDOSStopRule( $rule ) != 0 );
 				}
 			}
 		}
@@ -591,9 +591,9 @@ sub setDDOSStop
 }
 
 =begin nd
-        Function: setDDOSCreateRule
+        Function: setDOSCreateRule
 
-        Create a DDoS rules
+        Create a DoS rules
         This rules have two types: applied to a farm or applied to the balancer
 
         Parameters:
@@ -606,10 +606,10 @@ sub setDDOSStop
 
 =cut
 
-sub setDDOSCreateRule
+sub setDOSCreateRule
 {
-	my ( $rule, $farmName ) = @_;
-	my $confFile = &getGlobalConfiguration( 'ddosConf' );
+	my ( $ruleName, $farmName ) = @_;
+	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $output;
 
 	if ( !-e $confFile )
@@ -625,40 +625,40 @@ sub setDDOSCreateRule
 
 	if ( $farmName )
 	{
-		my $farmList = $fileHandle->{ $rule }->{ 'farms' };
+		my $farmList = $fileHandle->{ $ruleName }->{ 'farms' };
 		if ( $farmList !~ /(^| )$farmName( |$)/ )
 		{
-			$output = &setDDOSRunRule( $rule, $farmName );
+			$output = &setDOSRunRule( $ruleName, $farmName );
 
 			if ( $output != -2 )
 			{
 				$fileHandle = Config::Tiny->read( $confFile );
-				$fileHandle->{ $rule }->{ 'farms' } = "$farmList $farmName";
+				$fileHandle->{ $ruleName }->{ 'farms' } = "$farmList $farmName";
 				$fileHandle->write( $confFile );
 			}
 			else
 			{
-				&zenlog( "Rule $rule only is available for TCP protocol" );
+				&zenlog( "Rule $ruleName only is available for TCP protocol" );
 			}
 		}
 	}
 
 	# check param is down
-	elsif ( $fileHandle->{ $rule }->{ 'status' } ne "up" )
+	elsif ( $fileHandle->{ $ruleName }->{ 'status' } ne "up" )
 	{
-		$fileHandle->{ $rule }->{ 'status' } = "up";
+		$fileHandle->{ $ruleName }->{ 'status' } = "up";
 		$fileHandle->write( $confFile );
 
-		$output = &setDDOSRunRule( $rule );
+		$output = &setDOSRunRule( $ruleName );
 	}
 
 	return $output;
 }
 
 =begin nd
-        Function: setDDOSCreateRule
+        Function: setDOSCreateRule
 
-        Create a DDoS rules
+        Create a DoS rules
         This rules have two types: applied to farm or balancer
 
         Parameters:
@@ -671,10 +671,10 @@ sub setDDOSCreateRule
 
 =cut
 
-sub setDDOSDeleteRule
+sub setDOSDeleteRule
 {
-	my ( $rule, $farmName ) = @_;
-	my $confFile   = &getGlobalConfiguration( 'ddosConf' );
+	my ( $ruleName, $farmName ) = @_;
+	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 	my $output;
 
@@ -682,15 +682,15 @@ sub setDDOSDeleteRule
 	{
 		if ( $farmName )
 		{
-			$fileHandle->{ $rule }->{ 'farms' } =~ s/(^| )$farmName( |$)/ /;
+			$fileHandle->{ $ruleName }->{ 'farms' } =~ s/(^| )$farmName( |$)/ /;
 			$fileHandle->write( $confFile );
-			$output = &setDDOSStopRule( $rule, $farmName );
+			$output = &setDOSStopRule( $ruleName, $farmName );
 		}
 		else
 		{
-			$fileHandle->{ $rule }->{ 'status' } = "down";
+			$fileHandle->{ $ruleName }->{ 'status' } = "down";
 			$fileHandle->write( $confFile );
-			$output = &setDDOSStopRule( $rule );
+			$output = &setDOSStopRule( $ruleName );
 		}
 	}
 	return $output;
@@ -698,26 +698,26 @@ sub setDDOSDeleteRule
 
 # Only TCP farms
 ### Block packets with bogus TCP flags ###
-# &setDDOSBogusTcpFlagsRule ( ruleOpt )
-sub setDDOSBogusTcpFlagsRule
+# &setDOSBogusTcpFlagsRule ( ruleOpt )
+sub setDOSBogusTcpFlagsRule
 {
-	my ( $rule, $ruleOptRef ) = @_;
+	my ( $ruleName, $ruleOptRef ) = @_;
 	my %ruleOpt = %{ $ruleOptRef };
 
-	#~ my $key    = "BOGUSTCPFLAGS";
-	my $logMsg = "[Blocked by rule $rule]";
+	#~ my $rule    = "bogustcpflags";
+	my $logMsg = "[Blocked by rule $ruleName]";
 
 # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE -j DROP
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE "    # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 	my $output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_1' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_1' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,SYN FIN,SYN -j DROP
@@ -725,12 +725,12 @@ sub setDDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,SYN FIN,SYN "    # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_2' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_2' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags SYN,RST SYN,RST -j DROP
@@ -738,12 +738,12 @@ sub setDDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags SYN,RST SYN,RST "    # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_3' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_3' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags SYN,FIN SYN,FIN -j DROP
@@ -751,12 +751,12 @@ sub setDDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags SYN,FIN SYN,FIN "    # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_4' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_4' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,RST FIN,RST -j DROP
@@ -764,12 +764,12 @@ sub setDDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,RST FIN,RST "    # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_5' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_5' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,ACK FIN -j DROP
@@ -777,12 +777,12 @@ sub setDDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,ACK FIN "    # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_6' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_6' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ACK,URG URG -j DROP
@@ -790,12 +790,12 @@ sub setDDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ACK,URG URG "    # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_7' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_7' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ACK,FIN FIN -j DROP
@@ -803,12 +803,12 @@ sub setDDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ACK,FIN FIN "    # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_8' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_8' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ACK,PSH PSH -j DROP
@@ -816,12 +816,12 @@ sub setDDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ACK,PSH PSH "    # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_9' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_9' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL ALL -j DROP
@@ -829,12 +829,12 @@ sub setDDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL ALL "    # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_10' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_10' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL NONE -j DROP
@@ -842,12 +842,12 @@ sub setDDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL NONE "    # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_11' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_11' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL FIN,PSH,URG -j DROP
@@ -855,12 +855,12 @@ sub setDDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL FIN,PSH,URG "    # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_12' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_12' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL SYN,FIN,PSH,URG -j DROP
@@ -868,12 +868,12 @@ sub setDDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL SYN,FIN,PSH,URG "    # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_13' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_13' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL SYN,RST,ACK,FIN,URG -j DROP
@@ -881,31 +881,31 @@ sub setDDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL SYN,RST,ACK,FIN,URG "    # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_14' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_14' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	return $output;
 }
 
 ### Limit connections per source IP ###
-# &setDDOSLimitConnsRule ( ruleOpt )
-sub setDDOSLimitConnsRule
+# &setDOSLimitConnsRule ( ruleOpt )
+sub setDOSLimitConnsRule
 {
-	my ( $rule, $ruleOptRef ) = @_;
+	my ( $ruleName, $ruleOptRef ) = @_;
 	my %ruleOpt = %{ $ruleOptRef };
 
-	#~ my $key    = "LIMITCONNS";
-	my $logMsg = "[Blocked by rule $rule]";
+	#~ my $rule    = "limitconns";
+	my $logMsg = "[Blocked by rule $ruleName]";
 	my $chain  = "INPUT";                     # default, this chain is for L7 apps
 	my $dest   = $ruleOpt{ 'vip' };
 	my $port   = $ruleOpt{ 'vport' };
 	my $output;
-	my $limitConns = &getDDOSParam( $rule, 'limitConns' );
+	my $limitConns = &getDOSParam( $ruleName, 'limitConns' );
 
 	# especific values to L4 farm
 	if ( &getFarmType( $ruleOpt{ 'farmName' } ) eq "l4xnat" )
@@ -918,14 +918,14 @@ sub setDDOSLimitConnsRule
 			$dest = "-d $l_serv[1]";
 			$port = "--dport $l_serv[2]";
 
-# /sbin/iptables -A FORWARD -t filter -d 1.1.1.1,54.12.1.1 -p tcp --dport 5 -m connlimit --connlimit-above 5 -m comment --comment "DDOS_LIMITCONNS_aa" -j REJECT --reject-with tcp-reset
+# /sbin/iptables -A FORWARD -t filter -d 1.1.1.1,54.12.1.1 -p tcp --dport 5 -m connlimit --connlimit-above 5 -m comment --comment "DOS_limitconns_aa" -j REJECT --reject-with tcp-reset
 			my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 
 			  #~ . " -A INPUT -t filter "         # select iptables struct
 			  . " -A $chain -t filter "                          # select iptables struct
 			  . "$dest $ruleOpt{ 'protocol' } $port "            # who is destined
 			  . "-m connlimit --connlimit-above $limitConns "    # rules for block
-			  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+			  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 			$output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
 
@@ -935,14 +935,14 @@ sub setDDOSLimitConnsRule
 
 	else
 	{
-# /sbin/iptables -A FORWARD -t filter -d 1.1.1.1,54.12.1.1 -p tcp --dport 5 -m connlimit --connlimit-above 5 -m comment --comment "DDOS_LIMITCONNS_aa" -j REJECT --reject-with tcp-reset
+# /sbin/iptables -A FORWARD -t filter -d 1.1.1.1,54.12.1.1 -p tcp --dport 5 -m connlimit --connlimit-above 5 -m comment --comment "DOS_limitconns_aa" -j REJECT --reject-with tcp-reset
 		my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 
 		  #~ . " -A INPUT -t filter "         # select iptables struct
 		  . " -A $chain -t filter "                          # select iptables struct
 		  . "$dest $ruleOpt{ 'protocol' } $port "            # who is destined
 		  . "-m connlimit --connlimit-above $limitConns "    # rules for block
-		  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+		  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 		my $output =
 		  &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
@@ -951,7 +951,7 @@ sub setDDOSLimitConnsRule
 	}
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '$rule' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '$ruleName' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	return $output;
@@ -959,28 +959,28 @@ sub setDDOSLimitConnsRule
 
 # Only TCP farms
 ### Limit RST packets ###
-# &setDDOSLimitRstRule ( ruleOpt )
-sub setDDOSLimitRstRule
+# &setDOSLimitRstRule ( ruleOpt )
+sub setDOSLimitRstRule
 {
-	my ( $rule, $ruleOptRef ) = @_;
+	my ( $ruleName, $ruleOptRef ) = @_;
 	my %ruleOpt = %{ $ruleOptRef };
 
-	#~ my $key        = "LIMITRST";
-	my $logMsg     = "[Blocked by rule $rule]";
-	my $limit      = &getDDOSParam( $rule, 'limit' );
-	my $limitBurst = &getDDOSParam( $rule, 'limitBurst' );
+	#~ my $rule        = "limitrst";
+	my $logMsg     = "[Blocked by rule $ruleName]";
+	my $limit      = &getDOSParam( $ruleName, 'limit' );
+	my $limitBurst = &getDOSParam( $ruleName, 'limitBurst' );
 
 # /sbin/iptables -A PREROUTING -t mangle -p tcp --tcp-flags RST RST -m limit --limit 2/s --limit-burst 2 -j ACCEPT
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -A PREROUTING -t mangle "    # select iptables struct
 	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags RST RST -m limit --limit $limit/s --limit-burst $limitBurst " # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";            # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";            # comment
 
 	my $output = &iptSystem( $cmd );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_1' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_1' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 	else
 	{
@@ -989,40 +989,40 @@ sub setDDOSLimitRstRule
 		  . " -A PREROUTING -t mangle "    # select iptables struct
 		  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 		  . "--tcp-flags RST RST "    # rules for block
-		  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+		  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 		my $output = &setIPDSDropAndLog( $cmd, $logMsg );
 		if ( $output != 0 )
 		{
-			&zenlog( "Error appling '${rule}_2' rule to farm '$ruleOpt{ 'farmName' }'." );
+			&zenlog( "Error appling '${ruleName}_2' rule to farm '$ruleOpt{ 'farmName' }'." );
 		}
 	}
 	return $output;
 }
 
 ### Limit new TCP connections per second per source IP ###
-# &setDDOSLimitSecRule ( ruleOpt )
-sub setDDOSLimitSecRule
+# &setDOSLimitSecRule ( ruleOpt )
+sub setDOSLimitSecRule
 {
-	my ( $rule, $ruleOptRef ) = @_;
+	my ( $ruleName, $ruleOptRef ) = @_;
 	my %ruleOpt = %{ $ruleOptRef };
 
-	#~ my $key        = "LIMITSEC";
-	my $logMsg     = "[Blocked by rule $rule]";
-	my $limit      = &getDDOSParam( $rule, 'limit' );
-	my $limitBurst = &getDDOSParam( $rule, 'limitBurst' );
+	#~ my $rule        = "limitsec";
+	my $logMsg     = "[Blocked by rule $ruleName]";
+	my $limit      = &getDOSParam( $ruleName, 'limit' );
+	my $limitBurst = &getDOSParam( $ruleName, 'limitBurst' );
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp -m conntrack --ctstate NEW -m limit --limit 60/s --limit-burst 20 -j ACCEPT
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -A PREROUTING -t mangle "    # select iptables struct
 	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "-m conntrack --ctstate NEW -m limit --limit $limit/s --limit-burst $limitBurst " # rules for block
-	  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";                   # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";                   # comment
 
 	my $output = &iptSystem( $cmd );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${rule}_1' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog( "Error appling '${ruleName}_1' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 	else
 	{
@@ -1031,12 +1031,12 @@ sub setDDOSLimitSecRule
 		  . " -A PREROUTING -t mangle "    # select iptables struct
 		  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 		  . "-m conntrack --ctstate NEW "    # rules for block
-		  . "-m comment --comment \"DDOS_${rule}_$ruleOpt{ 'farmName' }\"";    # comment
+		  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 		my $output = &setIPDSDropAndLog( $cmd, $logMsg );
 		if ( $output != 0 )
 		{
-			&zenlog( "Error appling '${rule}_2' rule to farm '$ruleOpt{ 'farmName' }'." );
+			&zenlog( "Error appling '${ruleName}_2' rule to farm '$ruleOpt{ 'farmName' }'." );
 		}
 	}
 	return $output;
@@ -1044,31 +1044,31 @@ sub setDDOSLimitSecRule
 
 # All balancer
 ###  Drop ICMP ###
-# &setDDOSDropIcmpRule ( ruleOpt )
-sub setDDOSDropIcmpRule
+# &setDOSDropIcmpRule ( ruleOpt )
+sub setDOSDropIcmpRule
 {
-	my $key = "drop_icmp";
+	my $rule = "drop_icmp";
 
-	#~ my $key    = "DROPICMP";
-	my $logMsg = "[Blocked by rule $key]";
+	#~ my $rule    = "dropicmp";
+	my $logMsg = "[Blocked by rule $rule]";
 
 	# /sbin/iptables -t raw -A PREROUTING -p icmp -j DROP
 	my $cmd = &getGlobalConfiguration( 'iptables' )
 	  . " -t raw -A PREROUTING "                   # select iptables struct
 	  . "-p icmp "                                 # rules for block
-	  . "-m comment --comment \"DDOS_${key}\"";    # comment
+	  . "-m comment --comment \"DOS_${rule}\"";    # comment
 
 	my $output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '$key' rule." );
+		&zenlog( "Error appling '$rule' rule." );
 	}
 
 	return $output;
 }
 
 =begin nd
-        Function: setDDOSSshBruteForceRule
+        Function: setDOSSshBruteForceRule
 
         This rule is a protection against brute-force atacks to ssh protocol.
         This rule applies to the balancer
@@ -1083,16 +1083,16 @@ sub setDDOSDropIcmpRule
 
 # balancer
 ### SSH brute-force protection ###
-# &setDDOSSshBruteForceRule
-sub setDDOSSshBruteForceRule
+# &setDOSSshBruteForceRule
+sub setDOSSshBruteForceRule
 {
-	my $key = 'ssh_brute_force';
+	my $rule = 'ssh_brute_force';
 
-	#~ my $key    = "SSHBRUTEFORCE";
-	my $hits = &getDDOSParam( $key, 'hits' );
-	my $time = &getDDOSParam( $key, 'time' );
-	my $port = &getDDOSParam( $key, 'port' );
-	my $logMsg = "[Blocked by rule $key]";
+	#~ my $rule    = "sshbruteforce";
+	my $hits = &getDOSParam( $rule, 'hits' );
+	my $time = &getDOSParam( $rule, 'time' );
+	my $port = &getDOSParam( $rule, 'port' );
+	my $logMsg = "[Blocked by rule $rule]";
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --set
 	my $cmd =
@@ -1100,12 +1100,12 @@ sub setDDOSSshBruteForceRule
 	  . " -A PREROUTING -t mangle "                      # select iptables struct
 	  . "-p tcp --dport $port "                          # who is destined
 	  . "-m conntrack --ctstate NEW -m recent --set "    # rules for block
-	  . "-m comment --comment \"DDOS_$key\"";            # comment
+	  . "-m comment --comment \"DOS_$rule\"";            # comment
 
 	my $output = &iptSystem( $cmd );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${key}_1' rule." );
+		&zenlog( "Error appling '${rule}_1' rule." );
 	}
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --update --seconds 60 --hitcount 10 -j DROP
@@ -1114,12 +1114,12 @@ sub setDDOSSshBruteForceRule
 	  . " -A PREROUTING -t mangle "                      # select iptables struct
 	  . "-p tcp --dport $port "                          # who is destined
 	  . "-m conntrack --ctstate NEW -m recent --update --seconds $time --hitcount $hits " # rules for block
-	  . "-m comment --comment \"DDOS_$key\"";                                             # comment
+	  . "-m comment --comment \"DOS_$rule\"";                                             # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${key}_2' rule." );
+		&zenlog( "Error appling '${rule}_2' rule." );
 	}
 
 	return $output;
@@ -1139,16 +1139,16 @@ sub setDDOSSshBruteForceRule
 
 #~ # balancer
 #~ ### SSH brute-force protection ###
-#~ # &setDDOSSshBruteForceRule
-#~ sub setDDOSynProxyRule
+#~ # &setDOSSshBruteForceRule
+#~ sub setDOSynProxyRule
 #~ {
 #~ my ( $ruleOptRef ) = @_;
 #~ my %ruleOpt = %{ $ruleOptRef };
 
 #~ my $key = "SYNPROXY";
 #~ my $logMsg = "[Blocked by rule $key]";
-#~ my $scale = getDDOSParam ( $key, 'scale' );
-#~ my $mss = getDDOSParam ( $key, 'mss' );
+#~ my $scale = getDOSParam ( $key, 'scale' );
+#~ my $mss = getDOSParam ( $key, 'mss' );
 
 #~ # iptables -t raw -A PREROUTING -p tcp -m tcp --syn -j CT
 #~ my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
@@ -1156,7 +1156,7 @@ sub setDDOSSshBruteForceRule
 #~ . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " 						# who is destined
 #~ . "-m tcp --syn " 																										# rules for block
 #~ . "-j CT "																													# action
-#~ . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
+#~ . "-m comment --comment \"DOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
 #~ my $output = &iptSystem( "$cmd" );
 
 #~ # iptables -I INPUT -p tcp -m tcp -m conntrack --ctstate NEW -j SYNPROXY --sack-perm --timestamp --wscale 7 --mss 1460
@@ -1165,7 +1165,7 @@ sub setDDOSSshBruteForceRule
 #~ . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " 					# who is destined
 #~ . "-j SYNPROXY --sack-perm --timestamp --wscale $scale --mss $mss "	# action
 #~ . "-m conntrack --ctstate NEW "														 				# rules for block
-#~ . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
+#~ . "-m comment --comment \"DOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
 #~ $output = &iptSystem( "$cmd" );
 
 #~ # iptables -I FORWARD -p tcp -m tcp -m conntrack --ctstate NEW -j SYNPROXY --sack-perm --timestamp --wscale 7 --mss 1460
@@ -1174,7 +1174,7 @@ sub setDDOSSshBruteForceRule
 #~ . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " 					# who is destined
 #~ . "-j SYNPROXY --sack-perm --timestamp --wscale $scale --mss $mss "	# action
 #~ . "-m conntrack --ctstate NEW "														 				# rules for block
-#~ . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
+#~ . "-m comment --comment \"DOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
 #~ $output = &iptSystem( "$cmd" );
 
 #~ # iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
@@ -1182,7 +1182,7 @@ sub setDDOSSshBruteForceRule
 #~ . " -A INPUT "           																				# select iptables struct
 #~ . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " 	# who is destined
 #~ . "-m conntrack --ctstate INVALID " 													# rules for block
-#~ . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
+#~ . "-m comment --comment \"DOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
 #~ $output = &setIPDSDropAndLog ( $cmd, $logMsg );
 
 #~ # iptables -A FORWARD -m conntrack --ctstate INVALID -j DROP
@@ -1190,7 +1190,7 @@ sub setDDOSSshBruteForceRule
 #~ . " -A FORWARD "           																				# select iptables struct
 #~ . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " 	# who is destined
 #~ . "-m conntrack --ctstate INVALID " 													# rules for block
-#~ . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
+#~ . "-m comment --comment \"DOS_${key}_$ruleOpt{ 'farmName' }\"";	# comment
 #~ $output = &setIPDSDropAndLog ( $cmd, $logMsg );
 
 #~ if ( $output != 0 )
@@ -1203,8 +1203,8 @@ sub setDDOSSshBruteForceRule
 
 # Balancer
 ### Protection against port scanning ###
-# &setDDOSPortScanningRule ( ruleOpt )
-#~ sub setDDOSPortScanningRule
+# &setDOSPortScanningRule ( ruleOpt )
+#~ sub setDOSPortScanningRule
 #~ {
 #~ # my ( $ruleOptRef ) = @_;
 #~ # my %ruleOpt = %{ $ruleOptRef };
@@ -1213,10 +1213,10 @@ sub setDDOSSshBruteForceRule
 #~ my $logMsg = "[Blocked by rule $key]";
 #~ my $output;
 
-#~ my $portScan = &getDDOSParam( $key, 'portScan');
-#~ my $blTime = &getDDOSParam( $key, 'blTime');
-#~ my $time = &getDDOSParam( $key, 'time');
-#~ my $hits = &getDDOSParam( $key, 'hits');
+#~ my $portScan = &getDOSParam( $key, 'portScan');
+#~ my $blTime = &getDOSParam( $key, 'blTime');
+#~ my $time = &getDOSParam( $key, 'time');
+#~ my $hits = &getDOSParam( $key, 'hits');
 
 #~ my $cmd = &getGlobalConfiguration( 'iptables' )
 #~ . " -N PORT_SCANNING -t raw ";
@@ -1228,8 +1228,8 @@ sub setDDOSSshBruteForceRule
 #~ # . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 #~ . "-j PORT_SCANNING "
 #~ . "-p tcp --tcp-flags SYN,ACK,FIN,RST RST "    # rules for block
-#~ # . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
-#~ . "-m comment --comment \"DDOS_${key}\"";    # comment
+#~ # . "-m comment --comment \"DOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
+#~ . "-m comment --comment \"DOS_${key}\"";    # comment
 #~ $output = &iptSystem( $cmd );
 
 #~ # iptables -A PORT_SCANNING -p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit 1/s --limit-burst 2 -j RETURN
@@ -1237,13 +1237,13 @@ sub setDDOSSshBruteForceRule
 #~ . " -A PORT_SCANNING -t raw "     # select iptables struct
 #~ . "-j RETURN "
 #~ . "-p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit $time/s --limit-burst $hits "    # rules for block
-#~ . "-m comment --comment \"DDOS_${key}\"";    # comment
+#~ . "-m comment --comment \"DOS_${key}\"";    # comment
 #~ $output = &iptSystem( $cmd );
 
 #~ # /sbin/iptables -A port-scanning -j DROP
 #~ $cmd = &getGlobalConfiguration( 'iptables' )
 #~ . " -A PORT_SCANNING -t raw "     # select iptables struct
-#~ . "-m comment --comment \"DDOS_${key}\"";    # comment
+#~ . "-m comment --comment \"DOS_${key}\"";    # comment
 #~ $output = &setIPDSDropAndLog ( $cmd, $logMsg );
 
 #~ if ( $output != 0 )
@@ -1255,42 +1255,42 @@ sub setDDOSSshBruteForceRule
 #~ $cmd = &getGlobalConfiguration( 'iptables' )
 #~ . " -A PREROUTING -t mangle " # select iptables struct
 #~ . "-m recent --name portscan --rcheck --seconds $blTime "
-#~ . "-m comment --comment \"DDOS_${key}\"";    # comment
+#~ . "-m comment --comment \"DOS_${key}\"";    # comment
 #~ $output = &setIPDSDropAndLog ( $cmd, $logMsg );
 
 #~ # /sbin/iptables -A OUTPUT -t mangle -m recent --name portscan --rcheck --seconds $blTime
 #~ $cmd = &getGlobalConfiguration( 'iptables' )
 #~ . " -A OUTPUT -t mangle "    # select iptables struct
 #~ . "-m recent --name portscan --rcheck --seconds $blTime "
-#~ . "-m comment --comment \"DDOS_${key}\"";    # comment
+#~ . "-m comment --comment \"DOS_${key}\"";    # comment
 #~ $output = &setIPDSDropAndLog ( $cmd, $logMsg );
 
 #~ # /sbin/iptables -A PREROUTING -t mangle -m recent --name portscan --remove
 #~ $cmd = &getGlobalConfiguration( 'iptables' )
 #~ . " -A PREROUTING -t mangle " # select iptables struct
 #~ . "-m recent --name portscan --remove "
-#~ . "-m comment --comment \"DDOS_${key}\"";    # comment
+#~ . "-m comment --comment \"DOS_${key}\"";    # comment
 #~ $output = &iptSystem( $cmd );
 
 #~ # /sbin/iptables -A OUTPUT -t mangle -m recent --name portscan --remove
 #~ $cmd = &getGlobalConfiguration( 'iptables' )
 #~ . " -A OUTPUT -t mangle "    # select iptables struct
 #~ . "-m recent --name portscan --remove "
-#~ . "-m comment --comment \"DDOS_${key}\"";    # comment
+#~ . "-m comment --comment \"DOS_${key}\"";    # comment
 #~ $output = &iptSystem( $cmd );
 
 #~ # /sbin/iptables -A PREROUTING -t mangle -p tcp -m tcp --dport $portScan -m recent --name portscan --set -j DROP
 #~ $cmd = &getGlobalConfiguration( 'iptables' )
 #~ . " -A PREROUTING -t mangle " # select iptables struct
 #~ . "-p tcp -m tcp --dport $portScan -m recent --name portscan --set "
-#~ . "-m comment --comment \"DDOS_${key}\"";    # comment
+#~ . "-m comment --comment \"DOS_${key}\"";    # comment
 #~ $output = &setIPDSDropAndLog ( $cmd, $logMsg );
 
 #~ # /sbin/iptables -A OUTPUT -t mangle -p tcp -m tcp --dport $portScan -m recent --name portscan --set -j DROP
 #~ $cmd = &getGlobalConfiguration( 'iptables' )
 #~ . " -A OUTPUT -t mangle "    # select iptables struct
 #~ . "-p tcp -m tcp --dport $portScan -m recent --name portscan --set "
-#~ . "-m comment --comment \"DDOS_${key}\"";    # comment
+#~ . "-m comment --comment \"DOS_${key}\"";    # comment
 #~ $output = &setIPDSDropAndLog ( $cmd, $logMsg );
 
 #~ return $output;
@@ -1298,8 +1298,8 @@ sub setDDOSSshBruteForceRule
 
 #~ # only ipv4
 #~ ### Drop fragments in all chains ###
-#~ # &setDDOSDropFragmentsRule ( ruleOpt )
-#~ sub setDDOSDropFragmentsRule
+#~ # &setDOSDropFragmentsRule ( ruleOpt )
+#~ sub setDOSDropFragmentsRule
 #~ {
 #~ my ( $ruleOptRef ) = @_;
 #~ my %ruleOpt = %{ $ruleOptRef };
@@ -1318,7 +1318,7 @@ sub setDDOSSshBruteForceRule
 #~ . " -t raw -A PREROUTING "    # select iptables struct
 #~ . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 #~ . "-f "    # rules for block
-#~ . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
+#~ . "-m comment --comment \"DOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
 #~ my $output = &setIPDSDropAndLog ( $cmd, $logMsg );
 #~ if ( $output != 0 )
@@ -1330,8 +1330,8 @@ sub setDDOSSshBruteForceRule
 #~ }
 
 #~ ### Block spoofed packets ###
-#~ # &setDDOSBlockSpoofedRule ( ruleOpt )
-#~ sub setDDOSBlockSpoofedRule
+#~ # &setDOSBlockSpoofedRule ( ruleOpt )
+#~ sub setDOSBlockSpoofedRule
 #~ {
 #~ my ( $ruleOptRef ) = @_;
 #~ my %ruleOpt = %{ $ruleOptRef };
@@ -1344,7 +1344,7 @@ sub setDDOSSshBruteForceRule
 #~ . " -t raw -A PREROUTING "    # select iptables struct
 #~ . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 #~ . "-s 192.0.2.0/24,192.168.0.0/16,10.0.0.0/8,0.0.0.0/8,240.0.0.0/5 " # rules for block
-#~ . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";     # comment
+#~ . "-m comment --comment \"DOS_${key}_$ruleOpt{ 'farmName' }\"";     # comment
 
 #~ my $output = &setIPDSDropAndLog ( $cmd, $logMsg );
 #~ if ( $output != 0 )
@@ -1357,7 +1357,7 @@ sub setDDOSSshBruteForceRule
 #~ . " -t raw -A PREROUTING "    # select iptables struct
 #~ . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 #~ . "-s 127.0.0.0/8 ! -i lo "    # rules for block
-#~ . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
+#~ . "-m comment --comment \"DOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
 #~ $output = &setIPDSDropAndLog ( $cmd, $logMsg );
 #~ if ( $output != 0 )
@@ -1370,8 +1370,8 @@ sub setDDOSSshBruteForceRule
 
 #~ # Only TCP farms
 #~ ### Drop SYN packets with suspicious MSS value ###
-#~ # &setDDOSSynWithMssRule ( ruleOpt )
-#~ sub setDDOSSynWithMssRule
+#~ # &setDOSSynWithMssRule ( ruleOpt )
+#~ sub setDOSSynWithMssRule
 #~ {
 #~ my ( $ruleOptRef ) = @_;
 #~ my %ruleOpt = %{ $ruleOptRef };
@@ -1384,7 +1384,7 @@ sub setDDOSSshBruteForceRule
 #~ . " -t raw -A PREROUTING "    # select iptables struct
 #~ . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 #~ . "-m conntrack --ctstate NEW -m tcpmss ! --mss 536:65535 "  # rules for block
-#~ . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
+#~ . "-m comment --comment \"DOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
 #~ my $output = &setIPDSDropAndLog ( $cmd, $logMsg );
 #~ if ( $output != 0 )
@@ -1398,8 +1398,8 @@ sub setDDOSSshBruteForceRule
 #~ # Only TCP farms
 #~ # restrictive rule
 #~ ### Drop TCP packets that are new and are not SYN ###
-#~ # &setDDOSNewNoSynRule ( ruleOpt )
-#~ sub setDDOSNewNoSynRule
+#~ # &setDOSNewNoSynRule ( ruleOpt )
+#~ sub setDOSNewNoSynRule
 #~ {
 #~ my ( $ruleOptRef ) = @_;
 #~ my %ruleOpt = %{ $ruleOptRef };
@@ -1412,7 +1412,7 @@ sub setDDOSSshBruteForceRule
 #~ . " -t raw -A PREROUTING "    # select iptables struct
 #~ . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 #~ . "! --syn -m conntrack --ctstate NEW "    # rules for block
-#~ . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
+#~ . "-m comment --comment \"DOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
 #~ my $output = &setIPDSDropAndLog ( $cmd, $logMsg );
 #~ if ( $output != 0 )
@@ -1425,8 +1425,8 @@ sub setDDOSSshBruteForceRule
 
 #~ # permivisve rule
 #~ ### Drop invalid packets ###
-#~ # &setDDOSInvalidPacketRule ( ruleOpt )
-#~ sub setDDOSInvalidPacketRule
+#~ # &setDOSInvalidPacketRule ( ruleOpt )
+#~ sub setDOSInvalidPacketRule
 #~ {
 #~ my ( $ruleOptRef ) = @_;
 #~ my %ruleOpt = %{ $ruleOptRef };
@@ -1439,7 +1439,7 @@ sub setDDOSSshBruteForceRule
 #~ . " -t raw -A PREROUTING "    # select iptables struct
 #~ . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 #~ . "-m conntrack --ctstate INVALID "    # rules for block
-#~ . "-m comment --comment \"DDOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
+#~ . "-m comment --comment \"DOS_${key}_$ruleOpt{ 'farmName' }\"";    # comment
 
 #~ my $output = &setIPDSDropAndLog ( $cmd, $logMsg );
 #~ if ( $output != 0 )
