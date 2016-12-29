@@ -857,6 +857,10 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 			"ZAPI success, some parameters have been changed  in zone $zone in farm $farmname."
 		);
 
+		# update the ipds rule applied to the farm
+		&setBLReloadFarmRules ( $farmname );
+		&setDOSReloadFarmRules ( $farmname );
+
 		# Success
 		my $body = {
 					 description => "Modify zone $zone in farm $farmname",

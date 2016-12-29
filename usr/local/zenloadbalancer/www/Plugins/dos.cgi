@@ -490,6 +490,33 @@ sub setDOSStopRule
 	return $output;
 }
 
+
+
+
+sub setDOSReloadFarmRules
+{
+	my $farmName = shift;
+	# get all lists
+	my $dosConf = &getGlobalConfiguration ( 'dosConf' );
+	my $allRulesRef = Config::Tiny->read( $dosConf );
+	my %allRules = %{ $allRulesRef };
+
+	foreach my $dosRule ( keys %allRules )
+	{
+		my $farms =  &getDOSParam( $dosRule, "farms" );
+		if ( $farms =~ /( |^)$farmName( |$)/ )
+		{
+			&setDOSRunRule ( $dosRule, $farmName );
+			&setDOSStopRule ( $dosRule, $farmName );
+		}
+	}
+
+	#~ return $output;
+}
+
+
+
+
 =begin nd
         Function: setDOSBoot
 

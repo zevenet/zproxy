@@ -229,7 +229,7 @@ sub setBLCreateRule
 	my $cmd;
 	my $output;
 	my $logMsg = "[Blocked by BL rule]";
-	my $action = &getBLParam( $listName, 'policity' );
+	my $action = &getBLParam( $listName, 'policy' );
 
 	if ( $action eq "allow" )
 	{
@@ -354,6 +354,7 @@ sub setBLDeleteRule
 sub setBLReloadFarmRules
 {
 	my $farmName = shift;
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	# get all lists
 	my $allListsRef = Config::Tiny->read( $blacklistsConf );
 	my %allLists = %{ $allListsRef };
@@ -368,7 +369,7 @@ sub setBLReloadFarmRules
 		}
 	}
 
-	return $output;
+	#~ return $output;
 }
 
 
@@ -538,7 +539,7 @@ sub setBLCreateList
 {
 	my $listName    = shift;
 	my $listParams  = shift;
-	my $def_policity    = 'deny';
+	my $def_policy    = 'deny';
 	my $def_preload = 'false';
 	my $output;
 
@@ -571,13 +572,13 @@ sub setBLCreateList
 	{
 		$fileHandle->{ $listName }->{ 'preload' } = $def_preload;
 	}
-	if ( exists $listParams->{ 'policity' } )
+	if ( exists $listParams->{ 'policy' } )
 	{
-		$fileHandle->{ $listName }->{ 'policity' } = $listParams->{ 'policity' };
+		$fileHandle->{ $listName }->{ 'policy' } = $listParams->{ 'policy' };
 	}
 	else
 	{
-		$fileHandle->{ $listName }->{ 'policity' } = $def_policity;
+		$fileHandle->{ $listName }->{ 'policy' } = $def_policy;
 	}
 
 	$fileHandle->write( $blacklistsConf );
@@ -743,9 +744,9 @@ sub setBLParam
 			return $output;
 		}
 	}
-	elsif ( 'policity' eq $key )
+	elsif ( 'policy' eq $key )
 	{
-		$conf->{ 'policity' } = $value;
+		$conf->{ 'policy' } = $value;
 		$fileHandle->write( $blacklistsConf );
 
 		# delete list and all rules applied to farms
@@ -1201,7 +1202,7 @@ sub setBLAddToList
 sub setBLDeleteSource
 {
 	my ( $listName, $id ) = @_;
-	my $policity = &getBLParam( $listName, 'policity' );
+	my $policy = &getBLParam( $listName, 'policy' );
 
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
@@ -1237,7 +1238,7 @@ sub setBLDeleteSource
 sub setBLAddSource
 {
 	my ( $listName, $source ) = @_;
-	my $policity = &getBLParam( $listName, 'policity' );
+	my $policy = &getBLParam( $listName, 'policy' );
 
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
@@ -1273,7 +1274,7 @@ sub setBLAddSource
 sub setBLModifSource
 {
 	my ( $listName, $id, $source ) = @_;
-	my $policity           = &getBLParam( $listName, 'policity' );
+	my $policy           = &getBLParam( $listName, 'policy' );
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $err;

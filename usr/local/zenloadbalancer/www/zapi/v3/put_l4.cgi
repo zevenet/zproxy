@@ -476,6 +476,10 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		&zenlog(
 				  "ZAPI success, some parameters have been changed in farm $farmname." );
 
+		# update the ipds rule applied to the farm
+		&setBLReloadFarmRules ( $farmname );
+		&setDOSReloadFarmRules ( $farmname );
+
 		# Success
 		my $body = {
 					 description => "Modify farm $farmname",
