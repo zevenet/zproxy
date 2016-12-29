@@ -49,7 +49,7 @@ blacklists:
 #         ],
 #         "type" : "local",
 #         "name" : "blackList",
-#         "policity" : "deny"
+#         "policy" : "deny"
 #      },
 #      {
 #         "farms" : [],
@@ -59,7 +59,7 @@ blacklists:
 #		  ],
 #         "type" : "local",
 #         "name" : "whiteList",
-#         "policity" : "allow"
+#         "policy" : "allow"
 #      }
 #   ]
 #}
@@ -80,7 +80,7 @@ sub get_blacklists_all_lists
 		my %listHash = (
 						 name     => $list,
 						 farms    => &getBLParam( $list, 'farms' ),
-						 policity     => &getBLParam( $list, 'policity' ),
+						 policy     => &getBLParam( $list, 'policy' ),
 						 type => &getBLParam( $list, "type" ),
 						 preload => &getBLParam( $list, "preload" )
 		);
@@ -120,7 +120,7 @@ sub get_blacklists_all_lists
 #            }
 #         ],
 #         "name" : "blackList",
-#         "policity" : "deny"
+#         "policy" : "deny"
 #      }
 #   ]
 #}
@@ -150,7 +150,7 @@ sub get_blacklists_list
 					  name     => $listName,
 					  source  => \@ipList,
 					  farms    => &getBLParam( $listName, 'farms' ),
-					  policity     => &getBLParam( $listName, 'policity' ),
+					  policy     => &getBLParam( $listName, 'policy' ),
 					  type => &getBLParam( $listName, 'type' )
 		);
 		if ( &getBLParam( $listName, 'preload' ) eq 'true' )
@@ -186,7 +186,7 @@ sub get_blacklists_list
 #  @apiVersion 3.0.0
 #
 #
-# @apiSuccess   {String}	policity		The list will be white or black. The options are: allow or deny (default)
+# @apiSuccess   {String}	policy		The list will be white or black. The options are: allow or deny (default)
 # @apiSuccess	{string}	type	Specify where the list is keep it. The options are: local or remote.
 # @apiSuccess	{string}	url			when list is in remote type, it's rry add url where is keep it.
 # @apiSuccess	{number}	refresh	time to refresh the remote list.
@@ -200,13 +200,13 @@ sub get_blacklists_list
 #      "type" : "local",
 #      "name" : "newList",
 #      "source" : [],
-#      "policity" : "deny"
+#      "policy" : "deny"
 #   }
 #}
 #
 # @apiExample {curl} Example Usage:
 #		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"policity":"deny", "type":"local"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/newList
+#		-d '{"policy":"deny", "type":"local"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/newList
 #
 # @apiSampleRequest off
 #
@@ -221,7 +221,7 @@ sub add_blacklists_list
 	my $description = "Create a blacklist.";
 
 	my @requiredParams = ( "name", "type" );
-	my @optionalParams = ( "policity", "url" );
+	my @optionalParams = ( "policy", "url" );
 
 	$errormsg = &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
 
@@ -267,8 +267,8 @@ sub add_blacklists_list
 			if ( !$errormsg )
 			{
 				$listParams->{ 'type' } = $json_obj->{ 'type' };
-				$listParams->{ 'policity' }     = $json_obj->{ 'policity' }
-				  if ( exists $json_obj->{ 'policity' } );
+				$listParams->{ 'policy' }     = $json_obj->{ 'policy' }
+				  if ( exists $json_obj->{ 'policy' } );
 
 				if ( &setBLCreateList( $listName, $listParams ) )
 				{
@@ -311,7 +311,7 @@ sub add_blacklists_list
 #
 #
 # @apiSuccess	{String}	name	The new list name.
-# @apiSuccess   {String}	policity	The list will be white or black. The options are: allow or deny.
+# @apiSuccess   {String}	policy	The list will be white or black. The options are: allow or deny.
 # @apiSuccess	{source}		list	Replace sources ( IP's or network segment ) from list. Only local lists.
 # @apiSuccess	{string}	url		Change url where are allocated sources. Only remote lists.
 #
@@ -333,14 +333,14 @@ sub add_blacklists_list
 #            "source" : "21.5.6.4"
 #         }
 #      ],
-#      "policity" : "allow"
+#      "policy" : "allow"
 #   }
 #}
 #
 #
 # @apiExample {curl} Example Usage:
 #       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"policity":"allow","list":["192.168.100.240","21.5.6.4"],
+#        -d '{"policy":"allow","list":["192.168.100.240","21.5.6.4"],
 #       "name":"newNameList"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/list
 #
 # @apiSampleRequest off
@@ -355,7 +355,7 @@ sub set_blacklists_list
 	my $errormsg;
 
 	my @allowParams =
-	  ( "policity", "url", "source", "name", "min", "hour", "dom", "month", "dow" );
+	  ( "policy", "url", "source", "name", "min", "hour", "dom", "month", "dow" );
 
 	if ( &getBLExists( $listName ) == -1 )
 	{
@@ -366,6 +366,12 @@ sub set_blacklists_list
 					 message     => $errormsg,
 		};
 		&httpResponse( { code => 404, body => $body } );
+	}
+	
+	elsif ( &getBLParam( $listName, 'type' ) eq 'preload' )
+	{
+		$errormsg = &getValidOptParams( $json_obj, [ "policy" ] );
+		$errormsg = "In preload lists only is allow to change the policy" if ( $errormsg );
 	}
 
 	my $type = &getBLParam( $listName, 'type' );
@@ -602,7 +608,7 @@ sub update_remote_blacklists
 #            }
 #         ],
 #         "name" : "blackList",
-#         "policity" : "deny"
+#         "policy" : "deny"
 #      }
 #   ]
 #}
