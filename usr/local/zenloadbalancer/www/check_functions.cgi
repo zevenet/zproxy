@@ -95,6 +95,7 @@ my %format_re = (
 	'backend'      => qr/\d+/,
 	'service'      => $service,
 	'farm_modules' => qr/(?:gslb|dslb|lslb)/,
+	'service_position'      => qr/\d+/,
 
 	# backup
 	'backup'        => qr/[\w]+/,

@@ -835,6 +835,10 @@ POST qr{^/farms/($farm_re)/services$} => sub {
 
 my $service_re = &getValidFormat( 'service' );
 
+POST qr{^/farms/($farm_re)/services/($service_re)/actions$} => sub {
+	&move_services( @_ );
+};
+
 PUT qr{^/farms/($farm_re)/services/($service_re)$} => sub {
 	&modify_services( @_ );
 };

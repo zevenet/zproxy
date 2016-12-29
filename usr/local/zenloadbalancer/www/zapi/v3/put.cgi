@@ -12,6 +12,9 @@
 #
 ###############################################################################
 
+use warnings;
+use strict;
+
 # PUT /farms/FarmHTTP
 #
 #
@@ -1023,6 +1026,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 	my ( $json_obj, $farmname, $service ) = @_;
 
 	my $output_params;
+	my $description = "Modify service";
+	my $errormsg;
 
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 ) {
@@ -1030,7 +1035,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		my $errormsg = "The farmname $farmname does not exists.";
 
 		my $body = {
-					 description => "Modify service",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -1097,7 +1102,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			&setFarmVS( $farmname, $service, "urlp", $json_obj->{ urlp } );
 		}
 
-		$redirecttype = &getFarmVS( $farmname, $service, "redirecttype" );
+		my $redirecttype = &getFarmVS( $farmname, $service, "redirecttype" );
 
 		if ( exists ( $json_obj->{ redirect } ) )
 		{
@@ -1116,7 +1121,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			}
 		}
 
-		$redirect = &getFarmVS( $farmname, $service, "redirect" );
+		my $redirect = &getFarmVS( $farmname, $service, "redirect" );
 
 		if ( exists ( $json_obj->{ redirecttype } ) )
 		{
@@ -1144,8 +1149,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			if (
 					$json_obj->{ persistence } =~ /^nothing|IP|BASIC|URL|PARM|COOKIE|HEADER$/ )
 			{
-				$session = $json_obj->{ persistence };
-				$status = &setFarmVS( $farmname, $service, "session", "$session" );
+				my $session = $json_obj->{ persistence };
+				my $status = &setFarmVS( $farmname, $service, "session", "$session" );
 				if ( $status != 0 )
 				{
 					$error = "true";
@@ -1167,7 +1172,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			}
 			elsif ( $json_obj->{ ttl } =~ /^\d+/ )
 			{
-				$status = &setFarmVS( $farmname, $service, "ttl", "$json_obj->{ttl}" );
+				my $status = &setFarmVS( $farmname, $service, "ttl", "$json_obj->{ttl}" );
 				if ( $status != 0 )
 				{
 					$error = "true";
@@ -1380,7 +1385,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		$errormsg = "Errors found trying to modify farm $farmname";
 
 		my $body = {
-					 description => "Modify service $service in farm $farmname",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -1389,4 +1394,132 @@ sub modify_services # ( $json_obj, $farmname, $service )
 	}
 }
 
+
+
+sub move_services
+{
+	my ( $json_obj, $farmname, $service ) = @_;
+	my $errormsg;
+	my @services = &getFarmServices( $farmname );
+	my $services_num = scalar @services;
+	my $description = "Move service";
+	my $moveservice;
+	
+	# validate FARM NAME
+	if ( &getFarmFile( $farmname ) == -1 ) {
+		# Error
+		$errormsg = "The farmname $farmname does not exists.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+	elsif ( ! grep ( /^$service$/, @services ) )
+	{
+		$errormsg = "$service not found.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+		&httpResponse({ code => 404, body => $body });
+	}
+	
+	# Move services
+	else
+	{
+		$errormsg = &getValidOptParams ( $json_obj, [ "position" ] );
+		
+		if ( ! $errormsg )
+		{
+			if ( ! &getValidFormat ( 'service_position', $json_obj->{ 'position' } ) )
+			{
+				$errormsg = "Error in service position format.";
+			}
+			else{
+				my $srv_position = &getHTTPServicePosition ( $farmname, $service );
+				if ( $srv_position == $json_obj->{ 'position' } )
+				{
+					$errormsg = "The service already is in required position.";
+				}
+				elsif ( $services_num <= $json_obj->{ 'position' } )
+				{
+					$errormsg = "The required position is bigger than number of services.";
+				}
+				# select action
+				elsif ( $srv_position > $json_obj->{ 'position' } )
+				{
+					$moveservice = "up";
+				}
+				else
+				{
+					$moveservice = "down";
+				}
+				
+				if ( ! $errormsg )
+				{
+					# stopping farm
+					my $farm_status = &getFarmStatus( $farmname );
+					if ( $farm_status eq 'up' )
+					{
+						if ( &runFarmStop( $farmname, "true" ) != 0 )
+						{
+							$errormsg = "Error stopping the farm.";
+						}
+						else
+						{
+							&zenlog ("Farm stopped successful.");
+						}
+					}
+					if ( !$errormsg )
+					{
+						# move service until required position
+						while ( $srv_position != $json_obj->{ 'position' } )
+						{	
+							#change configuration file
+							&moveServiceFarmStatus( $farmname, $moveservice, $service );
+							&moveService( $farmname, $moveservice, $service );
+							
+							$srv_position = &getHTTPServicePosition ( $farmname, $service );
+						}
+						
+						# start farm if his status was up
+						if ( $farm_status eq 'up' )
+						{
+							if ( &runFarmStart( $farmname, "true" ) == 0 )
+							{
+								&setFarmHttpBackendStatus( $farmname );
+								&zenlog ( "$service was moved successful." );
+							}
+							else
+							{
+								$errormsg = "The $farmname farm hasn't been restarted";
+							}
+						}
+							
+						if  ( ! $errormsg )
+						{
+							$errormsg = "$service was moved successful.";
+							my $body = { description => $description, params => $json_obj, message => $errormsg,	};
+							&httpResponse({ code => 200, body => $body });
+						}
+					}
+				}
+			}
+		}
+	}
+	my $body =
+		{ description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 400, body => $body } );
+	
+}
+
+
+
+
+
 1;
+

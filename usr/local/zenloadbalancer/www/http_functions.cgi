@@ -3373,4 +3373,29 @@ sub getHttpFarmService
 	return $service_ref;
 }
 
+
+sub getHTTPServicePosition 
+{
+	my ( $farmname, $service ) = @_;
+	# get service position
+	my $srv_position = 0;
+	my @services = &getFarmServices( $farmname );
+	foreach my $srv ( @services )
+	{
+		if  ( $srv eq $service )
+		{
+			# found
+			last;
+		}
+		else
+		{
+			$srv_position++;
+		}
+	}
+	
+	return $srv_position;					
+}
+
+
 1;
+
