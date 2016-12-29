@@ -567,7 +567,8 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 	#~ &zenlog( "Response:$output<" ); # DEBUG
 	print $output;
 
-	&zenlog( "STATUS:$self->{ code }" );
+	&zenlog( "STATUS: $self->{ code }" );
+	&zenlog( "MESSAGE: $self->{ body }->{ message }" ) if ( exists $self->{ body }->{ message } );
 	&zenlog( "MEMORY: " . &getMemoryUsage );
 
 	exit;

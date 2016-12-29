@@ -148,7 +148,7 @@ sub get_blacklists_list
 		}
 		%listHash = (
 					  name     => $listName,
-					  source  => \@ipList,
+					  sources => \@ipList,
 					  farms    => &getBLParam( $listName, 'farms' ),
 					  policy     => &getBLParam( $listName, 'policy' ),
 					  type => &getBLParam( $listName, 'type' )
@@ -199,7 +199,7 @@ sub get_blacklists_list
 #      "farms" : [],
 #      "type" : "local",
 #      "name" : "newList",
-#      "source" : [],
+#      "sources" : [],
 #      "policy" : "deny"
 #   }
 #}
@@ -323,7 +323,7 @@ sub add_blacklists_list
 #      "farms" : [],
 #      "type" : "local",
 #      "name" : "newNameList",
-#      "source" : [
+#      "sources" : [
 #         {
 #            "id" : 0,
 #            "source" : "192.168.100.240"
@@ -410,7 +410,7 @@ sub set_blacklists_list
 			elsif ( exists $json_obj->{ 'source' }
 					&& $type ne 'local' )
 			{
-				$errormsg = "Sources parameter only is available in local lists.";
+				$errormsg = "Source parameter only is available in local lists.";
 			}
 			else
 			{
@@ -457,13 +457,9 @@ sub set_blacklists_list
 
 				# all successful
 				my $listHash = &getBLParam( $listName );
-				delete $listHash->{ 'action' };
-				&httpResponse(
-							   {
-								 code => 200,
-								 body => { description => $description, params => $listHash }
-							   }
-				);
+				
+				my $body = { description => $description, params => $listHash };
+				&httpResponse({ code => 200, body => $body } );
 				# almost one parameter couldn't be changed
 				#~ $errormsg = "Error, modifying $listName.";
 			}
@@ -683,12 +679,12 @@ sub get_blacklists_source
 #
 # @apiExample {curl} Example Usage:
 #		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"source":"16.31.0.223"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/source
+#		-d '{"source":"16.31.0.223"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/sources
 #
 # @apiSampleRequest off
 #
 #**
-#  POST /ipds/blacklists/<listname>/source
+#  POST /ipds/blacklists/<listname>/sources
 sub add_blacklists_source
 {
 	my $json_obj = shift;
@@ -1058,7 +1054,7 @@ sub del_blacklists_from_farm
 	my $errormsg;
 	my $description = "Delete a list form a farm";
 
-	if ( &getFarmFile( $farmName ) == -1 )
+	if ( &getFarmFile( $farmName ) eq '-1' )
 	{
 		$errormsg = "$farmName doesn't exist.";
 		my $body = {

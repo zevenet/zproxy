@@ -1285,11 +1285,18 @@ sub get_interfaces # ()
 
 	# Configured interfaces list
 	my @interfaces = @{ &getSystemInterfaceList() };
+	
+	# get cluster interface
+	my $zcl_conf  = &getZClusterConfig();
+	my $cluster_if = $zcl_conf->{ _ }->{ interface };
 
 	for my $if_ref ( @interfaces )
 	{
 		# Exclude IPv6
 		next if $if_ref->{ ip_v } == 6 && &getGlobalConfiguration( 'ipv6_enabled' ) ne 'true';
+
+		# Exclude cluster maintenance interface
+		next if $if_ref->{ type } eq 'dummy';
 
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
 
@@ -1301,7 +1308,8 @@ sub get_interfaces # ()
 		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
 		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
-		push @output_list,
+
+		my $if_conf =
 		  {
 			name    => $if_ref->{ name },
 			ip      => $if_ref->{ addr },
@@ -1312,6 +1320,10 @@ sub get_interfaces # ()
 			type    => $if_ref->{ type },
 			#~ ipv     => $if_ref->{ ip_v },
 		  };
+		  
+		  $if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
+		  
+		  push @output_list, $if_conf;
 	}
 
 	my $body = {

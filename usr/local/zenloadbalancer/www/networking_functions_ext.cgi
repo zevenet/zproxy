@@ -1247,7 +1247,10 @@ sub getInterfaceType
 	my $type;
 
 	return undef if $if_name eq '' || ! defined $if_name;
-
+	
+	# interfaz for cluster when is in maintenance mode
+	return 'dummy' if $if_name eq 'cl_maintenance';
+	
 	if ( ! -d "/sys/class/net/$if_name" )
 	{
 		my ( $parent_if ) = split( ':', $if_name );

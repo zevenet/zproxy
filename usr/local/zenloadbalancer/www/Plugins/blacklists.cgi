@@ -646,7 +646,7 @@ sub setBLDeleteList
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
-	my @farms          = &getBLParam( $listName, 'farms' );
+	my @farms          = @{ &getBLParam( $listName, 'farms' ) };
 
 	# delete associated farms
 	foreach my $farmName ( @farms )
@@ -748,21 +748,24 @@ sub setBLParam
 	{
 		$conf->{ 'policy' } = $value;
 		$fileHandle->write( $blacklistsConf );
-
-		# delete list and all rules applied to farms
-		$output = &setBLDeleteList( $name );
-
-		# crete new list
-		$output = &setBLCreateList( $name, $conf );
-		$output = &setBLParam( $name, 'source', $ipList );
-
-
-		# apply rules to farms
-		foreach my $farm ( @farmList )
+		
+		# reset the list if this was active
+		if ( @farmList )
 		{
-			&setBLDeleteRule ( $farm, $name );
-			$output = &setBLCreateRule( $farm, $name );
-			$output = &setBLParam( $name, 'farms-add', $farm );
+			# delete list and all rules applied to farms
+			$output = &setBLDeleteList( $name );
+	
+			# create a new list
+			$output = &setBLCreateList( $name, $conf );
+			$output = &setBLParam( $name, 'source', $ipList );
+			
+			&setBLRunList ( $name ) if ( @farmList );
+			# apply rules to farms
+			foreach my $farm ( @farmList )
+			{
+				$output = &setBLCreateRule( $farm, $name );
+				$output = &setBLParam( $name, 'farms-add', $farm );
+			}
 		}
 		return $output;
 	}
