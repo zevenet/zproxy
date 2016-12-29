@@ -88,9 +88,9 @@ sub getDOSInitialParams
 		'bogustcpflags' => { 'farms' => '', 'type'       => 'farm' },
 		'limitconns'    => { 'farms' => '', 'limitConns' => 10, 'type' => 'farm' },
 		'limitrst' =>
-		  { 'farms' => '', 'limit' => 2, 'limitBurst' => 2, 'type' => 'farm' },
+		  { 'farms' => '', 'limit' => 2, 'limit_burst' => 2, 'type' => 'farm' },
 		'limitsec' =>
-		  { 'farms' => '', 'limit' => 2, 'limitBurst' => 2, 'type' => 'farm' },
+		  { 'farms' => '', 'limit' => 2, 'limit_burst' => 2, 'type' => 'farm' },
 		'dropicmp' => { 'status' => 'down', 'type' => 'system', 'name' => 'drop_icmp' },
 		'sshbruteforce' => {
 							 'status' => 'down',
@@ -995,13 +995,13 @@ sub setDOSLimitRstRule
 	#~ my $rule        = "limitrst";
 	my $logMsg     = "[Blocked by rule $ruleName]";
 	my $limit      = &getDOSParam( $ruleName, 'limit' );
-	my $limitBurst = &getDOSParam( $ruleName, 'limitBurst' );
+	my $limit_burst = &getDOSParam( $ruleName, 'limit_burst' );
 
 # /sbin/iptables -A PREROUTING -t mangle -p tcp --tcp-flags RST RST -m limit --limit 2/s --limit-burst 2 -j ACCEPT
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -A PREROUTING -t mangle "    # select iptables struct
 	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
-	  . "--tcp-flags RST RST -m limit --limit $limit/s --limit-burst $limitBurst " # rules for block
+	  . "--tcp-flags RST RST -m limit --limit $limit/s --limit-burst $limit_burst " # rules for block
 	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";            # comment
 
 	my $output = &iptSystem( $cmd );
@@ -1037,13 +1037,13 @@ sub setDOSLimitSecRule
 	#~ my $rule        = "limitsec";
 	my $logMsg     = "[Blocked by rule $ruleName]";
 	my $limit      = &getDOSParam( $ruleName, 'limit' );
-	my $limitBurst = &getDOSParam( $ruleName, 'limitBurst' );
+	my $limit_burst = &getDOSParam( $ruleName, 'limit_burst' );
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp -m conntrack --ctstate NEW -m limit --limit 60/s --limit-burst 20 -j ACCEPT
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -A PREROUTING -t mangle "    # select iptables struct
 	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
-	  . "-m conntrack --ctstate NEW -m limit --limit $limit/s --limit-burst $limitBurst " # rules for block
+	  . "-m conntrack --ctstate NEW -m limit --limit $limit/s --limit-burst $limit_burst " # rules for block
 	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";                   # comment
 
 	my $output = &iptSystem( $cmd );

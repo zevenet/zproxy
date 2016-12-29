@@ -1215,7 +1215,7 @@ sub create_dos_rule
 #      "farms" : "",
 #      "rule" : "LIMITSEC",
 #      "limit" : "2",
-#      "limitBurst" : "2"
+#      "limit_burst" : "2"
 #   }
 #}
 #@apiExample {curl} Example Usage:
