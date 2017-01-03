@@ -315,6 +315,7 @@ if ( $eject eq "start" )
 	my $bond_conf = &getBondConfig();
 	for my $bond_k ( keys %{ $bond_conf } )
 	{
+		print "Bond of key: $bond_k";
 		next if $bond_k eq '_';
 
 		my $bond = $bond_conf->{ $bond_k };
@@ -331,6 +332,13 @@ if ( $eject eq "start" )
 		{
 			print " \033[1;31m ERROR \033[0m \n";
 		}
+
+
+                my $if_bond = $$bond{name};
+                print "  * Up bonding master $$bond{name} ";
+                my $if_ref = &getInterfaceConfig( $if_bond, 4 );
+                &createIf( $if_ref );
+                &upIf( $if_ref );
 	}
 
 	# Cluster
