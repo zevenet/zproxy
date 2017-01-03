@@ -1425,6 +1425,10 @@ sub get_nic_list # ()
 
 	my $description = "List NIC interfaces";
 
+	# get cluster interface
+	my $zcl_conf  = &getZClusterConfig();
+	my $cluster_if = $zcl_conf->{ _ }->{ interface };
+
 	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
 	{
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
@@ -1437,7 +1441,7 @@ sub get_nic_list # ()
 		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
 		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
-		push @output_list,
+		my $if_conf =
 		  {
 			name    => $if_ref->{ name },
 			ip      => $if_ref->{ addr },
@@ -1447,6 +1451,10 @@ sub get_nic_list # ()
 			mac     => $if_ref->{ mac },
 			is_slave => $if_ref->{ is_slave },
 		  };
+		  
+		  $if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
+		  
+		  push @output_list, $if_conf;
 	}
 
 	my $body = {
@@ -1518,6 +1526,10 @@ sub get_vlan_list # ()
 
 	my $description = "List VLAN interfaces";
 
+	# get cluster interface
+	my $zcl_conf  = &getZClusterConfig();
+	my $cluster_if = $zcl_conf->{ _ }->{ interface };
+	
 	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
 	{
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
@@ -1530,7 +1542,7 @@ sub get_vlan_list # ()
 		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
 		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
-		push @output_list,
+		my $if_conf =
 		  {
 			name    => $if_ref->{ name },
 			ip      => $if_ref->{ addr },
@@ -1540,6 +1552,10 @@ sub get_vlan_list # ()
 			mac     => $if_ref->{ mac },
 			parent  => $if_ref->{ parent },
 		  };
+		  
+		  $if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
+		  
+		  push @output_list, $if_conf;
 	}
 
 	my $body = {
@@ -1612,6 +1628,10 @@ sub get_bond_list # ()
 	my $description = "List bonding interfaces";
 	my $bond_conf = &getBondConfig();
 
+	# get cluster interface
+	my $zcl_conf  = &getZClusterConfig();
+	my $cluster_if = $zcl_conf->{ _ }->{ interface };
+	
 	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )
 	{
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
@@ -1628,7 +1648,7 @@ sub get_bond_list # ()
 		my @output_slaves;
 		push( @output_slaves, { name => $_ } ) for @bond_slaves;
 
-		push @output_list,
+		my $if_conf = 
 		  {
 			name    => $if_ref->{ name },
 			ip      => $if_ref->{ addr },
@@ -1641,6 +1661,10 @@ sub get_bond_list # ()
 			mode => $bond_modes_short[$bond_conf->{ $if_ref->{ name } }->{ mode }],
 			#~ ipv     => $if_ref->{ ip_v },
 		  };
+		  
+		  $if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
+		  
+		  push @output_list, $if_conf;
 	}
 
 	my $body = {

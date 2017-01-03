@@ -850,7 +850,7 @@ sub setDOSBogusTcpFlagsRule
 	{
 		&zenlog( "Error appling '${ruleName}_9' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
-
+	#  Christmas tree packet. Used to analyze tcp response and to elaborate a atack
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL ALL -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
