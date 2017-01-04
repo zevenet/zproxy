@@ -1552,6 +1552,11 @@ DELETE qr{^/farms/($farm_re)/ipds/blacklists/($blacklists_list)$} => sub {
 my $dos_rule = &getValidFormat( 'dos_name' );
 
 #  GET dos settings
+GET qr{^/ipds/dos/rules$} => sub {
+	&get_dos_rules( @_ );
+};
+
+#  GET dos settings
 GET qr{^/ipds/dos$} => sub {
 	&get_dos( @_ );
 };

@@ -20,55 +20,6 @@ use strict;
 
 blacklists:
 
-#**
-#  @api {get} /ipds/blacklists Request all black lists
-#  @apiGroup IPDS
-#  @apiDescription Get description of all blackl lists
-#  @apiName GetAllBlacklistsLists
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "black lists",
-#   "lists" : [
-#      {
-#         "farms" : [
-#            "gslbFarm",
-#            "dnsFarm"
-#         ],
-#         "ips" : [
-#            {
-#               "id" : 0,
-#               "source" : "192.168.100.240"
-#            },
-#            {
-#               "id" : 1,
-#               "source" : "21.5.6.4"
-#            }
-#         ],
-#         "type" : "local",
-#         "name" : "blackList",
-#         "policy" : "deny"
-#      },
-#      {
-#         "farms" : [],
-#         "ips" : [
-#               "id" : 0,
-#               "source" : "1.155.63.14"
-#		  ],
-#         "type" : "local",
-#         "name" : "whiteList",
-#         "policy" : "allow"
-#      }
-#   ]
-#}
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists
-#
-#@apiSampleRequest off
-#**
 # GET /ipds/blacklists
 sub get_blacklists_all_lists
 {
@@ -91,45 +42,7 @@ sub get_blacklists_all_lists
 		  { code => 200, body => { description => $description, params => \@lists } } );
 }
 
-#**
-#  @api {get} /ipds/blacklists/<listname> Request a black list
-#  @apiGroup IPDS
-#  @apiDescription Get a black list description
-#  @apiName GetBlacklistsList
-#  @apiParam {String} listname  Black list name, unique ID.
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "black lists",
-#   "params" : [
-#      {
-#         "farms" : [
-#            "gslbFarm",
-#            "httpFarm"
-#         ],
-#         "ips" : [
-#            {
-#               "id" : 0,
-#               "source" : "17.63.203.20"
-#            },
-#            {
-#               "id" : 1,
-#               "source" : "21.5.6.4"
-#            }
-#         ],
-#         "name" : "blackList",
-#         "policy" : "deny"
-#      }
-#   ]
-#}
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/<listname>
-#
-#@apiSampleRequest off
-#**
+
 #GET /ipds/blacklists/<listname>
 sub get_blacklists_list
 {
@@ -1111,6 +1024,21 @@ sub del_blacklists_from_farm
 }
 
 dos:
+
+sub get_dos_rules
+{
+	my $description = "Get DoS settings.";
+		
+	my $body = { description => $description, params => 
+		[
+		"farm"=>[ 'limitsec', 'limitrst', 'bogustcpflags', 'limitconns' ],
+		"system"=>[ 'sshbruteforce', 'dropicmp' ]
+		] 
+	};
+	&httpResponse( { code => 200, body => $body } );
+	
+}
+
 
 #**
 #  @api {get} /ipds/dos Request dos settings

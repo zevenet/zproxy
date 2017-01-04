@@ -82,15 +82,13 @@ sub getDOSInitialParams
 {
 	my $rule = shift;
 
-	#~ my $param = shift;
-
 	my %initial = (
-		'bogustcpflags' => { 'farms' => '', 'type'       => 'farm' },
-		'limitconns'    => { 'farms' => '', 'limitConns' => 10, 'type' => 'farm' },
+		'bogustcpflags' => { 'farms' => [], 'type'       => 'farm' },
+		'limitconns'    => { 'farms' => [], 'limit_conns' => 10, 'type' => 'farm' },
 		'limitrst' =>
-		  { 'farms' => '', 'limit' => 2, 'limit_burst' => 2, 'type' => 'farm' },
+		  { 'farms' => [], 'limit' => 2, 'limit_burst' => 2, 'type' => 'farm' },
 		'limitsec' =>
-		  { 'farms' => '', 'limit' => 2, 'limit_burst' => 2, 'type' => 'farm' },
+		  { 'farms' => [], 'limit' => 2, 'limit_burst' => 2, 'type' => 'farm' },
 		'dropicmp' => { 'status' => 'down', 'type' => 'system', 'name' => 'drop_icmp' },
 		'sshbruteforce' => {
 							 'status' => 'down',
@@ -115,17 +113,7 @@ sub getDOSInitialParams
 		#					},
 	);
 
-	#~ if ( $param )
-	#~ {
-	#~ $output = $initial{ $rule }->{ $param };
-	#~ }
-	#~ else
-	#~ {
-	my $output = $initial{ $rule };
-
-	#~ }
-
-	return $output;
+	return $initial{ $rule };
 }
 
 # &getDOSParam( $ruleName, $param );
@@ -932,7 +920,7 @@ sub setDOSLimitConnsRule
 	my $dest   = $ruleOpt{ 'vip' };
 	my $port   = $ruleOpt{ 'vport' };
 	my $output;
-	my $limitConns = &getDOSParam( $ruleName, 'limitConns' );
+	my $limit_conns = &getDOSParam( $ruleName, 'limit_conns' );
 
 	# especific values to L4 farm
 	if ( &getFarmType( $ruleOpt{ 'farmName' } ) eq "l4xnat" )
@@ -951,7 +939,7 @@ sub setDOSLimitConnsRule
 			  #~ . " -A INPUT -t filter "         # select iptables struct
 			  . " -A $chain -t filter "                          # select iptables struct
 			  . "$dest $ruleOpt{ 'protocol' } $port "            # who is destined
-			  . "-m connlimit --connlimit-above $limitConns "    # rules for block
+			  . "-m connlimit --connlimit-above $limit_conns "    # rules for block
 			  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 			$output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
@@ -968,7 +956,7 @@ sub setDOSLimitConnsRule
 		  #~ . " -A INPUT -t filter "         # select iptables struct
 		  . " -A $chain -t filter "                          # select iptables struct
 		  . "$dest $ruleOpt{ 'protocol' } $port "            # who is destined
-		  . "-m connlimit --connlimit-above $limitConns "    # rules for block
+		  . "-m connlimit --connlimit-above $limit_conns "    # rules for block
 		  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
 
 		my $output =

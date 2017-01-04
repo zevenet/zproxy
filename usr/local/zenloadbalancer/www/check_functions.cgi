@@ -164,7 +164,7 @@ my %format_re = (
 	'dos_rule_tcp'      => $dos_tcp,
 	# dos params
 	'dos_time'      => $natural,
-	'dos_limitConns'      => $natural,
+	'dos_limit_conns'      => $natural,
 	'dos_limit'      => $natural,
 	'dos_limit_burst'      => $natural,
 	'dos_status'      => qr/(?:down|up)/,
