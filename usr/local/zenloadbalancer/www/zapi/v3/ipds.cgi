@@ -1030,10 +1030,18 @@ sub get_dos_rules
 	my $description = "Get DoS settings.";
 		
 	my $body = { description => $description, params => 
-		[
-		"farm"=>[ 'limitsec', 'limitrst', 'bogustcpflags', 'limitconns' ],
-		"system"=>[ 'sshbruteforce', 'dropicmp' ]
-		] 
+		{
+		"farm"=>[ 
+				{ 'rule'=>'limitsec', 'description'=>'Connection limit per seconds.'},
+				{ 'rule'=>'limitrst', 'description'=>'Total connections limit per source IP.'},
+				{ 'rule'=>'bogustcpflags', 'description'=>'Check bogus TCP flags.'},
+				{ 'rule'=>'limitconns', 'description'=>'Limit RST request per second.'},
+			],
+		"system"=>[ 
+				{ 'rule' => 'sshbruteforce', 'description' => 'SSH brute force.' },
+				{ 'rule' => 'dropicmp', 'description' => 'Drop icmp packets' },
+			]
+		}
 	};
 	&httpResponse( { code => 200, body => $body } );
 	
