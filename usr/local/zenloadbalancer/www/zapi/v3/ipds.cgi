@@ -1081,7 +1081,7 @@ sub get_dos
 	{
 		my $hashObj;
 		
-		foreach my $key ( keys $rules{ $rule } )
+		foreach my $key ( keys %{ $rules{ $rule } } )
 		{
 			$hashObj->{ $key } = $rules{ $rule }->{ $key };
 			# return in integer format if this value is a number
@@ -1228,7 +1228,7 @@ sub get_dos_rule
 # @apiSampleRequest off
 #
 #**
-#PUT /ipds/dos
+#PUT /ipds/dos/<rule>
 sub set_dos_rule
 {
 	my $json_obj    = shift;
@@ -1263,6 +1263,12 @@ sub set_dos_rule
 		if ( exists $hashRuleConf{ 'farms' } )
 		{
 			delete $hashRuleConf{ 'farms' };
+		}
+
+		# not allow change ssh port. To change it call PUT /system/ssh
+		if ( $name eq 'ssh_brute_force' )
+		{
+			delete $hashRuleConf{ 'port' };
 		}
 
 		@requiredParams = keys %hashRuleConf;

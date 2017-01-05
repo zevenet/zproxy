@@ -709,6 +709,18 @@ sub setSsh
 
 	# restart service to apply changes
 	$output = system ( &getGlobalConfiguration( 'sshService' ) . " restart" );
+	
+	&setDOSParam( 'ssh_brute_force', 'port', $sshConf->{ 'port' } );
+	# restart sshbruteforce ipds rule if this is actived
+	if ( &getDOSParam( 'ssh_brute_force', 'status' ) eq 'up' )
+	{
+		&setDOSParam( 'ssh_brute_force', 'status', 'down' );
+		&setDOSParam( 'ssh_brute_force', 'status', 'up' );
+	}
+	else
+	{
+		
+	}
 
 	return $output;
 }

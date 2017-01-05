@@ -81,6 +81,10 @@ sub setDOSCreateFileConf
 sub getDOSInitialParams
 {
 	my $rule = shift;
+	
+	# get ssh port
+	my $sshconf = &getSsh();
+	my $port = $sshconf->{'port'};
 
 	my %initial = (
 		'bogustcpflags' => { 'farms' => '', 'type'       => 'farm' },
@@ -93,7 +97,7 @@ sub getDOSInitialParams
 		'sshbruteforce' => {
 							 'status' => 'down',
 							 'hits'   => 5,
-							 'port'   => 22,
+							 'port'   => $port,
 							 'time'   => 180,
 							 'type'   => 'system',
 							 'name'   => 'ssh_brute_force'
@@ -162,6 +166,10 @@ sub setDOSParam
 		if ( &getDOSParam( $name, 'status' ) eq 'up' )
 		{
 			&setDOSRunRule( $name );
+		}
+		elsif ( &getDOSParam( $name, 'status' ) eq 'down' )
+		{
+			&setDOSStopRule( $name );
 		}
 	}
 
@@ -1107,7 +1115,9 @@ sub setDOSSshBruteForceRule
 	#~ my $rule    = "sshbruteforce";
 	my $hits = &getDOSParam( $rule, 'hits' );
 	my $time = &getDOSParam( $rule, 'time' );
-	my $port = &getDOSParam( $rule, 'port' );
+	#~ my $port = &getDOSParam( $rule, 'port' );
+	my $sshconf = &getSsh();
+	my $port = $sshconf->{'port'};
 	my $logMsg = "[Blocked by rule $rule]";
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --set

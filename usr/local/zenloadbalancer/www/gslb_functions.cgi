@@ -384,9 +384,6 @@ sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 					$output =~ /_(\d+)(\s+)?$/;
 					$output = $1;
 
-					#~ $output =~ s/['\[''\]'' ']//g;
-					#~ my @tmp = split ( "_", $output );
-					#~ $output = $tmp[1];
 					last;
 				}
 				if ( $line =~ /\t$svice => / )
@@ -398,6 +395,8 @@ sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 	}
 	untie @fileconf;
 
+	# remove first '\n' string separate
+	$output =~ s/^\n//;
 	return $output;
 }
 
@@ -469,6 +468,16 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 	my $pluginfile = "";
 	use Tie::File;
 	my $found;
+	
+	# this backend is used if the round robin service has not backends. This one need to have one backend almost.
+	my $default_ip = '127.0.0.1';
+	my $flagNoDel;
+	my @backends = split ( "\n", &getFarmVS( $fname, $srv, "backends" ) );
+	if ( scalar @backends == 1 )
+	{
+		# replace backend and no delete it
+		$flagNoDel = 1;
+	}
 
 	#Find the plugin file
 	opendir ( DIR, "$configdir\/$ffile\/etc\/plugins\/" );
@@ -508,7 +517,14 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 			}
 			else
 			{
-				splice @fileconf, $index, 1;
+				if ( $flagNoDel )
+				{
+					$line = "\t\t$id => $default_ip";
+				}
+				else
+				{
+					splice @fileconf, $index, 1;
+				}
 			}
 			last;
 		}
