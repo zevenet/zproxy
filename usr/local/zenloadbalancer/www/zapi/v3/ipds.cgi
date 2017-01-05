@@ -64,13 +64,10 @@ sub get_blacklists_list
 					  sources => \@ipList,
 					  farms    => &getBLParam( $listName, 'farms' ),
 					  policy     => &getBLParam( $listName, 'policy' ),
-					  type => &getBLParam( $listName, 'type' )
+					  type => &getBLParam( $listName, 'type' ),
+					  preload => &getBLParam( $listName, 'preload' )
 		);
-		if ( &getBLParam( $listName, 'preload' ) eq 'true' )
-		{
-			$listHash{ 'preload' } = 'true';
-		}
-		if ( &getBLParam( $listName, 'url' ) )
+		if ( &getBLParam( $listName, 'type' ) eq 'remote' )
 		{
 			$listHash{ 'url' }     = &getBLParam( $listName, 'url' );
 			$listHash{ 'status' }  = &getBLParam( $listName, 'status' );
@@ -193,7 +190,7 @@ sub add_blacklists_list
 				{
 					my $listHash = &getBLParam( $listName );
 					delete $listHash->{ 'source' };
-					delete $listHash->{ 'preload' };
+					#~ delete $listHash->{ 'preload' };
 					&httpResponse(
 								{
 								  code => 200,
@@ -1077,9 +1074,23 @@ sub get_dos
 	my $description = "Get DoS settings.";
 
 	my $fileHandle = Config::Tiny->read( $confFile );
-	my %output = %{ $fileHandle };
-
-	my $body = { description => $description, params => \%output };
+	my %rules = %{ $fileHandle };
+	my @output;
+	
+	foreach my $rule ( keys %rules )
+	{
+		my $hashObj;
+		
+		foreach my $key ( keys $rules{ $rule } )
+		{
+			$hashObj->{ $key } = $rules{ $rule }->{ $key };
+			# return in integer format if this value is a number
+			$hashObj->{ $key } += 0 if ( $rules{ $rule }->{ $key } =~ /^\d+$/ );
+		}
+		push @output, $hashObj;
+	}
+	
+	my $body = { description => $description, params => \@output };
 	&httpResponse( { code => 200, body => $body } );
 }
 
@@ -1163,9 +1174,14 @@ sub get_dos_rule
 	my $description = "Get DoS $name settings";
 	my $refRule     = &getDOSParam( $name );
 	my $output;
-
+	
 	if ( ref ( $refRule ) eq 'HASH' )
 	{
+		# return in integer format if this value is a number
+		foreach my $key ( keys %{$refRule} )
+		{
+			$refRule->{ $key } += 0 if ( $refRule->{ $key } =~ /^\d+$/ );
+		}
 		# successful
 		my $body = { description => $description, params => $refRule, };
 		&httpResponse( { code => 200, body => $body } );

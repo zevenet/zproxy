@@ -83,12 +83,12 @@ sub getDOSInitialParams
 	my $rule = shift;
 
 	my %initial = (
-		'bogustcpflags' => { 'farms' => [], 'type'       => 'farm' },
-		'limitconns'    => { 'farms' => [], 'limit_conns' => 10, 'type' => 'farm' },
+		'bogustcpflags' => { 'farms' => '', 'type'       => 'farm' },
+		'limitconns'    => { 'farms' => '', 'limit_conns' => 10, 'type' => 'farm' },
 		'limitrst' =>
-		  { 'farms' => [], 'limit' => 2, 'limit_burst' => 2, 'type' => 'farm' },
+		  { 'farms' => '', 'limit' => 2, 'limit_burst' => 2, 'type' => 'farm' },
 		'limitsec' =>
-		  { 'farms' => [], 'limit' => 2, 'limit_burst' => 2, 'type' => 'farm' },
+		  { 'farms' => '', 'limit' => 2, 'limit_burst' => 2, 'type' => 'farm' },
 		'dropicmp' => { 'status' => 'down', 'type' => 'system', 'name' => 'drop_icmp' },
 		'sshbruteforce' => {
 							 'status' => 'down',
@@ -312,7 +312,8 @@ sub createDOSRule
 	$fileHandle->{ $ruleName }->{ 'rule' } = $rule;
 	if ( $params->{ 'type' } eq 'farm' )
 	{
-		$fileHandle->{ $ruleName }->{ 'rule' } = $ruleName;
+		$fileHandle->{ $ruleName }->{ 'rule' } = $rule;
+		$fileHandle->{ $ruleName }->{ 'name' } = $ruleName;
 	}
 	$fileHandle->write( $confFile );
 	&zenlog( "$ruleName rule created successful." );
