@@ -1076,18 +1076,11 @@ sub get_dos
 	my $fileHandle = Config::Tiny->read( $confFile );
 	my %rules = %{ $fileHandle };
 	my @output;
-	
+
 	foreach my $rule ( keys %rules )
 	{
-		my $hashObj;
-		
-		foreach my $key ( keys %{ $rules{ $rule } } )
-		{
-			$hashObj->{ $key } = $rules{ $rule }->{ $key };
-			# return in integer format if this value is a number
-			$hashObj->{ $key } += 0 if ( $rules{ $rule }->{ $key } =~ /^\d+$/ );
-		}
-		push @output, $hashObj;
+		my $aux = &getDOSParam( $rule );
+		push @output, $aux;
 	}
 	
 	my $body = { description => $description, params => \@output };
@@ -1177,11 +1170,7 @@ sub get_dos_rule
 	
 	if ( ref ( $refRule ) eq 'HASH' )
 	{
-		# return in integer format if this value is a number
-		foreach my $key ( keys %{$refRule} )
-		{
-			$refRule->{ $key } += 0 if ( $refRule->{ $key } =~ /^\d+$/ );
-		}
+		$output = &getDOSParam( $name );
 		# successful
 		my $body = { description => $description, params => $refRule, };
 		&httpResponse( { code => 200, body => $body } );
@@ -1336,7 +1325,7 @@ sub del_dos_rule
 		$errormsg =
 		  "Error, system rules not is possible to delete it, try to disable it.";
 	}
-	elsif ( &getDOSParam( $name, 'farms' ) )
+	elsif ( @{ &getDOSParam( $name, 'farms' ) } )
 	{
 		$errormsg = "Error, disable this rule from all farms before than delete it.";
 	}

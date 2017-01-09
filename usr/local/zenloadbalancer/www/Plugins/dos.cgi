@@ -133,10 +133,32 @@ sub getDOSParam
 	if ( $param )
 	{
 		$output = $fileHandle->{ $ruleName }->{ $param };
+		if ( $param eq 'farms' )
+			{
+				my @aux = split ( ' ', $output );
+				$output = \@aux;
+			}
 	}
-	else
+	elsif ( $ruleName )
 	{
-		$output = $fileHandle->{ $ruleName };
+		# get all params
+		my %hash = %{ $fileHandle->{ $ruleName } };
+		
+		# return in integer format if this value is a number
+		# It is neccessary for zapi
+		foreach my $key ( keys %hash )
+		{
+			$hash{ $key } += 0 if ( $hash{ $key } =~ /^\d+$/ );
+		}
+		
+		# replace farms string for a array reference
+		if ( exists $fileHandle->{ $ruleName }->{ 'farms' } )
+		{
+			my @aux = split ( ' ', $fileHandle->{ $ruleName }->{ 'farms' } );
+			$hash{ 'farms' } = \@aux;
+		}
+	
+		$output = \%hash;
 	}
 	return $output;
 }
@@ -147,6 +169,7 @@ sub setDOSParam
 	my $name  = shift;
 	my $param = shift;
 	my $value = shift;
+	my @farms;
 
 	my $rule = &getDOSParam( $name, 'rule' );
 
@@ -174,10 +197,9 @@ sub setDOSParam
 	}
 
 	# Rule applied to farm
-	elsif ( &getDOSParam( $name, 'farms' ) )
+	elsif ( @farms = @{ &getDOSParam( $name, 'farms' ) } )
 	{
-		my $farmsString = &getDOSParam( $name, 'farms' );
-		foreach my $farm ( split ( ' ', $farmsString ) )
+		foreach my $farm ( @farms )
 		{
 			&setDOSRunRule( $name, $farm );
 		}
@@ -500,8 +522,7 @@ sub setDOSReloadFarmRules
 
 	foreach my $dosRule ( keys %allRules )
 	{
-		my $farms =  &getDOSParam( $dosRule, "farms" );
-		if ( $farms =~ /( |^)$farmName( |$)/ )
+		if ( grep ( /^$farmName$/, @{ &getDOSParam( $dosRule, "farms" ) } ) )
 		{
 			&setDOSRunRule ( $dosRule, $farmName );
 			&setDOSStopRule ( $dosRule, $farmName );
@@ -517,7 +538,7 @@ sub setDOSReloadFarmRules
 =begin nd
         Function: setDOSBoot
 
-        Boot all DoS rules
+        Boot all DoS rules-
 
         Parameters:
 				
