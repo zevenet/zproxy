@@ -1150,6 +1150,10 @@ GET qr{^/stats/system/cpu$} => sub {
 	&stats_cpu();
 };
 
+GET qr{^/stats/system/connections$} => sub {
+	&stats_conns();
+};
+
 # Interfaces stats
 GET qr{^/stats/interfaces$} => sub {
 	&stats_network();

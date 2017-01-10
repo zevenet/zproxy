@@ -1065,5 +1065,16 @@ sub downloadLog
 	return $error;
 }
 
+sub getTotalConnections
+{
+	my $conntrack = &getGlobalConfiguration ( "conntrack" );
+	my $conns = `$conntrack -C`;
+	$conns =~ s/(\d+)/$1/;
+	$conns += 0;
+	
+	return $conns;
+}
+
+
 #do not remove this
 1;

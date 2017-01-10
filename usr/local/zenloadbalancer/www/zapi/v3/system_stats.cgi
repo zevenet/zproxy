@@ -1623,6 +1623,23 @@ sub stats_cpu # ()
 	&httpResponse({ code => 200, body => $body });
 }
 
+
+#GET /stats/system/connections
+sub stats_conns
+{
+	# Success
+	my $out = &getTotalConnections ();
+	my $body = {
+				 description => "System connections",
+				 params      => { "connections" => $out },
+	};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
+
+
+
 #**
 #  @api {get} /stats/network Request network system statistics
 #  @apiGroup System Stats
