@@ -50,7 +50,7 @@ sub get_blacklists_list
 	my $description = "Get list $listName";
 	my %listHash;
 	my $errormsg;
-
+	
 	if ( !&getBLExists( $listName ) )
 	{
 		my @ipList;
@@ -59,19 +59,24 @@ sub get_blacklists_list
 		{
 			push @ipList, { id => $index++, source => $source };
 		}
-		%listHash = (
-					  name     => $listName,
-					  sources => \@ipList,
-					  farms    => &getBLParam( $listName, 'farms' ),
-					  policy     => &getBLParam( $listName, 'policy' ),
-					  type => &getBLParam( $listName, 'type' ),
-					  preload => &getBLParam( $listName, 'preload' )
-		);
-		if ( &getBLParam( $listName, 'type' ) eq 'remote' )
+		
+		%listHash = %{ &getBLParam ( $listName ) };
+		$listHash{ 'source' } = \@ipList;
+		$listHash{ 'farms' } = &getBLParam( $listName, 'farms' );
+		
+		# save hour, minute, period and unit parameters in 'time' hash
+		my @timeParameters = ( 'period', 'unit', 'hour', 'minutes' );
+		#~ $listHash{ 'time'};
+		foreach my $param ( @timeParameters )
 		{
-			$listHash{ 'url' }     = &getBLParam( $listName, 'url' );
-			$listHash{ 'status' }  = &getBLParam( $listName, 'status' );
+			if ( exists $listHash{ $param } )
+			{
+				my $var = $listHash{ $param };
+				$listHash{ 'time' }->{ $param } = $var;
+				delete $listHash{ $param };
+			}
 		}
+		
 		&httpResponse(
 			  { code => 200, body => { description => $description, params => \%listHash } }
 		);
@@ -264,8 +269,18 @@ sub set_blacklists_list
 	my $description = "Modify list $listName.";
 	my $errormsg;
 
+	# remove time hash and add its param to common configuration hash
+	foreach my $timeParameters ( ( 'period', 'unit', 'hour', 'minutes' ) )
+	{
+		if ( exists $json_obj->{ 'time' }->{ $timeParameters } )
+		{
+			$json_obj->{ $timeParameters } = $json_obj->{ 'time' }->{ $timeParameters };
+		}
+	} 	
+	delete $json_obj->{ 'time' };
+	
 	my @allowParams =
-	  ( "policy", "url", "source", "name", "min", "hour", "dom", "month", "dow" );
+	  ( "policy", "url", "source", "name", "minutes", "hour", "day", "frecuency", "frecuency-type", "period", "unit" );
 
 	if ( &getBLExists( $listName ) == -1 )
 	{
@@ -278,7 +293,7 @@ sub set_blacklists_list
 		&httpResponse( { code => 404, body => $body } );
 	}
 	
-	elsif ( &getBLParam( $listName, 'type' ) eq 'preload' )
+	elsif ( &getBLParam( $listName, 'preload' ) eq 'true' )
 	{
 		$errormsg = &getValidOptParams( $json_obj, [ "policy" ] );
 		$errormsg = "In preload lists only is allow to change the policy" if ( $errormsg );
@@ -301,19 +316,10 @@ sub set_blacklists_list
 		if ( !$errormsg )
 		{
 			# Cron params and url only is used in remote lists
-			if (
-				 (
-				      exists $json_obj->{ 'url' }
-				   || exists $json_obj->{ 'min' }
-				   || exists $json_obj->{ 'hour' }
-				   || exists $json_obj->{ 'dom' }
-				   || exists $json_obj->{ 'month' }
-				   || exists $json_obj->{ 'dow' }
-				 )
-				 && $type ne 'remote'
-			  )
+			if ( $type ne 'remote' && 
+					&getValidOptParams( $json_obj, [ "url", "minutes", "hour", "day", "frecuency", "frecuency-type", "period", "unit" ] ) )
 			{
-				$errormsg = "Time options and url only are available in remote lists.";
+				$errormsg = "Error, wrong parameters." if ( $errormsg );
 			}
 
 			# Sources only is used in local lists
@@ -325,39 +331,54 @@ sub set_blacklists_list
 			else
 			{
 				my $cronFlag;
-				foreach my $key ( keys %{ $json_obj } )
+				# if there is a new update time configuration to remote lists, delete old configuration
+				#checking available configurations
+				if ( exists $json_obj->{ 'frecuency' } || exists $json_obj->{ 'frecuency-type' } || exists $json_obj->{ 'period' } || exists $json_obj->{ 'unit' }
+					|| exists $json_obj->{ 'minutes' } || exists $json_obj->{ 'hour' } || exists $json_obj->{ 'day' } )
 				{
-					# add only the sources with a correct format
-					# no correct format sources are ignored
-					if ( $key eq 'source' )
+					
+					if ( ( $json_obj->{ 'frecuency' } eq 'daily' && $json_obj->{ 'frecuency-type' } eq 'period' && exists $json_obj->{ 'period' } && exists $json_obj->{ 'unit' } )
+						|| ( $json_obj->{ 'frecuency' } eq 'daily' && $json_obj->{ 'frecuency-type' } eq 'exact' && exists $json_obj->{ 'minutes' } && exists $json_obj->{ 'hour' } )
+						|| ( $json_obj->{ 'frecuency' } eq 'weekly' && exists $json_obj->{ 'day' } && exists $json_obj->{ 'minutes' } &&  exists $json_obj->{ 'hour' } )
+						|| ( $json_obj->{ 'frecuency' } eq 'monthly' && exists $json_obj->{ 'day' } && exists $json_obj->{ 'minutes' } && exists $json_obj->{ 'hour' } ) )
 					{
-						my $source_format = &getValidFormat( 'blacklists_source' );
-						my $noPush = grep ( !/$source_format)/, @{ $json_obj->{ 'name' } } );
-
-						# error
-						&zenlog( "$noPush sources couldn't be added" ) if ( $noPush );
+						&delBLParam ( $listName, $_ ) for ( "minutes", "hour", "day", "frecuency", "frecuency-type", "period", "unit" );
+						# rewrite cron task if exists some of the next keys
+						$cronFlag = 1;
 					}
-
-					# set params
-					$errormsg = &setBLParam( $listName, $key, $json_obj->{ $key } );
-					$errormsg = "Error, modifying $key in $listName." if ( $errormsg );
-
-					# once changed list, update de list name
-					if ( $key eq 'name' )
+					else
 					{
-						$listName = $json_obj->{ 'name' };
+						$errormsg = "Error with update configuration parameters.";
 					}
-
-					# rewrite cron task if exists some of the next keys
-					$cronFlag = 1
-					  if (    $key eq "min"
-						   || $key eq "hour"
-						   || $key eq "month"
-						   || $key eq "dow"
-						   || $key eq "dom" );
-
-					# not continue if there was a error
-					last if ( $errormsg );
+				}
+				
+				if ( !$errormsg )
+				{
+					foreach my $key ( keys %{ $json_obj } )
+					{
+						# add only the sources with a correct format
+						# no correct format sources are ignored
+						if ( $key eq 'source' )
+						{
+							my $source_format = &getValidFormat( 'blacklists_source' );
+							my $noPush = grep ( !/$source_format)/, @{ $json_obj->{ 'name' } } );
+	
+							# error
+							&zenlog( "$noPush sources couldn't be added" ) if ( $noPush );
+						}
+						# set params
+						$errormsg = &setBLParam( $listName, $key, $json_obj->{ $key } );
+						$errormsg = "Error, modifying $key in $listName." if ( $errormsg );
+	
+						# once changed list, update de list name
+						if ( $key eq 'name' )
+						{
+							$listName = $json_obj->{ 'name' };
+						}
+	
+						# not continue if there was a error
+						last if ( $errormsg );
+					}
 				}
 
 				if ( $cronFlag && @{ &getBLParam( $listName, 'farms' ) } )
@@ -413,7 +434,7 @@ sub del_blacklists_list
 	my $listName    = shift;
 	my $description = "Delete list '$listName'",
 
-	  my $errormsg = &getBLExists( $listName );
+	my $errormsg = &getBLExists( $listName );
 	if ( $errormsg == -1 )
 	{
 		$errormsg = "$listName doesn't exist.";
@@ -423,6 +444,10 @@ sub del_blacklists_list
 					 message     => $errormsg,
 		};
 		&httpResponse( { code => 404, body => $body } );
+	}
+	elsif ( @{ &getBLParam ($listName, 'farms' ) }  )
+	{
+		$errormsg = "Delete this list from all farms before than delete it.";
 	}
 	else
 	{
@@ -474,7 +499,7 @@ sub update_remote_blacklists
 			{
 				&setBLRefreshList( $listName );
 			}
-			my $statusUpd = &getBLParam( $listName, 'status' );
+			my $statusUpd = &getBLParam( $listName, 'update_status' );
 			&httpResponse(
 				{ code => 200, body => { description => $description, update => $statusUpd } } );
 		}
@@ -1197,7 +1222,6 @@ sub get_dos_rule
 #
 #
 # @apiSuccess	{String}	rule		identify a DoS rule. The options are: ssh_bruteforce
-# @apiSuccess   {String}	status	enable or disable a DoS option.
 #
 #
 # @apiSuccessExample Success-Response:
@@ -1469,13 +1493,10 @@ sub add_dos_to_farm
 			&setDOSCreateRule( $name, $farmName );
 
 			my $confFile = &getGlobalConfiguration( 'dosConf' );
-			my $output;
-
+			
 			# check output
-			my $fileHandle  = Config::Tiny->read( $confFile );
-			my $farmsString = $fileHandle->{ $name }->{ 'farms' };
-
-			if ( $farmsString =~ /( |^)$farmName( |$)/ )
+			my $output = &getDOSParam ( $name );
+			if ( grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 			{
 				$errormsg = "$name was enabled successful in $farmName.";
 				&httpResponse(
@@ -1484,6 +1505,10 @@ sub add_dos_to_farm
 					   body => { description => $description, params => $output, message => $errormsg }
 					}
 				);
+			}
+			else
+			{
+				$errormsg = "Error, enabling $name rule.";
 			}
 		}
 	}
@@ -1564,11 +1589,8 @@ sub del_dos_from_farm
 			&setDOSDeleteRule( $name, $farmName );
 
 			# check output
-			my $confFile    = &getGlobalConfiguration( 'dosConf' );
-			my $fileHandle  = Config::Tiny->read( $confFile );
-			my $farmsString = $fileHandle->{ $name }->{ 'farms' };
-
-			if ( $farmsString !~ /( |^)$farmName( |$)/ )
+			my $output = &getDOSParam ( $name );
+			if ( ! grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 			{
 				$errormsg = "$name was disabled in $farmName successful.";
 				&httpResponse(
@@ -1577,6 +1599,10 @@ sub del_dos_from_farm
 					   body => { description => $description, success => "true", message => $errormsg }
 					}
 				);
+			}
+			else
+			{
+				$errormsg = "Error, disabling $name rule.";
 			}
 		}
 	}

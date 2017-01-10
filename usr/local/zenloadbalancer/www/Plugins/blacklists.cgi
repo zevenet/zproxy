@@ -588,18 +588,14 @@ sub setBLCreateList
 	if ( $type eq 'remote' )
 	{
 		&setBLParam( $listName, 'url', $listParams->{ 'url' } );
-		&setBLParam( $listName, 'status', "This list isn't downloaded yet." );
+		&setBLParam( $listName, 'update_status', "This list isn't downloaded yet." );
 		
-		&setBLParam( $listName, 'min', $listParams->{ 'min' } )
-		  if ( exists $listParams->{ 'min' } );
-		&setBLParam( $listName, 'hour', $listParams->{ 'hour' } )
-		  if ( exists $listParams->{ 'hour' } );
-		&setBLParam( $listName, 'dom', $listParams->{ 'dom' } )
-		  if ( exists $listParams->{ 'dom' } );
-		&setBLParam( $listName, 'month', $listParams->{ 'month' } )
-		  if ( exists $listParams->{ 'month' } );
-		&setBLParam( $listName, 'dow', $listParams->{ 'dow' } )
-		  if ( exists $listParams->{ 'dow' } );
+		# default value to update the list 
+		# the list is updated the mondays at 00:00 weekly 
+		&setBLParam( $listName, 'minutes', '00' );
+		&setBLParam( $listName, 'hour', '00' );
+		&setBLParam( $listName, 'day', 'monday' );
+		&setBLParam( $listName, 'frecuency', 'weekly' );
 
 		#~ &setBLDownloadRemoteList ( $listName );
 	}
@@ -714,6 +710,8 @@ sub setBLParam
 	my $conf           = $fileHandle->{ $name };
 	my @farmList       = @{ &getBLParam( $name, 'farms' ) };
 	my $ipList         = &getBLParam( $name, 'source' );
+	
+	&zenlog ("Modifiying list $name, parameter $key.");
 
 	# change name of the list
 	if ( 'name' eq $key )
@@ -793,7 +791,7 @@ sub setBLParam
 		$fileHandle->{ $name }->{ 'farms' } =~ s/(^| )$value( |$)/ /;
 		$fileHandle->write( $blacklistsConf );
 	}
-	elsif ( 'status' eq $key )
+	elsif ( 'update_status' eq $key )
 	{
 		my $date = &getBLlastUptdate ( $name );
 		if ( $value eq 'up' )
@@ -833,7 +831,7 @@ sub setBLParam
 					- name	-> list name
 					- farm	-> add or delete a asociated farm
 					- url	-> modificate url ( only remote lists )
-					- status-> modificate list status ( only remote lists )
+					- update_status-> modificate list status ( only remote lists )
 					- list  -> modificate ip list ( only local lists )
 					
 				value	- value for the field
@@ -864,7 +862,7 @@ sub getBLParam
 	{
 		$output = &getBLIpList( $listName );
 	}
-	else
+	elsif ( $listName )
 	{
 		if ( exists $fileHandle->{ $listName } )
 		{
@@ -875,7 +873,6 @@ sub getBLParam
 				$output = \@aux;
 			}
 		}
-
 		# don't exist that list
 		else
 		{
@@ -883,7 +880,26 @@ sub getBLParam
 			$output = -1;
 		}
 	}
+	
 	return $output;
+}
+
+
+# &delBLParam ( $listName, $key )
+sub delBLParam
+{
+	my ( $listName, $key ) = @_;
+	my $output;
+	my $fileHandle;
+
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	$fileHandle = Config::Tiny->read( $blacklistsConf );
+	if ( exists ( $fileHandle->{ $listName }->{ $key } ) )
+	{
+		&zenlog ( "Delete parameter $key in list $listName." );
+		delete $fileHandle->{ $listName }->{ $key };
+		$fileHandle->write( $blacklistsConf );		
+	}
 }
 
 =begin nd
@@ -947,7 +963,7 @@ sub setBLDownloadRemoteList
 
 	&zenlog( "Downloading $listName..." );
 
-	# if ( $fileHandle->{ $listName }->{ 'status' } ne 'dis' )
+	# if ( $fileHandle->{ $listName }->{ 'update_status' } ne 'dis' )
 	my @web           = `curl --connect-timeout $timeout \"$url\" 2>/dev/null`;
 	my $source_format = &getValidFormat( 'blacklists_source' );
 
@@ -964,7 +980,7 @@ sub setBLDownloadRemoteList
 	# set URL down if it doesn't have any ip
 	if ( !@ipList )
 	{
-		&setBLParam( $listName, 'status', 'down' );
+		&setBLParam( $listName, 'update_status', 'down' );
 		&zenlog( "Fail, downloading $listName from url '$url'. Not found any source." );
 	}
 	else
@@ -975,7 +991,7 @@ sub setBLDownloadRemoteList
 		@list = @ipList;
 		untie @list;
 		
-		&setBLParam( $listName, 'status', 'up' );
+		&setBLParam( $listName, 'update_status', 'up' );
 		&zenlog( "$listName was downloaded successful." );
 	}
 
@@ -1342,32 +1358,71 @@ sub getBLRules
 sub setBLCronTask
 {
 	my ( $listName ) = @_;
-	my $time;
+	my $cronFormat = { 'min' => '*', 'hour' => '*', 'dow' => '*', 'dom' => '*', 'month' => '*' };
+	my $rblFormat;
 	
-	# default values
-	$time->{ 'min' }   = '0';
-	$time->{ 'hour' }  = '0';
-	$time->{ 'dom' }   = '*';
-	$time->{ 'month' } = '*';
-	$time->{ 'dow' }   = '1';
-
-	$time->{ 'min' } = &getBLParam( $listName, 'min' )
-	  if ( &getBLParam( $listName, 'min' ) );
-	$time->{ 'hour' } = &getBLParam( $listName, 'hour' )
-	  if ( &getBLParam( $listName, 'hour' ) );
-	$time->{ 'dom' } = &getBLParam( $listName, 'dom' )
-	  if ( &getBLParam( $listName, 'dom' ) );
-	$time->{ 'month' } = &getBLParam( $listName, 'month' )
-	  if ( &getBLParam( $listName, 'month' ) );
-	$time->{ 'dow' } = &getBLParam( $listName, 'dow' )
-	  if ( &getBLParam( $listName, 'dow' ) );
-
+	# get values
+	$rblFormat->{ 'frecuency' } = &getBLParam( $listName, 'frecuency' );
+	$rblFormat->{ 'minutes' } = &getBLParam( $listName, 'minutes' )
+		if ( &getBLParam( $listName, 'minutes' ) );
+	$rblFormat->{ 'hour' } = &getBLParam( $listName, 'hour' )
+		if ( &getBLParam( $listName, 'hour' ) );
+	$rblFormat->{ 'period' } = &getBLParam( $listName, 'period' )
+		if ( &getBLParam( $listName, 'period' ) );
+	$rblFormat->{ 'unit' } = &getBLParam( $listName, 'unit' )
+		if ( &getBLParam( $listName, 'unit' ) );
+	$rblFormat->{ 'frecuency-type' } = &getBLParam( $listName, 'frecuency-type' )
+	  if ( &getBLParam( $listName, 'frecuency-type' ) );
+	$rblFormat->{ 'day' } = &getBLParam( $listName, 'day' )
+	  if ( &getBLParam( $listName, 'day' ) );
+	
+	# change to cron format
+	if ( $rblFormat->{ 'frecuency' } eq 'daily' && $rblFormat->{ 'frecuency-type' } eq 'period' )
+	{
+		my $period = $rblFormat->{ 'period' };
+		if ( $rblFormat->{ 'unit' } eq 'minutes' )
+		{
+			$cronFormat->{ 'min'} = "*/$rblFormat->{ 'period' }";
+		}
+		elsif ( $rblFormat->{ 'unit' } eq 'hours' )
+		{
+			$cronFormat->{ 'min'} = '00';
+			$cronFormat->{ 'hour'} = "*/$rblFormat->{ 'period' }";
+		}
+	}
+	else
+	{
+		$cronFormat->{'hour'} = $rblFormat->{ 'hour' };
+		$cronFormat->{'min'} = $rblFormat->{ 'minutes' };
+		# exact daily frencuncies only need these fields
+		
+		if ( $rblFormat->{ 'frecuency' } eq 'weekly' )
+		{
+			use Switch;
+			switch ( $rblFormat->{ 'day' } )
+			{
+				case 'monday' 	{ $cronFormat->{ 'dow' } = '1' };
+				case 'tuesday' 	{ $cronFormat->{ 'dow' } = '2' };
+				case 'wednesday'{ $cronFormat->{ 'dow' } = '3' };
+				case 'thursday' 	{ $cronFormat->{ 'dow' } = '4' };
+				case 'friday' 		{ $cronFormat->{ 'dow' } = '5' };
+				case 'saturday' 	{ $cronFormat->{ 'dow' } = '6' };
+				case 'sunday' 	{ $cronFormat->{ 'dow' } = '7' };
+			}
+		}
+		elsif ( $rblFormat->{ 'frecuency' } eq 'monthly' )
+		{
+			$cronFormat->{ 'dom' } = $rblFormat->{ 'day' };
+		}
+	}
+	
 	my $blacklistsCronFile = &getGlobalConfiguration( 'blacklistsCronFile' );
 
 	# 0 0 * * 1	root	/usr/local/zenloadbalancer/app/zenrrd/zenrrd.pl &>/dev/null
 	my $cmd =
-	  "$time->{ 'min' } $time->{ 'hour' } $time->{ 'dom' } $time->{ 'month' } $time->{ 'dow' }\t"
+	  "$cronFormat->{ 'min' } $cronFormat->{ 'hour' } $cronFormat->{ 'dom' } $cronFormat->{ 'month' } $cronFormat->{ 'dow' }\t"
 	  . "root\t/usr/local/zenloadbalancer/www/Plugins/ipds/blacklists/updateRemoteList.pl $listName &>/dev/null";
+	  &zenlog ("Added cron task: $cmd");
 
 	tie my @list, 'Tie::File', $blacklistsCronFile;
 

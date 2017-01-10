@@ -34,6 +34,7 @@ my $ipv4v6        = qr/(?:$ipv4_addr|$ipv6_addr)/;
 my $boolean       = qr/(?:true|false)/;
 my $enable        = qr/(?:enable|disable)/;
 my $natural = qr/[1-9]\d*/;    # natural number = {1, 2, 3, ...}
+my $weekdays = qr/(?:monday|tuesday|wednesday|thursday|fraiday|saturday|sunday)/;
 
 my $hostname = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
 my $service  = qr/[a-zA-Z1-9\-]+/;
@@ -152,10 +153,12 @@ my %format_re = (
 	'blacklists_policy'      => qr{(?:allow|deny)},
 	'blacklists_url'       => qr{.+},
 	'blacklists_hour'   => qr{\d+},
-	'blacklists_min'   => qr{\d+},
-	'blacklists_month'   => qr{\d+},
-	'blacklists_dow'   => qr{\d+},
-	'blacklists_dom'   => qr{\d+},
+	'blacklists_minutes'   => qr{\d+},
+	'blacklists_period'   => qr{\d+},
+	'blacklists_unit'   => qr{(:?hours|minutes)},
+	'blacklists_day'   => qr{(:?$natural|$weekdays)},
+	'blacklists_frecuency'   => qr{(:?daily|weekly|monthly)},
+	'blacklists_frecuency-type'   => qr{(:?period|exact)},
 	'dos_name'      => qr/[\w]+/,
 	'dos_rule'      => qr/(?:$dos_global|$dos_all|$dos_tcp)/,
 	'dos_rule_farm' => qr/(?:$dos_all|$dos_tcp)/,
