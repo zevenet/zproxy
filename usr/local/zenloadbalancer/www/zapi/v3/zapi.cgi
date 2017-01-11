@@ -567,7 +567,10 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 	print $output;
 
 	&zenlog( "STATUS: $self->{ code }" );
-	&zenlog( "MESSAGE: $self->{ body }->{ message }" ) if ( exists $self->{ body }->{ message } );
+	if ( ref $self->{ body } eq 'HASH' )
+	{
+		&zenlog( "MESSAGE: $self->{ body }->{ message }" ) if ( exists $self->{ body }->{ message } );
+	}
 	&zenlog( "MEMORY: " . &getMemoryUsage );
 
 	exit;
@@ -935,13 +938,13 @@ PUT qr{^/farms/($farm_re)/backends/($be_re)/maintenance$} => sub {
 ##### /farms/FARM/certificates
 
 POST qr{^/farms/($farm_re)/certificates$} => sub {
-	&add_farmcertificate( @_ );
+	&add_farm_certificate( @_ );
 };
 
 ##### /farms/FARM/certificates/CERTIFICATE
 
 DELETE qr{^/farms/($farm_re)/certificates/($cert_pem_re)$} => sub {
-	&delete_farmcertificate( @_ );
+	&delete_farm_certificate( @_ );
 };
 
 
@@ -1163,6 +1166,10 @@ GET qr{^/stats/interfaces$} => sub {
 my $modules_re = &getValidFormat( 'farm_modules' );
 GET qr{^/stats/farms$} => sub {
 	&all_farms_stats( @_ );
+};
+
+GET qr{^/stats/farms/modules$} => sub {
+	&module_stats_status( @_ );
 };
 
 GET qr{^/stats/farms/modules/($modules_re)$} => sub {

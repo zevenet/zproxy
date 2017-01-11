@@ -721,6 +721,22 @@ sub create_csr
 	my $json_obj = shift;
 
 	my $description = 'Create CSR';
+	my $errormsg;
+
+	my $configdir = &getGlobalConfiguration('configdir');
+
+	if ( -f "$configdir/$json_obj->{name}.csr" )
+	{
+		&zenlog( "ZAPI error, $json->{ name} already exists."	);
+		# Error
+		my $errormsg = "$json->{ name} already exists.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+		&httpResponse({ code => 400, body => $body });
+	}
 
 	$json_obj->{ name }         = &getCleanBlanc( $json_obj->{ name } );
 	#~ $json_obj->{ issuer }       = &getCleanBlanc( $json_obj->{ issuer } );
@@ -744,7 +760,7 @@ sub create_csr
 		 #~ || $json_obj->{ key } =~ /^$/
 		 )
 	{
-		my $errormsg = "Fields can not be empty. Try again.";
+		$errormsg = "Fields can not be empty. Try again.";
 		&zenlog( $errormsg );
 
 		my $body = {
@@ -758,7 +774,7 @@ sub create_csr
 
 	if ( &checkFQDN( $json_obj->{ fqdn } ) eq "false" )
 	{
-		my $errormsg = "FQDN is not valid. It must be as these examples: domain.com, mail.domain.com, or *.domain.com. Try again.";
+		$errormsg = "FQDN is not valid. It must be as these examples: domain.com, mail.domain.com, or *.domain.com. Try again.";
 		&zenlog( $errormsg );
 
 		my $body = {
@@ -772,7 +788,7 @@ sub create_csr
 
 	if ( $json_obj->{ name } !~ /^[a-zA-Z0-9\-]*$/ )
 	{
-		my $errormsg = "Certificate Name is not valid. Only letters, numbers and '-' chararter are allowed. Try again.";
+		$errormsg = "Certificate Name is not valid. Only letters, numbers and '-' chararter are allowed. Try again.";
 		&zenlog( $errormsg );
 
 		my $body = {
@@ -784,23 +800,37 @@ sub create_csr
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	&createCSR(
+	$errormsg = &createCSR(
 				$json_obj->{ name },     $json_obj->{ fqdn },     $json_obj->{ country },
 				$json_obj->{ state },    $json_obj->{ locality }, $json_obj->{ organization },
 				$json_obj->{ division }, $json_obj->{ mail },     $CSR_KEY_SIZE,
 				""
 	);
 
-	my $message = "Certificate $json_obj->{ name } created";
-	&zenlog( $message );
-
-	my $body = {
-				 description => $description,
-				 success     => "true",
-				 message     => $message
-	};
-
-	&httpResponse({ code => 200, body => $body });
+	if ( !$errormsg )
+	{
+		my $message = "Certificate $json_obj->{ name } created";
+		&zenlog( $message );
+		
+		my $body = {
+					description => $description,
+					success     => "true",
+					message     => $message
+		};
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
+	{
+		$errormsg = "Error, creating certificate $json_obj->{ name }.";
+		&zenlog( $message );
+		
+		my $body = {
+					description => $description,
+					error     => "true",
+					message     => $errormsg
+		};
+		&httpResponse({ code => 400, body => $body });
+	}
 }
 
 # POST /certificates/CERTIFICATE (Upload PEM)

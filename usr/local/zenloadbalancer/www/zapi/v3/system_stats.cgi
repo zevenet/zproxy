@@ -1228,6 +1228,50 @@ sub all_farms_stats # ()
 }
 
 
+# GET /stats/farms/modules
+#Get a farm status resume 
+sub module_stats_status
+{
+	my @farms = @{ &getAllFarmStats () };
+	my $lslb = { 'total' => 0, 'up' => 0, 'down' => 0, };
+	my $gslb = { 'total' => 0, 'up' => 0, 'down' => 0, };
+	my $dslb = { 'total' => 0, 'up' => 0, 'down' => 0, };
+
+	foreach my $farm ( @farms )
+	{
+		if ( $farm->{ 'profile' } =~ /(?:http|https|l4xnat)/ )
+		{
+			$lslb->{ 'total' } ++;
+			$lslb->{ 'down' } ++ 	if ( $farm->{ 'status' } eq 'down' );
+			$lslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' );
+		}
+		elsif ( $farm->{ 'profile' } =~ /gslb/ )
+		{
+			$gslb->{ 'total' } ++;
+			$gslb->{ 'down' } ++ 	if ( $farm->{ 'status' } eq 'down' );
+			$gslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' );
+		}
+		elsif ( $farm->{ 'profile' } =~ /datalink/ )
+		{
+			$dslb->{ 'total' } ++;
+			$dslb->{ 'down' } ++ 	if ( $farm->{ 'status' } eq 'down' );
+			$dslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' );
+		}
+	}
+	
+	# Print Success
+	my $body = {
+				 description => "Module status", 	
+				 params 		=> {
+					 "lslb" => $lslb,
+					 "gslb" => $gslb,
+					 "dslb" => $dslb,
+					 },
+	};
+	&httpResponse({ code => 200, body => $body });
+}
+
+
 #Get lslb|gslb|dslb Farm Stats
 sub module_stats # ()
 {

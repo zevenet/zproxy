@@ -66,6 +66,7 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 	my $i      = 0;
 	if ( $cfile =~ /^$/ )
 	{
+		&zenlog ( "Certificate not found." );
 		return $output;
 	}
 
@@ -92,6 +93,10 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 			$i++;
 		}
 		untie @array;
+	}
+	else
+	{
+		&zenlog ( "Error, adding certificate to farm $fname. This farm is not https type." );
 	}
 
 	return $output;
