@@ -223,6 +223,9 @@ sub getNetworkStats    # ()
 			}
 			$if =~ s/\ //g;
 
+			# not show cluster maintenance interface
+			next if $if eq 'cl_maintenance';
+			
 			push @interface, $if;
 			push @interfacein, $in;
 			push @interfaceout, $out;

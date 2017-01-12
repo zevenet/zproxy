@@ -17,6 +17,7 @@ use strict;
 
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 require "/usr/local/zenloadbalancer/www/rrd_functions.cgi";
+require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";
 
 # Supported graphs periods
 my $graph_period = {
@@ -1682,7 +1683,80 @@ sub stats_conns
 }
 
 
+#GET /stats/network/interfaces
+sub stats_network_interfaces
+{
+	my $description = "Interfaces info";
+	my @interfaces = &getNetworkStats( 'hash' );
+	
+	my @nic = &getInterfaceTypeList( 'nic' );
+	my @bond = &getInterfaceTypeList( 'bond' );
+	
+	my @nicList;
+	my @bondList;
+	
+	my @restIfaces;
 
+	foreach my $iface ( @interfaces )
+	{
+		my $extrainfo;
+		my $type = &getInterfaceType ( $iface->{ interface } );
+		# Fill nic interface list
+		if ( $type eq 'nic' )
+		{
+			foreach my $ifaceNic ( @nic )
+			{
+				if ( $iface->{ interface } eq $ifaceNic->{ name } )
+				{
+					$extrainfo = $ifaceNic;
+					last;
+				}
+			}
+			$iface->{ mac }	= $extrainfo->{ mac };
+			$iface->{ ip } 		= $extrainfo->{ addr };
+			$iface->{ status } = $extrainfo->{ status };
+			$iface->{ vlan } = &getAppendInterfaces ( $iface->{ interface }, 'vlan' );
+			$iface->{ virtual } = &getAppendInterfaces ( $iface->{ interface }, 'virtual' );
+			
+			push @nicList, $iface;
+		}
+		
+		# Fill bond interface list
+		elsif ( $type eq 'bond' )
+		{
+			foreach my $ifaceBond ( @bond )
+			{
+				if ( $iface->{ interface } eq $ifaceBond->{ name } )
+				{
+					$extrainfo = $ifaceBond;
+					last;
+				}
+			}
+			$iface->{ mac }	= $extrainfo->{ mac };
+			$iface->{ ip } 		= $extrainfo->{ addr };
+			$iface->{ status } = $extrainfo->{ status };
+			$iface->{ vlan } = &getAppendInterfaces ( $iface->{ interface }, 'vlan' );
+			$iface->{ virtual } = &getAppendInterfaces ( $iface->{ interface }, 'virtual' );
+			
+			$iface->{ slaves } = &getBondSlaves ( $iface->{ interface } );
+			
+			push @bondList, $iface;
+		}
+		
+		else 
+		{
+			push @restIfaces, $iface;
+		}
+		
+	}
+
+	# Success
+	my $body = {
+				 description => $description,
+				 params      => { nic => \@nicList, bond => \@bondList, }
+	};
+	&httpResponse({ code => 200, body => $body });
+}
 
 #**
 #  @api {get} /stats/network Request network system statistics
@@ -1739,7 +1813,6 @@ sub stats_network # ()
 	$output->{ 'hostname'} = &getHostname();
 	$output->{ 'date' } 		= &getDate();
 	$output->{ 'interfaces' } = \@interfaces;
-	
 
 	# Success
 	my $body = {

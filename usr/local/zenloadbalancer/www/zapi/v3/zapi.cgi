@@ -1149,6 +1149,10 @@ GET qr{^/stats/system/network$} => sub {
 	&stats_network();
 };
 
+GET qr{^/stats/system/network/interfaces$} => sub {
+	&stats_network_interfaces();
+};
+
 GET qr{^/stats/system/cpu$} => sub {
 	&stats_cpu();
 };
@@ -1158,9 +1162,10 @@ GET qr{^/stats/system/connections$} => sub {
 };
 
 # Interfaces stats
-GET qr{^/stats/interfaces$} => sub {
-	&stats_network();
-};
+# old call
+#~ GET qr{^/stats/interfaces$} => sub {
+	#~ &stats_network();
+#~ };
 
 # Farm stats
 my $modules_re = &getValidFormat( 'farm_modules' );
@@ -1282,6 +1287,11 @@ GET qr{^/graphs/farms/($farm_re)/($frequency_re)$} => sub {
 #
 _system:
 
+
+#  GET version
+GET qr{^/system/version$} => sub {
+	&get_version;
+};
 
 #  GET dns
 GET qr{^/system/dns$} => sub {

@@ -45,6 +45,10 @@ $licenseFileHtml="/usr/local/zenloadbalancer/license.html";
 $filedns="/etc/resolv.conf";
 #apt file
 $fileapt="/etc/apt/sources.list";
+#Where is hostname binary?
+$hostname="/bin/hostname";
+#Where is uname binary?
+$uname="/bin/uname";
 #Where is tar binary?
 $tar="/bin/tar";
 #where is ifconfig binary?

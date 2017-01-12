@@ -1891,4 +1891,33 @@ sub get_supportsave
 	}
 }
 
+
+# GET /system/version
+sub get_version
+{
+	my $description = "Get version";
+	
+	my $hostnameBin = &getGlobalConfiguration( 'hostname' );
+	my $uname = &getGlobalConfiguration( 'uname' );
+	
+	my $zevenet		= &getGlobalConfiguration( 'version' );
+	my $kernel			= `$uname -r`;
+	chop $kernel;
+	my $hostname  	= `$hostnameBin`;
+	chop $hostname;
+
+	&httpResponse(
+		{ 	code => 200, body => { description => $description, 
+				params => { 
+					'kernel_version' => $kernel, 
+					'zevenet_version' => $zevenet, 
+					'hostname' => $hostname,  
+				} } 
+		}
+	);
+}
+
+
+
+
 1;

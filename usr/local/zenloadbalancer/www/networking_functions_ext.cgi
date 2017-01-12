@@ -1432,4 +1432,30 @@ sub getAllBondsSlaves
 	return @slaves;
 }
 
+# Get vlan or virtual interfaces appended from a interface
+sub getAppendInterfaces # ( $iface_name, $type )
+{
+	my ( $ifaceName, $type )  = @_;
+	my @output;
+	
+	my @typeList = &getInterfaceTypeList ( $type );
+
+	foreach my $if ( @typeList )
+	{
+		my $iface = $if->{ name };
+		my $parent = $if->{ parent }; 
+		
+		# if this interface append from a VLAN interface, will find absolut parent
+		if ( &getInterfaceType ( $parent ) eq 'vlan' )
+		{
+			my $virtualInterface = &getInterfaceConfig ( $parent );
+			$parent = $virtualInterface->{ parent }; 
+		}
+		
+		push  @output, $iface if ( $parent eq $ifaceName );
+	}
+	
+	return \@output;		
+}
+			
 1;
