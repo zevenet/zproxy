@@ -61,6 +61,7 @@ sub get_blacklists_list
 		}
 		
 		%listHash = %{ &getBLParam ( $listName ) };
+		delete $listHash{ 'source' };
 		$listHash{ 'sources' } = \@ipList;
 		$listHash{ 'farms' } = &getBLParam( $listName, 'farms' );
 		
@@ -297,7 +298,7 @@ sub set_blacklists_list
 	elsif ( &getBLParam( $listName, 'preload' ) eq 'true' )
 	{
 		$errormsg = &getValidOptParams( $json_obj, [ "policy" ] );
-		$errormsg = "In preload lists only is allow to change the policy" if ( $errormsg );
+		$errormsg = "In preload lists only is allowed to change the policy" if ( $errormsg );
 	}
 
 	my $type = &getBLParam( $listName, 'type' );
@@ -317,42 +318,134 @@ sub set_blacklists_list
 		if ( !$errormsg )
 		{
 			# Cron params and url only is used in remote lists
-			if ( $type ne 'remote' && 
-					&getValidOptParams( $json_obj, [ "url", "minutes", "hour", "day", "frequency", "frequency-type", "period", "unit" ] ) )
+			if ( $type ne 'remote' )
 			{
-				$errormsg = "Error, wrong parameters." if ( $errormsg );
+				if ( grep ( /^(url|minutes|hour|day|frequency|frequency\-type|period|unit)$/ , keys %{ $json_obj } ) )
+				#~ if ( ! &getValidOptParams( $json_obj, [ "url", "minutes", "hour", "day", "frequency", "frequency-type", "period", "unit" ] ) )
+				{ 
+					$errormsg = "Error, trying to change a remote list parameter in a local list.";
+				}
 			}
 
 			# Sources only is used in local lists
-			elsif ( exists $json_obj->{ 'sources' }
+			if ( exists $json_obj->{ 'sources' }
 					&& $type ne 'local' )
 			{
 				$errormsg = "Source parameter only is available in local lists.";
 			}
-			else
+			if ( !$errormsg )
 			{
 				my $cronFlag;
+				
 				# if there is a new update time configuration to remote lists, delete old configuration
 				#checking available configurations
-				if ( exists $json_obj->{ 'frequency' } || exists $json_obj->{ 'frequency-type' } || exists $json_obj->{ 'period' } || exists $json_obj->{ 'unit' }
-					|| exists $json_obj->{ 'minutes' } || exists $json_obj->{ 'hour' } || exists $json_obj->{ 'day' } )
-				{
+				if ( grep ( /^(minutes|hour|day|frequency|frequency\-type|period|unit)$/ , keys %{ $json_obj } ) )
+				{				
+					$json_obj->{ 'frequency' } 	||=&getBLParam ( $listName, "frequency" );
 					
-					if (  ( $json_obj->{ 'frequency' } eq 'daily' && $json_obj->{ 'frequency-type' } eq 'period' && exists $json_obj->{ 'period' } && exists $json_obj->{ 'unit' } )
-						|| ( $json_obj->{ 'frequency' } eq 'daily' && $json_obj->{ 'frequency-type' } eq 'exact' && exists $json_obj->{ 'minutes' } && exists $json_obj->{ 'hour' } )
-						|| ( $json_obj->{ 'frequency' } eq 'weekly' && exists $json_obj->{ 'day' } && exists $json_obj->{ 'minutes' } &&  exists $json_obj->{ 'hour' } )
-						|| ( $json_obj->{ 'frequency' } eq 'monthly' && exists $json_obj->{ 'day' } && exists $json_obj->{ 'minutes' } && exists $json_obj->{ 'hour' } ) )
+					if ( $json_obj->{ 'frequency' } eq 'daily' )
 					{
-						&delBLParam ( $listName, $_ ) for ( "minutes", "hour", "day", "frequency", "frequency-type", "period", "unit" );
-						# rewrite cron task if exists some of the next keys
-						$cronFlag = 1;
+						$json_obj->{ 'frequency-type' }	||= &getBLParam ( $listName, "frequency-type" );
+						if ( $json_obj->{ 'frequency-type' } eq 'period' )
+						{
+							$json_obj->{ 'period' } 		||=&getBLParam ( $listName, "period" );
+							$json_obj->{ 'unit' } 			||=&getBLParam ( $listName, "unit" );
+							foreach my $timeParam ( "period", "unit" )
+							{
+								if ( ! $json_obj->{ $timeParam } )
+								{
+									$errormsg = "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
+									last; 	
+								}
+							}
+							if ( ! $errormsg )
+							{
+								&delBLParam ( $listName, $_ ) for ( "minutes", "hour" );
+								# rewrite cron task if exists some of the next keys
+								$cronFlag = 1;
+							}
+						}
+						elsif ( $json_obj->{ 'frequency-type' } eq 'exact' )
+						{
+							$json_obj->{ 'minutes' } 	||=&getBLParam ( $listName, "minutes" );
+							$json_obj->{ 'hour' } 			||=&getBLParam ( $listName, "hour" );
+							foreach my $timeParam ( "minutes", "hour" )
+							{
+								if ( ! $json_obj->{ $timeParam } )
+								{
+									$errormsg = "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
+									last;
+								}
+							}
+							if ( ! $errormsg )
+							{
+								&delBLParam ( $listName, $_ ) for ( "unit", "period" );
+								# rewrite cron task if exists some of the next keys
+								$cronFlag = 1;
+							}
+						}
+						else
+						{
+							$errormsg = "It's neccessary indicate frequency type for daily frequency.";
+						}
+					}
+					elsif ( $json_obj->{ 'frequency' } eq 'weekly'  )
+					{
+						$json_obj->{ 'frequency' } 	||=&getBLParam ( $listName, "frequency" );
+						$json_obj->{ 'minutes' } 	||=&getBLParam ( $listName, "minutes" );
+						$json_obj->{ 'hour' } 			||=&getBLParam ( $listName, "hour" );
+						$json_obj->{ 'day' } 			||=&getBLParam ( $listName, "day" );
+						foreach my $timeParam ( "minutes", "hour", "day" )
+						{
+							if ( ! $json_obj->{ $timeParam } )
+							{
+								$errormsg = "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
+								last;
+							}
+						}
+						if ( ! &getValidFormat ('weekdays', $json_obj->{ 'day' }) )
+						{
+							$errormsg = "Error value of $json_obj->{ 'day' } parameter in $json_obj->{ 'frequency' } frequency."; 
+						}
+						if ( ! $errormsg )
+						{
+							&delBLParam ( $listName, $_ ) for ( "frequency-type", "period", "unit" );
+							# rewrite cron task if exists some of the next keys
+							$cronFlag = 1;
+						}
+					}
+					elsif ( $json_obj->{ 'frequency' } eq 'monthly' )
+					{
+						$json_obj->{ 'frequency' } 	||=&getBLParam ( $listName, "frequency" );
+						$json_obj->{ 'minutes' } 	||=&getBLParam ( $listName, "minutes" );
+						$json_obj->{ 'hour' } 			||=&getBLParam ( $listName, "hour" );
+						$json_obj->{ 'day' } 			||=&getBLParam ( $listName, "day" );
+						# check if exists all paramameters
+						foreach my $timeParam ( "hour","minutes", "day" )
+						{
+							if ( ! $json_obj->{ $timeParam } )
+							{
+								$errormsg = "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
+								last;
+							}
+						}
+						if ( ! &getValidFormat ('day_of_month', $json_obj->{ 'day' }) )
+						{
+							$errormsg = "Error value of $json_obj->{ 'day' } parameter in $json_obj->{ 'frequency' } frequency."; 
+						}
+						if ( ! $errormsg )
+						{
+							&delBLParam ( $listName, $_ ) for ( "unit", "period", "frequency-type" );
+							# rewrite cron task if exists some of the next keys
+							$cronFlag = 1;
+						}
 					}
 					else
 					{
 						$errormsg = "Error with update configuration parameters.";
 					}
 				}
-				
+
 				if ( !$errormsg )
 				{
 					foreach my $key ( keys %{ $json_obj } )
@@ -369,7 +462,6 @@ sub set_blacklists_list
 						}
 						# set params
 						$errormsg = &setBLParam( $listName, $key, $json_obj->{ $key } );
-						$errormsg = "Error, modifying $key in $listName." if ( $errormsg );
 	
 						# once changed list, update de list name
 						if ( $key eq 'name' )
@@ -378,20 +470,29 @@ sub set_blacklists_list
 						}
 	
 						# not continue if there was a error
-						last if ( $errormsg );
+						if ( $errormsg )
+						{
+							$errormsg = "Error, modifying $key in $listName.";
+							last;
+						}
 					}
 
-					if ( $cronFlag && @{ &getBLParam( $listName, 'farms' ) } )
+					if ( !$errormsg )
 					{
-						&setBLCronTask( $listName );
+						if ( $cronFlag && @{ &getBLParam( $listName, 'farms' ) } )
+						{
+							&setBLCronTask( $listName );
+						}
+			
+						# all successful
+						my %listHash = %{ &getBLParam( $listName ) };
+						$listHash{ 'sources' } = $listHash{ 'source' };
+						delete $listHash{ 'source' };
+						
+						my $body = { description => $description, params => \%listHash };
+						&httpResponse({ code => 200, body => $body } );
 					}
-	
-					# all successful
-					my $listHash = &getBLParam( $listName );
-					my $body = { description => $description, params => $listHash };
-					&httpResponse({ code => 200, body => $body } );
 				}
-				
 			}
 		}
 	}
@@ -456,7 +557,7 @@ sub del_blacklists_list
 			$errormsg = "The list $listName has been deleted successful.";
 			my $body = {
 						 description => $description,
-						 successful  => "true",
+						 success  => "true",
 						 message     => $errormsg,
 			};
 			&httpResponse( { code => 200, body => $body } );

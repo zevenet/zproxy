@@ -35,6 +35,10 @@ my $boolean       = qr/(?:true|false)/;
 my $enable        = qr/(?:enable|disable)/;
 my $natural = qr/[1-9]\d*/;    # natural number = {1, 2, 3, ...}
 my $weekdays = qr/(?:monday|tuesday|wednesday|thursday|fraiday|saturday|sunday)/;
+my $minutes = qr/(?:\d|[1-5]\d)/;
+my $hours = qr/(?:\d|1\d|2[0-3])/;
+my $months = qr/(?:$natural|1[0-2])/;
+my $dayofmonth = qr/(?:\d|[1-2]\d|3[01])/;		# day of month
 
 my $hostname = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
 my $service  = qr/[a-zA-Z1-9\-]+/;
@@ -146,17 +150,19 @@ my %format_re = (
 	'notif_time'   => $natural,               # this value can't be 0
 
 	# ipds
+	'day_of_month' => qr{$dayofmonth},
+	'weekdays'	=> qr{$weekdays},
 	'blacklists_name'      => qr{[a-zA-Z0-9]+},
 	'blacklists_source'    => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
 	'blacklists_source_id' => qr{\d+},
 	'blacklists_type'  => qr{(?:local|remote)},
 	'blacklists_policy'      => qr{(?:allow|deny)},
 	'blacklists_url'       => qr{.+},
-	'blacklists_hour'   => qr{\d+},
-	'blacklists_minutes'   => qr{\d+},
-	'blacklists_period'   => qr{\d+},
+	'blacklists_hour'   => $hours,
+	'blacklists_minutes'   => $minutes,
+	'blacklists_period'   => qr{(:?$hours|$minutes)},
 	'blacklists_unit'   => qr{(:?hours|minutes)},
-	'blacklists_day'   => qr{(:?$natural|$weekdays)},
+	'blacklists_day'   => qr{(:?$dayofmonth|$weekdays)},
 	'blacklists_frequency'   => qr{(:?daily|weekly|monthly)},
 	'blacklists_frequency-type'   => qr{(:?period|exact)},
 	'dos_name'      => qr/[\w]+/,
@@ -304,7 +310,7 @@ sub getValidOptParams    # ( \%json_obj, \@allowParams )
 		$output .= "$_, " for ( @errorParams );
 		chop ( $output );
 		chop ( $output );
-		$output = "The param(s) $output are not correct for this call.";
+		$output = "The param(s): $output are not correct for this call.";
 	}
 
 	return $output;

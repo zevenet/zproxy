@@ -651,6 +651,10 @@ sub setBLDeleteList
 		last if $output;
 	}
 
+	# delete list from ipset
+	$output = &setBLDestroyList( $listName );
+	&zenlog( "Error deleting the list '$listName' from ipset." ) if ( $output );
+	
 	if ( !$output && &getBLParam( $listName, 'preload' ) eq 'false' )
 	{
 		# delete from config file
@@ -663,14 +667,10 @@ sub setBLDeleteList
 			$output = system ( "rm $blacklistsPath/$listName.txt" );
 		}
 	}
-
-	# delete list from ipset
-	$output = &setBLDestroyList( $listName );
+	
 	if ( $output != 0 )
 	{
 		&zenlog( "Error deleting the list '$listName'." );
-
-		#~ $output = 0;
 	}
 	else
 	{
@@ -711,7 +711,14 @@ sub setBLParam
 	my @farmList       = @{ &getBLParam( $name, 'farms' ) };
 	my $ipList         = &getBLParam( $name, 'source' );
 	
-	&zenlog ("Modifiying list $name, parameter $key.");
+	if ( exists $fileHandle->{ $name }->{ $key } )
+	{
+		&zenlog ("Modifying list $name, parameter $key.");
+	}
+	else
+	{
+		&zenlog ("Creating list $name, parameter $key.");
+	}
 
 	# change name of the list
 	if ( 'name' eq $key )
@@ -854,9 +861,9 @@ sub getBLParam
 
 	if ( !$key )
 	{
-		$output                = $fileHandle->{ $listName };
-		$output->{ 'name' }    = $listName;
-		$output->{ 'source' } = &getBLIpList( $listName );
+		$output   = $fileHandle->{ $listName };
+		$output->{ 'name' }  	= $listName;
+		$output->{ 'source' }	= &getBLIpList( $listName );
 	}
 	elsif ( $key eq 'source' )
 	{
@@ -998,8 +1005,6 @@ sub setBLDownloadRemoteList
 }
 
 
-
-
 # &getBLlastUptdate ( list );
 sub getBLlastUptdate
 {
@@ -1018,7 +1023,6 @@ sub getBLlastUptdate
 	if ( $outCmd =~ /^(.+)\./ )
 	{
 		$date = $1;
-		&zenlog ( "Last list update: $date" );
 	}
 	else
 	{
@@ -1401,13 +1405,13 @@ sub setBLCronTask
 			use Switch;
 			switch ( $rblFormat->{ 'day' } )
 			{
-				case 'monday' 	{ $cronFormat->{ 'dow' } = '1' };
-				case 'tuesday' 	{ $cronFormat->{ 'dow' } = '2' };
-				case 'wednesday'{ $cronFormat->{ 'dow' } = '3' };
-				case 'thursday' 	{ $cronFormat->{ 'dow' } = '4' };
-				case 'friday' 		{ $cronFormat->{ 'dow' } = '5' };
-				case 'saturday' 	{ $cronFormat->{ 'dow' } = '6' };
-				case 'sunday' 	{ $cronFormat->{ 'dow' } = '7' };
+				case 'monday' 	{ $cronFormat->{ 'dow' } = '0' };
+				case 'tuesday' 	{ $cronFormat->{ 'dow' } = '1' };
+				case 'wednesday'{ $cronFormat->{ 'dow' } = '2' };
+				case 'thursday' 	{ $cronFormat->{ 'dow' } = '3' };
+				case 'friday' 		{ $cronFormat->{ 'dow' } = '4' };
+				case 'saturday' 	{ $cronFormat->{ 'dow' } = '5' };
+				case 'sunday' 	{ $cronFormat->{ 'dow' } = '6' };
 			}
 		}
 		elsif ( $rblFormat->{ 'frequency' } eq 'monthly' )
@@ -1446,14 +1450,16 @@ sub delBLCronTask
 	my $blacklistsCronFile = &getGlobalConfiguration( 'blacklistsCronFile' );
 
 	tie my @list, 'Tie::File', $blacklistsCronFile;
-
+	
+	my $index = 0;
 	foreach my $line ( @list )
 	{
 		if ( $line =~ /\s$listName\s/ )
 		{
-			splice @list, $line, 1;
+			splice @list, $index, 1;
 			last;
 		}
+		$index ++;
 	}
 
 	untie @list;
