@@ -282,7 +282,7 @@ sub set_blacklists_list
 	delete $json_obj->{ 'time' };
 	
 	my @allowParams =
-	  ( "policy", "url", "sources", "name", "minutes", "hour", "day", "frequency", "frequency-type", "period", "unit" );
+	  ( "policy", "url", "sources", "name", "minutes", "hour", "day", "frequency", "frequency_type", "period", "unit" );
 
 	if ( &getBLExists( $listName ) == -1 )
 	{
@@ -321,7 +321,7 @@ sub set_blacklists_list
 			if ( $type ne 'remote' )
 			{
 				if ( grep ( /^(url|minutes|hour|day|frequency|frequency\-type|period|unit)$/ , keys %{ $json_obj } ) )
-				#~ if ( ! &getValidOptParams( $json_obj, [ "url", "minutes", "hour", "day", "frequency", "frequency-type", "period", "unit" ] ) )
+				#~ if ( ! &getValidOptParams( $json_obj, [ "url", "minutes", "hour", "day", "frequency", "frequency_type", "period", "unit" ] ) )
 				{ 
 					$errormsg = "Error, trying to change a remote list parameter in a local list.";
 				}
@@ -345,8 +345,8 @@ sub set_blacklists_list
 					
 					if ( $json_obj->{ 'frequency' } eq 'daily' )
 					{
-						$json_obj->{ 'frequency-type' }	||= &getBLParam ( $listName, "frequency-type" );
-						if ( $json_obj->{ 'frequency-type' } eq 'period' )
+						$json_obj->{ 'frequency_type' }	||= &getBLParam ( $listName, "frequency_type" );
+						if ( $json_obj->{ 'frequency_type' } eq 'period' )
 						{
 							$json_obj->{ 'period' } 		||=&getBLParam ( $listName, "period" );
 							$json_obj->{ 'unit' } 			||=&getBLParam ( $listName, "unit" );
@@ -360,16 +360,16 @@ sub set_blacklists_list
 							}
 							if ( ! $errormsg )
 							{
-								&delBLParam ( $listName, $_ ) for ( "minutes", "hour" );
+								&delBLParam ( $listName, $_ ) for ( "minutes", "hour", "day" );
 								# rewrite cron task if exists some of the next keys
 								$cronFlag = 1;
 							}
 						}
-						elsif ( $json_obj->{ 'frequency-type' } eq 'exact' )
+						elsif ( $json_obj->{ 'frequency_type' } eq 'exact' )
 						{
 							$json_obj->{ 'minutes' } 	||=&getBLParam ( $listName, "minutes" );
 							$json_obj->{ 'hour' } 			||=&getBLParam ( $listName, "hour" );
-							foreach my $timeParam ( "minutes", "hour" )
+							foreach my $timeParam ( "minutes", "hour", "day" )
 							{
 								if ( ! $json_obj->{ $timeParam } )
 								{
@@ -409,7 +409,7 @@ sub set_blacklists_list
 						}
 						if ( ! $errormsg )
 						{
-							&delBLParam ( $listName, $_ ) for ( "frequency-type", "period", "unit" );
+							&delBLParam ( $listName, $_ ) for ( "frequency_type", "period", "unit" );
 							# rewrite cron task if exists some of the next keys
 							$cronFlag = 1;
 						}
@@ -435,7 +435,7 @@ sub set_blacklists_list
 						}
 						if ( ! $errormsg )
 						{
-							&delBLParam ( $listName, $_ ) for ( "unit", "period", "frequency-type" );
+							&delBLParam ( $listName, $_ ) for ( "unit", "period", "frequency_type" );
 							# rewrite cron task if exists some of the next keys
 							$cronFlag = 1;
 						}

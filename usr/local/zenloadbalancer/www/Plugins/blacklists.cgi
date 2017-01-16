@@ -1375,13 +1375,13 @@ sub setBLCronTask
 		if ( &getBLParam( $listName, 'period' ) );
 	$rblFormat->{ 'unit' } = &getBLParam( $listName, 'unit' )
 		if ( &getBLParam( $listName, 'unit' ) );
-	$rblFormat->{ 'frequency-type' } = &getBLParam( $listName, 'frequency-type' )
-	  if ( &getBLParam( $listName, 'frequency-type' ) );
+	$rblFormat->{ 'frequency_type' } = &getBLParam( $listName, 'frequency_type' )
+	  if ( &getBLParam( $listName, 'frequency_type' ) );
 	$rblFormat->{ 'day' } = &getBLParam( $listName, 'day' )
 	  if ( &getBLParam( $listName, 'day' ) );
 	
 	# change to cron format
-	if ( $rblFormat->{ 'frequency' } eq 'daily' && $rblFormat->{ 'frequency-type' } eq 'period' )
+	if ( $rblFormat->{ 'frequency' } eq 'daily' && $rblFormat->{ 'frequency_type' } eq 'period' )
 	{
 		my $period = $rblFormat->{ 'period' };
 		if ( $rblFormat->{ 'unit' } eq 'minutes' )
