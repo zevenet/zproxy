@@ -371,8 +371,6 @@ sub set_blacklists_list
 						$errormsg = &setBLParam( $listName, $key, $json_obj->{ $key } );
 						$errormsg = "Error, modifying $key in $listName." if ( $errormsg );
 	
-						&zenlog("????? KEY::$key");
-	
 						# once changed list, update de list name
 						if ( $key eq 'name' )
 						{
