@@ -76,7 +76,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
-
+	
 	# Flags
 	my $reload_flag  = "false";
 	my $restart_flag = "false";
@@ -175,24 +175,32 @@ sub modify_http_farm # ( $json_obj, $farmname )
 								&zenlog(
 									"ZAPI error, trying to modify a http farm $farmname, invalid newfarmname, the new name can't be empty."
 								);
-								$newfstat = &runFarmStart( $farmname, "true" );
+								#~ $newfstat = &runFarmStart( $farmname, "true" );
+								
+								&zenlog ("?????status::$newfstat");
+								
 								if ( $newfstat != 0 )
 								{
 									$error = "true";
 									&zenlog(
-										"ZAPI error, trying to modify a http farm $farmname, the farm isn't running, chick if the IP address is up and the PORT is in use."
+										"ZAPI error, trying to modify a http farm $farmname, the farm isn't running, check if the IP address is up and the PORT is in use."
 									);
 								}
 							}
 							else
 							{
 								$farmname = $json_obj->{ newfarmname };
-								$newfstat = &runFarmStart( $farmname, "true" );
+								
+								&zenlog ("?????begining::$newfstat");
+								#~ $newfstat = &runFarmStart( $farmname, "true" );
+								
+								&zenlog ("?????status2::$newfstat");
+								
 								if ( $newfstat != 0 )
 								{
 									$error = "true";
 									&zenlog(
-										"ZAPI error, trying to modify a http farm $farmname, the farm isn't running, chick if the IP address is up and the PORT is in use."
+										"ZAPI error, trying to modify a http farm $farmname, the farm isn't running, check if the IP address is up and the PORT is in use."
 									);
 								}
 							}
@@ -623,6 +631,9 @@ sub modify_http_farm # ( $json_obj, $farmname )
 						if ( $cipherc eq "" )
 						{
 							$error = "true";
+							&zenlog(
+								"ZAPI error, trying to modify a http farm $farmname, invalid cipherc, can't be blank."
+							);
 						}
 						else
 						{

@@ -595,7 +595,7 @@ sub setBLCreateList
 		&setBLParam( $listName, 'minutes', '00' );
 		&setBLParam( $listName, 'hour', '00' );
 		&setBLParam( $listName, 'day', 'monday' );
-		&setBLParam( $listName, 'frecuency', 'weekly' );
+		&setBLParam( $listName, 'frequency', 'weekly' );
 
 		#~ &setBLDownloadRemoteList ( $listName );
 	}
@@ -1362,7 +1362,7 @@ sub setBLCronTask
 	my $rblFormat;
 	
 	# get values
-	$rblFormat->{ 'frecuency' } = &getBLParam( $listName, 'frecuency' );
+	$rblFormat->{ 'frequency' } = &getBLParam( $listName, 'frequency' );
 	$rblFormat->{ 'minutes' } = &getBLParam( $listName, 'minutes' )
 		if ( &getBLParam( $listName, 'minutes' ) );
 	$rblFormat->{ 'hour' } = &getBLParam( $listName, 'hour' )
@@ -1371,13 +1371,13 @@ sub setBLCronTask
 		if ( &getBLParam( $listName, 'period' ) );
 	$rblFormat->{ 'unit' } = &getBLParam( $listName, 'unit' )
 		if ( &getBLParam( $listName, 'unit' ) );
-	$rblFormat->{ 'frecuency-type' } = &getBLParam( $listName, 'frecuency-type' )
-	  if ( &getBLParam( $listName, 'frecuency-type' ) );
+	$rblFormat->{ 'frequency-type' } = &getBLParam( $listName, 'frequency-type' )
+	  if ( &getBLParam( $listName, 'frequency-type' ) );
 	$rblFormat->{ 'day' } = &getBLParam( $listName, 'day' )
 	  if ( &getBLParam( $listName, 'day' ) );
 	
 	# change to cron format
-	if ( $rblFormat->{ 'frecuency' } eq 'daily' && $rblFormat->{ 'frecuency-type' } eq 'period' )
+	if ( $rblFormat->{ 'frequency' } eq 'daily' && $rblFormat->{ 'frequency-type' } eq 'period' )
 	{
 		my $period = $rblFormat->{ 'period' };
 		if ( $rblFormat->{ 'unit' } eq 'minutes' )
@@ -1396,7 +1396,7 @@ sub setBLCronTask
 		$cronFormat->{'min'} = $rblFormat->{ 'minutes' };
 		# exact daily frencuncies only need these fields
 		
-		if ( $rblFormat->{ 'frecuency' } eq 'weekly' )
+		if ( $rblFormat->{ 'frequency' } eq 'weekly' )
 		{
 			use Switch;
 			switch ( $rblFormat->{ 'day' } )
@@ -1410,7 +1410,7 @@ sub setBLCronTask
 				case 'sunday' 	{ $cronFormat->{ 'dow' } = '7' };
 			}
 		}
-		elsif ( $rblFormat->{ 'frecuency' } eq 'monthly' )
+		elsif ( $rblFormat->{ 'frequency' } eq 'monthly' )
 		{
 			$cronFormat->{ 'dom' } = $rblFormat->{ 'day' };
 		}

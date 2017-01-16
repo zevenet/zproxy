@@ -72,12 +72,12 @@ sub getAllFarmStats
 graphs:
 #####Documentation of Graphs####
 #**
-#  @api {get} /graphs/<param1>/<param2>/<frecuency> Request graphs
+#  @api {get} /graphs/<param1>/<param2>/<frequency> Request graphs
 #  @apiGroup System Stats
 #  @apiName GetGraphs
 #  @apiParam {String} param1  First parameter. The possible values are system, network or farm.
 #  @apiParam {String} param2  Second parameter. The possible values if the first parameter is system are: cpu, disk, load, mem or memsw. The possible values if the first parameter is network are: eth0iface, eth0.1iface, eth1iface... The possible values if the first parameter is farm are: <farmname>-farm, for example httptest-farm.
-#  @apiParam {String} frecuency Third parameter. The possible values are: daily, weekly, monthly or yearly.
+#  @apiParam {String} frequency Third parameter. The possible values are: daily, weekly, monthly or yearly.
 #  @apiDescription Get a graph in base 64 data
 #  @apiVersion 3.0.0
 #
@@ -102,7 +102,7 @@ graphs:
 #~ {
 	#~ my $gtype     = shift;
 	#~ my $gtype2    = shift;
-	#~ my $frecuency = shift;
+	#~ my $frequency = shift;
 
 	#~ # Check RRD files are generated
 	#~ opendir ( DIR, "$rrdap_dir/$rrd_dir" );
@@ -203,7 +203,7 @@ graphs:
 	#~ }
 
 	#~ # &zenlog("graphlist: @graphlist");
-	#~ # &zenlog("parameters:$gtype $gtype2 $frecuency");
+	#~ # &zenlog("parameters:$gtype $gtype2 $frequency");
 
 	#~ if ( $gtype2 =~ /^$/ )
 	#~ {
@@ -308,7 +308,7 @@ graphs:
 	#~ }
 
 	#~ # Third parameter
-	#~ if ( $frecuency =~ /^$/ )
+	#~ if ( $frequency =~ /^$/ )
 	#~ {
 		#~ &zenlog(
 			#~ "ZAPI error, trying to get graphs, invalid third parameter, the possible values are daily, weekly, monthly and yearly."
@@ -325,12 +325,12 @@ graphs:
 		#~ &httpResponse({ code => 400, body => $body });
 	#~ }
 
-	#~ if ( $frecuency =~ /^daily|weekly|monthly|yearly$/ )
+	#~ if ( $frequency =~ /^daily|weekly|monthly|yearly$/ )
 	#~ {
-		#~ if ( $frecuency eq "daily" )   { $frecuency = "d"; }
-		#~ if ( $frecuency eq "weekly" )  { $frecuency = "w"; }
-		#~ if ( $frecuency eq "monthly" ) { $frecuency = "m"; }
-		#~ if ( $frecuency eq "yearly" )  { $frecuency = "y"; }
+		#~ if ( $frequency eq "daily" )   { $frequency = "d"; }
+		#~ if ( $frequency eq "weekly" )  { $frequency = "w"; }
+		#~ if ( $frequency eq "monthly" ) { $frequency = "m"; }
+		#~ if ( $frequency eq "yearly" )  { $frequency = "y"; }
 	#~ }
 	#~ else
 	#~ {
@@ -350,7 +350,7 @@ graphs:
 	#~ }
 
 	#~ # Print Graph Function
-	#~ my $graph = &printGraph( $gtype2, $frecuency );
+	#~ my $graph = &printGraph( $gtype2, $frequency );
 
 	#~ # Print Success
 	#~ &zenlog( "ZAPI success, trying to get graphs." );
@@ -509,37 +509,37 @@ sub get_sys_graphs	#()
 	# Print Graph Function
 	my @output;
 	my $graph = &printGraph( $key, 'd' );
-	push @output, { frecuency => 'daily', graph => $graph };
+	push @output, { frequency => 'daily', graph => $graph };
 	$graph = &printGraph( $key, 'w' );
-	push @output, { frecuency => 'weekly', graph => $graph };
+	push @output, { frequency => 'weekly', graph => $graph };
 	$graph = &printGraph( $key, 'm' );
-	push @output, { frecuency => 'monthly', graph => $graph };
+	push @output, { frequency => 'monthly', graph => $graph };
 	$graph = &printGraph( $key, 'y' );
-	push @output, { frecuency => 'yearly', graph => $graph };
+	push @output, { frequency => 'yearly', graph => $graph };
 
 	my $body = { description => $description, graphs => \@output };
 	&httpResponse({ code => 200, body => $body });
 }
 
-# GET frecuency system graphs
+# GET frequency system graphs
 sub get_frec_sys_graphs	#()
 {	
 	my $key = shift;
-	my $frecuency = shift;
-	my $description = "Get $frecuency $key graphs";
+	my $frequency = shift;
+	my $description = "Get $frequency $key graphs";
 	
 	$key = 'mem' if ( $key eq 'ram' );
 	$key = 'memsw' if ( $key eq 'swap' );
 	
 	 # take initial idenfiticative letter 
-	$frecuency = $1  if ( $frecuency =~ /^(\w)/ );
+	$frequency = $1  if ( $frequency =~ /^(\w)/ );
 	
 	# Print Success
 	&zenlog( "ZAPI success, trying to get graphs." );
 	
 	# Print Graph Function
 	my @output;
-	my $graph = &printGraph( $key, $frecuency );
+	my $graph = &printGraph( $key, $frequency );
 
 	my $body = { description => $description, graphs => $graph };
 	&httpResponse({ code => 200, body => $body });
@@ -593,13 +593,13 @@ sub get_iface_graphs	#()
 		# Print Graph Function
 		my @output;
 		my $graph = &printGraph( "${iface}iface", 'd' );
-		push @output, { frecuency => 'daily', graph => $graph };
+		push @output, { frequency => 'daily', graph => $graph };
 		$graph = &printGraph( "${iface}iface", 'w' );
-		push @output, { frecuency => 'weekly', graph => $graph };
+		push @output, { frequency => 'weekly', graph => $graph };
 		$graph = &printGraph( "${iface}iface", 'm' );
-		push @output, { frecuency => 'monthly', graph => $graph };
+		push @output, { frequency => 'monthly', graph => $graph };
 		$graph = &printGraph( "${iface}iface", 'y' );
-		push @output, { frecuency => 'yearly', graph => $graph };
+		push @output, { frequency => 'yearly', graph => $graph };
 
 		my $body = { description => $description, graphs => \@output };
 		&httpResponse({ code => 200, body => $body });
@@ -611,11 +611,11 @@ sub get_iface_graphs	#()
 }
 
 
-# GET frecuency interface graphs
+# GET frequency interface graphs
 sub get_frec_iface_graphs	#()
 {
 	my $iface = shift;
-	my $frecuency = shift;
+	my $frequency = shift;
 	my $description = "Get interface graphs";
 	my $errormsg;
 	# validate NIC NAME
@@ -640,18 +640,18 @@ sub get_frec_iface_graphs	#()
 	}
 	else
 	{
-		if ( $frecuency =~ /^daily|weekly|monthly|yearly$/ )
+		if ( $frequency =~ /^daily|weekly|monthly|yearly$/ )
 		{
-			if ( $frecuency eq "daily" )   { $frecuency = "d"; }
-			if ( $frecuency eq "weekly" )  { $frecuency = "w"; }
-			if ( $frecuency eq "monthly" ) { $frecuency = "m"; }
-			if ( $frecuency eq "yearly" )  { $frecuency = "y"; }
+			if ( $frequency eq "daily" )   { $frequency = "d"; }
+			if ( $frequency eq "weekly" )  { $frequency = "w"; }
+			if ( $frequency eq "monthly" ) { $frequency = "m"; }
+			if ( $frequency eq "yearly" )  { $frequency = "y"; }
 		}
 		# Print Success
 		&zenlog( "ZAPI success, trying to get graphs." );
 		
 		# Print Graph Function
-		my $graph = &printGraph( "${iface}iface", $frecuency );				
+		my $graph = &printGraph( "${iface}iface", $frequency );				
 		my $body = { description => $description, graph => $graph };
 		&httpResponse({ code => 200, body => $body });
 	}
@@ -701,13 +701,13 @@ sub get_farm_graphs	#()
 		# Print Graph Function
 		my @output;
 		my $graph = &printGraph( "$farmName-farm", 'd' );
-		push @output, { frecuency => 'daily', graph => $graph };
+		push @output, { frequency => 'daily', graph => $graph };
 		$graph = &printGraph( "$farmName-farm", 'w' );
-		push @output, { frecuency => 'weekly', graph => $graph };
+		push @output, { frequency => 'weekly', graph => $graph };
 		$graph = &printGraph( "$farmName-farm", 'm' );
-		push @output, { frecuency => 'monthly', graph => $graph };
+		push @output, { frequency => 'monthly', graph => $graph };
 		$graph = &printGraph( "$farmName-farm", 'y' );
-		push @output, { frecuency => 'yearly', graph => $graph };
+		push @output, { frequency => 'yearly', graph => $graph };
 
 		my $body = { description => $description, graphs => \@output };
 		&httpResponse({ code => 200, body => $body });
@@ -718,11 +718,11 @@ sub get_farm_graphs	#()
 	&httpResponse( { code => 400, body => $body } );
 }
 
-# GET frecuency farm graphs
+# GET frequency farm graphs
 sub get_frec_farm_graphs	#()
 {
 	my $farmName = shift;
-	my $frecuency = shift;
+	my $frequency = shift;
 	my $description = "Get farm graphs";
 	my $errormsg;
 
@@ -740,18 +740,18 @@ sub get_frec_farm_graphs	#()
 	}
 	else
 	{
-		if ( $frecuency =~ /^daily|weekly|monthly|yearly$/ )
+		if ( $frequency =~ /^daily|weekly|monthly|yearly$/ )
 		{
-			if ( $frecuency eq "daily" )   { $frecuency = "d"; }
-			if ( $frecuency eq "weekly" )  { $frecuency = "w"; }
-			if ( $frecuency eq "monthly" ) { $frecuency = "m"; }
-			if ( $frecuency eq "yearly" )  { $frecuency = "y"; }
+			if ( $frequency eq "daily" )   { $frequency = "d"; }
+			if ( $frequency eq "weekly" )  { $frequency = "w"; }
+			if ( $frequency eq "monthly" ) { $frequency = "m"; }
+			if ( $frequency eq "yearly" )  { $frequency = "y"; }
 		}
 		# Print Success
 		&zenlog( "ZAPI success, trying to get graphs." );
 		
 		# Print Graph Function
-		my $graph = &printGraph( "$farmName-farm", $frecuency );				
+		my $graph = &printGraph( "$farmName-farm", $frequency );				
 		my $body = { description => $description, graph => $graph };
 		&httpResponse({ code => 200, body => $body });
 	}

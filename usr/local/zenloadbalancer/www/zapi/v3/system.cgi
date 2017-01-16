@@ -1905,13 +1905,17 @@ sub get_version
 	chop $kernel;
 	my $hostname  	= `$hostnameBin`;
 	chop $hostname;
+	my $date = &getDate ();
+	my $applicance = getApplianceVersion ();
 
 	&httpResponse(
 		{ 	code => 200, body => { description => $description, 
 				params => { 
-					'kernel_version' => $kernel, 
-					'zevenet_version' => $zevenet, 
-					'hostname' => $hostname,  
+					'kernel_version' => $kernel,
+					'zevenet_version' => $zevenet,
+					'hostname' => $hostname,
+					'system_date' => $date,
+					'appliance_version' => $applicance,
 				} } 
 		}
 	);

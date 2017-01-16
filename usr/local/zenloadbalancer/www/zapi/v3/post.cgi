@@ -188,7 +188,7 @@ sub new_farm # ( $json_obj )
 		if ( $json_obj->{ profile } =~ /^DATALINK$/i )
 		{
 			$out_p = {
-				name      => $json_obj->{ farmname },
+				farmname      => $json_obj->{ farmname },
 				profile   => $json_obj->{ profile },
 				vip       => $json_obj->{ vip },
 				interface => $json_obj->{ interface },
@@ -197,7 +197,7 @@ sub new_farm # ( $json_obj )
 		else
 		{
 			$out_p = {
-				name      => $json_obj->{ farmname },
+				farmname      => $json_obj->{ farmname },
 				profile   => $json_obj->{ profile },
 				vip       => $json_obj->{ vip },
 				vport     => $json_obj->{ vport },

@@ -61,7 +61,7 @@ sub get_blacklists_list
 		}
 		
 		%listHash = %{ &getBLParam ( $listName ) };
-		$listHash{ 'source' } = \@ipList;
+		$listHash{ 'sources' } = \@ipList;
 		$listHash{ 'farms' } = &getBLParam( $listName, 'farms' );
 		
 		# save hour, minute, period and unit parameters in 'time' hash
@@ -72,6 +72,7 @@ sub get_blacklists_list
 			if ( exists $listHash{ $param } )
 			{
 				my $var = $listHash{ $param };
+				$var += 0 if ( $var =~ /^\d+$/ );
 				$listHash{ 'time' }->{ $param } = $var;
 				delete $listHash{ $param };
 			}
@@ -280,7 +281,7 @@ sub set_blacklists_list
 	delete $json_obj->{ 'time' };
 	
 	my @allowParams =
-	  ( "policy", "url", "source", "name", "minutes", "hour", "day", "frecuency", "frecuency-type", "period", "unit" );
+	  ( "policy", "url", "sources", "name", "minutes", "hour", "day", "frequency", "frequency-type", "period", "unit" );
 
 	if ( &getBLExists( $listName ) == -1 )
 	{
@@ -306,7 +307,7 @@ sub set_blacklists_list
 		# Check key format
 		foreach my $key ( keys %{ $json_obj } )
 		{
-			next if ( $key eq 'source' );
+			next if ( $key eq 'sources' );
 			if ( !&getValidFormat( "blacklists_$key", $json_obj->{ $key } ) )
 			{
 				$errormsg = "$key hasn't a correct format.";
@@ -317,13 +318,13 @@ sub set_blacklists_list
 		{
 			# Cron params and url only is used in remote lists
 			if ( $type ne 'remote' && 
-					&getValidOptParams( $json_obj, [ "url", "minutes", "hour", "day", "frecuency", "frecuency-type", "period", "unit" ] ) )
+					&getValidOptParams( $json_obj, [ "url", "minutes", "hour", "day", "frequency", "frequency-type", "period", "unit" ] ) )
 			{
 				$errormsg = "Error, wrong parameters." if ( $errormsg );
 			}
 
 			# Sources only is used in local lists
-			elsif ( exists $json_obj->{ 'source' }
+			elsif ( exists $json_obj->{ 'sources' }
 					&& $type ne 'local' )
 			{
 				$errormsg = "Source parameter only is available in local lists.";
@@ -333,16 +334,16 @@ sub set_blacklists_list
 				my $cronFlag;
 				# if there is a new update time configuration to remote lists, delete old configuration
 				#checking available configurations
-				if ( exists $json_obj->{ 'frecuency' } || exists $json_obj->{ 'frecuency-type' } || exists $json_obj->{ 'period' } || exists $json_obj->{ 'unit' }
+				if ( exists $json_obj->{ 'frequency' } || exists $json_obj->{ 'frequency-type' } || exists $json_obj->{ 'period' } || exists $json_obj->{ 'unit' }
 					|| exists $json_obj->{ 'minutes' } || exists $json_obj->{ 'hour' } || exists $json_obj->{ 'day' } )
 				{
 					
-					if ( ( $json_obj->{ 'frecuency' } eq 'daily' && $json_obj->{ 'frecuency-type' } eq 'period' && exists $json_obj->{ 'period' } && exists $json_obj->{ 'unit' } )
-						|| ( $json_obj->{ 'frecuency' } eq 'daily' && $json_obj->{ 'frecuency-type' } eq 'exact' && exists $json_obj->{ 'minutes' } && exists $json_obj->{ 'hour' } )
-						|| ( $json_obj->{ 'frecuency' } eq 'weekly' && exists $json_obj->{ 'day' } && exists $json_obj->{ 'minutes' } &&  exists $json_obj->{ 'hour' } )
-						|| ( $json_obj->{ 'frecuency' } eq 'monthly' && exists $json_obj->{ 'day' } && exists $json_obj->{ 'minutes' } && exists $json_obj->{ 'hour' } ) )
+					if (  ( $json_obj->{ 'frequency' } eq 'daily' && $json_obj->{ 'frequency-type' } eq 'period' && exists $json_obj->{ 'period' } && exists $json_obj->{ 'unit' } )
+						|| ( $json_obj->{ 'frequency' } eq 'daily' && $json_obj->{ 'frequency-type' } eq 'exact' && exists $json_obj->{ 'minutes' } && exists $json_obj->{ 'hour' } )
+						|| ( $json_obj->{ 'frequency' } eq 'weekly' && exists $json_obj->{ 'day' } && exists $json_obj->{ 'minutes' } &&  exists $json_obj->{ 'hour' } )
+						|| ( $json_obj->{ 'frequency' } eq 'monthly' && exists $json_obj->{ 'day' } && exists $json_obj->{ 'minutes' } && exists $json_obj->{ 'hour' } ) )
 					{
-						&delBLParam ( $listName, $_ ) for ( "minutes", "hour", "day", "frecuency", "frecuency-type", "period", "unit" );
+						&delBLParam ( $listName, $_ ) for ( "minutes", "hour", "day", "frequency", "frequency-type", "period", "unit" );
 						# rewrite cron task if exists some of the next keys
 						$cronFlag = 1;
 					}
@@ -358,7 +359,7 @@ sub set_blacklists_list
 					{
 						# add only the sources with a correct format
 						# no correct format sources are ignored
-						if ( $key eq 'source' )
+						if ( $key eq 'sources' )
 						{
 							my $source_format = &getValidFormat( 'blacklists_source' );
 							my $noPush = grep ( !/$source_format)/, @{ $json_obj->{ 'name' } } );
@@ -370,6 +371,8 @@ sub set_blacklists_list
 						$errormsg = &setBLParam( $listName, $key, $json_obj->{ $key } );
 						$errormsg = "Error, modifying $key in $listName." if ( $errormsg );
 	
+						&zenlog("????? KEY::$key");
+	
 						# once changed list, update de list name
 						if ( $key eq 'name' )
 						{
@@ -379,20 +382,18 @@ sub set_blacklists_list
 						# not continue if there was a error
 						last if ( $errormsg );
 					}
-				}
 
-				if ( $cronFlag && @{ &getBLParam( $listName, 'farms' ) } )
-				{
-					&setBLCronTask( $listName );
+					if ( $cronFlag && @{ &getBLParam( $listName, 'farms' ) } )
+					{
+						&setBLCronTask( $listName );
+					}
+	
+					# all successful
+					my $listHash = &getBLParam( $listName );
+					my $body = { description => $description, params => $listHash };
+					&httpResponse({ code => 200, body => $body } );
 				}
-
-				# all successful
-				my $listHash = &getBLParam( $listName );
 				
-				my $body = { description => $description, params => $listHash };
-				&httpResponse({ code => 200, body => $body } );
-				# almost one parameter couldn't be changed
-				#~ $errormsg = "Error, modifying $listName.";
 			}
 		}
 	}

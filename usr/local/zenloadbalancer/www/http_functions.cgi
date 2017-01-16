@@ -1049,14 +1049,19 @@ sub _runHTTPFarmStart    # ($farm_name)
 	&zenlog(
 		"running $pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid"
 	);
-	&zsystem(
-		"$pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid 2>/dev/null"
+	$status = &zsystem(
+		"$pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid"
+	#~ $status = &zsystem(
+		#~ "$pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid 2>/dev/null"
 	);
-	$status = $?;
 
 	if ( $status == 0 )
 	{
 		&setFarmHttpBackendStatus( $farm_name );
+	}
+	else
+	{
+		&zenlog( "Error, running $farm_name farm." );
 	}
 
 	return $status;
@@ -1877,6 +1882,7 @@ sub getHTTPFarmConfigIsOK    # ($farm_name)
 {
 	my $farm_name = shift;
 
+	my $pound = &getGlobalConfiguration( 'pound' );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $pound_command = "$pound -f $configdir\/$farm_filename -c";
 	my $output        = -1;

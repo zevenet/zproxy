@@ -25,7 +25,9 @@ $rttables = "/etc/iproute2/rt_tables";
 #this file
 $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 #version ZEN
-$version="5";#update
+$version="5.0";#update
+#appliance version file
+$applianceVersionFile="/etc/zevenet_version";
 #Cipher PCI
 $cipher_pci="kEECDH+ECDSA+AES128:kEECDH+ECDSA+AES256:kEECDH+AES128:kEECDH+AES256:kEDH+AES128:kEDH+AES256:DES-CBC3-SHA:+SHA:!aNULL:!eNULL:!LOW:!kECDH:!DSS:!MD5:!EXP:!PSK:!SRP:!CAMELLIA:!SEED";#update
 #BUY SSL Certificates
@@ -93,6 +95,8 @@ $unzip="/usr/bin/unzip";
 $mv="/bin/mv";
 #Where is mkdir?
 $mkdir="/bin/mkdir";
+#Where is awk binary?
+$awk="/usr/bin/awk";
 #Where is logger?
 $logger="/usr/bin/logger";
 #Where is sec?
@@ -142,7 +146,7 @@ $poundctl="/usr/local/zenloadbalancer/app/pound/sbin/poundctl";
 #pound file configuration template?
 $poundtpl="/usr/local/zenloadbalancer/app/pound/etc/poundtpl.cfg";
 #piddir
-$piddir="/var/run/";
+$piddir="/var/run";
 
 ## Network global configuration options ##
 $fwmarksconf = "$configdir/fwmarks.conf";

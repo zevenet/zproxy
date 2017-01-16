@@ -202,8 +202,8 @@ sub getNetworkStats    # ()
 		{
 			$i++;
 			my @iface = split ( ":", $_ );
-			my $if =~ s/\ //g;
-			$if = $iface[0];
+			my $if = $iface[0];
+			$if =~ s/\ //g;
 
 			if ( $_ =~ /:\ / )
 			{
@@ -544,8 +544,14 @@ sub zsystem    # (@exec)
 {
 	my ( @exec ) = @_;
 
-	system ( ". /etc/profile && @exec" );
-	return $?;
+	#~ system ( ". /etc/profile && @exec" ); 
+	my $out = `. /etc/profile && @exec`;
+	
+	my $error = $?;
+	&zenlog ("running: @exec");
+	&zenlog ("output: $out") if ( $error );
+	
+	return $error;
 }
 
 dns:
@@ -1076,6 +1082,68 @@ sub getTotalConnections
 	$conns += 0;
 	
 	return $conns;
+}
+
+sub getApplianceVersion
+{
+	my $version;
+	my $applianceFile = &getGlobalConfiguration ( 'applianceVersionFile' );
+	# look for appliance vesion
+	if ( -f $applianceFile )
+	{
+		use Tie::File;
+		tie my @filelines, 'Tie::File', $applianceFile;
+		$version = $filelines[0];
+		untie @filelines;
+	}
+	
+	# generate appliance version
+	if ( ! $version )
+	{
+		my $uname = &getGlobalConfiguration( 'uname' );
+		my $kernel = `$uname -r`;
+		#~ $kernel = "$uname -r";
+		my $awk = &getGlobalConfiguration( 'awk' );
+		my $ifconfig = &getGlobalConfiguration( 'ifconfig' );
+		
+		# look for mgmt interface
+		my @ifaces = `ifconfig -s | awk '{print $1}'`;
+		# Network appliance
+		if ( $kernel =~ /3\.2\.0\-4/ && grep ( /mgmt/, @ifaces ) )
+		{
+			$version = "ZNA 3300";
+		}
+		else
+		{
+			# select appliance verison
+			if ( $kernel =~ /3\.2\.0\-4/ ) 				{ $version = "3110"; }
+			elsif ( $kernel =~ /3\.16\.0\-4/ ) 			{ $version = "4000"; }
+			elsif ( $kernel =~ /3\.16\.7\-ckt20/ ) 	{ $version = "4100"; }
+			else													{ $version = "System version not detected"; }
+
+			my $lsmod = &getGlobalConfiguration ( 'lsmod' );
+			my @packages = `$lsmod`;
+			my @hypervisor = grep ( /(xen|vm|hv|kvm)_/ , @packages );
+			
+			# virtual appliance
+			if ( $hypervisor[0] =~ /(xen|vm|hv|kvm)_/ )
+			{
+				$version = "ZVA $version, hypervisor: $1";
+			}
+			# baremetal appliance
+			else
+			{
+				$version = "ZBA $version";
+			}
+		}
+		# save version for future request
+		use Tie::File;
+		tie my @filelines, 'Tie::File', $applianceFile;
+		$filelines[0] = $version;
+		untie @filelines;
+	}
+	
+	return $version;
 }
 
 
