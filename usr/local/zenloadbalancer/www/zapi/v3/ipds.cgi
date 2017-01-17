@@ -48,39 +48,14 @@ sub get_blacklists_list
 {
 	my $listName    = shift;
 	my $description = "Get list $listName";
-	my %listHash;
 	my $errormsg;
 	
 	if ( !&getBLExists( $listName ) )
 	{
-		my @ipList;
-		my $index = 0;
-		foreach my $source ( @{ &getBLParam( $listName, 'source' ) } )
-		{
-			push @ipList, { id => $index++, source => $source };
-		}
-		
-		%listHash = %{ &getBLParam ( $listName ) };
-		delete $listHash{ 'source' };
-		$listHash{ 'sources' } = \@ipList;
-		$listHash{ 'farms' } = &getBLParam( $listName, 'farms' );
-		
-		# save hour, minute, period and unit parameters in 'time' hash
-		my @timeParameters = ( 'period', 'unit', 'hour', 'minutes' );
-		#~ $listHash{ 'time'};
-		foreach my $param ( @timeParameters )
-		{
-			if ( exists $listHash{ $param } )
-			{
-				my $var = $listHash{ $param };
-				$var += 0 if ( $var =~ /^\d+$/ );
-				$listHash{ 'time' }->{ $param } = $var;
-				delete $listHash{ $param };
-			}
-		}
+		my $listHash = &getBLzapi ( $listName );
 		
 		&httpResponse(
-			  { code => 200, body => { description => $description, params => \%listHash } }
+			  { code => 200, body => { description => $description, params => $listHash } }
 		);
 	}
 	else
@@ -91,7 +66,6 @@ sub get_blacklists_list
 		&httpResponse( { code => 400, body => $body } );
 	}
 
-	return \%listHash;
 }
 
 #####Documentation of POST BL list####
@@ -348,11 +322,11 @@ sub set_blacklists_list
 						$json_obj->{ 'frequency_type' }	||= &getBLParam ( $listName, "frequency_type" );
 						if ( $json_obj->{ 'frequency_type' } eq 'period' )
 						{
-							$json_obj->{ 'period' } 		||=&getBLParam ( $listName, "period" );
-							$json_obj->{ 'unit' } 			||=&getBLParam ( $listName, "unit" );
+							$json_obj->{ 'period' } =&getBLParam ( $listName, "period" ) if ( ! exists $json_obj->{ 'period' } );
+							$json_obj->{ 'unit' } 	=&getBLParam ( $listName, "unit" ) if ( ! exists $json_obj->{ 'unit' } );
 							foreach my $timeParam ( "period", "unit" )
 							{
-								if ( ! $json_obj->{ $timeParam } )
+								if ( ! &getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } ) || $json_obj->{ $timeParam } eq '' )
 								{
 									$errormsg = "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
 									last; 	
@@ -367,11 +341,11 @@ sub set_blacklists_list
 						}
 						elsif ( $json_obj->{ 'frequency_type' } eq 'exact' )
 						{
-							$json_obj->{ 'minutes' } 	||=&getBLParam ( $listName, "minutes" );
-							$json_obj->{ 'hour' } 			||=&getBLParam ( $listName, "hour" );
+							$json_obj->{ 'minutes' } =&getBLParam ( $listName, "minutes" ) if ( ! exists $json_obj->{ 'minutes' } );
+							$json_obj->{ 'hour' } 		=&getBLParam ( $listName, "hour" ) if ( ! exists $json_obj->{ 'hour' } );
 							foreach my $timeParam ( "minutes", "hour" )
 							{
-								if ( ! $json_obj->{ $timeParam } )
+								if ( ! &getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } ) || $json_obj->{ $timeParam } eq '' )
 								{
 									$errormsg = "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
 									last;
@@ -391,12 +365,12 @@ sub set_blacklists_list
 					}
 					elsif ( $json_obj->{ 'frequency' } eq 'weekly'  )
 					{
-						$json_obj->{ 'minutes' } 	||=&getBLParam ( $listName, "minutes" );
-						$json_obj->{ 'hour' } 			||=&getBLParam ( $listName, "hour" );
-						$json_obj->{ 'day' } 			||=&getBLParam ( $listName, "day" );
+						$json_obj->{ 'minutes' } =&getBLParam ( $listName, "minutes" ) if ( ! exists $json_obj->{ 'minutes' } ); 
+						$json_obj->{ 'hour' } 		=&getBLParam ( $listName, "hour" ) if ( ! exists $json_obj->{ 'hour' } );
+						$json_obj->{ 'day' } 		=&getBLParam ( $listName, "day" ) if ( ! exists $json_obj->{ 'day' } );
 						foreach my $timeParam ( "minutes", "hour", "day" )
 						{
-							if ( ! $json_obj->{ $timeParam } )
+							if ( ! &getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } ) || $json_obj->{ $timeParam } eq '' )
 							{
 								$errormsg = "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
 								last;
@@ -404,7 +378,7 @@ sub set_blacklists_list
 						}
 						if ( ! &getValidFormat ('weekdays', $json_obj->{ 'day' }) )
 						{
-							$errormsg = "Error value of $json_obj->{ 'day' } parameter in $json_obj->{ 'frequency' } frequency."; 
+							$errormsg = "Error value of day parameter in $json_obj->{ 'frequency' } frequency."; 
 						}
 						if ( ! $errormsg )
 						{
@@ -415,13 +389,13 @@ sub set_blacklists_list
 					}
 					elsif ( $json_obj->{ 'frequency' } eq 'monthly' )
 					{
-						$json_obj->{ 'minutes' } 	||=&getBLParam ( $listName, "minutes" );
-						$json_obj->{ 'hour' } 			||=&getBLParam ( $listName, "hour" );
-						$json_obj->{ 'day' } 			||=&getBLParam ( $listName, "day" );
+						$json_obj->{ 'minutes' }=&getBLParam ( $listName, "minutes" ) if ( ! exists $json_obj->{ 'minutes' } );
+						$json_obj->{ 'hour' } 	=&getBLParam ( $listName, "hour" ) if ( ! exists $json_obj->{ 'hour' } );
+						$json_obj->{ 'day' }	=&getBLParam ( $listName, "day" ) + 0 if ( ! exists $json_obj->{ 'day' } );  # number format
 						# check if exists all paramameters
 						foreach my $timeParam ( "hour","minutes", "day" )
 						{
-							if ( ! $json_obj->{ $timeParam } )
+							if ( ! &getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } ) || $json_obj->{ $timeParam } eq '' )
 							{
 								$errormsg = "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
 								last;
@@ -429,7 +403,7 @@ sub set_blacklists_list
 						}
 						if ( ! &getValidFormat ('day_of_month', $json_obj->{ 'day' }) )
 						{
-							$errormsg = "Error value of $json_obj->{ 'day' } parameter in $json_obj->{ 'frequency' } frequency."; 
+							$errormsg = "Error value of day parameter in $json_obj->{ 'frequency' } frequency."; 
 						}
 						if ( ! $errormsg )
 						{
@@ -483,11 +457,11 @@ sub set_blacklists_list
 						}
 			
 						# all successful
-						my %listHash = %{ &getBLParam( $listName ) };
-						$listHash{ 'sources' } = $listHash{ 'source' };
-						delete $listHash{ 'source' };
+						my $listHash = &getBLzapi( $listName );
+						delete $listHash->{ 'sources' };
+						delete $listHash->{ 'farms' };
 						
-						my $body = { description => $description, params => \%listHash };
+						my $body = { description => $description, params => $listHash };
 						&httpResponse({ code => 200, body => $body } );
 					}
 				}

@@ -37,8 +37,8 @@ my $natural = qr/[1-9]\d*/;    # natural number = {1, 2, 3, ...}
 my $weekdays = qr/(?:monday|tuesday|wednesday|thursday|fraiday|saturday|sunday)/;
 my $minutes = qr/(?:\d|[1-5]\d)/;
 my $hours = qr/(?:\d|1\d|2[0-3])/;
-my $months = qr/(?:$natural|1[0-2])/;
-my $dayofmonth = qr/(?:\d|[1-2]\d|3[01])/;		# day of month
+my $months = qr/(?:[1-9]|1[0-2])/;
+my $dayofmonth = qr/(?:[1-9]|[1-2]\d|3[01])/;		# day of month
 
 my $hostname = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
 my $service  = qr/[a-zA-Z1-9\-]+/;
@@ -160,7 +160,7 @@ my %format_re = (
 	'blacklists_url'       => qr{.+},
 	'blacklists_hour'   => $hours,
 	'blacklists_minutes'   => $minutes,
-	'blacklists_period'   => qr{(:?$hours|$minutes)},
+	'blacklists_period'   => $natural,
 	'blacklists_unit'   => qr{(:?hours|minutes)},
 	'blacklists_day'   => qr{(:?$dayofmonth|$weekdays)},
 	'blacklists_frequency'   => qr{(:?daily|weekly|monthly)},

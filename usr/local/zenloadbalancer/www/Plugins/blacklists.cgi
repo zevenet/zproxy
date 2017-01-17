@@ -874,6 +874,7 @@ sub getBLParam
 		if ( exists $fileHandle->{ $listName } )
 		{
 			$output = $fileHandle->{ $listName }->{ $key };
+			
 			if ( $key eq 'farms' )
 			{
 				my @aux = split ( ' ', $output );
@@ -1367,18 +1368,12 @@ sub setBLCronTask
 	
 	# get values
 	$rblFormat->{ 'frequency' } = &getBLParam( $listName, 'frequency' );
-	$rblFormat->{ 'minutes' } = &getBLParam( $listName, 'minutes' )
-		if ( &getBLParam( $listName, 'minutes' ) );
-	$rblFormat->{ 'hour' } = &getBLParam( $listName, 'hour' )
-		if ( &getBLParam( $listName, 'hour' ) );
-	$rblFormat->{ 'period' } = &getBLParam( $listName, 'period' )
-		if ( &getBLParam( $listName, 'period' ) );
-	$rblFormat->{ 'unit' } = &getBLParam( $listName, 'unit' )
-		if ( &getBLParam( $listName, 'unit' ) );
-	$rblFormat->{ 'frequency_type' } = &getBLParam( $listName, 'frequency_type' )
-	  if ( &getBLParam( $listName, 'frequency_type' ) );
-	$rblFormat->{ 'day' } = &getBLParam( $listName, 'day' )
-	  if ( &getBLParam( $listName, 'day' ) );
+	$rblFormat->{ 'minutes' } = &getBLParam( $listName, 'minutes' );
+	$rblFormat->{ 'hour' } = &getBLParam( $listName, 'hour' );
+	$rblFormat->{ 'period' } = &getBLParam( $listName, 'period' );
+	$rblFormat->{ 'unit' } = &getBLParam( $listName, 'unit' );
+	$rblFormat->{ 'frequency_type' } = &getBLParam( $listName, 'frequency_type' );
+	$rblFormat->{ 'day' } = &getBLParam( $listName, 'day' );
 	
 	# change to cron format
 	if ( $rblFormat->{ 'frequency' } eq 'daily' && $rblFormat->{ 'frequency_type' } eq 'period' )
@@ -1396,8 +1391,8 @@ sub setBLCronTask
 	}
 	else
 	{
-		$cronFormat->{'hour'} = $rblFormat->{ 'hour' };
-		$cronFormat->{'min'} = $rblFormat->{ 'minutes' };
+		$cronFormat->{'hour'} = "$rblFormat->{ 'hour' }";
+		$cronFormat->{'min'} = "$rblFormat->{ 'minutes' }";
 		# exact daily frencuncies only need these fields
 		
 		if ( $rblFormat->{ 'frequency' } eq 'weekly' )
@@ -1477,6 +1472,41 @@ sub getBLCronTask
 
 	return \%conf;
 }
+
+
+sub getBLzapi
+{
+	my $listName = shift;
+	my %listHash;
+	my @ipList;
+	my $index = 0;
+	foreach my $source ( @{ &getBLParam( $listName, 'source' ) } )
+	{
+		push @ipList, { id => $index++, source => $source };
+	}
+	
+	%listHash = %{ &getBLParam ( $listName ) };
+	delete $listHash{ 'source' };
+	$listHash{ 'sources' } = \@ipList;
+	$listHash{ 'farms' } = &getBLParam( $listName, 'farms' );
+	
+	# save hour, minute, period and unit parameters in 'time' hash
+	my @timeParameters = ( 'period', 'unit', 'hour', 'minutes' );
+	#~ $listHash{ 'time'};
+	foreach my $param ( @timeParameters )
+	{
+		if ( exists $listHash{ $param } )
+		{
+			my $var = $listHash{ $param };
+			$var += 0 if ( $var =~ /^\d+$/ );
+			$listHash{ 'time' }->{ $param } = $var;
+			delete $listHash{ $param };
+		}
+	}
+	
+	return \%listHash;
+}
+
 
 1;
 
