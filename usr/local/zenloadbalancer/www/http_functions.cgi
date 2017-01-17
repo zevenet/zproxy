@@ -21,6 +21,9 @@
 #
 ###############################################################################
 
+use warnings;
+#~ use strict;
+
 my $configdir = &getGlobalConfiguration('configdir');
 
 # Only used in http content
@@ -34,7 +37,7 @@ sub setFarmClientTimeout    # ($client,$farm_name)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		tie @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 
 		my $i_f         = -1;
 		my $array_count = @filefarmhttp;
@@ -72,12 +75,12 @@ sub getFarmClientTimeout    # ($farm_name)
 		open FR, "<$configdir\/$farm_filename";
 		my @file = <FR>;
 
-		foreach $line ( @file )
+		foreach my $line ( @file )
 		{
 			if ( $line =~ /^Client\t\t.*\d+/ )
 			{
-				@line = split ( "\ ", $line );
-				$output = $line[1];
+				my @line_aux = split ( "\ ", $line );
+				$output = $line_aux[1];
 			}
 		}
 		close FR;
@@ -96,10 +99,10 @@ sub setHTTPFarmSessionType    # ($session,$farm_name)
 	my $output        = -1;
 
 	&zenlog( "setting 'Session type $session' for $farm_name farm $farm_type" );
-	tie @contents, 'Tie::File', "$configdir\/$farm_filename";
+	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
 	my $i     = -1;
 	my $found = "false";
-	foreach $line ( @contents )
+	foreach my $line ( @contents )
 	{
 		$i++;
 		if ( $session ne "nothing" )
@@ -173,12 +176,12 @@ sub getHTTPFarmSessionType    # ($farm_name)
 
 	open FR, "<$configdir\/$farm_name";
 	my @file = <FR>;
-	foreach $line ( @file )
+	foreach my $line ( @file )
 	{
 		if ( $line =~ /Type/ && $line !~ /#/ )
 		{
-			@line = split ( "\ ", $line );
-			$output = $line[1];
+			my @line_aux = split ( "\ ", $line );
+			$output = $line_aux[1];
 		}
 	}
 	close FR;
@@ -257,7 +260,7 @@ sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	tie @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 	my $i_f         = -1;
 	my $array_count = @filefarmhttp;
 	my $found       = "false";
@@ -287,12 +290,12 @@ sub getHTTPFarmBlacklistTime    # ($farm_filename)
 
 	open FR, "<$configdir\/$farm_filename";
 	my @file = <FR>;
-	foreach $line ( @file )
+	foreach my $line ( @file )
 	{
 		if ( $line =~ /Alive/i )
 		{
-			@line = split ( "\ ", $line );
-			$blacklist_time = $line[1];
+			my @line_aux = split ( "\ ", $line );
+			$blacklist_time = $line_aux[1];
 		}
 	}
 	close FR;
@@ -311,7 +314,7 @@ sub setFarmHttpVerb    # ($verb,$farm_name)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		tie @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 		my $i_f         = -1;
 		my $array_count = @filefarmhttp;
 		my $found       = "false";
@@ -345,12 +348,12 @@ sub getFarmHttpVerb    # ($farm_name)
 	{
 		open FR, "<$configdir\/$farm_filename";
 		my @file = <FR>;
-		foreach $line ( @file )
+		foreach my $line ( @file )
 		{
 			if ( $line =~ /xHTTP/ )
 			{
-				@line = split ( "\ ", $line );
-				$output = $line[1];
+				my @line_aux = split ( "\ ", $line );
+				$output = $line_aux[1];
 			}
 		}
 		close FR;
@@ -365,7 +368,7 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 	my ( $farm_name, $flisten ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	tie @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 	my $i_f         = -1;
 	my $array_count = @filefarmhttp;
 	my $found       = "false";
@@ -489,11 +492,12 @@ sub getHTTPFarmDHStatus    # ($farm_name)
 	my $output        = "off";
 
 	my $dhfile = "$configdir\/$farm_name\_dh2048.pem";
-	tie @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
-	my $match =~ /^DHParams.*/, @filefarmhttp;
+	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+	# my $match =~ /^DHParams.*/, @filefarmhttp; 
+	my @match = grep ( /^DHParams.*/, @filefarmhttp ); 
 	untie @filefarmhttp;
 
-	if ($match ne "" && -e "$dhfile"){
+	if ($match[0] ne "" && -e "$dhfile"){
 		$output = "on";
 	}
 
@@ -510,7 +514,7 @@ sub setHTTPFarmDHStatus    # ($farm_name, $newstatus)
 	my $dhfile = "$configdir\/$farm_name\_dh2048.pem";
 	my $output        = 0;
 
-	tie @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 	foreach my $row (@filefarmhttp)
 	{
 		if ($row =~ /.*DHParams.*/)
@@ -539,7 +543,7 @@ sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		tie @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 		my $i_f         = -1;
 		my $array_count = @filefarmhttp;
 		my $found       = "false";
@@ -571,12 +575,12 @@ sub getFarmRewriteL    # ($farm_name)
 	{
 		open FR, "<$configdir\/$farm_filename";
 		my @file = <FR>;
-		foreach $line ( @file )
+		foreach my $line ( @file )
 		{
 			if ( $line =~ /RewriteLocation\ .*/ )
 			{
-				@line = split ( "\ ", $line );
-				$output = $line[1];
+				my @line_aux = split ( "\ ", $line );
+				$output = $line_aux[1];
 			}
 		}
 		close FR;
@@ -598,7 +602,7 @@ sub setFarmConnTO    # ($tout,$farm_name)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
-		tie @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 		my $i_f         = -1;
 		my $array_count = @filefarmhttp;
 		my $found       = "false";
@@ -630,12 +634,12 @@ sub getFarmConnTO    # ($farm_name)
 	{
 		open FR, "<$configdir\/$farm_filename";
 		my @file = <FR>;
-		foreach $line ( @file )
+		foreach my $line ( @file )
 		{
 			if ( $line =~ /^ConnTO/ )
 			{
-				@line = split ( "\ ", $line );
-				$output = $line[1];
+				my @line_aux = split ( "\ ", $line );
+				$output = $line_aux[1];
 			}
 		}
 		close FR;
@@ -652,7 +656,7 @@ sub setHTTPFarmTimeout    # ($timeout,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	tie @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 	my $i_f         = -1;
 	my $array_count = @filefarmhttp;
 	my $found       = "false";
@@ -687,8 +691,8 @@ sub getHTTPFarmTimeout    # ($farm_filename)
 	{
 		if ( $line =~ /^Timeout/ )
 		{
-			@line = split ( "\ ", $line );
-			$output = $line[1];
+			my @line_aux = split ( "\ ", $line );
+			$output = $line_aux[1];
 		}
 	}
 	close FR;
@@ -706,7 +710,7 @@ sub setHTTPFarmMaxClientTime    # ($track,$farm_name)
 	my $i_f           = -1;
 	my $found         = "false";
 
-	tie @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 	my $array_count = @filefarmhttp;
 
 	while ( $i_f <= $array_count && $found eq "false" )
@@ -741,9 +745,9 @@ sub getHTTPFarmMaxClientTime    # ($farm_name)
 	{
 		if ( $line =~ /TTL/ )
 		{
-			@line = split ( "\ ", $line );
+			my @line_aux = split ( "\ ", $line );
 			@max_client_time[0] = "";
-			@max_client_time[1] = $line[1];
+			@max_client_time[1] = $line_aux[1];
 		}
 	}
 	close FR;
@@ -799,7 +803,7 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 	if ( $farm_type eq "https" )
 	{
 		use Tie::File;
-		tie @array, 'Tie::File', "$configdir/$farm_filename";
+		tie my @array, 'Tie::File', "$configdir/$farm_filename";
 		for ( @array )
 		{
 			if ( $_ =~ /Cert/ )
@@ -909,7 +913,7 @@ sub setFarmErr    # ($farm_name,$content,$nerr)
 			$output = 0;
 			my @err = split ( "\n", "$content" );
 			open FO, ">$configdir\/$farm_name\_Err$nerr.html";
-			foreach $line ( @err )
+			foreach my $line ( @err )
 			{
 				$line =~ s/\r$//;
 				print FO "$line\n";
@@ -935,12 +939,12 @@ sub getFarmErr    # ($farm_name,$nerr)
 	{
 		open FR, "<$configdir\/$farm_filename";
 		my @file = <FR>;
-		foreach $line ( @file )
+		foreach my $line ( @file )
 		{
 			if ( $line =~ /Err$nerr/ )
 			{
-				@line = split ( "\ ", $line );
-				my $err = $line[1];
+				my @line_aux = split ( "\ ", $line );
+				my $err = $line_aux[1];
 				$err =~ s/"//g;
 				if ( -e $err )
 				{
@@ -966,6 +970,8 @@ sub getHTTPFarmBootStatus    # ($farm_name)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = "down";
+	my $lastline;
+	my $line;
 
 	open FO, "<$configdir/$farm_filename";
 	while ( $line = <FO> )
@@ -994,7 +1000,7 @@ sub validateHTTPFarmDH    # ($farm_name)
 	my $dhstatus = &getHTTPFarmDHStatus($farm_name);
 	if ( $farm_type eq "https" && $dhstatus ne "on" )
 	{
-		my $lockstatus = &getFarmLock( $farmname );
+		my $lockstatus = &getFarmLock( $farm_name );
 		if ( $lockstatus !~ /Diffie-Hellman/ ) {
 			#$output = &setHTTPFarmDHStatus( $farm_name, "on" );
 			#&genDHFile( $farm_name );
@@ -1071,16 +1077,17 @@ sub _runHTTPFarmStart    # ($farm_name)
 sub _runHTTPFarmStop    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
+	my $status = -1;
 
 	&runFarmGuardianStop( $farm_name, "" );
 
 	if ( &getHTTPFarmConfigIsOK( $farm_name ) == 0 )
 	{
-		$pid = &getFarmPid( $farm_name );
+		my $pid = &getFarmPid( $farm_name );
 		my $piddir = &getGlobalConfiguration('piddir');
 
 		&zenlog( "running 'kill 15, $pid'" );
-		$run = kill 15, $pid;
+		my $run = kill 15, $pid;
 		$status = $?;
 
 		unlink ( "$piddir\/$farm_name\_pound.pid" ) if -e "$piddir\/$farm_name\_pound.pid";
@@ -1113,7 +1120,7 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 
 	#modify strings with variables
 	use Tie::File;
-	tie @file, 'Tie::File', "$configdir/$farm_name\_pound.cfg";
+	tie my @file, 'Tie::File', "$configdir/$farm_name\_pound.cfg";
 	foreach my $line ( @file )
 	{
 		$line =~ s/\[IP\]/$vip/;
@@ -1220,7 +1227,7 @@ sub getFarmChildPid    # ($farm_name)
 	{
 		my $pids = `pidof -o $fpid pound`;
 		my @pids = split ( " ", $pids );
-		foreach $pid ( @pids )
+		foreach my $pid ( @pids )
 		{
 			if ( fgrep { /^PPid:.*${fpid}$/ } "/proc/$pid/status" )
 			{
@@ -1279,7 +1286,7 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	my $enter         = 2;
 
 	use Tie::File;
-	tie @array, 'Tie::File', "$configdir\/$farm_filename";
+	tie my @array, 'Tie::File', "$configdir\/$farm_filename";
 	my $size = @array;
 
 	for ( my $i = 0 ; $i < $size && $enter > 0 ; $i++ )
@@ -1571,13 +1578,13 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 			my $line = $backends[0];
 
 			#backend IP,PORT
-			@backends_ip  = split ( ":", $backends[2] );
-			$ip_backend   = $backends_ip[0];
-			$port_backend = $backends_ip[1];
+			my @backends_ip  = split ( ":", $backends[2] );
+			my $ip_backend   = $backends_ip[0];
+			my $port_backend = $backends_ip[1];
 			$line         = $line . "\t" . $ip_backend . "\t" . $port_backend;
 
 			#status
-			$status_backend = $backends[7];
+			my $status_backend = $backends[7];
 			my $backend_disabled = $backends[3];
 			if ( $backend_disabled eq "DISABLED" )
 			{
@@ -1596,7 +1603,7 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 			$line = $line . "\t" . $status_backend;
 
 			#priority
-			$priority_backend = $backends[4];
+			my $priority_backend = $backends[4];
 			$priority_backend =~ s/\(//g;
 			$line = $line . "\t" . "-\t" . $priority_backend;
 			my $clients = &getFarmBackendsClients( $backends[0], @content, $farm_name );
@@ -1753,7 +1760,7 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 		if ( -e "$farm_filename" )
 		{
 			use Tie::File;
-			tie @configfile, 'Tie::File', "$farm_filename";
+			tie my @configfile, 'Tie::File', "$farm_filename";
 
 			for ( @configfile )
 			{
@@ -1776,9 +1783,9 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 {
 	# assign first/second/third argument or take global value
-	my $farm_name = shift // $farmname;
-	my $ciphers   = shift // $ciphers;
-	my $cipherc   = shift // $cipherc;
+	my $farm_name = shift;
+	my $ciphers   = shift;
+	my $cipherc   = shift;
 
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -1830,7 +1837,7 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 # Get Farm Ciphers value
 sub getFarmCipherList    # ($farm_name)
 {
-	my $farm_name = shift // $farmname;
+	my $farm_name = shift;
 	my $output = -1;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -1839,7 +1846,7 @@ sub getFarmCipherList    # ($farm_name)
 	my @content = <FI>;
 	close FI;
 
-	foreach $line ( @content )
+	foreach my $line ( @content )
 	{
 		next if ( $line !~ /Ciphers/ );
 
@@ -1855,7 +1862,7 @@ sub getFarmCipherList    # ($farm_name)
 # Get Farm Ciphers value
 sub getFarmCipherSet    # ($farm_name)
 {
-	my $farm_name = shift // $farmname;
+	my $farm_name = shift;
 
 	my $output = -1;
 
@@ -1983,7 +1990,7 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 	  "$poundctl -c /tmp/$farm_name\_pound.socket -B 0 $idsv $backend";
 
 	&zenlog( "running '$poundctl_command'" );
-	@run    = `$poundctl_command`;
+	my @run    = `$poundctl_command`;
 	$output = $?;
 
 	&getFarmHttpBackendStatus( $farm_name, $backend, "active", $idsv );
@@ -2003,7 +2010,7 @@ sub getFarmHttpBackendStatus    # ($farm_name,$backend,$status,$idsv)
 	{
 		open FW, ">$statusfile";
 		my $poundctl = &getGlobalConfiguration('poundctl');
-		@run = `$poundctl -c /tmp/$farm_name\_pound.socket`;
+		my @run = `$poundctl -c /tmp/$farm_name\_pound.socket`;
 		my @sw;
 		my @bw;
 
@@ -2033,7 +2040,7 @@ sub getFarmHttpBackendStatus    # ($farm_name,$backend,$status,$idsv)
 		close FW;
 	}
 	use Tie::File;
-	tie @filelines, 'Tie::File', "$statusfile";
+	tie my @filelines, 'Tie::File', "$statusfile";
 
 	my $i;
 	foreach my $linea ( @filelines )
@@ -2080,8 +2087,8 @@ sub runRemovehttpBackend    # ($farm_name,$backend,$service)
 	my $j      = -1;
 	my $change = "false";
 	my $sindex = &getFarmVSI( $farm_name, $service );
-	tie @contents, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
-	foreach $line ( @contents )
+	tie my @contents, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
+	foreach my $line ( @contents )
 	{
 		$i++;
 		if ( $line =~ /0\ ${sindex}\ ${backend}/ )
@@ -2091,13 +2098,13 @@ sub runRemovehttpBackend    # ($farm_name,$backend,$service)
 	}
 	untie @contents;
 	my $index = -1;
-	tie @filelines, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
+	tie my @filelines, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
 	for ( @filelines )
 	{
 		$index++;
 		if ( $_ !~ /0\ ${sindex}\ $index/ )
 		{
-			$jndex = $index + 1;
+			my $jndex = $index + 1;
 			$_ =~ s/0\ ${sindex}\ $jndex/0\ ${sindex}\ $index/g;
 		}
 	}
@@ -2112,9 +2119,11 @@ sub setFarmHttpBackendStatus    # ($farm_name)
 
 	open FR, "<", "$configdir\/$farm_name\_status.cfg";
 	my $poundctl = &getGlobalConfiguration('poundctl');
-	while ( <FR> )
+	
+	my $line_aux;
+	while ( $line_aux = <FR> )
 	{
-		my @line = split ( "\ ", $_ );
+		my @line = split ( "\ ", $line_aux );
 		my @run =
 		  `$poundctl -c /tmp/$farm_name\_pound.socket $line[0] $line[1] $line[2] $line[3]`;
 	}
@@ -2150,9 +2159,9 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 		my $sw    = 0;
 		my $count = 0;
 		my $poundtpl = &getGlobalConfiguration('poundtpl');
-		tie @poundtpl, 'Tie::File', "$poundtpl";
+		tie my @poundtpl, 'Tie::File', "$poundtpl";
 		my $countend = 0;
-		foreach $line ( @poundtpl )
+		foreach my $line ( @poundtpl )
 		{
 
 			if ( $line =~ /Service \"\[DESC\]\"/ )
@@ -2185,11 +2194,11 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 		my $i         = 0;
 		my $farm_type = "";
 		$farm_type = &getFarmType( $farm_name );
-		foreach $line ( @fileconf )
+		foreach my $line ( @fileconf )
 		{
 			if ( $line =~ /#ZWACL-END/ )
 			{
-				foreach $lline ( @newservice )
+				foreach my $lline ( @newservice )
 				{
 					if ( $lline =~ /\[DESC\]/ )
 					{
@@ -2248,7 +2257,7 @@ sub deleteFarmService    # ($farm_name,$service)
 	my $backendsvs = &getFarmVS( $farm_name, $service, "backends" );
 	my @be = split ( "\n", $backendsvs );
 	my $counter = -1;
-	foreach $subline ( @be )
+	foreach my $subline ( @be )
 	{
 		my @subbe = split ( "\ ", $subline );
 		$counter++;
@@ -2296,8 +2305,8 @@ sub deleteFarmService    # ($farm_name,$service)
 	}
 
 # change the ID value of services with an ID higher than the service deleted (value - 1)
-	tie @contents, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
-	foreach $line ( @contents )
+	tie my @contents, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
+	foreach my $line ( @contents )
 	{
 		my @params = split ( "\ ", $line );
 		my $newval = $params[2] - 1;
@@ -2324,6 +2333,7 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = "";
+	my $l;
 
 	open my $fileconf, '<', "$configdir/$farm_filename";
 
@@ -2334,6 +2344,8 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 	my $output_ti  = "";
 	my $sw_pr      = 0;
 	my $output_pr  = "";
+	my $outputa;
+	my $outputp;
 	my @return;
 
 	foreach my $line ( <$fileconf> )
@@ -2642,6 +2654,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 	my $line;
 	my $sw = 0;
 	my $j  = 0;
+	my $l;
 
 	use Tie::File;
 	tie my @fileconf, 'Tie::File', "$configdir/$farm_filename";
@@ -2887,7 +2900,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		#session type
 		if ( $tag eq "session" )
 		{
-			if ( $session ne "nothing" && $sw == 1 )
+			if ( $string ne "nothing" && $sw == 1 )
 			{
 				if ( $line =~ "Session" )
 				{
@@ -2899,22 +2912,22 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 				}
 				if ( $line =~ "Type" )
 				{
-					$line = "\t\t\tType $session";
+					$line = "\t\t\tType $string";
 				}
 				if ( $line =~ "TTL" )
 				{
 					$line =~ s/#//g;
 				}
-				if (    $session eq "URL"
-					 || $session eq "COOKIE"
-					 || $session eq "HEADER" )
+				if (    $string eq "URL"
+					 || $string eq "COOKIE"
+					 || $string eq "HEADER" )
 				{
 					if ( $line =~ "\t\t\tID |\t\t\t#ID " )
 					{
 						$line =~ s/#//g;
 					}
 				}
-				if ( $session eq "IP" )
+				if ( $string eq "IP" )
 				{
 					if ( $line =~ "\t\t\tID |\t\t\t#ID " )
 					{
@@ -2923,7 +2936,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 				}
 				$output = $?;
 			}
-			if ( $session eq "nothing" && $sw == 1 )
+			if ( $string eq "nothing" && $sw == 1 )
 			{
 				if ( $line =~ "Session" )
 				{
@@ -2995,13 +3008,13 @@ sub getFarmServices
 	my @file = <FR>;
 	my $pos  = 0;
 
-	foreach $line ( @file )
+	foreach my $line ( @file )
 	{
 		if ( $line =~ /\tService\ \"/ )
 		{
 			$pos++;
-			@line = split ( "\"", $line );
-			my $service = $line[1];
+			my @line_aux = split ( "\"", $line );
+			my $service = $line_aux[1];
 			push ( @output, $service );
 		}
 	}
@@ -3023,7 +3036,9 @@ sub setFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 	my $serviceid;
 	my @sessionid;
 	my $sessid;
+	my $sessionid2;
 	my $poundctl = &getGlobalConfiguration('poundctl');
+	my @output;
 
 	&zenlog(
 		"Deleting established sessions to a backend $backendid from farm $farm_name in service $service"
@@ -3070,7 +3085,7 @@ sub setFarmNameParam    # &setFarmNameParam( $farm_name, $new_name );
 
 	if ( $farmType eq "http" || $farmType eq "https" )
 	{
-		tie @filefarmhttp, 'Tie::File', "$configdir/$farmFilename";
+		tie my @filefarmhttp, 'Tie::File', "$configdir/$farmFilename";
 		my $i_f        = -1;
 		my $arrayCount = @filefarmhttp;
 		my $found      = "false";
@@ -3224,7 +3239,7 @@ sub moveServiceFarmStatus
 	foreach my $line ( @file )
 	{
 		$line =~ /(^-[bB] 0 )(\d+)/;
-		$cad        = $1;
+		my $cad        = $1;
 		$serviceNum = $2;
 
 		#	&main::zenlog("$moveService::$ind::$serviceNum");
@@ -3300,15 +3315,15 @@ sub getHttpFarmService
 	}
 
 	my @fgconfig  = &getFarmGuardianConf( $farmname, $service );
-	my $fgttcheck = @fgconfig[1];
-	my $fgscript  = @fgconfig[2];
+	my $fgttcheck = $fgconfig[1];
+	my $fgscript  = $fgconfig[2];
 	$fgscript =~ s/\n//g;
 	$fgscript =~ s/\"/\'/g;
 
-	my $fguse = @fgconfig[3];
+	my $fguse = $fgconfig[3];
 	$fguse =~ s/\n//g;
 
-	my $fglog = @fgconfig[4];
+	my $fglog = $fgconfig[4];
 
 	# Default values for farm guardian parameters
 	if ( !$fgttcheck ) { $fgttcheck = 5; }
@@ -3322,8 +3337,9 @@ sub getHttpFarmService
 
 	foreach my $subl ( @be )
 	{
+		my $backendstatus;
 		my @subbe       = split ( "\ ", $subl );
-		my $id          = @subbe[1] + 0;
+		my $id          = $subbe[1] + 0;
 		my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $service );
 
 		if ( $maintenance != 0 )
@@ -3335,10 +3351,10 @@ sub getHttpFarmService
 			$backendstatus = "maintenance";
 		}
 
-		my $ip   = @subbe[3];
-		my $port = @subbe[5] + 0;
-		my $tout = @subbe[7] + 0;
-		my $prio = @subbe[9] + 0;
+		my $ip   = $subbe[3];
+		my $port = $subbe[5] + 0;
+		my $tout = $subbe[7] + 0;
+		my $prio = $subbe[9] + 0;
 
 		push (
 			   @{ $out_ba },
