@@ -369,7 +369,7 @@ sub set_blacklists_list
 						{
 							$json_obj->{ 'minutes' } 	||=&getBLParam ( $listName, "minutes" );
 							$json_obj->{ 'hour' } 			||=&getBLParam ( $listName, "hour" );
-							foreach my $timeParam ( "minutes", "hour", "day" )
+							foreach my $timeParam ( "minutes", "hour" )
 							{
 								if ( ! $json_obj->{ $timeParam } )
 								{
@@ -391,7 +391,6 @@ sub set_blacklists_list
 					}
 					elsif ( $json_obj->{ 'frequency' } eq 'weekly'  )
 					{
-						$json_obj->{ 'frequency' } 	||=&getBLParam ( $listName, "frequency" );
 						$json_obj->{ 'minutes' } 	||=&getBLParam ( $listName, "minutes" );
 						$json_obj->{ 'hour' } 			||=&getBLParam ( $listName, "hour" );
 						$json_obj->{ 'day' } 			||=&getBLParam ( $listName, "day" );
@@ -416,7 +415,6 @@ sub set_blacklists_list
 					}
 					elsif ( $json_obj->{ 'frequency' } eq 'monthly' )
 					{
-						$json_obj->{ 'frequency' } 	||=&getBLParam ( $listName, "frequency" );
 						$json_obj->{ 'minutes' } 	||=&getBLParam ( $listName, "minutes" );
 						$json_obj->{ 'hour' } 			||=&getBLParam ( $listName, "hour" );
 						$json_obj->{ 'day' } 			||=&getBLParam ( $listName, "day" );
