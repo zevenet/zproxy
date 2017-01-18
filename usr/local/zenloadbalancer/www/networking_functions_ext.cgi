@@ -31,7 +31,8 @@ sub sendGPing    # ($pif)
 {
 	my ( $pif ) = @_;
 
-	my $gw = &gwofif( $pif );
+	my $if_conf = &getInterfaceConfig ( $pif );
+	my $gw = $if_conf->{ gateway };
 	if ( $gw ne "" )
 	{
 		my $ping_bin = &getGlobalConfiguration('ping_bin');
@@ -40,6 +41,10 @@ sub sendGPing    # ($pif)
 
 		&zenlog( "$ping_cmd" );
 		system( "$ping_cmd &" );
+	}
+	else
+	{
+		&zenlog( "Gateway not found for $pif interface." );
 	}
 }
 

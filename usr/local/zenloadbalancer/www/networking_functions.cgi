@@ -24,6 +24,9 @@
 use warnings;
 use strict;
 
+require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
+require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";
+
 use IO::Socket;
 
 my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
@@ -820,11 +823,10 @@ sub stopIf    # ($if_ref)
 		my @ifphysic = split ( /:/, $if );
 
 		&zenlog( "Stopping if $if" );
-		my $ip = &iponif( $if );
+		my $ip = $$if_ref{addr};
 		if ( $ip =~ /\./ )
 		{
-			my $ipmask = &maskonif( $if );
-			my ( $net, $mask ) = ipv4_network( "$ip / $ipmask" );
+			my ( $net, $mask ) = ipv4_network( "$ip / $$if_ref{mask}" );
 			&zenlog(
 					 "running '$ip_bin addr del $ip/$mask brd + dev $ifphysic[0] label $if' " );
 			my @eject = `$ip_bin addr del $ip/$mask brd + dev $ifphysic[0] label $if`;
@@ -1040,21 +1042,6 @@ sub maskonif    # ($if)
 	my @interfaces = $s->if_list;
 	my $maskonif = $s->if_netmask( $if );
 	return $maskonif;
-}
-
-#return the gw of a if
-sub gwofif    # ($if)
-{
-	my $if = shift;
-
-	my $configdir = &getGlobalConfiguration( 'configdir' );
-
-	open FGW, "<", "$configdir\/if\_$if\_conf";
-	my @gw_if = <FGW>;
-	close FGW;
-	my @gw_ifspt = split ( /:/, $gw_if[0] );
-	chomp ( $gw_ifspt[5] );
-	return $gw_ifspt[5];
 }
 
 # Returns array execution of netstat

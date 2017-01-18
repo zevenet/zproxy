@@ -22,10 +22,10 @@
 #
 ###############################################################################
 
-require '/usr/local/zenloadbalancer/config/global.conf';
+#~ require '/usr/local/zenloadbalancer/config/global.conf';
 require '/usr/local/zenloadbalancer/www/networking_functions.cgi';
 require '/usr/local/zenloadbalancer/www/functions_ext.cgi';
-require '/usr/local/zenloadbalancer/www/cluster_functions.cgi';
+#~ require '/usr/local/zenloadbalancer/www/cluster_functions.cgi';
 my $interface;
 
 &zenlog("Running local advertisement event");
