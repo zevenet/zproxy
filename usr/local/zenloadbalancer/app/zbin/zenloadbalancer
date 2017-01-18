@@ -23,6 +23,7 @@
 ###############################################################################
 
 #~ use strict;
+#~ use warnings;
 
 use Date::Parse;
 use Time::localtime;
@@ -325,7 +326,7 @@ if ( $eject eq "start" )
 		# escape dots for regular expression
 		my $quoted_key = quotemeta ( $key );
 
-		if ( !grep ( /^$key = $sysctl{$key}/, @sysctl ) )
+		if ( !grep ( /^$key = $sysctl{$key}/, @sysctl_file ) )
 		{
 			push ( @sysctl_file, "$key = $sysctl{$key}" );
 		} else {
