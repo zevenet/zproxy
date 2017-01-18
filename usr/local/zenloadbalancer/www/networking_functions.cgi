@@ -21,6 +21,9 @@
 #
 ###############################################################################
 
+use warnings;
+use strict;
+
 use IO::Socket;
 
 my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
@@ -93,7 +96,7 @@ sub listallips    # ()
 	my @interfaces     = $s->if_list;
 	for my $if ( @interfaces )
 	{
-		$ip = $s->if_addr( $if );
+		my $ip = $s->if_addr( $if );
 		my $flags = $s->if_flags( $if );
 
 		if ( $flags & IFF_RUNNING && $ip !~ /127.0.0.1/ && $ip !~ /0.0.0.0/ )
@@ -212,6 +215,7 @@ sub ifexist    # ($nif)
 	my @interfaces = $s->if_list;
 	my $configdir  = &getGlobalConfiguration( 'configdir' );
 
+	my $status;
 	for my $if ( @interfaces )
 	{
 		if ( $if eq $nif )
@@ -493,7 +497,7 @@ sub delIp    # 	($if, $ip ,$netmask)
 	}
 
 	my $ip_cmd = "$ip_bin addr del $ip/$netmask dev $if";
-	$status = &logAndRun( $ip_cmd );
+	my $status = &logAndRun( $ip_cmd );
 
 	return $status;
 }
@@ -763,7 +767,7 @@ sub downIf    # ($if_ref, $writeconf)
 		$ip_cmd = "$ip_bin addr del $$if_ref{addr}/$$if_ref{mask} dev $routed_iface";
 	}
 
-	$status = &logAndRun( $ip_cmd );
+	my $status = &logAndRun( $ip_cmd );
 
 	return $status;
 }
@@ -774,7 +778,7 @@ sub stopIf    # ($if_ref)
 	my $if_ref = shift;
 	my $status = 0;
 	
-	$if = $$if_ref{name};
+	my $if = $$if_ref{name};
 	# If $if is Vini do nothing
 	if ( $$if_ref{ vini } eq '' )
 	{
@@ -819,11 +823,11 @@ sub stopIf    # ($if_ref)
 		my $ip = &iponif( $if );
 		if ( $ip =~ /\./ )
 		{
-			$ipmask = &maskonif( $if );
+			my $ipmask = &maskonif( $if );
 			my ( $net, $mask ) = ipv4_network( "$ip / $ipmask" );
 			&zenlog(
-					 "running '$ip_bin addr del $ip/$mask brd + dev @ifphysic[0] label $if' " );
-			@eject = `$ip_bin addr del $ip/$mask brd + dev @ifphysic[0] label $if`;
+					 "running '$ip_bin addr del $ip/$mask brd + dev $ifphysic[0] label $if' " );
+			my @eject = `$ip_bin addr del $ip/$mask brd + dev $ifphysic[0] label $if`;
 
 		}
 
@@ -935,16 +939,19 @@ sub getDefaultGW    # ($if)
 {
 	my $if = shift;    # optional argument
 
+	my @line;
+	my @defgw;
+	my $gw;
+	my @routes = "";
+	
 	if ( $if )
 	{
-		$cif = $if;
+		my $cif = $if;
 		if ( $if =~ /\:/ )
 		{
-			@iface = split ( /\:/, $cif );
+			my @iface = split ( /\:/, $cif );
 			$cif = $iface[0];
 		}
-
-		@routes = "";
 
 		open ( ROUTINGFILE, &getGlobalConfiguration( 'rttables' ) );
 
@@ -961,7 +968,6 @@ sub getDefaultGW    # ($if)
 	}
 	else
 	{
-		@routes = "";
 		@routes = `$ip_bin route list`;
 		@defgw  = grep ( /^default/, @routes );
 		@line   = split ( / /, $defgw[0] );
@@ -1018,7 +1024,7 @@ sub iponif            # ($if)
 
 	my $s = IO::Socket::INET->new( Proto => 'udp' );
 	my @interfaces = $s->if_list;
-	$iponif = $s->if_addr( $if );
+	my $iponif = $s->if_addr( $if );
 
 	return $iponif;
 }
@@ -1032,7 +1038,7 @@ sub maskonif    # ($if)
 	use IO::Interface qw(:flags);
 	my $s = IO::Socket::INET->new( Proto => 'udp' );
 	my @interfaces = $s->if_list;
-	$maskonif = $s->if_netmask( $if );
+	my $maskonif = $s->if_netmask( $if );
 	return $maskonif;
 }
 
@@ -1082,7 +1088,8 @@ sub getDevData    # ($dev)
 
 	my $exit = "false";
 	my @dataout;
-
+	
+	my $line;
 	while ( $line = <FI> && $exit eq "false" )
 	{
 		if ( $dev ne "" )
@@ -1169,7 +1176,7 @@ sub uplinkUsed          # ($if)
 	my @farms  = &getFarmsByType( "datalink" );
 	my $output = "false";
 
-	foreach $farm ( @farms )
+	foreach my $farm ( @farms )
 	{
 		my $farmif = &getFarmVip( "vipp", $farm );
 		my $status = &getFarmStatus( $farm );
@@ -1229,14 +1236,14 @@ sub getInterfaceList
 		if ( $line =~ /^\d+: / )
 		{
 			my @linelist = split /[:@,\s\/]+/, $line;
-			$iface      = @linelist[1];
+			$iface      = $linelist[1];
 			$localiface = $iface;
 			goto addiface;
 		}
 		if ( $iface ne "" && $line =~ /inet.*$iface.+/ )
 		{
 			my @linelist = split /[\s\/]+/, $line;
-			$localiface = @linelist[$linelist - 1];
+			$localiface = $linelist[scalar @linelist - 1];
 			goto addiface;
 		}
 		next;
@@ -1262,13 +1269,13 @@ sub getVipOutputIp    # ($vip)
 	my $socket = &getIOSocket();
 	my $device;
 
-	foreach $interface ( &getInterfaceList( $socket ) )
+	foreach my $interface ( &getInterfaceList( $socket ) )
 	{
 		# ignore/skip localhost
 		next if $interface eq "lo";
 
 		# get interface ip
-		$ip = $socket->if_addr( $interface );
+		my $ip = $socket->if_addr( $interface );
 
 		# get NIC of our vip
 		if ( $ip eq $vip )
@@ -1297,7 +1304,7 @@ sub getInterfaceOfIp    # ($ip)
 {
 	my $ip = shift;
 
-	foreach $iface ( &getInterfaceList() )
+	foreach my $iface ( &getInterfaceList() )
 	{
 		# return interface if found in the list
 		return $iface if &iponif( $iface ) eq $ip;

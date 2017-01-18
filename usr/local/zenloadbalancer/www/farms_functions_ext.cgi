@@ -21,6 +21,9 @@
 #
 ###############################################################################
 
+#~ use warnings;
+#~ use strict;
+
 my $configdir = &getGlobalConfiguration('configdir');
 
 #
@@ -37,7 +40,7 @@ sub getFarmCertificatesSNI    #($fname)
 		open FI, "<$configdir/$file";
 		my @content = <FI>;
 		close FI;
-		foreach $line ( @content )
+		foreach my $line ( @content )
 		{
 			if ( $line =~ /Cert/ && $line !~ /\#.*Cert/ )
 			{
@@ -74,7 +77,7 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 	if ( $type eq "https" )
 	{
 		use Tie::File;
-		tie @array, 'Tie::File', "$configdir/$ffile";
+		tie my @array, 'Tie::File', "$configdir/$ffile";
 		for ( @array )
 		{
 			if ( $_ =~ /Cert/ )
@@ -117,7 +120,7 @@ sub setFarmDeleteCertSNI    #($certn,$fname)
 	if ( $type eq "https" )
 	{
 		use Tie::File;
-		tie @array, 'Tie::File', "$configdir/$ffile";
+		tie my @array, 'Tie::File', "$configdir/$ffile";
 
 		for ( @array )
 		{
@@ -161,7 +164,7 @@ sub setFarmDeleteCertNameSNI    #($certn,$fname)
 	if ( $type eq "https" )
 	{
 		use Tie::File;
-		tie @array, 'Tie::File', "$configdir/$ffile";
+		tie my @array, 'Tie::File', "$configdir/$ffile";
 
 		for ( @array )
 		{

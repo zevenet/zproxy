@@ -25,6 +25,10 @@ require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 require "/usr/local/zenloadbalancer/www/thread_functions.cgi";
 require "/usr/local/zenloadbalancer/www/conntrackd_functions.cgi";
 
+use warnings;
+use strict;
+
+
 my $maint_if = 'cl_maintenance';
 
 sub getClusterInfo
@@ -563,8 +567,8 @@ sub checkZClusterInterfaces # @inmatched_ifaces ( $cl_conf, $nodeIP )
 		my ( $remote_mask ) = grep( /Mask/, @line_words );
 		
 		# remove attached tags
-		my ( undef, $remote_ip ) = split( 'addr:', $remote_ip );
-		my ( undef, $remote_mask ) = split( 'Mask:', $remote_mask );
+		( undef, $remote_ip ) = split( 'addr:', $remote_ip );
+		( undef, $remote_mask ) = split( 'Mask:', $remote_mask );
 
 		#~ print "remote_ip:$remote_ip\n";
 		#~ print "remote_mask:$remote_mask\n";

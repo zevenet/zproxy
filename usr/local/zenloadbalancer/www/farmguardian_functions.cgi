@@ -21,6 +21,10 @@
 #
 ###############################################################################
 
+use warnings;
+use strict;
+
+
 my $configdir = &getGlobalConfiguration('configdir');
 
 # Returns FarmGuardian config file for this farm
@@ -59,14 +63,15 @@ sub getFarmGuardianStatus    # ($fname,$svice)
 	}
 
 	open FR, "$configdir/$fgfile";
-
+	my $line;
+	my $lastline;
 	while ( $line = <FR> )
 	{
 		$lastline = $line;
 	}
 
 	my @line_s = split ( "\:\:\:", $lastline );
-	$value = $line_s[3];
+	my $value = $line_s[3];
 	close FR;
 
 	if ( $value =~ /true/ )
@@ -92,14 +97,15 @@ sub getFarmGuardianLog    # ($fname,$svice)
 	}
 
 	open FR, "$configdir/$fgfile";
-
+	my $line;
+	my $lastline;
 	while ( $line = <FR> )
 	{
 		$lastline = $line;
 	}
 
 	my @line_s = split ( "\:\:\:", $lastline );
-	$value = $line_s[4];
+	my $value = $line_s[4];
 	close FR;
 
 	if ( $value =~ /true/ )
@@ -149,9 +155,9 @@ sub runFarmGuardianStart    # ($fname,$svice)
 		# Iterate over every farm service
 		my $services = &getFarmVS( $fname, "", "" );
 		my @servs = split ( " ", $services );
-		foreach $service ( @servs )
+		foreach my $service ( @servs )
 		{
-			$stat = &runFarmGuardianStart( $fname, $service );
+			my $stat = &runFarmGuardianStart( $fname, $service );
 			$status = $status + $stat;
 		}
 	}
@@ -186,9 +192,9 @@ sub runFarmGuardianStop    # ($fname,$svice)
 		my $services = &getFarmVS( $fname, "", "" );
 		my @servs = split ( " ", $services );
 
-		foreach $service ( @servs )
+		foreach my $service ( @servs )
 		{
-			$stat = &runFarmGuardianStop( $fname, $service );
+			my $stat = &runFarmGuardianStop( $fname, $service );
 			$status |= $stat;
 		}
 	}
@@ -213,7 +219,7 @@ sub runFarmGuardianStop    # ($fname,$svice)
 					my $portadmin = &getFarmPort( $fname );
 					my $idsv      = &getFarmVSI( $fname, $svice );
 					my $index     = -1;
-					tie @filelines, 'Tie::File', "$configdir\/$fname\_status.cfg";
+					tie my @filelines, 'Tie::File', "$configdir\/$fname\_status.cfg";
 
 					for ( @filelines )
 					{
@@ -335,7 +341,7 @@ sub getFarmGuardianPid    # ($fname,$svice)
 	my $piddir = &getGlobalConfiguration('piddir');
 
 	opendir ( my $dir, "$piddir" ) || return -1;
-	@files =
+	my @files =
 	  grep { /^$fname\_$svice.*guardian\.pid/ && -f "$piddir/$_" } readdir ( $dir );
 	closedir $dir;
 
@@ -343,7 +349,7 @@ sub getFarmGuardianPid    # ($fname,$svice)
 	{
 		$pidfile = $files[0];
 		open FR, "$piddir/$pidfile";
-		$fgpid = <FR>;
+		my $fgpid = <FR>;
 		close FR;
 		return $fgpid;
 	}

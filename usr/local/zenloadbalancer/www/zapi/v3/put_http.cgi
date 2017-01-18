@@ -72,6 +72,9 @@
 #
 #**
 
+use warnings;
+use strict;
+
 sub modify_http_farm # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;

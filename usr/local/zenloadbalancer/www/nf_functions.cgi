@@ -21,6 +21,10 @@
 #
 ###############################################################################
 
+use warnings;
+use strict;
+
+
 use Data::Dumper;
 use Fcntl qw(:flock SEEK_END);
 
@@ -640,7 +644,7 @@ sub getIptRuleNumber
 	my $table     = $rule_args[2];        # second argument of iptables is the table
 	my $chain     = $rule_args[4];        # forth argument of iptables is the chain
 
-	my $server_line;
+	my @server_line;
 	my $filter;
 
 	# Get the binary of iptables (iptables or ip6tables)
@@ -653,10 +657,10 @@ sub getIptRuleNumber
 	if ( defined ( $index ) )
 	{
 		# get backend tag
-		my @server_lines = &getL4FarmServers( $farm_name );
+		@server_line = &getL4FarmServers( $farm_name );
 
 		#~ &zenlog("index:$index server_lines:@server_lines");
-		@server_line = grep { /^$index;/ } @server_lines;
+		@server_line = grep { /^$index;/ } @server_line;
 		$filter = ( split ';', $server_line[0] )[3];
 	}
 	else
@@ -798,7 +802,7 @@ sub getIptRuleInsert
 			}
 		}
 
-		$rulenum = $rule_max_position if $rule_max_position < $rule_num;
+		my $rulenum = $rule_max_position if $rule_max_position < $rule_num;
 	}
 
 	# if the rule does not exist
@@ -916,7 +920,7 @@ sub getBinVersion    # ($farm_name)
 {
 	# Variables
 	my $farm_name = shift;
-	my $binary = $iptables;
+	my $binary;
 	my $vip = &getFarmVip( "vip", $farm_name );
 	my $ipv = &ipversion( $vip );
 

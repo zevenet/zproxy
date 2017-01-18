@@ -21,6 +21,10 @@
 #
 ###############################################################################
 
+use warnings;
+use strict;
+
+
 my $configdir = &getGlobalConfiguration('configdir');
 
 #
@@ -59,7 +63,7 @@ sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 	my $i = 0;
 
 	use Tie::File;
-	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	for my $line ( @configfile )
 	{
@@ -148,6 +152,7 @@ sub getFarmInterface    # ($farm_name)
 
 	my $type   = &getFarmType( $farm_name );
 	my $output = -1;
+	my $line;
 
 	if ( $type eq "datalink" )
 	{
@@ -220,7 +225,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 
 	if ( $algorithm eq "weight" )
 	{
-		foreach $serv ( @servers )
+		foreach my $serv ( @servers )
 		{
 			chomp ( $serv );
 			my @line = split ( "\;", $serv );
@@ -242,7 +247,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 	if ( $algorithm eq "prio" )
 	{
 		my $bestprio = 100;
-		foreach $serv ( @servers )
+		foreach my $serv ( @servers )
 		{
 			chomp ( $serv );
 			my @line = split ( "\;", $serv );
@@ -260,8 +265,6 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 			}
 		}
 	}
-
-	my $ip_bin = &getGlobalConfiguration('ip_bin');
 
 	if ( $routes ne "" )
 	{
@@ -312,7 +315,7 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 	if ( $writeconf eq "true" )
 	{
 		use Tie::File;
-		tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 		my $first = 1;
 		foreach ( @configfile )
 		{
@@ -328,8 +331,8 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 
 	# delete cron task to check backends
 	use Tie::File;
-	tie @cron_file, 'Tie::File', "/etc/cron.d/zenloadbalancer";
-	@cron_file = grep !/\# \_\_$farmname\_\_/, @cron_file;
+	tie my @cron_file, 'Tie::File', "/etc/cron.d/zenloadbalancer";
+	@cron_file = grep !/\# \_\_$farm_name\_\_/, @cron_file;
 	untie @cron_file;
 
 	$status = 0 if $writeconf eq 'false';
@@ -374,7 +377,7 @@ sub runDatalinkFarmCreate    # ($farm_name,$vip,$fdev)
 	open FO, ">$configdir\/$farm_name\_datalink.cfg";
 	print FO "$farm_name\;$vip\;$fdev\;weight\;up\n";
 	close FO;
-	$output = $?;
+	my $output = $?;
 
 	my $piddir = &getGlobalConfiguration('piddir');
 	if ( !-e "$piddir/${farm_name}_datalink.pid" )
@@ -428,7 +431,7 @@ sub setDatalinkFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	&runFarmStop( $farm_name, 'true' ) if $farm_state eq 'up';
 
 	use Tie::File;
-	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	for my $line ( @configfile )
 	{
@@ -619,7 +622,7 @@ sub setDatalinkNewFarmName    # ($farm_name,$new_farm_name)
 	my $output        = -1;
 
 	use Tie::File;
-	tie @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	for ( @configfile )
 	{

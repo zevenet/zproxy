@@ -613,7 +613,7 @@ sub setFarmProto    # ($proto,$farm_name)
 		# Load required modules
 		if ( $$farm{ vproto } =~ /sip|ftp/ )
 		{
-			$status = &loadL4Modules( $$farm{ vproto } );
+			my $status = &loadL4Modules( $$farm{ vproto } );
 		}
 
 		$output = &refreshL4FarmRules( $farm );
@@ -1411,7 +1411,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	if ( $status != -1 )
 	{
 		my $piddir = &getGlobalConfiguration('piddir');
-		open $fi, '>', "$piddir\/$$farm{name}\_l4xnat.pid";
+		open my $fi, '>', "$piddir\/$$farm{name}\_l4xnat.pid";
 		close $fi;
 	}
 
@@ -1841,7 +1841,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	%farm = undef;
 
 	%farm   = %{ &getL4FarmStruct( $farm_name ) };
-	%server = %{ $farm{ servers }[$server_id] };
+	my %server = %{ $farm{ servers }[$server_id] };
 
 	# do no apply rules if the farm is not up
 	if ( $farm{ status } eq 'up' )

@@ -443,7 +443,7 @@ sub getSystemInterfaceList
 
 			if ( !( $if_flags & IFF_RUNNING ) && ( $if_flags & IFF_UP ) )
 			{
-				$if_ref{ link } = "off";
+				$$if_ref{ link } = "off";
 			}
 
 			# add interface to the list
@@ -574,7 +574,7 @@ sub getBondList
 	}
 
 	my @bond_names = split ( ' ', <$bond_file> );
-	close $bondfile;
+	close $bond_file;
 	chomp ( @bond_names );
 
 	my @bonds;
@@ -908,10 +908,10 @@ sub setBondSlave
 	my $bonding_slaves_filename = &getGlobalConfiguration('bonding_slaves_filename');
 
 	#open ( my $bond_slaves_file, '>', "$bond_path/$bonding_slaves_filename" );
-	my $bond_slave_file = "${bond_path}\/${bonding_slaves_filename}";
+	my $bond_slaves_file = "${bond_path}\/${bonding_slaves_filename}";
 	my $bondslave = "$bond_path/$bonding_slaves_filename";
 
-	if ( !$bond_slaves_file )
+	if ( ! -f $bond_slaves_file )
 	{
 		&zenlog( "Could not open file $bondslave: $!" );
 		#return $return_code;

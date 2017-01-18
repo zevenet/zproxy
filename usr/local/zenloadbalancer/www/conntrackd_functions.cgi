@@ -21,6 +21,10 @@
 #
 ###############################################################################
 
+use warnings;
+use strict;
+
+
 sub setConntrackdConfig
 {
 	&zenlog("Setting conntrackd configuration file");

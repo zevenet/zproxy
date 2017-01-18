@@ -21,6 +21,9 @@
 #
 ###############################################################################
 
+#~ use warnings;
+#~ use strict;
+
 #get zapi status
 sub getZAPI    #($name,$value)
 {
@@ -41,11 +44,11 @@ sub getZAPI    #($name,$value)
 	{
 
 		tie my @contents, 'Tie::File', &getGlobalConfiguration('globalcfg');
-		foreach $line ( @contents )
+		foreach my $line ( @contents )
 		{
 			if ( $line =~ /^\$zapikey/ )
 			{
-				$l = $line;
+				my $l = $line;
 				$l =~ s/\$|\"|\=|zapikey|;//g;
 				$result = $l;
 			}
@@ -105,9 +108,9 @@ sub setZAPI    #($name,$value)
 	#Set Random key for zapi
 	if ( $name eq "randomkey" )
 	{
-		$random = &setZAPIKey( 64 );
+		my $random = &setZAPIKey( 64 );
 		tie my @contents, 'Tie::File', "$globalcfg";
-		foreach $line ( @contents )
+		foreach my $line ( @contents )
 		{
 			if ( $line =~ /zapi/ )
 			{
@@ -122,7 +125,7 @@ sub setZAPI    #($name,$value)
 	if ( $name eq "key" )
 	{
 		tie my @contents, 'Tie::File', "$globalcfg";
-		foreach $line ( @contents )
+		foreach my $line ( @contents )
 		{
 			if ( $line =~ /zapi/ )
 			{

@@ -21,6 +21,10 @@
 #
 ###############################################################################
 
+#~ use warnings;
+#~ use strict;
+
+
 use File::stat;
 use Time::localtime;
 
@@ -77,6 +81,7 @@ sub getCertCN    # ($certfile)
 {
 	my ( $certfile ) = @_;
 	my $certcn = "";
+	my @eject;
 
 	if ( &getCertType( $certfile ) eq "Certificate" )
 	{

@@ -21,6 +21,9 @@
 #
 ###############################################################################
 
+use warnings;
+use strict;
+
 my $passfile = "/etc/shadow";
 
 #login user
