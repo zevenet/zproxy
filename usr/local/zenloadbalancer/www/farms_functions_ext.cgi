@@ -37,7 +37,7 @@ sub getFarmCertificatesSNI    #($fname)
 		close FI;
 		foreach $line ( @content )
 		{
-			if ( $line =~ /Cert/ && $line !~ /\#.*Cert/ )
+			if ( $line =~ /Cert "/ && $line !~ /\#.*Cert/ )
 			{
 				my @partline = split ( '\"', $line );
 				@partline = split ( "\/", $partline[1] );
@@ -67,21 +67,21 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 		return $output;
 	}
 
-	&zenlog( "setting 'Certificate $cfile' for $fname farm $type" );
+	&zenlog( "setting 'Certificate $cfile' for $fname farm $type" );	
 	if ( $type eq "https" )
 	{
 		use Tie::File;
 		tie @array, 'Tie::File', "$configdir/$ffile";
 		for ( @array )
 		{
-			if ( $_ =~ /Cert/ )
+			if ( $_ =~ /Cert "/ )
 			{
 
 				#s/.*Cert\ .*/\tCert\ \"$configdir\/$cfile\"/g;
 				#$output = $?;
 				$sw = 1;
 			}
-			if ( $_ !~ /Cert/ && $sw eq 1 )
+			if ( $_ !~ /Cert "/ && $sw eq 1 )
 			{
 				splice @array, $i, 0, "\tCert\ \"$configdir\/$cfile\"";
 				$output = 0;
@@ -113,7 +113,7 @@ sub setFarmDeleteCertSNI    #($certn,$fname)
 		tie @array, 'Tie::File', "$configdir/$ffile";
 		for ( @array )
 		{
-			if ( $_ =~ /Cert/ )
+			if ( $_ =~ /Cert "/ )
 			{
 				$i++;
 			}

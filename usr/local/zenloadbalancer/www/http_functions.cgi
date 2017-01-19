@@ -800,7 +800,7 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 		tie @array, 'Tie::File', "$configdir/$farm_filename";
 		for ( @array )
 		{
-			if ( $_ =~ /Cert/ )
+			if ( $_ =~ /Cert "/ )
 			{
 				s/.*Cert\ .*/\tCert\ \"$configdir\/$cfile\"/g;
 				$output = $?;
