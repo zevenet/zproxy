@@ -537,6 +537,9 @@ sub setIptConnmarkRestore
 {
 	my $farm_name   = shift;    # farmname
 	my $switch      = shift;    # 'true' or not true value
+	$switch ||= 'false';   
+	
+	
 	my $return_code = -1;       # return value
 
 	my $rule = &getIptStringConnmarkRestore( $farm_name );
@@ -563,6 +566,8 @@ sub setIptConnmarkSave
 {
 	my $farm_name   = shift;    # farmname
 	my $switch      = shift;    # 'true' or not true value
+	$switch ||= 'false';    
+	
 	my $return_code = -1;       # return value
 
 	my $rule = &getIptStringConnmarkSave( $farm_name );

@@ -51,6 +51,11 @@
 #
 #**
 
+#~ use no warnings;
+use warnings;
+use strict;
+
+
 sub farm_actions # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
@@ -159,13 +164,13 @@ sub farm_actions # ( $json_obj, $farmname )
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		my $status = &runFarmStart( $farmname, "true" );
+		$status = &runFarmStart( $farmname, "true" );
 
 		if ( $status == 0 )
 		{
 			my $type = &getFarmType( $farmname );
 
-			if ( $type eq "http" || $type eq "http" )
+			if ( $type eq "http" || $type eq "https" )
 			{
 				&setFarmHttpBackendStatus( $farmname );
 			}
@@ -445,7 +450,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 
 	# validate BACKEND
 	my @backends = &getFarmServers( $farmname );
-	my $backend_line = $backends[$id_server];
+	my $backend_line = $backends[$backend_id];
 
 	if ( !$backend_line )
 	{

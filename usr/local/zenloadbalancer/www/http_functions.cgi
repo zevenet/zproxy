@@ -3399,6 +3399,7 @@ sub getHttpFarmService
 sub getHTTPServicePosition 
 {
 	my ( $farmname, $service ) = @_;
+	
 	# get service position
 	my $srv_position = 0;
 	my @services = &getFarmServices( $farmname );

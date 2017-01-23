@@ -1620,6 +1620,9 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid     = &getFarmGuardianPid( $farm_name );
 
+	$weight ||= 1;
+	$priority ||= 1;
+
 	if ( $$farm{ status } eq 'up' )
 	{
 		if ( $fg_enabled eq 'true' )
@@ -1838,7 +1841,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	untie @configfile;
 
 	$farm{ servers } = undef;
-	%farm = undef;
+	#~ %farm = undef;
 
 	%farm   = %{ &getL4FarmStruct( $farm_name ) };
 	my %server = %{ $farm{ servers }[$server_id] };
@@ -1873,7 +1876,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	}
 
 	$farm{ servers }  = undef;
-	%farm             = undef;
+	#~ %farm             = undef;
 	$$farm{ servers } = undef;
 	$farm             = undef;
 
@@ -1964,8 +1967,11 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 
 	my $piddir = &getGlobalConfiguration('piddir');
 	rename ( "$configdir\/$farm_filename", "$configdir\/$new_farm_filename" ) or $output = -1;
-	rename ( "$piddir\/$farm_name\_$farm_type.pid",
+	if ( -f "$piddir\/$farm_name\_$farm_type.pid" )
+	{
+		rename ( "$piddir\/$farm_name\_$farm_type.pid",
 			 "$piddir\/$new_farm_name\_$farm_type.pid" ) or $output = -1;
+	}	
 
 	# Rename fw marks for this farm
 	&renameMarks( $farm_name, $new_farm_name );

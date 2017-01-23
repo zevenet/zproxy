@@ -1,5 +1,11 @@
 #!/usr/bin/perl -w
 
+#~ use no warnings;
+use warnings;
+use strict;
+
+
+
 ############ GET HTTP/S
 # curl --tlsv1 -k --header 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/newfarmHTTP
 #
@@ -108,17 +114,17 @@ sub farms_name_http # ( $farmname )
 	my @out_s;
 	my @out_cn;
 	my $connto          = &getFarmConnTO( $farmname );
-	my $connto          = $connto + 0;
+	$connto          = $connto + 0;
 	my $timeout         = &getFarmTimeout( $farmname );
-	my $timeout         = $timeout + 0;
+	$timeout         = $timeout + 0;
 	my $alive           = &getFarmBlacklistTime( $farmname );
-	my $alive           = $alive + 0;
+	$alive           = $alive + 0;
 	my $client          = &getFarmClientTimeout( $farmname );
-	my $client          = $client + 0;
+	$client          = $client + 0;
 	my $conn_max        = &getFarmMaxConn( $farmname );
-	my $conn_max        = $conn_max + 0;
+	$conn_max        = $conn_max + 0;
 	my $rewritelocation = &getFarmRewriteL( $farmname );
-	my $rewritelocation = $rewritelocation + 0;
+	$rewritelocation = $rewritelocation + 0;
 
 	if ( $rewritelocation == 0 )
 	{
@@ -158,17 +164,18 @@ sub farms_name_http # ( $farmname )
 	}
 
 	my $type     = &getFarmType( $farmname );
-	$certname = $na;
-	$cipher   = '';
-	$ciphers  = 'all';
+	my $certname;
+	my $cipher   = '';
+	my $ciphers  = 'all';
+	my @cnames;
 
 	if ( $type eq "https" )
 	{
 		$certname = &getFarmCertificate( $farmname );
 		@cnames   = &getFarmCertificatesSNI( $farmname );
-		$elem     = @cnames;
+		my $elem     = scalar @cnames;
 
-		for ( $i = 0 ; $i < $elem ; $i++ )
+		for ( my $i = 0 ; $i < $elem ; $i++ )
 		{
 			push @out_cn, { file => $cnames[$i], id => $i + 1 };
 		}
@@ -183,22 +190,22 @@ sub farms_name_http # ( $farmname )
 		}
 	}
 
-	$vip   = &getFarmVip( "vip",  $farmname );
-	$vport = &getFarmVip( "vipp", $farmname );
+	my $vip   = &getFarmVip( "vip",  $farmname );
+	my $vport = &getFarmVip( "vipp", $farmname );
 	$vport = $vport + 0;
 
-	@err414 = &getFarmErr( $farmname, "414" );
+	my @err414 = &getFarmErr( $farmname, "414" );
 	chomp(@err414);
-	@err500 = &getFarmErr( $farmname, "500" );
+	my @err500 = &getFarmErr( $farmname, "500" );
 	chomp(@err500);
-	@err501 = &getFarmErr( $farmname, "501" );
+	my @err501 = &getFarmErr( $farmname, "501" );
 	chomp(@err501);
-	@err503 = &getFarmErr( $farmname, "503" );
+	my @err503 = &getFarmErr( $farmname, "503" );
 	chomp(@err503);
 
 	my $status = &getFarmStatus( $farmname );
 
-	if ( $status == 'up' && -e "/tmp/$farmname.lock" )
+	if ( $status eq 'up' && -e "/tmp/$farmname.lock" )
 	{
 		$status = "needed restart";
 	}
@@ -239,26 +246,26 @@ sub farms_name_http # ( $farmname )
 
 	foreach my $s ( @serv )
 	{
-		$vser         = &getFarmVS( $farmname, $s, "vs" );
-		$urlp         = &getFarmVS( $farmname, $s, "urlp" );
-		$redirect     = &getFarmVS( $farmname, $s, "redirect" );
-		$redirecttype = &getFarmVS( $farmname, $s, "redirecttype" );
-		$session      = &getFarmVS( $farmname, $s, "sesstype" );
-		$ttl          = &getFarmVS( $farmname, $s, "ttl" );
-		$sesid        = &getFarmVS( $farmname, $s, "sessionid" );
-		$dyns         = &getFarmVS( $farmname, $s, "dynscale" );
-		$httpsbe      = &getFarmVS( $farmname, $s, "httpsbackend" );
-		$cookiei      = &getFarmVS( $farmname, $s, "cookieins" );
+		my $vser         = &getFarmVS( $farmname, $s, "vs" );
+		my $urlp         = &getFarmVS( $farmname, $s, "urlp" );
+		my $redirect     = &getFarmVS( $farmname, $s, "redirect" );
+		my $redirecttype = &getFarmVS( $farmname, $s, "redirecttype" );
+		my $session      = &getFarmVS( $farmname, $s, "sesstype" );
+		my $ttl          = &getFarmVS( $farmname, $s, "ttl" );
+		my $sesid        = &getFarmVS( $farmname, $s, "sessionid" );
+		my $dyns         = &getFarmVS( $farmname, $s, "dynscale" );
+		my $httpsbe      = &getFarmVS( $farmname, $s, "httpsbackend" );
+		my $cookiei      = &getFarmVS( $farmname, $s, "cookieins" );
 
 		if ( $cookiei eq "" )
 		{
 			$cookiei = "false";
 		}
 
-		$cookieinsname = &getFarmVS( $farmname, $s, "cookieins-name" );
-		$domainname    = &getFarmVS( $farmname, $s, "cookieins-domain" );
-		$path          = &getFarmVS( $farmname, $s, "cookieins-path" );
-		$ttlc          = &getFarmVS( $farmname, $s, "cookieins-ttlc" );
+		my $cookieinsname = &getFarmVS( $farmname, $s, "cookieins-name" );
+		my $domainname    = &getFarmVS( $farmname, $s, "cookieins-domain" );
+		my $path          = &getFarmVS( $farmname, $s, "cookieins-path" );
+		my $ttlc          = &getFarmVS( $farmname, $s, "cookieins-ttlc" );
 
 		if ( $dyns =~ /^$/ )
 		{
@@ -270,13 +277,13 @@ sub farms_name_http # ( $farmname )
 		}
 
 		my @fgconfig  = &getFarmGuardianConf( $farmname, $s );
-		my $fgttcheck = @fgconfig[1];
-		my $fgscript  = @fgconfig[2];
+		my $fgttcheck = $fgconfig[1];
+		my $fgscript  = $fgconfig[2];
 		$fgscript =~ s/\n//g;
 		$fgscript =~ s/\"/\'/g;
-		my $fguse = @fgconfig[3];
+		my $fguse = $fgconfig[3];
 		$fguse =~ s/\n//g;
-		my $fglog      = @fgconfig[4];
+		my $fglog      = $fgconfig[4];
 
 		# Default values for farm guardian parameters
 		if ( !$fgttcheck ) { $fgttcheck = 5; }
@@ -291,9 +298,10 @@ sub farms_name_http # ( $farmname )
 		foreach my $subl ( @be )
 		{
 			my @subbe       = split ( "\ ", $subl );
-			my $id          = @subbe[1] + 0;
+			my $id          = $subbe[1] + 0;
 			my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $s );
 
+			my $backendstatus;
 			if ( $maintenance != 0 )
 			{
 				$backendstatus = "up";
@@ -303,10 +311,10 @@ sub farms_name_http # ( $farmname )
 				$backendstatus = "maintenance";
 			}
 
-			my $ip   = @subbe[3];
-			my $port = @subbe[5] + 0;
-			my $tout = @subbe[7];
-			my $prio = @subbe[9];
+			my $ip   = $subbe[3];
+			my $port = $subbe[5] + 0;
+			my $tout = $subbe[7];
+			my $prio = $subbe[9];
 
 			$tout = $tout eq '-' ? undef: $tout+0;
 			$prio = $prio eq '-' ? undef: $prio+0;

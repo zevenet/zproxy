@@ -62,6 +62,10 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	my $status;
 	my $changedname = "false";
 
+	# flag to reset IPDS rules when the farm changes the name.
+	my $farmname_old;
+	my $ipds = &getIPDSfarmsRules( $farmname );
+
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
@@ -166,6 +170,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 							}
 							else
 							{
+								$farmname_old = $farmname; 
 								$farmname = $json_obj->{ newfarmname };
 								$newfstat = &runFarmStart( $farmname, "true" );
 								if ( $newfstat != 0 )
@@ -387,6 +392,27 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	{
 		&zenlog(
 				  "ZAPI success, some parameters have been changed in farm $farmname." );
+
+		# update the ipds rule applied to the farm
+		if ( !$farmname_old )
+		{
+			&setBLReloadFarmRules ( $farmname );
+			&setDOSReloadFarmRules ( $farmname );
+		}
+		# create new rules with the new farmname
+		else
+		{
+			foreach my $list ( @{ $ipds->{ 'blacklists' } } )
+			{
+				&setBLRemFromFarm( $farmname_old, $list );
+				&setBLApplyToFarm( $farmname, $list );
+			}
+			foreach my $rule ( @{ $ipds->{ 'dos' } } )
+			{
+				&setDOSDeleteRule( $rule, $farmname_old );
+				&setDOSCreateRule( $rule, $farmname );
+			}
+		}
 
 		if ( $changedname ne "true" )
 		{
@@ -856,10 +882,6 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 		&zenlog(
 			"ZAPI success, some parameters have been changed  in zone $zone in farm $farmname."
 		);
-
-		# update the ipds rule applied to the farm
-		&setBLReloadFarmRules ( $farmname );
-		&setDOSReloadFarmRules ( $farmname );
 
 		# Success
 		my $body = {

@@ -79,6 +79,9 @@ sub modify_http_farm # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
+	# flag to reset IPDS rules when the farm changes the name.
+	my $farmname_old;
+	my $ipds = &getIPDSfarmsRules( $farmname );
 	
 	# Flags
 	my $reload_flag  = "false";
@@ -86,6 +89,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	my $error        = "false";
 	my $flag         = "false";
 
+	my $status;
+	
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
@@ -152,7 +157,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 					}
 					else
 					{
-						$oldfstat = &runFarmStop( $farmname, "true" );
+						my $oldfstat = &runFarmStop( $farmname, "true" );
 						if ( $oldfstat != 0 )
 						{
 							$error = "true";
@@ -180,32 +185,27 @@ sub modify_http_farm # ( $json_obj, $farmname )
 								);
 								#~ $newfstat = &runFarmStart( $farmname, "true" );
 								
-								&zenlog ("?????status::$newfstat");
-								
-								if ( $newfstat != 0 )
-								{
-									$error = "true";
-									&zenlog(
-										"ZAPI error, trying to modify a http farm $farmname, the farm isn't running, check if the IP address is up and the PORT is in use."
-									);
-								}
+								#~ if ( $newfstat != 0 )
+								#~ {
+									#~ $error = "true";
+									#~ &zenlog(
+										#~ "ZAPI error, trying to modify a http farm $farmname, the farm isn't running, check if the IP address is up and the PORT is in use."
+									#~ );
+								#~ }
 							}
 							else
 							{
+								$farmname_old = $farmname;
 								$farmname = $json_obj->{ newfarmname };
 								
-								&zenlog ("?????begining::$newfstat");
 								#~ $newfstat = &runFarmStart( $farmname, "true" );
-								
-								&zenlog ("?????status2::$newfstat");
-								
-								if ( $newfstat != 0 )
-								{
-									$error = "true";
-									&zenlog(
-										"ZAPI error, trying to modify a http farm $farmname, the farm isn't running, check if the IP address is up and the PORT is in use."
-									);
-								}
+								#~ if ( $newfstat != 0 )
+								#~ {
+									#~ $error = "true";
+									#~ &zenlog(
+										#~ "ZAPI error, trying to modify a http farm $farmname, the farm isn't running, check if the IP address is up and the PORT is in use."
+									#~ );
+								#~ }
 							}
 						}
 					}
@@ -365,6 +365,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		elsif (
 				$json_obj->{ rewritelocation } =~ /^disabled|enabled|enabled-backends$/ )
 		{
+			my $rewritelocation = 0;
 			if ( $json_obj->{ rewritelocation } eq "disabled" )
 			{
 				$rewritelocation = 0;
@@ -377,7 +378,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			{
 				$rewritelocation = 2;
 			}
-			$status1 = &setFarmRewriteL( $farmname, $rewritelocation );
+			my $status1 = &setFarmRewriteL( $farmname, $rewritelocation );
 			if ( $status1 != -1 )
 			{
 				$restart_flag = "true";
@@ -414,6 +415,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		elsif ( $json_obj->{ httpverb } =~
 				/^standardHTTP|extendedHTTP|standardWebDAV|MSextWebDAV|MSRPCext$/ )
 		{
+			my $httpverb = 0;
 			if ( $json_obj->{ httpverb } eq "standardHTTP" )
 			{
 				$httpverb = 0;
@@ -574,6 +576,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			}
 			elsif ( $json_obj->{ ciphers } =~ /^all|customsecurity$/ )
 			{
+				my $ciphers;
 				if ( $json_obj->{ ciphers } eq "all" )
 				{
 					$ciphers = "cipherglobal";
@@ -628,7 +631,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 					}
 					else
 					{
-						$cipherc = $json_obj->{ cipherc };
+						my $cipherc = $json_obj->{ cipherc };
 						$cipherc =~ s/\ //g;
 
 						if ( $cipherc eq "" )
@@ -812,9 +815,26 @@ sub modify_http_farm # ( $json_obj, $farmname )
 				  "ZAPI success, some parameters have been changed in farm $farmname." );
 	
 		# update the ipds rule applied to the farm
-		&setBLReloadFarmRules ( $farmname );
-		&setDOSReloadFarmRules ( $farmname );
-
+		if ( !$farmname_old )
+		{
+			&setBLReloadFarmRules ( $farmname );
+			&setDOSReloadFarmRules ( $farmname );
+		}
+		# create new rules with the new farmname
+		else
+		{
+			foreach my $list ( @{ $ipds->{ 'blacklists' } } )
+			{
+				&setBLRemFromFarm( $farmname_old, $list );
+				&setBLApplyToFarm( $farmname, $list );
+			}
+			foreach my $rule ( @{ $ipds->{ 'dos' } } )
+			{
+				&setDOSDeleteRule( $rule, $farmname_old );
+				&setDOSCreateRule( $rule, $farmname );
+			}
+		}
+		
 		# Success
 		my $body = {
 			description => "Modify farm $farmname",
@@ -837,7 +857,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		);
 
 		# Error
-		$errormsg = "Errors found trying to modify farm $farmname";
+		my $errormsg = "Errors found trying to modify farm $farmname";
 		my $body = {
 					 description => "Modify farm $farmname",
 					 error       => "true",

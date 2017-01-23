@@ -27,6 +27,7 @@ if ( -e "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi" )
 }
 
 require "/usr/local/zenloadbalancer/www/rrd_functions.cgi";
+require "/usr/local/zenloadbalancer/www/http_functions.cgi";
 	
 #~ use warnings;
 #~ use strict;

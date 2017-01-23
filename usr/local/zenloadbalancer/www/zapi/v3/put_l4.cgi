@@ -69,6 +69,9 @@
 #
 #**
 
+use warnings;
+use strict;
+
 sub modify_l4xnat_farm # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
@@ -78,6 +81,12 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	my $reload_flag  = "false";
 	my $restart_flag = "false";
 	my $error        = "false";
+	my $status;
+	my $initialStatus = &getFarmStatus( $farmname );
+	
+	# flag to reset IPDS rules when the farm changes the name.
+	my $farmname_old;
+	my $ipds = &getIPDSfarmsRules( $farmname );
 
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
@@ -150,7 +159,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 							my $fnchange = &setNewFarmName( $farmname, $json_obj->{ newfarmname } );
 							if ( $fnchange == -1 )
 							{
-								&error = "true";
+								$error = "true";
 								&zenlog(
 									"ZAPI error, trying to modify a l4xnat farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
 								);
@@ -158,6 +167,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 							else
 							{
 								$restart_flag = "true";
+								$farmname_old = $farmname;
 								$farmname     = $json_obj->{ newfarmname };
 							}
 						}
@@ -216,7 +226,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 
 			if (&getFarmPersistence($farmname) ne $persistence)
 			{
-				$statusp = &setFarmSessionType( $persistence, $farmname, "" );
+				my $statusp = &setFarmSessionType( $persistence, $farmname, "" );
 				if ( $statusp != 0 )
 				{
 					$error = "true";
@@ -464,7 +474,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	}
 
 	# Restart Farm
-	if ( $restart_flag eq "true" )
+	if ( $restart_flag eq "true" && $initialStatus ne 'down' )
 	{
 		&runFarmStop( $farmname, "true" );
 		&runFarmStart( $farmname, "true" );
@@ -476,9 +486,29 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		&zenlog(
 				  "ZAPI success, some parameters have been changed in farm $farmname." );
 
-		# update the ipds rule applied to the farm
-		&setBLReloadFarmRules ( $farmname );
-		&setDOSReloadFarmRules ( $farmname );
+		if ( &getFarmStatus( $farmname ) )
+		{
+			# update the ipds rule applied to the farm
+			if ( !$farmname_old )
+			{
+				&setBLReloadFarmRules ( $farmname );
+				&setDOSReloadFarmRules ( $farmname );
+			}
+			# create new rules with the new farmname
+			else
+			{
+				foreach my $list ( @{ $ipds->{ 'blacklists' } } )
+				{
+					&setBLRemFromFarm( $farmname_old, $list );
+					&setBLApplyToFarm( $farmname, $list );
+				}
+				foreach my $rule ( @{ $ipds->{ 'dos' } } )
+				{
+					&setDOSDeleteRule( $rule, $farmname_old );
+					&setDOSCreateRule( $rule, $farmname );
+				}
+			}
+		}
 
 		# Success
 		my $body = {

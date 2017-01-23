@@ -12,10 +12,21 @@
 #
 ###############################################################################
 
+# libs
+require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
+require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
+# ....
+
+
 require "/usr/local/zenloadbalancer/www/zapi/v3/get_http.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get_gslb.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get_l4.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get_datalink.cgi";
+
+
+#~ use no warnings;
+use warnings;
+use strict;
 
 #**
 #  @api {get} /farms Request farms list
@@ -285,9 +296,9 @@ sub backends
 				  {
 					id        => $l_serv[0],
 					ip        => $l_serv[1],
-					interface => @l_serv[2],
-					weight    => @l_serv[3],
-					priority  => @l_serv[4]
+					interface => $l_serv[2],
+					weight    => $l_serv[3],
+					priority  => $l_serv[4]
 				  };
 			}
 		}
@@ -318,6 +329,7 @@ sub service_backends
 {
 	my ( $farmname, $service ) = @_;
 
+	my $backendstatus;
 	my $description = "List service backends";
 
 	# Check that the farm exists
@@ -359,7 +371,7 @@ sub service_backends
 		foreach my $subl ( @be )
 		{
 			my @subbe       = split ( "\ ", $subl );
-			my $id          = @subbe[1] + 0;
+			my $id          = $subbe[1] + 0;
 			my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $service );
 
 			if ( $maintenance != 0 )
@@ -371,10 +383,10 @@ sub service_backends
 				$backendstatus = "maintenance";
 			}
 
-			my $ip   = @subbe[3];
-			my $port = @subbe[5] + 0;
-			my $tout = @subbe[7];
-			my $prio = @subbe[9];
+			my $ip   = $subbe[3];
+			my $port = $subbe[5] + 0;
+			my $tout = $subbe[7];
+			my $prio = $subbe[9];
 
 			$tout = $tout eq '-' ? undef: $tout+0;
 			$prio = $prio eq '-' ? undef: $prio+0;
@@ -428,13 +440,13 @@ sub service_backends
 
 			my @subbe = split ( " => ", $subline );
 
-			@subbe[0] =~ s/^primary$/1/;
-			@subbe[0] =~ s/^secondary$/2/;
+			$subbe[0] =~ s/^primary$/1/;
+			$subbe[0] =~ s/^secondary$/2/;
 
 			push @backends,
 			  {
-				id => @subbe[0]+0,
-				ip => @subbe[1],
+				id => $subbe[0]+0,
+				ip => $subbe[1],
 			  };
 		}
 

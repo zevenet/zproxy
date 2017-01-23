@@ -118,6 +118,11 @@
 #
 #**
 
+#~ use no warnings;
+use warnings;
+use strict;
+
+
 sub modify_farmguardian    # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
@@ -272,13 +277,13 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 			{
 				@fgconfig = &getFarmGuardianConf( $farmname, $service );
 			}
-			my $timetocheck  = @fgconfig[1] + 0;
-			my $check_script = @fgconfig[2];
+			my $timetocheck  = $fgconfig[1] + 0;
+			my $check_script = $fgconfig[2];
 			$check_script =~ s/\n//g;
 			$check_script =~ s/\"/\'/g;
-			my $usefarmguardian = @fgconfig[3];
+			my $usefarmguardian = $fgconfig[3];
 			$usefarmguardian =~ s/\n//g;
-			my $farmguardianlog = @fgconfig[4];
+			my $farmguardianlog = $fgconfig[4];
 
 			if ( exists ( $json_obj->{ fgtimecheck } ) )
 			{
@@ -301,7 +306,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 			if ( $type eq "l4xnat" )
 			{
 				&runFarmGuardianStop( $farmname, "" );
-				$status =
+				my $status =
 				&runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
 										$usefarmguardian, $farmguardianlog, "" );
 				if ( $status != -1 )
@@ -320,7 +325,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 			elsif ( $type eq "http" || $type eq "https" )
 			{
 				&runFarmGuardianStop( $farmname, $service );
-				$status =
+				my $status =
 				&runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
 										$usefarmguardian, $farmguardianlog, $service );
 				if ( $status != -1 )

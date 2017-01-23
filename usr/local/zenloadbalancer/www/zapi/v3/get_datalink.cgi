@@ -62,6 +62,7 @@
 #
 #**
 
+
 sub farms_name_datalink # ( $farmname )
 {
 	my $farmname = shift;
@@ -94,9 +95,9 @@ sub farms_name_datalink # ( $farmname )
 			  {
 				id        => $l_serv[0],
 				ip        => $l_serv[1],
-				interface => @l_serv[2],
-				weight    => @l_serv[3],
-				priority  => @l_serv[4]
+				interface => $l_serv[2],
+				weight    => $l_serv[3],
+				priority  => $l_serv[4]
 			  };
 		}
 	}

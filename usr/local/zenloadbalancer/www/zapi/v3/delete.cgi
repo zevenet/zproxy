@@ -42,6 +42,9 @@
 #
 #**
 
+use warnings;
+use strict;
+
 sub delete_farm # ( $farmname )
 {
 	my $farmname = shift;
@@ -194,7 +197,8 @@ sub delete_service # ( $farmname, $service )
 
 		# Error
 		my $errormsg = "Invalid service name, please insert a valid value.";
-		my $output = {
+		
+		my $body = {
 					   description => "Delete service",
 					   error       => "true",
 					   message     => $errormsg
@@ -240,12 +244,12 @@ sub delete_service # ( $farmname, $service )
 		&httpResponse({ code => 400, body => $body });
 	}
 	
-	
+	my $return;
 	if ( $type eq "http" || $type eq "https" )
 	{
 		$return = &deleteFarmService( $farmname, $service );
 	}
-	if ( $type eq "gslb" )
+	elsif ( $type eq "gslb" )
 	{
 		$return = &setGSLBFarmDeleteService( $farmname, $service );
 	}
@@ -515,14 +519,13 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 		}
 
 		# validate ALGORITHM
-		unless ( &getFarmVS( $farmname, $service, "algorithm" ) eq 'roundrobin' )
+		if ( &getFarmVS( $farmname, $service, "algorithm" ) eq 'roundrobin' )
 		{
-			
 			&zenlog(
 				 "ZAPI error, this service algorithm does not support removing backends." );
 
 			# Error
-			my $errormsg = "Could not find the requested service.";
+			my $errormsg = "This service algorithm does not support removing backends.";
 			my $body = {
 						 description => $description,
 						 error       => "true",
@@ -533,7 +536,8 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 		}
 		
 		my @backends = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
-		if  ( ! grep ( /^\t\t$id_server\s*=>/, @backends)  )
+		
+		if  ( ! grep ( /\sServer\s$id_server\s/, @backends)  )
 		{
 			my $errormsg = "Could not find the requested backend.";
 			my $body = {

@@ -13,8 +13,8 @@
 ###############################################################################
 
 #~ use no warnings;
-#~ use warnings;
-#~ use strict;
+use warnings;
+use strict;
 
 #~ use CGI;
 use CGI::Session;

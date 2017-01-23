@@ -48,6 +48,12 @@
 #
 #**
 
+require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
+
+
+use warnings;
+use strict;
+
 sub new_farm # ( $json_obj )
 {
 	my $json_obj = shift;
@@ -156,7 +162,7 @@ sub new_farm # ( $json_obj )
 	$json_obj->{ 'interface' } = &getInterfaceOfIp( $json_obj->{ 'vip' } );
 	#~ $json_obj->{ profile } = 'L4xNAT' if $json_obj->{ profile } eq 'L4XNAT';
 
-	$status = &runFarmCreate( $json_obj->{ profile },
+	my $status = &runFarmCreate( $json_obj->{ profile },
 							  $json_obj->{ vip },
 							  $json_obj->{ vport },
 							  $json_obj->{ farmname },
@@ -427,11 +433,11 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			foreach my $l_servers ( @run )
 			{
 				my @l_serv = split ( ";", $l_servers );
-				if ( @l_serv[1] ne "0.0.0.0" )
+				if ( $l_serv[1] ne "0.0.0.0" )
 				{
-					if ( @l_serv[0] > $id )
+					if ( $l_serv[0] > $id )
 					{
-						$id = @l_serv[0];
+						$id = $l_serv[0];
 					}
 				}
 			}
@@ -441,7 +447,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 				$id++;
 			}
 		}
-
+		
 		# validate IP
 		if ( ! &getValidFormat('IPv4_addr', $json_obj->{ ip }) )
 		{
@@ -450,7 +456,6 @@ sub new_farm_backend # ( $json_obj, $farmname )
 			);
 
 			# Error
-			$error = 1;
 			my $errormsg = "Invalid backend IP value, please insert a valid value.";
 			my $body = {
 						 description => $description,
@@ -480,7 +485,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		}
 
 		# validate PRIORITY
-		unless ( $json_obj->{ priority } =~ /^\d$/ || $json_obj->{ priority } == undef ) # (0-9)
+		if ( $json_obj->{ priority } !~ /^\d+$/ && exists $json_obj->{ priority } ) # (0-9)
 		{
 			# Error
 			my $errormsg =
@@ -495,7 +500,7 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		}
 
 		# validate WEIGHT
-		unless ( $json_obj->{ weight } !~ /^\d*[1-9]$/ || $json_obj->{ weight } == undef ) # 1 or higher
+		if ( $json_obj->{ weight } !~ /^[1-9]\d*$/ && exists $json_obj->{ weight } ) # 1 or higher
 		{
 			# Error
 			my $errormsg =
@@ -512,10 +517,10 @@ sub new_farm_backend # ( $json_obj, $farmname )
 ####### Create backend
 
 		my $status = &setFarmServer(
-									 $id,                   $json_obj->{ ip },
+									 $id, $json_obj->{ ip },
 									 $json_obj->{ port },   "",
 									 $json_obj->{ weight }, $json_obj->{ priority },
-									 "",                    $farmname
+									 "", $farmname
 		);
 
 		if ( $status != -1 )
@@ -569,14 +574,14 @@ sub new_farm_backend # ( $json_obj, $farmname )
 		my @run = &getFarmServers( $farmname );
 		if ( @run > 0 )
 		{
-			foreach $l_servers ( @run )
+			foreach my $l_servers ( @run )
 			{
 				my @l_serv = split ( ";", $l_servers );
-				if ( @l_serv[1] ne "0.0.0.0" )
+				if ( $l_serv[1] ne "0.0.0.0" )
 				{
-					if ( @l_serv[0] > $id )
+					if ( $l_serv[0] > $id )
 					{
-						$id = @l_serv[0];
+						$id = $l_serv[0];
 					}
 				}
 			}
@@ -797,10 +802,11 @@ sub new_service_backend # ( $json_obj, $farmname, $service )
 		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
 		my @be = split ( "\n", $backendsvs );
 
+		my $id;
 		foreach my $subl ( @be )
 		{
 			my @subbe = split ( "\ ", $subl );
-			$id = @subbe[1] + 1;
+			$id = $subbe[1] + 1;
 		}
 
 		if ( $id =~ /^$/ )
@@ -1322,7 +1328,7 @@ sub new_farm_service # ( $json_obj, $farmname )
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		$status = &setGSLBFarmNewService( $farmname,
+		my $status = &setGSLBFarmNewService( $farmname,
 										  $json_obj->{ id },
 										  $json_obj->{ algorithm } );
 		if ( $status != -1 )
