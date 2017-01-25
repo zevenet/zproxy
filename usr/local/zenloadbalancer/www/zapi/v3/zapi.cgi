@@ -57,12 +57,12 @@ package GLOBAL
 require "/usr/local/zenloadbalancer/www/functions.cgi";
 
 #~ require "/usr/local/zenloadbalancer/config/global.conf";
-#~ require "/usr/local/zenloadbalancer/www/cert_functions.cgi";
 #~ require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 
 # required
 require "/usr/local/zenloadbalancer/www/zapi_functions.cgi";
 require "/usr/local/zenloadbalancer/www/cgi_functions.cgi";
+require "/usr/local/zenloadbalancer/www/cert_functions.cgi";
 
 require "/usr/local/zenloadbalancer/www/zapi/v3/certificates.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get.cgi";

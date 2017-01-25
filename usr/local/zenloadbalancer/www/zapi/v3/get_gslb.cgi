@@ -3,112 +3,7 @@
 use warnings;
 use strict;
 
-########### GET GSLB
-# curl --tlsv1 -k --header 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB
-#
-#
-#
-#####Documentation of GET GSLB####
-#**
-#  @api {get} /farms/<farmname> Request info of a gslb Farm
-#  @apiGroup Farm Get
-#  @apiName GetFarmNameGSLB
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Get the Params of a given Farm <farmname> with GSLB profile
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "List farm FarmGSLB",
-#   "params" : [
-#      {
-#         "status" : "needed restart",
-#         "vip" : "178.62.126.152",
-#         "vport" : 53
-#      }
-#   ],
-#   "services" : [
-#      {
-#         "algorithm" : "roundrobin",
-#         "backends" : [
-#            {
-#               "ip" : "192.168.0.155",
-#               "id" : "1"
-#            }
-#         ],
-#         "id" : "sev1",
-#         "deftcpport" : "80"
-#      }
-#   ],
-#   "zones" : [
-#      {
-#         "DefaultNameServer" : "ns1",
-#         "id" : "zone2",
-#         "resources" : [
-#            {
-#               "id" : 0,
-#               "rdata" : "ns1",
-#               "rname" : "@",
-#               "ttl" : "",
-#               "type" : "NS"
-#            },
-#            {
-#               "id" : 1,
-#               "rdata" : "0.0.0.0",
-#               "rname" : "ns1",
-#               "ttl" : "",
-#               "type" : "A"
-#            }
-#         ]
-#      },
-#      {
-#         "DefaultNameServer" : "ns1",
-#         "id" : "zone1",
-#         "resources" : [
-#            {
-#               "id" : 0,
-#               "rdata" : "ns1",
-#               "rname" : "@",
-#               "ttl" : "",
-#               "type" : "NS"
-#            },
-#            {
-#               "id" : 1,
-#               "rdata" : "0.0.0.0",
-#               "rname" : "ns1",
-#               "ttl" : "",
-#               "type" : "A"
-#            },
-#            {
-#               "id" : 2,
-#               "rdata" : "sev1",
-#               "rname" : "www",
-#               "ttl" : "5",
-#               "type" : "DYNA"
-#            },
-#            {
-#               "id" : 3,
-#               "rdata" : "1.1.1.1",
-#               "rname" : "www",
-#               "ttl" : "10",
-#               "type" : "NS"
-#            }
-#         ]
-#      }
-#
-#   ]
-#}
-#
-#
-#@apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#         https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB
-#
-#@apiSampleRequest off
-#
-#**
-
+#	/farms/<GSLBfarm>
 sub farms_name_gslb # ( $farmname )
 {
 	my $farmname = shift;
@@ -183,10 +78,10 @@ sub farms_name_gslb # ( $farmname )
 		  {
 			id        => $srv,
 			algorithm => $lb,
-			deftcpport      => $dpc,
+			deftcpport      => $dpc + 0,
 			fgenabled => $fgStatus,
 			fgscript => $fgScrip,
-			fgtimecheck => $fgTime,
+			fgtimecheck => $fgTime + 0,
 			backends  => \@out_b,
 		  };
 	}
@@ -239,6 +134,7 @@ sub farms_name_gslb # ( $farmname )
 	&httpResponse({ code => 200, body => $body });
 }
 
+#	/farms/<GSLBfarm>/zones/<zone>/resources
 sub gslb_zone_resources # ( $farmname, $zone )
 {
 	my $farmname = shift;
