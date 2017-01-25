@@ -353,7 +353,7 @@ sub set_blacklists_list
 							}
 							if ( ! $errormsg )
 							{
-								&delBLParam ( $listName, $_ ) for ( "unit", "period" );
+								&delBLParam ( $listName, $_ ) for ( "unit", "period", "day" );
 								# rewrite cron task if exists some of the next keys
 								$cronFlag = 1;
 							}
@@ -370,6 +370,7 @@ sub set_blacklists_list
 						$json_obj->{ 'day' } 		=&getBLParam ( $listName, "day" ) if ( ! exists $json_obj->{ 'day' } );
 						foreach my $timeParam ( "minutes", "hour", "day" )
 						{
+							&zenlog ("??? cheking '$timeParam':$json_obj->{ $timeParam }");
 							if ( ! &getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } ) || $json_obj->{ $timeParam } eq '' )
 							{
 								$errormsg = "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
