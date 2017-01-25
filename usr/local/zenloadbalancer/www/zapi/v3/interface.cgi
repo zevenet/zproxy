@@ -1,5 +1,10 @@
 #!/usr/bin/perl -w
 
+
+use warnings;
+use strict;
+
+
 my @bond_modes_short = (
 				'balance-rr',
 				'active-backup',
@@ -171,7 +176,7 @@ sub new_vini # ( $json_obj )
 
 		if ( $state == 0 )
 		{
-			$if_ref{ status } = "up";
+			$if_ref->{ status } = "up";
 			&applyRoutes( "local", $if_ref );
 		}
 
@@ -198,7 +203,7 @@ sub new_vini # ( $json_obj )
 	{
 		# Error
 		my $errormsg = "The $json_obj->{ name } virtual network interface can't be created";
-		my $output = {
+		my $body = {
 					   description => $description,
 					   error       => "true",
 					   message     => $errormsg
@@ -1017,6 +1022,7 @@ sub delete_bond # ( $bond )
 		&httpResponse({ code => 404, body => $body });
 	}
 
+	my $bond_name = $bonds->{ $bond };
 	my $bond_in_use = 0;
 	$bond_in_use = 1 if &getInterfaceConfig( $bond_name, 4 );
 	$bond_in_use = 1 if &getInterfaceConfig( $bond_name, 6 );
@@ -1046,7 +1052,7 @@ sub delete_bond # ( $bond )
 	if ( ! $@ )
 	{
 		# Success
-		my $message = "The bonding interface $virtual has been deleted.";
+		my $message = "The bonding interface $bond has been deleted.";
 		my $body = {
 					 description => $description,
 					 success     => "true",
@@ -1058,7 +1064,7 @@ sub delete_bond # ( $bond )
 	else
 	{
 		# Error
-		my $errormsg = "The bonding interface $virtual could not be deleted";
+		my $errormsg = "The bonding interface $bond could not be deleted";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -1828,245 +1834,6 @@ sub get_virtual # ()
 	}
 }
 
-# POST Interface actions
-#
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"action":"down"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/ifaction/eth0
-#
-#####Documentation of POST INTERFACE ACTION####
-#**
-#  @api {post} /ifaction/<interface> Set an action in a interface
-#  @apiGroup Interfaces
-#  @apiName Postifaction
-#  @apiParam {String} interface  Interface name, unique ID.
-#  @apiDescription Set an action in a interface, virtual network interface or vlan
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess   {String}        action                   The action that will be set in the interface. Could it be up or down.
-#
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Action in interface eth0:new",
-#   "params" : [
-#      {
-#         "action" : "down"
-#      }
-#   ]
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"action":"down"}'
-#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/ifaction/eth0:new
-#
-# @apiSampleRequest off
-#
-#**
-
-sub ifaction # ( $fdev )
-{
-	my $fdev  = shift;
-
-	my $error = "false";
-
-	# Check interface errors
-	if ( $fdev =~ /^$/ )
-	{
-		# Error
-		my $errormsg = "Interface name can't be empty";
-		my $body = {
-					 description => "Interface $fdev",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	if ( $fdev =~ /\s+/ )
-	{
-		# Error
-		my $errormsg = "Interface name is not valid";
-		my $body = {
-					 description => "Interface $fdev",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	# Check input errors
-	if ( $json_obj->{ action } !~ /^(up|down)$/ )
-	{
-		# Error
-		my $errormsg = "Action value must be up or down";
-		my $body = {
-					 description => "Action value $json_obj->{action}",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	my $if_ref;
-	my @stacks;
-	for my $ip_v (4, 6)
-	{
-		$if_ref = &getInterfaceConfig( $fdev, $ip_v );
-		
-		if ($$if_ref{addr})
-		{
-			push @stacks, $if_ref;
-		}
-	}
-
-	# Check the interface exists
-	if ( !@stacks && $fdev =~ /:|\./ )
-	{
-		# Error
-		my $errormsg = "The Network interface $fdev doesn't exist.";
-		my $body = {
-					 description => "Action value $json_obj->{action}",
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	# Everything is ok
-	if ( $json_obj->{action} eq "up" )
-	{
-		# Create a hash with interface name
-		my %interface;
-		$interface{ name }    = $fdev;
-		
-		# Create vlan if required if it doesn't exist
-		my $exists = &ifexist( $if_ref->{name} );
-		if ( $exists eq "false" )
-		{
-			#Get parameters 					
-			$interface{ ip_v }    = $ip_v;		
-			my %if = %{ &getDevVlanVini( $interface{ name } ) };
-			$interface{ dev }  	  = $if{ dev };
-			$interface{ vlan }    = $if{ vlan };
-			$interface{ vini }    = $if{ vini };
-					
-			$status = &createIf( \%interface );
-		}
-	
-		# Delete routes in case that it is not a vini
-		if ( $interface{vini} eq '' )
-		{
-			for my $iface (@stacks)
-			{
-				&delRoutes( "local", $iface );
-			}
-		}
-		
-		# Check if there are some Virtual Interfaces or Vlan with IPv6 and previous UP status to get it up.
-		&setIfacesUp( $interface{name}, "vlan" );
-		&setIfacesUp( $interface{name}, "vini" );
-		
-		# Add IP
-		for my $iface (@stacks)
-		{
-			&addIp( $iface );
-		}
-		
-		# Check the parent's status before up the interface
-		my $parent_if_name = &getParentInterfaceName( $if_ref->{name} );
-		if ( !$parent_if_name )
-		{
-			# &zenlog ("parent doesn't exist for $fdev");
-			$parent_if_status = 'up';
-		}
-		else
-		{
-			# &zenlog ("parent exists");
-			my $parent_if_ref = &getInterfaceConfig( $parent_if_name, $ip_v );
-			$parent_if_status = &getInterfaceSystemStatus( $parent_if_ref, $ip_v );
-		}
-		
-		if ( $parent_if_status eq 'up' )
-		{	
-			# &zenlog ("GO UP!");
-			my $state = &upIf( \%interface, 'writeconf' );
-			if ( $state != 0 )
-			{
-				$error = "true";
-			}
-			for my $iface (@stacks)
-			{
-				&applyRoutes( "local", $iface );
-			}
-		}
-		else
-		{
-			# Error
-			my $errormsg = "The interface $if_ref->{name} has a parent interface DOWN, check the interfaces status";
-			my $body = {
-						 description => "Action value $json_obj->{action}",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}		
-	} 
-	elsif ( $json_obj->{action} eq "down" )
-	{
-		if ( $stacks[0] )
-		{
-			$if_ref = $stacks[0];
-		}
-		else # for unconfigured NICs, downIf requires only the interface name
-		{
-			$if_ref = { name => $fdev };
-		}
-		
-		my $state = &downIf( $if_ref, 'writeconf' );
-		
-		if ( $state != 0 )
-		{
-			$error = "true";
-		}
-	}
-	else
-	{
-		$error = "true";
-	}
-
-	if ( $error eq "false" )
-	{
-		# Success
-		my $body = {
-					 description => "Action in interface $fdev",
-					 params      =>  { action => $json_obj->{ action } },
-		};
-
-		&httpResponse({ code => 201, body => $body });
-	}
-	else
-	{
-		# Error
-		my $errormsg = "The action $json_obj->{action} is not set in interface $fdev";
-		my $body = {
-					 description => "Action in interface $fdev",
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-}
-
 sub actions_interface_nic # ( $json_obj, $nic )
 {
 	my $json_obj = shift;
@@ -2554,300 +2321,6 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 }
 
 
-# PUT Interface
-#
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"gateway":"1.1.1.0","ip":"1.1.1.3","netmask":"255.255.192.0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/modifyif/eth0:n1
-#
-#####Documentation of PUT INTERFACE####
-#**
-#  @api {put} /modifyif/<interface>/<ip_version> Modify a interface
-#  @apiGroup Interfaces
-#  @apiName PutIf
-#  @apiParam {String} interface  Interface name, unique ID.
-#  @apiDescription Modify a interface, vlan or a virtual network interface
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess   {String}        ip                       IP of the interface.
-# @apiSuccess   {String}        netmask                  Netmask of the interface.
-# @apiSuccess   {String}        gateway                  Gateway of the interface. This value could not be modified in virtual network interface.
-#
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Modify interface eth0:new",
-#   "params" : [
-#      {
-#         "gateway" : "192.168.1.0"
-#      },
-#      {
-#         "ip" : "192.168.1.160"
-#      },
-#      {
-#         "netmask" : "255.255.255.0"
-#      }
-#   ]
-#}
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"ip":"192.168.1.160","netmask":"255.255.255.0",
-#       "gateway":"192.168.1.0"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/modifyif/eth0:new/4
-#
-# @apiSampleRequest off
-#
-#**
-
-sub modify_interface # ( $json_obj, $fdev )
-{
-	my $json_obj = shift;
-	my $fdev = shift;
-
-	my $ip_v;
-
-	my $error = "false";
-
-	# If $fdev contain '/' means that we have received 2 parameters, interface_name and ip_version
-	if ( $fdev =~ /\// )
-	{
-		&zenlog("modify_interface fdev:$fdev");
-		
-		# Get interface_name and ip_version from $fdev
-		my @ifandipv = split ( '/', $fdev );
-		$fdev = $ifandipv[0];
-		$ip_v = $ifandipv[1];
-		
-		# If $ip_v is empty, establish IPv4 like default protocol
-		$ip_v = 4 if not $ip_v;
-		
-		if ( $ip_v != 4 && $ip_v != 6 )
-		{
-			# Error
-			my $errormsg = "The ip version value $ip_v must be 4 or 6";
-			my $body = {
-						 description => "Delete interface $fdev",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}	
-	}
-	
-	# If ip_v is empty, default value is 4
-	if ( !$ip_v ) { $ip_v = 4; }
-
-	# Check interface errors
-	if ( $fdev =~ /^$/ )
-	{
-		# Error
-		my $errormsg = "Interface name can't be empty";
-		my $body = {
-					 description => "Modify interface $fdev",
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	if ( $fdev =~ /\s+/ )
-	{
-		# Error
-		my $errormsg = "Interface name is not valid";
-		my $body = {
-					 description => "Modify interface $fdev",
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
-	my $if_ref = &getInterfaceConfig( $fdev, $ip_v );
-	
-	if ( ! $if_ref && $fdev !~ /:|\./ )
-	{
-		my $socket = IO::Socket::INET->new( Proto => 'udp' );
-		my @system_interfaces = $socket->if_list;
-
-		if ( scalar grep (/^$fdev$/, @system_interfaces) > 0 )
-		{
-			$if_ref = &getSystemInterface( $fdev );
-			$$if_ref{ip_v} = $ip_v;
-		}
-			&zenlog("fdev:$fdev system_interfaces:@system_interfaces");
-	}
-
-	if ( ! $$if_ref{mac} )
-	{
-		# Error
-		my $errormsg = "The stack IPv$ip_v in Network interface $fdev doesn't exist.";
-		my $body = {
-					 description => "Modify interface $fdev",
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	# Check address errors
-	if ( ipisok( $json_obj->{ ip } ) eq "false" )
-	{
-		# Error
-		my $errormsg = "IP Address $json_obj->{ip} structure is not ok.";
-		my $body = {
-					 description => "IP Address $json_obj->{ip}",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
-	# Check netmask errors
-	if ( exists ( $json_obj->{netmask} ) )
-	{
-		# Check netmask errors for IPv4
-		if ( $ip_v == 4 
-			&& ( $json_obj->{netmask} eq ''
-				|| ( &ipisok( $json_obj->{netmask}, 4 ) eq "false"
-					&& ( $json_obj->{netmask} !~ /^\d+$/ || $json_obj->{netmask} > 32 || $json_obj->{netmask} < 0 )
-					) 
-				)
-			)
-		{
-			# Error
-			my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
-			my $body = {
-			  description => "Netmask Address $json_obj->{netmask}",
-			  error       => "true",
-			  message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
-
-		# Check netmask errors for IPv6
-		if ( $ip_v == 6 && ( $json_obj->{netmask} !~ /^\d+$/ || $json_obj->{netmask} > 128 || $json_obj->{netmask} < 0 ) )
-		{
-			# Error
-			my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric.";
-			my $body = {
-						 description => "Netmask Address $json_obj->{netmask}",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
-	}
-
-	# Check gateway errors
-	if (    $json_obj->{ gateway } !~ /^$/
-		 && &ipisok( $json_obj->{ gateway } ) eq "false" )
-	{
-		# Error
-		my $errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
-		my $body = {
-					 description => "Gateway Address $json_obj->{gateway}",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	# No errors found
-	if ( $error eq "false" )
-	{
-		# Vlans need to be created if they don't already exist
-		my $exists = &ifexist( $if_ref->{name} );
-		if ( $exists eq "false" )
-		{
-			&createIf( $if_ref );
-		}
-		
-		# Set the new params
-		if ( exists( $json_obj->{ip} ) )
-		{
-			$if_ref->{addr} = $json_obj->{ip};
-		}
-		# If Vini is configured, only IP is the parameter editable
-		if ( $if_ref->{vini} eq '' )
-		{
-			if ( exists( $json_obj->{netmask} ) )
-			{
-				$if_ref->{mask} = $json_obj->{netmask};
-			}
-			if ( exists( $json_obj->{gateway} ) && $name =~ /^$/ )
-			{
-				$if_ref->{gateway} = $json_obj->{gateway};
-			}
-		}
-
-		# Delete old parameters
-		my $old_iface_ref = &getInterfaceConfig( $fdev, $ip_v );
-
-		if ( $old_iface_ref )
-		{
-			# Delete old IP and Netmask from system to replace it
-			&delIp( $$old_iface_ref{name}, $$old_iface_ref{addr}, $$old_iface_ref{mask} );
-		
-			# Remove routes if the interface has its own route table: nic and vlan
-			if ( $interface{vini} eq '' )
-			{
-				&delRoutes( "local", $old_iface_ref );
-			}
-		}
-		
-		# Add new IP, netmask and gateway
-		&addIp( $if_ref );		
-		my $state = &upIf( $if_ref, 'writeconf' );
-
-		if ( $state == 0 )
-		{
-			$if_ref->{status} = "up";
-		}
-
-		# Writing new parameters in configuration file
-		if ( $if_ref->{name} !~ /:/ )
-		{
-			&writeRoutes( $if_ref->{name} );
-		}
-		
-		&setInterfaceConfig( $if_ref );
-		&applyRoutes( "local", $if_ref );
-	}
-
-	# Print params
-	if ( $error ne "true" )
-	{
-		# Success
-		my $body = {
-					 description => "Modify interface $if",
-					 params      => $json_obj,
-		};
-
-		&httpResponse({ code => 200, body => $body });
-	}
-	else
-	{
-		# Error
-		my $errormsg = "Errors found trying to modify interface $if";
-		my $body = {
-					 description => "Modify interface $if",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-}
-
 sub modify_interface_nic # ( $json_obj, $nic )
 {
 	my $json_obj = shift;
@@ -3170,7 +2643,7 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 	else
 	{
 		# Error
-		my $errormsg = "Errors found trying to modify interface $if";
+		my $errormsg = "Errors found trying to modify interface $vlan";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -3186,7 +2659,7 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 	my $json_obj = shift;
 	my $virtual = shift;
 
-	my $description => "Modify virtual interface",
+	my $description = "Modify virtual interface",
 	my $ip_v = 4;
 	my $if_ref = &getInterfaceConfig( $virtual, $ip_v );
 
@@ -3253,7 +2726,7 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 	else
 	{
 		# Error
-		my $errormsg = "Errors found trying to modify interface $if";
+		my $errormsg = "Errors found trying to modify interface $virtual";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -3495,6 +2968,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 		&httpResponse({ code => 400, body => $body });
 	}
 
+	my $ip_v = 4;
 	my $if_ref = &getInterfaceConfig( $interface, $ip_v );
 
 	unless ( $if_ref )
@@ -3682,7 +3156,7 @@ sub get_floating
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		my $floating_ip = undef;
+		$floating_ip = undef;
 
 		if ( $float_ifaces_conf->{_}->{ $iface->{ name } } )
 		{
@@ -3821,7 +3295,9 @@ sub delete_gateway
 	my $description = "Remove default gateway";
 
 	my $ip_version = 4;
-	my $if_ref = getInterfaceConfig( $defaultgwif, $ip_version );
+	my $defaultgwif = &getIfDefaultGW();
+
+	my $if_ref = &getInterfaceConfig( $defaultgwif, $ip_version );
 
 	my $state = &delRoutes( "global", $if_ref );
 

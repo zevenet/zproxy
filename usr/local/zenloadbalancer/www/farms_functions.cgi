@@ -29,8 +29,8 @@ if ( -e "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi" )
 require "/usr/local/zenloadbalancer/www/rrd_functions.cgi";
 require "/usr/local/zenloadbalancer/www/http_functions.cgi";
 	
-#~ use warnings;
-#~ use strict;
+use warnings;
+use strict;
 
 my $configdir = &getGlobalConfiguration('configdir');
 
@@ -796,7 +796,7 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 	}
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	if ( $farm_filename == -1 )
+	if ( $farm_filename eq '-1' )
 	{
 		return -1;
 	}
@@ -1253,7 +1253,7 @@ sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 }
 
 # Add a new Backend
-sub setFarmServer # $output ($ids,$rip,$port,$max,$weight,$priority,$timeout,$farm_name,$service)
+sub setFarmServer # $output ($ids,$rip,$port|$iface,$max,$weight,$priority,$timeout,$farm_name,$service)
 {
 	my (
 		 $ids,      $rip,     $port,      $max, $weight,

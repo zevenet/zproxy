@@ -55,6 +55,8 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
+	my $description = "Modify farm";
+
 	# Flags
 	my $reload_flag  = "false";
 	my $restart_flag = "false";
@@ -65,19 +67,33 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;
 	my $ipds = &getIPDSfarmsRules( $farmname );
+	my $errormsg;
 
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		$errormsg = "The farmname $farmname does not exists.";
 		my $body = {
-					   description => "Modify farm",
+					   description => $description,
 					   error       => "true",
 					   message     => $errormsg
 		};
 
 		&httpResponse({ code => 404, body => $body });
+	}
+
+
+	if ( $errormsg = &getValidOptParams ( $json_obj, [ "vip", "vport", "newfarmname" ] ) )
+	{
+		# Error
+		my $body = {
+					   description => $description,
+					   error       => "true",
+					   message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
 	}
 
 	# Get current vip & vport
@@ -159,7 +175,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 								&zenlog(
 									"ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname, the new name can't be empty."
 								);
-								$newfstat = &runFarmStart( $farmname, "true" );
+								#~ $newfstat = &runFarmStart( $farmname, "true" );
 								if ( $newfstat != 0 )
 								{
 									$error = "true";
@@ -172,7 +188,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 							{
 								$farmname_old = $farmname; 
 								$farmname = $json_obj->{ newfarmname };
-								$newfstat = &runFarmStart( $farmname, "true" );
+								#~ $newfstat = &runFarmStart( $farmname, "true" );
 								if ( $newfstat != 0 )
 								{
 									$error = "true";
@@ -450,7 +466,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		);
 
 		# Error
-		my $errormsg = "Errors found trying to modify farm $farmname";
+		$errormsg = "Errors found trying to modify farm $farmname";
 		my $body = {
 					 description => "Modify farm $farmname",
 					 error       => "true",
@@ -741,17 +757,14 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		my $body = {
 					 description => $description,
 					 success       => "true",
+					 params       => $json_obj,
 					 message      => $message,
 		};
 		
 		my $checkConf = &getGSLBCheckConf  ( $farmname );
 		if( $checkConf )
 		{	
-			if ( $checkConf =~ /^(.+?)\s/ )
-			{
-				$checkConf = "The resource $1 gslb farm break the configuration. Please check the configuration";
-			}
-			$body->{ params }->{ warning }  =  $checkConf;
+			$body->{ warning }  =  $checkConf;
 		}
 
 		&httpResponse({ code => 200, body => $body });

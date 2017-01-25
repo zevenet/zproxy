@@ -55,12 +55,12 @@ package GLOBAL
 
 # all libs, tmp
 require "/usr/local/zenloadbalancer/www/functions.cgi";
+
 #~ require "/usr/local/zenloadbalancer/config/global.conf";
 #~ require "/usr/local/zenloadbalancer/www/cert_functions.cgi";
 #~ require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 
-
-# required 
+# required
 require "/usr/local/zenloadbalancer/www/zapi_functions.cgi";
 require "/usr/local/zenloadbalancer/www/cgi_functions.cgi";
 
@@ -79,7 +79,6 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/post_gslb.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/ipds.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/system.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/cluster.cgi";
-
 
 my $q = &getCGI();
 
@@ -294,7 +293,8 @@ sub POST($$)
 	{
 		$input_ref = $data;
 	}
-	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/x-pem-file' )
+	elsif ( exists $ENV{ CONTENT_TYPE }
+			&& $ENV{ CONTENT_TYPE } eq 'application/x-pem-file' )
 	{
 		$input_ref = $data;
 	}
@@ -330,7 +330,8 @@ sub PUT($$)
 	{
 		$input_ref = $data;
 	}
-	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/x-pem-file' )
+	elsif ( exists $ENV{ CONTENT_TYPE }
+			&& $ENV{ CONTENT_TYPE } eq 'application/x-pem-file' )
 	{
 		$input_ref = $data;
 	}
@@ -514,7 +515,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 
 	if ( &validCGISession() )
 	{
-		my $session        = CGI::Session->load( $cgi );
+		my $session = CGI::Session->load( $cgi );
 		my $session_cookie = $cgi->cookie( CGISESSID => $session->id );
 
 		push @headers,
@@ -574,7 +575,8 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 	&zenlog( "STATUS: $self->{ code }" );
 	if ( ref $self->{ body } eq 'HASH' )
 	{
-		&zenlog( "MESSAGE: $self->{ body }->{ message }" ) if ( exists $self->{ body }->{ message } );
+		&zenlog( "MESSAGE: $self->{ body }->{ message }" )
+		  if ( exists $self->{ body }->{ message } );
 	}
 	&zenlog( "MEMORY: " . &getMemoryUsage );
 
@@ -594,8 +596,9 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 &zenlog( "HTTP_ZAPI_KEY: <$ENV{HTTP_ZAPI_KEY}>" )
   if exists $ENV{ HTTP_ZAPI_KEY };
 
-my $post_data = $q->param('POSTDATA');
-my $put_data = $q->param('PUTDATA');
+my $post_data = $q->param( 'POSTDATA' );
+my $put_data  = $q->param( 'PUTDATA' );
+
 #~
 #~ #my $session = new CGI::Session( $q );
 #~
@@ -609,8 +612,8 @@ my $put_data = $q->param('PUTDATA');
 #~ &zenlog("CGI OBJECT: " . Dumper $q );
 #~ &zenlog("CGI VARS: " . Dumper $q->Vars() );
 #~ &zenlog("PERL ENV: " . Dumper \%ENV );
-&zenlog("CGI POST DATA: " . $post_data ) if $post_data;
-&zenlog("CGI PUT DATA: " . $put_data ) if $put_data;
+&zenlog( "CGI POST DATA: " . $post_data ) if $post_data;
+&zenlog( "CGI PUT DATA: " . $put_data )   if $put_data;
 
 ################################################################################
 #
@@ -705,12 +708,9 @@ DELETE qr{^/session$} => sub {
 	&httpResponse( { code => 400 } );
 };
 
-
-
 #	CERTIFICATES
 #
 _certificates:
-
 
 #  POST activation certificate
 POST qr{^/certificates/activation$} => sub {
@@ -764,12 +764,9 @@ DELETE qr{^/certificates/($cert_re)$} => sub {
 	&delete_certificate( @_ );
 };
 
-
-
 #	FARMS
 #
 _farms:
-
 
 my $farm_re = &getValidFormat( 'farm_name' );
 
@@ -952,12 +949,9 @@ DELETE qr{^/farms/($farm_re)/certificates/($cert_pem_re)$} => sub {
 	&delete_farm_certificate( @_ );
 };
 
-
-
 #	NETWORK INTERFACES
 #
 _interfaces:
-
 
 my $virt_interface = &getValidFormat( 'virt_interface' );
 my $vlan_interface = &getValidFormat( 'vlan_interface' );
@@ -1130,12 +1124,9 @@ DELETE qr{^/interfaces/gateway$} => sub {
 	&delete_gateway( @_ );
 };
 
-
-
 #	STATS
 #
 _stats:
-
 
 # System stats
 GET qr{^/stats$} => sub {
@@ -1169,7 +1160,7 @@ GET qr{^/stats/system/connections$} => sub {
 # Interfaces stats
 # old call
 #~ GET qr{^/stats/interfaces$} => sub {
-	#~ &stats_network();
+#~ &stats_network();
 #~ };
 
 # Farm stats
@@ -1198,12 +1189,9 @@ GET qr{^/stats/farms/($farm_re)/service/($service_re)/backends$} => sub {
 	&farm_stats( @_ );
 };
 
-
-
 #	GRAPHS
 #
 _graphs:
-
 
 my $frequency_re = &getValidFormat( 'graphs_frequency' );
 my $system_id_re = &getValidFormat( 'graphs_system_id' );
@@ -1286,12 +1274,9 @@ GET qr{^/graphs/farms/($farm_re)/($frequency_re)$} => sub {
 	&get_frec_farm_graphs( @_ );
 };
 
-
-
 # SYSTEM
 #
 _system:
-
 
 #  GET version
 GET qr{^/system/version$} => sub {
@@ -1328,7 +1313,8 @@ POST qr{^/system/snmp$} => sub {
 	&set_snmp( @_ );
 };
 
-my $license_re = &getValidFormat ( 'license_format' );
+my $license_re = &getValidFormat( 'license_format' );
+
 #  GET license
 GET qr{^/system/license/($license_re)$} => sub {
 	&get_license( @_ );
@@ -1376,8 +1362,7 @@ POST qr{^/system/users/($user_re)$} => sub {
 	&set_user( @_ );
 };
 
-
-my $logs_re = &getValidFormat ( 'log' );
+my $logs_re = &getValidFormat( 'log' );
 
 #  GET logs
 GET qr{^/system/logs$} => sub {
@@ -1388,7 +1373,6 @@ GET qr{^/system/logs$} => sub {
 GET qr{^/system/logs/($logs_re)$} => sub {
 	&download_logs;
 };
-
 
 _system_backup:
 
@@ -1502,12 +1486,9 @@ GET qr{^/system/supportsave$} => sub {
 	&get_supportsave( @_ );
 };
 
-
-
 #	IPDS
 #
 _ipds:
-
 
 my $blacklists_list      = &getValidFormat( 'blacklists_name' );
 my $blacklists_source_id = &getValidFormat( 'blacklists_source_id' );
@@ -1554,14 +1535,17 @@ POST qr{^/ipds/blacklists/($blacklists_list)/sources$} => sub {
 };
 
 #  PUT a source from a blacklists
-PUT qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$} => sub {
+PUT qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$} =>
+  sub {
 	&set_blacklists_source( @_ );
-};
+  };
 
 #  DELETE a source from a blacklists
-DELETE qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$} => sub {
+DELETE
+  qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$} =>
+  sub {
 	&del_blacklists_source( @_ );
-};
+  };
 
 #  POST list to farm
 POST qr{^/farms/($farm_re)/ipds/blacklists$} => sub {
@@ -1608,7 +1592,7 @@ DELETE qr{^/ipds/dos/($dos_rule)$} => sub {
 
 #  GET status dos for a farm
 #~ GET qr{^/farms/($farm_re)/ipds/dos$} => sub {
-	#~ &get_dos_farm( @_ );
+#~ &get_dos_farm( @_ );
 #~ };
 
 #  POST DoS to a farm
@@ -1630,5 +1614,4 @@ DELETE qr{^/farms/($farm_re)/ipds/dos/($dos_rule)$} => sub {
 				 }
 			   }
 );
-
 

@@ -1,74 +1,33 @@
 #!/usr/bin/perl -w
 
-######### PUT DATALINK
-#
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"algorithm": "prio", "newfarmname":"newDATAFARM","interfacevip":"eth0 178.62.126.152"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/DATAFARM
-#
-#
-#####Documentation of PUT DATALINK####
-#**
-#  @api {put} /farms/<farmname> Modify a datalink Farm
-#  @apiGroup Farm Modify
-#  @apiName PutFarmDATALINK
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Modify the params in a DATALINK Farm
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess	{String}		algorithm	Type of load balancing algorithm used in the Farm. The options are: weight or prio.
-# @apiSuccess	{String}		newfarmname	The new Farm's name.
-# @apiSuccess	{String}		interfacevip	P of the farm, where is listening the virtual service and the interface.
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Modify farm newDATAFARM",
-#   "params" : [
-#      {
-#         "algorithm" : "prio"
-#      },
-#      {
-#         "interfacevip" : "eth0 178.62.126.152"
-#      },
-#      {
-#         "newfarmname" : "newDATAFARM"
-#      }
-#   ]
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"algorithm":"prio","interfacevip":"eth0 178.62.126.152",
-#       "newfarmname":"newDATAFARM"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/newDATAFARM
-#
-# @apiSampleRequest off
-#
-#**
+use warnings;
+use strict;
 
-sub modify_datalink_farm # ( $json_obj, $farmname )
+sub modify_datalink_farm    # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
 
-	my $reload_flag  = "false";
-	my $restart_flag = "false";
-	my $error        = "false";
+	my $reload_flag    = "false";
+	my $restart_flag   = "false";
+	my $initial_status = &getFarmStatus( $farmname );
+	my $error          = "false";
+	my $status;
 
 	####### Functions
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
-		my $output = {
-					   description => "Modify farm",
-					   error       => "true",
-					   message     => $errormsg
+		my $body = {
+					 description => "Modify farm",
+					 error       => "true",
+					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# Modify Farm's Name
@@ -88,7 +47,7 @@ sub modify_datalink_farm # ( $json_obj, $farmname )
 						 message     => $errormsg
 			};
 
-			&httpResponse({ code => 400, body => $body });
+			&httpResponse( { code => 400, body => $body } );
 		}
 
 		if ( $json_obj->{ newfarmname } =~ /^$/ )
@@ -100,7 +59,7 @@ sub modify_datalink_farm # ( $json_obj, $farmname )
 		}
 		else
 		{
-			if ($json_obj->{newfarmname} ne $farmname)
+			if ( $json_obj->{ newfarmname } ne $farmname )
 			{
 				#Check if farmname has correct characters (letters, numbers and hyphens)
 				if ( $json_obj->{ newfarmname } =~ /^[a-zA-Z0-9\-]*$/ )
@@ -127,8 +86,7 @@ sub modify_datalink_farm # ( $json_obj, $farmname )
 						}
 						else
 						{
-							$restart_flag = "true";
-							$farmname     = $json_obj->{ newfarmname };
+							$farmname = $json_obj->{ newfarmname };
 						}
 					}
 				}
@@ -233,7 +191,7 @@ sub modify_datalink_farm # ( $json_obj, $farmname )
 	}
 
 	# Restart Farm
-	if ( $restart_flag eq "true" )
+	if ( $restart_flag eq "true" && $initial_status ne 'down' )
 	{
 		&runFarmStop( $farmname, "true" );
 		&runFarmStart( $farmname, "true" );
@@ -242,8 +200,7 @@ sub modify_datalink_farm # ( $json_obj, $farmname )
 	# Check errors and print JSON
 	if ( $error ne "true" )
 	{
-		&zenlog(
-				  "ZAPI success, some parameters have been changed in farm $farmname." );
+		&zenlog( "ZAPI success, some parameters have been changed in farm $farmname." );
 
 		# Success
 		my $body = {
@@ -251,7 +208,7 @@ sub modify_datalink_farm # ( $json_obj, $farmname )
 					 params      => $json_obj
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
@@ -267,7 +224,7 @@ sub modify_datalink_farm # ( $json_obj, $farmname )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 400, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
 }
 

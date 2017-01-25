@@ -12,58 +12,10 @@
 #
 ###############################################################################
 
-########### GET DATALINK
-# curl --tlsv1 -k --header 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/DATAFARM
-#
-#
-#
-#####Documentation of GET DATALINK####
-#**
-#  @api {get} /farms/<farmname> Request info of a datalink Farm
-#  @apiGroup Farm Get
-#  @apiName GetFarmNameDATALINK
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Get the Params of a given Farm <farmname> with DATALINK profile
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "backends" : [
-#      {
-#         "id" : 0,
-#         "ip" : "192.168.0.150",
-#         "interface" : "eth0",
-#         "priority" : 5,
-#         "weight" : 2
-#      },
-#      {
-#         "id" : 1,
-#         "ip" : "192.168.1.151",
-#         "interface" : "eth0",
-#         "priority" : 1,
-#         "weight" : 1
-#      }
-#   ],
-#   "description" : "List farm DATAFARM",
-#   "params" : [
-#      {
-#         "algorithm" : "weight",
-#         "vip" : "178.62.126.152",
-#      }
-#   ]
-#}
-#
-# @apiExample {curl} Example Usage:
-#	curl --tlsv1 -k --header 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server:444/zapi/v3/zapi.cgi/farms/DATAFARM
-#
-# @apiSampleRequest off
-#
-#**
+use warnings;
+use strict;
 
-
-sub farms_name_datalink # ( $farmname )
+sub farms_name_datalink    # ( $farmname )
 {
 	my $farmname = shift;
 
@@ -85,8 +37,8 @@ sub farms_name_datalink # ( $farmname )
 		my @l_serv = split ( ";", $l_servers );
 
 		$l_serv[0] = $l_serv[0] + 0;
-		$l_serv[3] = ($l_serv[3]) ? $l_serv[3]+0: undef;
-		$l_serv[4] = ($l_serv[4]) ? $l_serv[4]+0: undef;
+		$l_serv[3] = ( $l_serv[3] ) ? $l_serv[3] + 0 : undef;
+		$l_serv[4] = ( $l_serv[4] ) ? $l_serv[4] + 0 : undef;
 		$l_serv[5] = $l_serv[5] + 0;
 
 		if ( $l_serv[1] ne "0.0.0.0" )
@@ -101,17 +53,14 @@ sub farms_name_datalink # ( $farmname )
 			  };
 		}
 	}
-	
-	my $ipds = &getIPDSfarmsRules( $farmname );
 
 	my $body = {
 				 description => "List farm $farmname",
 				 params      => $out_p,
 				 backends    => \@out_b,
-				 ipds			=> $ipds,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

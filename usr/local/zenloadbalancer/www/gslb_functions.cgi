@@ -2333,10 +2333,11 @@ sub getGSLBCheckConf
 	if ( $errormsg )
 	{
 		my @run =
-		  `$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf 2>&1 > /dev/null `;
-
+		  `$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf 2>&1`;
 		@run = grep ( /# error:/, @run );
 		$errormsg = $run[0];
+		$errormsg =~ s/# error:\s*//;
+		chomp ($errormsg);
 
 		if ( $errormsg =~ /Zone ([\w\.]+).: Zonefile parse error at line (\d+)/ )
 		{
@@ -2345,7 +2346,7 @@ sub getGSLBCheckConf
 
 			use Tie::File;
 			tie my @filelines, 'Tie::File', $fileZone;
-			$errormsg = $filelines[$numLine];
+			$errormsg = "The resource $filelines[$numLine] gslb farm break the configuration. Please check the configuration";
 			untie @filelines;
 		}
 	}

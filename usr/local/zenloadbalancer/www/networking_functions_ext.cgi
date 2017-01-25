@@ -26,6 +26,10 @@ use Config::Tiny;
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
 
+
+#~ use warnings;
+#~ use strict;
+
 # send gratuitous ICMP packets for L3 aware
 sub sendGPing    # ($pif)
 {
@@ -329,25 +333,25 @@ sub getParentInterfaceName    # ($if_name)
 	my $parent_if_name;
 
 	# child interface: eth0.100:virtual => eth0.100
-	if ( $if_ref->{ vini } ne '' && $if_ref->{ vlan } ne '' )
+	if ( $if_ref->{ vini } && $if_ref->{ vlan } )
 	{
 		$parent_if_name = "$$if_ref{dev}.$$if_ref{vlan}";
 	}
 
 	# child interface: eth0:virtual => eth0
-	elsif ( $if_ref->{ vini } ne '' && $if_ref->{ vlan } eq '' )
+	elsif ( $if_ref->{ vini } && !$if_ref->{ vlan } )
 	{
 		$parent_if_name = $if_ref->{ dev };
 	}
 
 	# child interface: eth0.100 => eth0
-	elsif ( $if_ref->{ vini } eq '' && $if_ref->{ vlan } ne '' )
+	elsif ( !$if_ref->{ vini } && $if_ref->{ vlan } )
 	{
 		$parent_if_name = $if_ref->{ dev };
 	}
 
 	# child interface: eth0 => undef
-	elsif ( $if_ref->{ vini } eq '' && $if_ref->{ vlan } eq '' )
+	elsif ( ! $if_ref->{ vini } && ! $if_ref->{ vlan } )
 	{
 		$parent_if_name = undef;
 	}
@@ -540,7 +544,7 @@ sub getSystemInterface    # ($if_name)
 ################################## Bonding ##################################
 
 # global variable for bonding modes names
-@bond_modes = (
+my @bond_modes = (
 				'Round-robin policy',
 				'Active-backup policy',
 				'XOR policy',
@@ -550,7 +554,7 @@ sub getSystemInterface    # ($if_name)
 				'Adaptive load balancing',
 );
 
-@bond_modes_short = (
+my @bond_modes_short = (
 				'balance-rr',
 				'active-backup',
 				'balance-xor',
@@ -1012,7 +1016,7 @@ sub getBondAvailableSlaves
 
 	# get list of all the interfaces
 	my $sys_net_dir = &getGlobalConfiguration('sys_net_dir');
-	opendir my $dir_h, $sys_net_dir;
+	opendir ( my $dir_h, $sys_net_dir );
 
 	if ( !$dir_h )
 	{

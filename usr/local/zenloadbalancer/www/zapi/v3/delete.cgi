@@ -519,7 +519,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 		}
 
 		# validate ALGORITHM
-		if ( &getFarmVS( $farmname, $service, "algorithm" ) eq 'roundrobin' )
+		if ( &getFarmVS( $farmname, $service, "algorithm" ) eq 'prio' )
 		{
 			&zenlog(
 				 "ZAPI error, this service algorithm does not support removing backends." );
@@ -537,7 +537,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 		
 		my @backends = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
 		
-		if  ( ! grep ( /\sServer\s$id_server\s/, @backends)  )
+		if  ( ! grep ( /\s*$id_server\s=>\s/, @backends)  )
 		{
 			my $errormsg = "Could not find the requested backend.";
 			my $body = {

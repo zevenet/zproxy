@@ -21,8 +21,8 @@
 #
 ###############################################################################
 
-#~ use warnings;
-#~ use strict;
+use warnings;
+use strict;
 
 
 my $configdir = &getGlobalConfiguration('configdir');
@@ -180,7 +180,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 {
 	my ( $farm_name, $writeconf, $status ) = @_;
 
-	return $status if ( $status == -1 );
+	return $status if ( $status eq '-1' );
 
 	my $farm_filename = &getFarmFile( $farm_name );
 
@@ -461,6 +461,10 @@ sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 	my $end           = "false";
 	my $i             = 0;
 	my $l             = 0;
+	
+	# default value
+	$weight ||= 1;
+	$priority ||= 1;
 
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
 
