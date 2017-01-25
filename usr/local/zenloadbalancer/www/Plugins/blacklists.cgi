@@ -1490,6 +1490,9 @@ sub getBLzapi
 	$listHash{ 'sources' } = \@ipList;
 	$listHash{ 'farms' } = &getBLParam( $listName, 'farms' );
 	
+	# day as a number type
+	$listHash{ 'day' } += 0 if ( $listHash{ 'day' }=~ /^\d+$/ );
+	
 	# save hour, minute, period and unit parameters in 'time' hash
 	my @timeParameters = ( 'period', 'unit', 'hour', 'minutes' );
 	#~ $listHash{ 'time'};
