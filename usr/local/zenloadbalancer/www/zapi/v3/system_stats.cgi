@@ -1244,19 +1244,19 @@ sub module_stats_status
 		{
 			$lslb->{ 'total' } ++;
 			$lslb->{ 'down' } ++ 	if ( $farm->{ 'status' } eq 'down' );
-			$lslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' );
+			$lslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' || $farm->{ 'status' } eq 'needed restart' );
 		}
 		elsif ( $farm->{ 'profile' } =~ /gslb/ )
 		{
 			$gslb->{ 'total' } ++;
 			$gslb->{ 'down' } ++ 	if ( $farm->{ 'status' } eq 'down' );
-			$gslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' );
+			$gslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' || $farm->{ 'status' } eq 'needed restart' );
 		}
 		elsif ( $farm->{ 'profile' } =~ /datalink/ )
 		{
 			$dslb->{ 'total' } ++;
 			$dslb->{ 'down' } ++ 	if ( $farm->{ 'status' } eq 'down' );
-			$dslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' );
+			$dslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' || $farm->{ 'status' } eq 'needed restart' );
 		}
 	}
 	
