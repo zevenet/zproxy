@@ -81,6 +81,29 @@ sub setIPDSDropAndLog
 	return $output;
 }
 
+# 
+# &createLogMsg ( rule, farm );
+sub createLogMsg
+{
+	my $rule = shift;
+	my $farmname = shift;
+	
+	my $max_size = 29;
+	
+	my $msg = "[IPDS, $rule $farmname]";
+	my $size = length $msg;
+	if ( $size > $max_size  )
+	{
+		$farmname = substr($farmname,0,9);
+		chop $farmname;
+		$farmname = "$farmname#";
+		$rule = substr($rule,0,9);
+		$msg = "[IPDS, $rule $farmname]";
+	}
+	
+	return $msg;
+}
+
 
 # Get all IPDS rules applied to a farm
 sub getIPDSfarmsRules

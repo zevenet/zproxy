@@ -750,7 +750,7 @@ sub setDOSBogusTcpFlagsRule
 	my %ruleOpt = %{ $ruleOptRef };
 
 	#~ my $rule    = "bogustcpflags";
-	my $logMsg = "[Blocked by rule $ruleName]";
+	my $logMsg = &createLogMsg ( $ruleName, $ruleOpt{ 'farmName' } );
 
 # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE -j DROP
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
@@ -945,7 +945,7 @@ sub setDOSLimitConnsRule
 	my %ruleOpt = %{ $ruleOptRef };
 
 	#~ my $rule    = "limitconns";
-	my $logMsg = "[Blocked by rule $ruleName]";
+	my $logMsg = &createLogMsg ( $ruleName, $ruleOpt{ 'farmName' } );
 	my $chain  = "INPUT";                     # default, this chain is for L7 apps
 	my $dest   = $ruleOpt{ 'vip' };
 	my $port   = $ruleOpt{ 'vport' };
@@ -1011,7 +1011,7 @@ sub setDOSLimitRstRule
 	my %ruleOpt = %{ $ruleOptRef };
 
 	#~ my $rule        = "limitrst";
-	my $logMsg     = "[Blocked by rule $ruleName]";
+	my $logMsg = &createLogMsg ( $ruleName, $ruleOpt{ 'farmName' } );
 	my $limit      = &getDOSParam( $ruleName, 'limit' );
 	my $limit_burst = &getDOSParam( $ruleName, 'limit_burst' );
 
@@ -1053,7 +1053,7 @@ sub setDOSLimitSecRule
 	my %ruleOpt = %{ $ruleOptRef };
 
 	#~ my $rule        = "limitsec";
-	my $logMsg     = "[Blocked by rule $ruleName]";
+	my $logMsg = &createLogMsg ( $ruleName, $ruleOpt{ 'farmName' } );
 	my $limit      = &getDOSParam( $ruleName, 'limit' );
 	my $limit_burst = &getDOSParam( $ruleName, 'limit_burst' );
 
@@ -1095,7 +1095,7 @@ sub setDOSDropIcmpRule
 	my $rule = "drop_icmp";
 
 	#~ my $rule    = "dropicmp";
-	my $logMsg = "[Blocked by rule $rule]";
+	my $logMsg = &createLogMsg ( $rule );
 
 	# /sbin/iptables -t raw -A PREROUTING -p icmp -j DROP
 	my $cmd = &getGlobalConfiguration( 'iptables' )
@@ -1139,7 +1139,7 @@ sub setDOSSshBruteForceRule
 	#~ my $port = &getDOSParam( $rule, 'port' );
 	my $sshconf = &getSsh();
 	my $port = $sshconf->{'port'};
-	my $logMsg = "[Blocked by rule $rule]";
+	my $logMsg = &createLogMsg ( $rule );
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --set
 	my $cmd =

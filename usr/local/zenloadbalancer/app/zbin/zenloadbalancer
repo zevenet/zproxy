@@ -22,8 +22,8 @@
 #
 ###############################################################################
 
-#~ use strict;
-#~ use warnings;
+# use strict;
+# use warnings;
 
 use Date::Parse;
 use Time::localtime;
@@ -34,6 +34,7 @@ my $limitfile = "/etc/security/limits.conf";
 my $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 require "/usr/local/zenloadbalancer/config/global.conf";
 require "/usr/local/zenloadbalancer/www/functions.cgi";
+require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";
 
 my $basedir = &getGlobalConfiguration('basedir');
 my $configdir = &getGlobalConfiguration('configdir');
@@ -194,32 +195,6 @@ sub certcontrol          #()
 	return $swcert;
 }
 
-sub configureDefaultGW    #()
-{
-	print "\n";
-	if ( $ARGV[0] =~ /^start.*/ )
-	{
-		if ( $defaultgw ne '' && $defaultgwif ne '' )
-		{
-			my $if_ref = &getInterfaceConfig( $defaultgwif, 4 );
-			if ( $if_ref )
-			{
-				print "Default Gateway:$defaultgw Device:$defaultgwif\n";
-				&applyRoutes( "global", $if_ref, $defaultgw );
-			}
-		}
-
-		if ( $defaultgw6 ne '' && $defaultgwif6 ne '' )
-		{
-			my $if_ref = &getInterfaceConfig( $defaultgwif, 6 );
-			if ( $if_ref )
-			{
-				print "Default Gateway:$defaultgw6 Device:$defaultgwif6\n";
-				&applyRoutes( "global", $if_ref, $defaultgw6 );
-			}
-		}
-	}
-}
 
 sub runhttpsgui    #()
 {

@@ -228,13 +228,14 @@ sub setBLCreateRule
 	my $add;
 	my $cmd;
 	my $output;
-	my $logMsg = "[Blocked by BL rule]";
 	my $action = &getBLParam( $listName, 'policy' );
-
+	
+	#~ my $logMsg = "[Blocked by blacklists $listName in farm $farmName]";
+	my $logMsg = &createLogMsg ( $listName, $farmName );
+	
 	if ( $action eq "allow" )
 	{
 		$add = "-I";
-
 	}
 	elsif ( $action eq "deny" )
 	{
