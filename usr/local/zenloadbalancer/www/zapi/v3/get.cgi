@@ -24,35 +24,9 @@ require "/usr/local/zenloadbalancer/www/zapi/v3/get_l4.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get_datalink.cgi";
 
 
-#~ use no warnings;
 use warnings;
 use strict;
 
-#**
-#  @api {get} /farms Request farms list
-#  @apiGroup Farm Get
-#  @apiDescription Get the list of all Farms
-#  @apiName GetFarmList
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "List farms",
-#   "params" : [
-#      {
-#         "farmname" : "newfarmGSLB55",
-#         "profile" : "gslb",
-#         "status" : "up"
-#      }
-#   ]
-#}
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms
-#
-#@apiSampleRequest off
-#**
 #GET /farms
 sub farms # ()
 {
@@ -88,6 +62,7 @@ sub farms # ()
 	&httpResponse({ code => 200, body => $body });
 }
 
+# GET /farms/LSLBFARM
 sub farms_lslb # ()
 {
 	my @out;
@@ -123,6 +98,7 @@ sub farms_lslb # ()
 	&httpResponse({ code => 200, body => $body });
 }
 
+# GET /farms/GSLBFARM
 sub farms_gslb # ()
 {
 	my @out;
@@ -158,6 +134,7 @@ sub farms_gslb # ()
 	&httpResponse({ code => 200, body => $body });
 }
 
+# GET /farms/DATALINKFARM
 sub farms_dslb # ()
 {
 	my @out;

@@ -16,37 +16,7 @@ use strict;
 #
 ###############################################################################
 
-#
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zones/myzone.com
-#
-#
-#####Documentation of DELETE ZONE####
-#**
-#  @api {delete} /farms/<farmname>/zones/<zonename> Delete a zone of a  gslb Farm
-#  @apiGroup Farm Delete
-#  @apiName DeleteZone
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiParam {String} zonename  Zone name, unique ID.
-#  @apiDescription Delete a given zone of a gslb Farm
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Delete zone myzone.com in farm FarmGSLB",
-#   "message" : "The zone myzone.com in farm FarmGSLB has been deleted.",
-#   "success" : "true"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones/myzone.com
-#
-# @apiSampleRequest off
-#
-#**
-
+# DELETE /farms/<farmname>/zones/<zonename> Delete a zone of a  gslb Farm
 sub delete_zone # ( $farmname, $zone )
 {
 	my ( $farmname, $zone ) = @_;
@@ -135,38 +105,8 @@ sub delete_zone # ( $farmname, $zone )
 	}
 }
 
-#
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zones/myzone.com/resources/0
-#
-#
-#####Documentation of DELETE RESOURCE in a ZONE####
-#**
-#  @api {delete} /farms/<farmname>/zones/<zonename>/resources/<resourceid> Delete a resource of a Zone
-#  @apiGroup Farm Delete
-#  @apiName DeleteResource
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiParam {String} zonename  Zone name, unique ID.
-#  @apiParam {Number} resourceid  Resource ID, unique ID.
-#  @apiDescription Delete a given resource in a zone of a gslb Farm
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Delete resource with ID 2 in the zone my zone.com of the farm FarmGSLB.",
-#   "message" : "The resource with ID 2 in the zone myzone.com of the farm FarmGSLB has been deleted.",
-#   "success" : "true"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones/myzone.com/resources/2
-#
-# @apiSampleRequest off
-#
-#**
 
+#  @api {delete} /farms/<farmname>/zones/<zonename>/resources/<resourceid> Delete a resource of a Zone
 sub delete_zone_resource # ( $farmname, $zone, $resource )
 {
 	my ( $farmname, $zone, $resource ) = @_;

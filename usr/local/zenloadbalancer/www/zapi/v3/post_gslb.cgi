@@ -18,44 +18,7 @@ use strict;
 #
 ###############################################################################
 
-#
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"id":"zone123.com"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zones
-#
-#
-#####Documentation of POST ZONES GSLB####
-#**
-#  @api {post} /farms/<farmname>/zones Create a new zone in a gslb Farm
-#  @apiGroup Farm Create
-#  @apiName PostZoneGSLB
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Create a new zone in a given gslb Farm
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess   {String}        id                     Zone's name.
-#
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "New zone zone1",
-#   "params" : [
-#      {
-#         "id" : "myzone.com"
-#      }
-#   ]
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"id":"myzone.com"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones
-#
-# @apiSampleRequest off
-#
-#**
-
+# POST /farms/<farmname>/zones Create a new zone in a gslb Farm
 sub new_farm_zone # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
@@ -163,54 +126,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 	}
 }
 
-#
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"zone":"zone123","rname":"resource1","ttl":"10","type":"NS","rdata":"1.1.1.1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zoneresources
-#
-#
-#####Documentation of POST RESOURCES GSLB####
-#**
-#  @api {post} /farms/<farmname>/zoneresources Create a new resource of a zone in a gslb Farm
-#  @apiGroup Farm Create
-#  @apiName PostZoneResourceGSLB
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Create a new resource of a zone in a given gslb Farm
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess   {String}        rname                     Resource's name.
-# @apiSuccess   {rdata}         rdata                   It’s the real data needed by the record type.
-# @apiSuccess   {Number}        ttl                     The Time to Live value for the current record.
-# @apiSuccess   {String}        type                    DNS record type. The options are: NS, A, AAAA, CNAME, DYNA, SRV, PTR,NAPTR, TXT and MX.
-# @apiSuccess   {String}        zone                    It's the zone where the resource will be created.
-#
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "New zone resource resource2",
-#   "params" : [
-#      {
-#         "rname" : "resource2",
-#         "rdata" : "192.168.0.9",
-#         "ttl" : "10",
-#         "type" : "NS",
-#         "zone" : "zone1.com"
-#      }
-#   ]
-#}
-#
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"rname":"resource2", "rdata":"192.168.0.9", "ttl":"10", "type":"NS",
-#       "zone":"zone1.com"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zoneresources
-#
-# @apiSampleRequest off
-#
-#**
-
+# POST /farms/<farmname>/zoneresources Create a new resource of a zone in a gslb Farm
 sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 {
 	my $json_obj = shift;

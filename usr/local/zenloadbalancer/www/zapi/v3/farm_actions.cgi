@@ -12,50 +12,11 @@
 #
 ###############################################################################
 
-# POST action
-#
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"action":"stop"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmTCP/actions
-#
-#
-#
-#####Documentation of ACTIONS####
-#**
-#  @api {post} /farms/<farmname>/actions Set an action in a Farm
-#  @apiGroup Farm Actions
-#  @apiName PostActions
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Set a given action in a Farm
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess   {String}        action                  Set the action desired. The actions are: stop, start and restart.
-#
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Set a new action in FarmTCP",
-#   "params" : [
-#      {
-#         "action" : "stop"
-#      }
-#   ]
-#}
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"action":"stop"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmTCP/actions
-#
-# @apiSampleRequest off
-#
-#**
 
-#~ use no warnings;
 use warnings;
 use strict;
 
-
+# POST /farms/<farmname>/actions Set an action in a Farm
 sub farm_actions # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
@@ -204,48 +165,8 @@ sub farm_actions # ( $json_obj, $farmname )
 	&httpResponse({ code => 200, body => $body });
 }
 
-# POST maintenance
-#
-# curl --tlsv1  -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: 2bJUdMSHyAhsDYeHJnVHqw7kgN3lPl7gNoWyIej4gjkjpkmPDP9mAU5uUmRg4IHtT" -d '{"action":"up", "service":"service1", "id":"1"}' https://46.101.46.14:444/zapi/v3/zapi.cgi/farms/FarmHTTP/maintenance
-#
-#
-#####Documentation of MAINTENANCE####
-#**
-#  @api {post} /farms/<farmname>/maintenance Set an action in a backend of http|https farm
-#  @apiGroup Farm Actions
-#  @apiName PostMaintenance
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Set a given action in a backend of a HTTP farm
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccess   {String}        action                  Set the action desired. The actions are: up and maintenance.
-# @apiSuccess   {String}        service                 The service where the backend belongs.
-# @apiSuccess   {Number}        id                      Backend ID, unique ID.
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Set an action in  backend 1 in service service1 in farm FarmHTTP",
-#   "params" : [
-#      {
-#         "action" : "up",
-#         "id" : "0",
-#         "service" : "service1"
-#      }
-#   ]
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"action":"up", "service":"service1", "id":"0"}'
-#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP/maintenance
-#
-# @apiSampleRequest off
-#
-#**
 
+# POST /farms/<farmname>/maintenance Set an action in a backend of http|https farm
 sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id )
 {
 	my $json_obj   = shift;
@@ -410,6 +331,8 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	&httpResponse({ code => 200, body => $body });
 }
 
+
+# PUT backend in maintenance
 sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 {
 	my $json_obj   = shift;

@@ -724,6 +724,7 @@ sub set_http
 			{
 				&setHttpServerPort( $json_obj->{ 'port' } ) if ( exists $json_obj->{ 'port' } );
 				&setHttpServerIp( $httpIp ) if ( exists $json_obj->{ 'ip' } );
+				system ( "/etc/init.d/cherokee restart > /dev/null &" );
 				&httpResponse(
 					{ code => 200, body => { description => $description, params => $json_obj } } );
 			}
@@ -859,7 +860,7 @@ _users:
 sub get_all_users
 {
 	my $description = "Get users";
-	my $zapiStatus = &getZAPI( "status", "" );
+	my $zapiStatus = &getZAPI( "status" );
 	my @users = ( { "user"=>"root", "status"=>"true" }, { "user"=>"zapi","status"=>"$zapiStatus" } );
 	
 	&httpResponse(
@@ -901,8 +902,8 @@ sub get_user
 	}
 	else
 	{
-		my $zapi->{ 'key' } = &getZAPI( "keyzapi", "" );
-		$zapi->{ 'status' } = &getZAPI( "status", "" );
+		my $zapi->{ 'key' } = &getZAPI( "keyzapi" );
+		$zapi->{ 'status' } = &getZAPI( "status" );
 		&httpResponse(
 				{ code => 200, body => { description => $description, params => $zapi } } );
 	}
@@ -971,12 +972,12 @@ sub set_user_zapi
 		else
 		{
 			if (    $json_obj->{ 'status' } eq 'enable'
-				 && &getZAPI( "status", "" ) eq 'false' )
+				 && &getZAPI( "status") eq 'false' )
 			{
 				&setZAPI( "enable" );
 			}
 			elsif (    $json_obj->{ 'status' } eq 'disable'
-					&& &getZAPI( "status", "" ) eq 'true' )
+					&& &getZAPI( "status" ) eq 'true' )
 			{
 				&setZAPI( "disable" );
 			}
@@ -1830,13 +1831,13 @@ sub send_test_mail
 			$errormsg = &sendTestMail;
 			if ( ! $errormsg )
 			{
-				$errormsg = "Test mail sended successful.";
+				$errormsg = "Test mail sent successful.";
 				&httpResponse(
 					{ code => 200, body => { description => $description, success => "true", message => $errormsg } } );
 			}
 			else
 			{
-				$errormsg = "Test mail sended but it hasn't reached the destination.";
+				$errormsg = "Test mail sent but it hasn't reached the destination.";
 			}
 		}
 	}

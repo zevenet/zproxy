@@ -1144,8 +1144,8 @@ sub setDOSSshBruteForceRule
 # /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --set
 	my $cmd =
 	  &getGlobalConfiguration( 'iptables' )
-	  . " -A PREROUTING -t mangle "                      # select iptables struct
-	  . "-p tcp --dport $port "                          # who is destined
+	  . " -A PREROUTING -t mangle "     	# select iptables struct
+	  . "-p tcp --dport $port "                 	# who is destined
 	  . "-m conntrack --ctstate NEW -m recent --set "    # rules for block
 	  . "-m comment --comment \"DOS_$rule\"";            # comment
 

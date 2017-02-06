@@ -15,49 +15,7 @@ my @bond_modes_short = (
 				'balance-alb',
 );
 
-# POST Virtual Network Interface
-#
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"name":"new2","ip":"1.1.1.3","netmask":"255.255.192.0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/addvini/eth0
-#
-#####Documentation of POST VINI####
-#**
-#  @api {post} /addvini/<interface> Create a new virtual network interface
-#  @apiGroup Interfaces
-#  @apiName PostVini
-#  @apiParam {String} interface  Interface name, unique ID.
-#  @apiDescription Create a new virtual network interface of a given interface
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess   {String}    name    The name of the virtual network interface.
-# @apiSuccess	{String}	ip		IP of the virtual network interface.
-#
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "New virtual network interface eth0:new2",
-#   "params" : [
-#      {
-#         "mac" : "04:01:41:01:86:01",
-#         "gateway" : "",
-#         "ip" : "192.168.0.150",
-#         "name" : "eth0:new",
-#         "netmask" : "255.255.192.0"
-#      }
-#   ]
-#}
-#
-# @apiExample {curl} Example Usage:
-#	curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 -d '{"name":"new","ip":"192.168.0.150"}'
-#	https://<zenlb_server>:444/zapi/v3/zapi.cgi/addvini/eth0
-#
-# @apiSampleRequest off
-#
-#**
-
+# POST /addvini/<interface> Create a new virtual network interface
 sub new_vini # ( $json_obj )
 {
 	my $json_obj = shift;
@@ -213,51 +171,7 @@ sub new_vini # ( $json_obj )
 	}
 }
 
-# POST Vlan Network Interface
-#
-# curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"name":"3","ip":"1.1.1.3","netmask":"255.255.192.0"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/addvlan/eth0
-#
-#####Documentation of POST VLAN####
-#**
-#  @api {post} /addvlan/<interface> Create a new vlan network interface
-#  @apiGroup Interfaces
-#  @apiName PostVlan
-#  @apiParam {String} interface  Interface name, unique ID.
-#  @apiDescription Create a new vlan network interface of a given interface
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess   {String}        name                     The name of the vlan network interface.
-# @apiSuccess   {String}        ip                       IP of the vlan network interface.
-# @apiSuccess   {String}        netmask                  Netmask of the vlan network interface.
-# @apiSuccess   {String}        gateway                  Gateway of the vlan network interface.
-#
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "New vlan network interface eth0.3",
-#   "params" : [
-#      {
-#         "mac" : "04:01:41:01:86:01",
-#         "gateway" : "192.168.1.0",
-#         "ip" : "192.168.1.150",
-#         "name" : "eth0.3",
-#         "netmask" : "255.255.255.0"
-#      }
-#   ]
-#}
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"name":"new","ip":"192.168.1.150","netmask":"255.255.255.0",
-#       "gateway":"192.168.1.0"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/addvlan/eth0
-#
-# @apiSampleRequest off
-#
-#**
-
+#  POST /addvlan/<interface> Create a new vlan network interface
 sub new_vlan # ( $json_obj )
 {
 	my $json_obj = shift;
@@ -660,38 +574,7 @@ sub new_bond_slave # ( $json_obj, $bond )
 	}
 }
 
-# DELETE Virtual Network Interface
-#
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/deleteif/eth0:new
-#
-#
-#####Documentation of DELETE INTERFACE####
-#**
-#  @api {delete} /deleteif/<interface>/<ip_version> Delete a interface
-#  @apiGroup Interfaces
-#  @apiName DeleteIf
-#  @apiParam 	{String}	 interface	Interface name, unique ID.
-#  @apiParam 	{Number}	 ip_version	Stack to delete. Must be 6 for IPv6 and 4 for IPv4. In case that command ends with only the interface name, the ip version default value is IPv4.
-#  @apiDescription Delete a interface, a virtual network interface or a vlan
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Delete interface eth0:new",
-#   "message" : "The interface eth0:new has been deleted.",
-#   "success" : "true"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/deleteif/eth0:test/6
-#
-# @apiSampleRequest off
-#
-#**
-
+# DELETE /deleteif/<interface>/<ip_version> Delete a interface
 sub delete_interface # ( $if )
 {
 	my $if = shift;
@@ -1198,91 +1081,7 @@ sub delete_interface_floating # ( $floating )
 	}
 }
 
-# GET Interface
-#
-# curl --tlsv1 -k -X GET -H 'Content- Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/interfaces
-#
-#####Documentation of GET INTERFACES####
-#**
-#  @api {get} /interfaces Get params of the interfaces
-#  @apiGroup Interfaces
-#  @apiName GetInterfaces
-#  @apiDescription Gat all the params of the interfaces
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "List interfaces",
-#   "interfaces" : [
-#      {
-#         "mac" : "0e:1f:c6:69:a1:97",
-#         "gateway" : "192.168.101.5",
-#         "ip" : "192.168.101.120",
-#         "name" : "eth0",
-#         "netmask" : "255.255.255.0",
-#         "status" : "up"
-#      },
-#      {
-#         "mac" : "0e:1f:c6:69:a1:97",
-#         "gateway" : "",
-#         "ip" : "192.168.101.122",
-#         "name" : "eth0:cluster",
-#         "netmask" : "255.255.255.0",
-#         "status" : "up"
-#      },
-#      {
-#         "mac" : "ee:7f:26:4c:e2:b0",
-#         "gateway" : "192.168.100.5",
-#         "ip" : "192.168.100.15",
-#         "name" : "eth1",
-#         "netmask" : "255.255.255.0",
-#         "status" : "up"
-#      },
-#      {
-#         "mac" : "ee:7f:26:4c:e2:b0",
-#         "gateway" : "",
-#         "ip" : "fe80:99::180",
-#         "name" : "eth1",
-#         "netmask" : "64",
-#         "status" : "up"
-#      },
-#      {
-#         "mac" : "0a:d0:2b:ae:61:62",
-#         "gateway" : "",
-#         "ip" : "192.168.101.16",
-#         "name" : "eth2",
-#         "netmask" : "255.255.255.0",
-#         "status" : "up"
-#      },
-#      {
-#         "mac" : "0a:d0:2b:ae:61:62",
-#         "gateway" : "",
-#         "ip" : "fe80::120",
-#         "name" : "eth2",
-#         "netmask" : "64",
-#         "status" : "up"
-#      },
-#      {
-#         "mac" : "0a:d0:2b:ae:61:62",
-#         "gateway" : "192.168.12.5",
-#         "ip" : "192.168.12.25",
-#         "name" : "eth2.12",
-#         "netmask" : "255.255.255.0",
-#         "status" : "up"
-#      }
-#   ]
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/interfaces
-#
-# @apiSampleRequest off
-#
-#**
-
+# GET /interfaces Get params of the interfaces
 sub get_interfaces # ()
 {
 	my @output_list;
@@ -1340,91 +1139,7 @@ sub get_interfaces # ()
 	&httpResponse({ code => 200, body => $body });
 }
 
-# GET Interface NIC
-#
-# curl --tlsv1 -k -X GET -H 'Content- Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/interfaces
-#
-#####Documentation of GET INTERFACES####
-#**
-#  @api {get} /interfaces Get params of the interfaces
-#  @apiGroup Interfaces
-#  @apiName GetInterfaces
-#  @apiDescription Gat all the params of the interfaces
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "List interfaces",
-#   "interfaces" : [
-#      {
-#         "mac" : "0e:1f:c6:69:a1:97",
-#         "gateway" : "192.168.101.5",
-#         "ip" : "192.168.101.120",
-#         "name" : "eth0",
-#         "netmask" : "255.255.255.0",
-#         "status" : "up"
-#      },
-#      {
-#         "mac" : "0e:1f:c6:69:a1:97",
-#         "gateway" : "",
-#         "ip" : "192.168.101.122",
-#         "name" : "eth0:cluster",
-#         "netmask" : "255.255.255.0",
-#         "status" : "up"
-#      },
-#      {
-#         "mac" : "ee:7f:26:4c:e2:b0",
-#         "gateway" : "192.168.100.5",
-#         "ip" : "192.168.100.15",
-#         "name" : "eth1",
-#         "netmask" : "255.255.255.0",
-#         "status" : "up"
-#      },
-#      {
-#         "mac" : "ee:7f:26:4c:e2:b0",
-#         "gateway" : "",
-#         "ip" : "fe80:99::180",
-#         "name" : "eth1",
-#         "netmask" : "64",
-#         "status" : "up"
-#      },
-#      {
-#         "mac" : "0a:d0:2b:ae:61:62",
-#         "gateway" : "",
-#         "ip" : "192.168.101.16",
-#         "name" : "eth2",
-#         "netmask" : "255.255.255.0",
-#         "status" : "up"
-#      },
-#      {
-#         "mac" : "0a:d0:2b:ae:61:62",
-#         "gateway" : "",
-#         "ip" : "fe80::120",
-#         "name" : "eth2",
-#         "netmask" : "64",
-#         "status" : "up"
-#      },
-#      {
-#         "mac" : "0a:d0:2b:ae:61:62",
-#         "gateway" : "192.168.12.5",
-#         "ip" : "192.168.12.25",
-#         "name" : "eth2.12",
-#         "netmask" : "255.255.255.0",
-#         "status" : "up"
-#      }
-#   ]
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/interfaces
-#
-# @apiSampleRequest off
-#
-#**
-
+# GET /interfaces Get params of the interfaces
 sub get_nic_list # ()
 {
 	my @output_list;
@@ -1649,7 +1364,7 @@ sub get_bond_list # ()
 		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
 		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
 		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
-
+		
 		my @bond_slaves = @{ $bond_conf->{ $if_ref->{ name } }->{ slaves } };
 		my @output_slaves;
 		push( @output_slaves, { name => $_ } ) for @bond_slaves;

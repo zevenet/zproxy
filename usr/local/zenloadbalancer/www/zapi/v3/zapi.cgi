@@ -1157,11 +1157,6 @@ GET qr{^/stats/system/connections$} => sub {
 	&stats_conns();
 };
 
-# Interfaces stats
-# old call
-#~ GET qr{^/stats/interfaces$} => sub {
-#~ &stats_network();
-#~ };
 
 # Farm stats
 my $modules_re = &getValidFormat( 'farm_modules' );
@@ -1293,22 +1288,22 @@ POST qr{^/system/dns$} => sub {
 	&set_dns( @_ );
 };
 
-#  GET dns
+#  GET ssh
 GET qr{^/system/ssh$} => sub {
 	&get_ssh;
 };
 
-#  POST dns
+#  POST ssh
 POST qr{^/system/ssh$} => sub {
 	&set_ssh( @_ );
 };
 
-#  GET dns
+#  GET snmp
 GET qr{^/system/snmp$} => sub {
 	&get_snmp;
 };
 
-#  POST dns
+#  POST snmp
 POST qr{^/system/snmp$} => sub {
 	&set_snmp( @_ );
 };
@@ -1589,11 +1584,6 @@ PUT qr{^/ipds/dos/($dos_rule)$} => sub {
 DELETE qr{^/ipds/dos/($dos_rule)$} => sub {
 	&del_dos_rule( @_ );
 };
-
-#  GET status dos for a farm
-#~ GET qr{^/farms/($farm_re)/ipds/dos$} => sub {
-#~ &get_dos_farm( @_ );
-#~ };
 
 #  POST DoS to a farm
 POST qr{^/farms/($farm_re)/ipds/dos$} => sub {

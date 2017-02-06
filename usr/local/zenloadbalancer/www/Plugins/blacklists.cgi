@@ -32,8 +32,8 @@ require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 require "/usr/local/zenloadbalancer/www/check_functions.cgi";
 
-#~ use warnings;
-#~ use strict;
+use warnings;
+use strict;
 
 my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
@@ -725,7 +725,7 @@ sub setBLParam
 	if ( 'name' eq $key )
 	{
 		my @listNames = keys %{ $fileHandle };
-		if ( !&getBLExists( $name ) )
+		if ( !&getBLExists( $value ) )
 		{
 			&zenlog( "List '$value' just exists." );
 			$output = -1;
@@ -782,7 +782,8 @@ sub setBLParam
 			 && $conf->{ 'preload' } eq 'false' )
 		{
 			$output = &setBLAddToList( $name, $value );
-			$output = &setBLRefreshList( $name ) if ( !$output );
+			# refresh if not error and this list is applied almost to one farm
+			$output = &setBLRefreshList( $name ) if ( !$output && @{ &getBLParam ( $name, 'farms' ) } );
 		}
 	}
 	elsif ( 'farms-add' eq $key )
@@ -865,6 +866,9 @@ sub getBLParam
 		$output   = $fileHandle->{ $listName };
 		$output->{ 'name' }  	= $listName;
 		$output->{ 'source' }	= &getBLIpList( $listName );
+		my @aux = split ( ' ', $fileHandle->{ $listName }->{ 'farms' } );
+		$output->{ 'farms' } = \@aux;
+		
 	}
 	elsif ( $key eq 'source' )
 	{
@@ -1063,7 +1067,6 @@ sub setBLRefreshList
 
 	&zenlog( "refreshing '$listName'... " );
 	$output = system ( "$ipset flush $listName 2>/dev/null" );
-
 	#~ if ( !$output )
 	#~ {
 	#~ foreach my $ip ( @ipList )
@@ -1469,7 +1472,7 @@ sub getBLCronTask
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 
 	my $file = Config::Tiny->read( $blacklistsConf );
-	my %conf = %{ $file->{ $listname } };
+	my %conf = %{ $file->{ $listName } };
 
 	return \%conf;
 }

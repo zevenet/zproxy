@@ -21,14 +21,14 @@
 #
 ###############################################################################
 
-#~ use warnings;
-#~ use strict;
+use warnings;
+use strict;
 
 #get zapi status
-sub getZAPI    #($name,$value)
+sub getZAPI    #($name)
 {
 
-	my ( $name, $value ) = @_;
+	my ( $name ) = @_;
 	my $result = "false";
 
 	#return if zapi user is enabled or not true = enable, false = disabled
@@ -42,19 +42,7 @@ sub getZAPI    #($name,$value)
 	}
 	if ( $name eq "keyzapi" )
 	{
-
-		tie my @contents, 'Tie::File', &getGlobalConfiguration('globalcfg');
-		foreach my $line ( @contents )
-		{
-			if ( $line =~ /^\$zapikey/ )
-			{
-				my $l = $line;
-				$l =~ s/\$|\"|\=|zapikey|;//g;
-				$result = $l;
-			}
-		}
-		untie @contents;
-
+		$result = &getGlobalConfiguration ( 'zapikey' );
 	}
 
 	return $result;
@@ -75,14 +63,6 @@ sub setZAPI    #($name,$value)
 	if ( $name eq "enable" )
 	{
 
-		#	tie my @contents, 'Tie::File', "$htpass";
-		#	foreach $line(@contents){
-		#		if ($line =~ /zapi/){
-		#			$line =~ s/#//g;
-		#		}
-		#	}
-		#	untie @contents;
-
 		my @run =
 		  `adduser --system --shell /bin/false --no-create-home zapi 1> /dev/null 2> /dev/null`;
 		return $?;
@@ -91,14 +71,6 @@ sub setZAPI    #($name,$value)
 	#Disable ZAPI
 	if ( $name eq "disable" )
 	{
-
-		#        tie my @contents, 'Tie::File', "$htpass";
-		#        foreach $line(@contents){
-		#                if ($line =~ /zapi/){
-		#                        $line =~ s/zapi/#zapi/g;
-		#                }
-		#        }
-		#        untie @contents;
 
 		my @run = `deluser zapi 1> /dev/null 2> /dev/null`;
 		return $?;
@@ -135,20 +107,6 @@ sub setZAPI    #($name,$value)
 		untie @contents;
 
 	}
-
-	#Set ZAPI password
-	#if ($name eq "pass"){
-	#        tie my @contents, 'Tie::File', "$htpass";
-	#        foreach $line(@contents){
-	#        	if ($line =~ /^zapi/){
-	#	        	$line = "zapi:".crypt($value,$value);
-	#               }
-	#       }
-	#        untie @contents;
-	#my ( $index )= grep { $array[$_] =~ /zapi/ } 0..$#array;
-	#$array[$index] = "zapi:".crypt($newpass,$pass);
-	#untie @array;
-	#}
 
 }
 

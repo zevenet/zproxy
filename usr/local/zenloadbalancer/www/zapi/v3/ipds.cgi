@@ -68,40 +68,6 @@ sub get_blacklists_list
 
 }
 
-#####Documentation of POST BL list####
-#**
-#  @api {post} /ipds/blacklists/<listname> Create a new black list
-#  @apiGroup IPDS
-#  @apiName PostBlacklistsList
-#  @apiDescription Create a new black list
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccess   {String}	policy		The list will be white or black. The options are: allow or deny (default)
-# @apiSuccess	{string}	type	Specify where the list is keep it. The options are: local or remote.
-# @apiSuccess	{string}	url			when list is in remote type, it's rry add url where is keep it.
-# @apiSuccess	{number}	refresh	time to refresh the remote list.
-#
-#
-#@apiSuccessExample Success-Response:
-#{
-#   "description" : "Post list newList",
-#   "params" : {
-#      "farms" : [],
-#      "type" : "local",
-#      "name" : "newList",
-#      "sources" : [],
-#      "policy" : "deny"
-#   }
-#}
-#
-# @apiExample {curl} Example Usage:
-#		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"policy":"deny", "type":"local"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/newList
-#
-# @apiSampleRequest off
-#
-#**
 #  POST /ipds/blacklists
 sub add_blacklists_list
 {
@@ -190,53 +156,6 @@ sub add_blacklists_list
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of PUT black list####
-#**
-#  @api {put} /ipds/blacklists/<listname> Modify a black list
-#  @apiGroup IPDS
-#  @apiName PutBlacklistsList
-#  @apiParam {String} listname  BL list name, unique ID.
-#  @apiDescription Modify the params in a BL list
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess	{String}	name	The new list name.
-# @apiSuccess   {String}	policy	The list will be white or black. The options are: allow or deny.
-# @apiSuccess	{source}		list	Replace sources ( IP's or network segment ) from list. Only local lists.
-# @apiSuccess	{string}	url		Change url where are allocated sources. Only remote lists.
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Put list list",
-#   "params" : {
-#      "farms" : [],
-#      "type" : "local",
-#      "name" : "newNameList",
-#      "sources" : [
-#         {
-#            "id" : 0,
-#            "source" : "192.168.100.240"
-#         },
-#         {
-#            "id" : 1,
-#            "source" : "21.5.6.4"
-#         }
-#      ],
-#      "policy" : "allow"
-#   }
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"policy":"allow","list":["192.168.100.240","21.5.6.4"],
-#       "name":"newNameList"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/list
-#
-# @apiSampleRequest off
-#
-#**
 #  PUT /ipds/blacklists/<listname>
 sub set_blacklists_list
 {
@@ -256,7 +175,7 @@ sub set_blacklists_list
 	delete $json_obj->{ 'time' };
 	
 	my @allowParams =
-	  ( "policy", "url", "sources", "name", "minutes", "hour", "day", "frequency", "frequency_type", "period", "unit" );
+	  ( "policy", "url", "source", "name", "minutes", "hour", "day", "frequency", "frequency_type", "period", "unit" );
 
 	if ( &getBLExists( $listName ) == -1 )
 	{
@@ -282,7 +201,7 @@ sub set_blacklists_list
 		# Check key format
 		foreach my $key ( keys %{ $json_obj } )
 		{
-			next if ( $key eq 'sources' );
+			next if ( $key eq 'source' );
 			if ( !&getValidFormat( "blacklists_$key", $json_obj->{ $key } ) )
 			{
 				$errormsg = "$key hasn't a correct format.";
@@ -294,7 +213,7 @@ sub set_blacklists_list
 			# Cron params and url only is used in remote lists
 			if ( $type ne 'remote' )
 			{
-				if ( grep ( /^(url|minutes|hour|day|frequency|frequency\-type|period|unit)$/ , keys %{ $json_obj } ) )
+				if ( grep ( /^(url|minutes|hour|day|frequency|frequency_type|period|unit)$/ , keys %{ $json_obj } ) )
 				#~ if ( ! &getValidOptParams( $json_obj, [ "url", "minutes", "hour", "day", "frequency", "frequency_type", "period", "unit" ] ) )
 				{ 
 					$errormsg = "Error, trying to change a remote list parameter in a local list.";
@@ -313,7 +232,7 @@ sub set_blacklists_list
 				
 				# if there is a new update time configuration to remote lists, delete old configuration
 				#checking available configurations
-				if ( grep ( /^(minutes|hour|day|frequency|frequency\-type|period|unit)$/ , keys %{ $json_obj } ) )
+				if ( grep ( /^(minutes|hour|day|frequency|frequency_type|period|unit)$/ , keys %{ $json_obj } ) )
 				{				
 					$json_obj->{ 'frequency' } 	||=&getBLParam ( $listName, "frequency" );
 					
@@ -420,14 +339,15 @@ sub set_blacklists_list
 
 				if ( !$errormsg )
 				{
+					my $source_format = &getValidFormat( 'blacklists_source' );
+					
 					foreach my $key ( keys %{ $json_obj } )
 					{
 						# add only the sources with a correct format
 						# no correct format sources are ignored
 						if ( $key eq 'sources' )
 						{
-							my $source_format = &getValidFormat( 'blacklists_source' );
-							my $noPush = grep ( !/$source_format)/, @{ $json_obj->{ 'name' } } );
+							my $noPush = grep ( !/^$source_format$/, @{ $json_obj->{ 'sources' } } );
 	
 							# error
 							&zenlog( "$noPush sources couldn't be added" ) if ( $noPush );
@@ -476,31 +396,7 @@ sub set_blacklists_list
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of DELETE BL list####
-#**
-#  @api {delete} /ipds/blacklists/<listname> Delete a Farm
-#  @apiGroup IPDS
-#  @apiName DeleteBlacklistsList
-#  @apiParam {String} listname	black list name, unique ID.
-#  @apiDescription Delete a given black list
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Delete farm FarmHTTP",
-#   "message" : "The Farm FarmHTTP has been deleted.",
-#   "success" : "true"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/listname
-#
-# @apiSampleRequest off
-#
-#**
+#  DELETE /ipds/blacklists/<listname> Delete a Farm
 sub del_blacklists_list
 {
 	my $listName    = shift;
@@ -547,33 +443,53 @@ sub del_blacklists_list
 	&httpResponse( { code => 400, body => $body } );
 }
 
+# POST /ipds/blacklists/BLACKLIST/actions 	update a remote blacklist
 sub update_remote_blacklists
 {
 	my $json_obj    = shift;
 	my $listName    = shift;
 	my $description = "Update a remote list";
 
-	my @allowParams = ( "action" );
-	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
-	if ( !$errormsg )
+
+	my $errormsg = &getBLExists( $listName );
+	if ( $errormsg == -1 )
 	{
-		if ( $json_obj->{ 'action' } ne "update" )
+		$errormsg = "$listName doesn't exist.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+		&httpResponse( { code => 404, body => $body } );
+	}
+	elsif ( &getBLParam ( $listName, 'type' ) ne 'remote' )
+	{
+		$errormsg = "Error, only remote lists can be updated.";
+	}
+	else
+	{
+		my @allowParams = ( "action" );
+		$errormsg = &getValidOptParams( $json_obj, \@allowParams );
+		if ( !$errormsg )
 		{
-			$errormsg = "Error, the action available is 'update'.";
-			my $body =
-			  { description => $description, error => "true", message => $errormsg };
-			&httpResponse( { code => 404, body => $body } );
-		}
-		else
-		{
-			&setBLDownloadRemoteList( $listName );
-			if ( @{ &getBLParam( $listName, 'farms' ) } )
+			if ( $json_obj->{ 'action' } ne "update" )
 			{
-				&setBLRefreshList( $listName );
+				$errormsg = "Error, the action available is 'update'.";
+				my $body =
+				{ description => $description, error => "true", message => $errormsg };
+				&httpResponse( { code => 404, body => $body } );
 			}
-			my $statusUpd = &getBLParam( $listName, 'update_status' );
-			&httpResponse(
-				{ code => 200, body => { description => $description, update => $statusUpd } } );
+			else
+			{
+				&setBLDownloadRemoteList( $listName );
+				if ( @{ &getBLParam( $listName, 'farms' ) } )
+				{
+					&setBLRefreshList( $listName );
+				}
+				my $statusUpd = &getBLParam( $listName, 'update_status' );
+				&httpResponse(
+					{ code => 200, body => { description => $description, update => $statusUpd } } );
+			}
 		}
 	}
 
@@ -582,45 +498,6 @@ sub update_remote_blacklists
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#**
-#  @api {get} /ipds/blacklists/<listname>/sources Request the sources of a list
-#  @apiGroup IPDS
-#  @apiDescription Get the sources of a list
-#  @apiName GetBlacklistsSource
-#  @apiParam {String} listname  black list name, unique ID.
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "blacklists sources",
-#   "params" : [
-#      {
-#         "farms" : [
-#            "gslbFarm",
-#            "httpFarm"
-#         ],
-#         "ips" : [
-#            {
-#               "id" : 0,
-#               "source" : "17.63.203.20"
-#            },
-#            {
-#               "id" : 1,
-#               "source" : "21.5.6.4"
-#            }
-#         ],
-#         "name" : "blackList",
-#         "policy" : "deny"
-#      }
-#   ]
-#}
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/<listname>/sources
-#
-#@apiSampleRequest off
-#**
 #GET /ipds/blacklists/<listname>/sources
 sub get_blacklists_source
 {
@@ -659,38 +536,6 @@ sub get_blacklists_source
 	return \%listHash;
 }
 
-#####Documentation of POST a source to a list####
-#**
-#  @api {post} /ipds/blacklists/<listname>/sources Create a new source for a list
-#  @apiGroup IPDS
-#  @apiName PostBlacklistsSource
-#  @apiParam {String} listname  Black list name, unique ID.
-#  @apiDescription Add a source to a specific list
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess   {String}	source		New IP or net segment to add to a list.
-#
-#
-#
-#@apiSuccessExample Success-Response:
-#{
-#   "description" : "Post a source in a list",
-#   "params" : [
-#      "192.168.100.240",
-#      "21.5.6.4",
-#      "16.31.0.223"
-#   ]
-#}
-#
-# @apiExample {curl} Example Usage:
-#		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"source":"16.31.0.223"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/sources
-#
-# @apiSampleRequest off
-#
-#**
 #  POST /ipds/blacklists/<listname>/sources
 sub add_blacklists_source
 {
@@ -760,37 +605,6 @@ sub add_blacklists_source
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of PUT a source of a black list####
-#**
-#  @api {put} /ipds/blacklists/<listname>/sources/<id> Modify a source of a black list
-#  @apiGroup IPDS
-#  @apiName PutBlacklistsSource
-#  @apiParam	{String}	listname	Black list name, unique ID.
-#  @apiParam	{number}	id			Source ID to modificate.
-#  @apiDescription Modify a source of a Black list
-#  @apiVersion 3.0.0
-#
-#
-#  @apiSuccess	{String}	source		IP or net segment to modificate in a black list.
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Put a source of a list",
-#   "params" : [
-#      "192.168.100.240",
-#      "10.12.55.3"
-#   ]
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"source":"10.12.55.3" https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/sources/1
-#
-# @apiSampleRequest off
-#
-#**
 #  PUT /ipds/blacklists/<listname>/sources/<id>
 sub set_blacklists_source
 {
@@ -856,32 +670,7 @@ sub set_blacklists_source
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of DELETE a source of a black list####
-#**
-#  @api {delete} /ipds/blacklists/<listname>/sources/<id>	Delete a source from a black list
-#  @apiGroup IPDS
-#  @apiName DeleteBlacklistsSource
-#  @apiParam	{String}	listname	Black list name, unique ID.
-#  @apiParam	{number}	id			Source ID to delete.
-#  @apiDescription Delete a source of alist
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Delete source from 'listName'",
-#   "message" : "Source 1 has been deleted.",
-#   "success" : "true"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/blacklists/list/sources/1
-#
-# @apiSampleRequest off
-#
-#**
+#  DELETE /ipds/blacklists/<listname>/sources/<id>	Delete a source from a black list
 sub del_blacklists_source
 {
 	my $listName = shift;
@@ -934,33 +723,6 @@ sub del_blacklists_source
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of POST enable a list in a farm####
-#**
-#  @api {post} /farms/<farmname>/ipds/blacklists	Enable a list in a farm
-#  @apiGroup IPDS
-#  @apiName PostBlacklistsListToFarm
-#  @apiParam {String} farmname	farm name, unique ID.
-#  @apiDescription Add a list rule to a farm
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccess   {String}	list		Existing black list.
-#
-#@apiSuccessExample Success-Response:
-#{
-#   "description" : "Apply a list to a farm",
-#   "error" : "true",
-#   "message" : "blackList just is applied to prueba."
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"list":"blackList"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/dns/ipds/blacklists
-#
-# @apiSampleRequest off
-#
-#**
 #  POST /farms/<farmname>/ipds/blacklists
 sub add_blacklists_to_farm
 {
@@ -1027,32 +789,6 @@ sub add_blacklists_to_farm
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of DELETE disable a list in a farm####
-#**
-#  @api {delete} /farms/<farmname>/ipds/blacklists/<listname>	Delete a black rule from a farm
-#  @apiGroup IPDS
-#  @apiName DeleteBlacklistsFromFarm
-#  @apiParam	{String}	farmname	farm name, unique ID.
-#  @apiParam	{String}	listname	black list name, unique ID.
-#  @apiDescription Delete a given black list from a farm
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Delete list listName form farm dns",
-#   "message" : "List listName was removed successful from farm dns.",
-#   "success" : "true"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/dns/ipds/blacklists/listName
-#
-# @apiSampleRequest off
-#
-#**
 # DELETE /farms/<farmname>/ipds/blacklists/<listname>
 sub del_blacklists_from_farm
 {
@@ -1119,6 +855,7 @@ sub del_blacklists_from_farm
 
 dos:
 
+# GET /ipds/dos/rules
 sub get_dos_rules
 {
 	my $description = "Get DoS settings.";
@@ -1127,9 +864,9 @@ sub get_dos_rules
 		{
 		"farm"=>[ 
 				{ 'rule'=>'limitsec', 'description'=>'Connection limit per seconds.'},
-				{ 'rule'=>'limitrst', 'description'=>'Total connections limit per source IP.'},
+				{ 'rule'=>'limitconns', 'description'=>'Total connections limit per source IP.'},
 				{ 'rule'=>'bogustcpflags', 'description'=>'Check bogus TCP flags.'},
-				{ 'rule'=>'limitconns', 'description'=>'Limit RST request per second.'},
+				{ 'rule'=>'limitrst', 'description'=>'Limit RST request per second.'},
 			],
 		"system"=>[ 
 				{ 'rule' => 'sshbruteforce', 'description' => 'SSH brute force.' },
@@ -1142,28 +879,6 @@ sub get_dos_rules
 }
 
 
-#**
-#  @api {get} /ipds/dos Request dos settings
-#  @apiGroup IPDS
-#  @apiDescription Get dos configuraton.
-#  @apiName GetDos
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Get DoS settings.",
-#   "params" : {
-#      "farms" : "testFarm gslbFarm",
-#      "ssh_bruteForce" : "down"
-#   }
-#}
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/dos
-#
-#@apiSampleRequest off
-#**
 #GET /ipds/dos
 sub get_dos
 {
@@ -1233,30 +948,6 @@ sub create_dos_rule
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#**
-#  @api {get} /ipds/dos/RULE Request dos rule settings
-#  @apiGroup IPDS
-#  @apiDescription Get dos configuraton.for a rule
-#  @apiName GetDos
-#  @apiVersion 3.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Get DoS example_rule settings",
-#   "params" : {
-#      "farms" : "",
-#      "rule" : "LIMITSEC",
-#      "limit" : "2",
-#      "limit_burst" : "2"
-#   }
-#}
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/dos/RULE
-#
-#@apiSampleRequest off
-#**
 #GET /ipds/dos/RULE
 sub get_dos_rule
 {
@@ -1284,35 +975,6 @@ sub get_dos_rule
 	}
 }
 
-#**
-#  @api {put} /ipds/dos/RULE Modify dos settings
-#  @apiGroup IPDS
-#  @apiName PutDosSettings
-#  @apiDescription Modify the params to DoS
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess	{String}	rule		identify a DoS rule. The options are: ssh_bruteforce
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Put DoS settings",
-#   "params" : {
-#      "farms" : "httpFarm gslbFarm",
-#      "ssh_bruteForce" : "down"
-#   }
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"rule":"ssh_bruteForce","status":"down"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/ipds/dos
-#
-# @apiSampleRequest off
-#
-#**
 #PUT /ipds/dos/<rule>
 sub set_dos_rule
 {
@@ -1445,28 +1107,6 @@ sub del_dos_rule
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#**
-#  @api {get} /farms/<farmname>/ipds/dos Request DoS status of a farm
-#  @apiGroup IPDS
-#  @apiDescription Get DoS status of a farm
-#  @apiName GetBlacklistsList
-#  @apiParam {String} farmname  farm name, unique ID.
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Get status DoS gslbFarm.",
-#   "params" : ???
-#}
-#
-#
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/dos
-#
-#@apiSampleRequest off
-#**
 #  GET /farms/<farmname>/ipds/dos
 sub get_dos_farm
 {
@@ -1492,31 +1132,6 @@ sub get_dos_farm
 	&httpResponse( { code => 200, body => $body } );
 }
 
-#####Documentation of POST dos to farm####
-#**
-#  @api {post} /farms/<farmname>/ipds/dos	Add dos to a farm
-#  @apiGroup IPDS
-#  @apiName PostDosToFarm
-#  @apiParam {String} farmname	farm name, unique ID.
-#  @apiDescription Add dos protection to a farm
-#  @apiVersion 3.0.0
-#
-#
-#
-#@apiSuccessExample Success-Response:
-#{
-#   "description" : "Post DoS to httpFarm.",
-#   "params" : "up"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"rule":"NEWNOSYN"}'  https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/dos
-#
-# @apiSampleRequest off
-#
-#**
 #  POST /farms/<farmname>/ipds/dos
 sub add_dos_to_farm
 {
@@ -1590,31 +1205,6 @@ sub add_dos_to_farm
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of DELETE dos from a farm####
-#**
-#  @api {delete} /farms/<farmname>/ipds/dos	Delete dos rules from a farm
-#  @apiGroup IPDS
-#  @apiName DeleteDosFromFarm
-#  @apiParam	{String}	farmname	farm name, unique ID.
-#  @apiDescription Delete dos rules from a farm.
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Delete DoS form farm prueba",
-#   "message" : "DoS was desactived successful from farm prueba.",
-#   "success" : "true"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/<farmname>/ipds/dos/KEY
-#
-# @apiSampleRequest off
-#
-#**
 # DELETE /farms/<farmname>/ipds/dos/<ruleName>
 sub del_dos_from_farm
 {

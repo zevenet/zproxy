@@ -12,117 +12,12 @@
 #
 ###############################################################################
 
-# PUT /farms/FarmL4/farmguardian
-#
-# L4XNAT:
-#
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"fgtimecheck":"5","fgscript":"eyy","fgenabled":"true","fglog":"true"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/L4FARM/fg
-#
-# HTTP/HTTPS
-#
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"fgtimecheck":"5","fgscript":"eyy","fgenabled":"true","fglog":"false","service":"sev1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmHTTP/fg
-#
-#
-#####Documentation of PUT FARMGUARDIAN####
-#**
-#  @api {put} /farms/<farmname>/fg Modify the parameters of the farm guardian in a Farm
-#  @apiGroup Farm Guardian
-#  @apiName PutFarmFG
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Modify the parameters of the farm guardian in a Farm with l4xnat profile
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess   {Number}                fgtimecheck     The farm guardian will check each 'timetocheck' seconds.
-# @apiSuccess   {String}                fgscript        The command that farm guardian will check.
-# @apiSuccess   {String}                fgenabled       Enabled the use of farm guardian. The options are: true and false.
-# @apiSuccess   {String}                fglog           Enabled the use of logs in farm guardian. The options are: true and false. This option is not let it in gslb farms
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Modify farm L4FARM",
-#   "params" : [
-#      {
-#         "fglog" : "true"
-#      },
-#      {
-#         "fgenabled" : "true"
-#      },
-#      {
-#         "fgscript" : "Command of Farm Guardian"
-#      },
-#      {
-#         "fgtimecheck" : "5"
-#      }
-#   ]
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"fgtimecheck":"5","fgscript":"Command of Farm Guardian",
-#       "fgenabled":"true","fglog":"true"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/L4FARM/fg
-#
-# @apiSampleRequest off
-#
-#**
-#####Documentation of PUT FARMGUARDIAN SERVICE####
-#**
-#  @api {put} /farms/<farmname>/fg Modify the parameters of the farm guardian in a Service
-#  @apiGroup Farm Guardian
-#  @apiName PutFarmFGS
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Modify the parameters of the farm guardian in a Service http|https
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess   {Number}                fgtimecheck     The farm guardian will check each 'timetocheck' seconds.
-# @apiSuccess   {String}                fgscript                The command that farm guardian will check.
-# @apiSuccess   {String}                fgenabled       Enabled the use of farm guardian.
-# @apiSuccess   {String}                fglog           Enabled the use of logs in farm guardian.
-# @apiSuccess   {String}                service         The Service's name which farm guardian will be modified.
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Modify farm FarmHTTP",
-#   "params" : [
-#      {
-#         "fglog" : "true"
-#      },
-#      {
-#         "fgenabled" : "true"
-#      },
-#      {
-#         "fgscript" : "Command of Farm Guardian"
-#      },
-#      {
-#         "fgtimecheck" : "5"
-#      }
-#      {
-#         "service" : "service1"
-#      }
-#   ]
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"fgtimecheck":"5","fgscript":"Command of Farm Guardian","fgenabled":"true",
-#       "fglog":"true","service":"service1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP/fg
-#
-# @apiSampleRequest off
-#
-#**
 
-#~ use no warnings;
 use warnings;
 use strict;
 
-
+#  PUT /farms/<farmname>/fg Modify the parameters of the farm guardian in a Farm
+#  PUT /farms/<farmname>/fg Modify the parameters of the farm guardian in a Service
 sub modify_farmguardian    # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;

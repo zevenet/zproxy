@@ -1,80 +1,10 @@
 #!/usr/bin/perl -w
 
-######### PUT HTTP
-#
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"conectimeout":"22","newfarmname":"FarmHTTP2","vip":"178.62.126.152","vport":"88"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmHTTP
-#
-#
-#####Documentation of PUT HTTP####
-#**
-#  @api {put} /farms/<farmname> Modify a http|https Farm
-#  @apiGroup Farm Modify
-#  @apiName PutFarmHTTP
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Modify the params in a HTTP|HTTPS Farm
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess	{Number}		contimeout	This value indicates how long the farm is going to wait for a connection to the backend in seconds.
-# @apiSuccess	{Number}		restimeout	This value indicates how long the farm is going to wait for a response from the backends in seconds.
-# @apiSuccess	{Number}		resurrectime	This value in seconds is the period to get out a blacklisted backend and checks if is alive.
-# @apiSuccess	{Number}		reqtimeout	This value indicates how long the farm is going to wait for a client request in seconds.
-# @apiSuccess	{Number}		maxthreads		This value indicates the number of working threads.
-# @apiSuccess	{String}		rewritelocation	If enabled, the farm is forced to modify the Location: and Content-location: headers in responses to clients. The options are: enabled, disabled or enabled-backends.
-# @apiSuccess	{String}		httpverb		This field indicates the operations that will be permitted to the HTTP client requests. The options are: standardHTTP, extendedHTTP, standardWebDAV, MSextWebDAV or MSRPCext.
-# @apiSuccess	{String}		error414		Personalized message error 414.
-# @apiSuccess	{String}		error500		Personalized message error 500.
-# @apiSuccess	{String}		error501		Personalized message error 501.
-# @apiSuccess	{String}		error503		Personalized message error 503.
-# @apiSuccess	{String}		listener		A listener defines how the farm is going to play with the requests from the clients. The options are: http or https.
-# @apiSuccess	{String}		ciphers 		Only in https. This field is used to build a list of ciphers accepted by SSL connections in order to harden the SSL connection. The options are: all or customsecurity.
-# @apiSuccess	{String}		cipherc 		Only in https. This is the allowed customized list of ciphers that will be accepted by the SSL connection, which it’s a string in the same format as in OpenSSL ciphers.
-# @apiSuccess	{String}		certname		This field is used to add a new service through the same virtual IP and port, which specify how the requests from the clients are managed and delivered.
-# @apiSuccess	{String}		newfarmname	The new Farm's name.
-# @apiSuccess	{Number}		vport			PORT of the farm, where is listening the virtual service.
-# @apiSuccess	{String}		vip			IP of the farm, where is listening the virtual service.
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Modify farm testHttp",
-#   "info" : "There're changes that need to be applied, stop and start farm to apply them!",
-#   "params" : {
-#      "conectimeout" : "20",
-#      "error414" : "Message error 414",
-#      "error500" : "Message error 500",
-#      "error501" : "Message error 501",
-#      "error503" : "Message error 503",
-#      "httpverb" : "standardHTTP",
-#      "listener" : "http",
-#      "maxthreads" : "2",
-#      "newfarmname" : "testHttp",
-#      "reqtimeout" : "32",
-#      "restimeout" : "47",
-#      "resurrectime" : "12",
-#      "rewritelocation" : "enabled",
-#      "vip" : "192.168.10.30",
-#      "vport" : "88"
-#   }
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"conectimeout":"22","newfarmname":"FarmHTTP2","vip":"178.62.126.152","vport":"88",
-#       "restimeout":"47","resurrectime":"12","reqtimeout":"32","rewritelocation":"enabled","httpverb":"standardHTTP",
-#       "error414":"Message error 414","error500":"Message error 500","error501":"Message error 501",
-#       "error503":"Message error 503","listener":"https","ciphers":"customsecurity","cipherc":"TLSv1+SSLv3+HIGH:-MEDIUM:-LOW*:-ADH*",
-#       "maxthreads":"259","certname":"zencert.pem"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP
-#
-# @apiSampleRequest off
-#
-#**
 
 use warnings;
 use strict;
 
+# PUT /farms/<farmname> Modify a http|https Farm
 sub modify_http_farm # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;

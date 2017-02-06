@@ -12,39 +12,10 @@
 #
 ###############################################################################
 
-#
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmBORRAME
-#
-#
-#####Documentation of DELETE FARM####
-#**
-#  @api {delete} /farms/<farmname> Delete a Farm
-#  @apiGroup Farm Delete
-#  @apiName DeleteFarm
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Delete a given Farm
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Delete farm FarmHTTP",
-#   "message" : "The Farm FarmHTTP has been deleted.",
-#   "success" : "true"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmHTTP
-#
-# @apiSampleRequest off
-#
-#**
-
 use warnings;
 use strict;
 
+# DELETE /farms/FARMNAME
 sub delete_farm # ( $farmname )
 {
 	my $farmname = shift;
@@ -123,37 +94,8 @@ sub delete_farm # ( $farmname )
 	}
 }
 
-#
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmHTTP/services/service1
-#
-#
-#####Documentation of DELETE SERVICE####
-#**
-#  @api {delete} /farms/<farmname>/services/<servicename> Delete a service of a Farm
-#  @apiGroup Farm Delete
-#  @apiName DeleteService
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiParam {String} servicename  Service name, unique ID.
-#  @apiDescription Delete a given zone of a http, https or gslb Farm
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Delete service service1 in farm FarmGSLB",
-#   "message" : "The service service1 in farm FarmGSLB has been deleted.",
-#   "success" : "true"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/services/service1
-#
-# @apiSampleRequest off
-#
-#**
 
+# DELETE /farms/<farmname>/services/<servicename> Delete a service of a Farm
 sub delete_service # ( $farmname, $service )
 {
 	my ( $farmname, $service ) = @_;
@@ -303,37 +245,7 @@ sub delete_service # ( $farmname, $service )
 	}
 }
 
-#
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmHTTP/backends/0
-#
-#
-#####Documentation of DELETE BACKEND####
-#**
-#  @api {delete} /farms/<farmname>/backends/<backendid> Delete a backend of a Farm
-#  @apiGroup Farm Delete
-#  @apiName DeleteBackend
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiParam {Number} backendid  Backend ID, unique ID.
-#  @apiDescription Delete a given backend of a datalink or l4xnat Farm
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Delete backend 4 in farm L4FARM.",
-#   "message" : "The backend with ID 4 of the L4FARM farm has been deleted.",
-#   "success" : "true"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/L4FARM/backends/4
-#
-# @apiSampleRequest off
-#
-#**
-
+# DELETE /farms/<farmname>/backends/<backendid> Delete a backend of a Farm
 sub delete_backend # ( $farmname, $id_server )
 {
 	my ( $farmname, $id_server ) = @_;
@@ -423,38 +335,8 @@ sub delete_backend # ( $farmname, $id_server )
 	}
 }
 
-#
-# curl --tlsv1 -k -X DELETE -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/newfarmHTTP/services/service1/backends/0
-#
-#
-#####Documentation of DELETE BACKEND in a SERVICE####
-#**
-#  @api {delete} /farms/<farmname>/services/<servicename>/backends/<backendid> Delete a backend of a Service
-#  @apiGroup Farm Delete
-#  @apiName DeleteBackendServ
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiParam {String} servicename Service name, unique ID.
-#  @apiParam {Number} backendid  Backend ID, unique ID.
-#  @apiDescription Delete a given backend in a service of a http, https or gslb Farm
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Delete backend with ID 5 in the service service1 of the farm newfarmHTTP.",
-#   "message" : "The backend with ID 5 in the service service1 of the farm newfarmHTTP has been deleted.",
-#   "success" : "true"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/newfarmHTTP/services/service1/backends/4
-#
-# @apiSampleRequest off
-#
-#**
 
+#  DELETE /farms/<farmname>/services/<servicename>/backends/<backendid> Delete a backend of a Service
 sub delete_service_backend # ( $farmname, $service, $id_server )
 {
 	my ( $farmname, $service, $id_server ) = @_;
