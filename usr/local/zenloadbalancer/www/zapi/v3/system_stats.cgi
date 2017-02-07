@@ -1410,6 +1410,9 @@ sub stats # ()
 	{
 		my $name  = $data_load[$x][0];
 		my $value = $data_load[$x][1] + 0;
+
+		$name =~ s/ /_/;
+		$name = 'Last_1' if $name eq 'Last';
 		$out->{ load }->{ $name } = $value;
 	}
 
@@ -1417,8 +1420,12 @@ sub stats # ()
 	{
 		my $name  = $data_cpu[$x][0];
 		my $value = $data_cpu[$x][1] + 0;
+
+		$name =~ s/CPU//;
 		$out->{ cpu }->{ $name } = $value;
 	}
+
+	$out->{ cpu }->{ cores } = &getCpuCores();
 
 	foreach my $x ( 0 .. @data_net - 1 )
 	{
