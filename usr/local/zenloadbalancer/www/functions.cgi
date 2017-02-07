@@ -39,7 +39,6 @@ require "/usr/local/zenloadbalancer/www/cert_functions.cgi";
 require "/usr/local/zenloadbalancer/www/l4_functions.cgi";
 require "/usr/local/zenloadbalancer/www/gslb_functions.cgi";
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
-require "/usr/local/zenloadbalancer/www/gui_functions.cgi";
 require "/usr/local/zenloadbalancer/www/farmguardian_functions.cgi";
 require "/usr/local/zenloadbalancer/www/datalink_functions.cgi";
 require "/usr/local/zenloadbalancer/www/http_functions.cgi";
@@ -47,9 +46,7 @@ require "/usr/local/zenloadbalancer/www/tcpudp_functions.cgi";
 require "/usr/local/zenloadbalancer/www/zapi_functions.cgi";
 require "/usr/local/zenloadbalancer/www/login_functions.cgi";
 require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";
-require "/usr/local/zenloadbalancer/www/gui_functions_ext.cgi";
 require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
-require "/usr/local/zenloadbalancer/www/plugins_functions.cgi";
 require "/usr/local/zenloadbalancer/www/check_functions.cgi";  
 require "/usr/local/zenloadbalancer/www/cgi_functions.cgi" if defined $ENV{GATEWAY_INTERFACE};
 
