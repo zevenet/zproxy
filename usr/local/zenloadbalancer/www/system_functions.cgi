@@ -48,7 +48,7 @@ sub getMemStats    # ()
 		exit 1;
 	}
 
-	$format = "mb" if $format eq "";
+	$format = "mb" unless $format;
 
 	open FR, "/proc/meminfo";
 	my $line;
@@ -65,7 +65,11 @@ sub getMemStats    # ()
 		if ( $line =~ /memfree/i )
 		{
 			my @memfree = split ( ": ", $line );
-			$mfvalue = $memfree[1];
+
+			# capture first number found
+			$memfree[1] =~ /^\s+(\d+)\ /;
+			$mfvalue = $1;
+
 			$mfvalue = $mfvalue / 1024 if $format eq "mb";
 			$mfvalue = $mfvalue * 1024 if $format eq "b";
 			$mfname  = $memfree[0];
