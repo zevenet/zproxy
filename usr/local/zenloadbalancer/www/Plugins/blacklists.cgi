@@ -880,7 +880,7 @@ sub getBLParam
 		{
 			$output = $fileHandle->{ $listName }->{ $key };
 			
-			if ( $key eq 'farms' )
+			if ( $key eq 'farms' && $output )
 			{
 				my @aux = split ( ' ', $output );
 				$output = \@aux;

@@ -111,6 +111,8 @@ $ls="/bin/ls";
 $stat="/usr/bin/stat";
 #Where is cp?
 $cp="/bin/cp";
+#Where is rm?
+$rm="/bin/rm";
 #Where is iptables?
 $iptables="/sbin/iptables";
 #Where is ip6tables?

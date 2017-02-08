@@ -12,7 +12,11 @@
 #
 ###############################################################################
 
-#require "/usr/local/zenloadbalancer/www/zapi/v3/cluster.cgi";
+use warnings;
+use strict;
+
+require "/usr/local/zenloadbalancer/www/zcluster_functions.cgi";
+
 #
 ##### /system/cluster
 #
@@ -80,6 +84,7 @@ sub modify_cluster
 	my $json_obj = shift;
 
 	my $description = "Modifying the cluster configuration";
+	my $filecluster = &getGlobalConfiguration('filecluster');
 
 	unless ( &getZClusterStatus() )
 	{
@@ -226,7 +231,7 @@ sub modify_cluster
 			);
 
 			# reload keepalived configuration local and remotely
-			$error_code = &enableZCluster();
+			my $error_code = &enableZCluster();
 
 			&zenlog(
 				&runRemotely(
@@ -240,6 +245,7 @@ sub modify_cluster
 	if ( ! $@ )
 	{
 		# Success
+		my $local_hn  = &getHostname();
 		my $cluster = {
 						check_interval => $zcl_conf->{ _ }->{ deadratio } // $DEFAULT_DEADRATIO,
 						failback       => $zcl_conf->{ _ }->{ primary }   // $local_hn,
