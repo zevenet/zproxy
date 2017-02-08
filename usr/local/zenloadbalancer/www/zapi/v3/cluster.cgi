@@ -359,6 +359,7 @@ sub set_cluster_actions
 
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 			system("$ip_bin link set $maint_if down");
+			&setZClusterNodeStatus ( 'maintenance' );
 		}
 		elsif ( $json_obj->{ status } eq 'disable' )
 		{
@@ -379,6 +380,7 @@ sub set_cluster_actions
 
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 			system("$ip_bin link set $maint_if up");
+			#~ &setZClusterNodeStatus ( master );
 		}
 		else
 		{
@@ -391,6 +393,15 @@ sub set_cluster_actions
 
 			&httpResponse({ code => 400, body => $body });
 		}
+	
+		my $message = "Cluster status changed to $json_obj->{status} successfully";
+		my $body = {
+					 description => $description,
+					 success => 'true',
+					 message      => $message,
+		};
+
+		&httpResponse({ code => 200, body => $body });
 	}
 	else
 	{
@@ -407,27 +418,12 @@ sub set_cluster_actions
 
 sub disable_cluster
 {
-	my $json_obj = shift;
-
 	my $description = "Disabling cluster";
 
 	# make sure the cluster is enabled
 	unless ( &getZClusterStatus() )
 	{
 		my $errormsg = "The cluster is already disabled";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	# only allow the action parameter
-	if ( scalar keys %$json_obj )
-	{
-		my $errormsg = "Unrecognized parameter received";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -755,6 +751,9 @@ sub get_cluster_nodes_status
 			}
 
 			my $node = &getZClusterNodeStatusDigest( $ip );
+
+			#~ my $if_ref = getSystemInterface( $maint_if );
+			#~ if ( $if_ref->{ status } eq 'down' )
 
 			$node->{ name } = $node_name;
 			$node->{ ip } = $ip;

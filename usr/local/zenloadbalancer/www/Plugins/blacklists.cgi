@@ -148,7 +148,10 @@ sub setBLStart
 	# load lists
 	foreach my $list ( keys %{ $allLists } )
 	{
-		my @farms = @{ &getBLParam( $list, "farms" ) };
+		my $farms = &getBLParam( $list, "farms" );		
+		next if ( !$farms );
+		
+		my @farms = @{ $farms }; 
 		if ( @farms )
 		{
 			&setBLRunList( $list );
@@ -878,7 +881,7 @@ sub getBLParam
 	{
 		if ( exists $fileHandle->{ $listName } )
 		{
-			$output = $fileHandle->{ $listName }->{ $key };
+			#~ $output = $fileHandle->{ $listName }->{ $key };
 			
 			if ( $key eq 'farms' && $output )
 			{
