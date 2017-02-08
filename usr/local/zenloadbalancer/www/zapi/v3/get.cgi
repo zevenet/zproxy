@@ -310,7 +310,7 @@ sub service_backends
 	my $description = "List service backends";
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( &getFarmFile( $farmname ) eq '-1' )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";

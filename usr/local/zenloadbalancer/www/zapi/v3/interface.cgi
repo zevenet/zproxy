@@ -1126,7 +1126,7 @@ sub get_interfaces # ()
 			#~ ipv     => $if_ref->{ ip_v },
 		  };
 		  
-		  $if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
+		  $if_conf->{ is_cluster } = 'true' if $cluster_if && $cluster_if eq $if_ref->{ name };
 		  
 		  push @output_list, $if_conf;
 	}

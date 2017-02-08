@@ -180,17 +180,18 @@ sub farms_name_http # ( $farmname )
 		my @fgconfig  = &getFarmGuardianConf( $farmname, $s );
 		my $fgttcheck = $fgconfig[1];
 		my $fgscript  = $fgconfig[2];
-		$fgscript =~ s/\n//g;
-		$fgscript =~ s/\"/\'/g;
-		my $fguse = $fgconfig[3];
-		$fguse =~ s/\n//g;
-		my $fglog      = $fgconfig[4];
+		my $fguse     = $fgconfig[3];
+		my $fglog     = $fgconfig[4];
 
 		# Default values for farm guardian parameters
 		if ( !$fgttcheck ) { $fgttcheck = 5; }
-        if ( !$fguse ) { $fguse = "false"; }
-        if ( !$fglog  ) { $fglog = "false"; }
-        if ( !$fgscript ) { $fgscript = ""; }
+		if ( !$fguse )     { $fguse     = "false"; }
+		if ( !$fglog )     { $fglog     = "false"; }
+		if ( !$fgscript )  { $fgscript  = ""; }
+
+		$fgscript =~ s/\n//g;
+		$fgscript =~ s/\"/\'/g;
+		$fguse =~ s/\n//g;
 
 		my @out_ba;
 		my $backendsvs = &getFarmVS( $farmname, $s, "backends" );
@@ -230,6 +231,10 @@ sub farms_name_http # ( $farmname )
 				weight  => $prio
 			  };
 		}
+
+		$ttlc      = 0 unless $ttlc;
+		$ttl       = 0 unless $ttl;
+		$fgttcheck = 0 unless $fgttcheck;
 
 		push @out_s,
 		  {

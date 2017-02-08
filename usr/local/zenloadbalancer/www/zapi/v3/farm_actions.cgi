@@ -177,7 +177,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	my $description = "Set service backend status";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( &getFarmFile( $farmname ) eq '-1' )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
