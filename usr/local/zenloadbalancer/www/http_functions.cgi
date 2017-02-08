@@ -2117,17 +2117,27 @@ sub setFarmHttpBackendStatus    # ($farm_name)
 
 	&zenlog( "Setting backends status in farm $farm_name" );
 
-	open FR, "<", "$configdir\/$farm_name\_status.cfg";
+	my $be_status_filename = "$configdir\/$farm_name\_status.cfg";
+
+	open my $fh, "<", $be_status_filename;
+
+	unless ( $fh )
+	{
+		my $msg = "Error opening $be_status_filename: $!. Aborting execution.";
+
+		&zenlog( $msg );
+		die $msg;
+	}
+
 	my $poundctl = &getGlobalConfiguration('poundctl');
 	
-	my $line_aux;
-	while ( $line_aux = <FR> )
+	while ( my $line_aux = <$fh> )
 	{
 		my @line = split ( "\ ", $line_aux );
 		my @run =
 		  `$poundctl -c /tmp/$farm_name\_pound.socket $line[0] $line[1] $line[2] $line[3]`;
 	}
-	close FR;
+	close $fh;
 }
 
 #Create a new Service in a HTTP farm
@@ -2330,6 +2340,9 @@ sub deleteFarmService    # ($farm_name,$service)
 sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 {
 	my ( $farm_name, $service, $tag ) = @_;
+
+	$service = "" unless $service;
+	$tag = "" unless $tag;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = "";
