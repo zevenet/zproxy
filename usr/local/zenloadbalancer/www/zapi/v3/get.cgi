@@ -147,7 +147,7 @@ sub farms_dslb # ()
 		next unless $type eq 'datalink';
 		my $status = &getFarmStatus( $name );
 		my $vip    = &getFarmVip( 'vip', $name );
-		my $port   = &getFarmVip( 'vipp', $name );
+		my $iface  = &getFarmVip( 'vipp', $name );
 
 		push @out,
 		  {
@@ -155,7 +155,7 @@ sub farms_dslb # ()
 			#~ profile  => $type,
 			status   => $status,
 			vip      => $vip,
-			vport    => $port
+			interface => $iface
 		  };
 	}
 
