@@ -232,10 +232,11 @@ sub genIptMarkPersist    # ($farm_name,$vip,$vport,$protocol,$ttl,$index,$mark)
 	my $farm   = shift;    # input: first argument can be a farm reference
 	my $server = shift;    # input: second argument can be a server reference
 	my $rule;              # output: iptables rule template string
+
    	if ( defined $farm )
-    	{
-        	$farm_name = $$farm{ name };
-    	}
+	{
+		$farm_name = $$farm{ name };
+	}
 
 	if ( defined $index )
 	{
@@ -469,6 +470,9 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 	my $iptables_bin = &getBinVersion( $farm_name );
 
 	my $float_if = &getFloatInterfaceForAddress( $$server{ vip } );
+
+	#~ &zenlog( "genIptMasquerade server{ vip }: $$server{ vip }" );
+	#~ &zenlog( "genIptMasquerade float_if: " . Dumper $float_if );
 
 	$rule =
 	    "$iptables_bin --table nat --::ACTION_TAG:: POSTROUTING "
@@ -713,7 +717,14 @@ sub getIptRuleNumber
 	# take the first value (rule number)
 	# e.g.: 1    DNAT       all  --  0.0.0.0/0 ...
 	# if no rule was found: return -1
-	$rule_num = ( split / +/, $rules[0] )[0] // -1;
+	if ( @rules )
+	{
+		$rule_num = ( split / +/, $rules[0] )[0];
+	}
+	else
+	{
+		$rule_num = -1;
+	}
 
 	# error control
 	if ( $rule_num == -1 )

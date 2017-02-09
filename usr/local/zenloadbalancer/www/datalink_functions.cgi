@@ -282,7 +282,7 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 	# Set policies to the local network
 	my $ip = &iponif( $iface );
 
-	if ( $ip =~ /\./ )
+	if ( $ip && $ip =~ /\./ )
 	{
 		my $ipmask = &maskonif( $iface );
 		my ( $net, $mask ) = ipv4_network( "$ip / $ipmask" );
@@ -345,7 +345,7 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 
 		# Disable policies to the local network
 		my $ip = &iponif( $iface );
-		if ( $ip =~ /\./ )
+		if ( $ip && $ip =~ /\./ )
 		{
 			my $ipmask = &maskonif( $iface );
 			my ( $net, $mask ) = ipv4_network( "$ip / $ipmask" );

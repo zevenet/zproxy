@@ -1056,9 +1056,7 @@ sub _runHTTPFarmStart    # ($farm_name)
 		"running $pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid"
 	);
 	$status = &zsystem(
-		"$pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid"
-	#~ $status = &zsystem(
-		#~ "$pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid 2>/dev/null"
+		"$pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid 2>/dev/null"
 	);
 
 	if ( $status == 0 )
