@@ -26,7 +26,7 @@
 use Config::Tiny;
 use Tie::File;
 
-require "/usr/local/zenloadbalancer/www/Plugins/ipds.cgi";
+require "/usr/local/zenloadbalancer/www/ipds.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 
