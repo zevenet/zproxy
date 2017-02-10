@@ -184,6 +184,8 @@ sub getNetworkStats    # ()
 {
 	my ( $format ) = @_;
 
+	$format = "" unless defined $format; # removes undefined variable warnings
+
 	if ( !-f "/proc/net/dev" )
 	{
 		print "$0: Error: File /proc/net/dev not exist ...\n";
@@ -218,6 +220,7 @@ sub getNetworkStats    # ()
 				( $in, $out ) = ( split )[0, 8];
 				$in = ( split /:/, $in )[1];
 			}
+
 			if ( $format ne "raw" )
 			{
 				$in  = ( ( $in / 1024 ) / 1024 );
@@ -225,18 +228,18 @@ sub getNetworkStats    # ()
 				$in  = sprintf ( '%.2f', $in );
 				$out = sprintf ( '%.2f', $out );
 			}
+
 			$if =~ s/\ //g;
 
 			# not show cluster maintenance interface
 			next if $if eq 'cl_maintenance';
-			
-			push @interface, $if;
-			push @interfacein, $in;
-			push @interfaceout, $out;
-			
-			push @outHash, { 'interface' => $if, 'in' => $in, 'out' => $out  };
-		}
 
+			push @interface,    $if;
+			push @interfacein,  $in;
+			push @interfaceout, $out;
+
+			push @outHash, { 'interface' => $if, 'in' => $in, 'out' => $out };
+		}
 	}
 
 	for ( my $j = 0 ; $j <= $i ; $j++ )
