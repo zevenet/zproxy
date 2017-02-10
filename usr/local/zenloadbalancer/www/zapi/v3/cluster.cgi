@@ -251,7 +251,7 @@ sub modify_cluster
 						failback       => $zcl_conf->{ _ }->{ primary }   // $local_hn,
 		};
 
-		$cluster->{ check_interval } + 0;
+		$cluster->{ check_interval } += 0;
 
 		my $body = {
 					 description => $description,
@@ -658,23 +658,24 @@ sub enable_cluster
 		&setConntrackdConfig();
 
 		my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
+		my $cl_output;
 
 		# remote conntrackd configuration
-		my $cl_output = &runRemotely(
+		$cl_output = &runRemotely(
 			"$zcluster_manager setConntrackdConfig",
 			$zcl_conf->{$remote_hostname}->{ip}
 		);
 		&zenlog( "rc:$? $cl_output" );
 
 		# remote keepalived configuration
-		my $cl_output = &runRemotely(
+		$cl_output = &runRemotely(
 			"$zcluster_manager setKeepalivedConfig",
 			$zcl_conf->{$remote_hostname}->{ip}
 		);
 		&zenlog( "rc:$? $cl_output" );
 
 		# start remote interfaces, farms and cluster
-		my $cl_output = &runRemotely(
+		$cl_output = &runRemotely(
 			'/etc/init.d/zenloadbalancer start',
 			$zcl_conf->{$remote_hostname}->{ip}
 		);
