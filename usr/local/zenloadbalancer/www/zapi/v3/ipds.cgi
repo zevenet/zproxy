@@ -13,7 +13,7 @@
 ###############################################################################
 
 require "/usr/local/zenloadbalancer/www/blacklists.cgi";
-require "/usr/local/zenloadbalancer/www/Plugins/dos.cgi";
+require "/usr/local/zenloadbalancer/www/dos.cgi";
 
 use warnings;
 use strict;
