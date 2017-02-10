@@ -881,7 +881,7 @@ sub getBLParam
 	{
 		if ( exists $fileHandle->{ $listName } )
 		{
-			#~ $output = $fileHandle->{ $listName }->{ $key };
+			$output = $fileHandle->{ $listName }->{ $key };
 			
 			if ( $key eq 'farms' && $output )
 			{
