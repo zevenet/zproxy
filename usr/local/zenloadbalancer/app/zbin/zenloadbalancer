@@ -111,7 +111,7 @@ sub certcontrol          #()
 
 		if (    ( !grep /$key/, @zen_cert )
 			 || ( !grep /keyid:$keyid/,   @zen_cert )
-			 || ( !grep /CN=$hostname\//, @zen_cert ) )
+			 || ( !grep /CN=$hostname\/|CN = $hostname\,/, @zen_cert ) )
 		{
 			$swcert = 2;
 		}
