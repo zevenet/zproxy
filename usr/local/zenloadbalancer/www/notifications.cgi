@@ -53,11 +53,13 @@ sub setNotifCreateConfFile
 	my $mv = &getGlobalConfiguration( "mv" );
 	my $alertsOld = "/usr/local/zenloadbalancer/www/Plugins/Notifications/Alerts.conf";
 	my $sendersOld = "/usr/local/zenloadbalancer/www/Plugins/Notifications/Senders.conf";
+
 	if ( -e $alertsOld )	
 	{
 		system ( "$mv $alertsOld $alertsFile" );
 		&zenlog( "Alert config file was moved to $confdir." );
 	}
+
 	if ( -e $sendersOld )
 	{
 		system ( "$mv $sendersOld $senderFile" );

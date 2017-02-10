@@ -224,7 +224,7 @@ if ( $eject eq "start" )
 	&zenlog( "Beginning start proccess" );
 	system ( '/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi' );
 	require "/usr/local/zenloadbalancer/config/global.conf";
-	require "/usr/local/zenloadbalancer/www/Plugins/notifications.cgi";
+	require "/usr/local/zenloadbalancer/www/notifications.cgi";
 	require "/usr/local/zenloadbalancer/www/blacklists.cgi";
 	require "/usr/local/zenloadbalancer/www/dos.cgi";
 
@@ -724,7 +724,7 @@ if ( $eject eq "start" )
 if ( $eject eq "stop" )
 {
 	require "/usr/local/zenloadbalancer/www/blacklists.cgi";
-	require "/usr/local/zenloadbalancer/www/Plugins/notifications.cgi";
+	require "/usr/local/zenloadbalancer/www/notifications.cgi";
 	require "/usr/local/zenloadbalancer/www/dos.cgi";
 
 	&zenlog( "Beginning stop proccess" );

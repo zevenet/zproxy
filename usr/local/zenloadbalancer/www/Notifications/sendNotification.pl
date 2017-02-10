@@ -27,7 +27,7 @@ use Config::Tiny;
 
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
-require "/usr/local/zenloadbalancer/www/Plugins/notifications.cgi";
+require "/usr/local/zenloadbalancer/www/notifications.cgi";
 
 ( my $section, my $pattern ) = @ARGV;
 

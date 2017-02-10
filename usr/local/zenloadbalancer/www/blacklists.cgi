@@ -1427,7 +1427,7 @@ sub setBLCronTask
 	# 0 0 * * 1	root	/usr/local/zenloadbalancer/app/zenrrd/zenrrd.pl &>/dev/null
 	my $cmd =
 	  "$cronFormat->{ 'min' } $cronFormat->{ 'hour' } $cronFormat->{ 'dom' } $cronFormat->{ 'month' } $cronFormat->{ 'dow' }\t"
-	  . "root\t/usr/local/zenloadbalancer/www/Plugins/ipds/blacklists/updateRemoteList.pl $listName &>/dev/null";
+	  . "root\t/usr/local/zenloadbalancer/www/ipds/blacklists/updateRemoteList.pl $listName &>/dev/null";
 	  &zenlog ("Added cron task: $cmd");
 
 	tie my @list, 'Tie::File', $blacklistsCronFile;
