@@ -244,14 +244,14 @@ $bonding_miimon_filename="bonding/miimon";
 
 #Notifications Module
 $notifConfDir = "/usr/local/zenloadbalancer/config/notifications";
-$secConf="/usr/local/zenloadbalancer/www/Notifications/sec.rules";
+$secConf="/usr/local/zenloadbalancer/www/Notifications/sec.rules";#update
 $syslogFile="/var/log/syslog";
 
 #IPDS Module
 $blacklistsPath = "/usr/local/zenloadbalancer/config/ipds/blacklists/lists";
 $blacklistsConf = "/usr/local/zenloadbalancer/config/ipds/blacklists/lists.conf";
-$blacklistsLocalPreload = "/usr/local/zenloadbalancer/www/ipds/blacklists/local";
-$blacklistsRemotePreload = "/usr/local/zenloadbalancer/www/ipds/blacklists/remote_lists.conf";
+$blacklistsLocalPreload = "/usr/local/zenloadbalancer/www/ipds/blacklists/local";#update
+$blacklistsRemotePreload = "/usr/local/zenloadbalancer/www/ipds/blacklists/remote_lists.conf";#update
 $blacklistsCronFile = "/etc/cron.d/blacklists";
 $dosConf = "/usr/local/zenloadbalancer/config/ipds/dos/dos.conf";
 $dosConfDir = "/usr/local/zenloadbalancer/config/ipds/dos";
