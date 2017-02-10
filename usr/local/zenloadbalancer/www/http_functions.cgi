@@ -2117,6 +2117,12 @@ sub setFarmHttpBackendStatus    # ($farm_name)
 
 	my $be_status_filename = "$configdir\/$farm_name\_status.cfg";
 
+	unless ( -f $be_status_filename )
+	{
+		open my $fh, ">", $be_status_filename;
+		close $fh;
+	}
+
 	open my $fh, "<", $be_status_filename;
 
 	unless ( $fh )
