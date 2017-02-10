@@ -23,7 +23,7 @@
 ###############################################################################
 
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
-require "/usr/local/zenloadbalancer/www/Plugins/blacklists.cgi";
+require "/usr/local/zenloadbalancer/www/blacklists.cgi";
 
 ( my $listName ) = @ARGV;
 my $logger = &getGlobalConfiguration ( 'logger' );
