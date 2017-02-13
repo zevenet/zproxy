@@ -1,6 +1,5 @@
 #!/usr/bin/perl -w
 
-use warnings;
 use strict;
 
 sub modify_datalink_farm    # ( $json_obj, $farmname )

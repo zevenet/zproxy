@@ -12,8 +12,6 @@
 #
 ###############################################################################
 
-
-use warnings;
 use strict;
 
 # POST /farms/<farmname>/actions Set an action in a Farm

@@ -21,12 +21,11 @@
 #
 ###############################################################################
 
-use Tie::File;
-
 ### Debug ###
 #~ use v5.14;
 #~ use strict;
-#~ use warnings;
+
+use Tie::File;
 use Data::Dumper;
 
 #~ require "/usr/local/zenloadbalancer/config/global.conf";

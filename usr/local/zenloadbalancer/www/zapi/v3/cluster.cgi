@@ -12,7 +12,6 @@
 #
 ###############################################################################
 
-use warnings;
 use strict;
 
 require "/usr/local/zenloadbalancer/www/zcluster_functions.cgi";

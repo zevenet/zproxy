@@ -12,20 +12,17 @@
 #
 ###############################################################################
 
+use strict;
+
 # libs
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 # ....
 
-
 require "/usr/local/zenloadbalancer/www/zapi/v3/get_http.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get_gslb.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get_l4.cgi";
 require "/usr/local/zenloadbalancer/www/zapi/v3/get_datalink.cgi";
-
-
-use warnings;
-use strict;
 
 #GET /farms
 sub farms # ()

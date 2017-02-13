@@ -1,7 +1,5 @@
 #!/usr/bin/perl -w
 
-
-use warnings;
 use strict;
 
 # PUT /farms/<farmname> Modify a http|https Farm

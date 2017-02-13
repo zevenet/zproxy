@@ -12,12 +12,10 @@
 #
 ###############################################################################
 
+use strict;
 
 ########### GET L4XNAT
 # GET /farms/<farmname> Request info of a l4xnat Farm
-
-use warnings;
-use strict;
 
 sub farms_name_l4 # ( $farmname )
 {

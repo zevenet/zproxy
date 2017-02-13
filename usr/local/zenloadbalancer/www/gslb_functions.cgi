@@ -21,7 +21,6 @@
 #
 ###############################################################################
 
-use warnings;
 use strict;
 
 require "/usr/local/zenloadbalancer/www/networking_functions.cgi";

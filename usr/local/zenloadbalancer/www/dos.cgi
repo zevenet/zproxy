@@ -23,15 +23,14 @@
 #
 ###############################################################################
 
+use strict;
+
 use Config::Tiny;
 use Tie::File;
 
 require "/usr/local/zenloadbalancer/www/ipds.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
-
-use warnings;
-use strict;
 
 sub setDOSCreateFileConf
 {

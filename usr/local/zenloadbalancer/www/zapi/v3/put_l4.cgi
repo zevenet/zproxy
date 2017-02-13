@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
 
-# PUT /farms/<farmname> Modify a l4xnat Farm
-use warnings;
 use strict;
+
+# PUT /farms/<farmname> Modify a l4xnat Farm
 
 sub modify_l4xnat_farm # ( $json_obj, $farmname )
 {

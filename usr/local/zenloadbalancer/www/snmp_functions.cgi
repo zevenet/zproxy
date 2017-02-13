@@ -21,11 +21,9 @@
 #
 ###############################################################################
 
+use strict;
+
 #require "/usr/local/zenloadbalancer/www/functions.cgi";
-
-#~ use warnings;
-#~ use strict;
-
 
 sub setSnmpdStatus    # ($snmpd_status)
 {

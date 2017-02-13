@@ -1,10 +1,6 @@
 #!/usr/bin/perl -w
 
-#~ use no warnings;
-use warnings;
 use strict;
-
-
 
 # GET /farms/<farmname> Request info of a http|https Farm
 sub farms_name_http # ( $farmname )

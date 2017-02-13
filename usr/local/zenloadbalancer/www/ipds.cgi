@@ -21,10 +21,7 @@
 #
 ###############################################################################
 
-
-use warnings;
 use strict;
-
 
 =begin nd
         Function: getIptListV4

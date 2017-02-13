@@ -21,9 +21,7 @@
 #
 ###############################################################################
 
-use warnings;
 use strict;
-
 
 my $configdir = &getGlobalConfiguration('configdir');
 

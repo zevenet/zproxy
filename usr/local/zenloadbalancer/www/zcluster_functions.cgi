@@ -21,13 +21,11 @@
 #
 ###############################################################################
 
+use strict;
+
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 require "/usr/local/zenloadbalancer/www/thread_functions.cgi";
 require "/usr/local/zenloadbalancer/www/conntrackd_functions.cgi";
-
-#~ use warnings;
-#~ use strict;
-
 
 my $maint_if = 'cl_maintenance';
 

@@ -1,9 +1,6 @@
 #!/usr/bin/perl -w
 
-
-use warnings;
 use strict;
-
 
 my @bond_modes_short = (
 				'balance-rr',

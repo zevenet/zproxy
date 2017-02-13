@@ -12,14 +12,11 @@
 #
 ###############################################################################
 
+use strict;
+
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
 require "/usr/local/zenloadbalancer/www/notifications.cgi";
-
-
-use warnings;
-use strict;
-
 
 _dns:
 

@@ -12,7 +12,6 @@
 #
 ###############################################################################
 
-use warnings;
 use strict;
 
 sub farms_name_datalink    # ( $farmname )

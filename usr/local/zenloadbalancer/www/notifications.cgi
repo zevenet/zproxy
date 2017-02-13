@@ -21,10 +21,7 @@
 #
 ###############################################################################
 
-
-use warnings;
 use strict;
-
 
 #~ require "/usr/local/zenloadbalancer/www/functions.cgi";
 require "/usr/local/zenloadbalancer/www/farms_functions.cgi";

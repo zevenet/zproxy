@@ -21,8 +21,7 @@
 #
 ###############################################################################
 
-#~ use strict;
-#~ use warnings;
+use strict;
 use threads;
 
 sub runParallel

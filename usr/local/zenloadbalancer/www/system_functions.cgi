@@ -21,12 +21,9 @@
 #
 ###############################################################################
 
-
-use warnings;
 use strict;
 
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
-
 
 #get Memory usage of the System.
 #input $format Parameter format could be "b" for bytes, "kb" for KBytes and "mb" for MBytes (default: mb)

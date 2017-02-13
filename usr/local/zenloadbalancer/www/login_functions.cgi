@@ -21,15 +21,13 @@
 #
 ###############################################################################
 
-#~ use warnings;
-#~ use strict;
+use strict;
 
 my $passfile = "/etc/shadow";
 
 #login user
 sub login    #()
 {
-
 	use CGI::Session;
 	use Authen::Simple::Passwd;
 
@@ -58,7 +56,6 @@ sub login    #()
 		&zenlog( "grouplist is: $grouplist" );
 		if ( $passwd->authenticate( $user, $passw ) && $grouplist =~ /\(webgui\)/ )
 		{
-
 			#if ( $passwd->authenticate($user,$passw) ) {
 			# successfull authentication
 			&zenlog( "Login Successful for user $user" );
@@ -67,7 +64,6 @@ sub login    #()
 		}
 		else
 		{
-
 			#redirect to login web
 			&zenlog( "Login failed for user $user" );
 
@@ -85,7 +81,6 @@ sub login    #()
 	###login & session management end
 	#&zenlog("login Set-Cookie CGISESSID=".$session->id()."; path=/");
 	print "Set-Cookie: CGISESSID=" . $session->id() . "; path=/\n";
-
 }
 
 sub logout    #()

@@ -21,9 +21,7 @@
 #
 ###############################################################################
 
-use warnings;
 use strict;
-
 
 use Data::Dumper;
 use Fcntl qw(:flock SEEK_END);

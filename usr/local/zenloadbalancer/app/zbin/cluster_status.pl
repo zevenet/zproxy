@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
 use strict;
-use warnings;
 use Sys::Hostname;
 
 #~ require '/usr/local/zenloadbalancer/config/global.conf';

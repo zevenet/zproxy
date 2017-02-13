@@ -1,9 +1,8 @@
 #!/usr/bin/perl -w
 
-require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
-
-use warnings;
 use strict;
+
+require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
 
 sub new_farm    # ( $json_obj )
 {

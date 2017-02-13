@@ -12,11 +12,10 @@
 #
 ###############################################################################
 
+use strict;
+
 require "/usr/local/zenloadbalancer/www/blacklists.cgi";
 require "/usr/local/zenloadbalancer/www/dos.cgi";
-
-use warnings;
-use strict;
 
 blacklists:
 

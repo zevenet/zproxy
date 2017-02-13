@@ -12,7 +12,6 @@
 #
 ###############################################################################
 
-use warnings;
 use strict;
 
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";

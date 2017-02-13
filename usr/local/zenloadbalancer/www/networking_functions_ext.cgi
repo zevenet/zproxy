@@ -21,14 +21,10 @@
 #
 ###############################################################################
 
+use strict;
 use Config::Tiny;
-
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
-
-
-#~ use warnings;
-#~ use strict;
 
 # send gratuitous ICMP packets for L3 aware
 sub sendGPing    # ($pif)

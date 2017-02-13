@@ -12,8 +12,6 @@
 #
 ###############################################################################
 
-
-use warnings;
 use strict;
 
 #  PUT /farms/<farmname>/fg Modify the parameters of the farm guardian in a Farm

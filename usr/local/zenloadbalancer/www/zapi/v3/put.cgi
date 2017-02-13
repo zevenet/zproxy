@@ -12,7 +12,6 @@
 #
 ###############################################################################
 
-use warnings;
 use strict;
 
 # PUT /farms/FarmHTTP
@@ -23,7 +22,6 @@ sub modify_farm # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
-
 	
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) eq '-1' )
