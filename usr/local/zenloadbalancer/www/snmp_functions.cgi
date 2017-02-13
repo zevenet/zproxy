@@ -232,7 +232,7 @@ sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_sc
 	# if checkbox not checked set as false instead of undefined
 	if ( !defined $snmpd_new->{ status } )
 	{
-		$snmpd_enabled = 'false';			# GLOBALCGI
+		&setGlobalConfiguration( 'snmpd_enabled', 'false');
 	}
 
 	# read current management IP
