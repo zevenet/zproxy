@@ -327,6 +327,7 @@ sub set_cluster_actions
 
 		# validate parameters
 		my @cl_opts = ('action','status');
+		no warnings "experimental::smartmatch";
 		unless ( grep { @cl_opts ~~ /^(?:$_)$/ } keys %$json_obj )
 		{
 			my $errormsg = "Unrecognized parameter received";
@@ -338,6 +339,7 @@ sub set_cluster_actions
 
 			&httpResponse({ code => 400, body => $body });
 		}
+		use warnings "experimental::smartmatch";
 
 		if ( $json_obj->{ status } eq 'enable' )
 		{

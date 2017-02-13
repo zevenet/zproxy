@@ -381,7 +381,7 @@ sub validCGISession    # ()
 	my $validSession = 0;
 	my $session      = CGI::Session->load( &getCGI() );
 
-	&zenlog( "CGI SESSION ID: " . $session->id ) if $session->id;
+	#~ &zenlog( "CGI SESSION ID: " . $session->id ) if $session->id;
 
 	#~ &zenlog( "session data: " . Dumper $session->dataref() ); # DEBUG
 
@@ -588,11 +588,11 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 #########################################
 
 &zenlog( ">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<" );
-&zenlog( "HTTP HEADERS: " . join ( ', ', $q->http() ) );
-&zenlog( "HTTP_AUTHORIZATION: <$ENV{HTTP_AUTHORIZATION}>" )
-  if exists $ENV{ HTTP_AUTHORIZATION };
-&zenlog( "HTTP_ZAPI_KEY: <$ENV{HTTP_ZAPI_KEY}>" )
-  if exists $ENV{ HTTP_ZAPI_KEY };
+#~ &zenlog( "HTTP HEADERS: " . join ( ', ', $q->http() ) );
+#~ &zenlog( "HTTP_AUTHORIZATION: <$ENV{HTTP_AUTHORIZATION}>" )
+  #~ if exists $ENV{ HTTP_AUTHORIZATION };
+#~ &zenlog( "HTTP_ZAPI_KEY: <$ENV{HTTP_ZAPI_KEY}>" )
+  #~ if exists $ENV{ HTTP_ZAPI_KEY };
 
 my $post_data = $q->param( 'POSTDATA' );
 my $put_data  = $q->param( 'PUTDATA' );
