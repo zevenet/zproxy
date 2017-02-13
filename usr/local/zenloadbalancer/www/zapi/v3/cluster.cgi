@@ -328,7 +328,7 @@ sub set_cluster_actions
 
 		# validate parameters
 		my @cl_opts = ('action','status');
-		unless ( grep { @cl_opts !~ /^(?:$_)$/ } keys %$json_obj )
+		unless ( grep { @cl_opts ~~ /^(?:$_)$/ } keys %$json_obj )
 		{
 			my $errormsg = "Unrecognized parameter received";
 			my $body = {
