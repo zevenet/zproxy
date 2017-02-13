@@ -281,48 +281,6 @@ sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, 
 	return $output;
 }
 
-#function that creates a menu to manage a certificate
-sub createMenuCert    # ($certfile)
-{
-	my ( $certfile ) = @_;
-
-	my $certtype = &getCertType( $certfile );
-
-	if ( $certtype eq "CSR" )
-	{
-		&uploadCertFromCSR( $certfile );
-	}
-
-	print "<p>";
-
-	# delete
-	print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"Delete $certtype $certfile\" onclick=\"return confirm('Are you sure you want to delete the certificate: $certfile?')\">
-			<i class=\"fa fa-times-circle action-icon fa-fw red\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"$id\">
-		<input type=\"hidden\" name=\"action\" value=\"deletecert\">
-		<input type=\"hidden\" name=\"certname\" value=\"$certfile\">
-		</form>";
-
-	# view
-	print "
-		<form method=\"post\" action=\"index.cgi\" class=\"myform\">
-		<button type=\"submit\" class=\"myicons\" title=\"View $certtype $certfile content\">
-			<i class=\"fa fa-search action-icon fa-fw\"></i>
-		</button>
-		<input type=\"hidden\" name=\"id\" value=\"$id\">
-		<input type=\"hidden\" name=\"action\" value=\"View_Cert\">
-		<input type=\"hidden\" name=\"certname\" value=\"$certfile\">
-		</form>";
-
-	# download
-	print
-	  "<a href=\"downloadcerts.cgi?certname=$certfile\" target=\"_blank\" title=\"Download $certtype $certfile\"><i class=\"fa fa-download action-icon fa-fw\"></i></a>";
-	print "</p>";
-}
-
 sub uploadCertFromCSR    # ($certfile)
 {
 	my ( $certfile ) = @_;
@@ -403,9 +361,9 @@ sub createPemFromKeyCRT    # ($keyfile,$crtfile,$certautfile,$tmpdir)
 	my $pemfile = $keyfile;
 	$pemfile =~ s/\.key$/\.pem/;
 
-	@files = ( "$path/$keyfile", "$tmpdir/$crtfile", "$tmpdir/$certautfile" );
+	my @files = ( "$path/$keyfile", "$tmpdir/$crtfile", "$tmpdir/$certautfile" );
 
-	foreach $file ( @files )
+	foreach my $file ( @files )
 	{
 		# Open key files
 		open FILE, "<", $file or die $!;
@@ -419,7 +377,7 @@ sub createPemFromKeyCRT    # ($keyfile,$crtfile,$certautfile,$tmpdir)
 		# Close this particular file.
 		close FILE;
 	}
-	open $pemhandler, ">", "$path/$pemfile" or die $!;
+	open my $pemhandler, ">", "$path/$pemfile" or die $!;
 
 	# Write the buffer into the output file.
 	print $pemhandler $buff;
