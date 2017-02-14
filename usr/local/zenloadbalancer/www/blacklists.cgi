@@ -864,12 +864,11 @@ sub getBLParam
 
 	if ( !$key )
 	{
-		$output   = $fileHandle->{ $listName };
-		$output->{ 'name' }  	= $listName;
-		$output->{ 'source' }	= &getBLIpList( $listName );
+		$output               = $fileHandle->{ $listName };
+		$output->{ 'name' }   = $listName;
+		$output->{ 'source' } = &getBLIpList( $listName );
 		my @aux = split ( ' ', $fileHandle->{ $listName }->{ 'farms' } );
 		$output->{ 'farms' } = \@aux;
-		
 	}
 	elsif ( $key eq 'source' )
 	{
@@ -880,13 +879,21 @@ sub getBLParam
 		if ( exists $fileHandle->{ $listName } )
 		{
 			$output = $fileHandle->{ $listName }->{ $key };
-			
-			if ( $key eq 'farms' && $output )
+
+			if ( $key eq 'farms' )
 			{
-				my @aux = split ( ' ', $output );
-				$output = \@aux;
+				if ( $output )
+				{
+					my @aux = split ( ' ', $output );
+					$output = \@aux;
+				}
+				else
+				{
+					$output = [];
+				}
 			}
 		}
+
 		# don't exist that list
 		else
 		{
@@ -894,7 +901,7 @@ sub getBLParam
 			$output = -1;
 		}
 	}
-	
+
 	return $output;
 }
 
