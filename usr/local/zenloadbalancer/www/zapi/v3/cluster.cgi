@@ -745,13 +745,7 @@ sub get_cluster_nodes_status
 		{
 			next if $node_name eq '_';
 
-			my $ip;
-
-			if ( $node_name ne $localhost )
-			{
-				$ip = $cl_conf->{ $node_name }->{ ip };
-			}
-
+			my $ip = $cl_conf->{ $node_name }->{ ip };
 			my $node = &getZClusterNodeStatusDigest( $ip );
 
 			#~ my $if_ref = getSystemInterface( $maint_if );
