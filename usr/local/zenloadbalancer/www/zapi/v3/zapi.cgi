@@ -285,7 +285,7 @@ sub POST($$)
 	if ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/json' )
 	{
 		$input_ref = eval { decode_json( $data ) };
-		&zenlog( "json: " . Dumper $input_ref );
+		&zenlog( "json: " . Dumper $input_ref ) if &debug;
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
 	{
@@ -322,7 +322,7 @@ sub PUT($$)
 	if ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/json' )
 	{
 		$input_ref = eval { decode_json( $data ) };
-		&zenlog( "json: " . Dumper $input_ref );
+		&zenlog( "json: " . Dumper $input_ref ) if &debug;
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
 	{
@@ -573,7 +573,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 	&zenlog( "STATUS: $self->{ code }" ) if &debug;
 	if ( ref $self->{ body } eq 'HASH' )
 	{
-		&zenlog( "MESSAGE: $self->{ body }->{ message }" )
+		&zenlog( "Error Message: $self->{ body }->{ message }" )
 		  if ( exists $self->{ body }->{ message } );
 	}
 	#~ &zenlog( "MEMORY: " . &getMemoryUsage );
@@ -587,7 +587,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 #
 #########################################
 
-&zenlog( ">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<" );
+&zenlog( ">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<" ) if &debug;
 #~ &zenlog( "HTTP HEADERS: " . join ( ', ', $q->http() ) );
 #~ &zenlog( "HTTP_AUTHORIZATION: <$ENV{HTTP_AUTHORIZATION}>" )
   #~ if exists $ENV{ HTTP_AUTHORIZATION };
@@ -610,8 +610,8 @@ my $put_data  = $q->param( 'PUTDATA' );
 #~ &zenlog("CGI OBJECT: " . Dumper $q );
 #~ &zenlog("CGI VARS: " . Dumper $q->Vars() );
 #~ &zenlog("PERL ENV: " . Dumper \%ENV );
-&zenlog( "CGI POST DATA: " . $post_data ) if $post_data;
-&zenlog( "CGI PUT DATA: " . $put_data )   if $put_data;
+&zenlog( "CGI POST DATA: " . $post_data ) if $post_data && &debug;
+&zenlog( "CGI PUT DATA: " . $put_data )   if $put_data && &debug;
 
 ################################################################################
 #
