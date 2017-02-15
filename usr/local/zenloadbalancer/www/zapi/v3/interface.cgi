@@ -1123,9 +1123,14 @@ sub get_interfaces # ()
 			#~ ipv     => $if_ref->{ ip_v },
 		  };
 		  
-		  $if_conf->{ is_cluster } = 'true' if $cluster_if && $cluster_if eq $if_ref->{ name };
+		 if ( $if_ref->{ type } eq 'nic' )
+		{
+			$if_conf->{ is_slave } =
+			( grep { $$if_ref{ name } eq $_ } &getAllBondsSlaves ) ? 'true' : 'false';
+		}
+		$if_conf->{ is_cluster } = 'true' if $cluster_if && $cluster_if eq $if_ref->{ name };
 		  
-		  push @output_list, $if_conf;
+		push @output_list, $if_conf;
 	}
 
 	my $body = {
