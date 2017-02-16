@@ -576,7 +576,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 		&zenlog( "Error Message: $self->{ body }->{ message }" )
 		  if ( exists $self->{ body }->{ message } );
 	}
-	#~ &zenlog( "MEMORY: " . &getMemoryUsage );
+	&zenlog( "MEMORY: " . &getMemoryUsage ) if &debug() > 2;
 
 	exit;
 }
