@@ -713,6 +713,7 @@ sub get_cluster_localhost_status
 	my $description = "Cluster status for localhost";
 
 	my $node = &getZClusterNodeStatusDigest();
+	$node->{ name } = &getHostname();
 
 	my $body = {
 				 description => $description,
@@ -725,6 +726,7 @@ sub get_cluster_localhost_status
 sub get_cluster_nodes_status
 {
 	my $description = "Cluster nodes status";
+	my $localhost = &getHostname();
 	my @cluster;
 
 	if ( ! &getZClusterStatus() )
@@ -733,13 +735,13 @@ sub get_cluster_nodes_status
 					 role    => 'not configured',
 					 status  => 'not configured',
 					 message => 'Cluster not configured',
+					 name    => $localhost,
 		};
 		push @cluster, $node;
 	}
 	else
 	{
 		my $cl_conf = &getZClusterConfig();
-		my $localhost = &getHostname();
 
 		for my $node_name ( sort keys %{ $cl_conf } )
 		{
