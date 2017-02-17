@@ -762,7 +762,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 				&setDOSCreateRule( $rule, $farmname );
 			}
 		}
-		
+
 		# Success
 		my $body = {
 			description => "Modify farm $farmname",

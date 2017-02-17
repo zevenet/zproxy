@@ -146,8 +146,8 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 		elsif ( $json_obj->{ interfacevip } =~ /^[a-zA-Z0-9.]+/ )
 		{
 			my @fvip = split ( " ", $json_obj->{ interfacevip } );
-			my $fdev = @fvip[0];
-			my $vip  = @fvip[1];
+			my $fdev = $fvip[0];
+			my $vip  = $fvip[1];
 
 			if ( $fdev eq "" )
 			{
@@ -194,6 +194,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 	{
 		&runFarmStop( $farmname, "true" );
 		&runFarmStart( $farmname, "true" );
+		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 	}
 
 	# Check errors and print JSON

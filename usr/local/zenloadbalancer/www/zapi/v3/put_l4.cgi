@@ -405,20 +405,13 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		}
 	}
 
-	# Restart Farm
-	if ( $restart_flag eq "true" && $initialStatus ne 'down' )
-	{
-		&runFarmStop( $farmname, "true" );
-		&runFarmStart( $farmname, "true" );
-	}
-
 	# Check errors and print JSON
 	if ( $error ne "true" )
 	{
 		&zenlog(
 				  "ZAPI success, some parameters have been changed in farm $farmname." );
 
-		if ( &getFarmStatus( $farmname ) )
+		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
 			# update the ipds rule applied to the farm
 			if ( !$farmname_old )
@@ -440,6 +433,8 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 					&setDOSCreateRule( $rule, $farmname );
 				}
 			}
+
+			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 		}
 
 		# Success

@@ -78,6 +78,8 @@ sub farm_actions # ( $json_obj, $farmname )
 		{
 			&zenlog(
 					  "ZAPI success, the action stop has been established in farm $farmname." );
+
+			&runZClusterRemoteManager( 'farm', 'stop', $farmname );
 		}
 	}
 
@@ -102,7 +104,10 @@ sub farm_actions # ( $json_obj, $farmname )
 		{
 			&zenlog(
 					 "ZAPI success, the action start has been established in farm $farmname." );
+
+			&runZClusterRemoteManager( 'farm', 'start', $farmname );
 		}
+
 	}
 
 	if ( $action eq "restart" )
@@ -137,6 +142,8 @@ sub farm_actions # ( $json_obj, $farmname )
 			&setFarmNoRestart( $farmname );
 			&zenlog(
 				   "ZAPI success, the action restart has been established in farm $farmname." );
+
+			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 		}
 		else
 		{

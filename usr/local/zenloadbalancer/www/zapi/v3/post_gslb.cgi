@@ -95,7 +95,11 @@ sub new_farm_zone # ( $json_obj, $farmname )
 		);
 
 		# Success
-		&runFarmReload( $farmname );
+		if ( &getFarmStatus( $farmname ) eq 'up' )
+		{
+			&runFarmReload( $farmname );
+			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+		}
 
 		my $body = {
 					 description => "New zone " . $json_obj->{ id },
@@ -297,7 +301,12 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 		);
 
 		# Success
-		&runFarmReload( $farmname );
+		if ( &getFarmStatus( $farmname ) eq 'up' )
+		{
+			&runFarmReload( $farmname );
+			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+		}
+
 		$json_obj->{ ttl } = undef if ! $json_obj->{ ttl };
 
 		my $message = "Resource added";

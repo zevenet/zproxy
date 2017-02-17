@@ -323,6 +323,12 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 					 message     => $message
 		};
 
+		if ( &getFarmStatus( $farmname ) eq 'up' )
+		{
+			&setFarmRestart( $farmname );
+			$body->{ status } = 'needed restart';
+		}
+
 		&httpResponse({ code => 200, body => $body });
 	}
 	else
@@ -382,6 +388,12 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 						 success     => "true",
 						 message     => $message
 			};
+
+			if ( &getFarmStatus( $farmname ) eq 'up' )
+			{
+				&setFarmRestart( $farmname );
+				$body->{ status } = 'needed restart';
+			}
 
 			&httpResponse({ code => 200, body => $body });
 		}

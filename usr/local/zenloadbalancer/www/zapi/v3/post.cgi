@@ -184,6 +184,8 @@ sub new_farm    # ( $json_obj )
 					 params      => $out_p,
 		};
 
+		&runZClusterRemoteManager( 'farm', 'start', $json_obj->{ farmname } );
+
 		&httpResponse( { code => 201, body => $body } );
 	}
 }
@@ -340,6 +342,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 						 },
 						 message => $message,
 			};
+
+			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 
 			&httpResponse( { code => 201, body => $body } );
 		}
@@ -501,6 +505,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 				},
 				message => $message,
 			};
+
+			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 
 			&httpResponse( { code => 201, body => $body } );
 		}

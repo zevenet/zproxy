@@ -74,7 +74,11 @@ sub delete_zone # ( $farmname, $zone )
 		&zenlog( "ZAPI success, the zone $zone in farm $farmname has been deleted." );
 
 		# Success
-		&runFarmReload( $farmname );
+		if ( &getFarmStatus( $farmname ) eq 'up' )
+		{
+			&runFarmReload( $farmname );
+			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+		}
 
 		my $message = "The zone $zone in farm $farmname has been deleted.";
 		my $body = {
@@ -187,7 +191,12 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 		);
 
 		# Success
-		&runFarmReload( $farmname );
+		if ( &getFarmStatus( $farmname ) eq 'up' )
+		{
+			&runFarmReload( $farmname );
+			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+		}
+
 		#~ my $message = "The resource with id $resource in the zone $zone of the farm $farmnamehas been deleted.";
 		my $message = "Resource removed";
 		my $body = {

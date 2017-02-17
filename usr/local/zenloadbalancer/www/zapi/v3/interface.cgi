@@ -141,6 +141,8 @@ sub new_vini # ( $json_obj )
 	if ( !$@ )
 	{
 		# Success
+		&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
+
 		my $body = {
 					 description => $description,
 					 params      => {
@@ -803,6 +805,9 @@ sub delete_interface_virtual # ( $virtual )
 	if ( ! $@ )
 	{
 		# Success
+		&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
+		&runZClusterRemoteManager( 'interface', 'delete', $if_ref->{ name } );
+
 		my $message = "The virtual interface $virtual has been deleted.";
 		my $body = {
 					 description => $description,
@@ -1997,6 +2002,8 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 
 			&httpResponse({ code => 400, body => $body });
 		}
+
+		&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
 	}
 	elsif ( $json_obj->{action} eq "down" )
 	{
@@ -2014,6 +2021,8 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 
 			&httpResponse({ code => 400, body => $body });
 		}
+
+		&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
 	}
 	else
 	{
@@ -2409,6 +2418,8 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 
 	# No errors found
 	eval {
+		&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
+
 		# Delete old IP and Netmask from system to replace it
 		die if &delIp( $$if_ref{name}, $$if_ref{addr}, $$if_ref{mask} );
 
@@ -2433,6 +2444,8 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 	if ( ! $@ )
 	{
 		# Success
+		&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
+
 		my $body = {
 					 description => $description,
 					 params      => $json_obj,

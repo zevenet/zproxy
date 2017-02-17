@@ -523,6 +523,11 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 					 message => $message,
 		};
 
+		if ( &getFarmStatus( $farmname ) eq 'up' )
+		{
+			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+		}
+
 		&httpResponse({ code => 200, body => $body });
 	}
 	else
@@ -839,28 +844,19 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 		# Success
 		# Get farm status. If farm is down the restart is not required.
-		my $status = &getFarmStatus( $farmname);
-		my $body;
+		my $body = {
+					 description => $description,
+					 params      => $json_obj,
+					 message     => "Backend modified",
+		};
 
-		if ( $status eq "up" )
+		if ( &getFarmStatus( $farmname ) eq "up" )
 		{
-			$body = {
-				description => $description,
-				params      => $json_obj,
-				status      => 'needed restart',
-				info =>
-				  "There're changes that need to be applied, stop and start farm to apply them!"
-			};
-		}
-		if ( $status eq "down" )
-		{
-			$body = {
-					  description => "Modify backend $id_server in farm $farmname",
-					  params      => $json_obj,
-			};
+			$body->{ status } = 'needed restart';
+			$body->{ info } =
+			  "There're changes that need to be applied, stop and start farm to apply them!";
 		}
 
-		$body->{ message } = "Backend modified";
 		&httpResponse({ code => 200, body => $body });
 	}
 	else
@@ -1028,7 +1024,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 	my $errormsg;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 
@@ -1038,7 +1035,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 					 message     => $errormsg
 		};
 
-		&httpResponse({ code => 404, body => $body });
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	# validate FARM TYPE
@@ -1392,17 +1389,16 @@ sub modify_services # ( $json_obj, $farmname, $service )
 	}
 }
 
-
-
 sub move_services
 {
 	my ( $json_obj, $farmname, $service ) = @_;
+
 	my $errormsg;
 	my @services = &getFarmServices( $farmname );
 	my $services_num = scalar @services;
 	my $description = "Move service";
 	my $moveservice;
-	
+
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 ) {
 		# Error
@@ -1425,20 +1421,21 @@ sub move_services
 		};
 		&httpResponse({ code => 404, body => $body });
 	}
-	
+
 	# Move services
 	else
 	{
-		$errormsg = &getValidOptParams ( $json_obj, [ "position" ] );
-		
-		if ( ! $errormsg )
+		$errormsg = &getValidOptParams( $json_obj, ["position"] );
+
+		if ( !$errormsg )
 		{
-			if ( ! &getValidFormat ( 'service_position', $json_obj->{ 'position' } ) )
+			if ( !&getValidFormat( 'service_position', $json_obj->{ 'position' } ) )
 			{
 				$errormsg = "Error in service position format.";
 			}
-			else{
-				my $srv_position = &getHTTPServicePosition ( $farmname, $service );
+			else
+			{
+				my $srv_position = &getHTTPServicePosition( $farmname, $service );
 				if ( $srv_position == $json_obj->{ 'position' } )
 				{
 					$errormsg = "The service already is in required position.";
@@ -1447,6 +1444,7 @@ sub move_services
 				{
 					$errormsg = "The required position is bigger than number of services.";
 				}
+
 				# select action
 				elsif ( $srv_position > $json_obj->{ 'position' } )
 				{
@@ -1456,8 +1454,8 @@ sub move_services
 				{
 					$moveservice = "down";
 				}
-				
-				if ( ! $errormsg )
+
+				if ( !$errormsg )
 				{
 					# stopping farm
 					my $farm_status = &getFarmStatus( $farmname );
@@ -1469,55 +1467,58 @@ sub move_services
 						}
 						else
 						{
-							&zenlog ("Farm stopped successful.");
+							&zenlog( "Farm stopped successful." );
 						}
 					}
 					if ( !$errormsg )
 					{
 						# move service until required position
 						while ( $srv_position != $json_obj->{ 'position' } )
-						{	
+						{
 							#change configuration file
 							&moveServiceFarmStatus( $farmname, $moveservice, $service );
 							&moveService( $farmname, $moveservice, $service );
-							
-							$srv_position = &getHTTPServicePosition ( $farmname, $service );
+
+							$srv_position = &getHTTPServicePosition( $farmname, $service );
 						}
-						
+
 						# start farm if his status was up
 						if ( $farm_status eq 'up' )
 						{
 							if ( &runFarmStart( $farmname, "true" ) == 0 )
 							{
 								&setFarmHttpBackendStatus( $farmname );
-								&zenlog ( "$service was moved successful." );
+								&zenlog( "$service was moved successful." );
 							}
 							else
 							{
 								$errormsg = "The $farmname farm hasn't been restarted";
 							}
 						}
-							
-						if  ( ! $errormsg )
+
+						if ( !$errormsg )
 						{
 							$errormsg = "$service was moved successful.";
-							my $body = { description => $description, params => $json_obj, message => $errormsg,	};
-							&httpResponse({ code => 200, body => $body });
+
+							if ( &getFarmStatus( $farmname ) eq 'up' )
+							{
+								&runFarmReload( $farmname );
+								&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+							}
+
+							my $body =
+							  { description => $description, params => $json_obj, message => $errormsg, };
+							&httpResponse( { code => 200, body => $body } );
 						}
 					}
 				}
 			}
 		}
 	}
+
 	my $body =
-		{ description => $description, error => "true", message => $errormsg };
+	  { description => $description, error => "true", message => $errormsg };
 	&httpResponse( { code => 400, body => $body } );
-	
 }
 
-
-
-
-
 1;
-

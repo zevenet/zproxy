@@ -53,19 +53,21 @@ sub delete_farm # ( $farmname )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	my $stat = &runFarmStop( $farmname, "true" );
-	if ( $stat == 0 )
+	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
-		# Success
+		&runFarmStop( $farmname, "true" );
+		&runZClusterRemoteManager( 'farm', 'stop', $farmname );
 	}
 
-	$stat = &runFarmDelete( $farmname );
+	my $stat = &runFarmDelete( $farmname );
 
 	if ( $stat == 0 )
 	{
 		&zenlog( "ZAPI success, the farm $farmname has been deleted." );
 
 		# Success
+		&runZClusterRemoteManager( 'farm', 'delete', $farmname );
+
 		my $message = "The Farm $farmname has been deleted.";
 		my $body = {
 					 description => "Delete farm $farmname",
@@ -304,6 +306,8 @@ sub delete_backend # ( $farmname, $id_server )
 			   "ZAPI success, the backend $id_server in farm $farmname has been deleted." );
 
 		# Success
+		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+
 		#~ my $message = "The backend with ID $id_server of the $farmname farm has been deleted.";
 		my $message = "Backend removed";
 
