@@ -12,16 +12,12 @@ fi
 
 # Check for binaries
 PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
-if [ -e "/usr/local/zenloadbalancer/www/index.cgi.${PERLVER}" ]; then
-	mv "/usr/local/zenloadbalancer/www/index.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/index.cgi"
-	rm /usr/local/zenloadbalancer/www/index.cgi.*
-fi
 if [ -e "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.${PERLVER}" ]; then
 	mv "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi"
 	rm /usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.*
 fi
-if [ -e "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.${PERLVER}" ]; then
-	mv "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi"
+if [ -e "/usr/local/zenloadbalancer/www/zapi/v3/zapi.cgi.${PERLVER}" ]; then
+	mv "/usr/local/zenloadbalancer/www/zapi/v3/zapi.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/zapi/v3/zapi.cgi"
 	rm /usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.*
 fi
 if [ -e "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer.${PERLVER}" ]; then
