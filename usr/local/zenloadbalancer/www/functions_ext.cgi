@@ -223,7 +223,7 @@ sub getMemoryUsage
 	my $mem_string = `grep RSS /proc/$$/status`;
 
 	chomp ( $mem_string );
-	$mem_string =~ s/:.\s+/:    /;
+	$mem_string =~ s/:.\s+/: /;
 
 	return $mem_string;
 }
