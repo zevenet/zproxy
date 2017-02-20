@@ -582,7 +582,7 @@ sub getBondList
 	close $bond_file;
 	chomp ( @bond_names );
 
-	my @bonds;
+	my @bonds = ();
 
 	for my $bond_name ( @bond_names )
 	{
