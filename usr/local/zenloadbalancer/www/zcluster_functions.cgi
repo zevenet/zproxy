@@ -1035,7 +1035,7 @@ sub pgrep
 	# return_code
 	my $rc = system("/usr/bin/pgrep $cmd >/dev/null");
 
-	&zenlog("$cmd not found running") if $rc;
+	&zenlog("$cmd not found running") if $rc && &debug();
 
 	return $rc;
 }
