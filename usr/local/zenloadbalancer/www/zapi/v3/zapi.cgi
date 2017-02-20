@@ -570,13 +570,21 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 	#~ &zenlog( "Response:$output<" ); # DEBUG
 	print $output;
 
-	&zenlog( "STATUS: $self->{ code }" ) if &debug;
-	if ( ref $self->{ body } eq 'HASH' )
+	if ( &debug )
 	{
-		&zenlog( "Error Message: $self->{ body }->{ message }" )
-		  if ( exists $self->{ body }->{ message } );
+		# log request if debug is enabled
+		my $req_msg = "STATUS: $self->{ code } REQUEST: $ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}";
+		# include memory usage if debug is 2 or higher
+		$req_msg .= " " . &getMemoryUsage() if &debug() > 1;
+		&zenlog( $req_msg );
+
+		# log error message on error.
+		if ( ref $self->{ body } eq 'HASH' )
+		{
+			&zenlog( "Error Message: $self->{ body }->{ message }" )
+			  if ( exists $self->{ body }->{ message } );
+		}
 	}
-	&zenlog( "MEMORY: " . &getMemoryUsage ) if &debug() > 2;
 
 	exit;
 }
@@ -587,7 +595,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 #
 #########################################
 
-&zenlog( ">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<" ) if &debug;
+#~ &zenlog( ">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<" ) if &debug;
 #~ &zenlog( "HTTP HEADERS: " . join ( ', ', $q->http() ) );
 #~ &zenlog( "HTTP_AUTHORIZATION: <$ENV{HTTP_AUTHORIZATION}>" )
   #~ if exists $ENV{ HTTP_AUTHORIZATION };
