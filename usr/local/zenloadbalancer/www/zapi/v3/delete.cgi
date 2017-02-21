@@ -419,10 +419,21 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 
 			&httpResponse({ code => 400, body => $body });
 		}
-		
+
+		# check if the backend id is available
 		my @backends = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
-		
-		if  ( ! grep ( /\s*$id_server\s=>\s/, @backends)  )
+		my $be_found;
+
+		if ( $type eq "gslb" )
+		{
+			$be_found = grep( /\s*$id_server\s=>\s/, @backends);
+		}
+		else
+		{
+			$be_found = grep { (split ( " ", $_ ))[1] == $id_server } @backends;
+		}
+
+		unless ( $be_found )
 		{
 			my $errormsg = "Could not find the requested backend.";
 			my $body = {
@@ -433,7 +444,6 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 	
 			&httpResponse({ code => 404, body => $body });
 		}
-		
 	}
 
 	my $status;
@@ -458,10 +468,16 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 		#~ my $message = "The backend with ID $id_server in the service $service of the farm $farmname has been deleted.";
 		my $message = "Backend removed";
 		my $body = {
-			   description => $description,
-			   success => "true",
-			   message => $message
-			};
+					 description => $description,
+					 success     => "true",
+					 message     => $message,
+		};
+
+		if ( &getFarmStatus( $farmname ) eq 'up' )
+		{
+			$body->{ status } = "needed restart";
+			&setFarmRestart( $farmname );
+		}
 
 		&httpResponse({ code => 200, body => $body });
 	}
