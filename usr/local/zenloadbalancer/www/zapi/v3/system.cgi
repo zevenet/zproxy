@@ -18,30 +18,6 @@ require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
 require "/usr/local/zenloadbalancer/www/notifications.cgi";
 
-_dns:
-
-#**
-#  @api {get} /system/dns Request dns
-#  @apiGroup SYSTEM
-#  @apiDescription Get description of dns
-#  @apiName GetDns
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Post dns",
-#   "params" : {
-#      "primary" : "192.168.0.5",
-#      "secundary" : "8.8.8.8"
-#   }
-#}
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/dns
-#
-#@apiSampleRequest off
-#**
 # GET /system/dns
 sub get_dns
 {
@@ -52,35 +28,6 @@ sub get_dns
 			 { code => 200, body => { description => $description, params => $dns } } );
 }
 
-#####Documentation of POST dns####
-#**
-#  @api {post} /system/dns Modify the dns
-#  @apiGroup SYSTEM
-#  @apiName PostDns
-#  @apiDescription Modify primary and secondary dns
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccess	{string}	primary			DNS IP
-# @apiSuccess	{string}	secondary		DNS IP
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Post dns",
-#   "params" : {
-#      "primary" : "8.8.4.4",
-#      "secundary" : "8.8.8.8"
-#   }
-#}
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"secondary":"8.8.8.8","primary":"8.8.4.4"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/dns
-#
-# @apiSampleRequest off
-#
-#**
 #  POST /system/dns
 sub set_dns
 {
@@ -124,30 +71,6 @@ sub set_dns
 	&httpResponse( { code => 400, body => $body } );
 }
 
-_ssh:
-
-#**
-#  @api {get} /system/ssh Request ssh
-#  @apiGroup SYSTEM
-#  @apiDescription Get description of ssh
-#  @apiName GetSsh
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Get ssh",
-#   "params" : {
-#      "listen" : "*",
-#      "port" : "22"
-#   }
-#}
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/ssh
-#
-#@apiSampleRequest off
-#**
 # GET /system/ssh
 sub get_ssh
 {
@@ -158,37 +81,6 @@ sub get_ssh
 			 { code => 200, body => { description => $description, params => $ssh } } );
 }
 
-#####Documentation of POST ssh####
-#**
-#  @api {post} /system/ssh Modify the ssh settings
-#  @apiGroup SYSTEM
-#  @apiName PostSsh
-#  @apiDescription Modify the port and ip mask where is listening ssh server
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess	{Number}	port		Port where listen ssh server.
-# @apiSuccess	{string}		listen	IP where is listening the ssh server. Use '*' character to listen in all IPs
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Post ssh",
-#   "params" : {
-#      "listen" : "192.2.0.5",
-#      "port" : "25"
-#   }
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"port":"25","listen":"192.2.0.5"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/ssh
-#
-# @apiSampleRequest off
-#
-#**
 #  POST /system/ssh
 sub set_ssh
 {
@@ -246,33 +138,6 @@ sub set_ssh
 	&httpResponse( { code => 400, body => $body } );
 }
 
-_snmp:
-
-#**
-#  @api {get} /system/snmp Request snmp
-#  @apiGroup SYSTEM
-#  @apiDescription Get description of snmp
-#  @apiName GetSnmp
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Get snmp",
-#   "params" : {
-#      "community" : "public",
-#      "ip" : "192.168.100.241",
-#      "port" : "161",
-#      "scope" : "0.0.0.0/0",
-#      "status" : "true"
-#   }
-#}
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/snmp
-#
-#@apiSampleRequest off
-#**
 # GET /system/snmp
 sub get_snmp
 {
@@ -285,45 +150,6 @@ sub get_snmp
 		   { code => 200, body => { description => $description, params => \%snmp } } );
 }
 
-#####Documentation of POST snmp####
-#**
-#  @api {post} /system/snmp Modify the snmp server settings
-#  @apiGroup SYSTEM
-#  @apiName PostSnmp
-#  @apiDescription Modify snmp server settings
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess	{string}		status		Enable or disable snmp service. The options are true or false.
-# @apiSuccess	{Number}	port			Port where listen snmp server.
-# @apiSuccess	{scope}		ip				snmp ip
-# @apiSuccess	{string}		scope		snmp scope
-# @apiSuccess	{string}		community 	Id to access to a device stats.
-#
-#
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Post snmp",
-#   "params" : {
-#      "community" : "public",
-#      "ip" : "192.168.100.240",
-#      "port" : "656",
-#      "scope" : "0.0.0.0/0",
-#      "status" : "true"
-#   }
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"status":"true", "port":"656"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/snmp
-#
-# @apiSampleRequest off
-#
-#**
 #  POST /system/snmp
 sub set_snmp
 {
@@ -413,49 +239,6 @@ sub set_snmp
 	&httpResponse( { code => 400, body => $body } );
 }
 
-_license:
-# DOWNLOAD
-# GET /system/license
-#~ sub get_license
-#~ {
-	#~ my $description = "Get license";
-	#~ my $licenseFile = &getGlobalConfiguration( 'licenseFile' );
-	#~ open ( my $license_fh, '<', "$licenseFile" );
-	#~ if ( $license_fh )
-	#~ {
-		#~ my $cgi = &getCGI();
-		#~ print $cgi->header(
-							#~ -type            => 'application/x-download',
-							#~ -attachment      => 'license',
-							#~ 'Content-length' => -s "$licenseFile",
-		#~ );
-		#~ binmode $license_fh;
-		#~ print while <$license_fh>;
-		#~ close $license_fh;
-		#~ exit;
-	#~ }
-	#~ else
-	#~ {
-		#~ my $errormsg = "Don't find license.";
-		#~ my $body =
-		  #~ { description => $description, error => "true", message => $errormsg };
-		#~ &httpResponse( { code => 404, body => $body } );
-	#~ }
-#~ }
-
-#**
-#  @api {get} /system/license Request license
-#  @apiGroup SYSTEM
-#  @apiDescription Get license
-#  @apiName GetLicense
-#  @apiVersion 3.0.0
-#
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/license
-#
-#@apiSampleRequest off
-#**
 # show license
 sub get_license
 {
@@ -490,28 +273,6 @@ sub get_license
 	}
 }
 
-_ntp:
-
-#**
-#  @api {get} /system/ntp Request ntp
-#  @apiGroup SYSTEM
-#  @apiDescription Get description of ntp
-#  @apiName GetNtp
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Get ntp",
-#   "params" : "pool.ntp.or"
-#}
-#
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/ntp
-#
-#@apiSampleRequest off
-#**
 # GET /system/ntp
 sub get_ntp
 {
@@ -522,34 +283,6 @@ sub get_ntp
 			 { code => 200, body => { description => $description, params => { "server" => $ntp } } } );
 }
 
-#####Documentation of POST ntp####
-#**
-#  @api {post} /system/ntp Modify the ntp server settings
-#  @apiGroup SYSTEM
-#  @apiName PostSnmp
-#  @apiDescription Modify ntp server settings
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess	{string}		server		server where is allocated ntp service
-#
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Post ntp",
-#   "params" : "pool.ntp.org"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"status":"true", "port":"656"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/ntp
-#
-# @apiSampleRequest off
-#
-#**
 #  POST /system/ntp
 sub set_ntp
 {
@@ -586,34 +319,6 @@ sub set_ntp
 	&httpResponse( { code => 400, body => $body } );
 }
 
-_http:
-
-#**
-#  @api {get} /system/http Request http
-#  @apiGroup SYSTEM
-#  @apiDescription Get description of http
-#  @apiName GetHttp
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Get http",
-#   "params" : {
-#      "interface" : {
-#         "dev" : "eth0",
-#         "ip" : "192.168.100.240"
-#      },
-#      "port" : "443"
-#   }
-#}
-#
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/http
-#
-#@apiSampleRequest off
-#**
 # GET /system/http
 sub get_http
 {
@@ -648,37 +353,6 @@ sub get_http
 			{ code => 200, body => { description => $description, params => $http } } );
 }
 
-#####Documentation of POST http####
-#**
-#  @api {post} /system/http Modify the parameters to connect with http server
-#  @apiGroup SYSTEM
-#  @apiName PostHttp
-#  @apiDescription Modify http server settings
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess	{string}			ip			this ip has to exist in some interface. This interface can't be virtual. Set '*' character if you want to listen in all available interfaces
-# @apiSuccess	{number}		port		port to connect with http service
-#
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#	"description" : "Post http",
-#	"params" : {
-#		"ip" : "192.168.6.32",
-#		"port" : "444"
-#	}
-#}
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"ip":"192.168.6.32", "port":"444"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/http
-#
-# @apiSampleRequest off
-#
-#**
 # POST /system/http
 sub set_http
 {
@@ -732,39 +406,6 @@ sub set_http
 	&httpResponse( { code => 400, body => $body } );
 }
 
-_logs:
-#**
-#  @api {get} /system/backup Request existent backups
-#  @apiGroup SYSTEM
-#  @apiDescription Get existent backups
-#  @apiName GetBackup
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Get backups",
-#   "params" : [
-#      {
-#         "date" : "Fri Nov 18 11:24:13 2016",
-#         "file" : "back_2"
-#      },
-#      {
-#         "date" : "Fri Nov 18 12:40:06 2016",
-#         "file" : "back_1"
-#      },
-#      {
-#         "date" : "Thu Nov 17 18:14:47 2016",
-#         "file" : "first_conf"
-#      }
-#   ]
-#}
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/backup
-#
-#@apiSampleRequest off
-#**
 #	GET	/system/backup
 sub get_logs
 {
@@ -775,24 +416,6 @@ sub get_logs
 		 { code => 200, body => { description => $description, params => $backups } } );
 }
 
-#**
-#  @api {get} /system/logs/LOG 	Dowload a log file
-#  @apiGroup SYSTEM
-#  @apiDescription Download a log file
-#  @apiParam {String} log  file to download
-#  @apiName GetLogsDownload
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{{TODO}}
-#
-#@apiExample {curl} Example Usage:
-#	curl -o <PATH/FILE.tar.gz> --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/logs/LOG
-#
-#@apiSampleRequest off
-#**
 #	GET	/system/logs/LOG
 sub download_logs
 {
@@ -822,37 +445,6 @@ sub download_logs
 	&httpResponse( { code => 404, body => $body } );
 }
 
-_users:
-
-#**
-#  @api {get} /system/users Request existent users
-#  @apiGroup SYSTEM
-#  @apiDescription Get existent users
-#  @apiName GetUsers
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Get users",
-#   "params" : [
-#      {
-#         "status" : "true",
-#         "user" : "root"
-#      },
-#      {
-#         "status" : "true",
-#         "user" : "zapi"
-#      }
-#   ]
-#}
-#
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/users
-#
-#@apiSampleRequest off
-#**
 #	GET	/system/users
 sub get_all_users
 {
@@ -864,28 +456,6 @@ sub get_all_users
 		  { code => 200, body => { description => $description, params => \@users } } );
 }
 
-#**
-#  @api {get} /system/users/zapi		Request zapi settings
-#  @apiGroup SYSTEM
-#  @apiDescription Get the zapi settings
-#  @apiName GetUsersZapi
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Zapi user configuration.",
-#   "params" : {
-#      "key" : "root",
-#      "status" : "true"
-#   }
-#}
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/users/zapi
-#
-#@apiSampleRequest off
-#**
 #	GET	/system/users/zapi
 sub get_user
 {
@@ -909,38 +479,6 @@ sub get_user
 	&httpResponse( { code => 404, body => $body } );
 }
 
-#####Documentation of POST zapi configuration####
-#**
-#  @api {post} /system/users/zapi Modify the zapi parameters
-#  @apiGroup SYSTEM
-#  @apiName PostUsersZapi
-#  @apiDescription Modify zapi settings
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccess	{string}			key			key to connect with zapi
-# @apiSuccess	{string}			newpassword			new password for the zapi user
-# @apiSuccess	{string}			status			enable or disable the zapi. The options are: enable or disable
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Zapi user settings.",
-#   "message" : "Settings was changed successful.",
-#   "params" : {
-#      "key" : "yPh2vM20SyQudI9azEuPoHVB3lt35FqSTLSdDC7hYB98fIUH44GIQaurQeYoI8y6j",
-#      "newpassword" : "brla23v",
-#      "status" : "enable"
-#   }
-#}
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#         -d '{"key":"randomkey","newpassword":"brla23v","status":"enable"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/users/zapi
-#
-# @apiSampleRequest off
-#
-#**
 # POST /system/users/zapi
 sub set_user_zapi
 {
@@ -1003,36 +541,6 @@ sub set_user_zapi
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of POST user configuration####
-#**
-#  @api {post} /system/users/zapi Modify the user password
-#  @apiGroup SYSTEM
-#  @apiName PostUsersZapi
-#  @apiDescription Modify user password
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccess	{string}			newpassword		new password for the user
-# @apiSuccess	{string}			password				current password for the user
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "User settings.",
-#   "message" : "Settings was changed succesful.",
-#   "params" : {
-#      "newpassword" : "passwd12e",
-#      "password" : "admin"
-#   }
-#}
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#         -d '{"newpassword" : "passwd12e", "password" : "admin"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/users/root
-#
-# @apiSampleRequest off
-#
-#**
 # POST /system/users/root
 sub set_user
 {
@@ -1088,40 +596,6 @@ sub set_user
 	&httpResponse( { code => 400, body => $body } );
 }
 
-_backup:
-
-#**
-#  @api {get} /system/backup Request existent backups
-#  @apiGroup SYSTEM
-#  @apiDescription Get existent backups
-#  @apiName GetBackup
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Get backups",
-#   "params" : [
-#      {
-#         "date" : "Fri Nov 18 11:24:13 2016",
-#         "file" : "back_2"
-#      },
-#      {
-#         "date" : "Fri Nov 18 12:40:06 2016",
-#         "file" : "back_1"
-#      },
-#      {
-#         "date" : "Thu Nov 17 18:14:47 2016",
-#         "file" : "first_conf"
-#      }
-#   ]
-#}
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/backup
-#
-#@apiSampleRequest off
-#**
 #	GET	/system/backup
 sub get_backup
 {
@@ -1133,32 +607,6 @@ sub get_backup
 		 { code => 200, body => { description => $description, params => $backups } } );
 }
 
-#####Documentation of POST backup####
-#**
-#  @api {post} /system/backup Create a backup of configuration files
-#  @apiGroup SYSTEM
-#  @apiName PostBackup
-#  @apiDescription Create a backup of configuration files
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccess	{string}			name			name for backup
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Create a backups",
-#   "message" : "Backup zen_bak was created successful.",
-#   "params" : "zen_bak"
-#}
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"name":"zen_bak"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/backup
-#
-# @apiSampleRequest off
-#
-#**
 #	POST  /system/backup
 sub create_backup
 {
@@ -1199,24 +647,6 @@ sub create_backup
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#**
-#  @api {get} /system/backup/BACKUP Download a backup
-#  @apiGroup SYSTEM
-#  @apiDescription Download a backup
-#  @apiName GetBackupDownload
-#  @apiParam {String} backup  Backup name to download
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{{TODO}}
-#
-#@apiExample {curl} Example Usage:
-#	curl -o <PATH/FILE.tar.gz> --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/backup/BACKUP
-#
-#@apiSampleRequest off
-#**
 #	GET	/system/backup/BACKUP
 sub download_backup
 {
@@ -1245,35 +675,6 @@ sub download_backup
 	&httpResponse( { code => 404, body => $body } );
 }
 
-#####Documentation of PUT snmp####
-#**
-#  @api {post} /system/backup/BACKUP Upload a zen backup
-#  @apiGroup SYSTEM
-#  @apiName PutBackup
-#  @apiDescription Upload a backup
-#  @apiParam {String} backup  Name to save the backup
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccess	{string}		data-binary 	backup file to upload
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Upload a backup",
-#   "message" : "Backup backup_1 was created successful.",
-#   "params" : "backup_1"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X PUT -H 'Content-Type: text/plain' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        --data-binary @/opt/backup.tar.gz https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/backup/BACKUP
-#
-# @apiSampleRequest off
-#
-#**
-# curl -kis -X PUT -H "ZAPI_KEY: 2bJUd" --tcp-nodelay -H 'Content-Type: text/gzip' https://192.168.101.20:444/zapi/v3/zapi.cgi/system/backup/backup_1 --data-binary @/opt/backup.tar.gz
 #	PUT	/system/backup/BACKUP
 sub upload_backup
 {
@@ -1315,31 +716,6 @@ sub upload_backup
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of DELETE a backup####
-#**
-#  @api {delete} /system/backup/BACKUP	Delete a backup from zen balancer
-#  @apiGroup SYSTEM
-#  @apiName DeleteBackup
-#  @apiParam	{String}	Backup	Backup name
-#  @apiDescription Delete a backup from balancer
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Delete backup backup_1'",
-#   "message" : "The list backup_1 has been deleted successful.",
-#   "success" : "true"
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X DELETE -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/backup/BACKUP
-#
-# @apiSampleRequest off
-#
-#**
 #	DELETE /system/backup/BACKUP
 sub del_backup
 {
@@ -1383,35 +759,6 @@ sub del_backup
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of POST apply a backup to the system####
-#**
-#  @api {post} /system/backup/BACKUP/action Apply a backup to the system
-#  @apiGroup SYSTEM
-#  @apiName PostBackupAction
-#  @apiParam {String} backup  Backup name to apply to system
-#  @apiDescription Apply a backup to the system
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccess	{string}		action		The action param only has the option: apply.
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Apply a backup to the system",
-#   "params" : {
-#      "action" : "apply"
-#   }
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		  -d '{"action":"apply"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/backup/BACKUP/action
-#
-# @apiSampleRequest off
-#
-#**
 #	POST /system/backup/BACKUP/actions
 sub apply_backup
 {
@@ -1454,37 +801,6 @@ sub apply_backup
 	&httpResponse( { code => 400, body => $body } );
 }
 
-_notifications:
-
-#**
-#  @api {get} /system/notifications/methods/METHOD Request method info
-#  @apiGroup SYSTEM
-#  @apiDescription Get description of method to send notifications
-#  @apiName GetNotificationsMethods
-#  @apiParam {String} method  type of method to send notifications. Only email available.
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Get notifications email methods",
-#   "params" : {
-#      "from" : "",
-#      "method" : "email",
-#      "password" : "******",
-#      "server" : "smtp.foo.bar",
-#      "tls" : "true",
-#      "to" : "admin@mail.com",
-#      "user" : "user@mail.com"
-#   }
-#}
-#
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/methods/email
-#
-#@apiSampleRequest off
-#**
 # GET /system/notifications/methods/METHOD
 sub get_notif_methods
 {
@@ -1497,45 +813,6 @@ sub get_notif_methods
 		 { code => 200, body => { description => $description, params => $methods } } );
 }
 
-#####Documentation of POST notification methods####
-#**
-#  @api {post} /system/notifications/methods/METHOD Modify the notification methods
-#  @apiGroup SYSTEM
-#  @apiName PostNotificationsMethods
-#  @apiParam {String} method  type method to send notifications. Only email available.
-#  @apiDescription Modify notification methods. Remember enable mail sends from less secure applications if it is necessary
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccess	{string}		server		SMTP server
-# @apiSuccess	{string}		user			user for the SMTP server
-# @apiSuccess	{string}		password		Password for the SMTP server
-# @apiSuccess	{string}		from		origin email direction
-# @apiSuccess	{string}		to				destine email direction
-# @apiSuccess	{boolean}	tls			Define if TLS
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Set notifications email methods",
-#   "params" : {
-#      "password" : "password",
-#      "server" : "smtp.foo.bar",
-#      "tls" : "true",
-#      "to" : "admin@mail.com",
-#      "user" : "user@mail.com"
-#   }
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#		curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		-d '{"tls":"true","server":"smtp.foo.bar","user":"user@mail.com", "password":"password", "to":"admin@mail.com"}'
-#		https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/methods/email
-#
-# @apiSampleRequest off
-#
-#**
 #  POST /system/notifications/methods/METHOD
 sub set_notif_methods
 {
@@ -1577,35 +854,6 @@ sub set_notif_methods
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#**
-#  @api {get} /system/notifications/alerts Request status of all alerts
-#  @apiGroup SYSTEM
-#  @apiDescription Get if alert status is enabled or disabled
-#  @apiName GetNotificationsAlertsStatus
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Get notifications alert status",
-#   "params" : [
-#      {
-#         "alert" : "backends",
-#         "status" : "enabled"
-#      },
-#      {
-#         "alert" : "cluster",
-#         "status" : "disabled"
-#      }
-#   ]
-#}
-#
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/alerts
-#
-#@apiSampleRequest off
-#**
 # GET /system/notifications/alerts
 sub get_notif_alert_status
 {
@@ -1625,31 +873,6 @@ sub get_notif_alert_status
 		 { code => 200, body => { description => $description, params => \@output } } );
 }
 
-#**
-#  @api {get} /system/notifications/alerts/ALERT Request alert info
-#  @apiGroup SYSTEM
-#  @apiDescription Get description of alert to send notifications
-#  @apiName GetNotificationsAlerts
-#  @apiParam {String} alert  type of alert to send notifications. Options are: backends or cluster
-#  @apiVersion 3.0.0
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Get notifications alert backends settings",
-#   "params" : {
-#      "avoidflappingtime" : "4",
-#      "prefix" : "[Backend notifications]",
-#      "status" : "enabled"
-#   }
-#}
-#
-#@apiExample {curl} Example Usage:
-#	curl --tlsv1  -k -X GET -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#	 https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/alerts/backends
-#
-#@apiSampleRequest off
-#**
 # GET /system/notifications/alerts/ALERT
 sub get_notif_alert
 {
@@ -1661,39 +884,6 @@ sub get_notif_alert
 		   { code => 200, body => { description => $description, params => $param } } );
 }
 
-#####Documentation of POST notification alerts####
-#**
-#  @api {post} /system/notifications/alerts/ALERT Modify alert settings
-#  @apiGroup SYSTEM
-#  @apiName PostNotificationsAlerts
-#  @apiParam {String} alert  type alert to configure. Value can be backends or cluster.
-#  @apiDescription Modify alert settings
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess	{number}	avoidflappingtime		During this time doesn't send notification if there are service flaps. Not available in cluster notifications
-# @apiSuccess	{string}		prefix			Prefix to add to the mail subject
-#
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Set notifications alert backends",
-#   "params" : {
-#      "avoidflappingtime" : 4,
-#      "prefix" : "[Backend notifications]"
-#   }
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		  -d '{"avoidflappingtime":4,"prefix":"[Backend notifications]"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/alerts/backends
-#
-# @apiSampleRequest off
-#
-#**
 #  POST /system/notifications/alerts/ALERT
 sub set_notif_alert
 {
@@ -1738,37 +928,6 @@ sub set_notif_alert
 	&httpResponse( { code => 400, body => $body } );
 }
 
-#####Documentation of POST notification alerts status####
-#**
-#  @api {post} /system/notifications/alerts/ALERT/action Modify alert status
-#  @apiGroup SYSTEM
-#  @apiName PostNotificationsAlertsActions
-#  @apiParam {String} alert  type alert to configure. Value can be backends or cluster.
-#  @apiDescription Modify alert status
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess	{string}		action		Enable or disable this type of alert. Options: enable or disable
-#
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Set notifications alert backends actions",
-#   "params" : {
-#      "action" : "enable"
-#   }
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X POST -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#		  -d '{"action":"enabled"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/system/notifications/alerts/backends/actions
-#
-# @apiSampleRequest off
-#
-#**
 #  POST /system/notifications/alerts/ALERT/actions
 sub set_notif_alert_actions
 {
@@ -1809,7 +968,6 @@ sub set_notif_alert_actions
 }
 
 
-
 sub send_test_mail
 {
 	my $json_obj    = shift;
@@ -1844,7 +1002,6 @@ sub send_test_mail
 	&httpResponse( { code => 400, body => $body } );
 	
 }
-
 
 
 sub get_supportsave
@@ -1889,7 +1046,6 @@ sub get_supportsave
 	}
 }
 
-
 # GET /system/version
 sub get_version
 {
@@ -1918,8 +1074,5 @@ sub get_version
 		}
 	);
 }
-
-
-
 
 1;

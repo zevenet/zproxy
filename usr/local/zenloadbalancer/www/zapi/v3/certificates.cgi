@@ -14,38 +14,6 @@
 
 my $CSR_KEY_SIZE = 2048;
 
-#**
-# @apiDefine Request Request
-#**
-
-#**
-# @apiDefine RequestParams Request parameters
-#**
-
-#**
-# @apiDefine ResponseParams Response parameters
-#**
-
-#**
-# @apiDefine Response Response
-#**
-
-#**
-# @apiDefine ResponseHeader Response Headers
-#**
-
-#**
-# @apiDefine RequestHeader Request Headers
-#**
-
-#**
-# @apiDefine URI URI variables
-#**
-
-#**
-# @apiDefine RequestPostData Request Post Data
-#**
-
 # GET /certificates
 sub certificates # ()
 {

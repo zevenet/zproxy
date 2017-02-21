@@ -2,53 +2,6 @@
 
 use strict;
 
-######### PUT GSLB
-#
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"newfarmname":"newFarmGSLB","vip":"178.62.126.152","vport":"53"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB
-#
-#
-#####Documentation of PUT GSLB####
-#**
-#  @api {put} /farms/<farmname> Modify a gslb Farm
-#  @apiGroup Farm Modify
-#  @apiName PutFarmGSLB
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiDescription Modify the params in a GSLB Farm
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess	{String}		newfarmname	The new Farm's name.
-# @apiSuccess	{Number}		vport			PORT of the farm, where is listening the virtual service.
-# @apiSuccess	{String}		vip			IP of the farm, where is listening the virtual service.
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Modify farm newFarmGSLB",
-#   "params" : [
-#      {
-#         "vip" : "178.62.126.152"
-#      },
-#      {
-#         "vport" : "53"
-#      },
-#      {
-#         "newfarmname" : "newFarmGSLB"
-#      }
-#   ]
-#}
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"vip":"178.62.126.152","vport":"53",
-#       "newfarmname":"newFarmGSLB"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/newFarmGSLB
-#
-# @apiSampleRequest off
-#
-#**
-
 sub modify_gslb_farm # ( $json_obj,	$farmname )
 {
 	my $json_obj = shift;
@@ -477,62 +430,6 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 }
 
 
-
-#
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"rname":"ww2","ttl":"8","type":"DYNA","rdata":"sev2","zone":"zone1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zones/zone1/resources/3
-#
-#####Documentation of PUT RESOURCES####
-#**
-#  @api {put} /farms/<farmname>/zones/<zoneid>/resources/<resourceid> Modify a gslb Resource
-#  @apiGroup Farm Modify
-#  @apiName PutResource
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiParam {Number} resourceid Resource ID, unique ID.
-#  @apiDescription Modify the params of a resource of a zone in a GSLB Farm
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess   {String}        zone                     It's the zone where the resource will be created.
-# @apiSuccess   {Number}	ttl		The Time to Live value for the current record.
-# @apiSuccess   {String}        type		DNS record type. The options are: NS, A, AAAA, CNAME, DYNA, SRV, PTR,NAPTR, TXT and MX.
-# @apiSuccess   {String}        rdata		It’s the real data needed by the record type.
-# @apiSuccess	{String}	rname		Resource's name.
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Modify resource 3 in farm FarmGSLB",
-#   "params" : [
-#      {
-#         "zone" : "zone1"
-#      },
-#      {
-#         "ttl" : "8"
-#      },
-#      {
-#         "type" : "DYNA"
-#      },
-#      {
-#         "rdata" : "sev2"
-#      },
-#      {
-#         "rname" : "www"
-#      }
-#   ]
-#}
-#
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"rname":"www","ttl":"8","type":"DYNA","rdata":"sev2",
-#       "zone":"zone1"}' https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones/zone1/resources/3
-#
-# @apiSampleRequest off
-#
-#**
-
 sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 {
 	my ( $json_obj, $farmname, $zone, $id_resource ) = @_;
@@ -786,45 +683,6 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	}
 }
 
-#
-# curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: MyIzgr8gcGEd04nIfThgZe0YjLjtxG1vAL0BAfST6csR9Hg5pAWcFOFV1LtaTBJYs" -d '{"defnamesv":"ns1"}' https://178.62.126.152:445/zapi/v1/zapi.cgi/farms/FarmGSLB/zones/zone1
-#
-#####Documentation of PUT ZONE####
-#**
-#  @api {put} /farms/<farmname>/zones/<zoneid> Modify a gslb Zone
-#  @apiGroup Farm Modify
-#  @apiName PutZone
-#  @apiParam {String} farmname  Farm name, unique ID.
-#  @apiParam {String} zoneid Zone name, unique ID.
-#  @apiDescription Modify the params of a Zone in a GSLB Farm
-#  @apiVersion 3.0.0
-#
-#
-#
-# @apiSuccess   {String}        defnamesv		This will be the entry point root name server that will be available as the Start of Authority (SOA) DNS record.
-#
-#
-# @apiSuccessExample Success-Response:
-#{
-#   "description" : "Modify zone zone1 in farm FarmGSLB",
-#   "params" : [
-#      {
-#         "defnamesv" : "ns1"
-#      }
-#   ]
-#}
-#
-#
-#
-#
-# @apiExample {curl} Example Usage:
-#       curl --tlsv1 -k -X PUT -H 'Content-Type: application/json' -H "ZAPI_KEY: <ZAPI_KEY_STRING>"
-#        -d '{"defnamesv":"ns1"}'
-#       https://<zenlb_server>:444/zapi/v3/zapi.cgi/farms/FarmGSLB/zones/zone1
-#
-# @apiSampleRequest off
-#
-#**
 
 sub modify_zones # ( $json_obj, $farmname, $zone )
 {
