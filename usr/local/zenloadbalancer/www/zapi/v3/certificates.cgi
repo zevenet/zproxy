@@ -554,8 +554,21 @@ sub upload_certificate # ()
 	my $description = "Upload PEM certificate";
 	my $configdir = &getGlobalConfiguration('configdir');
 
-	if ( $filename =~ /^\w.+\.pem$/ && ! -f "$configdir/$filename" )
+	if ( $filename =~ /^\w.+\.pem$/ )
 	{
+		if ( -f "$configdir/$filename" )
+		{
+			# Error
+			my $errormsg = "Certificate file name already exists";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
 		if ( $filename =~ /\\/ )
 		{
 			my @filen = split ( /\\/, $filename );
@@ -580,7 +593,7 @@ sub upload_certificate # ()
 		&zenlog( "ZAPI error, trying to upload a certificate." );
 
 		# Error
-		my $errormsg = "Error uploading certificate file";
+		my $errormsg = "Invalid certificate file name";
 		my $body = {
 					 description => $description,
 					 error       => "true",

@@ -757,7 +757,7 @@ POST qr{^/certificates$} => sub {
 
 #  POST certificates
 POST qr{^/certificates/($cert_pem_re)$} => sub {
-	&upload_certs( @_ );
+	&upload_certificate( @_ );
 };
 
 #  DELETE activation certificate
