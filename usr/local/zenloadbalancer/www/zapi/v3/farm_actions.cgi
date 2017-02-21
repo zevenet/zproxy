@@ -333,6 +333,11 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 				 params      => { action => $json_obj->{ action } },
 	};
 
+	if ( &getFarmStatus( $farmname ) eq 'up' )
+	{
+		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+	}
+
 	&httpResponse({ code => 200, body => $body });
 }
 
@@ -450,6 +455,11 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 				 description => $description,
 				 params      => { action => $json_obj->{ action } },
 	};
+
+	if ( &getFarmStatus( $farmname ) eq 'up' )
+	{
+		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+	}
 
 	&httpResponse({ code => 200, body => $body });
 }
