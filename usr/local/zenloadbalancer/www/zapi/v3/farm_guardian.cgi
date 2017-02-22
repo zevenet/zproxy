@@ -239,7 +239,13 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	{
 		$errormsg = "Success, some parameters have been changed in farm guardian in farm $farmname.";
 		my $body = { description => $description, params =>$json_obj, message     => $errormsg };
-		$body->{ 'status' } = "need restart" if $type eq "gslb";
+
+			if ( $type eq "gslb" && &getFarmStatus( $farmname ) eq 'up' )
+			{
+				&setFarmRestart( $farmname );
+				$body->{ status } = 'needed restart';
+			}
+
 		&httpResponse( { code => 200, body => $body } );
 	}
 	else
