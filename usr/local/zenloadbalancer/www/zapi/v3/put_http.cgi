@@ -763,6 +763,15 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			}
 		}
 
+		# set numeric values to numeric type
+		for my $key ( keys %{ $json_obj } )
+		{
+			if ( $json_obj->{ $key } =~ /^\d+$/ )
+			{
+				$json_obj->{ $key } += 0;
+			}
+		}
+
 		# Success
 		my $body = {
 			description => "Modify farm $farmname",
