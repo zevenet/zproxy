@@ -113,9 +113,9 @@ sub farms_name_gslb # ( $farmname )
 
 		push @out_z,
 		  {
-			id                => $zone,
-			DefaultNameServer => $ns,
-			resources         => $resources
+			id        => $zone,
+			defnamesv => $ns,
+			resources => $resources,
 		  };
 	}
 
