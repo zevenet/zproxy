@@ -407,6 +407,7 @@ sub getSystemInterfaceList
 	my @interfaces;    # output
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
 
+	use IO::Interface qw(:flags);
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
 	my @system_interfaces = $socket->if_list;
 
@@ -507,6 +508,7 @@ sub getSystemInterfaceList
 
 sub getSystemInterface    # ($if_name)
 {
+	use IO::Interface qw(:flags);
 	my $if_ref = {};
 	$$if_ref{ name } = shift;
 

@@ -405,7 +405,7 @@ sub runNotifications
 		
 		# start sec process
 		&zenlog( "$sec --conf=$secConf --input=$syslogFile" );
-		system ( "$sec --conf=$secConf --input=$syslogFile /dev/null > 2>&1 &" );
+		system ( "$sec --conf=$secConf --input=$syslogFile 2>/dev/null" );
 		$pid = `$pidof -x sec`;
 		if ( $pid )
 		{
