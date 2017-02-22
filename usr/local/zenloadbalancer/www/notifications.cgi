@@ -23,12 +23,9 @@
 
 use strict;
 
-#~ require "/usr/local/zenloadbalancer/www/functions.cgi";
-require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
+require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
-#~ require "/usr/local/zenloadbalancer/www/plugins_functions.cgi";
-
-
+use Config::Tiny;
 
 sub setNotifCreateConfFile
 {
@@ -408,7 +405,7 @@ sub runNotifications
 		
 		# start sec process
 		&zenlog( "$sec --conf=$secConf --input=$syslogFile" );
-		system ( "$sec --conf=$secConf --input=$syslogFile 1>/dev/null &" );
+		system ( "$sec --conf=$secConf --input=$syslogFile /dev/null > 2>&1 &" );
 		$pid = `$pidof -x sec`;
 		if ( $pid )
 		{
