@@ -2917,6 +2917,8 @@ sub modify_gateway # ( $json_obj )
 
 	my $description = "Modify default gateway";
 
+	my $default_gw = &getDefaultGW();
+
 	# verify ONLY ACCEPTED parameters received
 	if ( grep { $_ !~ /^(?:address|interface)$/ } keys %$json_obj )
 	{
@@ -2931,18 +2933,37 @@ sub modify_gateway # ( $json_obj )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	# verify AT LEAST ONE parameter received
-	unless ( exists $json_obj->{ address } || exists $json_obj->{ interface } )
+	# if default gateway is not configured requires address and interface
+	if ( $default_gw )
 	{
-		# Error
-		my $errormsg = "No parameter received to be configured";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
+		# verify AT LEAST ONE parameter received
+		unless ( exists $json_obj->{ address } || exists $json_obj->{ interface } )
+		{
+			# Error
+			my $errormsg = "No parameter received to be configured";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg,
+			};
 
-		&httpResponse({ code => 400, body => $body });
+			&httpResponse({ code => 400, body => $body });
+		}
+	}
+	else
+	{
+		unless ( exists $json_obj->{ address } && exists $json_obj->{ interface } )
+		{
+			# Error
+			my $errormsg = "Gateway requires address and interface to be configured";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg,
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
 	}
 
 	# validate ADDRESS
@@ -2984,7 +3005,7 @@ sub modify_gateway # ( $json_obj )
 	}
 
 	my $ip_version = 4;
-	my $interface = $json_obj->{ interface } // &getDefaultGW();
+	my $interface = $json_obj->{ interface } // $default_gw;
 	my $address = $json_obj->{ address } // &getIfDefaultGW();
 
 	my $if_ref = getInterfaceConfig( $interface, $ip_version );
