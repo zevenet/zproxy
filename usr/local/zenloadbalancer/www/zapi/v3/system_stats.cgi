@@ -654,18 +654,15 @@ sub farm_stats # ( $farmname )
 		{
 			my @backends_data = split ( ";", $_ );
 			chomp @backends_data;
-			#~ $activesessions = $activesessions + $backends_data[6];   # replace by next line
-			my $activesessions = $backends_data[6];
+
 			my $ip_backend   = $backends_data[0];
 			my $port_backend = $backends_data[1];
 
 			# Pending Conns
-			my @synnetstatback;
 			my @netstat = &getConntrack( "", $fvip, $ip_backend, "", "" );
-			@synnetstatback =
-			&getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
-			my $npend = @synnetstatback;
 
+			my $established = scalar &getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
+			my $pending = scalar &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
 
 			if ( $backends_data[4] == -1 )
 			{
@@ -678,8 +675,8 @@ sub farm_stats # ( $farmname )
 				ip          => $ip_backend,
 				port        => $port_backend,
 				status      => $backends_data[4],
-				pending     => $npend,
-				established => $backends_data[7]
+				pending     => $pending,
+				established => $established,
 			  };
 
 			$index = $index + 1;
