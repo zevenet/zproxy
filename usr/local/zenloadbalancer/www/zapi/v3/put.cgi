@@ -815,11 +815,13 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 		if ( exists ( $json_obj->{ persistence } ) )
 		{
-			if (
-					$json_obj->{ persistence } =~ /^nothing|IP|BASIC|URL|PARM|COOKIE|HEADER$/ )
+			if ( $json_obj->{ persistence } =~ /^|IP|BASIC|URL|PARM|COOKIE|HEADER$/ )
 			{
 				my $session = $json_obj->{ persistence };
-				my $status = &setFarmVS( $farmname, $service, "session", "$session" );
+				$session = 'nothing' if $session == "";
+
+				my $status = &setFarmVS( $farmname, $service, "session", $session );
+
 				if ( $status != 0 )
 				{
 					$error = "true";
