@@ -101,10 +101,6 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 			}
 			else
 			{
-				# local variables
-				my $fgStatus = &getGSLBFarmFGStatus( $farmname, $service );
-				my ( $fgTime, $fgCmd ) = &getGSLBFarmGuardianParams( $farmname, $service );
-		
 				# Change check script
 				if ( exists $json_obj->{ fgscript } ) 
 				{
@@ -113,6 +109,11 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 						$errormsg = "error, trying to modify farm guardian script in farm $farmname, service $service";
 					}
 				}
+
+				# local variables
+				my $fgStatus = &getGSLBFarmFGStatus( $farmname, $service );
+				my ( $fgTime, $fgCmd ) = &getGSLBFarmGuardianParams( $farmname, $service );
+
 				# Change check time
 				if ( ! $errormsg && exists $json_obj->{ fgtimecheck } )
 				{
@@ -149,11 +150,6 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 							$errormsg = "ZAPI error, trying to disable farm guardian in farm $farmname, service $service";
 						}
 					}
-				}
-				# if not error, the farm needs restart
-				if ( ! $errormsg )
-				{
-					$json_obj->{ 'status' } = "need restart";
 				}
 			}
 		}
@@ -236,14 +232,20 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 					$errormsg = "Error, trying to modify the farm guardian in a farm $farmname, it's not possible to create the FarmGuardian configuration file.";
 				}
 			}
-
 		}
 	}
-		
+
 	if ( ! $errormsg )
 	{
 		$errormsg = "Success, some parameters have been changed in farm guardian in farm $farmname.";
 		my $body = { description => $description, params =>$json_obj, message     => $errormsg };
+
+			if ( $type eq "gslb" && &getFarmStatus( $farmname ) eq 'up' )
+			{
+				&setFarmRestart( $farmname );
+				$body->{ status } = 'needed restart';
+			}
+
 		&httpResponse( { code => 200, body => $body } );
 	}
 	else
@@ -252,6 +254,5 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 		&httpResponse( { code => 400, body => $body } );
 	}
 }
-
 
 1;
