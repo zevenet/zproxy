@@ -1015,13 +1015,14 @@ sub applyBackup
 	&zenlog( "Restoring backup $file" );
 	&zenlog( "unpacking files: @eject" );
 	$error = system ( "/etc/init.d/zenloadbalancer restart 2> /dev/null" );
+
 	if ( !$error )
 	{
-		&successmsg( "Backup applied and Zen Load Balancer restarted..." );
+		&zenlog( "Backup applied and Zen Load Balancer restarted..." );
 	}
 	else
 	{
-		&errormsg( "Problem restarting Zen Load Balancer service" );
+		&zenlog( "Problem restarting Zen Load Balancer service" );
 	}
 
 	return $error;
