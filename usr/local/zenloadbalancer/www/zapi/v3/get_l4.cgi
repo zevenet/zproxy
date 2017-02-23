@@ -77,14 +77,10 @@ sub farms_name_l4 # ( $farmname )
 
 		$l_serv[0] = $l_serv[0] + 0;
 
-		&zenlog( Dumper $l_serv[2] );
-
 		if ( !$l_serv[2] =~ /^$/ )
 		{
 			$l_serv[2] = $l_serv[2] + 0;
 		}
-
-		&zenlog( Dumper $l_serv[2] );
 
 		$l_serv[3] = $l_serv[3] + 0;
 		$l_serv[2] = $l_serv[2]? $l_serv[2]+0: undef;
