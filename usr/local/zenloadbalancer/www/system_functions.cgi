@@ -583,11 +583,11 @@ sub getDns
 	if ( defined $dnsArr[1] )
 	{
 		@aux = split ( ' ', $dnsArr[1] );
-		$dns->{ 'secundary' } = $aux[1];
+		$dns->{ 'secondary' } = $aux[1];
 	}
 	else
 	{
-		$dns->{ 'secundary' } = "";
+		$dns->{ 'secondary' } = "";
 	}
 	untie @dnsArr;
 
