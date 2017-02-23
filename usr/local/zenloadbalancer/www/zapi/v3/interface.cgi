@@ -710,7 +710,7 @@ sub delete_interface_nic # ( $nic )
 	else
 	{
 		# Error
-		my $errormsg = "The configuration for the network interface $nic can't be deleted: $@";
+		my $errormsg = "The configuration for the network interface $nic can't be deleted.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -2179,7 +2179,7 @@ sub modify_interface_nic # ( $json_obj, $nic )
 		&addIp( $if_ref );
 
 		# Writing new parameters in configuration file
-		die if &writeRoutes( $if_ref->{ name } );
+		&writeRoutes( $if_ref->{ name } );
 
 		# Put the interface up
 		{

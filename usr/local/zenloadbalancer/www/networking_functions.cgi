@@ -288,6 +288,8 @@ sub writeRoutes    # ($if_name)
 		print ROUTINGFILE "$rtnumber\ttable_$if_name\n";
 		close ROUTINGFILE;
 	}
+
+	return;
 }
 
 # add local network into routing table
