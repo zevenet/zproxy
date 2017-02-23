@@ -41,7 +41,8 @@ sub set_dns
 	{
 		foreach my $key ( keys %{ $json_obj } )
 		{
-			if ( !&getValidFormat( 'dns_nameserver', $json_obj->{ $key } ) )
+			unless ( &getValidFormat( 'dns_nameserver', $json_obj->{ $key } )
+					 || ( $key eq 'secondary' && $json_obj->{ $key } eq '' ) )
 			{
 				$errormsg = "Please, insert a nameserver correct.";
 				last;
