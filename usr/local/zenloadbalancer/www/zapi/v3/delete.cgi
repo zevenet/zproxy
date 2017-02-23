@@ -174,7 +174,7 @@ sub delete_service # ( $farmname, $service )
 		}
 	}
 
-	if ($found eq 0)
+	if ($found == 0)
 	{
 		# Error
 		my $errormsg = "Invalid service name, please insert a valid value.";
@@ -197,7 +197,7 @@ sub delete_service # ( $farmname, $service )
 		$return = &setGSLBFarmDeleteService( $farmname, $service );
 	}
 
-	if ( $return eq -2 )
+	if ( $return == -2 )
 	{
 		&zenlog(
 				 "ZAPI error, the service $service in farm $farmname hasn't been deleted. The service is used by a zone." );
@@ -212,19 +212,24 @@ sub delete_service # ( $farmname, $service )
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	elsif ( $return eq 0 )
+	elsif ( $return == 0 )
 	{
 		&zenlog(
 				 "ZAPI success, the service $service in farm $farmname has been deleted." );
 
 		# Success
-		&setFarmRestart( $farmname );
 		my $message = "The service $service in farm $farmname has been deleted.";
 		my $body = {
 					 description => "Delete service $service in farm $farmname.",
 					 success     => "true",
 					 message     => $message
 		};
+
+		if ( &getFarmStatus( $farmname ) eq 'up' )
+		{
+			$body->{ status } = "needed restart";
+			&setFarmRestart( $farmname );
+		}
 
 		&httpResponse({ code => 200, body => $body });
 	}
