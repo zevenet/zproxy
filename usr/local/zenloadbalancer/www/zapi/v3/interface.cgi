@@ -3005,8 +3005,8 @@ sub modify_gateway # ( $json_obj )
 	}
 
 	my $ip_version = 4;
-	my $interface = $json_obj->{ interface } // $default_gw;
-	my $address = $json_obj->{ address } // &getIfDefaultGW();
+	my $interface = $json_obj->{ interface } // &getIfDefaultGW();
+	my $address = $json_obj->{ address } // $default_gw;
 
 	my $if_ref = getInterfaceConfig( $interface, $ip_version );
 
