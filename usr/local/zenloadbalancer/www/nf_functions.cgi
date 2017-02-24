@@ -683,7 +683,7 @@ sub getIptRuleNumber
 	# pick rule by farm and optionally server id
 	my @rules = grep { /$filter/ } `$ipt_cmd`;
 
-	if ( !@rules )
+	if ( !@rules && &debug() )
 	{
 		&zlog(
 			"index:$index farm_name:$farm_name filter:$filter server:$server_line[0] server list:"
