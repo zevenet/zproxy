@@ -34,8 +34,9 @@
 #
 #fileconfig_penguardian structure:
 #[farmname]:::[timeout]:::[timetocheck]:::[script args]:::[logs]
-	
-use Data::Dumper;
+
+use strict;
+#~ use Data::Dumper;
 use Proc::Daemon;
 use POSIX ":sys_wait_h";
 
