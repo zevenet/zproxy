@@ -1015,7 +1015,7 @@ sub get_supportsave
 	my $last_word = ( split ( ' ', $first_line ) )[-1];
 
 	my $ss_path = $last_word;
-	my ( undef, $ss_filename ) = split ( '/tmp', $ss_path );
+	my ( undef, $ss_filename ) = split ( '/tmp/', $ss_path );
 
 	open ( my $ss_fh, '<', $ss_path );
 
