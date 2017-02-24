@@ -23,7 +23,7 @@
 #
 ###############################################################################
 
-##farmguardian 4.0
+##farmguardian 4.1
 #this script is a service that check all Bakends or servers in a farm
 #using a script to monitorice the status of backends.  If the execution script return
 # <> 0 this script put in blacklist the backendserver. This script check
@@ -35,6 +35,7 @@
 #fileconfig_penguardian structure:
 #[farmname]:::[timeout]:::[timetocheck]:::[script args]:::[logs]
 	
+use Data::Dumper;
 use Proc::Daemon;
 use POSIX ":sys_wait_h";
 
@@ -46,7 +47,7 @@ require '/usr/local/zenloadbalancer/www/farms_functions.cgi';
 if ( !defined $ARGV[0] )
 {
 	print
-	  "FarmGuardian v4.0. Check Backends Servers in a Farm and enable or disable the load balancing\n";
+	  "FarmGuardian v4.1. Check Backends Servers in a Farm and enable or disable the load balancing\n";
 	print "\thelp: farmguardian farmname [-s <service>] [-l]\n";
 	print
 	  "\t\t-s <service>\t: Launch FarmGuardian for a certain HTTP/S farm service\n";
@@ -62,7 +63,7 @@ my $fservice = '';
 
 # validate FARM TYPE
 my $type = &getFarmType( $farmname );
-unless ( $type =~ /^(?:http|https|tcp|udp|l4xnat)$/ )
+unless ( $type =~ /^(?:http|https|l4xnat)$/ )
 {
 	my $msg = "FarmGuardian does not support $type farm profile";
 	&zenlog( $msg );
@@ -181,8 +182,6 @@ $type = 'http' if $type eq 'https';
 
 require '/usr/local/zenloadbalancer/www/l4_functions.cgi' if $type eq 'l4xnat';
 require '/usr/local/zenloadbalancer/www/http_functions.cgi' if $type eq 'http';
-require '/usr/local/zenloadbalancer/www/tcpudp_functions.cgi' if $type =~ /(tcp|udp)/;
-my $pen_ctl = &getGlobalConfiguration('pen_ctl');
 my $poundctl = &getGlobalConfiguration('poundctl');
 
 #Get the admin port/socket about farm
@@ -198,59 +197,14 @@ while ( 1 )
 	my @backendserv;
 	my @backendport;
 	my @backendstatus;
-	my $blacklist;
 	my $timeout = '';
 	my $i       = 0;
 	my $j       = 0;
 
 	### Collect variable values for the diferent farm types ###
 
-	# Collect TCP/UDP farm variables values
-	if ( $type eq 'tcp' || $type eq 'udp' )
-	{
-		my @run = `$pen_ctl 127.0.0.1:$portadmin servers`;
-
-		if ( $? != 0 )
-		{
-			my $msg = "Farm $farmname is down, abort.";
-			
-			if ( $logging eq 'enabled' )
-			{
-				&zenlog( $msg );
-			}
-			else
-			{
-				print "$msg\n";
-			}
-			
-			exit 1;
-		}
-
-		foreach my $line ( @run )
-		{
-			my @lines = split ( ' ', $line );
-
-			if ( $lines[2] ne '0.0.0.0' )
-			{
-				$backendid[$i]   = $lines[0];
-				$backendserv[$i] = $lines[2];
-				$backendport[$i] = $lines[4];
-
-				$backendstatus[$i] = '';
-				$i++;
-			}
-		}
-
-		# get the farm's timeout
-		$timeout = `$pen_ctl 127.0.0.1:$portadmin timeout`;
-		chomp ( $timeout );
-
-		$blacklist = `$pen_ctl 127.0.0.1:$portadmin blacklist`;
-		chomp ( $blacklist );
-	}
-
 	# Collect HTTP/S farm variables values
-	elsif ( $type eq 'http' )
+	if ( $type eq 'http' )
 	{
 		system ( "$poundctl -c $portadmin 2>&1 >/dev/null" );
 
@@ -295,7 +249,7 @@ while ( 1 )
 			$backendid[$i]     = $i;
 			$backendserv[$i]   = $subbe[2];
 			$backendport[$i]   = $subbe[3];
-			$backendstatus[$i] = $subbe[7];
+			chomp( $backendstatus[$i] = $subbe[7]);
 			$i++;
 		}
 	}
@@ -316,7 +270,6 @@ while ( 1 )
 		$logline .= "farm $farmname - ";
 		$logline .= "timeout $timeout - ";
 		$logline .= "timetocheck $timetocheck - ";
-		$logline .= "blacklist $blacklist - " if defined $blacklist;    # TCP
 		$logline .= "portadmin $portadmin - " if defined $portadmin;
 		$logline .= "command $check_cmd_tpl";
 
@@ -396,11 +349,7 @@ while ( 1 )
 			}
 
 			# Enabling backend for every type of farm supported
-			if ( $type eq 'tcp' || $type eq 'udp' )
-			{
-				system ( "$pen_ctl 127.0.0.1:$portadmin server $j blacklist 0" );
-			}
-			elsif ( $type eq 'http' )
+			if ( $type eq 'http' )
 			{
 				my $idsv = &getFarmVSI( $farmname, $service );
 				system ( "$poundctl -c $portadmin -B 0 $idsv $j" );
@@ -417,12 +366,7 @@ while ( 1 )
 			&zenlog("BackEnd $backendserv[$j]:$backendport[$j] resurrect$auxLog");
 		}
 		### Disable backend
-		elsif (
-				( ( $timedout == 1 || $errorcode != 0 ) && $backendstatus[$j] ne 'fgDOWN' )
-				|| (    ( $timedout == 1 || $errorcode != 0 )
-					 && $backendstatus[$j] eq 'fgDOWN'
-					 && $type eq 'tcp' )
-		  )
+		elsif (	( $timedout == 1 || $errorcode != 0 ) && $backendstatus[$j] ne 'fgDOWN' )
 		{
 			if ( $logging eq 'enabled' )
 			{
@@ -431,11 +375,7 @@ while ( 1 )
 
 			# Disabling backend for every type of farm supported
 			#if exec error put in blacklist the server
-			if ( $type eq 'tcp' || $type eq 'udp' )
-			{
-				system ( "$pen_ctl 127.0.0.1:$portadmin server $j blacklist $blacklist" );
-			}
-			elsif ( $type eq 'http' )
+			if ( $type eq 'http' )
 			{
 				my $idsv = &getFarmVSI( $farmname, $service );
 				system ( "$poundctl -c $portadmin -b 0 $idsv $j" );
@@ -454,6 +394,11 @@ while ( 1 )
 		}
 		$j++;
 	}
+
+	#~ &zenlog( "backendid " . Dumper( \@backendid ) );
+	#~ &zenlog( "backendserv " . Dumper( \@backendserv ) );
+	#~ &zenlog( "backendport " . Dumper( \@backendport ) );
+	#~ &zenlog( "backendstatus " . Dumper( \@backendstatus ) );
 
 	sleep ( $timetocheck );
 }
