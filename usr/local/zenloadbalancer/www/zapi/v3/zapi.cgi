@@ -382,14 +382,16 @@ sub validCGISession    # ()
 	my $session      = CGI::Session->load( &getCGI() );
 
 	#~ &zenlog( "CGI SESSION ID: " . $session->id ) if $session->id;
-
 	#~ &zenlog( "session data: " . Dumper $session->dataref() ); # DEBUG
 
 	if ( $session && $session->param( 'is_logged_in' ) && !$session->is_expired )
 	{
-		$session->expire( 'is_logged_in', '+30m' );
+		# ignore cluster localhost status to reset session expiration date
+		unless ( $q->path_info eq '/system/cluster/nodes/localhost' )
+		{
+			$session->expire( 'is_logged_in', '+30m' );
+		}
 
-		#~ $session->expire('is_logged_in', '+5s'); # DEBUG
 		$validSession = 1;
 	}
 
