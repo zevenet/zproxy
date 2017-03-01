@@ -360,7 +360,6 @@ sub set_cluster_actions
 
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 			system("$ip_bin link set $maint_if down");
-			&setZClusterNodeStatus ( 'maintenance' );
 		}
 		elsif ( $json_obj->{ status } eq 'disable' )
 		{
@@ -381,7 +380,6 @@ sub set_cluster_actions
 
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 			system("$ip_bin link set $maint_if up");
-			&setZClusterNodeStatus ( 'backup' );
 		}
 		else
 		{

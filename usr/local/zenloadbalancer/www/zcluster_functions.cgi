@@ -530,8 +530,8 @@ sub runRemotely # `output` ( $cmd, $ip_addr [, $port ] )
 	# log the command to be run
 	my $ssh = &getGlobalConfiguration('ssh');
 	my $ssh_cmd = "$ssh $ssh_options root\@$ip_address '$cmd'";
-	&zenlog("Running remotely: \@$ip_address: $cmd");
-	&zenlog("Running: $ssh_cmd");
+	&zenlog("Running remotely: \@$ip_address: $cmd") if &debug();
+	&zenlog("Running: $ssh_cmd") if &debug() > 1;
 
 	# capture output and return it
 	return `$ssh_cmd`;
@@ -1143,7 +1143,7 @@ sub getZClusterNodeStatusDigest
 	}
 	elsif ( $node->{ role } eq 'maintenance' )
 	{
-		unless ( $n->{ ka } || !$n->{ zi } || $n->{ ct } )
+		if ( !$n->{ ka } || $n->{ zi } || !$n->{ ct } )
 		{
 			$node->{ status }  = 'ok';
 			$node->{ message } = 'Node in maintenance mode';

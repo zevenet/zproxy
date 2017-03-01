@@ -39,11 +39,15 @@ my $configdir = &getGlobalConfiguration( 'configdir' );
 my $rttables  = &getGlobalConfiguration( 'rttables' );
 my $zeninopid = &getGlobalConfiguration( 'zeninopid' );
 
-if ( $ARGV[0] eq 'stop' && -e $zeninopid )
+if ( $ARGV[0] eq 'stop' )
 {
-	open my $pidfile, "<", "$zeninopid";
-	kill ( 'TERM', <$pidfile> );
-	close $pidfile;
+	if ( -e $zeninopid )
+	{
+		open my $pidfile, "<", "$zeninopid";
+		my $pid = <$pidfile>;
+		close $pidfile;
+		kill ( 'TERM', $pid );
+	}
 	exit 0;
 }
 
