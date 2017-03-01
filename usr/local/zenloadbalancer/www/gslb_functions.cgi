@@ -134,7 +134,7 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 	}
 	else
 	{
-		&errormsg(
+		&zenlog(
 			  "Farm $fname can't be stopped, check the logs and modify the configuration" );
 		return 1;
 	}
