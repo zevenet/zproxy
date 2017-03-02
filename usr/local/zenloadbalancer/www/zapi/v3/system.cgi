@@ -341,14 +341,17 @@ sub get_http
 		}
 	}
 
-	# http is enabled in all interfaces
-	$interface = '*' if ( !$interface );
-
 	my $http;
+	# http is enabled in all interfaces
+	if ( !$interface )
+	{
+		$http->{ 'ip' } = '*' ;
+	}
+	else
+	{
+		$http->{ 'ip' } = $interface->{ 'ip' }; 
+	}
 	$http->{ 'port' } = &getHttpServerPort;
-
-	#~ $http->{ 'availableInterfaces' } = \@interfaces;
-	$http->{ 'ip' } = $interface;
 
 	&httpResponse(
 			{ code => 200, body => { description => $description, params => $http } } );
