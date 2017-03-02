@@ -2388,11 +2388,14 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 	my $description = "Modify virtual interface",
 	my $ip_v = 4;
 	my $if_ref = &getInterfaceConfig( $virtual, $ip_v );
+	
+	my $errormsg;
+	my @allowParams = ( "ip" );
 
 	unless ( $if_ref )
 	{
 		# Error
-		my $errormsg = "Virtual interface not found";
+		$errormsg = "Virtual interface not found";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -2402,11 +2405,8 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	# Check address errors
-	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+	if( $errormsg = &getValidOptParams( $json_obj, \@allowParams ) )
 	{
-		# Error
-		my $errormsg = "IP Address $json_obj->{ip} structure is not ok.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -2416,12 +2416,31 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 		&httpResponse({ code => 400, body => $body });
 	}
 
+
+	# Check address errors
+	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+	{
+		# Error
+		$errormsg = "IP Address $json_obj->{ip} structure is not ok.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	
+	my $state = $if_ref->{ 'status' };
+	&downIf( $if_ref ) if $state eq 'up';
+	
 	# No errors found
 	eval {
 		&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
 
 		# Delete old IP and Netmask from system to replace it
-		die if &delIp( $$if_ref{name}, $$if_ref{addr}, $$if_ref{mask} );
+		#~ die if &delIp( $$if_ref{name}, $$if_ref{addr}, $$if_ref{mask} ) ;
 
 		# Set the new params
 		$if_ref->{addr} = $json_obj->{ip};
@@ -2429,11 +2448,9 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 		# Add new IP, netmask and gateway
 		die if &addIp( $if_ref );
 
-		my $state = &upIf( $if_ref, 'writeconf' );
-
-		if ( $state == 0 )
+		if ( $state eq 'up' )
 		{
-			$if_ref->{status} = "up";
+			&upIf( $if_ref ) ;
 			&applyRoutes( "local", $if_ref );
 		}
 
@@ -2456,7 +2473,7 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 	else
 	{
 		# Error
-		my $errormsg = "Errors found trying to modify interface $virtual";
+		$errormsg = "Errors found trying to modify interface $virtual";
 		my $body = {
 					 description => $description,
 					 error       => "true",
