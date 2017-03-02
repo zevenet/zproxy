@@ -10,55 +10,23 @@ sub farms_name_http # ( $farmname )
 	my $output_params;
 	my @out_s;
 	my @out_cn;
-	my $connto          = &getFarmConnTO( $farmname );
-	$connto          = $connto + 0;
-	my $timeout         = &getFarmTimeout( $farmname );
-	$timeout         = $timeout + 0;
-	my $alive           = &getFarmBlacklistTime( $farmname );
-	$alive           = $alive + 0;
-	my $client          = &getFarmClientTimeout( $farmname );
-	$client          = $client + 0;
-	my $conn_max        = &getFarmMaxConn( $farmname );
-	$conn_max        = $conn_max + 0;
-	my $rewritelocation = &getFarmRewriteL( $farmname );
-	$rewritelocation = $rewritelocation + 0;
+	my $connto          = 0 + &getFarmConnTO( $farmname );
+	my $timeout         = 0 + &getFarmTimeout( $farmname );
+	my $alive           = 0 + &getFarmBlacklistTime( $farmname );
+	my $client          = 0 + &getFarmClientTimeout( $farmname );
+	my $conn_max        = 0 + &getFarmMaxConn( $farmname );
+	my $rewritelocation = 0 + &getFarmRewriteL( $farmname );
+	my $httpverb        = 0 + &getFarmHttpVerb( $farmname );
 
-	if ( $rewritelocation == 0 )
-	{
-		$rewritelocation = "disabled";
-	}
-	elsif ( $rewritelocation == 1 )
-	{
-		$rewritelocation = "enabled";
-	}
-	elsif ( $rewritelocation == 2 )
-	{
-		$rewritelocation = "enabled-backends";
-	}
+	if    ( $rewritelocation == 0 ) { $rewritelocation = "disabled"; }
+	elsif ( $rewritelocation == 1 ) { $rewritelocation = "enabled"; }
+	elsif ( $rewritelocation == 2 ) { $rewritelocation = "enabled-backends"; }
 
-	my $httpverb = &getFarmHttpVerb( $farmname );
-	$httpverb = $httpverb + 0;
-
-	if ( $httpverb == 0 )
-	{
-		$httpverb = "standardHTTP";
-	}
-	elsif ( $httpverb == 1 )
-	{
-		$httpverb = "extendedHTTP";
-	}
-	elsif ( $httpverb == 2 )
-	{
-		$httpverb = "standardWebDAV";
-	}
-	elsif ( $httpverb == 3 )
-	{
-		$httpverb = "MSextWebDAV";
-	}
-	elsif ( $httpverb == 4 )
-	{
-		$httpverb = "MSRPCext";
-	}
+	if    ( $httpverb == 0 ) { $httpverb = "standardHTTP"; }
+	elsif ( $httpverb == 1 ) { $httpverb = "extendedHTTP"; }
+	elsif ( $httpverb == 2 ) { $httpverb = "standardWebDAV"; }
+	elsif ( $httpverb == 3 ) { $httpverb = "MSextWebDAV"; }
+	elsif ( $httpverb == 4 ) { $httpverb = "MSRPCext"; }
 
 	my $type     = &getFarmType( $farmname );
 	my $certname;
@@ -88,8 +56,7 @@ sub farms_name_http # ( $farmname )
 	}
 
 	my $vip   = &getFarmVip( "vip",  $farmname );
-	my $vport = &getFarmVip( "vipp", $farmname );
-	$vport = $vport + 0;
+	my $vport = 0 + &getFarmVip( "vipp", $farmname );
 
 	my @err414 = &getFarmErr( $farmname, "414" );
 	chomp(@err414);
