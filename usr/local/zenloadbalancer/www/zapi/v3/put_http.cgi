@@ -772,6 +772,38 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			}
 		}
 
+		if ( $json_obj->{ listener } eq 'https' )
+		{
+			# certlist
+			my @certlist;
+			my @cnames = &getFarmCertificatesSNI( $farmname );
+			my $elem   = scalar @cnames;
+
+			for ( my $i = 0 ; $i < $elem ; $i++ )
+			{
+				push @certlist, { file => $cnames[$i], id => $i + 1 };
+			}
+
+			$json_obj->{ certlist } = \@certlist;
+
+			# cipherlist
+			unless ( exists $json_obj->{ cipherc } )
+			{
+				$json_obj->{ cipherc } = &getFarmCipherList( $farmname );
+			}
+
+			# cipherset
+			unless ( exists $json_obj->{ ciphers } )
+			{
+				chomp ( $json_obj->{ ciphers } = &getFarmCipherSet( $farmname ) );
+
+				if ( $json_obj->{ ciphers } eq "cipherglobal" )
+				{
+					$json_obj->{ ciphers } = "all";
+				}
+			}
+		}
+
 		# Success
 		my $body = {
 			description => "Modify farm $farmname",
