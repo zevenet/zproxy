@@ -663,7 +663,7 @@ sub set_blacklists_source
 				my $source = &getBLParam( $listName, 'source' );
 				my $body = {
 							 description => $description,
-							 params      => $source
+							 params      => { "source" => $json_obj->{'source'}, 'id' => $id } 
 				};
 				&httpResponse( { code => 200, body => $body } );
 			}
@@ -839,7 +839,7 @@ sub del_blacklists_from_farm
 		$errormsg = &setBLRemFromFarm( $farmName, $listName );
 		if ( !$errormsg )
 		{
-			$errormsg = "List $listName was removed successful from the farm $farmName.";
+			$errormsg = "Blacklist rule $listName was removed successful from the farm $farmName.";
 			my $body = {
 						 description => $description,
 						 success     => "true",
@@ -849,7 +849,7 @@ sub del_blacklists_from_farm
 		}
 		else
 		{
-			$errormsg = "Error, removing $listName from $farmName.";
+			$errormsg = "Error, removing $listName rule from $farmName.";
 		}
 	}
 	my $body = {
@@ -1244,7 +1244,7 @@ sub del_dos_from_farm
 	}
 	elsif ( &getDOSParam( $name, 'type' ) eq 'system' )
 	{
-		$errormsg = "system rules not is possible delete from a farm.";
+		$errormsg = "System rules not is possible delete from a farm.";
 	}
 	else
 	{
@@ -1261,7 +1261,7 @@ sub del_dos_from_farm
 			my $output = &getDOSParam ( $name );
 			if ( ! grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 			{
-				$errormsg = "$name was disabled in $farmName successful.";
+				$errormsg = "DoS rule $name was removed successful from the farm $farmName.";
 				&httpResponse(
 					{
 					   code => 200,
@@ -1271,7 +1271,7 @@ sub del_dos_from_farm
 			}
 			else
 			{
-				$errormsg = "Error, disabling $name rule.";
+				$errormsg = "Error, removing $name rule from $farmName.";
 			}
 		}
 	}

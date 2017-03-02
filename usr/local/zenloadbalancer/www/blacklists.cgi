@@ -38,12 +38,21 @@ my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 
 actions:
 
-#  &getBLLoadList ( $listName );
-sub getBLLoadList
+#  &getBLStatus ( $listName );
+sub getBLStatus
 {
 	my $listName = shift;
 	my $ipset    = &getGlobalConfiguration( 'ipset' );
 	my $output   = system ( "$ipset list $listName 2>/dev/null" );
+	
+	if ( $output )
+	{
+		$output = 'down';
+	}
+	else
+	{
+		$output = 'up';
+	}
 
 	return $output;
 }
@@ -55,7 +64,7 @@ sub setBLRunList
 	my $ipset    = &getGlobalConfiguration( 'ipset' );
 	my $output;
 
-	if ( system ( "$ipset -L $listName 2>/dev/null" ) )
+	if ( &getBLStatus ( $listName ) eq 'down' )
 	{
 		$output = system ( "$ipset create $listName hash:net 2>/dev/null" );
 		&zenlog( "Creating ipset table" );
@@ -96,7 +105,7 @@ sub setBLDestroyList
 		&delBLCronTask( $listName );
 	}
 
-	if ( !system ( "$ipset -L $listName 2>/dev/null" ) )
+	if ( ! &getBLStatus ( $listName ) eq 'up' )
 	{
 		&zenlog( "Destroying list" );
 		$output = system ( "$ipset destroy $listName 2>/dev/null" );
@@ -1142,7 +1151,7 @@ sub setBLRefreshAllLists
 		}
 
 		# Refresh list if is running
-		if ( &getBLLoadList( $listName ) )
+		if ( &getBLStatus( $listName ) eq 'up' )
 		{
 			&setBLRefreshList( $listName );
 		}
@@ -1251,7 +1260,7 @@ sub setBLDeleteSource
 	untie @list;
 
 	my $err;
-	if ( @{ &getBLParam( $listName, 'farms' ) } )
+	if ( &getBLStatus( $listName ) eq 'up' )
 	{
 		$err = system ( "$ipset del $listName $source 2>/dev/null" );
 	}
@@ -1287,7 +1296,7 @@ sub setBLAddSource
 	untie @list;
 
 	my $error;
-	if ( @{ &getBLParam( $listName, 'farms' ) } )
+	if ( &getBLStatus( $listName ) eq 'up' )
 	{
 		$error = system ( "$ipset add $listName $source 2>/dev/null" );
 	}
@@ -1322,7 +1331,7 @@ sub setBLModifSource
 	my $oldSource = splice @list, $id, 1, $source;
 	untie @list;
 
-	if ( @{ &getBLParam( $listName, 'farms' ) } )
+	if ( &getBLStatus( $listName ) eq 'up' )
 	{
 		$err = system ( "$ipset del $listName $oldSource 2>/dev/null" );
 		$err = system ( "$ipset add $listName $source 2>/dev/null" ) if ( !$err );
