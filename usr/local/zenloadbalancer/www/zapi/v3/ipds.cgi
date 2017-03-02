@@ -776,7 +776,7 @@ sub add_blacklists_to_farm
 					my $errormsg = "Blacklist rule $listName was applied successful to the farm $farmName.";
 					my $body = {
 								 description => $description,
-								 succes      => "true",
+								 success      => "true",
 								 message     => $errormsg
 					};
 					&httpResponse( { code => 200, body => $body } );
@@ -1196,7 +1196,7 @@ sub add_dos_to_farm
 				&httpResponse(
 					{
 					   code => 200,
-					   body => { description => $description, message => $errormsg }
+					   body => { description => $description, success => 'true', message => $errormsg }
 					}
 				);
 			}
