@@ -737,7 +737,7 @@ sub add_blacklists_to_farm
 	my $farmName = shift;
 	my $listName = $json_obj->{ 'name' };
 	my $errormsg;
-	my $description = "Apply a list to a farm";
+	my $description = "Apply a rule to a farm";
 
 	$errormsg = &getValidReqParams( $json_obj, ["name"] );
 	if ( !$errormsg )
@@ -773,7 +773,7 @@ sub add_blacklists_to_farm
 				$errormsg = &setBLApplyToFarm( $farmName, $listName );
 				if ( !$errormsg )
 				{
-					my $errormsg = "List $listName was applied successful to the farm $farmName.";
+					my $errormsg = "Blacklist rule $listName was applied successful to the farm $farmName.";
 					my $body = {
 								 description => $description,
 								 succes      => "true",
@@ -802,7 +802,7 @@ sub del_blacklists_from_farm
 	my $farmName = shift;
 	my $listName = shift;
 	my $errormsg;
-	my $description = "Delete a list form a farm";
+	my $description = "Delete a rule from a farm";
 
 	if ( &getFarmFile( $farmName ) eq '-1' )
 	{
@@ -1073,7 +1073,7 @@ sub del_dos_rule
 	#~ my $json_obj = shift;
 	my $name = shift;
 	my $errormsg;
-	my $description = "Delete DoS rule";
+	my $description = "Delete DoS rule from a farm";
 
 	if ( &getDOSExists( $name ) == -1 )
 	{
@@ -1144,7 +1144,7 @@ sub add_dos_to_farm
 {
 	my $json_obj    = shift;
 	my $farmName    = shift;
-	my $description = "Post a DoS rule to a farm";
+	my $description = "Apply a rule to a farm";
 	my $name        = $json_obj->{ 'name' };
 	my $errormsg;
 
@@ -1173,7 +1173,7 @@ sub add_dos_to_farm
 	}
 	elsif ( &getDOSParam( $name, 'type' ) eq 'system' )
 	{
-		$errormsg = "system rules not is possible apply to farm.";
+		$errormsg = "System rules not is possible apply to farm.";
 	}
 	else
 	{
@@ -1192,11 +1192,11 @@ sub add_dos_to_farm
 			my $output = &getDOSParam ( $name );
 			if ( grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 			{
-				$errormsg = "$name was enabled successful in $farmName.";
+				$errormsg = "DoS rule $name was applied successful to the farm $farmName.";
 				&httpResponse(
 					{
 					   code => 200,
-					   body => { description => $description, params => $output, message => $errormsg }
+					   body => { description => $description, message => $errormsg }
 					}
 				);
 			}
@@ -1217,7 +1217,7 @@ sub del_dos_from_farm
 {
 	my $farmName    = shift;
 	my $name        = shift;
-	my $description = "Delete DoS rule from a farm";
+	my $description = "Delete a rule from a farm";
 	my $errormsg;
 
 	my $confFile = &getGlobalConfiguration( 'dosConf' );

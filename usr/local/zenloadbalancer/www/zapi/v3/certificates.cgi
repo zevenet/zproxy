@@ -165,38 +165,59 @@ sub get_activation_certificate_info # ()
 sub delete_certificate # ( $cert_filename )
 {
 	my $cert_filename = shift;
-
 	my $description = "Delete certificate";
-	my $status = &getFarmCertUsed( $cert_filename );
-
-	if ( $status == 0 )
+	my $errormsg;
+	
+	my $cert_dir = &getGlobalConfiguration('configdir');
+	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
+	
+	if ( !-f "$cert_dir\/$cert_filename" )
 	{
-		&zenlog( "ZAPI error, file can't be deleted because it's in use by a farm." );
-
-		# Error
-		my $errormsg = "File can't be deleted because it's in use by a farm";
+		$errormsg = "Certificate file not found.";
 		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
+			 description => $description,
+			 error       => "true",
+			 message     => $errormsg
 		};
-
-		&httpResponse({ code => 400, body => $body });
+	&httpResponse({ code => 404, body => $body });
 	}
-
-	my $message = "The Certificate $cert_filename has been deleted";
-
-	&delCert( $cert_filename );
-	&zenlog( $message );
-
-	# Success
+	else
+	{
+		my $status = &getFarmCertUsed( $cert_filename );
+		if ( $status == 0 )
+		{
+			# Error
+			$errormsg = "File can't be deleted because it's in use by a farm.";
+		}
+		else
+		{
+			&delCert( $cert_filename );
+			
+			if ( !-f "$cert_dir\/$cert_filename" )
+			{
+				$errormsg = "The Certificate $cert_filename has been deleted.";
+				# Success
+				my $body = {
+					description => $description,
+					success     => "true",
+					message     => $errormsg
+				};
+				&httpResponse({ code => 200, body => $body });
+			}
+			else
+			{
+				$errormsg = "Error, deleting certificate $cert_filename.";
+			}
+		}
+	}
+	
 	my $body = {
 				 description => $description,
-				 success     => "true",
-				 message     => $message
+				 error       => "true",
+				 message     => $errormsg
 	};
+	&httpResponse({ code => 400, body => $body });
 
-	&httpResponse({ code => 200, body => $body });
 }
 
 # DELETE /certificates/activation

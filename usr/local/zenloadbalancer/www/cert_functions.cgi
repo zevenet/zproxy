@@ -228,7 +228,7 @@ sub delCert    # ($certname)
 	$certname = quotemeta $certname;
 	my $certdir;
 
-	if ( $certname eq 'zlbcertfile.pem' )
+	if ( $certname ne 'zlbcertfile.pem' )
 	{
 		$certdir = &getGlobalConfiguration('configdir');
 	}
