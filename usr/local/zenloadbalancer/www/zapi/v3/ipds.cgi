@@ -480,14 +480,22 @@ sub update_remote_blacklists
 			}
 			else
 			{
-				&setBLDownloadRemoteList( $listName );
-				if ( @{ &getBLParam( $listName, 'farms' ) } )
-				{
-					&setBLRefreshList( $listName );
-				}
+				$errormsg = &setBLDownloadRemoteList( $listName );
 				my $statusUpd = &getBLParam( $listName, 'update_status' );
-				&httpResponse(
-					{ code => 200, body => { description => $description, update => $statusUpd } } );
+				if ( !$errormsg )
+				{
+					if ( @{ &getBLParam( $listName, 'farms' ) } )
+					{
+						&setBLRefreshList( $listName );
+					}
+					
+					&httpResponse(
+						{ code => 200, body => { description => $description, update => $statusUpd } } );
+				}
+				else
+				{
+					$errormsg = $statusUpd;
+				}
 			}
 		}
 	}

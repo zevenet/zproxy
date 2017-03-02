@@ -981,7 +981,8 @@ sub setBLDownloadRemoteList
 	my ( $listName ) = @_;
 	my $url = &getBLParam( $listName, 'url' );
 	my $timeout = 10;
-
+	my $error;
+	
 	&zenlog( "Downloading $listName..." );
 
 	# if ( $fileHandle->{ $listName }->{ 'update_status' } ne 'dis' )
@@ -1003,6 +1004,7 @@ sub setBLDownloadRemoteList
 	{
 		&setBLParam( $listName, 'update_status', 'down' );
 		&zenlog( "Fail, downloading $listName from url '$url'. Not found any source." );
+		$error = 1;
 	}
 	else
 	{
@@ -1016,6 +1018,7 @@ sub setBLDownloadRemoteList
 		&zenlog( "$listName was downloaded successful." );
 	}
 
+	return $error;
 }
 
 
