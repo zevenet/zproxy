@@ -34,7 +34,7 @@ require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 
 sub setDOSCreateFileConf
 {
-	my $confFile    = &getGlobalConfiguration( 'dosConf' );
+	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $dosConfDir = &getGlobalConfiguration( 'dosConfDir' );
 	my $output;
 
@@ -80,13 +80,13 @@ sub setDOSCreateFileConf
 sub getDOSInitialParams
 {
 	my $rule = shift;
-	
+
 	# get ssh port
 	my $sshconf = &getSsh();
-	my $port = $sshconf->{'port'};
+	my $port    = $sshconf->{ 'port' };
 
 	my %initial = (
-		'bogustcpflags' => { 'farms' => '', 'type'       => 'farm' },
+		'bogustcpflags' => { 'farms' => '', 'type'        => 'farm' },
 		'limitconns'    => { 'farms' => '', 'limit_conns' => 10, 'type' => 'farm' },
 		'limitrst' =>
 		  { 'farms' => '', 'limit' => 2, 'limit_burst' => 2, 'type' => 'farm' },
@@ -133,30 +133,30 @@ sub getDOSParam
 	{
 		$output = $fileHandle->{ $ruleName }->{ $param };
 		if ( $param eq 'farms' )
-			{
-				my @aux = split ( ' ', $output );
-				$output = \@aux;
-			}
+		{
+			my @aux = split ( ' ', $output );
+			$output = \@aux;
+		}
 	}
 	elsif ( $ruleName )
 	{
 		# get all params
 		my %hash = %{ $fileHandle->{ $ruleName } };
-		
+
 		# return in integer format if this value is a number
 		# It is neccessary for zapi
 		foreach my $key ( keys %hash )
 		{
 			$hash{ $key } += 0 if ( $hash{ $key } =~ /^\d+$/ );
 		}
-		
+
 		# replace farms string for a array reference
 		if ( exists $fileHandle->{ $ruleName }->{ 'farms' } )
 		{
 			my @aux = split ( ' ', $fileHandle->{ $ruleName }->{ 'farms' } );
 			$hash{ 'farms' } = \@aux;
 		}
-	
+
 		$output = \%hash;
 	}
 	return $output;
@@ -317,7 +317,7 @@ sub getDOSExists
 sub createDOSRule
 {
 	my $ruleName = shift;
-	my $rule      = shift;
+	my $rule     = shift;
 	my $params;
 
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
@@ -430,7 +430,8 @@ sub setDOSRunRule
 	{
 		if ( $protocol !~ /TCP/i && $protocol !~ /FTP/i )
 		{
-			&zenlog( "$rule rule is only available in farms based in protocol TCP or FTP." );
+			&zenlog(
+					 "$rule rule is only available in farms based in protocol TCP or FTP." );
 			return -1;
 		}
 	}
@@ -508,31 +509,26 @@ sub setDOSStopRule
 	return $output;
 }
 
-
-
-
 sub setDOSReloadFarmRules
 {
 	my $farmName = shift;
+
 	# get all lists
-	my $dosConf = &getGlobalConfiguration ( 'dosConf' );
+	my $dosConf     = &getGlobalConfiguration( 'dosConf' );
 	my $allRulesRef = Config::Tiny->read( $dosConf );
-	my %allRules = %{ $allRulesRef };
+	my %allRules    = %{ $allRulesRef };
 
 	foreach my $dosRule ( keys %allRules )
 	{
 		if ( grep ( /^$farmName$/, @{ &getDOSParam( $dosRule, "farms" ) } ) )
 		{
-			&setDOSRunRule ( $dosRule, $farmName );
-			&setDOSStopRule ( $dosRule, $farmName );
+			&setDOSRunRule( $dosRule, $farmName );
+			&setDOSStopRule( $dosRule, $farmName );
 		}
 	}
 
 	#~ return $output;
 }
-
-
-
 
 =begin nd
         Function: setDOSBoot
@@ -749,19 +745,20 @@ sub setDOSBogusTcpFlagsRule
 	my %ruleOpt = %{ $ruleOptRef };
 
 	#~ my $rule    = "bogustcpflags";
-	my $logMsg = &createLogMsg ( $ruleName, $ruleOpt{ 'farmName' } );
+	my $logMsg = &createLogMsg( $ruleName, $ruleOpt{ 'farmName' } );
 
 # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE -j DROP
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE "    # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 	my $output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_1' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_1' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,SYN FIN,SYN -j DROP
@@ -769,12 +766,13 @@ sub setDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,SYN FIN,SYN "    # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_2' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_2' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags SYN,RST SYN,RST -j DROP
@@ -782,12 +780,13 @@ sub setDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags SYN,RST SYN,RST "    # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_3' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_3' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags SYN,FIN SYN,FIN -j DROP
@@ -795,12 +794,13 @@ sub setDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags SYN,FIN SYN,FIN "    # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_4' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_4' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,RST FIN,RST -j DROP
@@ -808,12 +808,13 @@ sub setDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,RST FIN,RST "    # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_5' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_5' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,ACK FIN -j DROP
@@ -821,12 +822,13 @@ sub setDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,ACK FIN "    # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_6' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_6' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ACK,URG URG -j DROP
@@ -834,12 +836,13 @@ sub setDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ACK,URG URG "    # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_7' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_7' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ACK,FIN FIN -j DROP
@@ -847,12 +850,13 @@ sub setDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ACK,FIN FIN "    # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_8' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_8' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ACK,PSH PSH -j DROP
@@ -860,25 +864,28 @@ sub setDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ACK,PSH PSH "    # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_9' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_9' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
+
 	#  Christmas tree packet. Used to analyze tcp response and to elaborate a atack
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL ALL -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL ALL "    # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_10' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_10' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL NONE -j DROP
@@ -886,12 +893,13 @@ sub setDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL NONE "    # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_11' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_11' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL FIN,PSH,URG -j DROP
@@ -899,12 +907,13 @@ sub setDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL FIN,PSH,URG "    # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_12' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_12' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL SYN,FIN,PSH,URG -j DROP
@@ -912,12 +921,13 @@ sub setDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL SYN,FIN,PSH,URG "    # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_13' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_13' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL SYN,RST,ACK,FIN,URG -j DROP
@@ -925,12 +935,13 @@ sub setDOSBogusTcpFlagsRule
 	  . " -t raw -A PREROUTING "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL SYN,RST,ACK,FIN,URG "    # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_14' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_14' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 
 	return $output;
@@ -944,10 +955,10 @@ sub setDOSLimitConnsRule
 	my %ruleOpt = %{ $ruleOptRef };
 
 	#~ my $rule    = "limitconns";
-	my $logMsg = &createLogMsg ( $ruleName, $ruleOpt{ 'farmName' } );
-	my $chain  = "INPUT";                     # default, this chain is for L7 apps
-	my $dest   = $ruleOpt{ 'vip' };
-	my $port   = $ruleOpt{ 'vport' };
+	my $logMsg = &createLogMsg( $ruleName, $ruleOpt{ 'farmName' } );
+	my $chain = "INPUT";               # default, this chain is for L7 apps
+	my $dest  = $ruleOpt{ 'vip' };
+	my $port  = $ruleOpt{ 'vport' };
 	my $output;
 	my $limit_conns = &getDOSParam( $ruleName, 'limit_conns' );
 
@@ -966,10 +977,10 @@ sub setDOSLimitConnsRule
 			my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 
 			  #~ . " -A INPUT -t filter "         # select iptables struct
-			  . " -A $chain -t filter "                          # select iptables struct
-			  . "$dest $ruleOpt{ 'protocol' } $port "            # who is destined
+			  . " -A $chain -t filter "                           # select iptables struct
+			  . "$dest $ruleOpt{ 'protocol' } $port "             # who is destined
 			  . "-m connlimit --connlimit-above $limit_conns "    # rules for block
-			  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+			  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 			$output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
 
@@ -983,10 +994,10 @@ sub setDOSLimitConnsRule
 		my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 
 		  #~ . " -A INPUT -t filter "         # select iptables struct
-		  . " -A $chain -t filter "                          # select iptables struct
-		  . "$dest $ruleOpt{ 'protocol' } $port "            # who is destined
+		  . " -A $chain -t filter "                           # select iptables struct
+		  . "$dest $ruleOpt{ 'protocol' } $port "             # who is destined
 		  . "-m connlimit --connlimit-above $limit_conns "    # rules for block
-		  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+		  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 		my $output =
 		  &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
@@ -1010,8 +1021,8 @@ sub setDOSLimitRstRule
 	my %ruleOpt = %{ $ruleOptRef };
 
 	#~ my $rule        = "limitrst";
-	my $logMsg = &createLogMsg ( $ruleName, $ruleOpt{ 'farmName' } );
-	my $limit      = &getDOSParam( $ruleName, 'limit' );
+	my $logMsg = &createLogMsg( $ruleName, $ruleOpt{ 'farmName' } );
+	my $limit       = &getDOSParam( $ruleName, 'limit' );
 	my $limit_burst = &getDOSParam( $ruleName, 'limit_burst' );
 
 # /sbin/iptables -A PREROUTING -t mangle -p tcp --tcp-flags RST RST -m limit --limit 2/s --limit-burst 2 -j ACCEPT
@@ -1019,12 +1030,13 @@ sub setDOSLimitRstRule
 	  . " -A PREROUTING -t mangle "    # select iptables struct
 	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags RST RST -m limit --limit $limit/s --limit-burst $limit_burst " # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";            # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";          # comment
 
 	my $output = &iptSystem( $cmd );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_1' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_1' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 	else
 	{
@@ -1033,12 +1045,13 @@ sub setDOSLimitRstRule
 		  . " -A PREROUTING -t mangle "    # select iptables struct
 		  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 		  . "--tcp-flags RST RST "    # rules for block
-		  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+		  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 		my $output = &setIPDSDropAndLog( $cmd, $logMsg );
 		if ( $output != 0 )
 		{
-			&zenlog( "Error appling '${ruleName}_2' rule to farm '$ruleOpt{ 'farmName' }'." );
+			&zenlog(
+					 "Error appling '${ruleName}_2' rule to farm '$ruleOpt{ 'farmName' }'." );
 		}
 	}
 	return $output;
@@ -1052,8 +1065,8 @@ sub setDOSLimitSecRule
 	my %ruleOpt = %{ $ruleOptRef };
 
 	#~ my $rule        = "limitsec";
-	my $logMsg = &createLogMsg ( $ruleName, $ruleOpt{ 'farmName' } );
-	my $limit      = &getDOSParam( $ruleName, 'limit' );
+	my $logMsg = &createLogMsg( $ruleName, $ruleOpt{ 'farmName' } );
+	my $limit       = &getDOSParam( $ruleName, 'limit' );
 	my $limit_burst = &getDOSParam( $ruleName, 'limit_burst' );
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp -m conntrack --ctstate NEW -m limit --limit 60/s --limit-burst 20 -j ACCEPT
@@ -1061,12 +1074,13 @@ sub setDOSLimitSecRule
 	  . " -A PREROUTING -t mangle "    # select iptables struct
 	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "-m conntrack --ctstate NEW -m limit --limit $limit/s --limit-burst $limit_burst " # rules for block
-	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";                   # comment
+	  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";                 # comment
 
 	my $output = &iptSystem( $cmd );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '${ruleName}_1' rule to farm '$ruleOpt{ 'farmName' }'." );
+		&zenlog(
+				 "Error appling '${ruleName}_1' rule to farm '$ruleOpt{ 'farmName' }'." );
 	}
 	else
 	{
@@ -1075,12 +1089,13 @@ sub setDOSLimitSecRule
 		  . " -A PREROUTING -t mangle "    # select iptables struct
 		  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 		  . "-m conntrack --ctstate NEW "    # rules for block
-		  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\"";    # comment
+		  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
 		my $output = &setIPDSDropAndLog( $cmd, $logMsg );
 		if ( $output != 0 )
 		{
-			&zenlog( "Error appling '${ruleName}_2' rule to farm '$ruleOpt{ 'farmName' }'." );
+			&zenlog(
+					 "Error appling '${ruleName}_2' rule to farm '$ruleOpt{ 'farmName' }'." );
 		}
 	}
 	return $output;
@@ -1094,7 +1109,7 @@ sub setDOSDropIcmpRule
 	my $rule = "drop_icmp";
 
 	#~ my $rule    = "dropicmp";
-	my $logMsg = &createLogMsg ( $rule );
+	my $logMsg = &createLogMsg( $rule );
 
 	# /sbin/iptables -t raw -A PREROUTING -p icmp -j DROP
 	my $cmd = &getGlobalConfiguration( 'iptables' )
@@ -1135,20 +1150,45 @@ sub setDOSSshBruteForceRule
 	#~ my $rule    = "sshbruteforce";
 	my $hits = &getDOSParam( $rule, 'hits' );
 	my $time = &getDOSParam( $rule, 'time' );
+
 	#~ my $port = &getDOSParam( $rule, 'port' );
 	my $sshconf = &getSsh();
-	my $port = $sshconf->{'port'};
-	my $logMsg = &createLogMsg ( $rule );
+	my $port    = $sshconf->{ 'port' };
+	my $logMsg  = &createLogMsg( $rule );
+	my $output;
+	my $cmd;
+
+	# If the cluster is configurated, will add an exception to the remote node
+	# /sbin/iptables -A PREROUTING -t mangle -s $clusterIP -j ACCEPT
+	require "/usr/local/zenloadbalancer/www/zcluster_functions.cgi";
+	if ( &getZClusterStatus() )
+	{
+		my $remoteHost        = getZClusterRemoteHost();
+		my $cl_conf           = &getZClusterConfig();
+		my $remoteClusterNode = $cl_conf->{ $remoteHost }->{ ip };
+
+		$cmd =
+		  &getGlobalConfiguration( 'iptables' )
+		  . " -A PREROUTING -t mangle "                        # select iptables struct
+		  . "-s $remoteClusterNode -j ACCEPT "                 # who is destined
+		  . "-m comment --comment \"DOS_${rule}_cluster\"";    # comment
+
+		$output = &iptSystem( $cmd );
+		if ( $output != 0 )
+		{
+			&zenlog( "Error appling '${rule}_cluster' rule." );
+		}
+	}
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --set
-	my $cmd =
+	$cmd =
 	  &getGlobalConfiguration( 'iptables' )
-	  . " -A PREROUTING -t mangle "     	# select iptables struct
-	  . "-p tcp --dport $port "                 	# who is destined
+	  . " -A PREROUTING -t mangle "                      # select iptables struct
+	  . "-p tcp --dport $port "                          # who is destined
 	  . "-m conntrack --ctstate NEW -m recent --set "    # rules for block
 	  . "-m comment --comment \"DOS_$rule\"";            # comment
 
-	my $output = &iptSystem( $cmd );
+	$output = &iptSystem( $cmd );
 	if ( $output != 0 )
 	{
 		&zenlog( "Error appling '${rule}_1' rule." );
