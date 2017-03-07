@@ -373,9 +373,10 @@ if ( $eject eq "start" )
 			close FW;
 
 			#creating configuration interface file:
-			#~ open FW, ">$configdir\/if\_$ifname\_conf";
-			#~ print FW "$ifname;;$ip;$netmask;;\n";
-			#~ close FW;
+			open FW, ">$configdir\/if\_$ifname\_conf";
+			print FW "status=up\n";
+			print FW "$ifname;$ip;$netmask;;\n";
+			close FW;
 
 			my %interface = (
 							  name    => $ifname,
