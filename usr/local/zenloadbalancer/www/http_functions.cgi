@@ -1093,7 +1093,7 @@ sub _runHTTPFarmStop    # ($farm_name)
 	}
 	else
 	{
-		&errormsg(
+		&zenlog(
 			 "Farm $farm_name can't be stopped, check the logs and modify the configuration"
 		);
 		return 1;
