@@ -661,8 +661,9 @@ sub set_blacklists_source
 			else
 			{
 				my $source = &getBLParam( $listName, 'source' );
+				$errormsg = "Source $id has been modified successful.";
 				my $body = {
-							 description => $description,
+							 description => $description, message     => $errormsg,
 							 params      => { "source" => $json_obj->{'source'}, 'id' => $id } 
 				};
 				&httpResponse( { code => 200, body => $body } );
