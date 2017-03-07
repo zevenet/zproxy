@@ -222,7 +222,6 @@ if ( $eject eq "start" )
 	my $version = &getGlobalConfiguration('version');
 	&zenlog( "Starting Zen Load Balancer v$version" );
 	&zenlog( "Beginning start proccess" );
-	system ( '/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi' );
 	require "/usr/local/zenloadbalancer/config/global.conf";
 	require "/usr/local/zenloadbalancer/www/notifications.cgi";
 	require "/usr/local/zenloadbalancer/www/blacklists.cgi";
