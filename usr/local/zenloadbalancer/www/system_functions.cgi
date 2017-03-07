@@ -890,9 +890,8 @@ sub getBackup
 		$line =~ s/backup-($backup_re).tar.gz/$1/;
 
 		my $datetime_string = ctime( stat ( $filepath )->mtime );
-		push @backups, { 'file' => $line, 'date' => $datetime_string };
+		push @backups, { 'name' => $line, 'date' => $datetime_string };
 
-#~ push @backups, { 'file' => $line, 'date' => $datetime_string, 'host' => $host };     #  $host;   in web gui said host
 	}
 
 	return \@backups;
@@ -907,7 +906,7 @@ sub getExistsBackup
 
 	foreach my $backup ( @{ &getBackup } )
 	{
-		if ( $backup->{ 'file' } =~ /^$name/, )
+		if ( $backup->{ 'name' } =~ /^$name/, )
 		{
 			$find = 1;
 			last;
