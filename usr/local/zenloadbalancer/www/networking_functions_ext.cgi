@@ -104,7 +104,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		close $file;
 	}
 
-	if ( !$if_line || !$if_status )
+	if ( !$if_line && $if_status !~ /up/ )
 	{
 		return undef;
 	}
@@ -135,6 +135,10 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	if ( $iface{ dev } =~ /:/ )
 	{
 		( $iface{ dev }, $iface{ vini } ) = split ':', $iface{ dev };
+	}
+
+	if ( !$iface{ name } ){
+		$iface{ name } = $if_name;
 	}
 
 	if ( $iface{ dev } =~ /./ )
