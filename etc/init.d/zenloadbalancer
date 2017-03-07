@@ -57,17 +57,4 @@ if ( "$action" eq "restart"){
         exit;
 }
 
-if ( "$action" eq "stoplocal"){
-
-        my @run = `$zenbin stoplocal > /dev/console`;
-        exit;
-}
-
-if ( "$action" eq "startlocal"){
-
-        my @run = `$zenbin startlocal > /dev/console`;
-	my @run = `/usr/local/zenloadbalancer/app/zenlatency/zenadvrt.pl`;
-        exit;
-}
-
-print "Usage: /etc/init.d/zenloadbalancer ( stop | start | restart | stoplocal | startlocal )\n";
+print "Usage: /etc/init.d/zenloadbalancer ( stop | start | restart )\n";
