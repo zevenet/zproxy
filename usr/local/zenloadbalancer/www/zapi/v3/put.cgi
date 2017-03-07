@@ -1006,6 +1006,9 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		}
 		if ( $error eq "false" )
 		{
+			# change to number format
+			$json_obj->{ deftcpport } += 0;
+			
 			&setFarmVS( $farmname, $service, "dpc", $json_obj->{ deftcpport } );
 			if ( $? eq 0 )
 			{
@@ -1043,7 +1046,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			$body->{ status } = 'needed restart';
 			$body->{ info } = "There're changes that need to be applied, stop and start farm to apply them!";
 		}
-
+		
 		&httpResponse({ code => 200, body => $body });
 	}
 	else
