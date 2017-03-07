@@ -1172,6 +1172,10 @@ GET qr{^/stats/farms$} => sub {
 	&all_farms_stats( @_ );
 };
 
+GET qr{^/stats/farms/total$} => sub {
+	&farms_number( @_ );
+};
+
 GET qr{^/stats/farms/modules$} => sub {
 	&module_stats_status( @_ );
 };

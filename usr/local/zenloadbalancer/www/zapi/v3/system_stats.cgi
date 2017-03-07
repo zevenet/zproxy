@@ -778,6 +778,22 @@ sub all_farms_stats # ()
 	&httpResponse({ code => 200, body => $body });
 }
 
+
+# Get the number of farms
+sub farms_number
+{
+	my $number =  scalar &getFarmNameList();
+
+	# Print Success
+	my $body = {
+				 description       => "Number of farms.",
+				 number => $number,
+	};
+
+	&httpResponse({ code => 200, body => $body });
+}
+
+
 # GET /stats/farms/modules
 #Get a farm status resume 
 sub module_stats_status
