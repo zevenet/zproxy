@@ -12,7 +12,7 @@
 
 ###############################################################################
 #
-#     This file is part of the Zen Load Balancer Enterprise Edition software
+#     This file is part of the ZEVENET Load Balancer Enterprise Edition software
 #     package.
 #
 #     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
@@ -220,7 +220,7 @@ if ( $eject eq "restart" )
 if ( $eject eq "start" )
 {
 	my $version = &getGlobalConfiguration('version');
-	&zenlog( "Starting Zen Load Balancer v$version" );
+	&zenlog( "Starting ZEVENET Load Balancer v$version" );
 	&zenlog( "Beginning start proccess" );
 	require "/usr/local/zenloadbalancer/config/global.conf";
 	require "/usr/local/zenloadbalancer/www/notifications.cgi";
@@ -438,7 +438,7 @@ if ( $eject eq "start" )
 	&setDOSBoot();
 
 	### Starting Network Interfaces
-	&printAndLog( "Starting Zen Load Balancer...\n" );
+	&printAndLog( "Starting ZEVENET Load Balancer...\n" );
 	&printAndLog( "* Starting Interfaces:\n" );
 
 	my $mgmt_ip = &getHttpServerIp();
@@ -748,7 +748,7 @@ if ( $eject eq "stop" )
 		}
 	}
 
-	&printAndLog( "Stopping Zen Load Balancer...\n" );
+	&printAndLog( "Stopping ZEVENET Load Balancer...\n" );
 
 	### Stopping Farms
 	&printAndLog( "* Stopping Farms:\n" );
