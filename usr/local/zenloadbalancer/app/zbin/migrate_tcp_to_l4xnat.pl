@@ -89,7 +89,7 @@ foreach my $farm ( @files )
 		$l4_persistence="";
 		$l4_persistence="ip" if ( grep ( /^no roundrobin/, @tcpfile ) );
 		
-		$l4_timeout=120;
+		$l4_timeout=3600;
 		
 		# save config parameter in l4 format
 		#l4farm;tcp;192.168.100.102;70;nat;weight;none;125;up
