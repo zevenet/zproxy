@@ -464,9 +464,9 @@ if ( $eject eq "start" )
 
 				my $socket   = &getIOSocket();
 				my $if_flags = $socket->if_flags( $$iface{ name } );
+
 				if ( !( $if_flags & IFF_UP ) )
 				{
-					
 					&upIf( $iface );
 					my $return_code = &addIp( $iface );
 
@@ -482,11 +482,11 @@ if ( $eject eq "start" )
 
 					if ( $return_code == 0 )
 					{
-						&printAndLog( " \033[1;32m OK \033[0m \n" );
+						print( " \033[1;32m OK \033[0m \n" );
 					}
 					else
 					{
-						&printAndLog( " \033[1;31m ERROR \033[0m \n" );
+						print( " \033[1;31m ERROR \033[0m \n" );
 					}
 
 					if ( $$iface{ ip_v } == 4 )
@@ -496,7 +496,11 @@ if ( $eject eq "start" )
 				}
 				elsif ( $$iface{ addr } eq $mgmt_ip && !( $if_flags & IFF_UP ) )
 				{
-					&printAndLog( " \033[1;32m OK \033[0m \n" );
+					print( " \033[1;32m OK \033[0m \n" );
+				}
+				else
+				{
+					print( "\n" );
 				}
 			}
 		}
@@ -507,6 +511,9 @@ if ( $eject eq "start" )
 	{
 		if ( $$iface{ vlan } ne '' && $$iface{ vini } eq '' )
 		{
+			&createIf( $iface );
+			my $return_code = &addIp( $iface );
+
 			if ( $$iface{ status } eq "up" )
 			{
 				&printAndLog( "  * Starting interface $$iface{name}\n" );
@@ -517,10 +524,8 @@ if ( $eject eq "start" )
 					&printAndLog( " Gateway:$$iface{gateway}" );
 				}
 
-				&createIf( $iface );
 				&upIf( $iface );
 
-				my $return_code = &addIp( $iface );
 				if ( $return_code )
 				{
 					my @ip_output = `$ip_bin address show dev $$iface{name}`;
@@ -529,11 +534,11 @@ if ( $eject eq "start" )
 
 				if ( $return_code == 0 )
 				{
-					&printAndLog( " \033[1;32m OK \033[0m \n" );
+					print( " \033[1;32m OK \033[0m \n" );
 				}
 				else
 				{
-					&printAndLog( " \033[1;31m ERROR \033[0m \n" );
+					print( " \033[1;31m ERROR \033[0m \n" );
 				}
 
 				&writeRoutes( $$iface{ name } );
@@ -614,11 +619,11 @@ if ( $eject eq "start" )
 
 				if ( $return_code == 0 )
 				{
-					&printAndLog( " \033[1;32m OK \033[0m \n" );
+					print( " \033[1;32m OK \033[0m \n" );
 				}
 				else
 				{
-					&printAndLog( " \033[1;31m ERROR \033[0m \n" );
+					print( " \033[1;31m ERROR \033[0m \n" );
 				}
 
 				if ( $$iface{ ip_v } == 4 )
