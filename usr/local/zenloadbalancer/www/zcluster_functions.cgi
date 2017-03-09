@@ -534,7 +534,7 @@ sub runRemotely # `output` ( $cmd, $ip_addr [, $port ] )
 	&zenlog("Running: $ssh_cmd") if &debug() > 1;
 
 	# capture output and return it
-	return `$ssh_cmd`;
+	return `$ssh_cmd 2>/dev/null`;
 }
 
 sub checkZClusterInterfaces # @inmatched_ifaces ( $cl_conf, $nodeIP )
