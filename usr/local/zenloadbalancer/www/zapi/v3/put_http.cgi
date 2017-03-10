@@ -502,7 +502,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 					"ZAPI error, trying to modify a http farm $farmname, invalid ciphers, can't be blank."
 				);
 			}
-			elsif ( $json_obj->{ ciphers } =~ /^all|customsecurity$/ )
+			elsif ( $json_obj->{ ciphers } =~ /^all|highsecurity|customsecurity$/ )
 			{
 				my $ciphers;
 				if ( $json_obj->{ ciphers } eq "all" )
