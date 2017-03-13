@@ -31,6 +31,7 @@ require "/usr/local/zenloadbalancer/www/notifications.cgi";
 
 ( my $section, my $pattern ) = @ARGV;
 
+my $command;
 my ( $subject, $bodycomp ) = &getSubjectBody( $pattern );
 my $logger = &getGlobalConfiguration ( 'logger' );
 
@@ -211,45 +212,6 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 	push @output, $subject, $body;
 	return @output;
 }
-
-
-#~ #  &getData ( $file, $section, $key )
-#~ sub getData
-#~ {
-	#~ my ( $name, $section, $key ) = @_;
-	#~ my $params = scalar @_;
-	#~ my $data;
-	#~ my $fileHandle;
-	#~ my $fileName;
-	#~ my $confdir = getGlobalConfiguration( 'notifConfDir' );
-
-	#~ if ( $name eq 'senders' )
-	#~ {
-		#~ $fileName = "$confdir/sender.conf";
-	#~ }
-	#~ elsif ( $name eq 'alerts' )
-	#~ {
-		#~ my $hostname = &getHostname();
-		#~ $fileName = "$confdir/alert_$hostname.conf";
-	#~ }
-
-	#~ if ( !-f $fileName ) 
-	#~ { 
-		#~ system ("$logger \"Error, not found $name config file\" -i -t notifications");
-		#~ exit 1;
-	#~ }
-		
-	#~ else
-	#~ {
-		#~ $fileHandle = Config::Tiny->read( $fileName );
-		#~ if ( $params == 3 ) 
-			#~ { $data = $fileHandle->{ $section }->{ $key }; }
-		#~ else 
-			#~ { system ("$logger \"Error getting data from file $name \" -i -t notifications"); }
-	#~ }
-	
-	#~ return $data;
-#~ }
 
 
 #   &getGSLBFarm ( $pid )
