@@ -911,7 +911,7 @@ sub set_notif_alert
 		{
 			my $params;
 			$params->{ 'PrefixSubject' } = $json_obj->{ 'prefix' }
-			  if ( $json_obj->{ 'prefix' } );
+			  if ( exists $json_obj->{ 'prefix' } );
 			$params->{ 'SwitchTime' } = $json_obj->{ 'avoidflappingtime' }
 			  if ( $json_obj->{ 'avoidflappingtime' } );
 			$errormsg = &setNotifAlerts( $alert, $params );
