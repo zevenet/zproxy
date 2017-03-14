@@ -767,6 +767,19 @@ sub runFarmStart    # ($farm_name,$writeconf)
 		&runFarmGuardianStart( $farm_name, "" );
 	}
 
+	# run ipds rules
+	require "/usr/local/zenloadbalancer/www/blacklists.cgi";
+	require "/usr/local/zenloadbalancer/www/dos.cgi";
+	my $ipds = &getIPDSfarmsRules( $farm_name );
+	foreach my $list ( @{ $ipds->{ 'blacklists' } } )
+	{
+		&setBLCreateRule ( $farm_name, $list );
+	}
+	foreach my $rule ( @{ $ipds->{ 'dos' } } )
+	{
+		&setDOSRunRule( $rule, $farm_name );
+	}
+
 	return $status;
 }
 
@@ -776,10 +789,23 @@ sub runFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
 
+	# stop ipds rules
+	require "/usr/local/zenloadbalancer/www/blacklists.cgi";
+	require "/usr/local/zenloadbalancer/www/dos.cgi";
+	my $ipds = &getIPDSfarmsRules( $farm_name );
+	foreach my $list ( @{ $ipds->{ 'blacklists' } } )
+	{
+		&setBLDeleteRule ( $farm_name, $list );
+	}
+	foreach my $rule ( @{ $ipds->{ 'dos' } } )
+	{
+		&setDOSStopRule( $rule, $farm_name );
+	}
+
 	&runFarmGuardianStop( $farm_name, "" );
 
 	my $status = &_runFarmStop( $farm_name, $writeconf );
-
+	
 	return $status;
 }
 
@@ -1163,6 +1189,21 @@ sub runFarmDelete    # ($farm_name)
 	my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
 	my $logdir = &getGlobalConfiguration('logdir');
 	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
+	
+	#delete IPDS rules
+	require "/usr/local/zenloadbalancer/www/blacklists.cgi";
+	require "/usr/local/zenloadbalancer/www/dos.cgi";
+	my $ipds = &getIPDSfarmsRules( $farm_name );
+	# delete black lists
+	foreach my $listName ( @{$ipds->{'blacklists'}} )
+	{ 
+		&setBLRemFromFarm( $farm_name, $listName );
+	}
+	# delete dos rules
+	foreach my $dos ( @{$ipds->{'dos'}} )
+	{ 
+		&setDOSDeleteRule( $dos, $farm_name );
+	}
 	
 	
 	my $farm_type = &getFarmType( $farm_name );

@@ -565,14 +565,24 @@ sub setDOSBoot
 				my @farms = split ( ' ', $farmList );
 				foreach my $farmName ( @farms )
 				{
-					$output++ if ( &setDOSRunRule( $ruleName, $farmName ) != 0 );
+					# run rules of running farms
+					if ( &getFarmBootStatus( $farmName ) eq 'up' )
+					{
+						if ( &setDOSRunRule( $ruleName, $farmName ) != 0 )
+						{
+							&zenlog ("Error running the rule $ruleName in the farm $farmName.");
+						}
+					}
 				}
 			}
 			elsif ( $fileHandle->{ $ruleName }->{ 'type' } eq 'system' )
 			{
 				if ( $fileHandle->{ $ruleName }->{ 'status' } eq "up" )
 				{
-					$output++ if ( &setDOSRunRule( $ruleName, 'status' ) != 0 );
+					if ( &setDOSRunRule( $ruleName, 'status' ) != 0 )
+					{
+						&zenlog ("Error, running the rule $ruleName.");
+					}
 				}
 			}
 		}
@@ -588,8 +598,8 @@ sub setDOSBoot
         Parameters:
 				
         Returns:
-				== 0	- Successful
-             != 0	- Number of rules didn't Stop
+			== 0	- Successful
+            != 0	- Number of rules didn't Stop
 
 =cut
 

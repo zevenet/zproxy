@@ -1186,6 +1186,12 @@ sub add_dos_to_farm
 		else
 		{
 			&setDOSCreateRule( $name, $farmName );
+			
+			# stop rule if the farm is down
+			if ( &getFarmStatus ( $farmName ) eq 'down' )
+			{
+				&setDOSStopRule( $name, $farmName );
+			}
 
 			my $confFile = &getGlobalConfiguration( 'dosConf' );
 			

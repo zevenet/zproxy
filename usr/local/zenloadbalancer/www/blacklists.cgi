@@ -164,11 +164,14 @@ sub setBLStart
 			&setBLRunList( $list );
 		}
 
-		# create cmd  for all farms where are applied the list
+		# create cmd  for all farms where are applied the list and  they are running
 		foreach my $farm ( @farms )
 		{
-			&zenlog( "Creating rules for the list $list and farm $farm." );
-			&setBLCreateRule( $farm, $list );
+			if ( &getFarmStatus( $farm ) eq 'up' )
+			{
+				&zenlog( "Creating rules for the list $list and farm $farm." );
+				&setBLCreateRule( $farm, $list );
+			}
 		}
 	}
 }
