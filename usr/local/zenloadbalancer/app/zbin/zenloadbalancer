@@ -721,6 +721,11 @@ if ( $eject eq "start" )
 		&enableZCluster();
 	}
 
+	if ( system( "/etc/init.d/ssh status >/dev/null 2>&1" ) )
+	{
+		system( "/etc/init.d/ssh start >/dev/null 2>&1" );
+	}
+
 	&zenlog( "start proccess finished" );
 }
 
