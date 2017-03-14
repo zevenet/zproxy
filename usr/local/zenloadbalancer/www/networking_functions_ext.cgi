@@ -40,7 +40,7 @@ sub sendGPing    # ($pif)
 		my $ping_cmd = "$ping_bin -c $pingc $gw";
 
 		&zenlog( "$ping_cmd" );
-		system( "$ping_cmd >/dev/null 2>1 &" );
+		system( "$ping_cmd >/dev/null 2>&1 &" );
 	}
 	else
 	{
