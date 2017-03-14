@@ -846,6 +846,7 @@ sub setBondMaster
 		my $configdir = &getGlobalConfiguration('configdir');
 
 		unlink "$configdir/if_${bond_name}_conf";
+		&delGraph ( $bond_name, "iface" );
 	}
 
 	$return_code = 0;
