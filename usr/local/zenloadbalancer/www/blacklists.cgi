@@ -134,41 +134,44 @@ sub setBLStart
 	my @rules          = @{ &getBLRules() };
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 
-	if ( !-d $blacklistsPath )
-	{
-		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $blacklistsPath" );
-		&zenlog( "Created $blacklistsPath directory." );
-	}
+	#~ if ( !-d $blacklistsPath )
+	#~ {
+		#~ system ( &getGlobalConfiguration( 'mkdir' ) . " -p $blacklistsPath" );
+		#~ &zenlog( "Created $blacklistsPath directory." );
+	#~ }
 
-	# create list config if doesn't exist
-	if ( !-e $blacklistsConf )
-	{
-		system ( "$touch $blacklistsConf" );
-		&zenlog( "Created $blacklistsConf file." );
-	}
+	#~ # create list config if doesn't exist
+	#~ if ( !-e $blacklistsConf )
+	#~ {
+		#~ system ( "$touch $blacklistsConf" );
+		#~ &zenlog( "Created $blacklistsConf file." );
+	#~ }
 
-	# load preload lists
-	&setBLAddPreloadLists();
+	#~ # load preload lists
+	#~ &setBLAddPreloadLists();
 
 	my $allLists = Config::Tiny->read( $blacklistsConf );
 
 	# load lists
 	foreach my $list ( keys %{ $allLists } )
 	{
-		my $farms = &getBLParam( $list, "farms" );		
+		my $farms = &getBLParam( $list, "farms" );
 		next if ( !$farms );
 		
-		my @farms = @{ $farms }; 
-		if ( @farms )
-		{
-			&setBLRunList( $list );
-		}
+		my @farms = @{ $farms };
 
+		my $flag = 0;
 		# create cmd  for all farms where are applied the list and  they are running
 		foreach my $farm ( @farms )
 		{
 			if ( &getFarmStatus( $farm ) eq 'up' )
 			{
+				if ( ! $flag )
+				{
+					# load in memory the list
+					&setBLRunList( $list );
+					$flag = 1;
+				}
 				&zenlog( "Creating rules for the list $list and farm $farm." );
 				&setBLCreateRule( $farm, $list );
 			}

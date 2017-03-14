@@ -82,6 +82,7 @@ sub getDOSInitialParams
 	my $rule = shift;
 
 	# get ssh port
+	require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 	my $sshconf = &getSsh();
 	my $port    = $sshconf->{ 'port' };
 
