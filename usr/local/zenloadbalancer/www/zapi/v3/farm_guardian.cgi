@@ -167,6 +167,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 				@fgconfig = &getFarmGuardianConf( $farmname, $service );
 			}
 			my $timetocheck  = $fgconfig[1] + 0;
+			$timetocheck = 5 if ( ! $timetocheck );
 			my $check_script = $fgconfig[2];
 			$check_script =~ s/\n//g;
 			$check_script =~ s/\"/\'/g;
