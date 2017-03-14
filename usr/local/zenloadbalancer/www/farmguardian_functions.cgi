@@ -247,6 +247,7 @@ sub runFarmGuardianStop    # ($fname,$svice)
 					my $backendserv   = $subbe[2];
 					my $backendport   = $subbe[3];
 					my $backendstatus = $subbe[7];
+					chomp $backendstatus;
 
 					if ( $backendstatus eq "fgDOWN" )
 					{
