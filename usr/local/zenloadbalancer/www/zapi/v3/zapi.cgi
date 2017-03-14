@@ -645,12 +645,10 @@ POST qr{^/session$} => sub {
 
 		my ( $username, $password ) = @credentials;
 
-		&zenlog( "credentials: @credentials<" );
-
 		if ( &authenticateCredentials( @credentials ) )
 		{
 			# successful authentication
-			&zenlog( "Login successful for username: $username" );
+			&zenlog( "Login successful for user: $username" );
 
 			$session->param( 'is_logged_in', 1 );
 			$session->param( 'username',     $username );
