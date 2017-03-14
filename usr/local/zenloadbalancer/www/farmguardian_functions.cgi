@@ -159,7 +159,7 @@ sub runFarmGuardianStart    # ($fname,$svice)
 			$status = $status + $stat;
 		}
 	}
-	elsif ( $ftype eq 'l4xnat' || $ftype eq 'udp' || $ftype eq 'tcp' )
+	elsif ( $ftype eq 'l4xnat' || $ftype eq 'udp' || $ftype eq 'tcp' || $ftype =~ /http/ )
 	{
 		my $farmguardian = &getGlobalConfiguration('farmguardian');
 		my $fg_cmd = "$farmguardian $fname $sv $log";
