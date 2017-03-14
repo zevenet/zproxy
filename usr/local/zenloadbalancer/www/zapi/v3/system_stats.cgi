@@ -129,13 +129,10 @@ sub get_sys_graphs	#()
 {
 	my $key = shift;
 	my $description = "Get $key graphs";
-	
+
 	$key = 'mem' if ( $key eq 'ram' );
 	$key = 'memsw' if ( $key eq 'swap' );
-	
-	# Print Success
-	&zenlog( "ZAPI success, trying to get graphs." );
-	
+
 	# Print Graph Function
 	my @output;
 	my $graph = &printGraph( $key, 'd' );
@@ -157,16 +154,13 @@ sub get_frec_sys_graphs	#()
 	my $key = shift;
 	my $frequency = shift;
 	my $description = "Get $frequency $key graphs";
-	
+
 	$key = 'mem' if ( $key eq 'ram' );
 	$key = 'memsw' if ( $key eq 'swap' );
-	
+
 	 # take initial idenfiticative letter 
 	$frequency = $1  if ( $frequency =~ /^(\w)/ );
-	
-	# Print Success
-	&zenlog( "ZAPI success, trying to get graphs." );
-	
+
 	# Print Graph Function
 	my @output;
 	my $graph = &printGraph( $key, $frequency );
