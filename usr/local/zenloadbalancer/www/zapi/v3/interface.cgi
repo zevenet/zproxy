@@ -2782,8 +2782,6 @@ sub modify_interface_floating # ( $json_obj, $floating )
 
 	unless ( $@ )
 	{
-		&zenlog("setConfigTiny successed");
-
 		# Error
 		my $message = "Floating interface modification done";
 		my $body = {
@@ -2796,8 +2794,6 @@ sub modify_interface_floating # ( $json_obj, $floating )
 	}
 	else
 	{
-		&zenlog("setConfigTiny failed");
-
 		# Error
 		my $errormsg = "Floating interface modification failed";
 		my $body = {
