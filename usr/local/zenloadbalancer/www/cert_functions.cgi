@@ -228,13 +228,13 @@ sub delCert    # ($certname)
 	$certname = quotemeta $certname;
 	my $certdir;
 
-	if ( $certname ne 'zlbcertfile.pem' )
+	if ( 'zlbcertfile.pem' =~ /^$certname$/ )
 	{
-		$certdir = &getGlobalConfiguration('configdir');
+		$certdir = &getGlobalConfiguration('basedir');
 	}
 	else
 	{
-		$certdir = &getGlobalConfiguration('basedir');
+		$certdir = &getGlobalConfiguration('configdir');
 	}
 
 	# verify existance in config directory for security reasons
