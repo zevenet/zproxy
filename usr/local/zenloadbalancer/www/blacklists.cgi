@@ -134,20 +134,20 @@ sub setBLStart
 	my @rules          = @{ &getBLRules() };
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 
-	#~ if ( !-d $blacklistsPath )
-	#~ {
-		#~ system ( &getGlobalConfiguration( 'mkdir' ) . " -p $blacklistsPath" );
-		#~ &zenlog( "Created $blacklistsPath directory." );
-	#~ }
+	if ( !-d $blacklistsPath )
+	{
+		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $blacklistsPath" );
+		&zenlog( "Created $blacklistsPath directory." );
+	}
 
-	#~ # create list config if doesn't exist
-	#~ if ( !-e $blacklistsConf )
-	#~ {
-		#~ system ( "$touch $blacklistsConf" );
-		#~ &zenlog( "Created $blacklistsConf file." );
-	#~ }
+	# create list config if doesn't exist
+	if ( !-e $blacklistsConf )
+	{
+		system ( "$touch $blacklistsConf" );
+		&zenlog( "Created $blacklistsConf file." );
+	}
 
-	#~ # load preload lists
+	# load preload lists
 	#~ &setBLAddPreloadLists();
 
 	my $allLists = Config::Tiny->read( $blacklistsConf );
@@ -492,12 +492,12 @@ sub setBLAddPreloadLists
 				&zenlog( "The preload list '$list' was created." );
 
 				system ( "cp $blacklistsLocalPreload/$list.txt $blacklistsPath/$list.txt" );
-				&zenlog( "The preload list '$list' was created." );
+				#~ &zenlog( "The preload list '$list' was created." );
 			}
 			elsif ( $fileHandle->{ $list }->{ 'preload' } eq 'true' )
 			{
 				system ( "cp $blacklistsLocalPreload/$list.txt $blacklistsPath/$list.txt" );
-				&zenlog( "The preload list '$list' was updated." );
+				#~ &zenlog( "The preload list '$list' was updated." );
 			}
 			else
 			{
@@ -886,7 +886,7 @@ sub getBLParam
 		$output->{ 'farms' } = \@aux;
 	}
 	elsif ( $key eq 'source' )
-	{
+	{	
 		$output = &getBLIpList( $listName );
 	}
 	elsif ( $listName )
@@ -1376,7 +1376,6 @@ sub getBLRules
 	foreach my $farmName ( @farms )
 	{
 		my @rules = &getIptList( $farmName, 'raw', 'PREROUTING' );
-
 		my $lineNum = 0;
 		foreach my $rule ( @rules )
 		{

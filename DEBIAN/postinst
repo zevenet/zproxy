@@ -236,6 +236,14 @@ else
 	/etc/init.d/minihttpd start
 fi
 
+# Migrate TCP farms to L4xNAT
+if [ -e /usr/local/zenloadbalancer/config/*_pen.cfg ]; then
+	/usr/local/zenloadbalancer/app/zbin/migrate_tcp_to_l4xnat.pl
+fi
+
+# Create IPDS directories
+/usr/local/zenloadbalancer/app/zbin/boot_ipds.pl
+
 # restarting zenloadbalancer service
 echo "ZLB will be unavailable while the service is restarting."
 /etc/init.d/zenloadbalancer stop
