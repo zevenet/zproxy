@@ -264,12 +264,8 @@ while ( 1 )
 	# print farm check details
 	if ( $logging eq 'enabled' )
 	{
-		my $logline;
-		my $now = localtime time;
-
-		$logline .= "$now - ";
-		$logline .= "farm $farmname - ";
-		$logline .= "timeout $timeout - ";
+		my $logline = '';
+		$logline .= "Farm $farmname - ";
 		$logline .= "timetocheck $timetocheck - ";
 		$logline .= "portadmin $portadmin - " if defined $portadmin;
 		$logline .= "command $check_cmd_tpl";
@@ -281,15 +277,13 @@ while ( 1 )
   BACKEND_IDX:
 	while ( $j < $i )
 	{
+		my $logline;
 		if ( $logging eq 'enabled' )
 		{
-			my $logline;
-			
-			$logline .= "server[$backendid[$j]] $backendserv[$j]:$backendport[$j]";
-			$logline .= " - status $backendstatus[$j]" if $type !~ /(tcp|udp)/;
-
-			&zenlog( $logline );
-			
+			$logline .= "Farm $farmname - ";
+			$logline .= "server[$backendid[$j]] $backendserv[$j]";
+			$logline .= ":$backendport[$j]" if $backendport[$j];
+			$logline .= " - status $backendstatus[$j] - ";
 		}
 
 		# jump to next backend if this one is in maintenance
@@ -321,8 +315,8 @@ while ( 1 )
 			@output    = `$command`;
 			$errorcode = $?;
 			alarm 0;
-		  }
-		  or do
+		}
+		or do
 		{
 			my $kid;
 			$timedout = 1;
@@ -336,7 +330,7 @@ while ( 1 )
 		# being verbose the check output
 		if ( $logging eq 'enabled' )
 		{
-			&zenlog( "timedout $timedout - errorcode $errorcode" );
+			&zenlog( $logline . "timedout $timedout - errorcode $errorcode" );
 		}
 
 		### Enable backend
@@ -346,7 +340,7 @@ while ( 1 )
 			if ( $logging eq 'enabled' )
 			{
 				&zenlog(
-				  "**execution OK in server $j - nerrorcode:$errorcode - timedout:$timedout - backend state:$backendstatus[$j]");
+				  "**execution OK in server $j - errorcode:$errorcode - timedout:$timedout - backend state:$backendstatus[$j]");
 			}
 
 			# Enabling backend for every type of farm supported
@@ -364,6 +358,8 @@ while ( 1 )
 			}
 
 			$backendstatus[$j] = 'active';
+
+			# WARNING: This message format is expected by 'sec'
 			&zenlog("BackEnd $backendserv[$j]:$backendport[$j] resurrect$auxLog");
 		}
 		### Disable backend
@@ -391,6 +387,8 @@ while ( 1 )
 			}
 
 			$backendstatus[$j] = 'fgDOWN';
+
+			# WARNING: This message format is expected by 'sec'
 			&zenlog("BackEnd $backendserv[$j]:$backendport[$j] down$auxLog");
 		}
 		$j++;
