@@ -307,7 +307,7 @@ sub set_cluster_actions
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	# ACTIONS
+	# ACTIONS: maintenance
 	if ( $json_obj->{ action } eq 'maintenance' )
 	{
 		my $description = "Setting maintenance mode";
@@ -341,6 +341,7 @@ sub set_cluster_actions
 		}
 		use warnings "experimental::smartmatch";
 
+		# Enable maintenance mode
 		if ( $json_obj->{ status } eq 'enable' )
 		{
 			# make sure the node is not already under maintenance
@@ -360,7 +361,11 @@ sub set_cluster_actions
 
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 			system("$ip_bin link set $maint_if down");
+
+			# required for no failback configuration
+			&setZClusterNodeStatus('maintenance');
 		}
+		# Disable maintenance mode
 		elsif ( $json_obj->{ status } eq 'disable' )
 		{
 			# make sure the node is under maintenance
@@ -380,6 +385,9 @@ sub set_cluster_actions
 
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 			system("$ip_bin link set $maint_if up");
+
+			# required for no failback configuration
+			&setZClusterNodeStatus('backup');
 		}
 		else
 		{
