@@ -147,12 +147,30 @@ if ( $object eq 'farm' )
 		my $farm_name = shift @ARGV;
 		&quit("Missing farm name argument") if ! $farm_name;
 
-		exit &_runFarmStart( $farm_name );
+		my $status = &_runFarmStart( $farm_name );
+
+		# reload ipds rules
+		require "/usr/local/zenloadbalancer/www/blacklists.cgi";
+		require "/usr/local/zenloadbalancer/www/dos.cgi";
+		&setBLStop();
+		&setBLStart();
+		&setDOSStop();
+		&setDOSBoot();
+
+		exit $status;
 	}
 	elsif ( $command eq 'stop' )
 	{
 		my $farm_name = shift @ARGV;
 		&quit("Missing farm name argument") if ! $farm_name;
+
+		# reload ipds rules
+		require "/usr/local/zenloadbalancer/www/blacklists.cgi";
+		require "/usr/local/zenloadbalancer/www/dos.cgi";
+		&setBLStop();
+		&setBLStart();
+		&setDOSStop();
+		&setDOSBoot();
 
 		exit &_runFarmStop( $farm_name );
 	}
@@ -161,8 +179,19 @@ if ( $object eq 'farm' )
 		my $farm_name = shift @ARGV;
 		&quit("Missing farm name argument") if ! $farm_name;
 
+		# include ipds rules
+		require "/usr/local/zenloadbalancer/www/blacklists.cgi";
+		require "/usr/local/zenloadbalancer/www/dos.cgi";
+		&setBLStop();
+		&setDOSStop();
+
 		&_runFarmStop( $farm_name );
-		exit &_runFarmStart( $farm_name );
+		my $status = &_runFarmStart( $farm_name );
+
+		&setBLStart();
+		&setDOSBoot();
+
+		exit $status;
 	}
 	elsif ( $command eq 'delete' )
 	{
@@ -174,6 +203,33 @@ if ( $object eq 'farm' )
 	else
 	{
 		&quit("Unrecognized farm command");
+	}
+}
+
+# farm commands
+if ( $object eq 'ipds' )
+{
+	if ( $command eq 'restart_bl' )
+	{
+		# reload ipds rules
+		require "/usr/local/zenloadbalancer/www/blacklists.cgi";
+		&setBLStop();
+		&setBLStart();
+
+		exit 0;
+	}
+	elsif ( $command eq 'restart_dos' )
+	{
+		# reload ipds rules
+		require "/usr/local/zenloadbalancer/www/dos.cgi";
+		&setDOSStop();
+		&setDOSBoot();
+
+		exit 0;
+	}
+	else
+	{
+		&quit("Unrecognized ipds command");
 	}
 }
 

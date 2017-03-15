@@ -381,6 +381,9 @@ sub set_blacklists_list
 						delete $listHash->{ 'farms' };
 						
 						my $body = { description => $description, params => $listHash };
+
+						&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+
 						&httpResponse({ code => 200, body => $body } );
 					}
 				}
@@ -488,7 +491,9 @@ sub update_remote_blacklists
 					{
 						&setBLRefreshList( $listName );
 					}
-					
+
+					&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+
 					&httpResponse(
 						{ code => 200, body => { description => $description, update => $statusUpd } } );
 				}
@@ -590,6 +595,9 @@ sub add_blacklists_source
 					}
 
 					$errormsg = "Added $json_obj->{'source'} successful.";
+
+					&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+
 					my $body = {
 								 description => $description,
 								 params      => \@ipList,
@@ -666,6 +674,9 @@ sub set_blacklists_source
 							 description => $description, message     => $errormsg,
 							 params      => { "source" => $json_obj->{'source'}, 'id' => $id } 
 				};
+
+				&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+
 				&httpResponse( { code => 200, body => $body } );
 			}
 		}
@@ -720,6 +731,9 @@ sub del_blacklists_source
 						 success     => "true",
 						 message     => $errormsg,
 			};
+
+			&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+
 			&httpResponse( { code => 200, body => $body } );
 		}
 	}
@@ -780,6 +794,12 @@ sub add_blacklists_to_farm
 								 success      => "true",
 								 message     => $errormsg
 					};
+
+					if ( &getFarmStatus( $farmName ) eq 'up' )
+					{
+						&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+					}
+
 					&httpResponse( { code => 200, body => $body } );
 				}
 				else
@@ -846,6 +866,12 @@ sub del_blacklists_from_farm
 						 success     => "true",
 						 message     => $errormsg,
 			};
+
+			if ( &getFarmStatus( $farmName ) eq 'up' )
+			{
+				&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+			}
+
 			&httpResponse( { code => 200, body => $body } );
 		}
 		else
@@ -1050,6 +1076,9 @@ sub set_dos_rule
 				if ( !$errormsg )
 				{
 					my $refRule = &getDOSParam( $name );
+
+					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
+
 					&httpResponse(
 						{
 						   code => 200,
@@ -1200,6 +1229,12 @@ sub add_dos_to_farm
 			if ( grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 			{
 				$errormsg = "DoS rule $name was applied successful to the farm $farmName.";
+
+				if ( &getFarmStatus( $farmName ) eq 'up' )
+				{
+					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
+				}
+
 				&httpResponse(
 					{
 					   code => 200,
@@ -1269,6 +1304,12 @@ sub del_dos_from_farm
 			if ( ! grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 			{
 				$errormsg = "DoS rule $name was removed successful from the farm $farmName.";
+
+				if ( &getFarmStatus( $farmName ) eq 'up' )
+				{
+					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
+				}
+
 				&httpResponse(
 					{
 					   code => 200,
