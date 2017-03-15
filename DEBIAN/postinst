@@ -193,6 +193,11 @@ then
 	rm -f /tmp/cherokee.conf
 fi
 
+# Migrate TCP farms to L4xNAT
+if [ "-f /usr/local/zenloadbalancer/config/*_pen.cfg" ]; then
+	/usr/local/zenloadbalancer/app/zbin/migrate_tcp_to_l4xnat.pl
+fi
+
 # HTTP profile directives migration to 4.2
 if [ -f /usr/local/zenloadbalancer/app/zbin/zlbmigrationto42.sh ]; then
 	/usr/local/zenloadbalancer/app/zbin/zlbmigrationto42.sh
@@ -234,11 +239,6 @@ then
 else
 	/etc/init.d/minihttpd stop
 	/etc/init.d/minihttpd start
-fi
-
-# Migrate TCP farms to L4xNAT
-if [ -e /usr/local/zenloadbalancer/config/*_pen.cfg ]; then
-	/usr/local/zenloadbalancer/app/zbin/migrate_tcp_to_l4xnat.pl
 fi
 
 # Create IPDS directories
