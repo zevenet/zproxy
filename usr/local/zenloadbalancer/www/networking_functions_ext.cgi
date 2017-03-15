@@ -1130,9 +1130,9 @@ sub setConfigTiny
 	my $file_path = shift;
 	my $config_ref = shift;
 
-	&zenlog("setConfigTiny: setConfigTiny=$file_path") if 1;
-	&zenlog("setConfigTiny: config_ref=". ref $config_ref) if 1;
-	&zenlog("setConfigTiny: config_ref=". Dumper $config_ref) if 1;
+	#~ &zenlog("setConfigTiny: setConfigTiny=$file_path") if 1;
+	#~ &zenlog("setConfigTiny: config_ref=". ref $config_ref) if 1;
+	#~ &zenlog("setConfigTiny: config_ref=". Dumper $config_ref) if 1;
 
 	if ( ! -f $file_path )
 	{
