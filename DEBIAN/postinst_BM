@@ -112,4 +112,4 @@ sed -i "s/1;30m/0;37m/g" /etc/bash.bashrc 2> /dev/null
 #Flush apt sources
 echo > /etc/apt/sources.list
 
-echo "Zen Load Balancer installed..."
+echo "Zevenet Load Balancer installed..."
