@@ -858,7 +858,11 @@ sub runZClusterRemoteManager
 			$zcl_conf->{$remote_hostname}->{ip}
 		);
 
-		&zenlog( "rc:$? $cl_output" );
+		my $rc = $?;
+		my $msg = "rc:$rc";
+		$msg .= " $cl_output" if $rc;
+
+		&zenlog( $msg );
 
 		return $?;
 	}
