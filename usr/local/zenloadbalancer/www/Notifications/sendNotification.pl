@@ -137,7 +137,7 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 
 		$body .= "\n"
 		  . "$program detected a status change to $status $auxBody\n"
-		  . "Zen Server: $host\n"
+		  . "Zevenet Server: $host\n"
 		  . "Backend: $ip\n"
 		  . "Port: $port\n";
 
@@ -148,17 +148,18 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 	# Cluster msg
 	# example:
 	# [WARNING] Switching to state: MASTER
-	elsif (    $program =~ /ucarp/
-			&& $msg =~ /\[WARNING\] Switching to state: (\w+)/ )
+	elsif (    $program =~ /Keepalived_vrrp/
+			#~ && $msg =~ /\[WARNING\] Switching to state: (\w+)/ )
+			&& $msg =~ /\(ZCluster\) Entering (\w+) STATE/ )
 	{
 		$status = $1;
 
 		$body .= "\n"
-		  . "Zen server switched to $status\n"
-		  . "Zen Server: $host\n"
+		  . "Zevenet server switched to $status\n"
+		  . "Zevenet Server: $host\n"
 		  . "Current Status: $status\n";
 
-		$subject = "Zen server \"$host\" switched to $status";
+		$subject = "Zevenet server \"$host\" switched to $status";
 	}
 
 	else
