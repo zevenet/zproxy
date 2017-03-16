@@ -864,7 +864,7 @@ sub runZClusterRemoteManager
 
 		&zenlog( $msg );
 
-		return $?;
+		return $rc;
 	}
 
 	return 0;
