@@ -849,9 +849,6 @@ if ( $eject eq "stop" )
 	}
 	&zenlog("End of $configdir/zlb-stop...");
 
-	# related system services
-	&local_http_service('stop');
-
 	&zenlog( "Stop process finished..." );
 }
 
