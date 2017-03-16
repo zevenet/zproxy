@@ -1097,6 +1097,9 @@ sub get_interfaces # ()
 	my $zcl_conf  = &getZClusterConfig();
 	my $cluster_if = $zcl_conf->{ _ }->{ interface };
 
+	# to include 'has_vlan' to nics
+	my @vlans = &getInterfaceTypeList( 'vlan' );
+
 	for my $if_ref ( @interfaces )
 	{
 		# Exclude IPv6
@@ -1115,9 +1118,7 @@ sub get_interfaces # ()
 		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
 		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
-
-		my $if_conf =
-		  {
+		my $if_conf = {
 			name    => $if_ref->{ name },
 			ip      => $if_ref->{ addr },
 			netmask => $if_ref->{ mask },
@@ -1125,14 +1126,28 @@ sub get_interfaces # ()
 			status  => $if_ref->{ status },
 			mac     => $if_ref->{ mac },
 			type    => $if_ref->{ type },
+
 			#~ ipv     => $if_ref->{ ip_v },
-		  };
-		  
-		 if ( $if_ref->{ type } eq 'nic' )
+		};
+
+		if ( $if_ref->{ type } eq 'nic' )
 		{
 			$if_conf->{ is_slave } =
 			( grep { $$if_ref{ name } eq $_ } &getAllBondsSlaves ) ? 'true' : 'false';
+
+			# include 'has_vlan'
+			for my $vlan_ref ( @vlans )
+			{
+				if ( $vlan_ref->{ parent } eq $if_ref->{ name } )
+				{
+					$if_conf->{ has_vlan } = 'true';
+					last;
+				}
+			}
+
+			$if_conf->{ has_vlan } = 'false' unless $if_conf->{ has_vlan };
 		}
+
 		$if_conf->{ is_cluster } = 'true' if $cluster_if && $cluster_if eq $if_ref->{ name };
 		  
 		push @output_list, $if_conf;
@@ -1156,6 +1171,7 @@ sub get_nic_list # ()
 	# get cluster interface
 	my $zcl_conf  = &getZClusterConfig();
 	my $cluster_if = $zcl_conf->{ _ }->{ interface };
+	my @vlans = &getInterfaceTypeList( 'vlan' );
 
 	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
 	{
@@ -1169,20 +1185,31 @@ sub get_nic_list # ()
 		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
 		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
-		my $if_conf =
-		  {
-			name    => $if_ref->{ name },
-			ip      => $if_ref->{ addr },
-			netmask => $if_ref->{ mask },
-			gateway => $if_ref->{ gateway },
-			status  => $if_ref->{ status },
-			mac     => $if_ref->{ mac },
-			is_slave => $if_ref->{ is_slave },
-		  };
+		my $if_conf = {
+						name     => $if_ref->{ name },
+						ip       => $if_ref->{ addr },
+						netmask  => $if_ref->{ mask },
+						gateway  => $if_ref->{ gateway },
+						status   => $if_ref->{ status },
+						mac      => $if_ref->{ mac },
+						is_slave => $if_ref->{ is_slave },
+		};
+
+		$if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
+
+		# include 'has_vlan'
+		for my $vlan_ref ( @vlans )
+		{
+			if ( $vlan_ref->{ parent } eq $if_ref->{ name } )
+			{
+				$if_conf->{ has_vlan } = 'true';
+				last;
+			}
+		}
+
+		$if_conf->{ has_vlan } = 'false' unless $if_conf->{ has_vlan };
 		  
-		  $if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
-		  
-		  push @output_list, $if_conf;
+		push @output_list, $if_conf;
 	}
 
 	my $body = {
