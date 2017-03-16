@@ -212,8 +212,6 @@ sub setBLStop
 	my $size    = scalar @rules - 1;
 	my @allLists;
 	
-	use List::MoreUtils qw(uniq); 
-	
 	for ( ; $size >= 0 ; $size-- )
 	{
 		if ( $rules[$size] =~ /^(\d+) .+match-set ($blacklists_name) src .+BL_$farm_name/ )
@@ -232,9 +230,12 @@ sub setBLStop
 
 	}
 
-	foreach my $listName ( uniq @allLists )
+	foreach my $listName ( @allLists )
 	{
-		&setBLDestroyList( $listName );
+		if ( &getBLStatus() eq 'up' )
+		{
+			&setBLDestroyList( $listName );
+		}
 	}
 
 }
