@@ -196,8 +196,13 @@ sub certcontrol          #()
 }
 
 
-sub runhttpsgui    #()
+sub local_http_service
 {
+	my ( $command ) = @_;
+
+	die "local_http_service command not recognized"
+		unless $command =~ /^(?:start|stop)$/;
+
 	my $pid;
 
 	if ( $pid = fork )
@@ -206,7 +211,7 @@ sub runhttpsgui    #()
 	}
 	elsif ( defined $pid )
 	{
-		system ( "/etc/init.d/cherokee start > /dev/null &" );
+		system ( "/etc/init.d/cherokee $command >/dev/null &" );
 		exit ( 0 );
 	}
 }
@@ -721,10 +726,13 @@ if ( $eject eq "start" )
 		&enableZCluster();
 	}
 
+	# related system services
 	if ( system( "/etc/init.d/ssh status >/dev/null 2>&1" ) )
 	{
 		system( "/etc/init.d/ssh start >/dev/null 2>&1" );
 	}
+
+	&local_http_service('start');
 
 	&zenlog( "start proccess finished" );
 }
@@ -841,8 +849,10 @@ if ( $eject eq "stop" )
 	}
 	&zenlog("End of $configdir/zlb-stop...");
 
+	# related system services
+	&local_http_service('stop');
+
 	&zenlog( "Stop process finished..." );
 }
 
-&runhttpsgui();
 &configureDefaultGW();
