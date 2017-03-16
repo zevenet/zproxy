@@ -333,7 +333,7 @@ sub new_vlan # ( $json_obj )
 				addr    => $json_obj->{ ip },
 				mask    => $json_obj->{ netmask },
 				gateway => $json_obj->{ gateway } // '',
-				#~ ip_v    => $json_obj->{ ip_v },
+				ip_v    => &ipversion( $json_obj->{ ip } ),
 				mac     => $socket->if_hwaddr( $if_ref->{ dev } ),
 	};
 
