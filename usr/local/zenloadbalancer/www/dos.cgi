@@ -88,17 +88,17 @@ sub getDOSInitialParams
 
 	my %initial = (
 		'bogustcpflags' => { 'farms' => '', 'type'        => 'farm' },
-		'limitconns'    => { 'farms' => '', 'limit_conns' => 10, 'type' => 'farm' },
+		'limitconns'    => { 'farms' => '', 'limit_conns' => 20, 'type' => 'farm' },
 		'limitrst' =>
-		  { 'farms' => '', 'limit' => 2, 'limit_burst' => 2, 'type' => 'farm' },
+		  { 'farms' => '', 'limit' => 10, 'limit_burst' => 5, 'type' => 'farm' },
 		'limitsec' =>
-		  { 'farms' => '', 'limit' => 2, 'limit_burst' => 2, 'type' => 'farm' },
+		  { 'farms' => '', 'limit' => 20, 'limit_burst' => 15, 'type' => 'farm' },
 		'dropicmp' => { 'status' => 'down', 'type' => 'system', 'name' => 'drop_icmp' },
 		'sshbruteforce' => {
 							 'status' => 'down',
-							 'hits'   => 5,
+							 'hits'   => 10,
 							 'port'   => $port,
-							 'time'   => 180,
+							 'time'   => 60,
 							 'type'   => 'system',
 							 'name'   => 'ssh_brute_force'
 		},
