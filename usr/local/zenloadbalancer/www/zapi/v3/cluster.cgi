@@ -16,6 +16,8 @@ use strict;
 
 require "/usr/local/zenloadbalancer/www/zcluster_functions.cgi";
 
+no if $] >= 5.018, warnings => "experimental::smartmatch";
+
 #
 ##### /system/cluster
 #
@@ -100,7 +102,6 @@ sub modify_cluster
 	my @cl_opts = ('check_interval','failback');
 
 	# validate CLUSTER parameters
-	no warnings "experimental::smartmatch";
 	if ( grep { ! ( @cl_opts ~~ /^$_$/ ) } keys %$json_obj )
 	{
 		my $errormsg = "Cluster parameter not recognized";
@@ -112,7 +113,6 @@ sub modify_cluster
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	use warnings "experimental::smartmatch";
 
 	# do not allow request without parameters
 	unless ( scalar keys %$json_obj )
@@ -173,7 +173,6 @@ sub modify_cluster
 
 		my @failback_opts = ( 'disabled', $local_hostname, $remote_hostname );
 
-		no warnings "experimental::smartmatch";
 		unless( @failback_opts ~~ /^$json_obj->{ failback }$/ )
 		{
 			my $errormsg = "Primary node value not recognized";
@@ -185,7 +184,6 @@ sub modify_cluster
 
 			&httpResponse({ code => 400, body => $body });
 		}
-		use warnings "experimental::smartmatch";
 
 		if ( $zcl_conf->{_}->{ primary } ne $json_obj->{ failback } )
 		{
@@ -327,7 +325,6 @@ sub set_cluster_actions
 
 		# validate parameters
 		my @cl_opts = ('action','status');
-		no warnings "experimental::smartmatch";
 		unless ( grep { @cl_opts ~~ /^(?:$_)$/ } keys %$json_obj )
 		{
 			my $errormsg = "Unrecognized parameter received";
@@ -339,7 +336,6 @@ sub set_cluster_actions
 
 			&httpResponse({ code => 400, body => $body });
 		}
-		use warnings "experimental::smartmatch";
 
 		# Enable maintenance mode
 		if ( $json_obj->{ status } eq 'enable' )
@@ -537,7 +533,6 @@ sub enable_cluster
 
 	# validate parameters
 	my @cl_opts = ('local_ip','remote_ip','remote_password');
-	no warnings "experimental::smartmatch";
 	if ( grep { ! ( @cl_opts ~~ /^$_$/ ) } keys %$json_obj )
 	{
 		my $errormsg = "Unrecognized parameter received";
@@ -549,7 +544,6 @@ sub enable_cluster
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	use warnings "experimental::smartmatch";
 
 	# the cluster cannot be already enabled
 	if ( &getZClusterStatus() )
