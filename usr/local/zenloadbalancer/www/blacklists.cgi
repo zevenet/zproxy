@@ -57,6 +57,21 @@ sub getBLStatus
 	return $output;
 }
 
+
+# return 0 if the list has not iptable rules applied
+# @lists = &getListNoUsed ();
+sub getBLListNoUsed
+{
+	my $blacklist = shift;
+	my @rules          	= @{ &getBLRules() };
+	my $farm_name		= &getValidFormat( 'farm_name' );
+
+	my $matchs = grep (  /^\d+ .+match-set ($blacklist) src .+BL_$farm_name/, @rules );
+	
+	return $matchs;
+}
+
+
 # &setBLRunList ( $listName );
 sub setBLRunList
 {
@@ -105,9 +120,9 @@ sub setBLDestroyList
 		&delBLCronTask( $listName );
 	}
 
-	if ( ! &getBLStatus ( $listName ) eq 'up' )
+	if ( &getBLStatus ( $listName ) eq 'up' )
 	{
-		&zenlog( "Destroying list" );
+		&zenlog( "Destroying $listName" );
 		$output = system ( "$ipset destroy $listName 2>/dev/null" );
 	}
 
@@ -160,17 +175,15 @@ sub setBLStart
 		
 		my @farms = @{ $farms };
 
-		my $flag = 0;
 		# create cmd  for all farms where are applied the list and  they are running
 		foreach my $farm ( @farms )
 		{
-			if ( &getFarmStatus( $farm ) eq 'up' )
+			if ( &getFarmBootStatus( $farm ) eq 'up' )
 			{
-				if ( ! $flag )
+				if ( &getBLStatus( $list ) eq "down" )
 				{
 					# load in memory the list
 					&setBLRunList( $list );
-					$flag = 1;
 				}
 				&zenlog( "Creating rules for the list $list and farm $farm." );
 				&setBLCreateRule( $farm, $list );
@@ -196,26 +209,30 @@ sub setBLStop
 	my @rules           = @{ &getBLRules() };
 	my $blacklists_name = &getValidFormat( 'blacklists_name' );
 	my $farm_name       = &getValidFormat( 'farm_name' );
-
+	my $size    = scalar @rules - 1;
 	my @allLists;
-
-	foreach my $rule ( @rules )
+	
+	use List::MoreUtils qw(uniq); 
+	
+	for ( ; $size >= 0 ; $size-- )
 	{
-
-		if ( $rule =~ /^(\d+) .+match-set ($blacklists_name) src .+BL_$farm_name/ )
+		if ( $rules[$size] =~ /^(\d+) .+match-set ($blacklists_name) src .+BL_$farm_name/ )
 		{
+			my $lineNum = $1;
 			my $list = $2;
+			# Delete
+			#	iptables -D PREROUTING -t raw 3
 			my $cmd =
-			  &getGlobalConfiguration( 'iptables' ) . " --table raw -D PREROUTING $1";
+			  &getGlobalConfiguration( 'iptables' ) . " --table raw -D PREROUTING $lineNum";
 			&iptSystem( $cmd );
 
 			# note the list to delete it late
-			push @allLists, $list if ( !grep ( /^$list$/, @allLists ) );
+			push @allLists, $list;
 		}
 
 	}
 
-	foreach my $listName ( @allLists )
+	foreach my $listName ( uniq @allLists )
 	{
 		&setBLDestroyList( $listName );
 	}
@@ -245,7 +262,7 @@ sub setBLCreateRule
 	my $cmd;
 	my $output;
 	my $action = &getBLParam( $listName, 'policy' );
-	
+
 	#~ my $logMsg = "[Blocked by blacklists $listName in farm $farmName]";
 	my $logMsg = &createLogMsg ( $listName, $farmName );
 	
@@ -399,7 +416,7 @@ sub setBLApplyToFarm
 	my ( $farmName, $listName ) = @_;
 	my $output;
 
-	if ( !@{ &getBLParam( $listName, 'farms' ) } )
+	if ( &getBLStatus( $listName ) eq 'down' )
 	{
 		$output = &setBLRunList( $listName );
 	}
@@ -429,7 +446,7 @@ sub setBLRemFromFarm
 	}
 
 	# delete list if it isn't used. This has to be the last call.
-	if ( !$output && !@{ &getBLParam( $listName, 'farms' ) } )
+	if ( !$output && !&getBLListNoUsed( $listName ) )
 	{
 		&setBLDestroyList( $listName );
 	}
@@ -799,7 +816,7 @@ sub setBLParam
 		{
 			$output = &setBLAddToList( $name, $value );
 			# refresh if not error and this list is applied almost to one farm
-			$output = &setBLRefreshList( $name ) if ( !$output && @{ &getBLParam ( $name, 'farms' ) } );
+			$output = &setBLRefreshList( $name ) if ( !$output && &getBLStatus ( $name ) eq 'up' );
 		}
 	}
 	elsif ( 'farms-add' eq $key )
