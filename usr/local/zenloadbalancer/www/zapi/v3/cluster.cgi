@@ -16,6 +16,7 @@ use strict;
 
 require "/usr/local/zenloadbalancer/www/zcluster_functions.cgi";
 
+# disable smartmatch experimental warnings for perl >= 5.18
 no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 #
