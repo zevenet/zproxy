@@ -1400,7 +1400,14 @@ sub getInterfaceTypeList
 		{
 			if ( $list_type eq &getInterfaceType( $if_name ) )
 			{
-				push ( @interfaces, &getInterfaceConfig( $if_name ) // &getSystemInterface( $if_name ) );
+				my $output_if = &getInterfaceConfig( $if_name );
+
+				if ( ! $output_if || ! $output_if->{ mac } )
+				{
+					$output_if = &getSystemInterface( $if_name );
+				}
+
+				push ( @interfaces, $output_if );
 			}
 		}
 	}
