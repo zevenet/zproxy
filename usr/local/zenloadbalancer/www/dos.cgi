@@ -64,8 +64,8 @@ sub setDOSCreateFileConf
 
 	if ( !$output )
 	{
-		$output = &createDOSRule( 'drop_icmp', 'dropicmp' )
-		  if ( &getDOSExists( 'drop_icmp' ) ne "0" );
+		#~ $output = &createDOSRule( 'drop_icmp', 'dropicmp' )		# Next version
+		  #~ if ( &getDOSExists( 'drop_icmp' ) ne "0" );
 		$output = &createDOSRule( 'ssh_brute_force', 'sshbruteforce' )
 		  if ( &getDOSExists( 'ssh_brute_force' ) ne "0" );
 	}

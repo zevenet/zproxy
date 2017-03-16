@@ -53,7 +53,8 @@ my $port_range =
   qr/(?:[1-5]?\d{1,4}|6[0-4]\d{3}|65[1-4]\d{2}|655[1-2]\d{1}|6553[1-5])/;
 my $graphsFrequency = qr/(?:daily|weekly|monthly|yearly)/;
 
-my $dos_global= qr/(?:sshbruteforce|dropicmp)/;
+#~ my $dos_global= qr/(?:sshbruteforce|dropicmp)/;		# Next version
+my $dos_global= qr/(?:sshbruteforce)/;
 my $dos_all 	=	qr/(?:limitconns|limitsec)/;
 my $dos_tcp	= qr/(?:bogustcpflags|limitrst)/;
 
