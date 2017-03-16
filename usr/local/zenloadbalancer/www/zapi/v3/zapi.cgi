@@ -656,11 +656,14 @@ POST qr{^/session$} => sub {
 
 			my ( $header ) = split ( "\r\n", $session->header() );
 			my ( undef, $session_cookie ) = split ( ': ', $header );
-
+			my $key =  &keycert();
+			my $host = &getHostname();
+	
 			&httpResponse(
 						   {
-							 code    => 200,
-							 headers => { 'Set-cookie' => $session_cookie },
+								body => { key	=> $key, host => $host },
+								code    => 200,
+								headers => { 'Set-cookie' => $session_cookie },
 						   }
 			);
 		}
