@@ -1132,7 +1132,13 @@ sub getApplianceVersion
 			# virtual appliance
 			if ( $hypervisor[0] =~ /(xen|vm|hv|kvm)_/ )
 			{
-				$version = "ZVA $version, hypervisor: $1";
+				my $hyperv= $1;
+				$hyperv = 'HyperV' if ( $hyperv eq 'hv' );
+				$hyperv = 'Vmware' if ( $hyperv eq 'vm' );
+				$hyperv = 'Xen' if ( $hyperv eq 'xen' );
+				$hyperv = 'KVM' if ( $hyperv eq 'kvm' );
+				
+				$version = "ZVA $version, hypervisor: $hyperv";
 			}
 			# baremetal appliance
 			else
