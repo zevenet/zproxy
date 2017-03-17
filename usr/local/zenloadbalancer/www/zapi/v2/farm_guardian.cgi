@@ -1,14 +1,22 @@
-#!/usr/bin/perl -w
-
-##############################################################################
+###############################################################################
 #
-#     This file is part of the Zen Load Balancer Enterprise Edition software
-#     package.
+#    Zevenet Software License
+#    This file is part of the Zevenet Load Balancer software package.
 #
-#     Copyright (C) 2014 SOFINTEL IT ENGINEERING SL, Sevilla (Spain)
+#    Copyright (C) 2014-today ZEVENET SL, Sevilla (Spain)
 #
-#     This file cannot be distributed, released in public domain and/or for
-#     commercial purposes.
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ###############################################################################
 
@@ -427,4 +435,4 @@ sub modify_farmguardian()
 
 }
 
-1
+1;
