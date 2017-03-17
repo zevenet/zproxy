@@ -43,7 +43,7 @@ sub getBLStatus
 {
 	my $listName = shift;
 	my $ipset    = &getGlobalConfiguration( 'ipset' );
-	my $output   = system ( "$ipset list $listName 2>/dev/null" );
+	my $output   = system ( "$ipset list $listName 2>/dev/null 2>&1" );
 	
 	if ( $output )
 	{
@@ -79,9 +79,9 @@ sub setBLRunList
 	my $ipset    = &getGlobalConfiguration( 'ipset' );
 	my $output;
 
-	if ( &getBLStatus ( $listName ) eq 'down' )
+	#~ if ( &getBLStatus ( $listName ) eq 'down' )
 	{
-		$output = system ( "$ipset create $listName hash:net 2>/dev/null" );
+		$output = system ( "$ipset create -exist $listName hash:net 2>/dev/null" );
 		&zenlog( "Creating ipset table" );
 	}
 
@@ -120,11 +120,12 @@ sub setBLDestroyList
 		&delBLCronTask( $listName );
 	}
 
-	if ( &getBLStatus ( $listName ) eq 'up' )
-	{
-		&zenlog( "Destroying $listName" );
-		$output = system ( "$ipset destroy $listName 2>/dev/null" );
-	}
+	#~ if ( &getBLStatus ( $listName ) eq 'up' )		# FIXME:  lunch two consecutive ipset command return error
+	#~ {
+		&zenlog( "Destroying blacklist $listName" );
+		#~ $output = system ( "$ipset -I destroy $listName >/dev/null 2>&1" );		# FIXME: Not contemplate error, because return error with before command
+		system ( "$ipset destroy $listName >/dev/null 2>&1" );
+	#~ }
 
 	return $output;
 }
@@ -374,13 +375,13 @@ sub setBLDeleteRule
 		}
 	}
 
-	# check if proccess was successful:
-	@rules = &getIptList( $farmName, 'raw', 'PREROUTING' );
-	if ( grep ( /^(\d+) .+match-set $listName src .+BL_$farmName/, @rules ) )
-	{
-		&zenlog( "Error, deleting '$farmName' from the list '$listName'." );
-		$output = -1;
-	}
+	#~ # check if proccess was successful:
+	#~ @rules = &getIptList( $farmName, 'raw', 'PREROUTING' );
+	#~ if ( grep ( /^(\d+) .+match-set $listName src .+BL_$farmName/, @rules ) )
+	#~ {
+		#~ &zenlog( "Error, deleting '$farmName' from the list '$listName'." );
+		#~ $output = -1;
+	#~ }
 
 	return $output;
 }
