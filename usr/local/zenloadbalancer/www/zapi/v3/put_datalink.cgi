@@ -134,38 +134,36 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 	}
 
 	# Modify Virtual IP and Interface
-	if ( exists ( $json_obj->{ interfacevip } ) )
+	if ( exists ( $json_obj->{ vip } ) )
 	{
-		if ( $json_obj->{ interfacevip } =~ /^$/ )
+		if ( $json_obj->{ vip } =~ /^$/ )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a datalink farm $farmname, invalid interfacevip, can't be blank."
+				"ZAPI error, trying to modify a datalink farm $farmname, invalid vip, can't be blank."
 			);
 		}
-		elsif ( $json_obj->{ interfacevip } =~ /^[a-zA-Z0-9.]+/ )
+		elsif ( $json_obj->{ vip } =~ /^[a-zA-Z0-9.]+/ )
 		{
-			my @fvip = split ( " ", $json_obj->{ interfacevip } );
-			my $fdev = $fvip[0];
-			my $vip  = $fvip[1];
+			my $fdev = &getInterfaceOfIp( $json_obj->{ vip } );
 
-			if ( $fdev eq "" )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify a datalink farm $farmname, invalid Interface value."
-				);
-			}
-			elsif ( $vip eq "" )
+			if ( ! defined $json_obj->{ vip } || $json_obj->{ vip } eq "" )
 			{
 				$error = "true";
 				&zenlog(
 					"ZAPI error, trying to modify a datalink farm $farmname, invalid Virtual IP value."
 				);
 			}
+			elsif ( ! defined $fdev )
+			{
+				$error = "true";
+				&zenlog(
+					"ZAPI error, trying to modify a datalink farm $farmname, invalid Interface value."
+				);
+			}
 			else
 			{
-				$status = &setFarmVirtualConf( $vip, $fdev, $farmname );
+				$status = &setFarmVirtualConf( $json_obj->{ vip }, $fdev, $farmname );
 				if ( $status != -1 )
 				{
 					$restart_flag = "true";
@@ -178,13 +176,12 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 					);
 				}
 			}
-
 		}
 		else
 		{
 			$error = "true";
 			&zenlog(
-				 "ZAPI error, trying to modify a datalink farm $farmname, invalid interfacevip."
+				 "ZAPI error, trying to modify a datalink farm $farmname, invalid vip."
 			);
 		}
 	}
