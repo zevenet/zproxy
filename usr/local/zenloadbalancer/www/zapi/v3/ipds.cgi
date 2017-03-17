@@ -84,10 +84,10 @@ sub add_blacklists_list
 	# $errormsg == 0, no error
 	if ( !$errormsg )
 	{
-		# A list with this name just exist
+		# A list already exists with this name 
 		if ( &getBLExists( $listName ) != -1 )
 		{
-			$errormsg = "A list with name '$listName' just exists.";
+			$errormsg = "A list already exists with name '$listName'.";
 		}
 
 		# Check key format
@@ -580,7 +580,7 @@ sub add_blacklists_source
 			elsif (
 				  grep ( /^$json_obj->{'source'}$/, @{ &getBLParam( $listName, 'source' ) } ) )
 			{
-				$errormsg = "$json_obj->{'source'} just exists in the list.";
+				$errormsg = "$json_obj->{'source'} already exists in the list.";
 			}
 			else
 			{
@@ -781,7 +781,7 @@ sub add_blacklists_to_farm
 		{
 			if ( grep ( /^$farmName$/, @{ &getBLParam( $listName, 'farms' ) } ) )
 			{
-				$errormsg = "$listName just is applied to $farmName.";
+				$errormsg = "$listName is already applied to $farmName.";
 			}
 			else
 			{

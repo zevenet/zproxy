@@ -179,12 +179,12 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	if ( grep { $_->{ rname } eq $json_obj->{ rname } } @{ &getGSLBResources ( $farmname, $zone ) } )
 	{
 		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter zone resource just exist."
+			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter zone resource already exists."
 		);
 
 		# Error
 		my $errormsg =
-		  "The parameter zone resource name (rname) just exist, please insert a valid value.";
+		  "The parameter zone resource name (rname) already exists, please insert a valid value.";
 		my $body = {
 					 description => $description,
 					 error       => "true",

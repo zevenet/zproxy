@@ -166,8 +166,8 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	return \%iface;
 }
 
-# returns 1 if it was sucessfull
-# returns 0 if it wasn't sucessfull
+# returns 1 if it was successful
+# returns 0 if it wasn't successful
 sub setInterfaceConfig    # $bool ($if_ref)
 {
 	my $if_ref = shift;

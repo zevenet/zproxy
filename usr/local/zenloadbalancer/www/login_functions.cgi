@@ -57,7 +57,7 @@ sub login    #()
 		if ( $passwd->authenticate( $user, $passw ) && $grouplist =~ /\(webgui\)/ )
 		{
 			#if ( $passwd->authenticate($user,$passw) ) {
-			# successfull authentication
+			# successful authentication
 			&zenlog( "Login Successful for user $user" );
 			$session->param( 'root_logged_in', 1 );
 			$session->param( 'username',       $user );

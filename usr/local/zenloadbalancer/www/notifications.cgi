@@ -161,7 +161,7 @@ sub setNotifAlerts
 		  if ( ! $errMsg );
 	}
 
-	# sucessful message and reset
+	# successful message and reset
 	&reloadNotifications() if ( ! $errMsg );
 
 	return $errMsg;
@@ -418,8 +418,7 @@ sub runNotifications
 	}
 	else
 	{
-		&zenlog(
-				 "SEC couldn't run because just exits a process $pid for this program" );
+		&zenlog( "SEC couldn't run because a process for this program already exists, pid:$pid." );
 	}
 }
 

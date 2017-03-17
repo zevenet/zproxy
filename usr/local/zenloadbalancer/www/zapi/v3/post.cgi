@@ -713,7 +713,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 			# Success
 			$json_obj->{ timeout } = $json_obj->{ timeout } + 0 if $json_obj->{ timeout };
 
-			my $message = "Added backend to service succesfully";
+			my $message = "Added backend to service successfully";
 			my $body = {
 						 description => $description,
 						 params      => {
@@ -835,7 +835,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 			);
 
 			# Success
-			my $message = "Added backend to service succesfully";
+			my $message = "Added backend to service successfully";
 			my $body = {
 						 description => $description,
 						 params      => {

@@ -583,7 +583,7 @@ sub set_user
 				}
 				else
 				{
-					$errormsg = "Settings was changed succesful.";
+					$errormsg = "Settings was changed successful.";
 					&httpResponse(
 						 {
 						   code => 200,
@@ -622,7 +622,7 @@ sub create_backup
 	$errormsg = getValidReqParams( $json_obj, \@requiredParams );
 	if ( &getExistsBackup( $json_obj->{ 'name' } ) )
 	{
-		$errormsg = "A backup just exists with this name.";
+		$errormsg = "A backup already exists with this name.";
 	}
 	elsif ( !&getValidFormat( 'backup', $json_obj->{ 'name' } ) )
 	{
@@ -694,7 +694,7 @@ sub upload_backup
 	}
 	elsif ( &getExistsBackup( $name ) )
 	{
-		$errormsg = "Backup just exists with this name.";
+		$errormsg = "A backup already exists with this name.";
 	}
 	elsif ( !&getValidFormat( 'backup', $name ) )
 	{
@@ -957,7 +957,7 @@ sub set_notif_alert_actions
 			}
 			elsif ( $errormsg == -2 )
 			{
-				$errormsg = "$alert just is $json_obj->{action}.";
+				$errormsg = "$alert is already $json_obj->{action}.";
 			}
 			else
 			{

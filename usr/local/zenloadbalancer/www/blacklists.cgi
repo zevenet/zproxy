@@ -762,7 +762,7 @@ sub setBLParam
 		my @listNames = keys %{ $fileHandle };
 		if ( !&getBLExists( $value ) )
 		{
-			&zenlog( "List '$value' just exists." );
+			&zenlog( "List '$value' already exists." );
 			$output = -1;
 		}
 		else
@@ -1473,7 +1473,7 @@ sub setBLCronTask
 
 	tie my @list, 'Tie::File', $blacklistsCronFile;
 
-	# just exists this line, replace it
+	# this line already exists, replace it
 	if ( grep ( s/.* $listName .*/$cmd/, @list ) )
 	{
 		&zenlog( "update cron task for list $listName" );
