@@ -213,6 +213,28 @@ sub new_vlan # ( $json_obj )
 
 		&httpResponse({ code => 400, body => $body });
 	}
+	# check that nic interface is no slave of a bonding
+	my $is_slave;
+	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
+	{
+		if ( $if_ref->{ name } eq $json_obj->{ parent } )
+		{
+			$is_slave = $if_ref->{ is_slave };
+			last;
+		}
+	}
+	if ( $is_slave eq 'true' )
+	{
+		# Error
+		my $errormsg = "It is not possible create a VLAN interface from a NIC slave.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
 
 	# validate VLAN TAG
 	unless ( $json_obj->{ tag } >= 1 && $json_obj->{ tag } <= 4094 )
