@@ -570,13 +570,20 @@ sub sendByMail
 	my $from = &getNotifData( 'senders', 'Smtp', 'from' );
 	$command .= &getNotifData( 'senders', 'Smtp', 'bin' );
 	$command .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
+	$command .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
 	$command .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
-	$command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
-	$command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' );
-	$command .= " --auth-password " . &getNotifData( 'senders', 'Smtp', 'auth-password' );
+	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
+	{
+		$command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
+		$command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' ) 
+				if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
+		$command .= " --auth-password " . &getNotifData( 'senders', 'Smtp', 'auth-password' )
+				if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
+	}
+	
 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) ) { $command .= " -tls"; }
 	
-	$command .= " --header 'From: $from '";
+	#~ $command .= " --header 'From: $from '";
 	$command .=	" --header 'Subject: "
 	. &getNotifData( 'alerts', $section, 'PrefixSubject' )
 	. " $subject'";
@@ -592,13 +599,20 @@ sub sendByMail
 	my $logMsg;
 	$logMsg .= &getNotifData( 'senders', 'Smtp', 'bin' );
 	$logMsg .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
+	$logMsg .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
 	$logMsg .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
-	$logMsg .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
-	$logMsg .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' );
-	$logMsg .= " --auth-password ********";
+	
+	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
+	{
+		$logMsg .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
+		$logMsg .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' ) 
+				if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
+		$logMsg .= " --auth-password ********"
+				if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
+	}	
 	$logMsg .= " -tls" 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) );
 	
-	$logMsg .= " --header 'From: $from'";
+	#~ $logMsg .= " --header 'From: $from'";
 	$logMsg .= " --header 'Subject: "
 			.  &getNotifData( 'alerts', $section, 'PrefixSubject' )
 			.  " $subject'";
@@ -626,13 +640,21 @@ sub sendTestMail
 	my $from = &getNotifData( 'senders', 'Smtp', 'from' );
 	$command .= &getNotifData( 'senders', 'Smtp', 'bin' );
 	$command .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
+	$command .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
 	$command .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
-	$command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
-	$command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' );
-	$command .= " --auth-password " . &getNotifData( 'senders', 'Smtp', 'auth-password' );
+	
+	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
+	{
+		$command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
+		$command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' ) 
+				if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
+		$command .= " --auth-password " . &getNotifData( 'senders', 'Smtp', 'auth-password' )
+				if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
+	}	
 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) ) { $command .= " -tls"; }
 	
-	$command .= " --header 'From: $from, ' --header 'Subject: $subject'";
+	#~ $command .= " --header 'From: $from, ' --header 'Subject: $subject'";
+	$command .= " --header 'Subject: $subject'";
 	$command .= " --body '$body'";
 	
 	#not print
@@ -645,13 +667,22 @@ sub sendTestMail
 	my $logMsg;
 	$logMsg .= &getNotifData( 'senders', 'Smtp', 'bin' );
 	$logMsg .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
+	$logMsg .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
 	$logMsg .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
-	$logMsg .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
-	$logMsg .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' );
-	$logMsg .= " --auth-password ********";
+	
+	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
+	{
+		$logMsg .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
+		$logMsg .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' ) 
+				if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
+		$logMsg .= " --auth-password ********"
+				if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
+	}		
+	
 	$logMsg .= " -tls" 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) );
 	
-	$logMsg .= " --header 'From: $from' --header 'Subject: $subject'";
+	#~ $logMsg .= " --header 'From: $from' --header 'Subject: $subject'";
+	$logMsg .= " --header 'Subject: $subject'";
 	$logMsg .= " --body 'BODY'";
 	
 	system ("$logger \"$logMsg\" -i -t sec");
