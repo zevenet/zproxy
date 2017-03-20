@@ -49,7 +49,7 @@ if [ -e "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.${PERLVER}" ]; then
 fi
 if [ -e "/usr/local/zenloadbalancer/www/zapi/v3/zapi.cgi.${PERLVER}" ]; then
 	mv "/usr/local/zenloadbalancer/www/zapi/v3/zapi.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/zapi/v3/zapi.cgi"
-	rm /usr/local/zenloadbalancer/www/zapi/v1/zapi.cgi.*
+	rm /usr/local/zenloadbalancer/www/zapi/v3/zapi.cgi.*
 fi
 if [ -e "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer.${PERLVER}" ]; then
 	mv "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer.${PERLVER}" "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer"
@@ -160,11 +160,11 @@ chmod +x /usr/local/zenloadbalancer/config/zlb-stop
 #move Alerts files #TO BE FIXED
 if [ -f /tmp/Alerts.conf ];
 then
-        mv /tmp/Alerts.conf /usr/local/zenloadbalancer/www/Plugins/Notifications/Alerts.conf
+        mv /tmp/Alerts.conf /usr/local/zenloadbalancer/config/notifications/alert_`hostname`.conf
 fi
 if [ -f /tmp/Senders.conf ];
 then
-        mv /tmp/Senders.conf /usr/local/zenloadbalancer/www/Plugins/Notifications/Senders.conf
+        mv /tmp/Senders.conf /usr/local/zenloadbalancer/config/notifications/sender.conf
 fi
 
 
