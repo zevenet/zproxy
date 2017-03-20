@@ -482,6 +482,13 @@ sub setBLAddPreloadLists
 {
 	my $blacklistsLocalPreload =
 	  &getGlobalConfiguration( 'blacklistsLocalPreload' );
+	 
+	# it is to bugfix in postinst zevenet packet.
+	if ( ! defined $blacklistsLocalPreload )  
+	{  
+		$blacklistsLocalPreload = "/usr/local/zenloadbalancer/www/ipds/blacklists/local";
+	} 
+	 
 	my $blacklistsRemotePreload =
 	  &getGlobalConfiguration( 'blacklistsRemotePreload' );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
