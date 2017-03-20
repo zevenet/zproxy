@@ -43,10 +43,10 @@ my $service  = qr/[a-zA-Z1-9\-]+/;
 my $zone     = qr/(?:$hostname\.)+[a-z]{2,}/;
 
 my $vlan_tag    = qr/\d{1,4}/;
-my $virtual_tag = qr/[a-zA-Z0-9]{1,13}/;
-my $nic_if      = qr/[a-zA-Z0-9]{1,15}/;
-my $bond_if     = qr/[a-zA-Z0-9]{1,15}/;
-my $vlan_if     = qr/[a-zA-Z0-9]{1,13}\.$vlan_tag/;
+my $virtual_tag = qr/[a-zA-Z0-9\-]{1,13}/;
+my $nic_if      = qr/[a-zA-Z0-9\-]{1,15}/;
+my $bond_if     = qr/[a-zA-Z0-9\-]{1,15}/;
+my $vlan_if     = qr/[a-zA-Z0-9\-]{1,13}\.$vlan_tag/;
 my $port_range =
   qr/(?:[1-5]?\d{1,4}|6[0-4]\d{3}|65[1-4]\d{2}|655[1-2]\d{1}|6553[1-5])/;
 my $graphsFrequency = qr/(?:daily|weekly|monthly|yearly)/;
