@@ -27,7 +27,7 @@ sw=0
 
 echo "Checking \"Name\" Directive in HTTP profiles"
 cd $confdir
-for file in `ls -1 *_pound.cfg`; do
+for file in `ls -1 *_pound.cfg 2>/dev/null`; do
 	grep -P "^Name\t.+" $file 1>/dev/null
 	if [ ! $? -eq 0 ]
 	then
