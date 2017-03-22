@@ -29,9 +29,9 @@ my $logger = &getGlobalConfiguration ( 'logger' );
 my $ipset = &getGlobalConfiguration ( 'ipset' );
 my $output;
 
-if ( ! system ( "ipset -L $listName 2>/dev/null" ) )
+&setBLDownloadRemoteList ( $listName );
+if ( &getBLStatus ( $listName ) eq 'up' )
 {
-	&setBLDownloadRemoteList ( $listName );
 	$output = &setBLRefreshList ( $listName );
 	
 	if ( ! $output )
@@ -40,13 +40,8 @@ if ( ! system ( "ipset -L $listName 2>/dev/null" ) )
 	}
 	else
 	{
-		system ("$logger \"Error, updatign $listName.\" -i -t updatelist");
+		system ("$logger \"Error, updating $listName.\" -i -t updatelist");
 	}	
-}
-else 
-{
-	$output = -2;
-	system ("$logger \"Error, updatign $listName.\" -i -t updatelist");
 }
 
 exit $output;
