@@ -424,8 +424,10 @@ sub copyIdKey # $rc ( $ip_addr, $pass )
 {
 	my $ip_address = shift;
 	my $password = shift;
+
+	my $safe_password = quotemeta( $password );
 	
-	my $copyId_cmd = "HOME=\"/root\" /usr/local/zenloadbalancer/app/zbin/ssh-copy-id.sh $password root\@$ip_address";
+	my $copyId_cmd = "HOME=\"/root\" /usr/local/zenloadbalancer/app/zbin/ssh-copy-id.sh $safe_password root\@$ip_address";
 
 	my $copy_output = `$copyId_cmd`; # WARNING: Do not redirect stderr to stdout
 	my $error_code = $?;
