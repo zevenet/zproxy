@@ -69,9 +69,18 @@ sub farms_name_http # ( $farmname )
 		$ciphers = &getFarmCipherSet( $farmname );
 		chomp ( $ciphers );
 
+		# adapt "ciphers" to required interface values 
 		if ( $ciphers eq "cipherglobal" )
 		{
 			$ciphers = "all";
+		}
+		elsif ( $ciphers eq "ciphercustom" )
+		{
+			$ciphers = "customsecurity";
+		}
+		elsif ( $ciphers eq "cipherpci" )
+		{
+			$ciphers = "highsecurity";
 		}
 	}
 
