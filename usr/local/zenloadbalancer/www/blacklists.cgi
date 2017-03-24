@@ -262,6 +262,14 @@ sub setBLCreateRule
 	my $output;
 	my $action = &getBLParam( $listName, 'policy' );
 
+
+	if ( &getBLStatus( $listName ) eq "down" )
+	{
+		# load in memory the list
+		&setBLRunList( $listName );
+	}
+
+
 	#~ my $logMsg = "[Blocked by blacklists $listName in farm $farmName]";
 	my $logMsg = &createLogMsg ( $listName, $farmName );
 	
@@ -370,6 +378,11 @@ sub setBLDeleteRule
 			  &getGlobalConfiguration( 'iptables' ) . " --table raw -D PREROUTING $lineNum";
 			&iptSystem( $cmd );
 		}
+	}
+	# delete list if it isn't used. This has to be the last call.
+	if ( !&getBLListNoUsed( $listName ) )
+	{
+		&setBLDestroyList( $listName );
 	}
 
 	#~ # check if proccess was successful:
