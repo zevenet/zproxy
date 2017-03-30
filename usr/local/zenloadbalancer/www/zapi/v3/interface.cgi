@@ -2244,7 +2244,7 @@ sub modify_interface_nic # ( $json_obj, $nic )
 		# Add new IP, netmask and gateway
 		#~ die if &addIp( $if_ref );
 
-		# sometimes there are expected erros pending to be controlled
+		# sometimes there are expected errors pending to be controlled
 		&addIp( $if_ref );
 
 		# Writing new parameters in configuration file
