@@ -948,12 +948,19 @@ sub getZCusterStatusInfo
 	{
 		next if $if_ref->{ vini } eq ''; # only virtual ips
 
-		if ( $status->{ $localhost }->{ node_role } ne 'master' && @arptables_lines !~ /^-j DROP -d $if_ref->{ addr } $/ )
+		# check if the ip is been dropped in arptables
+		my $is_dropping_ip = 0;
+		foreach my $line ( @arptables_lines )
+		{
+			$is_dropping_ip++ if $line =~ /^-j DROP -d $if_ref->{ addr } $/;
+		}
+
+		if ( $status->{ $localhost }->{ node_role } ne 'master' && ! $is_dropping_ip )
 		{
 			$status->{ $localhost }->{ arp } = 'ko';
 			last;
 		}
-		elsif ( $status->{ $localhost }->{ node_role } eq 'master' && @arptables_lines =~ /^-j DROP -d $if_ref->{ addr } $/ )
+		elsif ( $status->{ $localhost }->{ node_role } eq 'master' && $is_dropping_ip )
 		{
 			$status->{ $localhost }->{ arp } = 'ko';
 			last;
