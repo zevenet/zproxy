@@ -145,7 +145,7 @@ sub ipisok    # ($checkip ,$version)
 
 	use Data::Validate::IP;
 
-	if ( $version != 6 )
+	if ( !$version || $version != 6 )
 	{
 		if ( is_ipv4( $checkip ) )
 		{
@@ -153,7 +153,7 @@ sub ipisok    # ($checkip ,$version)
 		}
 	}
 
-	if ( $version != 4 )
+	if ( !$version || $version != 4 )
 	{
 		if ( is_ipv6( $checkip ) )
 		{
