@@ -490,7 +490,9 @@ if ( $eject eq "start" )
 						$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
 					}
 
+					# kept in case it is required for first interface
 					&writeRoutes( $$iface{ name } );
+
 					my $if_flags = $socket->if_flags( $$iface{ name } );
 					&applyRoutes( "local", $iface );
 
@@ -555,7 +557,6 @@ if ( $eject eq "start" )
 					print( " \033[1;31m ERROR \033[0m \n" );
 				}
 
-				&writeRoutes( $$iface{ name } );
 				&applyRoutes( "local", $iface );
 
 				if ( $$iface{ ip_v } == 4 )

@@ -314,8 +314,11 @@ sub isRule    # ($if_ref, $toif)
 	$toif = $$if_ref{ name } if !$toif;
 
 	my $existRule  = 0;
+
+	my ( $net, $mask ) = ipv4_network( "$$if_ref{addr} / $$if_ref{mask}" );
+
 	my @eject      = `$ip_bin -$$if_ref{ip_v} rule list`;
-	my $expression = "from $$if_ref{addr} lookup table_$toif";
+	my $expression = "from $net/$mask lookup table_$toif";
 
 	$existRule = grep /$expression/, @eject;
 
@@ -354,8 +357,9 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 			if ( &isRule( $if_ref ) == 0 )
 			{
+				my ( $net, $mask ) = ipv4_network( "$$if_ref{addr} / $$if_ref{mask}" );
 				my $ip_cmd =
-				  "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{addr} table table_$$if_ref{name}";
+				  "$ip_bin -$$if_ref{ip_v} rule add from $net/$mask table table_$$if_ref{name}";
 				$status = &logAndRun( "$ip_cmd" );
 			}
 		}
@@ -406,10 +410,11 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 		my ( $toif ) = split ( /:/, $$if_ref{ name } );
 
-		if ( &isRule( $if_ref, $toif ) eq 0 )
+		if ( &isRule( $if_ref, $toif ) == 0 )
 		{
+			my ( $net, $mask ) = ipv4_network( "$$if_ref{addr} / $$if_ref{mask}" );
 			my $ip_cmd =
-			  "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{addr} table table_$toif";
+			  "$ip_bin -$$if_ref{ip_v} rule add from $net/$mask table table_$toif";
 			$status = &logAndRun( "$ip_cmd" );
 		}
 	}
@@ -422,7 +427,7 @@ sub delRoutes    # ($table,$if_ref)
 {
 	my ( $table, $if_ref ) = @_;
 
-	my $status;
+	my $status = 0;
 
 	&zenlog(
 		   "Deleting $table routes for IPv$$if_ref{ip_v} in interface $$if_ref{name}" );
@@ -440,8 +445,9 @@ sub delRoutes    # ($table,$if_ref)
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route flush table table_$$if_ref{name}";
 			$status = &logAndRun( "$ip_cmd" );
 
+			my ( $net, $mask ) = ipv4_network( "$$if_ref{addr} / $$if_ref{mask}" );
 			$ip_cmd =
-			  "$ip_bin -$$if_ref{ip_v} rule del from $$if_ref{addr} table table_$$if_ref{name}";
+			  "$ip_bin -$$if_ref{ip_v} rule del from $net/$mask table table_$$if_ref{name}";
 			$status = &logAndRun( "$ip_cmd" );
 
 			return $status;
@@ -476,12 +482,6 @@ sub delRoutes    # ($table,$if_ref)
 			return $status;
 		}
 	}
-
-	# Delete rules for virtual interfaces
-	my ( $iface ) = split ( ':', $$if_ref{ name } );
-	my $ip_cmd =
-	  "$ip_bin -$$if_ref{ip_v} rule del from $$if_ref{addr} table table_$iface";
-	$status = &logAndRun( "$ip_cmd" );
 
 	return $status;
 }

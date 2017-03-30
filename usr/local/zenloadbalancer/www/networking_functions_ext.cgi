@@ -1225,7 +1225,7 @@ sub configureDefaultGW    #()
 	my $defaultgwif6 = &getGlobalConfiguration('defaultgwif6');
 
 	# input: global variables $defaultgw and $defaultgwif
-	if ( $defaultgw ne '' && $defaultgwif ne '' )
+	if ( $defaultgw && $defaultgwif )
 	{
 		my $if_ref = &getInterfaceConfig( $defaultgwif, 4 );
 		if ( $if_ref )
@@ -1236,7 +1236,7 @@ sub configureDefaultGW    #()
 	}
 
 	# input: global variables $$defaultgw6 and $defaultgwif6
-	if ( $defaultgw6 ne '' && $defaultgwif6 ne '' )
+	if ( $defaultgw6 && $defaultgwif6 )
 	{
 		my $if_ref = &getInterfaceConfig( $defaultgwif, 6 );
 		if ( $if_ref )

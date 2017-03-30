@@ -492,54 +492,72 @@ sub manage_mgmt(){
 sub set_net()
 {
 	my $setchanges = 1;
-	if ($mgmtifinput && $mgmtipinput && $mgmtmaskinput && $mgmtgwinput){
-		my $newif = $mgmtifinput->get();
-    		my $newip = $mgmtipinput->get();
-    		my $newmask = $mgmtmaskinput->get();
-    		my $newgw = $mgmtgwinput->get();
+	if ( $mgmtifinput && $mgmtipinput && $mgmtmaskinput && $mgmtgwinput )
+	{
+		my $newif   = $mgmtifinput->get();
+		my $newip   = $mgmtipinput->get();
+		my $newmask = $mgmtmaskinput->get();
+		my $newgw   = $mgmtgwinput->get();
 
-		if (&ipisok($newip) eq "false") {
-        		&error_dialog("IP Address $newip structure is not ok");
-        		$setchanges = 0;
-        	}
+		if ( &ipisok( $newip ) eq "false" )
+		{
+			&error_dialog( "IP Address $newip structure is not ok" );
+			$setchanges = 0;
+		}
+
 		# check if the new netmask is correct, if empty don't worry
-		if ( $newmask !~ /^$/ && &ipisok($newmask) eq "false"){
-        		&error_dialog("Netmask address $newmask structure is not ok");
-        		$setchanges = 0;
-        	}
+		if ( $newmask !~ /^$/ && &ipisok( $newmask ) eq "false" )
+		{
+			&error_dialog( "Netmask address $newmask structure is not ok" );
+			$setchanges = 0;
+		}
+
 		# check if the new gateway is correct, if empty don't worry
-		if ( $newgw !~ /^$/ && &ipisok($newgw) eq "false"){
-        		&inform_dialog("Gateway address $newgw structure is not ok, set it in the web GUI");
+		if ( $newgw !~ /^$/ && &ipisok( $newgw ) eq "false" )
+		{
+			&inform_dialog(
+						  "Gateway address $newgw structure is not ok, set it in the web GUI" );
 			$newgw = "";
-        	}
-		if ($setchanges){
-			my $ret = &confirm_dialog("Are you sure you want to change your ZEVENET MGMT Interface?");
-			if ($ret){
-				&createIf($newif);
-	        		&delRoutes("local",$newif);
-	        		&logfile("running '$ifconfig_bin $newif $newip netmask $newmask' ");
-	        		@eject = `$ifconfig_bin $newif $newip netmask $newmask 2> /dev/null`;
-	        		&upIf($newif);
-	        		$state = $?;
-	        		if ($state == 0){
-	                		$status = "up";
-	                		&inform_dialog("Network interface $newif is now UP");
-	                		&writeRoutes($newif);
-	                		&writeConfigIf($newif,"$newif\:\:$newip\:$newmask\:$status\:$newgw\:");
-	                		&applyRoutes("local",$newif,$newgw);
-	                		#apply the GW to default gw. 
-	                		&applyRoutes("global",$newif,$newgw);
-	                		#apply the GW to default gw. 
-	                		&applyRoutes("global",$newif,$newgw);
-					&inform_dialog("All is ok, saved $newif interface config file");
-	                		&inform_dialog("If this is your first boot you can access to ZEVENET Web GUI through\nhttps://$newip:444\nwith user root and password admin,\nremember to change the password for security reasons in web GUI.");
-	         		} else {
-	                		&error_dialog("A problem is detected configuring $newif interface, you have to configure your $newif \nthrough command line and after save the configuration in the web GUI");
-	         		}
+		}
+		if ( $setchanges )
+		{
+			my $ret = &confirm_dialog(
+							   "Are you sure you want to change your ZEVENET MGMT Interface?" );
+			if ( $ret )
+			{
+				&createIf( $newif );
+				&delRoutes( "local", $newif );
+				&logfile( "running '$ifconfig_bin $newif $newip netmask $newmask' " );
+				@eject = `$ifconfig_bin $newif $newip netmask $newmask 2> /dev/null`;
+				&upIf( $newif );
+				$state = $?;
+
+				if ( $state == 0 )
+				{
+					$status = "up";
+					&inform_dialog( "Network interface $newif is now UP" );
+					&writeRoutes( $newif );
+					&writeConfigIf( $newif, "$newif\:\:$newip\:$newmask\:$status\:$newgw\:" );
+					&applyRoutes( "local", $newif, $newgw );
+
+					#apply the GW to default gw.
+					&applyRoutes( "global", $newif, $newgw );
+
+					&inform_dialog( "All is ok, saved $newif interface config file" );
+					&inform_dialog(
+						"If this is your first boot you can access to ZEVENET Web GUI through\nhttps://$newip:444\nwith user root and password admin,\nremember to change the password for security reasons in web GUI."
+					);
+				}
+				else
+				{
+					&error_dialog(
+						"A problem is detected configuring $newif interface, you have to configure your $newif \nthrough command line and after save the configuration in the web GUI"
+					);
+				}
 			}
 		}
 		&refresh_win3();
-	}		
+	}
 }
 
 sub manage_zlb_services(){
