@@ -103,7 +103,8 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		close $file;
 	}
 
-	if ( !$if_line && $if_status !~ /up/ )
+	# includes !$if_status to avoid warning
+	if ( !$if_line && (!$if_status || $if_status !~ /up/) )
 	{
 		return undef;
 	}
@@ -148,12 +149,20 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 	$iface{ mac } = $socket->if_hwaddr( $iface{ dev } );
 
-	if ( $iface{ vini } eq '' && $iface{ addr } )
+	# complex check to avoid warnings
+	if (
+		 (
+		      !exists ( $iface{ vini } )
+		   || !defined ( $iface{ vini } )
+		   || $iface{ vini } eq ''
+		 )
+		 && $iface{ addr }
+	  )
 	{
 		use Config::Tiny;
-		my $float = Config::Tiny->read( &getGlobalConfiguration('floatfile') );
+		my $float = Config::Tiny->read( &getGlobalConfiguration( 'floatfile' ) );
 
-		$iface{ float } = $float->{_}->{ $iface{ name } } // '';
+		$iface{ float } = $float->{ _ }->{ $iface{ name } } // '';
 	}
 
 	if ( $iface{ type } eq 'nic' )
