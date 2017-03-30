@@ -28,7 +28,7 @@ require "/usr/local/zenloadbalancer/www/functions.cgi";
 require "/usr/local/zenloadbalancer/app/zenbui/buifunctions.pl";
 require ($globalcfg);
 
-
+my $ifconfig_bin = &getGlobalConfiguration('ifconfig_bin');
 my $zlbmenu;
 my $win3;
 my $winhelp;
@@ -384,15 +384,18 @@ sub manage_timezone(){
 
 sub manage_mgmt(){
 	my $mgmtif = "";
-	my @interfaces = `ifconfig -a | grep ' Link' | awk {'print \$1'} | grep -v lo | grep -v ':'`;
+	my @all_interfaces = &getInterfaceTypeList( 'nic' );
 	my $i=0;
 	my $mgmtindex = 0;
-	foreach (@interfaces){
-        	chomp($_);
-		$interfaces[$i] = $_;
-		if ( $_ eq "mgmt" ){
+	my @interfaces = ();
+
+	foreach my $if_ref (@all_interfaces){
+		push( @interfaces, $if_ref->{ name } );
+
+		if ( $if_ref->{ name } eq "mgmt" ){
 			$mgmtindex = $i;
 		} 
+
 		$i++;
 	}
 
@@ -519,50 +522,78 @@ sub set_net()
 						  "Gateway address $newgw structure is not ok, set it in the web GUI" );
 			$newgw = "";
 		}
+
 		if ( $setchanges )
 		{
 			my $ret = &confirm_dialog(
 							   "Are you sure you want to change your ZEVENET MGMT Interface?" );
+
+			# Get interface configuration structure
+			my $if_ref = &getInterfaceConfig( $newif ) // &getSystemInterface( $newif );
+
 			if ( $ret )
 			{
-				&createIf( $newif );
-				&delRoutes( "local", $newif );
-				&logfile( "running '$ifconfig_bin $newif $newip netmask $newmask' " );
-				@eject = `$ifconfig_bin $newif $newip netmask $newmask 2> /dev/null`;
-				&upIf( $newif );
-				$state = $?;
-
-				if ( $state == 0 )
+				if ( $if_ref->{addr} )
 				{
-					$status = "up";
-					&inform_dialog( "Network interface $newif is now UP" );
-					&writeRoutes( $newif );
-					&writeConfigIf( $newif, "$newif\:\:$newip\:$newmask\:$status\:$newgw\:" );
-					&applyRoutes( "local", $newif, $newgw );
+					# Delete old IP and Netmask from system to replace it
+					&delIp( $if_ref->{name}, $if_ref->{addr}, $if_ref->{mask} );
 
-					#apply the GW to default gw.
-					&applyRoutes( "global", $newif, $newgw );
-
-					&inform_dialog( "All is ok, saved $newif interface config file" );
-					&inform_dialog(
-						"If this is your first boot you can access to ZEVENET Web GUI through\nhttps://$newip:444\nwith user root and password admin,\nremember to change the password for security reasons in web GUI."
-					);
+					# Remove routes if the interface has its own route table: nic and vlan
+					&delRoutes( "local", $if_ref );
 				}
-				else
+
+				# Set new interface configuration
+				$if_ref->{ addr }    = $newip   if $newip;
+				$if_ref->{ mask }    = $newmask if $newmask;
+				$if_ref->{ gateway } = $newgw   if $newgw;
+				$if_ref->{ ip_v }    = 4;
+
+				# Add new IP, netmask and gateway
+				&addIp( $if_ref );
+
+				# Writing new parameters in configuration file
+				&writeRoutes( $if_ref->{ name } );
+
+				# Put the interface up
 				{
-					&error_dialog(
-						"A problem is detected configuring $newif interface, you have to configure your $newif \nthrough command line and after save the configuration in the web GUI"
-					);
+					my $previous_status = $if_ref->{ status };
+					my $state = &upIf( $if_ref, 'writeconf' );
+
+					if ( $state == 0 )
+					{
+						$if_ref->{ status } = "up";
+						&inform_dialog( "Network interface $newif is now UP" );
+
+						&applyRoutes( "local", $if_ref );
+
+						#apply the GW to default gw.
+						&applyRoutes( "global", $if_ref, $newgw );
+
+						&inform_dialog( "All is ok, saved $newif interface config file" );
+						&inform_dialog(
+							"If this is your first boot you can access to ZEVENET Web GUI through\nhttps://$newip:444\nwith user root and password admin,\nremember to change the password for security reasons in web GUI."
+						);
+					}
+					else
+					{
+						$if_ref->{ status } = $previous_status;
+						&error_dialog(
+							"A problem is detected configuring $newif interface, you have to configure your $newif \nthrough command line and after save the configuration in the web GUI"
+						);
+					}
 				}
+
+				&setInterfaceConfig( $if_ref );
 			}
 		}
+
 		&refresh_win3();
 	}
 }
 
 sub manage_zlb_services(){
 	my @services=('cherokee', 'zenloadbalancer');
-	my $cherokeedstatus = "STOPPED";
+	my $cherokeestatus = "STOPPED";
 	my $zlbservicestatus = "STOPPED";
 	my @run = `ps ex`;
 	if (grep (/$services[0]/,@run)){
