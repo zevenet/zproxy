@@ -905,7 +905,7 @@ sub get_dos_rules
 	my $body = { description => $description, params => 
 		{
 		"farm"=>[ 
-				{ 'rule'=>'limitsec', 'description'=>'Connection limit per seconds.'},
+				{ 'rule'=>'limitsec', 'description'=>'Connection limit per second.'},
 				{ 'rule'=>'limitconns', 'description'=>'Total connections limit per source IP.'},
 				{ 'rule'=>'bogustcpflags', 'description'=>'Check bogus TCP flags.'},
 				{ 'rule'=>'limitrst', 'description'=>'Limit RST request per second.'},
