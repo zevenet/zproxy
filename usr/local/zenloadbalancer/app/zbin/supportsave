@@ -42,9 +42,17 @@ echo "NAT table " >> $dir_backup/netfilter.txt
 echo "Mangle table " >> $dir_backup/netfilter.txt
 /sbin/iptables -nL -t mangle >> $dir_backup/netfilter.txt
 
+echo "Saving ARP filtering"
+/sbin/arptables -L > $dir_backup/arp_filtering.txt
+
 if [ -f /usr/local/zenloadbalancer/config/cluster.conf ]; then
 	echo "Saving time synchronization"
 	/usr/local/zenloadbalancer/app/zenntp/zenntp.pl > $dir_backup/ntp_test.txt 2>&1
+
+	if [ -f /usr/local/zenloadbalancer/node_status ];
+	then
+		cp /usr/local/zenloadbalancer/node_status  $dir_backup/
+	fi
 fi
 
 echo "Saving process status"
@@ -84,7 +92,7 @@ then
 	echo "Capturing recent information"
 	for file in $(ls -1 /proc/net/xt_recent/); do
 		echo "Recent table for $file" >> $dir_backup/recent.txt
-		cat $file >> $dir_backup/recent.txt
+		cat /proc/net/xt_recent/$file >> $dir_backup/recent.txt
 	done
 fi
 
