@@ -57,8 +57,9 @@ sub getAllFarmStats
 		{
 			my @netstat = &getConntrack( "", $vip, "", "", "" );
 
-			$established = scalar &getFarmSYNConns( $name, @netstat );
-			$pending = scalar &getFarmEstConns( $name, @netstat );
+			$pending = scalar &getFarmSYNConns( $name, @netstat );
+			$established = scalar &getFarmEstConns( $name, @netstat );
+			
 		}
 
 		push @farms,
@@ -619,8 +620,10 @@ sub farm_stats # ( $farmname )
 		&httpResponse({ code => 200, body => $body });
 	}
 
+
 	if ( $type eq "l4xnat" )
 	{
+		
 		# Parameters
 		my @out_rss;
 
@@ -635,12 +638,13 @@ sub farm_stats # ( $farmname )
 		# my @netstat = &getNetstatNat($args);
 		my $fvip     = &getFarmVip( "vip", $farmname );
 		my @content  = &getFarmBackendStatusCtl( $farmname );
+		#~ chomp @content;
 		my @backends = &getFarmBackendsStatus( $farmname, @content );
 
 		# List of backends
 		my $backendsize    = @backends;
 		my $activebackends = 0;
-
+		
 		foreach ( @backends )
 		{
 			my @backends_data = split ( ";", $_ );
@@ -649,14 +653,13 @@ sub farm_stats # ( $farmname )
 				$activebackends++;
 			}
 		}
-
+		
 		my $index = 0;
 
 		foreach ( @backends )
-		{
+		{			
 			my @backends_data = split ( ";", $_ );
 			chomp @backends_data;
-
 			my $ip_backend   = $backends_data[0];
 			my $port_backend = $backends_data[1];
 
