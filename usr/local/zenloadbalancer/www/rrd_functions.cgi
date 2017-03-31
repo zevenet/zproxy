@@ -60,26 +60,17 @@ sub delGraph	#($name, type)
 	my $type = shift;
 	my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
 	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
-	my $img_dir = &getGlobalConfiguration('img_dir');
 
 	if ( $type =~ /iface/ )
 	{
 		&zenlog( "Delete graph file: /usr/local/zenloadbalancer/app/zenrrd/rrd/${name}iface.rrd" );
 		unlink ( "/usr/local/zenloadbalancer/app/zenrrd/rrd/${name}iface.rrd" );
-		# old versions
-		unlink ( $basedir . $img_dir . "$name\_d.png" );
-		unlink ( $basedir . $img_dir . "$name\_m.png" );
-		unlink ( $basedir . $img_dir . "$name\_w.png" );
-		unlink ( $basedir . $img_dir . "$name\_y.png" );
 	}
 
 	if ( $type =~ /farm/ )
 	{
 		&zenlog( "Delete graph file: $rrdap_dir/$rrd_dir/$name-farm.rrd" );
 		unlink glob ( "$rrdap_dir/$rrd_dir/$name-farm*" );
-		# old versions
-		unlink glob ( $basedir . $img_dir . "bar$name*" );
-		unlink glob ( $basedir . $img_dir . "$name-farm\_*" );
 	}
 }
 	
@@ -89,7 +80,7 @@ sub printGraph    #($type,$time)
 	my ( $type, $time ) = @_;
 
 	my $img_dir = &getGlobalConfiguration('img_dir');
-	my $graph = "/tmp/" . $type . "_" . $time . ".png";
+	my $graph = $img_dir . "/" . $type . "_" . $time . ".png";
 
 	if ( $type eq "cpu" )
 	{
