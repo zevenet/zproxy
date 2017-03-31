@@ -83,7 +83,8 @@ sub certcontrol
 		my @run = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
 		if (    ( !grep /$key/, @run )
 			 || ( !grep /keyid:$keyid/,   @run )
-			 || ( !grep /CN=$hostname\//, @run ) )
+			 || ( !grep /CN=$hostname\//, @run ) 
+  			 || ( !grep /CN=$hostname\/|CN = $hostname\,/, @run ) )
 		{
 	#&errormsg( "Zen Load Balancer activation certificate isn't valid, please request one");
 			$swcert = 2;
