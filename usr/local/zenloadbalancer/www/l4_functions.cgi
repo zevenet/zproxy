@@ -1049,6 +1049,7 @@ sub getL4FarmEstConns    # ($farm_name,@netstat)
 
 	foreach ( @backends )
 	{
+		chomp($_);
 		my @backends_data = split ( ";", $_ );
 		if ( $backends_data[4] eq "up" )
 		{
@@ -1206,12 +1207,15 @@ sub getL4FarmSYNConns    # ($farm_name,@netstat)
 		$regexp = "\.*";
 	}
 
-	my @content = &getFarmBackendStatusCtl( $farm_name );
+	my @content = &getFarmBackendStatusCtl( $farm_name ); 
 	my @backends = &getFarmBackendsStatus( $farm_name, @content );
-
+					   
+	# tcp      6 299 ESTABLISHED src=192.168.0.186 dst=192.168.100.241 sport=56668 dport=80 src=192.168.0.186 dst=192.168.100.241 sport=80 dport=56668 [ASSURED] mark=517 use=2
 	foreach ( @backends )
 	{
 		my @backends_data = split ( ";", $_ );
+		chomp(@backends_data);
+		
 		if ( $backends_data[4] eq "up" )
 		{
 			my $ip_backend = $backends_data[0];
