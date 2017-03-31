@@ -185,7 +185,7 @@ $farmguardian_dir="/usr/local/zenloadbalancer/app/farmguardian/etc";
 #Where is ZenRRD Directory?. There is a perl script that create rrd database and images from Monitoring section
 $rrdap_dir="/usr/local/zenloadbalancer/app/zenrrd";#update
 #Relative path in Web Root directory ($basedir) where is graphs from ZenRRD *no modify
-$img_dir="/tmp";
+$img_dir="/tmp";#update
 #Relative path where is rrd databases from ZenRRD * no modify
 $rrd_dir="rrd";#update
 
