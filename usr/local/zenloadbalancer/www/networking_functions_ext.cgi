@@ -27,6 +27,31 @@ use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
 
 =begin nd
+Variable: $if_ref
+
+	Reference to a hash representation of a network interface.
+	It can be found dereferenced and used as a (%iface or %interface) hash.
+
+	$if_ref->{ name }     - Interface name.
+	$if_ref->{ addr }     - IP address. Empty if not configured.
+	$if_ref->{ mask }     - Network mask. Empty if not configured.
+	$if_ref->{ gateway }  - Interface gateway. Empty if not configured.
+	$if_ref->{ status }   - 'up' for enabled, or 'down' for disabled.
+	$if_ref->{ ip_v }     - IP version, 4 or 6.
+	$if_ref->{ dev }      - Name without VLAN or Virtual part (same as NIC or Bonding)
+	$if_ref->{ vini }     - Part of the name corresponding to a Virtual interface. Can be empty.
+	$if_ref->{ vlan }     - Part of the name corresponding to a VLAN interface. Can be empty.
+	$if_ref->{ mac }      - Interface hardware address.
+	$if_ref->{ type }     - Interface type: nic, bond, vlan, virtual.
+	$if_ref->{ parent }   - Interface which this interface is based/depends on.
+	$if_ref->{ float }    - Floating interface selected for this interface. For routing interfaces only.
+	$if_ref->{ is_slave } - Whether the NIC interface is a member of a Bonding interface. For NIC interfaces only.
+
+See also:
+	<getInterfaceConfig>, <setInterfaceConfig>, <getSystemInterface>
+=cut
+
+=begin nd
 Function: sendGPing
 
 	Send gratuitous ICMP packets for L3 aware.
@@ -222,31 +247,6 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 	return \%iface;
 }
-
-=begin nd
-Variable: $if_ref
-
-	Reference to a hash representation of a network interface.
-	It can be found dereferenced and used as a (%iface or %interface) hash.
-
-	$if_ref->{ name }     - Interface name.
-	$if_ref->{ addr }     - IP address. Empty if not configured.
-	$if_ref->{ mask }     - Network mask. Empty if not configured.
-	$if_ref->{ gateway }  - Interface gateway. Empty if not configured.
-	$if_ref->{ status }   - 'up' for enabled, or 'down' for disabled.
-	$if_ref->{ ip_v }     - IP version, 4 or 6.
-	$if_ref->{ dev }      - Name without VLAN or Virtual part (same as NIC or Bonding)
-	$if_ref->{ vini }     - Part of the name corresponding to a Virtual interface. Can be empty.
-	$if_ref->{ vlan }     - Part of the name corresponding to a VLAN interface. Can be empty.
-	$if_ref->{ mac }      - Interface hardware address.
-	$if_ref->{ type }     - Interface type: nic, bond, vlan, virtual.
-	$if_ref->{ parent }   - Interface which this interface is based/depends on.
-	$if_ref->{ float }    - Floating interface selected for this interface. For routing interfaces only.
-	$if_ref->{ is_slave } - Whether the NIC interface is a member of a Bonding interface. For NIC interfaces only.
-
-See also:
-	<getInterfaceConfig>, <setInterfaceConfig>, <getSystemInterface>
-=cut
 
 =begin nd
 Function: setInterfaceConfig
