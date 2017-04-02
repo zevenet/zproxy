@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -29,6 +30,24 @@ use IO::Socket;
 
 my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 
+=begin nd
+Function: getRandomPort
+
+	Get a random available port number from 35060 to 35160.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - encoded in base 64 if exists file.
+
+Bugs:
+	If no available port is found you will get an infinite loop.
+	FIXME: $check not used.
+
+See Also:
+	<runGSLBFarmCreate>, <setGSLBControlPort>
+=cut
 #get a random available port
 sub getRandomPort    # ()
 {
@@ -48,8 +67,23 @@ sub getRandomPort    # ()
 	return $random_port;
 }
 
+=begin nd
+Function: checkport
+
+	Check if a TCP port is open in a local or remote IP.
+
+Parameters:
+	host - IP address (or hostname?).
+	port - TCP port number.
+
+Returns:
+	boolean - string "true" or "false".
+
+See Also:
+	<getRandomPort>
+=cut
 #check if a port in a ip is up
-sub checkport    # ($host,$port)
+sub checkport    # ($host, $port)
 {
 	my ( $host, $port ) = @_;
 
@@ -86,6 +120,26 @@ sub checkport    # ($host,$port)
 	return "false";
 }
 
+=begin nd
+Function: listallips
+
+	List IP addresses up (flag IFF_RUNNING), excluding 127.0.0.1.
+
+Parameters:
+	none - .
+
+Returns:
+	list - All IP addresses up.
+
+Bugs:
+	$ip !~ /127.0.0.1/
+	$ip !~ /0.0.0.0/
+
+See Also:
+	zapi/v3/interface.cgi <new_vini>, <new_vlan>,
+	zapi/v3/post.cgi <new_farm>,
+	zapi/v2/interface.cgi <new_vini>, <new_vlan>, <ifaction>
+=cut
 #list ALL IPS UP
 sub listallips    # ()
 {
@@ -109,6 +163,20 @@ sub listallips    # ()
 	return @listinterfaces;
 }
 
+=begin nd
+Function: listActiveInterfaces
+
+	[NOT USED] List all interfaces.
+
+Parameters:
+	class - ?????.
+
+Returns:
+	list - All interfaces name.
+
+Bugs:
+	NOT USED
+=cut
 # list all interfaces
 sub listActiveInterfaces    # ($class)
 {
@@ -136,8 +204,20 @@ sub listActiveInterfaces    # ($class)
 	return @aifaces;
 }
 
+=begin nd
+Function: ipisok
+
+	Check if a string has a valid IP address format.
+
+Parameters:
+	checkip - IP address string.
+	version - 4 or 6 to validate IPv4 or IPv6 only. Optional.
+
+Returns:
+	boolean - string "true" or "false".
+=cut
 #check if a ip is ok structure
-sub ipisok    # ($checkip ,$version)
+sub ipisok    # ($checkip, $version)
 {
 	my $checkip = shift;
 	my $version = shift;
@@ -164,6 +244,20 @@ sub ipisok    # ($checkip ,$version)
 	return $return;
 }
 
+=begin nd
+Function: ipversion
+
+	Returns IP version number of input IP address.
+
+Parameters:
+	checkip - string to .
+
+Returns:
+	list - All IP addresses up.
+
+Bugs:
+	Fix return on non IPv4 or IPv6 valid address.
+=cut
 #check if a ip is IPv4 or IPv6
 sub ipversion    # ($checkip)
 {
@@ -184,6 +278,22 @@ sub ipversion    # ($checkip)
 	return $output;
 }
 
+=begin nd
+Function: ipinrange
+
+	[NOT USED] Check if an IP is in a range.
+
+Parameters:
+	netmask - .
+	toip - .
+	newip - .
+
+Returns:
+	boolean - string "true" or "false".
+
+Bugs:
+	NOT USED
+=cut
 #function checks if ip is in a range
 sub ipinrange    # ($netmask, $toip, $newip)
 {
@@ -205,6 +315,24 @@ sub ipinrange    # ($netmask, $toip, $newip)
 	}
 }
 
+=begin nd
+Function: ifexist
+
+	Check if interface exist.
+
+	Look for link interfaces, Virtual interfaces return "false".
+	If the interface is IFF_RUNNING or configuration file exists return "true".
+	If interface found but not IFF_RUNNING nor configutaion file exists returns "created".
+
+Parameters:
+	nif - network interface name.
+
+Returns:
+	string - "true", "false" or "created".
+
+Bugs:
+	"created"
+=cut
 #function check if interface exist
 sub ifexist    # ($nif)
 {
@@ -238,6 +366,23 @@ sub ifexist    # ($nif)
 	return "false";
 }
 
+=begin nd
+Function: writeConfigIf
+
+	[NOT USED] Saves network interface config to file.
+
+Parameters:
+	if - interface name.
+	string - replaces config file with this string.
+
+Returns:
+	$? - .
+
+Bugs:
+	returns $?
+
+	NOT USED
+=cut
 # saving network interfaces config files
 sub writeConfigIf    # ($if,$string)
 {
@@ -251,6 +396,19 @@ sub writeConfigIf    # ($if,$string)
 	return $?;
 }
 
+=begin nd
+Function: writeRoutes
+
+	Sets a routing table id and name pair in rt_tables file.
+
+	Only required setting up a routed interface. Complemented in delIf()
+
+Parameters:
+	if_name - network interface name.
+
+Returns:
+	undef - .
+=cut
 # create table route identification, complemented in delIf()
 sub writeRoutes    # ($if_name)
 {
@@ -290,6 +448,20 @@ sub writeRoutes    # ($if_name)
 	return;
 }
 
+=begin nd
+Function: addlocalnet
+
+	Set route to interface subnet into the interface routing table.
+
+Parameters:
+	if_ref - network interface hash reference.
+
+Returns:
+	integer - return code of ip command.
+
+See Also:
+	Only used here: <applyRoutes>
+=cut
 # add local network into routing table
 sub addlocalnet    # ($if_ref)
 {
@@ -306,6 +478,24 @@ sub addlocalnet    # ($if_ref)
 	return &logAndRun( $ip_cmd );
 }
 
+=begin nd
+Function: isRule
+
+	Check if routing rule for $if_ref subnet in $toif table exists.
+
+Parameters:
+	if_ref - network interface hash reference.
+	toif - interface name.
+
+Returns:
+	scalar - number of times the rule was found. True if found.
+
+Bugs:
+	Rules for Datalink farms are included.
+
+See Also:
+	Only used here: <applyRoutes>
+=cut
 # ask for rules
 sub isRule    # ($if_ref, $toif)
 {
@@ -325,6 +515,26 @@ sub isRule    # ($if_ref, $toif)
 	return $existRule;
 }
 
+=begin nd
+Function: applyRoutes
+
+	Apply routes for interface or default gateway.
+
+	For "local" table set route for interface.
+	For "global" table set route for default gateway and save the default
+	gateway in global configuration file.
+
+Parameters:
+	table - "local" for interface routes or "global" for default gateway route.
+	if_ref - network interface hash reference.
+	gateway - Default gateway. Only required if table parameter is "global".
+
+Returns:
+	integer - ip command return code.
+
+See Also:
+	<delRoutes>
+=cut
 # apply routes
 sub applyRoutes    # ($table,$if_ref,$gateway)
 {
@@ -422,6 +632,25 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 	return $status;
 }
 
+=begin nd
+Function: delRoutes
+
+	Delete routes for interface or default gateway.
+
+	For "local" table remove route for interface.
+	For "global" table remove route for default gateway and removes the
+	default gateway in global configuration file.
+
+Parameters:
+	table - "local" for interface routes or "global" for default gateway route.
+	if_ref - network interface hash reference.
+
+Returns:
+	integer - ip command return code.
+
+See Also:
+	<applyRoutes>
+=cut
 # delete routes
 sub delRoutes    # ($table,$if_ref)
 {
@@ -486,6 +715,22 @@ sub delRoutes    # ($table,$if_ref)
 	return $status;
 }
 
+=begin nd
+Function: delIp
+
+	Deletes an IP address from an interface
+
+Parameters:
+	if - Name of interface.
+	ip - IP address.
+	netmask - Network mask.
+
+Returns:
+	integer - ip command return code.
+
+See Also:
+	<addIp>
+=cut
 # Execute command line to delete an IP from an interface
 sub delIp    # 	($if, $ip ,$netmask)
 {
@@ -505,6 +750,20 @@ sub delIp    # 	($if, $ip ,$netmask)
 	return $status;
 }
 
+=begin nd
+Function: addIp
+
+	Add an IPv4 to an Interface, Vlan or Vini
+
+Parameters:
+	if_ref - network interface hash reference.
+
+Returns:
+	integer - ip command return code.
+
+See Also:
+	<delIp>, <setIfacesUp>
+=cut
 # Execute command line to add an IPv4 to an Interface, Vlan or Vini
 sub addIp    # ($if_ref)
 {
@@ -560,6 +819,21 @@ sub addIp    # ($if_ref)
 	return $status;
 }
 
+=begin nd
+Function: getConfigInterfaceList
+
+	Get a reference to an array of all the interfaces saved in files.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - reference to array of configured interfaces.
+
+See Also:
+	zenloadbalanacer, zcluster-manager, <getIfacesFromIf>,
+	<getActiveInterfaceList>, <getSystemInterfaceList>, <getFloatInterfaceForAddress>
+=cut
 sub getConfigInterfaceList
 {
 	my @configured_interfaces;
@@ -598,6 +872,21 @@ sub getConfigInterfaceList
 	return \@configured_interfaces;
 }
 
+=begin nd
+Function: getIfacesFromIf
+
+	Get List of Vinis or Vlans from a network interface.
+
+Parameters:
+	if_name - interface name.
+	type - "vini" or "vlan".
+
+Returns:
+	list - list of interface references.
+
+See Also:
+	Only used in: <setIfacesUp>
+=cut
 # Get List of Vinis or Vlans from an interface
 sub getIfacesFromIf    # ($if_name, $type)
 {
@@ -629,6 +918,24 @@ sub getIfacesFromIf    # ($if_name, $type)
 	return @ifaces;
 }
 
+=begin nd
+Function: setIfacesUp
+
+	Bring up all Virtual or VLAN interfaces on a network interface.
+
+Parameters:
+	if_name - Name of interface.
+	type - "vini" or "vlan".
+
+Returns:
+	undef - .
+
+Bugs:
+	Set VLANs up.
+
+See Also:
+	zapi/v3/interfaces.cgi
+=cut
 # Check if there are some Virtual Interfaces or Vlan with IPv6 and previous UP status to get it up.
 sub setIfacesUp    # ($if_name,$type)
 {
@@ -660,9 +967,23 @@ sub setIfacesUp    # ($if_name,$type)
 		}
 	}
 
-	return @ifaces;
+	return;
 }
 
+=begin nd
+Function: createIf
+
+	Create VLAN network interface
+
+Parameters:
+	if_ref - Network interface hash reference.
+
+Returns:
+	integer - ip command return code.
+
+See Also:
+	zenloadbalancer, <setInterfaceUp>, zapi/v?/interface.cgi
+=cut
 # create network interface
 sub createIf    # ($if_ref)
 {
@@ -686,6 +1007,21 @@ sub createIf    # ($if_ref)
 	return $status;
 }
 
+=begin nd
+Function: upIf
+
+	Bring up network interface in system and optionally in configuration file
+
+Parameters:
+	if_ref - network interface hash reference.
+	writeconf - true value to apply change in interface configuration file. Optional.
+
+Returns:
+	integer - return code of ip command.
+
+See Also:
+	<downIf>
+=cut
 # up network interface
 sub upIf    # ($if_ref, $writeconf)
 {
@@ -725,6 +1061,21 @@ sub upIf    # ($if_ref, $writeconf)
 	return $status;
 }
 
+=begin nd
+Function: downIf
+
+	Bring down network interface in system and optionally in configuration file
+
+Parameters:
+	if_ref - network interface hash reference.
+	writeconf - true value to apply change in interface configuration file. Optional.
+
+Returns:
+	integer - return code of ip command.
+
+See Also:
+	<upIf>, <stopIf>, zapi/v?/interface.cgi
+=cut
 # down network interface in system and configuration file
 sub downIf    # ($if_ref, $writeconf)
 {
@@ -775,6 +1126,29 @@ sub downIf    # ($if_ref, $writeconf)
 	return $status;
 }
 
+=begin nd
+Function: stopIf
+
+	Stop network interface, this removes the IP address instead of putting the interface down.
+
+	This is an alternative to downIf which performs better in hardware
+	appliances. Because if the interface is not brought down it wont take
+	time to bring the interface back up and enable the link.
+
+Parameters:
+	if_ref - network interface hash reference.
+
+Returns:
+	integer - return code of ip command.
+
+Bugs:
+	Remove VLAN interface and bring it up.
+
+See Also:
+	<downIf>
+
+	Only used in: zenloadbalancer
+=cut
 # stop network interface
 sub stopIf    # ($if_ref)
 {
@@ -838,6 +1212,20 @@ sub stopIf    # ($if_ref)
 	return $status;
 }
 
+=begin nd
+Function: delIf
+
+	Remove system and stored settings and statistics of a network interface.
+
+Parameters:
+	if_ref - network interface hash reference.
+
+Returns:
+	integer - return code ofip command.
+
+See Also:
+	
+=cut
 # delete network interface configuration and from the system
 sub delIf    # ($if_ref)
 {
@@ -936,6 +1324,20 @@ sub delIf    # ($if_ref)
 	return $status;
 }
 
+=begin nd
+Function: getDefaultGW
+
+	Get system or interface default gateway.
+
+Parameters:
+	if - interface name. Optional.
+
+Returns:
+	scalar - Gateway IP address.
+
+See Also:
+	<getIfDefaultGW>
+=cut
 # get default gw for interface
 sub getDefaultGW    # ($if)
 {
@@ -978,6 +1380,20 @@ sub getDefaultGW    # ($if)
 	}
 }
 
+=begin nd
+Function: getIPv6DefaultGW
+
+	Get system IPv6 default gateway.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - IPv6 default gateway address.
+
+See Also:
+	<getDefaultGW>, <getIPv6IfDefaultGW>
+=cut
 sub getIPv6DefaultGW    # ()
 {
 	my @routes = `$ip_bin -6 route list`;
@@ -992,6 +1408,20 @@ sub getIPv6DefaultGW    # ()
 	return $default_gw;
 }
 
+=begin nd
+Function: getIPv6IfDefaultGW
+
+	Get network interface to IPv6 default gateway.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - Interface to IPv6 default gateway.
+
+See Also:
+	<getIPv6DefaultGW>, <getIfDefaultGW>
+=cut
 sub getIPv6IfDefaultGW    # ()
 {
 	my @routes = `$ip_bin -6 route list`;
@@ -1006,6 +1436,20 @@ sub getIPv6IfDefaultGW    # ()
 	return $if_default_gw;
 }
 
+=begin nd
+Function: getIfDefaultGW
+
+	Get network interface to default gateway.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - Interface to default gateway address.
+
+See Also:
+	<getDefaultGW>, <getIPv6IfDefaultGW>
+=cut
 # get interface for default gw
 sub getIfDefaultGW    # ()
 {
@@ -1016,6 +1460,22 @@ sub getIfDefaultGW    # ()
 	return $line[4];
 }
 
+=begin nd
+Function: iponif
+
+	Get the (primary) ip address on a network interface.
+
+	A copy of this function is in zeninotify.
+
+Parameters:
+	if - interface namm.
+
+Returns:
+	scalar - string with IP address.
+
+See Also:
+	<getInterfaceOfIp>, <_runDatalinkFarmStart>, <_runDatalinkFarmStop>, <zeninotify.pl>
+=cut
 #know if and return ip
 sub iponif            # ($if)
 {
@@ -1031,6 +1491,20 @@ sub iponif            # ($if)
 	return $iponif;
 }
 
+=begin nd
+Function: maskonif
+
+	Get the network mask of an network interface (primary) address.
+
+Parameters:
+	if - interface namm.
+
+Returns:
+	scalar - string with network address.
+
+See Also:
+	<_runDatalinkFarmStart>, <_runDatalinkFarmStop>
+=cut
 # return the mask of an if
 sub maskonif    # ($if)
 {
@@ -1044,6 +1518,31 @@ sub maskonif    # ($if)
 	return $maskonif;
 }
 
+=begin nd
+Function: getNetstatFilter
+
+	Filter conntrack output
+
+Parameters:
+	proto - Protocol: "tcp", "udp", more?
+	state - State: ??
+	ninfo - Ninfo: ??
+	fpid - Fpid: ??
+	netstat - Output from getConntrack
+
+Returns:
+	list - Filtered netstat array.
+
+See Also:
+	Input from: <getConntrack>
+
+	<farm-rrd.pl>, zapi/v?/system_stats.cgi
+
+	<getBackendEstConns>, <getFarmEstConns>, <getBackendSYNConns>, <getFarmSYNConns>
+
+	<getL4BackendEstConns>, <getL4FarmEstConns>, <getL4BackendSYNConns>, <getL4FarmSYNConns>
+	<getHTTPBackendEstConns>, <getHTTPFarmEstConns>, <getHTTPBackendTWConns>, <getHTTPBackendSYNConns>, <getHTTPFarmSYNConns>, <getGSLBFarmEstConns>
+=cut
 # Returns array execution of netstat
 sub getNetstatFilter    # ($proto,$state,$ninfo,$fpid,@netstat)
 {
@@ -1067,6 +1566,22 @@ sub getNetstatFilter    # ($proto,$state,$ninfo,$fpid,@netstat)
 	return @output;
 }
 
+=begin nd
+Function: getDevData
+
+	[NOT USED] Get network interfaces statistics.
+
+	Includes bytes and packets received and transmited.
+
+Parameters:
+	dev - interface name. Optional.
+
+Returns:
+	list - array with statistics?
+
+Bugs:
+	NOT USED
+=cut
 sub getDevData    # ($dev)
 {
 	my $dev = shift;
@@ -1111,6 +1626,24 @@ sub getDevData    # ($dev)
 	return @dataout;
 }
 
+=begin nd
+Function: sendGArp
+
+	Send gratuitous ARP frames.
+
+	Broadcast an ip address with ARP frames through a network interface.
+	Also, pings the interface gateway.
+
+Parameters:
+	if - interface name.
+	ip - ip address.
+
+Returns:
+	undef - .
+
+See Also:
+	<broadcastInterfaceDiscovery>, <sendGPing>
+=cut
 # send gratuitous ARP frames
 sub sendGArp    # ($if,$ip)
 {
@@ -1126,6 +1659,20 @@ sub sendGArp    # ($if,$ip)
 	&sendGPing( $iface[0] );
 }
 
+=begin nd
+Function: setIpForward
+
+	Set IP forwarding on/off
+
+Parameters:
+	arg - "true" to turn it on or ("false" to turn it off).
+
+Returns:
+	scalar - return code setting the value.
+
+See Also:
+	<_runL4FarmStart>, <_runDatalinkFarmStart>
+=cut
 # Enable(true) / Disable(false) IP Forwarding
 sub setIpForward    # ($arg)
 {
@@ -1148,6 +1695,20 @@ sub setIpForward    # ($arg)
 	return $status;
 }
 
+=begin nd
+Function: flushCacheRoutes
+
+	[NOT USED] Flush cache routes
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+	NOT USED
+=cut
 # Flush cache routes
 sub flushCacheRoutes    # ()
 {
@@ -1155,6 +1716,20 @@ sub flushCacheRoutes    # ()
 	system ( "$ip_bin route flush cache >/dev/null 2>$1" );
 }
 
+=begin nd
+Function: uplinkUsed
+
+	[NOT USED] Return if interface is used for datalink farm
+
+Parameters:
+	none - .
+
+Returns:
+	boolean - "true" or "false".
+
+Bugs:
+	NOT USED
+=cut
 # Return if interface is used for datalink farm
 sub uplinkUsed          # ($if)
 {
@@ -1175,6 +1750,20 @@ sub uplinkUsed          # ($if)
 	return $output;
 }
 
+=begin nd
+Function: isValidPortNumber
+
+	Check if the input is a valid port number.
+
+Parameters:
+	port - Port number.
+
+Returns:
+	boolean - "true" or "false".
+
+See Also:
+	snmp_functions.cgi, check_functions.cgi, zapi/v3/post.cgi, zapi/v3/put.cgi
+=cut
 sub isValidPortNumber    # ($port)
 {
 	my $port = shift;
@@ -1193,24 +1782,20 @@ sub isValidPortNumber    # ($port)
 }
 
 =begin nd
-	Function: getInterfaceList
+Function: getInterfaceList
 
 	Return a list of all network interfaces detected in the system.
 
-	Parameters:
+Parameters:
+	None.
 
-		None.
+Returns:
+	array - list of network interface names.
+	array empty - if no network interface is detected.
 
-	Returns:
-
-		array - list of network interface names.
-		array empty - if no network interface is detected.
-
-	See Also:
-
-		listActiveInterfaces
+See Also:
+	<listActiveInterfaces>
 =cut
-
 sub getInterfaceList
 {
 	my @interfaces;
@@ -1242,6 +1827,20 @@ sub getInterfaceList
 	return @interfaces;
 }
 
+=begin nd
+Function: getIOSocket
+
+	Get a IO Socket. Used to get information about interfaces.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - IO::Socket::INET object reference.
+
+See Also:
+	<getVipOutputIp>, <zenloadbalancer>
+=cut
 # IO Socket is needed to get information about interfaces
 sub getIOSocket
 {
@@ -1249,6 +1848,20 @@ sub getIOSocket
 	return IO::Socket::INET->new( Proto => 'udp' );
 }
 
+=begin nd
+Function: getVipOutputIp
+
+	[NOT USED] Get outbound IP address (actually NIC) of vip.
+
+Parameters:
+	vip - vip address.
+
+Returns:
+	scalar - IP address string.
+
+Bugs:
+	NOT USED
+=cut
 sub getVipOutputIp    # ($vip)
 {
 	my $vip = shift;
@@ -1276,6 +1889,20 @@ sub getVipOutputIp    # ($vip)
 	return $socket->if_addr( $device );
 }
 
+=begin nd
+Function: getVirtualInterfaceFilenameList
+
+	[NOT USED] Get a list of the virtual interfaces configuration filenames.
+
+Parameters:
+	none - .
+
+Returns:
+	list - Every configuration file of virtual interfaces.
+
+Bugs:
+	NOT USED
+=cut
 sub getVirtualInterfaceFilenameList
 {
 	opendir ( DIR, &getGlobalConfiguration( 'configdir' ) );
@@ -1287,6 +1914,20 @@ sub getVirtualInterfaceFilenameList
 	return @filenames;
 }
 
+=begin nd
+Function: getInterfaceOfIp
+
+	Get the name of the interface with such IP address.
+
+Parameters:
+	ip - string with IP address.
+
+Returns:
+	scalar - Name of interface, if found, undef otherwise.
+
+See Also:
+	<enable_cluster>, <new_farm>, <modify_datalink_farm>
+=cut
 sub getInterfaceOfIp    # ($ip)
 {
 	my $ip = shift;

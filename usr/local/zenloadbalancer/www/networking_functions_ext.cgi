@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -25,6 +26,20 @@ use Config::Tiny;
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
 
+=begin nd
+Function: sendGPing
+
+	Send gratuitous ICMP packets for L3 aware.
+
+Parameters:
+	pif - ping interface name.
+
+Returns:
+	none - .
+
+See Also:
+	<sendGArp>
+=cut
 # send gratuitous ICMP packets for L3 aware
 sub sendGPing    # ($pif)
 {
@@ -47,6 +62,20 @@ sub sendGPing    # ($pif)
 	}
 }
 
+=begin nd
+Function: getConntrackExpect
+
+	[NOT USED] Get conntrack sessions.
+
+Parameters:
+	none - .
+
+Returns:
+	list - list of conntrack sessions.
+
+Bugs:
+	NOT USED
+=cut
 # get conntrack sessions
 sub getConntrackExpect    # ($args)
 {
@@ -61,6 +90,26 @@ sub getConntrackExpect    # ($args)
 	return @expect;
 }
 
+=begin nd
+Function: getInterfaceConfig
+
+	Get a hash reference with the stored configuration of a network interface.
+
+Parameters:
+	if_name - Interface name.
+	ip_version - Interface stack or IP version. 4 or 6 (Default: 4).
+
+Returns:
+	scalar - Reference to a network interface hash ($if_ref). undef if the network interface was not found.
+
+Bugs:
+	The configuration file exists but there isn't the requested stack.
+
+See Also:
+	<$if_ref>
+
+	zcluster-manager, zenbui.pl, zapi/v?/interface.cgi, zcluster_functions.cgi, networking_functions_ext
+=cut
 sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 {
 	my ( $if_name, $ip_version ) = @_;
@@ -174,6 +223,45 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	return \%iface;
 }
 
+=begin nd
+Variable: $if_ref
+
+	Reference to a hash representation of a network interface.
+	It can be found dereferenced and used as a (%iface or %interface) hash.
+
+	$if_ref->{ name }     - Interface name.
+	$if_ref->{ addr }     - IP address. Empty if not configured.
+	$if_ref->{ mask }     - Network mask. Empty if not configured.
+	$if_ref->{ gateway }  - Interface gateway. Empty if not configured.
+	$if_ref->{ status }   - 'up' for enabled, or 'down' for disabled.
+	$if_ref->{ ip_v }     - IP version, 4 or 6.
+	$if_ref->{ dev }      - Name without VLAN or Virtual part (same as NIC or Bonding)
+	$if_ref->{ vini }     - Part of the name corresponding to a Virtual interface. Can be empty.
+	$if_ref->{ vlan }     - Part of the name corresponding to a VLAN interface. Can be empty.
+	$if_ref->{ mac }      - Interface hardware address.
+	$if_ref->{ type }     - Interface type: nic, bond, vlan, virtual.
+	$if_ref->{ parent }   - Interface which this interface is based/depends on.
+	$if_ref->{ float }    - Floating interface selected for this interface. For routing interfaces only.
+	$if_ref->{ is_slave } - Whether the NIC interface is a member of a Bonding interface. For NIC interfaces only.
+
+See also:
+	<getInterfaceConfig>, <setInterfaceConfig>, <getSystemInterface>
+=cut
+
+=begin nd
+Function: setInterfaceConfig
+
+	Store a network interface configuration.
+
+Parameters:
+	if_ref - Reference to a network interface hash.
+
+Returns:
+	boolean - 1 on success, or 0 on failure.
+
+See Also:
+	<getInterfaceConfig>, <setInterfaceUp>, zenloadbalancer, zenbui.pl, zapi/v?/interface.cgi
+=cut
 # returns 1 if it was successful
 # returns 0 if it wasn't successful
 sub setInterfaceConfig    # $bool ($if_ref)
@@ -246,6 +334,23 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	return 1;
 }
 
+=begin nd
+Function: getDevVlanVini
+
+	Get a hash reference with the interface name divided into: dev, vlan, vini.
+
+Parameters:
+	if_name - Interface name.
+
+Returns:
+	Reference to a hash with:
+	dev - NIC or Bonding part of the interface name.
+	vlan - VLAN part of the interface name.
+	vini - Virtual interface part of the interface name.
+
+See Also:
+	<getParentInterfaceName>, <getSystemInterfaceList>, <getSystemInterface>, zapi/v2/interface.cgi
+=cut
 sub getDevVlanVini    # ($if_name)
 {
 	my %if;
@@ -264,6 +369,20 @@ sub getDevVlanVini    # ($if_name)
 	return \%if;
 }
 
+=begin nd
+Function: getInterfaceSystemStatus
+
+	Get the status of an network interface in the system.
+
+Parameters:
+	if_ref - Reference to a network interface hash.
+
+Returns:
+	scalar - 'up' or 'down'.
+
+See Also:
+	<getActiveInterfaceList>, <getSystemInterfaceList>, <getInterfaceTypeList>, zapi/v?/interface.cgi,
+=cut
 sub getInterfaceSystemStatus     # ($if_ref)
 {
 	my $if_ref = shift;
@@ -333,6 +452,20 @@ sub getInterfaceSystemStatus     # ($if_ref)
 	return &getInterfaceSystemStatus( $parent_if_ref );
 }
 
+=begin nd
+Function: getParentInterfaceName
+
+	Get the parent interface name.
+
+Parameters:
+	if_name - Interface name.
+
+Returns:
+	string - Parent interface name or undef if there is no parent interface (NIC and Bonding).
+
+See Also:
+	<getInterfaceConfig>, <getSystemInterface>, zenloadbalancer, zapi/v?/interface.cgi
+=cut
 sub getParentInterfaceName    # ($if_name)
 {
 	my $if_name = shift;
@@ -369,6 +502,20 @@ sub getParentInterfaceName    # ($if_name)
 	return $parent_if_name;
 }
 
+=begin nd
+Function: getActiveInterfaceList
+
+	Get a reference to a list of all running (up) and configured network interfaces.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - reference to an array of network interface hashrefs.
+
+See Also:
+	Zapi v3: post.cgi, put.cgi, system.cgi
+=cut
 sub getActiveInterfaceList
 {
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
@@ -414,6 +561,20 @@ sub getActiveInterfaceList
 	return \@configured_interfaces;
 }
 
+=begin nd
+Function: getSystemInterfaceList
+
+	Get a reference to a list with all the interfaces, configured and not configured.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - reference to an array with configured and system network interfaces.
+
+See Also:
+	zapi/v?/interface.cgi, zapi/v3/cluster.cgi
+=cut
 sub getSystemInterfaceList
 {
 	my @interfaces;    # output
@@ -518,6 +679,20 @@ sub getSystemInterfaceList
 	return \@interfaces;
 }
 
+=begin nd
+Function: getSystemInterface
+
+	Get a reference to a network interface hash from the system configuration, not the stored configuration.
+
+Parameters:
+	if_name - Interface name.
+
+Returns:
+	scalar - reference to a network interface hash as is on the system or undef if not found.
+
+See Also:
+	<getInterfaceConfig>, <setInterfaceConfig>
+=cut
 sub getSystemInterface    # ($if_name)
 {
 	use IO::Interface qw(:flags);
@@ -574,6 +749,25 @@ my @bond_modes_short = (
 				'balance-alb',
 );
 
+=begin nd
+Function: getBondList
+
+	Get a reference to a list of all bonding hashes.
+
+	Bonding hash:
+	name   - Interface name.
+	mode   - Bonding mode
+	slaves - NIC interfaces belonging to the bonding interface.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - reference to an array of bonding interfaces.
+
+See Also:
+	<applyBondChange>, <getAllBondsSlaves>
+=cut
 sub getBondList
 {
 	my $bonding_masters_filename = &getGlobalConfiguration('bonding_masters_filename');
@@ -619,6 +813,27 @@ sub getBondList
 	return \@bonds;
 }
 
+=begin nd
+Function: getBondMode
+
+	Get a reference to a list with two ways to express the bonding mode, name and number.
+
+Parameters:
+	bond_master - Bonding interface name.
+
+Returns:
+	scalar - list reference or undef if not found or an error happened.
+	The list has two elements:
+	- 0 - Bonding mode short name.
+	- 1 - Bonding mode number.
+
+Bugs:
+	Returning a reference to a two elements array is making it too complicated.
+	There is not need to return a reference. Returning a list is simpler.
+
+See Also:
+	
+=cut
 sub getBondMode
 {
 	my $bond_master = shift;
@@ -653,6 +868,20 @@ sub getBondMode
 	return \@mode;
 }
 
+=begin nd
+Function: getBondSlaves
+
+	Get a reference to a list of NICs part of the bonding interface
+
+Parameters:
+	bond_master - Name of bonding interface.
+
+Returns:
+	scalar - reference to a list of slaves in bonding interface.
+
+See Also:
+	
+=cut
 sub getBondSlaves
 {
 	my $bond_master = shift;
@@ -686,6 +915,24 @@ sub getBondSlaves
 	return \@slaves;
 }
 
+=begin nd
+Function: applyBondChange
+
+	Configure the bonding interface, and optionally store the configuration.
+
+Parameters:
+	bond - reference to bonding interface.
+	writeconf - Boolean, true to store the configuration, or false to only apply it.
+
+Returns:
+	scalar - 0 on success, -1 on failure.
+
+Bugs:
+	Use better return values.
+
+See Also:
+	
+=cut
 sub applyBondChange
 {
 	my $bond      = shift;
@@ -786,6 +1033,22 @@ sub applyBondChange
 	return $return_code;
 }
 
+=begin nd
+Function: setBondMaster
+
+	Creates or removes master bonding interface.
+
+Parameters:
+	bond_name - Name of bonding interface.
+	operation - 'add' to or 'del'.
+	writeconf - Boolean, true to store configuration changes.
+
+Returns:
+	scalar - 0 on success, or 1 on failure.
+
+See Also:
+	
+=cut
 sub setBondMaster
 {
 	my $bond_name = shift;
@@ -862,6 +1125,20 @@ sub setBondMaster
 	return $return_code;
 }
 
+=begin nd
+Function: setBondMode
+
+	Sets a bonding mode. Requires the bonding interface to have no slaves while changing the mode.
+
+Parameters:
+	bond - Reference to a bond interface.
+
+Returns:
+	scalar - 0 on success, or 1 on failure.
+
+See Also:
+	
+=cut
 sub setBondMode
 {
 	my $bond = shift;
@@ -894,6 +1171,22 @@ sub setBondMode
 	return $return_code;
 }
 
+=begin nd
+Function: setBondSlave
+
+	Adds or removes a slave interface to/from a bonding interface.
+
+Parameters:
+	bond_name - Name of bonding interface.
+	bond_slave - Name of NIC interface.
+	operation - 'add' or 'del'.
+
+Returns:
+	scalar - 0 on success, or 1 on failure.
+
+See Also:
+	
+=cut
 sub setBondSlave
 {
 	my $bond_name  = shift;
@@ -945,6 +1238,20 @@ sub setBondSlave
 	return $return_code;
 }
 
+=begin nd
+Function: getBondConfig
+
+	Get a hash reference with all the stored bonding interfaces configuration.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - Hash reference with pairs (bonding name => bonding hashref) of all bonding interfaces.
+
+See Also:
+	
+=cut
 sub getBondConfig
 {
 	# returns:	0 on failure
@@ -984,6 +1291,20 @@ sub getBondConfig
 	return $bond_conf;
 }
 
+=begin nd
+Function: setBondConfig
+
+	Save/Store the bonding configuration.
+
+Parameters:
+	bond_conf - Hashref with all bondings configuration.
+
+Returns:
+	none - .
+
+See Also:
+	
+=cut
 sub setBondConfig
 {
 	my $bond_conf = shift;
@@ -1011,6 +1332,20 @@ sub setBondConfig
 	return;
 }
 
+=begin nd
+Function: getBondAvailableSlaves
+
+	Get a list with all the nic interfaces with the conditions to be included in a bonding interface as a slave interface.
+
+Parameters:
+	none - .
+
+Returns:
+	list - list of nic interfaces available.
+
+See Also:
+	
+=cut
 sub getBondAvailableSlaves
 {
 	my @bond_list = ();
@@ -1055,6 +1390,20 @@ sub getBondAvailableSlaves
 	return @avail_ifaces;
 }
 
+=begin nd
+Function: getFloatInterfaceForAddress
+
+	Get floating interface or output interface
+
+Parameters:
+	remote_ip_address - .
+
+Returns:
+	scalar - Name of output .
+
+See Also:
+	
+=cut
 # get floating interface or output interface
 sub getFloatInterfaceForAddress
 {
@@ -1116,6 +1465,20 @@ sub getFloatInterfaceForAddress
 	return $output_interface;
 }
 
+=begin nd
+Function: getConfigTiny
+
+	Get a Config::Tiny object from a file name.
+
+Parameters:
+	file_path - Path to file.
+
+Returns:
+	scalar - reference to Config::Tiny object, or undef on failure.
+
+See Also:
+	
+=cut
 sub getConfigTiny
 {
 	my $file_path = shift;
@@ -1133,6 +1496,21 @@ sub getConfigTiny
 	return Config::Tiny->read( $file_path );
 }
 
+=begin nd
+Function: setConfigTiny
+
+	Store a Config::Tiny object in a file.
+
+Parameters:
+	file_path - Path to file.
+	config_ref - Config::Tiny object reference.
+
+Returns:
+	boolean - true on success, or undef on failure.
+
+See Also:
+	
+=cut
 sub setConfigTiny
 {
 	my $file_path = shift;
@@ -1160,6 +1538,21 @@ sub setConfigTiny
 	return $config_ref->write( $file_path );
 }
 
+=begin nd
+Function: setInterfaceUp
+
+	[NOT USED] Configure interface reference in the system, and optionally store the configuration
+
+Parameters:
+	interface - interface reference.
+	writeconf - true value to store the interface configuration.
+
+Returns:
+	scalar - 0 on success, or 1 on failure.
+
+Bugs:
+	NOT USED
+=cut
 # configure interface reference in the system, and optionally save the configuration
 sub setInterfaceUp
 {
@@ -1225,6 +1618,20 @@ sub setInterfaceUp
 	return 0; # FIXME
 }
 
+=begin nd
+Function: configureDefaultGW
+
+	Setup the configured default gateway (for IPv4 and IPv6).
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+See Also:
+	zenloadbalancer
+=cut
 # from zbin/zenloadbalancer, almost exactly
 sub configureDefaultGW    #()
 {
@@ -1256,6 +1663,27 @@ sub configureDefaultGW    #()
 	}
 }
 
+=begin nd
+Function: getInterfaceType
+
+	Get the type of a network interface from its name using linux 'hints'.
+
+	Original source code in bash:
+	http://stackoverflow.com/questions/4475420/detect-network-connection-type-in-linux
+
+	Translated to perl and adapted by Zevenet
+
+	Interface types: nic, virtual, vlan, bond, dummy or lo.
+
+Parameters:
+	if_name - Interface name.
+
+Returns:
+	scalar - Interface type: nic, virtual, vlan, bond, dummy or lo.
+
+See Also:
+	
+=cut
 # Source in bash translated to perl:
 # http://stackoverflow.com/questions/4475420/detect-network-connection-type-in-linux
 #
@@ -1393,6 +1821,22 @@ sub getInterfaceType
 	die ( $msg ); # This should not happen
 }
 
+=begin nd
+Function: getInterfaceTypeList
+
+	Get a list of hashrefs with interfaces of a single type.
+
+	Types supported are: nic, bond, vlan and virtual.
+
+Parameters:
+	list_type - Network interface type.
+
+Returns:
+	list - list of network interfaces hashrefs.
+
+See Also:
+	
+=cut
 sub getInterfaceTypeList
 {
 	my $list_type = shift;
@@ -1444,6 +1888,20 @@ sub getInterfaceTypeList
 	return @interfaces;
 }
 
+=begin nd
+Function: getAllBondsSlaves
+
+	Get a list of all the nics belonging to a bonding interface.
+
+Parameters:
+	none - .
+
+Returns:
+	list - list of NIC names used by bonding interfaces.
+
+See Also:
+	
+=cut
 sub getAllBondsSlaves
 {
 	my @slaves; # output
@@ -1461,6 +1919,21 @@ sub getAllBondsSlaves
 	return @slaves;
 }
 
+=begin nd
+Function: getAppendInterfaces
+
+	Get vlans or virtual interfaces running on a network interface.
+
+Parameters:
+	ifaceName - Interface name.
+	type - Interface type: vlan or virtual.
+
+Returns:
+	scalar - reference to an array of interfaces hashrefs.
+
+See Also:
+	
+=cut
 # Get vlan or virtual interfaces appended from a interface
 sub getAppendInterfaces # ( $iface_name, $type )
 {
