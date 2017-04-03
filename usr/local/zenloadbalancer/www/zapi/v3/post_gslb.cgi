@@ -183,25 +183,6 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	# validate RESOURCE NAME exist
-	if ( grep { $_->{ rname } eq $json_obj->{ rname } } @{ &getGSLBResources ( $farmname, $zone ) } )
-	{
-		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter zone resource already exists."
-		);
-
-		# Error
-		my $errormsg =
-		  "The parameter zone resource name (rname) already exists, please insert a valid value.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
 	# validate RESOURCE NAME
 	unless ( $json_obj->{ rname } && &getValidFormat( 'resource_name', $json_obj->{ rname } ) )
 	{
