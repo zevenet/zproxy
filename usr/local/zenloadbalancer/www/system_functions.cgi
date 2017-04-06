@@ -1091,7 +1091,12 @@ sub getTotalConnections
 sub getApplianceVersion
 {
 	my $version;
+	my $hyperv;
 	my $applianceFile = &getGlobalConfiguration ( 'applianceVersionFile' );
+	my $lsmod = &getGlobalConfiguration ( 'lsmod' );
+	my @packages = `$lsmod`;
+	my @hypervisor = grep ( /(xen|vm|hv|kvm)_/ , @packages );
+	
 	# look for appliance vesion
 	if ( -f $applianceFile )
 	{
@@ -1125,20 +1130,10 @@ sub getApplianceVersion
 			elsif ( $kernel =~ /3\.16\.7\-ckt20/ ) 	{ $version = "4100"; }
 			else													{ $version = "System version not detected"; }
 
-			my $lsmod = &getGlobalConfiguration ( 'lsmod' );
-			my @packages = `$lsmod`;
-			my @hypervisor = grep ( /(xen|vm|hv|kvm)_/ , @packages );
-			
 			# virtual appliance
 			if ( $hypervisor[0] =~ /(xen|vm|hv|kvm)_/ )
 			{
-				my $hyperv= $1;
-				$hyperv = 'HyperV' if ( $hyperv eq 'hv' );
-				$hyperv = 'Vmware' if ( $hyperv eq 'vm' );
-				$hyperv = 'Xen' if ( $hyperv eq 'xen' );
-				$hyperv = 'KVM' if ( $hyperv eq 'kvm' );
-				
-				$version = "ZVA $version, hypervisor: $hyperv";
+				$version = "ZVA $version";
 			}
 			# baremetal appliance
 			else
@@ -1151,6 +1146,22 @@ sub getApplianceVersion
 		tie my @filelines, 'Tie::File', $applianceFile;
 		$filelines[0] = $version;
 		untie @filelines;
+	}
+	
+	# virtual appliance
+	if ( $hypervisor[0] =~ /(xen|vm|hv|kvm)_/ )
+	{
+		$hyperv= $1;
+		$hyperv = 'HyperV' if ( $hyperv eq 'hv' );
+		$hyperv = 'Vmware' if ( $hyperv eq 'vm' );
+		$hyperv = 'Xen' if ( $hyperv eq 'xen' );
+		$hyperv = 'KVM' if ( $hyperv eq 'kvm' );
+	}
+
+	# before zevenet versions had hypervisor in appliance version file, so not inclue it in the chain
+	if ($hyperv && $version !~ /hypervisor/ )
+	{
+		$version = "ZVA $version, hypervisor: $hyperv";
 	}
 	
 	return $version;
