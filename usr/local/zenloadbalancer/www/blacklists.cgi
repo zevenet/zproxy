@@ -421,22 +421,25 @@ sub setBLReloadFarmRules
 
 
 	
-
-
 # setBLApplyToFarm ( $farmName, $list );
 sub setBLApplyToFarm
 {
 	my ( $farmName, $listName ) = @_;
 	my $output;
 
-	if ( &getBLStatus( $listName ) eq 'down' )
+	# run rule only if the farm is up
+	if ( &getFarmStatus( $farmName ) eq 'up' )
 	{
-		$output = &setBLRunList( $listName );
-	}
-
-	if ( !$output )
-	{
-		$output = &setBLCreateRule( $farmName, $listName );
+		# load de list if it is not been used
+		if ( &getBLStatus( $listName ) eq 'down' )
+		{
+			$output = &setBLRunList( $listName );
+		}
+		# create iptable rule
+		if ( !$output )
+		{
+			$output = &setBLCreateRule( $farmName, $listName );
+		}
 	}
 
 	if ( !$output )
