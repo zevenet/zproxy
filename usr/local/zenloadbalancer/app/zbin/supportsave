@@ -23,9 +23,10 @@
 
 tmp_name=`/bin/date +%Y%m%d_%H%M`
 hostname=`hostname`
+home_dir="/usr/local/zenloadbalancer"
 ss_dir="supportsave_${hostname}_${tmp_name}"
 dir_backup="/tmp/${ss_dir}"
-backup_to="/usr/local/zenloadbalancer/config /usr/local/zenloadbalancer/app/zenrrd/rrd /etc/iproute2/rt_tables /usr/local/zenloadbalancer/logs /var/log/messages* /var/log/syslog*";
+backup_to="${home_dir}/config ${home_dir}/app/zenrrd/rrd /etc/iproute2/rt_tables ${home_dir}/logs /var/log/messages* /var/log/syslog* ${home_dir}/app/cherokee/etc/cherokee/cherokee.conf /etc/ssh/sshd_config";
 
 echo "Saving information for support in the path ${dir_backup}.tar.gz"
 /bin/mkdir $dir_backup
@@ -48,13 +49,15 @@ echo "Mangle table " >> $dir_backup/netfilter.txt
 echo "Saving ARP filtering"
 /sbin/arptables -L > $dir_backup/arp_filtering.txt
 
-if [ -f /usr/local/zenloadbalancer/config/cluster.conf ]; then
-	echo "Saving time synchronization"
-	/usr/local/zenloadbalancer/app/zenntp/zenntp.pl > $dir_backup/ntp_test.txt 2>&1
+if [ -f ${home_dir}/config/cluster.conf ]; then
+	echo "Saving cluster related information"
+	${home_dir}/app/zenntp/zenntp.pl > $dir_backup/ntp_test.txt 2>&1
 
-	if [ -f /usr/local/zenloadbalancer/node_status ];
+	if [ -f ${home_dir}/node_status ];
 	then
-		cp /usr/local/zenloadbalancer/node_status  $dir_backup/
+		cp ${home_dir}/node_status  $dir_backup/
+		cp /etc/keepalived/keepalived.conf  $dir_backup/
+		cp /etc/conntrackd/conntrackd.conf  $dir_backup/
 	fi
 fi
 
@@ -72,7 +75,7 @@ echo "netstat -nr" >> $dir_backup/netstat.txt
 /usr/sbin/dmidecode >> $dir_backup/dmi.txt
 /bin/hostname >> $dir_backup/dmi.txt
 
-/bin/cp /usr/local/zenloadbalancer/www/*.pem $dir_backup 2>/dev/null
+/bin/cp ${home_dir}/www/*.pem $dir_backup 2>/dev/null
 
 for i in `cat /etc/iproute2/rt_tables  | grep "table_" | awk {'print $2'}`
 do
