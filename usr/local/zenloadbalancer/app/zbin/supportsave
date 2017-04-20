@@ -30,6 +30,9 @@ backup_to="/usr/local/zenloadbalancer/config /usr/local/zenloadbalancer/app/zenr
 echo "Saving information for support in the path ${dir_backup}.tar.gz"
 /bin/mkdir $dir_backup
 
+echo "Saving loaded modules"
+/sbin/lsmod > $dir_backup/lsmod.txt
+
 echo "Saving network configuration"
 /sbin/ifconfig -a >> $dir_backup/ifconfig.txt
 /sbin/ip link show >> $dir_backup/ip_link.txt
