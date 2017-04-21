@@ -365,7 +365,7 @@ while ( 1 )
 		{
 			if ( $logging eq 'enabled' )
 			{
-				&zenlog("**execution error in ' $command ', output::**\n".@output);
+				&zenlog("**execution error in ' $command ', output::**\n@output");
 			}
 
 			# Disabling backend for every type of farm supported
