@@ -1161,7 +1161,7 @@ sub getApplianceVersion
 	# before zevenet versions had hypervisor in appliance version file, so not inclue it in the chain
 	if ($hyperv && $version !~ /hypervisor/ )
 	{
-		$version = "ZVA $version, hypervisor: $hyperv";
+		$version = "$version, hypervisor: $hyperv";
 	}
 	
 	return $version;
