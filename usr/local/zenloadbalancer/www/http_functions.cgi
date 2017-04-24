@@ -25,7 +25,19 @@ use strict;
 
 my $configdir = &getGlobalConfiguration('configdir');
 
-# Only used in http content
+=begin nd
+Function: setFarmClientTimeout
+
+	Configure the client time parameter for a HTTP farm.
+	
+Parameters:
+	client - It is the time in seconds for the client time parameter
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success, or -1 on failure.
+
+=cut
 sub setFarmClientTimeout    # ($client,$farm_name)
 {
 	my ( $client, $farm_name ) = @_;
@@ -60,7 +72,18 @@ sub setFarmClientTimeout    # ($client,$farm_name)
 	return $output;
 }
 
-# Only used in http content
+=begin nd
+Function: getFarmClientTimeout
+
+	Return the client time parameter for a HTTP farm.
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - Return the seconds for client request timeout or -1 on failure.
+
+=cut
 sub getFarmClientTimeout    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -88,7 +111,20 @@ sub getFarmClientTimeout    # ($farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: setHTTPFarmSessionType
+
+	Configure type of persistence
+	
+Parameters:
+	session - type of session: nothing, HEADER, URL, COOKIE, PARAM, BASIC or IP
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success, or -1 on failure.
+
+=cut
 sub setHTTPFarmSessionType    # ($session,$farm_name)
 {
 	my ( $session, $farm_name ) = @_;
@@ -167,7 +203,19 @@ sub setHTTPFarmSessionType    # ($session,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getHTTPFarmSessionType
+
+	Return the type of session persistence for a HTTP farm.
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - type of persistence or -1 on failure.
+
+=cut
 sub getHTTPFarmSessionType    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -188,69 +236,20 @@ sub getHTTPFarmSessionType    # ($farm_name)
 	return $output;
 }
 
-# setFarmSessionId not used ?
-#sub setFarmSessionId($sessionid,$farm_name,$service)
-#{
-#my ( $sessionid, $farm_name, $service ) = @_;
 
-#my $farm_type   = &getFarmType( $farm_name );
-#my $farm_filename  = &getFarmFile( $farm_name );
-#my $output = -1;
+=begin nd
+Function: setHTTPFarmBlacklistTime
 
-#if ( $farm_type eq "http" || $farm_type eq "https" )
-#{
-#tie @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
-#my $i_f         = -1;
-#my $array_count = @filefarmhttp;
-#my $found       = "false";
-#while ( $i_f <= $array_count && $found eq "false" )
-#{
-#$i_f++;
-#if ( $filefarmhttp[$i_f] =~ /ID/ )
-#{
-#&zenlog( "setting 'Session id $sessionid' for $farm_name farm $farm_type" );
-#$filefarmhttp[$i_f] = "\t\t\tID \"$sessionid\"";
-#$output             = $?;
-#$found              = "true";
-#}
-#}
+	Configure check time for resurected back-end. It is a HTTP farm paramter.
+	
+Parameters:
+	checktime - time for resurrected checks
+	farmname - Farm name
 
-#untie @filefarmhttp;
-#}
+Returns:
+	Integer - Error code: 0 on success, or -1 on failure.
 
-#return $output;
-#}
-
-# getFarmSessionId not used ?
-#sub getFarmSessionId($farm_name,$service)
-#{
-#my ( $farm_name, $service ) = @_;
-
-#my $farm_type   = &getFarmType( $farm_name );
-#my $farm_filename  = &getFarmFile( $farm_name );
-#my $output = -1;
-
-#if ( $farm_type eq "http" || $farm_type eq "https" )
-#{
-#open FR, "<$configdir\/$farm_filename";
-#my @file = <FR>;
-#foreach $line ( @file )
-#{
-#if ( $line =~ /ID/ )
-#{
-#@line = split ( "\ ", $line );
-#$output = $line[1];
-#$output =~ s/\"//g;
-#}
-#}
-#close FR;
-#}
-
-##&zenlog("getting 'Session id $output' for $farm_name farm $farm_type");
-#return $output;
-#}
-
-#
+=cut
 sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 {
 	my ( $blacklist_time, $farm_name ) = @_;
@@ -281,7 +280,19 @@ sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getHTTPFarmBlacklistTime
+
+	Return  time for resurrected checks for a HTTP farm.
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	integer - seconds for check or -1 on failure.
+
+=cut
 sub getHTTPFarmBlacklistTime    # ($farm_filename)
 {
 	my ( $farm_filename ) = @_;
@@ -302,7 +313,26 @@ sub getHTTPFarmBlacklistTime    # ($farm_filename)
 	return $blacklist_time;
 }
 
-#
+
+=begin nd
+Function: setFarmHttpVerb
+
+	Configure the accepted HTTP verb for a HTTP farm.
+	The accepted verb sets are: 
+		0. standardHTTP, for the verbs GET, POST, HEAD.
+		1. extendedHTTP, add the verbs PUT, DELETE.
+		2. standardWebDAV, add the verbs LOCK, UNLOCK, PROPFIND, PROPPATCH, SEARCH, MKCOL, MOVE, COPY, OPTIONS, TRACE, MKACTIVITY, CHECKOUT, MERGE, REPORT.
+		3. MSextWebDAV, add the verbs SUBSCRIBE, UNSUBSCRIBE, NOTIFY, BPROPFIND, BPROPPATCH, POLL, BMOVE, BCOPY, BDELETE, CONNECT.
+		4. MSRPCext, add the verbs RPC_IN_DATA, RPC_OUT_DATA.
+	
+Parameters:
+	verb - accepted verbs: 0, 1, 2, 3 or 4
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success, or -1 on failure.
+
+=cut
 sub setFarmHttpVerb    # ($verb,$farm_name)
 {
 	my ( $verb, $farm_name ) = @_;
@@ -334,7 +364,25 @@ sub setFarmHttpVerb    # ($verb,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getFarmHttpVerb
+
+	Return the available verb set for a HTTP farm.
+	The possible verb sets are: 
+		0. standardHTTP, for the verbs GET, POST, HEAD.
+		1. extendedHTTP, add the verbs PUT, DELETE.
+		2. standardWebDAV, add the verbs LOCK, UNLOCK, PROPFIND, PROPPATCH, SEARCH, MKCOL, MOVE, COPY, OPTIONS, TRACE, MKACTIVITY, CHECKOUT, MERGE, REPORT.
+		3. MSextWebDAV, add the verbs SUBSCRIBE, UNSUBSCRIBE, NOTIFY, BPROPFIND, BPROPPATCH, POLL, BMOVE, BCOPY, BDELETE, CONNECT.
+		4. MSRPCext, add the verbs RPC_IN_DATA, RPC_OUT_DATA.
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	integer - return the verb set identier or -1 on failure.
+
+=cut
 sub getFarmHttpVerb    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -361,6 +409,23 @@ sub getFarmHttpVerb    # ($farm_name)
 	return $output;
 }
 
+
+=begin nd
+Function: setFarmListen
+
+	Change a HTTP farm between HTTP and HTTPS listener
+	
+Parameters:
+	farmname - Farm name
+	listener - type of listener: http or https
+
+Returns:
+	none - .
+	
+FIXME 
+	not return nothing, use $found variable to return success or error
+
+=cut
 #change to HTTP or HTTPS listener
 sub setFarmListen    # ( $farm_name, $farmlisten )
 {
@@ -482,7 +547,19 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 	untie @filefarmhttp;
 }
 
-#Obtain the status of the DH file: on or off
+
+=begin nd
+Function: getHTTPFarmDHStatus
+
+	Obtain the status of the DH file
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - on, if it is actived or off, if it is desactived
+
+=cut
 sub getHTTPFarmDHStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -503,7 +580,20 @@ sub getHTTPFarmDHStatus    # ($farm_name)
 	return $output;
 }
 
-#Set the status of the DH file: on or off
+
+=begin nd
+Function: setHTTPFarmDHStatus
+
+	Configure the status of the DH file
+	
+Parameters:
+	farmname - Farm name
+	status - set a status for the DH file
+
+Returns:
+	Integer - Error code: 1 on success, or 0 on failure.
+
+=cut
 sub setHTTPFarmDHStatus    # ($farm_name, $newstatus)
 {
 	my ( $farm_name, $newstatus ) = @_;
@@ -530,7 +620,20 @@ sub setHTTPFarmDHStatus    # ($farm_name, $newstatus)
 	return $output;
 }
 
-#asign a RewriteLocation vaue to a farm HTTP or HTTPS
+
+=begin nd
+Function: setFarmRewriteL
+
+	Asign a RewriteLocation vaue to a farm HTTP or HTTPS
+	
+Parameters:
+	farmname - Farm name
+	rewritelocation - The options are: disabled, enabled or enabled-backends
+
+Returns:
+	none - .
+
+=cut
 sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 {
 	my ( $farm_name, $rewritelocation ) = @_;
@@ -561,7 +664,19 @@ sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 
 }
 
-#Get RewriteLocation Header configuration HTTP and HTTPS farms
+
+=begin nd
+Function: getFarmRewriteL
+
+	Return RewriteLocation Header configuration HTTP and HTTPS farms
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - The possible values are: disabled, enabled, enabled-backends or -1 on failure
+
+=cut
 sub getFarmRewriteL    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -588,7 +703,20 @@ sub getFarmRewriteL    # ($farm_name)
 	return $output;
 }
 
-#set ConnTo value to a farm HTTP or HTTPS
+
+=begin nd
+Function: setFarmConnTO
+
+	Configure connection time out value to a farm HTTP or HTTPS
+	
+Parameters:
+	connectionTO - Conection time out in seconds
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success, or -1 on failure.
+
+=cut
 sub setFarmConnTO    # ($tout,$farm_name)
 {
 	my ( $tout, $farm_name ) = @_;
@@ -620,7 +748,19 @@ sub setFarmConnTO    # ($tout,$farm_name)
 	return $output;
 }
 
-#get farm ConnTO value for http and https farms
+
+=begin nd
+Function: getFarmRewriteL
+
+	Return farm connecton time out value for http and https farms
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	integer - return the connection time out or -1 on failure
+
+=cut
 sub getFarmConnTO    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -647,7 +787,20 @@ sub getFarmConnTO    # ($farm_name)
 	return $output;
 }
 
-#asign a timeout value to a farm
+
+=begin nd
+Function: setHTTPFarmTimeout
+
+	Asign a timeout value to a farm
+	
+Parameters:
+	timeout - Time out in seconds
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success, or -1 on failure.
+
+=cut
 sub setHTTPFarmTimeout    # ($timeout,$farm_name)
 {
 	my ( $timeout, $farm_name ) = @_;
@@ -675,7 +828,19 @@ sub setHTTPFarmTimeout    # ($timeout,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getHTTPFarmTimeout
+
+	Return the farm time out
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - Return time out, or -1 on failure.
+
+=cut
 sub getHTTPFarmTimeout    # ($farm_filename)
 {
 	my ( $farm_name ) = @_;
@@ -699,7 +864,20 @@ sub getHTTPFarmTimeout    # ($farm_filename)
 	return $output;
 }
 
-# set the max clients of a farm
+
+=begin nd
+Function: setHTTPFarmMaxClientTime
+
+	Set the maximum time for a client
+	
+Parameters:
+	maximumTO - Maximum client time
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success, or -1 on failure.
+
+=cut
 sub setHTTPFarmMaxClientTime    # ($track,$farm_name)
 {
 	my ( $track, $farm_name ) = @_;
@@ -727,7 +905,19 @@ sub setHTTPFarmMaxClientTime    # ($track,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getHTTPFarmMaxClientTime
+
+	Return the maximum time for a client
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - Return maximum time, or -1 on failure.
+
+=cut
 sub getHTTPFarmMaxClientTime    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -754,13 +944,43 @@ sub getHTTPFarmMaxClientTime    # ($farm_name)
 	return @max_client_time;
 }
 
-# set the max conn of a farm
+
+=begin nd
+Function: setHTTPFarmMaxConn
+
+	set the max conn of a farm
+	
+Parameters:
+	none - .
+
+Returns:
+	Integer - always return 0
+
+FIXME:
+	This function is in blank
+
+=cut
 sub setHTTPFarmMaxConn    # ($max_connections,$farm_name)
 {
 	return 0;
 }
 
-#
+
+=begin nd
+Function: getFarmCertificate
+
+	Return the certificate applied to the farm
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - Return the certificate file, or -1 on failure.
+
+FIXME:
+	If are there more than one certificate, only return the last one
+
+=cut
 sub getFarmCertificate    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -789,7 +1009,23 @@ sub getFarmCertificate    # ($farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: setFarmCertificate
+
+	[NOT USED] Configure a certificate for a HTTP farm
+	
+Parameters:
+	certificate - certificate file name
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success, or -1 on failure.
+
+FIXME:
+	There is other function for this action: setFarmCertificateSNI
+
+=cut
 sub setFarmCertificate    # ($cfile,$farm_name)
 {
 	my ( $cfile, $farm_name ) = @_;
@@ -817,6 +1053,19 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 	return $output;
 }
 
+
+=begin nd
+Function: getHTTPFarmGlobalStatus
+
+	[NOT USED] Get the status of a farm and its backends through pound command.
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	array - Return poundctl output 
+
+=cut
 sub getHTTPFarmGlobalStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -826,7 +1075,25 @@ sub getHTTPFarmGlobalStatus    # ($farm_name)
 	return `$poundctl -c "/tmp/$farm_name\_pound.socket"`;
 }
 
-#
+
+=begin nd
+Function: getHTTPBackendEstConns
+
+	Get all ESTABLISHED connections for a backend
+	 
+Parameters:
+	farmname - Farm name
+	ip_backend - IP backend
+	port_backend - backend port
+	netstat - Conntrack -L output
+
+Returns:
+	array - Return all ESTABLISHED conntrack lines for the backend
+	
+BUGFIX
+	Backend IP is used twice for filter the output, not used 
+
+=cut
 sub getHTTPBackendEstConns     # ($farm_name,$ip_backend,$port_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
@@ -841,7 +1108,22 @@ sub getHTTPBackendEstConns     # ($farm_name,$ip_backend,$port_backend,@netstat)
 	  );
 }
 
-#
+
+=begin nd
+Function: getHTTPFarmEstConns
+
+	Get all ESTABLISHED connections for a farm
+	 
+Parameters:
+	farmname - Farm name
+
+Returns:
+	array - Return poundctl output 
+	
+BUGFIX
+	Backend IP is used twice for filter the output, not used 
+
+=cut
 sub getHTTPFarmEstConns    # ($farm_name,@netstat)
 {
 	my ( $farm_name, @netstat ) = @_;

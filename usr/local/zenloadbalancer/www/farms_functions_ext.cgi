@@ -25,7 +25,18 @@ use strict;
 
 my $configdir = &getGlobalConfiguration('configdir');
 
-#
+=begin nd
+Function: getFarmCertificatesSNI
+
+	List all certificates added to a farm.
+
+Parameters:
+	farmname - Farm name.
+
+Returns:
+	array - list of certificates added to the farm
+
+=cut
 sub getFarmCertificatesSNI    #($fname)
 {
 	my $fname = shift;
@@ -56,7 +67,20 @@ sub getFarmCertificatesSNI    #($fname)
 	return @output;
 }
 
-#
+
+=begin nd
+Function: setFarmCertificateSNI
+
+	Add a certificate to a farm.
+
+Parameters:
+	certificate_file - Certificate file
+	farmname - Farm name.
+
+Returns:
+	Integer - Error code: 0 on success, or -1 on failure.
+
+=cut
 sub setFarmCertificateSNI    #($cfile,$fname)
 {
 	my ( $cfile, $fname ) = @_;
@@ -104,7 +128,22 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 	return $output;
 }
 
-#delete the selected certificate from HTTP farms
+=begin nd
+Function: setFarmDeleteCertSNI
+
+	Delete the selected certificate from a HTTP farm. This function is used in zapi v2
+
+Parameters:
+	certificate - Certificate name
+	farmname - Farm name.
+
+Returns:
+	Integer - Error code: 1 on success, or -1 on failure.
+
+FIXME:
+	Duplicate function with: setFarmDeleteCertNameSNI used in zapiv3
+
+=cut
 sub setFarmDeleteCertSNI    #($certn,$fname)
 {
 	my ( $certn, $fname ) = @_;
@@ -148,7 +187,22 @@ sub setFarmDeleteCertSNI    #($certn,$fname)
 	return $output;
 }
 
-#delete the selected certificate from HTTP farms
+=begin nd
+Function: setFarmDeleteCertNameSNI
+
+	Delete the selected certificate from a HTTP farm
+
+Parameters:
+	certificate - Certificate name
+	farmname - Farm name.
+
+Returns:
+	Integer - Error code: 1 on success, or -1 on failure.
+	
+FIXME:
+	Duplicate function with: setFarmDeleteCertSNI used in zapiv3
+
+=cut
 sub setFarmDeleteCertNameSNI    #($certn,$fname)
 {
 	my ( $certname, $fname ) = @_;
@@ -187,7 +241,19 @@ sub setFarmDeleteCertNameSNI    #($certn,$fname)
 	return $output;
 }
 
-# Returns a list of the farm names
+
+=begin nd
+Function: getFarmNameList
+
+	Returns a list with the farm names.
+
+Parameters:
+	none - .
+
+Returns:
+	array - list of farm names.
+
+=cut
 sub getFarmNameList
 {
 	my @farm_names;    # output: returned list
@@ -202,6 +268,19 @@ sub getFarmNameList
 	return @farm_names;
 }
 
+
+=begin nd
+Function: getFarmTable
+
+	Counter how many farms exists in a farm profile.
+
+Parameters:
+	type - Farm profile: "http", "l4xnat", "gslb" or "datalink"
+
+Returns:
+	integer- Number of farms
+
+=cut
 sub getNumberOfFarmTypeRunning
 {
 	my $type    = shift;    # input value
@@ -224,24 +303,5 @@ sub getNumberOfFarmTypeRunning
 	return $counter;
 }
 
-sub getFarmTable
-{
-	my $farm_name = shift;
-	my $farm_type = shift;
-
-	my @table;
-
-	foreach my $name ( getFarmNameList() )
-	{
-		my $vip  = &getFarmVip( "vip",  $name );
-		my $vipp = &getFarmVip( "vipp", $name );
-		my $status = &getFarmStatus( $name );
-		my $type   = &getFarmType( $name );
-
-		push @table, [$name, $vip, $vipp, $status, $type];
-	}
-
-	return \@table;
-}
 
 1;
