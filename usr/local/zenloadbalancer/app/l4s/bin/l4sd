@@ -242,6 +242,7 @@ while ()
 						my $server = $l_serv[2];
 						my $mark   = $l_serv[4];
 						my $status = $l_serv[7];
+						chomp($status);
 
 						if ( $status eq "up" )
 						{
