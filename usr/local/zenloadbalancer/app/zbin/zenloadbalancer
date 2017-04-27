@@ -315,6 +315,7 @@ if ( $eject eq "start" )
 				   "net.ipv4.tcp_keepalive_intvl"         => "15",
 				   "net.core.netdev_max_backlog"          => "50000",
 				   "net.core.somaxconn"                   => "3000",
+				   "net.ipv4.ip_nonlocal_bind" 		  => "1",
 		);
 	}
 	#  ZVA higher than 5000 
@@ -356,6 +357,7 @@ if ( $eject eq "start" )
 				   "net.ipv4.tcp_keepalive_intvl"         => "15",
 				   "net.core.netdev_max_backlog"          => "50000",
 				   "net.core.somaxconn"                   => "3000",
+				   "net.ipv4.ip_nonlocal_bind" 		  => "1",
 		);
 	}
 
