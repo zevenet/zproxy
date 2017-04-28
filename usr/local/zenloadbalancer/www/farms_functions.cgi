@@ -33,7 +33,20 @@ require "/usr/local/zenloadbalancer/www/http_functions.cgi";
 
 my $configdir = &getGlobalConfiguration('configdir');
 
-#
+
+=begin nd
+Function: setFarmBlacklistTime
+
+	Configure check time for resurected back-end. It is a farm paramter.
+	
+Parameters:
+	checktime - time for resurrected checks
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success, or -1 on failure.
+
+=cut
 sub setFarmBlacklistTime    # ($blacklist_time,$farm_name)
 {
 	my ( $blacklist_time, $farm_name ) = @_;
@@ -54,7 +67,19 @@ sub setFarmBlacklistTime    # ($blacklist_time,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getFarmBlacklistTime
+
+	Return  time for resurrected checks for a farm.
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	integer - seconds for check or -1 on failure.
+
+=cut
 sub getFarmBlacklistTime    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -76,7 +101,20 @@ sub getFarmBlacklistTime    # ($farm_name)
 	return $blacklist_time;
 }
 
-#
+
+=begin nd
+Function: setFarmSessionType
+
+	Configure type of persistence
+	
+Parameters:
+	session - type of session: nothing, HEADER, URL, COOKIE, PARAM, BASIC or IP, for HTTP farms; none or ip, for l4xnat farms
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success, or -1 on failure.
+
+=cut
 sub setFarmSessionType    # ($session,$farm_name)
 {
 	my ( $session, $farm_name ) = @_;
@@ -96,7 +134,19 @@ sub setFarmSessionType    # ($session,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getFarmSessionType
+
+	Return the type of session persistence for a farm.
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - type of persistence or -1 on failure.
+
+=cut
 sub getFarmSessionType    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -117,7 +167,20 @@ sub getFarmSessionType    # ($farm_name)
 	return $output;
 }
 
-#asign a timeout value to a farm
+
+=begin nd
+Function: setFarmTimeout
+
+	Asign a timeout value to a farm
+	
+Parameters:
+	timeout - Time out in seconds
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success, or -1 on failure.
+
+=cut
 sub setFarmTimeout    # ($timeout,$farm_name)
 {
 	my ( $timeout, $farm_name ) = @_;
@@ -140,7 +203,19 @@ sub setFarmTimeout    # ($timeout,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getFarmTimeout
+
+	Return the farm time out
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - Return time out, or -1 on failure.
+
+=cut
 sub getFarmTimeout    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -161,7 +236,23 @@ sub getFarmTimeout    # ($farm_name)
 	return $output;
 }
 
-# set the lb algorithm to a farm
+
+=begin nd
+Function: setFarmAlgorithm
+
+	Set the load balancing algorithm to a farm
+	
+Parameters:
+	algorithm - Type of balancing mode
+	farmname - Farm name
+
+Returns:
+	none - .
+	
+FIXME:
+	set a return value, and do error control
+	
+=cut
 sub setFarmAlgorithm    # ($algorithm,$farm_name)
 {
 	my ( $algorithm, $farm_name ) = @_;
@@ -189,7 +280,19 @@ sub setFarmAlgorithm    # ($algorithm,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getFarmAlgorithm
+
+	Get type of balancing algorithm. 
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - return a string with type of balancing algorithm or -1 on failure
+	
+=cut
 sub getFarmAlgorithm    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -215,7 +318,23 @@ sub getFarmAlgorithm    # ($farm_name)
 	return $algorithm;
 }
 
-# set client persistence to a farm
+
+=begin nd
+Function: setFarmPersistence
+
+	Set client persistence to a farm
+	
+Parameters:
+	persistence - Type of persitence
+	farmname - Farm name
+
+Returns:
+	scalar - Error code: 0 on success or -1 on failure
+	
+BUG:
+	Obsolet, only used in tcp farms
+	
+=cut
 sub setFarmPersistence    # ($persistence,$farm_name)
 {
 	my ( $persistence, $farm_name ) = @_;
@@ -236,7 +355,23 @@ sub setFarmPersistence    # ($persistence,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getFarmPersistence
+
+	Get type of persistence session for a farm
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Scalar - persistence type or -1 on failure
+	
+BUG
+	DUPLICATED, use for l4 farms getFarmSessionType
+	obsolete for tcp farms
+	
+=cut
 sub getFarmPersistence    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -257,7 +392,20 @@ sub getFarmPersistence    # ($farm_name)
 	return $persistence;
 }
 
-# set the max clients of a farm
+
+=begin nd
+Function: setFarmMaxClientTime
+
+	Set the maximum time for a client
+	
+Parameters:
+	maximumTO - Maximum client time
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success, or -1 on failure.
+
+=cut
 sub setFarmMaxClientTime    # ($max_client_time,$track,$farm_name)
 {
 	my ( $max_client_time, $track, $farm_name ) = @_;
@@ -287,7 +435,19 @@ sub setFarmMaxClientTime    # ($max_client_time,$track,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getFarmMaxClientTime
+
+	Return the maximum time for a client
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - Return maximum time, or -1 on failure.
+
+=cut
 sub getFarmMaxClientTime    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -313,7 +473,23 @@ sub getFarmMaxClientTime    # ($farm_name)
 	return @max_client_time;
 }
 
-# set the max conn of a farm
+
+=begin nd
+Function: setFarmMaxConn
+
+	set the max conn of a farm
+	
+Parameters:
+	maxiConns - Maximum number of allowed connections
+	farmname - Farm name
+
+Returns:
+	Integer - always return 0
+
+BUG:
+	Not used in zapi v3. It is used "setFarmMaxClientTime"
+
+=cut
 sub setFarmMaxConn    # ($max_connections,$farm_name)
 {
 	my ( $max_connections, $farm_name ) = @_;
@@ -337,7 +513,22 @@ sub setFarmMaxConn    # ($max_connections,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getFarmServers
+
+	List all farm backends and theirs configuration
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	array - list of backends
+		
+FIXME:
+	changes output to hash format
+	
+=cut
 sub getFarmServers    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -363,7 +554,22 @@ sub getFarmServers    # ($farm_name)
 	return @servers;
 }
 
-#
+
+=begin nd
+Function: getFarmGlobalStatus
+
+	[NOT USED] Get the status of a farm and its backends
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	array - ???
+
+BUG:
+	NOT USED
+	
+=cut
 sub getFarmGlobalStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -384,7 +590,22 @@ sub getFarmGlobalStatus    # ($farm_name)
 	return @run;
 }
 
-#
+
+=begin nd
+Function: getBackendEstConns
+
+	Get all ESTABLISHED connections for a backend
+	 
+Parameters:
+	farmname - Farm name
+	ip_backend - IP backend
+	port_backend - backend port
+	netstat - Conntrack -L output
+
+Returns:
+	array - Return all ESTABLISHED conntrack lines for the backend
+	
+=cut
 sub getBackendEstConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
@@ -410,7 +631,20 @@ sub getBackendEstConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 	return @nets;
 }
 
-#
+
+=begin nd
+Function: getFarmEstConns
+
+	Get all ESTABLISHED connections for a farm
+	 
+Parameters:
+	farmname - Farm name
+	netstat - Conntrack -L output
+
+Returns:
+	array - Return all ESTABLISHED conntrack lines for a farm
+
+=cut
 sub getFarmEstConns    # ($farm_name,@netstat)
 {
 	my ( $farm_name, @netstat ) = @_;
@@ -452,6 +686,22 @@ sub getFarmEstConns    # ($farm_name,@netstat)
 	return @nets;
 }
 
+
+=begin nd
+Function: getBackendSYNConns
+
+	Get all SYN connections for a backend
+	 
+Parameters:
+	farmname - Farm name
+	ip_backend - IP backend
+	port_backend - backend port
+	netstat - Conntrack -L output
+
+Returns:
+	array - Return all SYN conntrack lines for a backend of a farm
+
+=cut
 sub getBackendSYNConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
@@ -483,7 +733,20 @@ sub getBackendSYNConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 	return @nets;
 }
 
-#
+
+=begin nd
+Function: getFarmSYNConns
+
+	Get all SYN connections for a farm
+	 
+Parameters:
+	farmname - Farm name
+	netstat - Conntrack -L output
+
+Returns:
+	array - Return all SYN conntrack lines for a farm
+
+=cut
 sub getFarmSYNConns    # ($farm_name, @netstat)
 {
 	my ( $farm_name, @netstat ) = @_;
@@ -514,8 +777,22 @@ sub getFarmSYNConns    # ($farm_name, @netstat)
 	return @nets;
 }
 
-# Generic function
-# Returns farm file name
+
+=begin nd
+Function: getFarmsByType
+
+	Get all farms of a type 
+	 
+Parameters:
+	type - Farm type. The available options are "http", "https", "datalink", "l4xnat" or "gslb"
+
+Returns:
+	Array - List of farm name of a type
+
+NOTE:
+	Generic function
+
+=cut
 sub getFarmsByType    # ($farm_type)
 {
 	my ( $farm_type ) = @_;
@@ -543,8 +820,22 @@ sub getFarmsByType    # ($farm_type)
 	return @farm_names;
 }
 
-# Generic function
-# Returns farm type [udp|tcp|http|https|datalink|l4xnat|gslb]
+
+=begin nd
+Function: getFarmType
+
+	Get the farm type for a farm
+	 
+Parameters:
+	farmname - Farm name
+
+Returns:
+	String - "http", "https", "datalink", "l4xnat", "gslb" or 1 on failure
+
+NOTE:
+	Generic function
+	
+=cut
 sub getFarmType    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -586,8 +877,22 @@ sub getFarmType    # ($farm_name)
 	return 1;
 }
 
-# Generic function
-# Returns farm file name
+
+=begin nd
+Function: getFarmType
+
+	Returns farm file name
+	 
+Parameters:
+	farmname - Farm name
+
+Returns:
+	String - file name or -1 on failure
+	
+NOTE:
+	Generic function
+
+=cut
 sub getFarmFile    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -611,8 +916,22 @@ sub getFarmFile    # ($farm_name)
 	}
 }
 
-# Generic function
-# Returns farm status
+
+=begin nd
+Function: getFarmType
+
+	Return farm status checking if pid file exists
+	 
+Parameters:
+	farmname - Farm name
+
+Returns:
+	String - "down", "up" or -1 on failure
+
+NOTE:
+	Generic function
+		
+=cut
 sub getFarmStatus    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -661,7 +980,19 @@ sub getFarmStatus    # ($farm_name)
 	return $output;
 }
 
-# Returns farm status
+
+=begin nd
+Function: getFarmBootStatus
+
+	Return the farm status at boot zevenet
+	 
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - return "down" if the farm not run at boot or "up" if the farm run at boot
+
+=cut
 sub getFarmBootStatus    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -697,7 +1028,20 @@ sub getFarmBootStatus    # ($farm_name)
 	return $output;
 }
 
-# Start Farm rutine
+
+=begin nd
+Function: _runFarmStart
+
+	Run a farm
+	
+Parameters:
+	farmname - Farm name
+	writeconf - write this change in configuration status "true" or omit it "false"
+
+Returns:
+	Integer - return 0 on success or different of 0 on failure
+	
+=cut
 sub _runFarmStart    # ($farm_name, $writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
@@ -754,8 +1098,23 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 	return $status;
 }
 
-# Generic function
-# Start Farm basic rutine
+
+=begin nd
+Function: runFarmStart
+
+	Run a farm completely a farm. Run farm, its farmguardian and ipds rules
+	
+Parameters:
+	farmname - Farm name
+	writeconf - write this change in configuration status "true" or omit it "false"
+
+Returns:
+	Integer - return 0 on success or different of 0 on failure
+
+NOTE:
+	Generic function
+	
+=cut
 sub runFarmStart    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
@@ -783,8 +1142,23 @@ sub runFarmStart    # ($farm_name,$writeconf)
 	return $status;
 }
 
-# Generic function
-# Stop Farm basic rutine
+
+=begin nd
+Function: runFarmStop
+
+	Stop a farm completely a farm. Run farm, its farmguardian and ipds rules
+	
+Parameters:
+	farmname - Farm name
+	writeconf - write this change in configuration status "true" or omit it "false"
+
+Returns:
+	Integer - return 0 on success or different of 0 on failure
+
+NOTE:
+	Generic function
+		
+=cut
 sub runFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
@@ -809,7 +1183,20 @@ sub runFarmStop    # ($farm_name,$writeconf)
 	return $status;
 }
 
-# Stop Farm rutine
+
+=begin nd
+Function: _runFarmStop
+
+	Stop a farm
+	
+Parameters:
+	farmname - Farm name
+	writeconf - write this change in configuration status "true" or omit it "false"
+
+Returns:
+	Integer - return 0 on success or different of 0 on failure
+	
+=cut
 sub _runFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
@@ -869,7 +1256,27 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 	return $status;
 }
 
-#
+
+=begin nd
+Function: runFarmCreate
+
+	Create a farm
+	
+Parameters:
+	type - Farm type. The available options are: "http", "https", "datalink", "l4xnat" or "gslb"
+	vip - Virtual IP where the virtual service is listening
+	port - Virtual port where the virtual service is listening
+	farmname - Farm name
+	type - Specify if farm is HTTP or HTTPS
+	iface - Inteface wich uses the VIP. This parameter is only used in datalink farms
+
+Returns:
+	Integer - return 0 on success or different of 0 on failure
+		
+FIXME:
+	Use hash to pass the parameters
+		
+=cut
 sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 {
 	my ( $farm_type, $vip, $vip_port, $farm_name, $fdev ) = @_;
@@ -919,7 +1326,22 @@ sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 	return $output;
 }
 
-# Returns farm max connections
+
+=begin nd
+Function: getFarmMaxConn
+
+	Returns farm max connections
+	
+Parameters:
+	none - .
+
+Returns:
+	Integer - always return 0
+	
+BUG:
+	It is only used in tcp, for http farms profile does nothing
+		
+=cut
 sub getFarmMaxConn    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -940,7 +1362,24 @@ sub getFarmMaxConn    # ($farm_name)
 	return $output;
 }
 
-# Returns farm listen port
+
+=begin nd
+Function: getFarmPort
+
+	Returns farm port
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - port of farm or -1 on failure
+
+BUG:
+	Only it is used by tcp farms
+	DUPLICATE function. Use "getFarmVip" 
+	for http profile, return error response
+				
+=cut
 sub getFarmPort    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -976,7 +1415,25 @@ sub getFarmPort    # ($farm_name)
 	return $output;
 }
 
-# Returns farm protocol
+
+=begin nd
+Function: getFarmProto
+
+	Return basic transport protocol used by the farm protocol
+		
+Parameters:
+	farmname - Farm name
+
+Returns:
+	String - "udp" or "tcp"
+	
+BUG:
+	Gslb works with tcp protocol too
+	
+FIXME:
+	Use getL4ProtocolTransportLayer to get l4xnat protocol
+	
+=cut
 sub getFarmProto    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -1014,7 +1471,19 @@ sub getFarmProto    # ($farm_name)
 	return $output;
 }
 
-# Returns farm PID
+
+=begin nd
+Function: getFarmPid
+
+	Returns farm PID
+		
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - return pid of farm, '-' if pid not exist or -1 on failure
+			
+=cut
 sub getFarmPid    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -1040,7 +1509,23 @@ sub getFarmPid    # ($farm_name)
 	return $output;
 }
 
-# Returns farm vip
+
+=begin nd
+Function: getFarmVip
+
+	Returns farm vip or farm port
+		
+Parameters:
+	tag - requested parameter. The options are "vip" for virtual ip or "vipp" for virtual port
+	farmname - Farm name
+
+Returns:
+	Scalar - return vip or port of farm or -1 on failure
+	
+FIXME
+	vipps parameter is only used in tcp farms. Soon this parameter will be obsolete
+			
+=cut
 sub getFarmVip    # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
@@ -1076,9 +1561,22 @@ sub getFarmVip    # ($info,$farm_name)
 	return $output;
 }
 
-# Generic function
-# Is Farm configuration locked?
-# Return the content in the lock, -1 if isn't locked
+
+=begin nd
+Function: getFarmLock
+
+	Check if a farm is locked. A farm locked need to restart. 
+		
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Scalar - Return content of lock file if it is locked or -1 the farm is not locked
+
+NOTE:
+	Generic function
+		
+=cut
 sub getFarmLock    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -1096,9 +1594,28 @@ sub getFarmLock    # ($farm_name)
 
 }
 
-# Generic function
-# Set the lock status to "on" or "off"
-# If the new status in "on" it's possible to set a message inside
+
+=begin nd
+Function: setFarmLock
+
+	Set the lock status to "on" or "off"
+	If the new status in "on" it's possible to set a message inside
+		
+Parameters:
+	farmname - Farm name
+	status - This parameter can value "on" or "off"
+	message - Text for lock file
+
+Returns:
+	Integer - Always return 0
+	
+FIXME:
+	always return 0
+
+NOTE:
+	Generic function
+	
+=cut
 sub setFarmLock    # ($farm_name, $status, $msg)
 {
 	my ( $farm_name, $status, $msg ) = @_;
@@ -1121,8 +1638,22 @@ sub setFarmLock    # ($farm_name, $status, $msg)
 	return $output;
 }
 
-# Generic function
-# this function creates a file to tell that the farm needs to be restarted to apply changes
+
+=begin nd
+Function: setFarmRestart
+
+	This function creates a file to tell that the farm needs to be restarted to apply changes
+		
+Parameters:
+	farmname - Farm name
+
+Returns:
+	undef
+	
+NOTE:
+	Generic function
+	
+=cut
 sub setFarmRestart    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -1133,8 +1664,22 @@ sub setFarmRestart    # ($farm_name)
 	&setFarmLock( $farm_name, "on" );
 }
 
-# Generic function
-# this function deletes the file marking the farm to be restarted to apply changes
+
+=begin nd
+Function: setFarmNoRestart
+
+	This function deletes the file marking the farm to be restarted to apply changes
+		
+Parameters:
+	farmname - Farm name
+
+Returns:
+	none - .
+	
+NOTE:
+	Generic function
+	
+=cut
 sub setFarmNoRestart    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -1142,8 +1687,22 @@ sub setFarmNoRestart    # ($farm_name)
 	&setFarmLock( $farm_name, "off");
 }
 
-# Generic function
-# Returns farms configuration filename list
+
+=begin nd
+Function: getFarmList
+
+	Returns farms configuration filename list
+		
+Parameters:
+	none - .
+
+Returns:
+	Array - List of configuration files
+	
+NOTE:
+	Generic function
+	
+=cut
 sub getFarmList    # ()
 {
 	opendir ( DIR, $configdir );
@@ -1166,8 +1725,22 @@ sub getFarmList    # ()
 	return @files;
 }
 
-# Generic function
-# Returns
+
+=begin nd
+Function: getFarmName
+
+	Returns farms configuration filename list
+		
+Parameters:
+	file - Farm file
+
+Returns:
+	String - farm name
+	
+NOTE:
+	Generic function
+	
+=cut
 sub getFarmName    # ($farm_filename)
 {
 	my $farm_filename = shift;
@@ -1177,8 +1750,22 @@ sub getFarmName    # ($farm_filename)
 	return $filename_split[0];
 }
 
-# Generic function
-# Delete Farm rutine
+
+=begin nd
+Function: runFarmDelete
+
+	Delete a farm
+		
+Parameters:
+	farmname - Farm name
+
+Returns:
+	String - farm name
+	
+NOTE:
+	Generic function
+	
+=cut
 sub runFarmDelete    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -1253,7 +1840,21 @@ sub runFarmDelete    # ($farm_name)
 	return $status;
 }
 
-# Set farm virtual IP and virtual PORT
+
+=begin nd
+Function: setFarmVirtualConf
+
+	Set farm virtual IP and virtual PORT		
+	
+Parameters:
+	vip - virtual ip
+	port - virtual port
+	farmname - Farm name
+
+Returns:
+	Integer - return 0 on success or other value on failure
+	
+=cut
 sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
@@ -1292,7 +1893,31 @@ sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	return $stat;
 }
 
-# Add a new Backend
+
+=begin nd
+Function: setFarmServer
+
+	Add a new Backend
+	
+Parameters:
+	id - Backend id, if this id doesn't exist, it will create a new backend
+	ip - Real server ip
+	port | iface - Real server port or interface if the farm is datalink
+	max - parameter for tcp farm
+	weight - The higher the weight, the more request will go to this backend.
+	priority -  The lower the priority, the most preferred is the backend.
+	timeout - HTTP farm parameter
+	farmname - Farm name
+	service - service name. For HTTP farms
+
+Returns:
+	Scalar - Error code: undef on success or -1 on error 
+	
+FIXME:
+	Use a hash
+	max parameter is only used by tcp farms
+		
+=cut
 sub setFarmServer # $output ($ids,$rip,$port|$iface,$max,$weight,$priority,$timeout,$farm_name,$service)
 {
 	my (
@@ -1408,6 +2033,14 @@ sub getFarmBackendStatusCtl    # ($farm_name)
 
 #function that return the status information of a farm:
 #ip, port, backendstatus, weight, priority, clients
+=begin nd
+
+	
+FIXME:
+	always is called getFarmBackendStatusCtl function before this function, to pass @content array, then will be useful for avoid bugs call getFarmBackendStatusCtl inside this function.
+	Better, call getHTTPFarmBackendStatusCtl inside that getHTTPFarmBackendsStatus function, so it is not necessary work with @content variable
+	
+=cut
 sub getFarmBackendsStatus    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;

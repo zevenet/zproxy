@@ -25,7 +25,19 @@ use strict;
 
 my $configdir = &getGlobalConfiguration('configdir');
 
-#
+
+=begin nd
+Function: getDatalinkFarmAlgorithm
+
+	Get type of balancing algorithm. 
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - The possible values are "weight", "priority" or -1 on failure
+	
+=cut
 sub getDatalinkFarmAlgorithm    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -50,7 +62,23 @@ sub getDatalinkFarmAlgorithm    # ($farm_name)
 	return $algorithm;
 }
 
-# set the lb algorithm to a farm
+
+=begin nd
+Function: setDatalinkFarmAlgorithm
+
+	Set the load balancing algorithm to a farm
+	
+Parameters:
+	algorithm - Type of balancing mode: "weight" or "priority"
+	farmname - Farm name
+
+Returns:
+	none - .
+	
+FIXME:
+	set a return value, and do error control
+	
+=cut
 sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 {
 	my ( $algorithm, $farm_name ) = @_;
@@ -85,7 +113,22 @@ sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 	return;    # $output;
 }
 
-#
+
+=begin nd
+Function: getDatalinkFarmServers
+
+	List all farm backends and theirs configuration
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	array - list of backends. Each item has the format: ";index;ip;iface;weight;priority;status"
+		
+FIXME:
+	changes output to hash format
+	
+=cut
 sub getDatalinkFarmServers    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -100,6 +143,7 @@ sub getDatalinkFarmServers    # ($farm_name)
 
 	while ( my $line = <FI> )
 	{
+		# ;server;45.2.2.3;eth0;1;1;up
 		if ( $line ne "" && $line =~ /^\;server\;/ && $first ne "true" )
 		{
 			$line =~ s/^\;server/$sindex/g;    #, $line;
@@ -117,7 +161,19 @@ sub getDatalinkFarmServers    # ($farm_name)
 	return @servers;
 }
 
-#
+
+=begin nd
+Function: getDatalinkFarmBootStatus
+
+	Return the farm status at boot zevenet
+	 
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - return "down" if the farm not run at boot or "up" if the farm run at boot
+
+=cut
 sub getDatalinkFarmBootStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -143,7 +199,19 @@ sub getDatalinkFarmBootStatus    # ($farm_name)
 	return $output;
 }
 
-# get network physical (vlan included) interface used by the farm vip
+
+=begin nd
+Function: getFarmInterface
+
+	 Get network physical interface used by the farm vip
+	 
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - return NIC inteface or -1 on failure
+
+=cut
 sub getFarmInterface    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -173,7 +241,25 @@ sub getFarmInterface    # ($farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: _runDatalinkFarmStart
+
+	Run a datalink farm
+	
+Parameters:
+	farmname - Farm name
+	writeconf - If this param has the value "true" in config file will be saved the current status
+	status - status of a before operation
+
+Returns:
+	Integer - Error code: return 0 on success or different of 0 on failure
+	
+BUG: 
+	writeconf must not exist, always it has to be TRUE 
+	status parameter is not useful
+	
+=cut
 sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 {
 	my ( $farm_name, $writeconf, $status ) = @_;
@@ -299,16 +385,30 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 	return $status;
 }
 
-#
+
+=begin nd
+Function: _runDatalinkFarmStop
+
+	Stop a datalink farm
+	
+Parameters:
+	farmname - Farm name
+	writeconf - If this param has the value "true" in config file will be saved the current status
+
+Returns:
+	Integer - Error code: return 0 on success or -1 on failure
+	
+BUG: 
+	writeconf must not exist, always it has to be TRUE 
+	
+=cut
 sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $status =
-	  ( $writeconf eq "true" )
-	  ? -1
-	  : 0;
+	my $status = ( $writeconf eq "true" ) ? -1 : 0;
+
 
 	if ( $writeconf eq "true" )
 	{
@@ -367,7 +467,24 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 	return $status;
 }
 
-#
+
+=begin nd
+Function: runDatalinkFarmCreate
+
+	Create a datalink farm through its configuration file and run it
+	
+Parameters:
+	farmname - Farm name
+	vip - Virtual IP
+	port - Virtual port where service is listening
+
+Returns:
+	Integer - Error code: return 0 on success or different of 0 on failure
+	
+FIXME: 
+	it is possible calculate here the inteface of VIP and put standard the input as the others create farm functions
+		
+=cut
 sub runDatalinkFarmCreate    # ($farm_name,$vip,$fdev)
 {
 	my ( $farm_name, $vip, $fdev ) = @_;
@@ -388,7 +505,20 @@ sub runDatalinkFarmCreate    # ($farm_name,$vip,$fdev)
 	return $output;
 }
 
-# Returns farm vip
+
+=begin nd
+Function: getDatalinkFarmVip
+
+	Returns farm vip, vport or vip:vport
+	
+Parameters:
+	info - parameter to return: vip, for virtual ip; vipp, for virtual port or vipps, for vip:vipp
+	farmname - Farm name
+
+Returns:
+	Scalar - return request parameter on success or -1 on failure
+		
+=cut
 sub getDatalinkFarmVip    # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
@@ -416,7 +546,21 @@ sub getDatalinkFarmVip    # ($info,$farm_name)
 	return $output;
 }
 
-# Set farm virtual IP and virtual PORT
+
+=begin nd
+Function: setDatalinkFarmVirtualConf
+
+	Set farm virtual IP and virtual PORT
+	
+Parameters:
+	vip - virtual ip
+	port - virtual port
+	farmname - Farm name
+
+Returns:
+	Scalar - Error code: 0 on success or -1 on failure
+		
+=cut
 sub setDatalinkFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
@@ -450,7 +594,27 @@ sub setDatalinkFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	return $stat;
 }
 
-#
+
+=begin nd
+Function: setDatalinkFarmServer
+
+	Set a backend or create it if it doesn't exist
+	
+Parameters:
+	id - Backend id, if this id doesn't exist, it will create a new backend
+	ip - Real server ip
+	interface - Local interface used to connect to such backend.
+	weight - The higher the weight, the more request will go to this backend.
+	priority -  The lower the priority, the most preferred is the backend.
+	farmname - Farm name
+
+Returns:
+	none - .
+	
+FIXME:
+	Not return nothing, do error control
+		
+=cut
 sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 {
 	my ( $ids, $rip, $iface, $weight, $priority, $farm_name ) = @_;
@@ -470,6 +634,7 @@ sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 	{
 		if ( $line =~ /^\;server\;/ && $end ne "true" )
 		{
+			# modify a backend
 			if ( $i eq $ids )
 			{
 				my $dline = "\;server\;$rip\;$iface\;$weight\;$priority\;up\n";
@@ -484,6 +649,7 @@ sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 		$l++;
 	}
 
+	# create a backend
 	if ( $end eq "false" )
 	{
 		push ( @contents, "\;server\;$rip\;$iface\;$weight\;$priority\;up\n" );
@@ -501,7 +667,20 @@ sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 	return;
 }
 
-#
+
+=begin nd
+Function: runDatalinkFarmServerDelete
+
+	Delete a backend from a datalink farm
+	
+Parameters:
+	id - Backend id
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: return 0 on success or -1 on failure
+	
+=cut
 sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 {
 	my ( $ids, $farm_name ) = @_;
@@ -543,8 +722,24 @@ sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 	return $output;
 }
 
-#function that return the status information of a farm:
-#ip, port, backendstatus, weight, priority, clients
+
+=begin nd
+Function: getDatalinkFarmBackendsStatus
+
+	Get the backend status from a datalink farm
+	
+Parameters:
+	content - Not used, it is necessary create a function to generate content
+
+Returns:
+	array - Each item has the next format: "ip;port;backendstatus;weight;priority;clients"
+	
+BUG:
+	Not used. This function exist but is not contemplated in zapi v3
+	Use farmname as parameter
+	It is necessary creates backend checks and save backend status
+	
+=cut
 sub getDatalinkFarmBackendsStatus    # (@content)
 {
 	my ( @content ) = @_;
@@ -560,6 +755,24 @@ sub getDatalinkFarmBackendsStatus    # (@content)
 	return @backends_data;
 }
 
+
+=begin nd
+Function: setDatalinkFarmBackendStatus
+
+	Change backend status to up or down
+	
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+	status - Backend status, "up" or "down"
+
+Returns:
+	none - .
+	
+FIXME:
+	Not return nothing, do error control	
+	
+=cut
 sub setDatalinkFarmBackendStatus    # ($farm_name,$index,$stat)
 {
 	my ( $farm_name, $index, $stat ) = @_;
@@ -598,7 +811,19 @@ sub setDatalinkFarmBackendStatus    # ($farm_name,$index,$stat)
 	return;
 }
 
-#
+
+=begin nd
+Function: getDatalinkFarmBackendStatusCtl
+
+	Return from datalink config file, all backends with theirs parameters and status
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	array - Each item has the next format: ";server;ip;interface;weight;priority;status"
+	
+=cut
 sub getDatalinkFarmBackendStatusCtl    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -613,7 +838,20 @@ sub getDatalinkFarmBackendStatusCtl    # ($farm_name)
 	return @output;
 }
 
-#function that renames a farm
+
+=begin nd
+Function: setDatalinkNewFarmName
+
+	Function that renames a farm
+	
+Parameters:
+	farmname - Farm name
+	newfarmname - New farm name
+
+Returns:
+	Integer - Error code: return 0 on success or -1 on failure
+	
+=cut
 sub setDatalinkNewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $farm_name, $new_farm_name ) = @_;

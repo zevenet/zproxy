@@ -28,8 +28,6 @@
 use Tie::File;
 use Data::Dumper;
 
-#~ require "/usr/local/zenloadbalancer/config/global.conf";
-
 # End Debug ###
 
 require "/usr/local/zenloadbalancer/www/farmguardian_functions.cgi";
@@ -39,7 +37,22 @@ require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
 
 my $configdir = &getGlobalConfiguration('configdir');
 
-#check if the string is a valid multiport definition
+
+=begin nd
+Function: ismport
+
+	Check if the string is a valid multiport definition
+	
+Parameters:
+	port - Multiport string
+
+Returns:
+	String - "true" if port has a correct format or "false" if port has a wrong format
+	
+FIXME: 
+	Define regexp in check_functions.cgi and use it here
+	
+=cut
 sub ismport    # ($string)
 {
 	my $string = shift;
@@ -59,7 +72,19 @@ sub ismport    # ($string)
 	}
 }
 
-#check if the port has more than 1 port
+
+=begin nd
+Function: checkmport
+
+	Check if the port has more than 1 port
+	
+Parameters:
+	port - Port string
+
+Returns:
+	String - "true" if port string has more then one port or "false" if port has only a port
+	
+=cut
 sub checkmport    # ($port)
 {
 	my $port = shift;
@@ -74,7 +99,23 @@ sub checkmport    # ($port)
 	}
 }
 
-#
+
+=begin nd
+Function: getL4FarmsPorts
+
+	Get all port used by L4xNAT farms with a protocol
+	
+Parameters:
+	protocol - protocol used by l4xnat farm
+
+Returns:
+	String - return a list with the used ports by all L4xNAT farms. Format: "portList1,portList2,..."
+
+BUG:
+	Parameter is not farms_type, is farm_procotol. It is necessary add to port list only the ports of farms with same protocol that parameter.
+	There is to add a if senctence to control than farm protocol it is the same than request protocol
+	
+=cut
 sub getL4FarmsPorts    # ($farm_type)
 {
 	my $farm_type = shift;
@@ -90,6 +131,7 @@ sub getL4FarmsPorts    # ($farm_type)
 			my $farm_name     = &getFarmName( $farm_filename );
 			my $farm_type     = &getFarmType( $farm_name );
 			my $farm_protocol = &getFarmProto( $farm_name );
+
 
 			if ( $farm_type eq "l4xnat" )
 			{
@@ -110,11 +152,27 @@ sub getL4FarmsPorts    # ($farm_type)
 			}
 		}
 	}
-
 	return $port_list;
 }
 
-#
+
+=begin nd
+Function: loadL4Modules
+
+	Load sip, ftp or tftp conntrack module for l4 farms
+	
+Parameters:
+	protocol - protocol module to load
+
+Returns:
+	Integer - Always return 0
+
+BUG:
+	1. Bug in "loadMfModule" function, loading module "/sbin/modprobe nf_conntrack_ftp ports=888:999,12,34:69,555" not allow port ranges. It is necessary create a port list: "888,889,890,891,892..."
+		This bug could be fixed, using the function "getFarmPortList" 
+	2. Always return 0
+	
+=cut
 sub loadL4Modules    # ($protocol)
 {
 	my $protocol = shift;
@@ -147,7 +205,23 @@ sub loadL4Modules    # ($protocol)
 	return $status;
 }
 
-#
+
+=begin nd
+Function: validL4ExtPort
+
+	Load sip, ftp or tftp conntrack module for l4 farms
+	
+Parameters:
+	protocol - protocol module to load
+	ports - port string
+
+Returns:
+	Integer - 1 is valid or 0 is not valid
+
+BUG:
+	Fit regexp, to not allow port ranges. /^((\d+),(\d+))+$/
+	
+=cut
 sub validL4ExtPort    # ($farm_protocol,$ports)
 {
 	my ( $farm_protocol, $ports ) = @_;
@@ -166,7 +240,24 @@ sub validL4ExtPort    # ($farm_protocol,$ports)
 	return $status;
 }
 
-#
+
+=begin nd
+Function: runL4FarmRestart
+
+	Restart a l4xnat farm
+	
+Parameters:
+	farmname - Farm name
+	writeconf - Write start on configuration file
+	changes - This field lets to do the changes without stop the farm. The possible values are: "", blank for stop and start the farm, or "hot" for not stop the farm before run it
+
+Returns:
+	Integer - Error code: 0 on success or other value on failure
+
+FIXME:
+	writeconf is a obsolet parameter
+
+=cut
 sub runL4FarmRestart    # ($farm_name,$writeconf,$type)
 {
 	my ( $farm_name, $writeconf, $type ) = @_;
@@ -198,7 +289,28 @@ sub runL4FarmRestart    # ($farm_name,$writeconf,$type)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: _runL4FarmRestart
+
+	Restart a l4xnat farm
+	
+Parameters:
+	farmname - Farm name
+	writeconf - Write start on configuration file
+	changes - This field lets to do the changes without stop the farm. The possible values are: "", blank for stop and start the farm, or "hot" for not stop the farm before run it
+
+Returns:
+	Integer - Error code: 0 on success or other value on failure
+
+FIXME:
+	writeconf is a obsolet parameter
+	$type parameter never is used
+
+BUG:
+	DUPLICATED FUNCTION, do the same than &runL4FarmRestart function.
+	
+=cut
 sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
 {
 	my ( $farm_name, $writeconf, $type ) = @_;
@@ -231,7 +343,25 @@ sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: sendL4ConfChange
+
+	Run a l4xnat farm
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success or other value on failure
+
+FIXME:
+	only used in zapi v2. Obsolet
+
+BUG:
+	same functionlity than _runL4FarmRestart and runL4FarmRestart
+
+=cut
 sub sendL4ConfChange     # ($farm_name)
 {
 	my $farm_name = shift;
@@ -260,7 +390,26 @@ sub sendL4ConfChange     # ($farm_name)
 	return $output;      # FIXME
 }
 
-# Persistence mode
+
+=begin nd
+Function: setL4FarmSessionType
+
+	Configure type of persistence session
+	
+Parameters:
+	session - Session type. The options are: "none" not use persistence or "ip" for ip persistencia
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success or other value on failure
+
+FIXME:
+	only used in zapi v2. Obsolet
+
+BUG:
+	same functionlity than _runL4FarmRestart and runL4FarmRestart
+
+=cut
 sub setL4FarmSessionType    # ($session,$farm_name)
 {
 	my ( $session, $farm_name ) = @_;
@@ -334,7 +483,24 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getL4FarmSessionType
+
+	Get type of persistence session
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Scalar - "none" not use persistence, "ip" for ip persistencia or -1 on failure
+	
+BUG:
+	DUPLICATE with getL4FarmPersistence
+	Not used 
+	Use get and set with same name
+
+=cut
 sub getL4FarmSessionType    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -359,7 +525,23 @@ sub getL4FarmSessionType    # ($farm_name)
 	return $output;
 }
 
-# set the lb algorithm to a farm
+
+=begin nd
+Function: setL4FarmAlgorithm
+
+	Set the load balancing algorithm to a farm
+	
+Parameters:
+	algorithm - Load balancing algorithm. The options are: "leastconn" , "weight" or "prio"
+	farmname - Farm name
+
+Returns:
+	Integer - always return 0
+	
+FIXME:
+	do error control
+
+=cut
 sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 {
 	my ( $algorithm, $farm_name ) = @_;
@@ -531,7 +713,19 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 	return;
 }
 
-#
+
+=begin nd
+Function: getL4FarmAlgorithm
+
+	Get the load balancing algorithm for a farm
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Scalar - "leastconn" , "weight", "prio" or -1 on failure
+	
+=cut
 sub getL4FarmAlgorithm    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -556,7 +750,26 @@ sub getL4FarmAlgorithm    # ($farm_name)
 	return $output;
 }
 
-# set the protocol to a L4 farm
+
+=begin nd
+Function: setFarmProto
+
+	Set the protocol to a L4 farm
+	
+Parameters:
+	protocol - which protocol the farm will use to work. The available options are: "all", "tcp", "udp", "sip", "ftp" and "tftp"
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success or other value in failure
+	
+FIXME:
+	It is necessary more error control
+
+BUG:
+	Before change to sip, ftp or tftp protocol, check if farm port is contability
+
+=cut
 sub setFarmProto    # ($proto,$farm_name)
 {
 	my ( $proto, $farm_name ) = @_;
@@ -627,7 +840,18 @@ sub setFarmProto    # ($proto,$farm_name)
 }
 
 
-#
+=begin nd
+Function: getFarmNatType
+
+	Get the NAT type for a L4 farm
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Scalar - "nat", "dnat" or -1 on failure
+	
+=cut
 sub getFarmNatType    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -655,7 +879,20 @@ sub getFarmNatType    # ($farm_name)
 	return $output;
 }
 
-# set the NAT type for a farm
+
+=begin nd
+Function: setFarmNatType
+
+	Set the NAT type for a farm
+	
+Parameters:
+	nat - Type of nat. The options are: "nat" or "dnat"
+	farmname - Farm name
+
+Returns:
+	Scalar - 0 on success or other value on failure
+	
+=cut
 sub setFarmNatType    # ($nat,$farm_name)
 {
 	my ( $nat, $farm_name ) = @_;
@@ -743,62 +980,19 @@ sub setFarmNatType    # ($nat,$farm_name)
 	return $output;
 }
 
-# set client persistence to a farm
-#~ sub setL4FarmPersistence    # ($persistence,$farm_name)
-#~ {
-#~ my ( $persistence, $farm_name ) = @_;
-#~
-#~ my $farm_filename = &getFarmFile( $farm_name );
-#~ my $output        = 0;
-#~ my $i             = 0;
-#~
-#~ my $farm       = &getL4FarmStruct( $farm_name );
-#~ my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
-#~ my $fg_pid = &getFarmGuardianPid( $farm_name );
-#~
-#~ if ( $$farm{ status } eq 'up' )
-#~ {
-#~ if ( $fg_enabled eq 'true' )
-#~ {
-#~ kill 'STOP' => $fg_pid;
-#~ }
-#~ }
-#~
-#~ &zlog( "setL4FarmSessionType: Persistance" ) if &debug;
-#~
-#~ tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
-#~
-#~ for my $line ( @configfile )
-#~ {
-#~ if ( $line =~ /^$farm_name\;/ )
-#~ {
-#~ my @args = split ( "\;", $line );
-#~ $line =
-#~ "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$persistence\;$args[7]\;$args[8]";
-#~ splice @configfile, $i, $line;
-#~ $output = $?;    # FIXME
-#~ }
-#~ $i++;
-#~ }
-#~ untie @configfile;
-#~ $output = $?;            # FIXME
-#~
-#~ my $farm = &getL4FarmStruct( $farm_name );
-#~
-#~ if ( $$farm{ status } eq 'up' )
-#~ {
-#~ $output |= &refreshL4FarmRules( $farm );
-#~
-#~ if ( $fg_enabled eq 'true' )
-#~ {
-#~ kill 'CONT' => $fg_pid;
-#~ }
-#~ }
-#~
-#~ return $output;
-#~ }
 
-#
+=begin nd
+Function: getL4FarmPersistence
+
+	Get type of persistence session for a l4 farm
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Scalar - "none" not use persistence, "ip" for ip persistencia or -1 on failure
+	
+=cut
 sub getL4FarmPersistence    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -823,7 +1017,20 @@ sub getL4FarmPersistence    # ($farm_name)
 	return $persistence;
 }
 
-# set the max clients of a farm
+
+=begin nd
+Function: setL4FarmMaxClientTime
+
+	 Set the max client time of a farm
+	
+Parameters:
+	ttl - Persistence Session Time to Live
+	farmname - Farm name
+
+Returns:
+	Integer - 0 on success or other value on failure
+	
+=cut
 sub setL4FarmMaxClientTime    # ($track,$farm_name)
 {
 	my ( $track, $farm_name ) = @_;
@@ -892,7 +1099,22 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getL4FarmMaxClientTime
+
+	 Get the max client time of a farm
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - Time to Live (TTL) or -1 on failure
+	
+FIXME:
+	The returned value must to be a integer. Fit output like in the description
+	
+=cut
 sub getL4FarmMaxClientTime    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -917,7 +1139,22 @@ sub getL4FarmMaxClientTime    # ($farm_name)
 	return @max_client_time;
 }
 
-#
+
+=begin nd
+Function: getL4FarmServers
+
+	 Get all backends and theris configuration 
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Array - one backed per line. The line format is: "index;ip;port;mark;weight;priority;status"
+	
+FIXME:
+	Return as array of hash refs
+	
+=cut
 sub getL4FarmServers    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -945,7 +1182,21 @@ sub getL4FarmServers    # ($farm_name)
 	return @servers;
 }
 
-#
+
+=begin nd
+Function: getL4BackendEstConns
+
+	Get all ESTABLISHED connections for a backend
+	 
+Parameters:
+	farmname - Farm name
+	ip_backend - IP backend
+	netstat - Conntrack -L output
+
+Returns:
+	array - Return all ESTABLISHED conntrack lines for the backend
+		
+=cut
 sub getL4BackendEstConns    # ($farm_name,$ip_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, @netstat ) = @_;
@@ -1023,7 +1274,20 @@ sub getL4BackendEstConns    # ($farm_name,$ip_backend,@netstat)
 	return @nets;
 }
 
-#
+
+=begin nd
+Function: getL4FarmEstConns
+
+	Get all ESTABLISHED connections for a farm
+	 
+Parameters:
+	farmname - Farm name
+	netstat - Conntrack -L output
+
+Returns:
+	array - Return all ESTABLISHED conntrack lines for a farm
+
+=cut
 sub getL4FarmEstConns    # ($farm_name,@netstat)
 {
 	my ( $farm_name, @netstat ) = @_;
@@ -1110,7 +1374,21 @@ sub getL4FarmEstConns    # ($farm_name,@netstat)
 	return @nets;
 }
 
-#
+
+=begin nd
+Function: getL4BackendSYNConns
+
+	Get all SYN connections for a backend
+	 
+Parameters:
+	farmname - Farm name
+	ip_backend - IP backend
+	netstat - Conntrack -L output
+
+Returns:
+	array - Return all SYN conntrack lines for a backend of a farm
+
+=cut
 sub getL4BackendSYNConns    # ($farm_name,$ip_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, @netstat ) = @_;
@@ -1186,7 +1464,20 @@ sub getL4BackendSYNConns    # ($farm_name,$ip_backend,@netstat)
 	return @nets;
 }
 
-#
+
+=begin nd
+Function: getL4FarmSYNConns
+
+	Get all SYN connections for a farm
+	 
+Parameters:
+	farmname - Farm name
+	netstat - Conntrack -L output
+
+Returns:
+	array - Return all SYN conntrack lines for a farm
+
+=cut
 sub getL4FarmSYNConns    # ($farm_name,@netstat)
 {
 	my ( $farm_name, @netstat ) = @_;
@@ -1277,7 +1568,19 @@ sub getL4FarmSYNConns    # ($farm_name,@netstat)
 	return @nets;
 }
 
-# Returns farm status
+
+=begin nd
+Function: getL4FarmBootStatus
+
+	Return the farm status at boot zevenet
+	 
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - return "down" if the farm not run at boot or "up" if the farm run at boot
+
+=cut
 sub getL4FarmBootStatus    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -1303,7 +1606,23 @@ sub getL4FarmBootStatus    # ($farm_name)
 	return $output;
 }
 
-# Start Farm rutine
+
+=begin nd
+Function: _runL4FarmStart
+
+	Run a l4xnat farm
+	
+Parameters:
+	farmname - Farm name
+	writeconf - write this change in configuration status "true" or omit it "false"
+
+Returns:
+	Integer - return 0 on success or different of 0 on failure
+	
+FIXME: 
+	delete writeconf parameter. It is obsolet
+	
+=cut
 sub _runL4FarmStart    # ($farm_name,$writeconf)
 {
 	my $farm_name = shift;    # input
@@ -1421,7 +1740,23 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	return $status;
 }
 
-# Stop Farm rutine
+
+=begin nd
+Function: _runL4FarmStop
+
+	Stop a l4xnat farm
+	
+Parameters:
+	farmname - Farm name
+	writeconf - write this change in configuration status "true" or omit it "false"
+
+Returns:
+	Integer - return 0 on success or other value on failure
+	
+FIXME: 
+	delete writeconf parameter. It is obsolet
+	
+=cut
 sub _runL4FarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
@@ -1473,7 +1808,21 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	return $status;
 }
 
-#
+
+=begin nd
+Function: runL4FarmCreate
+
+	Create a l4xnat farm
+	
+Parameters:
+	vip - Virtual IP
+	port - Virtual port. In l4xnat it ls possible to define multiport using ',' for add ports and ':' for ranges
+	farmname - Farm name
+
+Returns:
+	Integer - return 0 on success or other value on failure
+	
+=cut
 sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 {
 	my ( $vip, $farm_name, $vip_port ) = @_;
@@ -1501,7 +1850,23 @@ sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 	return $output;    # FIXME
 }
 
-# Returns farm vip
+
+=begin nd
+Function: getL4FarmVip
+
+	Returns farm vip or farm port
+		
+Parameters:
+	tag - requested parameter. The options are "vip"for virtual ip or "vipp" for virtual port
+	farmname - Farm name
+
+Returns:
+	Scalar - return vip, port of farm or -1 on failure
+	
+FIXME
+	vipps parameter is only used in tcp farms. Soon this parameter will be obsolet
+			
+=cut
 sub getL4FarmVip       # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
@@ -1529,7 +1894,21 @@ sub getL4FarmVip       # ($info,$farm_name)
 	return $output;
 }
 
-# Set farm virtual IP and virtual PORT
+
+=begin nd
+Function: setL4FarmVirtualConf
+
+	Set farm virtual IP and virtual PORT
+		
+Parameters:
+	vip - Farm virtual IP
+	port - Farm virtual port
+	farmname - Farm name
+
+Returns:
+	Scalar - 0 on success or other value on failure
+	
+=cut
 sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
@@ -1604,7 +1983,27 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	return $stat;
 }
 
-# Edit a server/backend or add a new one if the id is not found
+
+=begin nd
+Function: setL4FarmServer
+
+	Edit a backend or add a new one if the id is not found
+		
+Parameters:
+	id - Backend id
+	ip - Backend IP
+	port - Backend port
+	weight - Backend weight. The backend with more weight will manage more connections 
+	priority - The priority of this backend (between 1 and 9). Higher priority backends will be used more often than lower priority ones
+	farmname - Farm name
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+
+Returns:
+	Scalar - 0 on success or other value on failure
+	
+=cut
 sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 {
 	my ( $ids, $rip, $port, $weight, $priority, $farm_name ) = @_;
@@ -1692,7 +2091,20 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: runL4FarmServerDelete
+
+	Delete a backend from a l4 farm
+		
+Parameters:
+	backend - Backend id
+	farmname - Farm name
+
+Returns:
+	Scalar - 0 on success or other value on failure
+	
+=cut
 sub runL4FarmServerDelete    # ($ids,$farm_name)
 {
 	my ( $ids, $farm_name ) = @_;
@@ -1767,8 +2179,23 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 	return $output;
 }
 
-#function that return the status information of a farm:
-#ip, port, backendstatus, weight, priority, clients
+
+=begin nd
+Function: getL4FarmBackendsStatus
+
+	function that return the status information of a farm:
+	ip, port, backendstatus, weight, priority, clients
+		
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Array - one backed per line. The line format is: "ip;port;weight;priority;status"
+	
+FIXME:
+	Change output to hash	
+		
+=cut
 sub getL4FarmBackendsStatus    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
@@ -1789,6 +2216,21 @@ sub getL4FarmBackendsStatus    # ($farm_name,@content)
 	return @backends_data;
 }
 
+
+=begin nd
+Function: setL4FarmBackendStatus
+
+	Set backend status for a l4 farm
+		
+Parameters:
+	farmname - Farm name
+	server - Server id
+	status - Backend status. The possible values are: "up" or "down"
+
+Returns:
+	Integer - 0 on success or other value on failure
+	
+=cut
 sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 {
 	my ( $farm_name, $server_id, $status ) = @_;
@@ -1886,6 +2328,19 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	return $output;
 }
 
+
+=begin nd
+Function: getFarmPortList
+
+	If port is multiport, it removes range port and it passes it to a port list
+		
+Parameters:
+	port - Port string
+
+Returns:
+	array - return a list of ports
+		
+=cut
 sub getFarmPortList    # ($fvipp)
 {
 	my $fvipp = shift;
@@ -1920,7 +2375,21 @@ sub getFarmPortList    # ($fvipp)
 	return @retportlist;
 }
 
-# returns backends lines
+=begin nd
+Function: getL4FarmBackendStatusCtl
+
+	Returns backends information lines
+		
+Parameters:
+	farmname - Farmname 
+
+Returns:
+	Array - Each line has the next format: ";server;ip;port;mark;weight;priority;status"
+	
+Bugfix:
+	DUPLICATED, do same than getL4FarmServers
+		
+=cut
 sub getL4FarmBackendStatusCtl    # ($farm_name)
 {
 	my $farm_name     = shift;
@@ -1934,7 +2403,23 @@ sub getL4FarmBackendStatusCtl    # ($farm_name)
 	return @output;
 }
 
-#function that renames a farm
+
+=begin nd
+Function: setL4NewFarmName
+
+	Function that renames a farm
+		
+Parameters:
+	newfarmname - New farm name 
+	farmname - Farm name 
+
+Returns:
+	Array - Each line has the next format: ";server;ip;port;mark;weight;priority;status"
+	
+Bugfix:
+	DUPLICATED, do same than getL4FarmServers
+		
+=cut
 sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $farm_name, $new_farm_name ) = @_;
@@ -2082,6 +2567,19 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	return $output;
 }
 
+
+=begin nd
+Function: getL4ProtocolTransportLayer
+
+	Return basic transport protocol used by l4 farm protocol
+		
+Parameters:
+	protocol - L4xnat farm protocol
+
+Returns:
+	String - "udp" or "tcp"
+	
+=cut
 sub getL4ProtocolTransportLayer
 {
 	my $vproto = shift;
@@ -2092,6 +2590,21 @@ sub getL4ProtocolTransportLayer
 	  :                             $vproto;
 }
 
+
+=begin nd
+Function: getL4FarmStruct
+
+	Return a hash with all data about a l4 farm
+		
+Parameters:
+	farmname - Farm name
+
+Returns:
+	hash ref - 
+		\%farm = { $name, $filename, $nattype, $lbalg, $vip, $vport, $vproto, $persist, $ttl, $proto, $status, \@servers }
+		\@servers = [ \%backend1, \%backend2, ... ]
+	
+=cut
 sub getL4FarmStruct
 {
 	my %farm;    # declare output hash
@@ -2129,6 +2642,21 @@ sub getL4FarmStruct
 	return \%farm;    # return a hash reference
 }
 
+
+=begin nd
+Function: getL4ServerStruct
+
+	Return a hash with all data about a backend in a l4 farm
+		
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+
+Returns:
+	hash ref - 
+		\%backend = { $id, $vip, $vport, $tag, $weight, $priority, $status, $rip = $vip }
+	
+=cut
 sub getL4ServerStruct
 {
 	my $farm        = shift;
@@ -2164,6 +2692,19 @@ sub getL4ServerStruct
 	return \%server;    # return reference
 }
 
+
+=begin nd
+Function: doL4FarmProbability
+
+	Create in the passed hash a new key called "prob". In this key is saved total weight of all backends
+		
+Parameters:
+	farm - farm hash ref. It is a hash with all information about the farm
+
+Returns:
+	none - .
+	
+=cut
 sub doL4FarmProbability
 {
 	my $farm = shift;    # input: farm reference
@@ -2181,6 +2722,21 @@ sub doL4FarmProbability
  #~ &zenlog( "doL4FarmProbability($$farm{ name }) => prob:$$farm{ prob }" ); ######
 }
 
+
+=begin nd
+Function: getL4ServerActionRules
+
+	???
+		
+Parameters:
+	farm - Farm hash ref. It is a hash with all information about the farm
+	backend - Backend id
+	switch - "on" or "off" ???
+
+Returns:
+	???
+	
+=cut
 sub getL4ServerActionRules
 {
 	my $farm   = shift;    # input: farm reference
@@ -2251,8 +2807,21 @@ sub getL4ServerActionRules
 	return $rules;
 }
 
-# Start Farm rutine
-# called from setL4FarmBackendStatus($farm_name,$server_id,$status)
+
+=begin nd
+Function: _runL4ServerStart
+
+	called from setL4FarmBackendStatus($farm_name,$server_id,$status)
+	Run rules to enable a backend
+		
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+
+Returns:
+	Integer - Error code: 0 on success or other value on failure 
+	
+=cut
 sub _runL4ServerStart    # ($farm_name,$server_id)
 {
 	my $farm_name = shift;    # input: farm name string
@@ -2300,8 +2869,20 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	return $status;
 }
 
-# Stop Farm rutine
-# called from setL4FarmBackendStatus($farm_name,$server_id,$status)
+
+=begin nd
+Function: _runL4ServerStop
+
+	Delete rules to disable a backend
+		
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+
+Returns:
+	Integer - Error code: 0 on success or other value on failure 
+	
+=cut
 sub _runL4ServerStop    # ($farm_name,$server_id)
 {
 	my $farm_name = shift;    # input: farm name string
@@ -2346,7 +2927,19 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 	return $output;
 }
 
-# Start Farm rutine
+
+=begin nd
+Function: getL4ServerWithLowestPriority
+
+	Look for backend with the lowest priority
+		
+Parameters:
+	farm - Farm hash ref. It is a hash with all information about the farm
+
+Returns:
+	hash ref - reference to the selected server for prio algorithm
+	
+=cut
 sub getL4ServerWithLowestPriority    # ($farm)
 {
 	my $farm = shift;                # input: farm reference
@@ -2366,7 +2959,20 @@ sub getL4ServerWithLowestPriority    # ($farm)
 	return $prio_server;
 }
 
-# function that check if a backend on a farm is on maintenance mode
+
+=begin nd
+Function: getL4FarmBackendMaintenance
+
+	Check if a backend on a farm is on maintenance mode
+		
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+
+Returns:
+	Integer - 0 for backend in maintenance or 1 for backend not in maintenance
+	
+=cut
 sub getL4FarmBackendMaintenance
 {
 	my ( $farm_name, $backend ) = @_;
@@ -2382,7 +2988,20 @@ sub getL4FarmBackendMaintenance
 	);
 }
 
-# function that enable the maintenance mode for backend
+
+=begin nd
+Function: setL4FarmBackendMaintenance
+
+	Enable the maintenance mode for backend
+		
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+
+Returns:
+	Integer - 0 on success or other value on failure
+	
+=cut
 sub setL4FarmBackendMaintenance             # ( $farm_name, $backend )
 {
 	my ( $farm_name, $backend ) = @_;
@@ -2390,7 +3009,20 @@ sub setL4FarmBackendMaintenance             # ( $farm_name, $backend )
 	return &setL4FarmBackendStatus( $farm_name, $backend, 'maintenance' );
 }
 
-# function that disable the maintenance mode for backend
+
+=begin nd
+Function: setL4FarmBackendNoMaintenance
+
+	Disable the maintenance mode for backend
+		
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+
+Returns:
+	Integer - 0 on success or other value on failure
+	
+=cut
 sub setL4FarmBackendNoMaintenance
 {
 	my ( $farm_name, $backend ) = @_;
@@ -2398,7 +3030,19 @@ sub setL4FarmBackendNoMaintenance
 	return &setL4FarmBackendStatus( $farm_name, $backend, 'up' );
 }
 
-# get probability for every backend
+
+=begin nd
+Function: getL4BackendsWeightProbability
+
+	Get probability for every backend
+		
+Parameters:
+	farm - Farm hash ref. It is a hash with all information about the farm
+
+Returns:
+	none - .
+	
+=cut
 sub getL4BackendsWeightProbability
 {
 	my $farm = shift;    # input: farm reference
@@ -2423,7 +3067,22 @@ sub getL4BackendsWeightProbability
 	}
 }
 
-# FIXME: send signal to l4sd to reload configuration
+
+=begin nd
+Function: refreshL4FarmRules
+
+	Refresh all iptables rule for a l4 farm
+		
+Parameters:
+	farm - Farm hash ref. It is a hash with all information about the farm
+
+Returns:
+	Integer - Error code: 0 on success or -1 on failure
+
+FIXME: 
+	Send signal to l4sd to reload configuration
+	
+=cut
 sub refreshL4FarmRules    # AlgorithmRules
 {
 	my $farm = shift;     # input: reference to farm structure
@@ -2501,6 +3160,22 @@ sub refreshL4FarmRules    # AlgorithmRules
 	return $return_code;
 }
 
+
+=begin nd
+Function: reloadL4FarmsSNAT
+
+	Reload iptables rules of all SNAT L4 farms
+		
+Parameters:
+	farm - Farm hash ref. It is a hash with all information about the farm
+
+Returns:
+	none - .
+
+FIXME: 
+	Send signal to l4sd to reload configuration
+	
+=cut
 sub reloadL4FarmsSNAT
 {
 	for my $farm_name ( &getFarmNameList() )

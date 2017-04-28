@@ -27,7 +27,26 @@ require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
-# Start Farm rutine
+
+=begin nd
+Function: _runGSLBFarmStart
+
+	Start a gslb farm rutine
+	
+Parameters:
+	farmname - Farm name
+	writeconf - If this param has the value "true" in config file will be saved the current status
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+	
+FIXME: 
+	writeconf must not exist, always it has to be TRUE. Obsolet parameter
+	
+BUG:
+	the returned variable must be $output and not $status
+	
+=cut
 sub _runGSLBFarmStart    # ($fname,$writeconf)
 {
 	my ( $fname, $writeconf ) = @_;
@@ -78,7 +97,23 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 	return $status;
 }
 
-# Stop Farm rutine
+
+=begin nd
+Function: _runGSLBFarmStop
+
+	Stop a gslb farm rutine
+	
+Parameters:
+	farmname - Farm name
+	writeconf - If this param has the value "true" in config file will be saved the current status
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+	
+FIXME: 
+	writeconf must not exist, always it has to be TRUE 
+	
+=cut
 sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $fname, $writeconf ) = @_;
@@ -142,7 +177,19 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 	return $status;
 }
 
-# Get farm services list for GSLB farms
+
+=begin nd
+Function: getGSLBFarmServices
+
+	Get farm services list for GSLB farms
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Array - list of service names or -1 on failure
+	
+=cut
 sub getGSLBFarmServices    # ($farm_name)
 {
 	my ( $fname ) = @_;
@@ -178,7 +225,19 @@ sub getGSLBFarmServices    # ($farm_name)
 	return @srvarr;
 }
 
-# Get farm zones list for GSLB farms
+
+=begin nd
+Function: getFarmZones
+
+	Get farm zones list for GSLB farms
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Array - list of zone names or -1 on failure
+	
+=cut
 sub getFarmZones    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -193,7 +252,19 @@ sub getFarmZones    # ($farm_name)
 	return @files;
 }
 
-#
+
+=begin nd
+Function: getGSLBFarmBootStatus
+
+	Return the farm status at boot zevenet
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Scalar - "up" the farm must run at boot, "down" the farm must not run at boot or -1 on failure
+	
+=cut
 sub getGSLBFarmBootStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -219,7 +290,19 @@ sub getGSLBFarmBootStatus    # ($farm_name)
 	return $output;
 }
 
-#function that check if the config file is OK.
+
+=begin nd
+Function: getGSLBFarmConfigIsOK
+
+	Function that check if the config file is OK.
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Scalar - 0 on success or -1 on failure
+	
+=cut
 sub getGSLBFarmConfigIsOK    # ($farm_name)
 {
 	my ( $fname ) = @_;
@@ -238,7 +321,22 @@ sub getGSLBFarmConfigIsOK    # ($farm_name)
 	return $output;
 }
 
-# Returns farm PID
+
+=begin nd
+Function: getGSLBFarmPid
+
+	Returns farm PID. Through ps command
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Scalar - pid, the farm is running; '-' the farm is stopped or -1 on failure
+	
+FIXME:
+	Do this function uses pid gslb farms file
+	
+=cut
 sub getGSLBFarmPid    # ($farm_name)
 {
 	my ( $fname ) = @_;
@@ -267,7 +365,22 @@ sub getGSLBFarmPid    # ($farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getGSLBFarmPidFile
+
+	Returns farm PID. Through ps command
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Scalar - pid, the farm is running; '-' the farm is stopped or -1 on failure
+	
+FIXME:
+	Use this function to get gslb farms pid 
+	
+=cut
 sub getGSLBFarmPidFile    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -275,8 +388,30 @@ sub getGSLBFarmPidFile    # ($farm_name)
 	return "$configdir\/$farm_name\_gslb.cfg\/etc\/gdnsd.pid";
 }
 
-#function that return indicated value from a HTTP Service
-#vs return virtual server
+
+=begin nd
+Function: getHTTPFarmVS
+
+	Return a virtual server parameter
+	
+Parameters:
+	farmname - Farm name
+	service - Service name
+	tag - Indicate which field will be returned. The options are: 
+		ns - return string
+		resources - return string with format: "resource1" . "\n" . "resource2" . "\n" . "resource3"..."
+		backends - return string with format: "backend1" . "\n" . "backend2" . "\n" . "backend3"..."
+		algorithm - string with the possible values: "prio" for priority algorihm or "roundrobin" for round robin algorithm 
+		plugin - Gslb plugin used for balancing. String with the possbible values: "simplefo " for priority or "multifo" for round robin
+		dpc - Default port check. Gslb use a tcp check to a port to check if backend is alive. This is disable when farm guardian is actived
+
+Returns:
+	string - The return value format depend on tag field
+
+FIXME:
+	return a hash with all parameters
+				
+=cut
 sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 {
 	my ( $fname, $svice, $tag ) = @_;
@@ -399,7 +534,23 @@ sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 	return $output;
 }
 
-# Returns farm vip
+
+=begin nd
+Function: getGSLBFarmVip
+
+	Returns farm vip or farm port
+	
+Parameters:
+	tag - requested parameter. The options are vip, for virtual ip or vipp, for virtual port
+	farmname - Farm name
+
+Returns:
+	Scalar - return vip or port of farm or -1 on failure
+
+FIXME:
+	return a hash with all parameters
+				
+=cut
 sub getGSLBFarmVip    # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
@@ -435,7 +586,19 @@ sub getGSLBFarmVip    # ($info,$farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getGSLBStartCommand
+
+	Create a string with the gslb farm start command
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	string - command
+
+=cut
 sub getGSLBStartCommand    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -444,7 +607,19 @@ sub getGSLBStartCommand    # ($farm_name)
 	return "$gdnsd -c $configdir\/$farm_name\_gslb.cfg/etc start";
 }
 
-#
+
+=begin nd
+Function: getGSLBStopCommand
+
+	Create a string with the gslb farm stop command
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	string - command
+
+=cut
 sub getGSLBStopCommand     # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -453,6 +628,21 @@ sub getGSLBStopCommand     # ($farm_name)
 	return "$gdnsd -c $configdir\/$farm_name\_gslb.cfg/etc stop";
 }
 
+
+=begin nd
+Function: remFarmServiceBackend
+
+	Remove a backend from a gslb service
+	
+Parameters:
+	backend - Backend id
+	farmname - Farm name
+	service - Service name
+
+Returns:
+	Integer - Error code: 0 on success or different of 0 on failure
+
+=cut
 sub remFarmServiceBackend    # ($id,$farm_name,$service)
 {
 	my ( $id, $fname, $srv ) = @_;
@@ -535,6 +725,21 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 	return $output;
 }
 
+
+=begin nd
+Function: remFarmZoneResource
+
+	Remove a resource from a gslb zone
+	
+Parameters:
+	resource - Resource id
+	farmname - Farm name
+	zone - Zone name
+
+Returns:
+	Integer - Error code: 0 on success or different of 0 on failure
+
+=cut
 sub remFarmZoneResource    # ($id,$farm_name,$service)
 {
 	my ( $id, $fname, $service ) = @_;
@@ -564,6 +769,19 @@ sub remFarmZoneResource    # ($id,$farm_name,$service)
 	return $output;
 }
 
+
+=begin nd
+Function: runFarmReload
+
+	Reload zones of a gslb farm
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success or different of 0 on failure
+
+=cut
 sub runFarmReload    # ($farm_name)
 {
 	my ( $fname ) = @_;
@@ -585,7 +803,23 @@ sub runFarmReload    # ($farm_name)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: runGSLBFarmServerDelete
+
+	Delete a resource from a zone
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success or different of 0 on failure
+	
+BUG:
+	This function has a bad name and is used in wrong way
+	It is duplicated with "remFarmZoneResource"
+	
+=cut
 sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
 {
 	my ( $ids, $farm_name, $service ) = @_;
@@ -616,7 +850,25 @@ sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: setFarmZoneResource
+
+	Modify or create a resource in a zone
+	
+Parameters:
+	id - Resource id. It is the resource to modify, if it is blank, a new resource will be created
+	resource - Resource name
+	ttl - Time to live
+	type - Type of resource. The possible values are: "A", "NS", "AAAA", "CNAME", "MX", "SRV", "TXT", "PTR", "NAPTR" or "DYN" (service)
+	rdata - Resource data. Depend on "type" parameter
+	farmname - Farm name
+	zone - Zone name
+
+Returns:
+	Integer - Error code: 0 on success or different of 0 on failure
+	
+=cut
 sub setFarmZoneResource  # ($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
 {
 	my ( $id, $resource, $ttl, $type, $rdata, $farm_name, $service ) = @_;
@@ -671,6 +923,20 @@ sub setFarmZoneResource  # ($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
 	return $output;
 }
 
+
+=begin nd
+Function: setFarmZoneSerial
+
+	Update gslb zone serial, to register that a zone has been modified
+	
+Parameters:
+	farmname - Farm name
+	zone - Zone name
+
+Returns:
+	Integer - Error code: 0 on success or different of 0 on failure
+	
+=cut
 sub setFarmZoneSerial    # ($farm_name,$zone)
 {
 	my ( $fname, $zone ) = @_;
@@ -697,7 +963,21 @@ sub setFarmZoneSerial    # ($farm_name,$zone)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: runGSLBFarmCreate
+
+	Create a gslb farm
+	
+Parameters:
+	vip - Virtual IP
+	port - Virtual port
+	farmname - Farm name
+
+Returns:
+	Integer - Error code: 0 on success or different of 0 on failure
+	
+=cut
 sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 {
 	my ( $fvip, $fvipp, $fname ) = @_;
@@ -749,7 +1029,19 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	return $output;
 }
 
-# Get http port  where is the gslb stats
+
+=begin nd
+Function: getGSLBControlPort
+
+	Get http port where it is the gslb stats
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - port on success or -1 on failure
+	
+=cut
 sub getGSLBControlPort    # ( $farm_name )
 {
 	my $farmName = shift;
@@ -770,7 +1062,19 @@ sub getGSLBControlPort    # ( $farm_name )
 	return $port;
 }
 
-# Set http port  where is the gslb stats
+
+=begin nd
+Function: setGSLBControlPort
+
+	Set http port where it is the gslb stats. This port is assigned randomly
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - port on success or -1 on failure
+	
+=cut
 sub setGSLBControlPort    # ( $farm_name )
 {
 	my $farmName = shift;
@@ -793,7 +1097,22 @@ sub setGSLBControlPort    # ( $farm_name )
 	return $port;
 }
 
-#
+
+=begin nd
+Function: setGSLBFarmBootStatus
+
+	Set status at boot zevenet
+	 
+Parameters:
+	farmname - Farm name
+
+Returns:
+	integer - Always return 0
+	
+FIXME:
+	Set a output and do error control
+
+=cut
 sub setGSLBFarmBootStatus    # ($farm_name, $status)
 {
 	my ( $farm_name, $status ) = @_;
@@ -825,7 +1144,20 @@ sub setGSLBFarmBootStatus    # ($farm_name, $status)
 	return $output;
 }
 
-# Delete an existing Service in a GSLB farm
+
+=begin nd
+Function: setGSLBFarmDeleteService
+
+	Delete an existing Service in a GSLB farm
+	 
+Parameters:
+	farmname - Farm name
+	service - Service name
+
+Returns:
+	Integer - Error code: 0 on success or different of 0 on failure
+
+=cut
 sub setGSLBFarmDeleteService    # ($farm_name,$service)
 {
 	my ( $fname, $svice ) = @_;
@@ -937,7 +1269,20 @@ sub setGSLBFarmDeleteService    # ($farm_name,$service)
 	return $output;
 }
 
-# Delete an existing Zone in a GSLB farm
+
+=begin nd
+Function: setGSLBFarmDeleteZone
+
+	Delete an existing Zone in a GSLB farm
+	 
+Parameters:
+	farmname - Farm name
+	zone - Zone name
+
+Returns:
+	Integer - Error code: 0 on success or -1 on failure
+
+=cut
 sub setGSLBFarmDeleteZone    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
@@ -951,6 +1296,23 @@ sub setGSLBFarmDeleteZone    # ($farm_name,$service)
 	return $output;
 }
 
+
+=begin nd
+Function: setGSLBFarmNewBackend
+
+	Create a new backend in a gslb service
+	 
+Parameters:
+	farmname - Farm name
+	service - Service name
+	algorithm - Balancing algorithm. This field can value: "prio" for priority balancing or "roundrobin" for round robin balancing
+	backend - Backend id. If algorithm is prio this field must have the value "primary" or "secondary", else backend id will be a integer
+	ip - Backend IP
+
+Returns:
+	Integer - Error code: 0 on success or -1 on failure
+
+=cut
 sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 {
 	my ( $fname, $srv, $lb, $id, $ipaddress ) = @_;
@@ -1042,7 +1404,24 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 	return $output;
 }
 
-# Create a new Service in a GSLB farm
+
+=begin nd
+Function: setGSLBFarmNewService
+
+	Create a new Service in a GSLB farm
+	 
+Parameters:
+	farmname - Farm name
+	service - Service name
+	algorithm - Balancing algorithm. This field can value "roundrobin" defined in plugin multifo, or "prio" defined in plugin simplefo
+
+Returns:
+	Integer - Error code: 0 on success or different of 0 on failure
+
+Bug:
+	Output is not well controlled
+
+=cut
 sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 {
 	my ( $fname, $svice, $alg ) = @_;
@@ -1167,7 +1546,20 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 	return $output;
 }
 
-# Create a new Zone in a GSLB farm
+
+=begin nd
+Function: setGSLBFarmNewZone
+
+	Create a new Zone in a GSLB farm
+	 
+Parameters:
+	farmname - Farm name
+	zone - Zone name
+
+Returns:
+	Integer - Error code: 0 on success, 1 if it already exists or -1 on failure
+
+=cut
 sub setGSLBFarmNewZone    # ($farm_name,$service)
 {
 	my ( $fname, $zone ) = @_;
@@ -1203,7 +1595,26 @@ sub setGSLBFarmNewZone    # ($farm_name,$service)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: setGSLBFarmStatus
+
+	Start or stop a gslb farm
+	 
+Parameters:
+	farmname - Farm name
+	zone - Zone name
+
+Returns:
+	Integer - Error code: 0 on success or -1 on failure
+	
+BUG:
+	Always return success
+	
+FIXME:
+	writeconf is obsolet parameter, always write configuration
+
+=cut
 sub setGSLBFarmStatus    # ($farm_name, $status, $writeconf)
 {
 	my ( $farm_name, $status, $writeconf ) = @_;
@@ -1240,24 +1651,20 @@ sub setGSLBFarmStatus    # ($farm_name, $status, $writeconf)
 	return $output;
 }
 
+
 =begin nd
-        Function: setGSLBRemoveTcpPort
+Function: setGSLBRemoveTcpPort
 
-        This functions removes tcp_port config from gdnsd config file
+	This functions removes the tcp default check port from gdnsd config file
 
-        Parameters:
+Parameters:
+	farmnmae - Farm name
+	port  - tcp default check port
 
-                fname - farm name
-                port  - tcp_PORT to delete
+Returns:	
+	Ingeter - Error code: 0 on success or -3 on failure
 
-        Returns:
-        
-                0	- successful
-				-3	- error in config file format
-               
 =cut
-
-# &setGSLBRemoveTcpPort ($farmName,$port);
 sub setGSLBRemoveTcpPort
 {
 	my ( $fname, $port ) = @_;
@@ -1301,23 +1708,20 @@ sub setGSLBRemoveTcpPort
 	return $found;
 }
 
+
 =begin nd
-        Function: getCheckPort
+Function: getCheckPort
 
-        This function checks if some service uses this port
+	This function checks if some service uses the tcp default check port
 
-        Parameters:
+Parameters:
+	farmname - Farm name
+	checkport - Port to check 
 
-                fname 	- farm name
-                checkport - port to check 
-
-        Returns:
-        
-                servicePorts  - number of services are using the port
+Returns:
+	Integer - Number of services that are using the port
                
 =cut
-
-# &getCheckPort ( $fname, $checkPort );
 sub getCheckPort
 {
 	my ( $fname, $checkPort ) = @_;
@@ -1352,31 +1756,25 @@ sub getCheckPort
 	return $servicePorts;
 }
 
+
 =begin nd
-        Function: setGSLBFarmVS
+Function: setGSLBFarmVS
 
-        This function can change name server or dpc
+	Set values for a gslb service. server or dpc
 
-        Parameters:
+Parameters:
+	farmname 	- Farm name
+	service - Service name
+	param	- Parameter to modificate. The possible values are: "ns" name server or "dpc" default tcp port check
+	value	- Value for the parameter
 
-                fname 	- farm name
-                service - service name
-                param	- param to modificate
-                value	- value for the param
-
-        Returns:
-        
-                newCmd  - command with extmon format
-                
-        See Also:
-                
-                
-        More info:
-
+Returns:     
+	Integer  - always return 0 
+	
+Bug:
+	Always return 0, do error control
                 
 =cut
-
-#set values for a service
 sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 {
 	my ( $fname, $svice, $tag, $stri ) = @_;
@@ -1642,7 +2040,24 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 	return $output;
 }
 
-# Set farm virtual IP and virtual PORT
+
+=begin nd
+Function: setGSLBFarmVirtualConf
+
+	Set farm virtual IP and virtual PORT
+
+Parameters:
+	vip - Virtual IP
+	port - Virtual port
+	farmname - Farm name
+
+Returns:     
+	Integer - Error code: 0 on success or different of 0 on failure
+	
+Bug:
+	The exit is not well controlled
+                
+=cut
 sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vipp, $fname ) = @_;
@@ -1683,7 +2098,20 @@ sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	return $stat;
 }
 
-#function that renames a farm
+
+=begin nd
+Function: setGSLBNewFarmName
+
+	Function that renames a farm
+
+Parameters:
+	farmname - Farm name
+	newfarmname - New farm name
+
+Returns:     
+	Integer - Error code: 0 on success or -2 when new farm name is blank
+	
+=cut
 sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $fname, $newfname ) = @_;
@@ -1717,9 +2145,25 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 	return $output;
 }
 
-# translate dns service descriptor to service name
-# if the same backend is in several services, return all service names
-# e.j.   typeService = tcp_54
+
+=begin nd
+Function: dnsServiceType
+
+	[NOT USED] Translate a check (i.e. tcp_54) and a backend ip to service name
+	If the same backend is in several services, return all service names
+
+Parameters:
+	farmname - Farm name
+	ip - Backend IP
+	check - Service check. Default checks "tcp_$port" or advanced checks "$service_fg_$port"
+
+Returns:     
+	Array - List of services are using this check and backend
+	
+Bug:
+	Not used
+	
+=cut
 sub dnsServiceType    #  dnsServiceType ( $farmname, $ip, $tcp_port )
 {
 	my ( $fname, $ip, $serviceType ) = @_;
@@ -1767,7 +2211,19 @@ sub dnsServiceType    #  dnsServiceType ( $farmname, $ip, $tcp_port )
 	return @serviceNames;
 }
 
-# this function return one string with json format
+
+=begin nd
+Function: getGSLBGdnsdStats
+
+	Get gslb farm stats from a local socket enabled by gdnsd service
+
+Parameters:
+	farmname - Farm name
+
+Returns:     
+	String - Return a string with json format
+		
+=cut
 sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ( )
 {
 	my $farmName   = shift;
@@ -1783,7 +2239,23 @@ sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ( )
 	return $stats;
 }
 
-#
+
+=begin nd
+Function: getGSLBFarmEstConns
+
+	Get total established connections in a gslb farm
+
+Parameters:
+	farmname - Farm name
+	netstat - Conntrack -L output
+
+Returns:     
+	array - Return all ESTABLISHED conntrack lines for a farm
+
+FIXME:
+	change to monitoring libs
+
+=cut
 sub getGSLBFarmEstConns    # ($farm_name,@netstat)
 {
 	my ( $farm_name, @netstat ) = @_;
@@ -1797,36 +2269,29 @@ sub getGSLBFarmEstConns    # ($farm_name,@netstat)
 						 "", @netstat );
 }
 
-## GSLB FARMGUARDIAN FUNCTIONS
 
 =begin nd
-        Function: getGSLBCommandInExtmonFormat
+Function: getGSLBCommandInExtmonFormat
 
-        Transform command with farm guardian format to command with extmon format,
-        this function is used to show the command in GUI.
+	Transform command with farm guardian format to command with extmon format,
+	this function is used to show the command in GUI.
 
-        Parameters:
+Parameters:
+	cmd - command with farm guardian format
+	port - port where service is checking
 
-                cmd		- command with farm guardian format
-                port	- port where service is checking
-
-        Returns:
-        
-                newCmd  - command with extmon format
+Returns:
+	String - command with extmon format
                 
-        See Also:
+See Also:
+	changeCmdToFGFormat
                 
-                changeCmdToFGFormat
-                
-        More info:
-
-			Farmguardian Fotmat	: bin -x option...
-			Extmon Format		: "bin", "-x", "option"...
+More info:
+	Farmguardian Fotmat: bin -x option...
+	Extmon Format: "bin", "-x", "option"...
                 
 =cut
-
-#	&getGSLBCommandInExtmonFormat( $cmd, $port );
-sub getGSLBCommandInExtmonFormat
+sub getGSLBCommandInExtmonFormat	# ( $cmd, $port )
 {
 	my ( $cmd, $port ) = @_;
 
@@ -1887,34 +2352,29 @@ sub getGSLBCommandInExtmonFormat
 	return $newCmd;
 }
 
+
 =begin nd
-        Function: getGSLBCommandInFGFormat
+Function: getGSLBCommandInFGFormat
 
-        Transform command with extmon format to command with fg format,
-        this function is used to show the command in GUI.
+	Transform command with extmon format to command with fg format,
+	this function is used to show the command in GUI.
 
-        Parameters:
+Parameters:
+	cmd - command with extmon format
+	port - port where service is checking
 
-                cmd		- command with extmon format
-                port	- port where service is checking
-
-        Returns:
-        
-                newCmd  - command with farm guardian format
+Returns:
+	newCmd  - command with farm guardian format
                 
-        See Also:
+See Also:
+	changeCmdToExtmonFormat
                 
-                changeCmdToExtmonFormat
-                
-        More info:
-
-			Farmguardian Fotmat	: bin -x option...
-			Extmon Format		: "bin", "-x", "option"...
+More info:
+	Farmguardian Fotmat: bin -x option...
+	Extmon Format: "bin", "-x", "option"...
 			
 =cut
-
-# &getGSLBCommandInFGFormat ( $cmd, $port );
-sub getGSLBCommandInFGFormat
+sub getGSLBCommandInFGFormat	# ( $cmd, $port )
 {
 	my ( $cmd, $port ) = @_;
 
@@ -1955,26 +2415,24 @@ sub getGSLBCommandInFGFormat
 	return $newCmd;
 }
 
+
 =begin nd
-        Function: getGSLBFarmGuardianParams
+Function: getGSLBFarmGuardianParams
 
-        Get farmguardian configuration
+	Get farmguardian configuration
 
-        Parameters:
+Parameters:
+	farmname - Farm name
+	service - Service name
 
-                fname 	- farm name
-                service - service name
-
-        Returns:
-        
-                @output =
-					time  - interval time to repeat cmd
-					cmd	  - command to check backend
+Returns:         
+	@output = ( time, cmd ), "time" is interval time to repeat cmd and "cmd" is command to check backend
+	
+FIXME:
+	Change output to a hash
 
 =cut
-
-#	&getGSLBFarmGuardianParams( farmName, $service );
-sub getGSLBFarmGuardianParams
+sub getGSLBFarmGuardianParams # ( farmName, $service )
 {
 	my ( $fname, $service ) = @_;
 	my $ftype = &getFarmType( $fname );
@@ -2031,26 +2489,21 @@ sub getGSLBFarmGuardianParams
 }
 
 =begin nd
-        Function: setGSLBFarmGuardianParams
+Function: setGSLBFarmGuardianParams
 
-        Change gslb farm guardian params
+	Change gslb farm guardian parameters
 
-        Parameters:
+Parameters:
+	farmname - Farm name
+	service - Service name
+	param - Parameter to change. The availabe parameters are: "cmd" farm guardian command and "time" time between checks
+	value - Value for the param
 
-                fname 	- farm name
-                service - service name
-                param	- cmd / interval
-                value	- value for the param
-
-        Returns:
-        
-				-1  - error
-				0	- successful
+Returns:
+	Integer - Error code: 0 on success or -1 on failure
 
 =cut
-
-# 	&setGSLBFarmGuardianParams( farmName, service, param, value );
-sub setGSLBFarmGuardianParams
+sub setGSLBFarmGuardianParams	# ( farmName, service, param, value );
 {
 	my ( $fname, $service, $param, $value ) = @_;
 	my $ftype = &getFarmType( $fname );
@@ -2111,24 +2564,19 @@ sub setGSLBFarmGuardianParams
 }
 
 =begin nd
-        Function: setGSLBDeleteFarmGuardian
+Function: setGSLBDeleteFarmGuardian
 
-        Delete Farm Guardian configuration from gslb farm configuration
+	Delete Farm Guardian configuration from a gslb farm configuration
 
-        Parameters:
+Parameters:
+	farmname - Farm name
+	service - Service name
 
-                fname 	- farm name
-                service - service name
-
-        Returns:
-        
-				-1  - error
-				0	- successful
-
+Returns:
+	Integer - Error code: 0 on success or -1 on failure
+	
 =cut
-
-# &setGSLBDeleteFarmGuardian ( $fname, $service );
-sub setGSLBDeleteFarmGuardian
+sub setGSLBDeleteFarmGuardian	# ( $fname, $service )
 {
 	my ( $fname, $service ) = @_;
 	my $ftype   = &getFarmType( $fname );
@@ -2167,24 +2615,19 @@ sub setGSLBDeleteFarmGuardian
 }
 
 =begin nd
-        Function: getGSLBFarmFGStatus
+Function: getGSLBFarmFGStatus
 
-        Reading farmguardian status for a service
+	Reading farmguardian status for a GSLB service
 
-        Parameters:
+Parameters:
+	farmname - Farm name
+	service - Service name
 
-                fname 	- farm name
-                service - service name
+Returns:
+	Scalar - "true" if fg is enabled, "false" if fg is disable or -1 on failure
 
-        Returns:
-        
-                true	  	- fg is enabled
-                false  	- fg is disabled
-                -1 	  		- error
 =cut
-
-# &getGSLBFarmFGStatus ( fname, service );
-sub getGSLBFarmFGStatus
+sub getGSLBFarmFGStatus	# ( fname, service )
 {
 	my ( $fname, $service ) = @_;
 
@@ -2252,25 +2695,20 @@ sub getGSLBFarmFGStatus
 }
 
 =begin nd
-        Function: enableGSLBFarmGuardian
+Function: enableGSLBFarmGuardian
 
-        Enable or disable a service farmguardian in gslb farms
+	Enable or disable a service farmguardian in gslb farms
 
-        Parameters:
+Parameters:
+	farmname - Farm name
+	service - Service name
+	option - The options are "up" to enable fg or "down" to disable fg
 
-                fname 	- farm name
-                service - service name
-                option	- up / down
-
-        Returns:
-
-                port - port where service is listening
-                -1	 - error
-                0	 - don't modificate
+Returns:
+	Integer - Error code: 0 on success or -1 on failure
+	
 =cut
-
-#		&enableGSLBFarmGuardian ( $fname, $service, $option );
-sub enableGSLBFarmGuardian
+sub enableGSLBFarmGuardian	# ( $fname, $service, $option )
 {
 	my ( $fname, $service, $option ) = @_;
 
@@ -2321,8 +2759,23 @@ sub enableGSLBFarmGuardian
 	return $output;
 }
 
-#&getGSLBCheckConf  ( $farmname );
-sub getGSLBCheckConf
+
+=begin nd
+Function: getGSLBCheckConf
+
+	Check gslb configuration file. If exist a error, it returns where the error is
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Scalar - 0 on successful or string with error on failure
+	
+FIXME:
+	Rename with same name used for http farms: getGLSBFarmConfigIsOK
+	
+=cut
+sub getGSLBCheckConf	#  ( $farmname )
 {
 	my $farmname = shift;
 
@@ -2353,9 +2806,23 @@ sub getGSLBCheckConf
 	return $errormsg;
 }
 
-# Get hash array with all resources for a farm and service
-# &getGSLBResources ( $farmname, $zone )
-sub getGSLBResources
+
+=begin nd
+Function: getGSLBResources
+
+	Get a array with all resource of a zone in a gslb farm
+
+Parameters:
+	farmname - Farm name
+	Zone - Zone name
+
+Returns:
+	Array ref - Each array element is a hash reference to a hash that has the keys: rname, id, ttl, type and rdata
+	i.e.  \@resourcesArray = ( \%resource1,  \%resource2, ...)
+	\%resource1 = { rname = $name, id  =$id, ttl = $ttl, type = $type, rdata = $rdata }
+	
+=cut
+sub getGSLBResources	# ( $farmname, $zone )
 {
 	my ( $farmname, $zone ) = @_;
 	my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );

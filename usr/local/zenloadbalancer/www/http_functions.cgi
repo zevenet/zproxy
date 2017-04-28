@@ -426,7 +426,6 @@ FIXME
 	not return nothing, use $found variable to return success or error
 
 =cut
-#change to HTTP or HTTPS listener
 sub setFarmListen    # ( $farm_name, $farmlisten )
 {
 	my ( $farm_name, $flisten ) = @_;
@@ -584,7 +583,7 @@ sub getHTTPFarmDHStatus    # ($farm_name)
 =begin nd
 Function: setHTTPFarmDHStatus
 
-	Configure the status of the DH file
+	[NOT USED] Configure the status of the DH file
 	
 Parameters:
 	farmname - Farm name
@@ -750,7 +749,7 @@ sub setFarmConnTO    # ($tout,$farm_name)
 
 
 =begin nd
-Function: getFarmRewriteL
+Function: getFarmConnTO
 
 	Return farm connecton time out value for http and https farms
 
@@ -1090,9 +1089,9 @@ Parameters:
 Returns:
 	array - Return all ESTABLISHED conntrack lines for the backend
 	
-BUGFIX
-	Backend IP is used twice for filter the output, not used 
-
+BUG:
+	it is possible filter using farm Vip and port too. If a backend if defined in more than a farm, here it appers all them
+	
 =cut
 sub getHTTPBackendEstConns     # ($farm_name,$ip_backend,$port_backend,@netstat)
 {
@@ -1116,12 +1115,10 @@ Function: getHTTPFarmEstConns
 	 
 Parameters:
 	farmname - Farm name
+	netstat - Conntrack -L output
 
 Returns:
-	array - Return poundctl output 
-	
-BUGFIX
-	Backend IP is used twice for filter the output, not used 
+	array - Return all ESTABLISHED conntrack lines for a farm
 
 =cut
 sub getHTTPFarmEstConns    # ($farm_name,@netstat)
@@ -1140,7 +1137,22 @@ sub getHTTPFarmEstConns    # ($farm_name,@netstat)
 	);
 }
 
-#
+
+=begin nd
+Function: getHTTPBackendTWConns
+
+	[NOT USED] Get all TIME WAIT connections for a backend
+	 
+Parameters:
+	farmname - Farm name
+	ip_backend - IP backend
+	port_backend - backend port
+	netstat - Conntrack -L output
+
+Returns:
+	array - Return all TIME WAIT conntrack lines for a backend of a farm
+
+=cut
 sub getHTTPBackendTWConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
@@ -1153,7 +1165,25 @@ sub getHTTPBackendTWConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 		  "", @netstat );
 }
 
-#
+
+=begin nd
+Function: getHTTPBackendSYNConns
+
+	Get all SYN connections for a backend
+	 
+Parameters:
+	farmname - Farm name
+	ip_backend - IP backend
+	port_backend - backend port
+	netstat - Conntrack -L output
+
+Returns:
+	array - Return all SYN conntrack lines for a backend of a farm
+
+BUG:
+	it is possible filter using farm Vip and port too. If a backend if defined in more than a farm, here it appers all them
+	
+=cut
 sub getHTTPBackendSYNConns  # ($farm_name, $ip_backend, $port_backend, @netstat)
 {
 	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
@@ -1164,7 +1194,20 @@ sub getHTTPBackendSYNConns  # ($farm_name, $ip_backend, $port_backend, @netstat)
 				"", @netstat );
 }
 
-#
+
+=begin nd
+Function: getHTTPFarmSYNConns
+
+	Get all SYN connections for a farm
+	 
+Parameters:
+	farmname - Farm name
+	netstat - Conntrack -L output
+
+Returns:
+	array - Return all SYN conntrack lines for a farm
+
+=cut
 sub getHTTPFarmSYNConns     # ($farm_name, @netstat)
 {
 	my ( $farm_name, @netstat ) = @_;
@@ -1178,7 +1221,21 @@ sub getHTTPFarmSYNConns     # ($farm_name, @netstat)
 					   "", @netstat );
 }
 
-# Only http function
+
+=begin nd
+Function: setFarmErr
+
+	Configure a error message for http error: 414, 500, 501 or 503
+	 
+Parameters:
+	farmname - Farm name
+	message - Message body for the error
+	error_number - Number of error to set, the options are 414, 500, 501 or 503
+
+Returns:
+	Integer - Error code: 0 on success, or -1 on failure.
+
+=cut
 sub setFarmErr    # ($farm_name,$content,$nerr)
 {
 	my ( $farm_name, $content, $nerr ) = @_;
@@ -1207,6 +1264,20 @@ sub setFarmErr    # ($farm_name,$content,$nerr)
 	return $output;
 }
 
+
+=begin nd
+Function: getFarmErr
+
+	Return the error message for a http error: 414, 500, 501 or 503
+	 
+Parameters:
+	farmname - Farm name
+	error_number - Number of error to set, the options are 414, 500, 501 or 503
+
+Returns:
+	Array - Message body for the error
+
+=cut
 # Only http function
 sub getFarmErr    # ($farm_name,$nerr)
 {
@@ -1244,7 +1315,19 @@ sub getFarmErr    # ($farm_name,$nerr)
 	return @output;
 }
 
-# Returns farm status
+
+=begin nd
+Function: getHTTPFarmBootStatus
+
+	Return the farm status at boot zevenet
+	 
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - return "down" if the farm not run at boot or "up" if the farm run at boot
+
+=cut
 sub getHTTPFarmBootStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -1269,7 +1352,22 @@ sub getHTTPFarmBootStatus    # ($farm_name)
 	return $output;
 }
 
-#Validate the farm Diffie Hellman configuration
+
+=begin nd
+Function: validateHTTPFarmDH
+
+	[NOT USED] Validate the farm Diffie Hellman configuration	 
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - always return -1
+	
+BUG
+	Not finish
+
+=cut
 sub validateHTTPFarmDH    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -1296,7 +1394,19 @@ sub validateHTTPFarmDH    # ($farm_name)
 	return $output;
 }
 
-#Generate the Diffie Hellman keys file
+
+=begin nd
+Function: genDHFile
+
+	[NOT USED] Generate the Diffie Hellman keys file
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - return 0 on success or different of 0 on failure
+	
+=cut
 sub genDHFile    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -1320,7 +1430,22 @@ sub genDHFile    # ($farm_name)
 	return $output
 }
 
-# Start Farm rutine
+
+=begin nd
+Function: _runHTTPFarmStart
+
+	Run a HTTP farm
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - return 0 on success or different of 0 on failure
+	
+FIXME: 
+	Control error if fail when restore backend status
+	
+=cut
 sub _runHTTPFarmStart    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -1342,6 +1467,7 @@ sub _runHTTPFarmStart    # ($farm_name)
 
 	if ( $status == 0 )
 	{
+		# set backend at status before that the farm stopped
 		&setFarmHttpBackendStatus( $farm_name );
 	}
 	else
@@ -1352,7 +1478,19 @@ sub _runHTTPFarmStart    # ($farm_name)
 	return $status;
 }
 
-# Stop Farm rutine
+
+=begin nd
+Function: _runHTTPFarmStop
+
+	Stop a HTTP farm
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - return 0 on success or different of 0 on failure
+		
+=cut
 sub _runHTTPFarmStop    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -1384,7 +1522,22 @@ sub _runHTTPFarmStop    # ($farm_name)
 	return $status;
 }
 
-#
+
+=begin nd
+Function: runHTTPFarmCreate
+
+	Create a HTTP farm
+	
+Parameters:
+	vip - Virtual IP where the virtual service is listening
+	port - Virtual port where the virtual service is listening
+	farmname - Farm name
+	type - Specify if farm is HTTP or HTTPS
+
+Returns:
+	Integer - return 0 on success or different of 0 on failure
+		
+=cut
 sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 {
 	my ( $vip, $vip_port, $farm_name, $farm_type ) = @_;
@@ -1443,13 +1596,43 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 	return $output;
 }
 
-# Returns farm max connections
+
+=begin nd
+Function: getHTTPFarmMaxConn
+
+	Returns farm max connections
+	
+Parameters:
+	none - .
+
+Returns:
+	Integer - always return 0
+	
+FIXME:
+	This function do nothing
+		
+=cut
 sub getHTTPFarmMaxConn    # ($farm_name)
 {
 	return 0;
 }
 
-# Returns farm listen port
+
+=begin nd
+Function: getHTTPFarmPort
+
+	Returns socket for HTTP farm
+		
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - return socket file
+	
+FIXME:
+	This funcion is only used in farmguardian functions. The function name must be called getHTTPFarmSocket, this function dont return the port
+		
+=cut
 sub getHTTPFarmPort       # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -1457,7 +1640,19 @@ sub getHTTPFarmPort       # ($farm_name)
 	return "/tmp/" . $farm_name . "_pound.socket";
 }
 
-# Returns farm PID
+
+=begin nd
+Function: getHTTPFarmPid
+
+	Returns farm PID
+		
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - return pid of farm, '-' if pid not exist or -1 on failure
+			
+=cut
 sub getHTTPFarmPid        # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -1492,7 +1687,19 @@ sub getHTTPFarmPid        # ($farm_name)
 	return $output;
 }
 
-# Returns farm Child PID (ONLY HTTP Farms)
+
+=begin nd
+Function: getFarmChildPid
+
+	Returns farm Child PID 
+		
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - return child pid of farm or -1 on failure
+			
+=cut
 sub getFarmChildPid    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -1519,7 +1726,23 @@ sub getFarmChildPid    # ($farm_name)
 	return $output;
 }
 
-# Returns farm vip
+
+=begin nd
+Function: getHTTPFarmVip
+
+	Returns farm vip or farm port
+		
+Parameters:
+	tag - requested parameter. The options are vip, for virtual ip or vipp, for virtual port
+	farmname - Farm name
+
+Returns:
+	Scalar - return vip or port of farm or -1 on failure
+	
+FIXME
+	vipps parameter is only used in tcp farms. Soon this parameter will be obsolet
+			
+=cut
 sub getHTTPFarmVip    # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
@@ -1555,7 +1778,21 @@ sub getHTTPFarmVip    # ($info,$farm_name)
 	return $output;
 }
 
-# Set farm virtual IP and virtual PORT
+
+=begin nd
+Function: setHTTPFarmVirtualConf
+
+	Set farm virtual IP and virtual PORT		
+	
+Parameters:
+	vip - virtual ip
+	port - virtual port
+	farmname - Farm name
+
+Returns:
+	Integer - return 0 on success or different on failure
+	
+=cut
 sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
@@ -1588,7 +1825,25 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	return $stat;
 }
 
-#
+
+=begin nd
+Function: setHTTPFarmServer
+
+	Add a new backend to a HTTP service or modify if it exists
+	
+Parameters:
+	ids - backend id
+	rip - backend ip
+	port - backend port
+	priority - The priority of this backend (between 1 and 9). Higher priority backends will be used more often than lower priority ones
+	timeout - Override the global time out for this backend
+	farmname - Farm name
+	service - service name
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+	
+=cut
 sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 {
 	my ( $ids, $rip, $port, $priority, $timeout, $farm_name, $service ) = @_;
@@ -1768,7 +2023,21 @@ sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: runHTTPFarmServerDelete
+
+	Delete a backend in a HTTP service
+	
+Parameters:
+	ids - backend id to delete it
+	farmname - Farm name
+	service - service name where is the backend
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+	
+=cut
 sub runHTTPFarmServerDelete    # ($ids,$farm_name,$service)
 {
 	my ( $ids, $farm_name, $service ) = @_;
@@ -1813,7 +2082,19 @@ sub runHTTPFarmServerDelete    # ($ids,$farm_name,$service)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getHTTPFarmBackendStatusCtl
+
+	Get status of a HTTP farm and its backends
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	array - return the output of poundctl command for a farm
+	
+=cut
 sub getHTTPFarmBackendStatusCtl    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -1823,8 +2104,24 @@ sub getHTTPFarmBackendStatusCtl    # ($farm_name)
 	return `$poundctl -c  /tmp/$farm_name\_pound.socket`;
 }
 
-#function that return the status information of a farm:
-#ip, port, backendstatus, weight, priority, clients, connections
+
+=begin nd
+Function: getHTTPFarmBackendsStatus
+
+	Function that return the status information of a farm: ip, port, backend status, weight, priority, clients, connections and service
+	
+Parameters:
+	farmname - Farm name
+	content - command output where parsing backend status
+
+Returns:
+	array - backends_data, each line is: "id" . "\t" . "ip" . "\t" . "port" . "\t" . "status" . "\t-\t" . "priority" . "\t" . "clients" . "\t" . "connections" . "\t" . "service"
+		
+FIXME:
+	will be useful change output format to hash format
+	delete @content arg and create it inside this funcion
+	
+=cut
 sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
@@ -1909,8 +2206,21 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 	return @backends_data;
 }
 
-# function that return if a pound backend is active, down by farmguardian
-# or it's in maintenance mode
+
+=begin nd
+Function: getHTTPBackendStatusFromFile
+
+	Function that return if a pound backend is active, down by farmguardian or it's in maintenance mode
+	
+Parameters:
+	farmname - Farm name
+	backend - backend id
+	service - service name
+
+Returns:
+	scalar - return backend status: "maintentance", "fgDOWN", "active" or -1 on failure
+		
+=cut
 sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
@@ -1948,7 +2258,21 @@ sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 	return $output;
 }
 
-#function that return the status information of a farm:
+
+=begin nd
+Function: getHTTPFarmBackendsClients
+
+	Function that return number of clients with session in a backend server
+	
+Parameters:
+	backend - backend id
+	content - command output where parsing backend status
+	farmname - Farm name
+
+Returns:
+	Integer - return number of clients in the backend
+		
+=cut
 sub getHTTPFarmBackendsClients    # ($idserver,@content,$farm_name)
 {
 	my ( $idserver, @content, $farm_name ) = @_;
@@ -1969,7 +2293,23 @@ sub getHTTPFarmBackendsClients    # ($idserver,@content,$farm_name)
 	return $numclients;
 }
 
-#function that return the status information of a farm:
+
+=begin nd
+Function: getHTTPFarmBackendsClientsList
+
+	Function that return sessions of clients
+	
+Parameters:
+	farmname - Farm name
+	content - command output where it must be parsed backend status
+
+Returns:
+	array - return information about existing sessions. The format for each line is: "service" . "\t" . "session_id" . "\t" . "session_value" . "\t" . "backend_id"
+		
+FIXME:
+	will be useful change output format to hash format
+	
+=cut
 sub getHTTPFarmBackendsClientsList    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
@@ -2004,7 +2344,19 @@ sub getHTTPFarmBackendsClientsList    # ($farm_name,@content)
 	return @client_list;
 }
 
-#function that renames a farm
+=begin nd
+Function: setHTTPNewFarmName
+
+	Function that renames a farm. Before call this function, stop the farm.
+	
+Parameters:
+	farmname - Farm name
+	newfarmname - New farm name
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+		
+=cut
 sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $farm_name, $new_farm_name ) = @_;
@@ -2057,8 +2409,21 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 	return $output;
 }
 
-# HTTPS only
-# Set Farm Ciphers value
+
+=begin nd
+Function: setFarmCipherList
+
+	Set Farm Ciphers value
+	
+Parameters:
+	farmname - Farm name
+	ciphers - The options are: cipherglobal, cipherpci or ciphercustom
+	cipherc - Cipher custom, this field is used when ciphers is ciphercustom
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+		
+=cut
 sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 {
 	# assign first/second/third argument or take global value
@@ -2112,8 +2477,19 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 	return $output;
 }
 
-# HTTPS only
-# Get Farm Ciphers value
+
+=begin nd
+Function: getFarmCipherList
+
+	Get Cipher value defined in pound configuration file 
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - return a string with cipher value or -1 on failure 
+		
+=cut
 sub getFarmCipherList    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -2137,8 +2513,19 @@ sub getFarmCipherList    # ($farm_name)
 	return $output;
 }
 
-# HTTPS only
-# Get Farm Ciphers value
+
+=begin nd
+Function: getFarmCipherSet
+
+	Get Ciphers value defined in pound configuration file. Possible values are: cipherglobal, cipherpci or ciphercustom.
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - return a string with cipher set (ciphers) or -1 on failure 
+		
+=cut
 sub getFarmCipherSet    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -2163,7 +2550,19 @@ sub getFarmCipherSet    # ($farm_name)
 	return $output;
 }
 
-#function that check if the config file is OK.
+
+=begin nd
+Function: getHTTPFarmConfigIsOK
+
+	Function that check if the config file is OK.
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - return 0 on success or different on failure
+		
+=cut
 sub getHTTPFarmConfigIsOK    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -2185,7 +2584,21 @@ sub getHTTPFarmConfigIsOK    # ($farm_name)
 	return $output;
 }
 
-#function that check if a backend on a farm is on maintenance mode
+
+=begin nd
+Function: getHTTPFarmBackendMaintenance
+
+	Function that check if a backend on a farm is on maintenance mode
+	
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+	service - Service name
+
+Returns:
+	scalar - if backend is in maintenance mode, return 0 else return -1
+		
+=cut
 sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
@@ -2224,7 +2637,21 @@ sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	return $output;
 }
 
-#function that enable the maintenance mode for backend
+
+=begin nd
+Function: setHTTPFarmBackendMaintenance
+
+	Function that enable the maintenance mode for backend
+	
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+	service - Service name
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+		
+=cut
 sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
@@ -2250,7 +2677,21 @@ sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	return $output;
 }
 
-#function that disable the maintenance mode for backend
+
+=begin nd
+Function: setHTTPFarmBackendMaintenance
+
+	Function that disable the maintenance mode for backend
+	
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+	service - Service name
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+		
+=cut
 sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
@@ -2272,12 +2713,32 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 	my @run    = `$poundctl_command`;
 	$output = $?;
 
+	# save backend status in status file
 	&getFarmHttpBackendStatus( $farm_name, $backend, "active", $idsv );
 
 	return $output;
 }
 
-#function that save in a file the backend status (maintenance or not)
+
+=begin nd
+Function: getFarmHttpBackendStatus
+
+	Function that save in a file the backend status (maintenance or not)
+	
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+	status - backend status to save in the status file
+	service_id - Service id
+
+Returns:
+	none - .
+		
+FIXME:
+	Rename the function, something like saveFarmHTTPBackendstatus, not is "get", this function makes changes in the system
+	Not return nothing, do error control
+		
+=cut
 sub getFarmHttpBackendStatus    # ($farm_name,$backend,$status,$idsv)
 {
 	my ( $farm_name, $backend, $status, $idsv ) = @_;
@@ -2357,7 +2818,24 @@ sub getFarmHttpBackendStatus    # ($farm_name,$backend,$status,$idsv)
 
 }
 
-#Function that removes a backend from the status file
+
+=begin nd
+Function: runRemovehttpBackend
+
+	Function that removes a backend from the status file
+	
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+	service - Service name
+
+Returns:
+	none - .
+		
+FIXME:
+	This function returns nothing, do error control
+		
+=cut
 sub runRemovehttpBackend    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
@@ -2390,6 +2868,22 @@ sub runRemovehttpBackend    # ($farm_name,$backend,$service)
 	untie @filelines;
 }
 
+
+=begin nd
+Function: setFarmHttpBackendStatus
+
+	For a HTTP farm, it gets each backend status from status file and set it in pound daemon
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	none - .
+		
+FIXME:
+	This function returns nothing, do error control
+		
+=cut
 sub setFarmHttpBackendStatus    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -2425,7 +2919,23 @@ sub setFarmHttpBackendStatus    # ($farm_name)
 	close $fh;
 }
 
-#Create a new Service in a HTTP farm
+
+=begin nd
+Function: setFarmHTTPNewService
+
+	Create a new Service in a HTTP farm
+	
+Parameters:
+	farmname - Farm name
+	service - Service name
+
+Returns:
+	Integer - Error code: 0 on success, other value on failure
+		
+FIXME:
+	This function returns nothing, do error control
+		
+=cut
 sub setFarmHTTPNewService    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
@@ -2522,7 +3032,23 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 	return $output;
 }
 
-#Create a new farm service
+
+=begin nd
+Function: setFarmNewService
+
+	[Not used] Create a new Service in a HTTP farm
+	
+Parameters:
+	farmname - Farm name
+	service - Service name
+
+Returns:
+	Integer - Error code: 0 on success, other value on failure
+		
+FIXME:
+	Exist another function, setFarmHttpBackendStatus, with same function.
+		
+=cut
 sub setFarmNewService    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
@@ -2538,7 +3064,23 @@ sub setFarmNewService    # ($farm_name,$service)
 	return $output;
 }
 
-#delete a service in a Farm
+
+=begin nd
+Function: deleteFarmService
+
+	Delete a service in a Farm
+	
+Parameters:
+	farmname - Farm name
+	service - Service name
+
+Returns:
+	Integer - Error code: 0 on success, -1 on failure
+		
+FIXME:
+	Rename function to delHTTPFarmService
+		
+=cut
 sub deleteFarmService    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
@@ -2620,8 +3162,25 @@ sub deleteFarmService    # ($farm_name,$service)
 	return $output;
 }
 
-#function that return indicated value from a HTTP Service
-#vs return virtual server
+
+=begin nd
+Function: getHTTPFarmVS
+
+	Return virtual server parameter
+	
+Parameters:
+	farmname - Farm name
+	service - Service name
+	tag - Indicate which field will be returned. The options are: vs, urlp, redirect, redirecttype, cookieins, cookieins-name, cookieins-domain,
+	cookieins-path, cookieins-ttlc, dynscale, sesstype, ttl, sessionid, httpsbackend or backends
+
+Returns:
+	scalar - if service and tag is blank, return all services in a string: "service0 service1 ..." else return the parameter value
+
+FIXME:
+	return a hash with all parameters
+				
+=cut
 sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 {
 	my ( $farm_name, $service, $tag ) = @_;
@@ -2721,6 +3280,7 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 				last;
 			}
 		}
+		
 		if ( $tag eq "redirecttype" )
 		{
 			if (    ( $line =~ "Redirect \"" || $line =~ "RedirectAppend \"" )
@@ -2942,7 +3502,25 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 	return $output;
 }
 
-#set values for a service
+
+=begin nd
+Function: setHTTPFarmVS
+
+	Set values for service parameters. The parameters are: vs, urlp, redirect, redirectappend, cookieins, cookieins-name, cookieins-domain,
+	cookieins-path, cookieins-ttlc, dynscale, sesstype, ttl, sessionid, httpsbackend or backends
+	
+	A blank string comment the tag field in config file
+	
+Parameters:
+	farmname - Farm name
+	service - Service name
+	tag - Indicate which parameter modify
+	string - value for the field "tag"
+
+Returns:
+	scalar - if service and tag is blank, return all services in a string: "service0 service1 ..." else return the parameter value
+		
+=cut
 sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 {
 	my ( $farm_name, $service, $tag, $string ) = @_;
@@ -3269,7 +3847,24 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 	return $output;
 }
 
-#get index of a service in a http farm
+
+=begin nd
+Function: getFarmVSI
+
+	Get the index of a service in a http farm
+	
+Parameters:
+	farmname - Farm name
+	service - Service name
+
+Returns:
+	integer - Service index 
+	
+FIXME: 
+	Initialize output to -1 and do error control
+	Rename with intuitive name, something like getHTTPFarmServiceIndex
+		
+=cut
 sub getFarmVSI    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
@@ -3295,7 +3890,23 @@ sub getFarmVSI    # ($farm_name,$service)
 	return $output;
 }
 
-# Get an array containing services that are configured in a http farm
+ 
+=begin nd
+Function: getFarmServices
+
+	Get an array containing service name that are configured in a http farm
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Array - service names
+	
+FIXME: 
+	rename to getHTTPFarmServices
+	&getHTTPFarmVS(farmname) does same but in a string
+		
+=cut
 sub getFarmServices
 {
 	my ( $farm_name ) = @_;
@@ -3320,9 +3931,24 @@ sub getFarmServices
 	return @output;
 }
 
-# used by farmguardian
-#function that removes all the active sessions enabled to a backend in a given service
-#needed: farmname, serviceid, backendid
+
+=begin nd
+Function: setFarmBackendsSessionsRemove
+
+	Remove all the active sessions enabled to a backend in a given service
+	Used by farmguardian
+	
+Parameters:
+	farmname - Farm name
+	service - Service name
+	backend - Backend id
+
+Returns:
+	none - .
+	
+FIXME: 
+		
+=cut
 sub setFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 {
 	my ( $farm_name, $service, $backendid ) = @_;
@@ -3370,7 +3996,23 @@ sub setFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 	}
 }
 
-# modify farm name
+
+=begin nd
+Function: setFarmNameParam
+
+	[NOT USED] Rename a HTTP farm
+	
+Parameters:
+	farmname - Farm name
+	newfarmname - New farm name
+
+Returns:
+	none - Error code: 0 on success or -1 on failure
+	
+BUG: 
+	this function is duplicated
+		
+=cut
 sub setFarmNameParam    # &setFarmNameParam( $farm_name, $new_name );
 {
 	my ( $farmName, $newName ) = @_;
@@ -3403,7 +4045,25 @@ sub setFarmNameParam    # &setFarmNameParam( $farm_name, $new_name );
 	return $output;
 }
 
-# -------------------- MOVE SERVICE FUNCTION --------------------------#
+
+=begin nd
+Function: moveService
+
+	Move a HTTP service to change its preference. This function changes the possition of a service in farm config file
+	
+Parameters:
+	farmname - Farm name
+	move - Direction where it moves the service. The possbile value are: "down", decrease the priority or "up", increase the priority
+	service - Service to move
+
+Returns:
+	integer - Always return 0
+	
+FIXME: 
+	Rename function to setHTTPFarmMoveService
+	Always return 0, create error control
+		
+=cut
 sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 {
 	# Params
@@ -3507,8 +4167,25 @@ sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 	return 0;
 }
 
-# Change farm_status.cfg file
-# &moveServiceFarmStatus($farmName, $moveService, $serviceSelect);
+
+=begin nd
+Function: moveServiceFarmStatus
+
+	Modify the service index in status file ( farmname_status.cfg ). For updating farmguardian backend status.
+	
+Parameters:
+	farmname - Farm name
+	move - Direction where it moves the service. The possbile value are: "down", decrease the priority or "up", increase the priority
+	service - Service to move
+
+Returns:
+	integer - Always return 0
+	
+FIXME: 
+	Rename function to setHTTPFarmMoveServiceStatusFile
+	Always return 0, create error control
+		
+=cut
 sub moveServiceFarmStatus
 {
 	my ( $farmName, $moveService, $serviceSelect ) = @_;
@@ -3575,6 +4252,54 @@ sub moveServiceFarmStatus
 	return 0;
 }
 
+
+=begin nd
+Function: getHttpFarmService
+
+	Get a struct with all parameters of a service and theirs values
+	
+	@{ $out_ba }, $backend_ref
+			  
+	$backend_ref = {
+				  id            => $id,
+				  backendstatus => $backendstatus,
+				  ip            => $ip,
+				  port          => $port,
+				  timeout       => $tout,
+				  weight        => $prio
+	}
+
+	$service_ref = {
+					 id           => $service,
+					 vhost        => $vser,
+					 urlp         => $urlp,
+					 redirect     => $redirect,
+					 redirecttype => $redirecttype,
+					 cookieinsert => $cookiei,
+					 cookiename   => $cookieinsname,
+					 cookiedomain => $domainname,
+					 cookiepath   => $path,
+					 cookiettl    => $ttlc + 0,
+					 persistence  => $session,
+					 ttl          => $ttl + 0,
+					 sessionid    => $sesid,
+					 leastresp    => $dyns,
+					 httpsb       => $httpsbe,
+					 fgtimecheck  => $fgttcheck + 0,
+					 fgscript     => $fgscript,
+					 fgenabled    => $fguse,
+					 fglog        => $fglog,
+					 backends     => $out_ba
+	};
+	
+Parameters:
+	farmname - Farm name
+	service - Service to move
+
+Returns:
+	hash ref - $service_ref
+			
+=cut
 sub getHttpFarmService
 {
 	my $farmname    = shift;    # input
@@ -3693,6 +4418,23 @@ sub getHttpFarmService
 	return $service_ref;
 }
 
+
+=begin nd
+Function: getHTTPServicePosition
+
+	Get the index of a service in a http farm
+	
+Parameters:
+	farmname - Farm name
+	service - Service to move
+
+Returns:
+	integer - Always return 0
+	
+FIXME: 
+	Duplicate, &getFarmVSI does the same
+		
+=cut
 sub getHTTPServicePosition 
 {
 	my ( $farmname, $service ) = @_;
@@ -3713,7 +4455,7 @@ sub getHTTPServicePosition
 		}
 	}
 	
-	return $srv_position;					
+	return $srv_position;	
 }
 
 1;
