@@ -2118,8 +2118,9 @@ Returns:
 	array - backends_data, each line is: "id" . "\t" . "ip" . "\t" . "port" . "\t" . "status" . "\t-\t" . "priority" . "\t" . "clients" . "\t" . "connections" . "\t" . "service"
 		
 FIXME:
-	will be useful change output format to hash format
-	delete @content arg and create it inside this funcion
+	1. Will be useful change output format to hash format
+	2. Delete @content arg and create it inside this funcion
+	3. Sustitute getFarmBackendsClients call for getHTTPFarmBackendsClients
 	
 =cut
 sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
@@ -3518,7 +3519,7 @@ Parameters:
 	string - value for the field "tag"
 
 Returns:
-	scalar - if service and tag is blank, return all services in a string: "service0 service1 ..." else return the parameter value
+	Integer - Error code: 0 on success or -1 on failure
 		
 =cut
 sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)

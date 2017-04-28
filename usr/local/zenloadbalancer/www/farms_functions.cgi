@@ -1962,7 +1962,21 @@ sub setFarmServer # $output ($ids,$rip,$port|$iface,$max,$weight,$priority,$time
 	return $output;
 }
 
-#
+
+=begin nd
+Function: runFarmServerDelete
+
+	Delete a Backend
+	
+Parameters:
+	id - Backend id, if this id doesn't exist, it will create a new backend
+	farmname - Farm name
+	service - service name. For HTTP farms
+
+Returns:
+	Scalar - Error code: undef on success or -1 on error 
+			
+=cut
 sub runFarmServerDelete    # ($ids,$farm_name,$service)
 {
 	my ( $ids, $farm_name, $service ) = @_;
@@ -2000,7 +2014,19 @@ sub runFarmServerDelete    # ($ids,$farm_name,$service)
 	return $output;
 }
 
-#
+
+=begin nd
+Function: getFarmBackendStatusCtl
+
+	get information about status and configuration of backend
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Array - Each profile has a different output format
+			
+=cut
 sub getFarmBackendStatusCtl    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -2031,14 +2057,24 @@ sub getFarmBackendStatusCtl    # ($farm_name)
 	return @output;
 }
 
-#function that return the status information of a farm:
-#ip, port, backendstatus, weight, priority, clients
+
 =begin nd
 
+Function: getFarmBackendStatus
+
+	Get processed information about status and configuration of backends
+	
+Parameters:
+	farmname - Farm name
+	content - Raw backend info
+
+Returns:
+	Array - List of backend. Each profile has a different output format 
 	
 FIXME:
-	always is called getFarmBackendStatusCtl function before this function, to pass @content array, then will be useful for avoid bugs call getFarmBackendStatusCtl inside this function.
+	1. Always is called getFarmBackendStatusCtl function before this function, to pass @content array, then will be useful for avoid bugs call getFarmBackendStatusCtl inside this function.
 	Better, call getHTTPFarmBackendStatusCtl inside that getHTTPFarmBackendsStatus function, so it is not necessary work with @content variable
+	2. Return a hash
 	
 =cut
 sub getFarmBackendsStatus    # ($farm_name,@content)
@@ -2071,7 +2107,25 @@ sub getFarmBackendsStatus    # ($farm_name,@content)
 	return @output;
 }
 
-#function that return the status information of a farm:
+
+=begin nd
+
+Function: getFarmBackendsClients
+
+	Function that return the status information of sessions
+	
+Parameters:
+	backend - Backend id
+	content - Raw backend info
+	farmname - Farm name
+
+Returns:
+	Integer - Number of clients with session in a backend or -1 on failure
+	
+FIXME: 
+	used in zapi v2 and tcp farms
+	
+=cut
 sub getFarmBackendsClients    # ($idserver,@content,$farm_name)
 {
 	my ( $idserver, @content, $farm_name ) = @_;
@@ -2091,7 +2145,24 @@ sub getFarmBackendsClients    # ($idserver,@content,$farm_name)
 	return $output;
 }
 
-#function that return the status information of a farm:
+
+=begin nd
+
+Function: getFarmBackendsClientsList
+
+	Return session status of all backends of a farm
+	
+Parameters:
+	content - Raw backend info
+	farmname - Farm name
+
+Returns:
+	Array - The format for each line is: "service" . "\t" . "session_id" . "\t" . "session_value" . "\t" . "backend_id"
+	
+FIXME: 
+	Same name than getFarmBackendsClients function but different uses
+	
+=cut
 sub getFarmBackendsClientsList    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
@@ -2112,6 +2183,21 @@ sub getFarmBackendsClientsList    # ($farm_name,@content)
 	return @output;
 }
 
+
+=begin nd
+Function: setFarmBackendStatus
+
+	Set backend status for a farm
+		
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+	status - Backend status. The possible values are: "up" or "down"
+
+Returns:
+	Integer - 0 on success or other value on failure
+	
+=cut
 sub setFarmBackendStatus    # ($farm_name,$index,$stat)
 {
 	my ( $farm_name, $index, $stat ) = @_;
@@ -2134,7 +2220,20 @@ sub setFarmBackendStatus    # ($farm_name,$index,$stat)
 	return $output;
 }
 
-#function that renames a farm
+
+=begin nd
+Function: setNewFarmName
+
+	Function that renames a farm. Before call this function, stop the farm.
+	
+Parameters:
+	farmname - Farm name
+	newfarmname - New farm name
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+		
+=cut
 sub setNewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $farm_name, $new_farm_name ) = @_;
@@ -2239,7 +2338,19 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	return $output;
 }
 
-#function that check if the config file is OK.
+
+=begin nd
+Function: getFarmConfigIsOK
+
+	Function that check if the config file is OK.
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - return 0 on success or different on failure
+		
+=cut
 sub getFarmConfigIsOK    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -2259,7 +2370,21 @@ sub getFarmConfigIsOK    # ($farm_name)
 	return $output;
 }
 
-#function that check if a backend on a farm is on maintenance mode
+
+=begin nd
+Function: getFarmBackendMaintenance
+
+	Function that check if a backend on a farm is on maintenance mode
+	
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+	service - Service name
+
+Returns:
+	scalar - if backend is in maintenance mode, return 0 else return -1
+		
+=cut
 sub getFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
@@ -2283,7 +2408,21 @@ sub getFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	return $output;
 }
 
-#function that enable the maintenance mode for backend
+
+=begin nd
+Function: setFarmBackendMaintenance
+
+	Function that enable the maintenance mode for backend
+	
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+	service - Service name
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+		
+=cut
 sub setFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
@@ -2307,7 +2446,21 @@ sub setFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	return $output;
 }
 
-#function that disable the maintenance mode for backend
+
+=begin nd
+Function: setFarmBackendNoMaintenance
+
+	Function that disable the maintenance mode for backend
+	
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+	service - Service name
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+		
+=cut
 sub setFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
@@ -2331,8 +2484,25 @@ sub setFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 	return $output;
 }
 
-# Generic function
-#checks thata farmname has correct characters (number, letters and lowercases)
+
+=begin nd
+Function: checkFarmnameOK
+
+	Checks the farmname has correct characters (number, letters and lowercases)
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - return 0 on success or -1 on failure
+	
+FIXME:
+	Use check_function.cgi regexp
+	
+NOTE:
+	Generic function
+		
+=cut
 sub checkFarmnameOK    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -2342,8 +2512,21 @@ sub checkFarmnameOK    # ($farm_name)
 	  : -1;
 }
 
-#function that return indicated value from a HTTP Service
-#vs return virtual server
+
+=begin nd
+Function: getFarmVS
+
+	Return virtual server parameter
+	
+Parameters:
+	farmname - Farm name
+	service - Service name
+	tag - Indicate which field will be returned
+
+Returns:
+	Integer - The requested parameter value
+
+=cut
 sub getFarmVS    # ($farm_name, $service, $tag)
 {
 	my ( $farm_name, $service, $tag ) = @_;
@@ -2363,7 +2546,22 @@ sub getFarmVS    # ($farm_name, $service, $tag)
 	return $output;
 }
 
-#set values for a service
+
+=begin nd
+Function: setFarmVS
+
+	Set values for service parameters
+	
+Parameters:
+	farmname - Farm name
+	service - Service name
+	tag - Indicate which parameter modify
+	string - value for the field "tag"
+
+Returns:
+	Integer - Error code: 0 on success or -1 on failure
+		
+=cut
 sub setFarmVS    # ($farm_name,$service,$tag,$string)
 {
 	my ( $farm_name, $service, $tag, $string ) = @_;
@@ -2383,6 +2581,23 @@ sub setFarmVS    # ($farm_name,$service,$tag,$string)
 	return $output;
 }
 
+
+=begin nd
+Function: setFarmName
+
+	Set values for service parameters
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	none - .
+		
+BUG:
+	This function not return nothing. Farm name never will change. This function worked before with global variables. 
+	Only it is used in zapi v2. Do this sentence in zapi v2 and remove function
+		
+=cut
 sub setFarmName    # ($farm_name)
 {
 	my $farm_name = shift;

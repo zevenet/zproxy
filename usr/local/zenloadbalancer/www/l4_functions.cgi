@@ -2224,7 +2224,7 @@ Function: setL4FarmBackendStatus
 		
 Parameters:
 	farmname - Farm name
-	server - Server id
+	backend - Backend id
 	status - Backend status. The possible values are: "up" or "down"
 
 Returns:
