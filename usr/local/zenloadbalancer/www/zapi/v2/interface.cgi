@@ -692,7 +692,7 @@ sub new_vlan()
 
 	# get params of fdev
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
-	my @system_interfaces = $socket->if_list;
+	my @system_interfaces = &getInterfaceList();
 
 	$new_if_ref->{name} = $ifn;
 	$new_if_ref->{dev} = $fdev;

@@ -148,7 +148,7 @@ sub listallips    # ()
 
 	my @listinterfaces = ();
 	my $s              = IO::Socket::INET->new( Proto => 'udp' );
-	my @interfaces     = $s->if_list;
+	my @interfaces     = &getInterfaceList();
 	for my $if ( @interfaces )
 	{
 		my $ip = $s->if_addr( $if );
@@ -183,7 +183,7 @@ sub listActiveInterfaces    # ($class)
 	my $class = shift;
 
 	my $s = IO::Socket::INET->new( Proto => 'udp' );
-	my @interfaces = $s->if_list;
+	my @interfaces = &getInterfaceList();
 	my @aifaces;
 
 	for my $if ( @interfaces )
@@ -341,7 +341,7 @@ sub ifexist    # ($nif)
 	use IO::Socket;
 	use IO::Interface qw(:flags);
 	my $s          = IO::Socket::INET->new( Proto => 'udp' );
-	my @interfaces = $s->if_list;
+	my @interfaces = &getInterfaceList();
 	my $configdir  = &getGlobalConfiguration( 'configdir' );
 
 	my $status;
@@ -1485,7 +1485,7 @@ sub iponif            # ($if)
 	use IO::Interface qw(:flags);
 
 	my $s = IO::Socket::INET->new( Proto => 'udp' );
-	my @interfaces = $s->if_list;
+	my @interfaces = &getInterfaceList();
 	my $iponif = $s->if_addr( $if );
 
 	return $iponif;
@@ -1513,7 +1513,7 @@ sub maskonif    # ($if)
 	use IO::Socket;
 	use IO::Interface qw(:flags);
 	my $s = IO::Socket::INET->new( Proto => 'udp' );
-	my @interfaces = $s->if_list;
+	my @interfaces = &getInterfaceList();
 	my $maskonif = $s->if_netmask( $if );
 	return $maskonif;
 }
@@ -1798,33 +1798,13 @@ See Also:
 =cut
 sub getInterfaceList
 {
-	my @interfaces;
-	my $iface;
-	my $localiface;
+	my $sys_net_dir = getGlobalConfiguration( 'sys_net_dir' );
 
-	my @iplist = `ip addr list`;
-	foreach my $line ( @iplist )
-	{
-		if ( $line =~ /^\d+: / )
-		{
-			my @linelist = split /[:@,\s\/]+/, $line;
-			$iface      = $linelist[1];
-			$localiface = $iface;
-			goto addiface;
-		}
-		if ( $iface ne "" && $line =~ /inet.*$iface.+/ )
-		{
-			my @linelist = split /[\s\/]+/, $line;
-			$localiface = $linelist[scalar @linelist - 1];
-			goto addiface;
-		}
-		next;
-	  addiface:
-		push ( @interfaces, $localiface );
-		next;
-	}
+	opendir( my $if_dir, $sys_net_dir );
+	my @if_list = grep { -l $_ } readdir $if_dir;
+	closedir $if_dir;
 
-	return @interfaces;
+	return @if_list;
 }
 
 =begin nd

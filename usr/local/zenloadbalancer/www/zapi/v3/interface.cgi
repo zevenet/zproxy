@@ -365,7 +365,6 @@ sub new_vlan # ( $json_obj )
 
 	# setup parameters of vlan
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
-	#~ my @system_interfaces = $socket->if_list;
 
 	$if_ref = {
 				name    => $json_obj->{ name },
@@ -2125,8 +2124,7 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	my $ip_v = 4;
 
 	# validate NIC NAME
-	my $socket = IO::Socket::INET->new( Proto => 'udp' );
-	my @system_interfaces = $socket->if_list;
+	my @system_interfaces = &getInterfaceList();
 	my $type = &getInterfaceType( $nic );
 
 	unless ( grep( { $nic eq $_ } @system_interfaces ) && $type eq 'nic' )
@@ -2562,8 +2560,7 @@ sub modify_interface_bond # ( $json_obj, $bond )
 	my $ip_v = 4;
 
 	# validate BOND NAME
-	my $socket = IO::Socket::INET->new( Proto => 'udp' );
-	my @system_interfaces = $socket->if_list;
+	my @system_interfaces = &getInterfaceList();
 	my $type = &getInterfaceType( $bond );
 
 	unless ( grep( { $bond eq $_ } @system_interfaces ) && $type eq 'bond' )
@@ -3068,8 +3065,7 @@ sub modify_gateway # ( $json_obj )
 	# validate INTERFACE
 	if ( exists $json_obj->{ interface } )
 	{
-		my $socket = IO::Socket::INET->new( Proto => 'udp' );
-		my @system_interfaces = $socket->if_list;
+		my @system_interfaces = &getInterfaceList();
 		#~ my $type = &getInterfaceType( $nic );
 
 		unless ( grep( { $json_obj->{ interface } eq $_ } @system_interfaces ) )

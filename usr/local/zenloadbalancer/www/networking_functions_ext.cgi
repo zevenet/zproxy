@@ -582,7 +582,7 @@ sub getSystemInterfaceList
 
 	use IO::Interface qw(:flags);
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
-	my @system_interfaces = $socket->if_list;
+	my @system_interfaces = &getInterfaceList();
 
 	## Build system device "tree"
 	for my $if_name ( @system_interfaces )    # list of interface names
@@ -1845,8 +1845,7 @@ sub getInterfaceTypeList
 
 	if ( $list_type =~ /^(?:nic|bond|vlan)$/ )
 	{
-		my $socket = IO::Socket::INET->new( Proto => 'udp' );
-		my @system_interfaces = $socket->if_list;
+		my @system_interfaces = &getInterfaceList();
 
 		for my $if_name ( @system_interfaces )
 		{

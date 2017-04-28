@@ -287,7 +287,6 @@ sub iponif            # ($if)
 	#~ use IO::Interface qw(:flags);
 
 	my $s = IO::Socket::INET->new( Proto => 'udp' );
-	#~ my @interfaces = $s->if_list;
 	my $iponif = $s->if_addr( $if );
 
 	return $iponif;

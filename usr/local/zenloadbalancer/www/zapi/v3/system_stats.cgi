@@ -197,8 +197,7 @@ sub get_iface_graphs	#()
 	my $description = "Get interface graphs";
 	my $errormsg;
 	# validate NIC NAME
-	my $socket = IO::Socket::INET->new( Proto => 'udp' );
-	my @system_interfaces = $socket->if_list;
+	my @system_interfaces = &getInterfaceList();
 
 	if ( ! grep( /^$iface$/, @system_interfaces ) )
 	{
@@ -250,8 +249,7 @@ sub get_frec_iface_graphs	#()
 	my $description = "Get interface graphs";
 	my $errormsg;
 	# validate NIC NAME
-	my $socket = IO::Socket::INET->new( Proto => 'udp' );
-	my @system_interfaces = $socket->if_list;
+	my @system_interfaces = &getInterfaceList();
 
 	if ( ! grep( /^$iface$/, @system_interfaces ) )
 	{
