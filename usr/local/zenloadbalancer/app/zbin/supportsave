@@ -72,6 +72,8 @@ echo "netstat -putan" >> $dir_backup/netstat.txt
 echo "netstat -nr" >> $dir_backup/netstat.txt
 /bin/netstat -nr >> $dir_backup/netstat.txt
 
+/usr/sbin/arp -n >> $dir_backup/arp_table.txt
+
 /usr/sbin/dmidecode >> $dir_backup/dmi.txt
 /bin/hostname >> $dir_backup/dmi.txt
 
