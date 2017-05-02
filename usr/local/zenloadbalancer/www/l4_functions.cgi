@@ -110,15 +110,11 @@ Parameters:
 
 Returns:
 	String - return a list with the used ports by all L4xNAT farms. Format: "portList1,portList2,..."
-
-BUG:
-	Parameter is not farms_type, is farm_procotol. It is necessary add to port list only the ports of farms with same protocol that parameter.
-	There is to add a if senctence to control than farm protocol it is the same than request protocol
 	
 =cut
-sub getL4FarmsPorts    # ($farm_type)
+sub getL4FarmsPorts    # ($protocol)
 {
-	my $farm_type = shift;
+	my $protocol = shift;
 
 	my $first           = 1;
 	my $port_list       = "";
@@ -132,8 +128,7 @@ sub getL4FarmsPorts    # ($farm_type)
 			my $farm_type     = &getFarmType( $farm_name );
 			my $farm_protocol = &getFarmProto( $farm_name );
 
-
-			if ( $farm_type eq "l4xnat" )
+			if ( ( $farm_type eq "l4xnat" ) && ( $protocol eq $farm_protocol ) )
 			{
 				my $farm_port = &getFarmVip( "vipp", $farm_name );
 
@@ -152,6 +147,7 @@ sub getL4FarmsPorts    # ($farm_type)
 			}
 		}
 	}
+	
 	return $port_list;
 }
 
@@ -167,9 +163,8 @@ Parameters:
 Returns:
 	Integer - Always return 0
 
-BUG:
-	1. Bug in "loadMfModule" function, loading module "/sbin/modprobe nf_conntrack_ftp ports=888:999,12,34:69,555" not allow port ranges. It is necessary create a port list: "888,889,890,891,892..."
-		This bug could be fixed, using the function "getFarmPortList" 
+FIXME:
+	1. The maximum number of ports, when the module is loaded, is 8
 	2. Always return 0
 	
 =cut
@@ -184,21 +179,21 @@ sub loadL4Modules    # ($protocol)
 	{
 		&removeNfModule( "nf_nat_sip" );
 		&removeNfModule( "nf_conntrack_sip" );
-		&loadNfModule( "nf_conntrack_sip", "ports=$port_list" );
+		&loadNfModule( "nf_conntrack_sip", "ports=\"$port_list\"" );
 		&loadNfModule( "nf_nat_sip",       "" );
 	}
 	elsif ( $protocol eq "ftp" )
 	{
 		&removeNfModule( "nf_nat_ftp" );
 		&removeNfModule( "nf_conntrack_ftp" );
-		&loadNfModule( "nf_conntrack_ftp", "ports=$port_list" );
+		&loadNfModule( "nf_conntrack_ftp", "ports=\"$port_list\"" );
 		&loadNfModule( "nf_nat_ftp",       "" );
 	}
 	elsif ( $protocol eq "tftp" )
 	{
 		&removeNfModule( "nf_nat_tftp" );
 		&removeNfModule( "nf_conntrack_tftp" );
-		&loadNfModule( "nf_conntrack_tftp", "ports=$port_list" );
+		&loadNfModule( "nf_conntrack_tftp", "ports=\"$port_list\"" );
 		&loadNfModule( "nf_nat_tftp",       "" );
 	}
 
@@ -209,7 +204,7 @@ sub loadL4Modules    # ($protocol)
 =begin nd
 Function: validL4ExtPort
 
-	Load sip, ftp or tftp conntrack module for l4 farms
+	check if the port is valid for a sip, ftp or tftp farm
 	
 Parameters:
 	protocol - protocol module to load
@@ -218,9 +213,6 @@ Parameters:
 Returns:
 	Integer - 1 is valid or 0 is not valid
 
-BUG:
-	Fit regexp, to not allow port ranges. /^((\d+),(\d+))+$/
-	
 =cut
 sub validL4ExtPort    # ($farm_protocol,$ports)
 {
@@ -232,7 +224,7 @@ sub validL4ExtPort    # ($farm_protocol,$ports)
 		 || $farm_protocol eq "ftp"
 		 || $farm_protocol eq "tftp" )
 	{
-		if ( $ports =~ /\d+/ || $ports =~ /((\d+),(\d+))+/ )
+		if ( $ports =~ /^\d+$/ || $ports =~ /^((\d+),(\d+))+$/ )
 		{
 			$status = 1;
 		}
@@ -2348,7 +2340,8 @@ sub getFarmPortList    # ($fvipp)
 	my @portlist = split ( ',', $fvipp );
 	my @retportlist = ();
 
-	if ( $portlist[0] !~ /\*/ )
+	#~ if ( $portlist[0] !~ /\*/ )
+	if ( ! grep ( /\*/, @portlist ) )
 	{
 		foreach my $port ( @portlist )
 		{
