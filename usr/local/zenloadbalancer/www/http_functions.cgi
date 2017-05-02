@@ -2394,9 +2394,13 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 			use Tie::File;
 			tie my @configfile, 'Tie::File', "$farm_filename";
 
-			for ( @configfile )
+			foreach my $line ( @configfile )
 			{
-				s/$farm_name/$new_farm_name/g;
+				# not rename service if its name has the $farmname chain
+				if ( $line !~ /\tService / )
+				{
+					s/$farm_name/$new_farm_name/g;
+				}
 			}
 			untie @configfile;
 
