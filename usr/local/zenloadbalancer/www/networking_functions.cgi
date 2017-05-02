@@ -1801,7 +1801,7 @@ sub getInterfaceList
 	my $sys_net_dir = getGlobalConfiguration( 'sys_net_dir' );
 
 	opendir( my $if_dir, $sys_net_dir );
-	my @if_list = grep { -l $_ } readdir $if_dir;
+	my @if_list = grep { -l "$sys_net_dir/$_" } readdir $if_dir;
 	closedir $if_dir;
 
 	return @if_list;
