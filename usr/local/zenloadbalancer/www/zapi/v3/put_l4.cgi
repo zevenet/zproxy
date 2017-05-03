@@ -222,6 +222,10 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			}
 			else
 			{
+				if ( $json_obj->{ protocol } eq 'all' )
+				{
+					$json_obj->{ vport } = &getFarmVip( "vipp", $farmname );
+				}
 				$restart_flag = "true";
 			}
 		}
