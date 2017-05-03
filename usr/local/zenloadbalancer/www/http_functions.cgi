@@ -2399,7 +2399,7 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 				# not rename service if its name has the $farmname chain
 				if ( $line !~ /\tService / )
 				{
-					s/$farm_name/$new_farm_name/g;
+					$line =~ s/$farm_name/$new_farm_name/g;
 				}
 			}
 			untie @configfile;
