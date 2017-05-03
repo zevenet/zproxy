@@ -45,6 +45,8 @@ echo "NAT table " >> $dir_backup/netfilter.txt
 /sbin/iptables -nL -t nat >> $dir_backup/netfilter.txt
 echo "Mangle table " >> $dir_backup/netfilter.txt
 /sbin/iptables -nL -t mangle >> $dir_backup/netfilter.txt
+echo "Raw table " >> $dir_backup/netfilter.txt
+/sbin/iptables -nL -t raw >> $dir_backup/netfilter.txt
 
 echo "Saving ARP filtering"
 /sbin/arptables -L > $dir_backup/arp_filtering.txt
@@ -58,6 +60,12 @@ if [ -f ${home_dir}/config/cluster.conf ]; then
 		cp ${home_dir}/node_status  $dir_backup/
 		cp /etc/keepalived/keepalived.conf  $dir_backup/
 		cp /etc/conntrackd/conntrackd.conf  $dir_backup/
+	fi
+fi
+
+if [ -f /sbin/ipset ]; then
+	echo "Saving ipset tables"
+	/sbin/ipset save > $dir_backup/ipset_tables.txt 2>&1
 	fi
 fi
 
