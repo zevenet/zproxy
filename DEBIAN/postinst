@@ -265,6 +265,14 @@ fi
 # Create IPDS directories
 /usr/local/zenloadbalancer/app/zbin/boot_ipds.pl
 
+# Do not show warning messages from bonding module on syslog
+ZEVENET_SYSLOG_FILE="/etc/rsyslog.d/10-zevenet.conf"
+if [ ! -f ${ZEVENET_SYSLOG_FILE} ];
+then
+	echo ':msg,contains,"Loading kernel module for a network device with CAP_SYS_MODULE (deprecated).  Use CAP_NET_ADMIN and alias netdev- instead." stop' > ${ZEVENET_SYSLOG_FILE}
+	/etc/init.d/rsyslog restart
+fi
+
 # restarting zenloadbalancer service
 echo "ZLB will be unavailable while the service is restarting."
 /etc/init.d/zenloadbalancer stop
