@@ -415,7 +415,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 			"Changing status to maintenance of backend $backend_id in farm $farmname"
 		);
 
-		if ( $? ne 0 )
+		if ( $status != 0 )
 		{
 			my $errormsg = "Errors found trying to change status backend to maintenance";
 			my $body = {
@@ -434,7 +434,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 		&zenlog(
 			 "Changing status to up of backend $backend_id in farm $farmname" );
 
-		if ( $? ne 0 )
+		if ( $status != 0 )
 		{
 			my $errormsg = "Errors found trying to change status backend to up";
 			my $body = {
