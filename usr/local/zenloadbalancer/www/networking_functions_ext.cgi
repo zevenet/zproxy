@@ -1888,6 +1888,29 @@ sub getInterfaceTypeList
 }
 
 =begin nd
+Function: getVirtualInterfaceNameList
+
+	Get a list of the virtual interfaces names.
+
+Parameters:
+	none - .
+
+Returns:
+	list - Every virtual interface name.
+=cut
+sub getVirtualInterfaceNameList
+{
+	opendir ( my $conf_dir, &getGlobalConfiguration( 'configdir' ) );
+	my $virt_if_re = &getValidFormat('virt_interface');
+
+	my @filenames = grep { s/^if_($virt_if_re)_conf$/$1/ } readdir ( $conf_dir );
+
+	closedir ( $conf_dir );
+
+	return @filenames;
+}
+
+=begin nd
 Function: getAllBondsSlaves
 
 	Get a list of all the nics belonging to a bonding interface.

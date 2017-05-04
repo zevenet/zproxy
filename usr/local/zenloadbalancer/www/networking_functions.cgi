@@ -146,9 +146,10 @@ sub listallips    # ()
 	use IO::Socket;
 	use IO::Interface qw(:flags);
 
-	my @listinterfaces = ();
+	my @listinterfaces = (); # output
 	my $s              = IO::Socket::INET->new( Proto => 'udp' );
 	my @interfaces     = &getInterfaceList();
+
 	for my $if ( @interfaces )
 	{
 		my $ip = $s->if_addr( $if );
@@ -160,6 +161,7 @@ sub listallips    # ()
 			push ( @listinterfaces, $ip ) if $ip;
 		}
 	}
+
 	return @listinterfaces;
 }
 
@@ -1800,9 +1802,13 @@ sub getInterfaceList
 {
 	my $sys_net_dir = getGlobalConfiguration( 'sys_net_dir' );
 
+	# Get link interfaces (nic, bond and vlan)
 	opendir( my $if_dir, $sys_net_dir );
 	my @if_list = grep { -l "$sys_net_dir/$_" } readdir $if_dir;
 	closedir $if_dir;
+
+	#Get virtual interfaces
+	push @if_list, &getVirtualInterfaceNameList();
 
 	return @if_list;
 }
