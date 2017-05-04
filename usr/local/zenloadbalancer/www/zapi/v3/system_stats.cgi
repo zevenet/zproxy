@@ -576,12 +576,6 @@ sub farm_stats # ( $farmname )
 				$backends_data[3] = "down";
 			}
 
-			my $stablished=0;
-			if ( &getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat ) )
-			{
-				$stablished = $backends_data[7]+0;
-			}
-
 			push @out_rss,
 			  {
 				service     => $a_service[$i],
@@ -590,7 +584,7 @@ sub farm_stats # ( $farmname )
 				port        => $backends_data[2]+0,
 				status      => $backends_data[3],
 				pending     => $npend,
-				established => $stablished
+				established => $backends_data[7]+0,
 			  };
 		}
 
