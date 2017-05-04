@@ -232,6 +232,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		}
 		else
 		{
+			$json_obj->{ vport } += 0;
 			$status = &setFarmVirtualConf( $vip, $json_obj->{ vport }, $farmname );
 			if ( $status == -1 )
 			{
@@ -281,6 +282,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 				}
 				else
 				{
+					$json_obj->{ vport } += 0;
 					$status =
 					  &setFarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname );
 					if ( $status == -1 )
@@ -299,81 +301,6 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		}
 	}
 
-	# Modify Farm's Name
-	#if(exists($json_obj->{newfarmname})){
-	#        if($json_obj->{newfarmname} =~ /^$/){
-	#                $error = "true";
-	#        } else {
-	#                #Check if farmname has correct characters (letters, numbers and hyphens)
-	#                if($json_obj->{newfarmname} =~ /^[a-zA-Z0-9\-]*$/){
-	#                        #Check if the new farm's name alredy exists
-	#                        my $newffile = &getFarmFile($json_obj->{newfarmname});
-	#                        if ($newffile != -1){
-	#                                $error = "true";
-	#                        } else {
-	#                                #Change farm name
-	#                                my $fnchange = &setNewFarmName($farmname,$json_obj->{newfarmname});
-	#                                if ($fnchange == -1){
-	#                                        &error = "true";
-	#                                } else {
-	#                                        $restart_flag = "true";
-	#										  $farmname = $json_obj->{newfarmname};
-	#                                }
-	#                        }
-	#                } else {
-	#                        $error = "true";
-	#                }
-	#        }
-	#}
-
-	# Restart Farm
-	#if($restart_flag eq "true"){
-	#        &runFarmStop($farmname,"true");
-	#        &runFarmStart($farmname,"true");
-	#}
-
-	# Check errors and print JSON
-	#if ($error ne "true")
-	#{
-	#        if($changedname ne "true")
-	#		 {
-	#                if($restart_flag eq "true")
-	#				 {
-	#                        &setFarmRestart($farmname);
-	#
-	#                        my $body = {
-	#                                description => "Modify farm $farmname",
-	#                                params => $json_obj,
-	#                                status => 'needed restart',
-	#                                info => "There're changes that need to be applied, stop and start farm to apply them!"
-	#                        };
-	#
-	#						 &httpResponse({ code => 200, body => $body });
-	#                }
-	#        }
-	#		 else
-	#		 {
-	#                # Success
-	#                        my $body = {
-	#                                description => "Modify farm $farmname",
-	#                                params => $json_obj,
-	#                        };
-	#
-	#						 &httpResponse({ code => 200, body => $body });
-	#        }
-	#}
-	#else
-	#{
-	#        # Error
-	#        my $errormsg = "Errors found trying to modify farm $farmname";
-	#        my $body = {
-	#                description => "Modify farm $farmname",
-	#                error => "true",
-	#                message => $errormsg
-	#        };
-	#
-	#		 &httpResponse({ code => 400, body => $body });
-	#}
 
 	# Check errors and print JSON
 	if ( $error ne "true" )
@@ -579,17 +506,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 
 	if ( !$error && exists ( $json_obj->{ rdata } ) )
 	{
-		#~ if ( &getValidFormat( 'resource_type', $json_obj->{ rdata } ) )
-		#~ {
-			$auxData = $json_obj->{ rdata };
-		#~ }
-		#~ else
-		#~ {
-			#~ $error = "true";
-			#~ &zenlog(
-				#~ "ZAPI error, trying to modify the resources in a farm $farmname, invalid rdata, can't be blank."
-			#~ );
-		#~ }
+		$auxData = $json_obj->{ rdata };
 	}
 	
 	# validate RESOURCE DATA
@@ -610,10 +527,6 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		
 		&zenlog( $errormsg );
 
-		# Error
-		#~ $errormsg =
-		  #~ "The parameter zone resource server (rdata) doesn't correct format for this type, please insert a valid value.";
-		  
 		my $body = {
 					 description => $description,
 					 error       => "true",
