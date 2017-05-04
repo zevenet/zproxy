@@ -1187,6 +1187,9 @@ Parameters:
 
 Returns:
 	array - Return all ESTABLISHED conntrack lines for the backend
+	
+FIXME:
+	dnat and nat regexp is duplicated
 		
 =cut
 sub getL4BackendEstConns    # ($farm_name,$ip_backend,@netstat)
@@ -1214,6 +1217,9 @@ sub getL4BackendEstConns    # ($farm_name,$ip_backend,@netstat)
 	{
 		if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 		{
+			# i.e. 
+			# tcp      6 431998 ESTABLISHED src=192.168.0.168 dst=192.168.100.241 sport=40130 dport=81 src=192.168.100.254 dst=192.168.100.241 sport=80 dport=40130 [ASSURED] mark=523 use=1
+			#protocol				 status		      client                         vip                                                           vport          backend_ip                   (vip, but can change)    backend_port
 			push (
 				@nets,
 				&getNetstatFilter(
@@ -1278,6 +1284,9 @@ Parameters:
 
 Returns:
 	array - Return all ESTABLISHED conntrack lines for a farm
+
+FIXME:
+	dnat and nat regexp is duplicated
 
 =cut
 sub getL4FarmEstConns    # ($farm_name,@netstat)
@@ -1355,7 +1364,7 @@ sub getL4FarmEstConns    # ($farm_name,@netstat)
 						@nets,
 						&getNetstatFilter(
 							   "udp", "",
-							   "\.* src=\.* dst=$fvip \.* dport=$regexp .*[^\[UNREPLIED\]] src=$ip_backend",
+							   "\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend",
 							   "", @netstat
 						)
 					);
@@ -1370,7 +1379,7 @@ sub getL4FarmEstConns    # ($farm_name,@netstat)
 =begin nd
 Function: getL4BackendSYNConns
 
-	Get all SYN connections for a backend
+	Get all SYN connections for a backend. This connection are called "pending". UDP protocol doesn't have pending concept 
 	 
 Parameters:
 	farmname - Farm name
@@ -1380,6 +1389,9 @@ Parameters:
 Returns:
 	array - Return all SYN conntrack lines for a backend of a farm
 
+FIXME:
+	dnat and nat regexp is duplicated
+	
 =cut
 sub getL4BackendSYNConns    # ($farm_name,$ip_backend,@netstat)
 {
@@ -1415,17 +1427,7 @@ sub getL4BackendSYNConns    # ($farm_name,$ip_backend,@netstat)
 				   )
 			);
 		}
-		if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
-		{
-			push (
-				@nets,
-				&getNetstatFilter(
-					  "udp", "",
-					  "\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*",
-					  "", @netstat
-				)
-			);
-		}
+		# udp doesn't have pending connections
 	}
 	else
 	{
@@ -1440,17 +1442,7 @@ sub getL4BackendSYNConns    # ($farm_name,$ip_backend,@netstat)
 				   )
 			);
 		}
-		if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
-		{
-			push (
-				@nets,
-				&getNetstatFilter(
-					  "udp", "",
-					  "\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*",
-					  "", @netstat
-				)
-			);
-		}
+		# udp doesn't have pending connections
 	}
 
 	return @nets;
@@ -1460,7 +1452,7 @@ sub getL4BackendSYNConns    # ($farm_name,$ip_backend,@netstat)
 =begin nd
 Function: getL4FarmSYNConns
 
-	Get all SYN connections for a farm
+	Get all SYN connections for a farm. This connection are called "pending". UDP protocol doesn't have pending concept 
 	 
 Parameters:
 	farmname - Farm name
@@ -1469,6 +1461,9 @@ Parameters:
 Returns:
 	array - Return all SYN conntrack lines for a farm
 
+FIXME:
+	dnat and nat regexp is duplicated
+	
 =cut
 sub getL4FarmSYNConns    # ($farm_name,@netstat)
 {
@@ -1517,17 +1512,7 @@ sub getL4FarmSYNConns    # ($farm_name,@netstat)
 						   )
 					);
 				}
-				if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
-				{
-					push (
-						@nets,
-						&getNetstatFilter(
-							  "udp", "",
-							  "\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*",
-							  "", @netstat
-						)
-					);
-				}
+				# udp doesn't have pending connections
 			}
 			else
 			{
@@ -1542,17 +1527,7 @@ sub getL4FarmSYNConns    # ($farm_name,@netstat)
 						   )
 					);
 				}
-				if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
-				{
-					push (
-						@nets,
-						&getNetstatFilter(
-							  "udp", "",
-							  "\.* src=\.* dst=$fvip \.* dport=$regexp \.*UNREPLIED\.* src=$ip_backend \.*",
-							  "", @netstat
-						)
-					);
-				}
+				# udp doesn't have pending connections
 			}
 		}
 	}

@@ -569,14 +569,17 @@ sub farm_stats # ( $farmname )
 			@netstat = &getConntrack( "$fvip", $ip_backend, "", "", "tcp" );
 			my @synnetstatback =
 			&getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
-			my $npend = @synnetstatback;
-			my @stabnetstatback =
-			&getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
-			my $nestab = @stabnetstatback;
+			my $npend = @synnetstatback; 
 
 			if ( $backends_data[3] == -1 )
 			{
 				$backends_data[3] = "down";
+			}
+
+			my $stablished=0;
+			if ( &getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat ) )
+			{
+				$stablished = $backends_data[7]+0;
 			}
 
 			push @out_rss,
@@ -587,7 +590,7 @@ sub farm_stats # ( $farmname )
 				port        => $backends_data[2]+0,
 				status      => $backends_data[3],
 				pending     => $npend,
-				established => $nestab
+				established => $stablished
 			  };
 		}
 
@@ -618,7 +621,6 @@ sub farm_stats # ( $farmname )
 		&httpResponse({ code => 200, body => $body });
 	}
 
-
 	if ( $type eq "l4xnat" )
 	{
 		
@@ -628,6 +630,7 @@ sub farm_stats # ( $farmname )
 		my @args;
 		my $nattype = &getFarmNatType( $farmname );
 		my $proto   = &getFarmProto( $farmname );
+
 		if ( $proto eq "all" )
 		{
 			$proto = "";
@@ -651,7 +654,7 @@ sub farm_stats # ( $farmname )
 				$activebackends++;
 			}
 		}
-		
+
 		my $index = 0;
 
 		foreach ( @backends )
@@ -665,7 +668,12 @@ sub farm_stats # ( $farmname )
 			my @netstat = &getConntrack( "", $fvip, $ip_backend, "", "" );
 
 			my $established = scalar &getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
-			my $pending = scalar &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
+			
+			my $pending = 0;
+			if ( $proto ne "udp" )
+			{
+				$pending = scalar &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
+			}
 
 			if ( $backends_data[4] == -1 )
 			{

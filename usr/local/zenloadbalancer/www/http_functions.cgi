@@ -1056,7 +1056,7 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 =begin nd
 Function: getHTTPFarmGlobalStatus
 
-	[NOT USED] Get the status of a farm and its backends through pound command.
+	Get the status of a farm and its backends through pound command.
 	
 Parameters:
 	farmname - Farm name
@@ -1101,7 +1101,7 @@ sub getHTTPBackendEstConns     # ($farm_name,$ip_backend,$port_backend,@netstat)
 	  &getNetstatFilter(
 		"tcp",
 		"",
-		"\.*ESTABLISHED src=\.* dst=$ip_backend sport=\.* dport=$port_backend \.*src=$ip_backend \.*",
+		"\.*ESTABLISHED src=\.* dst=.* sport=\.* dport=$port_backend \.*src=$ip_backend \.*",
 		"",
 		@netstat
 	  );
@@ -1131,38 +1131,9 @@ sub getHTTPFarmEstConns    # ($farm_name,@netstat)
 	return &getNetstatFilter(
 		"tcp", "",
 
-		#~ "\.* ESTABLISHED src=\.* dst=$vip sport=\.* dport=$vip_port .*src=\.*",
 		".* ESTABLISHED src=.* dst=$vip sport=.* dport=$vip_port src=.*",
 		"", @netstat
 	);
-}
-
-
-=begin nd
-Function: getHTTPBackendTWConns
-
-	[NOT USED] Get all TIME WAIT connections for a backend
-	 
-Parameters:
-	farmname - Farm name
-	ip_backend - IP backend
-	port_backend - backend port
-	netstat - Conntrack -L output
-
-Returns:
-	array - Return all TIME WAIT conntrack lines for a backend of a farm
-
-=cut
-sub getHTTPBackendTWConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
-{
-	my ( $farm_name, $ip_backend, $port_backend, @netstat ) = @_;
-
-	my $vip = &getFarmVip( "vip", $farm_name );
-
-	return
-	  &getNetstatFilter( "tcp", "",
-		  "\.*TIME\_WAIT src=$vip dst=$ip_backend sport=\.* dport=$port_backend \.*",
-		  "", @netstat );
 }
 
 
@@ -2116,11 +2087,19 @@ Parameters:
 
 Returns:
 	array - backends_data, each line is: "id" . "\t" . "ip" . "\t" . "port" . "\t" . "status" . "\t-\t" . "priority" . "\t" . "clients" . "\t" . "connections" . "\t" . "service"
+	usage - @backend = split ( '\t', $backend_data )
+				backend[0] = id, 
+				backend[1] = ip, 
+				backend[2] = port, 
+				backend[3] = status,
+				backend[4] = -, 
+				backend[5] = priority, 
+				backend[6] = clients, 
+				backend[7] = connections, 
+				backend[8] = service 
 		
 FIXME:
-	1. Will be useful change output format to hash format
-	2. Delete @content arg and create it inside this funcion
-	3. Sustitute getFarmBackendsClients call for getHTTPFarmBackendsClients
+	Sustitute by getHTTPFarmBackendsStats function
 	
 =cut
 sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
@@ -2200,11 +2179,155 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 				$connections = 0;
 			}
 			$line = $line . "\t" . $connections . "\t" . $service;
-
+			
 			push ( @backends_data, $line );
 		}
 	}
 	return @backends_data;
+}
+
+
+=begin nd
+Function: getHTTPFarmBackendsStats
+
+	This function is the same than getHTTPFarmBackendsStatus but return a hash with http farm information
+	This function take data from pounctl and it gives hash format 
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	hash ref - hash with backend farm stats
+		
+		backendStats = 
+		{
+			"farmname" = $farmname
+			"queue" = $pending_conns
+			"services" = \@services
+		}
+		
+		\@servcies = 
+		[
+			{
+				"id" = $service_id		# it is the index in the service array too
+				"service" = $service_name
+				"backends" = \@backends
+				"sessions" = \@sessions
+			}
+		]
+		
+		\@backends = 
+		[
+			{
+				"id" = $backend_id		# it is the index in the backend array too
+				"ip" = $backend_ip
+				"port" = $backend_port
+				"status" = $backend_status
+				"established" = $established_connections
+			}
+		]
+		
+		\@sessions = 
+		[
+			{
+				"client" = $client_id 		# it is the index in the session array too
+				"id" = $session_id		# id associated to a bacckend, it can change depend of session type
+				"backends" = $backend_id
+			}
+		]
+		
+FIXME: 
+		Put output format same format than "GET /stats/farms/BasekitHTTP"
+		
+=cut
+sub getHTTPFarmBackendsStats    # ($farm_name,@content)
+{
+	my ( $farm_name ) = @_;
+
+	my $stats;
+	my @sessions;
+	my $serviceName;
+	my $hashService;
+	my $firstService = 1;
+	
+	my $service_re = &getValidFormat( 'service' );
+
+	#i.e. of poundctl:
+	
+	#Requests in queue: 0
+	#0. http Listener 185.76.64.223:80 a
+		#0. Service "HTTP" active (4)
+		#0. Backend 172.16.110.13:80 active (1 0.780 sec) alive (61)
+		#1. Backend 172.16.110.14:80 active (1 0.878 sec) alive (90)
+		#2. Backend 172.16.110.11:80 active (1 0.852 sec) alive (99)
+		#3. Backend 172.16.110.12:80 active (1 0.826 sec) alive (75)
+	my @poundctl = &getHTTPFarmGlobalStatus ($farm_name);
+
+	foreach my $line ( @poundctl )
+	{
+		#i.e.
+		#Requests in queue: 0
+		#~ if ( $line =~ /Requests in queue: (\d+)/ )
+		#~ {
+			#~ $stats->{ "queue" } = $1;
+		#~ }
+		
+		# i.e.
+		#     0. Service "HTTP" active (10)
+		if ( $line =~ /(\d+)\. Service "($service_re)"/ )
+		{
+				$serviceName = $2;
+		}
+			
+		# i.e.
+		#      0. Backend 192.168.100.254:80 active (5 0.000 sec) alive (0)
+		if ( $line =~ /(\d+)\. Backend (\d+\.\d+\.\d+\.\d+):(\d+) (\w+) .+ (\w+) \((\d+)\)/ )
+		{
+			my $backendHash =
+ 				{ 
+					id => $1+0,
+					ip => $2,
+					port => $3+0,
+					status => $5,
+					established => $6+0,
+					service => $serviceName,
+				};
+				
+			my $backend_disabled = $4;
+			if ( $backend_disabled eq "DISABLED" )
+			{
+				#Checkstatusfile
+				$backendHash->{ "status" } =
+				  &getHTTPBackendStatusFromFile( $farm_name, $backendHash->{id}, $serviceName );
+			}
+			elsif ( $backendHash->{ "status" } eq "alive" )
+			{
+				$backendHash->{ "status" } = "up";
+			}
+			elsif ( $backendHash->{ "status" } eq "DEAD" )
+			{
+				$backendHash->{ "status" } = "down";
+			}
+			
+			push @{ $stats->{backends} }, $backendHash;
+		}
+
+		# i.e.
+		#      1. Session 107.178.194.117 -> 1
+		if ( $line =~ /(\d+)\. Session (.+) \-\> (\d+)/ )
+		{
+			push @{ $stats->{sessions} },
+				{ 
+					client => $1+0,
+					session => $2,
+					id => $3+0,
+					service => $serviceName,
+				};
+		}
+		
+	}
+	
+	return $stats;
 }
 
 
@@ -2394,14 +2517,22 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 			use Tie::File;
 			tie my @configfile, 'Tie::File', "$farm_filename";
 
-			foreach my $line ( @configfile )
-			{
-				# not rename service if its name has the $farmname chain
-				if ( $line !~ /\tService / )
-				{
-					$line =~ s/$farm_name/$new_farm_name/g;
-				}
-			}
+			# Lines to change: 
+			#Name		BasekitHTTP
+			#Control 	"/tmp/BasekitHTTP_pound.socket"
+			#\tErr414 "/usr/local/zenloadbalancer/config/BasekitHTTP_Err414.html"
+			#\tErr500 "/usr/local/zenloadbalancer/config/BasekitHTTP_Err500.html"
+			#\tErr501 "/usr/local/zenloadbalancer/config/BasekitHTTP_Err501.html"
+			#\tErr503 "/usr/local/zenloadbalancer/config/BasekitHTTP_Err503.html"
+			#\t#Service "BasekitHTTP"
+			grep (s/Name\t\t$farm_name/Name\t\t$new_farm_name/, @configfile );
+			grep (s/Control \t"\/tmp\/${farm_name}_pound.socket"/Control \t"\/tmp\/${new_farm_name}_pound.socket"/, @configfile );
+			grep (s/\tErr414 "\/usr\/local\/zenloadbalancer\/config\/${farm_name}_Err414.html"/\tErr414 "\/usr\/local\/zenloadbalancer\/config\/${new_farm_name}_Err414.html"/, @configfile );
+			grep (s/\tErr500 "\/usr\/local\/zenloadbalancer\/config\/${farm_name}_Err500.html"/\tErr500 "\/usr\/local\/zenloadbalancer\/config\/${new_farm_name}_Err500.html"/, @configfile );
+			grep (s/\tErr501 "\/usr\/local\/zenloadbalancer\/config\/${farm_name}_Err501.html"/\tErr501 "\/usr\/local\/zenloadbalancer\/config\/${new_farm_name}_Err501.html"/, @configfile );
+			grep (s/\tErr503 "\/usr\/local\/zenloadbalancer\/config\/${farm_name}_Err503.html"/\tErr503 "\/usr\/local\/zenloadbalancer\/config\/${new_farm_name}_Err503.html"/, @configfile );
+			grep (s/\t#Service "$farm_name"/\t#Service "$new_farm_name"/, @configfile );
+
 			untie @configfile;
 
 			rename ( "$farm_filename", "$new_farm_configfiles[0]" ) or $output = -1;
