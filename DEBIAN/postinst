@@ -269,7 +269,14 @@ fi
 ZEVENET_SYSLOG_FILE="/etc/rsyslog.d/10-zevenet.conf"
 if [ ! -f ${ZEVENET_SYSLOG_FILE} ];
 then
-	echo ':msg,contains,"Loading kernel module for a network device with CAP_SYS_MODULE (deprecated).  Use CAP_NET_ADMIN and alias netdev- instead." stop' > ${ZEVENET_SYSLOG_FILE}
+	KERNEL_VERSION=`uname -r | cut -d. -f1-2`
+	if [ ${KERNEL_VERSION} == '3.2' ];
+	then
+		STOP_TAG='~'
+	else
+		STOP_TAG='stop'
+	fi
+	echo ':msg,contains,"Loading kernel module for a network device with CAP_SYS_MODULE (deprecated).  Use CAP_NET_ADMIN and alias netdev- instead"' ${STOP_TAG} > ${ZEVENET_SYSLOG_FILE}
 	/etc/init.d/rsyslog restart
 fi
 
