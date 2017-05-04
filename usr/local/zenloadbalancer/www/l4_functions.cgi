@@ -2147,6 +2147,7 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 	}
 	untie @contents;
 
+	my $server = $$farm{ servers }[$ids];
 	$farm = &getL4FarmStruct( $farm_name );
 
 	# enabling new server
@@ -2157,6 +2158,12 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 		if ( $$farm{ lbalg } eq 'weight' || $$farm{ lbalg } eq 'prio' )
 		{
 			$output |= &refreshL4FarmRules( $farm );
+
+			# clear conntrack for udp farms
+			if ( $$farm{ proto } eq 'udp' )
+			{
+				&resetL4FarmBackendConntrackMark( $server );
+			}
 		}
 	}
 
@@ -3147,6 +3154,15 @@ sub refreshL4FarmRules    # AlgorithmRules
 
 			$return_code |= &applyIptRules( $rule );
 		}
+
+		# reset connection mark on udp
+		if ( $$farm{ proto } eq 'udp' )
+		{
+			foreach my $be ( @{ $$farm{ servers } } )
+			{
+				&resetL4FarmBackendConntrackMark( $be );
+			}
+		}
 	}
 
 	# apply new rules
@@ -3201,6 +3217,37 @@ sub reloadL4FarmsSNAT
 			&applyIptRules( $rule );
 		}
 	}
+}
+
+# reset connection tracking for a backend
+# used in udp protocol
+# called by: refreshL4FarmRules, runL4FarmServerDelete
+sub resetL4FarmBackendConntrackMark
+{
+	my $server = shift;
+
+	my $conntrack = &getGlobalConfiguration('conntrack');
+	my $cmd = "$conntrack -D -m $server->{ tag }";
+
+	&zenlog("running: $cmd") if &debug();
+
+	# return_code = 0 -> deleted
+	# return_code = 1 -> not found/deleted
+	my $return_code = system( $cmd );
+
+	if ( &debug() )
+	{
+		if ( $return_code )
+		{
+			&zenlog( "Connection tracking for $server->{ vip } not found." );
+		}
+		else
+		{
+			&zenlog( "Connection tracking for $server->{ vip } removed." );
+		}
+	}
+
+	return $return_code;
 }
 
 1;
