@@ -2,14 +2,16 @@
 #!!!!!!comments lines have a special patron that web application have to process 
 
 #::INI Global information
-#Document Root for Web Aplication  directory
+#Zevenet root directory
+$zdir="/usr/local/zevenet";
+#Zevenet lib directory
+$zlibdir="/usr/local/zevenet/lib";
+#Document Root for Web Aplication directory
 $basedir="/usr/local/zenloadbalancer/www";
 #configuration directory.In this section all config files are saved.
 $configdir="/usr/local/zenloadbalancer/config";
 #Log directory
 $logdir="/var/log";#update
-#.<b>Time out execution ZEN GUI CGIs.</b> <font size=1>When timeout is exceded the cgi execution is killed automatically.</font>
-$timeouterrors="60";
 #File configuration Zen Cluster
 $filecluster="/usr/local/zenloadbalancer/config/cluster.conf";
 #File configuration GUI
@@ -30,10 +32,6 @@ $version="5.0.4";#update
 $applianceVersionFile="/etc/zevenet_version";
 #Cipher PCI
 $cipher_pci="kEECDH+ECDSA+AES128:kEECDH+ECDSA+AES256:kEECDH+AES128:kEECDH+AES256:kEDH+AES128:kEDH+AES256:DES-CBC3-SHA:+SHA:!aNULL:!eNULL:!LOW:!kECDH:!DSS:!MD5:!EXP:!PSK:!SRP:!CAMELLIA:!SEED";#update
-#BUY SSL Certificates
-$buy_ssl="http://ecommerce.sofintel.net/ssl/ssl-certificate.aspx?ci=8347&prog_id=503889";
-#URL of dinamic content in global view
-$url="https://www.sofintel.net/json/eeinfo.php";
 #HTPASSWD file
 $htpass="/etc/passwd";#update
 #ZAPI KEY
@@ -45,8 +43,6 @@ $licenseFileHtml="/usr/local/zenloadbalancer/license.html";
 
 #dns file server?
 $filedns="/etc/resolv.conf";
-#apt file
-$fileapt="/etc/apt/sources.list";
 #Where is hostname binary?
 $hostname="/bin/hostname";
 #Where is uname binary?
@@ -57,10 +53,6 @@ $tar="/bin/tar";
 $ifconfig_bin="/sbin/ifconfig";
 #Where is ip bynary?
 $ip_bin="/sbin/ip";
-#Where is pen (tcp) load balancer?
-$pen_bin="/usr/local/zenloadbalancer/app/pen/bin/pen";
-#Where is pen control load balancer?
-$pen_ctl="/usr/local/zenloadbalancer/app/pen/bin/penctl";
 #Where is fdisk binary?
 $fdisk_bin="/sbin/fdisk";
 #Where is df binary?
@@ -121,8 +113,6 @@ $ip6tables="/sbin/ip6tables";
 $modprobe="/sbin/modprobe";
 #Where is lsmod?
 $lsmod="/sbin/lsmod";
-#Where is netstat-nat?
-$netstatNat="/usr/bin/netstat-nat";
 #Where is gdnsd?
 $gdnsd="/usr/local/zenloadbalancer/app/gdnsd/sbin/gdnsd";
 #Where is l4sd?
@@ -179,8 +169,6 @@ $iptlock = "/tmp/iptables.lock";
 $libexec_dir="/usr/local/zenloadbalancer/app/libexec";
 #FarmGuardian binary, create advanced check for backend servers
 $farmguardian="/usr/local/zenloadbalancer/app/farmguardian/bin/farmguardian";
-#Directory where FarmGuardian save the configuration files
-$farmguardian_dir="/usr/local/zenloadbalancer/app/farmguardian/etc";
 
 #Where is ZenRRD Directory?. There is a perl script that create rrd database and images from Monitoring section
 $rrdap_dir="/usr/local/zenloadbalancer/app/zenrrd";#update
@@ -227,9 +215,6 @@ $keygen_cmd="ssh-keygen -t rsa -f $key_path/$key_id -N '' -q";#update
 
 #Zen backup
 $zenbackup="/usr/local/zenloadbalancer/app/zenbackup/zenbackup.pl";
-
-#Plugins path
-$pluginsdir="/usr/local/zenloadbalancer/www/Plugins";
 
 #SNMP Service
 $snmpdconfig_file="/etc/snmp/snmpd.conf";
