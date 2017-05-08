@@ -66,6 +66,22 @@ fi
 cp -rpf /usr/local/zenloadbalancer/app/pound.${CRYPTOV}/* /usr/local/zenloadbalancer/app/pound/
 rm -rf /usr/local/zenloadbalancer/app/pound.*
 
+#Check for libexec commands
+LIBC6VER=`dpkg -l | grep libc6:amd | awk {'print $3'} | cut -d"-" -f1`
+echo "libc version is $LIBC6VER"
+
+if [ -e "/usr/local/zenloadbalancer/app/libexec" ];then
+	rm -rf /usr/local/zenloadbalancer/app/libexec
+fi
+
+if [ -e "/usr/local/zenloadbalancer/app/libexec_${LIBC6VER}" ]; then
+        mv "/usr/local/zenloadbalancer/app/libexec_${LIBC6VER}" "/usr/local/zenloadbalancer/app/libexec"
+        rm -rf /usr/local/zenloadbalancer/app/libexec_*
+else
+        mv "/usr/local/zenloadbalancer/app/libexec_2.all" "/usr/local/zenloadbalancer/app/libexec"
+        rm -rf /usr/local/zenloadbalancer/app/libexec_*
+fi
+
 # Get kernel version 
 KERNEL_VERSION=`uname -r | cut -d. -f1-2`
 # In Jessie move dependencies of libexec to system libs
