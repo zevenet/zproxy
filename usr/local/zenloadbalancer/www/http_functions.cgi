@@ -2351,7 +2351,8 @@ sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 	my $index;
 	my $line;
 	my $stfile = "$configdir\/$farm_name\_status.cfg";
-	my $output = -1;
+	# if the status file does not exist the backend is ok
+	my $output = "active";
 
 	if ( -e "$stfile" )
 	{
