@@ -4595,4 +4595,189 @@ sub getHTTPServicePosition
 	return $srv_position;	
 }
 
+
+
+
+=begin nd
+Function: getHTTPServiceStruct
+
+	Get a struct with all parameters of a HTTP service
+	
+Parameters:
+	farmname - Farm name
+	service - Farm name
+
+Returns:
+	hash ref - hash with service configuration
+	
+	Example output:
+	{
+   "services" : {
+      "backends" : [
+         {
+            "id" : 0,
+            "ip" : "48.5.25.5",
+            "port" : 70,
+            "status" : "up",
+            "timeout" : null,
+            "weight" : null
+         }
+      ],
+      "cookiedomain" : "",
+      "cookieinsert" : "false",
+      "cookiename" : "",
+      "cookiepath" : "",
+      "cookiettl" : 0,
+      "fgenabled" : "false",
+      "fglog" : "false",
+      "fgscript" : "",
+      "fgtimecheck" : 5,
+      "httpsb" : "false",
+      "id" : "srv3",
+      "leastresp" : "false",
+      "persistence" : "",
+      "redirect" : "",
+      "redirecttype" : "",
+      "sessionid" : "",
+      "ttl" : 0,
+      "urlp" : "",
+      "vhost" : ""
+   }
+
+=cut
+sub getHTTPServiceStruct
+{
+	my ( $farmname, $servicename ) = @_;
+	my $service = -1;
+	
+	#http services
+	my $services = &getFarmVS( $farmname, "", "" );
+	my @serv = split ( "\ ", $services );
+	
+	foreach my $s ( @serv )
+	{
+		if ( $s eq $servicename )
+		{
+			my $vser         = &getFarmVS( $farmname, $s, "vs" );
+			my $urlp         = &getFarmVS( $farmname, $s, "urlp" );
+			my $redirect     = &getFarmVS( $farmname, $s, "redirect" );
+			my $redirecttype = &getFarmVS( $farmname, $s, "redirecttype" );
+			my $session      = &getFarmVS( $farmname, $s, "sesstype" );
+			my $ttl          = &getFarmVS( $farmname, $s, "ttl" );
+			my $sesid        = &getFarmVS( $farmname, $s, "sessionid" );
+			my $dyns         = &getFarmVS( $farmname, $s, "dynscale" );
+			my $httpsbe      = &getFarmVS( $farmname, $s, "httpsbackend" );
+			my $cookiei      = &getFarmVS( $farmname, $s, "cookieins" );
+	
+			if ( $cookiei eq "" )
+			{
+				$cookiei = "false";
+			}
+	
+			my $cookieinsname = &getFarmVS( $farmname, $s, "cookieins-name" );
+			my $domainname    = &getFarmVS( $farmname, $s, "cookieins-domain" );
+			my $path          = &getFarmVS( $farmname, $s, "cookieins-path" );
+			my $ttlc          = &getFarmVS( $farmname, $s, "cookieins-ttlc" );
+	
+			if ( $dyns =~ /^$/ )
+			{
+				$dyns = "false";
+			}
+			if ( $httpsbe =~ /^$/ )
+			{
+				$httpsbe = "false";
+			}
+	
+			my @fgconfig  = &getFarmGuardianConf( $farmname, $s );
+			my $fgttcheck = $fgconfig[1];
+			my $fgscript  = $fgconfig[2];
+			my $fguse     = $fgconfig[3];
+			my $fglog     = $fgconfig[4];
+	
+			# Default values for farm guardian parameters
+			if ( !$fgttcheck ) { $fgttcheck = 5; }
+			if ( !$fguse )     { $fguse     = "false"; }
+			if ( !$fglog )     { $fglog     = "false"; }
+			if ( !$fgscript )  { $fgscript  = ""; }
+	
+			$fgscript =~ s/\n//g;
+			$fgscript =~ s/\"/\'/g;
+			$fguse =~ s/\n//g;
+	
+			my @out_ba;
+			my $backendsvs = &getFarmVS( $farmname, $s, "backends" );
+			my @be         = split ( "\n", $backendsvs );
+	
+			foreach my $subl ( @be )
+			{
+				my @subbe       = split ( "\ ", $subl );
+				my $id          = $subbe[1] + 0;
+				my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $s );
+	
+				my $backendstatus;
+				if ( $maintenance != 0 )
+				{
+					$backendstatus = "up";
+				}
+				else
+				{
+					$backendstatus = "maintenance";
+				}
+	
+				my $ip   = $subbe[3];
+				my $port = $subbe[5] + 0;
+				my $tout = $subbe[7];
+				my $prio = $subbe[9];
+	
+				$tout = $tout eq '-' ? undef: $tout+0;
+				$prio = $prio eq '-' ? undef: $prio+0;
+	
+				push @out_ba,
+				{
+					id      => $id,
+					status  => $backendstatus,
+					ip      => $ip,
+					port    => $port,
+					timeout => $tout,
+					weight  => $prio
+				};
+			}
+	
+			$ttlc      = 0 unless $ttlc;
+			$ttl       = 0 unless $ttl;
+			$fgttcheck = 0 unless $fgttcheck;
+	
+			$service =
+			{
+				id           => $s,
+				vhost        => $vser,
+				urlp         => $urlp,
+				redirect     => $redirect,
+				redirecttype => $redirecttype,
+				cookieinsert => $cookiei,
+				cookiename   => $cookieinsname,
+				cookiedomain => $domainname,
+				cookiepath   => $path,
+				cookiettl    => $ttlc + 0,
+				persistence  => $session,
+				ttl          => $ttl + 0,
+				sessionid    => $sesid,
+				leastresp    => $dyns,
+				httpsb       => $httpsbe,
+				fgtimecheck  => $fgttcheck + 0,
+				fgscript     => $fgscript,
+				fgenabled    => $fguse,
+				fglog        => $fglog,
+				backends     => \@out_ba,
+			};
+			last;
+		}
+		
+	}
+
+	return $service;
+}
+
+
+
 1;

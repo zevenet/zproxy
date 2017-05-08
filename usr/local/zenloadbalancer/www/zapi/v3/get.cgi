@@ -205,6 +205,79 @@ sub farms_name # ( $farmname )
 	}
 }
 
+
+
+
+#GET /farms/<name>/services/<service>
+sub farm_services
+{
+	my ( $farmname, $servicename ) = @_;
+	my $service;
+	my $description = "Get services of a farm";
+
+	# Check that the farm exists
+	if ( &getFarmFile( $farmname ) eq '-1' )
+	{
+		# Error
+		my $errormsg = "The farmname $farmname does not exist.";
+		my $body = {
+				description => $description,
+				error => "true",
+				message => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+	
+	
+	my @services = &getFarmServices( $farmname );
+	if ( ! grep ( /^$servicename$/, @services ) )
+	{
+		# Error
+		my $errormsg = "The required service does not exist.";
+		my $body = {
+				description => $description,
+				error => "true",
+				message => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+	
+	
+	my $type = &getFarmType( $farmname );
+	if ( $type =~ /http/i )
+	{
+		$service = &getServiceStruct ( $farmname, $servicename );
+	}
+	else
+	{
+		# Error
+		my $errormsg = "This functionality only is available for HTTP farms.";
+		my $body = {
+				description => $description,
+				error => "true",
+				message => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	# Success
+	my $body = {
+				 description => $description,
+				 services    	=> $service,
+	};
+
+	&httpResponse({ code => 200, body => $body });
+
+}
+
+
+
+
+
+
 #GET /farms/<name>/backends
 sub backends
 {
