@@ -66,6 +66,15 @@ fi
 cp -rpf /usr/local/zenloadbalancer/app/pound.${CRYPTOV}/* /usr/local/zenloadbalancer/app/pound/
 rm -rf /usr/local/zenloadbalancer/app/pound.*
 
+# Get kernel version 
+KERNEL_VERSION=`uname -r | cut -d. -f1-2`
+# In Jessie move dependencies of libexec to system libs
+if [ ${KERNEL_VERSION} == '3.16' ]; then
+	mv /usr/lib/x86_64-linux-gnu.3.16/* /usr/lib/x86_64-linux-gnu
+fi
+# Remove dependencies of libexec
+rm -r /usr/lib/x86_64-linux-gnu.3.16
+
 # GSLB user management
 GSLBHOME="/var/run/gdnsd"
 GSLBSHELL="/usr/sbin/nologin"
