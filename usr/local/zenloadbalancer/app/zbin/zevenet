@@ -278,7 +278,7 @@ if ( $eject eq "start" )
 	#  ZVA lower than 5000 
 	if ( $appliance_version < 5 )
 	{
-		my %sysctl = (
+		%sysctl = (
 				   "fs.file-max"                        => "100000",
 				   "vm.max_map_count"                   => "1048576",
 				   "vm.swappiness"                      => "10",
