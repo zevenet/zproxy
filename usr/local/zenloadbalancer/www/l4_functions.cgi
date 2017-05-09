@@ -1640,11 +1640,24 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	&setIptConnmarkSave( $farm_name, 'true' );
 	&setIptConnmarkRestore( $farm_name, 'true' );
 
+	## Set ip rule mark ##
+	my $ip_bin = &getGlobalConfiguration('ip_bin');
+	&zenlog( "farm vip: $farm->{ vip }" );
+	my $vip_if_name = &getInterfaceOfIp( $farm->{ vip } );
+	&zenlog( "vip_if_name: $vip_if_name" );
+	my $vip_if = &getInterfaceConfig( $vip_if_name );
+	&zenlog( "name: $vip_if->{ name } - type: $vip_if->{ type } - parent: $vip_if->{ parent }" );
+	my $table_if = ( $vip_if->{ type } eq 'virtual' )? $vip_if->{ parent }: $vip_if->{ name };
+
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
 		&zenlog( "_runL4FarmStart :: server:$server" ) if &debug;
 
 		my $backend_rules;
+
+		## Set ip rule mark ##
+		my $ip_cmd = "$ip_bin rule add fwmark $server->{ tag } table table_$table_if";
+		&logAndRun( $ip_cmd );
 
 		# go to next cycle if server must not be up or not a least connection algorithm
 		#~ if ( !    $$server{ status } =~ /up|maintenance/
@@ -1768,6 +1781,20 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	{
 		$status = -1;
 	}
+
+	## Delete ip rule mark ##
+	my $farm = &getL4FarmStruct( $farm_name );
+	my $ip_bin = &getGlobalConfiguration('ip_bin');
+	my $vip_if_name = &getInterfaceOfIp( $farm->{ vip } );
+	my $vip_if = &getInterfaceConfig( $vip_if_name );
+	my $table_if = ( $vip_if->{ type } eq 'virtual' )? $vip_if->{ parent }: $vip_if->{ name };
+
+	foreach my $server ( @{ $$farm{ servers } } )
+	{
+		my $ip_cmd = "$ip_bin rule del fwmark $server->{ tag } table table_$table_if";
+		&logAndRun( $ip_cmd );
+	}
+	## Delete ip rule mark END ##
 
 	&setIptConnmarkRestore( $farm_name );
 	&setIptConnmarkSave( $farm_name );
@@ -2024,10 +2051,12 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 		$l++;
 	}
 
+	my $mark = undef;
+
 	# add a new backend if not found
 	if ( $found_server eq 'false' )
 	{
-		my $mark = &getNewMark( $farm_name );
+		$mark = &getNewMark( $farm_name );
 		push ( @contents, "\;server\;$rip\;$port\;$mark\;$weight\;$priority\;up\n" );
 		$output = $?;    # FIXME
 	}
@@ -2045,6 +2074,16 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 			{
 				$output |= &_runL4ServerStart( $farm_name, $ids );
 			}
+
+			## Set ip rule mark ##
+			my $ip_bin = &getGlobalConfiguration('ip_bin');
+			my $vip_if_name = &getInterfaceOfIp( $farm->{ vip } );
+			my $vip_if = &getInterfaceConfig( $vip_if_name );
+			my $table_if = ( $vip_if->{ type } eq 'virtual' )? $vip_if->{ parent }: $vip_if->{ name };
+
+			my $ip_cmd = "$ip_bin rule add fwmark $mark table table_$table_if";
+			&logAndRun( $ip_cmd );
+			## Set ip rule mark END ##
 		}
 
 		&refreshL4FarmRules( $farm );
@@ -2125,7 +2164,7 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 	my $server = $$farm{ servers }[$ids];
 	$farm = &getL4FarmStruct( $farm_name );
 
-	# enabling new server
+	# disabling server
 	if ( $found_server eq 'true' && $$farm{ status } eq 'up' )
 	{
 		splice @{ $$farm{ servers } }, $ids, 1;    # remove server from structure
@@ -2140,6 +2179,16 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 				&resetL4FarmBackendConntrackMark( $server );
 			}
 		}
+
+		## Remove ip rule mark ##
+		my $ip_bin = &getGlobalConfiguration('ip_bin');
+		my $vip_if_name = &getInterfaceOfIp( $farm->{ vip } );
+		my $vip_if = &getInterfaceConfig( $vip_if_name );
+		my $table_if = ( $vip_if->{ type } eq 'virtual' )? $vip_if->{ parent }: $vip_if->{ name };
+
+		my $ip_cmd = "$ip_bin rule del fwmark $server->{ tag } table table_$table_if";
+		&logAndRun( $ip_cmd );
+		## Remove ip rule mark END ##
 	}
 
 	if ( $$farm{ status } eq 'up' )
