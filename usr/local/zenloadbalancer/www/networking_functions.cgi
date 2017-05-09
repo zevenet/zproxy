@@ -453,13 +453,13 @@ sub writeRoutes    # ($if_name)
 =begin nd
 Function: addlocalnet
 
-	Set route to interface subnet into the interface routing table.
+	Set routes to interface subnet into interface routing tables and fills the interface table.
 
 Parameters:
 	if_ref - network interface hash reference.
 
 Returns:
-	integer - return code of ip command.
+	void - .
 
 See Also:
 	Only used here: <applyRoutes>
@@ -469,15 +469,55 @@ sub addlocalnet    # ($if_ref)
 {
 	my $if_ref = shift;
 
+	&zenlog("addlocalnet( name: $$if_ref{ name }, addr: $$if_ref{ addr }, mask: $$if_ref{ mask } )") if &debug();
+
+	# Get network
 	use NetAddr::IP;
 	my $ip = new NetAddr::IP( $$if_ref{ addr }, $$if_ref{ mask } );
 	my $net = $ip->network();
+
+	# Get params
 	my $routeparams = &getGlobalConfiguration('routeparams');
 
-	my $ip_cmd =
-	  "$ip_bin -$$if_ref{ip_v} route replace $net dev $$if_ref{name} src $$if_ref{addr} table table_$$if_ref{name} $routeparams";
+	# Add or replace local net to all tables
+	my @links = ('main', &getLinkNameList() );
 
-	return &logAndRun( $ip_cmd );
+	foreach my $link ( @links )
+	{
+		next if $link eq 'lo';
+		next if $link eq 'cl_maintenance';
+
+		my $table = 'main';
+		$table = "table_$link" if $link ne 'main';
+
+		&zenlog("addlocalnet: setting route in table $table") if &debug();
+
+		my $ip_cmd =
+		  "$ip_bin -$$if_ref{ip_v} route replace $net dev $$if_ref{name} src $$if_ref{addr} table $table $routeparams";
+
+		&logAndRun( $ip_cmd );
+	}
+
+	# Include all routing into the current interface, in case it is new and empty
+	my @ifaces = @{ &getConfigInterfaceList() };
+
+	foreach my $iface ( @ifaces )
+	{
+		next if $iface->{ type } eq 'virtual';
+		next if $iface->{ name } eq $if_ref->{ name };
+		&zenlog("addlocalnet: into current interface: name $$iface{name} type $$iface{type}") if &debug();
+
+		my $ip = new NetAddr::IP( $$iface{ addr }, $$iface{ mask } );
+		my $net = $ip->network();
+		my $table = "table_$$if_ref{ name }";
+
+		my $ip_cmd =
+		  "$ip_bin -$$iface{ip_v} route replace $net dev $$iface{name} src $$iface{addr} table $table $routeparams";
+
+		&logAndRun( $ip_cmd );
+	}
+
+	return;
 }
 
 =begin nd
@@ -548,7 +588,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 	my $status = 0;
 
 	&zenlog(
-		"Appling $table routes in stack IPv$$if_ref{ip_v} to $$if_ref{name} with gateway \"$$if_ref{gateway}\""
+		"Applying $table routes in stack IPv$$if_ref{ip_v} to $$if_ref{name} with gateway \"$$if_ref{gateway}\""
 	);
 
 	# not virtual interface
@@ -956,6 +996,10 @@ sub setIfacesUp    # ($if_name,$type)
 			if ( $iface->{ status } eq 'up' )
 			{
 				&addIp( $iface );
+				if ( $iface->{ type } eq 'vlan' )
+				{
+					&applyRoutes( "local", $iface );
+				}
 			}
 		}
 
@@ -1800,12 +1844,10 @@ See Also:
 =cut
 sub getInterfaceList
 {
-	my $sys_net_dir = getGlobalConfiguration( 'sys_net_dir' );
+	my @if_list = ();
 
-	# Get link interfaces (nic, bond and vlan)
-	opendir( my $if_dir, $sys_net_dir );
-	my @if_list = grep { -l "$sys_net_dir/$_" } readdir $if_dir;
-	closedir $if_dir;
+	#Get link interfaces
+	push @if_list, &getLinkNameList();
 
 	#Get virtual interfaces
 	push @if_list, &getVirtualInterfaceNameList();

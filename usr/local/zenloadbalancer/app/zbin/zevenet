@@ -530,47 +530,32 @@ if ( $eject eq "start" )
 					&printAndLog( " Gateway:$$iface{gateway}" );
 				}
 
-				my $socket   = &getIOSocket();
-				my $if_flags = $socket->if_flags( $$iface{ name } );
+				&upIf( $iface );
+				my $return_code = &addIp( $iface );
 
-				if ( !( $if_flags & IFF_UP ) )
+				if ( $return_code )
 				{
-					&upIf( $iface );
-					my $return_code = &addIp( $iface );
-
-					if ( $return_code )
-					{
-						my @ip_output = `$ip_bin address show dev $$iface{name}`;
-						$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
-					}
-
-					# kept in case it is required for first interface
-					&writeRoutes( $$iface{ name } );
-
-					my $if_flags = $socket->if_flags( $$iface{ name } );
-					&applyRoutes( "local", $iface );
-
-					if ( $return_code == 0 )
-					{
-						print( " \033[1;32m OK \033[0m \n" );
-					}
-					else
-					{
-						print( " \033[1;31m ERROR \033[0m \n" );
-					}
-
-					if ( $$iface{ ip_v } == 4 )
-					{
-						&sendGPing( $$iface{ name } );
-					}
+					my @ip_output = `$ip_bin address show dev $$iface{name}`;
+					$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
 				}
-				elsif ( $$iface{ addr } eq $mgmt_ip && !( $if_flags & IFF_UP ) )
+
+				# kept in case it is required for first interface
+				&writeRoutes( $$iface{ name } );
+
+				&applyRoutes( "local", $iface );
+
+				if ( $return_code == 0 )
 				{
 					print( " \033[1;32m OK \033[0m \n" );
 				}
 				else
 				{
-					print( "\n" );
+					print( " \033[1;31m ERROR \033[0m \n" );
+				}
+
+				if ( $$iface{ ip_v } == 4 )
+				{
+					&sendGPing( $$iface{ name } );
 				}
 			}
 		}

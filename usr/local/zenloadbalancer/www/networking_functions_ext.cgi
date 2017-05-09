@@ -1911,6 +1911,29 @@ sub getVirtualInterfaceNameList
 }
 
 =begin nd
+Function: getLinkInterfaceNameList
+
+	Get a list of the link interfaces names.
+
+Parameters:
+	none - .
+
+Returns:
+	list - Every link interface name.
+=cut
+sub getLinkNameList
+{
+	my $sys_net_dir = getGlobalConfiguration( 'sys_net_dir' );
+
+	# Get link interfaces (nic, bond and vlan)
+	opendir( my $if_dir, $sys_net_dir );
+	my @if_list = grep { -l "$sys_net_dir/$_" } readdir $if_dir;
+	closedir $if_dir;
+
+	return @if_list;
+}
+
+=begin nd
 Function: getAllBondsSlaves
 
 	Get a list of all the nics belonging to a bonding interface.
