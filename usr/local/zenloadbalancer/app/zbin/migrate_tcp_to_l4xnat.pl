@@ -25,16 +25,23 @@ use strict;
 use Tie::File;
 
 my $dir = "/usr/local/zenloadbalancer/config";
+my $backup_dir = "/opt/farm_tcp";
 
 # get TCP files
 my @files = `ls $dir | egrep '.*_pen.cfg\$'`;
 # remove TCP config file extension
 @files = grep ( s/(.+)_pen.cfg/$1/, @files);
 
+mkdir $backup_dir if( ! -d $backup_dir );
+
 foreach my $farm ( @files )
 {
+	chomp $farm;
+	# the original config file is copied
+	system ("cp ${dir}/${farm}_pen.cfg ${backup_dir}/${farm}_pen.cfg");
+	
 	chomp ($farm);
-	print( "'${dir}/${farm}_l4xnat.cfg'\n");	
+	print( "Migrating farm \"${farm}\" to l4xnat profile\n");	
 	if ( ! -f "${dir}/${farm}_l4xnat.cfg" )	
 	{
 		#open l4xnat file
@@ -63,22 +70,28 @@ foreach my $farm ( @files )
 		{
 			#tcp
 			# server 6 acl 0 address 0.0.0.0 port 0 max 0 hard 0 prio 0
+			#server 0 acl 0 address 192.168.100.254 port 22 max 0 hard 0
 			if ( $tcpline =~ /server \d+ acl 0 address 0.0.0.0 port 0 max 0 hard 0/ )
 			{
 				next;
 			}
-			if ( $tcpline =~ /server (\d+) acl (\d+) address (\d+\.\d+\.\d+\.\d+) port (\d+) max (\d+) hard (\d+) prio (\d+)/ )
+			#server 0 acl 0 address 192.168.100.254 port 22 max 0 hard 0
+			if ( $tcpline =~ /server (\d+) acl (\d+) address (\d+\.\d+\.\d+\.\d+) port (\d+) max (\d+) hard (\d+)/ )
 			{
 				my $id=$1;
 				my $acl=$2;
 				my $ip=$3;
 				my $port=$4;
 				my $maxconns=$5;
-				my $weight=$6;
-				my $priority=$7;		
-
+				
+				my $weight="1";
+				$weight = $1 if ( $tcpline =~ /weight (\d+)/);
+				
+				my $priority="1";
+				$priority = $1 if ( $tcpline =~ /prio (\d+)/);
+				
 				my $status="up";
-				my $status="maintenance" if ( $acl==9 );
+				$status="maintenance" if ( $acl==9 );
 
 				# l4
 				#	;server;192.168.0.168;80;0x209;1;1;up
@@ -89,7 +102,6 @@ foreach my $farm ( @files )
 		}
 		
 		# pen -S 10 -c 2049 -x 257 -F '/usr/local/zenloadbalancer/config/tcpfarm_pen.cfg' -C 127.0.0.1:16802 192.168.100.249:41
-		print ">$tcpfile[1]\n";
 		if ( $tcpfile[1] =~ /^# pen .+ (\d+\.\d+\.\d+\.\d+):(\d+)$/)
 		{
 			$vip=$1;
@@ -107,10 +119,10 @@ foreach my $farm ( @files )
 		$l4_status="down" if ( grep ( /^\#down/, @tcpfile ) );
 		
 		
-		$l4_persistence="";
-		$l4_persistence="ip" if ( grep ( /^no roundrobin/, @tcpfile ) );
+		$l4_persistence="ip";
+		$l4_persistence="none" if ( grep ( /^roundrobin/, @tcpfile ) );
 		
-		$l4_timeout=3600;
+		$l4_timeout=120;
 		
 		# save config parameter in l4 format
 		#l4farm;tcp;192.168.100.102;70;nat;weight;none;125;up
@@ -123,8 +135,41 @@ foreach my $farm ( @files )
 		untie @l4file;
 		# close tcp file
 		untie @tcpfile;
-		# it is copied and remove the old TCP farm	
-		unlink "$dir/${farm}_pen.cfg"; 
+		
+		unlink "${dir}/${farm}_pen.cfg";
+		
+		# create a farmguardian service if it is not exist or if it is stopped
+		my $farmguardian_file = "${dir}/${farm}_guardian.conf";
+		if ( ! -f "$farmguardian_file" )
+		{
+			system ( "echo '${farm}:::5:::check_tcp -H HOST -p PORT -t 5:::true:::false' > $farmguardian_file" );
+		}
+		else
+		{
+			my @farmguardianConf = `cat $farmguardian_file`;
+			# check farm guardian
+			if ( $farmguardianConf[0] =~ /.+:::.+:::.+:::.+:::.+/ )
+			{
+				my @fgParams = split ( ':::', $farmguardianConf[0] );
+				my $fgtime = $fgParams[1];
+				my $fgcmd = $fgParams[2];
+				my $fgstatus = $fgParams[3];
+				my $fglogs = $fgParams[4];
+				
+				if ( $fgstatus ne "true" )
+				{
+					$fgstatus = "true";
+				}
+				system ( "echo '${farm}:::${fgtime}:::${fgcmd}:::${fgstatus}:::$fglogs' > $farmguardian_file" );
+				
+			}
+			# no correct farmguardian. Put a default farmguardian
+			else
+			{
+				system ( "echo '${farm}:::5:::check_tcp -H HOST -p PORT -t 5:::true:::false' > $farmguardian_file" );
+			}
+		}
+		
 	}
 	
 	else 
