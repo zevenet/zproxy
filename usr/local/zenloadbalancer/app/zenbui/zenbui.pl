@@ -385,6 +385,8 @@ sub manage_timezone(){
 sub manage_mgmt(){
 	my $mgmtif = "";
 	my @all_interfaces = &getInterfaceTypeList( 'nic' );
+	# discard bonding slave nics
+	@all_interfaces = grep { $_->{ is_slave } eq 'false' } @all_interfaces;
 	my $i=0;
 	my $mgmtindex = 0;
 	my @interfaces = ();
@@ -413,15 +415,16 @@ sub manage_mgmt(){
 		-vscrollbar => 1,
 		-onchange => sub {
 					$mgmtif = $mgmtifinput->get();
-					$mgmtip = `ifconfig $mgmtif | awk -F'inet addr:' '{print \$2}' | awk '{printf \$1}'`;
+					my $if_ref = &getInterfaceConfig( $mgmtif );
+					$mgmtip = $if_ref->{ addr } // '';
 					if ($mgmtipinput){
 						$mgmtipinput->text($mgmtip);
 					}
-					$mgmtmask = `ifconfig $mgmtif | awk -F'Mask:' '{printf \$2}'`;
+					$mgmtmask = $if_ref->{ mask } // '';
 					if ($mgmtmaskinput){
 						$mgmtmaskinput->text($mgmtmask);
 					}
-					$mgmtgw =`ip route show | grep default | awk '{printf \$3}'`;
+					$mgmtgw = $if_ref->{ gateway } // '';
 					if ($mgmtgwinput){
 						$mgmtgwinput->text($mgmtgw);
 					}
@@ -430,9 +433,10 @@ sub manage_mgmt(){
 	$mgmtifinput->focus();
 	$mgmtifinput->set_selection($mgmtindex);
 	$mgmtif = $mgmtifinput->get();
-	$mgmtip = `ifconfig $mgmtif | awk -F'inet addr:' '{print \$2}' | awk '{printf \$1}'`;
-	$mgmtmask = `ifconfig $mgmtif | awk -F'Mask:' '{printf \$2}'`;
-	$mgmtgw =`ip route show | grep default | awk '{printf \$3}'`;
+	my $if_ref = &getInterfaceConfig( $mgmtif );
+	$mgmtip = $if_ref->{ addr };
+	$mgmtmask = $if_ref->{ mask };
+	$mgmtgw = $if_ref->{ gateway };
 
 
 	$mgmtipinput = $win3->add(
@@ -821,7 +825,7 @@ sub show_status_system()
 	my @cpudata       = &get_system_cpu();
 	my $cpustring     = &set_data_string( @cpudata );
 	my $zlbversion    = &getGlobalConfiguration('version');
-	my $zaversion     = `dpkg -l | grep zen | awk '{printf \$3}'`;
+	my $zaversion     = &getApplianceVersion();
 	my $ncores = 1 + `grep processor /proc/cpuinfo | tail -1 | awk '{printf \$3}'`;
 	$zlbhostname = `hostname`;
 	chomp $zlbhostname;
@@ -856,7 +860,7 @@ sub show_status_system()
 	-y => 3,
 	-vscrollbar => 1,
     	-text => "\nAppliance Version:\n"
-		. "\tZEVENET EE " . $zaversion . "\n"
+		. "\t" . $zaversion . "\n"
 		. "\nSoftware Version:\n"
 		. "\t" . $zlbversion . "\n"
 		. "\nHostname:\n"
