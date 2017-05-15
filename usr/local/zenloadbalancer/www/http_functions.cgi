@@ -2047,7 +2047,7 @@ sub runHTTPFarmServerDelete    # ($ids,$farm_name,$service)
 
 	if ( $output != -1 )
 	{
-		&runRemovehttpBackend( $farm_name, $ids, $service );
+		&runRemoveHTTPBackendStatus( $farm_name, $service, $ids );
 	}
 
 	return $output;
@@ -2740,34 +2740,59 @@ sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
 
-	my $poundctl = &getGlobalConfiguration('poundctl');
-	my @run    = `$poundctl -c "/tmp/$farm_name\_pound.socket"`;
 	my $output = -1;
-	my $sw     = 0;
-
-	foreach my $line ( @run )
+	
+	# if the farm is running, take status from poundctl
+	if ( &getFarmStatus ($farm_name) eq 'up' )
 	{
-		if ( $line =~ /Service \"$service\"/ )
+		my $poundctl = &getGlobalConfiguration('poundctl');
+		my @run    = `$poundctl -c "/tmp/$farm_name\_pound.socket"`;
+		
+		my $sw     = 0;
+	
+		foreach my $line ( @run )
 		{
-			$sw = 1;
-		}
-
-		if ( $line =~ /$backend\. Backend/ && $sw == 1 )
-		{
-			my @line = split ( "\ ", $line );
-			my $backendstatus = $line[3];
-
-			if ( $backendstatus eq "DISABLED" )
+			if ( $line =~ /Service \"$service\"/ )
 			{
-				$backendstatus =
-				  &getHTTPBackendStatusFromFile( $farm_name, $backend, $service );
-
-				if ( $backendstatus =~ /maintenance/ )
-				{
-					$output = 0;
-				}
+				$sw = 1;
 			}
-			last;
+	
+			if ( $line =~ /$backend\. Backend/ && $sw == 1 )
+			{
+				my @line = split ( "\ ", $line );
+				my $backendstatus = $line[3];
+	
+				if ( $backendstatus eq "DISABLED" )
+				{
+					$backendstatus =
+					&getHTTPBackendStatusFromFile( $farm_name, $backend, $service );
+	
+					if ( $backendstatus =~ /maintenance/ )
+					{
+						$output = 0;
+					}
+				}
+				last;
+			}
+		}
+	}
+	# if the farm is not running, take status from status file
+	else
+	{
+		my $statusfile = "$configdir\/$farm_name\_status.cfg";
+
+		if ( -e $statusfile )
+		{
+			use Tie::File;
+			tie my @filelines, 'Tie::File', "$statusfile";
+			
+			my @sol;
+			my $service_index = &getFarmVSI( $farm_name, $service );
+			if ( @sol = grep ( /0 $service_index $backend maintenance/, @filelines ) )
+			{
+				$output = 0;
+			}
+			untie @filelines;
 		}
 	}
 
@@ -2801,13 +2826,16 @@ sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	&zenlog(
 		  "setting Maintenance mode for $farm_name service $service backend $backend" );
 
-	my $poundctl = &getGlobalConfiguration('poundctl');
-	my $poundctl_command =
-	  "$poundctl -c /tmp/$farm_name\_pound.socket -b 0 $idsv $backend";
-
-	&zenlog( "running '$poundctl_command'" );
-	my @run = `$poundctl_command`;
-	$output = $?;
+	if ( &getFarmStatus( $farm_name ) eq 'up' )
+	{
+		my $poundctl = &getGlobalConfiguration('poundctl');
+		my $poundctl_command =
+		"$poundctl -c /tmp/$farm_name\_pound.socket -b 0 $idsv $backend";
+	
+		&zenlog( "running '$poundctl_command'" );
+		my @run = `$poundctl_command`;
+		$output = $?;
+	}
 
 	&getFarmHttpBackendStatus( $farm_name, $backend, "maintenance", $idsv );
 
@@ -2842,14 +2870,17 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 		"setting Disabled maintenance mode for $farm_name service $service backend $backend"
 	);
 
-	my $poundctl = &getGlobalConfiguration('poundctl');
-	my $poundctl_command =
-	  "$poundctl -c /tmp/$farm_name\_pound.socket -B 0 $idsv $backend";
+	if ( &getFarmStatus( $farm_name ) eq 'up' ) 
+	{
+		my $poundctl = &getGlobalConfiguration('poundctl');
+		my $poundctl_command =
+			"$poundctl -c /tmp/$farm_name\_pound.socket -B 0 $idsv $backend";
 
-	&zenlog( "running '$poundctl_command'" );
-	my @run    = `$poundctl_command`;
-	$output = $?;
-
+		&zenlog( "running '$poundctl_command'" );
+		my @run    = `$poundctl_command`;
+		$output = $?;
+	}
+	
 	# save backend status in status file
 	&getFarmHttpBackendStatus( $farm_name, $backend, "active", $idsv );
 
@@ -2880,7 +2911,7 @@ sub getFarmHttpBackendStatus    # ($farm_name,$backend,$status,$idsv)
 {
 	my ( $farm_name, $backend, $status, $idsv ) = @_;
 
-	my $statusfile = "$configdir\/$farm_name\_status.cfg";
+	my $statusfile = "$configdir\/$farm_name\_status.cfg"; 
 	my $changed    = "false";
 
 	if ( !-e $statusfile )
@@ -2957,7 +2988,7 @@ sub getFarmHttpBackendStatus    # ($farm_name,$backend,$status,$idsv)
 
 
 =begin nd
-Function: runRemovehttpBackend
+Function: runRemoveHTTPBackendStatus
 
 	Function that removes a backend from the status file
 	
@@ -2973,7 +3004,7 @@ FIXME:
 	This function returns nothing, do error control
 		
 =cut
-sub runRemovehttpBackend    # ($farm_name,$backend,$service)
+sub runRemoveHTTPBackendStatus    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
 
@@ -3003,6 +3034,7 @@ sub runRemovehttpBackend    # ($farm_name,$backend,$service)
 		}
 	}
 	untie @filelines;
+		
 }
 
 
@@ -3273,23 +3305,20 @@ sub deleteFarmService    # ($farm_name,$service)
 	{
 		while ( $counter > -1 )
 		{
-			&runRemovehttpBackend( $farm_name, $counter, $service );
+			&runRemoveHTTPBackendStatus( $farm_name, $service, $counter );
 			$counter--;
 		}
 	}
 
-# change the ID value of services with an ID higher than the service deleted (value - 1)
+	# change the ID value of services with an ID higher than the service deleted (value - 1)
 	tie my @contents, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
 	foreach my $line ( @contents )
 	{
 		my @params = split ( "\ ", $line );
 		my $newval = $params[2] - 1;
 
-		&zenlog( "param2: $params[2] $newval" );
-
 		if ( $params[2] > $sindex )
 		{
-			&zenlog( "linea $_" );
 			$line =~
 			  s/$params[0]\ $params[1]\ $params[2]\ $params[3]\ $params[4]/$params[0]\ $params[1]\ $newval\ $params[3]\ $params[4]/g;
 		}
@@ -4004,27 +4033,25 @@ FIXME:
 =cut
 sub getFarmVSI    # ($farm_name,$service)
 {
-	my ( $farm_name, $service ) = @_;
-	my $output;
-	my $index;
-	my $l;
-	my @content = &getFarmBackendStatusCtl( $farm_name );
-
-	foreach ( @content )
+	my ( $farmname, $service ) = @_;
+	
+	# get service position
+	my $srv_position = 0;
+	my @services = &getFarmServices( $farmname );
+	foreach my $srv ( @services )
 	{
-		if ( $_ =~ /Service \"$service\"/ )
+		if  ( $srv eq $service )
 		{
-			$l = $_;
-			my @line = split ( '\.', $l );
-			$index = $line[0];
+			# found
+			last;
+		}
+		else
+		{
+			$srv_position++;
 		}
 	}
-	$index =~ s/\"//g;
-	$index =~ s/^\s+//;
-	$index =~ s/\s+$//;
-	$output = $index;
-
-	return $output;
+	
+	return $srv_position;	
 }
 
  
@@ -4554,48 +4581,6 @@ sub getHttpFarmService
 
 	return $service_ref;
 }
-
-
-=begin nd
-Function: getHTTPServicePosition
-
-	Get the index of a service in a http farm
-	
-Parameters:
-	farmname - Farm name
-	service - Service to move
-
-Returns:
-	integer - Always return 0
-	
-FIXME: 
-	Duplicate, &getFarmVSI does the same
-		
-=cut
-sub getHTTPServicePosition 
-{
-	my ( $farmname, $service ) = @_;
-	
-	# get service position
-	my $srv_position = 0;
-	my @services = &getFarmServices( $farmname );
-	foreach my $srv ( @services )
-	{
-		if  ( $srv eq $service )
-		{
-			# found
-			last;
-		}
-		else
-		{
-			$srv_position++;
-		}
-	}
-	
-	return $srv_position;	
-}
-
-
 
 
 =begin nd

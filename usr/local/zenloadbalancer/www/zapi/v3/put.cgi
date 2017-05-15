@@ -1138,7 +1138,7 @@ sub move_services
 			}
 			else
 			{
-				my $srv_position = &getHTTPServicePosition( $farmname, $service );
+				my $srv_position = &getFarmVSI( $farmname, $service );
 				if ( $srv_position == $json_obj->{ 'position' } )
 				{
 					$errormsg = "The service already is in required position.";
@@ -1182,7 +1182,7 @@ sub move_services
 							&moveServiceFarmStatus( $farmname, $moveservice, $service );
 							&moveService( $farmname, $moveservice, $service );
 
-							$srv_position = &getHTTPServicePosition( $farmname, $service );
+							$srv_position = &getFarmVSI( $farmname, $service );
 						}
 
 						# start farm if his status was up
