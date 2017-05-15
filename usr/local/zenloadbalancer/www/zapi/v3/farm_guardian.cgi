@@ -209,9 +209,13 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 										$usefarmguardian, $farmguardianlog, "" );
 				if ( $status != -1 )
 				{
-					if ( $usefarmguardian eq "true" && &runFarmGuardianStart( $farmname, "" ) )
+					# run farmguardian, if the farm is running
+					if ( &getFarmStatus( $farmname ) eq 'up' )
 					{
-						$errormsg = "Error, trying to modify the farm guardian in a farm $farmname, an error ocurred while starting the FarmGuardian service.";
+						if ( $usefarmguardian eq "true" && &runFarmGuardianStart( $farmname, "" ) )
+						{
+							$errormsg = "Error, trying to modify the farm guardian in a farm $farmname, an error ocurred while starting the FarmGuardian service.";
+						}
 					}
 				}
 				else
