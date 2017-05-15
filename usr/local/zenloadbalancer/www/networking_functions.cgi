@@ -1534,6 +1534,13 @@ sub iponif            # ($if)
 	my @interfaces = &getInterfaceList();
 	my $iponif = $s->if_addr( $if );
 
+	# fixes virtual interfaces IPs
+	unless ( $iponif )
+	{
+		my $if_ref = &getInterfaceConfig( $if );
+		$iponif = $if_ref->{ addr };
+	}
+
 	return $iponif;
 }
 

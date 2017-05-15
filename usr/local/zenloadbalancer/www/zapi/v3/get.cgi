@@ -311,6 +311,7 @@ sub backends
 			$be->{ 'vport' } = $be->{ 'vport' } eq '' ? undef : $be->{ 'vport' } + 0;
 			$be->{ 'priority' } = $be->{ 'priority' }? $be->{ 'priority' }+0: undef;
 			$be->{ 'weight' } = $be->{ 'weight' }? $be->{ 'weight' }+0: undef;
+			$be->{ 'max_conns' } = $be->{ 'max_conns' }+0;
 
 			push @backends,
 			  {
@@ -320,6 +321,7 @@ sub backends
 				priority => $be->{ 'priority' },
 				weight   => $be->{ 'weight' },
 				status   => $be->{ 'status' },
+				max_conns => $be->{ 'max_conns' },
 			  };
 		}
 

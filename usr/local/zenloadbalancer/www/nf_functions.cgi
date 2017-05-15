@@ -321,7 +321,6 @@ sub genIptMark # ($farm_name,$lbalg,$vip,$vport,$protocol,$index,$mark,$value,$p
 	if ( $$farm{ lbalg } eq 'leastconn' )
 	{
 		$rule .= "--match condition --condition '\_$$farm{ name }\_$$server{ tag }\_' ";
-
 	}
 
 	#~ if ( $$farm{ lbalg } eq 'prio' )
@@ -382,6 +381,12 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 		  "--match recent --name \"\_$$farm{ name }\_$$server{ tag }\_sessions\" --set";
 	}
 
+	my $connlimit_match = '';
+	if ( $$server{ max_conns } )
+	{
+		$connlimit_match .= "--match connlimit --connlimit-upto $$server{ max_conns } --connlimit-daddr";
+	}
+
 	# Get the binary of iptables (iptables or ip6tables)
 	my $iptables_bin = &getBinVersion( $farm_name );
 
@@ -389,6 +394,7 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 	    "$iptables_bin --table nat --::ACTION_TAG:: PREROUTING "
 	  . "--match mark --mark $$server{ tag } "
 	  . "$persist_match "
+	  . "$connlimit_match "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
 	  . "--jump DNAT $layer --to-destination $$server{ rip } ";
 

@@ -1947,7 +1947,7 @@ sub setFarmServer # $output ($ids,$rip,$port|$iface,$max,$weight,$priority,$time
 
 	if ( $farm_type eq "l4xnat" )
 	{
-		$output = &setL4FarmServer( $ids, $rip, $port, $weight, $priority, $farm_name );
+		$output = &setL4FarmServer( $ids, $rip, $port, $weight, $priority, $farm_name, $max );
 	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )

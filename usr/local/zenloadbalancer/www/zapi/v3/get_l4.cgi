@@ -94,6 +94,7 @@ sub farms_name_l4 # ( $farmname )
 		$l_serv[2] = $l_serv[2]? $l_serv[2]+0: undef;
 		$l_serv[4] = $l_serv[4]? $l_serv[4]+0: undef;
 		$l_serv[5] = $l_serv[5]? $l_serv[5]+0: undef;
+		$l_serv[7] = defined $l_serv[7]? $l_serv[7]+0: 0;
 		$l_serv[2] = undef if $l_serv[2] eq '';
 		chomp $l_serv[6];
 
@@ -105,6 +106,7 @@ sub farms_name_l4 # ( $farmname )
 			weight   => $l_serv[4],
 			priority => $l_serv[5],
 			status   => $l_serv[6],
+			max_conns => $l_serv[7],
 		  };
 	}
 	my $ipds = &getIPDSfarmsRules( $farmname );

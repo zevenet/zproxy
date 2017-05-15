@@ -181,6 +181,21 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			}
 		}
 
+		if ( !$error && exists ( $json_obj->{ max_conns } ) )
+		{
+			if ( $json_obj->{ max_conns } =~ /^\d+$/ ) # (0 or higher)
+			{
+				$backend->{ max_conns } = $json_obj->{ max_conns };
+			}
+			else
+			{
+				$error = "true";
+				&zenlog(
+					"ZAPI error, trying to modify the connection limit in the farm $farmname, invalid value."
+				);
+			}
+		}
+
 		if ( !$error )
 		{
 			my $status = &setL4FarmServer(
@@ -190,6 +205,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 										   $backend->{ weight },
 										   $backend->{ priority },
 										   $farmname,
+										   $backend->{ max_conns },
 			);
 
 			if ( $status == -1 )

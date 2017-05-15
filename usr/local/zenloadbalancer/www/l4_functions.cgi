@@ -1171,6 +1171,8 @@ sub getL4FarmServers    # ($farm_name)
 	}
 	close FI;
 
+	chomp @servers;
+
 	return @servers;
 }
 
@@ -2000,10 +2002,10 @@ Returns:
 =cut
 sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 {
-	my ( $ids, $rip, $port, $weight, $priority, $farm_name ) = @_;
+	my ( $ids, $rip, $port, $weight, $priority, $farm_name, $max_conns ) = @_;
 
 	&zenlog(
-		"setL4FarmServer << ids:$ids rip:$rip port:$port weight:$weight priority:$priority farm_name:$farm_name"
+		"setL4FarmServer << ids:$ids rip:$rip port:$port weight:$weight priority:$priority farm_name:$farm_name max_conns:$max_conns"
 	) if &debug;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -2037,7 +2039,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 			if ( $i eq $ids )
 			{
 				my @aline = split ( ';', $line );
-				my $dline = "\;server\;$rip\;$port\;$aline[4]\;$weight\;$priority\;up\n";
+				my $dline = "\;server\;$rip\;$port\;$aline[4]\;$weight\;$priority\;up\;$max_conns\n";
 
 				splice @contents, $l, 1, $dline;
 				$output       = $?;       # FIXME
@@ -2057,7 +2059,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	if ( $found_server eq 'false' )
 	{
 		$mark = &getNewMark( $farm_name );
-		push ( @contents, "\;server\;$rip\;$port\;$mark\;$weight\;$priority\;up\n" );
+		push ( @contents, "\;server\;$rip\;$port\;$mark\;$weight\;$priority\;up\;$max_conns\n" );
 		$output = $?;    # FIXME
 	}
 	untie @contents;
@@ -2424,6 +2426,8 @@ sub getL4FarmBackendStatusCtl    # ($farm_name)
 	@output = grep { /^\;server\;/ } <$farm_file>;
 	close $farm_file;
 
+	chomp @output;
+
 	return @output;
 }
 
@@ -2699,6 +2703,7 @@ sub getL4ServerStruct
 	$server{ weight }   = shift @server_args;          # input 4
 	$server{ priority } = shift @server_args;          # input 5
 	$server{ status }   = shift @server_args;          # input 6
+	$server{ max_conns } = shift @server_args // 0;    # input 7
 	$server{ rip }      = $server{ vip };
 
 	if ( $server{ vport } ne '' && $$farm{ proto } ne 'all' )

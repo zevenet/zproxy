@@ -438,7 +438,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
 			# Reset ip rule mark when changing the farm's vip
-			if ( $json_obj->{ vip } ne $vip )
+			if ( exists $json_obj->{ vip } && $json_obj->{ vip } ne $vip )
 			{
 				my $farm = &getL4FarmStruct( $farmname );
 				my $ip_bin = &getGlobalConfiguration('ip_bin');
