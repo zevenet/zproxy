@@ -42,7 +42,7 @@ Returns:
 Bugs:
 
 See Also:
-	Used in zapi v2 and v3 certificates.cgi
+	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
 =cut
 sub getCertFiles    # ()
 {
@@ -74,7 +74,7 @@ Returns:
 Bugs:
 
 See Also:
-	getCertCN, getCertIssuer, zapi/v3/certificates.cgi
+	<getCertCN>, <getCertIssuer>, zapi/v3/certificates.cgi
 =cut
 sub getCleanBlanc    # ($vartoclean)
 {
@@ -105,7 +105,7 @@ Returns:
 Bugs:
 
 See Also:
-	getCertCN, getCertIssuer, getCertCreation, getCertExpiration, getCertData, zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
+	<getCertCN>, <getCertIssuer>, <getCertCreation>, <getCertExpiration>, <getCertData>, zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
 =cut
 sub getCertType      # ($certfile)
 {

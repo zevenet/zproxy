@@ -223,6 +223,9 @@ Returns:
 	false	- If value failed to be validated
 	true	- If value was successfuly validated
 	regex	- If no value was passed to be matched
+
+See also:
+	Mainly but not exclusively used in zapi v3.
 =cut
 
 # &getValidFormat ( $format_name, $value );
