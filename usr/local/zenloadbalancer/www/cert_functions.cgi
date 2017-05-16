@@ -28,7 +28,22 @@ use Time::localtime;
 
 my $openssl = &getGlobalConfiguration('openssl');
 
-#Return all certificate files in config directory
+=begin nd
+Function: getCertFiles
+
+	Returns a list of all .pem and .csr certificate files in the config directory.
+
+Parameters:
+	none - .
+
+Returns:
+	list - certificate files in config/ directory.
+
+Bugs:
+
+See Also:
+	Used in zapi v2 and v3 certificates.cgi
+=cut
 sub getCertFiles    # ()
 {
 	my $configdir = &getGlobalConfiguration('configdir');
@@ -45,7 +60,22 @@ sub getCertFiles    # ()
 	return @files;
 }
 
-#Delete all blancs from the beginning and from the end of a variable.
+=begin nd
+Function: getCleanBlanc
+
+	Delete all blancs from the beginning and from the end of a variable.
+
+Parameters:
+	String - String possibly starting and/or ending with space characters.
+
+Returns:
+	String - String without space characters at the beginning or at the end.
+
+Bugs:
+
+See Also:
+	getCertCN, getCertIssuer, zapi/v3/certificates.cgi
+=cut
 sub getCleanBlanc    # ($vartoclean)
 {
 	my ( $vartoclean ) = @_;
@@ -56,7 +86,27 @@ sub getCleanBlanc    # ($vartoclean)
 	return $vartoclean;
 }
 
-#Return the type of a certificate file
+=begin nd
+Function: getCertType
+
+	Return the type of a certificate filename.
+
+	The certificate types are:
+	Certificate - For .pem or .crt certificates
+	CSR - For .csr certificates
+	none - for any other file or certificate
+
+Parameters:
+	String - Certificate filename.
+
+Returns:
+	String - Certificate type.
+
+Bugs:
+
+See Also:
+	getCertCN, getCertIssuer, getCertCreation, getCertExpiration, getCertData, zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
+=cut
 sub getCertType      # ($certfile)
 {
 	my ( $certfile ) = @_;
@@ -74,7 +124,22 @@ sub getCertType      # ($certfile)
 	return $certtype;
 }
 
-#Return the Common Name of a certificate file
+=begin nd
+Function: getCertCN
+
+	Return the Common Name of a certificate file
+
+Parameters:
+	String - Certificate filename.
+
+Returns:
+	String - Certificate's Common Name.
+
+Bugs:
+
+See Also:
+	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
+=cut
 sub getCertCN    # ($certfile)
 {
 	my ( $certfile ) = @_;
@@ -101,7 +166,22 @@ sub getCertCN    # ($certfile)
 	return $certcn;
 }
 
-#Return the Issuer Common Name of a certificate file
+=begin nd
+Function: getCertIssuer
+
+	Return the Issuer Common Name of a certificate file
+
+Parameters:
+	String - Certificate filename.
+
+Returns:
+	String - Certificate issuer.
+
+Bugs:
+
+See Also:
+	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
+=cut
 sub getCertIssuer    # ($certfile)
 {
 	my ( $certfile ) = @_;
@@ -124,7 +204,22 @@ sub getCertIssuer    # ($certfile)
 	return $certissu;
 }
 
-#Return the creation date of a certificate file
+=begin nd
+Function: getCertCreation
+
+	Return the creation date of a certificate file
+
+Parameters:
+	String - Certificate filename.
+
+Returns:
+	String - Creation date.
+
+Bugs:
+
+See Also:
+	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
+=cut
 sub getCertCreation    # ($certfile)
 {
 	my ( $certfile ) = @_;
@@ -151,7 +246,22 @@ sub getCertCreation    # ($certfile)
 	return $datecreation;
 }
 
-#Return the expiration date of a certificate file
+=begin nd
+Function: getCertExpiration
+
+	Return the expiration date of a certificate file
+
+Parameters:
+	String - Certificate filename.
+
+Returns:
+	String - Expiration date.
+
+Bugs:
+
+See Also:
+	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
+=cut
 sub getCertExpiration    # ($certfile)
 {
 	my ( $certfile ) = @_;
@@ -171,7 +281,22 @@ sub getCertExpiration    # ($certfile)
 	return $dateexpiration;
 }
 
-# content 1-3 certificate-https
+=begin nd
+Function: getFarmCertUsed
+
+	Get is a certificate file is being used by an HTTP farm
+
+Parameters:
+	String - Certificate filename.
+
+Returns:
+	Integer - 0 if the certificate is being used, or -1 if it is not.
+
+Bugs:
+
+See Also:
+	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
+=cut
 sub getFarmCertUsed    #($cfile)
 {
 	my ( $cfile ) = @_;
@@ -194,7 +319,22 @@ sub getFarmCertUsed    #($cfile)
 	return $output;
 }
 
-#Check if a fqdn is valid
+=begin nd
+Function: checkFQDN
+
+	Check if a FQDN is valid
+
+Parameters:
+	certfqdn - FQDN.
+
+Returns:
+	String - Boolean 'true' or 'false'.
+
+Bugs:
+
+See Also:
+	zapi/v3/certificates.cgi
+=cut
 sub checkFQDN    # ($certfqdn)
 {
 	my ( $certfqdn ) = @_;
@@ -220,6 +360,23 @@ sub checkFQDN    # ($certfqdn)
 	return $valid;
 }
 
+=begin nd
+Function: delCert
+
+	Removes a certificate file
+
+Parameters:
+	String - Certificate filename.
+
+Returns:
+	Integer - Number of files removed.
+
+Bugs:
+	Removes the _first_ file found _starting_ with the given certificate name.
+
+See Also:
+	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
+=cut
 sub delCert    # ($certname)
 {
 	my ( $certname ) = @_;
@@ -249,7 +406,34 @@ sub delCert    # ($certname)
 	return $files_removed;
 }
 
-#Create CSR file
+=begin nd
+Function: createCSR
+
+	Create a CSR file.
+
+	If the function run correctly two files will appear in the config/ directory:
+	certname.key and certname.csr.
+
+Parameters:
+	certname - Certificate name, part of the certificate filename without the extension.
+	certfqdn - FQDN.
+	certcountry - Country.
+	certstate - State.
+	certlocality - Locality.
+	certorganization - Organization.
+	certdivision - Division.
+	certmail - E-Mail.
+	certkey - Key. ¿?
+	certpassword - Password. Optional.
+
+Returns:
+	Integer - Return code of openssl generating the CSR file..
+
+Bugs:
+
+See Also:
+	zapi/v3/certificates.cgi
+=cut
 sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, $certorganization, $certdivision, $certmail, $certkey, $certpassword)
 {
 	my (
@@ -281,6 +465,23 @@ sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, 
 	return $output;
 }
 
+=begin nd
+Function: uploadCertFromCSR
+
+	NOT USED.
+
+Parameters:
+	String - Certificate filename.
+
+Returns:
+	 - .
+
+Bugs:
+	NOT USED.
+
+See Also:
+
+=cut
 sub uploadCertFromCSR    # ($certfile)
 {
 	my ( $certfile ) = @_;
@@ -298,6 +499,23 @@ sub uploadCertFromCSR    # ($certfile)
 	  "<a href=\"uploadcertsfromcsr.cgi?certname=$certfile\" title=\"Upload certificate for CSR $certfile\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><i class=\"fa fa-upload action-icon fa-fw green\"></i></a> ";
 }
 
+=begin nd
+Function: uploadPEMCerts
+
+	NOT USED.
+
+Parameters:
+	String - Certificate filename.
+
+Returns:
+	 - .
+
+Bugs:
+	NOT USED.
+
+See Also:
+
+=cut
 sub uploadPEMCerts    # ($certfile)
 {
 	my ( $certfile ) = @_;
@@ -308,6 +526,23 @@ sub uploadPEMCerts    # ($certfile)
 	  "<div id=\"dialog-container\" style=\"display: none;\"><iframe id=\"dialog\" width=\"350\" height=\"350\"></iframe></div>";
 }
 
+=begin nd
+Function: downloadCert
+
+	NOT USED.
+
+Parameters:
+	String - Certificate filename.
+
+Returns:
+	 - .
+
+Bugs:
+	NOT USED.
+
+See Also:
+
+=cut
 sub downloadCert      # ($certfile)
 {
 	my ( $certfile ) = @_;
@@ -326,6 +561,22 @@ sub downloadCert      # ($certfile)
 	  "<a href=\"downloadcerts.cgi?certname=$certfile\" onclick=\"positionedPopup(this.href,'myWindow','500','300','100','200','yes');return false\"><img src='img/icons/small/page_white_put.png' title=\"Download $certfile\"></a> ";
 }
 
+=begin nd
+Function: getCertData
+
+	Returns the information stored in a certificate.
+
+Parameters:
+	String - Certificate filename.
+
+Returns:
+	list - List of lines with the information stored in the certificate.
+
+Bugs:
+
+See Also:
+	zapi/v3/certificates.cgi
+=cut
 sub getCertData    # ($certfile)
 {
 	my ( $certfile ) = @_;
@@ -352,6 +603,26 @@ sub getCertData    # ($certfile)
 	return @eject;
 }
 
+=begin nd
+Function: createPemFromKeyCRT
+
+	NOT USED. Create PEM certificate from key, crt and certaut.
+
+Parameters:
+	keyfile - .
+	crtfile - .
+	certautfile - .
+	tmpdir - .
+
+Returns:
+	null - .
+
+Bugs:
+	NOT USED.
+
+See Also:
+
+=cut
 sub createPemFromKeyCRT    # ($keyfile,$crtfile,$certautfile,$tmpdir)
 {
 	my ( $keyfile, $crtfile, $certautfile, $tmpdir ) = @_;
