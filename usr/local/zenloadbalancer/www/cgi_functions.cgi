@@ -26,18 +26,56 @@ use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 
 use feature 'state';
 
-# getCGI returns a cgi object.
-# get a cgi object only once per http request and reuse the same object
+=begin nd
+Function: getCGI
+
+	Get a cgi object only once per http request and reuse the same object if the function is used more than once.
+
+Parameters:
+	none - .
+
+Returns:
+	CGI Object - CGI Object reference.
+
+Bugs:
+
+See Also:
+	zapi/v3/zapi.cgi, zapi/v3/certificates.cgi, zapi/v3/system.cgi, system_functions.cgi, 
+=cut
 sub getCGI
 {
 	state $cgi = CGI->new();
 	return $cgi;
 }
 
-# &getCgiParam();
-#		return = \%cgiVars			// Hash reference
-# &getCgiParam( $variableName );
-#		return = $varValue
+=begin nd
+Function: getCgiParam
+
+	Get CGI variables.
+
+	This functions can be used in two diferent ways:
+
+	1- When a variable name is passed as an argument, the variable value is returned:
+
+		$var = &getCgiParam( 'variableName' );
+
+	2- When no arguments are passed, a hash reference with all the variables is returned:
+
+		$hash_ref = &getCgiParam();
+		print $hash_ref->{ 'variableName' };
+
+Parameters:
+	String - CGI variable name. Optional.
+
+Returns:
+	Scalar - Variable value. When a variable name has been passed as an argument.
+	Scalar - Reference to a hash with all the CGI variables. When the function is run without arguments.
+
+Bugs:
+
+See Also:
+	zapi/v3/zapi.cgi
+=cut
 sub getCgiParam
 {
 	my $variable = shift;
