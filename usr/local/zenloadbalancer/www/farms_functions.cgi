@@ -1146,7 +1146,7 @@ sub runFarmStart    # ($farm_name,$writeconf)
 =begin nd
 Function: runFarmStop
 
-	Stop a farm completely a farm. Run farm, its farmguardian and ipds rules
+	Stop a farm completely a farm. Stop the farm, its farmguardian and ipds rules
 	
 Parameters:
 	farmname - Farm name

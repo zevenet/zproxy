@@ -204,6 +204,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 			if ( $type eq "l4xnat" )
 			{
 				&runFarmGuardianStop( $farmname, "" );
+				&runFarmGuardianRemove( $farmname, "" );
 				my $status =
 				&runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
 										$usefarmguardian, $farmguardianlog, "" );
@@ -227,6 +228,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 			elsif ( $type eq "http" || $type eq "https" )
 			{
 				&runFarmGuardianStop( $farmname, $service );
+				&runFarmGuardianRemove( $farmname, $service );
 				my $status =
 				&runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
 										$usefarmguardian, $farmguardianlog, $service );

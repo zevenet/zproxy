@@ -307,7 +307,7 @@ sub modify_farmguardian()
 
 	if ( $type eq "tcp" || $type eq "udp" || $type eq "l4xnat" )
 	{
-		&runFarmGuardianStop( $farmname, "" );
+		&runFarmGuardianRemove( $farmname, "" );
 		$status =
 		  &runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
 								  $usefarmguardian, $farmguardianlog, "" );
@@ -343,7 +343,7 @@ sub modify_farmguardian()
 	}
 	elsif ( $type eq "http" || $type eq "https" )
 	{
-		&runFarmGuardianStop( $farmname, $service );
+		&runFarmGuardianRemove( $farmname, $service );
 		$status =
 		  &runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
 								  $usefarmguardian, $farmguardianlog, $service );

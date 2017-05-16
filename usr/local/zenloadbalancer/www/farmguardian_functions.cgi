@@ -210,51 +210,6 @@ sub runFarmGuardianStop    # ($fname,$svice)
 			$status = $?;    # FIXME
 			unlink glob ( "/var/run/$fname\_${sv}guardian.pid" );
 
-			if ( $type eq "http" || $type eq "https" )
-			{
-				if ( -e "$configdir\/$fname\_status.cfg" )
-				{
-					my $portadmin = &getFarmPort( $fname );
-					my $idsv      = &getFarmVSI( $fname, $svice );
-					my $index     = -1;
-					tie my @filelines, 'Tie::File', "$configdir\/$fname\_status.cfg";
-
-					for ( @filelines )
-					{
-						$index++;
-
-						if ( $_ =~ /fgDOWN/ )
-						{
-							splice ( @filelines, $index, 1, );
-							my $poundctl = &getGlobalConfiguration('poundctl');
-							system ( "$poundctl -c $portadmin -B 0 $idsv $index >/dev/null 2>&1" );
-						}
-					}
-					untie @filelines;
-				}
-			}
-
-			if ( $type eq "l4xnat" )
-			{
-				my @be = &getFarmBackendStatusCtl( $fname );
-				my $i  = -1;
-
-				foreach my $line ( @be )
-				{
-					my @subbe = split ( ";", $line );
-					$i++;
-					my $backendid     = $i;
-					my $backendserv   = $subbe[2];
-					my $backendport   = $subbe[3];
-					my $backendstatus = $subbe[7];
-					chomp $backendstatus;
-
-					if ( $backendstatus eq "fgDOWN" )
-					{
-						$status |= &setFarmBackendStatus( $fname, $i, "up" );
-					}
-				}
-			}
 		}
 	}
 	return $status;
@@ -292,6 +247,82 @@ sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 	close FO;
 
 	return $output;
+}
+
+# Remove farmguardian check status
+sub runFarmGuardianRemove    # ( $fname, $svice )
+{
+	my ( $fname, $svice ) = @_;
+	my $type = &getFarmType( $fname );
+	my $status = 0;
+	
+	if ( $type =~ /http/ && $svice eq "" )
+	{
+		# Iterate over every farm service
+		my $services = &getFarmVS( $fname, "", "" );
+		my @servs = split ( " ", $services );
+
+		foreach my $service ( @servs )
+		{
+			my $stat = &runFarmGuardianStop( $fname, $service );
+			$status |= $stat;
+		}
+	}
+	
+	else
+	{
+		if ( $type eq "http" || $type eq "https" )
+		{
+			if ( -e "$configdir\/$fname\_status.cfg" )
+			{
+				my $portadmin = &getFarmPort( $fname );
+				my $idsv      = &getFarmVSI( $fname, $svice );
+
+				tie my @filelines, 'Tie::File', "$configdir\/$fname\_status.cfg";
+				
+				my @fileAux = @filelines;
+				my $lines     = scalar @fileAux;
+				
+				while ( $lines >= 0 )
+				{
+					$lines--;
+					my $line = $fileAux[ $lines ];
+					if ( $fileAux[ $lines ] =~ /0 $idsv (\d+) fgDOWN/ )
+					{
+						my $index = $1;
+						my $auxlin = splice ( @fileAux, $lines, 1, );
+						my $poundctl = &getGlobalConfiguration('poundctl');
+						system ( "$poundctl -c $portadmin -B 0 $idsv $index >/dev/null 2>&1" );
+					}
+				}
+				@filelines = @fileAux;
+				untie @filelines;
+			}
+		}
+		
+		if ( $type eq "l4xnat" )
+		{
+			my @be = &getFarmBackendStatusCtl( $fname );
+			my $i  = -1;
+		
+			foreach my $line ( @be )
+			{
+				my @subbe = split ( ";", $line );
+				$i++;
+				my $backendid     = $i;
+				my $backendserv   = $subbe[2];
+				my $backendport   = $subbe[3];
+				my $backendstatus = $subbe[7];
+				chomp $backendstatus;
+		
+				if ( $backendstatus eq "fgDOWN" )
+				{
+					$status |= &setFarmBackendStatus( $fname, $i, "up" );
+				}
+			}
+		}
+	
+	}
 }
 
 #

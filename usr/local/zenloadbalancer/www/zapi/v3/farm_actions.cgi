@@ -283,6 +283,20 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 		}
 	}
 
+	# Not allow modificate the maintenance status if the farm needs to restart
+	if ( &getFarmLock ($farmname) != -1 )
+	{
+		# Error
+		my $errormsg = "The farm needs to be restarted before to apply this action.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
 	# validate STATUS
 	if ( $json_obj->{ action } eq "maintenance" )
 	{

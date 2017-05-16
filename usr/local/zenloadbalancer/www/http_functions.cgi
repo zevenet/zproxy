@@ -2047,7 +2047,7 @@ sub runHTTPFarmServerDelete    # ($ids,$farm_name,$service)
 
 	if ( $output != -1 )
 	{
-		&runRemoveHTTPBackendStatus( $farm_name, $service, $ids );
+		&runRemoveHTTPBackendStatus( $farm_name, $ids, $service );
 	}
 
 	return $output;
@@ -3006,31 +3006,64 @@ FIXME:
 =cut
 sub runRemoveHTTPBackendStatus    # ($farm_name,$backend,$service)
 {
+	#~ my ( $farm_name, $backend, $service ) = @_;
+
+	#~ my $i      = -1;
+	#~ my $j      = -1;
+	#~ my $change = "false";
+	#~ my $sindex = &getFarmVSI( $farm_name, $service );
+	#~ tie my @contents, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
+	#~ foreach my $line ( @contents )
+	#~ {
+		#~ $i++;
+		#~ if ( $line =~ /0\ ${sindex}\ ${backend}/ )
+		#~ {
+			#~ splice @contents, $i, 1,;
+		#~ }
+	#~ }
+	#~ untie @contents;
+	#~ my $index = -1;
+	#~ tie my @filelines, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
+	#~ for ( @filelines )
+	#~ {
+		#~ $index++;
+		#~ if ( $_ !~ /0\ ${sindex}\ $index/ )
+		#~ {
+			#~ my $jndex = $index + 1;
+			#~ $_ =~ s/0\ ${sindex}\ $jndex/0\ ${sindex}\ $index/g;
+		#~ }
+	#~ }
+	#~ untie @filelines;
+
 	my ( $farm_name, $backend, $service ) = @_;
 
 	my $i      = -1;
-	my $j      = -1;
-	my $change = "false";
-	my $sindex = &getFarmVSI( $farm_name, $service );
+	my $serv_index = &getFarmVSI( $farm_name, $service );
 	tie my @contents, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
 	foreach my $line ( @contents )
 	{
 		$i++;
-		if ( $line =~ /0\ ${sindex}\ ${backend}/ )
+		if ( $line =~ /0\ ${serv_index}\ ${backend}/ )
 		{
 			splice @contents, $i, 1,;
+			last;
 		}
 	}
 	untie @contents;
-	my $index = -1;
+	
 	tie my @filelines, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
-	for ( @filelines )
+	# decrease backend index in greater backend ids
+	foreach my $line ( @filelines )
 	{
-		$index++;
-		if ( $_ !~ /0\ ${sindex}\ $index/ )
+		if ( $line =~ /0\ ${serv_index}\ (\d+) (\w+)/ )
 		{
-			my $jndex = $index + 1;
-			$_ =~ s/0\ ${sindex}\ $jndex/0\ ${sindex}\ $index/g;
+			my $backend_index = $1 ;
+			my $status = $2;
+			if ( $backend_index > $backend )
+			{
+				$backend_index = $backend_index -1;
+				$line = "-b 0 $serv_index $backend_index $status";
+			}
 		}
 	}
 	untie @filelines;
@@ -3274,6 +3307,8 @@ sub deleteFarmService    # ($farm_name,$service)
 
 	# Stop FG service
 	&runFarmGuardianStop( $farm_name, $service );
+	&runFarmGuardianRemove( $farm_name, $service );
+	unlink "$configdir/$farm_name\_$service\_guardian.conf";
 
 	my $i = 0;
 	for ( $i = 0 ; $i < $#fileconf ; $i++ )
@@ -3305,7 +3340,7 @@ sub deleteFarmService    # ($farm_name,$service)
 	{
 		while ( $counter > -1 )
 		{
-			&runRemoveHTTPBackendStatus( $farm_name, $service, $counter );
+			&runRemoveHTTPBackendStatus( $farm_name, $counter, $service );
 			$counter--;
 		}
 	}
