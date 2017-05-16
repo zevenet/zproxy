@@ -23,6 +23,22 @@
 
 use strict;
 
+=begin nd
+Function: setConntrackdConfig
+
+	Apply ZCluster configuration to Conntrackd configuration file
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+
+See Also:
+	zcluster-manager, zapi/v3/cluster.cgi, <enableZCluster>
+=cut
 sub setConntrackdConfig
 {
 	&zenlog("Setting conntrackd configuration file");
@@ -88,15 +104,47 @@ General {
 
 	close $ct_file;
 
-	return 0;
+	return;
 }
 
+=begin nd
+Function: startConntrackd
+
+	Start conntrackd service
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+
+See Also:
+	<enableZCluster>
+=cut
 sub startConntrackd
 {
 	&zenlog("Starting conntrackd");
 	return system("/etc/init.d/conntrackd start ");
 }
 
+=begin nd
+Function: stopConntrackd
+
+	Stop conntrackd service
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+
+See Also:
+	<enableZCluster>, <disableZCluster>
+=cut
 sub stopConntrackd
 {
 	&zenlog("Stopping conntrackd");
@@ -111,6 +159,22 @@ sub stopConntrackd
 	return 0;
 }
 
+=begin nd
+Function: getConntrackdRunning
+
+	Get if the the conntrackd service is running.
+
+Parameters:
+	none - .
+
+Returns:
+	Scalar - Boolean. TRUE if conntrackd is running, FALSE otherwise.
+
+Bugs:
+
+See Also:
+	zcluster-manager, <stopConntrackd>, <enableZCluster>, <disableZCluster>, <getZCusterStatusInfo>
+=cut
 sub getConntrackdRunning
 {
 	return ( system( "pgrep conntrackd >/dev/null" ) == 0 );
