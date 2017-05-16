@@ -199,30 +199,30 @@ my %format_re = (
 );
 
 =begin nd
-        Function: getValidFormat
+Function: getValidFormat
 
-        Validates a data format matching a value with a regular expression.
-        If no value is passed as an argument the regular expression is returned.
+	Validates a data format matching a value with a regular expression.
+	If no value is passed as an argument the regular expression is returned.
 
-        Usage:
-			# validate exact data
-			if ( ! &getValidFormat( "farm_name", $input_farmname ) ) {
-				print "error";
-			}
+	Usage:
 
-			# use the regular expression as a component for another regular expression 
-			my $file_regex = &getValidFormat( "certificate" );
-			if ( $file_path =~ /$configdir\/$file_regex/ ) { ... }
+	# validate exact data
+	if ( ! &getValidFormat( "farm_name", $input_farmname ) ) {
+		print "error";
+	}
 
-        Parameters:
-				format_name	- type of format
-				value		- value to be validated (optional)
-				
-        Returns:
-				false	- If value failed to be validated
-				true	- If value was successfuly validated
-				regex	- If no value was passed to be matched
+	# use the regular expression as a component for another regular expression
+	my $file_regex = &getValidFormat( "certificate" );
+	if ( $file_path =~ /$configdir\/$file_regex/ ) { ... }
 
+Parameters:
+	format_name	- type of format
+	value		- value to be validated (optional)
+
+Returns:
+	false	- If value failed to be validated
+	true	- If value was successfuly validated
+	regex	- If no value was passed to be matched
 =cut
 
 # &getValidFormat ( $format_name, $value );
@@ -253,7 +253,24 @@ sub getValidFormat
 	}
 }
 
-# validate port format and check if available when possible
+=begin nd
+Function: getValidPort
+
+	Validate port format and check if available when possible.
+
+Parameters:
+	ip - IP address.
+	port - Port number.
+	profile - Farm profile (HTTP, L4XNAT, GSLB or DATALINK). Optional.
+
+Returns:
+	Boolean - TRUE for a valid port number, FALSE otherwise.
+
+Bugs:
+
+See Also:
+	zapi/v3/post.cgi
+=cut
 sub getValidPort    # ( $ip, $port, $profile )
 {
 	my $ip      = shift;    # mandatory for HTTP, GSLB or no profile
@@ -286,8 +303,25 @@ sub getValidPort    # ( $ip, $port, $profile )
 	}
 }
 
-# check parameters when all params are optional
-# before called:	getValidPutParams
+=begin nd
+Function: getValidOptParams
+
+	Check parameters when all params are optional
+
+	Before called:	getValidPutParams
+
+Parameters:
+	\%json_obj - .
+	\@allowParams - .
+
+Returns:
+	none - .
+
+Bugs:
+
+See Also:
+
+=cut
 sub getValidOptParams    # ( \%json_obj, \@allowParams )
 {
 	my $params         = shift;
@@ -316,8 +350,26 @@ sub getValidOptParams    # ( \%json_obj, \@allowParams )
 	return $output;
 }
 
-# check parameters when there are required params
-# before called:	getValidPostParams
+=begin nd
+Function: getValidReqParams
+
+	Check parameters when there are required params
+
+	Before called:	getValidPostParams
+
+Parameters:
+	\%json_obj - .
+	\@requiredParams - .
+	\@optionalParams - .
+
+Returns:
+	none - .
+
+Bugs:
+
+See Also:
+
+=cut
 sub getValidReqParams    # ( \%json_obj, \@requiredParams, \@optionalParams )
 {
 	my $params            = shift;
