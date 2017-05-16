@@ -27,6 +27,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
+	my $zapierror;
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;
 	my $ipds = &getIPDSfarmsRules( $farmname );
@@ -43,7 +44,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
+		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 					 description => "Modify farm",
 					 error       => "true",
@@ -69,7 +70,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 				"ZAPI error, trying to modify a http farm $farmname, cannot change the farm name while running"
 			);
 
-			my $errormsg = 'Cannot change the farm name while running';
+			my $errormsg = 'Cannot change the farm name while the farm is running';
 
 			my $body = {
 						 description => "Modify farm",
@@ -83,9 +84,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		if ( $json_obj->{ newfarmname } =~ /^$/ )
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, invalid newfarmname, can't be blank."
-			);
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid newfarmname, can't be blank.";
+			&zenlog( "Zapi $zapierror" );
 		}
 		else
 		{
@@ -99,9 +99,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 					if ( $newffile != -1 )
 					{
 						$error = "true";
-						&zenlog(
-							"ZAPI error, trying to modify a http farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
-						);
+						$zapierror = "Error, trying to modify a http farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name.";
+						&zenlog( "Zapi $zapierror" );
 					}
 					else
 					{
@@ -109,9 +108,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 						if ( $oldfstat != 0 )
 						{
 							$error = "true";
-							&zenlog(
-								"ZAPI error, trying to modify a http farm $farmname,the farm is not disabled, are you sure it's running?"
-							);
+							$zapierror = "Error, trying to modify a http farm $farmname,the farm is not disabled, are you sure it's running?";
+							&zenlog( "Zapi $zapierror" );
 						}
 						else
 						{
@@ -121,39 +119,19 @@ sub modify_http_farm # ( $json_obj, $farmname )
 							if ( $fnchange == -1 )
 							{
 								&error = "true";
-								&zenlog(
-									"ZAPI error, trying to modify a http farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
-								);
+								$zapierror = "Error, trying to modify a http farm $farmname, the name of the farm can't be modified, delete the farm and create a new one.";
+								&zenlog( "Zapi $zapierror" );
 							}
 							elsif ( $fnchange == -2 )
 							{
 								$error = "true";
-								&zenlog(
-									"ZAPI error, trying to modify a http farm $farmname, invalid newfarmname, the new name can't be empty."
-								);
-								#~ $newfstat = &runFarmStart( $farmname, "true" );
-								
-								#~ if ( $newfstat != 0 )
-								#~ {
-									#~ $error = "true";
-									#~ &zenlog(
-										#~ "ZAPI error, trying to modify a http farm $farmname, the farm isn't running, check if the IP address is up and the PORT is in use."
-									#~ );
-								#~ }
+								$zapierror = "Error, trying to modify a http farm $farmname, invalid newfarmname, the new name can't be empty.";
+								&zenlog( "Zapi $zapierror" );
 							}
 							else
 							{
 								$farmname_old = $farmname;
 								$farmname = $json_obj->{ newfarmname };
-								
-								#~ $newfstat = &runFarmStart( $farmname, "true" );
-								#~ if ( $newfstat != 0 )
-								#~ {
-									#~ $error = "true";
-									#~ &zenlog(
-										#~ "ZAPI error, trying to modify a http farm $farmname, the farm isn't running, check if the IP address is up and the PORT is in use."
-									#~ );
-								#~ }
 							}
 						}
 					}
@@ -162,8 +140,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			else
 			{
 				$error = "true";
-				&zenlog(
-					   "ZAPI error, trying to modify a http farm $farmname, invalid newfarmname." );
+				$zapierror = "Error, trying to modify a http farm $farmname, invalid newfarmname.";
+				&zenlog( "Zapi $zapierror" );
 			}
 		}
 	}
@@ -174,9 +152,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		if ( $json_obj->{ contimeout } =~ /^$/ )
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, invalid contimeout, can't be blank."
-			);
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid contimeout, can't be blank.";
+			&zenlog( "Zapi $zapierror" );
 		}
 		elsif ( $json_obj->{ contimeout } =~ /^\d+$/ )
 		{
@@ -188,16 +165,15 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			else
 			{
 				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the contimeout."
-				);
+				$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the contimeout.";
+				&zenlog( "Zapi $zapierror" );
 			}
 		}
 		else
 		{
 			$error = "true";
-			&zenlog(
-					"ZAPI error, trying to modify a http farm $farmname, invalid contimeout." );
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid contimeout." );
+			&zenlog( "Zapi $zapierror" );
 		}
 	}
 
@@ -207,9 +183,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		if ( $json_obj->{ restimeout } =~ /^$/ )
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, invalid restimeout, can't be blank."
-			);
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid restimeout, can't be blank.";
+			&zenlog( "Zapi $zapierror" );
 		}
 		elsif ( $json_obj->{ restimeout } =~ /^\d+$/ )
 		{
@@ -221,16 +196,15 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			else
 			{
 				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the restimeout."
-				);
+				$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the restimeout.";
+				&zenlog( "Zapi $zapierror" );
 			}
 		}
 		else
 		{
 			$error = "true";
-			&zenlog(
-					"ZAPI error, trying to modify a http farm $farmname, invalid restimeout." );
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid restimeout.";
+			&zenlog( "Zapi $zapierror" );
 		}
 	}
 
@@ -240,9 +214,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		if ( $json_obj->{ resurrectime } =~ /^$/ )
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, invalid resurrectime, can't be blank."
-			);
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid resurrectime, can't be blank.";
+			&zenlog( "Zapi $zapierror" );
 		}
 		elsif ( $json_obj->{ resurrectime } =~ /^\d+$/ )
 		{
@@ -254,16 +227,15 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			else
 			{
 				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the resurrectime."
-				);
+				$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the resurrectime.";
+				&zenlog( "Zapi $zapierror" );
 			}
 		}
 		else
 		{
 			$error = "true";
-			&zenlog(
-				  "ZAPI error, trying to modify a http farm $farmname, invalid resurrectime." );
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid resurrectime.";
+			&zenlog( "Zapi $zapierror" );	  
 		}
 	}
 
@@ -273,9 +245,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		if ( $json_obj->{ reqtimeout } =~ /^$/ )
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, invalid reqtimeout, can't be blank."
-			);
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid reqtimeout, can't be blank.";
+			&zenlog( "Zapi $zapierror" );
 		}
 		elsif ( $json_obj->{ reqtimeout } =~ /^\d+$/ )
 		{
@@ -287,16 +258,15 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			else
 			{
 				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the reqtimeout."
-				);
+				$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the reqtimeout.";
+				&zenlog( "Zapi $zapierror" );
 			}
 		}
 		else
 		{
 			$error = "true";
-			&zenlog(
-					"ZAPI error, trying to modify a http farm $farmname, invalid reqtimeout." );
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid reqtimeout.";
+			&zenlog( "Zapi $zapierror" );
 		}
 	}
 
@@ -306,9 +276,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		if ( $json_obj->{ rewritelocation } =~ /^$/ )
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, invalid rewritelocation, can't be blank."
-			);
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid rewritelocation, can't be blank.";
+			&zenlog( "Zapi $zapierror" );
 		}
 		elsif (
 				$json_obj->{ rewritelocation } =~ /^disabled|enabled|enabled-backends$/ )
@@ -330,23 +299,19 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			if ( $status1 != -1 )
 			{
 				$restart_flag = "true";
-
-				#&runFarmRestart($farmname);
 			}
 			else
 			{
 				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the rewritelocation."
-				);
+				$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the rewritelocation.";
+				&zenlog( "Zapi $zapierror" );
 			}
 		}
 		else
 		{
 			$error = "true";
-			&zenlog(
-				  "ZAPI error, trying to modify a http farm $farmname, invalid rewritelocation."
-			);
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid rewritelocation.";
+			&zenlog( "Zapi $zapierror" );
 		}
 	}
 
@@ -356,9 +321,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		if ( $json_obj->{ httpverb } =~ /^$/ )
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, invalid httpverb, can't be blank."
-			);
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid httpverb, can't be blank.";
+			&zenlog( "Zapi $zapierror" );
 		}
 		elsif ( $json_obj->{ httpverb } =~
 				/^standardHTTP|extendedHTTP|standardWebDAV|MSextWebDAV|MSRPCext$/ )
@@ -388,22 +352,19 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			if ( $status != -1 )
 			{
 				$restart_flag = "true";
-
-				#&runFarmRestart($farmname);
 			}
 			else
 			{
 				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the httpverb."
-				);
+				$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the httpverb.";
+				&zenlog( "Zapi $zapierror" );			
 			}
 		}
 		else
 		{
 			$error = "true";
-			&zenlog(
-					  "ZAPI error, trying to modify a http farm $farmname, invalid httpverb." );
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid httpverb.";
+			&zenlog( "Zapi $zapierror" );
 		}
 	}
 
@@ -418,9 +379,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		else
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the error414."
-			);
+			$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the error414.";
+			&zenlog( "Zapi $zapierror" );		
 		}
 	}
 
@@ -435,9 +395,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		else
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the error500."
-			);
+			$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the error500.";
+			&zenlog( "Zapi $zapierror" );
 		}
 	}
 
@@ -452,9 +411,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		else
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the error501."
-			);
+			$zapierror = "ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the error501.";
+			&zenlog( "Zapi $zapierror" );
 		}
 	}
 
@@ -469,9 +427,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		else
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the error503."
-			);
+			$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the error503.";
+			&zenlog( "Zapi $zapierror" );
 		}
 	}
 
@@ -481,9 +438,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		if ( $json_obj->{ listener } =~ /^$/ )
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, invalid listener, can't be blank."
-			);
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid listener, can't be blank.";
+			&zenlog( "Zapi $zapierror" );
 		}
 		elsif ( $json_obj->{ listener } =~ /^http|https$/ )
 		{
@@ -495,16 +451,15 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			else
 			{
 				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the listener."
-				);
+				$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the listener.";
+				&zenlog( "Zapi $zapierror" );
 			}
 		}
 		else
 		{
 			$error = "true";
-			&zenlog(
-					  "ZAPI error, trying to modify a http farm $farmname, invalid listener." );
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid listener.";
+			&zenlog( "Zapi $zapierror" );
 		}
 	}
 
@@ -518,9 +473,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			if ( $json_obj->{ ciphers } =~ /^$/ )
 			{
 				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify a http farm $farmname, invalid ciphers, can't be blank."
-				);
+				$zapierror = "Error, trying to modify a http farm $farmname, invalid ciphers, can't be blank."
+				&zenlog( "Zapi $zapierror" );
 			}
 			elsif ( $json_obj->{ ciphers } =~ /^all|highsecurity|customsecurity$/ )
 			{
@@ -546,16 +500,15 @@ sub modify_http_farm # ( $json_obj, $farmname )
 				else
 				{
 					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the ciphers."
-					);
+					$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the ciphers.";
+					&zenlog( "Zapi $zapierror" );
 				}
 			}
 			else
 			{
 				$error = "true";
-				&zenlog(
-						  "ZAPI error, trying to modify a http farm $farmname, invalid ciphers." );
+				$zapierror = "Error, trying to modify a http farm $farmname, invalid ciphers.";
+				&zenlog( "Zapi $zapierror" );
 			}
 		}
 
@@ -573,9 +526,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 					if ( $json_obj->{ cipherc } =~ /^$/ )
 					{
 						$error = "true";
-						&zenlog(
-							"ZAPI error, trying to modify a http farm $farmname, invalid cipherc, can't be blank."
-						);
+						$zapierror = "Error, trying to modify a http farm $farmname, invalid cipherc, can't be blank.";
+						&zenlog( "Zapi $zapierror" );
 					}
 					else
 					{
@@ -585,9 +537,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 						if ( $cipherc eq "" )
 						{
 							$error = "true";
-							&zenlog(
-								"ZAPI error, trying to modify a http farm $farmname, invalid cipherc, can't be blank."
-							);
+							$zapierror = "Error, trying to modify a http farm $farmname, invalid cipherc, can't be blank.";
+							&zenlog( "Zapi $zapierror" );
 						}
 						else
 						{
@@ -599,9 +550,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 							else
 							{
 								$error = "true";
-								&zenlog(
-									"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the cipherc."
-								);
+								$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the cipherc.";
+								&zenlog( "Zapi $zapierror" );
 							}
 						}
 					}
@@ -620,9 +570,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			else
 			{
 				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify a http farm $farmname, some errors happened trying to modify the certname."
-				);
+				$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the certname.";
+				&zenlog( "Zapi $zapierror" );
 			}
 		}
 	}
@@ -650,15 +599,14 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		if ( $json_obj->{ vip } =~ /^$/ )
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, invalid vip, can't be blank."
-			);
+			$zapierror =  "Error, trying to modify a http farm $farmname, invalid vip, can't be blank.";
+			&zenlog( "Zapi $zapierror" );
 		}
 		elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
 		{
 			$error = "true";
-			&zenlog(
-					  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip." );
+			$zapierror = "Error, trying to modify a l4xnat farm $farmname, invalid vip.";
+			&zenlog( "Zapi $zapierror" );
 		}
 		else
 		{
@@ -666,7 +614,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			if ( $status == -1 )
 			{
 				$error = "true";
-				&zenlog( "ZAPI error, trying to modify a http farm $farmname, invalid vip." );
+				$zapierror = "Error, trying to modify a http farm $farmname, invalid vip.";
+				&zenlog( "Zapi $zapierror" );
 			}
 			else
 			{
@@ -681,14 +630,14 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		if ( $json_obj->{ vport } =~ /^$/ )
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, invalid port, can't be blank."
-			);
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid port, can't be blank.";
+			&zenlog( "Zapi $zapierror" );
 		}
 		elsif ( !$json_obj->{ vport } =~ /^\d+$/ )
 		{
 			$error = "true";
-			&zenlog( "ZAPI error, trying to modify a http farm $farmname, invalid port." );
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid port.";
+			&zenlog( "Zapi $zapierror" );
 		}
 		else
 		{
@@ -696,7 +645,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			if ( $status == -1 )
 			{
 				$error = "true";
-				&zenlog( "ZAPI error, trying to modify a http farm $farmname, invalid port." );
+				$zapierror = "Error, trying to modify a http farm $farmname, invalid port.";
+				&zenlog( "Zapi $zapierror" );
 			}
 			else
 			{
@@ -711,14 +661,14 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		if ( $json_obj->{ vip } =~ /^$/ )
 		{
 			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a http farm $farmname, invalid vip, can't be blank."
-			);
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid vip, can't be blank.";
+			&zenlog( "Zapi $zapierror" );
 		}
 		elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
 		{
 			$error = "true";
-			&zenlog( "ZAPI error, trying to modify a http farm $farmname, invalid vip." );
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid vip.";
+			&zenlog( "Zapi $zapierror" );
 		}
 		else
 		{
@@ -727,14 +677,14 @@ sub modify_http_farm # ( $json_obj, $farmname )
 				if ( $json_obj->{ vport } =~ /^$/ )
 				{
 					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify a http farm $farmname, invalid port, can't be blank."
-					);
+					$zapierror = "Error, trying to modify a http farm $farmname, invalid port, can't be blank.";
+					&zenlog( "Zapi $zapierror" );
 				}
 				elsif ( !$json_obj->{ vport } =~ /^\d+$/ )
 				{
 					$error = "true";
-					&zenlog( "ZAPI error, trying to modify a http farm $farmname, invalid port." );
+					$zapierror = "Error, trying to modify a http farm $farmname, invalid port.";
+					&zenlog( "Zapi $zapierror" );
 				}
 				else
 				{
@@ -743,9 +693,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 					if ( $status == -1 )
 					{
 						$error = "true";
-						&zenlog(
-							"ZAPI error, trying to modify a http farm $farmname, invalid port or invalid vip."
-						);
+						$zapierror = "Error, trying to modify a http farm $farmname, invalid port or invalid vip.";
+						&zenlog( "Zapi $zapierror" );
 					}
 					else
 					{
@@ -846,11 +795,10 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		);
 
 		# Error
-		my $errormsg = "Errors found trying to modify farm $farmname";
 		my $body = {
 					 description => "Modify farm $farmname",
 					 error       => "true",
-					 message     => $errormsg
+					 message     => $zapierror
 		};
 
 		&httpResponse({ code => 400, body => $body });
