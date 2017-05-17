@@ -41,7 +41,7 @@ sub getBLStatus
 {
 	my $listName = shift;
 	my $ipset    = &getGlobalConfiguration( 'ipset' );
-	my $output   = system ( "$ipset list $listName 2>/dev/null 2>&1" );
+	my $output   = system ( "$ipset list $listName >/dev/null 2>&1" );
 	
 	if ( $output )
 	{
@@ -79,7 +79,7 @@ sub setBLRunList
 
 	#~ if ( &getBLStatus ( $listName ) eq 'down' )
 	{
-		$output = system ( "$ipset create -exist $listName hash:net 2>/dev/null" );
+		$output = system ( "$ipset create -exist $listName hash:net >/dev/null 2>&1" );
 		&zenlog( "Creating ipset table" );
 	}
 
@@ -1041,7 +1041,7 @@ sub setBLDownloadRemoteList
 	&zenlog( "Downloading $listName..." );
 
 	# if ( $fileHandle->{ $listName }->{ 'update_status' } ne 'dis' )
-	my @web           = `curl --connect-timeout $timeout \"$url\" 2>/dev/null`;
+	my @web           = `curl --connect-timeout $timeout \"$url\" >/dev/null 2>&1`;
 	my $source_format = &getValidFormat( 'blacklists_source' );
 
 	my @ipList;
@@ -1132,12 +1132,12 @@ sub setBLRefreshList
 	my $source_re = &getValidFormat( 'blacklists_source' );
 
 	&zenlog( "refreshing '$listName'... " );
-	$output = system ( "$ipset flush $listName 2>/dev/null" );
+	$output = system ( "$ipset flush $listName >/dev/null 2>&1" );
 	#~ if ( !$output )
 	#~ {
 	#~ foreach my $ip ( @ipList )
 	#~ {
-	#~ $output = system ( "$ipset add $listName $ip 2>/dev/null" );
+	#~ $output = system ( "$ipset add $listName $ip >/dev/null 2>&1" );
 	#~ if ( $output  )
 	#~ {
 	#~ &zenlog ( "Error, adding $ip source" );
@@ -1152,12 +1152,12 @@ sub setBLRefreshList
 
 		my $tmp_list = "/tmp/tmp_blacklist.txt";
 		my $touch    = &getGlobalConfiguration( 'touch' );
-		system ( "$touch $tmp_list 2>/dev/null" );
+		system ( "$touch $tmp_list >/dev/null 2>&1" );
 		tie my @list_tmp, 'Tie::File', $tmp_list;
 		@list_tmp = @ipList;
 		untie @list_tmp;
 
-		system ( "$ipset restore < $tmp_list 2>/dev/null" );
+		system ( "$ipset restore < $tmp_list >/dev/null 2>&1" );
 
 		my $rm = &getGlobalConfiguration( 'rm' );
 		system ( "$rm $tmp_list" );
@@ -1308,7 +1308,7 @@ sub setBLDeleteSource
 	my $err;
 	if ( &getBLStatus( $listName ) eq 'up' )
 	{
-		$err = system ( "$ipset del $listName $source 2>/dev/null" );
+		$err = system ( "$ipset del $listName $source >/dev/null 2>&1" );
 	}
 	&zenlog( "$source was deleted from $listName" ) if ( !$err );
 
@@ -1344,7 +1344,7 @@ sub setBLAddSource
 	my $error;
 	if ( &getBLStatus( $listName ) eq 'up' )
 	{
-		$error = system ( "$ipset add $listName $source 2>/dev/null" );
+		$error = system ( "$ipset add $listName $source >/dev/null 2>&1" );
 	}
 	&zenlog( "$source was added to $listName" ) if ( !$error );
 	return $error;
@@ -1379,8 +1379,8 @@ sub setBLModifSource
 
 	if ( &getBLStatus( $listName ) eq 'up' )
 	{
-		$err = system ( "$ipset del $listName $oldSource 2>/dev/null" );
-		$err = system ( "$ipset add $listName $source 2>/dev/null" ) if ( !$err );
+		$err = system ( "$ipset del $listName $oldSource >/dev/null 2>&1" );
+		$err = system ( "$ipset add $listName $source >/dev/null 2>&1" ) if ( !$err );
 	}
 	&zenlog( "$oldSource was replaced for $source in the list $listName" )
 	  if ( !$err );
@@ -1486,10 +1486,10 @@ sub setBLCronTask
 	
 	my $blacklistsCronFile = &getGlobalConfiguration( 'blacklistsCronFile' );
 
-	# 0 0 * * 1	root	/usr/local/zenloadbalancer/app/zenrrd/zenrrd.pl &>/dev/null
+	# 0 0 * * 1	root	/usr/local/zenloadbalancer/app/zenrrd/zenrrd.pl & >/dev/null 2>&1
 	my $cmd =
 	  "$cronFormat->{ 'min' } $cronFormat->{ 'hour' } $cronFormat->{ 'dom' } $cronFormat->{ 'month' } $cronFormat->{ 'dow' }\t"
-	  . "root\t/usr/local/zenloadbalancer/www/ipds/blacklists/updateRemoteList.pl $listName &>/dev/null";
+	  . "root\t/usr/local/zenloadbalancer/www/ipds/blacklists/updateRemoteList.pl $listName & >/dev/null 2>&1";
 	  &zenlog ("Added cron task: $cmd");
 
 	tie my @list, 'Tie::File', $blacklistsCronFile;
