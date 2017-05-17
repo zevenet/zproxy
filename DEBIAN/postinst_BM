@@ -123,8 +123,8 @@ systemctl disable sec 2>/dev/null
 if [ `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]; then
         cp /usr/local/zenloadbalancer/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
 fi
-systemctl stop snmpd 2>/dev/null
-systemctl disable snmpd 2>/dev/null
+#systemctl stop snmpd 2>/dev/null
+#systemctl disable snmpd 2>/dev/null
 
 # Create IPDS directories
 /usr/local/zenloadbalancer/app/zbin/boot_ipds.pl

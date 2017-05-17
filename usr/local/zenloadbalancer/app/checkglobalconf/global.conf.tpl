@@ -129,6 +129,8 @@ $systemctl="/bin/systemctl";
 $insserv="/sbin/insserv";
 #Where is temperature file?
 $temperatureFile="/proc/acpi/thermal_zone/THRM/temperature";
+#Where is update-rc.d?
+$updatercd="/usr/sbin/update-rc.d";
 
 
 #where is pound binary?

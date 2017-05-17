@@ -32,23 +32,26 @@ sub setSnmpdStatus    # ($snmpd_status)
 
 	my $return_code = -1;
 	my $systemctl = &getGlobalConfiguration('systemctl');
+	my $updatercd = &getGlobalConfiguration('updatercd');
 
 	if ( $snmpd_status eq 'true' )
 	{
 		&zenlog( "Starting snmp service" );
+		my @run = system("$updatercd snmpd enable");
 
 		if ( -f $systemctl )
 		{
 			$return_code = system ( "$systemctl start snmpd > /dev/null" );
 		}
 		else
-		{
+		{	
 			$return_code = system ( "/etc/init.d/snmpd start > /dev/null" );
 		}
 	}
 	elsif ( $snmpd_status eq 'false' )
 	{
 		&zenlog( "Stopping snmp service" );
+		my @run = system("$updatercd snmpd disable");
 
 		if ( -f $systemctl )
 		{
