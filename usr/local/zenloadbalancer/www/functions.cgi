@@ -50,7 +50,27 @@ require "/usr/local/zenloadbalancer/www/snmp_functions.cgi";
 require "/usr/local/zenloadbalancer/www/check_functions.cgi";  
 require "/usr/local/zenloadbalancer/www/cgi_functions.cgi" if defined $ENV{GATEWAY_INTERFACE};
 
-#function that check if variable is a number no float
+=begin nd
+Function: isnumber
+
+	Check if variable is a number no float.
+
+	WARNING: This function should be deprecated, replaced by getValidFormat
+
+Parameters:
+	num - Variable to be checked. 
+
+Returns:
+	scalar - Boolean. 'true' or 'false'.
+
+Bugs:
+	TO BE DEPRECATED
+
+See Also:
+	Used in: zapi/v2/post.cgi, <applySnmpChanges>,
+
+	To be replaced for: <getValidFormat>
+=cut
 sub isnumber    # ($num)
 {
 	my $num = shift;
@@ -65,7 +85,23 @@ sub isnumber    # ($num)
 	}
 }
 
-#function that paint the date when started (uptime)
+=begin nd
+Function: uptime
+
+	NOT USED. Return the date when started (uptime)
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+	NOT USED.
+
+See Also:
+	
+=cut
 sub uptime                    # ()
 {
 	$timeseconds = time ();
@@ -98,6 +134,23 @@ sub uptime                    # ()
 	  . ( $year + 1900 ) . "\n";
 }
 
+=begin nd
+Function: graphs
+
+	NOT USED. Configure the graphs apareance
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+	NOT USED.
+
+See Also:
+	
+=cut
 #function that configure the graphs apareance.
 sub graphs    # ($description,@data)
 {
@@ -182,6 +235,23 @@ sub graphs    # ($description,@data)
 	my $imagemap = creategraph( \@data, \%options );
 }
 
+=begin nd
+Function: upload
+
+	NOT USED.
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+	NOT USED.
+
+See Also:
+	
+=cut
 sub upload                            # ()
 {
 	print
@@ -190,6 +260,23 @@ sub upload                            # ()
 	  "<div id=\"dialog-container\" style=\"display: none;\"><iframe id=\"dialog\" width=\"350\" height=\"350\"></iframe></div>";
 }
 
+=begin nd
+Function: uploadcerts
+
+	NOT USED.
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+	NOT USED.
+
+See Also:
+	
+=cut
 sub uploadcerts                       # ()
 {
 	print "<script language=\"javascript\">
