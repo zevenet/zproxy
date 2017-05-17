@@ -25,7 +25,24 @@ use strict;
 
 my $configdir = &getGlobalConfiguration('configdir');
 
-# Returns FarmGuardian config file for this farm
+=begin nd
+Function: getFarmGuardianFile
+
+	Returns FarmGuardian config file for this farm
+
+Parameters:
+	fname - Farm name.
+	svice - Service name. Only apply if the farm profile has services. Leave undefined for farms without services.
+
+Returns:
+	scalar - Returns the farm-service farmguardian filename or -1 if it wasn't found.
+
+Bugs:
+	Returns first filename matching a regex with .*
+
+See Also:
+	<setNewFarmName>, <getFarmGuardianStatus>, <getFarmGuardianLog>, <runFarmGuardianStart>, <runFarmGuardianCreate>, <getFarmGuardianConf>
+=cut
 sub getFarmGuardianFile    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
@@ -48,7 +65,25 @@ sub getFarmGuardianFile    # ($fname,$svice)
 	}
 }
 
-# Returns if FarmGuardian is activated for this farm
+=begin nd
+Function: getFarmGuardianStatus
+
+	Returns if FarmGuardian is activated for this farm
+
+Parameters:
+	fname - Farm name.
+	svice - Service name. Only apply if the farm profile has services. Leave undefined for farms without services.
+
+Returns:
+	-1 - If farmguardian file was not found.
+	 0 - If farmguardian is disabled.
+	 1 - If farmguardian is enabled.
+
+Bugs:
+
+See Also:
+	zcluster-manager, zenloadbalancer, <setNewFarmName>
+=cut
 sub getFarmGuardianStatus    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
@@ -82,7 +117,25 @@ sub getFarmGuardianStatus    # ($fname,$svice)
 	}
 }
 
-# Returns if FarmGuardian has logs activated for this farm
+=begin nd
+Function: getFarmGuardianLog
+
+	Returns if FarmGuardian has logs activated for this farm
+
+Parameters:
+	fname - Farm name.
+	svice - Service name. Only apply if the farm profile has services. Leave undefined for farms without services.
+
+Returns:
+	-1 - If farmguardian file was not found.
+	 0 - If farmguardian log is disabled.
+	 1 - If farmguardian log is enabled.
+
+Bugs:
+
+See Also:
+	<runFarmGuardianStart>
+=cut
 sub getFarmGuardianLog    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
@@ -116,7 +169,25 @@ sub getFarmGuardianLog    # ($fname,$svice)
 	}
 }
 
-# Start FarmGuardian rutine
+=begin nd
+Function: runFarmGuardianStart
+
+	Start FarmGuardian rutine
+
+Parameters:
+	fname - Farm name.
+	svice - Service name. Only apply if the farm profile has services. Leave undefined for farms without services.
+
+Returns:
+	-1       - If farmguardian file was not found or if farmguardian is not running.
+	 0       - If farm profile is not supported by farmguardian, or farmguardian was executed.
+
+Bugs:
+	Returning $? after running a command in the background & gives the illusion of capturing the ERRNO of the ran program. That is not possible since the program may not have finished.
+
+See Also:
+	zcluster-manager, zenloadbalancer, <runFarmStart>, <setNewFarmName>, zapi/v3/farm_guardian.cgi, zapi/v2/farm_guardian.cgi
+=cut
 sub runFarmGuardianStart    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
@@ -176,6 +247,24 @@ sub runFarmGuardianStart    # ($fname,$svice)
 	return $status;
 }
 
+=begin nd
+Function: runFarmGuardianStop
+
+	Stop FarmGuardian rutine
+
+Parameters:
+	fname - Farm name.
+	svice - Service name. Only apply if the farm profile has services. Leave undefined for farms without services.
+
+Returns:
+	Integer - BUG. Non-related to stopping farmguardian service. Probably zero.
+
+Bugs:
+	The kill function does not have an ERRNO output in $?.
+
+See Also:
+	zenloadbalancer, <runFarmStop>, <setNewFarmName>, zapi/v3/farm_guardian.cgi, <runFarmGuardianRemove>
+=cut
 sub runFarmGuardianStop    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
@@ -215,7 +304,31 @@ sub runFarmGuardianStop    # ($fname,$svice)
 	return $status;
 }
 
-# create farmguardian config file
+=begin nd
+Function: runFarmGuardianCreate
+
+	Create or update farmguardian config file
+
+	ttcheck and script must be defined and non-empty to enable farmguardian.
+
+Parameters:
+	fname - Farm name.
+	ttcheck - Time between command executions for all the backends.
+	script - Command to run.
+	usefg - 'true' to enable farmguardian, or 'false' to disable it.
+	fglog - 'true' to enable farmguardian verbosity in logs, or 'false' to disable it.
+	svice - Service name.
+
+Returns:
+	-1 - If ttcheck or script is not defined or empty and farmguardian is enabled.
+	unknown - BUG. After updating the farmguardian configuration.
+
+Bugs:
+	The function 'print' does not write the variable $?.
+
+See Also:
+	zapi/v3/farm_guardian.cgi, zapi/v2/farm_guardian.cgi
+=cut
 sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 {
 	my ( $fname, $ttcheck, $script, $usefg, $fglog, $svice ) = @_;
@@ -249,8 +362,26 @@ sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 	return $output;
 }
 
-# Remove farmguardian check status
-sub runFarmGuardianRemove    # ( $fname, $svice )
+=begin nd
+Function: runFarmGuardianRemove
+
+	Remove farmguardian down status on backends.
+
+	When farmguardian is stopped or disabled any backend marked as down by farmgardian must reset it's status.
+
+Parameters:
+	fname - Farm name.
+	svice - Service name. Only apply if the farm profile has services. Leave undefined for farms without services.
+
+Returns:
+	none - Nothing is returned explicitly.
+
+Bugs:
+
+See Also:
+	zapi/v3/farm_guardian.cgi, zapi/v2/farm_guardian.cgi, <deleteFarmService>
+=cut
+sub runFarmGuardianRemove    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
 	my $type = &getFarmType( $fname );
@@ -325,7 +456,30 @@ sub runFarmGuardianRemove    # ( $fname, $svice )
 	}
 }
 
-#
+=begin nd
+Function: getFarmGuardianConf
+
+	Get farmguardian configuration for a farm-service.
+
+Parameters:
+	fname - Farm name.
+	svice - Service name. Only apply if the farm profile has services. Leave undefined for farms without services.
+
+Returns:
+	list - List with (fname, ttcheck, script, usefg, fglog).
+
+Bugs:
+	There is no control if the file could not be opened, for example, if it does not exist.
+
+See Also:
+	L4xNAT: <setL4FarmSessionType>, <setL4FarmAlgorithm>, <setFarmProto>, <setFarmNatType>, <setL4FarmMaxClientTime>, <setL4FarmVirtualConf>, <setL4FarmServer>, <runL4FarmServerDelete>, <setL4FarmBackendStatus>, <setL4NewFarmName>, <_runL4ServerStart>, <_runL4ServerStop>
+
+	zapi/v3/get_l4.cgi, zapi/v3/farm_guardian.cgi,
+
+	zapi/v2/get_l4.cgi, zapi/v2/farm_guardian.cgi, zapi/v2/get_http.cgi, zapi/v2/get_tcp.cgi
+
+	<getHttpFarmService>, <getHTTPServiceStruct>
+=cut
 sub getFarmGuardianConf    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
@@ -362,7 +516,27 @@ sub getFarmGuardianConf    # ($fname,$svice)
 	return @line;
 }
 
-#
+=begin nd
+Function: getFarmGuardianPid
+
+	Get farmguardian PID for a running farm-service.
+
+Parameters:
+	fname - Farm name.
+	svice - Service name. Only apply if the farm profile has services. Leave undefined for farms without services.
+
+Returns:
+	-1      - If farmguardian PID file was not found (farmguardian not running).
+	integer - PID number (unsigned integer) if farmguardian is running.
+
+Bugs:
+	Regex with .* should be fixed.
+
+See Also:
+	zenloadbalancer
+
+	L4xNAT: <setL4FarmSessionType>, <setL4FarmAlgorithm>, <setFarmProto>, <setFarmNatType>, <setL4FarmMaxClientTime>, <setL4FarmVirtualConf>, <setL4FarmServer>, <runL4FarmServerDelete>, <setL4FarmBackendStatus>, <setL4NewFarmName>, <_runL4ServerStart>, <_runL4ServerStop>
+=cut
 sub getFarmGuardianPid    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
