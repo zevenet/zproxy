@@ -1041,7 +1041,9 @@ sub setBLDownloadRemoteList
 	&zenlog( "Downloading $listName..." );
 
 	# if ( $fileHandle->{ $listName }->{ 'update_status' } ne 'dis' )
-	my @web           = `curl --connect-timeout $timeout \"$url\" >/dev/null 2>&1`;
+	
+	# Not direct standard output to null, this output is used for web variable
+	my @web           = `curl --connect-timeout $timeout \"$url\" 2>/dev/null`;
 	my $source_format = &getValidFormat( 'blacklists_source' );
 
 	my @ipList;
@@ -1133,18 +1135,6 @@ sub setBLRefreshList
 
 	&zenlog( "refreshing '$listName'... " );
 	$output = system ( "$ipset flush $listName >/dev/null 2>&1" );
-	#~ if ( !$output )
-	#~ {
-	#~ foreach my $ip ( @ipList )
-	#~ {
-	#~ $output = system ( "$ipset add $listName $ip >/dev/null 2>&1" );
-	#~ if ( $output  )
-	#~ {
-	#~ &zenlog ( "Error, adding $ip source" );
-	#~ last;
-	#~ }
-	#~ }
-	#~ }
 
 	if ( !$output )
 	{
