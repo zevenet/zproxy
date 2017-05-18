@@ -25,6 +25,25 @@ use strict;
 
 my $passfile = "/etc/shadow";
 
+=begin nd
+Function: changePassword
+
+	Change the password of a username.
+
+Parameters:
+	user - User name.
+	newpass - New password.
+	verifypass - New password again.
+
+Returns:
+	integer - ERRNO or return code .
+
+Bugs:
+	Verify password? Really?!
+
+See Also:
+	Zapi v3: <set_user>, <set_user_zapi>
+=cut
 sub changePassword    #($user, $newpass, $verifypass)
 {
 	my ( $user, $newpass, $verifypass ) = @_;
@@ -50,6 +69,26 @@ EOF
 	return $output;
 }
 
+=begin nd
+Function: checkValidUser
+
+	Validate an user's password.
+
+Parameters:
+	user - User name.
+	curpasswd - Password.
+
+Returns:
+	scalar - Boolean. 1 for valid password, or 0 for invalid one.
+
+Bugs:
+	Not a bug, but using pam would be desirable.
+
+See Also:
+	<checkLoggedZapiUser>
+
+	Zapi v3: <set_user>
+=cut
 sub checkValidUser    #($user,$curpasswd)
 {
 	my ( $user, $curpasswd ) = @_;
@@ -65,6 +104,21 @@ sub checkValidUser    #($user,$curpasswd)
 	return $output;
 }
 
+=begin nd
+Function: verifyPasswd
+
+	NOT USED. Compare passwords.
+
+Parameters:
+	newpass     - A password.
+	trustedpass - Another password.
+
+Returns:
+	scalar - Boolean. Whether the passwords are equal or not.
+
+Bugs:
+	NOT USED
+=cut
 sub verifyPasswd    #($newpass, $trustedpass)
 {
 	my ( $newpass, $trustedpass ) = @_;
@@ -78,6 +132,20 @@ sub verifyPasswd    #($newpass, $trustedpass)
 	}
 }
 
+=begin nd
+Function: checkLoggedZapiUser
+
+	Check ZAPI user password.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - Boolean. Whether the zapi user password is correct.
+
+See Also:
+	zapi/v2/zapi.cgi
+=cut
 sub checkLoggedZapiUser    #()
 {
 	my $allowed  = 0;
