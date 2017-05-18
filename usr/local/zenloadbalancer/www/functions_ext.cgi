@@ -29,15 +29,28 @@ my $run_cmd_name = ( split '/', $0 )[-1];
 $run_cmd_name = ( split '/', "$ENV{'SCRIPT_NAME'}" )[-1] if $run_cmd_name eq '-e';
 $run_cmd_name = ( split '/', $^X )[-1] if ! $run_cmd_name;
 
-#function that insert info through syslog
-#
-#&zenlog($text, $priority);
-#
-#examples
-#&zenlog("This is test.", "info");
-#&zenlog("Some errors happended.", "err");
-#&zenlog("testing debug mode", "debug");
-#
+=begin nd
+Function: zenlog
+
+	Write logs through syslog
+
+	Usage:
+
+		&zenlog($text, $priority);
+
+	Examples:
+
+		&zenlog("This is test.", "info");
+		&zenlog("Some errors happended.", "err");
+		&zenlog("testing debug mode", "debug");
+
+Parameters:
+	string - String to be written in log.
+	type   - Log level.
+
+Returns:
+	none - .
+=cut
 sub zenlog    # ($string, $type)
 {
 	my $string = shift;            # string = message
@@ -58,15 +71,31 @@ sub zenlog    # ($string, $type)
 	closelog();                              #close syslog
 }
 
-#open file with lock
-#
-# $filehandle = &openlock($mode, $expr);
-# $filehandle = &openlock($mode);
-#
-#examples
-# $filehandle = &openlock(">>","output.txt");
-# $filehandle = &openlock("<$fichero");
-#
+=begin nd
+Function: openlock
+
+	Open file with lock
+
+	Usage:
+
+		$filehandle = &openlock($mode, $expr);
+		$filehandle = &openlock($mode);
+
+	Examples:
+
+		$filehandle = &openlock(">>","output.txt");
+		$filehandle = &openlock("<$fichero");
+
+Parameters:
+	mode - Mode used to open the file.
+	expr - Path of file if 3 arguments open is used.
+
+Returns:
+	scalar - File handler.
+
+Bugs:
+	Not used yet.
+=cut
 sub openlock    # ($mode,$expr)
 {
 	my ( $mode, $expr ) = @_;    #parameters
@@ -107,13 +136,28 @@ sub openlock    # ($mode,$expr)
 	return $filehandle;
 }
 
-#close file with lock
-#
-# &closelock($filehandle);
-#
-#examples
-# &closelock(FILE);
-#
+=begin nd
+Function: closelock
+
+	Close file with lock
+
+	Usage:
+
+		&closelock($filehandle);
+
+	Examples:
+
+		&closelock(FILE);
+
+Parameters:
+	filehandle - reference to file handler.
+
+Returns:
+	none - .
+
+Bugs:
+	Not used yet.
+=cut
 sub closelock    # ($filehandle)
 {
 	my $filehandle = shift;
@@ -123,14 +167,29 @@ sub closelock    # ($filehandle)
 	  "some problems happened closing the filehandle $filehandle";    #close file
 }
 
-#tie aperture with lock
-#
-# $handleArray = &tielock($file);
-#
-#examples
-# $handleArray = &tielock("test.dat");
-# $handleArray = &tielock($filename);
-#
+=begin nd
+Function: tielock
+
+	tie aperture with lock
+
+	Usage:
+
+		$handleArray = &tielock($file);
+
+	Examples:
+
+		$handleArray = &tielock("test.dat");
+		$handleArray = &tielock($filename);
+
+Parameters:
+	file_name - Path to File.
+
+Returns:
+	scalar - Reference to the array with the content of the file.
+
+Bugs:
+	Not used yet.
+=cut
 sub tielock    # ($file_name)
 {
 	my $file_name = shift;    #parameters
@@ -141,21 +200,49 @@ sub tielock    # ($file_name)
 	return \@array;
 }
 
-#untie close file with lock
-#
-# &untielock($array);
-#
-#examples
-# &untielock($myarray);
-#
+=begin nd
+Function: untielock
+
+	Untie close file with lock
+
+	Usage:
+
+		&untielock($array);
+
+	Examples:
+
+		&untielock($myarray);
+
+Parameters:
+	array - Reference to array.
+
+Returns:
+	none - .
+
+Bugs:
+	Not used yet.
+=cut
 sub untielock    # (@array)
 {
-	$array = shift;
+	my $array = shift;
 
 	untie @{ $array };
 }
 
-# log and run the command string input parameter returning execution error code
+=begin nd
+Function: logAndRun
+
+	Log and run the command string input parameter returning execution error code.
+
+Parameters:
+	command - String with the command to be run.
+
+Returns:
+	integer - ERRNO or return code returned by the command.
+
+See Also:
+	Widely used.
+=cut
 sub logAndRun    # ($command)
 {
 	my $command = shift;    # command string to log and run
@@ -190,7 +277,19 @@ sub logAndRun    # ($command)
 	return $return_code;
 }
 
-# example of caller usage
+=begin nd
+Function: zlog
+
+	Log some call stack information with an optional message.
+
+	This function is only used for debugging pourposes.
+
+Parameters:
+	message - Optional message to be printed with the stack information.
+
+Returns:
+	none - .
+=cut
 sub zlog                                          # (@message)
 {
 	my @message = shift;
@@ -208,7 +307,7 @@ sub zlog                                          # (@message)
 	#$hinthash       # 10
 	#) = caller (1);	 # arg = number of suroutines back in the stack trace
 
-	use Data::Dumper;
+	#~ use Data::Dumper;
 	&zenlog(   '>>> '
 			 . ( caller ( 3 ) )[3] . ' >>> '
 			 . ( caller ( 2 ) )[3] . ' >>> '
@@ -218,6 +317,20 @@ sub zlog                                          # (@message)
 	return;
 }
 
+=begin nd
+Function: getMemoryUsage
+
+	Get the resident memory usage of the current perl process.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - String with the memory usage.
+
+See Also:
+	Used in zapi.cgi
+=cut
 sub getMemoryUsage
 {
 	my $mem_string = `grep RSS /proc/$$/status`;
@@ -228,9 +341,40 @@ sub getMemoryUsage
 	return $mem_string;
 }
 
+=begin nd
+Function: debug
+
+	Get debugging level.
+
+Parameters:
+	none - .
+
+Returns:
+	integer - Debugging level.
+
+Bugs:
+	The debugging level should be stored as a variable.
+
+See Also:
+	Widely used.
+=cut
 sub debug { return 0 }
 
-# find index of an array element
+=begin nd
+Function: indexOfElementInArray
+
+	Get the index of the first position where an element if found in an array.
+
+Parameters:
+	searched_element - Element to search.
+	array_ref        - Reference to the array to be searched.
+
+Returns:
+	integer - Zero or higher if the element was found. -1 if the element was not found. -2 if no array reference was received.
+
+See Also:
+	Zapi v3: <new_bond>
+=cut
 sub indexOfElementInArray
 {
 	my $searched_element = shift;
@@ -264,6 +408,21 @@ sub indexOfElementInArray
 	return $index;
 }
 
+=begin nd
+Function: getGlobalConfiguration
+
+	Set the value of a configuration variable.
+
+Parameters:
+	parameter - Name of the global configuration variable. Optional.
+
+Returns:
+	scalar - Value of the configuration variable when a variable name is passed as an argument.
+	scalar - Hash reference to all global configuration variables when no argument is passed.
+
+See Also:
+	Widely used.
+=cut
 sub getGlobalConfiguration
 {
 	my $parameter = shift;
@@ -328,6 +487,26 @@ sub getGlobalConfiguration
 	return $global_conf;
 }
 
+=begin nd
+Function: setGlobalConfiguration
+
+	Set a value to a configuration variable
+
+Parameters:
+	param - Configuration variable name.
+	value - New value to be set on the configuration variable.
+
+Returns:
+	scalar - 0 on success, or -1 if the variable was not found.
+
+Bugs:
+	Control file handling errors.
+
+See Also:
+	<applySnmpChanges>
+
+	Zapi v3: <set_ntp>
+=cut
 sub setGlobalConfiguration		# ( parameter, value )
 {
 	my ( $param, $value ) = @_;
