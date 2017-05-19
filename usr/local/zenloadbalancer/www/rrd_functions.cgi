@@ -36,7 +36,20 @@ my $width  = "600";
 my $height = "150";
 my $imagetype = "PNG";
 
-#
+=begin nd
+Function: printImgFile
+
+	Get a file encoded in base64 and remove it.
+
+Parameters:
+	file - Path to image file.
+
+Returns:
+	scalar - Base64 encoded image on success, or an empty string on failure.
+
+See Also:
+	<printGraph>
+=cut
 sub printImgFile    #($file)
 {
 	my ( $file ) = @_;
@@ -55,10 +68,26 @@ sub printImgFile    #($file)
 	}
 }
 
+=begin nd
+Function: delGraph
+
+	Remove a farm or network interface graph.
+
+Parameters:
+	name - Name of the graph resource, without sufixes.
+	type - 'farm', 'iface'.
+
+Returns:
+	none - .
+
+See Also:
+	<runFarmDelete>, <setBondMaster>, <delIf>
+=cut
 sub delGraph	#($name, type)
 {
 	my $name = shift;
 	my $type = shift;
+
 	my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
 	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
 
@@ -74,8 +103,22 @@ sub delGraph	#($name, type)
 		unlink glob ( "$rrdap_dir/$rrd_dir/$name-farm*" );
 	}
 }
-	
-#
+
+=begin nd
+Function: printGraph
+
+	Get a graph 'type' of a period of time base64 encoded.
+
+Parameters:
+	type - Name of the graph.
+	time - Period of time shown in the image.
+
+Returns:
+	scalar - Base64 encoded image, or an empty string on failure.
+
+See Also:
+	<genCpuGraph>, <genDiskGraph>, <genLoadGraph>, <genMemGraph>, <genMemSwGraph>, <genNetGraph>, <genFarmGraph>, <genLoadGraph>
+=cut
 sub printGraph    #($type,$time)
 {
 	my ( $type, $time ) = @_;
@@ -126,7 +169,24 @@ sub printGraph    #($type,$time)
 	return &printImgFile( $graph );
 }
 
-#
+=begin nd
+Function: genCpuGraph
+
+	Generate CPU usage graph image file for a period of time.
+
+Parameters:
+	type - Database name without extension.
+	graph - Path to file to be generated.
+	time - Period of time shown in the graph.
+
+Returns:
+	none - .
+
+See Also:
+	<printGraph>
+
+	<genDiskGraph>, <genLoadGraph>, <genMemGraph>, <genMemSwGraph>, <genNetGraph>, <genFarmGraph>, <genLoadGraph>
+=cut
 sub genCpuGraph    #($type,$graph,$time)
 {
 	my ( $type, $graph, $time ) = @_;
@@ -200,7 +260,24 @@ sub genCpuGraph    #($type,$graph,$time)
 	}
 }
 
-#
+=begin nd
+Function: genDiskGraph
+
+	Generate disk partition usage graph image file for a period of time.
+
+Parameters:
+	type - Database name without extension.
+	graph - Path to file to be generated.
+	time - Period of time shown in the graph.
+
+Returns:
+	none - .
+
+See Also:
+	<printGraph>
+
+	<genCpuGraph>, <genLoadGraph>, <genMemGraph>, <genMemSwGraph>, <genNetGraph>, <genFarmGraph>, <genLoadGraph>
+=cut
 sub genDiskGraph    #($type,$graph,$time)
 {
 	my ( $type, $graph, $time ) = @_;
@@ -256,7 +333,24 @@ sub genDiskGraph    #($type,$graph,$time)
 	}
 }
 
-#
+=begin nd
+Function: genLoadGraph
+
+	Generate system load graph image file for a period of time.
+
+Parameters:
+	type - Database name without extension.
+	graph - Path to file to be generated.
+	time - Period of time shown in the graph.
+
+Returns:
+	none - .
+
+See Also:
+	<printGraph>
+
+	<genCpuGraph>, <genDiskGraph>, <genMemGraph>, <genMemSwGraph>, <genNetGraph>, <genFarmGraph>, <genLoadGraph>
+=cut
 sub genLoadGraph    #($type,$graph,$time)
 {
 	my ( $type, $graph, $time ) = @_;
@@ -301,7 +395,24 @@ sub genLoadGraph    #($type,$graph,$time)
 	}
 }
 
-#
+=begin nd
+Function: genMemGraph
+
+	Generate RAM memory usage graph image file for a period of time.
+
+Parameters:
+	type - Database name without extension.
+	graph - Path to file to be generated.
+	time - Period of time shown in the graph.
+
+Returns:
+	none - .
+
+See Also:
+	<printGraph>
+
+	<genCpuGraph>, <genDiskGraph>, <genLoadGraph>, <genMemSwGraph>, <genNetGraph>, <genFarmGraph>, <genLoadGraph>
+=cut
 sub genMemGraph    #($type,$graph,$time)
 {
 	my ( $type, $graph, $time ) = @_;
@@ -351,7 +462,24 @@ sub genMemGraph    #($type,$graph,$time)
 	}
 }
 
-#
+=begin nd
+Function: genMemSwGraph
+
+	Generate swap memory usage graph image file for a period of time.
+
+Parameters:
+	type - Database name without extension.
+	graph - Path to file to be generated.
+	time - Period of time shown in the graph.
+
+Returns:
+	none - .
+
+See Also:
+	<printGraph>
+
+	<genCpuGraph>, <genDiskGraph>, <genLoadGraph>, <genMemGraph>, <genNetGraph>, <genFarmGraph>, <genLoadGraph>
+=cut
 sub genMemSwGraph    #($type,$graph,$time)
 {
 	my ( $type, $graph, $time ) = @_;
@@ -402,7 +530,24 @@ sub genMemSwGraph    #($type,$graph,$time)
 	}
 }
 
-#
+=begin nd
+Function: genNetGraph
+
+	Generate network interface usage graph image file for a period of time.
+
+Parameters:
+	type - Database name without extension.
+	graph - Path to file to be generated.
+	time - Period of time shown in the graph.
+
+Returns:
+	none - .
+
+See Also:
+	<printGraph>
+
+	<genCpuGraph>, <genDiskGraph>, <genLoadGraph>, <genMemGraph>, <genMemSwGraph>, <genFarmGraph>, <genLoadGraph>
+=cut
 sub genNetGraph    #($type,$graph,$time)
 {
 	my ( $type, $graph, $time ) = @_;
@@ -447,7 +592,24 @@ sub genNetGraph    #($type,$graph,$time)
 	}
 }
 
-#
+=begin nd
+Function: genFarmGraph
+
+	Generate farm connections graph image file for a period of time.
+
+Parameters:
+	type - Database name without extension.
+	graph - Path to file to be generated.
+	time - Period of time shown in the graph.
+
+Returns:
+	none - .
+
+See Also:
+	<printGraph>
+
+	<genCpuGraph>, <genDiskGraph>, <genLoadGraph>, <genMemGraph>, <genMemSwGraph>, <genNetGraph>, <genLoadGraph>
+=cut
 sub genFarmGraph    #($type,$graph,$time)
 {
 	my ( $type, $graph, $time ) = @_;
@@ -498,7 +660,24 @@ sub genFarmGraph    #($type,$graph,$time)
 	}
 }
 
-#~ #Generate the CPU temperature Graph
+=begin nd
+Function: genTempGraph
+
+	Generate CPU temperature graph image file for a period of time.
+
+Parameters:
+	type - Database name without extension.
+	graph - Path to file to be generated.
+	time - Period of time shown in the graph.
+
+Returns:
+	none - .
+
+See Also:
+	<printGraph>
+
+	<genCpuGraph>, <genDiskGraph>, <genLoadGraph>, <genMemGraph>, <genMemSwGraph>, <genNetGraph>, <genFarmGraph>, <genLoadGraph>
+=cut
 #~ sub genTempGraph    #($type,$graph,$time)
 #~ {
 	#~ my $db_temp = "$type.rrd";
@@ -529,6 +708,20 @@ sub genFarmGraph    #($type,$graph,$time)
 	#~ }
 #~ }
 
+=begin nd
+Function: getGraphs2Show
+
+	Get list of graph names by type or all of them.
+
+Parameters:
+	graphtype - 'System', 'Network', 'Farm' or ... else?.
+
+Returns:
+	list - List of graph names or -1!!!.
+
+See Also:
+	zapi/v3/system_stats.cgi
+=cut
 #function that returns the graph list to show
 sub getGraphs2Show    #($graphtype)
 {
