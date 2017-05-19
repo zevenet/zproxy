@@ -330,11 +330,29 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 			&httpResponse( { code => 400, body => $body } );
 		}
 
+		#validate MAX_CONNS
+		$json_obj->{ max_conns } = 0 unless exists $json_obj->{ max_conns };
+
+		if ( $json_obj->{ max_conns } !~ /^[0-9]+$/ ) # (0 or higher)
+		{
+			# Error
+			my $errormsg =
+			  "Invalid backend connection limit value, accepted values are 0 or higher.";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse( { code => 400, body => $body } );
+		}
+
+
 ####### Create backend
 
 		my $status = &setFarmServer(
 									 $id,                   $json_obj->{ ip },
-									 $json_obj->{ port },   "",
+									 $json_obj->{ port },   $json_obj->{ max_conns },
 									 $json_obj->{ weight }, $json_obj->{ priority },
 									 "",                    $farmname
 		);
@@ -359,6 +377,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 									 port     => $json_obj->{ port },
 									 weight   => $json_obj->{ weight },
 									 priority => $json_obj->{ priority },
+									 max_conns => $json_obj->{ max_conns },
 						 },
 						 message => $message,
 			};
