@@ -25,6 +25,20 @@ use strict;
 
 #require "/usr/local/zenloadbalancer/www/functions.cgi";
 
+=begin nd
+Function: setSnmpdStatus
+
+	Start or stop the SNMP service.
+
+Parameters:
+	snmpd_status - 'true' to start, or 'stop' to stop the SNMP service.
+
+Returns:
+	scalar - 0 on success, non-zero on failure.
+
+See Also:
+	zapi/v3/system.cgi, <setSnmpdService>, <setSnmpdStatus>
+=cut
 sub setSnmpdStatus    # ($snmpd_status)
 {
 	# get 'true' string to start, or a 'false' string to stop
@@ -72,6 +86,20 @@ sub setSnmpdStatus    # ($snmpd_status)
 	return $return_code;
 }
 
+=begin nd
+Function: getSnmpdStatus
+
+	Get if the SNMP service is running.
+
+Parameters:
+	none - .
+
+Returns:
+	string - Boolean. 'true' if it is running, or 'false' if it is not runnig.
+
+See Also:
+	zapi/v3/system.cgi, <applySnmpChanges>
+=cut
 sub getSnmpdStatus    # ()
 {
 	my $pidof = &getGlobalConfiguration('pidof');
@@ -91,6 +119,29 @@ sub getSnmpdStatus    # ()
 	return $return_code;
 }
 
+=begin nd
+Function: getSnmpdConfig
+
+	Get the configuration of the SNMP service.
+
+	Returns this hash reference:
+
+		$snmpd_conf = {
+					   ip        => $snmpd_ip,
+					   port      => $snmpd_port,
+					   community => $snmpd_community,
+					   scope     => $snmpd_scope,
+		};
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - Hash reference with SNMP configuration.
+
+See Also:
+	<applySnmpChanges>, zapi/v3/system.cgi
+=cut
 sub getSnmpdConfig    # ()
 {
 	my $snmpdconfig_file = &getGlobalConfiguration('snmpdconfig_file');
@@ -117,9 +168,23 @@ sub getSnmpdConfig    # ()
 					   scope     => $snmpd_scope,
 	);
 
-	return ( \%snmpd_conf );
+	return \%snmpd_conf;
 }
 
+=begin nd
+Function: setSnmpdConfig
+
+	Store SNMP configuration.
+
+Parameters:
+	snmpd_conf - Hash reference with SNMP configuration.
+
+Returns:
+	integer - 0 on success, or -1 on failure.
+
+See Also:
+	<applySnmpChanges>, zapi/v3/system.cgi
+=cut
 sub setSnmpdConfig    # ($snmpd_conf)
 {
 	my ( $snmpd_conf ) = @_;
@@ -154,6 +219,20 @@ sub setSnmpdConfig    # ($snmpd_conf)
 	return 0;
 }
 
+=begin nd
+Function: setSnmpdService
+
+	Enable or disable SNMP service start on boot process.
+
+Parameters:
+	snmpd_enabled - 'true' to enable SNMP service, or 'false' to disable it.
+
+Returns:
+	integer - 0 on succes, or non-zero on failure.
+
+See Also:
+	<applySnmpChanges>
+=cut
 sub setSnmpdService    # ($snmpd_enabled)
 {
 	my ( $snmpd_enabled ) = @_;
@@ -214,11 +293,23 @@ sub setSnmpdService    # ($snmpd_enabled)
 	return $return_code;
 }
 
+=begin nd
+Function: applySnmpChanges
 
+	NOT USED. This function only is used in content??!!
 
-# GLOBALCGI This function only is used in content
-#	$snmpd_new = {   }
-#
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+	NOT USED.
+
+See Also:
+	NOT USED.
+=cut
 sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_scope)
 {
 	my ( $snmpd_new ) = @_;
