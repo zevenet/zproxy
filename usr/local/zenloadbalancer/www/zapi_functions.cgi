@@ -23,11 +23,26 @@
 
 use strict;
 
-#get zapi status
+=begin nd
+Function: getZAPI
+
+	Get zapi status
+
+Parameters:
+	name - 'status' to get if the user 'zapi' is enabled, or 'keyzapi' to get the 'zapikey'.
+
+Returns:
+	For 'status': Boolean. 'true' if the zapi user is enabled, or 'false' if it is disabled.
+
+	For 'zapikey': Returns the current zapikey.
+
+See Also:
+	zapi/v3/system.cgi
+=cut
 sub getZAPI    #($name)
 {
-
 	my ( $name ) = @_;
+
 	my $result = "false";
 
 	#return if zapi user is enabled or not true = enable, false = disabled
@@ -45,23 +60,43 @@ sub getZAPI    #($name)
 	}
 
 	return $result;
-
 }
 
-#set zapi values
+=begin nd
+Function: setZAPI
 
+	Set zapi values
+
+Parameters:
+	name - Actions to be taken: 'enable', 'disable', 'randomkey' to set a random key, or 'key' to set the key specified in value.
+
+		enable - Enables the user 'zapi'.
+		disable - Disables the user 'zapi'.
+		randomkey - Generates a random key.
+		key - Sets $value a the zapikey.
+
+	value - New key to be used. Only apply when the action 'key' is used.
+
+Returns:
+	none - .
+
+Bugs:
+	-setGlobalConfig should be used to set the zapikey.
+	-Randomkey is not used.
+
+See Also:
+	zapi/v3/system.cgi
+=cut
 sub setZAPI    #($name,$value)
 {
-
 	my ( $name, $value ) = @_;
-	my $result = "false";
 
+	my $result = "false";
 	my $globalcfg = &getGlobalConfiguration('globalcfg');
 
 	#Enable ZAPI
 	if ( $name eq "enable" )
 	{
-
 		my @run =
 		  `adduser --system --shell /bin/false --no-create-home zapi 1> /dev/null 2> /dev/null`;
 		return $?;
@@ -70,10 +105,8 @@ sub setZAPI    #($name,$value)
 	#Disable ZAPI
 	if ( $name eq "disable" )
 	{
-
 		my @run = `deluser zapi 1> /dev/null 2> /dev/null`;
 		return $?;
-
 	}
 
 	#Set Random key for zapi
@@ -89,7 +122,6 @@ sub setZAPI    #($name,$value)
 			}
 		}
 		untie @contents;
-
 	}
 
 	#Set ZAPI KEY
@@ -104,15 +136,27 @@ sub setZAPI    #($name,$value)
 			}
 		}
 		untie @contents;
-
 	}
-
 }
 
-#Generate random key for API user
+=begin nd
+Function: setZAPIKey
+
+	Generate random key for ZAPI user.
+
+Parameters:
+	passwordsize - Number of characters in the new key.
+
+Returns:
+	string - Random key.
+
+See Also:
+	<setZAPI>
+=cut
 sub setZAPIKey    #()
 {
 	my $passwordsize = shift;
+
 	my @alphanumeric = ( 'a' .. 'z', 'A' .. 'Z', 0 .. 9 );
 	my $randpassword = join '', map $alphanumeric[rand @alphanumeric],
 	  0 .. $passwordsize;

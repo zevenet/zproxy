@@ -24,6 +24,28 @@
 use strict;
 use threads;
 
+=begin nd
+Function: runParallel
+
+	Run code in parallel in different threads.
+
+Parameters:
+	code_ref - Code reference to be run on every thread.
+	arg_list - Array reference. Every element in the array is passed as the argument of the code reference.
+
+Returns:
+	scalar - Array reference. Every element in the array is a reference to a hash like this:
+
+	my %th = (
+			   arg     => $arg,
+			   thread  => threads->create( $code_ref, $arg ),
+			   ret_val => undef,
+			   tid     => $th{thread}->tid(),
+	);
+
+See Also:
+	Used in: <runSync>
+=cut
 sub runParallel
 {
 	# input
@@ -69,6 +91,20 @@ sub runParallel
 	return \@threads;
 }
 
+=begin nd
+Function: zenlog_thread
+
+	Zenlog for threads.
+
+Parameters:
+	msg - Message to write in log.
+
+Returns:
+	none - .
+
+See Also:
+	Used in: <zsync>
+=cut
 sub zenlog_thread
 {
 	my $msg = shift;
