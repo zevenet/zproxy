@@ -184,7 +184,7 @@ $zenino="/usr/local/zenloadbalancer/app/zeninotify/zeninotify.pl";
 #Zen Inotify pid file 
 $zeninopid="/var/run/zeninotify.pid";
 #.<b>Rsync replication parameters</b>
-$zenrsync="-auzv --delete";
+$zenrsync="-auzvr --delete";#update
 #Arptables
 $arptables="/sbin/arptables";
 
