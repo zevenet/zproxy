@@ -943,8 +943,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		}
 
 		#~ &zenlog("farmname:$farmname service:$service cookiedomain:$json_obj->{ cookiedomain } cookiename:$json_obj->{ cookiename } cookiepath:$json_obj->{ cookiepath } cookieinsert: $json_obj->{ cookieinsert } cookiettl:$json_obj->{ cookiettl }");
-
-		if ( $json_obj->{ cookieinsert } eq "true" )
+		my $cookieins_status = &getHTTPFarmVS ($farmname,$service, 'cookieins');
+		if ( $json_obj->{ cookieinsert } eq "true"  || $cookieins_status eq 'true' )
 		{
 			if ( exists ( $json_obj->{ cookiedomain } ) )
 			{
