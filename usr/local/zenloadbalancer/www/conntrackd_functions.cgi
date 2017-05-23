@@ -56,6 +56,29 @@ sub setConntrackdConfig
 
 	my $localhost = &getHostname();
 	my $remotehost = &getZClusterRemoteHost();
+	my $systemd_policy = '';
+
+	# Check conntrackd version
+	my $connt_version_string = `dpkg-query --show conntrackd`;
+	$connt_version_string =~ /:([0-9\.]+)/;
+	$connt_version_string = $1;
+	my @ct_version = split( /\./, $connt_version_string );
+	@ct_version = map { $_+0 } @ct_version;
+
+	# WARNING: make sure the version of conntrackd is at least 1.4.4
+	# WARNING: from conntrackd 1.4.4 the policy Systemd is required
+	my $mayor_v = 1;
+	my $minor_v = 4;
+	my $patch_v = 4;
+
+	if ( 	 $ct_version[0] > $mayor_v
+		|| ( $ct_version[0] == $mayor_v && $ct_version[1] > $minor_v )
+		|| ( $ct_version[0] == $mayor_v && $ct_version[1] == $minor_v && $ct_version[2] > $patch_v )
+		|| ( $ct_version[0] == $mayor_v && $ct_version[1] == $minor_v && $ct_version[2] == $patch_v )
+	)
+	{
+		$systemd_policy = "\n\tSystemd on\n";
+	}
 
 	my $ct_conf = "Sync {
 \tMode FTFW {
@@ -88,7 +111,7 @@ General {
 \t}
 \tNetlinkBufferSize 2097152
 \tNetlinkBufferSizeMaxGrowth 8388608
-
+$systemd_policy
 \tFilter From Kernelspace {
 \t\tProtocol Accept {
 \t\t\tTCP
