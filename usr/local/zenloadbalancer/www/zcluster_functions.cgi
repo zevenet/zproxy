@@ -703,21 +703,22 @@ sub runSync
 		#~ &zenlog( Dumper \%arg );
 	}
 
-	# run in parallel
-	my $r_list = &runParallel( \&zsync, \@args );
+	# WARNING: as a temporal workaround run zsync once
+	#          since there is only one more node.
+	&zsync( $args[0] );
 
-	#~ my $return_code = 0;
-	for my $rc ( @{ $r_list } )
-	{
-		#~ my $tid = $rc->{tid}->tid();
-		&zenlog("Return[$rc->{tid}] $rc->{ret_val}");
+	#~ # run in parallel
+	#~ my $r_list = &runParallel( \&zsync, \@args );
+
+	#~ for my $rc ( @{ $r_list } )
+	#~ {
+		#~ &zenlog("Return[$rc->{tid}] $rc->{ret_val}");
 		
-		if ( $rc->{ret_val} )
-		{
-			&zenlog( "An error happened syncing with $rc->{arg}->{ip_addr}");
-			#~ $return_code++;
-		}
-	}
+		#~ if ( $rc->{ret_val} )
+		#~ {
+			#~ &zenlog( "An error happened syncing with $rc->{arg}->{ip_addr}");
+		#~ }
+	#~ }
 }
 
 sub getZClusterNodeStatus
