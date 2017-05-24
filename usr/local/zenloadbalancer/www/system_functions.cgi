@@ -25,11 +25,33 @@ use strict;
 
 require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
 
-#get Memory usage of the System.
-#input $format Parameter format could be "b" for bytes, "kb" for KBytes and "mb" for MBytes (default: mb)
-#return @array
-#	name,value
-sub getMemStats    # ()
+=begin nd
+Function: getMemStats
+
+	Get stats of memory usage of the system.
+
+Parameters:
+	format - "b" for bytes, "kb" for KBytes and "mb" for MBytes (default: mb).
+
+Returns:
+	list - Two dimensional array.
+
+	@data = (
+			  [$mname,     $mvalue],
+			  [$mfname,    $mfvalue],
+			  ['MemUsed',  $mused],
+			  [$mbname,    $mbvalue],
+			  [$mcname,    $mcvalue],
+			  [$swtname,   $swtvalue],
+			  [$swfname,   $swfvalue],
+			  ['SwapUsed', $swused],
+			  [$swcname,   $swcvalue],
+	);
+
+See Also:
+	memory-rrd.pl, zapi/v3/system_stats.cgi, zapi/v2/system_stats.cgi
+=cut
+sub getMemStats
 {
 	my ( $format ) = @_;
 	my @data;
@@ -148,10 +170,27 @@ sub getMemStats    # ()
 	return @data;
 }
 
-#get Load usage of the System.
-#return @array
-#       name,value
-sub getLoadStats    # ()
+=begin nd
+Function: getLoadStats
+
+	Get the system load values.
+
+Parameters:
+	none - .
+
+Returns:
+	list - Two dimensional array.
+
+	@data = (
+		['Last', $last],
+		['Last 5', $last5],
+		['Last 15', $last15]
+	);
+
+See Also:
+	load-rrd.pl, zapi/v3/system_stats.cgi, zapi/v2/system_stats.cgi
+=cut
+sub getLoadStats
 {
 	my $last;
 	my $last5;
@@ -177,7 +216,58 @@ sub getLoadStats    # ()
 	return @data;
 }
 
-sub getNetworkStats    # ()
+=begin nd
+Function: getNetworkStats
+
+	Get stats for the network interfaces.
+
+Parameters:
+	format - 'raw', 'hash' or nothing.
+
+Returns:
+	When 'format' is not defined:
+
+		@data = (
+			  [
+				'eth0 in',
+				'46.11'
+			  ],
+			  [
+				'eth0 out',
+				'63.02'
+			  ],
+			  ...
+		);
+
+	When 'format' is 'raw':
+
+		@data = (
+			  [
+				'eth0 in',
+				'48296309'
+			  ],
+			  [
+				'eth0 out',
+				'66038087'
+			  ],
+			  ...
+		);
+
+	When 'format' is 'hash':
+
+		@data = (
+			  {
+				'in' => '46.12',
+				'interface' => 'eth0',
+				'out' => '63.04'
+			  },
+			  ...
+		);
+
+See Also:
+	iface-rrd.pl, zapi/v3/system_stats.cgi, zapi/v2/system_stats.cgi
+=cut
+sub getNetworkStats
 {
 	my ( $format ) = @_;
 
@@ -252,18 +342,55 @@ sub getNetworkStats    # ()
 	return @data;
 }
 
-#get Date
-sub getDate    # ()
-{
+=begin nd
+Function: getDate
 
+	Get date string
+
+Parameters:
+	none - .
+
+Returns:
+	string - Date string.
+
+	Example:
+
+		"Mon May 22 10:42:39 2017"
+
+See Also:
+	zapi/v3/system.cgi, zapi/v3/system_stats.cgi, zapi/v2/system_stats.cgi
+=cut
+sub getDate
+{
 	#$timeseconds = time();
 	my $now = ctime();
-	return $now;
 
+	return $now;
 }
 
-#get hostname
-sub getHostname    # ()
+=begin nd
+Function: getHostname
+
+	Get system hostname
+
+Parameters:
+	none - .
+
+Returns:
+	string - Hostname.
+
+See Also:
+	setConntrackdConfig
+
+	getZClusterLocalIp, setKeepalivedConfig, getZClusterRemoteHost, runSync, getZCusterStatusInfo
+
+	setNotifCreateConfFile, setNotifData, getNotifData
+
+	zapi/v3/cluster.cgi, zapi/v3/system_stats.cgi, zapi/v3/zapi.cgi, zapi/v2/system_stats.cgi
+
+	zenloadbalancer
+=cut
+sub getHostname
 {
 	my $hostname = `uname -n`;
 	chomp $hostname;
@@ -271,8 +398,34 @@ sub getHostname    # ()
 	return $hostname;
 }
 
-#get total CPU usage
-sub getCPU         # ()
+=begin nd
+Function: getCPU
+
+	Get system CPU usage stats.
+
+Parameters:
+	none - .
+
+Returns:
+	list - Two dimensional array.
+
+	Example:
+
+	@data = (
+			  ['CPUuser',    $cpu_user],
+			  ['CPUnice',    $cpu_nice],
+			  ['CPUsys',     $cpu_sys],
+			  ['CPUiowait',  $cpu_iowait],
+			  ['CPUirq',     $cpu_irq],
+			  ['CPUsoftirq', $cpu_softirq],
+			  ['CPUidle',    $cpu_idle],
+			  ['CPUusage',   $cpu_usage],
+	);
+
+See Also:
+	zapi/v3/system_stats.cgi, zapi/v2/system_stats.cgi, cpu-rrd.pl
+=cut
+sub getCPU
 {
 	my @data;
 	my $interval = 1;
@@ -406,6 +559,20 @@ sub getCPU         # ()
 	return @data;
 }
 
+=begin nd
+Function: getCpuCores
+
+	Get the number of CPU cores in the system.
+
+Parameters:
+	none - .
+
+Returns:
+	integer - Number of CPU cores.
+
+See Also:
+	zapi/v3/system_stats.cgi
+=cut
 sub getCpuCores
 {
 	my $cores = 1;
@@ -423,10 +590,37 @@ sub getCpuCores
 	return $cores;
 }
 
-#Obtain system disk usage
-#return @array
-#       name,value
-sub getDiskSpace    # ()
+=begin nd
+Function: getDiskSpace
+
+	Return total, used and free space for every partition in the system.
+
+Parameters:
+	none - .
+
+Returns:
+	list - Two dimensional array.
+
+	@data = (
+          [
+            'dev-dm-0 Total',
+            1981104128
+          ],
+          [
+            'dev-dm-0 Used',
+            1707397120
+          ],
+          [
+            'dev-dm-0 Free',
+            154591232
+          ],
+          ...
+	);
+
+See Also:
+	disk-rrd.pl
+=cut
+sub getDiskSpace
 {
 	my @data;       # output
 
@@ -462,7 +656,42 @@ sub getDiskSpace    # ()
 	return @data;
 }
 
-sub getDiskPartitionsInfo    #()
+=begin nd
+Function: getDiskPartitionsInfo
+
+	Get a reference to a hash with the partitions devices, mount points and name of rrd database.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - Hash reference.
+
+	Example:
+
+	$partitions = {
+		'/dev/dm-0' => {
+							'mount_point' => '/',
+							'rrd_id' => 'dev-dm-0hd'
+						},
+		'/dev/mapper/zva64-config' => {
+										'mount_point' => '/usr/local/zenloadbalancer/config',
+										'rrd_id' => 'dev-mapper-zva64-confighd'
+										},
+		'/dev/mapper/zva64-log' => {
+									'mount_point' => '/var/log',
+									'rrd_id' => 'dev-mapper-zva64-loghd'
+									},
+		'/dev/xvda1' => {
+							'mount_point' => '/boot',
+							'rrd_id' => 'dev-xvda1hd'
+						}
+	};
+
+See Also:
+	zapi/v3/system_stats.cgi
+=cut
+sub getDiskPartitionsInfo
 {
 	my $partitions;          # output
 
@@ -490,8 +719,22 @@ sub getDiskPartitionsInfo    #()
 	return $partitions;
 }
 
-#Obtain disk mount point from a device
-sub getDiskMountPoint    # ($dev)
+=begin nd
+Function: getDiskMountPoint
+
+	Get the mount point of a partition device
+
+Parameters:
+	dev - Partition device.
+
+Returns:
+	string - Mount point for such partition device.
+	undef  - The partition device is not mounted
+
+See Also:
+	<genDiskGraph>
+=cut
+sub getDiskMountPoint
 {
 	my ( $dev ) = @_;
 
@@ -513,8 +756,21 @@ sub getDiskMountPoint    # ($dev)
 	return $mount;
 }
 
-#Obtain the CPU temperature
-sub getCPUTemp    # ()
+=begin nd
+Function: getCPUTemp
+
+	Get the CPU temperature in celsius degrees.
+
+Parameters:
+	none - .
+
+Returns:
+	string - Temperature in celsius degrees.
+
+See Also:
+	temperature-rrd.pl
+=cut
+sub getCPUTemp
 {
 	my $file = &getGlobalConfiguration( "temperatureFile" );
 	my $lastline;
@@ -543,8 +799,21 @@ sub getCPUTemp    # ()
 	return $temp;
 }
 
-#
-sub zsystem    # (@exec)
+=begin nd
+Function: zsystem
+
+	Run a command with tuned system parameters.
+
+Parameters:
+	exec - Command to run.
+
+Returns:
+	integer - ERRNO or return code.
+
+See Also:
+	<runFarmGuardianStart>, <_runHTTPFarmStart>, <runHTTPFarmCreate>, <_runGSLBFarmStart>, <_runGSLBFarmStop>, <runFarmReload>, <runGSLBFarmCreate>, <setGSLBFarmStatus>
+=cut
+sub zsystem
 {
 	my ( @exec ) = @_;
 
@@ -558,12 +827,27 @@ sub zsystem    # (@exec)
 	return $error;
 }
 
-dns:
+=begin nd
+Function: getDns
 
-# return a hash ref = {
-#		primary => "value",
-#		secundary => "value",
-#		}
+	Get the dns servers.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - Hash reference.
+
+	Example:
+
+	$dns = {
+			primary => "value",
+			secundary => "value",
+	};
+
+See Also:
+	zapi/v3/system.cgi
+=cut
 sub getDns
 {
 	my $dns;
@@ -594,8 +878,24 @@ sub getDns
 	return $dns;
 }
 
-# dns = primary|secondary;
-# &setDns( $dns, $value );
+=begin nd
+Function: setDns
+
+	Set a primary or secondary dns server.
+
+Parameters:
+	dns - 'primary' or 'secondary'.
+	value - ip addres of dns server.
+
+Returns:
+	none - .
+
+Bugs:
+	Returned value.
+
+See Also:
+	zapi/v3/system.cgi
+=cut
 sub setDns
 {
 	my ( $dns, $value ) = @_;
@@ -626,10 +926,27 @@ sub setDns
 	return $output;
 }
 
-ssh:
+=begin nd
+Function: getSsh
 
-# return '*' character when ssh server is listening in all ips
-# return ssh port
+	Returns hash reference to ssh configuration.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - Hash reference.
+
+	Example:
+
+	$ssh = {
+			'port'   => 22,
+			'listen' => "*",
+	};
+
+See Also:
+	zapi/v3/system.cgi, dos.cgi
+=cut
 sub getSsh
 {
 	my $sshFile = &getGlobalConfiguration( 'sshConf' );
@@ -664,8 +981,29 @@ sub getSsh
 	return $ssh;
 }
 
-# to listen in all ip, the value is '*'
-# &setSsh( $hashRef );
+=begin nd
+Function: setSsh
+
+	Set ssh configuration.
+
+	To listen on all the ip addresses set 'listen' to '*'.
+
+Parameters:
+	sshConf - Hash reference with ssh configuration.
+
+	Example:
+
+	$ssh = {
+			'port'   => 22,
+			'listen' => "*",
+	};
+
+Returns:
+	integer - ERRNO or return code of ssh restart.
+
+See Also:
+	zapi/v3/system.cgi
+=cut
 sub setSsh
 {
 	my ( $sshConf ) = @_;
@@ -738,10 +1076,21 @@ sub setSsh
 	return $output;
 }
 
-#function that read the https port for http server
-sub getHttpServerPort
+=begin nd
+Function: getHttpServerPort
 
-  #~ sub getGuiPort    # ()
+	Get the web GUI port.
+
+Parameters:
+	none - .
+
+Returns:
+	integer - Web GUI port.
+
+See Also:
+	zapi/v3/system.cgi
+=cut
+sub getHttpServerPort
 {
 	my $gui_port;    # output
 
@@ -770,9 +1119,21 @@ sub getHttpServerPort
 	return $gui_port;
 }
 
-#function that write the https port for GUI
-#~ sub setGuiPort    # ($httpport)
-sub setHttpServerPort    # ($httpport)
+=begin nd
+Function: setHttpServerPort
+
+	Set the web GUI port.
+
+Parameters:
+	httpport - Port number.
+
+Returns:
+	none - .
+
+See Also:
+	zapi/v3/system.cgi
+=cut
+sub setHttpServerPort
 {
 	my ( $httpport ) = @_;
 	$httpport =~ s/\ //g;
@@ -785,20 +1146,20 @@ sub setHttpServerPort    # ($httpport)
 }
 
 =begin nd
-	Function: getHttpServerIp
+Function: getHttpServerIp
 
-	returns the GUI service ip address
+	Get the GUI service ip address
 
-	Parameters: none
+Parameters:
+	none - .
 
-	Returns:
+Returns:
+	scalar - GUI ip address or '*' for all local addresses
 
-		scalar - GUI ip address or '*' for all local addresses
-
+See Also:
+	zapi/v3/system.cgi, zenloadbalancer
 =cut
-
-#~ sub GUIip    # ()
-sub getHttpServerIp    # ()
+sub getHttpServerIp
 {
 	my $gui_ip;        # output
 
@@ -830,7 +1191,20 @@ sub getHttpServerIp    # ()
 	return $gui_ip;
 }
 
-# &setHttpInterface ( ipHttp )
+=begin nd
+Function: setHttpServerIp
+
+	Set the GUI service ip address
+
+Parameters:
+	ip - IP address.
+
+Returns:
+	none - .
+
+See Also:
+	zapi/v3/system.cgi
+=cut
 sub setHttpServerIp
 {
 	my $ip = shift;
@@ -865,13 +1239,23 @@ sub setHttpServerIp
 	untie @array;
 }
 
-backup:
-
 use File::stat;
 use File::Basename;
 
-#	&getBackup ()
-# list the backups in the system
+=begin nd
+Function: getBackup
+
+	List the backups in the system.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - Array reference.
+
+See Also:
+	<getExistsBackup>, zapi/v3/system.cgi
+=cut
 sub getBackup
 {
 	my @backups;
@@ -897,8 +1281,21 @@ sub getBackup
 	return \@backups;
 }
 
-# return if a backup file exists
-# &getExistsBackup ( $name );
+=begin nd
+Function: getExistsBackup
+
+	Check if there is a backup with the given name.
+
+Parameters:
+	name - Backup name.
+
+Returns:
+	1     - if the backup exists.
+	undef - if the backup does not exist.
+
+See Also:
+	zapi/v3/system.cgi
+=cut
 sub getExistsBackup
 {
 	my $name = shift;
@@ -915,7 +1312,20 @@ sub getExistsBackup
 	return $find;
 }
 
-#	&createBackup ( BackupName );
+=begin nd
+Function: createBackup
+
+	Creates a backup with the given name
+
+Parameters:
+	name - Backup name.
+
+Returns:
+	integer - ERRNO or return code of backup creation process.
+
+See Also:
+	zapi/v3/system.cgi
+=cut
 sub createBackup
 {
 	my $name      = shift;
@@ -925,7 +1335,22 @@ sub createBackup
 	return $error;
 }
 
-#	&downloadBackup ( backupName )
+=begin nd
+Function: downloadBackup
+
+	Get zapi client to download a backup file.
+
+Parameters:
+	backup - Backup name.
+
+Returns:
+	1 - on error.
+
+	Does not return on success.
+
+See Also:
+	zapi/v3/system.cgi
+=cut
 sub downloadBackup
 {
 	my $backup = shift;
@@ -956,7 +1381,22 @@ sub downloadBackup
 	return $error;
 }
 
-# &uploadBackup ( fileName, file_handle );
+=begin nd
+Function: uploadBackup
+
+	Store an uploaded backup.
+
+Parameters:
+	filename - Uploaded backup file name.
+	upload_filehandle - File handle or file content.
+
+Returns:
+	1     - on failure.
+	undef - on success.
+
+See Also:
+	zapi/v3/system.cgi
+=cut
 sub uploadBackup
 {
 	my $filename          = shift;
@@ -978,7 +1418,21 @@ sub uploadBackup
 	return $error;
 }
 
-#	&deleteBackup ( $fileName )
+=begin nd
+Function: deleteBackup
+
+	Delete a backup.
+
+Parameters:
+	file - Backup name.
+
+Returns:
+	1     - on failure.
+	undef - on success.
+
+See Also:
+	zapi/v3/system.cgi
+=cut
 sub deleteBackup
 {
 	my $file      = shift;
@@ -1001,7 +1455,20 @@ sub deleteBackup
 	return $error;
 }
 
-# &applyBackup ( backup );
+=begin nd
+Function: applyBackup
+
+	Restore files from a backup.
+
+Parameters:
+	backup - Backup name.
+
+Returns:
+	integer - ERRNO or return code of restarting load balancing service.
+
+See Also:
+	zapi/v3/system.cgi
+=cut
 sub applyBackup
 {
 	my $backup = shift;
@@ -1027,7 +1494,27 @@ sub applyBackup
 	return $error;
 }
 
-# list all available logs 
+=begin nd
+Function: getLogs
+
+	Get list of log files.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - Array reference.
+
+	Array element example:
+
+	{
+		'file' => $line,
+		'date' => $datetime_string
+	}
+
+See Also:
+	zapi/v3/system.cgi
+=cut
 sub getLogs
 {
 	my @logs;
@@ -1048,7 +1535,24 @@ sub getLogs
 	return \@logs;
 }
 
-# download a log file
+=begin nd
+Function: downloadLog
+
+	Download a log file.
+
+	This function ends the current precess on success.
+
+	Should this function be part of the API?
+
+Parameters:
+	logFile - log file name in /var/log.
+
+Returns:
+	1 - on failure.
+
+See Also:
+	zapi/v3/system.cgi
+=cut
 sub downloadLog
 {
 	my $logFile = shift;
@@ -1078,6 +1582,20 @@ sub downloadLog
 	return $error;
 }
 
+=begin nd
+Function: getTotalConnections
+
+	Get the number of current connections on this appliance.
+
+Parameters:
+	none - .
+
+Returns:
+	integer - The number of connections.
+
+See Also:
+	zapi/v3/system_stats.cgi
+=cut
 sub getTotalConnections
 {
 	my $conntrack = &getGlobalConfiguration ( "conntrack" );
@@ -1088,6 +1606,20 @@ sub getTotalConnections
 	return $conns;
 }
 
+=begin nd
+Function: getApplianceVersion
+
+	Returns a string with the description of the appliance.
+
+Parameters:
+	none - .
+
+Returns:
+	string - Version string.
+
+See Also:
+	zapi/v3/system.cgi, zenbui.pl, zenloadbalancer
+=cut
 sub getApplianceVersion
 {
 	my $version;
