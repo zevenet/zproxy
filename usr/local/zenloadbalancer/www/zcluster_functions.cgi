@@ -29,6 +29,23 @@ require "/usr/local/zenloadbalancer/www/conntrackd_functions.cgi";
 
 my $maint_if = 'cl_maintenance';
 
+=begin nd
+Function: getClusterInfo
+
+	NOT USED
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+	NOT USED
+
+See Also:
+	<getClusterStatus>
+=cut
 sub getClusterInfo
 {
 	my $cluster_msg  = "Not configured";
@@ -57,6 +74,23 @@ sub getClusterInfo
 	return ( $cluster_msg, $cluster_icon );
 }
 
+=begin nd
+Function: getClusterStatus
+
+	NOT USED
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+	NOT USED
+
+See Also:
+
+=cut
 sub getClusterStatus
 {
 	my ( $cluster_msg, $cluster_icon ) = &getClusterInfo();
@@ -75,6 +109,20 @@ sub getClusterStatus
 	}
 }
 
+=begin nd
+Function: getZClusterLocalIp
+
+	Get the IP address of the local node in the cluster.
+
+Parameters:
+	none - .
+
+Returns:
+	string - IP address.
+
+See Also:
+	<getZClusterNodeStatusInfo>
+=cut
 sub getZClusterLocalIp
 {
 	return undef if ! &getZClusterStatus();
@@ -84,8 +132,25 @@ sub getZClusterLocalIp
 	return $zcl_conf->{ &getHostname() }->{ ip };
 }
 
-################################################################################
+=begin nd
+Function: getZClusterStatus
 
+	Get if the cluster is configured.
+
+Parameters:
+	none - .
+
+Returns:
+	boolean - TRUE if the cluster is configured, or FALSE otherwise.
+
+See Also:
+	<getZClusterLocalIp>, <setDOSSshBruteForceRule>
+
+	zapi/v3/cluster.cgi, cluster_status.pl, zenloadbalancer
+
+	NOT USED: <getClusterInfo>,
+
+=cut
 sub getZClusterStatus
 {
 	# case filecuster does not exist
@@ -99,6 +164,25 @@ sub getZClusterStatus
 	return ( scalar( keys %{ $zcl_conf } ) > 2  );
 }
 
+=begin nd
+Function: getZClusterConfig
+
+	Get cluster configuration hash.
+
+Parameters:
+	none - .
+
+Returns:
+	undef  - On failure.
+	scalar - Hash reference on success.
+
+See Also:
+	<getZClusterLocalIp>, <getZClusterStatus>, <setKeepalivedConfig>, <getZClusterRemoteHost>, <parallel_run>, <runSync>, <runZClusterRemoteManager>, <getZCusterStatusInfo>
+
+	<setConntrackdConfig>, <setDOSSshBruteForceRule>
+
+	zapi/v3/interface.cgi, zapi/v3/cluster.cgi, zeninotify.pl, cluster_status.pl, zenloadbalancer
+=cut
 sub getZClusterConfig
 {
 	use Config::Tiny;
@@ -123,6 +207,20 @@ sub getZClusterConfig
 	return $config;
 }
 
+=begin nd
+Function: setZClusterConfig
+
+	Store cluster configuration.
+
+Parameters:
+	config - Reference to hash with cluster configuration.
+
+Returns:
+	none - .
+
+See Also:
+	zapi/v3/cluster.cgi
+=cut
 sub setZClusterConfig
 {
 	my $config = shift;
@@ -131,11 +229,43 @@ sub setZClusterConfig
 	return $config->write( &getGlobalConfiguration('filecluster') );
 }
 
+=begin nd
+Function: getZClusterRunning
+
+	Get if the cluster controller is running in localhost.
+
+Parameters:
+	none - .
+
+Returns:
+	boolean - TRUE if the cluster is running, or FALSE otherwise.
+
+See Also:
+	<enableZCluster>, <runZClusterRemoteManager>, <getZCusterStatusInfo>
+
+	zcluster-manager, zenloadbalancer
+=cut
 sub getZClusterRunning
 {
 	return ( system( "pgrep keepalived >/dev/null" ) == 0 );
 }
 
+=begin nd
+Function: enableZCluster
+
+	Start the cluster controller, keepalived, and conntrackd.
+
+	Also adds the cluster mantenance interface.
+
+Parameters:
+	prio - Sets a non-default priority to start the cluster controller. Used only when starting the node on an already running cluster.
+
+Returns:
+	integer - ERRNO or return code starting the cluster controller.
+
+See Also:
+	zapi/v3/cluster.cgi, zcluster-manager, zenloadbalancer
+=cut
 sub enableZCluster
 {
 	my $prio = shift;
@@ -219,6 +349,22 @@ sub enableZCluster
 	return $error_code;
 }
 
+=begin nd
+Function: disableZCluster
+
+	Stops the cluster controller, keepalived, and conntrackd.
+
+	Also removes the cluster mantenance interface.
+
+Parameters:
+	none - .
+
+Returns:
+	integer - ERRNO or return code stopping the cluster controller.
+
+See Also:
+	zapi/v3/cluster.cgi, zcluster-manager, zenloadbalancer
+=cut
 sub disableZCluster
 {
 	my $error_code = system("/etc/init.d/keepalived stop >/dev/null 2>&1");
@@ -244,6 +390,20 @@ sub disableZCluster
 	return $error_code;
 }
 
+=begin nd
+Function: setKeepalivedConfig
+
+	Apply to keepalive configuration file the settings in the cluster.
+
+Parameters:
+	prio - Sets a non-default priority.
+
+Returns:
+	none - .
+
+See Also:
+	<enableZCluster>, zcluster-manager
+=cut
 sub setKeepalivedConfig
 {
 	my $prio = shift;
@@ -273,8 +433,6 @@ sub setKeepalivedConfig
 	{
 		$priority = ( $zcl_conf->{_}->{ primary } eq $localhost )? 120: 50;
 	}
-
-#~ \tdebug 2
 
 	my $ka_conf = "! Zen Load Balancer configuration file for keepalived
 
@@ -335,6 +493,22 @@ vrrp_instance ZCluster {
 	return 0;
 }
 
+=begin nd
+Function: getZClusterRemoteHost
+
+	Get the hostname of the remote node.
+
+Parameters:
+	none - .
+
+Returns:
+	string - Remote node hostname.
+
+See Also:
+	<setConntrackdConfig>,<setKeepalivedConfig>, <runZClusterRemoteManager>, <getZCusterStatusInfo>, <setDOSSshBruteForceRule>, <getZClusterNodeStatusInfo>
+
+	zapi/v3/cluster.cgi, cluster_status.pl, zenloadbalancer
+=cut
 sub getZClusterRemoteHost
 {
 	my $zcl_conf = &getZClusterConfig();
@@ -354,6 +528,22 @@ sub getZClusterRemoteHost
 	return $remotehost;
 }
 
+=begin nd
+Function: parallel_run
+
+	NOT USED (yet?). Run a command on every node of the cluster via ssh.
+
+	WARNING: Requires the command 'parallel-ssh'.
+
+Parameters:
+	cmd - Command to run.
+
+Returns:
+	Returns the output of the command parallel-ssh.
+
+Bugs:
+	NOT USED (yet?).
+=cut
 sub parallel_run # `output` ( $cmd )
 {
 	my $cmd = shift;
@@ -382,6 +572,23 @@ sub parallel_run # `output` ( $cmd )
 	return `parallel-ssh $host_list '$cmd'`;
 }
 
+=begin nd
+Function: getMasterNode
+
+	COMMENTED FUNCTION
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+	COMMENTED FUNCTION
+
+See Also:
+
+=cut
 #sub getMasterNode # $ip_addr ()
 #{
 	#my @sucess_lines = grep /SUCCESS/, &parallel_run( 'ls /etc/MASTER' );
@@ -400,6 +607,20 @@ sub parallel_run # `output` ( $cmd )
 
 ################################# SSH-KEY #################################
 
+=begin nd
+Function: generateIdKey
+
+	Generate private and public RSA keys. Used in the process of cluster configuration if required.
+
+Parameters:
+	none - .
+
+Returns:
+	integer - ERRNO or return code generating the keys.
+
+See Also:
+	<exchangeIdKeys>
+=cut
 sub generateIdKey # $rc ()
 {
 	my $key_path = &getGlobalConfiguration('key_path');
@@ -421,6 +642,21 @@ sub generateIdKey # $rc ()
 	return $error_code;
 }
 
+=begin nd
+Function: copyIdKey
+
+	Send the local public RSA key to the indicated remote node.
+
+Parameters:
+	ip_address - Remote node cluster ip address.
+	password - Remote node root password.
+
+Returns:
+	integer - ERRNO or return code copying the public key to the remote node.
+
+See Also:
+	<exchangeIdKeys>
+=cut
 sub copyIdKey # $rc ( $ip_addr, $pass )
 {
 	my $ip_address = shift;
@@ -441,6 +677,22 @@ sub copyIdKey # $rc ( $ip_addr, $pass )
 	return $error_code;
 }
 
+=begin nd
+Function: exchangeIdKeys
+
+	This procedure exchanges plublic RSA keys between two nodes. Also generates the RSA keys if required.
+
+Parameters:
+	ip_address - Remote node cluster ip address.
+	password - Remote node root password.
+
+Returns:
+	0 - On success.
+	1 - On failure.
+
+See Also:
+	zapi/v3/cluster.cgi
+=cut
 sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 {
 	my $ip_address = shift;
@@ -519,6 +771,24 @@ sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 	return 0;
 }
 
+=begin nd
+Function: runRemotely
+
+	Run a command on a remote host via ssh.
+
+Parameters:
+	cmd - Command to be run.
+	ip_address - Remote ip addtress.
+	port - SSH port. Optional. (Default: 22)
+
+Returns:
+	Returns remote command output.
+
+See Also:
+	<exchangeIdKeys>, <checkZClusterInterfaces>, <runZClusterRemoteManager>, <getZCusterStatusInfo>, 
+
+	zapi/v3/cluster.cgi
+=cut
 sub runRemotely # `output` ( $cmd, $ip_addr [, $port ] )
 {
 	my $cmd = shift;
@@ -539,6 +809,24 @@ sub runRemotely # `output` ( $cmd, $ip_addr [, $port ] )
 	return `$ssh_cmd 2>/dev/null`;
 }
 
+=begin nd
+Function: checkZClusterInterfaces
+
+	NOT USED
+
+Parameters:
+	cl_conf - Cluster configuration.
+	nodeIP - .
+
+Returns:
+	list - .
+
+Bugs:
+	NOT USED
+
+See Also:
+
+=cut
 sub checkZClusterInterfaces # @inmatched_ifaces ( $cl_conf, $nodeIP )
 {
 	my $cl_conf = shift;
@@ -586,18 +874,40 @@ sub checkZClusterInterfaces # @inmatched_ifaces ( $cl_conf, $nodeIP )
 	return @unmatched_ifaces;
 }
 
-# rsync function
+=begin nd
+Function: zsync
+
+	Synchronize a local directory with a remote node.
+
+	The synchronization is made with rsync, via ssh.
+
+Parameters:
+	args - Hash reference.
+
+	Hash keys:
+
+	path    - Path to be synchronized.
+	ip_addr - Remote node IP address.
+	exclude - Files or directories to be excluded. Optional.
+	include - Files or directories to be included. Optional.
+
+	Input format example:
+
+	$args = {
+		path    => '/dir/',
+		ip_addr => '10.0.0.20',
+		exclude => [ '/dir/foo',      '/dir/*.cgi',  ... ],	# optional
+		include => [ '/dir/foo/test', '/dir/A*.cgi', ... ],	# optional
+	};
+
+Returns:
+	integer - ERRNO or return code of synchronization process.
+
+See Also:
+	<runSync>
+=cut
 sub zsync
 {
-#	input format example:
-#
-#	$args = {
-#		exclude => [ '/dir/foo',      '/dir/*.cgi',  ... ],	# optional
-#		include => [ '/dir/foo/test', '/dir/A*.cgi', ... ],	# optional
-#		ip_addr => '10.0.0.20',
-#		path    => '/dir/',
-#	};
-	
 	my $args = shift;
 
 	if ( ref $args ne 'HASH' )
@@ -650,6 +960,20 @@ sub zsync
 	return $error_code;
 }
 
+=begin nd
+Function: runSync
+
+	Sync a path with the remote node.
+
+Parameters:
+	src_path - Path to be synchronized.
+
+Returns:
+	none - .
+
+See Also:
+	zapi/v3/cluster.cgi, zeninotify.pl, zcluster-manager
+=cut
 sub runSync
 {
 	my $src_path = shift;
@@ -721,6 +1045,23 @@ sub runSync
 	#~ }
 }
 
+=begin nd
+Function: getZClusterNodeStatus
+
+	Get the status of the local node in the cluster.
+
+Parameters:
+	none - .
+
+Returns:
+	undef  - There is no status file of the local node.
+	string - Local node status. master, backup or maintenance.
+
+See Also:
+	<getClusterInfo>, <runZClusterRemoteManager>, <getZCusterStatusInfo>, <getZClusterNodeStatusInfo>
+
+	zapi/v3/cluster.cgi, zcluster-manager, zenloadbalancer
+=cut
 sub getZClusterNodeStatus
 {
 	my $znode_status_file = &getGlobalConfiguration('znode_status_file');
@@ -738,6 +1079,21 @@ sub getZClusterNodeStatus
 	return $status;
 }
 
+=begin nd
+Function: setZClusterNodeStatus
+
+	Store the status of the local node.
+
+Parameters:
+	node_status - New node status: master, backup or maintenance.
+
+Returns:
+	0 - On success.
+	1 - On failure.
+
+See Also:
+	zapi/v3/cluster.cgi, zcluster-manager
+=cut
 sub setZClusterNodeStatus
 {
 	my $node_status = shift;
@@ -764,6 +1120,21 @@ sub setZClusterNodeStatus
 	return 0;
 }
 
+=begin nd
+Function: disableInterfaceDiscovery
+
+	Disable interface broadcast discovery, ARP or NDP (Neighbour Discovery Protocol).
+
+Parameters:
+	iface - Virtual interface name.
+
+Returns:
+	0 - On success.
+	1 - On failure.
+
+See Also:
+	zcluster-manager, zenloadbalancer
+=cut
 sub disableInterfaceDiscovery
 {
 	my $iface = shift;
@@ -785,6 +1156,21 @@ sub disableInterfaceDiscovery
 	}
 }
 
+=begin nd
+Function: enableInterfaceDiscovery
+
+	Enable interface broadcast discovery, ARP or NDP (Neighbour Discovery Protocol).
+
+Parameters:
+	iface - Virtual interface name.
+
+Returns:
+	0 - On success.
+	1 - On failure.
+
+See Also:
+	zcluster-manager
+=cut
 sub enableInterfaceDiscovery
 {
 	my $iface = shift;
@@ -806,6 +1192,20 @@ sub enableInterfaceDiscovery
 	}
 }
 
+=begin nd
+Function: enableAllInterfacesDiscovery
+
+	Enable interface broadcast discovery for all interfaces, ARP or NDP (Neighbour Discovery Protocol).
+
+Parameters:
+	none - .
+
+Returns:
+	integer - 0 on success, or failure otherwise.
+
+See Also:
+	zcluster-manager, zenloadbalancer
+=cut
 sub enableAllInterfacesDiscovery
 {
 	# IPv4
@@ -818,6 +1218,21 @@ sub enableAllInterfacesDiscovery
 	return $rc;
 }
 
+=begin nd
+Function: broadcastInterfaceDiscovery
+
+	Advertise interface to be discovered.
+
+Parameters:
+	iface - Interface name.
+
+Returns:
+	0 - On success.
+	1 - On failure.
+
+See Also:
+	zcluster-manager
+=cut
 sub broadcastInterfaceDiscovery
 {
 	my $iface = shift;
@@ -842,6 +1257,46 @@ sub broadcastInterfaceDiscovery
 	return 0;
 }
 
+=begin nd
+Function: runZClusterRemoteManager
+
+	Run zcluster-manager on remote node.
+
+Parameters:
+	object - Can be: farm | interface | ipds.
+
+		Or a supported function like:
+
+		enableZCluster, disableZCluster, setKeepalivedConfig, setConntrackdConfig, getZClusterRunning, getZClusterNodeStatus, getConntrackdRunning, getZClusterArpStatus, sync, notify_master, notify_backup, notify_fault, gateway.
+
+	command - A supported command.
+
+		Supported commands for object 'farm': start | stop | restart | delete.
+		Supported commands for object 'ipds': restart_bl | restart_dos.
+		Supported commands for object 'interface': start | stop | delete | float-update.
+
+	arguments - Arguments are used to indicate an instance:
+
+		With the object farm: the farm name.
+		With the object interface: the interface name.
+
+Returns:
+	integer - 0 on success, or failure otherwise.
+
+See Also:
+	Unsed in:
+
+	zapi/v3/put.cgi,
+	zapi/v3/interface.cgi,
+	zapi/v3/farm_actions.cgi,
+	zapi/v3/put_l4.cgi,
+	zapi/v3/post_gslb.cgi,
+	zapi/v3/delete_gslb.cgi,
+	zapi/v3/ipds.cgi,
+	zapi/v3/post.cgi,
+	zapi/v3/put_datalink.cgi,
+	zapi/v3/delete.cgi
+=cut
 sub runZClusterRemoteManager
 {
 	my $object = shift;
@@ -873,6 +1328,23 @@ sub runZClusterRemoteManager
 	return 0;
 }
 
+=begin nd
+Function: getZCusterStatusInfo
+
+	NOT USED
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+	NOT USED
+
+See Also:
+
+=cut
 sub getZCusterStatusInfo
 {
 	my $status;
@@ -1042,6 +1514,20 @@ sub getZCusterStatusInfo
 	return $status;
 }
 
+=begin nd
+Function: pgrep
+
+	Check if a command is running.
+
+Parameters:
+	cmd - Command to be checked.
+
+Returns:
+	integer - 0 on success, or failure otherwise.
+
+See Also:
+	<getZClusterNodeStatusInfo>, <enableZCluster>
+=cut
 sub pgrep
 {
 	my $cmd = shift;
@@ -1054,6 +1540,29 @@ sub pgrep
 	return $rc;
 }
 
+=begin nd
+Function: getZClusterNodeStatusInfo
+
+	Get node role and cluster services status.
+
+Parameters:
+	ip - Remote IP address for a remote host, or undef for localhost.
+
+Returns:
+	scalar - Hash reference.
+
+	Hash reference example:
+
+	$node = {
+		ka   => 'value',
+		zi   => 'value',
+		ct   => 'value',
+		role => 'value'
+	}
+
+See Also:
+	<getZClusterLocalhostStatusDigest>, <getZClusterNodeStatusDigest>, cluster_status.pl
+=cut
 sub getZClusterNodeStatusInfo
 {
 	my $ip = shift; # IP for remote host, or undef for local host
@@ -1089,6 +1598,29 @@ sub getZClusterNodeStatusInfo
 	return $node;
 }
 
+=begin nd
+Function: getZClusterLocalhostStatusDigest
+
+	NOT USED
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - Hash reference.
+
+	my $node = {
+				 role    => 'value',
+				 status  => 'value',
+				 message => 'value',
+	};
+
+Bugs:
+	NOT USED
+
+See Also:
+
+=cut
 sub getZClusterLocalhostStatusDigest
 {
 	my $node = {
@@ -1112,6 +1644,44 @@ sub getZClusterLocalhostStatusDigest
 	return $node;
 }
 
+=begin nd
+Function: getZClusterNodeStatusDigest
+
+	Get a comprehensible information about the state of a cluster node.
+
+Parameters:
+	ip - Remote IP address for a remote host, or undef for localhost.
+
+Returns:
+	scalar - Hash reference.
+
+	Hash reference example:
+
+	$node = {
+		role    => 'value',
+		status  => 'value',
+		message => 'value',
+	}
+
+
+	Role values:
+		master | backup | maintenance | unreachable | error
+
+	Status values:
+		ok | failure | unreachable | error
+
+	Messages:
+		'Node online and active'
+		'Node online and passive'
+		'Node in maintenance mode'
+		'Services not running: '
+		'Failed services: ...'
+		'Node unreachable'
+		'error'
+
+See Also:
+	<getZClusterLocalhostStatusDigest>, zapi/v3/cluster.cgi
+=cut
 sub getZClusterNodeStatusDigest
 {
 	my $ip = shift; # IP for remote host, or undef for local host
