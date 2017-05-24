@@ -1027,7 +1027,18 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			# change to number format
 			$json_obj->{ deftcpport } += 0;
 			
+			my $old_deftcpport = &getGSLBFarmVS ($farmname,$service, 'dpc');
 			&setFarmVS( $farmname, $service, "dpc", $json_obj->{ deftcpport } );
+			
+			# Update farmguardian
+			my ( $fgTime, $fgScript ) = &getGSLBFarmGuardianParams( $farmname, $service );
+			
+			# Changing farm guardian port check
+			if ( $fgScript =~ s/-p $old_deftcpport/-p $json_obj->{ deftcpport }/ )
+			{
+				&setGSLBFarmGuardianParams( $farmname, $service, 'cmd', $fgScript );
+			}
+			
 			if ( $? eq 0 )
 			{
 				&runFarmReload( $farmname );

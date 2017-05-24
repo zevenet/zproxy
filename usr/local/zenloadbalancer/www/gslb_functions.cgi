@@ -2510,17 +2510,16 @@ sub setGSLBFarmGuardianParams	# ( farmName, service, param, value );
 	my @file;
 	my $flagSvc = 0;
 	my $err     = -1;
-	my $port;
+	my $port = &getGSLBFarmVS ($fname,$service, 'dpc');
 
 	tie @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
 
 	foreach my $line ( @file )
 	{
 		# Begin service block
-		if ( $line =~ /${service}_fg_(\d+) =>/ )
+		if ( $line =~ /${service}_fg_$port =>/ )
 		{
 			$flagSvc = 1;
-			$port    = $1;
 		}
 
 		# End service block

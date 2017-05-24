@@ -125,7 +125,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 						{
 							$error = "true";
 							&zenlog(
-								"ZAPI error, trying to modify a gslb farm $farmname,the farm is not disabled, are you sure it's running?"
+								"ZAPI error, trying to modify a gslb farm $farmname, the farm is not disabled, are you sure it's running?"
 							);
 						}
 						else
