@@ -172,7 +172,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		else
 		{
 			$error = "true";
-			$zapierror = "Error, trying to modify a http farm $farmname, invalid contimeout." );
+			$zapierror = ( "Error, trying to modify a http farm $farmname, invalid contimeout." );
 			&zenlog( "Zapi $zapierror" );
 		}
 	}
