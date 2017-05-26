@@ -149,16 +149,16 @@ sub getCertCN    # ($certfile)
 	if ( &getCertType( $certfile ) eq "Certificate" )
 	{
 		@eject  = `$openssl x509 -noout -in $certfile -text | grep Subject:`;
-		@eject  = split ( /CN=/, $eject[0] );
-		@eject  = split ( /\/emailAddress=/, $eject[1] );
-		$certcn = $eject[0];
+
+		@eject  = split ( /, |\/emailAddress=/, $eject[0] );
+		( $certcn ) = grep { s/CN ?= ?// } @eject;
 	}
 	else
 	{
 		@eject  = `$openssl req -noout -in $certfile -text | grep Subject:`;
-		@eject  = split ( /CN=/, $eject[0] );
-		@eject  = split ( /\/emailAddress=/, $eject[1] );
-		$certcn = $eject[0];
+
+		@eject  = split ( /, |\/emailAddress=/, $eject[0] );
+		( $certcn ) = grep { s/CN ?= ?// } @eject;
 	}
 
 	$certcn = &getCleanBlanc( $certcn );
