@@ -23,6 +23,8 @@
 
 use strict;
 
-use Zevenet::CGI;
+use Zevenet::Log;
+use Zevenet::Config;
+use Zevenet::Validation;
 
 1;

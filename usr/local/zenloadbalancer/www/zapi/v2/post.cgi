@@ -147,7 +147,7 @@ sub new_farm()
 
 	if ( $farmprotocol =~ /TCP|HTTP|UDP|HTTPS|GSLB|L4XNAT|DATALINK/ )
 	{
-		if ( &isnumber( $json_obj->{ vport } ) eq "true" )
+		if ( $json_obj->{ vport } ) =~ /^\d+$/ )
 		{
 			$inuse = &checkport( $json_obj->{ vip }, $json_obj->{ vport } );
 			if ( $inuse eq "true" )

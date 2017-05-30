@@ -23,6 +23,7 @@
 
 use strict;
 
-use Zevenet::CGI;
+
+
 
 1;

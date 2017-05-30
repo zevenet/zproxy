@@ -43,7 +43,6 @@ my $limitfile = "/etc/security/limits.conf";
 my $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 require "/usr/local/zenloadbalancer/config/global.conf";
 require "/usr/local/zenloadbalancer/www/functions.cgi";
-require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";
 
 my $basedir = &getGlobalConfiguration('basedir');
 my $configdir = &getGlobalConfiguration('configdir');

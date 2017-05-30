@@ -24,7 +24,7 @@ use strict;
 
 require "/usr/local/zenloadbalancer/www/system_functions.cgi";
 require "/usr/local/zenloadbalancer/www/rrd_functions.cgi";
-require "/usr/local/zenloadbalancer/www/networking_functions_ext.cgi";
+require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
 
 # Supported graphs periods
 my $graph_period = {
