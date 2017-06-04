@@ -148,7 +148,7 @@ sub tielock    # ($file_name)
 {
 	my $file_name = shift;    #parameters
 
-	$o = tie my @array, "Tie::File", $file_name;
+	my $o = tie my @array, "Tie::File", $file_name;
 	$o->flock;
 
 	return \@array;
