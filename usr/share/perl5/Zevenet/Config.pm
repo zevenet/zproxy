@@ -139,7 +139,7 @@ sub setGlobalConfiguration		# ( parameter, value )
 			$output = 0;
 		}
 	}
-	untie @gloabl_hf;
+	untie @global_hf;
 	
 	return $output;
 }
