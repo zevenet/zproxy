@@ -23,7 +23,7 @@
 
 use strict;
 
-#~ use Fcntl ':flock';                       #use of lock functions
+use Fcntl ':flock';                       #use of lock functions
 
 =begin nd
 Function: openlock
