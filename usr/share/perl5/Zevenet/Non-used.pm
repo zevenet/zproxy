@@ -391,4 +391,302 @@ sub verifyPasswd    #($newpass, $trustedpass)
 	}
 }
 
+=begin nd
+Function: listActiveInterfaces
+
+	[NOT USED] List all interfaces.
+
+Parameters:
+	class - ?????.
+
+Returns:
+	list - All interfaces name.
+
+Bugs:
+	NOT USED
+=cut
+# list all interfaces
+sub listActiveInterfaces    # ($class)
+{
+	my $class = shift;
+
+	my $s = IO::Socket::INET->new( Proto => 'udp' );
+	my @interfaces = &getInterfaceList();
+	my @aifaces;
+
+	for my $if ( @interfaces )
+	{
+		if ( $if !~ /^lo|sit0/ )
+		{
+			if ( ( $class eq "phvlan" && $if !~ /\:/ ) || $class eq "" )
+			{
+				my $flags = $s->if_flags( $if );
+				if ( $flags & IFF_UP )
+				{
+					push ( @aifaces, $if );
+				}
+			}
+		}
+	}
+
+	return @aifaces;
+}
+
+=begin nd
+Function: writeConfigIf
+
+	[NOT USED] Saves network interface config to file.
+
+Parameters:
+	if - interface name.
+	string - replaces config file with this string.
+
+Returns:
+	$? - .
+
+Bugs:
+	returns $?
+
+	NOT USED
+=cut
+# saving network interfaces config files
+sub writeConfigIf    # ($if,$string)
+{
+	my ( $if, $string ) = @_;
+
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+
+	open CONFFILE, ">", "$configdir/if\_$if\_conf";
+	print CONFFILE "$string\n";
+	close CONFFILE;
+	return $?;
+}
+
+=begin nd
+Function: getDevData
+
+	[NOT USED] Get network interfaces statistics.
+
+	Includes bytes and packets received and transmited.
+
+Parameters:
+	dev - interface name. Optional.
+
+Returns:
+	list - array with statistics?
+
+Bugs:
+	NOT USED
+=cut
+sub getDevData    # ($dev)
+{
+	my $dev = shift;
+
+	open FI, "<", "/proc/net/dev";
+
+	my $exit = "false";
+	my @dataout;
+	
+	my $line;
+	while ( $line = <FI> && $exit eq "false" )
+	{
+		if ( $dev ne "" )
+		{
+			my @curline = split ( ":", $line );
+			my $ini = $curline[0];
+			chomp ( $ini );
+			if ( $ini ne "" && $ini =~ $dev )
+			{
+				$exit = "true";
+				my @datain = split ( " ", $curline[1] );
+				push ( @dataout, $datain[0] );
+				push ( @dataout, $datain[1] );
+				push ( @dataout, $datain[8] );
+				push ( @dataout, $datain[9] );
+			}
+		}
+		else
+		{
+			if ( $line ne // )
+			{
+				push ( @dataout, $line );
+			}
+			else
+			{
+				$exit = "true";
+			}
+		}
+	}
+	close FI;
+
+	return @dataout;
+}
+
+=begin nd
+Function: uplinkUsed
+
+	[NOT USED] Return if interface is used for datalink farm
+
+Parameters:
+	none - .
+
+Returns:
+	boolean - "true" or "false".
+
+Bugs:
+	NOT USED
+=cut
+# Return if interface is used for datalink farm
+sub uplinkUsed          # ($if)
+{
+	my $if = shift;
+
+	my @farms  = &getFarmsByType( "datalink" );
+	my $output = "false";
+
+	foreach my $farm ( @farms )
+	{
+		my $farmif = &getFarmVip( "vipp", $farm );
+		my $status = &getFarmStatus( $farm );
+		if ( $status eq "up" && $farmif eq $if )
+		{
+			$output = "true";
+		}
+	}
+	return $output;
+}
+
+=begin nd
+Function: getVirtualInterfaceFilenameList
+
+	[NOT USED] Get a list of the virtual interfaces configuration filenames.
+
+Parameters:
+	none - .
+
+Returns:
+	list - Every configuration file of virtual interfaces.
+
+Bugs:
+	NOT USED
+=cut
+sub getVirtualInterfaceFilenameList
+{
+	opendir ( DIR, &getGlobalConfiguration( 'configdir' ) );
+
+	my @filenames = grep ( /^if.*\:.*$/, readdir ( DIR ) );
+
+	closedir ( DIR );
+
+	return @filenames;
+}
+
+=begin nd
+Function: getConntrackExpect
+
+	[NOT USED] Get conntrack sessions.
+
+Parameters:
+	none - .
+
+Returns:
+	list - list of conntrack sessions.
+
+Bugs:
+	NOT USED
+=cut
+# get conntrack sessions
+sub getConntrackExpect    # ($args)
+{
+	my ( $args ) = @_;
+
+	open CONNS, "</proc/net/nf_conntrack_expect";
+
+	#open CONNS, "</proc/net/nf_conntrack";
+	my @expect = <CONNS>;
+	close CONNS;
+
+	return @expect;
+}
+
+=begin nd
+Function: setInterfaceUp
+
+	[NOT USED] Configure interface reference in the system, and optionally store the configuration
+
+Parameters:
+	interface - interface reference.
+	writeconf - true value to store the interface configuration.
+
+Returns:
+	scalar - 0 on success, or 1 on failure.
+
+Bugs:
+	NOT USED
+=cut
+# configure interface reference in the system, and optionally save the configuration
+sub setInterfaceUp
+{
+	my $interface = shift;	# Interface reference
+	my $writeconf = shift;	# TRUE value to write configuration, FALSE otherwise
+
+	if ( ref $interface ne 'HASH' )
+	{
+		&zenlog("Argument must be a reference");
+		return 1;
+	}
+	
+	# vlans need to be created if they don't already exist
+	my $exists = &ifexist( $interface->{ name } );
+
+	if ( $exists eq "false" )
+	{
+		&createIf( $interface );    # create vlan if needed
+	}
+
+	if ( $writeconf )
+	{
+		my $old_iface_ref =
+		&getInterfaceConfig( $interface->{ name }, $interface->{ ip_v } );
+
+		if ( $old_iface_ref )
+		{
+			# Delete old IP and Netmask
+			# delete interface from system to be able to repace it
+			&delIp(
+					$$old_iface_ref{ name },
+					$$old_iface_ref{ addr },
+					$$old_iface_ref{ mask }
+			);
+
+			# Remove routes if the interface has its own route table: nic and vlan
+			if ( $interface->{ vini } eq '' )
+			{
+				&delRoutes( "local", $old_iface_ref );
+			}
+		}
+	}
+
+	&addIp( $interface );
+
+	my $state = &upIf( $interface, $writeconf );
+
+	if ( $state == 0 )
+	{
+		$interface->{ status } = "up";
+		&zenlog( "Network interface $interface->{name} is now UP" );
+	}
+
+	# Writing new parameters in configuration file
+	if ( $interface->{ name } !~ /:/ )
+	{
+		&writeRoutes( $interface->{ name } );
+	}
+
+	&setInterfaceConfig( $interface ) if $writeconf;
+	&applyRoutes( "local", $interface );
+
+	return 0; # FIXME
+}
+
 1;

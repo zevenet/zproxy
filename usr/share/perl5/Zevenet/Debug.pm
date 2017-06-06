@@ -23,10 +23,47 @@
 
 use strict;
 
-use Zevenet::Core;
-use Zevenet::Stats;
-use Zevenet::Backup;
-use Zevenet::SystemInfo;
-use Zevenet::System;
+=begin nd
+Function: debug
+
+	Get debugging level.
+
+Parameters:
+	none - .
+
+Returns:
+	integer - Debugging level.
+
+Bugs:
+	The debugging level should be stored as a variable.
+
+See Also:
+	Widely used.
+=cut
+sub debug { return 0 }
+
+=begin nd
+Function: getMemoryUsage
+
+	Get the resident memory usage of the current perl process.
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - String with the memory usage.
+
+See Also:
+	Used in zapi.cgi
+=cut
+sub getMemoryUsage
+{
+	my $mem_string = `grep RSS /proc/$$/status`;
+
+	chomp ( $mem_string );
+	$mem_string =~ s/:.\s+/: /;
+
+	return $mem_string;
+}
 
 1;
