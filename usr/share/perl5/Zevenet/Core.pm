@@ -25,6 +25,6 @@ use strict;
 
 use Zevenet::Log;
 use Zevenet::Config;
-use Zevenet::Validation;
+use Zevenet::Validate;
 
 1;
