@@ -592,7 +592,21 @@ sub add_blacklists_source
 			}
 			else
 			{
-				$errormsg = &setBLAddSource( $listName, $json_obj->{ 'source' } );
+				# ipset not allow the input 0.0.0.0/0, if this source is set, replace it for 0.0.0.0/1 and 128.0.0.0/1
+				if ( $json_obj->{ 'source' } eq '0.0.0.0/0' )
+				{
+					$errormsg = "Error";
+					my $body = {
+						description => $description,
+						error       => "true",
+						message     => $errormsg,
+					};
+					 &httpResponse( { code => 400, body => $body } );
+				}
+				else
+				{
+					$errormsg = &setBLAddSource( $listName, $json_obj->{ 'source' } );
+				}
 				if ( !$errormsg )
 				{
 					my @ipList;
