@@ -595,7 +595,7 @@ sub add_blacklists_source
 				# ipset not allow the input 0.0.0.0/0, if this source is set, replace it for 0.0.0.0/1 and 128.0.0.0/1
 				if ( $json_obj->{ 'source' } eq '0.0.0.0/0' )
 				{
-					$errormsg = "Error";
+					$errormsg = "Error, the source $json_obj->{'source'} is not valid, for this action, use the list \"All\".";
 					my $body = {
 						description => $description,
 						error       => "true",
