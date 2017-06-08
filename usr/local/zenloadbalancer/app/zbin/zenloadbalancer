@@ -440,17 +440,13 @@ if ( $eject eq "start" )
 			print FW "iface lo inet loopback\n";
 			close FW;
 
-			#creating configuration interface file:
-			open FW, ">$configdir\/if\_$ifname\_conf";
-			print FW "status=up\n";
-			print FW "$ifname;$ip;$netmask;;\n";
-			close FW;
-
 			my %interface = (
 							  name    => $ifname,
 							  addr    => $ip,
 							  mask    => $netmask,
 							  gateway => $gateway,
+							  status  => "up",
+							  name    => "$ifname",
 			);
 
 			&setInterfaceConfig( \%interface );
