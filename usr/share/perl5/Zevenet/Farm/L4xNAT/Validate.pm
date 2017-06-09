@@ -23,26 +23,64 @@
 
 use strict;
 
-#~ if ( -e "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi" )
-#~ {
-	#~ require "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi";
-#~ }
+=begin nd
+Function: ismport
 
-# FIXME: Load extended functions if module exists
-use Zevenet::Farm::Ext;
+	Check if the string is a valid multiport definition
+	
+Parameters:
+	port - Multiport string
 
-use Zevenet::RRD;
-use Zevenet::Farm::HTTP;
+Returns:
+	String - "true" if port has a correct format or "false" if port has a wrong format
+	
+FIXME: 
+	Define regexp in check_functions.cgi and use it here
+	
+=cut
+sub ismport    # ($string)
+{
+	my $string = shift;
 
-my $configdir = &getGlobalConfiguration('configdir');
+	chomp ( $string );
+	if ( $string eq "*" )
+	{
+		return "true";
+	}
+	elsif ( $string =~ /^([1-9][0-9]*|[1-9][0-9]*\:[1-9][0-9]*)(,([1-9][0-9]*|[1-9][0-9]*\:[1-9][0-9]*))*$/ )
+	{
+		return "true";
+	}
+	else
+	{
+		return "false";
+	}
+}
 
-use Zevenet::Farm::Core;
-use Zevenet::Farm::Base;
-use Zevenet::Farm::Stats;
-use Zevenet::Farm::Factory;
-use Zevenet::Farm::Actions;
-use Zevenet::Farm::Config;
+=begin nd
+Function: checkmport
 
-use Zevenet::Farm::Backend;
+	Check if the port has more than 1 port
+	
+Parameters:
+	port - Port string
+
+Returns:
+	String - "true" if port string has more then one port or "false" if port has only a port
+	
+=cut
+sub checkmport    # ($port)
+{
+	my $port = shift;
+
+	if ( $port =~ /\,|\:|\*/ )
+	{
+		return "true";
+	}
+	else
+	{
+		return "false";
+	}
+}
 
 1;

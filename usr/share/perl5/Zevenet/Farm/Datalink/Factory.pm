@@ -23,26 +23,41 @@
 
 use strict;
 
-#~ if ( -e "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi" )
-#~ {
-	#~ require "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi";
-#~ }
+=begin nd
+Function: runDatalinkFarmCreate
 
-# FIXME: Load extended functions if module exists
-use Zevenet::Farm::Ext;
+	Create a datalink farm through its configuration file and run it
+	
+Parameters:
+	farmname - Farm name
+	vip - Virtual IP
+	port - Virtual port where service is listening
 
-use Zevenet::RRD;
-use Zevenet::Farm::HTTP;
+Returns:
+	Integer - Error code: return 0 on success or different of 0 on failure
+	
+FIXME: 
+	it is possible calculate here the inteface of VIP and put standard the input as the others create farm functions
+		
+=cut
+sub runDatalinkFarmCreate    # ($farm_name,$vip,$fdev)
+{
+	my ( $farm_name, $vip, $fdev ) = @_;
 
-my $configdir = &getGlobalConfiguration('configdir');
+	open FO, ">$configdir\/$farm_name\_datalink.cfg";
+	print FO "$farm_name\;$vip\;$fdev\;weight\;up\n";
+	close FO;
+	my $output = $?;
 
-use Zevenet::Farm::Core;
-use Zevenet::Farm::Base;
-use Zevenet::Farm::Stats;
-use Zevenet::Farm::Factory;
-use Zevenet::Farm::Actions;
-use Zevenet::Farm::Config;
+	my $piddir = &getGlobalConfiguration('piddir');
+	if ( !-e "$piddir/${farm_name}_datalink.pid" )
+	{
+		# Enable active datalink file
+		open FI, ">$piddir\/$farm_name\_datalink.pid";
+		close FI;
+	}
 
-use Zevenet::Farm::Backend;
+	return $output;
+}
 
 1;

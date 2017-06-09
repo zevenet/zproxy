@@ -689,4 +689,39 @@ sub setInterfaceUp
 	return 0; # FIXME
 }
 
+=begin nd
+Function: getFarmGlobalStatus
+
+	[NOT USED] Get the status of a farm and its backends
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	array - ???
+
+BUG:
+	NOT USED
+	
+=cut
+sub getFarmGlobalStatus    # ($farm_name)
+{
+	my ( $farm_name ) = @_;
+
+	my $farm_type = &getFarmType( $farm_name );
+	my @run;
+
+	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
+	{
+		@run = &getTcpUdpFarmGlobalStatus( $farm_name );
+	}
+
+	if ( $farm_type eq "http" || $farm_type eq "https" )
+	{
+		@run = getHTTPFarmGlobalStatus( $farm_name );
+	}
+
+	return @run;
+}
+
 1;

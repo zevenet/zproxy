@@ -23,26 +23,45 @@
 
 use strict;
 
-#~ if ( -e "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi" )
-#~ {
-	#~ require "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi";
-#~ }
+=begin nd
+Function: runL4FarmCreate
 
-# FIXME: Load extended functions if module exists
-use Zevenet::Farm::Ext;
+	Create a l4xnat farm
+	
+Parameters:
+	vip - Virtual IP
+	port - Virtual port. In l4xnat it ls possible to define multiport using ',' for add ports and ':' for ranges
+	farmname - Farm name
 
-use Zevenet::RRD;
-use Zevenet::Farm::HTTP;
+Returns:
+	Integer - return 0 on success or other value on failure
+	
+=cut
+sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
+{
+	my ( $vip, $farm_name, $vip_port ) = @_;
 
-my $configdir = &getGlobalConfiguration('configdir');
+	my $output    = -1;
+	my $farm_type = 'l4xnat';
 
-use Zevenet::Farm::Core;
-use Zevenet::Farm::Base;
-use Zevenet::Farm::Stats;
-use Zevenet::Farm::Factory;
-use Zevenet::Farm::Actions;
-use Zevenet::Farm::Config;
+	$vip_port = 80 if not defined $vip_port;
 
-use Zevenet::Farm::Backend;
+	open FO, ">$configdir\/$farm_name\_$farm_type.cfg";
+	print FO "$farm_name\;tcp\;$vip\;$vip_port\;nat\;weight\;none\;120\;up\n";
+	close FO;
+	$output = $?;      # FIXME
+
+	my $piddir = &getGlobalConfiguration('piddir');
+	if ( !-e "$piddir/${farm_name}_$farm_type.pid" )
+	{
+		# Enable active l4xnat file
+		open FI, ">$piddir\/$farm_name\_$farm_type.pid";
+		close FI;
+	}
+
+	&_runL4FarmStart( $farm_name );
+
+	return $output;    # FIXME
+}
 
 1;
