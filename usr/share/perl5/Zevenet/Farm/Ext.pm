@@ -67,7 +67,6 @@ sub getFarmCertificatesSNI    #($fname)
 	return @output;
 }
 
-
 =begin nd
 Function: setFarmCertificateSNI
 
@@ -241,7 +240,6 @@ sub setFarmDeleteCertNameSNI    #($certn,$fname)
 	return $output;
 }
 
-
 =begin nd
 Function: getFarmNameList
 
@@ -267,7 +265,6 @@ sub getFarmNameList
 
 	return @farm_names;
 }
-
 
 =begin nd
 Function: getFarmTable
