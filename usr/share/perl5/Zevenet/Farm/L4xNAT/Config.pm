@@ -23,10 +23,10 @@
 
 use strict;
 
-require "/usr/local/zenloadbalancer/www/farmguardian_functions.cgi";
-require "/usr/local/zenloadbalancer/www/nf_functions.cgi";
-require "/usr/local/zenloadbalancer/www/networking_functions.cgi";
-require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
+use Zevenet::FarmGuardian;
+use Zevenet::Netfilter;
+use Zevenet::Net;
+use Zevenet::Farm;
 
 my $configdir = &getGlobalConfiguration('configdir');
 
