@@ -31,7 +31,7 @@
 #
 ###############################################################################
 
-# use strict;
+use strict;
 # use warnings;
 
 use Date::Parse;
@@ -39,10 +39,9 @@ use Time::localtime;
 use Tie::File;
 use Data::Dumper;
 
-my $limitfile = "/etc/security/limits.conf";
-my $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
-require "/usr/local/zenloadbalancer/config/global.conf";
-require "/usr/local/zenloadbalancer/www/functions.cgi";
+use Zevenet;
+
+#~ my $limitfile = "/etc/security/limits.conf";
 
 my $basedir = &getGlobalConfiguration('basedir');
 my $configdir = &getGlobalConfiguration('configdir');
@@ -398,6 +397,7 @@ if ( $eject eq "start" )
 		my @file = <$fr>;
 		close $fr;
 
+		# FIXME: Make function of this procedure
 		if ( !grep ( /zenmodified/, @file ) )
 		{
 			my ( $ifname, $ip, $netmask, $gateway );
@@ -460,7 +460,9 @@ if ( $eject eq "start" )
 
 			&setInterfaceConfig( \%interface );
 
-			#configure gateway
+			# Configure gateway for first time
+			# FIXME: use setGlobalConfiguration()
+			my $globalcfg = "/usr/local/zenloadbalancer/config/global.conf";
 			tie my @contents, 'Tie::File', "$globalcfg";
 
 			for my $line ( @contents )
@@ -474,7 +476,8 @@ if ( $eject eq "start" )
 
 			untie @contents;
 
-			#routes
+			# Routes
+			# FIXME: there is a function for this, it should be used.
 			open FW, ">>/etc/iproute2/rt_tables";
 			print FW "200\ttable_$ifname\n";
 			close FW;
