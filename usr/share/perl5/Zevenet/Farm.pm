@@ -34,8 +34,6 @@ use Zevenet::Farm::Ext;
 use Zevenet::RRD;
 use Zevenet::Farm::HTTP;
 
-my $configdir = &getGlobalConfiguration('configdir');
-
 use Zevenet::Farm::Core;
 use Zevenet::Farm::Base;
 use Zevenet::Farm::Stats;

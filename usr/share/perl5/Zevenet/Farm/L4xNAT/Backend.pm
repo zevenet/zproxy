@@ -23,6 +23,8 @@
 
 use strict;
 
+my $configdir = &getGlobalConfiguration('configdir');
+
 =begin nd
 Function: setL4FarmServer
 
