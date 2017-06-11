@@ -23,24 +23,26 @@
 
 use strict;
 
-#~ if ( -e "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi" )
-#~ {
-	#~ require "/usr/local/zenloadbalancer/www/farms_functions_ext.cgi";
-#~ }
+BEGIN {
+	if ( -e "/usr/share/perl5/Zevenet/Farm/Ext.pm" ) {
+		require Zevenet::Farm::Ext;
+	}
+}
 
-# FIXME: Load extended functions if module exists
-use Zevenet::Farm::Ext;
-
+# Dependencies
 use Zevenet::RRD;
 use Zevenet::Farm::HTTP;
+use Zevenet::Farm::L4xNAT;
+use Zevenet::Farm::GSLB;
+use Zevenet::Farm::Datalink;
 
+# Modules
 use Zevenet::Farm::Core;
 use Zevenet::Farm::Base;
 use Zevenet::Farm::Stats;
 use Zevenet::Farm::Factory;
 use Zevenet::Farm::Actions;
 use Zevenet::Farm::Config;
-
 use Zevenet::Farm::Backend;
 
 1;
