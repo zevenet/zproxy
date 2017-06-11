@@ -23,6 +23,8 @@
 
 use strict;
 
+my $configdir = &getGlobalConfiguration('configdir');
+
 =begin nd
 Function: _runHTTPFarmStart
 
