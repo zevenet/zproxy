@@ -23,8 +23,6 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
-
 use Zevenet::Farm::HTTP::Config;
 use Zevenet::Farm::HTTP::Factory;
 use Zevenet::Farm::HTTP::Actions;
