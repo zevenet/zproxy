@@ -23,16 +23,6 @@
 
 use strict;
 
-use Tie::File;
-use Data::Dumper;
-
-use Zevenet::FarmGuardian;
-use Zevenet::Netfilter;
-use Zevenet::Net;
-use Zevenet::Farm;
-
-my $configdir = &getGlobalConfiguration('configdir');
-
 use Zevenet::Farm::L4xNAT::Config;
 use Zevenet::Farm::L4xNAT::Actions;
 use Zevenet::Farm::L4xNAT::Stats;
