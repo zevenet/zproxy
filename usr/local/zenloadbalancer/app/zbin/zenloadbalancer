@@ -417,7 +417,17 @@ if ( $eject eq "start" )
 				{
 					my @ip = split ( " ", $line );
 					$ip = $ip[1];
+					my $ip_mask = $ip;
+					my @ip_nomask = split("/",$ip);
+					$ip = @ip_nomask[0];
 					chomp ( $ip );
+					#bit mask
+					use Net::Netmask;
+					my $in="$ip/@ip_nomask[1]";
+					my $cidr = $in;
+					my $block = Net::Netmask->new2( $cidr ) or die $Net::Netmask::error;
+					$netmask = $block->mask;
+					
 				}
 				if ( $line =~ /netmask/i )
 				{
