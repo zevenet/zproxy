@@ -23,6 +23,10 @@
 
 use strict;
 
+use Zevenet::Farm::HTTP::Stats;
+use Zevenet::Farm::L4xNAT::Stats;
+use Zevenet::Farm::GSLB::Stats;
+
 =begin nd
 Function: getBackendEstConns
 

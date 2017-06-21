@@ -25,6 +25,11 @@ use strict;
 
 my $configdir = &getGlobalConfiguration('configdir');
 
+use Zevenet::Farm::HTTP::Config;
+use Zevenet::Farm::L4xNAT::Config;
+use Zevenet::Farm::GSLB::Config;
+use Zevenet::Farm::Datalink::Config;
+
 =begin nd
 Function: getFarmPort
 
