@@ -370,7 +370,7 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( $certfilename !~ /^$/ && $certfilename =~ /^[\w\.-_]+$/ )
+	if ( $certfilename && &getValidFormat( 'cert_pem', $certfilename ) )
 	{
 		$status = &setFarmDeleteCertNameSNI( $certfilename, $farmname );
 
