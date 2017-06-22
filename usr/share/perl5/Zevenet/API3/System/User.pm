@@ -61,6 +61,9 @@ sub get_user
 sub set_user_zapi
 {
 	my $json_obj    = shift;
+
+	require Zevenet::Login;
+
 	my $description = "Zapi user settings.";
 
 	#~ my @requiredParams = ( "key", "status", "password", "newpassword" );
