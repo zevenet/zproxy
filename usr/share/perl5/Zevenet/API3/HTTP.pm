@@ -23,9 +23,13 @@
 
 use strict;
 
+use Zevenet::CGI;
+
 sub GET($$)
 {
-	my ( $path, $code ) = @_;
+	my ( $path, $code ) = @_
+
+	my $q = getCGI();
 
 	return unless $q->request_method eq 'GET' or $q->request_method eq 'HEAD';
 
@@ -38,6 +42,8 @@ sub GET($$)
 sub POST($$)
 {
 	my ( $path, $code ) = @_;
+
+	my $q = getCGI();
 
 	return unless $q->request_method eq 'POST';
 
@@ -76,6 +82,8 @@ sub PUT($$)
 {
 	my ( $path, $code ) = @_;
 
+	my $q = getCGI();
+
 	return unless $q->request_method eq 'PUT';
 
 	my @captures = $q->path_info =~ $path;
@@ -112,6 +120,8 @@ sub PUT($$)
 sub DELETE($$)
 {
 	my ( $path, $code ) = @_;
+
+	my $q = getCGI();
 
 	return unless $q->request_method eq 'DELETE';
 
