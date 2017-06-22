@@ -27,7 +27,7 @@ use Zevenet::CGI;
 
 sub GET($$)
 {
-	my ( $path, $code ) = @_
+	my ( $path, $code ) = @_;
 
 	my $q = getCGI();
 
