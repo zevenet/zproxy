@@ -27,9 +27,9 @@ use Config::Tiny;
 use Tie::File;
 
 use Zevenet::Core;
-
-require "/usr/local/zenloadbalancer/www/ipds.cgi";
-require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
+use Zevenet::IPDS;
+use Zevenet::Farm;
+use Zevenet::System::SSH;
 
 sub setDOSCreateFileConf
 {
