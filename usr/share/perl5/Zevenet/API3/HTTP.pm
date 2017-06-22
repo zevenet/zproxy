@@ -135,6 +135,8 @@ sub OPTIONS($$)
 {
 	my ( $path, $code ) = @_;
 
+	my $q = getCGI();
+
 	return unless $q->request_method eq 'OPTIONS';
 
 	my @captures = $q->path_info =~ $path;
