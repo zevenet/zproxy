@@ -23,6 +23,6 @@
 
 use strict;
 
-use Zevenet::Threads;
+use Zevenet::Thread;
 
 1;
