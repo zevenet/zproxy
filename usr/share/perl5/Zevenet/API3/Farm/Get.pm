@@ -25,11 +25,6 @@ use strict;
 use Zevenet::Core;
 use Zevenet::Farms;
 
-use Zevenet::API3::Farm::Get::HTTP;
-use Zevenet::API3::Farm::Get::L4xNAT;
-use Zevenet::API3::Farm::Get::GSLB;
-use Zevenet::API3::Farm::Get::Datalink;
-
 #GET /farms
 sub farms # ()
 {
@@ -175,7 +170,7 @@ sub farms_dslb # ()
 sub farms_name # ( $farmname )
 {
 	my $farmname = shift;
-	
+
 	use Switch;
 
 	# Check that the farm exists
@@ -191,330 +186,31 @@ sub farms_name # ( $farmname )
 
 		&httpResponse({ code => 404, body => $body });
 	}
-	
+
 	my $type = &getFarmType( $farmname );
 
 	switch ( $type )
 	{
-		case /http.*/   { &farms_name_http( $farmname ) }
-		case /gslb/     { &farms_name_gslb( $farmname ) }
-		case /l4xnat/   { &farms_name_l4( $farmname ) }
-		case /datalink/ { &farms_name_datalink( $farmname ) }
-	}
-}
-
-#GET /farms/<name>/services/<service>
-sub farm_services
-{
-	my ( $farmname, $servicename ) = @_;
-	my $service;
-	my $description = "Get services of a farm";
-
-	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) eq '-1' )
-	{
-		# Error
-		my $errormsg = "The farmname $farmname does not exist.";
-		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
-	}
-	
-	
-	my @services = &getFarmServices( $farmname );
-	if ( ! grep ( /^$servicename$/, @services ) )
-	{
-		# Error
-		my $errormsg = "The required service does not exist.";
-		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
-	}
-	
-	
-	my $type = &getFarmType( $farmname );
-	if ( $type =~ /http/i )
-	{
-		$service = &getServiceStruct ( $farmname, $servicename );
-	}
-	else
-	{
-		# Error
-		my $errormsg = "This functionality only is available for HTTP farms.";
-		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
-	# Success
-	my $body = {
-				 description => $description,
-				 services    	=> $service,
-	};
-
-	&httpResponse({ code => 200, body => $body });
-
-}
-
-#GET /farms/<name>/backends
-sub backends
-{
-	my $farmname = shift;
-
-	my $description = "List backends";
-
-	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
-	{
-		# Error
-		my $errormsg = "The farmname $farmname does not exist.";
-		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
-	}
-
-	my $type = &getFarmType( $farmname );
-
-	if ( $type eq 'l4xnat' )
-	{
-		my $l4_farm = &getL4FarmStruct( $farmname );
-		my @backends;
-
-		for my $be ( @{ $l4_farm->{ 'servers' } } )
+		case /http.*/
 		{
-			$be->{ 'vport' } = $be->{ 'vport' } eq '' ? undef : $be->{ 'vport' } + 0;
-			$be->{ 'priority' } = $be->{ 'priority' }? $be->{ 'priority' }+0: undef;
-			$be->{ 'weight' } = $be->{ 'weight' }? $be->{ 'weight' }+0: undef;
-			$be->{ 'max_conns' } = $be->{ 'max_conns' }+0;
-
-			push @backends,
-			  {
-				id       => $be->{ 'id' } + 0,
-				ip       => $be->{ 'vip' },
-				port     => $be->{ 'vport' },
-				priority => $be->{ 'priority' },
-				weight   => $be->{ 'weight' },
-				status   => $be->{ 'status' },
-				max_conns => $be->{ 'max_conns' },
-			  };
+			require Zevenet::API3::Farm::Get::HTTP;
+			&farms_name_http( $farmname );
 		}
-
-		my $body = {
-					description => $description,
-					params      => \@backends,
-		};
-
-		# Success
-		&httpResponse({ code => 200, body => $body });
-	}
-	elsif ( $type eq 'datalink' )
-	{
-		my @backends;
-		my @run = &getFarmServers( $farmname );
-
-		foreach my $l_servers ( @run )
+		case /gslb/
 		{
-			my @l_serv = split ( ";", $l_servers );
-
-			$l_serv[0] = $l_serv[0] + 0;
-			$l_serv[3] = ($l_serv[3]) ? $l_serv[3]+0: undef;
-			$l_serv[4] = ($l_serv[4]) ? $l_serv[4]+0: undef;
-			$l_serv[5] = $l_serv[5] + 0;
-
-			if ( $l_serv[1] ne "0.0.0.0" )
-			{
-				push @backends,
-				  {
-					id        => $l_serv[0],
-					ip        => $l_serv[1],
-					interface => $l_serv[2],
-					weight    => $l_serv[3],
-					priority  => $l_serv[4]
-				  };
-			}
+			require Zevenet::API3::Farm::Get::GSLB;
+			&farms_name_gslb( $farmname );
 		}
-
-		my $body = {
-					 description => $description,
-					 params      => \@backends,
-		};
-
-		&httpResponse({ code => 200, body => $body });
-	}
-	else
-	{
-		# Error
-		my $errormsg = "The farm $farmname with profile $type does not support this request.";
-		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-}
-
-#GET /farms/<name>/services/<service>/backends
-sub service_backends
-{
-	my ( $farmname, $service ) = @_;
-
-	my $backendstatus;
-	my $description = "List service backends";
-
-	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) eq '-1' )
-	{
-		# Error
-		my $errormsg = "The farmname $farmname does not exist.";
-		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
-	}
-
-	my $type = &getFarmType( $farmname );
-
-	if ( $type eq 'http' || $type eq 'https' )
-	{
-		my @services_list = split ' ', &getFarmVS( $farmname );
-
-		unless ( grep { $service eq $_ } @services_list )
+		case /l4xnat/
 		{
-			# Error
-			my $errormsg = "The service $service does not exist.";
-			my $body = {
-					description => $description,
-					error => "true",
-					message => $errormsg
-			};
-
-			&httpResponse({ code => 404, body => $body });
+			require Zevenet::API3::Farm::Get::L4xNAT;
+			&farms_name_l4( $farmname );
 		}
-
-		my @be         = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
-		my @backends;
-
-		foreach my $subl ( @be )
+		case /datalink/
 		{
-			my @subbe       = split ( "\ ", $subl );
-			my $id          = $subbe[1] + 0;
-			my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $service );
-
-			if ( $maintenance != 0 )
-			{
-				$backendstatus = "up";
-			}
-			else
-			{
-				$backendstatus = "maintenance";
-			}
-
-			my $ip   = $subbe[3];
-			my $port = $subbe[5] + 0;
-			my $tout = $subbe[7];
-			my $prio = $subbe[9];
-
-			$tout = $tout eq '-' ? undef: $tout+0;
-			$prio = $prio eq '-' ? undef: $prio+0;
-
-			push @backends,
-			  {
-				id      => $id,
-				status  => $backendstatus,
-				ip      => $ip,
-				port    => $port,
-				timeout => $tout,
-				weight  => $prio,
-			  };
+			require Zevenet::API3::Farm::Get::Datalink;
+			&farms_name_datalink( $farmname );
 		}
-
-		my $body = {
-					description => $description,
-					params      => \@backends,
-		};
-
-		# Success
-		&httpResponse({ code => 200, body => $body });
-	}
-	elsif ( $type eq 'gslb' )
-	{
-		my @services_list = &getGSLBFarmServices( $farmname );
-
-		unless ( grep { $service eq $_ } @services_list )
-		{
-			# Error
-			my $errormsg = "The service $service does not exist.";
-			my $body = {
-					description => $description,
-					error => "true",
-					message => $errormsg
-			};
-
-			&httpResponse({ code => 404, body => $body });
-		}
-
-		my @be = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
-		my @backends;
-
-		foreach my $subline ( @be )
-		{
-			$subline =~ s/^\s+//;
-			if ( $subline =~ /^$/ )
-			{
-				next;
-			}
-
-			my @subbe = split ( " => ", $subline );
-
-			$subbe[0] =~ s/^primary$/1/;
-			$subbe[0] =~ s/^secondary$/2/;
-
-			push @backends,
-			  {
-				id => $subbe[0]+0,
-				ip => $subbe[1],
-			  };
-		}
-
-		my $body = {
-					 description => $description,
-					 params      => \@backends,
-		};
-
-		&httpResponse({ code => 200, body => $body });
-	}
-	else
-	{
-		# Error
-		my $errormsg = "The farm $farmname with profile $type does not support this request.";
-		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
 	}
 }
 

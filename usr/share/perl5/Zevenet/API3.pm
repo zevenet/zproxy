@@ -38,6 +38,6 @@ use Zevenet::API3::Interface;
 use Zevenet::API3::System;
 use Zevenet::API3::System::Cluster;
 use Zevenet::API3::Stats;
-use Zevenet::API3::Graphs;
+use Zevenet::API3::Graph;
 
 1;
