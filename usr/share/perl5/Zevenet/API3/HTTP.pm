@@ -174,7 +174,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 	  if !defined $self->{ code }
 	  or !exists $GLOBAL::http_status_codes->{ $self->{ code } };
 
-	my $cgi = &getCGI();
+	my $q = &getCGI();
 
 	# Headers included in _ALL_ the responses, any method, any URI, sucess or error
 	my @headers = (
@@ -193,8 +193,8 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 
 	if ( &validCGISession() )
 	{
-		my $session = CGI::Session->load( $cgi );
-		my $session_cookie = $cgi->cookie( CGISESSID => $session->id );
+		my $session = CGI::Session->load( $q );
+		my $session_cookie = $q->cookie( CGISESSID => $session->id );
 
 		push @headers,
 		  'Set-Cookie'                    => $session_cookie,
@@ -219,7 +219,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 	my $content_type = 'application/json';
 	$content_type = $self->{ type } if $self->{ type } && $self->{ body };
 
-	my $output = $cgi->header(
+	my $output = $q->header(
 		-type    => $content_type,
 		-charset => 'utf-8',
 		-status  => "$self->{ code } $GLOBAL::http_status_codes->{ $self->{ code } }",
