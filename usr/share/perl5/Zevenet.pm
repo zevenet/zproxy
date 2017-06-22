@@ -48,6 +48,7 @@ use Zevenet::SNMP;
 use Zevenet::Stats;
 use Zevenet::SystemInfo;
 use Zevenet::System;
+use Zevenet::System::HTTP;
 use Zevenet::Zapi;
 
 require Zevenet::CGI if defined $ENV{GATEWAY_INTERFACE};
