@@ -23,7 +23,7 @@
 
 use strict;
 
-use Zevenet::CGI;
+#~ use Zevenet::CGI;
 
 sub GET($$)
 {
@@ -55,8 +55,17 @@ sub POST($$)
 
 	if ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/json' )
 	{
+		require JSON::XS;
+		JSON::XS->import;
+
 		$input_ref = eval { decode_json( $data ) };
-		&zenlog( "json: " . Dumper $input_ref ) if &debug;
+
+		if ( &debug() )
+		{
+			require Data::Dumper;
+			Data::Dumper->import;
+			&zenlog( "json: " . Dumper $input_ref );
+		}
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
 	{
@@ -94,8 +103,17 @@ sub PUT($$)
 
 	if ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'application/json' )
 	{
+		require JSON::XS;
+		JSON::XS->import;
+
 		$input_ref = eval { decode_json( $data ) };
-		&zenlog( "json: " . Dumper $input_ref ) if &debug;
+
+		if ( &debug() )
+		{
+			require Data::Dumper;
+			Data::Dumper->import;
+			&zenlog( "json: " . Dumper $input_ref );
+		}
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
 	{
@@ -191,7 +209,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 		  ;
 	}
 
-	if ( &validCGISession() )
+	if ( defined &main::validCGISession && &validCGISession() )
 	{
 		my $session = CGI::Session->load( $q );
 		my $session_cookie = $q->cookie( CGISESSID => $session->id );
@@ -235,6 +253,9 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 	{
 		if ( ref $self->{ body } eq 'HASH' )
 		{
+			require JSON::XS;
+			JSON::XS->import;
+
 			my $json           = JSON::XS->new->utf8->pretty( 1 );
 			my $json_canonical = 1;
 			$json->canonical( [$json_canonical] );
@@ -261,9 +282,9 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 		#~ require Data::Dumper;
 		#~ $Data::Dumper::Sortkeys = 1;
 
-		#~ foreach my $key ( sort keys %INC )
+		#~ foreach my $module ( &getLoadedModules() )
 		#~ {
-			#~ &zenlog( "\%INC: $key" );# if $key =~ /^Zevenet/;
+			#~ &zenlog( $module );
 		#~ }
 
 		# log error message on error.
