@@ -21,8 +21,9 @@
 #
 ###############################################################################
 
-use CGI;
-use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
+#~ use CGI;
+use CGI::Simple;
+#~ use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 
 use feature 'state';
 
@@ -44,7 +45,8 @@ See Also:
 =cut
 sub getCGI
 {
-	state $cgi = CGI->new();
+	#~ state $cgi = CGI->new();
+	state $cgi = CGI::Simple->new();
 	return $cgi;
 }
 
