@@ -31,6 +31,7 @@ sub get_activation_certificate_info # ()
 
 	if ( -f "$cert_dir\/$cert_filename" )
 	{
+		require Zevenet::Certificate;
 		my @cert_info = &getCertData( $cert_filename );
 		my $body;
 
