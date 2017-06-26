@@ -84,6 +84,8 @@ Function: getApplianceVersion
 
 	Returns a string with the description of the appliance.
 
+	NOTE: This function uses Tie::File, this module should be used only for writing files.
+
 Parameters:
 	none - .
 
@@ -105,7 +107,9 @@ sub getApplianceVersion
 	# look for appliance vesion
 	if ( -f $applianceFile )
 	{
-		use Tie::File;
+		require Tie::File;
+		Tie::File->import;
+
 		tie my @filelines, 'Tie::File', $applianceFile;
 		$version = $filelines[0];
 		untie @filelines;
@@ -147,7 +151,9 @@ sub getApplianceVersion
 			}
 		}
 		# save version for future request
-		use Tie::File;
+		require Tie::File;
+		Tie::File->import;
+
 		tie my @filelines, 'Tie::File', $applianceFile;
 		$filelines[0] = $version;
 		untie @filelines;
