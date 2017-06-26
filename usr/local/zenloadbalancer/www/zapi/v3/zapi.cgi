@@ -24,20 +24,18 @@
 use strict;
 
 #~ use CGI;
-use CGI::Session;
+#~ use CGI::Session;
 
 #~ use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
-use MIME::Base64;
-use JSON::XS;
-use URI::Escape;
+#~ use MIME::Base64;
+#~ use URI::Escape;
 
 # Certificate requrements
-use Date::Parse;
-use Time::localtime;
+#~ require Date::Parse;
+#~ require Time::localtime;
 
 # Debugging
-use Data::Dumper;
-
+#~ use Data::Dumper;
 #~ use Devel::Size qw(size total_size);
 
 package GLOBAL
@@ -62,310 +60,46 @@ package GLOBAL
 
 # all libs, tmp
 use Zevenet;
-use Zevenet::Zapi;
-
-#~ use Zevenet::Debug;
-#~ use Zevenet::Core;
-#~ use Zevenet::CGI;
+#~ use Zevenet::Net;
+#~ use Zevenet::Zapi;
+#~ use Zevenet::Config;
+#~ use Zevenet::Log;
 #~ use Zevenet::SystemInfo;
+
+#~ use Zevenet::Core;
+use Zevenet::Log;
+use Zevenet::Debug;
+use Zevenet::CGI;
+use Zevenet::API3::HTTP;
 
 my $q = &getCGI();
 
-use Zevenet::API3::HTTP;
-
-################################################################################
-#
-# Subroutines and HTTP methods
-#
-################################################################################
-
-# build local key
-sub keycert    # ()
-{
-	# requires:
-	#~ use Sys::Hostname;
-
-	my $dmidecode_bin = "/usr/sbin/dmidecode";    # input
-	my $hostname      = &getHostname();           # input
-
-	my @dmidec  = `$dmidecode_bin`;
-	my @dmidec2 = grep ( /UUID\:/, @dmidec );
-	my $dmi     = $dmidec2[0];
-
-	$dmi =~ s/\"//g;     # remove doble quotes
-	$dmi =~ s/^\s+//;    # remove whitespaces at the begining
-	$dmi =~ s/\s+$//;    # remove whitespaces at the end
-	$dmi =~ s/\ //g;     # remove spaces
-
-	my @dmidec3 = split ( ":", $dmi );
-	$dmi = $dmidec3[1];
-
-	$hostname =~ s/\"//g;     # remove doble quotes
-	$hostname =~ s/^\s+//;    # remove whitespaces at the begining
-	$hostname =~ s/\s+$//;    # remove whitespaces at the end
-
-	my $encrypted_string  = crypt ( "${dmi}${hostname}", "93" );
-	my $encrypted_string2 = crypt ( "${hostname}${dmi}", "a3" );
-	my $encrypted_string3 = crypt ( "${dmi}${hostname}", "ZH" );
-	my $encrypted_string4 = crypt ( "${hostname}${dmi}", "h7" );
-	$encrypted_string =~ s/^93//;
-	$encrypted_string2 =~ s/^a3//;
-	$encrypted_string3 =~ s/^ZH//;
-	$encrypted_string4 =~ s/^h7//;
-
-	my $str =
-	  "${encrypted_string}-${encrypted_string2}-${encrypted_string3}-${encrypted_string4}";
-
-	$str =~ s/\"//g;     # remove doble quotes
-	$str =~ s/^\s+//;    # remove whitespaces at the begining
-	$str =~ s/\s+$//;    # remove whitespaces at the end
-
-	return $str;
-}
-
-# evaluate certificate
-sub certcontrol          # ()
-{
-	# requires:
-	#~ use Sys::Hostname;
-	#~ use Date::Parse;
-	#~ use Time::localtime;
-	require Zevenet::SystemInfo;
-
-	my $basedir = &getGlobalConfiguration( 'basedir' );
-
-	# input
-	my $hostname    = &getHostname();
-	my $zlbcertfile = "$basedir/zlbcertfile.pem";
-	my $openssl_bin = "/usr/bin/openssl";
-	my $keyid       = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
-	my $key         = &keycert();
-
-	# output
-	my $swcert = 0;
-
-	if ( -e $zlbcertfile )
-	{
-		my @zen_cert = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
-
-		if (    ( !grep /$key/, @zen_cert )
-			 || ( !grep /keyid:$keyid/,   @zen_cert )
-			 || ( !grep /CN=$hostname\/|CN = $hostname\,/, @zen_cert ) )
-		{
-			$swcert = 2;
-		}
-
-		my $now = ctime();
-
-		# Certificate validity date
-		my @notbefore = grep /Not Before/i, @zen_cert;
-		my $nb = join '', @notbefore;
-		$nb =~ s/not before.*:\ //i;
-		my $ini = str2time( $nb );
-
-		# Certificate expiring date
-		my @notafter = grep /Not After/i, @zen_cert;
-		my $na = join "", @notafter;
-		$na =~ s/not after.*:\ //i;
-		my $end = str2time( $na );
-
-		# Validity remaining
-		my $totaldays = ( $end - $ini ) / 86400;
-		$totaldays =~ s/\-//g;
-		my $dayright = ( $end - time () ) / 86400;
-
-		#control errors
-		if ( $totaldays < 364 && $dayright < 0 && $swcert == 0 )
-		{
-			# Policy: expired testing certificates would not stop zen service,
-			# but rebooting the service would not start the service,
-			# interfaces should always be available.
-			$swcert = 3;
-		}
-
-		if ( $totaldays > 364 && $dayright < 0 && $swcert == 0 )
-		{
-			# The contract support plan is expired you have to request a
-			# new contract support. Only message alert!
-			$swcert = -1;
-		}
-	}
-	else
-	{
-		#There isn't certificate in the machine
-		$swcert = 1;
-	}
-
-	# error codes
-	#swcert = 0 ==> OK
-	#swcert = 1 ==> There isn't certificate
-	#swcert = 2 ==> Cert isn't signed OK
-	#swcert = 3 ==> Cert test and it's expired
-	#swcert = -1 ==> Cert support and it's expired
-
-	#output
-	return $swcert;
-}
-
-sub checkActivationCertificate
-{
-	my $swcert = &certcontrol();
-
-	# if $swcert is greater than 0 zapi should not work
-	if ( $swcert > 0 )
-	{
-		my $message;
-
-		if ( $swcert == 1 )
-		{
-			$message =
-			  "There isn't a valid Zen Load Balancer certificate file, please request a new one";
-		}
-		elsif ( $swcert == 2 )
-		{
-			$message =
-			  "The certificate file isn't signed by the Zen Load Balancer Certificate Authority, please request a new one";
-		}
-		elsif ( $swcert == 3 )
-		{
-			# Policy: expired testing certificates would not stop zen service,
-			# but rebooting the service would not start the service,
-			# interfaces should always be available.
-			$message =
-			  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one";
-		}
-
-		&httpResponse(
-					   {
-						 code => 403,
-						 body => {
-								   message         => $message,
-								   certificate_key => &keycert(),
-								   hostname        => &getHostname(),
-						 }
-					   }
-		);
-
-		exit;
-	}
-
-	return $swcert;
-}
-
-sub logInput
-{
-	&zenlog( "Input:(" . join ( ', ', @_ ) . ")" );
+#  OPTIONS PreAuth
+OPTIONS qr{^/.*$} => sub {
 	&httpResponse( { code => 200 } );
-}
+};
 
-sub validCGISession    # ()
-{
-	use CGI::Session;
+require Zevenet::Config;
+require Zevenet::Validate;
+require Zevenet::Certificate::Activation;
+require Zevenet::API3::Auth;
+#~ require JSON::XS;
+#~ require Date::Parse;
+#~ require Time::localtime;
 
-	my $validSession = 0;
-	my $session      = CGI::Session->load( &getCGI() );
-
-	#~ &zenlog( "CGI SESSION ID: " . $session->id ) if $session->id;
-	#~ &zenlog( "session data: " . Dumper $session->dataref() ); # DEBUG
-
-	if ( $session && $session->param( 'is_logged_in' ) && !$session->is_expired )
-	{
-		# ignore cluster localhost status to reset session expiration date
-		unless ( $q->path_info eq '/system/cluster/nodes/localhost' )
-		{
-			$session->expire( 'is_logged_in', '+30m' );
-		}
-
-		$validSession = 1;
-	}
-
-	return $validSession;
-}
-
-sub validZapiKey    # ()
-{
-	my $validKey = 0;    # output
-
-	my $key = "HTTP_ZAPI_KEY";
-
-	if (
-		 exists $ENV{ $key }                         # exists
-		 && &getZAPI( "keyzapi" ) eq $ENV{ $key }    # matches key
-		 && &getZAPI( "status" ) eq "true"
-	  )                                             # zapi user enabled??
-	{
-		$validKey = 1;
-	}
-
-	return $validKey;
-}
-
-sub getAuthorizationCredentials                     # ()
-{
-	my $base64_digest;
-	my $username;
-	my $password;
-
-	if ( exists $ENV{ HTTP_AUTHORIZATION } )
-	{
-		# Expected header example: 'Authorization': 'Basic aHR0cHdhdGNoOmY='
-		$ENV{ HTTP_AUTHORIZATION } =~ /^Basic (.+)$/;
-		$base64_digest = $1;
-	}
-
-	if ( $base64_digest )
-	{
-		# $decoded_digest format: "username:password"
-		my $decoded_digest = decode_base64( $base64_digest );
-		chomp $decoded_digest;
-		( $username, $password ) = split ( ":", $decoded_digest );
-	}
-
-	return undef if !$username or !$password;
-	return ( $username, $password );
-}
-
-sub authenticateCredentials    #($user,$curpasswd)
-{
-	my ( $user, $pass ) = @_;
-
-	return undef if !defined $user or !defined $pass;
-
-	use Authen::Simple::Passwd;
-
-	#~ use Authen::Simple::PAM;
-
-	my $valid_credentials = 0;    # output
-
-	my $passfile = "/etc/shadow";
-	my $simple = Authen::Simple::Passwd->new( path => "$passfile" );
-
-	#~ my $simple   = Authen::Simple::PAM->new();
-
-	if ( $simple->authenticate( $user, $pass ) )
-	{
-		$valid_credentials = 1;
-	}
-
-	return $valid_credentials;
-}
 
 #########################################
 #
 # Debugging messages
 #
 #########################################
-
+#
 #~ &zenlog( ">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<" ) if &debug;
 #~ &zenlog( "HTTP HEADERS: " . join ( ', ', $q->http() ) );
 #~ &zenlog( "HTTP_AUTHORIZATION: <$ENV{HTTP_AUTHORIZATION}>" )
-  #~ if exists $ENV{ HTTP_AUTHORIZATION };
+#~ if exists $ENV{ HTTP_AUTHORIZATION };
 #~ &zenlog( "HTTP_ZAPI_KEY: <$ENV{HTTP_ZAPI_KEY}>" )
-  #~ if exists $ENV{ HTTP_ZAPI_KEY };
-
-my $post_data = $q->param( 'POSTDATA' );
-my $put_data  = $q->param( 'PUTDATA' );
-
+#~ if exists $ENV{ HTTP_ZAPI_KEY };
 #~
 #~ #my $session = new CGI::Session( $q );
 #~
@@ -379,6 +113,10 @@ my $put_data  = $q->param( 'PUTDATA' );
 #~ &zenlog("CGI OBJECT: " . Dumper $q );
 #~ &zenlog("CGI VARS: " . Dumper $q->Vars() );
 #~ &zenlog("PERL ENV: " . Dumper \%ENV );
+
+my $post_data = $q->param( 'POSTDATA' );
+my $put_data  = $q->param( 'PUTDATA' );
+
 &zenlog( "CGI POST DATA: " . $post_data ) if $post_data && &debug;
 &zenlog( "CGI PUT DATA: " . $put_data )   if $put_data && &debug;
 
@@ -388,10 +126,7 @@ my $put_data  = $q->param( 'PUTDATA' );
 #
 ################################################################################
 
-#  OPTIONS PreAuth
-OPTIONS qr{^/.*$} => sub {
-	&httpResponse( { code => 200 } );
-};
+#~ require CGI::Session;
 
 #  POST CGISESSID
 POST qr{^/session$} => sub {
@@ -480,9 +215,23 @@ DELETE qr{^/session$} => sub {
 #
 _certificates:
 
+&zenlog("Before /certificates/activation BEGIN #####################");
+foreach my $module ( &getLoadedModules() )
+{
+	&zenlog( $module );
+}
+&zenlog("Before /certificates/activation END #####################");
+
 if ( $q->path_info =~ qr{^/certificates/activation$} )
 {
-	require Zevenet::API3::Certificates::Activation;
+	require Zevenet::API3::Certificate::Activation;
+
+	&zenlog("In /certificates/activation BEGIN #####################");
+	foreach my $module ( &getLoadedModules() )
+	{
+		&zenlog( $module );
+	}
+	&zenlog("In /certificates/activation END #####################");
 
 	#  GET activation certificate
 	GET qr{^/certificates/activation$} => sub {
@@ -748,7 +497,7 @@ my $vlan_re = &getValidFormat( 'vlan_interface' );
 
 if ( $q->path_info =~ qr{^/interfaces/nic} )
 {
-	require Zevenet::API3::Interfaces::NIC;
+	require Zevenet::API3::Interface::NIC;
 
 	GET qr{^/interfaces/nic$} => sub {
 		&get_nic_list();
@@ -773,7 +522,7 @@ if ( $q->path_info =~ qr{^/interfaces/nic} )
 
 if ( $q->path_info =~ qr{^/interfaces/vlan} )
 {
-	require Zevenet::API3::Interfaces::VLAN;
+	require Zevenet::API3::Interface::VLAN;
 
 	GET qr{^/interfaces/vlan$} => sub {
 		&get_vlan_list();
@@ -802,7 +551,7 @@ if ( $q->path_info =~ qr{^/interfaces/vlan} )
 
 if ( $q->path_info =~ qr{^/interfaces/bonding} )
 {
-	require Zevenet::API3::Interfaces::Bonding;
+	require Zevenet::API3::Interface::Bonding;
 
 	GET qr{^/interfaces/bonding$} => sub {
 		&get_bond_list();
@@ -839,7 +588,7 @@ if ( $q->path_info =~ qr{^/interfaces/bonding} )
 
 if ( $q->path_info =~ qr{^/interfaces/virtual} )
 {
-	require Zevenet::API3::Interfaces::Virtual;
+	require Zevenet::API3::Interface::Virtual;
 
 	GET qr{^/interfaces/virtual$} => sub {
 		&get_virtual_list();
@@ -870,7 +619,7 @@ if ( $q->path_info =~ qr{^/interfaces/virtual} )
 
 if ( $q->path_info =~ qr{^/interfaces/floating} )
 {
-	require Zevenet::API3::Interfaces::Floating;
+	require Zevenet::API3::Interface::Floating;
 
 	GET qr{^/interfaces/floating$} => sub {
 		&get_interfaces_floating( @_ );
@@ -891,7 +640,7 @@ if ( $q->path_info =~ qr{^/interfaces/floating} )
 
 if ( $q->path_info =~ qr{^/interfaces/gateway} )
 {
-	require Zevenet::API3::Interfaces::Gateway;
+	require Zevenet::API3::Interface::Gateway;
 
 	GET qr{^/interfaces/gateway$} => sub {
 		&get_gateway( @_ );
@@ -908,7 +657,7 @@ if ( $q->path_info =~ qr{^/interfaces/gateway} )
 
 if ( $q->path_info =~ qr{^/interfaces} )
 {
-	require Zevenet::API3::Interfaces::Generic;
+	require Zevenet::API3::Interface::Generic;
 
 	GET qr{^/interfaces$} => sub {
 		&get_interfaces();
