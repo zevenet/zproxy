@@ -74,6 +74,8 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 {
 	my ( $if_name, $ip_version ) = @_;
 
+	require Zevenet::Net::Bonding;
+
 	my $if_line;
 	my $if_status;
 	my $configdir = &getGlobalConfiguration('configdir');
