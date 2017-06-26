@@ -40,7 +40,7 @@ Bugs:
 See Also:
 	Widely used.
 =cut
-sub debug { return 0 }
+sub debug { return 2 }
 
 =begin nd
 Function: getMemoryUsage
@@ -64,6 +64,11 @@ sub getMemoryUsage
 	$mem_string =~ s/:.\s+/: /;
 
 	return $mem_string;
+}
+
+sub getLoadedModules
+{
+	return sort keys %INC;
 }
 
 1;
