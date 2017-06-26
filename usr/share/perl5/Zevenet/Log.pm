@@ -23,8 +23,9 @@
 
 use strict;
 
-use Sys::Syslog;                          #use of syslog
-use Sys::Syslog qw(:standard :macros);    #standard functions for Syslog
+use Unix::Syslog qw(:macros :subs);  # Syslog macros
+#~ use Sys::Syslog;                          #use of syslog
+#~ use Sys::Syslog qw(:standard :macros);    #standard functions for Syslog
 
 # Get the program name for zenlog
 my $run_cmd_name = ( split '/', $0 )[-1];
@@ -61,13 +62,15 @@ sub zenlog    # ($string, $type)
 	# Get the program name
 	my $program = $run_cmd_name;
 
-	openlog( $program, 'pid', 'local0' );    #open syslog
+	#~ openlog( $program, 'pid', 'local0' );    #open syslog
+	openlog( $program, LOG_PID, LOG_LOCAL0 );
 
 	my @lines = split /\n/, $string;
 
 	foreach my $line ( @lines )
 	{
-		syslog( $type, "(" . uc ( $type ) . ") " . $line );
+		#~ syslog( $type, "(" . uc ( $type ) . ") " . $line );
+		syslog( LOG_INFO, "(" . uc ( $type ) . ") " . $line );
 	}
 
 	closelog();                              #close syslog
