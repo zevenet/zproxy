@@ -116,7 +116,6 @@ sub getFloatInterfaceForAddress
 	my $remote_ip_address = shift;
 
 	my $subnet_interface;
-	my $gateway_interface;
 	my @interface_list = @{ &getConfigInterfaceList() };
 
 	use NetAddr::IP;
@@ -127,13 +126,6 @@ sub getFloatInterfaceForAddress
 	{
 		next if $iface->{ vini } ne '';
 
-		my $defaultgwif = &getGlobalConfiguration('defaultgwif');
-
-		if ( $defaultgwif eq $iface->{ name } )
-		{
-			$gateway_interface = $iface;
-		}
-
 		my $network = NetAddr::IP->new( $iface->{ addr }, $iface->{ mask } );
 		
 		if ( $remote_ip->within( $network ) )
@@ -142,10 +134,9 @@ sub getFloatInterfaceForAddress
 		}
 	}
 
-	# if no interface found get the interface to the default gateway
 	if ( ! $subnet_interface )
 	{
-		$subnet_interface = $gateway_interface;
+		return;
 	}
 
 	my $output_interface;

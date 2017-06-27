@@ -478,6 +478,10 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 	my $iptables_bin = &getBinVersion( $farm_name );
 
 	my $float_if = &getFloatInterfaceForAddress( $$server{ vip } );
+	if ( ! $float_if )
+	{
+		$float_if = &getFloatInterfaceForAddress( $$farm{ vip } );
+	}
 
 	#~ &zenlog( "genIptMasquerade server{ vip }: $$server{ vip }" );
 	#~ &zenlog( "genIptMasquerade float_if: " . Dumper $float_if );
