@@ -29,7 +29,6 @@ use Tie::File;
 use Zevenet::Core;
 use Zevenet::IPDS;
 use Zevenet::Farm;
-use Zevenet::System::SSH;
 
 sub setDOSCreateFileConf
 {
@@ -81,7 +80,8 @@ sub getDOSInitialParams
 	my $rule = shift;
 
 	# get ssh port
-	require "/usr/local/zenloadbalancer/www/system_functions.cgi";
+	require Zevenet::System::SSH;
+	
 	my $sshconf = &getSsh();
 	my $port    = $sshconf->{ 'port' };
 
@@ -560,6 +560,7 @@ sub setDOSBoot
 		# This block is a bugfix. When ssh_brute_force rule doesn't show the port
 		if ( ! &setDOSParam ( 'ssh_brute_force', 'port' ) )
 		{
+			require Zevenet::System::SSH;
 			my $sshconf = &getSsh();
 			my $port    = $sshconf->{ 'port' };
 			&setDOSParam ( 'ssh_brute_force', 'port', $port);
@@ -1171,6 +1172,7 @@ sub setDOSSshBruteForceRule
 	my $time = &getDOSParam( $rule, 'time' );
 
 	#~ my $port = &getDOSParam( $rule, 'port' );
+	require Zevenet::System::SSH;
 	my $sshconf = &getSsh();
 	my $port    = $sshconf->{ 'port' };
 	my $logMsg  = &createLogMsg( $rule );

@@ -23,7 +23,7 @@
 use strict;
 
 use Zevenet::Core;
-use Zevenet::Farms;
+use Zevenet::Farm;
 
 #GET /farms
 sub farms # ()

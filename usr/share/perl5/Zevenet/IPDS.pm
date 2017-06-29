@@ -23,8 +23,6 @@
 
 use strict;
 
-require "/usr/local/zevenet/www/rbl.cgi"; # ?????
-
 
 =begin nd
 Function: getIPDSFarmMatch

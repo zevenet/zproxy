@@ -26,11 +26,12 @@ use strict;
 use Config::Tiny;
 use Tie::File;
 
-require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
-require "/usr/local/zenloadbalancer/www/ipds.cgi";
-require "/usr/local/zenloadbalancer/www/farms_functions.cgi";
-require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
-require "/usr/local/zenloadbalancer/www/check_functions.cgi";
+
+use Zevenet::Core;
+use Zevenet::Debug;
+use Zevenet::IPDS;
+use Zevenet::Farm;
+use Zevenet::Validate;
 
 my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
