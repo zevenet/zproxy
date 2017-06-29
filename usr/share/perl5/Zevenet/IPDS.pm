@@ -23,6 +23,75 @@
 
 use strict;
 
+require "/usr/local/zevenet/www/rbl.cgi"; # ?????
+
+
+=begin nd
+Function: getIPDSFarmMatch
+
+	Return the iptables match string for a farm. Depend of the parameter, this function check:
+	All farms (rule applies to all vip and ports), farm with multiport, farm with udp and tcp simultaneous listeners on same port
+
+Parameters:
+	Farmname -  Farm name. If farm name is in blank, the rule applies to all destine IPs and ports
+				
+Returns:
+	Array - Each element of array is macth rule for iptables
+	
+=cut
+sub getIPDSFarmMatch
+{
+	my $farmname = shift;
+	my @match;
+	my $type = &getFarmType( $farmname );
+	my $protocol 	= &getFarmProto( $farmname );
+	my $protocolL4 = &getFarmProto( $farmname );
+	my $vip   	= &getFarmVip( 'vip',  $farmname );
+	my $vport	= &getFarmVip( 'vipp', $farmname );
+		
+	# no farm
+	# blank chain
+	
+	# all ports
+	if ( $type eq 'l4xnat' )
+	{
+		my $protocolL4 = &getFarmProto( $farmname );
+		if ( $protocol ne 'all' )
+		{
+			push @match, "-d $vip";
+		}
+		# l4 farm multiport
+		elsif ( &ismport ( $farmname ) )
+		{
+			push @match, "--protocol $protocol -m multiport --dports $vport -d $vip";
+		}
+		else
+		{
+			push @match, "--protocol $protocol --dports $vport -d $vip";
+		}
+	}
+	# farm using tcp and udp protocol
+	elsif ( $type eq 'gslb' )
+	{
+		push @match, "--protocol udp --dports $vport -d $vip";
+		push @match, "--protocol tcp --dports $vport -d $vip";
+	}
+	
+	# http farms
+	elsif ( $type =~ /http/ )
+	{
+		push @match, "--protocol $protocol --dport $vport -d $vip ";
+	}
+	
+	elsif ( $type eq 'datalink' )
+	{
+		push @match, "-d $vip";
+	}
+	
+	return @match;
+}
+
+
 =begin nd
         Function: getIptListV4
 
@@ -65,6 +134,7 @@ sub getIptListV4
 	return @ipt_output;
 }
 
+
 # LOGS
 # &setIPDSDropAndLog ( $cmd, $logMsg );
 sub setIPDSDropAndLog
@@ -99,6 +169,7 @@ sub createLogMsg
 	
 	return $msg;
 }
+
 
 # Get all IPDS rules applied to a farm
 sub getIPDSfarmsRules

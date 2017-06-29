@@ -59,6 +59,7 @@ my $dos_global= qr/(?:sshbruteforce)/;
 my $dos_all 	=	qr/(?:limitconns|limitsec)/;
 my $dos_tcp	= qr/(?:bogustcpflags|limitrst)/;
 
+my $run_actions = qr/^(?:stop|start|restart)$/;
 
 my %format_re = (
 
@@ -152,6 +153,7 @@ my %format_re = (
 	'notif_time'   => $natural,               # this value can't be 0
 
 	# ipds
+	# blacklists
 	'day_of_month' => qr{$dayofmonth},
 	'weekdays'	=> qr{$weekdays},
 	'blacklists_name'      => qr{[a-zA-Z0-9]+},
@@ -167,13 +169,13 @@ my %format_re = (
 	'blacklists_day'   => qr{(:?$dayofmonth|$weekdays)},
 	'blacklists_frequency'   => qr{(:?daily|weekly|monthly)},
 	'blacklists_frequency_type'   => qr{(:?period|exact)},
+	# dos
 	'dos_name'      => qr/[\w]+/,
 	'dos_rule'      => qr/(?:$dos_global|$dos_all|$dos_tcp)/,
 	'dos_rule_farm' => qr/(?:$dos_all|$dos_tcp)/,
 	'dos_rule_global' => $dos_global,
 	'dos_rule_all'       => $dos_all,
 	'dos_rule_tcp'      => $dos_tcp,
-	# dos params
 	'dos_time'      => $natural,
 	'dos_limit_conns'      => $natural,
 	'dos_limit'      => $natural,
@@ -181,6 +183,16 @@ my %format_re = (
 	'dos_status'      => qr/(?:down|up)/,
 	'dos_port'      => $port_range,
 	'dos_hits'      => $natural,	
+	# rbl
+	'rbl_name'	=> qr/[\w]+/,
+	'rbl_domain'	=> qr/[\w\.]+/,
+	'rbl_cache_size' => $natural,
+	'rbl_cache_time' => $natural,
+	'rbl_queue_size' => $natural,
+	'rbl_thread_max' => $natural,
+	'rbl_local_traffic' => $boolean,
+	'rbl_actions' => $run_actions,
+	
 
 	# certificates filenames
 	'certificate' => qr/\w[\w\.\(\)\@ -]*\.(?:pem|csr)/,
@@ -349,7 +361,7 @@ sub getValidOptParams    # ( \%json_obj, \@allowParams )
 		$output .= "$_, " for ( @errorParams );
 		chop ( $output );
 		chop ( $output );
-		$output = "The param(s): $output are not correct for this call.";
+		$output = "Illegal params: $output";
 	}
 
 	return $output;
@@ -410,7 +422,7 @@ sub getValidReqParams    # ( \%json_obj, \@requiredParams, \@optionalParams )
 			$output .= "$_, " for ( @errorParams );
 			chop ( $output );
 			chop ( $output );
-			$output = "The param(s) $output are not correct for this call.";
+			$output = "Illegal params: $output";
 		}
 	}
 
