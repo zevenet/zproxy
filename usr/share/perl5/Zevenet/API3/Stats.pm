@@ -192,7 +192,6 @@ sub farm_stats # ( $farmname )
 
 	if ( $type eq "l4xnat" )
 	{
-		
 		# Parameters
 		my @out_rss;
 
@@ -227,7 +226,7 @@ sub farm_stats # ( $farmname )
 		my $index = 0;
 
 		foreach ( @backends )
-		{			
+		{
 			my @backends_data = split ( ";", $_ );
 			chomp @backends_data;
 			my $ip_backend   = $backends_data[0];
@@ -656,7 +655,6 @@ sub stats_network_interfaces
 			
 			push @bondList, $iface;
 		}
-		
 		else 
 		{
 			push @restIfaces, $iface;
