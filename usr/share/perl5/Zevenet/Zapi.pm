@@ -48,7 +48,7 @@ sub getZAPI    #($name)
 	#return if zapi user is enabled or not true = enable, false = disabled
 	if ( $name eq "status" )
 	{
-		use File::Grep qw( fgrep fmap fdo );
+		use File::Grep qw( fgrep );
 		if ( fgrep { /^zapi/ } &getGlobalConfiguration('htpass') )
 		{
 			$result = "true";
