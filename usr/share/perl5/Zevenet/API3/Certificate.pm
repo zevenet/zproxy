@@ -27,6 +27,7 @@ my $CSR_KEY_SIZE = 2048;
 # GET /certificates
 sub certificates # ()
 {
+	require Zevenet::Certificate;
 	my @certificates = &getCertFiles();
 	my @out;
 
@@ -310,7 +311,7 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 
 	if ( $certfilename && &getValidFormat( 'cert_pem', $certfilename ) )
 	{
-		$status = &setFarmDeleteCertNameSNI( $certfilename, $farmname );
+		my $status = &setFarmDeleteCertNameSNI( $certfilename, $farmname );
 
 		if ( $status == 0 )
 		{
@@ -399,9 +400,9 @@ sub create_csr
 
 	if ( -f "$configdir/$json_obj->{name}.csr" )
 	{
-		&zenlog( "ZAPI error, $json->{ name} already exists."	);
+		&zenlog( "ZAPI error, $json_obj->{name} already exists." );
 		# Error
-		my $errormsg = "$json->{ name} already exists.";
+		my $errormsg = "$json_obj->{name} already exists.";
 		my $body = {
 					 description => $description,
 					 error       => "true",
@@ -494,7 +495,7 @@ sub create_csr
 	else
 	{
 		$errormsg = "Error, creating certificate $json_obj->{ name }.";
-		&zenlog( $message );
+		&zenlog( $errormsg );
 		
 		my $body = {
 					description => $description,
