@@ -724,4 +724,414 @@ sub getFarmGlobalStatus    # ($farm_name)
 	return @run;
 }
 
+=begin nd
+Function: getClusterInfo
+
+	NOT USED
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+	NOT USED
+
+See Also:
+	<getClusterStatus>
+=cut
+sub getClusterInfo
+{
+	my $cluster_msg  = "Not configured";
+	my $cluster_icon = "fa-cog yellow";
+
+	if ( &getZClusterStatus() )
+	{
+		$cluster_msg = &getZClusterNodeStatus();
+		
+		if ( $cluster_msg eq 'master' )
+		{
+			$cluster_icon = "fa-cog green";
+		}
+		elsif ( $cluster_msg eq 'maintenance' )
+		{
+			$cluster_icon = "fa-cog red";
+		}
+		elsif ( $cluster_msg eq 'backup' )
+		{
+			$cluster_icon = "fa-cog green";
+		}
+
+		$cluster_msg = ucfirst $cluster_msg;
+	}
+
+	return ( $cluster_msg, $cluster_icon );
+}
+
+=begin nd
+Function: getClusterStatus
+
+	NOT USED
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+	NOT USED
+
+See Also:
+
+=cut
+sub getClusterStatus
+{
+	my ( $cluster_msg, $cluster_icon ) = &getClusterInfo();
+	
+	if ( $cluster_msg eq "Not configured" )
+	{
+		print
+		  "<div class=\"grid_6\"><p class=\"cluster\"><a href=\"http://www.zenloadbalancer.com/eliminate-a-single-point-of-failure/\" target=\"_blank\"><i class=\"fa fa-fw $cluster_icon action-icon\" title=\"How to eliminate this single point of failure\"></i></a> Cluster status: $cluster_msg</p></div>";
+		print "<div class=\"clear\"></div>";
+	}
+	else
+	{
+		print
+		  "<div class=\"grid_6\"><p class=\"cluster\"><i class=\"fa fa-fw $cluster_icon action-icon\"></i> Cluster status: $cluster_msg</p></div>";
+		print "<div class=\"clear\"></div>";
+	}
+}
+
+=begin nd
+Function: getZCusterStatusInfo
+
+	NOT USED
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+	NOT USED
+
+See Also:
+
+=cut
+sub getZCusterStatusInfo
+{
+	my $status;
+
+	# check zcluster configuration
+	if ( ! -f &getGlobalConfiguration('filecluster') )
+	{
+		$status->{ cl_conf } = 'ko';
+		return $status;
+	}
+	
+	my $zcl_conf = &getZClusterConfig();
+	my $localhost = &getHostname();
+	my $remotehost = &getZClusterRemoteHost();
+
+	$status->{ localhost } = $localhost;
+	$status->{ remotehost } = $remotehost;
+
+	### Localhost ###
+
+	# check local keepalived
+	if ( &getZClusterRunning() )
+	{
+		$status->{ $localhost }->{ keepalived } = 'ok';
+	}
+	else
+	{
+		$status->{ $localhost }->{ keepalived } = 'ko';
+	}
+
+	# check local node role
+	if ( $status->{ $localhost }->{ keepalived } eq 'ok' )
+	{
+		$status->{ $localhost }->{ node_role } = &getZClusterNodeStatus();
+	}
+
+	# check local zeninotify
+	if ( $status->{ $localhost }->{ keepalived } eq 'ok' )
+	{
+		my $zenino_procs_found = `pgrep zeninotify | wc -l`;
+		chomp $zenino_procs_found;
+
+		if ( $status->{ $localhost }->{ node_role } eq 'master' && $zenino_procs_found == 1 )
+		{
+			$status->{ $localhost }->{ zeninotify } = 'ok';
+		}
+		elsif ( $status->{ $localhost }->{ node_role } eq 'backup' && $zenino_procs_found == 0 )
+		{
+			$status->{ $localhost }->{ zeninotify } = 'ok';
+		}
+		else
+		{
+			$status->{ $localhost }->{ zeninotify } = 'ko';
+		}
+	}
+	else
+	{
+		$status->{ $localhost }->{ zeninotify } = 'ko';
+	}
+	
+	# check local conntrackd
+	if ( &getConntrackdRunning() )
+	{
+		$status->{ $localhost }->{ conntrackd } = 'ok';
+	}
+	else
+	{
+		$status->{ $localhost }->{ conntrackd } = 'ko';
+	}
+
+	# check local arp/neighbour
+	my @arptables_lines = `arptables -L INPUT`;
+
+	for my $if_ref ( &getInterfaceList() )
+	{
+		next if $if_ref->{ vini } eq ''; # only virtual ips
+
+		# check if the ip is been dropped in arptables
+		my $is_dropping_ip = 0;
+		foreach my $line ( @arptables_lines )
+		{
+			$is_dropping_ip++ if $line =~ /^-j DROP -d $if_ref->{ addr } $/;
+		}
+
+		if ( $status->{ $localhost }->{ node_role } ne 'master' && ! $is_dropping_ip )
+		{
+			$status->{ $localhost }->{ arp } = 'ko';
+			last;
+		}
+		elsif ( $status->{ $localhost }->{ node_role } eq 'master' && $is_dropping_ip )
+		{
+			$status->{ $localhost }->{ arp } = 'ko';
+			last;
+		}
+	}
+
+	if ( $status->{ $localhost }->{ arp } ne 'ko' )
+	{
+		$status->{ $localhost }->{ arp } = 'ok';
+	}
+
+	# check local floating ips
+	# FIXME
+
+	### Remotehost ###
+
+	# check remote keepalived
+	my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
+
+	if ( &runRemotely( "$zcluster_manager getZClusterRunning", $zcl_conf->{$remotehost}->{ip} ) == 1 )
+	{
+		$status->{ $remotehost }->{ keepalived } = 'ok';
+	}
+	else
+	{
+		$status->{ $remotehost }->{ keepalived } = 'ko';
+	}
+
+	# check remote node role
+	if ( $status->{ $remotehost }->{ keepalived } eq 'ok' )
+	{
+		$status->{ $remotehost }->{ node_role } = &runRemotely( "$zcluster_manager getZClusterNodeStatus", $zcl_conf->{$remotehost}->{ip} );
+		chomp $status->{ $remotehost }->{ node_role };
+	}
+
+	# check remote zeninotify
+	if ( $status->{ $remotehost }->{ keepalived } eq 'ok' )
+	{
+		my $zenino_procs_found = &runRemotely( "pgrep zeninotify | wc -l", $zcl_conf->{$remotehost}->{ip} );
+		chomp $zenino_procs_found;
+
+		if ( $status->{ $remotehost }->{ node_role } eq 'master' && $zenino_procs_found == 1 )
+		{
+			$status->{ $remotehost }->{ zeninotify } = 'ok';
+		}
+		elsif ( $status->{ $remotehost }->{ node_role } eq 'backup' && $zenino_procs_found == 0 )
+		{
+			$status->{ $remotehost }->{ zeninotify } = 'ok';
+		}
+		else
+		{
+			$status->{ $remotehost }->{ zeninotify } = 'ko';
+		}
+	}
+	else
+	{
+		$status->{ $remotehost }->{ zeninotify } = 'ko';
+	}
+	
+	# check remote conntrackd
+	if ( &runRemotely( "$zcluster_manager getConntrackdRunning", $zcl_conf->{$remotehost}->{ip} ) == 1 )
+	{
+		$status->{ $remotehost }->{ conntrackd } = 'ok';
+	}
+	else
+	{
+		$status->{ $remotehost }->{ conntrackd } = 'ko';
+	}
+
+	# check remote arp/neighbour
+	$status->{ $remotehost }->{ arp } = &runRemotely( "$zcluster_manager getZClusterArpStatus", $zcl_conf->{$remotehost}->{ip} );
+	chomp $status->{ $remotehost }->{ arp };
+
+	# check remote floating ips
+	# FIXME
+
+	return $status;
+}
+
+=begin nd
+Function: getZClusterLocalhostStatusDigest
+
+	NOT USED
+
+Parameters:
+	none - .
+
+Returns:
+	scalar - Hash reference.
+
+	my $node = {
+				 role    => 'value',
+				 status  => 'value',
+				 message => 'value',
+	};
+
+Bugs:
+	NOT USED
+
+See Also:
+
+=cut
+#sub getZClusterLocalhostStatusDigest
+#{
+#	my $node = {
+#				 role    => undef,
+#				 status  => undef,
+#				 message => undef,
+#	};
+#
+#	if ( ! &getZClusterStatus() )
+#	{
+#		$node->{ role } = 'not configured';
+#		$node->{ status } = 'not configured';
+#		$node->{ message } = 'Cluster not configured';
+#	}
+#	else
+#	{
+#		my $n = &getZClusterNodeStatusInfo();
+#		my $node = &getZClusterNodeStatusDigest();
+#	}
+#
+#	return $node;
+#}
+
+=begin nd
+Function: checkZClusterInterfaces
+
+	NOT USED
+
+Parameters:
+	cl_conf - Cluster configuration.
+	nodeIP - .
+
+Returns:
+	list - .
+
+Bugs:
+	NOT USED
+
+See Also:
+
+=cut
+#sub checkZClusterInterfaces # @inmatched_ifaces ( $cl_conf, $nodeIP )
+#{
+#	my $cl_conf = shift;
+#	my $nodeIP = shift;
+#
+#	require NetAddr::IP;
+#
+#	my @unmatched_ifaces; 
+#
+#	for my $if_name ( values %{ $cl_conf->{interfaceList} } )
+#	{
+#		my $iface = &getInterfaceConfig( $if_name, 4 );
+#
+#		# get local data
+#		my $local_addr = new NetAddr::IP->new( $iface->{addr}, $iface->{mask} );
+#
+#		# get remote data
+#		my @output_line = &runRemotely( "ifconfig $if_name", $nodeIP );
+#
+#		# strip ipv4
+#		my ( $output_line ) = grep /inet addr/, @output_line; # get line
+#		my @line_words = split( /\s+/, $output_line );	# divide into words
+#
+#		# get ip and mask parts
+#		my ( $remote_ip ) = grep( /addr/, @line_words );
+#		my ( $remote_mask ) = grep( /Mask/, @line_words );
+#		
+#		# remove attached tags
+#		( undef, $remote_ip ) = split( 'addr:', $remote_ip );
+#		( undef, $remote_mask ) = split( 'Mask:', $remote_mask );
+#
+#		#~ print "remote_ip:$remote_ip\n";
+#		#~ print "remote_mask:$remote_mask\n";
+#
+#		my $remote_addr = new NetAddr::IP ( $remote_ip, $remote_mask );
+#		#~ print "remote_network:$remote_addr->network()\n";
+#
+#		if ( $local_addr->network() ne $remote_addr->network() )
+#		{
+#			#~ print "$if_name network did not match.";
+#			push @unmatched_ifaces, $if_name;
+#		}
+#	}
+#
+#	return @unmatched_ifaces;
+#}
+
+=begin nd
+Function: getMasterNode
+
+	COMMENTED FUNCTION
+
+Parameters:
+	none - .
+
+Returns:
+	none - .
+
+Bugs:
+	COMMENTED FUNCTION
+
+See Also:
+
+=cut
+#sub getMasterNode # $ip_addr ()
+#{
+	#my @sucess_lines = grep /SUCCESS/, &parallel_run( 'ls /etc/MASTER' );
+	
+	##~ &zenlog("getMasterNode1:@sucess_lines");
+
+	## take from the first line, the forth element
+	## sample: [1] 11:46:11 [SUCCESS] 192.168.101.12
+	#my $ip_address = ( split / /, $sucess_lines[0] )[3];
+	#chomp $ip_address;
+
+	##~ &zenlog("getMasterNode2 ip_address:$ip_address<");
+	
+	#return $ip_address;
+#}
+
 1;
