@@ -309,7 +309,9 @@ sub getFarmCertUsed    #($cfile)
 	{
 		my $fname         = $_;
 		my $farm_filename = &getFarmFile( $fname );
-		use File::Grep qw( fgrep fmap fdo );
+
+		use File::Grep qw( fgrep );
+
 		if ( fgrep { /Cert \"$configdir\/$cfile\"/ } "$configdir/$farm_filename" )
 		{
 			$output = 0;
