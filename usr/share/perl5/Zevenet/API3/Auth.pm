@@ -30,8 +30,14 @@ sub validCGISession    # ()
 
 	my $q = &getCGI();
 	my $validSession = 0;
+
+logNewModules("Before loading CGI Session");
+
 	my $session      = CGI::Session->load( $q );
 
+logNewModules("After loading CGI Session");
+
+	#~ &zenlog( "CGI SESSION ID: " . Dumper $session );
 	#~ &zenlog( "CGI SESSION ID: " . $session->id ) if $session->id;
 	#~ &zenlog( "session data: " . Dumper $session->dataref() ); # DEBUG
 
