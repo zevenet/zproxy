@@ -79,10 +79,16 @@ OPTIONS qr{^/.*$} => sub {
 	&httpResponse( { code => 200 } );
 };
 
+logNewModules("After OPTIONS");
+
 require Zevenet::Config;
+logNewModules("With Zevenet::Config");
 require Zevenet::Validate;
+logNewModules("With Zevenet::Validate");
 require Zevenet::Certificate::Activation;
+logNewModules("With Zevenet::Certificate::Activation");
 require Zevenet::API3::Auth;
+logNewModules("With Zevenet::API3::Auth");
 #~ require JSON::XS;
 #~ require Date::Parse;
 #~ require Time::localtime;
@@ -94,6 +100,7 @@ require Zevenet::API3::Auth;
 #
 #########################################
 #
+#~ use Data::Dumper;
 #~ &zenlog( ">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<" ) if &debug;
 #~ &zenlog( "HTTP HEADERS: " . join ( ', ', $q->http() ) );
 #~ &zenlog( "HTTP_AUTHORIZATION: <$ENV{HTTP_AUTHORIZATION}>" )
@@ -127,11 +134,12 @@ my $put_data  = $q->param( 'PUTDATA' );
 ################################################################################
 
 #~ require CGI::Session;
+logNewModules("Before URIs");
 
 #  POST CGISESSID
 POST qr{^/session$} => sub {
-
-	my $session = new CGI::Session( &getCGI() );
+	require CGI::Session;
+	my $session = CGI::Session->new( &getCGI() );
 
 	if ( $session && !$session->param( 'is_logged_in' ) )
 	{
@@ -177,11 +185,15 @@ POST qr{^/session$} => sub {
 
 #	Above this part are calls allowed without authentication
 ######################################################################
-if ( not ( &validZapiKey() or &validCGISession() ) )
+#~ if ( not ( &validZapiKey() or &validCGISession() ) )
+unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
+		 or ( exists $ENV{ HTTP_COOKIE } && &validCGISession() ) )
 {
 	&httpResponse(
 				   { code => 401, body => { message => 'Authorization required' } } );
 }
+
+logNewModules("After authentication");
 
 #	SESSION LOGOUT
 #
@@ -215,23 +227,11 @@ DELETE qr{^/session$} => sub {
 #
 _certificates:
 
-&zenlog("Before /certificates/activation BEGIN #####################");
-foreach my $module ( &getLoadedModules() )
-{
-	&zenlog( $module );
-}
-&zenlog("Before /certificates/activation END #####################");
-
 if ( $q->path_info =~ qr{^/certificates/activation$} )
 {
 	require Zevenet::API3::Certificate::Activation;
 
-	&zenlog("In /certificates/activation BEGIN #####################");
-	foreach my $module ( &getLoadedModules() )
-	{
-		&zenlog( $module );
-	}
-	&zenlog("In /certificates/activation END #####################");
+	logNewModules("In /certificates/activation");
 
 	#  GET activation certificate
 	GET qr{^/certificates/activation$} => sub {
@@ -253,12 +253,14 @@ if ( $q->path_info =~ qr{^/certificates/activation$} )
 ######################################################################
 &checkActivationCertificate();
 
+logNewModules("After checking the certificate");
+
 my $cert_re     = &getValidFormat( 'certificate' );
 my $cert_pem_re = &getValidFormat( 'cert_pem' );
 
 if ( $q->path_info =~ qr{^/certificates} )
 {
-	require Zevenet::API3::Certificates;
+	require Zevenet::API3::Certificate;
 
 	#  GET List SSL certificates
 	GET qr{^/certificates$} => sub {
@@ -671,6 +673,8 @@ _stats:
 if ( $q->path_info =~ qr{^/stats} )
 {
 	require Zevenet::API3::Stats;
+
+	logNewModules("In /stats");
 
 	# System stats
 	GET qr{^/stats$} => sub {
