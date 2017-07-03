@@ -104,7 +104,7 @@ sub certcontrol          # ()
 		}
 
 		#~ my $now = ctime(); ############# From: Time::localtime #############
-		my $now = scalar localtime; ############# From: Time::localtime #############
+		my $now = scalar localtime;
 		&zenlog( "now: $now" );
 
 		# Certificate validity date
