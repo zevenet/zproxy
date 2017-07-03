@@ -93,6 +93,7 @@ sub getNewModules
 
 sub logNewModules
 {
+	return; ################### disable debugging info
 	my $msg = shift;
 
 	zenlog("## ## ## $msg ## ## ## BEGIN");
