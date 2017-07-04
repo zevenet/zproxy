@@ -23,6 +23,33 @@
 
 use strict;
 
+=begin nd
+Function: getIPDSChain
+
+	Return the name of a iptables chain where there are rules of a module.
+
+Parameters:
+	Module - It is a IPDS module. The possible values are "blacklist", "whitelist", "dos" or "rbl"
+				
+Returns:
+	String - Name for the chain of a IPDS module
+	
+=cut
+
+sub getIPDSChain
+{
+	my $ipds_module = shift;
+	my %ipds_chains=
+		(
+			'blacklist' => 'BLACKLIST',
+			'whitelist' => 'WHITELIST',
+			'rbl' => 'RBL',
+			'dos' => 'DOS',
+		);
+	
+	return $ipds_chains{ $ipds_module };
+}
+
 
 =begin nd
 Function: getIPDSFarmMatch
@@ -54,7 +81,7 @@ sub getIPDSFarmMatch
 	if ( $type eq 'l4xnat' )
 	{
 		my $protocolL4 = &getFarmProto( $farmname );
-		if ( $protocol ne 'all' )
+		if ( $protocol eq 'all' )
 		{
 			push @match, "-d $vip";
 		}
@@ -138,9 +165,20 @@ sub getIptListV4
 sub setIPDSDropAndLog
 {
 	my ( $cmd, $logMsg ) = @_;
-
-	my $output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
-	$output = &iptSystem( "$cmd -j DROP" );
+	my $output;
+	
+	# Always LOG rule has to be above than DROP rule
+	if ( $cmd =~ / -I / )
+	{
+		$output = &iptSystem( "$cmd -j DROP" );
+		$output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
+	}
+	# $cmd =~ / -A /
+	else
+	{
+		$output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
+		$output = &iptSystem( "$cmd -j DROP" );
+	}
 
 	return $output;
 }

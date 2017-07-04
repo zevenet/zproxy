@@ -114,7 +114,7 @@ $modprobe="/sbin/modprobe";
 #Where is lsmod?
 $lsmod="/sbin/lsmod";
 #Where is gdnsd?
-$gdnsd="/usr/local/zenloadbalancer/app/gdnsd/sbin/gdnsd";
+$gdnsd="/gdnsd";
 #Where is l4sd?
 $l4sd="/usr/local/zenloadbalancer/app/l4s/bin/l4sd";
 #Where is id binary?
@@ -131,6 +131,8 @@ $insserv="/sbin/insserv";
 $temperatureFile="/proc/acpi/thermal_zone/THRM/temperature";
 #Where is update-rc.d?
 $updatercd="/usr/sbin/update-rc.d";
+#Where is packetbl?
+$packetbl_bin="/usr/local/zenloadbalancer/app/packetbl/bin/packetbl";
 
 
 #where is pound binary?

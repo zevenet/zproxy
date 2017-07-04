@@ -22,6 +22,8 @@
 
 use strict;
 
+use Zevenet::IPDS::Core;
+
 #	/farms/<GSLBfarm>
 sub farms_name_gslb # ( $farmname )
 {

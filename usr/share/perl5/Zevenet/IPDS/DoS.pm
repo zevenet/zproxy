@@ -27,7 +27,7 @@ use Config::Tiny;
 use Tie::File;
 
 use Zevenet::Core;
-use Zevenet::IPDS;
+use Zevenet::IPDS::Core;
 use Zevenet::Farm;
 
 sub setDOSCreateFileConf
@@ -531,7 +531,7 @@ sub setDOSReloadFarmRules
 }
 
 =begin nd
-        Function: setDOSBoot
+        Function: runDOSStartModule
 
         Boot all DoS rules-
 
@@ -543,7 +543,7 @@ sub setDOSReloadFarmRules
 
 =cut
 
-sub setDOSBoot
+sub runDOSStartModule
 {
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $output;
@@ -601,7 +601,7 @@ sub setDOSBoot
 }
 
 =begin nd
-        Function: setDOSStop
+        Function: runDOStopModule
 
         Stop all DoS rules
 
@@ -613,7 +613,7 @@ sub setDOSBoot
 
 =cut
 
-sub setDOSStop
+sub runDOStopModule
 {
 	my $output   = 0;
 	my $confFile = &getGlobalConfiguration( 'dosConf' );

@@ -29,7 +29,7 @@ use Tie::File;
 
 use Zevenet::Core;
 use Zevenet::Debug;
-use Zevenet::IPDS;
+use Zevenet::IPDS::Core;
 use Zevenet::Farm;
 use Zevenet::Validate;
 
@@ -131,7 +131,7 @@ sub setBLDestroyList
 }
 
 =begin nd
-        Function: setBLStart
+        Function: runBLStartModule
 
         Enable all blacklists rules
 
@@ -141,8 +141,8 @@ sub setBLDestroyList
 
 =cut
 
-#  &setBLStart
-sub setBLStart
+#  &runBLStartModule
+sub runBLStartModule
 {
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
@@ -194,7 +194,7 @@ sub setBLStart
 }
 
 =begin nd
-        Function: setBLStop
+        Function: runBLStopModule
 
         Disable all blacklists rules
         
@@ -204,8 +204,8 @@ sub setBLStart
 
 =cut
 
-# &setBLStop
-sub setBLStop
+# &runBLStopModule
+sub runBLStopModule
 {
 	my @rules           = @{ &getBLRules() };
 	my $blacklists_name = &getValidFormat( 'blacklists_name' );
@@ -241,6 +241,8 @@ sub setBLStop
 
 }
 
+
+
 =begin nd
         Function: setBLCreateRule
 
@@ -263,6 +265,7 @@ sub setBLCreateRule
 	my $add;
 	my $cmd;
 	my $output;
+	my $chain;
 	my $action = &getBLParam( $listName, 'policy' );
 
 
@@ -278,11 +281,11 @@ sub setBLCreateRule
 	
 	if ( $action eq "allow" )
 	{
-		$add = "-I";
+		$chain = &getIPDSChain("whitelist");
 	}
 	elsif ( $action eq "deny" )
 	{
-		$add = "-A";
+		$chain = &getIPDSChain("blacklist");
 	}
 	else
 	{
@@ -290,6 +293,8 @@ sub setBLCreateRule
 		&zenlog(
 				"The parameter 'action' isn't valid in function 'setBLCreateIptableCmd'." );
 	}
+	
+	$add = '-I';
 
 	if ( !$output )
 	{
@@ -320,7 +325,8 @@ sub setBLCreateRule
 	
 	# 		iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "BL_farmname"
 			$cmd = &getGlobalConfiguration( 'iptables' )
-			. " $add PREROUTING -t raw -m set --match-set $listName src $farmOpt -m comment --comment \"BL_$farmName\"";
+			#~ . " $add PREROUTING -t raw -m set --match-set $listName src $farmOpt -m comment --comment \"BL_$farmName\"";
+			. " $add $chain -t raw -m set --match-set $listName src $farmOpt -m comment --comment \"BL_$farmName\"";
 	
 			if ( $action eq "deny" )
 			{

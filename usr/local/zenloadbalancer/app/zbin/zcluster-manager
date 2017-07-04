@@ -149,12 +149,14 @@ if ( $object eq 'farm' )
 		my $status = &_runFarmStart( $farm_name );
 
 		# reload ipds rules
-		require "/usr/local/zenloadbalancer/www/blacklists.cgi";
-		require "/usr/local/zenloadbalancer/www/dos.cgi";
-		&setBLStop();
-		&setBLStart();
-		&setDOSStop();
-		&setDOSBoot();
+		require Zevenet::IPDS::Blacklist;
+		require Zevenet::IPDS::DoS;
+		require Zevenet::IPDS::RBL;
+		&runBLStopModule();
+		&runBLStartModule();
+		&runDOSStopModule();
+		&runDOSStartModule();
+		&runRBLStartByFarm( $farm_name );
 
 		exit $status;
 	}
@@ -164,12 +166,15 @@ if ( $object eq 'farm' )
 		&quit("Missing farm name argument") if ! $farm_name;
 
 		# reload ipds rules
-		require "/usr/local/zenloadbalancer/www/blacklists.cgi";
-		require "/usr/local/zenloadbalancer/www/dos.cgi";
-		&setBLStop();
-		&setBLStart();
-		&setDOSStop();
-		&setDOSBoot();
+		require Zevenet::IPDS::Blacklist;
+		require Zevenet::IPDS::DoS;
+		require Zevenet::IPDS::RBL;
+		
+		&runBLStopModule();
+		&runBLStartModule();
+		&runDOSStopModule();
+		&runDOSStartModule();
+		&runRBLStopByFarm( $farm_name );
 
 		exit &_runFarmStop( $farm_name );
 	}
@@ -179,16 +184,20 @@ if ( $object eq 'farm' )
 		&quit("Missing farm name argument") if ! $farm_name;
 
 		# include ipds rules
-		require "/usr/local/zenloadbalancer/www/blacklists.cgi";
-		require "/usr/local/zenloadbalancer/www/dos.cgi";
-		&setBLStop();
-		&setDOSStop();
+		require Zevenet::IPDS::Blacklist;
+		require Zevenet::IPDS::DoS;
+		require Zevenet::IPDS::RBL;
+		
+		&runBLStopModule();
+		&runDOSStopModule();
+		&runRBLStopByFarm( $farm_name );
 
 		&_runFarmStop( $farm_name );
 		my $status = &_runFarmStart( $farm_name );
 
-		&setBLStart();
-		&setDOSBoot();
+		&runBLStartModule();
+		&runDOSStartModule();
+		&runRBLStartByFarm( $farm_name );
 
 		exit $status;
 	}
@@ -208,24 +217,112 @@ if ( $object eq 'farm' )
 # farm commands
 if ( $object eq 'ipds' )
 {
-	if ( $command eq 'restart_bl' )
+	# Get params
+	my $action;
+	my $module;
+	my $farmname;
+	my $rule;
+	my  $farmname_re = &getValidFormat( 'farm_name' );
+	# command = "module_action_rule,farmname"
+	if ( $command =~ /([a-zA-Z]+)_(rbl|bl|dos)(_\w+(,$farmname_re)?)?/ )
 	{
-		# reload ipds rules
-		require "/usr/local/zenloadbalancer/www/blacklists.cgi";
-		&setBLStop();
-		&setBLStart();
+		$action = $1;
+		$module = $2;
+		my $opt = $3;
+		if ( $opt )
+		{
+			$opt =~ s/^_//;
+			if ( $opt =~ /,/ )
+			{
+				( $rule, $farmname ) = split ( ',', $opt );
+			}
+			else
+			{
+				$rule = $opt;
+			}
+			
+		}
+	}
+	
+	if ( $module eq 'bl' )
+	{
+		require Zevenet::IPDS::Blacklist;
+		# reload blacklist rules
+		&runBLStopModule();
+		&runBLStartModule();
 
 		exit 0;
 	}
-	elsif ( $command eq 'restart_dos' )
+	elsif ( $module eq 'dos' )
 	{
-		# reload ipds rules
-		require "/usr/local/zenloadbalancer/www/dos.cgi";
-		&setDOSStop();
-		&setDOSBoot();
+		require Zevenet::IPDS::DoS;
+		# reload DoS rules
+		&runDOSStopModule();
+		&runDOSStartModule();
 
 		exit 0;
 	}
+	elsif ( $module eq 'rbl' )
+	{
+		require Zevenet::IPDS::RBL;
+		if ( $farmname )
+		{
+			# stop RBL rules
+			if ( $action eq "stop" )
+			{
+				&runRBLStop( $rule, $farmname );
+			}
+			# start RBL rules
+			elsif ( $action eq "start" )
+			{
+				&runRBLStart( $rule, $farmname );
+			}
+			# reload RBL rules
+			else
+			{
+				&runRBLRestart( $rule, $farmname );
+			}
+		}
+		elsif ( $rule )
+		{
+			# stop RBL rules
+			if ( $action eq "stop" )
+			{
+				&runRBLStopByRule( $rule );
+			}
+			# start RBL rules
+			elsif ( $action eq "start" )
+			{
+				&runRBLStartByRule( $rule );
+			}
+			# reload RBL rules
+			else
+			{
+				&runRBLRestartByRule( $rule );
+			}
+		}
+		else
+		{
+			# stop RBL rules
+			if ( $action eq "stop" )
+			{
+				&runRBLStopModule();
+			}
+			# start RBL rules
+			elsif ( $action eq "start" )
+			{
+				&runRBLStartModule();
+			}
+			# reload RBL rules
+			else
+			{
+				&runRBLRestartModule();
+			}
+		}
+
+		exit 0;
+	}
+
 	else
 	{
 		&quit("Unrecognized ipds command");

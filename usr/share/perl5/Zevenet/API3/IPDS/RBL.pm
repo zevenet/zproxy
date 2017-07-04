@@ -20,7 +20,9 @@
 #
 ###############################################################################
 
+
 use strict;
+use Zevenet::IPDS::RBL;
 
 # GET /ipds/rbl
 sub get_rbl_all_rules
@@ -299,7 +301,7 @@ sub set_rbl_rule
 		my $listHash = &getRBLZapiRule( $name );
 		my $body = { description => $description, params => $listHash };
 	
-		&runZClusterRemoteManager( 'ipds', 'restart_rbl' );
+		&runZClusterRemoteManager( 'ipds', "restart_rbl_$name" );
 	
 		&httpResponse({ code => 200, body => $body } );
 	}
@@ -492,6 +494,20 @@ sub set_rbl_domain
 			{
 				$errormsg = "Error, Wrong domain format.";
 			}
+			
+			my @rules;
+			# get the rules where the domain is applied 
+			foreach my $rule ( &getRBLRuleList() )
+			{	
+				# modify the domain in all rules where it is applied
+				if ( grep( /^$domain$/, @{ &getRBLObjectRuleParam( $rule, 'domains' ) } ) )
+				{
+					&setRBLObjectRuleParam( $rule, "del_domains", $domain );
+					&setRBLObjectRuleParam( $rule, "add_domains", $new_domain );
+					push @rules, $rule;
+				}
+			}
+			
 			&setRBLDomains( $domain, $new_domain );
 			my $domains = &getRBLUserDomains(  );
 			$errormsg = "RBL domain $new_domain has been modified successful.";
@@ -500,7 +516,10 @@ sub set_rbl_domain
 						 params      => { "domains" => $domains } 
 			};
 
-			&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+			foreach my $rule ( @rules )
+			{
+				&runZClusterRemoteManager( 'ipds', "restart_rbl_$rule" );
+			}
 
 			&httpResponse( { code => 200, body => $body } );
 		}
@@ -556,7 +575,17 @@ sub del_rbl_domain
 						 message     => $errormsg,
 			};
 
-			&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+			# Delete domain from the rules where the domain is applied 
+			foreach my $rule ( &getRBLRuleList() )
+			{	
+				# modify the domain in all rules where it is applied
+				if ( grep( /^$domain$/, @{ &getRBLObjectRuleParam( $rule, 'domains' ) } ) )
+				{
+					&setRBLObjectRuleParam( $rule, "del_domains", $domain );
+					&runZClusterRemoteManager( 'ipds', "restart_rbl_$rule" );
+				}
+			}
+
 
 			&httpResponse( { code => 200, body => $body } );
 		}
@@ -618,7 +647,7 @@ sub add_domain_to_rbl
 				{
 					$errormsg = "Added $domain successful.";
 
-					&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+					&runZClusterRemoteManager( 'ipds', "restart_rbl_$name" );
 
 					my $rule = &getRBLZapiRule( $name );
 					my $body = {
@@ -687,7 +716,7 @@ sub del_domain_from_rbl
 						 message     => $errormsg,
 			};
 
-			&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+			&runZClusterRemoteManager( 'ipds', "restart_rbl_$name" );
 
 			&httpResponse( { code => 200, body => $body } );
 		}
@@ -758,7 +787,7 @@ sub add_rbl_to_farm
 
 					if ( &getFarmStatus( $farmName ) eq 'up' )
 					{
-						&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+						&runZClusterRemoteManager( 'ipds', "start_rbl_$name,$farmName" );
 					}
 
 					&httpResponse( { code => 200, body => $body } );
@@ -831,7 +860,7 @@ sub del_rbl_from_farm
 
 			if ( &getFarmStatus( $farmName ) eq 'up' )
 			{
-				&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+				&runZClusterRemoteManager( 'ipds', "stop_rbl_$name,$farmName" );
 			}
 
 			&httpResponse( { code => 200, body => $body } );
@@ -906,7 +935,7 @@ sub set_rbl_actions
 								
 					};
 		
-					&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+					&runZClusterRemoteManager( 'ipds', "${action}_rbl_$name" );
 		
 					&httpResponse( { code => 200, body => $body } );
 				}

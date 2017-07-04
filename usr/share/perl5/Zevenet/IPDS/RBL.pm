@@ -24,14 +24,16 @@
 use strict;
 use Tie::File;
 
-require "/usr/local/zevenet/www/functions_ext.cgi";
-require "/usr/local/zevenet/www/ipds.cgi";
+use Zevenet::Core;
+use Zevenet::Debug;
+use Zevenet::IPDS::Core;
 
 # rbl configuration path
 my $rblPath = &getGlobalConfiguration( 'configdir' ) . "/ipds/rbl";
 my $rblConfigFile = "$rblPath/rbl.conf";
 my $preloadedDomainsFile = "$rblPath/preloaded_domains.conf";
 my $userDomainsFile = "$rblPath/user_domains.conf";
+
 
 actions:
 actions_module:
@@ -53,9 +55,6 @@ sub runRBLStartModule
 {
 	# create config directory if it doesn't exist and config file
 	my $error = &setRBLCreateDirectory();
-
-	# create the necessary iptables chains
-	#~ ???
 
 	# Run all rules
 	foreach my $rule ( &getRBLRuleList() )
@@ -85,9 +84,6 @@ sub runRBLStopModule
 	{
 		&runRBLStopByRule( $rule );
 	}
-
-	# delete iptables chains used by rbl
-	#~ ????
 
 }
 
@@ -153,7 +149,7 @@ sub runRBLStartByFarm
 		}
 
 		# create iptables rule to link with rbl rule
-		&runRBLIptablesRule( $rule, $farmname, 'append' );
+		&runRBLIptablesRule( $rule, $farmname, 'insert' );
 	}
 }
 
@@ -237,30 +233,39 @@ sub runRBLStartByRule
 {
 	my ( $rule ) = @_;
 	my $error=0;
-
+	my @farms = @{ &getRBLObjectRuleParam( $rule, 'farms' ) };
+	
 	if ( &getRBLStatusRule( $rule ) eq "up" )
 	{
-		&zenlog( "Error, RBL rule \"$rule\" is already running" );
+		#~ &zenlog( "RBL rule \"$rule\" is already running" );
+		return -1;
+	}
+
+	if ( !@farms )
+	{
+		#~ &zenlog( "RBL rule \"$rule\" has not any farm linked" );
 		return -1;
 	}
 	
 	# to start a RBL rule it is necessary that the rule has almost one domain
 	if ( !@{ &getRBLObjectRuleParam($rule, 'domains') } )
 	{
-		&zenlog ( "RBL rule, $rule, was not started because doesn't have any domain." );
+		#~ &zenlog ( "RBL rule, $rule, was not started because doesn't have any domain." );
 		return -1;
 	}
 	
-	$error = &runRBLStartPacketbl( $rule );
-
-	if ( !$error )
+	my $flag=0;
+	foreach my $farmname ( @farms )
 	{
-		foreach my $farmname ( @{ &getRBLObjectRuleParam( $rule, 'farms' ) } )
+		if ( &getFarmBootStatus( $farmname ) eq 'up' )
 		{
-			if ( &getFarmStatus( $farmname ) eq 'up' )
+			if (!$flag)
 			{
-				&runRBLIptablesRule( $rule, $farmname, 'append' );
+				$flag=1;
+				$error = &runRBLStartPacketbl( $rule );
 			}
+			&zenlog ( "Linking RBL rule $rule with farm $farmname." );
+			&runRBLIptablesRule( $rule, $farmname, 'insert' );
 		}
 	}
 
@@ -338,6 +343,122 @@ sub runRBLRestartByRule
 	return $error;
 }
 
+=begin nd
+Function: runRBLStart
+
+	Start the runtime of a RBL rule and link with a farm that are using this rule.
+
+Parameters:
+	Rule - Rule name
+	Farmanme - Farm name
+				
+Returns:
+	integer - 0 on success or other value on failure
+	
+=cut
+
+sub runRBLStart
+{
+	my ( $rule, $farm ) = @_;
+	my $error=0;
+
+	# not run if the farm is not applied to the rule
+	if ( !grep ( /^$farm$/, @{ &getRBLObjectRuleParam( $rule, 'farms' ) } ) )
+	{
+		return -1;
+	}
+		
+	# to start a RBL rule it is necessary that the rule has almost one domain
+	if ( !@{ &getRBLObjectRuleParam($rule, 'domains') } )
+	{
+		#~ &zenlog ( "RBL rule, $rule, was not started because doesn't have any domain." );
+		return -1;
+	}
+		
+	# to start a rule the farm has to be up
+	if ( &getFarmBootStatus( $farm ) ne 'up' )
+	{
+		return -1;
+	}
+	
+	if ( &getRBLStatusRule( $rule ) eq "down" )
+	{
+		$error = &runRBLStartPacketbl( $rule );
+	}
+	
+	&runRBLIptablesRule( $rule, $farm, 'insert' );
+	
+	return $error;
+}
+
+=begin nd
+Function: runRBLStop
+
+	Stop the runtime of a RBL rule and link with a farm that are using this rule.
+
+Parameters:
+	Rule - Rule name
+	Farmname - Farm name
+				
+Returns:
+	integer - 0 on success or other value on failure
+	
+=cut
+
+sub runRBLStop
+{
+	my ( $rule, $farm ) = @_;
+	my $error=0;
+
+	if ( &getRBLStatusRule( $rule ) eq "down" )
+	{
+		&zenlog( "Error, RBL rule \"$rule\" is not running" );
+		return -1;
+	}
+
+	# remove all iptables rules
+	if ( &getFarmStatus( $farm ) eq 'up' )
+	{
+		&runRBLIptablesRule( $rule, $farm, 'delete' );
+	}
+
+	# if are not another farm using this rule, the rule is stopped
+	if ( !&getRBLRunningFarmList( $rule ) )
+	{
+		&runRBLStopPacketbl( $rule );
+	}
+
+	return $error;
+}
+
+=begin nd
+Function: runRBLRestart
+
+	Restart the runtime of a RBL rule with a farm.
+
+Parameters:
+	Rule - Rule name
+	Farmname - Farm name
+				
+Returns:
+	integer - 0 on success or other value on failure
+	
+=cut
+
+sub runRBLRestart
+{
+	my ( $rule, $farm ) = @_;
+
+	my $error = &runRBLStop( $rule, $farm );
+
+	if ( !$error )
+	{
+		$error = &runRBLStart( $rule, $farm );
+	}
+
+	return $error;
+}
+
 apply_farm:
 
 =begin nd
@@ -399,7 +520,7 @@ sub addRBLFarm
 		if (!$error)
 		{
 			# create iptables rule to link with rbl rule
-			$error=&runRBLIptablesRule( $rule, $farmname, 'append' );
+			$error=&runRBLIptablesRule( $rule, $farmname, 'insert' );
 		}
 	}
 	
@@ -947,14 +1068,14 @@ sub getRBLRunningFarmList
 	my $rule = shift;
 	
 	my @farms;
-	my $table = "filter";
-	my $chain = "INPUT";
+	my $table = "raw";
+	my $chain = &getIPDSChain( "rbl" );
 	my @iptables_output = &getIptListV4( $table, $chain );
 	my $farm_re = &getValidFormat( 'farm_name' );
 	
 	foreach my $line (@iptables_output)
 	{
-		if ( $line =~ /RBL_${rule}_($farm_re)\"/ )
+		if ( $line =~ /RBL,${rule},($farm_re)/ )
 		{
 			push @farms, $1;
 		}
@@ -987,7 +1108,6 @@ sub getRBLStatusRule
 {
 	my $rule     = shift;
 	my $status   = "down";
-	
 	if ( &getRBLPacketblPid( $rule ) )
 	{
 		$status = "up";
@@ -1019,7 +1139,8 @@ sub runRBLIptablesRule
 	my ( $rule, $farmname, $action ) = @_;
 	my $error;
 	my $nfqueue = &getRBLObjectRuleParam( $rule, 'nf_queue_number' );
-
+	my $rbl_chain = &getIPDSChain( "rbl" );
+	
 	my @farmMatch = &getIPDSFarmMatch( $farmname );
 
 	#~ my $logMsg = "[Blocked by blacklists $listName in farm $farmName]";
@@ -1046,14 +1167,33 @@ sub runRBLIptablesRule
 	# only check packets with SYN flag: "--tcp-flags SYN SYN"
 	# if packetbl is not running, return packet to netfilter flow: "--queue-bypass"
 
-# iptables -I INPUT -p tcp --tcp-flags SYN SYN -i eth0 --dport 80 -j NFQUEUE --queue-num 0 --queue-bypass
-	my @cmd =
-	    &getGlobalConfiguration( 'iptables' )
-	  . " $action INPUT -t filter @farmMatch --tcp-flags SYN SYN -j NFQUEUE --queue-num $nfqueue --queue-bypass"
-	  . " -m comment --comment \"RBL,${rule},$farmname\"";
+	# iptables -I INPUT -p tcp --tcp-flags SYN SYN -i eth0 --dport 80 -j NFQUEUE --queue-num 0 --queue-bypass
 
 	# execute without interblock
-	$error = &iptSystem( @cmd );
+	foreach my $ruleParam ( @farmMatch )
+	{
+		&zenlog ("rule param:$ruleParam ");
+		my $tcp;
+		my $cmd;
+		# not add rules to UDP ports
+		if ( $ruleParam !~ /\-\-protocol udp/ )
+		{
+			# It is necessary specific the tcp protocol to check add SYN flag option
+			if ( $ruleParam !~ /\-\-protocol tcp/ )
+			{
+				$tcp = "--protocol tcp";
+			}
+			else
+			{
+				$tcp = "";
+			}
+			$cmd =
+				&getGlobalConfiguration( 'iptables' )
+				. " $action $rbl_chain -t raw $ruleParam $tcp --tcp-flags SYN SYN -j NFQUEUE --queue-num $nfqueue --queue-bypass"
+				. " -m comment --comment \"RBL,${rule},$farmname\"";
+			$error = &iptSystem( $cmd );
+		}
+	}
 
 	return $error;
 }
@@ -1083,11 +1223,20 @@ sub setRBLCreateNfqueue
 	my @rules      = &getRBLRuleList();
 	use Config::Tiny;
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
+	my @queue_list;
+	
+	foreach my $rule (@rules)
+	{
+		if ( $fileHandle->{ $rule }->{ 'nf_queue_number' } ne "" )
+		{
+			push @queue_list, $fileHandle->{ $rule }->{ 'nf_queue_number' };
+		}
+	}
 
 	# Increase $queue_num until to find one is not used
 	while ( $queue_num < 65000 )
 	{
-		last if ( !grep ( /^$queue_num$/, $fileHandle->{ @rules }->{ 'nf_queue_number' } ) );
+		last if ( !grep ( /^$queue_num$/, @queue_list) );
 		$queue_num = $queue_num + 1;
 	}
 
@@ -1143,7 +1292,6 @@ sub runRBLStartPacketbl
 	&setRBLPacketblConfig( $rule );
 	# Get packetbl configuration file
 	my $configfile = &getRBLPacketblConfig( $rule );
-
 	# Run packetbl
 	my $error = &logAndRun( "$packetbl -f $configfile" );
 	return $error;
@@ -1220,7 +1368,7 @@ sub getRBLPacketblPid
 	my @process = `$ps -x`;
 	if ( @process = grep( /\/packetbl_$rule\.conf/, @process ) )
 	{
-		$pid=$1 if ( $process[0] =~ /^(\d+)\s/ );
+		$pid=$1 if ( $process[0] =~ /^\s*(\d+)\s/ );
 	}
 	return $pid;
 }
@@ -1263,8 +1411,6 @@ sub setRBLPacketblConfig
 	my $params = &getRBLObjectRule($rule);
 	my $error  = 0;
 
-
-
 	# filling config file
 	my $fileContent ="
 <host>";
@@ -1302,8 +1448,14 @@ Threadmax	$params->{'threadmax'}
 
 
 	# save file
+	my $fh;
 	my $filename = &getRBLPacketblConfig( $rule );
-	&openlock( my $fh, '>', $filename ) or return -1;
+	$fh = &openlock( '>', $filename );
+	unless( $fh )
+	{
+		&zenlog("Could not open file $filename: $!");
+		return -1;
+	}
 	print $fh $fileContent;
 	&closelock( $fh );
 

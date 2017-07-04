@@ -392,8 +392,9 @@ sub getValidReqParams    # ( \%json_obj, \@requiredParams, \@optionalParams )
 	my $params            = shift;
 	my $requiredParamsRef = shift;
 	my $allowParamsRef    = shift;
-	my @allowParams       = @{ $allowParamsRef };
 	my @requiredParams    = @{ $requiredParamsRef };
+	my @allowParams;
+	@allowParams = @{ $allowParamsRef } if ($allowParamsRef);
 	push @allowParams, @requiredParams;
 	my $output;
 	my $pattern;

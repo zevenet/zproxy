@@ -22,6 +22,8 @@
 
 use strict;
 
+use Zevenet::IPDS::Core;
+
 ########### GET L4XNAT
 # GET /farms/<farmname> Request info of a l4xnat Farm
 

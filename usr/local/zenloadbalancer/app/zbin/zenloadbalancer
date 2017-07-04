@@ -236,8 +236,7 @@ if ( $eject eq "start" )
 	&zenlog( "Beginning start proccess" );
 	require "/usr/local/zenloadbalancer/config/global.conf";
 	require "/usr/local/zenloadbalancer/www/notifications.cgi";
-	require "/usr/local/zenloadbalancer/www/blacklists.cgi";
-	require "/usr/local/zenloadbalancer/www/dos.cgi";
+	require Zevenet::IPDS::Base;
 
 	#### Starts node tuning ####
 
@@ -510,8 +509,7 @@ if ( $eject eq "start" )
 
 	# start all modules
 	&zlbstartNotifications();
-	&setBLStart();
-	&setDOSBoot();
+	&runIPDSStartModule();
 
 	### Starting Network Interfaces
 	&printAndLog( "Starting ZEVENET Load Balancer...\n" );
@@ -796,16 +794,14 @@ if ( $eject eq "start" )
 
 if ( $eject eq "stop" )
 {
-	require "/usr/local/zenloadbalancer/www/blacklists.cgi";
 	require "/usr/local/zenloadbalancer/www/notifications.cgi";
-	require "/usr/local/zenloadbalancer/www/dos.cgi";
+	require Zevenet::IPDS::Base;
 
 	&zenlog( "Beginning stop proccess" );
 
 	# stop all modules
 	&zlbstopNotifications( );
-	&setBLStop();
-	&setDOSStop();
+	&runIPDSStopModule();
 
 	if ( &getZClusterStatus() )
 	{
