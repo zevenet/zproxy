@@ -59,6 +59,8 @@ sub get_activation_certificate_info # ()
 # DELETE /certificates/activation
 sub delete_activation_certificate # ( $cert_filename )
 {
+	require Zevenet::Certificate;
+
 	my $description = "Delete activation certificate";
 	my $cert_filename = 'zlbcertfile.pem';
 

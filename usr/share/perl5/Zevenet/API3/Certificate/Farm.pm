@@ -31,6 +31,7 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 	my $description = "Add certificate";
 
 	# Check that the farm exists
+	require Zevenet::Farm::Core;
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
@@ -66,7 +67,7 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 	}
 
 	# FIXME: Show error if the certificate is already in the list
-
+	require Zevenet::Farm::Ext;
 	my $status = &setFarmCertificateSNI( $json_obj->{ file }, $farmname );
 
 	if ( $status == 0 )
@@ -83,6 +84,7 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 					 message     => $message
 		};
 
+		require Zevenet::Farm::Base;
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
 			&setFarmRestart( $farmname );
@@ -120,6 +122,7 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 	my $description = "Delete farm certificate";
 
 	# Check that the farm exists
+	require Zevenet::Farm::Core;
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
@@ -135,7 +138,8 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 
 	if ( $certfilename && &getValidFormat( 'cert_pem', $certfilename ) )
 	{
-		$status = &setFarmDeleteCertNameSNI( $certfilename, $farmname );
+		require Zevenet::Farm::Ext;
+		my $status = &setFarmDeleteCertNameSNI( $certfilename, $farmname );
 
 		if ( $status == 0 )
 		{
@@ -149,6 +153,7 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 						 message     => $message
 			};
 
+			require Zevenet::Farm::Base;
 			if ( &getFarmStatus( $farmname ) eq 'up' )
 			{
 				&setFarmRestart( $farmname );

@@ -105,7 +105,7 @@ sub certcontrol          # ()
 
 		#~ my $now = ctime(); ############# From: Time::localtime #############
 		my $now = scalar localtime;
-		&zenlog( "now: $now" );
+		#~ &zenlog( "now: $now" );
 
 		# Certificate validity date
 		my @notbefore = grep /Not Before/i, @zen_cert;
@@ -114,10 +114,10 @@ sub certcontrol          # ()
 		$nb =~ s/^\s*//;
 
 		#~ my $ini = str2time( $nb ); ############# From: Date::Parse #############
-		&zenlog( "Activation certificate expedition date: $nb" );
+		#~ &zenlog( "Activation certificate expedition date: $nb" );
 		my ( $month, $day, $hours, $min, $sec, $year ) = split /(?: |:)/, $nb;
 		my $ini = timelocal( $sec, $min, $hours, $day, $month, $year );
-		&zenlog( "ini: $ini" );
+		#~ &zenlog( "ini: $ini" );
 
 		# Certificate expiring date
 		my @notafter = grep /Not After/i, @zen_cert;
@@ -126,10 +126,10 @@ sub certcontrol          # ()
 		$na =~ s/^\s*//;
 
 		#~ my $end = str2time( $na ); ############# From: Date::Parse #############
-		&zenlog( "Activation certificate expiration date: $na" );
+		#~ &zenlog( "Activation certificate expiration date: $na" );
 		( $month, $day, $hours, $min, $sec, $year ) = split /(?: |:)/, $na;
 		my $end = timelocal( $sec, $min, $hours, $day, $month, $year );
-		&zenlog( "end: $end" );
+		#~ &zenlog( "end: $end" );
 
 		# Validity remaining
 		my $totaldays = ( $end - $ini ) / 86400;

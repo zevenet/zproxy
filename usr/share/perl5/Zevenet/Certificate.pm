@@ -301,6 +301,8 @@ sub getFarmCertUsed    #($cfile)
 {
 	my ( $cfile ) = @_;
 
+	require Zevenet::Farm::Core;
+
 	my $configdir = &getGlobalConfiguration('configdir');
 	my @farms  = &getFarmsByType( "https" );
 	my $output = -1;

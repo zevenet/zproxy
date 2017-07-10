@@ -115,6 +115,8 @@ sub get_certificate_info # ()
 
 	if ( $cert_filename =~ /\.(pem|csr)$/ && -f "$cert_dir\/$cert_filename" )
 	{
+		require Zevenet::Certificate;
+
 		my @cert_info = &getCertData( $cert_filename );
 		my $body;
 
@@ -161,6 +163,8 @@ sub delete_certificate # ( $cert_filename )
 	}
 	else
 	{
+		require Zevenet::Certificate;
+
 		my $status = &getFarmCertUsed( $cert_filename );
 		if ( $status == 0 )
 		{
@@ -410,6 +414,8 @@ sub create_csr
 		};
 		&httpResponse({ code => 400, body => $body });
 	}
+
+	require Zevenet::Certificate;
 
 	$json_obj->{ name }         = &getCleanBlanc( $json_obj->{ name } );
 	#~ $json_obj->{ issuer }       = &getCleanBlanc( $json_obj->{ issuer } );
