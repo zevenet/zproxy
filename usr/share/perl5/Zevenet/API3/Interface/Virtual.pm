@@ -71,6 +71,7 @@ sub new_vini # ( $json_obj )
 		&httpResponse({ code => 400, body => $body });
 	}
 
+	require Zevenet::Net::Validate;
 	$json_obj->{ ip_v } = ipversion( $json_obj->{ ip } );
 
 	# validate PARENT
@@ -107,6 +108,7 @@ sub new_vini # ( $json_obj )
 	}
 
 	# Check new IP address is not in use
+	require Zevenet::Net::Util;
 	my @activeips = &listallips();
 	for my $ip ( @activeips )
 	{
@@ -135,6 +137,9 @@ sub new_vini # ( $json_obj )
 	$if_ref->{ type } = 'virtual';
 
 	# No errors
+	require Zevenet::Net::Core;
+	require Zevenet::Net::Route;
+
 	eval {
 		die if &addIp( $if_ref );
 
@@ -152,6 +157,7 @@ sub new_vini # ( $json_obj )
 	if ( !$@ )
 	{
 		# Success
+		require Zevenet::Cluster;
 		&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
 
 		my $body = {
@@ -183,6 +189,8 @@ sub new_vini # ( $json_obj )
 
 sub delete_interface_virtual # ( $virtual )
 {
+	require Zevenet::Net::Interface;
+
 	my $virtual = shift;
 
 	my $description = "Delete virtual interface";
@@ -202,6 +210,9 @@ sub delete_interface_virtual # ( $virtual )
 		&httpResponse({ code => 400, body => $body });
 	}
 
+	require Zevenet::Net::Route;
+	require Zevenet::Net::Core;
+
 	eval {
 		die if &delRoutes( "local", $if_ref );
 		die if &downIf( $if_ref, 'writeconf' );
@@ -211,6 +222,7 @@ sub delete_interface_virtual # ( $virtual )
 	if ( ! $@ )
 	{
 		# Success
+		require Zevenet::Cluster;
 		&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
 		&runZClusterRemoteManager( 'interface', 'delete', $if_ref->{ name } );
 
@@ -239,6 +251,8 @@ sub delete_interface_virtual # ( $virtual )
 
 sub get_virtual_list # ()
 {
+	require Zevenet::Net::Interface;
+
 	my @output_list;
 
 	my $description = "List virtual interfaces";
@@ -281,6 +295,8 @@ sub get_virtual # ()
 
 	my $interface; # output
 	my $description = "Show virtual interface";
+
+	require Zevenet::Net::Interface;
 
 	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
 	{

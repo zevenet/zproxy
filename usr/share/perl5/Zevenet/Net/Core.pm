@@ -92,6 +92,8 @@ sub upIf    # ($if_ref, $writeconf)
 
 		if ( -f $file )
 		{
+			require Tie::File;
+
 			my $found = 0;
 			tie my @if_lines, 'Tie::File', "$file";
 			for my $line ( @if_lines )
@@ -150,6 +152,7 @@ sub downIf    # ($if_ref, $writeconf)
 		my $configdir = &getGlobalConfiguration( 'configdir' );
 		my $file      = "$configdir/if_$$if_ref{name}_conf";
 
+		require Tie::File;
 		tie my @if_lines, 'Tie::File', "$file";
 		for my $line ( @if_lines )
 		{
@@ -369,6 +372,7 @@ sub delIf    # ($if_ref)
 	}
 
 	# delete graphs
+	require Zevenet::RRD;
 	&delGraph ( $$if_ref{name}, "iface" );
 	#~ unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_d.png" );
 	#~ unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_m.png" );

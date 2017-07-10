@@ -226,6 +226,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	}
 
 	# Example: eth0;10.0.0.5;255.255.255.0;up;10.0.0.1;
+	require Tie::File;
 	if ( tie my @file_lines, 'Tie::File', "$config_filename" )
 	{
 		my $ip_line_found;
@@ -240,6 +241,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 
 			my ( undef, $ip ) = split ';', $line;
 
+			require Zevenet::Net::Validate;
 			if ( $$if_ref{ ip_v } eq &ipversion( $ip ) && !$ip_line_found )
 			{
 				# replace line

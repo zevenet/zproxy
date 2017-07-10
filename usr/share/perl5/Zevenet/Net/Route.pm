@@ -343,6 +343,9 @@ sub delRoutes    # ($table,$if_ref)
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route flush table table_$$if_ref{name}";
 			$status = &logAndRun( "$ip_cmd" );
 
+			use Net::IPv4Addr qw(ipv4_network);
+			#~ Net::IPv4Addr->import;
+
 			my ( $net, $mask ) = ipv4_network( "$$if_ref{addr} / $$if_ref{mask}" );
 			$ip_cmd =
 			  "$ip_bin -$$if_ref{ip_v} rule del from $net/$mask table table_$$if_ref{name}";

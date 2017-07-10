@@ -213,6 +213,7 @@ sub ifexist    # ($nif)
 	use IO::Socket;
 	use IO::Interface qw(:flags);
 	my $s          = IO::Socket::INET->new( Proto => 'udp' );
+	require Zevenet::Net::Interface;
 	my @interfaces = &getInterfaceList();
 	my $configdir  = &getGlobalConfiguration( 'configdir' );
 

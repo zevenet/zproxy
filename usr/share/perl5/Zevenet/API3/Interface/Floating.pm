@@ -209,6 +209,9 @@ sub modify_interface_floating # ( $json_obj, $floating )
 
 sub get_interfaces_floating
 {
+	require Zevenet::Net::Interface;
+	require Zevenet::Net::Floating;
+
 	my $description = "List floating interfaces";
 
 	# Interfaces
@@ -253,6 +256,9 @@ sub get_interfaces_floating
 sub get_floating
 {
 	my $floating = shift;
+
+	require Zevenet::Net::Interface;
+	require Zevenet::Net::Floating;
 
 	my $description = "Show floating interface";
 

@@ -25,6 +25,8 @@ use strict;
 
 sub get_gateway
 {
+	require Zevenet::Net::Route;
+
 	my $description = "Default gateway";
 
 	my $body = {

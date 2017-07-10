@@ -53,6 +53,7 @@ sub new_vlan # ( $json_obj )
 	}
 	
 	# validate PARENT
+	require Zevenet::Net::Validate;
 	my $parent_exist = &ifexist($json_obj->{ parent });
 	unless ( $parent_exist eq "true" )
 	{
@@ -137,6 +138,7 @@ sub new_vlan # ( $json_obj )
 
 	# FIXME: Check IPv6 compatibility
 	# Check new IP address is not in use
+	require Zevenet::Net::Util;
 	my @activeips = &listallips();
 	for my $ip ( @activeips )
 	{
@@ -212,6 +214,9 @@ sub new_vlan # ( $json_obj )
 	};
 
 	# No errors
+	require Zevenet::Net::Core;
+	require Zevenet::Net::Route;
+	require Zevenet::Net::Interface;
 	eval {
 		die if &createIf( $if_ref );
 		die if &addIp( $if_ref );
@@ -264,6 +269,7 @@ sub delete_interface_vlan # ( $vlan )
 
 	my $description = "Delete VLAN interface";
 	my $ip_v = 4;
+	require Zevenet::Net::Interface;
 	my $if_ref = &getInterfaceConfig( $vlan, $ip_v );
 
 	# validate VLAN interface
@@ -280,6 +286,8 @@ sub delete_interface_vlan # ( $vlan )
 		&httpResponse({ code => 400, body => $body });
 	}
 
+	require Zevenet::Net::Core;
+	require Zevenet::Net::Route;
 	eval {
 		die if &delRoutes( "local", $if_ref );
 		die if &downIf( $if_ref, 'writeconf' );
@@ -319,9 +327,11 @@ sub get_vlan_list # ()
 	my $description = "List VLAN interfaces";
 
 	# get cluster interface
+	require Zevenet::Cluster;
 	my $zcl_conf  = &getZClusterConfig();
 	my $cluster_if = $zcl_conf->{ _ }->{ interface };
 	
+	require Zevenet::Net::Interface;
 	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
 	{
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
@@ -366,6 +376,7 @@ sub get_vlan # ()
 
 	my $description = "Show VLAN interface";
 
+	require Zevenet::Net::Interface;
 	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
 	{
 		next unless $if_ref->{ name } eq $vlan;

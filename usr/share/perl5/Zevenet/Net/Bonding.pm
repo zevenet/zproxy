@@ -416,6 +416,7 @@ sub setBondMaster
 		my $configdir = &getGlobalConfiguration('configdir');
 
 		unlink "$configdir/if_${bond_name}_conf";
+		require Zevenet::RRD;
 		&delGraph ( $bond_name, "iface" );
 	}
 
