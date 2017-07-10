@@ -30,6 +30,9 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	my $zapierror;
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;
+	require Zevenet::IPDS;
+	require Zevenet::IPDS::Blacklist;
+	require Zevenet::IPDS::DoS;
 	my $ipds = &getIPDSfarmsRules( $farmname );
 	
 	# Flags
@@ -467,6 +470,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	my $farmtype = &getFarmType( $farmname );
 	if ( $farmtype eq "https" )
 	{
+		require Zevenet::Farm::HTTP::HTTPS;
 		# Modify Ciphers
 		if ( exists ( $json_obj->{ ciphers } ) )
 		{

@@ -38,6 +38,9 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;
+	require Zevenet::IPDS;
+	require Zevenet::IPDS::Blacklist;
+	require Zevenet::IPDS::DoS;
 	my $ipds = &getIPDSfarmsRules( $farmname );
 	my $errormsg;
 

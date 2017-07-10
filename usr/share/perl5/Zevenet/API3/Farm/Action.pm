@@ -32,6 +32,8 @@ sub farm_actions # ( $json_obj, $farmname )
 	my $action;
 
 	# calidate FARM NAME
+	require Zevenet::Farm::Core;
+
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
@@ -65,6 +67,7 @@ sub farm_actions # ( $json_obj, $farmname )
 	}
 	
 	# Functions
+	require Zevenet::Farm::Action;
 	if ( $action eq "stop" )
 	{
 		my $status = &runFarmStop( $farmname, "true" );
@@ -151,6 +154,7 @@ sub farm_actions # ( $json_obj, $farmname )
 			&zenlog(
 				   "ZAPI success, the action restart has been established in farm $farmname." );
 
+			require Zevenet::Cluster;
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 		}
 		else

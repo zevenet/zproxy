@@ -744,6 +744,8 @@ sub backends
 {
 	my $farmname = shift;
 
+	require Zevenet::Farm::Core;
+
 	my $description = "List backends";
 
 	# Check that the farm exists
@@ -764,6 +766,7 @@ sub backends
 
 	if ( $type eq 'l4xnat' )
 	{
+		require Zevenet::Farm::L4xNAT;
 		my $l4_farm = &getL4FarmStruct( $farmname );
 		my @backends;
 

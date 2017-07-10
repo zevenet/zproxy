@@ -35,18 +35,21 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 
 	####### Functions
 
-	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	# Check parameters
+	foreach my $key ( keys %$json_obj )
 	{
-		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
-		my $body = {
-					 description => "Modify farm",
-					 error       => "true",
-					 message     => $errormsg
-		};
+		unless ( grep { $key eq $_ } qw(newfarmname algorithm vip) )
+		{
+			# Error
+			my $errormsg = "The parameter $key is invalid.";
+			my $body = {
+						 description => "Modify farm",
+						 error       => "true",
+						 message     => $errormsg
+			};
 
-		&httpResponse( { code => 404, body => $body } );
+			&httpResponse( { code => 400, body => $body } );
+		}
 	}
 
 	# Modify Farm's Name

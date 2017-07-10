@@ -204,6 +204,8 @@ sub new_farm    # ( $json_obj )
 					 params      => $out_p,
 		};
 
+		require Zevenet::Cluster;
+
 		&runZClusterRemoteManager( 'farm', 'start', $json_obj->{ farmname } );
 
 		&httpResponse( { code => 201, body => $body } );

@@ -56,6 +56,8 @@ sub farms_name_http # ( $farmname )
 
 	if ( $type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::HTTPS;
+
 		$certname = &getFarmCertificate( $farmname );
 		@cnames   = &getFarmCertificatesSNI( $farmname );
 		my $elem     = scalar @cnames;
@@ -143,6 +145,7 @@ sub farms_name_http # ( $farmname )
 
 		push @out_s, $serviceStruct;
 	}
+	require Zevenet::IPDS;
 	my $ipds = &getIPDSfarmsRules( $farmname );
 
 	# Success

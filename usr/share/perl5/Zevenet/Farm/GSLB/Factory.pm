@@ -77,6 +77,7 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	#run farm
 	my $exec = &getGSLBStartCommand( $fname );
 	&zenlog( "running $exec" );
+	require Zevenet::System;
 	zsystem( "$exec > /dev/null 2>&1" );
 
 	#TODO

@@ -38,6 +38,10 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;
+	require Zevenet::IPDS;
+	require Zevenet::IPDS::Blacklist;
+	require Zevenet::IPDS::DoS;
+
 	my $ipds = &getIPDSfarmsRules( $farmname );
 
 	# Check that the farm exists

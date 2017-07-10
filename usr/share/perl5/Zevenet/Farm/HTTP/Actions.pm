@@ -55,6 +55,8 @@ sub _runHTTPFarmStart    # ($farm_name)
 	&zenlog(
 		"running $pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid"
 	);
+
+	require Zevenet::System;
 	$status = &zsystem(
 		"$pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid 2>/dev/null"
 	);

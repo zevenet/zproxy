@@ -139,6 +139,7 @@ sub farms_name_gslb # ( $farmname )
 		  };
 	}
 
+	require Zevenet::IPDS;
 	my $ipds = &getIPDSfarmsRules( $farmname );
 
 	# Success
