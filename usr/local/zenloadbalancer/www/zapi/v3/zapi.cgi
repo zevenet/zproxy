@@ -38,8 +38,7 @@ use strict;
 #~ use Data::Dumper;
 #~ use Devel::Size qw(size total_size);
 
-package GLOBAL
-{
+package GLOBAL {
 	our $http_status_codes = {
 
 		# 2xx Success codes
@@ -304,7 +303,7 @@ my $be_re      = &getValidFormat( 'backend' );
 ##### /farms
 if ( $q->path_info =~ qr{^/farms/$farm_re/certificates} )
 {
-	require Zevenet::API3::Certificates::Farm;
+	require Zevenet::API3::Certificate::Farm;
 
 	POST qr{^/farms/($farm_re)/certificates$} => sub {
 		&add_farm_certificate( @_ );
@@ -868,7 +867,7 @@ if ( $q->path_info =~ qr{^/system/cluster} )
 
 if ( $q->path_info =~ qr{^/system/dns} )
 {
-	require Zevenet::API3::System::Services::DNS;
+	require Zevenet::API3::System::Service::DNS;
 
 	#  GET dns
 	GET qr{^/system/dns$} => sub {
@@ -883,7 +882,7 @@ if ( $q->path_info =~ qr{^/system/dns} )
 
 if ( $q->path_info =~ qr{^/system/ssh} )
 {
-	require Zevenet::API3::System::Services::SSH;
+	require Zevenet::API3::System::Service::SSH;
 
 	#  GET ssh
 	GET qr{^/system/ssh$} => sub {
@@ -898,7 +897,7 @@ if ( $q->path_info =~ qr{^/system/ssh} )
 
 if ( $q->path_info =~ qr{^/system/snmp} )
 {
-	require Zevenet::API3::System::Services::SNMP;
+	require Zevenet::API3::System::Service::SNMP;
 
 	#  GET snmp
 	GET qr{^/system/snmp$} => sub {
@@ -913,7 +912,7 @@ if ( $q->path_info =~ qr{^/system/snmp} )
 
 if ( $q->path_info =~ qr{^/system/ntp} )
 {
-	require Zevenet::API3::System::Services::NTP;
+	require Zevenet::API3::System::Service::NTP;
 
 	#  GET ntp
 	GET qr{^/system/ntp$} => sub {
@@ -928,7 +927,7 @@ if ( $q->path_info =~ qr{^/system/ntp} )
 
 if ( $q->path_info =~ qr{^/system/http} )
 {
-	require Zevenet::API3::System::Services::HTTP;
+	require Zevenet::API3::System::Service::HTTP;
 
 	#  GET http
 	GET qr{^/system/http$} => sub {
@@ -1022,9 +1021,9 @@ if ( $q->path_info =~ qr{^/system/backup} )
 	};
 }
 
-if ( $q->path_info =~ qr{^/system/backup} )
+if ( $q->path_info =~ qr{^/system/notifications} )
 {
-	require Zevenet::API3::System::Backup;
+	require Zevenet::API3::System::Notification;
 
 	my $alert_re  = &getValidFormat( 'notif_alert' );
 	my $method_re = &getValidFormat( 'notif_method' );
@@ -1214,7 +1213,7 @@ if ( $q->path_info =~ qr{/ipds/rbl} )
 {
 	require Zevenet::API3::IPDS::RBL;
 
-	my $rbl_name = &getValidFormat( 'rbl_name' );
+	my $rbl_name   = &getValidFormat( 'rbl_name' );
 	my $rbl_domain = &getValidFormat( 'rbl_domain' );
 
 	#GET /ipds/rbl/domains
