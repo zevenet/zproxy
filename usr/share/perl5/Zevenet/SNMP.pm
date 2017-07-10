@@ -144,8 +144,10 @@ See Also:
 =cut
 sub getSnmpdConfig    # ()
 {
+	require Tie::File;
+
 	my $snmpdconfig_file = &getGlobalConfiguration('snmpdconfig_file');
-	
+
 	tie my @config_file, 'Tie::File', $snmpdconfig_file;
 
 	## agentAddress line ##

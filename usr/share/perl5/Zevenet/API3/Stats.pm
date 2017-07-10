@@ -29,6 +29,9 @@ use Zevenet::System;
 # Get all farm stats
 sub getAllFarmStats
 {
+	require Zevenet::Farm::Core;
+	require Zevenet::Farm::Base;
+
 	my @files = &getFarmList();
 	my @farms;
 
@@ -360,6 +363,7 @@ sub all_farms_stats # ()
 # Get the number of farms
 sub farms_number
 {
+	require Zevenet::Farm::Ext;
 	my $number =  scalar &getFarmNameList();
 
 	# Print Success
@@ -438,6 +442,7 @@ sub module_stats # ()
 #GET /stats
 sub stats # ()
 {
+	require Zevenet::Stats;
 	my @data_mem  = &getMemStats();
 	my @data_load = &getLoadStats();
 	my @data_net  = &getNetworkStats();
@@ -503,6 +508,7 @@ sub stats # ()
 #GET /stats/mem
 sub stats_mem # ()
 {
+	require Zevenet::Stats;
 	my @data_mem = &getMemStats();
 
 	my $out = {
@@ -529,6 +535,7 @@ sub stats_mem # ()
 #GET /stats/load
 sub stats_load # ()
 {
+	require Zevenet::Stats;
 	my @data_load = &getLoadStats();
 
 	my $out = {
@@ -557,6 +564,8 @@ sub stats_load # ()
 #GET /stats/cpu
 sub stats_cpu # ()
 {
+	require Zevenet::Stats;
+
 	my @data_cpu = &getCPU();
 
 	my $out = {
@@ -599,6 +608,9 @@ sub stats_conns
 #GET /stats/network/interfaces
 sub stats_network_interfaces
 {
+	require Zevenet::Stats;
+	require Zevenet::Net::Interface;
+
 	my $description = "Interfaces info";
 	my @interfaces = &getNetworkStats( 'hash' );
 	
@@ -673,6 +685,8 @@ sub stats_network_interfaces
 #GET /stats/network
 sub stats_network # ()
 {
+	require Zevenet::Stats;
+
 	my @interfaces = &getNetworkStats( 'hash' );
 
 	my $output;

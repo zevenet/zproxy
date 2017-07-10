@@ -41,6 +41,7 @@ sub possible_graphs	#()
 	my @sys = ( "cpu", "load", "ram", "swap" );
 	
 	# Get mount point of disks
+	require Zevenet::Stats;
 	my @mount_points;
 	my $partitions = &getDiskPartitionsInfo();
 	for my $key ( keys %{ $partitions } )
@@ -72,6 +73,7 @@ sub get_all_sys_graphs	 #()
 	my @sys = ( "cpu", "load", "ram", "swap" );
 	
 	# Get mount point of disks
+	require Zevenet::Stats;
 	my @mount_points;
 	my $partitions = &getDiskPartitionsInfo();
 	for my $key ( keys %{ $partitions } )
@@ -154,6 +156,7 @@ sub get_iface_graphs	#()
 	my $description = "Get interface graphs";
 	my $errormsg;
 	# validate NIC NAME
+	require Zevenet::Net::Interface;
 	my @system_interfaces = &getInterfaceList();
 
 	if ( ! grep( /^$iface$/, @system_interfaces ) )
@@ -175,9 +178,6 @@ sub get_iface_graphs	#()
 	}
 	else
 	{
-		# Print Success
-		&zenlog( "ZAPI success, trying to get graphs." );
-		
 		# Print Graph Function
 		my @output;
 		my $graph = &printGraph( "${iface}iface", 'd' );
@@ -206,6 +206,7 @@ sub get_frec_iface_graphs	#()
 	my $description = "Get interface graphs";
 	my $errormsg;
 	# validate NIC NAME
+	require Zevenet::Net::Interface;
 	my @system_interfaces = &getInterfaceList();
 
 	if ( ! grep( /^$iface$/, @system_interfaces ) )
@@ -233,9 +234,7 @@ sub get_frec_iface_graphs	#()
 			if ( $frequency eq "monthly" ) { $frequency = "m"; }
 			if ( $frequency eq "yearly" )  { $frequency = "y"; }
 		}
-		# Print Success
-		&zenlog( "ZAPI success, trying to get graphs." );
-		
+
 		# Print Graph Function
 		my $graph = &printGraph( "${iface}iface", $frequency );				
 		my $body = { description => $description, graph => $graph };
@@ -280,9 +279,6 @@ sub get_farm_graphs	#()
 	}
 	else
 	{
-		# Print Success
-		&zenlog( "ZAPI success, trying to get graphs." );
-		
 		# Print Graph Function
 		my @output;
 		my $graph = &printGraph( "$farmName-farm", 'd' );
@@ -332,9 +328,7 @@ sub get_frec_farm_graphs	#()
 			if ( $frequency eq "monthly" ) { $frequency = "m"; }
 			if ( $frequency eq "yearly" )  { $frequency = "y"; }
 		}
-		# Print Success
-		&zenlog( "ZAPI success, trying to get graphs." );
-		
+
 		# Print Graph Function
 		my $graph = &printGraph( "$farmName-farm", $frequency );				
 		my $body = { description => $description, graph => $graph };
@@ -349,6 +343,8 @@ sub get_frec_farm_graphs	#()
 #GET mount points list
 sub list_disks	#()
 {
+	require Zevenet::Stats;
+
 	my @mount_points;
 	my $partitions = &getDiskPartitionsInfo();
 
@@ -375,6 +371,7 @@ sub graphs_disk_mount_point_all	#()
 
 	$mount_point =~ s/^root[\/]?/\//;
 
+	require Zevenet::Stats;
 	my $description = "Disk partition usage graphs";
 	my $parts = &getDiskPartitionsInfo();
 
@@ -419,6 +416,7 @@ sub graph_disk_mount_point_freq	#()
 
 	$mount_point =~ s/^root[\/]?/\//;
 
+	require Zevenet::Stats;
 	my $description = "Disk partition usage graph";
 	my $parts = &getDiskPartitionsInfo();
 
