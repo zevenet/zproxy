@@ -26,6 +26,8 @@ use strict;
 #	GET	/system/backup
 sub get_backup
 {
+	require Zevenet::Backup;
+
 	my $description = "Get backups";
 
 	my $backups = &getBackup;

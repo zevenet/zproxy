@@ -130,6 +130,8 @@ sub getHttpServerIp
 	chomp ( $gui_ip );
 	$gui_ip =~ s/\s//g;
 
+	require Zevenet::Net::Validate;
+
 	if ( &ipisok( $gui_ip, 4 ) ne "true" )
 	{
 		$gui_ip = "*";

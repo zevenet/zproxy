@@ -44,7 +44,8 @@ See Also:
 sub getDate
 {
 	#$timeseconds = time();
-	my $now = ctime();
+	my $now = localtime;
+	#~ my $now = ctime();
 
 	return $now;
 }

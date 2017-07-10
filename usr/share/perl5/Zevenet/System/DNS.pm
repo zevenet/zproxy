@@ -53,6 +53,9 @@ sub getDns
 	{
 		return undef;
 	}
+
+	require Tie::File;
+	Tie::File->import;
 	tie my @dnsArr, 'Tie::File', $dnsFile;
 
 	#primary

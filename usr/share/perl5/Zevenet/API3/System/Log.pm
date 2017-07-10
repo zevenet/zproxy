@@ -26,6 +26,8 @@ use strict;
 #	GET	/system/logs
 sub get_logs
 {
+	require Zevenet::System::Log;
+
 	my $description = "Get logs";
 	my $backups = &getLogs;
 
@@ -51,6 +53,7 @@ sub download_logs
 	else
 	{
 # Download function ends communication if itself finishes successful. It is not necessary send "200 OK" msg
+		require Zevenet::System::Log;
 		$errormsg = &downloadLog( $logFile );
 		if ( $errormsg )
 		{
@@ -59,6 +62,7 @@ sub download_logs
 	}
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
+
 	&httpResponse( { code => 404, body => $body } );
 }
 

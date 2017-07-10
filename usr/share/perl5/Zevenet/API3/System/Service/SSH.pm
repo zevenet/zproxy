@@ -26,6 +26,8 @@ use strict;
 # GET /system/ssh
 sub get_ssh
 {
+	require Zevenet::System::SSH;
+
 	my $description = "Get ssh";
 	my $ssh         = &getSsh();
 

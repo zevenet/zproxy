@@ -26,6 +26,8 @@ use strict;
 # GET /system/dns
 sub get_dns
 {
+	require Zevenet::System::DNS;
+
 	my $description = "Get dns";
 	my $dns         = &getDns();
 

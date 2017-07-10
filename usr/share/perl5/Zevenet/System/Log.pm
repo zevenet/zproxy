@@ -55,6 +55,12 @@ sub getLogs
 
 	foreach my $line ( @files )
 	{
+		use File::stat;
+		#~ use Time::localtime qw(ctime);
+
+		require Time::localtime;
+		Time::localtime->import;
+
 		my $filepath = "$logdir/$line";
 		chomp ( $filepath );
 		my $datetime_string = ctime( stat ( $filepath )->mtime );
@@ -78,6 +84,9 @@ Parameters:
 
 Returns:
 	1 - on failure.
+
+Bugs:
+	To end the http request should be used the function httpResponse.
 
 See Also:
 	zapi/v3/system.cgi

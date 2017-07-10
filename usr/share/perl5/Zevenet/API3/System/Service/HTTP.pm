@@ -26,6 +26,9 @@ use strict;
 # GET /system/http
 sub get_http
 {
+	require Zevenet::System::HTTP;
+	require Zevenet::Net::Interface;
+
 	my $description       = "Get http";
 	my $httpIp            = &getHttpServerIp();
 	my $allInterfaces_aux = &getActiveInterfaceList();

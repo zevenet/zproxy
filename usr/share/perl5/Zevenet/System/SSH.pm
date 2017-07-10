@@ -59,6 +59,8 @@ sub getSsh
 	}
 	else
 	{
+		require Tie::File;
+
 		tie my @file, 'Tie::File', $sshFile;
 		foreach my $line ( @file )
 		{
