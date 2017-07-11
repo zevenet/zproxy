@@ -191,6 +191,8 @@ $zeninopid="/var/run/zeninotify.pid";
 $zenrsync="-auzvr --delete";#update
 #Arptables
 $arptables="/sbin/arptables";
+#ARP unsolicited
+$arp_unsolicited="";
 
 # keepalived configuration file
 $keepalived_conf="/etc/keepalived/keepalived.conf";
