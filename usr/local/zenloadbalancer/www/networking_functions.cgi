@@ -1704,7 +1704,10 @@ sub sendGArp    # ($if,$ip)
 
 	my @iface      = split ( ":", $if );
 	my $arping_bin = &getGlobalConfiguration( 'arping_bin' );
-	my $arping_cmd = "$arping_bin -c 2 -A -I $iface[0] $ip";
+	my $arp_unsolicited = &getGlobalConfiguration( 'arp_unsolicited' );
+
+	my $arp_arg = $arp_unsolicited ? '-U': '-A';
+	my $arping_cmd = "$arping_bin $arp_arg -c 2 -I $iface[0] $ip";
 
 	&zenlog( "$arping_cmd" );
 	system ( "$arping_cmd &" );
