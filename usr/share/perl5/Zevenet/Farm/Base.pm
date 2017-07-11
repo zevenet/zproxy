@@ -56,11 +56,6 @@ sub getFarmPort    # ($farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &getTcpUdpFarmPort( $farm_name );
-	}
-
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$output = &getHTTPFarmPort( $farm_name );
@@ -108,11 +103,6 @@ sub getFarmVip    # ($info,$farm_name)
 
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &getTcpUdpFarmVip( $info, $farm_name );
-	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -219,11 +209,6 @@ sub getFarmPid    # ($farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &getTcpUdpFarmPid( $farm_name );
-	}
-
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$output = &getHTTPFarmPid( $farm_name );
@@ -260,13 +245,12 @@ sub getFarmLock    # ($farm_name)
 
 	if ( -e "$lockfile" )
 	{
-		open FILE, "$lockfile";
-		read FILE, $output, 255;
-		close FILE;
+		open my $fh, "$lockfile";
+		read $fh, $output, 255;
+		close $fh;
 	}
 
 	return $output;
-
 }
 
 =begin nd
@@ -299,9 +283,9 @@ sub setFarmLock    # ($farm_name, $status, $msg)
 
 	if ( $status eq "on" && $lockstatus == -1 )
 	{
-		open FD, ">$lockfile";
-		print FD "$msg";
-		close FD;
+		open my $fh, ">$lockfile";
+		print $fh "$msg";
+		close $fh;
 	}
 
 	if ( $status eq "off" )
@@ -330,11 +314,6 @@ sub getFarmBootStatus    # ($farm_name)
 
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = "down";
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &getTcpUdpFarmBootStatus( $farm_name );
-	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{

@@ -44,11 +44,7 @@ sub getFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &getTcpUdpFarmBackendMaintenance( $farm_name, $backend );
-	}
-	elsif ( $farm_type eq "http" || $farm_type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$output = &getHTTPFarmBackendMaintenance( $farm_name, $backend, $service );
 	}
@@ -81,11 +77,7 @@ sub setFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &setTcpUdpFarmBackendMaintenance( $farm_name, $backend );
-	}
-	elsif ( $farm_type eq "http" || $farm_type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$output = &setHTTPFarmBackendMaintenance( $farm_name, $backend, $service );
 	}
@@ -118,11 +110,7 @@ sub setFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &setTcpUdpFarmBackendNoMaintenance( $farm_name, $backend );
-	}
-	elsif ( $farm_type eq "http" || $farm_type eq "https" )
+	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$output = &setHTTPFarmBackendNoMaintenance( $farm_name, $backend, $service );
 	}

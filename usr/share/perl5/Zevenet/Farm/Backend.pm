@@ -47,18 +47,15 @@ sub getFarmServers    # ($farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my @servers;
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		@servers = &getTcpUdpFarmServers( $farm_name );
-	}
-
 	if ( $farm_type eq "datalink" )
 	{
+		require Zevenet::Farm::Datalink::Backend;
 		@servers = &getDatalinkFarmServers( $farm_name );
 	}
 
 	if ( $farm_type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Backend;
 		@servers = &getL4FarmServers( $farm_name );
 	}
 
@@ -102,13 +99,6 @@ sub setFarmServer # $output ($ids,$rip,$port|$iface,$max,$weight,$priority,$time
 	&zenlog(
 		"setting 'Server $ids $rip $port max $max weight $weight prio $priority timeout $timeout' for $farm_name farm $farm_type"
 	);
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output =
-		  &setTcpUdpFarmServer( $ids, $rip, $port, $max, $weight, $priority,
-								$farm_name );
-	}
 
 	if ( $farm_type eq "datalink" )
 	{
@@ -156,11 +146,6 @@ sub runFarmServerDelete    # ($ids,$farm_name,$service)
 
 	&zenlog( "running 'ServerDelete $ids' for $farm_name farm $farm_type" );
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &runTcpUdpFarmServerDelete( $ids, $farm_name );
-	}
-
 	if ( $farm_type eq "datalink" )
 	{
 		$output = &runDatalinkFarmServerDelete( $ids, $farm_name );
@@ -202,11 +187,6 @@ sub getFarmBackendStatusCtl    # ($farm_name)
 
 	my $farm_type = &getFarmType( $farm_name );
 	my @output;
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		@output = &getTcpUdpFarmBackendStatusCtl( $farm_name );
-	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -257,11 +237,6 @@ sub getFarmBackendsStatus    # ($farm_name,@content)
 		@output = &getHTTPFarmBackendsStatus( $farm_name, @content );
 	}
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		@output = &getTcpUdpFarmBackendsStatus( $farm_name, @content );
-	}
-
 	if ( $farm_type eq "datalink" )
 	{
 		@output = &getDatalinkFarmBackendsStatus( @content );
@@ -290,7 +265,7 @@ Returns:
 	Integer - Number of clients with session in a backend or -1 on failure
 	
 FIXME: 
-	used in zapi v2 and tcp farms
+	used in zapi v2
 	
 =cut
 sub getFarmBackendsClients    # ($idserver,@content,$farm_name)
@@ -305,10 +280,6 @@ sub getFarmBackendsClients    # ($idserver,@content,$farm_name)
 		$output = &getHTTPFarmBackendsClients( $idserver, @content, $farm_name );
 	}
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &getTcpUdpFarmBackendsClients( $idserver, @content, $farm_name );
-	}
 	return $output;
 }
 
@@ -339,11 +310,6 @@ sub getFarmBackendsClientsList    # ($farm_name,@content)
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		@output = &getHTTPFarmBackendsClientsList( $farm_name, @content );
-	}
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		@output = &getTcpUdpFarmBackendsClientsList( $farm_name, @content );
 	}
 
 	return @output;

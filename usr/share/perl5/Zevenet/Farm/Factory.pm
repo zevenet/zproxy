@@ -58,16 +58,6 @@ sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 
 	&zenlog( "running 'Create' for $farm_name farm $farm_type" );
 
-	if ( $farm_type =~ /^TCP$/i )
-	{
-		$output = &runTcpFarmCreate( $vip, $vip_port, $farm_name );
-	}
-
-	if ( $farm_type =~ /^UDP$/i )
-	{
-		$output = &runUdpFarmCreate( $vip, $vip_port, $farm_name );
-	}
-
 	if ( $farm_type =~ /^HTTP[S]?$/i )
 	{
 		$output = &runHTTPFarmCreate( $vip, $vip_port, $farm_name, $farm_type );

@@ -47,11 +47,6 @@ sub setFarmBlacklistTime    # ($blacklist_time,$farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &setTcpUdpFarmBlacklistTime( $blacklist_time, $farm_name );
-	}
-
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$output = &setHTTPFarmBlacklistTime( $blacklist_time, $farm_name );
@@ -83,11 +78,6 @@ sub getFarmBlacklistTime    # ($farm_name)
 	my $farm_type      = &getFarmType( $farm_name );
 	my $farm_filename  = &getFarmFile( $farm_name );
 	my $blacklist_time = -1;
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$blacklist_time = &getTcpUdpFarmBlacklistTime( $farm_name );
-	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -192,11 +182,6 @@ sub setFarmTimeout    # ($timeout,$farm_name)
 
 	&zenlog( "setting 'Timeout $timeout' for $farm_name farm $farm_type" );
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &setTcpUdpFarmTimeout( $timeout, $farm_name );
-	}
-
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$output = &setHTTPFarmTimeout( $timeout, $farm_name );
@@ -227,11 +212,6 @@ sub getFarmTimeout    # ($farm_name)
 
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &getTcpUdpFarmTimeout( $farm_name );
-	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -273,11 +253,6 @@ sub setFarmAlgorithm    # ($algorithm,$farm_name)
 	my $output    = -1;
 
 	&zenlog( "setting 'Algorithm $algorithm' for $farm_name farm $farm_type" );
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &setTcpUdpFarmAlgorithm( $algorithm, $farm_name );
-	}
 
 	if ( $farm_type eq "datalink" )
 	{
@@ -325,11 +300,6 @@ sub getFarmAlgorithm    # ($farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $algorithm = -1;
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$algorithm = &getTcpUdpFarmAlgorithm( $farm_name );
-	}
-
 	if ( $farm_type eq "datalink" )
 	{
 		$algorithm = &getDatalinkFarmAlgorithm( $farm_name );
@@ -368,11 +338,6 @@ sub setFarmPersistence    # ($persistence,$farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &setTcpUdpFarmPersistence( $persistence, $farm_name );
-	}
-
 	if ( $farm_type eq "l4xnat" )
 	{
 		$output = &setL4FarmPersistence( $persistence, $farm_name );
@@ -403,11 +368,6 @@ sub getFarmPersistence    # ($farm_name)
 
 	my $farm_type   = &getFarmType( $farm_name );
 	my $persistence = -1;
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$persistence = &getTcpUdpFarmPersistence( $farm_name );
-	}
 
 	if ( $farm_type eq "l4xnat" )
 	{
@@ -441,11 +401,6 @@ sub setFarmMaxClientTime    # ($max_client_time,$track,$farm_name)
 		"setting 'MaxClientTime $max_client_time $track' for $farm_name farm $farm_type"
 	);
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &setTcpUdpFarmMaxClientTime( $max_client_time, $track, $farm_name );
-	}
-
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$output = &setHTTPFarmMaxClientTime( $track, $farm_name );
@@ -477,11 +432,6 @@ sub getFarmMaxClientTime    # ($farm_name)
 
 	my $farm_type = &getFarmType( $farm_name );
 	my @max_client_time;
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		@max_client_time = &getTcpUdpFarmMaxClientTime( $farm_name );
-	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -522,11 +472,6 @@ sub setFarmMaxConn    # ($max_connections,$farm_name)
 
 	&zenlog( "setting 'MaxConn $max_connections' for $farm_name farm $farm_type" );
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &setTcpUdpFarmMaxConn( $max_connections, $farm_name );
-	}
-
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$output = &setHTTPFarmMaxConn( $max_connections, $farm_name );
@@ -556,11 +501,6 @@ sub getFarmMaxConn    # ($farm_name)
 
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &getTcpUdpFarmMaxConn( $farm_name );
-	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -595,11 +535,6 @@ sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 
 	&zenlog(
 			 "setting 'VirtualConf $vip $vip_port' for $farm_name farm $farm_type" );
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$stat = &setTcpUdpFarmVirtualConf( $vip, $vip_port, $farm_name );
-	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{

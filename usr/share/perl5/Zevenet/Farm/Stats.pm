@@ -49,11 +49,6 @@ sub getBackendEstConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 	my $farm_type = &getFarmType( $farm_name );
 	my @nets      = ();
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		@nets =
-		  &getTcpUdpBackendEstConns( $farm_name, $ip_backend, $port_backend, @netstat );
-	}
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		@nets =
@@ -91,16 +86,6 @@ sub getFarmEstConns    # ($farm_name,@netstat)
 	if ( $pid eq "-" )
 	{
 		return @nets;
-	}
-
-	if ( $farm_type eq "tcp" )
-	{
-		@nets = &getTcpFarmEstConns( $farm_name, @netstat );
-	}
-
-	if ( $farm_type eq "udp" )
-	{
-		@nets = &getUdpFarmEstConns( $farm_name, @netstat );
 	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
@@ -148,16 +133,6 @@ sub getBackendSYNConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 		@nets =
 		  &getHTTPBackendSYNConns( $farm_name, $ip_backend, $port_backend, @netstat );
 	}
-	if ( $farm_type eq "tcp" )
-	{
-		@nets =
-		  &getTcpBackendSYNConns( $farm_name, $ip_backend, $port_backend, @netstat );
-	}
-	if ( $farm_type eq "udp" )
-	{
-		@nets =
-		  &getUdpBackendSYNConns( $farm_name, $ip_backend, $port_backend, @netstat );
-	}
 	if ( $farm_type eq "l4xnat" )
 	{
 		@nets =
@@ -186,16 +161,6 @@ sub getFarmSYNConns    # ($farm_name, @netstat)
 
 	my $farm_type = &getFarmType( $farm_name );
 	my @nets      = ();
-
-	if ( $farm_type eq "tcp" )
-	{
-		@nets = &getTcpFarmSYNConns( $farm_name, @netstat );
-	}
-
-	if ( $farm_type eq "udp" )
-	{
-		@nets = &getUdpFarmSYNConns( $farm_name, @netstat );
-	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{

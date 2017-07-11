@@ -66,11 +66,6 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 		untie @configfile;
 	}
 
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$status = &_runTcpUdpFarmStart( $farm_name );
-	}
-
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		$status = &_runHTTPFarmStart( $farm_name );
@@ -122,9 +117,11 @@ sub runFarmStart    # ($farm_name,$writeconf)
 	}
 
 	# run ipds rules
-	require "/usr/local/zenloadbalancer/www/blacklists.cgi";
-	require "/usr/local/zenloadbalancer/www/dos.cgi";
+	require Zevenet::IPDS::Blacklist;
+	require Zevenet::IPDS::DoS;
+
 	my $ipds = &getIPDSfarmsRules( $farm_name );
+
 	foreach my $list ( @{ $ipds->{ 'blacklists' } } )
 	{
 		&setBLCreateRule ( $farm_name, $list );
@@ -158,13 +155,16 @@ sub runFarmStop    # ($farm_name,$writeconf)
 	my ( $farm_name, $writeconf ) = @_;
 
 	# stop ipds rules
-	require "/usr/local/zenloadbalancer/www/blacklists.cgi";
-	require "/usr/local/zenloadbalancer/www/dos.cgi";
+	require Zevenet::IPDS::Blacklist;
+	require Zevenet::IPDS::DoS;
+
 	my $ipds = &getIPDSfarmsRules( $farm_name );
+
 	foreach my $list ( @{ $ipds->{ 'blacklists' } } )
 	{
 		&setBLDeleteRule ( $farm_name, $list );
 	}
+
 	foreach my $rule ( @{ $ipds->{ 'dos' } } )
 	{
 		&setDOSStopRule( $rule, $farm_name );
@@ -210,11 +210,6 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 	$status = $farm_type;
 
 	&zenlog( "running 'Stop write $writeconf' for $farm_name farm $farm_type" );
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$status = &_runTcpUdpFarmStop( $farm_name );
-	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -276,14 +271,17 @@ sub runFarmDelete    # ($farm_name)
 	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
 	
 	#delete IPDS rules
-	require "/usr/local/zenloadbalancer/www/blacklists.cgi";
-	require "/usr/local/zenloadbalancer/www/dos.cgi";
+	require Zevenet::IPDS::Blacklist;
+	require Zevenet::IPDS::DoS;
+
 	my $ipds = &getIPDSfarmsRules( $farm_name );
+
 	# delete black lists
 	foreach my $listName ( @{$ipds->{'blacklists'}} )
 	{ 
 		&setBLRemFromFarm( $farm_name, $listName );
 	}
+
 	# delete dos rules
 	foreach my $dos ( @{$ipds->{'dos'}} )
 	{ 
@@ -418,7 +416,7 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 		@fg_files = grep { /^$farm_name\_.+guardian\.conf/ } readdir ( $dir );
 		closedir $dir;
 	}
-	elsif ( $farm_type =~ /l4xnat|tcp|udp/ )
+	elsif ( $farm_type =~ /l4xnat/ )
 	{
 		$fg_files[0] = &getFarmGuardianFile( $farm_name );
 		&zlog( "found farmguardian file:@fg_files" ) if &debug;
@@ -440,11 +438,6 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 
 	&zenlog(
 			 "setting 'NewFarmName $new_farm_name' for $farm_name farm $farm_type" );
-
-	if ( $farm_type eq "tcp" || $farm_type eq "udp" )
-	{
-		$output = &setTcpUdpNewFarmName( $farm_name, $new_farm_name );
-	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
