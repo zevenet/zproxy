@@ -176,7 +176,7 @@ sub set_rbl_rule
 	my $name    = shift;
 	my $description = "Modify RBL rule $name.";
 	my $errormsg;
-	my @allowParams = ( "name", "cache_size", "cache_time", "queue_size", "threadmax", "local_traffic" );
+	my @allowParams = ( "name", "cache_size", "cache_time", "queue_size", "threadmax", "local_traffic", "only_logging", "log_level" );
 	
 	if ( !&getRBLExists( $name ) )
 	{
@@ -217,6 +217,38 @@ sub set_rbl_rule
 			}
 		}
 	}
+	# only_logging
+	if ( !$errormsg && exists $json_obj->{ 'only_logging' } )
+	{
+		if ( !&getValidFormat( 'rbl_only_logging', $json_obj->{'only_logging'} ) )
+		{
+			$errormsg = "Error, only level must be true or false.";
+		}
+		else
+		{
+			my $option='yes';
+			$option='no' if( $json_obj->{'only_logging'} eq 'false' );
+			if ( &setRBLObjectRuleParam($name, 'only_logging', $option) )
+			{
+				$errormsg = "Error, setting only logging mode.";
+			}
+		}
+	}
+	# log_level
+	if ( !$errormsg && exists $json_obj->{ 'log_level' } )
+	{
+		if ( !&getValidFormat( 'rbl_log_level', $json_obj->{'log_level'} ) )
+		{
+			$errormsg = "Error, log level must be a number between 0 and 7.";
+		}
+		else
+		{
+			if ( &setRBLObjectRuleParam($name, 'log_level', $json_obj->{'log_level'}) )
+			{
+				$errormsg = "Error, setting log level.";
+			}
+		}
+	}
 	# queue_size
 	if ( !$errormsg && exists $json_obj->{ 'queue_size' } )
 	{
@@ -226,6 +258,7 @@ sub set_rbl_rule
 		}
 		else
 		{
+			
 			if ( &setRBLObjectRuleParam($name, 'queue_size', $json_obj->{'queue_size'}) )
 			{
 				$errormsg = "Error, setting queue size.";

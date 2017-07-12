@@ -644,11 +644,14 @@ sub getRBLInitialParams
 		# maximum number of packet in the queue
 		'queue_size' => 64538,
 		
+		# Log lvl, syslog log levels from 0 to 7: 0 Emergency, 1 Alert, 2 Critical, 3 Error, 4 Warning, 5 Notice, 6 Informational, or 7 Debug
+		'log_level' => 5,
+		
+		# This mode logs the action but non blocking the packet
+		'only_logging' => 'no',
+		
 		# maximum number of threads for packetbl
-		'threadmax' => 700,
-
-		# Default time to block a source in raw table of iptables
-		#~ 'block_time'	=> 3600,
+		'threadmax' => 0,
 
 		# Scan local traffic
 		'local_traffic'	=> 'no',
@@ -1293,7 +1296,8 @@ sub runRBLStartPacketbl
 	# Get packetbl configuration file
 	my $configfile = &getRBLPacketblConfig( $rule );
 	# Run packetbl
-	my $error = &logAndRun( "$packetbl -f $configfile" );
+	my $error = system( "bash", "-c", ". /etc/profile_packetbl && $packetbl -f $configfile" );
+	&zenlog("Error, starting packetbl") if ($error);
 	return $error;
 }
 
@@ -1435,7 +1439,7 @@ sub setRBLPacketblConfig
 FallthroughAccept	yes
 AllowNonPort25		yes
 AllowNonSyn			no
-DryRun			no
+DryRun			$params->{'only_logging'}
 CacheSize	$params->{'cache_size'}
 CacheTTL		$params->{'cache_time'}
 LogFacility	daemon
@@ -1444,6 +1448,7 @@ AlternativeResolveFile	usr/local/zevenet/config/ipds/rbl/zevenet_nameservers.con
 Queueno		$params->{'nf_queue_number'}
 Queuesize	$params->{'queue_size'}
 Threadmax	$params->{'threadmax'}
+LogLevel	$params->{'log_level'}
 ";
 
 
@@ -1644,7 +1649,9 @@ Returns:
 			"cookiefarm"
 		],
 		"local_traffic" : "false",
+		"log_level" : 4,
 		"name" : "protection_ssh",
+		"only_logging" : "false",
 		"queue_size" : 64538,
 		"status" : "down",
 		"threadmax" : 700
@@ -1676,6 +1683,14 @@ sub getRBLZapiRule
 	else
 	{
 		$output->{ 'local_traffic' } = "false";
+	}
+	if ( $output->{ 'only_logging' } eq 'yes' )
+	{
+		$output->{ 'only_logging' } = "true";
+	}
+	else
+	{
+		$output->{ 'only_logging' } = "false";
 	}
 	
 	foreach my $key ( keys %{ $output } )
@@ -1710,7 +1725,9 @@ Returns:
 			"cookiefarm"
 		],
 		"local_traffic" : "false",
+		"log_level" : 4,
 		"name" : "protection_ssh",
+		"only_logging" : "false",
 		"queue_size" : 64538,
 		"status" : "down",
 		"threadmax" : 700

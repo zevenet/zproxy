@@ -277,6 +277,8 @@ if ( $eject eq "start" )
 	{
 		%sysctl = (
 				   "fs.file-max"                        => "100000",
+				   "kernel.threads-max"			=> "120000",	# this parameter is for packetbl process
+				   "kernel.pid_max"				=> "200000",	# this parameter is for packetbl process
 				   "vm.max_map_count"                   => "1048576",
 				   "vm.swappiness"                      => "10",
 				   "net.ipv4.conf.all.log_martians"     => "0",
@@ -320,6 +322,8 @@ if ( $eject eq "start" )
 	{
 		%sysctl = (
 				   "fs.file-max"                        => "100000",
+				   "kernel.threads-max"			=> "120000",	# this parameter is for packetbl process
+				   "kernel.pid_max"				=> "200000",	# this parameter is for packetbl process
 				   "vm.max_map_count"                   => "1048576",
 				   "vm.swappiness"                      => "10",
 				   "net.ipv4.conf.all.log_martians"     => "0",
