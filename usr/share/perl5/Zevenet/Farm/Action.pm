@@ -42,6 +42,8 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
 
+	require Zevenet::Farm::Base;
+
 	my $status = &getFarmStatus( $farm_name );
 
 	# finish the function if the tarm is already up
@@ -68,21 +70,25 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Action;
 		$status = &_runHTTPFarmStart( $farm_name );
 	}
 
 	if ( $farm_type eq "gslb" )
 	{
+		require Zevenet::Farm::GSLB::Action;
 		$status = &_runGSLBFarmStart( $farm_name, $writeconf );
 	}
 
 	if ( $farm_type eq "datalink" )
 	{
+		require Zevenet::Farm::Datalink::Action;
 		$status = &_runDatalinkFarmStart( $farm_name, $writeconf, $status );
 	}
 
 	if ( $farm_type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Action;
 		$status = &_runL4FarmStart( $farm_name, $writeconf );
 	}
 
@@ -113,6 +119,7 @@ sub runFarmStart    # ($farm_name,$writeconf)
 
 	if ( $status == 0 )
 	{
+		require Zevenet::FarmGuardian;
 		&runFarmGuardianStart( $farm_name, "" );
 	}
 
@@ -213,21 +220,25 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Action;
 		$status = &_runHTTPFarmStop( $farm_name );
 	}
 
 	if ( $farm_type eq "gslb" )
 	{
+		require Zevenet::Farm::GSLB::Action;
 		$status = &_runGSLBFarmStop( $farm_name, $writeconf );
 	}
 
 	if ( $farm_type eq "datalink" )
 	{
+		require Zevenet::Farm::Datalink::Action;
 		$status = &_runDatalinkFarmStop( $farm_name, $writeconf );
 	}
 
 	if ( $farm_type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Action;
 		$status = &_runL4FarmStop( $farm_name, $writeconf );
 	}
 
@@ -355,6 +366,8 @@ sub setFarmRestart    # ($farm_name)
 	my $farm_name = shift;
 
 	# do nothing if the farm is not running
+	require Zevenet::Farm::Base;
+
 	return if &getFarmStatus( $farm_name ) ne 'up';
 
 	&setFarmLock( $farm_name, "on" );
@@ -441,21 +454,25 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Action;
 		$output = &setHTTPNewFarmName( $farm_name, $new_farm_name );
 	}
 
 	if ( $farm_type eq "datalink" )
 	{
+		require Zevenet::Farm::Datalink::Action;
 		$output = &setDatalinkNewFarmName( $farm_name, $new_farm_name );
 	}
 
 	if ( $farm_type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Action;
 		$output = &setL4NewFarmName( $farm_name, $new_farm_name );
 	}
 
 	if ( $farm_type eq "gslb" )
 	{
+		require Zevenet::Farm::GSLB::Action;
 		$output = &setGSLBNewFarmName( $farm_name, $new_farm_name );
 	}
 
