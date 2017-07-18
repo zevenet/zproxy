@@ -27,23 +27,8 @@ sub delete_farm # ( $farmname )
 {
 	my $farmname = shift;
 
-	if ( $farmname =~ /^$/ )
-	{
-		&zenlog(
-				  "ZAPI error, trying to delete the farm $farmname, invalid farm name." );
-
-		# Error
-		my $errormsg = "Invalid farm name, please insert a valid value.";
-		my $body = {
-					 description => "Delete farm $farmname",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
 	my $newffile = &getFarmFile( $farmname );
+
 	if ( $newffile == -1 )
 	{
 		&zenlog(
@@ -64,6 +49,7 @@ sub delete_farm # ( $farmname )
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
 		&runFarmStop( $farmname, "true" );
+		require Zevenet::Cluster;
 		&runZClusterRemoteManager( 'farm', 'stop', $farmname );
 	}
 
@@ -74,6 +60,7 @@ sub delete_farm # ( $farmname )
 		&zenlog( "ZAPI success, the farm $farmname has been deleted." );
 
 		# Success
+		require Zevenet::Cluster;
 		&runZClusterRemoteManager( 'farm', 'delete', $farmname );
 
 		my $message = "The Farm $farmname has been deleted.";

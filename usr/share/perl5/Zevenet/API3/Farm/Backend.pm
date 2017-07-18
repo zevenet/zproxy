@@ -23,12 +23,16 @@
 
 use strict;
 
+use Zevenet::Farm::Core;
+
 # POST
 
 sub new_farm_backend    # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
+
+	require Zevenet::Farm::Backend;
 
 	# Initial parameters
 	my $description = "New farm backend";
@@ -95,6 +99,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# validate PORT
+		require Zevenet::Net::Validate;
 		unless (    &isValidPortNumber( $json_obj->{ port } ) eq 'true'
 				 || $json_obj->{ port } eq '' )
 		{
@@ -197,6 +202,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 						 message => $message,
 			};
 
+			require Zevenet::Cluster;
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 
 			&httpResponse( { code => 201, body => $body } );
@@ -263,6 +269,8 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# validate INTERFACE
+		require Zevenet::Net::Interface;
+
 		my $valid_interface;
 
 		for my $iface ( @{ &getActiveInterfaceList() } )
@@ -360,6 +368,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 				message => $message,
 			};
 
+			require Zevenet::Cluster;
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 
 			&httpResponse( { code => 201, body => $body } );
@@ -431,6 +440,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	{
 		# validate SERVICE
 		# Check that the provided service is configured in the farm
+		require Zevenet::Farm::HTTP::Service;
+
 		my @services = &getFarmServices( $farmname );
 
 		my $found = 0;
@@ -458,6 +469,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		}
 
 		# get an ID
+		require Zevenet::Farm::Config;
+
 		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
 		my @be = split ( "\n", $backendsvs );
 
@@ -493,6 +506,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		}
 
 		# validate PORT
+		require Zevenet::Net::Validate;
 		unless ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' )
 		{
 			&zenlog(
@@ -550,6 +564,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		}
 
 # First param ($id) is an empty string to let function autogenerate the id for the new backend
+		require Zevenet::Farm::Backend;
 		my $status = &setFarmServer(
 									 "",                     $json_obj->{ ip },
 									 $json_obj->{ port },    "",
@@ -580,6 +595,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 						 message => $message,
 			};
 
+			require Zevenet::Farm::Base;
 			if ( &getFarmStatus( $farmname ) eq 'up' )
 			{
 				&setFarmRestart( $farmname );
@@ -609,6 +625,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	}
 	elsif ( $type eq "gslb" )
 	{
+		require Zevenet::Farm::GSLB::Service;
 		# validate SERVICE
 		{
 			my @services_list = &getGSLBFarmServices( $farmname );
@@ -628,6 +645,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		}
 
 		# Get an ID
+		require Zevenet::Farm::Config;
+
 		my $id         = 1;
 		my $lb         = &getFarmVS( $farmname, $service, "algorithm" );
 		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
@@ -679,6 +698,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		}
 
 		#Adding the backend
+		require Zevenet::Farm::GSLB::Backend;
 		my $status =
 		  &setGSLBFarmNewBackend( $farmname, $service, $lb, $id, $json_obj->{ ip } );
 
@@ -698,6 +718,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 						 },
 						 message => $message,
 			};
+
+			require Zevenet::Farm::Base;
 
 			if ( &getFarmStatus( $farmname ) eq 'up' )
 			{
@@ -743,8 +765,6 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 sub backends
 {
 	my $farmname = shift;
-
-	require Zevenet::Farm::Core;
 
 	my $description = "List backends";
 
@@ -799,6 +819,8 @@ sub backends
 	}
 	elsif ( $type eq 'datalink' )
 	{
+		require Zevenet::Farm::Backend;
+
 		my @backends;
 		my @run = &getFarmServers( $farmname );
 
@@ -871,6 +893,7 @@ sub service_backends
 
 	if ( $type eq 'http' || $type eq 'https' )
 	{
+		require Zevenet::Farm::Config;
 		my @services_list = split ' ', &getFarmVS( $farmname );
 
 		unless ( grep { $service eq $_ } @services_list )
@@ -891,6 +914,8 @@ sub service_backends
 
 		foreach my $subl ( @be )
 		{
+			require Zevenet::Farm::Backend::Maintenance;
+
 			my @subbe       = split ( "\ ", $subl );
 			my $id          = $subbe[1] + 0;
 			my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $service );
@@ -933,6 +958,8 @@ sub service_backends
 	}
 	elsif ( $type eq 'gslb' )
 	{
+		require Zevenet::Farm::GSLB::Service;
+
 		my @services_list = &getGSLBFarmServices( $farmname );
 
 		unless ( grep { $service eq $_ } @services_list )
@@ -947,6 +974,8 @@ sub service_backends
 
 			&httpResponse({ code => 404, body => $body });
 		}
+
+		require Zevenet::Farm::Config;
 
 		my @be = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
 		my @backends;
@@ -1000,6 +1029,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 	my $description = "Modify backend";
 	my $zapierror;
+
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
@@ -1019,6 +1049,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 	if ( $type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Config;
+
 		# Params
 		my $l4_farm = &getL4FarmStruct( $farmname );
 		my $backend;
@@ -1136,6 +1168,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 	}
 	elsif ( $type eq "datalink" )
 	{
+		require Zevenet::Farm::Backend;
+
 		my @run = &getFarmServers( $farmname );
 		my $serv_values = $run[$id_server];
 		my $be;
@@ -1172,6 +1206,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( !$error && exists ( $json_obj->{ interface } ) )
 		{
+			require Zevenet::Net::Interface;
+
 			my $valid_interface;
 
 			for my $iface ( @{ &getActiveInterfaceList() } )
@@ -1273,6 +1309,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
+			require Zevenet::Cluster;
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 		}
 
@@ -1306,6 +1343,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 	my $description = "Modify service backend";
 	my $zapierror;
+
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
@@ -1325,6 +1363,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 	if ( $type eq "http" || $type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Service;
+
 		# validate SERVICE
 		{
 			my @services = &getFarmServices($farmname);
@@ -1347,6 +1387,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		# validate BACKEND
 		my $be;
 		{
+			require Zevenet::Farm::Config;
+
 			my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
 			my @be_list = split ( "\n", $backendsvs );
 
@@ -1402,6 +1444,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 		if ( !$error && exists ( $json_obj->{ port } ) )
 		{
+			require Zevenet::Net::Validate;
+
 			if ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' )
 			{
 				$be->{ port } = $json_obj->{ port };
@@ -1444,6 +1488,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 		if ( !$error )
 		{
+			require Zevenet::Farm::Backend;
+
 			my $status = &setFarmServer(
 										 $id_server,       $be->{ ip },
 										 $be->{ port },    "",
@@ -1460,6 +1506,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			}
 			else
 			{
+				require Zevenet::Farm::Action;
+
 				&setFarmRestart( $farmname );
 			}
 		}
@@ -1468,6 +1516,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 	{
 		# validate SERVICE
 		{
+			require Zevenet::Farm::GSLB::Service;
+
 			my @services = &getGSLBFarmServices($farmname);
 			my $found_service = grep { $service eq $_ } @services;
 
@@ -1489,6 +1539,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		my $be;
 		my $backend_id = $id_server;
 		{
+			require Zevenet::Farm::Config;
+
 			my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
 			my @be_list = split ( "\n", $backendsvs );
 
@@ -1554,6 +1606,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 		if ( !$error )
 		{
+			require Zevenet::Farm::GSLB::Backend;
+
 			my $status =
 			  &setGSLBFarmNewBackend( $farmname, $service, $lb, $backend_id, $json_obj->{ ip } );
 
@@ -1565,6 +1619,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			}
 			else
 			{
+				require Zevenet::Farm::Action;
 				&setFarmRestart( $farmname );
 			}
 		}
@@ -1666,6 +1721,8 @@ sub delete_backend # ( $farmname, $id_server )
 		&httpResponse({ code => 400, body => $body });
 	}
 
+	require Zevenet::Farm::Backend;
+
 	my @backends = &getFarmServers( $farmname );
 	my $backend_line = $backends[$id_server];
 
@@ -1690,6 +1747,7 @@ sub delete_backend # ( $farmname, $id_server )
 			   "ZAPI success, the backend $id_server in farm $farmname has been deleted." );
 
 		# Success
+		require Zevenet::Cluster;
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 
 		#~ my $message = "The backend with ID $id_server of the $farmname farm has been deleted.";
@@ -1764,10 +1822,12 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 
 		if ($type eq "gslb")
 		{
+			require Zevenet::Farm::GSLB::Service;
 			@services = &getGSLBFarmServices($farmname);
 		}
 		else
 		{
+			require Zevenet::Farm::HTTP::Service;
 			@services = &getFarmServices($farmname);
 		}
 
@@ -1787,6 +1847,8 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 		}
 
 		# validate ALGORITHM
+		require Zevenet::Farm::Config;
+
 		if ( &getFarmVS( $farmname, $service, "algorithm" ) eq 'prio' )
 		{
 			&zenlog(
@@ -1833,10 +1895,12 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 
 	if ( $type eq "http" || $type eq "https" )
 	{
+		require Zevenet::Farm::Backend;
 		$status = &runFarmServerDelete( $id_server, $farmname, $service );
 	}
 	if ( $type eq "gslb" )
 	{
+		require Zevenet::Farm::GSLB::Backend;
 		$status = &remFarmServiceBackend( $id_server, $farmname, $service );
 	}
 
@@ -1846,9 +1910,9 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 			"ZAPI success, the backend $id_server in service $service in farm $farmname has been deleted."
 		);
 
-		# Success
+		require Zevenet::Farm::Action;
 		&setFarmRestart( $farmname );
-		#~ my $message = "The backend with ID $id_server in the service $service of the farm $farmname has been deleted.";
+
 		my $message = "Backend removed";
 		my $body = {
 					 description => $description,

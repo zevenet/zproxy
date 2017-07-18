@@ -23,30 +23,15 @@
 
 use strict;
 
+use Zevenet::Farm::Core;
+
+
 # POST
 
 sub new_farm_service    # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
-
-	if ( $farmname =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to create a new service in farm $farmname, invalid farm name."
-		);
-
-		# Error
-		my $errormsg = "Invalid farm name, please insert a valid value.";
-
-		my $body = {
-					 description => "New service",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse( { code => 400, body => $body } );
-	}
 
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
@@ -67,6 +52,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 
 	if ( $type eq "http" || $type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Service;
+
 		if ( $json_obj->{ id } =~ /^$/ )
 		{
 			&zenlog(
@@ -98,6 +85,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 						 description => "New service " . $json_obj->{ id },
 						 params      => { id => $json_obj->{ id } },
 			};
+
+			require Zevenet::Farm::Base;
 
 			if ( &getFarmStatus( $farmname ) eq 'up' )
 			{
@@ -160,6 +149,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 
 	if ( $type eq "gslb" )
 	{
+		require Zevenet::Farm::GSLB::Service;
+
 		if ( $json_obj->{ id } =~ /^$/ )
 		{
 			&zenlog(
@@ -212,8 +203,12 @@ sub new_farm_service    # ( $json_obj, $farmname )
 						 },
 			};
 
+			require Zevenet::Farm::Base;
+
 			if ( &getFarmStatus( $farmname ) eq 'up' )
 			{
+				require Zevenet::Farm::Action;
+
 				&setFarmRestart( $farmname );
 				$body->{ status } = 'needed restart';
 			}
@@ -245,6 +240,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 sub farm_services
 {
 	my ( $farmname, $servicename ) = @_;
+
 	my $service;
 	my $description = "Get services of a farm";
 
@@ -261,8 +257,9 @@ sub farm_services
 
 		&httpResponse({ code => 404, body => $body });
 	}
-	
-	
+
+	require Zevenet::Farm::HTTP::Service;
+
 	my @services = &getFarmServices( $farmname );
 	if ( ! grep ( /^$servicename$/, @services ) )
 	{
@@ -276,11 +273,12 @@ sub farm_services
 
 		&httpResponse({ code => 404, body => $body });
 	}
-	
-	
+
 	my $type = &getFarmType( $farmname );
+
 	if ( $type =~ /http/i )
 	{
+		require Zevenet::Farm::Config;
 		$service = &getServiceStruct ( $farmname, $servicename );
 	}
 	else
@@ -303,7 +301,6 @@ sub farm_services
 	};
 
 	&httpResponse({ code => 200, body => $body });
-
 }
 
 # PUT
@@ -352,10 +349,12 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 		if ($type eq "gslb")
 		{
+			require Zevenet::Farm::GSLB::Service;
 			@services = &getGSLBFarmServices($farmname);
 		}
 		else
 		{
+			require Zevenet::Farm::HTTP::Service;
 			@services = &getFarmServices($farmname);
 		}
 
@@ -379,6 +378,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 	if ( $type eq "http" || $type eq "https" )
 	{
+		require Zevenet::Farm::Config;
+
 		# Functions
 		if ( exists ( $json_obj->{ vhost } ) )
 		{
@@ -394,7 +395,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 		if ( exists ( $json_obj->{ redirect } ) )
 		{
-			my $redirect = uri_unescape( $json_obj->{ redirect } );
+			my $redirect = $json_obj->{ redirect };
 
 			if ( $redirect =~ /^http\:\/\//i || $redirect =~ /^https:\/\//i || $redirect eq '' )
 			{
@@ -543,25 +544,21 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			}
 		}
 
-		#~ &zenlog("farmname:$farmname service:$service cookiedomain:$json_obj->{ cookiedomain } cookiename:$json_obj->{ cookiename } cookiepath:$json_obj->{ cookiepath } cookieinsert: $json_obj->{ cookieinsert } cookiettl:$json_obj->{ cookiettl }");
 		my $cookieins_status = &getHTTPFarmVS ($farmname,$service, 'cookieins');
 		if ( $json_obj->{ cookieinsert } eq "true"  || $cookieins_status eq 'true' )
 		{
 			if ( exists ( $json_obj->{ cookiedomain } ) )
 			{
-				#~ &zenlog("farmname:$farmname service:$service cookiedomain:$json_obj->{ cookiedomain }");
 				&setFarmVS( $farmname, $service, "cookieins-domain", $json_obj->{ cookiedomain } );
 			}
 
 			if ( exists ( $json_obj->{ cookiename } ) )
 			{
-				#~ &zenlog("farmname:$farmname service:$service cookiename:$json_obj->{ cookiename }");
 				&setFarmVS( $farmname, $service, "cookieins-name", $json_obj->{ cookiename } );
 			}
 
 			if ( exists ( $json_obj->{ cookiepath } ) )
 			{
-				#~ &zenlog("farmname:$farmname service:$service cookiepath:$json_obj->{ cookiepath }");
 				&setFarmVS( $farmname, $service, "cookieins-path", $json_obj->{ cookiepath } );
 			}
 
@@ -629,9 +626,11 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			$json_obj->{ deftcpport } += 0;
 			
 			my $old_deftcpport = &getGSLBFarmVS ($farmname,$service, 'dpc');
+			require Zevenet::Farm::Config;
 			&setFarmVS( $farmname, $service, "dpc", $json_obj->{ deftcpport } );
 			
 			# Update farmguardian
+			require Zevenet::Farm::GSLB::FarmGuardian;
 			my ( $fgTime, $fgScript ) = &getGSLBFarmGuardianParams( $farmname, $service );
 			
 			# Changing farm guardian port check
@@ -642,7 +641,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			
 			if ( $? eq 0 )
 			{
-				&runFarmReload( $farmname );
+				require Zevenet::Farm::GSLB::Config;
+				&runGSLBFarmReload( $farmname );
 			}
 			else
 			{
@@ -660,6 +660,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 	# Print params
 	if ( $error ne "true" )
 	{
+		require Zevenet::Farm::Base;
+
 		&zenlog(
 			"ZAPI success, some parameters have been changed in service $service in farm $farmname."
 		);
@@ -672,6 +674,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
+			require Zevenet::Farm::Action;
+
 			&setFarmRestart( $farmname );
 			$body->{ status } = 'needed restart';
 			$body->{ info } = "There're changes that need to be applied, stop and start farm to apply them!";
@@ -702,11 +706,13 @@ sub move_services
 {
 	my ( $json_obj, $farmname, $service ) = @_;
 
-	my $errormsg;
+	require Zevenet::Farm::HTTP::Service;
+
 	my @services = &getFarmServices( $farmname );
 	my $services_num = scalar @services;
 	my $description = "Move service";
 	my $moveservice;
+	my $errormsg;
 
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 ) {
@@ -767,6 +773,7 @@ sub move_services
 				if ( !$errormsg )
 				{
 					# stopping farm
+					require Zevenet::Farm::Base;
 					my $farm_status = &getFarmStatus( $farmname );
 					if ( $farm_status eq 'up' )
 					{
@@ -811,7 +818,8 @@ sub move_services
 
 							if ( &getFarmStatus( $farmname ) eq 'up' )
 							{
-								&runFarmReload( $farmname );
+								&runGSLBFarmReload( $farmname );
+								require Zevenet::Cluster;
 								&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 							}
 
@@ -837,23 +845,6 @@ sub delete_service # ( $farmname, $service )
 {
 	my ( $farmname, $service ) = @_;
 
-	if ( $farmname =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to delete the service $service in farm $farmname, invalid farm name."
-		);
-
-		# Error
-		my $errormsg = "Invalid farm name, please insert a valid value.";
-		my $body = {
-					 description => "Delete service",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
@@ -868,34 +859,18 @@ sub delete_service # ( $farmname, $service )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( $service =~ /^$/ )
-	{
-		&zenlog(
-			"ZAPI error, trying to delete the service $service in farm $farmname, invalid service name."
-		);
-
-		# Error
-		my $errormsg = "Invalid service name, please insert a valid value.";
-		
-		my $body = {
-					   description => "Delete service",
-					   error       => "true",
-					   message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-
 	my $type = &getFarmType( $farmname );
 	
 	# Check that the provided service is configured in the farm
 	my @services;
 	if ($type eq "gslb")
 	{
+		require Zevenet::Farm::GSLB::Service;
 		@services = &getGSLBFarmServices($farmname);
 	}
 	else
 	{
+		require Zevenet::Farm::HTTP::Service;
 		@services = &getFarmServices($farmname);
 	}
 
@@ -961,8 +936,12 @@ sub delete_service # ( $farmname, $service )
 					 message     => $message
 		};
 
+		require Zevenet::Farm::Base;
+
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
+			require Zevenet::Farm::Action;
+
 			$body->{ status } = "needed restart";
 			&setFarmRestart( $farmname );
 		}

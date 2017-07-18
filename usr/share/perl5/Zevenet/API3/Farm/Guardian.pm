@@ -29,6 +29,8 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
+	require Zevenet::Farm::Core;
+
 	my $description = "Modify farm guardian";
 	my $error       = "false";
 	my $needRestart;
@@ -38,6 +40,9 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	delete $json_obj->{'service'};
 
 	my @allowParams = ( "fgtimecheck", "fgscript", "fglog", "fgenabled" );
+
+	require Zevenet::Farm::GSLB::Service;
+	require Zevenet::Farm::HTTP::Service;
 	
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
@@ -61,14 +66,14 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 		&httpResponse( { code => 400, body => $body } );
 	}
 	# validate exist service for http(s) farms
-	elsif ( ! grep( /^$service$/, &getFarmServices( $farmname ) ) && $type =~ /(?:http|https)/ )
+	elsif ( $type =~ /(?:http|https)/ && ! grep( /^$service$/, &getFarmServices( $farmname ) ) )
 	{
 		$errormsg = "Invalid service name, please insert a valid value.";
 		my $body = { description => $description, error       => "true", message     => $errormsg };
 		&httpResponse( { code => 404, body => $body } );
 	}
 	# validate exist service for gslb farms
-	elsif ( ! grep( /^$service$/, &getGSLBFarmServices( $farmname ) ) && $type =~ /gslb/ )
+	elsif ( $type =~ /gslb/ && ! grep( /^$service$/, &getGSLBFarmServices( $farmname ) ) )
 	{
 		$errormsg = "Invalid service name, please insert a valid value.";
 		my $body = { description => $description, error       => "true", message     => $errormsg };
@@ -112,6 +117,8 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 				# Change check script
 				if ( exists $json_obj->{ fgscript } ) 
 				{
+					require Zevenet::Farm::GSLB::FarmGuardian;
+
 					if ( &setGSLBFarmGuardianParams( $farmname, $service, 'cmd', $json_obj->{ fgscript } ) == -1 )
 					{
 						$errormsg = "error, trying to modify farm guardian script in farm $farmname, service $service";
@@ -119,6 +126,8 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 				}
 
 				# local variables
+				require Zevenet::Farm::GSLB::FarmGuardian;
+
 				my $fgStatus = &getGSLBFarmFGStatus( $farmname, $service );
 				my ( $fgTime, $fgCmd ) = &getGSLBFarmGuardianParams( $farmname, $service );
 
@@ -164,6 +173,8 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 		# https(s) and l4xnat
 		else
 		{
+			require Zevenet::FarmGuardian;
+
 			my @fgconfig;
 	
 			if ( $type eq "l4xnat" )
@@ -174,13 +185,17 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 			{
 				@fgconfig = &getFarmGuardianConf( $farmname, $service );
 			}
+
 			my $timetocheck  = $fgconfig[1] + 0;
 			$timetocheck = 5 if ( ! $timetocheck );
+
 			my $check_script = $fgconfig[2];
 			$check_script =~ s/\n//g;
 			$check_script =~ s/\"/\'/g;
+
 			my $usefarmguardian = $fgconfig[3];
 			$usefarmguardian =~ s/\n//g;
+
 			my $farmguardianlog = $fgconfig[4];
 
 			if ( exists ( $json_obj->{ fgtimecheck } ) )
@@ -188,14 +203,18 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 				$timetocheck = $json_obj->{ fgtimecheck };
 				$timetocheck = $timetocheck + 0;
 			}
+
 			if ( exists ( $json_obj->{ fgscript } ) )
 			{
-				$check_script = uri_unescape( $json_obj->{ fgscript } );
+				# FIXME: Make safe script string
+				$check_script = $json_obj->{ fgscript };
 			}
+
 			if ( exists ( $json_obj->{ fgenabled } ) )
 			{
 				$usefarmguardian = $json_obj->{ fgenabled };
 			}
+
 			if ( exists ( $json_obj->{ fglog } ) )
 			{
 				$farmguardianlog = $json_obj->{ fglog };
@@ -206,10 +225,12 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 				&runFarmGuardianStop( $farmname, "" );
 				&runFarmGuardianRemove( $farmname, "" );
 				my $status =
-				&runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
-										$usefarmguardian, $farmguardianlog, "" );
+				  &runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
+										  $usefarmguardian, $farmguardianlog, "" );
 				if ( $status != -1 )
 				{
+					require Zevenet::Farm::Base;
+
 					# run farmguardian, if the farm is running
 					if ( &getFarmStatus( $farmname ) eq 'up' )
 					{
@@ -255,11 +276,15 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 		$errormsg = "Success, some parameters have been changed in farm guardian in farm $farmname.";
 		my $body = { description => $description, params =>$json_obj, message     => $errormsg };
 
-			if ( $type eq "gslb" && &getFarmStatus( $farmname ) eq 'up' )
-			{
-				&setFarmRestart( $farmname );
-				$body->{ status } = 'needed restart';
-			}
+		require Zevenet::Farm::Base;
+
+		if ( $type eq "gslb" && &getFarmStatus( $farmname ) eq 'up' )
+		{
+			require Zevenet::Farm::Action;
+
+			&setFarmRestart( $farmname );
+			$body->{ status } = 'needed restart';
+		}
 
 		&httpResponse( { code => 200, body => $body } );
 	}
