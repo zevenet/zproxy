@@ -29,16 +29,15 @@ my $configdir = &getGlobalConfiguration('configdir');
 Function: _runHTTPFarmStart
 
 	Run a HTTP farm
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
-	
+
 FIXME: 
 	Control error if fail when restore backend status
-	
 =cut
 sub _runHTTPFarmStart    # ($farm_name)
 {
@@ -63,6 +62,8 @@ sub _runHTTPFarmStart    # ($farm_name)
 
 	if ( $status == 0 )
 	{
+		require Zevenet::Farm::HTTP::Backend;
+
 		# set backend at status before that the farm stopped
 		&setFarmHttpBackendStatus( $farm_name );
 	}
@@ -78,17 +79,17 @@ sub _runHTTPFarmStart    # ($farm_name)
 Function: _runHTTPFarmStop
 
 	Stop a HTTP farm
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
-		
 =cut
 sub _runHTTPFarmStop    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
+
 	my $status = -1;
 
 	&runFarmGuardianStop( $farm_name, "" );
@@ -121,14 +122,13 @@ sub _runHTTPFarmStop    # ($farm_name)
 Function: setHTTPNewFarmName
 
 	Function that renames a farm. Before call this function, stop the farm.
-	
+
 Parameters:
 	farmname - Farm name
 	newfarmname - New farm name
 
 Returns:
 	Integer - return 0 on success or -1 on failure
-		
 =cut
 sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 {
@@ -163,7 +163,7 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 	{
 		if ( -e "$farm_filename" )
 		{
-			use Tie::File;
+			require Tie::File;
 			tie my @configfile, 'Tie::File', "$farm_filename";
 
 			# Lines to change: 

@@ -55,6 +55,7 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 	}
 
 	#check the correct string in the service
+	require Zevenet::Farm::Config;
 	my $newservice = &checkFarmnameOK( $service );
 	if ( $newservice ne 0 )
 	{
@@ -188,6 +189,8 @@ sub deleteFarmService    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
 
+	require Zevenet::Farm::Config; # getFarmVS
+
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $sw            = 0;
 	my $output        = -1;
@@ -207,6 +210,7 @@ sub deleteFarmService    # ($farm_name,$service)
 	tie my @fileconf, 'Tie::File', "$configdir/$farm_filename";
 
 	# Stop FG service
+	require Zevenet::FarmGuardian;
 	&runFarmGuardianStop( $farm_name, $service );
 	&runFarmGuardianRemove( $farm_name, $service );
 	unlink "$configdir/$farm_name\_$service\_guardian.conf";
@@ -283,12 +287,16 @@ FIXME:
 sub getFarmServices
 {
 	my ( $farm_name ) = @_;
-	my @output;
-	my $farm_filename = &getFarmFile( $farm_name );
 
-	open FR, "<$configdir\/$farm_filename";
-	my @file = <FR>;
+	require Zevenet::Farm::Core;
+
+	my $farm_filename = &getFarmFile( $farm_name );
 	my $pos  = 0;
+	my @output;
+
+	open my $fh, "<$configdir\/$farm_filename";
+	my @file = <$fh>;
+	close $fh;
 
 	foreach my $line ( @file )
 	{
@@ -593,6 +601,8 @@ sub getHttpFarmService
 		$httpsbe = "false";
 	}
 
+	require Zevenet::FarmGuardian;
+
 	my @fgconfig  = &getFarmGuardianConf( $farmname, $service );
 	my $fgttcheck = $fgconfig[1];
 	my $fgscript  = $fgconfig[2];
@@ -613,6 +623,8 @@ sub getHttpFarmService
 	my $out_ba     = [];
 	my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
 	my @be         = split ( "\n", $backendsvs );
+
+	require Zevenet::Farm::Backend::Maintenance;
 
 	foreach my $subl ( @be )
 	{
@@ -763,7 +775,9 @@ sub getHTTPServiceStruct
 			{
 				$httpsbe = "false";
 			}
-	
+
+			require Zevenet::FarmGuardian;
+
 			my @fgconfig  = &getFarmGuardianConf( $farmname, $s );
 			my $fgttcheck = $fgconfig[1];
 			my $fgscript  = $fgconfig[2];
@@ -786,6 +800,8 @@ sub getHTTPServiceStruct
 	
 			foreach my $subl ( @be )
 			{
+				require Zevenet::Farm::Backend::Maintenance;
+
 				my @subbe       = split ( "\ ", $subl );
 				my $id          = $subbe[1] + 0;
 				my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $s );
