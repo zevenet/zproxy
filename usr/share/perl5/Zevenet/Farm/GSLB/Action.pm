@@ -29,7 +29,7 @@ my $configdir = &getGlobalConfiguration('configdir');
 Function: _runGSLBFarmStart
 
 	Start a gslb farm rutine
-	
+
 Parameters:
 	farmname - Farm name
 	writeconf - If this param has the value "true" in config file will be saved the current status
@@ -83,6 +83,8 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 	my $exec = &getGSLBStartCommand( $fname );
 
 	&zenlog( "running $exec" );
+
+	require Zevenet::System;
 	zsystem( "$exec > /dev/null 2>&1" );
 
 	$output = $?;
@@ -131,7 +133,7 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 
 	&zenlog( "running 'Stop write $writeconf' for $fname farm $type" );
 
-	my $checkfarm = &getFarmConfigIsOK( $fname );
+	my $checkfarm = &getGSLBFarmConfigIsOK( $fname );
 	if ( $checkfarm == 0 )
 	{
 		if ( $writeconf eq "true" )
@@ -152,6 +154,8 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 		}
 		my $exec    = &getGSLBStopCommand( $fname );
 		my $pidfile = &getGSLBFarmPidFile( $fname );
+
+		require Zevenet::System;
 		zsystem( "$exec > /dev/null 2>&1" );
 
 		#$exec returns 0 even when gslb stop fails, checked, so force TERM

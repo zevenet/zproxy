@@ -183,10 +183,12 @@ sub setGSLBFarmDeleteService    # ($farm_name,$service)
 			untie @config_file;
 		}
 
+		require Zevenet::Farm::GSLB::FarmGuardian;
 		&setGSLBDeleteFarmGuardian( $fname, $svice );
 
 		# Delete port configuration from config file
-		if ( !getCheckPort( $fname, $srv_port ) )
+		require Zevenet::Farm::GSLB::Validate;
+		if ( !getGSLBCheckPort( $fname, $srv_port ) )
 		{
 			$output = &setGSLBRemoveTcpPort( $fname, $srv_port );
 		}
@@ -217,6 +219,8 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 {
 	my ( $fname, $svice, $alg ) = @_;
 
+	require Zevenet::Farm::GSLB::Service;
+
 	my $output = -1;
 	my $ftype  = &getFarmType( $fname );
 	my $gsalg  = "simplefo";
@@ -232,7 +236,10 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 			$gsalg = "simplefo";
 		}
 	}
-	if ( grep ( /^$svice$/, &getFarmServices( $fname ) ) )
+
+	require Zevenet::Farm::HTTP::Service;
+	zenlog( "Services: " . &getGSLBFarmServices( $fname ) );
+	if ( grep ( /^$svice$/, &getGSLBFarmServices( $fname ) ) )
 	{
 		$output = -1;
 	}
@@ -330,6 +337,8 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 				}
 			}
 			untie @fileconf;
+
+			require Zevenet::Farm::Config;
 			&setFarmVS( $fname, $svice, "dpc", "80" );
 		}
 	}
@@ -539,11 +548,16 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 			}
 		}
 		untie @fileconf;
-		&setFarmZoneSerial( $fname, $svice );
+
+		require Zevenet::Farm::GSLB::Zone;
+		&setGSLBFarmZoneSerial( $fname, $svice );
 	}
 
 	if ( $tag eq "dpc" )
 	{
+		require Zevenet::Farm::GSLB::Validate;
+
+		my $existPortFlag = &getGSLBCheckPort( $fname, $stri );
 		my $actualPort;
 		my $srvConf;
 		my @srvCp;
@@ -552,7 +566,6 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 		my $firstIndOld;
 		my $offsetIndOld;
 		my $newPortFlag;
-		my $existPortFlag = &getCheckPort( $fname, $stri );
 		my $found         = 0;
 		my $existFG       = 0;
 		my $newTcp =
@@ -615,7 +628,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 
 		if ( $output eq "0" )
 		{
-			my $srvAsocFlag = &getCheckPort( $fname, $actualPort );
+			my $srvAsocFlag = &getGSLBCheckPort( $fname, $actualPort );
 			my $found       = 0;
 			my $index       = 1;
 

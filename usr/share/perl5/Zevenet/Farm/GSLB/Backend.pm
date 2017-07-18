@@ -51,13 +51,13 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 	my $line;
 	my $index      = 0;
 	my $pluginfile = "";
-	use Tie::File;
 	my $found;
-	
+
 	# this backend is used if the round robin service has not backends. This one need to have one backend almost.
 	my $default_ip = '127.0.0.1';
 	my $flagNoDel;
 	my @backends = split ( "\n", &getFarmVS( $fname, $srv, "backends" ) );
+
 	if ( scalar @backends == 1 )
 	{
 		# replace backend and no delete it
@@ -67,6 +67,9 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 	#Find the plugin file
 	opendir ( DIR, "$configdir\/$ffile\/etc\/plugins\/" );
 	my @pluginlist = readdir ( DIR );
+
+	require Tie::File;
+
 	foreach my $plugin ( @pluginlist )
 	{
 		tie @fileconf, 'Tie::File', "$configdir\/$ffile\/etc\/plugins\/$plugin";
@@ -79,6 +82,7 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 	closedir ( DIR );
 
 	tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
+
 	foreach $line ( @fileconf )
 	{
 		if ( $line =~ /^\t$srv => / )
@@ -116,7 +120,6 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 		$index++;
 	}
 	untie @fileconf;
-	$output = $output + $?;
 
 	return $output;
 }
@@ -130,11 +133,11 @@ Parameters:
 	farmname - Farm name
 
 Returns:
-	Integer - Error code: 0 on success or different of 0 on failure
+	none - No returned value.
 	
 BUG:
 	This function has a bad name and is used in wrong way
-	It is duplicated with "remFarmZoneResource"
+	It is duplicated with "remGSLBFarmZoneResource"
 	
 =cut
 sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
@@ -142,10 +145,9 @@ sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
 	my ( $ids, $farm_name, $service ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
 	my $index         = 0;
 
-	use Tie::File;
+	require Tie::File;
 	tie my @configfile, 'Tie::File', "$configdir/$farm_filename/etc/zones/$service";
 
 	foreach my $line ( @configfile )
@@ -161,10 +163,8 @@ sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
 		}
 		$index++;
 	}
-	untie @configfile;
-	$output = $?;
 
-	return $output;
+	untie @configfile;
 }
 
 =begin nd
@@ -180,14 +180,13 @@ Parameters:
 	ip - Backend IP
 
 Returns:
-	Integer - Error code: 0 on success or -1 on failure
+	none - No returned value.
 
 =cut
 sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 {
 	my ( $fname, $srv, $lb, $id, $ipaddress ) = @_;
 
-	my $output = 0;
 	my $ftype  = &getFarmType( $fname );
 	my $ffile  = &getFarmFile( $fname );
 
@@ -198,11 +197,13 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 	my $index      = 0;
 	my $idx        = 0;
 	my $pluginfile = "";
-	use Tie::File;
+
+	require Tie::File;
 
 	#Find the plugin file
 	opendir ( DIR, "$configdir\/$ffile\/etc\/plugins\/" );
 	my @pluginlist = readdir ( DIR );
+
 	foreach my $plugin ( @pluginlist )
 	{
 		tie @fileconf, 'Tie::File', "$configdir\/$ffile\/etc\/plugins\/$plugin";
@@ -214,6 +215,7 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 	}
 	closedir ( DIR );
 	tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
+
 	foreach $line ( @fileconf )
 	{
 		if ( $line =~ /^\t$srv => / )
@@ -268,10 +270,8 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 		}
 		$index++;
 	}
-	untie @fileconf;
-	$output = $?;
 
-	return $output;
+	untie @fileconf;
 }
 
 1;

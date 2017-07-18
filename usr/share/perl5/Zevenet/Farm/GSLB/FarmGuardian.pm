@@ -188,14 +188,16 @@ FIXME:
 sub getGSLBFarmGuardianParams # ( farmName, $service )
 {
 	my ( $fname, $service ) = @_;
-	my $ftype = &getFarmType( $fname );
 
+	require Zevenet::Farm::Config;
+
+	my $port = &getFarmVS( $fname, $service, "dpc" );
+	my $ftype = &getFarmType( $fname );
 	my $cmd;
 	my $time;
 	my $flagSvc = 0;
 
-	my $port = &getFarmVS( $fname, $service, "dpc" );
-
+	require Tie::File;
 	tie my @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
 
 	foreach my $line ( @file )

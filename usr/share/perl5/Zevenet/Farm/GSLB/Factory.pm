@@ -29,7 +29,7 @@ my $configdir = &getGlobalConfiguration('configdir');
 Function: runGSLBFarmCreate
 
 	Create a gslb farm
-	
+
 Parameters:
 	vip - Virtual IP
 	port - Virtual port
@@ -37,7 +37,6 @@ Parameters:
 
 Returns:
 	Integer - Error code: 0 on success or different of 0 on failure
-	
 =cut
 sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 {

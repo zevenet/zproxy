@@ -56,7 +56,7 @@ sub getGSLBFarmConfigIsOK    # ($farm_name)
 }
 
 =begin nd
-Function: getCheckPort
+Function: getGSLBCheckPort
 
 	This function checks if some service uses the tcp default check port
 
@@ -68,21 +68,20 @@ Returns:
 	Integer - Number of services that are using the port
                
 =cut
-sub getCheckPort
+sub getGSLBCheckPort
 {
 	my ( $fname, $checkPort ) = @_;
 
 	my $ftype        = &getFarmType( $fname );
 	my $servicePorts = 0;
 
-	use Tie::File;
+	require Tie::File;
 
 	# select all ports used in plugins
 	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
-
-	#~ opendir ( DIR, "plugins\/" );
 	my @pluginlist = readdir ( DIR );
 	closedir ( DIR );
+
 	foreach my $plugin ( @pluginlist )
 	{
 		if ( $plugin !~ /^\./ )
@@ -99,6 +98,7 @@ sub getCheckPort
 			untie @fileconf;
 		}
 	}
+
 	return $servicePorts;
 }
 
@@ -112,10 +112,9 @@ Parameters:
 
 Returns:
 	Scalar - 0 on successful or string with error on failure
-	
+
 FIXME:
 	Rename with same name used for http farms: getGLSBFarmConfigIsOK
-	
 =cut
 sub getGSLBCheckConf	#  ( $farmname )
 {
@@ -124,6 +123,7 @@ sub getGSLBCheckConf	#  ( $farmname )
 	my $gdnsd = &getGlobalConfiguration( 'gdnsd' );
 	my $errormsg = system (
 		   "$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf > /dev/null 2>&1" );
+
 	if ( $errormsg )
 	{
 		my @run =
@@ -138,7 +138,7 @@ sub getGSLBCheckConf	#  ( $farmname )
 			my $fileZone = "$configdir\/$farmname\_gslb.cfg/etc/zones/$1";
 			my $numLine  = $2 - 1;
 
-			use Tie::File;
+			require Tie::File;
 			tie my @filelines, 'Tie::File', $fileZone;
 			$errormsg = "The resource $filelines[$numLine] gslb farm break the configuration. Please check the configuration";
 			untie @filelines;
