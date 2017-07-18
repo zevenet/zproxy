@@ -81,9 +81,12 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 	untie @cron_file;
 
 	# Apply changes online
+	require Zevenet::Farm::Datalink::Config;
+	require Zevenet::Farm::Backend;
+	require Zevenet::Farm::Config;
 
 	# Set default uplinks as gateways
-	my $iface     = &getFarmInterface( $farm_name );
+	my $iface     = &getDatalinkFarmInterface( $farm_name );
 	my $ip_bin    = &getGlobalConfiguration('ip_bin');
 	my @eject     = `$ip_bin route del default table table_$iface 2> /dev/null`;
 	my @servers   = &getFarmServers( $farm_name );
@@ -147,10 +150,14 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 	}
 
 	# Set policies to the local network
+	require Zevenet::Net::Util;
+
 	my $ip = &iponif( $iface );
 
 	if ( $ip && $ip =~ /\./ )
 	{
+		use Net::IPv4Addr qw(ipv4_network);
+
 		my $ipmask = &maskonif( $iface );
 		my ( $net, $mask ) = ipv4_network( "$ip / $ipmask" );
 		&zenlog( "running $ip_bin rule add from $net/$mask lookup table_$iface" );
@@ -220,7 +227,7 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 	# Apply changes online
 	if ( $status != -1 )
 	{
-		my $iface = &getFarmInterface( $farm_name );
+		my $iface = &getDatalinkFarmInterface( $farm_name );
 		my $ip_bin = &getGlobalConfiguration('ip_bin');
 
 		# Disable policies to the local network

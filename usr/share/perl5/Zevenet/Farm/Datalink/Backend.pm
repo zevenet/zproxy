@@ -135,8 +135,10 @@ sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 	untie @contents;
 
 	# Apply changes online
+	require Zevenet::Farm::Base;
 	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
+		require Zevenet::Farm::Action;
 		&runFarmStop( $farm_name, "true" );
 		&runFarmStart( $farm_name, "true" );
 	}
@@ -189,6 +191,8 @@ sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 	untie @contents;
 
 	# Apply changes online
+	require Zevenet::Farm::Base;
+
 	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
 		&runFarmStop( $farm_name, "true" );
