@@ -149,7 +149,7 @@ sub getDatalinkFarmBootStatus    # ($farm_name)
 }
 
 =begin nd
-Function: getFarmInterface
+Function: getDatalinkFarmInterface
 
 	 Get network physical interface used by the farm vip
 	 
@@ -160,7 +160,7 @@ Returns:
 	scalar - return NIC inteface or -1 on failure
 
 =cut
-sub getFarmInterface    # ($farm_name)
+sub getDatalinkFarmInterface    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
