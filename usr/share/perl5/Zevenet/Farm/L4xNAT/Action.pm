@@ -155,6 +155,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	  if &debug;
 
 	# initialize a farm struct
+	require Zevenet::Farm::L4xNAT::Config;
 	my $farm = &getL4FarmStruct( $farm_name );
 
 	if ( $writeconf eq "true" )
@@ -203,7 +204,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
-		&zenlog( "_runL4FarmStart :: server:$server" ) if &debug;
+		&zenlog( "_runL4FarmStart :: server:$server->{id}" ) if &debug;
 
 		my $backend_rules;
 

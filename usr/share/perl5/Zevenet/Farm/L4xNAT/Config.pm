@@ -959,7 +959,7 @@ Returns:
 =cut
 sub getL4FarmBootStatus    # ($farm_name)
 {
-	my $farm_name = shift;
+	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = "down";

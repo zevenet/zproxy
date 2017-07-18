@@ -59,6 +59,8 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	my $i             = 0;                            # server ID
 	my $l             = 0;                            # line index
 
+	require Zevenet::Farm::L4xNAT::Config;
+
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid     = &getFarmGuardianPid( $farm_name );
@@ -167,6 +169,8 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 	my $found_server = 'false';
 	my $i            = 0;
 	my $l            = 0;
+
+	require Zevenet::Farm::L4xNAT::Config;
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
@@ -302,6 +306,8 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 {
 	my ( $farm_name, $server_id, $status ) = @_;
 
+	require Zevenet::Farm::L4xNAT::Config;
+
 	my %farm = %{ &getL4FarmStruct( $farm_name ) };
 
 	my $output   = 0;
@@ -324,7 +330,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	{
 		if ( $fg_enabled eq 'true' && !$stopping_fg )
 		{
-			if ( $0 !~ /farmguardian/ )
+			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
 			{
 				kill 'STOP' => $fg_pid;
 			}
@@ -380,7 +386,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 
 		if ( $fg_enabled eq 'true' && !$stopping_fg )
 		{
-			if ( $0 !~ /farmguardian/ )
+			if ( $0 !~ /farmguardian/ && $fg_pid > 0 )
 			{
 				kill 'CONT' => $fg_pid;
 			}
