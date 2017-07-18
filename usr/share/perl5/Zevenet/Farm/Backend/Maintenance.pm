@@ -27,7 +27,7 @@ use strict;
 Function: getFarmBackendMaintenance
 
 	Function that check if a backend on a farm is on maintenance mode
-	
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
@@ -35,7 +35,6 @@ Parameters:
 
 Returns:
 	scalar - if backend is in maintenance mode, return 0 else return -1
-		
 =cut
 sub getFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
@@ -46,10 +45,12 @@ sub getFarmBackendMaintenance    # ($farm_name,$backend,$service)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Backend;
 		$output = &getHTTPFarmBackendMaintenance( $farm_name, $backend, $service );
 	}
 	elsif ( $farm_type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Backend;
 		$output = &getL4FarmBackendMaintenance( $farm_name, $backend );
 	}
 
@@ -60,7 +61,7 @@ sub getFarmBackendMaintenance    # ($farm_name,$backend,$service)
 Function: setFarmBackendMaintenance
 
 	Function that enable the maintenance mode for backend
-	
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
@@ -68,7 +69,6 @@ Parameters:
 
 Returns:
 	Integer - return 0 on success or -1 on failure
-		
 =cut
 sub setFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
@@ -79,10 +79,12 @@ sub setFarmBackendMaintenance    # ($farm_name,$backend,$service)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Backend;
 		$output = &setHTTPFarmBackendMaintenance( $farm_name, $backend, $service );
 	}
 	elsif ( $farm_type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Backend;
 		$output = &setL4FarmBackendMaintenance( $farm_name, $backend );
 	}
 
@@ -93,7 +95,7 @@ sub setFarmBackendMaintenance    # ($farm_name,$backend,$service)
 Function: setFarmBackendNoMaintenance
 
 	Function that disable the maintenance mode for backend
-	
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
@@ -101,7 +103,6 @@ Parameters:
 
 Returns:
 	Integer - return 0 on success or -1 on failure
-		
 =cut
 sub setFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 {
@@ -112,10 +113,12 @@ sub setFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Backend;
 		$output = &setHTTPFarmBackendNoMaintenance( $farm_name, $backend, $service );
 	}
 	elsif ( $farm_type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Backend;
 		$output = &setL4FarmBackendNoMaintenance( $farm_name, $backend );
 	}
 
