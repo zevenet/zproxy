@@ -22,6 +22,8 @@
 
 use strict;
 
+use Zevenet::Farm::Core;
+
 # POST /farms/<farmname>/actions Set an action in a Farm
 sub farm_actions # ( $json_obj, $farmname )
 {
@@ -32,8 +34,6 @@ sub farm_actions # ( $json_obj, $farmname )
 	my $action;
 
 	# calidate FARM NAME
-	require Zevenet::Farm::Core;
-
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
@@ -90,6 +90,7 @@ sub farm_actions # ( $json_obj, $farmname )
 			&zenlog(
 					  "ZAPI success, the action stop has been established in farm $farmname." );
 
+			require Zevenet::Cluster;
 			&runZClusterRemoteManager( 'farm', 'stop', $farmname );
 		}
 	}
@@ -116,6 +117,7 @@ sub farm_actions # ( $json_obj, $farmname )
 			&zenlog(
 					 "ZAPI success, the action start has been established in farm $farmname." );
 
+			require Zevenet::Cluster;
 			&runZClusterRemoteManager( 'farm', 'start', $farmname );
 		}
 
@@ -222,6 +224,8 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 
 	# validate SERVICE
 	{
+		require Zevenet::Farm::HTTP::Service;
+
 		my @services = &getFarmServices($farmname);
 		my $found_service;
 
@@ -251,6 +255,8 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	# validate BACKEND
 	my $be;
 	{
+		require Zevenet::Farm::Config;
+
 		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
 		my @be_list = split ( "\n", $backendsvs );
 
@@ -287,6 +293,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	}
 
 	# Not allow modificate the maintenance status if the farm needs to restart
+	require Zevenet::Farm::Base;
 	if ( &getFarmLock ($farmname) != -1 )
 	{
 		# Error
@@ -299,6 +306,8 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 
 		&httpResponse({ code => 400, body => $body });
 	}
+
+	require Zevenet::Farm::Backend::Maintenance;
 
 	# validate STATUS
 	if ( $json_obj->{ action } eq "maintenance" )
@@ -360,6 +369,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
+		require Zevenet::Cluster;
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 	}
 
@@ -403,9 +413,9 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	#~ my $l4_farm = &getL4FarmStruct( $farmname );
-
 	# validate BACKEND
+	require Zevenet::Farm::Backend;
+
 	my @backends = &getFarmServers( $farmname );
 	my $backend_line = $backends[$backend_id];
 
@@ -482,6 +492,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
+		require require Zevenet::Cluster;
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 	}
 
