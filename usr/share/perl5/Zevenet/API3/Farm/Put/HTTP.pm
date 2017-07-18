@@ -27,7 +27,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
-	my $zapierror;
+
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;
 	require Zevenet::IPDS;
@@ -42,6 +42,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	my $flag         = "false";
 
 	my $status;
+	my $zapierror;
 	
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
