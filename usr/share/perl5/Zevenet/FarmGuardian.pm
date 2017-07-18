@@ -221,6 +221,8 @@ sub runFarmGuardianStart    # ($fname,$svice)
 
 	if ( $ftype =~ /http/ && $svice eq "" )
 	{
+		require Zevenet::Farm::Config;
+
 		# Iterate over every farm service
 		my $services = &getFarmVS( $fname, "", "" );
 		my @servs = split ( " ", $services );
@@ -235,6 +237,8 @@ sub runFarmGuardianStart    # ($fname,$svice)
 		my $farmguardian = &getGlobalConfiguration('farmguardian');
 		my $fg_cmd = "$farmguardian $fname $sv $log";
 		&zenlog( "running $fg_cmd" );
+
+		require Zevenet::System;
 		&zsystem( "$fg_cmd > /dev/null &" );
 		$status = $?;
 	}
@@ -257,10 +261,7 @@ Parameters:
 	svice - Service name. Only apply if the farm profile has services. Leave undefined for farms without services.
 
 Returns:
-	Integer - BUG. Non-related to stopping farmguardian service. Probably zero.
-
-Bugs:
-	The kill function does not have an ERRNO output in $?.
+	Integer - 0 on success, or greater than 0 on failure.
 
 See Also:
 	zenloadbalancer, <runFarmStop>, <setNewFarmName>, zapi/v3/farm_guardian.cgi, <runFarmGuardianRemove>
@@ -268,6 +269,7 @@ See Also:
 sub runFarmGuardianStop    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
+
 	my $status = 0;
 	my $sv;
 	my $type = &getFarmType( $fname );
@@ -295,12 +297,13 @@ sub runFarmGuardianStop    # ($fname,$svice)
 		if ( $fgpid != -1 )
 		{
 			&zenlog( "running 'kill 9, $fgpid' stopping FarmGuardian $fname $svice" );
-			kill 9, $fgpid;
-			$status = $?;    # FIXME
+			my $count = kill 9, $fgpid;
+			$status = 1 unless $count;
 			unlink glob ( "/var/run/$fname\_${sv}guardian.pid" );
 
 		}
 	}
+
 	return $status;
 }
 
@@ -321,7 +324,7 @@ Parameters:
 
 Returns:
 	-1 - If ttcheck or script is not defined or empty and farmguardian is enabled.
-	unknown - BUG. After updating the farmguardian configuration.
+	 0 - If farmguardian configuration was created.
 
 Bugs:
 	The function 'print' does not write the variable $?.
@@ -333,6 +336,8 @@ sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 {
 	my ( $fname, $ttcheck, $script, $usefg, $fglog, $svice ) = @_;
 
+	&zenlog( "runFarmGuardianCreate( farm: $fname, interval: $ttcheck, cmd: $script, log: $fglog, enabled: $usefg )" );
+
 	my $fgfile = &getFarmGuardianFile( $fname, $svice );
 	my $output = -1;
 
@@ -342,8 +347,8 @@ sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 		{
 			$svice = "${svice}_";
 		}
-		$fgfile = "${fname}_${svice}guardian.conf";
 
+		$fgfile = "${fname}_${svice}guardian.conf";
 		&zenlog(
 			  "running 'Create FarmGuardian $ttcheck $script $usefg $fglog' for $fname farm"
 		);
@@ -354,10 +359,11 @@ sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 		return $output;
 	}
 
-	open FO, ">$configdir/$fgfile";
-	print FO "$fname\:\:\:$ttcheck\:\:\:$script\:\:\:$usefg\:\:\:$fglog\n";
-	$output = $?;
-	close FO;
+	open my $fh, '>', "$configdir/$fgfile";
+	print $fh "$fname\:\:\:$ttcheck\:\:\:$script\:\:\:$usefg\:\:\:$fglog\n";
+	close $fh;
+
+	$output = 0;
 
 	return $output;
 }
@@ -384,6 +390,7 @@ See Also:
 sub runFarmGuardianRemove    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
+
 	my $type = &getFarmType( $fname );
 	my $status = 0;
 	
@@ -406,9 +413,11 @@ sub runFarmGuardianRemove    # ($fname,$svice)
 		{
 			if ( -e "$configdir\/$fname\_status.cfg" )
 			{
+				require Zevenet::Farm::Base;
 				my $portadmin = &getFarmPort( $fname );
 				my $idsv      = &getFarmVSI( $fname, $svice );
 
+				require Tie::File;
 				tie my @filelines, 'Tie::File', "$configdir\/$fname\_status.cfg";
 				
 				my @fileAux = @filelines;
@@ -433,6 +442,8 @@ sub runFarmGuardianRemove    # ($fname,$svice)
 		
 		if ( $type eq "l4xnat" )
 		{
+			require Zevenet::Farm::Backend;
+
 			my @be = &getFarmBackendStatusCtl( $fname );
 			my $i  = -1;
 		
@@ -448,11 +459,10 @@ sub runFarmGuardianRemove    # ($fname,$svice)
 		
 				if ( $backendstatus eq "fgDOWN" )
 				{
-					$status |= &setFarmBackendStatus( $fname, $i, "up" );
+					$status |= &setL4FarmBackendStatus( $fname, $i, "up" );
 				}
 			}
 		}
-	
 	}
 }
 
@@ -498,9 +508,9 @@ sub getFarmGuardianConf    # ($fname,$svice)
 	}
 
 	# read file
-	open FG, "$configdir/$fgfile";
+	open my $fh, "$configdir/$fgfile";
 	my $line;
-	while ( $line = <FG> )
+	while ( $line = <$fh> )
 	{
 		if ( $line !~ /^#/ )
 		{
@@ -508,7 +518,8 @@ sub getFarmGuardianConf    # ($fname,$svice)
 			last;
 		}
 	}
-	close FG;
+	close $fh;
+
 	my @line = split ( ":::", $lastline );
 	chomp ( @line );
 
@@ -552,9 +563,11 @@ sub getFarmGuardianPid    # ($fname,$svice)
 	if ( @files )
 	{
 		$pidfile = $files[0];
-		open FR, "$piddir/$pidfile";
-		my $fgpid = <FR>;
-		close FR;
+
+		open my $fh, '<', "$piddir/$pidfile";
+		my $fgpid = <$fh>;
+		close $fh;
+
 		return $fgpid;
 	}
 	else
