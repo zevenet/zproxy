@@ -203,6 +203,8 @@ See Also:
 #get a random available port
 sub getRandomPort    # ()
 {
+	require Zevenet::Net::Validate;
+
 	#down limit
 	my $min = "35060";
 
@@ -214,6 +216,7 @@ sub getRandomPort    # ()
 	{
 		$random_port = int ( rand ( $max - $min ) ) + $min;
 	} while ( &checkport( '127.0.0.1', $random_port ) eq 'false' );
+
 	my $check = &checkport( '127.0.0.1', $random_port );
 
 	return $random_port;
@@ -276,8 +279,10 @@ sub iponif            # ($if)
 	use IO::Socket;
 	use IO::Interface qw(:flags);
 
-	my $s = IO::Socket::INET->new( Proto => 'udp' );
+	require Zevenet::Net::Interface;
 	my @interfaces = &getInterfaceList();
+
+	my $s = IO::Socket::INET->new( Proto => 'udp' );
 	my $iponif = $s->if_addr( $if );
 
 	# fixes virtual interfaces IPs
