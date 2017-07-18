@@ -23,10 +23,6 @@
 
 use strict;
 
-use Zevenet::Farm::HTTP::Stats;
-use Zevenet::Farm::L4xNAT::Stats;
-use Zevenet::Farm::GSLB::Stats;
-
 =begin nd
 Function: getBackendEstConns
 
@@ -51,11 +47,13 @@ sub getBackendEstConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Stats;
 		@nets =
 		  &getHTTPBackendEstConns( $farm_name, $ip_backend, $port_backend, @netstat );
 	}
 	if ( $farm_type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Stats;
 		@nets = &getL4BackendEstConns( $farm_name, $ip_backend, @netstat );
 	}
 
@@ -90,16 +88,19 @@ sub getFarmEstConns    # ($farm_name,@netstat)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Stats;
 		@nets = &getHTTPFarmEstConns( $farm_name, @netstat );
 	}
 
 	if ( $farm_type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Stats;
 		@nets = &getL4FarmEstConns( $farm_name, @netstat );
 	}
 
 	if ( $farm_type eq "gslb" )
 	{
+		require Zevenet::Farm::GSLB::Stats;
 		@nets = &getGSLBFarmEstConns( $farm_name, @netstat );
 	}
 
@@ -130,11 +131,13 @@ sub getBackendSYNConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Stats;
 		@nets =
 		  &getHTTPBackendSYNConns( $farm_name, $ip_backend, $port_backend, @netstat );
 	}
 	if ( $farm_type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Stats;
 		@nets =
 		  &getL4BackendSYNConns( $farm_name, $ip_backend, $port_backend, @netstat );
 	}
@@ -164,11 +167,13 @@ sub getFarmSYNConns    # ($farm_name, @netstat)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Stats;
 		@nets = &getHTTPFarmSYNConns( $farm_name, @netstat );
 	}
 
 	if ( $farm_type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Stats;
 		@nets = &getL4FarmSYNConns( $farm_name, @netstat );
 	}
 
