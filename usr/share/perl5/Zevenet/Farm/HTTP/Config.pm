@@ -1007,10 +1007,10 @@ sub getHTTPFarmBootStatus    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = "down";
 	my $lastline;
-	my $line;
 
 	open FO, "<$configdir/$farm_filename";
-	while ( $line = <FO> )
+
+	while ( my $line = <FO> )
 	{
 		$lastline = $line;
 	}
@@ -1045,21 +1045,19 @@ sub getHTTPFarmMaxConn    # ($farm_name)
 }
 
 =begin nd
-Function: getHTTPFarmPort
+Function: getHTTPFarmSocket
 
-	Returns socket for HTTP farm
-		
+	Returns socket for HTTP farm.
+
+	This funcion is only used in farmguardian functions.
+
 Parameters:
 	farmname - Farm name
 
 Returns:
-	Integer - return socket file
-	
-FIXME:
-	This funcion is only used in farmguardian functions. The function name must be called getHTTPFarmSocket, this function dont return the port
-		
+	String - return socket file
 =cut
-sub getHTTPFarmPort       # ($farm_name)
+sub getHTTPFarmSocket       # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 

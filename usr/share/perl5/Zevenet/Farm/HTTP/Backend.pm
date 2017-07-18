@@ -338,7 +338,7 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 
 	if ( !@content )
 	{
-		@content = &getFarmBackendStatusCtl( $farm_name );
+		@content = &getHTTPFarmBackendStatusCtl( $farm_name );
 	}
 
 	foreach ( @content )
@@ -626,7 +626,7 @@ sub getHTTPFarmBackendsClients    # ($idserver,@content,$farm_name)
 
 	if ( !@content )
 	{
-		@content = &getFarmBackendStatusCtl( $farm_name );
+		@content = &getHTTPFarmBackendStatusCtl( $farm_name );
 	}
 	my $numclients = 0;
 	foreach ( @content )
@@ -665,7 +665,7 @@ sub getHTTPFarmBackendsClientsList    # ($farm_name,@content)
 
 	if ( !@content )
 	{
-		@content = &getFarmBackendStatusCtl( $farm_name );
+		@content = &getHTTPFarmBackendStatusCtl( $farm_name );
 	}
 
 	foreach ( @content )
@@ -707,6 +707,8 @@ Returns:
 sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
+
+	require Zevenet::Farm::Base;
 
 	my $output = -1;
 	
@@ -1105,8 +1107,8 @@ sub setFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 {
 	my ( $farm_name, $service, $backendid ) = @_;
 
-	my @content = &getFarmBackendStatusCtl( $farm_name );
-	my @sessions = &getFarmBackendsClientsList( $farm_name, @content );
+	my @content = &getHTTPFarmBackendStatusCtl( $farm_name );
+	my @sessions = &getHTTPFarmBackendsClientsList( $farm_name, @content );
 	my @service;
 	my $sw = 0;
 	my $serviceid;

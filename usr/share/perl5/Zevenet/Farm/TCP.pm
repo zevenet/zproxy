@@ -1413,4 +1413,57 @@ sub setTcpUdpFarmBackendNoMaintenance    # ($farm_name,$backend)
 	return $output;
 }
 
+=begin nd
+Function: getFarmPort
+
+	Returns farm port
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - port of farm or -1 on failure
+
+Bugs:
+	Only it is used by tcp farms
+	DUPLICATE function. Use "getFarmVip"
+	for http profile, return error response
+
+See Also:
+	setFarmVirtualConf
+=cut
+sub getFarmPort    # ($farm_name)
+{
+	my $farm_name = shift;
+
+	my $farm_type = &getFarmType( $farm_name );
+	my $output    = -1;
+
+	if ( $farm_type eq "http" || $farm_type eq "https" )
+	{
+		require Zevenet::Farm::HTTP::Config;
+		$output = &getHTTPFarmPort( $farm_name );
+	}
+
+	if ( $farm_type eq "l4xnat" )
+	{
+		require Zevenet::Farm::L4xNAT::Config;
+		$output = &getL4FarmVip( 'vipp', $farm_name );
+	}
+
+	if ( $farm_type eq "gslb" )
+	{
+		require Zevenet::Farm::GSLB::Config;
+		$output = &getGSLBFarmVip( 'vipp', $farm_name );
+	}
+
+	if ( $farm_type eq "datalink" )
+	{
+		require Zevenet::Farm::Datalink::Config;
+		$output = &getDatalinkFarmVip( 'vipp', $farm_name );
+	}
+
+	return $output;
+}
+
 1;

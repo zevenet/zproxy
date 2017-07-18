@@ -413,8 +413,8 @@ sub runFarmGuardianRemove    # ($fname,$svice)
 		{
 			if ( -e "$configdir\/$fname\_status.cfg" )
 			{
-				require Zevenet::Farm::Base;
-				my $portadmin = &getFarmPort( $fname );
+				require Zevenet::Farm::HTTP::Config;
+				my $portadmin = &getHTTPFarmSocket( $fname );
 				my $idsv      = &getFarmVSI( $fname, $svice );
 
 				require Tie::File;
