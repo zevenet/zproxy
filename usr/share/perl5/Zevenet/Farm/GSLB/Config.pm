@@ -23,8 +23,6 @@
 
 use strict;
 
-use Zevenet::Net;
-
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
@@ -181,7 +179,7 @@ sub getGSLBFarmVip    # ($info,$farm_name)
 }
 
 =begin nd
-Function: runFarmReload
+Function: runGSLBFarmReload
 
 	Reload zones of a gslb farm
 	
@@ -192,9 +190,11 @@ Returns:
 	Integer - Error code: 0 on success or different of 0 on failure
 
 =cut
-sub runFarmReload    # ($farm_name)
+sub runGSLBFarmReload    # ($farm_name)
 {
 	my ( $fname ) = @_;
+
+	require Zevenet::System;
 
 	my $type = &getFarmType( $fname );
 	my $output;
@@ -203,6 +203,7 @@ sub runFarmReload    # ($farm_name)
 	my $gdnsd_command = "$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones";
 
 	&zenlog( "running $gdnsd_command" );
+
 	zsystem( "$gdnsd_command >/dev/null 2>&1" );
 	$output = $?;
 	if ( $output != 0 )
@@ -217,13 +218,12 @@ sub runFarmReload    # ($farm_name)
 Function: getGSLBControlPort
 
 	Get http port where it is the gslb stats
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Integer - port on success or -1 on failure
-	
 =cut
 sub getGSLBControlPort    # ( $farm_name )
 {
@@ -232,7 +232,9 @@ sub getGSLBControlPort    # ( $farm_name )
 	my $ffile    = &getFarmFile( $farmName );
 	$ffile = "$configdir/$ffile/etc/config";
 
+	require Tie::File;
 	tie my @file, 'Tie::File', $ffile;
+
 	foreach my $line ( @file )
 	{
 		if ( $line =~ /http_port =\s*(\d+)/ )
@@ -242,6 +244,7 @@ sub getGSLBControlPort    # ( $farm_name )
 		}
 	}
 	untie @file;
+
 	return $port;
 }
 
@@ -249,24 +252,27 @@ sub getGSLBControlPort    # ( $farm_name )
 Function: setGSLBControlPort
 
 	Set http port where it is the gslb stats. This port is assigned randomly
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Integer - port on success or -1 on failure
-	
 =cut
 sub setGSLBControlPort    # ( $farm_name )
 {
 	my $farmName = shift;
+
+	require Zevenet::Net::Util;
 
 	# set random port
 	my $port  = &getRandomPort();
 	my $ffile = &getFarmFile( $farmName );
 	$ffile = "$configdir/$ffile/etc/config";
 
+	require Tie::File;
 	tie my @file, 'Tie::File', $ffile;
+
 	foreach my $line ( @file )
 	{
 		if ( $line =~ /http_port =/ )
@@ -276,6 +282,7 @@ sub setGSLBControlPort    # ( $farm_name )
 		}
 	}
 	untie @file;
+
 	return $port;
 }
 
@@ -283,16 +290,15 @@ sub setGSLBControlPort    # ( $farm_name )
 Function: setGSLBFarmBootStatus
 
 	Set status at boot zevenet
-	 
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	integer - Always return 0
-	
+
 FIXME:
 	Set a output and do error control
-
 =cut
 sub setGSLBFarmBootStatus    # ($farm_name, $status)
 {
@@ -300,10 +306,11 @@ sub setGSLBFarmBootStatus    # ($farm_name, $status)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output;
-
-	use Tie::File;
-	tie my @filelines, 'Tie::File', "$configdir\/$farm_filename\/etc\/config";
 	my $first = 1;
+
+	require Tie::File;
+	tie my @filelines, 'Tie::File', "$configdir\/$farm_filename\/etc\/config";
+
 	foreach ( @filelines )
 	{
 		if ( $first eq 1 )
@@ -329,20 +336,19 @@ sub setGSLBFarmBootStatus    # ($farm_name, $status)
 Function: setGSLBFarmStatus
 
 	Start or stop a gslb farm
-	 
+
 Parameters:
 	farmname - Farm name
 	zone - Zone name
 
 Returns:
 	Integer - Error code: 0 on success or -1 on failure
-	
+
 BUG:
 	Always return success
-	
-FIXME:
-	writeconf is obsolet parameter, always write configuration
 
+FIXME:
+	writeconf is obsolete parameter, always write configuration
 =cut
 sub setGSLBFarmStatus    # ($farm_name, $status, $writeconf)
 {
@@ -366,6 +372,7 @@ sub setGSLBFarmStatus    # ($farm_name, $status, $writeconf)
 		$command = &getGSLBStopCommand( $farm_name );
 	}
 
+	require Zevenet::System;
 	&zenlog( "setGSLBFarmStatus(): Executing $command" );
 	zsystem( "$command > /dev/null 2>&1" );
 
@@ -391,16 +398,16 @@ Parameters:
 
 Returns:	
 	Ingeter - Error code: 0 on success or -3 on failure
-
 =cut
 sub setGSLBRemoveTcpPort
 {
 	my ( $fname, $port ) = @_;
+
 	my $ffile = &getFarmFile( $fname );
 	my $found = 0;
 	my $index = 1;
 
-	use Tie::File;
+	require Tie::File;
 	tie my @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
 
 	while ( ( $fileconf[$index] !~ /^plugins => / ) && ( $found !~ 2 ) )
@@ -447,11 +454,10 @@ Parameters:
 	farmname - Farm name
 
 Returns:     
-	Integer - Error code: 0 on success or different of 0 on failure
-	
+	none - No returned value
+
 Bug:
 	The exit is not well controlled
-                
 =cut
 sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
@@ -459,12 +465,13 @@ sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 
 	my $fconf = &getFarmFile( $fname );
 	my $type  = &getFarmType( $fname );
-	my $stat  = -1;
 
 	&zenlog( "setting 'VirtualConf $vip $vipp' for $fname farm $type" );
 
 	my $index = 0;
 	my $found = 0;
+
+	require Tie::File;
 	tie my @fileconf, 'Tie::File', "$configdir/$fconf/etc/config";
 
 	foreach my $line ( @fileconf )
@@ -487,74 +494,8 @@ sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		}
 		$index++;
 	}
+
 	untie @fileconf;
-	$stat = $?;
-
-	return $stat;
-}
-
-=begin nd
-Function: dnsServiceType
-
-	[NOT USED] Translate a check (i.e. tcp_54) and a backend ip to service name
-	If the same backend is in several services, return all service names
-
-Parameters:
-	farmname - Farm name
-	ip - Backend IP
-	check - Service check. Default checks "tcp_$port" or advanced checks "$service_fg_$port"
-
-Returns:     
-	Array - List of services are using this check and backend
-	
-Bug:
-	Not used
-	
-=cut
-sub dnsServiceType    #  dnsServiceType ( $farmname, $ip, $tcp_port )
-{
-	my ( $fname, $ip, $serviceType ) = @_;
-	my $name;
-	my @serviceNames;
-	my $ftype = &getFarmType( $fname );
-	my @file;
-	my $findePort = 0;    # var aux
-
-	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
-	my @pluginlist = readdir ( DIR );
-	closedir ( DIR );
-	foreach my $plugin ( @pluginlist )
-	{
-		if ( $plugin !~ /^\./ )
-		{
-			@file = ();
-			tie @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
-
-			foreach my $line ( @file )
-			{
-				$line =~ /^\t(\w+) => \{/;
-
-				# find potential name
-				if ( $1 )
-				{
-					$name      = $1;
-					$findePort = 0;
-				}
-
-				# find potential port
-				if ( $name && $line =~ /$serviceType/ )
-				{
-					$findePort = 1;
-				}
-
-				# find ip, add servername to array
-				if ( $findePort && $line =~ /$ip/ ) { push @serviceNames, $name; }
-			}
-
-			untie @file;
-		}
-	}
-	return @serviceNames;
 }
 
 1;

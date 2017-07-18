@@ -1134,4 +1134,70 @@ See Also:
 	#return $ip_address;
 #}
 
+=begin nd
+Function: dnsServiceType
+
+	[NOT USED] Translate a check (i.e. tcp_54) and a backend ip to service name
+	If the same backend is in several services, return all service names
+
+Parameters:
+	farmname - Farm name
+	ip - Backend IP
+	check - Service check. Default checks "tcp_$port" or advanced checks "$service_fg_$port"
+
+Returns:
+	Array - List of services are using this check and backend
+
+Bug:
+	Not used
+=cut
+sub dnsServiceType    #  dnsServiceType ( $farmname, $ip, $tcp_port )
+{
+	my ( $fname, $ip, $serviceType ) = @_;
+
+	my $name;
+	my @serviceNames;
+	my $ftype = &getFarmType( $fname );
+	my @file;
+	my $findePort = 0;    # var aux
+
+	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
+	my @pluginlist = readdir ( DIR );
+	closedir ( DIR );
+
+	foreach my $plugin ( @pluginlist )
+	{
+		if ( $plugin !~ /^\./ )
+		{
+			@file = ();
+			tie @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+
+			foreach my $line ( @file )
+			{
+				$line =~ /^\t(\w+) => \{/;
+
+				# find potential name
+				if ( $1 )
+				{
+					$name      = $1;
+					$findePort = 0;
+				}
+
+				# find potential port
+				if ( $name && $line =~ /$serviceType/ )
+				{
+					$findePort = 1;
+				}
+
+				# find ip, add servername to array
+				if ( $findePort && $line =~ /$ip/ ) { push @serviceNames, $name; }
+			}
+
+			untie @file;
+		}
+	}
+
+	return @serviceNames;
+}
+
 1;
