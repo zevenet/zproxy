@@ -26,18 +26,17 @@ use strict;
 my $configdir = &getGlobalConfiguration('configdir');
 
 =begin nd
-Function: getFarmZones
+Function: getGSLBFarmZones
 
 	Get farm zones list for GSLB farms
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Array - list of zone names or -1 on failure
-	
 =cut
-sub getFarmZones    # ($farm_name)
+sub getGSLBFarmZones    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
@@ -52,32 +51,32 @@ sub getFarmZones    # ($farm_name)
 }
 
 =begin nd
-Function: remFarmZoneResource
+Function: remGSLBFarmZoneResource
 
 	Remove a resource from a gslb zone
-	
+
 Parameters:
 	resource - Resource id
 	farmname - Farm name
 	zone - Zone name
 
 Returns:
-	Integer - Error code: 0 on success or different of 0 on failure
-
+	none - No returned value
 =cut
-sub remFarmZoneResource    # ($id,$farm_name,$service)
+sub remGSLBFarmZoneResource    # ($id,$farm_name,$service)
 {
 	my ( $id, $fname, $service ) = @_;
 
-	my $output = 0;
 	my $ftype  = &getFarmType( $fname );
 	my $ffile  = &getFarmFile( $fname );
 
 	my @fileconf;
 	my $line;
 	my $index = 0;
-	use Tie::File;
+
+	require Tie::File;
 	tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$service";
+
 	foreach $line ( @fileconf )
 	{
 		if ( $line =~ /\;index_$id/ )
@@ -87,38 +86,32 @@ sub remFarmZoneResource    # ($id,$farm_name,$service)
 		$index++;
 	}
 	untie @fileconf;
-	$output = $?;
-	&setFarmZoneSerial( $fname, $service );
-	$output = $output + $?;
-
-	return $output;
+	&setGSLBFarmZoneSerial( $fname, $service );
 }
 
 =begin nd
 Function: runGSLBFarmServerDelete
 
 	Delete a resource from a zone
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Integer - Error code: 0 on success or different of 0 on failure
-	
+
 BUG:
 	This function has a bad name and is used in wrong way
-	It is duplicated with "remFarmZoneResource"
-	
+	It is duplicated with "remGSLBFarmZoneResource"
 =cut
 sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
 {
 	my ( $ids, $farm_name, $service ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
 	my $index         = 0;
 
-	use Tie::File;
+	require Tie::File;
 	tie my @configfile, 'Tie::File', "$configdir/$farm_filename/etc/zones/$service";
 
 	foreach my $line ( @configfile )
@@ -134,17 +127,15 @@ sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
 		}
 		$index++;
 	}
-	untie @configfile;
-	$output = $?;
 
-	return $output;
+	untie @configfile;
 }
 
 =begin nd
-Function: setFarmZoneResource
+Function: setGSLBFarmZoneResource
 
 	Modify or create a resource in a zone
-	
+
 Parameters:
 	id - Resource id. It is the resource to modify, if it is blank, a new resource will be created
 	resource - Resource name
@@ -156,14 +147,12 @@ Parameters:
 
 Returns:
 	Integer - Error code: 0 on success or different of 0 on failure
-	
 =cut
-sub setFarmZoneResource  # ($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
+sub setGSLBFarmZoneResource  # ($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
 {
 	my ( $id, $resource, $ttl, $type, $rdata, $farm_name, $service ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $line;
 	my $param;
 	my $index = 0;
 	my $lb    = "";
@@ -171,10 +160,13 @@ sub setFarmZoneResource  # ($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
 
 	if ( $type =~ /DYN./ )
 	{
+		require Zevenet::Farm::Config;
+
 		$lb = &getFarmVS( $farm_name, $rdata, "plugin" );
 		$lb = "$lb!";
 	}
-	use Tie::File;
+
+	require Tie::File;
 	tie my @configfile, 'Tie::File', "$configdir/$farm_filename/etc/zones/$service";
 
 	foreach my $line ( @configfile )
@@ -195,14 +187,16 @@ sub setFarmZoneResource  # ($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
 			}
 		}
 	}
+
 	if ( $id =~ /^$/ )
 	{
 		push @configfile, "$resource\t$ttl\t$type\t$lb$rdata ;index_$index";
 	}
-	untie @configfile;
-	&setFarmZoneSerial( $farm_name, $service );
 
-	my $output = $?;
+	untie @configfile;
+	&setGSLBFarmZoneSerial( $farm_name, $service );
+
+	my $output = 0;
 
 	if ( $flag eq "false" )
 	{
@@ -213,29 +207,28 @@ sub setFarmZoneResource  # ($id,$resource,$ttl,$type,$rdata,$farm_name,$service)
 }
 
 =begin nd
-Function: setFarmZoneSerial
+Function: setGSLBFarmZoneSerial
 
 	Update gslb zone serial, to register that a zone has been modified
-	
+
 Parameters:
 	farmname - Farm name
 	zone - Zone name
 
 Returns:
-	Integer - Error code: 0 on success or different of 0 on failure
-	
+	none - No returned value.
 =cut
-sub setFarmZoneSerial    # ($farm_name,$zone)
+sub setGSLBFarmZoneSerial    # ($farm_name,$zone)
 {
 	my ( $fname, $zone ) = @_;
+
 	my $ftype  = &getFarmType( $fname );
 	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $index = 0;
 
-	my @fileconf;
-	use Tie::File;
-	tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$zone";
-	my $index;
+	require Tie::File;
+	tie my @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$zone";
+
 	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /@\tSOA / )
@@ -245,67 +238,60 @@ sub setFarmZoneSerial    # ($farm_name,$zone)
 		}
 		$index++;
 	}
-	untie @fileconf;
-	$output = $?;
 
-	return $output;
+	untie @fileconf;
 }
 
 =begin nd
 Function: setGSLBFarmDeleteZone
 
 	Delete an existing Zone in a GSLB farm
-	 
+
 Parameters:
 	farmname - Farm name
 	zone - Zone name
 
 Returns:
-	Integer - Error code: 0 on success or -1 on failure
-
+	Scalar - 1 on success, 0 or false on failure.
 =cut
-sub setGSLBFarmDeleteZone    # ($farm_name,$service)
+sub setGSLBFarmDeleteZone    # ($farm_name,$zone)
 {
-	my ( $farm_name, $service ) = @_;
+	my ( $farm_name, $zone ) = @_;
 
-	my $output = -1;
-
-	use File::Path 'rmtree';
-	rmtree( ["$configdir\/$farm_name\_gslb.cfg\/etc\/zones\/$service"] );
-	$output = 0;
-
-	return $output;
+	return unlink "$configdir\/$farm_name\_gslb.cfg\/etc\/zones\/$zone";
 }
 
 =begin nd
 Function: setGSLBFarmNewZone
 
 	Create a new Zone in a GSLB farm
-	 
+
 Parameters:
 	farmname - Farm name
 	zone - Zone name
 
 Returns:
 	Integer - Error code: 0 on success, 1 if it already exists or -1 on failure
-
 =cut
 sub setGSLBFarmNewZone    # ($farm_name,$service)
 {
 	my ( $fname, $zone ) = @_;
 
+	require Zevenet::Farm::Base;
+
 	my $output = -1;
 	my $ftype  = &getFarmType( $fname );
 	my $fvip   = &getFarmVip( "vip", $fname );
 
-	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/" );
-	my @files = grep { /^$zone/ } readdir ( DIR );
-	closedir ( DIR );
+	opendir ( my $dirh, "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/" );
+	my @files = grep { /^$zone/ } readdir ( $dirh );
+	closedir ( $dirh );
 
 	if ( scalar @files == 0 )
 	{
 		open ( my $file, ">", "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/$zone" )
 		  or warn "cannot open > $configdir\/$fname\_$ftype.cfg\/etc\/zones\/$zone: $!";
+
 		print $file "@	SOA ns1 hostmaster (\n" . "	1\n"
 		  . "	7200\n"
 		  . "	1800\n"
@@ -313,6 +299,7 @@ sub setGSLBFarmNewZone    # ($farm_name,$service)
 		  . "	900\n" . ")\n\n";
 		print $file "@		NS	ns1 ;index_0\n";
 		print $file "ns1		A	$fvip ;index_1\n";
+
 		close $file;
 
 		$output = 0;
@@ -338,17 +325,19 @@ Returns:
 	Array ref - Each array element is a hash reference to a hash that has the keys: rname, id, ttl, type and rdata
 	i.e.  \@resourcesArray = ( \%resource1,  \%resource2, ...)
 	\%resource1 = { rname = $name, id  =$id, ttl = $ttl, type = $type, rdata = $rdata }
-	
 =cut
 sub getGSLBResources	# ( $farmname, $zone )
 {
 	my ( $farmname, $zone ) = @_;
+
+	require Zevenet::Farm::Config;
+
 	my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
 	my @resourcesArray;
+	my $ind;
 
 	my @be = split ( "\n", $backendsvs );
 
-	my $ind;
 	foreach my $subline ( @be )
 	{
 		$ind++;
