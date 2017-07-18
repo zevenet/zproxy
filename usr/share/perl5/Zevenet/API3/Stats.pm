@@ -50,11 +50,13 @@ sub getAllFarmStats
 
 		if ( $status eq "up" )
 		{
+			require Zevenet::Net::ConnStats;
+			require Zevenet::Farm::Stats;
+
 			my @netstat = &getConntrack( "", $vip, "", "", "" );
 
 			$pending = scalar &getFarmSYNConns( $name, @netstat );
 			$established = scalar &getFarmEstConns( $name, @netstat );
-			
 		}
 
 		push @farms,
