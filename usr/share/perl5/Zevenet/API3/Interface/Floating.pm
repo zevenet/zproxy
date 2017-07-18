@@ -27,6 +27,8 @@ sub delete_interface_floating # ( $floating )
 {
 	my $floating = shift;
 
+	require Zevenet::Net::Floating;
+
 	my $description = "Remove floating interface";
 	my $floatfile = &getGlobalConfiguration('floatfile');
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
@@ -44,6 +46,8 @@ sub delete_interface_floating # ( $floating )
 
 		&httpResponse({ code => 404, body => $body });
 	}
+
+	require Zevenet::Farm::L4xNAT::Config;
 
 	eval {
 		delete $float_ifaces_conf->{_}->{ $floating };
@@ -116,6 +120,8 @@ sub modify_interface_floating # ( $json_obj, $floating )
 		&httpResponse({ code => 400, body => $body });
 	}
 
+	require Zevenet::Net::Interface;
+
 	my $ip_v = 4;
 	my $if_ref = &getInterfaceConfig( $interface, $ip_v );
 
@@ -167,6 +173,9 @@ sub modify_interface_floating # ( $json_obj, $floating )
 			&httpResponse({ code => 404, body => $body });
 		}
 	}
+
+	require Zevenet::Net::Floating;
+	require Zevenet::Farm::L4xNAT::Config;
 
 	eval {
 		my $floatfile = &getGlobalConfiguration('floatfile');

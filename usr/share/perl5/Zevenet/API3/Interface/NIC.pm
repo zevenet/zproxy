@@ -29,6 +29,9 @@ sub delete_interface_nic # ( $nic )
 
 	my $description = "Delete nic interface";
 	my $ip_v = 4;
+
+	require Zevenet::Net::Interface;
+
 	my $if_ref = &getInterfaceConfig( $nic, $ip_v );
 
 	if ( !$if_ref )
@@ -43,6 +46,9 @@ sub delete_interface_nic # ( $nic )
 
 		&httpResponse({ code => 400, body => $body });
 	}
+
+	require Zevenet::Net::Core;
+	require Zevenet::Net::Route;
 
 	eval {
 		die if &delRoutes( "local", $if_ref );
@@ -205,6 +211,8 @@ sub actions_interface_nic # ( $json_obj, $nic )
 	my $description = "Action on nic interface";
 	my $ip_v = 4;
 
+	require Zevenet::Net::Interface;
+
 	# validate NIC
 	unless ( grep { $nic eq $_->{ name } } &getInterfaceTypeList( 'nic' ) )
 	{
@@ -236,6 +244,9 @@ sub actions_interface_nic # ( $json_obj, $nic )
 	# validate action parameter
 	if ( $json_obj->{ action } eq "up" )
 	{
+		require Zevenet::Net::Core;
+		require Zevenet::Net::Route;
+
 		my $if_ref = &getInterfaceConfig( $nic, $ip_v );
 
 		# Delete routes in case that it is not a vini
@@ -251,6 +262,7 @@ sub actions_interface_nic # ( $json_obj, $nic )
 			&applyRoutes( "local", $if_ref ) if $if_ref;
 
 			# put all dependant interfaces up
+			require Zevenet::Net::Util;
 			&setIfacesUp( $nic, "vlan" );
 			&setIfacesUp( $nic, "vini" ) if $if_ref;
 		}
@@ -269,6 +281,8 @@ sub actions_interface_nic # ( $json_obj, $nic )
 	}
 	elsif ( $json_obj->{ action } eq "down" )
 	{
+		require Zevenet::Net::Core;
+
 		my $state = &downIf( { name => $nic }, 'writeconf' );
 
 		if ( $state )

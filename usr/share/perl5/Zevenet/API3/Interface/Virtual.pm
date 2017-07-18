@@ -350,6 +350,8 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 	my $json_obj = shift;
 	my $virtual  = shift;
 
+	require Zevenet::Net::Interface;
+
 	my $description = "Action on virtual interface";
 	my $ip_v = 4;
 
@@ -386,6 +388,8 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 	# Everything is ok
 	if ( $json_obj->{ action } eq "up" )
 	{
+		require Zevenet::Net::Core;
+
 		# Add IP
 		&addIp( $if_ref );
 
@@ -416,6 +420,7 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 		my $state = &upIf( $if_ref, 'writeconf' );
 		if ( ! $state )
 		{
+			require Zevenet::Net::Route;
 			&applyRoutes( "local", $if_ref );
 		}
 		else
@@ -431,10 +436,13 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 			&httpResponse({ code => 400, body => $body });
 		}
 
+		require Zevenet::Cluster;
 		&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
 	}
 	elsif ( $json_obj->{action} eq "down" )
 	{
+		require Zevenet::Net::Core;
+
 		my $state = &downIf( $if_ref, 'writeconf' );
 
 		if ( $state )
@@ -450,6 +458,7 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 			&httpResponse({ code => 400, body => $body });
 		}
 
+		require Zevenet::Cluster;
 		&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
 	}
 	else
@@ -478,6 +487,8 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 {
 	my $json_obj = shift;
 	my $virtual = shift;
+
+	require Zevenet::Net::Interface;
 
 	my $description = "Modify virtual interface",
 	my $ip_v = 4;
@@ -525,7 +536,8 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	
+	require Zevenet::Net::Core;
+
 	my $state = $if_ref->{ 'status' };
 	&downIf( $if_ref ) if $state eq 'up';
 	

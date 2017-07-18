@@ -149,6 +149,8 @@ sub new_bond_slave # ( $json_obj, $bond )
 
 	my $description = "Add a slave to a bond interface";
 
+	require Zevenet::Net::Bonding;
+
 	# validate BOND NAME
 	my $bonds = &getBondConfig();
 
@@ -230,6 +232,8 @@ sub delete_interface_bond # ( $bond )
 {
 	my $bond = shift;
 
+	require Zevenet::Net::Interface;
+
 	my $description = "Delete bonding network configuration";
 	my $ip_v = 4;
 	my $if_ref = &getInterfaceConfig( $bond, $ip_v );
@@ -247,7 +251,8 @@ sub delete_interface_bond # ( $bond )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	&zenlog( Dumper $if_ref );
+	require Zevenet::Net::Core;
+	require Zevenet::Net::Route;
 
 	eval {
 		die if &delRoutes( "local", $if_ref );
@@ -302,11 +307,10 @@ sub delete_bond # ( $bond )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	my $bond_name = $bonds->{ $bond };
 	my $bond_in_use = 0;
-	$bond_in_use = 1 if &getInterfaceConfig( $bond_name, 4 );
-	$bond_in_use = 1 if &getInterfaceConfig( $bond_name, 6 );
-	$bond_in_use = 1 if grep ( /^$bond_name(:|\.)/, &getInterfaceList() );
+	$bond_in_use = 1 if &getInterfaceConfig( $bond, 4 );
+	$bond_in_use = 1 if &getInterfaceConfig( $bond, 6 );
+	$bond_in_use = 1 if grep ( /^$bond(:|\.)/, &getInterfaceList() );
 
 	if ( $bond_in_use )
 	{
@@ -321,13 +325,15 @@ sub delete_bond # ( $bond )
 		&httpResponse({ code => 400, body => $body });
 	}
 
+	require Zevenet::Net::Core;
+
 	eval {
 		if ( ${ &getSystemInterface( $bond ) }{ status } eq 'up' )
 		{
-			die if &downIf( $bond, 'writeconf' );
+			die if &downIf( $bonds->{ $bond }, 'writeconf' );
 		}
 
-		 die if &setBondMaster( $bond, 'del', 'writeconf' );
+		die if &setBondMaster( $bond, 'del', 'writeconf' );
 	};
 
 	if ( ! $@ )
@@ -360,6 +366,8 @@ sub delete_bond_slave # ( $bond, $slave )
 {
 	my $bond  = shift;
 	my $slave = shift;
+
+	require Zevenet::Net::Bonding;
 
 	my $description = "Remove bonding slave interface";
 	my $bonds = &getBondConfig();
@@ -590,6 +598,8 @@ sub actions_interface_bond # ( $json_obj, $bond )
 	elsif ( $json_obj->{ action } eq "up" )
 	{
 		my $if_ref = &getInterfaceConfig( $bond, $ip_v );
+
+		require Zevenet::Net::Route;
 
 		# Delete routes in case that it is not a vini
 		&delRoutes( "local", $if_ref ) if $if_ref;

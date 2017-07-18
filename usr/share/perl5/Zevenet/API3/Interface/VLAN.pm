@@ -429,6 +429,8 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 	my $json_obj = shift;
 	my $vlan     = shift;
 
+	require Zevenet::Net::Interface;
+
 	my $description = "Action on vlan interface";
 	my $ip_v = 4;
 
@@ -463,6 +465,10 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 	# validate action parameter
 	if ( $json_obj->{action} eq "up" )
 	{
+		require Zevenet::Net::Validate;
+		require Zevenet::Net::Route;
+		require Zevenet::Net::Core;
+
 		my $if_ref = &getInterfaceConfig( $vlan, $ip_v );
 
 		# Create vlan if required if it doesn't exist
@@ -511,6 +517,7 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 			&applyRoutes( "local", $if_ref );
 
 			# put all dependant interfaces up
+			require Zevenet::Net::Util;
 			&setIfacesUp( $if_ref->{ name }, "vini" );
 		}
 		else
@@ -528,6 +535,8 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 	}
 	elsif ( $json_obj->{action} eq "down" )
 	{
+		require Zevenet::Net::Core;
+
 		my $state = &downIf( { name => $vlan }, 'writeconf' );
 
 		if ( $state )
@@ -569,6 +578,8 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 {
 	my $json_obj = shift;
 	my $vlan = shift;
+
+	require Zevenet::Net::Interface;
 
 	my $description = "Modify VLAN interface";
 	my $ip_v = 4;
@@ -669,6 +680,9 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 	# Delete old parameters
 	if ( $if_ref )
 	{
+		require Zevenet::Net::Core;
+		require Zevenet::Net::Route;
+
 		# Delete old IP and Netmask from system to replace it
 		&delIp( $$if_ref{name}, $$if_ref{addr}, $$if_ref{mask} );
 

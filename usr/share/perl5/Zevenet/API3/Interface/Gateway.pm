@@ -45,8 +45,9 @@ sub modify_gateway # ( $json_obj )
 {
 	my $json_obj = shift;
 
-	my $description = "Modify default gateway";
+	require Zevenet::Net::Route;
 
+	my $description = "Modify default gateway";
 	my $default_gw = &getDefaultGW();
 
 	# verify ONLY ACCEPTED parameters received
@@ -116,6 +117,8 @@ sub modify_gateway # ( $json_obj )
 	# validate INTERFACE
 	if ( exists $json_obj->{ interface } )
 	{
+		require Zevenet::Net::Interface;
+
 		my @system_interfaces = &getInterfaceList();
 		#~ my $type = &getInterfaceType( $nic );
 
@@ -137,6 +140,7 @@ sub modify_gateway # ( $json_obj )
 	my $interface = $json_obj->{ interface } // &getIfDefaultGW();
 	my $address = $json_obj->{ address } // $default_gw;
 
+	require Zevenet::Net::Interface;
 	my $if_ref = getInterfaceConfig( $interface, $ip_version );
 
 	&zenlog("applyRoutes interface:$interface address:$address if_ref:$if_ref");
@@ -172,6 +176,9 @@ sub modify_gateway # ( $json_obj )
 
 sub delete_gateway
 {
+	require Zevenet::Net::Route;
+	require Zevenet::Net::Interface;
+
 	my $description = "Remove default gateway";
 
 	my $ip_version = 4;

@@ -24,8 +24,6 @@
 use strict;
 
 use Config::Tiny;
-use Data::Dumper;
-$Data::Dumper::Sortkeys = 1;
 
 # global variable for bonding modes names
 my @bond_modes = (
@@ -260,7 +258,9 @@ sub applyBondChange
 	}
 
 	# verify every slave interface
+	require Zevenet::Net::Interface;
 	my @interface_list = &getInterfaceList();
+
 	for my $slave ( @{ $bond->{ slaves } } )
 	{
 		if ( $slave =~ /(:|\.)/ )    # do not allow vlans or vinis
@@ -670,6 +670,7 @@ sub getBondAvailableSlaves
 		return -1;
 	}
 
+	require Zevenet::Net::Interface;
 	my @avail_ifaces;
 
 	while ( my $dir_entry = readdir $dir_h )

@@ -154,6 +154,7 @@ sub downIf    # ($if_ref, $writeconf)
 
 		require Tie::File;
 		tie my @if_lines, 'Tie::File', "$file";
+
 		for my $line ( @if_lines )
 		{
 			if ( $line =~ /^status=/ )

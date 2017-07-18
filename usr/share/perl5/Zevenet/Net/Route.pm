@@ -253,6 +253,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 				  "$ip_bin -$$if_ref{ip_v} route replace default via $gateway dev $$if_ref{name} $routeparams";
 				$status = &logAndRun( "$ip_cmd" );
 
+				require Tie::File;
 				tie my @contents, 'Tie::File', &getGlobalConfiguration( 'globalcfg' );
 				for my $line ( @contents )
 				{
@@ -272,6 +273,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 				}
 				untie @contents;
 
+				require Zevenet::Farm::L4xNAT::Config;
 				&reloadL4FarmsSNAT() if $status == 0;
 			}
 		}
@@ -359,6 +361,7 @@ sub delRoutes    # ($table,$if_ref)
 			my $ip_cmd = "$ip_bin -$$if_ref{ip_v} route del default";
 			$status = &logAndRun( "$ip_cmd" );
 
+			require Tie::File;
 			tie my @contents, 'Tie::File', &getGlobalConfiguration( 'globalcfg' );
 			for my $line ( @contents )
 			{
@@ -378,6 +381,7 @@ sub delRoutes    # ($table,$if_ref)
 			}
 			untie @contents;
 
+			require Zevenet::Farm::L4xNAT::Config;
 			&reloadL4FarmsSNAT() if $status == 0;
 
 			return $status;
