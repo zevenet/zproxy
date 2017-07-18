@@ -25,10 +25,8 @@ use strict;
 
 use Zevenet::Net;
 
-my $configdir = &getGlobalConfiguration( 'configdir' );
-
 use Zevenet::Farm::GSLB::Config;
-use Zevenet::Farm::GSLB::Actions;
+use Zevenet::Farm::GSLB::Action;
 use Zevenet::Farm::GSLB::Factory;
 use Zevenet::Farm::GSLB::Validate;
 use Zevenet::Farm::GSLB::Service;

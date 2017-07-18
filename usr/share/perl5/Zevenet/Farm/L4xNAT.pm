@@ -24,7 +24,7 @@
 use strict;
 
 use Zevenet::Farm::L4xNAT::Config;
-use Zevenet::Farm::L4xNAT::Actions;
+use Zevenet::Farm::L4xNAT::Action;
 use Zevenet::Farm::L4xNAT::Stats;
 use Zevenet::Farm::L4xNAT::Factory;
 use Zevenet::Farm::L4xNAT::Backend;

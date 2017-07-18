@@ -23,11 +23,9 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
-
 use Zevenet::Farm::Datalink::Config;
 use Zevenet::Farm::Datalink::Backend;
-use Zevenet::Farm::Datalink::Actions;
+use Zevenet::Farm::Datalink::Action;
 use Zevenet::Farm::Datalink::Factory;
 
 1;

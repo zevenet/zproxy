@@ -25,7 +25,7 @@ use strict;
 
 use Zevenet::Farm::HTTP::Config;
 use Zevenet::Farm::HTTP::Factory;
-use Zevenet::Farm::HTTP::Actions;
+use Zevenet::Farm::HTTP::Action;
 use Zevenet::Farm::HTTP::Service;
 use Zevenet::Farm::HTTP::Backend;
 use Zevenet::Farm::HTTP::Stats;
