@@ -35,7 +35,7 @@ Returns:
 	integer - ERRNO or return code.
 
 See Also:
-	<runFarmGuardianStart>, <_runHTTPFarmStart>, <runHTTPFarmCreate>, <_runGSLBFarmStart>, <_runGSLBFarmStop>, <runFarmReload>, <runGSLBFarmCreate>, <setGSLBFarmStatus>
+	<runFarmGuardianStart>, <_runHTTPFarmStart>, <runHTTPFarmCreate>, <_runGSLBFarmStart>, <_runGSLBFarmStop>, <runGSLBFarmReload>, <runGSLBFarmCreate>, <setGSLBFarmStatus>
 =cut
 sub zsystem
 {
