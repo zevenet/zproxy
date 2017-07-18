@@ -111,7 +111,7 @@ sub farms_name_gslb # ( $farmname )
 	# Zones
 	#
 
-	my @zones   = &getFarmZones( $farmname );
+	my @zones   = &getGSLBFarmZones( $farmname );
 	my $first   = 0;
 	my $vserver = 0;
 	my $pos     = 0;
