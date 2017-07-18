@@ -25,60 +25,6 @@ use strict;
 
 my $configdir = &getGlobalConfiguration('configdir');
 
-use Zevenet::Farm::HTTP::Config;
-use Zevenet::Farm::L4xNAT::Config;
-use Zevenet::Farm::GSLB::Config;
-use Zevenet::Farm::Datalink::Config;
-
-=begin nd
-Function: getFarmPort
-
-	Returns farm port
-	
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Integer - port of farm or -1 on failure
-
-Bugs:
-	Only it is used by tcp farms
-	DUPLICATE function. Use "getFarmVip" 
-	for http profile, return error response
-
-See Also:
-	setFarmVirtualConf
-=cut
-sub getFarmPort    # ($farm_name)
-{
-	my $farm_name = shift;
-
-	my $farm_type = &getFarmType( $farm_name );
-	my $output    = -1;
-
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		$output = &getHTTPFarmPort( $farm_name );
-	}
-
-	if ( $farm_type eq "l4xnat" )
-	{
-		$output = &getL4FarmVip( 'vipp', $farm_name );
-	}
-
-	if ( $farm_type eq "gslb" )
-	{
-		$output = &getGSLBFarmVip( 'vipp', $farm_name );
-	}
-
-	if ( $farm_type eq "datalink" )
-	{
-		$output = &getDatalinkFarmVip( 'vipp', $farm_name );
-	}
-
-	return $output;
-}
-
 =begin nd
 Function: getFarmVip
 
@@ -106,21 +52,25 @@ sub getFarmVip    # ($info,$farm_name)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Config;
 		$output = &getHTTPFarmVip( $info, $farm_name );
 	}
 
 	if ( $farm_type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Config;
 		$output = &getL4FarmVip( $info, $farm_name );
 	}
 
 	if ( $farm_type eq "datalink" )
 	{
+		require Zevenet::Farm::Datalink::Config;
 		$output = &getDatalinkFarmVip( $info, $farm_name );
 	}
 
 	if ( $farm_type eq "gslb" )
 	{
+		require Zevenet::Farm::GSLB::Config;
 		$output = &getGSLBFarmVip( $info, $farm_name );
 	}
 
@@ -211,11 +161,13 @@ sub getFarmPid    # ($farm_name)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Config;
 		$output = &getHTTPFarmPid( $farm_name );
 	}
 
 	if ( $farm_type eq "gslb" )
 	{
+		require Zevenet::Farm::GSLB::Config;
 		$output = &getGSLBFarmPid( $farm_name );
 	}
 
@@ -225,8 +177,10 @@ sub getFarmPid    # ($farm_name)
 =begin nd
 Function: getFarmLock
 
-	Check if a farm is locked. A farm locked need to restart. 
-		
+	Check if a farm is locked.
+
+	A locked farm needs to be restarted to apply the latest changes.
+
 Parameters:
 	farmname - Farm name
 
@@ -235,11 +189,11 @@ Returns:
 
 NOTE:
 	Generic function
-		
 =cut
 sub getFarmLock    # ($farm_name)
 {
 	my $farm_name = shift;
+
 	my $output = -1;
 	my $lockfile = "/tmp/$farm_name.lock";
 
@@ -257,33 +211,31 @@ sub getFarmLock    # ($farm_name)
 Function: setFarmLock
 
 	Set the lock status to "on" or "off"
-	If the new status in "on" it's possible to set a message inside
-		
+	If the new status in "on" it's possible to set a message inside.
+
+	A locked farm needs to be restarted to apply the latest changes.
+
 Parameters:
 	farmname - Farm name
 	status - This parameter can value "on" or "off"
 	message - Text for lock file
 
 Returns:
-	Integer - Always return 0
-	
-FIXME:
-	always return 0
+	none - No returned value
 
 NOTE:
 	Generic function
-	
 =cut
 sub setFarmLock    # ($farm_name, $status, $msg)
 {
 	my ( $farm_name, $status, $msg ) = @_;
-	my $output = 0;
+
 	my $lockfile = "/tmp/$farm_name.lock";
 	my $lockstatus = &getFarmLock( "$farm_name" );
 
 	if ( $status eq "on" && $lockstatus == -1 )
 	{
-		open my $fh, ">$lockfile";
+		open my $fh, ">", "$lockfile";
 		print $fh "$msg";
 		close $fh;
 	}
@@ -292,21 +244,18 @@ sub setFarmLock    # ($farm_name, $status, $msg)
 	{
 		unlink ( "$lockfile" ) if -e "$lockfile";
 	}
-
-	return $output;
 }
 
 =begin nd
 Function: getFarmBootStatus
 
 	Return the farm status at boot zevenet
-	 
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	scalar - return "down" if the farm not run at boot or "up" if the farm run at boot
-
 =cut
 sub getFarmBootStatus    # ($farm_name)
 {
@@ -317,21 +266,25 @@ sub getFarmBootStatus    # ($farm_name)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Zevenet::Farm::HTTP::Config;
 		$output = &getHTTPFarmBootStatus( $farm_name );
 	}
 
 	if ( $farm_type eq "gslb" )
 	{
+		require Zevenet::Farm::GSLB::Config;
 		$output = &getGSLBFarmBootStatus( $farm_name );
 	}
 
 	if ( $farm_type eq "datalink" )
 	{
+		require Zevenet::Farm::Datalink::Config;
 		$output = &getDatalinkFarmBootStatus( $farm_name );
 	}
 
 	if ( $farm_type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Config;
 		$output = &getL4FarmBootStatus( $farm_name );
 	}
 
@@ -342,19 +295,18 @@ sub getFarmBootStatus    # ($farm_name)
 Function: getFarmProto
 
 	Return basic transport protocol used by the farm protocol
-		
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	String - "udp" or "tcp"
-	
+
 BUG:
 	Gslb works with tcp protocol too
-	
+
 FIXME:
 	Use getL4ProtocolTransportLayer to get l4xnat protocol
-	
 =cut
 sub getFarmProto    # ($farm_name)
 {
@@ -379,12 +331,12 @@ sub getFarmProto    # ($farm_name)
 		}
 		close FI;
 	}
-	
+
 	elsif ( $farm_type eq "gslb" )
 	{
 		$output = "UDP";
 	}
-	
+
 	elsif ( $farm_type eq "http" )
 	{
 		$output = "TCP";

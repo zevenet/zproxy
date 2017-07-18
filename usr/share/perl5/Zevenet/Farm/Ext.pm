@@ -35,7 +35,6 @@ Parameters:
 
 Returns:
 	array - list of certificates added to the farm
-
 =cut
 sub getFarmCertificatesSNI    #($fname)
 {
@@ -78,7 +77,6 @@ Parameters:
 
 Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
-
 =cut
 sub setFarmCertificateSNI    #($cfile,$fname)
 {
@@ -89,26 +87,29 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 	my $output = -1;
 	my $sw     = 0;
 	my $i      = 0;
+
 	if ( $cfile =~ /^$/ )
 	{
 		&zenlog ( "Certificate not found." );
 		return $output;
 	}
 
-	&zenlog( "setting 'Certificate $cfile' for $fname farm $type" );	
+	&zenlog( "setting 'Certificate $cfile' for $fname farm $type" );
+
 	if ( $type eq "https" )
 	{
-		use Tie::File;
+		require Tie::File;
 		tie my @array, 'Tie::File', "$configdir/$ffile";
+
 		for ( @array )
 		{
 			if ( $_ =~ /Cert "/ )
 			{
-
 				#s/.*Cert\ .*/\tCert\ \"$configdir\/$cfile\"/g;
 				#$output = $?;
 				$sw = 1;
 			}
+
 			if ( $_ !~ /Cert "/ && $sw eq 1 )
 			{
 				splice @array, $i, 0, "\tCert\ \"$configdir\/$cfile\"";
@@ -141,7 +142,6 @@ Returns:
 
 FIXME:
 	Duplicate function with: setFarmDeleteCertNameSNI used in zapiv3
-
 =cut
 sub setFarmDeleteCertSNI    #($certn,$fname)
 {
@@ -154,9 +154,10 @@ sub setFarmDeleteCertSNI    #($certn,$fname)
 	my $j      = 0;
 
 	&zenlog( "deleting 'Certificate $certn' for $fname farm $type" );
+
 	if ( $type eq "https" )
 	{
-		use Tie::File;
+		require Tie::File;
 		tie my @array, 'Tie::File', "$configdir/$ffile";
 
 		for ( @array )
@@ -170,11 +171,11 @@ sub setFarmDeleteCertSNI    #($certn,$fname)
 			{
 				splice @array, $j, 1,;
 				$output = 0;
+
 				if ( $array[$j] !~ /Cert/ && $array[$j - 1] !~ /Cert/ )
 				{
 					splice @array, $j, 0, "\tCert\ \"$configdir\/zencert.pem\"";
 					$output = 1;
-
 				}
 				last;
 			}
@@ -197,10 +198,9 @@ Parameters:
 
 Returns:
 	Integer - Error code: 1 on success, or -1 on failure.
-	
+
 FIXME:
 	Duplicate function with: setFarmDeleteCertSNI used in zapiv3
-
 =cut
 sub setFarmDeleteCertNameSNI    #($certn,$fname)
 {
@@ -215,7 +215,7 @@ sub setFarmDeleteCertNameSNI    #($certn,$fname)
 
 	if ( $type eq "https" )
 	{
-		use Tie::File;
+		require Tie::File;
 		tie my @array, 'Tie::File', "$configdir/$ffile";
 
 		for ( @array )
@@ -250,7 +250,6 @@ Parameters:
 
 Returns:
 	array - list of farm names.
-
 =cut
 sub getFarmNameList
 {
@@ -277,11 +276,11 @@ Parameters:
 
 Returns:
 	integer- Number of farms
-
 =cut
 sub getNumberOfFarmTypeRunning
 {
 	my $type    = shift;    # input value
+
 	my $counter = 0;        # return value
 
 	foreach my $farm_name ( &getFarmNameList() )
