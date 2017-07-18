@@ -71,6 +71,11 @@ if [ ! -f /etc/cron.d/zevenet ]; then
 	cp /usr/local/zevenet/share/zevenet.cron /etc/cron.d/zevenet
 fi
 
+#Disable conntrackd stats 
+sed -i '/Stats/,/}/d' /etc/conntrackd/conntrackd.conf 2>/dev/null
+#delete old conntrackd-stats logs
+rm -rf /var/log/conntrackd-stats* 2>/dev/null
+
 # Disable services
 
 # SNMP and sec services
