@@ -124,6 +124,11 @@ if [ ! -f /usr/local/zenloadbalancer/app/cherokee/var/run/cherokee.pid ]; then
 	pgrep cherokee$ > /usr/local/zenloadbalancer/app/cherokee/var/run/cherokee.pid
 fi
 
+#Disable conntrackd stats 
+sed -i '/Stats/,/}/d' /etc/conntrackd/conntrackd.conf 2>/dev/null
+#delete old conntrackd-stats logs
+rm -rf /var/log/conntrackd-stats* 2>/dev/null
+
 # Disable services
 
 # SNMP and sec services
