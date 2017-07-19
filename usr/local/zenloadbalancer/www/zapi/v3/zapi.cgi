@@ -239,7 +239,7 @@ sub checkActivationCertificate
 		elsif ( $swcert == 2 )
 		{
 			$message =
-			  "The certificate file isn't signed by the Zen Load Balancer Certificate Authority, please request a new one";
+			  "The certificate file isn't signed by the Zevenet Certificate Authority, please request a new one";
 		}
 		elsif ( $swcert == 3 )
 		{

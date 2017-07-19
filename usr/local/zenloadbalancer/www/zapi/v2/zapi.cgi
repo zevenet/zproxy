@@ -199,7 +199,7 @@ sub certcontrol()
 		elsif ( $swcert == 2 )
 		{
 			print
-			  "The certificate file isn't signed by the Zen Load Balancer Certificate Authority, please request a new one\n";
+			  "The certificate file isn't signed by the Zevenet Certificate Authority, please request a new one\n";
 		}
 		elsif ( $swcert == 3 )
 		{
