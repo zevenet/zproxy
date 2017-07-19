@@ -47,6 +47,20 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		&httpResponse( { code => 404, body => $body } );
 	}
 
+	# check if the service exists
+	if ( grep ( /^$json_obj->{id}$/, &getFarmServices( $farmname ) ) )
+	{
+		# Error
+		my $errormsg = "Error, the service $json_obj->{id} already exists.";
+		my $body = {
+					 description => "New service " . $json_obj->{ id },
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse( { code => 400, body => $body } );
+	}
+
 	my $type = &getFarmType( $farmname );
 
 	# validate farm profile

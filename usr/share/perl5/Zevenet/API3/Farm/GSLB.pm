@@ -69,13 +69,10 @@ sub new_gslb_farm_service    # ( $json_obj, $farmname )
 	require Zevenet::Farm::GSLB::Service;
 
 	# check if there is a service name
-	if ( $json_obj->{ id } eq '' )
+	if ( ! &getValidFormat( 'gslb_service', $json_obj->{ id } ) )
 	{
-		&zenlog(
-			"ZAPI error, trying to create a new service in farm $farmname, invalid service name."
-		);
-
-		my $errormsg = "Invalid service, please insert a valid value.";
+		# Error
+		my $errormsg = "Error, the service name has a invalid format.";
 		my $body = {
 					 description => "New service " . $json_obj->{ id },
 					 error       => "true",
