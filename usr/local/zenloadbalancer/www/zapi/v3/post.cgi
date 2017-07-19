@@ -1074,6 +1074,33 @@ sub new_farm_service    # ( $json_obj, $farmname )
 			&httpResponse( { code => 400, body => $body } );
 		}
 
+		if ( grep ( /^$json_obj->{id}$/, &getGSLBFarmServices( $farmname ) ) )
+		{
+			# Error
+			my $errormsg = "Error, the service $json_obj->{id} already exists.";
+			my $body = {
+						 description => "New service " . $json_obj->{ id },
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse( { code => 400, body => $body } );
+		}
+		# check format
+		
+		if ( ! &getValidFormat( 'gslb_service', $json_obj->{ id } ) )
+		{
+			# Error
+			my $errormsg = "Error, the service name has a invalid format.";
+			my $body = {
+						 description => "New service " . $json_obj->{ id },
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse( { code => 400, body => $body } );
+		}
+
 		if ( $json_obj->{ algorithm } =~ /^$/ )
 		{
 			&zenlog(
