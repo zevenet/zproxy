@@ -55,6 +55,8 @@ $tar="/bin/tar";
 $ifconfig_bin="/sbin/ifconfig";
 #Where is ip bynary?
 $ip_bin="/sbin/ip";
+#Where is wc binary?
+$wc_bin="/usr/bin/wc";
 #Where is fdisk binary?
 $fdisk_bin="/sbin/fdisk";
 #Where is df binary?

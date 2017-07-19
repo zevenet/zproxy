@@ -82,11 +82,37 @@ sub setBLRunList
 
 	my $ipset    = &getGlobalConfiguration( 'ipset' );
 	my $output;
+	
+	# Maximum number of sources in the list
+	my $maxelem = &getBLSourceNumber($listName);
+	
+	# ipset create the list with a minimum value of 64
+	if ($maxelem < 64)
+	{
+		$maxelem = 64;
+	}
+	# looking for 2 power for maxelem
+	else
+	{
+		# exponent = log2( maxelem )
+		my $exponent = log($maxelem)/log(2);
+
+		# the maxelem is not 2 power
+		if ( $exponent - (int $exponent) > 0 )
+		{
+			# take a expoenent greater
+			$maxelem = 2**( int $exponent +1);
+		}
+		# the maxelem was 2 power
+		# else
+			# maxelem = 2^n
+	}
+
 
 	#~ if ( &getBLStatus ( $listName ) eq 'down' )
 	{
-		$output = system ( "$ipset create -exist $listName hash:net >/dev/null 2>&1" );
 		&zenlog( "Creating ipset table" );
+		$output = system ( "$ipset create -exist $listName hash:net maxelem $maxelem >/dev/null 2>&1" );
 	}
 
 	# ???
@@ -99,8 +125,10 @@ sub setBLRunList
 
 	if ( !$output )
 	{
+		&zenlog( "Refreshing list $listName" );
 		$output = &setBLRefreshList( $listName );
-		&zenlog( "Setting refreshing list" );
+		
+		&zenlog( "Error, refreshing list $listName" ) if( $output );
 	}
 
 	if ( &getBLParam( $listName, 'type' ) eq 'remote' )
@@ -130,7 +158,8 @@ sub setBLDestroyList
 	#~ {
 		&zenlog( "Destroying blacklist $listName" );
 		#~ $output = system ( "$ipset -I destroy $listName >/dev/null 2>&1" );		# FIXME: Not contemplate error, because return error with before command
-		system ( "$ipset destroy $listName >/dev/null 2>&1" );
+		my $error = system ( "$ipset destroy $listName >/dev/null 2>&1" );
+		&zenlog( "Error, deleting the list $listName" ) if ($error);
 	#~ }
 
 	return $output;
@@ -723,7 +752,7 @@ sub setBLParam
 			# delete list and all rules applied to the farms
 			$output = &setBLDeleteList( $name );
 
-			# crete new list
+			# create new list
 			$output = &setBLCreateList( $value, $conf ) if ( !$output );
 			$output = &setBLParam( $value, 'source', $ipList ) if ( !$output );
 
@@ -732,7 +761,7 @@ sub setBLParam
 			{
 				foreach my $farm ( @farmList )
 				{
-					&setBLCreateRule( $farm, $value );
+					&setBLApplyToFarm( $farm, $value );
 				}
 			}
 			return $output;
@@ -1102,11 +1131,13 @@ sub setBLRefreshList
 
 		system ( "$ipset restore < $tmp_list >/dev/null 2>&1" );
 
-		my $rm = &getGlobalConfiguration( 'rm' );
-		system ( "$rm $tmp_list" );
+		unlink $tmp_list;
 	}
 
-	&zenlog( "refreshed '$listName'." );
+	if ( $output )
+	{
+		&zenlog( "Error, refreshing '$listName'." );
+	}
 
 	return $output;
 }
@@ -1277,7 +1308,52 @@ sub setBLAddSource
 
 	if ( &getBLStatus( $listName ) eq 'up' )
 	{
-		$error = system ( "$ipset add $listName $source >/dev/null 2>&1" );
+		# FIXME: Create a function to stop a rule by rule as RBL and use it here
+		# The list is full,  re-create it
+		if ( &getBLSourceNumber($listName) > &getBLMaxelem($listName) )
+		{
+			my @rules           = @{ &getBLRules() };
+			my $farm_name       = &getValidFormat( 'farm_name' );
+			my $size    = scalar @rules - 1;
+			my @farms;
+			
+			for ( ; $size >= 0 ; $size-- )
+			{
+				if ( $rules[$size] =~ /^(\d+) .+match-set ($listName) src .+BL_($farm_name)/ )
+				{
+					my $lineNum = $1;
+					my $listName = $2;
+					my $farm = $3;
+					# Delete
+					#	iptables -D PREROUTING -t raw 3
+					my $cmd =
+					&getGlobalConfiguration( 'iptables' ) . " --table raw -D PREROUTING $lineNum";
+					&iptSystem( $cmd );
+		
+					# note the list to delete it late
+					push @farms, $listName;
+				}
+		
+			}
+			
+			&setBLDestroyList($listName);
+			&setBLRunList($listName);
+			
+			# FIXME: Create a function to start a rule by rule as RBL and use it here
+			# load lists
+			foreach my $farm ( @farms )
+			{
+				&zenlog( "Creating rules for the list $listName and farm $farm." );
+				&setBLCreateRule( $farm, $listName );
+			}
+			
+			
+		}
+		# Add a new source to the list
+		else
+		{
+			$error = system ( "$ipset add $listName $source >/dev/null 2>&1" );
+		}
 	}
 
 	&zenlog( "$source was added to $listName" ) if ( !$error );
@@ -1519,5 +1595,67 @@ sub getBLzapi
 	
 	return \%listHash;
 }
+
+
+=begin nd
+	Function: getBLMaxelem
+
+        Get the maxelem configurated when the list was created
+
+        Parameters:
+        list - list name
+				
+        Returns:
+			integer - maxelem of the set
+
+=cut
+sub getBLMaxelem
+{
+	my $list = shift;
+	my $ipset = &getGlobalConfiguration("ipset");
+	my $maxelem=0;
+
+	my @aux = `$ipset list $list -terse`;
+	for my $line (@aux)
+	{
+		if ( $line =~ /maxelem (\d+)/ )
+		{
+			$maxelem = $1;
+			last;
+		}
+	}
+	return $maxelem;
+}
+
+
+=begin nd
+	Function: getBLSourceNumber
+
+        Get the number of sources from the source config file
+
+        Parameters:
+        list - list name
+				
+        Returns:
+			integer - number of sources 
+
+=cut
+sub getBLSourceNumber
+{
+	my $list = shift;
+	my $wc = &getGlobalConfiguration("wc_bin");
+	my $sources = `$wc -l $blacklistsPath/$list.txt`;
+
+	if ( $sources =~ /\s*(\d+)\s/ )
+	{
+		$sources = $1;
+	}
+	else
+	{
+		$sources = 0;
+	}
+	return $sources;
+}
+
 
 1;
