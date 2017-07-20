@@ -127,10 +127,13 @@ See Also:
 sub setGlobalConfiguration		# ( parameter, value )
 {
 	my ( $param, $value ) = @_;
+
 	my $global_conf_file = &getGlobalConfiguration ( 'globalcfg' );
 	my $output = -1;
 	
+	require Tie::File;
 	tie my @global_hf, 'Tie::File', $global_conf_file;
+
 	foreach my $line ( @global_hf )
 	{
 		if ( $line=~ /^\$$param\s*=/ )
