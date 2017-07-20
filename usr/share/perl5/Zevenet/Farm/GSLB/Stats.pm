@@ -38,6 +38,9 @@ Returns:
 sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ( )
 {
 	my $farmName   = shift;
+
+	require Zevenet::Farm::GSLB::Config;
+
 	my $wget       = &getGlobalConfiguration( 'wget' );
 	my $httpPort   = &getGSLBControlPort( $farmName );
 	my $gdnsdStats = `$wget -qO- http://127.0.0.1:$httpPort/json`;
@@ -45,7 +48,8 @@ sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ( )
 	my $stats;
 	if ( $gdnsdStats )
 	{
-		$stats = decode_json( $gdnsdStats );
+		require JSON::XS;
+		$stats = JSON::XS::decode_json( $gdnsdStats );
 	}
 	return $stats;
 }

@@ -265,6 +265,8 @@ sub get_farm_graphs	#()
 	my $description = "Get farm graphs";
 	my $errormsg;
 
+	require Zevenet::Farm::Core;
+
 	# this farm doesn't exist
 	if ( &getFarmFile( $farmName ) == -1 )
 	{
@@ -306,6 +308,8 @@ sub get_frec_farm_graphs	#()
 	my $frequency = shift;
 	my $description = "Get farm graphs";
 	my $errormsg;
+
+	require Zevenet::Farm::Core;
 
 	# this farm doesn't exist
 	if ( &getFarmFile( $farmName ) == -1 )

@@ -81,6 +81,8 @@ sub farm_stats # ( $farmname )
 	my $errormsg;
 	my $description = "Get farm stats";
 
+	require Zevenet::Farm::Core;
+
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		$errormsg = "The farmname $farmname does not exist.";
@@ -94,11 +96,14 @@ sub farm_stats # ( $farmname )
 	{
 		my @out_rss;
 		my @out_css;
-
-		# Real Server Table, from content1-25.cgi
 		my @netstat;
+
+		require Zevenet::Farm::Base;
+
 		my $fvip = &getFarmVip( "vip", $farmname );
 		my $fpid = &getFarmChildPid( $farmname );
+
+		require Zevenet::Farm::Backend;
 
 		my @content = &getFarmBackendStatusCtl( $farmname );
 		my @backends = &getFarmBackendsStatus( $farmname, @content );
@@ -145,6 +150,9 @@ sub farm_stats # ( $farmname )
 			}
 			my $ip_backend   = $backends_data[1];
 			my $port_backend = $backends_data[2];
+
+			require Zevenet::Net::ConnStats;
+			require Zevenet::Farm::Stats;
 
 			@netstat = &getConntrack( "$fvip", $ip_backend, "", "", "tcp" );
 			my @synnetstatback =
@@ -197,6 +205,8 @@ sub farm_stats # ( $farmname )
 
 	if ( $type eq "l4xnat" )
 	{
+		require Zevenet::Farm::L4xNAT::Config;
+
 		# Parameters
 		my @out_rss;
 
@@ -277,10 +287,15 @@ sub farm_stats # ( $farmname )
 
 	if ( $type eq "gslb" )
 	{
+		require Zevenet::Farm::GSLB::Stats;
+		require Zevenet::Farm::GSLB::Service;
+
 		my $out_rss;
 		my $gslb_stats = &getGSLBGdnsdStats( $farmname );
 		my @backendStats;
 		my @services = &getGSLBFarmServices( $farmname );
+
+		require Zevenet::Farm::Config;
 
 		foreach my $srv ( @services )
 		{
