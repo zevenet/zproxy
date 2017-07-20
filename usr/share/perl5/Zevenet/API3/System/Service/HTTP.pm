@@ -23,12 +23,13 @@
 
 use strict;
 
+use Zevenet::System::HTTP;
+use Zevenet::Net::Interface;
+
+
 # GET /system/http
 sub get_http
 {
-	require Zevenet::System::HTTP;
-	require Zevenet::Net::Interface;
-
 	my $description       = "Get http";
 	my $httpIp            = &getHttpServerIp();
 	my $allInterfaces_aux = &getActiveInterfaceList();
@@ -67,12 +68,12 @@ sub get_http
 sub set_http
 {
 	my $json_obj    = shift;
+
 	my $description = "Post http";
-	my $errormsg;
 	my @allowParams = ( "ip", "port" );
 	my $httpIp = $json_obj->{ 'ip' } if ( exists $json_obj->{ 'ip' } );
+	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
 
-	$errormsg = &getValidOptParams( $json_obj, \@allowParams );
 	if ( !$errormsg )
 	{
 		if ( !&getValidFormat( "port", $json_obj->{ 'port' } ) )
@@ -86,6 +87,7 @@ sub set_http
 				if ( $json_obj->{ 'ip' } ne '*' )
 				{
 					my $flag;
+
 					foreach my $iface ( @{ &getActiveInterfaceList() } )
 					{
 						if ( $httpIp eq $iface->{ addr } )
@@ -106,13 +108,16 @@ sub set_http
 				&setHttpServerPort( $json_obj->{ 'port' } ) if ( exists $json_obj->{ 'port' } );
 				&setHttpServerIp( $httpIp ) if ( exists $json_obj->{ 'ip' } );
 				system ( "/etc/init.d/cherokee restart > /dev/null &" );
+
 				&httpResponse(
 					{ code => 200, body => { description => $description, params => $json_obj } } );
 			}
 		}
 	}
+
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
+
 	&httpResponse( { code => 400, body => $body } );
 }
 
