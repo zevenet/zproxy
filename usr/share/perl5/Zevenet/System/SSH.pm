@@ -47,11 +47,11 @@ See Also:
 sub getSsh
 {
 	my $sshFile = &getGlobalConfiguration( 'sshConf' );
+	my $listen_format = &getValidFormat( 'ssh_listen' );
 	my $ssh     = {                                       # conf
 				'port'   => 22,
 				'listen' => "*",
 	};
-	my $listen_format = &getValidFormat( 'ssh_listen' );
 
 	if ( !-e $sshFile )
 	{
@@ -60,8 +60,8 @@ sub getSsh
 	else
 	{
 		require Tie::File;
-
 		tie my @file, 'Tie::File', $sshFile;
+
 		foreach my $line ( @file )
 		{
 			if ( $line =~ /^Port\s+(\d+)/ )
@@ -106,10 +106,11 @@ See Also:
 sub setSsh
 {
 	my ( $sshConf ) = @_;
+
 	my $sshFile     = &getGlobalConfiguration( 'sshConf' );
 	my $output      = 1;
-	my $index       = 5
-	  ; # default, it is the line where will add port and listen if one of this doesn't exist
+	my $index       = 5; # default, it is the line where will add port
+						 # and listen if one of this doesn't exist
 
 	# create flag to check all params are changed
 	my $portFlag   = 1 if ( exists $sshConf->{ 'port' } );
@@ -122,7 +123,9 @@ sub setSsh
 		return -1;
 	}
 
+	require Tie::File;
 	tie my @file, 'Tie::File', $sshFile;
+
 	foreach my $line ( @file )
 	{
 		if ( $portFlag )
@@ -134,6 +137,7 @@ sub setSsh
 				$portFlag = 0;
 			}
 		}
+
 		if ( $listenFlag )
 		{
 			if ( $line =~ /^ListenAddress\s+/ )
@@ -158,9 +162,10 @@ sub setSsh
 	untie @file;
 
 	# restart service to apply changes
+	require Zevenet::IPDS::DoS;
 	$output = system ( &getGlobalConfiguration( 'sshService' ) . " restart" );
-	
 	&setDOSParam( 'ssh_brute_force', 'port', $sshConf->{ 'port' } );
+
 	# restart sshbruteforce ipds rule if this is actived
 	if ( &getDOSParam( 'ssh_brute_force', 'status' ) eq 'up' )
 	{

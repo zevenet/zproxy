@@ -39,12 +39,12 @@ sub get_ssh
 sub set_ssh
 {
 	my $json_obj    = shift;
+
 	my $description = "Post ssh";
-	my $errormsg;
 	my @allowParams = ( "port", "listen" );
 	my $sshIp = $json_obj->{ 'listen' } if ( exists $json_obj->{ 'listen' } );
+	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
 
-	$errormsg = &getValidOptParams( $json_obj, \@allowParams );
 	if ( !$errormsg )
 	{
 		if ( !&getValidFormat( "port", $json_obj->{ 'port' } ) )
@@ -57,6 +57,9 @@ sub set_ssh
 			if ( exists $json_obj->{ 'listen' } && $json_obj->{ 'listen' } ne '*' )
 			{
 				my $flag;
+
+				require Zevenet::Net::Interface;
+
 				foreach my $iface ( @{ &getActiveInterfaceList() } )
 				{
 					if ( $sshIp eq $iface->{ addr } )
@@ -69,11 +72,15 @@ sub set_ssh
 						last;
 					}
 				}
+
 				$errormsg = "Ip $json_obj->{ 'listen' } not found in system." if ( !$flag );
 			}
+
 			if ( !$errormsg )
 			{
+				require Zevenet::System::SSH;
 				$errormsg = &setSsh( $json_obj );
+
 				if ( !$errormsg )
 				{
 					my $dns = &getSsh();
@@ -87,8 +94,10 @@ sub set_ssh
 			}
 		}
 	}
+
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
+
 	&httpResponse( { code => 400, body => $body } );
 }
 
