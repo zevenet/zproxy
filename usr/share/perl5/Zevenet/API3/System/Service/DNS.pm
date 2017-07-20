@@ -38,12 +38,12 @@ sub get_dns
 #  POST /system/dns
 sub set_dns
 {
-	my $json_obj    = shift;
-	my $description = "Post dns";
-	my $errormsg;
-	my @allowParams = ( "primary", "secondary" );
+	my $json_obj = shift;
 
-	$errormsg = &getValidOptParams( $json_obj, \@allowParams );
+	my $description = "Post dns";
+	my @allowParams = ( "primary", "secondary" );
+	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
+
 	if ( !$errormsg )
 	{
 		foreach my $key ( keys %{ $json_obj } )
@@ -51,17 +51,21 @@ sub set_dns
 			unless ( &getValidFormat( 'dns_nameserver', $json_obj->{ $key } )
 					 || ( $key eq 'secondary' && $json_obj->{ $key } eq '' ) )
 			{
-				$errormsg = "Please, insert a nameserver correct.";
+				$errormsg = "Please, insert a correct nameserver.";
 				last;
 			}
 		}
+
 		if ( !$errormsg )
 		{
+			require Zevenet::System::DNS;
+
 			foreach my $key ( keys %{ $json_obj } )
 			{
 				$errormsg = &setDns( $key, $json_obj->{ $key } );
 				last if ( $errormsg );
 			}
+
 			if ( !$errormsg )
 			{
 				my $dns = &getDns();
@@ -70,12 +74,14 @@ sub set_dns
 			}
 			else
 			{
-				$errormsg = "There was a error modifying dns.";
+				$errormsg = "There was an error modifying dns.";
 			}
 		}
 	}
+
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
+
 	&httpResponse( { code => 400, body => $body } );
 }
 

@@ -55,7 +55,6 @@ sub getDns
 	}
 
 	require Tie::File;
-	Tie::File->import;
 	tie my @dnsArr, 'Tie::File', $dnsFile;
 
 	#primary
@@ -98,16 +97,18 @@ See Also:
 sub setDns
 {
 	my ( $dns, $value ) = @_;
+
 	my $dnsFile = &getGlobalConfiguration( 'filedns' );
 	my $output;
+	my $line;
 
 	if ( !-e $dnsFile )
 	{
 		$output = system ( &getGlobalConfiguration( 'touch' ) . " $dnsFile" );
 	}
 
+	require Tie::File;
 	tie my @dnsArr, 'Tie::File', $dnsFile;
-	my $line;
 
 	if ( $dns eq 'primary' )
 	{
@@ -119,9 +120,10 @@ sub setDns
 	{
 		$line = 1;
 	}
-	$dnsArr[$line] = "nameserver $value";
 
+	$dnsArr[$line] = "nameserver $value";
 	untie @dnsArr;
+
 	return $output;
 }
 
