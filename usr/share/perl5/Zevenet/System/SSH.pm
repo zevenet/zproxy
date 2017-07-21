@@ -172,10 +172,6 @@ sub setSsh
 		&setDOSParam( 'ssh_brute_force', 'status', 'down' );
 		&setDOSParam( 'ssh_brute_force', 'status', 'up' );
 	}
-	else
-	{
-		
-	}
 
 	return $output;
 }
