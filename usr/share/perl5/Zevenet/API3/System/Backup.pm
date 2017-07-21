@@ -23,11 +23,11 @@
 
 use strict;
 
+use Zevenet::Backup;
+
 #	GET	/system/backup
 sub get_backup
 {
-	require Zevenet::Backup;
-
 	my $description = "Get backups";
 
 	my $backups = &getBackup;
@@ -40,11 +40,13 @@ sub get_backup
 sub create_backup
 {
 	my $json_obj       = shift;
+
 	my $description    = "Create a backups";
 	my @requiredParams = ( "name" );
 	my $errormsg;
 
 	$errormsg = getValidReqParams( $json_obj, \@requiredParams );
+
 	if ( &getExistsBackup( $json_obj->{ 'name' } ) )
 	{
 		$errormsg = "A backup already exists with this name.";
@@ -71,8 +73,10 @@ sub create_backup
 			$errormsg = "Error creating backup.";
 		}
 	}
+
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
+
 	&httpResponse( { code => 400, body => $body } );
 }
 
@@ -80,27 +84,34 @@ sub create_backup
 sub download_backup
 {
 	my $backup      = shift;
+
 	my $description = "Download a backup";
 	my $errormsg    = "$backup was download successful.";
 
 	if ( !&getExistsBackup( $backup ) )
 	{
 		$errormsg = "Not found $backup backup.";
+
 		my $body =
 		  { description => $description, error => "true", message => $errormsg };
+
 		&httpResponse( { code => 404, body => $body } );
 	}
 	else
 	{
-# Download function ends communication if itself finishes successful. It is not necessary send "200 OK" msg
+		# Download function ends communication if itself finishes successful.
+		# It is not necessary send "200 OK" msg
 		$errormsg = &downloadBackup( $backup );
+
 		if ( $errormsg )
 		{
 			$errormsg = "Error, downloading backup.";
 		}
 	}
+
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
+
 	&httpResponse( { code => 404, body => $body } );
 }
 
@@ -128,11 +139,14 @@ sub upload_backup
 	else
 	{
 		$errormsg = &uploadBackup( $name, $upload_filehandle );
+
 		if ( !$errormsg )
 		{
-			$errormsg = "Backup $name was created successful.";
+			$errormsg = "Backup $name was created successfully.";
+
 			my $body =
 			  { description => $description, params => $name, message => $errormsg };
+
 			&httpResponse( { code => 200, body => $body } );
 		}
 		else
@@ -140,8 +154,10 @@ sub upload_backup
 			$errormsg = "Error creating backup.";
 		}
 	}
+
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
+
 	&httpResponse( { code => 400, body => $body } );
 }
 
@@ -149,30 +165,36 @@ sub upload_backup
 sub del_backup
 {
 	my $backup = shift;
+
 	my $errormsg;
 	my $description = "Delete backup $backup'";
 
 	if ( !&getExistsBackup( $backup ) )
 	{
 		$errormsg = "$backup doesn't exist.";
+
 		my $body = {
 					 description => $description,
 					 error       => "true",
 					 message     => $errormsg,
 		};
+
 		&httpResponse( { code => 404, body => $body } );
 	}
 	else
 	{
 		$errormsg = &deleteBackup( $backup );
+
 		if ( !$errormsg )
 		{
 			$errormsg = "The list $backup has been deleted successful.";
+
 			my $body = {
 						 description => $description,
 						 success     => "true",
 						 message     => $errormsg,
 			};
+
 			&httpResponse( { code => 200, body => $body } );
 		}
 		else
@@ -180,11 +202,13 @@ sub del_backup
 			$errormsg = "There was a error deleting list $backup.";
 		}
 	}
+
 	my $body = {
 				 description => $description,
 				 error       => "true",
 				 message     => $errormsg,
 	};
+
 	&httpResponse( { code => 400, body => $body } );
 }
 
@@ -193,17 +217,20 @@ sub apply_backup
 {
 	my $json_obj    = shift;
 	my $backup      = shift;
-	my $description = "Apply a backup to the system";
 
+	my $description = "Apply a backup to the system";
 	my @allowParams = ( "action" );
 	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
+
 	if ( !$errormsg )
 	{
 		if ( !&getExistsBackup( $backup ) )
 		{
 			$errormsg = "Not found $backup backup.";
+
 			my $body =
 			  { description => $description, error => "true", message => $errormsg };
+
 			&httpResponse( { code => 404, body => $body } );
 		}
 		elsif ( !&getValidFormat( 'backup_action', $json_obj->{ 'action' } ) )
@@ -213,6 +240,7 @@ sub apply_backup
 		else
 		{
 			$errormsg = &applyBackup( $backup );
+
 			if ( !$errormsg )
 			{
 				&httpResponse(
@@ -227,6 +255,7 @@ sub apply_backup
 
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
+
 	&httpResponse( { code => 400, body => $body } );
 }
 

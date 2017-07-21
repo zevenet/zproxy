@@ -57,6 +57,8 @@ sub getBackup
 
 		$line =~ s/backup-($backup_re).tar.gz/$1/;
 
+		use Time::localtime qw(ctime);
+
 		my $datetime_string = ctime( stat ( $filepath )->mtime );
 		push @backups, { 'name' => $line, 'date' => $datetime_string };
 
