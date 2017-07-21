@@ -102,13 +102,13 @@ sub setNotifCreateConfFile
 }
 
 
-
 # Check form data and configure mail server.
 # &setNotifSenders ( $sender, $params );
 sub setNotifSenders
 {
 	my $sender  = shift;
 	my $params = shift;
+
 	my $sendersFile = &getGlobalConfiguration( 'senders' );
 	my $errMsg;
 
@@ -138,6 +138,7 @@ sub setNotifAlerts
 {
 	my $notif     = shift;
 	my $params    = shift;
+
 	my $alertFile = &getGlobalConfiguration( 'alerts' );
 	my $errMsg;
 
@@ -172,6 +173,7 @@ sub setNotifAlertsAction
 {
 	my $notif     = shift;
 	my $action    = shift;
+
 	my $alertFile = &getGlobalConfiguration( 'alerts' );
 	my $errMsg;
 	my $noChanged;
@@ -222,6 +224,7 @@ sub setNotifAlertsAction
 			&reloadNotifications();
 		}
 	}
+
 	return $errMsg;
 }
 
@@ -229,6 +232,7 @@ sub setNotifAlertsAction
 sub disableRule    # &disableRule ( $rule )
 {
 	my ( $rule ) = @_;
+
 	my $secConf  = &getGlobalConfiguration( 'secConf' );
 	my $fileConf = $secConf;
 	my $flag = 0;    # $flag = 0 rule don't find, $flag = 1 changing rule
@@ -240,6 +244,7 @@ sub disableRule    # &disableRule ( $rule )
 	}
 	else
 	{
+		require Tie::File;
 		tie my @handle, 'Tie::File', $fileConf;
 
 		# change server id
@@ -270,6 +275,7 @@ sub disableRule    # &disableRule ( $rule )
 sub enableRule    # &enableRule ( $rule )
 {
 	my ( $rule ) = @_;
+
 	my $fileConf = &getGlobalConfiguration( 'secConf' );
 	my $flag = 0;    # $flag = 0 rule don't find, $flag = 1 changing rule
 	my $output;
@@ -281,6 +287,7 @@ sub enableRule    # &enableRule ( $rule )
 	}
 	else
 	{
+		require Tie::File;
 		tie my @handle, 'Tie::File', $fileConf;
 
 		# change server id
@@ -311,12 +318,14 @@ sub enableRule    # &enableRule ( $rule )
 sub changeTimeSwitch    # &changeTimeSwitch ( $rule, $time )
 {
 	my ( $rule, $time ) = @_;
+
 	my $fileConf = &getGlobalConfiguration( 'secConf' );
 	my $flag   = 0;     # $flag = 0 rule don't find, $flag = 1 changing rule
 	my $errMsg = -1;
 
 	if ( -f $fileConf )
 	{
+		require Tie::File;
 		tie my @handle, 'Tie::File', $fileConf;
 
 		# change server id
@@ -341,6 +350,7 @@ sub changeTimeSwitch    # &changeTimeSwitch ( $rule, $time )
 
 		untie @handle;
 	}
+
 	return $errMsg;
 }
 
@@ -358,6 +368,7 @@ sub zlbstartNotifications
 
 	# set switch time in sec.rules configuration file
 	my $sections = &getNotifData( 'alerts' );
+
 	foreach my $notif ( keys %{ $sections } )
 	{
 		if ( exists $sections->{ $notif }->{ 'SwitchTime' } )
@@ -372,6 +383,7 @@ sub zlbstartNotifications
 	{
 		$output = &runNotifications();
 	}
+
 	return $output;
 }
 
@@ -382,6 +394,7 @@ sub zlbstopNotifications
 
 	my $pidof = &getGlobalConfiguration( 'pidof' );
 	my $pid   = `$pidof -x sec`;
+
 	if ( $pid )
 	{
 		kill 'KILL', $pid;
@@ -426,6 +439,7 @@ sub reloadNotifications
 {
 	my $pidof = &getGlobalConfiguration( 'pidof' );
 	my $pid   = `$pidof -x sec`;
+
 	if ( $pid )
 	{
 		kill 'HUP', $pid;
@@ -437,11 +451,12 @@ sub reloadNotifications
 sub setNotifData
 {
 	my ( $name, $section, $key, $data ) = @_;
+
 	my $errMsg;
 	my $fileHandle;
 	my $fileName;
-	
 	my $confdir = getGlobalConfiguration( 'notifConfDir' );
+
 	if ( $name eq 'senders' )
 	{
 		$fileName = "$confdir/sender.conf";
@@ -464,6 +479,7 @@ sub setNotifData
 		$fileHandle->write( $fileName );
 		#~ &zenlog( "'$key' was modificated in '$section' notifications to '$data'" );
 	}
+
 	return $errMsg;
 }
 
@@ -471,12 +487,13 @@ sub setNotifData
 sub getNotifData
 {
 	my ( $name, $section, $key ) = @_;
+
 	my $arguments = scalar @_;
 	my $data;
 	my $fileHandle;
 	my $fileName;
-	
 	my $confdir = getGlobalConfiguration( 'notifConfDir' );
+
 	if ( $name eq 'senders' )
 	{
 		$fileName = "$confdir/sender.conf";
@@ -498,6 +515,7 @@ sub getNotifData
 
 		if ( $arguments == 3 ) { $data = $fileHandle->{ $section }->{ $key }; }
 	}
+
 	return $data;
 }
 
@@ -521,6 +539,7 @@ sub getNotifSendersSmtp
 sub getNotifAlert
 {
 	my $alert = shift;
+
 	my $method;
 	
 	if ( $alert =~ /Backends/i )
@@ -529,6 +548,7 @@ sub getNotifAlert
 		$method->{ 'avoidflappingtime' } =
 		  &getNotifData( 'alerts', $alert, 'SwitchTime' ) + 0;
 		$method->{ 'prefix' } = &getNotifData( 'alerts', $alert, 'PrefixSubject' );
+
 		if ( &getNotifData( 'alerts', $alert, 'Status' ) eq 'on' )
 		{
 			$method->{ 'status' } = "enabled";
@@ -541,6 +561,7 @@ sub getNotifAlert
 	elsif ( $alert =~ /cluster/ )
 	{
 		$method->{ 'prefix' } = &getNotifData( 'alerts', 'Cluster', 'PrefixSubject' );
+
 		if ( &getNotifData( 'alerts', 'Cluster', 'Status' ) eq 'on' )
 		{
 			$method->{ 'status' } = "enabled";
@@ -550,15 +571,16 @@ sub getNotifAlert
 			$method->{ 'status' } = "disabled";
 		}
 	}
+
 	return $method;
 }
-
 
 
 # &sendByMail ( $subject, $bodycomp );
 sub sendByMail
 {
 	my ( $subject, $bodycomp, $section ) = @_;
+
 	my $body;
 	my $command;
 	my $logger = &getGlobalConfiguration ( 'logger' );
@@ -572,6 +594,7 @@ sub sendByMail
 	$command .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
 	$command .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
 	$command .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
+
 	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
 	{
 		$command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
@@ -580,28 +603,28 @@ sub sendByMail
 		$command .= " --auth-password " . &getNotifData( 'senders', 'Smtp', 'auth-password' )
 				if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
 	}
-	
+
 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) ) { $command .= " -tls"; }
-	
+
 	#~ $command .= " --header 'From: $from '";
 	$command .=	" --header 'Subject: "
 	. &getNotifData( 'alerts', $section, 'PrefixSubject' )
 	. " $subject'";
-	
+
 	$command .= " --body '$body'";
-	
+
 	#not print
 	$command .= " 1>/dev/null";
-	
+
 	$error = system ( $command );
-	
+
 	# print log
 	my $logMsg;
 	$logMsg .= &getNotifData( 'senders', 'Smtp', 'bin' );
 	$logMsg .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
 	$logMsg .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
 	$logMsg .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
-	
+
 	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
 	{
 		$logMsg .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
@@ -611,15 +634,15 @@ sub sendByMail
 				if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
 	}	
 	$logMsg .= " -tls" 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) );
-	
+
 	#~ $logMsg .= " --header 'From: $from'";
 	$logMsg .= " --header 'Subject: "
 			.  &getNotifData( 'alerts', $section, 'PrefixSubject' )
 			.  " $subject'";
 	$logMsg .= " --body 'BODY'";
-	
+
 	system ("$logger \"$logMsg\" -i -t sec");
-	
+
 	return $error;
 }
 
@@ -635,14 +658,13 @@ sub sendTestMail
 
 	my $body = "\n***** Notifications *****\n\n";
 	$body .= $bodycomp;
-	
 
 	my $from = &getNotifData( 'senders', 'Smtp', 'from' );
 	$command .= &getNotifData( 'senders', 'Smtp', 'bin' );
 	$command .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
 	$command .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
 	$command .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
-	
+
 	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
 	{
 		$command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
@@ -652,17 +674,17 @@ sub sendTestMail
 				if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
 	}	
 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) ) { $command .= " -tls"; }
-	
+
 	#~ $command .= " --header 'From: $from, ' --header 'Subject: $subject'";
 	$command .= " --header 'Subject: $subject'";
 	$command .= " --body '$body'";
-	
+
 	#not print
 	$command .= " 1>/dev/null";
-	
+
 	#~ print "$command\n";
 	$error = system ( $command );
-	
+
 	# print log
 	my $logMsg;
 	$logMsg .= &getNotifData( 'senders', 'Smtp', 'bin' );
@@ -684,9 +706,9 @@ sub sendTestMail
 	#~ $logMsg .= " --header 'From: $from' --header 'Subject: $subject'";
 	$logMsg .= " --header 'Subject: $subject'";
 	$logMsg .= " --body 'BODY'";
-	
+
 	system ("$logger \"$logMsg\" -i -t sec");
-	
+
 	return $error;
 }
 
