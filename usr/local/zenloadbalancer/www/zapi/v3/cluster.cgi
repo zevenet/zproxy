@@ -369,6 +369,10 @@ sub set_cluster_actions
 
 			# required for no failback configuration
 			&setZClusterNodeStatus('maintenance');
+			
+			# 1 stop zeninotify 
+			my $zenino   = &getGlobalConfiguration( 'zenino' );
+			system( "$zenino stop" );
 		}
 		# Disable maintenance mode
 		elsif ( $json_obj->{ status } eq 'disable' )
