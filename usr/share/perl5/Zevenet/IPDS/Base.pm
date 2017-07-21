@@ -131,9 +131,13 @@ sub runIPDSStartModule
 	require Zevenet::IPDS::Blacklist::Actions;
 	require Zevenet::IPDS::RBL::Actions;
 	require Zevenet::IPDS::DoS::Actions;
+	require Zevenet::Cluster;
 
 	&addIPDSIptablesChain();
 
+	# Add cluster exception not to block traffic from the other node of cluster
+	&setZClusterIptablesException( "insert" );
+	
 	&runBLStartModule();
 	&runRBLStartModule();
 	&runDOSStartModule();
@@ -153,10 +157,15 @@ Returns:
 
 sub runIPDSStopModule
 {
+	require Zevenet::Cluster;
+	
 	&runRBLStopModule();
 	&runBLStopModule();
 	&runDOStopModule();
 	
+	# Remove cluster exception not to block traffic from the other node of cluster
+	&setZClusterIptablesException( "delete" );
+		
 	&delIPDSIptablesChain();
 }
 

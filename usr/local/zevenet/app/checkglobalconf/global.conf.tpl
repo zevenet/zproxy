@@ -47,6 +47,8 @@ $licenseFileHtml="/usr/local/zevenet/license.html";
 $filedns="/etc/resolv.conf";
 #Where is hostname binary?
 $hostname="/bin/hostname";
+#Where is kill binary?
+$kill_bin="/bin/kill";
 #Where is uname binary?
 $uname="/bin/uname";
 #Where is tar binary?

@@ -28,17 +28,30 @@ use Linux::Inotify2;
 use Zevenet::Config;
 use Zevenet::Cluster;
 
+
 my $configdir = &getGlobalConfiguration( 'configdir' );
 my $rttables  = &getGlobalConfiguration( 'rttables' );
 my $zeninopid = &getGlobalConfiguration( 'zeninopid' );
+
+my $pid;
+# Get zeninotify status
+if ( -e $zeninopid )
+{
+	open my $pidfile, "<", "$zeninopid";
+	$pid = <$pidfile>;
+	close $pidfile;
+	my $kill = &getGlobalConfiguration( 'kill_bin' );
+	my $error = system ("$kill -0 $pid >/dev/null 2>&1");
+	if ($error)
+	{
+		unlink $zeninopid;
+	}
+}
 
 if ( @ARGV && $ARGV[0] eq 'stop' )
 {
 	if ( -e $zeninopid )
 	{
-		open my $pidfile, "<", "$zeninopid";
-		my $pid = <$pidfile>;
-		close $pidfile;
 		kill ( 'TERM', $pid );
 	}
 	exit 0;
