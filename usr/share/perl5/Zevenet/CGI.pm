@@ -21,11 +21,10 @@
 #
 ###############################################################################
 
-#~ use CGI;
-use CGI::Simple;
-#~ use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
-
 use feature 'state';
+use CGI::Simple;
+$CGI::Simple::DISABLE_UPLOADS = 0;      # enable uploads
+$CGI::Simple::POST_MAX = 1_048_576_000;     # allow 1000MB uploads
 
 =begin nd
 Function: getCGI
