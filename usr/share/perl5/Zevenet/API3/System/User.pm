@@ -26,6 +26,8 @@ use strict;
 #	GET	/system/users
 sub get_all_users
 {
+	require Zevenet::Zapi;
+
 	my $description = "Get users";
 	my $zapiStatus = &getZAPI( "status" );
 	my @users = ( { "user"=>"root", "status"=>"true" }, { "user"=>"zapi","status"=>"$zapiStatus" } );
@@ -38,6 +40,7 @@ sub get_all_users
 sub get_user
 {
 	my $user        = shift;
+
 	my $description = "Zapi user configuration.";
 	my $errormsg;
 
@@ -47,13 +50,18 @@ sub get_user
 	}
 	else
 	{
+		require Zevenet::Zapi;
+
 		my $zapi->{ 'key' } = &getZAPI( "keyzapi" );
 		$zapi->{ 'status' } = &getZAPI( "status" );
+
 		&httpResponse(
 				{ code => 200, body => { description => $description, params => $zapi } } );
 	}
+
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
+
 	&httpResponse( { code => 404, body => $body } );
 }
 
@@ -68,9 +76,8 @@ sub set_user_zapi
 
 	#~ my @requiredParams = ( "key", "status", "password", "newpassword" );
 	my @requiredParams = ( "key", "status", "newpassword" );
-	my $errormsg;
+	my $errormsg = &getValidOptParams( $json_obj, \@requiredParams );
 
-	$errormsg = &getValidOptParams( $json_obj, \@requiredParams );
 	if ( !$errormsg )
 	{
 		if ( !&getValidFormat( "zapi_key", $json_obj->{ 'key' } ) )
@@ -87,6 +94,8 @@ sub set_user_zapi
 		}
 		else
 		{
+			require Zevenet::Zapi;
+
 			if (    $json_obj->{ 'status' } eq 'enable'
 				 && &getZAPI( "status") eq 'false' )
 			{
@@ -97,6 +106,7 @@ sub set_user_zapi
 			{
 				&setZAPI( "disable" );
 			}
+
 			if ( exists $json_obj->{ 'key' } )
 			{
 				&setZAPI( 'key', $json_obj->{ 'key' } );
@@ -117,8 +127,10 @@ sub set_user_zapi
 			);
 		}
 	}
+
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
+
 	&httpResponse( { code => 400, body => $body } );
 }
 
@@ -127,11 +139,11 @@ sub set_user
 {
 	my $json_obj       = shift;
 	my $user           = shift;
+
 	my $description    = "User settings.";
 	my @requiredParams = ( "password", "newpassword" );
-	my $errormsg;
+	my $errormsg = &getValidReqParams( $json_obj, \@requiredParams, \@requiredParams );
 
-	$errormsg = &getValidReqParams( $json_obj, \@requiredParams, \@requiredParams );
 	if ( !$errormsg )
 	{
 		if ( $user ne 'root' )
@@ -141,6 +153,8 @@ sub set_user
 		}
 		else
 		{
+			require Zevenet::Login;
+
 			if ( !&getValidFormat( 'password', $json_obj->{ 'newpassword' } ) )
 			{
 				$errormsg = "Error, character incorrect in password.";
@@ -172,8 +186,10 @@ sub set_user
 			}
 		}
 	}
+
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
+
 	&httpResponse( { code => 400, body => $body } );
 }
 

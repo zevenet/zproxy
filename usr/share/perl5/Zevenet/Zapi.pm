@@ -127,7 +127,9 @@ sub setZAPI    #($name,$value)
 	#Set ZAPI KEY
 	if ( $name eq "key" )
 	{
+		require Tie::File;
 		tie my @contents, 'Tie::File', "$globalcfg";
+
 		foreach my $line ( @contents )
 		{
 			if ( $line =~ /zapi/ )
