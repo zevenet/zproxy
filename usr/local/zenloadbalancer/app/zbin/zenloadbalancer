@@ -616,6 +616,9 @@ if ( $eject eq "start" )
 	{
 		&zenlog( "Cluster configuration found" );
 
+		# Add cluster exception not to block traffic from the other node of cluster
+		&setZClusterIptablesException( "insert" );
+
 		my $znode_status_file = &getGlobalConfiguration('znode_status_file');
 
 		my $zcl_conf = &getZClusterConfig();
@@ -805,9 +808,13 @@ if ( $eject eq "stop" )
 	&setBLStop();
 	&setDOSStop();
 
+
 	if ( &getZClusterStatus() )
 	{
 		&zenlog( "Stopping ZCluster...\n" );
+
+		# Add cluster exception not to block traffic from the other node of cluster
+		&setZClusterIptablesException( "delete" );
 
 		if ( `pgrep zeninotify` )
 		{

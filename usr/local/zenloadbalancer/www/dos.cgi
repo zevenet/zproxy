@@ -1176,27 +1176,6 @@ sub setDOSSshBruteForceRule
 	my $output;
 	my $cmd;
 
-	# If the cluster is configurated, will add an exception to the remote node
-	# /sbin/iptables -A PREROUTING -t mangle -s $clusterIP -j ACCEPT
-	require "/usr/local/zenloadbalancer/www/zcluster_functions.cgi";
-	if ( &getZClusterStatus() )
-	{
-		my $remoteHost        = getZClusterRemoteHost();
-		my $cl_conf           = &getZClusterConfig();
-		my $remoteClusterNode = $cl_conf->{ $remoteHost }->{ ip };
-
-		$cmd =
-		  &getGlobalConfiguration( 'iptables' )
-		  . " -A PREROUTING -t mangle "                        # select iptables struct
-		  . "-s $remoteClusterNode -j ACCEPT "                 # who is destined
-		  . "-m comment --comment \"DOS_${rule}_cluster\"";    # comment
-
-		$output = &iptSystem( $cmd );
-		if ( $output != 0 )
-		{
-			&zenlog( "Error appling '${rule}_cluster' rule." );
-		}
-	}
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --set
 	$cmd =

@@ -491,6 +491,9 @@ sub disable_cluster
 		);
 	}
 
+	# Remove cluster exception not to block traffic from the other node of cluster
+	&setZClusterIptablesException( "delete" );
+
 	### Remove configuration files ###
 	# remove cluster configuration file
 	# remove keepalived configuration file
@@ -510,7 +513,7 @@ sub disable_cluster
 			)
 		);
 	}
-
+	
 	my $message = "Cluster disabled successfully";
 	my $body = {
 				 description => $description,
@@ -649,6 +652,9 @@ sub enable_cluster
 		}
 
 		&setZClusterConfig( $zcl_conf ) or die;
+		
+		# Add cluster exception not to block traffic from the other node of cluster
+		&setZClusterIptablesException( "insert" );
 
 
 		## Starting cluster services ##
@@ -690,6 +696,7 @@ sub enable_cluster
 			$zcl_conf->{$remote_hostname}->{ip}
 		);
 		&zenlog( "rc:$? $cl_output" );
+		
 	};
 	if ( ! $@ )
 	{

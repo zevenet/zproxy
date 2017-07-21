@@ -658,7 +658,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 
 		if ( $$farm{ lbalg } eq 'leastconn' && -e "$l4sd" )
 		{
-			system ( "$l4sd & >/dev/null" );
+			system ( "$l4sd >/dev/null &" );
 		}
 		elsif ( -e $l4sd_pidfile )
 		{

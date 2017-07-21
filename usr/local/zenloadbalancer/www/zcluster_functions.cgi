@@ -387,6 +387,9 @@ sub disableZCluster
 		&logAndRun( $ip_cmd );
 	}
 
+	# Remove cluster exception not to block traffic from the other node of cluster
+	&setZClusterIptablesException( "delete" );
+
 	return $error_code;
 }
 
@@ -1758,5 +1761,70 @@ sub getZClusterNodeStatusDigest
 
 	return $node;
 }
+
+=begin nd
+Function: setZClusterIptablesException
+
+	Add a list of iptable rules  to never block traffic from/to the other node of cluster
+
+Parameters:
+	Action - The available actions are "insert", insert rules in the first position of the iptables chains;
+	or "delete", delete the iptables rules.
+
+Returns:
+	Integer - It is the error code, 0 on success or other value on failure.
+
+See Also:
+	zapi/v3/cluster.cgi, zenloadbalancer
+=cut
+
+sub setZClusterIptablesException
+{
+	require "/usr/local/zenloadbalancer/www/conntrackd_functions.cgi";
+	my $option = shift;
+	my $error;
+	my $action;
+	
+	if ( $option eq "insert" )
+	{
+		$action = "-I";
+	}
+	elsif ( $option eq "delete" )
+	{
+		$action = "-D" ;
+	}
+	else
+	{
+		return -1;
+	 }
+	
+	my $config = &getZClusterConfig(); 
+	my $remote_hn = &getZClusterRemoteHost();
+	my $ipremote = $config->{ $remote_hn }->{ ip };
+
+	# avoid blacklist rules, rbl rules and bogustcpflag dos rule
+	my $cmd = &getGlobalConfiguration( 'iptables' )
+		. " $action PREROUTING -t raw -s $ipremote -j ACCEPT -m comment --comment \"cluster_exception\"";
+	$error = &iptSystem( $cmd );
+	
+	return -1 if $error;
+
+	# avoid the dos rules: limmit rst, limit sec and  ssh burte force
+	$cmd = &getGlobalConfiguration( 'iptables' )
+		. " $action PREROUTING -t mangle -s $ipremote -j ACCEPT -m comment --comment \"cluster_exception\"";
+	$error = &iptSystem( $cmd );
+	
+	return -1 if $error;
+
+	# avoid the dos rules: limit conns
+	$cmd = &getGlobalConfiguration( 'iptables' )
+		. " $action INPUT -t filter -s $ipremote -j ACCEPT -m comment --comment \"cluster_exception\"";
+	$error = &iptSystem( $cmd );
+	
+	$error = -1 if $error;
+	
+	return $error;
+}
+
 
 1;

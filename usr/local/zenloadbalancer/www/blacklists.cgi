@@ -146,12 +146,11 @@ sub setBLDestroyList
 		&delBLCronTask( $listName );
 	}
 
-	#~ if ( &getBLStatus ( $listName ) eq 'up' )		# FIXME:  lunch two consecutive ipset command return error
+	#~ if ( &getBLStatus ( $listName ) eq 'up' )		# FIXME:  lunch consecutive the following two ipset command return error
 	#~ {
 		&zenlog( "Destroying blacklist $listName" );
 		#~ $output = system ( "$ipset -I destroy $listName >/dev/null 2>&1" );		# FIXME: Not contemplate error, because return error with before command
-		my $error = system ( "$ipset destroy $listName >/dev/null 2>&1" );
-		&zenlog( "Error, deleting the list $listName" ) if ($error);
+		system ( "$ipset -I destroy $listName >/dev/null 2>&1" );		
 	#~ }
 
 	return $output;
@@ -234,15 +233,15 @@ sub setBLStart
 # &setBLStop
 sub setBLStop
 {
-	my @rules           = @{ &getBLRules() };
+	my @rules           = &getIptListV4 ( 'raw', 'PREROUTING' );
 	my $blacklists_name = &getValidFormat( 'blacklists_name' );
 	my $farm_name       = &getValidFormat( 'farm_name' );
-	my $size    = scalar @rules - 1;
+	my $size    = scalar @rules;
 	my @allLists;
-	
 	
 	for ( ; $size >= 0 ; $size-- )
 	{
+		
 		if ( $rules[$size] =~ /^(\d+) .+match-set ($blacklists_name) src .+BL_$farm_name/ )
 		{
 			my $lineNum = $1;
