@@ -26,7 +26,6 @@ use strict;
 use Config::Tiny;
 use Tie::File;
 
-
 use Zevenet::Core;
 use Zevenet::Debug;
 use Zevenet::IPDS::Core;
@@ -42,6 +41,7 @@ actions:
 sub getBLStatus
 {
 	my $listName = shift;
+
 	my $ipset    = &getGlobalConfiguration( 'ipset' );
 	my $output   = system ( "$ipset list $listName >/dev/null 2>&1" );
 	
@@ -63,6 +63,7 @@ sub getBLStatus
 sub getBLListNoUsed
 {
 	my $blacklist = shift;
+
 	my @rules          	= @{ &getBLRules() };
 	my $farm_name		= &getValidFormat( 'farm_name' );
 
@@ -76,6 +77,7 @@ sub getBLListNoUsed
 sub setBLRunList
 {
 	my $listName = shift;
+
 	my $ipset    = &getGlobalConfiguration( 'ipset' );
 	my $output;
 
@@ -107,10 +109,12 @@ sub setBLRunList
 	return $output;
 }
 
+
 #  &setBLDestroyList ( $listName );
 sub setBLDestroyList
 {
 	my $listName = shift;
+
 	my $ipset    = &getGlobalConfiguration( 'ipset' );
 	my $output;
 
@@ -131,17 +135,14 @@ sub setBLDestroyList
 }
 
 =begin nd
-        Function: runBLStartModule
+Function: runBLStartModule
 
-        Enable all blacklists rules
+	Enable all blacklists rules
 
-        Parameters:
-				
-        Returns:
+Parameters: None.
 
+Returns: None.
 =cut
-
-#  &runBLStartModule
 sub runBLStartModule
 {
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
@@ -194,17 +195,15 @@ sub runBLStartModule
 }
 
 =begin nd
-        Function: runBLStopModule
+Function: runBLStopModule
 
-        Disable all blacklists rules
-        
-        Parameters:
-				
-        Returns:
+	Disable all blacklists rules
+
+Parameters:
+
+Returns:
 
 =cut
-
-# &runBLStopModule
 sub runBLStopModule
 {
 	my @rules           = @{ &getBLRules() };
@@ -238,30 +237,28 @@ sub runBLStopModule
 			&setBLDestroyList( $listName );
 		}
 	}
-
 }
 
-
-
 =begin nd
-        Function: setBLCreateRule
+Function: setBLCreateRule
 
-        block / accept connections from a ip list for a determinate farm.
+	Block / accept connections from a ip list for a determinate farm.
 
-        Parameters:
-				farmName - farm where rules will be applied
-				name	 - ip list name
-				
-        Returns:
-				$cmd	- Command
-                -1		- error
+Parameters:
+
+	farmName - farm where rules will be applied
+	name	 - ip list name
+
+Returns:
+
+	$cmd	- Command
+	-1		- error
 
 =cut
-
-# &setBLCreateRule ( $farmName, $name );
 sub setBLCreateRule
 {
 	my ( $farmName, $listName ) = @_;
+
 	my $add;
 	my $cmd;
 	my $output;
@@ -348,24 +345,25 @@ sub setBLCreateRule
 }
 
 =begin nd
-        Function: setBLDeleteRule
+Function: setBLDeleteRule
 
-        Delete a iptables rule 
+	Delete a iptables rule.
 
-        Parameters:
-				farmName - farm where rules will be applied
-				list	 - ip list name
-				
-        Returns:
-				== 0	- successful
-                != 0	- error
+Parameters:
+
+	farmName - farm where rules will be applied
+	list	 - ip list name
+
+Returns:
+
+	== 0	- successful
+	!= 0	- error
 
 =cut
-
-# &setBLDeleteRule ( $farmName, $listName )
 sub setBLDeleteRule
 {
 	my ( $farmName, $listName ) = @_;
+
 	my $output;
 
 	# Get line number
@@ -409,6 +407,7 @@ sub setBLDeleteRule
 sub setBLReloadFarmRules
 {
 	my $farmName = shift;
+
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	# get all lists
 	my $allListsRef = Config::Tiny->read( $blacklistsConf );
@@ -428,11 +427,11 @@ sub setBLReloadFarmRules
 }
 
 
-	
 # setBLApplyToFarm ( $farmName, $list );
 sub setBLApplyToFarm
 {
 	my ( $farmName, $listName ) = @_;
+
 	my $output;
 
 	# run rule only if the farm is up
@@ -458,10 +457,12 @@ sub setBLApplyToFarm
 	return $output;
 }
 
+
 # &setBLRemFromFarm ( $farmName, $listName );
 sub setBLRemFromFarm
 {
 	my ( $farmName, $listName ) = @_;
+
 	my $output = &setBLDeleteRule( $farmName, $listName );
 
 	if ( !$output )
@@ -486,23 +487,21 @@ lists:
 # -------------------
 
 =begin nd
-        Function: setBLPreloadLists
+Function: setBLAddPreloadLists
 
-        This function return all preload lists available or 
-        the source list of ones of this
+	This function return all preload lists available or
+	the source list of ones of this
 
-        Parameters:
-        
-				country		- this param is optional, with this param, the function return the 
-										source list of lan segment for a counry
-				
-        Returns:
+Parameters:
 
-                array ref	- availabe counrties or source list
-                
+	country - This param is optional, with this param, the function return the
+			  source list of lan segment for a country
+
+Returns:
+
+		array ref	- availabe counrties or source list
+
 =cut
-
-# &getBLPreloadLists;
 sub setBLAddPreloadLists
 {
 	my $blacklistsLocalPreload =
@@ -525,6 +524,7 @@ sub setBLAddPreloadLists
 	closedir ( DIR );
 
 	my $fileHandle = Config::Tiny->read( $blacklistsConf );
+
 	foreach my $list ( @preloadLists )
 	{
 		if ( $list =~ s/.txt$// )
@@ -595,7 +595,6 @@ sub setBLAddPreloadLists
 			);
 		}
 	}
-
 }
 
 # $listParams = \ %paramsRef;
@@ -604,6 +603,7 @@ sub setBLCreateList
 {
 	my $listName    = shift;
 	my $listParams  = shift;
+
 	my $def_policy    = 'deny';
 	my $def_preload = 'false';
 	my $output;
@@ -680,26 +680,24 @@ sub setBLCreateList
 }
 
 =begin nd
-        Function: setBLDeleteList
+Function: setBLDeleteList
 
-        delete a list from iptables, ipset and configuration file
-			
+	Delete a list from iptables, ipset and configuration file
 
-        Parameters:
-        
-				$listName	- List to delete
-        
-        Returns:
+Parameters:
 
-                ==0	- successful
-				!=0 - error
-                
+	$listName	- List to delete
+
+Returns:
+
+	==0	- successful
+	!=0 - error
+
 =cut
-
-# &setBLDeleteList ( $listName )
 sub setBLDeleteList
 {
 	my ( $listName ) = @_;
+
 	my $fileHandle;
 	my $output;
 	my $error;
@@ -746,27 +744,27 @@ sub setBLDeleteList
 }
 
 =begin nd
-        Function: setBLParam
+Function: setBLParam
 
-				Modificate local config file 
+		Modificate local config file.
 
-        Parameters:
-        
-				name	- section name
-				key		- field to modificate
-				value	- value for the field
-				opt		- add / del		when key = farms
+Parameters:
 
-        Returns:
-                0	- successful
-                !=0	- error
-                
+	name	- section name
+	key		- field to modificate
+	value	- value for the field
+	opt		- add / del		when key = farms
+
+Returns:
+
+	0	- successful
+	!=0	- error
+
 =cut
-
-# &setBLParam ( $name , $key,  $value )
 sub setBLParam
 {
 	my ( $name, $key, $value ) = @_;
+
 	my $output;
 	# get conf
 	my $type       = &getBLParam( $name, 'type' );
@@ -893,32 +891,32 @@ sub setBLParam
 }
 
 =begin nd
-        Function: getBLParam
+Function: getBLParam
 
-				Get list config 
+	Get list config
 
-        Parameters:
-        
-				name	- section name
-				key		- field to modificate
-					- name	-> list name
-					- farm	-> add or delete a asociated farm
-					- url	-> modificate url ( only remote lists )
-					- update_status-> modificate list status ( only remote lists )
-					- list  -> modificate ip list ( only local lists )
-					
-				value	- value for the field
+Parameters:
 
-        Returns:
-                0	- successful
-                !=0	- error
-                
+	name	- section name
+	key		- field to modificate
+		- name	-> list name
+		- farm	-> add or delete a asociated farm
+		- url	-> modificate url ( only remote lists )
+		- update_status-> modificate list status ( only remote lists )
+		- list  -> modificate ip list ( only local lists )
+
+	value	- value for the field
+
+Returns:
+
+	0	- successful
+	!=0	- error
+
 =cut
-
-# &getBLParam ( $listName, $key )
 sub getBLParam
 {
 	my ( $listName, $key ) = @_;
+
 	my $output;
 	my $fileHandle;
 
@@ -973,11 +971,13 @@ sub getBLParam
 sub delBLParam
 {
 	my ( $listName, $key ) = @_;
+
 	my $output;
 	my $fileHandle;
 
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	$fileHandle = Config::Tiny->read( $blacklistsConf );
+
 	if ( exists ( $fileHandle->{ $listName }->{ $key } ) )
 	{
 		&zenlog ( "Delete parameter $key in list $listName." );
@@ -987,30 +987,27 @@ sub delBLParam
 }
 
 =begin nd
-        Function: getBLExists
+Function: getBLExists
 
-		get if a list exists o all available lists
+	Get if a list exists o all available lists
 
-        Parameters:
+Parameters:
 
-				listName	-	return 0 if list exists
-				no param	-	return a ref array of all available lists
+	listName	-	return 0 if list exists
+	no param	-	return a ref array of all available lists
 
-        Returns:
+Returns:
 
-                0   - list exists
-                -1  - list doesn't exist
-                
+	0   - list exists
+	-1  - list doesn't exist
 =cut
-
-# &getBLExists ( $listName );
 sub getBLExists
 {
 	my $listName       = shift;
+
 	my $output         = -1;
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $fileHandle     = Config::Tiny->read( $blacklistsConf );
-	my @aux;
 
 	if ( $listName )
 	{
@@ -1018,7 +1015,7 @@ sub getBLExists
 	}
 	else
 	{
-		@aux    = keys %{ $fileHandle };
+		my @aux    = keys %{ $fileHandle };
 		$output = \@aux;
 	}
 
@@ -1026,22 +1023,21 @@ sub getBLExists
 }
 
 =begin nd
-        Function: getBLIpList
+Function: setBLDownloadRemoteList
 
-		Download a list from url and keep it in file
+	Download a list from url and keep it in file
 
-        Parameters:
-        
-                listName 
+Parameters:
 
-        Returns:
-                
+	listName
+
+Returns:
+
 =cut
-
-# &setBLDownloadRemoteList ( $listName );
 sub setBLDownloadRemoteList
 {
 	my ( $listName ) = @_;
+
 	my $url = &getBLParam( $listName, 'url' );
 	my $timeout = 10;
 	my $error;
@@ -1075,6 +1071,7 @@ sub setBLDownloadRemoteList
 	{
 		my $path     = &getGlobalConfiguration( 'blacklistsPath' );
 		my $fileList = "$path/$listName.txt";
+
 		tie my @list, 'Tie::File', $fileList;
 		@list = @ipList;
 		untie @list;
@@ -1091,6 +1088,7 @@ sub setBLDownloadRemoteList
 sub getBLlastUptdate
 {
 	my $listName = shift;
+
 	my $date;
 	my $listFile = &getGlobalConfiguration ( 'blacklistsPath' ) . "/$listName.txt";
 	my $stat = &getGlobalConfiguration ( 'stat' );
@@ -1117,25 +1115,24 @@ sub getBLlastUptdate
 
 
 =begin nd
-        Function: setBLRefreshList
+Function: setBLRefreshList
 
-        Update IPs from a list
+	Update IPs from a list.
 
-        Parameters:
-        
-				$listName 	
-				
-        Returns:
+Parameters:
 
-                == 0	- successful
-                != 0	- error
-                
+	$listName
+
+Returns:
+
+	== 0	- successful
+	!= 0	- error
+
 =cut
-
-#	&setBLRefreshList ( $listName )
 sub setBLRefreshList
 {
 	my ( $listName ) = @_;
+
 	my @ipList = @{ &getBLIpList( $listName ) };
 	my $output;
 	my $ipset     = &getGlobalConfiguration( 'ipset' );
@@ -1162,24 +1159,24 @@ sub setBLRefreshList
 	}
 
 	&zenlog( "refreshed '$listName'." );
+
 	return $output;
 }
 
 =begin nd
-        Function: setBLRefreshAllLists
+Function: setBLRefreshAllLists
 
-				Check if config file data and list directories are coherent
-				Refresh all lists, locals and remotes.
-				
-        Parameters:
-        
-        Returns:
-                0	- successful
-                !=0	- error in some list 
-                
-=cut				
+	Check if config file data and list directories are coherent
+	Refresh all lists, locals and remotes.
 
-# &setBLRefreshAllLists
+Parameters: None.
+
+Returns:
+
+	0	- successful
+	!=0	- error in some list
+
+=cut
 sub setBLRefreshAllLists
 {
 	my $output;
@@ -1201,36 +1198,33 @@ sub setBLRefreshAllLists
 		}
 		&zenlog( "The preload list '$listName' was update." );
 	}
+
 	return $output;
 }
 
 =begin nd
-        Function: getBLIpList
+Function: getBLIpList
 
-				get list of IPs from a local or remote list
+	Get list of IPs from a local or remote list.
 
-        Parameters:
-        
-                listName - local listname / remote url, where find list of IPs
+Parameters:
 
-        Returns:
-                -1		 	- error
-                \@ipList	- successful
-                
+	listName - local listname / remote url, where find list of IPs
+
+Returns:
+
+	-1		 	- error
+	\@ipList	- successful
+
 =cut
-
-# &getBLIpList ( $listName )
 sub getBLIpList
 {
 	my ( $listName ) = @_;
+
 	my @ipList;
 	my $output = -1;
-	my $fileHandle;
-
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $source_format  = &getValidFormat( 'blacklists_source' );
-
-	#~ my $fileList = "$PreloadPath/$listName.txt";
 
 	tie my @list, 'Tie::File', "$blacklistsPath/$listName.txt";
 	@ipList = @list;
@@ -1245,22 +1239,21 @@ sub getBLIpList
 }
 
 =begin nd
-        Function: setBLAddToList
+Function: setBLAddToList
 
-		Change ip list for a list
+	Change ip list for a list
 
-        Parameters:
-				listName
-				listRef	 - ref to ip list
-				
-        Returns:
+Parameters:
+	listName
+	listRef	 - ref to ip list
 
-=cut			
+Returns:
 
-# &setBLAddToList  ( $listName, \@ipList );
+=cut
 sub setBLAddToList
 {
 	my ( $listName, $listRef ) = @_;
+
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $source_format  = &getValidFormat( 'blacklists_source' );
 	my @ipList         = grep ( /$source_format/, @{ $listRef } );
@@ -1274,98 +1267,95 @@ sub setBLAddToList
 		&zenlog( "IPs of '$listName' was modificated." );
 		$output = 0;
 	}
+
 	return $output;
 }
 
 =begin nd
-        Function: setBrefreshLDeleteSource
+Function: setBLDeleteSource
 
-        Delete a source from a list
+	Delete a source from a list
 
-        Parameters:
-				list	- ip list name
-				id		- line to delete
-				
-        Returns:
+Parameters:
+	list	- ip list name
+	id		- line to delete
+
+Returns:
 
 =cut
-
-# &setBLDeleteSource  ( $listName, $id );
 sub setBLDeleteSource
 {
 	my ( $listName, $id ) = @_;
-	my $policy = &getBLParam( $listName, 'policy' );
 
+	my $policy         = &getBLParam( $listName, 'policy' );
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
+	my $err;
 
 	tie my @list, 'Tie::File', "$blacklistsPath/$listName.txt";
 	my $source = splice @list, $id, 1;
 	untie @list;
 
-	my $err;
 	if ( &getBLStatus( $listName ) eq 'up' )
 	{
 		$err = system ( "$ipset del $listName $source >/dev/null 2>&1" );
 	}
+
 	&zenlog( "$source was deleted from $listName" ) if ( !$err );
 
 	return $err;
 }
 
 =begin nd
-        Function: setBLAddSource
+Function: setBLAddSource
 
-        Add a source from a list
+	Add a source from a list
 
-        Parameters:
-				list	- ip list name
-				source	- new source to add
-				
-        Returns:
+Parameters:
+	list	- ip list name
+	source	- new source to add
 
+Returns:
 =cut
-
-# &setBLAddSource  ( $listName, $source );
 sub setBLAddSource
 {
 	my ( $listName, $source ) = @_;
-	my $policy = &getBLParam( $listName, 'policy' );
 
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
+	my $policy         = &getBLParam( $listName, 'policy' );
+	my $error;
 
 	tie my @list, 'Tie::File', "$blacklistsPath/$listName.txt";
 	push @list, $source;
 	untie @list;
 
-	my $error;
 	if ( &getBLStatus( $listName ) eq 'up' )
 	{
 		$error = system ( "$ipset add $listName $source >/dev/null 2>&1" );
 	}
+
 	&zenlog( "$source was added to $listName" ) if ( !$error );
+
 	return $error;
 }
 
 =begin nd
-        Function: setBLModifSource
+Function: setBLModifSource
 
-        Modify a source from a list
+	Modify a source from a list
 
-        Parameters:
-				list	- ip list name
-				id		- line to modificate
-				source	- new value
-				
-        Returns:
+Parameters:
+	list	- ip list name
+	id		- line to modificate
+	source	- new value
 
+Returns:
 =cut
-
-# &setBLModifSource  ( $listName, $id, $source );
 sub setBLModifSource
 {
 	my ( $listName, $id, $source ) = @_;
+
 	my $policy           = &getBLParam( $listName, 'policy' );
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
@@ -1380,6 +1370,7 @@ sub setBLModifSource
 		$err = system ( "$ipset del $listName $oldSource >/dev/null 2>&1" );
 		$err = system ( "$ipset add $listName $source >/dev/null 2>&1" ) if ( !$err );
 	}
+
 	&zenlog( "$oldSource was replaced for $source in the list $listName" )
 	  if ( !$err );
 
@@ -1389,28 +1380,27 @@ sub setBLModifSource
 #~ --------
 farms:
 
-# modificate iptables
+# modify iptables rules
 #~ --------
 
 =begin nd
-        Function: getBLRules
+Function: getBLRules
 
-        list all BL applied rules
+	List all BL applied rules.
 
-        Parameters:
-				
-        Returns:
-				@array  - BL applied rules 
-				== 0	- error
+Parameters: None.
+
+Returns:
+
+	@array  - BL applied rules
+	== 0	- error
 
 =cut
-
-# &getBLRules
 sub getBLRules
 {
 	my @rlbRules;
-
 	my @farms = &getFarmNameList;
+
 	foreach my $farmName ( @farms )
 	{
 		my @rules = &getIptList( $farmName, 'raw', 'PREROUTING' );
@@ -1423,6 +1413,7 @@ sub getBLRules
 			}
 		}
 	}
+
 	return \@rlbRules;
 }
 
@@ -1430,6 +1421,7 @@ sub getBLRules
 sub setBLCronTask
 {
 	my ( $listName ) = @_;
+
 	my $cronFormat = { 'min' => '*', 'hour' => '*', 'dow' => '*', 'dom' => '*', 'month' => '*' };
 	my $rblFormat;
 	
@@ -1509,11 +1501,12 @@ sub setBLCronTask
 sub delBLCronTask
 {
 	my $listName           = shift;
+
 	my $blacklistsCronFile = &getGlobalConfiguration( 'blacklistsCronFile' );
+	my $index = 0;
 
 	tie my @list, 'Tie::File', $blacklistsCronFile;
-	
-	my $index = 0;
+
 	foreach my $line ( @list )
 	{
 		if ( $line =~ /\s$listName\s/ )
@@ -1531,9 +1524,9 @@ sub delBLCronTask
 
 sub getBLCronTask
 {
-	my $listName       = shift;
-	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my $listName = shift;
 
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $file = Config::Tiny->read( $blacklistsConf );
 	my %conf = %{ $file->{ $listName } };
 
@@ -1543,9 +1536,11 @@ sub getBLCronTask
 sub getBLzapi
 {
 	my $listName = shift;
+
 	my %listHash;
 	my @ipList;
 	my $index = 0;
+
 	foreach my $source ( @{ &getBLParam( $listName, 'source' ) } )
 	{
 		push @ipList, { id => $index++, source => $source };
@@ -1562,6 +1557,7 @@ sub getBLzapi
 	# save hour, minute, period and unit parameters in 'time' hash
 	my @timeParameters = ( 'period', 'unit', 'hour', 'minutes' );
 	#~ $listHash{ 'time'};
+
 	foreach my $param ( @timeParameters )
 	{
 		if ( exists $listHash{ $param } )
