@@ -1221,19 +1221,16 @@ sub getBLIpList
 {
 	my ( $listName ) = @_;
 
-	my @ipList;
 	my $output = -1;
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $source_format  = &getValidFormat( 'blacklists_source' );
 
-	tie my @list, 'Tie::File', "$blacklistsPath/$listName.txt";
-	@ipList = @list;
-	untie @list;
-
 	# ip list format wrong
 	# get only correct format lines
-	@ipList = grep ( /($source_format)/, @ipList );
+	open my $fh, '<', "$blacklistsPath/$listName.txt";
+	chomp( my @ipList = grep ( /($source_format)/, <$fh> ) );
 	$output = \@ipList;
+	close $fh;
 
 	return $output;
 }
