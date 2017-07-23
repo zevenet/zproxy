@@ -27,18 +27,26 @@ use Zevenet::IPDS::Blacklist;
 # GET /ipds/blacklists
 sub get_blacklists_all_lists
 {
-	my $listNames   = &getBLExists();
 	my $description = "Get black lists";
+
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my %bl = %{ Config::Tiny->read( $blacklistsConf ) };
 	my @lists;
-	foreach my $list ( @{ $listNames } )
+	delete $bl{_};
+
+	foreach my $list_name ( keys %bl )
 	{
+		my $bl_n  = $bl{ $list_name };
+		my $bl_nf = $bl_n->{ farms };
+
 		my %listHash = (
-						 name     => $list,
-						 farms    => &getBLParam( $list, 'farms' ),
-						 policy     => &getBLParam( $list, 'policy' ),
-						 type => &getBLParam( $list, "type" ),
-						 preload => &getBLParam( $list, "preload" )
+						 name    => $list_name,
+						 farms   => $bl_nf ? split ( ' ', $bl_nf ) : [],
+						 policy  => $bl_n->{ policy },
+						 type    => $bl_n->{ type },
+						 preload => $bl_n->{ preload },
 		);
+
 		push @lists, \%listHash;
 	}
 
