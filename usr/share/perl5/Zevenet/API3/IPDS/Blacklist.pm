@@ -34,7 +34,7 @@ sub get_blacklists_all_lists
 	my @lists;
 	delete $bl{_};
 
-	foreach my $list_name ( keys %bl )
+	foreach my $list_name ( sort keys %bl )
 	{
 		my $bl_n  = $bl{ $list_name };
 		my $bl_nf = $bl_n->{ farms };
