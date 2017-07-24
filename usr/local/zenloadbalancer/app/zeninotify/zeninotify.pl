@@ -212,6 +212,7 @@ while ( 1 )
 				&zenlog("Watching $event_fullname");
 				push( @ino_targets, $event->fullname );
 				$inotify->watch( $event->fullname, IN_CLOSE_WRITE | IN_CREATE | IN_DELETE );
+				&runSync( $configdir );
 			}
 			next;
 		}
