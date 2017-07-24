@@ -971,6 +971,10 @@ sub create_dos_rule
 		{
 			$errormsg = "$json_obj->{ 'name' } already exists.";
 		}
+		elsif ( $json_obj->{ 'name' } eq 'rules' )
+		{
+			$errormsg = 'The name is not valid, it is a reserved word.';
+		}
 		elsif ( !&getValidFormat( 'dos_name', $json_obj->{ 'name' } ) )
 		{
 			$errormsg = "rule name hasn't a correct format.";
