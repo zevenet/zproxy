@@ -715,7 +715,8 @@ sub enable_cluster
 	}
 	else
 	{
-		my $errormsg = "An error happened configuring the cluster: $@";
+		&zenlog( "An error happened configuring the cluster: $@" );
+		my $errormsg = "An error happened configuring the cluster.";
 		$errormsg =~ s/ at \/.+//;
 		$errormsg =~ s/\n//;
 		my $body = {
