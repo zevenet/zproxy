@@ -158,7 +158,7 @@ sub setBLDestroyList
 	#~ if ( &getBLStatus ( $listName ) eq 'up' ) 
 	#~ {
 		&zenlog( "Destroying blacklist $listName" );
-		system ( "$ipset -I destroy $listName >/dev/null 2>&1" );		
+		system ( "$ipset destroy $listName >/dev/null 2>&1" );
 	#~ }
 
 	return $output;
