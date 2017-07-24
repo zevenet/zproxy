@@ -494,6 +494,8 @@ sub update_remote_blacklists
 	my $json_obj    = shift;
 	my $listName    = shift;
 
+	require Zevenet::IPDS::Blacklist;
+
 	my $description = "Update a remote list";
 	my $errormsg = &getBLExists( $listName );
 
@@ -757,6 +759,7 @@ sub set_blacklists_source
 							 params      => { "source" => $json_obj->{'source'}, 'id' => $id } 
 				};
 
+				require Zevenet::Cluster;
 				&runZClusterRemoteManager( 'ipds', 'restart_bl' );
 
 				&httpResponse( { code => 200, body => $body } );
