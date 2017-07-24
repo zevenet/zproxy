@@ -198,6 +198,8 @@ sub enableZCluster
 		return 1;
 	}
 
+	require Zevenet::Net::Interface;
+
 	# create dummy interface
 	unless ( &getSystemInterface( $maint_if ) )
 	{
@@ -254,6 +256,7 @@ sub enableZCluster
 	# conntrackd
 	unless ( -f &getGlobalConfiguration('conntrackd_conf') )
 	{
+		require Zevenet::Conntrackd;
 		&setConntrackdConfig();
 	}
 
@@ -287,11 +290,15 @@ sub disableZCluster
 {
 	my $error_code = system("/etc/init.d/keepalived stop >/dev/null 2>&1");
 
+	require Zevenet::Conntrackd;
+
 	# conntrackd
 	if ( &getConntrackdRunning() )
 	{
 		&stopConntrackd();
 	}
+
+	require Zevenet::Net::Interface;
 
 	# remove dummy interface
 	if ( &getSystemInterface( $maint_if ) )
@@ -545,10 +552,10 @@ See Also:
 sub copyIdKey # $rc ( $ip_addr, $pass )
 {
 	my $ip_address = shift;
-	my $password = shift;
+	my $password   = shift;
 
 	my $safe_password = quotemeta( $password );
-	
+
 	my $copyId_cmd = "HOME=\"/root\" /usr/local/zenloadbalancer/app/zbin/ssh-copy-id.sh $safe_password root\@$ip_address";
 
 	my $copy_output = `$copyId_cmd`; # WARNING: Do not redirect stderr to stdout
@@ -581,10 +588,10 @@ See Also:
 sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 {
 	my $ip_address = shift;
-	my $password = shift;
+	my $password   = shift;
 
-	my $key_path = &getGlobalConfiguration('key_path');
-	my $key_id = &getGlobalConfiguration('key_id');
+	my $key_path = &getGlobalConfiguration( 'key_path' );
+	my $key_id   = &getGlobalConfiguration( 'key_id' );
 
 	#### Check for local key ID ####
 
@@ -676,17 +683,18 @@ See Also:
 =cut
 sub runRemotely # `output` ( $cmd, $ip_addr [, $port ] )
 {
-	my $cmd = shift;
+	my $cmd        = shift;
 	my $ip_address = shift;
-	my $port = shift // '22';
+	my $port       = shift // '22';
 
 	my $ssh_options = '';
 	$ssh_options .= '-o "ConnectTimeout=2" '; # ssh-connect timeout
 	$ssh_options .= '-o "StrictHostKeyChecking=no" ';
 
 	# log the command to be run
-	my $ssh = &getGlobalConfiguration('ssh');
+	my $ssh     = &getGlobalConfiguration( 'ssh' );
 	my $ssh_cmd = "$ssh $ssh_options root\@$ip_address '$cmd'";
+
 	&zenlog("Running remotely: \@$ip_address: $cmd") if &debug();
 	&zenlog("Running: $ssh_cmd") if &debug() > 1;
 

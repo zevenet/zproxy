@@ -226,6 +226,7 @@ sub modify_cluster
 			system( "scp $filecluster root\@$zcl_conf->{$rhost}->{ip}:$filecluster" );
 
 			# reconfigure local conntrackd
+			require Zevenet::Conntrackd;
 			&setConntrackdConfig();
 
 			# reconfigure remote conntrackd
@@ -349,6 +350,8 @@ sub set_cluster_actions
 		# Enable maintenance mode
 		if ( $json_obj->{ status } eq 'enable' )
 		{
+			require Zevenet::Net::Interface;
+
 			# make sure the node is not already under maintenance
 			my $if_ref = getSystemInterface( $maint_if );
 
@@ -373,6 +376,8 @@ sub set_cluster_actions
 		# Disable maintenance mode
 		elsif ( $json_obj->{ status } eq 'disable' )
 		{
+			require Zevenet::Net::Interface;
+
 			# make sure the node is under maintenance
 			my $if_ref = getSystemInterface( $maint_if );
 
@@ -568,6 +573,8 @@ sub enable_cluster
 	}
 
 	# validate LOCAL IP
+	require Zevenet::Net::Interface;
+
 	my @cl_if_candidates = @{ &getSystemInterfaceList() };
 	@cl_if_candidates = grep { $_->{ addr } && $_->{ type } ne 'virtual' } @cl_if_candidates;
 
@@ -624,6 +631,8 @@ sub enable_cluster
 
 		chomp $remote_hostname;
 		chomp $local_hostname;
+
+		require Zevenet::Net::Util;
 
 		$zcl_conf->{ _ }->{ deadratio } = $DEFAULT_DEADRATIO;
 		$zcl_conf->{ _ }->{ interface } = &getInterfaceOfIp( $json_obj->{ local_ip } );
