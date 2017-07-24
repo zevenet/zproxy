@@ -58,7 +58,7 @@ package GLOBAL {
 };
 
 # all libs, tmp
-use Zevenet;
+#~ use Zevenet;
 #~ use Zevenet::Net;
 #~ use Zevenet::Zapi;
 #~ use Zevenet::Config;
@@ -124,7 +124,7 @@ my $post_data = $q->param( 'POSTDATA' );
 my $put_data  = $q->param( 'PUTDATA' );
 
 &zenlog( "CGI POST DATA: " . $post_data ) if $post_data && &debug;
-&zenlog( "CGI PUT DATA: " . $put_data )   if $put_data && &debug;
+&zenlog( "CGI PUT DATA: " . $put_data )   if $put_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
 
 ################################################################################
 #
