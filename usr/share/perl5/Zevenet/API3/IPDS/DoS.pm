@@ -207,10 +207,12 @@ sub set_dos_rule
 				{
 					&setDOSParam( $name, $param, $json_obj->{ $param } );
 				}
+
 				if ( !$errormsg )
 				{
 					my $refRule = &getDOSParam( $name );
 
+					require Zevenet::Cluster;
 					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
 
 					&httpResponse(
@@ -366,6 +368,7 @@ sub add_dos_to_farm
 
 				if ( &getFarmStatus( $farmName ) eq 'up' )
 				{
+					require Zevenet::Cluster;
 					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
 				}
 
@@ -441,6 +444,7 @@ sub del_dos_from_farm
 
 				if ( &getFarmStatus( $farmName ) eq 'up' )
 				{
+					require Zevenet::Cluster;
 					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
 				}
 
