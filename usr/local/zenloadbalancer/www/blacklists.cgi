@@ -149,8 +149,8 @@ sub setBLDestroyList
 	#~ if ( &getBLStatus ( $listName ) eq 'up' )		# FIXME:  lunch consecutive the following two ipset command return error
 	#~ {
 		&zenlog( "Destroying blacklist $listName" );
-		#~ $output = system ( "$ipset -I destroy $listName >/dev/null 2>&1" );		# FIXME: Not contemplate error, because return error with before command
-		system ( "$ipset -I destroy $listName >/dev/null 2>&1" );		
+		#~ $output = system ( "$ipset destroy $listName >/dev/null 2>&1" );		# FIXME: Not contemplate error, because return error with before command
+		system ( "$ipset destroy $listName >/dev/null 2>&1" );
 	#~ }
 
 	return $output;
