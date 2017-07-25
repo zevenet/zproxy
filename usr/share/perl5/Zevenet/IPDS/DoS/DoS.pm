@@ -601,7 +601,7 @@ sub setDOSReloadFarmRules
 }
 
 =begin nd
-        Function: setDOSCreateRule
+Function: setDOSCreateRule
 
         Create a DoS rules
         This rules have two types: applied to a farm or applied to the balancer
