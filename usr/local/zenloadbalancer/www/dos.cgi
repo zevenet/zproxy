@@ -550,20 +550,8 @@ sub setDOSBoot
 	&zenlog( "Booting dos system... " );
 	&setDOSCreateFileConf();
 
-	#create  PORT_SCANNING chain
-	# /sbin/iptables -N PORT_SCANNING
-
 	if ( -e $confFile )
 	{
-		
-		# This block is a bugfix. When ssh_brute_force rule doesn't show the port
-		if ( ! &setDOSParam ( 'ssh_brute_force', 'port' ) )
-		{
-			my $sshconf = &getSsh();
-			my $port    = $sshconf->{ 'port' };
-			&setDOSParam ( 'ssh_brute_force', 'port', $port);
-		}
-		
 		my $fileHandle = Config::Tiny->read( $confFile );
 		foreach my $ruleName ( keys %{ $fileHandle } )
 		{
@@ -595,6 +583,15 @@ sub setDOSBoot
 			}
 		}
 	}
+	
+	# This block is a bugfix. When ssh_brute_force rule doesn't show the port
+	if ( ! &setDOSParam ( 'ssh_brute_force', 'port' ) )
+	{
+		my $sshconf = &getSsh();
+		my $port    = $sshconf->{ 'port' };
+		&setDOSParam ( 'ssh_brute_force', 'port', $port);
+	}
+	
 	return $output;
 }
 
