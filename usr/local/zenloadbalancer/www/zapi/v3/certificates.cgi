@@ -110,7 +110,7 @@ sub get_certificate_info # ()
 	my $cert_dir = &getGlobalConfiguration('configdir');
 	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
 
-	if ( $cert_filename =~ /\.(pem|csr)$/ && -f "$cert_dir\/$cert_filename" )
+	if ( &getValidFormat( 'certificate', $cert_filename ) && -f "$cert_dir\/$cert_filename" )
 	{
 		my @cert_info = &getCertData( $cert_filename );
 		my $body;
@@ -302,7 +302,18 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	# FIXME: Show error if the certificate is already in the list
+	if ( grep ( /^ $json_obj->{ file }$/, &getFarmCertificatesSNI( $farmname ) ) )
+	{
+		# Error
+		my $errormsg = "The certificate already exists in the farm.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
 
 	my $status = &setFarmCertificateSNI( $json_obj->{ file }, $farmname );
 
@@ -370,7 +381,22 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if ( $certfilename !~ /^$/ && $certfilename =~ /^[\w\.-_]+$/ )
+	# Check if this certificate is set in the farm
+	if ( !grep ( /^$certfilename$/, &getFarmCertificatesSNI( $farmname ) ) )
+	{
+		# Error
+		my $errormsg = "The certificate does not exist in the farm.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+
+	if ( &getValidFormat ( 'certificate', $certfilename ) )
 	{
 		$status = &setFarmDeleteCertNameSNI( $certfilename, $farmname );
 
@@ -583,8 +609,9 @@ sub upload_certificate # ()
 	my $description = "Upload PEM certificate";
 	my $configdir = &getGlobalConfiguration('configdir');
 
-	if ( $filename =~ /^\w.+\.pem$/ )
+	if ( &getValidFormat( 'certificate', $filename) )
 	{
+		$filename =~ s/[\(\)\@ ]//g;
 		if ( -f "$configdir/$filename" )
 		{
 			# Error
