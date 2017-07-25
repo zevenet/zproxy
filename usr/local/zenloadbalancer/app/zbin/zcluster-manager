@@ -453,17 +453,15 @@ sub setNodeStatusMaintenance
 		&zenlog("Node is already under maintenance");
 		return 0;
 	}
-	else
-	{
-		&zenlog("Switching node to under maintenance");
-		&setZClusterNodeStatus('maintenance');
-	}
-
+	&zenlog("Switching node to under maintenance");
+	&setZClusterNodeStatus('maintenance');
+	
 	my $primary_backup = &getGlobalConfiguration('primary_backup');
 	system("$primary_backup fault");
 
-	my $zenino = &getGlobalConfiguration('zenino');
-	system( "$zenino stop &" ) unless system('pgrep zeninotify.pl');
+	# stop zeninotify
+        my $zenino   = &getGlobalConfiguration( 'zenino' );
+        system( "$zenino stop" );
 
 	# stop farmguardian
 	system("pkill `pgrep farmguardian`");
@@ -475,6 +473,7 @@ sub setNodeStatusMaintenance
 		next if $if_ref->{ vini } eq '';
 		&disableInterfaceDiscovery( $if_ref );
 	}
+	#}
 
 	return 0;
 }
