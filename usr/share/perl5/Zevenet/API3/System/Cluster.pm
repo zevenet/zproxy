@@ -370,12 +370,6 @@ sub set_cluster_actions
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 			system("$ip_bin link set $maint_if down");
 
-			# required for no failback configuration
-			&setZClusterNodeStatus('maintenance');
-			
-			# 1 stop zeninotify 
-			my $zenino   = &getGlobalConfiguration( 'zenino' );
-			system( "$zenino stop" );
 		}
 		# Disable maintenance mode
 		elsif ( $json_obj->{ status } eq 'disable' )
