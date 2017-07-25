@@ -114,7 +114,7 @@ sub get_certificate_info # ()
 	my $cert_dir = &getGlobalConfiguration('configdir');
 	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
 
-	if ( $cert_filename =~ /\.(pem|csr)$/ && -f "$cert_dir\/$cert_filename" )
+	if ( &getValidFormat( 'certificate', $cert_filename ) && -f "$cert_dir\/$cert_filename" )
 	{
 		my @cert_info = &getCertData( $cert_filename );
 		my $body;
@@ -245,6 +245,19 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 		&httpResponse({ code => 400, body => $body });
 	}
 
+	if ( grep ( /^ $json_obj->{ file }$/, &getFarmCertificatesSNI( $farmname ) ) )
+	{
+		# Error
+		my $errormsg = "The certificate already exists in the farm.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
 	my $status = &setFarmCertificateSNI( $json_obj->{ file }, $farmname );
 
 	# check for error setting the certificate
@@ -308,7 +321,22 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	unless ( $certfilename && &getValidFormat( 'cert_pem', $certfilename ) )
+	# Check if this certificate is set in the farm
+	if ( !grep ( /^$certfilename$/, &getFarmCertificatesSNI( $farmname ) ) )
+	{
+		# Error
+		my $errormsg = "The certificate does not exist in the farm.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse({ code => 404, body => $body });
+	}
+
+
+	if ( &getValidFormat ( 'certificate', $certfilename ) )
 	{
 		&zenlog(
 			"ZAPI error, trying to delete a certificate to the SNI list, invalid certificate id."
@@ -510,8 +538,42 @@ sub upload_certificate # ()
 	my $description = "Upload PEM certificate";
 	my $configdir = &getGlobalConfiguration('configdir');
 
-	# check valid certificate filename
-	if ( $filename !~ /^\w.+\.pem$/ )
+	if ( &getValidFormat( 'certificate', $filename) )
+	{
+		$filename =~ s/[\(\)\@ ]//g;
+		if ( -f "$configdir/$filename" )
+		{
+			# Error
+			my $errormsg = "Certificate file name already exists";
+			my $body = {
+						 description => $description,
+						 error       => "true",
+						 message     => $errormsg
+			};
+
+			&httpResponse({ code => 400, body => $body });
+		}
+
+		if ( $filename =~ /\\/ )
+		{
+			my @filen = split ( /\\/, $filename );
+			$filename = $filen[-1];
+		}
+
+		open ( my $cert_filehandle, '>', "$configdir/$filename" ) or die "$!";
+		print $cert_filehandle $upload_filehandle;
+		close $cert_filehandle;
+
+		my $message = "Certificate uploaded";
+		my $body = {
+					 description => $description,
+					 success       => "true",
+					 message     => $message
+		};
+
+		&httpResponse({ code => 200, body => $body });
+	}
+	else
 	{
 		&zenlog( "ZAPI error, trying to upload a certificate." );
 
