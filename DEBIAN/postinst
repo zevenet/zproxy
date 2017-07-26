@@ -21,14 +21,14 @@
 #
 ###############################################################################
 
-GLOBALCF="/usr/local/zenloadbalancer/config/global.conf"
-GLOBALCFT="/usr/local/zenloadbalancer/app/checkglobalconf/global.conf.tpl"
+GLOBALCF="/usr/local/zevenet/config/global.conf"
+GLOBALCFT="/usr/local/zevenet/app/checkglobalconf/global.conf.tpl"
 
 [ ! "$1" == "configure" ] && echo "Installation aborted $1 $2" && exit 1
 [ "$1" == "configure" ] && echo "Completing the ZLB installation..."
 
 # Migration script
-MSCRIPT="/usr/local/zenloadbalancer/app/zbin/zlbmigration302to303.pl"
+MSCRIPT="/usr/local/zevenet/app/zbin/zlbmigration302to303.pl"
 if [ -f $MSCRIPT -a -f $GLOBALCF ]; then
 	oldver=`cat $GLOBALCF | grep "version=" | awk -F'"' '{printf $2}'`
 	newver=`cat $GLOBALCFT | grep "version=" | awk -F'"' '{printf $2}'`
@@ -37,39 +37,39 @@ if [ -f $MSCRIPT -a -f $GLOBALCF ]; then
 	fi
 fi
 
-if [ -f /usr/local/zenloadbalancer/app/zennetname/write_net_rules ]; then
-	cp -f /usr/local/zenloadbalancer/app/zennetname/write_net_rules /lib/udev/
+if [ -f /usr/local/zevenet/app/zennetname/write_net_rules ]; then
+	cp -f /usr/local/zevenet/app/zennetname/write_net_rules /lib/udev/
 fi
 
 # Check for binaries
 PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
-if [ -e "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.${PERLVER}" ]; then
-	mv "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi"
-	rm /usr/local/zenloadbalancer/www/zapi/v2/zapi.cgi.*
+if [ -e "/usr/local/zevenet/www/zapi/v2/zapi.cgi.${PERLVER}" ]; then
+	mv "/usr/local/zevenet/www/zapi/v2/zapi.cgi.${PERLVER}" "/usr/local/zevenet/www/zapi/v2/zapi.cgi"
+	rm /usr/local/zevenet/www/zapi/v2/zapi.cgi.*
 fi
-if [ -e "/usr/local/zenloadbalancer/www/zapi/v3/zapi.cgi.${PERLVER}" ]; then
-	mv "/usr/local/zenloadbalancer/www/zapi/v3/zapi.cgi.${PERLVER}" "/usr/local/zenloadbalancer/www/zapi/v3/zapi.cgi"
-	rm /usr/local/zenloadbalancer/www/zapi/v3/zapi.cgi.*
+if [ -e "/usr/local/zevenet/www/zapi/v3/zapi.cgi.${PERLVER}" ]; then
+	mv "/usr/local/zevenet/www/zapi/v3/zapi.cgi.${PERLVER}" "/usr/local/zevenet/www/zapi/v3/zapi.cgi"
+	rm /usr/local/zevenet/www/zapi/v3/zapi.cgi.*
 fi
-if [ -e "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer.${PERLVER}" ]; then
-	mv "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer.${PERLVER}" "/usr/local/zenloadbalancer/app/zbin/zenloadbalancer"
-	rm /usr/local/zenloadbalancer/app/zbin/zenloadbalancer.*
+if [ -e "/usr/local/zevenet/app/zbin/zevenet.${PERLVER}" ]; then
+	mv "/usr/local/zevenet/app/zbin/zevenet.${PERLVER}" "/usr/local/zevenet/app/zbin/zevenet"
+	rm /usr/local/zevenet/app/zbin/zevenet.*
 fi
 
 #Check for libexec commands
 LIBC6VER=`dpkg -l | grep libc6:amd | awk {'print $3'} | cut -d"-" -f1`
 echo "libc version is $LIBC6VER"
 
-if [ -e "/usr/local/zenloadbalancer/app/libexec" ];then
-	rm -rf /usr/local/zenloadbalancer/app/libexec
+if [ -e "/usr/local/zevenet/app/libexec" ];then
+	rm -rf /usr/local/zevenet/app/libexec
 fi
 
-if [ -e "/usr/local/zenloadbalancer/app/libexec_${LIBC6VER}" ]; then
-        mv "/usr/local/zenloadbalancer/app/libexec_${LIBC6VER}" "/usr/local/zenloadbalancer/app/libexec"
-        rm -rf /usr/local/zenloadbalancer/app/libexec_*
+if [ -e "/usr/local/zevenet/app/libexec_${LIBC6VER}" ]; then
+        mv "/usr/local/zevenet/app/libexec_${LIBC6VER}" "/usr/local/zevenet/app/libexec"
+        rm -rf /usr/local/zevenet/app/libexec_*
 else
-        mv "/usr/local/zenloadbalancer/app/libexec_2.all" "/usr/local/zenloadbalancer/app/libexec"
-        rm -rf /usr/local/zenloadbalancer/app/libexec_*
+        mv "/usr/local/zevenet/app/libexec_2.all" "/usr/local/zevenet/app/libexec"
+        rm -rf /usr/local/zevenet/app/libexec_*
 fi
 
 # Get kernel version 
@@ -88,19 +88,19 @@ CRYPTOVER=`find /usr/lib/ -name libcrypto.so.*.*.* | head -1 | awk -F'.' '{ prin
 
 # Check for cherokee version
 CRYPTOV="$CRYPTOVER"
-if [ ! -e "/usr/local/zenloadbalancer/app/cherokee.${CRYPTOV}" ]; then
+if [ ! -e "/usr/local/zevenet/app/cherokee.${CRYPTOV}" ]; then
 	CRYPTOV="$CRYPTOVERDEF"
 fi
-cp -rpf /usr/local/zenloadbalancer/app/cherokee.${CRYPTOV}/* /usr/local/zenloadbalancer/app/cherokee/
-rm -rf /usr/local/zenloadbalancer/app/cherokee.*
+cp -rpf /usr/local/zevenet/app/cherokee.${CRYPTOV}/* /usr/local/zevenet/app/cherokee/
+rm -rf /usr/local/zevenet/app/cherokee.*
 
 # Check for pound version
 CRYPTOV="$CRYPTOVER"
-if [ ! -e "/usr/local/zenloadbalancer/app/pound.${CRYPTOV}" ]; then
+if [ ! -e "/usr/local/zevenet/app/pound.${CRYPTOV}" ]; then
 	CRYPTOV="$CRYPTOVERDEF"
 fi
-cp -rpf /usr/local/zenloadbalancer/app/pound.${CRYPTOV}/* /usr/local/zenloadbalancer/app/pound/
-rm -rf /usr/local/zenloadbalancer/app/pound.*
+cp -rpf /usr/local/zevenet/app/pound.${CRYPTOV}/* /usr/local/zevenet/app/pound/
+rm -rf /usr/local/zevenet/app/pound.*
 
 # GSLB user management
 GSLBHOME="/var/run/gdnsd"
@@ -110,7 +110,7 @@ GSLBGROUP="nogroup"
 adduser --system -q --home $GSLBHOME --shell $GSLBSHELL --disabled-password --ingroup $GSLBGROUP $GSLBUSER
 
 #upgrading global.conf
-/usr/local/zenloadbalancer/app/checkglobalconf/checkglobalconf.cgi
+/usr/local/zevenet/app/checkglobalconf/checkglobalconf.cgi
 
 # Enable root access through SSH
 SSHDCONFIG="/etc/ssh/sshd_config"
@@ -120,15 +120,15 @@ if [[ `grep -c "^PermitRootLogin.*yes" $SSHDCONFIG` == '0' ]]; then
 fi
 
 #Check Cherokee PID
-if [ ! -f /usr/local/zenloadbalancer/app/cherokee/var/run/cherokee.pid ]; then
-	pgrep cherokee$ > /usr/local/zenloadbalancer/app/cherokee/var/run/cherokee.pid
+if [ ! -f /usr/local/zevenet/app/cherokee/var/run/cherokee.pid ]; then
+	pgrep cherokee$ > /usr/local/zevenet/app/cherokee/var/run/cherokee.pid
 fi
 
 # Disable services
 
 # SNMP and sec services
 if [ `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]; then
-	cp /usr/local/zenloadbalancer/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
+	cp /usr/local/zevenet/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
 fi
 if [ `grep -c 'Lsd' /etc/default/snmpd` == '1' ]; then
         sed -i -e 's/Lsd/LS6d/' /etc/default/snmpd
@@ -147,47 +147,36 @@ else
 	insserv -r sec
 fi
 
-# Do not mount /usr/local/zenloadbalancer/logs for zlb 4000 series
-sed -i 's/^\/dev\/mapper\/zva64-log \/usr\/local\/zenloadbalancer\/logs        ext4    defaults        0       2//' /etc/fstab
+# Do not mount /usr/local/zevenet/logs for zlb 4000 series
+sed -i 's/^\/dev\/mapper\/zva64-log \/usr\/local\/zevenet\/logs        ext4    defaults        0       2//' /etc/fstab
 
 # boot dependencies
-sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$remote_fs \$syslog zenloadbalancer/g' /etc/init.d/ssh
-sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$remote_fs \$syslog zenloadbalancer/g' /etc/init.d/ssh
+sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh
+sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh
 
 #move zlb-stop & zlb-start
 if [ -f /tmp/zlb-stop ];
 then
-	mv /tmp/zlb-stop /usr/local/zenloadbalancer/config/
+	mv /tmp/zlb-stop /usr/local/zevenet/config/
 fi
 if [ -f /tmp/zlb-start ];
 then
-	mv /tmp/zlb-start /usr/local/zenloadbalancer/config/
+	mv /tmp/zlb-start /usr/local/zevenet/config/
 fi
 
-chmod +x /usr/local/zenloadbalancer/config/zlb-start
-chmod +x /usr/local/zenloadbalancer/config/zlb-stop
-
-#move Alerts files #TO BE FIXED
-if [ -f /tmp/Alerts.conf ];
-then
-        mv /tmp/Alerts.conf /usr/local/zenloadbalancer/config/notifications/alert_`hostname`.conf
-fi
-if [ -f /tmp/Senders.conf ];
-then
-        mv /tmp/Senders.conf /usr/local/zenloadbalancer/config/notifications/sender.conf
-fi
-
+chmod +x /usr/local/zevenet/config/zlb-start
+chmod +x /usr/local/zevenet/config/zlb-stop
 
 #move old web server configuration
 if [ -f /tmp/mini_httpd.conf ];
 then
-	cat /tmp/mini_httpd.conf > /usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf
+	cat /tmp/mini_httpd.conf > /usr/local/zevenet/app/mini_httpd/mini_httpd.conf
 	rm -f /tmp/mini_httpd.conf
 fi
 
-if [ -d /usr/local/zenloadbalancer/app/cherokee ] && [ ! -f /tmp/cherokee.conf ]
+if [ -d /usr/local/zevenet/app/cherokee ] && [ ! -f /tmp/cherokee.conf ]
 then
-	cp /usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf /tmp/cherokee.conf
+	cp /usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf /tmp/cherokee.conf
 fi
 
 if [ -f /tmp/cherokee.conf ];
@@ -220,32 +209,32 @@ then
 		sed -i 's/^server!user = root$/server!user = root\nserver!thread_number = 1/' /tmp/cherokee.conf
 	fi
 
-	cat /tmp/cherokee.conf > /usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf
+	cat /tmp/cherokee.conf > /usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf
 	rm -f /tmp/cherokee.conf
 fi
 
 # Migrate TCP farms to L4xNAT
-if [ "-f /usr/local/zenloadbalancer/config/*_pen.cfg" ]; then
-	/usr/local/zenloadbalancer/app/zbin/migrate_tcp_to_l4xnat.pl
+if [ "-f /usr/local/zevenet/config/*_pen.cfg" ]; then
+	/usr/local/zevenet/app/zbin/migrate_tcp_to_l4xnat.pl
 fi
 
 # HTTP profile directives migration to 4.2
-if [ -f /usr/local/zenloadbalancer/app/zbin/zlbmigrationto42.sh ]; then
-	/usr/local/zenloadbalancer/app/zbin/zlbmigrationto42.sh
+if [ -f /usr/local/zevenet/app/zbin/zlbmigrationto42.sh ]; then
+	/usr/local/zevenet/app/zbin/zlbmigrationto42.sh
 fi
 
 # Http profile directives migration
-if [ -f /usr/local/zenloadbalancer/app/zbin/zlbmigrationto402.sh ]; then
-	/usr/local/zenloadbalancer/app/zbin/zlbmigrationto402.sh
+if [ -f /usr/local/zevenet/app/zbin/zlbmigrationto402.sh ]; then
+	/usr/local/zevenet/app/zbin/zlbmigrationto402.sh
 fi
 
 # Fix fwmarks for L4xNAT backends
-if [ -f /usr/local/zenloadbalancer/app/zbin/fwmark_tag_fix.pl ]; then
-	/usr/local/zenloadbalancer/app/zbin/fwmark_tag_fix.pl
+if [ -f /usr/local/zevenet/app/zbin/fwmark_tag_fix.pl ]; then
+	/usr/local/zevenet/app/zbin/fwmark_tag_fix.pl
 fi
 
 # Migrate HTTP farms to dynamic thread model, without tcmalloc
-for i in $(find /usr/local/zenloadbalancer/config/ -name *pound.cfg);
+for i in $(find /usr/local/zevenet/config/ -name *pound.cfg);
 do
 	if [[ `grep -c ThreadModel $i` == '0' ]]; then
 		echo Migrating $i
@@ -254,8 +243,8 @@ do
 done
 
 # Migrate interface configuration files to IPv6 ready format
-if [ -f /usr/local/zenloadbalancer/app/zbin/zlbmigrationtoipv6ready.pl ]; then
-	/usr/local/zenloadbalancer/app/zbin/zlbmigrationtoipv6ready.pl
+if [ -f /usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl ]; then
+	/usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl
 fi
 
 echo "Restarting Zen Load Balancer web GUI..."
@@ -273,7 +262,7 @@ else
 fi
 
 # Create IPDS directories
-/usr/local/zenloadbalancer/app/zbin/boot_ipds.pl
+/usr/local/zevenet/app/zbin/boot_ipds.pl
 
 # Do not show warning messages from bonding module on syslog
 ZEVENET_SYSLOG_FILE="/etc/rsyslog.d/10-zevenet.conf"
@@ -290,22 +279,22 @@ then
 	/etc/init.d/rsyslog restart
 fi
 
-# restarting zenloadbalancer service
+# restarting zevenet service
 echo "ZLB will be unavailable while the service is restarting."
-/etc/init.d/zenloadbalancer stop
-/etc/init.d/zenloadbalancer start
+/etc/init.d/zevenet stop
+/etc/init.d/zevenet start
 
 ###move .htpasswd from tmp to dst
 if [ -f /tmp/.htpasswd ];
 then
-	if [ -d /usr/local/zenloadbalancer/app/cherokee/etc/cherokee ];
+	if [ -d /usr/local/zevenet/app/cherokee/etc/cherokee ];
 	then
-		cat /tmp/.htpasswd > /usr/local/zenloadbalancer/app/cherokee/etc/cherokee/.htpasswd
+		cat /tmp/.htpasswd > /usr/local/zevenet/app/cherokee/etc/cherokee/.htpasswd
 		if [ -f /tmp/cherokee.conf ]; then
-			cat /tmp/cherokee.conf /usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf
+			cat /tmp/cherokee.conf /usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf
 		fi
 	else
-		cat /tmp/.htpasswd > /usr/local/zenloadbalancer/www/.htpasswd
+		cat /tmp/.htpasswd > /usr/local/zevenet/www/.htpasswd
 	fi
 	rm -f /tmp/.htpasswd
 fi
@@ -318,12 +307,12 @@ fi
 rm -f /etc/rc*.d/*zenloadbalancer
 
 # Add ZenLB services to boot process including dependencies
-update-rc.d zenloadbalancer defaults
+update-rc.d zevenet defaults
 
 # Link zenbui
-if [ -f /usr/local/zenloadbalancer/app/zenbui/zenbui ];
+if [ -f /usr/local/zevenet/app/zenbui/zenbui ];
 then
-	ln -sf /usr/local/zenloadbalancer/app/zenbui/zenbui /usr/bin/zenbui
+	ln -sf /usr/local/zevenet/app/zenbui/zenbui /usr/bin/zenbui
 fi
 
 #Change prompt color

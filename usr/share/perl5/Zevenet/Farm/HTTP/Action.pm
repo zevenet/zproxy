@@ -169,17 +169,17 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 			# Lines to change: 
 			#Name		BasekitHTTP
 			#Control 	"/tmp/BasekitHTTP_pound.socket"
-			#\tErr414 "/usr/local/zenloadbalancer/config/BasekitHTTP_Err414.html"
-			#\tErr500 "/usr/local/zenloadbalancer/config/BasekitHTTP_Err500.html"
-			#\tErr501 "/usr/local/zenloadbalancer/config/BasekitHTTP_Err501.html"
-			#\tErr503 "/usr/local/zenloadbalancer/config/BasekitHTTP_Err503.html"
+			#\tErr414 "/usr/local/zevenet/config/BasekitHTTP_Err414.html"
+			#\tErr500 "/usr/local/zevenet/config/BasekitHTTP_Err500.html"
+			#\tErr501 "/usr/local/zevenet/config/BasekitHTTP_Err501.html"
+			#\tErr503 "/usr/local/zevenet/config/BasekitHTTP_Err503.html"
 			#\t#Service "BasekitHTTP"
 			grep (s/Name\t\t$farm_name/Name\t\t$new_farm_name/, @configfile );
 			grep (s/Control \t"\/tmp\/${farm_name}_pound.socket"/Control \t"\/tmp\/${new_farm_name}_pound.socket"/, @configfile );
-			grep (s/\tErr414 "\/usr\/local\/zenloadbalancer\/config\/${farm_name}_Err414.html"/\tErr414 "\/usr\/local\/zenloadbalancer\/config\/${new_farm_name}_Err414.html"/, @configfile );
-			grep (s/\tErr500 "\/usr\/local\/zenloadbalancer\/config\/${farm_name}_Err500.html"/\tErr500 "\/usr\/local\/zenloadbalancer\/config\/${new_farm_name}_Err500.html"/, @configfile );
-			grep (s/\tErr501 "\/usr\/local\/zenloadbalancer\/config\/${farm_name}_Err501.html"/\tErr501 "\/usr\/local\/zenloadbalancer\/config\/${new_farm_name}_Err501.html"/, @configfile );
-			grep (s/\tErr503 "\/usr\/local\/zenloadbalancer\/config\/${farm_name}_Err503.html"/\tErr503 "\/usr\/local\/zenloadbalancer\/config\/${new_farm_name}_Err503.html"/, @configfile );
+			grep (s/\tErr414 "\/usr\/local\/zevenet\/config\/${farm_name}_Err414.html"/\tErr414 "\/usr\/local\/zevenet\/config\/${new_farm_name}_Err414.html"/, @configfile );
+			grep (s/\tErr500 "\/usr\/local\/zevenet\/config\/${farm_name}_Err500.html"/\tErr500 "\/usr\/local\/zevenet\/config\/${new_farm_name}_Err500.html"/, @configfile );
+			grep (s/\tErr501 "\/usr\/local\/zevenet\/config\/${farm_name}_Err501.html"/\tErr501 "\/usr\/local\/zevenet\/config\/${new_farm_name}_Err501.html"/, @configfile );
+			grep (s/\tErr503 "\/usr\/local\/zevenet\/config\/${farm_name}_Err503.html"/\tErr503 "\/usr\/local\/zevenet\/config\/${new_farm_name}_Err503.html"/, @configfile );
 			grep (s/\t#Service "$farm_name"/\t#Service "$new_farm_name"/, @configfile );
 
 			untie @configfile;

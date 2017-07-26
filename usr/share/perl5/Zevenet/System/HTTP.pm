@@ -104,7 +104,7 @@ Returns:
 	scalar - GUI ip address or '*' for all local addresses
 
 See Also:
-	zapi/v3/system.cgi, zenloadbalancer
+	zapi/v3/system.cgi, zevenet
 =cut
 sub getHttpServerIp
 {

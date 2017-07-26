@@ -70,12 +70,12 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 
 	# include cron task to check backends
 	use Tie::File;
-	tie my @cron_file, 'Tie::File', "/etc/cron.d/zenloadbalancer";
+	tie my @cron_file, 'Tie::File', "/etc/cron.d/zevenet";
 	my @farmcron = grep /\# \_\_$farm_name\_\_/, @cron_file;
 	if ( scalar @farmcron eq 0 )
 	{
 		push ( @cron_file,
-			   "* * * * *	root	\/usr\/local\/zenloadbalancer\/app\/libexec\/check_uplink $farm_name \# \_\_$farm_name\_\_"
+			   "* * * * *	root	\/usr\/local\/zevenet\/app\/libexec\/check_uplink $farm_name \# \_\_$farm_name\_\_"
 		);
 	}
 	untie @cron_file;
@@ -218,7 +218,7 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 
 	# delete cron task to check backends
 	use Tie::File;
-	tie my @cron_file, 'Tie::File', "/etc/cron.d/zenloadbalancer";
+	tie my @cron_file, 'Tie::File', "/etc/cron.d/zevenet";
 	@cron_file = grep !/\# \_\_$farm_name\_\_/, @cron_file;
 	untie @cron_file;
 

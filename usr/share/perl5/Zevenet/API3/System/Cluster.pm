@@ -461,10 +461,10 @@ sub disable_cluster
 		# 1 stop master zeninotify
 		system( "$zenino stop" );
 
-		# 2 stop backup node zenloadbalancer
+		# 2 stop backup node zevenet
 		&zenlog(
 			&runRemotely(
-				"/etc/init.d/zenloadbalancer stop >/dev/null 2>&1",
+				"/etc/init.d/zevenet stop >/dev/null 2>&1",
 				$zcl_conf->{$rhost}->{ip}
 			)
 		);
@@ -482,8 +482,8 @@ sub disable_cluster
 			)
 		);
 
-		# 2 stop slave zenloadbalancer
-		system( "/etc/init.d/zenloadbalancer stop >/dev/null 2>&1" );
+		# 2 stop slave zevenet
+		system( "/etc/init.d/zevenet stop >/dev/null 2>&1" );
 
 		my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
 
@@ -695,7 +695,7 @@ sub enable_cluster
 
 		# start remote interfaces, farms and cluster
 		$cl_output = &runRemotely(
-			'/etc/init.d/zenloadbalancer start',
+			'/etc/init.d/zevenet start',
 			$zcl_conf->{$remote_hostname}->{ip}
 		);
 		&zenlog( "rc:$? $cl_output" );

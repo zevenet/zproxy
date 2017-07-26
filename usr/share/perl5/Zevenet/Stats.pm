@@ -586,7 +586,7 @@ Returns:
 							'rrd_id' => 'dev-dm-0hd'
 						},
 		'/dev/mapper/zva64-config' => {
-										'mount_point' => '/usr/local/zenloadbalancer/config',
+										'mount_point' => '/usr/local/zevenet/config',
 										'rrd_id' => 'dev-mapper-zva64-confighd'
 										},
 		'/dev/mapper/zva64-log' => {

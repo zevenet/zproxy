@@ -539,9 +539,9 @@ Returns:
 	none - .
 
 See Also:
-	zenloadbalancer
+	zevenet
 =cut
-# from zbin/zenloadbalancer, almost exactly
+# from zbin/zevenet, almost exactly
 sub configureDefaultGW    #()
 {
 	my $defaultgw = &getGlobalConfiguration('defaultgw');

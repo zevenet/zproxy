@@ -1,1 +1,1 @@
-usr/local/zenloadbalancer/license.txt
+usr/local/zevenet/license.txt

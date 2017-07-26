@@ -25,8 +25,8 @@ use strict;
 
 use RRDs;
 use MIME::Base64;
-#~ require ( "/usr/local/zenloadbalancer/config/global.conf" );
-require ( "/usr/local/zenloadbalancer/www/check_functions.cgi" );
+#~ require ( "/usr/local/zevenet/config/global.conf" );
+require ( "/usr/local/zevenet/www/check_functions.cgi" );
 
 my $basedir = &getGlobalConfiguration('basedir');
 my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
@@ -93,8 +93,8 @@ sub delGraph	#($name, type)
 
 	if ( $type =~ /iface/ )
 	{
-		&zenlog( "Delete graph file: /usr/local/zenloadbalancer/app/zenrrd/rrd/${name}iface.rrd" );
-		unlink ( "/usr/local/zenloadbalancer/app/zenrrd/rrd/${name}iface.rrd" );
+		&zenlog( "Delete graph file: /usr/local/zevenet/app/zenrrd/rrd/${name}iface.rrd" );
+		unlink ( "/usr/local/zevenet/app/zenrrd/rrd/${name}iface.rrd" );
 	}
 
 	if ( $type =~ /farm/ )

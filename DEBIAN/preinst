@@ -28,7 +28,10 @@ my $dmidecode_bin = "/usr/sbin/dmidecode";
 my $keyid = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
 my $hostname = `hostname`;
 
-require "/usr/local/zenloadbalancer/config/global.conf";
+require "/usr/local/zevenet/config/global.conf";
+
+my $basedir = "/usr/local/zevenet";
+my $zlbcertfile = "/usr/local/zevenet";
 
 sub keycert
 {
@@ -149,12 +152,12 @@ else
 }
 
 #Check if exists mini_httpd conf and store the current port and interface
-if ( -e "/usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf" )
+if ( -e "/usr/local/zevenet/app/mini_httpd/mini_httpd.conf" )
 {
 	$port =
-	  `grep port= /usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf  | awk -F'=' '{printf \$2}'`;
+	  `grep port= /usr/local/zevenet/app/mini_httpd/mini_httpd.conf  | awk -F'=' '{printf \$2}'`;
 	$host =
-	  `grep host= /usr/local/zenloadbalancer/app/mini_httpd/mini_httpd.conf  | awk -F'=' '{printf \$2}'`;
+	  `grep host= /usr/local/zevenet/app/mini_httpd/mini_httpd.conf  | awk -F'=' '{printf \$2}'`;
 	system ( qq{echo "$port" > /tmp/zenport} );
 	system ( qq{echo "$host" > /tmp/zenhost} );
 }
@@ -164,8 +167,8 @@ system ( "cp /etc/sysctl.conf /etc/sysctl.conf.bck" );
 system ( qq{grep "^#" /etc/sysctl.conf > /etc/sysctl.conf 2> /dev/null} );
 
 #Move zlb-stop & zlb-start
-my $zlbstop = "/usr/local/zenloadbalancer/config/zlb-stop";
-my $zlbstart = "/usr/local/zenloadbalancer/config/zlb-start";
+my $zlbstop = "/usr/local/zevenet/config/zlb-stop";
+my $zlbstart = "/usr/local/zevenet/config/zlb-start";
 if ( -e $zlbstop )
 {
 	move $zlbstop, "/tmp/zlb-stop";
@@ -176,28 +179,19 @@ if ( -e $zlbstart )
 }
 
 #Move cherokee
-my $chero_conf = "/usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf";
+my $chero_conf = "/usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf";
 
 if ( -e  $chero_conf )
 {
 	move $chero_conf, "/tmp/cherokee.conf";
 }
 
-#Move Alerts conf files #TO BE FIXED
-if ( -e "/usr/local/zenloadbalancer/www/Plugins/Notifications/Alerts.conf" )
-{
-	system ( "mv /usr/local/zenloadbalancer/www/Plugins/Notifications/Alerts.conf /tmp/Alerts.conf" );
-}
-if ( -e "/usr/local/zenloadbalancer/www/Plugins/Notifications/Senders.conf" )
-{
-	system ( "mv /usr/local/zenloadbalancer/www/Plugins/Notifications/Senders.conf /tmp/Senders.conf" );
-}
 # Create the new GUI system group
 system ( "groupadd -f webgui" );
 system ( "usermod -a -G webgui root" );
 
 # Create openssl DH keys
-my $dhparam_certfile = "/usr/local/zenloadbalancer/app/pound/etc/dh2048.pem";
+my $dhparam_certfile = "/usr/local/zevenet/app/pound/etc/dh2048.pem";
 
 if ( ! -e $dhparam_certfile )
 {

@@ -23,8 +23,8 @@
 
 use strict;
 
-require "/usr/local/zenloadbalancer/www/functions_ext.cgi";
-require "/usr/local/zenloadbalancer/www/system_functions.cgi";
+require "/usr/local/zevenet/www/functions_ext.cgi";
+require "/usr/local/zevenet/www/system_functions.cgi";
 use Config::Tiny;
 
 sub setNotifCreateConfFile
@@ -45,8 +45,8 @@ sub setNotifCreateConfFile
 
 	# restore old config files
 	my $mv = &getGlobalConfiguration( "mv" );
-	my $alertsOld = "/usr/local/zenloadbalancer/www/Plugins/Notifications/Alerts.conf";
-	my $sendersOld = "/usr/local/zenloadbalancer/www/Plugins/Notifications/Senders.conf";
+	my $alertsOld = "/usr/local/zevenet/www/Plugins/Notifications/Alerts.conf";
+	my $sendersOld = "/usr/local/zevenet/www/Plugins/Notifications/Senders.conf";
 
 	if ( -e $alertsOld )	
 	{
@@ -68,7 +68,7 @@ sub setNotifCreateConfFile
 		 . "auth=LOGIN\n"
 		 . "auth-password=\n"
 		 . "auth-user=\n"
-		 . "bin=/usr/local/zenloadbalancer/app/swaks/swaks\n"
+		 . "bin=/usr/local/zevenet/app/swaks/swaks\n"
 		 . "from=\n"
 		 . "server=\n"
 		 . "tls=false\n"
@@ -378,7 +378,7 @@ sub zlbstartNotifications
 		}
 	}
 
-	# run service if was up before than stop zenloadbalancer
+	# run service if was up before than stop zevenet
 	if ( $status eq 'on' )
 	{
 		$output = &runNotifications();

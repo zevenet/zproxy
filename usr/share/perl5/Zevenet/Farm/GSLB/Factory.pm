@@ -70,7 +70,7 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	  . "   http_listen = 127.0.0.1\n" . "}\n\n";
 	print $file "service_types => { \n\n}\n\n";
 	print $file
-	  "plugins => { \n\textmon => { helper_path => \"/usr/local/zenloadbalancer/app/gdnsd/gdnsd_extmon_helper\" },\n}\n\n";
+	  "plugins => { \n\textmon => { helper_path => \"/usr/local/zevenet/app/gdnsd/gdnsd_extmon_helper\" },\n}\n\n";
 	close $file;
 
 	#run farm

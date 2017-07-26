@@ -60,7 +60,7 @@ sub get_license
 sub get_supportsave
 {
 	my $description = "Get supportsave file";
-	my @ss_output = `/usr/local/zenloadbalancer/app/zbin/supportsave 2>&1`;
+	my @ss_output = `/usr/local/zevenet/app/zbin/supportsave 2>&1`;
 
 	# get the last "word" from the first line
 	my $first_line = shift @ss_output;

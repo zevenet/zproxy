@@ -197,7 +197,7 @@ Returns:
 	boolean - 1 on success, or 0 on failure.
 
 See Also:
-	<getInterfaceConfig>, <setInterfaceUp>, zenloadbalancer, zenbui.pl, zapi/v?/interface.cgi
+	<getInterfaceConfig>, <setInterfaceUp>, zevenet, zenbui.pl, zapi/v?/interface.cgi
 =cut
 # returns 1 if it was successful
 # returns 0 if it wasn't successful
@@ -456,7 +456,7 @@ Returns:
 	string - Parent interface name or undef if there is no parent interface (NIC and Bonding).
 
 See Also:
-	<getInterfaceConfig>, <getSystemInterface>, zenloadbalancer, zapi/v?/interface.cgi
+	<getInterfaceConfig>, <getSystemInterface>, zevenet, zapi/v?/interface.cgi
 =cut
 sub getParentInterfaceName    # ($if_name)
 {

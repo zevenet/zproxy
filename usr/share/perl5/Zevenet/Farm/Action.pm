@@ -327,7 +327,7 @@ sub runFarmDelete    # ($farm_name)
 		{
 			# delete cron task to check backends
 			use Tie::File;
-			tie my @filelines, 'Tie::File', "/etc/cron.d/zenloadbalancer";
+			tie my @filelines, 'Tie::File', "/etc/cron.d/zevenet";
 			@filelines = grep !/\# \_\_$farm_name\_\_/, @filelines;
 			untie @filelines;
 		}

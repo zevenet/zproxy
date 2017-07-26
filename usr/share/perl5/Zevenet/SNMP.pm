@@ -23,7 +23,7 @@
 
 use strict;
 
-#require "/usr/local/zenloadbalancer/www/functions.cgi";
+#require "/usr/local/zevenet/www/functions.cgi";
 
 =begin nd
 Function: setSnmpdStatus

@@ -519,7 +519,7 @@ sub upload_certificate # ()
 #
 # Curl command:
 #
-# curl -kis -X POST -H "ZAPI_KEY: 2bJUd" --tcp-nodelay -H 'Content-Type: application/x-pem-file' https://192.168.101.20:444/zapi/v3/zapi.cgi/certificates/test.pem --data-binary @/usr/local/zenloadbalancer/config/zencert.pem
+# curl -kis -X POST -H "ZAPI_KEY: 2bJUd" --tcp-nodelay -H 'Content-Type: application/x-pem-file' https://192.168.101.20:444/zapi/v3/zapi.cgi/certificates/test.pem --data-binary @/usr/local/zevenet/config/zencert.pem
 #
 
 	my $upload_filehandle = shift;

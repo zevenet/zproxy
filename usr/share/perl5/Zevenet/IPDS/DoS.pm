@@ -1181,7 +1181,7 @@ sub setDOSSshBruteForceRule
 
 	# If the cluster is configurated, will add an exception to the remote node
 	# /sbin/iptables -A PREROUTING -t mangle -s $clusterIP -j ACCEPT
-	require "/usr/local/zenloadbalancer/www/zcluster_functions.cgi";
+	require "/usr/local/zevenet/www/zcluster_functions.cgi";
 	if ( &getZClusterStatus() )
 	{
 		my $remoteHost        = getZClusterRemoteHost();

@@ -64,7 +64,7 @@ Returns:
 See Also:
 	<getZClusterLocalIp>, <setDOSSshBruteForceRule>
 
-	zapi/v3/cluster.cgi, cluster_status.pl, zenloadbalancer
+	zapi/v3/cluster.cgi, cluster_status.pl, zevenet
 
 	NOT USED: <getClusterInfo>,
 
@@ -99,7 +99,7 @@ See Also:
 
 	<setConntrackdConfig>, <setDOSSshBruteForceRule>
 
-	zapi/v3/interface.cgi, zapi/v3/cluster.cgi, zeninotify.pl, cluster_status.pl, zenloadbalancer
+	zapi/v3/interface.cgi, zapi/v3/cluster.cgi, zeninotify.pl, cluster_status.pl, zevenet
 =cut
 sub getZClusterConfig
 {
@@ -161,7 +161,7 @@ Returns:
 See Also:
 	<enableZCluster>, <runZClusterRemoteManager>, <getZCusterStatusInfo>
 
-	zcluster-manager, zenloadbalancer
+	zcluster-manager, zevenet
 =cut
 sub getZClusterRunning
 {
@@ -182,7 +182,7 @@ Returns:
 	integer - ERRNO or return code starting the cluster controller.
 
 See Also:
-	zapi/v3/cluster.cgi, zcluster-manager, zenloadbalancer
+	zapi/v3/cluster.cgi, zcluster-manager, zevenet
 =cut
 sub enableZCluster
 {
@@ -284,7 +284,7 @@ Returns:
 	integer - ERRNO or return code stopping the cluster controller.
 
 See Also:
-	zapi/v3/cluster.cgi, zcluster-manager, zenloadbalancer
+	zapi/v3/cluster.cgi, zcluster-manager, zevenet
 =cut
 sub disableZCluster
 {
@@ -378,10 +378,10 @@ vrrp_instance ZCluster {
 \t\t$zcl_conf->{$remotehost}->{ip}
 \t}
 
-\tnotify_master	\"/usr/local/zenloadbalancer/app/zbin/zcluster-manager notify_master\"
-\tnotify_backup	\"/usr/local/zenloadbalancer/app/zbin/zcluster-manager notify_backup\"
-\tnotify_fault	\"/usr/local/zenloadbalancer/app/zbin/zcluster-manager notify_fault\"
-\tnotify		\"/usr/local/zenloadbalancer/app/zbin/zcluster-manager\"
+\tnotify_master	\"/usr/local/zevenet/app/zbin/zcluster-manager notify_master\"
+\tnotify_backup	\"/usr/local/zevenet/app/zbin/zcluster-manager notify_backup\"
+\tnotify_fault	\"/usr/local/zevenet/app/zbin/zcluster-manager notify_fault\"
+\tnotify		\"/usr/local/zevenet/app/zbin/zcluster-manager\"
 }
 
 ";
@@ -432,7 +432,7 @@ Returns:
 See Also:
 	<setConntrackdConfig>,<setKeepalivedConfig>, <runZClusterRemoteManager>, <getZCusterStatusInfo>, <setDOSSshBruteForceRule>, <getZClusterNodeStatusInfo>
 
-	zapi/v3/cluster.cgi, cluster_status.pl, zenloadbalancer
+	zapi/v3/cluster.cgi, cluster_status.pl, zevenet
 =cut
 sub getZClusterRemoteHost
 {
@@ -556,7 +556,7 @@ sub copyIdKey # $rc ( $ip_addr, $pass )
 
 	my $safe_password = quotemeta( $password );
 
-	my $copyId_cmd = "HOME=\"/root\" /usr/local/zenloadbalancer/app/zbin/ssh-copy-id.sh $safe_password root\@$ip_address";
+	my $copyId_cmd = "HOME=\"/root\" /usr/local/zevenet/app/zbin/ssh-copy-id.sh $safe_password root\@$ip_address";
 
 	my $copy_output = `$copyId_cmd`; # WARNING: Do not redirect stderr to stdout
 	my $error_code = $?;
@@ -888,7 +888,7 @@ Returns:
 See Also:
 	<getClusterInfo>, <runZClusterRemoteManager>, <getZCusterStatusInfo>, <getZClusterNodeStatusInfo>
 
-	zapi/v3/cluster.cgi, zcluster-manager, zenloadbalancer
+	zapi/v3/cluster.cgi, zcluster-manager, zevenet
 =cut
 sub getZClusterNodeStatus
 {
@@ -961,7 +961,7 @@ Returns:
 	1 - On failure.
 
 See Also:
-	zcluster-manager, zenloadbalancer
+	zcluster-manager, zevenet
 =cut
 sub disableInterfaceDiscovery
 {
@@ -1032,7 +1032,7 @@ Returns:
 	integer - 0 on success, or failure otherwise.
 
 See Also:
-	zcluster-manager, zenloadbalancer
+	zcluster-manager, zevenet
 =cut
 sub enableAllInterfacesDiscovery
 {

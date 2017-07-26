@@ -82,7 +82,7 @@ Returns:
 Bugs:
 
 See Also:
-	zcluster-manager, zenloadbalancer, <setNewFarmName>
+	zcluster-manager, zevenet, <setNewFarmName>
 =cut
 sub getFarmGuardianStatus    # ($fname,$svice)
 {
@@ -186,7 +186,7 @@ Bugs:
 	Returning $? after running a command in the background & gives the illusion of capturing the ERRNO of the ran program. That is not possible since the program may not have finished.
 
 See Also:
-	zcluster-manager, zenloadbalancer, <runFarmStart>, <setNewFarmName>, zapi/v3/farm_guardian.cgi, zapi/v2/farm_guardian.cgi
+	zcluster-manager, zevenet, <runFarmStart>, <setNewFarmName>, zapi/v3/farm_guardian.cgi, zapi/v2/farm_guardian.cgi
 =cut
 sub runFarmGuardianStart    # ($fname,$svice)
 {
@@ -264,7 +264,7 @@ Returns:
 	Integer - 0 on success, or greater than 0 on failure.
 
 See Also:
-	zenloadbalancer, <runFarmStop>, <setNewFarmName>, zapi/v3/farm_guardian.cgi, <runFarmGuardianRemove>
+	zevenet, <runFarmStop>, <setNewFarmName>, zapi/v3/farm_guardian.cgi, <runFarmGuardianRemove>
 =cut
 sub runFarmGuardianStop    # ($fname,$svice)
 {
@@ -544,7 +544,7 @@ Bugs:
 	Regex with .* should be fixed.
 
 See Also:
-	zenloadbalancer
+	zevenet
 
 	L4xNAT: <setL4FarmSessionType>, <setL4FarmAlgorithm>, <setFarmProto>, <setFarmNatType>, <setL4FarmMaxClientTime>, <setL4FarmVirtualConf>, <setL4FarmServer>, <runL4FarmServerDelete>, <setL4FarmBackendStatus>, <setL4NewFarmName>, <_runL4ServerStart>, <_runL4ServerStop>
 =cut

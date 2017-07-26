@@ -35,7 +35,7 @@ Returns:
 	scalar - IO::Socket::INET object reference.
 
 See Also:
-	<getVipOutputIp>, <zenloadbalancer>
+	<getVipOutputIp>, <zevenet>
 =cut
 # IO Socket is needed to get information about interfaces
 sub getIOSocket

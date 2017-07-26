@@ -70,7 +70,7 @@ See Also:
 
 	zapi/v3/cluster.cgi, zapi/v3/system_stats.cgi, zapi/v3/zapi.cgi, zapi/v2/system_stats.cgi
 
-	zenloadbalancer
+	zevenet
 =cut
 sub getHostname
 {
@@ -94,7 +94,7 @@ Returns:
 	string - Version string.
 
 See Also:
-	zapi/v3/system.cgi, zenbui.pl, zenloadbalancer
+	zapi/v3/system.cgi, zenbui.pl, zevenet
 =cut
 sub getApplianceVersion
 {

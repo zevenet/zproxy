@@ -44,7 +44,7 @@ sub getGlobalConfiguration
 {
 	my $parameter = shift;
 
-	my $global_conf_filepath = "/usr/local/zenloadbalancer/config/global.conf";
+	my $global_conf_filepath = "/usr/local/zevenet/config/global.conf";
 
 	open ( my $global_conf_file, '<', $global_conf_filepath );
 

@@ -29,20 +29,12 @@ my $openssl_bin   = "/usr/bin/openssl";
 system ( "cp /etc/sysctl.conf /etc/sysctl.conf.bck" );
 system ( qq{grep "^#" /etc/sysctl.conf > /etc/sysctl.conf 2> /dev/null} );
 
-#Move cherokee
-my $chero_conf = "/usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf";
-
-if ( -e  $chero_conf )
-{
-	move $chero_conf, "/tmp/cherokee.conf";
-}
-
 # Create the new GUI system group
 system ( "groupadd -f webgui" );
 system ( "usermod -a -G webgui root" );
 
 # Create openssl DH keys
-my $dhparam_certfile = "/usr/local/zenloadbalancer/app/pound/etc/dh2048.pem";
+my $dhparam_certfile = "/usr/local/zevenet/app/pound/etc/dh2048.pem";
 
 if ( ! -e $dhparam_certfile )
 {

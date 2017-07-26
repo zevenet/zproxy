@@ -510,7 +510,7 @@ sub setBLAddPreloadLists
 	# it is to bugfix in postinst zevenet packet.
 	if ( ! defined $blacklistsLocalPreload )  
 	{  
-		$blacklistsLocalPreload = "/usr/local/zenloadbalancer/www/ipds/blacklists/local";
+		$blacklistsLocalPreload = "/usr/local/zevenet/www/ipds/blacklists/local";
 	} 
 	 
 	my $blacklistsRemotePreload =
@@ -1473,10 +1473,10 @@ sub setBLCronTask
 	
 	my $blacklistsCronFile = &getGlobalConfiguration( 'blacklistsCronFile' );
 
-	# 0 0 * * 1	root	/usr/local/zenloadbalancer/app/zenrrd/zenrrd.pl & >/dev/null 2>&1
+	# 0 0 * * 1	root	/usr/local/zevenet/app/zenrrd/zenrrd.pl & >/dev/null 2>&1
 	my $cmd =
 	  "$cronFormat->{ 'min' } $cronFormat->{ 'hour' } $cronFormat->{ 'dom' } $cronFormat->{ 'month' } $cronFormat->{ 'dow' }\t"
-	  . "root\t/usr/local/zenloadbalancer/www/ipds/blacklists/updateRemoteList.pl $listName & >/dev/null 2>&1";
+	  . "root\t/usr/local/zevenet/www/ipds/blacklists/updateRemoteList.pl $listName & >/dev/null 2>&1";
 	  &zenlog ("Added cron task: $cmd");
 
 	tie my @list, 'Tie::File', $blacklistsCronFile;

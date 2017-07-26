@@ -37,7 +37,7 @@ Returns:
 	integer - ip command return code.
 
 See Also:
-	zenloadbalancer, <setInterfaceUp>, zapi/v?/interface.cgi
+	zevenet, <setInterfaceUp>, zapi/v?/interface.cgi
 =cut
 # create network interface
 sub createIf    # ($if_ref)
@@ -206,7 +206,7 @@ Bugs:
 See Also:
 	<downIf>
 
-	Only used in: zenloadbalancer
+	Only used in: zevenet
 =cut
 # stop network interface
 sub stopIf    # ($if_ref)
@@ -375,11 +375,6 @@ sub delIf    # ($if_ref)
 	# delete graphs
 	require Zevenet::RRD;
 	&delGraph ( $$if_ref{name}, "iface" );
-	#~ unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_d.png" );
-	#~ unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_m.png" );
-	#~ unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_w.png" );
-	#~ unlink ( "/usr/local/zenloadbalancer/www/img/graphs/$$if_ref{name}\_y.png" );
-	#~ unlink ( "/usr/local/zenloadbalancer/app/zenrrd/rrd/$$if_ref{name}iface.rrd" );
 
 	return $status;
 }

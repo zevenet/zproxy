@@ -20,9 +20,9 @@
 
 NAME=cherokee
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/lib/cherokee
-DAEMON=/usr/local/zenloadbalancer/app/cherokee/sbin/cherokee
-PIDFILE=/usr/local/zenloadbalancer/app/cherokee/var/run/$NAME.pid
-CONF=/usr/local/zenloadbalancer/app/cherokee/etc/cherokee/cherokee.conf
+DAEMON=/usr/local/zevenet/app/cherokee/sbin/cherokee
+PIDFILE=/usr/local/zevenet/app/cherokee/var/run/$NAME.pid
+CONF=/usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf
 
 trap "" 1
 export LANG=C

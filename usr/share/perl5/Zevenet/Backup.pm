@@ -266,7 +266,7 @@ sub applyBackup
 
 	&zenlog( "Restoring backup $file" );
 	&zenlog( "unpacking files: @eject" );
-	$error = system ( "/etc/init.d/zenloadbalancer restart 2> /dev/null" );
+	$error = system ( "/etc/init.d/zevenet restart 2> /dev/null" );
 
 	if ( !$error )
 	{
