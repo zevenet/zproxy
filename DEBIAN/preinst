@@ -29,7 +29,7 @@ my $keyid = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
 my $hostname = `hostname`;
 
 require "/usr/local/zevenet/config/global.conf";
-my $basedir = "/usr/local/zevenet";
+my $basedir = "/usr/local/zevenet/www";
 
 sub keycert
 {
