@@ -611,7 +611,7 @@ sub applyIptRuleAction
 	# return the action requested if not supported
 	return $action if $action !~ /append|check|delete|insert|replace/x;
 
-	if ( $action =~ /insert|replace|delete/ && defined $rulenum )
+	if ( $action =~ /insert|replace|delete/ && $rulenum > 0 )
 	{
 		my @rule_args = split ( ' ', $rule );
 
@@ -621,7 +621,7 @@ sub applyIptRuleAction
 		  ? join ( ' ', @rule_args[0 .. 5] )    # delete rule number
 		  : join ( ' ', @rule_args );           # include rule number
 	}
-	elsif ( $action eq 'replace' && !defined $rulenum )
+	elsif ( $action eq 'replace' )
 	{
 		&zenlog( 'Error: Iptables \'replace\' action requires a rule number' );
 	}

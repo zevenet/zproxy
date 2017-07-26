@@ -799,7 +799,7 @@ sub setFarmProto    # ($proto,$farm_name)
 				}
 				if ( $proto eq "sip" )
 				{
-					$args[4] = "nat";
+					#~ $args[4] = "nat";
 				}
 				$line =
 				  "$args[0]\;$proto\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8]";
