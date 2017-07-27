@@ -731,7 +731,9 @@ if ( $q->path_info =~ qr{^/stats} )
 		&farm_stats( @_ );
 	};
 
-	GET qr{^/stats/farms/($farm_re)/service/($service_re)/backends$} => sub {
+	# Fixed: make 'service' or 'services' valid requests for compatibility
+	# with previous bug.
+	GET qr{^/stats/farms/($farm_re)/services?/($service_re)/backends$} => sub {
 		&farm_stats( @_ );
 	};
 }
