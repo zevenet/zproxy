@@ -587,15 +587,15 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 	my $status = 0;
 
-	&zenlog(
-		"Applying $table routes in stack IPv$$if_ref{ip_v} to $$if_ref{name} with gateway \"$$if_ref{gateway}\""
-	);
-
 	# not virtual interface
 	if ( !defined $$if_ref{ vini } || $$if_ref{ vini } eq '' )
 	{
 		if ( $table eq "local" )
 		{
+			&zenlog(
+				"Applying $table routes in stack IPv$$if_ref{ip_v} to $$if_ref{name} with gateway \"$$if_ref{gateway}\""
+			);
+
 			# &delRoutes( "local", $if );
 			&addlocalnet( $if_ref );
 
@@ -622,8 +622,17 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 			if ( $gateway )
 			{
 				my $routeparams = &getGlobalConfiguration('routeparams');
+
+				my $action = "replace";
+				my $system_default_gw = &getDefaultGW();
+				if ( $system_default_gw eq "" ){
+					$action = "add";
+				}
+				&zenlog(
+					"Applying $table routes in stack IPv$$if_ref{ip_v} with gateway \"".&getGlobalConfiguration( 'defaultgw' )."\""
+				);
 				my $ip_cmd =
-				  "$ip_bin -$$if_ref{ip_v} route replace default via $gateway dev $$if_ref{name} $routeparams";
+				  "$ip_bin -$$if_ref{ip_v} route $action default via $gateway dev $$if_ref{name} $routeparams";
 				$status = &logAndRun( "$ip_cmd" );
 
 				tie my @contents, 'Tie::File', &getGlobalConfiguration( 'globalcfg' );
@@ -1702,7 +1711,7 @@ sub sendGArp    # ($if,$ip)
 {
 	my ( $if, $ip ) = @_;
 
-	my @iface      = split ( ":", $if );
+ 	my @iface      = split ( ":", $if );
 	my $arping_bin = &getGlobalConfiguration( 'arping_bin' );
 	my $arp_unsolicited = &getGlobalConfiguration( 'arp_unsolicited' );
 

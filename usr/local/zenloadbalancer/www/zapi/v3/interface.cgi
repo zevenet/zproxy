@@ -2257,6 +2257,9 @@ sub modify_interface_nic # ( $json_obj, $nic )
 			{
 				$if_ref->{ status } = "up";
 				&applyRoutes( "local", $if_ref );
+				my $gateway = getGlobalConfiguration('defaultgw');
+				&applyRoutes("global",$if_ref,$gateway); 
+
 			}
 			else
 			{
