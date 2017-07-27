@@ -123,7 +123,7 @@ logNewModules("With Zevenet::API3::Auth");
 my $post_data = $q->param( 'POSTDATA' );
 my $put_data  = $q->param( 'PUTDATA' );
 
-&zenlog( "CGI POST DATA: " . $post_data ) if $post_data && &debug;
+&zenlog( "CGI POST DATA: " . $post_data ) if $post_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
 &zenlog( "CGI PUT DATA: " . $put_data )   if $put_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
 
 ################################################################################
