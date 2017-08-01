@@ -169,13 +169,4 @@ if ( -e $zlbstart )
 system ( "groupadd -f webgui" );
 system ( "usermod -a -G webgui root" );
 
-# Create openssl DH keys
-my $dhparam_certfile = "/usr/local/zevenet/app/pound/etc/dh2048.pem";
-
-if ( ! -e $dhparam_certfile )
-{
-	print "Generating some SSL keys, just wait some seconds...\n";
-	system ( "$openssl_bin dhparam -5 2048 -out $dhparam_certfile" );
-}
-
 exit 0;

@@ -46,18 +46,6 @@ if [ -e "/usr/local/zevenet/app/zbin/zevenet.${PERLVER}" ]; then
 	rm /usr/local/zevenet/app/zbin/zevenet.*
 fi
 
-# cryptolib
-CRYPTOVERDEF="1.0.0"
-CRYPTOVER=`find /usr/lib/ -name libcrypto.so.*.*.* | head -1 | awk -F'.' '{ printf $3 "." $4 "." $5}'`
-
-# Check for pound version
-CRYPTOV="$CRYPTOVER"
-if [ ! -e "/usr/local/zevenet/app/pound.${CRYPTOV}" ]; then
-	CRYPTOV="$CRYPTOVERDEF"
-fi
-cp -rpf /usr/local/zevenet/app/pound.${CRYPTOV}/* /usr/local/zevenet/app/pound/
-rm -rf /usr/local/zevenet/app/pound.*
-
 # Get kernel version 
 KERNEL_VERSION=`uname -r | cut -d. -f1-2`
 # In Jessie move dependencies of libexec to system libs
