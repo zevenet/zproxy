@@ -7,13 +7,13 @@ $zdir="/usr/local/zevenet";
 #Zevenet lib directory
 $zlibdir="/usr/share/perl5/Zevenet";#update
 #Document Root for Web Aplication directory
-$basedir="/usr/local/zevenet/www";#update
+$basedir="/usr/local/zevenet/www";
 #configuration directory.In this section all config files are saved.
-$configdir="/usr/local/zevenet/config";#update
+$configdir="/usr/local/zevenet/config";
 #Log directory
 $logdir="/var/log";#update
 #File configuration Zen Cluster
-$filecluster="/usr/local/zevenet/config/cluster.conf";#update
+$filecluster="/usr/local/zevenet/config/cluster.conf";
 #File configuration GUI
 $confhttp="/usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf";#update
 #.<b>ntp server</b>
@@ -21,11 +21,11 @@ $ntp="pool.ntp.org";
 #Do backup to
 $backupfor="$configdir $confhttp /etc/iproute2/rt_tables";
 #Save backups on
-$backupdir="/usr/local/zevenet/backups/";#update
+$backupdir="/usr/local/zevenet/backups/";
 #rt tables file
 $rttables = "/etc/iproute2/rt_tables";
 #this file
-$globalcfg = "/usr/local/zevenet/config/global.conf";#update
+$globalcfg = "/usr/local/zevenet/config/global.conf";
 #version ZEVENET
 $version="5.0.8";#update
 #appliance version file
@@ -37,9 +37,9 @@ $htpass="/etc/passwd";#update
 #ZAPI KEY
 $zapikey="";
 # Zen license 
-$licenseFileTxt="/usr/local/zevenet/license.txt";#update
+$licenseFileTxt="/usr/local/zevenet/license.txt";
 # Zen license 
-$licenseFileHtml="/usr/local/zevenet/license.html";#update
+$licenseFileHtml="/usr/local/zevenet/license.html";
 
 #dns file server?
 $filedns="/etc/resolv.conf";
@@ -116,7 +116,7 @@ $lsmod="/sbin/lsmod";
 #Where is gdnsd?
 $gdnsd="/gdnsd";
 #Where is l4sd?
-$l4sd="/usr/local/zevenet/app/l4s/bin/l4sd";#update
+$l4sd="/usr/local/zevenet/app/l4s/bin/l4sd";
 #Where is id binary?
 $bin_id="/usr/bin/id";
 #Where is wget binary?
@@ -136,11 +136,11 @@ $packetbl_bin="/usr/local/bin/packetbl";
 
 
 #where is pound binary?
-$pound="/usr/local/zevenet/app/pound/sbin/pound";#update
+$pound="/usr/local/zevenet/app/pound/sbin/pound";
 #where is pound ctl?
-$poundctl="/usr/local/zevenet/app/pound/sbin/poundctl";#update
+$poundctl="/usr/local/zevenet/app/pound/sbin/poundctl";
 #pound file configuration template?
-$poundtpl="/usr/local/zevenet/app/pound/etc/poundtpl.cfg";#update
+$poundtpl="/usr/local/zevenet/app/pound/etc/poundtpl.cfg";
 #piddir
 $piddir="/var/run";
 
@@ -170,9 +170,9 @@ $recent_ip_list_hash_size="6000";#update
 $iptlock = "/tmp/iptables.lock";
 
 #Directory where is check script. In this directory you can save your own check scripts. 
-$libexec_dir="/usr/local/zevenet/app/libexec";#update
+$libexec_dir="/usr/local/zevenet/app/libexec";
 #FarmGuardian binary, create advanced check for backend servers
-$farmguardian="/usr/local/zevenet/app/farmguardian/bin/farmguardian";#update
+$farmguardian="/usr/local/zevenet/app/farmguardian/bin/farmguardian";
 
 #Where is ZenRRD Directory?. There is a perl script that create rrd database and images from Monitoring section
 $rrdap_dir="/usr/local/zevenet/app/zenrrd";#update
@@ -195,14 +195,14 @@ $keepalived_conf="/etc/keepalived/keepalived.conf";
 # conntrackd configuration file
 $conntrackd_conf="/etc/conntrackd/conntrackd.conf";
 # cluster floating interfaces configuration file path
-$floatfile="/usr/local/zevenet/config/float.conf";#update
+$floatfile="/usr/local/zevenet/config/float.conf";
 # node_status file path
 $znode_status_file="/usr/local/zevenet/node_status";
 
 # zcluster-manager command path
-$zcluster_manager="/usr/local/zevenet/app/zbin/zcluster-manager";#update
+$zcluster_manager="/usr/local/zevenet/app/zbin/zcluster-manager";
 # ssh-copy-id file path
-$ssh_copy_id="/usr/local/zevenet/app/zbin/ssh-copy-id.sh";#update
+$ssh_copy_id="/usr/local/zevenet/app/zbin/ssh-copy-id.sh";
 # primary-backup conntrackd script
 $primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
 
@@ -218,13 +218,13 @@ $key_id="id_rsa";
 $keygen_cmd="ssh-keygen -t rsa -f $key_path/$key_id -N '' -q";#update
 
 #Zen backup
-$zenbackup="/usr/local/zevenet/app/zenbackup/zenbackup.pl";#update
+$zenbackup="/usr/local/zevenet/app/zenbackup/zenbackup.pl";
 
 #SNMP Service
 $snmpdconfig_file="/etc/snmp/snmpd.conf";
 
 #Bonding interfaces
-$bond_config_file="/usr/local/zevenet/config/bonding.conf";#update
+$bond_config_file="/usr/local/zevenet/config/bonding.conf";
 $sys_net_dir="/sys/class/net";
 $bonding_masters_filename="/sys/class/net/bonding_masters";
 $bonding_mode_filename="bonding/mode";
@@ -232,18 +232,18 @@ $bonding_slaves_filename="bonding/slaves";
 $bonding_miimon_filename="bonding/miimon";
 
 #Notifications Module
-$notifConfDir = "/usr/local/zevenet/config/notifications";#update
+$notifConfDir = "/usr/local/zevenet/config/notifications";
 $secConf="/usr/local/zevenet/www/Notifications/sec.rules";#update
 $syslogFile="/var/log/syslog";
 
 #IPDS Module
-$blacklistsPath = "/usr/local/zevenet/config/ipds/blacklists/lists";#update
-$blacklistsConf = "/usr/local/zevenet/config/ipds/blacklists/lists.conf";#update
+$blacklistsPath = "/usr/local/zevenet/config/ipds/blacklists/lists";
+$blacklistsConf = "/usr/local/zevenet/config/ipds/blacklists/lists.conf";
 $blacklistsLocalPreload = "/usr/local/zevenet/www/ipds/blacklists/local";#update
 $blacklistsRemotePreload = "/usr/local/zevenet/www/ipds/blacklists/remote_lists.conf";#update
 $blacklistsCronFile = "/etc/cron.d/blacklists";
-$dosConf = "/usr/local/zevenet/config/ipds/dos/dos.conf";#update
-$dosConfDir = "/usr/local/zevenet/config/ipds/dos";#update
+$dosConf = "/usr/local/zevenet/config/ipds/dos/dos.conf";
+$dosConfDir = "/usr/local/zevenet/config/ipds/dos";
 
 
 
