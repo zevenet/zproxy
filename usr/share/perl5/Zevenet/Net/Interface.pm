@@ -216,6 +216,11 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	my $configdir = &getGlobalConfiguration('configdir');
 	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
 
+	if ( $if_ref->{ addr } && ! $if_ref->{ ip_v } )
+	{
+		$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } )
+	}
+
 	if ( !-f $config_filename )
 	{
 		open my $fh, '>', $config_filename;
