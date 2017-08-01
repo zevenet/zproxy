@@ -56,13 +56,6 @@ if [ -e "/usr/local/zevenet/app/zbin/zevenet.${PERLVER}" ]; then
 	rm /usr/local/zevenet/app/zbin/zevenet.*
 fi
 
-# GSLB user management
-GSLBHOME="/var/run/gdnsd"
-GSLBSHELL="/usr/sbin/nologin"
-GSLBUSER="gdnsd"
-GSLBGROUP="nogroup"
-adduser --system -q --home $GSLBHOME --shell $GSLBSHELL --disabled-password --ingroup $GSLBGROUP $GSLBUSER
-
 #upgrading global.conf
 /usr/local/zevenet/app/checkglobalconf/checkglobalconf.cgi
 
