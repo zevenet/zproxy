@@ -70,14 +70,6 @@ rm -r /usr/lib/x86_64-linux-gnu.3.16
 CRYPTOVERDEF="1.0.0"
 CRYPTOVER=`find /usr/lib/ -name libcrypto.so.*.*.* | head -1 | awk -F'.' '{ printf $3 "." $4 "." $5}'`
 
-# Check for cherokee version
-CRYPTOV="$CRYPTOVER"
-if [ ! -e "/usr/local/zevenet/app/cherokee.${CRYPTOV}" ]; then
-	CRYPTOV="$CRYPTOVERDEF"
-fi
-cp -rpf /usr/local/zevenet/app/cherokee.${CRYPTOV}/* /usr/local/zevenet/app/cherokee/
-rm -rf /usr/local/zevenet/app/cherokee.*
-
 # Check for pound version
 CRYPTOV="$CRYPTOVER"
 if [ ! -e "/usr/local/zevenet/app/pound.${CRYPTOV}" ]; then
@@ -101,11 +93,6 @@ SSHDCONFIG="/etc/ssh/sshd_config"
 if [[ `grep -c "^PermitRootLogin.*yes" $SSHDCONFIG` == '0' ]]; then
 	sed -i -e 's/^PermitRootLogin.*/PermitRootLogin yes/' $SSHDCONFIG
 	/etc/init.d/ssh reload 2> /dev/null
-fi
-
-#Check Cherokee PID
-if [ ! -f /usr/local/zevenet/app/cherokee/var/run/cherokee.pid ]; then
-	pgrep cherokee$ > /usr/local/zevenet/app/cherokee/var/run/cherokee.pid
 fi
 
 # Disable services
@@ -151,52 +138,6 @@ fi
 chmod +x /usr/local/zevenet/config/zlb-start
 chmod +x /usr/local/zevenet/config/zlb-stop
 
-#move old web server configuration
-if [ -f /tmp/mini_httpd.conf ];
-then
-	cat /tmp/mini_httpd.conf > /usr/local/zevenet/app/mini_httpd/mini_httpd.conf
-	rm -f /tmp/mini_httpd.conf
-fi
-
-if [ -d /usr/local/zevenet/app/cherokee ] && [ ! -f /tmp/cherokee.conf ]
-then
-	cp /usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf /tmp/cherokee.conf
-fi
-
-if [ -f /tmp/cherokee.conf ];
-then
-	# Migrate if needed from minihttpd to cherokee
-	if [ -f /tmp/zenport ];
-	then
-		ZENPORT=`cat /tmp/zenport`
-		sed -i "s/^.*server!bind!1!port.*/server!bind!1!port = ${ZENPORT}/g" /tmp/cherokee.conf
-		rm -f /tmp/zenport
-	fi
-	if [ -f /tmp/zenhost ];
-	then
-		ZENHOST=`cat /tmp/zenhost`
-		if [ "$ZENHOST" = "*" ];
-		then
-			sed -i "s/^.*server!bind!1!interface.*/#server!bind!1!interface/g" /tmp/cherokee.conf
-		else
-			sed -i "s/^.*server!bind!1!interface.*/server!bind!1!interface = ${ZENHOST}/g" /tmp/cherokee.conf
-		fi
-		rm -f /tmp/zenhost
-	fi
-
-	# reduce cherokee memory usage
-	sed -i 's/^server!keepalive_max_requests = 500$/server!keepalive_max_requests = 5/' /tmp/cherokee.conf
-	sed -i 's/^vserver!1!logger!access!buffsize = 16384$/vserver!1!logger!access!buffsize = 512/' /tmp/cherokee.conf
-	# limit cherokee-worker to one thread
-	if [ `grep -c 'server!thread_number = 1' /tmp/cherokee.conf` == "0" ];
-	then
-		sed -i 's/^server!user = root$/server!user = root\nserver!thread_number = 1/' /tmp/cherokee.conf
-	fi
-
-	cat /tmp/cherokee.conf > /usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf
-	rm -f /tmp/cherokee.conf
-fi
-
 # Migrate TCP farms to L4xNAT
 if [ "-f /usr/local/zevenet/config/*_pen.cfg" ]; then
 	/usr/local/zevenet/app/zbin/migrate_tcp_to_l4xnat.pl
@@ -231,20 +172,6 @@ if [ -f /usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl ]; then
 	/usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl
 fi
 
-echo "Restarting Zen Load Balancer web GUI..."
-if [ -f /etc/init.d/cherokee ];
-then
-	if [ "`pidof mini_httpd`" != "" ];
-	then
-		kill -9 `pidof mini_httpd`
-	fi
-	/etc/init.d/cherokee stop
-	/etc/init.d/cherokee start
-else
-	/etc/init.d/minihttpd stop
-	/etc/init.d/minihttpd start
-fi
-
 # Create IPDS directories
 /usr/local/zevenet/app/zbin/boot_ipds.pl
 
@@ -268,21 +195,6 @@ echo "ZLB will be unavailable while the service is restarting."
 /etc/init.d/zevenet stop
 /etc/init.d/zevenet start
 
-###move .htpasswd from tmp to dst
-if [ -f /tmp/.htpasswd ];
-then
-	if [ -d /usr/local/zevenet/app/cherokee/etc/cherokee ];
-	then
-		cat /tmp/.htpasswd > /usr/local/zevenet/app/cherokee/etc/cherokee/.htpasswd
-		if [ -f /tmp/cherokee.conf ]; then
-			cat /tmp/cherokee.conf /usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf
-		fi
-	else
-		cat /tmp/.htpasswd > /usr/local/zevenet/www/.htpasswd
-	fi
-	rm -f /tmp/.htpasswd
-fi
-
 # Load conntrack modules
 /sbin/modprobe nf_conntrack 2> /dev/null
 /sbin/modprobe ip_conntrack 2> /dev/null
@@ -302,4 +214,4 @@ fi
 #Change prompt color
 sed -i "s/1;30m/0;37m/g" /etc/bash.bashrc 2> /dev/null
 
-echo "Zen Load Balancer update completed..."
+echo "Zevenet Load Balancer update completed..."

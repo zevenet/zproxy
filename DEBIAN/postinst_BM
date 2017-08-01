@@ -50,14 +50,6 @@ fi
 CRYPTOVERDEF="1.0.0"
 CRYPTOVER=`find /usr/lib/ -name libcrypto.so.*.*.* | head -1 | awk -F'.' '{ printf $3 "." $4 "." $5}'`
 
-# Check for cherokee version
-CRYPTOV="$CRYPTOVER"
-if [ ! -e "/usr/local/zevenet/app/cherokee.${CRYPTOV}" ]; then
-	CRYPTOV="$CRYPTOVERDEF"
-fi
-cp -rpf /usr/local/zevenet/app/cherokee.${CRYPTOV}/* /usr/local/zevenet/app/cherokee/
-rm -rf /usr/local/zevenet/app/cherokee.*
-
 # Check for pound version
 CRYPTOV="$CRYPTOVER"
 if [ ! -e "/usr/local/zevenet/app/pound.${CRYPTOV}" ]; then

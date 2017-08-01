@@ -149,17 +149,6 @@ else
 	exit 1;        #Abort deploy
 }
 
-#Check if exists mini_httpd conf and store the current port and interface
-if ( -e "/usr/local/zevenet/app/mini_httpd/mini_httpd.conf" )
-{
-	$port =
-	  `grep port= /usr/local/zevenet/app/mini_httpd/mini_httpd.conf  | awk -F'=' '{printf \$2}'`;
-	$host =
-	  `grep host= /usr/local/zevenet/app/mini_httpd/mini_httpd.conf  | awk -F'=' '{printf \$2}'`;
-	system ( qq{echo "$port" > /tmp/zenport} );
-	system ( qq{echo "$host" > /tmp/zenhost} );
-}
-
 # Reset the sysctl in order to establish the new parameters
 system ( "cp /etc/sysctl.conf /etc/sysctl.conf.bck" );
 system ( qq{grep "^#" /etc/sysctl.conf > /etc/sysctl.conf 2> /dev/null} );
@@ -174,14 +163,6 @@ if ( -e $zlbstop )
 if ( -e $zlbstart )
 {
 	move $zlbstart, "/tmp/zlb-start";
-}
-
-#Move cherokee
-my $chero_conf = "/usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf";
-
-if ( -e  $chero_conf )
-{
-	move $chero_conf, "/tmp/cherokee.conf";
 }
 
 # Create the new GUI system group
