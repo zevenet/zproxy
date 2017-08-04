@@ -1037,7 +1037,7 @@ sub runRemoveHTTPBackendStatus    # ($farm_name,$backend,$service)
 }
 
 =begin nd
-Function: setFarmHttpBackendStatus
+Function: setHTTPFarmBackendStatus
 
 	For a HTTP farm, it gets each backend status from status file and set it in pound daemon
 	
@@ -1051,7 +1051,7 @@ FIXME:
 	This function returns nothing, do error control
 		
 =cut
-sub setFarmHttpBackendStatus    # ($farm_name)
+sub setHTTPFarmBackendStatus    # ($farm_name)
 {
 	my $farm_name = shift;
 

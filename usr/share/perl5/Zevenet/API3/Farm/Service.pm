@@ -803,7 +803,7 @@ sub move_services
 						{
 							if ( &runFarmStart( $farmname, "true" ) == 0 )
 							{
-								&setFarmHttpBackendStatus( $farmname );
+								&setHTTPFarmBackendStatus( $farmname );
 								&zenlog( "$service was moved successful." );
 							}
 							else

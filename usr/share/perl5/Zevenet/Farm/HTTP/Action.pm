@@ -65,7 +65,7 @@ sub _runHTTPFarmStart    # ($farm_name)
 		require Zevenet::Farm::HTTP::Backend;
 
 		# set backend at status before that the farm stopped
-		&setFarmHttpBackendStatus( $farm_name );
+		&setHTTPFarmBackendStatus( $farm_name );
 	}
 	else
 	{

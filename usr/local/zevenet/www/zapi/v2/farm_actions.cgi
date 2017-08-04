@@ -177,7 +177,7 @@ sub actions()
 			my $type = &getFarmType( $farmname );
 			if ( $type eq "http" || $type eq "http" )
 			{
-				&setFarmHttpBackendStatus( $farmname );
+				&setHTTPFarmBackendStatus( $farmname );
 			}
 			&setFarmNoRestart( $farmname );
 			&zenlog(

@@ -150,9 +150,6 @@ Parameters:
 Returns:
 	Integer - Error code: 0 on success, other value on failure
 		
-FIXME:
-	Exist another function, setFarmHttpBackendStatus, with same function.
-		
 =cut
 sub setFarmNewService    # ($farm_name,$service)
 {

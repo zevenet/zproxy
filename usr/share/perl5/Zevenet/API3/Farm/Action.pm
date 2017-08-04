@@ -149,7 +149,7 @@ sub farm_actions # ( $json_obj, $farmname )
 
 			if ( $type eq "http" || $type eq "https" )
 			{
-				&setFarmHttpBackendStatus( $farmname );
+				&setHTTPFarmBackendStatus( $farmname );
 			}
 
 			&setFarmNoRestart( $farmname );
