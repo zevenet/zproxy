@@ -213,7 +213,7 @@ sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 			my $idservice = &getFarmVSI( $farm_name, $service );
 			if ( $idservice ne "" )
 			{
-				&getFarmHttpBackendStatus( $farm_name, $backend, "active", $idservice );
+				&setHTTPFarmBackendStatusFile( $farm_name, $backend, "active", $idservice );
 			}
 		}
 	}
@@ -806,7 +806,7 @@ sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 		$output = $?;
 	}
 
-	&getFarmHttpBackendStatus( $farm_name, $backend, "maintenance", $idsv );
+	&setHTTPFarmBackendStatusFile( $farm_name, $backend, "maintenance", $idsv );
 
 	return $output;
 }
@@ -850,13 +850,13 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 	}
 	
 	# save backend status in status file
-	&getFarmHttpBackendStatus( $farm_name, $backend, "active", $idsv );
+	&setHTTPFarmBackendStatusFile( $farm_name, $backend, "active", $idsv );
 
 	return $output;
 }
 
 =begin nd
-Function: getFarmHttpBackendStatus
+Function: setHTTPFarmBackendStatusFile
 
 	Function that save in a file the backend status (maintenance or not)
 	
@@ -874,7 +874,7 @@ FIXME:
 	Not return nothing, do error control
 		
 =cut
-sub getFarmHttpBackendStatus    # ($farm_name,$backend,$status,$idsv)
+sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
 {
 	my ( $farm_name, $backend, $status, $idsv ) = @_;
 

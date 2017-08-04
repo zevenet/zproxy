@@ -354,7 +354,7 @@ while ( 1 )
 			{
 				my $idsv = &getFarmVSI( $farmname, $service );
 				system ( "$poundctl -c $portadmin -B 0 $idsv $j" );
-				&getFarmHttpBackendStatus( $farmname, $j, 'active', $idsv );
+				&setHTTPFarmBackendStatusFile( $farmname, $j, 'active', $idsv );
 				$auxLog = " in farm: '$farmname', service: '$service'";
 			}
 			elsif ( $type eq 'l4xnat' )
@@ -382,7 +382,7 @@ while ( 1 )
 			{
 				my $idsv = &getFarmVSI( $farmname, $service );
 				system ( "$poundctl -c $portadmin -b 0 $idsv $j" );
-				&getFarmHttpBackendStatus( $farmname, $j, 'fgDOWN', $idsv );
+				&setHTTPFarmBackendStatusFile( $farmname, $j, 'fgDOWN', $idsv );
 				&setFarmBackendsSessionsRemove( $farmname, $service, $j );
 				$auxLog = " in farm: '$farmname', service: '$service'";
 			}
