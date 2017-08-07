@@ -54,11 +54,12 @@ while ( my $linetpl = <$file_template> )
 
 		while ( my $line = <$fr> || $exit eq 'false' )
 		{
-			if ( $line =~ /^\$$vble[0]\=/ )
+			if ( $line =~ /^\$$vble[0] ?\=/ )
 			{
 				@vblegconf = split ( "\=", $line );
-
-				if ( $vblegconf[1] !~ /""/ && $vblegconf[1] !~ $vble[1] )
+				$vblegconf[1] =~ s/^\s?//g;
+				$vble[1] =~ s/^\s?//g;
+				if ( $vblegconf[1] !~ /""/ && $vblegconf[1] !~ $vble[1] && $vble[1] !~ /\#update/ )
 				{
 					$newline = $line;
 				}
