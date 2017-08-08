@@ -608,7 +608,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			}
 		}
 
-		$output_params = &getHttpFarmService( $farmname, $service );
+		$output_params = &getHTTPServiceStruct( $farmname, $service );
 	}
 
 	if ( $type eq "gslb" )
