@@ -280,6 +280,11 @@ sub farm_services
 	{
 		require Zevenet::Farm::Config;
 		$service = &getServiceStruct ( $farmname, $servicename );
+		foreach my $be ( @{ $service->{backends} } )
+		{
+			$be->{status} = "up" if $be->{status} eq "undefined";
+		}
+
 	}
 	else
 	{

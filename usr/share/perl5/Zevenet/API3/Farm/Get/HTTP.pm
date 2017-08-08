@@ -142,7 +142,13 @@ sub farms_name_http # ( $farmname )
 	foreach my $s ( @serv )
 	{
 		my $serviceStruct = &getServiceStruct ( $farmname, $s );
-
+		
+		# Remove backend status 'undefined', it is for news api versions
+		foreach my $be (@{$serviceStruct->{ 'backends' }})
+		{
+			$be->{ 'status' } = 'up'  if ($be->{ 'status' } eq 'undefined');
+		}
+		
 		push @out_s, $serviceStruct;
 	}
 	require Zevenet::IPDS;

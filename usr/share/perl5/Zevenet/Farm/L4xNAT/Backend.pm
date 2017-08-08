@@ -289,7 +289,6 @@ sub getL4FarmBackendsStatus_old    # ($farm_name,@content)
 }
 
 
-
 =begin nd
 Function: setL4FarmBackendsSessionsRemove
 

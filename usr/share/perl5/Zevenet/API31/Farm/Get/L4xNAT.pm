@@ -80,37 +80,9 @@ sub farms_name_l4 # ( $farmname )
 
 	########### backends
 	my @run = &getFarmServers( $farmname );
+	
+	@out_b = &getL4FarmBackends( $farmname );
 
-	foreach my $l_servers ( @run )
-	{
-		my @l_serv = split ( ";", $l_servers );
-
-		$l_serv[0] = $l_serv[0] + 0;
-
-		if ( !$l_serv[2] =~ /^$/ )
-		{
-			$l_serv[2] = $l_serv[2] + 0;
-		}
-
-		$l_serv[3] = $l_serv[3] + 0;
-		$l_serv[2] = $l_serv[2]? $l_serv[2]+0: undef;
-		$l_serv[4] = $l_serv[4]? $l_serv[4]+0: undef;
-		$l_serv[5] = $l_serv[5]? $l_serv[5]+0: undef;
-		$l_serv[7] = defined $l_serv[7]? $l_serv[7]+0: 0;
-		$l_serv[2] = undef if $l_serv[2] eq '';
-		chomp $l_serv[6];
-
-		push @out_b,
-		  {
-			id       => $l_serv[0],
-			ip       => $l_serv[1],
-			port     => $l_serv[2],
-			weight   => $l_serv[4],
-			priority => $l_serv[5],
-			status   => $l_serv[6],
-			max_conns => $l_serv[7],
-		  };
-	}
 	require Zevenet::IPDS;
 	my $ipds = &getIPDSfarmsRules( $farmname );
 

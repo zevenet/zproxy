@@ -470,7 +470,6 @@ sub getHTTPFarmBackends    # ($farm_name,$service)
 	return \@out_ba;
 }
 
-
 =begin nd
 Function: getHTTPFarmBackendsStatus
 

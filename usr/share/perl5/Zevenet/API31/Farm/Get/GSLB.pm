@@ -59,37 +59,11 @@ sub farms_name_gslb # ( $farmname )
 
 		# Default port health check
 		my $dpc        = &getFarmVS( $farmname, $srv, "dpc" );
-		my $backendsvs = &getFarmVS( $farmname, $srv, "backends" );
-		my @be = split ( "\n", $backendsvs );
 
 		#
 		# Backends
 		#
-
-		my @out_b;
-		$backendsvs = &getFarmVS( $farmname, $srv, "backends" );
-		@be         = split ( "\n", $backendsvs );
-
-		foreach my $subline ( @be )
-		{
-			$subline =~ s/^\s+//;
-			if ( $subline =~ /^$/ )
-			{
-				next;
-			}
-
-			my @subbe = split ( " => ", $subline );
-
-			$subbe[0] =~ s/^primary$/1/;
-			$subbe[0] =~ s/^secondary$/2/;
-			#~ @subbe[0]+0 if @subbe[0] =~ /^\d+$/;
-
-			push @out_b,
-			  {
-				id => $subbe[0]+0,
-				ip => $subbe[1],
-			  };
-		}
+		my @out_b = &getGSLBFarmBackends( $farmname, $srv );
 
 		# farm guardian 
 		my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $srv );

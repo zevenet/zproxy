@@ -724,6 +724,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 
 			if ( &getFarmStatus( $farmname ) eq 'up' )
 			{
+				require Zevenet::Farm::Action;
 				&setFarmRestart( $farmname );
 				$body->{ status } = 'needed restart';
 			}
@@ -787,32 +788,12 @@ sub backends
 
 	if ( $type eq 'l4xnat' )
 	{
-		require Zevenet::Farm::L4xNAT;
-		my $l4_farm = &getL4FarmStruct( $farmname );
-		my @backends;
-
-		for my $be ( @{ $l4_farm->{ 'servers' } } )
-		{
-			$be->{ 'vport' } = $be->{ 'vport' } eq '' ? undef : $be->{ 'vport' } + 0;
-			$be->{ 'priority' } = $be->{ 'priority' }? $be->{ 'priority' }+0: undef;
-			$be->{ 'weight' } = $be->{ 'weight' }? $be->{ 'weight' }+0: undef;
-			$be->{ 'max_conns' } = $be->{ 'max_conns' }+0;
-
-			push @backends,
-			  {
-				id       => $be->{ 'id' } + 0,
-				ip       => $be->{ 'vip' },
-				port     => $be->{ 'vport' },
-				priority => $be->{ 'priority' },
-				weight   => $be->{ 'weight' },
-				status   => $be->{ 'status' },
-				max_conns => $be->{ 'max_conns' },
-			  };
-		}
+		require Zevenet::Farm::Config;
+		my $backends = &getFarmBackends( $farmname );
 
 		my $body = {
 					description => $description,
-					params      => \@backends,
+					params      => $backends,
 		};
 
 		# Success
@@ -820,36 +801,12 @@ sub backends
 	}
 	elsif ( $type eq 'datalink' )
 	{
-		require Zevenet::Farm::Backend;
-
-		my @backends;
-		my @run = &getFarmServers( $farmname );
-
-		foreach my $l_servers ( @run )
-		{
-			my @l_serv = split ( ";", $l_servers );
-
-			$l_serv[0] = $l_serv[0] + 0;
-			$l_serv[3] = ($l_serv[3]) ? $l_serv[3]+0: undef;
-			$l_serv[4] = ($l_serv[4]) ? $l_serv[4]+0: undef;
-			$l_serv[5] = $l_serv[5] + 0;
-
-			if ( $l_serv[1] ne "0.0.0.0" )
-			{
-				push @backends,
-				  {
-					id        => $l_serv[0],
-					ip        => $l_serv[1],
-					interface => $l_serv[2],
-					weight    => $l_serv[3],
-					priority  => $l_serv[4]
-				  };
-			}
-		}
+		require Zevenet::Farm::Config;
+		my $backends = &getFarmBackends( $farmname );
 
 		my $body = {
 					 description => $description,
-					 params      => \@backends,
+					 params      => $backends,
 		};
 
 		&httpResponse({ code => 200, body => $body });
@@ -910,48 +867,12 @@ sub service_backends
 			&httpResponse({ code => 404, body => $body });
 		}
 
-		my @be         = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
-		my @backends;
-
-		foreach my $subl ( @be )
-		{
-			require Zevenet::Farm::Backend::Maintenance;
-
-			my @subbe       = split ( "\ ", $subl );
-			my $id          = $subbe[1] + 0;
-			my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $service );
-
-			if ( $maintenance != 0 )
-			{
-				$backendstatus = "up";
-			}
-			else
-			{
-				$backendstatus = "maintenance";
-			}
-
-			my $ip   = $subbe[3];
-			my $port = $subbe[5] + 0;
-			my $tout = $subbe[7];
-			my $prio = $subbe[9];
-
-			$tout = $tout eq '-' ? undef: $tout+0;
-			$prio = $prio eq '-' ? undef: $prio+0;
-
-			push @backends,
-			  {
-				id      => $id,
-				status  => $backendstatus,
-				ip      => $ip,
-				port    => $port,
-				timeout => $tout,
-				weight  => $prio,
-			  };
-		}
+		require Zevenet::Farm::Config;
+		my $backends = &getFarmBackends( $farmname, $service );
 
 		my $body = {
 					description => $description,
-					params      => \@backends,
+					params      => $backends,
 		};
 
 		# Success
@@ -977,33 +898,11 @@ sub service_backends
 		}
 
 		require Zevenet::Farm::Config;
-
-		my @be = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
-		my @backends;
-
-		foreach my $subline ( @be )
-		{
-			$subline =~ s/^\s+//;
-			if ( $subline =~ /^$/ )
-			{
-				next;
-			}
-
-			my @subbe = split ( " => ", $subline );
-
-			$subbe[0] =~ s/^primary$/1/;
-			$subbe[0] =~ s/^secondary$/2/;
-
-			push @backends,
-			  {
-				id => $subbe[0]+0,
-				ip => $subbe[1],
-			  };
-		}
+		my $backends = &getFarmBackends( $farmname, $service );
 
 		my $body = {
 					 description => $description,
-					 params      => \@backends,
+					 params      => $backends,
 		};
 
 		&httpResponse({ code => 200, body => $body });
