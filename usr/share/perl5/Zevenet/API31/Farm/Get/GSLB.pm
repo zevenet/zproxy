@@ -33,15 +33,10 @@ sub farms_name_gslb # ( $farmname )
 	my @out_s;
 	my @out_z;
 
-	my $status = &getFarmStatus( $farmname );
+	my $status = &getFarmVipStatus( $farmname );
 	my $vip   = &getFarmVip( "vip",  $farmname );
 	my $vport = &getFarmVip( "vipp", $farmname );
 	$vport = $vport + 0;
-
-	if ( $status == 'up' && -e "/tmp/$farmname.lock" )
-	{
-		$status = "needed restart";
-	}
 
 	$farm_ref = { vip => $vip, vport => $vport, status => $status };
 

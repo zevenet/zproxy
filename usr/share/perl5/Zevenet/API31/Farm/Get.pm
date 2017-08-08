@@ -35,11 +35,9 @@ sub farms # ()
 	{
 		my $name   = &getFarmName( $file );
 		my $type   = &getFarmType( $name );
-		my $status = &getFarmStatus( $name );
+		my $status = &getFarmVipStatus( $name );
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
-
-		$status = "needed restart" if $status eq 'up' && ! &getFarmLock($name);
 
 		push @out,
 		  {
@@ -71,11 +69,9 @@ sub farms_lslb # ()
 		my $name   = &getFarmName( $file );
 		my $type   = &getFarmType( $name );
 		next unless $type =~ /^(?:http|https|l4xnat)$/;
-		my $status = &getFarmStatus( $name );
+		my $status = &getFarmVipStatus( $name );
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
-
-		$status = "needed restart" if $status eq 'up' && ! &getFarmLock($name);
 
 		push @out,
 		  {
@@ -107,11 +103,9 @@ sub farms_gslb # ()
 		my $name   = &getFarmName( $file );
 		my $type   = &getFarmType( $name );
 		next unless $type eq 'gslb';
-		my $status = &getFarmStatus( $name );
+		my $status = &getFarmVipStatus( $name );
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
-
-		$status = "needed restart" if $status eq 'up' && ! &getFarmLock($name);
 
 		push @out,
 		  {
@@ -143,7 +137,7 @@ sub farms_dslb # ()
 		my $name   = &getFarmName( $file );
 		my $type   = &getFarmType( $name );
 		next unless $type eq 'datalink';
-		my $status = &getFarmStatus( $name );
+		my $status = &getFarmVipStatus( $name );
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $iface  = &getFarmVip( 'vipp', $name );
 
