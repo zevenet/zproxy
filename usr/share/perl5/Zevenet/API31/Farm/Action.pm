@@ -226,7 +226,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	{
 		require Zevenet::Farm::HTTP::Service;
 
-		my @services = &getFarmServices($farmname);
+		my @services = &getHTTPFarmServices($farmname);
 		my $found_service;
 
 		foreach my $service_name ( @services )

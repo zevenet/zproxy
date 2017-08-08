@@ -259,8 +259,22 @@ sub farm_services
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	require Zevenet::Farm::Service;
-	my @services = &getFarmServices( $farmname );
+	my $type = &getFarmType( $farmname );
+	if ( $type !~ /http/i )
+	{
+		# Error
+		my $errormsg = "This functionality only is available for HTTP farms.";
+		my $body = {
+				description => $description,
+				error => "true",
+				message => $errormsg
+		};
+
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	require Zevenet::Farm::HTTP::Service;
+	my @services = &getHTTPFarmServices( $farmname );
 	if ( ! grep ( /^$servicename$/, @services ) )
 	{
 		# Error
@@ -274,30 +288,13 @@ sub farm_services
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	my $type = &getFarmType( $farmname );
-
-	if ( $type =~ /http/i )
+	require Zevenet::Farm::Config;
+	$service = &getServiceStruct ( $farmname, $servicename );
+	foreach my $be ( @{ $service->{backends} } )
 	{
-		require Zevenet::Farm::Config;
-		$service = &getServiceStruct ( $farmname, $servicename );
-		foreach my $be ( @{ $service->{backends} } )
-		{
-			$be->{status} = "up" if $be->{status} eq "undefined";
-		}
-
+		$be->{status} = "up" if $be->{status} eq "undefined";
 	}
-	else
-	{
-		# Error
-		my $errormsg = "This functionality only is available for HTTP farms.";
-		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
-		};
 
-		&httpResponse({ code => 400, body => $body });
-	}
 
 	# Success
 	my $body = {
@@ -349,24 +346,22 @@ sub modify_services # ( $json_obj, $farmname, $service )
 	}
 
 	# validate SERVICE
+	require Zevenet::Farm::Service;
+	my @services = &getFarmServices($farmname);
+
+	my $found_service = grep { $service eq $_ } @services;
+
+	if ( !$found_service )
 	{
-		require Zevenet::Farm::Service;
-		my @services = &getFarmServices($farmname);
+		# Error
+		my $errormsg = "Could not find the requested service.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
 
-		my $found_service = grep { $service eq $_ } @services;
-
-		if ( !$found_service )
-		{
-			# Error
-			my $errormsg = "Could not find the requested service.";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 404, body => $body });
-		}
+		&httpResponse({ code => 404, body => $body });
 	}
 
 	my $error = "false";

@@ -41,9 +41,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 
 	my @allowParams = ( "fgtimecheck", "fgscript", "fglog", "fgenabled" );
 
-	require Zevenet::Farm::GSLB::Service;
-	require Zevenet::Farm::HTTP::Service;
-	
+	require Zevenet::Farm::Service;
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
@@ -65,15 +63,8 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 		my $body = { description => $description, error       => "true", message     => $errormsg };
 		&httpResponse( { code => 400, body => $body } );
 	}
-	# validate exist service for http(s) farms
-	elsif ( $type =~ /(?:http|https)/ && ! grep( /^$service$/, &getFarmServices( $farmname ) ) )
-	{
-		$errormsg = "Invalid service name, please insert a valid value.";
-		my $body = { description => $description, error       => "true", message     => $errormsg };
-		&httpResponse( { code => 404, body => $body } );
-	}
-	# validate exist service for gslb farms
-	elsif ( $type =~ /gslb/ && ! grep( /^$service$/, &getGSLBFarmServices( $farmname ) ) )
+	# validate exist service
+	elsif ( ! grep( /^$service$/, &getFarmServices( $farmname ) ) )
 	{
 		$errormsg = "Invalid service name, please insert a valid value.";
 		my $body = { description => $description, error       => "true", message     => $errormsg };
