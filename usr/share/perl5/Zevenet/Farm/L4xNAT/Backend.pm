@@ -289,6 +289,49 @@ sub getL4FarmBackendsStatus_old    # ($farm_name,@content)
 }
 
 
+
+=begin nd
+Function: setL4FarmBackendsSessionsRemove
+
+	Remove all the active sessions enabled to a backend in a given service
+	Used by farmguardian
+	
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+
+Returns:
+	Integer - 0 on success or -1 on failure
+	
+FIXME: 
+		
+=cut
+sub setL4FarmBackendsSessionsRemove
+{
+	my ( $farmname, $backend ) = @_;
+	
+	require Zevenet::Farm::L4xNAT::Config;
+	my %farm   = %{ &getL4FarmStruct( $farmname ) };
+	my %be = %{ $farm{ servers }[$backend] };
+
+	my $recent_file = "/proc/net/xt_recent/_${farmname}_$be{tag}_sessions";
+	my $output = -1;
+	
+	if ( open ( my $file, '>', $recent_file ) )
+	{
+		print $file "/\n";    # flush recent file!!
+		close $file;
+		$output = 0;
+	}
+	else
+	{
+		&zenlog( "Could not open file $recent_file: $!" );
+	}
+	
+	return $output;
+}
+
+
 =begin nd
 Function: setL4FarmBackendsSessionsRemove
 
