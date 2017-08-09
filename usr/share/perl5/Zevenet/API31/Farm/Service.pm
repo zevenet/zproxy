@@ -703,7 +703,7 @@ sub move_services
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 ) {
 		# Error
-		$errormsg = "The farmname $farmname does not exists.";
+		$errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 					 description => $description,
 					 error       => "true",

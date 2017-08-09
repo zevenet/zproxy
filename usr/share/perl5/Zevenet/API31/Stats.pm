@@ -46,7 +46,6 @@ sub getAllFarmStats
 		my $port   = &getFarmVip( 'vipp', $name );
 		my $established = 0;
 		my $pending     = 0;
-		$status = "needed restart" if $status eq 'up' && ! &getFarmLock($name);
 
 		if ( $status eq "up" )
 		{
@@ -173,29 +172,74 @@ sub farms_number
 sub module_stats_status
 {
 	my @farms = @{ &getAllFarmStats () };
-	my $lslb = { 'total' => 0, 'up' => 0, 'down' => 0, };
-	my $gslb = { 'total' => 0, 'up' => 0, 'down' => 0, };
-	my $dslb = { 'total' => 0, 'up' => 0, 'down' => 0, };
+	my $lslb = { 'total' => 0, 'up' => 0, 'down' => 0, 'critical' => 0, 
+		'problem' => 0 };
+	my $gslb = { 'total' => 0, 'up' => 0, 'down' => 0, 'critical' => 0, 
+		'problem' => 0 };
+	my $dslb = { 'total' => 0, 'up' => 0, 'down' => 0, 'critical' => 0, 
+		'problem' => 0 };
 
 	foreach my $farm ( @farms )
 	{
 		if ( $farm->{ 'profile' } =~ /(?:http|https|l4xnat)/ )
 		{
 			$lslb->{ 'total' } ++;
-			$lslb->{ 'down' } ++ 	if ( $farm->{ 'status' } eq 'down' );
-			$lslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' || $farm->{ 'status' } eq 'needed restart' );
+			if ( $farm->{ 'status' } eq 'down' )
+			{
+				$lslb->{ 'down' } ++;
+			}
+			elsif ( $farm->{ 'status' } eq 'problem' )
+			{
+				$lslb->{ 'problem' } ++;
+			}
+			elsif ( $farm->{ 'status' } eq 'critical' )
+			{
+				$lslb->{ 'critical' } ++;
+			}
+			else
+			{
+				$lslb->{ 'up' } ++;
+			}
 		}
 		elsif ( $farm->{ 'profile' } =~ /gslb/ )
 		{
 			$gslb->{ 'total' } ++;
-			$gslb->{ 'down' } ++ 	if ( $farm->{ 'status' } eq 'down' );
-			$gslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' || $farm->{ 'status' } eq 'needed restart' );
+			if ( $farm->{ 'status' } eq 'down' )
+			{
+				$gslb->{ 'down' } ++;
+			}
+			elsif ( $farm->{ 'status' } eq 'problem' )
+			{
+				$gslb->{ 'problem' } ++;
+			}
+			elsif ( $farm->{ 'status' } eq 'critical' )
+			{
+				$gslb->{ 'critical' } ++;
+			}
+			else
+			{
+				$gslb->{ 'up' } ++;
+			}
 		}
 		elsif ( $farm->{ 'profile' } =~ /datalink/ )
 		{
 			$dslb->{ 'total' } ++;
-			$dslb->{ 'down' } ++ 	if ( $farm->{ 'status' } eq 'down' );
-			$dslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' || $farm->{ 'status' } eq 'needed restart' );
+			if ( $farm->{ 'status' } eq 'down' )
+			{
+				$dslb->{ 'down' } ++;
+			}
+			elsif ( $farm->{ 'status' } eq 'problem' )
+			{
+				$dslb->{ 'problem' } ++;
+			}
+			elsif ( $farm->{ 'status' } eq 'critical' )
+			{
+				$dslb->{ 'critical' } ++;
+			}
+			else
+			{
+				$dslb->{ 'up' } ++;
+			}
 		}
 	}
 	
