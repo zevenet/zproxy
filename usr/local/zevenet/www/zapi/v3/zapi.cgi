@@ -23,21 +23,6 @@
 
 use strict;
 
-#~ use CGI;
-#~ use CGI::Session;
-
-#~ use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
-#~ use MIME::Base64;
-#~ use URI::Escape;
-
-# Certificate requrements
-#~ require Date::Parse;
-#~ require Time::localtime;
-
-# Debugging
-#~ use Data::Dumper;
-#~ use Devel::Size qw(size total_size);
-
 package GLOBAL {
 	our $http_status_codes = {
 
@@ -57,15 +42,6 @@ package GLOBAL {
 	};
 };
 
-# all libs, tmp
-#~ use Zevenet;
-#~ use Zevenet::Net;
-#~ use Zevenet::Zapi;
-#~ use Zevenet::Config;
-#~ use Zevenet::Log;
-#~ use Zevenet::SystemInfo;
-
-#~ use Zevenet::Core;
 use Zevenet::Log;
 use Zevenet::Debug;
 use Zevenet::CGI;
@@ -88,9 +64,6 @@ require Zevenet::Certificate::Activation;
 logNewModules("With Zevenet::Certificate::Activation");
 require Zevenet::API3::Auth;
 logNewModules("With Zevenet::API3::Auth");
-#~ require JSON::XS;
-#~ require Date::Parse;
-#~ require Time::localtime;
 
 
 #########################################
@@ -184,7 +157,6 @@ POST qr{^/session$} => sub {
 
 #	Above this part are calls allowed without authentication
 ######################################################################
-#~ if ( not ( &validZapiKey() or &validCGISession() ) )
 unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
 		 or ( exists $ENV{ HTTP_COOKIE } && &validCGISession() ) )
 {
@@ -758,11 +730,6 @@ if ( $q->path_info =~ qr{^/graphs} )
 
 	my $frequency_re = &getValidFormat( 'graphs_frequency' );
 	my $system_id_re = &getValidFormat( 'graphs_system_id' );
-
-	#  GET graphs
-	#~ GET qr{^/graphs/(\w+)/(.*)/(\w+$)} => sub {
-	#~ &get_graphs( @_ );
-	#~ };
 
 	#  GET possible graphs
 	GET qr{^/graphs$} => sub {
