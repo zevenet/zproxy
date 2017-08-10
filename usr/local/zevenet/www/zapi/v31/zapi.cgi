@@ -300,6 +300,16 @@ my $farm_re    = &getValidFormat( 'farm_name' );
 my $service_re = &getValidFormat( 'service' );
 my $be_re      = &getValidFormat( 'backend' );
 
+##### /ciphers
+if ( $q->path_info =~ qr{^/ciphers} )
+{
+	require Zevenet::API31::Certificate::Ciphers;
+
+	GET qr{^/ciphers$} => sub {
+		&ciphers_available( @_ );
+	};
+}
+
 ##### /farms
 if ( $q->path_info =~ qr{^/farms/$farm_re/certificates} )
 {
