@@ -23,8 +23,6 @@
 
 use strict;
 
-#~ use Zevenet::CGI;
-
 sub GET($$)
 {
 	my ( $path, $code ) = @_;
@@ -197,7 +195,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 
 	# Headers included in _ALL_ the responses, any method, any URI, sucess or error
 	my @headers = (
-					'Access-Control-Allow-Origin'      => $ENV{ HTTP_ORIGIN },
+					'Access-Control-Allow-Origin'      => "https://$ENV{ HTTP_HOST }/",
 					'Access-Control-Allow-Credentials' => 'true',
 	);
 
