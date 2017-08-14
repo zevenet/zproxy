@@ -211,7 +211,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 		return undef;
 	}
 
-	&zenlog( "setInterfaceConfig: " . Dumper $if_ref) if &debug();
+	&zenlog( "setInterfaceConfig: " . Dumper $if_ref) if &debug() > 2;
 	my @if_params = ( 'name', 'addr', 'mask', 'gateway' );
 
 	my $if_line = join ( ';', @{ $if_ref }{ @if_params } ) . ';';
