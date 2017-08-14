@@ -1,0 +1,58 @@
+# ignore all by default
+/*
+
+# exceptions
+!/license.txt
+
+#!/etc/cron.d/zevenet
+!/etc/profile
+!/etc/motd.tail
+
+!/usr
+/usr/*
+!/usr/local
+/usr/local/*
+!/usr/local/zevenet/
+
+/usr/local/zevenet/app/cherokee/
+/usr/local/zevenet/app/gdnsd/
+/usr/local/zevenet/app/pound/
+/usr/local/zevenet/app/libexec/*
+!/usr/local/zevenet/app/libexec/check_uplink
+
+# rrd
+/usr/local/zevenet/app/zenrrd/rrd/*
+!/usr/local/zevenet/app/zenrrd/rrd/.keep
+
+# backups
+/usr/local/zevenet/backups/*
+!/usr/local/zevenet/backups/.keep
+
+# config
+/usr/local/zevenet/config/
+!/usr/local/zevenet/config/zencert.pem
+!/usr/local/zevenet/config/zlb-start
+!/usr/local/zevenet/config/zlb-stop
+!/usr/local/zevenet/config/zencert-c.key
+!/usr/local/zevenet/config/notifications/.keep
+
+/usr/local/zevenet/logs
+
+!/usr/local/zevenet/www
+/usr/local/zevenet/www/assets/
+/usr/local/zevenet/www/commit
+/usr/local/zevenet/www/index.html
+/usr/local/zevenet/www/ipds/blacklists/local/
+/usr/local/zevenet/www/main.bundle.js
+/usr/local/zevenet/www/polyfills.*.bundle.js
+/usr/local/zevenet/www/zlbcertfile.pem
+
+!/usr/share/
+/usr/share/*
+!/usr/share/perl5/
+/usr/share/perl5/*
+!/usr/share/perl5/Zevenet/
+!/usr/share/perl5/Zevenet.pm
+
+# other
+.rnd
