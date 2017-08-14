@@ -102,6 +102,8 @@ sub get_supportsave
 # GET /system/version
 sub get_version
 {
+	require Zevenet::SystemInfo;
+
 	my $description = "Get version";
 	
 	my $hostnameBin = &getGlobalConfiguration( 'hostname' );

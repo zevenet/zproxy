@@ -280,6 +280,8 @@ sub module_stats # ()
 sub stats # ()
 {
 	require Zevenet::Stats;
+	require Zevenet::SystemInfo;
+
 	my @data_mem  = &getMemStats();
 	my @data_load = &getLoadStats();
 	my @data_net  = &getNetworkStats();
@@ -346,6 +348,8 @@ sub stats # ()
 sub stats_mem # ()
 {
 	require Zevenet::Stats;
+	require Zevenet::SystemInfo;
+
 	my @data_mem = &getMemStats();
 
 	my $out = {
@@ -373,6 +377,8 @@ sub stats_mem # ()
 sub stats_load # ()
 {
 	require Zevenet::Stats;
+	require Zevenet::SystemInfo;
+
 	my @data_load = &getLoadStats();
 
 	my $out = {
@@ -402,6 +408,7 @@ sub stats_load # ()
 sub stats_cpu # ()
 {
 	require Zevenet::Stats;
+	require Zevenet::SystemInfo;
 
 	my @data_cpu = &getCPU();
 
@@ -523,6 +530,7 @@ sub stats_network_interfaces
 sub stats_network # ()
 {
 	require Zevenet::Stats;
+	require Zevenet::SystemInfo;
 
 	my @interfaces = &getNetworkStats( 'hash' );
 
