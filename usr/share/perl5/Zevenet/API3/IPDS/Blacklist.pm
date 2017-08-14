@@ -442,6 +442,8 @@ sub del_blacklists_list
 {
 	my $listName    = shift;
 
+	require Zevenet::IPDS::Blacklist;
+
 	my $description = "Delete list '$listName'",
 	my $errormsg = &getBLExists( $listName );
 
