@@ -66,6 +66,11 @@ if [[ `grep -c "^PermitRootLogin.*yes" $SSHDCONFIG` == '0' ]]; then
 	/etc/init.d/ssh reload 2> /dev/null
 fi
 
+# Set crontab
+if [ ! -f /etc/cron.d/zevenet ]; then
+	cp /usr/local/zevenet/share/zevenet.cron /etc/cron.d/zevenet
+fi
+
 # Disable services
 
 # SNMP and sec services
