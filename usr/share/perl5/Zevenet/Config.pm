@@ -21,6 +21,7 @@
 #
 ###############################################################################
 
+use v5.14;
 use strict;
 
 use Zevenet::Log;
@@ -45,6 +46,7 @@ sub getGlobalConfiguration
 	my $parameter = shift;
 
 	my $global_conf_filepath = "/usr/local/zevenet/config/global.conf";
+	my $global_conf;
 
 	open ( my $global_conf_file, '<', $global_conf_filepath );
 
@@ -56,43 +58,27 @@ sub getGlobalConfiguration
 		die $msg;
 	}
 
-	my $global_conf;
-
-	for my $conf_line ( <$global_conf_file> )
+	while ( my $conf_line = <$global_conf_file> )
 	{
 		next if $conf_line !~ /^\$/;
 
-		#~ print "$conf_line"; # DEBUG
-
-		# capture
+		# extract variable name and value
 		$conf_line =~ /\$(\w+)\s*=\s*(?:"(.*)"|\'(.*)\');\s*$/;
-
 		my $var_name  = $1;
 		my $var_value = $2;
 
-		my $has_var = 1;
-
-		# replace every variable used in the $var_value by its content
-		while ( $has_var )
+		# if the var value contains any variable
+		if ( $var_value =~ /\$/ )
 		{
-			if ( $var_value =~ /\$(\w+)/ )
+			# replace every variable used in the $var_value by its content
+			foreach my $var ( $var_value =~ /\$(\w+)/g )
 			{
-				my $found_var_name = $1;
-
-#~ print "'$var_name' \t => \t '$var_value'\n"; # DEBUG
-#~ print "\t\t found_var_name:$found_var_name \t => \t $global_conf->{ $found_var_name }\n"; # DEBUG
-
-				$var_value =~ s/\$$found_var_name/$global_conf->{ $found_var_name }/;
-
-				#~ print "'$var_name' \t => \t '$var_value'\n"; # DEBUG
-			}
-			else
-			{
-				$has_var = 0;
+				$var_value =~ s/\$$var/$global_conf->{ $var }/;
 			}
 		}
 
-		#~ print "'$var_name' \t => \t '$var_value'\n"; # DEBUG
+		# early finish if the requested paremeter is found
+		return $var_value if $parameter && $parameter eq $var_name;
 
 		$global_conf->{ $var_name } = $var_value;
 	}
@@ -100,7 +86,6 @@ sub getGlobalConfiguration
 	close $global_conf_file;
 
 	return eval { $global_conf->{ $parameter } } if $parameter;
-
 	return $global_conf;
 }
 
