@@ -24,120 +24,90 @@
 use strict;
 
 use Time::Local;
-#~ use Date::Parse qw(str2time);
-#~ use Time::localtime qw(ctime);
+use Zevenet::Config;
 use Zevenet::SystemInfo;
 
 # build local key
-sub keycert    # ()
+sub keycert
 {
-	# requires:
-	#~ use Sys::Hostname;
+	#~ use Zevenet::SystemInfo;
 
-	my $dmidecode_bin = "/usr/sbin/dmidecode";    # input
-	my $hostname      = &getHostname();           # input
+	my $dmi      = get_sys_uuid();
+	my $hostname = &getHostname();
 
-	my @dmidec  = `$dmidecode_bin`;
-	my @dmidec2 = grep ( /UUID\:/, @dmidec );
-	my $dmi     = $dmidec2[0];
+	my $block1 = crypt ( "${dmi}${hostname}", "93" );
+	my $block2 = crypt ( "${hostname}${dmi}", "a3" );
+	my $block3 = crypt ( "${dmi}${hostname}", "ZH" );
+	my $block4 = crypt ( "${hostname}${dmi}", "h7" );
+	$block1 =~ s/^93//;
+	$block2 =~ s/^a3//;
+	$block3 =~ s/^ZH//;
+	$block4 =~ s/^h7//;
 
-	$dmi =~ s/\"//g;     # remove doble quotes
-	$dmi =~ s/^\s+//;    # remove whitespaces at the begining
-	$dmi =~ s/\s+$//;    # remove whitespaces at the end
-	$dmi =~ s/\ //g;     # remove spaces
-
-	my @dmidec3 = split ( ":", $dmi );
-	$dmi = $dmidec3[1];
-
-	$hostname =~ s/\"//g;     # remove doble quotes
-	$hostname =~ s/^\s+//;    # remove whitespaces at the begining
-	$hostname =~ s/\s+$//;    # remove whitespaces at the end
-
-	my $encrypted_string  = crypt ( "${dmi}${hostname}", "93" );
-	my $encrypted_string2 = crypt ( "${hostname}${dmi}", "a3" );
-	my $encrypted_string3 = crypt ( "${dmi}${hostname}", "ZH" );
-	my $encrypted_string4 = crypt ( "${hostname}${dmi}", "h7" );
-	$encrypted_string =~ s/^93//;
-	$encrypted_string2 =~ s/^a3//;
-	$encrypted_string3 =~ s/^ZH//;
-	$encrypted_string4 =~ s/^h7//;
-
-	my $str =
-	  "${encrypted_string}-${encrypted_string2}-${encrypted_string3}-${encrypted_string4}";
-
-	$str =~ s/\"//g;     # remove doble quotes
-	$str =~ s/^\s+//;    # remove whitespaces at the begining
-	$str =~ s/\s+$//;    # remove whitespaces at the end
+	my $str = "${block1}-${block2}-${block3}-${block4}";
 
 	return $str;
 }
 
 # evaluate certificate
-sub certcontrol          # ()
+sub certcontrol
 {
-	# requires:
-	#~ use Date::Parse;
-	#~ use Time::localtime;
-	require Zevenet::SystemInfo;
+	#~ require Time::Local;
+	#~ use Zevenet::Config;
+	#~ use Zevenet::SystemInfo;
 
 	my $basedir = &getGlobalConfiguration( 'basedir' );
-
-	# input
-	my $hostname    = &getHostname();
 	my $zlbcertfile = "$basedir/zlbcertfile.pem";
-	my $openssl_bin = "/usr/bin/openssl";
-	my $keyid       = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
-	my $key         = &keycert();
-
-	# output
 	my $swcert = 0;
 
-	if ( -e $zlbcertfile )
+	if ( ! -e $zlbcertfile )
 	{
-		my @zen_cert = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
+		#swcert = 1 ==> There isn't certificate
+		$swcert = 1;
+		return $swcert;
+	}
 
-		if (    ( !grep /$key/, @zen_cert )
-			 || ( !grep /keyid:$keyid/,   @zen_cert )
-			 || ( !grep /CN=$hostname\/|CN = $hostname\,/, @zen_cert ) )
-		{
-			$swcert = 2;
-		}
+	my $openssl_bin = "/usr/bin/openssl";
+	my $keyid       = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
+	my @months      = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+	my $hostname    = &getHostname();
+	my $key         = &keycert();
+	my @zen_cert    = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
 
-		#~ my $now = ctime(); ############# From: Time::localtime #############
-		my $now = scalar localtime;
-		#~ &zenlog( "now: $now" );
+	if (    ( !grep /$key/, @zen_cert )
+		 || ( !grep /keyid:$keyid/, @zen_cert )
+		 || ( !grep /CN=$hostname\/|CN = $hostname\,/, @zen_cert ) )
+	{
+		#swcert = 2 ==> Cert isn't signed OK
+		$swcert = 2;
+		return $swcert;
+	}
 
-		# Certificate validity date
-		my @notbefore = grep /Not Before/i, @zen_cert;
-		my $nb = join '', @notbefore;
-		$nb =~ s/not before.*:\ //i;
-		$nb =~ s/^\s*//;
+	# Certificate validity date
+	my ( $nb ) = grep /Not Before/i, @zen_cert;
+	$nb =~ s/.*not before.*:\ //i;
 
-		#~ my $ini = str2time( $nb ); ############# From: Date::Parse #############
-		#~ &zenlog( "Activation certificate expedition date: $nb" );
-		my ( $month, $day, $hours, $min, $sec, $year ) = split /(?: |:)/, $nb;
-		my $ini = timelocal( $sec, $min, $hours, $day, $month, $year );
-		#~ &zenlog( "ini: $ini" );
+	my ( $month, $day, $hours, $min, $sec, $year ) = split /[ :]/, $nb;
+	( $month ) = grep { $months[$_] eq $month } 0..$#months;
+	my $ini = timegm( $sec, $min, $hours, $day, $month, $year );
 
-		# Certificate expiring date
-		my @notafter = grep /Not After/i, @zen_cert;
-		my $na = join "", @notafter;
-		$na =~ s/not after.*:\ //i;
-		$na =~ s/^\s*//;
+	# Certificate expiring date
+	my ( $na ) = grep /Not After/i, @zen_cert;
+	$na =~ s/.*not after.*:\ //i;
 
-		#~ my $end = str2time( $na ); ############# From: Date::Parse #############
-		#~ &zenlog( "Activation certificate expiration date: $na" );
-		( $month, $day, $hours, $min, $sec, $year ) = split /(?: |:)/, $na;
-		my $end = timelocal( $sec, $min, $hours, $day, $month, $year );
-		#~ &zenlog( "end: $end" );
+	( $month, $day, $hours, $min, $sec, $year ) = split /[ :]/, $na;
+	( $month ) = grep { $months[$_] eq $month } 0..$#months;
+	my $end = timegm( $sec, $min, $hours, $day, $month, $year );
 
-		# Validity remaining
-		my $totaldays = ( $end - $ini ) / 86400;
-		$totaldays =~ s/\-//g;
-		my $dayright = ( $end - time () ) / 86400;
+	# Validity remaining
+	my $totaldays = ( $end - $ini ) / 86400;
+	$totaldays =~ s/\-//g;
+	my $dayright = ( $end - time () ) / 86400;
 
+	if ( $dayright < 0 )
+	{
 		#control errors
-		if ( $totaldays < 364 && $dayright < 0 && $swcert == 0 )
+		if ( $totaldays < 364 )
 		{
 			# Policy: expired testing certificates would not stop zen service,
 			# but rebooting the service would not start the service,
@@ -145,17 +115,12 @@ sub certcontrol          # ()
 			$swcert = 3;
 		}
 
-		if ( $totaldays > 364 && $dayright < 0 && $swcert == 0 )
+		if ( $totaldays > 364 )
 		{
 			# The contract support plan is expired you have to request a
 			# new contract support. Only message alert!
 			$swcert = -1;
 		}
-	}
-	else
-	{
-		#There isn't certificate in the machine
-		$swcert = 1;
 	}
 
 	# error codes
@@ -212,6 +177,25 @@ sub checkActivationCertificate
 	}
 
 	return $swcert;
+}
+
+sub get_sys_uuid
+{
+	my $uuid_file_path = '/sys/class/dmi/id/product_uuid';
+
+	open( my $file, '<', $uuid_file_path);
+
+	unless ( $file )
+	{
+		my $msg = "Could not open file $uuid_file_path: $!";
+		zenlog( $msg );
+		die( $msg );
+	}
+
+	my $uuid = <$file>;
+	close $file;
+
+	return $uuid;
 }
 
 1;
