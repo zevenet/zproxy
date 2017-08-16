@@ -119,8 +119,8 @@ sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
 	}
 	else
 	{
-		&_runFarmStop( $farm_name, $writeconf );
-		$output = &_runFarmStart( $farm_name, $writeconf );
+		&_runL4FarmStop( $farm_name, $writeconf );
+		$output = &_runL4FarmStart( $farm_name, $writeconf );
 	}
 
 	return $output;
