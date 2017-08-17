@@ -28,7 +28,6 @@ BEGIN {
 }
 
 # Dependencies
-use Zevenet::RRD;
 use Zevenet::Farm::HTTP;
 use Zevenet::Farm::L4xNAT;
 use Zevenet::Farm::Datalink;

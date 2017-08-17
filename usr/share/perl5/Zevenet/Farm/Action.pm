@@ -327,7 +327,7 @@ sub runFarmDelete    # ($farm_name)
 		elsif ( $farm_type eq "datalink" )
 		{
 			# delete cron task to check backends
-			use Tie::File;
+			require Tie::File;
 			tie my @filelines, 'Tie::File', "/etc/cron.d/zevenet";
 			@filelines = grep !/\# \_\_$farm_name\_\_/, @filelines;
 			untie @filelines;
@@ -341,7 +341,9 @@ sub runFarmDelete    # ($farm_name)
 
 	unlink glob ( "$configdir/$farm_name\_*\.conf" );
 	unlink glob ( "${logdir}/${farm_name}\_*farmguardian*" );
-	
+
+	require Zevenet::RRD;
+
 	&delGraph( $farm_name, "farm" );
 	
 	return $status;

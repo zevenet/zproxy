@@ -155,7 +155,8 @@ sub all_farms_stats # ()
 # Get the number of farms
 sub farms_number
 {
-	require Zevenet::Farm::Ext;
+	require Zevenet::Farm::Core;
+
 	my $number =  scalar &getFarmNameList();
 
 	# Print Success
