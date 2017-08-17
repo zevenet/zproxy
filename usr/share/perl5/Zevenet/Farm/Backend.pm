@@ -52,8 +52,7 @@ sub getFarmServers    # ($farm_name)
 		require Zevenet::Farm::Datalink::Backend;
 		@servers = &getDatalinkFarmServers( $farm_name );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
 		@servers = &getL4FarmServers( $farm_name );
@@ -106,14 +105,12 @@ sub setFarmServer # $output ($ids,$rip,$port|$iface,$max,$weight,$priority,$time
 		$output =
 		  &setDatalinkFarmServer( $ids, $rip, $port, $weight, $priority, $farm_name );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
 		$output = &setL4FarmServer( $ids, $rip, $port, $weight, $priority, $farm_name, $max );
 	}
-
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	elsif ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		require Zevenet::Farm::HTTP::Backend;
 		$output =
@@ -154,23 +151,22 @@ sub runFarmServerDelete    # ($ids,$farm_name,$service)
 		require Zevenet::Farm::Datalink::Backend;
 		$output = &runDatalinkFarmServerDelete( $ids, $farm_name );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
 		$output = &runL4FarmServerDelete( $ids, $farm_name );
 	}
-
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	elsif ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		require Zevenet::Farm::HTTP::Backend;
 		$output = &runHTTPFarmServerDelete( $ids, $farm_name, $service );
 	}
-
-	if ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Backend;
-		$output = &runGSLBFarmServerDelete( $ids, $farm_name, $service );
+		if ( eval { require Zevenet::Farm::GSLB::Backend; } )
+		{
+			$output = &runGSLBFarmServerDelete( $ids, $farm_name, $service );
+		}
 	}
 
 	return $output;
@@ -200,14 +196,12 @@ sub getFarmBackendStatusCtl    # ($farm_name)
 		require Zevenet::Farm::HTTP::Backend;
 		@output = &getHTTPFarmBackendStatusCtl( $farm_name );
 	}
-
-	if ( $farm_type eq "datalink" )
+	elsif ( $farm_type eq "datalink" )
 	{
 		require Zevenet::Farm::Datalink::Backend;
 		@output = &getDatalinkFarmBackendStatusCtl( $farm_name );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
 		@output = &getL4FarmBackendStatusCtl( $farm_name );
@@ -243,14 +237,12 @@ sub getFarmBackendsStatus_old    # ($farm_name,@content)
 		require Zevenet::Farm::HTTP::Backend;
 		@output = &getHTTPFarmBackendsStatus_old( $farm_name, @content );
 	}
-
-	if ( $farm_type eq "datalink" )
+	elsif ( $farm_type eq "datalink" )
 	{
 		require Zevenet::Farm::Datalink::Backend;
 		@output = &getDatalinkFarmBackendsStatus_old( @content );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
 		@output = &getL4FarmBackendsStatus_old( $farm_name, @content );
@@ -354,8 +346,7 @@ sub setFarmBackendStatus    # ($farm_name,$index,$stat)
 		require Zevenet::Farm::Datalink::Backend;
 		$output = &setDatalinkFarmBackendStatus( $farm_name, $index, $stat );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
 		$output = &setL4FarmBackendStatus( $farm_name, $index, $stat );

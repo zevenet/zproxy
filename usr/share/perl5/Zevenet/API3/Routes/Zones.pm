@@ -27,6 +27,14 @@ my $q = getCGI();
 my $farm_re    = &getValidFormat( 'farm_name' );
 
 
+if ( $q->path_info =~ qr{^/farms/modules/gslb$} )
+{
+	require Zevenet::API3::Farm::GSLB;
+
+	GET qr{^/farms/modules/gslb$} => \&farms_gslb;
+}
+
+
 if ( $q->path_info =~ qr{^/farms/$farm_re/zones} )
 {
 	require Zevenet::API3::Farm::Zone;

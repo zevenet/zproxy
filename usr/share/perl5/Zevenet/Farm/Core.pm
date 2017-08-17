@@ -46,38 +46,30 @@ sub getFarmType    # ($farm_name)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 
-	if ( $farm_filename =~ /^$farm_name\_pen\_udp.cfg/ )
-	{
-		return "udp";
-	}
-	if ( $farm_filename =~ /^$farm_name\_pen.cfg/ )
-	{
-		return "tcp";
-	}
 	if ( $farm_filename =~ /^$farm_name\_pound.cfg/ )
 	{
 		use File::Grep qw( fgrep );
-		if ( fgrep { /ListenHTTPS/ } "$configdir/$farm_filename" )
-		{
+
+		if ( fgrep { /ListenHTTPS/ } "$configdir/$farm_filename" ) {
 			return "https";
 		}
-		else
-		{
+		else {
 			return "http";
 		}
 	}
-	if ( $farm_filename =~ /^$farm_name\_datalink.cfg/ )
+	elsif ( $farm_filename =~ /^$farm_name\_datalink.cfg/ )
 	{
 		return "datalink";
 	}
-	if ( $farm_filename =~ /^$farm_name\_l4xnat.cfg/ )
+	elsif ( $farm_filename =~ /^$farm_name\_l4xnat.cfg/ )
 	{
 		return "l4xnat";
 	}
-	if ( $farm_filename =~ /^$farm_name\_gslb.cfg/ )
+	elsif ( $farm_filename =~ /^$farm_name\_gslb.cfg/ )
 	{
 		return "gslb";
 	}
+
 	return 1;
 }
 
@@ -161,21 +153,22 @@ NOTE:
 sub getFarmList    # ()
 {
 	opendir ( DIR, $configdir );
-	my @files1 = grep ( /\_pen.*\.cfg$/, readdir ( DIR ) );
+	my @files1 = grep ( /\_pound.cfg$/, readdir ( DIR ) );
 	closedir ( DIR );
+
 	opendir ( DIR, $configdir );
-	my @files2 = grep ( /\_pound.cfg$/, readdir ( DIR ) );
+	my @files2 = grep ( /\_datalink.cfg$/, readdir ( DIR ) );
 	closedir ( DIR );
+
 	opendir ( DIR, $configdir );
-	my @files3 = grep ( /\_datalink.cfg$/, readdir ( DIR ) );
+	my @files3 = grep ( /\_l4xnat.cfg$/, readdir ( DIR ) );
 	closedir ( DIR );
+
 	opendir ( DIR, $configdir );
-	my @files4 = grep ( /\_l4xnat.cfg$/, readdir ( DIR ) );
+	my @files4 = grep ( /\_gslb.cfg$/, readdir ( DIR ) );
 	closedir ( DIR );
-	opendir ( DIR, $configdir );
-	my @files5 = grep ( /\_gslb.cfg$/, readdir ( DIR ) );
-	closedir ( DIR );
-	my @files = ( @files1, @files2, @files3, @files4, @files5 );
+
+	my @files = ( @files1, @files2, @files3, @files4 );
 
 	return @files;
 }

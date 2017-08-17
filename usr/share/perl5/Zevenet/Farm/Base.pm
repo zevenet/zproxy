@@ -55,23 +55,22 @@ sub getFarmVip    # ($info,$farm_name)
 		require Zevenet::Farm::HTTP::Config;
 		$output = &getHTTPFarmVip( $info, $farm_name );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
 		$output = &getL4FarmVip( $info, $farm_name );
 	}
-
-	if ( $farm_type eq "datalink" )
+	elsif ( $farm_type eq "datalink" )
 	{
 		require Zevenet::Farm::Datalink::Config;
 		$output = &getDatalinkFarmVip( $info, $farm_name );
 	}
-
-	if ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Config;
-		$output = &getGSLBFarmVip( $info, $farm_name );
+		if ( eval { require Zevenet::Farm::GSLB::Config; } )
+		{
+			$output = &getGSLBFarmVip( $info, $farm_name );
+		}
 	}
 
 	return $output;
@@ -184,7 +183,9 @@ sub getFarmVipStatus    # ($farm_name)
 	
 	# types: "http", "https", "datalink", "l4xnat", "gslb" or 1
 	my $type = &getFarmType( $farm_name );
+
 	require Zevenet::Farm::Config;
+
 	my $backends;
 	my $up_flag;		# almost one backend is not reachable
 	my $down_flag; 	# almost one backend is not reachable
@@ -199,6 +200,7 @@ sub getFarmVipStatus    # ($farm_name)
 	elsif ( $type eq "gslb" || $type =~ /http/ )
 	{
 		require Zevenet::Farm::Service;
+
 		foreach my $srv ( &getFarmServices($farm_name) )
 		{
 			# Fill an array with backends of all services
@@ -242,9 +244,6 @@ sub getFarmVipStatus    # ($farm_name)
 	return $output;
 }
 
-
-
-
 =begin nd
 Function: getFarmPid
 
@@ -269,11 +268,12 @@ sub getFarmPid    # ($farm_name)
 		require Zevenet::Farm::HTTP::Config;
 		$output = &getHTTPFarmPid( $farm_name );
 	}
-
-	if ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Config;
-		$output = &getGSLBFarmPid( $farm_name );
+		if ( eval { require Zevenet::Farm::GSLB::Config; } )
+		{
+			$output = &getGSLBFarmPid( $farm_name );
+		}
 	}
 
 	return $output;
@@ -302,9 +302,9 @@ sub getFarmLock    # ($farm_name)
 	my $output = -1;
 	my $lockfile = "/tmp/$farm_name.lock";
 
-	if ( -e "$lockfile" )
+	if ( -e $lockfile )
 	{
-		open my $fh, "$lockfile";
+		open( my $fh, '<', $lockfile );
 		read $fh, $output, 255;
 		close $fh;
 	}
@@ -336,18 +336,18 @@ sub setFarmLock    # ($farm_name, $status, $msg)
 	my ( $farm_name, $status, $msg ) = @_;
 
 	my $lockfile = "/tmp/$farm_name.lock";
-	my $lockstatus = &getFarmLock( "$farm_name" );
+	my $lockstatus = &getFarmLock( $farm_name );
 
 	if ( $status eq "on" && $lockstatus == -1 )
 	{
-		open my $fh, ">", "$lockfile";
+		open my $fh, '>', $lockfile;
 		print $fh "$msg";
 		close $fh;
 	}
 
 	if ( $status eq "off" )
 	{
-		unlink ( "$lockfile" ) if -e "$lockfile";
+		unlink( $lockfile ) if -e $lockfile;
 	}
 }
 
@@ -374,23 +374,22 @@ sub getFarmBootStatus    # ($farm_name)
 		require Zevenet::Farm::HTTP::Config;
 		$output = &getHTTPFarmBootStatus( $farm_name );
 	}
-
-	if ( $farm_type eq "gslb" )
-	{
-		require Zevenet::Farm::GSLB::Config;
-		$output = &getGSLBFarmBootStatus( $farm_name );
-	}
-
-	if ( $farm_type eq "datalink" )
+	elsif ( $farm_type eq "datalink" )
 	{
 		require Zevenet::Farm::Datalink::Config;
 		$output = &getDatalinkFarmBootStatus( $farm_name );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
 		$output = &getL4FarmBootStatus( $farm_name );
+	}
+	elsif ( $farm_type eq "gslb" )
+	{
+		if ( eval { require Zevenet::Farm::GSLB::Config; } )
+		{
+			$output = &getGSLBFarmBootStatus( $farm_name );
+		}
 	}
 
 	return $output;
@@ -436,15 +435,13 @@ sub getFarmProto    # ($farm_name)
 		}
 		close FI;
 	}
-
-	elsif ( $farm_type eq "gslb" )
-	{
-		$output = "UDP";
-	}
-
 	elsif ( $farm_type eq "http" )
 	{
 		$output = "TCP";
+	}
+	elsif ( $farm_type eq "gslb" )
+	{
+		$output = "UDP";
 	}
 
 	return $output;

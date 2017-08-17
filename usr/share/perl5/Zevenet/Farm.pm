@@ -24,16 +24,13 @@
 use strict;
 
 BEGIN {
-	if ( -e "/usr/share/perl5/Zevenet/Farm/Ext.pm" ) {
-		require Zevenet::Farm::Ext;
-	}
+	eval { require Zevenet::Farm::Ext; }
 }
 
 # Dependencies
 use Zevenet::RRD;
 use Zevenet::Farm::HTTP;
 use Zevenet::Farm::L4xNAT;
-use Zevenet::Farm::GSLB;
 use Zevenet::Farm::Datalink;
 
 # Modules

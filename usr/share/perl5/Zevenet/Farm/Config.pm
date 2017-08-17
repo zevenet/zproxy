@@ -117,8 +117,7 @@ sub setFarmSessionType    # ($session,$farm_name)
 		require Zevenet::Farm::HTTP::Config;
 		$output = &setHTTPFarmSessionType( $session, $farm_name );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
 		$output = &setL4FarmSessionType( $session, $farm_name );
@@ -153,8 +152,7 @@ sub getFarmSessionType    # ($farm_name)
 		require Zevenet::Farm::HTTP::Config;
 		$output = &getHTTPFarmSessionType( $farm_name );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
 		$output = &getL4FarmSessionType( $farm_name );
@@ -268,8 +266,7 @@ sub setFarmAlgorithm    # ($algorithm,$farm_name)
 		require Zevenet::Farm::Datalink::Config;
 		$output = &setDatalinkFarmAlgorithm( $algorithm, $farm_name );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
 		$output = &setL4FarmAlgorithm( $algorithm, $farm_name );
@@ -283,7 +280,7 @@ Function: getFarmAlgorithm
 
 	Get type of balancing algorithm. 
 
-	Supports farm types: TCP, Datalink, L4xNAT.
+	Supports farm types: Datalink, L4xNAT.
 
 Parameters:
 	farmname - Farm name
@@ -301,8 +298,6 @@ See Also:
 
 	zapi/v2/get_l4.cgi
 	zapi/v2/get_datalink.cgi
-	zapi/v2/get_tcp.cgi
-	zapi/v2/get_tcp.cgi
 =cut
 sub getFarmAlgorithm    # ($farm_name)
 {
@@ -316,8 +311,7 @@ sub getFarmAlgorithm    # ($farm_name)
 		require Zevenet::Farm::Datalink::Config;
 		$algorithm = &getDatalinkFarmAlgorithm( $farm_name );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
 		$algorithm = &getL4FarmAlgorithm( $farm_name );
@@ -331,7 +325,7 @@ Function: setFarmPersistence
 
 	Set client persistence to a farm
 
-	Supports farm types: TCP, L4xNAT.
+	Supports farm types: L4xNAT.
 
 Parameters:
 	persistence - Type of persitence
@@ -418,8 +412,7 @@ sub setFarmMaxClientTime    # ($max_client_time,$track,$farm_name)
 		require Zevenet::Farm::HTTP::Config;
 		$output = &setHTTPFarmMaxClientTime( $track, $farm_name );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
 		$output = &setL4FarmMaxClientTime( $track, $farm_name );
@@ -451,8 +444,7 @@ sub getFarmMaxClientTime    # ($farm_name)
 		require Zevenet::Farm::HTTP::Config;
 		@max_client_time = &getHTTPFarmMaxClientTime( $farm_name );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
 		@max_client_time = &getL4FarmMaxClientTime( $farm_name );
@@ -556,23 +548,22 @@ sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		require Zevenet::Farm::HTTP::Config;
 		$stat = &setHTTPFarmVirtualConf( $vip, $vip_port, $farm_name );
 	}
-
-	if ( $farm_type eq "datalink" )
+	elsif ( $farm_type eq "datalink" )
 	{
 		require Zevenet::Farm::Datalink::Config;
 		$stat = &setDatalinkFarmVirtualConf( $vip, $vip_port, $farm_name );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
 		$stat = &setL4FarmVirtualConf( $vip, $vip_port, $farm_name );
 	}
-
-	if ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Config;
-		$stat = &setGSLBFarmVirtualConf( $vip, $vip_port, $farm_name );
+		if ( eval { require Zevenet::Farm::GSLB::Config; } )
+		{
+			$stat = &setGSLBFarmVirtualConf( $vip, $vip_port, $farm_name );
+		}
 	}
 
 	return $stat;
@@ -601,10 +592,12 @@ sub getFarmConfigIsOK    # ($farm_name)
 		require Zevenet::Farm::HTTP::Config;
 		$output = &getHTTPFarmConfigIsOK( $farm_name );
 	}
-	if ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Validate;
-		$output = &getGSLBFarmConfigIsOK( $farm_name );
+		if ( eval { require Zevenet::Farm::GSLB::Validate; } )
+		{
+			$output = &getGSLBFarmConfigIsOK( $farm_name );
+		}
 	}
 
 	return $output;
@@ -665,8 +658,10 @@ sub getFarmVS    # ($farm_name, $service, $tag)
 	}
 	elsif ( $farm_type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Service;
-		$output = &getGSLBFarmVS( $farm_name, $service, $tag );
+		if ( eval { require Zevenet::Farm::GSLB::Service; } )
+		{
+			$output = &getGSLBFarmVS( $farm_name, $service, $tag );
+		}
 	}
 
 	return $output;
@@ -696,11 +691,6 @@ sub getFarmBackends    # ($farm_name, $service)
 		require Zevenet::Farm::HTTP::Backend;
 		$output = &getHTTPFarmBackends( $farm_name, $service );
 	}
-	elsif ( $farm_type eq "gslb" )
-	{
-		require Zevenet::Farm::GSLB::Backend;
-		$output = &getGSLBFarmBackends( $farm_name, $service );
-	}
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
@@ -710,6 +700,13 @@ sub getFarmBackends    # ($farm_name, $service)
 	{
 		require Zevenet::Farm::Datalink::Backend;
 		$output = &getDatalinkFarmBackends( $farm_name );
+	}
+	elsif ( $farm_type eq "gslb" )
+	{
+		if ( eval { require Zevenet::Farm::GSLB::Backend; } )
+		{
+			$output = &getGSLBFarmBackends( $farm_name, $service );
+		}
 	}
 
 	return $output;
@@ -743,8 +740,10 @@ sub setFarmVS    # ($farm_name,$service,$tag,$string)
 	}
 	elsif ( $farm_type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Service;
-		$output = &setGSLBFarmVS( $farm_name, $service, $tag, $string );
+		if ( eval { require Zevenet::Farm::GSLB::Service; } )
+		{
+			$output = &setGSLBFarmVS( $farm_name, $service, $tag, $string );
+		}
 	}
 
 	return $output;
@@ -790,9 +789,10 @@ FIXME:
 sub getServiceStruct
 {
 	my ( $farmname, $service ) = @_;
-	my $output;
 
+	my $output;
 	my $farm_type = &getFarmType( $farmname );
+
 	if ( $farm_type =~ /http/ )
 	{
 		require Zevenet::Farm::HTTP::Service;

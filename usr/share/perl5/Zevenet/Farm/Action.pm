@@ -57,12 +57,9 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 
 	&zenlog( "running 'Start write $writeconf' for $farm_name farm $farm_type" );
 
-	if (    $writeconf eq "true"
-		 && $farm_type ne "datalink"
-		 && $farm_type ne "l4xnat"
-		 && $farm_type ne "gslb" )
+	if ( $writeconf eq "true" && $farm_type =~ /^https?$/ )
 	{
-		use Tie::File;
+		require Tie::File;
 		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 		@configfile = grep !/^\#down/, @configfile;
 		untie @configfile;
@@ -73,23 +70,22 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 		require Zevenet::Farm::HTTP::Action;
 		$status = &_runHTTPFarmStart( $farm_name );
 	}
-
-	if ( $farm_type eq "gslb" )
-	{
-		require Zevenet::Farm::GSLB::Action;
-		$status = &_runGSLBFarmStart( $farm_name, $writeconf );
-	}
-
-	if ( $farm_type eq "datalink" )
+	elsif ( $farm_type eq "datalink" )
 	{
 		require Zevenet::Farm::Datalink::Action;
 		$status = &_runDatalinkFarmStart( $farm_name, $writeconf, $status );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Action;
 		$status = &_runL4FarmStart( $farm_name, $writeconf );
+	}
+	elsif ( $farm_type eq "gslb" )
+	{
+		if ( eval { require Zevenet::Farm::GSLB::Action; } )
+		{
+			$status = &_runGSLBFarmStart( $farm_name, $writeconf );
+		}
 	}
 
 	return $status;
@@ -124,18 +120,21 @@ sub runFarmStart    # ($farm_name,$writeconf)
 	}
 
 	# run ipds rules
-	require Zevenet::IPDS::Blacklist;
-	require Zevenet::IPDS::DoS;
-
-	my $ipds = &getIPDSfarmsRules( $farm_name );
-
-	foreach my $list ( @{ $ipds->{ 'blacklists' } } )
+	if ( eval { require Zevenet::IPDS; } )
 	{
-		&setBLCreateRule ( $farm_name, $list );
-	}
-	foreach my $rule ( @{ $ipds->{ 'dos' } } )
-	{
-		&setDOSRunRule( $rule, $farm_name );
+		require Zevenet::IPDS::Blacklist;
+		require Zevenet::IPDS::DoS;
+
+		my $ipds = &getIPDSfarmsRules( $farm_name );
+
+		foreach my $list ( @{ $ipds->{ 'blacklists' } } )
+		{
+			&setBLCreateRule ( $farm_name, $list );
+		}
+		foreach my $rule ( @{ $ipds->{ 'dos' } } )
+		{
+			&setDOSRunRule( $rule, $farm_name );
+		}
 	}
 
 	return $status;
@@ -162,19 +161,22 @@ sub runFarmStop    # ($farm_name,$writeconf)
 	my ( $farm_name, $writeconf ) = @_;
 
 	# stop ipds rules
-	require Zevenet::IPDS::Blacklist;
-	require Zevenet::IPDS::DoS;
-
-	my $ipds = &getIPDSfarmsRules( $farm_name );
-
-	foreach my $list ( @{ $ipds->{ 'blacklists' } } )
+	if ( eval { require Zevenet::IPDS; } )
 	{
-		&setBLDeleteRule ( $farm_name, $list );
-	}
+		require Zevenet::IPDS::Blacklist;
+		require Zevenet::IPDS::DoS;
 
-	foreach my $rule ( @{ $ipds->{ 'dos' } } )
-	{
-		&setDOSStopRule( $rule, $farm_name );
+		my $ipds = &getIPDSfarmsRules( $farm_name );
+
+		foreach my $list ( @{ $ipds->{ 'blacklists' } } )
+		{
+			&setBLDeleteRule ( $farm_name, $list );
+		}
+
+		foreach my $rule ( @{ $ipds->{ 'dos' } } )
+		{
+			&setDOSStopRule( $rule, $farm_name );
+		}
 	}
 
 	&runFarmGuardianStop( $farm_name, "" );
@@ -223,29 +225,25 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 		require Zevenet::Farm::HTTP::Action;
 		$status = &_runHTTPFarmStop( $farm_name );
 	}
-
-	if ( $farm_type eq "gslb" )
-	{
-		require Zevenet::Farm::GSLB::Action;
-		$status = &_runGSLBFarmStop( $farm_name, $writeconf );
-	}
-
-	if ( $farm_type eq "datalink" )
+	elsif ( $farm_type eq "datalink" )
 	{
 		require Zevenet::Farm::Datalink::Action;
 		$status = &_runDatalinkFarmStop( $farm_name, $writeconf );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Action;
 		$status = &_runL4FarmStop( $farm_name, $writeconf );
 	}
+	elsif ( $farm_type eq "gslb" )
+	{
+		if ( eval { require Zevenet::Farm::GSLB::Action; } )
+		{
+			$status = &_runGSLBFarmStop( $farm_name, $writeconf );
+		}
+	}
 
-	if (    $writeconf eq "true"
-		 && $farm_type ne "datalink"
-		 && $farm_type ne "l4xnat"
-		 && $farm_type ne "gslb" )
+	if ( $writeconf eq "true" && $farm_type =~ /^https?$/ )
 	{
 		open FW, ">>$configdir/$farm_filename";
 		print FW "#down\n";
@@ -282,21 +280,24 @@ sub runFarmDelete    # ($farm_name)
 	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
 	
 	#delete IPDS rules
-	require Zevenet::IPDS::Blacklist;
-	require Zevenet::IPDS::DoS;
+	if ( eval { require Zevenet::IPDS; } )
+	{
+		require Zevenet::IPDS::Blacklist;
+		require Zevenet::IPDS::DoS;
 
-	my $ipds = &getIPDSfarmsRules( $farm_name );
+		my $ipds = &getIPDSfarmsRules( $farm_name );
 
-	# delete black lists
-	foreach my $listName ( @{$ipds->{'blacklists'}} )
-	{ 
-		&setBLRemFromFarm( $farm_name, $listName );
-	}
+		# delete black lists
+		foreach my $listName ( @{$ipds->{'blacklists'}} )
+		{ 
+			&setBLRemFromFarm( $farm_name, $listName );
+		}
 
-	# delete dos rules
-	foreach my $dos ( @{$ipds->{'dos'}} )
-	{ 
-		&setDOSDeleteRule( $dos, $farm_name );
+		# delete dos rules
+		foreach my $dos ( @{$ipds->{'dos'}} )
+		{ 
+			&setDOSDeleteRule( $dos, $farm_name );
+		}
 	}
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -457,23 +458,23 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 		require Zevenet::Farm::HTTP::Action;
 		$output = &setHTTPNewFarmName( $farm_name, $new_farm_name );
 	}
-
-	if ( $farm_type eq "datalink" )
+	elsif ( $farm_type eq "datalink" )
 	{
 		require Zevenet::Farm::Datalink::Action;
 		$output = &setDatalinkNewFarmName( $farm_name, $new_farm_name );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Action;
 		$output = &setL4NewFarmName( $farm_name, $new_farm_name );
 	}
-
-	if ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Action;
-		$output = &setGSLBNewFarmName( $farm_name, $new_farm_name );
+		if ( eval { require Zevenet::Farm::GSLB::Action; } )
+		{
+			require Zevenet::Farm::GSLB::Action;
+			$output = &setGSLBNewFarmName( $farm_name, $new_farm_name );
+		}
 	}
 
 	# farmguardian renaming

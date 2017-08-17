@@ -63,23 +63,22 @@ sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 		require Zevenet::Farm::HTTP::Factory;
 		$output = &runHTTPFarmCreate( $vip, $vip_port, $farm_name, $farm_type );
 	}
-
-	if ( $farm_type =~ /^DATALINK$/i )
+	elsif ( $farm_type =~ /^DATALINK$/i )
 	{
 		require Zevenet::Farm::Datalink::Factory;
 		$output = &runDatalinkFarmCreate( $farm_name, $vip, $fdev );
 	}
-
-	if ( $farm_type =~ /^L4xNAT$/i )
+	elsif ( $farm_type =~ /^L4xNAT$/i )
 	{
 		require Zevenet::Farm::L4xNAT::Factory;
 		$output = &runL4FarmCreate( $vip, $farm_name, $vip_port );
 	}
-
-	if ( $farm_type =~ /^GSLB$/i )
+	elsif ( $farm_type =~ /^GSLB$/i )
 	{
-		require Zevenet::Farm::GSLB::Factory;
-		$output = &runGSLBFarmCreate( $vip, $vip_port, $farm_name );
+		if ( eval { require Zevenet::Farm::GSLB::Factory; } )
+		{
+			$output = &runGSLBFarmCreate( $vip, $vip_port, $farm_name );
+		}
 	}
 
 	return $output;

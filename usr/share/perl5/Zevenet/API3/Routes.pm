@@ -143,7 +143,6 @@ if ( $q->path_info =~ qr{^/farms} )
 
 	##### /farms
 	GET qr{^/farms/modules/lslb$} => \&farms_lslb;
-	GET qr{^/farms/modules/gslb$} => \&farms_gslb;
 	GET qr{^/farms/modules/dslb$} => \&farms_dslb;
 
 	##### /farms/FARM

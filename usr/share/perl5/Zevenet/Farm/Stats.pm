@@ -51,7 +51,7 @@ sub getBackendEstConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 		@nets =
 		  &getHTTPBackendEstConns( $farm_name, $ip_backend, $port_backend, @netstat );
 	}
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Stats;
 		@nets = &getL4BackendEstConns( $farm_name, $ip_backend, @netstat );
@@ -91,17 +91,17 @@ sub getFarmEstConns    # ($farm_name,@netstat)
 		require Zevenet::Farm::HTTP::Stats;
 		@nets = &getHTTPFarmEstConns( $farm_name, @netstat );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Stats;
 		@nets = &getL4FarmEstConns( $farm_name, @netstat );
 	}
-
-	if ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Stats;
-		@nets = &getGSLBFarmEstConns( $farm_name, @netstat );
+		if ( eval { require Zevenet::Farm::GSLB::Stats; } )
+		{
+			@nets = &getGSLBFarmEstConns( $farm_name, @netstat );
+		}
 	}
 
 	return @nets;
@@ -135,7 +135,7 @@ sub getBackendSYNConns    # ($farm_name,$ip_backend,$port_backend,@netstat)
 		@nets =
 		  &getHTTPBackendSYNConns( $farm_name, $ip_backend, $port_backend, @netstat );
 	}
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Stats;
 		@nets =
@@ -170,8 +170,7 @@ sub getFarmSYNConns    # ($farm_name, @netstat)
 		require Zevenet::Farm::HTTP::Stats;
 		@nets = &getHTTPFarmSYNConns( $farm_name, @netstat );
 	}
-
-	if ( $farm_type eq "l4xnat" )
+	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Stats;
 		@nets = &getL4FarmSYNConns( $farm_name, @netstat );
