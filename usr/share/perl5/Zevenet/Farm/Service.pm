@@ -52,8 +52,10 @@ sub getFarmServices    # ($farm_name)
 
 	if ( $farm_type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Service;
-		@output = &getGSLBFarmServices( $farm_name );
+		if ( eval { require Zevenet::Farm::GSLB::Service; } )
+		{
+			@output = &getGSLBFarmServices( $farm_name );
+		}
 	}
 
 	return @output;
