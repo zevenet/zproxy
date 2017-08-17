@@ -16,7 +16,7 @@ $logdir="/var/log";#update
 $filecluster="/usr/local/zevenet/config/cluster.conf";
 #File configuration GUI
 $confhttp="/usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf";#update
-#.<b>ntp server</b>
+#ntp server
 $ntp="pool.ntp.org";
 #Do backup to
 $backupfor="$configdir $confhttp /etc/iproute2/rt_tables";
@@ -187,7 +187,7 @@ $rrd_dir="rrd";#update
 $zenino="/usr/local/zevenet/app/zeninotify/zeninotify.pl"; 
 #Zen Inotify pid file 
 $zeninopid="/var/run/zeninotify.pid";
-#.<b>Rsync replication parameters</b>
+#Rsync replication parameters
 $zenrsync="-auzvr --delete";#update
 #Arptables
 $arptables="/sbin/arptables";
