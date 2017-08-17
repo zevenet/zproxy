@@ -241,32 +241,6 @@ sub setFarmDeleteCertNameSNI    #($certn,$fname)
 }
 
 =begin nd
-Function: getFarmNameList
-
-	Returns a list with the farm names.
-
-Parameters:
-	none - .
-
-Returns:
-	array - list of farm names.
-=cut
-sub getFarmNameList
-{
-	my @farm_names;    # output: returned list
-
-	# take every farm filename
-	require Zevenet::Farm::Core;
-	foreach my $farm_filename ( &getFarmList() )
-	{
-		# add the farm name to the list
-		push ( @farm_names, &getFarmName( $farm_filename ) );
-	}
-
-	return @farm_names;
-}
-
-=begin nd
 Function: getNumberOfFarmTypeRunning
 
 	Counter how many farms exists in a farm profile.
