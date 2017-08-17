@@ -231,7 +231,6 @@ sub getFarmNameList
 	my @farm_names;    # output: returned list
 
 	# take every farm filename
-	require Zevenet::Farm::Core;
 	foreach my $farm_filename ( &getFarmList() )
 	{
 		# add the farm name to the list
