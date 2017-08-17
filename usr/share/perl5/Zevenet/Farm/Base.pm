@@ -447,4 +447,38 @@ sub getFarmProto    # ($farm_name)
 	return $output;
 }
 
+=begin nd
+Function: getNumberOfFarmTypeRunning
+
+	Counter how many farms exists in a farm profile.
+
+Parameters:
+	type - Farm profile: "http", "l4xnat", "gslb" or "datalink"
+
+Returns:
+	integer- Number of farms
+=cut
+sub getNumberOfFarmTypeRunning
+{
+	my $type    = shift;    # input value
+
+	my $counter = 0;        # return value
+
+	foreach my $farm_name ( &getFarmNameList() )
+	{
+		# count if requested farm type and running
+		my $current_type = &getFarmType( $farm_name );
+		my $current_status = &getFarmStatus( $farm_name );
+
+		if ( $current_type eq $type && $current_status eq 'up' )
+		{
+			$counter++;
+		}
+	}
+
+	#~ &zenlog( "getNumberOfFarmTypeRunning: $type -> $counter" );  ########
+
+	return $counter;
+}
+
 1;
