@@ -267,7 +267,7 @@ sub getFarmNameList
 }
 
 =begin nd
-Function: getFarmTable
+Function: getNumberOfFarmTypeRunning
 
 	Counter how many farms exists in a farm profile.
 
