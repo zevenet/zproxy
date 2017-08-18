@@ -179,6 +179,7 @@ sub certcontrol          #()
 	#output
 	return $swcert;
 }
+# end evaluate certificate
 
 sub local_http_service
 {
