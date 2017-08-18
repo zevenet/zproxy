@@ -178,6 +178,7 @@ sub certcontrol()
 	#output
 	return $swcert;
 }
+# end evaluate certificate
 
 {
 	my $swcert = &certcontrol();

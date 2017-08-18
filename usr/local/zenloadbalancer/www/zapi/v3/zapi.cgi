@@ -221,6 +221,7 @@ sub certcontrol          # ()
 	#output
 	return $swcert;
 }
+# end evaluate certificate
 
 sub checkActivationCertificate
 {
