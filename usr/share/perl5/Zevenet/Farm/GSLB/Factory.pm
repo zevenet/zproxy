@@ -73,6 +73,8 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	  "plugins => { \n\textmon => { helper_path => \"/usr/local/zevenet/app/gdnsd/gdnsd_extmon_helper\" },\n}\n\n";
 	close $file;
 
+	require Zevenet::Farm::GSLB::Action;
+
 	#run farm
 	my $exec = &getGSLBStartCommand( $fname );
 	&zenlog( "running $exec" );

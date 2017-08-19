@@ -133,12 +133,14 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 
 	&zenlog( "running 'Stop write $writeconf' for $fname farm $type" );
 
+	require Zevenet::Farm::GSLB::Validate;
 	my $checkfarm = &getGSLBFarmConfigIsOK( $fname );
+
 	if ( $checkfarm == 0 )
 	{
 		if ( $writeconf eq "true" )
 		{
-			use Tie::File;
+			require Tie::File;
 			tie my @filelines, 'Tie::File', "$configdir\/$filename\/etc\/config";
 			my $first = 1;
 			foreach ( @filelines )
