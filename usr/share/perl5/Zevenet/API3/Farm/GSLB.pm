@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -22,52 +23,39 @@
 
 use strict;
 
-sub modify_farm # ( $json_obj, $farmname )
+# GET /farms/GSLBFARM
+sub farms_gslb # ()
 {
-	my $json_obj = shift;
-	my $farmname = shift;
-	
-	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) eq '-1' )
-	{
-		# Error
-		my $errormsg = "The farmname $farmname does not exist.";
-		my $body = {
-					 description => "Modify farm",
-					 error       => "true",
-					 message     => $errormsg
-		};
+	my @out;
+	my @files = &getFarmList();
 
-		&httpResponse({ code => 404, body => $body });
+	foreach my $file ( @files )
+	{
+		my $name   = &getFarmName( $file );
+		my $type   = &getFarmType( $name );
+		next unless $type eq 'gslb';
+		my $status = &getFarmStatus( $name );
+		my $vip    = &getFarmVip( 'vip', $name );
+		my $port   = &getFarmVip( 'vipp', $name );
+
+		$status = "needed restart" if $status eq 'up' && ! &getFarmLock($name);
+
+		push @out,
+		  {
+			farmname => $name,
+			#~ profile  => $type,
+			status   => $status,
+			vip      => $vip,
+			vport    => $port
+		  };
 	}
 
-	my $type = &getFarmType( $farmname );
+	my $body = {
+				description => "List GSLB farms",
+				params      => \@out,
+	};
 
-	if ( $type eq "http" || $type eq "https" )
-	{
-		require Zevenet::API3::Farm::Put::HTTP;
-		&modify_http_farm( $json_obj, $farmname );
-	}
-
-	if ( $type eq "l4xnat" )
-	{
-		require Zevenet::API3::Farm::Put::L4xNAT;
-		&modify_l4xnat_farm( $json_obj, $farmname );
-	}
-
-	if ( $type eq "datalink" )
-	{
-		require Zevenet::API3::Farm::Put::Datalink;
-		&modify_datalink_farm( $json_obj, $farmname );
-	}
-
-	if ( $type eq "gslb" )
-	{
-		if ( eval { require Zevenet::API3::Farm::Put::GSLB; } )
-		{
-			&modify_gslb_farm( $json_obj, $farmname );
-		}
-	}
+	&httpResponse({ code => 200, body => $body });
 }
 
 1;

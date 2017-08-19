@@ -58,8 +58,6 @@ my $farm_re    = &getValidFormat( 'farm_name' );
 my $service_re = &getValidFormat( 'service' );
 my $be_re      = &getValidFormat( 'backend' );
 
-#~ eval { require Zevenet::API3::Routes::Zones; };
-
 if ( $q->path_info =~ qr{^/farms/$farm_re/certificates} )
 {
 	require Zevenet::API3::Certificate::Farm;

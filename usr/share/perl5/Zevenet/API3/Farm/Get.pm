@@ -54,7 +54,6 @@ sub farms # ()
 				params      => \@out,
 	};
 
-	# Success
 	&httpResponse({ code => 200, body => $body });
 }
 
@@ -68,7 +67,7 @@ sub farms_lslb # ()
 	{
 		my $name   = &getFarmName( $file );
 		my $type   = &getFarmType( $name );
-		next unless $type =~ /^(?:http|https|l4xnat)$/;
+		next unless $type =~ /^(?:https?|l4xnat)$/;
 		my $status = &getFarmVipStatus( $name );
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
@@ -88,41 +87,6 @@ sub farms_lslb # ()
 				params      => \@out,
 	};
 
-	# Success
-	&httpResponse({ code => 200, body => $body });
-}
-
-# GET /farms/GSLBFARM
-sub farms_gslb # ()
-{
-	my @out;
-	my @files = &getFarmList();
-
-	foreach my $file ( @files )
-	{
-		my $name   = &getFarmName( $file );
-		my $type   = &getFarmType( $name );
-		next unless $type eq 'gslb';
-		my $status = &getFarmVipStatus( $name );
-		my $vip    = &getFarmVip( 'vip', $name );
-		my $port   = &getFarmVip( 'vipp', $name );
-
-		push @out,
-		  {
-			farmname => $name,
-			#~ profile  => $type,
-			status   => $status,
-			vip      => $vip,
-			vport    => $port
-		  };
-	}
-
-	my $body = {
-				description => "List GSLB farms",
-				params      => \@out,
-	};
-
-	# Success
 	&httpResponse({ code => 200, body => $body });
 }
 
@@ -144,7 +108,6 @@ sub farms_dslb # ()
 		push @out,
 		  {
 			farmname => $name,
-			#~ profile  => $type,
 			status   => $status,
 			vip      => $vip,
 			interface => $iface
@@ -156,7 +119,6 @@ sub farms_dslb # ()
 				params      => \@out,
 	};
 
-	# Success
 	&httpResponse({ code => 200, body => $body });
 }
 
@@ -167,7 +129,7 @@ sub farms_name # ( $farmname )
 
 	use Switch;
 
-	# Check that the farm exists
+	# Check if the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		# Error
@@ -192,8 +154,10 @@ sub farms_name # ( $farmname )
 		}
 		case /gslb/
 		{
-			require Zevenet::API3::Farm::Get::GSLB;
-			&farms_name_gslb( $farmname );
+			if ( eval{ require Zevenet::API3::Farm::Get::GSLB; } )
+			{
+				&farms_name_gslb( $farmname );
+			}
 		}
 		case /l4xnat/
 		{
