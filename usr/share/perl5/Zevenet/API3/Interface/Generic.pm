@@ -35,9 +35,12 @@ sub get_interfaces # ()
 	my @interfaces = @{ &getSystemInterfaceList() };
 	
 	# get cluster interface
-	require Zevenet::Cluster;
-	my $zcl_conf  = &getZClusterConfig();
-	my $cluster_if = $zcl_conf->{ _ }->{ interface };
+	my $cluster_if;
+	if ( eval { require Zevenet::Cluster; } )
+	{
+		my $zcl_conf  = &getZClusterConfig();
+		$cluster_if = $zcl_conf->{ _ }->{ interface };
+	}
 
 	# to include 'has_vlan' to nics
 	my @vlans = &getInterfaceTypeList( 'vlan' );

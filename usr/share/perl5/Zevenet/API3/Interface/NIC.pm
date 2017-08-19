@@ -85,18 +85,21 @@ sub delete_interface_nic # ( $nic )
 # GET /interfaces Get params of the interfaces
 sub get_nic_list # ()
 {
-	require Zevenet::Cluster;
 	require Zevenet::Net::Interface;
 	require Zevenet::Net::Bonding;
 
-	my @output_list;
-
 	my $description = "List NIC interfaces";
 
-	# get cluster interface
-	my $zcl_conf  = &getZClusterConfig();
-	my $cluster_if = $zcl_conf->{ _ }->{ interface };
 	my @vlans = &getInterfaceTypeList( 'vlan' );
+	my @output_list;
+
+	# get cluster interface
+	my $cluster_if;
+	if ( eval { require Zevenet::Cluster; } )
+	{
+		my $zcl_conf  = &getZClusterConfig();
+		$cluster_if = $zcl_conf->{ _ }->{ interface };
+	}
 
 	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
 	{

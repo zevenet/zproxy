@@ -41,7 +41,6 @@ sub new_vlan # ( $json_obj )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "Interface name is not valid";
 		my $body = {
 					 description => $description,
@@ -55,9 +54,9 @@ sub new_vlan # ( $json_obj )
 	# validate PARENT
 	require Zevenet::Net::Validate;
 	my $parent_exist = &ifexist($json_obj->{ parent });
+
 	unless ( $parent_exist eq "true" )
 	{
-		# Error
 		my $errormsg = "The parent interface $json_obj->{ parent } doesn't exist";
 		my $body = {
 					 description => $description,
@@ -67,8 +66,10 @@ sub new_vlan # ( $json_obj )
 
 		&httpResponse({ code => 400, body => $body });
 	}
+
 	# check that nic interface is no slave of a bonding
 	my $is_slave;
+
 	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
 	{
 		if ( $if_ref->{ name } eq $json_obj->{ parent } )
@@ -77,9 +78,9 @@ sub new_vlan # ( $json_obj )
 			last;
 		}
 	}
+
 	if ( $is_slave eq 'true' )
 	{
-		# Error
 		my $errormsg = "It is not possible create a VLAN interface from a NIC slave.";
 		my $body = {
 					 description => $description,
@@ -93,7 +94,6 @@ sub new_vlan # ( $json_obj )
 	# validate VLAN TAG
 	unless ( $json_obj->{ tag } >= 1 && $json_obj->{ tag } <= 4094 )
 	{
-		# Error
 		my $errormsg = "The vlan tag must be in the range 1-4094, both included";
 		my $body = {
 					   description => $description,
@@ -107,7 +107,6 @@ sub new_vlan # ( $json_obj )
 	# validate IP
 	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 	{
-		# Error
 		my $errormsg = "IP Address is not valid.";
 		my $body = {
 					 description => $description,
@@ -125,7 +124,6 @@ sub new_vlan # ( $json_obj )
 
 	if ( $if_ref )
 	{
-		# Error
 		my $errormsg = "Vlan network interface $json_obj->{ name } already exists.";
 		my $body = {
 					 description => $description,
@@ -140,11 +138,11 @@ sub new_vlan # ( $json_obj )
 	# Check new IP address is not in use
 	require Zevenet::Net::Util;
 	my @activeips = &listallips();
+
 	for my $ip ( @activeips )
 	{
 		if ( $ip eq $json_obj->{ ip } )
 		{
-			# Error
 			my $errormsg = "IP Address $json_obj->{ip} is already in use.";
 			my $body = {
 						 description => $description,
@@ -159,7 +157,6 @@ sub new_vlan # ( $json_obj )
 	# Check netmask errors
 	if ( $json_obj->{ ip_v } == 4 && ($json_obj->{ netmask } == undef || ! &getValidFormat( 'IPv4_mask', $json_obj->{ ip } )) )
 	{
-		# Error
 		my $errormsg = "Netmask parameter not valid";
 		my $body = {
 					 description => $description,
@@ -187,7 +184,6 @@ sub new_vlan # ( $json_obj )
 	# Check gateway errors
 	unless ( ! defined( $json_obj->{ gateway } ) || &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) )
 	{
-		# Error
 		my $errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
 		my $body = {
 					 description => $description,
@@ -217,6 +213,7 @@ sub new_vlan # ( $json_obj )
 	require Zevenet::Net::Core;
 	require Zevenet::Net::Route;
 	require Zevenet::Net::Interface;
+
 	eval {
 		die if &createIf( $if_ref );
 		die if &addIp( $if_ref );
@@ -235,7 +232,6 @@ sub new_vlan # ( $json_obj )
 
 	if ( ! $@ )
 	{
-		# Success
 		my $body = {
 					 description => $description,
 					 params      => {
@@ -251,7 +247,6 @@ sub new_vlan # ( $json_obj )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "The $json_obj->{ name } vlan network interface can't be created";
 		my $body = {
 					 description => $description,
@@ -269,13 +264,14 @@ sub delete_interface_vlan # ( $vlan )
 
 	my $description = "Delete VLAN interface";
 	my $ip_v = 4;
+
 	require Zevenet::Net::Interface;
+
 	my $if_ref = &getInterfaceConfig( $vlan, $ip_v );
 
 	# validate VLAN interface
 	if ( !$if_ref )
 	{
-		# Error
 		my $errormsg = "The VLAN interface $vlan doesn't exist.";
 		my $body = {
 					 description => $description,
@@ -288,6 +284,7 @@ sub delete_interface_vlan # ( $vlan )
 
 	require Zevenet::Net::Core;
 	require Zevenet::Net::Route;
+
 	eval {
 		die if &delRoutes( "local", $if_ref );
 		die if &downIf( $if_ref, 'writeconf' );
@@ -296,7 +293,6 @@ sub delete_interface_vlan # ( $vlan )
 
 	if ( ! $@ )
 	{
-		# Success
 		my $message = "The VLAN interface $vlan has been deleted.";
 		my $body = {
 					 description => $description,
@@ -308,7 +304,6 @@ sub delete_interface_vlan # ( $vlan )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "The VLAN interface $vlan can't be deleted";
 		my $body = {
 					 description => $description,
@@ -327,11 +322,15 @@ sub get_vlan_list # ()
 	my $description = "List VLAN interfaces";
 
 	# get cluster interface
-	require Zevenet::Cluster;
-	my $zcl_conf  = &getZClusterConfig();
-	my $cluster_if = $zcl_conf->{ _ }->{ interface };
-	
+	my $cluster_if;
+	if ( eval { require Zevenet::Cluster; } )
+	{
+		my $zcl_conf  = &getZClusterConfig();
+		$cluster_if = $zcl_conf->{ _ }->{ interface };
+	}
+
 	require Zevenet::Net::Interface;
+
 	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
 	{
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
@@ -355,7 +354,7 @@ sub get_vlan_list # ()
 			parent  => $if_ref->{ parent },
 		  };
 		  
-		  $if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
+		  $if_conf->{ is_cluster } = 'true' if $cluster_if && $cluster_if eq $if_ref->{ name };
 		  
 		  push @output_list, $if_conf;
 	}
@@ -372,11 +371,11 @@ sub get_vlan # ()
 {
 	my $vlan = shift;
 
-	my $interface;
+	require Zevenet::Net::Interface;
 
 	my $description = "Show VLAN interface";
+	my $interface;
 
-	require Zevenet::Net::Interface;
 	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
 	{
 		next unless $if_ref->{ name } eq $vlan;
@@ -412,7 +411,6 @@ sub get_vlan # ()
 	}
 	else
 	{
-		# Error
 		my $errormsg = "VLAN interface not found.";
 		my $body = {
 					 description => $description,
@@ -437,7 +435,6 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 	# validate VLAN
 	unless ( grep { $vlan eq $_->{ name } } &getInterfaceTypeList( 'vlan' ) )
 	{
-		# Error
 		my $errormsg = "VLAN interface not found";
 		my $body = {
 					 description => $description,
@@ -451,7 +448,6 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 	# reject not accepted parameters
 	if ( grep { $_ ne 'action' } keys %$json_obj )
 	{
-		# Error
 		my $errormsg = "Only the parameter 'action' is accepted";
 		my $body = {
 					 description => $description,
@@ -490,10 +486,8 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 
 		if ( $parent_if_name )
 		{
-			#~ &zenlog ("parent exists parent_if_name:$parent_if_name");
 			my $parent_if_ref = &getSystemInterface( $parent_if_name );
 			$parent_if_status = &getInterfaceSystemStatus( $parent_if_ref );
-			#~ &zenlog ("parent exists parent_if_ref:$parent_if_ref parent_if_status:$parent_if_status");
 		}
 
 		# validate PARENT INTERFACE STATUS
@@ -522,7 +516,6 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 		}
 		else
 		{
-			# Error
 			my $errormsg = "The interface could not be set UP";
 			my $body = {
 						 description => $description,
@@ -541,7 +534,6 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 
 		if ( $state )
 		{
-			# Error
 			my $errormsg = "The interface could not be set DOWN";
 			my $body = {
 						 description => $description,
@@ -554,7 +546,6 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "Action accepted values are: up or down";
 		my $body = {
 					 description => $description,
@@ -565,7 +556,6 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	# Success
 	my $body = {
 				 description => $description,
 				 params      =>  { action => $json_obj->{ action } },
@@ -588,7 +578,6 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 	# Check interface errors
 	unless ( $if_ref )
 	{
-		# Error
 		my $errormsg = "VLAN not found";
 		my $body = {
 					 description => $description,
@@ -601,7 +590,6 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 
 	unless ( exists $json_obj->{ ip } || exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
 	{
-		# Error
 		my $errormsg = "No parameter received to be configured";
 		my $body = {
 					 description => $description,
@@ -617,7 +605,6 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 	{
 		unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 		{
-			# Error
 			my $errormsg = "IP Address $json_obj->{ip} structure is not ok.";
 			my $body = {
 						 description => $description,
@@ -634,7 +621,6 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 	{
 		unless ( defined( $json_obj->{ netmask } ) && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
 		{
-			# Error
 			my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
 			my $body = {
 						 description => $description,
@@ -665,7 +651,6 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 	{
 		unless ( exists( $json_obj->{ gateway } ) || &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) )
 		{
-			# Error
 			my $errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
 			my $body = {
 						 description => $description,
@@ -712,7 +697,6 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 
 	if ( ! $@ )
 	{
-		# Success
 		my $body = {
 					 description => $description,
 					 params      => $json_obj,
@@ -722,7 +706,6 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "Errors found trying to modify interface $vlan";
 		my $body = {
 					 description => $description,
@@ -733,6 +716,5 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 		&httpResponse({ code => 400, body => $body });
 	}
 }
-
 
 1;

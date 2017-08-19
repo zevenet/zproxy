@@ -30,10 +30,14 @@ sub modify_http_farm # ( $json_obj, $farmname )
 
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;
-	require Zevenet::IPDS;
-	require Zevenet::IPDS::Blacklist;
-	require Zevenet::IPDS::DoS;
-	my $ipds = &getIPDSfarmsRules( $farmname );
+	my $ipds;
+
+	if ( eval { Zevenet::IPDS; } )
+	{
+		require Zevenet::IPDS::Blacklist;
+		require Zevenet::IPDS::DoS;
+		$ipds = &getIPDSfarmsRules( $farmname );
+	}
 	
 	# Flags
 	my $reload_flag  = "false";
@@ -47,7 +51,6 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 					 description => "Modify farm",
@@ -85,7 +88,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		if ( $json_obj->{ newfarmname } =~ /^$/ )
+		if ( $json_obj->{ newfarmname } eq '' )
 		{
 			$error = "true";
 			$zapierror = "Error, trying to modify a http farm $farmname, invalid newfarmname, can't be blank.";
@@ -153,7 +156,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	# Modify Backend Connection Timeout
 	if ( exists ( $json_obj->{ contimeout } ) )
 	{
-		if ( $json_obj->{ contimeout } =~ /^$/ )
+		if ( $json_obj->{ contimeout } eq '' )
 		{
 			$error = "true";
 			$zapierror = "Error, trying to modify a http farm $farmname, invalid contimeout, can't be blank.";
@@ -184,7 +187,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	# Modify Backend Respone Timeout
 	if ( exists ( $json_obj->{ restimeout } ) )
 	{
-		if ( $json_obj->{ restimeout } =~ /^$/ )
+		if ( $json_obj->{ restimeout } eq '' )
 		{
 			$error = "true";
 			$zapierror = "Error, trying to modify a http farm $farmname, invalid restimeout, can't be blank.";
@@ -215,7 +218,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	# Modify Frequency To Check Resurrected Backends
 	if ( exists ( $json_obj->{ resurrectime } ) )
 	{
-		if ( $json_obj->{ resurrectime } =~ /^$/ )
+		if ( $json_obj->{ resurrectime } eq '' )
 		{
 			$error = "true";
 			$zapierror = "Error, trying to modify a http farm $farmname, invalid resurrectime, can't be blank.";
@@ -246,7 +249,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	# Modify Client Request Timeout
 	if ( exists ( $json_obj->{ reqtimeout } ) )
 	{
-		if ( $json_obj->{ reqtimeout } =~ /^$/ )
+		if ( $json_obj->{ reqtimeout } eq '' )
 		{
 			$error = "true";
 			$zapierror = "Error, trying to modify a http farm $farmname, invalid reqtimeout, can't be blank.";
@@ -277,7 +280,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	# Modify Rewrite Location Headers
 	if ( exists ( $json_obj->{ rewritelocation } ) )
 	{
-		if ( $json_obj->{ rewritelocation } =~ /^$/ )
+		if ( $json_obj->{ rewritelocation } eq '' )
 		{
 			$error = "true";
 			$zapierror = "Error, trying to modify a http farm $farmname, invalid rewritelocation, can't be blank.";
@@ -361,7 +364,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	# Modify HTTP Verbs Accepted
 	if ( exists ( $json_obj->{ httpverb } ) )
 	{
-		if ( $json_obj->{ httpverb } =~ /^$/ )
+		if ( $json_obj->{ httpverb } eq '' )
 		{
 			$error = "true";
 			$zapierror = "Error, trying to modify a http farm $farmname, invalid httpverb, can't be blank.";
@@ -371,27 +374,15 @@ sub modify_http_farm # ( $json_obj, $farmname )
 				/^standardHTTP|extendedHTTP|standardWebDAV|MSextWebDAV|MSRPCext$/ )
 		{
 			my $httpverb = 0;
-			if ( $json_obj->{ httpverb } eq "standardHTTP" )
-			{
-				$httpverb = 0;
-			}
-			elsif ( $json_obj->{ httpverb } eq "extendedHTTP" )
-			{
-				$httpverb = 1;
-			}
-			elsif ( $json_obj->{ httpverb } eq "standardWebDAV" )
-			{
-				$httpverb = 2;
-			}
-			elsif ( $json_obj->{ httpverb } eq "MSextWebDAV" )
-			{
-				$httpverb = 3;
-			}
-			elsif ( $json_obj->{ httpverb } eq "MSRPCext" )
-			{
-				$httpverb = 4;
-			}
+
+			if    ( $json_obj->{ httpverb } eq "standardHTTP" )   { $httpverb = 0; }
+			elsif ( $json_obj->{ httpverb } eq "extendedHTTP" )   { $httpverb = 1; }
+			elsif ( $json_obj->{ httpverb } eq "standardWebDAV" ) { $httpverb = 2; }
+			elsif ( $json_obj->{ httpverb } eq "MSextWebDAV" )    { $httpverb = 3; }
+			elsif ( $json_obj->{ httpverb } eq "MSRPCext" )       { $httpverb = 4; }
+
 			$status = &setFarmHttpVerb( $httpverb, $farmname );
+
 			if ( $status != -1 )
 			{
 				$restart_flag = "true";
@@ -582,7 +573,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 				# Modify Customized Ciphers
 				if ( exists ( $json_obj->{ cipherc } ) )
 				{
-					if ( $json_obj->{ cipherc } =~ /^$/ )
+					if ( $json_obj->{ cipherc } eq '' )
 					{
 						$error = "true";
 						$zapierror = "Error, trying to modify a http farm $farmname, invalid cipherc, can't be blank.";
@@ -700,7 +691,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	# Modify only vip
 	if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
 	{
-		if ( $json_obj->{ vip } =~ /^$/ )
+		if ( $json_obj->{ vip } eq '' )
 		{
 			$error = "true";
 			$zapierror =  "Error, trying to modify a http farm $farmname, invalid vip, can't be blank.";
@@ -731,7 +722,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	# Modify only vport
 	if ( exists ( $json_obj->{ vport } ) && !exists ( $json_obj->{ vip } ) )
 	{
-		if ( $json_obj->{ vport } =~ /^$/ )
+		if ( $json_obj->{ vport } eq '' )
 		{
 			$error = "true";
 			$zapierror = "Error, trying to modify a http farm $farmname, invalid port, can't be blank.";
@@ -762,7 +753,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	# Modify both vip & vport
 	if ( exists ( $json_obj->{ vip } ) && exists ( $json_obj->{ vport } ) )
 	{
-		if ( $json_obj->{ vip } =~ /^$/ )
+		if ( $json_obj->{ vip } eq '' )
 		{
 			$error = "true";
 			$zapierror = "Error, trying to modify a http farm $farmname, invalid vip, can't be blank.";
@@ -778,7 +769,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		{
 			if ( exists ( $json_obj->{ vport } ) )
 			{
-				if ( $json_obj->{ vport } =~ /^$/ )
+				if ( $json_obj->{ vport } eq '' )
 				{
 					$error = "true";
 					$zapierror = "Error, trying to modify a http farm $farmname, invalid port, can't be blank.";
@@ -814,25 +805,28 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	{
 		&zenlog(
 				  "ZAPI success, some parameters have been changed in farm $farmname." );
-	
-		# update the ipds rule applied to the farm
-		if ( !$farmname_old )
+
+		if ( eval { Zevenet::IPDS; } )
 		{
-			&setBLReloadFarmRules ( $farmname );
-			&setDOSReloadFarmRules ( $farmname );
-		}
-		# create new rules with the new farmname
-		else
-		{
-			foreach my $list ( @{ $ipds->{ 'blacklists' } } )
+			# update the ipds rule applied to the farm
+			if ( !$farmname_old )
 			{
-				&setBLRemFromFarm( $farmname_old, $list );
-				&setBLApplyToFarm( $farmname, $list );
+				&setBLReloadFarmRules ( $farmname );
+				&setDOSReloadFarmRules ( $farmname );
 			}
-			foreach my $rule ( @{ $ipds->{ 'dos' } } )
+			# create new rules with the new farmname
+			else
 			{
-				&setDOSDeleteRule( $rule, $farmname_old );
-				&setDOSCreateRule( $rule, $farmname );
+				foreach my $list ( @{ $ipds->{ 'blacklists' } } )
+				{
+					&setBLRemFromFarm( $farmname_old, $list );
+					&setBLApplyToFarm( $farmname, $list );
+				}
+				foreach my $rule ( @{ $ipds->{ 'dos' } } )
+				{
+					&setDOSDeleteRule( $rule, $farmname_old );
+					&setDOSCreateRule( $rule, $farmname );
+				}
 			}
 		}
 

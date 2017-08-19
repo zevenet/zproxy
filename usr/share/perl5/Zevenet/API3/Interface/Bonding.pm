@@ -433,7 +433,6 @@ sub delete_bond_slave # ( $bond, $slave )
 sub get_bond_list # ()
 {
 	require Zevenet::Net::Bonding;
-	require Zevenet::Cluster;
 	require Zevenet::Net::Interface;
 
 	my @output_list;
@@ -442,9 +441,13 @@ sub get_bond_list # ()
 	my $bond_conf = &getBondConfig();
 
 	# get cluster interface
-	my $zcl_conf  = &getZClusterConfig();
-	my $cluster_if = $zcl_conf->{ _ }->{ interface };
-	
+	my $cluster_if;
+	if ( eval { require Zevenet::Cluster; } )
+	{
+		my $zcl_conf  = &getZClusterConfig();
+		$cluster_if = $zcl_conf->{ _ }->{ interface };
+	}
+
 	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )
 	{
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
@@ -475,7 +478,7 @@ sub get_bond_list # ()
 			#~ ipv     => $if_ref->{ ip_v },
 		  };
 		  
-		  $if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
+		  $if_conf->{ is_cluster } = 'true' if $cluster_if && $cluster_if eq $if_ref->{ name };
 		  
 		  push @output_list, $if_conf;
 	}

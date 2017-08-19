@@ -56,7 +56,6 @@ sub delete_interface_floating # ( $floating )
 
 		# refresh l4xnat rules
 		&reloadL4FarmsSNAT();
-		#~ &runZClusterRemoteManager( 'interface', 'float-update' );
 	};
 	if ( ! $@ )
 	{
@@ -187,7 +186,6 @@ sub modify_interface_floating # ( $json_obj, $floating )
 
 		# refresh l4xnat rules
 		&reloadL4FarmsSNAT();
-		#~ &runZClusterRemoteManager( 'interface', 'float-update' );
 	};
 
 	unless ( $@ )

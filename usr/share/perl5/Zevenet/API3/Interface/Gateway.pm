@@ -148,9 +148,6 @@ sub modify_gateway # ( $json_obj )
 
 	if ( $state == 0 )
 	{
-		#~ &runZClusterRemoteManager( 'gateway', 'update', $json_obj->{ interface }, ip_version );
-
-		# Success
 		my $message = "The default gateway has been changed successfully";
 		my $body = {
 					 description => $description,
@@ -181,16 +178,13 @@ sub delete_gateway
 
 	my $description = "Remove default gateway";
 
-	my $ip_version = 4;
+	my $ip_version  = 4;
 	my $defaultgwif = &getIfDefaultGW();
-
-	my $if_ref = &getInterfaceConfig( $defaultgwif, $ip_version );
-
-	my $state = &delRoutes( "global", $if_ref );
+	my $if_ref      = &getInterfaceConfig( $defaultgwif, $ip_version );
+	my $state       = &delRoutes( "global", $if_ref );
 
 	if ( $state == 0 )
 	{
-		#~ &runZClusterRemoteManager( 'gateway', 'delete', $if, $ip_version );
 		my $message = "The default gateway has been deleted successfully";
 
 		my $body = {

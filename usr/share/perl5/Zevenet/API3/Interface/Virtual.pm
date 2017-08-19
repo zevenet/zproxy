@@ -46,7 +46,6 @@ sub new_vini # ( $json_obj )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "Interface name is not valid";
 		my $body = {
 					 description => $description,
@@ -60,7 +59,6 @@ sub new_vini # ( $json_obj )
 	# validate IP
 	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 	{
-		# Error
 		my $errormsg = "IP Address is not valid.";
 		my $body = {
 					 description => $description,
@@ -79,7 +77,6 @@ sub new_vini # ( $json_obj )
 	my $parent_exist = &ifexist( $json_obj->{ parent } );
 	unless ( $parent_exist eq "true" && &getInterfaceConfig( $json_obj->{ parent }, $json_obj->{ ip_v } ) )
 	{
-		# Error
 		my $errormsg = "The parent interface $json_obj->{ parent } doesn't exist.";
 		my $body = {
 					 description => $description,
@@ -96,7 +93,6 @@ sub new_vini # ( $json_obj )
 	
 	if ( $if_ref )
 	{
-		# Error
 		my $errormsg = "Network interface $json_obj->{ name } already exists.";
 		my $body = {
 					 description => $description,
@@ -109,12 +105,13 @@ sub new_vini # ( $json_obj )
 
 	# Check new IP address is not in use
 	require Zevenet::Net::Util;
+
 	my @activeips = &listallips();
+
 	for my $ip ( @activeips )
 	{
 		if ( $ip eq $json_obj->{ ip } )
 		{
-			# Error
 			my $errormsg = "IP Address $json_obj->{ip} is already in use.";
 			my $body = {
 						 description => $description,
@@ -136,7 +133,6 @@ sub new_vini # ( $json_obj )
 	$if_ref->{ gateway } = "" if ! $if_ref->{ gateway };
 	$if_ref->{ type } = 'virtual';
 
-	# No errors
 	require Zevenet::Net::Core;
 	require Zevenet::Net::Route;
 
@@ -156,9 +152,10 @@ sub new_vini # ( $json_obj )
 
 	if ( !$@ )
 	{
-		# Success
-		require Zevenet::Cluster;
-		&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
+		if ( eval { require Zevenet::Cluster; } )
+		{
+			&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
+		}
 
 		my $body = {
 					 description => $description,
@@ -175,7 +172,6 @@ sub new_vini # ( $json_obj )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "The $json_obj->{ name } virtual network interface can't be created";
 		my $body = {
 					   description => $description,
@@ -189,9 +185,9 @@ sub new_vini # ( $json_obj )
 
 sub delete_interface_virtual # ( $virtual )
 {
-	require Zevenet::Net::Interface;
-
 	my $virtual = shift;
+
+	require Zevenet::Net::Interface;
 
 	my $description = "Delete virtual interface";
 	my $ip_v = 4;
@@ -199,7 +195,6 @@ sub delete_interface_virtual # ( $virtual )
 
 	if ( !$if_ref )
 	{
-		# Error
 		my $errormsg = "The virtual interface $virtual doesn't exist.";
 		my $body = {
 					 description => $description,
@@ -221,10 +216,11 @@ sub delete_interface_virtual # ( $virtual )
 
 	if ( ! $@ )
 	{
-		# Success
-		require Zevenet::Cluster;
-		&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
-		&runZClusterRemoteManager( 'interface', 'delete', $if_ref->{ name } );
+		if ( eval { require Zevenet::Cluster; } )
+		{
+			&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
+			&runZClusterRemoteManager( 'interface', 'delete', $if_ref->{ name } );
+		}
 
 		my $message = "The virtual interface $virtual has been deleted.";
 		my $body = {
@@ -237,7 +233,6 @@ sub delete_interface_virtual # ( $virtual )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "The virtual interface $virtual can't be deleted";
 		my $body = {
 					 description => $description,
@@ -333,7 +328,6 @@ sub get_virtual # ()
 	}
 	else
 	{
-		# Error
 		my $errormsg = "Virtual interface not found.";
 		my $body = {
 					 description => $description,
@@ -358,7 +352,6 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 	# validate VLAN
 	unless ( grep { $virtual eq $_->{ name } } &getInterfaceTypeList( 'virtual' ) )
 	{
-		# Error
 		my $errormsg = "Virtual interface not found";
 		my $body = {
 					 description => $description,
@@ -372,7 +365,6 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 	# reject not accepted parameters
 	if ( grep { $_ ne 'action' } keys %$json_obj )
 	{
-		# Error
 		my $errormsg = "Only the parameter 'action' is accepted";
 		my $body = {
 					 description => $description,
@@ -385,7 +377,6 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 
 	my $if_ref = &getInterfaceConfig( $virtual, $ip_v );
 
-	# Everything is ok
 	if ( $json_obj->{ action } eq "up" )
 	{
 		require Zevenet::Net::Core;
@@ -396,17 +387,15 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 		# Check the parent's status before up the interface
 		my $parent_if_name = &getParentInterfaceName( $if_ref->{name} );
 		my $parent_if_status = 'up';
+
 		if ( $parent_if_name )
 		{
-			#~ &zenlog ("parent exists parent_if_name:$parent_if_name");
 			my $parent_if_ref = &getSystemInterface( $parent_if_name );
 			$parent_if_status = &getInterfaceSystemStatus( $parent_if_ref );
-			#~ &zenlog ("parent exists parent_if_ref:$parent_if_ref parent_if_status:$parent_if_status");
 		}
 
 		unless ( $parent_if_status eq 'up' )
 		{
-			# Error
 			my $errormsg = "The interface $if_ref->{name} has a parent interface DOWN, check the interfaces status";
 			my $body = {
 						 description => $description,
@@ -425,7 +414,6 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 		}
 		else
 		{
-			# Error
 			my $errormsg = "The interface could not be set UP";
 			my $body = {
 						 description => $description,
@@ -436,8 +424,10 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		require Zevenet::Cluster;
-		&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
+		if ( eval { require Zevenet::Cluster; } )
+		{
+			&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
+		}
 	}
 	elsif ( $json_obj->{action} eq "down" )
 	{
@@ -447,7 +437,6 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 
 		if ( $state )
 		{
-			# Error
 			my $errormsg = "The interface could not be set DOWN";
 			my $body = {
 						 description => $description,
@@ -458,12 +447,13 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		require Zevenet::Cluster;
-		&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
+		if ( eval { require Zevenet::Cluster; } )
+		{
+			&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
+		}
 	}
 	else
 	{
-		# Error
 		my $errormsg = "Action accepted values are: up or down";
 		my $body = {
 					 description => $description,
@@ -474,7 +464,6 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	# Success
 	my $body = {
 				 description => $description,
 				 params      =>  { action => $json_obj->{ action } },
@@ -486,7 +475,7 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 sub modify_interface_virtual # ( $json_obj, $virtual )
 {
 	my $json_obj = shift;
-	my $virtual = shift;
+	my $virtual  = shift;
 
 	require Zevenet::Net::Interface;
 
@@ -499,7 +488,6 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 
 	unless ( $if_ref )
 	{
-		# Error
 		$errormsg = "Virtual interface not found";
 		my $body = {
 					 description => $description,
@@ -510,7 +498,7 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	if( $errormsg = &getValidOptParams( $json_obj, \@allowParams ) )
+	if ( $errormsg = &getValidOptParams( $json_obj, \@allowParams ) )
 	{
 		my $body = {
 					 description => $description,
@@ -521,11 +509,9 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-
 	# Check address errors
 	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 	{
-		# Error
 		$errormsg = "IP Address $json_obj->{ip} structure is not ok.";
 		my $body = {
 					 description => $description,
@@ -540,11 +526,13 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 
 	my $state = $if_ref->{ 'status' };
 	&downIf( $if_ref ) if $state eq 'up';
-	
-	# No errors found
-	eval {
-		&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
 
+	if ( eval { require Zevenet::Cluster; } )
+	{
+		&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
+	}
+
+	eval {
 		# Delete old IP and Netmask from system to replace it
 		#~ die if &delIp( $$if_ref{name}, $$if_ref{addr}, $$if_ref{mask} ) ;
 
@@ -563,11 +551,12 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 		&setInterfaceConfig( $if_ref ) or die;
 	};
 
-	# Print params
 	if ( ! $@ )
 	{
-		# Success
-		&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
+		if ( eval { require Zevenet::Cluster; } )
+		{
+			&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
+		}
 
 		my $body = {
 					 description => $description,
@@ -578,7 +567,6 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 	}
 	else
 	{
-		# Error
 		$errormsg = "Errors found trying to modify interface $virtual";
 		my $body = {
 					 description => $description,
@@ -589,6 +577,5 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 		&httpResponse({ code => 400, body => $body });
 	}
 }
-
 
 1;

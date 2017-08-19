@@ -38,11 +38,15 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;
-	require Zevenet::IPDS;
-	require Zevenet::IPDS::Blacklist;
-	require Zevenet::IPDS::DoS;
+	my $ipds;
 
-	my $ipds = &getIPDSfarmsRules( $farmname );
+	if ( eval { Zevenet::IPDS; } )
+	{
+		require Zevenet::IPDS::Blacklist;
+		require Zevenet::IPDS::DoS;
+
+		$ipds = &getIPDSfarmsRules( $farmname );
+	}
 
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
@@ -464,32 +468,36 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 				}
 			}
 
-			# update the ipds rule applied to the farm
-			if ( !$farmname_old )
+			if ( eval { Zevenet::IPDS; } )
 			{
-				&setBLReloadFarmRules ( $farmname );
-				&setDOSReloadFarmRules ( $farmname );
-			}
-			# create new rules with the new farmname
-			else
-			{
-				foreach my $list ( @{ $ipds->{ 'blacklists' } } )
+				# update the ipds rule applied to the farm
+				if ( !$farmname_old )
 				{
-					&setBLRemFromFarm( $farmname_old, $list );
-					&setBLApplyToFarm( $farmname, $list );
+					&setBLReloadFarmRules ( $farmname );
+					&setDOSReloadFarmRules ( $farmname );
 				}
-				foreach my $rule ( @{ $ipds->{ 'dos' } } )
+				# create new rules with the new farmname
+				else
 				{
-					&setDOSDeleteRule( $rule, $farmname_old );
-					&setDOSCreateRule( $rule, $farmname );
+					foreach my $list ( @{ $ipds->{ 'blacklists' } } )
+					{
+						&setBLRemFromFarm( $farmname_old, $list );
+						&setBLApplyToFarm( $farmname, $list );
+					}
+					foreach my $rule ( @{ $ipds->{ 'dos' } } )
+					{
+						&setDOSDeleteRule( $rule, $farmname_old );
+						&setDOSCreateRule( $rule, $farmname );
+					}
 				}
 			}
 
-			require Zevenet::Cluster;
-			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+			if ( eval { require Zevenet::Cluster; } )
+			{
+				&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+			}
 		}
 
-		# Success
 		my $body = {
 					 description => "Modify farm $farmname",
 					 params      => $json_obj
@@ -503,7 +511,6 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			"ZAPI error, trying to modify a l4xnat farm $farmname, it's not possible to modify the farm."
 		);
 
-		# Error
 		my $errormsg = "Errors found trying to modify farm $farmname";
 		my $body = {
 					 description => "Modify farm $farmname",
