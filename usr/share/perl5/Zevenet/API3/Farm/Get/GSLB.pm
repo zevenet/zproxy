@@ -22,8 +22,6 @@
 
 use strict;
 
-use Zevenet::IPDS::Core;
-
 #	/farms/<GSLBfarm>
 sub farms_name_gslb # ( $farmname )
 {
@@ -35,15 +33,11 @@ sub farms_name_gslb # ( $farmname )
 
 	my $status = &getFarmVipStatus( $farmname );
 	my $vip   = &getFarmVip( "vip",  $farmname );
-	my $vport = &getFarmVip( "vipp", $farmname );
-	$vport = $vport + 0;
+	my $vport = &getFarmVip( "vipp", $farmname ) + 0;
 
 	$farm_ref = { vip => $vip, vport => $vport, status => $status };
 
-	#
 	# Services
-	#
-
 	require Zevenet::Farm::GSLB::Service;
 
 	my @services = &getGSLBFarmServices( $farmname );
@@ -57,12 +51,12 @@ sub farms_name_gslb # ( $farmname )
 		# Default port health check
 		my $dpc        = &getFarmVS( $farmname, $srv, "dpc" );
 
-		#
 		# Backends
-		#
 		my @out_b = &getGSLBFarmBackends( $farmname, $srv );
 
-		# farm guardian 
+		# Farmguardian
+		require Zevenet::Farm::GSLB::FarmGuardian;
+
 		my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $srv );
 		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $srv );
 		
@@ -78,10 +72,7 @@ sub farms_name_gslb # ( $farmname )
 		  };
 	}
 
-	#
 	# Zones
-	#
-
 	require Zevenet::Farm::GSLB::Zone;
 
 	my @zones   = &getGSLBFarmZones( $farmname );
@@ -91,7 +82,6 @@ sub farms_name_gslb # ( $farmname )
 
 	foreach my $zone ( @zones )
 	{
-		#if ($first == 0) {
 		$pos++;
 		$first = 1;
 		my $ns         = &getFarmVS( $farmname, $zone, "ns" );
@@ -114,17 +104,17 @@ sub farms_name_gslb # ( $farmname )
 		  };
 	}
 
-	require Zevenet::IPDS;
-	my $ipds = &getIPDSfarmsRules( $farmname );
-
-	# Success
 	my $body = {
 				 description => "List farm $farmname",
 				 params      => $farm_ref,
 				 services    => \@out_s,
 				 zones       => \@out_z,
-				 ipds			=>  $ipds,
 	};
+
+	if ( eval{ require Zevenet::IPDS; } )
+	{
+		$body->{ ipds } = &getIPDSfarmsRules( $farmname );
+	}
 
 	&httpResponse({ code => 200, body => $body });
 }

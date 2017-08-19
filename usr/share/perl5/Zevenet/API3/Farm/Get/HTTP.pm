@@ -22,8 +22,6 @@
 
 use strict;
 
-use Zevenet::IPDS::Core;
-
 # GET /farms/<farmname> Request info of a http|https Farm
 sub farms_name_http # ( $farmname )
 {
@@ -135,7 +133,7 @@ sub farms_name_http # ( $farmname )
 		$output_params->{ disable_tlsv1_2 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_2") )? "true": "false";
 	}
 
-	#http services
+	# Services
 	my $services = &getFarmVS( $farmname, "", "" );
 	my @serv = split ( "\ ", $services );
 
@@ -151,16 +149,17 @@ sub farms_name_http # ( $farmname )
 		
 		push @out_s, $serviceStruct;
 	}
-	require Zevenet::IPDS;
-	my $ipds = &getIPDSfarmsRules( $farmname );
 
-	# Success
 	my $body = {
 				 description => "List farm $farmname",
 				 params      => $output_params,
-				 services    	=> \@out_s,
-				 ipds			=> $ipds,
+				 services    => \@out_s,
 	};
+
+	if ( eval{ require Zevenet::IPDS; } )
+	{
+		$body->{ ipds } = &getIPDSfarmsRules( $farmname );
+	}
 
 	&httpResponse({ code => 200, body => $body });
 }

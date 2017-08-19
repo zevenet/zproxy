@@ -22,11 +22,7 @@
 
 use strict;
 
-use Zevenet::IPDS::Core;
-
-########### GET L4XNAT
 # GET /farms/<farmname> Request info of a l4xnat Farm
-
 sub farms_name_l4 # ( $farmname )
 {
 	my $farmname = shift;
@@ -45,7 +41,7 @@ sub farms_name_l4 # ( $farmname )
 	my @ttl = &getFarmMaxClientTime( $farmname, "" );
 	my $timetolimit = $ttl[0] + 0;
 	
-	############ FG
+	# Farmguardian
 	my @fgconfig    = &getFarmGuardianConf( $farmname, "" );
 	my $fguse       = $fgconfig[3];
 	my $fgcommand   = $fgconfig[2];
@@ -78,20 +74,21 @@ sub farms_name_l4 # ( $farmname )
 			   listener    => 'l4xnat',
 	};
 
-	########### backends
+	# Backends
 	my @run = &getFarmServers( $farmname );
 	
 	@out_b = &getL4FarmBackends( $farmname );
 
-	require Zevenet::IPDS;
-	my $ipds = &getIPDSfarmsRules( $farmname );
-
 	my $body = {
 				 description => "List farm $farmname",
 				 params      => $out_p,
-				 backends   => \@out_b,
-				 ipds 			=>  $ipds,
+				 backends    => \@out_b,
 	};
+
+	if ( eval{ require Zevenet::IPDS; } )
+	{
+		$body->{ ipds } = &getIPDSfarmsRules( $farmname );
+	}
 
 	&httpResponse({ code => 200, body => $body });
 }
