@@ -129,7 +129,6 @@ if ( $q->path_info =~ qr{^/farms/$farm_re/services} )
 
 	POST qr{^/farms/($farm_re)/services$}              => \&new_farm_service;
 	GET qr{^/farms/($farm_re)/services/($service_re)$} => \&farm_services;
-	POST qr{^/farms/($farm_re)/services/($service_re)/actions$} => \&move_services;
 	PUT qr{^/farms/($farm_re)/services/($service_re)$}    => \&modify_services;
 	DELETE qr{^/farms/($farm_re)/services/($service_re)$} => \&delete_service;
 }
