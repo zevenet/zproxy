@@ -74,8 +74,6 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 {
 	my ( $if_name, $ip_version ) = @_;
 
-	require Zevenet::Net::Bonding;
-
 	my $if_line;
 	my $if_status;
 	my $configdir = &getGlobalConfiguration('configdir');
@@ -176,7 +174,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		$iface{ float } = $float->{ _ }->{ $iface{ name } } // '';
 	}
 
-	if ( $iface{ type } eq 'nic' )
+	if ( $iface{ type } eq 'nic' && eval { require Zevenet::Net::Bonding; } )
 	{
 		$iface{ is_slave } =
 		  ( grep { $iface{ name } eq $_ } &getAllBondsSlaves ) ? 'true' : 'false';
@@ -227,8 +225,10 @@ sub setInterfaceConfig    # $bool ($if_ref)
 
 	# Example: eth0;10.0.0.5;255.255.255.0;up;10.0.0.1;
 	require Tie::File;
+
 	if ( tie my @file_lines, 'Tie::File', "$config_filename" )
 	{
+		require Zevenet::Net::Validate;
 		my $ip_line_found;
 
 		for my $line ( @file_lines )
@@ -241,7 +241,6 @@ sub setInterfaceConfig    # $bool ($if_ref)
 
 			my ( undef, $ip ) = split ';', $line;
 
-			require Zevenet::Net::Validate;
 			if ( $$if_ref{ ip_v } eq &ipversion( $ip ) && !$ip_line_found )
 			{
 				# replace line
@@ -379,8 +378,6 @@ sub getInterfaceSystemStatus     # ($if_ref)
 {
 	my $if_ref = shift;
 
-	#~ &zenlog("getInterfaceSystemStatus $$if_ref{name}:$$if_ref{status}");
-
 	my $parent_if_name = &getParentInterfaceName( $if_ref->{ name } );
 	my $status_if_name = $if_ref->{ name };
 
@@ -419,27 +416,19 @@ sub getInterfaceSystemStatus     # ($if_ref)
 	}
 
 	unless ( $if_ref->{ vini } ne '' && $if_ref->{ status } eq 'down' )    # vini
-	     #~ if ( not ( $if_ref->{vini} ne '' && $if_ref->{status} ne 'up' ) ) # vini
-	     # if   ( $if_ref->{vini} eq '' || $if_ref->{status} eq 'up' ) ) # vini
 	{
 		$if_ref->{ status } = $if_status;
 	}
 
-	#~ &zenlog("getInterfaceSystemStatus $$if_ref{name}:$$if_ref{status}");
-
 	return $if_ref->{ status } if $if_ref->{ status } eq 'down';
-
-	#~ &zenlog("getInterfaceSystemStatus parent_if_name:$parent_if_name");
 
 	my $parent_if_ref = &getInterfaceConfig( $parent_if_name, $if_ref->{ ip_v } );
 
-	# 2) vlans do not require the parent interface to be configured
+	# vlans do not require the parent interface to be configured
 	if ( !$parent_if_name || !$parent_if_ref )
 	{
 		return $if_ref->{ status };
 	}
-
-#~ &zenlog("getInterfaceSystemStatus $$parent_if_ref{name}:$$parent_if_ref{status}");
 
 	return &getInterfaceSystemStatus( $parent_if_ref );
 }
@@ -488,8 +477,6 @@ sub getParentInterfaceName    # ($if_name)
 	{
 		$parent_if_name = undef;
 	}
-
-	#~ &zenlog("if_name:$if_name parent_if_name:$parent_if_name");
 
 	return $parent_if_name;
 }
@@ -546,7 +533,6 @@ sub getActiveInterfaceList
 		$dev_ip_padded =~ s/ +$//;
 		$dev_ip_padded =~ s/ /&nbsp;/g;
 
-		#~ &zenlog("padded interface:$dev_ip_padded");
 		$iface->{ dev_ip_padded } = $dev_ip_padded;
 	}
 
@@ -609,9 +595,6 @@ sub getSystemInterfaceList
 				$$if_ref{ type }   = &getInterfaceType( $if_name );
 			}
 
-			# setup for configured and unconfigured interfaces
-			#~ $$if_ref{ gateway } = '-' if ! $$if_ref{ gateway };
-
 			if ( !( $if_flags & IFF_RUNNING ) && ( $if_flags & IFF_UP ) )
 			{
 				$$if_ref{ link } = "off";
@@ -629,8 +612,6 @@ sub getSystemInterfaceList
 
 				if ( $$vlan_if_conf{ ip_v } == $ip_stack )
 				{
-					#~ $$vlan_if_conf{ gateway } = '-' if ! $$vlan_if_conf{ gateway };
-
 					push ( @interfaces, $vlan_if_conf );
 
 					# add vini of vlan
@@ -642,7 +623,6 @@ sub getSystemInterfaceList
 
 						if ( $$vini_if_conf{ ip_v } == $ip_stack )
 						{
-							#~ $$vini_if_conf{ gateway } = '-' if ! $$vini_if_conf{ gateway };
 							push ( @interfaces, $vini_if_conf );
 						}
 					}
@@ -658,7 +638,6 @@ sub getSystemInterfaceList
 
 				if ( $$vini_if_conf{ ip_v } == $ip_stack )
 				{
-					#~ $$vini_if_conf{ gateway } = '-' if ! $$vini_if_conf{ gateway };
 					push ( @interfaces, $vini_if_conf );
 				}
 			}
