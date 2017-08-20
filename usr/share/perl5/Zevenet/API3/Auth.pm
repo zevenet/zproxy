@@ -31,11 +31,11 @@ sub validCGISession    # ()
 	my $q = &getCGI();
 	my $validSession = 0;
 
-logNewModules("Before loading CGI Session");
+	logNewModules("Before loading CGI Session"); ##############
 
 	my $session      = CGI::Session->load( $q );
 
-logNewModules("After loading CGI Session");
+	logNewModules("After loading CGI Session"); ##############
 
 	#~ &zenlog( "CGI SESSION ID: " . Dumper $session );
 	#~ &zenlog( "CGI SESSION ID: " . $session->id ) if $session->id;
@@ -60,14 +60,13 @@ sub validZapiKey    # ()
 	require Zevenet::Zapi;
 
 	my $validKey = 0;    # output
-
 	my $key = "HTTP_ZAPI_KEY";
 
 	if (
-		 exists $ENV{ $key }                         # exists
+		 exists $ENV{ $key }                         # zapi key was provided
+		 && &getZAPI( "status" ) eq "true"           # zapi user is enabled
 		 && &getZAPI( "keyzapi" ) eq $ENV{ $key }    # matches key
-		 && &getZAPI( "status" ) eq "true"
-	  )                                             # zapi user enabled??
+	  )
 	{
 		$validKey = 1;
 	}
@@ -82,7 +81,7 @@ sub getAuthorizationCredentials                     # ()
 	my $password;
 
 	require MIME::Base64;
-	MIME::Base64->import;
+	MIME::Base64->import();
 
 	if ( exists $ENV{ HTTP_AUTHORIZATION } )
 	{
