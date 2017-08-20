@@ -128,8 +128,10 @@ sub move_services
 							{
 								&setHTTPFarmBackendStatus( $farmname );
 
-								require Zevenet::Cluster;
-								&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+								if ( eval { require Zevenet::Cluster; } )
+								{
+									&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+								}
 
 								&zenlog( "$service was moved successful." );
 							}

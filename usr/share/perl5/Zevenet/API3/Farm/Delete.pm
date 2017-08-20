@@ -35,7 +35,6 @@ sub delete_farm # ( $farmname )
 			 "ZAPI error, trying to delete the farm $farmname, the farm name doesn't exist."
 		);
 
-		# Error
 		my $errormsg = "The farm $farmname doesn't exist, try another name.";
 		my $body = {
 					 description => "Delete farm $farmname",
@@ -49,8 +48,11 @@ sub delete_farm # ( $farmname )
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
 		&runFarmStop( $farmname, "true" );
-		require Zevenet::Cluster;
-		&runZClusterRemoteManager( 'farm', 'stop', $farmname );
+
+		if ( eval { require Zevenet::Cluster; } )
+		{
+			&runZClusterRemoteManager( 'farm', 'stop', $farmname );
+		}
 	}
 
 	my $stat = &runFarmDelete( $farmname );
@@ -59,9 +61,10 @@ sub delete_farm # ( $farmname )
 	{
 		&zenlog( "ZAPI success, the farm $farmname has been deleted." );
 
-		# Success
-		require Zevenet::Cluster;
-		&runZClusterRemoteManager( 'farm', 'delete', $farmname );
+		if ( eval { require Zevenet::Cluster; } )
+		{
+			&runZClusterRemoteManager( 'farm', 'delete', $farmname );
+		}
 
 		my $message = "The Farm $farmname has been deleted.";
 		my $body = {
@@ -78,7 +81,6 @@ sub delete_farm # ( $farmname )
 			"ZAPI error, trying to delete the farm $farmname, the farm hasn't been deleted."
 		);
 
-		# Error
 		my $errormsg = "The Farm $farmname hasn't been deleted";
 		my $body = {
 					 description => "Delete farm $farmname",
