@@ -36,29 +36,31 @@ my $graph_period = {
 #GET disk
 sub possible_graphs	#()
 {
+	require Zevenet::Stats;
+
 	my @farms = grep ( s/-farm//, &getGraphs2Show( "Farm" ) );
-	my @net = grep ( s/iface//, &getGraphs2Show( "Network" ) );
+	my @net   = grep ( s/iface//, &getGraphs2Show( "Network" ) );
 	my @sys = ( "cpu", "load", "ram", "swap" );
 	
 	# Get mount point of disks
-	require Zevenet::Stats;
 	my @mount_points;
 	my $partitions = &getDiskPartitionsInfo();
+
 	for my $key ( keys %{ $partitions } )
 	{
 		# mount point : root/mount_point
 		push( @mount_points, "root$partitions->{ $key }->{ mount_point }" );
 	}
+
 	@mount_points = sort @mount_points;
 	push @sys, { disks => \@mount_points };
 
-	# Success
 	my $body = {
 		description =>
 		  "These are the possible graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
-		system  => \@sys,
+		system     => \@sys,
 		interfaces => \@net,
-		farms    => \@farms
+		farms      => \@farms
 	};
 
 	&httpResponse({ code => 200, body => $body });
@@ -67,20 +69,23 @@ sub possible_graphs	#()
 # GET all system graphs
 sub get_all_sys_graphs	 #()
 {
+	require Zevenet::Stats;
+
 	# System values
 	my @graphlist = &getGraphs2Show( "System" );
 	
 	my @sys = ( "cpu", "load", "ram", "swap" );
 	
 	# Get mount point of disks
-	require Zevenet::Stats;
 	my @mount_points;
 	my $partitions = &getDiskPartitionsInfo();
+
 	for my $key ( keys %{ $partitions } )
 	{
 		# mount point : root/mount_point
 		push( @mount_points, "root$partitions->{ $key }->{ mount_point }" );
 	}
+
 	@mount_points = sort @mount_points;
 	push @sys, { disk => \@mount_points };
 
@@ -89,6 +94,7 @@ sub get_all_sys_graphs	 #()
 		  "These are the possible system graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph", 
 		  system    => \@sys
 	};
+
 	&httpResponse({ code => 200, body => $body });
 }
 
@@ -96,6 +102,7 @@ sub get_all_sys_graphs	 #()
 sub get_sys_graphs	#()
 {
 	my $key = shift;
+
 	my $description = "Get $key graphs";
 
 	$key = 'mem' if ( $key eq 'ram' );
@@ -113,27 +120,29 @@ sub get_sys_graphs	#()
 	push @output, { frequency => 'yearly', graph => $graph };
 
 	my $body = { description => $description, graphs => \@output };
+
 	&httpResponse({ code => 200, body => $body });
 }
 
 # GET frequency system graphs
 sub get_frec_sys_graphs	#()
 {	
-	my $key = shift;
+	my $key       = shift;
 	my $frequency = shift;
+
 	my $description = "Get $frequency $key graphs";
 
-	$key = 'mem' if ( $key eq 'ram' );
+	$key = 'mem'   if ( $key eq 'ram' );
 	$key = 'memsw' if ( $key eq 'swap' );
 
-	 # take initial idenfiticative letter 
-	$frequency = $1  if ( $frequency =~ /^(\w)/ );
+	# take initial idenfiticative letter
+	$frequency = $1 if ( $frequency =~ /^(\w)/ );
 
 	# Print Graph Function
 	my @output;
 	my $graph = &printGraph( $key, $frequency );
-
 	my $body = { description => $description, graphs => $graph };
+
 	&httpResponse({ code => 200, body => $body });
 }
 
@@ -146,6 +155,7 @@ sub get_all_iface_graphs	#()
 		  "These are the possible interface graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
 		  interfaces    => \@iface
 	};
+
 	&httpResponse({ code => 200, body => $body });
 }
 
@@ -153,15 +163,15 @@ sub get_all_iface_graphs	#()
 sub get_iface_graphs	#()
 {
 	my $iface = shift;
-	my $description = "Get interface graphs";
-	my $errormsg;
-	# validate NIC NAME
+
 	require Zevenet::Net::Interface;
+
+	my $description       = "Get interface graphs";
 	my @system_interfaces = &getInterfaceList();
 
+	# validate NIC NAME
 	if ( ! grep( /^$iface$/, @system_interfaces ) )
 	{
-		# Error
 		my $errormsg = "Nic interface not found.";
 		my $body = {
 					 description => $description,
@@ -174,44 +184,49 @@ sub get_iface_graphs	#()
 	# graph for this farm doesn't exist
 	elsif ( ! grep ( /${iface}iface/, &getGraphs2Show( "Network" ) ) )
 	{
-		$errormsg = "There is no rrd files yet.";
+		my $errormsg = "There is no rrd files yet.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+		&httpResponse( { code => 400, body => $body } );
 	}
-	else
-	{
-		# Print Graph Function
-		my @output;
-		my $graph = &printGraph( "${iface}iface", 'd' );
-		push @output, { frequency => 'daily', graph => $graph };
-		$graph = &printGraph( "${iface}iface", 'w' );
-		push @output, { frequency => 'weekly', graph => $graph };
-		$graph = &printGraph( "${iface}iface", 'm' );
-		push @output, { frequency => 'monthly', graph => $graph };
-		$graph = &printGraph( "${iface}iface", 'y' );
-		push @output, { frequency => 'yearly', graph => $graph };
 
-		my $body = { description => $description, graphs => \@output };
-		&httpResponse({ code => 200, body => $body });
-	}
-	
-	my $body =
-	  { description => $description, error => "true", message => $errormsg };
-	&httpResponse( { code => 400, body => $body } );
+	# Print Graph Function
+	my @output;
+
+	my $graph = &printGraph( "${iface}iface", 'd' );
+	push @output, { frequency => 'daily', graph => $graph };
+
+	$graph = &printGraph( "${iface}iface", 'w' );
+	push @output, { frequency => 'weekly', graph => $graph };
+
+	$graph = &printGraph( "${iface}iface", 'm' );
+	push @output, { frequency => 'monthly', graph => $graph };
+
+	$graph = &printGraph( "${iface}iface", 'y' );
+	push @output, { frequency => 'yearly', graph => $graph };
+
+	my $body = { description => $description, graphs => \@output };
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 # GET frequency interface graphs
 sub get_frec_iface_graphs	#()
 {
-	my $iface = shift;
+	my $iface     = shift;
 	my $frequency = shift;
-	my $description = "Get interface graphs";
-	my $errormsg;
-	# validate NIC NAME
+
 	require Zevenet::Net::Interface;
+
+	my $description       = "Get interface graphs";
 	my @system_interfaces = &getInterfaceList();
 
+	# validate NIC NAME
 	if ( ! grep( /^$iface$/, @system_interfaces ) )
 	{
-		# Error
 		my $errormsg = "Nic interface not found.";
 		my $body = {
 					 description => $description,
@@ -223,27 +238,28 @@ sub get_frec_iface_graphs	#()
 	}
 	elsif ( ! grep ( /${iface}iface/, &getGraphs2Show( "Network" ) ) )
 	{
-		$errormsg = "There is no rrd files yet.";
+		my $errormsg = "There is no rrd files yet.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+		&httpResponse( { code => 400, body => $body } );
 	}
-	else
-	{
-		if ( $frequency =~ /^daily|weekly|monthly|yearly$/ )
-		{
-			if ( $frequency eq "daily" )   { $frequency = "d"; }
-			if ( $frequency eq "weekly" )  { $frequency = "w"; }
-			if ( $frequency eq "monthly" ) { $frequency = "m"; }
-			if ( $frequency eq "yearly" )  { $frequency = "y"; }
-		}
 
-		# Print Graph Function
-		my $graph = &printGraph( "${iface}iface", $frequency );				
-		my $body = { description => $description, graph => $graph };
-		&httpResponse({ code => 200, body => $body });
+	if ( $frequency =~ /^daily|weekly|monthly|yearly$/ )
+	{
+		if ( $frequency eq "daily" )   { $frequency = "d"; }
+		if ( $frequency eq "weekly" )  { $frequency = "w"; }
+		if ( $frequency eq "monthly" ) { $frequency = "m"; }
+		if ( $frequency eq "yearly" )  { $frequency = "y"; }
 	}
-	
-	my $body =
-	  { description => $description, error => "true", message => $errormsg };
-	&httpResponse( { code => 400, body => $body } );
+
+	# Print Graph Function
+	my $graph = &printGraph( "${iface}iface", $frequency );
+	my $body = { description => $description, graph => $graph };
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 # GET all farm graphs
@@ -255,6 +271,7 @@ sub get_all_farm_graphs	#()
 		  "These are the possible farm graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph", 
 		  farms    => \@farms
 	};
+
 	&httpResponse({ code => 200, body => $body });
 }
 
@@ -262,86 +279,101 @@ sub get_all_farm_graphs	#()
 sub get_farm_graphs	#()
 {
 	my $farmName = shift;
-	my $description = "Get farm graphs";
-	my $errormsg;
 
 	require Zevenet::Farm::Core;
+
+	my $description = "Get farm graphs";
 
 	# this farm doesn't exist
 	if ( &getFarmFile( $farmName ) == -1 )
 	{
-		$errormsg = "$farmName doesn't exist.";
-		my $body = { description => $description, error => "true", message => $errormsg, };
+		my $errormsg = "$farmName doesn't exist.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
 		&httpResponse( { code => 404, body => $body } );
 	}	
 	# graph for this farm doesn't exist
 	elsif ( ! grep ( /$farmName-farm/, &getGraphs2Show( "Farm" ) ) )
 	{
-		$errormsg = "There is no rrd files yet.";
+		my $errormsg = "There is no rrd files yet.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+		&httpResponse( { code => 400, body => $body } );
 	}
-	else
-	{
-		# Print Graph Function
-		my @output;
-		my $graph = &printGraph( "$farmName-farm", 'd' );
-		push @output, { frequency => 'daily', graph => $graph };
-		$graph = &printGraph( "$farmName-farm", 'w' );
-		push @output, { frequency => 'weekly', graph => $graph };
-		$graph = &printGraph( "$farmName-farm", 'm' );
-		push @output, { frequency => 'monthly', graph => $graph };
-		$graph = &printGraph( "$farmName-farm", 'y' );
-		push @output, { frequency => 'yearly', graph => $graph };
 
-		my $body = { description => $description, graphs => \@output };
-		&httpResponse({ code => 200, body => $body });
-	}
-	
-	my $body =
-	  { description => $description, error => "true", message => $errormsg };
-	&httpResponse( { code => 400, body => $body } );
+	# Print Graph Function
+	my @output;
+
+	my $graph = &printGraph( "$farmName-farm", 'd' );
+	push @output, { frequency => 'daily', graph => $graph };
+
+	$graph = &printGraph( "$farmName-farm", 'w' );
+	push @output, { frequency => 'weekly', graph => $graph };
+
+	$graph = &printGraph( "$farmName-farm", 'm' );
+	push @output, { frequency => 'monthly', graph => $graph };
+
+	$graph = &printGraph( "$farmName-farm", 'y' );
+	push @output, { frequency => 'yearly', graph => $graph };
+
+	my $body = { description => $description, graphs => \@output };
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 # GET frequency farm graphs
 sub get_frec_farm_graphs	#()
 {
-	my $farmName = shift;
+	my $farmName  = shift;
 	my $frequency = shift;
-	my $description = "Get farm graphs";
-	my $errormsg;
 
 	require Zevenet::Farm::Core;
+
+	my $description = "Get farm graphs";
 
 	# this farm doesn't exist
 	if ( &getFarmFile( $farmName ) == -1 )
 	{
-		$errormsg = "$farmName doesn't exist.";
-		my $body = { description => $description, error => "true", message => $errormsg, };
+		my $errormsg = "$farmName doesn't exist.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
 		&httpResponse( { code => 404, body => $body } );
 	}	
 	# graph for this farm doesn't exist
 	elsif ( ! grep ( /$farmName-farm/, &getGraphs2Show( "Farm" ) ) )
 	{
-		$errormsg = "There is no rrd files yet.";
-	}
-	else
-	{
-		if ( $frequency =~ /^daily|weekly|monthly|yearly$/ )
-		{
-			if ( $frequency eq "daily" )   { $frequency = "d"; }
-			if ( $frequency eq "weekly" )  { $frequency = "w"; }
-			if ( $frequency eq "monthly" ) { $frequency = "m"; }
-			if ( $frequency eq "yearly" )  { $frequency = "y"; }
-		}
+		my $errormsg = "There is no rrd files yet.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
 
-		# Print Graph Function
-		my $graph = &printGraph( "$farmName-farm", $frequency );				
-		my $body = { description => $description, graph => $graph };
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 400, body => $body } );
 	}
-	
-	my $body =
-	  { description => $description, error => "true", message => $errormsg };
-	&httpResponse( { code => 400, body => $body } );
+
+	if ( $frequency =~ /^daily|weekly|monthly|yearly$/ )
+	{
+		if ( $frequency eq "daily" )   { $frequency = "d"; }
+		if ( $frequency eq "weekly" )  { $frequency = "w"; }
+		if ( $frequency eq "monthly" ) { $frequency = "m"; }
+		if ( $frequency eq "yearly" )  { $frequency = "y"; }
+	}
+
+	# Print Graph Function
+	my $graph = &printGraph( "$farmName-farm", $frequency );
+	my $body = { description => $description, graph => $graph };
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 #GET mount points list
@@ -361,8 +393,8 @@ sub list_disks	#()
 	@mount_points = sort @mount_points;
 
 	my $body = {
-		description => "List disk partitions",
-		params => \@mount_points,
+				 description => "List disk partitions",
+				 params      => \@mount_points,
 	};
 
 	&httpResponse({ code => 200, body => $body });
@@ -373,9 +405,9 @@ sub graphs_disk_mount_point_all	#()
 {
 	my $mount_point = shift;
 
-	$mount_point =~ s/^root[\/]?/\//;
-
 	require Zevenet::Stats;
+
+	$mount_point =~ s/^root[\/]?/\//; # remove leading 'root/'
 	my $description = "Disk partition usage graphs";
 	my $parts = &getDiskPartitionsInfo();
 
@@ -383,7 +415,6 @@ sub graphs_disk_mount_point_all	#()
 
 	unless ( $part_key )
 	{
-		# Error
 		my $errormsg = "Mount point not found";
 		my $body = {
 					 description => $description,
@@ -395,15 +426,12 @@ sub graphs_disk_mount_point_all	#()
 	}
 
 	my $dev_id = $parts->{ $part_key }->{ rrd_id };
-
-	# Success
 	my @graphs = (
 				   { frequency => 'daily',   graph => &printGraph( $dev_id, 'd' ) },
 				   { frequency => 'weekly',  graph => &printGraph( $dev_id, 'w' ) },
 				   { frequency => 'monthly', graph => &printGraph( $dev_id, 'm' ) },
 				   { frequency => 'yearly',  graph => &printGraph( $dev_id, 'y' ) },
 	);
-
 	my $body = {
 				 description => $description,
 				 graphs      => \@graphs,
@@ -416,11 +444,11 @@ sub graphs_disk_mount_point_all	#()
 sub graph_disk_mount_point_freq	#()
 {
 	my $mount_point = shift;
-	my $frequency = shift;
-
-	$mount_point =~ s/^root[\/]?/\//;
+	my $frequency   = shift;
 
 	require Zevenet::Stats;
+
+	$mount_point =~ s/^root[\/]?/\//;
 	my $description = "Disk partition usage graph";
 	my $parts = &getDiskPartitionsInfo();
 
@@ -428,7 +456,6 @@ sub graph_disk_mount_point_freq	#()
 
 	unless ( $part_key )
 	{
-		# Error
 		my $errormsg = "Mount point not found";
 		my $body = {
 					 description => $description,
@@ -441,8 +468,6 @@ sub graph_disk_mount_point_freq	#()
 
 	my $dev_id = $parts->{ $part_key }->{ rrd_id };
 	my $freq = $graph_period->{ $frequency };
-
-	# Success
 	my $body = {
 				 description => $description,
 				 frequency      => $frequency,
