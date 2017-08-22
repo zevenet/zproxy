@@ -30,6 +30,7 @@ my $hostname = `hostname`;
 
 require "/usr/local/zenloadbalancer/config/global.conf";
 
+# build local key
 sub keycert
 {
 	my @dmidec  = `$dmidecode_bin`;
@@ -133,6 +134,7 @@ sub certcontrol
 
 	return $swcert;
 }
+# end evaluate certificate
 
 if ( $ARGV[0] eq "install" || $ARGV[0] eq "upgrade" )
 {
