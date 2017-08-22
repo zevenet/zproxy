@@ -31,6 +31,7 @@ my $hostname = `hostname`;
 require "/usr/local/zevenet/config/global.conf";
 my $basedir = "/usr/local/zevenet/www";
 
+# build local key
 sub keycert
 {
 	my @dmidec  = `$dmidecode_bin`;
@@ -134,6 +135,7 @@ sub certcontrol
 
 	return $swcert;
 }
+# end evaluate certificate
 
 if ( $ARGV[0] eq "install" || $ARGV[0] eq "upgrade" )
 {
