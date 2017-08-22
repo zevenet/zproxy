@@ -229,37 +229,35 @@ if ( $action eq "start" )
 
 				if ( $line =~ /iface.*inet static/i )
 				{
-					my @iface = split ( " ", $line );
-					$ifname = $iface[1];
-					chomp ( $ifname );
+					my ( undef, $ifname ) = split ( " ", $line );
 				}
-				if ( $line =~ /address/i )
+				if ( $line =~ /\Waddress/i )
 				{
-					my @ip = split ( " ", $line );
-					$ip = $ip[1];
-					my $ip_mask = $ip;
-					my @ip_nomask = split("/",$ip);
-					$ip = @ip_nomask[0];
-					chomp ( $ip );
-					#bit mask
-					use Net::Netmask;
-					my $in="$ip/@ip_nomask[1]";
-					my $cidr = $in;
-					my $block = Net::Netmask->new2( $cidr ) or die $Net::Netmask::error;
-					$netmask = $block->mask;
-					
+					my ( undef, $ip_n_mask ) = split ( " ", $line );
+					my $mask;
+					( $ip, $mask ) = split ( "/", $ip_n_mask );
+
+					if ( $mask ) # only when bitmask is declared
+					{
+						use Net::Netmask;
+						my $block = Net::Netmask->new2( $ip_n_mask );
+
+						if ( $block ) {
+							$netmask = $block->mask;
+						}
+						else {
+							&zenlog( $Net::Netmask::error );
+							die $Net::Netmask::error;
+						}
+					}
 				}
 				if ( $line =~ /netmask/i )
 				{
-					my @netmask = split ( " ", $line );
-					$netmask = $netmask[1];
-					chomp ( $netmask );
+					my ( undef, $netmask ) = split ( " ", $line );
 				}
 				if ( $line =~ /gateway/i )
 				{
-					my @gateway = split ( " ", $line );
-					$gateway = $gateway[1];
-					chomp ( $gateway );
+					my ( undef, $gateway ) = split ( " ", $line );
 				}
 			}
 
