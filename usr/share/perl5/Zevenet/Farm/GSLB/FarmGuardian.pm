@@ -261,6 +261,7 @@ Returns:
 sub setGSLBFarmGuardianParams	# ( farmName, service, param, value );
 {
 	my ( $fname, $service, $param, $value ) = @_;
+
 	my $ftype = &getFarmType( $fname );
 	my @file;
 	my $flagSvc = 0;
@@ -333,6 +334,7 @@ Returns:
 sub setGSLBDeleteFarmGuardian	# ( $fname, $service )
 {
 	my ( $fname, $service ) = @_;
+
 	my $ftype   = &getFarmType( $fname );
 	my $err     = -1;
 	my $index   = 0;
@@ -388,7 +390,7 @@ sub getGSLBFarmFGStatus	# ( fname, service )
 	my $ftype  = &getFarmType( $fname );
 	my $output = -1;
 
-	use Tie::File;
+	require Tie::File;
 
 	# select all ports used in plugins
 	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
@@ -445,6 +447,7 @@ sub getGSLBFarmFGStatus	# ( fname, service )
 			untie @fileconf;
 		}
 	}
+
 	return $output;
 }
 
@@ -469,12 +472,13 @@ sub enableGSLBFarmGuardian	# ( $fname, $service, $option )
 	my $ftype  = &getFarmType( $fname );
 	my $output = -1;
 
-	use Tie::File;
+	require Tie::File;
 
 	# select all ports used in plugins
 	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
 	my @pluginlist = readdir ( DIR );
 	closedir ( DIR );
+
 	foreach my $plugin ( @pluginlist )
 	{
 		if ( $plugin !~ /^\./ )
@@ -510,6 +514,7 @@ sub enableGSLBFarmGuardian	# ( $fname, $service, $option )
 			untie @fileconf;
 		}
 	}
+
 	return $output;
 }
 

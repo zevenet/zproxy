@@ -40,7 +40,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	my $farmname_old;
 	my $ipds;
 
-	if ( eval { Zevenet::IPDS; } )
+	if ( eval { require Zevenet::IPDS; } )
 	{
 		require Zevenet::IPDS::Blacklist;
 		require Zevenet::IPDS::DoS;
@@ -315,7 +315,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		&zenlog(
 				  "ZAPI success, some parameters have been changed in farm $farmname." );
 
-		if ( eval { Zevenet::IPDS; } )
+		if ( eval { require Zevenet::IPDS; } )
 		{
 			# update the ipds rule applied to the farm
 			if ( !$farmname_old )
