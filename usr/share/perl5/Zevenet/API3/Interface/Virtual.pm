@@ -381,7 +381,6 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 	{
 		require Zevenet::Net::Core;
 
-		# Add IP
 		&addIp( $if_ref );
 
 		# Check the parent's status before up the interface

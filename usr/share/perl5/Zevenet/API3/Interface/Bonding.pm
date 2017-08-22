@@ -37,16 +37,17 @@ sub new_bond # ( $json_obj )
 {
 	my $json_obj = shift;
 
+	require Zevenet::Net::Bonding;
+	require Zevenet::Net::Validate;
+	require Zevenet::System;
+
 	my $description = "Add a bond interface";
 
 	# validate BOND NAME
 	my $bond_re = &getValidFormat( 'bond_interface' );
 
-	require Zevenet::Net::Validate;
-
 	unless ( $json_obj->{ name } =~ /^$bond_re$/ && &ifexist($json_obj->{ name }) eq 'false' )
 	{
-		# Error
 		my $errormsg = "Interface name is not valid";
 		my $body = {
 					 description => $description,
@@ -60,7 +61,6 @@ sub new_bond # ( $json_obj )
 	# validate BOND MODE
 	unless ( $json_obj->{ mode } && &getValidFormat( 'bond_mode_short', $json_obj->{ mode } ) )
 	{
-		# Error
 		my $errormsg = "Bond mode is not valid";
 		my $body = {
 					 description => $description,
@@ -71,11 +71,9 @@ sub new_bond # ( $json_obj )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	require Zevenet::System;
 	$json_obj->{ mode } = &indexOfElementInArray( $json_obj->{ mode }, \@bond_modes_short );
 
 	# validate SLAVES
-	require Zevenet::Net::Bonding;
 	my $missing_slave;
 	for my $slave ( @{ $json_obj->{slaves} } )
 	{
@@ -108,7 +106,6 @@ sub new_bond # ( $json_obj )
 	{
 		my $if_ref = getSystemInterface( $json_obj->{ name } );
 
-		# Success
 		my @bond_slaves = @{ $json_obj->{ slaves } };
 		my @output_slaves;
 		push( @output_slaves, { name => $_ } ) for @bond_slaves;
@@ -128,7 +125,6 @@ sub new_bond # ( $json_obj )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "The $json_obj->{ name } bonding network interface can't be created";
 		my $body = {
 					 description => $description,
@@ -147,16 +143,15 @@ sub new_bond_slave # ( $json_obj, $bond )
 	my $json_obj = shift;
 	my $bond     = shift;
 
-	my $description = "Add a slave to a bond interface";
-
 	require Zevenet::Net::Bonding;
+
+	my $description = "Add a slave to a bond interface";
 
 	# validate BOND NAME
 	my $bonds = &getBondConfig();
 
 	unless ( $bonds->{ $bond } )
 	{
-		# Error
 		my $errormsg = "Bond interface name not found";
 		my $body = {
 					 description => $description,
@@ -176,7 +171,6 @@ sub new_bond_slave # ( $json_obj, $bond )
 	};
 	if ( $@ )
 	{
-		# Error
 		my $errormsg = "Could not add the slave interface to this bonding";
 		my $body = {
 					 description => $description,
@@ -196,7 +190,6 @@ sub new_bond_slave # ( $json_obj, $bond )
 	{
 		my $if_ref = getSystemInterface( $bond );
 
-		# Success
 		my @bond_slaves = @{ $bonds->{ $bond }->{ slaves } };
 		my @output_slaves;
 		push( @output_slaves, { name => $_ } ) for @bond_slaves;
@@ -216,7 +209,6 @@ sub new_bond_slave # ( $json_obj, $bond )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "The $json_obj->{ name } bonding network interface can't be created";
 		my $body = {
 					 description => $description,
@@ -232,6 +224,8 @@ sub delete_interface_bond # ( $bond )
 {
 	my $bond = shift;
 
+	require Zevenet::Net::Core;
+	require Zevenet::Net::Route;
 	require Zevenet::Net::Interface;
 
 	my $description = "Delete bonding network configuration";
@@ -240,7 +234,6 @@ sub delete_interface_bond # ( $bond )
 
 	if ( !$if_ref )
 	{
-		# Error
 		my $errormsg = "There is no configuration for the network interface.";
 		my $body = {
 					 description => $description,
@@ -251,9 +244,6 @@ sub delete_interface_bond # ( $bond )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	require Zevenet::Net::Core;
-	require Zevenet::Net::Route;
-
 	eval {
 		die if &delRoutes( "local", $if_ref );
 		die if &downIf( $if_ref, 'writeconf' ); # FIXME: To be removed
@@ -262,7 +252,6 @@ sub delete_interface_bond # ( $bond )
 
 	if ( ! $@ )
 	{
-		# Success
 		my $message = "The configuration for the bonding interface $bond has been deleted.";
 		my $body = {
 					 description => $description,
@@ -274,7 +263,6 @@ sub delete_interface_bond # ( $bond )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "The configuration for the bonding interface $bond can't be deleted: $@";
 		my $body = {
 					 description => $description,
@@ -290,13 +278,14 @@ sub delete_bond # ( $bond )
 {
 	my $bond = shift;
 
+	require Zevenet::Net::Core;
+
 	my $description = "Remove bonding interface";
 	my $bonds = &getBondConfig();
 
 	# validate BOND
 	unless ( $bonds->{ $bond } )
 	{
-		# Error
 		my $errormsg = "Bonding interface name not found";
 		my $body = {
 					 description => $description,
@@ -314,7 +303,6 @@ sub delete_bond # ( $bond )
 
 	if ( $bond_in_use )
 	{
-		# Error
 		my $errormsg = "Bonding interface is being used";
 		my $body = {
 					 description => $description,
@@ -324,8 +312,6 @@ sub delete_bond # ( $bond )
 
 		&httpResponse({ code => 400, body => $body });
 	}
-
-	require Zevenet::Net::Core;
 
 	eval {
 		if ( ${ &getSystemInterface( $bond ) }{ status } eq 'up' )
@@ -338,7 +324,6 @@ sub delete_bond # ( $bond )
 
 	if ( ! $@ )
 	{
-		# Success
 		my $message = "The bonding interface $bond has been deleted.";
 		my $body = {
 					 description => $description,
@@ -350,7 +335,6 @@ sub delete_bond # ( $bond )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "The bonding interface $bond could not be deleted";
 		my $body = {
 					 description => $description,
@@ -375,7 +359,6 @@ sub delete_bond_slave # ( $bond, $slave )
 	# validate BOND
 	unless ( $bonds->{ $bond } )
 	{
-		# Error
 		my $errormsg = "Bonding interface not found";
 		my $body = {
 					 description => $description,
@@ -389,7 +372,6 @@ sub delete_bond_slave # ( $bond, $slave )
 	# validate SLAVE
 	unless ( grep ( { $slave eq $_ } @{ $bonds->{ $bond }->{ slaves } } ) )
 	{
-		# Error
 		my $errormsg = "Bonding slave interface not found";
 		my $body = {
 					 description => $description,
@@ -401,12 +383,11 @@ sub delete_bond_slave # ( $bond, $slave )
 	}
 
 	eval {
-		@{ $bonds->{ $bond }->{ slaves } } = grep ( { $slave ne $_ } @{ $bonds->{ $bond }->{ slaves } } );
+		@{ $bonds->{ $bond }{ slaves } } = grep ( { $slave ne $_ } @{ $bonds->{ $bond }{ slaves } } );
 		die if &applyBondChange( $bonds->{ $bond }, 'writeconf' );
 	};
 	if ( ! $@ )
 	{
-		# Success
 		my $message = "The bonding slave interface $slave has been removed.";
 		my $body = {
 					 description => $description,
@@ -418,7 +399,6 @@ sub delete_bond_slave # ( $bond, $slave )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "The bonding slave interface $slave could not be removed";
 		my $body = {
 					 description => $description,
@@ -498,9 +478,9 @@ sub get_bond # ()
 	require Zevenet::Net::Bonding;
 	require Zevenet::Net::Interface;
 
-	my $interface; # output
+	my $interface;    # output
 	my $description = "Show bonding interface";
-	my $bond_conf = &getBondConfig();
+	my $bond_conf   = &getBondConfig();
 
 	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )
 	{
@@ -543,7 +523,6 @@ sub get_bond # ()
 	}
 	else
 	{
-		# Error
 		my $errormsg = "Bonding interface not found.";
 		my $body = {
 					 description => $description,
@@ -560,14 +539,14 @@ sub actions_interface_bond # ( $json_obj, $bond )
 	my $json_obj = shift;
 	my $bond 	 = shift;
 
+	require Zevenet::Net::Core;
+	require Zevenet::Net::Interface;
+
 	my $description = "Action on bond interface";
 	my $ip_v = 4;
 
-	require Zevenet::Net::Interface;
-
 	unless ( grep { $bond eq $_->{ name } } &getInterfaceTypeList( 'bond' ) )
 	{
-		# Error
 		my $errormsg = "Bond interface not found";
 		my $body = {
 					 description => $description,
@@ -580,7 +559,6 @@ sub actions_interface_bond # ( $json_obj, $bond )
 
 	if ( grep { $_ ne 'action' } keys %$json_obj )
 	{
-		# Error
 		my $errormsg = "Only the parameter 'action' is accepted";
 		my $body = {
 					 description => $description,
@@ -591,8 +569,6 @@ sub actions_interface_bond # ( $json_obj, $bond )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	require Zevenet::Net::Core;
-
 	# validate action parameter
 	if ( $json_obj->{ action } eq 'destroy' )
 	{
@@ -600,30 +576,29 @@ sub actions_interface_bond # ( $json_obj, $bond )
 	}
 	elsif ( $json_obj->{ action } eq "up" )
 	{
-		my $if_ref = &getInterfaceConfig( $bond, $ip_v );
-
 		require Zevenet::Net::Route;
+
+		my $if_ref = &getInterfaceConfig( $bond, $ip_v );
 
 		# Delete routes in case that it is not a vini
 		&delRoutes( "local", $if_ref ) if $if_ref;
 
-		# Add IP
 		&addIp( $if_ref ) if $if_ref;
 
 		my $state = &upIf( { name => $bond }, 'writeconf' );
 
 		if ( ! $state )
 		{
+			require Zevenet::Net::Util;
+
 			&applyRoutes( "local", $if_ref ) if $if_ref;
 
 			# put all dependant interfaces up
-			require Zevenet::Net::Util;
 			&setIfacesUp( $bond, "vlan" );
 			&setIfacesUp( $bond, "vini" ) if $if_ref;
 		}
 		else
 		{
-			# Error
 			my $errormsg = "The interface could not be set UP";
 			my $body = {
 						 description => $description,
@@ -640,7 +615,6 @@ sub actions_interface_bond # ( $json_obj, $bond )
 
 		if ( $state )
 		{
-			# Error
 			my $errormsg = "The interface could not be set UP";
 			my $body = {
 						 description => $description,
@@ -653,7 +627,6 @@ sub actions_interface_bond # ( $json_obj, $bond )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "Action accepted values are: up, down or destroy";
 		my $body = {
 					 description => $description,
@@ -664,7 +637,6 @@ sub actions_interface_bond # ( $json_obj, $bond )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	# Success
 	my $body = {
 				 description => $description,
 				 params      =>  { action => $json_obj->{ action } },
@@ -676,19 +648,21 @@ sub actions_interface_bond # ( $json_obj, $bond )
 sub modify_interface_bond # ( $json_obj, $bond )
 {
 	my $json_obj = shift;
-	my $bond = shift;
+	my $bond     = shift;
+
+	require Zevenet::Net::Core;
+	require Zevenet::Net::Route;
+	require Zevenet::Net::Interface;
 
 	my $description = "Modify bond address";
 	my $ip_v = 4;
 
 	# validate BOND NAME
-	require Zevenet::Net::Interface;
 	my @system_interfaces = &getInterfaceList();
 	my $type = &getInterfaceType( $bond );
 
 	unless ( grep( { $bond eq $_ } @system_interfaces ) && $type eq 'bond' )
 	{
-		# Error
 		my $errormsg = "Nic interface not found.";
 		my $body = {
 					 description => $description,
@@ -701,7 +675,6 @@ sub modify_interface_bond # ( $json_obj, $bond )
 
 	if ( grep { !/^(?:ip|netmask|gateway)$/ } keys %$json_obj )
 	{
-		# Error
 		my $errormsg = "Parameter not recognized";
 		my $body = {
 					 description => $description,
@@ -714,7 +687,6 @@ sub modify_interface_bond # ( $json_obj, $bond )
 
 	unless ( exists $json_obj->{ ip } || exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
 	{
-		# Error
 		my $errormsg = "No parameter received to be configured";
 		my $body = {
 					 description => $description,
@@ -730,7 +702,6 @@ sub modify_interface_bond # ( $json_obj, $bond )
 	{
 		unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) || $json_obj->{ ip } eq '' )
 		{
-			# Error
 			my $errormsg = "IP Address is not valid.";
 			my $body = {
 						 description => $description,
@@ -753,7 +724,6 @@ sub modify_interface_bond # ( $json_obj, $bond )
 	{
 		unless ( defined( $json_obj->{ netmask } ) && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
 		{
-			# Error
 			my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
 			my $body = {
 						 description => $description,
@@ -770,7 +740,6 @@ sub modify_interface_bond # ( $json_obj, $bond )
 	{
 		unless ( defined( $json_obj->{ gateway } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) || $json_obj->{ gateway } eq '' )
 		{
-			# Error
 			my $errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
 			my $body = {
 						 description => $description,
@@ -787,9 +756,6 @@ sub modify_interface_bond # ( $json_obj, $bond )
 
 	if ( $if_ref )
 	{
-		require Zevenet::Net::Core;
-		require Zevenet::Net::Route;
-
 		# Delete old IP and Netmask from system to replace it
 		&delIp( $if_ref->{name}, $if_ref->{addr}, $if_ref->{mask} );
 
@@ -808,7 +774,6 @@ sub modify_interface_bond # ( $json_obj, $bond )
 
 	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
 	{
-		# Error
 		my $errormsg = "Cannot configure the interface without address or without netmask.";
 		my $body = {
 					 description => $description,
@@ -818,9 +783,6 @@ sub modify_interface_bond # ( $json_obj, $bond )
 
 		&httpResponse({ code => 400, body => $body });
 	}
-
-	require Zevenet::Net::Core;
-	require Zevenet::Net::Route;
 
 	eval {
 
@@ -849,10 +811,8 @@ sub modify_interface_bond # ( $json_obj, $bond )
 		&setInterfaceConfig( $if_ref ) or die;
 	};
 
-	# Print params
 	if ( ! $@ )
 	{
-		# Success
 		my $body = {
 					 description => $description,
 					 params      => $json_obj,
@@ -862,7 +822,6 @@ sub modify_interface_bond # ( $json_obj, $bond )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "Errors found trying to modify interface $bond";
 		my $body = {
 					 description => $description,
@@ -873,6 +832,5 @@ sub modify_interface_bond # ( $json_obj, $bond )
 		&httpResponse({ code => 400, body => $body });
 	}
 }
-
 
 1;

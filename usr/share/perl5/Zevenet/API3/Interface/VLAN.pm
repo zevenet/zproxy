@@ -28,6 +28,9 @@ sub new_vlan # ( $json_obj )
 {
 	my $json_obj = shift;
 
+	require Zevenet::Net::Util;
+	require Zevenet::Net::Validate;
+
 	my $description = "Add a vlan interface";
 
 	# validate VLAN NAME
@@ -52,7 +55,6 @@ sub new_vlan # ( $json_obj )
 	}
 	
 	# validate PARENT
-	require Zevenet::Net::Validate;
 	my $parent_exist = &ifexist($json_obj->{ parent });
 
 	unless ( $parent_exist eq "true" )
@@ -136,7 +138,6 @@ sub new_vlan # ( $json_obj )
 
 	# FIXME: Check IPv6 compatibility
 	# Check new IP address is not in use
-	require Zevenet::Net::Util;
 	my @activeips = &listallips();
 
 	for my $ip ( @activeips )
@@ -170,8 +171,7 @@ sub new_vlan # ( $json_obj )
 	## Check netmask errors for IPv6
 	#if ( $json_obj->{ ip_v } == 6 && ( $json_obj->{netmask} !~ /^\d+$/ || $json_obj->{netmask} > 128 || $json_obj->{netmask} < 0 ) )
 	#{
-	#	# Error
-    #    my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric [0-128].";
+    #	my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric [0-128].";
 	#	my $body = {
 	#				 description => $description,
 	#				 error       => "true",
@@ -209,7 +209,6 @@ sub new_vlan # ( $json_obj )
 				mac     => $socket->if_hwaddr( $if_ref->{ dev } ),
 	};
 
-	# No errors
 	require Zevenet::Net::Core;
 	require Zevenet::Net::Route;
 	require Zevenet::Net::Interface;
@@ -317,9 +316,10 @@ sub delete_interface_vlan # ( $vlan )
 
 sub get_vlan_list # ()
 {
-	my @output_list;
+	require Zevenet::Net::Interface;
 
 	my $description = "List VLAN interfaces";
+	my @output_list;
 
 	# get cluster interface
 	my $cluster_if;
@@ -328,8 +328,6 @@ sub get_vlan_list # ()
 		my $zcl_conf  = &getZClusterConfig();
 		$cluster_if = $zcl_conf->{ _ }->{ interface };
 	}
-
-	require Zevenet::Net::Interface;
 
 	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
 	{
@@ -493,7 +491,6 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 		# validate PARENT INTERFACE STATUS
 		unless ( $parent_if_status eq 'up' )
 		{
-			# Error
 			my $errormsg = "The interface $if_ref->{name} has a parent interface DOWN, check the interfaces status";
 			my $body = {
 						 description => $description,
@@ -567,7 +564,7 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 sub modify_interface_vlan # ( $json_obj, $vlan )
 {
 	my $json_obj = shift;
-	my $vlan = shift;
+	my $vlan     = shift;
 
 	require Zevenet::Net::Interface;
 
@@ -635,7 +632,6 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 	## Check netmask errors for IPv6
 	#if ( $ip_v == 6 && ( $json_obj->{netmask} !~ /^\d+$/ || $json_obj->{netmask} > 128 || $json_obj->{netmask} < 0 ) )
 	#{
-	#	# Error
 	#	my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric.";
 	#	my $body = {
 	#				 description => $description,

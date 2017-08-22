@@ -58,7 +58,6 @@ sub delete_interface_nic # ( $nic )
 
 	if ( ! $@ )
 	{
-		# Success
 		my $message = "The configuration for the network interface $nic has been deleted.";
 		my $body = {
 					 description => $description,
@@ -70,7 +69,6 @@ sub delete_interface_nic # ( $nic )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "The configuration for the network interface $nic can't be deleted.";
 		my $body = {
 					 description => $description,
@@ -194,7 +192,6 @@ sub get_nic # ()
 	}
 	else
 	{
-		# Error
 		my $errormsg = "Nic interface not found.";
 		my $body = {
 					 description => $description,
@@ -219,7 +216,6 @@ sub actions_interface_nic # ( $json_obj, $nic )
 	# validate NIC
 	unless ( grep { $nic eq $_->{ name } } &getInterfaceTypeList( 'nic' ) )
 	{
-		# Error
 		my $errormsg = "Nic interface not found";
 		my $body = {
 					 description => $description,
@@ -233,7 +229,6 @@ sub actions_interface_nic # ( $json_obj, $nic )
 	# reject not accepted parameters
 	if ( grep { $_ ne 'action' } keys %$json_obj )
 	{
-		# Error
 		my $errormsg = "Only the parameter 'action' is accepted";
 		my $body = {
 					 description => $description,
@@ -255,7 +250,6 @@ sub actions_interface_nic # ( $json_obj, $nic )
 		# Delete routes in case that it is not a vini
 		&delRoutes( "local", $if_ref ) if $if_ref;
 
-		# Add IP
 		&addIp( $if_ref ) if $if_ref;
 
 		my $state = &upIf( { name => $nic }, 'writeconf' );
@@ -271,7 +265,6 @@ sub actions_interface_nic # ( $json_obj, $nic )
 		}
 		else
 		{
-			# Error
 			my $errormsg = "The interface could not be set UP";
 			my $body = {
 						 description => $description,
@@ -290,7 +283,6 @@ sub actions_interface_nic # ( $json_obj, $nic )
 
 		if ( $state )
 		{
-			# Error
 			my $errormsg = "The interface could not be set DOWN";
 			my $body = {
 						 description => $description,
@@ -303,7 +295,6 @@ sub actions_interface_nic # ( $json_obj, $nic )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "Action accepted values are: up or down";
 		my $body = {
 					 description => $description,
@@ -314,7 +305,6 @@ sub actions_interface_nic # ( $json_obj, $nic )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	# Success
 	my $body = {
 				 description => $description,
 				 params      =>  { action => $json_obj->{ action } },
@@ -328,7 +318,6 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	require Zevenet::Net::Interface;
 	require Zevenet::Net::Core;
 	require Zevenet::Net::Route;
-	#~ require Zevenet::Net::Bonding;
 
 	my $json_obj = shift;
 	my $nic = shift;
@@ -342,7 +331,6 @@ sub modify_interface_nic # ( $json_obj, $nic )
 
 	unless ( grep( { $nic eq $_ } @system_interfaces ) && $type eq 'nic' )
 	{
-		# Error
 		my $errormsg = "Nic interface not found.";
 		my $body = {
 					 description => $description,
@@ -355,7 +343,6 @@ sub modify_interface_nic # ( $json_obj, $nic )
 
 	unless ( exists $json_obj->{ ip } || exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
 	{
-		# Error
 		my $errormsg = "No parameter received to be configured";
 		my $body = {
 					 description => $description,
@@ -371,7 +358,6 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	{
 		unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) || $json_obj->{ ip } eq '' )
 		{
-			# Error
 			my $errormsg = "IP Address is not valid.";
 			my $body = {
 						 description => $description,
@@ -388,7 +374,6 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	{
 		unless ( defined( $json_obj->{ netmask } ) && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
 		{
-			# Error
 			my $errormsg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
 			my $body = {
 						 description => $description,
@@ -405,7 +390,6 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	{
 		unless ( defined( $json_obj->{ gateway } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) || $json_obj->{ gateway } eq '' )
 		{
-			# Error
 			my $errormsg = "Gateway Address $json_obj->{gateway} structure is not ok.";
 			my $body = {
 						 description => $description,
@@ -440,7 +424,6 @@ sub modify_interface_nic # ( $json_obj, $nic )
 
 	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
 	{
-		# Error
 		my $errormsg = "Cannot configure the interface without address or without netmask.";
 		my $body = {
 					 description => $description,
@@ -453,8 +436,6 @@ sub modify_interface_nic # ( $json_obj, $nic )
 
 	eval {
 		# Add new IP, netmask and gateway
-		#~ die if &addIp( $if_ref );
-
 		# sometimes there are expected errors pending to be controlled
 		&addIp( $if_ref );
 
@@ -480,10 +461,8 @@ sub modify_interface_nic # ( $json_obj, $nic )
 		&setInterfaceConfig( $if_ref ) or die;
 	};
 
-	# Print params
 	if ( ! $@ )
 	{
-		# Success
 		my $body = {
 					 description => $description,
 					 params      => $json_obj,
@@ -493,7 +472,6 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "Errors found trying to modify interface $nic";
 		my $body = {
 					 description => $description,
@@ -504,6 +482,5 @@ sub modify_interface_nic # ( $json_obj, $nic )
 		&httpResponse({ code => 400, body => $body });
 	}
 }
-
 
 1;

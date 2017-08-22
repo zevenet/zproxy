@@ -36,8 +36,8 @@ sub new_farm_zone # ( $json_obj, $farmname )
 	# Check that the farm exists
 	require Zevenet::Farm::Core;
 
-	if ( &getFarmFile( $farmname ) == -1 ) {
-		# Error
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
 					 description => "New zone",
@@ -54,7 +54,6 @@ sub new_farm_zone # ( $json_obj, $farmname )
 			 "ZAPI error, trying to create a new zone in farm $farmname, invalid zone name."
 		);
 
-		# Error
 		my $errormsg = "Invalid zone name, please insert a valid value.";
 		my $body = {
 					 description => "New zone " . $json_obj->{ id },
@@ -86,13 +85,13 @@ sub new_farm_zone # ( $json_obj, $farmname )
 	require Zevenet::Farm::GSLB::Zone;
 
 	my $result = &setGSLBFarmNewZone( $farmname, $json_obj->{ id } );
-	if ( $result eq "0" )
+
+	if ( $result == 0 )
 	{
 		&zenlog(
 			"ZAPI success, a new zone has been created in farm $farmname with id $json_obj->{id}."
 		);
 
-		# Success
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
 			require Zevenet::Cluster;
@@ -114,7 +113,6 @@ sub new_farm_zone # ( $json_obj, $farmname )
 			"ZAPI error, trying to create a new zone in farm $farmname with id $json_obj->{id}, it's not possible to create the zone."
 		);
 
-		# Error
 		my $errormsg = "It's not possible to create the zone " . $json_obj->{ id };
 		my $body = {
 								   description => "New zone " . $json_obj->{ id },
@@ -133,12 +131,13 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	my $farmname = shift;
 	my $zone     = shift;
 
+	require Zevenet::Farm::Core;
+	require Zevenet::Farm::GSLB::Zone;
+
 	my $description = "New zone resource";
 	my $default_ttl = '';
 
 	# validate FARM NAME
-	require Zevenet::Farm::Core;
-
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -165,8 +164,6 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	}
 
 	# validate ZONE
-	require Zevenet::Farm::GSLB::Zone;
-
 	unless ( grep { $_ eq $zone } &getGSLBFarmZones( $farmname ) )
 	{
 		my $errormsg = "Could not find the requested zone.";
@@ -186,7 +183,6 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter zone resource name (rname) doesn't exist."
 		);
 
-		# Error
 		my $errormsg =
 		  "The parameter zone resource name (rname) doesn't exist, please insert a valid value.";
 		my $body = {
@@ -207,7 +203,6 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter time to live value (ttl) doesn't exist."
 		);
 
-		# Error
 		my $errormsg =
 		  "The parameter time to live value (ttl) doesn't exist, please insert a valid value.";
 		my $body = {
@@ -226,7 +221,6 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter DNS record type (type) doesn't exist."
 		);
 
-		# Error
 		my $errormsg =
 		  "The parameter DNS record type (type) doesn't exist, please insert a valid value.";
 		my $body = {
@@ -259,7 +253,6 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 		$errormsg .= " $json_obj->{ rname } not added to zone $zone";
 		&zenlog( $errormsg );
 
-		# Error
 		$errormsg =
 		  "The parameter zone resource server (rdata) doesn't correct format, please insert a valid value.";
 		my $body = {
@@ -289,7 +282,6 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 			"ZAPI success, a new resource has been created in zone $zone in farm $farmname."
 		);
 
-		# Success
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
 			require Zevenet::Cluster;
@@ -330,7 +322,6 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, it's not possible to create a new resource."
 		);
 
-		# Error
 		my $errormsg =
 		  "It's not possible to create a new resource in the zone $zone in farm $farmname.";
 		my $body = {
@@ -358,7 +349,6 @@ sub gslb_zone_resources # ( $farmname, $zone )
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		# Error
 		my $errormsg = "Farm name not found";
 		my $body = {
 				description => $description,
@@ -409,7 +399,6 @@ sub gslb_zone_resources # ( $farmname, $zone )
 		$resource->{ ttl } += 0 if $resource->{ ttl };
 	}
 
-	# Success
 	my $body = {
 				 description => $description,
 				 params      => $resources,
@@ -432,7 +421,6 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
 					   description => $description,
@@ -533,7 +521,6 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		}
 	}
 
-
 	my $auxType = $rsc->{ type };
 	my $auxData = $rsc->{ data };
 
@@ -629,7 +616,6 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 			"ZAPI success, some parameters have been changed in the resource $id_resource in zone $zone in farm $farmname."
 		);
 
-		# Success
 		my $message = "Resource modified";
 		my $body = {
 					 description => $description,
@@ -641,6 +627,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		require Zevenet::Farm::GSLB::Validate;
 
 		my $checkConf = &getGSLBCheckConf  ( $farmname );
+
 		if( $checkConf )
 		{	
 			$body->{ warning }  =  $checkConf;
@@ -654,7 +641,6 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 			"ZAPI error, trying to modify the resources in a farm $farmname, it's not possible to modify the resource."
 		);
 
-		# Error
 		my $errormsg = "Errors found trying to modify farm $farmname";
 		my $body = {
 					 description => $description,
@@ -675,8 +661,8 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 	require Zevenet::Farm::Core;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
-		# Error
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
 					 description => "Modify zone",
@@ -724,7 +710,6 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 			"ZAPI success, some parameters have been changed  in zone $zone in farm $farmname."
 		);
 
-		# Success
 		my $body = {
 					 description => "Modify zone $zone in farm $farmname",
 					 params      => $json_obj,
@@ -738,7 +723,6 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 			"ZAPI error, trying to modify the zones in a farm $farmname, it's not possible to modify the zone $zone."
 		);
 
-		# Error
 		my $errormsg = "Errors found trying to modify farm $farmname";
 		my $body = {
 					 description => "Modify zone $zone in farm $farmname",
@@ -758,11 +742,11 @@ sub delete_zone # ( $farmname, $zone )
 	my ( $farmname, $zone ) = @_;
 
 	require Zevenet::Farm::Core;
+	require Zevenet::Farm::GSLB::Zone;
 
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
 					 description => "Delete zone",
@@ -773,15 +757,12 @@ sub delete_zone # ( $farmname, $zone )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	require Zevenet::Farm::GSLB::Zone;
-
 	&setGSLBFarmDeleteZone( $farmname, $zone );
 
 	if ( $? eq 0 )
 	{
 		&zenlog( "ZAPI success, the zone $zone in farm $farmname has been deleted." );
 
-		# Success
 		require Zevenet::Farm::Base;
 
 		if ( &getFarmStatus( $farmname ) eq 'up' )
@@ -794,10 +775,10 @@ sub delete_zone # ( $farmname, $zone )
 
 		my $message = "The zone $zone in farm $farmname has been deleted.";
 		my $body = {
-								   description => "Delete zone $zone in farm $farmname.",
-								   success     => "true",
-								   message     => $message
-								 };
+					 description => "Delete zone $zone in farm $farmname.",
+					 success     => "true",
+					 message     => $message
+		};
 
 		&httpResponse({ code => 200, body => $body });
 	}
@@ -807,7 +788,6 @@ sub delete_zone # ( $farmname, $zone )
 			"ZAPI error, trying to delete the zone $zone in farm $farmname, the zone hasn't been deleted."
 		);
 
-		# Error
 		my $errormsg = "Zone $zone in farm $farmname hasn't been deleted.";
 		my $body = {
 					 description => "Delete zone $zone in farm $farmname",
@@ -824,14 +804,13 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 {
 	my ( $farmname, $zone, $resource ) = @_;
 
-	my $description = "Delete zone resource";
-
 	require Zevenet::Farm::Core;
+
+	my $description = "Delete zone resource";
 
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
 					 description => $description,
@@ -864,7 +843,6 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 			"ZAPI error, trying to delete the resource $resource in zone $zone in farm $farmname, invalid zone name."
 		);
 
-		# Error
 		my $errormsg = "Invalid zone name, please insert a valid value.";
 		my $body = {
 					 description => $description,
@@ -888,7 +866,6 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 			"ZAPI error, trying to delete the resource $resource in zone $zone in farm $farmname, invalid resource id."
 		);
 
-		# Error
 		my $errormsg = "Invalid resource id, please insert a valid value.";
 		my $body = {
 					 description => $description,
@@ -907,7 +884,6 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 			"ZAPI success, the resource $resource in zone $zone in farm $farmname has been deleted."
 		);
 
-		# Success
 		require Zevenet::Farm::Base;
 
 		if ( &getFarmStatus( $farmname ) eq 'up' )
@@ -918,7 +894,6 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 		}
 
-		#~ my $message = "The resource with id $resource in the zone $zone of the farm $farmnamehas been deleted.";
 		my $message = "Resource removed";
 		my $body = {
 					 description => $description,
@@ -934,7 +909,6 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 			"ZAPI error, trying to delete the resource $resource in zone $zone in farm $farmname, it's not possible to delete the resource."
 		);
 
-		# Error
 		my $errormsg =
 		  "It's not possible to delete the resource with id $resource in the zone $zone of the farm $farmname.";
 		my $body = {

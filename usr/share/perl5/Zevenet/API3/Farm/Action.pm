@@ -30,13 +30,14 @@ sub farm_actions # ( $json_obj, $farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
+	require Zevenet::Farm::Action;
+
 	my $description = "Farm actions";
 	my $action;
 
-	# calidate FARM NAME
+	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
 					 description => $description,
@@ -67,7 +68,6 @@ sub farm_actions # ( $json_obj, $farmname )
 	}
 	
 	# Functions
-	require Zevenet::Farm::Action;
 	if ( $action eq "stop" )
 	{
 		my $status = &runFarmStop( $farmname, "true" );
@@ -180,8 +180,6 @@ sub farm_actions # ( $json_obj, $farmname )
 		}
 	}
 
-	# Print params
-	# Success
 	my $body = {
 				 description => "Set a new action in $farmname",
 				 params      => { action => $json_obj->{ action } },
@@ -204,7 +202,6 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) eq '-1' )
 	{
-		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
 					 description => $description,
@@ -216,9 +213,8 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	}
 
 	# validate FARM TYPE
-	if ( &getFarmType( $farmname ) !~ /^(?:http|https)$/ )
+	if ( &getFarmType( $farmname ) !~ /^https?$/ )
 	{
-		# Error
 		my $errormsg = "Only HTTP farm profile supports this feature.";
 		my $body = {
 					 description => $description,
@@ -247,7 +243,6 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 
 		if ( !$found_service )
 		{
-			# Error
 			my $errormsg = "Could not find the requested service.";
 			my $body = {
 						 description => $description,
@@ -287,7 +282,6 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 
 		if ( !$be )
 		{
-			# Error
 			my $errormsg = "Could not find a service backend with such id.";
 			my $body = {
 						 description => $description,
@@ -299,12 +293,11 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 		}
 	}
 
-	# Not allow modificate the maintenance status if the farm needs to restart
+	# Do not allow to modify the maintenance status if the farm needs to be restarted
 	require Zevenet::Farm::Base;
 
 	if ( &getFarmLock ($farmname) != -1 )
 	{
-		# Error
 		my $errormsg = "The farm needs to be restarted before to apply this action.";
 		my $body = {
 					 description => $description,
@@ -414,7 +407,6 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
 					 description => $description,
@@ -428,7 +420,6 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 	# validate FARM TYPE
 	unless ( &getFarmType( $farmname ) eq 'l4xnat' )
 	{
-		# Error
 		my $errormsg = "Only L4xNAT farm profile supports this feature.";
 		my $body = {
 					 description => $description,
@@ -447,7 +438,6 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 
 	if ( !$backend_line )
 	{
-		# Error
 		my $errormsg = "Could not find a backend with such id.";
 		my $body = {
 					 description => $description,
@@ -526,7 +516,6 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	# Success
 	my $body = {
 				 description => $description,
 				 params      => { action => $json_obj->{ action } },

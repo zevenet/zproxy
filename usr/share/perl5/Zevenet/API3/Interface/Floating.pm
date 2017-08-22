@@ -36,7 +36,6 @@ sub delete_interface_floating # ( $floating )
 	# validate BOND
 	unless ( $float_ifaces_conf->{_}->{ $floating } )
 	{
-		# Error
 		my $errormsg = "Floating interface not found";
 		my $body = {
 					 description => $description,
@@ -59,7 +58,6 @@ sub delete_interface_floating # ( $floating )
 	};
 	if ( ! $@ )
 	{
-		# Success
 		my $message = "The floating interface has been removed.";
 		my $body = {
 					 description => $description,
@@ -71,7 +69,6 @@ sub delete_interface_floating # ( $floating )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "The floating interface could not be removed";
 		my $body = {
 					 description => $description,
@@ -91,11 +88,8 @@ sub modify_interface_floating # ( $json_obj, $floating )
 
 	my $description = "Modify floating interface";
 
-	#~ &zenlog("modify_interface_floating interface:$interface json_obj:".Dumper $json_obj );
-
 	if ( grep { $_ ne 'floating_ip' } keys %{$json_obj} )
 	{
-		# Error
 		my $errormsg = "Parameter not recognized";
 		my $body = {
 					 description => $description,
@@ -108,7 +102,6 @@ sub modify_interface_floating # ( $json_obj, $floating )
 
 	unless ( keys %{ $json_obj } )
 	{
-		# Error
 		my $errormsg = "Need to use floating_ip parameter";
 		my $body = {
 					 description => $description,
@@ -126,7 +119,6 @@ sub modify_interface_floating # ( $json_obj, $floating )
 
 	unless ( $if_ref )
 	{
-		# Error
 		my $errormsg = "Floating interface not found";
 		my $body = {
 					 description => $description,
@@ -144,7 +136,6 @@ sub modify_interface_floating # ( $json_obj, $floating )
 		# validate ADDRESS format
 		unless ( $json_obj->{ floating_ip } && &getValidFormat( 'IPv4_addr', $json_obj->{ floating_ip } ) )
 		{
-			# Error
 			my $errormsg = "Invalid floating address format";
 			my $body = {
 						 description => $description,
@@ -161,7 +152,6 @@ sub modify_interface_floating # ( $json_obj, $floating )
 		# validate ADDRESS in system
 		unless ( $if_ref )
 		{
-			# Error
 			my $errormsg = "Virtual interface with such address not found";
 			my $body = {
 						 description => $description,
@@ -190,7 +180,6 @@ sub modify_interface_floating # ( $json_obj, $floating )
 
 	unless ( $@ )
 	{
-		# Error
 		my $message = "Floating interface modification done";
 		my $body = {
 					 description => $description,
@@ -202,7 +191,6 @@ sub modify_interface_floating # ( $json_obj, $floating )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "Floating interface modification failed";
 		my $body = {
 					 description => $description,
@@ -229,7 +217,6 @@ sub get_interfaces_floating
 
 	for my $iface ( @ifaces )
 	{
-		#~ &zenlog( "getActiveInterfaceList: $iface->{ name }" );
 		next unless $iface->{ ip_v } == 4;
 		next if $iface->{ type } eq 'virtual';
 		next unless $iface->{ addr };
@@ -250,8 +237,6 @@ sub get_interfaces_floating
 			floating_ip => $floating_ip,
 			interface_virtual => $floating_interface,
 		  };
-
-		#~ $output{ $iface->{name} } = $iface->{name} unless $output{ $iface->{name} };
 	}
 
 	my $body = {
@@ -279,7 +264,6 @@ sub get_floating
 
 	for my $iface ( @ifaces )
 	{
-		#~ &zenlog( "getActiveInterfaceList: $iface->{ name }" );
 		next unless $iface->{ ip_v } == 4;
 		next if $iface->{ type } eq 'virtual';
 		next unless $iface->{ name } eq $floating;
@@ -289,7 +273,6 @@ sub get_floating
 
 		unless ( $iface->{ addr } )
 		{
-			# Error
 			my $errormsg = "This interface has no address configured";
 			my $body = {
 						 description => $description,
@@ -314,8 +297,6 @@ sub get_floating
 					floating_ip => $floating_ip,
 					interface_virtual => $floating_interface,
 		};
-
-		#~ $output{ $iface->{name} } = $iface->{name} unless $output{ $iface->{name} };
 	}
 
 	my $body = {

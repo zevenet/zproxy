@@ -127,7 +127,6 @@ sub delete_interface # ( $if )
 		
 		if ( $ip_v != 4 && $ip_v != 6 )
 		{
-			# Error
 			my $errormsg = "The ip version value $ip_v must be 4 or 6";
 			my $body = {
 						 description => "Delete interface $if",
@@ -145,7 +144,6 @@ sub delete_interface # ( $if )
 	# Check input errors and delete interface
 	if ( $if =~ /^$/ )
 	{
-		# Error
 		my $errormsg = "Interface name $if can't be empty";
 		my $body = {
 					 description => "Delete interface $if",
@@ -160,7 +158,6 @@ sub delete_interface # ( $if )
 	
 	if ( !$if_ref )
 	{
-		# Error
 		my $errormsg = "The stack IPv$ip_v in Network interface $if doesn't exist.";
 		my $body = {
 					 description => "Delete interface $if",
@@ -177,7 +174,6 @@ sub delete_interface # ( $if )
 		&downIf( $if_ref, 'writeconf' );
 		&delIf( $if_ref );
 
-		# Success
 		my $message = "The stack IPv$ip_v in Network interface $if has been deleted.";
 		my $body = {
 					 description => "Delete interface $if",
@@ -189,7 +185,6 @@ sub delete_interface # ( $if )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "The stack IPv$ip_v in Network interface $if can't be deleted";
 		my $body = {
 					 description => "Delete interface $if",

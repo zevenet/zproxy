@@ -53,7 +53,6 @@ sub modify_gateway # ( $json_obj )
 	# verify ONLY ACCEPTED parameters received
 	if ( grep { $_ !~ /^(?:address|interface)$/ } keys %$json_obj )
 	{
-		# Error
 		my $errormsg = "Parameter received not recognized";
 		my $body = {
 					 description => $description,
@@ -70,7 +69,6 @@ sub modify_gateway # ( $json_obj )
 		# verify AT LEAST ONE parameter received
 		unless ( exists $json_obj->{ address } || exists $json_obj->{ interface } )
 		{
-			# Error
 			my $errormsg = "No parameter received to be configured";
 			my $body = {
 						 description => $description,
@@ -85,7 +83,6 @@ sub modify_gateway # ( $json_obj )
 	{
 		unless ( exists $json_obj->{ address } && exists $json_obj->{ interface } )
 		{
-			# Error
 			my $errormsg = "Gateway requires address and interface to be configured";
 			my $body = {
 						 description => $description,
@@ -102,7 +99,6 @@ sub modify_gateway # ( $json_obj )
 	{
 		unless ( defined( $json_obj->{ address } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ address } ) )
 		{
-			# Error
 			my $errormsg = "Gateway address is not valid.";
 			my $body = {
 						 description => $description,
@@ -120,11 +116,9 @@ sub modify_gateway # ( $json_obj )
 		require Zevenet::Net::Interface;
 
 		my @system_interfaces = &getInterfaceList();
-		#~ my $type = &getInterfaceType( $nic );
 
 		unless ( grep( { $json_obj->{ interface } eq $_ } @system_interfaces ) )
 		{
-			# Error
 			my $errormsg = "Gateway interface not found.";
 			my $body = {
 						 description => $description,
@@ -159,7 +153,6 @@ sub modify_gateway # ( $json_obj )
 	}
 	else
 	{
-		# Error
 		my $errormsg = "The default gateway hasn't been changed";
 		my $body = {
 					 description => $description,
