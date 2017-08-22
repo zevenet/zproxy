@@ -33,7 +33,8 @@ require '/usr/local/zenloadbalancer/www/functions.cgi';
 
 #~ my $primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
 
-&zenlog( "ARGV:@ARGV" ) if &debug();
+#&zenlog( "ARGV:@ARGV" ) if &debug();
+&zenlog( "ARGV:@ARGV:" );
 
 my $object = shift @ARGV;
 my $command = shift @ARGV;
@@ -433,7 +434,7 @@ sub setNodeStatusBackup
 	system( "$zenino stop &" ) unless system('pgrep zeninotify.pl');
 
 	# stop farmguardians
-	system("pkill `pgrep farmguardian`");
+	system("kill `pgrep farmguardian`");
 
 	# block/disable ip announces ( arp and neigh )
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
@@ -464,7 +465,7 @@ sub setNodeStatusMaintenance
         system( "$zenino stop" );
 
 	# stop farmguardian
-	system("pkill `pgrep farmguardian`");
+	system("kill `pgrep farmguardian`");
 
 	# block/disable ip announces ( arp and neigh )
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
