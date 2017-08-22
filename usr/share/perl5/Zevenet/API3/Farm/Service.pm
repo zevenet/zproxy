@@ -25,7 +25,6 @@ use strict;
 
 use Zevenet::Farm::Core;
 
-
 # POST
 
 sub new_farm_service    # ( $json_obj, $farmname )
@@ -33,14 +32,14 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
-	# Check that the farm exists
+	my $description = "New service";
+
+	# Check if the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
-
 		my $body = {
-					 description => "New service",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -50,189 +49,117 @@ sub new_farm_service    # ( $json_obj, $farmname )
 
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq "http" || $type eq "https" )
+	# validate farm profile
+	if ( $type eq "gslb" && eval { require Zevenet::API3::Farm::GSLB; } )
 	{
-		require Zevenet::Farm::HTTP::Service;
+		&new_gslb_farm_service( $json_obj, $farmname );
+	}
+	elsif ( $type !~ /(?:https?)/ )
+	{
+		my $errormsg = "The farm profile $type does not support services.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
 
-		if ( $json_obj->{ id } =~ /^$/ )
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, invalid service name."
-			);
-
-			# Error
-			my $errormsg = "Invalid service, please insert a valid value.";
-
-			my $body = {
-						 description => "New service",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse( { code => 400, body => $body } );
-		}
-
-		my $result = &setFarmHTTPNewService( $farmname, $json_obj->{ id } );
-
-		if ( $result eq "0" )
-		{
-			&zenlog(
-				"ZAPI success, a new service has been created in farm $farmname with id $json_obj->{id}."
-			);
-
-			# Success
-			my $body = {
-						 description => "New service " . $json_obj->{ id },
-						 params      => { id => $json_obj->{ id } },
-			};
-
-			require Zevenet::Farm::Base;
-
-			if ( &getFarmStatus( $farmname ) eq 'up' )
-			{
-				require Zevenet::Farm::Action;
-				&setFarmRestart( $farmname );
-				$body->{ status } = 'needed restart';
-			}
-
-			&httpResponse( { code => 201, body => $body } );
-		}
-		if ( $result eq "2" )
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, new service $json_obj->{id} can't be empty."
-			);
-
-			# Error
-			my $errormsg = "New service can't be empty.";
-			my $body = {
-						 description => "New service " . $json_obj->{ id },
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse( { code => 400, body => $body } );
-		}
-		if ( $result eq "1" )
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, the service $json_obj->{id} already exists."
-			);
-
-			# Error
-			my $errormsg = "Service named " . $json_obj->{ id } . " already exists.";
-			my $body = {
-						 description => "New service " . $json_obj->{ id },
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse( { code => 400, body => $body } );
-		}
-		if ( $result eq "3" )
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, the service name $json_obj->{id} is not valid, only allowed numbers,letters and hyphens."
-			);
-
-			# Error
-			my $errormsg =
-			  "Service name is not valid, only allowed numbers, letters and hyphens.";
-			my $body = {
-						 description => "New service " . $json_obj->{ id },
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse( { code => 400, body => $body } );
-		}
+		&httpResponse({ code => 400, body => $body });
 	}
 
-	if ( $type eq "gslb" )
+	# HTTP profile
+	require Zevenet::Farm::Base;
+	require Zevenet::Farm::HTTP::Service;
+
+	# validate new service name
+	if ( $json_obj->{ id } eq '' )
 	{
-		require Zevenet::Farm::GSLB::Service;
+		&zenlog(
+			"ZAPI error, trying to create a new service in farm $farmname, invalid service name."
+		);
 
-		if ( $json_obj->{ id } =~ /^$/ )
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, invalid service name."
-			);
+		my $errormsg = "Invalid service, please insert a valid value.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
 
-			# Error
-			my $errormsg = "Invalid service, please insert a valid value.";
-			my $body = {
-						 description => "New service " . $json_obj->{ id },
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse( { code => 400, body => $body } );
-		}
-
-		if ( $json_obj->{ algorithm } =~ /^$/ )
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, invalid algorithm."
-			);
-
-			# Error
-			my $errormsg = "Invalid algorithm, please insert a valid value.";
-			my $body = {
-						 description => "New service " . $json_obj->{ id },
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse( { code => 400, body => $body } );
-		}
-
-		my $status = &setGSLBFarmNewService( $farmname,
-											 $json_obj->{ id },
-											 $json_obj->{ algorithm } );
-		if ( $status != -1 )
-		{
-			&zenlog(
-				"ZAPI success, a new service has been created in farm $farmname with id $json_obj->{id}."
-			);
-
-			# Success
-			my $body = {
-						 description => "New service " . $json_obj->{ id },
-						 params      => {
-									 id        => $json_obj->{ id },
-									 algorithm => $json_obj->{ algorithm }
-						 },
-			};
-
-			require Zevenet::Farm::Base;
-
-			if ( &getFarmStatus( $farmname ) eq 'up' )
-			{
-				require Zevenet::Farm::Action;
-
-				&setFarmRestart( $farmname );
-				$body->{ status } = 'needed restart';
-			}
-
-			&httpResponse( { code => 201, body => $body } );
-		}
-		else
-		{
-			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, it's not possible to create the service $json_obj->{id}."
-			);
-
-			# Error
-			my $errormsg = "It's not possible to create the service " . $json_obj->{ id };
-			my $body = {
-						 description => "New service " . $json_obj->{ id },
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse( { code => 400, body => $body } );
-		}
+		&httpResponse( { code => 400, body => $body } );
 	}
+
+	my $result = &setFarmHTTPNewService( $farmname, $json_obj->{ id } );
+
+	# check if a service with such name already exists
+	if ( $result == 1 )
+	{
+		&zenlog(
+			"ZAPI error, trying to create a new service in farm $farmname, the service $json_obj->{id} already exists."
+		);
+
+		my $errormsg = "Service named " . $json_obj->{ id } . " already exists.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse( { code => 400, body => $body } );
+	}
+
+	# check if the service name was empty
+	if ( $result == 2 )
+	{
+		&zenlog(
+			"ZAPI error, trying to create a new service in farm $farmname, new service $json_obj->{id} can't be empty."
+		);
+
+		my $errormsg = "New service can't be empty.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse( { code => 400, body => $body } );
+	}
+
+	# check if the service name has invalid characters
+	if ( $result == 3 )
+	{
+		&zenlog(
+			"ZAPI error, trying to create a new service in farm $farmname, the service name $json_obj->{id} is not valid, only allowed numbers,letters and hyphens."
+		);
+
+		my $errormsg =
+		  "Service name is not valid, only allowed numbers, letters and hyphens.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+
+		&httpResponse( { code => 400, body => $body } );
+	}
+
+	# no error found, return successful response
+	&zenlog(
+		"ZAPI success, a new service has been created in farm $farmname with id $json_obj->{id}."
+	);
+
+	my $body = {
+				 description => $description,
+				 params      => { id => $json_obj->{ id } },
+	};
+
+	if ( &getFarmStatus( $farmname ) eq 'up' )
+	{
+		require Zevenet::Farm::Action;
+
+		&setFarmRestart( $farmname );
+		$body->{ status } = 'needed restart';
+	}
+
+	&httpResponse( { code => 201, body => $body } );
 }
 
 # GET
@@ -242,13 +169,15 @@ sub farm_services
 {
 	my ( $farmname, $servicename ) = @_;
 
-	my $service;
-	my $description = "Get services of a farm";
+	require Zevenet::Farm::Config;
+	require Zevenet::Farm::HTTP::Service;
 
-	# Check that the farm exists
+	my $description = "Get services of a farm";
+	my $service;
+
+	# Check if the farm exists
 	if ( &getFarmFile( $farmname ) eq '-1' )
 	{
-		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
 		my $body = {
 				description => $description,
@@ -260,9 +189,10 @@ sub farm_services
 	}
 
 	my $type = &getFarmType( $farmname );
+
+	# check the farm type is supported
 	if ( $type !~ /http/i )
 	{
-		# Error
 		my $errormsg = "This functionality only is available for HTTP farms.";
 		my $body = {
 				description => $description,
@@ -273,11 +203,11 @@ sub farm_services
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	require Zevenet::Farm::HTTP::Service;
 	my @services = &getHTTPFarmServices( $farmname );
+
+	# check if the service is available
 	if ( ! grep ( /^$servicename$/, @services ) )
 	{
-		# Error
 		my $errormsg = "The required service does not exist.";
 		my $body = {
 				description => $description,
@@ -288,15 +218,14 @@ sub farm_services
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	require Zevenet::Farm::Config;
-	$service = &getServiceStruct ( $farmname, $servicename );
+	# no error found, return successful response
+	my $service = &getServiceStruct ( $farmname, $servicename );
+
 	foreach my $be ( @{ $service->{backends} } )
 	{
 		$be->{status} = "up" if $be->{status} eq "undefined";
 	}
 
-
-	# Success
 	my $body = {
 				 description => $description,
 				 services    	=> $service,
@@ -311,14 +240,17 @@ sub modify_services # ( $json_obj, $farmname, $service )
 {
 	my ( $json_obj, $farmname, $service ) = @_;
 
-	my $output_params;
+	require Zevenet::Farm::Base;
+	require Zevenet::Farm::Config;
+	require Zevenet::Farm::Service;
+
 	my $description = "Modify service";
+	my $output_params;
 	my $errormsg;
 
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
 
 		my $body = {
@@ -332,9 +264,9 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 	# validate FARM TYPE
 	my $type = &getFarmType( $farmname );
+
 	unless ( $type eq 'gslb' || $type eq 'http' || $type eq 'https' )
 	{
-		# Error
 		my $errormsg = "The $type farm profile does not support services.";
 		my $body = {
 					 description => $description,
@@ -346,14 +278,11 @@ sub modify_services # ( $json_obj, $farmname, $service )
 	}
 
 	# validate SERVICE
-	require Zevenet::Farm::Service;
 	my @services = &getFarmServices($farmname);
-
 	my $found_service = grep { $service eq $_ } @services;
 
 	if ( !$found_service )
 	{
-		# Error
 		my $errormsg = "Could not find the requested service.";
 		my $body = {
 					 description => $description,
@@ -366,320 +295,261 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 	my $error = "false";
 
-	if ( $type eq "http" || $type eq "https" )
+	# check if the farm profile gslb is supported
+	if ( $type eq "gslb" && eval { require Zevenet::API3::Farm::GSLB; } )
 	{
-		require Zevenet::Farm::Config;
+		$output_params = modify_gslb_service( $json_obj, $farmname, $service );
+	}
+	else
+	{
+		&zenlog(
+			"ZAPI error, farm profile $type not supported."
+		);
 
-		# Functions
-		if ( exists ( $json_obj->{ vhost } ) )
-		{
-			&setFarmVS( $farmname, $service, "vs", $json_obj->{ vhost } );
-		}
+		$errormsg = "Farm profile not supported";
 
-		if ( exists ( $json_obj->{ urlp } ) )
-		{
-			&setFarmVS( $farmname, $service, "urlp", $json_obj->{ urlp } );
-		}
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
 
-		my $redirecttype = &getFarmVS( $farmname, $service, "redirecttype" );
-
-		if ( exists ( $json_obj->{ redirect } ) )
-		{
-			my $redirect = $json_obj->{ redirect };
-
-			if ( $redirect =~ /^http\:\/\//i || $redirect =~ /^https:\/\//i || $redirect eq '' )
-			{
-				&setFarmVS( $farmname, $service, "redirect", $redirect );
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid redirect."
-				);
-			}
-		}
-
-		my $redirect = &getFarmVS( $farmname, $service, "redirect" );
-
-		if ( exists ( $json_obj->{ redirecttype } ) )
-		{
-			my $redirecttype = $json_obj->{ redirecttype };
-
-			if ( $redirecttype eq "default" )
-			{
-				&setFarmVS( $farmname, $service, "redirect", $redirect );
-			}
-			elsif ( $redirecttype eq "append" )
-			{
-				&setFarmVS( $farmname, $service, "redirectappend", $redirect );
-			}
-			elsif ( exists $json_obj->{ redirect } && $json_obj->{ redirect } )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid redirecttype."
-				);
-			}
-		}
-
-		if ( exists ( $json_obj->{ persistence } ) )
-		{
-			if ( $json_obj->{ persistence } =~ /^|IP|BASIC|URL|PARM|COOKIE|HEADER$/ )
-			{
-				my $session = $json_obj->{ persistence };
-				$session = 'nothing' if $session eq "";
-
-				my $status = &setFarmVS( $farmname, $service, "session", $session );
-
-				if ( $status != 0 )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the service $service in a farm $farmname, it's not possible to change the persistence parameter."
-					);
-				}
-			}
-		}
-
-		if ( exists ( $json_obj->{ ttl } ) )
-		{
-			if ( $json_obj->{ ttl } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid ttl, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ ttl } =~ /^\d+/ )
-			{
-				my $status = &setFarmVS( $farmname, $service, "ttl", "$json_obj->{ttl}" );
-				if ( $status != 0 )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the service $service in a farm $farmname, it's not possible to change the ttl parameter."
-					);
-				}
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid ttl, must be numeric."
-				);
-			}
-		}
-
-		if ( exists ( $json_obj->{ sessionid } ) )
-		{
-			&setFarmVS( $farmname, $service, "sessionid", $json_obj->{ sessionid } );
-		}
-
-		if ( exists ( $json_obj->{ leastresp } ) )
-		{
-			if ( $json_obj->{ leastresp } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid leastresp, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ leastresp } =~ /^true|false$/ )
-			{
-				if ( ( $json_obj->{ leastresp } eq "true" ) )
-				{
-					&setFarmVS( $farmname, $service, "dynscale", $json_obj->{ leastresp } );
-				}
-				elsif ( ( $json_obj->{ leastresp } eq "false" ) )
-				{
-					&setFarmVS( $farmname, $service, "dynscale", "" );
-				}
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid leastresp."
-				);
-			}
-		}
-
-		if ( exists ( $json_obj->{ cookieinsert } ) )
-		{
-			if ( $json_obj->{ cookieinsert } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookieinsert, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ cookieinsert } =~ /^true|false$/ )
-			{
-				if ( ( $json_obj->{ cookieinsert } eq "true" ) )
-				{
-					&setFarmVS( $farmname, $service, "cookieins", $json_obj->{ cookieinsert } );
-				}
-				elsif ( ( $json_obj->{ cookieinsert } eq "false" ) )
-				{
-					&setFarmVS( $farmname, $service, "cookieins", "" );
-				}
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookieinsert."
-				);
-			}
-		}
-
-		my $cookieins_status = &getHTTPFarmVS ($farmname,$service, 'cookieins');
-		if ( $json_obj->{ cookieinsert } eq "true"  || $cookieins_status eq 'true' )
-		{
-			if ( exists ( $json_obj->{ cookiedomain } ) )
-			{
-				&setFarmVS( $farmname, $service, "cookieins-domain", $json_obj->{ cookiedomain } );
-			}
-
-			if ( exists ( $json_obj->{ cookiename } ) )
-			{
-				&setFarmVS( $farmname, $service, "cookieins-name", $json_obj->{ cookiename } );
-			}
-
-			if ( exists ( $json_obj->{ cookiepath } ) )
-			{
-				&setFarmVS( $farmname, $service, "cookieins-path", $json_obj->{ cookiepath } );
-			}
-
-			if ( exists ( $json_obj->{ cookiettl } ) )
-			{
-				if ( $json_obj->{ cookiettl } =~ /^$/ )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookiettl, can't be blank."
-					);
-				}
-				else
-				{
-					&setFarmVS( $farmname, $service, "cookieins-ttlc", $json_obj->{ cookiettl } );
-				}
-			}
-		}
-
-		if ( exists ( $json_obj->{ httpsb } ) )
-		{
-			if ( $json_obj->{ httpsb } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid httpsb, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ httpsb } =~ /^true|false$/ )
-			{
-				if ( ( $json_obj->{ httpsb } eq "true" ) )
-				{
-					&setFarmVS( $farmname, $service, "httpsbackend", $json_obj->{ httpsb } );
-				}
-				elsif ( ( $json_obj->{ httpsb } eq "false" ) )
-				{
-					&setFarmVS( $farmname, $service, "httpsbackend", "" );
-				}
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid httpsb."
-				);
-			}
-		}
-
-		$output_params = &getHTTPServiceStruct( $farmname, $service );
+		&httpResponse({ code => 400, body => $body });
 	}
 
-	if ( $type eq "gslb" )
+	if ( exists ( $json_obj->{ vhost } ) )
 	{
-		# Functions
-		if ( $json_obj->{ deftcpport } =~ /^$/ )
+		&setFarmVS( $farmname, $service, "vs", $json_obj->{ vhost } );
+	}
+
+	if ( exists ( $json_obj->{ urlp } ) )
+	{
+		&setFarmVS( $farmname, $service, "urlp", $json_obj->{ urlp } );
+	}
+
+	my $redirecttype = &getFarmVS( $farmname, $service, "redirecttype" );
+
+	if ( exists ( $json_obj->{ redirect } ) )
+	{
+		my $redirect = $json_obj->{ redirect };
+
+		if ( $redirect =~ /^http\:\/\//i || $redirect =~ /^https:\/\//i || $redirect eq '' )
+		{
+			&setFarmVS( $farmname, $service, "redirect", $redirect );
+		}
+		else
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify the service $service in a farm $farmname, invalid deftcpport, can't be blank."
+				"ZAPI error, trying to modify the service $service in a farm $farmname, invalid redirect."
 			);
 		}
-		if ( $error eq "false" )
+	}
+
+	my $redirect = &getFarmVS( $farmname, $service, "redirect" );
+
+	if ( exists ( $json_obj->{ redirecttype } ) )
+	{
+		my $redirecttype = $json_obj->{ redirecttype };
+
+		if ( $redirecttype eq "default" )
 		{
-			# change to number format
-			$json_obj->{ deftcpport } += 0;
-			
-			my $old_deftcpport = &getGSLBFarmVS ($farmname,$service, 'dpc');
-			require Zevenet::Farm::Config;
-			&setFarmVS( $farmname, $service, "dpc", $json_obj->{ deftcpport } );
-			
-			# Update farmguardian
-			require Zevenet::Farm::GSLB::FarmGuardian;
-			my ( $fgTime, $fgScript ) = &getGSLBFarmGuardianParams( $farmname, $service );
-			
-			# Changing farm guardian port check
-			if ( $fgScript =~ s/-p $old_deftcpport/-p $json_obj->{ deftcpport }/ )
-			{
-				&setGSLBFarmGuardianParams( $farmname, $service, 'cmd', $fgScript );
-			}
-			
-			if ( $? eq 0 )
-			{
-				require Zevenet::Farm::GSLB::Config;
-				&runGSLBFarmReload( $farmname );
-			}
-			else
+			&setFarmVS( $farmname, $service, "redirect", $redirect );
+		}
+		elsif ( $redirecttype eq "append" )
+		{
+			&setFarmVS( $farmname, $service, "redirectappend", $redirect );
+		}
+		elsif ( exists $json_obj->{ redirect } && $json_obj->{ redirect } )
+		{
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify the service $service in a farm $farmname, invalid redirecttype."
+			);
+		}
+	}
+
+	if ( exists ( $json_obj->{ persistence } ) )
+	{
+		if ( $json_obj->{ persistence } =~ /^|IP|BASIC|URL|PARM|COOKIE|HEADER$/ )
+		{
+			my $session = $json_obj->{ persistence };
+			$session = 'nothing' if $session eq "";
+
+			my $status = &setFarmVS( $farmname, $service, "session", $session );
+
+			if ( $status != 0 )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, it's not possible to change the deftcpport parameter."
+					"ZAPI error, trying to modify the service $service in a farm $farmname, it's not possible to change the persistence parameter."
 				);
 			}
 		}
-
-		# FIXME: Read gslb configuration instead of returning input
-		$output_params = $json_obj;
 	}
 
-	# Print params
-	if ( $error ne "true" )
+	if ( exists ( $json_obj->{ ttl } ) )
 	{
-		require Zevenet::Farm::Base;
-
-		&zenlog(
-			"ZAPI success, some parameters have been changed in service $service in farm $farmname."
-		);
-
-		# Success
-		my $body = {
-			description => "Modify service $service in farm $farmname",
-			params      => $output_params,
-		};
-
-		if ( &getFarmStatus( $farmname ) eq 'up' )
+		if ( $json_obj->{ ttl } =~ /^$/ )
 		{
-			require Zevenet::Farm::Action;
-
-			&setFarmRestart( $farmname );
-			$body->{ status } = 'needed restart';
-			$body->{ info } = "There're changes that need to be applied, stop and start farm to apply them!";
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify the service $service in a farm $farmname, invalid ttl, can't be blank."
+			);
 		}
-		
-		&httpResponse({ code => 200, body => $body });
+		elsif ( $json_obj->{ ttl } =~ /^\d+/ )
+		{
+			my $status = &setFarmVS( $farmname, $service, "ttl", "$json_obj->{ttl}" );
+			if ( $status != 0 )
+			{
+				$error = "true";
+				&zenlog(
+					"ZAPI error, trying to modify the service $service in a farm $farmname, it's not possible to change the ttl parameter."
+				);
+			}
+		}
+		else
+		{
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify the service $service in a farm $farmname, invalid ttl, must be numeric."
+			);
+		}
 	}
-	else
+
+	if ( exists ( $json_obj->{ sessionid } ) )
+	{
+		&setFarmVS( $farmname, $service, "sessionid", $json_obj->{ sessionid } );
+	}
+
+	if ( exists ( $json_obj->{ leastresp } ) )
+	{
+		if ( $json_obj->{ leastresp } =~ /^$/ )
+		{
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify the service $service in a farm $farmname, invalid leastresp, can't be blank."
+			);
+		}
+		elsif ( $json_obj->{ leastresp } =~ /^true|false$/ )
+		{
+			if ( ( $json_obj->{ leastresp } eq "true" ) )
+			{
+				&setFarmVS( $farmname, $service, "dynscale", $json_obj->{ leastresp } );
+			}
+			elsif ( ( $json_obj->{ leastresp } eq "false" ) )
+			{
+				&setFarmVS( $farmname, $service, "dynscale", "" );
+			}
+		}
+		else
+		{
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify the service $service in a farm $farmname, invalid leastresp."
+			);
+		}
+	}
+
+	if ( exists ( $json_obj->{ cookieinsert } ) )
+	{
+		if ( $json_obj->{ cookieinsert } =~ /^$/ )
+		{
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookieinsert, can't be blank."
+			);
+		}
+		elsif ( $json_obj->{ cookieinsert } =~ /^true|false$/ )
+		{
+			if ( ( $json_obj->{ cookieinsert } eq "true" ) )
+			{
+				&setFarmVS( $farmname, $service, "cookieins", $json_obj->{ cookieinsert } );
+			}
+			elsif ( ( $json_obj->{ cookieinsert } eq "false" ) )
+			{
+				&setFarmVS( $farmname, $service, "cookieins", "" );
+			}
+		}
+		else
+		{
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookieinsert."
+			);
+		}
+	}
+
+	my $cookieins_status = &getHTTPFarmVS ($farmname,$service, 'cookieins');
+	if ( $json_obj->{ cookieinsert } eq "true"  || $cookieins_status eq 'true' )
+	{
+		if ( exists ( $json_obj->{ cookiedomain } ) )
+		{
+			&setFarmVS( $farmname, $service, "cookieins-domain", $json_obj->{ cookiedomain } );
+		}
+
+		if ( exists ( $json_obj->{ cookiename } ) )
+		{
+			&setFarmVS( $farmname, $service, "cookieins-name", $json_obj->{ cookiename } );
+		}
+
+		if ( exists ( $json_obj->{ cookiepath } ) )
+		{
+			&setFarmVS( $farmname, $service, "cookieins-path", $json_obj->{ cookiepath } );
+		}
+
+		if ( exists ( $json_obj->{ cookiettl } ) )
+		{
+			if ( $json_obj->{ cookiettl } =~ /^$/ )
+			{
+				$error = "true";
+				&zenlog(
+					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookiettl, can't be blank."
+				);
+			}
+			else
+			{
+				&setFarmVS( $farmname, $service, "cookieins-ttlc", $json_obj->{ cookiettl } );
+			}
+		}
+	}
+
+	if ( exists ( $json_obj->{ httpsb } ) )
+	{
+		if ( $json_obj->{ httpsb } =~ /^$/ )
+		{
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify the service $service in a farm $farmname, invalid httpsb, can't be blank."
+			);
+		}
+		elsif ( $json_obj->{ httpsb } =~ /^true|false$/ )
+		{
+			if ( ( $json_obj->{ httpsb } eq "true" ) )
+			{
+				&setFarmVS( $farmname, $service, "httpsbackend", $json_obj->{ httpsb } );
+			}
+			elsif ( ( $json_obj->{ httpsb } eq "false" ) )
+			{
+				&setFarmVS( $farmname, $service, "httpsbackend", "" );
+			}
+		}
+		else
+		{
+			$error = "true";
+			&zenlog(
+				"ZAPI error, trying to modify the service $service in a farm $farmname, invalid httpsb."
+			);
+		}
+	}
+
+	# check errors modifying service settings
+	if ( $error eq "true" )
 	{
 		&zenlog(
 			"ZAPI error, trying to modify the zones in a farm $farmname, it's not possible to modify the service $service."
 		);
 
-		# Error
 		$errormsg = "Errors found trying to modify farm $farmname";
 
 		my $body = {
@@ -690,6 +560,29 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 		&httpResponse({ code => 400, body => $body });
 	}
+
+	# no error found, return succesful response
+	$output_params = &getHTTPServiceStruct( $farmname, $service );
+
+	&zenlog(
+		"ZAPI success, some parameters have been changed in service $service in farm $farmname."
+	);
+
+	my $body = {
+		description => "Modify service $service in farm $farmname",
+		params      => $output_params,
+	};
+
+	if ( &getFarmStatus( $farmname ) eq 'up' )
+	{
+		require Zevenet::Farm::Action;
+
+		&setFarmRestart( $farmname );
+		$body->{ status } = 'needed restart';
+		$body->{ info } = "There're changes that need to be applied, stop and start farm to apply them!";
+	}
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 # DELETE
@@ -699,13 +592,14 @@ sub delete_service # ( $farmname, $service )
 {
 	my ( $farmname, $service ) = @_;
 
-	# Check that the farm exists
+	my $description = "Delete service";
+
+	# Check if the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
-					 description => "Delete service",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
@@ -713,16 +607,34 @@ sub delete_service # ( $farmname, $service )
 		&httpResponse({ code => 404, body => $body });
 	}
 
+	# check the farm type is supported
 	my $type = &getFarmType( $farmname );
 	
-	# Check that the provided service is configured in the farm
-	require Zevenet::Farm::Service;
-	my @services = &getFarmServices($farmname);
+	if ( $type eq "gslb" && eval { require Zevenet::API3::Farm::GSLB; } )
+	{
+		delete_gslb_service( $farmname, $service );
+	}
+	elsif ( $type !~ /(?:https?)/ )
+	{
+		my $errormsg = "The farm profile $type does not support services.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
 
+		&httpResponse({ code => 400, body => $body });
+	}
+
+	require Zevenet::Farm::Base;
+	require Zevenet::Farm::HTTP::Service;
+
+	# Check that the provided service is configured in the farm
+	my @services = &getHTTPFarmServices($farmname);
 	my $found = 0;
+
 	foreach my $farmservice (@services)
 	{
-		#print "service: $farmservice";
 		if ($service eq $farmservice)
 		{
 			$found = 1;
@@ -730,35 +642,26 @@ sub delete_service # ( $farmname, $service )
 		}
 	}
 
-	if ($found == 0)
+	if ( $found == 0 )
 	{
-		# Error
 		my $errormsg = "Invalid service name, please insert a valid value.";
 		my $body = {
-				description => "Delete service",
+				description => $description,
 				error => "true",
 				message => $errormsg
 		};
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	
-	my $return;
-	if ( $type eq "http" || $type eq "https" )
-	{
-		$return = &deleteFarmService( $farmname, $service );
-	}
-	elsif ( $type eq "gslb" )
-	{
-		$return = &setGSLBFarmDeleteService( $farmname, $service );
-	}
 
+	my $return = &deleteFarmService( $farmname, $service );
+
+	# check if the service is in use
 	if ( $return == -2 )
 	{
 		&zenlog(
 				 "ZAPI error, the service $service in farm $farmname hasn't been deleted. The service is used by a zone." );
 
-		# Error
 		my $message = "The service $service in farm $farmname hasn't been deleted. The service is used by a zone.";
 		my $body = {
 					 description => "Delete service $service in farm $farmname.",
@@ -768,47 +671,44 @@ sub delete_service # ( $farmname, $service )
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	elsif ( $return == 0 )
-	{
-		&zenlog(
-				 "ZAPI success, the service $service in farm $farmname has been deleted." );
 
-		# Success
-		my $message = "The service $service in farm $farmname has been deleted.";
-		my $body = {
-					 description => "Delete service $service in farm $farmname.",
-					 success     => "true",
-					 message     => $message
-		};
-
-		require Zevenet::Farm::Base;
-
-		if ( &getFarmStatus( $farmname ) eq 'up' )
-		{
-			require Zevenet::Farm::Action;
-
-			$body->{ status } = "needed restart";
-			&setFarmRestart( $farmname );
-		}
-
-		&httpResponse({ code => 200, body => $body });
-	}
-	else
+	# check if the service could not be deleted
+	if ( $return != 0 )
 	{
 		&zenlog(
 			"ZAPI error, trying to delete the service $service in farm $farmname, the service hasn't been deleted."
 		);
 
-		# Error
 		my $errormsg = "Service $service in farm $farmname hasn't been deleted.";
 		my $body = {
-					 description => "Delete service $service in farm $farmname",
+					 description => $description,
 					 error       => "true",
 					 message     => $errormsg
 		};
 
 		&httpResponse({ code => 400, body => $body });
 	}
+
+	# no errors found, returning successful response
+	&zenlog(
+			 "ZAPI success, the service $service in farm $farmname has been deleted." );
+
+	my $message = "The service $service in farm $farmname has been deleted.";
+	my $body = {
+				 description => $description,
+				 success     => "true",
+				 message     => $message
+	};
+
+	if ( &getFarmStatus( $farmname ) eq 'up' )
+	{
+		require Zevenet::Farm::Action;
+
+		$body->{ status } = "needed restart";
+		&setFarmRestart( $farmname );
+	}
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 1;
