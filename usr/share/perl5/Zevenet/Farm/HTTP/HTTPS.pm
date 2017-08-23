@@ -475,7 +475,7 @@ sub getHTTPFarmDisableSSL    # ($farm_name, $protocol)
 		my @file = <FR>;
 		foreach my $line ( @file )
 		{
-			if ( $line =~ /^\tDisable $protocol/ )
+			if ( $line =~ /^\tDisable $protocol$/ )
 			{
 				$output = 1;
 				last;

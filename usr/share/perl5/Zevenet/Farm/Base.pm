@@ -147,9 +147,8 @@ Function: getFarmVipStatus
 	Return a vip status depend on the backends:
 	
 	down = The farm is not running
-	restart = The farm is up but it is pending of a restart action
-	critical = The farm is up and all backends are unreachable. The backends 
-		are down or in maintenance mode
+	needed restart = The farm is up but it is pending of a restart action
+	critical = The farm is up and all backends are unreachable or maintenance
 	problem = The farm is up and there are some backend unreachable, but 
 		almost a backend is in up status
 	maintenance = The farm is up and there are backends in up status, but 
