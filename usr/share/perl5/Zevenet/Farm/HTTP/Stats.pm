@@ -181,6 +181,7 @@ sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 	my ( $farm_name ) = @_;
 
 	my $stats;
+	$stats->{ 'sessions' } = [];
 	my @sessions;
 	my $serviceName;
 	my $hashService;

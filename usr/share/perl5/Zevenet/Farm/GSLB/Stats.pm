@@ -122,7 +122,7 @@ sub getGSLBFarmBackendsStats
 			my @subbe = split(" => ",$subline);
 			my $id = $subbe[0];
 			my $addr = $subbe[1];
-			my $status;
+			my $status = "undefined";
 
 			# look for backend status in stats
 			foreach my $st_srv ( @{ $gslb_stats->{ 'services' } } )

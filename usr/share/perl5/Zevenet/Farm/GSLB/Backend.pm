@@ -274,4 +274,90 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 	untie @fileconf;
 }
 
+
+=begin nd
+Function: getGSLBFarmBackends
+
+	 Get all backends and theris configuration 
+	
+Parameters:
+	farmname - Farm name
+	service - service name
+
+Returns:
+	Array ref - Return a array in each element is a hash with the backend
+	configuration. The array index is the backend id
+	
+=cut
+sub getGSLBFarmBackends    # ($farm_name)
+{
+	my ( $farmname, $service ) = @_;
+		
+	my @backendStats;
+	my @services = &getGSLBFarmServices( $farmname );
+	
+	require Zevenet::Farm::Base;
+	my $farmStatus = &getFarmStatus( $farmname );
+	my $gslb_stats;
+	if ( $farmStatus eq "up" )
+	{
+		require Zevenet::Farm::GSLB::Stats;
+		$gslb_stats = &getGSLBGdnsdStats( $farmname );
+	}
+	
+	# Default port health check
+	require Zevenet::Farm::GSLB::Service;
+	my $port       = &getGSLBFarmVS( $farmname, $service, "dpc" );
+	my $backendsvs = &getGSLBFarmVS( $farmname, $service, "backends" );
+	my @be = split ( "\n", $backendsvs );
+	
+	#
+	# Backends
+	#
+	foreach my $subline ( @be )
+	{
+		$subline =~ s/^\s+//;
+	
+		if ($subline =~ /^$/)
+		{
+			next;
+		}
+	
+		# ID and IP
+		my @subbe = split(" => ",$subline);
+		my $id = $subbe[0];
+		my $addr = $subbe[1];
+		my $status = "undefined";
+	
+		if ( $farmStatus eq "up" )
+		{
+			# look for backend status in stats
+			foreach my $st_srv ( @{ $gslb_stats->{ 'services' } } )
+			{
+				if ( $st_srv->{ 'service' } =~ /^$addr\/[\w]+$port$/ )
+				{
+					$status = $st_srv->{ 'real_state' };
+					last;
+				}
+			}
+		}
+	
+		$id =~ s/^primary$/1/;
+		$id =~ s/^secondary$/2/;
+		$status = lc $status if defined $status;
+	
+		push @backendStats,
+		{
+			id      => $id + 0,
+			ip      => $addr,
+			port    => $port + 0,
+			status  => $status
+		};
+	}
+	
+	return \@backendStats;
+}
+
+
+
 1;

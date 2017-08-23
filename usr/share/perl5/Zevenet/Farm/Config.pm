@@ -673,6 +673,49 @@ sub getFarmVS    # ($farm_name, $service, $tag)
 }
 
 =begin nd
+Function: getFarmBackends
+
+	Return a list with all backends
+
+Parameters:
+	farmname - Farm name
+	service - Service name, required parameter to profiles: http and gslb)
+
+Returns:
+	Array ref - Each element in the array it is a hash ref to a backend.
+=cut
+sub getFarmBackends    # ($farm_name, $service)
+{
+	my ( $farm_name, $service ) = @_;
+
+	my $output    = "";
+	my $farm_type = &getFarmType( $farm_name );
+
+	if ( $farm_type =~ /http/ )
+	{
+		require Zevenet::Farm::HTTP::Backend;
+		$output = &getHTTPFarmBackends( $farm_name, $service );
+	}
+	elsif ( $farm_type eq "gslb" )
+	{
+		require Zevenet::Farm::GSLB::Backend;
+		$output = &getGSLBFarmBackends( $farm_name, $service );
+	}
+	elsif ( $farm_type eq "l4xnat" )
+	{
+		require Zevenet::Farm::L4xNAT::Backend;
+		$output = &getL4FarmBackends( $farm_name );
+	}
+	elsif ( $farm_type eq "datalink" )
+	{
+		require Zevenet::Farm::Datalink::Backend;
+		$output = &getDatalinkFarmBackends( $farm_name );
+	}
+
+	return $output;
+}
+
+=begin nd
 Function: setFarmVS
 
 	Set values for service parameters

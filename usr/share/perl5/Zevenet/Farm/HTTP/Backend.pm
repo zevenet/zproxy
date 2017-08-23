@@ -411,148 +411,140 @@ sub getHTTPFarmBackendsStatus_old    # ($farm_name,@content)
 	return @backends_data;
 }
 
-=begin nd
-Function: getHTTPFarmBackendsStats
 
-	This function is the same than getHTTPFarmBackendsStatus_old but return a hash with http farm information
-	This function take data from pounctl and it gives hash format 
+
+
+
+
+=begin nd
+Function: getHTTPFarmBackends
+
+	Return a list with all backends in a service and theirs configuration
 	
 Parameters:
 	farmname - Farm name
+	service - Service name
 
 Returns:
-	hash ref - hash with backend farm stats
-		
-		backendStats = 
-		{
-			"farmname" = $farmname
-			"queue" = $pending_conns
-			"services" = \@services
-		}
-		
-		\@servcies = 
-		[
-			{
-				"id" = $service_id		# it is the index in the service array too
-				"service" = $service_name
-				"backends" = \@backends
-				"sessions" = \@sessions
-			}
-		]
-		
-		\@backends = 
-		[
-			{
-				"id" = $backend_id		# it is the index in the backend array too
-				"ip" = $backend_ip
-				"port" = $backend_port
-				"status" = $backend_status
-				"established" = $established_connections
-			}
-		]
-		
-		\@sessions = 
-		[
-			{
-				"client" = $client_id 		# it is the index in the session array too
-				"id" = $session_id		# id associated to a bacckend, it can change depend of session type
-				"backends" = $backend_id
-			}
-		]
-		
-FIXME: 
-		Put output format same format than "GET /stats/farms/BasekitHTTP"
+	array ref - Each element in the array it is a hash ref to a backend.
+	the array index is the backend id
 		
 =cut
-sub getHTTPFarmBackendsStats    # ($farm_name,@content)
+
+sub getHTTPFarmBackends    # ($farm_name,$service)
 {
-	my ( $farm_name ) = @_;
+	my ( $farmname, $service ) = @_;
 
-	my $stats;
-	my @sessions;
-	my $serviceName;
-	my $hashService;
-	my $firstService = 1;
+	require Zevenet::Farm::HTTP::Service;
+	my $backendsvs = &getHTTPFarmVS( $farmname, $service, "backends" );
+	my @be         = split ( "\n", $backendsvs );
+	my @be_status = @{ &getHTTPFarmBackendsStatus( $farmname, $service ) };
+	my @out_ba;
 	
-	my $service_re = &getValidFormat( 'service' );
-
-	#i.e. of poundctl:
-	
-	#Requests in queue: 0
-	#0. http Listener 185.76.64.223:80 a
-		#0. Service "HTTP" active (4)
-		#0. Backend 172.16.110.13:80 active (1 0.780 sec) alive (61)
-		#1. Backend 172.16.110.14:80 active (1 0.878 sec) alive (90)
-		#2. Backend 172.16.110.11:80 active (1 0.852 sec) alive (99)
-		#3. Backend 172.16.110.12:80 active (1 0.826 sec) alive (75)
-	my @poundctl = &getHTTPFarmGlobalStatus ($farm_name);
-
-	foreach my $line ( @poundctl )
+	foreach my $subl ( @be )
 	{
-		#i.e.
-		#Requests in queue: 0
-		#~ if ( $line =~ /Requests in queue: (\d+)/ )
-		#~ {
-			#~ $stats->{ "queue" } = $1;
-		#~ }
-		
-		# i.e.
-		#     0. Service "HTTP" active (10)
-		if ( $line =~ /(\d+)\. Service "($service_re)"/ )
-		{
-				$serviceName = $2;
-		}
-			
-		# i.e.
-		#      0. Backend 192.168.100.254:80 active (5 0.000 sec) alive (0)
-		if ( $line =~ /(\d+)\. Backend (\d+\.\d+\.\d+\.\d+):(\d+) (\w+) .+ (\w+) \((\d+)\)/ )
-		{
-			my $backendHash =
- 				{ 
-					id => $1+0,
-					ip => $2,
-					port => $3+0,
-					status => $5,
-					established => $6+0,
-					service => $serviceName,
-				};
-				
-			my $backend_disabled = $4;
-			if ( $backend_disabled eq "DISABLED" )
-			{
-				#Checkstatusfile
-				$backendHash->{ "status" } =
-				  &getHTTPBackendStatusFromFile( $farm_name, $backendHash->{id}, $serviceName );
-			}
-			elsif ( $backendHash->{ "status" } eq "alive" )
-			{
-				$backendHash->{ "status" } = "up";
-			}
-			elsif ( $backendHash->{ "status" } eq "DEAD" )
-			{
-				$backendHash->{ "status" } = "down";
-			}
-			
-			push @{ $stats->{backends} }, $backendHash;
-		}
-
-		# i.e.
-		#      1. Session 107.178.194.117 -> 1
-		if ( $line =~ /(\d+)\. Session (.+) \-\> (\d+)/ )
-		{
-			push @{ $stats->{sessions} },
-				{ 
-					client => $1+0,
-					session => $2,
-					id => $3+0,
-					service => $serviceName,
-				};
-		}
-		
-	}
+		my @subbe       = split ( "\ ", $subl );
+		my $id          = $subbe[1] + 0;
 	
-	return $stats;
+		my $ip   = $subbe[3];
+		my $port = $subbe[5] + 0;
+		my $tout = $subbe[7];
+		my $prio = $subbe[9];
+	
+		$tout = $tout eq '-' ? undef: $tout+0;
+		$prio = $prio eq '-' ? undef: $prio+0;
+	
+		push @out_ba,
+		{
+			id      => $id,
+			status  => $be_status[ $id ],
+			ip      => $ip,
+			port    => $port,
+			timeout => $tout,
+			weight  => $prio
+		};
+	}
+	return \@out_ba;
 }
+
+
+=begin nd
+Function: getHTTPFarmBackendsStatus
+
+	Get the status of all backends in a service. The possible values are:
+	
+	- up = The farm is in up status and the backend is OK.
+	- down = The farm is in up status and the backend is unreachable
+	- maintenace = The backend is in maintenance mode.
+	- undefined = The farm is in down status and backend is not in maintenance mode.
+
+	
+Parameters:
+	farmname - Farm name
+	service - Service name
+
+Returns:
+	Array ref - the index is backend index, the value is the backend status
+		
+=cut
+
+sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
+{
+	my ( $farm_name, $service ) = @_;
+	my @status;
+	
+	require Zevenet::Farm::Base;
+	my $farmStatus = &getFarmStatus( $farm_name );
+
+	if ( $farmStatus eq "up" )
+	{
+		require Zevenet::Farm::Stats;
+		my $stats = &getHTTPFarmBackendsStats($farm_name);
+					
+		foreach my $be ( @{ $stats->{ backends } } )
+		{
+			#	$be = 
+			#	{
+			#		"id" = $backend_id		# it is the index in the backend array too
+			#		"ip" = $backend_ip
+			#		"port" = $backend_port
+			#		"status" = $backend_status
+			#		"established" = $established_connections
+			#	}
+			
+			push @status, $be->{ 'status' } if	( $be->{service} eq $service);
+		}
+	}
+	# farm status is down
+	else
+	{
+		require Zevenet::Farm::HTTP::Service;
+		my $backendsvs = &getFarmVS( $farm_name, $service, "backends" );
+		my @be         = split ( "\n", $backendsvs );
+		my $id = 0;
+		# @be is used to get size of backend array
+		for (@be)
+		{
+			my $backendstatus = &getHTTPBackendStatusFromFile( $farm_name, $id, $service );
+			if ( $backendstatus eq "maintenance" )
+			{
+				$backendstatus = "maintenance" 
+			}
+			else
+			{
+				$backendstatus = "undefined" 
+			}
+
+			push @status, $backendstatus;
+			$id = $id+1;
+		}
+	}
+
+	return \@status;
+}
+
+
+
 
 =begin nd
 Function: getHTTPBackendStatusFromFile
@@ -579,6 +571,7 @@ sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 
 	if ( -e "$stfile" )
 	{
+		require Zevenet::Farm::HTTP::Service;
 		$index = &getFarmVSI( $farm_name, $service );
 		open FG, "$stfile";
 		while ( $line = <FG> )
@@ -605,6 +598,106 @@ sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 
 	return $output;
 }
+
+
+=begin nd
+Function: setHTTPFarmBackendStatusFile
+
+	Function that save in a file the backend status (maintenance or not)
+	
+Parameters:
+	farmname - Farm name
+	backend - Backend id
+	status - backend status to save in the status file
+	service_id - Service id
+
+Returns:
+	none - .
+		
+FIXME:
+	Rename the function, something like saveFarmHTTPBackendstatus, not is "get", this function makes changes in the system
+	Not return nothing, do error control
+		
+=cut
+sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
+{
+	my ( $farm_name, $backend, $status, $idsv ) = @_;
+
+	my $statusfile = "$configdir\/$farm_name\_status.cfg"; 
+	my $changed    = "false";
+
+	if ( !-e $statusfile )
+	{
+		open FW, ">$statusfile";
+		my $poundctl = &getGlobalConfiguration('poundctl');
+		my @run = `$poundctl -c /tmp/$farm_name\_pound.socket`;
+		my @sw;
+		my @bw;
+
+		foreach my $line ( @run )
+		{
+			if ( $line =~ /\.\ Service\ / )
+			{
+				@sw = split ( "\ ", $line );
+				$sw[0] =~ s/\.//g;
+				chomp $sw[0];
+			}
+			if ( $line =~ /\.\ Backend\ / )
+			{
+				@bw = split ( "\ ", $line );
+				$bw[0] =~ s/\.//g;
+				chomp $bw[0];
+				if ( $bw[3] eq "active" )
+				{
+					#~ print FW "-B 0 $sw[0] $bw[0] active\n";
+				}
+				else
+				{
+					print FW "-b 0 $sw[0] $bw[0] fgDOWN\n";
+				}
+			}
+		}
+		close FW;
+	}
+	use Tie::File;
+	tie my @filelines, 'Tie::File', "$statusfile";
+
+	my $i;
+	foreach my $linea ( @filelines )
+	{
+		if ( $linea =~ /\ 0\ $idsv\ $backend/ )
+		{
+			if ( $status =~ /maintenance/ || $status =~ /fgDOWN/ )
+			{
+				$linea   = "-b 0 $idsv $backend $status";
+				$changed = "true";
+			}
+			else
+			{
+				splice @filelines, $i, 1,;
+				$changed = "true";
+			}
+		}
+		$i++;
+	}
+	untie @filelines;
+
+	if ( $changed eq "false" )
+	{
+		open FW, ">>$statusfile";
+		if ( $status =~ /maintenance/ || $status =~ /fgDOWN/ )
+		{
+			print FW "-b 0 $idsv $backend $status\n";
+		}
+		else
+		{
+			splice @filelines, $i, 1,;
+		}
+		close FW;
+	}
+
+}
+
 
 =begin nd
 Function: getHTTPFarmBackendsClients
@@ -853,104 +946,6 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 	&setHTTPFarmBackendStatusFile( $farm_name, $backend, "active", $idsv );
 
 	return $output;
-}
-
-=begin nd
-Function: setHTTPFarmBackendStatusFile
-
-	Function that save in a file the backend status (maintenance or not)
-	
-Parameters:
-	farmname - Farm name
-	backend - Backend id
-	status - backend status to save in the status file
-	service_id - Service id
-
-Returns:
-	none - .
-		
-FIXME:
-	Rename the function, something like saveFarmHTTPBackendstatus, not is "get", this function makes changes in the system
-	Not return nothing, do error control
-		
-=cut
-sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
-{
-	my ( $farm_name, $backend, $status, $idsv ) = @_;
-
-	my $statusfile = "$configdir\/$farm_name\_status.cfg"; 
-	my $changed    = "false";
-
-	if ( !-e $statusfile )
-	{
-		open FW, ">$statusfile";
-		my $poundctl = &getGlobalConfiguration('poundctl');
-		my @run = `$poundctl -c /tmp/$farm_name\_pound.socket`;
-		my @sw;
-		my @bw;
-
-		foreach my $line ( @run )
-		{
-			if ( $line =~ /\.\ Service\ / )
-			{
-				@sw = split ( "\ ", $line );
-				$sw[0] =~ s/\.//g;
-				chomp $sw[0];
-			}
-			if ( $line =~ /\.\ Backend\ / )
-			{
-				@bw = split ( "\ ", $line );
-				$bw[0] =~ s/\.//g;
-				chomp $bw[0];
-				if ( $bw[3] eq "active" )
-				{
-					#~ print FW "-B 0 $sw[0] $bw[0] active\n";
-				}
-				else
-				{
-					print FW "-b 0 $sw[0] $bw[0] fgDOWN\n";
-				}
-			}
-		}
-		close FW;
-	}
-	use Tie::File;
-	tie my @filelines, 'Tie::File', "$statusfile";
-
-	my $i;
-	foreach my $linea ( @filelines )
-	{
-		if ( $linea =~ /\ 0\ $idsv\ $backend/ )
-		{
-			if ( $status =~ /maintenance/ || $status =~ /fgDOWN/ )
-			{
-				$linea   = "-b 0 $idsv $backend $status";
-				$changed = "true";
-			}
-			else
-			{
-				splice @filelines, $i, 1,;
-				$changed = "true";
-			}
-		}
-		$i++;
-	}
-	untie @filelines;
-
-	if ( $changed eq "false" )
-	{
-		open FW, ">>$statusfile";
-		if ( $status =~ /maintenance/ || $status =~ /fgDOWN/ )
-		{
-			print FW "-b 0 $idsv $backend $status\n";
-		}
-		else
-		{
-			splice @filelines, $i, 1,;
-		}
-		close FW;
-	}
-
 }
 
 =begin nd

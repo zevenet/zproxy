@@ -73,6 +73,63 @@ sub getDatalinkFarmServers    # ($farm_name)
 }
 
 =begin nd
+Function: getDatalinkFarmBackends
+
+	List all farm backends and theirs configuration
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	array - list of backends. Each item has the format: ";index;ip;iface;weight;priority;status"
+	
+=cut
+sub getDatalinkFarmBackends    # ($farm_name)
+{
+	my ( $farm_name ) = @_;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $first         = "true";
+	my $sindex        = 0;
+	my @servers;
+
+	require Zevenet::Farm::Base;
+	my $farmStatus = &getFarmStatus( $farm_name );
+
+	open FI, "<$configdir/$farm_filename";
+
+	while ( my $line = <FI> )
+	{
+		chomp ($line);
+		# ;server;45.2.2.3;eth0;1;1;up
+		if ( $line ne "" && $line =~ /^\;server\;/ && $first ne "true" )
+		{
+			my @aux = split( ';', $line );
+			my $status=$aux[6];
+			$status = "undefined" if ($farmStatus eq "down");
+			 
+			push @servers, 
+				{
+					id=>$sindex,
+					ip=>$aux[2],
+					iface=>$aux[3],
+					weight=>$aux[4]+0,
+					priority=>$aux[5]+0,
+					status=>$status
+				};
+			$sindex = $sindex + 1;
+		}
+		else
+		{
+			$first = "false";
+		}
+	}
+	close FI;
+
+	return \@servers;
+}
+
+=begin nd
 Function: setDatalinkFarmServer
 
 	Set a backend or create it if it doesn't exist

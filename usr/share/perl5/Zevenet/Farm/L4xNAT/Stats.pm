@@ -385,75 +385,30 @@ sub getL4FarmBackendsStats
 {
 	my $farmname = shift;
 	
+	require Zevenet::Farm::L4xNAT::Backend;
+	my @backends = @{ &getL4FarmBackends( $farmname ) };
 	# Parameters
 	my @out_rss;
-	
-	my @args;
-	my $nattype = &getFarmNatType( $farmname );
 	my $proto   = &getFarmProto( $farmname );
-	
-	if ( $proto eq "all" )
-	{
-		$proto = "";
-	}
-	
-	# my @netstat = &getNetstatNat($args);
 	my $fvip     = &getFarmVip( "vip", $farmname );
-	my @content  = &getFarmBackendStatusCtl( $farmname );
-	#~ chomp @content;
-	my @backends = &getFarmBackendsStatus_old( $farmname, @content );
-	
-	# List of backends
-	my $backendsize    = @backends;
-	my $activebackends = 0;
-	
-	foreach ( @backends )
-	{
-		my @backends_data = split ( ";", $_ );
-		if ( $backends_data[4] eq "up" )
-		{
-			$activebackends++;
-		}
-	}
 	
 	my $index = 0;
 	
-	foreach ( @backends )
+	foreach my $be ( @backends )
 	{
-		my @backends_data = split ( ";", $_ );
-		chomp @backends_data;
-		my $ip_backend   = $backends_data[0];
-		my $port_backend = $backends_data[1];
-	
 		# Pending Conns
-		my @netstat = &getConntrack( "", $fvip, $ip_backend, "", "" );
-	
-		my $established = scalar &getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
+		my @netstat = &getConntrack( "", $fvip, $be->{ 'ip' }, "", "" );
+		$be->{ 'established' } = scalar &getBackendEstConns( $farmname, $be->{ 'ip' }, 
+			$be->{ 'port' }, @netstat );
 		
-		my $pending = 0;
+		$be->{ 'pending' } = 0;
 		if ( $proto ne "udp" )
 		{
-			$pending = scalar &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
+			$be->{ 'pending' } = scalar &getBackendSYNConns( $farmname, $be->{ 'ip' }, 
+				$be->{ 'port' }, @netstat );
 		}
-	
-		if ( $backends_data[4] == -1 )
-		{
-			$backends_data[4] = "down";
-		}
-	
-		push @out_rss,
-		{
-			id          => $index,
-			ip          => $ip_backend,
-			port        => $port_backend,
-			status      => $backends_data[4],
-			pending     => $pending,
-			established => $established,
-		};
-	
-		$index = $index + 1;
 	}
-	return \@out_rss;
+	return \@backends;
 }
 
 

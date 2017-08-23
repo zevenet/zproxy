@@ -288,6 +288,7 @@ sub getL4FarmBackendsStatus_old    # ($farm_name,@content)
 	return @backends_data;
 }
 
+
 =begin nd
 Function: setL4FarmBackendStatus
 
@@ -410,7 +411,8 @@ Parameters:
 	farmname - Farm name
 
 Returns:
-	Array - one backed per line. The line format is: "index;ip;port;mark;weight;priority;status"
+	Array - one backed per line. The line format is: 
+	"index;ip;port;mark;weight;priority;status"
 	
 FIXME:
 	Return as array of hash refs
@@ -444,6 +446,81 @@ sub getL4FarmServers    # ($farm_name)
 
 	return @servers;
 }
+
+
+=begin nd
+Function: getL4FarmBackends
+
+	 Get all backends and theirs configuration 
+	
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Array ref - Return a array in each element is a hash with the backend
+	configuration. The array index is the backend id
+	
+=cut
+sub getL4FarmBackends    # ($farm_name)
+{
+	my $farm_name = shift;
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $sindex        = 0;
+	my @servers;
+	
+	require Zevenet::Farm::Base;
+	my $farmStatus = &getFarmStatus( $farm_name );
+
+	open FI, "<", "$configdir/$farm_filename"
+	  or &zenlog( "Error opening file $configdir/$farm_filename: $!" );
+
+	while ( my $line = <FI> )
+	{
+		chomp ( $line );
+		
+		# ;server;192.168.100.254;80;0x20e;1;1;maintenance;0
+		if ( $line =~ /^\;server\;/ )
+		{
+			my @aux = split ( ';', $line );
+			
+			# Return port as integer
+			$aux[3] = $aux[3] + 0 if ( $aux[3] =~ /^\d+$/ );
+
+			my $status = $aux[7];
+			if ($status eq "fgDOWN")
+			{
+				$status = "down";
+			}
+			if ( ($status ne "maintenance") && ($farmStatus eq "down") )
+			{
+				$status = "undefined";
+			}
+
+			push @servers, 
+				{
+					index=>$sindex,
+					ip=>$aux[2],
+					port=>$aux[3],
+					mark=>$aux[4],
+					weight=>$aux[5]+0,
+					priority=>$aux[6]+0,
+					max_conns => $aux[8]+0,
+					status=>$status,
+				};
+			
+			$sindex++;
+		}
+	}
+	close FI;
+
+	return \@servers;
+}
+
+
+
+
+
 
 =begin nd
 Function: getL4FarmBackendStatusCtl

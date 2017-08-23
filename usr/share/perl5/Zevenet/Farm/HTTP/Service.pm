@@ -791,46 +791,7 @@ sub getHTTPServiceStruct
 			$fgscript =~ s/\"/\'/g;
 			$fguse =~ s/\n//g;
 	
-			my @out_ba;
-			my $backendsvs = &getFarmVS( $farmname, $s, "backends" );
-			my @be         = split ( "\n", $backendsvs );
-	
-			foreach my $subl ( @be )
-			{
-				require Zevenet::Farm::Backend::Maintenance;
-
-				my @subbe       = split ( "\ ", $subl );
-				my $id          = $subbe[1] + 0;
-				my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $s );
-	
-				my $backendstatus;
-				if ( $maintenance != 0 )
-				{
-					$backendstatus = "up";
-				}
-				else
-				{
-					$backendstatus = "maintenance";
-				}
-	
-				my $ip   = $subbe[3];
-				my $port = $subbe[5] + 0;
-				my $tout = $subbe[7];
-				my $prio = $subbe[9];
-	
-				$tout = $tout eq '-' ? undef: $tout+0;
-				$prio = $prio eq '-' ? undef: $prio+0;
-	
-				push @out_ba,
-				{
-					id      => $id,
-					status  => $backendstatus,
-					ip      => $ip,
-					port    => $port,
-					timeout => $tout,
-					weight  => $prio
-				};
-			}
+			my $backends = &getFarmBackends( $farmname, $s);
 	
 			$ttlc      = 0 unless $ttlc;
 			$ttl       = 0 unless $ttl;
@@ -857,7 +818,7 @@ sub getHTTPServiceStruct
 				fgscript     => $fgscript,
 				fgenabled    => $fguse,
 				fglog        => $fglog,
-				backends     => \@out_ba,
+				backends     => $backends,
 			};
 			last;
 		}
