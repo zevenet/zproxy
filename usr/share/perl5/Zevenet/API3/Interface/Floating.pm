@@ -237,10 +237,11 @@ sub get_interfaces_floating
 		next unless $iface->{ addr };
 
 		my $floating_ip = undef;
+		my $floating_interface = undef;
 
 		if ( $float_ifaces_conf->{_}->{ $iface->{ name } } )
 		{
-			my $floating_interface = $float_ifaces_conf->{_}->{ $iface->{ name } };
+			$floating_interface = $float_ifaces_conf->{_}->{ $iface->{ name } };
 			my $if_ref = &getInterfaceConfig( $floating_interface );
 			$floating_ip = $if_ref->{ addr };
 		}
@@ -249,6 +250,7 @@ sub get_interfaces_floating
 		  {
 			interface   => $iface->{ name },
 			floating_ip => $floating_ip,
+			interface_virtual => $floating_interface,
 		  };
 
 		#~ $output{ $iface->{name} } = $iface->{name} unless $output{ $iface->{name} };
@@ -285,6 +287,7 @@ sub get_floating
 		next unless $iface->{ name } eq $floating;
 
 		my $floating_ip = undef;
+		my $floating_interface = undef;
 
 		unless ( $iface->{ addr } )
 		{
@@ -303,7 +306,7 @@ sub get_floating
 
 		if ( $float_ifaces_conf->{_}->{ $iface->{ name } } )
 		{
-			my $floating_interface = $float_ifaces_conf->{_}->{ $iface->{ name } };
+			$floating_interface = $float_ifaces_conf->{_}->{ $iface->{ name } };
 			my $if_ref = &getInterfaceConfig( $floating_interface );
 			$floating_ip = $if_ref->{ addr };
 		}
@@ -311,6 +314,7 @@ sub get_floating
 		$output = {
 					interface   => $iface->{ name },
 					floating_ip => $floating_ip,
+					interface_virtual => $floating_interface,
 		};
 
 		#~ $output{ $iface->{name} } = $iface->{name} unless $output{ $iface->{name} };
