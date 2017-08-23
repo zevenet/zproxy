@@ -83,4 +83,73 @@ sub getGSLBFarmEstConns    # ($farm_name,@netstat)
 						 "", @netstat );
 }
 
+sub getGSLBFarmBackendsStats
+{
+	my ($farmname) = @_;
+	
+	require Zevenet::Farm::GSLB::Service;
+
+	my $out_rss;
+	my @backendStats;
+	my $gslb_stats = &getGSLBGdnsdStats( $farmname );
+	my @services = &getGSLBFarmServices( $farmname );
+
+	require Zevenet::Farm::Config;
+
+	foreach my $srv ( @services )
+	{
+		# Default port health check
+		my $port       = &getFarmVS( $farmname, $srv, "dpc" );
+		my $lb         = &getFarmVS( $farmname, $srv, "algorithm" );
+		my $backendsvs = &getFarmVS( $farmname, $srv, "backends" );
+		my @be = split ( "\n", $backendsvs );
+		my $out_b = [];
+
+		#
+		# Backends
+		#
+
+		foreach my $subline ( @be )
+		{
+			$subline =~ s/^\s+//;
+
+			if ($subline =~ /^$/)
+			{
+				next;
+			}
+
+			# ID and IP
+			my @subbe = split(" => ",$subline);
+			my $id = $subbe[0];
+			my $addr = $subbe[1];
+			my $status;
+
+			# look for backend status in stats
+			foreach my $st_srv ( @{ $gslb_stats->{ 'services' } } )
+			{
+				if ( $st_srv->{ 'service' } =~ /^$addr\/[\w]+$port$/ )
+				{
+					$status = $st_srv->{ 'real_state' };
+					last;
+				}
+			}
+
+			$id =~ s/^primary$/1/;
+			$id =~ s/^secondary$/2/;
+			$status = lc $status if defined $status;
+
+			push @backendStats,
+			  {
+				id      => $id + 0,
+				ip      => $addr,
+				service => $srv,
+				port    => $port + 0,
+				status  => $status
+			  };
+		}
+	}
+	$gslb_stats->{ 'backend' } = \@backendStats;
+	return $gslb_stats;
+}		
+		
 1;

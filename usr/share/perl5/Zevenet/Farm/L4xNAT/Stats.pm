@@ -380,4 +380,82 @@ sub getL4FarmSYNConns    # ($farm_name,@netstat)
 	return @nets;
 }
 
+
+sub getL4FarmBackendsStats
+{
+	my $farmname = shift;
+	
+	# Parameters
+	my @out_rss;
+	
+	my @args;
+	my $nattype = &getFarmNatType( $farmname );
+	my $proto   = &getFarmProto( $farmname );
+	
+	if ( $proto eq "all" )
+	{
+		$proto = "";
+	}
+	
+	# my @netstat = &getNetstatNat($args);
+	my $fvip     = &getFarmVip( "vip", $farmname );
+	my @content  = &getFarmBackendStatusCtl( $farmname );
+	#~ chomp @content;
+	my @backends = &getFarmBackendsStatus_old( $farmname, @content );
+	
+	# List of backends
+	my $backendsize    = @backends;
+	my $activebackends = 0;
+	
+	foreach ( @backends )
+	{
+		my @backends_data = split ( ";", $_ );
+		if ( $backends_data[4] eq "up" )
+		{
+			$activebackends++;
+		}
+	}
+	
+	my $index = 0;
+	
+	foreach ( @backends )
+	{
+		my @backends_data = split ( ";", $_ );
+		chomp @backends_data;
+		my $ip_backend   = $backends_data[0];
+		my $port_backend = $backends_data[1];
+	
+		# Pending Conns
+		my @netstat = &getConntrack( "", $fvip, $ip_backend, "", "" );
+	
+		my $established = scalar &getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
+		
+		my $pending = 0;
+		if ( $proto ne "udp" )
+		{
+			$pending = scalar &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
+		}
+	
+		if ( $backends_data[4] == -1 )
+		{
+			$backends_data[4] = "down";
+		}
+	
+		push @out_rss,
+		{
+			id          => $index,
+			ip          => $ip_backend,
+			port        => $port_backend,
+			status      => $backends_data[4],
+			pending     => $pending,
+			established => $established,
+		};
+	
+		$index = $index + 1;
+	}
+	return \@out_rss;
+}
+
+
+
 1;
