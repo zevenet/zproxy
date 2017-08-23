@@ -515,175 +515,6 @@ sub moveServiceFarmStatus
 }
 
 =begin nd
-Function: getHttpFarmService
-
-	Get a struct with all parameters of a service and theirs values
-	
-	@{ $out_ba }, $backend_ref
-			  
-	$backend_ref = {
-				  id            => $id,
-				  backendstatus => $backendstatus,
-				  ip            => $ip,
-				  port          => $port,
-				  timeout       => $tout,
-				  weight        => $prio
-	}
-
-	$service_ref = {
-					 id           => $service,
-					 vhost        => $vser,
-					 urlp         => $urlp,
-					 redirect     => $redirect,
-					 redirecttype => $redirecttype,
-					 cookieinsert => $cookiei,
-					 cookiename   => $cookieinsname,
-					 cookiedomain => $domainname,
-					 cookiepath   => $path,
-					 cookiettl    => $ttlc + 0,
-					 persistence  => $session,
-					 ttl          => $ttl + 0,
-					 sessionid    => $sesid,
-					 leastresp    => $dyns,
-					 httpsb       => $httpsbe,
-					 fgtimecheck  => $fgttcheck + 0,
-					 fgscript     => $fgscript,
-					 fgenabled    => $fguse,
-					 fglog        => $fglog,
-					 backends     => $out_ba
-	};
-	
-Parameters:
-	farmname - Farm name
-	service - Service to move
-
-Returns:
-	hash ref - $service_ref
-			
-=cut
-sub getHttpFarmService
-{
-	my $farmname    = shift;    # input
-	my $service     = shift;    # input
-	my $service_ref = {};       # output
-
-	my $vser         = &getFarmVS( $farmname, $service, "vs" );
-	my $urlp         = &getFarmVS( $farmname, $service, "urlp" );
-	my $redirect     = &getFarmVS( $farmname, $service, "redirect" );
-	my $redirecttype = &getFarmVS( $farmname, $service, "redirecttype" );
-	my $session      = &getFarmVS( $farmname, $service, "sesstype" );
-	my $ttl          = &getFarmVS( $farmname, $service, "ttl" );
-	my $sesid        = &getFarmVS( $farmname, $service, "sessionid" );
-	my $dyns         = &getFarmVS( $farmname, $service, "dynscale" );
-	my $httpsbe      = &getFarmVS( $farmname, $service, "httpsbackend" );
-	my $cookiei      = &getFarmVS( $farmname, $service, "cookieins" );
-
-	if ( $cookiei eq "" )
-	{
-		$cookiei = "false";
-	}
-
-	my $cookieinsname = &getFarmVS( $farmname, $service, "cookieins-name" );
-	my $domainname    = &getFarmVS( $farmname, $service, "cookieins-domain" );
-	my $path          = &getFarmVS( $farmname, $service, "cookieins-path" );
-	my $ttlc          = &getFarmVS( $farmname, $service, "cookieins-ttlc" );
-
-	if ( $dyns =~ /^$/ )
-	{
-		$dyns = "false";
-	}
-
-	if ( $httpsbe =~ /^$/ )
-	{
-		$httpsbe = "false";
-	}
-
-	require Zevenet::FarmGuardian;
-
-	my @fgconfig  = &getFarmGuardianConf( $farmname, $service );
-	my $fgttcheck = $fgconfig[1];
-	my $fgscript  = $fgconfig[2];
-	$fgscript =~ s/\n//g;
-	$fgscript =~ s/\"/\'/g;
-
-	my $fguse = $fgconfig[3];
-	$fguse =~ s/\n//g;
-
-	my $fglog = $fgconfig[4];
-
-	# Default values for farm guardian parameters
-	if ( !$fgttcheck ) { $fgttcheck = 5; }
-	if ( !$fguse )     { $fguse     = "false"; }
-	if ( !$fglog )     { $fglog     = "false"; }
-	if ( !$fgscript )  { $fgscript  = ""; }
-
-	my $out_ba     = [];
-	my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
-	my @be         = split ( "\n", $backendsvs );
-
-	require Zevenet::Farm::Backend::Maintenance;
-
-	foreach my $subl ( @be )
-	{
-		my $backendstatus;
-		my @subbe       = split ( "\ ", $subl );
-		my $id          = $subbe[1] + 0;
-		my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $service );
-
-		if ( $maintenance != 0 )
-		{
-			$backendstatus = "up";
-		}
-		else
-		{
-			$backendstatus = "maintenance";
-		}
-
-		my $ip   = $subbe[3];
-		my $port = $subbe[5] + 0;
-		my $tout = $subbe[7] + 0;
-		my $prio = $subbe[9] + 0;
-
-		push (
-			   @{ $out_ba },
-			   {
-				  id            => $id,
-				  backendstatus => $backendstatus,
-				  ip            => $ip,
-				  port          => $port,
-				  timeout       => $tout,
-				  weight        => $prio
-			   }
-		);
-	}
-
-	$service_ref = {
-					 id           => $service,
-					 vhost        => $vser,
-					 urlp         => $urlp,
-					 redirect     => $redirect,
-					 redirecttype => $redirecttype,
-					 cookieinsert => $cookiei,
-					 cookiename   => $cookieinsname,
-					 cookiedomain => $domainname,
-					 cookiepath   => $path,
-					 cookiettl    => $ttlc + 0,
-					 persistence  => $session,
-					 ttl          => $ttl + 0,
-					 sessionid    => $sesid,
-					 leastresp    => $dyns,
-					 httpsb       => $httpsbe,
-					 fgtimecheck  => $fgttcheck + 0,
-					 fgscript     => $fgscript,
-					 fgenabled    => $fguse,
-					 fglog        => $fglog,
-					 backends     => $out_ba
-	};
-
-	return $service_ref;
-}
-
-=begin nd
 Function: getHTTPServiceStruct
 
 	Get a struct with all parameters of a HTTP service
@@ -697,7 +528,7 @@ Returns:
 	
 	Example output:
 	{
-   "services" : {
+	  "services" : {
       "backends" : [
          {
             "id" : 0,
@@ -727,7 +558,8 @@ Returns:
       "ttl" : 0,
       "urlp" : "",
       "vhost" : ""
-   }
+      }
+    };
 
 =cut
 sub getHTTPServiceStruct
