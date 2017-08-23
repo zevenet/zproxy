@@ -442,7 +442,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		# Check that the provided service is configured in the farm
 		require Zevenet::Farm::HTTP::Service;
 
-		my @services = &getFarmServices( $farmname );
+		my @services = &getHTTPFarmServices( $farmname );
 
 		my $found = 0;
 		foreach my $farmservice ( @services )
@@ -1718,18 +1718,8 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 
 	# validate SERVICE
 	{
-		my @services;
-
-		if ($type eq "gslb")
-		{
-			require Zevenet::Farm::GSLB::Service;
-			@services = &getGSLBFarmServices($farmname);
-		}
-		else
-		{
-			require Zevenet::Farm::HTTP::Service;
-			@services = &getFarmServices($farmname);
-		}
+		require Zevenet::Farm::Service;
+		my @services = &getFarmServices($farmname);
 
 		my $found_service = grep { $service eq $_ } @services;
 

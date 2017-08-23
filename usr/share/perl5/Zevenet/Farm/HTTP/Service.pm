@@ -266,7 +266,7 @@ sub deleteFarmService    # ($farm_name,$service)
 }
 
 =begin nd
-Function: getFarmServices
+Function: getHTTPFarmServices
 
 	Get an array containing service name that are configured in a http farm
 	
@@ -277,11 +277,10 @@ Returns:
 	Array - service names
 	
 FIXME: 
-	rename to getHTTPFarmServices
 	&getHTTPFarmVS(farmname) does same but in a string
 		
 =cut
-sub getFarmServices
+sub getHTTPFarmServices
 {
 	my ( $farm_name ) = @_;
 
@@ -338,7 +337,7 @@ sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 	$farm_filename = "$configdir\/$farm_filename";
 
 	my @file;
-	my @services = &getFarmServices( $farmName );
+	my @services = &getHTTPFarmServices( $farmName );
 	my @serviceIndex;
 	my $selectServiceInd;
 	my $size = scalar @services;
@@ -455,7 +454,7 @@ sub moveServiceFarmStatus
 
 	my $fileName = "$configdir\/${farmName}_status.cfg";
 
-	my @services = &getFarmServices( $farmName );
+	my @services = &getHTTPFarmServices( $farmName );
 	my $size     = scalar @services;
 	my $ind      = -1;
 	my $auxInd;
@@ -1366,7 +1365,7 @@ sub getFarmVSI    # ($farm_name,$service)
 	
 	# get service position
 	my $srv_position = 0;
-	my @services = &getFarmServices( $farmname );
+	my @services = &getHTTPFarmServices( $farmname );
 	foreach my $srv ( @services )
 	{
 		if  ( $srv eq $service )

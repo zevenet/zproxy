@@ -197,23 +197,12 @@ sub getFarmVipStatus    # ($farm_name)
 		$backends = &getFarmBackends( $farm_name );
 	}
 	# Profiles with services
-	elsif ( $type eq "gslb" )
+	elsif ( $type eq "gslb" || $type =~ /http/ )
 	{
-		#~ require Zevenet::Farm::GSLB::Service;
-		foreach my $srv ( &getGSLBFarmServices($farm_name) )
-		{
-			# Fill an array with backends of all services
-			push @{ $backends }, @{ &getGSLBFarmBackends( $farm_name, $srv ) };
-		}
-	}	
-	elsif ( $type =~ /http/ )
-	{
-		require Zevenet::Farm::HTTP::Service;
 		foreach my $srv ( &getFarmServices($farm_name) )
 		{
 			# Fill an array with backends of all services
-			require Zevenet::Farm::HTTP::Backend;
-			push @{ $backends }, @{ &getHTTPFarmBackends( $farm_name, $srv ) };
+			push @{ $backends }, @{ &getFarmBackends( $farm_name, $srv ) };
 		}
 	}	
 	else

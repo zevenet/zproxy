@@ -259,8 +259,7 @@ sub farm_services
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	require Zevenet::Farm::HTTP::Service;
-
+	require Zevenet::Farm::Service;
 	my @services = &getFarmServices( $farmname );
 	if ( ! grep ( /^$servicename$/, @services ) )
 	{
@@ -346,18 +345,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 	# validate SERVICE
 	{
-		my @services;
-
-		if ($type eq "gslb")
-		{
-			require Zevenet::Farm::GSLB::Service;
-			@services = &getGSLBFarmServices($farmname);
-		}
-		else
-		{
-			require Zevenet::Farm::HTTP::Service;
-			@services = &getFarmServices($farmname);
-		}
+		require Zevenet::Farm::Service;
+		my @services = &getFarmServices($farmname);
 
 		my $found_service = grep { $service eq $_ } @services;
 
@@ -707,9 +696,6 @@ sub move_services
 {
 	my ( $json_obj, $farmname, $service ) = @_;
 
-	require Zevenet::Farm::HTTP::Service;
-
-	my @services = &getFarmServices( $farmname );
 	my $services_num = scalar @services;
 	my $description = "Move service";
 	my $moveservice;
@@ -727,7 +713,23 @@ sub move_services
 
 		&httpResponse({ code => 404, body => $body });
 	}
-	elsif ( ! grep ( /^$service$/, @services ) )
+
+	if ( &getFarmType( $farmname ) !~ /http/ )
+	{
+		$errormsg = "Error, this feature is only available to http farms.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg
+		};
+		&httpResponse({ code => 400, body => $body });
+	}
+
+
+	require Zevenet::Farm::Service;
+	my @services = &getFarmServices( $farmname );
+	
+	if ( ! grep ( /^$service$/, @services ) )
 	{
 		$errormsg = "$service not found.";
 		my $body = {
@@ -737,97 +739,94 @@ sub move_services
 		};
 		&httpResponse({ code => 404, body => $body });
 	}
-
+	
 	# Move services
-	else
-	{
-		$errormsg = &getValidOptParams( $json_obj, ["position"] );
+	$errormsg = &getValidOptParams( $json_obj, ["position"] );
 
-		if ( !$errormsg )
+	if ( !$errormsg )
+	{
+		if ( !&getValidFormat( 'service_position', $json_obj->{ 'position' } ) )
 		{
-			if ( !&getValidFormat( 'service_position', $json_obj->{ 'position' } ) )
+			$errormsg = "Error in service position format.";
+		}
+		else
+		{
+			my $srv_position = &getFarmVSI( $farmname, $service );
+			if ( $srv_position == $json_obj->{ 'position' } )
 			{
-				$errormsg = "Error in service position format.";
+				$errormsg = "The service already is in required position.";
+			}
+			elsif ( $services_num <= $json_obj->{ 'position' } )
+			{
+				$errormsg = "The required position is bigger than number of services.";
+			}
+
+			# select action
+			elsif ( $srv_position > $json_obj->{ 'position' } )
+			{
+				$moveservice = "up";
 			}
 			else
 			{
-				my $srv_position = &getFarmVSI( $farmname, $service );
-				if ( $srv_position == $json_obj->{ 'position' } )
-				{
-					$errormsg = "The service already is in required position.";
-				}
-				elsif ( $services_num <= $json_obj->{ 'position' } )
-				{
-					$errormsg = "The required position is bigger than number of services.";
-				}
+				$moveservice = "down";
+			}
 
-				# select action
-				elsif ( $srv_position > $json_obj->{ 'position' } )
+			if ( !$errormsg )
+			{
+				# stopping farm
+				require Zevenet::Farm::Base;
+				my $farm_status = &getFarmStatus( $farmname );
+				if ( $farm_status eq 'up' )
 				{
-					$moveservice = "up";
+					if ( &runFarmStop( $farmname, "true" ) != 0 )
+					{
+						$errormsg = "Error stopping the farm.";
+					}
+					else
+					{
+						&zenlog( "Farm stopped successful." );
+					}
 				}
-				else
-				{
-					$moveservice = "down";
-				}
-
 				if ( !$errormsg )
 				{
-					# stopping farm
-					require Zevenet::Farm::Base;
-					my $farm_status = &getFarmStatus( $farmname );
+					# move service until required position
+					while ( $srv_position != $json_obj->{ 'position' } )
+					{
+						#change configuration file
+						&moveServiceFarmStatus( $farmname, $moveservice, $service );
+						&moveService( $farmname, $moveservice, $service );
+
+						$srv_position = &getFarmVSI( $farmname, $service );
+					}
+
+					# start farm if his status was up
 					if ( $farm_status eq 'up' )
 					{
-						if ( &runFarmStop( $farmname, "true" ) != 0 )
+						if ( &runFarmStart( $farmname, "true" ) == 0 )
 						{
-							$errormsg = "Error stopping the farm.";
+							&setHTTPFarmBackendStatus( $farmname );
+							&zenlog( "$service was moved successful." );
 						}
 						else
 						{
-							&zenlog( "Farm stopped successful." );
+							$errormsg = "The $farmname farm hasn't been restarted";
 						}
 					}
+
 					if ( !$errormsg )
 					{
-						# move service until required position
-						while ( $srv_position != $json_obj->{ 'position' } )
-						{
-							#change configuration file
-							&moveServiceFarmStatus( $farmname, $moveservice, $service );
-							&moveService( $farmname, $moveservice, $service );
+						$errormsg = "$service was moved successful.";
 
-							$srv_position = &getFarmVSI( $farmname, $service );
+						if ( &getFarmStatus( $farmname ) eq 'up' )
+						{
+							&runGSLBFarmReload( $farmname );
+							require Zevenet::Cluster;
+							&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 						}
 
-						# start farm if his status was up
-						if ( $farm_status eq 'up' )
-						{
-							if ( &runFarmStart( $farmname, "true" ) == 0 )
-							{
-								&setHTTPFarmBackendStatus( $farmname );
-								&zenlog( "$service was moved successful." );
-							}
-							else
-							{
-								$errormsg = "The $farmname farm hasn't been restarted";
-							}
-						}
-
-						if ( !$errormsg )
-						{
-							$errormsg = "$service was moved successful.";
-
-							if ( &getFarmStatus( $farmname ) eq 'up' )
-							{
-								&runGSLBFarmReload( $farmname );
-								require Zevenet::Cluster;
-								&runZClusterRemoteManager( 'farm', 'restart', $farmname );
-							}
-
-							my $body =
-							  { description => $description, params => $json_obj, message => $errormsg, };
-							&httpResponse( { code => 200, body => $body } );
-						}
+						my $body =
+						  { description => $description, params => $json_obj, message => $errormsg, };
+						&httpResponse( { code => 200, body => $body } );
 					}
 				}
 			}
@@ -863,17 +862,8 @@ sub delete_service # ( $farmname, $service )
 	my $type = &getFarmType( $farmname );
 	
 	# Check that the provided service is configured in the farm
-	my @services;
-	if ($type eq "gslb")
-	{
-		require Zevenet::Farm::GSLB::Service;
-		@services = &getGSLBFarmServices($farmname);
-	}
-	else
-	{
-		require Zevenet::Farm::HTTP::Service;
-		@services = &getFarmServices($farmname);
-	}
+	require Zevenet::Farm::Service;
+	my @services = &getFarmServices($farmname);
 
 	my $found = 0;
 	foreach my $farmservice (@services)
