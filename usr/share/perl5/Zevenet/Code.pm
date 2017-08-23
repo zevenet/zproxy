@@ -1,0 +1,125 @@
+#!/usr/bin/perl
+###############################################################################
+#
+#    Zevenet Software License
+#    This file is part of the Zevenet Load Balancer software package.
+#
+#    Copyright (C) 2014-today ZEVENET SL, Sevilla (Spain)
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+###############################################################################
+
+use strict;
+
+use MIME::Base64;
+
+
+=begin nd
+Function: getCodeEncode
+
+	Encode a message
+
+Parameters:
+	message - String with the message to encode
+
+Returns:
+	String - Encoded message
+
+See Also:
+	Notifications password
+=cut
+sub getCodeEncode
+{
+	my $clear_msg = shift;    # output
+	my $encode_msg;
+	
+	if ( $clear_msg )
+	{
+		# encode fist time
+		$encode_msg = encode_base64( $clear_msg, '' );
+		
+		# apply a obfuscation the msg
+		# sustitute most used characters
+		$encode_msg =~ s/a/2f25ed/g;
+		$encode_msg =~ s/2/1B21VW/g;
+		$encode_msg =~ s/e/lpWvW5/g;
+		$encode_msg =~ s/o/Zx1Ce/g;
+		$encode_msg =~ s/0/JhDc1cw/g;
+		$encode_msg =~ s/9/mN1ffrh/g;
+		$encode_msg =~ s/5/8qe4w4/g;
+		$encode_msg =~ s/3/8q21NJn/g;
+		$encode_msg =~ s/7/Tr54g4V4eN/g;
+		chomp $encode_msg;
+		
+		# apply prefix and sufix
+		$encode_msg = "xh1Q334${encode_msg}0be65aP1";
+		
+		# encode the obfuscate msg
+		$encode_msg = encode_base64( $encode_msg, '' );
+		chomp $encode_msg;
+	}
+	
+	return $encode_msg;
+}
+
+=begin nd
+Function: getCodeDecode
+
+	Decode a encoded message
+
+Parameters:
+	message - String with a encoded message
+
+Returns:
+	String - Clear message
+
+See Also:
+	Notifications password
+=cut
+sub getCodeDecode
+{
+	my $encode_msg = shift;
+	my $clear_msg;    # output
+
+	if ( $encode_msg )
+	{
+		# decode first time
+		$clear_msg = decode_base64($encode_msg);
+		
+		# remove the obfuscate the msg
+		# remove code of most used characters
+		$clear_msg =~ s/Tr54g4V4eN/7/g;
+		$clear_msg =~ s/8q21NJn/3/g;
+		$clear_msg =~ s/8qe4w4/5/g;
+		$clear_msg =~ s/mN1ffrh/9/g;
+		$clear_msg =~ s/JhDc1cw/0/g;
+		$clear_msg =~ s/Zx1Ce/o/g;
+		$clear_msg =~ s/lpWvW5/e/g;
+		$clear_msg =~ s/1B21VW/2/g;
+		$clear_msg =~ s/2f25ed/a/g;
+		
+		# remove prefix and sufix
+		$clear_msg =~ s/^xh1Q334//;
+		$clear_msg =~ s/0be65aP1$//;
+	
+		# decode 
+		$clear_msg = decode_base64( $clear_msg );
+	}
+	
+	return $clear_msg;
+}
+
+
+1;

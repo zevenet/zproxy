@@ -116,12 +116,15 @@ sub setNotifSenders
 	{
 		if ( $key eq 'password' )
 		{
+			require Zevenet::Code;
 			$errMsg =
-			  &setNotifData( 'senders', $sender, 'auth-password', $params->{ $key } );
+			  &setNotifData( 'senders', $sender, 'auth-password', 
+				&getCodeEncode($params->{ $key } ) );
 		}
 		elsif ( $key eq 'user' )
 		{
-			$errMsg = &setNotifData( 'senders', $sender, 'auth-user', $params->{ $key } );
+			$errMsg = &setNotifData( 'senders', $sender, 'auth-user', 
+				$params->{ $key } );
 		}
 		else
 		{
@@ -586,6 +589,13 @@ sub sendByMail
 	my $logger = &getGlobalConfiguration ( 'logger' );
 	my $error;
 
+	my $pass = &getNotifData( 'senders', 'Smtp', 'auth-password' );
+	if ( $pass )
+	{
+		require Zevenet::Code;
+		$pass = &getCodeDecode($pass);
+	}
+
 	$body = "\n***** Notifications *****\n\n" . "Alerts: $section Notification\n";
 	$body .= $bodycomp;
 	
@@ -600,8 +610,7 @@ sub sendByMail
 		$command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
 		$command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' ) 
 				if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
-		$command .= " --auth-password " . &getNotifData( 'senders', 'Smtp', 'auth-password' )
-				if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
+		$command .= " --auth-password " . $pass if ( $pass );
 	}
 
 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) ) { $command .= " -tls"; }
@@ -655,6 +664,14 @@ sub sendTestMail
 	my $command;
 	my $logger = &getGlobalConfiguration ( 'logger' );
 	my $error;
+	
+	my $pass = &getNotifData( 'senders', 'Smtp', 'auth-password' );
+	if ( $pass )
+	{
+		require Zevenet::Code;
+		$pass = &getCodeDecode($pass);
+	}
+
 
 	my $body = "\n***** Notifications *****\n\n";
 	$body .= $bodycomp;
@@ -670,8 +687,7 @@ sub sendTestMail
 		$command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
 		$command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' ) 
 				if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
-		$command .= " --auth-password " . &getNotifData( 'senders', 'Smtp', 'auth-password' )
-				if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
+		$command .= " --auth-password " . $pass if ( $pass );
 	}	
 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) ) { $command .= " -tls"; }
 
