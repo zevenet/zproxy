@@ -747,7 +747,7 @@ sub farm_stats()
 		my $fpid = &getFarmChildPid( $farmname );
 
 		my @content = &getFarmBackendStatusCtl( $farmname );
-		my @backends = &getFarmBackendsStatus( $farmname, @content );
+		my @backends = &getFarmBackendsStatus_old( $farmname, @content );
 
 		# List of services
 		my @a_services;
@@ -867,7 +867,7 @@ sub farm_stats()
 		# my @netstat = &getNetstatNat($args);
 		my $fvip     = &getFarmVip( "vip", $farmname );
 		my @content  = &getFarmBackendStatusCtl( $farmname );
-		my @backends = &getFarmBackendsStatus( $farmname, @content );
+		my @backends = &getFarmBackendsStatus_old( $farmname, @content );
 
 		# List of backends
 		my $backendsize    = @backends;
@@ -947,7 +947,7 @@ sub farm_stats()
 		my @sessions = &getFarmBackendsClientsList( $farmname, @content );
 
 		#Real servers
-		my @backends = &getFarmBackendsStatus( $farmname, @content );
+		my @backends = &getFarmBackendsStatus_old( $farmname, @content );
 
 		my @netstat;
 		$fvipp = &getFarmVip( "vipp", $farmname );

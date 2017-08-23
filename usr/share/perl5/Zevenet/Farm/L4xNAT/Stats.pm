@@ -158,7 +158,7 @@ sub getL4FarmEstConns    # ($farm_name,@netstat)
 	}
 
 	my @content = &getFarmBackendStatusCtl( $farm_name );
-	my @backends = &getFarmBackendsStatus( $farm_name, @content );
+	my @backends = &getFarmBackendsStatus_old( $farm_name, @content );
 
 	foreach ( @backends )
 	{
@@ -332,7 +332,7 @@ sub getL4FarmSYNConns    # ($farm_name,@netstat)
 	}
 
 	my @content = &getFarmBackendStatusCtl( $farm_name ); 
-	my @backends = &getFarmBackendsStatus( $farm_name, @content );
+	my @backends = &getFarmBackendsStatus_old( $farm_name, @content );
 					   
 	# tcp      6 299 ESTABLISHED src=192.168.0.186 dst=192.168.100.241 sport=56668 dport=80 src=192.168.0.186 dst=192.168.100.241 sport=80 dport=56668 [ASSURED] mark=517 use=2
 	foreach ( @backends )

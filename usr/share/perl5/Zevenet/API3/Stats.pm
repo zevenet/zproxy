@@ -106,7 +106,7 @@ sub farm_stats # ( $farmname )
 		require Zevenet::Farm::Backend;
 
 		my @content = &getFarmBackendStatusCtl( $farmname );
-		my @backends = &getFarmBackendsStatus( $farmname, @content );
+		my @backends = &getFarmBackendsStatus_old( $farmname, @content );
 
 		# List of services
 		my @a_service;
@@ -223,7 +223,7 @@ sub farm_stats # ( $farmname )
 		my $fvip     = &getFarmVip( "vip", $farmname );
 		my @content  = &getFarmBackendStatusCtl( $farmname );
 		#~ chomp @content;
-		my @backends = &getFarmBackendsStatus( $farmname, @content );
+		my @backends = &getFarmBackendsStatus_old( $farmname, @content );
 
 		# List of backends
 		my $backendsize    = @backends;

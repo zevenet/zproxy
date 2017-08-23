@@ -218,9 +218,10 @@ sub getFarmBackendStatusCtl    # ($farm_name)
 
 =begin nd
 
-Function: getFarmBackendStatus
+Function: getFarmBackendStatus_old
 
-	Get processed information about status and configuration of backends
+	[Deprecated] Get processed information about status and configuration of backends.
+	This function is deprecated, use getFarmBackend to get a complete backend array list
 	
 Parameters:
 	farmname - Farm name
@@ -228,14 +229,9 @@ Parameters:
 
 Returns:
 	Array - List of backend. Each profile has a different output format 
-	
-FIXME:
-	1. Always is called getFarmBackendStatusCtl function before this function, to pass @content array, then will be useful for avoid bugs call getFarmBackendStatusCtl inside this function.
-	Better, call getHTTPFarmBackendStatusCtl inside that getHTTPFarmBackendsStatus function, so it is not necessary work with @content variable
-	2. Return a hash
-	
+		
 =cut
-sub getFarmBackendsStatus    # ($farm_name,@content)
+sub getFarmBackendsStatus_old    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
 
