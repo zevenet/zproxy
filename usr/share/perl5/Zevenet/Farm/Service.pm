@@ -34,7 +34,7 @@ Parameters:
 	farmname - Farm name
 
 Returns:
-	Array - list of service names or -1 on failure
+	Array - list of service names 
 	
 =cut
 sub getFarmServices    # ($farm_name)
@@ -42,21 +42,21 @@ sub getFarmServices    # ($farm_name)
 	my ( $farm_name ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
-	my $output    = -1;
+	my @output    = ();
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		require Zevenet::Farm::HTTP::Service;
-		$output = &getHTTPFarmServices( $info, $farm_name );
+		@output = &getHTTPFarmServices( $farm_name );
 	}
 
 	if ( $farm_type eq "gslb" )
 	{
 		require Zevenet::Farm::GSLB::Service;
-		$output = &getGSLBFarmServices( $info, $farm_name );
+		@output = &getGSLBFarmServices( $farm_name );
 	}
 
-	return $output;
+	return @output;
 }
 
 1;

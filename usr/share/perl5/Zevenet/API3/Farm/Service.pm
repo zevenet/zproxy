@@ -696,7 +696,6 @@ sub move_services
 {
 	my ( $json_obj, $farmname, $service ) = @_;
 
-	my $services_num = scalar @services;
 	my $description = "Move service";
 	my $moveservice;
 	my $errormsg;
@@ -728,6 +727,7 @@ sub move_services
 
 	require Zevenet::Farm::Service;
 	my @services = &getFarmServices( $farmname );
+	my $services_num = scalar @services;
 	
 	if ( ! grep ( /^$service$/, @services ) )
 	{
