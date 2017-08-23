@@ -28,9 +28,10 @@ use Tie::File;
 
 #~ use Zevenet::Core;
 #~ use Zevenet::Debug;
-use Zevenet::IPDS::RBL;
-use Zevenet::IPDS::Blacklist;
-use Zevenet::IPDS::DoS;
+use Zevenet::IPDS::Core;
+#~ use Zevenet::IPDS::RBL;
+#~ use Zevenet::IPDS::Blacklist;
+#~ use Zevenet::IPDS::DoS;
 
 
 
@@ -111,6 +112,8 @@ sub delIPDSIptablesChain
 
 
 
+actions:
+
 =begin nd
 Function: runIPDSStartModule
 
@@ -153,5 +156,139 @@ sub runIPDSStopModule
 	&delIPDSIptablesChain();
 }
 
+
+actions_by_farm:
+
+=begin nd
+Function: runIPDSStartByFarm
+
+	Link a farm with all its IPDS rules. If some rule is not been used by another farm, the rule is run.
+	It is useful when a farm is started, stopped or modified
+
+Parameters:
+	Farmname - Farm name
+				
+Returns:
+	none - .
+	
+=cut
+
+sub runIPDSStartByFarm
+{
+	my $farmname = shift;
+	
+	# get rules and perl modules
+	my $rules = &getIPDSfarmsRules( $farmname );
+	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{blacklist} } );
+	require Zevenet::IPDS::DoS::Actions if ( @{ $rules->{dos} } );
+	require Zevenet::IPDS::RBL::Actions if ( @{ $rules->{rbl} } );
+	
+	# start BL rules
+	foreach my $rule ( @{ $rules->{blacklist} } )
+	{
+		&runRBLStart( $rule, $farmname );
+	}
+	
+	# start dos rules
+	foreach my $rule ( @{ $rules->{dos} } )
+	{
+		&runDOSStart( $rule, $farmname );
+	}
+	
+	# start rbl rules
+	foreach my $rule ( @{ $rules->{rbl} } )
+	{
+		&runBLStart( $rule, $farmname );
+	}
+}
+
+=begin nd
+Function: runIPDSStopByFarm
+
+	Unlink a farm with all its IPDS rules. If no more farm is using the rule, stop it.
+	It is useful when a farm is stopped or remove from rule
+
+Parameters:
+	Farmname - Farm name
+				
+Returns:
+	none - .
+	
+=cut
+
+sub runIPDSStopByFarm
+{
+	my $farmname = shift;
+	
+	# get rules and perl modules
+	my $rules = &getIPDSfarmsRules( $farmname );
+	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{blacklist} } );
+	require Zevenet::IPDS::DoS::Actions if ( @{ $rules->{dos} } );
+	require Zevenet::IPDS::RBL::Actions if ( @{ $rules->{rbl} } );
+	
+	# start BL rules
+	foreach my $rule ( @{ $rules->{blacklist} } )
+	{
+		&runRBLStop( $rule, $farmname );
+	}
+	
+	# start dos rules
+	foreach my $rule ( @{ $rules->{dos} } )
+	{
+		&runDOSStop( $rule, $farmname );
+	}
+	
+	# start rbl rules
+	foreach my $rule ( @{ $rules->{rbl} } )
+	{
+		&runBLStop( $rule, $farmname );
+	}
+}
+
+=begin nd
+Function: runIPDSRestartByFarm
+
+	Reload all IPDS rules to a farm.
+	It is useful when a farm is modified
+
+Parameters:
+	Farmname - Farm name
+				
+Returns:
+	none - .
+	
+=cut
+
+sub runIPDSRestartByFarm
+{
+	my $farmname = shift;
+	
+	# get rules and perl modules
+	my $rules = &getIPDSfarmsRules( $farmname );
+	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{blacklist} } );
+	require Zevenet::IPDS::DoS::Actions if ( @{ $rules->{dos} } );
+	require Zevenet::IPDS::RBL::Actions if ( @{ $rules->{rbl} } );
+	
+	# start BL rules
+	foreach my $rule ( @{ $rules->{blacklist} } )
+	{
+		&runRBLStop( $rule, $farmname );
+		&runRBLStart( $rule, $farmname );
+	}
+	
+	# start dos rules
+	foreach my $rule ( @{ $rules->{dos} } )
+	{
+		&runDOSStop( $rule, $farmname );
+		&runDOSStart( $rule, $farmname );
+	}
+	
+	# start rbl rules
+	foreach my $rule ( @{ $rules->{rbl} } )
+	{
+		&runBLStop( $rule, $farmname );
+		&runBLStart( $rule, $farmname );
+	}
+}
 
 1;
