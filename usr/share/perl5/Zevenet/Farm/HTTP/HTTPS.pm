@@ -265,7 +265,7 @@ Function: setFarmCipherList
 	
 Parameters:
 	farmname - Farm name
-	ciphers - The options are: cipherglobal, cipherpci or ciphercustom
+	ciphers - The options are: cipherglobal, cipherpci, cipherssloffloading or ciphercustom
 	cipherc - Cipher custom, this field is used when ciphers is ciphercustom
 
 Returns:
@@ -307,6 +307,12 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 			$cipherc = 'DEFAULT' if not defined $cipherc;
 			$line =~ s/#//g;
 			$line   = "\tCiphers \"$cipherc\"";
+			$output = 0;
+		}
+		elsif ( $ciphers eq "cipherssloffloading" )
+		{
+			my $cipher = &getGlobalConfiguration('cipher_ssloffloading');
+			$line   = "\tCiphers \"$cipher\"";
 			$output = 0;
 		}
 
@@ -363,7 +369,8 @@ sub getFarmCipherList    # ($farm_name)
 =begin nd
 Function: getFarmCipherSet
 
-	Get Ciphers value defined in pound configuration file. Possible values are: cipherglobal, cipherpci or ciphercustom.
+	Get Ciphers value defined in pound configuration file. Possible values are: 
+		cipherglobal, cipherpci, cipherssloffloading or ciphercustom.
 	
 Parameters:
 	farmname - Farm name
@@ -388,6 +395,10 @@ sub getFarmCipherSet    # ($farm_name)
 	{
 		$output = "cipherpci";
 	}
+	elsif ( $cipher_list eq &getGlobalConfiguration('cipher_ssloffloading') )
+	{
+		$output = "cipherssloffloading";
+	}
 	else
 	{
 		$output = "ciphercustom";
@@ -395,5 +406,46 @@ sub getFarmCipherSet    # ($farm_name)
 
 	return $output;
 }
+
+
+=begin nd
+Function: getFarmCipherSSLOffLoadingSupport
+
+	Get if the process supports aes aceleration
+	 
+Parameters:
+	none -.
+
+Returns:
+	Integer - return 1 if proccess support AES aceleration or 0 if it doesn't 
+		support it
+
+=cut
+sub getFarmCipherSSLOffLoadingSupport
+{
+	my $output = 0;
+	my $proc_cpu = "/proc/cpuinfo";
+	
+	if ( -f $proc_cpu )
+	{
+		open my $fh, "<", $proc_cpu;
+		
+		my $line;
+		while ( $line = <$fh> )
+		{
+			if ( $line =~ /^flags.* aes / )
+			{
+				$output = 1;
+				last;
+			}
+			
+		}
+		close $fh;
+	}
+	
+	return $output;
+}
+
+
 
 1;

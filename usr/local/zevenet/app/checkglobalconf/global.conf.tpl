@@ -32,6 +32,8 @@ $version="5.0.8";#update
 $applianceVersionFile="/etc/zevenet_version";
 #Cipher PCI
 $cipher_pci="kEECDH+ECDSA+AES128:kEECDH+ECDSA+AES256:kEECDH+AES128:kEECDH+AES256:kEDH+AES128:kEDH+AES256:DES-CBC3-SHA:+SHA:!aNULL:!eNULL:!LOW:!kECDH:!DSS:!MD5:!EXP:!PSK:!SRP:!CAMELLIA:!SEED";#update
+#Cipher ssloffloading
+$cipher_ssloffloading="AES";
 #HTPASSWD file
 $htpass="/etc/passwd";#update
 #ZAPI KEY

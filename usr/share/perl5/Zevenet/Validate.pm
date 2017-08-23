@@ -106,6 +106,9 @@ my %format_re = (
 	'service_position'      => qr/\d+/,
 	'farm_maintenance_mode' => qr/(?:drain|cut)/,
 
+	# cipher
+	'ciphers'		=> qr/(?:all|highsecurity|customsecurity|ssloffloading)/,
+
 	# backup
 	'backup'        => qr/[\w]+/,
 	'backup_action' => qr/apply/,

@@ -481,8 +481,9 @@ sub modify_http_farm # ( $json_obj, $farmname )
 				$zapierror = "Error, trying to modify a http farm $farmname, invalid ciphers, can't be blank."
 				&zenlog( "Zapi $zapierror" );
 			}
-			elsif ( $json_obj->{ ciphers } =~ /^all|highsecurity|customsecurity$/ )
+			elsif ( &getValidFormat( 'ciphers', $json_obj->{ ciphers } ) )
 			{
+				my $ssloffloading_error=0;
 				my $ciphers;
 				if ( $json_obj->{ ciphers } eq "all" )
 				{
@@ -497,10 +498,24 @@ sub modify_http_farm # ( $json_obj, $farmname )
 				{
 					$ciphers = "cipherpci";
 				}
-				$status = &setFarmCipherList( $farmname, $ciphers );
-				if ( $status != -1 )
+				elsif ( $json_obj->{ ciphers } eq "ssloffloading" )
 				{
-					$restart_flag = "true";
+					if ( &getFarmCipherSSLOffLoadingSupport() )
+					{
+						$ciphers = "cipherssloffloading";
+					}
+					else
+					{
+						$ssloffloading_error = 1;
+						$error = "true";
+						$zapierror = "Error, the CPU not support SSL offloading.";
+						&zenlog( "Zapi $zapierror" );
+					}
+				}
+				if ( ! $ssloffloading_error )
+				{
+					$status = &setFarmCipherList( $farmname, $ciphers );
+					$restart_flag = "true" if ( $status != -1 );
 				}
 				else
 				{
