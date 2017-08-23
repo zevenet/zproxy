@@ -101,6 +101,7 @@ sub farms_name_http # ( $farmname )
 	chomp(@err503);
 
 	my $status = &getFarmVipStatus( $farmname );
+	my $ignore100continue = (&getHTTPFarm100Continue( $farmname ))? "true": "false";
 
 	# my @certnames = &getFarmCertificatesSNI($farmname);
 	# my $out_certs = [];
@@ -115,6 +116,7 @@ sub farms_name_http # ( $farmname )
 		resurrectime    => $alive,
 		reqtimeout      => $client,
 		rewritelocation => $rewritelocation,
+		ignore_100_continue => $ignore100continue,
 		httpverb        => $httpverb,
 		listener        => $type,
 		vip             => $vip,
@@ -130,6 +132,11 @@ sub farms_name_http # ( $farmname )
 		$output_params->{ certlist } = \@out_cn;
 		$output_params->{ ciphers }  = $ciphers;
 		$output_params->{ cipherc }  = $cipher;
+		$output_params->{ disable_sslv2 } = ( &getHTTPFarmDisableSSL($farmname, "SSLv2") )? "true": "false";
+		$output_params->{ disable_sslv3 } = ( &getHTTPFarmDisableSSL($farmname, "SSLv3") )? "true": "false";
+		$output_params->{ disable_tlsv1 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1") )? "true": "false";
+		$output_params->{ disable_tlsv1_1 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_1") )? "true": "false";
+		$output_params->{ disable_tlsv1_2 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_2") )? "true": "false";
 	}
 
 	#http services

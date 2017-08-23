@@ -319,6 +319,45 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		}
 	}
 
+	# Enable or disable ignore 100 continue header
+	if ( exists ( $json_obj->{ ignore_100_continue } ) )
+	{
+		if ( $json_obj->{ ignore_100_continue } =~ /^$/ )
+		{
+			$error = "true";
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid ignore_100_continue, can't be blank.";
+			&zenlog( "Zapi $zapierror" );
+		}
+		elsif (
+				$json_obj->{ ignore_100_continue } =~ /^true|false$/ )
+		{
+			my $action = 0;
+			$action = 1 if( $json_obj->{ ignore_100_continue } =~ /^true$/ );
+			
+			
+			if ( &getHTTPFarm100Continue( $farmname ) != $action )
+			{
+				$status = &setHTTPFarm100Continue($farmname, $action);
+				if ( $status != -1 )
+				{
+					$restart_flag = "true";
+				}
+				else
+				{
+					$error = "true";
+					$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the certname.";
+					&zenlog( "Zapi $zapierror" );
+				}
+			}
+		}
+		else
+		{
+			$error = "true";
+			$zapierror = "Error, trying to modify a http farm $farmname, invalid ignore_100_continue.";
+			&zenlog( "Zapi $zapierror" );
+		}
+	}
+
 	# Modify HTTP Verbs Accepted
 	if ( exists ( $json_obj->{ httpverb } ) )
 	{
@@ -592,6 +631,51 @@ sub modify_http_farm # ( $json_obj, $farmname )
 				$error = "true";
 				$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the certname.";
 				&zenlog( "Zapi $zapierror" );
+			}
+		}
+
+		# Disable security protocol
+		my @protocols_ssl_keys = ( "disable_sslv2","disable_sslv3","disable_tlsv1",
+			"disable_tlsv1_1","disable_tlsv1_2" );
+		foreach my $key_ssl ( @protocols_ssl_keys )
+		{
+			if ( grep ( /^$key_ssl$/, keys %{$json_obj} ) )
+			{
+				my $ssl_proto;
+				my $action = -1;
+				$action = 1 if( $json_obj->{$key_ssl} eq "true" );
+				$action = 0 if( $json_obj->{$key_ssl} eq "false" );
+				
+				$ssl_proto = "SSLv2" if( $key_ssl eq "disable_sslv2" );
+				$ssl_proto = "SSLv3" if( $key_ssl eq "disable_sslv3" );
+				$ssl_proto = "TLSv1" if( $key_ssl eq "disable_tlsv1" );
+				$ssl_proto = "TLSv1_1" if( $key_ssl eq "disable_tlsv1_1" );
+				$ssl_proto = "TLSv1_2" if( $key_ssl eq "disable_tlsv1_2" );
+				
+				
+				if( $action != -1 )
+				{
+					if( $action != &getHTTPFarmDisableSSL($farmname, $ssl_proto) )
+					{
+						$status = &setHTTPFarmDisableSSL ($farmname, $ssl_proto, $action );
+						if ( $status != -1 )
+						{
+							$restart_flag = "true";
+						}
+						else
+						{
+							$error = "true";
+							$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the certname.";
+							&zenlog( "Zapi $zapierror" );
+						}
+					}
+				}
+				else
+				{
+					$error = "true";
+					$zapierror = "Error, the value is not valid for parameter $key_ssl.";
+					&zenlog( "Zapi $zapierror" );
+				}
 			}
 		}
 	}

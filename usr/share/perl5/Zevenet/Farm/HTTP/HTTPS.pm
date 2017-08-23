@@ -447,5 +447,102 @@ sub getFarmCipherSSLOffLoadingSupport
 }
 
 
+=begin nd
+Function: getHTTPFarmDisableSSL
+
+	Get if a security protocol version is enabled or disabled in a HTTPS farm
+	 
+Parameters:
+	farmname - Farm name
+	protocol - SSL or TLS protocol get status (disabled or enabled)
+
+Returns:
+	Integer - 1 on disabled, 0 on enabled or -1 on failure
+
+=cut
+sub getHTTPFarmDisableSSL    # ($farm_name, $protocol)
+{
+	my ( $farm_name, $protocol ) = @_;
+
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+
+	if ( $farm_type eq "https" )
+	{
+		open FR, "<$configdir\/$farm_filename" or return $output;
+		$output = 0;	# if the sentence is not in config file, it is disabled
+		my @file = <FR>;
+		foreach my $line ( @file )
+		{
+			if ( $line =~ /^\tDisable $protocol/ )
+			{
+				$output = 1;
+				last;
+			}
+		}
+		close FR;
+	}
+
+	return $output;
+}
+
+=begin nd
+Function: setHTTPFarmDisableSSL
+
+	Enable or disable a security protocol for a HTTPS farm
+	 
+Parameters:
+	farmname - Farm name
+	protocol - SSL or TLS protocol to disable/enable: SSLv2|SSLv3|TLSv1|TLSv1_1|TLSv1_2 
+	action - The available actions are: 1 to disable or 0 to enable
+
+Returns:
+	Integer - Error code: 0 on success or -1 on failure
+
+=cut
+sub setHTTPFarmDisableSSL    # ($farm_name, $protocol, $action )
+{
+	my ( $farm_name, $protocol, $action ) = @_;
+
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	
+	if ( $farm_type eq "https" )
+	{		
+		use Tie::File;
+		tie my @file, 'Tie::File', "$configdir/$farm_filename";
+		
+		if ( $action == 1 )
+		{
+			foreach my $line (@file)
+			{
+				if ( $line =~ /Ciphers\ .*/ )
+				{
+					$line = "$line\n\tDisable $protocol";
+					last;
+				}
+			}
+			$output = 0;
+		}
+		else
+		{
+			my $it=-1;
+			foreach my $line (@file)
+			{
+				$it = $it +1;
+				last if( $line =~ /Disable $protocol$/);
+			}
+			splice @file, $it, 1;
+			$output = 0;
+		}
+			
+		untie @file;
+	}
+	return $output;
+}
+
+
 
 1;

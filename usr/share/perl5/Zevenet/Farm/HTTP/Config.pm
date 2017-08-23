@@ -462,20 +462,39 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 
 		}
 
-		# Enable 'Disable SSLv3'
-		if ( $filefarmhttp[$i_f] =~ /.*Disable SSLv3$/ && $flisten eq "http" )
+		# Enable 'Disable TLSv1, TLSv1_1 or TLSv1_2'
+		if ( $filefarmhttp[$i_f] =~ /.*Disable TLSv1$/ && $flisten eq "http" )
 		{
-			$filefarmhttp[$i_f] =~ s/Disable SSLv3/#Disable SSLv3/;
+			$filefarmhttp[$i_f] =~ s/Disable TLSv1/#Disable TLSv1/;
 		}
-		elsif ( $filefarmhttp[$i_f] =~ /.*DisableSSLv3$/ && $flisten eq "http" )
+		elsif ( $filefarmhttp[$i_f] =~ /.*DisableTLSv1$/ && $flisten eq "http" )
 		{
-			$filefarmhttp[$i_f] =~ s/DisableSSLv3/#DisableSSLv3/;
+			$filefarmhttp[$i_f] =~ s/DisableTLSv1/#DisableTLSv1/;
 		}
-		if ( $filefarmhttp[$i_f] =~ /.*Disable SSLv3$/ && $flisten eq "https" )
+		if ( $filefarmhttp[$i_f] =~ /.*Disable TLSv1$/ && $flisten eq "https" )
 		{
 			$filefarmhttp[$i_f] =~ s/#//g;
 		}
-		elsif (    $filefarmhttp[$i_f] =~ /.*DisableSSLv3$/
+		elsif (    $filefarmhttp[$i_f] =~ /.*DisableTLSv1\d$/
+				&& $flisten eq "https" )
+		{
+			$filefarmhttp[$i_f] =~ s/#//g;
+		}
+
+		# Enable 'Disable SSLv3 or SSLv2'
+		if ( $filefarmhttp[$i_f] =~ /.*Disable SSLv\d$/ && $flisten eq "http" )
+		{
+			$filefarmhttp[$i_f] =~ s/Disable SSLv\d/#Disable SSLv\d/;
+		}
+		elsif ( $filefarmhttp[$i_f] =~ /.*DisableSSLv\d$/ && $flisten eq "http" )
+		{
+			$filefarmhttp[$i_f] =~ s/DisableSSLv\d/#DisableSSLv\d/;
+		}
+		if ( $filefarmhttp[$i_f] =~ /.*Disable SSLv\d$/ && $flisten eq "https" )
+		{
+			$filefarmhttp[$i_f] =~ s/#//g;
+		}
+		elsif (    $filefarmhttp[$i_f] =~ /.*DisableSSLv\d$/
 				&& $flisten eq "https" )
 		{
 			$filefarmhttp[$i_f] =~ s/#//g;
@@ -617,6 +636,90 @@ sub getFarmRewriteL    # ($farm_name)
 		close FR;
 	}
 
+	return $output;
+}
+
+=begin nd
+Function: getHTTPFarm100Continue
+
+	Return 100 continue Header configuration HTTP and HTTPS farms
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - The possible values are: 0 on disabled, 1 on enabled or -1 on failure
+
+=cut
+sub getHTTPFarm100Continue    # ($farm_name)
+{
+	my ( $farm_name ) = @_;
+
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+
+	if ( $farm_type eq "http" || $farm_type eq "https" )
+	{
+		open FR, "<$configdir\/$farm_filename" or return $output;
+		$output = 0;	# if the sentence is not in config file, it is disabled
+		my @file = <FR>;
+		foreach my $line ( @file )
+		{
+			if ( $line =~ /Ignore100Continue (\d).*/ )
+			{
+				$output = $1;
+				last;
+			}
+		}
+		close FR;
+	}
+
+	return $output;
+}
+
+=begin nd
+Function: setHTTPFarm100Continue
+
+	Enable or disable the HTTP 100 continue header
+
+Parameters:
+	farmname - Farm name
+	action - The available actions are: 1 to enable or 0 to disable
+
+Returns:
+	scalar - The possible values are: 0 on success or -1 on failure
+
+=cut
+sub setHTTPFarm100Continue    # ($farm_name, $action)
+{
+	my ( $farm_name, $action ) = @_;
+
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+	
+	if ( $farm_type eq "http" || $farm_type eq "https" )
+	{		
+		use Tie::File;
+		tie my @file, 'Tie::File', "$configdir/$farm_filename";
+		
+		# check if 100 continue directive exists
+		if ( ! grep(s/^Ignore100Continue\ .*/Ignore100Continue $action/, @file) )
+		{
+			foreach my $line (@file)
+			{
+				# put ignore below than rewritelocation
+				if ( $line =~ /^Control\s/ )
+				{
+					$line = "$line\nIgnore100Continue $action";
+					last;
+				}
+			}
+		}
+		$output = 0;
+		untie @file;
+	}
 	return $output;
 }
 
