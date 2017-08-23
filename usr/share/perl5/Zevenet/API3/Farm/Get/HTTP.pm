@@ -100,12 +100,7 @@ sub farms_name_http # ( $farmname )
 	my @err503 = &getFarmErr( $farmname, "503" );
 	chomp(@err503);
 
-	my $status = &getFarmStatus( $farmname );
-
-	if ( $status eq 'up' && -e "/tmp/$farmname.lock" )
-	{
-		$status = "needed restart";
-	}
+	my $status = &getFarmVipStatus( $farmname );
 
 	# my @certnames = &getFarmCertificatesSNI($farmname);
 	# my $out_certs = [];

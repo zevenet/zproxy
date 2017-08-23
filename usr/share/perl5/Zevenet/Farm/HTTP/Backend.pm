@@ -453,11 +453,14 @@ sub getHTTPFarmBackends    # ($farm_name,$service)
 	
 		$tout = $tout eq '-' ? undef: $tout+0;
 		$prio = $prio eq '-' ? undef: $prio+0;
+		
+		my $status = "undefined";
+		$status = $be_status[ $id ] if $be_status[ $id ];
 	
 		push @out_ba,
 		{
 			id      => $id,
-			status  => $be_status[ $id ],
+			status  => $status,
 			ip      => $ip,
 			port    => $port,
 			timeout => $tout,
@@ -498,7 +501,7 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 
 	if ( $farmStatus eq "up" )
 	{
-		require Zevenet::Farm::Stats;
+		require Zevenet::Farm::HTTP::Stats;
 		my $stats = &getHTTPFarmBackendsStats($farm_name);
 					
 		foreach my $be ( @{ $stats->{ backends } } )

@@ -57,7 +57,7 @@ sub farms_name_l4 # ( $farmname )
     if ( !$fglog  ) { $fglog = "false"; }
     if ( !$fgcommand ) { $fgcommand = ""; }
 
-	my $status = &getFarmStatus( $farmname );
+	my $status = &getFarmVipStatus( $farmname );
 
 	my $persistence = &getFarmPersistence( $farmname );
 	$persistence = "" if $persistence eq 'none';

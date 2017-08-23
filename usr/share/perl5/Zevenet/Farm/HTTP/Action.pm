@@ -99,9 +99,16 @@ sub _runHTTPFarmStop    # ($farm_name)
 		my $pid = &getFarmPid( $farm_name );
 		my $piddir = &getGlobalConfiguration('piddir');
 
-		&zenlog( "running 'kill 15, $pid'" );
-		my $run = kill 15, $pid;
-		$status = $?;
+		if ( $pid eq '-' || $pid == -1 )
+		{
+			&zenlog( "Not found pid" );
+		}
+		else
+		{
+			&zenlog( "running 'kill 15, $pid'" );
+			my $run = kill 15, $pid;
+			$status = $?;
+		}
 
 		unlink ( "$piddir\/$farm_name\_pound.pid" ) if -e "$piddir\/$farm_name\_pound.pid";
 		unlink ( "\/tmp\/$farm_name\_pound.socket" ) if -e "\/tmp\/$farm_name\_pound.socket";

@@ -41,7 +41,7 @@ sub getAllFarmStats
 	{
 		my $name   = &getFarmName( $file );
 		my $type   = &getFarmType( $name );
-		my $status = &getFarmStatus( $name );
+		my $status = &getFarmVipStatus( $name );
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
 		my $established = 0;

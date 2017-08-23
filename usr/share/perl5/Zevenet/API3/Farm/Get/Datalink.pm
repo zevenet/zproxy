@@ -27,7 +27,7 @@ sub farms_name_datalink    # ( $farmname )
 	my $farmname = shift;
 
 	my $vip = &getFarmVip( "vip", $farmname );
-	my $status = &getFarmStatus( $farmname );
+	my $status = &getFarmVipStatus( $farmname );
 
 	my $out_p = {
 				  vip       => $vip,
