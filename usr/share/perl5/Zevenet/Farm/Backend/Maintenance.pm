@@ -65,14 +65,17 @@ Function: setFarmBackendMaintenance
 Parameters:
 	farmname - Farm name
 	backend - Backend id
+	mode - Maintenance mode, the options are: drain, the backend continues working with 
+	  the established connections; or cut, the backend cuts all the established 
+	  connections
 	service - Service name
 
 Returns:
 	Integer - return 0 on success or -1 on failure
 =cut
-sub setFarmBackendMaintenance    # ($farm_name,$backend,$service)
+sub setFarmBackendMaintenance    # ($farm_name,$backend,$mode,$service)
 {
-	my ( $farm_name, $backend, $service ) = @_;
+	my ( $farm_name, $backend, $mode, $service ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
@@ -80,12 +83,12 @@ sub setFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		require Zevenet::Farm::HTTP::Backend;
-		$output = &setHTTPFarmBackendMaintenance( $farm_name, $backend, $service );
+		$output = &setHTTPFarmBackendMaintenance( $farm_name, $backend, $mode, $service );
 	}
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
-		$output = &setL4FarmBackendMaintenance( $farm_name, $backend );
+		$output = &setL4FarmBackendMaintenance( $farm_name, $backend, $mode );
 	}
 
 	return $output;

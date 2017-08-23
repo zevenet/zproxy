@@ -104,6 +104,7 @@ my %format_re = (
 	'service'      => $service,
 	'farm_modules' => qr/(?:gslb|dslb|lslb)/,
 	'service_position'      => qr/\d+/,
+	'farm_maintenance_mode' => qr/(?:drain|cut)/,
 
 	# backup
 	'backup'        => qr/[\w]+/,

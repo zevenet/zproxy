@@ -242,6 +242,7 @@ sub deleteFarmService    # ($farm_name,$service)
 	{
 		while ( $counter > -1 )
 		{
+			require Zevenet::Farm::HTTP::Backend;
 			&runRemoveHTTPBackendStatus( $farm_name, $counter, $service );
 			$counter--;
 		}

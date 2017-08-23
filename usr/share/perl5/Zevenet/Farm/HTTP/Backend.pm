@@ -873,6 +873,9 @@ Function: setHTTPFarmBackendMaintenance
 Parameters:
 	farmname - Farm name
 	backend - Backend id
+	mode - Maintenance mode, the options are: drain, the backend continues working with 
+	  the established connections; or cut, the backend cuts all the established 
+	  connections
 	service - Service name
 
 Returns:
@@ -881,9 +884,14 @@ Returns:
 =cut
 sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
-	my ( $farm_name, $backend, $service ) = @_;
+	my ( $farm_name, $backend, $mode, $service ) = @_;
 
 	my $output = -1;
+
+	if ( $mode eq "cut" )
+	{
+		&setHTTPFarmBackendsSessionsRemove( $farm_name, $service, $backend );
+	}
 
 	#find the service number
 	my $idsv = &getFarmVSI( $farm_name, $service );
@@ -1085,7 +1093,7 @@ sub setHTTPFarmBackendStatus    # ($farm_name)
 }
 
 =begin nd
-Function: setFarmBackendsSessionsRemove
+Function: setHTTPFarmBackendsSessionsRemove
 
 	Remove all the active sessions enabled to a backend in a given service
 	Used by farmguardian
@@ -1101,7 +1109,7 @@ Returns:
 FIXME: 
 		
 =cut
-sub setFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
+sub setHTTPFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 {
 	my ( $farm_name, $service, $backendid ) = @_;
 

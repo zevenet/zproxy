@@ -199,6 +199,7 @@ sub getFarmVipStatus    # ($farm_name)
 	# Profiles with services
 	elsif ( $type eq "gslb" || $type =~ /http/ )
 	{
+		require Zevenet::Farm::Service;
 		foreach my $srv ( &getFarmServices($farm_name) )
 		{
 			# Fill an array with backends of all services
