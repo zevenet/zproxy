@@ -91,14 +91,10 @@ sub farms_name_http # ( $farmname )
 	my $vip   = &getFarmVip( "vip",  $farmname );
 	my $vport = 0 + &getFarmVip( "vipp", $farmname );
 
-	my @err414 = &getFarmErr( $farmname, "414" );
-	chomp(@err414);
-	my @err500 = &getFarmErr( $farmname, "500" );
-	chomp(@err500);
-	my @err501 = &getFarmErr( $farmname, "501" );
-	chomp(@err501);
-	my @err503 = &getFarmErr( $farmname, "503" );
-	chomp(@err503);
+	my $err414 = &getFarmErr( $farmname, "414" );
+	my $err500 = &getFarmErr( $farmname, "500" );
+	my $err501 = &getFarmErr( $farmname, "501" );
+	my $err503 = &getFarmErr( $farmname, "503" );
 
 	my $status = &getFarmVipStatus( $farmname );
 	my $ignore100continue = (&getHTTPFarm100Continue( $farmname ))? "true": "false";
@@ -121,10 +117,10 @@ sub farms_name_http # ( $farmname )
 		listener        => $type,
 		vip             => $vip,
 		vport           => $vport,
-		error500        => @err500,
-		error414        => @err414,
-		error501        => @err501,
-		error503        => @err503
+		error500        => $err500,
+		error414        => $err414,
+		error501        => $err501,
+		error503        => $err503
 	  };
 
 	if ( $type eq "https" )

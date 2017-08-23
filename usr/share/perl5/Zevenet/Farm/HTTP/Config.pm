@@ -1061,7 +1061,7 @@ sub getFarmErr    # ($farm_name,$nerr)
 
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
-	my @output;
+	my $output;
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -1079,16 +1079,17 @@ sub getFarmErr    # ($farm_name,$nerr)
 					open FI, "$err";
 					while ( <FI> )
 					{
-						push ( @output, $_ );
+						$output .= $_;
 					}
 					close FI;
+					chomp ($output);
 				}
 			}
 		}
 		close FR;
 	}
 
-	return @output;
+	return $output;
 }
 
 =begin nd
