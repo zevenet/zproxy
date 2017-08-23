@@ -90,6 +90,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 
 			if ( &getFarmStatus( $farmname ) eq 'up' )
 			{
+				require Zevenet::Farm::Action;
 				&setFarmRestart( $farmname );
 				$body->{ status } = 'needed restart';
 			}
