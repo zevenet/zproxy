@@ -241,19 +241,19 @@ sub getFarmBackendsStatus_old    # ($farm_name,@content)
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		require Zevenet::Farm::HTTP::Backend;
-		@output = &getHTTPFarmBackendsStatus( $farm_name, @content );
+		@output = &getHTTPFarmBackendsStatus_old( $farm_name, @content );
 	}
 
 	if ( $farm_type eq "datalink" )
 	{
 		require Zevenet::Farm::Datalink::Backend;
-		@output = &getDatalinkFarmBackendsStatus( @content );
+		@output = &getDatalinkFarmBackendsStatus_old( @content );
 	}
 
 	if ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
-		@output = &getL4FarmBackendsStatus( $farm_name, @content );
+		@output = &getL4FarmBackendsStatus_old( $farm_name, @content );
 	}
 
 	return @output;

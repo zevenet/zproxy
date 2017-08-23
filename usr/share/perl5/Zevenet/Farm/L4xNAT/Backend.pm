@@ -253,7 +253,7 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 }
 
 =begin nd
-Function: getL4FarmBackendsStatus
+Function: getL4FarmBackendsStatus_old
 
 	function that return the status information of a farm:
 	ip, port, backendstatus, weight, priority, clients
@@ -268,7 +268,7 @@ FIXME:
 	Change output to hash	
 		
 =cut
-sub getL4FarmBackendsStatus    # ($farm_name,@content)
+sub getL4FarmBackendsStatus_old    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
 

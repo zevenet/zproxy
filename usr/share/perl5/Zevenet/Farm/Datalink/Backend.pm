@@ -203,7 +203,7 @@ sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 }
 
 =begin nd
-Function: getDatalinkFarmBackendsStatus
+Function: getDatalinkFarmBackendsStatus_old
 
 	Get the backend status from a datalink farm
 	
@@ -219,7 +219,7 @@ BUG:
 	It is necessary creates backend checks and save backend status
 	
 =cut
-sub getDatalinkFarmBackendsStatus    # (@content)
+sub getDatalinkFarmBackendsStatus_old    # (@content)
 {
 	my ( @content ) = @_;
 

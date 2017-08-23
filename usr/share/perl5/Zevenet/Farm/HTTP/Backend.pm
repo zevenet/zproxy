@@ -302,7 +302,7 @@ sub getHTTPFarmBackendStatusCtl    # ($farm_name)
 }
 
 =begin nd
-Function: getHTTPFarmBackendsStatus
+Function: getHTTPFarmBackendsStatus_old
 
 	Function that return the status information of a farm: ip, port, backend status, weight, priority, clients, connections and service
 	
@@ -327,7 +327,7 @@ FIXME:
 	Sustitute by getHTTPFarmBackendsStats function
 	
 =cut
-sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
+sub getHTTPFarmBackendsStatus_old    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
 
@@ -414,7 +414,7 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 =begin nd
 Function: getHTTPFarmBackendsStats
 
-	This function is the same than getHTTPFarmBackendsStatus but return a hash with http farm information
+	This function is the same than getHTTPFarmBackendsStatus_old but return a hash with http farm information
 	This function take data from pounctl and it gives hash format 
 	
 Parameters:
