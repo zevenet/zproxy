@@ -22,16 +22,17 @@
 ###############################################################################
 
 use strict;
-# use warnings;
+use warnings;
 
-use Date::Parse;
-use Time::localtime;
-use Tie::File;
-use Data::Dumper;
-
+# standard required modules
 use Zevenet;
 
-#~ my $limitfile = "/etc/security/limits.conf";
+# activation certificate modules
+use Date::Parse;
+use Time::localtime;
+
+#~ use Tie::File;
+#~ use Data::Dumper;
 
 my $basedir      = &getGlobalConfiguration( 'basedir' );
 my $configdir    = &getGlobalConfiguration( 'configdir' );
@@ -40,20 +41,7 @@ my $defaultgwif  = &getGlobalConfiguration( 'defaultgwif' );
 my $defaultgw6   = &getGlobalConfiguration( 'defaultgw6' );
 my $defaultgwif6 = &getGlobalConfiguration( 'defaultgwif6' );
 
-my $eject                 = $ARGV[0];
-my @configured_interfaces = @{ &getConfigInterfaceList() };
-
-# cluster
-my $zcl_configured = &getZClusterStatus();
-
-my $master_node;
-if ( $zcl_configured && -f &getGlobalConfiguration('znode_status_file') )
-{
-	$master_node = ( &getZClusterNodeStatus() eq 'master' );
-}
-my $allow_fg = ( !$zcl_configured || ( $zcl_configured && $master_node ) );
-
-if ( !$eject && $eject !~ /stop|start|status/ )
+if ( !@ARGV && $ARGV[0] !~ /stop|start|status/ )
 {
 	print "Usage: /etc/init.d/zevenet stop|start|status\n";
 	exit 0;
@@ -61,10 +49,8 @@ if ( !$eject && $eject !~ /stop|start|status/ )
 
 sub printAndLog
 {
-	my @input = @_;
-
-	print ( @input );
-	#~ &zenlog( @input );
+	print( @_ );
+	zenlog( @_ );
 }
 
 # build local key
@@ -192,7 +178,6 @@ sub certcontrol          #()
 	return $swcert;
 }
 
-
 sub local_http_service
 {
 	my ( $command ) = @_;
@@ -200,17 +185,7 @@ sub local_http_service
 	die "local_http_service command not recognized"
 		unless $command =~ /^(?:start|stop)$/;
 
-	my $pid;
-
-	if ( $pid = fork )
-	{
-		#$SIG{'CHLD'}='IGNORE';
-	}
-	elsif ( defined $pid )
-	{
-		system ( "/etc/init.d/cherokee $command >/dev/null &" );
-		exit ( 0 );
-	}
+	system ( "/etc/init.d/cherokee $command >/dev/null &" );
 }
 
 if ( $eject eq "restart" )
@@ -222,165 +197,13 @@ if ( $eject eq "restart" )
 if ( $eject eq "start" )
 {
 	my $version = &getGlobalConfiguration('version');
-	&zenlog( "Starting ZEVENET Load Balancer v$version" );
-	&zenlog( "Beginning start proccess" );
-	require "/usr/local/zevenet/config/global.conf";
-	require "/usr/local/zevenet/www/notifications.cgi";
-	require Zevenet::IPDS::Base;
 
-	#### Starts node tuning ####
+	printAndLog( "Starting Zevenet Load Balancer v$version" );
 
 	# Load required modules
-	my $missing_bonding = system ( 'lsmod | grep bonding >/dev/null' );
-	if ( $missing_bonding )
-	{
-		system ( '/sbin/modprobe bonding >/dev/null 2>&1' );
-		my $bonding_masters_filename = &getGlobalConfiguration('bonding_masters_filename');
-		system ( "echo -bond0 > $bonding_masters_filename" );
-	}
 	system ( '/sbin/modprobe nf_conntrack >/dev/null 2>&1' );
 	system ( '/sbin/modprobe ip_conntrack >/dev/null 2>&1' );
-	system ( '/sbin/rmmod xt_recent >/dev/null 2>&1' );
-	my $recent_ip_list_tot = &getGlobalConfiguration('recent_ip_list_tot');
-	my $recent_ip_list_hash_size = &getGlobalConfiguration('recent_ip_list_hash_size');
-	system (
-		"/sbin/modprobe xt_recent ip_list_tot=$recent_ip_list_tot ip_list_hash_size=$recent_ip_list_hash_size >/dev/null 2>&1"
-	);
-
-	system ( 'echo "22500" > /sys/module/nf_conntrack/parameters/hashsize' );
-
-	# Set system tuning with sysctl
-	my $sysctl_conffile = "/etc/sysctl.conf";
-
-	tie my @sysctl_file, 'Tie::File', "$sysctl_conffile";
-	@sysctl_file = grep !/^net\.ipv4\.tcp_tw_recycle/, @sysctl_file;
-
-	# In Stretch Debian not appear "net.ipv4.netfilter.ip_conntrack*" variables
-	# Debian stretch is used in Zevenet 5000
-	my $appliance_version = &getApplianceVersion();
-	&zenlog ("Appliance version: $appliance_version");
-	$appliance_version =~ /[\w+] (\d)\d+/;
-	$appliance_version = $1;
-	my %sysctl;
-	#  ZVA lower than 5000 
-	if ( $appliance_version < 5 )
-	{
-		%sysctl = (
-				   "fs.file-max"                        => "100000",
-				   "kernel.threads-max"			=> "120000",	# this parameter is for packetbl process
-				   "kernel.pid_max"				=> "200000",	# this parameter is for packetbl process
-				   "vm.max_map_count"                   => "1048576",
-				   "vm.swappiness"                      => "10",
-				   "net.ipv4.conf.all.log_martians"     => "0",
-				   "net.ipv4.ip_local_port_range"       => "1024 65535",
-				   "net.ipv4.tcp_max_tw_buckets"        => "2000000",
-				   "net.ipv4.tcp_max_syn_backlog"       => "30000",
-				   "net.ipv4.tcp_window_scaling"        => "1",
-				   "net.ipv4.tcp_timestamps"            => "0",
-				   "net.ipv4.tcp_rmem"                  => "4096 87380 16777216",
-				   "net.ipv4.tcp_wmem"                  => "4096 65536 16777216",
-				   "net.ipv4.udp_rmem_min"              => "65536",
-				   "net.ipv4.udp_wmem_min"              => "65536",
-				   "net.ipv4.tcp_low_latency"           => "1",
-				   "net.ipv4.tcp_tw_reuse"              => "1",
-				   "net.ipv4.tcp_tw_recycle"            => "0",
-				   "net.ipv4.tcp_keepalive_time"        => "512",
-				   "net.ipv4.tcp_fin_timeout"           => "5",
-				   "net.ipv4.inet_peer_maxttl"          => "5",
-				   "net.ipv4.tcp_keepalive_probes"      => "5",
-				   "net.ipv4.tcp_slow_start_after_idle" => "0",
-				   "net.ipv4.netfilter.ip_conntrack_udp_timeout"             => "2",
-				   "net.ipv4.netfilter.ip_conntrack_udp_timeout_stream"      => "2",
-				   "net.ipv4.netfilter.ip_conntrack_tcp_timeout_time_wait"   => "2",
-				   "net.ipv4.netfilter.ip_conntrack_tcp_timeout_established" => "86400",
-				   "net.netfilter.nf_conntrack_tcp_timeout_time_wait"        => "2",
-				   "net.netfilter.nf_conntrack_max"       => "180000",
-				   "net.netfilter.nf_conntrack_tcp_loose" => "0",
-				   "net.core.rmem_max"                    => "16777216",
-				   "net.core.wmem_max"                    => "16777216",
-				   "net.core.rmem_default"                => "16777216",
-				   "net.core.wmem_default"                => "16777216",
-				   "net.core.optmem_max"                  => "40960",
-				   "net.ipv4.tcp_keepalive_intvl"         => "15",
-				   "net.core.netdev_max_backlog"          => "50000",
-				   "net.core.somaxconn"                   => "3000",
-				   "net.ipv4.ip_nonlocal_bind" 		  => "1",
-		);
-	}
-	#  ZVA higher than 5000 
-	else
-	{
-		%sysctl = (
-				   "fs.file-max"                        => "100000",
-				   "kernel.threads-max"			=> "120000",	# this parameter is for packetbl process
-				   "kernel.pid_max"				=> "200000",	# this parameter is for packetbl process
-				   "vm.max_map_count"                   => "1048576",
-				   "vm.swappiness"                      => "10",
-				   "net.ipv4.conf.all.log_martians"     => "0",
-				   "net.ipv4.ip_local_port_range"       => "1024 65535",
-				   "net.ipv4.tcp_max_tw_buckets"        => "2000000",
-				   "net.ipv4.tcp_max_syn_backlog"       => "30000",
-				   "net.ipv4.tcp_window_scaling"        => "1",
-				   "net.ipv4.tcp_timestamps"            => "0",
-				   "net.ipv4.tcp_rmem"                  => "4096 87380 16777216",
-				   "net.ipv4.tcp_wmem"                  => "4096 65536 16777216",
-				   "net.ipv4.udp_rmem_min"              => "65536",
-				   "net.ipv4.udp_wmem_min"              => "65536",
-				   "net.ipv4.tcp_low_latency"           => "1",
-				   "net.ipv4.tcp_tw_reuse"              => "1",
-				   "net.ipv4.tcp_tw_recycle"            => "0",
-				   "net.ipv4.tcp_keepalive_time"        => "512",
-				   "net.ipv4.tcp_fin_timeout"           => "5",
-				   "net.ipv4.inet_peer_maxttl"          => "5",
-				   "net.ipv4.tcp_keepalive_probes"      => "5",
-				   "net.ipv4.tcp_slow_start_after_idle" => "0",
-				   "net.netfilter.nf_conntrack_udp_timeout"             => "2",
-				   "net.netfilter.nf_conntrack_udp_timeout_stream"      => "2",
-				   "net.netfilter.nf_conntrack_tcp_timeout_time_wait"   => "2",
-				   "net.netfilter.nf_conntrack_tcp_timeout_established" => "86400",
-				   "net.netfilter.nf_conntrack_max"       => "180000",
-				   "net.netfilter.nf_conntrack_tcp_loose" => "0",
-				   "net.core.rmem_max"                    => "16777216",
-				   "net.core.wmem_max"                    => "16777216",
-				   "net.core.rmem_default"                => "16777216",
-				   "net.core.wmem_default"                => "16777216",
-				   "net.core.optmem_max"                  => "40960",
-				   "net.ipv4.tcp_keepalive_intvl"         => "15",
-				   "net.core.netdev_max_backlog"          => "50000",
-				   "net.core.somaxconn"                   => "3000",
-				   "net.ipv4.ip_nonlocal_bind" 		  => "1",
-		);
-	}
-
-	foreach my $key ( sort keys %sysctl )
-	{
-		# escape dots for regular expression
-		my $quoted_key = quotemeta ( $key );
-
-		if ( !grep ( /^$key = $sysctl{$key}/, @sysctl_file ) )
-		{
-			push ( @sysctl_file, "$key = $sysctl{$key}" );
-		} else {
-			s/^$quoted_key .*/$key = $sysctl{$key}/ for @sysctl_file;
-		}
-	}
-
-	untie @sysctl_file;
-
-	my $sysctl_errno = system ( 'sysctl -p > /dev/null' );
-	my $sysclt_msg;
-
-	if ( $sysctl_errno )
-	{
-		$sysclt_msg = "An error happenend applying sysctl policies.";
-	}
-	else
-	{
-		$sysclt_msg = "Sysctl applied policies successfully.";
-	}
-
-	&zenlog( $sysclt_msg );
-	#### End of node tuning ####
+	system ( '/sbin/modprobe xt_recent >/dev/null 2>&1'   );
 
 	# import system interface to zen if configured
 	#testing interface configured on the installation and gw
@@ -474,46 +297,20 @@ if ( $eject eq "start" )
 			open FW, ">>/etc/iproute2/rt_tables";
 			print FW "200\ttable_$ifname\n";
 			close FW;
-
-			@configured_interfaces = @{ &getConfigInterfaceList() };
 		}
 	}
 
-	#configuring bonding
-	my $bond_conf = &getBondConfig();
-	for my $bond_k ( keys %{ $bond_conf } )
-	{
-		next if $bond_k eq '_';
+	# enterprise hook
+	if ( eval { require Zevenet::Service; } ) { start_service(); }
 
-		my $bond = $bond_conf->{ $bond_k };
+	printAndLog( "* Starting Interfaces:\n" );
 
-		print "  * Up bonding master $$bond{name} ";
+	my $mgmt_ip    = &getHttpServerIp();
+	my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
+	my @interfaces = @{ &getConfigInterfaceList() };
 
-		my $error_code = &applyBondChange( $bond );
-
-		if ( $error_code == 0 )
-		{
-			print " \033[1;32m OK \033[0m \n";
-		}
-		else
-		{
-			print " \033[1;31m ERROR \033[0m \n";
-		}
-	}
-
-	# start all modules
-	&zlbstartNotifications();
-	&runIPDSStartModule();
-
-	### Starting Network Interfaces
-	&printAndLog( "Starting ZEVENET Load Balancer...\n" );
-	&printAndLog( "* Starting Interfaces:\n" );
-
-	my $mgmt_ip = &getHttpServerIp();
-	my $ip_bin = &getGlobalConfiguration('ip_bin');
-
-	#first real interfaces
-	foreach my $iface ( @configured_interfaces )
+	# first real interfaces
+	foreach my $iface ( @interfaces )
 	{
 		#interfaces as eth0 for example
 		if ( $$iface{ name } eq $$iface{ dev } )
@@ -522,12 +319,12 @@ if ( $eject eq "start" )
 
 			if ( $$iface{ status } eq "up" )
 			{
-				&printAndLog( "  * Starting interface $$iface{name}\n" );
-				&printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+				printAndLog( "  * Starting interface $$iface{name}\n" );
+				printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
 				if ( $$iface{ gateway } ne '' )
 				{
-					&printAndLog( " Gateway:$$iface{gateway}" );
+					printAndLog( " Gateway:$$iface{gateway}" );
 				}
 
 				&upIf( $iface );
@@ -546,11 +343,11 @@ if ( $eject eq "start" )
 
 				if ( $return_code == 0 )
 				{
-					print( " \033[1;32m OK \033[0m \n" );
+					printAndLog( " \033[1;32m OK \033[0m \n" );
 				}
 				else
 				{
-					print( " \033[1;31m ERROR \033[0m \n" );
+					printAndLog( " \033[1;31m ERROR \033[0m \n" );
 				}
 
 				if ( $$iface{ ip_v } == 4 )
@@ -561,8 +358,8 @@ if ( $eject eq "start" )
 		}
 	}
 
-	#interfaces as eth0.20 for example
-	foreach my $iface ( @configured_interfaces )
+	# vlans interfaces (ie. eth0.20)
+	foreach my $iface ( @interfaces )
 	{
 		if ( $$iface{ vlan } ne '' && $$iface{ vini } eq '' )
 		{
@@ -571,12 +368,12 @@ if ( $eject eq "start" )
 
 			if ( $$iface{ status } eq "up" )
 			{
-				&printAndLog( "  * Starting interface $$iface{name}\n" );
-				&printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+				printAndLog( "  * Starting interface $$iface{name}\n" );
+				printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
 				if ( $$iface{ gateway } ne '' )
 				{
-					&printAndLog( " Gateway:$$iface{gateway}" );
+					printAndLog( " Gateway:$$iface{gateway}" );
 				}
 
 				&upIf( $iface );
@@ -589,11 +386,11 @@ if ( $eject eq "start" )
 
 				if ( $return_code == 0 )
 				{
-					print( " \033[1;32m OK \033[0m \n" );
+					printAndLog( " \033[1;32m OK \033[0m \n" );
 				}
 				else
 				{
-					print( " \033[1;31m ERROR \033[0m \n" );
+					printAndLog( " \033[1;31m ERROR \033[0m \n" );
 				}
 
 				&applyRoutes( "local", $iface );
@@ -606,58 +403,18 @@ if ( $eject eq "start" )
 		}
 	}
 
-	if ( $zcl_configured )
-	{
-		&zenlog( "Cluster configuration found" );
+	# enable cluster hook
+	if ( eval { require Zevenet::Service; } ) { enable_cluster(); }
 
-		my $znode_status_file = &getGlobalConfiguration('znode_status_file');
-
-		my $zcl_conf = &getZClusterConfig();
-
-		# detect master node
-		# run command remotely on all nodes
-		my $remote_ip = $zcl_conf->{ &getZClusterRemoteHost() }->{ ip };
-
-		my $remote_node_status = &runRemotely( "cat $znode_status_file", $remote_ip );
-
-		# force sync with master
-		if ( $remote_node_status eq 'master' )
-		{
-			# force remote sync
-			my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
-
-			&runRemotely( "$zcluster_manager sync", $remote_ip );
-			&enableZCluster( 10 );
-			&zenlog("enableZCluster returned");
-		}
-
-		# disable ip announcement
-		#if not master already
-		if ( &getZClusterNodeStatus() ne 'master' )
-		{
-			foreach my $iface ( @configured_interfaces )
-			{
-				next if ( $$iface{ vini } eq '' );
-				next if ( $$iface{ status } ne "up" );
-
-				&disableInterfaceDiscovery( $iface );
-			}
-		}
-	}
-	else
-	{
-		&zenlog( "Cluster configuration not found" );
-	}
-
-	#interfaces as eth0:20 || eth0.20:2 for example
-	foreach my $iface ( @configured_interfaces )
+	# virtual interfaces (ie. eth0:20, eth0.20:2)
+	foreach my $iface ( @interfaces )
 	{
 		if ( $$iface{ vini } ne '' )
 		{
 			if ( $$iface{ status } eq "up" )
 			{
-				&printAndLog( "  * Starting interface $$iface{name}\n" );
-				&printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+				printAndLog( "  * Starting interface $$iface{name}\n" );
+				printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
 				my $return_code = &addIp( $iface );
 
@@ -673,11 +430,11 @@ if ( $eject eq "start" )
 
 				if ( $return_code == 0 )
 				{
-					print( " \033[1;32m OK \033[0m \n" );
+					printAndLog( " \033[1;32m OK \033[0m \n" );
 				}
 				else
 				{
-					print( " \033[1;31m ERROR \033[0m \n" );
+					printAndLog( " \033[1;31m ERROR \033[0m \n" );
 				}
 
 				if ( $$iface{ ip_v } == 4 )
@@ -689,138 +446,86 @@ if ( $eject eq "start" )
 		}
 	}
 
-	my $swcert = &certcontrol();
+	printAndLog( "* Starting Farms:\n" );
 
-	# error codes:
-	#
-	# valid values for farms:
-	#swcert = -1 ==> Cert valid (>365) and it's expired
-	#swcert = 0 ==> OK
-	#
-	# not valid values for farms:
-	#swcert = 1 ==> There isn't certificate
-	#swcert = 2 ==> Cert isn't signed OK
-	#swcert = 3 ==> Cert test and it's expired
+	my @farmsf = &getFarmList();
+	my $enable_fg = 1;
 
-	if ( $swcert < 1 )
+	if ( eval { require Zevenet::Service; } ) { $enable_fg = getEnableFarmGuardian(); }
+
+	foreach my $ffile ( @farmsf )
 	{
-		### Starting Farms
-		&printAndLog( "* Starting Farms:\n" );
-		my @farmsf = &getFarmList();
+		my $farmname = &getFarmName( $ffile );
+		my $bstatus  = &getFarmBootStatus( $farmname );
 
-		foreach my $ffile ( @farmsf )
+		if ( $bstatus eq "up" )
 		{
-			my $farmname = &getFarmName( $ffile );
-			my $bstatus  = &getFarmBootStatus( $farmname );
+			printAndLog( "  * Starting Farm $farmname:" );
+			my $status = &_runFarmStart( $farmname, "false" );
 
-			if ( $bstatus eq "up" )
+			if ( $status == 0 )
 			{
-				&printAndLog( "  * Starting Farm $farmname:" );
-				my $status = &_runFarmStart( $farmname, "false" );
-
-				if ( $status == 0 )
-				{
-					&printAndLog( " \033[1;32m OK \033[0m \n" );
-				}
-				else
-				{
-					&printAndLog( " \033[1;31m ERROR \033[0m \n" );
-				}
-
-				#farmguardian configured and up?
-				my $fgstatus = &getFarmGuardianStatus( $farmname );
-
-				if ( ( $status == 0 ) && ( $fgstatus == 1 ) && $allow_fg )
-				{
-					&printAndLog( "  * Starting Farm Guardian for $farmname:" );
-					my $stat = &runFarmGuardianStart( $farmname, "" );
-
-					if ( $stat == 0 )
-					{
-						&printAndLog( " \033[1;32m OK \033[0m \n" );
-					}
-					else
-					{
-						&printAndLog( " \033[1;31m ERROR \033[0m \n" );
-					}
-				}
+				printAndLog( " \033[1;32m OK \033[0m \n" );
 			}
 			else
 			{
-				&printAndLog( "  Farm $farmname configured DOWN\n" );
+				printAndLog( " \033[1;31m ERROR \033[0m \n" );
+			}
+
+			#farmguardian configured and up?
+			my $fgstatus = &getFarmGuardianStatus( $farmname );
+
+			if ( ( $status == 0 ) && ( $fgstatus == 1 ) && $enable_fg )
+			{
+				printAndLog( "  * Starting Farm Guardian for $farmname:" );
+				my $stat = &runFarmGuardianStart( $farmname, "" );
+
+				if ( $stat == 0 )
+				{
+					printAndLog( " \033[1;32m OK \033[0m \n" );
+				}
+				else
+				{
+					printAndLog( " \033[1;31m ERROR \033[0m \n" );
+				}
 			}
 		}
-
-		#At this point every zen interfaces and farms are running
-		#now a personalized script can be executed
-		my @ownscript = `$configdir/zlb-start 2>&1`;
-
-		&zenlog("Starting $configdir/zlb-start...");
-		if ( @ownscript )
+		else
 		{
-			print "@ownscript";
-			&zenlog("@ownscript");
+			&printAndLog( "  Farm $farmname configured DOWN\n" );
 		}
-		&zenlog("End of $configdir/zlb-start...");
-	}
-	else
-	{
-		&printAndLog( "No valid ZLB certificate was found, no farm started\n" );
 	}
 
-	# start cluster
-	if ( &getZClusterStatus() )
-	{
-		&enableAllInterfacesDiscovery();
-		&enableZCluster();
-	}
+	# At this point every zevenet interface and farm is running
+	# now a personalized script can be executed
+	printAndLog("Starting $configdir/zlb-start...");
 
-	# related system services
-	if ( system( "/etc/init.d/ssh status >/dev/null 2>&1" ) )
-	{
-		system( "/etc/init.d/ssh start >/dev/null 2>&1" );
+	my @ownscript = `$configdir/zlb-start 2>&1`;
+	printAndLog( @ownscript ) if ( @ownscript );
+
+	printAndLog("End of $configdir/zlb-start...");
+
+	if ( eval { require Zevenet::Service; } ) { start_cluster(); }
+
+	# make sure related system services are runnig
+	if ( system( "/etc/init.d/ssh status >/dev/null 2>&1" ) ) {
+		 system( "/etc/init.d/ssh start >/dev/null 2>&1" );
 	}
 
 	&local_http_service('start');
 
-	&zenlog( "start proccess finished" );
+	printAndLog( "Start proccess finished." );
 }
 
 if ( $eject eq "stop" )
 {
-	require "/usr/local/zevenet/www/notifications.cgi";
-	require Zevenet::IPDS::Base;
+	printAndLog( "Stopping Zevenet Load Balancer...\n" );
 
-	&zenlog( "Beginning stop proccess" );
+	if ( eval { require Zevenet::Service; } ) { stop_service(); }
 
-	# stop all modules
-	&zlbstopNotifications( );
-	&runIPDSStopModule();
+	printAndLog( "* Stopping Farms:\n" );
 
-	if ( &getZClusterStatus() )
-	{
-		&zenlog( "Stopping ZCluster...\n" );
-
-		if ( `pgrep zeninotify` )
-		{
-			my $zenino = &getGlobalConfiguration('zenino');
-			system ( "$zenino stop" );
-		}
-
-		if ( &getZClusterRunning() )
-		{
-			&disableZCluster();
-		}
-	}
-
-	&printAndLog( "Stopping ZEVENET Load Balancer...\n" );
-
-	### Stopping Farms
-	&printAndLog( "* Stopping Farms:\n" );
-
-	my @farmsf = &getFarmList();
-
-	foreach my $ffile ( @farmsf )
+	foreach my $ffile ( getFarmList() )
 	{
 		my $farmname = &getFarmName( $ffile );
 		my $status   = &getFarmStatus( $farmname );
@@ -832,71 +537,68 @@ if ( $eject eq "stop" )
 
 			if ( $fgstatus != -1 )
 			{
-				&printAndLog( "  * Stopping Farm Guardian for $farmname:" );
+				printAndLog( "  * Stopping Farm Guardian for $farmname:" );
 				my $stat = &runFarmGuardianStop( $farmname, "" );
 
 				if ( $stat == 0 )
 				{
-					&printAndLog( " \033[1;32m OK \033[0m \n" );
+					printAndLog( " \033[1;32m OK \033[0m \n" );
 				}
 				else
 				{
-					&printAndLog( " \033[1;31m ERROR \033[0m \n" );
+					printAndLog( " \033[1;31m ERROR \033[0m \n" );
 				}
 			}
-			&printAndLog( "  * Stopping Farm $farmname:" );
+
+			printAndLog( "  * Stopping Farm $farmname:" );
 			my $status = &_runFarmStop( $farmname, "false" );
 
 			if ( $status == 0 )
 			{
-				&printAndLog( " \033[1;32m OK \033[0m \n" );
+				printAndLog( " \033[1;32m OK \033[0m \n" );
 			}
 			else
 			{
-				&printAndLog( " \033[1;31m ERROR \033[0m \n" );
+				printAndLog( " \033[1;31m ERROR \033[0m \n" );
 			}
 		}
 	}
 
-	### Stopping Network Interfaces
-	&printAndLog( "* Stopping Interfaces:\n" );
+	printAndLog( "* Stopping Virtual Interfaces:\n" );
 
-	# First Virtual Network Interfaces
-	foreach my $iface ( @configured_interfaces )
+	# Virtual Network Interfaces
+	foreach my $iface ( @{ &getConfigInterfaceList() } )
 	{
 		if ( $$iface{ vini } ne '' )
 		{
-			&printAndLog( "  * Down interface $$iface{name}\n" );
-			&printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+			printAndLog( "  * Down interface $$iface{name}\n" );
+			printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
 			my $return_code = &stopIf( $iface );
 
 			if ( $return_code == 0 )
 			{
-				&printAndLog( " \033[1;32m OK \033[0m \n" );
+				printAndLog( " \033[1;32m OK \033[0m \n" );
 			}
 			else
 			{
-				&printAndLog( " \033[1;31m ERROR \033[0m \n" );
+				printAndLog( " \033[1;31m ERROR \033[0m \n" );
 			}
 		}
 	}
 
-	&enableAllInterfacesDiscovery() if $zcl_configured;
+	if ( eval { require Zevenet::Service; } ) { disable_cluster(); }
 
-	#At this point all zen interfaces and farms are stopped
-	#now a personalized script can be executed
+	# At this point every zevenet interface and farm is stopped
+	# now a personalized script can be executed
+	printAndLog("Starting $configdir/zlb-stop...");
+
 	my @ownscript = `$configdir/zlb-stop 2>&1`;
+	printAndLog( @ownscript ) if @ownscript;
 
-	&zenlog("Starting $configdir/zlb-stop...");
-	if ( @ownscript )
-	{
-		print "@ownscript";
-		&zenlog("@ownscript");
-	}
-	&zenlog("End of $configdir/zlb-stop...");
+	printAndLog( "End of $configdir/zlb-stop..." );
 
-	&zenlog( "Stop process finished..." );
+	printAndLog( "Stop process finished..." );
 }
 
 &configureDefaultGW();
