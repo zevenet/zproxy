@@ -181,6 +181,52 @@ sub certcontrol          #()
 }
 # end evaluate certificate
 
+# Read interfaces data blocks
+sub getInterfaceBlocks
+{
+	my @file_lines = @_;
+	#~ open ($fh, '<', '/etc/netwok/interfaces');
+
+	my @interface_list = ();
+	my @interface = ();
+	my $in_block = undef;
+
+
+	while ( my $line = shift @file_lines )
+	{
+		next if $line =~ /^\s*$/;	# skip blank lines
+		next if $line =~ /^\s*#/;	# skip commented lines
+		next if $line =~ /^auto /;	# skip auto lines
+
+		chomp $line;
+
+		if ($line =~ /^iface /)
+		{
+			$in_block = 'true';
+
+			if ( @interface ) # exclude first block 
+			{
+				my ( @array ) = @interface;
+				push( @interface_list, \@array ); # store previous iface
+			}
+			
+			@interface = ( $line ); # start new interface
+		}
+		elsif ( $in_block )
+		{
+			push( @interface, $line ); # store previous iface
+		}
+	}
+
+	# for last block found
+	if ( @interface )
+	{
+		push( @interface_list, \@interface ); # store last iface
+	}
+
+	return @interface_list;
+}
+
 sub local_http_service
 {
 	my ( $command ) = @_;
@@ -221,43 +267,73 @@ if ( $action eq "start" )
 		# FIXME: Make function of this procedure
 		if ( !grep ( /zenmodified/, @file ) )
 		{
-			my ( $ifname, $ip, $netmask, $gateway );
+			my %interface;
+			my @blocks = getInterfaceBlocks(@file);
 
-			foreach my $line ( @file )
+			for my $block ( @blocks )
 			{
-				chomp ( $line );
-
-				if ( $line =~ /iface.*inet static/i )
+				my ( $ifname, $ip, $netmask, $gateway );
+				
+	
+				foreach my $line ( @{ $block } )
 				{
-					my ( undef, $ifname ) = split ( " ", $line );
-				}
-				if ( $line =~ /\Waddress/i )
-				{
-					my ( undef, $ip_n_mask ) = split ( " ", $line );
-					my $mask;
-					( $ip, $mask ) = split ( "/", $ip_n_mask );
+					chomp ( $line );
 
-					if ( $mask ) # only when bitmask is declared
+					if ( $line =~ /iface.*inet static/i )
 					{
-						use Net::Netmask;
-						my $block = Net::Netmask->new2( $ip_n_mask );
+						( undef, $ifname ) = split ( " ", $line );
+					}
+					if ( $line =~ /\Waddress/i )
+					{
+						my ( undef, $ip_n_mask ) = split ( " ", $line );
+						my $mask;
+						( $ip, $mask ) = split ( "/", $ip_n_mask );
+						
+						if ( $mask ) # only when bitmask is declared
+						{
+							use Net::Netmask;
+							my $block = Net::Netmask->new2( $ip_n_mask );
 
-						if ( $block ) {
-							$netmask = $block->mask;
-						}
-						else {
-							&zenlog( $Net::Netmask::error );
-							die $Net::Netmask::error;
+							if ( $block ) {
+								$netmask = $block->mask;
+							}
+							else {
+								&zenlog( $Net::Netmask::error );
+								die $Net::Netmask::error;
+							}
 						}
 					}
+					if ( $line =~ /netmask/i )
+					{
+						( undef, $netmask ) = split ( " ", $line );
+					}
+					if ( $line =~ /gateway/i )
+					{
+						( undef, $gateway ) = split ( " ", $line );
+					}
 				}
-				if ( $line =~ /netmask/i )
+				
+				my %interface = (
+								  name    => $ifname,
+								  addr    => $ip,
+								  mask    => $netmask,
+								  gateway => $gateway,
+								  status  => "up",
+				);
+
+				# Write iface file
+				if ( $interface{ name } ) 
 				{
-					my ( undef, $netmask ) = split ( " ", $line );
-				}
-				if ( $line =~ /gateway/i )
-				{
-					my ( undef, $gateway ) = split ( " ", $line );
+					zenlog ( "Writing iface: $interface{ name }" );
+					&setInterfaceConfig( \%interface ) ;
+
+					#configure gateway
+					if ( $interface{ gateway } )
+					{
+						zenlog ( "Writing gateway: $interface{ gateway }" );
+						setGlobalConfiguration( defaultgw, $gateway );
+						setGlobalConfiguration( defaultgwif, $ifname );
+					}
 				}
 			}
 
@@ -267,33 +343,6 @@ if ( $action eq "start" )
 			print FW "auto lo\n";
 			print FW "iface lo inet loopback\n";
 			close FW;
-
-			my %interface = (
-							  name    => $ifname,
-							  addr    => $ip,
-							  mask    => $netmask,
-							  gateway => $gateway,
-							  status  => "up",
-							  name    => "$ifname",
-			);
-
-			&setInterfaceConfig( \%interface );
-
-			# Configure gateway for first time
-			# FIXME: use setGlobalConfiguration()
-			my $globalcfg = "/usr/local/zevenet/config/global.conf";
-			tie my @contents, 'Tie::File', "$globalcfg";
-
-			for my $line ( @contents )
-			{
-				if ( grep /^\$defaultgw/, $line )    # FIXME: IPv6 gateway
-				{
-					$line =~ s/^\$defaultgw=.*/\$defaultgw="$gateway";/g;
-					$line =~ s/^\$defaultgwif=.*/\$defaultgwif="$ifname";/g;
-				}
-			}
-
-			untie @contents;
 
 			# Routes
 			# FIXME: there is a function for this, it should be used.
