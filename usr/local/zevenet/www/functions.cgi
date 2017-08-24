@@ -34,7 +34,6 @@ require "/usr/local/zevenet/www/system_functions.cgi";
 require "/usr/local/zevenet/www/farmguardian_functions.cgi";
 require "/usr/local/zevenet/www/datalink_functions.cgi";
 require "/usr/local/zevenet/www/http_functions.cgi";
-require "/usr/local/zevenet/www/tcpudp_functions.cgi";
 require "/usr/local/zevenet/www/zapi_functions.cgi";
 require "/usr/local/zevenet/www/login_functions.cgi";
 require "/usr/local/zevenet/www/snmp_functions.cgi";
