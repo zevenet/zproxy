@@ -21,10 +21,10 @@
 #
 ###############################################################################
 
+use Zevenet::IPDS::Core;
+use Zevenet::IPDS::Base;
 use Zevenet::IPDS::RBL;
 use Zevenet::IPDS::DoS;
 use Zevenet::IPDS::Blacklist;
-use Zevenet::IPDS::Core;
-use Zevenet::IPDS::Base;
 
 1;
