@@ -463,15 +463,11 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 		}
 
 		# Enable 'Disable TLSv1, TLSv1_1 or TLSv1_2'
-		if ( $filefarmhttp[$i_f] =~ /.*Disable TLSv1$/ && $flisten eq "http" )
+		if ( $filefarmhttp[$i_f] =~ /.*Disable TLSv1/ && $flisten eq "http" )
 		{
 			$filefarmhttp[$i_f] =~ s/Disable TLSv1/#Disable TLSv1/;
 		}
-		elsif ( $filefarmhttp[$i_f] =~ /.*DisableTLSv1$/ && $flisten eq "http" )
-		{
-			$filefarmhttp[$i_f] =~ s/DisableTLSv1/#DisableTLSv1/;
-		}
-		if ( $filefarmhttp[$i_f] =~ /.*Disable TLSv1$/ && $flisten eq "https" )
+		if ( $filefarmhttp[$i_f] =~ /.*Disable TLSv1/ && $flisten eq "https" )
 		{
 			$filefarmhttp[$i_f] =~ s/#//g;
 		}
@@ -484,11 +480,7 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 		# Enable 'Disable SSLv3 or SSLv2'
 		if ( $filefarmhttp[$i_f] =~ /.*Disable SSLv\d$/ && $flisten eq "http" )
 		{
-			$filefarmhttp[$i_f] =~ s/Disable SSLv\d/#Disable SSLv\d/;
-		}
-		elsif ( $filefarmhttp[$i_f] =~ /.*DisableSSLv\d$/ && $flisten eq "http" )
-		{
-			$filefarmhttp[$i_f] =~ s/DisableSSLv\d/#DisableSSLv\d/;
+			$filefarmhttp[$i_f] =~ s/Disable SSLv/#Disable SSLv/;
 		}
 		if ( $filefarmhttp[$i_f] =~ /.*Disable SSLv\d$/ && $flisten eq "https" )
 		{

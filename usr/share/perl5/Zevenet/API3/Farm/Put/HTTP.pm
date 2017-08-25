@@ -869,6 +869,14 @@ sub modify_http_farm # ( $json_obj, $farmname )
 					$json_obj->{ ciphers } = "all";
 				}
 			}
+
+			# disabled protocols
+			$json_obj->{ disable_sslv2 } = ( &getHTTPFarmDisableSSL($farmname, "SSLv2") )? "true": "false";
+			$json_obj->{ disable_sslv3 } = ( &getHTTPFarmDisableSSL($farmname, "SSLv3") )? "true": "false";
+			$json_obj->{ disable_tlsv1 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1") )? "true": "false";
+			$json_obj->{ disable_tlsv1_1 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_1") )? "true": "false";
+			$json_obj->{ disable_tlsv1_2 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_2") )? "true": "false";
+	
 		}
 
 		# Success
