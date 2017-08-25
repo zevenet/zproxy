@@ -159,9 +159,9 @@ sub getApplianceVersion
 		$filelines[0] = $version;
 		untie @filelines;
 	}
-	
+
 	# virtual appliance
-	if ( $hypervisor[0] =~ /(xen|vm|hv|kvm)_/ )
+	if ( @hypervisor && $hypervisor[0] =~ /(xen|vm|hv|kvm)_/ )
 	{
 		$hyperv= $1;
 		$hyperv = 'HyperV' if ( $hyperv eq 'hv' );
