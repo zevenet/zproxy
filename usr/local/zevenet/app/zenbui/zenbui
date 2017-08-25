@@ -22,10 +22,13 @@
 ###############################################################################
 
 export NCURSES_NO_UTF8_ACS=1
+
 zenbui="/usr/local/zevenet/app/zenbui/zenbui.pl"
 perl=`which perl`
+
 if [ -f $zenbui ]; then
 	$perl $zenbui 2>/dev/null
 fi
+
 clear
 exit $?

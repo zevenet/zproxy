@@ -21,23 +21,21 @@
 #
 ###############################################################################
 
-#use strict;
+use strict;
+use warnings;
 use Curses::UI;
-my $globalcfg = "/usr/local/zevenet/config/global.conf";
-require "/usr/local/zevenet/www/functions.cgi";
-require "/usr/local/zevenet/app/zenbui/buifunctions.pl";
-require ($globalcfg);
+use Zevenet::Config;
+use Zevenet::BUI;
 
 my $ifconfig_bin = &getGlobalConfiguration('ifconfig_bin');
 my $zlbmenu;
 my $win3;
 my $winhelp;
 my $zlbhostinput;
-my ($mgmtif, $mgmtip, $mgmtmask, $mgmtgw);
-my ($mgmtifinput, $mgmtipinput, $mgmtmaskinput, $mgmtgwinput);
+my ( $mgmtif,      $mgmtip,      $mgmtmask,      $mgmtgw );
+my ( $mgmtifinput, $mgmtipinput, $mgmtmaskinput, $mgmtgwinput );
 
-my $zenui = new Curses::UI( -color_support => 1, 
-			  -clear_on_exit => 1 );
+my $zenui = new Curses::UI( -color_support => 1, -clear_on_exit => 1 );
 #my $co = $Curses::UI::color_object;
 #$co->define_color('white', 70, 185, 113);
 
