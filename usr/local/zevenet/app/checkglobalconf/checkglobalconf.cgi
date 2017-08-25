@@ -21,6 +21,9 @@
 #
 ###############################################################################
 
+use strict;
+use warnings;
+
 #this script update global.conf:
 #*if vble not exist on global.conf but exist on global.conf.tpl
 #then new variable on global.conf.
@@ -33,12 +36,12 @@
 
 use File::Copy;
 
-$tglobal   = "/usr/local/zevenet/app/checkglobalconf/global.conf.tmp";
-$global    = "/usr/local/zevenet/config/global.conf";
-$globaltpl = "/usr/local/zevenet/app/checkglobalconf/global.conf.tpl";
+my $tglobal   = "/usr/local/zevenet/app/checkglobalconf/global.conf.tmp";
+my $global    = "/usr/local/zevenet/config/global.conf";
+my $globaltpl = "/usr/local/zevenet/app/checkglobalconf/global.conf.tpl";
 
-open my $fw, '>', "$tglobal";
-open my $file_template, "$globaltpl";
+open my $fw,            '>', $tglobal;
+open my $file_template, '<', $globaltpl;
 
 while ( my $linetpl = <$file_template> )
 {
@@ -46,17 +49,17 @@ while ( my $linetpl = <$file_template> )
 
 	if ( $linetpl =~ /^\$/ )
 	{
-		my @vble = split ( "\=", $linetpl );
+		my @vble = split ( '=', $linetpl );
 		$vble[0] =~ s/\$//;
 		my $exit = 'true';
 
-		open my $fr, "$global";
+		open my $fr, '<', $global;
 
 		while ( my $line = <$fr> || $exit eq 'false' )
 		{
 			if ( $line =~ /^\$$vble[0]\=/ )
 			{
-				@vblegconf = split ( "\=", $line );
+				my @vblegconf = split ( '=', $line );
 
 				if ( $vblegconf[1] !~ /""/ && $vblegconf[1] !~ $vble[1] )
 				{
@@ -70,13 +73,14 @@ while ( my $linetpl = <$file_template> )
 				}
 			}
 		}
+
+		close $fr;
 	}
 
 	print $fw "$newline";
 }
 
 close $fw;
-close $fr;
 close $file_template;
 
 move( $tglobal, $global );
