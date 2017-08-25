@@ -40,9 +40,15 @@
 #~ require "/usr/local/zevenet/config/global.conf";
 # end debug
 
-require "/usr/local/zevenet/www/functions.cgi";
-
+use strict;
+use warnings;
 use Time::HiRes qw(ualarm usleep clock_gettime CLOCK_REALTIME);
+use Zevenet::Log;
+use Zevenet::Config;
+use Zevenet::Farm::Core;
+use Zevenet::Farm::Base;
+use Zevenet::Farm::Config;
+use Zevenet::Farm::Backend;
 
 my $conntrack = &getGlobalConfiguration('conntrack');
 my $fcondition = "/proc/net/nf_condition";
@@ -131,6 +137,7 @@ if ( -e "$pidfile" )
 		unlink ( $pidfile );
 	}
 }
+
 if ( !-e "$pidfile" )
 {
 	open my $file, '>', "$pidfile";
@@ -286,17 +293,8 @@ while ()
 				{
 					next if ( defined $connsperfarm{ $back } );
 
-					# new
 					my @cmd_output = `$conntrack -L -m $farms{ $farm }{ $back } 2>&1 >/dev/null`;
-
-					# old
-					#~ my @cmd_output = grep(!/TIME_WAIT/, `conntrack -L -r $back 2>/dev/null`);
-
-					# new
 					my $nestab = ( split ( ' ', $cmd_output[-1] ) )[3];
-
-					# old
-					#~ my $nestab = @cmd_output;
 
 					# common
 					@cmd_output = ();
