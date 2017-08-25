@@ -22,13 +22,12 @@
 ###############################################################################
 
 use strict;
-use Sys::Hostname;
-
-require "/usr/local/zevenet/www/functions_ext.cgi";
-require "/usr/local/zevenet/www/zcluster_functions.cgi";
+use warnings;
+use Zevenet::Config;
+use Zevenet::SystemInfo;
+use Zevenet::Cluster;
 
 my $DEBUG = 0;
-
 
 ## Cluster not configured
 
@@ -43,7 +42,7 @@ unless ( $cl_status )
 ## Cluster configured
 
 my $cl_conf    = &getZClusterConfig();
-my $localhost  = hostname();
+my $localhost  = getHostname();
 my $remotehost = &getZClusterRemoteHost();
 
 # n: ka, zi, ct, role
