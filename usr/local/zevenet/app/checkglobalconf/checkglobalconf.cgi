@@ -21,9 +21,6 @@
 #
 ###############################################################################
 
-use strict;
-use warnings;
-
 #this script update global.conf:
 #*if vble not exist on global.conf but exist on global.conf.tpl
 #then new variable on global.conf.
@@ -34,6 +31,8 @@ use warnings;
 #*if end of line on vble global.conf.tpl is #update, vble is updated
 #on global.conf
 
+use strict;
+use warnings;
 use File::Copy;
 
 my $tglobal   = "/usr/local/zevenet/app/checkglobalconf/global.conf.tmp";
