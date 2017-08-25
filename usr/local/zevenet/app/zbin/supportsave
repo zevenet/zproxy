@@ -26,7 +26,7 @@ hostname=`hostname`
 home_dir="/usr/local/zevenet"
 ss_dir="supportsave_${hostname}_${tmp_name}"
 dir_backup="/tmp/${ss_dir}"
-backup_to="${home_dir}/config ${home_dir}/app/zenrrd/rrd /etc/iproute2/rt_tables ${home_dir}/logs /var/log/messages* /var/log/syslog* ${home_dir}/app/cherokee/etc/cherokee/cherokee.conf /etc/ssh/sshd_config";
+backup_to="${home_dir}/config ${home_dir}/app/zenrrd/rrd /etc/iproute2/rt_tables ${home_dir}/logs /var/log/messages* /var/log/syslog* /var/log/cherokee* ${home_dir}/app/cherokee/etc/cherokee/cherokee.conf /etc/ssh/sshd_config";
 
 echo "Saving information for support in the path ${dir_backup}.tar.gz"
 /bin/mkdir $dir_backup
