@@ -22,10 +22,43 @@
 ###############################################################################
 
 ## zcluster-manager 1.0
+#
+# Usage:
+#
+# zcluster-manager enableZCluster
+# zcluster-manager disableZCluster
+# zcluster-manager setKeepalivedConfig
+# zcluster-manager setConntrackdConfig
+# zcluster-manager getZClusterRunning
+# zcluster-manager getZClusterNodeStatus
+# zcluster-manager getConntrackdRunning
+# zcluster-manager getZClusterArpStatus
+# zcluster-manager sync
+# zcluster-manager notify_master
+# zcluster-manager notify_backup
+# zcluster-manager notify_fault
+#
+# zcluster-manager interface float-update
+# zcluster-manager interface start <interface> [4|6]
+# zcluster-manager interface stop <interface> [4|6]
+# zcluster-manager interface delete <interface> [4|6]
+#
+# zcluster-manager gateway update <interface> [4|6]
+# zcluster-manager gateway delete <interface> [4|6]
+#
+# zcluster-manager farm start <farm>
+# zcluster-manager farm stop <farm>
+# zcluster-manager farm restart <farm>
+# zcluster-manager farm delete <farm>
+#
+# zcluster-manager ipds bl
+# zcluster-manager ipds dos
+# zcluster-manager ipds rbl
+#
 
 use strict;
+use warnings;
 use feature 'say';
-#~ use Data::Dumper;
 
 require '/usr/local/zevenet/config/global.conf';
 require '/usr/local/zevenet/www/functions_ext.cgi';
@@ -222,7 +255,8 @@ if ( $object eq 'ipds' )
 	my $module;
 	my $farmname;
 	my $rule;
-	my  $farmname_re = &getValidFormat( 'farm_name' );
+	my $farmname_re = &getValidFormat( 'farm_name' );
+
 	# command = "module_action_rule,farmname"
 	if ( $command =~ /([a-zA-Z]+)_(rbl|bl|dos)(_\w+(,$farmname_re)?)?/ )
 	{
