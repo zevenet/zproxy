@@ -21,11 +21,12 @@
 #
 ###############################################################################
 
-require '/usr/local/zevenet/config/global.conf';
-require '/usr/local/zevenet/www/functions_ext.cgi';
+use strict;
+use warnings;
+use Zevenet::Config;
 
-my $ntp = &getGlobalConfiguration('ntp');
-my $datentp = &getGlobalConfiguration('datentp');
+my $ntp     = &getGlobalConfiguration( 'ntp' );
+my $datentp = &getGlobalConfiguration( 'datentp' );
 
 if ( $datentp !~ /^$/ )
 {
