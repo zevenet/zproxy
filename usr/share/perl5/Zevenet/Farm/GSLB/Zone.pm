@@ -90,48 +90,6 @@ sub remGSLBFarmZoneResource    # ($id,$farm_name,$service)
 }
 
 =begin nd
-Function: runGSLBFarmServerDelete
-
-	Delete a resource from a zone
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Integer - Error code: 0 on success or different of 0 on failure
-
-BUG:
-	This function has a bad name and is used in wrong way
-	It is duplicated with "remGSLBFarmZoneResource"
-=cut
-sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
-{
-	my ( $ids, $farm_name, $service ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $index         = 0;
-
-	require Tie::File;
-	tie my @configfile, 'Tie::File', "$configdir/$farm_filename/etc/zones/$service";
-
-	foreach my $line ( @configfile )
-	{
-		if ( $line =~ /\;index_/ )
-		{
-			my @linesplt = split ( "\;index_", $line );
-			my $param = $linesplt[1];
-			if ( $ids !~ /^$/ && $ids eq $param )
-			{
-				splice @configfile, $index, 1,;
-			}
-		}
-		$index++;
-	}
-
-	untie @configfile;
-}
-
-=begin nd
 Function: setGSLBFarmZoneResource
 
 	Modify or create a resource in a zone

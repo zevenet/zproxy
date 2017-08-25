@@ -128,17 +128,16 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 Function: runGSLBFarmServerDelete
 
 	Delete a resource from a zone
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	none - No returned value.
-	
+
 BUG:
 	This function has a bad name and is used in wrong way
 	It is duplicated with "remGSLBFarmZoneResource"
-	
 =cut
 sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
 {
