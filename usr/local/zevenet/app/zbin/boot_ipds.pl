@@ -21,8 +21,10 @@
 #
 ###############################################################################
 
-require "/usr/local/zevenet/www/blacklists.cgi";
-require "/usr/local/zevenet/www/dos.cgi";
+use strict;
+use warnings;
+use Zevenet::IPDS::Blacklist;
+use Zevenet::IPDS::DoS;
 
 my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 my $touch          = &getGlobalConfiguration( 'touch' );
