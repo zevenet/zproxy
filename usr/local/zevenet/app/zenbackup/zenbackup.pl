@@ -21,8 +21,9 @@
 #
 ###############################################################################
 
-require '/usr/local/zevenet/config/global.conf';
-require '/usr/local/zevenet/www/functions_ext.cgi';
+use strict;
+use warnings;
+use Zevenet::Config;
 
 my $name   = $ARGV[0];
 my $action = $ARGV[1];
