@@ -21,29 +21,29 @@
 #
 ###############################################################################
 
+use strict;
+use warnings;
 use RRDs;
+use Zevenet::Config;
+use Zevenet::Stats;
 
-require ("/usr/local/zevenet/config/global.conf");
-require ("/usr/local/zevenet/www/system_functions.cgi");
-require ("/usr/local/zevenet/www/functions_ext.cgi");
-
-my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
-my $rrd_dir = &getGlobalConfiguration('rrd_dir');
-my $db_if = "iface.rrd";
+my $rrdap_dir = &getGlobalConfiguration( 'rrdap_dir' );
+my $rrd_dir   = &getGlobalConfiguration( 'rrd_dir' );
+my $db_if     = "iface.rrd";
 
 my $if_name;
 my $is_if = 0;
 my $in;
 my $out;
+my $ERROR;
 
-my @net = &getNetworkStats("raw");
+my @net = &getNetworkStats( "raw" );
 
-foreach (@net) {
-
+foreach ( @net )
+{
 	my $row = shift @net;
-	my @rowi = split("\ ",$row->[0]);
+	my @rowi = split ( "\ ", $row->[0] );
 	$if_name = $rowi[0];
-
 
 	if ( $if_name eq /^lo/ || $if_name eq /^sit/ || $if_name eq /\:/ )
 	{
@@ -52,11 +52,11 @@ foreach (@net) {
 
 	if ( $rowi[1] eq "in" )
 	{
-		$in = $row->[1];
+		$in  = $row->[1];
 		$row = shift @net;
 	}
 
-	my @rowi = split("\ ",$row->[0]);
+	@rowi = split ( "\ ", $row->[0] );
 
 	if ( $if_name eq $rowi[0] && $rowi[1] eq "out" )
 	{
@@ -69,33 +69,35 @@ foreach (@net) {
 		next;
 	}
 
-	if ( ! -f "$rrdap_dir/$rrd_dir/$if_name$db_if" )
+	if ( !-f "$rrdap_dir/$rrd_dir/$if_name$db_if" )
 	{
-		print "$0: Info: Creating the rrd database $if_name $rrdap_dir/$rrd_dir/$if_name$db_if ...\n";
+		print
+		  "$0: Info: Creating the rrd database $if_name $rrdap_dir/$rrd_dir/$if_name$db_if ...\n";
 		RRDs::create "$rrdap_dir/$rrd_dir/$if_name$db_if",
-			"--step", "300",
-			"DS:in:DERIVE:600:0:12500000",
-			"DS:out:DERIVE:600:0:12500000",
-			"RRA:LAST:0.5:1:288",		# daily - every 5 min - 288 reg
-			"RRA:MIN:0.5:1:288",		# daily - every 5 min - 288 reg
-			"RRA:AVERAGE:0.5:1:288",	# daily - every 5 min - 288 reg
-			"RRA:MAX:0.5:1:288",		# daily - every 5 min - 288 reg
-			"RRA:LAST:0.5:12:168",		# weekly - every 1 hour - 168 reg
-			"RRA:MIN:0.5:12:168",		# weekly - every 1 hour - 168 reg
-			"RRA:AVERAGE:0.5:12:168",	# weekly - every 1 hour - 168 reg
-			"RRA:MAX:0.5:12:168",		# weekly - every 1 hour - 168 reg
-			"RRA:LAST:0.5:96:93",		# monthly - every 8 hours - 93 reg
-			"RRA:MIN:0.5:96:93",		# monthly - every 8 hours - 93 reg
-			"RRA:AVERAGE:0.5:96:93",	# monthly - every 8 hours - 93 reg
-			"RRA:MAX:0.5:96:93",		# monthly - every 8 hours - 93 reg
-			"RRA:LAST:0.5:288:372",		# yearly - every 1 day - 372 reg
-			"RRA:MIN:0.5:288:372",		# yearly - every 1 day - 372 reg
-			"RRA:AVERAGE:0.5:288:372",	# yearly - every 1 day - 372 reg
-			"RRA:MAX:0.5:288:372";		# yearly - every 1 day - 372 reg
+		  "--step", "300",
+		  "DS:in:DERIVE:600:0:12500000",
+		  "DS:out:DERIVE:600:0:12500000",
+		  "RRA:LAST:0.5:1:288",         # daily - every 5 min - 288 reg
+		  "RRA:MIN:0.5:1:288",          # daily - every 5 min - 288 reg
+		  "RRA:AVERAGE:0.5:1:288",      # daily - every 5 min - 288 reg
+		  "RRA:MAX:0.5:1:288",          # daily - every 5 min - 288 reg
+		  "RRA:LAST:0.5:12:168",        # weekly - every 1 hour - 168 reg
+		  "RRA:MIN:0.5:12:168",         # weekly - every 1 hour - 168 reg
+		  "RRA:AVERAGE:0.5:12:168",     # weekly - every 1 hour - 168 reg
+		  "RRA:MAX:0.5:12:168",         # weekly - every 1 hour - 168 reg
+		  "RRA:LAST:0.5:96:93",         # monthly - every 8 hours - 93 reg
+		  "RRA:MIN:0.5:96:93",          # monthly - every 8 hours - 93 reg
+		  "RRA:AVERAGE:0.5:96:93",      # monthly - every 8 hours - 93 reg
+		  "RRA:MAX:0.5:96:93",          # monthly - every 8 hours - 93 reg
+		  "RRA:LAST:0.5:288:372",       # yearly - every 1 day - 372 reg
+		  "RRA:MIN:0.5:288:372",        # yearly - every 1 day - 372 reg
+		  "RRA:AVERAGE:0.5:288:372",    # yearly - every 1 day - 372 reg
+		  "RRA:MAX:0.5:288:372";        # yearly - every 1 day - 372 reg
 
 		if ( $ERROR = RRDs::error )
 		{
-			print "$0: Error: Unable to generate the rrd database for interface $if_name: $ERROR\n";
+			print
+			  "$0: Error: Unable to generate the rrd database for interface $if_name: $ERROR\n";
 		}
 	}
 
@@ -105,12 +107,11 @@ foreach (@net) {
 
 	print "$0: Info: Updating data in $rrdap_dir/$rrd_dir/$if_name$db_if ...\n";
 
-	RRDs::update "$rrdap_dir/$rrd_dir/$if_name$db_if",
-		"-t", "in:out",
-		"N:$in:$out";
+	RRDs::update "$rrdap_dir/$rrd_dir/$if_name$db_if", "-t", "in:out", "N:$in:$out";
 
 	if ( $ERROR = RRDs::error )
 	{
-		print "$0: Error: Unable to update the rrd database for interface $if_name: $ERROR\n";
+		print
+		  "$0: Error: Unable to update the rrd database for interface $if_name: $ERROR\n";
 	}
 }

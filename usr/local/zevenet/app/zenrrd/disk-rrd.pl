@@ -21,14 +21,16 @@
 #
 ###############################################################################
 
+use strict;
+use warnings;
 use RRDs;
-
-require ("/usr/local/zevenet/www/functions_ext.cgi");
-require ("/usr/local/zevenet/www/system_functions.cgi");
+use Zevenet::Config;
+use Zevenet::Stats;
 
 my $rrdap_dir = &getGlobalConfiguration( 'rrdap_dir' );
 my $rrd_dir = &getGlobalConfiguration( 'rrd_dir' );
 my $db_hd = "hd.rrd";
+my $ERROR;
 
 my @disks = getDiskSpace();
 

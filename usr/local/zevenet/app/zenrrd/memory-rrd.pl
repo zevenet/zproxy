@@ -21,16 +21,17 @@
 #
 ###############################################################################
 
+use strict;
+use warnings;
 use RRDs;
-require ("/usr/local/zevenet/config/global.conf");
-require ("/usr/local/zevenet/www/system_functions.cgi");
-require ("/usr/local/zevenet/www/functions_ext.cgi");
+use Zevenet::Config;
+use Zevenet::Stats;
 
 my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
 my $rrd_dir = &getGlobalConfiguration('rrd_dir');
 
-$db_mem = "mem.rrd";
-$db_memsw = "memsw.rrd";
+my $db_mem = "mem.rrd";
+my $db_memsw = "memsw.rrd";
 
 my @mem = &getMemStats("b");
 
@@ -44,6 +45,7 @@ my $swtvalue;
 my $swfvalue;
 my $swused;
 my $swcvalue;
+my $ERROR;
 
 my $row = shift @mem;
 

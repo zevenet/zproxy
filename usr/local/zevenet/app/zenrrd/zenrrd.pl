@@ -32,8 +32,9 @@
 #name-rrd.pl, the system going to include automatically to execute
 #and viewing in Zen load balancer GUI (Monitoring secction)
 
-require ( "/usr/local/zevenet/config/global.conf" );
-require ("/usr/local/zevenet/www/functions_ext.cgi");
+use strict;
+use warnings;
+use Zevenet::Config;
 
 my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
 my $lockfile = "/tmp/rrd.lock";
@@ -45,14 +46,14 @@ if ( -e $lockfile )
 }
 else
 {
-	open LOCK, '>', $lockfile;
-	print LOCK "lock rrd";
-	close LOCK;
+	open my $lock, '>', $lockfile;
+	print $lock "lock rrd";
+	close $lock;
 }
 
-opendir ( DIR, $rrdap_dir );
-my @rrd_scripts = grep ( /-rrd.pl$/, readdir ( DIR ) );
-closedir ( DIR );
+opendir ( my $dir, $rrdap_dir );
+my @rrd_scripts = grep ( /-rrd.pl$/, readdir ( $dir ) );
+closedir ( $dir );
 
 foreach my $script_rrd ( @rrd_scripts )
 {

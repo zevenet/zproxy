@@ -21,15 +21,21 @@
 #
 ###############################################################################
 
+use strict;
+use warnings;
 use RRDs;
-require ("/usr/local/zevenet/config/global.conf");
-require ("/usr/local/zevenet/www/functions.cgi");
+use Zevenet::Config;
+use Zevenet::Farm::Core;
+use Zevenet::Farm::Base;
+use Zevenet::Farm::Stats;
+use Zevenet::Net::ConnStats;
 
 my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
 my $rrd_dir = &getGlobalConfiguration('rrd_dir');
 
 my $synconns = 0;
 my $globalconns = 0;
+my $ERROR;
 
 foreach my $farmfile ( &getFarmList() )
 {
@@ -46,11 +52,13 @@ foreach my $farmfile ( &getFarmList() )
         my $vip = &getFarmVip("vip", $farm);
 
 	my @netstat = &getConntrack("", $vip, "", "", "");
+
 	# SYN_RECV connections
-	@synconnslist = &getFarmSYNConns($farm,@netstat);
+	my @synconnslist = &getFarmSYNConns($farm,@netstat);
 	$synconns = @synconnslist;
+
 	# ESTABLISHED connections
-	@gconns = &getFarmEstConns($farm,@netstat);
+	my @gconns = &getFarmEstConns($farm,@netstat);
 	$globalconns = @gconns;
 
 	if ( $globalconns =~ /^$/ || $synconns =~ /^$/)

@@ -21,11 +21,11 @@
 #
 ###############################################################################
 
+use strict;
+use warnings;
 use RRDs;
-
-require ("/usr/local/zevenet/config/global.conf");
-require ("/usr/local/zevenet/www/system_functions.cgi");
-require ("/usr/local/zevenet/www/functions_ext.cgi");
+use Zevenet::Config;
+use Zevenet::Stats;
 
 my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
 my $rrd_dir = &getGlobalConfiguration('rrd_dir');
@@ -41,6 +41,7 @@ my $cpu_irq;
 my $cpu_softirq;
 my $cpu_idle;
 my $cpu_usage;
+my $ERROR;
 
 my $row = shift @cpu;
 
