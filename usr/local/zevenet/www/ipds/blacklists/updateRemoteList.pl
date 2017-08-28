@@ -21,12 +21,11 @@
 #
 ###############################################################################
 
-require "/usr/local/zevenet/www/functions_ext.cgi";
-require "/usr/local/zevenet/www/blacklists.cgi";
+use Zevenet::Config;
+use Zevenet::IPDS::Blacklist;
 
 my ( $listName ) = @ARGV;
 my $logger = &getGlobalConfiguration ( 'logger' );
-my $ipset = &getGlobalConfiguration ( 'ipset' );
 my $output;
 
 &setBLDownloadRemoteList ( $listName );
