@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Config;
 
 my $configdir = &getGlobalConfiguration('configdir');
 
