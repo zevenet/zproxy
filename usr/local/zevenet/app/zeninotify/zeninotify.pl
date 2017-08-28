@@ -266,39 +266,3 @@ sub getSubdirectories
 
 	return @dir_list;
 }
-
-sub getSubdirectories
-{
-	my $dir_path = shift;
-
-	opendir my $dir_h, $dir_path;
-
-	if ( !$dir_h )
-	{
-		&zenlog( "Could not open directory $dir_path: $!" );
-		return 1;
-	}
-
-	my @dir_list;
-
-	while ( my $dir_entry = readdir $dir_h )
-	{
-		next if $dir_entry eq '.';
-		next if $dir_entry eq '..';
-
-		my $subdir = "$dir_path/$dir_entry";
-
-		if ( -d $subdir )
-		{
-			push ( @dir_list, $subdir );
-
-			my @subdirectories = &getSubdirectories( $subdir );
-
-			push ( @dir_list, @subdirectories );
-		}
-	}
-
-	closedir $dir_h;
-
-	return @dir_list;
-}
