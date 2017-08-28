@@ -22,8 +22,8 @@
 ###############################################################################
 
 use strict;
-
-#require "/usr/local/zevenet/www/functions.cgi";
+use Zevenet::Log;
+use Zevenet::Config;
 
 =begin nd
 Function: setSnmpdStatus
