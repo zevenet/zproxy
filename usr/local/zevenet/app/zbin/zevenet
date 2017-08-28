@@ -40,8 +40,9 @@ my $defaultgw    = &getGlobalConfiguration( 'defaultgw' );
 my $defaultgwif  = &getGlobalConfiguration( 'defaultgwif' );
 my $defaultgw6   = &getGlobalConfiguration( 'defaultgw6' );
 my $defaultgwif6 = &getGlobalConfiguration( 'defaultgwif6' );
+my $action       = shift @ARGV // '';
 
-if ( !@ARGV && $ARGV[0] !~ /stop|start|status/ )
+if ( $action !~ /stop|start|status/ )
 {
 	print "Usage: /etc/init.d/zevenet stop|start|status\n";
 	exit 0;
@@ -188,13 +189,13 @@ sub local_http_service
 	system ( "/etc/init.d/cherokee $command >/dev/null &" );
 }
 
-if ( $eject eq "restart" )
+if ( $action eq "restart" )
 {
 	system ( '/etc/init.d/zevenet stop' );
 	system ( '/etc/init.d/zevenet start' );
 }
 
-if ( $eject eq "start" )
+if ( $action eq "start" )
 {
 	my $version = &getGlobalConfiguration('version');
 
@@ -517,7 +518,7 @@ if ( $eject eq "start" )
 	printAndLog( "Start proccess finished." );
 }
 
-if ( $eject eq "stop" )
+if ( $action eq "stop" )
 {
 	printAndLog( "Stopping Zevenet Load Balancer...\n" );
 
