@@ -50,11 +50,14 @@ sub getLogs
 	my $logdir = &getGlobalConfiguration( 'logdir' );
 
 	opendir ( DIR, $logdir );
-	my @files = grep ( /^syslog/, readdir ( DIR ) );
+	my @files = readdir ( DIR );
 	closedir ( DIR );
 
 	foreach my $line ( @files )
-	{
+	{	
+		# not list if it is a directory
+		next if -d "$logdir/$line";
+		
 		use File::stat;
 		#~ use Time::localtime qw(ctime);
 
@@ -119,5 +122,42 @@ sub downloadLog
 	}
 	return $error;
 }
+
+
+=begin nd
+Function: getLogLines
+
+	Show a number of the last lines of a log file
+
+Parameters:
+	logFile - log file name in /var/log
+	lines - number of lines to show
+
+Returns:
+	array - last lines of log file
+
+See Also:
+	zapi/v31/system.cgi
+=cut
+sub getLogLines
+{
+	my ( $logFile, $lines_number ) = @_;
+	my @lines;
+	my $path = &getGlobalConfiguration( 'logdir' );
+	my $tail = &getGlobalConfiguration( 'tail' );
+
+	if ( $logFile =~ /\.gz$/ )
+	{
+		my $zcat = &getGlobalConfiguration( 'zcat' );
+		@lines = `$zcat ${path}/$logFile | $tail -n $lines_number`;
+	}
+	else
+	{
+		@lines = `$tail -n $lines_number ${path}/$logFile`;
+	}
+
+	return \@lines;
+}
+
 
 1;

@@ -22,12 +22,11 @@
 ###############################################################################
 
 use strict;
+use Zevenet::System::Log;
 
 #	GET	/system/logs
 sub get_logs
 {
-	require Zevenet::System::Log;
-
 	my $description = "Get logs";
 	my $backups = &getLogs;
 
@@ -41,9 +40,21 @@ sub download_logs
 	my $logFile      = shift;
 	my $description = "Download a log file";
 	my $errormsg    = "$logFile was download successful.";
-	my $logPath = &getGlobalConfiguration( 'logdir') . "/$logFile";
+	my $logfiles = &getLogs;
+	my $error=1;
+	
+	
+	# check if the file exists
+	foreach my $file ( @{$logfiles} )
+	{
+		if ( $file->{file} eq $logFile )
+		{
+			$error=0;
+			last;
+		}
+	}
 
-	if ( ! -f $logPath )
+	if ( $error )
 	{
 		$errormsg = "Not found $logFile file.";
 		my $body =
@@ -52,18 +63,56 @@ sub download_logs
 	}
 	else
 	{
-# Download function ends communication if itself finishes successful. It is not necessary send "200 OK" msg
-		require Zevenet::System::Log;
+		# Download function ends communication if itself finishes successful. It is not necessary send "200 OK" msg
 		$errormsg = &downloadLog( $logFile );
 		if ( $errormsg )
 		{
-			$errormsg = "Error, downloading backup.";
+			$errormsg = "Error, downloading log file.";
+			my $body =
+				{ description => $description, error => "true", message => $errormsg };
+			&httpResponse( { code => 400, body => $body } );
 		}
 	}
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
+	&httpResponse( { code => 200, body => $body } );
+}
 
-	&httpResponse( { code => 404, body => $body } );
+#	GET	/system/logs/LOG/lines/LINES
+sub show_logs
+{
+	my $logFile      = shift;
+	my $lines_number = shift; # number of lines to show
+	my $description  = "Show a log file";
+	my $errormsg;
+	my $logfiles = &getLogs;
+	my $error=1;
+	
+	# check if the file exists
+	foreach my $file ( @{$logfiles} )
+	{
+		if ( $file->{file} eq $logFile )
+		{
+			$error=0;
+			last;
+		}
+	}
+
+	if ( $error )
+	{
+		$errormsg = "Not found $logFile file.";
+		my $body =
+		  { description => $description, error => "true", message => $errormsg };
+		&httpResponse( { code => 404, body => $body } );
+	}
+	else
+	{
+		my $lines = &getLogLines( $logFile, $lines_number );
+		my $body =
+			{ description => $description, log => $lines };
+		&httpResponse( { code => 200, body => $body } );
+	}
+
 }
 
 1;

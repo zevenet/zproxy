@@ -358,6 +358,9 @@ if ( $q->path_info =~ qr{^/system/log} )
 
 	my $logs_re = &getValidFormat( 'log' );
 	GET qr{^/system/logs/($logs_re)$} => \&download_logs;
+	
+	GET	qr{^/system/logs/($logs_re)/lines/(\d+)$} => \&show_logs;
+	
 }
 
 if ( $q->path_info =~ qr{^/system/backup} )
