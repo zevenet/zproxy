@@ -1128,14 +1128,14 @@ sub setDOSDropIcmpRule
 # &setDOSSshBruteForceRule
 sub setDOSSshBruteForceRule
 {
-	my $rule = 'ssh_brute_force';
+	require Zevenet::System::SSH;
+	require Zevenet::Cluster;
 
-	#~ my $rule    = "sshbruteforce";
+	my $rule = 'ssh_brute_force';
 	my $hits = &getDOSParam( $rule, 'hits' );
 	my $time = &getDOSParam( $rule, 'time' );
 
 	#~ my $port = &getDOSParam( $rule, 'port' );
-	require Zevenet::System::SSH;
 	my $sshconf = &getSsh();
 	my $port    = $sshconf->{ 'port' };
 	my $logMsg  = &createLogMsg( $rule );
@@ -1144,7 +1144,6 @@ sub setDOSSshBruteForceRule
 
 	# If the cluster is configurated, will add an exception to the remote node
 	# /sbin/iptables -A PREROUTING -t mangle -s $clusterIP -j ACCEPT
-	require "/usr/local/zevenet/www/zcluster_functions.cgi";
 	if ( &getZClusterStatus() )
 	{
 		my $remoteHost        = getZClusterRemoteHost();
