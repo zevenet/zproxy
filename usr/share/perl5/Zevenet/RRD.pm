@@ -22,11 +22,9 @@
 ###############################################################################
 
 use strict;
-
 use RRDs;
 use MIME::Base64;
-#~ require ( "/usr/local/zevenet/config/global.conf" );
-require ( "/usr/local/zevenet/www/check_functions.cgi" );
+use Zevenet::Config;
 
 my $basedir = &getGlobalConfiguration('basedir');
 my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
