@@ -35,6 +35,7 @@ sub setNotifCreateConfFile
 	my $alertsFile = "$confdir/alert_$hostname.conf";
 	my $fileHandle;
 	my $output;
+	my $version = 1; # version of senders config file
 	
 	# create config directory
 	if ( ! -d $confdir )
@@ -64,7 +65,8 @@ sub setNotifCreateConfFile
 	if ( ! -e $senderFile )
 	{
 		my $senderConf =
-			"[Smtp]\n"
+			"version=$version\n\n"
+		 . "[Smtp]\n"
 		 . "auth=LOGIN\n"
 		 . "auth-password=\n"
 		 . "auth-user=\n"
