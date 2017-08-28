@@ -267,20 +267,6 @@ sub getSubdirectories
 	return @dir_list;
 }
 
-#know inteface and return ip
-sub iponif            # ($if)
-{
-	my $if = shift;
-
-	#~ use IO::Socket;
-	#~ use IO::Interface qw(:flags);
-
-	my $s = IO::Socket::INET->new( Proto => 'udp' );
-	my $iponif = $s->if_addr( $if );
-
-	return $iponif;
-}
-
 sub getSubdirectories
 {
 	my $dir_path = shift;
