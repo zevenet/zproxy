@@ -263,9 +263,11 @@ if ( $object eq 'farm' )
 # farm commands
 if ( $object eq 'ipds' )
 {
+	require Zevenet::Validate;
+
 	# Get params
 	my $action;
-	my $module;
+	my $module = '';
 	my $farmname;
 	my $rule;
 	my $farmname_re = &getValidFormat( 'farm_name' );

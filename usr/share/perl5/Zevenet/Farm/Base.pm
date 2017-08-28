@@ -22,6 +22,8 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Config;
+use Zevenet::Farm::Core;
 
 my $configdir = &getGlobalConfiguration('configdir');
 
