@@ -32,7 +32,7 @@ my $configdir = &getGlobalConfiguration( 'configdir' );
 my $rttables  = &getGlobalConfiguration( 'rttables' );
 my $zeninopid = &getGlobalConfiguration( 'zeninopid' );
 
-if ( $ARGV[0] eq 'stop' )
+if ( @ARGV && $ARGV[0] eq 'stop' )
 {
 	if ( -e $zeninopid )
 	{
@@ -233,7 +233,7 @@ sub getSubdirectories
 {
 	my $dir_path = shift;
 
-	opendir my $dir_h, $dir_path;
+	opendir( my $dir_h, $dir_path );
 
 	if ( ! $dir_h )
 	{
