@@ -25,8 +25,6 @@
 use strict;
 use warnings;
 use Linux::Inotify2;
-use IO::Socket;
-use IO::Interface qw(:flags);
 use Zevenet::Config;
 use Zevenet::Cluster;
 
