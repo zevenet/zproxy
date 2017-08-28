@@ -68,8 +68,8 @@ require '/usr/local/zevenet/www/functions.cgi';
 
 &zenlog( "ARGV:@ARGV" ) if &debug();
 
-my $object = shift @ARGV;
-my $command = shift @ARGV;
+my $object = shift @ARGV // '';
+my $command = shift @ARGV // '';
 
 #~ if ( $object eq 'node' )
 #~ {
@@ -124,12 +124,14 @@ elsif ( $object eq 'getZClusterArpStatus' )
 	{
 		next if $if_ref->{ vini } eq ''; # only virtual ips
 
-		if ( $node_role ne 'master' && @arptables_lines !~ /^-j DROP -d $if_ref->{ addr } $/ )
+		my $if_dropped = grep { $_ =~ /^-j DROP -d $if_ref->{ addr } $/ } @arptables_lines;
+
+		if ( $node_role ne 'master' && !$if_dropped )
 		{
 			$status = 'ko';
 			last;
 		}
-		elsif ( $node_role eq 'master' && @arptables_lines =~ /^-j DROP -d $if_ref->{ addr } $/ )
+		elsif ( $node_role eq 'master' && $if_dropped )
 		{
 			$status = 'ko';
 			last;
