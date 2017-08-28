@@ -323,7 +323,7 @@ if ( $action eq "start" )
 				printAndLog( "  * Starting interface $$iface{name}\n" );
 				printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
-				if ( $$iface{ gateway } ne '' )
+				if ( $$iface{ gateway } )
 				{
 					printAndLog( " Gateway:$$iface{gateway}" );
 				}
@@ -362,7 +362,7 @@ if ( $action eq "start" )
 	# vlans interfaces (ie. eth0.20)
 	foreach my $iface ( @interfaces )
 	{
-		if ( $$iface{ vlan } ne '' && $$iface{ vini } eq '' )
+		if ( $$iface{ vlan } && ! $$iface{ vini } )
 		{
 			&createIf( $iface );
 			my $return_code = &addIp( $iface );
@@ -410,7 +410,7 @@ if ( $action eq "start" )
 	# virtual interfaces (ie. eth0:20, eth0.20:2)
 	foreach my $iface ( @interfaces )
 	{
-		if ( $$iface{ vini } ne '' )
+		if ( $$iface{ vini } )
 		{
 			if ( $$iface{ status } eq "up" )
 			{
@@ -570,7 +570,7 @@ if ( $action eq "stop" )
 	# Virtual Network Interfaces
 	foreach my $iface ( @{ &getConfigInterfaceList() } )
 	{
-		if ( $$iface{ vini } ne '' )
+		if ( $$iface{ vini } )
 		{
 			printAndLog( "  * Down interface $$iface{name}\n" );
 			printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
