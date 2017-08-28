@@ -453,6 +453,8 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 	# structure references
 	my ( $farm_name, $index, $protocol, $mark ) = @_;
 
+	require Zevenet::Net::Floating;
+
 	my $farm   = shift;    # input: first argument can be a farm reference
 	my $server = shift;    # input: second argument can be a server reference
 	my $rule;              # output: iptables rule template string
