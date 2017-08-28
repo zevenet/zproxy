@@ -22,17 +22,13 @@
 ###############################################################################
 
 # zeninotify version 2.0
-#~ use strict;
-use threads;
-use feature 'say';
-
+use strict;
+use warnings;
 use Linux::Inotify2;
-#~ use Data::Dumper;
 use IO::Socket;
 use IO::Interface qw(:flags);
-
-require '/usr/local/zevenet/config/global.conf';
-require '/usr/local/zevenet/www/functions_ext.cgi';
+use Zevenet::Config;
+use Zevenet::Cluster;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 my $rttables  = &getGlobalConfiguration( 'rttables' );
@@ -49,13 +45,6 @@ if ( $ARGV[0] eq 'stop' )
 	}
 	exit 0;
 }
-
-#~ require "/usr/local/zevenet/www/networking_functions.cgi";
-#~ require "/usr/local/zevenet/www/functions.cgi";
-require "/usr/local/zevenet/www/system_functions.cgi";
-require "/usr/local/zevenet/www/functions_ext.cgi";
-require "/usr/local/zevenet/www/thread_functions.cgi";
-require "/usr/local/zevenet/www/zcluster_functions.cgi";
 
 sub abort
 {
