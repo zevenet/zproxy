@@ -22,10 +22,8 @@
 ###############################################################################
 
 use Config::Tiny;
-
-require "/usr/local/zevenet/www/functions_ext.cgi";
-require "/usr/local/zevenet/www/system_functions.cgi";
-require "/usr/local/zevenet/www/notifications.cgi";
+use Zevenet::Config;
+use Zevenet::Notify;
 
 ( my $section, my $pattern ) = @ARGV;
 
@@ -172,11 +170,9 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 sub getGSLBFarm
 {
 	my ( $pid ) = @_;
+
 	my $farm;
-
 	my @aux = `ps -ef | grep $pid `;
-
-	$pr = @aux;
 
 	foreach my $line ( @aux )
 	{
