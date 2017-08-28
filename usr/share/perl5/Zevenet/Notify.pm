@@ -22,13 +22,13 @@
 ###############################################################################
 
 use strict;
-
-require "/usr/local/zevenet/www/functions_ext.cgi";
-require "/usr/local/zevenet/www/system_functions.cgi";
 use Config::Tiny;
+use Zevenet::Config;
 
 sub setNotifCreateConfFile
 {
+	use Zevenet::SystemInfo;
+
 	my $confdir = &getGlobalConfiguration( 'notifConfDir' );
 	my $hostname = &getHostname();
 	my $senderFile = "$confdir/sender.conf";
