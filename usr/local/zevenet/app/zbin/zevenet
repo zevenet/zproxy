@@ -372,7 +372,7 @@ if ( $action eq "start" )
 				printAndLog( "  * Starting interface $$iface{name}\n" );
 				printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
-				if ( $$iface{ gateway } ne '' )
+				if ( $$iface{ gateway } )
 				{
 					printAndLog( " Gateway:$$iface{gateway}" );
 				}
