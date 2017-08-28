@@ -21,13 +21,11 @@
 #
 ###############################################################################
 
-use feature 'say';
 use Tie::File;
 use File::Basename;
-use constant BASENAME => basename $0;
-
-require "/usr/local/zevenet/config/global.conf";
-require "/usr/local/zevenet/www/functions.cgi";
+use Zevenet::Config;
+use Zevenet::Farm::L4xNAT::Action;
+use Zevenet::Farm::L4xNAT::Config;
 
 my $fwmarksconf = &getGlobalConfiguration('fwmarksconf');
 my $BASENAME = basename $0;
@@ -55,7 +53,6 @@ if ( $decimal_found == 0 )
 seek ( $input_file, 0, SEEK_SET );
 
 # collect hexadecimal marks
-#
 my @marks;
 
 while ( my $line = <$input_file> )
@@ -73,11 +70,8 @@ while ( my $line = <$input_file> )
 @marks = sort @marks;
 my $last_hex_tag = $marks[-1];
 my $last_dec_tag = hex $last_hex_tag;
-#~ print "$last_hex_tag\n";
-#~ print "$last_dec_tag\n";
 
 # Get L4 farm names
-#
 my @l4_farmnames;
 
 opendir my $cfg_dirh, $configdir or die $!;
@@ -90,10 +84,7 @@ while ( my $file = readdir $cfg_dirh )
 	}
 }
 
-#~ say "farms found: @l4_farmnames";
-
 # Stop L4 farms
-#
 foreach my $farm_name ( @l4_farmnames )
 {
 	my $boot_status = &getL4FarmBootStatus($farm_name);
@@ -119,7 +110,6 @@ system("$iptables -t mangle -F");
 
 
 # Make new fwmarks file
-#
 seek ( $input_file, 0, SEEK_SET );
 open my $output_file, '>', "$fwmarksconf.tmp"
   or die "Cannot open $fwmarksconf.tmp: $!";
@@ -152,11 +142,9 @@ while ( my $line = <$input_file> )
 			&zenlog("$BASENAME: Migrating tag $mark to $last_hex_tag for farm $farm_name.");
 
 			# Fix fwmarks line
-			#
 			print $output_file "$last_hex_tag // FARM_${farm_name}_\n";
 
 			# Fix L4 farm file
-			#
 			my $farm_filename = "${farm_name}_l4xnat.cfg";
 			tie my @farm_file, 'Tie::File', "$configdir\/$farm_filename"
 			  or die "Cannot open $farm_filename: $!";
@@ -175,12 +163,9 @@ close $input_file;
 close $output_file;
 
 # Replace fwmarks file
-#
-#~ rename "$fwmarksconf", "$fwmarksconf.bkp";
 rename "$fwmarksconf.tmp", "$fwmarksconf";
 
 # Start L4 farms
-#
 foreach my $farm_name ( @l4_farmnames )
 {
 	my $boot_status = &getL4FarmBootStatus($farm_name);
