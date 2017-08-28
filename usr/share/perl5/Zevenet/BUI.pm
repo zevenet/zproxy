@@ -23,9 +23,7 @@
 
 #~ use Net::IP;
 use Curses::UI;
-my $globalcfg = "/usr/local/zevenet/config/global.conf";
-require "/usr/local/zevenet/www/functions.cgi";
-require ( $globalcfg );
+use Zevenet::Config;
 
 sub get_system_mem
 {
