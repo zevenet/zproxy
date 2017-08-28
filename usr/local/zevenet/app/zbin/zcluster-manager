@@ -462,45 +462,6 @@ if ( $object eq 'gateway' )
 	}
 }
 
-
-# "GROUP"|"INSTANCE"
-#~ elsif ( $ARGV[0] eq 'GROUP' || $ARGV[0] eq 'INSTANCE' )
-#~ {
-    #~ # $1 = "GROUP"|"INSTANCE"
-    #~ # $2 = name of the group or instance
-    #~ # $3 = target state of transition
-    #~ #     ("MASTER"|"BACKUP"|"FAULT")
-    #~ # $4 = Node priority
-#~ 
-	#~ my %notif = (
-				  #~ type   => $ARGV[0],
-				  #~ name   => $ARGV[1],
-				  #~ target => $ARGV[2],
-				  #~ prio   => $ARGV[3],
-	#~ );
-#~ 
-	#~ my $target_state = $ARGV[2];
-#~ 
-	#~ if ( $notif{ target } eq 'MASTER' )
-	#~ {
-		#~ # &setNodeStatusMaster();
-	#~ }
-	#~ elsif ( $notif{ target } eq 'BACKUP' )
-	#~ {
-		#~ # &setNodeStatusBackup();
-	#~ }
-	#~ elsif ( $notif{ target } eq 'FAULT' )
-	#~ {
-		#~ # &setNodeStatusBackup();
-	#~ }
-#~ }
-elsif ( @ARGV == 0 )
-{
-	# FIXME: do something??
-}
-
-
-
 sub setNodeStatusMaster
 {
 	if ( &getZClusterNodeStatus() eq 'master' )
