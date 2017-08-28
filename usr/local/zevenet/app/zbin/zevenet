@@ -199,7 +199,7 @@ if ( $action eq "start" )
 {
 	my $version = &getGlobalConfiguration('version');
 
-	printAndLog( "Starting Zevenet Load Balancer v$version" );
+	&printAndLog( "Starting Zevenet Load Balancer v$version" );
 
 	# Load required modules
 	system ( '/sbin/modprobe nf_conntrack >/dev/null 2>&1' );
@@ -304,7 +304,7 @@ if ( $action eq "start" )
 	# enterprise hook
 	if ( eval { require Zevenet::Service; } ) { start_service(); }
 
-	printAndLog( "* Starting Interfaces:\n" );
+	&printAndLog( "* Starting Interfaces:\n" );
 
 	my $mgmt_ip    = &getHttpServerIp();
 	my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
@@ -320,12 +320,12 @@ if ( $action eq "start" )
 
 			if ( $$iface{ status } eq "up" )
 			{
-				printAndLog( "  * Starting interface $$iface{name}\n" );
-				printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+				&printAndLog( "  * Starting interface $$iface{name}\n" );
+				&printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
 				if ( $$iface{ gateway } )
 				{
-					printAndLog( " Gateway:$$iface{gateway}" );
+					&printAndLog( " Gateway:$$iface{gateway}" );
 				}
 
 				&upIf( $iface );
@@ -344,11 +344,11 @@ if ( $action eq "start" )
 
 				if ( $return_code == 0 )
 				{
-					printAndLog( " \033[1;32m OK \033[0m \n" );
+					&printAndLog( " \033[1;32m OK \033[0m \n" );
 				}
 				else
 				{
-					printAndLog( " \033[1;31m ERROR \033[0m \n" );
+					&printAndLog( " \033[1;31m ERROR \033[0m \n" );
 				}
 
 				if ( $$iface{ ip_v } == 4 )
@@ -369,12 +369,12 @@ if ( $action eq "start" )
 
 			if ( $$iface{ status } eq "up" )
 			{
-				printAndLog( "  * Starting interface $$iface{name}\n" );
-				printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+				&printAndLog( "  * Starting interface $$iface{name}\n" );
+				&printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
 				if ( $$iface{ gateway } )
 				{
-					printAndLog( " Gateway:$$iface{gateway}" );
+					&printAndLog( " Gateway:$$iface{gateway}" );
 				}
 
 				&upIf( $iface );
@@ -387,11 +387,11 @@ if ( $action eq "start" )
 
 				if ( $return_code == 0 )
 				{
-					printAndLog( " \033[1;32m OK \033[0m \n" );
+					&printAndLog( " \033[1;32m OK \033[0m \n" );
 				}
 				else
 				{
-					printAndLog( " \033[1;31m ERROR \033[0m \n" );
+					&printAndLog( " \033[1;31m ERROR \033[0m \n" );
 				}
 
 				&applyRoutes( "local", $iface );
@@ -414,8 +414,8 @@ if ( $action eq "start" )
 		{
 			if ( $$iface{ status } eq "up" )
 			{
-				printAndLog( "  * Starting interface $$iface{name}\n" );
-				printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+				&printAndLog( "  * Starting interface $$iface{name}\n" );
+				&printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
 				my $return_code = &addIp( $iface );
 
@@ -431,11 +431,11 @@ if ( $action eq "start" )
 
 				if ( $return_code == 0 )
 				{
-					printAndLog( " \033[1;32m OK \033[0m \n" );
+					&printAndLog( " \033[1;32m OK \033[0m \n" );
 				}
 				else
 				{
-					printAndLog( " \033[1;31m ERROR \033[0m \n" );
+					&printAndLog( " \033[1;31m ERROR \033[0m \n" );
 				}
 
 				if ( $$iface{ ip_v } == 4 )
@@ -447,7 +447,7 @@ if ( $action eq "start" )
 		}
 	}
 
-	printAndLog( "* Starting Farms:\n" );
+	&printAndLog( "* Starting Farms:\n" );
 
 	my @farmsf = &getFarmList();
 	my $enable_fg = 1;
@@ -461,16 +461,16 @@ if ( $action eq "start" )
 
 		if ( $bstatus eq "up" )
 		{
-			printAndLog( "  * Starting Farm $farmname:" );
+			&printAndLog( "  * Starting Farm $farmname:" );
 			my $status = &_runFarmStart( $farmname, "false" );
 
 			if ( $status == 0 )
 			{
-				printAndLog( " \033[1;32m OK \033[0m \n" );
+				&printAndLog( " \033[1;32m OK \033[0m \n" );
 			}
 			else
 			{
-				printAndLog( " \033[1;31m ERROR \033[0m \n" );
+				&printAndLog( " \033[1;31m ERROR \033[0m \n" );
 			}
 
 			#farmguardian configured and up?
@@ -478,16 +478,16 @@ if ( $action eq "start" )
 
 			if ( ( $status == 0 ) && ( $fgstatus == 1 ) && $enable_fg )
 			{
-				printAndLog( "  * Starting Farm Guardian for $farmname:" );
+				&printAndLog( "  * Starting Farm Guardian for $farmname:" );
 				my $stat = &runFarmGuardianStart( $farmname, "" );
 
 				if ( $stat == 0 )
 				{
-					printAndLog( " \033[1;32m OK \033[0m \n" );
+					&printAndLog( " \033[1;32m OK \033[0m \n" );
 				}
 				else
 				{
-					printAndLog( " \033[1;31m ERROR \033[0m \n" );
+					&printAndLog( " \033[1;31m ERROR \033[0m \n" );
 				}
 			}
 		}
@@ -499,12 +499,12 @@ if ( $action eq "start" )
 
 	# At this point every zevenet interface and farm is running
 	# now a personalized script can be executed
-	printAndLog("Starting $configdir/zlb-start...");
+	&printAndLog("Starting $configdir/zlb-start...");
 
 	my @ownscript = `$configdir/zlb-start 2>&1`;
-	printAndLog( @ownscript ) if ( @ownscript );
+	&printAndLog( @ownscript ) if ( @ownscript );
 
-	printAndLog("End of $configdir/zlb-start...");
+	&printAndLog("End of $configdir/zlb-start...");
 
 	if ( eval { require Zevenet::Service; } ) { start_cluster(); }
 
@@ -515,16 +515,16 @@ if ( $action eq "start" )
 
 	&local_http_service('start');
 
-	printAndLog( "Start proccess finished." );
+	&printAndLog( "Start proccess finished." );
 }
 
 if ( $action eq "stop" )
 {
-	printAndLog( "Stopping Zevenet Load Balancer...\n" );
+	&printAndLog( "Stopping Zevenet Load Balancer...\n" );
 
 	if ( eval { require Zevenet::Service; } ) { stop_service(); }
 
-	printAndLog( "* Stopping Farms:\n" );
+	&printAndLog( "* Stopping Farms:\n" );
 
 	foreach my $ffile ( getFarmList() )
 	{
@@ -538,52 +538,52 @@ if ( $action eq "stop" )
 
 			if ( $fgstatus != -1 )
 			{
-				printAndLog( "  * Stopping Farm Guardian for $farmname:" );
+				&printAndLog( "  * Stopping Farm Guardian for $farmname:" );
 				my $stat = &runFarmGuardianStop( $farmname, "" );
 
 				if ( $stat == 0 )
 				{
-					printAndLog( " \033[1;32m OK \033[0m \n" );
+					&printAndLog( " \033[1;32m OK \033[0m \n" );
 				}
 				else
 				{
-					printAndLog( " \033[1;31m ERROR \033[0m \n" );
+					&printAndLog( " \033[1;31m ERROR \033[0m \n" );
 				}
 			}
 
-			printAndLog( "  * Stopping Farm $farmname:" );
+			&printAndLog( "  * Stopping Farm $farmname:" );
 			my $status = &_runFarmStop( $farmname, "false" );
 
 			if ( $status == 0 )
 			{
-				printAndLog( " \033[1;32m OK \033[0m \n" );
+				&printAndLog( " \033[1;32m OK \033[0m \n" );
 			}
 			else
 			{
-				printAndLog( " \033[1;31m ERROR \033[0m \n" );
+				&printAndLog( " \033[1;31m ERROR \033[0m \n" );
 			}
 		}
 	}
 
-	printAndLog( "* Stopping Virtual Interfaces:\n" );
+	&printAndLog( "* Stopping Virtual Interfaces:\n" );
 
 	# Virtual Network Interfaces
 	foreach my $iface ( @{ &getConfigInterfaceList() } )
 	{
 		if ( $$iface{ vini } )
 		{
-			printAndLog( "  * Down interface $$iface{name}\n" );
-			printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+			&printAndLog( "  * Down interface $$iface{name}\n" );
+			&printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
 			my $return_code = &stopIf( $iface );
 
 			if ( $return_code == 0 )
 			{
-				printAndLog( " \033[1;32m OK \033[0m \n" );
+				&printAndLog( " \033[1;32m OK \033[0m \n" );
 			}
 			else
 			{
-				printAndLog( " \033[1;31m ERROR \033[0m \n" );
+				&printAndLog( " \033[1;31m ERROR \033[0m \n" );
 			}
 		}
 	}
@@ -592,14 +592,14 @@ if ( $action eq "stop" )
 
 	# At this point every zevenet interface and farm is stopped
 	# now a personalized script can be executed
-	printAndLog("Starting $configdir/zlb-stop...");
+	&printAndLog("Starting $configdir/zlb-stop...");
 
 	my @ownscript = `$configdir/zlb-stop 2>&1`;
-	printAndLog( @ownscript ) if @ownscript;
+	&printAndLog( @ownscript ) if @ownscript;
 
-	printAndLog( "End of $configdir/zlb-stop..." );
+	&printAndLog( "End of $configdir/zlb-stop..." );
 
-	printAndLog( "Stop process finished..." );
+	&printAndLog( "Stop process finished..." );
 }
 
 &configureDefaultGW();
