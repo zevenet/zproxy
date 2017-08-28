@@ -212,9 +212,12 @@ See Also:
 sub stopIf    # ($if_ref)
 {
 	my $if_ref = shift;
+
+	&zenlog( "Stopping interface $$if_ref{ name }" );
+
 	my $status = 0;
-	
-	my $if = $$if_ref{name};
+	my $if     = $$if_ref{ name };
+
 	# If $if is Vini do nothing
 	if ( $$if_ref{ vini } eq '' )
 	{
@@ -254,18 +257,15 @@ sub stopIf    # ($if_ref)
 	if ( $if =~ /\:/ )
 	{
 		my @ifphysic = split ( /:/, $if );
-
-		&zenlog( "Stopping if $if" );
 		my $ip = $$if_ref{addr};
+
 		if ( $ip =~ /\./ )
 		{
 			my ( $net, $mask ) = ipv4_network( "$ip / $$if_ref{mask}" );
 			&zenlog(
 					 "running '$ip_bin addr del $ip/$mask brd + dev $ifphysic[0] label $if' " );
 			my @eject = `$ip_bin addr del $ip/$mask brd + dev $ifphysic[0] label $if`;
-
 		}
-
 	}
 
 	return $status;
