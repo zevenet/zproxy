@@ -383,7 +383,7 @@ if ( $object eq 'ipds' )
 # WARNING: only virtual interfaces are handled
 if ( $object eq 'interface' )
 {
-	require Zevenet:Net;
+	require Zevenet::Net;
 
 	if ( $command eq 'float-update' )
 	{
@@ -435,7 +435,7 @@ if ( $object eq 'gateway' )
 	my $iface_name = shift @ARGV;
 	my $ip_version = shift @ARGV;
 
-	require Zevenet:Net;
+	require Zevenet::Net;
 
 	my $status;
 	
