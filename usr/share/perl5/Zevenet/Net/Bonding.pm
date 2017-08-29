@@ -71,7 +71,7 @@ sub getBondList
 
 	if ( !-f $bonding_masters_filename )
 	{
-		&zenlog( "Bonding module seems missing" );
+		# No bonding interface found
 		return undef;
 	}
 
