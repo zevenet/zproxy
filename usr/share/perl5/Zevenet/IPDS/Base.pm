@@ -128,8 +128,10 @@ Returns:
 
 sub runIPDSStartModule
 {
+	require Zevenet::IPDS::Blacklist::Actions;
+
 	&addIPDSIptablesChain();
-	
+
 	&runBLStartModule();
 	&runRBLStartModule();
 	&runDOSStartModule();
