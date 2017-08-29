@@ -219,7 +219,7 @@ sub stopIf    # ($if_ref)
 	my $if     = $$if_ref{ name };
 
 	# If $if is Vini do nothing
-	if ( $$if_ref{ vini } eq '' )
+	if ( ! $$if_ref{ vini } )
 	{
 		# If $if is a Interface, delete that IP
 		my $ip_cmd = "$ip_bin address flush dev $$if_ref{name}";
@@ -254,7 +254,7 @@ sub stopIf    # ($if_ref)
 	}
 
 	#if virtual interface
-	if ( $if =~ /\:/ )
+	else
 	{
 		my @ifphysic = split ( /:/, $if );
 		my $ip = $$if_ref{addr};
@@ -262,9 +262,10 @@ sub stopIf    # ($if_ref)
 		if ( $ip =~ /\./ )
 		{
 			my ( $net, $mask ) = ipv4_network( "$ip / $$if_ref{mask}" );
-			&zenlog(
-					 "running '$ip_bin addr del $ip/$mask brd + dev $ifphysic[0] label $if' " );
-			my @eject = `$ip_bin addr del $ip/$mask brd + dev $ifphysic[0] label $if`;
+			my $cmd = "$ip_bin addr del $ip/$mask brd + dev $ifphysic[0] label $if";
+
+			&zenlog( "running '$cmd' " );
+			system ( "$cmd >/dev/null 2>&1" );
 		}
 	}
 
