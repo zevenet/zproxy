@@ -510,7 +510,7 @@ sub getDOSStatusRule
 	# check farm rules
 	else
 	{
-		if ( @{ &getDOSLookForRule( $rule ) )
+		if ( @{ &getDOSLookForRule( $rule ) } )
 		{
 			$status = "up";
 		}
