@@ -32,6 +32,8 @@ use Zevenet::IPDS::Core;
 use Zevenet::Farm;
 use Zevenet::Validate;
 
+use Zevenet::IPDS::Blacklist::Blacklist;
+
 my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 
@@ -210,11 +212,11 @@ sub runBLStopByRule
 	my ( $ruleName ) = @_;
 	my $error=0;
 
-	return if ( &getDOSStatusRule() eq 'down' );
+	return if ( &getBLStatus() eq 'down' );
 	
-	foreach my $farmName ( @{ &getDOSParam( $ruleName, 'farms' ) } )
+	foreach my $farmName ( @{ &getBLParam( $ruleName, 'farms' ) } )
 	{
-		if ( &setDOSStop( $ruleName, $farmName ) != 0 )
+		if ( &runBLStop( $ruleName, $farmName ) != 0 )
 		{
 			&zenlog ("Error stopping the rule $ruleName in the farm $farmName.");
 		}
@@ -316,7 +318,7 @@ sub runBLStop
 			# Delete
 			#	iptables -D PREROUTING -t raw 3
 			my $cmd =
-			  &getGlobalConfiguration( 'iptables' ) . " --table raw -D PREROUTING $lineNum";
+			  &getGlobalConfiguration( 'iptables' ) . " --table raw -D PREROUTING $size";
 			&iptSystem( $cmd );
 		}
 
@@ -330,7 +332,7 @@ sub runBLStop
 		}
 	}
 
-	return $error;
+	#~ return $error;
 }
 
 =begin nd

@@ -272,36 +272,13 @@ sub getDOSParam
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 
-	if ( $param )
+	$output = $fileHandle->{ $ruleName }->{ $param };
+	if ( $param eq 'farms' )
 	{
-		$output = $fileHandle->{ $ruleName }->{ $param };
-		if ( $param eq 'farms' )
-		{
-			my @aux = split ( ' ', $output );
-			$output = \@aux;
-		}
+		my @aux = split ( ' ', $output );
+		$output = \@aux;
 	}
-	elsif ( $ruleName )
-	{
-		# get all params
-		my %hash = %{ $fileHandle->{ $ruleName } };
 
-		# return in integer format if this value is a number
-		# It is neccessary for zapi
-		foreach my $key ( keys %hash )
-		{
-			$hash{ $key } += 0 if ( $hash{ $key } =~ /^\d+$/ );
-		}
-
-		# replace farms string for a array reference
-		if ( exists $fileHandle->{ $ruleName }->{ 'farms' } )
-		{
-			my @aux = split ( ' ', $fileHandle->{ $ruleName }->{ 'farms' } );
-			$hash{ 'farms' } = \@aux;
-		}
-
-		$output = \%hash;
-	}
 	return $output;
 }
 
@@ -524,9 +501,19 @@ sub getDOSStatusRule
 {
 	my $rule     = shift;
 	my $status   = "down";
-	if ( @{ &getDOSLookForRule( $rule ) )
+	
+	# check system rules
+	if (&getDOSParam( $rule, 'type' ) eq 'system')
 	{
-		$status = "up";
+		$status = &getDOSParam( $rule, 'status' );
+	}
+	# check farm rules
+	else
+	{
+		if ( @{ &getDOSLookForRule( $rule ) )
+		{
+			$status = "up";
+		}
 	}
 	
 	return $status;
@@ -1193,5 +1180,40 @@ sub setDOSSshBruteForceRule
 
 	return $output;
 }
+
+
+sub getDOSZapiRule
+{
+	my $ruleName = shift;
+	my $output;
+
+	my $confFile   = &getGlobalConfiguration( 'dosConf' );
+	my $fileHandle = Config::Tiny->read( $confFile );
+
+	# get all params
+	my %hash = %{ $fileHandle->{ $ruleName } };
+
+	# return in integer format if this value is a number
+	# It is neccessary for zapi
+	foreach my $key ( keys %hash )
+	{
+		$hash{ $key } += 0 if ( $hash{ $key } =~ /^\d+$/ );
+	}
+
+	# replace farms string for a array reference
+	if ( exists $fileHandle->{ $ruleName }->{ 'farms' } )
+	{
+		my @aux = split ( ' ', $fileHandle->{ $ruleName }->{ 'farms' } );
+		$hash{ 'farms' } = \@aux;
+		# add rule status in farm dos rules
+		$hash{ 'status' } = &getDOSStatusRule( $ruleName );
+	}
+
+	$output = \%hash;
+	
+	return $output;
+}
+
+
 
 1;

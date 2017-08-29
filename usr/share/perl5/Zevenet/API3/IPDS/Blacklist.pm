@@ -33,6 +33,8 @@ sub get_blacklists_all_lists
 	my @lists;
 	delete $bl{_};
 
+	my @active_lists = `ipset -L -name`;
+
 	foreach my $list_name ( sort keys %bl )
 	{
 		my $bl_n  = $bl{ $list_name };
@@ -43,6 +45,7 @@ sub get_blacklists_all_lists
 						 farms   => $bl_nf ? split ( ' ', $bl_nf ) : [],
 						 policy  => $bl_n->{ policy },
 						 type    => $bl_n->{ type },
+						 status  => (grep(/^$list_name$/,@active_lists))?"up":"down",
 						 preload => $bl_n->{ preload },
 		);
 
@@ -419,7 +422,7 @@ sub set_blacklists_list
 						my $body = { description => $description, params => $listHash };
 
 						require Zevenet::Cluster;
-						&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+						&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
 						&httpResponse({ code => 200, body => $body } );
 					}
@@ -490,17 +493,16 @@ sub del_blacklists_list
 	&httpResponse( { code => 400, body => $body } );
 }
 
-# POST /ipds/blacklists/BLACKLIST/actions 	update a remote blacklist
-sub update_remote_blacklists
+# POST /ipds/blacklists/BLACKLIST/actions
+sub actions_blacklists
 {
 	my $json_obj    = shift;
 	my $listName    = shift;
-
+	
+	my $description = "Apply a action to a blacklist";
+	
 	require Zevenet::IPDS::Blacklist;
-
-	my $description = "Update a remote list";
 	my $errormsg = &getBLExists( $listName );
-
 	if ( $errormsg == -1 )
 	{
 		$errormsg = "$listName doesn't exist.";
@@ -511,49 +513,89 @@ sub update_remote_blacklists
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( &getBLParam ( $listName, 'type' ) ne 'remote' )
+	
+	if ( $json_obj->{ 'action' } eq "update" )
+	{
+		&update_remote_blacklists( $listName );
+		require Zevenet::Cluster;
+		&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
+	}
+	else
+	{
+		require Zevenet::IPDS::Blacklist::Actions;
+		my $error;
+		if ( $json_obj->{ action } eq 'start' )
+		{
+			$error = &runBLStartByRule( $listName );
+		}
+		elsif ( $json_obj->{ action } eq 'stop' )
+		{
+			$error = &runBLStopByRule( $listName );
+		}
+		elsif ( $json_obj->{ action } eq 'restart' )
+		{
+			$error = &runBLRestartByRule( $listName );
+		}
+		else
+		{
+			$errormsg = "The action has not a valid value";
+			my $body = {
+						description => $description,
+						error       => "true",
+						message     => $errormsg,
+			};
+			&httpResponse( { code => 400, body => $body } );
+		}
+		
+		if ( $error )
+		{
+			&httpResponse(
+				{ code => 400, body => 
+					{ description => $description, error => "true", message => "Error, applying the action to the blacklist." } } );
+		}
+		else
+		{
+			require Zevenet::Cluster;
+			&runZClusterRemoteManager( 'ipds_bl', $json_obj->{ action }, $listName );
+			&httpResponse(
+				{ code => 200, body => 
+					{ description => $description, success => "true", params => $json_obj->{action} } } );
+		}
+	}		
+}
+
+# POST /ipds/blacklists/BLACKLIST/actions 	update a remote blacklist
+sub update_remote_blacklists
+{
+	my $listName    = shift;
+
+	require Zevenet::IPDS::Blacklist;
+
+	my $errormsg;
+	my $description = "Update a remote list";
+	if ( &getBLParam ( $listName, 'type' ) ne 'remote' )
 	{
 		$errormsg = "Error, only remote lists can be updated.";
 	}
 	else
 	{
-		my @allowParams = ( "action" );
-		$errormsg = &getValidOptParams( $json_obj, \@allowParams );
+		$errormsg = &setBLDownloadRemoteList( $listName );
+		my $statusUpd = &getBLParam( $listName, 'update_status' );
 
 		if ( !$errormsg )
 		{
-			if ( $json_obj->{ 'action' } ne "update" )
+			if ( @{ &getBLParam( $listName, 'farms' ) } )
 			{
-				$errormsg = "Error, the action available is 'update'.";
-
-				my $body =
-				{ description => $description, error => "true", message => $errormsg };
-
-				&httpResponse( { code => 404, body => $body } );
+				&setBLRefreshList( $listName );
 			}
-			else
-			{
-				$errormsg = &setBLDownloadRemoteList( $listName );
-				my $statusUpd = &getBLParam( $listName, 'update_status' );
 
-				if ( !$errormsg )
-				{
-					if ( @{ &getBLParam( $listName, 'farms' ) } )
-					{
-						&setBLRefreshList( $listName );
-					}
-
-					require Zevenet::Cluster;
-					&runZClusterRemoteManager( 'ipds', 'restart_bl' );
-
-					&httpResponse(
-						{ code => 200, body => { description => $description, update => $statusUpd } } );
-				}
-				else
-				{
-					$errormsg = $statusUpd;
-				}
-			}
+			&httpResponse(
+				{ code => 200, body => 
+					{ description => $description, success => "true", params => {"action" => "update"} } } );
+		}
+		else
+		{
+			$errormsg = $statusUpd;
 		}
 	}
 
@@ -675,7 +717,7 @@ sub add_blacklists_source
 					$errormsg = "Added $json_obj->{'source'} successful.";
 
 					require Zevenet::Cluster;
-					&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+					&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
 					my $body = {
 								 description => $description,
@@ -762,7 +804,7 @@ sub set_blacklists_source
 				};
 
 				require Zevenet::Cluster;
-				&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+				&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
 				&httpResponse( { code => 200, body => $body } );
 			}
@@ -823,7 +865,7 @@ sub del_blacklists_source
 			};
 
 			require Zevenet::Cluster;
-			&runZClusterRemoteManager( 'ipds', 'restart_bl' );
+			&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
 			&httpResponse( { code => 200, body => $body } );
 		}
@@ -891,11 +933,8 @@ sub add_blacklists_to_farm
 								 message     => $errormsg
 					};
 
-					if ( &getFarmStatus( $farmName ) eq 'up' )
-					{
-						require Zevenet::Cluster;
-						&runZClusterRemoteManager( 'ipds', 'restart_bl' );
-					}
+					require Zevenet::Cluster;
+					&runZClusterRemoteManager( 'ipds_bl', 'start', $listName, $farmName );
 
 					&httpResponse( { code => 200, body => $body } );
 				}
@@ -970,11 +1009,8 @@ sub del_blacklists_from_farm
 						 message     => $errormsg,
 			};
 
-			if ( &getFarmStatus( $farmName ) eq 'up' )
-			{
-				require Zevenet::Cluster;
-				&runZClusterRemoteManager( 'ipds', 'restart_bl' );
-			}
+			require Zevenet::Cluster;
+			&runZClusterRemoteManager( 'ipds_bl', 'stop', $listName, $farmName );
 
 			&httpResponse( { code => 200, body => $body } );
 		}

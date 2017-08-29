@@ -334,7 +334,7 @@ sub set_rbl_rule
 		my $listHash = &getRBLZapiRule( $name );
 		my $body = { description => $description, params => $listHash };
 	
-		&runZClusterRemoteManager( 'ipds', "restart_rbl_$name" );
+		&runZClusterRemoteManager( 'ipds_rbl', "restart", $name );
 	
 		&httpResponse({ code => 200, body => $body } );
 	}
@@ -551,7 +551,7 @@ sub set_rbl_domain
 
 			foreach my $rule ( @rules )
 			{
-				&runZClusterRemoteManager( 'ipds', "restart_rbl_$rule" );
+				&runZClusterRemoteManager( 'ipds_rbl', "restart", $rule );
 			}
 
 			&httpResponse( { code => 200, body => $body } );
@@ -615,7 +615,7 @@ sub del_rbl_domain
 				if ( grep( /^$domain$/, @{ &getRBLObjectRuleParam( $rule, 'domains' ) } ) )
 				{
 					&setRBLObjectRuleParam( $rule, "del_domains", $domain );
-					&runZClusterRemoteManager( 'ipds', "restart_rbl_$rule" );
+					&runZClusterRemoteManager( 'ipds_rbl', "restart", $rule );
 				}
 			}
 
@@ -680,7 +680,7 @@ sub add_domain_to_rbl
 				{
 					$errormsg = "Added $domain successful.";
 
-					&runZClusterRemoteManager( 'ipds', "restart_rbl_$name" );
+					&runZClusterRemoteManager( 'ipds_rbl', "restart", $name );
 
 					my $rule = &getRBLZapiRule( $name );
 					my $body = {
@@ -749,7 +749,7 @@ sub del_domain_from_rbl
 						 message     => $errormsg,
 			};
 
-			&runZClusterRemoteManager( 'ipds', "restart_rbl_$name" );
+			&runZClusterRemoteManager( 'ipds_rbl', "restart", $name );
 
 			&httpResponse( { code => 200, body => $body } );
 		}
@@ -820,7 +820,7 @@ sub add_rbl_to_farm
 
 					if ( &getFarmStatus( $farmName ) eq 'up' )
 					{
-						&runZClusterRemoteManager( 'ipds', "start_rbl_$name,$farmName" );
+						&runZClusterRemoteManager( 'ipds_rbl', "start", $name, $farmName );
 					}
 
 					&httpResponse( { code => 200, body => $body } );
@@ -893,7 +893,7 @@ sub del_rbl_from_farm
 
 			if ( &getFarmStatus( $farmName ) eq 'up' )
 			{
-				&runZClusterRemoteManager( 'ipds', "stop_rbl_$name,$farmName" );
+				&runZClusterRemoteManager( 'ipds_rbl', "stop", $name, $farmName );
 			}
 
 			&httpResponse( { code => 200, body => $body } );
@@ -968,7 +968,7 @@ sub set_rbl_actions
 								
 					};
 		
-					&runZClusterRemoteManager( 'ipds', "${action}_rbl_$name" );
+					&runZClusterRemoteManager( 'ipds_rbl', $action, $name );
 		
 					&httpResponse( { code => 200, body => $body } );
 				}

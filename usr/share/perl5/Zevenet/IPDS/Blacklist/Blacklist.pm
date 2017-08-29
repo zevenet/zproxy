@@ -1496,6 +1496,7 @@ sub getBLzapi
 	%listHash = %{ &getBLParam ( $listName ) };
 	delete $listHash{ 'source' };
 	$listHash{ 'sources' } = \@ipList;
+	$listHash{ 'status' } = &getBLStatus( $listName );
 	$listHash{ 'farms' } = &getBLParam( $listName, 'farms' );
 	
 	# day as a number type

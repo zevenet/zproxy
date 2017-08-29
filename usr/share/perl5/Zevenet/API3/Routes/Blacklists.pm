@@ -50,8 +50,8 @@ if ( $q->path_info =~ qr{/ipds/blacklists} )
 	#  DELETE blacklists list
 	DELETE qr{^/ipds/blacklists/($blacklists_list)$} => \&del_blacklists_list;
 
-	#  UPDATE a remote blacklists
-	POST qr{^/ipds/blacklists/($blacklists_list)/actions$} => \&update_remote_blacklists;
+	#  action for a blacklists
+	POST qr{^/ipds/blacklists/($blacklists_list)/actions$} => \&actions_blacklists;
 
 	#  GET a source from a blacklists
 	GET qr{^/ipds/blacklists/($blacklists_list)/sources$} => \&get_blacklists_source;

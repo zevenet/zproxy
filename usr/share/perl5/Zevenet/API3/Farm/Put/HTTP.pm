@@ -28,17 +28,6 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
-	# flag to reset IPDS rules when the farm changes the name.
-	my $farmname_old;
-	my $ipds;
-
-	if ( eval { require Zevenet::IPDS; } )
-	{
-		require Zevenet::IPDS::Blacklist;
-		require Zevenet::IPDS::DoS;
-		$ipds = &getIPDSfarmsRules( $farmname );
-	}
-	
 	# Flags
 	my $reload_flag  = "false";
 	my $restart_flag = "false";
@@ -65,6 +54,18 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	my $vip   = &getFarmVip( "vip",  $farmname );
 	my $vport = &getFarmVip( "vipp", $farmname );
 	my $changedname = "false";
+
+	my $reload_ipds = 0;
+	if (exists $json_obj->{vport} || exists $json_obj->{vip} || exists $json_obj->{newfarmname})
+	{
+		if ( eval { require Zevenet::IPDS; } )		
+		{
+			$reload_ipds = 1;
+			&runIPDSStopByFarm( $farmname );
+			require Zevenet::Cluster;
+			&runZClusterRemoteManager( 'ipds', 'stop', $farmname );
+		}
+	}
 
 	######## Functions
 
@@ -879,6 +880,16 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	
 		}
 
+		if ( $reload_ipds )
+		{
+			if ( eval { require Zevenet::IPDS::Base; } )
+			{
+				&runIPDSStartByFarm( $farmname );
+				require Zevenet::Cluster;
+				&runZClusterRemoteManager( 'ipds', 'start', $farmname );
+			}
+		}
+		
 		# Success
 		my $body = {
 			description => "Modify farm $farmname",

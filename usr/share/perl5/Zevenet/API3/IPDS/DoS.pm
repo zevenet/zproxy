@@ -59,7 +59,7 @@ sub get_dos
 
 	foreach my $rule ( keys %rules )
 	{
-		my $aux = &getDOSParam( $rule );
+		my $aux = &getDOSZapiRule( $rule );
 		push @output, $aux;
 	}
 	
@@ -100,7 +100,7 @@ sub create_dos_rule
 			}
 			else
 			{
-				my $output = &getDOSParam( $json_obj->{ 'name' } );
+				my $output = &getDOSZapiRule( $json_obj->{ 'name' } );
 				&httpResponse(
 							   {
 								 code => 200,
@@ -121,12 +121,12 @@ sub get_dos_rule
 {
 	my $name        = shift;
 	my $description = "Get DoS $name settings";
-	my $refRule     = &getDOSParam( $name );
+	my $refRule     = &getDOSZapiRule( $name );
 	my $output;
 	
 	if ( ref ( $refRule ) eq 'HASH' )
 	{
-		$output = &getDOSParam( $name );
+		$output = &getDOSZapiRule( $name );
 		# successful
 		my $body = { description => $description, params => $refRule, };
 		&httpResponse( { code => 200, body => $body } );
@@ -210,10 +210,10 @@ sub set_dos_rule
 
 				if ( !$errormsg )
 				{
-					my $refRule = &getDOSParam( $name );
+					my $refRule = &getDOSZapiRule( $name );
 
 					require Zevenet::Cluster;
-					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
+					&runZClusterRemoteManager( 'ipds_dos', 'restart', $name );
 
 					&httpResponse(
 						{
@@ -361,7 +361,7 @@ sub add_dos_to_farm
 			my $confFile = &getGlobalConfiguration( 'dosConf' );
 			
 			# check output
-			my $output = &getDOSParam ( $name );
+			my $output = &getDOSZapiRule ( $name );
 			if ( grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 			{
 				$errormsg = "DoS rule $name was applied successful to the farm $farmName.";
@@ -369,7 +369,7 @@ sub add_dos_to_farm
 				if ( &getFarmStatus( $farmName ) eq 'up' )
 				{
 					require Zevenet::Cluster;
-					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
+					&runZClusterRemoteManager( 'ipds_dos', 'start', $name, $farmName );
 				}
 
 				&httpResponse(
@@ -437,7 +437,7 @@ sub del_dos_from_farm
 			&setDOSDeleteRule( $name, $farmName );
 
 			# check output
-			my $output = &getDOSParam ( $name );
+			my $output = &getDOSZapiRule ( $name );
 			if ( ! grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 			{
 				$errormsg = "DoS rule $name was removed successful from the farm $farmName.";
@@ -445,7 +445,7 @@ sub del_dos_from_farm
 				if ( &getFarmStatus( $farmName ) eq 'up' )
 				{
 					require Zevenet::Cluster;
-					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
+					&runZClusterRemoteManager( 'ipds_dos', 'stop', $name, $farmName );
 				}
 
 				&httpResponse(
@@ -465,6 +465,68 @@ sub del_dos_from_farm
 	my $body =
 	  { description => $description, error => "true", message => $errormsg, };
 	&httpResponse( { code => 400, body => $body } );
+}
+
+
+# POST /ipds/dos/DOS/actions
+sub actions_dos
+{
+	my $json_obj    = shift;
+	my $rule    = shift;
+	
+	my $description = "Apply a action to a DoS rule";
+	
+	my $errormsg = &getBLExists( $rule );
+	if ( $errormsg == -1 )
+	{
+		$errormsg = "$rule doesn't exist.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+		&httpResponse( { code => 404, body => $body } );
+	}
+	
+	require Zevenet::IPDS::DoS::Actions;
+	my $error;
+	if ( $json_obj->{ action } eq 'start' )
+	{
+		$error = &runDOSStartByRule( $rule );
+	}
+	elsif ( $json_obj->{ action } eq 'stop' )
+	{
+		$error = &runDOSStopByRule( $rule );
+	}
+	elsif ( $json_obj->{ action } eq 'restart' )
+	{
+		$error = &runDOSRestartByRule( $rule );
+	}
+	else
+	{
+		$errormsg = "The action has not a valid value";
+		my $body = {
+					description => $description,
+					error       => "true",
+					message     => $errormsg,
+		};
+		&httpResponse( { code => 400, body => $body } );
+	}
+		
+	if ( $error )
+	{
+		&httpResponse(
+			{ code => 400, body => 
+				{ description => $description, error => "true", message => "Error, applying the action to the DoS rule." } } );
+	}
+	else
+	{
+		require Zevenet::Cluster;
+		&runZClusterRemoteManager( 'ipds_dos', $json_obj->{ action }, $rule );
+		&httpResponse(
+			{ code => 200, body => 
+				{ description => $description, success => "true", params => $json_obj->{action} } } );
+	}
 }
 
 1;

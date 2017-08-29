@@ -36,17 +36,6 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	my $status;
 	my $changedname = "false";
 
-	# flag to reset IPDS rules when the farm changes the name.
-	my $farmname_old;
-	my $ipds;
-
-	if ( eval { require Zevenet::IPDS; } )
-	{
-		require Zevenet::IPDS::Blacklist;
-		require Zevenet::IPDS::DoS;
-		my $ipds = &getIPDSfarmsRules( $farmname );
-	}
-
 	my $errormsg;
 
 	# Check that the farm exists
@@ -75,6 +64,18 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		&httpResponse({ code => 400, body => $body });
 	}
 
+	my $reload_ipds = 0;
+	if (exists $json_obj->{vport} || exists $json_obj->{vip} || exists $json_obj->{newfarmname})
+	{
+		if ( eval { require Zevenet::IPDS; } )		
+		{
+			$reload_ipds = 1;
+			&runIPDSStopByFarm( $farmname );
+			require Zevenet::Cluster;
+			&runZClusterRemoteManager( 'ipds', 'stop', $farmname );
+		}
+	}
+	
 	# Get current vip & vport
 	my $vip   = &getFarmVip( "vip",  $farmname );
 	my $vport = &getFarmVip( "vipp", $farmname );
@@ -165,7 +166,6 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 							}
 							else
 							{
-								$farmname_old = $farmname; 
 								$farmname = $json_obj->{ newfarmname };
 								#~ $newfstat = &runFarmStart( $farmname, "true" );
 								if ( $newfstat != 0 )
@@ -315,27 +315,13 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		&zenlog(
 				  "ZAPI success, some parameters have been changed in farm $farmname." );
 
-		if ( eval { require Zevenet::IPDS; } )
+		if ( $reload_ipds )
 		{
-			# update the ipds rule applied to the farm
-			if ( !$farmname_old )
+			if ( eval { require Zevenet::IPDS::Base; } )
 			{
-				&setBLReloadFarmRules ( $farmname );
-				&setDOSReloadFarmRules ( $farmname );
-			}
-			# create new rules with the new farmname
-			else
-			{
-				foreach my $list ( @{ $ipds->{ 'blacklists' } } )
-				{
-					&setBLRemFromFarm( $farmname_old, $list );
-					&setBLApplyToFarm( $farmname, $list );
-				}
-				foreach my $rule ( @{ $ipds->{ 'dos' } } )
-				{
-					&setDOSDeleteRule( $rule, $farmname_old );
-					&setDOSCreateRule( $rule, $farmname );
-				}
+				&runIPDSStartByFarm( $farmname );
+				require Zevenet::Cluster;
+				&runZClusterRemoteManager( 'ipds', 'start', $farmname );
 			}
 		}
 

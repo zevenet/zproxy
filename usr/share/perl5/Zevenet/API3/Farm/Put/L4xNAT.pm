@@ -36,17 +36,6 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	my $status;
 	my $initialStatus = &getFarmStatus( $farmname );
 	
-	# flag to reset IPDS rules when the farm changes the name.
-	my $farmname_old;
-	my $ipds;
-
-	if ( eval { require Zevenet::IPDS; } )
-	{
-		require Zevenet::IPDS::Blacklist;
-		require Zevenet::IPDS::DoS;
-
-		$ipds = &getIPDSfarmsRules( $farmname );
-	}
 
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
@@ -66,6 +55,18 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	my $vip   = &getFarmVip( "vip",  $farmname );
 	my $vport = &getFarmVip( "vipp", $farmname );
 
+	my $reload_ipds = 0;
+	if (exists $json_obj->{vport} || exists $json_obj->{vip} || exists $json_obj->{newfarmname})
+	{
+		if ( eval { require Zevenet::IPDS; } )		
+		{
+			$reload_ipds = 1;
+			&runIPDSStopByFarm( $farmname );
+			require Zevenet::Cluster;
+			&runZClusterRemoteManager( 'ipds', 'stop', $farmname );
+		}
+	}
+	
 	####### Functions
 
 	# Modify Farm's Name
@@ -127,7 +128,6 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 							else
 							{
 								$restart_flag = "true";
-								$farmname_old = $farmname;
 								$farmname     = $json_obj->{ newfarmname };
 							}
 						}
@@ -468,33 +468,19 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 				}
 			}
 
-			if ( eval { require Zevenet::IPDS; } )
-			{
-				# update the ipds rule applied to the farm
-				if ( !$farmname_old )
-				{
-					&setBLReloadFarmRules ( $farmname );
-					&setDOSReloadFarmRules ( $farmname );
-				}
-				# create new rules with the new farmname
-				else
-				{
-					foreach my $list ( @{ $ipds->{ 'blacklists' } } )
-					{
-						&setBLRemFromFarm( $farmname_old, $list );
-						&setBLApplyToFarm( $farmname, $list );
-					}
-					foreach my $rule ( @{ $ipds->{ 'dos' } } )
-					{
-						&setDOSDeleteRule( $rule, $farmname_old );
-						&setDOSCreateRule( $rule, $farmname );
-					}
-				}
-			}
-
 			if ( eval { require Zevenet::Cluster; } )
 			{
 				&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+			}
+			
+			if ( $reload_ipds )
+			{
+				if ( eval { require Zevenet::IPDS::Base; } )
+				{
+					&runIPDSStartByFarm( $farmname );
+					require Zevenet::Cluster;
+					&runZClusterRemoteManager( 'ipds', 'start', $farmname );
+				}
 			}
 		}
 

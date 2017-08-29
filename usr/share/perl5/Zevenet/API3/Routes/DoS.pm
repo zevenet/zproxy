@@ -54,8 +54,12 @@ if ( $q->path_info =~ qr{/ipds/dos} )
 	#  POST DoS to a farm
 	POST qr{^/farms/($farm_re)/ipds/dos$} => \&add_dos_to_farm;
 
-	#  DELETE DoS from a farm
+	#  DELETE DoS from farm
 	DELETE qr{^/farms/($farm_re)/ipds/dos/($dos_rule)$} => \&del_dos_from_farm;
+	
+	#  action for a DoS rule
+	POST qr{^/ipds/dos/($dos_rule)/actions$} => \&actions_dos;
+	
 }
 
 1;
