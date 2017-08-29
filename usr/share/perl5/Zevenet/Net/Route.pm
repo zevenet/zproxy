@@ -115,7 +115,15 @@ sub addlocalnet    # ($if_ref)
 		next if $link eq 'cl_maintenance';
 
 		my $table = 'main';
-		$table = "table_$link" if $link ne 'main';
+
+		if ( $link ne 'main' )
+		{
+			$table = "table_$link";
+			my $if_ref = getInterfaceConfig( $link );
+
+			# ignores interfaces down or not configured
+			next if $if_ref->{ status } ne 'up';
+		}
 
 		&zenlog("addlocalnet: setting route in table $table") if &debug();
 
