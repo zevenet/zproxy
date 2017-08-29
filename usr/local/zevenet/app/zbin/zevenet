@@ -26,6 +26,7 @@ use warnings;
 
 # standard required modules
 use Zevenet;
+use Zevenet::Log;
 
 # activation certificate modules
 use Date::Parse;
@@ -206,6 +207,8 @@ if ( $action eq "start" )
 	system ( '/sbin/modprobe ip_conntrack >/dev/null 2>&1' );
 	system ( '/sbin/modprobe xt_recent >/dev/null 2>&1'   );
 
+	&zenlog("zevenet: Modules loaded");
+
 	# import system interface to zen if configured
 	#testing interface configured on the installation and gw
 	if ( -e '/etc/network/interfaces' )
@@ -303,12 +306,15 @@ if ( $action eq "start" )
 
 	# enterprise hook
 	if ( eval { require Zevenet::Service; } ) { start_service(); }
+	else { zenlog( $@ ); }
 
 	print ( "* Starting Interfaces:\n" );
 
 	my $mgmt_ip    = &getHttpServerIp();
 	my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
 	my @interfaces = @{ &getConfigInterfaceList() };
+
+	&zenlog("zevenet: Setting up NIC and Bonding interfaces...");
 
 	# first real interfaces
 	foreach my $iface ( @interfaces )
@@ -359,6 +365,8 @@ if ( $action eq "start" )
 		}
 	}
 
+	&zenlog("zevenet: Setting up VLAN interfaces...");
+
 	# vlans interfaces (ie. eth0.20)
 	foreach my $iface ( @interfaces )
 	{
@@ -404,8 +412,13 @@ if ( $action eq "start" )
 		}
 	}
 
+	&zenlog("zevenet: Setting up Cluster...");
+
 	# enable cluster hook
 	if ( eval { require Zevenet::Service; } ) { enable_cluster(); }
+	else { zenlog( $@ ); }
+
+	&zenlog("zevenet: Setting up virtual interfaces...");
 
 	# virtual interfaces (ie. eth0:20, eth0.20:2)
 	foreach my $iface ( @interfaces )
@@ -453,6 +466,9 @@ if ( $action eq "start" )
 	my $enable_fg = 1;
 
 	if ( eval { require Zevenet::Service; } ) { $enable_fg = getEnableFarmGuardian(); }
+	else { zenlog( $@ ); }
+
+	&zenlog("zevenet: Setting up farms...");
 
 	foreach my $ffile ( @farmsf )
 	{
@@ -507,6 +523,7 @@ if ( $action eq "start" )
 	&printAndLog("End of $configdir/zlb-start");
 
 	if ( eval { require Zevenet::Service; } ) { start_cluster(); }
+	else { zenlog( $@ ); }
 
 	# make sure related system services are runnig
 	if ( system( "/etc/init.d/ssh status >/dev/null 2>&1" ) ) {
@@ -523,6 +540,7 @@ if ( $action eq "stop" )
 	&printAndLog( "Stopping Zevenet Load Balancer...\n" );
 
 	if ( eval { require Zevenet::Service; } ) { stop_service(); }
+	else { zenlog( $@ ); }
 
 	print ( "* Stopping Farms:\n" );
 
@@ -589,6 +607,7 @@ if ( $action eq "stop" )
 	}
 
 	if ( eval { require Zevenet::Service; } ) { disable_cluster(); }
+	else { zenlog( $@ ); }
 
 	# At this point every zevenet interface and farm is stopped
 	# now a personalized script can be executed

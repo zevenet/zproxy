@@ -22,6 +22,8 @@
 ###############################################################################
 
 use strict;
+use warnings;
+use Zevenet::Log;
 
 # error codes:
 #
@@ -153,15 +155,21 @@ sub setSystemOptimizations
 	#### End of node tuning ####
 }
 
-sub service_start
+sub start_service
 {
+	&zenlog("Zevenet Service: Starting...");
+
 	if ( $swcert > 0 )
 	{
 		&printAndLog( "No valid ZLB certificate was found, no farm started\n" );
 		exec ('/usr/local/zevenet/app/zbin/zevenet stop');
 	}
 
-	setSystemOptimizations();
+	&zenlog("Zevenet Service: Loading Optimizations...");
+
+	&setSystemOptimizations();
+
+	&zenlog("Zevenet Service: Loading Bonding configuration...");
 
 	# bonding
 	if ( eval { require Zevenet::Net::Bonding; } )
@@ -198,11 +206,15 @@ sub service_start
 		}
 	}
 
+	&zenlog("Zevenet Service: Loading Notification configuration...");
+
 	# notifications
 	if ( eval { require Zevenet::Notify; } )
 	{
 		&zlbstartNotifications();
 	}
+
+	&zenlog("Zevenet Service: Starting IPDS system...");
 
 	# ipds
 	if ( eval { require Zevenet::IPDS::Base; } )
@@ -268,6 +280,8 @@ sub enable_cluster
 	# disable ip announcement if the node is not master
 	if ( $local_node_status ne 'master' )
 	{
+		my @configured_interfaces = @{ &getConfigInterfaceList() };
+
 		foreach my $iface ( @configured_interfaces )
 		{
 			next if ( $$iface{ vini } eq '' );
@@ -306,7 +320,7 @@ sub start_cluster
 	}
 }
 
-sub service_stop
+sub stop_service
 {
 	require Zevenet::Notify;
 	require Zevenet::IPDS::Base;
