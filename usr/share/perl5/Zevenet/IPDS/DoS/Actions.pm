@@ -50,6 +50,8 @@ actions_module:
 
 sub runDOSStartModule
 {
+	require Zevenet::IPDS::DoS::DoS;
+
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $output;
 

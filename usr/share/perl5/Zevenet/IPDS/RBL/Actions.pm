@@ -53,6 +53,8 @@ Returns:
 # when start a module load the blocked sources from logs
 sub runRBLStartModule
 {
+	require Zevenet::IPDS::RBL::RBL;
+
 	# create config directory if it doesn't exist and config file
 	my $error = &setRBLCreateDirectory();
 
