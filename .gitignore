@@ -44,7 +44,10 @@
 /usr/local/zevenet/www/index.html
 /usr/local/zevenet/www/ipds/blacklists/local/
 /usr/local/zevenet/www/main.bundle.js
+/usr/local/zevenet/www/main.bundle.js.gz
+/usr/local/zevenet/www/main.map*
 /usr/local/zevenet/www/polyfills.*.bundle.js
+/usr/local/zevenet/www/polyfills.*
 /usr/local/zevenet/www/zlbcertfile.pem
 
 !/usr/share
@@ -57,3 +60,4 @@
 
 # other
 .rnd
+.htpasswd
