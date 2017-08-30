@@ -144,13 +144,12 @@ sub getIptListV4
 	my $iptables_command = &getGlobalConfiguration( 'iptables' )
 	  . " $table -L $chain -n -v --line-numbers";
 
-	&zenlog( $iptables_command );
-
 	## lock iptables use ##
 	open my $ipt_lockfile, '>', $iptlock;
 	&setIptLock( $ipt_lockfile );
 
 	my @ipt_output = `$iptables_command`;
+	&zenlog( "failed: $iptables_command" ) if $?;
 
 	## unlock iptables use ##
 	&setIptUnlock( $ipt_lockfile );
