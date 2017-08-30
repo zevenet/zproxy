@@ -158,7 +158,10 @@ Returns:
 sub runIPDSStopModule
 {
 	require Zevenet::Cluster;
-	
+	require Zevenet::IPDS::Blacklist::Actions;
+	require Zevenet::IPDS::RBL::Actions;
+	require Zevenet::IPDS::DoS::Actions;
+
 	&runRBLStopModule();
 	&runBLStopModule();
 	&runDOStopModule();
