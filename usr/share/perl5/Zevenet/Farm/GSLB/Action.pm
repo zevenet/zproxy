@@ -93,7 +93,7 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 		$output = -1;
 	}
 
-	return $status;
+	return $output;
 }
 
 =begin nd
@@ -116,6 +116,8 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $fname, $writeconf ) = @_;
 
+	require Zevenet::Farm::GSLB::Validate;
+
 	my $status = &getFarmStatus( $fname );
 	if ( $status eq "down" )
 	{
@@ -129,54 +131,55 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 	}
 
 	my $type = &getFarmType( $fname );
-	$status = $type;
 
 	&zenlog( "running 'Stop write $writeconf' for $fname farm $type" );
 
-	require Zevenet::Farm::GSLB::Validate;
 	my $checkfarm = &getGSLBFarmConfigIsOK( $fname );
 
-	if ( $checkfarm == 0 )
-	{
-		if ( $writeconf eq "true" )
-		{
-			require Tie::File;
-			tie my @filelines, 'Tie::File', "$configdir\/$filename\/etc\/config";
-			my $first = 1;
-			foreach ( @filelines )
-			{
-				if ( $first eq 1 )
-				{
-					s/\;up/\;down/g;
-					$status = $?;
-					$first  = 0;
-				}
-			}
-			untie @filelines;
-		}
-		my $exec    = &getGSLBStopCommand( $fname );
-		my $pidfile = &getGSLBFarmPidFile( $fname );
-
-		require Zevenet::System;
-		zsystem( "$exec > /dev/null 2>&1" );
-
-		#$exec returns 0 even when gslb stop fails, checked, so force TERM
-		my $pid_gslb = &getGSLBFarmPid( $fname );
-		&zenlog( "forcing stop to gslb with PID $pid_gslb" );
-		if ( $pid_gslb ne "-" )
-		{
-			kill 'TERM' => $pid_gslb;
-		}
-		unlink ( $pidfile );
-	}
-	else
+	if ( $checkfarm )
 	{
 		&zenlog(
 			  "Farm $fname can't be stopped, check the logs and modify the configuration" );
 		return 1;
 	}
 
-	return $status;
+	if ( $writeconf eq "true" )
+	{
+		require Tie::File;
+		tie my @filelines, 'Tie::File', "$configdir\/$filename\/etc\/config";
+		my $first = 1;
+
+		foreach ( @filelines )
+		{
+			if ( $first eq 1 )
+			{
+				s/\;up/\;down/g;
+				$status = $?;
+				$first  = 0;
+			}
+		}
+
+		untie @filelines;
+	}
+
+	my $exec    = &getGSLBStopCommand( $fname );
+	my $pidfile = &getGSLBFarmPidFile( $fname );
+
+	require Zevenet::System;
+	zsystem( "$exec > /dev/null 2>&1" );
+
+	# $exec returns 0 even when gslb stop fails, checked, so force TERM
+	my $pid_gslb = &getGSLBFarmPid( $fname );
+	&zenlog( "forcing stop to gslb with PID $pid_gslb" );
+
+	if ( $pid_gslb ne "-" )
+	{
+		kill 'TERM' => $pid_gslb;
+	}
+	unlink ( $pidfile );
+
+	# since gdnsd is always stopped or killed, we return 0 always
+	return 0;
 }
 
 =begin nd
