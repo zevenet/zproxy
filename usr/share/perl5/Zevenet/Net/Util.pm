@@ -165,20 +165,17 @@ sub sendGPing    # ($pif)
 {
 	my ( $pif ) = @_;
 
-	my $if_conf = &getInterfaceConfig ( $pif );
-	my $gw = $if_conf->{ gateway };
-	if ( $gw ne "" )
+	my $if_conf = &getInterfaceConfig( $pif );
+	my $gw      = $if_conf->{ gateway };
+
+	if ( $gw )
 	{
-		my $ping_bin = &getGlobalConfiguration('ping_bin');
-		my $pingc = &getGlobalConfiguration('pingc');
+		my $ping_bin = &getGlobalConfiguration( 'ping_bin' );
+		my $pingc    = &getGlobalConfiguration( 'pingc' );
 		my $ping_cmd = "$ping_bin -c $pingc $gw";
 
-		&zenlog( "$ping_cmd" );
+		&zenlog( "Sending $pingc ping(s) to gateway $gw" );
 		system( "$ping_cmd >/dev/null 2>&1 &" );
-	}
-	else
-	{
-		&zenlog( "Gateway not found for $pif interface." );
 	}
 }
 
