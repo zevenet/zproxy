@@ -264,8 +264,8 @@ sub stopIf    # ($if_ref)
 			my ( $net, $mask ) = ipv4_network( "$ip / $$if_ref{mask}" );
 			my $cmd = "$ip_bin addr del $ip/$mask brd + dev $ifphysic[0] label $if";
 
-			&zenlog( "running '$cmd' " );
 			system ( "$cmd >/dev/null 2>&1" );
+			&zenlog( "failed: $cmd" ) if $?;
 		}
 	}
 
