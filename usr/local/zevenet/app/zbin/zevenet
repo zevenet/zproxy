@@ -268,7 +268,7 @@ if ( $action eq "start" )
 		if ( !grep ( /zenmodified/, @file ) )
 		{
 			my %interface;
-			my @blocks = getInterfaceBlocks(@file);
+			my @blocks = &getInterfaceBlocks(@file);
 
 			for my $block ( @blocks )
 			{
@@ -323,13 +323,13 @@ if ( $action eq "start" )
 				# Write iface file
 				if ( $interface{ name } ) 
 				{
-					zenlog ( "Writing iface: $interface{ name }" );
+					&zenlog( "Writing iface: $interface{ name }" );
 					&setInterfaceConfig( \%interface ) ;
 
 					#configure gateway
 					if ( $interface{ gateway } )
 					{
-						zenlog ( "Writing gateway: $interface{ gateway }" );
+						&zenlog( "Writing gateway: $interface{ gateway }" );
 						setGlobalConfiguration( 'defaultgw', $gateway );
 						setGlobalConfiguration( 'defaultgwif', $ifname );
 					}
@@ -353,7 +353,7 @@ if ( $action eq "start" )
 
 	# enterprise hook
 	if ( eval { require Zevenet::Service; } ) { start_service(); }
-	else { zenlog( $@ ); }
+	else { &zenlog( $@ ); }
 
 	print ( "* Starting Interfaces:\n" );
 
