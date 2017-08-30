@@ -437,7 +437,7 @@ sub getFarmProto    # ($farm_name)
 		}
 		close FI;
 	}
-	elsif ( $farm_type eq "http" )
+	elsif ( $farm_type =~ /http/i )
 	{
 		$output = "TCP";
 	}

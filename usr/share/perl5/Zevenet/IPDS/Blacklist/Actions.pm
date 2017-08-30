@@ -272,6 +272,12 @@ sub runBLStart
 	my ( $list, $farm ) = @_;
 	my $error;
 	
+	# the rule is already running
+	if( grep( / BL_$farm /, @{&getBLRunningRules()}))
+	{
+		return $error;
+	}
+	
 	if ( &getFarmBootStatus( $farm ) eq 'up' )
 	{
 		if ( &getBLStatus( $list ) eq "down" )
@@ -310,15 +316,17 @@ sub runBLStop
 	my @rules           = @{ &getBLRunningRules() };
 	my $size    = scalar @rules - 1;
 	my @allLists;
+	my $blacklist_chain = &getIPDSChain("blacklist");
 	
 	for ( ; $size >= 0 ; $size-- )
 	{
 		if ( $rules[$size] =~ /^(\d+) .+match-set ($rule) src .+BL_$farm/ )
 		{
+			my $rule_num = $1;
 			# Delete
 			#	iptables -D PREROUTING -t raw 3
 			my $cmd =
-			  &getGlobalConfiguration( 'iptables' ) . " --table raw -D PREROUTING $size";
+			  &getGlobalConfiguration( 'iptables' ) . " --table raw -D $blacklist_chain $rule_num";
 			&iptSystem( $cmd );
 		}
 

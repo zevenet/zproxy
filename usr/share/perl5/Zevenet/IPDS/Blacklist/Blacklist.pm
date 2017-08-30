@@ -229,7 +229,7 @@ sub setBLCreateRule
 
 		# multiport		
 		my @ports = split ( ',', $vport_str );
-			
+
 		foreach my $vport ( @ports )
 		{
 			my $farmOpt;
@@ -239,7 +239,7 @@ sub setBLCreateRule
 				$farmOpt  = "$vip -p $protocol --dport $vport";
 			}
 	
-			if ( $protocol =~ /TCP/i || $protocol =~ /FTP/i )
+			if ( $protocol =~ /HTTP/i || $protocol =~ /TCP/i || $protocol =~ /FTP/i )
 			{
 				$protocol = 'tcp';
 				$farmOpt  = "$vip -p $protocol --dport $vport";
@@ -1422,7 +1422,7 @@ sub getBLRunningRules
 	my @farms = &getFarmNameList;
 	my $blacklist_chain = &getIPDSChain("blacklist");
 	
-	my @rules = &getIptList( 'raw', $blacklist_chain );
+	my @rules = &getIptListV4( 'raw', $blacklist_chain );
 	my @blRules = grep ( /BL_/, @rules ); 
 
 	return \@blRules;
