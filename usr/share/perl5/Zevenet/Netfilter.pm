@@ -85,11 +85,8 @@ sub getIptList                              # ($table,$chain)
 	}
 
 	# Get the binary of iptables (iptables or ip6tables)
-	my $iptables_bin = &getBinVersion( $farm_name );
-
+	my $iptables_bin     = &getBinVersion( $farm_name );
 	my $iptables_command = "$iptables_bin $table -L $chain -n -v --line-numbers";
-
-	&zenlog( $iptables_command );
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration('iptlock');
@@ -97,6 +94,7 @@ sub getIptList                              # ($table,$chain)
 	&setIptLock( $ipt_lockfile );
 
 	my @ipt_output = `$iptables_command`;
+	&zenlog( "failed: $iptables_command" ) if $?;
 
 	## unlock iptables use ##
 	&setIptUnlock( $ipt_lockfile );
@@ -985,8 +983,6 @@ sub iptSystem
 	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
 	$program .= ' ';
 
-	&zenlog( $program . "Running: $command" );    # log
-
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration('iptlock');
 	my $open_rc = open ( my $ipt_lockfile, '>', $iptlock );
@@ -1013,12 +1009,12 @@ sub iptSystem
 	{
 		if ( grep { /--check/ } $command )
 		{
-			&zenlog( $program . "Previous iptables line not found" )
+			&zenlog( $program . "Not found line: $command" )
 			  if &debug == 2;    # show in logs if failed
 		}
 		else
 		{
-			&zenlog( $program . "Previous command failed!" );    # show in logs if failed
+			&zenlog( $program . "failed: $command" );    # show in logs if failed
 		}
 	}
 
