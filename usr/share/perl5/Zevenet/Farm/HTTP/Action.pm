@@ -43,33 +43,28 @@ sub _runHTTPFarmStart    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $farm_filename = &getFarmFile( $farm_name );
+	require Zevenet::System;
+	require Zevenet::Farm::HTTP::Backend;
+
 	my $status        = -1;
-	my $pound = &getGlobalConfiguration('pound');
-	my $piddir = &getGlobalConfiguration('piddir');
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $pound         = &getGlobalConfiguration( 'pound' );
+	my $piddir        = &getGlobalConfiguration( 'piddir' );
 
 	&zenlog( "Checking $farm_name farm configuration" );
 	&getHTTPFarmConfigIsOK( $farm_name );
 
-	&zenlog(
-		"running $pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid"
-	);
-
-	require Zevenet::System;
-	$status = &zsystem(
-		"$pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid 2>/dev/null"
-	);
+	my $cmd = "$pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid";
+	$status = &zsystem( "$cmd 2>/dev/null" );
 
 	if ( $status == 0 )
 	{
-		require Zevenet::Farm::HTTP::Backend;
-
 		# set backend at status before that the farm stopped
 		&setHTTPFarmBackendStatus( $farm_name );
 	}
 	else
 	{
-		&zenlog( "Error, running $farm_name farm." );
+		&zenlog( "failed: $cmd" );
 	}
 
 	return $status;
@@ -105,9 +100,10 @@ sub _runHTTPFarmStop    # ($farm_name)
 		}
 		else
 		{
-			&zenlog( "running 'kill 15, $pid'" );
-			my $run = kill 15, $pid;
-			$status = $?;
+			&zenlog( "Stopping HTTP farm $farm_name with PID $pid" );
+
+			# Returns the number of arguments that were successfully used to signal.
+			kill 15, $pid;
 		}
 
 		unlink ( "$piddir\/$farm_name\_pound.pid" ) if -e "$piddir\/$farm_name\_pound.pid";
@@ -122,7 +118,7 @@ sub _runHTTPFarmStop    # ($farm_name)
 		return 1;
 	}
 
-	return $status;
+	return 0;
 }
 
 =begin nd
