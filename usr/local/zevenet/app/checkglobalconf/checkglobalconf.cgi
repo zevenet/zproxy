@@ -58,7 +58,7 @@ while ( my $linetpl = <$file_template> )
 		{
 			if ( $line =~ /^\$$vble[0] ?\=/ )
 			{
-				@vblegconf = split ( "\=", $line );
+				my @vblegconf = split ( "\=", $line );
 				$vblegconf[1] =~ s/^\s?//g;
 				$vble[1] =~ s/^\s?//g;
 				if ( $vblegconf[1] !~ /""/ && $vblegconf[1] !~ $vble[1] && $vble[1] !~ /\#update/ )
