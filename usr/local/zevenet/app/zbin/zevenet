@@ -273,8 +273,7 @@ if ( $action eq "start" )
 			for my $block ( @blocks )
 			{
 				my ( $ifname, $ip, $netmask, $gateway );
-				
-	
+
 				foreach my $line ( @{ $block } )
 				{
 					chomp ( $line );
@@ -283,12 +282,12 @@ if ( $action eq "start" )
 					{
 						( undef, $ifname ) = split ( " ", $line );
 					}
-					if ( $line =~ /\Waddress/i )
+					elsif ( $line =~ /\Waddress/i )
 					{
 						my ( undef, $ip_n_mask ) = split ( " ", $line );
 						my $mask;
 						( $ip, $mask ) = split ( "/", $ip_n_mask );
-						
+
 						if ( $mask ) # only when bitmask is declared
 						{
 							use Net::Netmask;
@@ -303,16 +302,16 @@ if ( $action eq "start" )
 							}
 						}
 					}
-					if ( $line =~ /netmask/i )
+					elsif ( $line =~ /netmask/i )
 					{
 						( undef, $netmask ) = split ( " ", $line );
 					}
-					if ( $line =~ /gateway/i )
+					elsif ( $line =~ /gateway/i )
 					{
 						( undef, $gateway ) = split ( " ", $line );
 					}
 				}
-				
+
 				my %interface = (
 								  name    => $ifname,
 								  addr    => $ip,
@@ -331,8 +330,8 @@ if ( $action eq "start" )
 					if ( $interface{ gateway } )
 					{
 						zenlog ( "Writing gateway: $interface{ gateway }" );
-						setGlobalConfiguration( defaultgw, $gateway );
-						setGlobalConfiguration( defaultgwif, $ifname );
+						setGlobalConfiguration( 'defaultgw', $gateway );
+						setGlobalConfiguration( 'defaultgwif', $ifname );
 					}
 				}
 			}
@@ -347,7 +346,7 @@ if ( $action eq "start" )
 			# Routes
 			# FIXME: there is a function for this, it should be used.
 			open FW, ">>/etc/iproute2/rt_tables";
-			print FW "200\ttable_$ifname\n";
+			print FW "200\ttable_$interface{ name }\n";
 			close FW;
 		}
 	}
