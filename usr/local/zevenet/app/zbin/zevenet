@@ -420,7 +420,11 @@ if ( $action eq "start" )
 	{
 		if ( $$iface{ vlan } && ! $$iface{ vini } )
 		{
-			&createIf( $iface );
+			unless ( scalar grep { $$iface{ name } eq $_ } &getLinkNameList() )
+			{
+				&createIf( $iface );
+			}
+
 			my $return_code = &addIp( $iface );
 
 			if ( $$iface{ status } eq "up" )
