@@ -141,23 +141,25 @@ sub logAndRun    # ($command)
 	$program .= ' ';
 
 	# &zenlog( (caller (2))[3] . ' >>> ' . (caller (1))[3]);
-	&zenlog( $program . "running: $command" );    # log
 
 	if ( &debug )
 	{
-		@cmd_output = `$command 2>&1`;            # run
+		&zenlog( $program . "running: $command" );
+
+		@cmd_output = `$command 2>&1`;
+		$return_code = $?;
+
+		if ( $return_code )
+		{
+			&zenlog( "@cmd_output" );
+			&zenlog( "last command failed!" );
+		}
 	}
 	else
 	{
-		system ( "$command >/dev/null 2>&1" );    # run
-	}
-
-	$return_code = $?;
-
-	if ( $return_code )
-	{
-		&zenlog( "last command failed!" );        # show in logs if failed
-		&zenlog( "@cmd_output" ) if &debug;
+		system ( "$command >/dev/null 2>&1" );
+		$return_code = $?;
+		&zenlog( $program . "failed: $command" ) if $return_code;
 	}
 
 	# returning error code from execution
