@@ -42,17 +42,20 @@ sub getGSLBFarmConfigIsOK    # ($farm_name)
 	my ( $fname ) = @_;
 
 	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
 	my $gdnsd  = &getGlobalConfiguration( 'gdnsd' );
-
 	my $gdnsd_command = "$gdnsd -c $configdir\/$ffile/etc checkconf";
 
-	&zenlog( "running: $gdnsd_command" );
 	my $run = `$gdnsd_command 2>&1`;
-	$output = $?;
-	&zenlog( "output: $run " );
+	my $return_code = $?;
 
-	return $output;
+	if ( $return_code or &debug() )
+	{
+		my $message = $return_code ? 'failure' : 'running';
+		&zenlog( "$message: $gdnsd_command" );
+		&zenlog( "output: $run " );
+	}
+
+	return $return_code;
 }
 
 =begin nd
