@@ -1376,8 +1376,10 @@ See Also:
 
 sub setZClusterIptablesException
 {
-	require "/usr/local/zenloadbalancer/www/conntrackd_functions.cgi";
 	my $option = shift;
+
+	require Zevenet::Conntrackd;
+
 	my $error;
 	my $action;
 	
@@ -1394,27 +1396,26 @@ sub setZClusterIptablesException
 		return -1;
 	 }
 	
-	my $config = &getZClusterConfig(); 
+	my $config    = &getZClusterConfig();
 	my $remote_hn = &getZClusterRemoteHost();
-	my $ipremote = $config->{ $remote_hn }->{ ip };
+	my $ipremote  = $config->{ $remote_hn }->{ ip };
+	my $iptables  = &getGlobalConfiguration( 'iptables' );
+	my $ipt_args  = '-j ACCEPT -m comment --comment "cluster_exception"';
 
 	# avoid blacklist rules, rbl rules and bogustcpflag dos rule
-	my $cmd = &getGlobalConfiguration( 'iptables' )
-		. " $action PREROUTING -t raw -s $ipremote -j ACCEPT -m comment --comment \"cluster_exception\"";
+	my $cmd = "$iptables $action PREROUTING -t raw -s $ipremote $ipt_args";
 	$error = &iptSystem( $cmd );
 	
 	return -1 if $error;
 
 	# avoid the dos rules: limmit rst, limit sec and  ssh burte force
-	$cmd = &getGlobalConfiguration( 'iptables' )
-		. " $action PREROUTING -t mangle -s $ipremote -j ACCEPT -m comment --comment \"cluster_exception\"";
+	$cmd = "$iptables $action PREROUTING -t mangle -s $ipremote $ipt_args";
 	$error = &iptSystem( $cmd );
 	
 	return -1 if $error;
 
 	# avoid the dos rules: limit conns
-	$cmd = &getGlobalConfiguration( 'iptables' )
-		. " $action INPUT -t filter -s $ipremote -j ACCEPT -m comment --comment \"cluster_exception\"";
+	$cmd = "$iptables $action INPUT -t filter -s $ipremote $ipt_args";
 	$error = &iptSystem( $cmd );
 	
 	$error = -1 if $error;
