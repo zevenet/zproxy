@@ -195,11 +195,8 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 
 	## Set ip rule mark ##
 	my $ip_bin = &getGlobalConfiguration('ip_bin');
-	&zenlog( "farm vip: $farm->{ vip }" );
 	my $vip_if_name = &getInterfaceOfIp( $farm->{ vip } );
-	&zenlog( "vip_if_name: $vip_if_name" );
 	my $vip_if = &getInterfaceConfig( $vip_if_name );
-	&zenlog( "name: $vip_if->{ name } - type: $vip_if->{ type } - parent: $vip_if->{ parent }" );
 	my $table_if = ( $vip_if->{ type } eq 'virtual' )? $vip_if->{ parent }: $vip_if->{ name };
 
 	foreach my $server ( @{ $$farm{ servers } } )
@@ -211,13 +208,6 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		## Set ip rule mark ##
 		my $ip_cmd = "$ip_bin rule add fwmark $server->{ tag } table table_$table_if";
 		&logAndRun( $ip_cmd );
-
-		# go to next cycle if server must not be up or not a least connection algorithm
-		#~ if ( !    $$server{ status } =~ /up|maintenance/
-		#~ || $$farm{ lbalg } eq 'leastconn' )
-		#~ {
-		#~ next;
-		#~ }
 
 		# TMP: leastconn dynamic backend status check
 		if ( $$farm{ lbalg } =~ /weight|leastconn/ )
@@ -329,25 +319,26 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	# Disable active l4xnat file
 	my $piddir = &getGlobalConfiguration('piddir');
 	unlink ( "$piddir\/$farm_name\_l4xnat.pid" );
+
 	if ( -e "$piddir\/$farm_name\_l4xnat.pid" )
 	{
 		$status = -1;
 	}
 
 	## Delete ip rule mark ##
-	my $farm = &getL4FarmStruct( $farm_name );
-	my $ip_bin = &getGlobalConfiguration('ip_bin');
+	my $farm        = &getL4FarmStruct( $farm_name );
+	my $ip_bin      = &getGlobalConfiguration( 'ip_bin' );
 	my $vip_if_name = &getInterfaceOfIp( $farm->{ vip } );
-	my $vip_if = &getInterfaceConfig( $vip_if_name );
-	my $table_if = ( $vip_if->{ type } eq 'virtual' )? $vip_if->{ parent }: $vip_if->{ name };
+	my $vip_if      = &getInterfaceConfig( $vip_if_name );
+	my $table_if    = ( $vip_if->{ type } eq 'virtual' ) ? $vip_if->{ parent } : $vip_if->{ name };
 
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
 		my $ip_cmd = "$ip_bin rule del fwmark $server->{ tag } table table_$table_if";
 		&logAndRun( $ip_cmd );
 	}
-	## Delete ip rule mark END ##
 
+	## Delete ip rule mark END ##
 	&setIptConnmarkRestore( $farm_name );
 	&setIptConnmarkSave( $farm_name );
 
