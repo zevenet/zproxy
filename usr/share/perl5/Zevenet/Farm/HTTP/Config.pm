@@ -1357,21 +1357,21 @@ sub getHTTPFarmConfigIsOK    # ($farm_name)
 {
 	my $farm_name = shift;
 
-	my $pound = &getGlobalConfiguration( 'pound' );
+	my $pound         = &getGlobalConfiguration( 'pound' );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $pound_command = "$pound -f $configdir\/$farm_filename -c";
-	my $output        = -1;
-
-	#&validateHTTPFarmDH( $farm_name );
-
-	&zenlog( "running: $pound_command" );
 
 	my $run = `$pound_command 2>&1`;
-	$output = $?;
+	my $rc  = $?;
 
-	&zenlog( "output: $run " );
+	if ( $rc or &debug() )
+	{
+		my $message = $rc ? 'failed' : 'running';
+		&zenlog( "$message: $pound_command" );
+		&zenlog( "output: $run " );
+	}
 
-	return $output;
+	return $rc;
 }
 
 =begin nd
