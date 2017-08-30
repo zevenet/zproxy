@@ -1417,7 +1417,11 @@ sub setZClusterIptablesException
 	# avoid the dos rules: limit conns
 	$cmd = "$iptables $action INPUT -t filter -s $ipremote $ipt_args";
 	$error = &iptSystem( $cmd );
-	
+	$error = -1 if $error;
+
+	# avoid the dos rules: limit conns (l4 profiles)
+	$cmd = "$iptables $action FORWARD -t filter -s $ipremote $ipt_args";
+	$error = &iptSystem( $cmd );
 	$error = -1 if $error;
 	
 	return $error;
