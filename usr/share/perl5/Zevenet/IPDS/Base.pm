@@ -50,24 +50,33 @@ Returns:
 
 sub addIPDSIptablesChain
 {
-	my $whitelist_chain = &getIPDSChain("whitelist");
-	my $blacklist_chain = &getIPDSChain("blacklist");
-	my $rbl_chain = &getIPDSChain("rbl");
-	
+	my $iptables        = &getGlobalConfiguration( 'iptables' );
+	my $whitelist_chain = &getIPDSChain( "whitelist" );
+	my $blacklist_chain = &getIPDSChain( "blacklist" );
+	my $rbl_chain       = &getIPDSChain( "rbl" );
+	my @chains          = ( $whitelist_chain, $blacklist_chain, $rbl_chain );
+	my $error;
+
 	# create chains
-	my $error = &iptSystem( "iptables -N $whitelist_chain -t raw" );
-	$error = &iptSystem( "iptables -N $blacklist_chain -t raw" ) if (!$error);
-	$error = &iptSystem( "iptables -N $rbl_chain -t raw" ) if (!$error);
-	
+	for my $chain ( @chains )
+	{
+		# if the chain does not exists
+		unless ( &iptSystem( "$iptables -L $chain -t raw" ) == 0  )
+		{
+			$error = &iptSystem( "$iptables -N $chain -t raw" ); # create chain
+			last if $error;
+		}
+	}
+
 	# link this chains
-	$error = &iptSystem( "iptables -A PREROUTING -t raw -j $whitelist_chain" ) if (!$error);
-	$error = &iptSystem( "iptables -A $whitelist_chain -t raw -j $blacklist_chain" ) if (!$error);
-	$error = &iptSystem( "iptables -A $blacklist_chain -t raw -j $rbl_chain" ) if (!$error);
+	$error = &iptSystem( "$iptables -A PREROUTING -t raw -j $whitelist_chain" ) if (!$error);
+	$error = &iptSystem( "$iptables -A $whitelist_chain -t raw -j $blacklist_chain" ) if (!$error);
+	$error = &iptSystem( "$iptables -A $blacklist_chain -t raw -j $rbl_chain" ) if (!$error);
 	
 	# last sentence in each chain is return to above chain
-	$error = &iptSystem( "iptables -A $whitelist_chain -t raw -j RETURN" ) if (!$error);
-	$error = &iptSystem( "iptables -A $blacklist_chain -t raw -j RETURN" ) if (!$error);
-	$error = &iptSystem( "iptables -A $rbl_chain -t raw -j RETURN" ) if (!$error);
+	$error = &iptSystem( "$iptables -A $whitelist_chain -t raw -j RETURN" ) if (!$error);
+	$error = &iptSystem( "$iptables -A $blacklist_chain -t raw -j RETURN" ) if (!$error);
+	$error = &iptSystem( "$iptables -A $rbl_chain -t raw -j RETURN" ) if (!$error);
 	
 	if ($error)
 	{
@@ -102,8 +111,8 @@ sub delIPDSIptablesChain
 	# clean and remove all IPDS chains
 	for my $chain ( $rbl_chain, $blacklist_chain, $whitelist_chain )
 	{
-		# if the chain exists
-		if ( &iptSystem( "$iptables -L $chain -t raw" ) )
+		# if the chain does not exists
+		if ( &iptSystem( "$iptables -L $chain -t raw" ) == 0 )
 		{
 			$error = &iptSystem( "$iptables -F $chain -t raw" ); # flush it
 			$error = &iptSystem( "$iptables -X $chain -t raw" ) if (!$error); # remove it
