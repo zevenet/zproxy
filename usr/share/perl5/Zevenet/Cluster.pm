@@ -1378,6 +1378,9 @@ sub setZClusterIptablesException
 {
 	my $option = shift;
 
+	# return if the node is not in a cluster
+	return 0 unless &getZClusterStatus();
+
 	require Zevenet::Conntrackd;
 
 	my $error;
