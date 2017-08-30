@@ -41,13 +41,16 @@ sub zsystem
 {
 	my ( @exec ) = @_;
 
-	#~ system ( ". /etc/profile && @exec" ); 
-	my $out = `. /etc/profile && @exec`;
-	
+	my $out   = `. /etc/profile && @exec`;
 	my $error = $?;
-	&zenlog ("running: @exec");
-	&zenlog ("output: $out") if ( $error );
-	
+
+	if ( $error or &debug() )
+	{
+		my $message = $error ? 'failed' : 'running';
+		&zenlog( "$message: @exec" );
+		&zenlog( "output: $out" );
+	}
+
 	return $error;
 }
 
