@@ -63,7 +63,6 @@ sub runRBLStartModule
 	{
 		&runRBLStartByRule( $rule );
 	}
-
 }
 
 =begin nd
@@ -80,13 +79,13 @@ Returns:
 # this function has to remove the tmp directory /tmp/IPDS/<module> and stop all rules in /tmp/IPDS/<module> directory
 sub runRBLStopModule
 {
+	require Zevenet::IPDS::RBL::RBL;
 
 	# stop all rules
 	foreach my $rule ( &getRBLRuleList() )
 	{
 		&runRBLStopByRule( $rule );
 	}
-
 }
 
 =begin nd
