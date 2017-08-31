@@ -807,30 +807,6 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		&zenlog(
 				  "ZAPI success, some parameters have been changed in farm $farmname." );
 
-		if ( eval { require Zevenet::IPDS; } )
-		{
-			# update the ipds rule applied to the farm
-			if ( !$farmname_old )
-			{
-				&setBLReloadFarmRules ( $farmname );
-				&setDOSReloadFarmRules ( $farmname );
-			}
-			# create new rules with the new farmname
-			else
-			{
-				foreach my $list ( @{ $ipds->{ 'blacklists' } } )
-				{
-					&setBLRemFromFarm( $farmname_old, $list );
-					&setBLApplyToFarm( $farmname, $list );
-				}
-				foreach my $rule ( @{ $ipds->{ 'dos' } } )
-				{
-					&setDOSDeleteRule( $rule, $farmname_old );
-					&setDOSCreateRule( $rule, $farmname );
-				}
-			}
-		}
-
 		# set numeric values to numeric type
 		for my $key ( keys %{ $json_obj } )
 		{

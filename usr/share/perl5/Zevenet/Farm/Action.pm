@@ -121,21 +121,9 @@ sub runFarmStart    # ($farm_name,$writeconf)
 	}
 
 	# run ipds rules
-	if ( eval { require Zevenet::IPDS; } )
+	if ( eval { require Zevenet::IPDS::Base; } )
 	{
-		require Zevenet::IPDS::Blacklist;
-		require Zevenet::IPDS::DoS;
-
-		my $ipds = &getIPDSfarmsRules( $farm_name );
-
-		foreach my $list ( @{ $ipds->{ 'blacklists' } } )
-		{
-			&setBLCreateRule ( $farm_name, $list );
-		}
-		foreach my $rule ( @{ $ipds->{ 'dos' } } )
-		{
-			&setDOSRunRule( $rule, $farm_name );
-		}
+		&runIPDSStartByFarm( $farm_name );
 	}
 
 	return $status;
@@ -162,22 +150,9 @@ sub runFarmStop    # ($farm_name,$writeconf)
 	my ( $farm_name, $writeconf ) = @_;
 
 	# stop ipds rules
-	if ( eval { require Zevenet::IPDS; } )
+	if ( eval { require Zevenet::IPDS::Base; } )
 	{
-		require Zevenet::IPDS::Blacklist;
-		require Zevenet::IPDS::DoS;
-
-		my $ipds = &getIPDSfarmsRules( $farm_name );
-
-		foreach my $list ( @{ $ipds->{ 'blacklists' } } )
-		{
-			&setBLDeleteRule ( $farm_name, $list );
-		}
-
-		foreach my $rule ( @{ $ipds->{ 'dos' } } )
-		{
-			&setDOSStopRule( $rule, $farm_name );
-		}
+		&runIPDSStopByFarm( $farm_name );
 	}
 
 	&runFarmGuardianStop( $farm_name, "" );
@@ -281,7 +256,7 @@ sub runFarmDelete    # ($farm_name)
 	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
 	
 	#delete IPDS rules
-	if ( eval { require Zevenet::IPDS; } )
+	if ( eval { require Zevenet::IPDS::Core; } )
 	{
 		require Zevenet::IPDS::Blacklist;
 		require Zevenet::IPDS::DoS;
