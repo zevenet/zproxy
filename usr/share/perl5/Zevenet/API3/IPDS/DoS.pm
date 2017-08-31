@@ -480,7 +480,7 @@ sub actions_dos
 	
 	my $description = "Apply a action to a DoS rule";
 	
-	my $errormsg = &getBLExists( $rule );
+	my $errormsg = &getDOSExists( $rule );
 	if ( $errormsg == -1 )
 	{
 		$errormsg = "$rule doesn't exist.";
