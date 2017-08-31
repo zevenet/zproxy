@@ -433,10 +433,15 @@ sub setBLDeleteRule
 
 	require Zevenet::Netfilter;
 
+	my $chain = 'blacklist';
+	$chain = "whitelist" if ( &getBLParam( $listName, 'policy' ) eq "allow" );
+
+	$chain = &getIPDSChain( $chain );
+
 	my $output;
 
 	# Get line number
-	my @rules = &getIptList( $farmName, 'raw', 'PREROUTING' );
+	my @rules = &getIptListV4( 'raw', $chain );
 	@rules = grep ( /^(\d+) .+match-set $listName src .+BL_$farmName/, @rules );
 
 	my $lineNum = 0;
@@ -451,7 +456,7 @@ sub setBLDeleteRule
 			# Delete
 			#	iptables -D PREROUTING -t raw 3
 			$cmd =
-			  &getGlobalConfiguration( 'iptables' ) . " --table raw -D PREROUTING $lineNum";
+			  &getGlobalConfiguration( 'iptables' ) . " --table raw -D $chain $lineNum";
 			&iptSystem( $cmd );
 		}
 	}
@@ -461,14 +466,6 @@ sub setBLDeleteRule
 	{
 		&setBLDestroyList( $listName );
 	}
-
-	#~ # check if proccess was successful:
-	#~ @rules = &getIptList( $farmName, 'raw', 'PREROUTING' );
-	#~ if ( grep ( /^(\d+) .+match-set $listName src .+BL_$farmName/, @rules ) )
-	#~ {
-	#~ &zenlog( "Error, deleting '$farmName' from the list '$listName'." );
-	#~ $output = -1;
-	#~ }
 
 	return $output;
 }

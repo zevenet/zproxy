@@ -177,7 +177,7 @@ sub getBLParam
 		# don't exist that list
 		else
 		{
-			&zenlog( "List '$listName' doesn't exist." );
+			&zenlog( "List $listName doesn\'t exist." );
 			$output = -1;
 		}
 	}
@@ -233,10 +233,16 @@ sub getBLRunningRules
 	require Zevenet::IPDS::Core;
 
 	my @blRules;
-	my $blacklist_chain = &getIPDSChain( "blacklist" );
 
-	my @rules = &getIptListV4( 'raw', $blacklist_chain );
-	my @blRules = grep ( /BL_/, @rules );
+	# look for blacklist rules
+	my $blacklist_chain = &getIPDSChain( "blacklist" );
+	my @rules           = &getIptListV4( 'raw', $blacklist_chain );
+	my @blRules         = grep ( /BL_/, @rules );
+
+	# look for whitelist rules
+	$blacklist_chain = &getIPDSChain( "whitelist" );
+	@rules           = &getIptListV4( 'raw', $blacklist_chain );
+	@blRules         = grep ( /BL_/, @rules );
 
 	return \@blRules;
 }

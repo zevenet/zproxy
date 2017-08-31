@@ -50,7 +50,6 @@ sub runBLStartModule
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my $touch          = &getGlobalConfiguration( 'touch' );
-	my @rules          = @{ &getBLRunningRules() };
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 
 	if ( !-d $blacklistsPath )
@@ -109,39 +108,25 @@ Returns:
 
 sub runBLStopModule
 {
-	my @rules           = @{ &getBLRunningRules() };
-	my $blacklists_name = &getValidFormat( 'blacklists_name' );
-	my $farm_name       = &getValidFormat( 'farm_name' );
-	my $size            = scalar @rules - 1;
-	my @allLists;
+	my $error;
 
-	for ( ; $size >= 0 ; $size-- )
+	foreach my $typelist ( 'blacklist', 'whitelist' )
 	{
-		if (
-			 $rules[$size] =~ /^(\d+) .+match-set ($blacklists_name) src .+BL_$farm_name/ )
-		{
-			my $lineNum = $1;
-			my $list    = $2;
-
-			# Delete
-			#	iptables -D PREROUTING -t raw 3
-			my $cmd =
-			  &getGlobalConfiguration( 'iptables' ) . " --table raw -D PREROUTING $lineNum";
-			&iptSystem( $cmd );
-
-			# note the list to delete it late
-			push @allLists, $list;
-		}
-
+		my $chain = &getIPDSChain( $typelist );
+		my $cmd   = &getGlobalConfiguration( 'iptables' ) . " --table raw -F $chain";
+		&iptSystem( $cmd );
 	}
 
-	foreach my $listName ( @allLists )
+	# destroy lists
+	my $ipset = &getGlobalConfiguration( 'ipset' );
+	my @lists = `$ipset list -name`;
+	foreach my $rule ( @lists )
 	{
-		if ( &getBLStatus() eq 'up' )
-		{
-			&setBLDestroyList( $listName );
-		}
+		chomp ($rule);
+		&setBLDestroyList( $rule );
 	}
+
+	return $error;
 }
 
 =begin nd
@@ -160,8 +145,6 @@ sub runBLRestartModule
 	&runBLStopModule;
 	&runBLStartModule;
 }
-
-actions_by_rule:
 
 =begin nd
 Function: runBLStartByRule
@@ -210,6 +193,8 @@ sub runBLStopByRule
 {
 	my ( $ruleName ) = @_;
 	my $error = 0;
+
+	my $ipset = &getGlobalConfiguration( 'ipset' );
 
 	return if ( &getBLStatus() eq 'down' );
 
@@ -312,26 +297,7 @@ sub runBLStop
 {
 	my ( $rule, $farm ) = @_;
 
-	my @rules = @{ &getBLRunningRules() };
-	my $size  = scalar @rules - 1;
-	my @allLists;
-	my $blacklist_chain = &getIPDSChain( "blacklist" );
-
-	for ( ; $size >= 0 ; $size-- )
-	{
-		if ( $rules[$size] =~ /^(\d+) .+match-set ($rule) src .+BL_$farm/ )
-		{
-			my $rule_num = $1;
-
-			# Delete
-			#	iptables -D PREROUTING -t raw 3
-			my $cmd =
-			  &getGlobalConfiguration( 'iptables' )
-			  . " --table raw -D $blacklist_chain $rule_num";
-			&iptSystem( $cmd );
-		}
-
-	}
+	&setBLDeleteRule( $farm, $rule );
 
 	if ( !&getBLListNoUsed( $rule ) )
 	{

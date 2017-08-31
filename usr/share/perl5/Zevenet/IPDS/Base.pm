@@ -56,36 +56,22 @@ sub addIPDSIptablesChain
 	my @chains          = ( $whitelist_chain, $blacklist_chain, $rbl_chain );
 	my $error;
 
-	# create chains
-	for my $chain ( @chains )
-	{
-		# if the chain does not exists
-		unless ( &iptSystem( "$iptables -L $chain -t raw" ) == 0  )
-		{
-			$error = &iptSystem( "$iptables -N $chain -t raw" ); # create chain
-			last if $error;
-		}
-	}
+	$error |= &iptSystem( "iptables -N $whitelist_chain -t raw" );
+	$error |= &iptSystem( "iptables -N $blacklist_chain -t raw" );
+	$error |= &iptSystem( "iptables -N $rbl_chain -t raw" );
 
 	# link this chains
-	$error = &iptSystem( "$iptables -A PREROUTING -t raw -j $whitelist_chain" )
-	  if ( !$error );
-	$error =
-	  &iptSystem( "$iptables -A $whitelist_chain -t raw -j $blacklist_chain" )
-	  if ( !$error );
-	$error = &iptSystem( "$iptables -A $blacklist_chain -t raw -j $rbl_chain" )
-	  if ( !$error );
+	$error |= &iptSystem( "$iptables -A PREROUTING -t raw -j $whitelist_chain" );
+	$error |=
+	  &iptSystem( "$iptables -A $whitelist_chain -t raw -j $blacklist_chain" );
+	$error |= &iptSystem( "$iptables -A $blacklist_chain -t raw -j $rbl_chain" );
 
 	# last sentence in each chain is return to above chain
-	$error = &iptSystem( "$iptables -A $whitelist_chain -t raw -j RETURN" )
-	  if ( !$error );
-	$error = &iptSystem( "$iptables -A $blacklist_chain -t raw -j RETURN" )
-	  if ( !$error );
-	$error = &iptSystem( "$iptables -A $rbl_chain -t raw -j RETURN" )
-	  if ( !$error );
+	$error |= &iptSystem( "$iptables -A $whitelist_chain -t raw -j RETURN" );
+	$error |= &iptSystem( "$iptables -A $blacklist_chain -t raw -j RETURN" );
+	$error |= &iptSystem( "$iptables -A $rbl_chain -t raw -j RETURN" );
 
-
-	if ($error)
+	if ( $error )
 	{
 		&zenlog( "Error creating iptables chains" );
 	}
@@ -114,19 +100,20 @@ sub delIPDSIptablesChain
 	my $rbl_chain       = &getIPDSChain( "rbl" );
 	my $error;
 
-	# clean and remove all IPDS chains
-	for my $chain ( $rbl_chain, $blacklist_chain, $whitelist_chain )
-	{
-		# if the chain does not exists
-		if ( &iptSystem( "$iptables -L $chain -t raw" ) == 0 )
-		{
-			$error = &iptSystem( "$iptables -F $chain -t raw" ); # flush it
-			$error = &iptSystem( "$iptables -X $chain -t raw" ) if (!$error); # remove it
-			last if $error;
-		}
-	}
+	$error |= &iptSystem( "$iptables -F $whitelist_chain -t raw" );
+	$error |= &iptSystem( "$iptables -F $blacklist_chain -t raw" );
+	$error |= &iptSystem( "$iptables -F $rbl_chain -t raw" );
 
-	$error = &iptSystem( "$iptables -D PREROUTING -t raw -j $whitelist_chain" ) if (!$error);
+	$error |= &iptSystem( "$iptables -D PREROUTING -t raw -j $whitelist_chain" );
+
+	$error |= &iptSystem( "$iptables -X $blacklist_chain -t raw" );
+	$error |= &iptSystem( "$iptables -X $whitelist_chain -t raw" );
+	$error |= &iptSystem( "$iptables -X $rbl_chain -t raw" );
+
+	if ( $error )
+	{
+		&zenlog( "Error deleting iptables chains" );
+	}
 
 	return $error;
 }
