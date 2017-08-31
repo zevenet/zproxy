@@ -29,11 +29,10 @@ use Tie::File;
 #~ use Zevenet::Core;
 #~ use Zevenet::Debug;
 use Zevenet::IPDS::Core;
+
 #~ use Zevenet::IPDS::RBL;
 #~ use Zevenet::IPDS::Blacklist;
 #~ use Zevenet::IPDS::DoS;
-
-
 
 =begin nd
 Function: addIPDSIptablesChain
@@ -69,23 +68,30 @@ sub addIPDSIptablesChain
 	}
 
 	# link this chains
-	$error = &iptSystem( "$iptables -A PREROUTING -t raw -j $whitelist_chain" ) if (!$error);
-	$error = &iptSystem( "$iptables -A $whitelist_chain -t raw -j $blacklist_chain" ) if (!$error);
-	$error = &iptSystem( "$iptables -A $blacklist_chain -t raw -j $rbl_chain" ) if (!$error);
-	
+	$error = &iptSystem( "$iptables -A PREROUTING -t raw -j $whitelist_chain" )
+	  if ( !$error );
+	$error =
+	  &iptSystem( "$iptables -A $whitelist_chain -t raw -j $blacklist_chain" )
+	  if ( !$error );
+	$error = &iptSystem( "$iptables -A $blacklist_chain -t raw -j $rbl_chain" )
+	  if ( !$error );
+
 	# last sentence in each chain is return to above chain
-	$error = &iptSystem( "$iptables -A $whitelist_chain -t raw -j RETURN" ) if (!$error);
-	$error = &iptSystem( "$iptables -A $blacklist_chain -t raw -j RETURN" ) if (!$error);
-	$error = &iptSystem( "$iptables -A $rbl_chain -t raw -j RETURN" ) if (!$error);
-	
+	$error = &iptSystem( "$iptables -A $whitelist_chain -t raw -j RETURN" )
+	  if ( !$error );
+	$error = &iptSystem( "$iptables -A $blacklist_chain -t raw -j RETURN" )
+	  if ( !$error );
+	$error = &iptSystem( "$iptables -A $rbl_chain -t raw -j RETURN" )
+	  if ( !$error );
+
+
 	if ($error)
 	{
 		&zenlog( "Error creating iptables chains" );
 	}
-	
+
 	return $error;
 }
-
 
 =begin nd
 Function: delIPDSIptablesChain
@@ -125,8 +131,6 @@ sub delIPDSIptablesChain
 	return $error;
 }
 
-
-
 actions:
 
 =begin nd
@@ -152,7 +156,7 @@ sub runIPDSStartModule
 
 	# Add cluster exception not to block traffic from the other node of cluster
 	&setZClusterIptablesException( "insert" );
-	
+
 	&runBLStartModule();
 	&runRBLStartModule();
 	&runDOSStartModule();
@@ -180,13 +184,12 @@ sub runIPDSStopModule
 	&runRBLStopModule();
 	&runBLStopModule();
 	&runDOStopModule();
-	
+
 	# Remove cluster exception not to block traffic from the other node of cluster
 	&setZClusterIptablesException( "delete" );
-		
+
 	&delIPDSIptablesChain();
 }
-
 
 actions_by_farm:
 
@@ -207,27 +210,27 @@ Returns:
 sub runIPDSStartByFarm
 {
 	my $farmname = shift;
-	
+
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );
-	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{blacklist} } );
-	require Zevenet::IPDS::DoS::Actions if ( @{ $rules->{dos} } );
-	require Zevenet::IPDS::RBL::Actions if ( @{ $rules->{rbl} } );
-	
+	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{ blacklist } } );
+	require Zevenet::IPDS::DoS::Actions       if ( @{ $rules->{ dos } } );
+	require Zevenet::IPDS::RBL::Actions       if ( @{ $rules->{ rbl } } );
+
 	# start BL rules
-	foreach my $rule ( @{ $rules->{blacklist} } )
+	foreach my $rule ( @{ $rules->{ blacklist } } )
 	{
 		&runRBLStart( $rule, $farmname );
 	}
-	
+
 	# start dos rules
-	foreach my $rule ( @{ $rules->{dos} } )
+	foreach my $rule ( @{ $rules->{ dos } } )
 	{
 		&runDOSStart( $rule, $farmname );
 	}
-	
+
 	# start rbl rules
-	foreach my $rule ( @{ $rules->{rbl} } )
+	foreach my $rule ( @{ $rules->{ rbl } } )
 	{
 		&runBLStart( $rule, $farmname );
 	}
@@ -250,27 +253,27 @@ Returns:
 sub runIPDSStopByFarm
 {
 	my $farmname = shift;
-	
+
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );
-	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{blacklist} } );
-	require Zevenet::IPDS::DoS::Actions if ( @{ $rules->{dos} } );
-	require Zevenet::IPDS::RBL::Actions if ( @{ $rules->{rbl} } );
-	
+	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{ blacklist } } );
+	require Zevenet::IPDS::DoS::Actions       if ( @{ $rules->{ dos } } );
+	require Zevenet::IPDS::RBL::Actions       if ( @{ $rules->{ rbl } } );
+
 	# start BL rules
-	foreach my $rule ( @{ $rules->{blacklist} } )
+	foreach my $rule ( @{ $rules->{ blacklist } } )
 	{
 		&runRBLStop( $rule, $farmname );
 	}
-	
+
 	# start dos rules
-	foreach my $rule ( @{ $rules->{dos} } )
+	foreach my $rule ( @{ $rules->{ dos } } )
 	{
 		&runDOSStop( $rule, $farmname );
 	}
-	
+
 	# start rbl rules
-	foreach my $rule ( @{ $rules->{rbl} } )
+	foreach my $rule ( @{ $rules->{ rbl } } )
 	{
 		&runBLStop( $rule, $farmname );
 	}
@@ -293,29 +296,29 @@ Returns:
 sub runIPDSRestartByFarm
 {
 	my $farmname = shift;
-	
+
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );
-	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{blacklist} } );
-	require Zevenet::IPDS::DoS::Actions if ( @{ $rules->{dos} } );
-	require Zevenet::IPDS::RBL::Actions if ( @{ $rules->{rbl} } );
-	
+	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{ blacklist } } );
+	require Zevenet::IPDS::DoS::Actions       if ( @{ $rules->{ dos } } );
+	require Zevenet::IPDS::RBL::Actions       if ( @{ $rules->{ rbl } } );
+
 	# start BL rules
-	foreach my $rule ( @{ $rules->{blacklist} } )
+	foreach my $rule ( @{ $rules->{ blacklist } } )
 	{
 		&runRBLStop( $rule, $farmname );
 		&runRBLStart( $rule, $farmname );
 	}
-	
+
 	# start dos rules
-	foreach my $rule ( @{ $rules->{dos} } )
+	foreach my $rule ( @{ $rules->{ dos } } )
 	{
 		&runDOSStop( $rule, $farmname );
 		&runDOSStart( $rule, $farmname );
 	}
-	
+
 	# start rbl rules
-	foreach my $rule ( @{ $rules->{rbl} } )
+	foreach my $rule ( @{ $rules->{ rbl } } )
 	{
 		&runBLStop( $rule, $farmname );
 		&runBLStart( $rule, $farmname );

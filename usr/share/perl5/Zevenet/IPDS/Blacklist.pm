@@ -21,18 +21,9 @@
 #
 ###############################################################################
 
-use strict;
-
-use Config::Tiny;
-use Tie::File;
-
-use Zevenet::Core;
-use Zevenet::Debug;
-use Zevenet::IPDS::Core;
-use Zevenet::Farm;
-use Zevenet::Validate;
-
-use Zevenet::IPDS::Blacklist::Blacklist;
+use Zevenet::IPDS::Blacklist::Core;
+use Zevenet::IPDS::Blacklist::Runtime;
+use Zevenet::IPDS::Blacklist::Config;
 use Zevenet::IPDS::Blacklist::Actions;
 
 1;

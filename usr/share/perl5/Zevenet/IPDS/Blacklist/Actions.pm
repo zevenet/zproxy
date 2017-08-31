@@ -21,22 +21,16 @@
 #
 ###############################################################################
 
+# The goal of this file is keep the needed functions to apply start, stop or
+# restart actions to blacklist rules
+
 use strict;
 
-use Config::Tiny;
-use Tie::File;
-
-use Zevenet::Core;
-use Zevenet::Debug;
-use Zevenet::IPDS::Core;
-use Zevenet::Farm;
-use Zevenet::Validate;
-
-use Zevenet::IPDS::Blacklist::Blacklist;
+use Zevenet::IPDS::Blacklist::Runtime;
+use Zevenet::Farm::Base;
 
 my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
-
 
 actions:
 actions_module:
@@ -50,6 +44,7 @@ Parameters: None.
 
 Returns: None.
 =cut
+
 sub runBLStartModule
 {
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
@@ -81,7 +76,7 @@ sub runBLStartModule
 	{
 		my $farms = &getBLParam( $list, "farms" );
 		next if ( !$farms );
-		
+
 		my @farms = @{ $farms };
 
 		# create cmd  for all farms where are applied the list and  they are running
@@ -111,20 +106,23 @@ Parameters:
 Returns:
 
 =cut
+
 sub runBLStopModule
 {
 	my @rules           = @{ &getBLRunningRules() };
 	my $blacklists_name = &getValidFormat( 'blacklists_name' );
 	my $farm_name       = &getValidFormat( 'farm_name' );
-	my $size    = scalar @rules - 1;
+	my $size            = scalar @rules - 1;
 	my @allLists;
-	
+
 	for ( ; $size >= 0 ; $size-- )
 	{
-		if ( $rules[$size] =~ /^(\d+) .+match-set ($blacklists_name) src .+BL_$farm_name/ )
+		if (
+			 $rules[$size] =~ /^(\d+) .+match-set ($blacklists_name) src .+BL_$farm_name/ )
 		{
 			my $lineNum = $1;
-			my $list = $2;
+			my $list    = $2;
+
 			# Delete
 			#	iptables -D PREROUTING -t raw 3
 			my $cmd =
@@ -156,6 +154,7 @@ Parameters:
 Returns:
 
 =cut
+
 sub runBLRestartModule
 {
 	&runBLStopModule;
@@ -180,17 +179,17 @@ Returns:
 sub runBLStartByRule
 {
 	my ( $ruleName ) = @_;
-	my $error=0;
+	my $error = 0;
 	my @farms = @{ &getBLParam( $ruleName, 'farms' ) };
-	
+
 	foreach my $farmName ( @farms )
 	{
 		if ( &runBLStart( $ruleName, $farmName ) != 0 )
 		{
-			&zenlog ("Error running the rule $ruleName in the farm $farmName.");
+			&zenlog( "Error running the rule $ruleName in the farm $farmName." );
 		}
 	}
-	
+
 	return $error;
 }
 
@@ -210,18 +209,18 @@ Returns:
 sub runBLStopByRule
 {
 	my ( $ruleName ) = @_;
-	my $error=0;
+	my $error = 0;
 
 	return if ( &getBLStatus() eq 'down' );
-	
+
 	foreach my $farmName ( @{ &getBLParam( $ruleName, 'farms' ) } )
 	{
 		if ( &runBLStop( $ruleName, $farmName ) != 0 )
 		{
-			&zenlog ("Error stopping the rule $ruleName in the farm $farmName.");
+			&zenlog( "Error stopping the rule $ruleName in the farm $farmName." );
 		}
 	}
-	
+
 	return $error;
 }
 
@@ -271,13 +270,13 @@ sub runBLStart
 {
 	my ( $list, $farm ) = @_;
 	my $error;
-	
+
 	# the rule is already running
-	if( grep( / BL_$farm /, @{&getBLRunningRules()}))
+	if ( grep ( / BL_$farm /, @{ &getBLRunningRules() } ) )
 	{
 		return $error;
 	}
-	
+
 	if ( &getFarmBootStatus( $farm ) eq 'up' )
 	{
 		if ( &getBLStatus( $list ) eq "down" )
@@ -291,7 +290,7 @@ sub runBLStart
 			$error = &setBLCreateRule( $farm, $list );
 		}
 	}
-			
+
 	return $error;
 }
 
@@ -312,27 +311,29 @@ Returns:
 sub runBLStop
 {
 	my ( $rule, $farm ) = @_;
-		
-	my @rules           = @{ &getBLRunningRules() };
-	my $size    = scalar @rules - 1;
+
+	my @rules = @{ &getBLRunningRules() };
+	my $size  = scalar @rules - 1;
 	my @allLists;
-	my $blacklist_chain = &getIPDSChain("blacklist");
-	
+	my $blacklist_chain = &getIPDSChain( "blacklist" );
+
 	for ( ; $size >= 0 ; $size-- )
 	{
 		if ( $rules[$size] =~ /^(\d+) .+match-set ($rule) src .+BL_$farm/ )
 		{
 			my $rule_num = $1;
+
 			# Delete
 			#	iptables -D PREROUTING -t raw 3
 			my $cmd =
-			  &getGlobalConfiguration( 'iptables' ) . " --table raw -D $blacklist_chain $rule_num";
+			  &getGlobalConfiguration( 'iptables' )
+			  . " --table raw -D $blacklist_chain $rule_num";
 			&iptSystem( $cmd );
 		}
 
 	}
 
-	if ( ! &getBLListNoUsed( $rule ) )
+	if ( !&getBLListNoUsed( $rule ) )
 	{
 		if ( &getBLStatus( $rule ) eq 'up' )
 		{
