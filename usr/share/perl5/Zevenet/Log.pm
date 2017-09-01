@@ -166,4 +166,10 @@ sub logAndRun    # ($command)
 	return $return_code;
 }
 
+sub zdie
+{
+	&zenlog( @_ );
+	die( @_ );
+}
+
 1;
