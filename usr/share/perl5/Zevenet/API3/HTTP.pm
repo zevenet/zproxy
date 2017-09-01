@@ -299,4 +299,76 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 	exit;
 }
 
+sub httpErrorResponse
+{
+	my $args;
+
+	eval { $args = @_ == 1? shift @_: { @_ }; };
+
+	# check errors loading the hash reference
+	if ( $@ )
+	{
+		&zdie( "httpErrorResponse: Wrong argument received" );
+	}
+
+	# verify we have a hash reference
+	unless ( ref( $args ) eq 'hash' )
+	{
+		&zdie( "httpErrorResponse: Argument is not a hash reference" );
+	}
+
+	# check required arguments: code, desc and msg
+	unless ( $args->{ code } && $args->{ desc } && $args->{ msg } )
+	{
+		&zdie( "httpErrorResponse: Missing mandatory arguments" );
+	}
+
+	# check the status code is in a valid range
+	unless ( $args->{ code } =~ /^4[0-9][0-9]$/ )
+	{
+		&zdie( "httpErrorResponse: Non-supported HTTP status code: $args->{ code }" );
+	}
+
+	my $body = {
+				 description => $args->{ desc },
+				 error       => "true",
+				 message     => $args->{ msg },
+	};
+
+	&zenlog( "$args->{ desc }: [Error] $args->{ msg }" );
+	&zenlog( $args->{ log_msg } ) if exists $args->{ log_msg };
+	&httpResponse( { code => $args->{ code }, body => $body } );
+}
+
+# WARNING: Function unfinished.
+sub httpSuccessResponse
+{
+	my ( $args ) = @_;
+
+	unless ( ref( $args ) eq 'hash' )
+	{
+		&zdie( "httpSuccessResponse: Argument is not a hash reference" );
+	}
+
+	unless ( $args->{ code } && $args->{ desc } && $args->{ msg } )
+	{
+		&zdie( "httpSuccessResponse: Missing mandatory arguments" );
+	}
+
+	unless ( $args->{ code } =~ /^2[0-9][0-9]$/ )
+	{
+		&zdie( "httpSuccessResponse: Non-supported HTTP status code: $args->{ code }" );
+	}
+
+	my $body = {
+				 description => $args->{ desc },
+				 success     => "true",
+				 message     => $args->{ msg },
+	};
+
+	#~ &zenlog( "Zapi $errormsg" );
+	&zenlog( $args->{ log_msg } ) if exists $args->{ log_msg };
+	&httpResponse({ code => $args->{ code }, body => $body });
+}
+
 1;
