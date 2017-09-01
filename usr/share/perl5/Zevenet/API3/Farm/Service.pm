@@ -32,6 +32,8 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
+	require Zevenet::Farm::Service;
+
 	my $description = "New service";
 
 	# Check if the farm exists
