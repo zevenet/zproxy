@@ -27,6 +27,9 @@ sub farms_name_gslb # ( $farmname )
 {
 	my $farmname = shift;
 
+	require Zevenet::Farm::GSLB::Service;
+	require Zevenet::Farm::GSLB::Backend;
+
 	my $farm_ref;
 	my @out_s;
 	my @out_z;
@@ -38,8 +41,6 @@ sub farms_name_gslb # ( $farmname )
 	$farm_ref = { vip => $vip, vport => $vport, status => $status };
 
 	# Services
-	require Zevenet::Farm::GSLB::Service;
-
 	my @services = &getGSLBFarmServices( $farmname );
 
 	foreach my $srv_it ( @services )
@@ -49,7 +50,7 @@ sub farms_name_gslb # ( $farmname )
 		my $lb   = &getFarmVS( $farmname, $srv, "algorithm" );
 
 		# Default port health check
-		my $dpc        = &getFarmVS( $farmname, $srv, "dpc" );
+		my $dpc = &getFarmVS( $farmname, $srv, "dpc" );
 
 		# Backends
 		my @out_b = &getGSLBFarmBackends( $farmname, $srv );
