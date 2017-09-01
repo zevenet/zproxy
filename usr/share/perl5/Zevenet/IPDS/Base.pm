@@ -200,9 +200,9 @@ sub runIPDSStartByFarm
 
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );
-	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{ blacklist } } );
-	require Zevenet::IPDS::DoS::Actions       if ( @{ $rules->{ dos } } );
-	require Zevenet::IPDS::RBL::Actions       if ( @{ $rules->{ rbl } } );
+	require Zevenet::IPDS::Blacklist::Actions if $rules->{ blacklist };
+	require Zevenet::IPDS::DoS::Actions       if $rules->{ dos };
+	require Zevenet::IPDS::RBL::Actions       if $rules->{ rbl };
 
 	# start BL rules
 	foreach my $rule ( @{ $rules->{ blacklist } } )
@@ -243,9 +243,9 @@ sub runIPDSStopByFarm
 
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );
-	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{ blacklist } } );
-	require Zevenet::IPDS::DoS::Actions       if ( @{ $rules->{ dos } } );
-	require Zevenet::IPDS::RBL::Actions       if ( @{ $rules->{ rbl } } );
+	require Zevenet::IPDS::Blacklist::Actions if $rules->{ blacklist };
+	require Zevenet::IPDS::DoS::Actions       if $rules->{ dos };
+	require Zevenet::IPDS::RBL::Actions       if $rules->{ rbl };
 
 	# start BL rules
 	foreach my $rule ( @{ $rules->{ blacklist } } )
