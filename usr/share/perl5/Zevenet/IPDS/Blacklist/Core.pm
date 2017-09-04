@@ -26,7 +26,6 @@
 
 use strict;
 use Config::Tiny;
-
 use Zevenet::Core;
 use Zevenet::Debug;
 

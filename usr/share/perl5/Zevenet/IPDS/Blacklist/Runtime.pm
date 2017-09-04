@@ -339,7 +339,7 @@ sub setBLCreateRule
 	}
 
 	#~ my $logMsg = "[Blocked by blacklists $listName in farm $farmName]";
-	my $logMsg = &createLogMsg( $listName, $farmName );
+	my $logMsg = &createLogMsg( "BL", $listName, $farmName );
 
 	if ( $action eq "allow" )
 	{
@@ -385,19 +385,22 @@ sub setBLCreateRule
 				$farmOpt  = "$vip -p $protocol --dport $vport";
 			}
 
-# 		iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "BL_farmname"
+# iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "BL,rulename,farmname"
 			$cmd = &getGlobalConfiguration( 'iptables' )
-
-#~ . " $add PREROUTING -t raw -m set --match-set $listName src $farmOpt -m comment --comment \"BL_$farmName\"";
-			  . " $add $chain -t raw -m set --match-set $listName src $farmOpt -m comment --comment \"BL_$farmName\"";
+			  . " $add $chain -t raw -m set --match-set $listName src $farmOpt -m comment --comment \"BL,$listName,$farmName\"";
 
 			if ( $action eq "deny" )
 			{
+				# check inside of function
 				$output = &setIPDSDropAndLog( $cmd, $logMsg );
 			}
 			else
 			{
-				$output = &iptSystem( "$cmd -j ACCEPT" );
+				# the rule already exists
+				if ( ! &getIPDSRuleExists( $cmd ) )
+				{
+					$output = &iptSystem( "$cmd -j ACCEPT" );
+				}
 			}
 
 			if ( !$output )

@@ -256,12 +256,6 @@ sub runBLStart
 	my ( $list, $farm ) = @_;
 	my $error;
 
-	# the rule is already running
-	if ( grep ( / BL_$farm /, @{ &getBLRunningRules() } ) )
-	{
-		return $error;
-	}
-
 	if ( &getFarmBootStatus( $farm ) eq 'up' )
 	{
 		if ( &getBLStatus( $list ) eq "down" )

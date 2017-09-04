@@ -39,17 +39,16 @@ Returns:
 sub getIPDSChain
 {
 	my $ipds_module = shift;
-	my %ipds_chains=
-		(
-			'blacklist' => 'BLACKLIST',
-			'whitelist' => 'WHITELIST',
-			'rbl' => 'RBL',
-			#~ 'dos' => 'DOS',	# DoS uses different chains of netfilter
-		);
-	
+	my %ipds_chains = (
+		'blacklist' => 'BLACKLIST',
+		'whitelist' => 'WHITELIST',
+		'rbl'       => 'RBL',
+
+		#~ 'dos' => 'DOS',	# DoS uses different chains of netfilter
+	);
+
 	return $ipds_chains{ $ipds_module };
 }
-
 
 =begin nd
 Function: getIPDSFarmMatch
@@ -64,19 +63,20 @@ Returns:
 	Array - Each element of array is macth rule for iptables
 	
 =cut
+
 sub getIPDSFarmMatch
 {
 	my $farmname = shift;
 	my @match;
-	my $type = &getFarmType( $farmname );
-	my $protocol 	= &getFarmProto( $farmname );
+	my $type       = &getFarmType( $farmname );
+	my $protocol   = &getFarmProto( $farmname );
 	my $protocolL4 = &getFarmProto( $farmname );
-	my $vip   	= &getFarmVip( 'vip',  $farmname );
-	my $vport	= &getFarmVip( 'vipp', $farmname );
-		
+	my $vip        = &getFarmVip( 'vip', $farmname );
+	my $vport      = &getFarmVip( 'vipp', $farmname );
+
 	# no farm
 	# blank chain
-	
+
 	# all ports
 	if ( $type eq 'l4xnat' )
 	{
@@ -85,8 +85,9 @@ sub getIPDSFarmMatch
 		{
 			push @match, "-d $vip";
 		}
+
 		# l4 farm multiport
-		elsif ( &ismport ( $farmname ) )
+		elsif ( &ismport( $farmname ) )
 		{
 			push @match, "--protocol $protocol -m multiport --dports $vport -d $vip";
 		}
@@ -95,27 +96,27 @@ sub getIPDSFarmMatch
 			push @match, "--protocol $protocol --dports $vport -d $vip";
 		}
 	}
+
 	# farm using tcp and udp protocol
 	elsif ( $type eq 'gslb' )
 	{
 		push @match, "--protocol udp --dports $vport -d $vip";
 		push @match, "--protocol tcp --dports $vport -d $vip";
 	}
-	
+
 	# http farms
 	elsif ( $type =~ /http/ )
 	{
 		push @match, "--protocol $protocol --dport $vport -d $vip ";
 	}
-	
+
 	elsif ( $type eq 'datalink' )
 	{
 		push @match, "-d $vip";
 	}
-	
+
 	return @match;
 }
-
 
 =begin nd
         Function: getIptListV4
@@ -131,10 +132,11 @@ sub getIPDSFarmMatch
              @out	- Array with rules
 
 =cut
+
 sub getIptListV4
 {
 	my ( $table, $chain ) = @_;
-	my $iptlock = &getGlobalConfiguration ( 'iptlock' );
+	my $iptlock = &getGlobalConfiguration( 'iptlock' );
 
 	if ( $table ne '' )
 	{
@@ -158,20 +160,22 @@ sub getIptListV4
 	return @ipt_output;
 }
 
-
 # LOGS
 # &setIPDSDropAndLog ( $cmd, $logMsg );
 sub setIPDSDropAndLog
 {
 	my ( $cmd, $logMsg ) = @_;
 	my $output;
-	
+
+	return 0 if ( &getIPDSRuleExists( "$cmd -j DROP" ) );
+
 	# Always LOG rule has to be above than DROP rule
 	if ( $cmd =~ / -I / )
 	{
 		$output = &iptSystem( "$cmd -j DROP" );
 		$output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
 	}
+
 	# $cmd =~ / -A /
 	else
 	{
@@ -182,29 +186,41 @@ sub setIPDSDropAndLog
 	return $output;
 }
 
-# 
-# &createLogMsg ( rule, farm );
-sub createLogMsg
+# check if a rule exists. Return 1 if it exists or 0 if it is not
+sub getIPDSRuleExists
 {
-	my $rule = shift;
-	my $farmname = shift;
-	
-	my $max_size = 29;
-	
-	my $msg = "[IPDS, $rule $farmname]";
-	my $size = length $msg;
-	if ( $size > $max_size  )
-	{
-		$farmname = substr($farmname,0,9);
-		chop $farmname;
-		$farmname = "$farmname#";
-		$rule = substr($rule,0,9);
-		$msg = "[IPDS, $rule $farmname]";
-	}
-	
-	return $msg;
+	my $check_cmd = shift;
+	my $output    = 0;
+	$check_cmd =~ s/ \-[AI] / --check /;
+
+	$output = 1 if ( !&iptSystem( $check_cmd ) );
+
+	return $output;
 }
 
+#
+# &createLogMsg ( module, rule, farm );
+sub createLogMsg
+{
+	my $module   = shift;
+	my $rule     = shift;
+	my $farmname = shift;
+
+	my $max_size = 29;
+
+	my $msg  = "[$module,$rule,$farmname]";
+	my $size = length $msg;
+	if ( $size > $max_size )
+	{
+		$farmname = substr ( $farmname, 0, 9 );
+		chop $farmname;
+		$farmname = "$farmname#";
+		$rule     = substr ( $rule, 0, 9 );
+		$msg      = "[$module,$rule,$farmname]";
+	}
+
+	return $msg;
+}
 
 # Get all IPDS rules applied to a farm
 sub getIPDSfarmsRules
@@ -212,15 +228,15 @@ sub getIPDSfarmsRules
 	my $farmName = shift;
 	my $rules;
 	my $fileHandle;
-	my @dosRules = ();
+	my @dosRules        = ();
 	my @blacklistsRules = ();
-	my @rblRules = ();
-	
-	my $dosConf = &getGlobalConfiguration( 'dosConf' );
+	my @rblRules        = ();
+
+	my $dosConf        = &getGlobalConfiguration( 'dosConf' );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
-	my $rblPath = &getGlobalConfiguration( 'configdir' ) . "/ipds/rbl";
-	my $rblConf = "$rblPath/rbl.conf";
-	
+	my $rblPath        = &getGlobalConfiguration( 'configdir' ) . "/ipds/rbl";
+	my $rblConf        = "$rblPath/rbl.conf";
+
 	if ( -e $dosConf )
 	{
 		$fileHandle = Config::Tiny->read( $dosConf );
@@ -232,7 +248,7 @@ sub getIPDSfarmsRules
 			}
 		}
 	}
-	
+
 	if ( -e $blacklistsConf )
 	{
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
@@ -244,7 +260,7 @@ sub getIPDSfarmsRules
 			}
 		}
 	}
-	
+
 	if ( -e $rblConf )
 	{
 		$fileHandle = Config::Tiny->read( $rblConf );
@@ -256,8 +272,9 @@ sub getIPDSfarmsRules
 			}
 		}
 	}
-	
-	$rules = { dos => \@dosRules, blacklists => \@blacklistsRules, rbl => \@rblRules };
+
+	$rules =
+	  { dos => \@dosRules, blacklists => \@blacklistsRules, rbl => \@rblRules };
 	return $rules;
 }
 

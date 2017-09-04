@@ -29,11 +29,10 @@ use Zevenet::Debug;
 use Zevenet::IPDS::Core;
 
 # rbl configuration path
-my $rblPath = &getGlobalConfiguration( 'configdir' ) . "/ipds/rbl";
-my $rblConfigFile = "$rblPath/rbl.conf";
+my $rblPath              = &getGlobalConfiguration( 'configdir' ) . "/ipds/rbl";
+my $rblConfigFile        = "$rblPath/rbl.conf";
 my $preloadedDomainsFile = "$rblPath/preloaded_domains.conf";
-my $userDomainsFile = "$rblPath/user_domains.conf";
-
+my $userDomainsFile      = "$rblPath/user_domains.conf";
 
 apply_farm:
 
@@ -56,7 +55,6 @@ sub getRBLFarm
 
 	return &getRBLObjectRuleParam( $rule, 'farms' );
 }
-
 
 =begin nd
 Function: addRBLFarm
@@ -81,25 +79,25 @@ sub addRBLFarm
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
 		# to start a RBL rule it is necessary that the rule has almost one domain
-		if ( !@{ &getRBLObjectRuleParam($rule, 'domains') } )
+		if ( !@{ &getRBLObjectRuleParam( $rule, 'domains' ) } )
 		{
-			&zenlog ( "RBL rule, $rule, was not started because doesn't have any domain." );
+			&zenlog( "RBL rule, $rule, was not started because doesn't have any domain." );
 			return -1;
 		}
-		
+
 		# if rule is not running, start it
 		if ( &getRBLStatusRule( $rule ) eq 'down' )
 		{
 			$error = &runRBLStartPacketbl( $rule );
 		}
 
-		if (!$error)
+		if ( !$error )
 		{
 			# create iptables rule to link with rbl rule
-			$error=&runRBLIptablesRule( $rule, $farmname, 'insert' );
+			$error = &runRBLIptablesRule( $rule, $farmname, 'insert' );
 		}
 	}
-	
+
 	if ( !$error )
 	{
 		# Add to configuration file
@@ -126,8 +124,8 @@ Returns:
 sub delRBLFarm
 {
 	my ( $farmname, $rule ) = @_;
-	my $error; 
-	
+	my $error;
+
 	# if the farm is in UP status, apply it the rule
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
@@ -140,7 +138,7 @@ sub delRBLFarm
 			$error = &runRBLStopPacketbl( $rule );
 		}
 	}
-	
+
 	# Remove from configuration file
 	&setRBLObjectRuleParam( $rule, 'farms-del', $farmname );
 
@@ -219,18 +217,18 @@ sub getRBLInitialParams
 
 		# maximum number of packet in the queue
 		'queue_size' => 64538,
-		
-		# Log lvl, syslog log levels from 0 to 7: 0 Emergency, 1 Alert, 2 Critical, 3 Error, 4 Warning, 5 Notice, 6 Informational, or 7 Debug
+
+# Log lvl, syslog log levels from 0 to 7: 0 Emergency, 1 Alert, 2 Critical, 3 Error, 4 Warning, 5 Notice, 6 Informational, or 7 Debug
 		'log_level' => 5,
-		
+
 		# This mode logs the action but non blocking the packet
 		'only_logging' => 'no',
-		
+
 		# maximum number of threads for packetbl
 		'threadmax' => 0,
 
 		# Scan local traffic
-		'local_traffic'	=> 'no',
+		'local_traffic' => 'no',
 	};
 
 	return $initial;
@@ -305,7 +303,7 @@ Returns:
 
 sub getRBLObjectRule
 {
-	my $rule       = shift;
+	my $rule = shift;
 
 	use Config::Tiny;
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
@@ -316,8 +314,8 @@ sub getRBLObjectRule
 
 	$output->{ 'domains' } = \@domains;
 	$output->{ 'farms' }   = \@farms;
-	
-	$output->{'status'} = &getRBLStatusRule($rule);
+
+	$output->{ 'status' } = &getRBLStatusRule( $rule );
 
 	return $output;
 }
@@ -367,7 +365,7 @@ Returns:
 
 sub addRBLCreateObjectRule
 {
-	my $rule       = shift;
+	my $rule = shift;
 
 	# check that the rule is not exist
 	if ( &getRBLExists( $rule ) )
@@ -387,7 +385,7 @@ sub addRBLCreateObjectRule
 	$fileHandle->{ $rule } = $params;
 
 	$fileHandle->write( $rblConfigFile );
-	
+
 	&zenlog( "The RBL rule \"$rule\" was successfully created." );
 
 	return 0;
@@ -496,8 +494,8 @@ Returns:
 
 sub addRBLCopyObjectRule
 {
-	my $rule       = shift;
-	my $newrule    = shift;
+	my $rule    = shift;
+	my $newrule = shift;
 
 	# check if the rule already exists
 	if ( &getRBLExists( $newrule ) )
@@ -509,10 +507,10 @@ sub addRBLCopyObjectRule
 	my $params = &getRBLObjectRule( $rule );
 
 	# Add rule name
-	$params->{ 'name' }     = $newrule;
-	$params->{ 'farms' }    = '';
+	$params->{ 'name' }            = $newrule;
+	$params->{ 'farms' }           = '';
 	$params->{ 'nf_queue_number' } = '';
-	$params->{ 'domains' } = join( " ", @{ $params->{'domains'} } );
+	$params->{ 'domains' }         = join ( " ", @{ $params->{ 'domains' } } );
 
 	use Config::Tiny;
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
@@ -539,8 +537,8 @@ Returns:
 
 sub setRBLRenameObjectRule
 {
-	my $rule       = shift;
-	my $newname    = shift;
+	my $rule    = shift;
+	my $newname = shift;
 
 	# check that the rule is not exist
 	if ( &getRBLExists( $newname ) )
@@ -581,7 +579,7 @@ Returns:
 
 sub delRBLDeleteObjectRule
 {
-	my $rule       = shift;
+	my $rule = shift;
 
 	# check that the rule is not exist
 	if ( !&getRBLExists( $rule ) )
@@ -615,11 +613,11 @@ Returns:
 
 sub getRBLFarmApplied
 {
-	my $farmname       = shift;
+	my $farmname = shift;
 
 	my @rules;
-	
-	foreach my $rule ( @{ &getRBLRuleList() })
+
+	foreach my $rule ( @{ &getRBLRuleList() } )
 	{
 		if ( grep ( /^$farmname$/, @{ &getRBLObjectRuleParam( $rule, 'farms' ) } ) )
 		{
@@ -645,22 +643,22 @@ Returns:
 sub getRBLRunningFarmList
 {
 	my $rule = shift;
-	
+
 	my @farms;
-	my $table = "raw";
-	my $chain = &getIPDSChain( "rbl" );
+	my $table           = "raw";
+	my $chain           = &getIPDSChain( "rbl" );
 	my @iptables_output = &getIptListV4( $table, $chain );
-	my $farm_re = &getValidFormat( 'farm_name' );
-	
-	foreach my $line (@iptables_output)
+	my $farm_re         = &getValidFormat( 'farm_name' );
+
+	foreach my $line ( @iptables_output )
 	{
 		if ( $line =~ /RBL,${rule},($farm_re)/ )
 		{
 			push @farms, $1;
 		}
 	}
-	
-	return @farms;	
+
+	return @farms;
 }
 
 rules:
@@ -685,13 +683,13 @@ Returns:
 
 sub getRBLStatusRule
 {
-	my $rule     = shift;
-	my $status   = "down";
+	my $rule   = shift;
+	my $status = "down";
 	if ( &getRBLPacketblPid( $rule ) )
 	{
 		$status = "up";
 	}
-	
+
 	return $status;
 }
 
@@ -719,11 +717,8 @@ sub runRBLIptablesRule
 	my $error;
 	my $nfqueue = &getRBLObjectRuleParam( $rule, 'nf_queue_number' );
 	my $rbl_chain = &getIPDSChain( "rbl" );
-	
-	my @farmMatch = &getIPDSFarmMatch( $farmname );
 
-	#~ my $logMsg = "[Blocked by blacklists $listName in farm $farmName]";
-	#~ my $logMsg = &createLogMsg ( $listName, $farmName );
+	my @farmMatch = &getIPDSFarmMatch( $farmname );
 
 	if ( $action eq "insert" )
 	{
@@ -746,14 +741,15 @@ sub runRBLIptablesRule
 	# only check packets with SYN flag: "--tcp-flags SYN SYN"
 	# if packetbl is not running, return packet to netfilter flow: "--queue-bypass"
 
-	# iptables -I INPUT -p tcp --tcp-flags SYN SYN -i eth0 --dport 80 -j NFQUEUE --queue-num 0 --queue-bypass
+# iptables -I INPUT -p tcp --tcp-flags SYN SYN -i eth0 --dport 80 -j NFQUEUE --queue-num 0 --queue-bypass
 
 	# execute without interblock
 	foreach my $ruleParam ( @farmMatch )
 	{
-		&zenlog ("rule param:$ruleParam ");
+		&zenlog( "rule param:$ruleParam " );
 		my $tcp;
 		my $cmd;
+
 		# not add rules to UDP ports
 		if ( $ruleParam !~ /\-\-protocol udp/ )
 		{
@@ -767,9 +763,13 @@ sub runRBLIptablesRule
 				$tcp = "";
 			}
 			$cmd =
-				&getGlobalConfiguration( 'iptables' )
-				. " $action $rbl_chain -t raw $ruleParam $tcp --tcp-flags SYN SYN -j NFQUEUE --queue-num $nfqueue --queue-bypass"
-				. " -m comment --comment \"RBL,${rule},$farmname\"";
+			    &getGlobalConfiguration( 'iptables' )
+			  . " $action $rbl_chain -t raw $ruleParam $tcp --tcp-flags SYN SYN -j NFQUEUE --queue-num $nfqueue --queue-bypass"
+			  . " -m comment --comment \"RBL,${rule},$farmname\"";
+
+			# thre rule already exists
+			return 0 if ( &getIPDSRuleExists( $cmd ) );
+
 			$error = &iptSystem( $cmd );
 		}
 	}
@@ -798,13 +798,13 @@ sub setRBLCreateNfqueue
 {
 	my $rule = shift;
 
-	my $queue_num  = 0;
-	my @rules      = &getRBLRuleList();
+	my $queue_num = 0;
+	my @rules     = &getRBLRuleList();
 	use Config::Tiny;
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 	my @queue_list;
-	
-	foreach my $rule (@rules)
+
+	foreach my $rule ( @rules )
 	{
 		if ( $fileHandle->{ $rule }->{ 'nf_queue_number' } ne "" )
 		{
@@ -815,7 +815,7 @@ sub setRBLCreateNfqueue
 	# Increase $queue_num until to find one is not used
 	while ( $queue_num < 65000 )
 	{
-		last if ( !grep ( /^$queue_num$/, @queue_list) );
+		last if ( !grep ( /^$queue_num$/, @queue_list ) );
 		$queue_num = $queue_num + 1;
 	}
 
@@ -869,11 +869,14 @@ sub runRBLStartPacketbl
 
 	# Create packetbl config file
 	&setRBLPacketblConfig( $rule );
+
 	# Get packetbl configuration file
 	my $configfile = &getRBLPacketblConfig( $rule );
+
 	# Run packetbl
-	my $error = system( "bash", "-c", ". /etc/profile_packetbl && $packetbl -f $configfile" );
-	&zenlog("Error, starting packetbl") if ($error);
+	my $error = system ( "bash", "-c",
+						 ". /etc/profile_packetbl && $packetbl -f $configfile" );
+	&zenlog( "Error, starting packetbl" ) if ( $error );
 	return $error;
 }
 
@@ -894,14 +897,14 @@ FIXME:
 
 sub runRBLStopPacketbl
 {
-	my $rule    = shift;
+	my $rule = shift;
 
 	# Remove associated nfqueue from configfile
 	&setRBLRemoveNfqueue( $rule );
 
 	# exec kill
-	my $pid = &getRBLPacketblPid($rule);
-	
+	my $pid = &getRBLPacketblPid( $rule );
+
 	return &logAndRun( "kill $pid" );
 }
 
@@ -941,14 +944,14 @@ Returns:
 
 sub getRBLPacketblPid
 {
-	my $rule   = shift;
+	my $rule = shift;
 	my $pid;
-	
-	my $ps = &getGlobalConfiguration( 'ps' );
+
+	my $ps      = &getGlobalConfiguration( 'ps' );
 	my @process = `$ps -x`;
-	if ( @process = grep( /\/packetbl_$rule\.conf/, @process ) )
+	if ( @process = grep ( /\/packetbl_$rule\.conf/, @process ) )
 	{
-		$pid=$1 if ( $process[0] =~ /^\s*(\d+)\s/ );
+		$pid = $1 if ( $process[0] =~ /^\s*(\d+)\s/ );
 	}
 	return $pid;
 }
@@ -988,15 +991,15 @@ Returns:
 sub setRBLPacketblConfig
 {
 	my $rule   = shift;
-	my $params = &getRBLObjectRule($rule);
+	my $params = &getRBLObjectRule( $rule );
 	my $error  = 0;
 
 	# filling config file
-	my $fileContent ="
+	my $fileContent = "
 <host>";
-	
+
 	# not review local traffic
-	if ($params->{'local_traffic'} eq 'no')
+	if ( $params->{ 'local_traffic' } eq 'no' )
 	{
 		$fileContent .= "
 	whitelist	192.168.0.0/16
@@ -1004,12 +1007,12 @@ sub setRBLPacketblConfig
 	whitelist	172.16.0.0/12
 	whitelist	10.0.0.0/8";
 	}
-	
-	foreach my $domain (@{ $params->{ 'domains' } })
+
+	foreach my $domain ( @{ $params->{ 'domains' } } )
 	{
 		$fileContent .= "\n\tblacklistbl\t$domain";
 	}
-	
+
 	$fileContent .= "	
 </host>
 FallthroughAccept	yes
@@ -1027,14 +1030,13 @@ Threadmax	$params->{'threadmax'}
 LogLevel	$params->{'log_level'}
 ";
 
-
 	# save file
 	my $fh;
 	my $filename = &getRBLPacketblConfig( $rule );
 	$fh = &openlock( '>', $filename );
-	unless( $fh )
+	unless ( $fh )
 	{
-		&zenlog("Could not open file $filename: $!");
+		&zenlog( "Could not open file $filename: $!" );
 		return -1;
 	}
 	print $fh $fileContent;
@@ -1042,7 +1044,6 @@ LogLevel	$params->{'log_level'}
 
 	return $error;
 }
-
 
 domains:
 
@@ -1061,14 +1062,13 @@ Returns:
 sub getRBLUserDomains
 {
 	my @domains;
-	
+
 	tie my @list, 'Tie::File', $userDomainsFile;
 	@domains = @list;
 	untie @list;
-	
+
 	return \@domains;
 }
-
 
 =begin nd
 Function: getRBLPreloadedDomains
@@ -1085,11 +1085,11 @@ Returns:
 sub getRBLPreloadedDomains
 {
 	my @domains;
-	
+
 	tie my @list, 'Tie::File', $preloadedDomainsFile;
 	@domains = @list;
 	untie @list;
-	
+
 	return \@domains;
 }
 
@@ -1108,13 +1108,12 @@ Returns:
 sub getRBLDomains
 {
 	my @domains;
-	
+
 	push @domains, @{ &getRBLPreloadedDomains };
 	push @domains, @{ &getRBLUserDomains };
-	
+
 	return \@domains;
 }
-
 
 =begin nd
 Function: addRBLDomains
@@ -1132,12 +1131,11 @@ Returns:
 sub addRBLDomains
 {
 	my $new_domain = shift;
-	
+
 	tie my @domains, 'Tie::File', $userDomainsFile;
 	push @domains, $new_domain;
 	untie @domains;
 }
-
 
 =begin nd
 Function: setRBLDomains
@@ -1155,13 +1153,12 @@ Returns:
 
 sub setRBLDomains
 {
-	my $domain = shift;
+	my $domain     = shift;
 	my $new_domain = shift;
-	
+
 	&delRBLDomains( $domain );
 	&addRBLDomains( $new_domain );
 }
-
 
 =begin nd
 Function: delRBLDomains
@@ -1180,26 +1177,24 @@ Returns:
 sub delRBLDomains
 {
 	my $domain = shift;
-	my $error=-1;
-	my $it=0;
-	
+	my $error  = -1;
+	my $it     = 0;
+
 	tie my @domains, 'Tie::File', $userDomainsFile;
-	foreach my $item (@domains)
+	foreach my $item ( @domains )
 	{
 		if ( $item =~ /^$domain$/ )
 		{
 			splice @domains, $it, 1;
-			$error=0;
+			$error = 0;
 			last;
 		}
-		$it+=1;
+		$it += 1;
 	}
 	untie @domains;
-	
+
 	return $error;
 }
-
-
 
 zapi_format:
 
@@ -1234,24 +1229,25 @@ Returns:
 	}
 
 =cut
+
 sub getRBLZapiRule
 {
 	my $rule = shift;
-	
+
 	use Config::Tiny;
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 
-	my $output  = $fileHandle->{ $rule };
-	
+	my $output = $fileHandle->{ $rule };
+
 	my @domains = split ( ' ', $fileHandle->{ $rule }->{ 'domains' } );
 	my @farms   = split ( ' ', $fileHandle->{ $rule }->{ 'farms' } );
-	
+
 	$output->{ 'domains' } = \@domains;
 	$output->{ 'farms' }   = \@farms;
-	
-	$output->{'name'}  = $rule;
+
+	$output->{ 'name' }   = $rule;
 	$output->{ 'status' } = &getRBLStatusRule( $rule );
-	
+
 	if ( $output->{ 'local_traffic' } eq 'yes' )
 	{
 		$output->{ 'local_traffic' } = "true";
@@ -1268,17 +1264,16 @@ sub getRBLZapiRule
 	{
 		$output->{ 'only_logging' } = "false";
 	}
-	
+
 	foreach my $key ( keys %{ $output } )
 	{
 		$output->{ $key } += 0 if ( $output->{ $key } =~ /^\d+$/ );
 	}
-	
+
 	delete $output->{ 'nf_queue_number' };
 
 	return $output;
 }
-
 
 =begin nd
 Function: getRBLZapi
@@ -1310,20 +1305,19 @@ Returns:
 	}
 
 =cut
+
 sub getRBLZapi
 {
 	my @all_rules;
-	
+
 	foreach my $rule ( &getRBLRuleList )
 	{
-		my $output = &getRBLZapiRule($rule);
+		my $output = &getRBLZapiRule( $rule );
 
 		push @all_rules, $output;
 	}
 
 	return \@all_rules;
 }
-
-
 
 1;
