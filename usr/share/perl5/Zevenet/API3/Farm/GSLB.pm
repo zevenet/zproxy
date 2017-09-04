@@ -68,35 +68,20 @@ sub new_gslb_farm_service    # ( $json_obj, $farmname )
 	require Zevenet::Farm::Base;
 	require Zevenet::Farm::GSLB::Service;
 
+	my $desc = "New service";
+
 	# check if there is a service name
 	if ( ! &getValidFormat( 'gslb_service', $json_obj->{ id } ) )
 	{
-		# Error
-		my $errormsg = "Error, the service name has a invalid format.";
-		my $body = {
-					 description => "New service " . $json_obj->{ id },
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "Error, the service name has a invalid format.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# check if there is a service algorithm
 	if ( $json_obj->{ algorithm } eq '' )
 	{
-		&zenlog(
-			"ZAPI error, trying to create a new service in farm $farmname, invalid algorithm."
-		);
-
-		my $errormsg = "Invalid algorithm, please insert a valid value.";
-		my $body = {
-					 description => "New service " . $json_obj->{ id },
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "Invalid algorithm, please insert a valid value.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $status = &setGSLBFarmNewService( $farmname,
@@ -106,18 +91,8 @@ sub new_gslb_farm_service    # ( $json_obj, $farmname )
 	# check if there was an error creating the new service
 	if ( $status == -1 )
 	{
-		&zenlog(
-			"ZAPI error, trying to create a new service in farm $farmname, it's not possible to create the service $json_obj->{id}."
-		);
-
-		my $errormsg = "It's not possible to create the service " . $json_obj->{ id };
-		my $body = {
-					 description => "New service " . $json_obj->{ id },
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "It's not possible to create the service " . $json_obj->{ id };
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# no error found, return a succesful response
@@ -153,22 +128,13 @@ sub modify_gslb_service # ( $json_obj, $farmname, $service )
 	require Zevenet::Farm::GSLB::FarmGuardian;
 
 	my $output_params;
-	my $description = "Modify service";
+	my $desc = "Modify service";
 
 	# check deftcpport parameter is not empty
 	if ( $json_obj->{ deftcpport } eq '' )
 	{
-		&zenlog(
-			"ZAPI error, trying to modify the service $service in a farm $farmname, invalid deftcpport, can't be blank."
-		);
-		my $errormsg = "Invalid parameter deftcpport, can't be blank.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Invalid deftcpport value, can't be blank.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# change to number format
@@ -190,17 +156,8 @@ sub modify_gslb_service # ( $json_obj, $farmname, $service )
 	# check if setting FG params failed
 	if ( $error )
 	{
-		&zenlog(
-			"ZAPI error, trying to modify the service $service in a farm $farmname, it's not possible to change the deftcpport parameter."
-		);
-		my $errormsg = "Could not change the deftcpport parameter.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Could not change the deftcpport parameter.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	&runGSLBFarmReload( $farmname );
@@ -214,8 +171,8 @@ sub modify_gslb_service # ( $json_obj, $farmname, $service )
 	);
 
 	my $body = {
-		description => "Modify service $service in farm $farmname",
-		params      => $output_params,
+				 description => "Modify service $service in farm $farmname",
+				 params      => $output_params,
 	};
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
@@ -238,8 +195,9 @@ sub delete_gslb_service # ( $farmname, $service )
 	require Zevenet::Farm::Base;
 	require Zevenet::Farm::GSLB::Service;
 
-	my @services = &getGSLBFarmServices($farmname);
-	my $found = 0;
+	my $desc     = "Delete service";
+	my @services = &getGSLBFarmServices( $farmname );
+	my $found    = 0;
 
 	# validate SERVICE
 	foreach my $farmservice (@services)
@@ -255,14 +213,8 @@ sub delete_gslb_service # ( $farmname, $service )
 	# Check if the service exists
 	if ($found == 0)
 	{
-		my $errormsg = "Invalid service name, please insert a valid value.";
-		my $body = {
-					 description => "Delete service",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Invalid service name, please insert a valid value.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $return = &setGSLBFarmDeleteService( $farmname, $service );
@@ -270,34 +222,15 @@ sub delete_gslb_service # ( $farmname, $service )
 	# check if the service is being used
 	if ( $return == -2 )
 	{
-		&zenlog(
-				 "ZAPI error, the service $service in farm $farmname hasn't been deleted. The service is used by a zone." );
-
-		my $message = "The service $service in farm $farmname hasn't been deleted. The service is used by a zone.";
-		my $body = {
-					 description => "Delete service $service in farm $farmname.",
-					 error       => "true",
-					 message     => $message
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "The service $service in farm $farmname hasn't been deleted. The service is used by a zone.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# check if the service could not be deleted
 	if ( $return != 0 )
 	{
-		&zenlog(
-			"ZAPI error, trying to delete the service $service in farm $farmname, the service hasn't been deleted."
-		);
-
-		my $errormsg = "Service $service in farm $farmname hasn't been deleted.";
-		my $body = {
-					 description => "Delete service $service in farm $farmname",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Service $service in farm $farmname hasn't been deleted.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# no error found, return succesful response
@@ -336,20 +269,14 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 	require Zevenet::Farm::GSLB::Service;
 	require Zevenet::Farm::GSLB::Backend;
 
-	my $description = "New service backend";
+	my $desc = "New service backend";
 	my @services_list = &getGSLBFarmServices( $farmname );
 
 	# check if the SERVICE exists
 	unless ( grep { $service eq $_ } @services_list )
 	{
-		my $errormsg = "Could not find the requested service.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse( { code => 404, body => $body } );
+		my $msg = "Could not find the requested service.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $lb = &getFarmVS( $farmname, $service, "algorithm" );
@@ -357,17 +284,8 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 	# validate supported ALGORITHM
 	unless ( $lb eq 'roundrobin' )
 	{
-		&zenlog(
-			   "ZAPI error, this service algorithm does not support adding new backends." );
-
-		my $errormsg = "This service algorithm does not support adding new backends.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "This service algorithm does not support adding new backends.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# Get an ID for the new backend
@@ -388,18 +306,8 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 	# validate IP
 	unless ( &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 	{
-		&zenlog(
-			"ZAPI error, trying to create a new backend in the service $service of the farm $farmname, invalid IP."
-		);
-
-		my $errormsg = "Could not find the requested service.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "Invalid IP value.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# Adding the backend
@@ -409,17 +317,8 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 	# check if adding the new backend failed
 	if ( $status == -1 )
 	{
-		my $errormsg =
-		    "It's not possible to create the backend "
-		  . $json_obj->{ ip }
-		  . " for the service $service.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "It's not possible to create the backend $json_obj->{ ip } for the service $service.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# no error found, return successful response
@@ -429,7 +328,7 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 
 	my $message = "Added backend to service successfully";
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => {
 							 id => $id,
 							 ip => $json_obj->{ ip },
@@ -456,7 +355,7 @@ sub list_gslb_service_backends
 	require Zevenet::Farm::Config;
 	require Zevenet::Farm::GSLB::Service;
 
-	my $description   = "List service backends";
+	my $desc          = "List service backends";
 	my $type          = &getFarmType( $farmname );
 	my @services_list = &getGSLBFarmServices( $farmname );
 	my @backends;    # output
@@ -464,19 +363,13 @@ sub list_gslb_service_backends
 	# check if the service exists
 	unless ( grep { $service eq $_ } @services_list )
 	{
-		my $errormsg = "The service $service does not exist.";
-		my $body = {
-				description => $description,
-				error => "true",
-				message => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "The service $service does not exist.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $backends = &getFarmBackends( $farmname, $service );
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => $backends,
 	};
 
@@ -493,31 +386,25 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 	require Zevenet::Farm::GSLB::Service;
 	require Zevenet::Farm::GSLB::Backend;
 
-	my $description = "Modify service backend";
+	my $desc     = "Modify service backend";
 	my @services = &getGSLBFarmServices( $farmname );
 
 	# check if the SERVICE exists
 	unless ( grep { $service eq $_ } @services )
 	{
-		my $errormsg = "Could not find the requested service.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "Could not find the requested service.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $be;
 	my $backend_id = $id_server;
 	my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
-	my @be_list = split ( "\n", $backendsvs );
-	my $algorithm = &getFarmVS( $farmname, $service, "algorithm" ); # convert backend_id for prio algorithm
+	my @be_list    = split ( "\n", $backendsvs );
+	my $algorithm  = &getFarmVS( $farmname, $service, "algorithm" );    # convert backend_id for prio algorithm
 
 	if ( $algorithm eq 'prio' )
 	{
-		$backend_id = 'primary' if $id_server == 1;
+		$backend_id = 'primary'   if $id_server == 1;
 		$backend_id = 'secondary' if $id_server == 2;
 	}
 
@@ -546,14 +433,8 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 	# check if the BACKEND exists
 	if ( !$be )
 	{
-		my $errormsg = "Could not find a service backend with such id.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "Could not find a service backend with such id.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $lb = &getFarmVS( $farmname, $service, "algorithm" );
@@ -563,15 +444,8 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 	{
 		unless ( $json_obj->{ ip } && &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
 		{
-			my $errormsg = "Error, trying to modify the backends in a farm $farmname, invalid IP.";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg,
-			};
-
-			&zenlog( $errormsg );
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "Invalid IP.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		$be->{ ip } = $json_obj->{ ip };
@@ -583,15 +457,8 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 	# check if there was an error modifying the backend
 	if ( $status == -1 )
 	{
-		my $errormsg = "Error, trying to modify the backends in a farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} in service $service.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&zenlog( $errormsg );
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "It's not possible to modify the backend with IP $json_obj->{ip} in service $service.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# no error found, return successful response
@@ -603,7 +470,7 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 	# Get farm status. If farm is down the restart is not required.
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => $json_obj,
 				 message     => "Backend modified",
 	};
@@ -628,36 +495,21 @@ sub delete_gslb_service_backend # ( $farmname, $service, $id_server )
 	require Zevenet::Farm::GSLB::Service;
 	require Zevenet::Farm::GSLB::Backend;
 
-	my $description = "Delete service backend";
-	my @services = &getGSLBFarmServices($farmname);
+	my $desc     = "Delete service backend";
+	my @services = &getGSLBFarmServices( $farmname );
 
 	# check if the SERVICE exists
 	unless ( grep { $service eq $_ } @services )
 	{
-		my $errormsg = "Could not find the requested service.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "Could not find the requested service.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# validate ALGORITHM
 	if ( &getFarmVS( $farmname, $service, "algorithm" ) eq 'prio' )
 	{
-		&zenlog(
-			 "ZAPI error, this service algorithm does not support removing backends." );
-
-		my $errormsg = "This service algorithm does not support removing backends.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "This service algorithm does not support removing backends.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# check if the backend id is available
@@ -667,13 +519,7 @@ sub delete_gslb_service_backend # ( $farmname, $service, $id_server )
 	unless ( $be_found )
 	{
 		my $errormsg = "Could not find the requested backend.";
-		my $body = {
-					description => $description,
-					error       => "true",
-					message     => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $status = &remFarmServiceBackend( $id_server, $farmname, $service );
@@ -681,19 +527,10 @@ sub delete_gslb_service_backend # ( $farmname, $service, $id_server )
 	# check if there was an error removing the backend
 	if ( $status == -1 )
 	{
-		&zenlog(
-			"ZAPI error, trying to delete the backend $id_server in service $service in farm $farmname, it's not possible to delete the backend."
-		);
+		&zenlog( "It's not possible to delete the backend." );
 
-		my $errormsg =
-		  "Could not find the backend with ID $id_server of the $farmname farm.";
-		my $body = {
-			   description => $description,
-			   error   => "true",
-			   message => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "Could not find the backend with ID $id_server of the $farmname farm.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# no error found, return successful response
@@ -705,7 +542,7 @@ sub delete_gslb_service_backend # ( $farmname, $service, $id_server )
 
 	my $message = "Backend removed";
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 success     => "true",
 				 message     => $message,
 	};
@@ -732,30 +569,20 @@ sub modify_gslb_farmguardian    # ( $json_obj, $farmname )
 	require Zevenet::Farm::GSLB::Service;
 	require Zevenet::Farm::GSLB::FarmGuardian;
 
-	my $description = "Modify farm guardian";
+	my $desc = "Modify farm guardian";
 
 	# validate exist service for gslb farms
 	if ( ! grep( /^$service$/, &getGSLBFarmServices( $farmname ) ) )
 	{
-		my $errormsg = "Invalid service name, please insert a valid value.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-		&httpResponse( { code => 404, body => $body } );
+		my $msg = "Invalid service name, please insert a valid value.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# check farm guardian logs are not enabled
 	if ( exists ( $json_obj->{ fglog } ) )
 	{
-		my $errormsg = "GSLS profile do not support Farm Guardian logs.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "GSLS profile do not support Farm Guardian logs.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# Change check script
@@ -763,13 +590,8 @@ sub modify_gslb_farmguardian    # ( $json_obj, $farmname )
 	{
 		if ( &setGSLBFarmGuardianParams( $farmname, $service, 'cmd', $json_obj->{ fgscript } ) == -1 )
 		{
-			my $errormsg = "Error, trying to modify farm guardian script in farm $farmname, service $service";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-			&httpResponse( { code => 400, body => $body } );
+			my $msg = "Error, trying to modify farm guardian script in farm $farmname, service $service";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -782,13 +604,8 @@ sub modify_gslb_farmguardian    # ( $json_obj, $farmname )
 	{
 		if ( &setGSLBFarmGuardianParams( $farmname, $service, 'interval', $json_obj->{ fgtimecheck } ) == -1 )
 		{
-			my $errormsg = "Error, found trying to enable farm guardian check time in farm $farmname, service $service";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-			&httpResponse( { code => 400, body => $body } );
+			my $msg = "Error, found trying to enable farm guardian check time in farm $farmname, service $service";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -800,44 +617,29 @@ sub modify_gslb_farmguardian    # ( $json_obj, $farmname )
 		{
 			if ( $fgCmd )
 			{
-				my $errormsg = &enableGSLBFarmGuardian( $farmname, $service, 'true' );
-				if ( $errormsg )
+				my $error = &enableGSLBFarmGuardian( $farmname, $service, 'true' );
+				if ( $error )
 				{
-					my $errormsg = "Error, trying to enable farm guardian in farm $farmname, service $service.";
-					my $body = {
-								 description => $description,
-								 error       => "true",
-								 message     => $errormsg
-					};
-					&httpResponse( { code => 400, body => $body } );
+					my $msg = "Error, trying to enable farm guardian in farm $farmname, service $service.";
+					&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 				}
 			}
 			else
 			{
-				my $errormsg = "Error, it's necesary add a check script to enable farm guardian";
-				my $body = {
-							 description => $description,
-							 error       => "true",
-							 message     => $errormsg
-				};
-				&httpResponse( { code => 400, body => $body } );
+				my $msg = "Error, it's necesary add a check script to enable farm guardian";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
 
 		# disable farmguardian
 		elsif ( $json_obj->{ fgenabled } eq 'false' && $fgStatus eq 'true' )
 		{
-			my $errormsg = &enableGSLBFarmGuardian( $farmname, $service, 'false' );
+			my $error = &enableGSLBFarmGuardian( $farmname, $service, 'false' );
 
-			if ( $errormsg )
+			if ( $error )
 			{
-				my $errormsg = "ZAPI error, trying to disable farm guardian in farm $farmname, service $service";
-				my $body = {
-							 description => $description,
-							 error       => "true",
-							 message     => $errormsg
-				};
-				&httpResponse( { code => 400, body => $body } );
+				my $msg = "ZAPI error, trying to disable farm guardian in farm $farmname, service $service";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
 	}
@@ -845,7 +647,7 @@ sub modify_gslb_farmguardian    # ( $json_obj, $farmname )
 	# no error found, return successful response
 	my $errormsg = "Success, some parameters have been changed in farm guardian in farm $farmname.";
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => $json_obj,
 				 message     => $errormsg,
 	};
