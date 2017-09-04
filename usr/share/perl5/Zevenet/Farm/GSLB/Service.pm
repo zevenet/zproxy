@@ -617,7 +617,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 			{
 				$actualPort = $2;
 				$line       = "\t\tservice_types = $1$stri";
-				$output     = "0";
+				$output     = 0;
 				last;
 			}
 			if ( $line =~ /\t$svice => / )
@@ -627,7 +627,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 		}
 		untie @fileconf;
 
-		if ( $output eq "0" )
+		if ( $output == 0 )
 		{
 			my $srvAsocFlag = &getGSLBCheckPort( $fname, $actualPort );
 			my $found       = 0;

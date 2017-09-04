@@ -1022,7 +1022,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 	my ( $farm_name, $service, $tag, $string ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = "";
+	my $output        = 0;
 	my $line;
 	my $sw = 0;
 	my $j  = 0;
@@ -1306,8 +1306,8 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 						$line = "\#$line";
 					}
 				}
-				$output = $?;
 			}
+
 			if ( $string eq "nothing" && $sw == 1 )
 			{
 				if ( $line =~ "Session" )
