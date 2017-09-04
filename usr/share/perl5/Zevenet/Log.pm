@@ -168,8 +168,11 @@ sub logAndRun    # ($command)
 
 sub zdie
 {
+	require Carp;
+	Carp->import();
+
 	&zenlog( @_ );
-	die( @_ );
+	carp( @_ );
 }
 
 1;
