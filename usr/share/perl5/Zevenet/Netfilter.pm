@@ -925,6 +925,8 @@ sub getBinVersion    # ($farm_name)
 {
 	# Variables
 	my $farm_name = shift;
+	
+	require Zevenet::Net::Validate;
 	my $binary = &getGlobalConfiguration('iptables');
 	my $vip = &getFarmVip( "vip", $farm_name );
 	my $ipv = &ipversion( $vip );

@@ -23,17 +23,8 @@
 
 use strict;
 
-use Config::Tiny;
-use Tie::File;
-
-use Zevenet::Core;
-use Zevenet::IPDS::Core;
-use Zevenet::Farm;
-
-
-
-actions:
-actions_module:
+use Zevenet::IPDS::DoS::Runtime;
+use Zevenet::Farm::Base;
 
 =begin nd
         Function: runDOSStartModule
@@ -50,7 +41,7 @@ actions_module:
 
 sub runDOSStartModule
 {
-	require Zevenet::IPDS::DoS::DoS;
+	require Zevenet::IPDS::DoS::Config;
 
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $output;
@@ -58,50 +49,47 @@ sub runDOSStartModule
 	&zenlog( "Booting dos system... " );
 	&setDOSCreateFileConf();
 
-	if ( -e $confFile )
-	{		
-		my $fileHandle = Config::Tiny->read( $confFile );
-		foreach my $ruleName ( keys %{ $fileHandle } )
+	my $fileHandle = Config::Tiny->read( $confFile );
+	foreach my $ruleName ( keys %{ $fileHandle } )
+	{
+		if ( $fileHandle->{ $ruleName }->{ 'type' } eq 'farm' )
 		{
-			if ( $fileHandle->{ $ruleName }->{ 'type' } eq 'farm' )
+			my $farmList = $fileHandle->{ $ruleName }->{ 'farms' };
+			my @farms = split ( ' ', $farmList );
+			foreach my $farmName ( @farms )
 			{
-				my $farmList = $fileHandle->{ $ruleName }->{ 'farms' };
-				my @farms = split ( ' ', $farmList );
-				foreach my $farmName ( @farms )
+				# run rules of running farms
+				if ( &getFarmBootStatus( $farmName ) eq 'up' )
 				{
-					# run rules of running farms
-					if ( &getFarmBootStatus( $farmName ) eq 'up' )
+					if ( &setDOSRunRule( $ruleName, $farmName ) != 0 )
 					{
-						if ( &setDOSRunRule( $ruleName, $farmName ) != 0 )
-						{
-							&zenlog ("Error running the rule $ruleName in the farm $farmName.");
-						}
-					}
-				}
-			}
-			elsif ( $fileHandle->{ $ruleName }->{ 'type' } eq 'system' )
-			{
-				if ( $fileHandle->{ $ruleName }->{ 'status' } eq "up" )
-				{
-					if ( &setDOSRunRule( $ruleName, 'status' ) != 0 )
-					{
-						&zenlog ("Error, running the rule $ruleName.");
+						&zenlog( "Error running the rule $ruleName in the farm $farmName." );
 					}
 				}
 			}
 		}
+		elsif ( $fileHandle->{ $ruleName }->{ 'type' } eq 'system' )
+		{
+			if ( $fileHandle->{ $ruleName }->{ 'status' } eq "up" )
+			{
+				if ( &setDOSRunRule( $ruleName, 'status' ) != 0 )
+				{
+					&zenlog( "Error, running the rule $ruleName." );
+				}
+			}
+		}
 	}
-	
+
 	# This block is a bugfix. When ssh_brute_force rule doesn't show the port
-	if ( ! &setDOSParam ( 'ssh_brute_force', 'port' ) )
+	if ( !&setDOSParam( 'ssh_brute_force', 'port' ) )
 	{
 		require Zevenet::System::SSH;
 
 		my $sshconf = &getSsh();
 		my $port    = $sshconf->{ 'port' };
-		&setDOSParam ( 'ssh_brute_force', 'port', $port);
+		&setDOSParam( 'ssh_brute_force', 'port', $port );
 	}
-	
+
 	return $output;
 }
 
@@ -137,7 +125,7 @@ sub runDOStopModule
 					my @farms = split ( ' ', $farmList );
 					foreach my $farmName ( @farms )
 					{
-						$output++ if ( &setDOSStopRule( $rule, $farmName ) != 0 );
+						$output |= &setDOSStopRule( $rule, $farmName );
 					}
 				}
 			}
@@ -147,14 +135,13 @@ sub runDOStopModule
 			{
 				if ( $fileHandle->{ $rule }->{ 'status' } eq 'up' )
 				{
-					$output++ if ( &setDOSStopRule( $rule ) != 0 );
+					$output |= &setDOSStopRule( $rule );
 				}
 			}
 		}
 	}
 	return $output;
 }
-
 
 =begin nd
 Function: runDOSRestartModule
@@ -174,8 +161,6 @@ sub runDOSRestartModule
 	&runDOStartModule;
 }
 
-actions_by_rule:
-
 =begin nd
 Function: runDOSStartByRule
 
@@ -192,21 +177,31 @@ Returns:
 sub runDOSStartByRule
 {
 	my ( $ruleName ) = @_;
-	my $error=0;
+	my $error = 0;
 	my @farms = @{ &getDOSParam( $ruleName, 'farms' ) };
-	
-	foreach my $farmName ( @farms )
+
+	if ( &getDOSParam( $ruleName, 'type' ) eq "system" )
 	{
-		# run rules of running farms
-		if ( &getFarmBootStatus( $farmName ) eq 'up' )
+		if ( &getDOSParam( $ruleName, 'status' ) eq "up" )
 		{
-			if ( &setDOSRunRule( $ruleName, $farmName ) != 0 )
+			&setDOSStartRule( $ruleName );
+		}
+	}
+	else
+	{
+		foreach my $farmName ( @farms )
+		{
+			# run rules of running farms
+			if ( &getFarmBootStatus( $farmName ) eq 'up' )
 			{
-				&zenlog ("Error running the rule $ruleName in the farm $farmName.");
+				if ( &setDOSRunRule( $ruleName, $farmName ) != 0 )
+				{
+					&zenlog( "Error running the rule $ruleName in the farm $farmName." );
+				}
 			}
 		}
 	}
-	
+
 	return $error;
 }
 
@@ -226,18 +221,25 @@ Returns:
 sub runDOSStopByRule
 {
 	my ( $ruleName ) = @_;
-	my $error=0;
+	my $error = 0;
 
 	return if ( &getDOSStatusRule() eq 'down' );
-	
-	foreach my $farmName ( @{ &getDOSParam( $ruleName, 'farms' ) } )
+
+	if ( &getDOSParam( $ruleName, 'type' ) eq "system" )
 	{
-		if ( &setDOSStopRule( $ruleName, $farmName ) != 0 )
+		&setDOSStopRule( $ruleName );
+	}
+	else
+	{
+		foreach my $farmName ( @{ &getDOSParam( $ruleName, 'farms' ) } )
 		{
-			&zenlog ("Error stopping the rule $ruleName in the farm $farmName.");
+			if ( &setDOSStopRule( $ruleName, $farmName ) != 0 )
+			{
+				&zenlog( "Error stopping the rule $ruleName in the farm $farmName." );
+			}
 		}
 	}
-	
+
 	return $error;
 }
 
@@ -286,7 +288,7 @@ Returns:
 sub runDOSStart
 {
 	my ( $rule, $farm ) = @_;
-	my $error=&setDOSRunRule( $rule, $farm );
+	my $error = &setDOSRunRule( $rule, $farm );
 	return $error;
 }
 
@@ -307,7 +309,7 @@ Returns:
 sub runDOSStop
 {
 	my ( $rule, $farm ) = @_;
-	my $error=&setDOSStopRule( $rule, $farm );
+	my $error = &setDOSStopRule( $rule, $farm );
 	return $error;
 }
 

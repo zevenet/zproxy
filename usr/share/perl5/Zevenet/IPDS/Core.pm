@@ -211,10 +211,10 @@ sub getIPDSfarmsRules
 {
 	my $farmName = shift;
 	my $rules;
-	my @dosRules;
-	my @blacklistsRules;
-	my @rblRules;
 	my $fileHandle;
+	my @dosRules = ();
+	my @blacklistsRules = ();
+	my @rblRules = ();
 	
 	my $dosConf = &getGlobalConfiguration( 'dosConf' );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );

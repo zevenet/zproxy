@@ -23,30 +23,31 @@
 
 use strict;
 
-use Config::Tiny;
-use Tie::File;
-
-use Zevenet::Core;
+use Zevenet::Netfilter;
 use Zevenet::IPDS::Core;
-use Zevenet::Farm;
-
+use Zevenet::IPDS::DoS::Core;
 
 =begin nd
-        Function: setDOSRunRule
+Function: setDOSRunRule
 
-        Apply iptables rules to a farm or all balancer
+	Wrapper that get the farm values and launch the necessary function to 
+	start run the iptables rule
 
-        Parameters:
-				rule		 - id that indetify a rule, ( rule = 'farms' to apply rules to farm )
-				farmname - farm name
+Parameters:
+	rule	 - Rule name
+	farmname - farm name
 				
-        Returns:
+Returns:
+	Integer - Error code: 0 on success or other value on failure
 
 =cut
 
 sub setDOSRunRule
 {
 	my ( $ruleName, $farmName ) = @_;
+
+	require Zevenet::Farm::Base;
+
 	my %hash;
 	my $output = -2;
 	my $protocol;
@@ -80,25 +81,8 @@ sub setDOSRunRule
 		}
 	}
 
-	my $rule = &getDOSParam( $ruleName, 'rule' );
-
-	if (    ( $rule eq 'DROPFRAGMENTS' )
-		 || ( $rule eq 'NEWNOSYN' )
-		 || ( $rule eq 'SYNWITHMSS' )
-		 || ( $rule eq 'bogustcpflags' )
-		 || ( $rule eq 'limitrst' )
-		 || ( $rule eq 'SYNPROXY' ) )
-	{
-		if ( $protocol !~ /TCP/i && $protocol !~ /FTP/i )
-		{
-			&zenlog(
-					 "$rule rule is only available in farms based in protocol TCP or FTP." );
-			return -1;
-		}
-	}
-
 	use Switch;
-	switch ( $rule )
+	switch ( &getDOSParam( $ruleName, "rule" ) )
 	{
 		# comented rules aren't finished
 		# global rules
@@ -126,30 +110,32 @@ sub setDOSRunRule
 		#~ case 'SYNWITHMSS'			{ $output = &setDOSSynWithMssRule();	 }
 		#~ case 'SYNPROXY'				{ $output = &setDOSynProxyRule();			 }
 	}
+	
+	
+	$output = (@{ &getDOSLookForRule( $ruleName, $farmName ) })? 0 : 1;
 
 	return $output;
 }
 
 =begin nd
-        Function: setDOSStopRule
+Function: setDOSStopRule
 
-        Remove iptables rules
+	Remove iptables rules
 
-        Parameters:
-				ruleName		- id that indetify a rule, ( rule = 'farms' to remove rules from farm )
-				farmname 	- farm name
+Parameters:
+	ruleName		- id that indetify a rule, ( rule = 'farms' to remove rules from farm )
+	farmname 	- farm name
 				
-        Returns:
-				== 0	- Successful
-             != 0	- Number of rules didn't boot
+Returns:
+	Integer - Error code, 0 on success or other value on failure
 
 =cut
 
 sub setDOSStopRule
 {
 	my ( $ruleName, $farmName ) = @_;
-	my $output = 0;
 
+	my $output = 0;
 	my $ind++;
 	foreach my $rule ( @{ &getDOSLookForRule( $ruleName, $farmName ) } )
 	{
@@ -167,548 +153,25 @@ sub setDOSStopRule
 		}
 	}
 
+	$output = (@{ &getDOSLookForRule( $ruleName, $farmName ) })? 1 : 0;
 	return $output;
 }
-
-rule:
-
-
-sub setDOSCreateFileConf
-{
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
-	my $dosConfDir = &getGlobalConfiguration( 'dosConfDir' );
-	my $output;
-
-	return 0 if ( -e $confFile );
-
-	# create dos directory if it doesn't exist
-	if ( !-d $dosConfDir )
-	{
-		$output = system ( &getGlobalConfiguration( 'mkdir' ) . " -p $dosConfDir" );
-		&zenlog( "Created ipds configuration directory: $dosConfDir" );
-	}
-
-	# create file conf if doesn't exist
-	if ( !$output )
-	{
-		&zenlog( "Created dos configuration directory: $dosConfDir" );
-		$output = system ( &getGlobalConfiguration( 'touch' ) . " $confFile" );
-		if ( $output )
-		{
-			&zenlog( "Error, creating dos configuration directory: $dosConfDir" );
-		}
-		else
-		{
-			&zenlog( "Created dos configuration file: $confFile" );
-		}
-	}
-
-	if ( !$output )
-	{
-		#~ $output = &createDOSRule( 'drop_icmp', 'dropicmp' )		# Next version
-		  #~ if ( &getDOSExists( 'drop_icmp' ) ne "0" );
-		$output = &createDOSRule( 'ssh_brute_force', 'sshbruteforce' )
-		  if ( &getDOSExists( 'ssh_brute_force' ) ne "0" );
-	}
-	else
-	{
-		&zenlog( "Error, creating dos configuration file: $confFile" );
-	}
-
-	return $output;
-}
-
-sub getDOSInitialParams
-{
-	my $rule = shift;
-
-	# get ssh port
-	require Zevenet::System::SSH;
-	
-	my $sshconf = &getSsh();
-	my $port    = $sshconf->{ 'port' };
-
-	my %initial = (
-		'bogustcpflags' => { 'farms' => '', 'type'        => 'farm' },
-		'limitconns'    => { 'farms' => '', 'limit_conns' => 20, 'type' => 'farm' },
-		'limitrst' =>
-		  { 'farms' => '', 'limit' => 10, 'limit_burst' => 5, 'type' => 'farm' },
-		'limitsec' =>
-		  { 'farms' => '', 'limit' => 20, 'limit_burst' => 15, 'type' => 'farm' },
-		'dropicmp' => { 'status' => 'down', 'type' => 'system', 'name' => 'drop_icmp' },
-		'sshbruteforce' => {
-							 'status' => 'down',
-							 'hits'   => 10,
-							 'port'   => $port,
-							 'time'   => 60,
-							 'type'   => 'system',
-							 'name'   => 'ssh_brute_force'
-		},
-
-		#					'NEWNOSYN' => { 'farms' => '' },
-		#					'DROPFRAGMENTS' => { 'farms'  => '' },
-		#					'INVALID'       => { 'farms'  => '' },
-		#					'SYNPROXY'     => { 'farms' => '', 'mss' => 1460, 'scale' => 7 },
-		#					'SYNWITHMSS'   => { 'farms' => '' },
-		#					'PORTSCANNING' => {
-		#										'farms'    => '',
-		#										'portScan' => 15,
-		#										'blTime'   => 500,
-		#										'time'     => 100,
-		#										'hits'     => 3,
-		#					},
-	);
-
-	return $initial{ $rule };
-}
-
-# &getDOSParam( $ruleName, $param );
-sub getDOSParam
-{
-	my $ruleName = shift;
-	my $param    = shift;
-	my $output;
-
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
-	my $fileHandle = Config::Tiny->read( $confFile );
-
-	$output = $fileHandle->{ $ruleName }->{ $param };
-	if ( $param eq 'farms' )
-	{
-		my @aux = split ( ' ', $output );
-		$output = \@aux;
-	}
-
-	return $output;
-}
-
-# &setDOSParam ($name,$param,$value)
-sub setDOSParam
-{
-	my $name  = shift;
-	my $param = shift;
-	my $value = shift;
-	my @farms;
-
-	my $rule = &getDOSParam( $name, 'rule' );
-
-	#Stop related rules
-	&setDOSStopRule( $name );
-
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
-	my $fileHandle = Config::Tiny->read( $confFile );
-	$fileHandle = Config::Tiny->read( $confFile );
-
-	$fileHandle->{ $name }->{ $param } = $value;
-	$fileHandle->write( $confFile );
-
-	#~ # Rule global for the balancer
-	if ( &getDOSParam( $name, 'type' ) eq 'system' )
-	{
-		if ( &getDOSParam( $name, 'status' ) eq 'up' )
-		{
-			&setDOSRunRule( $name );
-		}
-		elsif ( &getDOSParam( $name, 'status' ) eq 'down' )
-		{
-			&setDOSStopRule( $name );
-		}
-	}
-
-	# Rule applied to farm
-	elsif ( @farms = @{ &getDOSParam( $name, 'farms' ) } )
-	{
-		foreach my $farm ( @farms )
-		{
-			&setDOSRunRule( $name, $farm );
-		}
-	}
-}
-
 
 =begin nd
-Function: getDOSRuleList
+Function: setDOSBogusTcpFlagsRule
 
-	Get an array with all DOS rule names
+	Run the iptables rules necessary to control bogus in tcp flags.
+	This rule only can be applied to farms working with TCP protocol.
 
 Parameters:
+	ruleName	- Rule name
+	farmname 	- Farm name
 				
 Returns:
-	Array - DOS name list
-	
-=cut
-
-sub getDOSRuleList
-{
-	my $confFile = &getGlobalConfiguration( 'dosConf' );
-	use Config::Tiny;
-	my $fileHandle = Config::Tiny->read( $confFile );
-
-	return keys %{ $fileHandle };
-}
-
-
-=begin nd
-Function: getDOSFarmApplied
-
-	Return a list with all rules where the farm is applied
-
-Parameters:
-	Farmname -  Farm name
-				
-Returns:
-	Array - list of DOS rules
-	
-=cut
-
-sub getDOSFarmApplied
-{
-	my $farmname       = shift;
-
-	my @rules;
-	
-	foreach my $rule ( @{ &getDOSRuleList() })
-	{
-		if ( grep ( /^$farmname$/, @{ &getDOSParam( $rule, 'farms' ) } ) )
-		{
-			push @rules, $rule;
-		}
-	}
-	return \@rules;
-}
-
-=begin nd
-        Function: getDOSLookForRule
-
-        Look for a:
-			- global name 				( key )
-			- set of rules applied a farm 	( key, farmName )
-        
-        Parameters:
-				key		 - id that indetify a rule
-				farmName - farm name
-				
-        Returns:
-				== 0	- don't find any rule
-             @out	- Array with reference hashs
-							- out[i]= { 
-									line  => num,
-									table => string,
-									chain => string
-								  }
+	Integer - Error code, 0 on success or other value on failure
 
 =cut
 
-sub getDOSLookForRule
-{
-	my ( $ruleName, $farmName ) = @_;
-
-	# table and chain where there are keep dos rules
-
- # active this when port scanning rule will be available
- #~ my @table = ( 'raw', 'filter', 'filter', 'raw', 'mangle' );
- #~ my @chain = ( 'PREROUTING', 'INPUT', 'FORWARD', 'PORT_SCANNING', 'PREROUTING' );
-
-	my @table = ( 'raw',        'filter', 'filter',  'mangle' );
-	my @chain = ( 'PREROUTING', 'INPUT',  'FORWARD', 'PREROUTING' );
-	my $farmNameRule;
-
-	my @output;
-	my $ind = -1;
-	for ( @table )
-	{
-		$ind++;
-
-		# Get line number
-		my @rules = &getIptListV4( $table[$ind], $chain[$ind] );
-
-		# Reverse @rules to delete first last rules
-		@rules = reverse ( @rules );
-
-		# Delete DoS global conf
-		foreach my $rule ( @rules )
-		{
-			my $flag = 0;
-			my $lineNum;
-
-			# Look for farm rule
-			if ( $farmName )
-			{
-				if ( $rule =~ /^(\d+) .+DOS_${ruleName}_$farmName \*/ )
-				{
-					$lineNum = $1;
-					$flag    = 1;
-				}
-			}
-
-			# Look for global rule
-			else
-			{
-				my $farmNameFormat = &getValidFormat( 'farm_name' );
-				if ( $rule =~ /^(\d+) .+DOS_$ruleName/ )
-				{
-					$lineNum      = $1;
-					$flag         = 1;
-					$farmNameRule = $2;
-				}
-			}
-			push @output, { line => $lineNum, table => $table[$ind], chain => $chain[$ind] }
-			  if ( $flag );
-		}
-	}
-	return \@output;
-}
-
-# return -1 if not exists
-# return  0 if exists
-# return  array with all rules if the function not receive params
-# &getDOSExists ( $rule );
-sub getDOSExists
-{
-	my $name       = shift;
-	my $output     = -1;
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
-	my $fileHandle = Config::Tiny->read( $confFile );
-	my @aux;
-
-	if ( $name )
-	{
-		$output = 0 if ( exists $fileHandle->{ $name } );
-	}
-	else
-	{
-		@aux    = keys %{ $fileHandle };
-		$output = \@aux;
-	}
-
-	return $output;
-}
-
-=begin nd
-Function: getDOSStatusRule
-
-	Check if there are some iptables rule
-
-Parameters:
-	String - Rule name 
-				
-Returns:
-	String - "up" if the rule is running or "down" if it is not running
-	
-=cut
-
-sub getDOSStatusRule
-{
-	my $rule     = shift;
-	my $status   = "down";
-	
-	# check system rules
-	if (&getDOSParam( $rule, 'type' ) eq 'system')
-	{
-		$status = &getDOSParam( $rule, 'status' );
-	}
-	# check farm rules
-	else
-	{
-		if ( @{ &getDOSLookForRule( $rule ) } )
-		{
-			$status = "up";
-		}
-	}
-	
-	return $status;
-}
-
-
-# key is the rule identifier
-# &createDOSRule( $rule, $rule );
-sub createDOSRule
-{
-	my $ruleName = shift;
-	my $rule     = shift;
-	my $params;
-
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
-	my $fileHandle = Config::Tiny->read( $confFile );
-	$fileHandle = Config::Tiny->read( $confFile );
-
-	if ( exists $fileHandle->{ $ruleName } )
-	{
-		&zenlog( "$ruleName rule already exists." );
-		return -1;
-	}
-	$params = &getDOSInitialParams( $rule );
-
-	if ( !$params )
-	{
-		&zenlog( "Error, saving $ruleName rule." );
-		return -2;
-	}
-
-	$fileHandle->{ $ruleName } = $params;
-	$fileHandle->{ $ruleName }->{ 'rule' } = $rule;
-	if ( $params->{ 'type' } eq 'farm' )
-	{
-		$fileHandle->{ $ruleName }->{ 'rule' } = $rule;
-		$fileHandle->{ $ruleName }->{ 'name' } = $ruleName;
-	}
-	$fileHandle->write( $confFile );
-	&zenlog( "$ruleName rule created successful." );
-
-	return 0;
-}
-
-sub deleteDOSRule
-{
-	my $name = shift;
-
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
-	my $fileHandle = Config::Tiny->read( $confFile );
-	$fileHandle = Config::Tiny->read( $confFile );
-
-	if ( !exists $fileHandle->{ $name } )
-	{
-		&zenlog( "$name rule doesn't exist." );
-		return -1;
-	}
-
-	delete $fileHandle->{ $name };
-	$fileHandle->write( $confFile );
-
-	return 0;
-}
-
-
-sub setDOSReloadFarmRules
-{
-	my $farmName = shift;
-
-	# get all lists
-	my $dosConf     = &getGlobalConfiguration( 'dosConf' );
-	my $allRulesRef = Config::Tiny->read( $dosConf );
-	my %allRules    = %{ $allRulesRef };
-
-	foreach my $dosRule ( keys %allRules )
-	{
-		if ( grep ( /^$farmName$/, @{ &getDOSParam( $dosRule, "farms" ) } ) )
-		{
-			&setDOSRunRule( $dosRule, $farmName );
-			&setDOSStopRule( $dosRule, $farmName );
-		}
-	}
-
-	#~ return $output;
-}
-
-=begin nd
-Function: setDOSCreateRule
-
-        Create a DoS rules
-        This rules have two types: applied to a farm or applied to the balancer
-
-        Parameters:
-				rule		 		- id that indetify a rule
-				farmname - farm name
-				
-        Returns:
-				== 0	- Successful
-             != 0	- Error
-
-=cut
-
-sub setDOSCreateRule
-{
-	my ( $ruleName, $farmName ) = @_;
-	my $confFile = &getGlobalConfiguration( 'dosConf' );
-	my $output;
-
-	if ( !-e $confFile )
-	{
-		if ( system ( &getGlobalConfiguration( 'touch' ) . " " . $confFile ) != 0 )
-		{
-			&zenlog( "Error creating " . $confFile );
-			return -2;
-		}
-	}
-
-	my $fileHandle = Config::Tiny->read( $confFile );
-
-	if ( $farmName )
-	{
-		my $farmList = $fileHandle->{ $ruleName }->{ 'farms' };
-		if ( $farmList !~ /(^| )$farmName( |$)/ )
-		{
-			$output = &setDOSRunRule( $ruleName, $farmName );
-
-			if ( $output != -2 )
-			{
-				$fileHandle = Config::Tiny->read( $confFile );
-				$fileHandle->{ $ruleName }->{ 'farms' } = "$farmList $farmName";
-				$fileHandle->write( $confFile );
-			}
-			else
-			{
-				&zenlog( "Rule $ruleName only is available for TCP protocol" );
-			}
-		}
-	}
-
-	# check param is down
-	elsif ( $fileHandle->{ $ruleName }->{ 'status' } ne "up" )
-	{
-		$fileHandle->{ $ruleName }->{ 'status' } = "up";
-		$fileHandle->write( $confFile );
-
-		$output = &setDOSRunRule( $ruleName );
-	}
-
-	return $output;
-}
-
-=begin nd
-        Function: setDOSCreateRule
-
-        Create a DoS rules
-        This rules have two types: applied to farm or balancer
-
-        Parameters:
-				rule		 - id that indetify a rule
-				farmname - farm name
-				
-        Returns:
-				== 0	- Successful
-             != 0	- Error
-
-=cut
-
-sub setDOSDeleteRule
-{
-	my ( $ruleName, $farmName ) = @_;
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
-	my $fileHandle = Config::Tiny->read( $confFile );
-	my $output;
-
-	if ( -e $confFile )
-	{
-		if ( $farmName )
-		{
-			$fileHandle->{ $ruleName }->{ 'farms' } =~ s/(^| )$farmName( |$)/ /;
-			$fileHandle->write( $confFile );
-			$output = &setDOSStopRule( $ruleName, $farmName );
-		}
-		else
-		{
-			$fileHandle->{ $ruleName }->{ 'status' } = "down";
-			$fileHandle->write( $confFile );
-			$output = &setDOSStopRule( $ruleName );
-		}
-	}
-	return $output;
-}
-
-# Only TCP farms
-### Block packets with bogus TCP flags ###
-# &setDOSBogusTcpFlagsRule ( ruleOpt )
 sub setDOSBogusTcpFlagsRule
 {
 	my ( $ruleName, $ruleOptRef ) = @_;
@@ -917,12 +380,28 @@ sub setDOSBogusTcpFlagsRule
 	return $output;
 }
 
-### Limit connections per source IP ###
-# &setDOSLimitConnsRule ( ruleOpt )
+=begin nd
+Function: setDOSLimitConnsRule
+
+	Run the iptables rules necessary to reject connections when a source IP reach the limit of connections.
+	This rule only can be applied to farms working with TCP protocol.
+
+Parameters:
+	ruleName	- Rule name
+	farmname 	- Farm name
+				
+Returns:
+	Integer - Error code, 0 on success or other value on failure
+
+=cut
+
 sub setDOSLimitConnsRule
 {
 	my ( $ruleName, $ruleOptRef ) = @_;
 	my %ruleOpt = %{ $ruleOptRef };
+
+	require Zevenet::Farm::Core;
+	require Zevenet::Farm::Backend;
 
 	#~ my $rule    = "limitconns";
 	my $logMsg = &createLogMsg( $ruleName, $ruleOpt{ 'farmName' } );
@@ -952,8 +431,7 @@ sub setDOSLimitConnsRule
 			  . "-m connlimit --connlimit-above $limit_conns "    # rules for block
 			  . "-m comment --comment \"DOS_${ruleName}_$ruleOpt{ 'farmName' }\""; # comment
 
-			$output = &iptSystem( "$cmd -j LOG  --log-prefix \"$logMsg\" --log-level 4 " );
-
+			$output = &iptSystem( "$cmd -j LOG --log-prefix \"$logMsg\" --log-level 4 " );
 			$output = &iptSystem( "$cmd -j REJECT --reject-with tcp-reset" );
 		}
 	}
@@ -982,9 +460,21 @@ sub setDOSLimitConnsRule
 	return $output;
 }
 
-# Only TCP farms
-### Limit RST packets ###
-# &setDOSLimitRstRule ( ruleOpt )
+=begin nd
+Function: setDOSLimitRstRule
+
+	Run the iptables rules necessary to limit the number of RST packet for a TCP per second for a connection.
+	This rule only can be applied to farms working with TCP protocol.
+
+Parameters:
+	ruleName	- Rule name
+	farmname 	- Farm name
+				
+Returns:
+	Integer - Error code, 0 on success or other value on failure
+
+=cut
+
 sub setDOSLimitRstRule
 {
 	my ( $ruleName, $ruleOptRef ) = @_;
@@ -1027,8 +517,20 @@ sub setDOSLimitRstRule
 	return $output;
 }
 
-### Limit new TCP connections per second per source IP ###
-# &setDOSLimitSecRule ( ruleOpt )
+=begin nd
+Function: setDOSLimitSecRule
+
+	Run the iptables rules necessary to limit the number of new connections per second.
+
+Parameters:
+	ruleName	- Rule name
+	farmname 	- Farm name
+				
+Returns:
+	Integer - Error code, 0 on success or other value on failure
+
+=cut
+
 sub setDOSLimitSecRule
 {
 	my ( $ruleName, $ruleOptRef ) = @_;
@@ -1071,9 +573,20 @@ sub setDOSLimitSecRule
 	return $output;
 }
 
-# All balancer
-###  Drop ICMP ###
-# &setDOSDropIcmpRule ( ruleOpt )
+=begin nd
+Function: setDOSDropIcmpRule
+
+	This rule applies the necessary rules to desable the ping response
+	This rule applies to the balancer.
+
+Parameters:
+	none -.
+
+Returns:
+	Integer - Code error: 0 on success or other value on failure
+
+=cut
+
 sub setDOSDropIcmpRule
 {
 	my $rule = "drop_icmp";
@@ -1097,26 +610,22 @@ sub setDOSDropIcmpRule
 }
 
 =begin nd
-        Function: setDOSSshBruteForceRule
+Function: setDOSSshBruteForceRule
 
-        This rule is a protection against brute-force atacks to ssh protocol.
-        This rule applies to the balancer
+	This rule is a protection against brute-force atacks to ssh protocol.
+	This rule applies to the balancer
 
-        Parameters:
-				
-        Returns:
-				== 0	- successful
-                != 0	- error
+Parameters:
+	none -.
+
+Returns:
+	Integer - Code error: 0 on success or other value on failure
 
 =cut
 
-# balancer
-### SSH brute-force protection ###
-# &setDOSSshBruteForceRule
 sub setDOSSshBruteForceRule
 {
 	require Zevenet::System::SSH;
-	require Zevenet::Cluster;
 
 	my $rule = 'ssh_brute_force';
 	my $hits = &getDOSParam( $rule, 'hits' );
@@ -1128,7 +637,6 @@ sub setDOSSshBruteForceRule
 	my $logMsg  = &createLogMsg( $rule );
 	my $output;
 	my $cmd;
-
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --set
 	$cmd =
@@ -1161,39 +669,122 @@ sub setDOSSshBruteForceRule
 	return $output;
 }
 
+=begin nd
+Function: setDOSApplyRule
+	
+	Enable a DoS rule for rules of farm or system type
+	Farm type: Link a DoS rule with a farm
+	System type: Put rule in up status
 
-sub getDOSZapiRule
+Parameters:
+	rule	- Rule name
+	farmname - Farm name
+				
+Returns:
+	Integer - Error code. 0 on succes or other value on failure.
+
+=cut
+
+sub setDOSApplyRule
 {
-	my $ruleName = shift;
-	my $output;
+	my ( $ruleName, $farmName ) = @_;
 
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
+	require Zevenet::Farm::Base;
+	
+	my $confFile = &getGlobalConfiguration( 'dosConf' );
+	my $output;
+	my $rule = &getDOSParam( $ruleName, 'rule' );
+	my $protocol = &getFarmProto( $farmName );
+
+	if (    ( $rule eq 'DROPFRAGMENTS' )
+		 || ( $rule eq 'NEWNOSYN' )
+		 || ( $rule eq 'SYNWITHMSS' )
+		 || ( $rule eq 'bogustcpflags' )
+		 || ( $rule eq 'limitrst' )
+		 || ( $rule eq 'SYNPROXY' ) )
+	{
+		if ( $protocol !~ /TCP/i && $protocol !~ /FTP/i )
+		{
+			&zenlog(
+					 "$rule rule is only available in farms based in protocol TCP or FTP." );
+			return -1;
+		}
+	}
+
 	my $fileHandle = Config::Tiny->read( $confFile );
 
-	# get all params
-	my %hash = %{ $fileHandle->{ $ruleName } };
-
-	# return in integer format if this value is a number
-	# It is neccessary for zapi
-	foreach my $key ( keys %hash )
+	if ( $farmName )
 	{
-		$hash{ $key } += 0 if ( $hash{ $key } =~ /^\d+$/ );
+		my $farmList = $fileHandle->{ $ruleName }->{ 'farms' };
+		if ( $farmList !~ /(^| )$farmName( |$)/ )
+		{
+			$fileHandle = Config::Tiny->read( $confFile );
+			$fileHandle->{ $ruleName }->{ 'farms' } = "$farmList $farmName";
+			$fileHandle->write( $confFile );
+		}
+		else
+		{
+			&zenlog( "Rule $ruleName only is available for TCP protocol" );
+		}
+
+		if ( &getFarmBootStatus( $farmName ) eq "up" )
+		{
+			$output = &setDOSRunRule( $ruleName, $farmName );
+		}
 	}
 
-	# replace farms string for a array reference
-	if ( exists $fileHandle->{ $ruleName }->{ 'farms' } )
+	# check param is down
+	elsif ( $fileHandle->{ $ruleName }->{ 'status' } ne "up" )
 	{
-		my @aux = split ( ' ', $fileHandle->{ $ruleName }->{ 'farms' } );
-		$hash{ 'farms' } = \@aux;
-		# add rule status in farm dos rules
-		$hash{ 'status' } = &getDOSStatusRule( $ruleName );
+		$fileHandle->{ $ruleName }->{ 'status' } = "up";
+		$fileHandle->write( $confFile );
+
+		$output = &setDOSRunRule( $ruleName );
 	}
 
-	$output = \%hash;
-	
 	return $output;
 }
 
+=begin nd
 
+Function: setDOSUnsetRule
+	
+	Enable a DoS rule for rules of farm or system type
+	Farm type: Unlink a DoS rule with a farm
+	System type: Put rule in down status
+
+Parameters:
+	rule	- Rule name
+	farmname - Farm name
+				
+Returns:
+	Integer - Error code. 0 on succes or other value on failure.
+
+=cut
+
+sub setDOSUnsetRule
+{
+	my ( $ruleName, $farmName ) = @_;
+	my $confFile   = &getGlobalConfiguration( 'dosConf' );
+	my $fileHandle = Config::Tiny->read( $confFile );
+	my $output;
+
+	if ( -e $confFile )
+	{
+		if ( $farmName )
+		{
+			$fileHandle->{ $ruleName }->{ 'farms' } =~ s/(^| )$farmName( |$)/ /;
+			$fileHandle->write( $confFile );
+			$output = &setDOSStopRule( $ruleName, $farmName );
+		}
+		else
+		{
+			$fileHandle->{ $ruleName }->{ 'status' } = "down";
+			$fileHandle->write( $confFile );
+			$output = &setDOSStopRule( $ruleName );
+		}
+	}
+	return $output;
+}
 
 1;

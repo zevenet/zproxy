@@ -256,24 +256,9 @@ sub runFarmDelete    # ($farm_name)
 	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
 	
 	#delete IPDS rules
-	if ( eval { require Zevenet::IPDS::Core; } )
+	if ( eval { require Zevenet::IPDS::Action; } )
 	{
-		require Zevenet::IPDS::Blacklist;
-		require Zevenet::IPDS::DoS;
-
-		my $ipds = &getIPDSfarmsRules( $farm_name );
-
-		# delete black lists
-		foreach my $listName ( @{$ipds->{'blacklists'}} )
-		{ 
-			&setBLRemFromFarm( $farm_name, $listName );
-		}
-
-		# delete dos rules
-		foreach my $dos ( @{$ipds->{'dos'}} )
-		{ 
-			&setDOSDeleteRule( $dos, $farm_name );
-		}
+		&runIPDSStopByFarm ( $farm_name );
 	}
 
 	my $farm_type = &getFarmType( $farm_name );

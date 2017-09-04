@@ -21,16 +21,9 @@
 #
 ###############################################################################
 
-use strict;
-
-use Config::Tiny;
-use Tie::File;
-
-use Zevenet::Core;
-use Zevenet::IPDS::Core;
-use Zevenet::Farm;
-
-use Zevenet::IPDS::DoS::DoS;
+use Zevenet::IPDS::DoS::Core;
+use Zevenet::IPDS::DoS::Runtime;
+use Zevenet::IPDS::DoS::Config;
 use Zevenet::IPDS::DoS::Actions;
 
 1;
