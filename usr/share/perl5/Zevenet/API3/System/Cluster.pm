@@ -44,12 +44,12 @@ my $maint_if = 'cl_maintenance';
 
 sub get_cluster
 {
-	my $description = "Show the cluster configuration";
+	my $desc = "Show the cluster configuration";
 
 	unless ( &getZClusterStatus() )
 	{
 		my $body = {
-					 description => $description,
+					 description => $desc,
 					 success     => 'true',
 					 message     => "There is no cluster configured on this node.",
 		};
@@ -82,7 +82,7 @@ sub get_cluster
 	$cluster->{ check_interval } += 0;
 
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => $cluster,
 	};
 
@@ -93,19 +93,13 @@ sub modify_cluster
 {
 	my $json_obj = shift;
 
-	my $description = "Modifying the cluster configuration";
+	my $desc = "Modifying the cluster configuration";
 	my $filecluster = &getGlobalConfiguration('filecluster');
 
 	unless ( &getZClusterStatus() )
 	{
-		my $errormsg = "The cluster must be configured";
-		my $body = {
-					 description => $description,
-					 error       => 'true',
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "The cluster must be configured";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my @cl_opts = ('check_interval','failback');
@@ -113,27 +107,15 @@ sub modify_cluster
 	# validate CLUSTER parameters
 	if ( grep { ! ( @cl_opts ~~ /^$_$/ ) } keys %$json_obj )
 	{
-		my $errormsg = "Cluster parameter not recognized";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Cluster parameter not recognized";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# do not allow request without parameters
 	unless ( scalar keys %$json_obj )
 	{
-		my $errormsg = "Cluster setting requires at least one parameter";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Cluster setting requires at least one parameter";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $zcl_conf        = &getZClusterConfig();
@@ -147,14 +129,8 @@ sub modify_cluster
 		unless (    $json_obj->{ check_interval }
 				 && &getValidFormat( 'natural_num', $json_obj->{ check_interval } ) )
 		{
-			my $errormsg = "Invalid check interval value";
-			my $body = {
-						 description => $description,
-						 error      => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "Invalid check interval value";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		# change deadratio
@@ -170,28 +146,16 @@ sub modify_cluster
 	{
 		unless ( &getZClusterStatus() )
 		{
-			my $errormsg = "Setting a primary node Error configuring the cluster";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "Setting a primary node Error configuring the cluster";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		my @failback_opts = ( 'disabled', $local_hostname, $remote_hostname );
 
 		unless( @failback_opts ~~ /^$json_obj->{ failback }$/ )
 		{
-			my $errormsg = "Primary node value not recognized";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "Primary node value not recognized";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		if ( $zcl_conf->{_}->{ primary } ne $json_obj->{ failback } )
@@ -203,15 +167,8 @@ sub modify_cluster
 
 	unless ( $changed_config )
 	{
-		# Error
-		my $errormsg = "Nothing to be changed";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Nothing to be changed";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	eval {
@@ -249,102 +206,66 @@ sub modify_cluster
 			);
 		}
 	};
-	if ( ! $@ )
+	if ( $@ )
 	{
-		# Success
-		my $local_hn  = &getHostname();
-		my $cluster = {
-						check_interval => $zcl_conf->{ _ }->{ deadratio } // $DEFAULT_DEADRATIO,
-						failback       => $zcl_conf->{ _ }->{ primary }   // $local_hn,
-		};
-
-		$cluster->{ check_interval } += 0;
-
-		my $body = {
-					 description => $description,
-					 params      => $cluster,
-		};
-
-		&httpResponse({ code => 200, body => $body });
+		my $msg = "Error configuring the cluster";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg, log_msg => $@ );
 	}
-	else
-	{
-		# Error
-		&zenlog( $@ );
 
-		my $errormsg = "Error configuring the cluster";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
+	my $local_hn  = &getHostname();
+	my $cluster = {
+					check_interval => $zcl_conf->{ _ }->{ deadratio } // $DEFAULT_DEADRATIO,
+					failback       => $zcl_conf->{ _ }->{ primary }   // $local_hn,
+	};
 
-		&httpResponse({ code => 400, body => $body });
-	}
+	$cluster->{ check_interval } += 0;
+
+	my $body = {
+				 description => $desc,
+				 params      => $cluster,
+	};
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 sub set_cluster_actions
 {
 	my $json_obj = shift;
 
-	my $description = "Setting cluster action";
+	my $desc = "Setting cluster action";
 
 	# validate ACTION parameter
 	unless ( exists $json_obj->{ action } )
 	{
-		my $errormsg = "Action parameter required";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Action parameter required";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# do not allow requests without parameters
 	unless ( scalar keys %$json_obj )
 	{
-		my $errormsg = "Cluster actions requires at least the action parameter";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Cluster actions requires at least the action parameter";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# ACTIONS: maintenance
 	if ( $json_obj->{ action } eq 'maintenance' )
 	{
-		my $description = "Setting maintenance mode";
+		my $desc = "Setting maintenance mode";
 
 		# make sure the cluster is enabled
 		unless ( &getZClusterStatus() )
 		{
-			my $errormsg = "The cluster must be enabled";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "The cluster must be enabled";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		# validate parameters
 		my @cl_opts = ('action','status');
 		unless ( grep { @cl_opts ~~ /^(?:$_)$/ } keys %$json_obj )
 		{
-			my $errormsg = "Unrecognized parameter received";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "Unrecognized parameter received";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		# Enable maintenance mode
@@ -357,14 +278,8 @@ sub set_cluster_actions
 
 			if ( $if_ref->{ status } eq 'down' )
 			{
-				my $errormsg = "The node is already under maintenance";
-				my $body = {
-							 description => $description,
-							 error       => "true",
-							 message     => $errormsg
-				};
-
-				&httpResponse({ code => 400, body => $body });
+				my $msg = "The node is already under maintenance";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
@@ -381,14 +296,8 @@ sub set_cluster_actions
 
 			if ( $if_ref->{ status } eq 'up' )
 			{
-				my $errormsg = "The node is not under maintenance";
-				my $body = {
-							 description => $description,
-							 error       => "true",
-							 message     => $errormsg
-				};
-
-				&httpResponse({ code => 400, body => $body });
+				my $msg = "The node is not under maintenance";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
@@ -399,19 +308,13 @@ sub set_cluster_actions
 		}
 		else
 		{
-			my $errormsg = "Status parameter not recognized";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "Status parameter not recognized";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	
 		my $message = "Cluster status changed to $json_obj->{status} successfully";
 		my $body = {
-					 description => $description,
+					 description => $desc,
 					 success => 'true',
 					 message      => $message,
 		};
@@ -420,32 +323,20 @@ sub set_cluster_actions
 	}
 	else
 	{
-		my $errormsg = "Cluster action not recognized";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Cluster action not recognized";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 }
 
 sub disable_cluster
 {
-	my $description = "Disabling cluster";
+	my $desc = "Disabling cluster";
 
 	# make sure the cluster is enabled
 	unless ( &getZClusterStatus() )
 	{
-		my $errormsg = "The cluster is already disabled";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "The cluster is already disabled";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# handle remote host when disabling cluster
@@ -519,7 +410,7 @@ sub disable_cluster
 	
 	my $message = "Cluster disabled successfully";
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 success => 'true',
 				 message      => $message,
 	};
@@ -531,46 +422,28 @@ sub enable_cluster
 {
 	my $json_obj = shift;
 
-	my $description = "Enabling cluster";
+	my $desc = "Enabling cluster";
 
 	# do not allow requests without parameters
 	unless ( scalar keys %$json_obj )
 	{
-		my $errormsg = "Cluster actions requires at least the action parameter";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Cluster actions requires at least the action parameter";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate parameters
 	my @cl_opts = ('local_ip','remote_ip','remote_password');
 	if ( grep { ! ( @cl_opts ~~ /^$_$/ ) } keys %$json_obj )
 	{
-		my $errormsg = "Unrecognized parameter received";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Unrecognized parameter received";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# the cluster cannot be already enabled
 	if ( &getZClusterStatus() )
 	{
-		my $errormsg = "The cluster is already enabled";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "The cluster is already enabled";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate LOCAL IP
@@ -581,40 +454,22 @@ sub enable_cluster
 
 	unless ( scalar grep { $json_obj->{ local_ip } eq $_->{ addr } } @cl_if_candidates )
 	{
-		my $errormsg = "Local IP address value is not valid";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Local IP address value is not valid";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate REMOTE IP format
 	unless ( $json_obj->{ remote_ip } && &getValidFormat( 'IPv4_addr', $json_obj->{ remote_ip } ) )
 	{
-		my $errormsg = "Remote IP address has invalid format";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Remote IP address has invalid format";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate REMOTE PASSWORD
 	unless ( exists $json_obj->{ remote_password } && defined $json_obj->{ remote_password } )
 	{
-		my $errormsg = "A remote node password must be defined";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "A remote node password must be defined";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	eval {
@@ -705,42 +560,31 @@ sub enable_cluster
 		&zenlog( "rc:$? $cl_output" );
 		
 	};
-	if ( ! $@ )
+	if ( $@ )
 	{
-		my $message = "Cluster enabled successfully";
-		my $body = {
-					 description => $description,
-					 success => 'true',
-					 message      => $message,
-		};
-
-		&httpResponse({ code => 200, body => $body });
+		my $msg = "An error happened configuring the cluster.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg, log_msg => $@ );
 	}
-	else
-	{
-		&zenlog( "An error happened configuring the cluster: $@" );
-		my $errormsg = "An error happened configuring the cluster.";
-		$errormsg =~ s/ at \/.+//;
-		$errormsg =~ s/\n//;
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
 
-		&httpResponse({ code => 400, body => $body });
-	}
+	my $message = "Cluster enabled successfully";
+	my $body = {
+				 description => $desc,
+				 success => 'true',
+				 message      => $message,
+	};
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 sub get_cluster_localhost_status
 {
-	my $description = "Cluster status for localhost";
+	my $desc = "Cluster status for localhost";
 
 	my $node = &getZClusterNodeStatusDigest();
 	$node->{ name } = &getHostname();
 
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => $node,
 	};
 
@@ -749,7 +593,7 @@ sub get_cluster_localhost_status
 
 sub get_cluster_nodes_status
 {
-	my $description = "Cluster nodes status";
+	my $desc = "Cluster nodes status";
 	my $localhost = &getHostname();
 	my @cluster;
 
@@ -774,9 +618,6 @@ sub get_cluster_nodes_status
 			my $ip = $cl_conf->{ $node_name }->{ ip };
 			my $node = &getZClusterNodeStatusDigest( $ip );
 
-			#~ my $if_ref = getSystemInterface( $maint_if );
-			#~ if ( $if_ref->{ status } eq 'down' )
-
 			$node->{ name } = $node_name;
 			$node->{ ip } = $ip;
 			$node->{ node } = ( $node_name eq $localhost ) ? 'local' : 'remote';
@@ -786,7 +627,7 @@ sub get_cluster_nodes_status
 	}
 
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => \@cluster,
 	};
 
