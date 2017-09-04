@@ -162,7 +162,7 @@ sub setSsh
 	untie @file;
 
 	# restart service to apply changes
-	require Zevenet::IPDS::DoS;
+	require Zevenet::IPDS::DoS::Config;
 	$output = system ( &getGlobalConfiguration( 'sshService' ) . " restart" );
 	&setDOSParam( 'ssh_brute_force', 'port', $sshConf->{ 'port' } );
 

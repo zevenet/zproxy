@@ -25,6 +25,19 @@ use strict;
 use Config::Tiny;
 use Zevenet::IPDS::DoS::Core;
 
+=begin nd
+Function: getDOSInitialParams
+
+	Get a struct with the parameters of a DoS rule
+
+Parameters:
+	rule	 - Rule name
+				
+Returns:
+	Hash ref - Parameters for the rule
+
+=cut
+
 sub getDOSInitialParams
 {
 	my $rule = shift;
@@ -68,6 +81,19 @@ sub getDOSInitialParams
 
 	return $initial{ $rule };
 }
+
+=begin nd
+Function: setDOSCreateFileConf
+
+	Create the directory and DoS configuration files if they are not exist
+
+Parameters:
+	none	 - .
+				
+Returns:
+	Integer - Error code. 0 on success or other value on failure
+
+=cut
 
 sub setDOSCreateFileConf
 {
@@ -114,7 +140,21 @@ sub setDOSCreateFileConf
 	return $output;
 }
 
-# &setDOSParam ($name,$param,$value)
+=begin nd
+Function: getDOSInitialParams
+
+	Change a value in conf file
+
+Parameters:
+	rule	 - Rule name
+	parameter	 - Parameter to change
+	value	 - Value for the parameter
+				
+Returns:
+	none - .
+
+=cut
+
 sub setDOSParam
 {
 	my $name  = shift;
@@ -122,9 +162,10 @@ sub setDOSParam
 	my $value = shift;
 
 	require Zevenet::IPDS::DoS::Actions;
-	
+
 	#Stop related rules
-	&runDOSStopByRule( $name );
+	my $status = &getDOSStatusRule( $rule );
+	&runDOSStopByRule( $name ) if ( $status eq "up" );
 
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
@@ -133,11 +174,23 @@ sub setDOSParam
 	$fileHandle->{ $name }->{ $param } = $value;
 	$fileHandle->write( $confFile );
 
-	&runDOSStartByRule( $name );
+	&runDOSStartByRule( $name ) if ( $status eq "up" );
 }
 
-# key is the rule identifier
-# &createDOSRule( $rule, $rule );
+=begin nd
+Function: getDOSInitialParams
+
+	Create a DoS rule in the config file
+
+Parameters:
+	name	 - Rule name
+	rule	 - key that identify the DoS rule type
+				
+Returns:
+	Integer - Error code. 0 on success or other value on failure
+
+=cut
+
 sub createDOSRule
 {
 	my $ruleName = shift;
@@ -173,6 +226,19 @@ sub createDOSRule
 
 	return 0;
 }
+
+=begin nd
+Function: deleteDOSRule
+
+	Delete a DoS rule from the config file
+
+Parameters:
+	rule	 - Rule name
+				
+Returns:
+	none - .
+
+=cut
 
 sub deleteDOSRule
 {

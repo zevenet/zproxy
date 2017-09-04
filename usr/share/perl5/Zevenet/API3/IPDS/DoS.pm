@@ -221,10 +221,15 @@ sub set_dos_rule
 			# output
 			if ( !$errormsg )
 			{
+				require Zevenet::IPDS::DoS::Actions;
+				my $status = &getDOSStatusRule( $name );
+				&runDOSStopByRule( $name ) if ( $status eq "up" );
+
 				foreach my $param ( keys %{ $json_obj } )
 				{
 					&setDOSParam( $name, $param, $json_obj->{ $param } );
 				}
+				&runDOSStartByRule( $name ) if ( $status eq "up" );
 
 				if ( !$errormsg )
 				{
