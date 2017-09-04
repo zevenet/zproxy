@@ -32,152 +32,81 @@ sub farm_actions # ( $json_obj, $farmname )
 
 	require Zevenet::Farm::Action;
 
-	my $description = "Farm actions";
+	my $desc = "Farm actions";
 	my $action;
 
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		my $errormsg = "The farmname $farmname does not exists.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "The farmname $farmname does not exists.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	# Check input errors
-	if ( $json_obj->{ action } =~ /^(?:stop|start|restart)$/ )
+	# Check action parameter
+	if ( not exists $json_obj->{ action } )
 	{
-		$action = $json_obj->{ action };
+		my $msg = "No action has been requested.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	else
-	{
-		&zenlog( "ZAPI error, trying to set an action." );
 
-		my $errormsg = "Invalid action; the possible actions are stop, start and restart";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 400, body => $body });
-	}
-	
-	# Functions
-	if ( $action eq "stop" )
+	if ( $json_obj->{ action } eq "stop" )
 	{
 		my $status = &runFarmStop( $farmname, "true" );
 
 		if ( $status != 0 )
 		{
-			my $errormsg = "Error trying to set the action stop in farm $farmname.";
-			&zenlog( $errormsg );
-
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg,
-			};
-
-			&httpResponse({ code => 400, body => $body });
-		}
-		else
-		{
-			&zenlog(
-					  "ZAPI success, the action stop has been established in farm $farmname." );
-
-			if ( eval { require Zevenet::Cluster; } )
-			{
-				&runZClusterRemoteManager( 'farm', 'stop', $farmname );
-			}
+			my $msg = "Error trying to set the action stop in farm $farmname.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
-
-	if ( $action eq "start" )
+	elsif ( $json_obj->{ action } eq "start" )
 	{
 		my $status = &runFarmStart( $farmname, "true" );
 
-		if ( $status != 0 )
+		if ( $status )
 		{
-			my $errormsg = "Error trying to set the action start in farm $farmname.";
-			&zenlog( $errormsg );
-
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg,
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "Error trying to set the action start in farm $farmname.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		else
-		{
-			&zenlog(
-					 "ZAPI success, the action start has been established in farm $farmname." );
-
-			if ( eval { require Zevenet::Cluster; } )
-			{
-				&runZClusterRemoteManager( 'farm', 'start', $farmname );
-			}
-		}
-
 	}
-
-	if ( $action eq "restart" )
+	elsif ( $json_obj->{ action } eq "restart" )
 	{
 		my $status = &runFarmStop( $farmname, "true" );
 
-		if ( $status != 0 )
+		if ( $status )
 		{
-			my $errormsg = "Error trying to stop the farm in the action restart in farm $farmname.";
-			&zenlog( $errormsg );
-
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg,
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "Error trying to stop the farm in the action restart in farm $farmname.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		$status = &runFarmStart( $farmname, "true" );
 
-		if ( $status == 0 )
+		if ( $status )
 		{
-			my $type = &getFarmType( $farmname );
-
-			if ( $type eq "http" || $type eq "https" )
-			{
-				&setHTTPFarmBackendStatus( $farmname );
-			}
-
-			&setFarmNoRestart( $farmname );
-			&zenlog(
-				   "ZAPI success, the action restart has been established in farm $farmname." );
-
-			if ( eval { require Zevenet::Cluster; } )
-			{
-				&runZClusterRemoteManager( 'farm', 'restart', $farmname );
-			}
+			my $msg = "ZAPI error, trying to start the farm in the action restart in farm $farmname.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		else
+
+		my $type = &getFarmType( $farmname );
+
+		if ( $type eq "http" || $type eq "https" )
 		{
-			my $errormsg = "ZAPI error, trying to start the farm in the action restart in farm $farmname.";
-			&zenlog( $errormsg );
-
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg,
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			&setHTTPFarmBackendStatus( $farmname );
 		}
+
+		&setFarmNoRestart( $farmname );
+	}
+	else
+	{
+		my $msg = "Invalid action; the actions available are stop, start and restart";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	&zenlog( "ZAPI success, the action $json_obj->{ action } has been performed in farm $farmname." );
+
+	if ( eval { require Zevenet::Cluster; } )
+	{
+		&runZClusterRemoteManager( 'farm', $json_obj->{ action }, $farmname );
 	}
 
 	my $body = {
@@ -197,32 +126,20 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	my $service    = shift;
 	my $backend_id = shift;
 
-	my $description = "Set service backend status";
+	my $desc = "Set service backend status";
 
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) eq '-1' )
 	{
-		my $errormsg = "The farmname $farmname does not exists.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "The farmname $farmname does not exists.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# validate FARM TYPE
 	if ( &getFarmType( $farmname ) !~ /^https?$/ )
 	{
-		my $errormsg = "Only HTTP farm profile supports this feature.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "Only HTTP farm profile supports this feature.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate SERVICE
@@ -243,69 +160,49 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 
 		if ( !$found_service )
 		{
-			my $errormsg = "Could not find the requested service.";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 404, body => $body });
+			my $msg = "Could not find the requested service.";
+			&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 		}
 	}
 
 	# validate BACKEND
 	my $be;
+
+	require Zevenet::Farm::Config;
+
+	my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
+	my @be_list = split ( "\n", $backendsvs );
+
+	foreach my $be_line ( @be_list )
 	{
-		require Zevenet::Farm::Config;
+		my @current_be = split ( " ", $be_line );
 
-		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
-		my @be_list = split ( "\n", $backendsvs );
+		next if $current_be[1] != $backend_id;
 
-		foreach my $be_line ( @be_list )
-		{
-			my @current_be = split ( " ", $be_line );
+		$be = {
+				id       => $current_be[1],
+				ip       => $current_be[3],
+				port     => $current_be[5],
+				timeout  => $current_be[7],
+				priority => $current_be[9],
+		};
 
-			if ( $current_be[1] == $backend_id )
-			{
-				$be = {
-						id       => $current_be[1],
-						ip       => $current_be[3],
-						port     => $current_be[5],
-						timeout  => $current_be[7],
-						priority => $current_be[9],
-				};
+		last;
+	}
 
-				last;
-			}
-		}
-
-		if ( !$be )
-		{
-			my $errormsg = "Could not find a service backend with such id.";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg,
-			};
-
-			&httpResponse({ code => 404, body => $body });
-		}
+	if ( !$be )
+	{
+		my $msg = "Could not find a service backend with such id.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# Do not allow to modify the maintenance status if the farm needs to be restarted
 	require Zevenet::Farm::Base;
 
-	if ( &getFarmLock ($farmname) != -1 )
+	if ( &getFarmLock( $farmname ) != -1 )
 	{
-		my $errormsg = "The farm needs to be restarted before to apply this action.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "The farm needs to be restarted before to apply this action.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	require Zevenet::Farm::Backend::Maintenance;
@@ -314,18 +211,15 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	if ( $json_obj->{ action } eq "maintenance" )
 	{
 		my $maintenance_mode = "drain";	# default
+
 		if ( defined $json_obj->{ mode } )
 		{
 			if ( ! &getValidFormat( 'farm_maintenance_mode', $json_obj->{ mode } ) )
 			{
-				my $errormsg = "Error, the maintenance mode is not a valid value.";
-				my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-				};
-				&httpResponse({ code => 400, body => $body });
+				my $msg = "Error, the maintenance mode is not a valid value.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
+
 			$maintenance_mode = $json_obj->{ mode };
 		}
 		
@@ -335,16 +229,10 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 			"Changing status to maintenance of backend $backend_id in service $service in farm $farmname"
 		);
 
-		if ( $? ne 0 )
+		if ( $? )
 		{
-			my $errormsg = "Errors found trying to change status backend to maintenance";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "Errors found trying to change status backend to maintenance";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 	elsif ( $json_obj->{ action } eq "up" )
@@ -354,32 +242,20 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 		&zenlog(
 			 "Changing status to up of backend $backend_id in service $service in farm $farmname" );
 
-		if ( $? ne 0 )
+		if ( $? )
 		{
-			my $errormsg = "Errors found trying to change status backend to up";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "Errors found trying to change status backend to up";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 	else
 	{
-		my $errormsg = "Invalid action; the possible actions are up and maintenance";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Invalid action; the possible actions are up and maintenance";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => { action => $json_obj->{ action } },
 	};
 
@@ -402,32 +278,20 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 	my $farmname   = shift;
 	my $backend_id = shift;
 
-	my $description = "Set backend status";
+	my $desc = "Set backend status";
 
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		my $errormsg = "The farmname $farmname does not exists.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "The farmname $farmname does not exists.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# validate FARM TYPE
 	unless ( &getFarmType( $farmname ) eq 'l4xnat' )
 	{
-		my $errormsg = "Only L4xNAT farm profile supports this feature.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "Only L4xNAT farm profile supports this feature.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# validate BACKEND
@@ -438,32 +302,29 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 
 	if ( !$backend_line )
 	{
-		my $errormsg = "Could not find a backend with such id.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
+		my $msg = "Could not find a backend with such id.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
 
-		&httpResponse({ code => 404, body => $body });
+	if ( not exists $json_obj->{ action } )
+	{
+		my $msg = "No maintenance action was requested.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate STATUS
 	if ( $json_obj->{ action } eq "maintenance" )
 	{
 		my $maintenance_mode = "drain";	# default
+
 		if ( defined $json_obj->{ mode } )
 		{
 			if ( ! &getValidFormat( 'farm_maintenance_mode', $json_obj->{ mode } ) )
 			{
-				my $errormsg = "Error, the maintenance mode is not a valid value.";
-				my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-				};
-				&httpResponse({ code => 400, body => $body });
+				my $msg = "Error, the maintenance mode is not a valid value.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
+
 			$maintenance_mode = $json_obj->{ mode };
 		}
 		
@@ -475,49 +336,31 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 
 		if ( $status != 0 )
 		{
-			my $errormsg = "Errors found trying to change status backend to maintenance";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "Errors found trying to change status backend to maintenance";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 	elsif ( $json_obj->{ action } eq "up" )
 	{
 		my $status = &setFarmBackendNoMaintenance( $farmname, $backend_id );
 
-		&zenlog(
-			 "Changing status to up of backend $backend_id in farm $farmname" );
+		&zenlog( "Changing status to up of backend $backend_id in farm $farmname" );
 
-		if ( $status != 0 )
+		if ( $status )
 		{
-			my $errormsg = "Errors found trying to change status backend to up";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "Errors found trying to change status backend to up";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 	else
 	{
-		my $errormsg = "Invalid action; the possible actions are up and maintenance";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Invalid action; the possible actions are up and maintenance";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	# no error found, send successful response
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => { action => $json_obj->{ action } },
 	};
 
