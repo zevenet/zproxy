@@ -21,14 +21,9 @@
 #
 ###############################################################################
 
-use strict;
-use Tie::File;
-
-use Zevenet::Core;
-use Zevenet::Debug;
-use Zevenet::IPDS::Core;
-
-use Zevenet::IPDS::RBL::RBL;
+use Zevenet::IPDS::RBL::Core;
+use Zevenet::IPDS::RBL::Config;
+use Zevenet::IPDS::RBL::Runtime;
 use Zevenet::IPDS::RBL::Actions;
 
 1;

@@ -543,7 +543,7 @@ sub setBLCronTask
 
 		if ( $rblFormat->{ 'frequency' } eq 'weekly' )
 		{
-			use Switch;
+			require Switch;
 			switch ( $rblFormat->{ 'day' } )
 			{
 				case 'monday'    { $cronFormat->{ 'dow' } = '0' };

@@ -21,7 +21,7 @@
 ###############################################################################
 
 use strict;
-use Zevenet::IPDS::RBL;
+use Zevenet::IPDS::RBL::Core;
 
 # GET /ipds/rbl
 sub get_rbl_all_rules
@@ -79,6 +79,7 @@ sub add_rbl_rule
 	}
 	else
 	{
+		require Zevenet::IPDS::RBL::Config;
 		if ( &addRBLCreateObjectRule( $name ) )
 		{
 			$errormsg = "Error, creating a new RBL rule.";
@@ -138,6 +139,7 @@ sub copy_rbl_rule
 	}
 	else
 	{
+		require Zevenet::IPDS::RBL::Config;
 		if ( &addRBLCopyObjectRule( $name, $newrule ) )
 		{
 			$errormsg = "Error, copying a RBL rule.";
@@ -189,7 +191,8 @@ sub set_rbl_rule
 	}
 
 	$errormsg = &getValidOptParams( $json_obj, \@allowParams );
-
+	
+	require Zevenet::IPDS::RBL::Config;
 	# Rename
 	if ( !$errormsg && exists $json_obj->{ 'name' } )
 	{
@@ -343,7 +346,7 @@ sub set_rbl_rule
 		# all successful
 		my $listHash = &getRBLZapiRule( $name );
 		my $body = { description => $description, params => $listHash };
-
+		require Zevenet::Cluster;
 		&runZClusterRemoteManager( 'ipds_rbl', "restart", $name );
 
 		&httpResponse( { code => 200, body => $body } );
@@ -379,6 +382,7 @@ sub del_rbl_rule
 	}
 	else
 	{
+		require Zevenet::IPDS::RBL::Config;
 		$errormsg = &delRBLDeleteObjectRule( $name );
 		if ( !$errormsg )
 		{
@@ -461,6 +465,7 @@ sub add_rbl_domain
 			}
 			else
 			{
+				require Zevenet::IPDS::RBL::Config;
 				&addRBLDomains( $domain );
 				my $domains = &getRBLUserDomains();
 				my $body = {
@@ -529,6 +534,8 @@ sub set_rbl_domain
 		$errormsg = &getValidOptParams( $json_obj, \@allowParams );
 		if ( !$errormsg )
 		{
+			require Zevenet::IPDS::RBL::Config;
+			
 			if ( !&getValidFormat( 'rbl_domain', $new_domain ) )
 			{
 				$errormsg = "Error, Wrong domain format.";
@@ -556,7 +563,7 @@ sub set_rbl_domain
 						 message     => $errormsg,
 						 params      => { "domains" => $domains }
 			};
-
+			require Zevenet::Cluster;
 			foreach my $rule ( @rules )
 			{
 				&runZClusterRemoteManager( 'ipds_rbl', "restart", $rule );
@@ -602,6 +609,7 @@ sub del_rbl_domain
 	}
 	else
 	{
+		require Zevenet::IPDS::RBL::Config;
 		if ( &delRBLDomains( $domain ) )
 		{
 			$errormsg = "Error deleting the RBL domain $domain";
@@ -621,6 +629,7 @@ sub del_rbl_domain
 				# modify the domain in all rules where it is applied
 				if ( grep ( /^$domain$/, @{ &getRBLObjectRuleParam( $rule, 'domains' ) } ) )
 				{
+					require Zevenet::Cluster;
 					&setRBLObjectRuleParam( $rule, "del_domains", $domain );
 					&runZClusterRemoteManager( 'ipds_rbl', "restart", $rule );
 				}
@@ -680,11 +689,12 @@ sub add_domain_to_rbl
 			}
 			else
 			{
+				require Zevenet::IPDS::RBL::Config;
 				$errormsg = &setRBLObjectRuleParam( $name, 'domains-add', $domain );
 				if ( !$errormsg )
 				{
 					$errormsg = "Added $domain successful.";
-
+					require Zevenet::Cluster;
 					&runZClusterRemoteManager( 'ipds_rbl', "restart", $name );
 
 					my $rule = &getRBLZapiRule( $name );
@@ -740,6 +750,7 @@ sub del_domain_from_rbl
 	}
 	else
 	{
+		require Zevenet::Cluster;
 		if ( &setRBLObjectRuleParam( $name, 'domains-del', $domain ) )
 		{
 			$errormsg = "Error deleting a domain from a RBL rule.";
@@ -753,7 +764,7 @@ sub del_domain_from_rbl
 						 success     => "true",
 						 message     => $errormsg,
 			};
-
+			require Zevenet::Cluster;
 			&runZClusterRemoteManager( 'ipds_rbl', "restart", $name );
 
 			&httpResponse( { code => 200, body => $body } );
@@ -813,6 +824,7 @@ sub add_rbl_to_farm
 			}
 			else
 			{
+				require Zevenet::IPDS::RBL::Config;
 				$errormsg = &addRBLFarm( $farmName, $name );
 				if ( !$errormsg )
 				{
@@ -825,6 +837,7 @@ sub add_rbl_to_farm
 
 					if ( &getFarmStatus( $farmName ) eq 'up' )
 					{
+						require Zevenet::Cluster;
 						&runZClusterRemoteManager( 'ipds_rbl', "start", $name, $farmName );
 					}
 
@@ -885,6 +898,7 @@ sub del_rbl_from_farm
 	}
 	else
 	{
+		require Zevenet::IPDS::RBL::Config;
 		$errormsg = &delRBLFarm( $farmName, $name );
 		if ( !$errormsg )
 		{
@@ -897,6 +911,7 @@ sub del_rbl_from_farm
 
 			if ( &getFarmStatus( $farmName ) eq 'up' )
 			{
+				require Zevenet::Cluster;
 				&runZClusterRemoteManager( 'ipds_rbl', "stop", $name, $farmName );
 			}
 
@@ -952,6 +967,7 @@ sub set_rbl_actions
 			}
 			else
 			{
+				require Zevenet::IPDS::RBL::Actions;
 				if ( $action eq 'start' )
 				{
 					$errormsg = &runRBLStartByRule( $name );
@@ -972,7 +988,7 @@ sub set_rbl_actions
 						params      => { 'action' => $action },
 
 					};
-
+					require Zevenet::Cluster;
 					&runZClusterRemoteManager( 'ipds_rbl', $action, $name );
 
 					&httpResponse( { code => 200, body => $body } );

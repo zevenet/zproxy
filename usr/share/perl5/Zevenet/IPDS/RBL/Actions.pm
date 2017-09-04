@@ -22,21 +22,7 @@
 ###############################################################################
 
 use strict;
-use Tie::File;
-
-use Zevenet::Core;
-use Zevenet::Debug;
-use Zevenet::IPDS::Core;
-
-# rbl configuration path
-my $rblPath = &getGlobalConfiguration( 'configdir' ) . "/ipds/rbl";
-my $rblConfigFile = "$rblPath/rbl.conf";
-my $preloadedDomainsFile = "$rblPath/preloaded_domains.conf";
-my $userDomainsFile = "$rblPath/user_domains.conf";
-
-
-actions:
-actions_module:
+use Zevenet::IPDS::RBL::Runtime;
 
 =begin nd
 Function: runRBLStartModule
@@ -53,7 +39,7 @@ Returns:
 # when start a module load the blocked sources from logs
 sub runRBLStartModule
 {
-	require Zevenet::IPDS::RBL::RBL;
+	require Zevenet::IPDS::RBL::Config;
 
 	# create config directory if it doesn't exist and config file
 	my $error = &setRBLCreateDirectory();
@@ -79,8 +65,6 @@ Returns:
 # this function has to remove the tmp directory /tmp/IPDS/<module> and stop all rules in /tmp/IPDS/<module> directory
 sub runRBLStopModule
 {
-	require Zevenet::IPDS::RBL::RBL;
-
 	# stop all rules
 	foreach my $rule ( &getRBLRuleList() )
 	{
@@ -110,8 +94,6 @@ sub runRBLRestartModule
 	}
 }
 
-actions_by_rule:
-
 =begin nd
 Function: runRBLStartByRule
 
@@ -128,16 +110,16 @@ Returns:
 sub runRBLStartByRule
 {
 	my ( $rule ) = @_;
-	my $error=0;
+	my $error = 0;
 	my @farms = @{ &getRBLObjectRuleParam( $rule, 'farms' ) };
-	
+
 	if ( !@farms )
 	{
 		#~ &zenlog( "RBL rule \"$rule\" has not any farm linked" );
 		return -1;
 	}
-	
-	my $flag=0;
+
+	my $flag = 0;
 	foreach my $farmname ( @farms )
 	{
 		&runRBLStart( $rule, $farmname );
@@ -162,7 +144,7 @@ Returns:
 sub runRBLStopByRule
 {
 	my ( $rule ) = @_;
-	my $error=0;
+	my $error = 0;
 
 	# remove all iptables rules
 	foreach my $farmname ( @{ &getRBLObjectRuleParam( $rule, 'farms' ) } )
@@ -218,39 +200,40 @@ Returns:
 sub runRBLStart
 {
 	my ( $rule, $farm ) = @_;
-	my $error=0;
+	my $error = 0;
 
+	require Zevenet::Farm::Base;
 	# to start a rule the farm has to be up
 	if ( &getFarmBootStatus( $farm ) ne 'up' )
 	{
 		return -1;
 	}
-	
+
 	# not run if the farm is not applied to the rule
 	if ( !grep ( /^$farm$/, @{ &getRBLObjectRuleParam( $rule, 'farms' ) } ) )
 	{
 		return -1;
 	}
-		
+
 	# to start a RBL rule it is necessary that the rule has almost one domain
-	if ( !@{ &getRBLObjectRuleParam($rule, 'domains') } )
+	if ( !@{ &getRBLObjectRuleParam( $rule, 'domains' ) } )
 	{
-		#~ &zenlog ( "RBL rule, $rule, was not started because doesn't have any domain." );
+	 #~ &zenlog ( "RBL rule, $rule, was not started because doesn't have any domain." );
 		return -1;
 	}
-	
+
 	# if the process is not running, start it
 	if ( &getRBLStatusRule( $rule ) eq "down" )
 	{
 		$error = &runRBLStartPacketbl( $rule );
 	}
-	
+
 	# if all is success link with the farm
-	if ( ! $error )
+	if ( !$error )
 	{
 		$error = &runRBLIptablesRule( $rule, $farm, 'insert' );
 	}
-	
+
 	return $error;
 }
 
@@ -271,7 +254,7 @@ Returns:
 sub runRBLStop
 {
 	my ( $rule, $farm ) = @_;
-	my $error=0;
+	my $error = 0;
 
 	# remove all iptables rules
 	if ( &getFarmStatus( $farm ) eq 'up' )

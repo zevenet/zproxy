@@ -260,7 +260,7 @@ Returns:
 
 sub getBLRuleList
 {
-	use Config::Tiny;
+	require Config::Tiny;
 	my $fileHandle = Config::Tiny->read( $blacklistsConf );
 
 	return keys %{ $fileHandle };

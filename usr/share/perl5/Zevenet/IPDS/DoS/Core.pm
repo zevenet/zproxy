@@ -66,7 +66,7 @@ Returns:
 sub getDOSRuleList
 {
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
-	use Config::Tiny;
+	require Config::Tiny;
 	my $fileHandle = Config::Tiny->read( $confFile );
 
 	return keys %{ $fileHandle };

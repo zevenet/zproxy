@@ -1,0 +1,539 @@
+#!/usr/bin/perl
+###############################################################################
+#
+#    Zevenet Software License
+#    This file is part of the Zevenet Load Balancer software package.
+#
+#    Copyright (C) 2014-today ZEVENET SL, Sevilla (Spain)
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+###############################################################################
+
+use strict;
+
+=begin nd
+Function: setRBLCreateDirectory
+
+	This function creates the RBL directory and RBL config file if they are not exist.	
+
+Parameters:
+				
+Returns:
+	none - .
+	
+=cut
+
+sub setRBLCreateDirectory
+{
+	if ( !-d $rblPath )
+	{
+		&logAndRun( &getGlobalConfiguration( 'mkdir' ) . " -p $rblPath" );
+		&zenlog( "Created $rblPath directory." );
+	}
+
+	# create list config if doesn't exist
+	if ( !-e $rblConfigFile )
+	{
+		&logAndRun( &getGlobalConfiguration( 'touch' ) . " $rblConfigFile" );
+		&zenlog( "Created $rblConfigFile file." );
+	}
+
+	# create list config if doesn't exist
+	if ( !-e $userDomainsFile )
+	{
+		&logAndRun( &getGlobalConfiguration( 'touch' ) . " $userDomainsFile" );
+		&zenlog( "Created $userDomainsFile file." );
+	}
+}
+
+=begin nd
+Function: setRBLInitialParams
+
+	This function return a struct used as template to create a RBL object
+
+Parameters:
+				
+Returns:
+	hash ref - Struct with default values for a rbl rule
+	
+=cut
+
+sub getRBLInitialParams
+{
+	my $initial = {
+
+# save a list of farms split by space character. These farms are the farms where this rule is applied
+		'farms' => '',
+
+		# save a list of domains split by space character
+		'domains' => '',
+
+# this value is written with a nf_queue is assignate to this rule. The maximum nf_queue value is 256
+		'nf_queue_number' => '',
+
+		# Cache size, parameter "CacheSize"
+		'cache_size' => 8192,
+
+		# Cache time, parameter "CacheTTL"
+		'cache_time' => 3600,
+
+		# maximum number of packet in the queue
+		'queue_size' => 64538,
+
+# Log lvl, syslog log levels from 0 to 7: 0 Emergency, 1 Alert, 2 Critical, 3 Error, 4 Warning, 5 Notice, 6 Informational, or 7 Debug
+		'log_level' => 5,
+
+		# This mode logs the action but non blocking the packet
+		'only_logging' => 'no',
+
+		# maximum number of threads for packetbl
+		'threadmax' => 0,
+
+		# Scan local traffic
+		'local_traffic' => 'no',
+	};
+
+	return $initial;
+}
+
+=begin nd
+Function: addRBLCreateObjectRule
+
+	Create a object through its configuration file
+
+Parameters:
+	Rule - Rule name
+				
+Returns:
+	Integer - 0 on success or -1 on failure
+	
+=cut
+
+sub addRBLCreateObjectRule
+{
+	my $rule = shift;
+
+	require Config::Tiny;
+
+	# check that the rule is not exist
+	if ( &getRBLExists( $rule ) )
+	{
+		return -1;
+	}
+
+	# Get default parameters
+	my $params = &getRBLInitialParams();
+
+	# Add rule name
+	$params->{ 'name' } = $rule;
+
+	require Config::Tiny;
+	my $fileHandle = Config::Tiny->read( $rblConfigFile );
+
+	$fileHandle->{ $rule } = $params;
+
+	$fileHandle->write( $rblConfigFile );
+
+	&zenlog( "The RBL rule \"$rule\" was successfully created." );
+
+	return 0;
+}
+
+=begin nd
+Function: setRBLObjectRule
+
+	Modify an object, receive a hash with all parameters to modify.
+
+Parameters:
+	Rule - Rule name
+	Hash ref - Hash with the value to change and its values
+				
+Returns:
+	Integer - 0 on success or -1 on failure
+	
+=cut
+
+sub setRBLObjectRule
+{
+	my $rule   = shift;
+	my $params = shift;
+
+	require Config::Tiny;
+	my $fileHandle = Config::Tiny->read( $rblConfigFile );
+
+	foreach my $key ( keys %{ $params } )
+	{
+		$fileHandle->{ $rule }->{ $key } = $params->{ $key };
+	}
+
+	$fileHandle->write( $rblConfigFile );
+
+	return 0;
+}
+
+=begin nd
+Function: setRBLObjectRuleParam
+
+	Set the value of a parameter (only one)     
+
+Parameters:
+	Rule - Rule name
+	Key - Parameter to set a value
+	Value - Value for the parameter
+				
+Returns:
+	Integer - 0 on success or -1 on failure
+	
+=cut
+
+sub setRBLObjectRuleParam
+{
+	my $name  = shift;
+	my $key   = shift;
+	my $value = shift;
+
+	require Config::Tiny;
+	my $fileHandle = Config::Tiny->read( $rblConfigFile );
+
+	my $action;
+
+	# if command has a action, split it
+	# key-action
+	# possible actions are 'add' or 'delete'
+	if ( $key =~ /(\w+)(?:-(\w+))?/ )
+	{
+		$key    = $1;
+		$action = $2;
+	}
+
+	if ( 'add' eq $action )
+	{
+		if ( $fileHandle->{ $name }->{ $key } !~ /(^| )$value( |$)/ )
+		{
+			$fileHandle->{ $name }->{ $key } .= " $value";
+		}
+	}
+	elsif ( 'del' eq $action )
+	{
+		$fileHandle->{ $name }->{ $key } =~ s/(^| )$value( |$)/ /;
+	}
+	else
+	{
+		$fileHandle->{ $name }->{ $key } = $value;
+	}
+
+	$fileHandle->write( $rblConfigFile );
+
+	return 0;
+}
+
+=begin nd
+Function: addRBLDomains
+
+	Get a list with the preloaded domains. Only it is possible to add a new domain of the user domain list
+
+Parameters:
+	Domain - String with a domain
+	
+Returns:
+	none - .
+
+=cut
+
+sub addRBLDomains
+{
+	my $new_domain = shift;
+
+	tie my @domains, 'Tie::File', $userDomainsFile;
+	push @domains, $new_domain;
+	untie @domains;
+}
+
+=begin nd
+Function: setRBLDomains
+
+	Modify a domain of the domain list. Only it is possible to replace a domain of the user domain list
+
+Parameters:
+	Domain - Domain to remove from the list
+	Domain_new - New domain for the list
+	
+Returns:
+	none - .
+
+=cut
+
+sub setRBLDomains
+{
+	my $domain     = shift;
+	my $new_domain = shift;
+
+	&delRBLDomains( $domain );
+	&addRBLDomains( $new_domain );
+}
+
+=begin nd
+Function: delRBLDomains
+
+	Modify a domain of the domain list. Only it is possible to remove a domain of the user domain list
+
+Parameters:
+	Domain - Domain to remove from the list
+	Domain_new - New domain for the list
+	
+Returns:
+	Integer - Error code, 0 on success or -1 on failure.
+
+=cut
+
+sub delRBLDomains
+{
+	my $domain = shift;
+	my $error  = -1;
+	my $it     = 0;
+
+	tie my @domains, 'Tie::File', $userDomainsFile;
+	foreach my $item ( @domains )
+	{
+		if ( $item =~ /^$domain$/ )
+		{
+			splice @domains, $it, 1;
+			$error = 0;
+			last;
+		}
+		$it += 1;
+	}
+	untie @domains;
+
+	return $error;
+}
+
+=begin nd
+Function: addRBLCopyObjectRule
+
+	Copy a object through its configuration file but deleting its associated farms
+
+Parameters:
+	Rule - Rule name
+				
+Returns:
+	Integer - 0 on success or -1 on failure
+	
+=cut
+
+sub addRBLCopyObjectRule
+{
+	my $rule    = shift;
+	my $newrule = shift;
+
+	# check if the rule already exists
+	if ( &getRBLExists( $newrule ) )
+	{
+		return -1;
+	}
+
+	# Get default parameters
+	my $params = &getRBLObjectRule( $rule );
+
+	# Add rule name
+	$params->{ 'name' }            = $newrule;
+	$params->{ 'farms' }           = '';
+	$params->{ 'nf_queue_number' } = '';
+	$params->{ 'domains' }         = join ( " ", @{ $params->{ 'domains' } } );
+
+	require Config::Tiny;
+	my $fileHandle = Config::Tiny->read( $rblConfigFile );
+	$fileHandle->{ $newrule } = $params;
+
+	$fileHandle->write( $rblConfigFile );
+
+	return 0;
+}
+
+=begin nd
+Function: addRBLFarm
+
+	Associate a farm with a IPDS object, adding the farm to the configuration file of the rule. If the farm is up, apply the rule 
+
+Parameters:
+	Farmname - Farm name 
+	Rule - Rule name 
+					
+Returns:
+	None - .
+	
+=cut
+
+sub addRBLFarm
+{
+	my ( $farmname, $rule ) = @_;
+	my $error;
+
+	require Zevenet::Farm::Base;
+
+	# if the farm is in UP status, apply it the rule
+	if ( &getFarmStatus( $farmname ) eq 'up' )
+	{
+		# to start a RBL rule it is necessary that the rule has almost one domain
+		if ( !@{ &getRBLObjectRuleParam( $rule, 'domains' ) } )
+		{
+			&zenlog( "RBL rule, $rule, was not started because doesn't have any domain." );
+			return -1;
+		}
+
+		require Zevenet::IPDS::RBL::Runtime;
+
+		# if rule is not running, start it
+		if ( &getRBLStatusRule( $rule ) eq 'down' )
+		{
+			$error = &runRBLStartPacketbl( $rule );
+		}
+
+		if ( !$error )
+		{
+			# create iptables rule to link with rbl rule
+			$error = &runRBLIptablesRule( $rule, $farmname, 'insert' );
+		}
+	}
+
+	if ( !$error )
+	{
+		# Add to configuration file
+		&setRBLObjectRuleParam( $rule, 'farms-add', $farmname );
+	}
+
+	return $error;
+}
+
+=begin nd
+Function: delRBLFarm
+
+	Disassociate a farm from a IPDS object, removing the farm from the configuration file of the rule. If the farm is up, stop the rule
+
+Parameters:
+	Rule - Rule name 
+	Farmname - Farm name 
+				
+Returns:
+	None - .
+	
+=cut
+
+sub delRBLFarm
+{
+	my ( $farmname, $rule ) = @_;
+	my $error;
+
+	require Zevenet::Farm::Base;
+
+	# if the farm is in UP status, apply it the rule
+	if ( &getFarmStatus( $farmname ) eq 'up' )
+	{
+		require Zevenet::IPDS::RBL::Runtime;
+
+		# create iptables rule to link with rbl rule
+		$error = &runRBLIptablesRule( $rule, $farmname, 'delete' );
+
+		# if another farm is not using this rule, the rule is stopped
+		if ( !$error && !&getRBLRunningFarmList( $rule ) )
+		{
+			$error = &runRBLStopPacketbl( $rule );
+		}
+	}
+
+	# Remove from configuration file
+	&setRBLObjectRuleParam( $rule, 'farms-del', $farmname );
+
+	return $error;
+}
+
+=begin nd
+Function: setRBLRenameObjectRule 
+
+	Rename a RBL rule. The farm must be stopped.
+
+Parameters:
+	Rule - Rule name
+	NewRule - New name for the rule
+				
+Returns:
+	Integer - 0 on success or -1 on failure
+	
+=cut
+
+sub setRBLRenameObjectRule
+{
+	my $rule    = shift;
+	my $newname = shift;
+
+	# check that the rule is not exist
+	if ( &getRBLExists( $newname ) )
+	{
+		return -1;
+	}
+
+	# get applied farms
+	my @farms = @{ &getRBLObjectRuleParam( $rule, 'farms' ) };
+
+	# copy object
+	&addRBLCopyObjectRule( $rule, $newname );
+
+	# apply to farms
+	foreach my $farm ( @farms )
+	{
+		&addRBLFarm( $farm, $newname );
+	}
+
+	# Remove old object
+	&delRBLDeleteObjectRule( $rule );
+
+	return 0;
+}
+
+=begin nd
+Function: addRBLCopyObjectRule
+
+	Delete a object through its configuration file
+
+Parameters:
+	Rule - Rule name
+				
+Returns:
+	Integer - 0 on success or -1 on failure
+	
+=cut
+
+sub delRBLDeleteObjectRule
+{
+	my $rule = shift;
+
+	# check that the rule is not exist
+	if ( !&getRBLExists( $rule ) )
+	{
+		&zenlog( "Error, the RBL rule \"$rule\" doesn't exist." );
+		return -1;
+	}
+
+	require Config::Tiny;
+	my $fileHandle = Config::Tiny->read( $rblConfigFile );
+	delete $fileHandle->{ $rule };
+	$fileHandle->write( $rblConfigFile );
+
+	&zenlog( "The RBL rule \"$rule\" was successfully removed." );
+
+	return 0;
+}
+
+1;

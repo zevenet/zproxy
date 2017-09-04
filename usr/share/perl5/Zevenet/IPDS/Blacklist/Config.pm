@@ -96,7 +96,7 @@ sub setBLCreateList
 	# specific to remote lists
 	if ( $type eq 'remote' )
 	{
-		use Zevenet::IPDS::Blacklist::Config;
+		require Zevenet::IPDS::Blacklist::Config;
 
 		&setBLParam( $listName, 'url',           $listParams->{ 'url' } );
 		&setBLParam( $listName, 'update_status', "This list isn't downloaded yet." );
