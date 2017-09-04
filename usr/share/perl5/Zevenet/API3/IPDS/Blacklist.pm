@@ -28,7 +28,7 @@ sub get_blacklists_all_lists
 {
 	require Config::Tiny;
 
-	my $description    = "Get black lists";
+	my $description    = "List the available blacklists";
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my %bl             = %{ Config::Tiny->read( $blacklistsConf ) };
 	my @lists;
@@ -62,7 +62,7 @@ sub get_blacklists_list
 {
 	my $listName = shift;
 
-	my $description = "Get list $listName";
+	my $description = "Get the blacklist $listName";
 	my $errormsg;
 
 	if ( !&getBLExists( $listName ) )
@@ -88,7 +88,7 @@ sub add_blacklists_list
 	my $errormsg;
 	my $listParams;
 	my $listName    = $json_obj->{ 'name' };
-	my $description = "Create a blacklist.";
+	my $description = "Create the blacklist $listName";
 
 	my @requiredParams = ( "name",   "type" );
 	my @optionalParams = ( "policy", "url" );
@@ -181,7 +181,7 @@ sub set_blacklists_list
 	my $json_obj = shift;
 	my $listName = shift;
 
-	my $description = "Modify list $listName.";
+	my $description = "Modify the blacklist $listName.";
 	my $errormsg;
 
 	require Zevenet::IPDS::Blacklist::Config;
@@ -479,7 +479,7 @@ sub del_blacklists_list
 {
 	my $listName = shift;
 
-	my $description = "Delete list '$listName'",
+	my $description = "Delete the list $listName",
 	  my $errormsg  = &getBLExists( $listName );
 
 	if ( $errormsg == -1 )
@@ -532,7 +532,7 @@ sub actions_blacklists
 	my $json_obj = shift;
 	my $listName = shift;
 
-	my $description = "Apply a action to a blacklist";
+	my $description = "Apply a action to a blacklist $listName";
 
 	my $errormsg = &getBLExists( $listName );
 	if ( $errormsg == -1 )
@@ -662,7 +662,7 @@ sub get_blacklists_source
 {
 	my $listName = shift;
 
-	my $description = "Get $listName sources";
+	my $description = "List the sources of the blacklist $listName";
 	my $err         = &getBLExists( $listName );
 	my %listHash;
 
@@ -704,7 +704,7 @@ sub add_blacklists_source
 	my $listName = shift;
 
 	my $errormsg;
-	my $description    = "Post source to $listName.";
+	my $description    = "Add a source to the blacklist $listName.";
 	my @requiredParams = ( "source" );
 	my @optionalParams;
 
@@ -801,7 +801,7 @@ sub set_blacklists_source
 	my $listName = shift;
 	my $id       = shift;
 
-	my $description = "Put source into $listName";
+	my $description = "Modify a source of the blacklsit $listName";
 	my $errormsg;
 	my @allowParams = ( "source" );
 
@@ -875,7 +875,7 @@ sub del_blacklists_source
 	my $id       = shift;
 
 	my $errormsg;
-	my $description = "Delete source from the list $listName";
+	my $description = "Delete a source from the blacklist $listName";
 
 	if ( &getBLExists( $listName ) == -1 )
 	{
@@ -936,7 +936,7 @@ sub add_blacklists_to_farm
 	my $farmName = shift;
 
 	my $listName    = $json_obj->{ 'name' };
-	my $description = "Apply a rule to a farm";
+	my $description = "Apply the blacklist $listName to the farm $farmName";
 	my $errormsg    = &getValidReqParams( $json_obj, ["name"] );
 
 	if ( !$errormsg )
@@ -1012,7 +1012,7 @@ sub del_blacklists_from_farm
 	my $listName = shift;
 
 	my $errormsg;
-	my $description = "Delete a rule from a farm";
+	my $description = "Unset the blacklist $listName from the farm $farmName";
 
 	if ( &getFarmFile( $farmName ) eq '-1' )
 	{
