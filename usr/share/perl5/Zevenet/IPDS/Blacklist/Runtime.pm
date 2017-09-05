@@ -435,6 +435,7 @@ sub setBLDeleteRule
 	my ( $farmName, $listName ) = @_;
 
 	require Zevenet::Netfilter;
+	require Zevenet::IPDS::Core;
 
 	my $chain = 'blacklist';
 	$chain = "whitelist" if ( &getBLParam( $listName, 'policy' ) eq "allow" );
@@ -543,7 +544,7 @@ sub setBLCronTask
 
 		if ( $rblFormat->{ 'frequency' } eq 'weekly' )
 		{
-			require Switch;
+			use Switch;
 			switch ( $rblFormat->{ 'day' } )
 			{
 				case 'monday'    { $cronFormat->{ 'dow' } = '0' };

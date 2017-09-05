@@ -164,7 +164,7 @@ sub setDOSParam
 	require Zevenet::IPDS::DoS::Actions;
 
 	#Stop related rules
-	my $status = &getDOSStatusRule( $rule );
+	my $status = &getDOSStatusRule( $name );
 	&runDOSStopByRule( $name ) if ( $status eq "up" );
 
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );

@@ -81,7 +81,7 @@ sub setDOSRunRule
 		}
 	}
 
-	require Switch;
+	use Switch;
 	switch ( &getDOSParam( $ruleName, "rule" ) )
 	{
 		# comented rules aren't finished

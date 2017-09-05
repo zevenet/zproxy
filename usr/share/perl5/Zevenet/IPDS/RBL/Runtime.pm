@@ -25,6 +25,12 @@ use strict;
 
 use Zevenet::IPDS::RBL::Core;
 
+# rbl configuration path
+my $rblPath              = &getGlobalConfiguration( 'configdir' ) . "/ipds/rbl";
+my $rblConfigFile        = "$rblPath/rbl.conf";
+my $preloadedDomainsFile = "$rblPath/preloaded_domains.conf";
+my $userDomainsFile      = "$rblPath/user_domains.conf";
+
 =begin nd
 Function: runRBLIptablesRule
 
