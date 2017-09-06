@@ -48,7 +48,7 @@ sub zsystem
 	{
 		my $message = $error ? 'failed' : 'running';
 		&zenlog( "$message: @exec" );
-		&zenlog( "output: $out" );
+		&zenlog( "output: $out" ) if $out;
 	}
 
 	return $error;
