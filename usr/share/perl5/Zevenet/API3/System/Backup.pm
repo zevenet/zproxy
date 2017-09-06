@@ -42,40 +42,40 @@ sub create_backup
 
 	my $desc           = "Create a backups";
 	my @requiredParams = ( "name" );
-	#~ my $errormsg;
 
-	my $msg = getValidReqParams( $json_obj, \@requiredParams );
+	my $errormsg = getValidReqParams( $json_obj, \@requiredParams );
+	if ( $errormsg )
+	{
+		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
+	}
 
 	if ( &getExistsBackup( $json_obj->{ 'name' } ) )
 	{
 		my $msg = "A backup already exists with this name.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	elsif ( !&getValidFormat( 'backup', $json_obj->{ 'name' } ) )
+
+	if ( !&getValidFormat( 'backup', $json_obj->{ 'name' } ) )
 	{
 		my $msg = "The backup name has invalid characters.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	else
+
+	my $error = &createBackup( $json_obj->{ 'name' } );
+	if ( $error )
 	{
-		my $error = &createBackup( $json_obj->{ 'name' } );
-		if ( $error )
-		{
-			my $msg = "Error creating backup.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		my $msg = "Backup $json_obj->{ 'name' } was created successful.";
-		my $body = {
-					 description => $desc,
-					 params      => $json_obj->{ 'name' },
-					 message     => $errormsg
-		};
-
-		&httpResponse( { code => 200, body => $body } );
+		my $msg = "Error creating backup.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	my $msg = "Backup $json_obj->{ 'name' } was created successful.";
+	my $body = {
+				 description => $desc,
+				 params      => $json_obj->{ 'name' },
+				 message     => $msg,
+	};
+
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #	GET	/system/backup/BACKUP
