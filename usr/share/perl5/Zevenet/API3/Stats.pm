@@ -39,11 +39,11 @@ sub getAllFarmStats
 
 	foreach my $file ( @files )
 	{
-		my $name   = &getFarmName( $file );
-		my $type   = &getFarmType( $name );
-		my $status = &getFarmVipStatus( $name );
-		my $vip    = &getFarmVip( 'vip', $name );
-		my $port   = &getFarmVip( 'vipp', $name );
+		my $name        = &getFarmName( $file );
+		my $type        = &getFarmType( $name );
+		my $status      = &getFarmVipStatus( $name );
+		my $vip         = &getFarmVip( 'vip', $name );
+		my $port        = &getFarmVip( 'vipp', $name );
 		my $established = 0;
 		my $pending     = 0;
 
@@ -69,6 +69,7 @@ sub getAllFarmStats
 			pending     => $pending,
 		  };
 	}
+
 	return \@farms;
 }
 
@@ -77,16 +78,15 @@ sub farm_stats # ( $farmname )
 {
 	my $farmname = shift;
 
-	my $errormsg;
-	my $description = "Get farm stats";
-
 	require Zevenet::Farm::Core;
+
+	my $desc = "Get farm stats";
+	my $errormsg;
 
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		$errormsg = "The farmname $farmname does not exist.";
-		my $body = { description => $description, error  => "true", message => $errormsg };
-		&httpResponse( { code => 404, body => $body } );		
+		my $msg = "The farmname $farmname does not exist.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $type = &getFarmType( $farmname );
@@ -94,13 +94,12 @@ sub farm_stats # ( $farmname )
 	if ( $type eq "http" || $type eq "https" )
 	{
 		require Zevenet::Farm::HTTP::Stats;		
-		my $stats = &getHTTPFarmBackendsStats( $farmname );
 
-		# Print Success
+		my $stats = &getHTTPFarmBackendsStats( $farmname );
 		my $body = {
-					description         => "List farm stats",
-					backends => $stats->{backends},
-					sessions => $stats->{sessions},
+					 description => $desc,
+					 backends    => $stats->{ backends },
+					 sessions    => $stats->{ sessions },
 		};
 
 		&httpResponse({ code => 200, body => $body });
@@ -109,12 +108,11 @@ sub farm_stats # ( $farmname )
 	if ( $type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Stats;
-		my $stats = &getL4FarmBackendsStats	($farmname);
 
-		# Print Success
+		my $stats = &getL4FarmBackendsStats( $farmname );
 		my $body = {
-					description       => "List farm stats",
-					backends => $stats,
+					 description => $desc,
+					 backends    => $stats,
 		};
 
 		&httpResponse({ code => 200, body => $body });
@@ -123,11 +121,10 @@ sub farm_stats # ( $farmname )
 	if ( $type eq "gslb" )
 	{
 		require Zevenet::Farm::GSLB::Stats;
-		my $gslb_stats = &getGSLBFarmBackendsStats( $farmname );
 
-		# Print Success
+		my $gslb_stats = &getGSLBFarmBackendsStats( $farmname );
 		my $body = {
-					 description => "List farm stats",
+					 description => $desc,
 					 backends    => $gslb_stats->{ 'backend' },
 					 client      => $gslb_stats->{ 'udp' },
 					 server      => $gslb_stats->{ 'tcp' },
@@ -142,11 +139,9 @@ sub farm_stats # ( $farmname )
 sub all_farms_stats # ()
 {
 	my $farms = &getAllFarmStats();
-
-	# Print Success
 	my $body = {
-				 description       => "List all farms stats",
-				 farms => $farms,
+				 description => "List all farms stats",
+				 farms       => $farms,
 	};
 
 	&httpResponse({ code => 200, body => $body });
@@ -157,12 +152,10 @@ sub farms_number
 {
 	require Zevenet::Farm::Core;
 
-	my $number =  scalar &getFarmNameList();
-
-	# Print Success
+	my $number = scalar &getFarmNameList();
 	my $body = {
-				 description       => "Number of farms.",
-				 number => $number,
+				 description => "Number of farms.",
+				 number      => $number,
 	};
 
 	&httpResponse({ code => 200, body => $body });
@@ -172,79 +165,93 @@ sub farms_number
 #Get a farm status resume 
 sub module_stats_status
 {
-	my @farms = @{ &getAllFarmStats () };
-	my $lslb = { 'total' => 0, 'up' => 0, 'down' => 0, 'critical' => 0, 
-		'problem' => 0 };
-	my $gslb = { 'total' => 0, 'up' => 0, 'down' => 0, 'critical' => 0, 
-		'problem' => 0 };
-	my $dslb = { 'total' => 0, 'up' => 0, 'down' => 0, 'critical' => 0, 
-		'problem' => 0 };
+	my @farms = @{ &getAllFarmStats() };
+	my $lslb = {
+				 'total'    => 0,
+				 'up'       => 0,
+				 'down'     => 0,
+				 'critical' => 0,
+				 'problem'  => 0,
+	};
+	my $gslb = {
+				 'total'    => 0,
+				 'up'       => 0,
+				 'down'     => 0,
+				 'critical' => 0,
+				 'problem'  => 0,
+	};
+	my $dslb = {
+				 'total'    => 0,
+				 'up'       => 0,
+				 'down'     => 0,
+				 'critical' => 0,
+				 'problem'  => 0,
+	};
 
 	foreach my $farm ( @farms )
 	{
 		if ( $farm->{ 'profile' } =~ /(?:http|https|l4xnat)/ )
 		{
-			$lslb->{ 'total' } ++;
+			$lslb->{ 'total' }++;
 			if ( $farm->{ 'status' } eq 'down' )
 			{
-				$lslb->{ 'down' } ++;
+				$lslb->{ 'down' }++;
 			}
 			elsif ( $farm->{ 'status' } eq 'problem' )
 			{
-				$lslb->{ 'problem' } ++;
+				$lslb->{ 'problem' }++;
 			}
 			elsif ( $farm->{ 'status' } eq 'critical' )
 			{
-				$lslb->{ 'critical' } ++;
+				$lslb->{ 'critical' }++;
 			}
 			else
 			{
-				$lslb->{ 'up' } ++;
+				$lslb->{ 'up' }++;
 			}
 		}
-		elsif ( $farm->{ 'profile' } =~ /gslb/ )
+		elsif ( $farm->{ 'profile' } eq 'gslb' )
 		{
-			$gslb->{ 'total' } ++;
+			$gslb->{ 'total' }++;
 			if ( $farm->{ 'status' } eq 'down' )
 			{
-				$gslb->{ 'down' } ++;
+				$gslb->{ 'down' }++;
 			}
 			elsif ( $farm->{ 'status' } eq 'problem' )
 			{
-				$gslb->{ 'problem' } ++;
+				$gslb->{ 'problem' }++;
 			}
 			elsif ( $farm->{ 'status' } eq 'critical' )
 			{
-				$gslb->{ 'critical' } ++;
+				$gslb->{ 'critical' }++;
 			}
 			else
 			{
-				$gslb->{ 'up' } ++;
+				$gslb->{ 'up' }++;
 			}
 		}
-		elsif ( $farm->{ 'profile' } =~ /datalink/ )
+		elsif ( $farm->{ 'profile' } eq 'datalink' )
 		{
-			$dslb->{ 'total' } ++;
+			$dslb->{ 'total' }++;
 			if ( $farm->{ 'status' } eq 'down' )
 			{
-				$dslb->{ 'down' } ++;
+				$dslb->{ 'down' }++;
 			}
 			elsif ( $farm->{ 'status' } eq 'problem' )
 			{
-				$dslb->{ 'problem' } ++;
+				$dslb->{ 'problem' }++;
 			}
 			elsif ( $farm->{ 'status' } eq 'critical' )
 			{
-				$dslb->{ 'critical' } ++;
+				$dslb->{ 'critical' }++;
 			}
 			else
 			{
-				$dslb->{ 'up' } ++;
+				$dslb->{ 'up' }++;
 			}
 		}
 	}
-	
-	# Print Success
+
 	my $body = {
 				 description => "Module status", 	
 				 params 		=> {
@@ -253,6 +260,7 @@ sub module_stats_status
 					 "dslb" => $dslb,
 					 },
 	};
+
 	&httpResponse({ code => 200, body => $body });
 }
 
@@ -260,6 +268,7 @@ sub module_stats_status
 sub module_stats # ()
 {
 	my $module = shift;
+
 	my @farms = @{ &getAllFarmStats () };
 	my @farmModule;
 
@@ -269,11 +278,12 @@ sub module_stats # ()
 		push @farmModule, $farm	if ( $farm->{ 'profile' } =~ /gslb/ && $module eq 'gslb' );
 		push @farmModule, $farm	if ( $farm->{ 'profile' } =~ /datalink/ && $module eq 'dslb' );
 	}
-	
-	# Print Success
+
 	my $body = {
-				 description       => "List lslb farms stats", farms => \@farmModule,
+				 description => "List lslb farms stats",
+				 farms       => \@farmModule,
 	};
+
 	&httpResponse({ code => 200, body => $body });
 }
 
@@ -289,8 +299,8 @@ sub stats # ()
 	my @data_cpu  = &getCPU();
 
 	my $out = {
-		'hostname' => &getHostname(),
-		'date'     => &getDate(),
+				'hostname' => &getHostname(),
+				'date'     => &getDate(),
 	};
 
 	foreach my $x ( 0 .. @data_mem - 1 )
@@ -336,7 +346,6 @@ sub stats # ()
 		$out->{ network }->{ $name } = $value;
 	}
 
-	# Success
 	my $body = {
 				 description => "System stats",
 				 params      => $out
@@ -352,10 +361,9 @@ sub stats_mem # ()
 	require Zevenet::SystemInfo;
 
 	my @data_mem = &getMemStats();
-
 	my $out = {
-		'hostname' => &getHostname(),
-		'date'     => &getDate(),
+				'hostname' => &getHostname(),
+				'date'     => &getDate(),
 	};
 
 	foreach my $x ( 0 .. @data_mem - 1 )
@@ -365,7 +373,6 @@ sub stats_mem # ()
 		$out->{ $name } = $value;
 	}
 
-	# Success
 	my $body = {
 				 description => "Memory usage",
 				 params      => $out
@@ -381,22 +388,20 @@ sub stats_load # ()
 	require Zevenet::SystemInfo;
 
 	my @data_load = &getLoadStats();
-
 	my $out = {
-		'hostname' => &getHostname(),
-		'date'     => &getDate(),
+				'hostname' => &getHostname(),
+				'date'     => &getDate(),
 	};
 
 	foreach my $x ( 0 .. @data_load - 1 )
 	{
-		my $name  = $data_load[$x][0];
+		my $name = $data_load[$x][0];
 		$name =~ s/ /_/;
 		$name = 'Last_1' if $name eq 'Last';
 		my $value = $data_load[$x][1] + 0;
 		$out->{ $name } = $value;
 	}
 
-	# Success
 	my $body = {
 				 description => "System load",
 				 params      => $out
@@ -414,21 +419,20 @@ sub stats_cpu # ()
 	my @data_cpu = &getCPU();
 
 	my $out = {
-		'hostname' => &getHostname(),
-		'date'     => &getDate(),
+				'hostname' => &getHostname(),
+				'date'     => &getDate(),
 	};
 
 	foreach my $x ( 0 .. @data_cpu - 1 )
 	{
 		my $name  = $data_cpu[$x][0];
 		my $value = $data_cpu[$x][1] + 0;
-		(undef, $name) = split( 'CPU', $name );
+		( undef, $name ) = split ( 'CPU', $name );
 		$out->{ $name } = $value;
 	}
 
 	$out->{ cores } = &getCpuCores();
 
-	# Success
 	my $body = {
 				 description => "System CPU usage",
 				 params      => $out
@@ -440,8 +444,7 @@ sub stats_cpu # ()
 #GET /stats/system/connections
 sub stats_conns
 {
-	# Success
-	my $out = &getTotalConnections ();
+	my $out = &getTotalConnections();
 	my $body = {
 				 description => "System connections",
 				 params      => { "connections" => $out },
@@ -457,20 +460,18 @@ sub stats_network_interfaces
 	require Zevenet::Net::Interface;
 
 	my $description = "Interfaces info";
-	my @interfaces = &getNetworkStats( 'hash' );
-	
-	my @nic = &getInterfaceTypeList( 'nic' );
-	my @bond = &getInterfaceTypeList( 'bond' );
-	
+	my @interfaces  = &getNetworkStats( 'hash' );
+	my @nic         = &getInterfaceTypeList( 'nic' );
+	my @bond        = &getInterfaceTypeList( 'bond' );
 	my @nicList;
 	my @bondList;
-	
 	my @restIfaces;
 
 	foreach my $iface ( @interfaces )
 	{
 		my $extrainfo;
 		my $type = &getInterfaceType ( $iface->{ interface } );
+
 		# Fill nic interface list
 		if ( $type eq 'nic' )
 		{
@@ -482,11 +483,12 @@ sub stats_network_interfaces
 					last;
 				}
 			}
-			$iface->{ mac }	= $extrainfo->{ mac };
-			$iface->{ ip } 		= $extrainfo->{ addr };
-			$iface->{ status } = $extrainfo->{ status };
-			$iface->{ vlan } = &getAppendInterfaces ( $iface->{ interface }, 'vlan' );
-			$iface->{ virtual } = &getAppendInterfaces ( $iface->{ interface }, 'virtual' );
+
+			$iface->{ mac }     = $extrainfo->{ mac };
+			$iface->{ ip }      = $extrainfo->{ addr };
+			$iface->{ status }  = $extrainfo->{ status };
+			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
+			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
 			
 			push @nicList, $iface;
 		}
@@ -502,13 +504,13 @@ sub stats_network_interfaces
 					last;
 				}
 			}
-			$iface->{ mac }	= $extrainfo->{ mac };
-			$iface->{ ip } 		= $extrainfo->{ addr };
-			$iface->{ status } = $extrainfo->{ status };
-			$iface->{ vlan } = &getAppendInterfaces ( $iface->{ interface }, 'vlan' );
-			$iface->{ virtual } = &getAppendInterfaces ( $iface->{ interface }, 'virtual' );
-			
-			$iface->{ slaves } = &getBondSlaves ( $iface->{ interface } );
+
+			$iface->{ mac }     = $extrainfo->{ mac };
+			$iface->{ ip }      = $extrainfo->{ addr };
+			$iface->{ status }  = $extrainfo->{ status };
+			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
+			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
+			$iface->{ slaves }  = &getBondSlaves( $iface->{ interface } );
 			
 			push @bondList, $iface;
 		}
@@ -516,10 +518,8 @@ sub stats_network_interfaces
 		{
 			push @restIfaces, $iface;
 		}
-		
 	}
 
-	# Success
 	my $body = {
 				 description => $description,
 				 params      => { nic => \@nicList, bond => \@bondList, }
@@ -534,13 +534,11 @@ sub stats_network # ()
 	require Zevenet::SystemInfo;
 
 	my @interfaces = &getNetworkStats( 'hash' );
-
 	my $output;
-	$output->{ 'hostname'} = &getHostname();
-	$output->{ 'date' } 		= &getDate();
+	$output->{ 'hostname' }   = &getHostname();
+	$output->{ 'date' }       = &getDate();
 	$output->{ 'interfaces' } = \@interfaces;
 
-	# Success
 	my $body = {
 				 description => "Network interefaces usage",
 				 params      => $output
