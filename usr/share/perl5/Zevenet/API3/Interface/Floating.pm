@@ -28,25 +28,18 @@ sub delete_interface_floating # ( $floating )
 	my $floating = shift;
 
 	require Zevenet::Net::Floating;
+	require Zevenet::Farm::L4xNAT::Config;
 
-	my $description = "Remove floating interface";
-	my $floatfile = &getGlobalConfiguration('floatfile');
+	my $desc              = "Remove floating interface";
+	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
 	# validate BOND
 	unless ( $float_ifaces_conf->{_}->{ $floating } )
 	{
-		my $errormsg = "Floating interface not found";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "Floating interface not found";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-
-	require Zevenet::Farm::L4xNAT::Config;
 
 	eval {
 		delete $float_ifaces_conf->{_}->{ $floating };
@@ -56,77 +49,54 @@ sub delete_interface_floating # ( $floating )
 		# refresh l4xnat rules
 		&reloadL4FarmsSNAT();
 	};
-	if ( ! $@ )
-	{
-		my $message = "The floating interface has been removed.";
-		my $body = {
-					 description => $description,
-					 success     => "true",
-					 message     => $message,
-		};
 
-		&httpResponse({ code => 200, body => $body });
-	}
-	else
+	if ( $@ )
 	{
-		my $errormsg = "The floating interface could not be removed";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "The floating interface could not be removed";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+
+	my $message = "The floating interface has been removed.";
+	my $body = {
+				 description => $desc,
+				 success     => "true",
+				 message     => $message,
+	};
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 # address or interface
 sub modify_interface_floating # ( $json_obj, $floating )
 {
-	my $json_obj = shift;
+	my $json_obj  = shift;
 	my $interface = shift;
 
-	my $description = "Modify floating interface";
+	require Zevenet::Net::Interface;
+	require Zevenet::Net::Floating;
+	require Zevenet::Farm::L4xNAT::Config;
+
+	my $desc = "Modify floating interface";
 
 	if ( grep { $_ ne 'floating_ip' } keys %{$json_obj} )
 	{
-		my $errormsg = "Parameter not recognized";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Parameter not recognized";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	unless ( keys %{ $json_obj } )
 	{
-		my $errormsg = "Need to use floating_ip parameter";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Need to use floating_ip parameter";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-
-	require Zevenet::Net::Interface;
 
 	my $ip_v = 4;
 	my $if_ref = &getInterfaceConfig( $interface, $ip_v );
 
 	unless ( $if_ref )
 	{
-		my $errormsg = "Floating interface not found";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "Floating interface not found";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	$if_ref = undef;
@@ -136,14 +106,8 @@ sub modify_interface_floating # ( $json_obj, $floating )
 		# validate ADDRESS format
 		unless ( $json_obj->{ floating_ip } && &getValidFormat( 'IPv4_addr', $json_obj->{ floating_ip } ) )
 		{
-			my $errormsg = "Invalid floating address format";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "Invalid floating address format";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		my @interfaces = &getInterfaceTypeList( 'virtual' );
@@ -152,19 +116,10 @@ sub modify_interface_floating # ( $json_obj, $floating )
 		# validate ADDRESS in system
 		unless ( $if_ref )
 		{
-			my $errormsg = "Virtual interface with such address not found";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 404, body => $body });
+			my $msg = "Virtual interface with such address not found";
+			&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 		}
 	}
-
-	require Zevenet::Net::Floating;
-	require Zevenet::Farm::L4xNAT::Config;
 
 	eval {
 		my $floatfile = &getGlobalConfiguration('floatfile');
@@ -180,26 +135,18 @@ sub modify_interface_floating # ( $json_obj, $floating )
 
 	unless ( $@ )
 	{
-		my $message = "Floating interface modification done";
-		my $body = {
-					 description => $description,
-					 success       => "true",
-					 message     => $message
-		};
-
-		&httpResponse({ code => 200, body => $body });
+		my $msg = "Floating interface modification failed";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	else
-	{
-		my $errormsg = "Floating interface modification failed";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
 
-		&httpResponse({ code => 400, body => $body });
-	}
+	my $message = "Floating interface modification done";
+	my $body = {
+				 description => $desc,
+				 success     => "true",
+				 message     => $message
+	};
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 sub get_interfaces_floating
@@ -207,12 +154,12 @@ sub get_interfaces_floating
 	require Zevenet::Net::Interface;
 	require Zevenet::Net::Floating;
 
-	my $description = "List floating interfaces";
+	my $desc = "List floating interfaces";
 
 	# Interfaces
 	my @output;
-	my @ifaces = @{ &getSystemInterfaceList() };
-	my $floatfile = &getGlobalConfiguration('floatfile');
+	my @ifaces            = @{ &getSystemInterfaceList() };
+	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
 	for my $iface ( @ifaces )
@@ -221,26 +168,26 @@ sub get_interfaces_floating
 		next if $iface->{ type } eq 'virtual';
 		next unless $iface->{ addr };
 
-		my $floating_ip = undef;
+		my $floating_ip        = undef;
 		my $floating_interface = undef;
 
 		if ( $float_ifaces_conf->{_}->{ $iface->{ name } } )
 		{
-			$floating_interface = $float_ifaces_conf->{_}->{ $iface->{ name } };
+			$floating_interface = $float_ifaces_conf->{ _ }->{ $iface->{ name } };
 			my $if_ref = &getInterfaceConfig( $floating_interface );
 			$floating_ip = $if_ref->{ addr };
 		}
 
 		push @output,
 		  {
-			interface   => $iface->{ name },
-			floating_ip => $floating_ip,
+			interface         => $iface->{ name },
+			floating_ip       => $floating_ip,
 			interface_virtual => $floating_interface,
 		  };
 	}
 
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => \@output,
 	};
 
@@ -254,12 +201,12 @@ sub get_floating
 	require Zevenet::Net::Interface;
 	require Zevenet::Net::Floating;
 
-	my $description = "Show floating interface";
+	my $desc = "Show floating interface";
 
 	# Interfaces
 	my $output;
-	my @ifaces = @{ &getSystemInterfaceList() };
-	my $floatfile = &getGlobalConfiguration('floatfile');
+	my @ifaces            = @{ &getSystemInterfaceList() };
+	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
 	for my $iface ( @ifaces )
@@ -268,19 +215,13 @@ sub get_floating
 		next if $iface->{ type } eq 'virtual';
 		next unless $iface->{ name } eq $floating;
 
-		my $floating_ip = undef;
+		my $floating_ip        = undef;
 		my $floating_interface = undef;
 
 		unless ( $iface->{ addr } )
 		{
-			my $errormsg = "This interface has no address configured";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg,
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = "This interface has no address configured";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		$floating_ip = undef;
@@ -293,14 +234,14 @@ sub get_floating
 		}
 
 		$output = {
-					interface   => $iface->{ name },
-					floating_ip => $floating_ip,
+					interface         => $iface->{ name },
+					floating_ip       => $floating_ip,
 					interface_virtual => $floating_interface,
 		};
 	}
 
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => $output,
 	};
 
