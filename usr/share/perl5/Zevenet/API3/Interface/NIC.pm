@@ -375,7 +375,7 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	}
 
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => $json_obj,
 	};
 

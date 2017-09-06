@@ -312,9 +312,9 @@ sub httpErrorResponse
 	}
 
 	# verify we have a hash reference
-	unless ( ref( $args ) eq 'hash' )
+	unless ( ref( $args ) eq 'HASH' )
 	{
-		&zdie( "httpErrorResponse: Argument is not a hash reference" );
+		&zdie( "httpErrorResponse: Argument is not a hash reference." );
 	}
 
 	# check required arguments: code, desc and msg
@@ -335,7 +335,7 @@ sub httpErrorResponse
 				 message     => $args->{ msg },
 	};
 
-	&zenlog( "$args->{ desc }: [Error] $args->{ msg }" );
+	&zenlog( "[Error] $args->{ desc }: $args->{ msg }" );
 	&zenlog( $args->{ log_msg } ) if exists $args->{ log_msg };
 	&httpResponse( { code => $args->{ code }, body => $body } );
 }

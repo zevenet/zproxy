@@ -155,6 +155,7 @@ sub runFarmStop    # ($farm_name,$writeconf)
 		&runIPDSStopByFarm( $farm_name );
 	}
 
+	require Zevenet::FarmGuardian;
 	&runFarmGuardianStop( $farm_name, "" );
 
 	my $status = &_runFarmStop( $farm_name, $writeconf );

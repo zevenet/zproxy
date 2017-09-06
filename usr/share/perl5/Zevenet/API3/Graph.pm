@@ -372,7 +372,7 @@ sub graphs_disk_mount_point_all	#()
 
 	unless ( $part_key )
 	{
-		my $errormsg = "Mount point not found";
+		my $msg = "Mount point not found";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 

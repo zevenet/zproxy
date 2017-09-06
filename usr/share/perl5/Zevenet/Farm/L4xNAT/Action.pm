@@ -147,7 +147,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	my $farm_name = shift;    # input
 	my $writeconf = shift;    # input
 
-	&zlog( "Stopping farm $farm_name" ) if &debug == 2;
+	&zlog( "Starting farm $farm_name" ) if &debug == 2;
 
 	my $status = 0;           # output
 

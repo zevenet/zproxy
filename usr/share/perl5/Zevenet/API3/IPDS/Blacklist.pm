@@ -62,7 +62,7 @@ sub get_blacklists_list
 {
 	my $listName = shift;
 
-	my $descr = "Get the blacklist $listName";
+	my $desc = "Get the blacklist $listName";
 
 	if ( &getBLExists( $listName ) )
 	{
@@ -83,7 +83,7 @@ sub add_blacklists_list
 
 	require Zevenet::IPDS::Blacklist::Config;
 
-	my $desc     = "Create the blacklist $listName";
+	my $desc     = "Create the blacklist $json_obj->{ 'name' }";
 	my $listName = $json_obj->{ 'name' };
 	my $listParams;
 
@@ -206,7 +206,7 @@ sub set_blacklists_list
 
 	if ( $errormsg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
 	}
 
 	# Check key format
@@ -661,11 +661,11 @@ sub add_blacklists_source
 	&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
 	# no error found, send successful response
-	$msg = "Added $json_obj->{'source'} successful.";
+	my $msg = "Added $json_obj->{'source'} successful.";
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => \@ipList,
-				 message     => $errormsg,
+				 message     => $msg,
 	};
 
 	&httpResponse( { code => 200, body => $body } );
@@ -741,7 +741,7 @@ sub del_blacklists_source
 
 	if ( &getBLExists( $listName ) == -1 )
 	{
-		$msg = "$listName doesn't exist.";
+		my $msg = "$listName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -761,7 +761,7 @@ sub del_blacklists_source
 	my $body = {
 				 description => $desc,
 				 success     => "true",
-				 message     => $errormsg,
+				 message     => $msg,
 	};
 
 	require Zevenet::Cluster;
@@ -776,7 +776,7 @@ sub add_blacklists_to_farm
 	my $json_obj = shift;
 	my $farmName = shift;
 
-	my $desc     = "Apply the blacklist $listName to the farm $farmName";
+	my $desc     = "Apply the blacklist $json_obj->{ 'name' } to the farm $farmName";
 	my $listName = $json_obj->{ 'name' };
 	my $errormsg = &getValidReqParams( $json_obj, ["name"] );
 

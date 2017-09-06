@@ -29,12 +29,14 @@ use Zevenet::Notify;
 sub get_notif_methods
 {
 	my $key = shift;
+
+	my $desc = "Get notifications email methods";
 	$key = 'Smtp' if ( $key eq 'email' );
-	my $description = "Get notifications email methods";
-	my $methods     = &getNotifSendersSmtp();
+
+	my $methods = &getNotifSendersSmtp();
 
 	&httpResponse(
-		 { code => 200, body => { description => $description, params => $methods } } );
+		 { code => 200, body => { description => $desc, params => $methods } } );
 }
 
 #  POST /system/notifications/methods/METHOD
@@ -48,6 +50,7 @@ sub set_notif_methods
 
 	if ( $key ne 'Smtp' )
 	{
+		my $msg = "Such notification method is not supported.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -117,7 +120,7 @@ sub set_notif_alert
 
 	if ( $errormsg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
 	}
 
 	if ( !&getValidFormat( 'notif_time', $json_obj->{ 'avoidflappingtime' } ) )
@@ -158,7 +161,7 @@ sub set_notif_alert_actions
 	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
 	if ( $errormsg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
 	}
 
 	if ( !&getValidFormat( 'notif_action', $json_obj->{ 'action' } ) )
@@ -193,7 +196,7 @@ sub send_test_mail
 	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
 	if ( $errormsg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
 	}
 
 	if ( $json_obj->{ 'action' } ne "test" )
@@ -210,12 +213,9 @@ sub send_test_mail
 	}
 
 	my $msg = "Test mail sent successful.";
-	&httpResponse(
-		{
-		   code => 200,
-		   body => { description => $description, success => "true", message => $errormsg }
-		}
-	);
+	my $body = { description => $desc, success => "true", message => $msg };
+
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

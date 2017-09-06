@@ -277,6 +277,8 @@ sub runFarmGuardianStop    # ($fname,$svice)
 
 	if ( $type =~ /http/ && $svice eq "" )
 	{
+		require Zevenet::Farm::Config;
+
 		# Iterate over every farm service
 		my $services = &getFarmVS( $fname, "", "" );
 		my @servs = split ( " ", $services );
@@ -300,7 +302,6 @@ sub runFarmGuardianStop    # ($fname,$svice)
 			my $count = kill 9, $fgpid;
 			$status = 1 unless $count;
 			unlink glob ( "/var/run/$fname\_${sv}guardian.pid" );
-
 		}
 	}
 
