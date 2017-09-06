@@ -32,9 +32,9 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
 
-	my $description = "Modify farm guardian";
-	my $type = &getFarmType( $farmname );
-	my $service = $json_obj->{'service'};
+	my $desc    = "Modify farm guardian";
+	my $type    = &getFarmType( $farmname );
+	my $service = $json_obj->{ 'service' };
 	delete $json_obj->{'service'};
 
 	#~ my @fgKeys = ( "fg_time", "fg_log", "fg_enabled", "fg_type" );
@@ -42,37 +42,22 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		my $errormsg = "The farmname $farmname does not exists.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-		&httpResponse( { code => 404, body => $body } );
+		my $msg = "The farmname $farmname does not exists.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# validate FARM TYPE
 	unless ( $type eq 'l4xnat' || $type =~ /^https?$/ || $type eq 'gslb' )
 	{
-		my $errormsg = "Farm guardian is not supported for the requested farm profile.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "Farm guardian is not supported for the requested farm profile.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# check if no service is declared for l4xnat farms
 	if ( $type eq 'l4xnat' && $service )
 	{
-		my $errormsg = "L4xNAT profile farms do not have services.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "L4xNAT profile farms do not have services.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# make service variable empty for l4xnat functions
@@ -85,72 +70,42 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 
 		if ( !grep( /^$service$/, &getHTTPFarmServices( $farmname ) ) )
 		{
-			my $errormsg = "Invalid service name, please insert a valid value.";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg,
-			};
-			&httpResponse( { code => 404, body => $body } );
+			my $msg = "Invalid service name, please insert a valid value.";
+			&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 		}
 	}
 
 	# check farmguardian time interval
 	if ( exists ( $json_obj->{ fgtimecheck } ) && ! &getValidFormat( 'fg_time', $json_obj->{ fgtimecheck } ) )
 	{
-		my $errormsg = "Invalid format, please insert a valid fgtimecheck.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "Invalid format, please insert a valid fgtimecheck.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 	# check farmguardian command
 	elsif ( exists ( $json_obj->{ fgscript } ) && $json_obj->{ fgscript } eq '' )
 	{
-		my $errormsg = "Invalid fgscript, can't be blank.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "Invalid fgscript, can't be blank.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 	# check farmguardian enabled
 	elsif ( exists ( $json_obj->{ fgenabled } ) && ! &getValidFormat( 'fg_enabled', $json_obj->{ fgenabled } ) )
 	{
-		my $errormsg = "Invalid format, please insert a valid fgenabled.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "Invalid format, please insert a valid fgenabled.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 	# check farmguardian log
 	elsif ( exists ( $json_obj->{ fglog } ) && ! &getValidFormat( 'fg_log', $json_obj->{ fglog } ) )
 	{
-		my $errormsg = "Invalid format, please insert a valid fglog.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "Invalid format, please insert a valid fglog.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my @allowParams = ( "fgtimecheck", "fgscript", "fglog", "fgenabled" );
 
 	# check optional parameters
-	if ( my $errormsg = &getValidOptParams( $json_obj, \@allowParams ) )
+	if ( my $msg = &getValidOptParams( $json_obj, \@allowParams ) )
 	{
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-		&httpResponse( { code => 400, body => $body } );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( $type eq 'gslb' && eval { require Zevenet::API3::Farm::GSLB; } )
@@ -159,13 +114,8 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	}
 	else
 	{
-		my $errormsg = "Farm guardian is not supported for the requested farm profile.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "Farm guardian is not supported for the requested farm profile.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# HTTP or L4xNAT
@@ -208,13 +158,8 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	# check for errors setting farmguardian
 	if ( $status == -1 )
 	{
-		my $errormsg = "Error, trying to modify the farm guardian in a farm $farmname, it's not possible to create the FarmGuardian configuration file.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "It's not possible to create the FarmGuardian configuration file.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# run farmguardian if enabled and the farm running
@@ -222,20 +167,15 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	{
 		if ( &runFarmGuardianStart( $farmname, $service ) == -1 )
 		{
-			my $errormsg = "Error, trying to modify the farm guardian in a farm $farmname, an error ocurred while starting the FarmGuardian service.";
-			my $body = {
-						 description => $description,
-						 error       => "true",
-						 message     => $errormsg
-			};
-			&httpResponse( { code => 400, body => $body } );
+			my $msg = "An error ocurred while starting the FarmGuardian service.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
 	# no error found, return successful response
 	my $errormsg = "Success, some parameters have been changed in farm guardian in farm $farmname.";
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => $json_obj,
 				 message     => $errormsg,
 	};
