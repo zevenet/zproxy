@@ -59,8 +59,6 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 		return 0;
 	}
 
-	&zenlog( "running 'Start write $writeconf' for $fname farm $type" );
-
 	&setGSLBControlPort( $fname );
 
 	if ( $writeconf eq "true" )
@@ -131,9 +129,6 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 	}
 
 	my $type = &getFarmType( $fname );
-
-	&zenlog( "running 'Stop write $writeconf' for $fname farm $type" );
-
 	my $checkfarm = &getGSLBFarmConfigIsOK( $fname );
 
 	if ( $checkfarm )
