@@ -518,7 +518,7 @@ sub delete_gslb_service_backend # ( $farmname, $service, $id_server )
 
 	unless ( $be_found )
 	{
-		my $errormsg = "Could not find the requested backend.";
+		my $msg = "Could not find the requested backend.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
