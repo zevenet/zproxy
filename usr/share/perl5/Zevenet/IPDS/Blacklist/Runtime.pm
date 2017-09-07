@@ -213,7 +213,7 @@ Returns:
 sub setBLRefreshAllLists
 {
 	my $output;
-	my @lists = @{ &getBLExists };
+	my @lists = &getBLRuleList;
 
 	# update lists
 	foreach my $listName ( @lists )

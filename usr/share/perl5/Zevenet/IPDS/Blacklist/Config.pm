@@ -117,11 +117,6 @@ sub setBLCreateList
 		$output = system ( "$touch $blacklistsPath/$listName.txt" );
 	}
 
-	if ( !$output )
-	{
-		&zenlog( "'$listName' list was created successful" );
-	}
-
 	return $output;
 }
 
@@ -163,26 +158,20 @@ sub setBLDeleteList
 		return -1;
 	}
 
-	if ( &getBLParam( $listName, 'preload' ) eq 'false' )
-	{
-		# delete from config file
-		$fileHandle = Config::Tiny->read( $blacklistsConf );
-		delete $fileHandle->{ $listName };
-		$fileHandle->write( $blacklistsConf );
+	# delete from config file
+	$fileHandle = Config::Tiny->read( $blacklistsConf );
+	delete $fileHandle->{ $listName };
+	$fileHandle->write( $blacklistsConf );
 
-		if ( -f "$blacklistsPath/$listName.txt" )
-		{
-			$output = unlink "$blacklistsPath/$listName.txt";
-		}
+	if ( -f "$blacklistsPath/$listName.txt" )
+	{
+		$output = unlink "$blacklistsPath/$listName.txt";
+		$output = ( $output ) ? 0 : 1;
 	}
 
 	if ( $output != 0 )
 	{
 		&zenlog( "Error deleting the list '$listName'." );
-	}
-	else
-	{
-		&zenlog( "List '$listName' was deleted successful." );
 	}
 
 	return $output;
@@ -207,71 +196,41 @@ Returns:
 
 sub setBLAddPreloadLists
 {
-	my $blacklistsLocalPreload =
-	  &getGlobalConfiguration( 'blacklistsLocalPreload' );
+	my $local_list     = shift;
+	my $preload_remote = shift;
 
-	# it is to bugfix in postinst zevenet packet.
-	if ( !defined $blacklistsLocalPreload )
-	{
-		$blacklistsLocalPreload = "/usr/local/zevenet/www/ipds/blacklists/local";
-	}
-
-	my $blacklistsRemotePreload =
-	  &getGlobalConfiguration( 'blacklistsRemotePreload' );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $touch          = &getGlobalConfiguration( 'touch' );
 
 	# Local preload lists
-	opendir ( DIR, "$blacklistsLocalPreload/" );
-	my @preloadLists = readdir ( DIR );
-	closedir ( DIR );
-
-	my $fileHandle = Config::Tiny->read( $blacklistsConf );
+	my @preloadLists = @{ $local_list };
+	my $fileHandle   = Config::Tiny->read( $blacklistsConf );
 
 	foreach my $list ( @preloadLists )
 	{
-		if ( $list =~ s/.txt$// )
+		$list =~ s/\.txt$//;
+
+		# save lists
+		if ( !exists $fileHandle->{ $list } )
 		{
-			# save lists
-			if ( !exists $fileHandle->{ $list } )
-			{
-				my $listHash;
-				$listHash->{ 'type' }    = 'local';
-				$listHash->{ 'preload' } = 'true';
+			my $listHash;
+			$listHash->{ 'type' }    = 'local';
+			$listHash->{ 'preload' } = 'true';
 
-				&setBLCreateList( $list, $listHash );
-				&zenlog( "The preload list '$list' was created." );
-
-				system ( "cp $blacklistsLocalPreload/$list.txt $blacklistsPath/$list.txt" );
-
-				#~ &zenlog( "The preload list '$list' was created." );
-			}
-			elsif ( $fileHandle->{ $list }->{ 'preload' } eq 'true' )
-			{
-				system ( "cp $blacklistsLocalPreload/$list.txt $blacklistsPath/$list.txt" );
-
-				#~ &zenlog( "The preload list '$list' was updated." );
-			}
-			else
-			{
-				&zenlog(
-					"The preload list '$list' can't be loaded because other list exists with the same name."
-				);
-			}
+			&setBLCreateList( $list, $listHash );
+			&zenlog( "The preload list '$list' was created." );
 		}
 	}
 
-	my $remoteFile = Config::Tiny->read( $blacklistsRemotePreload );
-
 	# Remote preload lists
-	foreach my $list ( keys %{ $remoteFile } )
+	foreach my $list ( keys %{ $preload_remote } )
 	{
 		# list don't exist. Download
 		if ( !exists $fileHandle->{ $list } )
 		{
 			my $listHash;
-			$listHash->{ 'url' }     = $remoteFile->{ $list }->{ 'url' };
+			$listHash->{ 'url' }     = $preload_remote->{ $list }->{ 'url' };
 			$listHash->{ 'type' }    = 'remote';
 			$listHash->{ 'preload' } = 'true';
 
@@ -283,7 +242,7 @@ sub setBLAddPreloadLists
 		elsif ( &getBLParam( $list, 'preload' ) eq 'true' )
 		{
 			&zenlog( "Update list $list" );
-			&setBLParam( $list, 'url', $remoteFile->{ $list }->{ 'url' } );
+			&setBLParam( $list, 'url', $preload_remote->{ $list }->{ 'url' } );
 
 			# Download lists if not exists
 			if ( !-f "$blacklistsPath/$list.txt" )
@@ -367,20 +326,10 @@ sub setBLParam
 	my @farmList       = @{ &getBLParam( $name, 'farms' ) };
 	my $ipList         = &getBLParam( $name, 'source' );
 
-	if ( exists $fileHandle->{ $name }->{ $key } )
-	{
-		&zenlog( "Modifying list $name, parameter $key." );
-	}
-	else
-	{
-		&zenlog( "Creating list $name, parameter $key." );
-	}
-
 	# change name of the list
 	if ( 'name' eq $key )
 	{
-		my @listNames = keys %{ $fileHandle };
-		if ( !&getBLExists( $value ) )
+		if ( &getBLExists( $value ) )
 		{
 			&zenlog( "List '$value' already exists." );
 			$output = -1;
@@ -397,10 +346,9 @@ sub setBLParam
 			# apply rules to farms
 			if ( !$output && @farmList )
 			{
-				require Zevenet::IPDS::Blacklist::Runtime;
 				foreach my $farm ( @farmList )
 				{
-					&setBLApplyToFarm( $farm, $value );
+					&setBLParam( $value, 'farms-add', $farm );
 				}
 			}
 			return $output;

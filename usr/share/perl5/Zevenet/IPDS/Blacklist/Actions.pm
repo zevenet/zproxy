@@ -110,6 +110,9 @@ sub runBLStopModule
 {
 	my $error;
 
+	require Zevenet::IPDS::Core;
+	require Zevenet::Netfilter;
+
 	foreach my $typelist ( 'blacklist', 'whitelist' )
 	{
 		my $chain = &getIPDSChain( $typelist );

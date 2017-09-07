@@ -44,26 +44,21 @@ Parameters:
 
 Returns:
 
-	0   - list exists
-	-1  - list doesn't exist
+	1   - list exists
+	0  - list doesn't exist
 =cut
 
 sub getBLExists
 {
 	my $listName = shift;
 
-	my $output         = -1;
+	my $output         = 0;
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	my $fileHandle     = Config::Tiny->read( $blacklistsConf );
 
 	if ( $listName )
 	{
-		$output = 0 if ( exists $fileHandle->{ $listName } );
-	}
-	else
-	{
-		my @aux = keys %{ $fileHandle };
-		$output = \@aux;
+		$output = 1 if ( exists $fileHandle->{ $listName } );
 	}
 
 	return $output;
@@ -140,45 +135,32 @@ sub getBLParam
 
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 	$fileHandle = Config::Tiny->read( $blacklistsConf );
+	my @aux = ();
 
 	if ( !$key )
 	{
 		$output               = $fileHandle->{ $listName };
 		$output->{ 'name' }   = $listName;
 		$output->{ 'source' } = &getBLIpList( $listName );
-		my @aux = split ( ' ', $fileHandle->{ $listName }->{ 'farms' } );
-		$output->{ 'farms' } = \@aux;
+		@aux                  = split ( ' ', $fileHandle->{ $listName }->{ 'farms' } );
+		$output->{ 'farms' }  = \@aux;
 	}
 	elsif ( $key eq 'source' )
 	{
 		$output = &getBLIpList( $listName );
 	}
-	elsif ( $listName )
+	elsif ( $key eq 'farms' )
 	{
-		if ( exists $fileHandle->{ $listName } )
+		my $farm_string = $fileHandle->{ $listName }->{ $key };
+		if ( $fileHandle->{ $listName }->{ $key } )
 		{
-			$output = $fileHandle->{ $listName }->{ $key };
-
-			if ( $key eq 'farms' )
-			{
-				if ( $output )
-				{
-					my @aux = split ( ' ', $output );
-					$output = \@aux;
-				}
-				else
-				{
-					$output = [];
-				}
-			}
+			@aux = split ( ' ', $farm_string );
 		}
-
-		# don't exist that list
-		else
-		{
-			&zenlog( "List $listName doesn\'t exist." );
-			$output = -1;
-		}
+		$output = \@aux;
+	}
+	else
+	{
+		$output = $fileHandle->{ $listName }->{ $key };
 	}
 
 	return $output;

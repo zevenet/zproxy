@@ -45,7 +45,7 @@ if ( !-e $blacklistsConf )
 }
 
 # load preload lists
-&setBLAddPreloadLists();
+#~ &setBLAddPreloadLists();
 
 #dos
 &setDOSCreateFileConf();

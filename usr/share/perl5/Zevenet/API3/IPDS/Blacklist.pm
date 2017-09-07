@@ -39,11 +39,11 @@ sub get_blacklists_all_lists
 	foreach my $list_name ( sort keys %bl )
 	{
 		my $bl_n  = $bl{ $list_name };
-		my $bl_nf = $bl_n->{ farms };
+		my @farms = split ( ' ', $bl_n->{ farms } );
 
 		my %listHash = (
 					   name   => $list_name,
-					   farms  => $bl_nf ? split ( ' ', $bl_nf ) : [],
+					   farms  => ( @farms ) ? \@farms : [],
 					   policy => $bl_n->{ policy },
 					   type   => $bl_n->{ type },
 					   status => ( grep ( /^$list_name$/, @active_lists ) ) ? "up" : "down",
@@ -64,10 +64,10 @@ sub get_blacklists_list
 
 	my $desc = "Get the blacklist $listName";
 
-	if ( &getBLExists( $listName ) )
+	if ( ! &getBLExists( $listName ) )
 	{
 		my $msg = "Requested list doesn't exist.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $listHash = &getBLzapi( $listName );
@@ -99,7 +99,7 @@ sub add_blacklists_list
 	}
 
 	# A list already exists with this name
-	if ( &getBLExists( $listName ) != -1 )
+	if ( &getBLExists( $listName ) )
 	{
 		my $msg = "A list already exists with name '$listName'.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -183,7 +183,7 @@ sub set_blacklists_list
 	);
 
 	# check if BL exists
-	if ( &getBLExists( $listName ) == -1 )
+	if ( ! &getBLExists( $listName ) )
 	{
 		my $msg = "The list '$listName' doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -207,6 +207,18 @@ sub set_blacklists_list
 	if ( $errormsg )
 	{
 		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
+	}
+
+	# not allow rename preload lists
+	if ( &getBLParam( $listName, 'preload' ) eq 'true' )
+	{
+		$errormsg = "The preload lists can't be renamed.";
+		my $body = {
+					 description => $description,
+					 error       => "true",
+					 message     => $errormsg,
+		};
+		&httpResponse( { code => 400, body => $body } );
 	}
 
 	# Check key format
@@ -440,10 +452,8 @@ sub del_blacklists_list
 	require Zevenet::IPDS::Blacklist::Config;
 
 	my $desc     = "Delete the list $listName";
-	my $errormsg = &getBLExists( $listName );
 
-	# check BL is available
-	if ( $errormsg == -1 )
+	if ( ! &getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -486,8 +496,7 @@ sub actions_blacklists
 	my $desc     = "Apply a action to a blacklist $listName";
 	my $errormsg = "Error, applying the action to the blacklist.";
 
-	my $error = &getBLExists( $listName );
-	if ( $error == -1 )
+	if ( ! &getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -578,9 +587,8 @@ sub get_blacklists_source
 	my $listName = shift;
 
 	my $desc = "List the sources of the blacklist $listName";
-	my $err  = &getBLExists( $listName );
 
-	if ( $err )
+	if ( &getBLExists( $listName ) )
 	{
 		my $msg = "Requested list doesn't exist.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -607,7 +615,7 @@ sub add_blacklists_source
 	my @requiredParams = ( "source" );
 	my @optionalParams;
 
-	if ( &getBLExists( $listName ) == -1 )
+	if ( ! &getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -684,7 +692,7 @@ sub set_blacklists_source
 	my @allowParams = ( "source" );
 
 	# check list exists
-	if ( &getBLExists( $listName ) == -1 )
+	if ( ! &getBLExists( $listName ) )
 	{
 		my $msg = "$listName not found";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -739,7 +747,7 @@ sub del_blacklists_source
 
 	my $desc = "Delete a source from the blacklist $listName";
 
-	if ( &getBLExists( $listName ) == -1 )
+	if ( ! &getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -784,7 +792,6 @@ sub add_blacklists_to_farm
 	{
 		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
 	}
-
 	require Zevenet::Farm::Core;
 
 	if ( &getFarmFile( $farmName ) eq "-1" )
@@ -793,7 +800,7 @@ sub add_blacklists_to_farm
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( &getBLExists( $listName ) == -1 )
+	if ( ! &getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -844,7 +851,7 @@ sub del_blacklists_from_farm
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( &getBLExists( $listName ) == -1 )
+	if ( ! &getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
