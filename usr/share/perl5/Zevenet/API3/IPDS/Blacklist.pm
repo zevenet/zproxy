@@ -214,7 +214,7 @@ sub set_blacklists_list
 	{
 		$errormsg = "The preload lists can't be renamed.";
 		my $body = {
-					 description => $description,
+					 description => $desc,
 					 error       => "true",
 					 message     => $errormsg,
 		};
