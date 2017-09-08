@@ -133,19 +133,44 @@ if ( $q->path_info =~ qr{^/farms/$farm_re/services} )
 
 if ( $q->path_info =~ qr{^/farms} )
 {
-	require Zevenet::API3::Farm;
+	if ( $ENV{ REQUEST_METHOD } eq 'GET' )
+	{
+		require Zevenet::API3::Farm::Get;
 
-	GET qr{^/farms$}  => \&farms;
-	POST qr{^/farms$} => \&new_farm;
+		##### /farms
+		GET qr{^/farms$}  => \&farms;
 
-	##### /farms
-	GET qr{^/farms/modules/lslb$} => \&farms_lslb;
-	GET qr{^/farms/modules/dslb$} => \&farms_dslb;
+		##### /farms/modules/MODULE
+		GET qr{^/farms/modules/lslb$} => \&farms_lslb;
+		GET qr{^/farms/modules/dslb$} => \&farms_dslb;
 
-	##### /farms/FARM
-	GET qr{^/farms/($farm_re)$}    => \&farms_name;
-	PUT qr{^/farms/($farm_re)$}    => \&modify_farm;
-	DELETE qr{^/farms/($farm_re)$} => \&delete_farm;
+		##### /farms/FARM
+		GET qr{^/farms/($farm_re)$} => \&farms_name;
+	}
+
+	if ( $ENV{ REQUEST_METHOD } eq 'POST' )
+	{
+		require Zevenet::API3::Farm::Post;
+
+		##### /farms
+		POST qr{^/farms$} => \&new_farm;
+	}
+
+	if ( $ENV{ REQUEST_METHOD } eq 'PUT' )
+	{
+		require Zevenet::API3::Farm::Put;
+
+		##### /farms/FARM
+		PUT qr{^/farms/($farm_re)$} => \&modify_farm;
+	}
+
+	if ( $ENV{ REQUEST_METHOD } eq 'DELETE' )
+	{
+		require Zevenet::API3::Farm::Delete;
+
+		##### /farms/FARM
+		DELETE qr{^/farms/($farm_re)$} => \&delete_farm;
+	}
 }
 
 
@@ -208,9 +233,6 @@ if ( $q->path_info =~ qr{^/interfaces$} )
 
 	GET qr{^/interfaces$} => \&get_interfaces;
 }
-
-#~ eval { require Zevenet::API3::Routes::Bonding; };
-#~ eval { require Zevenet::API3::Routes::Floating; };
 
 
 # Statistics
@@ -302,10 +324,6 @@ if ( $q->path_info =~ qr{^/graphs} )
 
 
 # System
-#~ eval { require Zevenet::API3::Routes::SSH; };
-#~ eval { require Zevenet::API3::Routes::Cluster; };
-#~ eval { require Zevenet::API3::Routes::Notifications; };
-
 if ( $q->path_info =~ qr{^/system/dns} )
 {
 	require Zevenet::API3::System::Service::DNS;
@@ -387,12 +405,6 @@ if ( $q->path_info =~ qr{^/system/(?:version|license|supportsave)} )
 	my $license_re = &getValidFormat( 'license_format' );
 	GET qr{^/system/license/($license_re)$} => \&get_license;
 }
-
-
-# IPDS
-#~ eval { require Zevenet::API3::Routes::Blacklists; };
-#~ eval { require Zevenet::API3::Routes::DoS; };
-#~ eval { require Zevenet::API3::Routes::RBL; };
 
 
 ##### Activation certificates ########################################
