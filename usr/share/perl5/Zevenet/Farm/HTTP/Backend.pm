@@ -178,7 +178,7 @@ sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 				$output = $?;
 				$index++;
 				splice @contents, $index, 0, "\t\t\tAddress $rip";
-				my $httpsbe = &getFarmVS( $farm_name, $service, "httpsbackend" );
+				my $httpsbe = &getHTTPFarmVS( $farm_name, $service, "httpsbackend" );
 				if ( $httpsbe eq "true" )
 				{
 					#add item
