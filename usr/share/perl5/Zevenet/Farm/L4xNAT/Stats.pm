@@ -140,6 +140,8 @@ sub getL4FarmEstConns    # ($farm_name,@netstat)
 {
 	my ( $farm_name, @netstat ) = @_;
 
+	require Zevenet::Farm::L4xNAT::Backend;
+
 	my $proto     = &getFarmProto( $farm_name );
 	my $nattype   = &getFarmNatType( $farm_name );
 	my $fvip      = &getFarmVip( "vip", $farm_name );
@@ -157,8 +159,8 @@ sub getL4FarmEstConns    # ($farm_name,@netstat)
 		$regexp = "\.*";
 	}
 
-	my @content = &getFarmBackendStatusCtl( $farm_name );
-	my @backends = &getFarmBackendsStatus_old( $farm_name, @content );
+	my @content = &getL4FarmBackendStatusCtl( $farm_name );
+	my @backends = &getL4FarmBackendsStatus_old( $farm_name, @content );
 
 	foreach ( @backends )
 	{
@@ -219,6 +221,7 @@ sub getL4FarmEstConns    # ($farm_name,@netstat)
 			}
 		}
 	}
+
 	return @nets;
 }
 
@@ -314,6 +317,8 @@ sub getL4FarmSYNConns    # ($farm_name,@netstat)
 {
 	my ( $farm_name, @netstat ) = @_;
 
+	require Zevenet::Farm::L4xNAT::Backend;
+
 	my $fvip  = &getFarmVip( "vip",  $farm_name );
 	my $fvipp = &getFarmVip( "vipp", $farm_name );
 	my $proto = &getFarmProto( $farm_name );
@@ -331,8 +336,8 @@ sub getL4FarmSYNConns    # ($farm_name,@netstat)
 		$regexp = "\.*";
 	}
 
-	my @content = &getFarmBackendStatusCtl( $farm_name ); 
-	my @backends = &getFarmBackendsStatus_old( $farm_name, @content );
+	my @content = &getL4FarmBackendStatusCtl( $farm_name );
+	my @backends = &getL4FarmBackendsStatus_old( $farm_name, @content );
 					   
 	# tcp      6 299 ESTABLISHED src=192.168.0.186 dst=192.168.100.241 sport=56668 dport=80 src=192.168.0.186 dst=192.168.100.241 sport=80 dport=56668 [ASSURED] mark=517 use=2
 	foreach ( @backends )
