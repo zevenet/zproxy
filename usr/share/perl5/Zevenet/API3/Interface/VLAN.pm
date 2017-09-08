@@ -287,7 +287,7 @@ sub get_vlan # ()
 
 	require Zevenet::Net::Interface;
 
-	my $desc = "Show VLAN interface";
+	my $desc = "Show VLAN interface $vlan";
 	my $interface;
 
 	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
@@ -314,7 +314,7 @@ sub get_vlan # ()
 		};
 	}
 
-	if ( $interface )
+	if ( not $interface )
 	{
 		my $msg = "VLAN interface not found.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
