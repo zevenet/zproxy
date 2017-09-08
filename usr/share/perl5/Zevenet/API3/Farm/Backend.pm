@@ -502,6 +502,7 @@ sub service_backends
 	{
 		&list_gslb_service_backends( $farmname, $service );
 	}
+
 	if ( $type !~ /^https?$/ )
 	{
 		my $msg = "The farm profile $type does not support this request.";
@@ -509,10 +510,10 @@ sub service_backends
 	}
 
 	# HTTP
-	require Zevenet::Farm::Config;
-	require Zevenet::Farm::Backend::Maintenance;
+	require Zevenet::Farm::HTTP::Backend;
+	require Zevenet::Farm::HTTP::Service;
 
-	my @services_list = split ' ', &getFarmVS( $farmname );
+	my @services_list = split ' ', &getHTTPFarmVS( $farmname );
 
 	# check if the requested service exists
 	unless ( grep { $service eq $_ } @services_list )
@@ -521,7 +522,7 @@ sub service_backends
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my @be = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
+	my @be = split ( "\n", &getHTTPFarmVS( $farmname, $service, "backends" ) );
 	my @backends;
 
 	# populate output array
@@ -529,7 +530,7 @@ sub service_backends
 	{
 		my @subbe       = split ( ' ', $subl );
 		my $id          = $subbe[1] + 0;
-		my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $service );
+		my $maintenance = &getHTTPFarmBackendMaintenance( $farmname, $id, $service );
 
 		if ( $maintenance != 0 )
 		{
@@ -826,9 +827,10 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 	}
 
 	# HTTP
+	require Zevenet::Farm::Base;
 	require Zevenet::Farm::Action;
-	require Zevenet::Farm::Config;
-	require Zevenet::Farm::Backend;
+	require Zevenet::Farm::HTTP::Config;
+	require Zevenet::Farm::HTTP::Backend;
 	require Zevenet::Farm::HTTP::Service;
 
 	# validate SERVICE
@@ -843,7 +845,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 	}
 
 	# validate BACKEND
-	my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
+	my $backendsvs = &getHTTPFarmVS( $farmname, $service, "backends" );
 	my @be_list = split ( "\n", $backendsvs );
 	my $be;
 
@@ -927,10 +929,9 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 	}
 
 	# apply BACKEND change
-	my $status = &setFarmServer(
+	my $status = &setHTTPFarmServer(
 								 $id_server,       $be->{ ip },
-								 $be->{ port },    "",
-								 "",               $be->{ priority },
+								 $be->{ port },    $be->{ priority },
 								 $be->{ timeout }, $farmname,
 								 $service
 	);
@@ -1055,8 +1056,8 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 	# HTTP
 	require Zevenet::Farm::Base;
 	require Zevenet::Farm::Action;
-	require Zevenet::Farm::Config;
-	require Zevenet::Farm::Backend;
+	require Zevenet::Farm::HTTP::Config;
+	require Zevenet::Farm::HTTP::Backend;
 	require Zevenet::Farm::HTTP::Service;
 
 	# validate SERVICE
@@ -1069,7 +1070,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my @backends = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
+	my @backends = split ( "\n", &getHTTPFarmVS( $farmname, $service, "backends" ) );
 	my $be_found = grep { (split ( " ", $_ ))[1] == $id_server } @backends;
 
 	# check if the backend id is available
@@ -1079,7 +1080,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $status = &runFarmServerDelete( $id_server, $farmname, $service );
+	my $status = &runHTTPFarmServerDelete( $id_server, $farmname, $service );
 
 	# check if there was an error deleting the backend
 	if ( $status == -1 )
