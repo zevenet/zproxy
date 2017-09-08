@@ -107,9 +107,8 @@ sub PUT($$)
 
 		if ( &debug() )
 		{
-			require Data::Dumper;
-			Data::Dumper->import;
-			&zenlog( "json: " . Dumper $input_ref );
+			use Data::Dumper;
+			&zenlog( "json: " . Dumper( $input_ref ) );
 		}
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
