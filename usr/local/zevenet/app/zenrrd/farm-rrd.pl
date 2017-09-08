@@ -24,8 +24,6 @@
 use strict;
 use warnings;
 use RRDs;
-use Zevenet::Config;
-use Zevenet::Farm::Core;
 use Zevenet::Farm::Base;
 use Zevenet::Farm::Stats;
 use Zevenet::Net::ConnStats;
@@ -33,23 +31,23 @@ use Zevenet::Net::ConnStats;
 my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
 my $rrd_dir = &getGlobalConfiguration('rrd_dir');
 
-my $synconns = 0;
-my $globalconns = 0;
-my $ERROR;
-
 foreach my $farmfile ( &getFarmList() )
 {
-	my $farm = &getFarmName($farmfile);
-	my $ftype = &getFarmType($farm);
-	my $status = &getFarmStatus($farm);
+	my $farm   = &getFarmName( $farmfile );
+	my $ftype  = &getFarmType( $farm );
+	my $status = &getFarmStatus( $farm );
 
-	if ( &getFarmType($farm) =~ /datalink/ || &getFarmStatus($farm) ne "up" )
+	if ( $ftype =~ /datalink/ || $status ne "up" )
 	{
 		next;
 	}
 
+	my $synconns = 0;
+	my $globalconns = 0;
+	my $ERROR;
+
 	my $db_farm = "$farm-farm.rrd";
-        my $vip = &getFarmVip("vip", $farm);
+	my $vip = &getFarmVip("vip", $farm);
 
 	my @netstat = &getConntrack("", $vip, "", "", "");
 
@@ -61,13 +59,14 @@ foreach my $farmfile ( &getFarmList() )
 	my @gconns = &getFarmEstConns($farm,@netstat);
 	$globalconns = @gconns;
 
-	if ( $globalconns =~ /^$/ || $synconns =~ /^$/)
+	if ( $globalconns eq '' || $synconns eq '' )
 	{
 		print "$0: Error: Unable to get the data for farm $farm\n";
 		exit;
 	}
 
-	if (! -f "$rrdap_dir/$rrd_dir/$db_farm"){
+	if (! -f "$rrdap_dir/$rrd_dir/$db_farm")
+	{
 		print "$0: Info: Creating the rrd database $rrdap_dir/$rrd_dir/$db_farm ...\n";
 		RRDs::create "$rrdap_dir/$rrd_dir/$db_farm",
 			"--step", "300",
