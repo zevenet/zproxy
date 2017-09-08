@@ -21,13 +21,15 @@
 ###############################################################################
 
 use strict;
-
-use Zevenet::Core;
-use Zevenet::Farm;
+use Zevenet::Config;
+use Zevenet::Farm::Core;
+use Zevenet::Farm::Base;
 
 #GET /farms
 sub farms # ()
 {
+	require Zevenet::Farm::Base;
+
 	my @out;
 	my @files = &getFarmList();
 
@@ -60,6 +62,10 @@ sub farms # ()
 # GET /farms/LSLBFARM
 sub farms_lslb # ()
 {
+	require Zevenet::Farm::Base;
+	require Zevenet::Farm::HTTP;
+	require Zevenet::Farm::L4xNAT;
+
 	my @out;
 	my @files = &getFarmList();
 
@@ -93,6 +99,9 @@ sub farms_lslb # ()
 # GET /farms/DATALINKFARM
 sub farms_dslb # ()
 {
+	require Zevenet::Farm::Base;
+	require Zevenet::Farm::Datalink;
+
 	my @out;
 	my @files = &getFarmList();
 
@@ -127,47 +136,37 @@ sub farms_name # ( $farmname )
 {
 	my $farmname = shift;
 
-	use Switch;
+	my $desc = "Show farm $farmname";
 
 	# Check if the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		# Error
-		my $errormsg = "The farmname $farmname does not exist.";
-		my $body = {
-				description => "Get farm",
-				error => "true",
-				message => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "Farm not found.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $type = &getFarmType( $farmname );
 
-	switch ( $type )
+	if ( $type =~ /https?/ )
 	{
-		case /http.*/
+		require Zevenet::API3::Farm::Get::HTTP;
+		&farms_name_http( $farmname );
+	}
+	if ( $type eq 'l4xnat' )
+	{
+		require Zevenet::API3::Farm::Get::L4xNAT;
+		&farms_name_l4( $farmname );
+	}
+	if ( $type eq 'datalink' )
+	{
+		require Zevenet::API3::Farm::Get::Datalink;
+		&farms_name_datalink( $farmname );
+	}
+	if ( $type eq 'gslb' )
+	{
+		if ( eval{ require Zevenet::API3::Farm::Get::GSLB; } )
 		{
-			require Zevenet::API3::Farm::Get::HTTP;
-			&farms_name_http( $farmname );
-		}
-		case /gslb/
-		{
-			if ( eval{ require Zevenet::API3::Farm::Get::GSLB; } )
-			{
-				&farms_name_gslb( $farmname );
-			}
-		}
-		case /l4xnat/
-		{
-			require Zevenet::API3::Farm::Get::L4xNAT;
-			&farms_name_l4( $farmname );
-		}
-		case /datalink/
-		{
-			require Zevenet::API3::Farm::Get::Datalink;
-			&farms_name_datalink( $farmname );
+			&farms_name_gslb( $farmname );
 		}
 	}
 }
