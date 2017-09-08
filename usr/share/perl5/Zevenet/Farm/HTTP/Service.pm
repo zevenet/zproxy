@@ -1028,7 +1028,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 	my $j  = 0;
 	my $l;
 
-	use Tie::File;
+	require Tie::File;
 	tie my @fileconf, 'Tie::File', "$configdir/$farm_filename";
 
 	foreach $line ( @fileconf )
@@ -1234,7 +1234,6 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 				$line = "\t\t##True##HTTPS-backend##";
 			}
 
-			#
 			if ( $line =~ "##HTTPS-backend##" && $sw == 1 && $string eq "" )
 			{
 				#turn off
@@ -1347,18 +1346,17 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 Function: getFarmVSI
 
 	Get the index of a service in a http farm
-	
+
 Parameters:
 	farmname - Farm name
 	service - Service name
 
 Returns:
 	integer - Service index 
-	
+
 FIXME: 
 	Initialize output to -1 and do error control
 	Rename with intuitive name, something like getHTTPFarmServiceIndex
-		
 =cut
 sub getFarmVSI    # ($farm_name,$service)
 {
