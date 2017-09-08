@@ -423,11 +423,15 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 {
 	my ( $farm_name, $flisten ) = @_;
 
+	require Tie::File;
+
 	my $farm_filename = &getFarmFile( $farm_name );
+	my $i_f           = -1;
+	my $found         = "false";
+
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
-	my $i_f         = -1;
 	my $array_count = @filefarmhttp;
-	my $found       = "false";
+
 	while ( $i_f <= $array_count && $found eq "false" )
 	{
 		$i_f++;
@@ -693,7 +697,7 @@ sub setHTTPFarm100Continue    # ($farm_name, $action)
 	
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{		
-		use Tie::File;
+		require Tie::File;
 		tie my @file, 'Tie::File', "$configdir/$farm_filename";
 		
 		# check if 100 continue directive exists
@@ -1221,7 +1225,9 @@ Returns:
 sub getFarmChildPid    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
-	use File::Grep qw( fgrep fmap fdo );
+
+	require File::Grep;
+	File::Grep->import( 'fgrep' );
 
 	my $farm_type = &getFarmType( $farm_name );
 	my $fpid      = &getFarmPid( $farm_name );
@@ -1317,7 +1323,7 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	my $stat          = 0;
 	my $enter         = 2;
 
-	use Tie::File;
+	require Tie::File;
 	tie my @array, 'Tie::File', "$configdir\/$farm_filename";
 	my $size = @array;
 
