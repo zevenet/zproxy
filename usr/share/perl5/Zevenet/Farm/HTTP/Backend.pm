@@ -50,6 +50,7 @@ sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
+	require Tie::File;
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
 
 	if ( $ids !~ /^$/ )
@@ -57,6 +58,7 @@ sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 		my $index_count = -1;
 		my $i           = -1;
 		my $sw          = 0;
+
 		foreach my $line ( @contents )
 		{
 			$i++;
@@ -73,7 +75,7 @@ sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 				{
 					#server for modify $ids;
 					#HTTPS
-					my $httpsbe = &getFarmVS( $farm_name, $service, "httpsbackend" );
+					my $httpsbe = &getHTTPFarmVS( $farm_name, $service, "httpsbackend" );
 					if ( $httpsbe eq "true" )
 					{
 						#add item
@@ -246,6 +248,7 @@ sub runHTTPFarmServerDelete    # ($ids,$farm_name,$service)
 	my $j             = -1;
 	my $sw            = 0;
 
+	require Tie::File;
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
 
 	foreach my $line ( @contents )
@@ -344,6 +347,7 @@ sub getHTTPFarmBackendsStatus_old    # ($farm_name,@content)
 	foreach ( @content )
 	{
 		my @serviceline;
+
 		if ( $_ =~ /Service/ )
 		{
 			@serviceline = split ( "\ ", $_ );
@@ -367,6 +371,7 @@ sub getHTTPFarmBackendsStatus_old    # ($farm_name,@content)
 			#status
 			my $status_backend = $backends[7];
 			my $backend_disabled = $backends[3];
+
 			if ( $backend_disabled eq "DISABLED" )
 			{
 				#Checkstatusfile
@@ -388,6 +393,7 @@ sub getHTTPFarmBackendsStatus_old    # ($farm_name,@content)
 			$priority_backend =~ s/\(//g;
 			$line = $line . "\t" . "-\t" . $priority_backend;
 			my $clients = &getFarmBackendsClients( $backends[0], @content, $farm_name );
+
 			if ( $clients != -1 )
 			{
 				$line = $line . "\t" . $clients;
@@ -398,7 +404,8 @@ sub getHTTPFarmBackendsStatus_old    # ($farm_name,@content)
 			}
 
 			$connections = $backends[8];
-			$connections =~ s/[\(\)]//g;			
+			$connections =~ s/[\(\)]//g;
+
 			if ( !( $connections >= 0 ) )
 			{
 				$connections = 0;
@@ -408,6 +415,7 @@ sub getHTTPFarmBackendsStatus_old    # ($farm_name,@content)
 			push ( @backends_data, $line );
 		}
 	}
+
 	return @backends_data;
 }
 
@@ -436,6 +444,7 @@ sub getHTTPFarmBackends    # ($farm_name,$service)
 	my ( $farmname, $service ) = @_;
 
 	require Zevenet::Farm::HTTP::Service;
+
 	my $backendsvs = &getHTTPFarmVS( $farmname, $service, "backends" );
 	my @be         = split ( "\n", $backendsvs );
 	my @be_status = @{ &getHTTPFarmBackendsStatus( $farmname, $service ) };
@@ -493,14 +502,16 @@ Returns:
 sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 {
 	my ( $farm_name, $service ) = @_;
-	my @status;
-	
+
 	require Zevenet::Farm::Base;
+
+	my @status;
 	my $farmStatus = &getFarmStatus( $farm_name );
 
 	if ( $farmStatus eq "up" )
 	{
 		require Zevenet::Farm::HTTP::Stats;
+
 		my $stats = &getHTTPFarmBackendsStats($farm_name);
 					
 		foreach my $be ( @{ $stats->{ backends } } )
@@ -521,9 +532,11 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 	else
 	{
 		require Zevenet::Farm::HTTP::Service;
-		my $backendsvs = &getFarmVS( $farm_name, $service, "backends" );
+
+		my $backendsvs = &getHTTPFarmVS( $farm_name, $service, "backends" );
 		my @be         = split ( "\n", $backendsvs );
 		my $id = 0;
+
 		# @be is used to get size of backend array
 		for (@be)
 		{
@@ -565,38 +578,43 @@ Returns:
 sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
+
+	require Zevenet::Farm::HTTP::Service;
+
 	my $index;
 	my $line;
 	my $stfile = "$configdir\/$farm_name\_status.cfg";
 	# if the status file does not exist the backend is ok
 	my $output = "active";
 
-	if ( -e "$stfile" )
+	if ( ! -e $stfile )
 	{
-		require Zevenet::Farm::HTTP::Service;
-		$index = &getFarmVSI( $farm_name, $service );
-		open FG, "$stfile";
-		while ( $line = <FG> )
+		return $output;
+	}
+
+	$index = &getFarmVSI( $farm_name, $service );
+	open FG, "$stfile";
+
+	while ( my $line = <FG> )
+	{
+		#service index
+		if ( $line =~ /\ 0\ ${index}\ ${backend}/ )
 		{
-			#service index
-			if ( $line =~ /\ 0\ ${index}\ ${backend}/ )
+			if ( $line =~ /maintenance/ )
 			{
-				if ( $line =~ /maintenance/ )
-				{
-					$output = "maintenance";
-				}
-				elsif ( $line =~ /fgDOWN/ )
-				{
-					$output = "fgDOWN";
-				}
-				else
-				{
-					$output = "active";
-				}
+				$output = "maintenance";
+			}
+			elsif ( $line =~ /fgDOWN/ )
+			{
+				$output = "fgDOWN";
+			}
+			else
+			{
+				$output = "active";
 			}
 		}
-		close FG;
 	}
+	close FG;
 
 	return $output;
 }
@@ -723,7 +741,9 @@ sub getHTTPFarmBackendsClients    # ($idserver,@content,$farm_name)
 	{
 		@content = &getHTTPFarmBackendStatusCtl( $farm_name );
 	}
+
 	my $numclients = 0;
+
 	foreach ( @content )
 	{
 		if ( $_ =~ / Session .* -> $idserver$/ )
@@ -848,16 +868,17 @@ sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 
 		if ( -e $statusfile )
 		{
-			use Tie::File;
-			tie my @filelines, 'Tie::File', "$statusfile";
+			open( my $fh, '<', $statusfile );
 			
 			my @sol;
 			my $service_index = &getFarmVSI( $farm_name, $service );
-			if ( @sol = grep ( /0 $service_index $backend maintenance/, @filelines ) )
+
+			if ( @sol = grep ( /0 $service_index $backend maintenance/, <$fh> ) )
 			{
 				$output = 0;
 			}
-			untie @filelines;
+
+			close $fh;
 		}
 	}
 
@@ -977,40 +998,15 @@ FIXME:
 =cut
 sub runRemoveHTTPBackendStatus    # ($farm_name,$backend,$service)
 {
-	#~ my ( $farm_name, $backend, $service ) = @_;
-
-	#~ my $i      = -1;
-	#~ my $j      = -1;
-	#~ my $change = "false";
-	#~ my $sindex = &getFarmVSI( $farm_name, $service );
-	#~ tie my @contents, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
-	#~ foreach my $line ( @contents )
-	#~ {
-		#~ $i++;
-		#~ if ( $line =~ /0\ ${sindex}\ ${backend}/ )
-		#~ {
-			#~ splice @contents, $i, 1,;
-		#~ }
-	#~ }
-	#~ untie @contents;
-	#~ my $index = -1;
-	#~ tie my @filelines, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
-	#~ for ( @filelines )
-	#~ {
-		#~ $index++;
-		#~ if ( $_ !~ /0\ ${sindex}\ $index/ )
-		#~ {
-			#~ my $jndex = $index + 1;
-			#~ $_ =~ s/0\ ${sindex}\ $jndex/0\ ${sindex}\ $index/g;
-		#~ }
-	#~ }
-	#~ untie @filelines;
-
 	my ( $farm_name, $backend, $service ) = @_;
 
-	my $i      = -1;
+	require Tie::File;
+
+	my $i = -1;
 	my $serv_index = &getFarmVSI( $farm_name, $service );
+
 	tie my @contents, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
+
 	foreach my $line ( @contents )
 	{
 		$i++;
@@ -1022,8 +1018,9 @@ sub runRemoveHTTPBackendStatus    # ($farm_name,$backend,$service)
 	}
 	untie @contents;
 	
-	tie my @filelines, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
 	# decrease backend index in greater backend ids
+	tie my @filelines, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
+
 	foreach my $line ( @filelines )
 	{
 		if ( $line =~ /0\ ${serv_index}\ (\d+) (\w+)/ )
@@ -1038,7 +1035,6 @@ sub runRemoveHTTPBackendStatus    # ($farm_name,$backend,$service)
 		}
 	}
 	untie @filelines;
-		
 }
 
 =begin nd
@@ -1096,7 +1092,7 @@ Function: setHTTPFarmBackendsSessionsRemove
 
 	Remove all the active sessions enabled to a backend in a given service
 	Used by farmguardian
-	
+
 Parameters:
 	farmname - Farm name
 	service - Service name
@@ -1104,9 +1100,9 @@ Parameters:
 
 Returns:
 	none - .
-	
-FIXME: 
-		
+
+FIXME:
+
 =cut
 sub setHTTPFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 {
