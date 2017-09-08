@@ -21,6 +21,8 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Farm::HTTP::Config;
+use Zevenet::Farm::HTTP::Service;
 
 # GET /farms/<farmname> Request info of a http|https Farm
 sub farms_name_http # ( $farmname )
@@ -31,10 +33,10 @@ sub farms_name_http # ( $farmname )
 	my @out_s;
 	my @out_cn;
 	my $connto          = 0 + &getFarmConnTO( $farmname );
-	my $timeout         = 0 + &getFarmTimeout( $farmname );
-	my $alive           = 0 + &getFarmBlacklistTime( $farmname );
+	my $timeout         = 0 + &getHTTPFarmTimeout( $farmname );
+	my $alive           = 0 + &getHTTPFarmBlacklistTime( $farmname );
 	my $client          = 0 + &getFarmClientTimeout( $farmname );
-	my $conn_max        = 0 + &getFarmMaxConn( $farmname );
+	my $conn_max        = 0 + &getHTTPFarmMaxConn( $farmname );
 	my $rewritelocation = 0 + &getFarmRewriteL( $farmname );
 	my $httpverb        = 0 + &getFarmHttpVerb( $farmname );
 
@@ -56,6 +58,7 @@ sub farms_name_http # ( $farmname )
 
 	if ( $type eq "https" )
 	{
+		require Zevenet::Farm::Ext;
 		require Zevenet::Farm::HTTP::HTTPS;
 
 		$certname = &getFarmCertificate( $farmname );
@@ -97,12 +100,6 @@ sub farms_name_http # ( $farmname )
 	my $status = &getFarmVipStatus( $farmname );
 	my $ignore100continue = (&getHTTPFarm100Continue( $farmname ))? "true": "false";
 
-	# my @certnames = &getFarmCertificatesSNI($farmname);
-	# my $out_certs = [];
-	# foreach $file(@certnames) {
-	# push $out_certs, { filename => $file };
-	# }
-
 	$output_params = {
 		status          => $status,
 		restimeout      => $timeout,
@@ -134,12 +131,12 @@ sub farms_name_http # ( $farmname )
 	}
 
 	# Services
-	my $services = &getFarmVS( $farmname, "", "" );
+	my $services = &getHTTPFarmVS( $farmname, "", "" );
 	my @serv = split ( "\ ", $services );
 
 	foreach my $s ( @serv )
 	{
-		my $serviceStruct = &getServiceStruct ( $farmname, $s );
+		my $serviceStruct = &getHTTPServiceStruct ( $farmname, $s );
 		
 		# Remove backend status 'undefined', it is for news api versions
 		foreach my $be (@{$serviceStruct->{ 'backends' }})

@@ -21,14 +21,15 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Farm::GSLB::Service;
+use Zevenet::Farm::GSLB::Backend;
+use Zevenet::Farm::GSLB::FarmGuardian;
+use Zevenet::Farm::GSLB::Zone;
 
 #	/farms/<GSLBfarm>
 sub farms_name_gslb # ( $farmname )
 {
 	my $farmname = shift;
-
-	require Zevenet::Farm::GSLB::Service;
-	require Zevenet::Farm::GSLB::Backend;
 
 	my $farm_ref;
 	my @out_s;
@@ -47,17 +48,15 @@ sub farms_name_gslb # ( $farmname )
 	{
 		my @serv = split ( ".cfg", $srv_it );
 		my $srv  = $serv[0];
-		my $lb   = &getFarmVS( $farmname, $srv, "algorithm" );
+		my $lb   = &getGSLBFarmVS( $farmname, $srv, "algorithm" );
 
 		# Default port health check
-		my $dpc = &getFarmVS( $farmname, $srv, "dpc" );
+		my $dpc = &getGSLBFarmVS( $farmname, $srv, "dpc" );
 
 		# Backends
 		my @out_b = &getGSLBFarmBackends( $farmname, $srv );
 
 		# Farmguardian
-		require Zevenet::Farm::GSLB::FarmGuardian;
-
 		my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $srv );
 		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $srv );
 		
@@ -74,8 +73,6 @@ sub farms_name_gslb # ( $farmname )
 	}
 
 	# Zones
-	require Zevenet::Farm::GSLB::Zone;
-
 	my @zones   = &getGSLBFarmZones( $farmname );
 	my $first   = 0;
 	my $vserver = 0;
