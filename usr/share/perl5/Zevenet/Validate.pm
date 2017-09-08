@@ -310,6 +310,7 @@ sub getValidPort    # ( $ip, $port, $profile )
 	}
 	elsif ( $profile =~ /^(?:L4XNAT)$/i )
 	{
+		require Zevenet::Farm::L4xNAT::Validate;
 		return &ismport( $port ) eq 'true';
 	}
 	elsif ( $profile =~ /^(?:DATALINK)$/i )
