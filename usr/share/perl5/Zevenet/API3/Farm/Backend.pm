@@ -22,7 +22,6 @@
 ###############################################################################
 
 use strict;
-
 use Zevenet::Farm::Core;
 
 # POST
@@ -316,8 +315,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	# HTTP
 	require Zevenet::Net::Validate;
 	require Zevenet::Farm::Base;
-	require Zevenet::Farm::Config;
-	require Zevenet::Farm::Backend;
+	require Zevenet::Farm::HTTP::Config;
+	require Zevenet::Farm::HTTP::Backend;
 	require Zevenet::Farm::HTTP::Service;
 
 	# validate SERVICE
@@ -341,7 +340,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	}
 
 	# get an ID for the new backend
-	my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
+	my $backendsvs = &getHTTPFarmVS( $farmname, $service, "backends" );
 	my @be = split ( "\n", $backendsvs );
 	my $id;
 
@@ -387,10 +386,9 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	}
 
 	# First param ($id) is an empty string to let function autogenerate the id for the new backend
-	my $status = &setFarmServer(
+	my $status = &setHTTPFarmServer(
 								 "",                     $json_obj->{ ip },
-								 $json_obj->{ port },    "",
-								 "",                     $json_obj->{ weight },
+								 $json_obj->{ port },    $json_obj->{ weight },
 								 $json_obj->{ timeout }, $farmname,
 								 $service,
 	);
