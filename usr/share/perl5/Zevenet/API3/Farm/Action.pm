@@ -21,7 +21,6 @@
 ###############################################################################
 
 use strict;
-
 use Zevenet::Farm::Core;
 
 # POST /farms/<farmname>/actions Set an action in a Farm
@@ -126,6 +125,11 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	my $service    = shift;
 	my $backend_id = shift;
 
+	require Zevenet::Farm::Base;
+	require Zevenet::Farm::HTTP::Config;
+	require Zevenet::Farm::HTTP::Service;
+	require Zevenet::Farm::HTTP::Backend;
+
 	my $desc = "Set service backend status";
 
 	# validate FARM NAME
@@ -143,34 +147,27 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	}
 
 	# validate SERVICE
+	my @services = &getHTTPFarmServices($farmname);
+	my $found_service;
+
+	foreach my $service_name ( @services )
 	{
-		require Zevenet::Farm::HTTP::Service;
-
-		my @services = &getHTTPFarmServices($farmname);
-		my $found_service;
-
-		foreach my $service_name ( @services )
+		if ( $service eq $service_name )
 		{
-			if ( $service eq $service_name )
-			{
-				$found_service = 1;
-				last;
-			}
+			$found_service = 1;
+			last;
 		}
+	}
 
-		if ( !$found_service )
-		{
-			my $msg = "Could not find the requested service.";
-			&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-		}
+	if ( !$found_service )
+	{
+		my $msg = "Could not find the requested service.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# validate BACKEND
 	my $be;
-
-	require Zevenet::Farm::Config;
-
-	my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
+	my $backendsvs = &getHTTPFarmVS( $farmname, $service, "backends" );
 	my @be_list = split ( "\n", $backendsvs );
 
 	foreach my $be_line ( @be_list )
@@ -197,15 +194,11 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	}
 
 	# Do not allow to modify the maintenance status if the farm needs to be restarted
-	require Zevenet::Farm::Base;
-
 	if ( &getFarmLock( $farmname ) != -1 )
 	{
 		my $msg = "The farm needs to be restarted before to apply this action.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-
-	require Zevenet::Farm::Backend::Maintenance;
 
 	# validate STATUS
 	if ( $json_obj->{ action } eq "maintenance" )
@@ -223,7 +216,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 			$maintenance_mode = $json_obj->{ mode };
 		}
 		
-		my $status = &setFarmBackendMaintenance( $farmname, $backend_id, $maintenance_mode, $service );
+		my $status = &setHTTPFarmBackendMaintenance( $farmname, $backend_id, $maintenance_mode, $service );
 
 		&zenlog(
 			"Changing status to maintenance of backend $backend_id in service $service in farm $farmname"
@@ -237,7 +230,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	}
 	elsif ( $json_obj->{ action } eq "up" )
 	{
-		my $status = &setFarmBackendNoMaintenance( $farmname, $backend_id, $service );
+		my $status = &setHTTPFarmBackendNoMaintenance( $farmname, $backend_id, $service );
 
 		&zenlog(
 			 "Changing status to up of backend $backend_id in service $service in farm $farmname" );
@@ -278,6 +271,8 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 	my $farmname   = shift;
 	my $backend_id = shift;
 
+	require Zevenet::Farm::Backend;
+
 	my $desc = "Set backend status";
 
 	# validate FARM NAME
@@ -295,8 +290,6 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 	}
 
 	# validate BACKEND
-	require Zevenet::Farm::Backend;
-
 	my @backends = &getFarmServers( $farmname );
 	my $backend_line = $backends[$backend_id];
 
