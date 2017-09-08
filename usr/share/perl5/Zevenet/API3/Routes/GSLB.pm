@@ -24,7 +24,7 @@
 use strict;
 
 my $q = getCGI();
-my $farm_re    = &getValidFormat( 'farm_name' );
+my $farm_re = &getValidFormat( 'farm_name' );
 
 
 if ( $q->path_info =~ qr{^/farms/modules/gslb$} )
