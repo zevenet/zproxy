@@ -565,37 +565,41 @@ Returns:
 sub getHTTPServiceStruct
 {
 	my ( $farmname, $servicename ) = @_;
+
+	require Zevenet::FarmGuardian;
+	require Zevenet::Farm::HTTP::Backend;
+
 	my $service = -1;
-	
+
 	#http services
-	my $services = &getFarmVS( $farmname, "", "" );
+	my $services = &getHTTPFarmVS( $farmname, "", "" );
 	my @serv = split ( "\ ", $services );
-	
+
 	foreach my $s ( @serv )
 	{
 		if ( $s eq $servicename )
 		{
-			my $vser         = &getFarmVS( $farmname, $s, "vs" );
-			my $urlp         = &getFarmVS( $farmname, $s, "urlp" );
-			my $redirect     = &getFarmVS( $farmname, $s, "redirect" );
-			my $redirecttype = &getFarmVS( $farmname, $s, "redirecttype" );
-			my $session      = &getFarmVS( $farmname, $s, "sesstype" );
-			my $ttl          = &getFarmVS( $farmname, $s, "ttl" );
-			my $sesid        = &getFarmVS( $farmname, $s, "sessionid" );
-			my $dyns         = &getFarmVS( $farmname, $s, "dynscale" );
-			my $httpsbe      = &getFarmVS( $farmname, $s, "httpsbackend" );
-			my $cookiei      = &getFarmVS( $farmname, $s, "cookieins" );
-	
+			my $vser         = &getHTTPFarmVS( $farmname, $s, "vs" );
+			my $urlp         = &getHTTPFarmVS( $farmname, $s, "urlp" );
+			my $redirect     = &getHTTPFarmVS( $farmname, $s, "redirect" );
+			my $redirecttype = &getHTTPFarmVS( $farmname, $s, "redirecttype" );
+			my $session      = &getHTTPFarmVS( $farmname, $s, "sesstype" );
+			my $ttl          = &getHTTPFarmVS( $farmname, $s, "ttl" );
+			my $sesid        = &getHTTPFarmVS( $farmname, $s, "sessionid" );
+			my $dyns         = &getHTTPFarmVS( $farmname, $s, "dynscale" );
+			my $httpsbe      = &getHTTPFarmVS( $farmname, $s, "httpsbackend" );
+			my $cookiei      = &getHTTPFarmVS( $farmname, $s, "cookieins" );
+
 			if ( $cookiei eq "" )
 			{
 				$cookiei = "false";
 			}
-	
-			my $cookieinsname = &getFarmVS( $farmname, $s, "cookieins-name" );
-			my $domainname    = &getFarmVS( $farmname, $s, "cookieins-domain" );
-			my $path          = &getFarmVS( $farmname, $s, "cookieins-path" );
-			my $ttlc          = &getFarmVS( $farmname, $s, "cookieins-ttlc" );
-	
+
+			my $cookieinsname = &getHTTPFarmVS( $farmname, $s, "cookieins-name" );
+			my $domainname    = &getHTTPFarmVS( $farmname, $s, "cookieins-domain" );
+			my $path          = &getHTTPFarmVS( $farmname, $s, "cookieins-path" );
+			my $ttlc          = &getHTTPFarmVS( $farmname, $s, "cookieins-ttlc" );
+
 			if ( $dyns =~ /^$/ )
 			{
 				$dyns = "false";
@@ -605,30 +609,28 @@ sub getHTTPServiceStruct
 				$httpsbe = "false";
 			}
 
-			require Zevenet::FarmGuardian;
-
 			my @fgconfig  = &getFarmGuardianConf( $farmname, $s );
 			my $fgttcheck = $fgconfig[1];
 			my $fgscript  = $fgconfig[2];
 			my $fguse     = $fgconfig[3];
 			my $fglog     = $fgconfig[4];
-	
+
 			# Default values for farm guardian parameters
 			if ( !$fgttcheck ) { $fgttcheck = 5; }
 			if ( !$fguse )     { $fguse     = "false"; }
 			if ( !$fglog )     { $fglog     = "false"; }
 			if ( !$fgscript )  { $fgscript  = ""; }
-	
+
 			$fgscript =~ s/\n//g;
 			$fgscript =~ s/\"/\'/g;
 			$fguse =~ s/\n//g;
-	
-			my $backends = &getFarmBackends( $farmname, $s);
-	
+
+			my $backends = &getHTTPFarmBackends( $farmname, $s);
+
 			$ttlc      = 0 unless $ttlc;
 			$ttl       = 0 unless $ttl;
 			$fgttcheck = 0 unless $fgttcheck;
-	
+
 			$service =
 			{
 				id           => $s,
@@ -654,7 +656,6 @@ sub getHTTPServiceStruct
 			};
 			last;
 		}
-		
 	}
 
 	return $service;
@@ -664,7 +665,7 @@ sub getHTTPServiceStruct
 Function: getHTTPFarmVS
 
 	Return virtual server parameter
-	
+
 Parameters:
 	farmname - Farm name
 	service - Service name
@@ -676,7 +677,6 @@ Returns:
 
 FIXME:
 	return a hash with all parameters
-				
 =cut
 sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 {

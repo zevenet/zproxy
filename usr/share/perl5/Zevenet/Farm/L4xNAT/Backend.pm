@@ -49,6 +49,9 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 {
 	my ( $ids, $rip, $port, $weight, $priority, $farm_name, $max_conns ) = @_;
 
+	require Zevenet::FarmGuardian;
+	require Zevenet::Farm::L4xNAT::Config;
+
 	&zenlog(
 		"setL4FarmServer << ids:$ids rip:$rip port:$port weight:$weight priority:$priority farm_name:$farm_name max_conns:$max_conns"
 	) if &debug;
@@ -58,8 +61,6 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	my $found_server  = 'false';
 	my $i             = 0;                            # server ID
 	my $l             = 0;                            # line index
-
-	require Zevenet::Farm::L4xNAT::Config;
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
@@ -76,6 +77,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 		}
 	}
 
+	require Tie::File;
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
 
 	# edit the backed line if found
@@ -105,6 +107,8 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	# add a new backend if not found
 	if ( $found_server eq 'false' )
 	{
+		require Zevenet::Netfilter;
+
 		$mark = &getNewMark( $farm_name );
 		push ( @contents, "\;server\;$rip\;$port\;$mark\;$weight\;$priority\;up\;$max_conns\n" );
 		$output = $?;    # FIXME
@@ -119,6 +123,8 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 		# enabling new server
 		if ( $found_server eq 'false' )
 		{
+			require Zevenet::Net::Util;
+
 			if ( $$farm{ lbalg } eq 'weight' || $$farm{ lbalg } eq 'leastconn' )
 			{
 				$output |= &_runL4ServerStart( $farm_name, $ids );
@@ -163,14 +169,15 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 {
 	my ( $ids, $farm_name ) = @_;
 
+	require Zevenet::FarmGuardian;
+	require Zevenet::Farm::L4xNAT::Config;
+
 	my $farm_filename = &getFarmFile( $farm_name );
 
 	my $output       = 0;
 	my $found_server = 'false';
 	my $i            = 0;
 	my $l            = 0;
-
-	require Zevenet::Farm::L4xNAT::Config;
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
@@ -189,6 +196,7 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 		$output |= &_runL4ServerStop( $farm_name, $ids ) if $$farm{ status } eq 'up';
 	}
 
+	require Tie::File;
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
 
 	foreach my $line ( @contents )
@@ -217,6 +225,8 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 	# disabling server
 	if ( $found_server eq 'true' && $$farm{ status } eq 'up' )
 	{
+		require Zevenet::Net::Util;
+
 		splice @{ $$farm{ servers } }, $ids, 1;    # remove server from structure
 
 		if ( $$farm{ lbalg } eq 'weight' || $$farm{ lbalg } eq 'prio' )
@@ -347,6 +357,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 {
 	my ( $farm_name, $server_id, $status ) = @_;
 
+	require Zevenet::FarmGuardian;
 	require Zevenet::Farm::L4xNAT::Config;
 
 	my %farm = %{ &getL4FarmStruct( $farm_name ) };
@@ -379,6 +390,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	}
 
 	# load farm configuration file
+	require Tie::File;
 	tie my @configfile, 'Tie::File', "$configdir\/$farm{filename}";
 
 	# look for $server_id backend
@@ -719,6 +731,8 @@ sub getL4ServerActionRules
 	my $farm   = shift;    # input: farm reference
 	my $server = shift;    # input: server reference
 	my $switch = shift;    # input: on/off
+
+	require Zevenet::Netfilter;
 
 	my $rules = &getIptRulesStruct();
 	my $rule;
