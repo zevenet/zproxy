@@ -23,11 +23,6 @@
 
 use strict;
 
-use Zevenet::FarmGuardian;
-use Zevenet::Netfilter;
-use Zevenet::Net;
-use Zevenet::Farm;
-
 my $configdir = &getGlobalConfiguration('configdir');
 
 =begin nd
@@ -50,34 +45,34 @@ sub getL4FarmsPorts    # ($protocol)
 	my $port_list       = "";
 	my @farms_filenames = &getFarmList();
 
-	if ( $#farms_filenames > -1 )
+	unless ( $#farms_filenames > -1 )
 	{
-		foreach my $farm_filename ( @farms_filenames )
+		return $port_list;
+	}
+
+	foreach my $farm_filename ( @farms_filenames )
+	{
+		my $farm_name     = &getFarmName( $farm_filename );
+		my $farm_type     = &getFarmType( $farm_name );
+		my $farm_protocol = &getFarmProto( $farm_name );
+
+		next if not ( $farm_type eq "l4xnat" && $protocol eq $farm_protocol );
+
+		my $farm_port = &getFarmVip( "vipp", $farm_name );
+
+		next if not &validL4ExtPort( $farm_protocol, $farm_port );
+
+		if ( $first == 1 )
 		{
-			my $farm_name     = &getFarmName( $farm_filename );
-			my $farm_type     = &getFarmType( $farm_name );
-			my $farm_protocol = &getFarmProto( $farm_name );
-
-			if ( ( $farm_type eq "l4xnat" ) && ( $protocol eq $farm_protocol ) )
-			{
-				my $farm_port = &getFarmVip( "vipp", $farm_name );
-
-				if ( &validL4ExtPort( $farm_protocol, $farm_port ) )
-				{
-					if ( $first == 1 )
-					{
-						$port_list = $farm_port;
-						$first     = 0;
-					}
-					else
-					{
-						$port_list = "$port_list,$farm_port";
-					}
-				}
-			}
+			$port_list = $farm_port;
+			$first     = 0;
+		}
+		else
+		{
+			$port_list = "$port_list,$farm_port";
 		}
 	}
-	
+
 	return $port_list;
 }
 
@@ -1043,6 +1038,8 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
+	require Zevenet::FarmGuardian;
+
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $stat          = -1;
 	my $i             = 0;
@@ -1132,7 +1129,6 @@ sub getFarmPortList    # ($fvipp)
 	my @portlist = split ( ',', $fvipp );
 	my @retportlist = ();
 
-	#~ if ( $portlist[0] !~ /\*/ )
 	if ( ! grep ( /\*/, @portlist ) )
 	{
 		foreach my $port ( @portlist )
@@ -1202,6 +1198,9 @@ sub getL4FarmStruct
 
 	$farm{ name } = shift;    # input: farm name
 
+	require Zevenet::Farm::Base;
+	require Zevenet::Farm::L4xNAT::Backend;
+
 	$farm{ filename } = &getFarmFile( $farm{ name } );
 	$farm{ nattype }  = &getFarmNatType( $farm{ name } );
 	$farm{ lbalg }    = &getL4FarmAlgorithm( $farm{ name } );
@@ -1251,6 +1250,8 @@ sub getL4ServerStruct
 {
 	my $farm        = shift;
 	my $server_line = shift;    # input example: ;0;192.168.101.252;80;0x20a;1;1;up
+
+	require Zevenet::Net::Validate;
 
 	my @server_args = split ( "\;", $server_line );    # split server line
 	chomp ( @server_args );
@@ -1330,6 +1331,9 @@ FIXME:
 sub refreshL4FarmRules    # AlgorithmRules
 {
 	my $farm = shift;     # input: reference to farm structure
+
+	require Zevenet::Netfilter;
+
 	my $prio_server;
 	my @rules;
 	my $return_code = 0;
