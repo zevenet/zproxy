@@ -159,6 +159,8 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 {
 	my ( $cfile, $farm_name ) = @_;
 
+	require Tie::File;
+
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
@@ -166,7 +168,6 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 	&zenlog( "setting 'Certificate $cfile' for $farm_name farm $farm_type" );
 	if ( $farm_type eq "https" )
 	{
-		use Tie::File;
 		tie my @array, 'Tie::File', "$configdir/$farm_filename";
 		for ( @array )
 		{
@@ -505,13 +506,14 @@ sub setHTTPFarmDisableSSL    # ($farm_name, $protocol, $action )
 {
 	my ( $farm_name, $protocol, $action ) = @_;
 
+	require Tie::File;
+
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 	
 	if ( $farm_type eq "https" )
 	{		
-		use Tie::File;
 		tie my @file, 'Tie::File', "$configdir/$farm_filename";
 		
 		if ( $action == 1 )
@@ -540,8 +542,8 @@ sub setHTTPFarmDisableSSL    # ($farm_name, $protocol, $action )
 			
 		untie @file;
 	}
+
 	return $output;
 }
-
 
 1;

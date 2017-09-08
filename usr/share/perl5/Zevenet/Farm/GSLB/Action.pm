@@ -48,6 +48,8 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 {
 	my ( $fname, $writeconf ) = @_;
 
+	require Tie::File;
+
 	my $output;
 	my $status = &getFarmStatus( $fname );
 	my $type   = &getFarmType( $fname );
@@ -64,9 +66,9 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 	if ( $writeconf eq "true" )
 	{
 		unlink ( "/tmp/$fname.lock" );
-		use Tie::File;
 		tie my @filelines, 'Tie::File', "$configdir\/$file\/etc\/config";
 		my $first = 1;
+
 		foreach ( @filelines )
 		{
 			if ( $first eq 1 )

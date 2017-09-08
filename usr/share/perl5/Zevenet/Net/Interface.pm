@@ -123,7 +123,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 	# Example: eth0;10.0.0.5;255.255.255.0;up;10.0.0.1;
 
-	use IO::Socket;
+	require IO::Socket;
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
 
 	my %iface;
@@ -168,7 +168,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		 && $iface{ addr }
 	  )
 	{
-		use Config::Tiny;
+		require Config::Tiny;
 		my $float = Config::Tiny->read( &getGlobalConfiguration( 'floatfile' ) );
 
 		$iface{ float } = $float->{ _ }->{ $iface{ name } } // '';
@@ -560,10 +560,11 @@ See Also:
 =cut
 sub getSystemInterfaceList
 {
+	use IO::Interface qw(:flags);
+
 	my @interfaces;    # output
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
 
-	use IO::Interface qw(:flags);
 	my $socket = IO::Socket::INET->new( Proto => 'udp' );
 	my @system_interfaces = &getInterfaceList();
 
@@ -671,11 +672,10 @@ See Also:
 =cut
 sub getSystemInterface    # ($if_name)
 {
-	use IO::Interface qw(:flags);
 	my $if_ref = {};
 	$$if_ref{ name } = shift;
 
-	#~ $$if_ref{ ip_v } = shift;
+	use IO::Interface qw(:flags);
 
 	my %if_parts = %{ &getDevVlanVini( $$if_ref{ name } ) };
 	my $socket   = IO::Socket::INET->new( Proto => 'udp' );

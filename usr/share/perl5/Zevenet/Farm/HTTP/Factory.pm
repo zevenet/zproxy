@@ -44,17 +44,20 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 {
 	my ( $vip, $vip_port, $farm_name, $farm_type ) = @_;
 
+	require Tie::File;
+	require File::Copy;
+	File::Copy->import();
+
 	my $output = -1;
 
 	#copy template modyfing values
-	use File::Copy;
 	&zenlog( "copying pound tpl file on $farm_name\_pound.cfg" );
 	my $poundtpl = &getGlobalConfiguration('poundtpl');
 	copy( "$poundtpl", "$configdir/$farm_name\_pound.cfg" );
 
 	#modify strings with variables
-	use Tie::File;
 	tie my @file, 'Tie::File', "$configdir/$farm_name\_pound.cfg";
+
 	foreach my $line ( @file )
 	{
 		$line =~ s/\[IP\]/$vip/;

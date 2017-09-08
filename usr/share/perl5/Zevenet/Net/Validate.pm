@@ -56,11 +56,11 @@ sub checkport    # ($host, $port)
 	# check remote ports
 	else
 	{
-		use IO::Socket;
-		my $sock = new IO::Socket::INET(
-										 PeerAddr => $host,
-										 PeerPort => $port,
-										 Proto    => 'tcp'
+		require IO::Socket;
+		my $sock = IO::Socket::INET->new(
+										  PeerAddr => $host,
+										  PeerPort => $port,
+										  Proto    => 'tcp'
 		);
 
 		if ( $sock )
@@ -95,7 +95,8 @@ sub ipisok    # ($checkip, $version)
 	my $version = shift;
 	my $return  = "false";
 
-	use Data::Validate::IP;
+	require Data::Validate::IP;
+	Data::Validate::IP->import();
 
 	if ( !$version || $version != 6 )
 	{
@@ -136,7 +137,8 @@ sub ipversion    # ($checkip)
 	my $checkip = shift;
 	my $output  = "-";
 
-	use Data::Validate::IP;
+	require Data::Validate::IP;
+	Data::Validate::IP->import();
 
 	if ( is_ipv4( $checkip ) )
 	{
@@ -171,7 +173,8 @@ sub ipinrange    # ($netmask, $toip, $newip)
 {
 	my ( $netmask, $toip, $newip ) = @_;
 
-	use Net::IPv4Addr qw( :all );
+	require Net::IPv4Addr;
+	Net::IPv4Addr->import( qw( :all ) );
 
 	#$ip_str1="10.234.18.13";
 	#$mask_str1="255.255.255.0";
@@ -210,14 +213,16 @@ sub ifexist    # ($nif)
 {
 	my $nif = shift;
 
-	use IO::Socket;
-	use IO::Interface qw(:flags);
-	my $s          = IO::Socket::INET->new( Proto => 'udp' );
+	use IO::Interface qw(:flags); # Needs to load with 'use'
+
+	require IO::Socket;
 	require Zevenet::Net::Interface;
+
+	my $s          = IO::Socket::INET->new( Proto => 'udp' );
 	my @interfaces = &getInterfaceList();
 	my $configdir  = &getGlobalConfiguration( 'configdir' );
-
 	my $status;
+
 	for my $if ( @interfaces )
 	{
 		if ( $if eq $nif )

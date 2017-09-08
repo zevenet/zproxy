@@ -643,6 +643,8 @@ sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
 {
 	my ( $farm_name, $backend, $status, $idsv ) = @_;
 
+	require Tie::File;
+
 	my $statusfile = "$configdir\/$farm_name\_status.cfg"; 
 	my $changed    = "false";
 
@@ -679,7 +681,7 @@ sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
 		}
 		close FW;
 	}
-	use Tie::File;
+
 	tie my @filelines, 'Tie::File', "$statusfile";
 
 	my $i;

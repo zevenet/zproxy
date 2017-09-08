@@ -58,7 +58,7 @@ sub getLogs
 		# not list if it is a directory
 		next if -d "$logdir/$line";
 		
-		use File::stat;
+		use File::stat; # Cannot 'require' this module
 		#~ use Time::localtime qw(ctime);
 
 		require Time::localtime;

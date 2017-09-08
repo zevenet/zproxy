@@ -48,7 +48,7 @@ sub getConfigTiny
 		close $fi;
 	}
 	
-	use Config::Tiny;
+	require Config::Tiny;
 
 	# returns object on success or undef on error.
 	return Config::Tiny->read( $file_path );
@@ -86,7 +86,7 @@ sub setConfigTiny
 		return undef;
 	}
 
-	use Config::Tiny;
+	require Config::Tiny;
 
 	# returns true on success or undef on error,
 	return $config_ref->write( $file_path );

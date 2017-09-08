@@ -276,10 +276,9 @@ sub iponif            # ($if)
 {
 	my $if = shift;
 
-	use IO::Socket;
-	use IO::Interface qw(:flags);
-
+	require IO::Socket;
 	require Zevenet::Net::Interface;
+
 	my @interfaces = &getInterfaceList();
 
 	my $s = IO::Socket::INET->new( Proto => 'udp' );
@@ -314,11 +313,12 @@ sub maskonif    # ($if)
 {
 	my $if = shift;
 
-	use IO::Socket;
-	use IO::Interface qw(:flags);
+	require IO::Socket;
+
 	my $s = IO::Socket::INET->new( Proto => 'udp' );
 	my @interfaces = &getInterfaceList();
 	my $maskonif = $s->if_netmask( $if );
+
 	return $maskonif;
 }
 
@@ -345,8 +345,9 @@ See Also:
 #list ALL IPS UP
 sub listallips    # ()
 {
-	use IO::Socket;
 	use IO::Interface qw(:flags);
+
+	require IO::Socket;
 
 	my @listinterfaces = (); # output
 	my $s              = IO::Socket::INET->new( Proto => 'udp' );

@@ -81,12 +81,11 @@ sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 {
 	my ( $algorithm, $farm_name ) = @_;
 
-	my $farm_filename = &getFarmFile( $farm_name );
+	require Tie::File;
 
-	#~ my $output        = -1;
+	my $farm_filename = &getFarmFile( $farm_name );
 	my $i = 0;
 
-	use Tie::File;
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	for my $line ( @configfile )
@@ -108,7 +107,7 @@ sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 		&runFarmStart( $farm_name, "true" );
 	}
 
-	return;    # $output;
+	return;
 }
 
 =begin nd
@@ -247,6 +246,7 @@ sub setDatalinkFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
+	require Tie::File;
 	require Zevenet::Farm::Action;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -256,7 +256,6 @@ sub setDatalinkFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 
 	&runFarmStop( $farm_name, 'true' ) if $farm_state eq 'up';
 
-	use Tie::File;
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	for my $line ( @configfile )

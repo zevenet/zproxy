@@ -83,10 +83,12 @@ See Also:
 sub setHttpServerPort
 {
 	my ( $httpport ) = @_;
-	$httpport =~ s/\ //g;
+
+	require Tie::File;
 
 	my $confhttp = &getGlobalConfiguration( 'confhttp' );
-	use Tie::File;
+	$httpport =~ s/\ //g;
+
 	tie my @array, 'Tie::File', "$confhttp";
 	@array[2] = "server!bind!1!port = $httpport\n";
 	untie @array;
@@ -158,11 +160,13 @@ sub setHttpServerIp
 {
 	my $ip = shift;
 
+	require Tie::File;
+
 	my $confhttp = &getGlobalConfiguration( 'confhttp' );
 
 	#action save ip
-	use Tie::File;
 	tie my @array, 'Tie::File', "$confhttp";
+
 	if ( $ip =~ /^\*$/ )
 	{
 		@array[1] = "#server!bind!1!interface = \n";

@@ -312,12 +312,12 @@ sub setDatalinkFarmBackendStatus    # ($farm_name,$index,$stat)
 {
 	my ( $farm_name, $index, $stat ) = @_;
 
+	require Tie::File;
+
 	my $farm_filename = &getFarmFile( $farm_name );
+	my $fileid        = 0;
+	my $serverid      = 0;
 
-	my $fileid   = 0;
-	my $serverid = 0;
-
-	use Tie::File;
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
 	foreach my $line ( @configfile )

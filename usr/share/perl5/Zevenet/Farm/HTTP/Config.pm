@@ -1226,8 +1226,7 @@ sub getFarmChildPid    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	require File::Grep;
-	File::Grep->import( 'fgrep' );
+	use File::Grep 'fgrep';
 
 	my $farm_type = &getFarmType( $farm_name );
 	my $fpid      = &getFarmPid( $farm_name );
