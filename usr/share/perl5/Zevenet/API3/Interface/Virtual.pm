@@ -34,21 +34,19 @@ sub new_vini # ( $json_obj )
 	my $vlan_re = &getValidFormat( 'vlan_interface' );
 	my $virtual_tag_re = &getValidFormat( 'virtual_tag' );
 
-	if ( $json_obj->{ name } =~ /^($nic_re|$vlan_re):($virtual_tag_re)$/ )
-	{
-		$json_obj->{ parent } = $1;
-		$json_obj->{ vini } = $2;
-
-		my $vlan_tag_re = &getValidFormat( 'vlan_tag' );
-		$json_obj->{ parent } =~ /^($nic_re)(?:\.($vlan_tag_re))?$/;
-		$json_obj->{ dev } = $1;
-		$json_obj->{ vlan } = $2;
-	}
-	else
+	unless ( $json_obj->{ name } =~ /^($nic_re|$vlan_re):($virtual_tag_re)$/ )
 	{
 		my $msg = "Interface name is not valid";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+
+	$json_obj->{ parent } = $1;
+	$json_obj->{ vini }   = $2;
+
+	my $vlan_tag_re = &getValidFormat( 'vlan_tag' );
+	$json_obj->{ parent } =~ /^($nic_re)(?:\.($vlan_tag_re))?$/;
+	$json_obj->{ dev }  = $1;
+	$json_obj->{ vlan } = $2;
 
 	# validate IP
 	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
@@ -235,7 +233,7 @@ sub get_virtual # ()
 {
 	my $virtual = shift;
 
-	my $desc = "Show virtual interface";
+	my $desc = "Show virtual interface $virtual";
 	my $interface; # output
 
 	require Zevenet::Net::Interface;
@@ -264,10 +262,10 @@ sub get_virtual # ()
 		};
 	}
 
-	if ( $interface )
+	if ( not $interface )
 	{
 		my $msg = "Virtual interface not found.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $body = {
