@@ -44,6 +44,11 @@ FIXME:
 sub setFarmHTTPNewService    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
+
+	use File::Grep 'fgrep';
+	require Tie::File;
+	require Zevenet::Farm::Config;
+
 	my $output = -1;
 
 	#first check if service name exist
@@ -55,14 +60,14 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 	}
 
 	#check the correct string in the service
-	require Zevenet::Farm::Config;
 	my $newservice = &checkFarmnameOK( $service );
+
 	if ( $newservice ne 0 )
 	{
 		$output = 3;
 		return $output;
 	}
-	use File::Grep qw( fgrep fmap fdo );
+
 	if ( !fgrep { /Service "$service"/ } "$configdir/$farm_name\_pound.cfg" )
 	{
 		#create service
@@ -72,9 +77,9 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 		my $poundtpl = &getGlobalConfiguration('poundtpl');
 		tie my @poundtpl, 'Tie::File', "$poundtpl";
 		my $countend = 0;
+
 		foreach my $line ( @poundtpl )
 		{
-
 			if ( $line =~ /Service \"\[DESC\]\"/ )
 			{
 				$sw = 1;
@@ -105,6 +110,7 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 		my $i         = 0;
 		my $farm_type = "";
 		$farm_type = &getFarmType( $farm_name );
+
 		foreach my $line ( @fileconf )
 		{
 			if ( $line =~ /#ZWACL-END/ )
@@ -186,7 +192,9 @@ sub deleteFarmService    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
 
-	require Zevenet::Farm::Config; # getFarmVS
+	require Tie::File;
+	require Zevenet::FarmGuardian;
+	require Zevenet::Farm::HTTP::Service;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $sw            = 0;
@@ -194,20 +202,19 @@ sub deleteFarmService    # ($farm_name,$service)
 
 	# Counter the Service's backends
 	my $sindex = &getFarmVSI( $farm_name, $service );
-	my $backendsvs = &getFarmVS( $farm_name, $service, "backends" );
+	my $backendsvs = &getHTTPFarmVS( $farm_name, $service, "backends" );
 	my @be = split ( "\n", $backendsvs );
 	my $counter = -1;
+
 	foreach my $subline ( @be )
 	{
 		my @subbe = split ( "\ ", $subline );
 		$counter++;
 	}
 
-	use Tie::File;
 	tie my @fileconf, 'Tie::File', "$configdir/$farm_filename";
 
 	# Stop FG service
-	require Zevenet::FarmGuardian;
 	&runFarmGuardianStop( $farm_name, $service );
 	&runFarmGuardianRemove( $farm_name, $service );
 	unlink "$configdir/$farm_name\_$service\_guardian.conf";

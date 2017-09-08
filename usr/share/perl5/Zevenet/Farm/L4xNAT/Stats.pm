@@ -389,33 +389,35 @@ sub getL4FarmSYNConns    # ($farm_name,@netstat)
 sub getL4FarmBackendsStats
 {
 	my $farmname = shift;
-	
+
+	require Zevenet::Net::ConnStats;
 	require Zevenet::Farm::L4xNAT::Backend;
-	my @backends = @{ &getL4FarmBackends( $farmname ) };
+	require Zevenet::Farm::L4xNAT::Stats;
+
 	# Parameters
-	my @out_rss;
-	my $proto   = &getFarmProto( $farmname );
+	my @backends = @{ &getL4FarmBackends( $farmname ) };
+	my $proto    = &getFarmProto( $farmname );
 	my $fvip     = &getFarmVip( "vip", $farmname );
-	
-	my $index = 0;
-	
+	my $index    = 0;
+	my @out_rss;
+
 	foreach my $be ( @backends )
 	{
 		# Pending Conns
 		my @netstat = &getConntrack( "", $fvip, $be->{ 'ip' }, "", "" );
-		$be->{ 'established' } = scalar &getBackendEstConns( $farmname, $be->{ 'ip' }, 
+		$be->{ 'established' } = scalar &getL4BackendEstConns($farmname, $be->{ 'ip' },
 			$be->{ 'port' }, @netstat );
 		
 		$be->{ 'pending' } = 0;
+
 		if ( $proto ne "udp" )
 		{
-			$be->{ 'pending' } = scalar &getBackendSYNConns( $farmname, $be->{ 'ip' }, 
+			$be->{ 'pending' } = scalar &getL4BackendSYNConns( $farmname, $be->{ 'ip' },
 				$be->{ 'port' }, @netstat );
 		}
 	}
+
 	return \@backends;
 }
-
-
 
 1;
