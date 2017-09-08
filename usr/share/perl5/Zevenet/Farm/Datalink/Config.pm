@@ -247,6 +247,8 @@ sub setDatalinkFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
+	require Zevenet::Farm::Action;
+
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $farm_state    = &getFarmStatus( $farm_name );
 	my $stat          = -1;

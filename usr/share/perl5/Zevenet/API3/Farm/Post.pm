@@ -21,8 +21,9 @@
 ###############################################################################
 
 use strict;
-
 use Zevenet::Net;
+use Zevenet::Farm::Core;
+use Zevenet::Farm::Factory;
 
 sub new_farm    # ( $json_obj )
 {

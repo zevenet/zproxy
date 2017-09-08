@@ -71,12 +71,8 @@ See Also:
 =cut
 sub setConfigTiny
 {
-	my $file_path = shift;
+	my $file_path  = shift;
 	my $config_ref = shift;
-
-	#~ &zenlog("setConfigTiny: setConfigTiny=$file_path") if 1;
-	#~ &zenlog("setConfigTiny: config_ref=". ref $config_ref) if 1;
-	#~ &zenlog("setConfigTiny: config_ref=". Dumper $config_ref) if 1;
 
 	if ( ! -f $file_path )
 	{
@@ -115,11 +111,12 @@ sub getFloatInterfaceForAddress
 {
 	my $remote_ip_address = shift;
 
+	require NetAddr::IP;
+	require Zevenet::Net::Interface;
+
 	my $subnet_interface;
 	my @interface_list = @{ &getConfigInterfaceList() };
-
-	use NetAddr::IP;
-	my $remote_ip = NetAddr::IP->new( $remote_ip_address );
+	my $remote_ip      = NetAddr::IP->new( $remote_ip_address );
 
 	# find interface in range
 	for my $iface ( @interface_list )

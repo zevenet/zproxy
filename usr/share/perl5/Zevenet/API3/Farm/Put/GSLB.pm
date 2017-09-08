@@ -21,6 +21,8 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Farm::Action;
+use Zevenet::Farm::GSLB::Config;
 
 sub modify_gslb_farm # ( $json_obj,	$farmname )
 {
@@ -291,7 +293,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 				{
 					$json_obj->{ vport } += 0;
 					$status =
-					  &setFarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname );
+					  &setGSLBFarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname );
 					if ( $status == -1 )
 					{
 						$error = "true";

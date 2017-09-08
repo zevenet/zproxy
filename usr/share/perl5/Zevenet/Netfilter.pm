@@ -179,6 +179,7 @@ sub delMarks    # ($farm_name,$mark)
 
 	if ( $farm_name ne "" )
 	{
+		require Tie::File;
 		tie my @contents, 'Tie::File', "$fwmarksconf";
 		@contents = grep { !/ \/\/ FARM\_$farm_name\_$/x } @contents;
 		$status = $?;    # FIXME
@@ -187,6 +188,7 @@ sub delMarks    # ($farm_name,$mark)
 
 	if ( $mark ne "" )
 	{
+		require Tie::File;
 		tie my @contents, 'Tie::File', "$fwmarksconf";
 		@contents = grep { !/^$mark \/\//x } @contents;
 		$status = $?;    # FIXME

@@ -21,6 +21,9 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Farm::Core;
+use Zevenet::Farm::Base;
+use Zevenet::Farm::Action;
 
 # DELETE /farms/FARMNAME
 sub delete_farm # ( $farmname )

@@ -21,6 +21,9 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Farm::Base;
+use Zevenet::Farm::Config;
+use Zevenet::Farm::Action;
 
 # PUT /farms/<farmname> Modify a http|https Farm
 sub modify_http_farm # ( $json_obj, $farmname )
@@ -557,6 +560,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 
 	if ( $json_obj->{ listener } eq 'https' )
 	{
+		require Zevenet::Farm::Ext;
+
 		# certlist
 		my @certlist;
 		my @cnames = &getFarmCertificatesSNI( $farmname );

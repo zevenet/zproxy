@@ -421,6 +421,8 @@ sub getInterfaceOfIp    # ($ip)
 {
 	my $ip = shift;
 
+	require Zevenet::Net::Interface;
+
 	foreach my $iface ( &getInterfaceList() )
 	{
 		# return interface if found in the list

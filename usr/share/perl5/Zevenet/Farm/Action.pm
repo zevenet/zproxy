@@ -249,6 +249,8 @@ sub runFarmDelete    # ($farm_name)
 {
 	my $farm_name = shift;
 
+	require Zevenet::Netfilter;
+
 	# global variables
 	my $basedir = &getGlobalConfiguration('basedir');
 	my $configdir = &getGlobalConfiguration('configdir');

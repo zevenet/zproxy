@@ -147,6 +147,8 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	my $farm_name = shift;    # input
 	my $writeconf = shift;    # input
 
+	require Zevenet::Netfilter;
+
 	&zlog( "Starting farm $farm_name" ) if &debug == 2;
 
 	my $status = 0;           # output
@@ -282,6 +284,8 @@ FIXME:
 sub _runL4FarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
+
+	require Zevenet::Net::Util;
 
 	&zlog( "Stopping farm $farm_name" ) if &debug == 2;
 

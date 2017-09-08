@@ -21,9 +21,10 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Farm::Base;
+use Zevenet::Farm::L4xNAT::Config;
 
 # PUT /farms/<farmname> Modify a l4xnat Farm
-
 sub modify_l4xnat_farm # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
@@ -35,7 +36,6 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	my $error        = "false";
 	my $status;
 	my $initialStatus = &getFarmStatus( $farmname );
-	
 
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
@@ -420,7 +420,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 				else
 				{
 					$status =
-					  &setFarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname );
+					  &setL4FarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname );
 					if ( $status == -1 )
 					{
 						$error = "true";
@@ -448,6 +448,8 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			# Reset ip rule mark when changing the farm's vip
 			if ( exists $json_obj->{ vip } && $json_obj->{ vip } ne $vip )
 			{
+				require Zevenet::Net::Util;
+
 				my $farm = &getL4FarmStruct( $farmname );
 				my $ip_bin = &getGlobalConfiguration('ip_bin');
 				# previous vip

@@ -198,7 +198,6 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $status = ( $writeconf eq "true" ) ? -1 : 0;
 
-
 	if ( $writeconf eq "true" )
 	{
 		use Tie::File;
@@ -227,6 +226,9 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 	# Apply changes online
 	if ( $status != -1 )
 	{
+		require Zevenet::Net::Util;
+		require Zevenet::Farm::Datalink::Config;
+
 		my $iface = &getDatalinkFarmInterface( $farm_name );
 		my $ip_bin = &getGlobalConfiguration('ip_bin');
 

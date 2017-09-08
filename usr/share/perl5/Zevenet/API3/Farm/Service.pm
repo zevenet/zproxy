@@ -22,11 +22,9 @@
 ###############################################################################
 
 use strict;
-
 use Zevenet::Farm::Core;
 
 # POST
-
 sub new_farm_service    # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;

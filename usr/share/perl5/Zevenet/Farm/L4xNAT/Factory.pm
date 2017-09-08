@@ -23,6 +23,8 @@
 
 use strict;
 
+use Zevenet::Farm::L4xNAT::Action;
+
 my $configdir = &getGlobalConfiguration('configdir');
 
 =begin nd

@@ -26,6 +26,8 @@ use strict;
 # GET /farms/GSLBFARM
 sub farms_gslb # ()
 {
+	require Zevenet::Farm::Base;
+
 	my @out;
 	my @files = &getFarmList();
 

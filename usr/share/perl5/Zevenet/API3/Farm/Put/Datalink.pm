@@ -21,6 +21,9 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Net::Util;
+use Zevenet::Farm::Base;
+use Zevenet::Farm::Datalink::Config;
 
 sub modify_datalink_farm    # ( $json_obj, $farmname )
 {
@@ -186,7 +189,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 			}
 			else
 			{
-				$status = &setFarmVirtualConf( $json_obj->{ vip }, $fdev, $farmname );
+				$status = &setDatalinkFarmVirtualConf( $json_obj->{ vip }, $fdev, $farmname );
 				if ( $status != -1 )
 				{
 					$restart_flag = "true";
