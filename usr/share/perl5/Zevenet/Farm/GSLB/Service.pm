@@ -41,6 +41,8 @@ sub getGSLBFarmServices    # ($farm_name)
 {
 	my ( $fname ) = @_;
 
+	require Tie::File;
+
 	my $output = -1;
 	my $ftype  = &getFarmType( $fname );
 	my @srvarr = ();
@@ -48,27 +50,33 @@ sub getGSLBFarmServices    # ($farm_name)
 	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
 	my @pluginlist = readdir ( DIR );
 	closedir ( DIR );
+
 	foreach my $plugin ( @pluginlist )
 	{
-		if ( $plugin !~ /^\./ )
+		next if $plugin =~ /^\./;
+
+		tie my @fileconf, 'Tie::File',
+		  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+
+		my @srv = grep ( /^\t[a-zA-Z1-9].* => \{/, @fileconf );
+
+		foreach my $srvstring ( @srv )
 		{
-			tie my @fileconf, 'Tie::File',
-			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
-			my @srv = grep ( /^\t[a-zA-Z1-9].* => \{/, @fileconf );
-			foreach my $srvstring ( @srv )
-			{
-				my @srvstr = split ( ' => ', $srvstring );
-				$srvstring = $srvstr[0];
-				$srvstring =~ s/^\s+|\s+$//g;
-			}
-			my $nsrv = @srv;
-			if ( $nsrv > 0 )
-			{
-				push ( @srvarr, @srv );
-			}
-			untie @fileconf;
+			my @srvstr = split ( ' => ', $srvstring );
+			$srvstring = $srvstr[0];
+			$srvstring =~ s/^\s+|\s+$//g;
 		}
+
+		my $nsrv = @srv;
+
+		if ( $nsrv > 0 )
+		{
+			push ( @srvarr, @srv );
+		}
+
+		untie @fileconf;
 	}
+
 	return @srvarr;
 }
 
@@ -374,6 +382,8 @@ sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 {
 	my ( $fname, $svice, $tag ) = @_;
 
+	require Tie::File;
+
 	my $output = "";
 	my $type   = &getFarmType( $fname );
 	my $ffile  = &getFarmFile( $fname );
@@ -381,7 +391,7 @@ sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 	my @fileconf;
 	my $line;
 	my @linesplt;
-	use Tie::File;
+
 	if ( $tag eq "ns" || $tag eq "resources" )
 	{
 		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$svice";
@@ -514,19 +524,17 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 {
 	my ( $fname, $svice, $tag, $stri ) = @_;
 
-	my $output = "";
+	require Tie::File;
 
 	my $type  = &getFarmType( $fname );
 	my $ffile = &getFarmFile( $fname );
-
 	my $pluginfile;
 	my @fileconf;
 	my $line;
 	my $param;
 	my @linesplt;
 	my $tcp_port;
-
-	use Tie::File;
+	my $output = "";
 
 	if ( $tag eq "ns" )
 	{
@@ -774,6 +782,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 			}
 		}
 	}
+
 	return $output;
 }
 
