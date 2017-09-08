@@ -271,7 +271,9 @@ sub runFarmDelete    # ($farm_name)
 
 	if ( $farm_type eq "gslb" )
 	{
-		use File::Path 'rmtree';
+		require File::Path;
+		File::Path->import( 'rmtree' );
+
 		$status = 0
 		  if rmtree( ["$configdir/$farm_name\_gslb.cfg"] );
 	}
