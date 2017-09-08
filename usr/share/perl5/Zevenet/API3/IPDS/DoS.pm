@@ -80,10 +80,10 @@ sub get_dos
 #  POST /ipds/dos
 sub create_dos_rule
 {
-	my $json_obj       = shift;
+	my $json_obj = shift;
 
-	my $desc           = "Create the DoS rule $rule";
 	my $rule           = $json_obj->{ 'rule' };
+	my $desc           = "Create the DoS rule $rule";
 	my @requiredParams = ( "name", "rule" );
 	my $confFile       = &getGlobalConfiguration( 'dosConf' );
 
@@ -145,15 +145,15 @@ sub get_dos_rule
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $body = { description => $description, params => $refRule };
+	my $body = { description => $desc, params => $refRule };
 	&httpResponse( { code => 200, body => $body } );
 }
 
 #PUT /ipds/dos/<rule>
 sub set_dos_rule
 {
-	my $json_obj    = shift;
-	my $name        = shift;
+	my $json_obj = shift;
+	my $name     = shift;
 
 	require Zevenet::IPDS::DoS::Config;
 	require Zevenet::IPDS::DoS::Actions;
@@ -298,9 +298,9 @@ sub add_dos_to_farm
 
 	require Zevenet::IPDS::DoS::Runtime;
 
-	my $desc = "Apply the DoS rule $name to the farm $farmName";
-	my $name = $json_obj->{ 'name' };
+	my $name     = $json_obj->{ 'name' };
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
+	my $desc     = "Apply the DoS rule $name to the farm $farmName";
 
 	if ( &getFarmFile( $farmName ) eq '-1' )
 	{
@@ -413,7 +413,7 @@ sub actions_dos
 
 	require Zevenet::IPDS::DoS::Actions;
 
-	my $desc = "Apply a action to the DoS rule $rule";
+	my $desc     = "Apply a action to the DoS rule $rule";
 	my $errormsg = "Error, applying the action to the DoS rule.";
 
 	if ( !&getDOSExists( $rule ) )

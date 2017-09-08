@@ -254,7 +254,7 @@ sub setBLDownloadRemoteList
 
 	require Zevenet::Validate;
 	require Zevenet::IPDS::Blacklist::Config;
-	require File::Tie;
+	require Tie::File;
 
 	my $url = &getBLParam( $listName, 'url' );
 	my $timeout = 10;
