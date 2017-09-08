@@ -21,6 +21,9 @@
 ###############################################################################
 
 use strict;
+use Zevenet::FarmGuardian;
+use Zevenet::Farm::Config;
+use Zevenet::Farm::L4xNAT::Backend;
 
 # GET /farms/<farmname> Request info of a l4xnat Farm
 sub farms_name_l4 # ( $farmname )
@@ -75,8 +78,6 @@ sub farms_name_l4 # ( $farmname )
 	};
 
 	# Backends
-	my @run = &getFarmServers( $farmname );
-	
 	@out_b = &getL4FarmBackends( $farmname );
 
 	my $body = {
