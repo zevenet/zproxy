@@ -243,7 +243,7 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 	my $ffile  = &getFarmFile( $fname );
 	my $output = -1;
 
-	if ( $newfname =~ /^$/ )
+	unless ( length $newfname )
 	{
 		&zenlog( "error 'NewFarmName $newfname' is empty" );
 		return -2;
@@ -254,6 +254,17 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 	my $newffile = "$newfname\_$type.cfg";
 	rename ( "$configdir\/$ffile", "$configdir\/$newffile" );
 	$output = 0;
+
+	# substitute paths in config file
+	open ( my $file, '<', "$configdir\/$newffile\/etc\/config" );
+	my @lines = <$file>;
+	close $file;
+
+	s/$configdir\/$ffile/$configdir\/$newffile/ for @lines;
+
+	open ( my $file, '>', "$configdir\/$newffile\/etc\/config" );
+	print { $file } @lines;
+	close $file;
 
 	# rename rrd
 	rename ( "$rrdap_dir/$rrd_dir/$fname-farm.rrd",

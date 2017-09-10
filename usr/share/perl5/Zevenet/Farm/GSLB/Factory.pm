@@ -60,6 +60,7 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	mkdir "$farm_path\/etc";
 	mkdir "$farm_path\/etc\/zones";
 	mkdir "$farm_path\/etc\/plugins";
+	mkdir "$farm_path\/var";
 
 	open ( my $file, ">", "$configdir\/$fname\_$type.cfg\/etc\/config" );
 	print $file ";up\n"
@@ -67,7 +68,10 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	  . "   listen = $fvip\n"
 	  . "   dns_port = $fvipp\n"
 	  . "   http_port = $httpport\n"
-	  . "   http_listen = 127.0.0.1\n" . "}\n\n";
+	  . "   http_listen = 127.0.0.1\n"
+	  . "   run_dir = $configdir\/$fname\_$type.cfg\/var\/run\n"
+	  . "   state_dir = $configdir\/$fname\_$type.cfg\/var\/lib\n"
+	  . "}\n\n";
 	print $file "service_types => { \n\n}\n\n";
 	print $file
 	  "plugins => { \n\textmon => { helper_path => \"/usr/local/zevenet/app/gdnsd/gdnsd_extmon_helper\" },\n}\n\n";
