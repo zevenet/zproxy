@@ -421,7 +421,10 @@ sub httpDownloadResponse
 	# make body
 	my $body;
 	binmode $fh;
-	print { $body } $fh;
+	{
+		local $/ = undef;
+		$body = <$fh>;
+	}
 	close $fh;
 
 	# optionally, remove the downloaded file, useful for temporal files
