@@ -30,7 +30,7 @@ my $service_re = &getValidFormat( 'service' );
 
 if ( $q->path_info =~ qr{^/farms/$farm_re/services/($service_re)/actions$} )
 {
-	require Zevenet::API3::Farm::HTTP::MoveService;
+	require Zevenet::API3::Farm::MoveService;
 
 	POST qr{^/farms/($farm_re)/services/($service_re)/actions$} => \&move_services;
 }
