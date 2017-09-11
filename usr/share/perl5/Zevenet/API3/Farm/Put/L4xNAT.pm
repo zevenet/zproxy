@@ -84,7 +84,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			#Check if farmname has correct characters (letters, numbers and hyphens)
 			unless ( $json_obj->{ newfarmname } =~ /^[a-zA-Z0-9\-]*$/ )
 			{
-				my $msg = "Invalid newfarmname." );
+				my $msg = "Invalid newfarmname.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
@@ -260,7 +260,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		my $error = &setFarmVirtualConf( $json_obj->{ vip }, $vport, $farmname );
 		if ( $error )
 		{
-			my $msg = "Invalid vip." );
+			my $msg = "Invalid vip.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
@@ -306,7 +306,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 
 		if ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
 		{
-			my $msg = "Invalid vip." );
+			my $msg = "Invalid vip.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
