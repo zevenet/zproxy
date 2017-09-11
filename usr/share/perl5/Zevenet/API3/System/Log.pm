@@ -27,23 +27,22 @@ use Zevenet::System::Log;
 #	GET	/system/logs
 sub get_logs
 {
-	my $description = "Get logs";
+	my $desc    = "Get logs";
 	my $backups = &getLogs;
 
 	&httpResponse(
-		 { code => 200, body => { description => $description, params => $backups } } );
+		 { code => 200, body => { description => $desc, params => $backups } } );
 }
 
 #	GET	/system/logs/LOG
 sub download_logs
 {
-	my $logFile      = shift;
-	my $description = "Download a log file";
-	my $errormsg    = "$logFile was download successful.";
-	my $logfiles = &getLogs;
-	my $error=1;
-	
-	
+	my $logFile = shift;
+
+	my $desc     = "Download log file '$logFile'";
+	my $logfiles = &getLogs();
+	my $error    = 1;
+
 	# check if the file exists
 	foreach my $file ( @{$logfiles} )
 	{
@@ -56,26 +55,14 @@ sub download_logs
 
 	if ( $error )
 	{
-		$errormsg = "Not found $logFile file.";
-		my $body =
-		  { description => $description, error => "true", message => $errormsg };
-		&httpResponse( { code => 404, body => $body } );
+		my $msg = "Not found $logFile file.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
-	else
-	{
-		# Download function ends communication if itself finishes successful. It is not necessary send "200 OK" msg
-		$errormsg = &downloadLog( $logFile );
-		if ( $errormsg )
-		{
-			$errormsg = "Error, downloading log file.";
-			my $body =
-				{ description => $description, error => "true", message => $errormsg };
-			&httpResponse( { code => 400, body => $body } );
-		}
-	}
-	my $body =
-	  { description => $description, error => "true", message => $errormsg };
-	&httpResponse( { code => 200, body => $body } );
+
+	# Download function ends communication if itself finishes successful. It is not necessary send "200 OK" msg
+	my $logdir = &getGlobalConfiguration( 'logdir' );
+
+	&httpDownloadResponse( desc => $desc, dir => $logdir, file => $logFile );
 }
 
 #	GET	/system/logs/LOG/lines/LINES
@@ -83,36 +70,31 @@ sub show_logs
 {
 	my $logFile      = shift;
 	my $lines_number = shift; # number of lines to show
-	my $description  = "Show a log file";
-	my $errormsg;
+
+	my $desc     = "Show a log file";
 	my $logfiles = &getLogs;
-	my $error=1;
+	my $error    = 1;
 	
 	# check if the file exists
-	foreach my $file ( @{$logfiles} )
+	foreach my $file ( @{ $logfiles } )
 	{
-		if ( $file->{file} eq $logFile )
+		if ( $file->{ file } eq $logFile )
 		{
-			$error=0;
+			$error = 0;
 			last;
 		}
 	}
 
 	if ( $error )
 	{
-		$errormsg = "Not found $logFile file.";
-		my $body =
-		  { description => $description, error => "true", message => $errormsg };
-		&httpResponse( { code => 404, body => $body } );
-	}
-	else
-	{
-		my $lines = &getLogLines( $logFile, $lines_number );
-		my $body =
-			{ description => $description, log => $lines };
-		&httpResponse( { code => 200, body => $body } );
+		my $msg = "Not found $logFile file.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	my $lines = &getLogLines( $logFile, $lines_number );
+	my $body = { description => $desc, log => $lines };
+
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

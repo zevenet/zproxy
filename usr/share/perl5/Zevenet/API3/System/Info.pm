@@ -27,39 +27,38 @@ use strict;
 sub get_license
 {
 	my $format = shift;
-	my $description = "Get license";
+
+	my $desc = "Get license";
+	my $licenseFile;
 	my $file;
 
 	if ( $format eq 'txt' )
 	{
-		my $licenseFile = &getGlobalConfiguration( 'licenseFileTxt' );
-		open ( my $license_fh, '<', "$licenseFile" );
-		$file .= $_ while ( <$license_fh> );
-		# Close this particular file.
-		close $license_fh;
-		&httpResponse({ code => 200, body => $file, type => 'text/plain' });
+		$licenseFile = &getGlobalConfiguration( 'licenseFileTxt' );
 	}
 	elsif ( $format eq 'html' )
 	{
-		my $licenseFile = &getGlobalConfiguration( 'licenseFileHtml' );
-		open ( my $license_fh, '<', "$licenseFile" );
-		$file .= $_ while ( <$license_fh> );
-		# Close this particular file.
-		close $license_fh;
-		&httpResponse({ code => 200, body => $file, type => 'text/html' });
+		$licenseFile = &getGlobalConfiguration( 'licenseFileHtml' );
 	}
 	else
 	{
-		my $errormsg = "Not found license.";
-		my $body =
-		  { description => $description, error => "true", message => $errormsg };
-		&httpResponse( { code => 404, body => $body } );
+		my $msg = "Not found license.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+
+	open ( my $license_fh, '<', $licenseFile );
+	{
+		local $/ = undef;
+		$file = <$license_fh>;
+	}
+	close $license_fh;
+
+	&httpResponse({ code => 200, body => $file, type => 'text/plain' });
 }
 
 sub get_supportsave
 {
-	my $description = "Get supportsave file";
+	my $desc = "Get supportsave file";
 	my @ss_output = `/usr/local/zevenet/app/zbin/supportsave 2>&1`;
 
 	# get the last "word" from the first line
@@ -69,34 +68,7 @@ sub get_supportsave
 	my $ss_path = $last_word;
 	my ( undef, $ss_filename ) = split ( '/tmp/', $ss_path );
 
-	open ( my $ss_fh, '<', $ss_path );
-
-	if ( -f $ss_path && $ss_fh )
-	{
-		my $cgi = &getCGI();
-		print $cgi->header(
-							-type            => 'application/x-download',
-							-attachment      => $ss_filename,
-							'Content-length' => -s $ss_path,
-		);
-
-		binmode $ss_fh;
-		print while <$ss_fh>;
-		close $ss_fh;
-		unlink $ss_path;
-		exit;
-	}
-	else
-	{
-		# Error
-		my $errormsg = "Error getting a supportsave file";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-		&httpResponse( { code => 400, body => $body } );
-	}
+	&httpDownloadResponse( desc => $desc, dir => '/tmp', file => $ss_filename );
 }
 
 # GET /system/version
@@ -104,30 +76,28 @@ sub get_version
 {
 	require Zevenet::SystemInfo;
 
-	my $description = "Get version";
-	
-	my $hostnameBin = &getGlobalConfiguration( 'hostname' );
-	my $uname = &getGlobalConfiguration( 'uname' );
-	
-	my $zevenet		= &getGlobalConfiguration( 'version' );
-	my $kernel			= `$uname -r`;
-	chop $kernel;
-	my $hostname  	= `$hostnameBin`;
-	chop $hostname;
-	my $date = &getDate ();
-	my $applicance = getApplianceVersion ();
+	my $desc    = "Get version";
+	my $uname   = &getGlobalConfiguration( 'uname' );
+	my $zevenet = &getGlobalConfiguration( 'version' );
 
-	&httpResponse(
-		{ 	code => 200, body => { description => $description, 
-				params => { 
-					'kernel_version' => $kernel,
-					'zevenet_version' => $zevenet,
-					'hostname' => $hostname,
-					'system_date' => $date,
-					'appliance_version' => $applicance,
-				} } 
-		}
-	);
+	my $kernel     = `$uname -r`;
+	my $hostname   = &getHostname();
+	my $date       = &getDate();
+	my $applicance = &getApplianceVersion();
+
+	chop $kernel;
+	chop $hostname;
+
+	my $params = {
+				   'kernel_version'    => $kernel,
+				   'zevenet_version'   => $zevenet,
+				   'hostname'          => $hostname,
+				   'system_date'       => $date,
+				   'appliance_version' => $applicance,
+	};
+	my $body = { description => $desc, params => $params };
+
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

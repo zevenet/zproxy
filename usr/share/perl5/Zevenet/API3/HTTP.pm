@@ -176,7 +176,7 @@ sub OPTIONS($$)
 
 		This function exits the execution uf the current process.
 =cut
-sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
+sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 {
 	my $self = shift;
 
@@ -319,7 +319,7 @@ sub httpErrorResponse
 	# check required arguments: code, desc and msg
 	unless ( $args->{ code } && $args->{ desc } && $args->{ msg } )
 	{
-		&zdie( "httpErrorResponse: Missing mandatory arguments" );
+		&zdie( "httpErrorResponse: Missing required argument" );
 	}
 
 	# check the status code is in a valid range
@@ -351,7 +351,7 @@ sub httpSuccessResponse
 
 	unless ( $args->{ code } && $args->{ desc } && $args->{ msg } )
 	{
-		&zdie( "httpSuccessResponse: Missing mandatory arguments" );
+		&zdie( "httpSuccessResponse: Missing required argument" );
 	}
 
 	unless ( $args->{ code } =~ /^2[0-9][0-9]$/ )
@@ -365,9 +365,71 @@ sub httpSuccessResponse
 				 message     => $args->{ msg },
 	};
 
-	#~ &zenlog( "Zapi $errormsg" );
 	&zenlog( $args->{ log_msg } ) if exists $args->{ log_msg };
 	&httpResponse({ code => $args->{ code }, body => $body });
+}
+
+sub httpDownloadResponse
+{
+	my $args;
+
+	eval { $args = @_ == 1? shift @_: { @_ }; };
+
+	# check errors loading the hash reference
+	if ( $@ )
+	{
+		&zdie( "httpDownloadResponse: Wrong argument received" );
+	}
+
+	unless ( ref( $args ) eq 'hash' )
+	{
+		&zdie( "httpDownloadResponse: Argument is not a hash reference" );
+	}
+
+	unless ( $args->{ desc } && $args->{ dir } && $args->{ file } )
+	{
+		&zdie( "httpDownloadResponse: Missing required argument" );
+	}
+
+	unless ( -d $args->{ dir } )
+	{
+		my $msg = "Invalid directory '$args->{ dir }'";
+		&httpErrorResponse( code => 400, desc => $args->{ desc }, msg => $msg );
+	}
+
+	my $path = "$args->{ dir }/$args->{ file }";
+	unless ( -f $path )
+	{
+		my $msg = "The requested file $path could not be found.";
+		&httpErrorResponse( code => 400, desc => $args->{ desc }, msg => $msg );
+	}
+
+	open ( my $fh, '<', $args->{ path } );
+	unless ( $fh )
+	{
+		my $msg = "Could not open file $path: $!";
+		&httpErrorResponse( code => 400, desc => $args->{ desc }, msg => $msg );
+	}
+
+	# make headers
+	my $headers = {
+					-type            => 'application/x-download',
+					-attachment      => $args->{ file },
+					'Content-length' => -s $path,
+	};
+
+	# make body
+	my $body;
+	binmode $fh;
+	print { $body } $fh;
+	close $fh;
+
+	# optionally, remove the downloaded file, useful for temporal files
+	unlink $path if $args->{ remove } eq 'true';
+
+	&zenlog( "[Download] $args->{ desc }: $path" );
+
+	&httpResponse({ code => 200, headers => $headers, body => $body });
 }
 
 1;

@@ -97,30 +97,11 @@ See Also:
 sub downloadLog
 {
 	my $logFile = shift;
-	my $error;
 
+	my $desc = "Download log file ";
 	my $logdir = &getGlobalConfiguration( 'logdir' );
-	open ( my $download_fh, '<', "$logdir/$logFile" );
 
-	if ( -f "$logdir\/$logFile" && $download_fh )
-	{
-		my $cgi = &getCGI();
-		print $cgi->header(
-							-type            => 'application/x-download',
-							-attachment      => $logFile,
-							'Content-length' => -s "$logdir/$logFile",
-		);
-
-		binmode $download_fh;
-		print while <$download_fh>;
-		close $download_fh;
-		exit;
-	}
-	else
-	{
-		$error = 1;
-	}
-	return $error;
+	&httpDownloadResponse( desc => $desc, dir => $logdir, file => $logFile );
 }
 
 
@@ -142,6 +123,7 @@ See Also:
 sub getLogLines
 {
 	my ( $logFile, $lines_number ) = @_;
+
 	my @lines;
 	my $path = &getGlobalConfiguration( 'logdir' );
 	my $tail = &getGlobalConfiguration( 'tail' );
@@ -158,6 +140,5 @@ sub getLogLines
 
 	return \@lines;
 }
-
 
 1;
