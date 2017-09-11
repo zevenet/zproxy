@@ -344,7 +344,7 @@ sub httpSuccessResponse
 {
 	my ( $args ) = @_;
 
-	unless ( ref( $args ) eq 'hash' )
+	unless ( ref( $args ) eq 'HASH' )
 	{
 		&zdie( "httpSuccessResponse: Argument is not a hash reference" );
 	}
@@ -381,7 +381,7 @@ sub httpDownloadResponse
 		&zdie( "httpDownloadResponse: Wrong argument received" );
 	}
 
-	unless ( ref( $args ) eq 'hash' )
+	unless ( ref( $args ) eq 'HASH' )
 	{
 		&zdie( "httpDownloadResponse: Argument is not a hash reference" );
 	}
