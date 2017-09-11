@@ -26,7 +26,7 @@ use strict;
 sub ciphers_available # ( $json_obj, $farmname )
 {
 	my @out;
-	my $description = "Get the ciphers available";
+	my $desc = "Get the ciphers available";
 	
 	require Zevenet::Farm::HTTP::HTTPS;
 	
@@ -40,7 +40,7 @@ sub ciphers_available # ( $json_obj, $farmname )
 	}
 	
 	my $body = {
-				description => $description,
+				description => $desc,
 				params      => \@out,
 	};
 

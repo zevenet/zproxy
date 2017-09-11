@@ -69,8 +69,8 @@ sub get_nic_list # ()
 	require Zevenet::Net::Interface;
 	require Zevenet::Net::Bonding;
 
-	my $description = "List NIC interfaces";
-	my @vlans       = &getInterfaceTypeList( 'vlan' );
+	my $desc  = "List NIC interfaces";
+	my @vlans = &getInterfaceTypeList( 'vlan' );
 	my @output_list;
 
 	# get cluster interface
@@ -121,7 +121,7 @@ sub get_nic_list # ()
 	}
 
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 interfaces  => \@output_list,
 	};
 

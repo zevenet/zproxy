@@ -181,7 +181,6 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 	my $desc = "Modify service";
 	my $output_params;
-	my $errormsg;
 
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )

@@ -124,31 +124,31 @@ sub getGSLBCheckConf	#  ( $farmname )
 	my $farmname = shift;
 
 	my $gdnsd = &getGlobalConfiguration( 'gdnsd' );
-	my $errormsg = system (
+	my $error = system (
 		   "$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf > /dev/null 2>&1" );
 
-	if ( $errormsg )
+	if ( $error )
 	{
 		my @run =
 		  `$gdnsd -c $configdir\/$farmname\_gslb.cfg/etc checkconf 2>&1`;
 		@run = grep ( /# error:/, @run );
-		$errormsg = $run[0];
-		$errormsg =~ s/# error:\s*//;
-		chomp ($errormsg);
+		$error = $run[0];
+		$error =~ s/# error:\s*//;
+		chomp ($error);
 
-		if ( $errormsg =~ /Zone ([\w\.]+).: Zonefile parse error at line (\d+)/ )
+		if ( $error =~ /Zone ([\w\.]+).: Zonefile parse error at line (\d+)/ )
 		{
 			my $fileZone = "$configdir\/$farmname\_gslb.cfg/etc/zones/$1";
 			my $numLine  = $2 - 1;
 
 			require Tie::File;
 			tie my @filelines, 'Tie::File', $fileZone;
-			$errormsg = "The resource $filelines[$numLine] gslb farm break the configuration. Please check the configuration";
+			$error = "The resource $filelines[$numLine] gslb farm break the configuration. Please check the configuration";
 			untie @filelines;
 		}
 	}
 
-	return $errormsg;
+	return $error;
 }
 
 1;

@@ -103,7 +103,7 @@ sub get_sys_graphs	#()
 {
 	my $key = shift;
 
-	my $description = "Get $key graphs";
+	my $desc = "Get $key graphs";
 
 	$key = 'mem'   if ( $key eq 'ram' );
 	$key = 'memsw' if ( $key eq 'swap' );
@@ -119,7 +119,7 @@ sub get_sys_graphs	#()
 	$graph = &printGraph( $key, 'y' );
 	push @output, { frequency => 'yearly', graph => $graph };
 
-	my $body = { description => $description, graphs => \@output };
+	my $body = { description => $desc, graphs => \@output };
 
 	&httpResponse({ code => 200, body => $body });
 }
@@ -130,7 +130,7 @@ sub get_frec_sys_graphs	#()
 	my $key       = shift;
 	my $frequency = shift;
 
-	my $description = "Get $frequency $key graphs";
+	my $desc = "Get $frequency $key graphs";
 
 	$key = 'mem'   if ( $key eq 'ram' );
 	$key = 'memsw' if ( $key eq 'swap' );
@@ -141,7 +141,7 @@ sub get_frec_sys_graphs	#()
 	# Print Graph Function
 	my @output;
 	my $graph = &printGraph( $key, $frequency );
-	my $body = { description => $description, graphs => $graph };
+	my $body = { description => $desc, graphs => $graph };
 
 	&httpResponse({ code => 200, body => $body });
 }

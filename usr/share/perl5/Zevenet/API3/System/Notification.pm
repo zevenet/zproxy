@@ -80,20 +80,21 @@ sub set_notif_methods
 # GET /system/notifications/alerts
 sub get_notif_alert_status
 {
-	my $description = "Get notifications alert status";
+	my $desc = "Get notifications alert status";
 	my @output;
+
 	my $status = &getNotifData( 'alerts', 'Backend', 'Status' );
 	$status = 'disabled' if ( $status eq 'off' );
 	$status = 'enabled'  if ( $status eq 'on' );
-
 	push @output, { 'alert' => 'backends', 'status' => $status };
+
 	$status = &getNotifData( 'alerts', 'Cluster', 'Status' );
 	$status = 'disabled' if ( $status eq 'off' );
 	$status = 'enabled'  if ( $status eq 'on' );
 	push @output, { 'alert' => 'cluster', 'status' => $status };
 
 	&httpResponse(
-		 { code => 200, body => { description => $description, params => \@output } } );
+		 { code => 200, body => { description => $desc, params => \@output } } );
 }
 
 # GET /system/notifications/alerts/ALERT
@@ -101,11 +102,11 @@ sub get_notif_alert
 {
 	my $alert = shift;
 
-	my $description = "Get notifications alert $alert settings";
+	my $desc = "Get notifications alert $alert settings";
 	my $param       = &getNotifAlert( $alert );
 
 	&httpResponse(
-		   { code => 200, body => { description => $description, params => $param } } );
+		   { code => 200, body => { description => $desc, params => $param } } );
 }
 
 #  POST /system/notifications/alerts/ALERT
@@ -114,13 +115,14 @@ sub set_notif_alert
 	my $json_obj = shift;
 	my $alert    = shift;
 
-	my $desc        = "Set notifications alert $alert";
-	my @allowParams = ( "avoidflappingtime", "prefix" );
-	my $errormsg    = &getValidOptParams( $json_obj, \@allowParams );
+	my $desc = "Set notifications alert $alert";
 
-	if ( $errormsg )
+	my @allowParams = ( "avoidflappingtime", "prefix" );
+	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
+
+	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( !&getValidFormat( 'notif_time', $json_obj->{ 'avoidflappingtime' } ) )
@@ -138,8 +140,8 @@ sub set_notif_alert
 	$params->{ 'PrefixSubject' } = $json_obj->{ 'prefix' }            if ( exists $json_obj->{ 'prefix' } );
 	$params->{ 'SwitchTime' }    = $json_obj->{ 'avoidflappingtime' } if ( $json_obj->{ 'avoidflappingtime' } );
 
-	$errormsg = &setNotifAlerts( $alert, $params );
-	if ( $errormsg )
+	my $error = &setNotifAlerts( $alert, $params );
+	if ( $error )
 	{
 		my $msg = "There was a error modifiying $alert.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -155,13 +157,13 @@ sub set_notif_alert_actions
 	my $json_obj = shift;
 	my $alert    = shift;
 
-	my $desc        = "Set notifications alert $alert actions";
-	my @allowParams = ( "action" );
+	my $desc = "Set notifications alert $alert actions";
 
-	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
-	if ( $errormsg )
+	my @allowParams = ( "action" );
+	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
+	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( !&getValidFormat( 'notif_action', $json_obj->{ 'action' } ) )
@@ -170,13 +172,13 @@ sub set_notif_alert_actions
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	$errormsg = &setNotifAlertsAction( $alert, $json_obj->{ 'action' } );
-	if ( $errormsg == -2 )
+	my $error = &setNotifAlertsAction( $alert, $json_obj->{ 'action' } );
+	if ( $error == -2 )
 	{
 		my $msg = "$alert is already $json_obj->{action}.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	elsif ( $errormsg )
+	elsif ( $error )
 	{
 		my $msg = "There was a error in $alert action.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -191,12 +193,12 @@ sub send_test_mail
 	my $json_obj = shift;
 
 	my $desc        = "Send test mail";
-	my @allowParams = ( "action" );
 
-	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
-	if ( $errormsg )
+	my @allowParams = ( "action" );
+	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
+	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( $json_obj->{ 'action' } ne "test" )
@@ -205,8 +207,8 @@ sub send_test_mail
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	$errormsg = &sendTestMail();
-	if ( $errormsg )
+	my $error = &sendTestMail();
+	if ( $error )
 	{
 		my $msg = "Test mail sent but it hasn't reached the destination.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

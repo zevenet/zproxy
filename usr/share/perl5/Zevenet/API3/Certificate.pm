@@ -311,9 +311,8 @@ sub create_csr
 
 	require Zevenet::Certificate;
 
-	my $desc = 'Create CSR';
-	my $errormsg;
-	my $configdir = &getGlobalConfiguration('configdir');
+	my $desc      = 'Create CSR';
+	my $configdir = &getGlobalConfiguration( 'configdir' );
 
 	if ( -f "$configdir/$json_obj->{name}.csr" )
 	{

@@ -43,10 +43,10 @@ sub create_backup
 	my $desc           = "Create a backups";
 	my @requiredParams = ( "name" );
 
-	my $errormsg = getValidReqParams( $json_obj, \@requiredParams );
-	if ( $errormsg )
+	my $param_msg = getValidReqParams( $json_obj, \@requiredParams );
+	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( &getExistsBackup( $json_obj->{ 'name' } ) )
@@ -83,8 +83,7 @@ sub download_backup
 {
 	my $backup = shift;
 
-	my $desc     = "Download a backup";
-	my $errormsg = "$backup was download successful.";
+	my $desc = "Download a backup";
 
 	if ( !&getExistsBackup( $backup ) )
 	{
@@ -143,7 +142,6 @@ sub del_backup
 	my $backup = shift;
 
 	my $desc = "Delete backup $backup'";
-	my $errormsg;
 
 	if ( !&getExistsBackup( $backup ) )
 	{

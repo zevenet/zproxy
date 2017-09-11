@@ -89,13 +89,11 @@ sub add_blacklists_list
 
 	my @requiredParams = ( "name",   "type" );
 	my @optionalParams = ( "policy", "url" );
+	my $param_msg = &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
 
-	my $msg = &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
-
-	# $errormsg == 0, no error
-	if ( $msg )
+	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	# A list already exists with this name
@@ -164,7 +162,6 @@ sub set_blacklists_list
 	require Zevenet::IPDS::Blacklist::Config;
 
 	my $desc = "Modify the blacklist $listName.";
-	my $errormsg;
 
 	# remove time hash and add its param to common configuration hash
 	foreach my $timeParameters ( ( 'period', 'unit', 'hour', 'minutes' ) )
@@ -192,33 +189,28 @@ sub set_blacklists_list
 	# check not allowed actions on preloaded BL
 	if ( &getBLParam( $listName, 'preload' ) eq 'true' )
 	{
-		my $errormsg = &getValidOptParams( $json_obj, ["policy"] );
+		my $param_msg = &getValidOptParams( $json_obj, ["policy"] );
 
-		if ( $errormsg )
+		if ( $param_msg )
 		{
 			my $msg = "In preload lists only is allowed to change the policy";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 		}
 	}
 
 	my $type = &getBLParam( $listName, 'type' );
-	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
+	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
 
-	if ( $errormsg )
+	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	# not allow rename preload lists
 	if ( &getBLParam( $listName, 'preload' ) eq 'true' )
 	{
-		$errormsg = "The preload lists can't be renamed.";
-		my $body = {
-					 description => $desc,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "The preload lists can't be renamed.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# Check key format
@@ -235,12 +227,7 @@ sub set_blacklists_list
 	# Cron params and url only is used in remote lists
 	if ( $type ne 'remote' )
 	{
-		if (
-			 grep ( /^(url|minutes|hour|day|frequency|frequency_type|period|unit)$/,
-					keys %{ $json_obj } )
-		  )
-
-#~ if ( ! &getValidOptParams( $json_obj, [ "url", "minutes", "hour", "day", "frequency", "frequency_type", "period", "unit" ] ) )
+		if ( grep ( /^(url|minutes|hour|day|frequency|frequency_type|period|unit)$/, keys %{ $json_obj } ) )
 		{
 			my $msg = "Error, trying to change a remote list parameter in a local list.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -409,17 +396,17 @@ sub set_blacklists_list
 			&zenlog( "$noPush sources couldn't be added" ) if ( $noPush );
 		}
 
-		# set params
-		$errormsg = &setBLParam( $listName, $key, $json_obj->{ $key } );
-
 		# once changed list, update de list name
 		if ( $key eq 'name' )
 		{
 			$listName = $json_obj->{ 'name' };
 		}
 
+		# set params
+		my $error = &setBLParam( $listName, $key, $json_obj->{ $key } );
+
 		# not continue if there was a error
-		if ( $errormsg )
+		if ( $error )
 		{
 			my $msg = "Error, modifying $key in $listName.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -493,8 +480,8 @@ sub actions_blacklists
 
 	require Zevenet::IPDS::Blacklist::Actions;
 
-	my $desc     = "Apply a action to a blacklist $listName";
-	my $errormsg = "Error, applying the action to the blacklist.";
+	my $desc = "Apply a action to a blacklist $listName";
+	my $msg  = "Error, applying the action to the blacklist.";
 
 	if ( ! &getBLExists( $listName ) )
 	{
@@ -505,22 +492,23 @@ sub actions_blacklists
 	# allow only available actions
 	if ( $json_obj->{ action } eq 'update' )
 	{
+		# this function continues the 'update' api request
 		&update_remote_blacklists( $listName );
 	}
 	elsif ( $json_obj->{ action } eq 'start' )
 	{
 		my $error = &runBLStartByRule( $listName );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg ) if $error;
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'stop' )
 	{
 		my $error = &runBLStopByRule( $listName );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg ) if $error;
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'restart' )
 	{
 		my $error = &runBLRestartByRule( $listName );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg ) if $error;
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	else
 	{
@@ -558,10 +546,10 @@ sub update_remote_blacklists
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $errormsg = &setBLDownloadRemoteList( $listName );
+	my $error = &setBLDownloadRemoteList( $listName );
 	my $statusUpd = &getBLParam( $listName, 'update_status' );
 
-	if ( $errormsg )
+	if ( $error )
 	{
 		my $msg = $statusUpd;
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -705,11 +693,11 @@ sub set_blacklists_source
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
+	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
 
-	if ( $errormsg )
+	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( !&getValidFormat( 'blacklists_source', $json_obj->{ 'source' } ) )
@@ -784,15 +772,17 @@ sub add_blacklists_to_farm
 	my $json_obj = shift;
 	my $farmName = shift;
 
+	require Zevenet::Farm::Core;
+	require Zevenet::IPDS::Blacklist::Runtime;
+
 	my $desc     = "Apply the blacklist $json_obj->{ 'name' } to the farm $farmName";
 	my $listName = $json_obj->{ 'name' };
-	my $errormsg = &getValidReqParams( $json_obj, ["name"] );
+	my $param_msg = &getValidReqParams( $json_obj, ["name"] );
 
-	if ( $errormsg )
+	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
-	require Zevenet::Farm::Core;
 
 	if ( &getFarmFile( $farmName ) eq "-1" )
 	{
@@ -812,10 +802,8 @@ sub add_blacklists_to_farm
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	require Zevenet::IPDS::Blacklist::Runtime;
-	$errormsg = &setBLApplyToFarm( $farmName, $listName );
-
-	if ( $errormsg )
+	my $error = &setBLApplyToFarm( $farmName, $listName );
+	if ( $error )
 	{
 		my $msg = "Error, applying $listName to $farmName";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -864,7 +852,6 @@ sub del_blacklists_from_farm
 	}
 
 	my $error = &setBLRemFromFarm( $farmName, $listName );
-
 	if ( $error )
 	{
 		my $msg = "Error, removing $listName rule from $farmName.";

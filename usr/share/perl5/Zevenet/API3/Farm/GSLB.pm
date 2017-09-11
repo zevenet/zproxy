@@ -197,7 +197,7 @@ sub delete_gslb_service # ( $farmname, $service )
 	require Zevenet::Farm::Base;
 	require Zevenet::Farm::GSLB::Service;
 
-	my $desc     = "Delete service";
+	my $desc     = "Delete service in GSLB farm";
 	my @services = &getGSLBFarmServices( $farmname );
 	my $found    = 0;
 
@@ -213,37 +213,36 @@ sub delete_gslb_service # ( $farmname, $service )
 	}
 
 	# Check if the service exists
-	if ($found == 0)
+	unless ( $found )
 	{
 		my $msg = "Invalid service name, please insert a valid value.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $return = &setGSLBFarmDeleteService( $farmname, $service );
+	my $error = &setGSLBFarmDeleteService( $farmname, $service );
 
 	# check if the service is being used
-	if ( $return == -2 )
+	if ( $error == -2 )
 	{
 		my $msg = "The service $service in farm $farmname hasn't been deleted. The service is used by a zone.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# check if the service could not be deleted
-	if ( $return != 0 )
+	if ( $error )
 	{
 		my $msg = "Service $service in farm $farmname hasn't been deleted.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# no error found, return succesful response
-	&zenlog(
-			 "ZAPI success, the service $service in farm $farmname has been deleted." );
+	&zenlog( "ZAPI success, the service $service in farm $farmname has been deleted." );
 
-	my $message = "The service $service in farm $farmname has been deleted.";
+	my $msg = "The service $service in farm $farmname has been deleted.";
 	my $body = {
 				 description => "Delete service $service in farm $farmname.",
 				 success     => "true",
-				 message     => $message
+				 message     => $msg,
 	};
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
@@ -298,10 +297,7 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 	foreach my $subline ( @be )
 	{
 		$subline =~ s/^\s+//;
-		if ( $subline =~ /^$/ )
-		{
-			next;
-		}
+		next unless length $subline;
 		$id++;
 	}
 
@@ -647,11 +643,11 @@ sub modify_gslb_farmguardian    # ( $json_obj, $farmname )
 	}
 
 	# no error found, return successful response
-	my $errormsg = "Success, some parameters have been changed in farm guardian in farm $farmname.";
+	my $msg = "Success, some parameters have been changed in farm guardian in farm $farmname.";
 	my $body = {
 				 description => $desc,
 				 params      => $json_obj,
-				 message     => $errormsg,
+				 message     => $msg,
 	};
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )

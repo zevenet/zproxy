@@ -81,7 +81,6 @@ sub farm_stats # ( $farmname )
 	require Zevenet::Farm::Core;
 
 	my $desc = "Get farm stats";
-	my $errormsg;
 
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
@@ -459,10 +458,10 @@ sub stats_network_interfaces
 	require Zevenet::Stats;
 	require Zevenet::Net::Interface;
 
-	my $description = "Interfaces info";
-	my @interfaces  = &getNetworkStats( 'hash' );
-	my @nic         = &getInterfaceTypeList( 'nic' );
-	my @bond        = &getInterfaceTypeList( 'bond' );
+	my $desc       = "Interfaces info";
+	my @interfaces = &getNetworkStats( 'hash' );
+	my @nic        = &getInterfaceTypeList( 'nic' );
+	my @bond       = &getInterfaceTypeList( 'bond' );
 	my @nicList;
 	my @bondList;
 	my @restIfaces;
@@ -521,7 +520,7 @@ sub stats_network_interfaces
 	}
 
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 params      => { nic => \@nicList, bond => \@bondList, }
 	};
 	&httpResponse({ code => 200, body => $body });

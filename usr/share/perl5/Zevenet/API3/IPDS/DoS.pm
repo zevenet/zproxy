@@ -27,10 +27,10 @@ use Zevenet::IPDS::DoS;
 # GET /ipds/dos/rules
 sub get_dos_rules
 {
-	my $description = "List the possible DoS rules";
+	my $desc = "List the possible DoS rules";
 
 	my $body = {
-		description => $description,
+		description => $desc,
 		params      => {
 			"farm" => [
 					   {
@@ -61,7 +61,7 @@ sub get_dos_rules
 sub get_dos
 {
 	my $confFile    = &getGlobalConfiguration( 'dosConf' );
-	my $description = "List the DoS rules";
+	my $desc = "List the DoS rules";
 
 	my $fileHandle = Config::Tiny->read( $confFile );
 	my %rules      = %{ $fileHandle };
@@ -73,7 +73,7 @@ sub get_dos
 		push @output, $aux;
 	}
 
-	my $body = { description => $description, params => \@output };
+	my $body = { description => $desc, params => \@output };
 	&httpResponse( { code => 200, body => $body } );
 }
 
@@ -82,15 +82,18 @@ sub create_dos_rule
 {
 	my $json_obj = shift;
 
-	my $rule           = $json_obj->{ 'rule' };
-	my $desc           = "Create the DoS rule $rule";
-	my @requiredParams = ( "name", "rule" );
-	my $confFile       = &getGlobalConfiguration( 'dosConf' );
+	require Zevenet::IPDS::DoS::Config;
 
-	my $errormsg = &getValidReqParams( $json_obj, \@requiredParams );
-	if ( $errormsg )
+	my $desc     = "Create the DoS rule $rule";
+	my $rule     = $json_obj->{ 'rule' };
+	my $confFile = &getGlobalConfiguration( 'dosConf' );
+
+	my @requiredParams = ( "name", "rule" );
+	my $param_msg = &getValidReqParams( $json_obj, \@requiredParams );
+
+	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( &getDOSExists( $json_obj->{ 'name' } ) )
@@ -113,12 +116,11 @@ sub create_dos_rule
 
 	if ( !&getValidFormat( "dos_rule_farm", $json_obj->{ 'rule' } ) )
 	{
-		$errormsg = "ID rule isn't correct.";
+		my $msg = "ID rule isn't correct.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	require Zevenet::IPDS::DoS::Config;
 	my $error = &createDOSRule( $json_obj->{ 'name' }, $rule );
-
 	if ( $error )
 	{
 		my $msg = "There was a error enabling DoS in $json_obj->{ 'name' }.";
@@ -190,11 +192,11 @@ sub set_dos_rule
 	}
 
 	@requiredParams = keys %hashRuleConf;
-	my $errormsg = &getValidOptParams( $json_obj, \@requiredParams );
+	my $param_msg = &getValidOptParams( $json_obj, \@requiredParams );
 
-	if ( $errormsg )
+	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 404, desc => $desc, msg => $errormsg );
+		&httpErrorResponse( code => 404, desc => $desc, msg => $param_msg );
 	}
 
 	# check input format
@@ -233,7 +235,6 @@ sub del_dos_rule
 	require Zevenet::IPDS::DoS::Config;
 
 	my $desc = "Delete the DoS rule $name";
-	my $errormsg;
 
 	if ( !&getDOSExists( $name ) )
 	{
@@ -270,7 +271,7 @@ sub get_dos_farm
 	my $farmName = shift;
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my @output;
-	my $description = "Get status DoS $farmName.";
+	my $desc = "Get status DoS $farmName.";
 
 	if ( -e $confFile )
 	{
@@ -285,7 +286,7 @@ sub get_dos_farm
 		}
 	}
 
-	my $body = { description => $description, params => \@output };
+	my $body = { description => $desc, params => \@output };
 
 	&httpResponse( { code => 200, body => $body } );
 }
@@ -352,9 +353,7 @@ sub del_dos_from_farm
 	my $farmName = shift;
 	my $name     = shift;
 
-	my $desc = "Unset the DoS rule $name from the farm $farmName";
-	my $errormsg;
-
+	my $desc     = "Unset the DoS rule $name from the farm $farmName";
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 
 	if ( &getFarmFile( $farmName ) eq "-1" )
@@ -414,7 +413,7 @@ sub actions_dos
 	require Zevenet::IPDS::DoS::Actions;
 
 	my $desc     = "Apply a action to the DoS rule $rule";
-	my $errormsg = "Error, applying the action to the DoS rule.";
+	my $msg = "Error, applying the action to the DoS rule.";
 
 	if ( !&getDOSExists( $rule ) )
 	{
@@ -425,17 +424,17 @@ sub actions_dos
 	if ( $json_obj->{ action } eq 'start' )
 	{
 		my $error = &runDOSStartByRule( $rule );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg ) if $error;
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'stop' )
 	{
 		my $error = &runDOSStopByRule( $rule );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg ) if $error;
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'restart' )
 	{
 		my $error = &runDOSRestartByRule( $rule );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $errormsg ) if $error;
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	else
 	{

@@ -173,11 +173,11 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	}
 
 	# no error found, return successful response
-	my $errormsg = "Success, some parameters have been changed in farm guardian in farm $farmname.";
+	my $msg = "Success, some parameters have been changed in farm guardian in farm $farmname.";
 	my $body = {
 				 description => $desc,
 				 params      => $json_obj,
-				 message     => $errormsg,
+				 message     => $msg,
 	};
 
 	&httpResponse( { code => 200, body => $body } );
