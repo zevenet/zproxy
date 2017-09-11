@@ -1041,7 +1041,6 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	require Zevenet::FarmGuardian;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $stat          = -1;
 	my $i             = 0;
 
 	my $farm       = &getL4FarmStruct( $farm_name );
@@ -1066,12 +1065,10 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 			$line =
 			  "$args[0]\;$args[1]\;$vip\;$vip_port\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8]";
 			splice @configfile, $i, $line;
-			$stat = $?;    # FIXME
 		}
 		$i++;
 	}
 	untie @configfile;
-	$stat = $?;            # FIXME
 
 	$farm = &getL4FarmStruct( $farm_name );
 
@@ -1107,7 +1104,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		}
 	}
 
-	return $stat;
+	return 0; # FIXME?
 }
 
 =begin nd

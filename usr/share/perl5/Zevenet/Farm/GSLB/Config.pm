@@ -496,6 +496,8 @@ sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	}
 
 	untie @fileconf;
+
+	return 0;
 }
 
 1;
