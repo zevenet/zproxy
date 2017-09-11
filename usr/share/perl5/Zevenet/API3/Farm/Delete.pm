@@ -30,22 +30,13 @@ sub delete_farm # ( $farmname )
 {
 	my $farmname = shift;
 
+	my $desc = "Delete farm $farmname";
 	my $newffile = &getFarmFile( $farmname );
 
 	if ( $newffile == -1 )
 	{
-		&zenlog(
-			 "ZAPI error, trying to delete the farm $farmname, the farm name doesn't exist."
-		);
-
-		my $errormsg = "The farm $farmname doesn't exist, try another name.";
-		my $body = {
-					 description => "Delete farm $farmname",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "The farm $farmname doesn't exist, try another name.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
@@ -58,41 +49,29 @@ sub delete_farm # ( $farmname )
 		}
 	}
 
-	my $stat = &runFarmDelete( $farmname );
+	my $error = &runFarmDelete( $farmname );
 
-	if ( $stat == 0 )
+	if ( $error )
 	{
-		&zenlog( "ZAPI success, the farm $farmname has been deleted." );
-
-		if ( eval { require Zevenet::Cluster; } )
-		{
-			&runZClusterRemoteManager( 'farm', 'delete', $farmname );
-		}
-
-		my $message = "The Farm $farmname has been deleted.";
-		my $body = {
-					 description => "Delete farm $farmname",
-					 success     => "true",
-					 message     => $message
-		};
-
-		&httpResponse({ code => 200, body => $body });
+		my $msg = "The Farm $farmname hasn't been deleted";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	else
+
+	&zenlog( "ZAPI success, the farm $farmname has been deleted." );
+
+	if ( eval { require Zevenet::Cluster; } )
 	{
-		&zenlog(
-			"ZAPI error, trying to delete the farm $farmname, the farm hasn't been deleted."
-		);
-
-		my $errormsg = "The Farm $farmname hasn't been deleted";
-		my $body = {
-					 description => "Delete farm $farmname",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		&runZClusterRemoteManager( 'farm', 'delete', $farmname );
 	}
+
+	my $msg = "The Farm $farmname has been deleted.";
+	my $body = {
+				 description => $desc,
+				 success     => "true",
+				 message     => $msg
+	};
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 1;

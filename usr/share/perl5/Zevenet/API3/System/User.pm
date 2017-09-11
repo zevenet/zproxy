@@ -28,110 +28,101 @@ sub get_all_users
 {
 	require Zevenet::Zapi;
 
-	my $description = "Get users";
+	my $desc = "Get users";
 	my $zapiStatus = &getZAPI( "status" );
-	my @users = ( { "user"=>"root", "status"=>"true" }, { "user"=>"zapi","status"=>"$zapiStatus" } );
+	my @users = (
+				  { "user" => "root", "status" => "true" },
+				  { "user" => "zapi", "status" => "$zapiStatus" }
+	);
 	
 	&httpResponse(
-		  { code => 200, body => { description => $description, params => \@users } } );
+		  { code => 200, body => { description => $desc, params => \@users } } );
 }
 
 #	GET	/system/users/zapi
 sub get_user
 {
-	my $user        = shift;
+	my $user = shift;
 
-	my $description = "Zapi user configuration.";
-	my $errormsg;
+	require Zevenet::Zapi;
+
+	my $desc = "Zapi user configuration.";
 
 	if ( $user ne 'zapi' )
 	{
-		$errormsg = "Actually only is available information about 'zapi' user";
-	}
-	else
-	{
-		require Zevenet::Zapi;
-
-		my $zapi->{ 'key' } = &getZAPI( "keyzapi" );
-		$zapi->{ 'status' } = &getZAPI( "status" );
-
-		&httpResponse(
-				{ code => 200, body => { description => $description, params => $zapi } } );
+		my $msg = "Actually only is available information about 'zapi' user";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $body =
-	  { description => $description, error => "true", message => $errormsg };
+	my $zapi = {
+				 'key'    => &getZAPI( "keyzapi" ),
+				 'status' => &getZAPI( "status" ),
+	};
 
-	&httpResponse( { code => 404, body => $body } );
+	&httpResponse( { code => 200, body => { description => $desc, params => $zapi } } );
 }
 
 # POST /system/users/zapi
 sub set_user_zapi
 {
-	my $json_obj    = shift;
+	my $json_obj = shift;
 
+	require Zevenet::Zapi;
 	require Zevenet::Login;
 
-	my $description = "Zapi user settings.";
+	my $desc = "Setting Zapi user configuration";
 
-	#~ my @requiredParams = ( "key", "status", "password", "newpassword" );
 	my @requiredParams = ( "key", "status", "newpassword" );
-	my $errormsg = &getValidOptParams( $json_obj, \@requiredParams );
+	my $param_msg = &getValidOptParams( $json_obj, \@requiredParams );
 
-	if ( !$errormsg )
+	if ( $param_msg )
 	{
-		if ( !&getValidFormat( "zapi_key", $json_obj->{ 'key' } ) )
-		{ 
-			$errormsg = "Error, character incorrect in key zapi.";
-		}
-		elsif ( !&getValidFormat( "zapi_password", $json_obj->{ 'newpassword' } ) )
-		{
-			$errormsg = "Error, character incorrect in password zapi.";
-		}
-		elsif ( !&getValidFormat( "zapi_status", $json_obj->{ 'status' } ) )
-		{
-			$errormsg = "Error, character incorrect in status zapi.";
-		}
-		else
-		{
-			require Zevenet::Zapi;
-
-			if (    $json_obj->{ 'status' } eq 'enable'
-				 && &getZAPI( "status") eq 'false' )
-			{
-				&setZAPI( "enable" );
-			}
-			elsif (    $json_obj->{ 'status' } eq 'disable'
-					&& &getZAPI( "status" ) eq 'true' )
-			{
-				&setZAPI( "disable" );
-			}
-
-			if ( exists $json_obj->{ 'key' } )
-			{
-				&setZAPI( 'key', $json_obj->{ 'key' } );
-			}
-
-			&changePassword( 'zapi',
-							 $json_obj->{ 'newpassword' },
-							 $json_obj->{ 'newpassword' } )
-			  if ( exists $json_obj->{ 'newpassword' } );
-
-			$errormsg = "Settings was changed successful.";
-			&httpResponse(
-				 {
-				   code => 200,
-				   body =>
-					 { description => $description, params => $json_obj, message => $errormsg }
-				 }
-			);
-		}
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
-	my $body =
-	  { description => $description, error => "true", message => $errormsg };
+	if ( !&getValidFormat( "zapi_key", $json_obj->{ 'key' } ) )
+	{
+		my $msg = "Error, character incorrect in key zapi.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+	elsif ( !&getValidFormat( "zapi_password", $json_obj->{ 'newpassword' } ) )
+	{
+		my $msg = "Error, character incorrect in password zapi.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+	elsif ( !&getValidFormat( "zapi_status", $json_obj->{ 'status' } ) )
+	{
+		my $msg = "Error, character incorrect in status zapi.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
-	&httpResponse( { code => 400, body => $body } );
+	if (    $json_obj->{ 'status' } eq 'enable'
+		 && &getZAPI( "status" ) eq 'false' )
+	{
+		&setZAPI( "enable" );
+	}
+	elsif (    $json_obj->{ 'status' } eq 'disable'
+			&& &getZAPI( "status" ) eq 'true' )
+	{
+		&setZAPI( "disable" );
+	}
+
+	if ( exists $json_obj->{ 'key' } )
+	{
+		&setZAPI( 'key', $json_obj->{ 'key' } );
+	}
+
+	if ( exists $json_obj->{ 'newpassword' } )
+	{
+		&changePassword( 'zapi',
+						 $json_obj->{ 'newpassword' },
+						 $json_obj->{ 'newpassword' } );
+	}
+
+	my $msg = "Settings was changed successful.";
+	my $body = { description => $desc, params => $json_obj, message => $msg }
+
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # POST /system/users/root
@@ -140,57 +131,48 @@ sub set_user
 	my $json_obj       = shift;
 	my $user           = shift;
 
-	my $description    = "User settings.";
+	require Zevenet::Login;
+
+	my $desc = "User settings.";
+
 	my @requiredParams = ( "password", "newpassword" );
-	my $errormsg = &getValidReqParams( $json_obj, \@requiredParams, \@requiredParams );
+	my $param_msg = &getValidReqParams( $json_obj, \@requiredParams, \@requiredParams );
 
-	if ( !$errormsg )
+	if ( $param_msg )
 	{
-		if ( $user ne 'root' )
-		{
-			$errormsg =
-			  "Error, actually only is available to change password in root user.";
-		}
-		else
-		{
-			require Zevenet::Login;
-
-			if ( !&getValidFormat( 'password', $json_obj->{ 'newpassword' } ) )
-			{
-				$errormsg = "Error, character incorrect in password.";
-			}
-			elsif ( !&checkValidUser( $user, $json_obj->{ 'password' } ) )
-			{
-				$errormsg = "Error, invalid current password.";
-			}
-			else
-			{
-				$errormsg = &changePassword( $user,
-											 $json_obj->{ 'newpassword' },
-											 $json_obj->{ 'newpassword' } );
-				if ( $errormsg )
-				{
-					$errormsg = "Error, changing $user password.";
-				}
-				else
-				{
-					$errormsg = "Settings was changed successful.";
-					&httpResponse(
-						 {
-						   code => 200,
-						   body =>
-							 { description => $description, params => $json_obj, message => $errormsg }
-						 }
-					);
-				}
-			}
-		}
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
-	my $body =
-	  { description => $description, error => "true", message => $errormsg };
+	if ( $user ne 'root' )
+	{
+		my $msg = "Actually only is available to change password in root user.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
-	&httpResponse( { code => 400, body => $body } );
+	if ( !&getValidFormat( 'password', $json_obj->{ 'newpassword' } ) )
+	{
+		my $msg = "Character incorrect in password.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+	elsif ( !&checkValidUser( $user, $json_obj->{ 'password' } ) )
+	{
+		my $msg = "Invalid current password.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $error = &changePassword( $user,
+								 $json_obj->{ 'newpassword' },
+								 $json_obj->{ 'newpassword' } );
+	if ( $error )
+	{
+		my $msg = "Changing $user password.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $msg = "Settings was changed successful.";
+	my $body = { description => $desc, params => $json_obj, message => $msg };
+
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

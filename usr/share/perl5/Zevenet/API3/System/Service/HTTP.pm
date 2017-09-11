@@ -22,15 +22,13 @@
 ###############################################################################
 
 use strict;
-
 use Zevenet::System::HTTP;
 use Zevenet::Net::Interface;
-
 
 # GET /system/http
 sub get_http
 {
-	my $description       = "Get http";
+	my $desc              = "Get http";
 	my $httpIp            = &getHttpServerIp();
 	my $allInterfaces_aux = &getActiveInterfaceList();
 	my @interfaces;
@@ -61,64 +59,63 @@ sub get_http
 	$http->{ 'port' } = &getHttpServerPort;
 
 	&httpResponse(
-			{ code => 200, body => { description => $description, params => $http } } );
+			{ code => 200, body => { description => $desc, params => $http } } );
 }
 
 # POST /system/http
 sub set_http
 {
-	my $json_obj    = shift;
+	my $json_obj = shift;
 
-	my $description = "Post http";
-	my @allowParams = ( "ip", "port" );
+	my $desc = "Post http";
 	my $httpIp = $json_obj->{ 'ip' } if ( exists $json_obj->{ 'ip' } );
-	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
 
-	if ( !$errormsg )
+	my @allowParams = ( "ip", "port" );
+	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
+
+	if ( $param_msg )
 	{
-		if ( !&getValidFormat( "port", $json_obj->{ 'port' } ) )
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+	}
+
+	if ( !&getValidFormat( "port", $json_obj->{ 'port' } ) )
+	{
+		my $msg = "Port hasn't a correct format.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	if ( exists $json_obj->{ 'ip' } && $json_obj->{ 'ip' } ne '*' )
+	{
+		my $flag;
+
+		foreach my $iface ( @{ &getActiveInterfaceList() } )
 		{
-			$errormsg = "Port hasn't a correct format.";
+			next unless $httpIp eq $iface->{ addr };
+
+			if ( $iface->{ vini } ne '' )    # discard virtual interfaces
+			{
+				my $msg = "Virtual interface canot be configurate as http interface.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
+			$flag = 1;
+			last;
 		}
-		else
+
+		unless ( $flag )
 		{
-			if ( exists $json_obj->{ 'ip' } )
-			{
-				if ( $json_obj->{ 'ip' } ne '*' )
-				{
-					my $flag;
-
-					foreach my $iface ( @{ &getActiveInterfaceList() } )
-					{
-						if ( $httpIp eq $iface->{ addr } )
-						{
-							$flag = 1;
-							if ( $iface->{ vini } ne '' )    # discard virtual interfaces
-							{
-								$errormsg = "Virtual interface canot be configurate as http interface.";
-							}
-							last;
-						}
-					}
-					$errormsg = "Ip not found in system." if ( !$flag );
-				}
-			}
-			if ( !$errormsg )
-			{
-				&setHttpServerPort( $json_obj->{ 'port' } ) if ( exists $json_obj->{ 'port' } );
-				&setHttpServerIp( $httpIp ) if ( exists $json_obj->{ 'ip' } );
-				system ( "/etc/init.d/cherokee restart > /dev/null &" );
-
-				&httpResponse(
-					{ code => 200, body => { description => $description, params => $json_obj } } );
-			}
+			my $msg = "Ip not found in system.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
-	my $body =
-	  { description => $description, error => "true", message => $errormsg };
+	&setHttpServerPort( $json_obj->{ 'port' } ) if ( exists $json_obj->{ 'port' } );
+	&setHttpServerIp( $httpIp ) if ( exists $json_obj->{ 'ip' } );
+	system ( "/etc/init.d/cherokee restart > /dev/null &" );
 
-	&httpResponse( { code => 400, body => $body } );
+	my $body = { description => $desc, params => $json_obj };
+
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

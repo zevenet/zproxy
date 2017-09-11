@@ -37,88 +37,44 @@ sub new_farm    # ( $json_obj )
    #	- vport: optional for L4xNAT and not used in Datalink profile.
 
 	my $error       = "false";
-	my $description = "Creating farm '$json_obj->{ farmname }'";
+	my $desc = "Creating farm '$json_obj->{ farmname }'";
 
 	# validate FARM NAME
 	unless (    $json_obj->{ farmname }
 			 && &getValidFormat( 'farm_name', $json_obj->{ farmname } ) )
 	{
-		my $errormsg =
-		  "Error trying to create a new farm, the farm name is required to have alphabet letters, numbers or hypens (-) only.";
-		&zenlog( $errormsg );
-
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse( { code => 400, body => $body } );
+		my $msg =
+		  "The farm name is required to have alphabet letters, numbers or hypens (-) only.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# check if FARM NAME already exists
 	unless ( &getFarmType( $json_obj->{ farmname } ) == 1 )
 	{
-		my $errormsg =
-		  "Error trying to create a new farm, the farm name already exists.";
-		&zenlog( $errormsg );
-
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "Error trying to create a new farm, the farm name already exists.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# Farm PROFILE validation
 	if ( $json_obj->{ profile } !~ /^(:?HTTP|GSLB|L4XNAT|DATALINK)$/i )
 	{
-		my $errormsg =
-		  "Error trying to create a new farm, the farm's profile is not supported.";
-		&zenlog( $errormsg );
-
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "The farm's profile is not supported.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# VIP validation
 	# vip must be available
 	if ( !grep { $_ eq $json_obj->{ vip } } &listallips() )
 	{
-		my $errormsg =
-		  "Error trying to create a new farm, an available virtual IP must be set.";
-		&zenlog( $errormsg );
-
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "An available virtual IP must be set.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# VPORT validation
 	if ( !&getValidPort( $json_obj->{ vip }, $json_obj->{ vport }, $json_obj->{ profile }) )
 	{
-		my $errormsg =
-		  "Error trying to create a new farm, the virtual port must be an acceptable value and must be available.";
-		&zenlog( $errormsg );
-
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
-
-		&httpResponse( { code => 400, body => $body } );
+		my $msg = "The virtual port must be an acceptable value and must be available.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	$json_obj->{ 'interface' } = &getInterfaceOfIp( $json_obj->{ 'vip' } );
@@ -137,55 +93,47 @@ sub new_farm    # ( $json_obj )
 			"ZAPI error, trying to create a new farm $json_obj->{ farmname }, can't be created."
 		);
 
-		my $errormsg = "The $json_obj->{ farmname } farm can't be created";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg,
-		};
+		my $msg = "The $json_obj->{ farmname } farm can't be created";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
-		&httpResponse( { code => 400, body => $body } );
+	&zenlog(
+		 "ZAPI success, the farm $json_obj->{ farmname } has been created successfully."
+	);
+
+	my $out_p;
+
+	if ( $json_obj->{ profile } =~ /^DATALINK$/i )
+	{
+		$out_p = {
+				   farmname  => $json_obj->{ farmname },
+				   profile   => $json_obj->{ profile },
+				   vip       => $json_obj->{ vip },
+				   interface => $json_obj->{ interface },
+		};
 	}
 	else
 	{
-		&zenlog(
-			 "ZAPI success, the farm $json_obj->{ farmname } has been created successfully."
-		);
-
-		my $out_p;
-
-		if ( $json_obj->{ profile } =~ /^DATALINK$/i )
-		{
-			$out_p = {
-					   farmname  => $json_obj->{ farmname },
-					   profile   => $json_obj->{ profile },
-					   vip       => $json_obj->{ vip },
-					   interface => $json_obj->{ interface },
-			};
-		}
-		else
-		{
-			$out_p = {
-					   farmname  => $json_obj->{ farmname },
-					   profile   => $json_obj->{ profile },
-					   vip       => $json_obj->{ vip },
-					   vport     => $json_obj->{ vport },
-					   interface => $json_obj->{ interface },
-			};
-		}
-
-		my $body = {
-					 description => $description,
-					 params      => $out_p,
+		$out_p = {
+				   farmname  => $json_obj->{ farmname },
+				   profile   => $json_obj->{ profile },
+				   vip       => $json_obj->{ vip },
+				   vport     => $json_obj->{ vport },
+				   interface => $json_obj->{ interface },
 		};
-
-		if ( eval { require Zevenet::Cluster; } )
-		{
-			&runZClusterRemoteManager( 'farm', 'start', $json_obj->{ farmname } );
-		}
-
-		&httpResponse( { code => 201, body => $body } );
 	}
+
+	my $body = {
+				 description => $desc,
+				 params      => $out_p,
+	};
+
+	if ( eval { require Zevenet::Cluster; } )
+	{
+		&runZClusterRemoteManager( 'farm', 'start', $json_obj->{ farmname } );
+	}
+
+	&httpResponse( { code => 201, body => $body } );
 }
 
 1;

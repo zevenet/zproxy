@@ -28,102 +28,72 @@ use Zevenet::SNMP;
 # GET /system/snmp
 sub get_snmp
 {
-	my $description = "Get snmp";
+	my $desc = "Get snmp";
+
 	my %snmp        = %{ &getSnmpdConfig() };
 	$snmp{ 'status' } = &getSnmpdStatus();
 	
-	
-	&httpResponse(
-		   { code => 200, body => { description => $description, params => \%snmp } } );
+	&httpResponse( { code => 200, body => { description => $desc, params => \%snmp } } );
 }
 
 #  POST /system/snmp
 sub set_snmp
 {
-	my $json_obj    = shift;
-	my $description = "Post snmp";
-	my $errormsg;
-	my @allowParams = ( "port", "status", "ip", "community", "scope" );
+	my $json_obj = shift;
 
-	$errormsg = &getValidOptParams( $json_obj, \@allowParams );
-	if ( !$errormsg )
+	my $desc = "Post snmp";
+
+	my @allowParams = ( "port", "status", "ip", "community", "scope" );
+	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
+
+	if ( $param_msg )
 	{
-		# Check key format
-		foreach my $key ( keys %{ $json_obj } )
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+	}
+
+	# Check key format
+	foreach my $key ( keys %{ $json_obj } )
+	{
+		if ( !&getValidFormat( "snmp_$key", $json_obj->{ $key } ) )
 		{
-			if ( !&getValidFormat( "snmp_$key", $json_obj->{ $key } ) )
-			{
-				$errormsg = "$key hasn't a correct format.";
-				last;
-			}
-		}
-		#~ # check if listen exists
-		#~ if ( exists $json_obj->{ 'ip' } && $json_obj->{ 'ip' } ne '*'
-				#~ && !$errormsg )
-		#~ {
-			#~ my $flag;
-			#~ foreach my $iface ( @{ &getActiveInterfaceList() } )
-			#~ {
-				#~ if ( $json_obj->{ 'ip' } eq $iface->{ addr } )
-				#~ {
-					#~ $flag = 1;
-					#~ if ( $iface->{ vini } ne '' )    # discard virtual interfaces
-					#~ {
-						#~ $errormsg = "Virtual interface canot be configurate as http interface.";
-					#~ }
-					#~ else
-					#~ {
-						#~ $interface = $iface;
-					#~ }
-					#~ last;
-				#~ }
-			#~ }
-			#~ $errormsg = "Ip $json_obj->{ 'ip' } not found in system." if ( !$flag );
-		#~ }
-		
-		if ( !$errormsg )
-		{
-			my $status = $json_obj->{ 'status' };
-			delete $json_obj->{ 'status' };
-			my $snmp = &getSnmpdConfig();
-			
-			foreach my $key ( keys %{ $json_obj } )
-			{
-				$snmp->{ $key } = $json_obj->{ $key };
-			}
-			
-			$errormsg = &setSnmpdConfig( $snmp );
-			if ( !$errormsg )
-			{
-				if ( !$status && &getSnmpdStatus() eq 'true' )
-				{
-					&setSnmpdStatus( 'false' );    # stopping snmp
-					&setSnmpdStatus( 'true' );     # starting snmp
-				}
-				elsif ( $status eq 'true' && &getSnmpdStatus() eq 'false' )
-				{
-					&setSnmpdStatus( 'true' );     # starting snmp
-				}
-				elsif ( $status eq 'false' && &getSnmpdStatus() eq 'true' )
-				{
-					&setSnmpdStatus( 'false' );    # stopping snmp
-				}
-				if ( !$errormsg )
-				{
-					$snmp->{ status } = &getSnmpdStatus();
-					&httpResponse(
-							{ code => 200, body => { description => $description, params => $snmp } } );
-				}
-			}
-			else
-			{
-				$errormsg = "There was a error modifying ssh.";
-			}
+			my $msg = "$key hasn't a correct format.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
-	my $body =
-	  { description => $description, error => "true", message => $errormsg };
-	&httpResponse( { code => 400, body => $body } );
+
+	my $status = $json_obj->{ 'status' };
+	delete $json_obj->{ 'status' };
+	my $snmp = &getSnmpdConfig();
+
+	foreach my $key ( keys %{ $json_obj } )
+	{
+		$snmp->{ $key } = $json_obj->{ $key };
+	}
+
+	my $error = &setSnmpdConfig( $snmp );
+	if ( $error )
+	{
+		my $msg = "There was a error modifying ssh.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	if ( !$status && &getSnmpdStatus() eq 'true' )
+	{
+		&setSnmpdStatus( 'false' );    # stopping snmp
+		&setSnmpdStatus( 'true' );     # starting snmp
+	}
+	elsif ( $status eq 'true' && &getSnmpdStatus() eq 'false' )
+	{
+		&setSnmpdStatus( 'true' );     # starting snmp
+	}
+	elsif ( $status eq 'false' && &getSnmpdStatus() eq 'true' )
+	{
+		&setSnmpdStatus( 'false' );    # stopping snmp
+	}
+
+	$snmp->{ status } = &getSnmpdStatus();
+
+	&httpResponse( { code => 200, body => { description => $desc, params => $snmp } } );
 }
 
 1;

@@ -28,18 +28,13 @@ sub modify_farm # ( $json_obj, $farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
+	my $desc = "Modify farm";
+
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) eq '-1' )
 	{
-		# Error
-		my $errormsg = "The farmname $farmname does not exist.";
-		my $body = {
-					 description => "Modify farm",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "The farmname $farmname does not exist.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $type = &getFarmType( $farmname );

@@ -30,6 +30,8 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
+	my $desc = "Modify L4xNAT farm '$farmname'";
+
 	# Flags
 	my $reload_flag  = "false";
 	my $restart_flag = "false";
@@ -40,15 +42,8 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		# Error
-		my $errormsg = "The farmname $farmname does not exists.";
-		my $body = {
-					 description => "Modify farm",
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "The farmname $farmname does not exists.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# Get current vip & vport
@@ -74,440 +69,329 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	{
 		unless ( &getFarmStatus( $farmname ) eq 'down' )
 		{
-			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, cannot change the farm name while running"
-			);
-
-			my $errormsg = 'Cannot change the farm name while running';
-
-			my $body = {
-						 description => "Modify farm",
-						 error       => "true",
-						 message     => $errormsg
-			};
-
-			&httpResponse({ code => 400, body => $body });
+			my $msg = 'Cannot change the farm name while running';
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		if ( $json_obj->{ newfarmname } =~ /^$/ )
+		unless ( length $json_obj->{ newfarmname } )
 		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid newfarmname, can't be blank."
-			);
+			my $msg = "Invalid newfarmname, can't be blank.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		else
+
+		if ($json_obj->{newfarmname} ne $farmname)
 		{
-			if ($json_obj->{newfarmname} ne $farmname)
+			#Check if farmname has correct characters (letters, numbers and hyphens)
+			unless ( $json_obj->{ newfarmname } =~ /^[a-zA-Z0-9\-]*$/ )
 			{
-				#Check if farmname has correct characters (letters, numbers and hyphens)
-				if ( $json_obj->{ newfarmname } =~ /^[a-zA-Z0-9\-]*$/ )
-				{
-					if ($json_obj->{newfarmname} ne $farmname)
-					{
-						#Check if the new farm's name alredy exists
-						my $newffile = &getFarmFile( $json_obj->{ newfarmname } );
-						if ( $newffile != -1 )
-						{
-							$error = "true";
-							&zenlog(
-								"ZAPI error, trying to modify a l4xnat farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
-							);
-						}
-						else
-						{
-							#Change farm name
-							my $fnchange = &setNewFarmName( $farmname, $json_obj->{ newfarmname } );
-							if ( $fnchange == -1 )
-							{
-								$error = "true";
-								&zenlog(
-									"ZAPI error, trying to modify a l4xnat farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
-								);
-							}
-							else
-							{
-								$restart_flag = "true";
-								$farmname     = $json_obj->{ newfarmname };
-							}
-						}
-					}
-				}
-				else
-				{
-					$error = "true";
-					&zenlog(
-						 "ZAPI error, trying to modify a l4xnat farm $farmname, invalid newfarmname." );
-				}
+				my $msg = "Invalid newfarmname." );
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
+
+			#Check if the new farm's name alredy exists
+			my $newffile = &getFarmFile( $json_obj->{ newfarmname } );
+			if ( $newffile != -1 )
+			{
+				my $msg = "The farm $json_obj->{newfarmname} already exists, try another name.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
+			#Change farm name
+			my $fnchange = &setNewFarmName( $farmname, $json_obj->{ newfarmname } );
+			if ( $fnchange == -1 )
+			{
+				my $msg = "The name of the farm can't be modified, delete the farm and create a new one.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
+			$restart_flag = "true";
+			$farmname     = $json_obj->{ newfarmname };
 		}
 	}
 
 	# Modify Load Balance Algorithm
 	if ( exists ( $json_obj->{ algorithm } ) )
 	{
-		if ( $json_obj->{ algorithm } =~ /^$/ )
+		unless ( length $json_obj->{ algorithm } )
 		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid algorithm, can't be blank."
-			);
+			my $msg = "Invalid algorithm, can't be blank.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		if ( $json_obj->{ algorithm } =~ /^leastconn|weight|prio$/ )
+
+		unless ( $json_obj->{ algorithm } =~ /^(leastconn|weight|prio)$/ )
 		{
-			$status = &setFarmAlgorithm( $json_obj->{ algorithm }, $farmname );
-			if ( $status == -1 )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify a l4xnat farm $farmname, some errors happened trying to modify the algorithm."
-				);
-			}
-			else
-			{
-				$restart_flag = "true";
-			}
+			my $msg = "Invalid algorithm.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		else
+
+		my $error = &setFarmAlgorithm( $json_obj->{ algorithm }, $farmname );
+		if ( $error )
 		{
-			$error = "true";
-			&zenlog(
-				   "ZAPI error, trying to modify a l4xnat farm $farmname, invalid algorithm." );
+			my $msg = "Some errors happened trying to modify the algorithm.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
+
+		$restart_flag = "true";
 	}
 
 	# Modify Persistence Mode
 	if ( exists ( $json_obj->{ persistence } ) )
 	{
-		if ( $json_obj->{ persistence } =~ /^(?:ip|)$/ )
+		unless ( $json_obj->{ persistence } =~ /^(?:ip|)$/ )
 		{
-			my $persistence = $json_obj->{ persistence };
-			$persistence = 'none' if $persistence eq '';
-
-			if (&getFarmPersistence($farmname) ne $persistence)
-			{
-				my $statusp = &setFarmSessionType( $persistence, $farmname, "" );
-				if ( $statusp != 0 )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify a l4xnat farm $farmname, some errors happened trying to modify the persistence."
-					);
-				}
-				else
-				{
-					$restart_flag = "true";
-				}
-			}
+			my $msg = "Invalid persistence.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		else
+
+		my $persistence = $json_obj->{ persistence };
+		$persistence = 'none' if $persistence eq '';
+
+		if ( &getFarmPersistence( $farmname ) ne $persistence )
 		{
-			$error = "true";
-			&zenlog(
-				 "ZAPI error, trying to modify a l4xnat farm $farmname, invalid persistence." );
+			my $statusp = &setFarmSessionType( $persistence, $farmname, "" );
+			if ( $statusp )
+			{
+				my $msg = "Some errors happened trying to modify the persistence.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
+			$restart_flag = "true";
 		}
 	}
 
 	# Modify Protocol Type
 	if ( exists ( $json_obj->{ protocol } ) )
 	{
-		if ( $json_obj->{ protocol } =~ /^$/ )
+		unless ( length $json_obj->{ protocol } )
 		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid protocol, can't be blank."
-			);
+			my $msg = "Invalid protocol, can't be blank.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		if ( $json_obj->{ protocol } =~ /^all|tcp|udp|sip|ftp|tftp$/ )
+
+		unless ( $json_obj->{ protocol } =~ /^(all|tcp|udp|sip|ftp|tftp)$/ )
 		{
-			$status = &setFarmProto( $json_obj->{ protocol }, $farmname );
-			if ( $status != 0 )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify a l4xnat farm $farmname, some errors happened trying to modify the protocol."
-				);
-			}
-			else
-			{
-				if ( $json_obj->{ protocol } eq 'all' )
-				{
-					$json_obj->{ vport } = &getFarmVip( "vipp", $farmname );
-				}
-				$restart_flag = "true";
-			}
+			my $msg = "Invalid protocol.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		else
+
+		my $error = &setFarmProto( $json_obj->{ protocol }, $farmname );
+		if ( $error )
 		{
-			$error = "true";
-			&zenlog(
-					"ZAPI error, trying to modify a l4xnat farm $farmname, invalid protocol." );
+			my $msg = "Some errors happened trying to modify the protocol.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
+
+		if ( $json_obj->{ protocol } eq 'all' )
+		{
+			$json_obj->{ vport } = &getFarmVip( "vipp", $farmname );
+		}
+
+		$restart_flag = "true";
 	}
 
 	# Modify NAT Type
 	if ( exists ( $json_obj->{ nattype } ) )
 	{
-		if ( $json_obj->{ nattype } =~ /^$/ )
+		unless ( length $json_obj->{ nattype } )
 		{
-			&error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid nattype, can't be blank."
-			);
+			my $msg = "Invalid nattype, can't be blank.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		if ( $json_obj->{ nattype } =~ /^nat|dnat$/ )
+
+		unless ( $json_obj->{ nattype } =~ /^(nat|dnat)$/ )
 		{
-			if (&getFarmNatType($farmname) ne $json_obj->{nattype})
+			my $msg = "Invalid nattype.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
+		if ( &getFarmNatType( $farmname ) ne $json_obj->{ nattype } )
+		{
+			my $error = &setFarmNatType( $json_obj->{ nattype }, $farmname );
+			if ( $error )
 			{
-				$status = &setFarmNatType( $json_obj->{ nattype }, $farmname );
-				if ( $status != 0 )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify a l4xnat farm $farmname, some errors happened trying to modify the nattype."
-					);
-				}
-				else
-				{
-					$restart_flag = "true";
-				}
+				my $msg = "Some errors happened trying to modify the nattype.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
-		}
-		else
-		{
-			$error = "true";
-			&zenlog(
-					 "ZAPI error, trying to modify a l4xnat farm $farmname, invalid nattype." );
+
+			$restart_flag = "true";
 		}
 	}
 
 	# Modify IP Adress Persistence Time To Limit
 	if ( exists ( $json_obj->{ ttl } ) )
 	{
-		if ( $json_obj->{ ttl } =~ /^$/ )
+		unless ( length $json_obj->{ ttl } )
 		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid ttl, can't be blank."
-			);
+			my $msg = "Invalid ttl, can't be blank.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		elsif ( $json_obj->{ ttl } =~ /^\d+$/ )
+
+		unless ( $json_obj->{ ttl } =~ /^\d+$/ )
 		{
-			$status = &setFarmMaxClientTime( 0, $json_obj->{ ttl }, $farmname );
-			if ( $status != 0 )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify a l4xnat farm $farmname, some errors happened trying to modify the ttl."
-				);
-			}
-			else
-			{
-				$restart_flag = "true";
-			}
+			my $msg = "Invalid ttl.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		else
+
+		my $error = &setFarmMaxClientTime( 0, $json_obj->{ ttl }, $farmname );
+		if ( $error )
 		{
-			$error = "true";
-			&zenlog(
-					  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid ttl." );
+			my $msg = "Some errors happened trying to modify the ttl.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
+
+		$restart_flag = "true";
 	}
 
 	# Modify only vip
 	if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
 	{
-		if ( $json_obj->{ vip } =~ /^$/ )
+		unless ( length $json_obj->{ vip } )
 		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip, can't be blank."
-			);
+			my $msg = "Invalid vip, can't be blank.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
+
+		if ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
 		{
-			$error = "true";
-			&zenlog(
-					  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip." );
+			my $msg = "Invalid vip.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		else
+
+		my $error = &setFarmVirtualConf( $json_obj->{ vip }, $vport, $farmname );
+		if ( $error )
 		{
-			$status = &setFarmVirtualConf( $json_obj->{ vip }, $vport, $farmname );
-			if ( $status == -1 )
-			{
-				$error = "true";
-				&zenlog(
-						  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip." );
-			}
-			else
-			{
-				$restart_flag = "true";
-			}
+			my $msg = "Invalid vip." );
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
+
+		$restart_flag = "true";
 	}
 
 	# Modify only vport
 	if ( exists ( $json_obj->{ vport } ) && !exists ( $json_obj->{ vip } ) )
 	{
-		if ( $json_obj->{ vport } =~ /^$/ )
+		unless ( length $json_obj->{ vport } )
 		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport, can't be blank."
-			);
+			my $msg = "Invalid vport, can't be blank.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		elsif ( !$json_obj->{ vport } =~ /^\d+((\:\d+)*(\,\d+)*)*$/ )
+
+		if ( !$json_obj->{ vport } =~ /^\d+((\:\d+)*(\,\d+)*)*$/ )
 		{
 			if ( $json_obj->{ vport } ne "*" )
 			{
-				$error = "true";
-				&zenlog(
-						  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport." );
+				my $msg = "Invalid vport.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
-		else
+
+		my $error = &setFarmVirtualConf( $vip, $json_obj->{ vport }, $farmname );
+		if ( $error )
 		{
-			$status = &setFarmVirtualConf( $vip, $json_obj->{ vport }, $farmname );
-			if ( $status == -1 )
-			{
-				$error = "true";
-				&zenlog(
-						  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport." );
-			}
-			else
-			{
-				$restart_flag = "true";
-			}
+			my $msg = "Invalid vport.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
+
+		$restart_flag = "true";
 	}
 
 	# Modify both vip & vport
 	if ( exists ( $json_obj->{ vip } ) && exists ( $json_obj->{ vport } ) )
 	{
-		if ( $json_obj->{ vip } =~ /^$/ )
+		unless ( length $json_obj->{ vip } )
 		{
-			$error = "true";
-			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip, can't be blank."
-			);
+			my $msg = "Invalid vip, can't be blank.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
+
+		if ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
 		{
-			$error = "true";
-			&zenlog(
-					  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip." );
+			my $msg = "Invalid vip." );
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		else
+
+		unless ( length $json_obj->{ vport } )
 		{
-			if ( exists ( $json_obj->{ vport } ) )
+			my $msg = "Invalid vport, can't be blank.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
+		if ( !$json_obj->{ vport } =~ /^\d+((\:\d+)*(\,\d+)*)*$/ )
+		{
+			if ( $json_obj->{ vport } ne "*" )
 			{
-				if ( $json_obj->{ vport } =~ /^$/ )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport, can't be blank."
-					);
-				}
-				elsif ( !$json_obj->{ vport } =~ /^\d+((\:\d+)*(\,\d+)*)*$/ )
-				{
-					if ( $json_obj->{ vport } ne "*" )
-					{
-						$error = "true";
-						&zenlog(
-								  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport." );
-					}
-				}
-				else
-				{
-					$status =
-					  &setL4FarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname );
-					if ( $status == -1 )
-					{
-						$error = "true";
-						&zenlog(
-							"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport or invalid vip."
-						);
-					}
-					else
-					{
-						$restart_flag = "true";
-					}
-				}
+				my $msg = "Invalid vport.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
+
+		my $error =
+		  &setL4FarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname );
+		if ( $error )
+		{
+			my $msg = "Invalid vport or invalid vip.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
+		$restart_flag = "true";
 	}
 
-	# Check errors and print JSON
-	if ( $error ne "true" )
+	# no error found, return successful response
+	&zenlog( "ZAPI success, some parameters have been changed in farm $farmname." );
+
+	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
-		&zenlog(
-				  "ZAPI success, some parameters have been changed in farm $farmname." );
-
-		if ( &getFarmStatus( $farmname ) eq 'up' )
+		# Reset ip rule mark when changing the farm's vip
+		if ( exists $json_obj->{ vip } && $json_obj->{ vip } ne $vip )
 		{
-			# Reset ip rule mark when changing the farm's vip
-			if ( exists $json_obj->{ vip } && $json_obj->{ vip } ne $vip )
-			{
-				require Zevenet::Net::Util;
+			require Zevenet::Net::Util;
 
-				my $farm = &getL4FarmStruct( $farmname );
-				my $ip_bin = &getGlobalConfiguration('ip_bin');
-				# previous vip
-				my $prev_vip_if_name = &getInterfaceOfIp( $vip );
-				my $prev_vip_if = &getInterfaceConfig( $prev_vip_if_name );
-				my $prev_table_if = ( $prev_vip_if->{ type } eq 'virtual' )? $prev_vip_if->{ parent }: $prev_vip_if->{ name };
-				# new vip
-				my $vip_if_name = &getInterfaceOfIp( $json_obj->{ vip } );
-				my $vip_if = &getInterfaceConfig( $vip_if_name );
-				my $table_if = ( $vip_if->{ type } eq 'virtual' )? $vip_if->{ parent }: $vip_if->{ name };
+			my $farm   = &getL4FarmStruct( $farmname );
+			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+			# previous vip
+			my $prev_vip_if_name = &getInterfaceOfIp( $vip );
+			my $prev_vip_if      = &getInterfaceConfig( $prev_vip_if_name );
+			my $prev_table_if =
+			  ( $prev_vip_if->{ type } eq 'virtual' )
+			  ? $prev_vip_if->{ parent }
+			  : $prev_vip_if->{ name };
+			# new vip
+			my $vip_if_name = &getInterfaceOfIp( $json_obj->{ vip } );
+			my $vip_if      = &getInterfaceConfig( $vip_if_name );
+			my $table_if =
+			  ( $vip_if->{ type } eq 'virtual' ) ? $vip_if->{ parent } : $vip_if->{ name };
 
-				foreach my $server ( @{ $$farm{ servers } } )
-				{
-					my $ip_del_cmd = "$ip_bin rule add fwmark $server->{ tag } table table_$table_if";
-					my $ip_add_cmd = "$ip_bin rule del fwmark $server->{ tag } table table_$prev_table_if";
-					&logAndRun( $ip_add_cmd );
-					&logAndRun( $ip_del_cmd );
-				}
-			}
-
-			if ( eval { require Zevenet::Cluster; } )
+			foreach my $server ( @{ $$farm{ servers } } )
 			{
-				&runZClusterRemoteManager( 'farm', 'restart', $farmname );
-			}
-			
-			if ( $reload_ipds )
-			{
-				if ( eval { require Zevenet::IPDS::Base; } )
-				{
-					&runIPDSStartByFarm( $farmname );
-					require Zevenet::Cluster;
-					&runZClusterRemoteManager( 'ipds', 'start', $farmname );
-				}
+				my $ip_del_cmd = "$ip_bin rule add fwmark $server->{ tag } table table_$table_if";
+				my $ip_add_cmd = "$ip_bin rule del fwmark $server->{ tag } table table_$prev_table_if";
+				&logAndRun( $ip_add_cmd );
+				&logAndRun( $ip_del_cmd );
 			}
 		}
 
-		my $body = {
-					 description => "Modify farm $farmname",
-					 params      => $json_obj
-		};
+		if ( eval { require Zevenet::Cluster; } )
+		{
+			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
+		}
 
-		&httpResponse({ code => 200, body => $body });
+		if ( $reload_ipds )
+		{
+			if ( eval { require Zevenet::IPDS::Base; } )
+			{
+				&runIPDSStartByFarm( $farmname );
+				require Zevenet::Cluster;
+				&runZClusterRemoteManager( 'ipds', 'start', $farmname );
+			}
+		}
 	}
-	else
-	{
-		&zenlog(
-			"ZAPI error, trying to modify a l4xnat farm $farmname, it's not possible to modify the farm."
-		);
 
-		my $errormsg = "Errors found trying to modify farm $farmname";
-		my $body = {
-					 description => "Modify farm $farmname",
-					 error       => "true",
-					 message     => $errormsg
-		};
+	my $body = {
+				 description => $desc,
+				 params      => $json_obj
+	};
 
-		&httpResponse({ code => 400, body => $body });
-	}
+	&httpResponse({ code => 200, body => $body });
 }
 
 1;

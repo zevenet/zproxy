@@ -25,35 +25,21 @@ use strict;
 # GET /certificates/activation
 sub get_activation_certificate_info # ()
 {
-	my $description = "Activation certificate information";
+	require Zevenet::Certificate;
+
+	my $desc          = "Activation certificate information";
 	my $cert_filename = 'zlbcertfile.pem';
-	my $cert_dir = &getGlobalConfiguration('basedir');
+	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
 
-	if ( -f "$cert_dir\/$cert_filename" )
+	unless ( -f "$cert_dir\/$cert_filename" )
 	{
-		require Zevenet::Certificate;
-		my @cert_info = &getCertData( $cert_filename );
-		my $body;
-
-		# Success
-		foreach my $line ( @cert_info )
-		{
-			$body .= $line;
-		}
-
-		&httpResponse({ code => 200, body => $body, type => 'text/plain' });
+		my $msg = "There is no activation certificate installed";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
-	else
-	{
-		my $errormsg = "There is no activation certificate installed";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
 
-		&httpResponse({ code => 400, body => $body });
-	}
+	my $body .= $_ for &getCertData( $cert_filename );
+
+	&httpResponse({ code => 200, body => $body, type => 'text/plain' });
 }
 
 # DELETE /certificates/activation
@@ -61,84 +47,60 @@ sub delete_activation_certificate # ( $cert_filename )
 {
 	require Zevenet::Certificate;
 
-	my $description = "Delete activation certificate";
+	my $desc          = "Delete activation certificate";
 	my $cert_filename = 'zlbcertfile.pem';
 
-	if ( &delCert( $cert_filename ) )
+	unless ( &delCert( $cert_filename ) )
 	{
-		# Success
-		my $message = "The activation certificate has been deleted";
-		my $body = {
-					 description => $description,
-					 success     => "true",
-					 message     => $message
-		};
-
-		&httpResponse({ code => 200, body => $body });
+		my $msg = "An error happened deleting the activation certificate";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	else
-	{
-		my $errormsg = "An error happened deleting the activation certificate";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
 
-		&httpResponse({ code => 400, body => $body });
-	}
+	my $msg = "The activation certificate has been deleted";
+	my $body = {
+				 description => $desc,
+				 success     => "true",
+				 message     => $msg,
+	};
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 # POST /certificates/activation
-sub upload_activation_certificate # ()
-{
-
 #
 # Curl command:
 #
-# curl -kis --tcp-nodelay -X POST -H "ZAPI_KEY: 2bJUd" -H 'Content-Type: application/x-pem-file' https://46.101.46.14:444/zapi/v3/zapi.cgi/certificates/activation --data-binary @hostmane.pem
-#
-
+# curl -kis --tcp-nodelay -X POST -H "ZAPI_KEY: 2bJUd" -H 'Content-Type: application/x-pem-file' https://1.2.3.4:444/zapi/v3/zapi.cgi/certificates/activation --data-binary @hostmane.pem
+sub upload_activation_certificate # ()
+{
 	my $upload_filehandle = shift;
 
-	my $description = "Upload activation certificate";
+	my $desc = "Upload activation certificate";
 	my $filename = 'zlbcertfile.pem';
 
-	if ( $upload_filehandle )
+	unless ( $upload_filehandle )
 	{
-		my $basedir = &getGlobalConfiguration('basedir');
-
-		open ( my $cert_filehandle, '>', "$basedir/$filename" ) or die "$!";
-		binmode $cert_filehandle;
-		print { $cert_filehandle } $upload_filehandle;
-		close $cert_filehandle;
-
-		&checkActivationCertificate();
-
-		my $message = "Activation certificate uploaded";
-		my $body = {
-					 description => $description,
-					 success     => "true",
-					 message     => $message
-		};
-
-		&httpResponse({ code => 200, body => $body });
+		my $msg = "Error uploading activation certificate file";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	else
-	{
-		&zenlog( "ZAPI error, trying to upload activation certificate." );
 
-		# Error
-		my $errormsg = "Error uploading activation certificate file";
+	my $basedir = &getGlobalConfiguration('basedir');
 
-		my $body = {
-					   description => $description,
-					   error       => "true",
-					   message     => $errormsg,
-		};
+	open ( my $cert_filehandle, '>', "$basedir/$filename" ) or die "$!";
+	binmode $cert_filehandle;
+	print { $cert_filehandle } $upload_filehandle;
+	close $cert_filehandle;
 
-		&httpResponse({ code => 400, body => $body });
-	}
+	&checkActivationCertificate();
+
+	my $msg = "Activation certificate uploaded";
+	my $body = {
+				 description => $desc,
+				 success     => "true",
+				 message     => $msg,
+	};
+
+	&httpResponse({ code => 200, body => $body });
 }
 
 1;

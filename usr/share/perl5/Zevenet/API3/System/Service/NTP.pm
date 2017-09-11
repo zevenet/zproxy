@@ -26,47 +26,44 @@ use strict;
 # GET /system/ntp
 sub get_ntp
 {
-	my $description = "Get ntp";
-	my $ntp         = &getGlobalConfiguration( 'ntp' );
+	my $desc = "Get ntp";
+	my $ntp  = &getGlobalConfiguration( 'ntp' );
 
 	&httpResponse(
-			 { code => 200, body => { description => $description, params => { "server" => $ntp } } } );
+			 { code => 200, body => { description => $desc, params => { "server" => $ntp } } } );
 }
 
 #  POST /system/ntp
 sub set_ntp
 {
-	my $json_obj    = shift;
-	my $description = "Post ntp";
-	my $errormsg;
+	my $json_obj = shift;
+
+	my $desc = "Post ntp";
+
 	my @allowParams = ( "server" );
+	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
 
-	$errormsg = &getValidOptParams( $json_obj, \@allowParams );
-	if ( !$errormsg )
+	if ( $param_msg )
 	{
-		if ( !&getValidFormat( "ntp", $json_obj->{ 'server' } ) )
-		{
-			$errormsg = "NTP hasn't a correct format.";
-		}
-		else
-		{
-			$errormsg = &setGlobalConfiguration( 'ntp', $json_obj->{ 'server' } );
-
-			if ( !$errormsg )
-			{
-				my $ntp = &getGlobalConfiguration( 'ntp' );
-				&httpResponse(
-						 { code => 200, body => { description => $description, params => $ntp } } );
-			}
-			else
-			{
-				$errormsg = "There was a error modifying ntp.";
-			}
-		}
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
-	my $body =
-	  { description => $description, error => "true", message => $errormsg };
-	&httpResponse( { code => 400, body => $body } );
+
+	if ( !&getValidFormat( "ntp", $json_obj->{ 'server' } ) )
+	{
+		my $msg = "NTP hasn't a correct format.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $error = &setGlobalConfiguration( 'ntp', $json_obj->{ 'server' } );
+
+	if ( $error )
+	{
+		my $msg = "There was a error modifying ntp.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $ntp = &getGlobalConfiguration( 'ntp' );
+	&httpResponse( { code => 200, body => { description => $desc, params => $ntp } } );
 }
 
 1;

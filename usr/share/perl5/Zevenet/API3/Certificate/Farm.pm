@@ -32,19 +32,13 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
-	my $description = "Add certificate";
+	my $desc = "Add certificate to farm '$farmname'";
 
 	# Check if the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		my $errormsg = "Farm not found";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "Farm not found";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $configdir = &getGlobalConfiguration('configdir');
@@ -54,39 +48,27 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 	unless ( -f $configdir . "/" . $json_obj->{ file }
 			 && &getValidFormat( 'cert_pem', $json_obj->{ file } ) )
 	{
-		&zenlog(
-			"ZAPI error, trying to add a certificate to the SNI list, invalid certificate name."
-		);
-
-		my $errormsg = "Invalid certificate name, please insert a valid value.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Invalid certificate name, please insert a valid value.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# FIXME: Show error if the certificate is already in the list
 	my $status = &setFarmCertificateSNI( $json_obj->{ file }, $farmname );
-
-	if ( $status != 0 )
+	if ( $status )
 	{
-		&zenlog(
-			"ZAPI error, trying to add a certificate to the SNI list, it's not possible to add the certificate."
-		);
-
-		my $errormsg =
+		my $msg =
 		  "It's not possible to add the certificate with name $json_obj->{file} for the $farmname farm";
 
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
+		&zenlog( "It's not possible to add the certificate." );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
-		&httpResponse({ code => 400, body => $body });
+	if ( &getFarmStatus( $farmname ) eq 'up' )
+	{
+		require Zevenet::Farm::Action;
+
+		&setFarmRestart( $farmname );
+		$body->{ status } = 'needed restart';
 	}
 
 	# no errors found, return succesful response
@@ -96,18 +78,10 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 	  "The certificate $json_obj->{file} has been added to the SNI list of farm $farmname, you need restart the farm to apply";
 
 	my $body = {
-				 description => $description,
+				 description => $desc,
 				 success     => "true",
 				 message     => $message,
 	};
-
-	if ( &getFarmStatus( $farmname ) eq 'up' )
-	{
-		require Zevenet::Farm::Action;
-
-		&setFarmRestart( $farmname );
-		$body->{ status } = 'needed restart';
-	}
 
 	&httpResponse({ code => 200, body => $body });
 }
@@ -118,36 +92,21 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 	my $farmname     = shift;
 	my $certfilename = shift;
 
-	my $description = "Delete farm certificate";
+	my $desc = "Delete farm certificate";
 
 	# Check if the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
-		my $errormsg = "The farmname $farmname does not exists";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 404, body => $body });
+		my $msg = "The farmname $farmname does not exists";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# validate certificate
 	unless ( $certfilename && &getValidFormat( 'cert_pem', $certfilename ) )
 	{
-		&zenlog(
-			"ZAPI error, trying to delete a certificate to the SNI list, invalid certificate id."
-		);
-
-		my $errormsg = "Invalid certificate id, please insert a valid value.";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		my $msg = "Invalid certificate id, please insert a valid value.";
+		&zenlog( "Invalid certificate id." );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $status = &setFarmDeleteCertNameSNI( $certfilename, $farmname );
@@ -155,48 +114,24 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 	# check if the certificate could not be removed
 	if ( $status == -1 )
 	{
-		&zenlog(
-			"ZAPI error, trying to delete a certificate to the SNI list, it's not possible to delete the certificate."
-		);
+		&zenlog( "It's not possible to delete the certificate." );
 
-		my $errormsg =
+		my $msg =
 		  "It isn't possible to delete the selected certificate $certfilename from the SNI list";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# check if removing the certificate would leave the SNI list empty, not supported
 	if ( $status == 1 )
 	{
 		&zenlog(
-			"ZAPI error, trying to delete a certificate to the SNI list, it's not possible to delete all certificates, at least one is required for HTTPS."
+			"It's not possible to delete all certificates, at least one is required for HTTPS."
 		);
 
-		my $errormsg =
+		my $msg =
 		  "It isn't possible to delete all certificates, at least one is required for HTTPS profiles";
-		my $body = {
-					 description => $description,
-					 error       => "true",
-					 message     => $errormsg
-		};
-
-		&httpResponse({ code => 400, body => $body });
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-
-	# no errors found, return succesful response
-	&zenlog( "ZAPI Success, trying to delete a certificate to the SNI list." );
-
-	my $message = "The Certificate $certfilename has been deleted";
-	my $body = {
-				 description => $description,
-				 success     => "true",
-				 message     => $message
-	};
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
@@ -206,6 +141,15 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 		$body->{ status } = 'needed restart';
 	}
 
+	# no errors found, return succesful response
+	my $msg = "The Certificate $certfilename has been deleted";
+	my $body = {
+				 description => $desc,
+				 success     => "true",
+				 message     => $msg
+	};
+
+	&zenlog( "ZAPI Success, trying to delete a certificate to the SNI list." );
 	&httpResponse({ code => 200, body => $body });
 }
 

@@ -28,77 +28,73 @@ sub get_ssh
 {
 	require Zevenet::System::SSH;
 
-	my $description = "Get ssh";
-	my $ssh         = &getSsh();
+	my $desc = "Get ssh";
+	my $ssh  = &getSsh();
 
-	&httpResponse(
-			 { code => 200, body => { description => $description, params => $ssh } } );
+	&httpResponse( { code => 200, body => { description => $desc, params => $ssh } } );
 }
 
 #  POST /system/ssh
 sub set_ssh
 {
-	my $json_obj    = shift;
+	my $json_obj = shift;
 
-	my $description = "Post ssh";
-	my @allowParams = ( "port", "listen" );
+	require Zevenet::System::SSH;
+
+	my $desc = "Post ssh";
 	my $sshIp = $json_obj->{ 'listen' } if ( exists $json_obj->{ 'listen' } );
-	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
 
-	if ( !$errormsg )
+	my @allowParams = ( "port", "listen" );
+	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
+
+	if ( $param_msg )
 	{
-		if ( !&getValidFormat( "port", $json_obj->{ 'port' } ) )
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+	}
+
+	if ( !&getValidFormat( "port", $json_obj->{ 'port' } ) )
+	{
+		my $msg = "Port hasn't a correct format.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	# check if listen exists
+	if ( exists $json_obj->{ 'listen' } && $json_obj->{ 'listen' } ne '*' )
+	{
+		require Zevenet::Net::Interface;
+
+		my $flag;
+		foreach my $iface ( @{ &getActiveInterfaceList() } )
 		{
-			$errormsg = "Port hasn't a correct format.";
+			if ( $sshIp eq $iface->{ addr } )
+			{
+				if ( $iface->{ vini } ne '' )    # discard virtual interfaces
+				{
+					my $msg = "Virtual interface canot be configurate as http interface.";
+					&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				}
+
+				$flag = 1;
+				last;
+			}
 		}
-		else
+
+		unless ( $flag )
 		{
-			# check if listen exists
-			if ( exists $json_obj->{ 'listen' } && $json_obj->{ 'listen' } ne '*' )
-			{
-				my $flag;
-
-				require Zevenet::Net::Interface;
-
-				foreach my $iface ( @{ &getActiveInterfaceList() } )
-				{
-					if ( $sshIp eq $iface->{ addr } )
-					{
-						$flag = 1;
-						if ( $iface->{ vini } ne '' )    # discard virtual interfaces
-						{
-							$errormsg = "Virtual interface canot be configurate as http interface.";
-						}
-						last;
-					}
-				}
-
-				$errormsg = "Ip $json_obj->{ 'listen' } not found in system." if ( !$flag );
-			}
-
-			if ( !$errormsg )
-			{
-				require Zevenet::System::SSH;
-				$errormsg = &setSsh( $json_obj );
-
-				if ( !$errormsg )
-				{
-					my $dns = &getSsh();
-					&httpResponse(
-							 { code => 200, body => { description => $description, params => $dns } } );
-				}
-				else
-				{
-					$errormsg = "There was a error modifying ssh.";
-				}
-			}
+			my $msg = "Ip $json_obj->{ 'listen' } not found in system.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
-	my $body =
-	  { description => $description, error => "true", message => $errormsg };
+	my $error = &setSsh( $json_obj );
+	if ( $error )
+	{
+		my $msg = "There was a error modifying ssh.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
-	&httpResponse( { code => 400, body => $body } );
+	my $dns = &getSsh();
+	&httpResponse( { code => 200, body => { description => $desc, params => $dns } } );
 }
 
 1;

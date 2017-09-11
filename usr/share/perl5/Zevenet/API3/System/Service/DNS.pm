@@ -28,11 +28,10 @@ sub get_dns
 {
 	require Zevenet::System::DNS;
 
-	my $description = "Get dns";
-	my $dns         = &getDns();
+	my $desc = "Get dns";
+	my $dns  = &getDns();
 
-	&httpResponse(
-			 { code => 200, body => { description => $description, params => $dns } } );
+	&httpResponse( { code => 200, body => { description => $desc, params => $dns } } );
 }
 
 #  POST /system/dns
@@ -40,49 +39,37 @@ sub set_dns
 {
 	my $json_obj = shift;
 
-	my $description = "Post dns";
+	require Zevenet::System::DNS;
+
+	my $desc = "Post dns";
+
 	my @allowParams = ( "primary", "secondary" );
-	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
+	my $param_msg    = &getValidOptParams( $json_obj, \@allowParams );
 
-	if ( !$errormsg )
+	if ( $param_msg )
 	{
-		foreach my $key ( keys %{ $json_obj } )
+		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+	}
+
+	foreach my $key ( keys %{ $json_obj } )
+	{
+		unless ( &getValidFormat( 'dns_nameserver', $json_obj->{ $key } )
+				 || ( $key eq 'secondary' && $json_obj->{ $key } eq '' ) )
 		{
-			unless ( &getValidFormat( 'dns_nameserver', $json_obj->{ $key } )
-					 || ( $key eq 'secondary' && $json_obj->{ $key } eq '' ) )
-			{
-				$errormsg = "Please, insert a correct nameserver.";
-				last;
-			}
-		}
-
-		if ( !$errormsg )
-		{
-			require Zevenet::System::DNS;
-
-			foreach my $key ( keys %{ $json_obj } )
-			{
-				$errormsg = &setDns( $key, $json_obj->{ $key } );
-				last if ( $errormsg );
-			}
-
-			if ( !$errormsg )
-			{
-				my $dns = &getDns();
-				&httpResponse(
-						 { code => 200, body => { description => $description, params => $dns } } );
-			}
-			else
-			{
-				$errormsg = "There was an error modifying dns.";
-			}
+			my $msg = "Please, insert a correct nameserver.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
-	my $body =
-	  { description => $description, error => "true", message => $errormsg };
+	foreach my $key ( keys %{ $json_obj } )
+	{
+		my $msg = &setDns( $key, $json_obj->{ $key } );
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $msg;
+	}
 
-	&httpResponse( { code => 400, body => $body } );
+	my $dns = &getDns();
+	&httpResponse(
+			 { code => 200, body => { description => $desc, params => $dns } } );
 }
 
 1;
