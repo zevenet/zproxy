@@ -120,7 +120,7 @@ sub set_user_zapi
 	}
 
 	my $msg = "Settings was changed successful.";
-	my $body = { description => $desc, params => $json_obj, message => $msg }
+	my $body = { description => $desc, params => $json_obj, message => $msg };
 
 	&httpResponse( { code => 200, body => $body } );
 }
@@ -128,8 +128,8 @@ sub set_user_zapi
 # POST /system/users/root
 sub set_user
 {
-	my $json_obj       = shift;
-	my $user           = shift;
+	my $json_obj = shift;
+	my $user     = shift;
 
 	require Zevenet::Login;
 
