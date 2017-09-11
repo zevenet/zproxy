@@ -250,7 +250,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 
 	if ( $changedname ne "true" )
 	{
-		$body{ info } = "There're changes that need to be applied, stop and start farm to apply them!";
+		$body->{ info } = "There're changes that need to be applied, stop and start farm to apply them!";
 
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
