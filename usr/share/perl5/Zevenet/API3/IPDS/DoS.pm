@@ -84,8 +84,7 @@ sub create_dos_rule
 
 	require Zevenet::IPDS::DoS::Config;
 
-	my $desc     = "Create the DoS rule $rule";
-	my $rule     = $json_obj->{ 'rule' };
+	my $desc     = "Create the DoS rule '$json_obj->{ 'rule' }'";
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 
 	my @requiredParams = ( "name", "rule" );
@@ -120,7 +119,7 @@ sub create_dos_rule
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $error = &createDOSRule( $json_obj->{ 'name' }, $rule );
+	my $error = &createDOSRule( $json_obj->{ 'name' }, $json_obj->{ 'rule' } );
 	if ( $error )
 	{
 		my $msg = "There was a error enabling DoS in $json_obj->{ 'name' }.";
