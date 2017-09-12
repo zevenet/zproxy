@@ -593,6 +593,8 @@ sub setBLApplyToFarm
 {
 	my ( $farmName, $listName ) = @_;
 
+	require Zevenet::Farm::Base;
+
 	my $output;
 
 	# run rule only if the farm is up
