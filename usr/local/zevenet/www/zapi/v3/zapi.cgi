@@ -99,12 +99,6 @@ unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
 ##### Load API routes ################################################
 require Zevenet::API3::Routes;
 
-&httpResponse(
-			   {
-				 code => 404,
-				 body => {
-						   message => 'Request not found',
-						   error   => 'true',
-				 }
-			   }
-);
+my $body = { message => 'Request not found', error => 'true' };
+&httpResponse( { code => 404, body => $body } );
+
