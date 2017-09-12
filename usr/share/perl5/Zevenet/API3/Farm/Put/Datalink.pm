@@ -106,7 +106,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		$status = &setFarmAlgorithm( $json_obj->{ algorithm }, $farmname );
+		$status = &setDatalinkFarmAlgorithm( $json_obj->{ algorithm }, $farmname );
 		if ( $status == -1 )
 		{
 			my $msg = "Some errors happened trying to modify the algorithm.";
