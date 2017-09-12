@@ -608,7 +608,7 @@ sub setDOSApplyRule
 	my ( $ruleName, $farmName ) = @_;
 
 	require Zevenet::Farm::Base;
-	require Zevenet::Config::Tiny;
+	require Config::Tiny;
 
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $output;
