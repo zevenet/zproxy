@@ -693,7 +693,8 @@ sub setDOSUnsetRule
 {
 	my ( $ruleName, $farmName ) = @_;
 
-	require Zevenet::Config::Tiny;
+	require Config::Tiny;
+
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 	my $output;
@@ -713,6 +714,7 @@ sub setDOSUnsetRule
 			$output = &setDOSStopRule( $ruleName );
 		}
 	}
+
 	return $output;
 }
 
