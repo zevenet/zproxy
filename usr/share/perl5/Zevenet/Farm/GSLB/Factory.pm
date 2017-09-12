@@ -61,6 +61,11 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	mkdir "$farm_path\/etc\/zones";
 	mkdir "$farm_path\/etc\/plugins";
 	mkdir "$farm_path\/var";
+	mkdir "$farm_path\/var/lib";
+
+	# create admin_state file so there is no warning about the missing file
+	open ( my $state_file, ">", "$configdir\/$fname\_$type.cfg\/var\/lib\/admin_state" );
+	close $state_file;
 
 	open ( my $file, ">", "$configdir\/$fname\_$type.cfg\/etc\/config" );
 	print $file ";up\n"
@@ -69,6 +74,7 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	  . "   dns_port = $fvipp\n"
 	  . "   http_port = $httpport\n"
 	  . "   http_listen = 127.0.0.1\n"
+	  . "   zones_rfc1035_auto = true\n"
 	  . "   run_dir = $configdir\/$fname\_$type.cfg\/var\/run\n"
 	  . "   state_dir = $configdir\/$fname\_$type.cfg\/var\/lib\n"
 	  . "}\n\n";
