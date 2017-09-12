@@ -173,11 +173,15 @@ sub setBLRefreshList
 
 	if ( !$output )
 	{
+		require Tie::File;
+
 		grep ( s/($source_re)/add $listName $1/, @ipList );
 
 		my $tmp_list = "/tmp/tmp_blacklist.txt";
 		my $touch    = &getGlobalConfiguration( 'touch' );
+
 		system ( "$touch $tmp_list >/dev/null 2>&1" );
+
 		tie my @list_tmp, 'Tie::File', $tmp_list;
 		@list_tmp = @ipList;
 		untie @list_tmp;
