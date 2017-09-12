@@ -23,6 +23,23 @@
 
 use strict;
 
+my %http_status_codes = (
+
+	# 2xx Success codes
+	200 => 'OK',
+	201 => 'Created',
+	204 => 'No Content',
+
+	# 4xx Client Error codes
+	400 => 'Bad Request',
+	401 => 'Unauthorized',
+	403 => 'Forbidden',
+	404 => 'Not Found',
+	406 => 'Not Acceptable',
+	415 => 'Unsupported Media Type',
+	422 => 'Unprocessable Entity',
+);
+
 sub GET($$)
 {
 	my ( $path, $code ) = @_;
@@ -186,7 +203,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 
 	die
 	  if !defined $self->{ code }
-	  or !exists $GLOBAL::http_status_codes->{ $self->{ code } };
+	  or !exists $http_status_codes{ $self->{ code } };
 
 	my $q = &getCGI();
 
@@ -246,7 +263,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 	my $output = $q->header(
 		-type    => $content_type,
 		-charset => 'utf-8',
-		-status  => "$self->{ code } $GLOBAL::http_status_codes->{ $self->{ code } }",
+		-status  => "$self->{ code } $http_status_codes{ $self->{ code } }",
 
 		# extra headers
 		@headers,

@@ -22,25 +22,7 @@
 ###############################################################################
 
 use strict;
-
-package GLOBAL {
-	our $http_status_codes = {
-
-		# 2xx Success codes
-		200 => 'OK',
-		201 => 'Created',
-		204 => 'No Content',
-
-		# 4xx Client Error codes
-		400 => 'Bad Request',
-		401 => 'Unauthorized',
-		403 => 'Forbidden',
-		404 => 'Not Found',
-		406 => 'Not Acceptable',
-		415 => 'Unsupported Media Type',
-		422 => 'Unprocessable Entity',
-	};
-};
+use warnings;
 
 use Zevenet::Log;
 use Zevenet::Debug;
