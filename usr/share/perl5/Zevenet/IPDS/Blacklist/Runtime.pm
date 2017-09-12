@@ -480,7 +480,7 @@ sub delBLCronTask
 {
 	my $listName = shift;
 
-	require File::Tie;
+	require Tie::File;
 
 	my $blacklistsCronFile = &getGlobalConfiguration( 'blacklistsCronFile' );
 	my $index              = 0;
