@@ -190,14 +190,13 @@ Returns:
 Bugs:
 	Not used yet.
 =cut
-sub tielock    # ($file_name)
+sub ztielock    # ($file_name)
 {
+	my $array_ref = shift;    #parameters
 	my $file_name = shift;    #parameters
 
-	$o = tie my @array, "Tie::File", $file_name;
+	my $o = tie @{ $array_ref }, "Tie::File", $file_name;
 	$o->flock;
-
-	return \@array;
 }
 
 =begin nd

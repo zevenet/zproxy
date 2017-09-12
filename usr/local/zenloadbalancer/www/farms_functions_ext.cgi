@@ -100,7 +100,7 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 	if ( $type eq "https" )
 	{
 		use Tie::File;
-		tie my @array, 'Tie::File', "$configdir/$ffile";
+		&ztielock ( \my @array, "$configdir/$ffile" );
 		for ( @array )
 		{
 			if ( $_ =~ /Cert "/ )
@@ -217,7 +217,7 @@ sub setFarmDeleteCertNameSNI    #($certn,$fname)
 	if ( $type eq "https" )
 	{
 		use Tie::File;
-		tie my @array, 'Tie::File', "$configdir/$ffile";
+		&ztielock ( \my @array, "$configdir/$ffile" );
 
 		for ( @array )
 		{
