@@ -63,7 +63,7 @@ sub get_blacklists_list
 
 	require Zevenet::IPDS::Blacklist;
 
-	if ( !&getBLExists( $listName ) )
+	if ( &getBLExists( $listName ) )
 	{
 		my $listHash = &getBLzapi ( $listName );
 		
@@ -100,7 +100,7 @@ sub add_blacklists_list
 		require Zevenet::IPDS::Blacklist;
 
 		# A list already exists with this name 
-		if ( &getBLExists( $listName ) != -1 )
+		if ( &getBLExists( $listName ) )
 		{
 			$errormsg = "A list already exists with name '$listName'.";
 		}
@@ -197,7 +197,7 @@ sub set_blacklists_list
 
 	require Zevenet::IPDS::Blacklist;
 
-	if ( &getBLExists( $listName ) == -1 )
+	if ( ! &getBLExists( $listName ) )
 	{
 		$errormsg = "The list '$listName' doesn't exist.";
 		my $body = {
@@ -443,9 +443,9 @@ sub del_blacklists_list
 	my $listName    = shift;
 
 	my $description = "Delete list '$listName'",
-	my $errormsg = &getBLExists( $listName );
+	my $errormsg;
 
-	if ( $errormsg == -1 )
+	if ( ! &getBLExists( $listName ) )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
@@ -497,9 +497,9 @@ sub update_remote_blacklists
 	require Zevenet::IPDS::Blacklist;
 
 	my $description = "Update a remote list";
-	my $errormsg = &getBLExists( $listName );
+	my $errormsg;
 
-	if ( $errormsg == -1 )
+	if ( !&getBLExists( $listName ) )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
@@ -569,10 +569,9 @@ sub get_blacklists_source
 	require Zevenet::IPDS::Blacklist;
 
 	my $description = "Get $listName sources";
-	my $err = &getBLExists( $listName );
 	my %listHash;
 
-	if ( $err == 0 )
+	if ( &getBLExists( $listName ) )
 	{
 		my @ipList;
 		my $index = 0;
@@ -616,7 +615,7 @@ sub add_blacklists_source
 
 	require Zevenet::IPDS::Blacklist;
 
-	if ( &getBLExists( $listName ) == -1 )
+	if ( ! &getBLExists( $listName ) )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
@@ -714,7 +713,7 @@ sub set_blacklists_source
 	require Zevenet::IPDS::Blacklist;
 
 	# check list exists
-	if ( &getBLExists( $listName ) == -1 )
+	if ( ! &getBLExists( $listName ) )
 	{
 		$errormsg = "$listName not found";
 		my $body = {
@@ -785,7 +784,7 @@ sub del_blacklists_source
 
 	require Zevenet::IPDS::Blacklist;
 
-	if ( &getBLExists( $listName ) == -1 )
+	if (! &getBLExists( $listName ) )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {
@@ -860,7 +859,7 @@ sub add_blacklists_to_farm
 			};
 			&httpResponse( { code => 404, body => $body } );
 		}
-		elsif ( &getBLExists( $listName ) == -1 )
+		elsif ( ! &getBLExists( $listName ) )
 		{
 			$errormsg = "$listName doesn't exist.";
 			my $body = {
@@ -935,7 +934,7 @@ sub del_blacklists_from_farm
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( &getBLExists( $listName ) == -1 )
+	elsif ( ! &getBLExists( $listName ) )
 	{
 		$errormsg = "$listName doesn't exist.";
 		my $body = {

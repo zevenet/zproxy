@@ -97,7 +97,7 @@ sub getBLListNoUsed
 	my $farm_name = &getValidFormat( 'farm_name' );
 
 	my $matchs =
-	  grep ( /^\d+ .+match-set ($blacklist) src .+BL_$farm_name/, @rules );
+	  grep ( /^\d+ .+match-set ($blacklist) src .+BL,$blacklist,/, @rules );
 
 	return $matchs;
 }

@@ -450,7 +450,7 @@ sub setBLDeleteRule
 
 	# Get line number
 	my @rules = &getIptListV4( 'raw', $chain );
-	@rules = grep ( /^(\d+) .+match-set $listName src .+BL_$farmName/, @rules );
+	@rules = grep ( /^(\d+) .+match-set $listName src .+BL,$listName,$farmName/, @rules );
 
 	my $lineNum = 0;
 	my $size    = scalar @rules - 1;
@@ -460,7 +460,6 @@ sub setBLDeleteRule
 		if ( $rules[$size] =~ /^(\d+) / )
 		{
 			$lineNum = $1;
-
 			# Delete
 			#	iptables -D PREROUTING -t raw 3
 			$cmd =

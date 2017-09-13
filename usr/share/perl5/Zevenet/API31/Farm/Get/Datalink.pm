@@ -45,6 +45,13 @@ sub farms_name_datalink    # ( $farmname )
 				 backends    => $out_b,
 	};
 
+	if ( eval{ require Zevenet::IPDS; } )
+	{
+		$body->{ ipds } = &getIPDSfarmsRules( $farmname );
+		delete $body->{ ipds }->{ rbl };
+		delete $body->{ ipds }->{ dos };
+	}
+
 	&httpResponse( { code => 200, body => $body } );
 }
 
