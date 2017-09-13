@@ -286,7 +286,7 @@ sub runIPDSRestartByFarm
 
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );
-	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{ blacklist } } );
+	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{ blacklists } } );
 	require Zevenet::IPDS::DoS::Actions       if ( @{ $rules->{ dos } } );
 	require Zevenet::IPDS::RBL::Actions       if ( @{ $rules->{ rbl } } );
 

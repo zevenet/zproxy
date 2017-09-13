@@ -719,8 +719,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		# update the ipds rule applied to the farm
 		if ( !$farmname_old )
 		{
-			&setBLReloadFarmRules ( $farmname );
-			&setDOSReloadFarmRules ( $farmname );
+			&runIPDSRestartByFarm ( $farmname );
 		}
 		# create new rules with the new farmname
 		else
