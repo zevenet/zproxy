@@ -426,7 +426,10 @@ opendir( my $dir, $routes_path );
 foreach my $file ( readdir $dir )
 {
 	next if $file !~ /\w\.pm$/;
-	require $routes_path . '/' . $file;
+
+	my $module = "$routes_path/$file";
+
+	&zenlog( $@ ) unless eval { require $module; };
 }
 
 1;
