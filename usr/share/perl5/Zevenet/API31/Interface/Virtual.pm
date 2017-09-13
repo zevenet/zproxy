@@ -90,7 +90,7 @@ sub new_vini # ( $json_obj )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
-
+	
 	# setup parameters of virtual interface
 	$if_ref = &getInterfaceConfig( $json_obj->{ parent }, $json_obj->{ ip_v } );
 
@@ -100,6 +100,15 @@ sub new_vini # ( $json_obj )
 	$if_ref->{ addr } = $json_obj->{ ip };
 	$if_ref->{ gateway } = "" if ! $if_ref->{ gateway };
 	$if_ref->{ type } = 'virtual';
+
+	require Net::Netmask;
+	my $ip_struct = new2 Net::Netmask ( $if_ref->{ gateway },$if_ref->{ mask } );
+	unless ( $ip_struct->match( $if_ref->{ addr } ) )
+	{
+		my $msg =
+  "IP Address $json_obj->{ip} must be same net than the father interface.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
 	require Zevenet::Net::Core;
 	require Zevenet::Net::Route;
@@ -378,8 +387,9 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 	my $virtual  = shift;
 
 	require Zevenet::Net::Interface;
+	require Net::Netmask;
 
-	my $desc = "Modify virtual interface",
+	my $desc = "Modify virtual interface";
 	my $ip_v = 4;
 	my $if_ref = &getInterfaceConfig( $virtual, $ip_v );
 	
@@ -404,6 +414,15 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	require Net::Netmask;
+	my $ip_struct = new2 Net::Netmask ( $if_ref->{ gateway },$if_ref->{ mask } );
+	unless ( $ip_struct->match( $json_obj->{ ip } ) )
+	{
+		my $msg =
+  "IP Address $json_obj->{ip} must be same net than the father interface.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+	
 	require Zevenet::Net::Core;
 
 	my $state = $if_ref->{ 'status' };
