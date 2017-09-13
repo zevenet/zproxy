@@ -35,6 +35,7 @@ my $q = &getCGI();
 ##### Debugging messages #############################################
 #
 #~ use Data::Dumper;
+#~ $Data::Dumper::Sortkeys = 1;
 #
 #~ if ( debug() )
 #~ {
@@ -99,6 +100,8 @@ unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
 ##### Load API routes ################################################
 require Zevenet::API31::Routes;
 
-my $body = { message => 'Request not found', error => 'true' };
-&httpResponse( { code => 404, body => $body } );
+my $desc = 'Request not found';
+my $req = $ENV{ PATH_INFO };
+
+&httpErrorResponse( code => 404, desc => $desc, msg => "$desc: $req" );
 
