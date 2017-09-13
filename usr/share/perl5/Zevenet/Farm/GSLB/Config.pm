@@ -42,22 +42,20 @@ sub getGSLBFarmBootStatus    # ($farm_name)
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $first         = "true";
-	my $output        = -1;
+	my $output        = "down";
 
-	open FI, "<$configdir/$farm_filename/etc/config";
+	open my $fh, '<', "$configdir/$farm_filename/etc/config";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fh> )
 	{
-		if ( $line ne "" && $first eq "true" )
-		{
-			$first = "false";
-			my @line_a = split ( "\;", $line );
-			$output = $line_a[1];
-			chomp ( $output );
-		}
+		next unless length $line; # skip empty lines
+
+		( undef, $output ) = split ( ';', $line );
+		chomp ( $output );
+
+		last;
 	}
-	close FI;
+	close $fh;
 
 	return $output;
 }
