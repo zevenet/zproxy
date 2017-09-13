@@ -541,10 +541,10 @@ sub getL4FarmBackends    # ($farm_name)
 
 			push @servers, 
 				{
-					index=>$sindex,
+					id=>$sindex,
 					ip=>$aux[2],
 					port=>$aux[3],
-					mark=>$aux[4],
+					#~ mark=>$aux[4],
 					weight=>$aux[5]+0,
 					priority=>$aux[6]+0,
 					max_conns => $aux[8]+0,
