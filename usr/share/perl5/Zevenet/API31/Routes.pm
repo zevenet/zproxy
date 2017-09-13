@@ -421,7 +421,7 @@ require Zevenet::API31::Routes::Activation if ( $q->path_info eq '/certificates/
 
 
 ##### Load modules dynamically #######################################
-my $routes_path = &getGlobalConfiguration( 'zlibdir' ) . '/API3/Routes';
+my $routes_path = &getGlobalConfiguration( 'zlibdir' ) . '/API31/Routes';
 opendir( my $dir, $routes_path );
 foreach my $file ( readdir $dir )
 {
