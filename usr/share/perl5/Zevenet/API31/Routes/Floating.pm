@@ -23,12 +23,22 @@
 
 use strict;
 
-use Zevenet::API3::Interface::Generic;
-use Zevenet::API3::Interface::NIC;
-use Zevenet::API3::Interface::VLAN;
-use Zevenet::API3::Interface::Bonding;
-use Zevenet::API3::Interface::Virtual;
-use Zevenet::API3::Interface::Floating;
-use Zevenet::API3::Interface::Gateway;
+my $q = getCGI();
+my $nic_re  = &getValidFormat( 'nic_interface' );
+my $bond_re = &getValidFormat( 'bond_interface' );
+my $vlan_re = &getValidFormat( 'vlan_interface' );
+
+
+if ( $q->path_info =~ qr{^/interfaces/floating} )
+{
+	require Zevenet::API31::Interface::Floating;
+
+	GET qr{^/interfaces/floating$} => \&get_interfaces_floating;
+	GET qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_re)$} => \&get_floating;
+	PUT qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_re)$} =>
+	  \&modify_interface_floating;
+	DELETE qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_re)$} =>
+	  \&delete_interface_floating;
+}
 
 1;

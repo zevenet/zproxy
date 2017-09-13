@@ -24,21 +24,23 @@
 use strict;
 
 my $q = getCGI();
-my $nic_re  = &getValidFormat( 'nic_interface' );
 my $bond_re = &getValidFormat( 'bond_interface' );
-my $vlan_re = &getValidFormat( 'vlan_interface' );
+my $nic_re  = &getValidFormat( 'nic_interface' );
 
 
-if ( $q->path_info =~ qr{^/interfaces/floating} )
+if ( $q->path_info =~ qr{^/interfaces/bonding} )
 {
-	require Zevenet::API3::Interface::Floating;
+	require Zevenet::API31::Interface::Bonding;
 
-	GET qr{^/interfaces/floating$} => \&get_interfaces_floating;
-	GET qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_re)$} => \&get_floating;
-	PUT qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_re)$} =>
-	  \&modify_interface_floating;
-	DELETE qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_re)$} =>
-	  \&delete_interface_floating;
+	GET qr{^/interfaces/bonding$}                    => \&get_bond_list;
+	POST qr{^/interfaces/bonding$}                   => \&new_bond;
+	GET qr{^/interfaces/bonding/($bond_re)$}         => \&get_bond;
+	PUT qr{^/interfaces/bonding/($bond_re)$}         => \&modify_interface_bond;
+	DELETE qr{^/interfaces/bonding/($bond_re)$}      => \&delete_interface_bond;
+	POST qr{^/interfaces/bonding/($bond_re)/slaves$} => \&new_bond_slave;
+	DELETE qr{^/interfaces/bonding/($bond_re)/slaves/($nic_re)$} =>
+	  \&delete_bond_slave;
+	POST qr{^/interfaces/bonding/($bond_re)/actions$} => \&actions_interface_bond;
 }
 
 1;

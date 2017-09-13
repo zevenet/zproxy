@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -22,15 +23,16 @@
 
 use strict;
 
-use Zevenet::API3::System::Service::DNS;
-use Zevenet::API3::System::Service::SSH;
-use Zevenet::API3::System::Service::SNMP;
-use Zevenet::API3::System::Service::NTP;
-use Zevenet::API3::System::Service::HTTP;
-use Zevenet::API3::System::Log;
-use Zevenet::API3::System::User;
-use Zevenet::API3::System::Backup;
-use Zevenet::API3::System::Notification;
-use Zevenet::API3::System::Info;
+my $q          = getCGI();
+my $farm_re    = &getValidFormat( 'farm_name' );
+my $service_re = &getValidFormat( 'service' );
+
+
+if ( $q->path_info =~ qr{^/farms/$farm_re/services/($service_re)/actions$} )
+{
+	require Zevenet::API31::Farm::MoveService;
+
+	POST qr{^/farms/($farm_re)/services/($service_re)/actions$} => \&move_services;
+}
 
 1;

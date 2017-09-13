@@ -24,14 +24,42 @@
 use strict;
 
 my $q = getCGI();
+my $farm_re    = &getValidFormat( 'farm_name' );
 
 
-if ( $q->path_info =~ qr{^/system/ssh} )
+if ( $q->path_info =~ qr{/ipds/dos} )
 {
-	require Zevenet::API3::System::Service::SSH;
+	require Zevenet::API31::IPDS::DoS;
 
-	GET qr{^/system/ssh$}  => \&get_ssh;
-	POST qr{^/system/ssh$} => \&set_ssh;
+	my $dos_rule = &getValidFormat( 'dos_name' );
+
+	#  GET dos settings
+	GET qr{^/ipds/dos/rules$} => \&get_dos_rules;
+
+	#  GET dos settings
+	GET qr{^/ipds/dos$} => \&get_dos;
+
+	#  GET dos configuration
+	GET qr{^/ipds/dos/($dos_rule)$} => \&get_dos_rule;
+
+	#  POST dos settings
+	POST qr{^/ipds/dos$} => \&create_dos_rule;
+
+	#  PUT dos rule
+	PUT qr{^/ipds/dos/($dos_rule)$} => \&set_dos_rule;
+
+	#  DELETE dos rule
+	DELETE qr{^/ipds/dos/($dos_rule)$} => \&del_dos_rule;
+
+	#  POST DoS to a farm
+	POST qr{^/farms/($farm_re)/ipds/dos$} => \&add_dos_to_farm;
+
+	#  DELETE DoS from farm
+	DELETE qr{^/farms/($farm_re)/ipds/dos/($dos_rule)$} => \&del_dos_from_farm;
+	
+	#  action for a DoS rule
+	POST qr{^/ipds/dos/($dos_rule)/actions$} => \&actions_dos;
+	
 }
 
 1;

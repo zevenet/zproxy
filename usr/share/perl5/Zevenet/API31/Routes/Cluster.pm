@@ -23,9 +23,20 @@
 
 use strict;
 
-use Zevenet::API3::Farm::Post;
-use Zevenet::API3::Farm::Get;
-use Zevenet::API3::Farm::Put;
-use Zevenet::API3::Farm::Delete;
+my $q = getCGI();
+
+
+if ( $q->path_info =~ qr{^/system/cluster} )
+{
+	require Zevenet::API31::System::Cluster;
+
+	GET qr{^/system/cluster$}                 => \&get_cluster;
+	POST qr{^/system/cluster$}                => \&enable_cluster;
+	PUT qr{^/system/cluster$}                 => \&modify_cluster;
+	DELETE qr{^/system/cluster$}              => \&disable_cluster;
+	POST qr{^/system/cluster/actions$}        => \&set_cluster_actions;
+	GET qr{^/system/cluster/nodes$}           => \&get_cluster_nodes_status;
+	GET qr{^/system/cluster/nodes/localhost$} => \&get_cluster_localhost_status;
+}
 
 1;

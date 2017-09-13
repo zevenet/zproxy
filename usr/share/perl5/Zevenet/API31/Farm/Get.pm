@@ -149,22 +149,22 @@ sub farms_name # ( $farmname )
 
 	if ( $type =~ /https?/ )
 	{
-		require Zevenet::API3::Farm::Get::HTTP;
+		require Zevenet::API31::Farm::Get::HTTP;
 		&farms_name_http( $farmname );
 	}
 	if ( $type eq 'l4xnat' )
 	{
-		require Zevenet::API3::Farm::Get::L4xNAT;
+		require Zevenet::API31::Farm::Get::L4xNAT;
 		&farms_name_l4( $farmname );
 	}
 	if ( $type eq 'datalink' )
 	{
-		require Zevenet::API3::Farm::Get::Datalink;
+		require Zevenet::API31::Farm::Get::Datalink;
 		&farms_name_datalink( $farmname );
 	}
 	if ( $type eq 'gslb' )
 	{
-		if ( eval{ require Zevenet::API3::Farm::Get::GSLB; } )
+		if ( eval{ require Zevenet::API31::Farm::Get::GSLB; } )
 		{
 			&farms_name_gslb( $farmname );
 		}

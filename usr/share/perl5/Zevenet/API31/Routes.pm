@@ -31,7 +31,7 @@ my $cert_pem_re = &getValidFormat( 'cert_pem' );
 
 if ( $q->path_info =~ qr{^/certificates} )
 {
-	require Zevenet::API3::Certificate;
+	require Zevenet::API31::Certificate;
 
 	#  GET List SSL certificates
 	GET qr{^/certificates$} => \&certificates;
@@ -60,7 +60,7 @@ my $be_re      = &getValidFormat( 'backend' );
 
 if ( $q->path_info =~ qr{^/farms/$farm_re/certificates} )
 {
-	require Zevenet::API3::Certificate::Farm;
+	require Zevenet::API31::Certificate::Farm;
 
 	POST qr{^/farms/($farm_re)/certificates$} => \&add_farm_certificate;
 
@@ -69,21 +69,21 @@ if ( $q->path_info =~ qr{^/farms/$farm_re/certificates} )
 
 if ( $q->path_info =~ qr{^/farms/$farm_re/fg} )
 {
-	require Zevenet::API3::Farm::Guardian;
+	require Zevenet::API31::Farm::Guardian;
 
 	PUT qr{^/farms/($farm_re)/fg$} => \&modify_farmguardian;
 }
 
 if ( $q->path_info =~ qr{^/farms/$farm_re/actions} )
 {
-	require Zevenet::API3::Farm::Action;
+	require Zevenet::API31::Farm::Action;
 
 	PUT qr{^/farms/($farm_re)/actions$} => \&farm_actions;
 }
 
 if ( $q->path_info =~ qr{^/farms/$farm_re.*/backends/$be_re/maintenance} )
 {
-	require Zevenet::API3::Farm::Action;
+	require Zevenet::API31::Farm::Action;
 
 	PUT qr{^/farms/($farm_re)/services/($service_re)/backends/($be_re)/maintenance$}
 	  => \&service_backend_maintenance;    #  (HTTP only)
@@ -94,7 +94,7 @@ if ( $q->path_info =~ qr{^/farms/$farm_re.*/backends/$be_re/maintenance} )
 
 if ( $q->path_info =~ qr{^/farms/$farm_re(?:/services/$service_re)?/backends} )
 {
-	require Zevenet::API3::Farm::Backend;
+	require Zevenet::API31::Farm::Backend;
 
 	GET qr{^/farms/($farm_re)/backends$}
 	  => \&backends;
@@ -123,7 +123,7 @@ if ( $q->path_info =~ qr{^/farms/$farm_re(?:/services/$service_re)?/backends} )
 
 if ( $q->path_info =~ qr{^/farms/$farm_re/services} )
 {
-	require Zevenet::API3::Farm::Service;
+	require Zevenet::API31::Farm::Service;
 
 	POST qr{^/farms/($farm_re)/services$}              => \&new_farm_service;
 	GET qr{^/farms/($farm_re)/services/($service_re)$} => \&farm_services;
@@ -135,7 +135,7 @@ if ( $q->path_info =~ qr{^/farms} )
 {
 	if ( $ENV{ REQUEST_METHOD } eq 'GET' )
 	{
-		require Zevenet::API3::Farm::Get;
+		require Zevenet::API31::Farm::Get;
 
 		##### /farms
 		GET qr{^/farms$}  => \&farms;
@@ -150,7 +150,7 @@ if ( $q->path_info =~ qr{^/farms} )
 
 	if ( $ENV{ REQUEST_METHOD } eq 'POST' )
 	{
-		require Zevenet::API3::Farm::Post;
+		require Zevenet::API31::Farm::Post;
 
 		##### /farms
 		POST qr{^/farms$} => \&new_farm;
@@ -158,7 +158,7 @@ if ( $q->path_info =~ qr{^/farms} )
 
 	if ( $ENV{ REQUEST_METHOD } eq 'PUT' )
 	{
-		require Zevenet::API3::Farm::Put;
+		require Zevenet::API31::Farm::Put;
 
 		##### /farms/FARM
 		PUT qr{^/farms/($farm_re)$} => \&modify_farm;
@@ -166,7 +166,7 @@ if ( $q->path_info =~ qr{^/farms} )
 
 	if ( $ENV{ REQUEST_METHOD } eq 'DELETE' )
 	{
-		require Zevenet::API3::Farm::Delete;
+		require Zevenet::API31::Farm::Delete;
 
 		##### /farms/FARM
 		DELETE qr{^/farms/($farm_re)$} => \&delete_farm;
@@ -181,7 +181,7 @@ my $vlan_re = &getValidFormat( 'vlan_interface' );
 
 if ( $q->path_info =~ qr{^/interfaces/nic} )
 {
-	require Zevenet::API3::Interface::NIC;
+	require Zevenet::API31::Interface::NIC;
 
 	GET qr{^/interfaces/nic$}                    => \&get_nic_list;
 	GET qr{^/interfaces/nic/($nic_re)$}          => \&get_nic;
@@ -192,7 +192,7 @@ if ( $q->path_info =~ qr{^/interfaces/nic} )
 
 if ( $q->path_info =~ qr{^/interfaces/vlan} )
 {
-	require Zevenet::API3::Interface::VLAN;
+	require Zevenet::API31::Interface::VLAN;
 
 	GET qr{^/interfaces/vlan$}                     => \&get_vlan_list;
 	POST qr{^/interfaces/vlan$}                    => \&new_vlan;
@@ -204,7 +204,7 @@ if ( $q->path_info =~ qr{^/interfaces/vlan} )
 
 if ( $q->path_info =~ qr{^/interfaces/virtual} )
 {
-	require Zevenet::API3::Interface::Virtual;
+	require Zevenet::API31::Interface::Virtual;
 
 	GET qr{^/interfaces/virtual$}  => \&get_virtual_list;
 	POST qr{^/interfaces/virtual$} => \&new_vini;
@@ -220,7 +220,7 @@ if ( $q->path_info =~ qr{^/interfaces/virtual} )
 
 if ( $q->path_info =~ qr{^/interfaces/gateway} )
 {
-	require Zevenet::API3::Interface::Gateway;
+	require Zevenet::API31::Interface::Gateway;
 
 	GET qr{^/interfaces/gateway$}    => \&get_gateway;
 	PUT qr{^/interfaces/gateway$}    => \&modify_gateway;
@@ -229,7 +229,7 @@ if ( $q->path_info =~ qr{^/interfaces/gateway} )
 
 if ( $q->path_info =~ qr{^/interfaces$} )
 {
-	require Zevenet::API3::Interface::Generic;
+	require Zevenet::API31::Interface::Generic;
 
 	GET qr{^/interfaces$} => \&get_interfaces;
 }
@@ -238,7 +238,7 @@ if ( $q->path_info =~ qr{^/interfaces$} )
 # Statistics
 if ( $q->path_info =~ qr{^/stats} )
 {
-	require Zevenet::API3::Stats;
+	require Zevenet::API31::Stats;
 
 	logNewModules("In /stats");
 
@@ -269,7 +269,7 @@ if ( $q->path_info =~ qr{^/stats} )
 # Graphs
 if ( $q->path_info =~ qr{^/graphs} )
 {
-	require Zevenet::API3::Graph;
+	require Zevenet::API31::Graph;
 
 	my $frequency_re = &getValidFormat( 'graphs_frequency' );
 	my $system_id_re = &getValidFormat( 'graphs_system_id' );
@@ -326,7 +326,7 @@ if ( $q->path_info =~ qr{^/graphs} )
 # System
 if ( $q->path_info =~ qr{^/system/dns} )
 {
-	require Zevenet::API3::System::Service::DNS;
+	require Zevenet::API31::System::Service::DNS;
 
 	GET qr{^/system/dns$}  => \&get_dns;
 	POST qr{^/system/dns$} => \&set_dns;
@@ -334,7 +334,7 @@ if ( $q->path_info =~ qr{^/system/dns} )
 
 if ( $q->path_info =~ qr{^/system/snmp} )
 {
-	require Zevenet::API3::System::Service::SNMP;
+	require Zevenet::API31::System::Service::SNMP;
 
 	GET qr{^/system/snmp$}  => \&get_snmp;
 	POST qr{^/system/snmp$} => \&set_snmp;
@@ -342,7 +342,7 @@ if ( $q->path_info =~ qr{^/system/snmp} )
 
 if ( $q->path_info =~ qr{^/system/ntp} )
 {
-	require Zevenet::API3::System::Service::NTP;
+	require Zevenet::API31::System::Service::NTP;
 
 	GET qr{^/system/ntp$}  => \&get_ntp;
 	POST qr{^/system/ntp$} => \&set_ntp;
@@ -350,7 +350,7 @@ if ( $q->path_info =~ qr{^/system/ntp} )
 
 if ( $q->path_info =~ qr{^/system/http} )
 {
-	require Zevenet::API3::System::Service::HTTP;
+	require Zevenet::API31::System::Service::HTTP;
 
 	GET qr{^/system/http$}  => \&get_http;
 	POST qr{^/system/http$} => \&set_http;
@@ -358,7 +358,7 @@ if ( $q->path_info =~ qr{^/system/http} )
 
 if ( $q->path_info =~ qr{^/system/users} )
 {
-	require Zevenet::API3::System::User;
+	require Zevenet::API31::System::User;
 
 	my $user_re = &getValidFormat( 'user' );
 
@@ -370,7 +370,7 @@ if ( $q->path_info =~ qr{^/system/users} )
 
 if ( $q->path_info =~ qr{^/system/log} )
 {
-	require Zevenet::API3::System::Log;
+	require Zevenet::API31::System::Log;
 
 	GET qr{^/system/logs$} => \&get_logs;
 
@@ -383,7 +383,7 @@ if ( $q->path_info =~ qr{^/system/log} )
 
 if ( $q->path_info =~ qr{^/system/backup} )
 {
-	require Zevenet::API3::System::Backup;
+	require Zevenet::API31::System::Backup;
 
 	GET qr{^/system/backup$}  => \&get_backup;       #  GET list backups
 	POST qr{^/system/backup$} => \&create_backup;    #  POST create backups
@@ -397,7 +397,7 @@ if ( $q->path_info =~ qr{^/system/backup} )
 
 if ( $q->path_info =~ qr{^/system/(?:version|license|supportsave)} )
 {
-	require Zevenet::API3::System::Info;
+	require Zevenet::API31::System::Info;
 
 	GET qr{^/system/version$}     => \&get_version;
 	GET qr{^/system/supportsave$} => \&get_supportsave;
@@ -411,7 +411,7 @@ if ( $q->path_info =~ qr{^/system/(?:version|license|supportsave)} )
 require Zevenet::Certificate::Activation;
 #~ logNewModules("With Zevenet::Certificate::Activation");
 
-require Zevenet::API3::Routes::Activation if ( $q->path_info eq '/certificates/activation' );
+require Zevenet::API31::Routes::Activation if ( $q->path_info eq '/certificates/activation' );
 
 # Check activation certificate
 &checkActivationCertificate();

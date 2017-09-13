@@ -1,4 +1,3 @@
-#!/usr/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -23,36 +22,15 @@
 
 use strict;
 
-my $q = getCGI();
-
-
-if ( $q->path_info =~ qr{^/system/notifications} )
-{
-	require Zevenet::API3::System::Notification;
-
-	my $alert_re  = &getValidFormat( 'notif_alert' );
-	my $method_re = &getValidFormat( 'notif_method' );
-
-	#  GET notification methods
-	GET qr{^/system/notifications/methods/($method_re)$} => \&get_notif_methods;
-
-	#  POST notification methods
-	POST qr{^/system/notifications/methods/($method_re)$} => \&set_notif_methods;
-
-	#  GET notification alert status
-	GET qr{^/system/notifications/alerts$} => \&get_notif_alert_status;
-
-	#  GET notification alerts
-	GET qr{^/system/notifications/alerts/($alert_re)$} => \&get_notif_alert;
-
-	#  POST notification alerts
-	POST qr{^/system/notifications/alerts/($alert_re)$} => \&set_notif_alert;
-
-	#  POST notification alert actions
-	POST qr{^/system/notifications/alerts/($alert_re)/actions$} => \&set_notif_alert_actions;
-
-	#  POST  notifications test
-	POST qr{^/system/notifications/methods/email/actions$} => \&send_test_mail;
-}
+use Zevenet::API31::System::Service::DNS;
+use Zevenet::API31::System::Service::SSH;
+use Zevenet::API31::System::Service::SNMP;
+use Zevenet::API31::System::Service::NTP;
+use Zevenet::API31::System::Service::HTTP;
+use Zevenet::API31::System::Log;
+use Zevenet::API31::System::User;
+use Zevenet::API31::System::Backup;
+use Zevenet::API31::System::Notification;
+use Zevenet::API31::System::Info;
 
 1;

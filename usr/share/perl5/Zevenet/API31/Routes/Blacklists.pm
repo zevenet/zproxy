@@ -29,7 +29,7 @@ my $farm_re    = &getValidFormat( 'farm_name' );
 
 if ( $q->path_info =~ qr{/ipds/blacklists} )
 {
-	require Zevenet::API3::IPDS::Blacklist;
+	require Zevenet::API31::IPDS::Blacklist;
 
 	my $blacklists_list      = &getValidFormat( 'blacklists_name' );
 	my $blacklists_source_id = &getValidFormat( 'blacklists_source_id' );

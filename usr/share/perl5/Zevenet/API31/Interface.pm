@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -21,49 +22,13 @@
 ###############################################################################
 
 use strict;
-use Zevenet::Farm::Core;
 
-sub modify_farm # ( $json_obj, $farmname )
-{
-	my $json_obj = shift;
-	my $farmname = shift;
-
-	my $desc = "Modify farm";
-
-	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) eq '-1' )
-	{
-		my $msg = "The farmname $farmname does not exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}
-
-	my $type = &getFarmType( $farmname );
-
-	if ( $type eq "http" || $type eq "https" )
-	{
-		require Zevenet::API3::Farm::Put::HTTP;
-		&modify_http_farm( $json_obj, $farmname );
-	}
-
-	if ( $type eq "l4xnat" )
-	{
-		require Zevenet::API3::Farm::Put::L4xNAT;
-		&modify_l4xnat_farm( $json_obj, $farmname );
-	}
-
-	if ( $type eq "datalink" )
-	{
-		require Zevenet::API3::Farm::Put::Datalink;
-		&modify_datalink_farm( $json_obj, $farmname );
-	}
-
-	if ( $type eq "gslb" )
-	{
-		if ( eval { require Zevenet::API3::Farm::Put::GSLB; } )
-		{
-			&modify_gslb_farm( $json_obj, $farmname );
-		}
-	}
-}
+use Zevenet::API31::Interface::Generic;
+use Zevenet::API31::Interface::NIC;
+use Zevenet::API31::Interface::VLAN;
+use Zevenet::API31::Interface::Bonding;
+use Zevenet::API31::Interface::Virtual;
+use Zevenet::API31::Interface::Floating;
+use Zevenet::API31::Interface::Gateway;
 
 1;

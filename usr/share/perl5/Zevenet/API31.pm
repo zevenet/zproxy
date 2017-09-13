@@ -23,16 +23,22 @@
 
 use strict;
 
-my $q          = getCGI();
-my $farm_re    = &getValidFormat( 'farm_name' );
-my $service_re = &getValidFormat( 'service' );
+use Zevenet::API31::Certificate;
+use Zevenet::API31::Certificate::Farm;
+use Zevenet::API31::Farm::Delete;
+use Zevenet::API31::Farm::Action;
+use Zevenet::API31::Farm::Guardian;
+use Zevenet::API31::Farm::Get;
+use Zevenet::API31::Farm::Post;
+use Zevenet::API31::Farm::Put;
+use Zevenet::API31::Interface;
+use Zevenet::API31::System;
+use Zevenet::API31::Stats;
+use Zevenet::API31::Graph;
 
-
-if ( $q->path_info =~ qr{^/farms/$farm_re/services/($service_re)/actions$} )
-{
-	require Zevenet::API3::Farm::MoveService;
-
-	POST qr{^/farms/($farm_re)/services/($service_re)/actions$} => \&move_services;
-}
+#~ use Zevenet::API31::Certificate::Activation;
+#~ use Zevenet::API31::Farm::Delete::GSLB;
+#~ use Zevenet::API31::Farm::Post::GSLB;
+#~ use Zevenet::API31::System::Cluster;
 
 1;

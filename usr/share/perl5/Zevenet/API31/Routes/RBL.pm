@@ -29,7 +29,7 @@ my $farm_re    = &getValidFormat( 'farm_name' );
 
 if ( $q->path_info =~ qr{/ipds/rbl} )
 {
-	require Zevenet::API3::IPDS::RBL;
+	require Zevenet::API31::IPDS::RBL;
 
 	my $rbl_name   = &getValidFormat( 'rbl_name' );
 	my $rbl_domain = &getValidFormat( 'rbl_domain' );

@@ -1,4 +1,3 @@
-#!/usr/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -22,44 +21,49 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Farm::Core;
 
-my $q = getCGI();
-my $farm_re    = &getValidFormat( 'farm_name' );
-
-
-if ( $q->path_info =~ qr{/ipds/dos} )
+sub modify_farm # ( $json_obj, $farmname )
 {
-	require Zevenet::API3::IPDS::DoS;
+	my $json_obj = shift;
+	my $farmname = shift;
 
-	my $dos_rule = &getValidFormat( 'dos_name' );
+	my $desc = "Modify farm";
 
-	#  GET dos settings
-	GET qr{^/ipds/dos/rules$} => \&get_dos_rules;
+	# Check that the farm exists
+	if ( &getFarmFile( $farmname ) eq '-1' )
+	{
+		my $msg = "The farmname $farmname does not exist.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
 
-	#  GET dos settings
-	GET qr{^/ipds/dos$} => \&get_dos;
+	my $type = &getFarmType( $farmname );
 
-	#  GET dos configuration
-	GET qr{^/ipds/dos/($dos_rule)$} => \&get_dos_rule;
+	if ( $type eq "http" || $type eq "https" )
+	{
+		require Zevenet::API31::Farm::Put::HTTP;
+		&modify_http_farm( $json_obj, $farmname );
+	}
 
-	#  POST dos settings
-	POST qr{^/ipds/dos$} => \&create_dos_rule;
+	if ( $type eq "l4xnat" )
+	{
+		require Zevenet::API31::Farm::Put::L4xNAT;
+		&modify_l4xnat_farm( $json_obj, $farmname );
+	}
 
-	#  PUT dos rule
-	PUT qr{^/ipds/dos/($dos_rule)$} => \&set_dos_rule;
+	if ( $type eq "datalink" )
+	{
+		require Zevenet::API31::Farm::Put::Datalink;
+		&modify_datalink_farm( $json_obj, $farmname );
+	}
 
-	#  DELETE dos rule
-	DELETE qr{^/ipds/dos/($dos_rule)$} => \&del_dos_rule;
-
-	#  POST DoS to a farm
-	POST qr{^/farms/($farm_re)/ipds/dos$} => \&add_dos_to_farm;
-
-	#  DELETE DoS from farm
-	DELETE qr{^/farms/($farm_re)/ipds/dos/($dos_rule)$} => \&del_dos_from_farm;
-	
-	#  action for a DoS rule
-	POST qr{^/ipds/dos/($dos_rule)/actions$} => \&actions_dos;
-	
+	if ( $type eq "gslb" )
+	{
+		if ( eval { require Zevenet::API31::Farm::Put::GSLB; } )
+		{
+			&modify_gslb_farm( $json_obj, $farmname );
+		}
+	}
 }
 
 1;

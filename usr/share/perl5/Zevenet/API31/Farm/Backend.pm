@@ -302,7 +302,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	# validate FARM TYPE
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq "gslb" && eval { require Zevenet::API3::Farm::GSLB; } )
+	if ( $type eq "gslb" && eval { require Zevenet::API31::Farm::GSLB; } )
 	{
 		&new_gslb_service_backend( $json_obj, $farmname, $service );
 	}
@@ -498,7 +498,7 @@ sub service_backends
 
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq 'gslb' && eval { require Zevenet::API3::Farm::GSLB; } )
+	if ( $type eq 'gslb' && eval { require Zevenet::API31::Farm::GSLB; } )
 	{
 		&list_gslb_service_backends( $farmname, $service );
 	}
@@ -816,7 +816,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq "gslb" && eval { require Zevenet::API3::Farm::GSLB; } )
+	if ( $type eq "gslb" && eval { require Zevenet::API31::Farm::GSLB; } )
 	{
 		&modify_gslb_service_backends( $json_obj, $farmname, $service, $id_server );
 	}
@@ -1043,7 +1043,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 	# validate FARM TYPE
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq 'gslb' && eval { require Zevenet::API3::Farm::GSLB; } )
+	if ( $type eq 'gslb' && eval { require Zevenet::API31::Farm::GSLB; } )
 	{
 		&delete_gslb_service_backend( $farmname, $service, $id_server );
 	}

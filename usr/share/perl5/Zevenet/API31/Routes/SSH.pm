@@ -24,23 +24,14 @@
 use strict;
 
 my $q = getCGI();
-my $bond_re = &getValidFormat( 'bond_interface' );
-my $nic_re  = &getValidFormat( 'nic_interface' );
 
 
-if ( $q->path_info =~ qr{^/interfaces/bonding} )
+if ( $q->path_info =~ qr{^/system/ssh} )
 {
-	require Zevenet::API3::Interface::Bonding;
+	require Zevenet::API31::System::Service::SSH;
 
-	GET qr{^/interfaces/bonding$}                    => \&get_bond_list;
-	POST qr{^/interfaces/bonding$}                   => \&new_bond;
-	GET qr{^/interfaces/bonding/($bond_re)$}         => \&get_bond;
-	PUT qr{^/interfaces/bonding/($bond_re)$}         => \&modify_interface_bond;
-	DELETE qr{^/interfaces/bonding/($bond_re)$}      => \&delete_interface_bond;
-	POST qr{^/interfaces/bonding/($bond_re)/slaves$} => \&new_bond_slave;
-	DELETE qr{^/interfaces/bonding/($bond_re)/slaves/($nic_re)$} =>
-	  \&delete_bond_slave;
-	POST qr{^/interfaces/bonding/($bond_re)/actions$} => \&actions_interface_bond;
+	GET qr{^/system/ssh$}  => \&get_ssh;
+	POST qr{^/system/ssh$} => \&set_ssh;
 }
 
 1;

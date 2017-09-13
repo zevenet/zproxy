@@ -25,18 +25,20 @@ use strict;
 
 my $q = getCGI();
 
-
-if ( $q->path_info =~ qr{^/system/cluster} )
+if ( $q->path_info =~ qr{^/certificates/activation$} )
 {
-	require Zevenet::API3::System::Cluster;
+	require Zevenet::API31::Certificate::Activation;
 
-	GET qr{^/system/cluster$}                 => \&get_cluster;
-	POST qr{^/system/cluster$}                => \&enable_cluster;
-	PUT qr{^/system/cluster$}                 => \&modify_cluster;
-	DELETE qr{^/system/cluster$}              => \&disable_cluster;
-	POST qr{^/system/cluster/actions$}        => \&set_cluster_actions;
-	GET qr{^/system/cluster/nodes$}           => \&get_cluster_nodes_status;
-	GET qr{^/system/cluster/nodes/localhost$} => \&get_cluster_localhost_status;
+	logNewModules("In /certificates/activation");
+
+	#  GET activation certificate
+	GET qr{^/certificates/activation$} => \&get_activation_certificate_info;
+
+	#  POST activation certificate
+	POST qr{^/certificates/activation$} => \&upload_activation_certificate;
+
+	#  DELETE activation certificate
+	DELETE qr{^/certificates/activation$} => \&delete_activation_certificate;
 }
 
 1;

@@ -25,20 +25,34 @@ use strict;
 
 my $q = getCGI();
 
-if ( $q->path_info =~ qr{^/certificates/activation$} )
+
+if ( $q->path_info =~ qr{^/system/notifications} )
 {
-	require Zevenet::API3::Certificate::Activation;
+	require Zevenet::API31::System::Notification;
 
-	logNewModules("In /certificates/activation");
+	my $alert_re  = &getValidFormat( 'notif_alert' );
+	my $method_re = &getValidFormat( 'notif_method' );
 
-	#  GET activation certificate
-	GET qr{^/certificates/activation$} => \&get_activation_certificate_info;
+	#  GET notification methods
+	GET qr{^/system/notifications/methods/($method_re)$} => \&get_notif_methods;
 
-	#  POST activation certificate
-	POST qr{^/certificates/activation$} => \&upload_activation_certificate;
+	#  POST notification methods
+	POST qr{^/system/notifications/methods/($method_re)$} => \&set_notif_methods;
 
-	#  DELETE activation certificate
-	DELETE qr{^/certificates/activation$} => \&delete_activation_certificate;
+	#  GET notification alert status
+	GET qr{^/system/notifications/alerts$} => \&get_notif_alert_status;
+
+	#  GET notification alerts
+	GET qr{^/system/notifications/alerts/($alert_re)$} => \&get_notif_alert;
+
+	#  POST notification alerts
+	POST qr{^/system/notifications/alerts/($alert_re)$} => \&set_notif_alert;
+
+	#  POST notification alert actions
+	POST qr{^/system/notifications/alerts/($alert_re)/actions$} => \&set_notif_alert_actions;
+
+	#  POST  notifications test
+	POST qr{^/system/notifications/methods/email/actions$} => \&send_test_mail;
 }
 
 1;

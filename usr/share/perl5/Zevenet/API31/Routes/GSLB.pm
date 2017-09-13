@@ -23,22 +23,36 @@
 
 use strict;
 
-use Zevenet::API3::Certificate;
-use Zevenet::API3::Certificate::Farm;
-use Zevenet::API3::Farm::Delete;
-use Zevenet::API3::Farm::Action;
-use Zevenet::API3::Farm::Guardian;
-use Zevenet::API3::Farm::Get;
-use Zevenet::API3::Farm::Post;
-use Zevenet::API3::Farm::Put;
-use Zevenet::API3::Interface;
-use Zevenet::API3::System;
-use Zevenet::API3::Stats;
-use Zevenet::API3::Graph;
+my $q = getCGI();
+my $farm_re = &getValidFormat( 'farm_name' );
 
-#~ use Zevenet::API3::Certificate::Activation;
-#~ use Zevenet::API3::Farm::Delete::GSLB;
-#~ use Zevenet::API3::Farm::Post::GSLB;
-#~ use Zevenet::API3::System::Cluster;
+
+if ( $q->path_info =~ qr{^/farms/modules/gslb$} )
+{
+	require Zevenet::API31::Farm::GSLB;
+
+	GET qr{^/farms/modules/gslb$} => \&farms_gslb;
+}
+
+
+if ( $q->path_info =~ qr{^/farms/$farm_re/zones} )
+{
+	require Zevenet::API31::Farm::Zone;
+
+	POST qr{^/farms/($farm_re)/zones$} => \&new_farm_zone;
+
+	my $zone_re = &getValidFormat( 'zone' );
+
+	PUT qr{^/farms/($farm_re)/zones/($zone_re)$}           => \&modify_zones;
+	DELETE qr{^/farms/($farm_re)/zones/($zone_re)$}        => \&delete_zone;
+	GET qr{^/farms/($farm_re)/zones/($zone_re)/resources$} => \&gslb_zone_resources;
+	POST qr{^/farms/($farm_re)/zones/($zone_re)/resources$} =>
+	  \&new_farm_zone_resource;
+
+	my $resource_id_re = &getValidFormat( 'resource_id' );
+
+	PUT qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => \&modify_zone_resource;
+	DELETE qr{^/farms/($farm_re)/zones/($zone_re)/resources/($resource_id_re)$} => \&delete_zone_resource;
+}
 
 1;
