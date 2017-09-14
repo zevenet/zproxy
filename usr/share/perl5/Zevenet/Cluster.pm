@@ -439,6 +439,8 @@ See Also:
 =cut
 sub getZClusterRemoteHost
 {
+	require Zevenet::SystemInfo;
+
 	my $zcl_conf = &getZClusterConfig();
 	my $hostname = &getHostname();
 	my @hosts = keys %{ $zcl_conf };
