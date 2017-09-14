@@ -59,7 +59,7 @@ sub add_rbl_rule
 
 	require Zevenet::IPDS::RBL::Config;
 
-	my $desc = "Create the RBL rule $name";
+	my $desc = "Create the RBL rule '$json_obj->{ 'name' }'";
 	my $name = $json_obj->{ 'name' };
 
 	# A list already exists with this name
@@ -70,7 +70,7 @@ sub add_rbl_rule
 	}
 	elsif ( !&getValidFormat( "rbl_name", $name ) )
 	{
-		$msg = "The RBL name has not a valid format.";
+		my $msg = "The RBL name has not a valid format.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 	elsif ( $name eq "domains" )
@@ -377,7 +377,7 @@ sub add_rbl_domain
 
 	require Zevenet::IPDS::RBL::Config;
 
-	my $desc           = "Add the domain $domain";
+	my $desc           = "Add the domain '$json_obj->{ 'domain' }'";
 	my $domain         = $json_obj->{ 'domain' };
 	my @requiredParams = ( "domain" );
 	my @optionalParams;
@@ -552,7 +552,7 @@ sub add_domain_to_rbl
 
 	require Zevenet::IPDS::RBL::Config;
 
-	my $desc           = "Add the domain $domain to a RBL rule $name";
+	my $desc           = "Add the domain '$json_obj->{ 'domain' }' to the RBL rule $name";
 	my $domain         = $json_obj->{ 'domain' };
 	my @requiredParams = ( "domain" );
 	my @optionalParams;
