@@ -695,8 +695,15 @@ sub getSystemInterface    # ($if_name)
 
 	if ( $$if_ref{ type } eq 'nic' )
 	{
+		my @bond_slaves;
+
+		if ( eval { require Zevenet::Net::Bonding; } )
+		{
+			@bond_slaves = &getAllBondsSlaves();
+		}
+
 		$$if_ref{ is_slave } =
-		  ( grep { $$if_ref{ name } eq $_ } &getAllBondsSlaves ) ? 'true' : 'false';
+		  ( grep { $$if_ref{ name } eq $_ } @bond_slaves ) ? 'true' : 'false';
 	}
 
 	return $if_ref;
