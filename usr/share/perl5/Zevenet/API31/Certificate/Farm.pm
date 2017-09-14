@@ -63,14 +63,6 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( &getFarmStatus( $farmname ) eq 'up' )
-	{
-		require Zevenet::Farm::Action;
-
-		&setFarmRestart( $farmname );
-		$body->{ status } = 'needed restart';
-	}
-
 	# no errors found, return succesful response
 	&zenlog( "ZAPI Success, trying to add a certificate to the SNI list." );
 
@@ -82,6 +74,14 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 				 success     => "true",
 				 message     => $message,
 	};
+
+	if ( &getFarmStatus( $farmname ) eq 'up' )
+	{
+		require Zevenet::Farm::Action;
+
+		&setFarmRestart( $farmname );
+		$body->{ status } = 'needed restart';
+	}
 
 	&httpResponse({ code => 200, body => $body });
 }
@@ -133,14 +133,6 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( &getFarmStatus( $farmname ) eq 'up' )
-	{
-		require Zevenet::Farm::Action;
-
-		&setFarmRestart( $farmname );
-		$body->{ status } = 'needed restart';
-	}
-
 	# no errors found, return succesful response
 	my $msg = "The Certificate $certfilename has been deleted";
 	my $body = {
@@ -148,6 +140,14 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 				 success     => "true",
 				 message     => $msg
 	};
+
+	if ( &getFarmStatus( $farmname ) eq 'up' )
+	{
+		require Zevenet::Farm::Action;
+
+		&setFarmRestart( $farmname );
+		$body->{ status } = 'needed restart';
+	}
 
 	&zenlog( "ZAPI Success, trying to delete a certificate to the SNI list." );
 	&httpResponse({ code => 200, body => $body });
