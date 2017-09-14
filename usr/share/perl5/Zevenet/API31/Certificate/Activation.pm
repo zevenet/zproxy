@@ -37,7 +37,8 @@ sub get_activation_certificate_info # ()
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $body .= $_ for &getCertData( $cert_filename );
+	my @cert_info = &getCertData( $cert_filename );
+	my $body = "@cert_info";
 
 	&httpResponse({ code => 200, body => $body, type => 'text/plain' });
 }
