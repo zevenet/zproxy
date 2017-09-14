@@ -85,8 +85,7 @@ sub get_version
 	my $date       = &getDate();
 	my $applicance = &getApplianceVersion();
 
-	chop $kernel;
-	chop $hostname;
+	chomp $kernel;
 
 	my $params = {
 				   'kernel_version'    => $kernel,
