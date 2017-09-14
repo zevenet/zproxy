@@ -182,6 +182,7 @@ sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 
 	my $stats;
 	$stats->{ 'sessions' } = [];
+	$stats->{ 'backends' } = [];
 	my @sessions;
 	my $serviceName;
 	my $hashService;
@@ -216,23 +217,22 @@ sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 		#     0. Service "HTTP" active (10)
 		if ( $line =~ /(\d+)\. Service "($service_re)"/ )
 		{
-				$serviceName = $2;
+			$serviceName = $2;
 		}
 			
 		# i.e.
 		#      0. Backend 192.168.100.254:80 active (5 0.000 sec) alive (0)
 		if ( $line =~ /(\d+)\. Backend (\d+\.\d+\.\d+\.\d+):(\d+) (\w+) .+ (\w+) \((\d+)\)/ )
 		{
-			my $backendHash =
- 				{ 
-					id => $1+0,
-					ip => $2,
-					port => $3+0,
-					status => $5,
-					pending     => 0,
-					established => $6+0,
-					service => $serviceName,
-				};
+			my $backendHash = {
+								id          => $1 + 0,
+								ip          => $2,
+								port        => $3 + 0,
+								status      => $5,
+								pending     => 0,
+								established => $6 + 0,
+								service     => $serviceName,
+			};
 				
 			# Getting real status
 			my $backend_disabled = $4;
@@ -258,6 +258,7 @@ sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 			# Getting pending connections
 			require Zevenet::Net::ConnStats;
 			require Zevenet::Farm::Stats;
+
 			my @netstat = &getConntrack( $fvip, $backendHash->{ ip }, "", "", "tcp" );
 			my @synnetstatback =
 				&getBackendSYNConns( $farm_name, $backendHash->{ ip }, $backendHash->{ port }, @netstat );
@@ -271,13 +272,13 @@ sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 		#      1. Session 107.178.194.117 -> 1
 		if ( $line =~ /(\d+)\. Session (.+) \-\> (\d+)/ )
 		{
-			push @{ $stats->{sessions} },
-				{ 
-					client => $1+0,
-					session => $2,
-					id => $3+0,
-					service => $serviceName,
-				};
+			push @{ $stats->{ sessions } },
+			  {
+				client  => $1 + 0,
+				session => $2,
+				id      => $3 + 0,
+				service => $serviceName,
+			  };
 		}
 		
 	}
