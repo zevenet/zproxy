@@ -147,6 +147,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	my $farm_name = shift;    # input
 	my $writeconf = shift;    # input
 
+	require Zevenet::Net::Util;
 	require Zevenet::Netfilter;
 	require Zevenet::Farm::L4xNAT::Config;
 
