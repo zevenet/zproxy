@@ -148,6 +148,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	my $writeconf = shift;    # input
 
 	require Zevenet::Netfilter;
+	require Zevenet::Farm::L4xNAT::Config;
 
 	&zlog( "Starting farm $farm_name" ) if &debug == 2;
 
@@ -157,11 +158,12 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	  if &debug;
 
 	# initialize a farm struct
-	require Zevenet::Farm::L4xNAT::Config;
 	my $farm = &getL4FarmStruct( $farm_name );
 
 	if ( $writeconf eq "true" )
 	{
+		require Tie::File;
+
 		tie my @configfile, 'Tie::File', "$configdir\/$$farm{ filename }";
 		foreach ( @configfile )
 		{
@@ -294,6 +296,8 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 
 	if ( $writeconf eq 'true' )
 	{
+		require Tie::File;
+
 		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 		foreach ( @configfile )
 		{
@@ -368,6 +372,8 @@ Bugfix:
 sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $farm_name, $new_farm_name ) = @_;
+
+	require Tie::File;
 
 	my $farm_filename     = &getFarmFile( $farm_name );
 	my $farm_type         = &getFarmType( $farm_name );
