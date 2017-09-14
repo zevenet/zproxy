@@ -292,19 +292,21 @@ Returns:
 sub getHTTPFarmBlacklistTime    # ($farm_filename)
 {
 	my ( $farm_filename ) = @_;
-	my $blacklist_time = -1;
 
-	open FR, "<$configdir\/$farm_filename";
-	my @file = <FR>;
-	foreach my $line ( @file )
+	my $blacklist_time = -1;
+	my $conf_file      = &getFarmFile( $farm_filename );
+	my $conf_path      = "$configdir/$conf_file";
+
+	open( my $fh, '<', $conf_path ) or die "Could not open $conf_path: $!";
+	while ( my $line = <$fh> )
 	{
-		if ( $line =~ /Alive/i )
-		{
-			my @line_aux = split ( "\ ", $line );
-			$blacklist_time = $line_aux[1];
-		}
+		next unless $line =~ /^Alive/i;
+
+		my @line_aux = split ( "\ ", $line );
+		$blacklist_time = $line_aux[1];
+		last;
 	}
-	close FR;
+	close $fh;
 
 	return $blacklist_time;
 }
