@@ -650,7 +650,7 @@ sub add_rbl_to_farm
 
 	require Zevenet::IPDS::RBL::Config;
 
-	my $desc = "Apply the RBL rule $name to the farm $farmName";
+	my $desc = "Apply the RBL rule $json_obj->{ 'name' } to the farm $farmName";
 	my $name = $json_obj->{ 'name' };
 
 	my $param_msg = &getValidReqParams( $json_obj, ["name"] );
