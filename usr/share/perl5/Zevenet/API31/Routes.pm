@@ -429,7 +429,11 @@ foreach my $file ( readdir $dir )
 
 	my $module = "$routes_path/$file";
 
-	&zenlog( $@ ) unless eval { require $module; };
+	unless ( eval { require $module; } )
+	{
+		&zenlog( $@ );
+		die $@;
+	}
 }
 
 1;
