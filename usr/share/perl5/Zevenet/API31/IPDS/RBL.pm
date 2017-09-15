@@ -624,6 +624,8 @@ sub del_domain_from_rbl
 	my $name   = shift;
 	my $domain = shift;
 
+	require Zevenet::IPDS::RBL::Config;
+
 	my $desc = "Delete the domain $domain from a RBL rule $name";
 
 	if ( !&getRBLExists( $name ) )
