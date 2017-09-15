@@ -319,6 +319,24 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	# Delete old interface configuration
 	my $if_ref = &getInterfaceConfig( $nic, $ip_v );
 
+	# check if network is correct
+	my $new_if = {
+				   addr    => $json_obj->{ ip }      // $if_ref->{ addr },
+				   mask    => $json_obj->{ netmask } // $if_ref->{ mask },
+				   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
+	};
+
+	if ( $new_if->{ gateway } )
+	{
+		require Zevenet::Net::Validate;
+		unless (
+		&getNetValidate( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
+		{
+			my $msg = "The gateway is not valid for the network.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	if ( $if_ref )
 	{
 		# Delete old IP and Netmask from system to replace it

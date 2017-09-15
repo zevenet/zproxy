@@ -105,7 +105,16 @@ sub modify_gateway # ( $json_obj )
 	my $address = $json_obj->{ address } // $default_gw;
 
 	require Zevenet::Net::Interface;
-	my $if_ref = getInterfaceConfig( $interface, $ip_version );
+	my $if_ref = &getInterfaceConfig( $interface, $ip_version );
+
+	# check if network is correct
+	require Zevenet::Net::Validate;
+	unless (
+		&getNetValidate( $if_ref->{ addr }, $if_ref->{ mask }, $address ) )
+	{
+		my $msg = "The gateway is not valid for the network.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
 	&zenlog("applyRoutes interface:$interface address:$address if_ref:$if_ref");
 

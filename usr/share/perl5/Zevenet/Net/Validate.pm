@@ -191,6 +191,35 @@ sub ipinrange    # ($netmask, $toip, $newip)
 }
 
 =begin nd
+Function: getNetValidate
+
+	Check if the network configuration is valid. This function receive two IP
+	address and a net segment and check if both address are in the segment.
+	It is usefull to check if the gateway is correct or to check a new IP
+	for a interface
+
+Parameters:
+	ip - IP from net segment
+	netmask - Net segment
+	new_ip - IP to check if it is from net segment
+
+Returns:
+	Integer - 1 if the configuration is correct or 0 on incorrect
+
+=cut
+sub getNetValidate    # ($ip, $mask, $ip2)
+{
+	my ( $ip, $mask, $ip2 ) = @_;
+	my $output = 0;
+
+	require Net::Netmask;
+	my $ip_struct = new2 Net::Netmask ( $ip, $mask );
+
+	$output = 1 if ( $ip_struct->match( $ip2 ) );
+	return $output;
+}
+
+=begin nd
 Function: ifexist
 
 	Check if interface exist.

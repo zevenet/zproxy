@@ -147,6 +147,17 @@ sub new_vlan # ( $json_obj )
 				mac     => $socket->if_hwaddr( $if_ref->{ dev } ),
 	};
 
+
+	if ( $if_ref->{ gateway } )
+	{
+		unless (
+		&getNetValidate( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ gateway } ) )
+		{
+			my $msg = "The gateway is not valid for the network.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	require Zevenet::Net::Core;
 	require Zevenet::Net::Route;
 	require Zevenet::Net::Interface;
@@ -490,6 +501,23 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 		unless ( exists( $json_obj->{ gateway } ) || &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) )
 		{
 			my $msg = "Gateway Address $json_obj->{gateway} structure is not ok.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
+	my $new_if = {
+				   addr    => $json_obj->{ ip }      // $if_ref->{ addr },
+				   mask    => $json_obj->{ netmask } // $if_ref->{ mask },
+				   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
+	};
+
+	if ( $new_if->{ gateway } )
+	{
+		require Zevenet::Net::Validate;
+		unless (
+		&getNetValidate( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
+		{
+			my $msg = "The gateway is not valid for the network.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}

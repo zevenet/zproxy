@@ -61,7 +61,8 @@ sub new_vini # ( $json_obj )
 	# validate PARENT
 	# virtual interfaces require a configured parent interface
 	my $parent_exist = &ifexist( $json_obj->{ parent } );
-	unless ( $parent_exist eq "true" && &getInterfaceConfig( $json_obj->{ parent }, $json_obj->{ ip_v } ) )
+	my $if_parent = &getInterfaceConfig( $json_obj->{ parent }, $json_obj->{ ip_v } );
+	unless ( $parent_exist eq "true" && $if_parent )
 	{
 		my $msg = "The parent interface $json_obj->{ parent } doesn't exist.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -90,7 +91,7 @@ sub new_vini # ( $json_obj )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
-	
+
 	# setup parameters of virtual interface
 	$if_ref = &getInterfaceConfig( $json_obj->{ parent }, $json_obj->{ ip_v } );
 
@@ -101,12 +102,10 @@ sub new_vini # ( $json_obj )
 	$if_ref->{ gateway } = "" if ! $if_ref->{ gateway };
 	$if_ref->{ type } = 'virtual';
 
-	require Net::Netmask;
-	my $ip_struct = new2 Net::Netmask ( $if_ref->{ gateway },$if_ref->{ mask } );
-	unless ( $ip_struct->match( $if_ref->{ addr } ) )
+	unless ( &getNetValidate($if_parent->{ addr }, $if_ref->{ mask }, $if_ref->{ addr }) )
 	{
 		my $msg =
-  "IP Address $json_obj->{ip} must be same net than the father interface.";
+  "IP Address $json_obj->{ip} must be same net than the parent interface.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -414,11 +413,10 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	require Net::Netmask;
-	my $ip_struct = new2 Net::Netmask ( $if_ref->{ gateway },$if_ref->{ mask } );
-	unless ( $ip_struct->match( $json_obj->{ ip } ) )
+	require Zevenet::Net::Validate;
+	unless ( &getNetValidate($if_ref->{ gateway }, $if_ref->{ mask }, $json_obj->{ ip }) )
 	{
-		my $msg =
+		$msg =
   "IP Address $json_obj->{ip} must be same net than the father interface.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
