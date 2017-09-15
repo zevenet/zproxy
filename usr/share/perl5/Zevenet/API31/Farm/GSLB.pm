@@ -36,7 +36,7 @@ sub farms_gslb # ()
 		my $name   = &getFarmName( $file );
 		my $type   = &getFarmType( $name );
 		next unless $type eq 'gslb';
-		my $status = &getFarmStatus( $name );
+		my $status = &getFarmVipStatus( $name );
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
 
