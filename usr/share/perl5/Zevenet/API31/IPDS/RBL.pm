@@ -362,8 +362,24 @@ sub get_rbl_domains
 {
 	my $desc = "List the available RBL domains";
 
+	my @user;
+	my $id = 0;
+	foreach my $it ( @{&getRBLUserDomains()} )
+	{
+		push @user, { 'id' => $id, 'domain' => $it };
+		$id++;
+	}
+
+	my @preload;
+	$id = 0;
+	foreach my $it ( @{&getRBLPreloadedDomains()} )
+	{
+		push @preload, { 'id' => $id, 'domain' => $it };
+		$id++;
+	}
+
 	my $domains =
-	  { 'user' => &getRBLUserDomains(), 'preloaded' => &getRBLPreloadedDomains() };
+	{ 'user' => \@user, 'preloaded' => \@preload };
 
 	my $body = { description => $desc, params => $domains };
 
