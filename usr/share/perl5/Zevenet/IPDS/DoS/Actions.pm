@@ -125,7 +125,7 @@ sub runDOStopModule
 					my @farms = split ( ' ', $farmList );
 					foreach my $farmName ( @farms )
 					{
-						$output |= &setDOSStopRule( $rule, $farmName );
+						$output |= &runDOSStop( $rule, $farmName );
 					}
 				}
 			}
@@ -135,7 +135,7 @@ sub runDOStopModule
 			{
 				if ( $fileHandle->{ $rule }->{ 'status' } eq 'up' )
 				{
-					$output |= &setDOSStopRule( $rule );
+					$output |= &runDOSStop( $rule );
 				}
 			}
 		}
