@@ -204,7 +204,7 @@ sub getDOSLookForRule
 			# Look for farm rule
 			if ( $farmName )
 			{
-				if ( $rule =~ /^(\d+) .+DOS_${ruleName}_$farmName \*/ )
+				if ( $rule =~ /^(\d+) .+DOS,${ruleName},$farmName \*/ )
 				{
 					$lineNum = $1;
 					$flag    = 1;
@@ -215,7 +215,7 @@ sub getDOSLookForRule
 			else
 			{
 				my $farmNameFormat = &getValidFormat( 'farm_name' );
-				if ( $rule =~ /^(\d+) .+DOS_$ruleName/ )
+				if ( $rule =~ /^(\d+) .+DOS,$ruleName/ )
 				{
 					$lineNum      = $1;
 					$flag         = 1;
