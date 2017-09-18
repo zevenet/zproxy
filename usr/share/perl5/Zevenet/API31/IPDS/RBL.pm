@@ -237,7 +237,8 @@ sub set_rbl_rule
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		if ( &setRBLObjectRuleParam( $name, 'queue_size', $json_obj->{ 'queue_size' } ) )
+		if (
+			 &setRBLObjectRuleParam( $name, 'queue_size', $json_obj->{ 'queue_size' } ) )
 		{
 			my $msg = "Error, setting queue size.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -269,7 +270,8 @@ sub set_rbl_rule
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		if ( &setRBLObjectRuleParam( $name, 'cache_size', $json_obj->{ 'cache_size' } ) )
+		if (
+			 &setRBLObjectRuleParam( $name, 'cache_size', $json_obj->{ 'cache_size' } ) )
 		{
 			my $msg = "Error, setting cache size.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -285,7 +287,8 @@ sub set_rbl_rule
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		if ( &setRBLObjectRuleParam( $name, 'cache_time', $json_obj->{ 'cache_time' } ) )
+		if (
+			 &setRBLObjectRuleParam( $name, 'cache_time', $json_obj->{ 'cache_time' } ) )
 		{
 			my $msg = "Error, setting cache time.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -364,7 +367,7 @@ sub get_rbl_domains
 
 	my @user;
 	my $id = 0;
-	foreach my $it ( @{&getRBLUserDomains()} )
+	foreach my $it ( @{ &getRBLUserDomains() } )
 	{
 		push @user, { 'id' => $id, 'domain' => $it };
 		$id++;
@@ -372,14 +375,13 @@ sub get_rbl_domains
 
 	my @preload;
 	$id = 0;
-	foreach my $it ( @{&getRBLPreloadedDomains()} )
+	foreach my $it ( @{ &getRBLPreloadedDomains() } )
 	{
 		push @preload, { 'id' => $id, 'domain' => $it };
 		$id++;
 	}
 
-	my $domains =
-	{ 'user' => \@user, 'preloaded' => \@preload };
+	my $domains = { 'user' => \@user, 'preloaded' => \@preload };
 
 	my $body = { description => $desc, params => $domains };
 
@@ -410,7 +412,8 @@ sub add_rbl_domain
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $param_msg = &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
+	my $param_msg =
+	  &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
 	if ( $param_msg )
 	{
 		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
@@ -425,7 +428,7 @@ sub add_rbl_domain
 	&addRBLDomains( $domain );
 
 	my $domains = &getRBLUserDomains();
-	my $msg = "Added RBL domain '$json_obj->{ 'domain' }'";
+	my $msg     = "Added RBL domain '$json_obj->{ 'domain' }'";
 	my $body = {
 				 description => $desc,
 				 params      => { 'domains' => $domains },
@@ -438,29 +441,25 @@ sub add_rbl_domain
 #  PUT /ipds/rbl/domains/<domain>
 sub set_rbl_domain
 {
-	my $json_obj = shift;
-	my $domain   = shift;
+	my $json_obj  = shift;
+	my $domain_id = shift;
 
 	require Zevenet::IPDS::RBL::Config;
 
-	my $desc        = "Replace the domain $domain";
-	my @allowParams = ( "domain" );
-	my $new_domain  = $json_obj->{ 'domain' };
+	my $desc             = "Replace the domain $domain_id";
+	my @allowParams      = ( "domain" );
+	my $new_domain       = $json_obj->{ 'domain' };
+	my @user_domain_list = @{ &getRBLUserDomains() };
 
-	# check list exists
-	if ( grep ( /^$domain$/, @{ &getRBLPreloadedDomains() } ) )
-	{
-		my $msg = "Error, only can be modified the domains created by the user.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	my $tam = scalar @user_domain_list;
 
-	if ( !grep ( /^$domain$/, @{ &getRBLUserDomains() } ) )
+	if ( $domain_id >= scalar @user_domain_list )
 	{
-		my $msg = "$domain not found";
+		my $msg = "$domain_id not found";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	elsif ( grep ( /^$new_domain$/, @{ &getRBLDomains() } ) )
+	if ( grep ( /^$new_domain$/, @{ &getRBLDomains() } ) )
 	{
 		my $msg = "$new_domain already exists.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -479,6 +478,7 @@ sub set_rbl_domain
 	}
 
 	my @rules;
+	my $domain = $user_domain_list[$domain_id];
 
 	# get the rules where the domain is applied
 	foreach my $rule ( &getRBLRuleList() )
@@ -494,12 +494,20 @@ sub set_rbl_domain
 
 	&setRBLDomains( $domain, $new_domain );
 
-	my $domains = &getRBLUserDomains();
-	my $msg     = "RBL domain $new_domain has been modified successful.";
+	# Get response
+	my @user;
+	my $id = 0;
+	foreach my $it ( @{ &getRBLUserDomains() } )
+	{
+		push @user, { 'id' => $id, 'domain' => $it };
+		$id++;
+	}
+
+	my $msg = "RBL domain $new_domain has been modified successful.";
 	my $body = {
 				 description => $desc,
 				 message     => $msg,
-				 params      => { "domains" => $domains }
+				 params      => { "domains" => \@user }
 	};
 
 	require Zevenet::Cluster;
@@ -514,31 +522,27 @@ sub set_rbl_domain
 #  DELETE /ipds/rbl/domains/<domain>
 sub del_rbl_domain
 {
-	my $domain = shift;
+	my $domain_id = shift;
 
 	require Zevenet::IPDS::RBL::Config;
 
-	my $desc = "Delete the domain $domain";
+	my $desc = "Delete the domain $domain_id";
 
-	if ( grep ( /^$domain$/, @{ &getRBLPreloadedDomains() } ) )
+	my @user_domain_list = @{ &getRBLUserDomains() };
+	if ( $domain_id >= scalar @user_domain_list )
 	{
-		my $msg = "Error, only can be deleted the domains created by the user.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	if ( !grep ( /^$domain$/, @{ &getRBLDomains() } ) )
-	{
-		my $msg = "$domain doesn't exist.";
+		my $msg = "$domain_id not found";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	my $domain = $user_domain_list[$domain_id];
 	if ( &delRBLDomains( $domain ) )
 	{
-		my $msg = "Error deleting the RBL domain $domain";
+		my $msg = "Error deleting the RBL domain $domain_id";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $msg = "RBL domain $domain has been deleted successful.";
+	my $msg = "RBL domain $domain_id has been deleted successful.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",
@@ -568,8 +572,8 @@ sub add_domain_to_rbl
 
 	require Zevenet::IPDS::RBL::Config;
 
-	my $desc           = "Add the domain '$json_obj->{ 'domain' }' to the RBL rule $name";
-	my $domain         = $json_obj->{ 'domain' };
+	my $desc   = "Add the domain '$json_obj->{ 'domain' }' to the RBL rule $name";
+	my $domain = $json_obj->{ 'domain' };
 	my @requiredParams = ( "domain" );
 	my @optionalParams;
 
@@ -585,7 +589,8 @@ sub add_domain_to_rbl
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $param_msg = &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
+	my $param_msg =
+	  &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
 	if ( $param_msg )
 	{
 		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
@@ -650,7 +655,8 @@ sub del_domain_from_rbl
 	require Zevenet::Cluster;
 	&runZClusterRemoteManager( 'ipds_rbl', "restart", $name );
 
-	my $msg = "The domain $domain has been deleted successful from the RBL rule $name.";
+	my $msg =
+	  "The domain $domain has been deleted successful from the RBL rule $name.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",
