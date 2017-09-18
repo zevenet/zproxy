@@ -226,6 +226,9 @@ sub createLogMsg
 sub getIPDSfarmsRules
 {
 	my $farmName = shift;
+
+	require Config::Tiny;
+
 	my $rules;
 	my $fileHandle;
 	my @dosRules        = ();
@@ -276,6 +279,54 @@ sub getIPDSfarmsRules
 	$rules =
 	  { dos => \@dosRules, blacklists => \@blacklistsRules, rbl => \@rblRules };
 	return $rules;
+}
+
+# Get all IPDS rules
+sub getIPDSRules
+{
+	require Config::Tiny;
+
+	my @rules;
+	my $fileHandle;
+
+	my $dosConf        = &getGlobalConfiguration( 'dosConf' );
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my $rblPath        = &getGlobalConfiguration( 'configdir' ) . "/ipds/rbl";
+	my $rblConf        = "$rblPath/rbl.conf";
+
+	if ( -e $dosConf )
+	{
+		$fileHandle = Config::Tiny->read( $dosConf );
+		foreach my $key ( keys %{ $fileHandle } )
+		{
+			push @rules,
+			  {
+				'name' => $key,
+				'rule' => 'dos',
+				'type' => $fileHandle->{ $key }->{ type }
+			  };
+		}
+	}
+
+	if ( -e $blacklistsConf )
+	{
+		$fileHandle = Config::Tiny->read( $blacklistsConf );
+		foreach my $key ( keys %{ $fileHandle } )
+		{
+			push @rules, { 'name' => $key, 'rule' => 'blacklist' };
+		}
+	}
+
+	if ( -e $rblConf )
+	{
+		$fileHandle = Config::Tiny->read( $rblConf );
+		foreach my $key ( keys %{ $fileHandle } )
+		{
+			push @rules, { 'name' => $key, 'rule' => 'rbl' };
+		}
+	}
+
+	return \@rules;
 }
 
 1;
