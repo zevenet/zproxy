@@ -26,7 +26,7 @@ use strict;
 use File::stat;
 use Time::localtime;
 
-my $openssl = &getGlobalConfiguration('openssl');
+my $openssl = &getGlobalConfiguration( 'openssl' );
 
 =begin nd
 Function: getCertFiles
@@ -44,9 +44,10 @@ Bugs:
 See Also:
 	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
 =cut
+
 sub getCertFiles    # ()
 {
-	my $configdir = &getGlobalConfiguration('configdir');
+	my $configdir = &getGlobalConfiguration( 'configdir' );
 
 	opendir ( DIR, $configdir );
 	my @files = grep ( /.*\.pem$/, readdir ( DIR ) );
@@ -76,6 +77,7 @@ Bugs:
 See Also:
 	<getCertCN>, <getCertIssuer>, zapi/v3/certificates.cgi
 =cut
+
 sub getCleanBlanc    # ($vartoclean)
 {
 	my ( $vartoclean ) = @_;
@@ -107,7 +109,8 @@ Bugs:
 See Also:
 	<getCertCN>, <getCertIssuer>, <getCertCreation>, <getCertExpiration>, <getCertData>, zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
 =cut
-sub getCertType      # ($certfile)
+
+sub getCertType    # ($certfile)
 {
 	my ( $certfile ) = @_;
 	my $certtype = "none";
@@ -140,27 +143,25 @@ Bugs:
 See Also:
 	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
 =cut
+
 sub getCertCN    # ($certfile)
 {
 	my ( $certfile ) = @_;
 	my $certcn = "";
-	my @eject;
 
-	if ( &getCertType( $certfile ) eq "Certificate" )
+	my $type = ( &getCertType( $certfile ) eq "Certificate" ) ? "x509" : "req";
+	my @eject = `$openssl $type -noout -in $certfile -text | grep Subject:`;
+
+	my $string = $eject[0];
+	chomp $string;
+	$string =~ s/Subject://;
+
+	my @data = split ( /,/, $string );
+
+	foreach my $param ( @data )
 	{
-		@eject  = `$openssl x509 -noout -in $certfile -text | grep Subject:`;
-
-		@eject  = split ( /, |\/emailAddress=/, $eject[0] );
-		( $certcn ) = grep { s/CN ?= ?// } @eject;
+		$certcn = $1 if ( $param =~ /CN ?=(.+)/ );
 	}
-	else
-	{
-		@eject  = `$openssl req -noout -in $certfile -text | grep Subject:`;
-
-		@eject  = split ( /, |\/emailAddress=/, $eject[0] );
-		( $certcn ) = grep { s/CN ?= ?// } @eject;
-	}
-
 	$certcn = &getCleanBlanc( $certcn );
 
 	return $certcn;
@@ -182,6 +183,7 @@ Bugs:
 See Also:
 	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
 =cut
+
 sub getCertIssuer    # ($certfile)
 {
 	my ( $certfile ) = @_;
@@ -220,6 +222,7 @@ Bugs:
 See Also:
 	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
 =cut
+
 sub getCertCreation    # ($certfile)
 {
 	my ( $certfile ) = @_;
@@ -262,6 +265,7 @@ Bugs:
 See Also:
 	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
 =cut
+
 sub getCertExpiration    # ($certfile)
 {
 	my ( $certfile ) = @_;
@@ -297,15 +301,16 @@ Bugs:
 See Also:
 	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
 =cut
+
 sub getFarmCertUsed    #($cfile)
 {
 	my ( $cfile ) = @_;
 
 	require Zevenet::Farm::Core;
 
-	my $configdir = &getGlobalConfiguration('configdir');
-	my @farms  = &getFarmsByType( "https" );
-	my $output = -1;
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my @farms     = &getFarmsByType( "https" );
+	my $output    = -1;
 
 	for ( @farms )
 	{
@@ -339,6 +344,7 @@ Bugs:
 See Also:
 	zapi/v3/certificates.cgi
 =cut
+
 sub checkFQDN    # ($certfqdn)
 {
 	my ( $certfqdn ) = @_;
@@ -381,6 +387,7 @@ Bugs:
 See Also:
 	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
 =cut
+
 sub delCert    # ($certname)
 {
 	my ( $certname ) = @_;
@@ -391,11 +398,11 @@ sub delCert    # ($certname)
 
 	if ( 'zlbcertfile.pem' =~ /^$certname$/ )
 	{
-		$certdir = &getGlobalConfiguration('basedir');
+		$certdir = &getGlobalConfiguration( 'basedir' );
 	}
 	else
 	{
-		$certdir = &getGlobalConfiguration('configdir');
+		$certdir = &getGlobalConfiguration( 'configdir' );
 	}
 
 	# verify existance in config directory for security reasons
@@ -405,7 +412,7 @@ sub delCert    # ($certname)
 
 	my $files_removed = unlink ( "$certdir\/$file[0]" );
 
-	&zenlog( "Error removing certificate $certdir\/$file[0]" ) if ! $files_removed;
+	&zenlog( "Error removing certificate $certdir\/$file[0]" ) if !$files_removed;
 
 	return $files_removed;
 }
@@ -438,6 +445,7 @@ Bugs:
 See Also:
 	zapi/v3/certificates.cgi
 =cut
+
 sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, $certorganization, $certdivision, $certmail, $certkey, $certpassword)
 {
 	my (
@@ -446,9 +454,9 @@ sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, 
 		 $certkey,      $certpassword
 	) = @_;
 
-	my $configdir = &getGlobalConfiguration('configdir');
-	my $output; 
-	
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $output;
+
 	##sustituir los espacios por guiones bajos en el nombre de archivo###
 	if ( $certpassword eq "" )
 	{
@@ -456,12 +464,16 @@ sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, 
 			"Creating CSR: $openssl req -nodes -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\""
 		);
 		$output =
-		  system ("$openssl req -nodes -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\" 2> /dev/null");
+		  system (
+			"$openssl req -nodes -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\" 2> /dev/null"
+		  );
 	}
 	else
 	{
 		$output =
-		  system ("$openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\" 2> /dev/null");
+		  system (
+			"$openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\" 2> /dev/null"
+		  );
 		&zenlog(
 			"Creating CSR: $openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\""
 		);
@@ -485,17 +497,18 @@ Bugs:
 See Also:
 	zapi/v3/certificates.cgi
 =cut
+
 sub getCertData    # ($certfile)
 {
 	my ( $certfile ) = @_;
 
-	my $configdir = &getGlobalConfiguration('configdir');
-	my $filepath     = "$configdir\/$certfile";
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $filepath  = "$configdir\/$certfile";
 	my @eject;
 
 	if ( $certfile eq "zlbcertfile.pem" )
 	{
-		my $basedir = &getGlobalConfiguration('basedir');
+		my $basedir = &getGlobalConfiguration( 'basedir' );
 		$filepath = "$basedir\/$certfile";
 	}
 
@@ -531,11 +544,12 @@ Bugs:
 See Also:
 
 =cut
+
 sub createPemFromKeyCRT    # ($keyfile,$crtfile,$certautfile,$tmpdir)
 {
 	my ( $keyfile, $crtfile, $certautfile, $tmpdir ) = @_;
 
-	my $path    = &getGlobalConfiguration('configdir');
+	my $path    = &getGlobalConfiguration( 'configdir' );
 	my $buff    = "";
 	my $pemfile = $keyfile;
 	$pemfile =~ s/\.key$/\.pem/;
