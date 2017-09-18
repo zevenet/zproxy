@@ -708,8 +708,8 @@ sub add_rbl_to_farm
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $error = &addRBLFarm( $farmName, $name );
-	if ( $error )
+	&addRBLFarm( $farmName, $name );
+	if ( ! grep ( /^$farmName$/, @{ &getRBLFarm( $name, 'farms' ) } ) )
 	{
 		my $msg = "Error, applying $name to $farmName";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -759,8 +759,9 @@ sub del_rbl_from_farm
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $error = &delRBLFarm( $farmName, $name );
-	if ( $error )
+	&delRBLFarm( $farmName, $name );
+
+	if ( grep ( /^$farmName$/, @{ &getRBLFarm( $name, 'farms' ) } ) )
 	{
 		my $msg = "Error, removing $name rule from $farmName.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

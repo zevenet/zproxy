@@ -350,19 +350,14 @@ sub add_dos_to_farm
 		}
 		else
 		{
-			&setDOSCreateRule( $name, $farmName );
+			require Zevenet::IPDS::DoS::Runtime;
+			&setDOSApplyRule( $name, $farmName );
 			
-			# stop rule if the farm is down
-			if ( &getFarmStatus ( $farmName ) eq 'down' )
-			{
-				&setDOSStopRule( $name, $farmName );
-			}
-
 			my $confFile = &getGlobalConfiguration( 'dosConf' );
 			
 			# check output
-			my $output = &getDOSParam ( $name );
-			if ( grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
+			my $output = &getDOSParam ( $name, 'farms' );
+			if ( grep ( /^$farmName$/, @{ $output } ) )
 			{
 				$errormsg = "DoS rule $name was applied successful to the farm $farmName.";
 
@@ -434,7 +429,8 @@ sub del_dos_from_farm
 		}
 		else
 		{
-			&setDOSDeleteRule( $name, $farmName );
+			require Zevenet::IPDS::DoS::Runtime;
+			&setDOSUnsetRule( $name, $farmName );
 
 			# check output
 			my $output = &getDOSParam ( $name );

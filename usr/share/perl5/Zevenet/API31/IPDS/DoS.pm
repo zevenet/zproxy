@@ -328,7 +328,7 @@ sub add_dos_to_farm
 	&setDOSApplyRule( $name, $farmName );
 
 	my $output = &getDOSZapiRule( $name );
-	if ( grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
+	if ( ! grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 	{
 		my $msg = "Error, enabling $name rule.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -385,7 +385,7 @@ sub del_dos_from_farm
 
 	# check output
 	my $output = &getDOSZapiRule( $name );
-	if ( !grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
+	if ( grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 	{
 		my $msg = "Error, removing $name rule from $farmName.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

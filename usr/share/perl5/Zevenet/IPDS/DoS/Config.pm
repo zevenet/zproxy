@@ -243,7 +243,7 @@ Returns:
 sub deleteDOSRule
 {
 	my $name = shift;
-
+	
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 	$fileHandle = Config::Tiny->read( $confFile );

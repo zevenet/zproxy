@@ -694,7 +694,7 @@ sub setDOSUnsetRule
 	my ( $ruleName, $farmName ) = @_;
 
 	require Config::Tiny;
-
+	
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 	my $output;
