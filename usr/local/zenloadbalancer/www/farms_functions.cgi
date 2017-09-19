@@ -1463,7 +1463,7 @@ sub getFarmProto    # ($farm_name)
 		$output = "UDP";
 	}
 	
-	elsif ( $farm_type eq "http" )
+	elsif ( $farm_type =~ /http/i )
 	{
 		$output = "TCP";
 	}
