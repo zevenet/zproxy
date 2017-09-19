@@ -53,12 +53,17 @@ sub addIPDSIptablesChain
 	my $whitelist_chain = &getIPDSChain( "whitelist" );
 	my $blacklist_chain = &getIPDSChain( "blacklist" );
 	my $rbl_chain       = &getIPDSChain( "rbl" );
+	my $dos_chain       = &getIPDSChain( "dos" );
 	my @chains          = ( $whitelist_chain, $blacklist_chain, $rbl_chain );
 	my $error;
 
+	# creating chains
 	$error |= &iptSystem( "iptables -N $whitelist_chain -t raw" );
 	$error |= &iptSystem( "iptables -N $blacklist_chain -t raw" );
 	$error |= &iptSystem( "iptables -N $rbl_chain -t raw" );
+
+	$error |= &iptSystem( "iptables -N $whitelist_chain -t mangle" );
+	$error |= &iptSystem( "iptables -N $dos_chain -t mangle" );
 
 	# link this chains
 	$error |= &iptSystem( "$iptables -A PREROUTING -t raw -j $whitelist_chain" );
@@ -66,10 +71,16 @@ sub addIPDSIptablesChain
 	  &iptSystem( "$iptables -A $whitelist_chain -t raw -j $blacklist_chain" );
 	$error |= &iptSystem( "$iptables -A $blacklist_chain -t raw -j $rbl_chain" );
 
+	$error |= &iptSystem( "$iptables -A PREROUTING -t mangle -j $whitelist_chain" );
+	$error |= &iptSystem( "$iptables -A $whitelist_chain -t mangle -j $dos_chain" );
+
 	# last sentence in each chain is return to above chain
 	$error |= &iptSystem( "$iptables -A $whitelist_chain -t raw -j RETURN" );
 	$error |= &iptSystem( "$iptables -A $blacklist_chain -t raw -j RETURN" );
 	$error |= &iptSystem( "$iptables -A $rbl_chain -t raw -j RETURN" );
+
+	$error |= &iptSystem( "$iptables -A $whitelist_chain -t mangle -j RETURN" );
+	$error |= &iptSystem( "$iptables -A $dos_chain -t mangle -j RETURN" );
 
 	if ( $error )
 	{
@@ -98,17 +109,23 @@ sub delIPDSIptablesChain
 	my $whitelist_chain = &getIPDSChain( "whitelist" );
 	my $blacklist_chain = &getIPDSChain( "blacklist" );
 	my $rbl_chain       = &getIPDSChain( "rbl" );
+	my $dos_chain       = &getIPDSChain( "dos" );
 	my $error;
 
 	$error |= &iptSystem( "$iptables -F $whitelist_chain -t raw" );
 	$error |= &iptSystem( "$iptables -F $blacklist_chain -t raw" );
 	$error |= &iptSystem( "$iptables -F $rbl_chain -t raw" );
+	$error |= &iptSystem( "$iptables -F $whitelist_chain -t mangle" );
+	$error |= &iptSystem( "$iptables -F $dos_chain -t mangle" );
 
 	$error |= &iptSystem( "$iptables -D PREROUTING -t raw -j $whitelist_chain" );
+	$error |= &iptSystem( "$iptables -D PREROUTING -t mangle -j $whitelist_chain" );
 
 	$error |= &iptSystem( "$iptables -X $blacklist_chain -t raw" );
 	$error |= &iptSystem( "$iptables -X $whitelist_chain -t raw" );
 	$error |= &iptSystem( "$iptables -X $rbl_chain -t raw" );
+	$error |= &iptSystem( "$iptables -X $whitelist_chain -t mangle" );
+	$error |= &iptSystem( "$iptables -X $dos_chain -t mangle" );
 
 	if ( $error )
 	{

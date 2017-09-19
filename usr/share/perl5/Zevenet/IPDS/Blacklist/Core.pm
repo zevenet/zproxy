@@ -90,14 +90,20 @@ sub getBLStatus
 sub getBLListNoUsed
 {
 	my $blacklist = shift;
+	my $ipset     = &getGlobalConfiguration( 'ipset' );
 
-	require Zevenet::Validate;
+	#~ require Zevenet::Validate;
+	my $matchs = 0;
+	my @cmd    = `$ipset -L -terse $blacklist`;
 
-	my @rules     = @{ &getBLRunningRules() };
-	my $farm_name = &getValidFormat( 'farm_name' );
-
-	my $matchs =
-	  grep ( /^\d+ .+match-set ($blacklist) src .+BL,$blacklist,/, @rules );
+	foreach my $line ( @cmd )
+	{
+		if ( $line =~ /References: (\d+)/ )
+		{
+			$matchs = $1;
+			last;
+		}
+	}
 
 	return $matchs;
 }

@@ -176,12 +176,16 @@ sub setDOSBogusTcpFlagsRule
 	my ( $ruleName, $ruleOptRef ) = @_;
 	my %ruleOpt = %{ $ruleOptRef };
 
+	require Zevenet::IPDS::Core;
+	my $chain = &getIPDSChain( 'dos' );
+	my $table = "mangle";
+
 	#~ my $rule    = "bogustcpflags";
 	my $logMsg = &createLogMsg( "DOS", $ruleName, $ruleOpt{ 'farmName' } );
 
 # /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE -j DROP
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -t raw -A PREROUTING "    # select iptables struct
+	  . " -t $table -I $chain "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
@@ -191,7 +195,7 @@ sub setDOSBogusTcpFlagsRule
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,SYN FIN,SYN -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -t raw -A PREROUTING "    # select iptables struct
+	  . " -t $table -I $chain "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,SYN FIN,SYN "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
@@ -201,7 +205,7 @@ sub setDOSBogusTcpFlagsRule
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags SYN,RST SYN,RST -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -t raw -A PREROUTING "    # select iptables struct
+	  . " -t $table -I $chain "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags SYN,RST SYN,RST "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
@@ -211,7 +215,7 @@ sub setDOSBogusTcpFlagsRule
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags SYN,FIN SYN,FIN -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -t raw -A PREROUTING "    # select iptables struct
+	  . " -t $table -I $chain "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags SYN,FIN SYN,FIN "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
@@ -221,7 +225,7 @@ sub setDOSBogusTcpFlagsRule
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,RST FIN,RST -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -t raw -A PREROUTING "    # select iptables struct
+	  . " -t $table -I $chain "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,RST FIN,RST "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
@@ -231,17 +235,17 @@ sub setDOSBogusTcpFlagsRule
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags FIN,ACK FIN -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -t raw -A PREROUTING "    # select iptables struct
+	  . " -t $table -I $chain "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags FIN,ACK FIN "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
 
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	return $output if ( $output );
-	
+
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ACK,URG URG -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -t raw -A PREROUTING "    # select iptables struct
+	  . " -t $table -I $chain "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ACK,URG URG "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
@@ -251,7 +255,7 @@ sub setDOSBogusTcpFlagsRule
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ACK,FIN FIN -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -t raw -A PREROUTING "    # select iptables struct
+	  . " -t $table -I $chain "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ACK,FIN FIN "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
@@ -261,7 +265,7 @@ sub setDOSBogusTcpFlagsRule
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ACK,PSH PSH -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -t raw -A PREROUTING "    # select iptables struct
+	  . " -t $table -I $chain "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ACK,PSH PSH "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
@@ -272,7 +276,7 @@ sub setDOSBogusTcpFlagsRule
 	#  Christmas tree packet. Used to analyze tcp response and to elaborate a atack
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL ALL -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -t raw -A PREROUTING "    # select iptables struct
+	  . " -t $table -I $chain "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL ALL "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
@@ -282,7 +286,7 @@ sub setDOSBogusTcpFlagsRule
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL NONE -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -t raw -A PREROUTING "    # select iptables struct
+	  . " -t $table -I $chain "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL NONE "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
@@ -292,7 +296,7 @@ sub setDOSBogusTcpFlagsRule
 
 	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL FIN,PSH,URG -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -t raw -A PREROUTING "    # select iptables struct
+	  . " -t $table -I $chain "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL FIN,PSH,URG "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
@@ -300,9 +304,9 @@ sub setDOSBogusTcpFlagsRule
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	return $output if ( $output );
 
-	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL SYN,FIN,PSH,URG -j DROP
+# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL SYN,FIN,PSH,URG -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -t raw -A PREROUTING "    # select iptables struct
+	  . " -t $table -I $chain "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL SYN,FIN,PSH,URG "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
@@ -310,9 +314,9 @@ sub setDOSBogusTcpFlagsRule
 	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	return $output if ( $output );
 
-	# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL SYN,RST,ACK,FIN,URG -j DROP
+# /sbin/iptables -t raw -A PREROUTING -p tcp --tcp-flags ALL SYN,RST,ACK,FIN,URG -j DROP
 	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -t raw -A PREROUTING "    # select iptables struct
+	  . " -t $table -I $chain "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags ALL SYN,RST,ACK,FIN,URG "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
@@ -341,60 +345,31 @@ sub setDOSLimitConnsRule
 	my ( $ruleName, $ruleOptRef ) = @_;
 	my %ruleOpt = %{ $ruleOptRef };
 
-	require Zevenet::Farm::Core;
-	require Zevenet::Farm::Backend;
+	require Zevenet::IPDS::Core;
+	my $chain = &getIPDSChain( 'dos' );
+	my $table = "mangle";
 
 	#~ my $rule    = "limitconns";
 	my $logMsg = &createLogMsg( "DOS", $ruleName, $ruleOpt{ 'farmName' } );
-	my $chain = "INPUT";               # default, this chain is for L7 apps
-	my $dest  = $ruleOpt{ 'vip' };
-	my $port  = $ruleOpt{ 'vport' };
+
+	#~ my $chain = "INPUT";               # default, this chain is for L7 apps
+	my $dest = $ruleOpt{ 'vip' };
+	my $port = $ruleOpt{ 'vport' };
 	my $output;
 	my $limit_conns = &getDOSParam( $ruleName, 'limit_conns' );
 
-	# especific values to L4 farm
-	if ( &getFarmType( $ruleOpt{ 'farmName' } ) eq "l4xnat" )
-	{
-		$chain = "FORWARD";
-		my @run = &getFarmServers( $ruleOpt{ 'farmName' } );
-		for my $l4Backends ( @run )
-		{
-			my @l_serv = split ( "\;", $l4Backends );
-			$dest = "-d $l_serv[1]";
-			$port = "--dport $l_serv[2]";
+	# /sbin/iptables -A FORWARD -t filter -d 1.1.1.1,54.12.1.1 -p tcp --dport 5 -m connlimit --connlimit-above 5 -m comment --comment "DOS_limitconns_aa" -j REJECT --reject-with tcp-reset
+	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
+	  . " -I $chain -t $table "                           # select iptables struct
+	  . "$dest $ruleOpt{ 'protocol' } $port "             # who is destined
+	  . "-m connlimit --connlimit-above $limit_conns "    # rules for block
+	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
 
-		# /sbin/iptables -A FORWARD -t filter -d 1.1.1.1,54.12.1.1 -p tcp --dport 5 -m connlimit --connlimit-above 5 -m comment --comment "DOS,limitconns,aa" -j REJECT --reject-with tcp-reset
-			my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-			  . " -A $chain -t filter "                           # select iptables struct
-			  . "$dest $ruleOpt{ 'protocol' } $port "             # who is destined
-			  . "-m connlimit --connlimit-above $limit_conns "    # rules for block
-			  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
+	# thre rule already exists
+	return 0 if ( &getIPDSRuleExists( "$cmd -j DROP" ) );
 
-			# thre rule already exists
-			return 0 if ( &getIPDSRuleExists( "$cmd -j REJECT --reject-with tcp-reset" ) );
-
-			$output = &iptSystem( "$cmd -j LOG --log-prefix \"$logMsg\" --log-level 4 " );
-			$output = &iptSystem( "$cmd -j REJECT --reject-with tcp-reset" );
-		}
-	}
-
-	else
-	{
-		# /sbin/iptables -A FORWARD -t filter -d 1.1.1.1,54.12.1.1 -p tcp --dport 5 -m connlimit --connlimit-above 5 -m comment --comment "DOS_limitconns_aa" -j REJECT --reject-with tcp-reset
-		my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-		  . " -A $chain -t filter "                           # select iptables struct
-		  . "$dest $ruleOpt{ 'protocol' } $port "             # who is destined
-		  . "-m connlimit --connlimit-above $limit_conns "    # rules for block
-		  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
-
-		# thre rule already exists
-		return 0 if ( &getIPDSRuleExists( "$cmd -j REJECT --reject-with tcp-reset" ) );
-
-		$output =
-		  &iptSystem( "$cmd -j LOG --log-prefix \"$logMsg\" --log-level 4 " );
-
-		$output = &iptSystem( "$cmd -j REJECT --reject-with tcp-reset" );
-	}
+	$output = &iptSystem( "$cmd -j LOG --log-prefix \"$logMsg\" --log-level 4 " );
+	$output = &iptSystem( "$cmd -j DROP" );
 
 	return $output;
 }
@@ -419,6 +394,10 @@ sub setDOSLimitRstRule
 	my ( $ruleName, $ruleOptRef ) = @_;
 	my %ruleOpt = %{ $ruleOptRef };
 
+	require Zevenet::IPDS::Core;
+	my $chain = &getIPDSChain( 'dos' );
+	my $table = "mangle";
+
 	#~ my $rule        = "limitrst";
 	my $logMsg = &createLogMsg( "DOS", $ruleName, $ruleOpt{ 'farmName' } );
 	my $limit       = &getDOSParam( $ruleName, 'limit' );
@@ -426,25 +405,25 @@ sub setDOSLimitRstRule
 
 # /sbin/iptables -A PREROUTING -t mangle -p tcp --tcp-flags RST RST -m limit --limit 2/s --limit-burst 2 -j ACCEPT
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -A PREROUTING -t mangle "    # select iptables struct
+	  . " -I $chain -t $table "    # select iptables struct
 	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags RST RST -m limit --limit $limit/s --limit-burst $limit_burst " # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\"";          # comment
 
+	# /sbin/iptables -I PREROUTING -t mangle -p tcp --tcp-flags RST RST -j DROP
+	my $cmd2 = &getBinVersion( $ruleOpt{ 'farmName' } )
+	  . " -I $chain -t $table "    # select iptables struct
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
+	  . "--tcp-flags RST RST "    # rules for block
+	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
+
 	# thre rule already exists
 	return 0 if ( &getIPDSRuleExists( $cmd ) );
 
-	my $output = &iptSystem( $cmd );
+	my $output = &setIPDSDropAndLog( $cmd2, $logMsg );
 	return $output if ( $output );
 
-	# /sbin/iptables -I PREROUTING -t mangle -p tcp --tcp-flags RST RST -j DROP
-	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-		. " -A PREROUTING -t mangle "    # select iptables struct
-		. "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
-		. "--tcp-flags RST RST "    # rules for block
-		. "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
-
-	$output = &setIPDSDropAndLog( $cmd, $logMsg );
+	$output = &iptSystem( $cmd );
 	return $output;
 }
 
@@ -467,6 +446,10 @@ sub setDOSLimitSecRule
 	my ( $ruleName, $ruleOptRef ) = @_;
 	my %ruleOpt = %{ $ruleOptRef };
 
+	require Zevenet::IPDS::Core;
+	my $chain = &getIPDSChain( 'dos' );
+	my $table = "mangle";
+
 	#~ my $rule        = "limitsec";
 	my $logMsg = &createLogMsg( "DOS", $ruleName, $ruleOpt{ 'farmName' } );
 	my $limit       = &getDOSParam( $ruleName, 'limit' );
@@ -474,25 +457,26 @@ sub setDOSLimitSecRule
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp -m conntrack --ctstate NEW -m limit --limit 60/s --limit-burst 20 -j ACCEPT
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -A PREROUTING -t mangle "    # select iptables struct
+	  . " -I $chain -t $table "    # select iptables struct
 	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "-m conntrack --ctstate NEW -m limit --limit $limit/s --limit-burst $limit_burst " # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\"";                 # comment
 
+  # /sbin/iptables -I PREROUTING -t mangle -p tcp -m conntrack --ctstate NEW -j DROP
+	my $cmd2 = &getBinVersion( $ruleOpt{ 'farmName' } )
+	  . " -I $chain -t $table "    # select iptables struct
+	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
+	  . "-m conntrack --ctstate NEW "    # rules for block
+	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
+
 	# thre rule already exists
 	return 0 if ( &getIPDSRuleExists( $cmd ) );
 
-	my $output = &iptSystem( $cmd );
+	my $output = &setIPDSDropAndLog( $cmd2, $logMsg );
 	return $output if ( $output );
 
-	# /sbin/iptables -I PREROUTING -t mangle -p tcp -m conntrack --ctstate NEW -j DROP
-	$cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-		. " -A PREROUTING -t mangle "    # select iptables struct
-		. "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
-		. "-m conntrack --ctstate NEW "    # rules for block
-		. "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
+	$output = &iptSystem( $cmd );
 
-	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 	return $output;
 }
 
@@ -519,7 +503,7 @@ sub setDOSDropIcmpRule
 
 	# /sbin/iptables -t raw -A PREROUTING -p icmp -j DROP
 	my $cmd = &getGlobalConfiguration( 'iptables' )
-	  . " -t raw -A PREROUTING "                   # select iptables struct
+	  . " -t raw -I PREROUTING "                   # select iptables struct
 	  . "-p icmp "                                 # rules for block
 	  . "-m comment --comment \"DOS_${rule}\"";    # comment
 
@@ -550,6 +534,10 @@ sub setDOSSshBruteForceRule
 {
 	require Zevenet::System::SSH;
 
+	require Zevenet::IPDS::Core;
+	my $chain = &getIPDSChain( 'dos' );
+	my $table = "mangle";
+
 	my $rule = 'ssh_brute_force';
 	my $hits = &getDOSParam( $rule, 'hits' );
 	my $time = &getDOSParam( $rule, 'time' );
@@ -559,31 +547,30 @@ sub setDOSSshBruteForceRule
 	my $port    = $sshconf->{ 'port' };
 	my $logMsg  = &createLogMsg( $rule );
 	my $output;
-	my $cmd;
 
-	# /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --set
-	$cmd =
+# /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --set
+	my $cmd =
 	  &getGlobalConfiguration( 'iptables' )
-	  . " -A PREROUTING -t mangle "                      # select iptables struct
+	  . " -I $chain -t $table "                          # select iptables struct
 	  . "-p tcp --dport $port "                          # who is destined
 	  . "-m conntrack --ctstate NEW -m recent --set "    # rules for block
 	  . "-m comment --comment \"DOS,$rule\"";            # comment
 
-	# thre rule already exists
-	return 0 if ( &getIPDSRuleExists( $cmd ) );
-
-	$output = &iptSystem( $cmd );
-	return $output if ( $output );
-	
-	# /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --update --seconds 60 --hitcount 10 -j DROP
-	$cmd =
+# /sbin/iptables -I PREROUTING -t mangle -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --update --seconds 60 --hitcount 10 -j DROP
+	my $cmd2 =
 	  &getGlobalConfiguration( 'iptables' )
-	  . " -A PREROUTING -t mangle "    # select iptables struct
-	  . "-p tcp --dport $port "        # who is destined
+	  . " -I $chain -t $table "                          # select iptables struct
+	  . "-p tcp --dport $port "                          # who is destined
 	  . "-m conntrack --ctstate NEW -m recent --update --seconds $time --hitcount $hits " # rules for block
 	  . "-m comment --comment \"DOS,$rule\"";                                             # comment
 
-	$output = &setIPDSDropAndLog( $cmd, $logMsg );
+	# thre rule already exists
+	return 0 if ( &getIPDSRuleExists( $cmd ) );
+
+	$output = &setIPDSDropAndLog( $cmd2, $logMsg );
+	return $output if ( $output );
+
+	$output = &iptSystem( $cmd );
 	return $output;
 }
 
@@ -694,7 +681,7 @@ sub setDOSUnsetRule
 	my ( $ruleName, $farmName ) = @_;
 
 	require Config::Tiny;
-	
+
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 	my $output;

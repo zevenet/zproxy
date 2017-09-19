@@ -334,6 +334,7 @@ sub setBLCreateRule
 	my $cmd;
 	my $output;
 	my $chain;
+	my @tables;
 	my $action = &getBLParam( $listName, 'policy' );
 
 	if ( &getBLStatus( $listName ) eq "down" )
@@ -348,21 +349,23 @@ sub setBLCreateRule
 	if ( $action eq "allow" )
 	{
 		$chain = &getIPDSChain( "whitelist" );
+		@tables = ( 'raw', 'mangle' );
 	}
 	elsif ( $action eq "deny" )
 	{
-		$chain = &getIPDSChain( "blacklist" );
+		$chain  = &getIPDSChain( "blacklist" );
+		@tables = ( 'raw' );
 	}
 	else
 	{
-		$output = -1;
 		&zenlog(
 				"The parameter 'action' isn't valid in function 'setBLCreateIptableCmd'." );
+		return -1;
 	}
 
 	$add = '-I';
 
-	if ( !$output )
+	foreach my $table ( @tables )
 	{
 		# -d farmIP, -p PROTOCOL --dport farmPORT
 		my $vip       = &getFarmVip( 'vip',  $farmName );
@@ -391,7 +394,7 @@ sub setBLCreateRule
 
 # iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "BL,rulename,farmname"
 			$cmd = &getGlobalConfiguration( 'iptables' )
-			  . " $add $chain -t raw -m set --match-set $listName src $farmOpt -m comment --comment \"BL,$listName,$farmName\"";
+			  . " $add $chain -t $table -m set --match-set $listName src $farmOpt -m comment --comment \"BL,$listName,$farmName\"";
 
 			if ( $action eq "deny" )
 			{
@@ -401,7 +404,7 @@ sub setBLCreateRule
 			else
 			{
 				# the rule already exists
-				if ( ! &getIPDSRuleExists( $cmd ) )
+				if ( !&getIPDSRuleExists( $cmd ) )
 				{
 					$output = &iptSystem( "$cmd -j ACCEPT" );
 				}
@@ -441,30 +444,39 @@ sub setBLDeleteRule
 	require Zevenet::Netfilter;
 	require Zevenet::IPDS::Core;
 
-	my $chain = 'blacklist';
-	$chain = "whitelist" if ( &getBLParam( $listName, 'policy' ) eq "allow" );
+	my $chain  = 'blacklist';
+	my @tables = ( 'raw' );
+	if ( &getBLParam( $listName, 'policy' ) eq "allow" )
+	{
+		$chain = "whitelist";
+		@tables = ( 'raw', 'mangle' );
+	}
 
 	$chain = &getIPDSChain( $chain );
-
 	my $output;
 
-	# Get line number
-	my @rules = &getIptListV4( 'raw', $chain );
-	@rules = grep ( /^(\d+) .+match-set $listName src .+BL,$listName,$farmName/, @rules );
-
-	my $lineNum = 0;
-	my $size    = scalar @rules - 1;
-	my $cmd;
-	for ( ; $size >= 0 ; $size-- )
+	foreach my $table ( @tables )
 	{
-		if ( $rules[$size] =~ /^(\d+) / )
+		# Get line number
+		my @rules = &getIptListV4( $table, $chain );
+		@rules =
+		  grep ( /^(\d+) .+match-set $listName src .+BL,$listName,$farmName/, @rules );
+
+		my $lineNum = 0;
+		my $size    = scalar @rules - 1;
+		my $cmd;
+		for ( ; $size >= 0 ; $size-- )
 		{
-			$lineNum = $1;
-			# Delete
-			#	iptables -D PREROUTING -t raw 3
-			$cmd =
-			  &getGlobalConfiguration( 'iptables' ) . " --table raw -D $chain $lineNum";
-			&iptSystem( $cmd );
+			if ( $rules[$size] =~ /^(\d+) / )
+			{
+				$lineNum = $1;
+
+				# Delete
+				#	iptables -D PREROUTING -t raw 3
+				$cmd =
+				  &getGlobalConfiguration( 'iptables' ) . " --table $table -D $chain $lineNum";
+				&iptSystem( $cmd );
+			}
 		}
 	}
 

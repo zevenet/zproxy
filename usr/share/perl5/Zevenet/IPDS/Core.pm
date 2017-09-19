@@ -44,7 +44,7 @@ sub getIPDSChain
 		'whitelist' => 'WHITELIST',
 		'rbl'       => 'RBL',
 
-		#~ 'dos' => 'DOS',	# DoS uses different chains of netfilter
+		'dos' => 'DOS',	# DoS uses different chains of netfilter
 	);
 
 	return $ipds_chains{ $ipds_module };

@@ -179,8 +179,11 @@ sub getDOSLookForRule
 	require Zevenet::Validate;
 
 	# table and chain where there are saved dos rules
-	my @table = ( 'raw',        'filter', 'filter',  'mangle' );
-	my @chain = ( 'PREROUTING', 'INPUT',  'FORWARD', 'PREROUTING' );
+	#~ my @table = ( 'raw',        'filter', 'filter',  'mangle' );
+	#~ my @chain = ( 'PREROUTING', 'INPUT',  'FORWARD', 'PREROUTING' );
+	my $dos_chain = &getIPDSChain( 'dos' );
+	my @table = ( 'mangle' );
+	my @chain = ( $dos_chain );
 	my $farmNameRule;
 
 	my @output;
