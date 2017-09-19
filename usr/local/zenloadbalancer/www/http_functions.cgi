@@ -2119,14 +2119,14 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 	foreach ( @content )
 	{
 		my @serviceline;
-		if ( $_ =~ /Service/ )
+		if ( $_ =~ /\d+\. Service/ )
 		{
 			@serviceline = split ( "\ ", $_ );
 			$serviceline[2] =~ s/"//g;
 			chomp ( $serviceline[2] );
 			$service = $serviceline[2];
 		}
-		if ( $_ =~ /Backend/ )
+		if ( $_ =~ /\d+\. Backend/ )
 		{
 			#backend ID
 			my @backends = split ( "\ ", $_ );

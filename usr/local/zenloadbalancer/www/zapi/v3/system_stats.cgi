@@ -529,7 +529,7 @@ sub farm_stats # ( $farmname )
 
 		foreach ( @content )
 		{
-			if ( $_ =~ /Service/ )
+			if ( $_ =~ /\d+\. Service/ )
 			{
 				my @l = split ( "\ ", $_ );
 				$sv = $l[2];
