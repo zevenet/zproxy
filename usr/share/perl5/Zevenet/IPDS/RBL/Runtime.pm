@@ -60,10 +60,10 @@ sub getRBLFarmMatch
 	# blank chain
 	if ( $type eq 'l4xnat' )
 	{
-		my $protocolL4 = &getFarmProto( $farmname );
+		require Zevenet::Farm::L4xNAT::Validate;
 
 		# all ports
-		if ( $protocol eq 'all' )
+		if ( $vport eq '*' )
 		{
 			$match = "-d $vip --protocol tcp";
 		}
@@ -77,14 +77,14 @@ sub getRBLFarmMatch
 		# unique port
 		else
 		{
-			$match = "-d $vip --protocol tcp --dports $vport";
+			$match = "-d $vip --protocol tcp --dport $vport";
 		}
 	}
 
 	# farm using tcp and udp protocol
 	elsif ( $type eq 'gslb' )
 	{
-		$match = "-d $vip --protocol tcp --dports $vport";
+		$match = "-d $vip --protocol tcp --dport $vport";
 	}
 
 	# http farms

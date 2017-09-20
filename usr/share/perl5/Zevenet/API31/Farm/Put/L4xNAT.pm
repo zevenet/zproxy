@@ -242,7 +242,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		$restart_flag = "true";
 	}
 
-	if ( exists ( $json_obj->{ vip } )
+	if ( exists ( $json_obj->{ vip } ) )
 	{
 		# the ip must exist in some interface
 		require Zevenet::Net::Interface;
@@ -290,6 +290,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# Modify only vport
 	if ( exists ( $json_obj->{ vport } ) && !exists ( $json_obj->{ vip } ) )
 	{
+		require Zevenet::Farm::Config;
 		if ( &setFarmVirtualConf( $vip, $json_obj->{ vport }, $farmname ) )
 		{
 			my $msg = "Invalid vport.";
