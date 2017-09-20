@@ -1597,7 +1597,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	my $farm_name = shift;    # input
 	my $writeconf = shift;    # input
 
-	&zlog( "Stopping farm $farm_name" ) if &debug == 2;
+	&zlog( "Starting farm $farm_name" ) if &debug == 2;
 
 	my $status = 0;           # output
 
@@ -1629,7 +1629,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	# Load required modules
 	if ( $$farm{ vproto } =~ /sip|ftp/ )
 	{
-		$status = &loadL4Modules( $$farm{ vproto } );
+		&loadL4Modules( $$farm{ vproto } );
 	}
 
 	my $rules;
@@ -1637,10 +1637,6 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	my $server_prio;    # reference to the selected server for prio algorithm
 
 	&zenlog( "_runL4FarmStart :: farm:" . Dumper( $farm ) ) if &debug == 2;
-
-	# first insert the save rule, then insert on top the restore rule
-	&setIptConnmarkSave( $farm_name, 'true' );
-	&setIptConnmarkRestore( $farm_name, 'true' );
 
 	## Set ip rule mark ##
 	my $ip_bin = &getGlobalConfiguration('ip_bin');
@@ -1653,7 +1649,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
-		&zenlog( "_runL4FarmStart :: server:$server" ) if &debug;
+		&zenlog( "_runL4FarmStart :: server:$server->{id}" ) if &debug;
 
 		my $backend_rules;
 
@@ -1699,20 +1695,35 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		$rules = &getL4ServerActionRules( $farm, $server_prio, 'on' );
 	}
 
-	$status |= &applyIptRules( @{ $$rules{ t_mangle_p } } );
-	&zlog( "status:$status" ) if &debug == 2;
-	$status |= &applyIptRules( @{ $$rules{ t_mangle } } );
-	&zlog( "status:$status" ) if &debug == 2;
-	$status |= &applyIptRules( @{ $$rules{ t_nat } } );
-	&zlog( "status:$status" ) if &debug == 2;
-	$status |= &applyIptRules( @{ $$rules{ t_snat } } );
-	&zlog( "status:$status" ) if &debug == 2;
+	# insert the save rule, then insert on top the restore rule
+	&setIptConnmarkSave( $farm_name, 'true' );
+	&setIptConnmarkRestore( $farm_name, 'true' );
+
+	## lock iptables use ##
+	my $iptlock = &getGlobalConfiguration('iptlock');
+	open ( my $ipt_lockfile, '>', $iptlock );
+
+	unless ( $ipt_lockfile )
+	{
+		&zenlog("Could not open $iptlock: $!");
+		return 1;
+	}
+
+	for my $table ( qw(t_mangle_p t_mangle t_nat t_snat) )
+	{
+		$status = &applyIptRules( @{ $$rules{ $table } } );
+		return $status if $status;
+	}
+
+	## unlock iptables use ##
+	&setIptUnlock( $ipt_lockfile );
+	close $ipt_lockfile;
 
 	# Enable IP forwarding
 	&setIpForward( 'true' );
 
 	# Enable active l4 file
-	if ( $status != -1 )
+	if ( $status == 0 )
 	{
 		my $piddir = &getGlobalConfiguration('piddir');
 		open my $fi, '>', "$piddir\/$$farm{name}\_l4xnat.pid";
@@ -1759,6 +1770,18 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 		untie @configfile;
 	}
 
+	## lock iptables use ##
+	my $iptlock = &getGlobalConfiguration('iptlock');
+	open ( my $ipt_lockfile, '>', $iptlock );
+
+	unless ( $ipt_lockfile )
+	{
+		&zenlog("Could not open $iptlock: $!");
+		return 1;
+	}
+
+	&setIptLock( $ipt_lockfile );
+
 	# Disable rules
 	my @allrules;
 
@@ -1775,6 +1798,10 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	$status =
 	  &deleteIptRules( $farm_name, "farm", $farm_name, "nat", "POSTROUTING",
 					   @allrules );
+
+	## unlock iptables use ##
+	&setIptUnlock( $ipt_lockfile );
+	close $ipt_lockfile;
 
 	# Disable active l4xnat file
 	my $piddir = &getGlobalConfiguration('piddir');
@@ -3124,6 +3151,16 @@ sub refreshL4FarmRules    # AlgorithmRules
 	# refresh backends probability values
 	&getL4BackendsWeightProbability( $farm ) if ( $$farm{ lbalg } eq 'weight' );
 
+	## lock iptables use ##
+	my $iptlock = &getGlobalConfiguration('iptlock');
+	open ( my $ipt_lockfile, '>', $iptlock );
+
+	unless ( $ipt_lockfile )
+	{
+		&zenlog("Could not open $iptlock: $!");
+		return 1;
+	}
+
 	# get new rules
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
@@ -3193,6 +3230,10 @@ sub refreshL4FarmRules    # AlgorithmRules
 			}
 		}
 	}
+
+	## unlock iptables use ##
+	&setIptUnlock( $ipt_lockfile );
+	close $ipt_lockfile;
 
 	# apply new rules
 	return $return_code;

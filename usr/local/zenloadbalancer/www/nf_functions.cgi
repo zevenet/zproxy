@@ -86,21 +86,11 @@ sub getIptList                              # ($table,$chain)
 
 	# Get the binary of iptables (iptables or ip6tables)
 	my $iptables_bin = &getBinVersion( $farm_name );
-
 	my $iptables_command = "$iptables_bin $table -L $chain -n -v --line-numbers";
 
 	&zenlog( $iptables_command );
 
-	## lock iptables use ##
-	my $iptlock = &getGlobalConfiguration('iptlock');
-	open my $ipt_lockfile, '>', $iptlock;
-	&setIptLock( $ipt_lockfile );
-
 	my @ipt_output = `$iptables_command`;
-
-	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
-	close $ipt_lockfile;
 
 	return @ipt_output;
 }
@@ -128,7 +118,7 @@ sub deleteIptRules    # ($type,$desc,$table,$chain,@allrules)
 			my $iptables_command =
 			  "$iptables_bin --table $table --delete $chain $sprule[0]";
 
-			$status = iptSystem( $iptables_command );
+			$status = &runIptables( $iptables_command );
 		}
 	}
 
@@ -550,17 +540,26 @@ sub setIptConnmarkRestore
 	my $farm_name   = shift;    # farmname
 	my $switch      = shift;    # 'true' or not true value
 	$switch ||= 'false';   
-	
-	
+
 	my $return_code = -1;       # return value
 
+	## lock iptables use ##
+	my $iptlock = &getGlobalConfiguration('iptlock');
+	open ( my $ipt_lockfile, '>', $iptlock );
+
+	unless ( $ipt_lockfile )
+	{
+		&zenlog("Could not open $iptlock: $!");
+		return 1;
+	}
+
 	my $rule = &getIptStringConnmarkRestore( $farm_name );
-	my $restore_on = ( &iptSystem( &applyIptRuleAction( $rule, 'check' ) ) == 0 );
+	my $restore_on = ( &runIptables( &applyIptRuleAction( $rule, 'check' ) ) == 0 );
 
 	# if want to set it on but not already on
 	if ( $switch eq 'true' && !$restore_on )
 	{
-		$return_code = &iptSystem( &applyIptRuleAction( $rule, 'insert' ) );
+		$return_code = &runIptables( &applyIptRuleAction( $rule, 'insert' ) );
 	}
 
 	# if want to turn it off, is on and only one farm needs it
@@ -568,8 +567,12 @@ sub setIptConnmarkRestore
 			&& $restore_on
 			&& &getNumberOfFarmTypeRunning( 'l4xnat' ) == 0 )
 	{
-		$return_code = &iptSystem( &applyIptRuleAction( $rule, 'delete' ) );
+		$return_code = &runIptables( &applyIptRuleAction( $rule, 'delete' ) );
 	}
+
+	## unlock iptables use ##
+	&setIptUnlock( $ipt_lockfile );
+	close $ipt_lockfile;
 
 	return $return_code;
 }
@@ -582,13 +585,23 @@ sub setIptConnmarkSave
 	
 	my $return_code = -1;       # return value
 
+	## lock iptables use ##
+	my $iptlock = &getGlobalConfiguration('iptlock');
+	open ( my $ipt_lockfile, '>', $iptlock );
+
+	unless ( $ipt_lockfile )
+	{
+		&zenlog("Could not open $iptlock: $!");
+		return 1;
+	}
+
 	my $rule = &getIptStringConnmarkSave( $farm_name );
-	my $restore_on = ( &iptSystem( &applyIptRuleAction( $rule, 'check' ) ) == 0 );
+	my $restore_on = ( &runIptables( &applyIptRuleAction( $rule, 'check' ) ) == 0 );
 
 	# if want to set it on but not already on
 	if ( $switch eq 'true' && !$restore_on )
 	{
-		$return_code = &iptSystem( &applyIptRuleAction( $rule, 'append' ) );
+		$return_code = &runIptables( &applyIptRuleAction( $rule, 'append' ) );
 	}
 
 	# if want to turn it off, is on and only one farm needs it
@@ -596,8 +609,12 @@ sub setIptConnmarkSave
 			&& $restore_on
 			&& &getNumberOfFarmTypeRunning( 'l4xnat' ) == 0 )
 	{
-		$return_code = &iptSystem( &applyIptRuleAction( $rule, 'delete' ) );
+		$return_code = &runIptables( &applyIptRuleAction( $rule, 'delete' ) );
 	}
+
+	## unlock iptables use ##
+	&setIptUnlock( $ipt_lockfile );
+	close $ipt_lockfile;
 
 	return $return_code;
 }
@@ -756,7 +773,8 @@ sub applyIptRules
 		# skip cycle if $rule empty
 		next if not $rule or $rule !~ /ip6?tables/;
 
-		$return_code |= &iptSystem( $rule );
+		$return_code = &runIptables( $rule );
+		last if $return_code;
 	}
 
 	return $return_code;     # FIXME: make a proper return code control
@@ -1036,6 +1054,37 @@ sub iptSystem
 		else
 		{
 			&zenlog( $program . "Previous command failed!" );    # show in logs if failed
+		}
+	}
+
+	# returning error code from execution
+	return $return_code;
+}
+
+sub runIptables
+{
+	my $command = shift;    # command string to log and run
+
+	my $checking = grep { /--check/ } $command;
+	my $return_code = system ( "$command >/dev/null 2>&1" );
+
+	if ( $return_code )
+	{
+		if ( $checking )
+		{
+			&zenlog( "Previous iptables line not found" ) if &debug > 1;
+		}
+		else
+		{
+			zenlog("return_code: $return_code rule: $command");
+
+			for my $retry ( 1 .. 2 )
+			{
+				&zenlog( "Previous command failed! Retrying..." );
+				$return_code = system ( "$command >/dev/null 2>&1" );
+				zenlog("Retry ($retry) ... return_code: $return_code rule: $command");
+				last unless $return_code;
+			}
 		}
 	}
 
