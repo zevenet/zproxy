@@ -141,21 +141,35 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		}
 	}
 
-	# Modify only vip
-	if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
+	if ( exists ( $json_obj->{ vip } ) )
 	{
+		# the ip must exist in some interface
+		require Zevenet::Net::Interface;
+		unless ( &getIpAddressExists( $json_obj->{ vip } ) )
+		{
+			my $msg = "The vip IP must exist in some interface.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 		unless ( length $json_obj->{ vip } )
 		{
 			my $msg = "Invalid vip, can't be blank.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
+	}
 
-		unless ( $json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
+	if ( exists ( $json_obj->{ vport } )
+	{
+		$json_obj->{ vport } += 0;
+		unless ( $json_obj->{ vport } =~ /^\d+$/ )
 		{
-			my $msg = "ZAPI error, trying to modify a gslb farm $farmname, invalid vip.";
+			my $msg = "Invalid vport.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-
+	}
+	
+	# Modify only vip
+	if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
+	{
 		my $error = &setFarmVirtualConf( $json_obj->{ vip }, $vport, $farmname );
 		if ( $error )
 		{
@@ -169,19 +183,6 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	# Modify only vport
 	if ( exists ( $json_obj->{ vport } ) && !exists ( $json_obj->{ vip } ) )
 	{
-		unless ( length $json_obj->{ vport } )
-		{
-			my $msg = "Invalid vport, can't be blank.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		unless ( $json_obj->{ vport } =~ /^\d+$/ )
-		{
-			my $msg = "Invalid vport.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		$json_obj->{ vport } += 0;
 		my $error = &setFarmVirtualConf( $vip, $json_obj->{ vport }, $farmname );
 		if ( $error )
 		{
@@ -195,31 +196,6 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	# Modify both vip & vport
 	if ( exists $json_obj->{ vip } && exists $json_obj->{ vport } )
 	{
-		unless ( length $json_obj->{ vip } )
-		{
-			my $msg = "Invalid vip, can't be blank.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		if ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
-		{
-			my $msg = "Invalid vip.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		unless ( length $json_obj->{ vport } )
-		{
-			my $msg = "Invalid vport, can't be blank.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		if ( !$json_obj->{ vport } =~ /^\d+$/ )
-		{
-			my $msg = "Invalid vport.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		$json_obj->{ vport } += 0;
 		my $error = &setGSLBFarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname );
 		if ( $error )
 		{

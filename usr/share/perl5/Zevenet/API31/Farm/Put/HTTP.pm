@@ -26,7 +26,7 @@ use Zevenet::Farm::Config;
 use Zevenet::Farm::Action;
 
 # PUT /farms/<farmname> Modify a http|https Farm
-sub modify_http_farm # ( $json_obj, $farmname )
+sub modify_http_farm    # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
@@ -40,7 +40,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	my $flag         = "false";
 
 	my $farmname_old;
-	
+
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
@@ -54,9 +54,11 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	my $changedname = "false";
 	my $reload_ipds = 0;
 
-	if (exists $json_obj->{vport} || exists $json_obj->{vip} || exists $json_obj->{newfarmname})
+	if (    exists $json_obj->{ vport }
+		 || exists $json_obj->{ vip }
+		 || exists $json_obj->{ newfarmname } )
 	{
-		if ( eval { require Zevenet::IPDS; } )		
+		if ( eval { require Zevenet::IPDS; } )
 		{
 			require Zevenet::Cluster;
 
@@ -112,7 +114,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 
 		if ( $fnchange == -1 )
 		{
-			my $msg = "The name of the farm can't be modified, delete the farm and create a new one.";
+			my $msg =
+			  "The name of the farm can't be modified, delete the farm and create a new one.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 		elsif ( $fnchange == -2 )
@@ -122,7 +125,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		}
 
 		$farmname_old = $farmname;
-		$farmname = $json_obj->{ newfarmname };
+		$farmname     = $json_obj->{ newfarmname };
 	}
 
 	# Modify Backend Connection Timeout
@@ -204,16 +207,20 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	# Modify Rewrite Location Headers
 	if ( exists ( $json_obj->{ rewritelocation } ) )
 	{
-		if ( $json_obj->{ rewritelocation } !~ /^(?:disabled|enabled|enabled-backends)$/ )
+		if (
+			 $json_obj->{ rewritelocation } !~ /^(?:disabled|enabled|enabled-backends)$/ )
 		{
 			my $msg = "Invalid rewritelocation value.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		my $rewritelocation = 0;
-		if    ( $json_obj->{ rewritelocation } eq "disabled" )        { $rewritelocation = 0; }
-		elsif ( $json_obj->{ rewritelocation } eq "enabled" )         { $rewritelocation = 1; }
-		elsif ( $json_obj->{ rewritelocation } eq "enabled-backends" ){	$rewritelocation = 2; }
+		if    ( $json_obj->{ rewritelocation } eq "disabled" ) { $rewritelocation = 0; }
+		elsif ( $json_obj->{ rewritelocation } eq "enabled" )  { $rewritelocation = 1; }
+		elsif ( $json_obj->{ rewritelocation } eq "enabled-backends" )
+		{
+			$rewritelocation = 2;
+		}
 
 		my $status = &setFarmRewriteL( $farmname, $rewritelocation );
 		if ( $status == -1 )
@@ -235,11 +242,11 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		}
 
 		my $action = 0;
-		$action = 1 if( $json_obj->{ ignore_100_continue } =~ /^true$/ );
+		$action = 1 if ( $json_obj->{ ignore_100_continue } =~ /^true$/ );
 
 		if ( &getHTTPFarm100Continue( $farmname ) != $action )
 		{
-			my $status = &setHTTPFarm100Continue($farmname, $action);
+			my $status = &setHTTPFarm100Continue( $farmname, $action );
 			if ( $status == -1 )
 			{
 				my $msg = "Some errors happened trying to modify the certname.";
@@ -254,7 +261,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	if ( exists ( $json_obj->{ httpverb } ) )
 	{
 		if ( $json_obj->{ httpverb } !~
-				/^(?:standardHTTP|extendedHTTP|standardWebDAV|MSextWebDAV|MSRPCext)$/ )
+			 /^(?:standardHTTP|extendedHTTP|standardWebDAV|MSextWebDAV|MSRPCext)$/ )
 		{
 			my $msg = "Invalid httpverb value.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -358,13 +365,13 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		# Modify Ciphers
 		if ( exists ( $json_obj->{ ciphers } ) )
 		{
-			if ( ! &getValidFormat( 'ciphers', $json_obj->{ ciphers } ) )
+			if ( !&getValidFormat( 'ciphers', $json_obj->{ ciphers } ) )
 			{
 				my $msg = "Invalid ciphers value.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
-			my $ssloffloading_error=0;
+			my $ssloffloading_error = 0;
 			my $ciphers;
 
 			if ( $json_obj->{ ciphers } eq "all" )
@@ -372,8 +379,11 @@ sub modify_http_farm # ( $json_obj, $farmname )
 				$ciphers = "cipherglobal";
 				$flag    = "true";
 			}
-			elsif ( $json_obj->{ ciphers } eq "customsecurity" ) { $ciphers = "ciphercustom"; }
-			elsif ( $json_obj->{ ciphers } eq "highsecurity" )   { $ciphers = "cipherpci"; }
+			elsif ( $json_obj->{ ciphers } eq "customsecurity" )
+			{
+				$ciphers = "ciphercustom";
+			}
+			elsif ( $json_obj->{ ciphers } eq "highsecurity" ) { $ciphers = "cipherpci"; }
 			elsif ( $json_obj->{ ciphers } eq "ssloffloading" )
 			{
 				unless ( &getFarmCipherSSLOffLoadingSupport() )
@@ -435,22 +445,25 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		}
 
 		# Disable security protocol
-		my @protocols_ssl_keys = ( "disable_sslv2","disable_sslv3","disable_tlsv1",
-			"disable_tlsv1_1","disable_tlsv1_2" );
+		my @protocols_ssl_keys = (
+								   "disable_sslv2", "disable_sslv3",
+								   "disable_tlsv1", "disable_tlsv1_1",
+								   "disable_tlsv1_2"
+		);
 		foreach my $key_ssl ( @protocols_ssl_keys )
 		{
-			if ( grep ( /^$key_ssl$/, keys %{$json_obj} ) )
+			if ( grep ( /^$key_ssl$/, keys %{ $json_obj } ) )
 			{
 				my $ssl_proto;
 				my $action = -1;
-				$action = 1 if( $json_obj->{$key_ssl} eq "true" );
-				$action = 0 if( $json_obj->{$key_ssl} eq "false" );
-				
-				$ssl_proto = "SSLv2" if( $key_ssl eq "disable_sslv2" );
-				$ssl_proto = "SSLv3" if( $key_ssl eq "disable_sslv3" );
-				$ssl_proto = "TLSv1" if( $key_ssl eq "disable_tlsv1" );
-				$ssl_proto = "TLSv1_1" if( $key_ssl eq "disable_tlsv1_1" );
-				$ssl_proto = "TLSv1_2" if( $key_ssl eq "disable_tlsv1_2" );
+				$action = 1 if ( $json_obj->{ $key_ssl } eq "true" );
+				$action = 0 if ( $json_obj->{ $key_ssl } eq "false" );
+
+				$ssl_proto = "SSLv2"   if ( $key_ssl eq "disable_sslv2" );
+				$ssl_proto = "SSLv3"   if ( $key_ssl eq "disable_sslv3" );
+				$ssl_proto = "TLSv1"   if ( $key_ssl eq "disable_tlsv1" );
+				$ssl_proto = "TLSv1_1" if ( $key_ssl eq "disable_tlsv1_1" );
+				$ssl_proto = "TLSv1_2" if ( $key_ssl eq "disable_tlsv1_2" );
 
 				if ( $action == -1 )
 				{
@@ -460,7 +473,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 
 				if ( $action != &getHTTPFarmDisableSSL( $farmname, $ssl_proto ) )
 				{
-					my $status = &setHTTPFarmDisableSSL ($farmname, $ssl_proto, $action );
+					my $status = &setHTTPFarmDisableSSL( $farmname, $ssl_proto, $action );
 					if ( $status == -1 )
 					{
 						my $msg = "Some errors happened trying to modify the certname.";
@@ -483,15 +496,29 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		}
 	}
 
+	if ( exists ( $json_obj->{ vip } ) )
+	{
+		# the ip must exist in some interface
+		require Zevenet::Net::Interface;
+		unless ( &getIpAddressExists( $json_obj->{ vip } ) )
+		{
+			my $msg = "The vip IP must exist in some interface.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
+	if ( exists ( $json_obj->{ vport } ) )
+	{
+		if ( !$json_obj->{ vport } =~ /^\d+$/ )
+		{
+			my $msg = "Invalid port value.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	# Modify only vip
 	if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
 	{
-		if ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
-		{
-			my $msg = "Invalid vip value.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
 		my $status = &setFarmVirtualConf( $json_obj->{ vip }, $vport, $farmname );
 		if ( $status == -1 )
 		{
@@ -505,12 +532,6 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	# Modify only vport
 	if ( exists ( $json_obj->{ vport } ) && !exists ( $json_obj->{ vip } ) )
 	{
-		if ( !$json_obj->{ vport } =~ /^\d+$/ )
-		{
-			my $msg = "Invalid port value.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
 		my $status = &setFarmVirtualConf( $vip, $json_obj->{ vport }, $farmname );
 		if ( $status == -1 )
 		{
@@ -524,18 +545,6 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	# Modify both vip & vport
 	if ( exists ( $json_obj->{ vip } ) && exists ( $json_obj->{ vport } ) )
 	{
-		if ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
-		{
-			my $msg = "Invalid vip value.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		if ( !$json_obj->{ vport } =~ /^\d+$/ )
-		{
-			my $msg = "Invalid port value.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
 		my $status =
 		  &setFarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname );
 		if ( $status == -1 )
@@ -592,11 +601,16 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		}
 
 		# disabled protocols
-		$json_obj->{ disable_sslv2 } = ( &getHTTPFarmDisableSSL($farmname, "SSLv2") )? "true": "false";
-		$json_obj->{ disable_sslv3 } = ( &getHTTPFarmDisableSSL($farmname, "SSLv3") )? "true": "false";
-		$json_obj->{ disable_tlsv1 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1") )? "true": "false";
-		$json_obj->{ disable_tlsv1_1 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_1") )? "true": "false";
-		$json_obj->{ disable_tlsv1_2 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_2") )? "true": "false";
+		$json_obj->{ disable_sslv2 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "SSLv2" ) ) ? "true" : "false";
+		$json_obj->{ disable_sslv3 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "SSLv3" ) ) ? "true" : "false";
+		$json_obj->{ disable_tlsv1 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "TLSv1" ) ) ? "true" : "false";
+		$json_obj->{ disable_tlsv1_1 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "TLSv1_1" ) ) ? "true" : "false";
+		$json_obj->{ disable_tlsv1_2 } =
+		  ( &getHTTPFarmDisableSSL( $farmname, "TLSv1_2" ) ) ? "true" : "false";
 	}
 
 	if ( $reload_ipds )
@@ -619,10 +633,11 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	{
 		&setFarmRestart( $farmname );
 		$body->{ status } = 'needed restart';
-		$body->{ info } = "There're changes that need to be applied, stop and start farm to apply them!";
+		$body->{ info } =
+		  "There're changes that need to be applied, stop and start farm to apply them!";
 	}
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

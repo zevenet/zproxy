@@ -242,23 +242,43 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		$restart_flag = "true";
 	}
 
-	# Modify only vip
-	if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
+	if ( exists ( $json_obj->{ vip } )
 	{
+		# the ip must exist in some interface
+		require Zevenet::Net::Interface;
+		unless ( &getIpAddressExists( $json_obj->{ vip } ) )
+		{
+			my $msg = "The vip IP must exist in some interface.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 		unless ( length $json_obj->{ vip } )
 		{
 			my $msg = "Invalid vip, can't be blank.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
+	}
 
-		if ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
+	if ( exists ( $json_obj->{ vport } ) )
+	{
+		unless ( length $json_obj->{ vport } )
 		{
-			my $msg = "Invalid vip.";
+			my $msg = "Invalid vport, can't be blank.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-
-		my $error = &setFarmVirtualConf( $json_obj->{ vip }, $vport, $farmname );
-		if ( $error )
+		unless ( $json_obj->{ vport } =~ /^\d+((\:\d+)*(\,\d+)*)*$/ )
+		{
+			if ( $json_obj->{ vport } ne "*" )
+			{
+				my $msg = "Invalid vport.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+	}
+	
+	# Modify only vip
+	if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
+	{
+		if ( &setFarmVirtualConf( $json_obj->{ vip }, $vport, $farmname ) )
 		{
 			my $msg = "Invalid vip.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -270,23 +290,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# Modify only vport
 	if ( exists ( $json_obj->{ vport } ) && !exists ( $json_obj->{ vip } ) )
 	{
-		unless ( length $json_obj->{ vport } )
-		{
-			my $msg = "Invalid vport, can't be blank.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		if ( !$json_obj->{ vport } =~ /^\d+((\:\d+)*(\,\d+)*)*$/ )
-		{
-			if ( $json_obj->{ vport } ne "*" )
-			{
-				my $msg = "Invalid vport.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
-		}
-
-		my $error = &setFarmVirtualConf( $vip, $json_obj->{ vport }, $farmname );
-		if ( $error )
+		if ( &setFarmVirtualConf( $vip, $json_obj->{ vport }, $farmname ) )
 		{
 			my $msg = "Invalid vport.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -298,36 +302,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# Modify both vip & vport
 	if ( exists ( $json_obj->{ vip } ) && exists ( $json_obj->{ vport } ) )
 	{
-		unless ( length $json_obj->{ vip } )
-		{
-			my $msg = "Invalid vip, can't be blank.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		if ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
-		{
-			my $msg = "Invalid vip.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		unless ( length $json_obj->{ vport } )
-		{
-			my $msg = "Invalid vport, can't be blank.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		if ( !$json_obj->{ vport } =~ /^\d+((\:\d+)*(\,\d+)*)*$/ )
-		{
-			if ( $json_obj->{ vport } ne "*" )
-			{
-				my $msg = "Invalid vport.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
-		}
-
-		my $error =
-		  &setL4FarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname );
-		if ( $error )
+		if ( &setL4FarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname ) )
 		{
 			my $msg = "Invalid vport or invalid vip.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

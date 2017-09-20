@@ -83,7 +83,8 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 			my $fnchange = &setNewFarmName( $farmname, $json_obj->{ newfarmname } );
 			if ( $fnchange == -1 )
 			{
-				my $msg = "The name of the farm can't be modified, delete the farm and create a new one.";
+				my $msg =
+				  "The name of the farm can't be modified, delete the farm and create a new one.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
@@ -131,20 +132,28 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		if ( ! defined $json_obj->{ vip } || $json_obj->{ vip } eq "" )
+		if ( !defined $json_obj->{ vip } || $json_obj->{ vip } eq "" )
 		{
 			my $msg = "Invalid Virtual IP value.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
+		# interface must be running
+		if ( !grep { $_ eq $json_obj->{ vip } } &listallips() )
+		{
+			my $msg = "An available virtual IP must be set.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
 		my $fdev = &getInterfaceOfIp( $json_obj->{ vip } );
-		if ( ! defined $fdev )
+		if ( !defined $fdev )
 		{
 			my $msg = "Invalid Interface value.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		my $status = &setDatalinkFarmVirtualConf( $json_obj->{ vip }, $fdev, $farmname );
+		my $status =
+		  &setDatalinkFarmVirtualConf( $json_obj->{ vip }, $fdev, $farmname );
 		if ( $status == -1 )
 		{
 			my $msg = "It's not possible to change the farm virtual IP and interface.";

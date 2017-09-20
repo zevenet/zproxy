@@ -348,6 +348,7 @@ sub listallips    # ()
 	use IO::Interface qw(:flags);
 
 	require IO::Socket;
+	require Zevenet::Net::Interface;
 
 	my @listinterfaces = (); # output
 	my $s              = IO::Socket::INET->new( Proto => 'udp' );

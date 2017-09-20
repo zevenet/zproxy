@@ -21,7 +21,7 @@
 ###############################################################################
 
 use strict;
-use Zevenet::Net;
+use Zevenet::Net::Util;
 use Zevenet::Farm::Core;
 use Zevenet::Farm::Factory;
 
@@ -36,8 +36,8 @@ sub new_farm    # ( $json_obj )
    #	- vip
    #	- vport: optional for L4xNAT and not used in Datalink profile.
 
-	my $error       = "false";
-	my $desc = "Creating farm '$json_obj->{ farmname }'";
+	my $error = "false";
+	my $desc  = "Creating farm '$json_obj->{ farmname }'";
 
 	# validate FARM NAME
 	unless (    $json_obj->{ farmname }
@@ -63,15 +63,34 @@ sub new_farm    # ( $json_obj )
 	}
 
 	# VIP validation
-	# vip must be available
-	if ( !grep { $_ eq $json_obj->{ vip } } &listallips() )
+	if ( $json_obj->{ profile } =~ /^DATALINK$/i )
 	{
-		my $msg = "An available virtual IP must be set.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		# interface must be running
+		if ( !grep { $_ eq $json_obj->{ vip } } &listallips() )
+		{
+			my $msg = "An available virtual IP must be set.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+	else
+	{
+		# the ip must exist in some interface
+		require Zevenet::Net::Interface;
+		if ( !&getIpAddressExists( $json_obj->{ vip } ) )
+		{
+			my $msg = "The vip IP must exist in some interface.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	# VPORT validation
-	if ( !&getValidPort( $json_obj->{ vip }, $json_obj->{ vport }, $json_obj->{ profile }) )
+	if (
+		 !&getValidPort(
+						 $json_obj->{ vip },
+						 $json_obj->{ vport },
+						 $json_obj->{ profile }
+		 )
+	  )
 	{
 		my $msg = "The virtual port must be an acceptable value and must be available.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

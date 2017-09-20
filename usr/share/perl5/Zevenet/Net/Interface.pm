@@ -70,13 +70,14 @@ See Also:
 
 	zcluster-manager, zenbui.pl, zapi/v?/interface.cgi, zcluster_functions.cgi, networking_functions_ext
 =cut
+
 sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 {
 	my ( $if_name, $ip_version ) = @_;
 
 	my $if_line;
 	my $if_status;
-	my $configdir = &getGlobalConfiguration('configdir');
+	my $configdir       = &getGlobalConfiguration( 'configdir' );
 	my $config_filename = "$configdir/if_${if_name}_conf";
 
 	$ip_version = 4 if !$ip_version;
@@ -113,7 +114,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	}
 
 	# includes !$if_status to avoid warning
-	if ( !$if_line && (!$if_status || $if_status !~ /up/) )
+	if ( !$if_line && ( !$if_status || $if_status !~ /up/ ) )
 	{
 		return undef;
 	}
@@ -131,7 +132,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	$iface{ name }    = shift @if_params;
 	$iface{ addr }    = shift @if_params;
 	$iface{ mask }    = shift @if_params;
-	$iface{ gateway } = shift @if_params;                        # optional
+	$iface{ gateway } = shift @if_params;                            # optional
 	$iface{ status }  = $if_status;
 	$iface{ ip_v }    = ( $iface{ addr } =~ /:/ ) ? '6' : '4';
 	$iface{ dev }     = $iface{ name };
@@ -146,7 +147,8 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		( $iface{ dev }, $iface{ vini } ) = split ':', $iface{ dev };
 	}
 
-	if ( !$iface{ name } ){
+	if ( !$iface{ name } )
+	{
 		$iface{ name } = $if_name;
 	}
 
@@ -197,6 +199,7 @@ Returns:
 See Also:
 	<getInterfaceConfig>, <setInterfaceUp>, zevenet, zenbui.pl, zapi/v?/interface.cgi
 =cut
+
 # returns 1 if it was successful
 # returns 0 if it wasn't successful
 sub setInterfaceConfig    # $bool ($if_ref)
@@ -212,13 +215,13 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	&zenlog( "setInterfaceConfig: " . Dumper $if_ref) if &debug() > 2;
 	my @if_params = ( 'name', 'addr', 'mask', 'gateway' );
 
-	my $if_line = join ( ';', @{ $if_ref }{ @if_params } ) . ';';
-	my $configdir = &getGlobalConfiguration('configdir');
+	my $if_line         = join ( ';', @{ $if_ref }{ @if_params } ) . ';';
+	my $configdir       = &getGlobalConfiguration( 'configdir' );
 	my $config_filename = "$configdir/if_$$if_ref{ name }_conf";
 
-	if ( $if_ref->{ addr } && ! $if_ref->{ ip_v } )
+	if ( $if_ref->{ addr } && !$if_ref->{ ip_v } )
 	{
-		$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } )
+		$if_ref->{ ip_v } = &ipversion( $if_ref->{ addr } );
 	}
 
 	if ( !-f $config_filename )
@@ -294,6 +297,7 @@ Returns:
 See Also:
 	<getParentInterfaceName>, <getSystemInterfaceList>, <getSystemInterface>, zapi/v2/interface.cgi
 =cut
+
 sub getDevVlanVini    # ($if_name)
 {
 	my %if;
@@ -327,6 +331,7 @@ See Also:
 	zenloadbalanacer, zcluster-manager, <getIfacesFromIf>,
 	<getActiveInterfaceList>, <getSystemInterfaceList>, <getFloatInterfaceForAddress>
 =cut
+
 sub getConfigInterfaceList
 {
 	my @configured_interfaces;
@@ -379,7 +384,8 @@ Returns:
 See Also:
 	<getActiveInterfaceList>, <getSystemInterfaceList>, <getInterfaceTypeList>, zapi/v?/interface.cgi,
 =cut
-sub getInterfaceSystemStatus     # ($if_ref)
+
+sub getInterfaceSystemStatus    # ($if_ref)
 {
 	my $if_ref = shift;
 
@@ -391,17 +397,17 @@ sub getInterfaceSystemStatus     # ($if_ref)
 		$status_if_name = $parent_if_name;
 	}
 
-	my $ip_bin = &getGlobalConfiguration('ip_bin');
+	my $ip_bin    = &getGlobalConfiguration( 'ip_bin' );
 	my $ip_output = `$ip_bin link show $status_if_name`;
 	$ip_output =~ / state (\w+) /;
 	my $if_status = lc $1;
 
-	if ( $if_status !~ /^(?:up|down)$/ ) # if not up or down, ex: UNKNOWN
+	if ( $if_status !~ /^(?:up|down)$/ )    # if not up or down, ex: UNKNOWN
 	{
-		my ($flags) = $ip_output =~ /<(.+)>/;
-		my @flags = split( ',', $flags );
+		my ( $flags ) = $ip_output =~ /<(.+)>/;
+		my @flags = split ( ',', $flags );
 
-		if ( grep( /^UP$/, @flags ) )
+		if ( grep ( /^UP$/, @flags ) )
 		{
 			$if_status = 'up';
 		}
@@ -452,6 +458,7 @@ Returns:
 See Also:
 	<getInterfaceConfig>, <getSystemInterface>, zevenet, zapi/v?/interface.cgi
 =cut
+
 sub getParentInterfaceName    # ($if_name)
 {
 	my $if_name = shift;
@@ -478,7 +485,7 @@ sub getParentInterfaceName    # ($if_name)
 	}
 
 	# child interface: eth0 => undef
-	elsif ( ! $if_ref->{ vini } && ! $if_ref->{ vlan } )
+	elsif ( !$if_ref->{ vini } && !$if_ref->{ vlan } )
 	{
 		$parent_if_name = undef;
 	}
@@ -500,6 +507,7 @@ Returns:
 See Also:
 	Zapi v3: post.cgi, put.cgi, system.cgi
 =cut
+
 sub getActiveInterfaceList
 {
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
@@ -558,6 +566,7 @@ Returns:
 See Also:
 	zapi/v?/interface.cgi, zapi/v3/cluster.cgi
 =cut
+
 sub getSystemInterfaceList
 {
 	use IO::Interface qw(:flags);
@@ -670,6 +679,7 @@ Returns:
 See Also:
 	<getInterfaceConfig>, <setInterfaceConfig>
 =cut
+
 sub getSystemInterface    # ($if_name)
 {
 	my $if_ref = {};
@@ -730,6 +740,7 @@ Returns:
 See Also:
 	
 =cut
+
 # Source in bash translated to perl:
 # http://stackoverflow.com/questions/4475420/detect-network-connection-type-in-linux
 #
@@ -740,21 +751,22 @@ sub getInterfaceType
 
 	my $type;
 
-	return undef if $if_name eq '' || ! defined $if_name;
-	
+	return undef if $if_name eq '' || !defined $if_name;
+
 	# interfaz for cluster when is in maintenance mode
 	return 'dummy' if $if_name eq 'cl_maintenance';
-	
-	if ( ! -d "/sys/class/net/$if_name" )
-	{
-		my ( $parent_if ) = split( ':', $if_name );
-		my $quoted_if = quotemeta $if_name;
-		my $ip_bin = &getGlobalConfiguration('ip_bin');
-		my $found = grep( /inet .+ $quoted_if$/, `$ip_bin addr show $parent_if 2>/dev/null` );
 
-		if ( ! $found )
+	if ( !-d "/sys/class/net/$if_name" )
+	{
+		my ( $parent_if ) = split ( ':', $if_name );
+		my $quoted_if     = quotemeta $if_name;
+		my $ip_bin        = &getGlobalConfiguration( 'ip_bin' );
+		my $found =
+		  grep ( /inet .+ $quoted_if$/, `$ip_bin addr show $parent_if 2>/dev/null` );
+
+		if ( !$found )
 		{
-			my $configdir = &getGlobalConfiguration('configdir');
+			my $configdir = &getGlobalConfiguration( 'configdir' );
 			$found = ( -f "$configdir/if_${if_name}_conf" && $if_name =~ /^.+\:.+$/ );
 		}
 
@@ -768,19 +780,19 @@ sub getInterfaceType
 		}
 	}
 
-	my $code; # read type code
+	my $code;    # read type code
 	{
 		my $if_type_filename = "/sys/class/net/$if_name/type";
 
-		open( my $type_file, '<', $if_type_filename )
-			or die "Could not open file $if_type_filename: $!";
-		chomp( $code = <$type_file> );
+		open ( my $type_file, '<', $if_type_filename )
+		  or die "Could not open file $if_type_filename: $!";
+		chomp ( $code = <$type_file> );
 		close $type_file;
 	}
 
 	if ( $code == 1 )
 	{
-		$type='nic';
+		$type = 'nic';
 
 		# Ethernet, may also be wireless, ...
 		if ( -f "/proc/net/vlan/$if_name" )
@@ -791,22 +803,23 @@ sub getInterfaceType
 		{
 			$type = 'bond';
 		}
-		#elsif ( -d "/sys/class/net/$if_name/wireless" || -l "/sys/class/net/$if_name/phy80211" )
-		#{
-		#	$type = 'wlan';
-		#}
-		#elsif ( -d "/sys/class/net/$if_name/bridge" )
-		#{
-		#	$type = 'bridge';
-		#}
-		#elsif ( -f "/sys/class/net/$if_name/tun_flags" )
-		#{
-		#	$type = 'tap';
-		#}
-		#elsif ( -d "/sys/devices/virtual/net/$if_name" )
-		#{
-		#	$type = 'dummy' if $if_name =~ /^dummy/;
-		#}
+
+#elsif ( -d "/sys/class/net/$if_name/wireless" || -l "/sys/class/net/$if_name/phy80211" )
+#{
+#	$type = 'wlan';
+#}
+#elsif ( -d "/sys/class/net/$if_name/bridge" )
+#{
+#	$type = 'bridge';
+#}
+#elsif ( -f "/sys/class/net/$if_name/tun_flags" )
+#{
+#	$type = 'tap';
+#}
+#elsif ( -d "/sys/devices/virtual/net/$if_name" )
+#{
+#	$type = 'dummy' if $if_name =~ /^dummy/;
+#}
 	}
 	elsif ( $code == 24 )
 	{
@@ -818,6 +831,7 @@ sub getInterfaceType
 		{
 			$type = 'bond';
 		}
+
 		#elsif ( -d "/sys/class/net/$if_name/create_child" )
 		#{
 		#	$type = 'ib';
@@ -827,6 +841,7 @@ sub getInterfaceType
 		#	$type = 'ibchild';
 		#}
 	}
+
 	#elsif ( $code == 512 ) { $type = 'ppp'; }
 	#elsif ( $code == 768 )
 	#{
@@ -837,6 +852,7 @@ sub getInterfaceType
 	#	$type = 'ip6tnl';    # IP6IP6 tunnel
 	#}
 	elsif ( $code == 772 ) { $type = 'lo'; }
+
 	#elsif ( $code == 776 )
 	#{
 	#	$type = 'sit';       # sit0 device - IPv6-in-IPv4
@@ -864,7 +880,7 @@ sub getInterfaceType
 	my $msg = "Could not recognize the type of the interface $if_name.";
 
 	&zenlog( $msg );
-	die ( $msg ); # This should not happen
+	die ( $msg );    # This should not happen
 }
 
 =begin nd
@@ -883,6 +899,7 @@ Returns:
 See Also:
 	
 =cut
+
 sub getInterfaceTypeList
 {
 	my $list_type = shift;
@@ -899,7 +916,7 @@ sub getInterfaceTypeList
 			{
 				my $output_if = &getInterfaceConfig( $if_name );
 
-				if ( ! $output_if || ! $output_if->{ mac } )
+				if ( !$output_if || !$output_if->{ mac } )
 				{
 					$output_if = &getSystemInterface( $if_name );
 				}
@@ -910,8 +927,8 @@ sub getInterfaceTypeList
 	}
 	elsif ( $list_type eq 'virtual' )
 	{
-		opendir my $conf_dir, &getGlobalConfiguration('configdir');
-		my $virt_if_re = &getValidFormat('virt_interface');
+		opendir my $conf_dir, &getGlobalConfiguration( 'configdir' );
+		my $virt_if_re = &getValidFormat( 'virt_interface' );
 
 		for my $file_name ( readdir $conf_dir )
 		{
@@ -927,7 +944,7 @@ sub getInterfaceTypeList
 	{
 		my $msg = "Interface type '$list_type' is not supported.";
 		&zenlog( $msg );
-		die( $msg );
+		die ( $msg );
 	}
 
 	return @interfaces;
@@ -948,32 +965,33 @@ Returns:
 See Also:
 	
 =cut
+
 # Get vlan or virtual interfaces appended from a interface
-sub getAppendInterfaces # ( $iface_name, $type )
+sub getAppendInterfaces    # ( $iface_name, $type )
 {
-	my ( $ifaceName, $type )  = @_;
+	my ( $ifaceName, $type ) = @_;
 	my @output;
-	
-	my @typeList = &getInterfaceTypeList ( $type );
+
+	my @typeList = &getInterfaceTypeList( $type );
 
 	foreach my $if ( @typeList )
 	{
-		my $iface = $if->{ name };
-		my $parent = $if->{ parent }; 
-		
+		my $iface  = $if->{ name };
+		my $parent = $if->{ parent };
+
 		# if this interface append from a VLAN interface, will find absolut parent
-		if ( &getInterfaceType ( $parent ) eq 'vlan' )
+		if ( &getInterfaceType( $parent ) eq 'vlan' )
 		{
-			my $virtualInterface = &getInterfaceConfig ( $parent );
-			$parent = $virtualInterface->{ parent }; 
+			my $virtualInterface = &getInterfaceConfig( $parent );
+			$parent = $virtualInterface->{ parent };
 		}
-		
-		push  @output, $iface if ( $parent eq $ifaceName );
+
+		push @output, $iface if ( $parent eq $ifaceName );
 	}
-	
-	return \@output;		
+
+	return \@output;
 }
-			
+
 =begin nd
 Function: getInterfaceList
 
@@ -989,6 +1007,7 @@ Returns:
 See Also:
 	<listActiveInterfaces>
 =cut
+
 sub getInterfaceList
 {
 	my @if_list = ();
@@ -1013,10 +1032,11 @@ Parameters:
 Returns:
 	list - Every virtual interface name.
 =cut
+
 sub getVirtualInterfaceNameList
 {
 	opendir ( my $conf_dir, &getGlobalConfiguration( 'configdir' ) );
-	my $virt_if_re = &getValidFormat('virt_interface');
+	my $virt_if_re = &getValidFormat( 'virt_interface' );
 
 	my @filenames = grep { s/^if_($virt_if_re)_conf$/$1/ } readdir ( $conf_dir );
 
@@ -1036,16 +1056,48 @@ Parameters:
 Returns:
 	list - Every link interface name.
 =cut
+
 sub getLinkNameList
 {
 	my $sys_net_dir = getGlobalConfiguration( 'sys_net_dir' );
 
 	# Get link interfaces (nic, bond and vlan)
-	opendir( my $if_dir, $sys_net_dir );
+	opendir ( my $if_dir, $sys_net_dir );
 	my @if_list = grep { -l "$sys_net_dir/$_" } readdir $if_dir;
 	closedir $if_dir;
 
 	return @if_list;
+}
+
+
+=begin nd
+Function: getIpAddressExists
+
+	Return if a IP exists in some configurated interface
+
+Parameters:
+	IP - IP address
+
+Returns:
+	Integer - 0 if it doesn't exist or 1 if the IP already exists
+
+=cut
+
+sub getIpAddressExists
+{
+	my $ip     = shift;
+	my $output = 0;
+
+	foreach my $if_ref ( @{ &getConfigInterfaceList() } )
+	{
+		if ( $if_ref->{ addr } = $ip )
+		{
+			$output = 1;
+			last;
+		}
+	}
+
+	return $output;
 }
 
 1;

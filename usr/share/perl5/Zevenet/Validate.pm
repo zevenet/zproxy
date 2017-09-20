@@ -302,7 +302,7 @@ sub getValidPort    # ( $ip, $port, $profile )
 	my $profile = shift;    # farm profile, optional
 
 	#~ &zenlog("getValidPort( ip:$ip, port:$port, profile:$profile )");# if &debug;
-
+	require Zevenet::Net::Validate;
 	if ( $profile =~ /^(?:HTTP|GSLB)$/i )
 	{
 		return &isValidPortNumber( $port ) eq 'true'
