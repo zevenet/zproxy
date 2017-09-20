@@ -422,6 +422,14 @@ sub actions_dos
 
 	if ( $json_obj->{ action } eq 'start' )
 	{
+		if( &getDOSParam( $rule, 'type' ) eq 'farm' )
+		{
+			if ( ! @{ &getDOSParam( $rule, 'farms' ) } )
+			{
+				$msg = "The rule has to be applied to some farm to start it.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
 		my $error = &runDOSStartByRule( $rule );
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}

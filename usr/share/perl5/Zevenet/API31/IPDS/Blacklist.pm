@@ -30,11 +30,12 @@ sub get_blacklists_all_lists
 
 	my $desc           = "List the available blacklists";
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my $ipset = &getGlobalConfiguration( 'ipset' );
 	my %bl             = %{ Config::Tiny->read( $blacklistsConf ) };
 	my @lists;
 	delete $bl{ _ };
 
-	my @active_lists = `ipset -L -name`;
+	my @active_lists = `$ipset -L -name`;
 
 	foreach my $list_name ( sort keys %bl )
 	{
@@ -497,6 +498,11 @@ sub actions_blacklists
 	}
 	elsif ( $json_obj->{ action } eq 'start' )
 	{
+		if ( ! @{ &getBLParam( $listName, 'farms' ) } )
+		{
+			$msg = "The list has to be applied to some farm to start it.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 		my $error = &runBLStartByRule( $listName );
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
@@ -512,7 +518,7 @@ sub actions_blacklists
 	}
 	else
 	{
-		my $msg = "The action has not a valid value";
+		$msg = "The action has not a valid value";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
