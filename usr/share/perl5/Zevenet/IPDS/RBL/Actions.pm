@@ -203,6 +203,7 @@ sub runRBLStart
 	my $error = 0;
 
 	require Zevenet::Farm::Base;
+
 	# to start a rule the farm has to be up
 	if ( &getFarmBootStatus( $farm ) ne 'up' )
 	{
@@ -255,6 +256,8 @@ sub runRBLStop
 {
 	my ( $rule, $farm ) = @_;
 	my $error = 0;
+
+	require Zevenet::Farm::Base;
 
 	# remove all iptables rules
 	if ( &getFarmStatus( $farm ) eq 'up' )
