@@ -180,6 +180,7 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
 
+	require Zevenet::Farm::Base;
 	my $status = &getFarmStatus( $farm_name );
 	if ( $status eq "down" )
 	{

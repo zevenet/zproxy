@@ -311,6 +311,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	# Disable rules
 	my @allrules;
 
+	require Zevenet::Netfilter;
 	@allrules = &getIptList( $farm_name, "mangle", "PREROUTING" );
 	$status =
 	  &deleteIptRules( $farm_name,   "farm", $farm_name, "mangle",
