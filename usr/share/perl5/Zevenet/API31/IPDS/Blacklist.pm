@@ -582,7 +582,7 @@ sub get_blacklists_source
 
 	my $desc = "List the sources of the blacklist $listName";
 
-	if ( &getBLExists( $listName ) )
+	if ( ! &getBLExists( $listName ) )
 	{
 		my $msg = "Requested list doesn't exist.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
