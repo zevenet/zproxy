@@ -146,7 +146,7 @@ sub new_bond_slave # ( $json_obj, $bond )
 	eval {
 		die if &applyBondChange( $bonds->{ $bond }, 'writeconf' );
 	};
-	if ( ! $@ )
+	if ( $@ )
 	{
 		my $msg = "The $json_obj->{ name } bonding network interface can't be created";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
