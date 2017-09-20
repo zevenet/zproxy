@@ -824,6 +824,11 @@ sub set_rbl_actions
 
 	if ( $action eq 'start' )
 	{
+		if ( ! @{ &getRBLFarm( $name ) } )
+		{
+			$msg = "The rule has to be applied to some farm to start it.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 		my $error = &runRBLStartByRule( $name );
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
