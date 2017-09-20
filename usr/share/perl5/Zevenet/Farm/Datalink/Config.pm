@@ -137,7 +137,7 @@ sub getDatalinkFarmBootStatus    # ($farm_name)
 		if ( $line ne "" && $first eq "true" )
 		{
 			$first = "false";
-			my @line_a = split ( "\;", $line );
+			my @line_a = split ( /;/, $line );
 			$output = $line_a[4];
 			chomp ( $output );
 		}

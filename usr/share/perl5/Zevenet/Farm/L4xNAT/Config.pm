@@ -974,6 +974,8 @@ sub getL4FarmBootStatus    # ($farm_name)
 	}
 	close FI;
 
+	$output = "down" if ( !$output );
+
 	return $output;
 }
 

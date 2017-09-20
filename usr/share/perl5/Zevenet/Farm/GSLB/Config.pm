@@ -37,6 +37,7 @@ Returns:
 	Scalar - "up" the farm must run at boot, "down" the farm must not run at boot or -1 on failure
 	
 =cut
+
 sub getGSLBFarmBootStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -48,14 +49,16 @@ sub getGSLBFarmBootStatus    # ($farm_name)
 
 	while ( my $line = <$fh> )
 	{
-		next unless length $line; # skip empty lines
+		next unless length $line;    # skip empty lines
 
-		( undef, $output ) = split ( ';', $line );
+		( undef, $output ) = split ( /;/, $line );
 		chomp ( $output );
 
 		last;
 	}
 	close $fh;
+
+	$output = "down" if ( !$output );
 
 	return $output;
 }
@@ -75,6 +78,7 @@ FIXME:
 	Do this function uses pid gslb farms file
 	
 =cut
+
 sub getGSLBFarmPid    # ($farm_name)
 {
 	my ( $fname ) = @_;
@@ -90,7 +94,7 @@ sub getGSLBFarmPid    # ($farm_name)
 	  `$ps -ef | grep "$gdnsd -c $configdir\/$farm_filename" | grep -v grep | awk {'print \$2'}`;
 
 	chomp ( @run );
-	
+
 	if ( $run[0] )
 	{
 		$output = $run[0];
@@ -118,6 +122,7 @@ FIXME:
 	Use this function to get gslb farms pid 
 	
 =cut
+
 sub getGSLBFarmPidFile    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -141,6 +146,7 @@ FIXME:
 	return a hash with all parameters
 				
 =cut
+
 sub getGSLBFarmVip    # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
@@ -188,6 +194,7 @@ Returns:
 	Integer - Error code: 0 on success or different of 0 on failure
 
 =cut
+
 sub runGSLBFarmReload    # ($farm_name)
 {
 	my ( $fname ) = @_;
@@ -223,6 +230,7 @@ Parameters:
 Returns:
 	Integer - port on success or -1 on failure
 =cut
+
 sub getGSLBControlPort    # ( $farm_name )
 {
 	my $farmName = shift;
@@ -257,6 +265,7 @@ Parameters:
 Returns:
 	Integer - port on success or -1 on failure
 =cut
+
 sub setGSLBControlPort    # ( $farm_name )
 {
 	my $farmName = shift;
@@ -298,6 +307,7 @@ Returns:
 FIXME:
 	Set a output and do error control
 =cut
+
 sub setGSLBFarmBootStatus    # ($farm_name, $status)
 {
 	my ( $farm_name, $status ) = @_;
@@ -348,6 +358,7 @@ BUG:
 FIXME:
 	writeconf is obsolete parameter, always write configuration
 =cut
+
 sub setGSLBFarmStatus    # ($farm_name, $status, $writeconf)
 {
 	my ( $farm_name, $status, $writeconf ) = @_;
@@ -397,6 +408,7 @@ Parameters:
 Returns:	
 	Ingeter - Error code: 0 on success or -3 on failure
 =cut
+
 sub setGSLBRemoveTcpPort
 {
 	my ( $fname, $port ) = @_;
@@ -457,6 +469,7 @@ Returns:
 Bug:
 	The exit is not well controlled
 =cut
+
 sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vipp, $fname ) = @_;
