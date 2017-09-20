@@ -49,6 +49,7 @@ sub farms_name_gslb # ( $farmname )
 	# Services
 	#
 
+	require Zevenet::Farm::GSLB::Service;
 	my @services = &getGSLBFarmServices( $farmname );
 
 	foreach my $srv_it ( @services )
@@ -110,7 +111,7 @@ sub farms_name_gslb # ( $farmname )
 	#
 	# Zones
 	#
-
+	require Zevenet::Farm::GSLB::Zone;
 	my @zones   = &getGSLBFarmZones( $farmname );
 	my $first   = 0;
 	my $vserver = 0;
