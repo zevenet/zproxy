@@ -120,7 +120,7 @@ $modprobe="/sbin/modprobe";
 #Where is lsmod?
 $lsmod="/sbin/lsmod";
 #Where is gdnsd?
-$gdnsd="/gdnsd";
+$gdnsd="/usr/local/zevenet/app/gdnsd/sbin/gdnsd";
 #Where is l4sd?
 $l4sd="/usr/local/zevenet/app/l4s/bin/l4sd";
 #Where is id binary?
