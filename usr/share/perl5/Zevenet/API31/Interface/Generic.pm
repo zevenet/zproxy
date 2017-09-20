@@ -78,6 +78,8 @@ sub get_interfaces # ()
 
 		if ( $if_ref->{ type } eq 'nic' )
 		{
+			require Zevenet::Net::Bonding;
+			
 			$if_conf->{ is_slave } =
 			( grep { $$if_ref{ name } eq $_ } &getAllBondsSlaves ) ? 'true' : 'false';
 
