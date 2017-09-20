@@ -23,7 +23,7 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: getL4FarmsPorts
@@ -37,6 +37,7 @@ Returns:
 	String - return a list with the used ports by all L4xNAT farms. Format: "portList1,portList2,..."
 	
 =cut
+
 sub getL4FarmsPorts    # ($protocol)
 {
 	my $protocol = shift;
@@ -92,6 +93,7 @@ FIXME:
 	2. Always return 0
 	
 =cut
+
 sub loadL4Modules    # ($protocol)
 {
 	my $protocol = shift;
@@ -137,6 +139,7 @@ Returns:
 	Integer - 1 is valid or 0 is not valid
 
 =cut
+
 sub validL4ExtPort    # ($farm_protocol,$ports)
 {
 	my ( $farm_protocol, $ports ) = @_;
@@ -173,7 +176,8 @@ BUG:
 	same functionlity than _runL4FarmRestart and runL4FarmRestart
 
 =cut
-sub sendL4ConfChange     # ($farm_name)
+
+sub sendL4ConfChange    # ($farm_name)
 {
 	my $farm_name = shift;
 
@@ -220,6 +224,7 @@ BUG:
 	same functionlity than _runL4FarmRestart and runL4FarmRestart
 
 =cut
+
 sub setL4FarmSessionType    # ($session,$farm_name)
 {
 	my ( $session, $farm_name ) = @_;
@@ -310,6 +315,7 @@ BUG:
 	Use get and set with same name
 
 =cut
+
 sub getL4FarmSessionType    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -350,9 +356,13 @@ FIXME:
 	do error control
 
 =cut
+
 sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 {
 	my ( $algorithm, $farm_name ) = @_;
+
+	require Zevenet::FarmGuardian;
+	require Tie::File;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
@@ -470,7 +480,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 
 		# manage l4sd
 		my $l4sd_pidfile = '/var/run/l4sd.pid';
-		my $l4sd = &getGlobalConfiguration('l4sd');
+		my $l4sd         = &getGlobalConfiguration( 'l4sd' );
 
 		if ( $$farm{ lbalg } eq 'leastconn' && -e "$l4sd" )
 		{
@@ -479,7 +489,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 		elsif ( -e $l4sd_pidfile )
 		{
 			## lock iptables use ##
-			my $iptlock = &getGlobalConfiguration('iptlock');
+			my $iptlock = &getGlobalConfiguration( 'iptlock' );
 			open my $ipt_lockfile, '>', $iptlock;
 			&setIptLock( $ipt_lockfile );
 
@@ -533,6 +543,7 @@ Returns:
 	Scalar - "leastconn" , "weight", "prio" or -1 on failure
 	
 =cut
+
 sub getL4FarmAlgorithm    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -576,10 +587,12 @@ BUG:
 	Before change to sip, ftp or tftp protocol, check if farm port is contability
 
 =cut
+
 sub setFarmProto    # ($proto,$farm_name)
 {
 	my ( $proto, $farm_name ) = @_;
 
+	require Zevenet::FarmGuardian;
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = 0;
@@ -600,6 +613,7 @@ sub setFarmProto    # ($proto,$farm_name)
 
 	if ( $farm_type eq "l4xnat" )
 	{
+		require Tie::File;
 		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename" or return $output;
 		my $i = 0;
 		for my $line ( @configfile )
@@ -657,6 +671,7 @@ Returns:
 	Scalar - "nat", "dnat" or -1 on failure
 	
 =cut
+
 sub getFarmNatType    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -697,6 +712,7 @@ Returns:
 	Scalar - 0 on success or other value on failure
 	
 =cut
+
 sub setFarmNatType    # ($nat,$farm_name)
 {
 	my ( $nat, $farm_name ) = @_;
@@ -796,6 +812,7 @@ Returns:
 	Scalar - "none" not use persistence, "ip" for ip persistencia or -1 on failure
 	
 =cut
+
 sub getL4FarmPersistence    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -833,6 +850,7 @@ Returns:
 	Integer - 0 on success or other value on failure
 	
 =cut
+
 sub setL4FarmMaxClientTime    # ($track,$farm_name)
 {
 	my ( $track, $farm_name ) = @_;
@@ -890,6 +908,7 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 			push ( @rules, $rule );    # collect rule
 		}
 
+		require Zevenet::Netfilter;
 		$output = &applyIptRules( @rules );
 
 		if ( $fg_enabled eq 'true' )
@@ -916,6 +935,7 @@ FIXME:
 	The returned value must to be a integer. Fit output like in the description
 	
 =cut
+
 sub getL4FarmMaxClientTime    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -952,6 +972,7 @@ Returns:
 	scalar - return "down" if the farm not run at boot or "up" if the farm run at boot
 
 =cut
+
 sub getL4FarmBootStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -995,7 +1016,8 @@ FIXME
 	vipps parameter is only used in tcp farms. Soon this parameter will be obsolet
 			
 =cut
-sub getL4FarmVip       # ($info,$farm_name)
+
+sub getL4FarmVip    # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
 
@@ -1036,6 +1058,7 @@ Returns:
 	Scalar - 0 on success or other value on failure
 	
 =cut
+
 sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
@@ -1106,7 +1129,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		}
 	}
 
-	return 0; # FIXME?
+	return 0;                              # FIXME?
 }
 
 =begin nd
@@ -1121,6 +1144,7 @@ Returns:
 	array - return a list of ports
 		
 =cut
+
 sub getFarmPortList    # ($fvipp)
 {
 	my $fvipp = shift;
@@ -1128,7 +1152,7 @@ sub getFarmPortList    # ($fvipp)
 	my @portlist = split ( ',', $fvipp );
 	my @retportlist = ();
 
-	if ( ! grep ( /\*/, @portlist ) )
+	if ( !grep ( /\*/, @portlist ) )
 	{
 		foreach my $port ( @portlist )
 		{
@@ -1167,6 +1191,7 @@ Returns:
 	String - "udp" or "tcp"
 	
 =cut
+
 sub getL4ProtocolTransportLayer
 {
 	my $vproto = shift;
@@ -1191,6 +1216,7 @@ Returns:
 		\@servers = [ \%backend1, \%backend2, ... ]
 	
 =cut
+
 sub getL4FarmStruct
 {
 	my %farm;    # declare output hash
@@ -1245,6 +1271,7 @@ Returns:
 		\%backend = { $id, $vip, $vport, $tag, $weight, $priority, $status, $rip = $vip }
 	
 =cut
+
 sub getL4ServerStruct
 {
 	my $farm        = shift;
@@ -1258,15 +1285,15 @@ sub getL4ServerStruct
 	# server args example: ( 0, 192.168.101.252, 80, 0x20a, 1, 1 ,up )
 	my %server;                                        # output hash
 
-	$server{ id }       = shift @server_args;          # input 0
-	$server{ vip }      = shift @server_args;          # input 1
-	$server{ vport }    = shift @server_args;          # input 2
-	$server{ tag }      = shift @server_args;          # input 3
-	$server{ weight }   = shift @server_args;          # input 4
-	$server{ priority } = shift @server_args;          # input 5
-	$server{ status }   = shift @server_args;          # input 6
+	$server{ id }        = shift @server_args;         # input 0
+	$server{ vip }       = shift @server_args;         # input 1
+	$server{ vport }     = shift @server_args;         # input 2
+	$server{ tag }       = shift @server_args;         # input 3
+	$server{ weight }    = shift @server_args;         # input 4
+	$server{ priority }  = shift @server_args;         # input 5
+	$server{ status }    = shift @server_args;         # input 6
 	$server{ max_conns } = shift @server_args // 0;    # input 7
-	$server{ rip }      = $server{ vip };
+	$server{ rip }       = $server{ vip };
 
 	if ( $server{ vport } ne '' && $$farm{ proto } ne 'all' )
 	{
@@ -1295,6 +1322,7 @@ Returns:
 	none - .
 	
 =cut
+
 sub doL4FarmProbability
 {
 	my $farm = shift;    # input: farm reference
@@ -1309,7 +1337,7 @@ sub doL4FarmProbability
 		}
 	}
 
- #~ &zenlog( "doL4FarmProbability($$farm{ name }) => prob:$$farm{ prob }" ); ######
+  #~ &zenlog( "doL4FarmProbability($$farm{ name }) => prob:$$farm{ prob }" ); ######
 }
 
 =begin nd
@@ -1327,6 +1355,7 @@ FIXME:
 	Send signal to l4sd to reload configuration
 	
 =cut
+
 sub refreshL4FarmRules    # AlgorithmRules
 {
 	my $farm = shift;     # input: reference to farm structure
@@ -1431,6 +1460,7 @@ FIXME:
 	Send signal to l4sd to reload configuration
 	
 =cut
+
 sub reloadL4FarmsSNAT
 {
 	for my $farm_name ( &getFarmNameList() )
@@ -1443,11 +1473,11 @@ sub reloadL4FarmsSNAT
 		my $l4f_conf = &getL4FarmStruct( $farm_name );
 
 		next if $$l4f_conf{ nattype } ne 'nat';
-		
+
 		foreach my $server ( @{ $$l4f_conf{ servers } } )
 		{
 			my $rule;
-			
+
 			if ( $$l4f_conf{ vproto } eq 'sip' )
 			{
 				$rule = &genIptSourceNat( $l4f_conf, $server );

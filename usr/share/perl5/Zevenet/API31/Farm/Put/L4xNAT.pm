@@ -124,6 +124,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
+		require Zevenet::Farm::Config;
 		my $error = &setFarmAlgorithm( $json_obj->{ algorithm }, $farmname );
 		if ( $error )
 		{
@@ -232,6 +233,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
+		require Zevenet::Farm::Config;
 		my $error = &setFarmMaxClientTime( 0, $json_obj->{ ttl }, $farmname );
 		if ( $error )
 		{

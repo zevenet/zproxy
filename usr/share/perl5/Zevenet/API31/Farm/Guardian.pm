@@ -108,14 +108,17 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( $type eq 'gslb' && eval { require Zevenet::API31::Farm::GSLB; } )
+	if ( $type eq 'gslb' )
 	{
-		&modify_gslb_farmguardian( $json_obj, $farmname, $service );
-	}
-	else
-	{
-		my $msg = "Farm guardian is not supported for the requested farm profile.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		if( eval { require Zevenet::API31::Farm::GSLB; } )
+		{
+			&modify_gslb_farmguardian( $json_obj, $farmname, $service );
+		}
+		else
+		{
+			my $msg = "Farm guardian is not supported for the requested farm profile.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	# HTTP or L4xNAT
