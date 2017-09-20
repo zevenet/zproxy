@@ -463,7 +463,13 @@ sub getRBLZapiRule
 	my @domains = split ( ' ', $fileHandle->{ $rule }->{ 'domains' } );
 	my @farms   = split ( ' ', $fileHandle->{ $rule }->{ 'farms' } );
 
-	$output->{ 'domains' } = \@domains;
+	my @format_domains;
+	foreach my $domain (@domains)
+	{
+		push @format_domains, { 'domain'=>$domain };
+	}
+	
+	$output->{ 'domains' } = \@format_domains;
 	$output->{ 'farms' }   = \@farms;
 
 	$output->{ 'name' }   = $rule;

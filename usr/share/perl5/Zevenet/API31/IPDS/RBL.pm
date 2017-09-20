@@ -709,7 +709,7 @@ sub add_rbl_to_farm
 	}
 
 	&addRBLFarm( $farmName, $name );
-	if ( ! grep ( /^$farmName$/, @{ &getRBLFarm( $name, 'farms' ) } ) )
+	if ( !grep ( /^$farmName$/, @{ &getRBLFarm( $name, 'farms' ) } ) )
 	{
 		my $msg = "Error, applying $name to $farmName";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -824,7 +824,7 @@ sub set_rbl_actions
 
 	if ( $action eq 'start' )
 	{
-		if ( ! @{ &getRBLFarm( $name ) } )
+		if ( !@{ &getRBLFarm( $name ) } )
 		{
 			$msg = "The rule has to be applied to some farm to start it.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

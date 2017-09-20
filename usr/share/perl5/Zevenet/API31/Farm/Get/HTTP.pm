@@ -153,7 +153,7 @@ sub farms_name_http # ( $farmname )
 				 services    => \@out_s,
 	};
 
-	if ( eval{ require Zevenet::IPDS; } )
+	if ( eval{ require Zevenet::IPDS::Core; } )
 	{
 		$body->{ ipds } = &getIPDSfarmsRules( $farmname );
 	}
