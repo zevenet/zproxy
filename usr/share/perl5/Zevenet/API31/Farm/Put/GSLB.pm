@@ -24,7 +24,7 @@ use strict;
 use Zevenet::Farm::Action;
 use Zevenet::Farm::GSLB::Config;
 
-sub modify_gslb_farm # ( $json_obj,	$farmname )
+sub modify_gslb_farm    # ( $json_obj,	$farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
@@ -45,15 +45,18 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( my $param_msg = &getValidOptParams ( $json_obj, [ "vip", "vport", "newfarmname" ] ) )
+	if ( my $param_msg =
+		 &getValidOptParams( $json_obj, ["vip", "vport", "newfarmname"] ) )
 	{
 		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	my $reload_ipds = 0;
-	if (exists $json_obj->{vport} || exists $json_obj->{vip} || exists $json_obj->{newfarmname})
+	if (    exists $json_obj->{ vport }
+		 || exists $json_obj->{ vip }
+		 || exists $json_obj->{ newfarmname } )
 	{
-		if ( eval { require Zevenet::IPDS; } )		
+		if ( eval { require Zevenet::IPDS; } )
 		{
 			$reload_ipds = 1;
 			&runIPDSStopByFarm( $farmname );
@@ -61,7 +64,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 			&runZClusterRemoteManager( 'ipds', 'stop', $farmname );
 		}
 	}
-	
+
 	# Get current vip & vport
 	my $vip   = &getFarmVip( "vip",  $farmname );
 	my $vport = &getFarmVip( "vipp", $farmname );
@@ -91,7 +94,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		if ($json_obj->{newfarmname} ne $farmname)
+		if ( $json_obj->{ newfarmname } ne $farmname )
 		{
 			#Check if the new farm's name alredy exists
 			my $newffile = &getFarmFile( $json_obj->{ newfarmname } );
@@ -114,7 +117,8 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 
 			if ( $fnchange == -1 )
 			{
-				my $msg = "The name of the farm can't be modified, delete the farm and create a new one.";
+				my $msg =
+				  "The name of the farm can't be modified, delete the farm and create a new one.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 			elsif ( $fnchange == -2 )
@@ -125,7 +129,8 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 				#~ $newfstat = &runFarmStart( $farmname, "true" );
 				if ( $newfstat != 0 )
 				{
-					my $msg = "The farm isn't running, check if the IP address is up and the PORT is in use.";
+					my $msg =
+					  "The farm isn't running, check if the IP address is up and the PORT is in use.";
 					&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 				}
 			}
@@ -135,7 +140,8 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 			#~ $newfstat = &runFarmStart( $farmname, "true" );
 			if ( $newfstat != 0 )
 			{
-				my $msg = "The farm isn't running, check if the IP address is up and the PORT is in use.";
+				my $msg =
+				  "The farm isn't running, check if the IP address is up and the PORT is in use.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
@@ -157,7 +163,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		}
 	}
 
-	if ( exists ( $json_obj->{ vport } )
+	if ( exists ( $json_obj->{ vport } ) )
 	{
 		$json_obj->{ vport } += 0;
 		unless ( $json_obj->{ vport } =~ /^\d+$/ )
@@ -166,7 +172,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
-	
+
 	# Modify only vip
 	if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
 	{
@@ -183,6 +189,8 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	# Modify only vport
 	if ( exists ( $json_obj->{ vport } ) && !exists ( $json_obj->{ vip } ) )
 	{
+		require Zevenet::Farm::Config;
+
 		my $error = &setFarmVirtualConf( $vip, $json_obj->{ vport }, $farmname );
 		if ( $error )
 		{
@@ -196,7 +204,9 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	# Modify both vip & vport
 	if ( exists $json_obj->{ vip } && exists $json_obj->{ vport } )
 	{
-		my $error = &setGSLBFarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname );
+		my $error =
+		  &setGSLBFarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport },
+								   $farmname );
 		if ( $error )
 		{
 			my $msg = "Invalid vport or invalid vip.";
@@ -226,7 +236,8 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 
 	if ( $changedname ne "true" )
 	{
-		$body->{ info } = "There're changes that need to be applied, stop and start farm to apply them!";
+		$body->{ info } =
+		  "There're changes that need to be applied, stop and start farm to apply them!";
 
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
@@ -235,7 +246,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		}
 	}
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;
