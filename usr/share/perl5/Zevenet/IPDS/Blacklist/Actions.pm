@@ -32,8 +32,6 @@ use Zevenet::Farm::Base;
 my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 
-actions:
-actions_module:
 
 =begin nd
 Function: runBLStartModule

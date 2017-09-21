@@ -489,8 +489,6 @@ sub setBLDeleteRule
 	return $output;
 }
 
-cron:
-
 sub delBLCronTask
 {
 	my $listName = shift;
@@ -600,8 +598,6 @@ sub setBLCronTask
 
 	&zenlog( "Created a cron task for the list $listName" );
 }
-
-farm:
 
 # setBLApplyToFarm ( $farmName, $list );
 sub setBLApplyToFarm

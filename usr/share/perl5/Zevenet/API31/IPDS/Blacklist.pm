@@ -397,12 +397,6 @@ sub set_blacklists_list
 			&zenlog( "$noPush sources couldn't be added" ) if ( $noPush );
 		}
 
-		# once changed list, update de list name
-		if ( $key eq 'name' )
-		{
-			$listName = $json_obj->{ 'name' };
-		}
-
 		# set params
 		my $error = &setBLParam( $listName, $key, $json_obj->{ $key } );
 
@@ -411,6 +405,14 @@ sub set_blacklists_list
 		{
 			my $msg = "Error, modifying $key in $listName.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+		else
+		{
+			# once changed list, update de list name
+			if ( $key eq 'name' )
+			{
+				$listName = $json_obj->{ 'name' };
+			}
 		}
 	}
 

@@ -40,7 +40,6 @@ use Zevenet::IPDS::Blacklist::Core;
 
 # use Zevenet::IPDS::Blacklist::Runtime; # only it's used in some cases
 
-actions:
 
 # $listParams = \ %paramsRef;
 # &setBLCreateList ( $listName, $paramsRef );
@@ -459,7 +458,6 @@ sub delBLParam
 	}
 }
 
-sources:
 
 =begin nd
 Function: setBLAddToList
