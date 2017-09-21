@@ -208,7 +208,7 @@ sub set_blacklists_list
 	}
 
 	# not allow rename preload lists
-	if ( &getBLParam( $listName, 'preload' ) eq 'true' )
+	if ( exists $json_obj->{ 'name' } && &getBLParam( $listName, 'preload' ) eq 'true' )
 	{
 		my $msg = "The preload lists can't be renamed.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
