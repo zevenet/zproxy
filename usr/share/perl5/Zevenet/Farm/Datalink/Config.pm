@@ -103,6 +103,7 @@ sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 	# Apply changes online
 	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
+		require Zevenet::Farm::Action;
 		&runFarmStop( $farm_name, "true" );
 		&runFarmStart( $farm_name, "true" );
 	}

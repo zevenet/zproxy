@@ -92,14 +92,17 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# validate PRIORITY
-		if ( $json_obj->{ priority } !~ /^\d+$/ && exists $json_obj->{ priority } ) # (0-9)
+		if ( $json_obj->{ priority } !~ /^\d+$/
+			 && exists $json_obj->{ priority } )    # (0-9)
 		{
-			my $msg = "Invalid backend priority value, please insert a value within the range 0-9.";
+			my $msg =
+			  "Invalid backend priority value, please insert a value within the range 0-9.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		# validate WEIGHT
-		if ( $json_obj->{ weight } !~ /^[1-9]\d*$/ && exists $json_obj->{ weight } ) # 1 or higher
+		if ( $json_obj->{ weight } !~ /^[1-9]\d*$/
+			 && exists $json_obj->{ weight } )      # 1 or higher
 		{
 			my $msg = "Invalid backend weight value, please insert a value greater than 0.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -108,18 +111,23 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		# validate MAX_CONNS
 		$json_obj->{ max_conns } = 0 unless exists $json_obj->{ max_conns };
 
-		if ( $json_obj->{ max_conns } !~ /^[0-9]+$/ ) # (0 or higher)
+		if ( $json_obj->{ max_conns } !~ /^[0-9]+$/ )    # (0 or higher)
 		{
-			my $msg = "Invalid backend connection limit value, accepted values are 0 or higher.";
+			my $msg =
+			  "Invalid backend connection limit value, accepted values are 0 or higher.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		# Create backend
 		my $status = &setFarmServer(
-									 $id,                   $json_obj->{ ip },
-									 $json_obj->{ port },   $json_obj->{ max_conns },
-									 $json_obj->{ weight }, $json_obj->{ priority },
-									 "",                    $farmname
+									 $id,
+									 $json_obj->{ ip },
+									 $json_obj->{ port },
+									 $json_obj->{ max_conns },
+									 $json_obj->{ weight },
+									 $json_obj->{ priority },
+									 "",
+									 $farmname
 		);
 
 		if ( $status == -1 )
@@ -184,13 +192,6 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 			}
 		}
 
-		# validate IP
-		if ( !&getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
-		{
-			my $msg = "Invalid backend IP value, please insert a valid value.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
 		# validate INTERFACE
 		require Zevenet::Net::Interface;
 
@@ -210,6 +211,20 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		if ( !$valid_interface )
 		{
 			my $msg = "Invalid interface value, please insert any non-virtual interface.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
+		require Zevenet::Net::Validate;
+		my $iface_ref = &getInterfaceConfig( $json_obj->{ interface } );
+		if (
+			 !&getNetValidate(
+							   $iface_ref->{ addr },
+							   $iface_ref->{ mask },
+							   $json_obj->{ ip }
+			 )
+		  )
+		{
+			my $msg = "The IP must be in the network than interface.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
@@ -240,9 +255,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		# check error adding a new backend
 		if ( $status == -1 )
 		{
-			&zenlog(
-				"It's not possible to create the backend."
-			);
+			&zenlog( "It's not possible to create the backend." );
 
 			my $msg = "It's not possible to create the backend with ip $json_obj->{ ip }"
 			  . " and port $json_obj->{ port } for the $farmname farm";
@@ -321,7 +334,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 
 	# validate SERVICE
 	my @services = &getHTTPFarmServices( $farmname );
-	my $found = 0;
+	my $found    = 0;
 
 	foreach my $farmservice ( @services )
 	{
@@ -381,16 +394,20 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	unless ( !defined ( $json_obj->{ timeout } )
 		   || ( $json_obj->{ timeout } =~ /^\d+$/ && $json_obj->{ timeout } != 0 ) )
 	{
-		my $msg = "Invalid timeout value for a backend, it must be empty or greater than 0.";
+		my $msg =
+		  "Invalid timeout value for a backend, it must be empty or greater than 0.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# First param ($id) is an empty string to let function autogenerate the id for the new backend
+# First param ($id) is an empty string to let function autogenerate the id for the new backend
 	my $status = &setHTTPFarmServer(
-								 "",                     $json_obj->{ ip },
-								 $json_obj->{ port },    $json_obj->{ weight },
-								 $json_obj->{ timeout }, $farmname,
-								 $service,
+									 "",
+									 $json_obj->{ ip },
+									 $json_obj->{ port },
+									 $json_obj->{ weight },
+									 $json_obj->{ timeout },
+									 $farmname,
+									 $service,
 	);
 
 	# check if there was an error adding a new backend
@@ -456,11 +473,11 @@ sub backends
 		my $backends = &getL4FarmBackends( $farmname );
 
 		my $body = {
-					description => $desc,
-					params      => $backends,
+					 description => $desc,
+					 params      => $backends,
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	elsif ( $type eq 'datalink' )
 	{
@@ -472,11 +489,12 @@ sub backends
 					 params      => $backends,
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 	else
 	{
-		my $msg = "The farm $farmname with profile $type does not support this request.";
+		my $msg =
+		  "The farm $farmname with profile $type does not support this request.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 }
@@ -546,8 +564,8 @@ sub service_backends
 		my $tout = $subbe[7];
 		my $prio = $subbe[9];
 
-		$tout = $tout eq '-' ? undef: $tout+0;
-		$prio = $prio eq '-' ? undef: $prio+0;
+		$tout = $tout eq '-' ? undef : $tout + 0;
+		$prio = $prio eq '-' ? undef : $prio + 0;
 
 		push @backends,
 		  {
@@ -561,16 +579,16 @@ sub service_backends
 	}
 
 	my $body = {
-				description => $desc,
-				params      => \@backends,
+				 description => $desc,
+				 params      => \@backends,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # PUT
 
-sub modify_backends #( $json_obj, $farmname, $id_server )
+sub modify_backends    #( $json_obj, $farmname, $id_server )
 {
 	my ( $json_obj, $farmname, $id_server ) = @_;
 
@@ -595,15 +613,15 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 		my $l4_farm = &getL4FarmStruct( $farmname );
 		my $backend;
 
-		for my $be ( @{ $l4_farm->{'servers'} } )
+		for my $be ( @{ $l4_farm->{ 'servers' } } )
 		{
-			if ( $be->{'id'} eq $id_server )
+			if ( $be->{ 'id' } eq $id_server )
 			{
 				$backend = $be;
 			}
 		}
 
-		if ( ! $backend )
+		if ( !$backend )
 		{
 			my $msg = "Could not find a backend with such id.";
 			&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -611,7 +629,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			unless ( $json_obj->{ ip } && &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
+			unless (    $json_obj->{ ip }
+					 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 			{
 				my $msg = "Invalid IP.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -622,7 +641,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( exists ( $json_obj->{ port } ) )
 		{
-			unless ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' || $json_obj->{ port } == undef )
+			unless (    &isValidPortNumber( $json_obj->{ port } ) eq 'true'
+					 || $json_obj->{ port } == undef )
 			{
 				my $msg = "Invalid port number.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -633,9 +653,11 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( exists ( $json_obj->{ weight } ) )
 		{
-			unless ( $json_obj->{ weight } =~ /^\d*[1-9]$/ || $json_obj->{ weight } == undef ) # 1 or higher
+			unless (    $json_obj->{ weight } =~ /^\d*[1-9]$/
+					 || $json_obj->{ weight } == undef )    # 1 or higher
 			{
-				my $msg = "Error, trying to modify the backends in a farm $farmname, invalid weight.";
+				my $msg =
+				  "Error, trying to modify the backends in a farm $farmname, invalid weight.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
@@ -644,9 +666,11 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( exists ( $json_obj->{ priority } ) )
 		{
-			unless ( $json_obj->{ priority } =~ /^\d$/ || $json_obj->{ priority } == undef ) # (0-9)
+			unless (    $json_obj->{ priority } =~ /^\d$/
+					 || $json_obj->{ priority } == undef )    # (0-9)
 			{
-				my $msg = "Error, trying to modify the backends in the farm $farmname, invalid priority.";
+				my $msg =
+				  "Error, trying to modify the backends in the farm $farmname, invalid priority.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
@@ -655,9 +679,10 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( exists ( $json_obj->{ max_conns } ) )
 		{
-			unless ( $json_obj->{ max_conns } =~ /^\d+$/ ) # (0 or higher)
+			unless ( $json_obj->{ max_conns } =~ /^\d+$/ )    # (0 or higher)
 			{
-				my $msg = "Error, trying to modify the connection limit in the farm $farmname, invalid value.";
+				my $msg =
+				  "Error, trying to modify the connection limit in the farm $farmname, invalid value.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
@@ -684,22 +709,29 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 	{
 		require Zevenet::Farm::Backend;
 
-		my @run = &getFarmServers( $farmname );
+		my @run         = &getFarmServers( $farmname );
 		my $serv_values = $run[$id_server];
 		my $be;
 
-		if ( ! $serv_values )
+		if ( !$serv_values )
 		{
 			my $msg = "Could not find a backend with such id.";
 			&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 		}
 
-		( undef, $be->{ip}, $be->{interface}, $be->{weight}, $be->{priority}, $be->{status} ) = split ( ";", $serv_values );
+		(
+		   undef,
+		   $be->{ ip },
+		   $be->{ interface },
+		   $be->{ weight },
+		   $be->{ priority },
+		   $be->{ status }
+		) = split ( ";", $serv_values );
 
 		# Functions
 		if ( exists ( $json_obj->{ ip } ) )
 		{
-			if ( $json_obj->{ ip } && &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
+			if ( $json_obj->{ ip } && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 			{
 				$be->{ ip } = $json_obj->{ ip };
 			}
@@ -718,8 +750,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 			for my $iface ( @{ &getActiveInterfaceList() } )
 			{
-				next if $iface->{ vini }; # discard virtual interfaces
-				next if !$iface->{ addr }; # discard interfaces without address
+				next if $iface->{ vini };     # discard virtual interfaces
+				next if !$iface->{ addr };    # discard interfaces without address
 
 				if ( $iface->{ name } eq $json_obj->{ interface } )
 				{
@@ -736,9 +768,19 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			$be->{ interface } = $json_obj->{ interface };
 		}
 
+		# check that IP is in network than interface
+		require Zevenet::Net::Validate;
+		my $iface_ref = &getInterfaceConfig( $be->{ interface } );
+		if (
+			 !&getNetValidate( $iface_ref->{ addr }, $iface_ref->{ mask }, $be->{ ip } ) )
+		{
+			my $msg = "The IP must be in the network than interface.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
 		if ( exists ( $json_obj->{ weight } ) )
 		{
-			if ( $json_obj->{ weight } =~ &getValidFormat('natural_num') || $json_obj->{ weight } == undef ) # 1 or higher
+			if ( !&getValidFormat( 'natural_num', $json_obj->{ weight } ) )    # 1 or higher
 			{
 				my $msg = "Invalid weight.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -749,7 +791,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( exists ( $json_obj->{ priority } ) )
 		{
-			if ( $json_obj->{ priority } =~ /^[1-9]$/ || $json_obj->{ priority } == undef ) # (1-9)
+			if ( $json_obj->{ priority } !~ /^[1-9]$/ )                        # (1-9)
 			{
 				my $msg = "Invalid priority.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -769,7 +811,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( $status == -1 )
 		{
-			my $msg = "It's not possible to modify the backend with IP $json_obj->{ip} and interface $json_obj->{interface}.";
+			my $msg =
+			  "It's not possible to modify the backend with IP $json_obj->{ip} and interface $json_obj->{interface}.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -798,10 +841,10 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 		}
 	}
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
-sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
+sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 {
 	my ( $json_obj, $farmname, $service, $id_server ) = @_;
 
@@ -853,10 +896,10 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 	{
 		my @current_be = split ( " ", $be_line );
 
-		if ( $current_be[1] == $id_server ) # id
+		if ( $current_be[1] == $id_server )    # id
 		{
-			$current_be[7] = undef if $current_be[7] eq '-'; # timeout
-			$current_be[9] = undef if $current_be[9] eq '-'; # priority
+			$current_be[7] = undef if $current_be[7] eq '-';    # timeout
+			$current_be[9] = undef if $current_be[9] eq '-';    # priority
 
 			$be = {
 					id       => $current_be[1],
@@ -880,7 +923,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 	# validate BACKEND new ip
 	if ( exists ( $json_obj->{ ip } ) )
 	{
-		unless ( $json_obj->{ ip } && &getValidFormat('IPv4_addr', $json_obj->{ ip } ) )
+		unless (    $json_obj->{ ip }
+				 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 		{
 			my $msg = "Invalid IP.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -929,17 +973,18 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 	}
 
 	# apply BACKEND change
-	my $status = &setHTTPFarmServer(
-								 $id_server,       $be->{ ip },
-								 $be->{ port },    $be->{ priority },
-								 $be->{ timeout }, $farmname,
-								 $service
-	);
+	my $status = &setHTTPFarmServer( $id_server,
+									 $be->{ ip },
+									 $be->{ port },
+									 $be->{ priority },
+									 $be->{ timeout },
+									 $farmname, $service );
 
 	# check if there was an error modifying the backend
 	if ( $status == -1 )
 	{
-		my $msg = "It's not possible to modify the backend with IP $json_obj->{ip} in service $service.";
+		my $msg =
+		  "It's not possible to modify the backend with IP $json_obj->{ip} in service $service.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -963,13 +1008,13 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		  "There're changes that need to be applied, stop and start farm to apply them!";
 	}
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # DELETE
 
 # DELETE /farms/<farmname>/backends/<backendid> Delete a backend of a Farm
-sub delete_backend # ( $farmname, $id_server )
+sub delete_backend    # ( $farmname, $id_server )
 {
 	my ( $farmname, $id_server ) = @_;
 
@@ -992,7 +1037,7 @@ sub delete_backend # ( $farmname, $id_server )
 
 	require Zevenet::Farm::Backend;
 
-	my @backends = &getFarmServers( $farmname );
+	my @backends     = &getFarmServers( $farmname );
 	my $backend_line = $backends[$id_server];
 
 	if ( !$backend_line )
@@ -1005,11 +1050,13 @@ sub delete_backend # ( $farmname, $id_server )
 
 	if ( $status == -1 )
 	{
-		my $msg = "It's not possible to delete the backend with ID $id_server of the $farmname farm.";
+		my $msg =
+		  "It's not possible to delete the backend with ID $id_server of the $farmname farm.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	&zenlog( "ZAPI success, the backend $id_server in farm $farmname has been deleted." );
+	&zenlog(
+		   "ZAPI success, the backend $id_server in farm $farmname has been deleted." );
 
 	if ( eval { require Zevenet::Cluster; } )
 	{
@@ -1023,11 +1070,11 @@ sub delete_backend # ( $farmname, $id_server )
 				 message     => $message
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #  DELETE /farms/<farmname>/services/<servicename>/backends/<backendid> Delete a backend of a Service
-sub delete_service_backend # ( $farmname, $service, $id_server )
+sub delete_service_backend    # ( $farmname, $service, $id_server )
 {
 	my ( $farmname, $service, $id_server ) = @_;
 
@@ -1061,7 +1108,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 	require Zevenet::Farm::HTTP::Service;
 
 	# validate SERVICE
-	my @services = &getHTTPFarmServices($farmname);
+	my @services = &getHTTPFarmServices( $farmname );
 
 	# check if the SERVICE exists
 	unless ( grep { $service eq $_ } @services )
@@ -1070,8 +1117,9 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my @backends = split ( "\n", &getHTTPFarmVS( $farmname, $service, "backends" ) );
-	my $be_found = grep { (split ( " ", $_ ))[1] == $id_server } @backends;
+	my @backends =
+	  split ( "\n", &getHTTPFarmVS( $farmname, $service, "backends" ) );
+	my $be_found = grep { ( split ( " ", $_ ) )[1] == $id_server } @backends;
 
 	# check if the backend id is available
 	unless ( $be_found )
@@ -1087,7 +1135,8 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 	{
 		&zenlog( "It's not possible to delete the backend." );
 
-		my $msg = "Could not find the backend with ID $id_server of the $farmname farm.";
+		my $msg =
+		  "Could not find the backend with ID $id_server of the $farmname farm.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -1109,7 +1158,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 		&setFarmRestart( $farmname );
 	}
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

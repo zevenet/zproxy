@@ -23,7 +23,7 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: getDatalinkFarmServers
@@ -40,6 +40,7 @@ FIXME:
 	changes output to hash format
 	
 =cut
+
 sub getDatalinkFarmServers    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -58,7 +59,7 @@ sub getDatalinkFarmServers    # ($farm_name)
 		if ( $line ne "" && $line =~ /^\;server\;/ && $first ne "true" )
 		{
 			$line =~ s/^\;server/$sindex/g;    #, $line;
-			chomp( $line );
+			chomp ( $line );
 			push ( @servers, $line );
 			$sindex = $sindex + 1;
 		}
@@ -84,6 +85,7 @@ Returns:
 	array - list of backends. Each item has the format: ";index;ip;iface;weight;priority;status"
 	
 =cut
+
 sub getDatalinkFarmBackends    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -100,23 +102,24 @@ sub getDatalinkFarmBackends    # ($farm_name)
 
 	while ( my $line = <FI> )
 	{
-		chomp ($line);
+		chomp ( $line );
+
 		# ;server;45.2.2.3;eth0;1;1;up
 		if ( $line ne "" && $line =~ /^\;server\;/ && $first ne "true" )
 		{
-			my @aux = split( ';', $line );
-			my $status=$aux[6];
-			$status = "undefined" if ($farmStatus eq "down");
-			 
-			push @servers, 
-				{
-					id=>$sindex,
-					ip=>$aux[2],
-					iface=>$aux[3],
-					weight=>$aux[4]+0,
-					priority=>$aux[5]+0,
-					status=>$status
-				};
+			my @aux = split ( ';', $line );
+			my $status = $aux[6];
+			$status = "undefined" if ( $farmStatus eq "down" );
+
+			push @servers,
+			  {
+				id        => $sindex,
+				ip        => $aux[2],
+				interface => $aux[3],
+				weight    => $aux[4] + 0,
+				priority  => $aux[5] + 0,
+				status    => $status
+			  };
 			$sindex = $sindex + 1;
 		}
 		else
@@ -149,17 +152,20 @@ FIXME:
 	Not return nothing, do error control
 		
 =cut
+
 sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 {
 	my ( $ids, $rip, $iface, $weight, $priority, $farm_name ) = @_;
+
+	require Tie::File;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $end           = "false";
 	my $i             = 0;
 	my $l             = 0;
-	
+
 	# default value
-	$weight ||= 1;
+	$weight   ||= 1;
 	$priority ||= 1;
 
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
@@ -216,10 +222,12 @@ Returns:
 	Integer - Error code: return 0 on success or -1 on failure
 	
 =cut
+
 sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 {
 	my ( $ids, $farm_name ) = @_;
 
+	require Tie::File;
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 	my $end           = "false";
@@ -252,6 +260,7 @@ sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 
 	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
+		require Zevenet::Farm::Action;
 		&runFarmStop( $farm_name, "true" );
 		&runFarmStart( $farm_name, "true" );
 	}
@@ -276,6 +285,7 @@ BUG:
 	It is necessary creates backend checks and save backend status
 	
 =cut
+
 sub getDatalinkFarmBackendsStatus_old    # (@content)
 {
 	my ( @content ) = @_;
@@ -308,6 +318,7 @@ FIXME:
 	Not return nothing, do error control	
 	
 =cut
+
 sub setDatalinkFarmBackendStatus    # ($farm_name,$index,$stat)
 {
 	my ( $farm_name, $index, $stat ) = @_;
@@ -358,6 +369,7 @@ Returns:
 	array - Each item has the next format: ";server;ip;interface;weight;priority;status"
 	
 =cut
+
 sub getDatalinkFarmBackendStatusCtl    # ($farm_name)
 {
 	my ( $farm_name ) = @_;

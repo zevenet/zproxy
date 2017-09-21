@@ -27,6 +27,7 @@ sub farms_name_datalink    # ( $farmname )
 {
 	my $farmname = shift;
 
+	require Zevenet::Farm::Config;
 	my $vip = &getFarmVip( "vip", $farmname );
 	my $status = &getFarmVipStatus( $farmname );
 
