@@ -326,7 +326,7 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 		{
 			# Include the plugin file in the main configuration
 			tie my @fileconf, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
-			if ( ( grep ( /include{plugins\/$gsalg\.cfg}/, @fileconf ) ) == 0 )
+			if ( ( grep ( /include\{plugins\/$gsalg\.cfg\}/, @fileconf ) ) == 0 )
 			{
 				my $found = 0;
 				my $index = 0;
