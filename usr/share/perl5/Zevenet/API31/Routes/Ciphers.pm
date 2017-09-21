@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -22,30 +23,13 @@
 
 use strict;
 
-# GET /ciphers
-sub ciphers_available # ( $json_obj, $farmname )
-{
-	my @out;
-	my $desc = "Get the ciphers available";
-	
-	require Zevenet::Farm::HTTP::HTTPS;
-	
-	push @out, { 'ciphers' => "all", "description" => "All" };
-	push @out, { 'ciphers' => "highsecurity", "description" => "High security" };
-	push @out, { 'ciphers' => "customsecurity", "description" => "Custom security" };
-				
-	if ( &getFarmCipherSSLOffLoadingSupport() )
-	{
-		push @out, { 'ciphers' => "ssloffloading", "description" => "SSL offloading" };
-	}
-	
-	my $body = {
-				description => $desc,
-				params      => \@out,
-	};
+my $q = getCGI();
 
-	# Success
-	&httpResponse({ code => 200, body => $body });
+if ( $q->path_info =~ qr{/ciphers$} )
+{
+	require Zevenet::API31::Certificate::Ciphers;
+
+	GET qr{^/ciphers$} => \&ciphers_available;
 }
-	
+
 1;
