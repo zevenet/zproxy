@@ -571,7 +571,7 @@ if ( $eject eq "start" )
 	my $ip_bin = &getGlobalConfiguration('ip_bin');
 
 	#first real interfaces
-	foreach my $iface ( @configured_interfaces )
+	foreach my $iface ( &getInterfaceTypeList('nic'), &getInterfaceTypeList('bond') )
 	{
 		#interfaces as eth0 for example
 		if ( $$iface{ name } eq $$iface{ dev } )
@@ -580,27 +580,31 @@ if ( $eject eq "start" )
 
 			if ( $$iface{ status } eq "up" )
 			{
-				&printAndLog( "  * Starting interface $$iface{name}\n" );
-				&printAndLog( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
-
-				if ( $$iface{ gateway } ne '' )
-				{
-					&printAndLog( " Gateway:$$iface{gateway}" );
-				}
-
+				&printAndLog( "  * Starting interface $$iface{name}" );
 				&upIf( $iface );
-				my $return_code = &addIp( $iface );
 
-				if ( $return_code )
+				if ( exists $$iface{ addr } && length $$iface{ addr } )
 				{
-					my @ip_output = `$ip_bin address show dev $$iface{name}`;
-					$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
+					&printAndLog( "\n    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+
+					if ( $$iface{ gateway } ne '' )
+					{
+						&printAndLog( " Gateway:$$iface{gateway}" );
+					}
+
+					my $return_code = &addIp( $iface );
+
+					if ( $return_code )
+					{
+						my @ip_output = `$ip_bin address show dev $$iface{name}`;
+						$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
+					}
+
+					# kept in case it is required for first interface
+					&writeRoutes( $$iface{ name } );
+
+					&applyRoutes( "local", $iface );
 				}
-
-				# kept in case it is required for first interface
-				&writeRoutes( $$iface{ name } );
-
-				&applyRoutes( "local", $iface );
 
 				if ( $return_code == 0 )
 				{

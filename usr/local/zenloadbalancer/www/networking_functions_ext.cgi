@@ -193,13 +193,13 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 	my %iface;
 
-	$iface{ name }    = shift @if_params;
+	$iface{ name }    = shift @if_params // $if_name;
 	$iface{ addr }    = shift @if_params;
 	$iface{ mask }    = shift @if_params;
 	$iface{ gateway } = shift @if_params;                        # optional
 	$iface{ status }  = $if_status;
 	$iface{ ip_v }    = ( $iface{ addr } =~ /:/ ) ? '6' : '4';
-	$iface{ dev }     = $iface{ name };
+	$iface{ dev }     = $if_name;
 	$iface{ vini }    = undef;
 	$iface{ vlan }    = undef;
 	$iface{ mac }     = undef;
@@ -222,6 +222,15 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	}
 
 	$iface{ mac } = $socket->if_hwaddr( $iface{ dev } );
+
+	# Interfaces without ip do not get HW addr via socket,
+	# in those cases get the MAC from the OS.
+	unless ( $iface{ mac } )
+	{
+		open my $fh, '<', "/sys/class/net/$if_name/address";
+		chomp( $iface{ mac } = <$fh> );
+		close $fh;
+	}
 
 	# complex check to avoid warnings
 	if (
