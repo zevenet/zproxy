@@ -182,9 +182,9 @@ sub runDOSStartByRule
 
 	if ( &getDOSParam( $ruleName, 'type' ) eq "system" )
 	{
-		if ( &getDOSParam( $ruleName, 'status' ) eq "up" )
+		if ( &getDOSParam( $ruleName, 'status' ) ne "up" )
 		{
-			&setDOSStartRule( $ruleName );
+			&runDOSStart( $ruleName );
 		}
 	}
 	else
@@ -194,7 +194,7 @@ sub runDOSStartByRule
 			# run rules of running farms
 			if ( &getFarmBootStatus( $farmName ) eq 'up' )
 			{
-				if ( &setDOSRunRule( $ruleName, $farmName ) != 0 )
+				if ( &runDOSStart( $ruleName, $farmName ) != 0 )
 				{
 					&zenlog( "Error running the rule $ruleName in the farm $farmName." );
 				}
@@ -227,13 +227,13 @@ sub runDOSStopByRule
 
 	if ( &getDOSParam( $ruleName, 'type' ) eq "system" )
 	{
-		&setDOSStopRule( $ruleName );
+		&runDOSStop( $ruleName );
 	}
 	else
 	{
 		foreach my $farmName ( @{ &getDOSParam( $ruleName, 'farms' ) } )
 		{
-			if ( &setDOSStopRule( $ruleName, $farmName ) != 0 )
+			if ( &runDOSStop( $ruleName, $farmName ) != 0 )
 			{
 				&zenlog( "Error stopping the rule $ruleName in the farm $farmName." );
 			}

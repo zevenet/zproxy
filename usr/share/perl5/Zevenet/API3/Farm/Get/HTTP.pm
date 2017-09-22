@@ -150,7 +150,7 @@ sub farms_name_http # ( $farmname )
 		push @out_s, $serviceStruct;
 	}
 	require Zevenet::IPDS;
-	my $ipds = &getIPDSfarmsRules( $farmname );
+	my $ipds = &getIPDSfarmsRules_zapiv3( $farmname );
 
 	# Success
 	my $body = {
@@ -161,6 +161,65 @@ sub farms_name_http # ( $farmname )
 	};
 
 	&httpResponse({ code => 200, body => $body });
+}
+
+# Get all IPDS rules applied to a farm
+sub getIPDSfarmsRules_zapiv3
+{
+	my $farmName = shift;
+
+	require Config::Tiny;
+
+	my $rules;
+	my $fileHandle;
+	my @dosRules        = ();
+	my @blacklistsRules = ();
+	my @rblRules        = ();
+
+	my $dosConf        = &getGlobalConfiguration( 'dosConf' );
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my $rblPath        = &getGlobalConfiguration( 'configdir' ) . "/ipds/rbl";
+	my $rblConf        = "$rblPath/rbl.conf";
+
+	if ( -e $dosConf )
+	{
+		$fileHandle = Config::Tiny->read( $dosConf );
+		foreach my $key ( keys %{ $fileHandle } )
+		{
+			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			{
+				push @dosRules, $key;
+			}
+		}
+	}
+
+	if ( -e $blacklistsConf )
+	{
+		$fileHandle = Config::Tiny->read( $blacklistsConf );
+		foreach my $key ( keys %{ $fileHandle } )
+		{
+			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			{
+				push @blacklistsRules, $key;
+			}
+		}
+	}
+
+	if ( -e $rblConf )
+	{
+		$fileHandle = Config::Tiny->read( $rblConf );
+		foreach my $key ( keys %{ $fileHandle } )
+		{
+			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			{
+				push @rblRules, $key;
+			}
+		}
+	}
+
+	$rules =
+	  { dos => \@dosRules, blacklists => \@blacklistsRules, rbl => \@rblRules };
+	return $rules;
 }
 
 1;
