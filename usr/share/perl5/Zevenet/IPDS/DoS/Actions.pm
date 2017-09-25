@@ -52,6 +52,9 @@ sub runDOSStartModule
 	my $fileHandle = Config::Tiny->read( $confFile );
 	foreach my $ruleName ( keys %{ $fileHandle } )
 	{
+		# It is disabled
+		next if ( &getDOSStatusRule( $ruleName ) eq "down" );
+
 		if ( $fileHandle->{ $ruleName }->{ 'type' } eq 'farm' )
 		{
 			my $farmList = $fileHandle->{ $ruleName }->{ 'farms' };
@@ -61,21 +64,18 @@ sub runDOSStartModule
 				# run rules of running farms
 				if ( &getFarmBootStatus( $farmName ) eq 'up' )
 				{
-					if ( &setDOSRunRule( $ruleName, $farmName ) != 0 )
+					if ( &runDOSStart( $ruleName, $farmName ) != 0 )
 					{
 						&zenlog( "Error running the rule $ruleName in the farm $farmName." );
 					}
 				}
 			}
 		}
-		elsif ( $fileHandle->{ $ruleName }->{ 'type' } eq 'system' )
+		else
 		{
-			if ( $fileHandle->{ $ruleName }->{ 'status' } eq "up" )
+			if ( &runDOSStart( $ruleName ) != 0 )
 			{
-				if ( &setDOSRunRule( $ruleName, 'status' ) != 0 )
-				{
-					&zenlog( "Error, running the rule $ruleName." );
-				}
+				&zenlog( "Error, running the rule $ruleName." );
 			}
 		}
 	}
@@ -178,17 +178,16 @@ sub runDOSStartByRule
 {
 	my ( $ruleName ) = @_;
 	my $error = 0;
-	my @farms = @{ &getDOSParam( $ruleName, 'farms' ) };
+
+	return 0 if ( &getDOSStatusRule( $ruleName ) eq 'down' );
 
 	if ( &getDOSParam( $ruleName, 'type' ) eq "system" )
 	{
-		if ( &getDOSParam( $ruleName, 'status' ) ne "up" )
-		{
-			&runDOSStart( $ruleName );
-		}
+		&runDOSStart( $ruleName );
 	}
 	else
 	{
+		my @farms = @{ &getDOSParam( $ruleName, 'farms' ) };
 		foreach my $farmName ( @farms )
 		{
 			# run rules of running farms
@@ -223,17 +222,15 @@ sub runDOSStopByRule
 	my ( $ruleName ) = @_;
 	my $error = 0;
 
-	return if ( &getDOSStatusRule() eq 'down' );
-
 	if ( &getDOSParam( $ruleName, 'type' ) eq "system" )
 	{
-		&runDOSStop( $ruleName );
+		&setDOSStopRule( $ruleName );
 	}
 	else
 	{
 		foreach my $farmName ( @{ &getDOSParam( $ruleName, 'farms' ) } )
 		{
-			if ( &runDOSStop( $ruleName, $farmName ) != 0 )
+			if ( &setDOSStopRule( $ruleName, $farmName ) != 0 )
 			{
 				&zenlog( "Error stopping the rule $ruleName in the farm $farmName." );
 			}
@@ -288,7 +285,12 @@ Returns:
 sub runDOSStart
 {
 	my ( $rule, $farm ) = @_;
-	my $error = &setDOSRunRule( $rule, $farm );
+	my $error;
+
+	if ( &getDOSStatusRule( $rule ) eq 'up' )
+	{
+		$error = &setDOSRunRule( $rule, $farm );
+	}
 	return $error;
 }
 

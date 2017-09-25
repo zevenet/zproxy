@@ -204,10 +204,16 @@ sub runRBLStart
 
 	require Zevenet::Farm::Base;
 
+	# Check if the rule is disabled
+	if ( &getRBLObjectRuleParam( $rule, 'status' ) eq 'down' )
+	{
+		return 0;
+	}
+
 	# to start a rule the farm has to be up
 	if ( &getFarmBootStatus( $farm ) ne 'up' )
 	{
-		return -1;
+		return 0;
 	}
 
 	# not run if the farm is not applied to the rule

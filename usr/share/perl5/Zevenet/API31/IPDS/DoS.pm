@@ -60,8 +60,8 @@ sub get_dos_rules
 #GET /ipds/dos
 sub get_dos
 {
-	my $confFile    = &getGlobalConfiguration( 'dosConf' );
-	my $desc = "List the DoS rules";
+	my $confFile = &getGlobalConfiguration( 'dosConf' );
+	my $desc     = "List the DoS rules";
 
 	my $fileHandle = Config::Tiny->read( $confFile );
 	my %rules      = %{ $fileHandle };
@@ -208,7 +208,7 @@ sub set_dos_rule
 		}
 	}
 
-	my $status = &getDOSStatusRule( $name );
+	my $status = &getDOSParam( $name, 'status' );
 	&runDOSStopByRule( $name ) if ( $status eq "up" );
 
 	foreach my $param ( keys %{ $json_obj } )
@@ -328,7 +328,7 @@ sub add_dos_to_farm
 	&setDOSApplyRule( $name, $farmName );
 
 	my $output = &getDOSZapiRule( $name );
-	if ( ! grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
+	if ( !grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 	{
 		my $msg = "Error, enabling $name rule.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -411,8 +411,8 @@ sub actions_dos
 
 	require Zevenet::IPDS::DoS::Actions;
 
-	my $desc     = "Apply a action to the DoS rule $rule";
-	my $msg = "Error, applying the action to the DoS rule.";
+	my $desc = "Apply a action to the DoS rule $rule";
+	my $msg  = "Error, applying the action to the DoS rule.";
 
 	if ( !&getDOSExists( $rule ) )
 	{
@@ -422,19 +422,23 @@ sub actions_dos
 
 	if ( $json_obj->{ action } eq 'start' )
 	{
-		if( &getDOSParam( $rule, 'type' ) eq 'farm' )
+		if ( &getDOSParam( $rule, 'type' ) eq 'farm' )
 		{
-			if ( ! @{ &getDOSParam( $rule, 'farms' ) } )
+			if ( !@{ &getDOSParam( $rule, 'farms' ) } )
 			{
 				$msg = "The rule has to be applied to some farm to start it.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
+		&setDOSParam( $rule, 'status', 'up' );
+
 		my $error = &runDOSStartByRule( $rule );
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'stop' )
 	{
+		require Zevenet::IPDS::Blacklist::Config;
+		&setDOSParam( $rule, 'status', 'down' );
 		my $error = &runDOSStopByRule( $rule );
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
@@ -442,6 +446,7 @@ sub actions_dos
 	{
 		my $error = &runDOSRestartByRule( $rule );
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
+		&setDOSParam( $rule, 'status', 'up' );
 	}
 	else
 	{

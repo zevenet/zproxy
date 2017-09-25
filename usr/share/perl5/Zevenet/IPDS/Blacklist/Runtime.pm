@@ -64,7 +64,7 @@ sub setBLRunList
 		# maxelem = 2^n
 	}
 
-	#~ if ( &getBLStatus ( $listName ) eq 'down' )
+	#~ if ( &getBLIpsetStatus ( $listName ) eq 'down' )
 	{
 		&zenlog( "Creating ipset table" );
 		$output = system (
@@ -110,7 +110,7 @@ sub setBLDestroyList
 	}
 
 	# FIXME:  lunch consecutively this ipset command and below return error
-	#~ if ( &getBLStatus ( $listName ) eq 'up' )
+	#~ if ( &getBLIpsetStatus ( $listName ) eq 'up' )
 	#~ {
 	&zenlog( "Destroying blacklist $listName" );
 	system ( "$ipset destroy $listName >/dev/null 2>&1" );
@@ -229,7 +229,7 @@ sub setBLRefreshAllLists
 		}
 
 		# Refresh list if is running
-		if ( &getBLStatus( $listName ) eq 'up' )
+		if ( &getBLIpsetStatus( $listName ) eq 'up' )
 		{
 			&setBLRefreshList( $listName );
 		}
@@ -337,7 +337,7 @@ sub setBLCreateRule
 	my @tables;
 	my $action = &getBLParam( $listName, 'policy' );
 
-	if ( &getBLStatus( $listName ) eq "down" )
+	if ( &getBLIpsetStatus( $listName ) eq "down" )
 	{
 		# load in memory the list
 		&setBLRunList( $listName );
@@ -612,7 +612,7 @@ sub setBLApplyToFarm
 	if ( &getFarmStatus( $farmName ) eq 'up' )
 	{
 		# load de list if it is not been used
-		if ( &getBLStatus( $listName ) eq 'down' )
+		if ( &getBLIpsetStatus( $listName ) eq 'down' )
 		{
 			$output = &setBLRunList( $listName );
 

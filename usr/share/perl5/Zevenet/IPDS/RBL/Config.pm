@@ -109,6 +109,9 @@ sub getRBLInitialParams
 
 		# Scan local traffic
 		'local_traffic' => 'no',
+
+		# rule status
+		'status' => 'down',
 	};
 
 	return $initial;
@@ -461,6 +464,12 @@ sub delRBLFarm
 
 	# Remove from configuration file
 	&setRBLObjectRuleParam( $rule, 'farms-del', $farmname );
+
+	# Disable rule if it is not applied to any farm
+	if ( ! @{ &getRBLFarm( $rule ) } )
+	{
+		&setRBLObjectRuleParam( $rule, 'status', 'down' );
+	}
 
 	return $error;
 }

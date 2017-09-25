@@ -179,7 +179,8 @@ sub getIPDSfarmsRules
 		{
 			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
-				push @dosRules, $key;
+				my $status = $fileHandle->{ $key }->{ 'status' } || "down";
+				push @dosRules, { 'name' => $key, 'status' => $status };
 			}
 		}
 	}
@@ -191,7 +192,8 @@ sub getIPDSfarmsRules
 		{
 			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
-				push @blacklistsRules, $key;
+				my $status = $fileHandle->{ $key }->{ 'status' } || "down";
+				push @blacklistsRules, { 'name' => $key, 'status' => $status };
 			}
 		}
 	}
@@ -203,7 +205,8 @@ sub getIPDSfarmsRules
 		{
 			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
-				push @rblRules, $key;
+				my $status = $fileHandle->{ $key }->{ 'status' } || "down";
+				push @rblRules, { 'name' => $key, 'status' => $status };
 			}
 		}
 	}

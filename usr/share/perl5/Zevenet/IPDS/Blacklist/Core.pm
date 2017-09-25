@@ -64,13 +64,13 @@ sub getBLExists
 	return $output;
 }
 
-#  &getBLStatus ( $listName );
-sub getBLStatus
+#  &getBLIpsetStatus ( $listName );
+sub getBLIpsetStatus
 {
 	my $listName = shift;
 
 	my $ipset  = &getGlobalConfiguration( 'ipset' );
-	my $output = system ( "$ipset list $listName >/dev/null 2>&1" );
+	my $output = system ( "$ipset list $listName -name >/dev/null 2>&1" );
 
 	if ( $output )
 	{
@@ -80,6 +80,17 @@ sub getBLStatus
 	{
 		$output = 'up';
 	}
+
+	return $output;
+}
+
+#  &getBLStatus ( $listName );
+sub getBLStatus
+{
+	my $listName = shift;
+
+	my $output = &getBLParam( $listName, 'status' );
+	$output = "down" if ( !$output );
 
 	return $output;
 }

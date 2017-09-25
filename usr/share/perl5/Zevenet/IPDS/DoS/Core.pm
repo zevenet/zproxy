@@ -248,22 +248,10 @@ Returns:
 sub getDOSStatusRule
 {
 	my $rule   = shift;
-	my $status = "down";
 
 	# check system rules
-	if ( &getDOSParam( $rule, 'type' ) eq 'system' )
-	{
-		$status = &getDOSParam( $rule, 'status' );
-	}
-
-	# check farm rules
-	else
-	{
-		if ( @{ &getDOSLookForRule( $rule ) } )
-		{
-			$status = "up";
-		}
-	}
+	my $status = &getDOSParam( $rule, 'status' );
+	$status = "down" if ( $status !~ /^(down|up)$/ );
 
 	return $status;
 }
@@ -304,9 +292,6 @@ sub getDOSZapiRule
 	{
 		my @aux = split ( ' ', $fileHandle->{ $ruleName }->{ 'farms' } );
 		$hash{ 'farms' } = \@aux;
-
-		# add rule status in farm dos rules
-		$hash{ 'status' } = &getDOSStatusRule( $ruleName );
 	}
 
 	$output = \%hash;

@@ -30,32 +30,32 @@ sub get_blacklists_all_lists
 
 	my $desc           = "List the available blacklists";
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
-	my $ipset = &getGlobalConfiguration( 'ipset' );
+	my $ipset          = &getGlobalConfiguration( 'ipset' );
 	my %bl             = %{ Config::Tiny->read( $blacklistsConf ) };
 	my @lists;
 	delete $bl{ _ };
 
-	my @active_lists = `$ipset -L -name`;
-
 	foreach my $list_name ( sort keys %bl )
 	{
-		my $bl_n  = $bl{ $list_name };
-		my @farms = split ( ' ', $bl_n->{ farms } );
+		my $bl_n   = $bl{ $list_name };
+		my @farms  = split ( ' ', $bl_n->{ farms } );
+		my $status = $bl_n->{ status };
+		$status = "down" if ( !$status );
 
 		my %listHash = (
-					   name   => $list_name,
-					   farms  => ( @farms ) ? \@farms : [],
-					   policy => $bl_n->{ policy },
-					   type   => $bl_n->{ type },
-					   status => ( grep ( /^$list_name$/, @active_lists ) ) ? "up" : "down",
-					   preload => $bl_n->{ preload },
+						 name    => $list_name,
+						 farms   => ( @farms ) ? \@farms : [],
+						 policy  => $bl_n->{ policy },
+						 type    => $bl_n->{ type },
+						 status  => $status,
+						 preload => $bl_n->{ preload },
 		);
 
 		push @lists, \%listHash;
 	}
 
 	&httpResponse(
-		  { code => 200, body => { description => $desc, params => \@lists } } );
+				 { code => 200, body => { description => $desc, params => \@lists } } );
 }
 
 #GET /ipds/blacklists/<listname>
@@ -65,7 +65,7 @@ sub get_blacklists_list
 
 	my $desc = "Get the blacklist $listName";
 
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "Requested list doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -90,7 +90,8 @@ sub add_blacklists_list
 
 	my @requiredParams = ( "name",   "type" );
 	my @optionalParams = ( "policy", "url" );
-	my $param_msg = &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
+	my $param_msg =
+	  &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
 
 	if ( $param_msg )
 	{
@@ -181,7 +182,7 @@ sub set_blacklists_list
 	);
 
 	# check if BL exists
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "The list '$listName' doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -208,7 +209,8 @@ sub set_blacklists_list
 	}
 
 	# not allow rename preload lists
-	if ( exists $json_obj->{ 'name' } && &getBLParam( $listName, 'preload' ) eq 'true' )
+	if ( exists $json_obj->{ 'name' }
+		 && &getBLParam( $listName, 'preload' ) eq 'true' )
 	{
 		my $msg = "The preload lists can't be renamed.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -228,7 +230,10 @@ sub set_blacklists_list
 	# Cron params and url only is used in remote lists
 	if ( $type ne 'remote' )
 	{
-		if ( grep ( /^(url|minutes|hour|day|frequency|frequency_type|period|unit)$/, keys %{ $json_obj } ) )
+		if (
+			 grep ( /^(url|minutes|hour|day|frequency|frequency_type|period|unit)$/,
+					keys %{ $json_obj } )
+		  )
 		{
 			my $msg = "Error, trying to change a remote list parameter in a local list.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -245,8 +250,8 @@ sub set_blacklists_list
 
 	my $cronFlag;
 
-	# if there is a new update time configuration to remote lists, delete old configuration
-	#checking available configurations
+# if there is a new update time configuration to remote lists, delete old configuration
+#checking available configurations
 	if (
 		 grep ( /^(minutes|hour|day|frequency|frequency_type|period|unit)$/,
 				keys %{ $json_obj } )
@@ -441,9 +446,9 @@ sub del_blacklists_list
 
 	require Zevenet::IPDS::Blacklist::Config;
 
-	my $desc     = "Delete the list $listName";
+	my $desc = "Delete the list $listName";
 
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -486,7 +491,7 @@ sub actions_blacklists
 	my $desc = "Apply a action to a blacklist $listName";
 	my $msg  = "Error, applying the action to the blacklist.";
 
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -500,16 +505,21 @@ sub actions_blacklists
 	}
 	elsif ( $json_obj->{ action } eq 'start' )
 	{
-		if ( ! @{ &getBLParam( $listName, 'farms' ) } )
+		if ( !@{ &getBLParam( $listName, 'farms' ) } )
 		{
 			$msg = "The list has to be applied to some farm to start it.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
+
+		require Zevenet::IPDS::Blacklist::Config;
+		&setBLParam( $listName, 'status', 'up' );
 		my $error = &runBLStartByRule( $listName );
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'stop' )
 	{
+		require Zevenet::IPDS::Blacklist::Config;
+		&setBLParam( $listName, 'status', 'down' );
 		my $error = &runBLStopByRule( $listName );
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
@@ -517,6 +527,7 @@ sub actions_blacklists
 	{
 		my $error = &runBLRestartByRule( $listName );
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
+		&setBLParam( $listName, 'status', 'up' );
 	}
 	else
 	{
@@ -525,7 +536,8 @@ sub actions_blacklists
 	}
 
 	# restart in remote node if an update was requested, or do the requested action
-	my $action = $json_obj->{ action } eq 'update'? 'restart': $json_obj->{ action };
+	my $action =
+	  $json_obj->{ action } eq 'update' ? 'restart' : $json_obj->{ action };
 
 	require Zevenet::Cluster;
 	&runZClusterRemoteManager( 'ipds_bl', $action, $listName );
@@ -584,7 +596,7 @@ sub get_blacklists_source
 
 	my $desc = "List the sources of the blacklist $listName";
 
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "Requested list doesn't exist.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -598,7 +610,8 @@ sub get_blacklists_source
 		push @ipList, { id => $index++, source => $source };
 	}
 
-	&httpResponse( { code => 200, body => { description => $desc, params => \@ipList } } );
+	&httpResponse(
+				{ code => 200, body => { description => $desc, params => \@ipList } } );
 }
 
 #  POST /ipds/blacklists/<listname>/sources
@@ -607,11 +620,11 @@ sub add_blacklists_source
 	my $json_obj = shift;
 	my $listName = shift;
 
-	my $desc = "Add a source to the blacklist $listName.";
+	my $desc           = "Add a source to the blacklist $listName.";
 	my @requiredParams = ( "source" );
 	my @optionalParams;
 
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -630,13 +643,14 @@ sub add_blacklists_source
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( grep ( /^$json_obj->{'source'}$/, @{ &getBLParam( $listName, 'source' ) } ) )
+	if (
+		 grep ( /^$json_obj->{'source'}$/, @{ &getBLParam( $listName, 'source' ) } ) )
 	{
 		my $msg = "$json_obj->{'source'} already exists in the list.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# ipset not allow the input 0.0.0.0/0, if this source is set, replace it for 0.0.0.0/1 and 128.0.0.0/1
+# ipset not allow the input 0.0.0.0/0, if this source is set, replace it for 0.0.0.0/1 and 128.0.0.0/1
 	if ( $json_obj->{ 'source' } eq '0.0.0.0/0' )
 	{
 		my $msg =
@@ -688,7 +702,7 @@ sub set_blacklists_source
 	my @allowParams = ( "source" );
 
 	# check list exists
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "$listName not found";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -743,7 +757,7 @@ sub del_blacklists_source
 
 	my $desc = "Delete a source from the blacklist $listName";
 
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -783,7 +797,7 @@ sub add_blacklists_to_farm
 	require Zevenet::Farm::Core;
 	require Zevenet::IPDS::Blacklist::Runtime;
 
-	my $desc     = "Apply the blacklist $json_obj->{ 'name' } to the farm $farmName";
+	my $desc = "Apply the blacklist $json_obj->{ 'name' } to the farm $farmName";
 	my $listName = $json_obj->{ 'name' };
 	my $param_msg = &getValidReqParams( $json_obj, ["name"] );
 
@@ -798,7 +812,7 @@ sub add_blacklists_to_farm
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -847,7 +861,7 @@ sub del_blacklists_from_farm
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( ! &getBLExists( $listName ) )
+	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -860,6 +874,10 @@ sub del_blacklists_from_farm
 	}
 
 	my $error = &setBLRemFromFarm( $farmName, $listName );
+
+	&setBLParam( $listName, 'status' )
+	  if ( @{ &getBLParam( $listName, 'farms' ) } );
+
 	if ( $error )
 	{
 		my $msg = "Error, removing $listName rule from $farmName.";

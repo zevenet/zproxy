@@ -81,7 +81,7 @@ sub runBLStartModule
 		{
 			if ( &getFarmBootStatus( $farm ) eq 'up' )
 			{
-				if ( &getBLStatus( $list ) eq "down" )
+				if ( &getBLIpsetStatus( $list ) eq "down" )
 				{
 					# load in memory the list
 					&setBLRunList( $list );
@@ -197,7 +197,7 @@ sub runBLStopByRule
 
 	my $ipset = &getGlobalConfiguration( 'ipset' );
 
-	return if ( &getBLStatus() eq 'down' );
+	return if ( &getBLIpsetStatus() eq 'down' );
 
 	foreach my $farmName ( @{ &getBLParam( $ruleName, 'farms' ) } )
 	{
@@ -257,9 +257,12 @@ sub runBLStart
 	my ( $list, $farm ) = @_;
 	my $error;
 
+	# if the rule is disabled, not run it
+	return 0 if ( &getBLStatus( $list ) eq "down" );
+
 	if ( &getFarmBootStatus( $farm ) eq 'up' )
 	{
-		if ( &getBLStatus( $list ) eq "down" )
+		if ( &getBLIpsetStatus( $list ) eq "down" )
 		{
 			# load in memory the list
 			$error = &setBLRunList( $list );
@@ -296,7 +299,7 @@ sub runBLStop
 
 	if ( !&getBLListNoUsed( $rule ) )
 	{
-		if ( &getBLStatus( $rule ) eq 'up' )
+		if ( &getBLIpsetStatus( $rule ) eq 'up' )
 		{
 			&setBLDestroyList( $rule );
 		}

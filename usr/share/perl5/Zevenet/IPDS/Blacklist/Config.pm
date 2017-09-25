@@ -72,6 +72,7 @@ sub setBLCreateList
 	# share params
 	my $fileHandle = Config::Tiny->read( $blacklistsConf );
 	$fileHandle->{ $listName }->{ 'type' }  = $listParams->{ 'type' };
+	$fileHandle->{ $listName }->{ 'status' } = "down";
 	$fileHandle->{ $listName }->{ 'farms' } = "";
 	if ( exists $listParams->{ 'preload' } )
 	{
@@ -149,7 +150,7 @@ sub setBLDeleteList
 	my @farms          = @{ &getBLParam( $listName, 'farms' ) };
 
 	# Check if the rule is down
-	if ( &getBLStatus( $listName ) eq "up" )
+	if ( &getBLIpsetStatus( $listName ) eq "up" )
 	{
 		&zenlog(
 			"Error deleting the list, it is not possible remove the rule while it is running."
@@ -390,7 +391,7 @@ sub setBLParam
 			$output = &setBLAddToList( $name, $value );
 
 			# refresh if not error and this list is applied almost to one farm
-			if ( !$output && &getBLStatus( $name ) eq 'up' )
+			if ( !$output && &getBLIpsetStatus( $name ) eq 'up' )
 			{
 				require Zevenet::IPDS::Blacklist::Runtime;
 				$output = &setBLRefreshList( $name );
@@ -520,7 +521,7 @@ sub setBLAddSource
 	push @list, $source;
 	untie @list;
 
-	if ( &getBLStatus( $listName ) eq 'up' )
+	if ( &getBLIpsetStatus( $listName ) eq 'up' )
 	{
 		# The list is full,  re-create it
 		if ( &getBLSourceNumber( $listName ) > &getBLMaxelem( $listName ) )
@@ -567,7 +568,7 @@ sub setBLModifSource
 	my $oldSource = splice @list, $id, 1, $source;
 	untie @list;
 
-	if ( &getBLStatus( $listName ) eq 'up' )
+	if ( &getBLIpsetStatus( $listName ) eq 'up' )
 	{
 		$err = system ( "$ipset del $listName $oldSource >/dev/null 2>&1" );
 		$err = system ( "$ipset add $listName $source >/dev/null 2>&1" ) if ( !$err );
@@ -605,7 +606,7 @@ sub setBLDeleteSource
 	my $source = splice @list, $id, 1;
 	untie @list;
 
-	if ( &getBLStatus( $listName ) eq 'up' )
+	if ( &getBLIpsetStatus( $listName ) eq 'up' )
 	{
 		$err = system ( "$ipset del $listName $source >/dev/null 2>&1" );
 	}

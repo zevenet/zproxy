@@ -53,11 +53,7 @@ sub setDOSRunRule
 	my $protocol;
 
 	# return if this rule already is applied
-	if ( @{ &getDOSLookForRule( $ruleName, $farmName ) } )
-	{
-		&zenlog( "This rule already is applied." );
-		return -1;
-	}
+	return 0 if ( @{ &getDOSLookForRule( $ruleName, $farmName ) } );
 
 	if ( $farmName )
 	{
@@ -358,7 +354,7 @@ sub setDOSLimitConnsRule
 	my $output;
 	my $limit_conns = &getDOSParam( $ruleName, 'limit_conns' );
 
-	# /sbin/iptables -A FORWARD -t filter -d 1.1.1.1,54.12.1.1 -p tcp --dport 5 -m connlimit --connlimit-above 5 -m comment --comment "DOS_limitconns_aa" -j REJECT --reject-with tcp-reset
+# /sbin/iptables -A FORWARD -t filter -d 1.1.1.1,54.12.1.1 -p tcp --dport 5 -m connlimit --connlimit-above 5 -m comment --comment "DOS_limitconns_aa" -j REJECT --reject-with tcp-reset
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -I $chain -t $table "                           # select iptables struct
 	  . "$dest $ruleOpt{ 'protocol' } $port "             # who is destined
@@ -611,48 +607,36 @@ sub setDOSApplyRule
 	{
 		if ( $protocol !~ /TCP/i && $protocol !~ /FTP/i )
 		{
-			&zenlog(
-					 "$rule rule is only available in farms based in protocol TCP or FTP." );
+			&zenlog( "$rule rule is only available in farms based in protocol TCP." );
 			return -1;
 		}
 	}
 
 	my $fileHandle = Config::Tiny->read( $confFile );
 
-	if ( $farmName )
+	my $farmList = $fileHandle->{ $ruleName }->{ 'farms' };
+	if ( $farmList !~ /(^| )$farmName( |$)/ )
 	{
-		my $farmList = $fileHandle->{ $ruleName }->{ 'farms' };
-		if ( $farmList !~ /(^| )$farmName( |$)/ )
-		{
-			$fileHandle = Config::Tiny->read( $confFile );
-			$fileHandle->{ $ruleName }->{ 'farms' } = "$farmList $farmName";
-			$fileHandle->write( $confFile );
-		}
-		else
-		{
-			&zenlog( "Rule $ruleName only is available for TCP protocol" );
-		}
-
-		if ( &getFarmBootStatus( $farmName ) eq "up" )
-		{
-			$output = &setDOSRunRule( $ruleName, $farmName );
-			if ( $output )
-			{
-				&zenlog( "Error, running rule $ruleName to farm $farmName" );
-			}
-		}
+		$fileHandle = Config::Tiny->read( $confFile );
+		$fileHandle->{ $ruleName }->{ 'farms' } = "$farmList $farmName";
+		$fileHandle->write( $confFile );
+	}
+	else
+	{
+		&zenlog( "Rule $ruleName already is applied" );
+		return 0;
 	}
 
-	# check param is down
-	elsif ( $fileHandle->{ $ruleName }->{ 'status' } ne "up" )
+	# dos system rules
+	if ( &getDOSParam( $ruleName, 'status' ) eq "up" )
 	{
-		$fileHandle->{ $ruleName }->{ 'status' } = "up";
-		$fileHandle->write( $confFile );
-
-		$output = &setDOSRunRule( $ruleName );
-		if ( $output )
+		if ( &getFarmBootStatus( $farmName ) eq "up" )
 		{
-			&zenlog( "Error, running rule $ruleName" );
+			$output = &setDOSRunRule( $ruleName );
+			if ( $output )
+			{
+				&zenlog( "Error, running rule $ruleName" );
+			}
 		}
 	}
 
@@ -686,20 +670,17 @@ sub setDOSUnsetRule
 	my $fileHandle = Config::Tiny->read( $confFile );
 	my $output;
 
-	if ( -e $confFile )
+	$output = &setDOSStopRule( $ruleName, $farmName );
+	if ( $output )
 	{
-		if ( $farmName )
+		$fileHandle->{ $ruleName }->{ 'farms' } =~ s/(^| )$farmName( |$)/ /;
+
+		# put down if there is not more farms applied
+		if ( $fileHandle->{ $ruleName }->{ 'farms' } !~ /\w/ )
 		{
-			$fileHandle->{ $ruleName }->{ 'farms' } =~ s/(^| )$farmName( |$)/ /;
-			$fileHandle->write( $confFile );
-			$output = &setDOSStopRule( $ruleName, $farmName );
+			$fileHandle->{ $ruleName }->{ 'status' } =~ "down";
 		}
-		else
-		{
-			$fileHandle->{ $ruleName }->{ 'status' } = "down";
-			$fileHandle->write( $confFile );
-			$output = &setDOSStopRule( $ruleName );
-		}
+		$fileHandle->write( $confFile );
 	}
 
 	return $output;

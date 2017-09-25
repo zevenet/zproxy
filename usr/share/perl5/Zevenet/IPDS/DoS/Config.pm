@@ -49,12 +49,12 @@ sub getDOSInitialParams
 	my $port    = $sshconf->{ 'port' };
 
 	my %initial = (
-		'bogustcpflags' => { 'farms' => '', 'type'        => 'farm' },
-		'limitconns'    => { 'farms' => '', 'limit_conns' => 20, 'type' => 'farm' },
+		'bogustcpflags' => { 'farms' => '', 'status' => 'down', 'type'        => 'farm' },
+		'limitconns'    => { 'farms' => '', 'status' => 'down', 'limit_conns' => 20, 'type' => 'farm' },
 		'limitrst' =>
-		  { 'farms' => '', 'limit' => 10, 'limit_burst' => 5, 'type' => 'farm' },
+		  { 'farms' => '', 'limit' => 10, 'status' => 'down', 'limit_burst' => 5, 'type' => 'farm' },
 		'limitsec' =>
-		  { 'farms' => '', 'limit' => 20, 'limit_burst' => 15, 'type' => 'farm' },
+		  { 'farms' => '', 'limit' => 20, 'status' => 'down', 'limit_burst' => 15, 'type' => 'farm' },
 		'dropicmp' => { 'status' => 'down', 'type' => 'system', 'name' => 'drop_icmp' },
 		'sshbruteforce' => {
 							 'status' => 'down',

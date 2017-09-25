@@ -409,12 +409,8 @@ Returns:
 
 sub getRBLStatusRule
 {
-	my $rule   = shift;
-	my $status = "down";
-	if ( &getRBLPacketblPid( $rule ) )
-	{
-		$status = "up";
-	}
+	my $rule = shift;
+	my $status = &getRBLObjectRuleParam( $rule, 'status' ) || 'down';
 
 	return $status;
 }
@@ -464,11 +460,11 @@ sub getRBLZapiRule
 	my @farms   = split ( ' ', $fileHandle->{ $rule }->{ 'farms' } );
 
 	my @format_domains;
-	foreach my $domain (@domains)
+	foreach my $domain ( @domains )
 	{
-		push @format_domains, { 'domain'=>$domain };
+		push @format_domains, { 'domain' => $domain };
 	}
-	
+
 	$output->{ 'domains' } = \@format_domains;
 	$output->{ 'farms' }   = \@farms;
 
