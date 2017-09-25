@@ -57,12 +57,28 @@ sub setDOSRunRule
 
 	if ( $farmName )
 	{
+		require Zevenet::Farm::L4xNAT::Validate;
+
 		# get farm struct
 		%hash = (
 				  farmName => $farmName,
 				  vip      => "-d " . &getFarmVip( 'vip', $farmName ),
-				  vport    => "--dport " . &getFarmVip( 'vipp', $farmName ),
 		);
+
+		my $port = &getFarmVip( 'vipp', $farmName );
+		if ( $port eq '*' )
+		{
+			$hash{vport} => "";
+		}
+		# l4 farm multiport
+		elsif ( &ismport( $farmName ) )
+		{
+			$hash{vport} = "-m multiport --dports $port";
+		}
+		else
+		{
+			$hash{vport} => "--dport $port";
+		}
 
 		# -d farmIP -p PROTOCOL --dport farmPORT
 		$protocol = &getFarmProto( $farmName );
