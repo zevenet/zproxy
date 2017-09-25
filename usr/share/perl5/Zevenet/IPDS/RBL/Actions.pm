@@ -231,7 +231,6 @@ sub runRBLStart
 	# to start a RBL rule it is necessary that the rule has almost one domain
 	if ( !@{ &getRBLObjectRuleParam( $rule, 'domains' ) } )
 	{
-	 #~ &zenlog ( "RBL rule, $rule, was not started because doesn't have any domain." );
 		return -1;
 	}
 
@@ -270,7 +269,6 @@ sub runRBLStop
 	my $error = 0;
 
 	require Zevenet::Farm::Base;
-
 	# remove all iptables rules
 	&runRBLIptablesRule( $rule, $farm, 'delete' );
 

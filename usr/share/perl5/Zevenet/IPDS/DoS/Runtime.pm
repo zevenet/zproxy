@@ -158,10 +158,6 @@ sub setDOSStopRule
 			&zenlog( "Error deleting '$cmd'" );
 			$output++;
 		}
-		else
-		{
-			&zenlog( "Deleted '$cmd' successful" );
-		}
 	}
 
 	$output = ( @{ &getDOSLookForRule( $ruleName, $farmName ) } ) ? 1 : 0;

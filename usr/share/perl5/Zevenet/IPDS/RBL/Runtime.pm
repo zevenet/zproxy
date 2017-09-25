@@ -132,6 +132,9 @@ sub runRBLIptablesRule
 	my $rbl_chain = &getIPDSChain( "rbl" );
 	my $ruleParam = &getRBLFarmMatch( $farmname );
 
+	# The rule doesn't exist
+	return 0 if ( $nfqueue !~ /\d+/ );
+
 	if ( $action eq "insert" )
 	{
 		$action = "-I";
@@ -223,6 +226,7 @@ FIXME:
 sub runRBLStopPacketbl
 {
 	my $rule = shift;
+	my $error = 0;
 
 	# Remove associated nfqueue from configfile
 	&setRBLRemoveNfqueue( $rule );
@@ -230,7 +234,12 @@ sub runRBLStopPacketbl
 	# exec kill
 	my $pid = &getRBLPacketblPid( $rule );
 
-	return &logAndRun( "kill $pid" );
+	if ($pid)
+	{
+		$error = &logAndRun( "kill $pid" )
+	}
+
+	return $error;
 }
 
 =begin nd

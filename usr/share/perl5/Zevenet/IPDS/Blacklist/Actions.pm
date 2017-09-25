@@ -71,6 +71,8 @@ sub runBLStartModule
 	# load lists
 	foreach my $list ( keys %{ $allLists } )
 	{
+		next if ( &getBLParam( $list, 'status' ) eq "down" );
+
 		my $farms = &getBLParam( $list, "farms" );
 		next if ( !$farms );
 
@@ -154,7 +156,7 @@ Function: runBLStartByRule
 
 Parameters:
 	Rule - Rule name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
 	
@@ -258,7 +260,7 @@ sub runBLStart
 	my $error;
 
 	# if the rule is disabled, not run it
-	return 0 if ( &getBLStatus( $list ) eq "down" );
+	return 0 if ( &getBLParam( $list, 'status' ) eq "down" );
 
 	if ( &getFarmBootStatus( $farm ) eq 'up' )
 	{

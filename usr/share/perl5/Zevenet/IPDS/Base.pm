@@ -66,46 +66,60 @@ sub addIPDSIptablesChain
 	$error |= &iptSystem( "$iptables -N $dos_chain -t mangle" );
 
 	# link this chains
-	if ( &iptSystem( "$iptables -C PREROUTING -t raw -j $whitelist_chain" ) )
+	if (
+		&iptSystem( "$iptables -C PREROUTING -t raw -j $whitelist_chain 2>/dev/null" ) )
 	{
 		$error |= &iptSystem( "$iptables -A PREROUTING -t raw -j $whitelist_chain" );
 	}
-	if ( &iptSystem( "$iptables -C $whitelist_chain -t raw -j $blacklist_chain" ) )
+	if (
+		 &iptSystem( "$iptables -C $whitelist_chain -t raw -j $blacklist_chain 2>/dev/null"
+		 )
+	  )
 	{
 		$error |=
-			&iptSystem( "$iptables -A $whitelist_chain -t raw -j $blacklist_chain" );
+		  &iptSystem( "$iptables -A $whitelist_chain -t raw -j $blacklist_chain" );
 	}
-	if ( &iptSystem( "$iptables -C $blacklist_chain -t raw -j $rbl_chain" ) )
+	if (
+		&iptSystem( "$iptables -C $blacklist_chain -t raw -j $rbl_chain 2>/dev/null" ) )
 	{
 		$error |= &iptSystem( "$iptables -A $blacklist_chain -t raw -j $rbl_chain" );
 	}
-	if ( &iptSystem( "$iptables -C PREROUTING -t mangle -j $whitelist_chain" ) )
+	if (
+		 &iptSystem( "$iptables -C PREROUTING -t mangle -j $whitelist_chain 2>/dev/null"
+		 )
+	  )
 	{
 		$error |= &iptSystem( "$iptables -A PREROUTING -t mangle -j $whitelist_chain" );
 	}
-	if ( &iptSystem( "$iptables -C $whitelist_chain -t mangle -j $dos_chain" ) )
+	if (
+		 &iptSystem( "$iptables -C $whitelist_chain -t mangle -j $dos_chain 2>/dev/null"
+		 )
+	  )
 	{
 		$error |= &iptSystem( "$iptables -A $whitelist_chain -t mangle -j $dos_chain" );
 	}
 
 	# last sentence in each chain is return to above chain
-	if (&iptSystem( "$iptables -C $whitelist_chain -t raw -j RETURN" ))
+	if (
+		 &iptSystem( "$iptables -C $whitelist_chain -t raw -j RETURN 2>/dev/null" ) )
 	{
 		$error |= &iptSystem( "$iptables -A $whitelist_chain -t raw -j RETURN" );
 	}
-	if (&iptSystem( "$iptables -C $blacklist_chain -t raw -j RETURN" ))
+	if (
+		 &iptSystem( "$iptables -C $blacklist_chain -t raw -j RETURN 2>/dev/null" ) )
 	{
 		$error |= &iptSystem( "$iptables -A $blacklist_chain -t raw -j RETURN" );
 	}
-	if (&iptSystem( "$iptables -C $rbl_chain -t raw -j RETURN" ))
+	if ( &iptSystem( "$iptables -C $rbl_chain -t raw -j RETURN 2>/dev/null" ) )
 	{
 		$error |= &iptSystem( "$iptables -A $rbl_chain -t raw -j RETURN" );
 	}
-	if (&iptSystem( "$iptables -C $whitelist_chain -t mangle -j RETURN" ))
+	if (
+		 &iptSystem( "$iptables -C $whitelist_chain -t mangle -j RETURN 2>/dev/null" ) )
 	{
 		$error |= &iptSystem( "$iptables -A $whitelist_chain -t mangle -j RETURN" );
 	}
-	if (&iptSystem( "$iptables -C $dos_chain -t mangle -j RETURN" ))
+	if ( &iptSystem( "$iptables -C $dos_chain -t mangle -j RETURN 2>/dev/null" ) )
 	{
 		$error |= &iptSystem( "$iptables -A $dos_chain -t mangle -j RETURN" );
 	}
@@ -247,23 +261,27 @@ sub runIPDSStartByFarm
 	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{ blacklists } } );
 	require Zevenet::IPDS::DoS::Actions       if ( @{ $rules->{ dos } } );
 	require Zevenet::IPDS::RBL::Actions       if ( @{ $rules->{ rbl } } );
+	my $name;
 
 	# start BL rules
-	foreach my $rule ( @{ $rules->{ blacklist } } )
+	foreach my $rule ( @{ $rules->{ blacklists } } )
 	{
-		&runRBLStart( $rule, $farmname );
+		$name = $rule->{ name };
+		&runBLStart( $name, $farmname );
 	}
 
 	# start dos rules
 	foreach my $rule ( @{ $rules->{ dos } } )
 	{
-		&runDOSStart( $rule, $farmname );
+		$name = $rule->{ name };
+		&runDOSStart( $name, $farmname );
 	}
 
 	# start rbl rules
 	foreach my $rule ( @{ $rules->{ rbl } } )
 	{
-		&runRBLStart( $rule, $farmname );
+		$name = $rule->{ name };
+		&runRBLStart( $name, $farmname );
 	}
 }
 
@@ -290,23 +308,27 @@ sub runIPDSStopByFarm
 	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{ blacklists } } );
 	require Zevenet::IPDS::DoS::Actions       if ( @{ $rules->{ dos } } );
 	require Zevenet::IPDS::RBL::Actions       if ( @{ $rules->{ rbl } } );
+	my $name;
 
 	# start BL rules
-	foreach my $rule ( @{ $rules->{ blacklist } } )
+	foreach my $rule ( @{ $rules->{ blacklists } } )
 	{
-		&runRBLStop( $rule, $farmname );
+		$name = $rule->{ name };
+		&runBLStop( $name, $farmname );
 	}
 
 	# start dos rules
 	foreach my $rule ( @{ $rules->{ dos } } )
 	{
-		&runDOSStop( $rule, $farmname );
+		$name = $rule->{ name };
+		&runDOSStop( $name, $farmname );
 	}
 
 	# start rbl rules
 	foreach my $rule ( @{ $rules->{ rbl } } )
 	{
-		&runRBLStop( $rule, $farmname );
+		$name = $rule->{ name };
+		&runRBLStop( $name, $farmname );
 	}
 }
 
@@ -333,26 +355,30 @@ sub runIPDSRestartByFarm
 	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{ blacklists } } );
 	require Zevenet::IPDS::DoS::Actions       if ( @{ $rules->{ dos } } );
 	require Zevenet::IPDS::RBL::Actions       if ( @{ $rules->{ rbl } } );
+	my $name;
 
 	# start BL rules
-	foreach my $rule ( @{ $rules->{ blacklist } } )
+	foreach my $rule ( @{ $rules->{ blacklists } } )
 	{
-		&runRBLStop( $rule, $farmname );
-		&runRBLStart( $rule, $farmname );
+		$name = $rule->{ name };
+		&runBLStop( $name, $farmname );
+		&runBLStart( $name, $farmname );
 	}
 
 	# start dos rules
 	foreach my $rule ( @{ $rules->{ dos } } )
 	{
-		&runDOSStop( $rule, $farmname );
-		&runDOSStart( $rule, $farmname );
+		$name = $rule->{ name };
+		&runDOSStop( $name, $farmname );
+		&runDOSStart( $name, $farmname );
 	}
 
 	# start rbl rules
 	foreach my $rule ( @{ $rules->{ rbl } } )
 	{
-		&runRBLStop( $rule, $farmname );
-		&runRBLStart( $rule, $farmname );
+		$name = $rule->{ name };
+		&runRBLStop( $name, $farmname );
+		&runRBLStart( $name, $farmname );
 	}
 }
 

@@ -134,8 +134,6 @@ sub getRBLObjectRule
 	$output->{ 'domains' } = \@domains;
 	$output->{ 'farms' }   = \@farms;
 
-	$output->{ 'status' } = &getRBLStatusRule( $rule );
-
 	return $output;
 }
 
