@@ -140,6 +140,11 @@ sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$remote_fs \$syslog zenloadbal
 chmod +x /usr/local/zenloadbalancer/config/zlb-start
 chmod +x /usr/local/zenloadbalancer/config/zlb-stop
 
+# Disable DNS resolution for SSH service
+if [ -f /usr/local/zenloadbalancer/app/zbin/ssh_nodns.sh ]; then
+        /usr/local/zenloadbalancer/app/zbin/ssh_nodns.sh
+fi
+
 # Load conntrack modules
 /sbin/modprobe nf_conntrack 2> /dev/null
 /sbin/modprobe ip_conntrack 2> /dev/null
