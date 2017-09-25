@@ -1384,6 +1384,7 @@ sub setZClusterIptablesException
 	return 0 unless &getZClusterStatus();
 
 	require Zevenet::Conntrackd;
+	require Zevenet::IPDS::Core;
 
 	my $error;
 	my $action;
@@ -1406,28 +1407,17 @@ sub setZClusterIptablesException
 	my $ipremote  = $config->{ $remote_hn }->{ ip };
 	my $iptables  = &getGlobalConfiguration( 'iptables' );
 	my $ipt_args  = '-j ACCEPT -m comment --comment "cluster_exception"';
+	my $chain = &getIPDSChain( 'whitelist' );
 
-	# avoid blacklist rules, rbl rules and bogustcpflag dos rule
-	my $cmd = "$iptables $action PREROUTING -t raw -s $ipremote $ipt_args";
+	# Avoid blacklist rules and rbl rules
+	my $cmd = "$iptables $action $chain -t raw -s $ipremote $ipt_args";
 	$error = &iptSystem( $cmd );
 	
 	return -1 if $error;
 
-	# avoid the dos rules: limmit rst, limit sec and  ssh burte force
-	$cmd = "$iptables $action PREROUTING -t mangle -s $ipremote $ipt_args";
+	# Avoid the dos rules
+	$cmd = "$iptables $action $chain -t mangle -s $ipremote $ipt_args";
 	$error = &iptSystem( $cmd );
-	
-	return -1 if $error;
-
-	# avoid the dos rules: limit conns
-	$cmd = "$iptables $action INPUT -t filter -s $ipremote $ipt_args";
-	$error = &iptSystem( $cmd );
-	$error = -1 if $error;
-
-	# avoid the dos rules: limit conns (l4 profiles)
-	$cmd = "$iptables $action FORWARD -t filter -s $ipremote $ipt_args";
-	$error = &iptSystem( $cmd );
-	$error = -1 if $error;
 	
 	return $error;
 }
