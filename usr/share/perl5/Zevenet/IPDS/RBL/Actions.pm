@@ -118,6 +118,12 @@ sub runRBLStartByRule
 		#~ &zenlog( "RBL rule \"$rule\" has not any farm linked" );
 		return -1;
 	}
+	
+	# Check if the rule is disabled
+	if ( &getRBLObjectRuleParam( $rule, 'status' ) eq 'down' )
+	{
+		return 0;
+	}
 
 	my $flag = 0;
 	foreach my $farmname ( @farms )
@@ -266,10 +272,7 @@ sub runRBLStop
 	require Zevenet::Farm::Base;
 
 	# remove all iptables rules
-	if ( &getFarmStatus( $farm ) eq 'up' )
-	{
-		&runRBLIptablesRule( $rule, $farm, 'delete' );
-	}
+	&runRBLIptablesRule( $rule, $farm, 'delete' );
 
 	# if are not another farm using this rule, the rule is stopped
 	if ( !&getRBLRunningFarmList( $rule ) )

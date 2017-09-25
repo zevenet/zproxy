@@ -58,29 +58,57 @@ sub addIPDSIptablesChain
 	my $error;
 
 	# creating chains
-	$error |= &iptSystem( "iptables -N $whitelist_chain -t raw" );
-	$error |= &iptSystem( "iptables -N $blacklist_chain -t raw" );
-	$error |= &iptSystem( "iptables -N $rbl_chain -t raw" );
+	$error |= &iptSystem( "$iptables -N $whitelist_chain -t raw" );
+	$error |= &iptSystem( "$iptables -N $blacklist_chain -t raw" );
+	$error |= &iptSystem( "$iptables -N $rbl_chain -t raw" );
 
-	$error |= &iptSystem( "iptables -N $whitelist_chain -t mangle" );
-	$error |= &iptSystem( "iptables -N $dos_chain -t mangle" );
+	$error |= &iptSystem( "$iptables -N $whitelist_chain -t mangle" );
+	$error |= &iptSystem( "$iptables -N $dos_chain -t mangle" );
 
 	# link this chains
-	$error |= &iptSystem( "$iptables -A PREROUTING -t raw -j $whitelist_chain" );
-	$error |=
-	  &iptSystem( "$iptables -A $whitelist_chain -t raw -j $blacklist_chain" );
-	$error |= &iptSystem( "$iptables -A $blacklist_chain -t raw -j $rbl_chain" );
-
-	$error |= &iptSystem( "$iptables -A PREROUTING -t mangle -j $whitelist_chain" );
-	$error |= &iptSystem( "$iptables -A $whitelist_chain -t mangle -j $dos_chain" );
+	if ( &iptSystem( "$iptables -C PREROUTING -t raw -j $whitelist_chain" ) )
+	{
+		$error |= &iptSystem( "$iptables -A PREROUTING -t raw -j $whitelist_chain" );
+	}
+	if ( &iptSystem( "$iptables -C $whitelist_chain -t raw -j $blacklist_chain" ) )
+	{
+		$error |=
+			&iptSystem( "$iptables -A $whitelist_chain -t raw -j $blacklist_chain" );
+	}
+	if ( &iptSystem( "$iptables -C $blacklist_chain -t raw -j $rbl_chain" ) )
+	{
+		$error |= &iptSystem( "$iptables -A $blacklist_chain -t raw -j $rbl_chain" );
+	}
+	if ( &iptSystem( "$iptables -C PREROUTING -t mangle -j $whitelist_chain" ) )
+	{
+		$error |= &iptSystem( "$iptables -A PREROUTING -t mangle -j $whitelist_chain" );
+	}
+	if ( &iptSystem( "$iptables -C $whitelist_chain -t mangle -j $dos_chain" ) )
+	{
+		$error |= &iptSystem( "$iptables -A $whitelist_chain -t mangle -j $dos_chain" );
+	}
 
 	# last sentence in each chain is return to above chain
-	$error |= &iptSystem( "$iptables -A $whitelist_chain -t raw -j RETURN" );
-	$error |= &iptSystem( "$iptables -A $blacklist_chain -t raw -j RETURN" );
-	$error |= &iptSystem( "$iptables -A $rbl_chain -t raw -j RETURN" );
-
-	$error |= &iptSystem( "$iptables -A $whitelist_chain -t mangle -j RETURN" );
-	$error |= &iptSystem( "$iptables -A $dos_chain -t mangle -j RETURN" );
+	if (&iptSystem( "$iptables -C $whitelist_chain -t raw -j RETURN" ))
+	{
+		$error |= &iptSystem( "$iptables -A $whitelist_chain -t raw -j RETURN" );
+	}
+	if (&iptSystem( "$iptables -C $blacklist_chain -t raw -j RETURN" ))
+	{
+		$error |= &iptSystem( "$iptables -A $blacklist_chain -t raw -j RETURN" );
+	}
+	if (&iptSystem( "$iptables -C $rbl_chain -t raw -j RETURN" ))
+	{
+		$error |= &iptSystem( "$iptables -A $rbl_chain -t raw -j RETURN" );
+	}
+	if (&iptSystem( "$iptables -C $whitelist_chain -t mangle -j RETURN" ))
+	{
+		$error |= &iptSystem( "$iptables -A $whitelist_chain -t mangle -j RETURN" );
+	}
+	if (&iptSystem( "$iptables -C $dos_chain -t mangle -j RETURN" ))
+	{
+		$error |= &iptSystem( "$iptables -A $dos_chain -t mangle -j RETURN" );
+	}
 
 	if ( $error )
 	{
@@ -121,11 +149,11 @@ sub delIPDSIptablesChain
 	$error |= &iptSystem( "$iptables -D PREROUTING -t raw -j $whitelist_chain" );
 	$error |= &iptSystem( "$iptables -D PREROUTING -t mangle -j $whitelist_chain" );
 
+	$error |= &iptSystem( "$iptables -X $rbl_chain -t raw" );
 	$error |= &iptSystem( "$iptables -X $blacklist_chain -t raw" );
 	$error |= &iptSystem( "$iptables -X $whitelist_chain -t raw" );
-	$error |= &iptSystem( "$iptables -X $rbl_chain -t raw" );
-	$error |= &iptSystem( "$iptables -X $whitelist_chain -t mangle" );
 	$error |= &iptSystem( "$iptables -X $dos_chain -t mangle" );
+	$error |= &iptSystem( "$iptables -X $whitelist_chain -t mangle" );
 
 	if ( $error )
 	{
@@ -160,7 +188,6 @@ sub runIPDSStartModule
 
 	# Add cluster exception not to block traffic from the other node of cluster
 	&setZClusterIptablesException( "insert" );
-
 	&runBLStartModule();
 	&runRBLStartModule();
 	&runDOSStartModule();

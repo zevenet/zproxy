@@ -91,7 +91,9 @@ sub getRBLRuleList
 	require Config::Tiny;
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 
-	return keys %{ $fileHandle };
+	my @rules = keys %{ $fileHandle };
+
+	return @rules;
 }
 
 =begin nd
@@ -409,11 +411,16 @@ Returns:
 
 sub getRBLStatusRule
 {
-	my $rule = shift;
-	my $status = &getRBLObjectRuleParam( $rule, 'status' ) || 'down';
+	my $rule   = shift;
+	my $status = "down";
+	if ( &getRBLPacketblPid( $rule ) )
+	{
+		$status = "up";
+	}
 
 	return $status;
 }
+
 
 =begin nd
 Function: getRBLZapiRule
