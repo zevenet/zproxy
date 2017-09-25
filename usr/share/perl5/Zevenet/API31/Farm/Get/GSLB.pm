@@ -31,6 +31,7 @@ sub farms_name_gslb # ( $farmname )
 {
 	my $farmname = shift;
 
+	require Zevenet::Farm::Config;
 	my $farm_ref;
 	my @out_s;
 	my @out_z;
