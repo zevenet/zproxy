@@ -41,7 +41,7 @@ Bugs:
 See Also:
 	Widely used.
 =cut
-sub debug { return 2 }
+sub debug { return 0 }
 
 =begin nd
 Function: getMemoryUsage

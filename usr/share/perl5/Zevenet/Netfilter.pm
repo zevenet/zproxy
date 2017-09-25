@@ -1011,7 +1011,7 @@ sub iptSystem
 
 	if ( $return_code )
 	{
-		if ( grep { /--check/ } $command )
+		if ( grep ( /--check/, $command ) || grep ( /-C /, $command ) )
 		{
 			&zenlog( $program . "Not found line: $command" )
 			  if &debug == 2;    # show in logs if failed
