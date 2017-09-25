@@ -476,7 +476,6 @@ sub getRBLZapiRule
 	$output->{ 'farms' }   = \@farms;
 
 	$output->{ 'name' }   = $rule;
-	$output->{ 'status' } = &getRBLStatusRule( $rule );
 
 	if ( $output->{ 'local_traffic' } eq 'yes' )
 	{

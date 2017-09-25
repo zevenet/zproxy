@@ -829,19 +829,21 @@ sub set_rbl_actions
 			$msg = "The rule has to be applied to some farm to start it.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-
+		require Zevenet::IPDS::RBL::Config;
 		&setRBLObjectRuleParam( $name, 'status', 'up' );
 		my $error = &runRBLStartByRule( $name );
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $action eq 'stop' )
 	{
+		require Zevenet::IPDS::RBL::Config;
 		&setRBLObjectRuleParam( $name, 'status', 'down' );
 		my $error = &runRBLStopByRule( $name );
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $action eq 'restart' )
 	{
+		require Zevenet::IPDS::RBL::Config;
 		my $error = &runRBLRestartByRule( $name );
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 		&setRBLObjectRuleParam( $name, 'status', 'up' );
