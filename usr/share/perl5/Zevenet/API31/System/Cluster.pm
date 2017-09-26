@@ -44,47 +44,53 @@ my $maint_if = 'cl_maintenance';
 
 sub get_cluster
 {
-	my $desc = "Show the cluster configuration";
+	require Zevenet::SystemInfo;
 
-	unless ( &getZClusterStatus() )
+	my $desc = "Show the cluster configuration";
+	my $cl_status = &getZClusterStatus();
+	my $body;
+
+	zenlog("cluster status: $cl_status");
+
+	if ( $cl_status )
 	{
-		my $body = {
-					 description => $desc,
-					 success     => 'true',
-					 message     => "There is no cluster configured on this node.",
+		my $zcl_conf  = &getZClusterConfig();
+		my $local_hn  = &getHostname();
+		my $remote_hn = &getZClusterRemoteHost();
+
+		my $cluster = {
+					check_interval => $zcl_conf->{ _ }->{ deadratio } // $DEFAULT_DEADRATIO,
+					failback       => $zcl_conf->{ _ }->{ primary }   // $local_hn,
+					interface      => $zcl_conf->{ _ }->{ interface },
+					nodes          => [
+							  {
+								ip   => $zcl_conf->{ $local_hn }->{ ip },
+								name => $local_hn,
+								node => 'local',
+							  },
+							  {
+								ip   => $zcl_conf->{ $remote_hn }->{ ip },
+								name => $remote_hn,
+								node => 'remote',
+							  },
+					]
 		};
 
-		&httpResponse( { code => 200, body => $body } );
+		$cluster->{ check_interval } += 0;
+
+		$body = {
+					 description => $desc,
+					 params      => $cluster,
+		};
 	}
-
-	my $zcl_conf  = &getZClusterConfig();
-	my $local_hn  = &getHostname();
-	my $remote_hn = &getZClusterRemoteHost();
-
-	my $cluster = {
-				check_interval => $zcl_conf->{ _ }->{ deadratio } // $DEFAULT_DEADRATIO,
-				failback       => $zcl_conf->{ _ }->{ primary }   // $local_hn,
-				interface      => $zcl_conf->{ _ }->{ interface },
-				nodes          => [
-						  {
-							ip   => $zcl_conf->{ $local_hn }->{ ip },
-							name => $local_hn,
-							node => 'local',
-						  },
-						  {
-							ip   => $zcl_conf->{ $remote_hn }->{ ip },
-							name => $remote_hn,
-							node => 'remote',
-						  },
-				]
-	};
-
-	$cluster->{ check_interval } += 0;
-
-	my $body = {
-				 description => $desc,
-				 params      => $cluster,
-	};
+	else
+	{
+		$body = {
+				  description => $desc,
+				  success     => 'true',
+				  message     => "There is no cluster configured on this node.",
+		};
+	}
 
 	&httpResponse({ code => 200, body => $body });
 }
@@ -578,6 +584,8 @@ sub enable_cluster
 
 sub get_cluster_localhost_status
 {
+	require Zevenet::SystemInfo;
+
 	my $desc = "Cluster status for localhost";
 
 	my $node = &getZClusterNodeStatusDigest();
@@ -593,7 +601,9 @@ sub get_cluster_localhost_status
 
 sub get_cluster_nodes_status
 {
-	my $desc = "Cluster nodes status";
+	require Zevenet::SystemInfo;
+
+	my $desc      = "Cluster nodes status";
 	my $localhost = &getHostname();
 	my @cluster;
 
