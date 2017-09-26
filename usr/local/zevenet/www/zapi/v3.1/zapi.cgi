@@ -39,6 +39,7 @@ my $q = &getCGI();
 #
 #~ if ( debug() )
 #~ {
+	&zenlog( "REQUEST: $ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}" ) if &debug;
 	#~ &zenlog( ">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<" ) if &debug;
 	#~ &zenlog( "HTTP HEADERS: " . join ( ', ', $q->http() ) );
 	#~ &zenlog( "HTTP_AUTHORIZATION: <$ENV{HTTP_AUTHORIZATION}>" )
