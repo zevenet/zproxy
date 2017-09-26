@@ -23,7 +23,7 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: setFarmHTTPNewService
@@ -41,6 +41,7 @@ FIXME:
 	This function returns nothing, do error control
 		
 =cut
+
 sub setFarmHTTPNewService    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
@@ -72,9 +73,9 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 	{
 		#create service
 		my @newservice;
-		my $sw    = 0;
-		my $count = 0;
-		my $poundtpl = &getGlobalConfiguration('poundtpl');
+		my $sw       = 0;
+		my $count    = 0;
+		my $poundtpl = &getGlobalConfiguration( 'poundtpl' );
 		tie my @poundtpl, 'Tie::File', "$poundtpl";
 		my $countend = 0;
 
@@ -157,6 +158,7 @@ Returns:
 	Integer - Error code: 0 on success, other value on failure
 		
 =cut
+
 sub setFarmNewService    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
@@ -188,6 +190,7 @@ FIXME:
 	Rename function to delHTTPFarmService
 		
 =cut
+
 sub deleteFarmService    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
@@ -255,7 +258,7 @@ sub deleteFarmService    # ($farm_name,$service)
 		}
 	}
 
-	# change the ID value of services with an ID higher than the service deleted (value - 1)
+# change the ID value of services with an ID higher than the service deleted (value - 1)
 	tie my @contents, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
 	foreach my $line ( @contents )
 	{
@@ -288,6 +291,7 @@ FIXME:
 	&getHTTPFarmVS(farmname) does same but in a string
 		
 =cut
+
 sub getHTTPFarmServices
 {
 	my ( $farm_name ) = @_;
@@ -295,7 +299,7 @@ sub getHTTPFarmServices
 	require Zevenet::Farm::Core;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $pos  = 0;
+	my $pos           = 0;
 	my @output;
 
 	open my $fh, "<$configdir\/$farm_filename";
@@ -334,6 +338,7 @@ FIXME:
 	Always return 0, create error control
 		
 =cut
+
 sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 {
 	# Params
@@ -455,6 +460,7 @@ FIXME:
 	Always return 0, create error control
 		
 =cut
+
 sub moveServiceFarmStatus
 {
 	my ( $farmName, $moveService, $serviceSelect ) = @_;
@@ -483,7 +489,7 @@ sub moveServiceFarmStatus
 	foreach my $line ( @file )
 	{
 		$line =~ /(^-[bB] 0 )(\d+)/;
-		my $cad        = $1;
+		my $cad = $1;
 		$serviceNum = $2;
 
 		#	&main::zenlog("$moveService::$ind::$serviceNum");
@@ -569,6 +575,7 @@ Returns:
     };
 
 =cut
+
 sub getHTTPServiceStruct
 {
 	my ( $farmname, $servicename ) = @_;
@@ -632,34 +639,33 @@ sub getHTTPServiceStruct
 			$fgscript =~ s/\"/\'/g;
 			$fguse =~ s/\n//g;
 
-			my $backends = &getHTTPFarmBackends( $farmname, $s);
+			my $backends = &getHTTPFarmBackends( $farmname, $s );
 
 			$ttlc      = 0 unless $ttlc;
 			$ttl       = 0 unless $ttl;
 			$fgttcheck = 0 unless $fgttcheck;
 
-			$service =
-			{
-				id           => $s,
-				vhost        => $vser,
-				urlp         => $urlp,
-				redirect     => $redirect,
-				redirecttype => $redirecttype,
-				cookieinsert => $cookiei,
-				cookiename   => $cookieinsname,
-				cookiedomain => $domainname,
-				cookiepath   => $path,
-				cookiettl    => $ttlc + 0,
-				persistence  => $session,
-				ttl          => $ttl + 0,
-				sessionid    => $sesid,
-				leastresp    => $dyns,
-				httpsb       => $httpsbe,
-				fgtimecheck  => $fgttcheck + 0,
-				fgscript     => $fgscript,
-				fgenabled    => $fguse,
-				fglog        => $fglog,
-				backends     => $backends,
+			$service = {
+						 id           => $s,
+						 vhost        => $vser,
+						 urlp         => $urlp,
+						 redirect     => $redirect,
+						 redirecttype => $redirecttype,
+						 cookieinsert => $cookiei,
+						 cookiename   => $cookieinsname,
+						 cookiedomain => $domainname,
+						 cookiepath   => $path,
+						 cookiettl    => $ttlc + 0,
+						 persistence  => $session,
+						 ttl          => $ttl + 0,
+						 sessionid    => $sesid,
+						 leastresp    => $dyns,
+						 httpsb       => $httpsbe,
+						 fgtimecheck  => $fgttcheck + 0,
+						 fgscript     => $fgscript,
+						 fgenabled    => $fguse,
+						 fglog        => $fglog,
+						 backends     => $backends,
 			};
 			last;
 		}
@@ -685,12 +691,13 @@ Returns:
 FIXME:
 	return a hash with all parameters
 =cut
+
 sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 {
 	my ( $farm_name, $service, $tag ) = @_;
 
 	$service = "" unless $service;
-	$tag = "" unless $tag;
+	$tag     = "" unless $tag;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = "";
@@ -784,7 +791,7 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 				last;
 			}
 		}
-		
+
 		if ( $tag eq "redirecttype" )
 		{
 			if (    ( $line =~ "Redirect \"" || $line =~ "RedirectAppend \"" )
@@ -1024,6 +1031,7 @@ Returns:
 	Integer - Error code: 0 on success or -1 on failure
 		
 =cut
+
 sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 {
 	my ( $farm_name, $service, $tag, $string ) = @_;
@@ -1296,20 +1304,17 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 				{
 					$line =~ s/#//g;
 				}
-				if (    $string eq "URL"
-					 || $string eq "COOKIE"
-					 || $string eq "HEADER" )
+				if ( $line =~ /\t\t\t#?ID / )
 				{
-					if ( $line =~ "\t\t\tID |\t\t\t#ID " )
+					if (    $string eq "URL"
+						 || $string eq "COOKIE"
+						 || $string eq "HEADER" )
 					{
 						$line =~ s/#//g;
 					}
-				}
-				if ( $string eq "IP" )
-				{
-					if ( $line =~ "\t\t\tID |\t\t\t#ID " )
+					else
 					{
-						$line = "\#$line";
+						$line = "#$line";
 					}
 				}
 			}
@@ -1365,16 +1370,17 @@ FIXME:
 	Initialize output to -1 and do error control
 	Rename with intuitive name, something like getHTTPFarmServiceIndex
 =cut
+
 sub getFarmVSI    # ($farm_name,$service)
 {
 	my ( $farmname, $service ) = @_;
-	
+
 	# get service position
 	my $srv_position = 0;
-	my @services = &getHTTPFarmServices( $farmname );
+	my @services     = &getHTTPFarmServices( $farmname );
 	foreach my $srv ( @services )
 	{
-		if  ( $srv eq $service )
+		if ( $srv eq $service )
 		{
 			# found
 			last;
@@ -1384,8 +1390,8 @@ sub getFarmVSI    # ($farm_name,$service)
 			$srv_position++;
 		}
 	}
-	
-	return $srv_position;	
+
+	return $srv_position;
 }
 
 1;

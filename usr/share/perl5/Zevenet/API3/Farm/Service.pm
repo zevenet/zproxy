@@ -423,23 +423,9 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			}
 		}
 
-		if ( exists ( $json_obj->{ persistence } ) )
+		if ( exists ( $json_obj->{ sessionid } ) )
 		{
-			if ( $json_obj->{ persistence } =~ /^|IP|BASIC|URL|PARM|COOKIE|HEADER$/ )
-			{
-				my $session = $json_obj->{ persistence };
-				$session = 'nothing' if $session eq "";
-
-				my $status = &setFarmVS( $farmname, $service, "session", $session );
-
-				if ( $status != 0 )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the service $service in a farm $farmname, it's not possible to change the persistence parameter."
-					);
-				}
-			}
+			&setFarmVS( $farmname, $service, "sessionid", $json_obj->{ sessionid } );
 		}
 
 		if ( exists ( $json_obj->{ ttl } ) )
@@ -471,10 +457,24 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			}
 		}
 
-		if ( exists ( $json_obj->{ sessionid } ) )
+		if ( exists ( $json_obj->{ persistence } ) )
 		{
-			&setFarmVS( $farmname, $service, "sessionid", $json_obj->{ sessionid } );
-		}
+			if ( $json_obj->{ persistence } =~ /^|IP|BASIC|URL|PARM|COOKIE|HEADER$/ )
+			{
+				my $session = $json_obj->{ persistence };
+				$session = 'nothing' if $session eq "";
+
+				my $status = &setFarmVS( $farmname, $service, "session", $session );
+
+				if ( $status != 0 )
+				{
+					$error = "true";
+					&zenlog(
+						"ZAPI error, trying to modify the service $service in a farm $farmname, it's not possible to change the persistence parameter."
+					);
+				}
+			}
+		}		
 
 		if ( exists ( $json_obj->{ leastresp } ) )
 		{
