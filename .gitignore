@@ -61,3 +61,4 @@
 # other
 .rnd
 .htpasswd
+*.pme
