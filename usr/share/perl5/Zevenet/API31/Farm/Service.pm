@@ -92,12 +92,15 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	# check if the service name has invalid characters
 	if ( $result == 3 )
 	{
-		my $msg = "Service name is not valid, only allowed numbers, letters and hyphens.";
+		my $msg =
+		  "Service name is not valid, only allowed numbers, letters and hyphens.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# no error found, return successful response
-	&zenlog( "ZAPI success, a new service has been created in farm $farmname with id $json_obj->{id}." );
+	&zenlog(
+		"ZAPI success, a new service has been created in farm $farmname with id $json_obj->{id}."
+	);
 
 	my $body = {
 				 description => $desc,
@@ -147,18 +150,18 @@ sub farm_services
 	my @services = &getHTTPFarmServices( $farmname );
 
 	# check if the service is available
-	if ( ! grep { $servicename eq $_ } @services )
+	if ( !grep { $servicename eq $_ } @services )
 	{
 		my $msg = "The required service does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# no error found, return successful response
-	my $service = &getServiceStruct ( $farmname, $servicename );
+	my $service = &getServiceStruct( $farmname, $servicename );
 
-	foreach my $be ( @{ $service->{backends} } )
+	foreach my $be ( @{ $service->{ backends } } )
 	{
-		$be->{status} = "up" if $be->{status} eq "undefined";
+		$be->{ status } = "up" if $be->{ status } eq "undefined";
 	}
 
 	my $body = {
@@ -166,12 +169,12 @@ sub farm_services
 				 services    => $service,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # PUT
 
-sub modify_services # ( $json_obj, $farmname, $service )
+sub modify_services    # ( $json_obj, $farmname, $service )
 {
 	my ( $json_obj, $farmname, $service ) = @_;
 
@@ -199,7 +202,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 	}
 
 	# validate SERVICE
-	my @services = &getFarmServices($farmname);
+	my @services = &getFarmServices( $farmname );
 	my $found_service = grep { $service eq $_ } @services;
 
 	if ( not $found_service )
@@ -235,7 +238,9 @@ sub modify_services # ( $json_obj, $farmname, $service )
 	{
 		my $redirect = $json_obj->{ redirect };
 
-		unless ( $redirect =~ /^http\:\/\//i || $redirect =~ /^https:\/\//i || $redirect eq '' )
+		unless (    $redirect =~ /^http\:\/\//i
+				 || $redirect =~ /^https:\/\//i
+				 || $redirect eq '' )
 		{
 			my $msg = "Invalid redirect value.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -265,20 +270,10 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		}
 	}
 
-	if ( exists $json_obj->{ persistence } )
+	# It is necessary evaluate first session, next ttl and later persistence
+	if ( exists $json_obj->{ sessionid } )
 	{
-		if ( $json_obj->{ persistence } =~ /^(|IP|BASIC|URL|PARM|COOKIE|HEADER)$/ )
-		{
-			my $session = $json_obj->{ persistence };
-			$session = 'nothing' if $session eq "";
-
-			my $error = &setFarmVS( $farmname, $service, "session", $session );
-			if ( $error )
-			{
-				my $msg = "It's not possible to change the persistence parameter.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
-		}
+		&setFarmVS( $farmname, $service, "sessionid", $json_obj->{ sessionid } );
 	}
 
 	if ( exists $json_obj->{ ttl } )
@@ -297,9 +292,20 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		}
 	}
 
-	if ( exists $json_obj->{ sessionid } )
+	if ( exists $json_obj->{ persistence } )
 	{
-		&setFarmVS( $farmname, $service, "sessionid", $json_obj->{ sessionid } );
+		if ( $json_obj->{ persistence } =~ /^(|IP|BASIC|URL|PARM|COOKIE|HEADER)$/ )
+		{
+			my $session = $json_obj->{ persistence };
+			$session = 'nothing' if $session eq "";
+
+			my $error = &setFarmVS( $farmname, $service, "session", $session );
+			if ( $error )
+			{
+				my $msg = "It's not possible to change the persistence parameter.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
 	}
 
 	if ( exists $json_obj->{ leastresp } )
@@ -336,12 +342,13 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		}
 	}
 
-	my $cookieins_status = &getHTTPFarmVS ($farmname,$service, 'cookieins');
-	if ( $json_obj->{ cookieinsert } eq "true"  || $cookieins_status eq 'true' )
+	my $cookieins_status = &getHTTPFarmVS( $farmname, $service, 'cookieins' );
+	if ( $json_obj->{ cookieinsert } eq "true" || $cookieins_status eq 'true' )
 	{
 		if ( exists $json_obj->{ cookiedomain } )
 		{
-			&setFarmVS( $farmname, $service, "cookieins-domain", $json_obj->{ cookiedomain } );
+			&setFarmVS( $farmname, $service, "cookieins-domain",
+						$json_obj->{ cookiedomain } );
 		}
 
 		if ( exists $json_obj->{ cookiename } )
@@ -401,16 +408,17 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 		&setFarmRestart( $farmname );
 		$body->{ status } = 'needed restart';
-		$body->{ info } = "There're changes that need to be applied, stop and start farm to apply them!";
+		$body->{ info } =
+		  "There're changes that need to be applied, stop and start farm to apply them!";
 	}
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # DELETE
 
 # DELETE /farms/<farmname>/services/<servicename> Delete a service of a Farm
-sub delete_service # ( $farmname, $service )
+sub delete_service    # ( $farmname, $service )
 {
 	my ( $farmname, $service ) = @_;
 
@@ -425,7 +433,7 @@ sub delete_service # ( $farmname, $service )
 
 	# check the farm type is supported
 	my $type = &getFarmType( $farmname );
-	
+
 	if ( $type eq "gslb" && eval { require Zevenet::API31::Farm::GSLB; } )
 	{
 		delete_gslb_service( $farmname, $service );
@@ -440,12 +448,12 @@ sub delete_service # ( $farmname, $service )
 	require Zevenet::Farm::HTTP::Service;
 
 	# Check that the provided service is configured in the farm
-	my @services = &getHTTPFarmServices($farmname);
-	my $found = 0;
+	my @services = &getHTTPFarmServices( $farmname );
+	my $found    = 0;
 
-	foreach my $farmservice (@services)
+	foreach my $farmservice ( @services )
 	{
-		if ($service eq $farmservice)
+		if ( $service eq $farmservice )
 		{
 			$found = 1;
 			last;
@@ -475,7 +483,8 @@ sub delete_service # ( $farmname, $service )
 	}
 
 	# no errors found, returning successful response
-	&zenlog( "ZAPI success, the service $service in farm $farmname has been deleted." );
+	&zenlog(
+			 "ZAPI success, the service $service in farm $farmname has been deleted." );
 
 	my $message = "The service $service in farm $farmname has been deleted.";
 	my $body = {
@@ -492,7 +501,7 @@ sub delete_service # ( $farmname, $service )
 		&setFarmRestart( $farmname );
 	}
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

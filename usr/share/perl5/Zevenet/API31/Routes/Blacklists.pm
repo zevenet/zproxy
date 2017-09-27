@@ -23,55 +23,51 @@
 
 use strict;
 
-my $q = getCGI();
-my $farm_re    = &getValidFormat( 'farm_name' );
 
-
-if ( $q->path_info =~ qr{/ipds/blacklists} )
+if ( $ENV{ PATH_INFO } =~ qr{/ipds/blacklists} )
 {
-	require Zevenet::API31::IPDS::Blacklist;
+	my $mod = 'Zevenet::API31::IPDS::Blacklist';
 
+	my $farm_re              = &getValidFormat( 'farm_name' );
 	my $blacklists_list      = &getValidFormat( 'blacklists_name' );
 	my $blacklists_source_id = &getValidFormat( 'blacklists_source_id' );
 
 	# BLACKLISTS
 	#  GET all blacklists
-	GET qr{^/ipds/blacklists$} => \&get_blacklists_all_lists;
+	GET qr{^/ipds/blacklists$}, 'get_blacklists_all_lists', $mod;
 
 	#  POST blacklists list
-	POST qr{^/ipds/blacklists$} => \&add_blacklists_list;
+	POST qr{^/ipds/blacklists$}, 'add_blacklists_list', $mod;
 
 	#  GET blacklists lists
-	GET qr{^/ipds/blacklists/($blacklists_list)$} => \&get_blacklists_list;
+	GET qr{^/ipds/blacklists/($blacklists_list)$}, 'get_blacklists_list', $mod;
 
 	#  PUT blacklists list
-	PUT qr{^/ipds/blacklists/($blacklists_list)$} => \&set_blacklists_list;
+	PUT qr{^/ipds/blacklists/($blacklists_list)$}, 'set_blacklists_list', $mod;
 
 	#  DELETE blacklists list
-	DELETE qr{^/ipds/blacklists/($blacklists_list)$} => \&del_blacklists_list;
+	DELETE qr{^/ipds/blacklists/($blacklists_list)$}, 'del_blacklists_list', $mod;
 
 	#  action for a blacklists
-	POST qr{^/ipds/blacklists/($blacklists_list)/actions$} => \&actions_blacklists;
+	POST qr{^/ipds/blacklists/($blacklists_list)/actions$}, 'actions_blacklists', $mod;
 
 	#  GET a source from a blacklists
-	GET qr{^/ipds/blacklists/($blacklists_list)/sources$} => \&get_blacklists_source;
+	GET qr{^/ipds/blacklists/($blacklists_list)/sources$}, 'get_blacklists_source', $mod;
 
 	#  POST a source from a blacklists
-	POST qr{^/ipds/blacklists/($blacklists_list)/sources$} => \&add_blacklists_source;
+	POST qr{^/ipds/blacklists/($blacklists_list)/sources$}, 'add_blacklists_source', $mod;
 
 	#  PUT a source from a blacklists
-	PUT qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$} => \&set_blacklists_source;
+	PUT qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$}, 'set_blacklists_source', $mod;
 
 	#  DELETE a source from a blacklists
-	DELETE
-	  qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$}
-	  => \&del_blacklists_source;
+	DELETE qr{^/ipds/blacklists/($blacklists_list)/sources/($blacklists_source_id)$}, 'del_blacklists_source', $mod;
 
 	#  POST list to farm
-	POST qr{^/farms/($farm_re)/ipds/blacklists$} => \&add_blacklists_to_farm;
+	POST qr{^/farms/($farm_re)/ipds/blacklists$}, 'add_blacklists_to_farm', $mod;
 
 	#  DELETE list from farm
-	DELETE qr{^/farms/($farm_re)/ipds/blacklists/($blacklists_list)$} => \&del_blacklists_from_farm;
+	DELETE qr{^/farms/($farm_re)/ipds/blacklists/($blacklists_list)$}, 'del_blacklists_from_farm', $mod;
 }
 
 1;

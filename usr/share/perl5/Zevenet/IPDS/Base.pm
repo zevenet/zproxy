@@ -99,31 +99,6 @@ sub addIPDSIptablesChain
 		$error |= &iptSystem( "$iptables -A $whitelist_chain -t mangle -j $dos_chain" );
 	}
 
-	# last sentence in each chain is return to above chain
-	if (
-		 &iptSystem( "$iptables -C $whitelist_chain -t raw -j RETURN 2>/dev/null" ) )
-	{
-		$error |= &iptSystem( "$iptables -A $whitelist_chain -t raw -j RETURN" );
-	}
-	if (
-		 &iptSystem( "$iptables -C $blacklist_chain -t raw -j RETURN 2>/dev/null" ) )
-	{
-		$error |= &iptSystem( "$iptables -A $blacklist_chain -t raw -j RETURN" );
-	}
-	if ( &iptSystem( "$iptables -C $rbl_chain -t raw -j RETURN 2>/dev/null" ) )
-	{
-		$error |= &iptSystem( "$iptables -A $rbl_chain -t raw -j RETURN" );
-	}
-	if (
-		 &iptSystem( "$iptables -C $whitelist_chain -t mangle -j RETURN 2>/dev/null" ) )
-	{
-		$error |= &iptSystem( "$iptables -A $whitelist_chain -t mangle -j RETURN" );
-	}
-	if ( &iptSystem( "$iptables -C $dos_chain -t mangle -j RETURN 2>/dev/null" ) )
-	{
-		$error |= &iptSystem( "$iptables -A $dos_chain -t mangle -j RETURN" );
-	}
-
 	if ( $error )
 	{
 		&zenlog( "Error creating iptables chains" );

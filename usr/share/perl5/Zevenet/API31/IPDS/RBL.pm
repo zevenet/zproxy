@@ -313,6 +313,9 @@ sub set_rbl_rule
 		}
 	}
 
+	require Zevenet::IPDS::RBL::Actions;
+	&runRBLRestartByRule( $name );
+
 	# all successful
 	my $listHash = &getRBLZapiRule( $name );
 	my $body = { description => $desc, params => $listHash };

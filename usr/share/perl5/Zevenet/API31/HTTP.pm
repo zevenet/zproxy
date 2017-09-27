@@ -40,30 +40,37 @@ my %http_status_codes = (
 	422 => 'Unprocessable Entity',
 );
 
-sub GET($$)
+sub GET
 {
-	my ( $path, $code ) = @_;
+	my ( $path, $code, $mod ) = @_;
 
-	my $q = getCGI();
+	return unless $ENV{ REQUEST_METHOD } eq 'GET' or $ENV{ REQUEST_METHOD } eq 'HEAD';
 
-	return unless $q->request_method eq 'GET' or $q->request_method eq 'HEAD';
-
-	my @captures = $q->path_info =~ $path;
+	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	$code->( @captures );
+	&zenlog("GET captures( @captures )");
+
+	if ( ref $code eq 'CODE' )
+	{
+		$code->( @captures );
+	}
+	else
+	{
+		&eload( module => $mod, func => $code, args => \@captures );
+	}
 }
 
-sub POST($$)
+sub POST
 {
-	my ( $path, $code ) = @_;
+	my ( $path, $code, $mod ) = @_;
 
-	my $q = getCGI();
+	return unless $ENV{ REQUEST_METHOD } eq 'POST';
 
-	return unless $q->request_method eq 'POST';
-
-	my @captures = $q->path_info =~ $path;
+	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
+
+	&zenlog("POST captures( @captures )");
 
 	my $data = &getCgiParam( 'POSTDATA' );
 	my $input_ref;
@@ -89,6 +96,7 @@ sub POST($$)
 			&& $ENV{ CONTENT_TYPE } eq 'application/x-pem-file' )
 	{
 		$input_ref = $data;
+		$input_ref =~ s/\n/\\n/g; # escape '\n' characters in pem certificates
 	}
 	else
 	{
@@ -98,19 +106,28 @@ sub POST($$)
 		&httpResponse( { code => 415, body => $body } );
 	}
 
-	$code->( $input_ref, @captures );
+	my @args = ( $input_ref, @captures );
+
+	if ( ref $code eq 'CODE' )
+	{
+		$code->( @args );
+	}
+	else
+	{
+		&eload( module => $mod, func => $code, args => \@args );
+	}
 }
 
-sub PUT($$)
+sub PUT
 {
-	my ( $path, $code ) = @_;
+	my ( $path, $code, $mod ) = @_;
 
-	my $q = getCGI();
+	return unless $ENV{ REQUEST_METHOD } eq 'PUT';
 
-	return unless $q->request_method eq 'PUT';
-
-	my @captures = $q->path_info =~ $path;
+	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
+
+	&zenlog("PUT captures( @captures )");
 
 	my $data = &getCgiParam( 'PUTDATA' );
 	my $input_ref;
@@ -145,33 +162,49 @@ sub PUT($$)
 		&httpResponse( { code => 415, body => $body } );
 	}
 
-	$code->( $input_ref, @captures );
+	my @args = ( $input_ref, @captures );
+
+	if ( ref $code eq 'CODE' )
+	{
+		$code->( @args );
+	}
+	else
+	{
+		&eload( module => $mod, func => $code, args => \@args );
+	}
 }
 
-sub DELETE($$)
+sub DELETE
+{
+	my ( $path, $code, $mod ) = @_;
+
+	return unless $ENV{ REQUEST_METHOD } eq 'DELETE';
+
+	my @captures = ( $ENV{ PATH_INFO } =~ $path );
+	return unless @captures;
+
+	&zenlog("DELETE captures( @captures )");
+
+	if ( ref $code eq 'CODE' )
+	{
+		$code->( @captures );
+	}
+	else
+	{
+		&eload( module => $mod, func => $code, args => \@captures );
+	}
+}
+
+sub OPTIONS
 {
 	my ( $path, $code ) = @_;
 
-	my $q = getCGI();
+	return unless $ENV{ REQUEST_METHOD } eq 'OPTIONS';
 
-	return unless $q->request_method eq 'DELETE';
-
-	my @captures = $q->path_info =~ $path;
+	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	$code->( @captures );
-}
-
-sub OPTIONS($$)
-{
-	my ( $path, $code ) = @_;
-
-	my $q = getCGI();
-
-	return unless $q->request_method eq 'OPTIONS';
-
-	my @captures = $q->path_info =~ $path;
-	return unless @captures;
+	&zenlog("OPTIONS captures( @captures )");
 
 	$code->( @captures );
 }
@@ -196,6 +229,8 @@ sub OPTIONS($$)
 sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 {
 	my $self = shift;
+
+	return $self if &_isRunningEnterprise();
 
 	#~ &zenlog("DEBUG httpResponse input: " . Dumper $self ); # DEBUG
 
@@ -353,7 +388,15 @@ sub httpErrorResponse
 
 	&zenlog( "[Error] $args->{ desc }: $args->{ msg }" );
 	&zenlog( $args->{ log_msg } ) if exists $args->{ log_msg };
-	&httpResponse( { code => $args->{ code }, body => $body } );
+
+	my $response = { code => $args->{ code }, body => $body };
+
+	if ( $0 =~ m!app/zbin/enterprise\.bin$! )
+	{
+		return $response;
+	}
+
+	&httpResponse( $response );
 }
 
 # WARNING: Function unfinished.
@@ -450,6 +493,90 @@ sub httpDownloadResponse
 	&zenlog( "[Download] $args->{ desc }: $path" );
 
 	&httpResponse({ code => 200, headers => $headers, body => $body });
+}
+
+sub eload
+{
+	my %req = @_;
+
+	my @required = ( qw(module func) );
+	my @params   = ( qw(module func args) );
+
+	# check required params
+	if ( my ( $required ) = grep { not exists $req{ $_ } } @required )
+	{
+		my $msg = "Required eload parameter '$required' missing";
+
+		&zenlog( $msg );
+		die( $msg );
+	}
+
+	# check not used params
+	if ( grep { not exists $req{ $_ } } @params )
+	{
+		my $params = join( ', ', @required );
+		my $msg = "Warning: Detected unused eload parameter: $params";
+
+		&zenlog( $msg );
+	}
+
+	my $zbin_path  = '/usr/local/zevenet/app/zbin';
+	my $bin        = "$zbin_path/enterprise.bin";
+	my $input;
+
+	require JSON;
+	JSON->import( qw( encode_json decode_json ) );
+
+	my $validArrayRef = exists $req{ args } && ref $req{ args } eq 'ARRAY';
+	my @args = $validArrayRef ? @{ $req{ args } }: ();
+
+	if ( ref( $req{ args } ) eq 'ARRAY' )
+	{
+		&zenlog("eload: ARGS is ARRAY ref: [OK]");
+	}
+	else
+	{
+		&zenlog("eload: ARGS is ARRAY ref: Failed!");
+	}
+
+	unless ( eval { $input = encode_json( $req{ args } ) } )
+	{
+		my $msg = "eload: Error encoding JSON: $@";
+
+		zenlog( $msg );
+		die $msg;
+	}
+
+	my $cmd = "$bin $req{ module } $req{ func }";
+
+	&zenlog("eload: CMD: '$cmd'");
+	&zenlog("eload: INPUT: '$input'");
+
+	my $ret_output = `echo -n '$input' | $cmd 2>&1`;
+	my $rc = $?;
+
+	#~ &zenlog( "rc: '$rc'" );
+	#~ &zenlog( "ret_output: '$ret_output'" );
+
+	if ( $rc )
+	{
+		my $msg = "Error loading enterprise module $req{ module }";
+		chomp $ret_output;
+
+		#~ zenlog( "rc: '$rc'" );
+		#~ zenlog( "ret_output: '$ret_output'" );
+		&zenlog( "$msg. $ret_output" );
+		die( $msg );
+	}
+
+	my $ref = decode_json( $ret_output );
+
+	&httpResponse( $ref );
+}
+
+sub _isRunningEnterprise
+{
+	return ( $0 =~ m!(?:\/|^)enterprise\.bin$! );
 }
 
 1;

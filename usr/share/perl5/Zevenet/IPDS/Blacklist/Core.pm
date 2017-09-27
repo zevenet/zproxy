@@ -287,7 +287,6 @@ sub getBLlastUptdate
 	}
 	else
 	{
-		&zenlog( "Not found $listFile." );
 		$date = -2;
 	}
 

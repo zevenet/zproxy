@@ -23,16 +23,15 @@
 
 use strict;
 
-my $q          = getCGI();
 my $farm_re    = &getValidFormat( 'farm_name' );
 my $service_re = &getValidFormat( 'service' );
 
 
-if ( $q->path_info =~ qr{^/farms/$farm_re/services/($service_re)/actions$} )
+if ( $ENV{ PATH_INFO } =~ qr{^/farms/$farm_re/services/$service_re/actions$} )
 {
-	require Zevenet::API31::Farm::MoveService;
+	my $mod = 'Zevenet::API31::Farm::MoveService';
 
-	POST qr{^/farms/($farm_re)/services/($service_re)/actions$} => \&move_services;
+	POST qr{^/farms/($farm_re)/services/($service_re)/actions$}, 'move_services', $mod;
 }
 
 1;

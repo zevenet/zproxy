@@ -23,22 +23,19 @@
 
 use strict;
 
-my $q = getCGI();
-my $nic_re  = &getValidFormat( 'nic_interface' );
-my $bond_re = &getValidFormat( 'bond_interface' );
-my $vlan_re = &getValidFormat( 'vlan_interface' );
 
-
-if ( $q->path_info =~ qr{^/interfaces/floating} )
+if ( $ENV{ PATH_INFO } =~ qr{^/interfaces/floating} )
 {
-	require Zevenet::API31::Interface::Floating;
+	my $mod = 'Zevenet::API31::Interface::Floating';
 
-	GET qr{^/interfaces/floating$} => \&get_interfaces_floating;
-	GET qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_re)$} => \&get_floating;
-	PUT qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_re)$} =>
-	  \&modify_interface_floating;
-	DELETE qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_re)$} =>
-	  \&delete_interface_floating;
+	my $nic_re  = &getValidFormat( 'nic_interface' );
+	my $bond_re = &getValidFormat( 'bond_interface' );
+	my $vlan_re = &getValidFormat( 'vlan_interface' );
+
+	GET    qr{^/interfaces/floating$},                             'get_interfaces_floating',   $mod;
+	GET    qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_re)$}, 'get_floating',              $mod;
+	PUT    qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_re)$}, 'modify_interface_floating', $mod;
+	DELETE qr{^/interfaces/floating/($nic_re|$bond_re|$vlan_re)$}, 'delete_interface_floating', $mod;
 }
 
 1;

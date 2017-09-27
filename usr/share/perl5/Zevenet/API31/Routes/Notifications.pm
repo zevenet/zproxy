@@ -23,36 +23,34 @@
 
 use strict;
 
-my $q = getCGI();
 
-
-if ( $q->path_info =~ qr{^/system/notifications} )
+if ( $ENV{ PATH_INFO } =~ qr{^/system/notifications} )
 {
-	require Zevenet::API31::System::Notification;
+	my $mod = 'Zevenet::API31::System::Notification';
 
 	my $alert_re  = &getValidFormat( 'notif_alert' );
 	my $method_re = &getValidFormat( 'notif_method' );
 
 	#  GET notification methods
-	GET qr{^/system/notifications/methods/($method_re)$} => \&get_notif_methods;
+	GET qr{^/system/notifications/methods/($method_re)$}, 'get_notif_methods', $mod;
 
 	#  POST notification methods
-	POST qr{^/system/notifications/methods/($method_re)$} => \&set_notif_methods;
+	POST qr{^/system/notifications/methods/($method_re)$}, 'set_notif_methods', $mod;
 
 	#  GET notification alert status
-	GET qr{^/system/notifications/alerts$} => \&get_notif_alert_status;
+	GET qr{^/system/notifications/alerts$}, 'get_notif_alert_status', $mod;
 
 	#  GET notification alerts
-	GET qr{^/system/notifications/alerts/($alert_re)$} => \&get_notif_alert;
+	GET qr{^/system/notifications/alerts/($alert_re)$}, 'get_notif_alert', $mod;
 
 	#  POST notification alerts
-	POST qr{^/system/notifications/alerts/($alert_re)$} => \&set_notif_alert;
+	POST qr{^/system/notifications/alerts/($alert_re)$}, 'set_notif_alert', $mod;
 
 	#  POST notification alert actions
-	POST qr{^/system/notifications/alerts/($alert_re)/actions$} => \&set_notif_alert_actions;
+	POST qr{^/system/notifications/alerts/($alert_re)/actions$}, 'set_notif_alert_actions', $mod;
 
 	#  POST  notifications test
-	POST qr{^/system/notifications/methods/email/actions$} => \&send_test_mail;
+	POST qr{^/system/notifications/methods/email/actions$}, 'send_test_mail', $mod;
 }
 
 1;

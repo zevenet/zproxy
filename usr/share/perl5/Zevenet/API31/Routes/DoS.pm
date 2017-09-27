@@ -23,42 +23,40 @@
 
 use strict;
 
-my $q = getCGI();
-my $farm_re    = &getValidFormat( 'farm_name' );
 
-
-if ( $q->path_info =~ qr{/ipds/dos} )
+if ( $ENV{ PATH_INFO } =~ qr{/ipds/dos} )
 {
-	require Zevenet::API31::IPDS::DoS;
+	my $mod = 'Zevenet::API31::IPDS::DoS';
 
+	my $farm_re  = &getValidFormat( 'farm_name' );
 	my $dos_rule = &getValidFormat( 'dos_name' );
 
 	#  GET dos settings
-	GET qr{^/ipds/dos/rules$} => \&get_dos_rules;
+	GET qr{^/ipds/dos/rules$}, 'get_dos_rules', $mod;
 
 	#  GET dos settings
-	GET qr{^/ipds/dos$} => \&get_dos;
+	GET qr{^/ipds/dos$}, 'get_dos', $mod;
 
 	#  GET dos configuration
-	GET qr{^/ipds/dos/($dos_rule)$} => \&get_dos_rule;
+	GET qr{^/ipds/dos/($dos_rule)$}, 'get_dos_rule', $mod;
 
 	#  POST dos settings
-	POST qr{^/ipds/dos$} => \&create_dos_rule;
+	POST qr{^/ipds/dos$}, 'create_dos_rule', $mod;
 
 	#  PUT dos rule
-	PUT qr{^/ipds/dos/($dos_rule)$} => \&set_dos_rule;
+	PUT qr{^/ipds/dos/($dos_rule)$}, 'set_dos_rule', $mod;
 
 	#  DELETE dos rule
-	DELETE qr{^/ipds/dos/($dos_rule)$} => \&del_dos_rule;
+	DELETE qr{^/ipds/dos/($dos_rule)$}, 'del_dos_rule', $mod;
 
 	#  POST DoS to a farm
-	POST qr{^/farms/($farm_re)/ipds/dos$} => \&add_dos_to_farm;
+	POST qr{^/farms/($farm_re)/ipds/dos$}, 'add_dos_to_farm', $mod;
 
 	#  DELETE DoS from farm
-	DELETE qr{^/farms/($farm_re)/ipds/dos/($dos_rule)$} => \&del_dos_from_farm;
+	DELETE qr{^/farms/($farm_re)/ipds/dos/($dos_rule)$}, 'del_dos_from_farm', $mod;
 	
 	#  action for a DoS rule
-	POST qr{^/ipds/dos/($dos_rule)/actions$} => \&actions_dos;
+	POST qr{^/ipds/dos/($dos_rule)/actions$}, 'actions_dos', $mod;
 	
 }
 

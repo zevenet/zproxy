@@ -141,16 +141,16 @@ sub checkActivationCertificate
 	# if $swcert is greater than 0 zapi should not work
 	if ( $swcert > 0 )
 	{
-		my $message;
+		my $msg;
 
 		if ( $swcert == 1 )
 		{
-			$message =
+			$msg =
 			  "There isn't a valid Zen Load Balancer certificate file, please request a new one";
 		}
 		elsif ( $swcert == 2 )
 		{
-			$message =
+			$msg =
 			  "The certificate file isn't signed by the Zevenet Certificate Authority, please request a new one";
 		}
 		elsif ( $swcert == 3 )
@@ -158,22 +158,17 @@ sub checkActivationCertificate
 			# Policy: expired testing certificates would not stop zen service,
 			# but rebooting the service would not start the service,
 			# interfaces should always be available.
-			$message =
+			$msg =
 			  "The Zen Load Balancer certificate file you are using is for testing purposes and its expired, please request a new one";
 		}
 
-		&httpResponse(
-					   {
-						 code => 403,
-						 body => {
-								   message         => $message,
-								   certificate_key => &keycert(),
-								   hostname        => &getHostname(),
-						 }
-					   }
-		);
+		my $body = {
+					 message         => $msg,
+					 certificate_key => &keycert(),
+					 hostname        => &getHostname(),
+		};
 
-		exit;
+		&httpResponse( { code => 403, body => $body } );
 	}
 
 	return $swcert;

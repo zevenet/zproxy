@@ -73,13 +73,14 @@ sub getZClusterStatus
 {
 	# case filecuster does not exist
 	return undef if ! -f &getGlobalConfiguration('filecluster');
-	
+
 	my $zcl_conf = &getZClusterConfig();
 
 	# $zcl_conf->{_} global section
 	# $zcl_conf->{*} node section
 	# 1 global section + 2 nodes section
-	return ( scalar( keys %{ $zcl_conf } ) > 2  );
+
+	return keys %{ $zcl_conf } > 2;
 }
 
 =begin nd
