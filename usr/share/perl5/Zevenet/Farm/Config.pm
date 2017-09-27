@@ -77,13 +77,12 @@ sub getFarmBlacklistTime    # ($farm_name)
 	my ( $farm_name ) = @_;
 
 	my $farm_type      = &getFarmType( $farm_name );
-	my $farm_filename  = &getFarmFile( $farm_name );
 	my $blacklist_time = -1;
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		require Zevenet::Farm::HTTP::Config;
-		$blacklist_time = &getHTTPFarmBlacklistTime( $farm_filename );
+		$blacklist_time = &getHTTPFarmBlacklistTime( $farm_name );
 	}
 
 	return $blacklist_time;

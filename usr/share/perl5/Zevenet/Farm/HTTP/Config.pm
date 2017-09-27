@@ -289,12 +289,12 @@ Returns:
 	integer - seconds for check or -1 on failure.
 
 =cut
-sub getHTTPFarmBlacklistTime    # ($farm_filename)
+sub getHTTPFarmBlacklistTime    # ($farm_name)
 {
-	my ( $farm_filename ) = @_;
+	my ( $farm_name ) = @_;
 
 	my $blacklist_time = -1;
-	my $conf_file      = &getFarmFile( $farm_filename );
+	my $conf_file      = &getFarmFile( $farm_name );
 	my $conf_path      = "$configdir/$conf_file";
 
 	open( my $fh, '<', $conf_path ) or die "Could not open $conf_path: $!";
