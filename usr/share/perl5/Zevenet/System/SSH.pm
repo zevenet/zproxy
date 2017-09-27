@@ -46,6 +46,8 @@ See Also:
 =cut
 sub getSsh
 {
+	require Zevenet::Validate;
+
 	my $sshFile = &getGlobalConfiguration( 'sshConf' );
 	my $listen_format = &getValidFormat( 'ssh_listen' );
 	my $ssh     = {                                       # conf

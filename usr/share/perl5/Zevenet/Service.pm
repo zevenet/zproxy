@@ -221,6 +221,8 @@ sub start_service
 	{
 		&runIPDSStartModule();
 	}
+
+	return 0;
 }
 
 # this function syncs files with the other node before starting the cluster and
@@ -290,10 +292,14 @@ sub enable_cluster
 			&disableInterfaceDiscovery( $iface );
 		}
 	}
+
+	return 0;
 }
 
 sub start_cluster
 {
+	require Zevenet::Cluster;
+
 	# check activation certificate
 	if ( $swcert > 0 )
 	{
@@ -318,6 +324,8 @@ sub start_cluster
 		&enableAllInterfacesDiscovery();
 		&enableZCluster();
 	}
+
+	return 0;
 }
 
 sub stop_service
@@ -344,12 +352,18 @@ sub stop_service
 			&disableZCluster();
 		}
 	}
+
+	return 0;
 }
 
 sub disable_cluster
 {
+	require Zevenet::Cluster;
+
 	my $zcl_configured = &getZClusterStatus();
 	&enableAllInterfacesDiscovery() if $zcl_configured;
+
+	return 0;
 }
 
 1;
