@@ -521,8 +521,7 @@ sub eload
 	}
 
 	my $zbin_path  = '/usr/local/zevenet/app/zbin';
-	my $enterprise = 'enterprise.bin';
-	my $bin        = "$zbin_path/$enterprise";
+	my $bin        = "$zbin_path/enterprise.bin";
 	my $input;
 
 	require JSON;
@@ -533,13 +532,11 @@ sub eload
 
 	if ( ref( $req{ args } ) eq 'ARRAY' )
 	{
-		&zenlog("req{ args }: is an ARRAY ref. OK");
-		#~ &zenlog("function args: '@args'");
-		#~ &zenlog("first arg: '$args[0]'");
+		&zenlog("eload: ARGS is ARRAY ref: [OK]");
 	}
 	else
 	{
-		&zenlog("req{ args }: is not an ARRAY ref. ERROR");
+		&zenlog("eload: ARGS is ARRAY ref: Failed!");
 	}
 
 	unless ( eval { $input = encode_json( $req{ args } ) } )
@@ -552,8 +549,8 @@ sub eload
 
 	my $cmd = "$bin $req{ module } $req{ func }";
 
-	&zenlog("CMD: '$cmd'");
-	&zenlog("INPUT: '$input'");
+	&zenlog("eload: CMD: '$cmd'");
+	&zenlog("eload: INPUT: '$input'");
 
 	my $ret_output = `echo -n '$input' | $cmd 2>&1`;
 	my $rc = $?;
