@@ -69,7 +69,7 @@ sub getRBLFarmMatch
 		}
 
 		# l4 farm multiport
-		elsif ( &ismport( $farmname ) )
+		elsif ( &ismport( $farmname ) eq "true" )
 		{
 			$match = "-d $vip --protocol tcp -m multiport --dports $vport";
 		}
