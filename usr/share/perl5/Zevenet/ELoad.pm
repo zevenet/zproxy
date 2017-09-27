@@ -57,7 +57,6 @@ sub eload
 
 	# make sure $req{ args } is always an array reference 
 	my $validArrayRef = exists $req{ args } && ref $req{ args } eq 'ARRAY';
-	$req{ args } = [] if $validArrayRef && @{ $req{ args } } == ( 1 );
 	$req{ args } = [] unless $validArrayRef;
 
 
