@@ -49,12 +49,23 @@ sub getDOSInitialParams
 	my $port    = $sshconf->{ 'port' };
 
 	my %initial = (
-		'bogustcpflags' => { 'farms' => '', 'status' => 'down', 'type'        => 'farm' },
-		'limitconns'    => { 'farms' => '', 'status' => 'down', 'limit_conns' => 20, 'type' => 'farm' },
-		'limitrst' =>
-		  { 'farms' => '', 'limit' => 10, 'status' => 'down', 'limit_burst' => 5, 'type' => 'farm' },
-		'limitsec' =>
-		  { 'farms' => '', 'limit' => 20, 'status' => 'down', 'limit_burst' => 15, 'type' => 'farm' },
+		'bogustcpflags' => { 'farms' => '', 'status' => 'down', 'type' => 'farm' },
+		'limitconns' =>
+		  { 'farms' => '', 'status' => 'down', 'limit_conns' => 20, 'type' => 'farm' },
+		'limitrst' => {
+						'farms'       => '',
+						'limit'       => 10,
+						'status'      => 'down',
+						'limit_burst' => 5,
+						'type'        => 'farm'
+		},
+		'limitsec' => {
+						'farms'       => '',
+						'limit'       => 20,
+						'status'      => 'down',
+						'limit_burst' => 15,
+						'type'        => 'farm'
+		},
 		'dropicmp' => { 'status' => 'down', 'type' => 'system', 'name' => 'drop_icmp' },
 		'sshbruteforce' => {
 							 'status' => 'down',
@@ -101,6 +112,11 @@ sub setDOSCreateFileConf
 	my $dosConfDir = &getGlobalConfiguration( 'dosConfDir' );
 	my $output;
 
+	#~ $output = &createDOSRule( 'drop_icmp', 'dropicmp' )		# Next version
+	#~ if ( ! &getDOSExists( 'drop_icmp' ) );
+	$output = &createDOSRule( 'ssh_brute_force', 'sshbruteforce' )
+	  if ( !&getDOSExists( 'ssh_brute_force' ) );
+
 	return 0 if ( -e $confFile );
 
 	# create dos directory if it doesn't exist
@@ -123,18 +139,6 @@ sub setDOSCreateFileConf
 		{
 			&zenlog( "Created dos configuration file: $confFile" );
 		}
-	}
-
-	if ( !$output )
-	{
-		#~ $output = &createDOSRule( 'drop_icmp', 'dropicmp' )		# Next version
-		#~ if ( ! &getDOSExists( 'drop_icmp' ) );
-		$output = &createDOSRule( 'ssh_brute_force', 'sshbruteforce' )
-		  if ( !&getDOSExists( 'ssh_brute_force' ) );
-	}
-	else
-	{
-		&zenlog( "Error, creating dos configuration file: $confFile" );
 	}
 
 	return $output;
@@ -243,7 +247,7 @@ Returns:
 sub deleteDOSRule
 {
 	my $name = shift;
-	
+
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 	$fileHandle = Config::Tiny->read( $confFile );

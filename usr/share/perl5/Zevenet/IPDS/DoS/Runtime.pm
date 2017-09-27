@@ -370,16 +370,15 @@ sub setDOSLimitConnsRule
 
 # /sbin/iptables -A FORWARD -t filter -d 1.1.1.1,54.12.1.1 -p tcp --dport 5 -m connlimit --connlimit-above 5 -m comment --comment "DOS_limitconns_aa" -j REJECT --reject-with tcp-reset
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -I $chain -t $table "                  # select iptables struct
-	  . "$dest $ruleOpt{ 'protocol' } $port "    # who is destined
+	  . " -I $chain -t $table "                         # select iptables struct
+	  . "$dest $ruleOpt{ 'protocol' } --sync $port "    # who is destined
 	  . "-m connlimit --connlimit-above $limit_conns --connlimit-mask 32 " # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
 
 	# thre rule already exists
 	return 0 if ( &getIPDSRuleExists( "$cmd -j DROP" ) );
 
-	$output = &iptSystem( "$cmd -j LOG --log-prefix \"$logMsg\" --log-level 4 " );
-	$output = &iptSystem( "$cmd -j DROP" );
+	$output = &setIPDSDropAndLog( $cmd, $logMsg );
 
 	return $output;
 }
@@ -466,15 +465,16 @@ sub setDOSLimitSecRule
 	my $limit_burst = &getDOSParam( $ruleName, 'limit_burst' );
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp -m conntrack --ctstate NEW -m limit --limit 60/s --limit-burst 20 -j ACCEPT
+# /sbin/iptables
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -I $chain -t $table "    # select iptables struct
+	  . " -A $chain -t $table "    # select iptables struct
 	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "-m conntrack --ctstate NEW -m limit --limit $limit/s --limit-burst $limit_burst " # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\"";                 # comment
 
   # /sbin/iptables -I PREROUTING -t mangle -p tcp -m conntrack --ctstate NEW -j DROP
 	my $cmd2 = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -I $chain -t $table "    # select iptables struct
+	  . " -A $chain -t $table "    # select iptables struct
 	  . "$ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "-m conntrack --ctstate NEW "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
@@ -482,10 +482,10 @@ sub setDOSLimitSecRule
 	# thre rule already exists
 	return 0 if ( &getIPDSRuleExists( $cmd ) );
 
-	my $output = &setIPDSDropAndLog( $cmd2, $logMsg );
+	my $output = &setIPDSDropAndLog( $cmd, $logMsg );
 	return $output if ( $output );
 
-	$output = &iptSystem( $cmd );
+	$output = &iptSystem( $cmd2 );
 
 	return $output;
 }

@@ -325,6 +325,40 @@ sub add_dos_to_farm
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	# A farm can not simultaneasly have a "limitsec" and "limitrst" rule
+	# or two dos rules with the same type
+	require Zevenet::IPDS::Core;
+	my $farm_rules = &getIPDSfarmsRules( $farmName );
+	foreach my $rule_dos ( @{ $farm_rules->{ 'dos' } } )
+	{
+		$rule_dos = $rule_dos->{ 'name' };
+
+		if ( $fileHandle->{ $rule_dos }->{ 'farms' } =~ /(^| )$farmName($| )/ )
+		{
+			if (
+				 $fileHandle->{ $rule_dos }->{ 'rule' } eq $fileHandle->{ $name }->{ 'rule' } )
+			{
+				my $msg =
+				  "Error, a DoS rule $fileHandle->{$name}->{'rule'} already is applied to the farm.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+			if (    $fileHandle->{ $rule_dos }->{ 'rule' } eq "limitsec"
+				 && $fileHandle->{ $name }->{ 'rule' } eq "limitrst" )
+			{
+				my $msg =
+				  "Error, the farm has already applied a limitsec rule, and it is not possible to apply to a farm a limitrst rule and a limit sec rule at the same time.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+			if (    $fileHandle->{ $name }->{ 'rule' } eq "limitsec"
+				 && $fileHandle->{ $rule_dos }->{ 'rule' } eq "limitrst" )
+			{
+				my $msg =
+				  "Error, the farm has already applied a limitrst rule, and it is not possible to apply to a farm a limitrst rule and a limit sec rule at the same time.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+	}
+
 	&setDOSApplyRule( $name, $farmName );
 
 	my $output = &getDOSZapiRule( $name );
