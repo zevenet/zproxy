@@ -200,6 +200,8 @@ my $input_l = length $input;
 unless ( $input_l >= 2 )
 { &zenlog("#### Function args input length: NOT Enough characters. Failed!" ); } ####
 
+&zenlog( "#### Function input: $input" );
+
 # decode JSON
 require Zevenet::Config;
 require Zevenet::Debug;
