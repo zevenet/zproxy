@@ -83,7 +83,7 @@ sub eload
 	&zenlog("eload: CMD: '$cmd'");
 	&zenlog("eload: INPUT: '$input'");
 
-	my $ret_output = `echo -n '$input' | $cmd 2>&1`;
+	my $ret_output = `echo -n '$input' | $cmd`;
 	my $rc = $?;
 
 	#~ &zenlog( "rc: '$rc'" );
@@ -100,6 +100,7 @@ sub eload
 		die( $msg );
 	}
 
+	# return function output for non-API functions (service)
 	return $ret_output if $req{module} !~ /^Zevenet::API/;
 
 	my $ref = decode_json( $ret_output );
