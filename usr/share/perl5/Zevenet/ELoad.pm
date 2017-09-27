@@ -100,19 +100,6 @@ sub eload
 		die( $msg );
 	}
 
-	#~ my $ref;
-	#~ my $out_l = length $ret_output;
-	#~ &zenlog( "ret_output: $ret_output" );
-	#~ &zenlog( "ret_output length: $out_l" );
-
-	#~ if ( $out_l )
-	#~ {
-		#~ my $ref = decode_json( $ret_output );
-	#~ }
-
-	#~ &httpResponse( $ref ) if ref $ref;
-	#~ return $ref;
-
 	return $ret_output if $req{module} !~ /^Zevenet::API/;
 
 	my $ref = decode_json( $ret_output );
