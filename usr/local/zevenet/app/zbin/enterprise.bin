@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use warnings;
 
 use Time::Local;
 #~ use Data::Dumper;
@@ -73,7 +74,7 @@ if ( $module eq 'enc' )
 	}
 
 	my $mod_path = "$lib_path/$module.pm";
-	my $mod_path =~ s#\:\:#\/#g; # Replace :: with /
+	$mod_path =~ s#\:\:#\/#g; # Replace :: with /
 
 	unless ( -f $module )
 	{
@@ -135,7 +136,6 @@ unless ( $skip_cert_check )
 ## Module. Find, decrypt and load the module
 
 # validate module
-my $mod_path = "$lib_path/$module.pm";
 my $mod_path = "$lib_path/$module.pm";
 $mod_path =~ s#\:\:#\/#g; # Replace :: with /
 my $emod_path = "${mod_path}e";
@@ -219,44 +219,46 @@ else { &zenlog( "#### Function input JSON decode: Failed!" ); } ####
 
 # make code reference from function name
 my $code_ref = \&{ $func };
-my $output;
+my $returned_value;
 
 # call api request function
-unless ( eval {   $output = $code_ref->( @{ $args } )   } )
+eval { $returned_value = $code_ref->( @{ $args } ) };
+if ( $@ )
 {
 	&zenlog( "#### Function run $func: Failed!" );
 	&zenlog( $@ );
 	die $@;
 }
-else { &zenlog( "#### Function run $func: [OK]" ); }
+else { &zenlog( "#### Function run: $func: [OK]" ); }
 
+&zenlog( "Function $func output ::: $returned_value" );
 
-my $output_l = length $output;
-unless ( defined $output ) { &zenlog( "#### Function output defined: Failed!" ); } ####
+unless ( defined $returned_value ) { &zenlog( "#### Function output defined: Failed!" ); } ####
 
-unless ( ref $output eq 'HASH' )
-{ &zenlog( "#### Function output is HASH ref: Failed!" ); } ####
+my $output;
 
+if ( ref $returned_value )
+{
+	## Proccess output
 
+	# Encode output in JSON and print it
+	my $json = JSON->new();
 
-## Proccess output
+	#~ if ( eval { $json_out = encode_json( $returned_value ); } )
+	if ( eval { $output = $json->pretty->indent->canonical->encode( $returned_value ); } )
+		 { &zenlog( "#### Function output JSON encode: [OK]" ); }
+	else { &zenlog( "#### Function output JSON encode: Failed!" ); }
 
-# Encode output in JSON and print it
-my $json = JSON->new();
-my $json_out;
-#~ if ( eval { $json_out = encode_json( $output ); } )
-if ( eval { $json_out = $json->pretty->indent->canonical->encode( $output ); } )
-     { &zenlog( "#### Function output JSON encode: [OK]" ); }
-else { &zenlog( "#### Function output JSON encode: Failed!" ); }
+	# Optionally send JSON to system log
+	#~ &zenlog( "json: '$_'" ) for split ( /\\n/, $output );
+}
+else
+{
+	$output = $returned_value;
+}
 
-
-
-# Send Output. To STDOUT, and optionally to system log
-
-#~ &zenlog( "json: '$_'" ) for split ( /\\n/, $json_out );
-print $json_out;
-
-
+# Send Output to STDOUT
+print $output;
 
 # Send memory usage info to system log
 if ( &debug() )
