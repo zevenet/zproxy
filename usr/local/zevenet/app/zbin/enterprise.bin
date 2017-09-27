@@ -24,104 +24,253 @@
 use strict;
 
 use Time::Local;
-#~ use Zevenet::Config;
-#~ use Zevenet::SystemInfo;
+#~ use Data::Dumper;
+use Zevenet::Log;
+use Zevenet::Config;
+use Zevenet::SystemInfo;
 
-use Data::Dumper;
+my $SYMKEY   = "1135628147310";
+my $lib_path = '/usr/share/perl5';
+my $module   = shift @ARGV;
 
-my $module_name = $ARGV[0];
-
-if ( $module_name eq 'enc' )
+# check module name provided
+unless ( $module )
 {
-	my $SYMKEY="1135628147310";
-	my $module_name = $ARGV[1];
+	print STDERR "enterprise.bin: missing operand
+Try 'enterprise.bin --help' for more information.\n";
 
-	unless ( length $module_name )
+	exit 1;
+}
+
+# command help and usage instructions
+if ( $module =~ /^(?:-h|-help|--help)$/ )
+{
+	print "Usage: enterprise.bin [enc] MODULE [FUNCTION]
+Encrypt or decrypt Zevenet Module.
+
+Encryption
+Example:\tenterprise.bin enc Zevenet::API31::System::Cluster
+
+Writes the module encrypted in the same path as the .pm module with extension .pme
+
+Decryption
+Example:\tenterprise.bin Zevenet::API31::System::Cluster get_cluster < JSONFILE
+
+Run encrypted module accepting arguments from STDIN in JSON format, returning JSON output.
+";
+
+	exit 0;
+}
+
+# Module Encoding functionality
+if ( $module eq 'enc' )
+{
+	my $module = shift @ARGV;
+
+	unless ( $module )
 	{
-		# no module name
-		print "no module name\n";
-		exit 1;
+		die "$0: No module name received.\n";
 	}
 
-	open my $enc_mod, '>', "${module_name}e";
+	my $mod_path = "$lib_path/$module.pm";
+	my $mod_path =~ s#\:\:#\/#g; # Replace :: with /
 
+	unless ( -f $module )
+	{
+		die "$0: Module file $module not found.\n";
+	}
+
+	# New, encripted module
+	open my $enc_mod, '>', "${module}e";
 	unless ( $enc_mod )
 	{
-		# no module name
-		print "colud not open: $!\n";
-		exit 1;
+		die "$0: Could not open file ${module}e: $!\n";
 	}
 
-	print { $enc_mod } `openssl aes-256-cbc -a -nosalt -k "${SYMKEY}" -in ${module_name}`;
+	print { $enc_mod } `openssl aes-256-cbc -a -nosalt -k "${SYMKEY}" -in ${module}`;
 
 	close $enc_mod;
+
+	exit 0;
 }
 
-if ( $module_name eq 'dec' )
-{
-	my $SYMKEY="1135628147310";
-	my $module_name = $ARGV[1];
 
-	unless ( length $module_name )
+
+&zenlog( "#### Start enterprise.bin ####" );
+
+## Required conditions
+
+# check function name provided
+my $func = shift @ARGV;
+unless ( $func )
+{
+	die "$0: No API function name received.";
+}
+
+
+
+## Activation certificate
+
+# check if the activation certificate is valid
+my $hostname = &getHostname();
+my $basedir = &getGlobalConfiguration('basedir');
+
+my $skip_cert_check = (    $module eq 'Zevenet::API31::Certificate::Activation'
+						&& $func   eq 'upload_activation_certificate' );
+
+unless ( $skip_cert_check )
+{
+	my $swcert = &certcontrol();
+
+	if ( $swcert > 0 )
 	{
-		# no module name
-		print "no module name\n";
-		exit 1;
+		die "$0: Invalid activation certificate ($swcert)";
 	}
 
-	#~ open my $enc_mod, '<', $module_name;
-
-	#~ unless ( $enc_mod )
-	#~ {
-		#~ # no module name
-		#~ print "colud not open: $!\n";
-		#~ exit 1;
-	#~ }
-
-	print `openssl aes-256-cbc -d -a -nosalt -k "${SYMKEY}" -in ${module_name}`;
-
-	#~ close $enc_mod;
+	&zenlog( "#### Certificate: [OK]" );
 }
 
-chomp( my $hostname = `hostname` );
-my $basedir = '/usr/local/zevenet/www';
 
-my $swcert = &certcontrol();
 
-if ( $swcert > 0 )
+## Module. Find, decrypt and load the module
+
+# validate module
+my $mod_path = "$lib_path/$module.pm";
+my $mod_path = "$lib_path/$module.pm";
+$mod_path =~ s#\:\:#\/#g; # Replace :: with /
+my $emod_path = "${mod_path}e";
+
+unless ( -f $emod_path )
 {
-	# not a valid certificate
-	print "not a valid certificate ($swcert)\n";
-	exit 1;
+	my $msg = "File $emod_path not found.";
+	&zenlog( $msg );
+
+	if ( -f $mod_path )
+	{
+		&zenlog( "Found non-encrypted module, making encripted version..." );
+		my $error = system ( "$0 enc $mod_path" );
+
+		&zenlog( "Module encrypted successfully, continuing execution." ) if $error;
+	}
+	else
+	{
+		die "$0: Module file $module not found.\n";
+	}
 }
 
-my $module_name = $ARGV[0];
-my $ppid = getppid();
-my $pcom = `ps -p $$ -o args=`;
+# decrypt module
+my $code = `openssl aes-256-cbc -d -a -nosalt -k "${SYMKEY}" -in ${emod_path}`;
 
+# load module
+eval $code;
 
-unless ( length $module_name )
+if ( $@ )
 {
-	# no module name
-	print "no module name\n";
-	exit 1;
+	&zenlog( "### Module path:   $mod_path" );
+	&zenlog( "### E-Module path: $emod_path" );
+	&zenlog( "### Module name:   $module" );
+	&zenlog( $@ );
+	die $@;
 }
+else { &zenlog( "#### Module Load: $module [OK]" ); }
 
-open my $file, '<', $module_name;
-unless ( $file )
+
+
+## Function. Check the function is in the module, load params from input in JSON
+
+# check if the function is available
+unless ( grep { /^sub $func(?:\W|$)/ } split( '\n', $code ) )
 {
-	print "file $module_name not open: $!";
-	exit 1;
+	die "$0: API function $func definition not found";
 }
 
+
+
+# Arguments. Passed from STDIN as a JSON string
+# Load Input, then Decode JSON from intput string
+
+# get input for api function
+my $input;
 {
 	local $/ = undef;
-	print <$file>;
+	$input = <STDIN>;
 }
-close $file;
+
+my $input_l = length $input;
+unless ( $input_l >= 2 )
+{ &zenlog("#### Function args input length: NOT Enough characters. Failed!" ); } ####
+
+# decode JSON
+require Zevenet::Config;
+require Zevenet::Debug;
+require Zevenet::API31::HTTP;
+require JSON;
+JSON->import();
+
+# decode input into data reference
+my $args;
+if ( eval { $args = decode_json( $input ); } )
+     { &zenlog( "#### Function input JSON decode: [OK]" ); } ####
+else { &zenlog( "#### Function input JSON decode: Failed!" ); } ####
 
 
 
+## Run call
+
+# make code reference from function name
+my $code_ref = \&{ $func };
+my $output;
+
+# call api request function
+unless ( eval {   $output = $code_ref->( @{ $args } )   } )
+{
+	&zenlog( "#### Function run $func: Failed!" );
+	&zenlog( $@ );
+	die $@;
+}
+else { &zenlog( "#### Function run $func: [OK]" ); }
+
+
+my $output_l = length $output;
+unless ( defined $output ) { &zenlog( "#### Function output defined: Failed!" ); } ####
+
+unless ( ref $output eq 'HASH' )
+{ &zenlog( "#### Function output is HASH ref: Failed!" ); } ####
+
+
+
+## Proccess output
+
+# Encode output in JSON and print it
+my $json = JSON->new();
+my $json_out;
+#~ if ( eval { $json_out = encode_json( $output ); } )
+if ( eval { $json_out = $json->pretty->indent->canonical->encode( $output ); } )
+     { &zenlog( "#### Function output JSON encode: [OK]" ); }
+else { &zenlog( "#### Function output JSON encode: Failed!" ); }
+
+
+
+# Send Output. To STDOUT, and optionally to system log
+
+#~ &zenlog( "json: '$_'" ) for split ( /\\n/, $json_out );
+print $json_out;
+
+
+
+# Send memory usage info to system log
+if ( &debug() )
+{
+	my $msg = "MODULE: $module FUNCTION: $func " . &getMemoryUsage();
+
+	&zenlog( $msg );
+}
+
+exit 0;
+
+
+
+## Activation Certificate Functions
 
 # build local key
 sub keycert
@@ -158,8 +307,11 @@ sub certcontrol
 
 	if ( ! -e $zlbcertfile )
 	{
+		&zenlog( "#### Certificate file found: Failed!!" ); ####
+
 		#swcert = 1 ==> There isn't certificate
 		$swcert = 1;
+
 		return $swcert;
 	}
 
@@ -170,10 +322,16 @@ sub certcontrol
 	my $key         = &keycert();
 	my @zen_cert    = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
 
-	#~ print "key: $key\n";
-	#~ print "zen_cert: @zen_cert\n";
-	#~ print "keyid: $keyid\n";
-	#~ print "hostname: $hostname\n";
+	if ( $? )
+	{
+		# if openssl failed it is not a certificate
+		return 1;
+	}
+
+	unless ( length $key ) { &zenlog( "#### Certificate Key: Not Found!!" ); } #####
+
+	my $cert_length = length ( "@zen_cert" );
+	unless ( $cert_length )	{ &zenlog( "#### Certificate length: ZERO!!! characters. ERROR!" ); } ####
 
 	if (    ( !grep /$key/, @zen_cert )
 		 || ( !grep /keyid:$keyid/, @zen_cert )

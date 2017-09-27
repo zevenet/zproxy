@@ -23,15 +23,13 @@
 
 use strict;
 
-my $q = getCGI();
 
-
-if ( $q->path_info =~ qr{^/system/ssh} )
+if ( $ENV{ PATH_INFO } =~ qr{^/system/ssh} )
 {
-	require Zevenet::API31::System::Service::SSH;
+	my $mod = 'Zevenet::API31::System::Service::SSH';
 
-	GET qr{^/system/ssh$}  => \&get_ssh;
-	POST qr{^/system/ssh$} => \&set_ssh;
+	GET  qr{^/system/ssh$}, 'get_ssh', $mod;
+	POST qr{^/system/ssh$}, 'set_ssh', $mod;
 }
 
 1;

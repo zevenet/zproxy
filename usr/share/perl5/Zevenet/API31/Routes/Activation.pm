@@ -22,23 +22,17 @@
 ###############################################################################
 
 use strict;
+use warnings;
 
-my $q = getCGI();
-
-if ( $q->path_info =~ qr{^/certificates/activation$} )
+if ( $ENV{ PATH_INFO } =~ qr{^/certificates/activation$} )
 {
-	require Zevenet::API31::Certificate::Activation;
+	my $mod = 'Zevenet::API31::Certificate::Activation';
 
 	logNewModules("In /certificates/activation");
 
-	#  GET activation certificate
-	GET qr{^/certificates/activation$} => \&get_activation_certificate_info;
-
-	#  POST activation certificate
-	POST qr{^/certificates/activation$} => \&upload_activation_certificate;
-
-	#  DELETE activation certificate
-	DELETE qr{^/certificates/activation$} => \&delete_activation_certificate;
+	GET    qr{^/certificates/activation$}, 'get_activation_certificate_info', $mod;
+	POST   qr{^/certificates/activation$}, 'upload_activation_certificate',   $mod;
+	DELETE qr{^/certificates/activation$}, 'delete_activation_certificate',   $mod;
 }
 
 1;

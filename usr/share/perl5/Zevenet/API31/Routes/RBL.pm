@@ -23,61 +23,59 @@
 
 use strict;
 
-my $q = getCGI();
-my $farm_re    = &getValidFormat( 'farm_name' );
 
-
-if ( $q->path_info =~ qr{/ipds/rbl} )
+if ( $ENV{ PATH_INFO } =~ qr{/ipds/rbl} )
 {
-	require Zevenet::API31::IPDS::RBL;
+	my $mod = 'Zevenet::API31::IPDS::RBL';
 
+	my $farm_re    = &getValidFormat( 'farm_name' );
 	my $rbl_name   = &getValidFormat( 'rbl_name' );
 	my $rbl_domain = &getValidFormat( 'rbl_domain' );
 
 	#GET /ipds/rbl/domains
-	GET qr{^/ipds/rbl/domains$} => \&get_rbl_domains;
+	GET qr{^/ipds/rbl/domains$}, 'get_rbl_domains', $mod;
 
 	#  POST /ipds/rbl/domains
-	POST qr{^/ipds/rbl/domains$} => \&add_rbl_domain;
+	POST qr{^/ipds/rbl/domains$}, 'add_rbl_domain', $mod;
 
 	#  PUT /ipds/rbl/domains/<domain>
-	PUT qr{^/ipds/rbl/domains/($rbl_domain)$} => \&set_rbl_domain;
+	PUT qr{^/ipds/rbl/domains/($rbl_domain)$}, 'set_rbl_domain', $mod;
 
 	#  DELETE /ipds/rbl/domains/<domain>
-	DELETE qr{^/ipds/rbl/domains/($rbl_domain)$} => \&del_rbl_domain;
+	DELETE qr{^/ipds/rbl/domains/($rbl_domain)$}, 'del_rbl_domain', $mod;
 
 	# GET /ipds/rbl
-	GET qr{^/ipds/rbl$} => \&get_rbl_all_rules;
+	GET qr{^/ipds/rbl$}, 'get_rbl_all_rules', $mod;
 
 	# GET /ipds/rbl/<name>
-	GET qr{^/ipds/rbl/($rbl_name)$} => \&get_rbl_rule;
+	GET qr{^/ipds/rbl/($rbl_name)$}, 'get_rbl_rule', $mod;
 
 	#  POST /ipds/rbl
-	POST qr{^/ipds/rbl$} => \&add_rbl_rule;
+	POST qr{^/ipds/rbl$}, 'add_rbl_rule', $mod;
 
 	#  POST /ipds/rbl/<name>
-	POST qr{^/ipds/rbl/($rbl_name)$} => \&copy_rbl_rule;
+	POST qr{^/ipds/rbl/($rbl_name)$}, 'copy_rbl_rule', $mod;
 
 	#  PUT /ipds/rbl/<name>
-	PUT qr{^/ipds/rbl/($rbl_name)$} => \&set_rbl_rule;
+	PUT qr{^/ipds/rbl/($rbl_name)$}, 'set_rbl_rule', $mod;
 
 	#  DELETE /ipds/rbl/<name>
-	DELETE qr{^/ipds/rbl/($rbl_name)$} => \&del_rbl_rule;
+	DELETE qr{^/ipds/rbl/($rbl_name)$}, 'del_rbl_rule', $mod;
 
 	#  POST /ipds/rbl/<name>/domains
-	POST qr{^/ipds/rbl/($rbl_name)/domains$} => \&add_domain_to_rbl;
+	POST qr{^/ipds/rbl/($rbl_name)/domains$}, 'add_domain_to_rbl', $mod;
 
 	#  DELETE /ipds/rbl/<name>/domains/<domain>
-	DELETE qr{^/ipds/rbl/($rbl_name)/domains/($rbl_domain)$} => \&del_domain_from_rbl;
+	DELETE qr{^/ipds/rbl/($rbl_name)/domains/($rbl_domain)$}, 'del_domain_from_rbl', $mod;
 
 	#  POST /farms/<farmname>/ipds/rbl
-	POST qr{^/farms/($farm_re)/ipds/rbl$} => \&add_rbl_to_farm;
+	POST qr{^/farms/($farm_re)/ipds/rbl$}, 'add_rbl_to_farm', $mod;
 
 	# DELETE /farms/<farmname>/ipds/rbl/<name>
-	DELETE qr{^/farms/($farm_re)/ipds/rbl/($rbl_name)$} => \&del_rbl_from_farm;
+	DELETE qr{^/farms/($farm_re)/ipds/rbl/($rbl_name)$}, 'del_rbl_from_farm', $mod;
 
 	# POST /ipds/rbl/<name>/actions
-	POST qr{^/ipds/rbl/($rbl_name)/actions$} => \&set_rbl_actions;
+	POST qr{^/ipds/rbl/($rbl_name)/actions$}, 'set_rbl_actions', $mod;
 }
 
 1;
