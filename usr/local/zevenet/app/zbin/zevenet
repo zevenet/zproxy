@@ -27,6 +27,7 @@ use warnings;
 # standard required modules
 use Zevenet;
 use Zevenet::Log;
+use Zevenet::ELoad;
 
 # activation certificate modules
 use Date::Parse;
@@ -35,6 +36,7 @@ use Time::localtime;
 #~ use Tie::File;
 #~ use Data::Dumper;
 
+my $mod          = 'Zevenet::Service';
 my $basedir      = &getGlobalConfiguration( 'basedir' );
 my $configdir    = &getGlobalConfiguration( 'configdir' );
 my $defaultgw    = &getGlobalConfiguration( 'defaultgw' );
@@ -352,8 +354,7 @@ if ( $action eq "start" )
 	}
 
 	# enterprise hook
-	if ( eval { require Zevenet::Service; } ) { start_service(); }
-	else { &zenlog( $@ ); }
+	&eload( module => $mod, func => 'start_service' );
 
 	print ( "* Starting Interfaces:\n" );
 
@@ -466,8 +467,7 @@ if ( $action eq "start" )
 	&zenlog("zevenet: Setting up Cluster...");
 
 	# enable cluster hook
-	if ( eval { require Zevenet::Service; } ) { enable_cluster(); }
-	else { zenlog( $@ ); }
+	&eload( module => $mod, func => 'enable_cluster' );
 
 	&zenlog("zevenet: Setting up virtual interfaces...");
 
@@ -516,8 +516,7 @@ if ( $action eq "start" )
 	my @farmsf = &getFarmList();
 	my $enable_fg = 1;
 
-	if ( eval { require Zevenet::Service; } ) { $enable_fg = getEnableFarmGuardian(); }
-	else { zenlog( $@ ); }
+	$enable_fg = &eload( module => $mod, func => 'getEnableFarmGuardian' );
 
 	&zenlog("zevenet: Setting up farms...");
 
@@ -573,8 +572,7 @@ if ( $action eq "start" )
 
 	&printAndLog("End of $configdir/zlb-start");
 
-	if ( eval { require Zevenet::Service; } ) { start_cluster(); }
-	else { zenlog( $@ ); }
+	&eload( module => $mod, func => 'start_cluster' );
 
 	# make sure related system services are runnig
 	if ( system( "/etc/init.d/ssh status >/dev/null 2>&1" ) ) {
@@ -590,8 +588,7 @@ if ( $action eq "stop" )
 {
 	&printAndLog( "Stopping Zevenet Load Balancer...\n" );
 
-	if ( eval { require Zevenet::Service; } ) { stop_service(); }
-	else { zenlog( $@ ); }
+	&eload( module => $mod, func => 'stop_service' );
 
 	print ( "* Stopping Farms:\n" );
 
@@ -657,8 +654,7 @@ if ( $action eq "stop" )
 		}
 	}
 
-	if ( eval { require Zevenet::Service; } ) { disable_cluster(); }
-	else { zenlog( $@ ); }
+	&eload( module => $mod, func => 'disable_cluster' );
 
 	# At this point every zevenet interface and farm is stopped
 	# now a personalized script can be executed
