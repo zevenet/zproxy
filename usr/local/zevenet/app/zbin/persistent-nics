@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#[ "$IFACE" == "lo" ] || exit 0
+
+if [ "$1" != "" ]
+then
+ IFACE=$1
+fi
+
+if [ "$1" == "--all" ]
+then
+	rm -rf /etc/udev/rules.d/70-persistent-rules.net
+	logger "iface is all"
+	for i in `ip a | grep ^[0-9] | grep -v lo | awk '{print $2}' | sed 's/://g'`
+	do 
+		export INTERFACE=$i
+		export MATCHADDR=`ip addr show $INTERFACE | grep ether | awk '{print $2}'`
+		 /lib/udev/write_net_rules
+	done
+else
+	
+	logger "iface is $IFACE"
+	export INTERFACE=$IFACE
+	export MATCHADDR=`ip addr show $INTERFACE | grep ether | awk '{print $2}'`
+	/lib/udev/write_net_rules
+fi
