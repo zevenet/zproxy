@@ -501,7 +501,7 @@ sub actions_blacklists
 	if ( $json_obj->{ action } eq 'update' )
 	{
 		# this function continues the 'update' api request
-		&update_remote_blacklists( $listName );
+		return &update_remote_blacklists( $listName );
 	}
 	elsif ( $json_obj->{ action } eq 'start' )
 	{
@@ -583,7 +583,10 @@ sub update_remote_blacklists
 	my $body = {
 				 description => $desc,
 				 success     => "true",
-				 params      => { "action" => "update" }
+				 params      => {
+					"action" => "update",
+					"update_status" => $statusUpd,
+				}
 	};
 
 	&httpResponse( { code => 200, body => $body } );
