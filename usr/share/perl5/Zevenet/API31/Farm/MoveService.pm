@@ -88,6 +88,7 @@ sub move_services
 	my $farm_status = &getFarmStatus( $farmname );
 	if ( $farm_status eq 'up' )
 	{
+		require Zevenet::Farm::Action;
 		if ( &runFarmStop( $farmname, "true" ) != 0 )
 		{
 			my $msg = "Error stopping the farm.";
