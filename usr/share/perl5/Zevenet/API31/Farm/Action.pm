@@ -24,12 +24,13 @@ use strict;
 use Zevenet::Farm::Core;
 
 # POST /farms/<farmname>/actions Set an action in a Farm
-sub farm_actions # ( $json_obj, $farmname )
+sub farm_actions    # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
 
 	require Zevenet::Farm::Action;
+	require Zevenet::Farm::Base;
 
 	my $desc = "Farm actions";
 	my $action;
@@ -74,7 +75,8 @@ sub farm_actions # ( $json_obj, $farmname )
 
 		if ( $status )
 		{
-			my $msg = "Error trying to stop the farm in the action restart in farm $farmname.";
+			my $msg =
+			  "Error trying to stop the farm in the action restart in farm $farmname.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
@@ -82,7 +84,8 @@ sub farm_actions # ( $json_obj, $farmname )
 
 		if ( $status )
 		{
-			my $msg = "ZAPI error, trying to start the farm in the action restart in farm $farmname.";
+			my $msg =
+			  "ZAPI error, trying to start the farm in the action restart in farm $farmname.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
@@ -101,7 +104,9 @@ sub farm_actions # ( $json_obj, $farmname )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	&zenlog( "ZAPI success, the action $json_obj->{ action } has been performed in farm $farmname." );
+	&zenlog(
+		"ZAPI success, the action $json_obj->{ action } has been performed in farm $farmname."
+	);
 
 	if ( eval { require Zevenet::Cluster; } )
 	{
@@ -110,10 +115,13 @@ sub farm_actions # ( $json_obj, $farmname )
 
 	my $body = {
 				 description => "Set a new action in $farmname",
-				 params      => { action => $json_obj->{ action } },
+				 params      => {
+							 "action" => $json_obj->{ action },
+							 "status" => &getFarmVipStatus( $farmname ),
+				 },
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # Set an action in a backend of http|https farm
@@ -147,7 +155,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	}
 
 	# validate SERVICE
-	my @services = &getHTTPFarmServices($farmname);
+	my @services = &getHTTPFarmServices( $farmname );
 	my $found_service;
 
 	foreach my $service_name ( @services )
@@ -193,7 +201,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	# Do not allow to modify the maintenance status if the farm needs to be restarted
+   # Do not allow to modify the maintenance status if the farm needs to be restarted
 	if ( &getFarmLock( $farmname ) != -1 )
 	{
 		my $msg = "The farm needs to be restarted before to apply this action.";
@@ -203,11 +211,11 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	# validate STATUS
 	if ( $json_obj->{ action } eq "maintenance" )
 	{
-		my $maintenance_mode = "drain";	# default
+		my $maintenance_mode = "drain";    # default
 
 		if ( defined $json_obj->{ mode } )
 		{
-			if ( ! &getValidFormat( 'farm_maintenance_mode', $json_obj->{ mode } ) )
+			if ( !&getValidFormat( 'farm_maintenance_mode', $json_obj->{ mode } ) )
 			{
 				my $msg = "Error, the maintenance mode is not a valid value.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -215,8 +223,10 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 
 			$maintenance_mode = $json_obj->{ mode };
 		}
-		
-		my $status = &setHTTPFarmBackendMaintenance( $farmname, $backend_id, $maintenance_mode, $service );
+
+		my $status =
+		  &setHTTPFarmBackendMaintenance( $farmname, $backend_id, $maintenance_mode,
+										  $service );
 
 		&zenlog(
 			"Changing status to maintenance of backend $backend_id in service $service in farm $farmname"
@@ -230,10 +240,12 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	}
 	elsif ( $json_obj->{ action } eq "up" )
 	{
-		my $status = &setHTTPFarmBackendNoMaintenance( $farmname, $backend_id, $service );
+		my $status =
+		  &setHTTPFarmBackendNoMaintenance( $farmname, $backend_id, $service );
 
 		&zenlog(
-			 "Changing status to up of backend $backend_id in service $service in farm $farmname" );
+			"Changing status to up of backend $backend_id in service $service in farm $farmname"
+		);
 
 		if ( $? )
 		{
@@ -260,12 +272,12 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 		}
 	}
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # PUT backend in maintenance
 # PUT /farms/<farmname>/backends/<backend>/maintenance
-sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
+sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 {
 	my $json_obj   = shift;
 	my $farmname   = shift;
@@ -290,7 +302,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 	}
 
 	# validate BACKEND
-	my @backends = &getFarmServers( $farmname );
+	my @backends     = &getFarmServers( $farmname );
 	my $backend_line = $backends[$backend_id];
 
 	if ( !$backend_line )
@@ -308,11 +320,11 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 	# validate STATUS
 	if ( $json_obj->{ action } eq "maintenance" )
 	{
-		my $maintenance_mode = "drain";	# default
+		my $maintenance_mode = "drain";    # default
 
 		if ( defined $json_obj->{ mode } )
 		{
-			if ( ! &getValidFormat( 'farm_maintenance_mode', $json_obj->{ mode } ) )
+			if ( !&getValidFormat( 'farm_maintenance_mode', $json_obj->{ mode } ) )
 			{
 				my $msg = "Error, the maintenance mode is not a valid value.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -320,12 +332,12 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 
 			$maintenance_mode = $json_obj->{ mode };
 		}
-		
-		my $status = &setFarmBackendMaintenance( $farmname, $backend_id, $maintenance_mode );
+
+		my $status =
+		  &setFarmBackendMaintenance( $farmname, $backend_id, $maintenance_mode );
 
 		&zenlog(
-			"Changing status to maintenance of backend $backend_id in farm $farmname"
-		);
+				"Changing status to maintenance of backend $backend_id in farm $farmname" );
 
 		if ( $status != 0 )
 		{
@@ -365,7 +377,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 		}
 	}
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;
