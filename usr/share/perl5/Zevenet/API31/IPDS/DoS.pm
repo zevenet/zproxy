@@ -67,7 +67,7 @@ sub get_dos
 	my %rules      = %{ $fileHandle };
 	my @output;
 
-	foreach my $rule ( keys %rules )
+	foreach my $rule ( sort keys %rules )
 	{
 		my $aux = &getDOSZapiRule( $rule );
 		push @output, $aux;
