@@ -84,8 +84,8 @@ sub setSystemOptimizations
 		"net.ipv4.inet_peer_maxttl"          => "5",
 		"net.ipv4.tcp_keepalive_probes"      => "5",
 		"net.ipv4.tcp_slow_start_after_idle" => "0",
-		"net.ipv4.netfilter.ip_conntrack_udp_timeout"        => "2",
-		"net.ipv4.netfilter.ip_conntrack_udp_timeout_stream" => "2",
+		#"net.ipv4.netfilter.ip_conntrack_udp_timeout"        => "2",
+		#"net.ipv4.netfilter.ip_conntrack_udp_timeout_stream" => "2",
 		"net.netfilter.nf_conntrack_tcp_timeout_time_wait"   => "2",
 		"net.netfilter.nf_conntrack_max"                     => "180000",
 		"net.netfilter.nf_conntrack_tcp_loose"               => "0",
@@ -110,11 +110,16 @@ sub setSystemOptimizations
 	{
 		$sysctl{ "net.ipv4.netfilter.ip_conntrack_tcp_timeout_time_wait" }   = "2";
 		$sysctl{ "net.ipv4.netfilter.ip_conntrack_tcp_timeout_established" } = "86400";
+		$sysctl{ "net.ipv4.netfilter.ip_conntrack_udp_timeout" } = "2";
+		$sysctl{ "net.ipv4.netfilter.ip_conntrack_udp_timeout_stream" } = 2;
 	}
-	#  ZVA higher than 5000
+	#  ZVA equal or higher than 5000
 	else
 	{
 		$sysctl{ "net.netfilter.nf_conntrack_tcp_timeout_established" } = "86400";
+		$sysctl{ "net.netfilter.nf_conntrack_udp_timeout" }  = "2";
+		$sysctl{ "net.netfilter.nf_conntrack_udp_timeout_stream" } = "2";
+
 	}
 
 	# apply tuning to config file
