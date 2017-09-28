@@ -23,9 +23,8 @@
 
 use strict;
 
-my $q = getCGI();
 
-if ( $q->path_info =~ qr{/ipds$} )
+if ( $ENV{ PATH_INFO } =~ qr{/ipds$} )
 {
 	my $mod = 'Zevenet::API31::IPDS::IPDS';
 
