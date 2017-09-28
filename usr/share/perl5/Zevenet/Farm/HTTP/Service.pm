@@ -464,8 +464,9 @@ FIXME:
 sub moveServiceFarmStatus
 {
 	my ( $farmName, $moveService, $serviceSelect ) = @_;
-	my @file;
 
+	require Tie::File;
+	my @file;
 	my $fileName = "$configdir\/${farmName}_status.cfg";
 
 	my @services = &getHTTPFarmServices( $farmName );
