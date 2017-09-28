@@ -98,6 +98,8 @@ sub loadL4Modules    # ($protocol)
 {
 	my $protocol = shift;
 
+	require Zevenet::Netfilter;
+
 	my $status    = 0;
 	my $port_list = &getL4FarmsPorts( $protocol );
 
@@ -233,6 +235,9 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 	my $output        = 0;
 	my $i             = 0;
 
+	require Zevenet::FarmGuardian;
+	require Tie::File;
+
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid     = &getFarmGuardianPid( $farm_name );
@@ -267,6 +272,8 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
+		require Zevenet::Netfilter;
+
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 
@@ -402,6 +409,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
+		require Zevenet::Netfilter;
 		my @rules;
 
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
@@ -488,6 +496,7 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 		}
 		elsif ( -e $l4sd_pidfile )
 		{
+			require Zevenet::Netfilter;
 			## lock iptables use ##
 			my $iptlock = &getGlobalConfiguration( 'iptlock' );
 			open my $ipt_lockfile, '>', $iptlock;
@@ -721,6 +730,8 @@ sub setFarmNatType    # ($nat,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
+	require Zevenet::FarmGuardian;
+
 	&zenlog( "setting 'NAT type $nat' for $farm_name farm $farm_type" );
 
 	my $farm       = &getL4FarmStruct( $farm_name );
@@ -740,6 +751,7 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 	if ( $farm_type eq "l4xnat" )
 	{
+		require Tie::File;
 		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 		my $i = 0;
 		for my $line ( @configfile )
@@ -762,6 +774,8 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
+		require Zevenet::Netfilter;
+
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 
@@ -859,6 +873,9 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 	my $output        = -1;
 	my $i             = 0;
 
+	require Zevenet::FarmGuardian;
+	require Tie::File;
+
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid     = &getFarmGuardianPid( $farm_name );
@@ -892,6 +909,8 @@ sub setL4FarmMaxClientTime    # ($track,$farm_name)
 
 	if ( $$farm{ status } eq 'up' && $$farm{ persist } ne 'none' )
 	{
+		require Zevenet::Netfilter;
+
 		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 

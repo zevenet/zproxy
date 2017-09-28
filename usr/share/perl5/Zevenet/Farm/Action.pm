@@ -24,7 +24,7 @@
 use strict;
 use Zevenet::Config;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: _runFarmStart
@@ -39,6 +39,7 @@ Returns:
 	Integer - return 0 on success or different of 0 on failure
 	
 =cut
+
 sub _runFarmStart    # ($farm_name, $writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
@@ -108,6 +109,7 @@ NOTE:
 	Generic function
 	
 =cut
+
 sub runFarmStart    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
@@ -145,6 +147,7 @@ NOTE:
 	Generic function
 		
 =cut
+
 sub runFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
@@ -159,7 +162,7 @@ sub runFarmStop    # ($farm_name,$writeconf)
 	&runFarmGuardianStop( $farm_name, "" );
 
 	my $status = &_runFarmStop( $farm_name, $writeconf );
-	
+
 	return $status;
 }
 
@@ -176,6 +179,7 @@ Returns:
 	Integer - return 0 on success or different of 0 on failure
 	
 =cut
+
 sub _runFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
@@ -246,6 +250,7 @@ NOTE:
 	Generic function
 	
 =cut
+
 sub runFarmDelete    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -253,20 +258,20 @@ sub runFarmDelete    # ($farm_name)
 	require Zevenet::Netfilter;
 
 	# global variables
-	my $basedir = &getGlobalConfiguration('basedir');
-	my $configdir = &getGlobalConfiguration('configdir');
-	my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
-	my $logdir = &getGlobalConfiguration('logdir');
-	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
-	
+	my $basedir   = &getGlobalConfiguration( 'basedir' );
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $rrdap_dir = &getGlobalConfiguration( 'rrdap_dir' );
+	my $logdir    = &getGlobalConfiguration( 'logdir' );
+	my $rrd_dir   = &getGlobalConfiguration( 'rrd_dir' );
+
 	#delete IPDS rules
 	if ( eval { require Zevenet::IPDS::Action; } )
 	{
-		&runIPDSStopByFarm ( $farm_name );
+		&runIPDSStopByFarm( $farm_name );
 	}
 
 	my $farm_type = &getFarmType( $farm_name );
-	my $status = 1;
+	my $status    = 1;
 
 	&zenlog( "running 'Delete' for $farm_name" );
 
@@ -312,7 +317,7 @@ sub runFarmDelete    # ($farm_name)
 	require Zevenet::RRD;
 
 	&delGraph( $farm_name, "farm" );
-	
+
 	return $status;
 }
 
@@ -331,6 +336,7 @@ NOTE:
 	Generic function
 	
 =cut
+
 sub setFarmRestart    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -358,11 +364,12 @@ NOTE:
 	Generic function
 	
 =cut
+
 sub setFarmNoRestart    # ($farm_name)
 {
 	my $farm_name = shift;
 
-	&setFarmLock( $farm_name, "off");
+	&setFarmLock( $farm_name, "off" );
 }
 
 =begin nd
@@ -378,12 +385,13 @@ Returns:
 	Integer - return 0 on success or -1 on failure
 		
 =cut
+
 sub setNewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $farm_name, $new_farm_name ) = @_;
 
-	my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
-	my $rrd_dir = &getGlobalConfiguration('rrd_dir');
+	my $rrdap_dir = &getGlobalConfiguration( 'rrdap_dir' );
+	my $rrd_dir   = &getGlobalConfiguration( 'rrd_dir' );
 
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
@@ -401,6 +409,7 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	}
 	elsif ( $farm_type =~ /l4xnat/ )
 	{
+		require Zevenet::FarmGuardian;
 		$fg_files[0] = &getFarmGuardianFile( $farm_name );
 		&zlog( "found farmguardian file:@fg_files" ) if &debug;
 	}

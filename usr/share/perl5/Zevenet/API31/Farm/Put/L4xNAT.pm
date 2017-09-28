@@ -97,6 +97,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			}
 
 			#Change farm name
+			require Zevenet::Farm::Action;
 			my $fnchange = &setNewFarmName( $farmname, $json_obj->{ newfarmname } );
 			if ( $fnchange == -1 )
 			{
@@ -138,6 +139,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# Modify Persistence Mode
 	if ( exists ( $json_obj->{ persistence } ) )
 	{
+		require Zevenet::Farm::Config;
 		unless ( $json_obj->{ persistence } =~ /^(?:ip|)$/ )
 		{
 			my $msg = "Invalid persistence.";

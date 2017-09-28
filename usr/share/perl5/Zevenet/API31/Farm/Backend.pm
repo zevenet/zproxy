@@ -670,7 +670,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 					 || $json_obj->{ priority } == undef )    # (0-9)
 			{
 				my $msg =
-				  "Error, trying to modify the backends in the farm $farmname, invalid priority.";
+				  "Error, trying to modify the backends in the farm $farmname, invalid priority. The higher value is 9.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 

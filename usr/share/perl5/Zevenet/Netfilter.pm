@@ -413,6 +413,8 @@ sub genIptSourceNat    # ($farm_name,$vip,$index,$protocol,$mark)
 	my $server = shift;    # input: second argument can be a server reference
 	my $rule;              # output: iptables rule template string
 
+	require Zevenet::Net::Floating;
+
 	if ( defined $farm )
 	{
 		$farm_name = $$farm{ name };
