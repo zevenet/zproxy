@@ -27,6 +27,7 @@ use warnings;
 use Time::Local;
 #~ use Data::Dumper;
 use Zevenet::Log;
+use Zevenet::Debug;
 use Zevenet::Config;
 use Zevenet::SystemInfo;
 
@@ -139,6 +140,12 @@ unless ( $skip_cert_check )
 my $mod_path = "$lib_path/$module.pm";
 $mod_path =~ s#\:\:#\/#g; # Replace :: with /
 my $emod_path = "${mod_path}e";
+
+# In debug mode, remove encrpyted module to re-encrypted again
+if ( &debug() )
+{
+	unlink $emod_path;
+}
 
 unless ( -f $emod_path )
 {
