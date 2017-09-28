@@ -32,7 +32,6 @@ use Zevenet::Farm::Base;
 my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 
-
 =begin nd
 Function: runBLStartModule
 
@@ -72,6 +71,12 @@ sub runBLStartModule
 	foreach my $list ( keys %{ $allLists } )
 	{
 		next if ( &getBLParam( $list, 'status' ) eq "down" );
+
+		# run cron process
+		if ( &getBLParam( $list, 'type' ) eq "remote" )
+		{
+			&setBLCronTask( $list );
+		}
 
 		my $farms = &getBLParam( $list, "farms" );
 		next if ( !$farms );
@@ -125,7 +130,13 @@ sub runBLStopModule
 	my @lists = `$ipset list -name`;
 	foreach my $rule ( @lists )
 	{
-		chomp ($rule);
+		chomp ( $rule );
+
+		# run cron process
+		if ( &getBLParam( $rule, 'type' ) eq "remote" )
+		{
+			&delBLCronTask( $rule );
+		}
 		&setBLDestroyList( $rule );
 	}
 
@@ -168,6 +179,12 @@ sub runBLStartByRule
 	my $error = 0;
 	my @farms = @{ &getBLParam( $ruleName, 'farms' ) };
 
+	# run cron process
+	if ( &getBLParam( $ruleName, 'type' ) eq "remote" )
+	{
+		&setBLCronTask( $ruleName );
+	}
+
 	foreach my $farmName ( @farms )
 	{
 		if ( &runBLStart( $ruleName, $farmName ) != 0 )
@@ -198,6 +215,12 @@ sub runBLStopByRule
 	my $error = 0;
 
 	my $ipset = &getGlobalConfiguration( 'ipset' );
+
+	# run cron process
+	if ( &getBLParam( $ruleName, 'type' ) eq "remote" )
+	{
+		&delBLCronTask( $ruleName );
+	}
 
 	return if ( &getBLIpsetStatus() eq 'down' );
 

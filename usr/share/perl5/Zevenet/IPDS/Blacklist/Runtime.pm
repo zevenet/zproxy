@@ -512,6 +512,9 @@ sub delBLCronTask
 
 	untie @list;
 
+	my $cron_service = &getGlobalConfiguration( 'cron_service' );
+	&logAndRun( "$cron_service restart" );
+
 	&zenlog( "Delete the task associated to the list $listName" );
 }
 
@@ -596,6 +599,8 @@ sub setBLCronTask
 	}
 	untie @list;
 
+	my $cron_service = &getGlobalConfiguration( 'cron_service' );
+	&logAndRun( "$cron_service restart" );
 	&zenlog( "Created a cron task for the list $listName" );
 }
 

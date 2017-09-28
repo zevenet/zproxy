@@ -188,7 +188,7 @@ $img_dir="/tmp";#update
 $rrd_dir="rrd";#update
 
 #Service for configure Zen directory replication
-$zenino="/usr/local/zevenet/app/zeninotify/zeninotify.pl"; 
+$zenino="/usr/local/zevenet/app/zeninotify/zeninotify.pl";
 #Zen Inotify pid file 
 $zeninopid="/var/run/zeninotify.pid";
 #Rsync replication parameters
@@ -197,6 +197,9 @@ $zenrsync="-auzvr --delete";#update
 $arptables="/sbin/arptables";
 #ARP unsolicited
 $arp_unsolicited="";
+
+# cron service
+$cron_service = "/etc/init.d/cron";
 
 # keepalived configuration file
 $keepalived_conf="/etc/keepalived/keepalived.conf";
