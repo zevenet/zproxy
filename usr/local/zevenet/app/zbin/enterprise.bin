@@ -29,6 +29,7 @@ use Time::Local;
 use Zevenet::Log;
 use Zevenet::Debug;
 use Zevenet::Config;
+use Zevenet::Validate;
 use Zevenet::SystemInfo;
 
 my $SYMKEY   = "1135628147310";
