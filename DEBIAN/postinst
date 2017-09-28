@@ -25,7 +25,7 @@ GLOBALCF="/usr/local/zevenet/config/global.conf"
 GLOBALCFT="/usr/local/zevenet/app/checkglobalconf/global.conf.tpl"
 
 [ ! "$1" == "configure" ] && echo "Installation aborted $1 $2" && exit 1
-[ "$1" == "configure" ] && echo "Completing the ZLB installation..."
+[ "$1" == "configure" ] && echo "Completing the Zevenet installation..."
 
 # Migration script
 MSCRIPT="/usr/local/zevenet/app/zbin/zlbmigration302to303.pl"
@@ -166,7 +166,7 @@ then
 fi
 
 # restarting zevenet service
-echo "ZLB will be unavailable while the service is restarting."
+echo "Zevenet will be unavailable while the service is restarting."
 /etc/init.d/zevenet stop
 /etc/init.d/zevenet start
 
