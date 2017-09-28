@@ -284,6 +284,7 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
+	require Tie::File;
 	tie my @array, 'Tie::File', "$configdir/$farm_filename";
 	for my $line ( @array )
 	{

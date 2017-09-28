@@ -48,6 +48,7 @@ sub setFarmClientTimeout    # ($client,$farm_name)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Tie::File;
 		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 
 		my $i_f         = -1;
@@ -255,6 +256,7 @@ sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
+	require Tie::File;
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 	my $i_f         = -1;
 	my $array_count = @filefarmhttp;
@@ -340,6 +342,7 @@ sub setFarmHttpVerb    # ($verb,$farm_name)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Tie::File;
 		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 		my $i_f         = -1;
 		my $array_count = @filefarmhttp;
@@ -580,6 +583,7 @@ sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Tie::File;
 		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 		my $i_f         = -1;
 		my $array_count = @filefarmhttp;
@@ -746,6 +750,7 @@ sub setFarmConnTO    # ($tout,$farm_name)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		require Tie::File;
 		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 		my $i_f         = -1;
 		my $array_count = @filefarmhttp;
@@ -823,6 +828,7 @@ sub setHTTPFarmTimeout    # ($timeout,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
+	require Tie::File;
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 	my $i_f         = -1;
 	my $array_count = @filefarmhttp;
