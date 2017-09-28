@@ -27,9 +27,9 @@ my $q = getCGI();
 
 if ( $q->path_info =~ qr{/ipds$} )
 {
-	require Zevenet::API31::IPDS::IPDS;
+	my $mod = 'Zevenet::API31::IPDS::IPDS';
 
-	GET qr{^/ipds$} => \&get_ipds_rules_list;
+	GET qr{^/ipds$}, 'get_ipds_rules_list', $mod;
 }
 
 1;
