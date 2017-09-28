@@ -255,9 +255,9 @@ sub enableZCluster
 	}
 
 	# conntrackd
+	require Zevenet::Conntrackd;
 	unless ( -f &getGlobalConfiguration('conntrackd_conf') )
 	{
-		require Zevenet::Conntrackd;
 		&setConntrackdConfig();
 	}
 
