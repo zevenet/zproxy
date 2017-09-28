@@ -105,7 +105,7 @@ sub getBLListNoUsed
 
 	#~ require Zevenet::Validate;
 	my $matchs = 0;
-	my @cmd    = `$ipset -L -terse $blacklist`;
+	my @cmd    = `$ipset -L -terse $blacklist 2>/dev/null`;
 
 	foreach my $line ( @cmd )
 	{
