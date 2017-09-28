@@ -951,6 +951,7 @@ sub getBinVersion    # ($farm_name)
 sub setIptLock    # ($lockfile)
 {
 	my $ipt_lockfile = shift;
+	require Zevenet::Debug;
 
 	if ( flock ( $ipt_lockfile, LOCK_EX ) )
 	{
