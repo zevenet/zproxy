@@ -34,13 +34,13 @@ sub get_activation_certificate_info # ()
 	unless ( -f "$cert_dir\/$cert_filename" )
 	{
 		my $msg = "There is no activation certificate installed";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my @cert_info = &getCertData( $cert_filename );
 	my $body = "@cert_info";
 
-	&httpResponse({ code => 200, body => $body, type => 'text/plain' });
+	return &httpResponse({ code => 200, body => $body, type => 'text/plain' });
 }
 
 # DELETE /certificates/activation
@@ -54,7 +54,7 @@ sub delete_activation_certificate # ( $cert_filename )
 	unless ( &delCert( $cert_filename ) )
 	{
 		my $msg = "An error happened deleting the activation certificate";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $msg = "The activation certificate has been deleted";
@@ -64,7 +64,7 @@ sub delete_activation_certificate # ( $cert_filename )
 				 message     => $msg,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	return &httpResponse({ code => 200, body => $body });
 }
 
 # POST /certificates/activation
@@ -84,7 +84,7 @@ sub upload_activation_certificate # ()
 	unless ( $upload_filehandle )
 	{
 		my $msg = "Error uploading activation certificate file";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $basedir = &getGlobalConfiguration('basedir');
@@ -103,7 +103,7 @@ sub upload_activation_certificate # ()
 				 message     => $msg,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	return &httpResponse({ code => 200, body => $body });
 }
 
 1;

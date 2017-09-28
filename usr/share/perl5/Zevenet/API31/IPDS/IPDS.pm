@@ -28,7 +28,7 @@ sub get_ipds_rules_list
 	require Zevenet::IPDS::Core;
 	my $desc = "List the available IPDS rules.";
 
-	&httpResponse(
+	return &httpResponse(
 		  { code => 200, body => { description => $desc, params => &getIPDSRules } } );
 }
 

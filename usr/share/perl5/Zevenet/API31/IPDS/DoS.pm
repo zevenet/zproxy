@@ -54,7 +54,7 @@ sub get_dos_rules
 		}
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #GET /ipds/dos
@@ -74,7 +74,7 @@ sub get_dos
 	}
 
 	my $body = { description => $desc, params => \@output };
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  POST /ipds/dos
@@ -92,44 +92,44 @@ sub create_dos_rule
 
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( &getDOSExists( $json_obj->{ 'name' } ) )
 	{
 		my $msg = "$json_obj->{ 'name' } already exists.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( $json_obj->{ 'name' } eq 'rules' )
 	{
 		my $msg = 'The name is not valid, it is a reserved word.';
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( !&getValidFormat( 'dos_name', $json_obj->{ 'name' } ) )
 	{
 		my $msg = "rule name hasn't a correct format.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( !&getValidFormat( "dos_rule_farm", $json_obj->{ 'rule' } ) )
 	{
 		my $msg = "ID rule isn't correct.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $error = &createDOSRule( $json_obj->{ 'name' }, $json_obj->{ 'rule' } );
 	if ( $error )
 	{
 		my $msg = "There was a error enabling DoS in $json_obj->{ 'name' }.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $output = &getDOSZapiRule( $json_obj->{ 'name' } );
 	my $body = { description => $desc, params => $output };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #GET /ipds/dos/RULE
@@ -143,11 +143,11 @@ sub get_dos_rule
 	if ( ref ( $refRule ) ne 'HASH' )
 	{
 		my $msg = "$name doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $body = { description => $desc, params => $refRule };
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #PUT /ipds/dos/<rule>
@@ -165,7 +165,7 @@ sub set_dos_rule
 	if ( !&getDOSExists( $name ) )
 	{
 		my $msg = "$name not found";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# Get allowed params for a determinated rule
@@ -195,7 +195,7 @@ sub set_dos_rule
 
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 404, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $param_msg );
 	}
 
 	# check input format
@@ -204,7 +204,7 @@ sub set_dos_rule
 		if ( !&getValidFormat( "dos_$param", $json_obj->{ $param } ) )
 		{
 			my $msg = "Error, $param format is wrong.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -223,7 +223,7 @@ sub set_dos_rule
 	&runZClusterRemoteManager( 'ipds_dos', 'restart', $name );
 
 	my $body = { description => $desc, success => "true", params => $refRule };
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # DELETE /ipds/dos/RULE
@@ -238,18 +238,18 @@ sub del_dos_rule
 	if ( !&getDOSExists( $name ) )
 	{
 		my $msg = "$name not found.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 	elsif ( &getDOSParam( $name, 'type' ) eq 'system' )
 	{
 		my $msg =
 		  "Error, system rules not is possible to delete it, try to disable it.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 	elsif ( @{ &getDOSParam( $name, 'farms' ) } )
 	{
 		my $msg = "Error, disable this rule from all farms before than delete it.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	&deleteDOSRule( $name );
@@ -261,7 +261,7 @@ sub del_dos_rule
 				 message     => $msg,
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  GET /farms/<farmname>/ipds/dos
@@ -287,7 +287,7 @@ sub get_dos_farm
 
 	my $body = { description => $desc, params => \@output };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  POST /farms/<farmname>/ipds/dos
@@ -305,24 +305,24 @@ sub add_dos_to_farm
 	if ( &getFarmFile( $farmName ) eq '-1' )
 	{
 		my $msg = "$farmName doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 	elsif ( !&getDOSExists( $name ) )
 	{
 		my $msg = "$name not found.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 	elsif ( &getDOSParam( $name, 'type' ) eq 'system' )
 	{
 		my $msg = "System rules not is possible apply to farm.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $fileHandle = Config::Tiny->read( $confFile );
 	if ( $fileHandle->{ $name }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 	{
 		my $msg = "This rule already is enabled in $farmName.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# A farm can not simultaneasly have a "limitsec" and "limitrst" rule
@@ -340,21 +340,21 @@ sub add_dos_to_farm
 			{
 				my $msg =
 				  "Error, a DoS rule $fileHandle->{$name}->{'rule'} already is applied to the farm.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 			if (    $fileHandle->{ $rule_dos }->{ 'rule' } eq "limitsec"
 				 && $fileHandle->{ $name }->{ 'rule' } eq "limitrst" )
 			{
 				my $msg =
 				  "Error, the farm has already applied a limitsec rule, and it is not possible to apply to a farm a limitrst rule and a limit sec rule at the same time.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 			if (    $fileHandle->{ $name }->{ 'rule' } eq "limitsec"
 				 && $fileHandle->{ $rule_dos }->{ 'rule' } eq "limitrst" )
 			{
 				my $msg =
 				  "Error, the farm has already applied a limitrst rule, and it is not possible to apply to a farm a limitrst rule and a limit sec rule at the same time.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
 	}
@@ -365,7 +365,7 @@ sub add_dos_to_farm
 	if ( !grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 	{
 		my $msg = "Error, enabling $name rule.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( &getFarmStatus( $farmName ) eq 'up' )
@@ -377,7 +377,7 @@ sub add_dos_to_farm
 	my $msg = "DoS rule $name was applied successful to the farm $farmName.";
 	my $body = { description => $desc, success => 'true', message => $msg };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # DELETE /farms/<farmname>/ipds/dos/<ruleName>
@@ -392,26 +392,26 @@ sub del_dos_from_farm
 	if ( &getFarmFile( $farmName ) eq "-1" )
 	{
 		my $msg = "$farmName doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( !&getDOSExists( $name ) )
 	{
 		my $msg = "$name not found.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( &getDOSParam( $name, 'type' ) eq 'system' )
 	{
 		my $msg = "System rules not is possible delete from a farm.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $fileHandle = Config::Tiny->read( $confFile );
 	if ( $fileHandle->{ $name }->{ 'farms' } !~ /( |^)$farmName( |$)/ )
 	{
 		my $msg = "This rule no is enabled in $farmName.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	require Zevenet::IPDS::DoS::Runtime;
@@ -422,7 +422,7 @@ sub del_dos_from_farm
 	if ( grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 	{
 		my $msg = "Error, removing $name rule from $farmName.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( &getFarmStatus( $farmName ) eq 'up' )
@@ -434,7 +434,7 @@ sub del_dos_from_farm
 	my $msg = "DoS rule $name was removed successful from the farm $farmName.";
 	my $body = { description => $desc, success => "true", message => $msg };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # POST /ipds/dos/DOS/actions
@@ -451,7 +451,7 @@ sub actions_dos
 	if ( !&getDOSExists( $rule ) )
 	{
 		my $msg = "$rule doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( $json_obj->{ action } eq 'start' )
@@ -461,31 +461,31 @@ sub actions_dos
 			if ( !@{ &getDOSParam( $rule, 'farms' ) } )
 			{
 				$msg = "The rule has to be applied to some farm to start it.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
 		&setDOSParam( $rule, 'status', 'up' );
 
 		my $error = &runDOSStartByRule( $rule );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'stop' )
 	{
 		require Zevenet::IPDS::Blacklist::Config;
 		&setDOSParam( $rule, 'status', 'down' );
 		my $error = &runDOSStopByRule( $rule );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'restart' )
 	{
 		my $error = &runDOSRestartByRule( $rule );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 		&setDOSParam( $rule, 'status', 'up' );
 	}
 	else
 	{
 		my $msg = "The action has not a valid value";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	require Zevenet::Cluster;
@@ -497,7 +497,7 @@ sub actions_dos
 				 params      => $json_obj->{ action }
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;

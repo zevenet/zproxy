@@ -54,7 +54,7 @@ sub get_blacklists_all_lists
 		push @lists, \%listHash;
 	}
 
-	&httpResponse(
+	return &httpResponse(
 				 { code => 200, body => { description => $desc, params => \@lists } } );
 }
 
@@ -68,12 +68,12 @@ sub get_blacklists_list
 	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "Requested list doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $listHash = &getBLzapi( $listName );
 
-	&httpResponse(
+	return &httpResponse(
 			   { code => 200, body => { description => $desc, params => $listHash } } );
 }
 
@@ -95,14 +95,14 @@ sub add_blacklists_list
 
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	# A list already exists with this name
 	if ( &getBLExists( $listName ) )
 	{
 		my $msg = "A list already exists with name '$listName'.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# Check key format
@@ -111,7 +111,7 @@ sub add_blacklists_list
 		if ( !&getValidFormat( "blacklists_$key", $json_obj->{ $key } ) )
 		{
 			my $msg = "$key hasn't a correct format.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -120,7 +120,7 @@ sub add_blacklists_list
 		if ( $json_obj->{ 'type' } ne 'remote' )
 		{
 			my $msg = "Url only is available in remote lists.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		$listParams->{ 'url' } = $json_obj->{ 'url' };
@@ -130,7 +130,7 @@ sub add_blacklists_list
 		if ( $json_obj->{ 'type' } eq 'remote' )
 		{
 			my $msg = "It's necessary to add the url where is allocated the list.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -141,13 +141,13 @@ sub add_blacklists_list
 	if ( &setBLCreateList( $listName, $listParams ) )
 	{
 		my $msg = "Error, creating a new list.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $listHash = &getBLParam( $listName );
 	delete $listHash->{ 'source' };
 
-	&httpResponse(
+	return &httpResponse(
 				   {
 					 code => 200,
 					 body => { description => $desc, params => $listHash }
@@ -185,7 +185,7 @@ sub set_blacklists_list
 	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "The list '$listName' doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# check not allowed actions on preloaded BL
@@ -196,7 +196,7 @@ sub set_blacklists_list
 		if ( $param_msg )
 		{
 			my $msg = "In preload lists only is allowed to change the policy";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 		}
 	}
 
@@ -205,7 +205,7 @@ sub set_blacklists_list
 
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	# not allow rename preload lists
@@ -213,7 +213,7 @@ sub set_blacklists_list
 		 && &getBLParam( $listName, 'preload' ) eq 'true' )
 	{
 		my $msg = "The preload lists can't be renamed.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# Check key format
@@ -223,7 +223,7 @@ sub set_blacklists_list
 		if ( !&getValidFormat( "blacklists_$key", $json_obj->{ $key } ) )
 		{
 			my $msg = "$key hasn't a correct format.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -236,7 +236,7 @@ sub set_blacklists_list
 		  )
 		{
 			my $msg = "Error, trying to change a remote list parameter in a local list.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -245,7 +245,7 @@ sub set_blacklists_list
 		 && $type ne 'local' )
 	{
 		my $msg = "Source parameter only is available in local lists.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $cronFlag;
@@ -278,7 +278,7 @@ sub set_blacklists_list
 					{
 						my $msg =
 						  "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
-						&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+						return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 					}
 				}
 
@@ -301,7 +301,7 @@ sub set_blacklists_list
 					{
 						my $msg =
 						  "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
-						&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+						return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 					}
 				}
 
@@ -313,7 +313,7 @@ sub set_blacklists_list
 			else
 			{
 				my $msg = "It's neccessary indicate frequency type for daily frequency.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
 		elsif ( $json_obj->{ 'frequency' } eq 'weekly' )
@@ -332,7 +332,7 @@ sub set_blacklists_list
 				{
 					my $msg =
 					  "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
-					&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+					return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 				}
 			}
 
@@ -340,7 +340,7 @@ sub set_blacklists_list
 			{
 				my $msg =
 				  "Error value of day parameter in $json_obj->{ 'frequency' } frequency.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
 			&delBLParam( $listName, $_ ) for ( "frequency_type", "period", "unit" );
@@ -365,7 +365,7 @@ sub set_blacklists_list
 				{
 					my $msg =
 					  "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
-					&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+					return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 				}
 			}
 
@@ -373,7 +373,7 @@ sub set_blacklists_list
 			{
 				my $msg =
 				  "Error value of day parameter in $json_obj->{ 'frequency' } frequency.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
 			&delBLParam( $listName, $_ ) for ( "unit", "period", "frequency_type" );
@@ -384,7 +384,7 @@ sub set_blacklists_list
 		else
 		{
 			my $msg = "Error with update configuration parameters.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -409,7 +409,7 @@ sub set_blacklists_list
 		if ( $error )
 		{
 			my $msg = "Error, modifying $key in $listName.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 		else
 		{
@@ -436,7 +436,7 @@ sub set_blacklists_list
 	require Zevenet::Cluster;
 	&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  DELETE /ipds/blacklists/<listname> Delete a Farm
@@ -451,14 +451,14 @@ sub del_blacklists_list
 	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# check the list is not being used
 	if ( @{ &getBLParam( $listName, 'farms' ) } )
 	{
 		my $msg = "Remove this list from all farms before deleting it.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $error = &setBLDeleteList( $listName );
@@ -467,7 +467,7 @@ sub del_blacklists_list
 	if ( $error )
 	{
 		my $msg = "Error, deleting the list $listName.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $msg = "The list $listName has been deleted successful.";
@@ -477,7 +477,7 @@ sub del_blacklists_list
 				 message     => $msg,
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # POST /ipds/blacklists/BLACKLIST/actions
@@ -494,7 +494,7 @@ sub actions_blacklists
 	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# allow only available actions
@@ -510,31 +510,31 @@ sub actions_blacklists
 			if ( !@{ &getBLParam( $listName, 'farms' ) } )
 			{
 				$msg = "The list has to be applied to some farm to start it.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
 		require Zevenet::IPDS::Blacklist::Config;
 		&setBLParam( $listName, 'status', 'up' );
 		my $error = &runBLStartByRule( $listName );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'stop' )
 	{
 		require Zevenet::IPDS::Blacklist::Config;
 		&setBLParam( $listName, 'status', 'down' );
 		my $error = &runBLStopByRule( $listName );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'restart' )
 	{
 		my $error = &runBLRestartByRule( $listName );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 		&setBLParam( $listName, 'status', 'up' );
 	}
 	else
 	{
 		$msg = "The action has not a valid value";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# restart in remote node if an update was requested, or do the requested action
@@ -550,7 +550,7 @@ sub actions_blacklists
 				 params      => $json_obj->{ action }
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # POST /ipds/blacklists/BLACKLIST/actions 	update a remote blacklist
@@ -565,7 +565,7 @@ sub update_remote_blacklists
 	if ( &getBLParam( $listName, 'type' ) ne 'remote' )
 	{
 		my $msg = "Error, only remote lists can be updated.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $error = &setBLDownloadRemoteList( $listName );
@@ -574,7 +574,7 @@ sub update_remote_blacklists
 	if ( $error )
 	{
 		my $msg = $statusUpd;
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( @{ &getBLParam( $listName, 'farms' ) } )
@@ -591,7 +591,7 @@ sub update_remote_blacklists
 				}
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #GET /ipds/blacklists/<listname>/sources
@@ -604,7 +604,7 @@ sub get_blacklists_source
 	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "Requested list doesn't exist.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my @ipList;
@@ -615,7 +615,7 @@ sub get_blacklists_source
 		push @ipList, { id => $index++, source => $source };
 	}
 
-	&httpResponse(
+	return &httpResponse(
 				{ code => 200, body => { description => $desc, params => \@ipList } } );
 }
 
@@ -632,27 +632,27 @@ sub add_blacklists_source
 	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $msg = &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
 
 	if ( $msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( !&getValidFormat( 'blacklists_source', $json_obj->{ 'source' } ) )
 	{
 		my $msg = "It's necessary to introduce a correct source.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if (
 		 grep ( /^$json_obj->{'source'}$/, @{ &getBLParam( $listName, 'source' ) } ) )
 	{
 		my $msg = "$json_obj->{'source'} already exists in the list.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 # ipset not allow the input 0.0.0.0/0, if this source is set, replace it for 0.0.0.0/1 and 128.0.0.0/1
@@ -660,7 +660,7 @@ sub add_blacklists_source
 	{
 		my $msg =
 		  "Error, the source $json_obj->{'source'} is not valid, for this action, use the list \"All\".";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	require Zevenet::IPDS::Blacklist::Config;
@@ -669,7 +669,7 @@ sub add_blacklists_source
 	if ( $error )
 	{
 		my $msg = "Error, adding source to $listName.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my @ipList;
@@ -691,7 +691,7 @@ sub add_blacklists_source
 				 message     => $msg,
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  PUT /ipds/blacklists/<listname>/sources/<id>
@@ -710,33 +710,33 @@ sub set_blacklists_source
 	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "$listName not found";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# check source id exists
 	elsif ( @{ &getBLParam( $listName, 'source' ) } <= $id )
 	{
 		my $msg = "Source id $id not found";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
 
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( !&getValidFormat( 'blacklists_source', $json_obj->{ 'source' } ) )
 	{
 		my $msg = "Wrong source format.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( &setBLModifSource( $listName, $id, $json_obj->{ 'source' } ) != 0 )
 	{
 		my $msg = "Error, putting the source to the list.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $msg = "Source $id has been modified successful.";
@@ -749,7 +749,7 @@ sub set_blacklists_source
 	require Zevenet::Cluster;
 	&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  DELETE /ipds/blacklists/<listname>/sources/<id>	Delete a source from a black list
@@ -765,19 +765,19 @@ sub del_blacklists_source
 	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( @{ &getBLParam( $listName, 'source' ) } <= $id )
 	{
 		my $msg = "ID $id doesn't exist in the list $listName.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( &setBLDeleteSource( $listName, $id ) != 0 )
 	{
 		my $msg = "Error deleting source $id";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $msg = "Source $id has been deleted successful.";
@@ -790,7 +790,7 @@ sub del_blacklists_source
 	require Zevenet::Cluster;
 	&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  POST /farms/<farmname>/ipds/blacklists
@@ -808,32 +808,32 @@ sub add_blacklists_to_farm
 
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( &getFarmFile( $farmName ) eq "-1" )
 	{
 		my $msg = "$farmName doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( grep ( /^$farmName$/, @{ &getBLParam( $listName, 'farms' ) } ) )
 	{
 		my $msg = "$listName is already applied to $farmName.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $error = &setBLApplyToFarm( $farmName, $listName );
 	if ( $error )
 	{
 		my $msg = "Error, applying $listName to $farmName";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $msg =
@@ -847,7 +847,7 @@ sub add_blacklists_to_farm
 	require Zevenet::Cluster;
 	&runZClusterRemoteManager( 'ipds_bl', 'start', $listName, $farmName );
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # DELETE /farms/<farmname>/ipds/blacklists/<listname>
@@ -863,19 +863,19 @@ sub del_blacklists_from_farm
 	if ( &getFarmFile( $farmName ) eq '-1' )
 	{
 		my $msg = "$farmName doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( !&getBLExists( $listName ) )
 	{
 		my $msg = "$listName doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( !grep ( /^$farmName$/, @{ &getBLParam( $listName, 'farms' ) } ) )
 	{
 		my $msg = "Not found a rule associated to $listName and $farmName.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $error = &setBLRemFromFarm( $farmName, $listName );
@@ -889,7 +889,7 @@ sub del_blacklists_from_farm
 	if ( $error )
 	{
 		my $msg = "Error, removing $listName rule from $farmName.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $msg =
@@ -903,7 +903,7 @@ sub del_blacklists_from_farm
 	require Zevenet::Cluster;
 	&runZClusterRemoteManager( 'ipds_bl', 'stop', $listName, $farmName );
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;

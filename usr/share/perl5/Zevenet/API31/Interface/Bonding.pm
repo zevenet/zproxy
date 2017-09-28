@@ -49,14 +49,14 @@ sub new_bond # ( $json_obj )
 	unless ( $json_obj->{ name } =~ /^$bond_re$/ && &ifexist($json_obj->{ name }) eq 'false' )
 	{
 		my $msg = "Interface name is not valid";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate BOND MODE
 	unless ( $json_obj->{ mode } && &getValidFormat( 'bond_mode_short', $json_obj->{ mode } ) )
 	{
 		my $msg = "Bond mode is not valid";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	$json_obj->{ mode } = &indexOfElementInArray( $json_obj->{ mode }, \@bond_modes_short );
@@ -75,7 +75,7 @@ sub new_bond # ( $json_obj )
 	if ( $missing_slave || !@{ $json_obj->{ slaves } } )
 	{
 		my $msg = "Error loading the slave interfaces list";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	eval {
@@ -85,7 +85,7 @@ sub new_bond # ( $json_obj )
 	if ( $@ )
 	{
 		my $msg = "The $json_obj->{ name } bonding network interface can't be created";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $if_ref      = getSystemInterface( $json_obj->{ name } );
@@ -105,7 +105,7 @@ sub new_bond # ( $json_obj )
 				 },
 	};
 
-	&httpResponse({ code => 201, body => $body });
+	return &httpResponse({ code => 201, body => $body });
 }
 
 # POST bond slave
@@ -125,7 +125,7 @@ sub new_bond_slave # ( $json_obj, $bond )
 	unless ( $bonds->{ $bond } )
 	{
 		my $msg = "Bond interface name not found";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# validate SLAVE
@@ -138,7 +138,7 @@ sub new_bond_slave # ( $json_obj, $bond )
 	if ( $@ )
 	{
 		my $msg = "Could not add the slave interface to this bonding";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	push @{ $bonds->{ $bond }->{ slaves } }, $json_obj->{ name };
@@ -149,7 +149,7 @@ sub new_bond_slave # ( $json_obj, $bond )
 	if ( $@ )
 	{
 		my $msg = "The $json_obj->{ name } bonding network interface can't be created";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $if_ref      = getSystemInterface( $bond );
@@ -169,7 +169,7 @@ sub new_bond_slave # ( $json_obj, $bond )
 				 },
 	};
 
-	&httpResponse({ code => 201, body => $body });
+	return &httpResponse({ code => 201, body => $body });
 }
 
 sub delete_interface_bond # ( $bond )
@@ -187,7 +187,7 @@ sub delete_interface_bond # ( $bond )
 	if ( !$if_ref )
 	{
 		my $msg = "There is no configuration for the network interface.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	eval {
@@ -199,7 +199,7 @@ sub delete_interface_bond # ( $bond )
 	if ( $@ )
 	{
 		my $msg = "The configuration for the bonding interface $bond couldn't be deleted.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $message = "The configuration for the bonding interface $bond has been deleted.";
@@ -209,7 +209,7 @@ sub delete_interface_bond # ( $bond )
 				 message     => $message,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	return &httpResponse({ code => 200, body => $body });
 }
 
 sub delete_bond # ( $bond )
@@ -226,7 +226,7 @@ sub delete_bond # ( $bond )
 	unless ( $bonds->{ $bond } )
 	{
 		my $msg = "Bonding interface name not found";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $bond_in_use = 0;
@@ -237,7 +237,7 @@ sub delete_bond # ( $bond )
 	if ( $bond_in_use )
 	{
 		my $msg = "Bonding interface is being used";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	eval {
@@ -252,7 +252,7 @@ sub delete_bond # ( $bond )
 	if ( $@ )
 	{
 		my $msg = "The bonding interface $bond could not be deleted";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $message = "The bonding interface $bond has been deleted.";
@@ -262,7 +262,7 @@ sub delete_bond # ( $bond )
 				 message     => $message,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	return &httpResponse({ code => 200, body => $body });
 }
 
 sub delete_bond_slave # ( $bond, $slave )
@@ -279,14 +279,14 @@ sub delete_bond_slave # ( $bond, $slave )
 	unless ( $bonds->{ $bond } )
 	{
 		my $msg = "Bonding interface not found";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# validate SLAVE
 	unless ( grep ( { $slave eq $_ } @{ $bonds->{ $bond }->{ slaves } } ) )
 	{
 		my $msg = "Bonding slave interface not found";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	eval {
@@ -296,7 +296,7 @@ sub delete_bond_slave # ( $bond, $slave )
 	if ( $@ )
 	{
 		my $msg = "The bonding slave interface $slave could not be removed";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $message = "The bonding slave interface $slave has been removed.";
@@ -306,7 +306,7 @@ sub delete_bond_slave # ( $bond, $slave )
 				 message     => $message,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	return &httpResponse({ code => 200, body => $body });
 }
 
 sub get_bond_list # ()
@@ -367,7 +367,7 @@ sub get_bond_list # ()
 			interfaces  => \@output_list,
 		};
 
-	&httpResponse({ code => 200, body => $body });
+	return &httpResponse({ code => 200, body => $body });
 }
 
 sub get_bond # ()
@@ -414,7 +414,7 @@ sub get_bond # ()
 	unless ( $interface )
 	{
 		my $msg = "Bonding interface not found.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $body = {
@@ -422,7 +422,7 @@ sub get_bond # ()
 				 interface   => $interface,
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 sub actions_interface_bond # ( $json_obj, $bond )
@@ -439,13 +439,13 @@ sub actions_interface_bond # ( $json_obj, $bond )
 	unless ( grep { $bond eq $_->{ name } } &getInterfaceTypeList( 'bond' ) )
 	{
 		my $msg = "Bond interface not found";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( grep { $_ ne 'action' } keys %$json_obj )
 	{
 		my $msg = "Only the parameter 'action' is accepted";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate action parameter
@@ -479,7 +479,7 @@ sub actions_interface_bond # ( $json_obj, $bond )
 		else
 		{
 			my $msg = "The interface could not be set UP";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 	elsif ( $json_obj->{ action } eq "down" )
@@ -489,13 +489,13 @@ sub actions_interface_bond # ( $json_obj, $bond )
 		if ( $state )
 		{
 			my $msg = "The interface could not be set UP";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 	else
 	{
 		my $msg = "Action accepted values are: up, down or destroy";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $body = {
@@ -503,7 +503,7 @@ sub actions_interface_bond # ( $json_obj, $bond )
 				 params      =>  { action => $json_obj->{ action } },
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	return &httpResponse({ code => 200, body => $body });
 }
 
 sub modify_interface_bond # ( $json_obj, $bond )
@@ -525,19 +525,19 @@ sub modify_interface_bond # ( $json_obj, $bond )
 	unless ( grep( { $bond eq $_ } @system_interfaces ) && $type eq 'bond' )
 	{
 		my $msg = "Nic interface not found.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( grep { !/^(?:ip|netmask|gateway)$/ } keys %$json_obj )
 	{
 		my $msg = "Parameter not recognized";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	unless ( exists $json_obj->{ ip } || exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
 	{
 		my $msg = "No parameter received to be configured";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# Check address errors
@@ -546,7 +546,7 @@ sub modify_interface_bond # ( $json_obj, $bond )
 		unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) || $json_obj->{ ip } eq '' )
 		{
 			my $msg = "IP Address is not valid.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		if ( $json_obj->{ ip } eq '' )
@@ -562,7 +562,7 @@ sub modify_interface_bond # ( $json_obj, $bond )
 		unless ( defined( $json_obj->{ netmask } ) && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
 		{
 			my $msg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -572,7 +572,7 @@ sub modify_interface_bond # ( $json_obj, $bond )
 		unless ( defined( $json_obj->{ gateway } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) || $json_obj->{ gateway } eq '' )
 		{
 			my $msg = "Gateway Address $json_obj->{gateway} structure is not ok.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -593,7 +593,7 @@ sub modify_interface_bond # ( $json_obj, $bond )
 		&getNetValidate( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
 		{
 			my $msg = "The gateway is not valid for the network.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -618,7 +618,7 @@ sub modify_interface_bond # ( $json_obj, $bond )
 	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
 	{
 		my $msg = "Cannot configure the interface without address or without netmask.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	eval {
@@ -651,7 +651,7 @@ sub modify_interface_bond # ( $json_obj, $bond )
 	if ( $@ )
 	{
 		my $msg = "Errors found trying to modify interface $bond";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $body = {
@@ -659,7 +659,7 @@ sub modify_interface_bond # ( $json_obj, $bond )
 				 params      => $json_obj,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	return &httpResponse({ code => 200, body => $body });
 }
 
 1;

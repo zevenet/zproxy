@@ -39,39 +39,39 @@ sub move_services
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
 		my $msg = "The farmname $farmname does not exists.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( ! grep ( /^$service$/, @services ) )
 	{
 		my $msg = "$service not found.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# Move services
 	my $param_msg = &getValidOptParams( $json_obj, ["position"] );
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( !&getValidFormat( 'service_position', $json_obj->{ 'position' } ) )
 	{
 		my $msg = "Error in service position format.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $srv_position = &getFarmVSI( $farmname, $service );
 	if ( $srv_position == $json_obj->{ 'position' } )
 	{
 		my $msg = "The service already is in required position.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( $services_num <= $json_obj->{ 'position' } )
 	{
 		my $msg = "The required position is bigger than number of services.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# select action
@@ -92,7 +92,7 @@ sub move_services
 		if ( &runFarmStop( $farmname, "true" ) != 0 )
 		{
 			my $msg = "Error stopping the farm.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		&zenlog( "Farm stopped successful." );
@@ -114,7 +114,7 @@ sub move_services
 		if ( &runFarmStart( $farmname, "true" ) )
 		{
 			my $msg = "The $farmname farm hasn't been restarted";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		&setHTTPFarmBackendStatus( $farmname );
@@ -128,7 +128,7 @@ sub move_services
 	my $msg = "$service was moved successfully.";
 	my $body = { description => $desc, params => $json_obj, message => $msg };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;

@@ -38,7 +38,7 @@ sub delete_interface_floating    # ( $floating )
 	unless ( $float_ifaces_conf->{ _ }->{ $floating } )
 	{
 		my $msg = "Floating interface not found";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	eval {
@@ -53,7 +53,7 @@ sub delete_interface_floating    # ( $floating )
 	if ( $@ )
 	{
 		my $msg = "The floating interface could not be removed";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $message = "The floating interface has been removed.";
@@ -63,7 +63,7 @@ sub delete_interface_floating    # ( $floating )
 				 message     => $message,
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # address or interface
@@ -81,13 +81,13 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 	if ( grep { $_ ne 'floating_ip' } keys %{ $json_obj } )
 	{
 		my $msg = "Parameter not recognized";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	unless ( keys %{ $json_obj } )
 	{
 		my $msg = "Need to use floating_ip parameter";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $ip_v = 4;
@@ -96,7 +96,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 	unless ( $if_ref )
 	{
 		my $msg = "Floating interface not found";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	$if_ref = undef;
@@ -109,7 +109,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 				 && &getValidFormat( 'IPv4_addr', $json_obj->{ floating_ip } ) )
 		{
 			my $msg = "Invalid floating address format";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		my @interfaces = &getInterfaceTypeList( 'virtual' );
@@ -122,7 +122,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		unless ( $if_ref )
 		{
 			my $msg = "Virtual interface with such address not found";
-			&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -141,7 +141,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 	unless ( $@ )
 	{
 		my $msg = "Floating interface modification failed";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $message = "Floating interface modification done";
@@ -151,7 +151,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 				 message     => $message
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 sub get_interfaces_floating
@@ -196,7 +196,7 @@ sub get_interfaces_floating
 				 params      => \@output,
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 sub get_floating
@@ -226,7 +226,7 @@ sub get_floating
 		unless ( $iface->{ addr } )
 		{
 			my $msg = "This interface has no address configured";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		$floating_ip = undef;
@@ -250,7 +250,7 @@ sub get_floating
 				 params      => $output,
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;

@@ -29,7 +29,7 @@ sub get_rbl_all_rules
 	my $rules = &getRBLZapi();
 	my $desc  = "List the RBL rules";
 
-	&httpResponse(
+	return &httpResponse(
 				  { code => 200, body => { description => $desc, params => $rules } } );
 }
 
@@ -43,13 +43,13 @@ sub get_rbl_rule
 	unless ( &getRBLExists( $name ) )
 	{
 		my $msg = "Requested rule doesn't exist.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $ruleHash = &getRBLZapiRule( $name );
 	my $body = { description => $desc, params => $ruleHash };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  POST /ipds/rbl
@@ -66,29 +66,29 @@ sub add_rbl_rule
 	if ( &getRBLExists( $name ) )
 	{
 		my $msg = "A RBL rule already exists with the name '$name'.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 	elsif ( !&getValidFormat( "rbl_name", $name ) )
 	{
 		my $msg = "The RBL name has not a valid format.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 	elsif ( $name eq "domains" )
 	{
 		my $msg = "Error, \"domains\" is a reserved word.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( &addRBLCreateObjectRule( $name ) )
 	{
 		my $msg = "Error, creating a new RBL rule.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $listHash = &getRBLZapiRule( $name );
 	my $body = { description => $desc, params => $listHash };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  POST /ipds/rbl/<name>
@@ -106,37 +106,37 @@ sub copy_rbl_rule
 	if ( !&getRBLExists( $name ) )
 	{
 		my $msg = "The RBL rule '$name' doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( &getRBLExists( $newrule ) )
 	{
 		my $msg = "A RBL rule already exists with the name '$newrule'.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( !&getValidFormat( "rbl_name", $newrule ) )
 	{
 		my $msg = "The RBL name has not a valid format.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( $newrule eq "domains" )
 	{
 		my $msg = "Error, \"domains\" is a reserved word.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( &addRBLCopyObjectRule( $name, $newrule ) )
 	{
 		my $msg = "Error, copying a RBL rule.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $listHash = &getRBLZapiRule( $newrule );
 	my $body = { description => $desc, params => $listHash };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  PUT /ipds/rbl/<name>
@@ -158,14 +158,14 @@ sub set_rbl_rule
 	if ( !&getRBLExists( $name ) )
 	{
 		my $msg = "The RBL rule '$name' doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
 
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( exists $json_obj->{ 'name' } )
@@ -173,22 +173,22 @@ sub set_rbl_rule
 		if ( !&getValidFormat( 'rbl_name', $json_obj->{ 'name' } ) )
 		{
 			my $msg = "The RBL name has not a valid format.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 		elsif ( &getRBLExists( $json_obj->{ 'name' } ) )
 		{
 			my $msg = "A RBL rule already exists with the name '$json_obj->{'name'}'.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 		elsif ( $json_obj->{ 'name' } eq "domains" )
 		{
 			my $msg = "Error, \"domains\" is a reserved word.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 		elsif ( &setRBLRenameObjectRule( $name, $json_obj->{ 'name' } ) )
 		{
 			my $msg = "Error, setting name.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		$name = $json_obj->{ 'name' };
@@ -200,7 +200,7 @@ sub set_rbl_rule
 		if ( !&getValidFormat( 'rbl_only_logging', $json_obj->{ 'only_logging' } ) )
 		{
 			my $msg = "Error, only level must be true or false.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		my $option = 'yes';
@@ -208,7 +208,7 @@ sub set_rbl_rule
 		if ( &setRBLObjectRuleParam( $name, 'only_logging', $option ) )
 		{
 			my $msg = "Error, setting only logging mode.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -218,13 +218,13 @@ sub set_rbl_rule
 		if ( !&getValidFormat( 'rbl_log_level', $json_obj->{ 'log_level' } ) )
 		{
 			my $msg = "Error, log level must be a number between 0 and 7.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		if ( &setRBLObjectRuleParam( $name, 'log_level', $json_obj->{ 'log_level' } ) )
 		{
 			my $msg = "Error, setting log level.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -234,14 +234,14 @@ sub set_rbl_rule
 		if ( !&getValidFormat( 'rbl_queue_size', $json_obj->{ 'queue_size' } ) )
 		{
 			my $msg = "Error, queue size must be a number.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		if (
 			 &setRBLObjectRuleParam( $name, 'queue_size', $json_obj->{ 'queue_size' } ) )
 		{
 			my $msg = "Error, setting queue size.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -251,13 +251,13 @@ sub set_rbl_rule
 		if ( !&getValidFormat( 'rbl_thread_max', $json_obj->{ 'threadmax' } ) )
 		{
 			my $msg = "Error, thread maximum must be a number.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		if ( &setRBLObjectRuleParam( $name, 'threadmax', $json_obj->{ 'threadmax' } ) )
 		{
 			my $msg = "Error, setting thread maximum.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -267,14 +267,14 @@ sub set_rbl_rule
 		if ( !&getValidFormat( 'rbl_cache_size', $json_obj->{ 'cache_size' } ) )
 		{
 			my $msg = "Error, cache size must be a number.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		if (
 			 &setRBLObjectRuleParam( $name, 'cache_size', $json_obj->{ 'cache_size' } ) )
 		{
 			my $msg = "Error, setting cache size.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -284,14 +284,14 @@ sub set_rbl_rule
 		if ( !&getValidFormat( 'rbl_cache_time', $json_obj->{ 'cache_time' } ) )
 		{
 			my $msg = "Error, cache time must be a number.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		if (
 			 &setRBLObjectRuleParam( $name, 'cache_time', $json_obj->{ 'cache_time' } ) )
 		{
 			my $msg = "Error, setting cache time.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -301,7 +301,7 @@ sub set_rbl_rule
 		if ( !&getValidFormat( 'rbl_local_traffic', $json_obj->{ 'local_traffic' } ) )
 		{
 			my $msg = "Error, cache time must be a number.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		my $option = "no";
@@ -309,7 +309,7 @@ sub set_rbl_rule
 		if ( &setRBLObjectRuleParam( $name, 'local_traffic', $option ) )
 		{
 			my $msg = "Error, setting local time.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -323,7 +323,7 @@ sub set_rbl_rule
 	require Zevenet::Cluster;
 	&runZClusterRemoteManager( 'ipds_rbl', "restart", $name );
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  DELETE /ipds/rbl/<name>
@@ -338,19 +338,19 @@ sub del_rbl_rule
 	if ( !&getRBLExists( $name ) )
 	{
 		my $msg = "$name doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 	elsif ( @{ &getRBLFarm( $name ) } )
 	{
 		my $msg = "Delete this rule from all farms before than delete it.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $error = &delRBLDeleteObjectRule( $name );
 	if ( $error )
 	{
 		my $msg = "Error, deleting the rule $name.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $msg = "The rule $name has been deleted successful.";
@@ -360,7 +360,7 @@ sub del_rbl_rule
 				 message     => $msg,
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  GET /ipds/rbl/domains
@@ -388,7 +388,7 @@ sub get_rbl_domains
 
 	my $body = { description => $desc, params => $domains };
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  POST /ipds/rbl/domains
@@ -406,26 +406,26 @@ sub add_rbl_domain
 	if ( grep ( /^$domain$/, @{ &getRBLUserDomains() } ) )
 	{
 		my $msg = "$domain already exists.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( grep ( /^$domain$/, @{ &getRBLPreloadedDomains() } ) )
 	{
 		my $msg = "$domain already exists.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $param_msg =
 	  &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( !&getValidFormat( 'rbl_domain', $domain ) )
 	{
 		my $msg = "Error, the RBL domain format is not valid.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	&addRBLDomains( $domain );
@@ -438,7 +438,7 @@ sub add_rbl_domain
 				 message     => $msg,
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  PUT /ipds/rbl/domains/<domain>
@@ -459,25 +459,25 @@ sub set_rbl_domain
 	if ( $domain_id >= scalar @user_domain_list )
 	{
 		my $msg = "$domain_id not found";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( grep ( /^$new_domain$/, @{ &getRBLDomains() } ) )
 	{
 		my $msg = "$new_domain already exists.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( !&getValidFormat( 'rbl_domain', $new_domain ) )
 	{
 		my $msg = "Error, Wrong domain format.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my @rules;
@@ -519,7 +519,7 @@ sub set_rbl_domain
 		&runZClusterRemoteManager( 'ipds_rbl', "restart", $rule );
 	}
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  DELETE /ipds/rbl/domains/<domain>
@@ -535,14 +535,14 @@ sub del_rbl_domain
 	if ( $domain_id >= scalar @user_domain_list )
 	{
 		my $msg = "$domain_id not found";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $domain = $user_domain_list[$domain_id];
 	if ( &delRBLDomains( $domain ) )
 	{
 		my $msg = "Error deleting the RBL domain $domain_id";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $msg = "RBL domain $domain_id has been deleted successful.";
@@ -564,7 +564,7 @@ sub del_rbl_domain
 		}
 	}
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  POST /ipds/rbl/<name>/domains
@@ -583,33 +583,33 @@ sub add_domain_to_rbl
 	if ( !&getRBLExists( $name ) )
 	{
 		my $msg = "$name doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( !&getValidFormat( 'rbl_domain', $domain ) )
 	{
 		my $msg = "The domain has not a correct format.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $param_msg =
 	  &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( grep ( /^$domain$/, @{ &getRBLObjectRuleParam( $name, 'domains' ) } ) )
 	{
 		my $msg = "$domain already exists in the rule.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $error = &setRBLObjectRuleParam( $name, 'domains-add', $domain );
 	if ( $error )
 	{
 		my $msg = "Error, adding $domain to $name.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	require Zevenet::Cluster;
@@ -623,7 +623,7 @@ sub add_domain_to_rbl
 				 message     => $msg,
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  DELETE /ipds/rbl/<name>/domains/<domain>
@@ -639,20 +639,20 @@ sub del_domain_from_rbl
 	if ( !&getRBLExists( $name ) )
 	{
 		my $msg = "$name doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( !grep ( /^$domain$/, @{ &getRBLObjectRuleParam( $name, 'domains' ) } ) )
 	{
 		my $msg = "The domains is not applied to the RBL rule.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	require Zevenet::Cluster;
 	if ( &setRBLObjectRuleParam( $name, 'domains-del', $domain ) )
 	{
 		my $msg = "Error deleting a domain from a RBL rule.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	require Zevenet::Cluster;
@@ -666,7 +666,7 @@ sub del_domain_from_rbl
 				 message     => $msg,
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #  POST /farms/<farmname>/ipds/rbl
@@ -683,39 +683,39 @@ sub add_rbl_to_farm
 	my $param_msg = &getValidReqParams( $json_obj, ["name"] );
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( &getFarmFile( $farmName ) eq "-1" )
 	{
 		my $msg = "$farmName doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( !&getRBLExists( $name ) )
 	{
 		my $msg = "$name doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( grep ( /^$farmName$/, @{ &getRBLFarm( $name, 'farms' ) } ) )
 	{
 		my $msg = "$name is already applied to $farmName.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# for start a RBL rule it is necessary that the rule has almost one domain
 	elsif ( !@{ &getRBLObjectRuleParam( $name, 'domains' ) } )
 	{
 		my $msg = "RBL rule, $name, was not started because doesn't have any domain.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	&addRBLFarm( $farmName, $name );
 	if ( !grep ( /^$farmName$/, @{ &getRBLFarm( $name, 'farms' ) } ) )
 	{
 		my $msg = "Error, applying $name to $farmName";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $msg = "RBL rule $name was applied successful to the farm $farmName.";
@@ -731,7 +731,7 @@ sub add_rbl_to_farm
 		&runZClusterRemoteManager( 'ipds_rbl', "start", $name, $farmName );
 	}
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # DELETE /farms/<farmname>/ipds/rbl/<name>
@@ -747,19 +747,19 @@ sub del_rbl_from_farm
 	if ( &getFarmFile( $farmName ) eq '-1' )
 	{
 		my $msg = "$farmName doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( !&getRBLExists( $name ) )
 	{
 		my $msg = "$name doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( !grep ( /^$farmName$/, @{ &getRBLFarm( $name, 'farms' ) } ) )
 	{
 		my $msg = "Not found a rule associated to $name and $farmName.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	&delRBLFarm( $farmName, $name );
@@ -767,7 +767,7 @@ sub del_rbl_from_farm
 	if ( grep ( /^$farmName$/, @{ &getRBLFarm( $name, 'farms' ) } ) )
 	{
 		my $msg = "Error, removing $name rule from $farmName.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $msg = "RBL rule $name was removed successful from the farm $farmName.";
@@ -783,7 +783,7 @@ sub del_rbl_from_farm
 		&runZClusterRemoteManager( 'ipds_rbl', "stop", $name, $farmName );
 	}
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # POST /ipds/rbl/<name>/actions
@@ -800,26 +800,26 @@ sub set_rbl_actions
 	my $param_msg = &getValidReqParams( $json_obj, ["action"] );
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( !&getRBLExists( $name ) )
 	{
 		my $msg = "$name doesn't exist.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	if ( !&getValidFormat( 'rbl_actions', $json_obj->{ 'action' } ) )
 	{
 		my $msg = "Invalid action; the possible actions are stop, start and restart";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# to start a RBL rule it is necessary that the rule has almost one domain
 	if ( !@{ &getRBLObjectRuleParam( $name, 'domains' ) } )
 	{
 		my $msg = "RBL rule, $name, was not started because doesn't have any domain.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# Error message in case the following action fails
@@ -830,25 +830,25 @@ sub set_rbl_actions
 		if ( !@{ &getRBLFarm( $name ) } )
 		{
 			$msg = "The rule has to be applied to some farm to start it.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 		require Zevenet::IPDS::RBL::Config;
 		&setRBLObjectRuleParam( $name, 'status', 'up' );
 		my $error = &runRBLStartByRule( $name );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $action eq 'stop' )
 	{
 		require Zevenet::IPDS::RBL::Config;
 		&setRBLObjectRuleParam( $name, 'status', 'down' );
 		my $error = &runRBLStopByRule( $name );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $action eq 'restart' )
 	{
 		require Zevenet::IPDS::RBL::Config;
 		my $error = &runRBLRestartByRule( $name );
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 		&setRBLObjectRuleParam( $name, 'status', 'up' );
 	}
 
@@ -860,7 +860,7 @@ sub set_rbl_actions
 				 params      => { 'action' => $action }
 	};
 
-	&httpResponse( { code => 200, body => $body } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;

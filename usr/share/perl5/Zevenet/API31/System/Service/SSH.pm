@@ -31,7 +31,7 @@ sub get_ssh
 	my $desc = "Get ssh";
 	my $ssh  = &getSsh();
 
-	&httpResponse( { code => 200, body => { description => $desc, params => $ssh } } );
+	return &httpResponse( { code => 200, body => { description => $desc, params => $ssh } } );
 }
 
 #  POST /system/ssh
@@ -49,13 +49,13 @@ sub set_ssh
 
 	if ( $param_msg )
 	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
 	if ( !&getValidFormat( "port", $json_obj->{ 'port' } ) )
 	{
 		my $msg = "Port hasn't a correct format.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# check if listen exists
@@ -71,7 +71,7 @@ sub set_ssh
 				if ( $iface->{ vini } ne '' )    # discard virtual interfaces
 				{
 					my $msg = "Virtual interface canot be configurate as http interface.";
-					&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+					return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 				}
 
 				$flag = 1;
@@ -82,7 +82,7 @@ sub set_ssh
 		unless ( $flag )
 		{
 			my $msg = "Ip $json_obj->{ 'listen' } not found in system.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -90,11 +90,11 @@ sub set_ssh
 	if ( $error )
 	{
 		my $msg = "There was a error modifying ssh.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	my $dns = &getSsh();
-	&httpResponse( { code => 200, body => { description => $desc, params => $dns } } );
+	return &httpResponse( { code => 200, body => { description => $desc, params => $dns } } );
 }
 
 1;
