@@ -1035,6 +1035,8 @@ Returns:
 
 sub getVirtualInterfaceNameList
 {
+	require Zevenet::Validate;
+
 	opendir ( my $conf_dir, &getGlobalConfiguration( 'configdir' ) );
 	my $virt_if_re = &getValidFormat( 'virt_interface' );
 
@@ -1068,7 +1070,6 @@ sub getLinkNameList
 
 	return @if_list;
 }
-
 
 =begin nd
 Function: getIpAddressExists

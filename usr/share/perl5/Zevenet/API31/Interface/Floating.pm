@@ -23,7 +23,7 @@
 
 use strict;
 
-sub delete_interface_floating # ( $floating )
+sub delete_interface_floating    # ( $floating )
 {
 	my $floating = shift;
 
@@ -35,14 +35,14 @@ sub delete_interface_floating # ( $floating )
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
 	# validate BOND
-	unless ( $float_ifaces_conf->{_}->{ $floating } )
+	unless ( $float_ifaces_conf->{ _ }->{ $floating } )
 	{
 		my $msg = "Floating interface not found";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	eval {
-		delete $float_ifaces_conf->{_}->{ $floating };
+		delete $float_ifaces_conf->{ _ }->{ $floating };
 
 		&setConfigTiny( $floatfile, $float_ifaces_conf ) or die;
 
@@ -63,11 +63,11 @@ sub delete_interface_floating # ( $floating )
 				 message     => $message,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # address or interface
-sub modify_interface_floating # ( $json_obj, $floating )
+sub modify_interface_floating    # ( $json_obj, $floating )
 {
 	my $json_obj  = shift;
 	my $interface = shift;
@@ -78,7 +78,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 
 	my $desc = "Modify floating interface";
 
-	if ( grep { $_ ne 'floating_ip' } keys %{$json_obj} )
+	if ( grep { $_ ne 'floating_ip' } keys %{ $json_obj } )
 	{
 		my $msg = "Parameter not recognized";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -104,14 +104,19 @@ sub modify_interface_floating # ( $json_obj, $floating )
 	if ( exists $json_obj->{ floating_ip } )
 	{
 		# validate ADDRESS format
-		unless ( $json_obj->{ floating_ip } && &getValidFormat( 'IPv4_addr', $json_obj->{ floating_ip } ) )
+		require Zevenet::Validate;
+		unless (    $json_obj->{ floating_ip }
+				 && &getValidFormat( 'IPv4_addr', $json_obj->{ floating_ip } ) )
 		{
 			my $msg = "Invalid floating address format";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		my @interfaces = &getInterfaceTypeList( 'virtual' );
-		( $if_ref ) = grep { $json_obj->{ floating_ip } eq $_->{ addr } && $_->{ parent } eq $interface } @interfaces;
+		( $if_ref ) = grep
+		{
+			$json_obj->{ floating_ip } eq $_->{ addr } && $_->{ parent } eq $interface
+		} @interfaces;
 
 		# validate ADDRESS in system
 		unless ( $if_ref )
@@ -122,7 +127,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 	}
 
 	eval {
-		my $floatfile = &getGlobalConfiguration('floatfile');
+		my $floatfile         = &getGlobalConfiguration( 'floatfile' );
 		my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
 		$float_ifaces_conf->{ _ }->{ $interface } = $if_ref->{ name };
@@ -146,7 +151,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 				 message     => $message
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 sub get_interfaces_floating
@@ -171,7 +176,7 @@ sub get_interfaces_floating
 		my $floating_ip        = undef;
 		my $floating_interface = undef;
 
-		if ( $float_ifaces_conf->{_}->{ $iface->{ name } } )
+		if ( $float_ifaces_conf->{ _ }->{ $iface->{ name } } )
 		{
 			$floating_interface = $float_ifaces_conf->{ _ }->{ $iface->{ name } };
 			my $if_ref = &getInterfaceConfig( $floating_interface );
@@ -191,7 +196,7 @@ sub get_interfaces_floating
 				 params      => \@output,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 sub get_floating
@@ -226,9 +231,9 @@ sub get_floating
 
 		$floating_ip = undef;
 
-		if ( $float_ifaces_conf->{_}->{ $iface->{ name } } )
+		if ( $float_ifaces_conf->{ _ }->{ $iface->{ name } } )
 		{
-			$floating_interface = $float_ifaces_conf->{_}->{ $iface->{ name } };
+			$floating_interface = $float_ifaces_conf->{ _ }->{ $iface->{ name } };
 			my $if_ref = &getInterfaceConfig( $floating_interface );
 			$floating_ip = $if_ref->{ addr };
 		}
@@ -245,7 +250,7 @@ sub get_floating
 				 params      => $output,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;
