@@ -36,10 +36,10 @@ Returns:
 
 	Example:
 
-	$ssh = {
-			'port'   => 22,
-			'listen' => "*",
-	};
+	{
+		'port'   => 22,
+		'listen' => "*",
+	}
 
 See Also:
 	zapi/v3/system.cgi, dos.cgi
