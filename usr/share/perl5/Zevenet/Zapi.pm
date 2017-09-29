@@ -113,6 +113,7 @@ sub setZAPI    #($name,$value)
 	#Set Random key for zapi
 	if ( $name eq "randomkey" )
 	{
+		require Tie::File;
 		my $random = &setZAPIKey( 64 );
 		tie my @contents, 'Tie::File', "$globalcfg";
 		foreach my $line ( @contents )
