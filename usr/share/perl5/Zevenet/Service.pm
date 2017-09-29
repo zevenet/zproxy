@@ -287,6 +287,7 @@ sub enable_cluster
 	# disable ip announcement if the node is not master
 	if ( $local_node_status ne 'master' )
 	{
+		require Zevenet::Net::Interface;
 		my @configured_interfaces = @{ &getConfigInterfaceList() };
 
 		foreach my $iface ( @configured_interfaces )
