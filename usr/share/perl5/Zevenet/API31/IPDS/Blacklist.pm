@@ -857,6 +857,7 @@ sub del_blacklists_from_farm
 	my $listName = shift;
 
 	require Zevenet::IPDS::Blacklist::Runtime;
+	require Zevenet::Farm::Core;
 
 	my $desc = "Unset the blacklist $listName from the farm $farmName";
 

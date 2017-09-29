@@ -741,6 +741,7 @@ sub del_rbl_from_farm
 	my $name     = shift;
 
 	require Zevenet::IPDS::RBL::Config;
+	require Zevenet::Farm::Core;
 
 	my $desc = "Delete the RBL rule $name from the farm $farmName";
 
