@@ -147,12 +147,13 @@ sub add_blacklists_list
 	my $listHash = &getBLParam( $listName );
 	delete $listHash->{ 'source' };
 
-	return &httpResponse(
-				   {
-					 code => 200,
-					 body => { description => $desc, params => $listHash }
-				   }
-	);
+	return
+	  &httpResponse(
+					 {
+					   code => 200,
+					   body => { description => $desc, params => $listHash }
+					 }
+	  );
 }
 
 #  PUT /ipds/blacklists/<listname>
@@ -189,7 +190,8 @@ sub set_blacklists_list
 	}
 
 	# check not allowed actions on preloaded BL
-	if ( &getBLParam( $listName, 'preload' ) eq 'true' )
+	if (    &getBLParam( $listName, 'preload' ) eq 'true'
+		 && &getBLParam( $listName, 'type' ) eq 'local' )
 	{
 		my $param_msg = &getValidOptParams( $json_obj, ["policy"] );
 
@@ -421,8 +423,9 @@ sub set_blacklists_list
 		}
 	}
 
-	if ( $cronFlag && @{ &getBLParam( $listName, 'farms' ) } )
+	if ( $cronFlag && &getBLParam( $listName, 'status' ) eq 'up' )
 	{
+		require Zevenet::IPDS::Blacklist::Runtime;
 		&setBLCronTask( $listName );
 	}
 
@@ -586,9 +589,9 @@ sub update_remote_blacklists
 				 description => $desc,
 				 success     => "true",
 				 params      => {
-					"action" => "update",
-					"update_status" => $statusUpd,
-				}
+							 "action"        => "update",
+							 "update_status" => $statusUpd,
+				 }
 	};
 
 	return &httpResponse( { code => 200, body => $body } );
@@ -884,7 +887,7 @@ sub del_blacklists_from_farm
 	if ( &getBLParam( $listName, "type" ) eq "local" )
 	{
 		&setBLParam( $listName, 'status', "down" )
-			if ( ! @{ &getBLParam( $listName, 'farms' ) } );
+		  if ( !@{ &getBLParam( $listName, 'farms' ) } );
 	}
 
 	if ( $error )
