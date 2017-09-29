@@ -165,7 +165,8 @@ sub setSsh
 
 	# restart service to apply changes
 	require Zevenet::IPDS::DoS::Config;
-	$output = system ( &getGlobalConfiguration( 'sshService' ) . " restart" );
+	my $cmd = &getGlobalConfiguration( 'sshService' ) . " restart";
+	$output = &logAndRun ( $cmd );
 	&setDOSParam( 'ssh_brute_force', 'port', $sshConf->{ 'port' } );
 
 	# restart sshbruteforce ipds rule if this is actived
