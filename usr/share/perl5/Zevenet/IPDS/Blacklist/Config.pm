@@ -247,7 +247,7 @@ sub setBLAddPreloadLists
 			# Download lists if not exists
 			if ( !-f "$blacklistsPath/$list.txt" )
 			{
-				system ( "$touch $blacklistsPath/$list.txt 2>/dev/null" );
+				system ( "$touch $blacklistsPath/$list.txt &>/dev/null" );
 			}
 			&zenlog( "The preload list '$list' was updated." );
 		}
