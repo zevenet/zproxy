@@ -292,7 +292,7 @@ sub enable_cluster
 
 		foreach my $iface ( @configured_interfaces )
 		{
-			next if ( $$iface{ vini } eq '' );
+			next if ( !defined $$iface{ vini } ||  $$iface{ vini } eq '');
 			next if ( $$iface{ status } ne "up" );
 
 			&disableInterfaceDiscovery( $iface );
