@@ -337,7 +337,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	# Functions
 	if ( exists ( $json_obj->{ rname } ) )
 	{
-		if ( &getValidFormat( 'resource_name', $json_obj->{ rname } ) )
+		if ( ! &getValidFormat( 'resource_name', $json_obj->{ rname } ) )
 		{
 			my $msg = "Invalid rname, can't be blank.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
