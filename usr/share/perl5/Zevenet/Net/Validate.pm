@@ -254,20 +254,19 @@ sub ifexist    # ($nif)
 
 	for my $if ( @interfaces )
 	{
-		if ( $if eq $nif )
+		next if $if ne $nif;
+
+		my $flags = $s->if_flags( $if );
+
+		if   ( $flags & IFF_RUNNING ) { $status = "up"; }
+		else                          { $status = "down"; }
+
+		if ( $status eq "up" || -e "$configdir/if_$nif\_conf" )
 		{
-			my $flags = $s->if_flags( $if );
-
-			if   ( $flags & IFF_RUNNING ) { $status = "up"; }
-			else                          { $status = "down"; }
-
-			if ( $status eq "up" || -e "$configdir/if_$nif\_conf" )
-			{
-				return "true";
-			}
-
-			return "created";
+			return "true";
 		}
+
+		return "created";
 	}
 
 	return "false";

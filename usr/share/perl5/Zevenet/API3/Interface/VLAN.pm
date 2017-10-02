@@ -55,7 +55,7 @@ sub new_vlan # ( $json_obj )
 	# validate PARENT
 	require Zevenet::Net::Validate;
 	my $parent_exist = &ifexist($json_obj->{ parent });
-	unless ( $parent_exist eq "true" )
+	unless ( $parent_exist eq "true" || $parent_exist eq "created" )
 	{
 		# Error
 		my $errormsg = "The parent interface $json_obj->{ parent } doesn't exist";
@@ -218,6 +218,7 @@ sub new_vlan # ( $json_obj )
 	require Zevenet::Net::Route;
 	require Zevenet::Net::Interface;
 	eval {
+		&zenlog("new_vlan: $if_ref->{name}");
 		die if &createIf( $if_ref );
 		die if &addIp( $if_ref );
 		&writeRoutes( $if_ref->{name} );

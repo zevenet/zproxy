@@ -52,7 +52,12 @@ sub createIf    # ($if_ref)
 
 		# enable the parent physical interface
 		my $parent_if = &getInterfaceConfig( $$if_ref{ dev }, $$if_ref{ ip_v } );
-		$status = &upIf( $parent_if, 'writeconf' );
+		$parent_if = &getSystemInterface( $$if_ref{ dev }, $$if_ref{ ip_v } ) unless $parent_if;
+
+		if ( $parent_if->{ status } eq 'down' )
+		{
+			$status = &upIf( $parent_if, 'writeconf' );
+		}
 
 		my $ip_cmd =
 		  "$ip_bin link add link $$if_ref{dev} name $$if_ref{name} type vlan id $$if_ref{vlan}";
@@ -108,6 +113,12 @@ sub upIf    # ($if_ref, $writeconf)
 
 			unshift ( @if_lines, 'status=up' ) if !$found;
 			untie @if_lines;
+		}
+		else
+		{
+			open( my $fh, '>', $file );
+			print { $fh } "status=up\n";
+			close $fh;
 		}
 	}
 
