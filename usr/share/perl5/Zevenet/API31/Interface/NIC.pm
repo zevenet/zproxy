@@ -239,7 +239,7 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 		}
 		else
 		{
-			my $msg = "The interface could not be set UP";
+			my $msg = "The interface $nic could not be set UP";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -251,7 +251,7 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 
 		if ( $state )
 		{
-			my $msg = "The interface could not be set DOWN";
+			my $msg = "The interface $nic could not be set DOWN";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}

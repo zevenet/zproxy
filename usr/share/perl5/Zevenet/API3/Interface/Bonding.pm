@@ -621,7 +621,7 @@ sub actions_interface_bond # ( $json_obj, $bond )
 		else
 		{
 			# Error
-			my $errormsg = "The interface could not be set UP";
+			my $errormsg = "The interface $bond could not be set UP";
 			my $body = {
 						 description => $description,
 						 error       => "true",
@@ -638,7 +638,7 @@ sub actions_interface_bond # ( $json_obj, $bond )
 		if ( $state )
 		{
 			# Error
-			my $errormsg = "The interface could not be set UP";
+			my $errormsg = "The interface $bond could not be set UP";
 			my $body = {
 						 description => $description,
 						 error       => "true",

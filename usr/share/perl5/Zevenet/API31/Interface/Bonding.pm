@@ -510,7 +510,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 		}
 		else
 		{
-			my $msg = "The interface could not be set UP";
+			my $msg = "The interface $bond could not be set UP";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -520,7 +520,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 
 		if ( $state )
 		{
-			my $msg = "The interface could not be set UP";
+			my $msg = "The interface $bond could not be set UP";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}

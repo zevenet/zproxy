@@ -269,7 +269,7 @@ sub actions_interface_nic # ( $json_obj, $nic )
 		else
 		{
 			# Error
-			my $errormsg = "The interface could not be set UP";
+			my $errormsg = "The interface $nic could not be set UP";
 			my $body = {
 						 description => $description,
 						 error       => "true",
@@ -288,7 +288,7 @@ sub actions_interface_nic # ( $json_obj, $nic )
 		if ( $state )
 		{
 			# Error
-			my $errormsg = "The interface could not be set DOWN";
+			my $errormsg = "The interface $nic could not be set DOWN";
 			my $body = {
 						 description => $description,
 						 error       => "true",

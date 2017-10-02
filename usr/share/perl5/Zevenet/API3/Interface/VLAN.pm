@@ -524,7 +524,7 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 		else
 		{
 			# Error
-			my $errormsg = "The interface could not be set UP";
+			my $errormsg = "The interface $if_ref->{ name } could not be set UP";
 			my $body = {
 						 description => $description,
 						 error       => "true",

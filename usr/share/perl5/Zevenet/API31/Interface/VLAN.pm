@@ -430,7 +430,7 @@ sub actions_interface_vlan    # ( $json_obj, $vlan )
 		}
 		else
 		{
-			my $msg = "The interface could not be set UP";
+			my $msg = "The interface $if_ref->{ name } could not be set UP";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
