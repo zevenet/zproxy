@@ -398,15 +398,15 @@ if ( $action eq "start" )
 					&writeRoutes( $$iface{ name } );
 
 					&applyRoutes( "local", $iface );
-				}
 
-				if ( $return_code == 0 )
-				{
-					print ( " \033[1;32m OK \033[0m \n" );
-				}
-				else
-				{
-					print ( " \033[1;31m ERROR \033[0m \n" );
+					if ( $return_code == 0 )
+					{
+						print ( " \033[1;32m OK \033[0m \n" );
+					}
+					else
+					{
+						print ( " \033[1;31m ERROR \033[0m \n" );
+					}
 				}
 
 				if ( $$iface{ ip_v } == 4 )
