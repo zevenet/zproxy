@@ -122,7 +122,7 @@ sub closelock    # ($filehandle)
 }
 
 =begin nd
-Function: tielock
+Function: ztielock
 
 	tie aperture with lock
 
@@ -144,14 +144,15 @@ Returns:
 Bugs:
 	Not used yet.
 =cut
-sub tielock    # ($file_name)
+sub ztielock    # ($file_name)
 {
+	my $array_ref = shift;    #parameters
 	my $file_name = shift;    #parameters
 
-	my $o = tie my @array, "Tie::File", $file_name;
-	$o->flock;
+	require Tie::File;
 
-	return \@array;
+	my $o = tie @{ $array_ref }, "Tie::File", $file_name;
+	$o->flock;
 }
 
 =begin nd
