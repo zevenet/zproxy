@@ -147,6 +147,11 @@ if [ -f /usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl ]; then
 	/usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl
 fi
 
+# Disable DNS resolution for SSH service
+if [ -f /usr/local/zevenet/app/zbin/ssh_nodns.sh ]; then
+        /usr/local/zevenet/app/zbin/ssh_nodns.sh
+fi
+
 # Create IPDS directories
 /usr/local/zevenet/app/zbin/boot_ipds.pl
 
