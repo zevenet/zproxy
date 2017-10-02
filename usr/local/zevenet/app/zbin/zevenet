@@ -365,7 +365,7 @@ if ( $action eq "start" )
 	&zenlog("zevenet: Setting up NIC and Bonding interfaces...");
 
 	# first real interfaces
-	foreach my $iface ( @interfaces )
+	foreach my $iface ( &getInterfaceTypeList('nic'), &getInterfaceTypeList('bond') )
 	{
 		#interfaces as eth0 for example
 		if ( $$iface{ name } eq $$iface{ dev } )
@@ -374,27 +374,31 @@ if ( $action eq "start" )
 
 			if ( $$iface{ status } eq "up" )
 			{
-				print ( "  * Starting interface $$iface{name}\n" );
-				print ( "    Ip:$$iface{addr} Netmask:$$iface{mask}" );
-
-				if ( $$iface{ gateway } )
-				{
-					print ( " Gateway:$$iface{gateway}" );
-				}
-
+				print( "  * Starting interface $$iface{name}" );
 				&upIf( $iface );
-				my $return_code = &addIp( $iface );
 
-				if ( $return_code )
+				if ( exists $$iface{ addr } && length $$iface{ addr } )
 				{
-					my @ip_output = `$ip_bin address show dev $$iface{name}`;
-					$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
+					print( "\n    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+
+					if ( $$iface{ gateway } ne '' )
+					{
+						print( " Gateway:$$iface{gateway}" );
+					}
+
+					my $return_code = &addIp( $iface );
+
+					if ( $return_code )
+					{
+						my @ip_output = `$ip_bin address show dev $$iface{name}`;
+						$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
+					}
+
+					# kept in case it is required for first interface
+					&writeRoutes( $$iface{ name } );
+
+					&applyRoutes( "local", $iface );
 				}
-
-				# kept in case it is required for first interface
-				&writeRoutes( $$iface{ name } );
-
-				&applyRoutes( "local", $iface );
 
 				if ( $return_code == 0 )
 				{
