@@ -466,26 +466,29 @@ sub getParentInterfaceName    # ($if_name)
 	my $if_ref = &getDevVlanVini( $if_name );
 	my $parent_if_name;
 
+	my $is_vlan = defined $if_ref->{ vlan } && length $if_ref->{ vlan };
+	my $is_virtual = defined $if_ref->{ vini } && length $if_ref->{ vini };
+
 	# child interface: eth0.100:virtual => eth0.100
-	if ( $if_ref->{ vini } && $if_ref->{ vlan } )
+	if ( $is_virtual && $is_vlan )
 	{
 		$parent_if_name = "$$if_ref{dev}.$$if_ref{vlan}";
 	}
 
 	# child interface: eth0:virtual => eth0
-	elsif ( $if_ref->{ vini } && !$if_ref->{ vlan } )
+	elsif ( $is_virtual && !$is_vlan )
 	{
 		$parent_if_name = $if_ref->{ dev };
 	}
 
 	# child interface: eth0.100 => eth0
-	elsif ( !$if_ref->{ vini } && $if_ref->{ vlan } )
+	elsif ( !$is_virtual && $is_vlan )
 	{
 		$parent_if_name = $if_ref->{ dev };
 	}
 
 	# child interface: eth0 => undef
-	elsif ( !$if_ref->{ vini } && !$if_ref->{ vlan } )
+	elsif ( !$is_virtual && !$is_vlan )
 	{
 		$parent_if_name = undef;
 	}
