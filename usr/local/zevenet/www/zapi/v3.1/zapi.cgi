@@ -98,6 +98,16 @@ unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
 #~ logNewModules("After authentication");
 
 
+##### Activation certificates ########################################
+require Zevenet::Certificate::Activation;
+#~ logNewModules("With Zevenet::Certificate::Activation");
+
+require Zevenet::API31::Routes::Activation if ( $q->path_info eq '/certificates/activation' );
+
+# Check activation certificate
+&checkActivationCertificate();
+
+
 ##### Load API routes ################################################
 require Zevenet::API31::Routes;
 
