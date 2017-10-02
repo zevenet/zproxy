@@ -242,6 +242,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	}
 
 	# insert the save rule, then insert on top the restore rule
+	# WARNING: Set Connmark rules BEFORE getting the farm rules or Connmark rules will be misplaced
 	&setIptConnmarkSave( $farm_name, 'true' );
 	&setIptConnmarkRestore( $farm_name, 'true' );
 
