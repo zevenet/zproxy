@@ -486,7 +486,8 @@ sub setBLAddToList
 
 	if ( -f "$blacklistsPath/$listName.txt" )
 	{
-		tie my @list, 'Tie::File', "$blacklistsPath/$listName.txt";
+		require Zevenet::Lock;
+		&ztielock ( \my @list, "$blacklistsPath/$listName.txt" );
 		@list = @ipList;
 		untie @list;
 		&zenlog( "IPs of '$listName' was modificated." );
@@ -517,7 +518,8 @@ sub setBLAddSource
 	my $policy         = &getBLParam( $listName, 'policy' );
 	my $error;
 
-	tie my @list, 'Tie::File', "$blacklistsPath/$listName.txt";
+	require Zevenet::Lock;
+	&ztielock ( \my @list, "$blacklistsPath/$listName.txt" );
 	push @list, $source;
 	untie @list;
 
@@ -564,7 +566,8 @@ sub setBLModifSource
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $err;
 
-	tie my @list, 'Tie::File', "$blacklistsPath/$listName.txt";
+	require Zevenet::Lock;
+	&ztielock ( \my @list, "$blacklistsPath/$listName.txt" );
 	my $oldSource = splice @list, $id, 1, $source;
 	untie @list;
 
@@ -602,7 +605,8 @@ sub setBLDeleteSource
 	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $err;
 
-	tie my @list, 'Tie::File', "$blacklistsPath/$listName.txt";
+	require Zevenet::Lock;
+	&ztielock ( \my @list, "$blacklistsPath/$listName.txt" );
 	my $source = splice @list, $id, 1;
 	untie @list;
 

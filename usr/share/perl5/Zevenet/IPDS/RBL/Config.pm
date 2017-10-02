@@ -265,7 +265,8 @@ sub addRBLDomains
 {
 	my $new_domain = shift;
 
-	tie my @domains, 'Tie::File', $userDomainsFile;
+	require Zevenet::Lock;
+	&ztielock ( \my @domains, "$userDomainsFile" );
 	push @domains, $new_domain;
 	untie @domains;
 }
@@ -313,7 +314,9 @@ sub delRBLDomains
 	my $error  = -1;
 	my $it     = 0;
 
-	tie my @domains, 'Tie::File', $userDomainsFile;
+	require Zevenet::Lock;
+	&ztielock ( \my @domains, "$userDomainsFile" );
+
 	foreach my $item ( @domains )
 	{
 		if ( $item =~ /^$domain$/ )

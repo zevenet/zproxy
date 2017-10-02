@@ -174,15 +174,15 @@ sub setBLRefreshList
 	if ( !$output )
 	{
 		require Tie::File;
+		require Zevenet::Lock;
+		my $tmp_list = "/tmp/tmp_blacklist.txt";
+		&ztielock ( \my @list_tmp, $tmp_list );
 
 		grep ( s/($source_re)/add $listName $1/, @ipList );
-
-		my $tmp_list = "/tmp/tmp_blacklist.txt";
 		my $touch    = &getGlobalConfiguration( 'touch' );
 
 		system ( "$touch $tmp_list >/dev/null 2>&1" );
 
-		tie my @list_tmp, 'Tie::File', $tmp_list;
 		@list_tmp = @ipList;
 		untie @list_tmp;
 
@@ -294,7 +294,8 @@ sub setBLDownloadRemoteList
 		my $path     = &getGlobalConfiguration( 'blacklistsPath' );
 		my $fileList = "$path/$listName.txt";
 
-		tie my @list, 'Tie::File', $fileList;
+		require Zevenet::Lock;
+		&ztielock ( \my @list, $fileList );
 		@list = @ipList;
 		untie @list;
 
@@ -498,7 +499,8 @@ sub delBLCronTask
 	my $blacklistsCronFile = &getGlobalConfiguration( 'blacklistsCronFile' );
 	my $index              = 0;
 
-	tie my @list, 'Tie::File', $blacklistsCronFile;
+	require Zevenet::Lock;
+	&ztielock ( \my @list, $blacklistsCronFile );
 
 	foreach my $line ( @list )
 	{
@@ -586,7 +588,8 @@ sub setBLCronTask
 	  . "root\t/usr/local/zevenet/www/ipds/blacklists/updateRemoteList.pl $listName & >/dev/null 2>&1";
 	&zenlog( "Added cron task: $cmd" );
 
-	tie my @list, 'Tie::File', $blacklistsCronFile;
+	require Zevenet::Lock;
+	&ztielock ( \my @list, $blacklistsCronFile );
 
 	# this line already exists, replace it
 	if ( grep ( s/.* $listName .*/$cmd/, @list ) )
