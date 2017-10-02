@@ -1101,4 +1101,39 @@ sub getIpAddressExists
 	return $output;
 }
 
+sub getInterfaceChild
+{
+	my $if_name = shift;
+	my @output  = ();
+	my $if_ref  = &getInterfaceConfig( $if_name );
+
+	# show floating interfaces used by this virtual interface
+	if ( $if_ref->{ 'type' } eq 'virtual' )
+	{
+		require Config::Tiny;
+		my $float = Config::Tiny->read( &getGlobalConfiguration( 'floatfile' ) );
+
+		foreach my $iface ( keys %{ $float->{ _ } } )
+		{
+			push @output, $iface if ( $float->{ _ }->{ $iface } eq $if_name );
+		}
+	}
+
+	# the other type of interfaces can have virtual interfaces as child
+	# vlan, bond and nic
+	else
+	{
+		push @output, grep ( /^$if_name:/, &getVirtualInterfaceNameList() );
+
+		# look for vlan
+		# if ( ( $if_ref->{ 'type' } eq 'bond' ) ||
+		# 	( $if_ref->{ 'type' } eq 'nic' ) )
+		# {
+		# 	push @output, grep( /^$if_name\./, &getLinkNameList() );
+		# }
+	}
+
+	return @output;
+}
+
 1;

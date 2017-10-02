@@ -138,7 +138,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		&reloadL4FarmsSNAT();
 	};
 
-	unless ( $@ )
+	if ( $@ )
 	{
 		my $msg = "Floating interface modification failed";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );

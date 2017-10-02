@@ -24,14 +24,14 @@
 use strict;
 
 # POST /addvini/<interface> Create a new virtual network interface
-sub new_vini # ( $json_obj )
+sub new_vini    # ( $json_obj )
 {
 	my $json_obj = shift;
 
 	my $desc = "Add a virtual interface";
 
-	my $nic_re = &getValidFormat( 'nic_interface' );
-	my $vlan_re = &getValidFormat( 'vlan_interface' );
+	my $nic_re         = &getValidFormat( 'nic_interface' );
+	my $vlan_re        = &getValidFormat( 'vlan_interface' );
 	my $virtual_tag_re = &getValidFormat( 'virtual_tag' );
 
 	unless ( $json_obj->{ name } =~ /^($nic_re|$vlan_re):($virtual_tag_re)$/ )
@@ -49,7 +49,8 @@ sub new_vini # ( $json_obj )
 	$json_obj->{ vlan } = $2;
 
 	# validate IP
-	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+	unless ( defined ( $json_obj->{ ip } )
+			 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 	{
 		my $msg = "IP Address is not valid.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -61,17 +62,18 @@ sub new_vini # ( $json_obj )
 	# validate PARENT
 	# virtual interfaces require a configured parent interface
 	my $parent_exist = &ifexist( $json_obj->{ parent } );
-	my $if_parent = &getInterfaceConfig( $json_obj->{ parent }, $json_obj->{ ip_v } );
+	my $if_parent =
+	  &getInterfaceConfig( $json_obj->{ parent }, $json_obj->{ ip_v } );
 	unless ( $parent_exist eq "true" && $if_parent )
 	{
 		my $msg = "The parent interface $json_obj->{ parent } doesn't exist.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	
+
 	# Check network interface errors
 	# A virtual interface cannnot exist in two stacks
 	my $if_ref = &getInterfaceConfig( $json_obj->{ name }, $json_obj->{ ip_v } );
-	
+
 	if ( $if_ref )
 	{
 		my $msg = "Network interface $json_obj->{ name } already exists.";
@@ -95,17 +97,18 @@ sub new_vini # ( $json_obj )
 	# setup parameters of virtual interface
 	$if_ref = &getInterfaceConfig( $json_obj->{ parent }, $json_obj->{ ip_v } );
 
-	$if_ref->{ status } = &getInterfaceSystemStatus( $json_obj );
-	$if_ref->{ name } = $json_obj->{ name };
-	$if_ref->{ vini } = $json_obj->{ vini };
-	$if_ref->{ addr } = $json_obj->{ ip };
-	$if_ref->{ gateway } = "" if ! $if_ref->{ gateway };
-	$if_ref->{ type } = 'virtual';
+	$if_ref->{ status }  = &getInterfaceSystemStatus( $json_obj );
+	$if_ref->{ name }    = $json_obj->{ name };
+	$if_ref->{ vini }    = $json_obj->{ vini };
+	$if_ref->{ addr }    = $json_obj->{ ip };
+	$if_ref->{ gateway } = "" if !$if_ref->{ gateway };
+	$if_ref->{ type }    = 'virtual';
 
-	unless ( &getNetValidate($if_parent->{ addr }, $if_ref->{ mask }, $if_ref->{ addr }) )
+	unless (
+		 &getNetValidate( $if_parent->{ addr }, $if_ref->{ mask }, $if_ref->{ addr } ) )
 	{
 		my $msg =
-  "IP Address $json_obj->{ip} must be same net than the parent interface.";
+		  "IP Address $json_obj->{ip} must be same net than the parent interface.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -151,19 +154,28 @@ sub new_vini # ( $json_obj )
 	&httpResponse( { code => 201, body => $body } );
 }
 
-sub delete_interface_virtual # ( $virtual )
+sub delete_interface_virtual    # ( $virtual )
 {
 	my $virtual = shift;
 
 	require Zevenet::Net::Interface;
 
-	my $desc = "Delete virtual interface";
-	my $ip_v = 4;
+	my $desc   = "Delete virtual interface";
+	my $ip_v   = 4;
 	my $if_ref = &getInterfaceConfig( $virtual, $ip_v );
 
 	if ( !$if_ref )
 	{
 		my $msg = "The virtual interface $virtual doesn't exist.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my @child = &getInterfaceChild( $virtual );
+	if ( @child )
+	{
+		my $child_string = join ( ', ', @child );
+		my $msg =
+		  "Before of removing $virtual interface, disable the floating IPs: $child_string.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -184,7 +196,7 @@ sub delete_interface_virtual # ( $virtual )
 
 	if ( eval { require Zevenet::Cluster; } )
 	{
-		&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
+		&runZClusterRemoteManager( 'interface', 'stop',   $if_ref->{ name } );
 		&runZClusterRemoteManager( 'interface', 'delete', $if_ref->{ name } );
 	}
 
@@ -195,10 +207,10 @@ sub delete_interface_virtual # ( $virtual )
 				 message     => $message,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
-sub get_virtual_list # ()
+sub get_virtual_list    # ()
 {
 	require Zevenet::Net::Interface;
 
@@ -210,12 +222,12 @@ sub get_virtual_list # ()
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
 
 		# Any key must cotain a value or "" but can't be null
-		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		push @output_list,
 		  {
@@ -230,19 +242,19 @@ sub get_virtual_list # ()
 	}
 
 	my $body = {
-			description => $desc,
-			interfaces  => \@output_list,
-		};
+				 description => $desc,
+				 interfaces  => \@output_list,
+	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
-sub get_virtual # ()
+sub get_virtual    # ()
 {
 	my $virtual = shift;
 
 	my $desc = "Show virtual interface $virtual";
-	my $interface; # output
+	my $interface;    # output
 
 	require Zevenet::Net::Interface;
 
@@ -253,20 +265,20 @@ sub get_virtual # ()
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
 
 		# Any key must cotain a value or "" but can't be null
-		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		$interface = {
-			name    => $if_ref->{ name },
-			ip      => $if_ref->{ addr },
-			netmask => $if_ref->{ mask },
-			gateway => $if_ref->{ gateway },
-			status  => $if_ref->{ status },
-			mac     => $if_ref->{ mac },
+					   name    => $if_ref->{ name },
+					   ip      => $if_ref->{ addr },
+					   netmask => $if_ref->{ mask },
+					   gateway => $if_ref->{ gateway },
+					   status  => $if_ref->{ status },
+					   mac     => $if_ref->{ mac },
 		};
 	}
 
@@ -284,7 +296,7 @@ sub get_virtual # ()
 	&httpResponse( { code => 200, body => $body } );
 }
 
-sub actions_interface_virtual # ( $json_obj, $virtual )
+sub actions_interface_virtual    # ( $json_obj, $virtual )
 {
 	my $json_obj = shift;
 	my $virtual  = shift;
@@ -317,7 +329,7 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 		&addIp( $if_ref );
 
 		# Check the parent's status before up the interface
-		my $parent_if_name = &getParentInterfaceName( $if_ref->{name} );
+		my $parent_if_name   = &getParentInterfaceName( $if_ref->{ name } );
 		my $parent_if_status = 'up';
 
 		if ( $parent_if_name )
@@ -328,12 +340,13 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 
 		unless ( $parent_if_status eq 'up' )
 		{
-			my $msg = "The interface $if_ref->{name} has a parent interface DOWN, check the interfaces status";
+			my $msg =
+			  "The interface $if_ref->{name} has a parent interface DOWN, check the interfaces status";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		my $state = &upIf( $if_ref, 'writeconf' );
-		if ( ! $state )
+		if ( !$state )
 		{
 			require Zevenet::Net::Route;
 			&applyRoutes( "local", $if_ref );
@@ -349,7 +362,7 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 			&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
 		}
 	}
-	elsif ( $json_obj->{action} eq "down" )
+	elsif ( $json_obj->{ action } eq "down" )
 	{
 		require Zevenet::Net::Core;
 
@@ -374,13 +387,13 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 
 	my $body = {
 				 description => $desc,
-				 params      =>  { action => $json_obj->{ action } },
+				 params      => { action => $json_obj->{ action } },
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
-sub modify_interface_virtual # ( $json_obj, $virtual )
+sub modify_interface_virtual    # ( $json_obj, $virtual )
 {
 	my $json_obj = shift;
 	my $virtual  = shift;
@@ -388,10 +401,10 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 	require Zevenet::Net::Interface;
 	require Net::Netmask;
 
-	my $desc = "Modify virtual interface";
-	my $ip_v = 4;
+	my $desc   = "Modify virtual interface";
+	my $ip_v   = 4;
 	my $if_ref = &getInterfaceConfig( $virtual, $ip_v );
-	
+
 	my $msg;
 	my @allowParams = ( "ip" );
 
@@ -407,20 +420,30 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 	}
 
 	# Check address errors
-	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+	unless ( defined ( $json_obj->{ ip } )
+			 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 	{
 		$msg = "IP Address $json_obj->{ip} structure is not ok.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	require Zevenet::Net::Validate;
-	unless ( &getNetValidate($if_ref->{ gateway }, $if_ref->{ mask }, $json_obj->{ ip }) )
+	my @child = &getInterfaceChild( $virtual );
+	if ( @child )
 	{
-		$msg =
-  "IP Address $json_obj->{ip} must be same net than the father interface.";
+		my $child_string = join ( ', ', @child );
+		my $msg =
+		  "Before of modifying $virtual interface, disable the floating IPs: $child_string.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	
+
+	require Zevenet::Net::Validate;
+	unless (
+		 &getNetValidate( $if_ref->{ gateway }, $if_ref->{ mask }, $json_obj->{ ip } ) )
+	{
+		$msg = "IP Address $json_obj->{ip} must be same net than the father interface.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	require Zevenet::Net::Core;
 
 	my $state = $if_ref->{ 'status' };
@@ -436,14 +459,14 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 		#~ die if &delIp( $$if_ref{name}, $$if_ref{addr}, $$if_ref{mask} ) ;
 
 		# Set the new params
-		$if_ref->{addr} = $json_obj->{ip};
+		$if_ref->{ addr } = $json_obj->{ ip };
 
 		# Add new IP, netmask and gateway
 		die if &addIp( $if_ref );
 
 		if ( $state eq 'up' )
 		{
-			&upIf( $if_ref ) ;
+			&upIf( $if_ref );
 			&applyRoutes( "local", $if_ref );
 		}
 
@@ -466,7 +489,7 @@ sub modify_interface_virtual # ( $json_obj, $virtual )
 				 params      => $json_obj,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

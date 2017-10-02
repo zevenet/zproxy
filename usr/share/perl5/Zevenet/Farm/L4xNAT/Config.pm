@@ -1482,6 +1482,10 @@ FIXME:
 
 sub reloadL4FarmsSNAT
 {
+	require Zevenet::Farm::Core;
+	require Zevenet::Farm::Base;
+	require Zevenet::Netfilter;
+
 	for my $farm_name ( &getFarmNameList() )
 	{
 		my $farm_type = &getFarmType( $farm_name );

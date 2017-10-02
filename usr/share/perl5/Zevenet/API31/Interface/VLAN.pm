@@ -24,7 +24,7 @@
 use strict;
 
 #  POST /addvlan/<interface> Create a new vlan network interface
-sub new_vlan # ( $json_obj )
+sub new_vlan    # ( $json_obj )
 {
 	my $json_obj = shift;
 
@@ -45,9 +45,9 @@ sub new_vlan # ( $json_obj )
 
 	$json_obj->{ parent } = $1;
 	$json_obj->{ tag }    = $2;
-	
+
 	# validate PARENT
-	my $parent_exist = &ifexist($json_obj->{ parent });
+	my $parent_exist = &ifexist( $json_obj->{ parent } );
 
 	unless ( $parent_exist eq "true" )
 	{
@@ -81,7 +81,8 @@ sub new_vlan # ( $json_obj )
 	}
 
 	# validate IP
-	unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+	unless ( defined ( $json_obj->{ ip } )
+			 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 	{
 		my $msg = "IP Address is not valid.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -112,21 +113,26 @@ sub new_vlan # ( $json_obj )
 	}
 
 	# Check netmask errors
-	if ( $json_obj->{ ip_v } == 4 && ($json_obj->{ netmask } == undef || ! &getValidFormat( 'IPv4_mask', $json_obj->{ ip } )) )
+	if (
+		 $json_obj->{ ip_v } == 4
+		 && ( $json_obj->{ netmask } == undef
+			  || !&getValidFormat( 'IPv4_mask', $json_obj->{ ip } ) )
+	  )
 	{
 		my $msg = "Netmask parameter not valid";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	## Check netmask errors for IPv6
-	#if ( $json_obj->{ ip_v } == 6 && ( $json_obj->{netmask} !~ /^\d+$/ || $json_obj->{netmask} > 128 || $json_obj->{netmask} < 0 ) )
-	#{
-    #	my $msg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric [0-128].";
-	#	&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	#}
-	
+#if ( $json_obj->{ ip_v } == 6 && ( $json_obj->{netmask} !~ /^\d+$/ || $json_obj->{netmask} > 128 || $json_obj->{netmask} < 0 ) )
+#{
+#	my $msg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric [0-128].";
+#	&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+#}
+
 	# Check gateway errors
-	unless ( ! defined( $json_obj->{ gateway } ) || &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) )
+	unless ( !defined ( $json_obj->{ gateway } )
+			 || &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) )
 	{
 		my $msg = "Gateway Address $json_obj->{gateway} structure is not ok.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -147,11 +153,10 @@ sub new_vlan # ( $json_obj )
 				mac     => $socket->if_hwaddr( $if_ref->{ dev } ),
 	};
 
-
 	if ( $if_ref->{ gateway } )
 	{
 		unless (
-		&getNetValidate( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ gateway } ) )
+			 &getNetValidate( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ gateway } ) )
 		{
 			my $msg = "The gateway is not valid for the network.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -165,13 +170,13 @@ sub new_vlan # ( $json_obj )
 	eval {
 		die if &createIf( $if_ref );
 		die if &addIp( $if_ref );
-		&writeRoutes( $if_ref->{name} );
+		&writeRoutes( $if_ref->{ name } );
 
 		my $state = &upIf( $if_ref, 'writeconf' );
 
 		if ( $state == 0 )
 		{
-			$if_ref->{status} = "up";
+			$if_ref->{ status } = "up";
 			&applyRoutes( "local", $if_ref );
 		}
 
@@ -195,10 +200,10 @@ sub new_vlan # ( $json_obj )
 				 },
 	};
 
-	&httpResponse({ code => 201, body => $body });
+	&httpResponse( { code => 201, body => $body } );
 }
 
-sub delete_interface_vlan # ( $vlan )
+sub delete_interface_vlan    # ( $vlan )
 {
 	my $vlan = shift;
 
@@ -213,6 +218,15 @@ sub delete_interface_vlan # ( $vlan )
 	if ( !$if_ref )
 	{
 		my $msg = "The VLAN interface $vlan doesn't exist.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my @child = &getInterfaceChild( $vlan );
+	if ( @child )
+	{
+		my $child_string = join ( ', ', @child );
+		my $msg =
+		  "Before of removing $vlan interface, delete de virtual interfaces: $child_string.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -238,10 +252,10 @@ sub delete_interface_vlan # ( $vlan )
 				 message     => $message,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
-sub get_vlan_list # ()
+sub get_vlan_list    # ()
 {
 	require Zevenet::Net::Interface;
 
@@ -252,7 +266,7 @@ sub get_vlan_list # ()
 	my $cluster_if;
 	if ( eval { require Zevenet::Cluster; } )
 	{
-		my $zcl_conf  = &getZClusterConfig();
+		my $zcl_conf = &getZClusterConfig();
 		$cluster_if = $zcl_conf->{ _ }->{ interface };
 	}
 
@@ -261,27 +275,27 @@ sub get_vlan_list # ()
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
 
 		# Any key must cotain a value or "" but can't be null
-		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
-		my $if_conf =
-		  {
-			name    => $if_ref->{ name },
-			ip      => $if_ref->{ addr },
-			netmask => $if_ref->{ mask },
-			gateway => $if_ref->{ gateway },
-			status  => $if_ref->{ status },
-			mac     => $if_ref->{ mac },
-			parent  => $if_ref->{ parent },
-		  };
-		  
-		  $if_conf->{ is_cluster } = 'true' if $cluster_if && $cluster_if eq $if_ref->{ name };
-		  
-		  push @output_list, $if_conf;
+		my $if_conf = {
+						name    => $if_ref->{ name },
+						ip      => $if_ref->{ addr },
+						netmask => $if_ref->{ mask },
+						gateway => $if_ref->{ gateway },
+						status  => $if_ref->{ status },
+						mac     => $if_ref->{ mac },
+						parent  => $if_ref->{ parent },
+		};
+
+		$if_conf->{ is_cluster } = 'true'
+		  if $cluster_if && $cluster_if eq $if_ref->{ name };
+
+		push @output_list, $if_conf;
 	}
 
 	my $body = {
@@ -289,10 +303,10 @@ sub get_vlan_list # ()
 				 interfaces  => \@output_list,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
-sub get_vlan # ()
+sub get_vlan    # ()
 {
 	my $vlan = shift;
 
@@ -308,12 +322,12 @@ sub get_vlan # ()
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
 
 		# Any key must cotain a value or "" but can't be null
-		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		$interface = {
 					   name    => $if_ref->{ name },
@@ -336,10 +350,10 @@ sub get_vlan # ()
 				 interface   => $interface,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
-sub actions_interface_vlan # ( $json_obj, $vlan )
+sub actions_interface_vlan    # ( $json_obj, $vlan )
 {
 	my $json_obj = shift;
 	my $vlan     = shift;
@@ -364,7 +378,7 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 	}
 
 	# validate action parameter
-	if ( $json_obj->{action} eq "up" )
+	if ( $json_obj->{ action } eq "up" )
 	{
 		require Zevenet::Net::Validate;
 		require Zevenet::Net::Route;
@@ -386,7 +400,7 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 		&addIp( $if_ref );
 
 		# Check the parent's status before up the interface
-		my $parent_if_name = &getParentInterfaceName( $if_ref->{ name } );
+		my $parent_if_name   = &getParentInterfaceName( $if_ref->{ name } );
 		my $parent_if_status = 'up';
 
 		if ( $parent_if_name )
@@ -398,13 +412,14 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 		# validate PARENT INTERFACE STATUS
 		unless ( $parent_if_status eq 'up' )
 		{
-			my $msg = "The interface $if_ref->{name} has a parent interface DOWN, check the interfaces status";
+			my $msg =
+			  "The interface $if_ref->{name} has a parent interface DOWN, check the interfaces status";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
 		my $state = &upIf( $if_ref, 'writeconf' );
 
-		if ( ! $state )
+		if ( !$state )
 		{
 			&applyRoutes( "local", $if_ref );
 
@@ -418,7 +433,7 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
-	elsif ( $json_obj->{action} eq "down" )
+	elsif ( $json_obj->{ action } eq "down" )
 	{
 		require Zevenet::Net::Core;
 
@@ -438,21 +453,21 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 
 	my $body = {
 				 description => $desc,
-				 params      =>  { action => $json_obj->{ action } },
+				 params      => { action => $json_obj->{ action } },
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
-sub modify_interface_vlan # ( $json_obj, $vlan )
+sub modify_interface_vlan    # ( $json_obj, $vlan )
 {
 	my $json_obj = shift;
 	my $vlan     = shift;
 
 	require Zevenet::Net::Interface;
 
-	my $desc = "Modify VLAN interface";
-	my $ip_v = 4;
+	my $desc   = "Modify VLAN interface";
+	my $ip_v   = 4;
 	my $if_ref = &getInterfaceConfig( $vlan, $ip_v );
 
 	# Check interface errors
@@ -462,7 +477,22 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	unless ( exists $json_obj->{ ip } || exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
+	#not modify gateway or netmask if exists a virtual interface using this vlan
+	if ( exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
+	{
+		my @child = &getInterfaceChild( $vlan );
+		if ( @child )
+		{
+			my $child_string = join ( ', ', @child );
+			my $msg =
+			  "Is is not possible to modify $vlan because there are virtual interfaces using it: $child_string.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
+	unless (    exists $json_obj->{ ip }
+			 || exists $json_obj->{ netmask }
+			 || exists $json_obj->{ gateway } )
 	{
 		my $msg = "No parameter received to be configured";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -471,7 +501,8 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 	# Check address errors
 	if ( exists $json_obj->{ ip } )
 	{
-		unless ( defined( $json_obj->{ ip } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+		unless ( defined ( $json_obj->{ ip } )
+				 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 		{
 			my $msg = "IP Address $json_obj->{ip} structure is not ok.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -481,24 +512,27 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 	# Check netmask errors
 	if ( exists $json_obj->{ netmask } )
 	{
-		unless ( defined( $json_obj->{ netmask } ) && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
+		unless ( defined ( $json_obj->{ netmask } )
+				 && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
 		{
-			my $msg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
+			my $msg =
+			  "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
 	## Check netmask errors for IPv6
-	#if ( $ip_v == 6 && ( $json_obj->{netmask} !~ /^\d+$/ || $json_obj->{netmask} > 128 || $json_obj->{netmask} < 0 ) )
-	#{
-	#	my $msg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric.";
-	#	&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	#}
+#if ( $ip_v == 6 && ( $json_obj->{netmask} !~ /^\d+$/ || $json_obj->{netmask} > 128 || $json_obj->{netmask} < 0 ) )
+#{
+#	my $msg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric.";
+#	&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+#}
 
 	# Check gateway errors
 	if ( exists $json_obj->{ gateway } )
 	{
-		unless ( exists( $json_obj->{ gateway } ) || &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) )
+		unless ( exists ( $json_obj->{ gateway } )
+				 || &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) )
 		{
 			my $msg = "Gateway Address $json_obj->{gateway} structure is not ok.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -515,7 +549,7 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 	{
 		require Zevenet::Net::Validate;
 		unless (
-		&getNetValidate( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
+			 &getNetValidate( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
 		{
 			my $msg = "The gateway is not valid for the network.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -529,7 +563,7 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 		require Zevenet::Net::Route;
 
 		# Delete old IP and Netmask from system to replace it
-		&delIp( $$if_ref{name}, $$if_ref{addr}, $$if_ref{mask} );
+		&delIp( $$if_ref{ name }, $$if_ref{ addr }, $$if_ref{ mask } );
 
 		# Remove routes if the interface has its own route table: nic and vlan
 		&delRoutes( "local", $if_ref );
@@ -542,13 +576,13 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 	eval {
 		# Add new IP, netmask and gateway
 		die if &addIp( $if_ref );
-		die if &writeRoutes( $if_ref->{name} );
+		die if &writeRoutes( $if_ref->{ name } );
 
 		my $state = &upIf( $if_ref, 'writeconf' );
 
 		if ( $state == 0 )
 		{
-			$if_ref->{status} = "up";
+			$if_ref->{ status } = "up";
 			die if &applyRoutes( "local", $if_ref );
 		}
 
@@ -566,7 +600,7 @@ sub modify_interface_vlan # ( $json_obj, $vlan )
 				 params      => $json_obj,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;
