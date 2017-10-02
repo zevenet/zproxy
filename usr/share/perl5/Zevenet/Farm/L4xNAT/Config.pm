@@ -1390,6 +1390,16 @@ sub refreshL4FarmRules    # AlgorithmRules
 	# refresh backends probability values
 	&getL4BackendsWeightProbability( $farm ) if ( $$farm{ lbalg } eq 'weight' );
 
+	## lock iptables use ##
+	my $iptlock = &getGlobalConfiguration('iptlock');
+	open ( my $ipt_lockfile, '>', $iptlock );
+
+	unless ( $ipt_lockfile )
+	{
+		&zenlog("Could not open $iptlock: $!");
+		return 1;
+	}
+
 	# get new rules
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
@@ -1459,6 +1469,10 @@ sub refreshL4FarmRules    # AlgorithmRules
 			}
 		}
 	}
+
+	## unlock iptables use ##
+	&setIptUnlock( $ipt_lockfile );
+	close $ipt_lockfile;
 
 	# apply new rules
 	return $return_code;

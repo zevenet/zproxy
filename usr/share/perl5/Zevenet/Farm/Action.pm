@@ -46,11 +46,12 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 
 	require Zevenet::Farm::Base;
 
-	my $status = &getFarmStatus( $farm_name );
+	my $status = -1;
 
 	# finish the function if the tarm is already up
-	if ( $status eq "up" )
+	if ( &getFarmStatus( $farm_name ) eq "up" )
 	{
+		zenlog("Farm $farm_name already up");
 		return 0;
 	}
 
