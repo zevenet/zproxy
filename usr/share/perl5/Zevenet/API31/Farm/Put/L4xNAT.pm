@@ -243,6 +243,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
+		$json_obj->{ ttl } = $json_obj->{ ttl } + 0;
 		$restart_flag = "true";
 	}
 
