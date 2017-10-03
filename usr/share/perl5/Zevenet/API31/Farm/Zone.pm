@@ -43,13 +43,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( $json_obj->{ id } =~ /^$/ )
-	{
-		my $msg = "Invalid zone name, please insert a valid value.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	if ( $json_obj->{ id } !~ /.*\..*/ )
+	if ( ! &getValidFormat( 'zone', $json_obj->{ id } ) )
 	{
 		&zenlog(
 			"Wrong zone name. The name has to be like zonename.com, zonename.net, etc. The zone $zone can't be created"
