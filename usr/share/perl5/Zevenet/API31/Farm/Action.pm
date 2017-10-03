@@ -261,7 +261,8 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 
 	my $body = {
 				 description => $desc,
-				 params      => { action => $json_obj->{ action } },
+				 params      => { action => $json_obj->{ action },
+					 farm => { status => &getFarmVipStatus( $farmname ) } },
 	};
 
 	if ( eval { require Zevenet::Cluster; } )
@@ -366,7 +367,8 @@ sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 	# no error found, send successful response
 	my $body = {
 				 description => $desc,
-				 params      => { action => $json_obj->{ action } },
+				 params      => { action => $json_obj->{ action },
+					farm => { status => &getFarmVipStatus( $farmname ) } },
 	};
 
 	if ( eval { require Zevenet::Cluster; } )
