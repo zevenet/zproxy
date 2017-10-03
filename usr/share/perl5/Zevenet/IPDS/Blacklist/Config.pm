@@ -324,6 +324,7 @@ sub setBLParam
 	# get conf
 	my $type           = &getBLParam( $name, 'type' );
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 	my $fileHandle     = Config::Tiny->read( $blacklistsConf );
 	my $conf           = $fileHandle->{ $name };
 	my @farmList       = @{ &getBLParam( $name, 'farms' ) };
@@ -340,20 +341,15 @@ sub setBLParam
 		else
 		{
 			# delete list and all rules applied to the farms
-			$output = &setBLDeleteList( $name );
+			$output = system ( "mv $blacklistsPath/$name.txt $blacklistsPath/$value.txt" );
 
-			# create new list
-			$output = &setBLCreateList( $value, $conf ) if ( !$output );
-			$output = &setBLParam( $value, 'source', $ipList ) if ( !$output );
+			my $lock = &setBLLockConfigFile();
+			$fileHandle         = Config::Tiny->read( $blacklistsConf );
+			$fileHandle->{ $value } = $fileHandle->{ $name };
+			delete $fileHandle->{ $name };
+			$fileHandle->write( $blacklistsConf );
+			&setBLUnlockConfigFile( $lock );
 
-			# apply rules to farms
-			if ( !$output && @farmList )
-			{
-				foreach my $farm ( @farmList )
-				{
-					&setBLParam( $value, 'farms-add', $farm );
-				}
-			}
 			return $output;
 		}
 	}

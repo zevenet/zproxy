@@ -399,6 +399,12 @@ sub set_blacklists_list
 
 	my $source_format = &getValidFormat( 'blacklists_source' );
 
+	if ( &getBLParam( $listName, 'status' ) eq 'up' )
+	{
+		require Zevenet::IPDS::Blacklist::Actions;
+		&runBLStopByRule( $listName );
+	}
+
 	foreach my $key ( keys %{ $json_obj } )
 	{
 		# add only the sources with a correct format
@@ -430,10 +436,10 @@ sub set_blacklists_list
 		}
 	}
 
-	if ( $cronFlag && &getBLParam( $listName, 'status' ) eq 'up' )
+	if ( &getBLParam( $listName, 'status' ) eq 'up' )
 	{
-		require Zevenet::IPDS::Blacklist::Runtime;
-		&setBLCronTask( $listName );
+		require Zevenet::IPDS::Blacklist::Actions;
+		&runBLStartByRule( $listName );
 	}
 
 	# all successful
