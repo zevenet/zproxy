@@ -173,6 +173,7 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 		}
 	}
 
+	require Zevenet::Farm::Config;
 	# Modify only vip
 	if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
 	{
@@ -189,8 +190,6 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 	# Modify only vport
 	if ( exists ( $json_obj->{ vport } ) && !exists ( $json_obj->{ vip } ) )
 	{
-		require Zevenet::Farm::Config;
-
 		my $error = &setFarmVirtualConf( $vip, $json_obj->{ vport }, $farmname );
 		if ( $error )
 		{
