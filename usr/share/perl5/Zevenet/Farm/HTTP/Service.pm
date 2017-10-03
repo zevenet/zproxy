@@ -1139,22 +1139,6 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 			}
 		}
 
-		#cookie ins
-		if ( $tag eq "cookieins" )
-		{
-			if ( $line =~ "BackendCookie" && $sw == 1 && $string ne "" )
-			{
-				$line =~ s/#//g;
-				last;
-			}
-			if ( $line =~ "BackendCookie" && $sw == 1 && $string eq "" )
-			{
-				$line =~ s/\t\t//g;
-				$line = "\t\t#$line";
-				last;
-			}
-		}
-
 		#cookie insertion name
 		if ( $tag eq "cookieins-name" )
 		{
@@ -1207,6 +1191,22 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 				my @values = split ( "\ ", $l );
 				$values[4] =~ s/\"//g;
 				$line = "\t\tBackendCookie $values[1] $values[2] $values[3] $string";
+				last;
+			}
+		}
+
+		#cookie ins
+		if ( $tag eq "cookieins" )
+		{
+			if ( $line =~ "BackendCookie" && $sw == 1 && $string ne "" )
+			{
+				$line =~ s/#//g;
+				last;
+			}
+			if ( $line =~ "BackendCookie" && $sw == 1 && $string eq "" )
+			{
+				$line =~ s/\t\t//g;
+				$line = "\t\t#$line";
 				last;
 			}
 		}

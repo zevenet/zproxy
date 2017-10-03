@@ -56,7 +56,7 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 		 || exists $json_obj->{ vip }
 		 || exists $json_obj->{ newfarmname } )
 	{
-		if ( eval { require Zevenet::IPDS; } )
+		if ( eval { require Zevenet::IPDS::Base; } )
 		{
 			$reload_ipds = 1;
 			&runIPDSStopByFarm( $farmname );
@@ -229,6 +229,7 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 		}
 	}
 
+	$json_obj->{ vport } += 0 if ( exists $json_obj->{ vport } );
 	my $body = {
 				 description => $desc,
 				 params      => $json_obj,
