@@ -211,11 +211,18 @@ sub set_blacklists_list
 	}
 
 	# not allow rename preload lists
-	if ( exists $json_obj->{ 'name' }
-		 && &getBLParam( $listName, 'preload' ) eq 'true' )
+	if ( exists $json_obj->{ 'name' } )
 	{
-		my $msg = "The preload lists can't be renamed.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		if ( &getBLParam( $listName, 'preload' ) eq 'true' )
+		{
+			my $msg = "The preload lists can't be renamed.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+		elsif ( &getBLExists( $json_obj->{ name } ) )
+		{
+			my $msg = "The list $json_obj->{ name } already exists.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	# Check key format
