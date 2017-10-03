@@ -40,7 +40,6 @@ use Zevenet::IPDS::Blacklist::Core;
 
 # use Zevenet::IPDS::Blacklist::Runtime; # only it's used in some cases
 
-
 # $listParams = \ %paramsRef;
 # &setBLCreateList ( $listName, $paramsRef );
 sub setBLCreateList
@@ -70,10 +69,11 @@ sub setBLCreateList
 	}
 
 	# share params
+	my $lock       = &setBLLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $blacklistsConf );
-	$fileHandle->{ $listName }->{ 'type' }  = $listParams->{ 'type' };
+	$fileHandle->{ $listName }->{ 'type' }   = $listParams->{ 'type' };
 	$fileHandle->{ $listName }->{ 'status' } = "down";
-	$fileHandle->{ $listName }->{ 'farms' } = "";
+	$fileHandle->{ $listName }->{ 'farms' }  = "";
 	if ( exists $listParams->{ 'preload' } )
 	{
 		$fileHandle->{ $listName }->{ 'preload' } = $listParams->{ 'preload' };
@@ -92,6 +92,7 @@ sub setBLCreateList
 	}
 
 	$fileHandle->write( $blacklistsConf );
+	&setBLUnlockConfigFile( $lock );
 
 	# specific to remote lists
 	if ( $type eq 'remote' )
@@ -159,9 +160,11 @@ sub setBLDeleteList
 	}
 
 	# delete from config file
+	my $lock = &setBLLockConfigFile();
 	$fileHandle = Config::Tiny->read( $blacklistsConf );
 	delete $fileHandle->{ $listName };
 	$fileHandle->write( $blacklistsConf );
+	&setBLUnlockConfigFile( $lock );
 
 	if ( -f "$blacklistsPath/$listName.txt" )
 	{
@@ -356,8 +359,12 @@ sub setBLParam
 	}
 	elsif ( 'policy' eq $key )
 	{
+		my $lock = &setBLLockConfigFile();
+		$fileHandle         = Config::Tiny->read( $blacklistsConf );
+		$conf               = $fileHandle->{ $name };
 		$conf->{ 'policy' } = $value;
 		$fileHandle->write( $blacklistsConf );
+		&setBLUnlockConfigFile( $lock );
 
 		# reset the list if this was active
 		if ( @farmList )
@@ -400,21 +407,33 @@ sub setBLParam
 	}
 	elsif ( 'farms-add' eq $key )
 	{
+		my $lock = &setBLLockConfigFile();
+		$fileHandle = Config::Tiny->read( $blacklistsConf );
+		$conf       = $fileHandle->{ $name };
+
 		if ( $conf->{ $key } !~ /(^| )$value( |$)/ )
 		{
 			my $farmList = $fileHandle->{ $name }->{ 'farms' };
 			$fileHandle->{ $name }->{ 'farms' } = "$farmList $value";
 			$fileHandle->write( $blacklistsConf );
 		}
+
+		&setBLUnlockConfigFile( $lock );
 	}
 	elsif ( 'farms-del' eq $key )
 	{
+		my $lock = &setBLLockConfigFile();
+		$fileHandle = Config::Tiny->read( $blacklistsConf );
+		$conf       = $fileHandle->{ $name };
 		$fileHandle->{ $name }->{ 'farms' } =~ s/(^| )$value( |$)/ /;
 		$fileHandle->write( $blacklistsConf );
+		&setBLUnlockConfigFile( $lock );
 	}
 	elsif ( 'update_status' eq $key )
 	{
 		my $date = &getBLlastUptdate( $name );
+		my $lock = &setBLLockConfigFile();
+		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		if ( $value eq 'up' )
 		{
 			$fileHandle->{ $name }->{ $key } = "Sync OK. Last update: $date";
@@ -428,13 +447,17 @@ sub setBLParam
 			$fileHandle->{ $name }->{ $key } = $value;
 		}
 		$fileHandle->write( $blacklistsConf );
+		&setBLUnlockConfigFile( $lock );
 	}
 
 	# other value  of the file conf
 	else
 	{
+		my $lock = &setBLLockConfigFile();
+		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		$fileHandle->{ $name }->{ $key } = $value;
 		$fileHandle->write( $blacklistsConf );
+		&setBLUnlockConfigFile( $lock );
 	}
 
 	return $output;
@@ -449,6 +472,8 @@ sub delBLParam
 	my $fileHandle;
 
 	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+
+	my $lock = &setBLLockConfigFile();
 	$fileHandle = Config::Tiny->read( $blacklistsConf );
 
 	if ( exists ( $fileHandle->{ $listName }->{ $key } ) )
@@ -457,8 +482,8 @@ sub delBLParam
 		delete $fileHandle->{ $listName }->{ $key };
 		$fileHandle->write( $blacklistsConf );
 	}
+	&setBLUnlockConfigFile( $lock );
 }
-
 
 =begin nd
 Function: setBLAddToList
@@ -487,7 +512,7 @@ sub setBLAddToList
 	if ( -f "$blacklistsPath/$listName.txt" )
 	{
 		require Zevenet::Lock;
-		&ztielock ( \my @list, "$blacklistsPath/$listName.txt" );
+		&ztielock( \my @list, "$blacklistsPath/$listName.txt" );
 		@list = @ipList;
 		untie @list;
 		&zenlog( "IPs of '$listName' was modificated." );
@@ -519,7 +544,7 @@ sub setBLAddSource
 	my $error;
 
 	require Zevenet::Lock;
-	&ztielock ( \my @list, "$blacklistsPath/$listName.txt" );
+	&ztielock( \my @list, "$blacklistsPath/$listName.txt" );
 	push @list, $source;
 	untie @list;
 
@@ -567,7 +592,7 @@ sub setBLModifSource
 	my $err;
 
 	require Zevenet::Lock;
-	&ztielock ( \my @list, "$blacklistsPath/$listName.txt" );
+	&ztielock( \my @list, "$blacklistsPath/$listName.txt" );
 	my $oldSource = splice @list, $id, 1, $source;
 	untie @list;
 
@@ -606,7 +631,7 @@ sub setBLDeleteSource
 	my $err;
 
 	require Zevenet::Lock;
-	&ztielock ( \my @list, "$blacklistsPath/$listName.txt" );
+	&ztielock( \my @list, "$blacklistsPath/$listName.txt" );
 	my $source = splice @list, $id, 1;
 	untie @list;
 

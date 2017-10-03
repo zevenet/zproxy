@@ -384,7 +384,7 @@ sub getRBLZapi
 {
 	my @all_rules;
 
-	foreach my $rule ( &getRBLRuleList )
+	foreach my $rule ( sort &getRBLRuleList )
 	{
 		my $output = &getRBLZapiRule( $rule );
 
@@ -418,7 +418,6 @@ sub getRBLStatusRule
 
 	return $status;
 }
-
 
 =begin nd
 Function: getRBLZapiRule
@@ -473,7 +472,7 @@ sub getRBLZapiRule
 	$output->{ 'domains' } = \@format_domains;
 	$output->{ 'farms' }   = \@farms;
 
-	$output->{ 'name' }   = $rule;
+	$output->{ 'name' } = $rule;
 
 	if ( $output->{ 'local_traffic' } eq 'yes' )
 	{
@@ -500,6 +499,23 @@ sub getRBLZapiRule
 	delete $output->{ 'nf_queue_number' };
 
 	return $output;
+}
+
+sub setRBLLockConfigFile
+{
+	require Zevenet::Lock;
+
+	my $lockfile = "/tmp/rbl.lock";
+
+	return &lockfile( $lockfile );
+}
+
+sub setRBLUnlockConfigFile
+{
+	my $lock_fd = shift;
+
+	require Zevenet::Lock;
+	&unlockfile( $lock_fd );
 }
 
 1;

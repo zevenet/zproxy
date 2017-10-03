@@ -301,43 +301,19 @@ sub getDOSZapiRule
 
 sub setDOSLockConfigFile
 {
-	use Fcntl ':flock';    #use of lock functions
-	my $lockfile = "/tmp/blacklist.lock";
-	require Zevenet::Debug;
-	## lock iptables use ##
-	my $open_rc = open ( my $lock_fd, '>', $lockfile );
+	require Zevenet::Lock;
 
-	if ( $open_rc )
-	{
-		if ( flock ( $lock_fd, LOCK_EX ) )
-		{
-			&zenlog( "Success locking IPTABLES" ) if &debug == 3;
-		}
-		else
-		{
-			&zenlog( "Cannot lock iptables: $!" );
-		}
-	}
-	else
-	{
-		&zenlog( "Cannot open $lockfile: $!" );
-	}
+	my $lockfile = "/tmp/dos.lock";
 
-	return $lock_fd;
+	return &lockfile( $lockfile );
 }
 
 sub setDOSUnlockConfigFile
 {
 	my $lock_fd = shift;
 
-	if ( flock ( $lock_fd, LOCK_UN ) )
-	{
-		&zenlog( "Success unlocking IPTABLES" ) if &debug == 3;
-	}
-	else
-	{
-		&zenlog( "Cannot unlock iptables: $!" );
-	}
+	require Zevenet::Lock;
+	&unlockfile( $lock_fd );
 }
 
 1;

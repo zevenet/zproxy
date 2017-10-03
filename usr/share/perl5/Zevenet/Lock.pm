@@ -23,7 +23,48 @@
 
 use strict;
 
-use Fcntl ':flock';                       #use of lock functions
+use Fcntl ':flock';    #use of lock functions
+
+sub lockfile
+{
+	my $lockfile = shift;
+
+	require Zevenet::Debug;
+	## lock iptables use ##
+	my $open_rc = open ( my $lock_fd, '>', $lockfile );
+
+	if ( $open_rc )
+	{
+		if ( flock ( $lock_fd, LOCK_EX ) )
+		{
+			&zenlog( "Success locking IPTABLES" ) if &debug == 3;
+		}
+		else
+		{
+			&zenlog( "Cannot lock iptables: $!" );
+		}
+	}
+	else
+	{
+		&zenlog( "Cannot open $lockfile: $!" );
+	}
+
+	return $lock_fd;
+}
+
+sub unlockfile
+{
+	my $lock_fd = shift;
+
+	if ( flock ( $lock_fd, LOCK_UN ) )
+	{
+		&zenlog( "Success unlocking IPTABLES" ) if &debug == 3;
+	}
+	else
+	{
+		&zenlog( "Cannot unlock iptables: $!" );
+	}
+}
 
 =begin nd
 Function: openlock
@@ -50,6 +91,7 @@ Returns:
 Bugs:
 	Not used yet.
 =cut
+
 sub openlock    # ($mode,$expr)
 {
 	my ( $mode, $expr ) = @_;    #parameters
@@ -112,6 +154,7 @@ Returns:
 Bugs:
 	Not used yet.
 =cut
+
 sub closelock    # ($filehandle)
 {
 	my $filehandle = shift;
@@ -144,6 +187,7 @@ Returns:
 Bugs:
 	Not used yet.
 =cut
+
 sub ztielock    # ($file_name)
 {
 	my $array_ref = shift;    #parameters
@@ -177,6 +221,7 @@ Returns:
 Bugs:
 	Not used yet.
 =cut
+
 sub untielock    # (@array)
 {
 	my $array = shift;

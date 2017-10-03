@@ -400,4 +400,21 @@ sub getBLSourceNumber
 	return $sources;
 }
 
+sub setBLLockConfigFile
+{
+	require Zevenet::Lock;
+
+	my $lockfile = "/tmp/blacklist.lock";
+
+	return &lockfile( $lockfile );
+}
+
+sub setBLUnlockConfigFile
+{
+	my $lock_fd = shift;
+
+	require Zevenet::Lock;
+	&unlockfile( $lock_fd );
+}
+
 1;

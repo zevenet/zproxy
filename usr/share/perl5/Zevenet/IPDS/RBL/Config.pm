@@ -134,8 +134,6 @@ sub addRBLCreateObjectRule
 {
 	my $rule = shift;
 
-	require Config::Tiny;
-
 	# check that the rule is not exist
 	if ( &getRBLExists( $rule ) )
 	{
@@ -149,11 +147,11 @@ sub addRBLCreateObjectRule
 	$params->{ 'name' } = $rule;
 
 	require Config::Tiny;
+	my $lock       = &setRBLLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
-
 	$fileHandle->{ $rule } = $params;
-
 	$fileHandle->write( $rblConfigFile );
+	&setRBLUnlockConfigFile( $lock );
 
 	&zenlog( "The RBL rule \"$rule\" was successfully created." );
 
@@ -180,6 +178,7 @@ sub setRBLObjectRule
 	my $params = shift;
 
 	require Config::Tiny;
+	my $lock       = &setRBLLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 
 	foreach my $key ( keys %{ $params } )
@@ -188,6 +187,7 @@ sub setRBLObjectRule
 	}
 
 	$fileHandle->write( $rblConfigFile );
+	&setRBLUnlockConfigFile( $lock );
 
 	return 0;
 }
@@ -214,6 +214,7 @@ sub setRBLObjectRuleParam
 	my $value = shift;
 
 	require Config::Tiny;
+	my $lock       = &setRBLLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 
 	my $action;
@@ -244,6 +245,7 @@ sub setRBLObjectRuleParam
 	}
 
 	$fileHandle->write( $rblConfigFile );
+	&setRBLUnlockConfigFile( $lock );
 
 	return 0;
 }
@@ -266,7 +268,7 @@ sub addRBLDomains
 	my $new_domain = shift;
 
 	require Zevenet::Lock;
-	&ztielock ( \my @domains, "$userDomainsFile" );
+	&ztielock( \my @domains, "$userDomainsFile" );
 	push @domains, $new_domain;
 	untie @domains;
 }
@@ -315,7 +317,7 @@ sub delRBLDomains
 	my $it     = 0;
 
 	require Zevenet::Lock;
-	&ztielock ( \my @domains, "$userDomainsFile" );
+	&ztielock( \my @domains, "$userDomainsFile" );
 
 	foreach my $item ( @domains )
 	{
@@ -366,10 +368,11 @@ sub addRBLCopyObjectRule
 	$params->{ 'domains' }         = join ( " ", @{ $params->{ 'domains' } } );
 
 	require Config::Tiny;
+	my $lock       = &setRBLLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 	$fileHandle->{ $newrule } = $params;
-
 	$fileHandle->write( $rblConfigFile );
+	&setRBLUnlockConfigFile( $lock );
 
 	return 0;
 }
@@ -469,7 +472,7 @@ sub delRBLFarm
 	&setRBLObjectRuleParam( $rule, 'farms-del', $farmname );
 
 	# Disable rule if it is not applied to any farm
-	if ( ! @{ &getRBLFarm( $rule ) } )
+	if ( !@{ &getRBLFarm( $rule ) } )
 	{
 		&setRBLObjectRuleParam( $rule, 'status', 'down' );
 	}
@@ -545,9 +548,11 @@ sub delRBLDeleteObjectRule
 	}
 
 	require Config::Tiny;
+	my $lock       = &setRBLLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 	delete $fileHandle->{ $rule };
 	$fileHandle->write( $rblConfigFile );
+	&setRBLUnlockConfigFile( $lock );
 
 	&zenlog( "The RBL rule \"$rule\" was successfully removed." );
 

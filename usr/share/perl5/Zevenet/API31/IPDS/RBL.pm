@@ -686,6 +686,7 @@ sub add_rbl_to_farm
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
+	require Zevenet::Farm::Core;
 	if ( &getFarmFile( $farmName ) eq "-1" )
 	{
 		my $msg = "$farmName doesn't exist.";
