@@ -909,7 +909,7 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 		#ttl
 		if ( $tag eq "ttl" )
 		{
-			if ( $line =~ "TTL" && $sw == 1 && $line !~ "#" )
+			if ( $line =~ "TTL" && $sw == 1 )
 			{
 				@return = split ( "\ ", $line );
 				$return[1] =~ s/\"//g;
