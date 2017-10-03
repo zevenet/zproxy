@@ -171,12 +171,14 @@ sub setDOSParam
 	my $status = &getDOSStatusRule( $name );
 	&runDOSStopByRule( $name ) if ( $status eq "up" );
 
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
+	my $confFile = &getGlobalConfiguration( 'dosConf' );
+
+	my $lock       = &setDOSLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $confFile );
 	$fileHandle = Config::Tiny->read( $confFile );
-
 	$fileHandle->{ $name }->{ $param } = $value;
 	$fileHandle->write( $confFile );
+	&setDOSUnlockConfigFile( $lock );
 
 	&runDOSStartByRule( $name ) if ( $status eq "up" );
 }
@@ -203,19 +205,22 @@ sub createDOSRule
 
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
-	$fileHandle = Config::Tiny->read( $confFile );
 
-	if ( exists $fileHandle->{ $ruleName } )
-	{
-		&zenlog( "$ruleName rule already exists." );
-		return -1;
-	}
 	$params = &getDOSInitialParams( $rule );
-
 	if ( !$params )
 	{
 		&zenlog( "Error, saving $ruleName rule." );
 		return -2;
+	}
+
+	my $lock = &setDOSLockConfigFile();
+	$fileHandle = Config::Tiny->read( $confFile );
+
+	if ( exists $fileHandle->{ $ruleName } )
+	{
+		&setDOSUnlockConfigFile( $lock );
+		&zenlog( "$ruleName rule already exists." );
+		return -1;
 	}
 
 	$fileHandle->{ $ruleName } = $params;
@@ -226,8 +231,9 @@ sub createDOSRule
 		$fileHandle->{ $ruleName }->{ 'name' } = $ruleName;
 	}
 	$fileHandle->write( $confFile );
-	&zenlog( "$ruleName rule created successful." );
+	&setDOSUnlockConfigFile( $lock );
 
+	&zenlog( "$ruleName rule created successful." );
 	return 0;
 }
 
@@ -248,18 +254,22 @@ sub deleteDOSRule
 {
 	my $name = shift;
 
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
+	my $confFile = &getGlobalConfiguration( 'dosConf' );
+
+	my $lock       = setDOSLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $confFile );
 	$fileHandle = Config::Tiny->read( $confFile );
 
 	if ( !exists $fileHandle->{ $name } )
 	{
+		&setDOSUnlockConfigFile( $lock );
 		&zenlog( "$name rule doesn't exist." );
 		return -1;
 	}
 
 	delete $fileHandle->{ $name };
 	$fileHandle->write( $confFile );
+	&setDOSUnlockConfigFile( $lock );
 
 	return 0;
 }

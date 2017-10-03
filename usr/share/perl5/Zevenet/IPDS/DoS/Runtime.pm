@@ -626,17 +626,19 @@ sub setDOSApplyRule
 	#~ }
 	#~ }
 
+	my $lock       = &setDOSLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $confFile );
-
-	my $farmList = $fileHandle->{ $ruleName }->{ 'farms' };
+	my $farmList   = $fileHandle->{ $ruleName }->{ 'farms' };
 	if ( $farmList !~ /(^| )$farmName( |$)/ )
 	{
 		$fileHandle = Config::Tiny->read( $confFile );
 		$fileHandle->{ $ruleName }->{ 'farms' } = "$farmList $farmName";
 		$fileHandle->write( $confFile );
+		&setDOSUnlockConfigFile( $lock );
 	}
 	else
 	{
+		&setDOSUnlockConfigFile( $lock );
 		&zenlog( "Rule $ruleName already is applied" );
 		return 0;
 	}
@@ -680,14 +682,13 @@ sub setDOSUnsetRule
 
 	require Config::Tiny;
 
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
-	my $fileHandle = Config::Tiny->read( $confFile );
-	my $output;
-
-	$output = &setDOSStopRule( $ruleName, $farmName );
+	my $confFile = &getGlobalConfiguration( 'dosConf' );
+	my $output = &setDOSStopRule( $ruleName, $farmName );
 
 	if ( !$output )
 	{
+		my $fileHandle = Config::Tiny->read( $confFile );
+		my $lock       = &setDOSLockConfigFile();
 		$fileHandle->{ $ruleName }->{ 'farms' } =~ s/(^| )$farmName( |$)/ /;
 
 		# put down if there is not more farms applied
@@ -696,6 +697,8 @@ sub setDOSUnsetRule
 			$fileHandle->{ $ruleName }->{ 'status' } =~ "down";
 		}
 		$fileHandle->write( $confFile );
+
+		&setDOSUnlockConfigFile( $lock );
 	}
 
 	return $output;

@@ -182,8 +182,8 @@ sub getDOSLookForRule
 	#~ my @table = ( 'raw',        'filter', 'filter',  'mangle' );
 	#~ my @chain = ( 'PREROUTING', 'INPUT',  'FORWARD', 'PREROUTING' );
 	my $dos_chain = &getIPDSChain( 'dos' );
-	my @table = ( 'mangle' );
-	my @chain = ( $dos_chain );
+	my @table     = ( 'mangle' );
+	my @chain     = ( $dos_chain );
 	my $farmNameRule;
 
 	my @output;
@@ -247,7 +247,7 @@ Returns:
 
 sub getDOSStatusRule
 {
-	my $rule   = shift;
+	my $rule = shift;
 
 	# check system rules
 	my $status = &getDOSParam( $rule, 'status' );
@@ -297,6 +297,47 @@ sub getDOSZapiRule
 	$output = \%hash;
 
 	return $output;
+}
+
+sub setDOSLockConfigFile
+{
+	use Fcntl ':flock';    #use of lock functions
+	my $lockfile = "/tmp/blacklist.lock";
+	require Zevenet::Debug;
+	## lock iptables use ##
+	my $open_rc = open ( my $lock_fd, '>', $lockfile );
+
+	if ( $open_rc )
+	{
+		if ( flock ( $lock_fd, LOCK_EX ) )
+		{
+			&zenlog( "Success locking IPTABLES" ) if &debug == 3;
+		}
+		else
+		{
+			&zenlog( "Cannot lock iptables: $!" );
+		}
+	}
+	else
+	{
+		&zenlog( "Cannot open $lockfile: $!" );
+	}
+
+	return $lock_fd;
+}
+
+sub setDOSUnlockConfigFile
+{
+	my $lock_fd = shift;
+
+	if ( flock ( $lock_fd, LOCK_UN ) )
+	{
+		&zenlog( "Success unlocking IPTABLES" ) if &debug == 3;
+	}
+	else
+	{
+		&zenlog( "Cannot unlock iptables: $!" );
+	}
 }
 
 1;
