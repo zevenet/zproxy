@@ -396,30 +396,33 @@ sub addRBLFarm
 	my ( $farmname, $rule ) = @_;
 	my $error;
 
-	require Zevenet::Farm::Base;
-
-	# if the farm is in UP status, apply it the rule
-	if ( &getFarmStatus( $farmname ) eq 'up' )
+	if ( &getRBLObjectRuleParam( $rule, 'status' ) eq 'up' )
 	{
-		# to start a RBL rule it is necessary that the rule has almost one domain
-		if ( !@{ &getRBLObjectRuleParam( $rule, 'domains' ) } )
-		{
-			&zenlog( "RBL rule, $rule, was not started because doesn't have any domain." );
-			return -1;
-		}
+		require Zevenet::Farm::Base;
 
-		require Zevenet::IPDS::RBL::Runtime;
-
-		# if rule is not running, start it
-		if ( &getRBLStatusRule( $rule ) eq 'down' )
+		# if the farm is in UP status, apply it the rule
+		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
-			$error = &runRBLStartPacketbl( $rule );
-		}
+			# to start a RBL rule it is necessary that the rule has almost one domain
+			if ( !@{ &getRBLObjectRuleParam( $rule, 'domains' ) } )
+			{
+				&zenlog( "RBL rule, $rule, was not started because doesn't have any domain." );
+				return -1;
+			}
 
-		if ( !$error )
-		{
-			# create iptables rule to link with rbl rule
-			$error = &runRBLIptablesRule( $rule, $farmname, 'insert' );
+			require Zevenet::IPDS::RBL::Runtime;
+
+			# if rule is not running, start it
+			if ( &getRBLStatusRule( $rule ) eq 'down' )
+			{
+				$error = &runRBLStartPacketbl( $rule );
+			}
+
+			if ( !$error )
+			{
+				# create iptables rule to link with rbl rule
+				$error = &runRBLIptablesRule( $rule, $farmname, 'insert' );
+			}
 		}
 	}
 

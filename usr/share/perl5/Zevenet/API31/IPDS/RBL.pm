@@ -612,6 +612,12 @@ sub add_domain_to_rbl
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	if ( &getRBLObjectRuleParam( $name, 'status' ) eq 'up' )
+	{
+		require Zevenet::IPDS::RBL::Actions;
+		&runRBLRestartByRule( $name );
+	}
+
 	require Zevenet::Cluster;
 	&runZClusterRemoteManager( 'ipds_rbl', "restart", $name );
 
@@ -653,6 +659,12 @@ sub del_domain_from_rbl
 	{
 		my $msg = "Error deleting a domain from a RBL rule.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	if ( &getRBLObjectRuleParam( $name, 'status' ) eq 'up' )
+	{
+		require Zevenet::IPDS::RBL::Actions;
+		&runRBLRestartByRule( $name );
 	}
 
 	require Zevenet::Cluster;
@@ -726,6 +738,7 @@ sub add_rbl_to_farm
 				 message     => $msg
 	};
 
+	require Zevenet::Farm::Base;
 	if ( &getFarmStatus( $farmName ) eq 'up' )
 	{
 		require Zevenet::Cluster;
