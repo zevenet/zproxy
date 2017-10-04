@@ -192,8 +192,6 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	my $lowest_prio;
 	my $server_prio;    # reference to the selected server for prio algorithm
 
-	&zenlog( "_runL4FarmStart :: farm:" . Dumper( $farm ) ) if &debug == 2;
-
 	## Set ip rule mark ##
 	my $ip_bin = &getGlobalConfiguration('ip_bin');
 	my $vip_if_name = &getInterfaceOfIp( $farm->{ vip } );
