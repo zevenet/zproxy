@@ -574,7 +574,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-   #not modify gateway or netmask if exists a virtual interface using this interface
+	# not modify gateway or netmask if exists a virtual interface using this interface
 	if ( exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
 	{
 		my @child = &getInterfaceChild( $bond );
@@ -650,7 +650,8 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		}
 	}
 
-	if ( $if_ref )
+	# hash reference may exist without key-value pairs
+	if ( $if_ref && keys %$if_ref )
 	{
 		# Delete old IP and Netmask from system to replace it
 		&delIp( $if_ref->{ name }, $if_ref->{ addr }, $if_ref->{ mask } );
