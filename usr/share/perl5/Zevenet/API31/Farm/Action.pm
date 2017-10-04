@@ -89,13 +89,6 @@ sub farm_actions    # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		my $type = &getFarmType( $farmname );
-
-		if ( $type eq "http" || $type eq "https" )
-		{
-			&setHTTPFarmBackendStatus( $farmname );
-		}
-
 		&setFarmNoRestart( $farmname );
 	}
 	else
