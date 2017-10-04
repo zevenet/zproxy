@@ -50,11 +50,13 @@ sub _runHTTPFarmStart    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $pound         = &getGlobalConfiguration( 'pound' );
 	my $piddir        = &getGlobalConfiguration( 'piddir' );
+	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
+	my $args = ( $ssyncd_enabled eq 'true' ) ? '-s': '';
 
 	&zenlog( "Checking $farm_name farm configuration" );
 	&getHTTPFarmConfigIsOK( $farm_name );
 
-	my $cmd = "$pound -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid";
+	my $cmd = "$pound $args -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid";
 	$status = &zsystem( "$cmd 2>/dev/null" );
 
 	if ( $status == 0 )

@@ -129,6 +129,8 @@ sub runFarmStart    # ($farm_name,$writeconf)
 		&runIPDSStartByFarm( $farm_name );
 	}
 
+	if ( eval { require Zevenet::Cluster } ) { &zClusterFarmUp( $farmname ); }
+
 	return $status;
 }
 
@@ -152,6 +154,8 @@ NOTE:
 sub runFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
+
+	if ( eval { require Zevenet::Cluster } ) { &zClusterFarmUp( $farmname ); }
 
 	# stop ipds rules
 	if ( eval { require Zevenet::IPDS::Base; } )

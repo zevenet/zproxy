@@ -256,6 +256,11 @@ $blacklistsCronFile = "/etc/cron.d/blacklists";
 $dosConf = "/usr/local/zevenet/config/ipds/dos/dos.conf";
 $dosConfDir = "/usr/local/zevenet/config/ipds/dos";
 
+#Ssyncd
+$ssyncd_enabled = 'true';
+$ssyncd_bin     = '/usr/local/zevenet/app/ssyncd/bin/ssyncd';
+$ssyncdctl_bin  = '/usr/local/zevenet/app/ssyncd/bin/ssyncdctl';
+$ssyncd_port    = '9999';
 
 
 #::END Global Section

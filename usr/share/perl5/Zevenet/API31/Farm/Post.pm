@@ -149,6 +149,7 @@ sub new_farm    # ( $json_obj )
 
 	if ( eval { require Zevenet::Cluster; } )
 	{
+		&zClusterFarmUp( $json_obj->{ farmname } ) if $json_obj->{ profile } =~ /^l4xnat$/i;
 		&runZClusterRemoteManager( 'farm', 'start', $json_obj->{ farmname } );
 	}
 

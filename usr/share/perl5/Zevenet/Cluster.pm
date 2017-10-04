@@ -1423,5 +1423,32 @@ sub setZClusterIptablesException
 	return $error;
 }
 
+sub zClusterFarmUp
+{
+	my ( $farm_name ) = @_;
+
+	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
+
+	if ( $ssyncd_enabled eq 'true' )
+	{
+		&setSsyncdFarmUp( $farm_name );
+	}
+
+	return 0;
+}
+
+sub zClusterFarmDown
+{
+	my ( $farm_name ) = @_;
+
+	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
+
+	if ( $ssyncd_enabled eq 'true' )
+	{
+		&setSsyncdFarmDown( $farm_name );
+	}
+
+	return 0;
+}
 
 1;

@@ -17,6 +17,7 @@
 /usr/local/zevenet/app/cherokee/
 /usr/local/zevenet/app/gdnsd/
 /usr/local/zevenet/app/pound/
+/usr/local/zevenet/app/ssyncd/
 /usr/local/zevenet/app/libexec/*
 !/usr/local/zevenet/app/libexec/check_uplink
 
