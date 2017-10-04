@@ -54,7 +54,6 @@ sub setDOSRunRule
 
 	# return if this rule already is applied
 	return 0 if ( @{ &getDOSLookForRule( $ruleName, $farmName ) } );
-
 	if ( $farmName )
 	{
 		require Zevenet::Farm::L4xNAT::Validate;
@@ -363,17 +362,20 @@ sub setDOSLimitConnsRule
 	my $logMsg = &createLogMsg( "DOS", $ruleName, $ruleOpt{ 'farmName' } );
 
 	#~ my $chain = "INPUT";               # default, this chain is for L7 apps
-	my $dest = $ruleOpt{ 'vip' };
-	my $port = $ruleOpt{ 'vport' };
+	my $dest     = $ruleOpt{ 'vip' };
+	my $port     = $ruleOpt{ 'vport' };
+	my $protocol = $ruleOpt{ 'protocol' };
 	my $output;
 	my $limit_conns = &getDOSParam( $ruleName, 'limit_conns' );
 
+	$protocol = "" if ( !$port );
+
 # /sbin/iptables -A FORWARD -t filter -d 1.1.1.1,54.12.1.1 -p tcp --dport 5 -m connlimit --connlimit-above 5 -m comment --comment "DOS_limitconns_aa" -j REJECT --reject-with tcp-reset
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -I $chain -t $table "                         # select iptables struct
-	  . "$dest $ruleOpt{ 'protocol' } --sync $port "    # who is destined
-	  . "-m connlimit --connlimit-above $limit_conns --connlimit-mask 32 " # rules for block
-	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
+	  . " -I $chain -t $table "     # select iptables struct
+	  . "$dest $protocol $port "    # who is destined
+	  . "-m conntrack --ctstate NEW -m connlimit --connlimit-above $limit_conns --connlimit-mask 32 " # rules for block
+	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\"";                            # comment
 
 	# thre rule already exists
 	return 0 if ( &getIPDSRuleExists( "$cmd -j DROP" ) );
@@ -646,9 +648,9 @@ sub setDOSApplyRule
 	# dos system rules
 	if ( &getDOSParam( $ruleName, 'status' ) eq "up" )
 	{
-		if ( &getFarmBootStatus( $farmName ) eq "up" )
+		if ( &getFarmBootStatus( $farmName ) eq "up" || !$farmName )
 		{
-			$output = &setDOSRunRule( $ruleName );
+			$output = &setDOSRunRule( $ruleName, $farmName );
 			if ( $output )
 			{
 				&zenlog( "Error, running rule $ruleName" );

@@ -71,14 +71,6 @@ sub setBLRunList
 			   "$ipset create -exist $listName hash:net maxelem $maxelem >/dev/null 2>&1" );
 	}
 
-	# ???
-	# Discomment to download the remote list  when is applied
-	# if ( !$output && &getBLParam( $listName, 'type' ) eq 'remote' )
-	# {
-	# $output = &setBLDownloadRemoteList ( $listName ) ;
-	# &zenlog ( "Downloading remote list" );
-	# }
-
 	if ( !$output )
 	{
 		&zenlog( "Refreshing list $listName" );
