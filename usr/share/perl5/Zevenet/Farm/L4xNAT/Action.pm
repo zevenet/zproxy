@@ -328,6 +328,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 		return 1;
 	}
 
+	require Zevenet::Netfilter;
 	&setIptLock( $ipt_lockfile );
 
 	# Disable rules

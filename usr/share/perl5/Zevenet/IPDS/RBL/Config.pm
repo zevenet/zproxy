@@ -454,21 +454,15 @@ sub delRBLFarm
 	my ( $farmname, $rule ) = @_;
 	my $error;
 
-	require Zevenet::Farm::Base;
+	require Zevenet::IPDS::RBL::Runtime;
 
-	# if the farm is in UP status, apply it the rule
-	if ( &getFarmStatus( $farmname ) eq 'up' )
+	# create iptables rule to link with rbl rule
+	$error = &runRBLIptablesRule( $rule, $farmname, 'delete' );
+
+	# if another farm is not using this rule, the rule is stopped
+	if ( !$error && !&getRBLRunningFarmList( $rule ) )
 	{
-		require Zevenet::IPDS::RBL::Runtime;
-
-		# create iptables rule to link with rbl rule
-		$error = &runRBLIptablesRule( $rule, $farmname, 'delete' );
-
-		# if another farm is not using this rule, the rule is stopped
-		if ( !$error && !&getRBLRunningFarmList( $rule ) )
-		{
-			$error = &runRBLStopPacketbl( $rule );
-		}
+		$error = &runRBLStopPacketbl( $rule );
 	}
 
 	# Remove from configuration file

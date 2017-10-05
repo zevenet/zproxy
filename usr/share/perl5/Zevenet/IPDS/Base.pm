@@ -357,4 +357,50 @@ sub runIPDSRestartByFarm
 	}
 }
 
+=begin nd
+Function: runIPDSDeleteByFarm
+
+	Unset a farm from all farms where it is linked
+
+Parameters:
+	Farmname - Farm name
+				
+Returns:
+	none - .
+	
+=cut
+
+sub runIPDSDeleteByFarm
+{
+	my $farmname = shift;
+
+	# get rules and perl modules
+	my $rules = &getIPDSfarmsRules( $farmname );
+	require Zevenet::IPDS::Blacklist::Runtime if ( @{ $rules->{ blacklists } } );
+	require Zevenet::IPDS::DoS::Runtime       if ( @{ $rules->{ dos } } );
+	require Zevenet::IPDS::RBL::Config        if ( @{ $rules->{ rbl } } );
+	my $name;
+
+	# start BL rules
+	foreach my $rule ( @{ $rules->{ blacklists } } )
+	{
+		$name = $rule->{ name };
+		&setBLRemFromFarm( $farmname, 'farms-del', $name );
+	}
+
+	# start dos rules
+	foreach my $rule ( @{ $rules->{ dos } } )
+	{
+		$name = $rule->{ name };
+		&setDOSUnsetRule( $name, $farmname );
+	}
+
+	# start rbl rules
+	foreach my $rule ( @{ $rules->{ rbl } } )
+	{
+		$name = $rule->{ name };
+		&delRBLFarm( $farmname, $name );
+	}
+}
+
 1;

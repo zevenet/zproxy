@@ -270,9 +270,9 @@ sub runFarmDelete    # ($farm_name)
 	my $rrd_dir   = &getGlobalConfiguration( 'rrd_dir' );
 
 	#delete IPDS rules
-	if ( eval { require Zevenet::IPDS::Action; } )
+	if ( eval { require Zevenet::IPDS::Base; } )
 	{
-		&runIPDSStopByFarm( $farm_name );
+		&runIPDSDeleteByFarm( $farm_name );
 	}
 
 	my $farm_type = &getFarmType( $farm_name );
