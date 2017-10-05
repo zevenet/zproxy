@@ -97,7 +97,11 @@ sub POST
 			&& $ENV{ CONTENT_TYPE } eq 'application/x-pem-file' )
 	{
 		$input_ref = $data;
-		$input_ref =~ s/\n/\\n/g; # escape '\n' characters in pem certificates
+		if ( $path eq '/certificates/activation' )
+		{
+			# escape '\n' characters in activation certificate
+			$input_ref =~ s/\n/\\n/g;
+		}
 	}
 	else
 	{
