@@ -87,7 +87,7 @@ sub certcontrol
 	my ( $nb ) = grep /Not Before/i, @zen_cert;
 	$nb =~ s/.*not before.*:\ //i;
 
-	my ( $month, $day, $hours, $min, $sec, $year ) = split /[ :]/, $nb;
+	my ( $month, $day, $hours, $min, $sec, $year ) = split /[ :]+/, $nb;
 	( $month ) = grep { $months[$_] eq $month } 0..$#months;
 	my $ini = timegm( $sec, $min, $hours, $day, $month, $year );
 
@@ -95,7 +95,7 @@ sub certcontrol
 	my ( $na ) = grep /Not After/i, @zen_cert;
 	$na =~ s/.*not after.*:\ //i;
 
-	( $month, $day, $hours, $min, $sec, $year ) = split /[ :]/, $na;
+	( $month, $day, $hours, $min, $sec, $year ) = split /[ :]+/, $na;
 	( $month ) = grep { $months[$_] eq $month } 0..$#months;
 	my $end = timegm( $sec, $min, $hours, $day, $month, $year );
 
