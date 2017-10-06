@@ -250,7 +250,7 @@ sub setBLAddPreloadLists
 			# Download lists if not exists
 			if ( !-f "$blacklistsPath/$list.txt" )
 			{
-				system ( "$touch $blacklistsPath/$list.txt &>/dev/null" );
+				system ( "$touch $blacklistsPath/$list.txt 2>/dev/null" );
 			}
 			&zenlog( "The preload list '$list' was updated." );
 		}
@@ -341,7 +341,7 @@ sub setBLParam
 		else
 		{
 			# delete list and all rules applied to the farms
-			$output = system ( "mv $blacklistsPath/$name.txt $blacklistsPath/$value.txt" );
+			$output = system ( "mv $blacklistsPath/$name.txt $blacklistsPath/$value.txt 2>/dev/null" );
 
 			my $lock = &setBLLockConfigFile();
 			$fileHandle         = Config::Tiny->read( $blacklistsConf );
