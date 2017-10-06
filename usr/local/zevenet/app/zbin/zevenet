@@ -381,7 +381,7 @@ if ( $action eq "start" )
 				{
 					print( "\n    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
-					if ( $$iface{ gateway } ne '' )
+					if ( defined $$iface{ gateway } && $$iface{ gateway } ne '' )
 					{
 						print( " Gateway:$$iface{gateway}" );
 					}
