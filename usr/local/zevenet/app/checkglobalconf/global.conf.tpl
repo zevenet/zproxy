@@ -138,7 +138,7 @@ $temperatureFile="/proc/acpi/thermal_zone/THRM/temperature";
 #Where is update-rc.d?
 $updatercd="/usr/sbin/update-rc.d";
 #Where is packetbl?
-$packetbl_bin="/usr/local/bin/packetbl";
+$packetbl_bin="/bin/packetbl";
 
 
 #where is pound binary?
