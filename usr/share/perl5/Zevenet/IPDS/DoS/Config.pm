@@ -112,34 +112,36 @@ sub setDOSCreateFileConf
 	my $dosConfDir = &getGlobalConfiguration( 'dosConfDir' );
 	my $output;
 
+	if ( !-e $confFile )
+	{
+		# create dos directory if it doesn't exist
+		if ( !-d $dosConfDir )
+		{
+			$output = system ( &getGlobalConfiguration( 'mkdir' ) . " -p $dosConfDir" );
+			&zenlog( "Created ipds configuration directory: $dosConfDir" );
+		}
+
+		# create file conf if doesn't exist
+		if ( !$output )
+		{
+			&zenlog( "Created dos configuration directory: $dosConfDir" );
+			$output = system ( &getGlobalConfiguration( 'touch' ) . " $confFile" );
+			if ( $output )
+			{
+				&zenlog( "Error, creating dos configuration directory: $dosConfDir" );
+			}
+			else
+			{
+				&zenlog( "Created dos configuration file: $confFile" );
+			}
+		}
+	}
+
 	#~ $output = &createDOSRule( 'drop_icmp', 'dropicmp' )		# Next version
 	#~ if ( ! &getDOSExists( 'drop_icmp' ) );
+
 	$output = &createDOSRule( 'ssh_brute_force', 'sshbruteforce' )
 	  if ( !&getDOSExists( 'ssh_brute_force' ) );
-
-	return 0 if ( -e $confFile );
-
-	# create dos directory if it doesn't exist
-	if ( !-d $dosConfDir )
-	{
-		$output = system ( &getGlobalConfiguration( 'mkdir' ) . " -p $dosConfDir" );
-		&zenlog( "Created ipds configuration directory: $dosConfDir" );
-	}
-
-	# create file conf if doesn't exist
-	if ( !$output )
-	{
-		&zenlog( "Created dos configuration directory: $dosConfDir" );
-		$output = system ( &getGlobalConfiguration( 'touch' ) . " $confFile" );
-		if ( $output )
-		{
-			&zenlog( "Error, creating dos configuration directory: $dosConfDir" );
-		}
-		else
-		{
-			&zenlog( "Created dos configuration file: $confFile" );
-		}
-	}
 
 	return $output;
 }
