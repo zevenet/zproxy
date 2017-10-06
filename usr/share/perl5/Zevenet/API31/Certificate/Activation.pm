@@ -94,7 +94,11 @@ sub upload_activation_certificate # ()
 	print { $cert_filehandle } $upload_filehandle;
 	close $cert_filehandle;
 
-	&checkActivationCertificate();
+	my $response = &checkActivationCertificate();
+	if ( ref $response )
+	{
+		return $response;
+	}
 
 	my $msg = "Activation certificate uploaded";
 	my $body = {

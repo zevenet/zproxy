@@ -168,7 +168,7 @@ sub checkActivationCertificate
 					 hostname        => &getHostname(),
 		};
 
-		&httpResponse( { code => 403, body => $body } );
+		return &httpResponse( { code => 403, body => $body } );
 	}
 
 	return $swcert;
