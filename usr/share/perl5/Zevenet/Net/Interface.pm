@@ -939,6 +939,8 @@ sub getInterfaceTypeList
 	}
 	elsif ( $list_type eq 'virtual' )
 	{
+		require Zevenet::Validate;
+
 		opendir my $conf_dir, &getGlobalConfiguration( 'configdir' );
 		my $virt_if_re = &getValidFormat( 'virt_interface' );
 
