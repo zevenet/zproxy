@@ -168,10 +168,10 @@ sub setBLRefreshList
 		require Tie::File;
 		require Zevenet::Lock;
 		my $tmp_list = "/tmp/tmp_blacklist.txt";
-		&ztielock ( \my @list_tmp, $tmp_list );
+		&ztielock( \my @list_tmp, $tmp_list );
 
 		grep ( s/($source_re)/add $listName $1/, @ipList );
-		my $touch    = &getGlobalConfiguration( 'touch' );
+		my $touch = &getGlobalConfiguration( 'touch' );
 
 		system ( "$touch $tmp_list >/dev/null 2>&1" );
 
@@ -287,7 +287,7 @@ sub setBLDownloadRemoteList
 		my $fileList = "$path/$listName.txt";
 
 		require Zevenet::Lock;
-		&ztielock ( \my @list, $fileList );
+		&ztielock( \my @list, $fileList );
 		@list = @ipList;
 		untie @list;
 
@@ -492,7 +492,7 @@ sub delBLCronTask
 	my $index              = 0;
 
 	require Zevenet::Lock;
-	&ztielock ( \my @list, $blacklistsCronFile );
+	&ztielock( \my @list, $blacklistsCronFile );
 
 	foreach my $line ( @list )
 	{
@@ -581,7 +581,7 @@ sub setBLCronTask
 	&zenlog( "Added cron task: $cmd" );
 
 	require Zevenet::Lock;
-	&ztielock ( \my @list, $blacklistsCronFile );
+	&ztielock( \my @list, $blacklistsCronFile );
 
 	# this line already exists, replace it
 	if ( grep ( s/.* $listName .*/$cmd/, @list ) )
@@ -608,26 +608,28 @@ sub setBLApplyToFarm
 
 	my $output;
 
-	# run rule only if the farm is up
-	if ( &getFarmStatus( $farmName ) eq 'up' )
+	# run rule only if the farm is up and the rule is enabled
+	if ( &getBLParam( $listName, 'status' ) ne 'down' )
 	{
-		# load de list if it is not been used
-		if ( &getBLIpsetStatus( $listName ) eq 'down' )
+		if ( &getFarmStatus( $farmName ) eq 'up' )
 		{
-			$output = &setBLRunList( $listName );
-
-			# if the list is remote and is not downloaded yet, downloaded it
-			if ( &getBLParam( $listName, 'remote' ) )
+			# load de list if it is not been used
+			if ( &getBLIpsetStatus( $listName ) eq 'down' )
 			{
-				&setBLDownloadRemoteList( $listName );
+				$output = &setBLRunList( $listName );
+
+				# if the list is remote and is not downloaded yet, downloaded it
+				if ( &getBLParam( $listName, 'remote' ) )
+				{
+					&setBLDownloadRemoteList( $listName );
+				}
 			}
 
-		}
-
-		# create iptable rule
-		if ( !$output )
-		{
-			$output = &setBLCreateRule( $farmName, $listName );
+			# create iptable rule
+			if ( !$output )
+			{
+				$output = &setBLCreateRule( $farmName, $listName );
+			}
 		}
 	}
 
