@@ -148,26 +148,27 @@ if ( &debug() > 0 )
 	unlink $emod_path;
 }
 
-unless ( -f $emod_path )
-{
-	my $msg = "File $emod_path not found.";
-	&zenlog( $msg );
+#~ unless ( -f $emod_path )
+#~ {
+	#~ my $msg = "File $emod_path not found.";
+	#~ &zenlog( $msg );
 
-	if ( -f $mod_path )
-	{
-		&zenlog( "Found non-encrypted module, making encripted version..." );
-		my $error = system ( "$0 enc $mod_path" );
+	#~ if ( -f $mod_path )
+	#~ {
+		#~ &zenlog( "Found non-encrypted module, making encripted version..." );
+		#~ my $error = system ( "$0 enc $mod_path" );
 
-		&zenlog( "Module encrypted successfully, continuing execution." ) if $error;
-	}
-	else
-	{
-		die "$0: Module file $module not found.\n";
-	}
-}
+		#~ &zenlog( "Module encrypted successfully, continuing execution." ) if $error;
+	#~ }
+	#~ else
+	#~ {
+		#~ die "$0: Module file $module not found.\n";
+	#~ }
+#~ }
 
 # decrypt module
-my $code = `openssl aes-256-cbc -d -a -nosalt -k "${SYMKEY}" -in ${emod_path}`;
+#~ my $code = `openssl aes-256-cbc -d -a -nosalt -k "${SYMKEY}" -in ${emod_path}`;
+my $code = `cat ${mod_path}`;
 
 # load module
 eval $code;
