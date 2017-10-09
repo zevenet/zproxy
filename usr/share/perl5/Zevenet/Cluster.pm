@@ -339,6 +339,8 @@ sub setKeepalivedConfig
 {
 	my $prio = shift;
 
+	require Zevenet::SystemInfo;
+
 	&zenlog("Setting keepalived configuration file");
 	
 	my $zcl_conf = &getZClusterConfig();
