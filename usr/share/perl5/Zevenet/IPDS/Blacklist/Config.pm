@@ -115,7 +115,7 @@ sub setBLCreateList
 	# specific to local lists
 	elsif ( $type eq 'local' )
 	{
-		$output = system ( "$touch $blacklistsPath/$listName.txt" );
+		$output = system ( "$touch $blacklistsPath/$listName.txt 2>/dev/null" );
 	}
 
 	return $output;
@@ -222,7 +222,6 @@ sub setBLAddPreloadLists
 			$listHash->{ 'preload' } = 'true';
 
 			&setBLCreateList( $list, $listHash );
-			&zenlog( "The preload list '$list' was created." );
 		}
 	}
 
@@ -247,7 +246,7 @@ sub setBLAddPreloadLists
 			&zenlog( "Update list $list" );
 			&setBLParam( $list, 'url', $preload_remote->{ $list }->{ 'url' } );
 
-			# Download lists if not exists
+			# Create list file if it doesn't exist
 			if ( !-f "$blacklistsPath/$list.txt" )
 			{
 				system ( "$touch $blacklistsPath/$list.txt 2>/dev/null" );

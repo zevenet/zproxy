@@ -276,6 +276,7 @@ sub getBLlastUptdate
 
 	# only update remote lists
 	return -1 if ( &getBLParam( $listName, 'type' ) eq 'local' );
+	return 0 if ( !-f $listFile );
 
 	# comand
 	my $outCmd = `$stat -c %y $listFile`;
