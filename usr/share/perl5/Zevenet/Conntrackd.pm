@@ -152,7 +152,7 @@ See Also:
 sub startConntrackd
 {
 	&zenlog("Starting conntrackd");
-	return system("/etc/init.d/conntrackd start ");
+	return system("/etc/init.d/conntrackd start >/dev/null 2>&1");
 }
 
 =begin nd
@@ -174,7 +174,7 @@ See Also:
 sub stopConntrackd
 {
 	&zenlog("Stopping conntrackd");
-	system("/etc/init.d/conntrackd stop");
+	system("/etc/init.d/conntrackd stop >/dev/null 2>&1");
 
 	if ( getConntrackdRunning() )
 	{
