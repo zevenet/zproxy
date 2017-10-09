@@ -41,6 +41,9 @@ See Also:
 =cut
 sub setConntrackdConfig
 {
+	require Zevenet::Cluster;
+	require Zevenet::SystemInfo;
+
 	&zenlog("Setting conntrackd configuration file");
 	
 	my $zcl_conf = &getZClusterConfig();
@@ -127,7 +130,7 @@ $systemd_policy
 
 	close $ct_file;
 
-	return;
+	return 0;
 }
 
 =begin nd

@@ -105,6 +105,8 @@ See Also:
 sub getZClusterConfig
 {
 	require Config::Tiny;
+	require Zevenet::Config;
+
 	my $filecluster = &getGlobalConfiguration('filecluster');
 
 	if ( ! -f $filecluster )
@@ -1384,6 +1386,7 @@ sub setZClusterIptablesException
 	# return if the node is not in a cluster
 	return 0 unless &getZClusterStatus();
 
+	require Zevenet::Netfilter;
 	require Zevenet::Conntrackd;
 	require Zevenet::IPDS::Core;
 
