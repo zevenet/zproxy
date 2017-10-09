@@ -706,7 +706,7 @@ sub runRemotely # `output` ( $cmd, $ip_addr [, $port ] )
 	my $ssh_cmd = "$ssh $ssh_options root\@$ip_address '$cmd'";
 
 	&zenlog("Running remotely: \@$ip_address: $cmd") if &debug();
-	&zenlog("Running: $ssh_cmd") if &debug() > 1;
+	&zenlog("Running: $ssh_cmd") if &debug() > 2;
 
 	# capture output and return it
 	return `$ssh_cmd 2>/dev/null`;

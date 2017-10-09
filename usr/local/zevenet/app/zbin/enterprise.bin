@@ -99,7 +99,7 @@ if ( $module eq 'enc' )
 
 
 
-&zenlog( "#### Start enterprise.bin ####" );
+#~ &zenlog( "#### Start enterprise.bin ####" );
 
 ## Required conditions
 
@@ -130,7 +130,7 @@ unless ( $skip_cert_check )
 		die "$0: Invalid activation certificate ($swcert)";
 	}
 
-	&zenlog( "#### Certificate: [OK]" );
+	#~ &zenlog( "#### Certificate: [OK]" );
 }
 
 
@@ -180,7 +180,7 @@ if ( $@ )
 	&zenlog( $@ );
 	die $@;
 }
-else { &zenlog( "#### Module Load: $module [OK]" ); }
+#~ else { &zenlog( "#### Module Load: $module [OK]" ); }
 
 
 
@@ -208,7 +208,7 @@ my $input_l = length $input;
 unless ( $input_l >= 2 )
 { &zenlog("#### Function args input length: NOT Enough characters. Failed!" ); } ####
 
-&zenlog( "#### Function input: $input" );
+&zenlog( "#### Function input: $input" ) if $input ne '["1"]';
 
 # decode JSON
 require Zevenet::Config;
@@ -220,7 +220,7 @@ JSON->import();
 # decode input into data reference
 my $args;
 if ( eval { $args = decode_json( $input ); } )
-     { &zenlog( "#### Function input JSON decode: [OK]" ); } ####
+     { 1 || &zenlog( "#### Function input JSON decode: [OK]" ); } ####
 else { &zenlog( "#### Function input JSON decode: Failed!" ); } ####
 
 
@@ -239,9 +239,9 @@ if ( $@ )
 	&zenlog( $@ );
 	die $@;
 }
-else { &zenlog( "#### Function run: $func: [OK]" ); }
+#~ else { &zenlog( "#### Function run: $func: [OK]" ); }
 
-&zenlog( "Function $func output ::: $returned_value" );
+#~ &zenlog( "Function $func output ::: $returned_value" );
 
 unless ( defined $returned_value ) { &zenlog( "#### Function output defined: Failed!" ); } ####
 
@@ -256,7 +256,7 @@ if ( ref $returned_value )
 
 	#~ if ( eval { $json_out = encode_json( $returned_value ); } )
 	if ( eval { $output = $json->pretty->indent->canonical->encode( $returned_value ); } )
-		 { &zenlog( "#### Function output JSON encode: [OK]" ); }
+		 { 1 || &zenlog( "#### Function output JSON encode: [OK]" ); }
 	else { &zenlog( "#### Function output JSON encode: Failed!" ); }
 
 	# Optionally send JSON to system log

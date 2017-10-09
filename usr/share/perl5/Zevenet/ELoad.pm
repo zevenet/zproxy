@@ -60,11 +60,7 @@ sub eload
 	$req{ args } = [] unless $validArrayRef;
 
 
-	if ( ref( $req{ args } ) eq 'ARRAY' )
-	{
-		&zenlog("eload: ARGS is ARRAY ref: [OK]");
-	}
-	else
+	unless ( ref( $req{ args } ) eq 'ARRAY' )
 	{
 		&zenlog("eload: ARGS is ARRAY ref: Failed!");
 	}
