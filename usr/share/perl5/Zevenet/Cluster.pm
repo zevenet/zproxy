@@ -1083,6 +1083,8 @@ sub broadcastInterfaceDiscovery
 
 	if ( $iface->{ ip_v } == 4 )
 	{
+		require Zevenet::Net::Util;
+
 		# arping
 		&sendGArp( $iface->{ name }, $iface->{ addr } );
 	}

@@ -57,6 +57,7 @@ use feature 'say';
 use Zevenet::Log;
 use Zevenet::Config;
 use Zevenet::Debug;
+use Data::Dumper;
 
 #~ my $primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
 
@@ -480,9 +481,11 @@ if ( $object eq 'gateway' )
 
 sub setNodeStatusMaster
 {
-	&zenlog("Starting setNodeStatusMaster");
+	&zenlog("############# Starting setNodeStatusMaster");
 
 	require Zevenet::Net::Interface;
+	require Zevenet::Farm::Core;
+	require Zevenet::Farm::Base;
 
 	if ( &getZClusterNodeStatus() eq 'master' )
 	{
@@ -505,11 +508,10 @@ sub setNodeStatusMaster
 	
 	for my $if_ref ( @configured_interfaces )
 	{
-		next if $if_ref->{ vini } eq '';
-		
+		next unless $if_ref->{ type } eq 'virtual';
 		&broadcastInterfaceDiscovery( $if_ref );
 	}
-	
+
 	# start sync
 	my $zenino = &getGlobalConfiguration('zenino');
 	system( "$zenino &" );
@@ -524,13 +526,15 @@ sub setNodeStatusMaster
 
 		if ( $bstatus eq "up" )
 		{
+			require Zevenet::FarmGuardian;
+
 			#~ print "  * Starting Farm $farmname:";
 			#~ $status = &_runFarmStart( $farmname, "false" );
 
 			#farmguardian configured and up?
 			my $fgstatus = &getFarmGuardianStatus( $farmname );
 
-			if ( ( $bstatus == 'up' ) && ( $fgstatus == 1 ) )
+			if ( ( $bstatus eq 'up' ) && ( $fgstatus == 1 ) )
 			{
 				my $error_code = &runFarmGuardianStart( $farmname, "" );
 				if ( $error_code )
@@ -541,14 +545,16 @@ sub setNodeStatusMaster
 		}
 	}
 
-	&zenlog("End of setNodeStatusMaster");
+	&zenlog("End of setNodeStatusMaster ###################");
 
 	return 0;
 }
 
 sub setNodeStatusBackup
 {
-	&zenlog("Starting setNodeStatusBackup");
+	&zenlog("############### Starting setNodeStatusBackup");
+
+	require Zevenet::Net::Interface;
 
 	if ( &getZClusterNodeStatus() eq 'backup' )
 	{
@@ -562,30 +568,32 @@ sub setNodeStatusBackup
 	}
 
 	my $primary_backup = &getGlobalConfiguration('primary_backup');
-	system("$primary_backup backup");
+	system("$primary_backup backup >/dev/null");
 
 	my $zenino = &getGlobalConfiguration('zenino');
-	system( "$zenino stop &" ) unless system('pgrep zeninotify.pl');
+	system( "$zenino stop &" ) unless system('pgrep zeninotify.pl >/dev/null');
 
 	# stop farmguardians
-	system("kill `pgrep farmguardian`");
+	my $pids = `pgrep farmguardian`;
+	system("kill $pids") if $pids;
 
 	# block/disable ip announces ( arp and neigh )
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
+
 	for my $if_ref ( @configured_interfaces )
 	{
-		next if $if_ref->{ vini } eq '';
+		next unless $if_ref->{ type } eq 'virtual';
 		&disableInterfaceDiscovery( $if_ref );
 	}
 
-	&zenlog("End of setNodeStatusBackup");
+	&zenlog("End of setNodeStatusBackup ####################");
 
 	return 0;
 }
 
 sub setNodeStatusMaintenance
 {
-	&zenlog("Starting setNodeStatusMaintenance");
+	&zenlog("############### Starting setNodeStatusMaintenance");
 
 	if ( &getZClusterNodeStatus() eq 'maintenance' )
 	{
@@ -614,7 +622,7 @@ sub setNodeStatusMaintenance
 	}
 	#}
 
-	&zenlog("Starting setNodeStatusMaintenance");
+	&zenlog("Starting setNodeStatusMaintenance ################");
 
 	return 0;
 }

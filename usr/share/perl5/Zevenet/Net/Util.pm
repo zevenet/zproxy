@@ -250,7 +250,7 @@ sub sendGArp    # ($if,$ip)
 	my $arping_cmd = "$arping_bin $arp_arg -c 2 -I $iface[0] $ip";
 
 	&zenlog( "$arping_cmd" );
-	system ( "$arping_cmd &" );
+	system ( "$arping_cmd >/dev/null &" );
 
 	&sendGPing( $iface[0] );
 }
