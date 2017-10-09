@@ -55,6 +55,7 @@ use strict;
 use warnings;
 use feature 'say';
 use Zevenet::Log;
+use Zevenet::Config;
 use Zevenet::Debug;
 
 #~ my $primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
@@ -115,7 +116,9 @@ elsif ( $object eq 'getConntrackdRunning' )
 }
 elsif ( $object eq 'getZClusterArpStatus' )
 {
-	my $status;
+	require Zevenet::Net::Interface;
+
+	my $status = 'ok';
 
 	if ( ! &getZClusterRunning() )
 	{
@@ -126,10 +129,8 @@ elsif ( $object eq 'getZClusterArpStatus' )
 	my $node_role = &getZClusterNodeStatus();
 	my @arptables_lines = `arptables -L INPUT`;
 
-	for my $if_ref ( &getInterfaceList() )
+	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
 	{
-		next if $if_ref->{ vini } eq ''; # only virtual ips
-
 		my $if_dropped = grep { $_ =~ /^-j DROP -d $if_ref->{ addr } $/ } @arptables_lines;
 
 		if ( $node_role ne 'master' && !$if_dropped )
@@ -144,11 +145,6 @@ elsif ( $object eq 'getZClusterArpStatus' )
 		}
 	}
 
-	if ( $status ne 'ko' )
-	{
-		$status = 'ok';
-	}
-	
 	say $status;
 	exit 0;
 }
@@ -405,6 +401,8 @@ if ( $object eq 'interface' )
 
 	if ( $command eq 'float-update' )
 	{
+		require Zevenet::Farm::L4xNAT::Config;
+
 		&reloadL4FarmsSNAT();
 		exit 0;
 	}
@@ -482,6 +480,10 @@ if ( $object eq 'gateway' )
 
 sub setNodeStatusMaster
 {
+	&zenlog("Starting setNodeStatusMaster");
+
+	require Zevenet::Net::Interface;
+
 	if ( &getZClusterNodeStatus() eq 'master' )
 	{
 		&zenlog("Node is already master");
@@ -539,11 +541,15 @@ sub setNodeStatusMaster
 		}
 	}
 
+	&zenlog("End of setNodeStatusMaster");
+
 	return 0;
 }
 
 sub setNodeStatusBackup
 {
+	&zenlog("Starting setNodeStatusBackup");
+
 	if ( &getZClusterNodeStatus() eq 'backup' )
 	{
 		&zenlog("Node is already backup");
@@ -572,11 +578,15 @@ sub setNodeStatusBackup
 		&disableInterfaceDiscovery( $if_ref );
 	}
 
+	&zenlog("End of setNodeStatusBackup");
+
 	return 0;
 }
 
 sub setNodeStatusMaintenance
 {
+	&zenlog("Starting setNodeStatusMaintenance");
+
 	if ( &getZClusterNodeStatus() eq 'maintenance' )
 	{
 		&zenlog("Node is already under maintenance");
@@ -603,6 +613,8 @@ sub setNodeStatusMaintenance
 		&disableInterfaceDiscovery( $if_ref );
 	}
 	#}
+
+	&zenlog("Starting setNodeStatusMaintenance");
 
 	return 0;
 }
