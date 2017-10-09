@@ -39,22 +39,16 @@
 # zcluster-manager notify_fault
 #
 # zcluster-manager interface float-update
-# zcluster-manager interface start <interface> [4|6]
-# zcluster-manager interface stop <interface> [4|6]
-# zcluster-manager interface delete <interface> [4|6]
+# zcluster-manager interface [start|stop|delete] <interface> [4|6]
 #
-# zcluster-manager gateway update <interface> [4|6]
-# zcluster-manager gateway delete <interface> [4|6]
+# zcluster-manager gateway [update|delete] <interface> [4|6]
 #
-# zcluster-manager farm start <farm>
-# zcluster-manager farm stop <farm>
-# zcluster-manager farm restart <farm>
-# zcluster-manager farm delete <farm>
+# zcluster-manager farm [start|stop|restart|delete] <farm>
 #
-# zcluster-manager ipds <farm>
-# zcluster-manager ipds_bl <rule> [farm]
-# zcluster-manager ipds_dos <rule> [farm]
-# zcluster-manager ipds_rbl <rule> [farm]
+# zcluster-manager ipds [start|stop|restart] <farm>
+# zcluster-manager ipds_bl [start|stop|restart] <rule> [farm]
+# zcluster-manager ipds_dos [start|stop|restart] <rule> [farm]
+# zcluster-manager ipds_rbl [start|stop|restart] <rule> [farm]
 #
 
 use strict;
@@ -244,12 +238,12 @@ if ( $object eq "ipds" )
 {
 	my $farm_name = shift @ARGV;
 	# stop DOS rules
-	if ( $action eq "stop" )
+	if ( $command eq "stop" )
 	{
 		&runIPDSStopByFarm( $farm_name );
 	}
 	# start DOS rules
-	elsif ( $action eq "start" )
+	elsif ( $command eq "start" )
 	{
 		&runIPDSStartByFarm( $farm_name );
 	}
@@ -274,12 +268,12 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 		if ( $farm_name )
 		{
 			# stop BL rules
-			if ( $action eq "stop" )
+			if ( $command eq "stop" )
 			{
 				&runBLStop( $rule_name, $farm_name );
 			}
 			# start BL rules
-			elsif ( $action eq "start" )
+			elsif ( $command eq "start" )
 			{
 				&runBLStart( $rule_name, $farm_name );
 			}
@@ -292,12 +286,12 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 		else
 		{
 			# stop BL rules
-			if ( $action eq "stop" )
+			if ( $command eq "stop" )
 			{
 				&runBLStopByRule( $rule_name );
 			}
 			# start BL rules
-			elsif ( $action eq "start" )
+			elsif ( $command eq "start" )
 			{
 				&runBLStartByRule( $rule_name );
 			}
@@ -317,12 +311,12 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 		if ( $farm_name )
 		{
 			# stop DOS rules
-			if ( $action eq "stop" )
+			if ( $command eq "stop" )
 			{
 				&runDOSStop( $rule_name, $farm_name );
 			}
 			# start DOS rules
-			elsif ( $action eq "start" )
+			elsif ( $command eq "start" )
 			{
 				&runDOSStart( $rule_name, $farm_name );
 			}
@@ -335,12 +329,12 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 		else
 		{
 			# stop DOS rules
-			if ( $action eq "stop" )
+			if ( $command eq "stop" )
 			{
 				&runDOSStopByRule( $rule_name );
 			}
 			# start DOS rules
-			elsif ( $action eq "start" )
+			elsif ( $command eq "start" )
 			{
 				&runDOSStartByRule( $rule_name );
 			}
@@ -360,12 +354,12 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 		if ( $farm_name )
 		{
 			# stop RBL rules
-			if ( $action eq "stop" )
+			if ( $command eq "stop" )
 			{
 				&runRBLStop( $rule_name, $farm_name );
 			}
 			# start RBL rules
-			elsif ( $action eq "start" )
+			elsif ( $command eq "start" )
 			{
 				&runRBLStart( $rule_name, $farm_name );
 			}
@@ -378,12 +372,12 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 		else
 		{
 			# stop RBL rules
-			if ( $action eq "stop" )
+			if ( $command eq "stop" )
 			{
 				&runRBLStopByRule( $rule_name );
 			}
 			# start RBL rules
-			elsif ( $action eq "start" )
+			elsif ( $command eq "start" )
 			{
 				&runRBLStartByRule( $rule_name );
 			}
