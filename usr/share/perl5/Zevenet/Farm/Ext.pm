@@ -217,6 +217,7 @@ sub setFarmDeleteCertNameSNI    #($certn,$fname)
 
 	if ( $type eq "https" )
 	{
+		require Zevenet::Lock;
 		require Tie::File;
 		&ztielock ( \my @array, "$configdir/$ffile" );
 
