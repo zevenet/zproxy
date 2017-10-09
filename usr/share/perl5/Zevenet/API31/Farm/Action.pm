@@ -58,6 +58,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 			my $msg = "Error trying to set the action stop in farm $farmname.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
+		&setFarmNoRestart( $farmname );
 	}
 	elsif ( $json_obj->{ action } eq "start" )
 	{
