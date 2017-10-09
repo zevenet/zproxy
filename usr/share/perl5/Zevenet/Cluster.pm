@@ -1442,6 +1442,7 @@ sub zClusterFarmUp
 
 	if ( $ssyncd_enabled eq 'true' )
 	{
+		require Zevenet::Ssyncd;
 		&setSsyncdFarmUp( $farm_name );
 	}
 
@@ -1456,6 +1457,7 @@ sub zClusterFarmDown
 
 	if ( $ssyncd_enabled eq 'true' )
 	{
+		require Zevenet::Ssyncd;
 		&setSsyncdFarmDown( $farm_name );
 	}
 

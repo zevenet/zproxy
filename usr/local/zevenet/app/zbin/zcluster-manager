@@ -486,6 +486,7 @@ sub setNodeStatusMaster
 	require Zevenet::Net::Interface;
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
+	require Zevenet::Ssyncd;
 
 	if ( &getZClusterNodeStatus() eq 'master' )
 	{
@@ -496,8 +497,12 @@ sub setNodeStatusMaster
 	&zenlog("Switching node to master");
 	&setZClusterNodeStatus('master');
 
+	# conntrackd sync
 	my $primary_backup = &getGlobalConfiguration('primary_backup');
 	system("$primary_backup primary");
+
+	# http sessions sync
+	&setSsyncdMaster();
 
 	# flush arp rules
 	my $rc = &enableAllInterfacesDiscovery();
@@ -555,6 +560,7 @@ sub setNodeStatusBackup
 	&zenlog("############### Starting setNodeStatusBackup");
 
 	require Zevenet::Net::Interface;
+	require Zevenet::Ssyncd;
 
 	if ( &getZClusterNodeStatus() eq 'backup' )
 	{
@@ -567,8 +573,12 @@ sub setNodeStatusBackup
 		&setZClusterNodeStatus('backup');
 	}
 
+	# conntrackd sync
 	my $primary_backup = &getGlobalConfiguration('primary_backup');
 	system("$primary_backup backup >/dev/null");
+
+	# http sessions sync
+	&setSsyncdBackup();
 
 	my $zenino = &getGlobalConfiguration('zenino');
 	system( "$zenino stop &" ) unless system('pgrep zeninotify.pl >/dev/null');
