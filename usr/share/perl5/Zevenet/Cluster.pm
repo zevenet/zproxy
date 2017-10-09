@@ -818,6 +818,8 @@ sub runSync
 
 	#~ &zenlog("starting runSync");
 
+	require Zevenet::SystemInfo;
+
 	#~ my @excluded_paths = @_;
 	my @excluded_files = (
 		"lost+found",
@@ -902,6 +904,8 @@ See Also:
 =cut
 sub getZClusterNodeStatus
 {
+	require Zevenet::Config;
+
 	my $znode_status_file = &getGlobalConfiguration('znode_status_file');
 	open my $znode_status, '<', $znode_status_file;
 
