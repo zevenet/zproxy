@@ -523,6 +523,7 @@ sub getFarmGuardianConf    # ($fname,$svice)
 
 	my @line = split ( ":::", $lastline );
 	chomp ( @line );
+	$line[4]="false" if ( ! $line[4] );
 
 	#&zenlog("getting 'FarmGuardianConf @line' for $fname farm");
 	return @line;

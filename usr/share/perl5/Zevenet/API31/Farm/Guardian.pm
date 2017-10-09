@@ -35,7 +35,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	my $desc    = "Modify farm guardian";
 	my $type    = &getFarmType( $farmname );
 	my $service = $json_obj->{ 'service' };
-	delete $json_obj->{'service'};
+	delete $json_obj->{ 'service' };
 
 	#~ my @fgKeys = ( "fg_time", "fg_log", "fg_enabled", "fg_type" );
 
@@ -68,7 +68,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	{
 		require Zevenet::Farm::HTTP::Service;
 
-		if ( !grep( /^$service$/, &getHTTPFarmServices( $farmname ) ) )
+		if ( !grep ( /^$service$/, &getHTTPFarmServices( $farmname ) ) )
 		{
 			my $msg = "Invalid service name, please insert a valid value.";
 			&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -76,25 +76,31 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	}
 
 	# check farmguardian time interval
-	if ( exists ( $json_obj->{ fgtimecheck } ) && ! &getValidFormat( 'fg_time', $json_obj->{ fgtimecheck } ) )
+	if ( exists ( $json_obj->{ fgtimecheck } )
+		 && !&getValidFormat( 'fg_time', $json_obj->{ fgtimecheck } ) )
 	{
 		my $msg = "Invalid format, please insert a valid fgtimecheck.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+
 	# check farmguardian command
 	elsif ( exists ( $json_obj->{ fgscript } ) && $json_obj->{ fgscript } eq '' )
 	{
 		my $msg = "Invalid fgscript, can't be blank.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+
 	# check farmguardian enabled
-	elsif ( exists ( $json_obj->{ fgenabled } ) && ! &getValidFormat( 'fg_enabled', $json_obj->{ fgenabled } ) )
+	elsif ( exists ( $json_obj->{ fgenabled } )
+			&& !&getValidFormat( 'fg_enabled', $json_obj->{ fgenabled } ) )
 	{
 		my $msg = "Invalid format, please insert a valid fgenabled.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+
 	# check farmguardian log
-	elsif ( exists ( $json_obj->{ fglog } ) && ! &getValidFormat( 'fg_log', $json_obj->{ fglog } ) )
+	elsif ( exists ( $json_obj->{ fglog } )
+			&& !&getValidFormat( 'fg_log', $json_obj->{ fglog } ) )
 	{
 		my $msg = "Invalid format, please insert a valid fglog.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -110,7 +116,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 
 	if ( $type eq 'gslb' )
 	{
-		if( eval { require Zevenet::API31::Farm::GSLB; } )
+		if ( eval { require Zevenet::API31::Farm::GSLB; } )
 		{
 			&modify_gslb_farmguardian( $json_obj, $farmname, $service );
 		}
@@ -128,25 +134,30 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	my @fgconfig = &getFarmGuardianConf( $farmname, $service );
 
 	chomp @fgconfig;
-	my (undef, $timetocheck, $check_script, $usefarmguardian, $farmguardianlog) = @fgconfig;
+	my ( undef, $timetocheck, $check_script, $usefarmguardian, $farmguardianlog ) =
+	  @fgconfig;
 
 	$timetocheck += 0;
-	$timetocheck = 5 if ! $timetocheck;
+	$timetocheck = 5 if !$timetocheck;
 
 	$check_script =~ s/\"/\'/g;
 
 	# update current configuration with new settings
-	if ( exists $json_obj->{ fgtimecheck } ) {
+	if ( exists $json_obj->{ fgtimecheck } )
+	{
 		$timetocheck = $json_obj->{ fgtimecheck };
 		$timetocheck = $timetocheck + 0;
 	}
-	if ( exists $json_obj->{ fgscript } ) {
-		$check_script = $json_obj->{ fgscript }; # FIXME: Make safe script string
+	if ( exists $json_obj->{ fgscript } )
+	{
+		$check_script = $json_obj->{ fgscript };    # FIXME: Make safe script string
 	}
-	if ( exists $json_obj->{ fgenabled } ) {
+	if ( exists $json_obj->{ fgenabled } )
+	{
 		$usefarmguardian = $json_obj->{ fgenabled };
 	}
-	if ( exists $json_obj->{ fglog } ) {
+	if ( exists $json_obj->{ fglog } )
+	{
 		$farmguardianlog = $json_obj->{ fglog };
 	}
 
@@ -155,8 +166,8 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	&runFarmGuardianRemove( $farmname, $service );
 
 	my $status =
-	&runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
-							$usefarmguardian, $farmguardianlog, $service );
+	  &runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
+							  $usefarmguardian, $farmguardianlog, $service );
 
 	# check for errors setting farmguardian
 	if ( $status == -1 )
@@ -175,12 +186,27 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 		}
 	}
 
+	# get current farmguardian configuration
+	require Zevenet::FarmGuardian;
+	my ( undef, $timetocheck, $check_script, $usefarmguardian, $farmguardianlog ) =
+	  &getFarmGuardianConf( $farmname, $service );
+
+	$timetocheck += 0;
+	$timetocheck = 5 if !$timetocheck;
+	$check_script =~ s/\"/\'/g;
+
 	# no error found, return successful response
-	my $msg = "Success, some parameters have been changed in farm guardian in farm $farmname.";
+	my $msg =
+	  "Success, some parameters have been changed in farm guardian in farm $farmname.";
 	my $body = {
 				 description => $desc,
-				 params      => $json_obj,
-				 message     => $msg,
+				 params      => {
+							 fgenabled   => $usefarmguardian,
+							 fgtimecheck => $timetocheck,
+							 fgscript    => $check_script,
+							 fglog       => $farmguardianlog,
+				 },
+				 message => $msg,
 	};
 
 	&httpResponse( { code => 200, body => $body } );

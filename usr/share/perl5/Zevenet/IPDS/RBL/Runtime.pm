@@ -49,6 +49,8 @@ sub getRBLFarmMatch
 {
 	my $farmname = shift;
 
+	require Zevenet::Farm::Base;
+
 	my $match;
 	my $type       = &getFarmType( $farmname );
 	my $protocol   = &getFarmProto( $farmname );

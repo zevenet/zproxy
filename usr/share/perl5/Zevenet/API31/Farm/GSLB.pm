@@ -643,10 +643,18 @@ sub modify_gslb_farmguardian    # ( $json_obj, $farmname )
 	}
 
 	# no error found, return successful response
+	require Zevenet::Farm::GSLB::FarmGuardian;
+	my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $service );
+	my $fgStatus = &getGSLBFarmFGStatus( $farmname, $service );
+
 	my $msg = "Success, some parameters have been changed in farm guardian in farm $farmname.";
 	my $body = {
 				 description => $desc,
-				 params      => $json_obj,
+				 params      => {
+					 fgenabled   => $fgStatus,
+					 fgscript    => $fgScrip,
+					 fgtimecheck => $fgTime + 0,
+				 },
 				 message     => $msg,
 	};
 
