@@ -22,6 +22,7 @@
 
 use strict;
 use Zevenet::Farm::Action;
+use Zevenet::Farm::Base;
 use Zevenet::Farm::GSLB::Config;
 
 sub modify_gslb_farm    # ( $json_obj,	$farmname )
