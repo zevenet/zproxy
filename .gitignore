@@ -13,6 +13,7 @@
 !/usr/local
 /usr/local/*
 !/usr/local/zevenet/
+usr/local/zevenet/node_status
 
 /usr/local/zevenet/app/cherokee/
 /usr/local/zevenet/app/gdnsd/
