@@ -293,7 +293,9 @@ sub disableZCluster
 {
 	my $error_code = system("/etc/init.d/keepalived stop >/dev/null 2>&1");
 
+	require Zevenet::Net::Interface;
 	require Zevenet::Conntrackd;
+	require Zevenet::Ssyncd;
 
 	# conntrackd
 	if ( &getConntrackdRunning() )
@@ -301,7 +303,8 @@ sub disableZCluster
 		&stopConntrackd();
 	}
 
-	require Zevenet::Net::Interface;
+	# ssyncd
+	&setSsyncdDisabled();
 
 	# remove dummy interface
 	if ( &getSystemInterface( $maint_if ) )

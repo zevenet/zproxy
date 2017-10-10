@@ -85,7 +85,18 @@ sub setSsyncdDisabled
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncd_bin' );
 
 	# /ssyncdctl quit --> Exit ssyncd process
-	return system( "$ssyncdctl_bin quit" );
+	my $ssync_cmd = "$ssyncdctl_bin quit";
+	my $error = system( "$ssync_cmd >/dev/null" );
+
+	zenlog("/// setSsyncdDisabled error: $error");
+
+	if ( $error )
+	{
+		$error = system("pkill ssyncd");
+		zenlog("/// setSsyncdDisabled kill error: $error");
+	}
+
+	return $error;
 }
 
 sub setSsyncdBackup
@@ -131,6 +142,7 @@ sub setSsyncdMaster
 	# ./ssyncdctl show mode --> master|slave
 	my $ssync_cmd = "$ssyncdctl_bin show mode";
 	chomp( my ( $mode ) = `$ssync_cmd` );
+
 	&zenlog("/// ssyncd mode: $mode > cmd: $ssync_cmd");
 
 	# end function if already in master mode
