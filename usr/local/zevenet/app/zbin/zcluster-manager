@@ -233,6 +233,7 @@ if ( $object eq 'farm' )
 #  object = ipds 
 if ( $object eq "ipds" )
 {
+	require Zevenet::IPDS::Base;
 	my $farm_name = shift @ARGV;
 	# stop DOS rules
 	if ( $command eq "stop" )
@@ -260,7 +261,7 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 	
 	if ( $module eq 'bl' )
 	{
-		require Zevenet::IPDS::Blacklist::Action;
+		require Zevenet::IPDS::Blacklist::Actions;
 
 		if ( $farm_name )
 		{
@@ -303,7 +304,7 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 	}
 	elsif ( $module eq 'dos' )
 	{
-		require Zevenet::IPDS::DoS::Action;
+		require Zevenet::IPDS::DoS::Actions;
 
 		if ( $farm_name )
 		{
@@ -346,7 +347,7 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 	}
 	elsif ( $module eq 'rbl' )
 	{
-		require Zevenet::IPDS::RBL::Action;
+		require Zevenet::IPDS::RBL::Actions;
 
 		if ( $farm_name )
 		{

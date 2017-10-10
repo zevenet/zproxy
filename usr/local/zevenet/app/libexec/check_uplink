@@ -26,6 +26,7 @@ use warnings;
 use Zevenet::Config;
 use Zevenet::Farm::Core;
 use Zevenet::Farm::Backend;
+use Zevenet::Farm::Action;
 
 my ( $farmname, $count ) = @ARGV;
 
