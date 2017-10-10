@@ -403,4 +403,55 @@ sub runIPDSDeleteByFarm
 	}
 }
 
+=begin nd
+Function: runIPDSRenameByFarm
+
+	When a farm is renamed, link ipds rules with new farm name
+
+Parameters:
+	Farmname - Farm name
+	New farmname - New farm name
+
+Returns:
+	none - .
+
+=cut
+
+sub runIPDSRenameByFarm
+{
+	my $farmname = shift;
+	my $newname  = shift;
+
+	# get rules and perl modules
+	my $rules = &getIPDSfarmsRules( $farmname );
+	require Zevenet::IPDS::Blacklist::Config if ( @{ $rules->{ blacklists } } );
+	require Zevenet::IPDS::DoS::Config       if ( @{ $rules->{ dos } } );
+	require Zevenet::IPDS::RBL::Config       if ( @{ $rules->{ rbl } } );
+	my $name;
+
+	# start BL rules
+	foreach my $rule ( @{ $rules->{ blacklists } } )
+	{
+		$name = $rule->{ name };
+		&setBLParam( $name, 'farms-del', $farmname );
+		&setBLParam( $name, 'farms-add', $newname );
+	}
+
+	# start dos rules
+	foreach my $rule ( @{ $rules->{ dos } } )
+	{
+		$name = $rule->{ name };
+		&setDOSParam( $name, 'farms-del', $farmname );
+		&setDOSParam( $name, 'farms-add', $newname );
+	}
+
+	# start rbl rules
+	foreach my $rule ( @{ $rules->{ rbl } } )
+	{
+		$name = $rule->{ name };
+		&setRBLObjectRuleParam( $name, 'farms-del', $farmname );
+		&setRBLObjectRuleParam( $name, 'farms-add', $newname );
+	}
+}
+
 1;

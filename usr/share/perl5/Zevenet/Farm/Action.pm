@@ -51,7 +51,7 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 	# finish the function if the tarm is already up
 	if ( &getFarmStatus( $farm_name ) eq "up" )
 	{
-		zenlog("Farm $farm_name already up");
+		zenlog( "Farm $farm_name already up" );
 		return 0;
 	}
 
@@ -129,7 +129,10 @@ sub runFarmStart    # ($farm_name,$writeconf)
 		&runIPDSStartByFarm( $farm_name );
 	}
 
-	if ( eval { require Zevenet::Cluster } ) { &zClusterFarmUp( $farm_name ); }
+	if ( eval { require Zevenet::Cluster } )
+	{
+		&zClusterFarmUp( $farm_name );
+	}
 
 	return $status;
 }
@@ -155,7 +158,10 @@ sub runFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
 
-	if ( eval { require Zevenet::Cluster } ) { &zClusterFarmUp( $farm_name ); }
+	if ( eval { require Zevenet::Cluster } )
+	{
+		&zClusterFarmUp( $farm_name );
+	}
 
 	# stop ipds rules
 	if ( eval { require Zevenet::IPDS::Base; } )
@@ -489,6 +495,12 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 
 	# delete old graphs
 	unlink ( "img/graphs/bar$farm_name.png" );
+
+	#~ require Zevenet::IPDS;
+	if ( eval { require Zevenet::IPDS; } )
+	{
+		&runIPDSRenameByFarm( $farm_name, $new_farm_name );
+	}
 
 	# FIXME: farmguardian files
 	# FIXME: logfiles

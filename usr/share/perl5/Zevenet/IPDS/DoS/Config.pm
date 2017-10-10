@@ -170,15 +170,31 @@ sub setDOSParam
 	require Zevenet::IPDS::DoS::Actions;
 
 	#Stop related rules
-	my $status = &getDOSStatusRule( $name );
+	my $status = ( &getDOSLookForRule( $name ) ) ? "up" : "down";
 	&runDOSStopByRule( $name ) if ( $status eq "up" );
 
-	my $confFile = &getGlobalConfiguration( 'dosConf' );
-
+	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $lock       = &setDOSLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $confFile );
 	$fileHandle = Config::Tiny->read( $confFile );
-	$fileHandle->{ $name }->{ $param } = $value;
+
+	if ( 'farms-add' eq $param )
+	{
+		if ( $fileHandle->{ $name }->{ 'farms' } !~ /(^| )$value( |$)/ )
+		{
+			my $farmList = $fileHandle->{ $name }->{ 'farms' };
+			$fileHandle->{ $name }->{ 'farms' } = "$farmList $value";
+		}
+	}
+	elsif ( 'farms-del' eq $param )
+	{
+		$fileHandle->{ $name }->{ 'farms' } =~ s/(^| )$value( |$)/ /;
+	}
+	else
+	{
+		$fileHandle->{ $name }->{ $param } = $value;
+	}
+
 	$fileHandle->write( $confFile );
 	&setDOSUnlockConfigFile( $lock );
 
