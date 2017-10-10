@@ -42,12 +42,12 @@ sub setSsyncdFarmUp
 		
 		if ( $farms_started )
 		{
-			return system( "$ssyncdctl_bin start recent" );
+			return system( "$ssyncdctl_bin start recent >/dev/null" );
 		}
 	}
 	elsif ( $type =~ /^https?$/ )
 	{
-		return system( "$ssyncdctl_bin start http $farm_name" );
+		return system( "$ssyncdctl_bin start http $farm_name >/dev/null" );
 	}
 
 	return undef;
@@ -68,12 +68,12 @@ sub setSsyncdFarmDown
 		
 		if ( $farms_started <= 1 )
 		{
-			return system( "$ssyncdctl_bin stop recent" );
+			return system( "$ssyncdctl_bin stop recent >/dev/null" );
 		}
 	}
 	elsif ( $type =~ /^https?$/ )
 	{
-		return system( "$ssyncdctl_bin stop http $farm_name" );
+		return system( "$ssyncdctl_bin stop http $farm_name >/dev/null" );
 	}
 
 	return undef;
@@ -82,18 +82,19 @@ sub setSsyncdFarmDown
 #~ sub disable_ssyncd
 sub setSsyncdDisabled
 {
-	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncd_bin' );
+	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
 
 	# /ssyncdctl quit --> Exit ssyncd process
 	my $ssync_cmd = "$ssyncdctl_bin quit";
-	my $error = system( "$ssync_cmd >/dev/null" );
+	my $error;
 
-	zenlog("/// setSsyncdDisabled error: $error");
+	$error = system( "$ssync_cmd >/dev/null" ) if `pgrep ssyncd`;
 
 	if ( $error )
 	{
+		zenlog("setSsyncdDisabled quit error: $error");
 		$error = system("pkill ssyncd");
-		zenlog("/// setSsyncdDisabled kill error: $error");
+		zenlog("setSsyncdDisabled kill error: $error");
 	}
 
 	return $error;
@@ -111,10 +112,18 @@ sub setSsyncdBackup
 	# ./ssyncdctl show mode --> master|backup
 	my $ssync_cmd = "$ssyncdctl_bin show mode";
 	chomp( my ( $mode ) = `$ssync_cmd` );
-	&zenlog("/// ssyncd mode: $mode > cmd: $ssync_cmd");
 
-	# end function if already in backup mode
-	return 0 if $mode eq 'backup';
+	if ( $mode eq 'backup' )
+	{
+		&zenlog("Ssyncd already in master mode");
+
+		# end function if already in backup mode
+		return 0;
+	}
+	else
+	{
+		&zenlog("Ssyncd current mode: $mode");
+	}
 
 	&setSsyncdDisabled();
 
@@ -132,8 +141,6 @@ sub setSsyncdBackup
 
 sub setSsyncdMaster
 {
-	&zenlog("/// Starting setSsyncdMaster");
-
 	my $ssyncd_bin    = &getGlobalConfiguration( 'ssyncd_bin' );
 	my $ssyncd_port   = &getGlobalConfiguration( 'ssyncd_port' );
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
@@ -143,27 +150,30 @@ sub setSsyncdMaster
 	my $ssync_cmd = "$ssyncdctl_bin show mode";
 	chomp( my ( $mode ) = `$ssync_cmd` );
 
-	&zenlog("/// ssyncd mode: $mode > cmd: $ssync_cmd");
+	if ( $mode eq 'master' )
+	{
+		&zenlog("Ssyncd already in master mode");
 
-	# end function if already in master mode
-	return 0 if $mode eq 'master';
-
-	&zenlog("/// ssyncd mode is not master");
+		# end function if already in master mode
+		return 0;
+	}
+	else
+	{
+		&zenlog("Ssyncd current mode: $mode");
+	}
 
 	# Before changing to master mode:
 	# ./ssyncdctl write http   --> Write http sessions data to pound 
 	# ./ssyncdctl write recent --> Write recent data to recent module
 	$ssync_cmd = "$ssyncdctl_bin write http";
 	my $error = system( "$ssync_cmd" );
-	&zenlog("/// ssyncd write http: $error > cmd: $ssync_cmd");
+	&zenlog("setSsyncdMaster ssyncd write http: $error > cmd: $ssync_cmd") if $error;
 
 	$ssync_cmd = "$ssyncdctl_bin write recent";
 	my $error = system( "$ssync_cmd" );
-	&zenlog("/// ssyncd write recent: $error > cmd: $ssync_cmd");
+	&zenlog("setSsyncdMaster ssyncd write recent: $error > cmd: $ssync_cmd") if $error;
 
 	&setSsyncdDisabled();
-	&zenlog("/// ssyncd disabled");
-
 
 	# Start Master mode:
 	# ./ssyncd -d -M -p 9999 --> start master node
