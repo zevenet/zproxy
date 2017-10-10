@@ -728,7 +728,7 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
+	my $output        = 0;
 
 	require Zevenet::FarmGuardian;
 
@@ -762,12 +762,10 @@ sub setFarmNatType    # ($nat,$farm_name)
 				$line =
 				  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$nat\;$args[5]\;$args[6]\;$args[7]\;$args[8]";
 				splice @configfile, $i, $line;
-				$output = $?;    # FIXME
 			}
 			$i++;
 		}
 		untie @configfile;
-		$output = $?;            # FIXME
 	}
 
 	$farm = &getL4FarmStruct( $farm_name );
