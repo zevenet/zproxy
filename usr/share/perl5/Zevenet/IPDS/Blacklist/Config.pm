@@ -352,38 +352,6 @@ sub setBLParam
 			return $output;
 		}
 	}
-	elsif ( 'policy' eq $key )
-	{
-		my $lock = &setBLLockConfigFile();
-		$fileHandle         = Config::Tiny->read( $blacklistsConf );
-		$conf               = $fileHandle->{ $name };
-		$conf->{ 'policy' } = $value;
-		$fileHandle->write( $blacklistsConf );
-		&setBLUnlockConfigFile( $lock );
-
-		# reset the list if this was active
-		if ( @farmList )
-		{
-			require Zevenet::IPDS::Blacklist::Runtime;
-
-			# delete list and all rules applied to farms
-			$output = &setBLDeleteList( $name );
-
-			# create a new list
-			$output = &setBLCreateList( $name, $conf );
-			$output = &setBLParam( $name, 'source', $ipList );
-
-			&setBLRunList( $name ) if ( @farmList );
-
-			# apply rules to farms
-			foreach my $farm ( @farmList )
-			{
-				$output = &setBLCreateRule( $farm, $name );
-				$output = &setBLParam( $name, 'farms-add', $farm );
-			}
-		}
-		return $output;
-	}
 	elsif ( 'source' eq $key )
 	{
 		# only can be modificated local lists not preloaded
