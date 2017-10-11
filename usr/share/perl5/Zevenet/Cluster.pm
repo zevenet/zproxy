@@ -1229,12 +1229,17 @@ sub getZClusterNodeStatusInfo
 	my $ip = shift; # IP for remote host, or undef for local host
 
 	my $node; # output
+	my $ssyncd_enabled = &getGlobalConfiguration('ssyncd_enabled');
+	my $ssyncdctl_bin = &getGlobalConfiguration('ssyncdctl_bin');
 
-	if ( $ip eq &getZClusterLocalIp() || ! $ip )
+	if ( ! defined( $ip ) || $ip eq &getZClusterLocalIp() )
 	{
 		$node->{ ka } = pgrep('keepalived');
 		$node->{ zi } = pgrep('zeninotify.pl');
 		$node->{ ct } = pgrep('conntrackd');
+
+		chomp( ( $node->{ sy } ) = `$ssyncdctl_bin show mode` ) if $ssyncd_enabled eq 'true';
+
 		$node->{ role } = &getZClusterNodeStatus();
 	}
 	else
@@ -1248,13 +1253,13 @@ sub getZClusterNodeStatusInfo
 		&runRemotely("pgrep conntrackd", $ip );
 		$node->{ ct } = $?;
 
+		chomp( ( $node->{ sy } ) = &runRemotely("$ssyncdctl_bin show mode", $ip ) ) if $ssyncd_enabled eq 'true';
+
 		my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
 
 		$node->{ role } = &runRemotely("$zcluster_manager getZClusterNodeStatus", $ip );
 		chomp $node->{ role };
 	}
-
-	#~ &zenlog( "Node $ip: " . Dumper $node );
 
 	return $node;
 }
@@ -1301,12 +1306,15 @@ sub getZClusterNodeStatusDigest
 {
 	my $ip = shift; # IP for remote host, or undef for local host
 
-	my $n = &getZClusterNodeStatusInfo( $ip );
+	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
+	my $n              = &getZClusterNodeStatusInfo( $ip );
 	my $node->{ role } = $n->{ role };
 
 	if ( $node->{ role } eq 'master' )
 	{
-		if ( !$n->{ ka } && !$n->{ zi } && !$n->{ ct } )
+		my $ssync_ok = $ssyncd_enabled eq 'false' || $n->{ sy } eq 'master';
+
+		if ( !$n->{ ka } && !$n->{ zi } && !$n->{ ct } && $ssync_ok )
 		{
 			$node->{ status }  = 'ok';
 			$node->{ message } = 'Node online and active';
@@ -1319,12 +1327,15 @@ sub getZClusterNodeStatusDigest
 			push ( @services, 'keepalived' )    if $n->{ ka };
 			push ( @services, 'zeninotify.pl' ) if $n->{ zi };
 			push ( @services, 'conntrackd' )    if $n->{ ct };
+			push ( @services, 'ssyncd' )        unless $ssync_ok;
 			$node->{ message } .= join ', ', @services;
 		}
 	}
 	elsif ( $node->{ role } eq 'backup' )
 	{
-		if ( !$n->{ ka } && $n->{ zi } && !$n->{ ct } )
+		my $ssync_ok = $ssyncd_enabled eq 'false' || $n->{ sy } eq 'backup';
+
+		if ( !$n->{ ka } && $n->{ zi } && !$n->{ ct } && $ssync_ok )
 		{
 			$node->{ status } = 'ok';
 			$node->{ message } = 'Node online and passive';
@@ -1337,12 +1348,15 @@ sub getZClusterNodeStatusDigest
 			push ( @services, 'keepalived' )    if $n->{ ka };
 			push ( @services, 'zeninotify.pl' ) if !$n->{ zi };
 			push ( @services, 'conntrackd' )    if $n->{ ct };
+			push ( @services, 'ssyncd' )        unless $ssync_ok;
 			$node->{ message } .= join ', ', @services;
 		}
 	}
 	elsif ( $node->{ role } eq 'maintenance' )
 	{
-		if ( !$n->{ ka } || $n->{ zi } || !$n->{ ct } )
+		my $ssync_ok = $ssyncd_enabled eq 'false' || $n->{ sy } eq 'error';
+
+		if ( !$n->{ ka } || $n->{ zi } || !$n->{ ct } || $ssync_ok )
 		{
 			$node->{ status }  = 'ok';
 			$node->{ message } = 'Node in maintenance mode';
@@ -1355,6 +1369,7 @@ sub getZClusterNodeStatusDigest
 			push ( @services, 'keepalived' )    if $n->{ ka };
 			push ( @services, 'zeninotify.pl' ) if !$n->{ zi };
 			push ( @services, 'conntrackd' )    if $n->{ ct };
+			push ( @services, 'ssyncd' )        unless $ssync_ok;
 			$node->{ message } .= join ', ', @services;
 		}
 	}
