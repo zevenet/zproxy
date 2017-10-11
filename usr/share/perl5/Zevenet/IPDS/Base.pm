@@ -385,7 +385,7 @@ sub runIPDSDeleteByFarm
 	foreach my $rule ( @{ $rules->{ blacklists } } )
 	{
 		$name = $rule->{ name };
-		&setBLRemFromFarm( $farmname, 'farms-del', $name );
+		&setBLRemFromFarm( $farmname, $name );
 	}
 
 	# start dos rules
