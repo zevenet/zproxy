@@ -191,8 +191,11 @@ sub delete_interface_virtual    # ( $virtual )
 	require Zevenet::Net::Core;
 
 	eval {
-		die if &delRoutes( "local", $if_ref );
-		die if &downIf( $if_ref, 'writeconf' );
+		if ( $if_ref->{ status } eq 'up' )
+		{
+			die if &delRoutes( "local", $if_ref );
+			die if &downIf( $if_ref, 'writeconf' );
+		}
 		die if &delIf( $if_ref );
 	};
 
