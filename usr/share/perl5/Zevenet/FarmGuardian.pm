@@ -49,7 +49,7 @@ sub getFarmGuardianFile    # ($fname,$svice)
 
 	opendir ( my $dir, "$configdir" ) || return -1;
 	my @files =
-	  grep { /^$fname\_$svice.*guardian\.conf/ && -f "$configdir/$_" }
+	  grep { /^$fname\_$svice\_guardian\.conf/ && -f "$configdir/$_" }
 	  readdir ( $dir );
 	closedir $dir;
 
