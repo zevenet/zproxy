@@ -455,21 +455,18 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 	}
 
 	eval {
-		# Delete old IP and Netmask from system to replace it
-		#~ die if &delIp( $$if_ref{name}, $$if_ref{addr}, $$if_ref{mask} ) ;
-
 		# Set the new params
 		$if_ref->{ addr } = $json_obj->{ ip };
 
-		# Add new IP, netmask and gateway
-		die if &addIp( $if_ref );
-
 		if ( $state eq 'up' )
 		{
+			require Zevenet::Net::Route;
+			die if &addIp( $if_ref );
 			&upIf( $if_ref );
 			&applyRoutes( "local", $if_ref );
 		}
 
+		# Add new IP, netmask and gateway
 		&setInterfaceConfig( $if_ref ) or die;
 	};
 

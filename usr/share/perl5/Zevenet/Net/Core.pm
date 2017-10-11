@@ -126,27 +126,31 @@ sub upIf    # ($if_ref, $writeconf)
 
 	$status = &logAndRun( $ip_cmd );
 
-#check if link is up after ip link up; checks /sys/class/net/$$if_ref{name}/operstate
-	my $status_if = `cat /sys/class/net/$$if_ref{name}/operstate`;
-	&zenlog( "Link status for $$if_ref{name} is $status_if" );
-	zenlog( "Waiting link up for $$if_ref{name}" );
-	my $iter = 6;
-	while ( $status_if =~ /down/ && $iter > 0 )
+	# not check virtual interfaces
+	if ( $if_ref->{ type } ne "virtual" )
 	{
-		$status_if = `cat /sys/class/net/$$if_ref{name}/operstate`;
-		if ( $status_if !~ /down/ )
+		#check if link is up after ip link up; checks /sys/class/net/$$if_ref{name}/operstate
+		my $status_if = `cat /sys/class/net/$$if_ref{name}/operstate`;
+		&zenlog( "Link status for $$if_ref{name} is $status_if" );
+		zenlog( "Waiting link up for $$if_ref{name}" );
+		my $iter = 6;
+		while ( $status_if =~ /down/ && $iter > 0 )
 		{
-			&zenlog( "Link up for $$if_ref{name}" );
-			last;
+			$status_if = `cat /sys/class/net/$$if_ref{name}/operstate`;
+			if ( $status_if !~ /down/ )
+			{
+				&zenlog( "Link up for $$if_ref{name}" );
+				last;
+			}
+			$iter--;
+			sleep 1;
 		}
-		$iter--;
-		sleep 1;
-	}
 
-	if ( $iter == 0 )
-	{
-		$status = 1;
-		&zenlog( "No link up for $$if_ref{name}" );
+		if ( $iter == 0 )
+		{
+			$status = 1;
+			&zenlog( "No link up for $$if_ref{name}" );
+		}
 	}
 
 	return $status;
