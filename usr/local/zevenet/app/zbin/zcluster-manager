@@ -484,10 +484,8 @@ sub setNodeStatusMaster
 {
 	&zenlog("############# Starting setNodeStatusMaster");
 
-	require Zevenet::Net::Interface;
-	require Zevenet::Farm::Core;
-	require Zevenet::Farm::Base;
-	require Zevenet::Ssyncd;
+	my $node_status = &getZClusterNodeStatus();
+	&zenlog("Cluster ==== node_status: $node_status ===> Master");
 
 	if ( &getZClusterNodeStatus() eq 'master' )
 	{
@@ -497,6 +495,11 @@ sub setNodeStatusMaster
 
 	&zenlog("Switching node to master");
 	&setZClusterNodeStatus('master');
+
+	require Zevenet::Net::Interface;
+	require Zevenet::Farm::Core;
+	require Zevenet::Farm::Base;
+	require Zevenet::Ssyncd;
 
 	# conntrackd sync
 	my $primary_backup = &getGlobalConfiguration('primary_backup');
@@ -559,6 +562,9 @@ sub setNodeStatusBackup
 {
 	&zenlog("############### Starting setNodeStatusBackup");
 
+	my $node_status = &getZClusterNodeStatus();
+	&zenlog("Cluster ==== node_status: $node_status ===> Backup");
+
 	if ( &getZClusterNodeStatus() eq 'maintenance' )
 	{
 		&zenlog("Node on maintenance mode reloaded cluster configuration");
@@ -610,13 +616,16 @@ sub setNodeStatusMaintenance
 {
 	&zenlog("############### Starting setNodeStatusMaintenance");
 
-	require Zevenet::Ssyncd;
+	my $node_status = &getZClusterNodeStatus();
+	&zenlog("Cluster ==== node_status: $node_status ===> Maintenance");
 
 	if ( &getZClusterNodeStatus() eq 'maintenance' )
 	{
 		&zenlog("Node is already under maintenance");
 		return 0;
 	}
+
+	require Zevenet::Ssyncd;
 
 	&zenlog("Switching node to under maintenance");
 	&setZClusterNodeStatus('maintenance');
