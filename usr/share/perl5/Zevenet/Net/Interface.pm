@@ -920,7 +920,7 @@ sub getInterfaceTypeList
 
 	if ( $list_type =~ /^(?:nic|bond|vlan)$/ )
 	{
-		my @system_interfaces = &getInterfaceList();
+		my @system_interfaces = sort &getInterfaceList();
 
 		for my $if_name ( @system_interfaces )
 		{
@@ -941,7 +941,7 @@ sub getInterfaceTypeList
 	{
 		require Zevenet::Validate;
 
-		opendir my $conf_dir, &getGlobalConfiguration( 'configdir' );
+		opendir my $conf_dir, sort &getGlobalConfiguration( 'configdir' );
 		my $virt_if_re = &getValidFormat( 'virt_interface' );
 
 		for my $file_name ( readdir $conf_dir )
