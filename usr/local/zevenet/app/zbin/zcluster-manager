@@ -502,7 +502,7 @@ sub setNodeStatusMaster
 	my $primary_backup = &getGlobalConfiguration('primary_backup');
 	system("$primary_backup primary");
 
-	# http sessions sync
+	# Ssyncd
 	&setSsyncdMaster();
 
 	# flush arp rules
@@ -510,7 +510,6 @@ sub setNodeStatusMaster
 
 	# announce ips ( arp and neigh )
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
-	#~ &zenlog("Found candidate for GArping $_->{ name }, $_->{ addr }") for @configured_interfaces;
 	
 	for my $if_ref ( @configured_interfaces )
 	{
@@ -560,10 +559,12 @@ sub setNodeStatusBackup
 {
 	&zenlog("############### Starting setNodeStatusBackup");
 
-	require Zevenet::Net::Interface;
-	require Zevenet::Ssyncd;
-
-	if ( &getZClusterNodeStatus() eq 'backup' )
+	if ( &getZClusterNodeStatus() eq 'maintenance' )
+	{
+		&zenlog("Node on maintenance mode reloaded cluster configuration");
+		return 0;
+	}
+	elsif ( &getZClusterNodeStatus() eq 'backup' )
 	{
 		&zenlog("Node is already backup");
 		#~ return 0;
@@ -574,11 +575,14 @@ sub setNodeStatusBackup
 		&setZClusterNodeStatus('backup');
 	}
 
-	# conntrackd sync
+	require Zevenet::Net::Interface;
+	require Zevenet::Ssyncd;
+
+	# conntrackd
 	my $primary_backup = &getGlobalConfiguration('primary_backup');
 	system("$primary_backup backup >/dev/null");
 
-	# http sessions sync
+	# Ssyncd
 	&setSsyncdBackup();
 
 	my $zenino = &getGlobalConfiguration('zenino');
@@ -606,23 +610,30 @@ sub setNodeStatusMaintenance
 {
 	&zenlog("############### Starting setNodeStatusMaintenance");
 
+	require Zevenet::Ssyncd;
+
 	if ( &getZClusterNodeStatus() eq 'maintenance' )
 	{
 		&zenlog("Node is already under maintenance");
 		return 0;
 	}
+
 	&zenlog("Switching node to under maintenance");
 	&setZClusterNodeStatus('maintenance');
-	
+
+	# conntrackd
 	my $primary_backup = &getGlobalConfiguration('primary_backup');
 	system("$primary_backup fault");
 
+	# Ssyncd
+	&setSsyncdDisabled();
+
 	# stop zeninotify
-        my $zenino   = &getGlobalConfiguration( 'zenino' );
-        system( "$zenino stop" );
+	my $zenino = &getGlobalConfiguration( 'zenino' );
+	system( "$zenino stop" );
 
 	# stop farmguardian
-	system("kill `pgrep farmguardian`");
+	system("pkill farmguardian");
 
 	# block/disable ip announces ( arp and neigh )
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
@@ -631,9 +642,8 @@ sub setNodeStatusMaintenance
 		next if $if_ref->{ vini } eq '';
 		&disableInterfaceDiscovery( $if_ref );
 	}
-	#}
 
-	&zenlog("Starting setNodeStatusMaintenance ################");
+	&zenlog("End of setNodeStatusMaintenance ################");
 
 	return 0;
 }
