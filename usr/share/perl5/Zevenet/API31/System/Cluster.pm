@@ -406,13 +406,13 @@ sub disable_cluster
 
 	for my $cl_file ( $filecluster, $keepalived_conf, $znode_status_file, $conntrackd_conf ) # FIXME: Global variables
 	{
-		unlink $cl_file;
 		&zenlog(
 			&runRemotely(
 				"rm $cl_file >/dev/null 2>&1",
 				$zcl_conf->{$rhost}->{ip}
 			)
 		);
+		unlink $cl_file;
 	}
 	
 	my $message = "Cluster disabled successfully";
