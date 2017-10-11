@@ -34,6 +34,14 @@ sub new_vini    # ( $json_obj )
 	my $vlan_re        = &getValidFormat( 'vlan_interface' );
 	my $virtual_tag_re = &getValidFormat( 'virtual_tag' );
 
+	# virtual_name = pather_name + . + virtual_tag
+	# size < 16: size = pather_name:virtual_name
+	if ( length $json_obj->{ name } > 15 )
+	{
+		my $msg = "Virtual interface name has a maximum length of 15 characters";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	unless ( $json_obj->{ name } =~ /^($nic_re|$vlan_re):($virtual_tag_re)$/ )
 	{
 		my $msg = "Interface name is not valid";

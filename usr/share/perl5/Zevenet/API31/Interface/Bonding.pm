@@ -43,6 +43,13 @@ sub new_bond    # ( $json_obj )
 	# validate BOND NAME
 	my $bond_re = &getValidFormat( 'bond_interface' );
 
+	# size < 16: size = bonding_name.vlan_name:virtual_name
+	if ( length $json_obj->{ name } > 11 )
+	{
+		my $msg = "Bonding interface name has a maximum length of 11 characters";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	unless (    $json_obj->{ name } =~ /^$bond_re$/
 			 && &ifexist( $json_obj->{ name } ) eq 'false' )
 	{
