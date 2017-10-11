@@ -658,7 +658,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	}
 
 	# hash reference may exist without key-value pairs
-	if ( $if_ref && keys %$if_ref )
+	if ( $if_ref->{ addr } )
 	{
 		# Delete old IP and Netmask from system to replace it
 		&delIp( $if_ref->{ name }, $if_ref->{ addr }, $if_ref->{ mask } );
