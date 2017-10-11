@@ -28,10 +28,14 @@ use strict;
 # my $ssyncdctl_bin  = '/usr/local/zevenet/app/ssyncd/bin/ssyncdctl';
 # my $ssyncd_port    = 9999;
 
+my $ssyncd_enabled = &getGlobalConfiguration('ssyncd_enabled');
+
 # farm up
 sub setSsyncdFarmUp
 {
 	my ( $farm_name ) = @_;
+
+	return 0 if $ssyncd_enabled eq 'false';
 
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
 	my $type          = getFarmType( $farm_name );
@@ -58,6 +62,8 @@ sub setSsyncdFarmUp
 sub setSsyncdFarmDown
 {
 	my ( $farm_name ) = @_;
+
+	return 0 if $ssyncd_enabled eq 'false';
 
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
 	my $type          = getFarmType( $farm_name );
@@ -104,6 +110,8 @@ sub setSsyncdBackup
 {
 	&zenlog("/// Starting setSsyncdBackup");
 
+	return 0 if $ssyncd_enabled eq 'false';
+
 	my $ssyncd_bin    = &getGlobalConfiguration( 'ssyncd_bin' );
 	my $ssyncd_port   = &getGlobalConfiguration( 'ssyncd_port' );
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
@@ -141,6 +149,8 @@ sub setSsyncdBackup
 
 sub setSsyncdMaster
 {
+	return 0 if $ssyncd_enabled eq 'false';
+
 	my $ssyncd_bin    = &getGlobalConfiguration( 'ssyncd_bin' );
 	my $ssyncd_port   = &getGlobalConfiguration( 'ssyncd_port' );
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
