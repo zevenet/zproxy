@@ -102,6 +102,7 @@ sub modify_cluster
 	my $desc = "Modifying the cluster configuration";
 	my $filecluster = &getGlobalConfiguration('filecluster');
 
+	# check if there is a cluster configured
 	unless ( &getZClusterStatus() )
 	{
 		my $msg = "The cluster must be configured";
