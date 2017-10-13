@@ -198,6 +198,11 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	my $vip_if = &getInterfaceConfig( $vip_if_name );
 	my $table_if = ( $vip_if->{ type } eq 'virtual' )? $vip_if->{ parent }: $vip_if->{ name };
 
+	# insert the save rule, then insert on top the restore rule
+	# WARNING: Set Connmark rules BEFORE getting the farm rules or Connmark rules will be misplaced
+	&setIptConnmarkSave( $farm_name, 'true' );
+	&setIptConnmarkRestore( $farm_name, 'true' );
+
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
 		&zenlog( "_runL4FarmStart :: server:$server->{id}" ) if &debug;
@@ -239,10 +244,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		$rules = &getL4ServerActionRules( $farm, $server_prio, 'on' );
 	}
 
-	# insert the save rule, then insert on top the restore rule
-	# WARNING: Set Connmark rules BEFORE getting the farm rules or Connmark rules will be misplaced
-	&setIptConnmarkSave( $farm_name, 'true' );
-	&setIptConnmarkRestore( $farm_name, 'true' );
+
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration('iptlock');
