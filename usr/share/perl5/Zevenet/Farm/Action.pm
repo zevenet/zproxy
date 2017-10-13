@@ -160,7 +160,7 @@ sub runFarmStop    # ($farm_name,$writeconf)
 
 	if ( eval { require Zevenet::Cluster } )
 	{
-		&zClusterFarmUp( $farm_name );
+		&zClusterFarmDown( $farm_name );
 	}
 
 	# stop ipds rules
