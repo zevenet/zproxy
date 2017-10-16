@@ -64,3 +64,12 @@ usr/local/zevenet/node_status
 .rnd
 .htpasswd
 *.pme
+
+usr/local/zevenet/app/display/
+usr/local/zevenet/app/zbin/renamenet.pl
+usr/local/zevenet/app/zbin/zenloadbalancer
+usr/local/zevenet/app/zbin/zlbchecknetpersistent.pl
+usr/local/zevenet/app/zbin/zlbgennet.sh
+usr/local/zevenet/app/zendisplayinfo/
+usr/local/zevenet/app/zennetname/
+
