@@ -941,10 +941,10 @@ sub getInterfaceTypeList
 	{
 		require Zevenet::Validate;
 
-		opendir my $conf_dir, sort &getGlobalConfiguration( 'configdir' );
+		opendir my $conf_dir, &getGlobalConfiguration( 'configdir' );
 		my $virt_if_re = &getValidFormat( 'virt_interface' );
 
-		for my $file_name ( readdir $conf_dir )
+		for my $file_name ( sort readdir $conf_dir )
 		{
 			if ( $file_name =~ /^if_($virt_if_re)_conf$/ )
 			{
