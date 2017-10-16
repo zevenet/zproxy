@@ -95,7 +95,7 @@ my %format_re = (
 	'snmp_port'      => $port_range,
 	'snmp_community' => qr{[\w]+},
 	'snmp_scope'     => qr{(?:\d{1,3}\.){3}\d{1,3}\/\d{1,2}},    # ip/mask
-	'ntp'            => qr{[\w\.]+},
+	'ntp'            => qr{[\w\.\-]+},
 
 	# farms
 	'farm_name'    => qr/[a-zA-Z0-9\-]+/,
