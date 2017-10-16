@@ -626,6 +626,7 @@ sub setNodeStatusMaintenance
 	}
 
 	require Zevenet::Ssyncd;
+	require Zevenet::Net::Interface;
 
 	&zenlog("Switching node to under maintenance");
 	&setZClusterNodeStatus('maintenance');
