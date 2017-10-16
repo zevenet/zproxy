@@ -139,9 +139,9 @@ sub logAndRun    # ($command)
 	my $program = ( split '/', $0 )[-1];
 	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
 	$program .= ' ';
-
 	# &zenlog( (caller (2))[3] . ' >>> ' . (caller (1))[3]);
 
+	require Zevenet::Debug;
 	if ( &debug )
 	{
 		&zenlog( $program . "running: $command" );
