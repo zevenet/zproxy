@@ -76,7 +76,7 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 	elsif ( $farm_type eq "datalink" )
 	{
 		require Zevenet::Farm::Datalink::Action;
-		$status = &_runDatalinkFarmStart( $farm_name, $writeconf, $status );
+		$status = &_runDatalinkFarmStart( $farm_name, $writeconf );
 	}
 	elsif ( $farm_type eq "l4xnat" )
 	{

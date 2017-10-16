@@ -33,7 +33,6 @@ Function: _runDatalinkFarmStart
 Parameters:
 	farmname - Farm name
 	writeconf - If this param has the value "true" in config file will be saved the current status
-	status - status of a before operation
 
 Returns:
 	Integer - Error code: return 0 on success or different of 0 on failure
@@ -45,15 +44,14 @@ BUG:
 =cut
 sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 {
-	my ( $farm_name, $writeconf, $status ) = @_;
+	my ( $farm_name, $writeconf ) = @_;
 
 	require Tie::File;
 	require Zevenet::Net::Util;
 	require Zevenet::Farm::Datalink::Config;
 	require Zevenet::Farm::Datalink::Backend;
 
-	return $status if ( $status eq '-1' );
-
+	my $status;
 	my $farm_filename = &getFarmFile( $farm_name );
 
 	if ( $writeconf eq "true" )
