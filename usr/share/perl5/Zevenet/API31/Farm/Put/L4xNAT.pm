@@ -283,6 +283,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# Modify only vip
 	if ( exists ( $json_obj->{ vip } ) && !exists ( $json_obj->{ vport } ) )
 	{
+		require Zevenet::Farm::Config;
 		if ( &setFarmVirtualConf( $json_obj->{ vip }, $vport, $farmname ) )
 		{
 			my $msg = "Invalid vip.";
@@ -308,7 +309,8 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# Modify both vip & vport
 	if ( exists ( $json_obj->{ vip } ) && exists ( $json_obj->{ vport } ) )
 	{
-		if ( &setL4FarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname ) )
+		require Zevenet::Farm::Config;
+		if ( &setFarmVirtualConf( $json_obj->{ vip }, $json_obj->{ vport }, $farmname ) )
 		{
 			my $msg = "Invalid vport or invalid vip.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
