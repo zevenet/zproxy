@@ -75,6 +75,7 @@ sub get_supportsave
 sub get_version
 {
 	require Zevenet::SystemInfo;
+	require Zevenet::Certificate;
 
 	my $desc    = "Get version";
 	my $uname   = &getGlobalConfiguration( 'uname' );
@@ -87,12 +88,50 @@ sub get_version
 
 	chomp $kernel;
 
+	################ Certificate ######################
+
+	use Time::Local;
+
+	sub getDateEpoc
+	{
+		my $date_string = shift @_;
+		my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+
+		my ( $month, $day, $hours, $min, $sec, $year ) = split /[ :]+/, $date_string;
+		( $month ) = grep { $months[$_] eq $month } 0..$#months;
+
+		return timegm( $sec, $min, $hours, $day, $month, $year );
+	}
+
+	my $basedir = &getGlobalConfiguration( 'basedir' );
+	my $zlbcertfile = "$basedir/zlbcertfile.pem";
+
+	my $cert_ends = &getCertExpiration( "$zlbcertfile" );
+	#~ zenlog("cert_ends: $cert_ends");
+	my $end = &getDateEpoc( $cert_ends );
+	#~ zenlog("end: $end");
+
+	my $days_left = ( $end - time () ) / 86400;
+	$days_left =~ s/\..*//g;
+	$days_left = 'expired' if $days_left < 0;
+	#~ zenlog("certificate remaining days: $days_left");
+
+	#~ my $cert_begins = &getCertCreation( "$zlbcertfile" );
+	#~ zenlog("cert_begins: $cert_begins");
+	#~ my $init = &getDateEpoc( $cert_begins );
+	#~ zenlog("init: $init");
+	#~ my $totaldays = ( $end - $init ) / 86400;
+	#~ zenlog("certificate duration: $totaldays");
+
+	#################################################
+
 	my $params = {
 				   'kernel_version'    => $kernel,
 				   'zevenet_version'   => $zevenet,
 				   'hostname'          => $hostname,
 				   'system_date'       => $date,
 				   'appliance_version' => $applicance,
+				   'certificate_expiration' => $days_left,
 	};
 	my $body = { description => $desc, params => $params };
 
