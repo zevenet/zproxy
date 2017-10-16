@@ -340,10 +340,11 @@ sub setBLParam
 		else
 		{
 			# delete list and all rules applied to the farms
-			$output = system ( "mv $blacklistsPath/$name.txt $blacklistsPath/$value.txt 2>/dev/null" );
+			$output = system (
+						"mv $blacklistsPath/$name.txt $blacklistsPath/$value.txt 2>/dev/null" );
 
 			my $lock = &setBLLockConfigFile();
-			$fileHandle         = Config::Tiny->read( $blacklistsConf );
+			$fileHandle = Config::Tiny->read( $blacklistsConf );
 			$fileHandle->{ $value } = $fileHandle->{ $name };
 			delete $fileHandle->{ $name };
 			$fileHandle->write( $blacklistsConf );
@@ -403,7 +404,16 @@ sub setBLParam
 		}
 		elsif ( $value eq 'down' )
 		{
-			$fileHandle->{ $name }->{ $key } = "Sync fail. Last update: $date";
+			# never was downloaded
+			if ( !$date )
+			{
+				$fileHandle->{ $name }->{ $key } =
+				  "Sync fail. The list has not been downloaded yet";
+			}
+			else
+			{
+				$fileHandle->{ $name }->{ $key } = "Sync fail. Last update: $date";
+			}
 		}
 		else
 		{

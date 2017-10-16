@@ -190,7 +190,7 @@ my %format_re = (
 	'dos_hits'      => $natural,	
 	# rbl
 	'rbl_name'	=> qr/[\w]+/,
-	'rbl_domain'	=> qr/[\w\.]+/,
+	'rbl_domain'	=> qr/[\w\.\-]+/,
 	'rbl_log_level' => qr/[0-7]/,
 	'rbl_only_logging' => $boolean,
 	'rbl_cache_size' => $natural,
