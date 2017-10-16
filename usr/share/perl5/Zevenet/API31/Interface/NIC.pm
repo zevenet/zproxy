@@ -352,11 +352,23 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	my $if_ref = &getInterfaceConfig( $nic, $ip_v );
 
 	# check if network is correct
-	my $new_if = {
-				   addr    => $json_obj->{ ip }      // $if_ref->{ addr },
-				   mask    => $json_obj->{ netmask } // $if_ref->{ mask },
-				   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
-	};
+	my $new_if;
+	if ( $if_ref )
+	{
+		$new_if = {
+					addr    => $json_obj->{ ip }      // $if_ref->{ addr },
+					mask    => $json_obj->{ netmask } // $if_ref->{ mask },
+					gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
+		};
+	}
+	else
+	{
+		$new_if = {
+					addr    => $json_obj->{ ip },
+					mask    => $json_obj->{ netmask },
+					gateway => $json_obj->{ gateway } // undef,
+		};
+	}
 
 	if ( $new_if->{ gateway } )
 	{
