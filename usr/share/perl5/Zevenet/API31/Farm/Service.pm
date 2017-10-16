@@ -270,24 +270,19 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 		}
 	}
 
-	# It is necessary evaluate first session, next ttl and later persistence
-	if ( exists $json_obj->{ sessionid } )
+	if ( exists $json_obj->{ leastresp } )
 	{
-		&setFarmVS( $farmname, $service, "sessionid", $json_obj->{ sessionid } );
-	}
-
-	if ( exists $json_obj->{ ttl } )
-	{
-		if ( $json_obj->{ ttl } !~ /^\d+$/ )
+		if ( $json_obj->{ leastresp } eq "true" )
 		{
-			my $msg = "Invalid ttl, must be numeric.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			&setFarmVS( $farmname, $service, "dynscale", $json_obj->{ leastresp } );
 		}
-
-		my $error = &setFarmVS( $farmname, $service, "ttl", "$json_obj->{ttl}" );
-		if ( $error )
+		elsif ( $json_obj->{ leastresp } eq "false" )
 		{
-			my $msg = "Could not change the ttl parameter.";
+			&setFarmVS( $farmname, $service, "dynscale", "" );
+		}
+		else
+		{
+			my $msg = "Invalid leastresp.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -308,20 +303,33 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 		}
 	}
 
-	if ( exists $json_obj->{ leastresp } )
+	my $session = &getFarmVS( $farmname, $service, "sesstype" );
+
+	# It is necessary evaluate first session, next ttl and later persistence
+	if ( exists $json_obj->{ sessionid } )
 	{
-		if ( $json_obj->{ leastresp } eq "true" )
+		if ( $session =~ /^(URL|COOKIE|HEADER)$/ )
 		{
-			&setFarmVS( $farmname, $service, "dynscale", $json_obj->{ leastresp } );
+			&setFarmVS( $farmname, $service, "sessionid", $json_obj->{ sessionid } );
 		}
-		elsif ( $json_obj->{ leastresp } eq "false" )
+	}
+
+	if ( exists $json_obj->{ ttl } )
+	{
+		if ( $session =~ /^(IP|BASIC|URL|PARM|COOKIE|HEADER)$/ )
 		{
-			&setFarmVS( $farmname, $service, "dynscale", "" );
-		}
-		else
-		{
-			my $msg = "Invalid leastresp.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			if ( $json_obj->{ ttl } !~ /^\d+$/ )
+			{
+				my $msg = "Invalid ttl, must be numeric.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
+			my $error = &setFarmVS( $farmname, $service, "ttl", "$json_obj->{ttl}" );
+			if ( $error )
+			{
+				my $msg = "Could not change the ttl parameter.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
 		}
 	}
 
@@ -343,7 +351,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	}
 
 	my $cookieins_status = &getHTTPFarmVS( $farmname, $service, 'cookieins' );
-	if ( $json_obj->{ cookieinsert } eq "true" || $cookieins_status eq 'true' )
+	if ( $cookieins_status eq "true" )
 	{
 		if ( exists $json_obj->{ cookiedomain } )
 		{
