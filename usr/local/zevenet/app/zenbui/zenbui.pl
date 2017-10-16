@@ -262,7 +262,7 @@ sub manage_power()
 				   my $ret = &confirm_dialog( "Are you sure you want to reboot your ZEVENET?" );
 				   if ( $ret )
 				   {
-					   my @run = `(reboot &)`;
+					   my @run = `reboot &`;
 					   exit ( 0 );
 				   }
 			   },
@@ -275,7 +275,7 @@ sub manage_power()
 				   my $ret = &confirm_dialog( "Are you sure you want to shutdown your ZEVENET?" );
 				   if ( $ret )
 				   {
-					   my @run = `(poweroff &)`;
+					   my @run = `poweroff &`;
 					   exit ( 0 );
 				   }
 			   },
@@ -393,7 +393,7 @@ sub manage_timezone()
 			   -onpress  => sub {           #$zenui->leave_curses();
 				   system ( 'dpkg-reconfigure tzdata' );
 				   $zenui->reset_curses();
-				   my @run = `(ntpdate pool.ntp.org &) > /dev/null`;
+				   system("ntpdate pool.ntp.org >/dev/null 2>&1");
 
 				   #$zenui->reset_curses();
 				   &inform_dialog( "Synchronizing time with pool.ntp.org..." );
@@ -539,6 +539,7 @@ sub set_net()
 {
 	require Zevenet::Net::Validate;
 	my $setchanges = 1;
+
 	if ( $mgmtifinput && $mgmtipinput && $mgmtmaskinput && $mgmtgwinput )
 	{
 		my $newif   = $mgmtifinput->get();
@@ -604,6 +605,7 @@ sub set_net()
 				# Put the interface up
 				{
 					my $previous_status = $if_ref->{ status };
+
 					my $state = &upIf( $if_ref, 'writeconf' );
 
 					if ( $state == 0 )
@@ -691,7 +693,7 @@ sub manage_zlb_services()
 				   my $ret = &confirm_dialog( "Are you sure you want to STOP Web Server?" );
 				   if ( $ret )
 				   {
-					   my @run = `(/etc/init.d/cherokee stop &) > /dev/null`;
+					   system ("/etc/init.d/cherokee stop >/dev/null 2>&1");
 					   &inform_dialog( 'Service already stopped' );
 					   $zlbmenu->focus();
 					   $zlbmenu->set_selection( 1 );
@@ -707,7 +709,7 @@ sub manage_zlb_services()
 				   my $ret = &confirm_dialog( "Are you sure you want to START Web Server?" );
 				   if ( $ret )
 				   {
-					   my @run = `(/etc/init.d/cherokee start &) > /dev/null`;
+					   system("/etc/init.d/cherokee start >/dev/null 2>&1");
 					   &inform_dialog( 'Service already started' );
 					   $zlbmenu->focus();
 					   $zlbmenu->set_selection( 1 );
@@ -723,7 +725,7 @@ sub manage_zlb_services()
 				   my $ret = &confirm_dialog( "Are you sure you want to RESTART Web Server?" );
 				   if ( $ret )
 				   {
-					   my @run = `(/etc/init.d/cherokee restart &) > /dev/null`;
+					   system("/etc/init.d/cherokee restart >/dev/null 2>&1");
 					   &inform_dialog( 'Service already restarted' );
 					   $zlbmenu->focus();
 					   $zlbmenu->set_selection( 1 );
@@ -750,10 +752,11 @@ sub manage_zlb_services()
 			   -shortcut => 1,
 			   -onpress  => sub {
 				   my $ret =
-					 &confirm_dialog( "Are you sure you want to STOP Zenloadbalancer service?" );
+					 &confirm_dialog( "Are you sure you want to STOP ZEVENET service?" );
 				   if ( $ret )
 				   {
-					   my @run = `(/etc/init.d/zevenet stop &) > /dev/null`;
+					   my $zenbin="/usr/local/zevenet/app/zbin/zevenet";
+					   system ("$zenbin stop >/dev/null 2>&1");
 					   &inform_dialog( 'Service already stopped' );
 					   $zlbmenu->focus();
 					   $zlbmenu->set_selection( 1 );
@@ -769,7 +772,8 @@ sub manage_zlb_services()
 				   my $ret = &confirm_dialog( "Are you sure you want to START ZEVENET service?" );
 				   if ( $ret )
 				   {
-					   my @run = `(/etc/init.d/zevenet start &) > /dev/null`;
+					   my $zenbin="/usr/local/zevenet/app/zbin/zevenet";
+					   system ("$zenbin start >/dev/null 2>&1");
 					   &inform_dialog( 'Service already started' );
 					   $zlbmenu->focus();
 					   $zlbmenu->set_selection( 1 );
@@ -785,7 +789,9 @@ sub manage_zlb_services()
 				   my $ret = &confirm_dialog( "Are you sure you want to RESTART ZEVENET service?" );
 				   if ( $ret )
 				   {
-					   my @run = `(/etc/init.d/zevenet restart &) > /dev/null`;
+					   my $zenbin="/usr/local/zevenet/app/zbin/zevenet";
+					   system ("$zenbin stop >/dev/null 2>&1");
+					   system ("$zenbin start >/dev/null 2>&1");
 					   &inform_dialog( 'Service already restarted' );
 					   $zlbmenu->focus();
 					   $zlbmenu->set_selection( 1 );
