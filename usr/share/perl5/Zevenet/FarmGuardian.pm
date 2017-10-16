@@ -47,22 +47,24 @@ sub getFarmGuardianFile    # ($fname,$svice)
 {
 	my ( $fname, $svice ) = @_;
 
-	opendir ( my $dir, "$configdir" ) || return -1;
-	my @files =
-	  grep { /^$fname\_$svice\_guardian\.conf/ && -f "$configdir/$_" }
-	  readdir ( $dir );
-	closedir $dir;
+	my $output = -1;
 
-	my $nfiles = @files;
+	opendir ( my $dir, "$configdir" );
 
-	if ( $nfiles == 0 )
+	if ( $dir )
 	{
-		return -1;
+		my @files =
+		  grep { /^$fname\_${svice}.*guardian\.conf/ && -f "$configdir/$_" }
+		  readdir ( $dir );
+		closedir $dir;
+
+		if ( scalar @files )
+		{
+			$output = $files[0];
+		}
 	}
-	else
-	{
-		return $files[0];
-	}
+
+	return $output;
 }
 
 =begin nd
@@ -89,10 +91,11 @@ sub getFarmGuardianStatus    # ($fname,$svice)
 	my ( $fname, $svice ) = @_;
 
 	my $fgfile = &getFarmGuardianFile( $fname, $svice );
+	my $output = -1;
 
 	if ( $fgfile == -1 )
 	{
-		return -1;
+		return $output;
 	}
 
 	open FR, "$configdir/$fgfile";
@@ -107,14 +110,10 @@ sub getFarmGuardianStatus    # ($fname,$svice)
 	my $value = $line_s[3];
 	close FR;
 
-	if ( $value =~ /true/ )
-	{
-		return 1;
-	}
-	else
-	{
-		return 0;
-	}
+	if   ( $value =~ /true/ ) { $output = 1; }
+	else                      { $output = 0; }
+
+	return $output;
 }
 
 =begin nd
@@ -201,7 +200,18 @@ sub runFarmGuardianStart    # ($fname,$svice)
 
 	if ( $fgpid != -1 )
 	{
-		return -1;
+		my $fg_running = kill 0, $fgpid;
+
+		if ( $fg_running )
+		{
+			return -1;
+		}
+		else
+		{
+			my $piddir = &getGlobalConfiguration( 'piddir' );
+			my $sv = ( length ${ svice } ) ? "${svice}_" : "";
+			unlink "$piddir/${fname}_${svice}guardian.pid";
+		}
 	}
 
 	if ( $fgfile == -1 )
@@ -226,6 +236,7 @@ sub runFarmGuardianStart    # ($fname,$svice)
 		# Iterate over every farm service
 		my $services = &getFarmVS( $fname, "", "" );
 		my @servs = split ( " ", $services );
+
 		foreach my $service ( @servs )
 		{
 			my $stat = &runFarmGuardianStart( $fname, $service );
