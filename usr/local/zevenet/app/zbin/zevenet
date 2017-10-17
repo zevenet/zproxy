@@ -24,17 +24,9 @@
 use strict;
 use warnings;
 
-# standard required modules
 use Zevenet;
 use Zevenet::Log;
 use Zevenet::ELoad;
-
-# activation certificate modules
-use Date::Parse;
-use Time::localtime;
-
-#~ use Tie::File;
-#~ use Data::Dumper;
 
 my $mod          = 'Zevenet::Service';
 my $basedir      = &getGlobalConfiguration( 'basedir' );
@@ -57,142 +49,14 @@ sub printAndLog
 	zenlog( @_ );
 }
 
-# build local key
-sub keycert    #()
-{
-	# requires:
-	#~ use Sys::Hostname;
-
-	my $dmidecode_bin = "/usr/sbin/dmidecode";    # input
-	my $hostname      = &getHostname();               # input
-
-	my @dmidec  = `$dmidecode_bin`;
-	my @dmidec2 = grep ( /UUID\:/, @dmidec );
-	my $dmi     = $dmidec2[0];
-
-	$dmi =~ s/\"//g;     # remove doble quotes
-	$dmi =~ s/^\s+//;    # remove whitespaces at the begining
-	$dmi =~ s/\s+$//;    # remove whitespaces at the end
-	$dmi =~ s/\ //g;     # remove spaces
-
-	my @dmidec3 = split ( ":", $dmi );
-	$dmi = $dmidec3[1];
-
-	$hostname =~ s/\"//g;     # remove doble quotes
-	$hostname =~ s/^\s+//;    # remove whitespaces at the begining
-	$hostname =~ s/\s+$//;    # remove whitespaces at the end
-
-	my $encrypted_string  = crypt ( "${dmi}${hostname}", "93" );
-	my $encrypted_string2 = crypt ( "${hostname}${dmi}", "a3" );
-	my $encrypted_string3 = crypt ( "${dmi}${hostname}", "ZH" );
-	my $encrypted_string4 = crypt ( "${hostname}${dmi}", "h7" );
-	$encrypted_string =~ s/^93//;
-	$encrypted_string2 =~ s/^a3//;
-	$encrypted_string3 =~ s/^ZH//;
-	$encrypted_string4 =~ s/^h7//;
-
-	my $str =
-	  "${encrypted_string}-${encrypted_string2}-${encrypted_string3}-${encrypted_string4}";
-
-	$str =~ s/\"//g;     # remove doble quotes
-	$str =~ s/^\s+//;    # remove whitespaces at the begining
-	$str =~ s/\s+$//;    # remove whitespaces at the end
-
-	return $str;
-}
-
-# evaluate certificate
-sub certcontrol          #()
-{
-	# requires:
-	#~ use Sys::Hostname;
-	#~ use Date::Parse;
-	#~ use Time::localtime;
-
-	# input
-	my $hostname    = &getHostname();
-	my $zlbcertfile = "$basedir/zlbcertfile.pem";
-	my $openssl_bin = "/usr/bin/openssl";
-	my $keyid       = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
-
-	# output
-	my $swcert = 0;
-
-	if ( -e $zlbcertfile )
-	{
-		my @zen_cert = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
-		my $key = &keycert();
-
-		if (    ( !grep /$key/, @zen_cert )
-			 || ( !grep /keyid:$keyid/,   @zen_cert )
-			 || ( !grep /CN=$hostname\/|CN = $hostname\,/, @zen_cert ) )
-		{
-			$swcert = 2;
-		}
-
-		my $now = ctime();
-
-		# Certificate validity date
-		my @notbefore = grep /Not Before/i, @zen_cert;
-		my $nb = join '', @notbefore;
-		$nb =~ s/not before.*:\ //i;
-		my $ini = str2time( $nb );
-
-		# Certificate expiring date
-		my @notafter = grep /Not After/i, @zen_cert;
-		my $na = join "", @notafter;
-		$na =~ s/not after.*:\ //i;
-		my $end = str2time( $na );
-
-		# Validity remaining
-		my $totaldays = ( $end - $ini ) / 86400;
-		$totaldays =~ s/\-//g;
-		my $dayright = ( $end - time () ) / 86400;
-
-		#control errors
-		if ( $totaldays < 364 && $dayright < 0 && $swcert == 0 )
-		{
-			# Policy: expired testing certificates would not stop zen service,
-			# but rebooting the service would not start the service,
-			# interfaces should always be available.
-			$swcert = 3;
-		}
-
-		if ( $totaldays > 364 && $dayright < 0 && $swcert == 0 )
-		{
-			# The contract support plan is expired you have to request a
-			# new contract support. Only message alert!
-			$swcert = -1;
-		}
-	}
-	else
-	{
-		#There isn't certificate in the machine
-		$swcert = 1;
-	}
-
-	# error codes
-	#swcert = 0 ==> OK
-	#swcert = 1 ==> There isn't certificate
-	#swcert = 2 ==> Cert isn't signed OK
-	#swcert = 3 ==> Cert test and it's expired
-	#swcert = -1 ==> Cert support and it's expired
-
-	#output
-	return $swcert;
-}
-# end evaluate certificate
-
 # Read interfaces data blocks
 sub getInterfaceBlocks
 {
 	my @file_lines = @_;
-	#~ open ($fh, '<', '/etc/netwok/interfaces');
 
 	my @interface_list = ();
 	my @interface = ();
 	my $in_block = undef;
-
 
 	while ( my $line = shift @file_lines )
 	{
