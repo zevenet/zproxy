@@ -271,16 +271,16 @@ if ( &debug() )
 exit 0;
 
 
-
-## Activation Certificate Functions
+### Activation certificate code ############
+use Time::Local;
+use Zevenet::Config;
+use Zevenet::SystemInfo;
 
 # build local key
 sub keycert
 {
-	#~ use Zevenet::SystemInfo;
-
-	my $dmi = &get_sys_uuid();
-	#~ my $hostname = &getHostname();
+	my $dmi      = &get_sys_uuid();
+	my $hostname = &getHostname();
 
 	my $block1 = crypt ( "${dmi}${hostname}", "93" );
 	my $block2 = crypt ( "${hostname}${dmi}", "a3" );
@@ -299,41 +299,23 @@ sub keycert
 # evaluate certificate
 sub certcontrol
 {
-	#~ require Time::Local;
-	#~ use Zevenet::Config;
-	#~ use Zevenet::SystemInfo;
-
-	#~ my $basedir = &getGlobalConfiguration( 'basedir' );
+	my $basedir = &getGlobalConfiguration( 'basedir' );
 	my $zlbcertfile = "$basedir/zlbcertfile.pem";
 	my $swcert = 0;
 
 	if ( ! -e $zlbcertfile )
 	{
-		&zenlog( "#### Certificate file found: Failed!!" ); ####
-
 		#swcert = 1 ==> There isn't certificate
 		$swcert = 1;
-
 		return $swcert;
 	}
 
 	my $openssl_bin = "/usr/bin/openssl";
 	my $keyid       = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
 	my @months      = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-	#~ my $hostname    = getHostname();
+	my $hostname    = &getHostname();
 	my $key         = &keycert();
 	my @zen_cert    = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
-
-	if ( $? )
-	{
-		# if openssl failed it is not a certificate
-		return 1;
-	}
-
-	unless ( length $key ) { &zenlog( "#### Certificate Key: Not Found!!" ); } #####
-
-	my $cert_length = length ( "@zen_cert" );
-	unless ( $cert_length )	{ &zenlog( "#### Certificate length: ZERO!!! characters. ERROR!" ); } ####
 
 	if (    ( !grep /$key/, @zen_cert )
 		 || ( !grep /keyid:$keyid/, @zen_cert )
@@ -397,20 +379,10 @@ sub certcontrol
 
 sub get_sys_uuid
 {
-	my $uuid_file_path = '/sys/class/dmi/id/product_uuid';
+	my ( $dmi ) = grep ( /UUID\:/, `/usr/sbin/dmidecode` );
+	( undef, $dmi ) = split ( /:\s+/, $dmi );
 
-	open( my $file, '<', $uuid_file_path);
+	chomp $dmi;
 
-	unless ( $file )
-	{
-		my $msg = "Could not open file $uuid_file_path: $!";
-		zenlog( $msg );
-		die( $msg );
-	}
-
-	my $uuid = <$file>;
-	close $file;
-
-	return $uuid;
+	return $dmi;
 }
-
