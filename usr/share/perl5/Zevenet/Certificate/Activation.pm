@@ -176,21 +176,12 @@ sub checkActivationCertificate
 
 sub get_sys_uuid
 {
-	my $uuid_file_path = '/sys/class/dmi/id/product_uuid';
+	my ( $dmi ) = grep ( /UUID\:/, `/usr/sbin/dmidecode` );
+	( undef, $dmi ) = split ( /:\s+/, $dmi );
 
-	open( my $file, '<', $uuid_file_path);
+	chomp $dmi;
 
-	unless ( $file )
-	{
-		my $msg = "Could not open file $uuid_file_path: $!";
-		zenlog( $msg );
-		die( $msg );
-	}
-
-	my $uuid = <$file>;
-	close $file;
-
-	return $uuid;
+	return $dmi;
 }
 
 1;
