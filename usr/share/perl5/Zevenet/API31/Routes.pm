@@ -407,18 +407,6 @@ if ( $q->path_info =~ qr{^/system/(?:version|license|supportsave)} )
 }
 
 
-##### Activation certificates ########################################
-#require Zevenet::Certificate::Activation;
-##~ logNewModules("With Zevenet::Certificate::Activation");
-#
-#require Zevenet::API31::Routes::Activation if ( $q->path_info eq '/certificates/activation' );
-#
-## Check activation certificate
-#&checkActivationCertificate();
-#
-##~ logNewModules("After checking the certificate");
-
-
 ##### Load modules dynamically #######################################
 my $routes_path = &getGlobalConfiguration( 'zlibdir' ) . '/API31/Routes';
 opendir( my $dir, $routes_path );

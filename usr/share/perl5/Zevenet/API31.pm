@@ -36,9 +36,4 @@ use Zevenet::API31::System;
 use Zevenet::API31::Stats;
 use Zevenet::API31::Graph;
 
-#~ use Zevenet::API31::Certificate::Activation;
-#~ use Zevenet::API31::Farm::Delete::GSLB;
-#~ use Zevenet::API31::Farm::Post::GSLB;
-#~ use Zevenet::API31::System::Cluster;
-
 1;
