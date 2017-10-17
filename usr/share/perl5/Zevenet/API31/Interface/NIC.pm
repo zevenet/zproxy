@@ -381,7 +381,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 		}
 	}
 
-	if ( $if_ref )
+	if ( $if_ref->{ addr } )
 	{
 		# Delete old IP and Netmask from system to replace it
 		&delIp( $if_ref->{ name }, $if_ref->{ addr }, $if_ref->{ mask } );
