@@ -657,6 +657,21 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		}
 	}
 
+	# check if ip exists in other interface
+	if ( $json_obj->{ ip } )
+	{
+		if ( ( ( $json_obj->{ ip } ne $if_ref->{ addr } ) && $if_ref->{ addr } )
+			|| ! $if_ref->{ addr } )
+		{
+			require Zevenet::Net::Util;
+			if ( grep ( /^$json_obj->{ ip }$/, &listallips() ) )
+			{
+				my $msg = "The IP address is already in use for other interface.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+	}
+
 	# hash reference may exist without key-value pairs
 	if ( $if_ref->{ addr } )
 	{

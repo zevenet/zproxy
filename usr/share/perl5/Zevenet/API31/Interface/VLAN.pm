@@ -518,6 +518,20 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		}
 	}
 
+	# check if ip exists in other interface
+	if ( $json_obj->{ ip } )
+	{
+		if ( $json_obj->{ ip } ne $if_ref->{ addr } )
+		{
+			require Zevenet::Net::Util;
+			if ( grep ( /^$json_obj->{ ip }$/, &listallips() ) )
+			{
+				my $msg = "The IP address is already in use for other interface.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+	}
+
 	# Check netmask errors
 	if ( exists $json_obj->{ netmask } )
 	{

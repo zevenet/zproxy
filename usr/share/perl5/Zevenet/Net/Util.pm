@@ -37,6 +37,7 @@ Returns:
 See Also:
 	<getVipOutputIp>, <zevenet>
 =cut
+
 # IO Socket is needed to get information about interfaces
 sub getIOSocket
 {
@@ -59,6 +60,7 @@ Returns:
 See Also:
 	Only used in: <setIfacesUp>
 =cut
+
 # Get List of Vinis or Vlans from an interface
 sub getIfacesFromIf    # ($if_name, $type)
 {
@@ -108,6 +110,7 @@ Bugs:
 See Also:
 	zapi/v3/interfaces.cgi
 =cut
+
 # Check if there are some Virtual Interfaces or Vlan with IPv6 and previous UP status to get it up.
 sub setIfacesUp    # ($if_name,$type)
 {
@@ -160,6 +163,7 @@ Returns:
 See Also:
 	<sendGArp>
 =cut
+
 # send gratuitous ICMP packets for L3 aware
 sub sendGPing    # ($pif)
 {
@@ -175,7 +179,7 @@ sub sendGPing    # ($pif)
 		my $ping_cmd = "$ping_bin -c $pingc $gw";
 
 		&zenlog( "Sending $pingc ping(s) to gateway $gw" );
-		system( "$ping_cmd >/dev/null 2>&1 &" );
+		system ( "$ping_cmd >/dev/null 2>&1 &" );
 	}
 }
 
@@ -197,6 +201,7 @@ Bugs:
 See Also:
 	<runGSLBFarmCreate>, <setGSLBControlPort>
 =cut
+
 #get a random available port
 sub getRandomPort    # ()
 {
@@ -237,16 +242,17 @@ Returns:
 See Also:
 	<broadcastInterfaceDiscovery>, <sendGPing>
 =cut
+
 # send gratuitous ARP frames
 sub sendGArp    # ($if,$ip)
 {
 	my ( $if, $ip ) = @_;
 
-	my @iface      = split ( ":", $if );
-	my $arping_bin = &getGlobalConfiguration( 'arping_bin' );
+	my @iface           = split ( ":", $if );
+	my $arping_bin      = &getGlobalConfiguration( 'arping_bin' );
 	my $arp_unsolicited = &getGlobalConfiguration( 'arp_unsolicited' );
 
-	my $arp_arg = $arp_unsolicited ? '-U': '-A';
+	my $arp_arg = $arp_unsolicited ? '-U' : '-A';
 	my $arping_cmd = "$arping_bin $arp_arg -c 2 -I $iface[0] $ip";
 
 	&zenlog( "$arping_cmd" );
@@ -271,8 +277,9 @@ Returns:
 See Also:
 	<getInterfaceOfIp>, <_runDatalinkFarmStart>, <_runDatalinkFarmStop>, <zeninotify.pl>
 =cut
+
 #know if and return ip
-sub iponif            # ($if)
+sub iponif    # ($if)
 {
 	my $if = shift;
 
@@ -308,6 +315,7 @@ Returns:
 See Also:
 	<_runDatalinkFarmStart>, <_runDatalinkFarmStop>
 =cut
+
 # return the mask of an if
 sub maskonif    # ($if)
 {
@@ -315,9 +323,9 @@ sub maskonif    # ($if)
 
 	require IO::Socket;
 
-	my $s = IO::Socket::INET->new( Proto => 'udp' );
+	my $s          = IO::Socket::INET->new( Proto => 'udp' );
 	my @interfaces = &getInterfaceList();
-	my $maskonif = $s->if_netmask( $if );
+	my $maskonif   = $s->if_netmask( $if );
 
 	return $maskonif;
 }
@@ -325,13 +333,13 @@ sub maskonif    # ($if)
 =begin nd
 Function: listallips
 
-	List IP addresses up (flag IFF_RUNNING), excluding 127.0.0.1.
+	List all IPs used for interfaces
 
 Parameters:
 	none - .
 
 Returns:
-	list - All IP addresses up.
+	list - All IP addresses.
 
 Bugs:
 	$ip !~ /127.0.0.1/
@@ -340,30 +348,19 @@ Bugs:
 See Also:
 	zapi/v3/interface.cgi <new_vini>, <new_vlan>,
 	zapi/v3/post.cgi <new_farm>,
-	zapi/v2/interface.cgi <new_vini>, <new_vlan>, <ifaction>
 =cut
+
 #list ALL IPS UP
 sub listallips    # ()
 {
-	use IO::Interface qw(:flags);
-
-	require IO::Socket;
 	require Zevenet::Net::Interface;
 
-	my @listinterfaces = (); # output
-	my $s              = IO::Socket::INET->new( Proto => 'udp' );
-	my @interfaces     = &getInterfaceList();
+	my @listinterfaces = ();    # output
 
-	for my $if ( @interfaces )
+	for my $if_name ( &getInterfaceList() )
 	{
-		my $ip = $s->if_addr( $if );
-		my $flags = $s->if_flags( $if );
-
-		if ( $flags & IFF_RUNNING && $ip !~ /127.0.0.1/ && $ip !~ /0.0.0.0/ )
-		{
-			# if $ip: skip an empty element in the array
-			push ( @listinterfaces, $ip ) if $ip;
-		}
+		my $if_ref = &getInterfaceConfig( $if_name );
+		push @listinterfaces, $if_ref->{ addr } if ( $if_ref->{ addr } );
 	}
 
 	return @listinterfaces;
@@ -383,6 +380,7 @@ Returns:
 See Also:
 	<_runL4FarmStart>, <_runDatalinkFarmStart>
 =cut
+
 # Enable(true) / Disable(false) IP Forwarding
 sub setIpForward    # ($arg)
 {
@@ -419,6 +417,7 @@ Returns:
 See Also:
 	<enable_cluster>, <new_farm>, <modify_datalink_farm>
 =cut
+
 sub getInterfaceOfIp    # ($ip)
 {
 	my $ip = shift;
@@ -449,6 +448,7 @@ Returns:
 Bugs:
 	NOT USED
 =cut
+
 sub getVipOutputIp    # ($vip)
 {
 	my $vip = shift;

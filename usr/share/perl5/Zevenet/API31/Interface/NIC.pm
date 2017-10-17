@@ -381,6 +381,21 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 		}
 	}
 
+	# check if ip exists in other interface
+	if ( $json_obj->{ ip } )
+	{
+		if ( ( ( $json_obj->{ ip } ne $if_ref->{ addr } ) && $if_ref->{ addr } )
+			|| ! $if_ref->{ addr } )
+		{
+			require Zevenet::Net::Util;
+			if ( grep ( /^$json_obj->{ ip }$/, &listallips() ) )
+			{
+				my $msg = "The IP address is already in use for other interface.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+	}
+
 	if ( $if_ref->{ addr } )
 	{
 		# Delete old IP and Netmask from system to replace it

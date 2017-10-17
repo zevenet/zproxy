@@ -447,9 +447,24 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	# check if ip exists in other interface
+	if ( $json_obj->{ ip } )
+	{
+		if ( $json_obj->{ ip } ne $if_ref->{ addr } )
+		{
+			require Zevenet::Net::Util;
+			if ( grep ( /^$json_obj->{ ip }$/, &listallips() ) )
+			{
+				my $msg = "The IP address is already in use for other interface.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+	}
+
 	require Zevenet::Net::Validate;
+	my $if_ref_parent = &getInterfaceConfig( $if_ref->{ parent }, $ip_v );
 	unless (
-		 &getNetValidate( $if_ref->{ gateway }, $if_ref->{ mask }, $json_obj->{ ip } ) )
+		 &getNetValidate( $if_ref_parent->{ addr }, $if_ref->{ mask }, $json_obj->{ ip } ) )
 	{
 		$msg = "IP Address $json_obj->{ip} must be same net than the father interface.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
