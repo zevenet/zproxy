@@ -76,8 +76,6 @@ sub upload_activation_certificate # ()
 {
 	my $upload_filehandle = shift;
 
-	require Zevenet::Certificate::Activation;
-
 	my $desc = "Upload activation certificate";
 	my $filename = 'zlbcertfile.pem';
 
@@ -95,10 +93,9 @@ sub upload_activation_certificate # ()
 	close $cert_filehandle;
 
 	my $response = &checkActivationCertificate();
-	if ( ref $response )
-	{
-		return $response;
-	}
+
+	# A hash reference will be returned for non valid activation certificates
+	return $response if ref $response;
 
 	my $msg = "Activation certificate uploaded";
 	my $body = {

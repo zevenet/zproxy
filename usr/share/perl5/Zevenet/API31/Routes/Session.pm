@@ -56,9 +56,6 @@ sub session_login
 		&httpErrorResponse( code => 401, desc => $desc, msg => $msg );
 	}
 
-	# successful authentication
-	require Zevenet::Certificate::Activation;
-
 	$session->param( 'is_logged_in', 1 );
 	$session->param( 'username',     $username );
 	$session->expire( 'is_logged_in', '+30m' );
