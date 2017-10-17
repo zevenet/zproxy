@@ -142,33 +142,22 @@ my $mod_path = "$lib_path/$module.pm";
 $mod_path =~ s#\:\:#\/#g; # Replace :: with /
 my $emod_path = "${mod_path}e";
 
-# In debug mode, remove encrpyted module to re-encrypted again
-if ( &debug() > 0 )
+my $code;
+
+if ( -f $mod_path )
 {
-	unlink $emod_path;
+	$code = `cat ${mod_path}`;
 }
-
-#~ unless ( -f $emod_path )
-#~ {
-	#~ my $msg = "File $emod_path not found.";
-	#~ &zenlog( $msg );
-
-	#~ if ( -f $mod_path )
-	#~ {
-		#~ &zenlog( "Found non-encrypted module, making encripted version..." );
-		#~ my $error = system ( "$0 enc $mod_path" );
-
-		#~ &zenlog( "Module encrypted successfully, continuing execution." ) if $error;
-	#~ }
-	#~ else
-	#~ {
-		#~ die "$0: Module file $module not found.\n";
-	#~ }
-#~ }
-
-# decrypt module
-#~ my $code = `openssl aes-256-cbc -d -a -nosalt -k "${SYMKEY}" -in ${emod_path}`;
-my $code = `cat ${mod_path}`;
+elsif ( -f $emod_path )
+{
+	$code = `openssl aes-256-cbc -d -a -nosalt -k "${SYMKEY}" -in ${emod_path}`;
+}
+else
+{
+	my $msg = "Module file $module not found.";
+	&zenlog( $msg );
+	die $msg;
+}
 
 # load module
 eval $code;
