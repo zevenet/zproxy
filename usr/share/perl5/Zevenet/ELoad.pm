@@ -81,8 +81,12 @@ sub eload
 
 	my $cmd = "$bin $req{ module } $req{ func }";
 
-	&zenlog("eload: CMD: '$cmd'");
-	&zenlog("eload: INPUT: '$input'");
+	if ( &debug() )
+	{
+		&zenlog("eload: CMD: '$cmd'");
+		&zenlog("eload: INPUT: '$input'");
+	}
+
 	my $ret_output = `echo -n '$input' | $cmd`;
 	my $rc = $?;
 

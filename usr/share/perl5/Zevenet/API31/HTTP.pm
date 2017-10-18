@@ -50,7 +50,7 @@ sub GET
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("GET captures( @captures )");
+	&zenlog("GET captures( @captures )") if &debug();
 
 	if ( ref $code eq 'CODE' )
 	{
@@ -71,7 +71,7 @@ sub POST
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("POST captures( @captures )");
+	&zenlog("POST captures( @captures )") if &debug();
 
 	my $data = &getCgiParam( 'POSTDATA' );
 	my $input_ref;
@@ -127,7 +127,7 @@ sub PUT
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("PUT captures( @captures )");
+	&zenlog("PUT captures( @captures )") if &debug();
 
 	my $data = &getCgiParam( 'PUTDATA' );
 	my $input_ref;
@@ -183,7 +183,7 @@ sub DELETE
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("DELETE captures( @captures )");
+	&zenlog("DELETE captures( @captures )") if &debug();
 
 	if ( ref $code eq 'CODE' )
 	{
@@ -204,7 +204,7 @@ sub OPTIONS
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("OPTIONS captures( @captures )");
+	&zenlog("OPTIONS captures( @captures )") if &debug();
 
 	$code->( @captures );
 }
