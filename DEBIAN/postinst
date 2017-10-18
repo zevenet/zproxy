@@ -43,18 +43,19 @@ fi
 
 # Check for binaries
 PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
-if [ -e "/usr/local/zevenet/www/zapi/v2/zapi.cgi.${PERLVER}" ]; then
-	mv "/usr/local/zevenet/www/zapi/v2/zapi.cgi.${PERLVER}" "/usr/local/zevenet/www/zapi/v2/zapi.cgi"
-	rm /usr/local/zevenet/www/zapi/v2/zapi.cgi.*
-fi
-if [ -e "/usr/local/zevenet/www/zapi/v3/zapi.cgi.${PERLVER}" ]; then
-	mv "/usr/local/zevenet/www/zapi/v3/zapi.cgi.${PERLVER}" "/usr/local/zevenet/www/zapi/v3/zapi.cgi"
-	rm /usr/local/zevenet/www/zapi/v3/zapi.cgi.*
-fi
-if [ -e "/usr/local/zevenet/app/zbin/zevenet.${PERLVER}" ]; then
-	mv "/usr/local/zevenet/app/zbin/zevenet.${PERLVER}" "/usr/local/zevenet/app/zbin/zevenet"
-	rm /usr/local/zevenet/app/zbin/zevenet.*
-fi
+compiled_files=(
+	/usr/local/zevenet/www/zapi/v3/zapi.cgi
+	/usr/local/zevenet/www/zapi/v3.1/zapi.cgi
+	/usr/local/zevenet/app/zbin/zevenet
+	/usr/local/zevenet/app/zbin/enterprise.bin
+)
+for i in ${compiled_files[@]}
+do
+	if [ -e ${i}.${PERLVER} ]; then
+		mv ${i}.${PERLVER} ${i}
+		rm ${i}.*
+	fi
+done
 
 #upgrading global.conf
 /usr/local/zevenet/app/checkglobalconf/checkglobalconf.cgi
