@@ -88,16 +88,10 @@ OPTIONS qr{^/.*$} => sub {
 	&httpResponse( { code => 200 } );
 };
 
-logNewModules("After OPTIONS");
-
 require Zevenet::Config;
-logNewModules("With Zevenet::Config");
 require Zevenet::Validate;
-logNewModules("With Zevenet::Validate");
 require Zevenet::Certificate::Activation;
-logNewModules("With Zevenet::Certificate::Activation");
 require Zevenet::API3::Auth;
-logNewModules("With Zevenet::API3::Auth");
 #~ require JSON::XS;
 #~ require Date::Parse;
 #~ require Time::localtime;
@@ -143,7 +137,6 @@ my $put_data  = $q->param( 'PUTDATA' );
 ################################################################################
 
 #~ require CGI::Session;
-logNewModules("Before URIs");
 
 #  POST CGISESSID
 POST qr{^/session$} => sub {
@@ -202,8 +195,6 @@ unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
 				   { code => 401, body => { message => 'Authorization required' } } );
 }
 
-logNewModules("After authentication");
-
 #	SESSION LOGOUT
 #
 
@@ -240,8 +231,6 @@ if ( $q->path_info =~ qr{^/certificates/activation$} )
 {
 	require Zevenet::API3::Certificate::Activation;
 
-	logNewModules("In /certificates/activation");
-
 	#  GET activation certificate
 	GET qr{^/certificates/activation$} => sub {
 		&get_activation_certificate_info( @_ );
@@ -261,8 +250,6 @@ if ( $q->path_info =~ qr{^/certificates/activation$} )
 #	Check activation certificate
 ######################################################################
 &checkActivationCertificate();
-
-logNewModules("After checking the certificate");
 
 my $cert_re     = &getValidFormat( 'certificate' );
 my $cert_pem_re = &getValidFormat( 'cert_pem' );
@@ -682,8 +669,6 @@ _stats:
 if ( $q->path_info =~ qr{^/stats} )
 {
 	require Zevenet::API3::Stats;
-
-	logNewModules("In /stats");
 
 	# System stats
 	GET qr{^/stats$} => sub {
