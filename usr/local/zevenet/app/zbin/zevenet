@@ -37,9 +37,9 @@ my $defaultgw6   = &getGlobalConfiguration( 'defaultgw6' );
 my $defaultgwif6 = &getGlobalConfiguration( 'defaultgwif6' );
 my $action       = shift @ARGV // '';
 
-if ( $action !~ /stop|start|status/ )
+if ( $action !~ /^(start|stop|restart)$/ )
 {
-	print "Usage: /etc/init.d/zevenet stop|start|status\n";
+	print "Usage: /etc/init.d/zevenet start|stop|restart\n";
 	exit 0;
 }
 
