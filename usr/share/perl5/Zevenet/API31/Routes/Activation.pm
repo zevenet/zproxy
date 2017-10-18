@@ -28,8 +28,6 @@ if ( $ENV{ PATH_INFO } =~ qr{^/certificates/activation$} )
 {
 	my $mod = 'Zevenet::API31::Certificate::Activation';
 
-	logNewModules("In /certificates/activation");
-
 	GET    qr{^/certificates/activation$}, 'get_activation_certificate_info', $mod;
 	POST   qr{^/certificates/activation$}, 'upload_activation_certificate',   $mod;
 	DELETE qr{^/certificates/activation$}, 'delete_activation_certificate',   $mod;

@@ -193,8 +193,6 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 
 	my $q = &getCGI();
 
-	logNewModules("HTTP Response 1");
-
 	# Headers included in _ALL_ the responses, any method, any URI, sucess or error
 	my @headers = (
 					'Access-Control-Allow-Origin'      => $ENV{ HTTP_ORIGIN },
@@ -210,14 +208,11 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 		  ;
 	}
 
-	logNewModules("HTTP Response 2");
-
 	if ( exists $ENV{HTTP_COOKIE} && $ENV{HTTP_COOKIE} =~ /CGISESSID/ )
 	{
 		if ( &validCGISession() )
 		{
 			my $session = CGI::Session->load( $q );
-			logNewModules("HTTP Response 2.1");
 			my $session_cookie = $q->cookie( CGISESSID => $session->id );
 
 			push @headers,
@@ -226,8 +221,6 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 			  ;
 		}
 	}
-
-	logNewModules("HTTP Response 3");
 
 	if ( $q->path_info =~ '/session' )
 	{
@@ -287,8 +280,6 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 		# include memory usage if debug is 2 or higher
 		$req_msg .= " " . &getMemoryUsage() if &debug() > 1;
 		&zenlog( $req_msg );
-
-		logNewModules("HTTP Response");
 
 		# log error message on error.
 		if ( ref $self->{ body } eq 'HASH' )

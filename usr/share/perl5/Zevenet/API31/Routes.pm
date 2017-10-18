@@ -240,8 +240,6 @@ if ( $q->path_info =~ qr{^/stats} )
 {
 	require Zevenet::API31::Stats;
 
-	logNewModules("In /stats");
-
 	# System stats
 	GET qr{^/stats$}                           => \&stats;
 	GET qr{^/stats/system/memory$}             => \&stats_mem;
