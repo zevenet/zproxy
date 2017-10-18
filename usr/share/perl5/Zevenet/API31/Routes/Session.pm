@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use warnings;
 
 require CGI::Session;
 
@@ -37,6 +38,8 @@ sub session_login
 {
 	my $desc = "Login to new session";
 	my $session = CGI::Session->new( &getCGI() );
+
+	require Zevenet::SystemInfo;
 
 	unless ( $session && !$session->param( 'is_logged_in' ) )
 	{
