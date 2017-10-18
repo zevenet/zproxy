@@ -637,7 +637,6 @@ sub getHTTPServiceStruct
 			if ( !$fgscript )  { $fgscript  = ""; }
 
 			$fgscript =~ s/\n//g;
-			$fgscript =~ s/\"/\'/g;
 			$fguse =~ s/\n//g;
 
 			my $backends = &getHTTPFarmBackends( $farmname, $s );

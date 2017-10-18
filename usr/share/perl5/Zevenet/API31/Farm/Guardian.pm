@@ -193,7 +193,6 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 
 	$timetocheck += 0;
 	$timetocheck = 5 if !$timetocheck;
-	$check_script =~ s/\"/\'/g;
 
 	# no error found, return successful response
 	my $msg =
