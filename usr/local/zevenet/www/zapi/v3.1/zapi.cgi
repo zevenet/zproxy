@@ -71,19 +71,15 @@ my $q = &getCGI();
 
 ##### OPTIONS method request #########################################
 require Zevenet::API31::Routes::Options if ( $ENV{ REQUEST_METHOD } eq 'OPTIONS' );
-#~ logNewModules("After OPTIONS");
 
 
 ##### Load more basic modules ########################################
 require Zevenet::Config;
-#~ logNewModules("With Zevenet::Config");
 require Zevenet::Validate;
-#~ logNewModules("With Zevenet::Validate");
 
 
 ##### Authentication #################################################
 require Zevenet::API31::Auth;
-#~ logNewModules("With Zevenet::API31::Auth");
 
 # Session request
 require Zevenet::API31::Routes::Session if ( $q->path_info eq '/session' );
@@ -95,7 +91,6 @@ unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
 	&httpResponse(
 				   { code => 401, body => { message => 'Authorization required' } } );
 }
-#~ logNewModules("After authentication");
 
 
 ##### Activation certificates ########################################
@@ -145,7 +140,7 @@ sub certcontrol
 {
 	#~ require Time::Local;
 	#~ use Zevenet::Config;
-	#~ use Zevenet::SystemInfo;
+	require Zevenet::SystemInfo;
 
 	my $basedir = &getGlobalConfiguration( 'basedir' );
 	my $zlbcertfile = "$basedir/zlbcertfile.pem";
