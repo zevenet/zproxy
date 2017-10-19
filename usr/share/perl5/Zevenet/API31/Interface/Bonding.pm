@@ -206,7 +206,6 @@ sub delete_interface_bond    # ( $bond )
 
 	eval {
 		die if &delRoutes( "local", $if_ref );
-		die if &downIf( $if_ref, 'writeconf' );    # FIXME: To be removed
 		die if &delIf( $if_ref );
 	};
 
