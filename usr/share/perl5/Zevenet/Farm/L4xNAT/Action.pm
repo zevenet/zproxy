@@ -23,7 +23,7 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: runL4FarmRestart
@@ -42,6 +42,7 @@ FIXME:
 	writeconf is a obsolet parameter
 
 =cut
+
 sub runL4FarmRestart    # ($farm_name,$writeconf,$type)
 {
 	my ( $farm_name, $writeconf, $type ) = @_;
@@ -94,6 +95,7 @@ BUG:
 	DUPLICATED FUNCTION, do the same than &runL4FarmRestart function.
 	
 =cut
+
 sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
 {
 	my ( $farm_name, $writeconf, $type ) = @_;
@@ -142,6 +144,7 @@ FIXME:
 	delete writeconf parameter. It is obsolet
 	
 =cut
+
 sub _runL4FarmStart    # ($farm_name,$writeconf)
 {
 	my $farm_name = shift;    # input
@@ -174,7 +177,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		untie @configfile;
 	}
 
-	my $l4sd = &getGlobalConfiguration('l4sd');
+	my $l4sd = &getGlobalConfiguration( 'l4sd' );
 
 	# Load L4 scheduler if needed
 	if ( $$farm{ lbalg } eq 'leastconn' && -e "$l4sd" )
@@ -193,13 +196,14 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	my $server_prio;    # reference to the selected server for prio algorithm
 
 	## Set ip rule mark ##
-	my $ip_bin = &getGlobalConfiguration('ip_bin');
+	my $ip_bin      = &getGlobalConfiguration( 'ip_bin' );
 	my $vip_if_name = &getInterfaceOfIp( $farm->{ vip } );
-	my $vip_if = &getInterfaceConfig( $vip_if_name );
-	my $table_if = ( $vip_if->{ type } eq 'virtual' )? $vip_if->{ parent }: $vip_if->{ name };
+	my $vip_if      = &getInterfaceConfig( $vip_if_name );
+	my $table_if =
+	  ( $vip_if->{ type } eq 'virtual' ) ? $vip_if->{ parent } : $vip_if->{ name };
 
-	# insert the save rule, then insert on top the restore rule
-	# WARNING: Set Connmark rules BEFORE getting the farm rules or Connmark rules will be misplaced
+# insert the save rule, then insert on top the restore rule
+# WARNING: Set Connmark rules BEFORE getting the farm rules or Connmark rules will be misplaced
 	&setIptConnmarkSave( $farm_name, 'true' );
 	&setIptConnmarkRestore( $farm_name, 'true' );
 
@@ -244,15 +248,13 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		$rules = &getL4ServerActionRules( $farm, $server_prio, 'on' );
 	}
 
-
-
 	## lock iptables use ##
-	my $iptlock = &getGlobalConfiguration('iptlock');
+	my $iptlock = &getGlobalConfiguration( 'iptlock' );
 	open ( my $ipt_lockfile, '>', $iptlock );
 
 	unless ( $ipt_lockfile )
 	{
-		&zenlog("Could not open $iptlock: $!");
+		&zenlog( "Could not open $iptlock: $!" );
 		return 1;
 	}
 
@@ -272,7 +274,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	# Enable active l4 file
 	if ( $status == 0 )
 	{
-		my $piddir = &getGlobalConfiguration('piddir');
+		my $piddir = &getGlobalConfiguration( 'piddir' );
 		open my $fi, '>', "$piddir\/$$farm{name}\_l4xnat.pid";
 		close $fi;
 	}
@@ -296,6 +298,7 @@ FIXME:
 	delete writeconf parameter. It is obsolet
 	
 =cut
+
 sub _runL4FarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
@@ -321,12 +324,12 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	}
 
 	## lock iptables use ##
-	my $iptlock = &getGlobalConfiguration('iptlock');
+	my $iptlock = &getGlobalConfiguration( 'iptlock' );
 	open ( my $ipt_lockfile, '>', $iptlock );
 
 	unless ( $ipt_lockfile )
 	{
-		&zenlog("Could not open $iptlock: $!");
+		&zenlog( "Could not open $iptlock: $!" );
 		return 1;
 	}
 
@@ -356,7 +359,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	close $ipt_lockfile;
 
 	# Disable active l4xnat file
-	my $piddir = &getGlobalConfiguration('piddir');
+	my $piddir = &getGlobalConfiguration( 'piddir' );
 	unlink ( "$piddir\/$farm_name\_l4xnat.pid" );
 
 	if ( -e "$piddir\/$farm_name\_l4xnat.pid" )
@@ -369,10 +372,14 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	my $ip_bin      = &getGlobalConfiguration( 'ip_bin' );
 	my $vip_if_name = &getInterfaceOfIp( $farm->{ vip } );
 	my $vip_if      = &getInterfaceConfig( $vip_if_name );
-	my $table_if    = ( $vip_if->{ type } eq 'virtual' ) ? $vip_if->{ parent } : $vip_if->{ name };
+	my $table_if =
+	  ( $vip_if->{ type } eq 'virtual' ) ? $vip_if->{ parent } : $vip_if->{ name };
 
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
+		# remove conntrack
+		&resetL4FarmBackendConntrackMark( $server );
+
 		my $ip_cmd = "$ip_bin rule del fwmark $server->{ tag } table table_$table_if";
 		&logAndRun( $ip_cmd );
 	}
@@ -400,6 +407,7 @@ Bugfix:
 	DUPLICATED, do same than getL4FarmServers
 		
 =cut
+
 sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 {
 	my ( $farm_name, $new_farm_name ) = @_;
@@ -435,13 +443,15 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	}
 	untie @configfile;
 
-	my $piddir = &getGlobalConfiguration('piddir');
-	rename ( "$configdir\/$farm_filename", "$configdir\/$new_farm_filename" ) or $output = -1;
+	my $piddir = &getGlobalConfiguration( 'piddir' );
+	rename ( "$configdir\/$farm_filename", "$configdir\/$new_farm_filename" )
+	  or $output = -1;
 	if ( -f "$piddir\/$farm_name\_$farm_type.pid" )
 	{
 		rename ( "$piddir\/$farm_name\_$farm_type.pid",
-			 "$piddir\/$new_farm_name\_$farm_type.pid" ) or $output = -1;
-	}	
+				 "$piddir\/$new_farm_name\_$farm_type.pid" )
+		  or $output = -1;
+	}
 
 	# Rename fw marks for this farm
 	&renameMarks( $farm_name, $new_farm_name );

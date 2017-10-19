@@ -23,7 +23,7 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: setL4FarmServer
@@ -45,6 +45,7 @@ Returns:
 	Scalar - 0 on success or other value on failure
 	
 =cut
+
 sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 {
 	my ( $ids, $rip, $port, $weight, $priority, $farm_name, $max_conns ) = @_;
@@ -66,7 +67,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid     = &getFarmGuardianPid( $farm_name );
 
-	$weight ||= 1;
+	$weight   ||= 1;
 	$priority ||= 1;
 
 	if ( $$farm{ status } eq 'up' )
@@ -88,7 +89,8 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 			if ( $i eq $ids )
 			{
 				my @aline = split ( ';', $line );
-				my $dline = "\;server\;$rip\;$port\;$aline[4]\;$weight\;$priority\;up\;$max_conns\n";
+				my $dline =
+				  "\;server\;$rip\;$port\;$aline[4]\;$weight\;$priority\;up\;$max_conns\n";
 
 				splice @contents, $l, 1, $dline;
 				$output       = $?;       # FIXME
@@ -110,7 +112,8 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 		require Zevenet::Netfilter;
 
 		$mark = &getNewMark( $farm_name );
-		push ( @contents, "\;server\;$rip\;$port\;$mark\;$weight\;$priority\;up\;$max_conns\n" );
+		push ( @contents,
+			   "\;server\;$rip\;$port\;$mark\;$weight\;$priority\;up\;$max_conns\n" );
 		$output = $?;    # FIXME
 	}
 	untie @contents;
@@ -131,10 +134,11 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 			}
 
 			## Set ip rule mark ##
-			my $ip_bin = &getGlobalConfiguration('ip_bin');
+			my $ip_bin      = &getGlobalConfiguration( 'ip_bin' );
 			my $vip_if_name = &getInterfaceOfIp( $farm->{ vip } );
-			my $vip_if = &getInterfaceConfig( $vip_if_name );
-			my $table_if = ( $vip_if->{ type } eq 'virtual' )? $vip_if->{ parent }: $vip_if->{ name };
+			my $vip_if      = &getInterfaceConfig( $vip_if_name );
+			my $table_if =
+			  ( $vip_if->{ type } eq 'virtual' ) ? $vip_if->{ parent } : $vip_if->{ name };
 
 			my $ip_cmd = "$ip_bin rule add fwmark $mark table table_$table_if";
 			&logAndRun( $ip_cmd );
@@ -165,6 +169,7 @@ Returns:
 	Scalar - 0 on success or other value on failure
 	
 =cut
+
 sub runL4FarmServerDelete    # ($ids,$farm_name)
 {
 	my ( $ids, $farm_name ) = @_;
@@ -241,10 +246,11 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 		}
 
 		## Remove ip rule mark ##
-		my $ip_bin = &getGlobalConfiguration('ip_bin');
+		my $ip_bin      = &getGlobalConfiguration( 'ip_bin' );
 		my $vip_if_name = &getInterfaceOfIp( $farm->{ vip } );
-		my $vip_if = &getInterfaceConfig( $vip_if_name );
-		my $table_if = ( $vip_if->{ type } eq 'virtual' )? $vip_if->{ parent }: $vip_if->{ name };
+		my $vip_if      = &getInterfaceConfig( $vip_if_name );
+		my $table_if =
+		  ( $vip_if->{ type } eq 'virtual' ) ? $vip_if->{ parent } : $vip_if->{ name };
 
 		my $ip_cmd = "$ip_bin rule del fwmark $server->{ tag } table table_$table_if";
 		&logAndRun( $ip_cmd );
@@ -278,11 +284,12 @@ FIXME:
 	Change output to hash	
 		
 =cut
+
 sub getL4FarmBackendsStatus_old    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
 
-	my @backends_data;         # output
+	my @backends_data;             # output
 
 	foreach my $server ( @content )
 	{
@@ -314,17 +321,18 @@ Returns:
 FIXME: 
 		
 =cut
+
 sub setL4FarmBackendsSessionsRemove
 {
 	my ( $farmname, $backend ) = @_;
-	
+
 	require Zevenet::Farm::L4xNAT::Config;
 
 	my %farm        = %{ &getL4FarmStruct( $farmname ) };
 	my %be          = %{ $farm{ servers }[$backend] };
 	my $recent_file = "/proc/net/xt_recent/_${farmname}_$be{tag}_sessions";
 	my $output      = -1;
-	
+
 	if ( open ( my $file, '>', $recent_file ) )
 	{
 		print $file "/\n";    # flush recent file!!
@@ -335,7 +343,7 @@ sub setL4FarmBackendsSessionsRemove
 	{
 		&zenlog( "Could not open file $recent_file: $!" );
 	}
-	
+
 	return $output;
 }
 
@@ -353,6 +361,7 @@ Returns:
 	Integer - 0 on success or other value on failure
 	
 =cut
+
 sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 {
 	my ( $farm_name, $server_id, $status ) = @_;
@@ -412,9 +421,10 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	untie @configfile;
 
 	$farm{ servers } = undef;
+
 	#~ %farm = undef;
 
-	%farm   = %{ &getL4FarmStruct( $farm_name ) };
+	%farm = %{ &getL4FarmStruct( $farm_name ) };
 	my %server = %{ $farm{ servers }[$server_id] };
 
 	# do no apply rules if the farm is not up
@@ -424,7 +434,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 
 		if ( $status eq 'fgDOWN' && $farm{ persist } eq 'ip' )
 		{
-			&setL4FarmBackendsSessionsRemove( $farm{name}, $server_id );
+			&setL4FarmBackendsSessionsRemove( $farm{ name }, $server_id );
 		}
 
 		if ( $fg_enabled eq 'true' && !$stopping_fg )
@@ -436,10 +446,11 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 		}
 	}
 
-	$farm{ servers }  = undef;
+	$farm{ servers } = undef;
+
 	#~ %farm             = undef;
 	$$farm{ servers } = undef;
-	$farm             = undef;
+	$farm = undef;
 
 	return $output;
 }
@@ -460,6 +471,7 @@ FIXME:
 	Return as array of hash refs
 	
 =cut
+
 sub getL4FarmServers    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -489,7 +501,6 @@ sub getL4FarmServers    # ($farm_name)
 	return @servers;
 }
 
-
 =begin nd
 Function: getL4FarmBackends
 
@@ -503,6 +514,7 @@ Returns:
 	configuration. The array index is the backend id
 	
 =cut
+
 sub getL4FarmBackends    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -510,7 +522,7 @@ sub getL4FarmBackends    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $sindex        = 0;
 	my @servers;
-	
+
 	require Zevenet::Farm::Base;
 	my $farmStatus = &getFarmStatus( $farm_name );
 
@@ -520,37 +532,37 @@ sub getL4FarmBackends    # ($farm_name)
 	while ( my $line = <FI> )
 	{
 		chomp ( $line );
-		
+
 		# ;server;192.168.100.254;80;0x20e;1;1;maintenance;0
 		if ( $line =~ /^\;server\;/ )
 		{
 			my @aux = split ( ';', $line );
-			
+
 			# Return port as integer
 			$aux[3] = $aux[3] + 0 if ( $aux[3] =~ /^\d+$/ );
 
 			my $status = $aux[7];
-			if ($status eq "fgDOWN")
+			if ( $status eq "fgDOWN" )
 			{
 				$status = "down";
 			}
-			if ( ($status ne "maintenance") && ($farmStatus eq "down") )
+			if ( ( $status ne "maintenance" ) && ( $farmStatus eq "down" ) )
 			{
 				$status = "undefined";
 			}
 
-			push @servers, 
-				{
-					id=>$sindex,
-					ip=>$aux[2],
-					port=> ( $aux[3] )? $aux[3] : undef,
-					#~ mark=>$aux[4],
-					weight=>$aux[5]+0,
-					priority=>$aux[6]+0,
-					max_conns => $aux[8]+0,
-					status=>$status,
-				};
-			
+			push @servers, {
+				id   => $sindex,
+				ip   => $aux[2],
+				port => ( $aux[3] ) ? $aux[3] : undef,
+
+				#~ mark=>$aux[4],
+				weight    => $aux[5] + 0,
+				priority  => $aux[6] + 0,
+				max_conns => $aux[8] + 0,
+				status    => $status,
+			};
+
 			$sindex++;
 		}
 	}
@@ -558,11 +570,6 @@ sub getL4FarmBackends    # ($farm_name)
 
 	return \@servers;
 }
-
-
-
-
-
 
 =begin nd
 Function: getL4FarmBackendStatusCtl
@@ -579,6 +586,7 @@ Bugfix:
 	DUPLICATED, do same than getL4FarmServers
 		
 =cut
+
 sub getL4FarmBackendStatusCtl    # ($farm_name)
 {
 	my $farm_name     = shift;
@@ -608,6 +616,7 @@ Returns:
 	Integer - Error code: 0 on success or other value on failure 
 	
 =cut
+
 sub _runL4ServerStart    # ($farm_name,$server_id)
 {
 	my $farm_name = shift;    # input: farm name string
@@ -668,6 +677,7 @@ Returns:
 	Integer - Error code: 0 on success or other value on failure 
 	
 =cut
+
 sub _runL4ServerStop    # ($farm_name,$server_id)
 {
 	my $farm_name = shift;    # input: farm name string
@@ -726,6 +736,7 @@ Returns:
 	???
 	
 =cut
+
 sub getL4ServerActionRules
 {
 	my $farm   = shift;    # input: farm reference
@@ -810,6 +821,7 @@ Returns:
 	hash ref - reference to the selected server for prio algorithm
 	
 =cut
+
 sub getL4ServerWithLowestPriority    # ($farm)
 {
 	my $farm = shift;                # input: farm reference
@@ -842,6 +854,7 @@ Returns:
 	Integer - 0 for backend in maintenance or 1 for backend not in maintenance
 	
 =cut
+
 sub getL4FarmBackendMaintenance
 {
 	my ( $farm_name, $backend ) = @_;
@@ -873,13 +886,19 @@ Returns:
 	Integer - 0 on success or other value on failure
 	
 =cut
-sub setL4FarmBackendMaintenance             # ( $farm_name, $backend )
+
+sub setL4FarmBackendMaintenance    # ( $farm_name, $backend )
 {
 	my ( $farm_name, $backend, $mode ) = @_;
 
-	if ( $mode eq "cut"	)
+	if ( $mode eq "cut" )
 	{
 		&setL4FarmBackendsSessionsRemove( $farm_name, $backend );
+
+		# remove conntrack
+		my $farm   = &getL4FarmStruct( $farm_name );
+		my $server = $$farm{ servers }[$backend];
+		&resetL4FarmBackendConntrackMark( $server );
 	}
 
 	return &setL4FarmBackendStatus( $farm_name, $backend, 'maintenance' );
@@ -898,6 +917,7 @@ Returns:
 	Integer - 0 on success or other value on failure
 	
 =cut
+
 sub setL4FarmBackendNoMaintenance
 {
 	my ( $farm_name, $backend ) = @_;
@@ -917,6 +937,7 @@ Returns:
 	none - .
 	
 =cut
+
 sub getL4BackendsWeightProbability
 {
 	my $farm = shift;    # input: farm reference
@@ -948,16 +969,16 @@ sub resetL4FarmBackendConntrackMark
 {
 	my $server = shift;
 
-	my $conntrack = &getGlobalConfiguration('conntrack');
-	my $cmd = "$conntrack -D -m $server->{ tag }";
+	my $conntrack = &getGlobalConfiguration( 'conntrack' );
+	my $cmd       = "$conntrack -D -m $server->{ tag }";
 
-	&zenlog("running: $cmd") if &debug();
+	&zenlog( "running: $cmd" ) if &debug();
 
 	# return_code = 0 -> deleted
 	# return_code = 1 -> not found/deleted
 	# WARNIG: STDOUT must be null so cherokee does not receive this output
 	# as http headers.
-	my $return_code = system( "$cmd 1>/dev/null" );
+	my $return_code = system ( "$cmd 1>/dev/null" );
 
 	if ( &debug() )
 	{
