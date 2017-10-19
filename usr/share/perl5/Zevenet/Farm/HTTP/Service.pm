@@ -1048,7 +1048,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 
 	foreach $line ( @fileconf )
 	{
-		if ( $line =~ /Service \"$service\"/ )
+		if ( $line =~ /\tService \"$service\"/ )
 		{
 			$sw = 1;
 		}
@@ -1058,12 +1058,12 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		#vs tag
 		if ( $tag eq "vs" )
 		{
-			if ( $line =~ "HeadRequire" && $sw == 1 && $string ne "" )
+			if ( $line =~ /^\t\t#?HeadRequire/ && $sw == 1 && $string ne "" )
 			{
 				$line = "\t\tHeadRequire \"Host: $string\"";
 				last;
 			}
-			if ( $line =~ "HeadRequire" && $sw == 1 && $string eq "" )
+			if ( $line =~ /^\t\t#?HeadRequire/ && $sw == 1 && $string eq "" )
 			{
 				$line = "\t\t#HeadRequire \"Host:\"";
 				last;
@@ -1073,12 +1073,12 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		#url pattern
 		if ( $tag eq "urlp" )
 		{
-			if ( $line =~ "Url" && $sw == 1 && $string ne "" )
+			if ( $line =~ /^\t\t#?Url/ && $sw == 1 && $string ne "" )
 			{
 				$line = "\t\tUrl \"$string\"";
 				last;
 			}
-			if ( $line =~ "Url" && $sw == 1 && $string eq "" )
+			if ( $line =~ /^\t\t#?Url/ && $sw == 1 && $string eq "" )
 			{
 				$line = "\t\t#Url \"\"";
 				last;
@@ -1088,12 +1088,12 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		#dynscale
 		if ( $tag eq "dynscale" )
 		{
-			if ( $line =~ "DynScale" && $sw == 1 && $string ne "" )
+			if ( $line =~ /^\t\t#?DynScale/ && $sw == 1 && $string ne "" )
 			{
 				$line = "\t\tDynScale 1";
 				last;
 			}
-			if ( $line =~ "DynScale" && $sw == 1 && $string eq "" )
+			if ( $line =~ /^\t\t#DynScale/ && $sw == 1 && $string eq "" )
 			{
 				$line = "\t\t#DynScale 1";
 				last;
@@ -1103,14 +1103,14 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		#client redirect default
 		if ( $tag eq "redirect" )
 		{
-			if (    ( $line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"" )
+			if (    ( $line =~ /^\t\t#?Redirect\ \"/ || $line =~ "RedirectAppend\ \"" )
 				 && $sw == 1
 				 && $string ne "" )
 			{
 				$line = "\t\tRedirect \"$string\"";
 				last;
 			}
-			if (    ( $line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"" )
+			if (    ( $line =~ /^\t\t#?Redirect\ \"/ || $line =~ "RedirectAppend\ \"" )
 				 && $sw == 1
 				 && $string eq "" )
 			{
@@ -1122,14 +1122,14 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		#client redirect append
 		if ( $tag eq "redirectappend" )
 		{
-			if (    ( $line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"" )
+			if (    ( $line =~ /^\t\t#?Redirect\ \"/ || $line =~ /^\t\t#?RedirectAppend\ \"/ )
 				 && $sw == 1
 				 && $string ne "" )
 			{
 				$line = "\t\tRedirectAppend \"$string\"";
 				last;
 			}
-			if (    ( $line =~ "Redirect\ \"" || $line =~ "RedirectAppend\ \"" )
+			if (    ( $line =~ /^\t\t#?Redirect\ \"/ || $line =~ /^\t\t#?RedirectAppend\ \"/ )
 				 && $sw == 1
 				 && $string eq "" )
 			{
@@ -1141,7 +1141,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		#cookie insertion name
 		if ( $tag eq "cookieins-name" )
 		{
-			if ( $line =~ "BackendCookie" && $sw == 1 && $string ne "" )
+			if ( $line =~ /^\t\t#?BackendCookie/ && $sw == 1 && $string ne "" )
 			{
 				$l = $line;
 				$l =~ s/\t\t//g;
@@ -1155,7 +1155,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		#cookie insertion domain
 		if ( $tag eq "cookieins-domain" )
 		{
-			if ( $line =~ "BackendCookie" && $sw == 1 && $string ne "" )
+			if ( $line =~ /^\t\t#?BackendCookie/ && $sw == 1 && $string ne "" )
 			{
 				$l = $line;
 				$l =~ s/\t\t//g;
@@ -1169,7 +1169,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		#cookie insertion path
 		if ( $tag eq "cookieins-path" )
 		{
-			if ( $line =~ "BackendCookie" && $sw == 1 && $string ne "" )
+			if ( $line =~ /^\t\t#?BackendCookie/ && $sw == 1 && $string ne "" )
 			{
 				$l = $line;
 				$l =~ s/\t\t//g;
@@ -1183,7 +1183,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		#cookie insertion TTL
 		if ( $tag eq "cookieins-ttlc" )
 		{
-			if ( $line =~ "BackendCookie" && $sw == 1 && $string ne "" )
+			if ( $line =~ /^\t\t#?BackendCookie/ && $sw == 1 && $string ne "" )
 			{
 				$l = $line;
 				$l =~ s/\t\t//g;
@@ -1197,12 +1197,12 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		#cookie ins
 		if ( $tag eq "cookieins" )
 		{
-			if ( $line =~ "BackendCookie" && $sw == 1 && $string ne "" )
+			if ( $line =~ /^\t\t#BackendCookie/ && $sw == 1 && $string ne "" )
 			{
 				$line =~ s/#//g;
 				last;
 			}
-			if ( $line =~ "BackendCookie" && $sw == 1 && $string eq "" )
+			if ( $line =~ /^\t\tBackendCookie/ && $sw == 1 && $string eq "" )
 			{
 				$line =~ s/\t\t//g;
 				$line = "\t\t#$line";
@@ -1213,12 +1213,12 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		#TTL
 		if ( $tag eq "ttl" )
 		{
-			if ( $line =~ "TTL" && $sw == 1 && $string ne "" )
+			if ( $line =~ /^\t\t\t#?TTL/ && $sw == 1 && $string ne "" )
 			{
 				$line = "\t\t\tTTL $string";
 				last;
 			}
-			if ( $line =~ "TTL" && $sw == 1 && $string eq "" )
+			if ( $line =~ /^\t\t\t#?TTL/ && $sw == 1 && $string eq "" )
 			{
 				$line = "\t\t\t#TTL 120";
 				last;
@@ -1273,9 +1273,9 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 			}
 
 			#go out of curret Service
-			if (    $line =~ /Service \"/
+			if (    $line =~ /\tService \"/
 				 && $sw == 1
-				 && $line !~ /Service \"$service\"/ )
+				 && $line !~ /\tService \"$service\"/ )
 			{
 				$tag = "";
 				$sw  = 0;
@@ -1288,19 +1288,19 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		{
 			if ( $string ne "nothing" && $sw == 1 )
 			{
-				if ( $line =~ "Session" )
+				if ( $line =~ /^\t\t#Session/ )
 				{
 					$line = "\t\tSession";
 				}
-				if ( $line =~ "End" )
+				if ( $line =~ /\t\t#End/ )
 				{
 					$line = "\t\tEnd";
 				}
-				if ( $line =~ "Type" )
+				if ( $line =~ /^\t\t\t#?Type/ )
 				{
 					$line = "\t\t\tType $string";
 				}
-				if ( $line =~ "TTL" )
+				if ( $line =~ /^\t\t\t#?TTL/ )
 				{
 					$line =~ s/#//g;
 				}
@@ -1321,19 +1321,19 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 
 			if ( $string eq "nothing" && $sw == 1 )
 			{
-				if ( $line =~ "Session" )
+				if ( $line =~ /^\t\tSession/ )
 				{
 					$line = "\t\t#Session";
 				}
-				if ( $line =~ "End" )
+				if ( $line =~ /^\t\tEnd/ )
 				{
 					$line = "\t\t#End";
 				}
-				if ( $line =~ "TTL" )
+				if ( $line =~ /^\t\t\tTTL/ )
 				{
 					$line = "\t\t\t#TTL 120";
 				}
-				if ( $line =~ "Type" )
+				if ( $line =~ /^\t\t\tType/ )
 				{
 					$line = "\t\t\t#Type nothing";
 				}
