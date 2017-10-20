@@ -324,6 +324,7 @@ sub setDatalinkFarmBackendStatus    # ($farm_name,$index,$stat)
 	my ( $farm_name, $index, $stat ) = @_;
 
 	require Tie::File;
+	require Zevenet::Farm::Base;
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $fileid        = 0;
