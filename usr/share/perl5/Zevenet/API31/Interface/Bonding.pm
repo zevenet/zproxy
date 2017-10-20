@@ -705,8 +705,9 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		die if &writeRoutes( $if_ref->{ name } );
 
 		# Put the interface up
+		my $previous_status = $if_ref->{ status };
+		if ( $previous_status eq "up" )
 		{
-			my $previous_status = $if_ref->{ status };
 			my $state = &upIf( $if_ref, 'writeconf' );
 
 			if ( $state == 0 )
