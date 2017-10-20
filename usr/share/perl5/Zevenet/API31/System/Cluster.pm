@@ -50,8 +50,6 @@ sub get_cluster
 	my $cl_status = &getZClusterStatus();
 	my $body;
 
-	zenlog("cluster status: $cl_status");
-
 	if ( $cl_status )
 	{
 		my $zcl_conf  = &getZClusterConfig();
