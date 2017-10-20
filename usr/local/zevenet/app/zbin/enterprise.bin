@@ -65,41 +65,7 @@ Run encrypted module accepting arguments from STDIN in JSON format, returning JS
 	exit 0;
 }
 
-# Module Encoding functionality
-if ( $module eq 'enc' )
-{
-	my $module = shift @ARGV;
 
-	unless ( $module )
-	{
-		die "$0: No module name received.\n";
-	}
-
-	my $mod_path = "$lib_path/$module.pm";
-	$mod_path =~ s#\:\:#\/#g; # Replace :: with /
-
-	unless ( -f $module )
-	{
-		die "$0: Module file $module not found.\n";
-	}
-
-	# New, encripted module
-	open my $enc_mod, '>', "${module}e";
-	unless ( $enc_mod )
-	{
-		die "$0: Could not open file ${module}e: $!\n";
-	}
-
-	print { $enc_mod } `openssl aes-256-cbc -a -nosalt -k "${SYMKEY}" -in ${module}`;
-
-	close $enc_mod;
-
-	exit 0;
-}
-
-
-
-#~ &zenlog( "#### Start enterprise.bin ####" );
 
 ## Required conditions
 
@@ -129,8 +95,6 @@ unless ( $skip_cert_check )
 	{
 		die "$0: Invalid activation certificate ($swcert)";
 	}
-
-	#~ &zenlog( "#### Certificate: [OK]" );
 }
 
 
@@ -170,7 +134,6 @@ if ( $@ )
 	&zenlog( $@ );
 	die $@;
 }
-#~ else { &zenlog( "#### Module Load: $module [OK]" ); }
 
 
 
@@ -229,9 +192,6 @@ if ( $@ )
 	&zenlog( $@ );
 	die $@;
 }
-#~ else { &zenlog( "#### Function run: $func: [OK]" ); }
-
-#~ &zenlog( "Function $func output ::: $returned_value" );
 
 unless ( defined $returned_value ) { &zenlog( "#### Function output defined: Failed!" ); } ####
 
@@ -244,10 +204,9 @@ if ( ref $returned_value )
 	# Encode output in JSON and print it
 	my $json = JSON->new();
 
-	#~ if ( eval { $json_out = encode_json( $returned_value ); } )
-	if ( eval { $output = $json->pretty->indent->canonical->encode( $returned_value ); } )
-		 { 1 || &zenlog( "#### Function output JSON encode: [OK]" ); }
-	else { &zenlog( "#### Function output JSON encode: Failed!" ); }
+	#~ unless ( eval { $json_out = encode_json( $returned_value ); } )
+	unless ( eval { $output = $json->pretty->indent->canonical->encode( $returned_value ); } )
+	{ &zenlog( "#### Function output JSON encode: Failed!" ); }
 
 	# Optionally send JSON to system log
 	#~ &zenlog( "json: '$_'" ) for split ( /\\n/, $output );
