@@ -223,7 +223,7 @@ sub setFarmDeleteCertNameSNI    #($certn,$fname)
 
 		for ( @array )
 		{
-			if ( $_ =~ /Cert "$configdir\/$certname"/ )
+			if ( $_ =~ /\tCert "$configdir\/$certname"/ )
 			{
 				splice @array, $j, 1,;
 				$output = 0;

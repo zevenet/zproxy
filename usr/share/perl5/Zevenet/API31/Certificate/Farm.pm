@@ -27,7 +27,7 @@ use Zevenet::Farm::Base;
 use Zevenet::Farm::Ext;
 
 # POST /farms/FARM/certificates (Add certificate to farm)
-sub add_farm_certificate # ( $json_obj, $farmname )
+sub add_farm_certificate    # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
@@ -41,14 +41,20 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $configdir = &getGlobalConfiguration('configdir');
-	my $cert_pem_re = &getValidFormat('cert_pem');
+	my $configdir   = &getGlobalConfiguration( 'configdir' );
+	my $cert_pem_re = &getValidFormat( 'cert_pem' );
 
 	# validate certificate filename and format
 	unless ( -f $configdir . "/" . $json_obj->{ file }
 			 && &getValidFormat( 'cert_pem', $json_obj->{ file } ) )
 	{
 		my $msg = "Invalid certificate name, please insert a valid value.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	if ( grep ( /^$json_obj->{ file }$/, &getFarmCertificatesSNI( $farmname ) ) )
+	{
+		my $msg = "The certificate already exists in the farm.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -83,11 +89,11 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 		$body->{ status } = 'needed restart';
 	}
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # DELETE /farms/FARM/certificates/CERTIFICATE
-sub delete_farm_certificate # ( $farmname, $certfilename )
+sub delete_farm_certificate    # ( $farmname, $certfilename )
 {
 	my $farmname     = shift;
 	my $certfilename = shift;
@@ -109,7 +115,22 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $status = &setFarmDeleteCertNameSNI( $certfilename, $farmname );
+	my $number =
+	  scalar grep ( /^$certfilename$/, &getFarmCertificatesSNI( $farmname ) );
+	if ( !$number )
+	{
+		my $msg = "Certificate is not used by the farm.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $status;
+
+ # This is a BUGFIX: delete the certificate all times that it appears in config file
+	for ( my $it = 0 ; $it < $number ; $it++ )
+	{
+		$status = &setFarmDeleteCertNameSNI( $certfilename, $farmname );
+		last if ( $status == -1 );
+	}
 
 	# check if the certificate could not be removed
 	if ( $status == -1 )
@@ -121,7 +142,7 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# check if removing the certificate would leave the SNI list empty, not supported
+   # check if removing the certificate would leave the SNI list empty, not supported
 	if ( $status == 1 )
 	{
 		&zenlog(
@@ -150,7 +171,7 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 	}
 
 	&zenlog( "ZAPI Success, trying to delete a certificate to the SNI list." );
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;
