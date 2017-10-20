@@ -38,8 +38,8 @@ sub possible_graphs	#()
 {
 	require Zevenet::Stats;
 
-	my @farms = grep ( s/-farm//, &getGraphs2Show( "Farm" ) );
-	my @net   = grep ( s/iface//, &getGraphs2Show( "Network" ) );
+	my @farms = grep ( s/-farm$//, &getGraphs2Show( "Farm" ) );
+	my @net   = grep ( s/iface$//, &getGraphs2Show( "Network" ) );
 	my @sys = ( "cpu", "load", "ram", "swap" );
 	
 	# Get mount point of disks
@@ -149,7 +149,7 @@ sub get_frec_sys_graphs	#()
 # GET all interface graphs
 sub get_all_iface_graphs	#()
 {
-	my @iface = grep ( s/iface//, &getGraphs2Show( "Network" ) );
+	my @iface = grep ( s/iface$//, &getGraphs2Show( "Network" ) );
 	my $body = {
 		description =>
 		  "These are the possible interface graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
@@ -176,7 +176,7 @@ sub get_iface_graphs	#()
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 	# graph for this farm doesn't exist
-	elsif ( ! grep ( /${iface}iface/, &getGraphs2Show( "Network" ) ) )
+	elsif ( ! grep ( /${iface}iface$/, &getGraphs2Show( "Network" ) ) )
 	{
 		my $msg = "There is no rrd files yet.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -219,7 +219,7 @@ sub get_frec_iface_graphs	#()
 		my $msg = "Nic interface not found.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
-	elsif ( ! grep ( /${iface}iface/, &getGraphs2Show( "Network" ) ) )
+	elsif ( ! grep ( /${iface}iface$/, &getGraphs2Show( "Network" ) ) )
 	{
 		my $msg = "There is no rrd files yet.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -243,7 +243,7 @@ sub get_frec_iface_graphs	#()
 # GET all farm graphs
 sub get_all_farm_graphs	#()
 {
-	my @farms = grep ( s/-farm//, &getGraphs2Show( "Farm" ) );
+	my @farms = grep ( s/-farm$//, &getGraphs2Show( "Farm" ) );
 	my $body = {
 		description =>
 		  "These are the possible farm graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph", 
@@ -269,7 +269,7 @@ sub get_farm_graphs	#()
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}	
 	# graph for this farm doesn't exist
-	elsif ( ! grep ( /$farmName-farm/, &getGraphs2Show( "Farm" ) ) )
+	elsif ( ! grep ( /^$farmName-farm$/, &getGraphs2Show( "Farm" ) ) )
 	{
 		my $msg = "There are no rrd files yet.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

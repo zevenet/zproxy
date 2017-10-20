@@ -732,7 +732,7 @@ sub getGraphs2Show    #($graphtype)
 		opendir ( DIR, "$rrdap_dir/$rrd_dir" );
 		my @disk = grep ( /^dev-.*$/, readdir ( DIR ) );
 		closedir ( DIR );
-		for ( @disk ) { s/.rrd//g };    # remove filenames .rrd trailing
+		for ( @disk ) { s/.rrd$//g };    # remove filenames .rrd trailing
 		@list = ( "cpu", @disk, "load", "mem", "memsw" );
 	}
 	elsif ( $graphtype eq 'Network' )
@@ -740,21 +740,21 @@ sub getGraphs2Show    #($graphtype)
 		opendir ( DIR, "$rrdap_dir/$rrd_dir" );
 		@list = grep ( /iface.rrd$/, readdir ( DIR ) );
 		closedir ( DIR );
-		for ( @list ) { s/.rrd//g };    # remove filenames .rrd trailing
+		for ( @list ) { s/.rrd$//g };    # remove filenames .rrd trailing
 	}
 	elsif ( $graphtype eq 'Farm' )
 	{
 		opendir ( DIR, "$rrdap_dir/$rrd_dir" );
 		@list = grep ( /farm.rrd$/, readdir ( DIR ) );
 		closedir ( DIR );
-		for ( @list ) { s/.rrd//g };    # remove filenames .rrd trailing
+		for ( @list ) { s/.rrd$//g };    # remove filenames .rrd trailing
 	}
 	else
 	{
 		opendir ( DIR, "$rrdap_dir/$rrd_dir" );
 		@list = grep ( /.rrd$/, readdir ( DIR ) );
 		closedir ( DIR );
-		for ( @list ) { s/.rrd//g };    # remove filenames .rrd trailing
+		for ( @list ) { s/.rrd$//g };    # remove filenames .rrd trailing
 	}
 
 	return @list;
