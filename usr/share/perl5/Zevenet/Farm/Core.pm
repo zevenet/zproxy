@@ -198,7 +198,7 @@ sub getFarmsByType    # ($farm_type)
 
   # gslb uses a directory, not a file
   # my @farm_files = grep { /^.*\_.*\.cfg/ && -f "$configdir/$_" } readdir ( $dir );
-	my @farm_files = grep { /^.*\_.*\.cfg/ } readdir ( $dir );
+	my @farm_files = grep { /^.*\_.*\.cfg$/ } readdir ( $dir );
 	closedir $dir;
 
 	foreach my $farm_filename ( @farm_files )
