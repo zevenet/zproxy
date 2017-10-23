@@ -34,7 +34,7 @@ dhfile="/usr/local/zevenet/app/pound/etc/dh2048.pem"
 openssl=`which openssl`
 
 if [ ! -f $dhfile ]; then
-	$openssl dhparam -5 2048 -out $dhfile
+	$openssl dhparam -out $dhfile -5 2048
 fi
 
 cd $confdir
