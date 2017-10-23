@@ -38,10 +38,11 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;
-	require Zevenet::IPDS;
+	require Zevenet::IPDS::Base;
 	require Zevenet::IPDS::Blacklist;
 	require Zevenet::IPDS::DoS;
 	my $ipds = &getIPDSfarmsRules_zapiv3( $farmname );
+
 	my $errormsg;
 
 	# Check that the farm exists
@@ -71,6 +72,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		&httpResponse({ code => 400, body => $body });
 	}
 
+	&runIPDSStopByFarm($farmname);
 	# Get current vip & vport
 	my $vip   = &getFarmVip( "vip",  $farmname );
 	my $vport = &getFarmVip( "vipp", $farmname );
@@ -311,26 +313,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		&zenlog(
 				  "ZAPI success, some parameters have been changed in farm $farmname." );
 
-		# update the ipds rule applied to the farm
-		if ( !$farmname_old )
-		{
-			&setBLReloadFarmRules ( $farmname );
-			&setDOSReloadFarmRules ( $farmname );
-		}
-		# create new rules with the new farmname
-		else
-		{
-			foreach my $list ( @{ $ipds->{ 'blacklists' } } )
-			{
-				&setBLRemFromFarm( $farmname_old, $list );
-				&setBLApplyToFarm( $farmname, $list );
-			}
-			foreach my $rule ( @{ $ipds->{ 'dos' } } )
-			{
-				&setDOSDeleteRule( $rule, $farmname_old );
-				&setDOSCreateRule( $rule, $farmname );
-			}
-		}
+		&runIPDSStartByFarm($farmname);
 
 		if ( $changedname ne "true" )
 		{
