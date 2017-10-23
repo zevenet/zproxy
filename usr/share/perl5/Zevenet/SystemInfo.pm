@@ -43,11 +43,7 @@ See Also:
 =cut
 sub getDate
 {
-	#$timeseconds = time();
-	my $now = localtime;
-	#~ my $now = ctime();
-
-	return $now;
+	return scalar CORE::localtime();
 }
 
 =begin nd

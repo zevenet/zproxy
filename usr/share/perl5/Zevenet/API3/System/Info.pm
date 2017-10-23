@@ -103,17 +103,16 @@ sub get_supportsave
 sub get_version
 {
 	my $description = "Get version";
-	
-	my $hostnameBin = &getGlobalConfiguration( 'hostname' );
-	my $uname = &getGlobalConfiguration( 'uname' );
-	
-	my $zevenet		= &getGlobalConfiguration( 'version' );
-	my $kernel			= `$uname -r`;
+
+	my $uname      = &getGlobalConfiguration( 'uname' );
+	my $zevenet    = &getGlobalConfiguration( 'version' );
+	my $kernel     = `$uname -r`;
+	my $hostname   = &getHostname();
+	my $date       = &getDate();
+	my $applicance = getApplianceVersion();
+
 	chop $kernel;
-	my $hostname  	= `$hostnameBin`;
 	chop $hostname;
-	my $date = &getDate ();
-	my $applicance = getApplianceVersion ();
 
 	&httpResponse(
 		{ 	code => 200, body => { description => $description, 
