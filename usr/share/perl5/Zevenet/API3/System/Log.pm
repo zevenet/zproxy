@@ -41,6 +41,7 @@ sub download_logs
 	my $logFile      = shift;
 	my $description = "Download a log file";
 	my $errormsg    = "$logFile was download successful.";
+	my $logDir = &getGlobalConfiguration( 'logdir');
 	my $logPath = &getGlobalConfiguration( 'logdir') . "/$logFile";
 
 	if ( ! -f $logPath )
@@ -54,16 +55,40 @@ sub download_logs
 	{
 # Download function ends communication if itself finishes successful. It is not necessary send "200 OK" msg
 		require Zevenet::System::Log;
-		$errormsg = &downloadLog( $logFile );
-		if ( $errormsg )
+		#~ $errormsg = &downloadLog( $logFile );
+
+		open ( my $fh, '<', $logPath );
+		unless ( $fh )
 		{
-			$errormsg = "Error, downloading backup.";
+			my $msg = "Could not open file $logPath: $!";
+			&httpErrorResponse( code => 400, desc => $description, msg => $msg );
 		}
+
+		# make headers
+		my $headers = {
+						-type            => 'application/x-download',
+						-attachment      => $logFile,
+						'Content-length' => -s $logPath,
+		};
+
+		# make body
+		my $body;
+		binmode $fh;
+		{
+			local $/ = undef;
+			$body = <$fh>;
+		}
+		close $fh;
+
+		&zenlog( "[Download] $description: $logPath" );
+
+		return &httpResponse({ code => 200, headers => $headers, body => $body });		
 	}
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };
 
 	&httpResponse( { code => 404, body => $body } );
 }
+
 
 1;
