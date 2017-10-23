@@ -111,7 +111,7 @@ sub get_sys_uuid
 # evaluate certificate
 sub certcontrol
 {
-	#~ require Time::Local;
+	use Time::Local;
 	#~ use Zevenet::Config;
 	#~ use Zevenet::SystemInfo;
 
