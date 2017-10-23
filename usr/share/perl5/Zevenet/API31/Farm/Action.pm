@@ -226,7 +226,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 			"Changing status to maintenance of backend $backend_id in service $service in farm $farmname"
 		);
 
-		if ( $? )
+		if ( $status )
 		{
 			my $msg = "Errors found trying to change status backend to maintenance";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

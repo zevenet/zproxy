@@ -220,9 +220,6 @@ sub getFarmVipStatus    # ($farm_name)
 		$up_flag = 1 if $be->{ 'status' } eq "up";
 		$maintenance_flag = 1 if $be->{ 'status' } eq "maintenance";
 		$down_flag = 1 if $be->{ 'status' } eq "down";
-		
-		# finish when almost the farm has one backend up and one backend not reachable
-		last if $up_flag && ( $down_flag || $maintenance_flag );
 	}
 	
 	# Decision logic

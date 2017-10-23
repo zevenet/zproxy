@@ -32,6 +32,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	my $farmname = shift;
 
 	require Zevenet::Farm::Backend;
+	require Zevenet::Farm::Base;
 
 	# Initial parameters
 	my $desc = "New farm backend";
@@ -155,6 +156,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 								 max_conns => $json_obj->{ max_conns },
 					 },
 					 message => $message,
+					 status => &getFarmVipStatus( $farmname ),
 		};
 
 		if ( eval { require Zevenet::Cluster; } )
@@ -280,6 +282,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 				  : undef,
 			},
 			message => $message,
+			status => &getFarmVipStatus( $farmname ),
 		};
 
 		if ( eval { require Zevenet::Cluster; } )
@@ -425,6 +428,13 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 
 	$json_obj->{ timeout } = $json_obj->{ timeout } + 0 if $json_obj->{ timeout };
 
+	if ( &getFarmStatus( $farmname ) eq 'up' )
+	{
+		require Zevenet::Farm::Action;
+
+		&setFarmRestart( $farmname );
+	}
+
 	my $message = "Added backend to service successfully";
 	my $body = {
 				 description => $desc,
@@ -436,15 +446,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 							 timeout => $json_obj->{ timeout },
 				 },
 				 message => $message,
+				 status => &getFarmVipStatus( $farmname ),
 	};
-
-	if ( &getFarmStatus( $farmname ) eq 'up' )
-	{
-		require Zevenet::Farm::Action;
-
-		&setFarmRestart( $farmname );
-		$body->{ status } = 'needed restart';
-	}
 
 	&httpResponse( { code => 201, body => $body } );
 }
@@ -826,11 +829,13 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 		"ZAPI success, some parameters have been changed in the backend $id_server in farm $farmname."
 	);
 
+	require Zevenet::Farm::Base;
 	my $message = "Backend modified";
 	my $body = {
 				 description => $desc,
 				 params      => $json_obj,
 				 message     => $message,
+				 status => &getFarmVipStatus( $farmname ),
 	};
 
 	if ( eval { require Zevenet::Cluster; } )
@@ -993,17 +998,20 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 		"ZAPI success, some parameters have been changed in the backend $id_server in service $service in farm $farmname."
 	);
 
+	if ( &getFarmStatus( $farmname ) eq "up" )
+	{
+		&setFarmRestart( $farmname );
+	}
+
 	my $body = {
 				 description => $desc,
 				 params      => $json_obj,
 				 message     => "Backend modified",
+				 status => &getFarmVipStatus( $farmname ),
 	};
 
 	if ( &getFarmStatus( $farmname ) eq "up" )
 	{
-		&setFarmRestart( $farmname );
-
-		$body->{ status } = 'needed restart';
 		$body->{ info } =
 		  "There're changes that need to be applied, stop and start farm to apply them!";
 	}
@@ -1067,7 +1075,8 @@ sub delete_backend    # ( $farmname, $id_server )
 	my $body = {
 				 description => $desc,
 				 success     => "true",
-				 message     => $message
+				 message     => $message,
+				 status => &getFarmVipStatus( $farmname ),
 	};
 
 	&httpResponse( { code => 200, body => $body } );
@@ -1145,18 +1154,18 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 		"ZAPI success, the backend $id_server in service $service in farm $farmname has been deleted."
 	);
 
+	if ( &getFarmStatus( $farmname ) eq 'up' )
+	{
+		&setFarmRestart( $farmname );
+	}
+
 	my $message = "Backend removed";
 	my $body = {
 				 description => $desc,
 				 success     => "true",
 				 message     => $message,
+				 status => &getFarmVipStatus( $farmname ),
 	};
-
-	if ( &getFarmStatus( $farmname ) eq 'up' )
-	{
-		$body->{ status } = "needed restart";
-		&setFarmRestart( $farmname );
-	}
 
 	&httpResponse( { code => 200, body => $body } );
 }
