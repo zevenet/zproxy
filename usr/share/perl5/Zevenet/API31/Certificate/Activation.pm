@@ -76,8 +76,6 @@ sub upload_activation_certificate # ()
 {
 	my $upload_filehandle = shift;
 
-	require Zevenet::Certificate::Activation;
-
 	my $desc = "Upload activation certificate";
 	my $filename = 'zlbcertfile.pem';
 
