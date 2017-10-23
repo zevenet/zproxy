@@ -36,6 +36,7 @@ sub new_bond    # ( $json_obj )
 
 	require Zevenet::Net::Bonding;
 	require Zevenet::Net::Validate;
+	require Zevenet::Net::Interface;
 	require Zevenet::System;
 
 	my $desc = "Add a bond interface";
@@ -70,8 +71,17 @@ sub new_bond    # ( $json_obj )
 
 	# validate SLAVES
 	my $missing_slave;
+
 	for my $slave ( @{ $json_obj->{ slaves } } )
 	{
+		if ( &getInterfaceConfig( $slave )
+			 && ( &getInterfaceConfig( $slave )->{ status } eq 'up' ) )
+		{
+			my $msg =
+			  "The $slave interface has to be in DOWN status to add it to a bonding.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
 		unless ( grep { $slave eq $_ } &getBondAvailableSlaves() )
 		{
 			$missing_slave = $slave;
@@ -121,6 +131,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	my $bond     = shift;
 
 	require Zevenet::Net::Bonding;
+	require Zevenet::Net::Interface;
 
 	my $desc = "Add a slave to a bond interface";
 
@@ -131,6 +142,12 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	{
 		my $msg = "Bond interface name not found";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	if ( &getInterfaceConfig( $json_obj->{ name } )->{ status } eq 'up' )
+	{
+		my $msg = "The NIC interface has to be in DOWN status to add it as slave.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate SLAVE
@@ -196,6 +213,7 @@ sub delete_interface_bond    # ( $bond )
 
 	# not delete the interface if it has some vlan configured
 	my @child = &getInterfaceChild( $bond );
+
 	if ( @child )
 	{
 		my $child_string = join ( ', ', @child );
@@ -265,13 +283,12 @@ sub delete_bond    # ( $bond )
 	}
 
 	my $bond_in_use = 0;
-	$bond_in_use = 1 if &getInterfaceConfig( $bond, 4 );
-	$bond_in_use = 1 if &getInterfaceConfig( $bond, 6 );
-	$bond_in_use = 1 if grep ( /^$bond(:|\.)/, &getInterfaceList() );
+	$bond_in_use = 1 if &getInterfaceConfig( $bond, 4 )->{ addr };
+	$bond_in_use = 1 if &getInterfaceConfig( $bond, 6 )->{ addr };
 
 	if ( $bond_in_use )
 	{
-		my $msg = "Bonding interface is being used";
+		my $msg = "Bonding interface is configured";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -580,7 +597,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# not modify gateway or netmask if exists a virtual interface using this interface
+  # not modify gateway or netmask if exists a virtual interface using this interface
 	if ( exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
 	{
 		my @child = &getInterfaceChild( $bond );
@@ -660,7 +677,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	if ( $json_obj->{ ip } )
 	{
 		if ( ( ( $json_obj->{ ip } ne $if_ref->{ addr } ) && $if_ref->{ addr } )
-			|| ! $if_ref->{ addr } )
+			 || !$if_ref->{ addr } )
 		{
 			require Zevenet::Net::Util;
 			if ( grep ( /^$json_obj->{ ip }$/, &listallips() ) )
