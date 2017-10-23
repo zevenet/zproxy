@@ -144,7 +144,8 @@ sub new_bond_slave    # ( $json_obj, $bond )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( &getInterfaceConfig( $json_obj->{ name } )->{ status } eq 'up' )
+	if ( &getInterfaceConfig( $json_obj->{ name } ) &&
+		( &getInterfaceConfig( $json_obj->{ name } )->{ status } eq 'up' ) )
 	{
 		my $msg = "The NIC interface has to be in DOWN status to add it as slave.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );

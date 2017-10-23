@@ -37,30 +37,21 @@ my $in;
 my $out;
 my $ERROR;
 
-my @net = &getNetworkStats( "raw" );
+my @net = &getNetworkStats( "hash" );
 
-foreach ( @net )
+my $net_size= scalar @net;
+my $it;
+for ( $it=0; $it < $net_size; $it++ )
 {
 	my $row = shift @net;
-	my @rowi = split ( "\ ", $row->[0] );
-	$if_name = $rowi[0];
 
-	if ( $if_name eq /^lo/ || $if_name eq /^sit/ || $if_name eq /\:/ )
+	$if_name = $row->{ interface };
+	$in = $row->{ in } * 1000;
+	$out = $row->{ out } * 1000;
+
+	if ( $if_name =~ /^lo/ || $if_name =~ /^sit/ || $if_name =~ /\:/ )
 	{
 		next;
-	}
-
-	if ( $rowi[1] eq "in" )
-	{
-		$in  = $row->[1];
-		$row = shift @net;
-	}
-
-	@rowi = split ( "\ ", $row->[0] );
-
-	if ( $if_name eq $rowi[0] && $rowi[1] eq "out" )
-	{
-		$out = $row->[1];
 	}
 
 	if ( $in =~ /^$/ || $out =~ /^$/ )

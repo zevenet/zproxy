@@ -289,6 +289,7 @@ sub getNetworkStats
 	my $i = -1;
 	while ( <DEV> )
 	{
+		chomp $_;
 		if ( $_ =~ /\:/ && $_ !~ /lo/ )
 		{
 			$i++;
@@ -317,7 +318,7 @@ sub getNetworkStats
 			$if =~ s/\ //g;
 
 			# not show cluster maintenance interface
-			$i=$i-1 eq 'cl_maintenance';
+			$i=$i-1 if $if eq 'cl_maintenance';
 			next if $if eq 'cl_maintenance';
 			push @interface,    $if;
 			push @interfacein,  $in;
