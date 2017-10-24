@@ -240,6 +240,8 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 	  if !defined $self->{ code }
 	  or !exists $http_status_codes{ $self->{ code } };
 
+	require Zevenet::CGI;
+
 	my $q = &getCGI();
 
 	# Headers included in _ALL_ the responses, any method, any URI, sucess or error
