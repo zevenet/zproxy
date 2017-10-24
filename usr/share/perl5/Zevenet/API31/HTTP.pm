@@ -455,7 +455,7 @@ sub httpDownloadResponse
 		&httpErrorResponse( code => 400, desc => $args->{ desc }, msg => $msg );
 	}
 
-	open ( my $fh, '<', $args->{ path } );
+	open ( my $fh, '<', $path );
 	unless ( $fh )
 	{
 		my $msg = "Could not open file $path: $!";
