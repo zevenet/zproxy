@@ -69,7 +69,7 @@ systemctl stop sec 2>/dev/null
 systemctl disable sec 2>/dev/null
 
 # disable SNMP service
-if [ `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]; then
+if [[ `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]]; then
 	cp /usr/local/zevenet/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
 fi
 
