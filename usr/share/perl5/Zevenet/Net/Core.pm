@@ -51,13 +51,13 @@ sub createIf    # ($if_ref)
 		&zenlog( "Creating vlan $$if_ref{name}" );
 
 		# enable the parent physical interface
-		my $parent_if = &getInterfaceConfig( $$if_ref{ dev }, $$if_ref{ ip_v } );
-		$parent_if = &getSystemInterface( $$if_ref{ dev }, $$if_ref{ ip_v } ) unless $parent_if;
+		#~ my $parent_if = &getInterfaceConfig( $$if_ref{ dev }, $$if_ref{ ip_v } );
+		#~ $parent_if = &getSystemInterface( $$if_ref{ dev }, $$if_ref{ ip_v } ) unless $parent_if;
 
-		if ( $parent_if->{ status } eq 'down' )
-		{
-			$status = &upIf( $parent_if, 'writeconf' );
-		}
+		#~ if ( $parent_if->{ status } eq 'down' )
+		#~ {
+			#~ $status = &upIf( $parent_if, 'writeconf' );
+		#~ }
 
 		my $ip_cmd =
 		  "$ip_bin link add link $$if_ref{dev} name $$if_ref{name} type vlan id $$if_ref{vlan}";
