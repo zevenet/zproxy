@@ -236,23 +236,25 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 			&setIfacesUp( $nic, "vlan" );
 			&setIfacesUp( $nic, "vini" ) if $if_ref;
 
-			# put a NIC interface up will do all VLANs go up
-			# Then put VLAN down again
-			foreach my $if_vlan_name ( &getLinkNameList() )
-			{
-				if ( $if_vlan_name =~ /^$nic./ )
-				{
-					my $if_vlan_conf = &getInterfaceConfig ( $if_vlan_name );
-					if ( $if_vlan_conf->{status} eq "down" )
-					{
-						if ( &downIf( $if_vlan_conf ) )
-						{
-							my $msg = "Error, setting up the appending VLAN $if_vlan_name";
-							&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-						}
-					}
-				}
-			}
+
+			# WARNING: This is now control by GUI
+			#~ # put a NIC interface up will do all VLANs go up
+			#~ # Then put VLAN down again
+			#~ foreach my $if_vlan_name ( &getLinkNameList() )
+			#~ {
+				#~ if ( $if_vlan_name =~ /^$nic./ )
+				#~ {
+					#~ my $if_vlan_conf = &getInterfaceConfig ( $if_vlan_name );
+					#~ if ( $if_vlan_conf->{status} eq "down" )
+					#~ {
+						#~ if ( &downIf( $if_vlan_conf ) )
+						#~ {
+							#~ my $msg = "Error, setting up the appending VLAN $if_vlan_name";
+							#~ &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+						#~ }
+					#~ }
+				#~ }
+			#~ }
 		}
 		else
 		{
