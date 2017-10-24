@@ -87,6 +87,8 @@ sub _runHTTPFarmStop    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
+	require Zevenet::FarmGuardian;
+
 	my $status = -1;
 
 	&runFarmGuardianStop( $farm_name, "" );
