@@ -36,11 +36,14 @@ sub get_blacklists_all_lists
 	foreach my $list_name ( sort keys %bl )
 	{
 		my $bl_n  = $bl{ $list_name };
-		my $bl_nf = $bl_n->{ farms };
+		my $bl_nf = [];
+
+		my @aux = split ( ' ', $bl_n->{ farms } );
+		$bl_nf = \@aux if ( @aux );
 
 		my %listHash = (
 						 name    => $list_name,
-						 farms   => $bl_nf ? split ( ' ', $bl_nf ) : [],
+						 farms   => $bl_nf,
 						 policy  => $bl_n->{ policy },
 						 type    => $bl_n->{ type },
 						 preload => $bl_n->{ preload },
@@ -66,7 +69,6 @@ sub get_blacklists_list
 	if ( &getBLExists( $listName ) )
 	{
 		my $listHash = &getBLzapi ( $listName );
-		
 		&httpResponse(
 			  { code => 200, body => { description => $description, params => $listHash } }
 		);
