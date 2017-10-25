@@ -290,6 +290,11 @@ sub set_cluster_actions
 			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 			system("$ip_bin link set $maint_if down");
 
+			# required for no failback configuration
+			if ( &getZClusterNodeStatus() eq 'backup' )
+			{
+				&setZClusterNodeStatus('maintenance');
+			}
 		}
 		# Disable maintenance mode
 		elsif ( $json_obj->{ status } eq 'disable' )

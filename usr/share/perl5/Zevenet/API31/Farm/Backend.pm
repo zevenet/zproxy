@@ -226,7 +226,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 			 )
 		  )
 		{
-			my $msg = "The IP must be in the network than interface.";
+			my $msg = "The IP must be in the same network than the local interface.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
@@ -777,7 +777,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 		if (
 			 !&getNetValidate( $iface_ref->{ addr }, $iface_ref->{ mask }, $be->{ ip } ) )
 		{
-			my $msg = "The IP must be in the network than interface.";
+			my $msg = "The IP must be in the same network than the local interface.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
