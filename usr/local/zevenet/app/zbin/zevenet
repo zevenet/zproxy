@@ -273,7 +273,7 @@ if ( $action eq "start" )
 					}
 				}
 
-				if ( $$iface{ ip_v } == 4 )
+				if ( defined $$iface{ ip_v } && $$iface{ ip_v } == 4 )
 				{
 					&sendGPing( $$iface{ name } );
 				}
