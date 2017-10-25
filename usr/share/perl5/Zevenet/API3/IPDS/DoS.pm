@@ -28,41 +28,50 @@ use Zevenet::IPDS::DoS;
 sub get_dos_rules
 {
 	my $description = "Get DoS settings.";
-		
-	my $body = { description => $description, params => 
-		{
-		"farm"=>[ 
-				{ 'rule'=>'limitsec', 'description'=>'Connection limit per second.'},
-				{ 'rule'=>'limitconns', 'description'=>'Total connections limit per source IP.'},
-				{ 'rule'=>'bogustcpflags', 'description'=>'Check bogus TCP flags.'},
-				{ 'rule'=>'limitrst', 'description'=>'Limit RST request per second.'},
+
+	my $body = {
+		description => $description,
+		params      => {
+			"farm" => [
+					   {
+						  'rule'        => 'limitsec',
+						  'description' => 'Connection limit per second.'
+					   },
+					   {
+						  'rule'        => 'limitconns',
+						  'description' => 'Total connections limit per source IP.'
+					   },
+					   { 'rule' => 'bogustcpflags', 'description' => 'Check bogus TCP flags.' },
+					   {
+						  'rule'        => 'limitrst',
+						  'description' => 'Limit RST request per second.'
+					   },
 			],
-		"system"=>[ 
-				{ 'rule' => 'sshbruteforce', 'description' => 'SSH brute force.' },
-				{ 'rule' => 'dropicmp', 'description' => 'Drop icmp packets' },
+			"system" => [
+						 { 'rule' => 'sshbruteforce', 'description' => 'SSH brute force.' },
+						 { 'rule' => 'dropicmp',      'description' => 'Drop icmp packets' },
 			]
 		}
 	};
 	&httpResponse( { code => 200, body => $body } );
-	
+
 }
 
 #GET /ipds/dos
 sub get_dos
 {
-	my $confFile = &getGlobalConfiguration( 'dosConf' );
+	my $confFile    = &getGlobalConfiguration( 'dosConf' );
 	my $description = "Get DoS settings.";
 
 	my $fileHandle = Config::Tiny->read( $confFile );
-	my %rules = %{ $fileHandle };
+	my %rules      = %{ $fileHandle };
 	my @output;
-
 	foreach my $rule ( keys %rules )
 	{
-		my $aux = &getDOSParam( $rule );
+		my $aux = &getDOSZapiRule( $rule );
 		push @output, $aux;
 	}
-	
+
 	my $body = { description => $description, params => \@output };
 	&httpResponse( { code => 200, body => $body } );
 }
@@ -72,14 +81,14 @@ sub create_dos_rule
 {
 	my $json_obj       = shift;
 	my $description    = "Post a DoS rule";
-	my $rule            = $json_obj->{ 'rule' };
+	my $rule           = $json_obj->{ 'rule' };
 	my @requiredParams = ( "name", "rule" );
 	my $confFile       = &getGlobalConfiguration( 'dosConf' );
 
 	my $errormsg = &getValidReqParams( $json_obj, \@requiredParams );
 	if ( !$errormsg )
 	{
-		if ( &getDOSExists( $json_obj->{ 'name' } ) eq "0" )
+		if ( &getDOSExists( $json_obj->{ 'name' } ) )
 		{
 			$errormsg = "$json_obj->{ 'name' } already exists.";
 		}
@@ -100,7 +109,7 @@ sub create_dos_rule
 			}
 			else
 			{
-				my $output = &getDOSParam( $json_obj->{ 'name' } );
+				my $output = &getDOSZapiRule( $json_obj->{ 'name' } );
 				&httpResponse(
 							   {
 								 code => 200,
@@ -121,12 +130,13 @@ sub get_dos_rule
 {
 	my $name        = shift;
 	my $description = "Get DoS $name settings";
-	my $refRule     = &getDOSParam( $name );
+	my $refRule     = &getDOSZapiRule( $name );
 	my $output;
-	
+
 	if ( ref ( $refRule ) eq 'HASH' )
 	{
-		$output = &getDOSParam( $name );
+		$output = &getDOSZapiRule( $name );
+
 		# successful
 		my $body = { description => $description, params => $refRule, };
 		&httpResponse( { code => 200, body => $body } );
@@ -152,7 +162,7 @@ sub set_dos_rule
 	my @requiredParams;
 	my $errormsg;
 
-	if ( &getDOSExists( $name ) )
+	if ( !&getDOSExists( $name ) )
 	{
 		$errormsg = "$name not found";
 		my $body = {
@@ -210,7 +220,7 @@ sub set_dos_rule
 
 				if ( !$errormsg )
 				{
-					my $refRule = &getDOSParam( $name );
+					my $refRule = &getDOSZapiRule( $name );
 
 					require Zevenet::Cluster;
 					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
@@ -241,7 +251,7 @@ sub del_dos_rule
 	my $errormsg;
 	my $description = "Delete DoS rule from a farm";
 
-	if ( &getDOSExists( $name ) == -1 )
+	if ( !&getDOSExists( $name ) )
 	{
 		$errormsg = "$name not found.";
 		my $body = {
@@ -327,7 +337,7 @@ sub add_dos_to_farm
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( &getDOSExists( $name ) == -1 )
+	elsif ( !&getDOSExists( $name ) )
 	{
 		$errormsg = "$name not found.";
 		my $body = {
@@ -352,11 +362,11 @@ sub add_dos_to_farm
 		{
 			require Zevenet::IPDS::DoS::Runtime;
 			&setDOSApplyRule( $name, $farmName );
-			
+
 			my $confFile = &getGlobalConfiguration( 'dosConf' );
-			
+
 			# check output
-			my $output = &getDOSParam ( $name, 'farms' );
+			my $output = &getDOSParam( $name, 'farms' );
 			if ( grep ( /^$farmName$/, @{ $output } ) )
 			{
 				$errormsg = "DoS rule $name was applied successful to the farm $farmName.";
@@ -406,7 +416,7 @@ sub del_dos_from_farm
 		};
 		&httpResponse( { code => 404, body => $body } );
 	}
-	elsif ( &getDOSExists( $name ) == -1 )
+	elsif ( !&getDOSExists( $name ) )
 	{
 		$errormsg = "$name not found.";
 		my $body = {
@@ -433,8 +443,8 @@ sub del_dos_from_farm
 			&setDOSUnsetRule( $name, $farmName );
 
 			# check output
-			my $output = &getDOSParam ( $name );
-			if ( ! grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
+			my $output = &getDOSZapiRule( $name );
+			if ( !grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 			{
 				$errormsg = "DoS rule $name was removed successful from the farm $farmName.";
 
