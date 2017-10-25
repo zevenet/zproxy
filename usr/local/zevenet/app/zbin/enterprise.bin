@@ -25,7 +25,6 @@ use strict;
 use warnings;
 
 use Time::Local;
-#~ use Data::Dumper;
 use Zevenet::Log;
 use Zevenet::Debug;
 use Zevenet::Config;
@@ -114,7 +113,10 @@ if ( -f $mod_path )
 }
 elsif ( -f $emod_path )
 {
-	$code = `openssl aes-256-cbc -d -a -nosalt -k "${SYMKEY}" -in ${emod_path}`;
+	my $cmd = "openssl aes-256-cbc -d -a -nosalt -k "${SYMKEY}" -in ${emod_path}";
+	$cmd .= " -md md5" if `uname -r` =~ /^4.9/;
+
+	$code = `$cmd`;
 }
 else
 {
