@@ -166,8 +166,6 @@ unless ( $input_l >= 2 )
 &zenlog( "#### Function input: $input" ) if $input ne '["1"]';
 
 # decode JSON
-require Zevenet::Config;
-require Zevenet::Debug;
 require Zevenet::API31::HTTP;
 require JSON;
 JSON->import();
