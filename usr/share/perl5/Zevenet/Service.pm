@@ -329,6 +329,17 @@ sub start_cluster
 	{
 		&enableAllInterfacesDiscovery();
 		&enableZCluster();
+
+		if ( &getZClusterNodeStatus() eq 'maintenance' )
+		{
+			require Zevenet::Net::Interface;
+
+			my $maint_if = 'cl_maintenance';
+			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+			my $if_ref = &getSystemInterface( $maint_if );
+
+			system("$ip_bin link set $maint_if down");
+		}
 	}
 
 	return 0;
