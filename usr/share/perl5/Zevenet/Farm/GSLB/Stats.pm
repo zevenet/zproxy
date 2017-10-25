@@ -127,7 +127,7 @@ sub getGSLBFarmBackendsStats
 			# look for backend status in stats
 			foreach my $st_srv ( @{ $gslb_stats->{ 'services' } } )
 			{
-				if ( $st_srv->{ 'service' } =~ /^$addr\/[\w]+$port$/ )
+				if ( $st_srv->{ 'service' } =~ /^$addr\/[\w\-]+$port$/ )
 				{
 					$status = $st_srv->{ 'real_state' };
 					last;

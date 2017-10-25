@@ -203,7 +203,7 @@ sub getGSLBFarmGuardianParams # ( farmName, $service )
 	foreach my $line ( @file )
 	{
 		# Begin service block
-		if ( $line =~ /^\t$service.+ =>/ )
+		if ( $line =~ /^\t${service}_fg_\d+ =>/ )
 		{
 			$flagSvc = 1;
 		}
@@ -273,7 +273,7 @@ sub setGSLBFarmGuardianParams	# ( farmName, service, param, value );
 	foreach my $line ( @file )
 	{
 		# Begin service block
-		if ( $line =~ /${service}_fg_$port =>/ )
+		if ( $line =~ /\s${service}_fg_$port =>/ )
 		{
 			$flagSvc = 1;
 		}
@@ -286,7 +286,7 @@ sub setGSLBFarmGuardianParams	# ( farmName, service, param, value );
 		elsif ( $flagSvc && $line =~ /$param/ )
 		{
 			# change interval time
-			if ( $line =~ /interval/ )
+			if ( $line =~ /interval =/ )
 			{
 				$line =~ s/interval =.*,/interval = $value,/;
 				$err = 0;
@@ -294,7 +294,7 @@ sub setGSLBFarmGuardianParams	# ( farmName, service, param, value );
 			}
 
 			# change cmd
-			elsif ( $line =~ /cmd/ )
+			elsif ( $line =~ /cmd = / )
 			{
 				my $cmd = &getGSLBCommandInExtmonFormat( $value, $port );
 				$line =~ s/cmd =.*,/cmd = \[$cmd\],/;
@@ -304,7 +304,7 @@ sub setGSLBFarmGuardianParams	# ( farmName, service, param, value );
 		}
 
 		# change timeout if we are changing interval. timeout = interval / 2
-		elsif ( $line =~ /timeout =/ && $flagSvc && $param =~ /interval/ )
+		elsif ( $line =~ /timeout =/ && $flagSvc && $param =~ /interval =/ )
 		{
 			my $timeout = int ( $value / 2 );
 			$line =~ s/timeout =.*,/timeout = $timeout,/;
@@ -410,7 +410,7 @@ sub getGSLBFarmFGStatus	# ( fname, service )
 			foreach my $line ( @fileconf )
 			{
 				# find service
-				if ( $line =~ /$service =>/ )
+				if ( $line =~ /\s$service =>/ )
 				{
 					$output = 0;
 				}
