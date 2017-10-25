@@ -230,7 +230,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 {
 	my $self = shift;
 
-	return $self if &_isRunningEnterprise();
+	return $self unless exists $ENV{ GATEWAY_INTERFACE };
 
 	#~ &zenlog("DEBUG httpResponse input: " . Dumper $self ); # DEBUG
 
@@ -488,11 +488,6 @@ sub httpDownloadResponse
 	&zenlog( "[Download] $args->{ desc }: $path" );
 
 	&httpResponse({ code => 200, headers => $headers, body => $body });
-}
-
-sub _isRunningEnterprise
-{
-	return ( $0 =~ m!(?:\/|^)enterprise\.bin$! );
 }
 
 1;

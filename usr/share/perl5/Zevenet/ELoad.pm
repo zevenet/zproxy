@@ -87,7 +87,12 @@ sub eload
 		&zenlog("eload: INPUT: '$input'");
 	}
 
-	my $ret_output = `echo -n '$input' | $cmd`;
+	my $ret_output;
+	{
+		local %ENV = %ENV;
+		delete $ENV{ GATEWAY_INTERFACE };
+		$ret_output = `echo -n '$input' | $cmd`;
+	}
 	my $rc = $?;
 
 	#~ &zenlog( "rc: '$rc'" );
