@@ -782,7 +782,7 @@ sub modify_interface_bond # ( $json_obj, $bond )
 	# Delete old interface configuration
 	my $if_ref = &getInterfaceConfig( $bond, $ip_v );
 
-	if ( $if_ref )
+	if ( $if_ref->{ addr } )
 	{
 		require Zevenet::Net::Core;
 		require Zevenet::Net::Route;
