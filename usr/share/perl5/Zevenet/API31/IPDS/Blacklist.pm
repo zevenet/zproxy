@@ -593,10 +593,13 @@ sub update_remote_blacklists
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( @{ &getBLParam( $listName, 'farms' ) } )
+	if ( &getBLIpsetStatus( $listName ) eq "up" )
 	{
 		&setBLRefreshList( $listName );
 	}
+
+	require Zevenet::Cluster;
+	&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
 	my $body = {
 				 description => $desc,
