@@ -80,7 +80,7 @@ rm -rf /var/log/conntrackd-stats* 2>/dev/null
 # Disable services
 
 # SNMP and sec services
-if [[ `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]]; then
+if [[ -f /etc/snmp/snmpd.conf && `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]]; then
 	cp /usr/local/zevenet/app/checkglobalconf/snmpd.conf.tpl /etc/snmp/snmpd.conf
 fi
 if [[ `grep -c 'Lsd' /etc/default/snmpd` == '1' ]]; then
