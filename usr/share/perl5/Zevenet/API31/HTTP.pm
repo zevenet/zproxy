@@ -261,6 +261,8 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 
 	if ( exists $ENV{HTTP_COOKIE} && $ENV{HTTP_COOKIE} =~ /CGISESSID/ )
 	{
+		require Zevenet::API31::Auth;
+
 		if ( &validCGISession() )
 		{
 			my $session = CGI::Session->load( $q );
