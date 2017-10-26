@@ -23,7 +23,7 @@
 
 use strict;
 
-# GET /farms/GSLBFARM
+# GET /farms/modules/gslb
 sub farms_gslb # ()
 {
 	require Zevenet::Farm::Base;
