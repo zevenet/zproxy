@@ -1781,6 +1781,7 @@ See Also:
 sub setZClusterIptablesException
 {
 	require "/usr/local/zenloadbalancer/www/conntrackd_functions.cgi";
+	require "/usr/local/zenloadbalancer/www/nf_functions.cgi";
 	my $option = shift;
 	my $error;
 	my $action;
@@ -1810,10 +1811,16 @@ sub setZClusterIptablesException
 	return -1 if $error;
 
 	# avoid the dos rules: limmit rst, limit sec and  ssh burte force
+	my $connmark_rule = &getIptStringConnmarkRestore( );
+	my $connmark_exists = ( &runIptables( &applyIptRuleAction( $connmark_rule, 'check' ) ) == 0 );
+	# if the CONMARK rule exists, put cluster exception in second place
+	my $num_position;
+	$num_position = 1 if ( $action eq "insert" ); # only put it in first place in insert actions, not in delete actions
+	$num_position = 2 if ( $connmark_exists && ( $option eq "insert" ) );
 	$cmd = &getGlobalConfiguration( 'iptables' )
-		. " $action PREROUTING -t mangle -s $ipremote -j ACCEPT -m comment --comment \"cluster_exception\"";
+			. " $action PREROUTING $num_position -t mangle -s $ipremote -j ACCEPT -m comment --comment \"cluster_exception\"";
 	$error = &iptSystem( $cmd );
-	
+
 	return -1 if $error;
 
 	# avoid the dos rules: limit conns

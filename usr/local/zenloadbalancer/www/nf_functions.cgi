@@ -513,6 +513,9 @@ sub getIptStringConnmarkRestore
 	# Get the binary of iptables (iptables or ip6tables)
 	my $iptables_bin = &getBinVersion( $farm_name );
 
+	# put ipv4 version as default iptables bin
+	$iptables_bin = &getGlobalConfiguration('iptables') if (!$farm_name);
+
 	return "$iptables_bin --table mangle --::ACTION_TAG:: PREROUTING "
 	  . "--jump CONNMARK --restore-mark ";
 
