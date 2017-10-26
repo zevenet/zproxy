@@ -56,6 +56,11 @@ sub delete_interface_floating    # ( $floating )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	if ( eval { require Zevenet::Cluster; } )
+	{
+		&runZClusterRemoteManager( 'interface', 'interface', 'float-update' );
+	}
+
 	my $message = "The floating interface has been removed.";
 	my $body = {
 				 description => $desc,
@@ -142,6 +147,11 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 	{
 		my $msg = "Floating interface modification failed";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	if ( eval { require Zevenet::Cluster; } )
+	{
+		&runZClusterRemoteManager( 'interface', 'interface', 'float-update' );
 	}
 
 	my $message = "Floating interface modification done";
