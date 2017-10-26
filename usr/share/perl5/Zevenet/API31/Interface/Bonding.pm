@@ -144,8 +144,8 @@ sub new_bond_slave    # ( $json_obj, $bond )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( &getInterfaceConfig( $json_obj->{ name } ) &&
-		( &getInterfaceConfig( $json_obj->{ name } )->{ status } eq 'up' ) )
+	if ( &getInterfaceConfig( $json_obj->{ name } )
+		 && ( &getInterfaceConfig( $json_obj->{ name } )->{ status } eq 'up' ) )
 	{
 		my $msg = "The NIC interface has to be in DOWN status to add it as slave.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -599,7 +599,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	}
 
   # not modify gateway or netmask if exists a virtual interface using this interface
-	if ( exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
+	if ( exists $json_obj->{ netmask } )
 	{
 		my @child = &getInterfaceChild( $bond );
 		if ( @child )
@@ -740,6 +740,17 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		}
 
 		&setInterfaceConfig( $if_ref ) or die;
+
+		# if the GW is changed, change it in all appending virtual interfaces
+		if ( exists $json_obj->{ gateway } )
+		{
+			foreach my $appending ( &getInterfaceChild( $bond ) )
+			{
+				my $app_config = &getInterfaceConfig( $appending );
+				$app_config->{ gateway } = $json_obj->{ gateway };
+				&setInterfaceConfig( $app_config );
+			}
+		}
 	};
 
 	if ( $@ )

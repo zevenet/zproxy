@@ -331,7 +331,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	}
 
    #not modify gateway or netmask if exists a virtual interface using this interface
-	if ( exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
+	if ( exists $json_obj->{ netmask } )
 	{
 		my @child = &getInterfaceChild( $nic );
 		if ( @child )
@@ -463,6 +463,17 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 		}
 
 		&setInterfaceConfig( $if_ref ) or die;
+
+		# if the GW is changed, change it in all appending virtual interfaces
+		if ( exists $json_obj->{ gateway } )
+		{
+			foreach my $appending ( &getInterfaceChild( $nic ) )
+			{
+				my $app_config = &getInterfaceConfig ( $appending );
+				$app_config->{ gateway } = $json_obj->{ gateway };
+				&setInterfaceConfig ( $app_config );
+			}
+		}
 	};
 
 	if ( $@ )

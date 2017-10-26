@@ -165,7 +165,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	unless ( $iface{ mac } )
 	{
 		open my $fh, '<', "/sys/class/net/$if_name/address";
-		chomp( $iface{ mac } = <$fh> );
+		chomp ( $iface{ mac } = <$fh> );
 		close $fh;
 	}
 
@@ -475,7 +475,7 @@ sub getParentInterfaceName    # ($if_name)
 	my $if_ref = &getDevVlanVini( $if_name );
 	my $parent_if_name;
 
-	my $is_vlan = defined $if_ref->{ vlan } && length $if_ref->{ vlan };
+	my $is_vlan    = defined $if_ref->{ vlan } && length $if_ref->{ vlan };
 	my $is_virtual = defined $if_ref->{ vini } && length $if_ref->{ vini };
 
 	# child interface: eth0.100:virtual => eth0.100
@@ -967,14 +967,16 @@ sub getInterfaceTypeList
 =begin nd
 Function: getAppendInterfaces
 
-	Get vlans or virtual interfaces running on a network interface.
+	Get vlans or virtual interfaces configured from a interface.
+	If the interface is a nic or bonding, this function return the virtual interfaces
+	create from the VLANs, for example: eth0.2:virt
 
 Parameters:
 	ifaceName - Interface name.
 	type - Interface type: vlan or virtual.
 
 Returns:
-	scalar - reference to an array of interfaces hashrefs.
+	scalar - reference to an array of interfaces names.
 
 See Also:
 	
@@ -983,24 +985,25 @@ See Also:
 # Get vlan or virtual interfaces appended from a interface
 sub getAppendInterfaces    # ( $iface_name, $type )
 {
-	my ( $ifaceName, $type ) = @_;
-	my @output;
+	my ( $if_parent, $type ) = @_;
+	my @output = ();
 
-	my @typeList = &getInterfaceTypeList( $type );
+	my @list = &getInterfaceList();
 
-	foreach my $if ( @typeList )
+	my $vlan_tag    = &getValidFormat( 'vlan_tag' );
+	my $virtual_tag = &getValidFormat( 'virtual_tag' );
+
+	foreach my $if ( @list )
 	{
-		my $iface  = $if->{ name };
-		my $parent = $if->{ parent };
-
-		# if this interface append from a VLAN interface, will find absolut parent
-		if ( &getInterfaceType( $parent ) eq 'vlan' )
+		if ( $type eq 'vlan' )
 		{
-			my $virtualInterface = &getInterfaceConfig( $parent );
-			$parent = $virtualInterface->{ parent };
+			push @output, $if if ( $if =~ /^$if_parent\.$vlan_tag$/ );
 		}
 
-		push @output, $iface if ( $parent eq $ifaceName );
+		if ( $type eq 'virtual' )
+		{
+			push @output, $if if ( $if =~ /^$if_parent(?:\.$vlan_tag)?\:$virtual_tag$/ );
+		}
 	}
 
 	return \@output;
@@ -1115,11 +1118,32 @@ sub getIpAddressExists
 	return $output;
 }
 
+=begin nd
+Function: getInterfaceChild
+
+	Show the interfaces that depends directly of the interface.
+	From a nic, bonding and VLANs interfaces depend the virtual interfaces.
+	From a virtual interface depends the floating itnerfaces.
+
+Parameters:
+	ifaceName - Interface name.
+
+Returns:
+	scalar - Array of interfaces names.
+
+FIXME: rename me, this function is used to check if the interface has some interfaces
+ that depends of it. It is useful to avoid that corrupts the child interface
+
+See Also:
+
+=cut
+
 sub getInterfaceChild
 {
-	my $if_name = shift;
-	my @output  = ();
-	my $if_ref  = &getInterfaceConfig( $if_name );
+	my $if_name     = shift;
+	my @output      = ();
+	my $if_ref      = &getInterfaceConfig( $if_name );
+	my $virtual_tag = &getValidFormat( 'virtual_tag' );
 
 	# show floating interfaces used by this virtual interface
 	if ( $if_ref->{ 'type' } eq 'virtual' )
@@ -1137,14 +1161,8 @@ sub getInterfaceChild
 	# vlan, bond and nic
 	else
 	{
-		push @output, grep ( /^$if_name:/, &getVirtualInterfaceNameList() );
-
-		# look for vlan
-		# if ( ( $if_ref->{ 'type' } eq 'bond' ) ||
-		# 	( $if_ref->{ 'type' } eq 'nic' ) )
-		# {
-		# 	push @output, grep( /^$if_name\./, &getLinkNameList() );
-		# }
+		push @output,
+		  grep ( /^$if_name:$virtual_tag$/, &getVirtualInterfaceNameList() );
 	}
 
 	return @output;

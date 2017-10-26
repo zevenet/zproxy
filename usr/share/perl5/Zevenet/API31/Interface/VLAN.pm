@@ -487,7 +487,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	}
 
 	#not modify gateway or netmask if exists a virtual interface using this vlan
-	if ( exists $json_obj->{ netmask } || exists $json_obj->{ gateway } )
+	if ( exists $json_obj->{ netmask } )
 	{
 		my @child = &getInterfaceChild( $vlan );
 		if ( @child )
@@ -610,6 +610,17 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		}
 
 		&setInterfaceConfig( $if_ref ) or die;
+
+		# if the GW is changed, change it in all appending virtual interfaces
+		if ( exists $json_obj->{ gateway } )
+		{
+			foreach my $appending ( &getInterfaceChild( $vlan ) )
+			{
+				my $app_config = &getInterfaceConfig ( $appending );
+				$app_config->{ gateway } = $json_obj->{ gateway };
+				&setInterfaceConfig ( $app_config );
+			}
+		}
 	};
 
 	if ( $@ )
