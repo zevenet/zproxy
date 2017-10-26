@@ -404,6 +404,12 @@ if ( $object eq 'interface' )
 	if ( $command eq 'float-update' )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
+		require Zevenet::Cluster;
+
+		# force sync to make sure the configuration is updated
+		my $configdir = &getGlobalConfiguration('configdir');
+		&zenlog("Syncing $configdir");
+		&runSync( $configdir );
 
 		&reloadL4FarmsSNAT();
 		exit 0;
