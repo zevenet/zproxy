@@ -41,9 +41,10 @@ Returns:
 See Also:
 	zapi/v3/system.cgi, zapi/v3/system_stats.cgi, zapi/v2/system_stats.cgi
 =cut
+
 sub getDate
 {
-	return scalar CORE::localtime();
+	return scalar CORE::localtime ();
 }
 
 =begin nd
@@ -68,6 +69,7 @@ See Also:
 
 	zevenet
 =cut
+
 sub getHostname
 {
 	my $hostname = `uname -n`;
@@ -92,15 +94,16 @@ Returns:
 See Also:
 	zapi/v3/system.cgi, zenbui.pl, zevenet
 =cut
+
 sub getApplianceVersion
 {
 	my $version;
 	my $hyperv;
-	my $applianceFile = &getGlobalConfiguration ( 'applianceVersionFile' );
-	my $lsmod = &getGlobalConfiguration ( 'lsmod' );
-	my @packages = `$lsmod`;
-	my @hypervisor = grep ( /(xen|vm|hv|kvm)_/ , @packages );
-	
+	my $applianceFile = &getGlobalConfiguration( 'applianceVersionFile' );
+	my $lsmod         = &getGlobalConfiguration( 'lsmod' );
+	my @packages      = `$lsmod`;
+	my @hypervisor    = grep ( /(xen|vm|hv|kvm)_/, @packages );
+
 	# look for appliance vesion
 	if ( -f $applianceFile )
 	{
@@ -111,42 +114,46 @@ sub getApplianceVersion
 		$version = $filelines[0];
 		untie @filelines;
 	}
-	
+
 	# generate appliance version
-	if ( ! $version )
+	if ( !$version )
 	{
-		my $uname = &getGlobalConfiguration( 'uname' );
+		my $uname  = &getGlobalConfiguration( 'uname' );
 		my $kernel = `$uname -r`;
+
 		#~ $kernel = "$uname -r";
-		my $awk = &getGlobalConfiguration( 'awk' );
+		my $awk      = &getGlobalConfiguration( 'awk' );
 		my $ifconfig = &getGlobalConfiguration( 'ifconfig' );
-		
+
 		# look for mgmt interface
 		my @ifaces = `ifconfig -s | awk '{print $1}'`;
+
 		# Network appliance
-		if ( $kernel =~ /3\.2\.0\-4/ && grep ( /mgmt/, @ifaces ) )
+		if ( grep ( /mgmt/, @ifaces ) )
 		{
 			$version = "ZNA 3300";
 		}
 		else
 		{
 			# select appliance verison
-			if ( $kernel =~ /3\.2\.0\-4/ ) 				{ $version = "3110"; }
-			elsif ( $kernel =~ /3\.16\.0\-4/ ) 			{ $version = "4000"; }
-			elsif ( $kernel =~ /3\.16\.7\-ckt20/ ) 	{ $version = "4100"; }
-			else													{ $version = "System version not detected"; }
+			if    ( $kernel =~ /3\.2\.0\-4/ )      { $version = "3110"; }
+			elsif ( $kernel =~ /3\.16\.0\-4/ )     { $version = "4000"; }
+			elsif ( $kernel =~ /3\.16\.7\-ckt20/ ) { $version = "4100"; }
+			else { $version = "System version not detected"; }
 
 			# virtual appliance
 			if ( $hypervisor[0] =~ /(xen|vm|hv|kvm)_/ )
 			{
 				$version = "ZVA $version";
 			}
+
 			# baremetal appliance
 			else
 			{
 				$version = "ZBA $version";
 			}
 		}
+
 		# save version for future request
 		require Tie::File;
 		Tie::File->import;
@@ -159,19 +166,19 @@ sub getApplianceVersion
 	# virtual appliance
 	if ( @hypervisor && $hypervisor[0] =~ /(xen|vm|hv|kvm)_/ )
 	{
-		$hyperv= $1;
+		$hyperv = $1;
 		$hyperv = 'HyperV' if ( $hyperv eq 'hv' );
 		$hyperv = 'Vmware' if ( $hyperv eq 'vm' );
 		$hyperv = 'Xen' if ( $hyperv eq 'xen' );
 		$hyperv = 'KVM' if ( $hyperv eq 'kvm' );
 	}
 
-	# before zevenet versions had hypervisor in appliance version file, so not inclue it in the chain
-	if ($hyperv && $version !~ /hypervisor/ )
+# before zevenet versions had hypervisor in appliance version file, so not inclue it in the chain
+	if ( $hyperv && $version !~ /hypervisor/ )
 	{
 		$version = "$version, hypervisor: $hyperv";
 	}
-	
+
 	return $version;
 }
 
@@ -189,13 +196,14 @@ Returns:
 See Also:
 	zapi/v3/system_stats.cgi
 =cut
+
 sub getCpuCores
 {
 	my $cores = 1;
 
 	open my $stat_file, "/proc/stat";
 
-	while( my $line = <$stat_file> )
+	while ( my $line = <$stat_file> )
 	{
 		next unless $line =~ /^cpu(\d) /;
 		$cores = $1 + 1;
