@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Farm::Core;
 
 # GET /farms/modules/gslb
 sub farms_gslb # ()
@@ -355,7 +356,6 @@ sub list_gslb_service_backends
 
 	require Zevenet::Farm::Config;
 	require Zevenet::Farm::GSLB::Service;
-	require Zevenet::Farm::Core;
 
 	my $desc          = "List service backends";
 	my $type          = &getFarmType( $farmname );
