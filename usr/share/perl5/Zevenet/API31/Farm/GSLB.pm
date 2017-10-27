@@ -644,15 +644,15 @@ sub modify_gslb_farmguardian    # ( $json_obj, $farmname )
 	}
 
 	# no error found, return successful response
-	( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $service );
-	my $fgStatus = &getGSLBFarmFGStatus( $farmname, $service );
+	( $fgTime, $fgCmd ) = &getGSLBFarmGuardianParams( $farmname, $service );
+	$fgStatus = &getGSLBFarmFGStatus( $farmname, $service );
 
 	my $msg = "Success, some parameters have been changed in farm guardian in farm $farmname.";
 	my $body = {
 				 description => $desc,
 				 params      => {
 					 fgenabled   => $fgStatus,
-					 fgscript    => $fgScrip,
+					 fgscript    => $fgCmd,
 					 fgtimecheck => $fgTime + 0,
 				 },
 				 message     => $msg,
