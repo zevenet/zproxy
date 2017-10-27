@@ -151,6 +151,11 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 
 	if ( eval { require Zevenet::Cluster; } )
 	{
+		# force sync to make sure the configuration is updated
+		my $configdir = &getGlobalConfiguration('configdir');
+		&zenlog("Syncing $configdir");
+		&runSync( $configdir );
+
 		&runZClusterRemoteManager( 'interface', 'interface', 'float-update' );
 	}
 
