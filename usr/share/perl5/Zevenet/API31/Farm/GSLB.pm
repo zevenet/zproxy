@@ -128,6 +128,7 @@ sub modify_gslb_service # ( $json_obj, $farmname, $service )
 
 	require Zevenet::Farm::GSLB::Config;
 	require Zevenet::Farm::GSLB::FarmGuardian;
+	require Zevenet::Farm::GSLB::Service;
 
 	my $output_params;
 	my $desc = "Modify service";
@@ -643,8 +644,7 @@ sub modify_gslb_farmguardian    # ( $json_obj, $farmname )
 	}
 
 	# no error found, return successful response
-	require Zevenet::Farm::GSLB::FarmGuardian;
-	my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $service );
+	( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $service );
 	my $fgStatus = &getGSLBFarmFGStatus( $farmname, $service );
 
 	my $msg = "Success, some parameters have been changed in farm guardian in farm $farmname.";
