@@ -130,6 +130,7 @@ sub modify_gslb_service # ( $json_obj, $farmname, $service )
 	require Zevenet::Farm::GSLB::FarmGuardian;
 	require Zevenet::Farm::GSLB::Service;
 	require Zevenet::Farm::Config;
+	require Zevenet::Farm::Base;
 
 	my $output_params;
 	my $desc = "Modify service";
