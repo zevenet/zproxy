@@ -63,7 +63,7 @@ sub delete_interface_floating    # ( $floating )
 		&zenlog("Syncing $configdir");
 		&runSync( $configdir );
 
-		&runZClusterRemoteManager( 'interface', 'interface', 'float-update' );
+		&runZClusterRemoteManager( 'interface', 'float-update' );
 	}
 
 	my $message = "The floating interface has been removed.";
@@ -161,7 +161,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		&zenlog("Syncing $configdir");
 		&runSync( $configdir );
 
-		&runZClusterRemoteManager( 'interface', 'interface', 'float-update' );
+		&runZClusterRemoteManager( 'interface', 'float-update' );
 	}
 
 	my $message = "Floating interface modification done";
