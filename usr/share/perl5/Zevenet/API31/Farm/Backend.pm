@@ -156,7 +156,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 								 max_conns => $json_obj->{ max_conns },
 					 },
 					 message => $message,
-					 status => &getFarmVipStatus( $farmname ),
+					 status  => &getFarmVipStatus( $farmname ),
 		};
 
 		if ( eval { require Zevenet::Cluster; } )
@@ -282,7 +282,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 				  : undef,
 			},
 			message => $message,
-			status => &getFarmVipStatus( $farmname ),
+			status  => &getFarmVipStatus( $farmname ),
 		};
 
 		if ( eval { require Zevenet::Cluster; } )
@@ -318,9 +318,14 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	# validate FARM TYPE
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq "gslb" && eval { require Zevenet::API31::Farm::GSLB; } )
+	if ( $type eq "gslb" )
 	{
-		&new_gslb_service_backend( $json_obj, $farmname, $service );
+		require Zevenet::ELoad;
+		&eload(
+				module => 'Zevenet::API31::Farm::GSLB',
+				func   => 'new_gslb_service_backend',
+				args   => [$json_obj, $farmname, $service]
+		);
 	}
 	elsif ( $type !~ /^https?$/ )
 	{
@@ -446,7 +451,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 							 timeout => $json_obj->{ timeout },
 				 },
 				 message => $message,
-				 status => &getFarmVipStatus( $farmname ),
+				 status  => &getFarmVipStatus( $farmname ),
 	};
 
 	&httpResponse( { code => 201, body => $body } );
@@ -519,9 +524,14 @@ sub service_backends
 
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq 'gslb' && eval { require Zevenet::API31::Farm::GSLB; } )
+	if ( $type eq 'gslb' )
 	{
-		&list_gslb_service_backends( $farmname, $service );
+		require Zevenet::ELoad;
+		&eload(
+				module => 'Zevenet::API31::Farm::GSLB',
+				func   => 'list_gslb_service_backends',
+				args   => [$farmname, $service]
+		);
 	}
 
 	if ( $type !~ /^https?$/ )
@@ -835,7 +845,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 				 description => $desc,
 				 params      => $json_obj,
 				 message     => $message,
-				 status => &getFarmVipStatus( $farmname ),
+				 status      => &getFarmVipStatus( $farmname ),
 	};
 
 	if ( eval { require Zevenet::Cluster; } )
@@ -864,9 +874,14 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq "gslb" && eval { require Zevenet::API31::Farm::GSLB; } )
+	if ( $type eq "gslb" )
 	{
-		&modify_gslb_service_backends( $json_obj, $farmname, $service, $id_server );
+		require Zevenet::ELoad;
+		&eload(
+				module => 'Zevenet::API31::Farm::GSLB',
+				func   => 'modify_gslb_service_backends',
+				args   => [$json_obj, $farmname, $service, $id_server]
+		);
 	}
 	elsif ( $type !~ /^https?$/ )
 	{
@@ -1007,7 +1022,7 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 				 description => $desc,
 				 params      => $json_obj,
 				 message     => "Backend modified",
-				 status => &getFarmVipStatus( $farmname ),
+				 status      => &getFarmVipStatus( $farmname ),
 	};
 
 	if ( &getFarmStatus( $farmname ) eq "up" )
@@ -1076,7 +1091,7 @@ sub delete_backend    # ( $farmname, $id_server )
 				 description => $desc,
 				 success     => "true",
 				 message     => $message,
-				 status => &getFarmVipStatus( $farmname ),
+				 status      => &getFarmVipStatus( $farmname ),
 	};
 
 	&httpResponse( { code => 200, body => $body } );
@@ -1099,9 +1114,14 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 	# validate FARM TYPE
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq 'gslb' && eval { require Zevenet::API31::Farm::GSLB; } )
+	if ( $type eq 'gslb' )
 	{
-		&delete_gslb_service_backend( $farmname, $service, $id_server );
+		require Zevenet::ELoad;
+		&eload(
+				module => 'Zevenet::API31::Farm::GSLB',
+				func   => 'delete_gslb_service_backend',
+				args   => [$farmname, $service, $id_server]
+		);
 	}
 	elsif ( $type !~ /^https?$/ )
 	{
@@ -1164,7 +1184,7 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 				 description => $desc,
 				 success     => "true",
 				 message     => $message,
-				 status => &getFarmVipStatus( $farmname ),
+				 status      => &getFarmVipStatus( $farmname ),
 	};
 
 	&httpResponse( { code => 200, body => $body } );
