@@ -383,6 +383,7 @@ sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 	my ( $fname, $svice, $tag ) = @_;
 
 	require Tie::File;
+	require Zevenet::Farm::Core;
 
 	my $output = "";
 	my $type   = &getFarmType( $fname );
