@@ -201,6 +201,8 @@ sub setSsyncdMaster
 	# ./ssyncdctl start http <farm>
 	# ./ssyncdctl start recent
 
+	sleep 1;
+
 	for my $farm ( &getFarmNameList() )
 	{
 		my $type = &getFarmType( $farm );
