@@ -751,6 +751,9 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 				&setInterfaceConfig( $app_config );
 			}
 		}
+
+		# put all dependant interfaces up
+		&setIfacesUp( $bond, "vini" );
 	};
 
 	if ( $@ )

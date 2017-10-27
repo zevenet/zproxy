@@ -474,6 +474,9 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 				&setInterfaceConfig ( $app_config );
 			}
 		}
+
+		# put all dependant interfaces up
+		&setIfacesUp( $nic, "vini" );
 	};
 
 	if ( $@ )

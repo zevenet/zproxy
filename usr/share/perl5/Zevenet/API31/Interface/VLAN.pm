@@ -621,6 +621,9 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 				&setInterfaceConfig ( $app_config );
 			}
 		}
+
+		# put all dependant interfaces up
+		&setIfacesUp( $vlan, "vini" );
 	};
 
 	if ( $@ )
