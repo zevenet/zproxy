@@ -276,45 +276,69 @@ sub set_cluster_actions
 		# Enable maintenance mode
 		if ( $json_obj->{ status } eq 'enable' )
 		{
-			require Zevenet::Net::Interface;
-
-			# make sure the node is not already under maintenance
-			my $if_ref = getSystemInterface( $maint_if );
-
-			if ( $if_ref->{ status } eq 'down' )
+			# workaround for keepalived 1.2.13
+			if ( &getKeepalivedVersion() eq '1.2.13' )
 			{
-				my $msg = "The node is already under maintenance";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
+				system("$zcluster_manager notify_fault");
+
+				my $ka_cmd = "/etc/init.d/keepalived stop >/dev/null 2>&1";
+				&logAndRun( $ka_cmd );
 			}
-
-			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-			system("$ip_bin link set $maint_if down");
-
-			# required for no failback configuration
-			if ( &getZClusterNodeStatus() eq 'backup' )
+			else
 			{
-				&setZClusterNodeStatus('maintenance');
+				require Zevenet::Net::Interface;
+
+				# make sure the node is not already under maintenance
+				my $if_ref = getSystemInterface( $maint_if );
+
+				if ( $if_ref->{ status } eq 'down' )
+				{
+					my $msg = "The node is already under maintenance";
+					return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				}
+
+				my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+				system("$ip_bin link set $maint_if down");
+
+				# required for no failback configuration
+				if ( &getZClusterNodeStatus() eq 'backup' )
+				{
+					&setZClusterNodeStatus('maintenance');
+				}
 			}
 		}
 		# Disable maintenance mode
 		elsif ( $json_obj->{ status } eq 'disable' )
 		{
-			require Zevenet::Net::Interface;
-
-			# make sure the node is under maintenance
-			my $if_ref = getSystemInterface( $maint_if );
-
-			if ( $if_ref->{ status } eq 'up' )
+			# workaround for keepalived 1.2.13
+			if ( &getKeepalivedVersion() eq '1.2.13' )
 			{
-				my $msg = "The node is not under maintenance";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
+				system("$zcluster_manager notify_backup");
+
+				my $ka_cmd = "/etc/init.d/keepalived start >/dev/null 2>&1";
+				&logAndRun( $ka_cmd );
 			}
+			else
+			{
+				require Zevenet::Net::Interface;
 
-			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-			system("$ip_bin link set $maint_if up");
+				# make sure the node is under maintenance
+				my $if_ref = getSystemInterface( $maint_if );
 
-			# required for no failback configuration
-			&setZClusterNodeStatus('backup');
+				if ( $if_ref->{ status } eq 'up' )
+				{
+					my $msg = "The node is not under maintenance";
+					return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				}
+
+				my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+				system("$ip_bin link set $maint_if up");
+
+				# required for no failback configuration
+				&setZClusterNodeStatus('backup');
+			}
 		}
 		else
 		{

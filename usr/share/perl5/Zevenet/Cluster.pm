@@ -1482,4 +1482,12 @@ sub zClusterFarmDown
 	return 0;
 }
 
+sub getKeepalivedVersion
+{
+	my ( $line ) = `keepalived -v 2>&1`;
+	my ( $version ) = $line =~ / v([1-9]+\.[1-9]+\.[1-9]+)/;
+
+	return $version;
+}
+
 1;
