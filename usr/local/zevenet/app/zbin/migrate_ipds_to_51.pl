@@ -32,7 +32,7 @@ foreach my $point ( @setbox )
 	my $chain=$point->{ chain };
 	my $table=$point->{ table };
 
-	my @rules	= `iptables -L $chain -t $table --line-numbers`;
+	my @rules	= `iptables -L $chain -t $table --line-numbers 2>/dev/null`;
 	chomp (@rules);
 	my $size	= scalar @rules;
 
