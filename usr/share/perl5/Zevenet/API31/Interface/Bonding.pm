@@ -753,6 +753,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		}
 
 		# put all dependant interfaces up
+		require Zevenet::Net::Util;
 		&setIfacesUp( $bond, "vini" );
 	};
 

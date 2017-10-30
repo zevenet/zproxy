@@ -476,6 +476,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 		}
 
 		# put all dependant interfaces up
+		require Zevenet::Net::Util;
 		&setIfacesUp( $nic, "vini" );
 	};
 

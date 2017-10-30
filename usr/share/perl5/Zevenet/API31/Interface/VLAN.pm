@@ -623,6 +623,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		}
 
 		# put all dependant interfaces up
+		require Zevenet::Net::Util;
 		&setIfacesUp( $vlan, "vini" );
 	};
 
