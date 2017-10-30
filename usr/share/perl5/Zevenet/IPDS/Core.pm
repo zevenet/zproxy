@@ -76,7 +76,7 @@ sub getIptListV4
 	}
 
 	my $iptables_command = &getGlobalConfiguration( 'iptables' )
-	  . " $table -L $chain -n -v --line-numbers";
+	  . " $table -L $chain -n -v --line-numbers 2>/dev/null";
 
 	## lock iptables use ##
 	open my $ipt_lockfile, '>', $iptlock;
