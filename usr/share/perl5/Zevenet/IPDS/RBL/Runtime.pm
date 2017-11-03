@@ -130,9 +130,26 @@ sub runRBLIptablesRule
 	require Zevenet::Netfilter;
 	require Zevenet::IPDS::Core;
 
-	my $nfqueue   = &getRBLObjectRuleParam( $rule, 'nf_queue_number' );
+	my $nfqueue;
 	my $rbl_chain = &getIPDSChain( "rbl" );
 	my $ruleParam = &getRBLFarmMatch( $farmname );
+
+	# look for nfqueue in iptables
+	if ( $action eq "delete" )
+	{
+		foreach my $iptrule ( &getIptListV4( "raw", $rbl_chain ) )
+		{
+			if ( $iptrule =~ / RBL,${rule},$farmname \*\/ NFQUEUE num (\d+) / )
+			{
+				$nfqueue = $1;
+				last;
+			}
+		}
+	}
+	else
+	{
+		$nfqueue = &getRBLObjectRuleParam( $rule, 'nf_queue_number' );
+	}
 
 	# The rule doesn't exist
 	return 0 if ( $nfqueue !~ /\d+/ );
@@ -227,7 +244,7 @@ FIXME:
 
 sub runRBLStopPacketbl
 {
-	my $rule = shift;
+	my $rule  = shift;
 	my $error = 0;
 
 	# Remove associated nfqueue from configfile
@@ -236,9 +253,9 @@ sub runRBLStopPacketbl
 	# exec kill
 	my $pid = &getRBLPacketblPid( $rule );
 
-	if ($pid)
+	if ( $pid )
 	{
-		$error = &logAndRun( "kill $pid" )
+		$error = &logAndRun( "kill $pid" );
 	}
 
 	return $error;

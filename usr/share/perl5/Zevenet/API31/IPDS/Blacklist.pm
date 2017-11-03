@@ -403,6 +403,9 @@ sub set_blacklists_list
 	{
 		require Zevenet::IPDS::Blacklist::Actions;
 		&runBLStopByRule( $listName );
+
+		require Zevenet::Cluster;
+		&runZClusterRemoteManager( 'ipds_bl', 'stop', $listName );
 	}
 
 	foreach my $key ( keys %{ $json_obj } )
@@ -440,6 +443,9 @@ sub set_blacklists_list
 	{
 		require Zevenet::IPDS::Blacklist::Actions;
 		&runBLStartByRule( $listName );
+
+		require Zevenet::Cluster;
+		&runZClusterRemoteManager( 'ipds_bl', 'start', $listName );
 	}
 
 	# all successful
@@ -448,9 +454,6 @@ sub set_blacklists_list
 	delete $listHash->{ 'farms' };
 
 	my $body = { description => $desc, params => $listHash };
-
-	require Zevenet::Cluster;
-	&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
 	return &httpResponse( { code => 200, body => $body } );
 }
