@@ -265,18 +265,17 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 
 	if ( exists ( $json_obj->{ vport } ) )
 	{
-		unless ( length $json_obj->{ vport } )
+		# VPORT validation
+		if (
+			!&getValidPort(
+							$json_obj->{ vip },
+							$json_obj->{ vport },
+							"L4XNAT"
+			)
+		)
 		{
-			my $msg = "Invalid vport, can't be blank.";
+			my $msg = "The virtual port must be an acceptable value and must be available.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-		unless ( $json_obj->{ vport } =~ /^\d+((\:\d+)*(\,\d+)*)*$/ )
-		{
-			if ( $json_obj->{ vport } ne "*" )
-			{
-				my $msg = "Invalid vport.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
 		}
 	}
 	
