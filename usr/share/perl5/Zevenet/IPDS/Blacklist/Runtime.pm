@@ -376,13 +376,32 @@ sub setBLCreateRule
 			if ( $protocol =~ /UDP/i || $protocol =~ /TFTP/i || $protocol =~ /SIP/i )
 			{
 				$protocol = 'udp';
-				$farmOpt  = "$vip -p $protocol --dport $vport";
+				if ( $vport eq "*" )
+				{
+					$farmOpt  = "$vip";
+				}
+				else
+				{
+					$farmOpt  = "$vip -p $protocol --dport $vport";
+				}
 			}
 
 			if ( $protocol =~ /HTTP/i || $protocol =~ /TCP/i || $protocol =~ /FTP/i )
 			{
 				$protocol = 'tcp';
-				$farmOpt  = "$vip -p $protocol --dport $vport";
+				if ( $vport eq "*" )
+				{
+					$farmOpt  = "$vip";
+				}
+				else
+				{
+					$farmOpt  = "$vip -p $protocol --dport $vport";
+				}
+			}
+			# no port in datalink famrs
+			else
+			{
+				$farmOpt  = "$vip";
 			}
 
 # iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "BL,rulename,farmname"
