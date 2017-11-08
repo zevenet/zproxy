@@ -29,35 +29,14 @@ sub certificates # ()
 {
 	require Zevenet::Certificate;
 
-	my $desc = "List certificates";
+	my $desc         = "List certificates";
+	my @certificates = &getCertFiles();
+	my $configdir    = &getGlobalConfiguration( 'configdir' );
 	my @out;
-	my @certificates   = &getCertFiles();
-	my $cert_dh2048_re = &getValidFormat( 'cert_dh2048' );
-	@certificates = grep { !/$cert_dh2048_re/ } @certificates;
 
-	foreach my $certificate ( @certificates )
+	foreach my $cert ( @certificates )
 	{
-		my $configdir       = &getGlobalConfiguration( 'configdir' );
-		my $certificateFile = "$configdir\/$certificate";
-
-		my $type       = &getCertType( $certificateFile );
-		my $cn         = &getCertCN( $certificateFile );
-		my $issuer     = &getCertIssuer( $certificateFile );
-		my $creation   = &getCertCreation( $certificateFile );
-		my $expiration = &getCertExpiration( $certificateFile );
-
-		chomp($creation);
-		chomp($expiration);
-
-		push @out,
-		  {
-			"file"       => "$certificate",
-			"type"       => "$type",
-			"CN"         => "$cn",
-			"issuer"     => "$issuer",
-			"creation"   => "$creation",
-			"expiration" => "$expiration"
-		  };
+		push @out, &getCertInfo( $cert, $configdir );
 	}
 
 	my $body = {

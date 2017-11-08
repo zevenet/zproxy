@@ -578,4 +578,95 @@ sub createPemFromKeyCRT    # ($keyfile,$crtfile,$certautfile,$tmpdir)
 	close $pemhandler;
 }
 
+sub getCertInfo    # ($certfile)
+{
+	my ( $certfile, $path ) = @_;
+
+	my $filepath  = "$path\/$certfile";
+	my @cert_data;
+
+	# Cert type
+	my $type = "none";
+
+	if    ( $certfile =~ /\.(?:pem|crt)$/ ) { $type = "Certificate"; }
+	elsif ( $certfile =~ /\.csr$/ )         { $type = "CSR"; }
+
+	if    ( $type eq "Certificate" ) { @cert_data = `$openssl x509 -in $filepath -text`; }
+	elsif ( $type eq "CSR" )         { @cert_data = `$openssl req -in $filepath -text`; }
+
+
+	# Cert CN
+	my $cn;
+	{
+		my ( $string ) = grep( /\sSubject: /, @cert_data );
+		chomp $string;
+		$string =~ s/Subject://;
+
+		my @data = split ( /,/, $string );
+
+		foreach my $param ( @data )
+		{
+			$cn = $1 if ( $param =~ /CN ?=(.+)/ );
+		}
+	}
+	#~ $cn = &getCleanBlanc( $cn );
+
+
+	# Cert Issuer
+	my $issuer = "";
+	if ( $type eq "Certificate" )
+	{
+		my ( $line ) = grep 'Issuer:', @cert_data;
+		( undef, $line ) = split ( /CN=/, $line );
+		( $issuer ) = split ( /\/emailAddress=/, $line );
+	}
+	elsif ( $type eq "CSR" )
+	{
+		$issuer = "NA";
+	}
+	#~ $issuer = &getCleanBlanc( $issuer );
+
+
+	# Cert Creation Date
+	my $creation = "";
+	if ( $type eq "Certificate" )
+	{
+		my ( $line ) = grep /\sNot Before/, @cert_data;
+		#~ my @eject = `$openssl x509 -noout -in $certfile -dates`;
+		( undef, $creation ) = split ( /: /, $line );
+	}
+	elsif ( $type eq "CSR" )
+	{
+		my @eject = split ( / /, gmtime ( stat ( $certfile )->mtime ) );
+		splice ( @eject, 0, 1 );
+		push ( @eject, "GMT" );
+		$creation = join ( ' ', @eject );
+	}
+	chomp ( $creation );
+
+
+	# Cert Expiration Date
+	my $expiration = "";
+	if ( $type eq "Certificate" )
+	{
+		my ( $line ) = grep /\sNot After/, @cert_data;
+		( undef, $expiration ) = split ( /: /, $line );
+	}
+	elsif ( $type eq "CSR" )
+	{
+		$expiration = "NA";
+	}
+	chomp ( $expiration );
+
+
+	return {
+			 "file"       => "$certfile",
+			 "type"       => "$type",
+			 "CN"         => "$cn",
+			 "issuer"     => "$issuer",
+			 "creation"   => "$creation",
+			 "expiration" => "$expiration"
+	};
+}
+
 1;
