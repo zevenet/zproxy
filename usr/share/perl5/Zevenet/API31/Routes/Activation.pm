@@ -24,13 +24,15 @@
 use strict;
 use warnings;
 
-if ( $ENV{ PATH_INFO } =~ qr{^/certificates/activation$} )
+if ( $ENV{ PATH_INFO } =~ qr{^/certificates/activation} )
 {
 	my $mod = 'Zevenet::API31::Certificate::Activation';
 
-	GET    qr{^/certificates/activation$}, 'get_activation_certificate_info', $mod;
-	POST   qr{^/certificates/activation$}, 'upload_activation_certificate',   $mod;
-	DELETE qr{^/certificates/activation$}, 'delete_activation_certificate',   $mod;
+	GET qr{^/certificates/activation$},    'get_activation_certificate',    $mod;
+	POST qr{^/certificates/activation$},   'upload_activation_certificate', $mod;
+	DELETE qr{^/certificates/activation$}, 'delete_activation_certificate', $mod;
+
+	GET    qr{^/certificates/activation/info$}, 'get_activation_certificate_info', $mod;
 }
 
 1;

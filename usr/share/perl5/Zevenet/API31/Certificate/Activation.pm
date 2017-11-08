@@ -22,12 +22,37 @@
 
 use strict;
 
-# GET /certificates/activation
+# GET /certificates/activation/info
 sub get_activation_certificate_info # ()
 {
 	require Zevenet::Certificate;
 
 	my $desc          = "Activation certificate information";
+	my $cert_filename = 'zlbcertfile.pem';
+	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
+
+	unless ( -f "$cert_dir\/$cert_filename" )
+	{
+		my $msg = "There is no activation certificate installed";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my $cert = &getCertInfo( $cert_filename, $cert_dir );
+	my $params = {
+				   days_to_expire => &getCertDaysToExpire( $cert->{ expiration } ),
+				   hostname       => $cert->{ CN },
+	};
+	my $body = { description => $desc, params => $params };
+
+	return &httpResponse({ code => 200, body => $body, type => 'text/plain' });
+}
+
+# GET /certificates/activation
+sub get_activation_certificate # ()
+{
+	require Zevenet::Certificate;
+
+	my $desc          = "Activation certificate";
 	my $cert_filename = 'zlbcertfile.pem';
 	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
 

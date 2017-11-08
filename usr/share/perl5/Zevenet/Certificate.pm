@@ -669,4 +669,29 @@ sub getCertInfo    # ($certfile)
 	};
 }
 
+sub getCertDaysToExpire
+{
+	my ( $cert_ends ) = @_;
+
+	use Time::Local;
+
+	sub getDateEpoc
+	{
+		my $date_string = shift @_;
+		my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+
+		my ( $month, $day, $hours, $min, $sec, $year ) = split /[ :]+/, $date_string;
+		( $month ) = grep { $months[$_] eq $month } 0..$#months;
+
+		return timegm( $sec, $min, $hours, $day, $month, $year );
+	}
+
+	my $end = &getDateEpoc( $cert_ends );
+	my $days_left = ( $end - time () ) / 86400;
+	$days_left =~ s/\..*//g;
+	$days_left = 'expired' if $days_left < 0;
+
+	return $days_left;
+}
+
 1;
