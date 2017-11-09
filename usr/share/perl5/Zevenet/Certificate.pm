@@ -637,7 +637,7 @@ sub getCertInfo    # ($certfile)
 	}
 	elsif ( $type eq "CSR" )
 	{
-		my @eject = split ( / /, gmtime ( stat ( $certfile )->mtime ) );
+		my @eject = split ( / /, gmtime ( stat( $filepath )->mtime ) );
 		splice ( @eject, 0, 1 );
 		push ( @eject, "GMT" );
 		$creation = join ( ' ', @eject );
