@@ -718,14 +718,8 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 
 	foreach my $line ( <$fileconf> )
 	{
-		if ( $line =~ /^\tService/ )
-		{
-			$sw = 0;
-		}
-		if ( $line =~ /^\tService \"$service\"/ )
-		{
-			$sw = 1;
-		}
+		if ( $line =~ /^\tService \"$service\"/ ) { $sw = 1; }
+		if ( $line =~ /^\tEnd$/ ) { $sw = 0; }
 
 		# returns all services for this farm
 		if ( $tag eq "" && $service eq "" )
@@ -772,40 +766,30 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 		#redirect
 		if ( $tag eq "redirect" )
 		{
-			if (    ( $line =~ "Redirect \"" || $line =~ "RedirectAppend \"" )
+			# Redirect types: 301, 302 or 307.
+			if (    $line =~ /Redirect(?:Append)?\s/
 				 && $sw == 1
 				 && $line !~ "#" )
 			{
-				if ( $line =~ "Redirect \"" )
-				{
-					@return = split ( "Redirect", $line );
-				}
-				elsif ( $line =~ "RedirectAppend \"" )
-				{
-					@return = split ( "RedirectAppend", $line );
-				}
-				$return[1] =~ s/\"//g;
-				$return[1] =~ s/^\s+//;
-				$return[1] =~ s/\s+$//;
-				$output = $return[1];
+				@return = split ( " ", $line );
+
+				my $url = $return[-1];
+				$url =~ s/\"//g;
+				$url =~ s/^\s+//;
+				$url =~ s/\s+$//;
+				$output = $url;
 				last;
 			}
 		}
 
 		if ( $tag eq "redirecttype" )
 		{
-			if (    ( $line =~ "Redirect \"" || $line =~ "RedirectAppend \"" )
+			if (    $line =~ /Redirect(?:Append)?\s/
 				 && $sw == 1
 				 && $line !~ "#" )
 			{
-				if ( $line =~ "Redirect \"" )
-				{
-					$output = "default";
-				}
-				elsif ( $line =~ "RedirectAppend \"" )
-				{
-					$output = "append";
-				}
+				if    ( $line =~ /Redirect / )       { $output = "default"; }
+				elsif ( $line =~ /RedirectAppend / ) { $output = "append"; }
 				last;
 			}
 		}
@@ -1043,17 +1027,17 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 	my $j  = 0;
 	my $l;
 
+	$string =~ s/^\s+//;
+	$string =~ s/\s+$//;
+
 	require Tie::File;
 	tie my @fileconf, 'Tie::File', "$configdir/$farm_filename";
 
 	foreach $line ( @fileconf )
 	{
-		if ( $line =~ /\tService \"$service\"/ )
-		{
-			$sw = 1;
-		}
-		$string =~ s/^\s+//;
-		$string =~ s/\s+$//;
+		if ( $line =~ /\tService \"$service\"/ ) { $sw = 1; }
+		if ( $line =~ /^\tEnd$/ && $sw == 1 ) { last; }
+		next if $sw == 0;
 
 		#vs tag
 		if ( $tag eq "vs" )
@@ -1101,39 +1085,19 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		}
 
 		#client redirect default
-		if ( $tag eq "redirect" )
+		if ( $tag eq "redirect" or $tag eq "redirectappend" )
 		{
-			if (    ( $line =~ /^\t\t#?Redirect\ \"/ || $line =~ "RedirectAppend\ \"" )
-				 && $sw == 1
-				 && $string ne "" )
+			if ( $line =~ /^\t\t#?Redirect(?:Append)?\s/ )
 			{
-				$line = "\t\tRedirect \"$string\"";
-				last;
-			}
-			if (    ( $line =~ /^\t\t#?Redirect\ \"/ || $line =~ "RedirectAppend\ \"" )
-				 && $sw == 1
-				 && $string eq "" )
-			{
-				$line = "\t\t#Redirect \"\"";
-				last;
-			}
-		}
+				my $policy = 'Redirect';
+				$policy .= 'Append' if $tag eq "redirectappend";
 
-		#client redirect append
-		if ( $tag eq "redirectappend" )
-		{
-			if (    ( $line =~ /^\t\t#?Redirect\ \"/ || $line =~ /^\t\t#?RedirectAppend\ \"/ )
-				 && $sw == 1
-				 && $string ne "" )
-			{
-				$line = "\t\tRedirectAppend \"$string\"";
-				last;
-			}
-			if (    ( $line =~ /^\t\t#?Redirect\ \"/ || $line =~ /^\t\t#?RedirectAppend\ \"/ )
-				 && $sw == 1
-				 && $string eq "" )
-			{
-				$line = "\t\t#Redirect \"\"";
+				my $comment = ( $string eq "" )? '#': '';
+
+				$line =~ /Redirect(?:Append)? (30[127] )?"/;
+				my $redirect_code = $1 // "";
+
+				$line = "\t\t${comment}${policy} $redirect_code\"$string\"";
 				last;
 			}
 		}
