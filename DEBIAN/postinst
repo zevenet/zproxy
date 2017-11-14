@@ -87,6 +87,7 @@ if [[ `grep -c 'Lsd' /etc/default/snmpd` == '1' ]]; then
         sed -i -e 's/Lsd/LS6d/' /etc/default/snmpd
 fi
 
+# sec service for zevenet notifications
 if [ -f /bin/systemctl ]
 then
 	systemctl stop sec 2>/dev/null
@@ -94,6 +95,14 @@ then
 else
 	/etc/init.d/sec stop > /dev/null
 	insserv -r sec
+fi
+
+# keepalived service for zevenet cluster
+if [ -f /bin/systemctl ]
+then
+	systemctl disable keepalived 2>/dev/null
+else
+	insserv -r keepalived
 fi
 
 # Do not mount /usr/local/zevenet/logs for zlb 4000 series
