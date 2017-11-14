@@ -35,10 +35,10 @@ if ( $action eq "-c" )
 {
 	my $backupfor = &getGlobalConfiguration( 'backupfor' );
 
-	my @eject = `$tar -czvf $backupdir\/backup-$name.tar.gz $backupfor`;
+	my @eject = `$tar -czf $backupdir\/backup-$name.tar.gz $backupfor`;
 }
 
 if ( $action eq "-d" )
 {
-	my @eject = `$tar -xzvf $backupdir\/backup-$name.tar.gz -C /`;
+	my @eject = `$tar -xzf $backupdir\/backup-$name.tar.gz -C /`;
 }
