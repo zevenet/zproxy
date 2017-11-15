@@ -67,14 +67,15 @@ sub setDOSRunRule
 
 		my $port = &getFarmVip( 'vipp', $farmName );
 
-		# l4 farm multiport
-		if ( &ismport( $farmName ) eq "true" )
-		{
-			$hash{ vport } = "-m multiport --dports $port";
-		}
-		elsif ( $port =~ /^\d+$/ )
+		if ( $port =~ /^\d+$/ )
 		{
 			$hash{ vport } = "--dport $port";
+		}
+
+		# l4 farm multiport
+		elsif ( &ismport( $port ) eq "true" )
+		{
+			$hash{ vport } = "-m multiport --dports $port";
 		}
 		else
 		{
@@ -467,7 +468,6 @@ sub setDOSLimitSecRule
 	my $limit_burst = &getDOSParam( $ruleName, 'limit_burst' );
 
 # /sbin/iptables -I PREROUTING -t mangle -p tcp -m conntrack --ctstate NEW -m limit --limit 60/s --limit-burst 20 -j ACCEPT
-# /sbin/iptables
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
 	  . " -A $chain -t $table "    # select iptables struct
 	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
@@ -481,13 +481,13 @@ sub setDOSLimitSecRule
 	  . "-m conntrack --ctstate NEW "    # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\""; # comment
 
-	# thre rule already exists
+	# the rule already exists
 	return 0 if ( &getIPDSRuleExists( $cmd ) );
 
-	my $output = &setIPDSDropAndLog( $cmd, $logMsg );
+	my $output = &iptSystem( $cmd );
 	return $output if ( $output );
 
-	$output = &iptSystem( $cmd2 );
+	$output = &setIPDSDropAndLog( $cmd2, $logMsg );
 
 	return $output;
 }
