@@ -188,7 +188,7 @@ sub set_rbl_rule
 		else
 		{
 			require Zevenet::Cluster;
-			&runZClusterRemoteManager( 'ipds_rbl', "restart", $name );
+			&runZClusterRemoteManager( 'ipds_rbl', "stop", $name );
 
 			require Zevenet::IPDS::RBL::Actions;
 			&runRBLStopByRule( $name );
