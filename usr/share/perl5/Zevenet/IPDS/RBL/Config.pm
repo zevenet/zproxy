@@ -551,6 +551,10 @@ sub delRBLDeleteObjectRule
 	$fileHandle->write( $rblConfigFile );
 	&setRBLUnlockConfigFile( $lock );
 
+	# Remove packetbl config file
+	my $config_file = &getRBLPacketblConfig( $rule );
+	unlink $config_file if ( -f $config_file );
+
 	&zenlog( "The RBL rule \"$rule\" was successfully removed." );
 
 	return 0;
