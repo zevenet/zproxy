@@ -185,13 +185,21 @@ sub set_rbl_rule
 			my $msg = "Error, \"domains\" is a reserved word.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		elsif ( &setRBLRenameObjectRule( $name, $json_obj->{ 'name' } ) )
+		else
 		{
-			my $msg = "Error, setting name.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
+			require Zevenet::Cluster;
+			&runZClusterRemoteManager( 'ipds_rbl', "restart", $name );
 
-		$name = $json_obj->{ 'name' };
+			require Zevenet::IPDS::RBL::Actions;
+			&runRBLStopByRule( $name );
+			if ( &setRBLRenameObjectRule( $name, $json_obj->{ 'name' } ) )
+			{
+				my $msg = "Error, setting name.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
+			$name = $json_obj->{ 'name' };
+		}
 	}
 
 	# only_logging
