@@ -211,8 +211,12 @@ sub runRBLStartPacketbl
 	# Get packetbl bin
 	my $packetbl = &getGlobalConfiguration( "packetbl_bin" );
 
-	# Look for a not used nf queue and assign it to this rule
-	&setRBLCreateNfqueue( $rule );
+	# WARNING: to not choose a new nt queue if it exists. This is a bugfix for backup node
+	if ( &getRBLObjectRuleParam( $rule, "nf_queue_number" ) eq "" )
+	{
+		# Look for a not used nf queue and assign it to this rule
+		&setRBLCreateNfqueue( $rule );
+	}
 
 	# Create packetbl config file
 	&setRBLPacketblConfig( $rule );

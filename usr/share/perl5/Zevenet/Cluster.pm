@@ -1148,7 +1148,7 @@ sub runZClusterRemoteManager
 {
 	my $object = shift;
 	my $command = shift;
-	my @arguments = shift;
+	my @arguments = @_;
 
 	# zcluster: start farm in remote node
 	if ( &getZClusterRunning() && &getZClusterNodeStatus() eq 'master' )
