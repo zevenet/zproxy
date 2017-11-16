@@ -71,15 +71,15 @@ sub setDOSRunRule
 		{
 			$hash{ vport } = "--dport $port";
 		}
+		elsif ( $port eq '*' )
+		{
+			$hash{ vport } = "";
+		}
 
 		# l4 farm multiport
 		elsif ( &ismport( $port ) eq "true" )
 		{
 			$hash{ vport } = "-m multiport --dports $port";
-		}
-		else
-		{
-			$hash{ vport } = "";
 		}
 
 		# -d farmIP -p PROTOCOL --dport farmPORT
@@ -415,9 +415,12 @@ sub setDOSLimitRstRule
 	my $limit       = &getDOSParam( $ruleName, 'limit' );
 	my $limit_burst = &getDOSParam( $ruleName, 'limit_burst' );
 
+	my $line = &getDOSAcceptLine();
+	my $add_action = ( $line ) ? "-I $chain $line" : "-A $chain";
+
 # /sbin/iptables -A PREROUTING -t mangle -p tcp --tcp-flags RST RST -m limit --limit 2/s --limit-burst 2 -j ACCEPT
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -A $chain -t $table "    # select iptables struct
+	  . " $add_action -t $table "    # select iptables struct
 	  . "-j ACCEPT $ruleOpt{ 'vip' } --protocol tcp $ruleOpt{ 'vport' } " # who is destined
 	  . "--tcp-flags RST RST -m limit --limit $limit/s --limit-burst $limit_burst " # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\"";          # comment
@@ -467,9 +470,12 @@ sub setDOSLimitSecRule
 	my $limit       = &getDOSParam( $ruleName, 'limit' );
 	my $limit_burst = &getDOSParam( $ruleName, 'limit_burst' );
 
+	my $line = &getDOSAcceptLine();
+	my $add_action = ( $line ) ? "-I $chain $line" : "-A $chain";
+
 # /sbin/iptables -I PREROUTING -t mangle -p tcp -m conntrack --ctstate NEW -m limit --limit 60/s --limit-burst 20 -j ACCEPT
 	my $cmd = &getBinVersion( $ruleOpt{ 'farmName' } )
-	  . " -A $chain -t $table "    # select iptables struct
+	  . " $add_action -t $table "    # select iptables struct
 	  . "-j ACCEPT $ruleOpt{ 'vip' } $ruleOpt{ 'protocol' } $ruleOpt{ 'vport' } " # who is destined
 	  . "-m conntrack --ctstate NEW -m limit --limit $limit/s --limit-burst $limit_burst " # rules for block
 	  . "-m comment --comment \"DOS,${ruleName},$ruleOpt{ 'farmName' }\"";                 # comment
@@ -704,6 +710,41 @@ sub setDOSUnsetRule
 	}
 
 	return $output;
+}
+
+=begin nd
+
+Function: getDOSAcceptLine
+
+	Look for in DOS iptables chain some rule with "ACCEPT" jump.
+	It is used to add all ACCEPT rules together
+
+Parameters:
+	none - .
+
+Returns:
+	Integer - number of line where the ACCEPT rule was found
+
+=cut
+
+sub getDOSAcceptLine
+{
+	my $line;
+
+	my $chain = &getIPDSChain( "dos" );
+
+	# look for a iptables line with a ACCEPT action
+	my @ipt_rules = &getIptListV4( "mangle", $chain );
+	foreach my $rule ( @ipt_rules )
+	{
+		if ( $rule =~ /^(\d+)\s+\w+\s+\w+\s+ACCEPT\s/ )
+		{
+			$line = $1;
+			last;
+		}
+	}
+
+	return $line;
 }
 
 1;
