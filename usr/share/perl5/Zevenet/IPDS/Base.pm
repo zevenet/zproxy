@@ -231,6 +231,9 @@ sub runIPDSStartByFarm
 {
 	my $farmname = shift;
 
+	require Zevenet::Farm::Base;
+	return 0 if ( &getFarmBootStatus( $farmname ) eq "down" );
+
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );
 	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{ blacklists } } );
@@ -324,6 +327,9 @@ Returns:
 sub runIPDSRestartByFarm
 {
 	my $farmname = shift;
+
+	require Zevenet::Farm::Base;
+	return 0 if ( &getFarmBootStatus( $farmname ) eq "down" );
 
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );

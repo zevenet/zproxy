@@ -342,20 +342,6 @@ sub add_dos_to_farm
 				  "Error, a DoS rule $fileHandle->{$name}->{'rule'} already is applied to the farm.";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
-			if (    $fileHandle->{ $rule_dos }->{ 'rule' } eq "limitsec"
-				 && $fileHandle->{ $name }->{ 'rule' } eq "limitrst" )
-			{
-				my $msg =
-				  "Error, the farm has already applied a limitsec rule, and it is not possible to apply to a farm a limitrst rule and a limit sec rule at the same time.";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
-			if (    $fileHandle->{ $name }->{ 'rule' } eq "limitsec"
-				 && $fileHandle->{ $rule_dos }->{ 'rule' } eq "limitrst" )
-			{
-				my $msg =
-				  "Error, the farm has already applied a limitrst rule, and it is not possible to apply to a farm a limitrst rule and a limit sec rule at the same time.";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
 		}
 	}
 
