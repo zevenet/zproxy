@@ -62,6 +62,9 @@ cat /proc/cpuinfo                       >> $backup_dir/system_resources.txt
 echo -e "\n--- TOP information ---"     >> $backup_dir/system_resources.txt
 /usr/bin/top -b -n1                     >> $backup_dir/system_resources.txt
 
+echo "- Partitions"
+/bin/df -h                              >> $backup_dir/partitions.txt 2>&1
+
 echo "- Time"
 ${home_dir}/app/zenntp/zenntp.pl        >> $backup_dir/ntp_test.txt 2>&1
 
