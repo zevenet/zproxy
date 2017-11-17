@@ -574,11 +574,14 @@ sub setNodeStatusBackup
 
 	if ( &getZClusterNodeStatus() eq 'maintenance' )
 	{
-		&zenlog("Node on maintenance mode reloaded cluster configuration");
+		&zenlog("Node on maintenance mode. Setting maintenance mode instead");
+		&setNodeStatusMaintenance();
+
 		return 0;
 	}
 	elsif ( &getZClusterNodeStatus() eq 'backup' )
 	{
+		# FIXME: Deprecate this condition if it is not required.
 		&zenlog("Node is already backup");
 		#~ return 0;
 	}
@@ -623,17 +626,11 @@ sub setNodeStatusMaintenance
 {
 	&zenlog("############### Starting setNodeStatusMaintenance");
 
-	my $node_status = &getZClusterNodeStatus();
-	&zenlog("Cluster ==== node_status: $node_status ===> Maintenance");
-
-	if ( &getZClusterNodeStatus() eq 'maintenance' )
-	{
-		&zenlog("Node is already under maintenance");
-		return 0;
-	}
-
 	require Zevenet::Ssyncd;
 	require Zevenet::Net::Interface;
+
+	my $node_status = &getZClusterNodeStatus();
+	&zenlog("Cluster ==== node_status: $node_status ===> Maintenance");
 
 	&zenlog("Switching node to under maintenance");
 	&setZClusterNodeStatus('maintenance');

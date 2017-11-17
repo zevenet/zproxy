@@ -263,8 +263,7 @@ sub enable_cluster
 	if ( -f $znode_status_file )
 	{
 		$local_node_status = &getZClusterNodeStatus();
-		$master_node       = ( $local_node_status eq 'master' );
-		$enable_fg         = $master_node;
+		$enable_fg         = ( $local_node_status eq 'master' );
 	}
 
 	# detect master node

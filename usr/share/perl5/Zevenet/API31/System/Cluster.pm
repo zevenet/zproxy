@@ -314,6 +314,8 @@ sub set_cluster_actions
 			# workaround for keepalived 1.2.13
 			if ( &getKeepalivedVersion() eq '1.2.13' )
 			{
+				&setZClusterNodeStatus('backup');
+
 				my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
 				system("$zcluster_manager notify_backup");
 
