@@ -28,7 +28,7 @@ my $configdir = &getGlobalConfiguration( 'configdir' );
 =begin nd
 Function: getL4FarmsPorts
 
-	Get all port used by L4xNAT farms with a protocol
+	Get all port used of L4xNAT farms in up status and using a protocol
 	
 Parameters:
 	protocol - protocol used by l4xnat farm
@@ -42,7 +42,6 @@ sub getL4FarmsPorts    # ($protocol)
 {
 	my $protocol = shift;
 
-	my $first           = 1;
 	my $port_list       = "";
 	my @farms_filenames = &getFarmList();
 
@@ -58,21 +57,17 @@ sub getL4FarmsPorts    # ($protocol)
 		my $farm_protocol = &getFarmProto( $farm_name );
 
 		next if not ( $farm_type eq "l4xnat" && $protocol eq $farm_protocol );
+		next if ( &getFarmBootStatus( $farm_name ) ne "up" );
 
 		my $farm_port = &getFarmVip( "vipp", $farm_name );
-
+		$farm_port = join ( ',', &getFarmPortList( $farm_port ) );
 		next if not &validL4ExtPort( $farm_protocol, $farm_port );
 
-		if ( $first == 1 )
-		{
-			$port_list = $farm_port;
-			$first     = 0;
-		}
-		else
-		{
-			$port_list = "$port_list,$farm_port";
-		}
+		$port_list .= "$farm_port,";
 	}
+
+	# remove the las comma
+	chop ( $port_list );
 
 	return $port_list;
 }
@@ -107,22 +102,31 @@ sub loadL4Modules    # ($protocol)
 	{
 		&removeNfModule( "nf_nat_sip" );
 		&removeNfModule( "nf_conntrack_sip" );
-		&loadNfModule( "nf_conntrack_sip", "ports=\"$port_list\"" );
-		&loadNfModule( "nf_nat_sip",       "" );
+		if ( $port_list )
+		{
+			&loadNfModule( "nf_conntrack_sip", "ports=\"$port_list\"" );
+			&loadNfModule( "nf_nat_sip",       "" );
+		}
 	}
 	elsif ( $protocol eq "ftp" )
 	{
 		&removeNfModule( "nf_nat_ftp" );
 		&removeNfModule( "nf_conntrack_ftp" );
-		&loadNfModule( "nf_conntrack_ftp", "ports=\"$port_list\"" );
-		&loadNfModule( "nf_nat_ftp",       "" );
+		if ( $port_list )
+		{
+			&loadNfModule( "nf_conntrack_ftp", "ports=\"$port_list\"" );
+			&loadNfModule( "nf_nat_ftp",       "" );
+		}
 	}
 	elsif ( $protocol eq "tftp" )
 	{
 		&removeNfModule( "nf_nat_tftp" );
 		&removeNfModule( "nf_conntrack_tftp" );
-		&loadNfModule( "nf_conntrack_tftp", "ports=\"$port_list\"" );
-		&loadNfModule( "nf_nat_tftp",       "" );
+		if ( $port_list )
+		{
+			&loadNfModule( "nf_conntrack_tftp", "ports=\"$port_list\"" );
+			&loadNfModule( "nf_nat_tftp",       "" );
+		}
 	}
 
 	return $status;
@@ -609,6 +613,7 @@ sub setFarmProto    # ($proto,$farm_name)
 	&zenlog( "setting 'Protocol $proto' for $farm_name farm $farm_type" );
 
 	my $farm       = &getL4FarmStruct( $farm_name );
+	my $old_proto  = $$farm{ vproto };
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
 	my $fg_pid     = &getFarmGuardianPid( $farm_name );
 
@@ -651,6 +656,12 @@ sub setFarmProto    # ($proto,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
+		# Remove required modules
+		if ( $old_proto =~ /sip|ftp/ )
+		{
+			my $status = &loadL4Modules( $old_proto );
+		}
+
 		# Load required modules
 		if ( $$farm{ vproto } =~ /sip|ftp/ )
 		{
@@ -1144,9 +1155,15 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		{
 			kill 'CONT' => $fg_pid;
 		}
+
+		# Reload required modules
+		if ( $$farm{ vproto } =~ /sip|ftp/ )
+		{
+			my $status = &loadL4Modules( $$farm{ vproto } );
+		}
 	}
 
-	return 0;                              # FIXME?
+	return 0;    # FIXME?
 }
 
 =begin nd
@@ -1389,12 +1406,12 @@ sub refreshL4FarmRules    # AlgorithmRules
 	&getL4BackendsWeightProbability( $farm ) if ( $$farm{ lbalg } eq 'weight' );
 
 	## lock iptables use ##
-	my $iptlock = &getGlobalConfiguration('iptlock');
+	my $iptlock = &getGlobalConfiguration( 'iptlock' );
 	open ( my $ipt_lockfile, '>', $iptlock );
 
 	unless ( $ipt_lockfile )
 	{
-		&zenlog("Could not open $iptlock: $!");
+		&zenlog( "Could not open $iptlock: $!" );
 		return 1;
 	}
 

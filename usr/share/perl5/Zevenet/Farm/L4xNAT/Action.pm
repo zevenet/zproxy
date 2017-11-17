@@ -304,6 +304,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	my ( $farm_name, $writeconf ) = @_;
 
 	require Zevenet::Net::Util;
+	require Zevenet::Farm::L4xNAT::Config;
 
 	&zlog( "Stopping farm $farm_name" ) if &debug == 2;
 
@@ -387,6 +388,12 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 	## Delete ip rule mark END ##
 	&setIptConnmarkRestore( $farm_name );
 	&setIptConnmarkSave( $farm_name );
+
+	# Reload conntrack modules
+	if ( $$farm{ vproto } =~ /sip|ftp/ )
+	{
+		&loadL4Modules( $$farm{ vproto } );
+	}
 
 	return $status;
 }
