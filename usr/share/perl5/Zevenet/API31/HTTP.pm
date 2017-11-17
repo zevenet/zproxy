@@ -248,6 +248,9 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 	my @headers = (
 					'Access-Control-Allow-Origin'      => "https://$ENV{ HTTP_HOST }/",
 					'Access-Control-Allow-Credentials' => 'true',
+					'Cache-Control'                    => 'no-cache',
+					'Expires'                          => '-1',
+					'Pragma'                           => 'no-cache',
 	);
 
 	if ( $ENV{ 'REQUEST_METHOD' } eq 'OPTIONS' )    # no session info received
