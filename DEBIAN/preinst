@@ -155,6 +155,15 @@ else
 system ( "cp /etc/sysctl.conf /etc/sysctl.conf.bck" );
 system ( qq{grep "^#" /etc/sysctl.conf > /etc/sysctl.conf 2> /dev/null} );
 
+# Bugfix to wheezy version
+# put ipset in same directory than stretch and jessie version
+my $kernel_version = `uname -r`;
+if ( $kernel_version =~ /^3\.2\./ )
+{
+	my $ipset = "/sbin/ipset";
+	system( "ln -s /usr/sbin/ipset $ipset" ) if ( ! -f $ipset );
+}
+
 #Move zlb-stop & zlb-start
 my $zlbstop = "/usr/local/zevenet/config/zlb-stop";
 my $zlbstart = "/usr/local/zevenet/config/zlb-start";
