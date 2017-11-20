@@ -606,7 +606,7 @@ sub getCertInfo    # ($certfile)
 
 		foreach my $param ( @data )
 		{
-			$cn = $1 if ( $param =~ /CN ?=(.+)/ );
+			$cn = $1 if ( $param =~ /CN ?= ?(.+)?[ \/]?/ );
 		}
 	}
 	#~ $cn = &getCleanBlanc( $cn );

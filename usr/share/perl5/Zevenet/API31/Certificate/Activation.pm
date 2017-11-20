@@ -38,9 +38,13 @@ sub get_activation_certificate_info # ()
 	}
 
 	my $cert = &getCertInfo( $cert_filename, $cert_dir );
+	my $c_days = $cert->{ expiration } - $cert->{ creation };
+	my $c_type = ( $c_days > 364 )? 'permanent': 'temporal';
+
 	my $params = {
 				   days_to_expire => &getCertDaysToExpire( $cert->{ expiration } ),
 				   hostname       => $cert->{ CN },
+				   type           => $c_type,
 	};
 	my $body = { description => $desc, params => $params };
 
