@@ -19,7 +19,7 @@ $confhttp="/usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf";#update
 #ntp server
 $ntp="pool.ntp.org";
 #Do backup to
-$backupfor="/usr/local/zevenet/config /usr/local/zevenet/www/*.pem /usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf /etc/iproute2/rt_tables /etc/ssh/sshd_config /etc/default/snmpd /etc/keepalived/keepalived.conf /etc/conntrackd/conntrackd.conf /etc/hostname /etc/resolv.conf";#update
+$backupfor="/usr/local/zevenet/config /usr/local/zevenet/www/*.pem /usr/local/zevenet/app/cherokee/etc/cherokee/cherokee.conf /etc/iproute2/rt_tables /etc/ssh/sshd_config /etc/default/snmpd /etc/keepalived/keepalived.conf /etc/conntrackd/conntrackd.conf /etc/hostname /etc/resolv.conf /etc/cron.d/zevenet";#update
 #Save backups on
 $backupdir="/usr/local/zevenet/backups/";
 #rt tables file
