@@ -263,6 +263,7 @@ sub applyBackup
 	my $file = &getGlobalConfiguration( 'backupdir' ) . "/backup-$backup.tar.gz";
 
 	my @eject = `$tar -xvzf $file -C /`;
+	unlink '/zevenet_version';
 
 	&zenlog( "Restoring backup $file" );
 	&zenlog( "unpacking files: @eject" );

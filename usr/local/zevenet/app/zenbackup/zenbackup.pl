@@ -23,6 +23,7 @@
 
 use strict;
 use warnings;
+use Zevenet::Log;
 use Zevenet::Config;
 
 my $name   = $ARGV[0];
@@ -33,9 +34,21 @@ my $tar = &getGlobalConfiguration( 'tar' );
 
 if ( $action eq "-c" )
 {
-	my $backupfor = &getGlobalConfiguration( 'backupfor' );
+	my $backupfor      = &getGlobalConfiguration( 'backupfor' );
+	my $version        = &getGlobalConfiguration( 'version' );
+	my $z_version_file = '/zevenet_version';
+	my $backup_file    = "$backupdir\/backup-$name.tar.gz";
 
-	my @eject = `$tar -czf $backupdir\/backup-$name.tar.gz $backupfor`;
+	open my $file, '>', $z_version_file;
+	print $file "$version";
+	close $file;
+
+	zenlog("Creating backup $backup_file");
+
+	my $cmd = "$tar -czf $backup_file $backupfor";
+	zenlog (`$cmd 2>&1`);
+
+	unlink $z_version_file;
 }
 
 if ( $action eq "-d" )

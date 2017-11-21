@@ -132,7 +132,9 @@ fi
 
 echo "Saving configuration files"
 #################################
+echo `dpkg -l | grep zevenet\  | awk '{print $3}'` > /zevenet_version
 /bin/tar zcf $backup_dir/config.tar.gz $config_paths 2>/dev/null
+rm /zevenet_version
 
 
 echo "Saving monitoring files"
