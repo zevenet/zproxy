@@ -596,6 +596,8 @@ sub getCertInfo    # ($certfile)
 
 
 	# Cert CN
+	# Stretch: Subject: C = SP, ST = SP, L = SP, O = Test, O = f9**3b, OU = al**X6, CN = zevenet-hostname, emailAddress = cr**@zevenet.com
+	# Jessie:  Subject: C=SP, ST=SP, L=SP, O=Test, O=f9**3b, OU=al**X6, CN=zevenet-hostname/emailAddress=cr**@zevenet.com
 	my $cn;
 	{
 		my ( $string ) = grep( /\sSubject: /, @cert_data );
@@ -606,7 +608,8 @@ sub getCertInfo    # ($certfile)
 
 		foreach my $param ( @data )
 		{
-			$cn = $1 if ( $param =~ /CN ?= ?(.+)?[ \/]?/ );
+			$cn = $1 if ( $param =~ /CN ?= ?(.+)/ );
+			( $cn ) = split ( /\/emailAddress=/, $cn );
 		}
 	}
 	#~ $cn = &getCleanBlanc( $cn );
@@ -658,14 +661,13 @@ sub getCertInfo    # ($certfile)
 	}
 	chomp ( $expiration );
 
-
 	return {
-			 "file"       => "$certfile",
-			 "type"       => "$type",
-			 "CN"         => "$cn",
-			 "issuer"     => "$issuer",
-			 "creation"   => "$creation",
-			 "expiration" => "$expiration"
+			 file       => $certfile,
+			 type       => $type,
+			 CN         => $cn,
+			 issuer     => $issuer,
+			 creation   => $creation,
+			 expiration => $expiration,
 	};
 }
 
@@ -689,9 +691,8 @@ sub getCertDaysToExpire
 	my $end = &getDateEpoc( $cert_ends );
 	my $days_left = ( $end - time () ) / 86400;
 	$days_left =~ s/\..*//g;
-	$days_left = 'expired' if $days_left < 0;
 
-	return $days_left;
+	return $days_left + 0;
 }
 
 1;
