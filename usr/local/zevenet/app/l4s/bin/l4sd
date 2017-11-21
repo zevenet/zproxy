@@ -41,7 +41,7 @@
 # end debug
 
 use strict;
-use warnings;
+#~ use warnings;
 use Time::HiRes qw(ualarm usleep clock_gettime CLOCK_REALTIME);
 use Zevenet::Log;
 use Zevenet::Config;
