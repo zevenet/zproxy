@@ -218,20 +218,21 @@ if ( $action eq "start" )
 	}
 
 	# enterprise hook
-	&eload( module => $mod, func => 'start_service' );
+	my $cert_error = &eload( module => $mod, func => 'start_service' );
 
 	print ( "* Starting Interfaces:\n" );
 
 	my $mgmt_ip    = &getHttpServerIp();
 	my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
-	my @interfaces = @{ &getConfigInterfaceList() };
+	my @interfaces = &getInterfaceTypeList('nic');
+	@interfaces = ( @interfaces, &getInterfaceTypeList('bond') ) unless $cert_error;
 
 	&zenlog("zevenet: Setting up NIC and Bonding interfaces...");
 
 	# first real interfaces
-	foreach my $iface ( &getInterfaceTypeList('nic'), &getInterfaceTypeList('bond') )
+	foreach my $iface ( @interfaces )
 	{
-		#interfaces as eth0 for example
+		# interfaces as eth0 for example
 		if ( $$iface{ name } eq $$iface{ dev } )
 		{
 			use IO::Interface ':flags';
@@ -282,6 +283,7 @@ if ( $action eq "start" )
 	}
 
 	&zenlog("zevenet: Setting up VLAN interfaces...");
+	@interfaces = @{ &getConfigInterfaceList() };
 
 	# vlans interfaces (ie. eth0.20)
 	foreach my $iface ( @interfaces )

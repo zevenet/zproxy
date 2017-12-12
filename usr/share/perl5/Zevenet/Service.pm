@@ -167,7 +167,7 @@ sub start_service
 	if ( $swcert > 0 )
 	{
 		&printAndLog( "No valid ZLB certificate was found, no farm started\n" );
-		exec ('/usr/local/zevenet/app/zbin/zevenet stop');
+		return 1;
 	}
 
 	&zenlog("Zevenet Service: Loading Optimizations...");
