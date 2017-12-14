@@ -229,14 +229,15 @@ if ( $action eq "start" )
 
 	my $mgmt_ip    = &getHttpServerIp();
 	my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
-	my @interfaces = @{ &getConfigInterfaceList() };
+	my @interfaces = &getInterfaceTypeList('nic');
+	push( @interfaces, &getInterfaceTypeList('bond') ) if $eload;
 
 	&zenlog("zevenet: Setting up NIC interfaces...");
 
 	# first real interfaces
-	foreach my $iface ( &getInterfaceTypeList('nic'), &getInterfaceTypeList('bond') )
+	foreach my $iface ( @interfaces )
 	{
-		#interfaces as eth0 for example
+		# interfaces as eth0 for example
 		if ( $$iface{ name } eq $$iface{ dev } )
 		{
 			use IO::Interface ':flags';
@@ -290,6 +291,7 @@ if ( $action eq "start" )
 	&eload( module => $mod, func => 'start_service' ) if $eload;
 
 	&zenlog("zevenet: Setting up VLAN interfaces...");
+	@interfaces = @{ &getConfigInterfaceList() };
 
 	# vlans interfaces (ie. eth0.20)
 	foreach my $iface ( @interfaces )
