@@ -606,6 +606,7 @@ sub setNodeStatusBackup
 
 	# stop farmguardians
 	my $pids = `pgrep farmguardian`;
+	$pids =~ s/\n/ /g;
 	system("kill $pids") if $pids;
 
 	# block/disable ip announces ( arp and neigh )
