@@ -795,7 +795,7 @@ sub zsync
 
 	if ( $error_code )
 	{
-		&zenlog_thread( $rsync_output );
+		&zenlog( $rsync_output );
 	}
 
 	return $error_code;
