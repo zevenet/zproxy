@@ -22,7 +22,9 @@
 ###############################################################################
 
 use strict;
-use Zevenet::ELoad;
+
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
 my %http_status_codes = (
 
@@ -58,7 +60,7 @@ sub GET
 	}
 	else
 	{
-		&eload( module => $mod, func => $code, args => \@captures );
+		&eload( module => $mod, func => $code, args => \@captures ) if $eload;
 	}
 }
 
@@ -114,7 +116,7 @@ sub POST
 	}
 	else
 	{
-		&eload( module => $mod, func => $code, args => \@args );
+		&eload( module => $mod, func => $code, args => \@args ) if $eload;
 	}
 }
 
@@ -170,7 +172,7 @@ sub PUT
 	}
 	else
 	{
-		&eload( module => $mod, func => $code, args => \@args );
+		&eload( module => $mod, func => $code, args => \@args ) if $eload;
 	}
 }
 
@@ -191,7 +193,7 @@ sub DELETE
 	}
 	else
 	{
-		&eload( module => $mod, func => $code, args => \@captures );
+		&eload( module => $mod, func => $code, args => \@captures ) if $eload;
 	}
 }
 
