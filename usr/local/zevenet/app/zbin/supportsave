@@ -25,7 +25,13 @@ tmp_name=`/bin/date +%Y%m%d_%H%M`
 hostname=`hostname`
 home_dir="/usr/local/zevenet"
 ss_dir="supportsave_${hostname}_${tmp_name}"
-backup_dir="/tmp/${ss_dir}"
+prefix="/tmp"
+
+if [ -d "$1" ]; then
+	prefix=${1}
+fi
+
+backup_dir="${prefix}/${ss_dir}"
 
 config_paths=`perl -MZevenet::Config -e 'print getGlobalConfiguration("backupfor");'`;
 monitoring_paths="${home_dir}/app/zenrrd/rrd ${home_dir}/logs /var/log/messages* /var/log/syslog* /var/log/cherokee* ${home_dir}/node_status";
@@ -145,12 +151,12 @@ echo "Saving monitoring files"
 
 echo "Packing supportsave"
 ##########################
-cd /tmp
+cd ${prefix}
 /bin/tar zcf ${ss_dir}.tar.gz ${ss_dir} 2>/dev/null
 cd - >/dev/null
 
 echo "Cleaning temporal files"
 ##########################
-/bin/rm -rf $backup_dir
+/bin/rm -rf ${backup_dir}
 
-ls -lh /tmp/${ss_dir}.tar.gz
+ls -lh ${backup_dir}.tar.gz
