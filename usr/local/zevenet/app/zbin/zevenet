@@ -220,7 +220,7 @@ if ( $action eq "start" )
 	}
 
 	# enterprise hook
-	if ( $eload ) { &eload( module => $mod, func => 'start_service' ); }
+	&eload( module => $mod, func => 'start_service' ) if $eload;
 
 	print ( "* Starting Interfaces:\n" );
 
@@ -339,7 +339,7 @@ if ( $action eq "start" )
 	&zenlog("zevenet: Setting up Cluster...");
 
 	# enable cluster hook
-	if ( $eload ) { &eload( module => $mod, func => 'enable_cluster' ); }
+	&eload( module => $mod, func => 'enable_cluster' ) if $eload;
 
 	&zenlog("zevenet: Setting up virtual interfaces...");
 
@@ -388,7 +388,7 @@ if ( $action eq "start" )
 	my @farmsf = &getFarmList();
 	my $enable_fg = 1;
 
-	if ( $eload ) { $enable_fg = &eload( module => $mod, func => 'getEnableFarmGuardian' ); }
+	$enable_fg = &eload( module => $mod, func => 'getEnableFarmGuardian' ) if $eload;
 
 	&zenlog("zevenet: Setting up farms...");
 
@@ -444,7 +444,7 @@ if ( $action eq "start" )
 
 	&printAndLog("End of $configdir/zlb-start");
 
-	if ( $eload ) { &eload( module => $mod, func => 'start_cluster' ); }
+	&eload( module => $mod, func => 'start_cluster' ) if $eload;
 
 	# make sure related system services are runnig
 	if ( system( "/etc/init.d/ssh status >/dev/null 2>&1" ) ) {
@@ -460,7 +460,7 @@ if ( $action eq "stop" )
 {
 	&printAndLog( "Stopping Zevenet Load Balancer...\n" );
 
-	if ( $eload ) { &eload( module => $mod, func => 'stop_service' ); }
+	&eload( module => $mod, func => 'stop_service' ) if $eload;
 
 	print ( "* Stopping Farms:\n" );
 
@@ -526,7 +526,7 @@ if ( $action eq "stop" )
 		}
 	}
 
-	if ( $eload ) { &eload( module => $mod, func => 'disable_cluster' ); }
+	&eload( module => $mod, func => 'disable_cluster' ) if $eload;
 
 	# At this point every zevenet interface and farm is stopped
 	# now a personalized script can be executed
