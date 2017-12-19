@@ -33,9 +33,9 @@ use strict;
 use warnings;
 use File::Copy;
 
-my $tglobal   = "/usr/local/zevenet/app/checkglobalconf/global.conf.tmp";
-my $global    = "/usr/local/zevenet/config/global.conf";
-my $globaltpl = "/usr/local/zevenet/app/checkglobalconf/global.conf.tpl";
+my $tmp_global = "/usr/local/zevenet/app/checkglobalconf/global.conf.tmp";
+my $global     = "/usr/local/zevenet/config/global.conf";
+my $globaltpl  = "/usr/local/zevenet/app/checkglobalconf/global.conf.tpl";
 
 unless ( -f $global )
 {
