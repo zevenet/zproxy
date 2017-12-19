@@ -37,16 +37,22 @@ my $tglobal   = "/usr/local/zevenet/app/checkglobalconf/global.conf.tmp";
 my $global    = "/usr/local/zevenet/config/global.conf";
 my $globaltpl = "/usr/local/zevenet/app/checkglobalconf/global.conf.tpl";
 
-open my $fw,            '>', $tglobal;
+unless ( -f $global )
+{
+	system( "cp $globaltpl $global" );
+	exit 0;
+}
+
+open my $fw,            '>', $tmp_global;
 open my $file_template, '<', $globaltpl;
 
-while ( my $linetpl = <$file_template> )
+while ( my $tpl_line = <$file_template> )
 {
-	my $newline = $linetpl;
+	my $newline = $tpl_line;
 
-	if ( $linetpl =~ /^\$/ )
+	if ( $tpl_line =~ /^\$/ )
 	{
-		my @vble = split ( '=', $linetpl );
+		my @vble = split ( '=', $tpl_line );
 		$vble[0] =~ s/\$//;
 		my $exit = 'true';
 
@@ -59,6 +65,7 @@ while ( my $linetpl = <$file_template> )
 				my @vblegconf = split ( "\=", $line );
 				$vblegconf[1] =~ s/^\s?//g;
 				$vble[1] =~ s/^\s?//g;
+
 				if ( $vblegconf[1] !~ /""/ && $vblegconf[1] !~ $vble[1] && $vble[1] !~ /\#update/ )
 				{
 					$newline = $line;
@@ -66,8 +73,8 @@ while ( my $linetpl = <$file_template> )
 
 				if ( $vble[1] =~ /\#update/i )
 				{
-					$linetpl =~ s/\#update//i;
-					$newline = $linetpl;
+					$tpl_line =~ s/\#update//i;
+					$newline = $tpl_line;
 				}
 			}
 		}
@@ -81,5 +88,5 @@ while ( my $linetpl = <$file_template> )
 close $fw;
 close $file_template;
 
-move( $tglobal, $global );
+move( $tmp_global, $global );
 print "Update global.conf file done...\n";
