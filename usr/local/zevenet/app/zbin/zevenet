@@ -72,12 +72,12 @@ sub getInterfaceBlocks
 		{
 			$in_block = 'true';
 
-			if ( @interface ) # exclude first block 
+			if ( @interface ) # exclude first block
 			{
 				my ( @array ) = @interface;
 				push( @interface_list, \@array ); # store previous iface
 			}
-			
+
 			@interface = ( $line ); # start new interface
 		}
 		elsif ( $in_block )
@@ -188,34 +188,32 @@ if ( $action eq "start" )
 								  status  => "up",
 				);
 
-				# Write iface file
-				if ( $interface{ name } ) 
+				# Write interface file
+				if ( $interface{ name } )
 				{
-					&zenlog( "Writing iface: $interface{ name }" );
+					&zenlog( "Writing interface: $interface{ name }" );
 					&setInterfaceConfig( \%interface ) ;
 
-					#configure gateway
+					# gateway
 					if ( $interface{ gateway } )
 					{
 						&zenlog( "Writing gateway: $interface{ gateway }" );
 						setGlobalConfiguration( 'defaultgw', $gateway );
 						setGlobalConfiguration( 'defaultgwif', $ifname );
 					}
+
+					# route table
+					&zenlog( "Writing route table: $interface{ name }" );
+					&writeRoutes( $interface{ name } );
 				}
 			}
 
-			#deleting interfaces file
-			open FW, ">/etc/network/interfaces";
-			print FW "#zenmodified\n";
-			print FW "auto lo\n";
-			print FW "iface lo inet loopback\n";
-			close FW;
-
-			# Routes
-			# FIXME: there is a function for this, it should be used.
-			open FW, ">>/etc/iproute2/rt_tables";
-			print FW "200\ttable_$interface{ name }\n";
-			close FW;
+			# overwriting interfaces file
+			open my $if_file, '>', '/etc/network/interfaces';
+			print $if_file "#zenmodified\n";
+			print $if_file "auto lo\n";
+			print $if_file "iface lo inet loopback\n";
+			close $if_file;
 		}
 	}
 
