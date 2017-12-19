@@ -21,15 +21,13 @@
 #
 ###############################################################################
 
-#this script update global.conf:
-#*if vble not exist on global.conf but exist on global.conf.tpl
-#then new variable on global.conf.
-#*if vble="" on global.conf.tpl do nothing
-#*if vble on global.conf.tpl = vble on global.conf.tpl do nothing
-#*if vble on global.conf is not equal to vble on global.conf.tpl
-#vble on globa.conf persist.
-#*if end of line on vble global.conf.tpl is #update, vble is updated
-#on global.conf
+# This script updates or generates the file global.conf:
+#
+# * If a variable on global.conf does not exist but exists on global.conf.tpl then adds the new variable on global.conf.
+# * If a variable on global.conf.tpl equals "" do nothing.
+# * If a variable on global.conf.tpl is equal to the variable on global.conf.tpl do nothing
+# * If a variable on global.conf is not equal to variable on global.conf.tpl, the variable on globa.conf is not changed.
+# * If a valiable's line on global.conf.tpl ends with #update, the variable is updated on global.conf.
 
 use strict;
 use warnings;
