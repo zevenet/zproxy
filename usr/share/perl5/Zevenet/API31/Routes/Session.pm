@@ -65,14 +65,15 @@ sub session_login
 
 	my ( $header ) = split ( "\r\n", $session->header() );
 	my ( undef, $session_cookie ) = split ( ': ', $header );
-	my $key =  &keycert();
-	my $host = &getHostname();
+	my $body;
+	$body{ host } = &getHostname();
+	$body{ key }  = &keycert() if defined( &keycert );
 
 	&zenlog( "Login successful for user: $username" );
 	&httpResponse(
 				   {
 					 code => 200,
-					 body => { key => $key, host => $host },
+					 body => $body,
 					 headers => { 'Set-cookie' => $session_cookie },
 				   }
 	);

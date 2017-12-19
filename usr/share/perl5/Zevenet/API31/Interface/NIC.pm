@@ -77,7 +77,8 @@ sub delete_interface_nic    # ( $nic )
 sub get_nic_list    # ()
 {
 	require Zevenet::Net::Interface;
-	require Zevenet::Net::Bonding;
+
+	my $EE = eval{ require Zevenet::Net::Bonding; }? 1: undef;
 
 	my $desc  = "List NIC interfaces";
 	my @vlans = &getInterfaceTypeList( 'vlan' );
@@ -110,9 +111,9 @@ sub get_nic_list    # ()
 						gateway  => $if_ref->{ gateway },
 						status   => $if_ref->{ status },
 						mac      => $if_ref->{ mac },
-						is_slave => $if_ref->{ is_slave },
 		};
 
+		$if_conf->{ is_slave } = $if_ref->{ is_slave } if $EE;
 		$if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
 
 		# include 'has_vlan'
@@ -143,7 +144,8 @@ sub get_nic    # ()
 	my $nic = shift;
 
 	require Zevenet::Net::Interface;
-	require Zevenet::Net::Bonding;
+
+	my $EE = eval{ require Zevenet::Net::Bonding; }? 1: undef;
 
 	my $desc = "Show NIC interface";
 	my $interface;
@@ -169,8 +171,9 @@ sub get_nic    # ()
 					   gateway  => $if_ref->{ gateway },
 					   status   => $if_ref->{ status },
 					   mac      => $if_ref->{ mac },
-					   is_slave => $if_ref->{ is_slave },
 		};
+
+		$interface->{ is_slave } = $if_ref->{ is_slave } if $EE;
 	}
 
 	unless ( $interface )
