@@ -1281,9 +1281,9 @@ sub getHTTPFarmVip    # ($info,$farm_name)
 	my $output        = -1;
 	my $i             = 0;
 
-	open FI, "<$configdir/$farm_filename";
-	my @file = <FI>;
-	close FI;
+	open my $fi, '<', "$configdir/$farm_filename";
+	my @file = <$fi>;
+	close $fi;
 
 	foreach my $line ( @file )
 	{
@@ -1311,7 +1311,7 @@ sub getHTTPFarmVip    # ($info,$farm_name)
 =begin nd
 Function: setHTTPFarmVirtualConf
 
-	Set farm virtual IP and virtual PORT		
+	Set farm virtual IP and virtual PORT
 	
 Parameters:
 	vip - virtual ip
