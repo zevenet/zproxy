@@ -24,7 +24,9 @@ use strict;
 
 use Zevenet::Farm::Core;
 use Zevenet::Farm::Base;
-use Zevenet::Farm::Ext;
+my $EE = eval { require Zevenet::Farm::Ext; } ? 1: undef;
+
+unless ( $EE ) { require Zevenet::Farm::HTTP::HTTPS; }
 
 # POST /farms/FARM/certificates (Add certificate to farm)
 sub add_farm_certificate    # ( $json_obj, $farmname )
@@ -52,14 +54,33 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( grep ( /^$json_obj->{ file }$/, &getFarmCertificatesSNI( $farmname ) ) )
+	my $cert_in_use;
+	if ( $EE )
+	{
+		$cert_in_use = grep ( /^$json_obj->{ file }$/, &getFarmCertificatesSNI( $farmname ) );
+	}
+	else
+	{
+		$cert_in_use = &getFarmCertificate( $farmname ) eq $json_obj->{ file };
+	}
+
+	if ( $cert_in_use )
 	{
 		my $msg = "The certificate already exists in the farm.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# FIXME: Show error if the certificate is already in the list
-	my $status = &setFarmCertificateSNI( $json_obj->{ file }, $farmname );
+	my $status;
+	if ( $EE )
+	{
+		$status = &setFarmCertificateSNI( $json_obj->{ file }, $farmname );
+	}
+	else
+	{
+		$status = &setFarmCertificate( $json_obj->{ file }, $farmname );
+	}
+
 	if ( $status )
 	{
 		my $msg =
@@ -70,10 +91,10 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 	}
 
 	# no errors found, return succesful response
-	&zenlog( "ZAPI Success, trying to add a certificate to the SNI list." );
+	&zenlog( "ZAPI Success, trying to add a certificate to the farm." );
 
 	my $message =
-	  "The certificate $json_obj->{file} has been added to the SNI list of farm $farmname, you need restart the farm to apply";
+	  "The certificate $json_obj->{file} has been added to the farm $farmname, you need restart the farm to apply";
 
 	my $body = {
 				 description => $desc,
@@ -100,6 +121,12 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 
 	my $desc = "Delete farm certificate";
 
+	unless ( $EE )
+	{
+		my $msg = "HTTPS farm without certificate is not allowed.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	# Check if the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
@@ -125,7 +152,7 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 
 	my $status;
 
- # This is a BUGFIX: delete the certificate all times that it appears in config file
+	# This is a BUGFIX: delete the certificate all times that it appears in config file
 	for ( my $it = 0 ; $it < $number ; $it++ )
 	{
 		$status = &setFarmDeleteCertNameSNI( $certfilename, $farmname );

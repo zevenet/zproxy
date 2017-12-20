@@ -50,22 +50,26 @@ sub farms_name_http # ( $farmname )
 	elsif ( $httpverb == 3 ) { $httpverb = "MSextWebDAV"; }
 	elsif ( $httpverb == 4 ) { $httpverb = "MSRPCext"; }
 
-	my $type     = &getFarmType( $farmname );
+	my $type    = &getFarmType( $farmname );
 	my $certname;
-	my $cipher   = '';
-	my $ciphers  = 'all';
+	my $cipher  = '';
+	my $ciphers = 'all';
 	my @cnames;
 
 	if ( $type eq "https" )
 	{
-		require Zevenet::Farm::Ext;
 		require Zevenet::Farm::HTTP::HTTPS;
 
-		$certname = &getFarmCertificate( $farmname );
-		@cnames   = &getFarmCertificatesSNI( $farmname );
-		my $elem     = scalar @cnames;
+		if ( eval { require Zevenet::Farm::Ext; } )
+		{
+			@cnames = &getFarmCertificatesSNI( $farmname );
+		}
+		else
+		{
+			@cnames = ( &getFarmCertificate( $farmname ) );
+		}
 
-		for ( my $i = 0 ; $i < $elem ; $i++ )
+		for ( my $i = 0 ; $i < scalar @cnames ; $i++ )
 		{
 			push @out_cn, { file => $cnames[$i], id => $i + 1 };
 		}
@@ -74,7 +78,7 @@ sub farms_name_http # ( $farmname )
 		$ciphers = &getFarmCipherSet( $farmname );
 		chomp ( $ciphers );
 
-		# adapt "ciphers" to required interface values 
+		# adapt "ciphers" to required interface values
 		if ( $ciphers eq "cipherglobal" )
 		{
 			$ciphers = "all";
@@ -131,19 +135,19 @@ sub farms_name_http # ( $farmname )
 	}
 
 	# Services
-	my $services = &getHTTPFarmVS( $farmname, "", "" );
-	my @serv = split ( "\ ", $services );
+	my $services = &getHTTPFarmVS( $farmname, '', '' );
+	my @serv = split ( ' ', $services );
 
 	foreach my $s ( @serv )
 	{
 		my $serviceStruct = &getHTTPServiceStruct ( $farmname, $s );
-		
+
 		# Remove backend status 'undefined', it is for news api versions
 		foreach my $be (@{$serviceStruct->{ 'backends' }})
 		{
 			$be->{ 'status' } = 'up'  if ($be->{ 'status' } eq 'undefined');
 		}
-		
+
 		push @out_s, $serviceStruct;
 	}
 
