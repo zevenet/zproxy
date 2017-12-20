@@ -46,8 +46,8 @@ sub getHTTPFarmDHStatus    # ($farm_name)
 
 	my $dhfile = "$configdir\/$farm_name\_dh2048.pem";
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
-	# my $match =~ /^DHParams.*/, @filefarmhttp; 
-	my @match = grep ( /^DHParams.*/, @filefarmhttp ); 
+	# my $match =~ /^DHParams.*/, @filefarmhttp;
+	my @match = grep ( /^DHParams.*/, @filefarmhttp );
 	untie @filefarmhttp;
 
 	if ($match[0] ne "" && -e "$dhfile"){
@@ -61,7 +61,7 @@ sub getHTTPFarmDHStatus    # ($farm_name)
 Function: setHTTPFarmDHStatus
 
 	[NOT USED] Configure the status of the DH file
-	
+
 Parameters:
 	farmname - Farm name
 	status - set a status for the DH file
@@ -100,7 +100,7 @@ sub setHTTPFarmDHStatus    # ($farm_name, $newstatus)
 Function: getFarmCertificate
 
 	Return the certificate applied to the farm
-	
+
 Parameters:
 	farmname - Farm name
 
@@ -142,8 +142,8 @@ sub getFarmCertificate    # ($farm_name)
 =begin nd
 Function: setFarmCertificate
 
-	[NOT USED] Configure a certificate for a HTTP farm
-	
+	Configure a certificate for a HTTP farm
+
 Parameters:
 	certificate - certificate file name
 	farmname - Farm name
@@ -186,17 +186,16 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 =begin nd
 Function: validateHTTPFarmDH
 
-	[NOT USED] Validate the farm Diffie Hellman configuration	 
-	
+	[NOT USED] Validate the farm Diffie Hellman configuration
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Integer - always return -1
-	
+
 BUG
 	Not finish
-
 =cut
 sub validateHTTPFarmDH    # ($farm_name)
 {
@@ -228,13 +227,12 @@ sub validateHTTPFarmDH    # ($farm_name)
 Function: genDHFile
 
 	[NOT USED] Generate the Diffie Hellman keys file
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
-	
 =cut
 sub genDHFile    # ($farm_name)
 {
@@ -263,7 +261,7 @@ sub genDHFile    # ($farm_name)
 Function: setFarmCipherList
 
 	Set Farm Ciphers value
-	
+
 Parameters:
 	farmname - Farm name
 	ciphers - The options are: cipherglobal, cipherpci, cipherssloffloading or ciphercustom
@@ -271,7 +269,6 @@ Parameters:
 
 Returns:
 	Integer - return 0 on success or -1 on failure
-		
 =cut
 sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 {
@@ -286,6 +283,7 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 
 	require Tie::File;
 	tie my @array, 'Tie::File', "$configdir/$farm_filename";
+
 	for my $line ( @array )
 	{
 		# takes the first Ciphers line only
@@ -336,14 +334,13 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 =begin nd
 Function: getFarmCipherList
 
-	Get Cipher value defined in pound configuration file 
-	
+	Get Cipher value defined in pound configuration file
+
 Parameters:
 	farmname - Farm name
 
 Returns:
-	scalar - return a string with cipher value or -1 on failure 
-		
+	scalar - return a string with cipher value or -1 on failure
 =cut
 sub getFarmCipherList    # ($farm_name)
 {
@@ -371,15 +368,15 @@ sub getFarmCipherList    # ($farm_name)
 =begin nd
 Function: getFarmCipherSet
 
-	Get Ciphers value defined in pound configuration file. Possible values are: 
+	Get Ciphers value defined in pound configuration file. Possible values are:
 		cipherglobal, cipherpci, cipherssloffloading or ciphercustom.
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
-	scalar - return a string with cipher set (ciphers) or -1 on failure 
-		
+	scalar - return a string with cipher set (ciphers) or -1 on failure
+
 =cut
 sub getFarmCipherSet    # ($farm_name)
 {
@@ -414,12 +411,12 @@ sub getFarmCipherSet    # ($farm_name)
 Function: getFarmCipherSSLOffLoadingSupport
 
 	Get if the process supports aes aceleration
-	 
+
 Parameters:
 	none -.
 
 Returns:
-	Integer - return 1 if proccess support AES aceleration or 0 if it doesn't 
+	Integer - return 1 if proccess support AES aceleration or 0 if it doesn't
 		support it
 
 =cut
@@ -427,11 +424,11 @@ sub getFarmCipherSSLOffLoadingSupport
 {
 	my $output = 0;
 	my $proc_cpu = "/proc/cpuinfo";
-	
+
 	if ( -f $proc_cpu )
 	{
 		open my $fh, "<", $proc_cpu;
-		
+
 		my $line;
 		while ( $line = <$fh> )
 		{
@@ -440,11 +437,10 @@ sub getFarmCipherSSLOffLoadingSupport
 				$output = 1;
 				last;
 			}
-			
 		}
 		close $fh;
 	}
-	
+
 	return $output;
 }
 
@@ -453,14 +449,13 @@ sub getFarmCipherSSLOffLoadingSupport
 Function: getHTTPFarmDisableSSL
 
 	Get if a security protocol version is enabled or disabled in a HTTPS farm
-	 
+
 Parameters:
 	farmname - Farm name
 	protocol - SSL or TLS protocol get status (disabled or enabled)
 
 Returns:
 	Integer - 1 on disabled, 0 on enabled or -1 on failure
-
 =cut
 sub getHTTPFarmDisableSSL    # ($farm_name, $protocol)
 {
@@ -493,15 +488,14 @@ sub getHTTPFarmDisableSSL    # ($farm_name, $protocol)
 Function: setHTTPFarmDisableSSL
 
 	Enable or disable a security protocol for a HTTPS farm
-	 
+
 Parameters:
 	farmname - Farm name
-	protocol - SSL or TLS protocol to disable/enable: SSLv2|SSLv3|TLSv1|TLSv1_1|TLSv1_2 
+	protocol - SSL or TLS protocol to disable/enable: SSLv2|SSLv3|TLSv1|TLSv1_1|TLSv1_2
 	action - The available actions are: 1 to disable or 0 to enable
 
 Returns:
 	Integer - Error code: 0 on success or -1 on failure
-
 =cut
 sub setHTTPFarmDisableSSL    # ($farm_name, $protocol, $action )
 {
@@ -512,11 +506,11 @@ sub setHTTPFarmDisableSSL    # ($farm_name, $protocol, $action )
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
-	
+
 	if ( $farm_type eq "https" )
-	{		
+	{
 		tie my @file, 'Tie::File', "$configdir/$farm_filename";
-		
+
 		if ( $action == 1 )
 		{
 			foreach my $line (@file)
@@ -540,7 +534,7 @@ sub setHTTPFarmDisableSSL    # ($farm_name, $protocol, $action )
 			splice @file, $it, 1;
 			$output = 0;
 		}
-			
+
 		untie @file;
 	}
 
