@@ -1091,6 +1091,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
 
+	require Tie::File;
 	require Zevenet::FarmGuardian;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -1127,6 +1128,8 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 
 	if ( $$farm{ status } eq 'up' )
 	{
+		require Zevenet::Netfilter;
+
 		my @rules;
 
 		foreach my $server ( @{ $$farm{ servers } } )
