@@ -78,10 +78,11 @@ sub get_interfaces # ()
 
 		if ( $if_ref->{ type } eq 'nic' )
 		{
-			require Zevenet::Net::Bonding;
-			
-			$if_conf->{ is_slave } =
-			( grep { $$if_ref{ name } eq $_ } &getAllBondsSlaves ) ? 'true' : 'false';
+			if ( eval { require Zevenet::Net::Bonding; } )
+			{
+				$if_conf->{ is_slave } =
+				  ( grep { $$if_ref{ name } eq $_ } &getAllBondsSlaves ) ? 'true' : 'false';
+			}
 
 			# include 'has_vlan'
 			for my $vlan_ref ( @vlans )
@@ -97,7 +98,6 @@ sub get_interfaces # ()
 		}
 
 		$if_conf->{ is_cluster } = 'true' if $cluster_if && $cluster_if eq $if_ref->{ name };
-		  
 		push @output_list, $if_conf;
 	}
 
