@@ -406,45 +406,6 @@ sub getFarmCipherSet    # ($farm_name)
 	return $output;
 }
 
-
-=begin nd
-Function: getFarmCipherSSLOffLoadingSupport
-
-	Get if the process supports aes aceleration
-
-Parameters:
-	none -.
-
-Returns:
-	Integer - return 1 if proccess support AES aceleration or 0 if it doesn't
-		support it
-
-=cut
-sub getFarmCipherSSLOffLoadingSupport
-{
-	my $output = 0;
-	my $proc_cpu = "/proc/cpuinfo";
-
-	if ( -f $proc_cpu )
-	{
-		open my $fh, "<", $proc_cpu;
-
-		my $line;
-		while ( $line = <$fh> )
-		{
-			if ( $line =~ /^flags.* aes / )
-			{
-				$output = 1;
-				last;
-			}
-		}
-		close $fh;
-	}
-
-	return $output;
-}
-
-
 =begin nd
 Function: getHTTPFarmDisableSSL
 

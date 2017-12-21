@@ -243,4 +243,53 @@ sub setFarmDeleteCertNameSNI    #($certn,$fname)
 	return $output;
 }
 
+=begin nd
+Function: getFarmCipherSSLOffLoadingSupport
+
+	Get if the process supports aes aceleration
+
+Parameters:
+	none -.
+
+Returns:
+	Integer - return 1 if proccess support AES aceleration or 0 if it doesn't
+		support it
+
+=cut
+sub getFarmCipherSSLOffLoadingSupport
+{
+	my $aes_found = 0;
+	my $proc_cpu = "/proc/cpuinfo";
+
+	if ( -f $proc_cpu )
+	{
+		open my $fh, "<", $proc_cpu;
+
+		while ( my $line = <$fh> )
+		{
+			if ( $line =~ /^flags.* aes / )
+			{
+				$aes_found = 1;
+				last;
+			}
+		}
+
+		close $fh;
+	}
+
+	return $aes_found;
+}
+
+sub getExtraCipherProfiles
+{
+	my @cipher_profiles = ();
+	
+	if ( &getFarmCipherSSLOffLoadingSupport() )
+	{
+		push @cipher_profiles, { 'ciphers' => "ssloffloading", "description" => "SSL offloading" };
+	}
+
+	return @cipher_profiles;
+}
+
 1;
