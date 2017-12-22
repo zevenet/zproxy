@@ -93,7 +93,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# validate PRIORITY
-		if ( $json_obj->{ priority } !~ /^\d+$/
+		if ( $json_obj->{ priority } !~ /^\d$/
 			 && exists $json_obj->{ priority } )    # (0-9)
 		{
 			my $msg =
@@ -102,10 +102,10 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# validate WEIGHT
-		if ( $json_obj->{ weight } !~ /^[1-9]\d*$/
+		if ( $json_obj->{ weight } !~ /^[1-9]$/
 			 && exists $json_obj->{ weight } )      # 1 or higher
 		{
-			my $msg = "Invalid backend weight value, please insert a value greater than 0.";
+			my $msg = "Invalid backend weight value, please insert a value form 1 to 9.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
@@ -666,11 +666,11 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 
 		if ( exists ( $json_obj->{ weight } ) )
 		{
-			unless (    $json_obj->{ weight } =~ /^\d*[1-9]$/
+			unless (    $json_obj->{ weight } =~ /^[1-9]$/
 					 || $json_obj->{ weight } == undef )    # 1 or higher
 			{
 				my $msg =
-				  "Error, trying to modify the backends in a farm $farmname, invalid weight.";
+				  "Invalid backend weight value, please insert a value form 1 to 9.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
