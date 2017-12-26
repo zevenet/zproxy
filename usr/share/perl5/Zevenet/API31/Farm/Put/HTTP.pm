@@ -358,6 +358,8 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 
 	# Modify HTTPS Params
 	my $farmtype = &getFarmType( $farmname );
+	my $EE;
+
 	if ( $farmtype eq "https" )
 	{
 		require Zevenet::Farm::HTTP::HTTPS;
@@ -386,13 +388,23 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 			elsif ( $json_obj->{ ciphers } eq "highsecurity" ) { $ciphers = "cipherpci"; }
 			elsif ( $json_obj->{ ciphers } eq "ssloffloading" )
 			{
-				unless ( &getFarmCipherSSLOffLoadingSupport() )
+				if ( eval { require Zevenet::Farm::HTTP::HTTPS::Ext; } )
 				{
-					my $msg = "The CPU does not support SSL offloading.";
+					$EE = 1;
+
+					unless ( &getFarmCipherSSLOffLoadingSupport() )
+					{
+						my $msg = "The CPU does not support SSL offloading.";
+						&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+					}
+
+					$ciphers = "cipherssloffloading";
+				}
+				else
+				{
+					my $msg = "SSL offloading cipher profile not available.";
 					&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 				}
-
-				$ciphers = "cipherssloffloading";
 			}
 
 			my $status = &setFarmCipherList( $farmname, $ciphers );
@@ -434,7 +446,16 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		# Add Certificate to SNI list
 		if ( exists ( $json_obj->{ certname } ) )
 		{
-			my $status = &setFarmCertificateSNI( $json_obj->{ certname }, $farmname );
+			my $status;
+			if ( $EE )
+			{
+				$status = &setFarmCertificateSNI( $json_obj->{ certname }, $farmname );
+			}
+			else
+			{
+				$status = &setFarmCertificate( $json_obj->{ certname }, $farmname );
+			}
+
 			if ( $status == -1 )
 			{
 				my $msg = "Some errors happened trying to modify the certname.";
@@ -569,12 +590,20 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 
 	if ( $json_obj->{ listener } eq 'https' )
 	{
-		require Zevenet::Farm::Ext;
-
 		# certlist
 		my @certlist;
-		my @cnames = &getFarmCertificatesSNI( $farmname );
-		my $elem   = scalar @cnames;
+		my @cnames;
+
+		if ( $EE )
+		{
+			@cnames = &getFarmCertificatesSNI( $farmname );
+		}
+		else
+		{
+			@cnames = ( &getFarmCertificate( $farmname ) );
+		}
+
+		my $elem = scalar @cnames;
 
 		for ( my $i = 0 ; $i < $elem ; $i++ )
 		{

@@ -57,7 +57,7 @@ sub get_farm_struct
 	{
 		require Zevenet::Farm::HTTP::HTTPS;
 
-		if ( eval { require Zevenet::Farm::Ext; } )
+		if ( eval { require Zevenet::Farm::HTTP::HTTPS::Ext; } )
 		{
 			@cnames = &getFarmCertificatesSNI( $farmname );
 		}

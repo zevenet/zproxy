@@ -473,6 +473,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	if ( $farmtype eq "https" )
 	{
 		require Zevenet::Farm::HTTP::HTTPS;
+
 		# Modify Ciphers
 		if ( exists ( $json_obj->{ ciphers } ) )
 		{
@@ -568,6 +569,8 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		# Add Certificate to SNI list
 		if ( exists ( $json_obj->{ certname } ) )
 		{
+			require Zevenet::Farm::HTTP::HTTPS::Ext;
+
 			$status = &setFarmCertificateSNI( $json_obj->{ certname }, $farmname );
 			if ( $status != -1 )
 			{

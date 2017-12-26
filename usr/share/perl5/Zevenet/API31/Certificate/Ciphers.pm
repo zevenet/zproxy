@@ -27,8 +27,6 @@ sub ciphers_available # ( $json_obj, $farmname )
 {
 	my $desc = "Get the ciphers available";
 
-	require Zevenet::Farm::HTTP::HTTPS;
-
 	my @out = (
 				{ 'ciphers' => "all",            "description" => "All" },
 				{ 'ciphers' => "highsecurity",   "description" => "High security" },

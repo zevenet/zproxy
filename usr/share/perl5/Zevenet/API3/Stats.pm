@@ -380,13 +380,12 @@ sub all_farms_stats # ()
 # Get the number of farms
 sub farms_number
 {
-	require Zevenet::Farm::Ext;
-	my $number =  scalar &getFarmNameList();
+	require Zevenet::Farm::Core;
 
-	# Print Success
+	my $number = scalar &getFarmNameList();
 	my $body = {
-				 description       => "Number of farms.",
-				 number => $number,
+				 description => "Number of farms.",
+				 number      => $number,
 	};
 
 	&httpResponse({ code => 200, body => $body });

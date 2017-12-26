@@ -67,7 +67,7 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 	}
 
 	# FIXME: Show error if the certificate is already in the list
-	require Zevenet::Farm::Ext;
+	require Zevenet::Farm::HTTP::HTTPS::Ext;
 	my $status = &setFarmCertificateSNI( $json_obj->{ file }, $farmname );
 
 	if ( $status == 0 )
@@ -139,7 +139,7 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 
 	if ( $certfilename && &getValidFormat( 'cert_pem', $certfilename ) )
 	{
-		require Zevenet::Farm::Ext;
+		require Zevenet::Farm::HTTP::HTTPS::Ext;
 		my $status = &setFarmDeleteCertNameSNI( $certfilename, $farmname );
 
 		if ( $status == 0 )

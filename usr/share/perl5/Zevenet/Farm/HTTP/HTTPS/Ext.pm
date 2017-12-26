@@ -283,7 +283,7 @@ sub getFarmCipherSSLOffLoadingSupport
 sub getExtraCipherProfiles
 {
 	my @cipher_profiles = ();
-	
+
 	if ( &getFarmCipherSSLOffLoadingSupport() )
 	{
 		push @cipher_profiles, { 'ciphers' => "ssloffloading", "description" => "SSL offloading" };
