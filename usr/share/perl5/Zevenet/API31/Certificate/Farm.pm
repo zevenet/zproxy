@@ -24,7 +24,7 @@ use strict;
 
 use Zevenet::Farm::Core;
 use Zevenet::Farm::Base;
-my $EE = eval { require Zevenet::Farm::Ext; } ? 1: undef;
+my $EE = eval { require Zevenet::Farm::HTTP::HTTPS::Ext; } ? 1: undef;
 
 unless ( $EE ) { require Zevenet::Farm::HTTP::HTTPS; }
 

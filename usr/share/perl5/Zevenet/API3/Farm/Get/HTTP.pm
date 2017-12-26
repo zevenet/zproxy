@@ -51,7 +51,6 @@ sub farms_name_http # ( $farmname )
 	elsif ( $httpverb == 4 ) { $httpverb = "MSRPCext"; }
 
 	my $type     = &getFarmType( $farmname );
-	my $certname;
 	my $cipher   = '';
 	my $ciphers  = 'all';
 	my @cnames;
@@ -59,10 +58,10 @@ sub farms_name_http # ( $farmname )
 	if ( $type eq "https" )
 	{
 		require Zevenet::Farm::HTTP::HTTPS;
+		require Zevenet::Farm::HTTP::HTTPS::Ext;
 
-		$certname = &getFarmCertificate( $farmname );
-		@cnames   = &getFarmCertificatesSNI( $farmname );
-		my $elem     = scalar @cnames;
+		@cnames = &getFarmCertificatesSNI( $farmname );
+		my $elem = scalar @cnames;
 
 		for ( my $i = 0 ; $i < $elem ; $i++ )
 		{
