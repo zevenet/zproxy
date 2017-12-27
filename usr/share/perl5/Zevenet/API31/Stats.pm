@@ -92,7 +92,7 @@ sub farm_stats # ( $farmname )
 
 	if ( $type eq "http" || $type eq "https" )
 	{
-		require Zevenet::Farm::HTTP::Stats;		
+		require Zevenet::Farm::HTTP::Stats;
 
 		my $stats = &getHTTPFarmBackendsStats( $farmname );
 		my $body = {
@@ -268,18 +268,38 @@ sub module_stats # ()
 {
 	my $module = shift;
 
+	my $valid_module;
+
+	if ( $module eq 'gslb' && eval { require Zevenet::Farm::GSLB::Stats; } )
+	{
+		$valid_module = 1;
+	}
+
+	if ( $module eq 'lslb' || $module eq 'dslb' )
+	{
+		$valid_module = 1;
+	}
+
+	unless ( $valid_module )
+	{
+		my $desc = "List module farms stats";
+		my $msg  = "Incorrect module";
+
+		&httpErrorResponse({ code => 400, msg => $msg, desc => $desc });
+	}
+
 	my @farms = @{ &getAllFarmStats () };
 	my @farmModule;
 
 	foreach my $farm ( @farms )
 	{
-		push @farmModule, $farm	if ( $farm->{ 'profile' } =~ /(?:http|https|l4xnat)/ && $module eq 'lslb' );
+		push @farmModule, $farm	if ( $farm->{ 'profile' } =~ /(?:https?|l4xnat)/ && $module eq 'lslb' );
 		push @farmModule, $farm	if ( $farm->{ 'profile' } =~ /gslb/ && $module eq 'gslb' );
 		push @farmModule, $farm	if ( $farm->{ 'profile' } =~ /datalink/ && $module eq 'dslb' );
 	}
 
 	my $body = {
-				 description => "List lslb farms stats",
+				 description => "List $module farms stats",
 				 farms       => \@farmModule,
 	};
 
