@@ -478,13 +478,16 @@ sub stats_network_interfaces
 	require Zevenet::Stats;
 	require Zevenet::Net::Interface;
 
+	my $EE = eval { require Zevenet::Net::Bonding; }? 1: undef;
+
 	my $desc       = "Interfaces info";
 	my @interfaces = &getNetworkStats( 'hash' );
 	my @nic        = &getInterfaceTypeList( 'nic' );
-	my @bond       = &getInterfaceTypeList( 'bond' );
+	my @bond;
 	my @nicList;
 	my @bondList;
 	my @restIfaces;
+	@bond = &getInterfaceTypeList( 'bond' ) if $EE;
 
 	foreach my $iface ( @interfaces )
 	{
@@ -513,7 +516,7 @@ sub stats_network_interfaces
 		}
 		
 		# Fill bond interface list
-		elsif ( $type eq 'bond' )
+		elsif ( $type eq 'bond' && $EE )
 		{
 			foreach my $ifaceBond ( @bond )
 			{
@@ -539,10 +542,14 @@ sub stats_network_interfaces
 		}
 	}
 
+	my $params->{ nic } = \@nicList;
+	$params->{ bond } = \@bondList if $EE;
+
 	my $body = {
 				 description => $desc,
-				 params      => { nic => \@nicList, bond => \@bondList, }
+				 params      => $params,
 	};
+
 	&httpResponse({ code => 200, body => $body });
 }
 
