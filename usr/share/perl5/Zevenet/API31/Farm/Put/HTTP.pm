@@ -232,28 +232,33 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		$restart_flag = "true";
 	}
 
-	# Enable or disable ignore 100 continue header
-	if ( exists ( $json_obj->{ ignore_100_continue } ) )
+	my $EE = eval { require Zevenet::HTTP::Ext; } ? 1 : undef;
+
+	if ( $EE )
 	{
-		if ( $json_obj->{ ignore_100_continue } !~ /^(?:true|false)$/ )
+		# Enable or disable ignore 100 continue header
+		if ( exists ( $json_obj->{ ignore_100_continue } ) )
 		{
-			my $msg = "Invalid ignore_100_continue value.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		my $action = 0;
-		$action = 1 if ( $json_obj->{ ignore_100_continue } =~ /^true$/ );
-
-		if ( &getHTTPFarm100Continue( $farmname ) != $action )
-		{
-			my $status = &setHTTPFarm100Continue( $farmname, $action );
-			if ( $status == -1 )
+			if ( $json_obj->{ ignore_100_continue } !~ /^(?:true|false)$/ )
 			{
-				my $msg = "Some errors happened trying to modify the certname.";
+				my $msg = "Invalid ignore_100_continue value.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
-			$restart_flag = "true";
+			my $action = 0;
+			$action = 1 if ( $json_obj->{ ignore_100_continue } =~ /^true$/ );
+
+			if ( &getHTTPFarm100Continue( $farmname ) != $action )
+			{
+				my $status = &setHTTPFarm100Continue( $farmname, $action );
+				if ( $status == -1 )
+				{
+					my $msg = "Some errors happened trying to modify the certname.";
+					&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				}
+
+				$restart_flag = "true";
+			}
 		}
 	}
 
