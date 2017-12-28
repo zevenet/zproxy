@@ -52,7 +52,7 @@ sub getBackup
 
 	foreach my $line ( @files )
 	{
-		my $filepath = "$backupdir$line";
+		my $filepath = "$backupdir/$line";
 		chomp ( $filepath );
 
 		$line =~ s/backup-($backup_re).tar.gz/$1/;
@@ -224,7 +224,7 @@ sub deleteBackup
 	my $file      = shift;
 	$file      = "backup-$file.tar.gz";
 	my $backupdir = &getGlobalConfiguration( "backupdir" );
-	my $filepath  = "$backupdir$file";
+	my $filepath  = "$backupdir/$file";
 	my $error;
 
 	if ( -e $filepath )
