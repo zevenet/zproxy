@@ -28,6 +28,7 @@ sub get_farm_struct
 {
 	my $farmname = shift;
 	my $output_params;
+
 	my @out_cn;
 	my $connto          = 0 + &getFarmConnTO( $farmname );
 	my $timeout         = 0 + &getHTTPFarmTimeout( $farmname );
@@ -99,25 +100,31 @@ sub get_farm_struct
 	my $err503 = &getFarmErr( $farmname, "503" );
 
 	my $status = &getFarmVipStatus( $farmname );
-	my $ignore100continue = (&getHTTPFarm100Continue( $farmname ))? "true": "false";
 
-	$output_params = {
-		status          => $status,
-		restimeout      => $timeout,
-		contimeout      => $connto,
-		resurrectime    => $alive,
-		reqtimeout      => $client,
-		rewritelocation => $rewritelocation,
-		ignore_100_continue => $ignore100continue,
-		httpverb        => $httpverb,
-		listener        => $type,
-		vip             => $vip,
-		vport           => $vport,
-		error500        => $err500,
-		error414        => $err414,
-		error501        => $err501,
-		error503        => $err503
-	  };
+	my $output_params = {
+						  status              => $status,
+						  restimeout          => $timeout,
+						  contimeout          => $connto,
+						  resurrectime        => $alive,
+						  reqtimeout          => $client,
+						  rewritelocation     => $rewritelocation,
+						  httpverb            => $httpverb,
+						  listener            => $type,
+						  vip                 => $vip,
+						  vport               => $vport,
+						  error500            => $err500,
+						  error414            => $err414,
+						  error501            => $err501,
+						  error503            => $err503
+	};
+
+	my $EE = eval { require Zevenet::HTTP::Ext; } ? 1 : undef;
+
+	if ( $EE )
+	{
+		$output_params->{ ignore_100_continue } =
+		  ( &getHTTPFarm100Continue( $farmname ) ) ? "true" : "false";
+	}
 
 	if ( $type eq "https" )
 	{
