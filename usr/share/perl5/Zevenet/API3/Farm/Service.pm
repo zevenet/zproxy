@@ -474,7 +474,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 					);
 				}
 			}
-		}		
+		}
 
 		if ( exists ( $json_obj->{ leastresp } ) )
 		{
@@ -505,67 +505,12 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			}
 		}
 
-		if ( exists ( $json_obj->{ cookieinsert } ) )
+		# Cookie insertion
+		if ( scalar grep ( /^cookie/, keys $json_obj ) )
 		{
-			if ( $json_obj->{ cookieinsert } =~ /^$/ )
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookieinsert, can't be blank."
-				);
-			}
-			elsif ( $json_obj->{ cookieinsert } =~ /^true|false$/ )
-			{
-				if ( ( $json_obj->{ cookieinsert } eq "true" ) )
-				{
-					&setFarmVS( $farmname, $service, "cookieins", $json_obj->{ cookieinsert } );
-				}
-				elsif ( ( $json_obj->{ cookieinsert } eq "false" ) )
-				{
-					&setFarmVS( $farmname, $service, "cookieins", "" );
-				}
-			}
-			else
-			{
-				$error = "true";
-				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookieinsert."
-				);
-			}
-		}
-
-		my $cookieins_status = &getHTTPFarmVS ($farmname,$service, 'cookieins');
-		if ( $json_obj->{ cookieinsert } eq "true"  || $cookieins_status eq 'true' )
-		{
-			if ( exists ( $json_obj->{ cookiedomain } ) )
-			{
-				&setFarmVS( $farmname, $service, "cookieins-domain", $json_obj->{ cookiedomain } );
-			}
-
-			if ( exists ( $json_obj->{ cookiename } ) )
-			{
-				&setFarmVS( $farmname, $service, "cookieins-name", $json_obj->{ cookiename } );
-			}
-
-			if ( exists ( $json_obj->{ cookiepath } ) )
-			{
-				&setFarmVS( $farmname, $service, "cookieins-path", $json_obj->{ cookiepath } );
-			}
-
-			if ( exists ( $json_obj->{ cookiettl } ) )
-			{
-				if ( $json_obj->{ cookiettl } =~ /^$/ )
-				{
-					$error = "true";
-					&zenlog(
-						"ZAPI error, trying to modify the service $service in a farm $farmname, invalid cookiettl, can't be blank."
-					);
-				}
-				else
-				{
-					&setFarmVS( $farmname, $service, "cookieins-ttlc", $json_obj->{ cookiettl } );
-				}
-			}
+			require Zevenet::API31::HTTP;
+			require Zevenet::Farm::HTTP::Service::Ext;
+			&modify_service_cookie_intertion( $farmname, $service, $json_obj );
 		}
 
 		if ( exists ( $json_obj->{ httpsb } ) )
@@ -614,21 +559,21 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		{
 			# change to number format
 			$json_obj->{ deftcpport } += 0;
-			
+
 			my $old_deftcpport = &getGSLBFarmVS ($farmname,$service, 'dpc');
 			require Zevenet::Farm::Config;
 			&setFarmVS( $farmname, $service, "dpc", $json_obj->{ deftcpport } );
-			
+
 			# Update farmguardian
 			require Zevenet::Farm::GSLB::FarmGuardian;
 			my ( $fgTime, $fgScript ) = &getGSLBFarmGuardianParams( $farmname, $service );
-			
+
 			# Changing farm guardian port check
 			if ( $fgScript =~ s/-p $old_deftcpport/-p $json_obj->{ deftcpport }/ )
 			{
 				&setGSLBFarmGuardianParams( $farmname, $service, 'cmd', $fgScript );
 			}
-			
+
 			if ( $? eq 0 )
 			{
 				require Zevenet::Farm::GSLB::Config;
@@ -670,7 +615,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			$body->{ status } = 'needed restart';
 			$body->{ info } = "There're changes that need to be applied, stop and start farm to apply them!";
 		}
-		
+
 		&httpResponse({ code => 200, body => $body });
 	}
 	else
@@ -849,7 +794,7 @@ sub delete_service # ( $farmname, $service )
 	}
 
 	my $type = &getFarmType( $farmname );
-	
+
 	# Check that the provided service is configured in the farm
 	my @services;
 	if ($type eq "gslb")
@@ -886,7 +831,7 @@ sub delete_service # ( $farmname, $service )
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	
+
 	my $return;
 	if ( $type eq "http" || $type eq "https" )
 	{

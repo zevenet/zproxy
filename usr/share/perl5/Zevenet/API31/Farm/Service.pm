@@ -335,51 +335,17 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 		}
 	}
 
-	if ( exists ( $json_obj->{ cookieinsert } ) )
+	# Cookie insertion
+	if ( scalar grep( /^cookie/, keys $json_obj ) )
 	{
-		if ( $json_obj->{ cookieinsert } eq "true" )
+		if ( eval { require Zevenet::API31::Farm::Service::Ext; } )
 		{
-			&setFarmVS( $farmname, $service, "cookieins", $json_obj->{ cookieinsert } );
-		}
-		elsif ( $json_obj->{ cookieinsert } eq "false" )
-		{
-			&setFarmVS( $farmname, $service, "cookieins", "" );
+			&modify_service_cookie_intertion( $farmname, $service, $json_obj );
 		}
 		else
 		{
-			my $msg = "Invalid cookieinsert value.";
+			my $msg = "Cookie insertion feature not available.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
-	my $cookieins_status = &getHTTPFarmVS( $farmname, $service, 'cookieins' );
-	if ( $cookieins_status eq "true" )
-	{
-		if ( exists $json_obj->{ cookiedomain } )
-		{
-			&setFarmVS( $farmname, $service, "cookieins-domain",
-						$json_obj->{ cookiedomain } );
-		}
-
-		if ( exists $json_obj->{ cookiename } )
-		{
-			&setFarmVS( $farmname, $service, "cookieins-name", $json_obj->{ cookiename } );
-		}
-
-		if ( exists $json_obj->{ cookiepath } )
-		{
-			&setFarmVS( $farmname, $service, "cookieins-path", $json_obj->{ cookiepath } );
-		}
-
-		if ( exists $json_obj->{ cookiettl } )
-		{
-			if ( $json_obj->{ cookiettl } eq '' )
-			{
-				my $msg = "Invalid cookiettl, can't be blank.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
-
-			&setFarmVS( $farmname, $service, "cookieins-ttlc", $json_obj->{ cookiettl } );
 		}
 	}
 
