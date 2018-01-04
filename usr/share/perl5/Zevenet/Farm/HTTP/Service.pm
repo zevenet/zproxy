@@ -29,17 +29,17 @@ my $configdir = &getGlobalConfiguration( 'configdir' );
 Function: setFarmHTTPNewService
 
 	Create a new Service in a HTTP farm
-	
+
 Parameters:
 	farmname - Farm name
 	service - Service name
 
 Returns:
 	Integer - Error code: 0 on success, other value on failure
-		
+
 FIXME:
 	This function returns nothing, do error control
-		
+
 =cut
 
 sub setFarmHTTPNewService    # ($farm_name,$service)
@@ -149,14 +149,14 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 Function: setFarmNewService
 
 	[Not used] Create a new Service in a HTTP farm
-	
+
 Parameters:
 	farmname - Farm name
 	service - Service name
 
 Returns:
 	Integer - Error code: 0 on success, other value on failure
-		
+
 =cut
 
 sub setFarmNewService    # ($farm_name,$service)
@@ -178,17 +178,17 @@ sub setFarmNewService    # ($farm_name,$service)
 Function: deleteFarmService
 
 	Delete a service in a Farm
-	
+
 Parameters:
 	farmname - Farm name
 	service - Service name
 
 Returns:
 	Integer - Error code: 0 on success, -1 on failure
-		
+
 FIXME:
 	Rename function to delHTTPFarmService
-		
+
 =cut
 
 sub deleteFarmService    # ($farm_name,$service)
@@ -280,16 +280,16 @@ sub deleteFarmService    # ($farm_name,$service)
 Function: getHTTPFarmServices
 
 	Get an array containing service name that are configured in a http farm
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Array - service names
-	
-FIXME: 
+
+FIXME:
 	&getHTTPFarmVS(farmname) does same but in a string
-		
+
 =cut
 
 sub getHTTPFarmServices
@@ -324,7 +324,7 @@ sub getHTTPFarmServices
 Function: moveService
 
 	Move a HTTP service to change its preference. This function changes the possition of a service in farm config file
-	
+
 Parameters:
 	farmname - Farm name
 	move - Direction where it moves the service. The possbile value are: "down", decrease the priority or "up", increase the priority
@@ -332,11 +332,11 @@ Parameters:
 
 Returns:
 	integer - Always return 0
-	
-FIXME: 
+
+FIXME:
 	Rename function to setHTTPFarmMoveService
 	Always return 0, create error control
-		
+
 =cut
 
 sub moveService    # moveService ( $farmName, $move, $serviceSelect);
@@ -446,7 +446,7 @@ sub moveService    # moveService ( $farmName, $move, $serviceSelect);
 Function: moveServiceFarmStatus
 
 	Modify the service index in status file ( farmname_status.cfg ). For updating farmguardian backend status.
-	
+
 Parameters:
 	farmname - Farm name
 	move - Direction where it moves the service. The possbile value are: "down", decrease the priority or "up", increase the priority
@@ -454,11 +454,11 @@ Parameters:
 
 Returns:
 	integer - Always return 0
-	
-FIXME: 
+
+FIXME:
 	Rename function to setHTTPFarmMoveServiceStatusFile
 	Always return 0, create error control
-		
+
 =cut
 
 sub moveServiceFarmStatus
@@ -532,14 +532,14 @@ sub moveServiceFarmStatus
 Function: getHTTPServiceStruct
 
 	Get a struct with all parameters of a HTTP service
-	
+
 Parameters:
 	farmname - Farm name
 	service - Farm name
 
 Returns:
 	hash ref - hash with service configuration
-	
+
 	Example output:
 	{
 	  "services" : {
@@ -553,11 +553,6 @@ Returns:
             "weight" : null
          }
       ],
-      "cookiedomain" : "",
-      "cookieinsert" : "false",
-      "cookiename" : "",
-      "cookiepath" : "",
-      "cookiettl" : 0,
       "fgenabled" : "false",
       "fglog" : "false",
       "fgscript" : "",
@@ -575,6 +570,15 @@ Returns:
       }
     };
 
+	Enterprise Edition also includes:
+
+      ...
+      "cookiedomain" : "",
+      "cookieinsert" : "false",
+      "cookiename" : "",
+      "cookiepath" : "",
+      "cookiettl" : 0,
+      ...
 =cut
 
 sub getHTTPServiceStruct
@@ -586,89 +590,74 @@ sub getHTTPServiceStruct
 
 	my $service = -1;
 
-	#http services
+	# http services
 	my $services = &getHTTPFarmVS( $farmname, "", "" );
 	my @serv = split ( "\ ", $services );
 
-	foreach my $s ( @serv )
+	# return error if service is not found
+	return $service unless grep( { $servicename eq $_ } @serv );
+
+	my $vser         = &getHTTPFarmVS( $farmname, $s, "vs" );
+	my $urlp         = &getHTTPFarmVS( $farmname, $s, "urlp" );
+	my $redirect     = &getHTTPFarmVS( $farmname, $s, "redirect" );
+	my $redirecttype = &getHTTPFarmVS( $farmname, $s, "redirecttype" );
+	my $session      = &getHTTPFarmVS( $farmname, $s, "sesstype" );
+	my $ttl          = &getHTTPFarmVS( $farmname, $s, "ttl" );
+	my $sesid        = &getHTTPFarmVS( $farmname, $s, "sessionid" );
+	my $dyns         = &getHTTPFarmVS( $farmname, $s, "dynscale" );
+	my $httpsbe      = &getHTTPFarmVS( $farmname, $s, "httpsbackend" );
+
+	if ( $dyns =~ /^$/ )
 	{
-		if ( $s eq $servicename )
-		{
-			my $vser         = &getHTTPFarmVS( $farmname, $s, "vs" );
-			my $urlp         = &getHTTPFarmVS( $farmname, $s, "urlp" );
-			my $redirect     = &getHTTPFarmVS( $farmname, $s, "redirect" );
-			my $redirecttype = &getHTTPFarmVS( $farmname, $s, "redirecttype" );
-			my $session      = &getHTTPFarmVS( $farmname, $s, "sesstype" );
-			my $ttl          = &getHTTPFarmVS( $farmname, $s, "ttl" );
-			my $sesid        = &getHTTPFarmVS( $farmname, $s, "sessionid" );
-			my $dyns         = &getHTTPFarmVS( $farmname, $s, "dynscale" );
-			my $httpsbe      = &getHTTPFarmVS( $farmname, $s, "httpsbackend" );
-			my $cookiei      = &getHTTPFarmVS( $farmname, $s, "cookieins" );
+		$dyns = "false";
+	}
+	if ( $httpsbe =~ /^$/ )
+	{
+		$httpsbe = "false";
+	}
 
-			if ( $cookiei eq "" )
-			{
-				$cookiei = "false";
-			}
+	my @fgconfig  = &getFarmGuardianConf( $farmname, $s );
+	my $fgttcheck = $fgconfig[1];
+	my $fgscript  = $fgconfig[2];
+	my $fguse     = $fgconfig[3];
+	my $fglog     = $fgconfig[4];
 
-			my $cookieinsname = &getHTTPFarmVS( $farmname, $s, "cookieins-name" );
-			my $domainname    = &getHTTPFarmVS( $farmname, $s, "cookieins-domain" );
-			my $path          = &getHTTPFarmVS( $farmname, $s, "cookieins-path" );
-			my $ttlc          = &getHTTPFarmVS( $farmname, $s, "cookieins-ttlc" );
+	# Default values for farm guardian parameters
+	if ( !$fgttcheck ) { $fgttcheck = 5; }
+	if ( !$fguse )     { $fguse     = "false"; }
+	if ( !$fglog )     { $fglog     = "false"; }
+	if ( !$fgscript )  { $fgscript  = ""; }
 
-			if ( $dyns =~ /^$/ )
-			{
-				$dyns = "false";
-			}
-			if ( $httpsbe =~ /^$/ )
-			{
-				$httpsbe = "false";
-			}
+	$fgscript =~ s/\n//g;
+	$fguse =~ s/\n//g;
 
-			my @fgconfig  = &getFarmGuardianConf( $farmname, $s );
-			my $fgttcheck = $fgconfig[1];
-			my $fgscript  = $fgconfig[2];
-			my $fguse     = $fgconfig[3];
-			my $fglog     = $fgconfig[4];
+	my $backends = &getHTTPFarmBackends( $farmname, $s );
 
-			# Default values for farm guardian parameters
-			if ( !$fgttcheck ) { $fgttcheck = 5; }
-			if ( !$fguse )     { $fguse     = "false"; }
-			if ( !$fglog )     { $fglog     = "false"; }
-			if ( !$fgscript )  { $fgscript  = ""; }
+	$ttlc      = 0 unless $ttlc;
+	$ttl       = 0 unless $ttl;
+	$fgttcheck = 0 unless $fgttcheck;
 
-			$fgscript =~ s/\n//g;
-			$fguse =~ s/\n//g;
+	$service = {
+				 id           => $s,
+				 vhost        => $vser,
+				 urlp         => $urlp,
+				 redirect     => $redirect,
+				 redirecttype => $redirecttype,
+				 persistence  => $session,
+				 ttl          => $ttl + 0,
+				 sessionid    => $sesid,
+				 leastresp    => $dyns,
+				 httpsb       => $httpsbe,
+				 fgtimecheck  => $fgttcheck + 0,
+				 fgscript     => $fgscript,
+				 fgenabled    => $fguse,
+				 fglog        => $fglog,
+				 backends     => $backends,
+	};
 
-			my $backends = &getHTTPFarmBackends( $farmname, $s );
-
-			$ttlc      = 0 unless $ttlc;
-			$ttl       = 0 unless $ttl;
-			$fgttcheck = 0 unless $fgttcheck;
-
-			$service = {
-						 id           => $s,
-						 vhost        => $vser,
-						 urlp         => $urlp,
-						 redirect     => $redirect,
-						 redirecttype => $redirecttype,
-						 cookieinsert => $cookiei,
-						 cookiename   => $cookieinsname,
-						 cookiedomain => $domainname,
-						 cookiepath   => $path,
-						 cookiettl    => $ttlc + 0,
-						 persistence  => $session,
-						 ttl          => $ttl + 0,
-						 sessionid    => $sesid,
-						 leastresp    => $dyns,
-						 httpsb       => $httpsbe,
-						 fgtimecheck  => $fgttcheck + 0,
-						 fgscript     => $fgscript,
-						 fgenabled    => $fguse,
-						 fglog        => $fglog,
-						 backends     => $backends,
-			};
-			last;
-		}
+	if ( eval { require Zevenet::API31::Farm::Service::Ext; } )
+	{
+		&add_service_cookie_intertion( $farmname, $service );
 	}
 
 	return $service;
@@ -682,8 +671,7 @@ Function: getHTTPFarmVS
 Parameters:
 	farmname - Farm name
 	service - Service name
-	tag - Indicate which field will be returned. The options are: vs, urlp, redirect, redirecttype, cookieins, cookieins-name, cookieins-domain,
-	cookieins-path, cookieins-ttlc, dynscale, sesstype, ttl, sessionid, httpsbackend or backends
+	tag - Indicate which field will be returned. The options are: vs, urlp, redirect, redirecttype, dynscale, sesstype, ttl, sessionid, httpsbackend or backends
 
 Returns:
 	scalar - if service and tag is blank, return all services in a string: "service0 service1 ..." else return the parameter value
@@ -790,76 +778,6 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 			{
 				if    ( $line =~ /Redirect / )       { $output = "default"; }
 				elsif ( $line =~ /RedirectAppend / ) { $output = "append"; }
-				last;
-			}
-		}
-
-		#cookie insertion
-		if ( $tag eq "cookieins" )
-		{
-			if ( $line =~ "BackendCookie \"" && $sw == 1 && $line !~ "#" )
-			{
-				$output = "true";
-				last;
-			}
-		}
-
-		#cookie insertion name
-		if ( $tag eq "cookieins-name" )
-		{
-			if ( $line =~ "BackendCookie \"" && $sw == 1 && $line !~ "#" )
-			{
-				$l = $line;
-				$l =~ s/\t\t//g;
-				$l =~ s/\"//g;
-				my @values = split ( "\ ", $l );
-				$output = $values[1];
-				chomp ( $output );
-				last;
-			}
-		}
-
-		#cookie insertion Domain
-		if ( $tag eq "cookieins-domain" )
-		{
-			if ( $line =~ "BackendCookie \"" && $sw == 1 && $line !~ "#" )
-			{
-				$l = $line;
-				$l =~ s/\t\t//g;
-				$l =~ s/\"//g;
-				my @values = split ( "\ ", $l );
-				$output = $values[2];
-				chomp ( $output );
-				last;
-			}
-		}
-
-		#cookie insertion Path
-		if ( $tag eq "cookieins-path" )
-		{
-			if ( $line =~ "BackendCookie \"" && $sw == 1 && $line !~ "#" )
-			{
-				$l = $line;
-				$l =~ s/\t\t//g;
-				$l =~ s/\"//g;
-				my @values = split ( "\ ", $l );
-				$output = $values[3];
-				chomp ( $output );
-				last;
-			}
-		}
-
-		#cookie insertion TTL
-		if ( $tag eq "cookieins-ttlc" )
-		{
-			if ( $line =~ "BackendCookie \"" && $sw == 1 && $line !~ "#" )
-			{
-				$l = $line;
-				$l =~ s/\t\t//g;
-				$l =~ s/\"//g;
-				my @values = split ( "\ ", $l );
-				$output = $values[4];
-				chomp ( $output );
 				last;
 			}
 		}
@@ -1000,11 +918,10 @@ sub getHTTPFarmVS    # ($farm_name,$service,$tag)
 =begin nd
 Function: setHTTPFarmVS
 
-	Set values for service parameters. The parameters are: vs, urlp, redirect, redirectappend, cookieins, cookieins-name, cookieins-domain,
-	cookieins-path, cookieins-ttlc, dynscale, sesstype, ttl, sessionid, httpsbackend or backends
-	
+	Set values for service parameters. The parameters are: vs, urlp, redirect, redirectappend, dynscale, sesstype, ttl, sessionid, httpsbackend or backends
+
 	A blank string comment the tag field in config file
-	
+
 Parameters:
 	farmname - Farm name
 	service - Service name
@@ -1013,7 +930,7 @@ Parameters:
 
 Returns:
 	Integer - Error code: 0 on success or -1 on failure
-		
+
 =cut
 
 sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
@@ -1099,78 +1016,6 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 				my $redirect_code = $1 // "";
 
 				$line = "\t\t${comment}${policy} $redirect_code\"$string\"";
-				last;
-			}
-		}
-
-		#cookie insertion name
-		if ( $tag eq "cookieins-name" )
-		{
-			if ( $line =~ /^\t\t#?BackendCookie/ && $sw == 1 && $string ne "" )
-			{
-				$l = $line;
-				$l =~ s/\t\t//g;
-				my @values = split ( "\ ", $l );
-				$values[1] =~ s/\"//g;
-				$line = "\t\tBackendCookie \"$string\" $values[2] $values[3] $values[4]";
-				last;
-			}
-		}
-
-		#cookie insertion domain
-		if ( $tag eq "cookieins-domain" )
-		{
-			if ( $line =~ /^\t\t#?BackendCookie/ && $sw == 1 && $string ne "" )
-			{
-				$l = $line;
-				$l =~ s/\t\t//g;
-				my @values = split ( "\ ", $l );
-				$values[2] =~ s/\"//g;
-				$line = "\t\tBackendCookie $values[1] \"$string\" $values[3] $values[4]";
-				last;
-			}
-		}
-
-		#cookie insertion path
-		if ( $tag eq "cookieins-path" )
-		{
-			if ( $line =~ /^\t\t#?BackendCookie/ && $sw == 1 && $string ne "" )
-			{
-				$l = $line;
-				$l =~ s/\t\t//g;
-				my @values = split ( "\ ", $l );
-				$values[3] =~ s/\"//g;
-				$line = "\t\tBackendCookie $values[1] $values[2] \"$string\" $values[4]";
-				last;
-			}
-		}
-
-		#cookie insertion TTL
-		if ( $tag eq "cookieins-ttlc" )
-		{
-			if ( $line =~ /^\t\t#?BackendCookie/ && $sw == 1 && $string ne "" )
-			{
-				$l = $line;
-				$l =~ s/\t\t//g;
-				my @values = split ( "\ ", $l );
-				$values[4] =~ s/\"//g;
-				$line = "\t\tBackendCookie $values[1] $values[2] $values[3] $string";
-				last;
-			}
-		}
-
-		#cookie ins
-		if ( $tag eq "cookieins" )
-		{
-			if ( $line =~ /^\t\t#BackendCookie/ && $sw == 1 && $string ne "" )
-			{
-				$line =~ s/#//g;
-				last;
-			}
-			if ( $line =~ /^\t\tBackendCookie/ && $sw == 1 && $string eq "" )
-			{
-				$line =~ s/\t\t//g;
-				$line = "\t\t#$line";
 				last;
 			}
 		}
@@ -1324,9 +1169,9 @@ Parameters:
 	service - Service name
 
 Returns:
-	integer - Service index 
+	integer - Service index
 
-FIXME: 
+FIXME:
 	Initialize output to -1 and do error control
 	Rename with intuitive name, something like getHTTPFarmServiceIndex
 =cut
