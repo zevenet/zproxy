@@ -583,29 +583,29 @@ Returns:
 
 sub getHTTPServiceStruct
 {
-	my ( $farmname, $servicename ) = @_;
+	my ( $farmname, $service_name ) = @_;
 
 	require Zevenet::FarmGuardian;
 	require Zevenet::Farm::HTTP::Backend;
 
-	my $service = -1;
+	my $service_ref = -1;
 
 	# http services
 	my $services = &getHTTPFarmVS( $farmname, "", "" );
-	my @serv = split ( "\ ", $services );
+	my @serv = split ( ' ', $services );
 
 	# return error if service is not found
-	return $service unless grep( { $servicename eq $_ } @serv );
+	return $service_ref unless grep( { $service_name eq $_ } @serv );
 
-	my $vser         = &getHTTPFarmVS( $farmname, $s, "vs" );
-	my $urlp         = &getHTTPFarmVS( $farmname, $s, "urlp" );
-	my $redirect     = &getHTTPFarmVS( $farmname, $s, "redirect" );
-	my $redirecttype = &getHTTPFarmVS( $farmname, $s, "redirecttype" );
-	my $session      = &getHTTPFarmVS( $farmname, $s, "sesstype" );
-	my $ttl          = &getHTTPFarmVS( $farmname, $s, "ttl" );
-	my $sesid        = &getHTTPFarmVS( $farmname, $s, "sessionid" );
-	my $dyns         = &getHTTPFarmVS( $farmname, $s, "dynscale" );
-	my $httpsbe      = &getHTTPFarmVS( $farmname, $s, "httpsbackend" );
+	my $vser         = &getHTTPFarmVS( $farmname, $service_name, "vs" );
+	my $urlp         = &getHTTPFarmVS( $farmname, $service_name, "urlp" );
+	my $redirect     = &getHTTPFarmVS( $farmname, $service_name, "redirect" );
+	my $redirecttype = &getHTTPFarmVS( $farmname, $service_name, "redirecttype" );
+	my $session      = &getHTTPFarmVS( $farmname, $service_name, "sesstype" );
+	my $ttl          = &getHTTPFarmVS( $farmname, $service_name, "ttl" );
+	my $sesid        = &getHTTPFarmVS( $farmname, $service_name, "sessionid" );
+	my $dyns         = &getHTTPFarmVS( $farmname, $service_name, "dynscale" );
+	my $httpsbe      = &getHTTPFarmVS( $farmname, $service_name, "httpsbackend" );
 
 	if ( $dyns =~ /^$/ )
 	{
@@ -616,7 +616,7 @@ sub getHTTPServiceStruct
 		$httpsbe = "false";
 	}
 
-	my @fgconfig  = &getFarmGuardianConf( $farmname, $s );
+	my @fgconfig  = &getFarmGuardianConf( $farmname, $service_name );
 	my $fgttcheck = $fgconfig[1];
 	my $fgscript  = $fgconfig[2];
 	my $fguse     = $fgconfig[3];
@@ -631,36 +631,35 @@ sub getHTTPServiceStruct
 	$fgscript =~ s/\n//g;
 	$fguse =~ s/\n//g;
 
-	my $backends = &getHTTPFarmBackends( $farmname, $s );
+	my $backends = &getHTTPFarmBackends( $farmname, $service_name );
 
-	$ttlc      = 0 unless $ttlc;
 	$ttl       = 0 unless $ttl;
 	$fgttcheck = 0 unless $fgttcheck;
 
-	$service = {
-				 id           => $s,
-				 vhost        => $vser,
-				 urlp         => $urlp,
-				 redirect     => $redirect,
-				 redirecttype => $redirecttype,
-				 persistence  => $session,
-				 ttl          => $ttl + 0,
-				 sessionid    => $sesid,
-				 leastresp    => $dyns,
-				 httpsb       => $httpsbe,
-				 fgtimecheck  => $fgttcheck + 0,
-				 fgscript     => $fgscript,
-				 fgenabled    => $fguse,
-				 fglog        => $fglog,
-				 backends     => $backends,
+	$service_ref = {
+					 id           => $service_name,
+					 vhost        => $vser,
+					 urlp         => $urlp,
+					 redirect     => $redirect,
+					 redirecttype => $redirecttype,
+					 persistence  => $session,
+					 ttl          => $ttl + 0,
+					 sessionid    => $sesid,
+					 leastresp    => $dyns,
+					 httpsb       => $httpsbe,
+					 fgtimecheck  => $fgttcheck + 0,
+					 fgscript     => $fgscript,
+					 fgenabled    => $fguse,
+					 fglog        => $fglog,
+					 backends     => $backends,
 	};
 
 	if ( eval { require Zevenet::API31::Farm::Service::Ext; } )
 	{
-		&add_service_cookie_intertion( $farmname, $service );
+		&add_service_cookie_intertion( $farmname, $service_ref );
 	}
 
-	return $service;
+	return $service_ref;
 }
 
 =begin nd
