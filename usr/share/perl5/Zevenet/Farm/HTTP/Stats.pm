@@ -27,7 +27,7 @@ use strict;
 Function: getHTTPBackendEstConns
 
 	Get all ESTABLISHED connections for a backend
-	 
+
 Parameters:
 	farmname - Farm name
 	ip_backend - IP backend
@@ -36,10 +36,10 @@ Parameters:
 
 Returns:
 	array - Return all ESTABLISHED conntrack lines for the backend
-	
+
 BUG:
 	it is possible filter using farm Vip and port too. If a backend if defined in more than a farm, here it appers all them
-	
+
 =cut
 sub getHTTPBackendEstConns     # ($farm_name,$ip_backend,$port_backend,@netstat)
 {
@@ -59,7 +59,7 @@ sub getHTTPBackendEstConns     # ($farm_name,$ip_backend,$port_backend,@netstat)
 Function: getHTTPFarmEstConns
 
 	Get all ESTABLISHED connections for a farm
-	 
+
 Parameters:
 	farmname - Farm name
 	netstat - Conntrack -L output
@@ -87,7 +87,7 @@ sub getHTTPFarmEstConns    # ($farm_name,@netstat)
 Function: getHTTPBackendSYNConns
 
 	Get all SYN connections for a backend
-	 
+
 Parameters:
 	farmname - Farm name
 	ip_backend - IP backend
@@ -99,7 +99,7 @@ Returns:
 
 BUG:
 	it is possible filter using farm Vip and port too. If a backend if defined in more than a farm, here it appers all them
-	
+
 =cut
 sub getHTTPBackendSYNConns  # ($farm_name, $ip_backend, $port_backend, @netstat)
 {
@@ -115,7 +115,7 @@ sub getHTTPBackendSYNConns  # ($farm_name, $ip_backend, $port_backend, @netstat)
 Function: getHTTPFarmSYNConns
 
 	Get all SYN connections for a farm
-	 
+
 Parameters:
 	farmname - Farm name
 	netstat - Conntrack -L output
@@ -144,14 +144,14 @@ sub getHTTPFarmSYNConns     # ($farm_name, @netstat)
 Function: getHTTPFarmBackendsStats
 
 	This function is the same than getHTTPFarmBackendsStatus_old but return a hash with http farm information
-	This function take data from pounctl and it gives hash format 
-	
+	This function take data from pounctl and it gives hash format
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	hash ref - hash with backend farm stats
-		
+
 		backends =>
 		[
 			{
@@ -162,7 +162,7 @@ Returns:
 				"established" = $established_connections
 			}
 		]
-		
+
 		sessions =>
 		[
 			{
@@ -171,10 +171,10 @@ Returns:
 				"backends" = $backend_id
 			}
 		]
-		
-FIXME: 
+
+FIXME:
 		Put output format same format than "GET /stats/farms/BasekitHTTP"
-		
+
 =cut
 sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 {
@@ -187,15 +187,16 @@ sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 	my $serviceName;
 	my $hashService;
 	my $firstService = 1;
-	
+
 	require Zevenet::Farm::Base;
 	require Zevenet::Farm::HTTP::Config;
 	my $fvip = &getFarmVip( "vip", $farm_name );
-	
+
 	my $service_re = &getValidFormat( 'service' );
 
+	# Get pound info
 	#i.e. of poundctl:
-	
+
 	#Requests in queue: 0
 	#0. http Listener 185.76.64.223:80 a
 		#0. Service "HTTP" active (4)
@@ -205,6 +206,7 @@ sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 		#3. Backend 172.16.110.12:80 active (1 0.826 sec) alive (75)
 	my @poundctl = &getHTTPFarmGlobalStatus ($farm_name);
 
+	# Parse pound info
 	foreach my $line ( @poundctl )
 	{
 		#i.e.
@@ -213,17 +215,18 @@ sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 		#~ {
 			#~ $stats->{ "queue" } = $1;
 		#~ }
-		
+
 		# i.e.
 		#     0. Service "HTTP" active (10)
 		if ( $line =~ /(\d+)\. Service "($service_re)"/ )
 		{
 			$serviceName = $2;
 		}
-			
+
+		# Parse backend connections
 		# i.e.
 		#      0. Backend 192.168.100.254:80 active (5 0.000 sec) alive (0)
-		if ( $line =~ /(\d+)\. Backend (\d+\.\d+\.\d+\.\d+):(\d+) (\w+) .+ (\w+) \((\d+)\)/ )
+		if ( $line =~ /(\d+)\. Backend (\d+\.\d+\.\d+\.\d+):(\d+) (\w+) .+ (\w+)(?: \((\d+)\))?/ )
 		{
 			my $backendHash = {
 								id          => $1 + 0,
@@ -231,10 +234,11 @@ sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 								port        => $3 + 0,
 								status      => $5,
 								pending     => 0,
-								established => $6 + 0,
 								service     => $serviceName,
 			};
-				
+
+			$backendHash->{ established } = $6 + 0 if defined $6;
+
 			# Getting real status
 			my $backend_disabled = $4;
 			if ( $backend_disabled eq "DISABLED" )
@@ -243,7 +247,7 @@ sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 				#Checkstatusfile
 				$backendHash->{ "status" } =
 				  &getHTTPBackendStatusFromFile( $farm_name, $backendHash->{id}, $serviceName );
-				 
+
 				# not show fgDOWN status
 				$backendHash->{ "status" } = "down" if ( $backendHash->{ "status" } eq "fgDOWN" );
 			}
@@ -255,7 +259,7 @@ sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 			{
 				$backendHash->{ "status" } = "down";
 			}
-			
+
 			# Getting pending connections
 			require Zevenet::Net::ConnStats;
 			require Zevenet::Farm::Stats;
@@ -263,12 +267,13 @@ sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 			my @netstat = &getConntrack( $fvip, $backendHash->{ ip }, "", "", "tcp" );
 			my @synnetstatback =
 				&getBackendSYNConns( $farm_name, $backendHash->{ ip }, $backendHash->{ port }, @netstat );
-			my $npend = @synnetstatback; 
+			my $npend = @synnetstatback;
 			$backendHash->{ pending } = $npend;
-				
+
 			push @{ $stats->{backends} }, $backendHash;
 		}
 
+		# Parse sessions
 		# i.e.
 		#      1. Session 107.178.194.117 -> 1
 		if ( $line =~ /(\d+)\. Session (.+) \-\> (\d+)/ )
@@ -281,9 +286,9 @@ sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 				service => $serviceName,
 			  };
 		}
-		
+
 	}
-	
+
 	return $stats;
 }
 
