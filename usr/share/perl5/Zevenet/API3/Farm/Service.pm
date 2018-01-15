@@ -642,6 +642,8 @@ sub move_services
 	my ( $json_obj, $farmname, $service ) = @_;
 
 	require Zevenet::Farm::HTTP::Service;
+	require Zevenet::Farm::HTTP::Service::Ext;
+
 	my @services = &getHTTPFarmServices( $farmname );
 	my $services_num = scalar @services;
 	my $description = "Move service";

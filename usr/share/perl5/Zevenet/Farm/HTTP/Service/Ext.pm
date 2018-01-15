@@ -25,6 +25,8 @@ use strict;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
+# Cookie insertion
+
 =begin nd
 Function: getHTTPServiceCookieIns
 
@@ -46,7 +48,6 @@ Returns:
 	   ttl     => 60,			# Time to live in seconds
 	}
 =cut
-
 sub getHTTPServiceCookieIns    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
@@ -134,7 +135,6 @@ Returns:
 	Integer - Error code: 0 on success or -1 on failure
 
 =cut
-
 sub setHTTPServiceCookieIns    # ($farm_name,$service,$ci)
 {
 	my ( $farm_name, $service, $ci ) = @_;
@@ -194,6 +194,215 @@ sub add_service_cookie_intertion
 	$service->{ cookiettl }    = $ci->{ ttl };
 
 	return;
+}
+
+
+# Move/Sort services
+
+=begin nd
+Function: moveService
+
+	Move a HTTP service to change its preference. This function changes the possition of a service in farm config file
+
+Parameters:
+	farmname - Farm name
+	move - Direction where it moves the service. The possbile value are: "down", decrease the priority or "up", increase the priority
+	service - Service to move
+
+Returns:
+	integer - Always return 0
+
+FIXME:
+	Rename function to setHTTPFarmMoveService
+	Always return 0, create error control
+
+=cut
+sub moveService    # moveService ( $farmName, $move, $serviceSelect);
+{
+	# Params
+	my $farmName      = shift;
+	my $move          = shift;
+	my $serviceSelect = shift;
+
+	my $farm_filename = &getFarmFile( $farmName );
+	$farm_filename = "$configdir\/$farm_filename";
+
+	my @file;
+	my @services = &getHTTPFarmServices( $farmName );
+	my @serviceIndex;
+	my $selectServiceInd;
+	my $size = scalar @services;
+	my @aux;
+	my $lastService;
+
+	# loop
+	my $ind        = 0;
+	my $serviceNum = 0;
+	my $flag       = 0;
+	my @definition;    # Service definition
+
+	if (    ( ( $move eq 'up' ) && ( $services[0] ne $serviceSelect ) )
+		 || ( ( $move eq 'down' ) && ( $services[$size - 1] ne $serviceSelect ) ) )
+	{
+		#~ system ( "cp $farm_filename $farm_filename.bak" );
+		tie @file, 'Tie::File', $farm_filename;
+
+		# Find service indexs
+		foreach my $line ( @file )
+		{
+			# Select service index
+			if ( $line =~ /^\tService \"$serviceSelect\"$/ )
+			{
+				$flag             = 1;
+				$selectServiceInd = $serviceNum;
+			}
+
+			# keep service definition and delete it from configuration file
+			if ( $flag == 1 )
+			{
+				push @definition, $line;
+
+				# end service definition
+				if ( $line =~ /^\tEnd$/ )
+				{
+					$flag = 0;
+					$ind -= 1;
+				}
+			}
+			else
+			{
+				push @aux, $line;
+			}
+
+			# add a new index to the index table
+			if ( $line =~ /^\tService \"$services[$serviceNum]\"$/ )
+			{
+				push @serviceIndex, $ind;
+				$serviceNum += 1;
+			}
+
+			# index of last service
+			if ( $line =~ /^\tEnd$/ )
+			{
+				$lastService = $ind + 1;
+			}
+
+			if ( !$flag )
+			{
+				$ind += 1;
+			}
+
+		}
+		@file = @aux;
+
+		# move up service
+		if ( $move eq 'up' )
+		{
+			splice ( @file, $serviceIndex[$selectServiceInd - 1], 0, @definition );
+		}
+
+		# move down service
+		elsif ( $move eq 'down' )
+		{
+			if ( $selectServiceInd == ( $size - 2 ) )
+			{
+				unshift @definition, "\n";
+				splice ( @file, $lastService + 1, 0, @definition );
+			}
+			else
+			{
+				splice ( @file, $serviceIndex[$selectServiceInd + 2], 0, @definition );
+			}
+		}
+		untie @file;
+	}
+
+	return 0;
+}
+
+=begin nd
+Function: moveServiceFarmStatus
+
+	Modify the service index in status file ( farmname_status.cfg ). For updating farmguardian backend status.
+
+Parameters:
+	farmname - Farm name
+	move - Direction where it moves the service. The possbile value are: "down", decrease the priority or "up", increase the priority
+	service - Service to move
+
+Returns:
+	integer - Always return 0
+
+FIXME:
+	Rename function to setHTTPFarmMoveServiceStatusFile
+	Always return 0, create error control
+
+=cut
+sub moveServiceFarmStatus
+{
+	my ( $farmName, $moveService, $serviceSelect ) = @_;
+
+	require Tie::File;
+	my @file;
+	my $fileName = "$configdir\/${farmName}_status.cfg";
+
+	my @services = &getHTTPFarmServices( $farmName );
+	my $size     = scalar @services;
+	my $ind      = -1;
+	my $auxInd;
+	my $serviceNum;
+
+	# Find service select index
+	foreach my $se ( @services )
+	{
+		$ind += 1;
+		last if ( $services[$ind] eq $serviceSelect );
+	}
+
+	#~ system ( "cp $fileName $fileName.bak" );
+
+	tie @file, 'Tie::File', $fileName;
+
+	# change server id
+	foreach my $line ( @file )
+	{
+		$line =~ /(^-[bB] 0 )(\d+)/;
+		my $cad = $1;
+		$serviceNum = $2;
+
+		#	&main::zenlog("$moveService::$ind::$serviceNum");
+		if ( ( $moveService eq 'up' ) && ( $serviceNum == $ind ) )
+		{
+			$auxInd = $serviceNum - 1;
+			$line =~ s/^-[bB] 0 (\d+)/${cad}$auxInd/;
+		}
+
+		if ( ( $moveService eq 'up' ) && ( $serviceNum == $ind - 1 ) )
+		{
+			$auxInd = $serviceNum + 1;
+			$line =~ s/^-[bB] 0 (\d+)/${cad}$auxInd/;
+		}
+
+		if ( ( $moveService eq 'down' ) && ( $serviceNum == $ind ) )
+		{
+			$auxInd = $serviceNum + 1;
+			$line =~ s/^-[bB] 0 (\d+)/${cad}$auxInd/;
+		}
+
+		if ( ( $moveService eq 'down' ) && ( $serviceNum == $ind + 1 ) )
+		{
+			$auxInd = $serviceNum - 1;
+			$line =~ s/^-[bB] 0 (\d+)/${cad}$auxInd/;
+		}
+	}
+
+	untie @file;
+
+	&zenlog(
+		"The service \"$serviceSelect\" from farm \"$farmName\" has been moved $moveService"
+	);
+
+	return 0;
 }
 
 1;
