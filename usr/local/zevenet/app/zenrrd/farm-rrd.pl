@@ -42,20 +42,13 @@ foreach my $farmfile ( &getFarmList() )
 		next;
 	}
 
-	my $synconns = 0;
-	my $globalconns = 0;
 	my $ERROR;
-
 	my $db_farm = "$farm-farm.rrd";
-	my $vip = &getFarmVip("vip", $farm);
+	my $vip     = &getFarmVip( "vip", $farm );
 
-	my $netstat = &getConntrack( "", $vip, "", "", "" );
-
-	# SYN_RECV connections
-	my $synconns = &getFarmSYNConns( $farm, $netstat );
-
-	# ESTABLISHED connections
-	my $globalconns = &getFarmEstConns( $farm, $netstat );
+	my $netstat     = &getConntrack( "", $vip, "", "", "" );
+	my $synconns    = &getFarmSYNConns( $farm, $netstat ); # SYN_RECV connections
+	my $globalconns = &getFarmEstConns( $farm, $netstat ); # ESTABLISHED connections
 
 	if ( $globalconns eq '' || $synconns eq '' )
 	{
