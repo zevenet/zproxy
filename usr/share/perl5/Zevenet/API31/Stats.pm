@@ -23,7 +23,6 @@
 
 use strict;
 
-#~ use Zevenet::Net;
 use Zevenet::System;
 
 # Get all farm stats
@@ -52,10 +51,11 @@ sub getAllFarmStats
 			require Zevenet::Net::ConnStats;
 			require Zevenet::Farm::Stats;
 
-			my @netstat = &getConntrack( "", $vip, "", "", "" );
+			my $netstat;
+			$netstat = &getConntrack( '', $vip, '', '', '' ) if $type !~ /^https?$/;
 
-			$pending = scalar &getFarmSYNConns( $name, @netstat );
-			$established = scalar &getFarmEstConns( $name, @netstat );
+			$pending     = &getFarmSYNConns( $name, $netstat );
+			$established = &getFarmEstConns( $name, $netstat );
 		}
 
 		push @farms,
@@ -161,7 +161,7 @@ sub farms_number
 }
 
 # GET /stats/farms/modules
-#Get a farm status resume 
+#Get a farm status resume
 sub module_stats_status
 {
 	my @farms = @{ &getAllFarmStats() };
@@ -252,7 +252,7 @@ sub module_stats_status
 	}
 
 	my $body = {
-				 description => "Module status", 	
+				 description => "Module status",
 				 params 		=> {
 					 "lslb" => $lslb,
 					 "gslb" => $gslb,
@@ -511,10 +511,10 @@ sub stats_network_interfaces
 			$iface->{ status }  = $extrainfo->{ status };
 			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
 			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
-			
+
 			push @nicList, $iface;
 		}
-		
+
 		# Fill bond interface list
 		elsif ( $type eq 'bond' && $EE )
 		{
@@ -533,10 +533,10 @@ sub stats_network_interfaces
 			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
 			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
 			$iface->{ slaves }  = &getBondSlaves( $iface->{ interface } );
-			
+
 			push @bondList, $iface;
 		}
-		else 
+		else
 		{
 			push @restIfaces, $iface;
 		}

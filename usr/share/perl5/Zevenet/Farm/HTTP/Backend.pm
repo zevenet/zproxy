@@ -29,7 +29,7 @@ my $configdir = &getGlobalConfiguration('configdir');
 Function: setHTTPFarmServer
 
 	Add a new backend to a HTTP service or modify if it exists
-	
+
 Parameters:
 	ids - backend id
 	rip - backend ip
@@ -41,7 +41,7 @@ Parameters:
 
 Returns:
 	Integer - return 0 on success or -1 on failure
-	
+
 =cut
 sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 {
@@ -228,7 +228,7 @@ sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 Function: runHTTPFarmServerDelete
 
 	Delete a backend in a HTTP service
-	
+
 Parameters:
 	ids - backend id to delete it
 	farmname - Farm name
@@ -236,7 +236,7 @@ Parameters:
 
 Returns:
 	Integer - return 0 on success or -1 on failure
-	
+
 =cut
 sub runHTTPFarmServerDelete    # ($ids,$farm_name,$service)
 {
@@ -287,13 +287,13 @@ sub runHTTPFarmServerDelete    # ($ids,$farm_name,$service)
 Function: getHTTPFarmBackendStatusCtl
 
 	Get status of a HTTP farm and its backends
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	array - return the output of poundctl command for a farm
-	
+
 =cut
 sub getHTTPFarmBackendStatusCtl    # ($farm_name)
 {
@@ -308,7 +308,7 @@ sub getHTTPFarmBackendStatusCtl    # ($farm_name)
 Function: getHTTPFarmBackendsStatus_old
 
 	Function that return the status information of a farm: ip, port, backend status, weight, priority, clients, connections and service
-	
+
 Parameters:
 	farmname - Farm name
 	content - command output where parsing backend status
@@ -316,19 +316,19 @@ Parameters:
 Returns:
 	array - backends_data, each line is: "id" . "\t" . "ip" . "\t" . "port" . "\t" . "status" . "\t-\t" . "priority" . "\t" . "clients" . "\t" . "connections" . "\t" . "service"
 	usage - @backend = split ( '\t', $backend_data )
-				backend[0] = id, 
-				backend[1] = ip, 
-				backend[2] = port, 
+				backend[0] = id,
+				backend[1] = ip,
+				backend[2] = port,
 				backend[3] = status,
-				backend[4] = -, 
-				backend[5] = priority, 
-				backend[6] = clients, 
-				backend[7] = connections, 
-				backend[8] = service 
-		
+				backend[4] = -,
+				backend[5] = priority,
+				backend[6] = clients,
+				backend[7] = connections,
+				backend[8] = service
+
 FIXME:
 	Sustitute by getHTTPFarmBackendsStats function
-	
+
 =cut
 sub getHTTPFarmBackendsStatus_old    # ($farm_name,@content)
 {
@@ -411,7 +411,7 @@ sub getHTTPFarmBackendsStatus_old    # ($farm_name,@content)
 				$connections = 0;
 			}
 			$line = $line . "\t" . $connections . "\t" . $service;
-			
+
 			push ( @backends_data, $line );
 		}
 	}
@@ -428,7 +428,7 @@ sub getHTTPFarmBackendsStatus_old    # ($farm_name,@content)
 Function: getHTTPFarmBackends
 
 	Return a list with all backends in a service and theirs configuration
-	
+
 Parameters:
 	farmname - Farm name
 	service - Service name
@@ -436,7 +436,7 @@ Parameters:
 Returns:
 	array ref - Each element in the array it is a hash ref to a backend.
 	the array index is the backend id
-		
+
 =cut
 
 sub getHTTPFarmBackends    # ($farm_name,$service)
@@ -447,25 +447,25 @@ sub getHTTPFarmBackends    # ($farm_name,$service)
 
 	my $backendsvs = &getHTTPFarmVS( $farmname, $service, "backends" );
 	my @be         = split ( "\n", $backendsvs );
-	my @be_status = @{ &getHTTPFarmBackendsStatus( $farmname, $service ) };
+	my @be_status  = @{ &getHTTPFarmBackendsStatus( $farmname, $service ) };
 	my @out_ba;
-	
+
 	foreach my $subl ( @be )
 	{
-		my @subbe       = split ( "\ ", $subl );
-		my $id          = $subbe[1] + 0;
-	
+		my @subbe = split ( ' ', $subl );
+		my $id    = $subbe[1] + 0;
+
 		my $ip   = $subbe[3];
 		my $port = $subbe[5] + 0;
 		my $tout = $subbe[7];
 		my $prio = $subbe[9];
-	
+
 		$tout = $tout eq '-' ? undef: $tout+0;
 		$prio = $prio eq '-' ? undef: $prio+0;
-		
+
 		my $status = "undefined";
 		$status = $be_status[ $id ] if $be_status[ $id ];
-	
+
 		push @out_ba,
 		{
 			id      => $id,
@@ -476,6 +476,7 @@ sub getHTTPFarmBackends    # ($farm_name,$service)
 			weight  => $prio
 		};
 	}
+
 	return \@out_ba;
 }
 
@@ -483,20 +484,20 @@ sub getHTTPFarmBackends    # ($farm_name,$service)
 Function: getHTTPFarmBackendsStatus
 
 	Get the status of all backends in a service. The possible values are:
-	
+
 	- up = The farm is in up status and the backend is OK.
 	- down = The farm is in up status and the backend is unreachable
 	- maintenace = The backend is in maintenance mode.
 	- undefined = The farm is in down status and backend is not in maintenance mode.
 
-	
+
 Parameters:
 	farmname - Farm name
 	service - Service name
 
 Returns:
 	Array ref - the index is backend index, the value is the backend status
-		
+
 =cut
 
 sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
@@ -513,10 +514,10 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 		require Zevenet::Farm::HTTP::Stats;
 
 		my $stats = &getHTTPFarmBackendsStats($farm_name);
-					
+
 		foreach my $be ( @{ $stats->{ backends } } )
 		{
-			#	$be = 
+			#	$be =
 			#	{
 			#		"id" = $backend_id		# it is the index in the backend array too
 			#		"ip" = $backend_ip
@@ -524,8 +525,10 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 			#		"status" = $backend_status
 			#		"established" = $established_connections
 			#	}
-			
-			push @status, $be->{ 'status' } if	( $be->{service} eq $service);
+
+			next if $be->{ service } ne $service;
+
+			push ( @status, $be->{ status } );
 		}
 	}
 	# farm status is down
@@ -535,19 +538,20 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 
 		my $backendsvs = &getHTTPFarmVS( $farm_name, $service, "backends" );
 		my @be         = split ( "\n", $backendsvs );
-		my $id = 0;
+		my $id         = 0;
 
 		# @be is used to get size of backend array
-		for (@be)
+		for ( @be )
 		{
 			my $backendstatus = &getHTTPBackendStatusFromFile( $farm_name, $id, $service );
+
 			if ( $backendstatus eq "maintenance" )
 			{
-				$backendstatus = "maintenance" 
+				$backendstatus = "maintenance"
 			}
 			else
 			{
-				$backendstatus = "undefined" 
+				$backendstatus = "undefined"
 			}
 
 			push @status, $backendstatus;
@@ -558,14 +562,11 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 	return \@status;
 }
 
-
-
-
 =begin nd
 Function: getHTTPBackendStatusFromFile
 
 	Function that return if a pound backend is active, down by farmguardian or it's in maintenance mode
-	
+
 Parameters:
 	farmname - Farm name
 	backend - backend id
@@ -573,7 +574,7 @@ Parameters:
 
 Returns:
 	scalar - return backend status: "maintentance", "fgDOWN", "active" or -1 on failure
-		
+
 =cut
 sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 {
@@ -624,7 +625,7 @@ sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 Function: setHTTPFarmBackendStatusFile
 
 	Function that save in a file the backend status (maintenance or not)
-	
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
@@ -633,11 +634,11 @@ Parameters:
 
 Returns:
 	none - .
-		
+
 FIXME:
 	Rename the function, something like saveFarmHTTPBackendstatus, not is "get", this function makes changes in the system
 	Not return nothing, do error control
-		
+
 =cut
 sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
 {
@@ -645,7 +646,7 @@ sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
 
 	require Tie::File;
 
-	my $statusfile = "$configdir\/$farm_name\_status.cfg"; 
+	my $statusfile = "$configdir\/$farm_name\_status.cfg";
 	my $changed    = "false";
 
 	if ( !-e $statusfile )
@@ -725,7 +726,7 @@ sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
 Function: getHTTPFarmBackendsClients
 
 	Function that return number of clients with session in a backend server
-	
+
 Parameters:
 	backend - backend id
 	content - command output where parsing backend status
@@ -733,7 +734,7 @@ Parameters:
 
 Returns:
 	Integer - return number of clients in the backend
-		
+
 =cut
 sub getHTTPFarmBackendsClients    # ($idserver,@content,$farm_name)
 {
@@ -761,17 +762,17 @@ sub getHTTPFarmBackendsClients    # ($idserver,@content,$farm_name)
 Function: getHTTPFarmBackendsClientsList
 
 	Function that return sessions of clients
-	
+
 Parameters:
 	farmname - Farm name
 	content - command output where it must be parsed backend status
 
 Returns:
 	array - return information about existing sessions. The format for each line is: "service" . "\t" . "session_id" . "\t" . "session_value" . "\t" . "backend_id"
-		
+
 FIXME:
 	will be useful change output format to hash format
-	
+
 =cut
 sub getHTTPFarmBackendsClientsList    # ($farm_name,@content)
 {
@@ -811,7 +812,7 @@ sub getHTTPFarmBackendsClientsList    # ($farm_name,@content)
 Function: getHTTPFarmBackendMaintenance
 
 	Function that check if a backend on a farm is on maintenance mode
-	
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
@@ -819,7 +820,7 @@ Parameters:
 
 Returns:
 	scalar - if backend is in maintenance mode, return 0 else return -1
-		
+
 =cut
 sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
@@ -828,32 +829,32 @@ sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	require Zevenet::Farm::Base;
 
 	my $output = -1;
-	
+
 	# if the farm is running, take status from poundctl
 	if ( &getFarmStatus ($farm_name) eq 'up' )
 	{
 		my $poundctl = &getGlobalConfiguration('poundctl');
 		my @run    = `$poundctl -c "/tmp/$farm_name\_pound.socket"`;
-		
+
 		my $sw     = 0;
-	
+
 		foreach my $line ( @run )
 		{
 			if ( $line =~ /Service \"$service\"/ )
 			{
 				$sw = 1;
 			}
-	
+
 			if ( $line =~ /$backend\. Backend/ && $sw == 1 )
 			{
 				my @line = split ( "\ ", $line );
 				my $backendstatus = $line[3];
-	
+
 				if ( $backendstatus eq "DISABLED" )
 				{
 					$backendstatus =
 					&getHTTPBackendStatusFromFile( $farm_name, $backend, $service );
-	
+
 					if ( $backendstatus =~ /maintenance/ )
 					{
 						$output = 0;
@@ -871,7 +872,7 @@ sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 		if ( -e $statusfile )
 		{
 			open( my $fh, '<', $statusfile );
-			
+
 			my @sol;
 			my $service_index = &getFarmVSI( $farm_name, $service );
 
@@ -891,18 +892,18 @@ sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 Function: setHTTPFarmBackendMaintenance
 
 	Function that enable the maintenance mode for backend
-	
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
-	mode - Maintenance mode, the options are: drain, the backend continues working with 
-	  the established connections; or cut, the backend cuts all the established 
+	mode - Maintenance mode, the options are: drain, the backend continues working with
+	  the established connections; or cut, the backend cuts all the established
 	  connections
 	service - Service name
 
 Returns:
 	Integer - return 0 on success or -1 on failure
-		
+
 =cut
 sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
@@ -926,7 +927,7 @@ sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 		my $poundctl = &getGlobalConfiguration('poundctl');
 		my $poundctl_command =
 		"$poundctl -c /tmp/$farm_name\_pound.socket -b 0 $idsv $backend";
-	
+
 		&zenlog( "running '$poundctl_command'" );
 		my @run = `$poundctl_command`;
 		$output = $?;
@@ -941,7 +942,7 @@ sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 Function: setHTTPFarmBackendMaintenance
 
 	Function that disable the maintenance mode for backend
-	
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
@@ -949,7 +950,7 @@ Parameters:
 
 Returns:
 	Integer - return 0 on success or -1 on failure
-		
+
 =cut
 sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 {
@@ -964,7 +965,7 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 		"setting Disabled maintenance mode for $farm_name service $service backend $backend"
 	);
 
-	if ( &getFarmStatus( $farm_name ) eq 'up' ) 
+	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
 		my $poundctl = &getGlobalConfiguration('poundctl');
 		my $poundctl_command =
@@ -974,7 +975,7 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 		my @run    = `$poundctl_command`;
 		$output = $?;
 	}
-	
+
 	# save backend status in status file
 	&setHTTPFarmBackendStatusFile( $farm_name, $backend, "active", $idsv );
 
@@ -985,7 +986,7 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 Function: runRemoveHTTPBackendStatus
 
 	Function that removes a backend from the status file
-	
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
@@ -993,10 +994,10 @@ Parameters:
 
 Returns:
 	none - .
-		
+
 FIXME:
 	This function returns nothing, do error control
-		
+
 =cut
 sub runRemoveHTTPBackendStatus    # ($farm_name,$backend,$service)
 {
@@ -1019,7 +1020,7 @@ sub runRemoveHTTPBackendStatus    # ($farm_name,$backend,$service)
 		}
 	}
 	untie @contents;
-	
+
 	# decrease backend index in greater backend ids
 	tie my @filelines, 'Tie::File', "$configdir\/$farm_name\_status.cfg";
 
@@ -1043,16 +1044,16 @@ sub runRemoveHTTPBackendStatus    # ($farm_name,$backend,$service)
 Function: setHTTPFarmBackendStatus
 
 	For a HTTP farm, it gets each backend status from status file and set it in pound daemon
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	none - .
-		
+
 FIXME:
 	This function returns nothing, do error control
-		
+
 =cut
 sub setHTTPFarmBackendStatus    # ($farm_name)
 {
@@ -1079,7 +1080,7 @@ sub setHTTPFarmBackendStatus    # ($farm_name)
 	}
 
 	my $poundctl = &getGlobalConfiguration('poundctl');
-	
+
 	while ( my $line_aux = <$fh> )
 	{
 		my @line = split ( "\ ", $line_aux );

@@ -53,10 +53,10 @@ sub getAllFarmStats
 			require Zevenet::Net::ConnStats;
 			require Zevenet::Farm::Stats;
 
-			my @netstat = &getConntrack( "", $vip, "", "", "" );
+			my $netstat = &getConntrack( "", $vip, "", "", "" );
 
-			$pending = scalar &getFarmSYNConns( $name, @netstat );
-			$established = scalar &getFarmEstConns( $name, @netstat );
+			$pending     = &getFarmSYNConns( $name, $netstat );
+			$established = &getFarmEstConns( $name, $netstat );
 		}
 
 		push @farms,
@@ -87,7 +87,7 @@ sub farm_stats # ( $farmname )
 	{
 		$errormsg = "The farmname $farmname does not exist.";
 		my $body = { description => $description, error  => "true", message => $errormsg };
-		&httpResponse( { code => 404, body => $body } );		
+		&httpResponse( { code => 404, body => $body } );
 	}
 
 	my $type = &getFarmType( $farmname );
@@ -96,7 +96,7 @@ sub farm_stats # ( $farmname )
 	{
 		my @out_rss;
 		my @out_css;
-		my @netstat;
+		my $netstat;
 
 		require Zevenet::Farm::Base;
 
@@ -154,10 +154,9 @@ sub farm_stats # ( $farmname )
 			require Zevenet::Net::ConnStats;
 			require Zevenet::Farm::Stats;
 
-			@netstat = &getConntrack( "$fvip", $ip_backend, "", "", "tcp" );
-			my @synnetstatback =
-			&getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
-			my $npend = @synnetstatback; 
+			$netstat = &getConntrack( "$fvip", $ip_backend, "", "", "tcp" );
+			my $npend =
+			  scalar &getBackendSYNConns( $farmname, $ip_backend, $port_backend, $netstat );
 
 			if ( $backends_data[3] == -1 || $backends_data[3] eq "fgDOWN" )
 			{
@@ -219,16 +218,14 @@ sub farm_stats # ( $farmname )
 			$proto = "";
 		}
 
-		# my @netstat = &getNetstatNat($args);
 		my $fvip     = &getFarmVip( "vip", $farmname );
 		my @content  = &getFarmBackendStatusCtl( $farmname );
-		#~ chomp @content;
 		my @backends = &getFarmBackendsStatus_old( $farmname, @content );
 
 		# List of backends
 		my $backendsize    = @backends;
 		my $activebackends = 0;
-		
+
 		foreach ( @backends )
 		{
 			my @backends_data = split ( ";", $_ );
@@ -248,14 +245,14 @@ sub farm_stats # ( $farmname )
 			my $port_backend = $backends_data[1];
 
 			# Pending Conns
-			my @netstat = &getConntrack( "", $fvip, $ip_backend, "", "" );
+			my $netstat = &getConntrack( "", $fvip, $ip_backend, "", "" );
 
-			my $established = scalar &getBackendEstConns( $farmname, $ip_backend, $port_backend, @netstat );
-			
+			my $established = &getBackendEstConns( $farmname, $ip_backend, $port_backend, $netstat );
+
 			my $pending = 0;
 			if ( $proto ne "udp" )
 			{
-				$pending = scalar &getBackendSYNConns( $farmname, $ip_backend, $port_backend, @netstat );
+				$pending = &getBackendSYNConns( $farmname, $ip_backend, $port_backend, $netstat );
 			}
 
 			if ( $backends_data[4] == -1 )
@@ -392,7 +389,7 @@ sub farms_number
 }
 
 # GET /stats/farms/modules
-#Get a farm status resume 
+#Get a farm status resume
 sub module_stats_status
 {
 	my @farms = @{ &getAllFarmStats () };
@@ -421,10 +418,10 @@ sub module_stats_status
 			$dslb->{ 'up' } ++ 		if ( $farm->{ 'status' } eq 'up' || $farm->{ 'status' } eq 'needed restart' );
 		}
 	}
-	
+
 	# Print Success
 	my $body = {
-				 description => "Module status", 	
+				 description => "Module status",
 				 params 		=> {
 					 "lslb" => $lslb,
 					 "gslb" => $gslb,
@@ -447,7 +444,7 @@ sub module_stats # ()
 		push @farmModule, $farm	if ( $farm->{ 'profile' } =~ /gslb/ && $module eq 'gslb' );
 		push @farmModule, $farm	if ( $farm->{ 'profile' } =~ /datalink/ && $module eq 'dslb' );
 	}
-	
+
 	# Print Success
 	my $body = {
 				 description       => "List lslb farms stats", farms => \@farmModule,
@@ -629,13 +626,13 @@ sub stats_network_interfaces
 
 	my $description = "Interfaces info";
 	my @interfaces = &getNetworkStats( 'hash' );
-	
+
 	my @nic = &getInterfaceTypeList( 'nic' );
 	my @bond = &getInterfaceTypeList( 'bond' );
-	
+
 	my @nicList;
 	my @bondList;
-	
+
 	my @restIfaces;
 
 	foreach my $iface ( @interfaces )
@@ -658,10 +655,10 @@ sub stats_network_interfaces
 			$iface->{ status } = $extrainfo->{ status };
 			$iface->{ vlan } = &getAppendInterfaces ( $iface->{ interface }, 'vlan' );
 			$iface->{ virtual } = &getAppendInterfaces ( $iface->{ interface }, 'virtual' );
-			
+
 			push @nicList, $iface;
 		}
-		
+
 		# Fill bond interface list
 		elsif ( $type eq 'bond' )
 		{
@@ -678,16 +675,16 @@ sub stats_network_interfaces
 			$iface->{ status } = $extrainfo->{ status };
 			$iface->{ vlan } = &getAppendInterfaces ( $iface->{ interface }, 'vlan' );
 			$iface->{ virtual } = &getAppendInterfaces ( $iface->{ interface }, 'virtual' );
-			
+
 			$iface->{ slaves } = &getBondSlaves ( $iface->{ interface } );
-			
+
 			push @bondList, $iface;
 		}
-		else 
+		else
 		{
 			push @restIfaces, $iface;
 		}
-		
+
 	}
 
 	# Success

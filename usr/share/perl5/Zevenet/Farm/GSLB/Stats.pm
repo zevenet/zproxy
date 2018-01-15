@@ -31,26 +31,26 @@ Function: getGSLBGdnsdStats
 Parameters:
 	farmname - Farm name
 
-Returns:     
+Returns:
 	String - Return a string with json format
-		
 =cut
 sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ( )
 {
-	my $farmName   = shift;
+	my $farmName = shift;
 
 	require Zevenet::Farm::GSLB::Config;
 
 	my $wget       = &getGlobalConfiguration( 'wget' );
 	my $httpPort   = &getGSLBControlPort( $farmName );
 	my $gdnsdStats = `$wget -qO- http://127.0.0.1:$httpPort/json`;
-
 	my $stats;
+
 	if ( $gdnsdStats )
 	{
 		require JSON::XS;
 		$stats = JSON::XS::decode_json( $gdnsdStats );
 	}
+
 	return $stats;
 }
 
@@ -61,40 +61,41 @@ Function: getGSLBFarmEstConns
 
 Parameters:
 	farmname - Farm name
-	netstat - Conntrack -L output
+	netstat - reference to array with Conntrack -L output
 
-Returns:     
+Returns:
 	array - Return all ESTABLISHED conntrack lines for a farm
 
 FIXME:
 	change to monitoring libs
-
 =cut
-sub getGSLBFarmEstConns    # ($farm_name,@netstat)
+sub getGSLBFarmEstConns    # ($farm_name,$netstat)
 {
-	my ( $farm_name, @netstat ) = @_;
+	my ( $farm_name, $netstat ) = @_;
 
 	my $vip      = &getFarmVip( "vip",  $farm_name );
 	my $vip_port = &getFarmVip( "vipp", $farm_name );
 
 	return
-	  &getNetstatFilter( "udp", "",
-						 "src=.* dst=$vip sport=.* dport=$vip_port .*src=.*",
-						 "", @netstat );
+		&getNetstatFilter(
+			"udp",
+			"",
+			"src=.* dst=$vip sport=.* dport=$vip_port .*src=.*",
+			"",
+			$netstat
+		);
 }
 
 sub getGSLBFarmBackendsStats
 {
-	my ($farmname) = @_;
-	
+	my ( $farmname ) = @_;
+
+	require Zevenet::Farm::Config;
 	require Zevenet::Farm::GSLB::Service;
 
 	my $out_rss;
-	my @backendStats;
 	my $gslb_stats = &getGSLBGdnsdStats( $farmname );
-	my @services = &getGSLBFarmServices( $farmname );
-
-	require Zevenet::Farm::Config;
+	my @services   = &getGSLBFarmServices( $farmname );
 
 	foreach my $srv ( @services )
 	{
@@ -104,10 +105,6 @@ sub getGSLBFarmBackendsStats
 		my $backendsvs = &getFarmVS( $farmname, $srv, "backends" );
 		my @be = split ( "\n", $backendsvs );
 		my $out_b = [];
-
-		#
-		# Backends
-		#
 
 		foreach my $subline ( @be )
 		{
@@ -119,9 +116,9 @@ sub getGSLBFarmBackendsStats
 			}
 
 			# ID and IP
-			my @subbe = split(" => ",$subline);
-			my $id = $subbe[0];
-			my $addr = $subbe[1];
+			my @subbe  = split ( " => ", $subline );
+			my $id     = $subbe[0];
+			my $addr   = $subbe[1];
 			my $status = "undefined";
 
 			# look for backend status in stats
@@ -138,7 +135,7 @@ sub getGSLBFarmBackendsStats
 			$id =~ s/^secondary$/2/;
 			$status = lc $status if defined $status;
 
-			push @backendStats,
+			push @$gslb_stats->{ 'backend' },
 			  {
 				id      => $id + 0,
 				ip      => $addr,
@@ -148,8 +145,8 @@ sub getGSLBFarmBackendsStats
 			  };
 		}
 	}
-	$gslb_stats->{ 'backend' } = \@backendStats;
+
 	return $gslb_stats;
-}		
-		
+}
+
 1;
