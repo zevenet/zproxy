@@ -35,7 +35,7 @@ Returns:
 	scalar - reference to Config::Tiny object, or undef on failure.
 
 See Also:
-	
+
 =cut
 sub getConfigTiny
 {
@@ -47,7 +47,7 @@ sub getConfigTiny
 		&zenlog("Could not open file $file_path: $!") if ! $fi;
 		close $fi;
 	}
-	
+
 	require Config::Tiny;
 
 	# returns object on success or undef on error.
@@ -67,7 +67,7 @@ Returns:
 	boolean - true on success, or undef on failure.
 
 See Also:
-	
+
 =cut
 sub setConfigTiny
 {
@@ -104,7 +104,7 @@ Returns:
 	scalar - Name of output .
 
 See Also:
-	
+
 =cut
 # get floating interface or output interface
 sub getFloatInterfaceForAddress
@@ -124,7 +124,7 @@ sub getFloatInterfaceForAddress
 		next if $iface->{ vini } ne '';
 
 		my $network = NetAddr::IP->new( $iface->{ addr }, $iface->{ mask } );
-		
+
 		if ( $remote_ip->within( $network ) )
 		{
 			$subnet_interface = $iface;
@@ -157,6 +157,29 @@ sub getFloatInterfaceForAddress
 	}
 
 	return $output_interface;
+}
+
+sub getFloatingMasqParams
+{
+	my ( $farm, $server ) = @_;
+
+	my $out_if = &getFloatInterfaceForAddress( $$server{ vip } );
+
+	if ( ! $out_if )
+	{
+		$out_if = &getFloatInterfaceForAddress( $$farm{ vip } );
+	}
+
+	return "--jump SNAT --to-source $out_if->{ addr } ";
+}
+
+sub getFloatingSnatParams
+{
+	my ( $server ) = @_;
+
+	my $float_if = &getFloatInterfaceForAddress( $$server{ vip } );
+
+	return "--jump SNAT --to-source $float_if->{ addr }";
 }
 
 1;
