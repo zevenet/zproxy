@@ -978,7 +978,7 @@ sub resetL4FarmBackendConntrackMark
 	# return_code = 1 -> not found/deleted
 	# WARNIG: STDOUT must be null so cherokee does not receive this output
 	# as http headers.
-	my $return_code = system( "$cmd 2>/dev/null" );
+	my $return_code = system ( "$cmd >/dev/null 2>&1" );
 
 	if ( &debug() )
 	{
