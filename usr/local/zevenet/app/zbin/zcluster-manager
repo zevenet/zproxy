@@ -50,6 +50,9 @@
 # zcluster-manager ipds_dos [start|stop|restart] <rule> [farm]
 # zcluster-manager ipds_rbl [start|stop|restart] <rule> [farm]
 #
+# zcluster-manager rbac_user [add|delete|modify] <user>
+# zcluster-manager rbac_group [add|remove|create|delete] <group> [user]
+#
 
 use strict;
 use warnings;
@@ -64,10 +67,10 @@ use Data::Dumper;
 #&zenlog( "ARGV:@ARGV" ) if &debug();
 &zenlog( "ARGV:@ARGV:" );
 
-my $object = shift @ARGV // '';
+my $object  = shift @ARGV // '';
 my $command = shift @ARGV // '';
 
-if ( ! grep { $object eq $_ } ( qw(interface gateway farm ipds) ) )
+if ( !grep { $object eq $_ } ( qw(interface gateway farm ipds) ) )
 {
 	if ( $object =~ /Conntrackd/ )
 	{
@@ -100,7 +103,8 @@ elsif ( $object eq 'setConntrackdConfig' )
 elsif ( $object eq 'getZClusterRunning' )
 {
 	#~ say &getZClusterRunning();
-	say ( ( &getZClusterRunning() )? '1': '0' );
+	say ( ( &getZClusterRunning() ) ? '1' : '0' );
+
 	#~ say ( &getZClusterRunning() )? 'true': 'false';
 	exit 0;
 }
@@ -112,7 +116,7 @@ elsif ( $object eq 'getZClusterNodeStatus' )
 elsif ( $object eq 'getConntrackdRunning' )
 {
 	#~ say &getConntrackdRunning();
-	say ( ( &getConntrackdRunning() )? '1': '0' );
+	say ( ( &getConntrackdRunning() ) ? '1' : '0' );
 	exit 0;
 }
 elsif ( $object eq 'getZClusterArpStatus' )
@@ -121,18 +125,19 @@ elsif ( $object eq 'getZClusterArpStatus' )
 
 	my $status = 'ok';
 
-	if ( ! &getZClusterRunning() )
+	if ( !&getZClusterRunning() )
 	{
 		say 'ko';
 		exit 0;
 	}
 
-	my $node_role = &getZClusterNodeStatus();
+	my $node_role       = &getZClusterNodeStatus();
 	my @arptables_lines = `arptables -L INPUT`;
 
 	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
 	{
-		my $if_dropped = grep { $_ =~ /^-j DROP -d $if_ref->{ addr } $/ } @arptables_lines;
+		my $if_dropped =
+		  grep { $_ =~ /^-j DROP -d $if_ref->{ addr } $/ } @arptables_lines;
 
 		if ( $node_role ne 'master' && !$if_dropped )
 		{
@@ -151,13 +156,13 @@ elsif ( $object eq 'getZClusterArpStatus' )
 }
 elsif ( $object eq 'sync' )
 {
-	my $configdir = &getGlobalConfiguration('configdir');
-	my $rttables = &getGlobalConfiguration('rttables');
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $rttables  = &getGlobalConfiguration( 'rttables' );
 
-	&zenlog("Syncing $configdir");
+	&zenlog( "Syncing $configdir" );
 	&runSync( $configdir );
 
-	&zenlog("Syncing $rttables");
+	&zenlog( "Syncing $rttables" );
 	&runSync( $rttables );
 }
 elsif ( $object eq 'notify_master' )
@@ -172,8 +177,8 @@ elsif ( $object eq 'notify_fault' )
 {
 	exit &setNodeStatusMaintenance();
 }
-#~ }
 
+#~ }
 
 # farm commands
 if ( $object eq 'farm' )
@@ -183,7 +188,7 @@ if ( $object eq 'farm' )
 	if ( $command eq 'start' )
 	{
 		my $farm_name = shift @ARGV;
-		&quit("Missing farm name argument") if ! $farm_name;
+		&quit( "Missing farm name argument" ) if !$farm_name;
 
 		my $status = &_runFarmStart( $farm_name );
 
@@ -196,7 +201,7 @@ if ( $object eq 'farm' )
 	elsif ( $command eq 'stop' )
 	{
 		my $farm_name = shift @ARGV;
-		&quit("Missing farm name argument") if ! $farm_name;
+		&quit( "Missing farm name argument" ) if !$farm_name;
 
 		# Stop ipds rules
 		require Zevenet::IPDS::Base;
@@ -207,7 +212,7 @@ if ( $object eq 'farm' )
 	elsif ( $command eq 'restart' )
 	{
 		my $farm_name = shift @ARGV;
-		&quit("Missing farm name argument") if ! $farm_name;
+		&quit( "Missing farm name argument" ) if !$farm_name;
 
 		&_runFarmStop( $farm_name );
 		my $status = &_runFarmStart( $farm_name );
@@ -217,34 +222,50 @@ if ( $object eq 'farm' )
 	elsif ( $command eq 'delete' )
 	{
 		my $farm_name = shift @ARGV;
-		&quit("Missing farm name argument") if ! $farm_name;
+		&quit( "Missing farm name argument" ) if !$farm_name;
 
 		exit &runFarmDelete( $farm_name );
 	}
 	else
 	{
-		&quit("Unrecognized farm command");
+		&quit( "Unrecognized farm command" );
 	}
 }
 
+# zcluster-manager rbac_user [add|delete|modify] <user>
+if ( $object =~ /^rbac_(user|group)/ )
+{
+	my $module = $1;
+	if ( $module eq "user" )
+	{
+		require Zevenet::RBAC::User::Action;
+		my ( $user ) = @ARGV;
 
+		&updateRBACUser( $user, $command );
+
+	}
+
+}
 
 # ipds commands
-#  object = ipds 
+#  object = ipds
 if ( $object eq "ipds" )
 {
 	require Zevenet::IPDS::Base;
 	my $farm_name = shift @ARGV;
+
 	# stop DOS rules
 	if ( $command eq "stop" )
 	{
 		&runIPDSStopByFarm( $farm_name );
 	}
+
 	# start DOS rules
 	elsif ( $command eq "start" )
 	{
 		&runIPDSStartByFarm( $farm_name );
 	}
+
 	# reload DOS rules
 	else
 	{
@@ -255,10 +276,10 @@ if ( $object eq "ipds" )
 #  object = ipds_(rbl|bl|dos)
 if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 {
-	my $module = $1;
+	my $module    = $1;
 	my $rule_name = shift @ARGV;
 	my $farm_name = shift @ARGV;
-	
+
 	if ( $module eq 'bl' )
 	{
 		require Zevenet::IPDS::Blacklist::Actions;
@@ -270,11 +291,13 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 			{
 				&runBLStop( $rule_name, $farm_name );
 			}
+
 			# start BL rules
 			elsif ( $command eq "start" )
 			{
 				&runBLStart( $rule_name, $farm_name );
 			}
+
 			# reload BL rules
 			else
 			{
@@ -288,18 +311,20 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 			{
 				&runBLStopByRule( $rule_name );
 			}
+
 			# start BL rules
 			elsif ( $command eq "start" )
 			{
 				&runBLStartByRule( $rule_name );
 			}
+
 			# reload BL rules
 			else
 			{
 				&runBLRestartByRule( $rule_name );
 			}
 		}
-		
+
 		exit 0;
 	}
 	elsif ( $module eq 'dos' )
@@ -313,11 +338,13 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 			{
 				&runDOSStop( $rule_name, $farm_name );
 			}
+
 			# start DOS rules
 			elsif ( $command eq "start" )
 			{
 				&runDOSStart( $rule_name, $farm_name );
 			}
+
 			# reload DOS rules
 			else
 			{
@@ -331,11 +358,13 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 			{
 				&runDOSStopByRule( $rule_name );
 			}
+
 			# start DOS rules
 			elsif ( $command eq "start" )
 			{
 				&runDOSStartByRule( $rule_name );
 			}
+
 			# reload DOS rules
 			else
 			{
@@ -356,11 +385,13 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 			{
 				&runRBLStop( $rule_name, $farm_name );
 			}
+
 			# start RBL rules
 			elsif ( $command eq "start" )
 			{
 				&runRBLStart( $rule_name, $farm_name );
 			}
+
 			# reload RBL rules
 			else
 			{
@@ -374,24 +405,26 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 			{
 				&runRBLStopByRule( $rule_name );
 			}
+
 			# start RBL rules
 			elsif ( $command eq "start" )
 			{
 				&runRBLStartByRule( $rule_name );
 			}
+
 			# reload RBL rules
 			else
 			{
 				&runRBLRestartByRule( $rule_name );
 			}
 		}
-		
+
 		exit 0;
 	}
 
 	else
 	{
-		&quit("Unrecognized ipds command");
+		&quit( "Unrecognized ipds command" );
 	}
 }
 
@@ -411,16 +444,17 @@ if ( $object eq 'interface' )
 	}
 
 	# common interface initial tasks
-	my $if_name = shift @ARGV;		# virtual interface name
-	my $ip_v = shift @ARGV // 4;	# ip version: 4 or 6 (default: 4)
+	my $if_name = shift @ARGV;      # virtual interface name
+	my $ip_v = shift @ARGV // 4;    # ip version: 4 or 6 (default: 4)
 
 	# must have an interface argument
-	&quit( "Interface action not defined." ) if ! $if_name;
-	&quit( "Only virtual interfaces are supported." ) if $if_name !~ /.+:.+/;	# only accept virtual interfaces
+	&quit( "Interface action not defined." ) if !$if_name;
+	&quit( "Only virtual interfaces are supported." )
+	  if $if_name !~ /.+:.+/;       # only accept virtual interfaces
 
 	my $if_ref = &getInterfaceConfig( $if_name, $ip_v );
 
-	exit 1 if ! $if_ref;
+	exit 1 if !$if_ref;
 
 	my $status;
 
@@ -432,13 +466,13 @@ if ( $object eq 'interface' )
 		require Zevenet::Cluster;
 		require Zevenet::Farm::L4xNAT::Config;
 
-		&disableInterfaceDiscovery( $if_ref ); # backup node only
+		&disableInterfaceDiscovery( $if_ref );    # backup node only
 		$status = &addIp( $if_ref );
 		$status = &applyRoutes( "local", $if_ref ) if $status == 0;
 		&reloadL4FarmsSNAT();
 		exit $status;
 	}
-	elsif ( $command eq 'stop' ) # flush ip
+	elsif ( $command eq 'stop' )                  # flush ip
 	{
 		require Zevenet::Cluster;
 		require Zevenet::Farm::L4xNAT::Config;
@@ -448,7 +482,7 @@ if ( $object eq 'interface' )
 		&enableInterfaceDiscovery( $if_ref );
 		exit $status;
 	}
-	elsif ( $command eq 'delete' ) # remove interface stats and other
+	elsif ( $command eq 'delete' )                # remove interface stats and other
 	{
 		$status = &delIf( $if_name );
 		exit $status;
@@ -463,24 +497,24 @@ if ( $object eq 'gateway' )
 	require Zevenet::Net;
 
 	my $status;
-	
+
 	if ( $command eq 'update' )
 	{
 		my $if_ref = getInterfaceConfig( $iface_name, $ip_version );
 
-		exit 1 if ! $if_ref;
-		
+		exit 1 if !$if_ref;
+
 		$status = &applyRoutes( "global", $if_ref, $if_ref->{ gateway } );
 		&reloadL4FarmsSNAT();
-		
+
 		exit $status;
 	}
-	elsif ( $command eq 'delete' ) # remove interface stats and other
+	elsif ( $command eq 'delete' )    # remove interface stats and other
 	{
-		my $defaultgwif = &getGlobalConfiguration('defaultgwif');
+		my $defaultgwif = &getGlobalConfiguration( 'defaultgwif' );
 		my $if_ref = getInterfaceConfig( $defaultgwif, $ip_version );
 
-		exit 1 if ! $if_ref;
+		exit 1 if !$if_ref;
 
 		$status = &delRoutes( "global", $if_ref );
 		exit $status;
@@ -489,19 +523,19 @@ if ( $object eq 'gateway' )
 
 sub setNodeStatusMaster
 {
-	&zenlog("############# Starting setNodeStatusMaster");
+	&zenlog( "############# Starting setNodeStatusMaster" );
 
 	my $node_status = &getZClusterNodeStatus();
-	&zenlog("Cluster ==== node_status: $node_status ===> Master");
+	&zenlog( "Cluster ==== node_status: $node_status ===> Master" );
 
 	if ( &getZClusterNodeStatus() eq 'master' )
 	{
-		&zenlog("Node is already master");
+		&zenlog( "Node is already master" );
 		return 0;
 	}
 
-	&zenlog("Switching node to master");
-	&setZClusterNodeStatus('master');
+	&zenlog( "Switching node to master" );
+	&setZClusterNodeStatus( 'master' );
 
 	require Zevenet::Net::Interface;
 	require Zevenet::Farm::Core;
@@ -509,8 +543,8 @@ sub setNodeStatusMaster
 	require Zevenet::Ssyncd;
 
 	# conntrackd sync
-	my $primary_backup = &getGlobalConfiguration('primary_backup');
-	system("$primary_backup primary");
+	my $primary_backup = &getGlobalConfiguration( 'primary_backup' );
+	system ( "$primary_backup primary" );
 
 	# Ssyncd
 	&setSsyncdMaster();
@@ -520,7 +554,7 @@ sub setNodeStatusMaster
 
 	# announce ips ( arp and neigh )
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
-	
+
 	for my $if_ref ( @configured_interfaces )
 	{
 		next unless $if_ref->{ type } eq 'virtual';
@@ -528,8 +562,8 @@ sub setNodeStatusMaster
 	}
 
 	# start sync
-	my $zenino = &getGlobalConfiguration('zenino');
-	system( "$zenino &" );
+	my $zenino = &getGlobalConfiguration( 'zenino' );
+	system ( "$zenino &" );
 
 	# start farmguardians
 	my @farmsf = &getFarmList();
@@ -554,27 +588,27 @@ sub setNodeStatusMaster
 				my $error_code = &runFarmGuardianStart( $farmname, "" );
 				if ( $error_code )
 				{
-					&zenlog("Some error happened starting farmguardian for farm $farmname");
+					&zenlog( "Some error happened starting farmguardian for farm $farmname" );
 				}
 			}
 		}
 	}
 
-	&zenlog("End of setNodeStatusMaster ###################");
+	&zenlog( "End of setNodeStatusMaster ###################" );
 
 	return 0;
 }
 
 sub setNodeStatusBackup
 {
-	&zenlog("############### Starting setNodeStatusBackup");
+	&zenlog( "############### Starting setNodeStatusBackup" );
 
 	my $node_status = &getZClusterNodeStatus();
-	&zenlog("Cluster ==== node_status: $node_status ===> Backup");
+	&zenlog( "Cluster ==== node_status: $node_status ===> Backup" );
 
 	if ( &getZClusterNodeStatus() eq 'maintenance' )
 	{
-		&zenlog("Node on maintenance mode. Setting maintenance mode instead");
+		&zenlog( "Node on maintenance mode. Setting maintenance mode instead" );
 		&setNodeStatusMaintenance();
 
 		return 0;
@@ -582,32 +616,33 @@ sub setNodeStatusBackup
 	elsif ( &getZClusterNodeStatus() eq 'backup' )
 	{
 		# FIXME: Deprecate this condition if it is not required.
-		&zenlog("Node is already backup");
+		&zenlog( "Node is already backup" );
+
 		#~ return 0;
 	}
 	else
 	{
-		&zenlog("Switching node to backup");
-		&setZClusterNodeStatus('backup');
+		&zenlog( "Switching node to backup" );
+		&setZClusterNodeStatus( 'backup' );
 	}
 
 	require Zevenet::Net::Interface;
 	require Zevenet::Ssyncd;
 
 	# conntrackd
-	my $primary_backup = &getGlobalConfiguration('primary_backup');
-	system("$primary_backup backup >/dev/null");
+	my $primary_backup = &getGlobalConfiguration( 'primary_backup' );
+	system ( "$primary_backup backup >/dev/null" );
 
 	# Ssyncd
 	&setSsyncdBackup();
 
-	my $zenino = &getGlobalConfiguration('zenino');
-	system( "$zenino stop &" ) unless system('pgrep zeninotify.pl >/dev/null');
+	my $zenino = &getGlobalConfiguration( 'zenino' );
+	system ( "$zenino stop &" ) unless system ( 'pgrep zeninotify.pl >/dev/null' );
 
 	# stop farmguardians
 	my $pids = `pgrep farmguardian`;
 	$pids =~ s/\n/ /g;
-	system("kill $pids") if $pids;
+	system ( "kill $pids" ) if $pids;
 
 	# block/disable ip announces ( arp and neigh )
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
@@ -618,37 +653,37 @@ sub setNodeStatusBackup
 		&disableInterfaceDiscovery( $if_ref );
 	}
 
-	&zenlog("End of setNodeStatusBackup ####################");
+	&zenlog( "End of setNodeStatusBackup ####################" );
 
 	return 0;
 }
 
 sub setNodeStatusMaintenance
 {
-	&zenlog("############### Starting setNodeStatusMaintenance");
+	&zenlog( "############### Starting setNodeStatusMaintenance" );
 
 	require Zevenet::Ssyncd;
 	require Zevenet::Net::Interface;
 
 	my $node_status = &getZClusterNodeStatus();
-	&zenlog("Cluster ==== node_status: $node_status ===> Maintenance");
+	&zenlog( "Cluster ==== node_status: $node_status ===> Maintenance" );
 
-	&zenlog("Switching node to under maintenance");
-	&setZClusterNodeStatus('maintenance');
+	&zenlog( "Switching node to under maintenance" );
+	&setZClusterNodeStatus( 'maintenance' );
 
 	# conntrackd
-	my $primary_backup = &getGlobalConfiguration('primary_backup');
-	system("$primary_backup fault");
+	my $primary_backup = &getGlobalConfiguration( 'primary_backup' );
+	system ( "$primary_backup fault" );
 
 	# Ssyncd
 	&setSsyncdDisabled();
 
 	# stop zeninotify
 	my $zenino = &getGlobalConfiguration( 'zenino' );
-	system( "$zenino stop" );
+	system ( "$zenino stop" );
 
 	# stop farmguardian
-	system("pkill farmguardian");
+	system ( "pkill farmguardian" );
 
 	# block/disable ip announces ( arp and neigh )
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
@@ -658,7 +693,7 @@ sub setNodeStatusMaintenance
 		&disableInterfaceDiscovery( $if_ref );
 	}
 
-	&zenlog("End of setNodeStatusMaintenance ################");
+	&zenlog( "End of setNodeStatusMaintenance ################" );
 
 	return 0;
 }

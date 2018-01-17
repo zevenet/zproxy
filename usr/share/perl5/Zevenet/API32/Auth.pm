@@ -28,10 +28,10 @@ sub validCGISession    # ()
 	require Zevenet::CGI;
 	require CGI::Session;
 
-	my $q = &getCGI();
+	my $q            = &getCGI();
 	my $validSession = 0;
 
-	my $session      = CGI::Session->load( $q );
+	my $session = CGI::Session->load( $q );
 
 	#~ &zenlog( "CGI SESSION ID: " . Dumper $session );
 	#~ &zenlog( "CGI SESSION ID: " . $session->id ) if $session->id;
@@ -55,22 +55,34 @@ sub validZapiKey    # ()
 {
 	require Zevenet::Zapi;
 
-	my $validKey = 0;    # output
-	my $key = "HTTP_ZAPI_KEY";
+	my $validKey = 0;                 # output
+	my $key      = "HTTP_ZAPI_KEY";
 
-	if (
-		 exists $ENV{ $key }                         # zapi key was provided
-		 && &getZAPI( "status" ) eq "true"           # zapi user is enabled
-		 && &getZAPI( "keyzapi" ) eq $ENV{ $key }    # matches key
-	  )
+	if ( exists $ENV{ $key } )        # zapi key was provided
 	{
-		$validKey = 1;
+		if (
+			 &getZAPI( "status" ) eq "true"              # zapi user is enabled
+			 && &getZAPI( "keyzapi" ) eq $ENV{ $key }    # matches key
+		  )
+		{
+			$validKey = 1;
+		}
+		elsif ( eval { require Zevenet::RBAC::User::Core; } )
+		{
+			my $user = &validateRBACUserZapi( $ENV{ $key } );
+			if ( $user )
+			{
+				$validKey = 1;
+				require Zevenet::Core;
+				&zenlog( "Auth $user successful" );
+			}
+		}
 	}
 
 	return $validKey;
 }
 
-sub getAuthorizationCredentials                     # ()
+sub getAuthorizationCredentials    # ()
 {
 	my $base64_digest;
 	my $username;
@@ -115,7 +127,6 @@ sub authenticateCredentials    #($user,$curpasswd)
 	my $simple = Authen::Simple::Passwd->new( path => "$passfile" );
 
 	#~ my $simple   = Authen::Simple::PAM->new();
-
 	if ( $simple->authenticate( $user, $pass ) )
 	{
 		$valid_credentials = 1;

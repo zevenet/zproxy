@@ -36,10 +36,10 @@ my $boolean       = qr/(?:true|false)/;
 my $enable        = qr/(?:enable|disable)/;
 my $natural = qr/[1-9]\d*/;    # natural number = {1, 2, 3, ...}
 my $weekdays = qr/(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)/;
-my $minutes = qr/(?:\d|[0-5]\d)/;
-my $hours = qr/(?:\d|[0-1]\d|2[0-3])/;
-my $months = qr/(?:[1-9]|1[0-2])/;
-my $dayofmonth = qr/(?:[1-9]|[1-2]\d|3[01])/;		# day of month
+my $minutes  = qr/(?:\d|[0-5]\d)/;
+my $hours    = qr/(?:\d|[0-1]\d|2[0-3])/;
+my $months   = qr/(?:[1-9]|1[0-2])/;
+my $dayofmonth = qr/(?:[1-9]|[1-2]\d|3[01])/;    # day of month
 
 my $hostname = qr/[a-z][a-z0-9\-]{0,253}[a-z0-9]/;
 my $service  = qr/[a-zA-Z0-9][a-zA-Z0-9\-]*/;
@@ -55,9 +55,9 @@ my $port_range =
 my $graphsFrequency = qr/(?:daily|weekly|monthly|yearly)/;
 
 #~ my $dos_global= qr/(?:sshbruteforce|dropicmp)/;		# Next version
-my $dos_global= qr/(?:sshbruteforce)/;
-my $dos_all 	=	qr/(?:limitconns|limitsec)/;
-my $dos_tcp	= qr/(?:bogustcpflags|limitrst)/;
+my $dos_global = qr/(?:sshbruteforce)/;
+my $dos_all    = qr/(?:limitconns|limitsec)/;
+my $dos_tcp    = qr/(?:bogustcpflags|limitrst)/;
 
 my $run_actions = qr/^(?:stop|start|restart)$/;
 
@@ -65,13 +65,14 @@ my %format_re = (
 
 	# generic types
 	'natural_num' => $natural,
+	'boolean'     => $boolean,
 
 	# hostname
 	'hostname' => $hostname,
-	
+
 	# license
 	'license_format' => qr/(?:txt|html)/,
-	
+
 	# log
 	'log' => qr/[\.\-\w]+/,
 
@@ -98,17 +99,17 @@ my %format_re = (
 	'ntp'            => qr{[\w\.\-]+},
 
 	# farms
-	'farm_name'    => qr/[a-zA-Z0-9\-]+/,
-	'farm_profile' => qr/HTTP|GSLB|L4XNAT|DATALINK/,
-	'backend'      => qr/\d+/,
-	'service'      => $service,
-	'gslb_service'      => qr/[a-zA-Z0-9][\w\-]*/,
-	'farm_modules' => qr/(?:gslb|dslb|lslb)/,
+	'farm_name'             => qr/[a-zA-Z0-9\-]+/,
+	'farm_profile'          => qr/HTTP|GSLB|L4XNAT|DATALINK/,
+	'backend'               => qr/\d+/,
+	'service'               => $service,
+	'gslb_service'          => qr/[a-zA-Z0-9][\w\-]*/,
+	'farm_modules'          => qr/(?:gslb|dslb|lslb)/,
 	'service_position'      => qr/\d+/,
 	'farm_maintenance_mode' => qr/(?:drain|cut)/,
 
 	# cipher
-	'ciphers'		=> qr/(?:all|highsecurity|customsecurity|ssloffloading)/,
+	'ciphers' => qr/(?:all|highsecurity|customsecurity|ssloffloading)/,
 
 	# backup
 	'backup'        => qr/[\w]+/,
@@ -132,10 +133,10 @@ my %format_re = (
 	'resource_data_NS'   => qr/[a-zA-Z0-9\-]+/,
 	'resource_data_CNAME' => qr/[a-z\.]+/,
 	'resource_data_MX'    => qr/[a-z\.\ 0-9]+/,
-	'resource_data_TXT'   => qr/.+/,            # all characters allow
+	'resource_data_TXT'   => qr/.+/,              # all characters allow
 	'resource_data_SRV'   => qr/[a-z0-9 \.]/,
 	'resource_data_PTR'   => qr/[a-z\.]+/,
-	'resource_data_NAPTR' => qr/.+/,            # all characters allow
+	'resource_data_NAPTR' => qr/.+/,              # all characters allow
 
 	# interfaces ( WARNING: length in characters < 16  )
 	'nic_interface'    => $nic_if,
@@ -155,51 +156,52 @@ my %format_re = (
 	'notif_method' => qr/(?:email)/,
 	'notif_tls'    => $boolean,
 	'notif_action' => $enable,
-	'notif_time'   => $natural,               # this value can't be 0
+	'notif_time'   => $natural,                   # this value can't be 0
 
 	# ipds
 	# blacklists
-	'day_of_month' => qr{$dayofmonth},
-	'weekdays'	=> qr{$weekdays},
-	'blacklists_name'      => qr{\w+},
-	'blacklists_source'    => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
-	'blacklists_source_id' => qr{\d+},
-	'blacklists_type'  => qr{(?:local|remote)},
-	'blacklists_policy'      => qr{(?:allow|deny)},
-	'blacklists_url'       => qr{.+},
-	'blacklists_hour'   => $hours,
-	'blacklists_minutes'   => $minutes,
-	'blacklists_period'   => $natural,
-	'blacklists_unit'   => qr{(:?hours|minutes)},
-	'blacklists_day'   => qr{(:?$dayofmonth|$weekdays)},
-	'blacklists_frequency'   => qr{(:?daily|weekly|monthly)},
-	'blacklists_frequency_type'   => qr{(:?period|exact)},
+	'day_of_month'              => qr{$dayofmonth},
+	'weekdays'                  => qr{$weekdays},
+	'blacklists_name'           => qr{\w+},
+	'blacklists_source'         => qr{(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?},
+	'blacklists_source_id'      => qr{\d+},
+	'blacklists_type'           => qr{(?:local|remote)},
+	'blacklists_policy'         => qr{(?:allow|deny)},
+	'blacklists_url'            => qr{.+},
+	'blacklists_hour'           => $hours,
+	'blacklists_minutes'        => $minutes,
+	'blacklists_period'         => $natural,
+	'blacklists_unit'           => qr{(:?hours|minutes)},
+	'blacklists_day'            => qr{(:?$dayofmonth|$weekdays)},
+	'blacklists_frequency'      => qr{(:?daily|weekly|monthly)},
+	'blacklists_frequency_type' => qr{(:?period|exact)},
+
 	# dos
-	'dos_name'      => qr/[\w]+/,
-	'dos_rule'      => qr/(?:$dos_global|$dos_all|$dos_tcp)/,
-	'dos_rule_farm' => qr/(?:$dos_all|$dos_tcp)/,
+	'dos_name'        => qr/[\w]+/,
+	'dos_rule'        => qr/(?:$dos_global|$dos_all|$dos_tcp)/,
+	'dos_rule_farm'   => qr/(?:$dos_all|$dos_tcp)/,
 	'dos_rule_global' => $dos_global,
-	'dos_rule_all'       => $dos_all,
-	'dos_rule_tcp'      => $dos_tcp,
-	'dos_time'      => $natural,
-	'dos_limit_conns'      => $natural,
-	'dos_limit'      => $natural,
-	'dos_limit_burst'      => $natural,
+	'dos_rule_all'    => $dos_all,
+	'dos_rule_tcp'    => $dos_tcp,
+	'dos_time'        => $natural,
+	'dos_limit_conns' => $natural,
+	'dos_limit'       => $natural,
+	'dos_limit_burst' => $natural,
 	'dos_status'      => qr/(?:down|up)/,
-	'dos_port'      => $port_range,
-	'dos_hits'      => $natural,	
+	'dos_port'        => $port_range,
+	'dos_hits'        => $natural,
+
 	# rbl
-	'rbl_name'	=> qr/[\w]+/,
-	'rbl_domain'	=> qr/[\w\.\-]+/,
-	'rbl_log_level' => qr/[0-7]/,
-	'rbl_only_logging' => $boolean,
-	'rbl_cache_size' => $natural,
-	'rbl_cache_time' => $natural,
-	'rbl_queue_size' => $natural,
-	'rbl_thread_max' => $natural,
+	'rbl_name'          => qr/[\w]+/,
+	'rbl_domain'        => qr/[\w\.\-]+/,
+	'rbl_log_level'     => qr/[0-7]/,
+	'rbl_only_logging'  => $boolean,
+	'rbl_cache_size'    => $natural,
+	'rbl_cache_time'    => $natural,
+	'rbl_queue_size'    => $natural,
+	'rbl_thread_max'    => $natural,
 	'rbl_local_traffic' => $boolean,
-	'rbl_actions' => $run_actions,
-	
+	'rbl_actions'       => $run_actions,
 
 	# certificates filenames
 	'certificate' => qr/\w[\w\.\(\)\@ \-]*\.(?:pem|csr)/,
@@ -216,6 +218,9 @@ my %format_re = (
 	'fg_enabled' => $boolean,
 	'fg_log'     => $boolean,
 	'fg_time'    => qr/$natural/,                     # this value can't be 0
+
+	# rbac
+	'user_name' => qr/[\w-]+/,
 
 );
 
@@ -295,6 +300,7 @@ Bugs:
 See Also:
 	zapi/v3/post.cgi
 =cut
+
 sub getValidPort    # ( $ip, $port, $profile )
 {
 	my $ip      = shift;    # mandatory for HTTP, GSLB or no profile
@@ -347,6 +353,7 @@ Bugs:
 See Also:
 
 =cut
+
 sub getValidOptParams    # ( \%json_obj, \@allowParams )
 {
 	my $params         = shift;
@@ -395,14 +402,15 @@ Bugs:
 See Also:
 
 =cut
+
 sub getValidReqParams    # ( \%json_obj, \@requiredParams, \@optionalParams )
 {
 	my $params            = shift;
 	my $requiredParamsRef = shift;
-	my $allowParamsRef    = shift;
+	my $allowParamsRef    = shift || [];
 	my @requiredParams    = @{ $requiredParamsRef };
 	my @allowParams;
-	@allowParams = @{ $allowParamsRef } if ($allowParamsRef);
+	@allowParams = @{ $allowParamsRef } if ( $allowParamsRef );
 	push @allowParams, @requiredParams;
 	my $output;
 	my $pattern;
@@ -414,7 +422,7 @@ sub getValidReqParams    # ( \%json_obj, \@requiredParams, \@optionalParams )
 	my $aux = grep { /^(?:$pattern)$/ } keys %{ $params };
 	if ( $aux != scalar @requiredParams )
 	{
-		$aux = scalar @requiredParams - $aux;
+		$aux    = scalar @requiredParams - $aux;
 		$output = "Missing required parameters. Parameters missed: $aux.";
 	}
 
@@ -436,6 +444,212 @@ sub getValidReqParams    # ( \%json_obj, \@requiredParams, \@optionalParams )
 	}
 
 	return $output;
+}
+
+=begin nd
+Function: checkZAPIParams
+
+	Function to check parameters of a PUT or POST call.
+	It check a list of parameters, and apply it some checks:
+	- Almost 1 parameter
+	- All required parameters must exist
+	- All required parameters are correct
+
+	Also, it checks: getValidFormat funcion, if black is allowed, intervals, aditionals regex and excepts regex
+
+
+Parameters:
+	Json_obj - Parameters sent in a POST or PUT call
+	Parameters - Hash of parameter objects
+
+	parameter object:
+	{
+		parameter :
+		{		# parameter is the key or parameter name
+			"required" 	: "true",		# or not defined
+			"non_blank" : "true",		# or not defined
+			"interval" 	: "1,65535",	# it is possible define strings matchs ( non implement). For example: "ports" = "1-65535", "log_level":"1-3", ...
+										# ",10" indicates that the value has to be less than 10 but without low limit
+										# "10," indicates that the value has to be more than 10 but without high limit
+			"exceptions"	: [ "zapi", "webgui", "root" ],	# The parameter can't have got any of the listed values
+			"regex"	: "/\w+,\d+/",		# regex format
+			"valid_format"	: "farmname",		# regex stored in Validate.pm file, it checks with the function getValidFormat
+		}
+		param2 :
+		{
+			...
+		}
+		....
+	}
+
+
+Returns:
+	String - Return a error message with the first error found or undef on success
+
+=cut
+
+sub checkZAPIParams
+{
+	my $json_obj  = shift;
+	my $param_obj = shift;
+
+	# Almost 1 parameter
+	return "At least a parameters is expected." if ( !keys %{ $json_obj } );
+
+	# All required parameters must exist
+	my @miss_params;
+	foreach my $param ( keys %{ $param_obj } )
+	{
+		if ( $param_obj->{ $param }->{ 'required' } eq 'true' )
+		{
+			push @miss_params, $param if ( !grep ( /^$param$/, keys %{ $json_obj } ) );
+		}
+	}
+	return
+	  &putArrayAsText( \@miss_params,
+				   "The required parameter<sp>s</sp> <pl> <bs>is<|>are</bp> missing." )
+	  if ( @miss_params );
+
+	# All sent parameters are correct
+	my @non_valid;
+	foreach my $param ( keys %{ $json_obj } )
+	{
+		push @non_valid, $param if ( !grep ( /^$param$/, keys %{ $param_obj } ) );
+	}
+	return
+	  &putArrayAsText( \@non_valid,
+		  "The parameter<sp>s</sp> <pl> <bs>is<|>are</bp> not correct for this call." )
+	  if ( @non_valid );
+
+	# check for each parameter
+	foreach my $param ( keys %{ $json_obj } )
+	{
+		# getValidFormat funcion:
+		if ( exists $param_obj->{ $param }->{ 'valid_format' } )
+		{
+			return "The parameter $param has not a valid value."
+			  if (
+				   !&getValidFormat(
+									 $param_obj->{ $param }->{ 'valid_format' },
+									 $json_obj->{ $param }
+				   )
+			  );
+		}
+
+		# if blank value is allowed
+		if ( $param_obj->{ $param }->{ 'non_blank' } eq 'true' )
+		{
+			return "The parameter $param can't be in blank."
+			  if ( $json_obj->{ $param } eq '' );
+		}
+
+		# intervals
+		if ( exists $param_obj->{ $param }->{ 'interval' } )
+		{
+			if ( $param_obj->{ $param }->{ 'interval' } =~ /,/ )
+			{
+				my ( $low_limit, $high_limit ) =
+				  split ( ',', $param_obj->{ $param }->{ 'interval' } );
+				return "The parameter $param has not a valid value."
+				  if (    ( $json_obj->{ $param } < $low_limit )
+					   || ( $json_obj->{ $param } > $high_limit ) );
+			}
+		}
+
+		# exceptions
+		if ( exists $param_obj->{ $param }->{ 'exceptions' } )
+		{
+			return
+			  "The value $json_obj->{ $param } is a reserved word of the parameter $param."
+			  if (
+				   grep ( /^$json_obj->{ $param }$/,
+						  @{ $param_obj->{ $param }->{ 'exceptions' } } ) );
+		}
+
+		# aditionals
+
+		# regex
+
+	}
+
+	return undef;
+}
+
+=begin nd
+Function: putArrayAsText
+
+	This funcion receives a text string and a list of values and it generates a
+	text with the values.
+
+	It uses a delimited to modify the text string passed as argument:
+	put list - <pl>
+	select plural - <sp>text</sp>
+	select single - <ss>text</ss>
+	select between single or plural - <bs>text_single<|>text_plural</bp>
+
+	Examples:
+		putArrayAsText ( ["password", "user", "key"], "The possible value<sp>s</sp> <sp>are</sp>: <pl>")
+			return: ""
+		putArrayAsText ( ["", "", ""], "The values are")
+			return: ""
+
+
+Parameters:
+	Parameters - List of parameters to add to the string message
+	Text string - Text
+
+Returns:
+	String - Return a message adjust to the number of parameters passed
+
+=cut
+
+sub putArrayAsText
+{
+	my $array_ref = shift;
+	my $msg       = shift;
+	my @array     = @{ $array_ref };
+
+	# one element
+	if ( scalar @array eq 1 )
+	{
+		# save single tags
+		$msg =~ s/<\/?ss>//g;
+
+		# remove plural text
+		#~ $msg =~ s/<sp>.+<\/?sp>// while ( $msg =~ /<sp>/ );
+		$msg =~ s/<sp>.+<\/?sp>//g;
+
+		# select between plural and single text
+		#~ $msg =~ s/<bs>(.+)<|>.+<\/bp>/$1/ while ( $msg =~ /<|>/ );
+		$msg =~ s/<bs>(.+)<\|>.+<\/bp>/$1/g;
+
+		# put list
+		$msg =~ s/<pl>/$array[0]/;
+	}
+
+	# more than one element
+	else
+	{
+		# save plual tags
+		$msg =~ s/<\/?sp>//g;
+
+		# remove single text
+		#~ $msg =~ s/<ss>.+<\/?ss>// while ( $msg =~ /<ss>/ );
+		$msg =~ s/<ss>.+<\/?ss>//g;
+
+		# select between plural and single text
+		#~ $msg =~ s/<bs>.+<|>(.+)<\/bp>/$1/ while ( $msg =~ /<|>/ );
+		$msg =~ s/<bs>.+<\|>(.+)<\/bp>/$1/g;
+
+		my $lastItem = pop @array;
+		my $list = join ( ', ', @array );
+		$list .= " and $lastItem";
+
+		# put list
+		$msg =~ s/<pl>/$list/;
+	}
+
+	return $msg;
 }
 
 1;

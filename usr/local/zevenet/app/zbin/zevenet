@@ -339,6 +339,9 @@ if ( $action eq "start" )
 	# enable cluster hook
 	&eload( module => $mod, func => 'enable_cluster' ) if $eload;
 
+	# enable modules
+	&eload( module => $mod, func => 'start_modules' ) if $eload;
+
 	&zenlog("zevenet: Setting up virtual interfaces...");
 
 	# virtual interfaces (ie. eth0:20, eth0.20:2)

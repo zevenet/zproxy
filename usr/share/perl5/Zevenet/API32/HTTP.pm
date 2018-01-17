@@ -386,7 +386,7 @@ sub httpErrorResponse
 				 message     => $args->{ msg },
 	};
 
-	&zenlog( "[Error] $args->{ desc }: $args->{ msg }" );
+	&zenlog( "$args->{ desc }: $args->{ msg }", 'ERROR' );
 	&zenlog( $args->{ log_msg } ) if exists $args->{ log_msg };
 
 	my $response = { code => $args->{ code }, body => $body };

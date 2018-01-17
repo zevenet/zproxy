@@ -151,7 +151,7 @@ sub logAndRun    # ($command)
 
 		if ( $return_code )
 		{
-			&zenlog( "@cmd_output" );
+			&zenlog( "@cmd_output", "error" );
 			&zenlog( "last command failed!" );
 		}
 	}
@@ -159,7 +159,7 @@ sub logAndRun    # ($command)
 	{
 		system ( "$command >/dev/null 2>&1" );
 		$return_code = $?;
-		&zenlog( $program . "failed: $command" ) if $return_code;
+		&zenlog( $program . "failed: $command", 'error' ) if $return_code;
 	}
 
 	# returning error code from execution

@@ -25,6 +25,7 @@ use strict;
 
 use MIME::Base64;
 
+my $crypt_key = 'S7hi_krAX_Q1GBCY';
 
 =begin nd
 Function: getCodeEncode
@@ -40,16 +41,17 @@ Returns:
 See Also:
 	Notifications password
 =cut
+
 sub getCodeEncode
 {
 	my $clear_msg = shift;    # output
 	my $encode_msg;
-	
+
 	if ( $clear_msg )
 	{
 		# encode fist time
 		$encode_msg = encode_base64( $clear_msg, '' );
-		
+
 		# apply a obfuscation the msg
 		# sustitute most used characters
 		$encode_msg =~ s/a/2f25ed/g;
@@ -62,15 +64,15 @@ sub getCodeEncode
 		$encode_msg =~ s/3/8q21NJn/g;
 		$encode_msg =~ s/7/Tr54g4V4eN/g;
 		chomp $encode_msg;
-		
+
 		# apply prefix and sufix
 		$encode_msg = "xh1Q334${encode_msg}0be65aP1";
-		
+
 		# encode the obfuscate msg
 		$encode_msg = encode_base64( $encode_msg, '' );
 		chomp $encode_msg;
 	}
-	
+
 	return $encode_msg;
 }
 
@@ -88,6 +90,7 @@ Returns:
 See Also:
 	Notifications password
 =cut
+
 sub getCodeDecode
 {
 	my $encode_msg = shift;
@@ -96,8 +99,8 @@ sub getCodeDecode
 	if ( $encode_msg )
 	{
 		# decode first time
-		$clear_msg = decode_base64($encode_msg);
-		
+		$clear_msg = decode_base64( $encode_msg );
+
 		# remove the obfuscate the msg
 		# remove code of most used characters
 		$clear_msg =~ s/Tr54g4V4eN/7/g;
@@ -109,17 +112,83 @@ sub getCodeDecode
 		$clear_msg =~ s/lpWvW5/e/g;
 		$clear_msg =~ s/1B21VW/2/g;
 		$clear_msg =~ s/2f25ed/a/g;
-		
+
 		# remove prefix and sufix
 		$clear_msg =~ s/^xh1Q334//;
 		$clear_msg =~ s/0be65aP1$//;
-	
-		# decode 
+
+		# decode
 		$clear_msg = decode_base64( $clear_msg );
 	}
-	
+
 	return $clear_msg;
 }
 
+=begin nd
+Function: setCryptString
+
+	Encrypt a string 
+	
+Parameters:
+	clean string - Text to compare
+
+Returns:
+	String - It returns encryted the string
+
+=cut
+
+sub setCryptString
+{
+	my $clearString = shift;
+	require Crypt::CBC;
+
+	my $cipher = Crypt::CBC->new( -key    => $crypt_key,
+								  -cipher => 'Blowfish', );
+
+	my $out = $cipher->encrypt_hex( $clearString );
+
+	return $out;
+}
+
+=begin nd
+Function: validateCryptString
+
+	Decript a encrypted string to check if it is the same than a clear string
+	
+Parameters:
+	encrypted string - Text to decrypt and compare
+	clean string - Text to compare
+
+Returns:
+	Error code - Return 1 if the two strings are the same or 0 if they aren't not
+
+=cut
+
+sub validateCryptString
+{
+	my $encryptString = shift;
+	my $clearString   = shift;
+	my $decrypt       = '';
+	my $out           = 0;
+	require Crypt::CBC;
+
+	my $cipher = Crypt::CBC->new( -key    => $crypt_key,
+								  -cipher => 'Blowfish', );
+
+	eval {
+		# packet
+		$encryptString = pack ( "H*", $encryptString );
+
+		# decrypt
+		$decrypt = $cipher->decrypt( $encryptString );
+	};
+
+	if ( $clearString eq $decrypt )
+	{
+		$out = 1;
+	}
+
+	return $out;
+}
 
 1;

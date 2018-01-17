@@ -35,9 +35,8 @@ use Zevenet::Log;
 #swcert = 1 ==> There isn't certificate
 #swcert = 2 ==> Cert isn't signed OK
 #swcert = 3 ==> Cert test and it's expired
-my $swcert = &certcontrol();
+my $swcert    = &certcontrol();
 my $enable_fg = 1;
-
 
 sub getEnableFarmGuardian
 {
@@ -47,11 +46,12 @@ sub getEnableFarmGuardian
 sub setSystemOptimizations
 {
 	my $appliance_version = &getApplianceVersion();
-	&zenlog ("Appliance version: $appliance_version");
+	&zenlog( "Appliance version: $appliance_version" );
 
 	#### Starts node tuning ####
-	my $recent_ip_list_tot = &getGlobalConfiguration('recent_ip_list_tot');
-	my $recent_ip_list_hash_size = &getGlobalConfiguration('recent_ip_list_hash_size');
+	my $recent_ip_list_tot = &getGlobalConfiguration( 'recent_ip_list_tot' );
+	my $recent_ip_list_hash_size =
+	  &getGlobalConfiguration( 'recent_ip_list_hash_size' );
 	system ( '/sbin/rmmod xt_recent >/dev/null 2>&1' );
 	system (
 		"/sbin/modprobe xt_recent ip_list_tot=$recent_ip_list_tot ip_list_hash_size=$recent_ip_list_hash_size >/dev/null 2>&1"
@@ -84,20 +84,21 @@ sub setSystemOptimizations
 		"net.ipv4.inet_peer_maxttl"          => "5",
 		"net.ipv4.tcp_keepalive_probes"      => "5",
 		"net.ipv4.tcp_slow_start_after_idle" => "0",
+
 		#"net.ipv4.netfilter.ip_conntrack_udp_timeout"        => "2",
 		#"net.ipv4.netfilter.ip_conntrack_udp_timeout_stream" => "2",
-		"net.netfilter.nf_conntrack_tcp_timeout_time_wait"   => "2",
-		"net.netfilter.nf_conntrack_max"                     => "180000",
-		"net.netfilter.nf_conntrack_tcp_loose"               => "0",
-		"net.core.rmem_max"                                  => "16777216",
-		"net.core.wmem_max"                                  => "16777216",
-		"net.core.rmem_default"                              => "16777216",
-		"net.core.wmem_default"                              => "16777216",
-		"net.core.optmem_max"                                => "40960",
-		"net.ipv4.tcp_keepalive_intvl"                       => "15",
-		"net.core.netdev_max_backlog"                        => "50000",
-		"net.core.somaxconn"                                 => "3000",
-		"net.ipv4.ip_nonlocal_bind"                          => "1",
+		"net.netfilter.nf_conntrack_tcp_timeout_time_wait" => "2",
+		"net.netfilter.nf_conntrack_max"                   => "180000",
+		"net.netfilter.nf_conntrack_tcp_loose"             => "0",
+		"net.core.rmem_max"                                => "16777216",
+		"net.core.wmem_max"                                => "16777216",
+		"net.core.rmem_default"                            => "16777216",
+		"net.core.wmem_default"                            => "16777216",
+		"net.core.optmem_max"                              => "40960",
+		"net.ipv4.tcp_keepalive_intvl"                     => "15",
+		"net.core.netdev_max_backlog"                      => "50000",
+		"net.core.somaxconn"                               => "3000",
+		"net.ipv4.ip_nonlocal_bind"                        => "1",
 	);
 
 	# In Stretch Debian not appear "net.ipv4.netfilter.ip_conntrack*" variables
@@ -110,15 +111,16 @@ sub setSystemOptimizations
 	{
 		$sysctl{ "net.ipv4.netfilter.ip_conntrack_tcp_timeout_time_wait" }   = "2";
 		$sysctl{ "net.ipv4.netfilter.ip_conntrack_tcp_timeout_established" } = "86400";
-		$sysctl{ "net.ipv4.netfilter.ip_conntrack_udp_timeout" } = "2";
-		$sysctl{ "net.ipv4.netfilter.ip_conntrack_udp_timeout_stream" } = 2;
+		$sysctl{ "net.ipv4.netfilter.ip_conntrack_udp_timeout" }             = "2";
+		$sysctl{ "net.ipv4.netfilter.ip_conntrack_udp_timeout_stream" }      = 2;
 	}
+
 	#  ZVA equal or higher than 5000
 	else
 	{
 		$sysctl{ "net.netfilter.nf_conntrack_tcp_timeout_established" } = "86400";
-		$sysctl{ "net.netfilter.nf_conntrack_udp_timeout" }  = "2";
-		$sysctl{ "net.netfilter.nf_conntrack_udp_timeout_stream" } = "2";
+		$sysctl{ "net.netfilter.nf_conntrack_udp_timeout" }             = "2";
+		$sysctl{ "net.netfilter.nf_conntrack_udp_timeout_stream" }      = "2";
 
 	}
 
@@ -162,7 +164,7 @@ sub setSystemOptimizations
 
 sub start_service
 {
-	&zenlog("Zevenet Service: Starting...");
+	&zenlog( "Zevenet Service: Starting..." );
 
 	if ( $swcert > 0 )
 	{
@@ -170,11 +172,11 @@ sub start_service
 		return 1;
 	}
 
-	&zenlog("Zevenet Service: Loading Optimizations...");
+	&zenlog( "Zevenet Service: Loading Optimizations..." );
 
 	&setSystemOptimizations();
 
-	&zenlog("Zevenet Service: Loading Bonding configuration...");
+	&zenlog( "Zevenet Service: Loading Bonding configuration..." );
 
 	# bonding
 	if ( eval { require Zevenet::Net::Bonding; } )
@@ -184,7 +186,8 @@ sub start_service
 		if ( $missing_bonding )
 		{
 			system ( '/sbin/modprobe bonding >/dev/null 2>&1' );
-			my $bonding_masters_filename = &getGlobalConfiguration('bonding_masters_filename');
+			my $bonding_masters_filename =
+			  &getGlobalConfiguration( 'bonding_masters_filename' );
 			system ( "echo -bond0 > $bonding_masters_filename" );
 		}
 
@@ -211,7 +214,12 @@ sub start_service
 		}
 	}
 
-	&zenlog("Zevenet Service: Loading Notification configuration...");
+	return 0;
+}
+
+sub start_modules
+{
+	&zenlog( "Zevenet Service: Loading Notification configuration..." );
 
 	# notifications
 	if ( eval { require Zevenet::Notify; } )
@@ -219,15 +227,21 @@ sub start_service
 		&zlbstartNotifications();
 	}
 
-	&zenlog("Zevenet Service: Starting IPDS system...");
+	&zenlog( "Zevenet Service: Starting RBAC system..." );
+
+	# rbac
+	if ( eval { require Zevenet::RBAC::User::Action; } )
+	{
+		&initRBACModule();
+	}
+
+	&zenlog( "Zevenet Service: Starting IPDS system..." );
 
 	# ipds
 	if ( eval { require Zevenet::IPDS::Base; } )
 	{
 		&runIPDSStartModule();
 	}
-
-	return 0;
 }
 
 # this function syncs files with the other node before starting the cluster and
@@ -238,9 +252,10 @@ sub enable_cluster
 	if ( $swcert > 0 )
 	{
 		&printAndLog( "No valid ZLB certificate was found, no farm started\n" );
+
 		# stop zevenet service if the certificate is not valid
 		# WARNING: this MUST be 'exec' and not other way of running a program
-		exec ('/usr/local/zevenet/app/zbin/zevenet stop');
+		exec ( '/usr/local/zevenet/app/zbin/zevenet stop' );
 	}
 
 	require Zevenet::Cluster;
@@ -276,11 +291,16 @@ sub enable_cluster
 	if ( $remote_node_status eq 'master' )
 	{
 		# FIXME: use zcluster_manager function
-		my $zcluster_manager = &getGlobalConfiguration('zcluster_manager');
+		my $zcluster_manager = &getGlobalConfiguration( 'zcluster_manager' );
 
 		&runRemotely( "$zcluster_manager sync", $remote_ip );
 		&enableZCluster( 10 );
-		&zenlog("enableZCluster returned");
+
+		&zenlog( "Syncing RBAC users" );
+		require Zevenet::RBAC::Action;
+		&updateRBACAllUser();
+
+		&zenlog( "enableZCluster returned" );
 	}
 
 	# disable ip announcement if the node is not master
@@ -291,7 +311,7 @@ sub enable_cluster
 
 		foreach my $iface ( @configured_interfaces )
 		{
-			next if ( !defined $$iface{ vini } ||  $$iface{ vini } eq '');
+			next if ( !defined $$iface{ vini } || $$iface{ vini } eq '' );
 			next if ( $$iface{ status } ne "up" );
 
 			&disableInterfaceDiscovery( $iface );
@@ -309,9 +329,10 @@ sub start_cluster
 	if ( $swcert > 0 )
 	{
 		&printAndLog( "No valid ZLB certificate was found, no farm started\n" );
+
 		# stop zevenet service if the certificate is not valid
 		# WARNING: this MUST be 'exec' and not other execution
-		exec ('/usr/local/zevenet/app/zbin/zevenet stop');
+		exec ( '/usr/local/zevenet/app/zbin/zevenet stop' );
 	}
 
 	my $zcl_configured = &getZClusterStatus();
@@ -334,10 +355,10 @@ sub start_cluster
 			require Zevenet::Net::Interface;
 
 			my $maint_if = 'cl_maintenance';
-			my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
-			my $if_ref = &getSystemInterface( $maint_if );
+			my $ip_bin   = &getGlobalConfiguration( 'ip_bin' );
+			my $if_ref   = &getSystemInterface( $maint_if );
 
-			system("$ip_bin link set $maint_if down");
+			system ( "$ip_bin link set $maint_if down" );
 		}
 	}
 
@@ -359,7 +380,7 @@ sub stop_service
 
 		if ( `pgrep zeninotify` )
 		{
-			my $zenino = &getGlobalConfiguration('zenino');
+			my $zenino = &getGlobalConfiguration( 'zenino' );
 			system ( "$zenino stop" );
 		}
 

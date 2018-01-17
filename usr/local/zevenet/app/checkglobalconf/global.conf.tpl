@@ -36,6 +36,8 @@ $cipher_pci="kEECDH+ECDSA+AES128:kEECDH+ECDSA+AES256:kEECDH+AES128:kEECDH+AES256
 $cipher_ssloffloading="AES";
 #HTPASSWD file
 $htpass="/etc/passwd";#update
+#shadow file
+$shadow_file="/etc/shadow";
 #ZAPI KEY
 $zapikey="";
 # Zen license 
@@ -139,6 +141,16 @@ $temperatureFile="/proc/acpi/thermal_zone/THRM/temperature";
 $updatercd="/usr/sbin/update-rc.d";
 #Where is packetbl?
 $packetbl_bin="/bin/packetbl";
+#Where is adduser?
+$adduser_bin="/usr/sbin/adduser";
+#Where is deluser?
+$deluser_bin="/usr/sbin/deluser";
+#Where is groupadd?
+$groupadd_bin="/usr/sbin/groupadd";
+#Where is groups?
+$groups_bin="/usr/bin/groups";
+#Where is echo?
+$echo_bin="/bin/echo";
 
 
 #where is pound binary?

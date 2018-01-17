@@ -59,6 +59,14 @@ sub session_login
 		&httpErrorResponse( code => 401, desc => $desc, msg => $msg );
 	}
 
+	# check if the user has got permissions
+	my ( $name,$passwd,$gid,$webgui_group ) = getgrnam( 'webgui' );
+	if ( ! grep( /(^| )webgui( |$)/, $webgui_group ) )
+	{
+		my $msg = "the user $username has not web permissions";
+		&httpErrorResponse( code => 401, desc => $desc, msg => $msg );
+	}
+
 	$session->param( 'is_logged_in', 1 );
 	$session->param( 'username',     $username );
 	$session->expire( 'is_logged_in', '+30m' );

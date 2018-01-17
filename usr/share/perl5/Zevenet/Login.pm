@@ -44,9 +44,12 @@ Bugs:
 See Also:
 	Zapi v3: <set_user>, <set_user_zapi>
 =cut
+
 sub changePassword    #($user, $newpass, $verifypass)
 {
 	my ( $user, $newpass, $verifypass ) = @_;
+
+	$verifypass = $newpass if ( !$verifypass );
 
 	##write \$ instead $
 	$newpass =~ s/\$/\\\$/g;
@@ -89,6 +92,7 @@ See Also:
 
 	Zapi v3: <set_user>
 =cut
+
 sub checkValidUser    #($user,$curpasswd)
 {
 	my ( $user, $curpasswd ) = @_;
@@ -118,6 +122,7 @@ Returns:
 See Also:
 	zapi/v2/zapi.cgi
 =cut
+
 sub checkLoggedZapiUser    #()
 {
 	my $allowed  = 0;
