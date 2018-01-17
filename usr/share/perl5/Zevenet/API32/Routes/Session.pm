@@ -61,7 +61,7 @@ sub session_login
 
 	# check if the user has got permissions
 	my ( $name,$passwd,$gid,$webgui_group ) = getgrnam( 'webgui' );
-	if ( ! grep( /(^| )webgui( |$)/, $webgui_group ) )
+	if ( ! grep( /(^| )$username( |$)/, $webgui_group ) )
 	{
 		my $msg = "the user $username has not web permissions";
 		&httpErrorResponse( code => 401, desc => $desc, msg => $msg );
