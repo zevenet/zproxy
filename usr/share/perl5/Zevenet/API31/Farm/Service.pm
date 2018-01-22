@@ -385,18 +385,21 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 
 	if ( exists $json_obj->{ httpsb } )
 	{
-		if ( $json_obj->{ httpsb } eq "true" )
+		if ( $json_obj->{ httpsb } ne &getFarmVS( $farmname, $service, 'httpsbackend' ) )
 		{
-			&setFarmVS( $farmname, $service, "httpsbackend", $json_obj->{ httpsb } );
-		}
-		elsif ( $json_obj->{ httpsb } eq "false" )
-		{
-			&setFarmVS( $farmname, $service, "httpsbackend", "" );
-		}
-		else
-		{
-			my $msg = "Invalid httpsb value.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			if ( $json_obj->{ httpsb } eq "true" )
+			{
+				&setFarmVS( $farmname, $service, "httpsbackend", $json_obj->{ httpsb } );
+			}
+			elsif ( $json_obj->{ httpsb } eq "false" )
+			{
+				&setFarmVS( $farmname, $service, "httpsbackend", "" );
+			}
+			else
+			{
+				my $msg = "Invalid httpsb value.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
 		}
 	}
 

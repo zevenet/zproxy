@@ -1024,7 +1024,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 	my $output        = 0;
 	my $line;
 	my $sw = 0;
-	my $j  = 0;
+	my $j  = -1;
 	my $l;
 
 	$string =~ s/^\s+//;
@@ -1035,6 +1035,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 
 	foreach $line ( @fileconf )
 	{
+		$j++;
 		if ( $line =~ /\tService \"$service\"/ ) { $sw = 1; }
 		if ( $line =~ /^\tEnd$/ && $sw == 1 ) { last; }
 		next if $sw == 0;
@@ -1227,13 +1228,9 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 			}
 
 			#Add HTTPS tag
-			if ( $sw == 1 && $line =~ /BackEnd$/ && $string ne "" )
+			if ( $sw == 1 && $line =~ /\t\tBackEnd$/ && $string ne "" )
 			{
-				if ( $fileconf[$j + 1] =~ /Address\ .*/ )
-				{
-					#add new line with HTTPS tag
-					splice @fileconf, $j + 1, 0, "\t\t\tHTTPS";
-				}
+				$line .= "\n\t\t\tHTTPS";
 			}
 
 			#go out of curret Service
@@ -1311,7 +1308,6 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 				last;
 			}
 		}
-		$j++;
 	}
 	untie @fileconf;
 
