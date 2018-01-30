@@ -74,6 +74,10 @@ echo "- Partitions"
 echo "- Time"
 ${home_dir}/app/zenntp/zenntp.pl        >> $backup_dir/ntp_test.txt 2>&1
 
+echo "- Sessions Table"
+${home_dir}/app/ssyncd/bin/ssyncdctl show http	>> $backup_dir/sessions_http.txt 2>&1
+${home_dir}/app/ssyncd/bin/ssyncdctl show recent	>> $backup_dir/sessions_recent.txt 2>&1
+
 
 echo "Saving network information:"
 ##################################
