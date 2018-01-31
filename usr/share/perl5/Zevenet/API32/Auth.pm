@@ -46,6 +46,8 @@ sub validCGISession    # ()
 		}
 
 		$validSession = 1;
+		require Zevenet::User;
+		&getUser( $session->param( 'username' ) );
 	}
 
 	return $validSession;
@@ -65,17 +67,13 @@ sub validZapiKey    # ()
 			 && &getZAPI( "keyzapi" ) eq $ENV{ $key }    # matches key
 		  )
 		{
+			require Zevenet::User;
+			&getUser( 'root' );
 			$validKey = 1;
 		}
 		elsif ( eval { require Zevenet::RBAC::User::Core; } )
 		{
-			my $user = &validateRBACUserZapi( $ENV{ $key } );
-			if ( $user )
-			{
-				$validKey = 1;
-				require Zevenet::Core;
-				&zenlog( "Auth $user successful" );
-			}
+			$validKey = 1 if ( &validateRBACUserZapi( $ENV{ $key } ) );
 		}
 	}
 
@@ -107,6 +105,10 @@ sub getAuthorizationCredentials    # ()
 	}
 
 	return undef if !$username or !$password;
+
+	require Zevenet::User;
+	&getUser( $username );
+
 	return ( $username, $password );
 }
 

@@ -39,16 +39,14 @@ sub getZapiRBACUsers
 {
 	my $user = shift;
 	require Zevenet::RBAC::User::Core;
-	my $obj    = &getRBACUserObject( $user );
-	my @groups = &getRBACUserGroups( $user );
+	my $obj   = &getRBACUserObject( $user );
+	my $group = &getRBACUserGroup( $user );
 
 	my $out;
 	$out->{ 'name' }               = $user;
 	$out->{ 'webgui_permissions' } = $obj->{ 'webgui_permissions' };
 	$out->{ 'zapi_permissions' }   = $obj->{ 'zapi_permissions' };
-
-	#~ $out->{ 'zapikey' } = $obj->{ 'zapikey' };
-	$out->{ 'groups' } = \@groups;
+	$out->{ 'group' }              = $group;
 
 	return $out;
 }
@@ -68,7 +66,6 @@ Returns:
 
 sub getZapiRBACAllUsers
 {
-	use Zevenet::RBAC::User::Core;
 	my @allUsers = ();
 
 	foreach my $user ( &getRBACUserList() )
@@ -76,6 +73,59 @@ sub getZapiRBACAllUsers
 		push @allUsers, &getZapiRBACUsers( $user );
 	}
 	return \@allUsers;
+}
+
+=begin nd
+Function: getZapiRBACGroups
+
+	Adjust the format for zapi of the group struct
+
+Parameters:
+	Group - Group name
+
+Returns:
+	Hash ref - Configuration of a group
+
+=cut
+
+sub getZapiRBACGroups
+{
+	my $group = shift;
+	require Zevenet::RBAC::Group::Core;
+	my $obj = &getRBACGroupObject( $group );
+
+	my $out;
+	$out->{ 'name' }  = $group;
+	$out->{ 'role' }  = $obj->{ 'role' };
+	$out->{ 'users' } = $obj->{ 'users' };
+	$out->{ 'resources' } =
+	  { 'farms' => $obj->{ 'farms' }, 'interfaces' => $obj->{ 'interfaces' } };
+
+	return $out;
+}
+
+=begin nd
+Function: getZapiRBACAllGroups
+
+	Return a list with all RBAC groups and theirs configurations
+
+Parameters:
+	None - .
+
+Returns:
+	Array ref - Group object list
+
+=cut
+
+sub getZapiRBACAllGroups
+{
+	my @allGroups = ();
+
+	foreach my $group ( &getRBACGroupList() )
+	{
+		push @allGroups, &getZapiRBACGroups( $group );
+	}
+	return \@allGroups;
 }
 
 1;

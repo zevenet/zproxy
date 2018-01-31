@@ -70,11 +70,16 @@ sub getAllFarmStats
 		  };
 	}
 
+	if ( eval { require Zevenet::RBAC::Group::Core; } )
+	{
+		@farms = @{ &getRBACUserSet( 'farms', \@farms ) };
+	}
+
 	return \@farms;
 }
 
 #Get Farm Stats
-sub farm_stats # ( $farmname )
+sub farm_stats                                                # ( $farmname )
 {
 	my $farmname = shift;
 
@@ -101,7 +106,7 @@ sub farm_stats # ( $farmname )
 					 sessions    => $stats->{ sessions },
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 
 	if ( $type eq "l4xnat" )
@@ -114,7 +119,7 @@ sub farm_stats # ( $farmname )
 					 backends    => $stats,
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 
 	if ( $type eq "gslb" )
@@ -130,20 +135,21 @@ sub farm_stats # ( $farmname )
 					 extended    => $gslb_stats->{ 'stats' },
 		};
 
-		&httpResponse({ code => 200, body => $body });
+		&httpResponse( { code => 200, body => $body } );
 	}
 }
 
 #Get Farm Stats
-sub all_farms_stats # ()
+sub all_farms_stats    # ()
 {
 	my $farms = &getAllFarmStats();
+
 	my $body = {
 				 description => "List all farms stats",
 				 farms       => $farms,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # Get the number of farms
@@ -157,11 +163,11 @@ sub farms_number
 				 number      => $number,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # GET /stats/farms/modules
-#Get a farm status resume 
+#Get a farm status resume
 sub module_stats_status
 {
 	my @farms = @{ &getAllFarmStats() };
@@ -252,19 +258,19 @@ sub module_stats_status
 	}
 
 	my $body = {
-				 description => "Module status", 	
-				 params 		=> {
-					 "lslb" => $lslb,
-					 "gslb" => $gslb,
-					 "dslb" => $dslb,
-					 },
+				 description => "Module status",
+				 params      => {
+							 "lslb" => $lslb,
+							 "gslb" => $gslb,
+							 "dslb" => $dslb,
+				 },
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #Get lslb|gslb|dslb Farm Stats
-sub module_stats # ()
+sub module_stats    # ()
 {
 	my $module = shift;
 
@@ -285,17 +291,20 @@ sub module_stats # ()
 		my $desc = "List module farms stats";
 		my $msg  = "Incorrect module";
 
-		&httpErrorResponse({ code => 400, msg => $msg, desc => $desc });
+		&httpErrorResponse( { code => 400, msg => $msg, desc => $desc } );
 	}
 
-	my @farms = @{ &getAllFarmStats () };
+	my @farms = @{ &getAllFarmStats() };
 	my @farmModule;
 
 	foreach my $farm ( @farms )
 	{
-		push @farmModule, $farm	if ( $farm->{ 'profile' } =~ /(?:https?|l4xnat)/ && $module eq 'lslb' );
-		push @farmModule, $farm	if ( $farm->{ 'profile' } =~ /gslb/ && $module eq 'gslb' );
-		push @farmModule, $farm	if ( $farm->{ 'profile' } =~ /datalink/ && $module eq 'dslb' );
+		push @farmModule, $farm
+		  if ( $farm->{ 'profile' } =~ /(?:https?|l4xnat)/ && $module eq 'lslb' );
+		push @farmModule, $farm
+		  if ( $farm->{ 'profile' } =~ /gslb/ && $module eq 'gslb' );
+		push @farmModule, $farm
+		  if ( $farm->{ 'profile' } =~ /datalink/ && $module eq 'dslb' );
 	}
 
 	my $body = {
@@ -303,11 +312,11 @@ sub module_stats # ()
 				 farms       => \@farmModule,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats
-sub stats # ()
+sub stats    # ()
 {
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
@@ -370,11 +379,11 @@ sub stats # ()
 				 params      => $out
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/mem
-sub stats_mem # ()
+sub stats_mem    # ()
 {
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
@@ -397,11 +406,11 @@ sub stats_mem # ()
 				 params      => $out
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/load
-sub stats_load # ()
+sub stats_load    # ()
 {
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
@@ -426,11 +435,11 @@ sub stats_load # ()
 				 params      => $out
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/cpu
-sub stats_cpu # ()
+sub stats_cpu    # ()
 {
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
@@ -457,7 +466,7 @@ sub stats_cpu # ()
 				 params      => $out
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/system/connections
@@ -469,7 +478,7 @@ sub stats_conns
 				 params      => { "connections" => $out },
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/network/interfaces
@@ -478,7 +487,7 @@ sub stats_network_interfaces
 	require Zevenet::Stats;
 	require Zevenet::Net::Interface;
 
-	my $EE = eval { require Zevenet::Net::Bonding; }? 1: undef;
+	my $EE = eval { require Zevenet::Net::Bonding; } ? 1 : undef;
 
 	my $desc       = "Interfaces info";
 	my @interfaces = &getNetworkStats( 'hash' );
@@ -492,7 +501,7 @@ sub stats_network_interfaces
 	foreach my $iface ( @interfaces )
 	{
 		my $extrainfo;
-		my $type = &getInterfaceType ( $iface->{ interface } );
+		my $type = &getInterfaceType( $iface->{ interface } );
 
 		# Fill nic interface list
 		if ( $type eq 'nic' )
@@ -511,10 +520,10 @@ sub stats_network_interfaces
 			$iface->{ status }  = $extrainfo->{ status };
 			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
 			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
-			
+
 			push @nicList, $iface;
 		}
-		
+
 		# Fill bond interface list
 		elsif ( $type eq 'bond' && $EE )
 		{
@@ -533,10 +542,10 @@ sub stats_network_interfaces
 			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
 			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
 			$iface->{ slaves }  = &getBondSlaves( $iface->{ interface } );
-			
+
 			push @bondList, $iface;
 		}
-		else 
+		else
 		{
 			push @restIfaces, $iface;
 		}
@@ -550,11 +559,11 @@ sub stats_network_interfaces
 				 params      => $params,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 #GET /stats/network
-sub stats_network # ()
+sub stats_network    # ()
 {
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
@@ -570,7 +579,7 @@ sub stats_network # ()
 				 params      => $output
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

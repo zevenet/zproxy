@@ -151,7 +151,6 @@ if ( $q->path_info =~ qr{^/farms} )
 	if ( $ENV{ REQUEST_METHOD } eq 'POST' )
 	{
 		require Zevenet::API32::Farm::Post;
-
 		##### /farms
 		POST qr{^/farms$} => \&new_farm;
 	}

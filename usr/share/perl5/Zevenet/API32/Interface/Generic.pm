@@ -24,7 +24,7 @@
 use strict;
 
 # GET /interfaces Get params of the interfaces
-sub get_interfaces # ()
+sub get_interfaces    # ()
 {
 	my @output_list;
 
@@ -34,7 +34,7 @@ sub get_interfaces # ()
 
 	# Configured interfaces list
 	my @interfaces = @{ &getSystemInterfaceList() };
-	
+
 	# get cluster interface
 	my $cluster_if;
 	if ( eval { require Zevenet::Cluster; } )
@@ -43,26 +43,43 @@ sub get_interfaces # ()
 		$cluster_if = $zcl_conf->{ _ }->{ interface };
 	}
 
+	my $rbac_mod;
+	my $rbac_if_list = [];
+	my $user         = &getUser();
+	if ( eval { require Zevenet::RBAC::Group::Core; } && ( $user ne 'root' ) )
+	{
+		$rbac_mod = 1;
+		$rbac_if_list = &getRBACUsersResources( $user, 'interfaces' );
+	}
+
 	# to include 'has_vlan' to nics
 	my @vlans = &getInterfaceTypeList( 'vlan' );
 
 	for my $if_ref ( @interfaces )
 	{
 		# Exclude IPv6
-		next if $if_ref->{ ip_v } == 6 && &getGlobalConfiguration( 'ipv6_enabled' ) ne 'true';
+		next
+		  if $if_ref->{ ip_v } == 6
+		  && &getGlobalConfiguration( 'ipv6_enabled' ) ne 'true';
 
 		# Exclude cluster maintenance interface
 		next if $if_ref->{ type } eq 'dummy';
 
+		# Exclude no user's virtual intefaces
+		next
+		  if (    $rbac_mod
+			   && !grep ( /^$if_ref->{ name }$/, @{ $rbac_if_list } )
+			   && ( $if_ref->{ type } eq 'virtual' ) );
+
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
 
 		# Any key must cotain a value or "" but can't be null
-		if ( ! defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( ! defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( ! defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( ! defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( ! defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( ! defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		my $if_conf = {
 			name    => $if_ref->{ name },
@@ -97,7 +114,8 @@ sub get_interfaces # ()
 			$if_conf->{ has_vlan } = 'false' unless $if_conf->{ has_vlan };
 		}
 
-		$if_conf->{ is_cluster } = 'true' if $cluster_if && $cluster_if eq $if_ref->{ name };
+		$if_conf->{ is_cluster } = 'true'
+		  if $cluster_if && $cluster_if eq $if_ref->{ name };
 		push @output_list, $if_conf;
 	}
 
@@ -106,11 +124,11 @@ sub get_interfaces # ()
 				 interfaces  => \@output_list,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 # DELETE /deleteif/<interface>/<ip_version> Delete a interface
-sub delete_interface # ( $if )
+sub delete_interface    # ( $if )
 {
 	my $if = shift;
 
@@ -118,24 +136,24 @@ sub delete_interface # ( $if )
 	my $ip_v;
 	my $error = "false";
 
-	# If $if contain '/' means that we have received 2 parameters, interface_name and ip_version
+# If $if contain '/' means that we have received 2 parameters, interface_name and ip_version
 	if ( $if =~ /\// )
 	{
 		# Get interface_name and ip_version from $if
 		my @ifandipv = split ( '/', $if );
-		$if = $ifandipv[0];
+		$if   = $ifandipv[0];
 		$ip_v = $ifandipv[1];
-		
+
 		# If $ip_v is empty, establish IPv4 like default protocol
 		$ip_v = 4 if not $ip_v;
-		
+
 		if ( $ip_v != 4 && $ip_v != 6 )
 		{
 			my $msg = "The ip version value $ip_v must be 4 or 6";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
-	
+
 	# If ip_v is empty, default value is 4
 	if ( !$ip_v ) { $ip_v = 4; }
 
@@ -145,9 +163,9 @@ sub delete_interface # ( $if )
 		my $msg = "Interface name $if can't be empty";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	
+
 	my $if_ref = &getInterfaceConfig( $if, $ip_v );
-	
+
 	if ( !$if_ref )
 	{
 		my $msg = "The stack IPv$ip_v in Network interface $if doesn't exist.";
@@ -171,7 +189,7 @@ sub delete_interface # ( $if )
 				 message     => $msg,
 	};
 
-	&httpResponse({ code => 200, body => $body });
+	&httpResponse( { code => 200, body => $body } );
 }
 
 1;

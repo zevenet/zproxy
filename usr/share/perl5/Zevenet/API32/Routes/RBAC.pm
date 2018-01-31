@@ -23,12 +23,11 @@
 
 use strict;
 
-
-if ( $ENV{ PATH_INFO } =~ qr{/rbac/users} )
+if ( $ENV{ PATH_INFO } =~ qr{^/rbac/users} )
 {
 	my $mod = 'Zevenet::API32::RBAC::User';
 
-	my $user_name    = &getValidFormat( 'user_name' );
+	my $user_name = &getValidFormat( 'user_name' );
 
 	#GET /rbac/users
 	GET qr{^/rbac/users$}, 'get_rbac_all_users', $mod;
@@ -44,7 +43,41 @@ if ( $ENV{ PATH_INFO } =~ qr{/rbac/users} )
 
 	#  DELETE /rbac/users/<user>
 	DELETE qr{^/rbac/users/($user_name)$}, 'del_rbac_user', $mod;
+}
 
+if ( $ENV{ PATH_INFO } =~ qr{^/rbac/groups} )
+{
+	my $mod = 'Zevenet::API32::RBAC::Group';
+
+	my $group_name  = &getValidFormat( 'group_name' );
+	my $user_name   = &getValidFormat( 'user_name' );
+	my $iface_re    = &getValidFormat( 'virt_interface' );
+	my $farmname_re = &getValidFormat( 'farm_name' );
+
+	#  GET /rbac/groups
+	GET qr{^/rbac/groups$}, 'get_rbac_all_groups', $mod;
+
+	#  POST /rbac/groups
+	POST qr{^/rbac/groups$}, 'add_rbac_group', $mod;
+
+	#  GET /rbac/groups/<group>
+	GET qr{^/rbac/groups/($group_name)$}, 'get_rbac_group', $mod;
+
+	#  PUT /rbac/groups/<group>
+	PUT qr{^/rbac/groups/($group_name)$}, 'set_rbac_group', $mod;
+
+	#  DELETE /rbac/groups/<group>
+	DELETE qr{^/rbac/groups/($group_name)$}, 'del_rbac_group', $mod;
+
+	#  POST /rbac/groups/<group>/users/(intefarces|farms|users)
+	POST qr{^/rbac/groups/($group_name)/(interfaces|farms|users)$},
+	  'add_rbac_group_resource', $mod;
+
+#  DELETE /rbac/groups/<group>/users/<users>/(interfaces|farms|users)/<resource_name>
+	DELETE
+	  qr{^/rbac/groups/($group_name)/(interfaces|farms|users)/($user_name|$iface_re|$farmname_re)$},
+	  'del_rbac_group_resource', $mod;
 }
 
 1;
+

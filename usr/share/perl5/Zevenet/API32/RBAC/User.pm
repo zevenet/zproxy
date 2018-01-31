@@ -54,34 +54,6 @@ sub get_rbac_user
 }
 
 #  POST /rbac/users
-
-=begin nd
-Function: add_rbac_user
-
-	Create a RBAC user
-
-Parameters:
-	name - name for the new user
-	password - password for logging
-					
-Returns:
-	return example - .
-	
-	{
-		"description" : "Create the RBAC user, user1",
-		"message" : "Added the RBAC user user1",
-		"params" : {
-			"user" : {
-				"name" : "user1",
-				"webgui_permissions" : "false",
-				"zapi_permissions" : "false",
-				"zapikey" : ""
-			}
-		}
-	}
-	
-=cut
-
 sub add_rbac_user
 {
 	my $json_obj = shift;
@@ -90,14 +62,18 @@ sub add_rbac_user
 
 	my $desc = "Create the RBAC user, $json_obj->{ 'name' }";
 	my $params = {
-		"name" => {
-					'valid_format' => 'user_name',
-					'non_blank'    => 'true',
-					'required'     => 'true',
-					'exceptcions'  => ["zapi"]
-		},
-		"password" =>
-		  { 'valid_format' => 'password', 'non_blank' => 'true', 'required' => 'true' },
+				   "name" => {
+							   'valid_format' => 'user_name',
+							   'non_blank'    => 'true',
+							   'required'     => 'true',
+							   'exceptcions'  => ["zapi"]
+				   },
+				   "password" => {
+								   'valid_format' => 'rbac_password',
+								   'non_blank'    => 'true',
+								   'required'     => 'true',
+								   'format_msg'   => 'must have letters and digits'
+				   },
 	};
 
 	# Check if it exists
@@ -129,7 +105,7 @@ sub add_rbac_user
 					 params      => { 'user' => $output },
 					 message     => $msg,
 		};
-		return &httpResponse( { code => 200, body => $body } );
+		return &httpResponse( { code => 201, body => $body } );
 	}
 	else
 	{
@@ -137,32 +113,6 @@ sub add_rbac_user
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 }
-
-=begin nd
-Function: add_rbac_user
-
-	Create a RBAC user
-
-Parameters:
-	name - name for the new user
-	password - password for logging
-					
-Returns:
-	return example - .
-	
-	{
-		"description" : "Create the RBAC user, user1",
-		"message" : "Added the RBAC user user1",
-		"params" : {
-			"user" : {
-				"name" : "user1",
-				"webgui_permissions" : "false",
-				"zapi_permissions" : "false",
-				"zapikey" : ""
-			}
-		}
-	}
-=cut
 
 #  PUT /rbac/users/<user>
 sub set_rbac_user
@@ -176,8 +126,12 @@ sub set_rbac_user
 		 "zapikey"            => { 'valid_format' => 'zapi_key' },
 		 "zapi_permissions"   => { 'valid_format' => 'boolean', 'non_black' => 'true' },
 		 "webgui_permissions" => { 'valid_format' => 'boolean', 'non_black' => 'true' },
-		 "password" => { 'valid_format' => 'password', 'non_blank' => 'true' },
-		 "newpassword" => { 'valid_format' => 'password', 'non_blank' => 'true' },
+		 "password" => { 'valid_format' => 'rbac_password', 'non_blank' => 'true' },
+		 "newpassword" => {
+							'valid_format' => 'rbac_password',
+							'non_blank'    => 'true',
+							'format_msg'   => 'must have letters and digits'
+		 },
 	};
 
 	# check if the user exists
@@ -215,6 +169,18 @@ sub set_rbac_user
 	# modify zapikey
 	if ( exists $json_obj->{ 'zapikey' } )
 	{
+		require Zevenet::Code;
+		foreach my $userAux ( &getRBACUserList() )
+		{
+			if (
+				 &validateCryptString( &getRBACUserParam( $userAux, 'zapikey' ),
+									   $json_obj->{ 'zapikey' } )
+			  )
+			{
+				my $msg = "The zapikey is not valid.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
 		if ( &setRBACUserZapikey( $user, $json_obj->{ 'zapikey' } ) )
 		{
 			my $msg = "Changing RBAC $user zapikey.";
@@ -249,7 +215,7 @@ sub set_rbac_user
 	require Zevenet::Cluster;
 	&runZClusterRemoteManager( 'rbac_user', 'update', $user );
 
-	my $msg    = "Settings was changed successful.";
+	my $msg    = "Settings were changed successful.";
 	my $output = &getZapiRBACUsers( $user );
 	my $body   = { description => $desc, params => $output, message => $msg };
 
@@ -289,7 +255,7 @@ sub del_rbac_user
 	}
 	else
 	{
-		my $msg = "Deleting the RBAC $user.";
+		my $msg = "Deleting the RBAC user $user.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 }

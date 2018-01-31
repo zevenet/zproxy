@@ -135,6 +135,10 @@ sub new_vini    # ( $json_obj )
 		}
 
 		&setInterfaceConfig( $if_ref ) or die;
+		if ( eval { require Zevenet::RBAC::Group::Config; } )
+		{
+			&addRBACUserResource( $if_ref->{ name }, 'interfaces' );
+		}
 	};
 
 	if ( $@ )
@@ -250,6 +254,11 @@ sub get_virtual_list    # ()
 			mac     => $if_ref->{ mac },
 			parent  => $if_ref->{ parent },
 		  };
+	}
+
+	if ( eval{ require Zevenet::RBAC::Group::Core; } )
+	{
+		@output_list = @{ &getRBACUserSet( 'interfaces', \@output_list ) };
 	}
 
 	my $body = {

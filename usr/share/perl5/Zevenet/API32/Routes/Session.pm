@@ -26,17 +26,15 @@ use warnings;
 
 require CGI::Session;
 
-
 # POST CGISESSID to login
 POST qr{^/session$} => \&session_login;
 
 #  DELETE session to logout
 DELETE qr{^/session$} => \&session_logout;
 
-
 sub session_login
 {
-	my $desc = "Login to new session";
+	my $desc    = "Login to new session";
 	my $session = CGI::Session->new( &getCGI() );
 
 	require Zevenet::SystemInfo;
@@ -60,8 +58,8 @@ sub session_login
 	}
 
 	# check if the user has got permissions
-	my ( $name,$passwd,$gid,$webgui_group ) = getgrnam( 'webgui' );
-	if ( ! grep( /(^| )$username( |$)/, $webgui_group ) )
+	my ( $name, $passwd, $gid, $webgui_group ) = getgrnam ( 'webgui' );
+	if ( !grep ( /(^| )$username( |$)/, $webgui_group ) )
 	{
 		my $msg = "the user $username has not web permissions";
 		&httpErrorResponse( code => 401, desc => $desc, msg => $msg );
@@ -75,13 +73,13 @@ sub session_login
 	my ( undef, $session_cookie ) = split ( ': ', $header );
 	my $body;
 	$body->{ host } = &getHostname();
-	$body->{ key }  = &keycert() if defined( &keycert );
+	$body->{ key } = &keycert() if defined ( &keycert );
 
 	&zenlog( "Login successful for user: $username" );
 	&httpResponse(
 				   {
-					 code => 200,
-					 body => $body,
+					 code    => 200,
+					 body    => $body,
 					 headers => { 'Set-cookie' => $session_cookie },
 				   }
 	);
@@ -90,7 +88,7 @@ sub session_login
 sub session_logout
 {
 	my $desc = "Logout of session";
-	my $cgi = &getCGI();
+	my $cgi  = &getCGI();
 
 	unless ( $cgi->http( 'Cookie' ) )
 	{

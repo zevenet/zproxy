@@ -119,7 +119,7 @@ sub farms_name_http # ( $farmname )
 						  error503            => $err503
 	};
 
-	my $EE = eval { require Zevenet::HTTP::Ext; } ? 1 : undef;
+	my $EE = eval { require Zevenet::Farm::HTTP::Ext; } ? 1 : undef;
 
 	if ( $EE )
 	{
