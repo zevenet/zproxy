@@ -110,7 +110,7 @@ if ( $username ne 'root' )
 	{
 		my $desc = "RBAC auth";
 		&httpErrorResponse(
-							code => 400,
+							code => 403,
 							desc => $desc,
 							msg  => "The user $username has not permissions"
 		);

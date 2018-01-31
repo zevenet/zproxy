@@ -26,22 +26,38 @@ use feature 'state';
 =begin nd
 Function: getUser
 
-	Save or get the user that is executing the API or WEBGUI
+	Get the user that is executing the API or WEBGUI
 
 Parameters:
-	User - User name. If this parameter is sent, it will save. If it is not sent,
-	the the function will return the last saved user.
+	User - User name
 
 Returns:
 	String - User name
-	
+
 =cut
 
 sub getUser
 {
-	state $user = shift;
-	$user ||= '';
-	return $user;
+	return $ENV{ REQ_USER };
+}
+
+=begin nd
+Function: setUser
+
+	Save the user that is executing the API or WEBGUI
+
+Parameters:
+	None - .
+
+Returns:
+	String - User name
+
+=cut
+
+sub setUser
+{
+	my $user = shift;
+	$ENV{ REQ_USER } = $user;
 }
 
 1;

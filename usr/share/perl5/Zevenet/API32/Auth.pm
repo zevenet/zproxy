@@ -47,7 +47,7 @@ sub validCGISession    # ()
 
 		$validSession = 1;
 		require Zevenet::User;
-		&getUser( $session->param( 'username' ) );
+		&setUser( $session->param( 'username' ) );
 	}
 
 	return $validSession;
@@ -68,7 +68,7 @@ sub validZapiKey    # ()
 		  )
 		{
 			require Zevenet::User;
-			&getUser( 'root' );
+			&setUser( 'root' );
 			$validKey = 1;
 		}
 		elsif ( eval { require Zevenet::RBAC::User::Core; } )
@@ -107,7 +107,7 @@ sub getAuthorizationCredentials    # ()
 	return undef if !$username or !$password;
 
 	require Zevenet::User;
-	&getUser( $username );
+	&setUser( $username );
 
 	return ( $username, $password );
 }
