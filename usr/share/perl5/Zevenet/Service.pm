@@ -230,7 +230,7 @@ sub start_modules
 	&zenlog( "Zevenet Service: Starting RBAC system..." );
 
 	# rbac
-	if ( eval { require Zevenet::RBAC::User::Action; } )
+	if ( eval { require Zevenet::RBAC::Action; } )
 	{
 		&initRBACModule();
 	}

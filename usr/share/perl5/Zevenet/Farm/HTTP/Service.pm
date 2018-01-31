@@ -654,7 +654,7 @@ sub getHTTPServiceStruct
 					 backends     => $backends,
 	};
 
-	if ( eval { require Zevenet::API31::Farm::Service::Ext; } )
+	if ( eval { require Zevenet::Farm::HTTP::Service::Ext; } )
 	{
 		&add_service_cookie_intertion( $farmname, $service_ref );
 	}

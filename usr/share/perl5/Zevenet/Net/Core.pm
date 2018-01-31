@@ -39,6 +39,7 @@ Returns:
 See Also:
 	zevenet, <setInterfaceUp>, zapi/v?/interface.cgi
 =cut
+
 # create network interface
 sub createIf    # ($if_ref)
 {
@@ -50,13 +51,13 @@ sub createIf    # ($if_ref)
 	{
 		&zenlog( "Creating vlan $$if_ref{name}" );
 
-		# enable the parent physical interface
-		#~ my $parent_if = &getInterfaceConfig( $$if_ref{ dev }, $$if_ref{ ip_v } );
-		#~ $parent_if = &getSystemInterface( $$if_ref{ dev }, $$if_ref{ ip_v } ) unless $parent_if;
+# enable the parent physical interface
+#~ my $parent_if = &getInterfaceConfig( $$if_ref{ dev }, $$if_ref{ ip_v } );
+#~ $parent_if = &getSystemInterface( $$if_ref{ dev }, $$if_ref{ ip_v } ) unless $parent_if;
 
 		#~ if ( $parent_if->{ status } eq 'down' )
 		#~ {
-			#~ $status = &upIf( $parent_if, 'writeconf' );
+		#~ $status = &upIf( $parent_if, 'writeconf' );
 		#~ }
 
 		my $ip_cmd =
@@ -82,6 +83,7 @@ Returns:
 See Also:
 	<downIf>
 =cut
+
 # up network interface
 sub upIf    # ($if_ref, $writeconf)
 {
@@ -116,7 +118,7 @@ sub upIf    # ($if_ref, $writeconf)
 		}
 		else
 		{
-			open( my $fh, '>', $file );
+			open ( my $fh, '>', $file );
 			print { $fh } "status=up\n";
 			close $fh;
 		}
@@ -129,7 +131,7 @@ sub upIf    # ($if_ref, $writeconf)
 	# not check virtual interfaces
 	if ( $if_ref->{ type } ne "virtual" )
 	{
-		#check if link is up after ip link up; checks /sys/class/net/$$if_ref{name}/operstate
+   #check if link is up after ip link up; checks /sys/class/net/$$if_ref{name}/operstate
 		my $status_if = `cat /sys/class/net/$$if_ref{name}/operstate`;
 		&zenlog( "Link status for $$if_ref{name} is $status_if" );
 		zenlog( "Waiting link up for $$if_ref{name}" );
@@ -171,6 +173,7 @@ Returns:
 See Also:
 	<upIf>, <stopIf>, zapi/v?/interface.cgi
 =cut
+
 # down network interface in system and configuration file
 sub downIf    # ($if_ref, $writeconf)
 {
@@ -246,6 +249,7 @@ See Also:
 
 	Only used in: zevenet
 =cut
+
 # stop network interface
 sub stopIf    # ($if_ref)
 {
@@ -257,7 +261,7 @@ sub stopIf    # ($if_ref)
 	my $if     = $$if_ref{ name };
 
 	# If $if is Vini do nothing
-	if ( ! $$if_ref{ vini } )
+	if ( !$$if_ref{ vini } )
 	{
 		# If $if is a Interface, delete that IP
 		my $ip_cmd = "$ip_bin address flush dev $$if_ref{name}";
@@ -295,7 +299,7 @@ sub stopIf    # ($if_ref)
 	else
 	{
 		my @ifphysic = split ( /:/, $if );
-		my $ip = $$if_ref{addr};
+		my $ip = $$if_ref{ addr };
 
 		if ( $ip =~ /\./ )
 		{
@@ -324,6 +328,7 @@ Returns:
 See Also:
 	
 =cut
+
 # delete network interface configuration and from the system
 sub delIf    # ($if_ref)
 {
@@ -413,7 +418,14 @@ sub delIf    # ($if_ref)
 
 	# delete graphs
 	require Zevenet::RRD;
-	&delGraph ( $$if_ref{name}, "iface" );
+	&delGraph( $$if_ref{ name }, "iface" );
+
+	#delete from RBAC
+
+	if ( eval { require Zevenet::RBAC::Group::Config; } )
+	{
+		&delRBACResource( $$if_ref{ name }, 'interfaces' );
+	}
 
 	return $status;
 }
@@ -434,6 +446,7 @@ Returns:
 See Also:
 	<addIp>
 =cut
+
 # Execute command line to delete an IP from an interface
 sub delIp    # 	($if, $ip ,$netmask)
 {
@@ -467,6 +480,7 @@ Returns:
 See Also:
 	<delIp>, <setIfacesUp>
 =cut
+
 # Execute command line to add an IPv4 to an Interface, Vlan or Vini
 sub addIp    # ($if_ref)
 {

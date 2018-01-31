@@ -51,7 +51,7 @@
 # zcluster-manager ipds_rbl [start|stop|restart] <rule> [farm]
 #
 # zcluster-manager rbac_user [add|delete|modify] <user>
-# zcluster-manager rbac_group [add|remove|create|delete] <group> [user]
+# zcluster-manager rbac_group [add|delete|add_user|del_user] <group> [user]
 #
 
 use strict;
@@ -233,6 +233,7 @@ if ( $object eq 'farm' )
 }
 
 # zcluster-manager rbac_user [add|delete|modify] <user>
+# zcluster-manager rbac_group [add|delete|add_user|del_user] <group> [user]
 if ( $object =~ /^rbac_(user|group)/ )
 {
 	my $module = $1;
@@ -240,9 +241,13 @@ if ( $object =~ /^rbac_(user|group)/ )
 	{
 		require Zevenet::RBAC::User::Action;
 		my ( $user ) = @ARGV;
-
 		&updateRBACUser( $user, $command );
-
+	}
+	if ( $module eq "group" )
+	{
+		require Zevenet::RBAC::Group::Action;
+		my ( $group, $user ) = @ARGV;
+		&updateRBACGroup( $group, $command, $user );
 	}
 
 }

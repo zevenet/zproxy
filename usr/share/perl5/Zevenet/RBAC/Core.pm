@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 
 use Zevenet::Core;
+use Zevenet::CGI;
+
 use strict;
 
 =begin nd
@@ -38,8 +40,10 @@ sub getRBACGroupMembers
 {
 	my $group = shift;
 
-	my ( $name, $passwd, $gid, $members ) = getgrnam ( $group );
-	my @members = split ' ', $members;
+	my ( undef, undef, undef, $members ) = getgrnam ( $group );
+
+	#~ $members = s/(^| )rbac( |$)/ /;
+	my @members = split ( ' ', $members );
 
 	return @members;
 }
@@ -70,32 +74,89 @@ sub getRBACUserIsMember
 }
 
 =begin nd
-Function: getRBACUserGroups
+Function: getRBACUserGroup
 
-	Get a list with all groups where the user is incluied
+	Get the group where the user is incluied
 
 Parameters:
 	User - User name
 					
 Returns:
-	Array - List of groups
+	String - Group of the user
 	
 =cut
 
-sub getRBACUserGroups
+sub getRBACUserGroup
 {
 	my $user = shift;
 	my @groups_list;
 	my $groups_bin = &getGlobalConfiguration( "groups_bin" );
 	my $groups     = `$groups_bin $user`;
 	chomp $groups;
-	$groups =~ s/^$user : (:?nogroup) ?//;
-	$groups =~ s/(^| )rbac($| )//;
-	$groups =~ s/(^| )webgui($| )//;
-	$groups =~ s/(^| )zapi($| )//;
+	$groups =~ s/^$user : (:?nogroup) ?/ /;
+	$groups =~ s/(^| )rbac($| )/ /;
+	$groups =~ s/(^| )webgui($| )/ /;
+	$groups =~ s/(^| )zapi($| )/ /;
 
 	@groups_list = split ' ', $groups;
-	return @groups_list;
+
+	#~ return @groups_list;
+
+	# In the first version, the user only will have one group
+	return $groups_list[0] // '';
+}
+
+sub getRBACPath
+{
+	my $path = shift;
+
+	#~ my $method = shift;
+
+	require Zevenet::User;
+	my $user       = &getUser();
+	my $permission = 1;
+
+	require Zevenet::RBAC::Group::Core;
+
+	# check resources
+	my $object_re = '[^/]+';
+	if ( $path =~ qr{^/(?:stats|graphs)?/?farms/modules} ) { }
+	elsif ( $path =~ qr{^/(?:stats|graphs)?/?farms/($object_re)} )
+	{
+		my $farm = $1;
+
+		if ( !grep ( /^$farm$/, @{ &getRBACUsersResources( $user, 'farms' ) } ) )
+		{
+			$permission = 0;
+
+			#~ &zenlog( "The user $user cannot access to the farm $farm.", 'error' );
+		}
+
+		# include permission checks foreach method
+		# ...
+	}
+	elsif ( $path =~ qr{^/(?:graphs/)?interfaces/virtual/($object_re)} )
+	{
+		my $iface = $1;
+		if ( !grep ( /^$iface$/, @{ &getRBACUsersResources( $user, 'interfaces' ) } ) )
+		{
+			$permission = 0;
+
+			#~ &zenlog( "The user $user cannot access to the interface $iface.", 'error' );
+		}
+	}
+
+#~ elsif ( $path =~ qr{^/(?:graphs/)?interfaces/(?:vlan|nic|bonding)?/?($object_re)} )
+#~ {
+#~ my $iface = $1;
+#~ if ( ! grep( /^$iface$/, @{ &getRBACUsersResources( $user, 'interfaces' ) } ) )
+#~ {
+#~ $permission = 0;
+#~ &zenlog( "The user $user cannot access to the interface $iface.", 'error' );
+#~ }
+#~ }
+
+	return $permission;
 }
 
 1;

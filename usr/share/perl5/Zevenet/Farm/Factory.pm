@@ -42,6 +42,7 @@ Returns:
 FIXME:
 	Use hash to pass the parameters
 =cut
+
 sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 {
 	my ( $farm_type, $vip, $vip_port, $farm_name, $fdev ) = @_;
@@ -79,6 +80,10 @@ sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 		{
 			$output = &runGSLBFarmCreate( $vip, $vip_port, $farm_name );
 		}
+	}
+	if ( eval { require Zevenet::RBAC::Group::Config; } )
+	{
+		&addRBACUserResource( $farm_name, 'farms' );
 	}
 
 	return $output;

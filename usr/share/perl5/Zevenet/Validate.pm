@@ -220,7 +220,10 @@ my %format_re = (
 	'fg_time'    => qr/$natural/,                     # this value can't be 0
 
 	# rbac
-	'user_name' => qr/[\w-]+/,
+	'user_name'     => qr/[\w-]+/,
+	'rbac_password' => qr/(?=.*[0-9])(?=.*[a-zA-Z]).{8,16}/,
+	'group_name'    => qr/[\w-]+/,
+	'role_name'     => qr/[\w-]+/,
 
 );
 
@@ -457,6 +460,8 @@ Function: checkZAPIParams
 
 	Also, it checks: getValidFormat funcion, if black is allowed, intervals, aditionals regex and excepts regex
 
+	It is possible add a error message with the correct format. For example: $parameter . "must have letters and digits"
+
 
 Parameters:
 	Json_obj - Parameters sent in a POST or PUT call
@@ -474,6 +479,7 @@ Parameters:
 			"exceptions"	: [ "zapi", "webgui", "root" ],	# The parameter can't have got any of the listed values
 			"regex"	: "/\w+,\d+/",		# regex format
 			"valid_format"	: "farmname",		# regex stored in Validate.pm file, it checks with the function getValidFormat
+			"format_msg"	: "must have letters and digits",	# used message when a value is not correct
 		}
 		param2 :
 		{
@@ -527,13 +533,23 @@ sub checkZAPIParams
 		# getValidFormat funcion:
 		if ( exists $param_obj->{ $param }->{ 'valid_format' } )
 		{
-			return "The parameter $param has not a valid value."
-			  if (
-				   !&getValidFormat(
-									 $param_obj->{ $param }->{ 'valid_format' },
-									 $json_obj->{ $param }
-				   )
-			  );
+			if (
+				 !&getValidFormat(
+								   $param_obj->{ $param }->{ 'valid_format' },
+								   $json_obj->{ $param }
+				 )
+			  )
+			{
+
+				if ( exists $param_obj->{ $param }->{ format_msg } )
+				{
+					return "$param $param_obj->{ $param }->{ format_msg }";
+				}
+				else
+				{
+					return "The parameter $param has not a valid value.";
+				}
+			}
 		}
 
 		# if blank value is allowed

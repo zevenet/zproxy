@@ -23,7 +23,7 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: getFarmType
@@ -40,6 +40,7 @@ NOTE:
 	Generic function
 
 =cut
+
 sub getFarmType    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -50,10 +51,12 @@ sub getFarmType    # ($farm_name)
 	{
 		use File::Grep qw( fgrep );
 
-		if ( fgrep { /ListenHTTPS/ } "$configdir/$farm_filename" ) {
+		if ( fgrep { /ListenHTTPS/ } "$configdir/$farm_filename" )
+		{
 			return "https";
 		}
-		else {
+		else
+		{
 			return "http";
 		}
 	}
@@ -88,6 +91,7 @@ NOTE:
 	Generic function
 
 =cut
+
 sub getFarmFile    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -126,6 +130,7 @@ NOTE:
 	Generic function
 	
 =cut
+
 sub getFarmName    # ($farm_filename)
 {
 	my $farm_filename = shift;
@@ -150,6 +155,7 @@ NOTE:
 	Generic function
 	
 =cut
+
 sub getFarmList    # ()
 {
 	opendir ( DIR, $configdir );
@@ -188,6 +194,7 @@ NOTE:
 	Generic function
 
 =cut
+
 sub getFarmsByType    # ($farm_type)
 {
 	my ( $farm_type ) = @_;
@@ -226,6 +233,7 @@ Parameters:
 Returns:
 	array - list of farm names.
 =cut
+
 sub getFarmNameList
 {
 	my @farm_names;    # output: returned list
@@ -238,6 +246,26 @@ sub getFarmNameList
 	}
 
 	return @farm_names;
+}
+
+=begin nd
+Function: getFarmExists
+
+	Check if a farm exists
+
+Parameters:
+	Farm - Farm name
+
+Returns:
+	Integer - 1 if the farm exists or 0 if it is not
+=cut
+
+sub getFarmExists
+{
+	my $farmname = shift;
+	my $out      = 0;
+	$out = 1 if ( grep /^$farmname$/, &getFarmNameList() );
+	return $out;
 }
 
 1;

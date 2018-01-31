@@ -31,7 +31,6 @@ use Zevenet::API32::HTTP;
 
 my $q = &getCGI();
 
-
 ##### Debugging messages #############################################
 #
 #~ use Data::Dumper;
@@ -39,44 +38,42 @@ my $q = &getCGI();
 #
 #~ if ( debug() )
 #~ {
-	&zenlog( "REQUEST: $ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}" ) if &debug;
-	#~ &zenlog( ">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<" ) if &debug;
-	#~ &zenlog( "HTTP HEADERS: " . join ( ', ', $q->http() ) );
-	#~ &zenlog( "HTTP_AUTHORIZATION: <$ENV{HTTP_AUTHORIZATION}>" )
-	#~ if exists $ENV{ HTTP_AUTHORIZATION };
-	#~ &zenlog( "HTTP_ZAPI_KEY: <$ENV{HTTP_ZAPI_KEY}>" )
-	#~ if exists $ENV{ HTTP_ZAPI_KEY };
-	#~
-	#~ #my $session = new CGI::Session( $q );
-	#~
-	#~ my $param_zapikey = $ENV{'HTTP_ZAPI_KEY'};
-	#~ my $param_session = new CGI::Session( $q );
-	#~
-	#~ my $param_client = $q->param('client');
-	#~
-	#~
-	#~ &zenlog("CGI PARAMS: " . Dumper $params );
-	#~ &zenlog("CGI OBJECT: " . Dumper $q );
-	#~ &zenlog("CGI VARS: " . Dumper $q->Vars() );
-	#~ &zenlog("PERL ENV: " . Dumper \%ENV );
-	#~
-	#~
-	#~ my $post_data = $q->param( 'POSTDATA' );
-	#~ my $put_data  = $q->param( 'PUTDATA' );
-	#~
-	#~ &zenlog( "CGI POST DATA: " . $post_data ) if $post_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
-	#~ &zenlog( "CGI PUT DATA: " . $put_data )   if $put_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
+#~ &zenlog( "REQUEST: $ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}" ) if &debug;
+#~ &zenlog( ">>>>>> CGI REQUEST: <$ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}> <<<<<<" ) if &debug;
+#~ &zenlog( "HTTP HEADERS: " . join ( ', ', $q->http() ) );
+#~ &zenlog( "HTTP_AUTHORIZATION: <$ENV{HTTP_AUTHORIZATION}>" )
+#~ if exists $ENV{ HTTP_AUTHORIZATION };
+#~ &zenlog( "HTTP_ZAPI_KEY: <$ENV{HTTP_ZAPI_KEY}>" )
+#~ if exists $ENV{ HTTP_ZAPI_KEY };
+#~
+#~ #my $session = new CGI::Session( $q );
+#~
+#~ my $param_zapikey = $ENV{'HTTP_ZAPI_KEY'};
+#~ my $param_session = new CGI::Session( $q );
+#~
+#~ my $param_client = $q->param('client');
+#~
+#~
+#~ &zenlog("CGI PARAMS: " . Dumper $params );
+#~ &zenlog("CGI OBJECT: " . Dumper $q );
+#~ &zenlog("CGI VARS: " . Dumper $q->Vars() );
+#~ &zenlog("PERL ENV: " . Dumper \%ENV );
+#~
+#~
+#~ my $post_data = $q->param( 'POSTDATA' );
+#~ my $put_data  = $q->param( 'PUTDATA' );
+#~
+#~ &zenlog( "CGI POST DATA: " . $post_data ) if $post_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
+#~ &zenlog( "CGI PUT DATA: " . $put_data )   if $put_data && &debug && $ENV{ CONTENT_TYPE } eq 'application/json';
 #~ }
 
-
 ##### OPTIONS method request #########################################
-require Zevenet::API32::Routes::Options if ( $ENV{ REQUEST_METHOD } eq 'OPTIONS' );
-
+require Zevenet::API32::Routes::Options
+  if ( $ENV{ REQUEST_METHOD } eq 'OPTIONS' );
 
 ##### Load more basic modules ########################################
 require Zevenet::Config;
 require Zevenet::Validate;
-
 
 ##### Authentication #################################################
 require Zevenet::API32::Auth;
@@ -92,23 +89,41 @@ unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
 				   { code => 401, body => { message => 'Authorization required' } } );
 }
 
-
 ##### Activation certificates ########################################
 require Zevenet::SystemInfo;
-require Zevenet::API32::Routes::Activation if ( $q->path_info eq '/certificates/activation' );
+
+require Zevenet::API32::Routes::Activation
+  if ( $q->path_info eq '/certificates/activation' );
 
 # Check activation certificate
 &checkActivationCertificate();
 
+# Verify RBAC permissions
+require Zevenet::User;
+my $username = &getUser();
+require Zevenet::Core;
+&zenlog( "RBAC:: Request from $username" );
+if ( $username ne 'root' )
+{
+	require Zevenet::RBAC::Core;
+	if ( !&getRBACPath( $q->path_info ) )
+	{
+		my $desc = "RBAC auth";
+		&httpErrorResponse(
+							code => 400,
+							desc => $desc,
+							msg  => "The user $username has not permissions"
+		);
+	}
+}
 
 ##### Load API routes ################################################
 require Zevenet::API32::Routes;
 
 my $desc = 'Request not found';
-my $req = $ENV{ PATH_INFO };
+my $req  = $ENV{ PATH_INFO };
 
 &httpErrorResponse( code => 404, desc => $desc, msg => "$desc: $req" );
-
 
 ### Activation certificate code ############
 use Time::Local;
@@ -142,11 +157,11 @@ sub certcontrol
 	#~ use Zevenet::Config;
 	require Zevenet::SystemInfo;
 
-	my $basedir = &getGlobalConfiguration( 'basedir' );
+	my $basedir     = &getGlobalConfiguration( 'basedir' );
 	my $zlbcertfile = "$basedir/zlbcertfile.pem";
-	my $swcert = 0;
+	my $swcert      = 0;
 
-	if ( ! -e $zlbcertfile )
+	if ( !-e $zlbcertfile )
 	{
 		#swcert = 1 ==> There isn't certificate
 		$swcert = 1;
@@ -174,7 +189,7 @@ sub certcontrol
 	$nb =~ s/.*not before.*:\ //i;
 
 	my ( $month, $day, $hours, $min, $sec, $year ) = split /[ :]+/, $nb;
-	( $month ) = grep { $months[$_] eq $month } 0..$#months;
+	( $month ) = grep { $months[$_] eq $month } 0 .. $#months;
 	my $ini = timegm( $sec, $min, $hours, $day, $month, $year );
 
 	# Certificate expiring date
@@ -182,7 +197,7 @@ sub certcontrol
 	$na =~ s/.*not after.*:\ //i;
 
 	( $month, $day, $hours, $min, $sec, $year ) = split /[ :]+/, $na;
-	( $month ) = grep { $months[$_] eq $month } 0..$#months;
+	( $month ) = grep { $months[$_] eq $month } 0 .. $#months;
 	my $end = timegm( $sec, $min, $hours, $day, $month, $year );
 
 	# Validity remaining
@@ -232,7 +247,7 @@ sub checkActivationCertificate
 		if ( $swcert == 1 )
 		{
 			$msg =
-			  "There isn't a valid Zen Load Balancer certificate file, please request a new one";
+			  "There isn't a valid Zevenet Load Balancer certificate file, please request a new one";
 		}
 		elsif ( $swcert == 2 )
 		{

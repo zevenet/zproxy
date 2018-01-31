@@ -281,6 +281,12 @@ sub runFarmDelete    # ($farm_name)
 		&runIPDSDeleteByFarm( $farm_name );
 	}
 
+	#delete from RBAC
+	if ( eval { require Zevenet::RBAC::Group::Config; } )
+	{
+		&delRBACResource( $farm_name, 'farms' );
+	}
+
 	my $farm_type = &getFarmType( $farm_name );
 	my $status    = 1;
 
@@ -496,10 +502,14 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	# delete old graphs
 	unlink ( "img/graphs/bar$farm_name.png" );
 
-	#~ require Zevenet::IPDS;
 	if ( eval { require Zevenet::IPDS; } )
 	{
 		&runIPDSRenameByFarm( $farm_name, $new_farm_name );
+	}
+
+	if ( eval { require Zevenet::RBAC::Group::Config; } )
+	{
+		&setRBACRenameByFarm( $farm_name, $new_farm_name );
 	}
 
 	# FIXME: farmguardian files

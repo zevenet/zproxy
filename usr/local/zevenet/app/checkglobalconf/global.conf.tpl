@@ -147,6 +147,8 @@ $adduser_bin="/usr/sbin/adduser";
 $deluser_bin="/usr/sbin/deluser";
 #Where is groupadd?
 $groupadd_bin="/usr/sbin/groupadd";
+#Where is groupdel?
+$groupdel_bin="/usr/sbin/groupdel";
 #Where is groups?
 $groups_bin="/usr/bin/groups";
 #Where is echo?

@@ -6,7 +6,6 @@ use Zevenet::Core;
 use Zevenet::RBAC::User::Core;
 
 # rbac configuration paths
-my $rbacPath       = &getRBACConfPath();
 my $rbacUserConfig = &getRBACUserConf();
 
 =begin nd
@@ -38,11 +37,10 @@ sub runRBACCreateUserCmd
 =begin nd
 Function: runRBACDeleteUserCmd
 
-	Add a user to the RBAC module
+	Delete a user from the system
 
 Parameters:
 	User - User name
-	Password - Password for the user
 					
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
@@ -55,6 +53,7 @@ sub runRBACDeleteUserCmd
 	my $deluser = &getGlobalConfiguration( "deluser_bin" );
 
 	my $cmd = "$deluser $user";
+
 	return &logAndRun( $cmd );
 }
 

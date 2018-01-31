@@ -7,7 +7,6 @@ use Zevenet::RBAC::User::Core;
 use Zevenet::RBAC::User::Runtime;
 
 # rbac configuration paths
-my $rbacPath       = &getRBACConfPath();
 my $rbacUserConfig = &getRBACUserConf();
 
 =begin nd
@@ -123,7 +122,7 @@ sub createRBACUser
 	if ( !$error )
 	{
 		# get password from system
-		my ( $id, $encrypt_pass ) = getpwnam ( $user );
+		my ( undef, $encrypt_pass ) = getpwnam ( $user );
 
 		# save it
 		$user_obj->{ 'password' }           = $encrypt_pass;
@@ -154,8 +153,14 @@ sub delRBACUser
 {
 	my $user = shift;
 
+	require Zevenet::RBAC::Group::Config;
+
+	# delete from its group
+	my $group = &getRBACUserGroup( $user );
+	my $error = &delRBACGroupResource( $group, $user, 'users' ) if ( $group );
+
 	# remove from system. It removes the user of the groups
-	my $error = &runRBACDeleteUserCmd( $user );
+	$error = &runRBACDeleteUserCmd( $user ) if ( !$error );
 
 	# remove from config file
 	if ( !$error )
@@ -290,7 +295,7 @@ sub setRBACUserPassword
 	if ( !&changePassword( $user, $password ) )
 	{
 		# get password from system
-		my ( $id, $encrypt_pass ) = getpwnam ( $user );
+		my ( undef, $encrypt_pass ) = getpwnam ( $user );
 
 		# save it in the config file
 		&setRBACUserConfigFile( $user, 'password', $encrypt_pass ) if ( $encrypt_pass );

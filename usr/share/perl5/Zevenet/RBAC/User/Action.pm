@@ -7,7 +7,6 @@ use Zevenet::RBAC::User::Core;
 use Zevenet::RBAC::User::Runtime;
 
 # rbac configuration paths
-my $rbacPath       = &getRBACConfPath();
 my $rbacUserConfig = &getRBACUserConf();
 
 =begin nd
@@ -31,8 +30,6 @@ sub updateRBACUser
 	my $user   = shift;
 	my $action = shift;
 
-	require Zevenet::RBAC::User::Config;
-
 	# DELETE
 	if ( $action eq 'delete' )
 	{
@@ -52,35 +49,35 @@ sub updateRBACUser
 	# PUT
 	elsif ( $action eq 'modify' )
 	{
-		my $groups     = &getGlobalConfiguration( 'groups_bin' );
-		my $permission = `$groups $user`;
-		chomp $permission;
-
 		my $user_struct = &getRBACUserObject( $user );
 
 		# set zapi permissions
 		if ( $user_struct->{ 'zapi_permissions' } eq 'true' )
 		{
-			&runRBACAddUserToGroup( $user, 'zapi' ) if ( $permission !~ / zapi( |$)/ );
+			&runRBACAddUserToGroup( $user, 'zapi' )
+			  if ( !&getRBACUserIsMember( $user, 'zapi' ) );
 		}
 		else
 		{
-			&runRBACDelUserToGroup( $user, 'zapi' ) if ( $permission =~ / zapi( |$)/ );
+			&runRBACDelUserToGroup( $user, 'zapi' )
+			  if ( &getRBACUserIsMember( $user, 'zapi' ) );
 		}
 
 		# set webgui permissions
 		if ( $user_struct->{ 'webgui_permissions' } eq 'true' )
 		{
-			&runRBACAddUserToGroup( $user, 'webgui' ) if ( $permission !~ / webgui( |$)/ );
+			&runRBACAddUserToGroup( $user, 'webgui' )
+			  if ( !&getRBACUserIsMember( $user, 'webgui' ) );
 		}
 		else
 		{
-			&runRBACDelUserToGroup( $user, 'webgui' ) if ( $permission =~ / webgui( |$)/ );
+			&runRBACDelUserToGroup( $user, 'webgui' )
+			  if ( &getRBACUserIsMember( $user, 'webgui' ) );
 		}
 
 		# set user password
 		my $password = $user_struct->{ 'password' };
-		my ( $id, $encrypt_pass ) = getpwnam ( $user );
+		my ( undef, $encrypt_pass ) = getpwnam ( $user );
 		if ( $encrypt_pass ne $password )
 		{
 			&setRBACUserPasswordInSystem( $user, $password );
@@ -90,6 +87,8 @@ sub updateRBACUser
 	# check status and apply necessary actions
 	else
 	{
+		my $user_struct = &getRBACUserObject( $user );
+
 		# check if it exists
 		my ( $id_user, $encrypt_pass ) = getpwnam ( $user );
 		if ( !$id_user )
@@ -98,29 +97,28 @@ sub updateRBACUser
 		}
 
 		# update it
-		my $user_struct = &getRBACUserObject( $user );
-		my $groups      = &getGlobalConfiguration( 'groups_bin' );
-		my $permission  = `$groups $user`;
-		chomp $permission;
-
 		# set zapi permissions
 		if ( $user_struct->{ 'zapi_permissions' } eq 'true' )
 		{
-			&runRBACAddUserToGroup( $user, 'zapi' ) if ( $permission !~ / zapi( |$)/ );
+			&runRBACAddUserToGroup( $user, 'zapi' )
+			  if ( !&getRBACUserIsMember( $user, 'zapi' ) );
 		}
 		else
 		{
-			&runRBACDelUserToGroup( $user, 'zapi' ) if ( $permission =~ / zapi( |$)/ );
+			&runRBACDelUserToGroup( $user, 'zapi' )
+			  if ( &getRBACUserIsMember( $user, 'zapi' ) );
 		}
 
 		# set webgui permissions
 		if ( $user_struct->{ 'webgui_permissions' } eq 'true' )
 		{
-			&runRBACAddUserToGroup( $user, 'webgui' ) if ( $permission !~ / webgui( |$)/ );
+			&runRBACAddUserToGroup( $user, 'webgui' )
+			  if ( !&getRBACUserIsMember( $user, 'webgui' ) );
 		}
 		else
 		{
-			&runRBACDelUserToGroup( $user, 'webgui' ) if ( $permission =~ / webgui( |$)/ );
+			&runRBACDelUserToGroup( $user, 'webgui' )
+			  if ( &getRBACUserIsMember( $user, 'webgui' ) );
 		}
 
 		# set user password
@@ -195,31 +193,6 @@ sub setRBACUserPasswordInSystem
 		last if ( $line =~ s/^$user:[^:]+/$user:$password/ );
 	}
 	untie @array;
-}
-
-=begin nd
-Function: initRBACModule
-
-	Create configuration files and run all needed commands requested to RBAC module
-
-Parameters:
-	None - .
-					
-Returns:
-	None - .
-	
-=cut
-
-sub initRBACModule
-{
-	my $touch    = &getGlobalConfiguration( "touch" );
-	my $groupadd = &getGlobalConfiguration( "groupadd_bin" );
-	mkdir $rbacPath                        if ( !-d $rbacPath );
-	&logAndRun( "$touch $rbacUserConfig" ) if ( !-f $rbacUserConfig );
-	&logAndRun( "$groupadd zapi" )         if ( !getgrnam ( 'zapi' ) );
-	&logAndRun( "$groupadd rbac" )         if ( !getgrnam ( 'rbac' ) );
-
-	&updateRBACAllUser();
 }
 
 1;

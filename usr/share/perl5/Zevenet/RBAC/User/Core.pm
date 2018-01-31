@@ -4,7 +4,6 @@ use strict;
 use Zevenet::Core;
 use Zevenet::RBAC::Core;
 
-my $rbacPath       = &getRBACConfPath();
 my $rbacUserConfig = &getRBACUserConf();
 
 =begin nd
@@ -22,11 +21,12 @@ Returns:
 
 sub getRBACUserConf
 {
+	my $rbacPath       = &getRBACConfPath();
 	return "$rbacPath/users.conf";
 }
 
 =begin nd
-Function: getRBACUser
+Function: getRBACUserList
 
 	List all created users in the load balancer
 
@@ -124,7 +124,7 @@ Parameters:
 	zapikey - Zapikey sent by the user. It is encrypt
 					
 Returns:
-	String - The funcion returns the user name owned of zapikey if it is validated successly or undef if thre process is not correct
+	Integer - 1 if the user has been validated sucessfully or 0 if it has not
 	
 =cut
 
@@ -145,7 +145,7 @@ sub validateRBACUserZapi
 			last;
 		}
 	}
-	return undef if ( !$user );
+	return 0 if ( !$user );
 
 	# check permissions
 	my $groups      = &getGlobalConfiguration( 'groups_bin' );
@@ -154,10 +154,13 @@ sub validateRBACUserZapi
 	if ( !grep ( / zapi( |$)/, $user_groups ) )
 	{
 		&zenlog( "The user $user has not zapi permissions" );
-		return undef;
+		return 0;
 	}
 
-	return $user;
+	require Zevenet::User;
+	&getUser( $user );
+
+	return 1;
 }
 
 1;
