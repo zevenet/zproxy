@@ -467,6 +467,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	}
 
 	# Rename fw marks for this farm
+	require Zevenet::Netfilter;
 	&renameMarks( $farm_name, $new_farm_name );
 
 	$farm = &getL4FarmStruct( $new_farm_name );
