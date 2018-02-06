@@ -40,9 +40,9 @@ FIXME:
 	dnat and nat regexp is duplicated
 
 =cut
-sub getL4BackendEstConns    # ($farm_name,$ip_backend,$netstat)
+sub getL4BackendEstConns    # ($farm_name,$be_ip,$be_port,$netstat)
 {
-	my ( $farm_name, $ip_backend, $netstat ) = @_;
+	my ( $farm_name, $be_ip, $be_port, $netstat ) = @_;
 
 	my $fvip        = &getFarmVip( "vip",  $farm_name );
 	my $fvipp       = &getFarmVip( "vipp", $farm_name );
@@ -72,7 +72,7 @@ sub getL4BackendEstConns    # ($farm_name,$ip_backend,$netstat)
 				&getNetstatFilter(
 					"tcp",
 					"",
-					"\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp \.*src=$ip_backend \.*",
+					"\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp \.*src=$be_ip \.*",
 					"",
 					$netstat
 				) };
@@ -83,7 +83,7 @@ sub getL4BackendEstConns    # ($farm_name,$ip_backend,$netstat)
 				&getNetstatFilter(
 					"udp",
 					"",
-					"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+					"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$be_ip \.*",
 					"",
 					$netstat
 				) };
@@ -97,7 +97,7 @@ sub getL4BackendEstConns    # ($farm_name,$ip_backend,$netstat)
 				&getNetstatFilter(
 					"tcp",
 					"",
-					"\.*ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$regexp \.*src=$ip_backend \.*",
+					"\.*ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$regexp \.*src=$be_ip \.*",
 					"",
 					$netstat
 				) };
@@ -108,7 +108,7 @@ sub getL4BackendEstConns    # ($farm_name,$ip_backend,$netstat)
 				&getNetstatFilter(
 					"udp",
 					"",
-					"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+					"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$be_ip \.*",
 					"",
 					$netstat
 				) };
@@ -244,9 +244,9 @@ FIXME:
 	dnat and nat regexp is duplicated
 
 =cut
-sub getL4BackendSYNConns    # ($farm_name,$ip_backend,$netstat)
+sub getL4BackendSYNConns    # ($farm_name,$be_ip,$be_port,$netstat)
 {
-	my ( $farm_name, $ip_backend, $netstat ) = @_;
+	my ( $farm_name, $be_ip, $be_port, $netstat ) = @_;
 
 	my $proto     = &getFarmProto( $farm_name );
 	my $nattype   = &getFarmNatType( $farm_name );
@@ -273,7 +273,7 @@ sub getL4BackendSYNConns    # ($farm_name,$ip_backend,$netstat)
 				&getNetstatFilter(
 					"tcp",
 					"",
-					"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*",
+					"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$be_ip \.*",
 					"",
 					$netstat
 				) };
@@ -288,7 +288,7 @@ sub getL4BackendSYNConns    # ($farm_name,$ip_backend,$netstat)
 				&getNetstatFilter(
 					"tcp",
 					"",
-					"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*",
+					"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$be_ip \.*",
 					"",
 					$netstat
 				) };
