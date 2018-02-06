@@ -135,6 +135,14 @@ sub set_rbac_group
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
+	# Check if role exists
+	require Zevenet::RBAC::Role::Config;
+	if ( ! grep( /^$json_obj->{ role }$/, &getRBACRolesList() ) )
+	{
+		my $msg = "The role $json_obj->{ 'role' } doesn't exist.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	# modify zapi permissions
 	if ( exists $json_obj->{ 'role' } )
 	{
@@ -145,15 +153,11 @@ sub set_rbac_group
 		}
 	}
 
-	require Zevenet::Cluster;
-	&runZClusterRemoteManager( 'rbac_group', 'update', $group );
-
 	my $msg    = "Settings were changed successful.";
 	my $output = &getZapiRBACGroups( $group );
 	my $body   = { description => $desc, params => $output, message => $msg };
 
 	&httpResponse( { code => 200, body => $body } );
-
 }
 
 #  DELETE /rbac/groups/<group>

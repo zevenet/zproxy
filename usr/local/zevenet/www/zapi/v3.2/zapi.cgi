@@ -106,7 +106,7 @@ require Zevenet::Core;
 if ( $username ne 'root' )
 {
 	require Zevenet::RBAC::Core;
-	if ( !&getRBACPath( $q->path_info ) )
+	if ( !&getRBACPathPermissions( $q->path_info,  $ENV{REQUEST_METHOD} ) )
 	{
 		my $desc = "RBAC auth";
 		&httpErrorResponse(

@@ -26,9 +26,11 @@ sub initRBACModule
 	my $touch           = &getGlobalConfiguration( "touch" );
 	my $groupadd        = &getGlobalConfiguration( "groupadd_bin" );
 	my $rbacPath        = &getRBACConfPath();
+	my $rbacRolePath    = &getRBACRolePath();
 	my $rbacUserConfig  = &getRBACUserConf();
 	my $rbacGroupConfig = &getRBACGroupConf();
 	mkdir $rbacPath                         if ( !-d $rbacPath );
+	mkdir $rbacRolePath                    	if ( !-d $rbacRolePath );
 	&logAndRun( "$touch $rbacUserConfig" )  if ( !-f $rbacUserConfig );
 	&logAndRun( "$touch $rbacGroupConfig" ) if ( !-f $rbacGroupConfig );
 	&runRBACCreateGroupCmd( "zapi" )        if ( !getgrnam ( 'zapi' ) );

@@ -26,7 +26,7 @@ sub setRBACGroupLockConfigFile
 {
 	require Zevenet::Lock;
 
-	my $lockfile = "/tmp/rback_groups.lock";
+	my $lockfile = "/tmp/rbac_groups.lock";
 	return &lockfile( $lockfile );
 }
 

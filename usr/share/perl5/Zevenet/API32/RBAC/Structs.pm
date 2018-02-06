@@ -128,4 +128,119 @@ sub getZapiRBACAllGroups
 	return \@allGroups;
 }
 
+sub getRBACRoleStruct
+{
+	return {
+			 'activation-certificate' => {
+										   'show'   => 'false',
+										   'upload' => 'false',
+										   'delete' => 'false',
+			 },
+			 'certificate' => {
+								'show'     => 'false',
+								'create'   => 'false',
+								'download' => 'false',
+								'upload'   => 'false',
+								'delete'   => 'false',
+			 },
+			 'farm' => {
+						 'create'      => 'false',
+						 'modify'      => 'false',
+						 'action'      => 'false',
+						 'maintenance' => 'false',
+						 'delete'      => 'false',
+			 },
+			 'interface-virtual' => {
+									  'create' => 'false',
+									  'modify' => 'false',
+									  'action' => 'false',
+									  'delete' => 'false',
+			 },
+			 'interface' => {
+							  'modify' => 'false',
+							  'action' => 'false',
+			 },
+			 'ipds' => {
+						 'modify' => 'false',
+						 'action' => 'false',
+			 },
+			 'system-service' => {
+								   'modify' => 'false',
+			 },
+			 'log' => {
+						'download' => 'false',
+						'show'     => 'false',
+			 },
+			 'backup' => {
+						   'create'   => 'false',
+						   'apply'    => 'false',
+						   'upload'   => 'false',
+						   'delete'   => 'false',
+						   'download' => 'false',
+			 },
+			 'cluster' => {
+							'create'      => 'false',
+							'modify'      => 'false',
+							'delete'      => 'false',
+							'maintenance' => 'false',
+			 },
+			 'notification' => {
+								 'show'          => 'false',
+								 'modify-method' => 'false',
+								 'modify-alert'  => 'false',
+								 'test'          => 'false',
+								 'action'        => 'false',
+			 },
+			 'system-user' => {
+								'show'   => 'false',
+								'modify' => 'false',
+			 },
+			 'supportsave' => {
+								'download' => 'false',
+			 },
+			 'rbac-user' => {
+							  'show'   => 'false',
+							  'create' => 'false',
+							  'list'   => 'false',
+							  'modify' => 'false',
+							  'delete' => 'false',
+			 },
+			 'rbac-group' => {
+							   'show'   => 'false',
+							   'create' => 'false',
+							   'list'   => 'false',
+							   'modify' => 'false',
+							   'delete' => 'false',
+			 },
+			 'rbac-role' => {
+							  'show'   => 'false',
+							  'create' => 'false',
+							  'modify' => 'false',
+							  'delete' => 'false',
+			 },
+	};
+}
+
+sub getZapiRBACRole
+{
+	my $role = shift;
+	require Config::Tiny;
+	my $roleFile   = &getRBACRoleFile( $role );
+	my $fileHandle = Config::Tiny->read( $roleFile );
+	my $out;
+
+	my $paramStruct = &getRBACRoleStruct();
+
+	foreach my $structKey ( keys %{ $paramStruct } )
+	{
+		foreach my $paramKey ( keys %{ $paramStruct->{ $structKey } } )
+		{
+			$out->{ $structKey }->{ $paramKey } =
+			  $fileHandle->{ $structKey }->{ $paramKey };
+		}
+	}
+
+	return $out;
+}
+
 1;

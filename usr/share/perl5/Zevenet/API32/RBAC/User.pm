@@ -72,7 +72,7 @@ sub add_rbac_user
 								   'valid_format' => 'rbac_password',
 								   'non_blank'    => 'true',
 								   'required'     => 'true',
-								   'format_msg'   => 'must have letters and digits'
+								   'format_msg'   => 'must be alphanumeric and must have at least 8 characters'
 				   },
 	};
 
@@ -130,7 +130,7 @@ sub set_rbac_user
 		 "newpassword" => {
 							'valid_format' => 'rbac_password',
 							'non_blank'    => 'true',
-							'format_msg'   => 'must have letters and digits'
+							'format_msg'   => 'must be alphanumeric and must have at least 8 characters'
 		 },
 	};
 

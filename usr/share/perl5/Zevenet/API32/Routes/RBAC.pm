@@ -79,5 +79,26 @@ if ( $ENV{ PATH_INFO } =~ qr{^/rbac/groups} )
 	  'del_rbac_group_resource', $mod;
 }
 
+if ( $ENV{ PATH_INFO } =~ qr{^/rbac/roles} )
+{
+	my $mod       = 'Zevenet::API32::RBAC::Role';
+	my $role_name = &getValidFormat( 'role_name' );
+
+	# GET /rbac/roles
+	GET qr{^/rbac/roles$}, 'get_rbac_all_roles', $mod;
+
+	# GET /rbac/roles/ROLE
+	GET qr{^/rbac/roles/($role_name)$}, 'get_rbac_role', $mod;
+
+	# POST /rbac/roles
+	POST qr{^/rbac/roles$}, 'add_rbac_role', $mod;
+
+	# DELETE /rbac/roles/ROLE
+	DELETE qr{^/rbac/roles/($role_name)$}, 'del_rbac_role', $mod;
+
+	# PUT /rbac/roles/ROLE
+	PUT qr{^/rbac/roles/($role_name)$}, 'set_rbac_role', $mod;
+}
+
 1;
 
