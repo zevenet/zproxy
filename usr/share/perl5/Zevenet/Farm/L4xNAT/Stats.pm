@@ -68,50 +68,50 @@ sub getL4BackendEstConns    # ($farm_name,$ip_backend,$netstat)
 			# i.e.
 			# tcp      6 431998 ESTABLISHED src=192.168.0.168 dst=192.168.100.241 sport=40130 dport=81 src=192.168.100.254 dst=192.168.100.241 sport=80 dport=40130 [ASSURED] mark=523 use=1
 			#protocol				 status		      client                         vip                                                           vport          backend_ip                   (vip, but can change)    backend_port
-			$connections +=
+			$connections += scalar @{
 				&getNetstatFilter(
 					"tcp",
 					"",
 					"\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp \.*src=$ip_backend \.*",
 					"",
 					$netstat
-				);
+				) };
 		}
 		if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 		{
-			$connections +=
+			$connections += scalar @{
 				&getNetstatFilter(
 					"udp",
 					"",
 					"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
 					"",
 					$netstat
-				);
+				) };
 		}
 	}
 	else
 	{
 		if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 		{
-			$connections +=
+			$connections += scalar @{
 				&getNetstatFilter(
 					"tcp",
 					"",
 					"\.*ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$regexp \.*src=$ip_backend \.*",
 					"",
 					$netstat
-				);
+				) };
 		}
 		if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 		{
-			$connections +=
+			$connections += scalar @{
 				&getNetstatFilter(
 					"udp",
 					"",
 					"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
 					"",
 					$netstat
-				);
+				) };
 		}
 	}
 
@@ -173,52 +173,52 @@ sub getL4FarmEstConns    # ($farm_name,$netstat)
 			{
 				if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 				{
-					$connections +=
+					$connections += scalar @{
 						&getNetstatFilter(
 							"tcp",
 							"",
 							"\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
 							"",
 							$netstat
-						);
+						) };
 				}
 
 				if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 				{
-					$connections +=
+					$connections += scalar @{
 						&getNetstatFilter(
 							"udp",
 							"",
 							"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
 							"",
 							$netstat
-						);
+						) };
 				}
 			}
 			else
 			{
 				if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 				{
-					$connections +=
+					$connections += scalar @{
 						&getNetstatFilter(
 							"tcp",
 							"",
 							"\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
 							"",
 							$netstat
-						);
+						) };
 				}
 
 				if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
 				{
-					$connections +=
+					$connections += scalar @{
 						&getNetstatFilter(
 							"udp",
 							"",
 							"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend",
 							"",
 							$netstat
-						);
+						) };
 				}
 			}
 		}
@@ -269,14 +269,14 @@ sub getL4BackendSYNConns    # ($farm_name,$ip_backend,$netstat)
 	{
 		if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 		{
-			$connections +=
+			$connections += scalar @{
 				&getNetstatFilter(
 					"tcp",
 					"",
 					"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*",
 					"",
 					$netstat
-				);
+				) };
 		}
 		# udp doesn't have pending connections
 	}
@@ -284,14 +284,14 @@ sub getL4BackendSYNConns    # ($farm_name,$ip_backend,$netstat)
 	{
 		if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 		{
-			$connections +=
+			$connections += scalar @{
 				&getNetstatFilter(
 					"tcp",
 					"",
 					"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*",
 					"",
 					$netstat
-				);
+				) };
 		}
 		# udp doesn't have pending connections
 	}
@@ -338,7 +338,7 @@ sub getL4FarmSYNConns    # ($farm_name,$netstat)
 		$regexp = ".*";
 	}
 
-	my @content = &getL4FarmBackendStatusCtl( $farm_name );
+	my @content  = &getL4FarmBackendStatusCtl( $farm_name );
 	my @backends = &getL4FarmBackendsStatus_old( $farm_name, @content );
 
 	# tcp      6 299 ESTABLISHED src=192.168.0.186 dst=192.168.100.241 sport=56668 dport=80 src=192.168.0.186 dst=192.168.100.241 sport=80 dport=56668 [ASSURED] mark=517 use=2
@@ -355,14 +355,14 @@ sub getL4FarmSYNConns    # ($farm_name,$netstat)
 			{
 				if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 				{
-					$connections +=
+					$connections += scalar @{
 						&getNetstatFilter(
 								"tcp",
 								"",
 								"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*",
 								"",
 								$netstat
-						);
+						) };
 				}
 				# udp doesn't have pending connections
 			}
@@ -370,14 +370,14 @@ sub getL4FarmSYNConns    # ($farm_name,$netstat)
 			{
 				if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
 				{
-					$connections +=
+					$connections += scalar @{
 						&getNetstatFilter(
 								"tcp",
 								"",
 								"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*",
 								"",
 								$netstat
-						);
+						) };
 				}
 				# udp doesn't have pending connections
 			}
