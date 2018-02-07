@@ -1,9 +1,11 @@
 #!!!!!!NO REMOVE COMMENTS LINES!!!!!!
-#!!!!!!comments lines have a special patron that web application have to process 
+#!!!!!!comments lines have a special patron that web application have to process
 
 #::INI Global information
 #Zevenet root directory
 $zdir="/usr/local/zevenet";
+#Zevenet bin directory
+$zbindir = "/usr/local/zevenet/app/zbin";
 #Zevenet lib directory
 $zlibdir="/usr/share/perl5/Zevenet";#update
 #Document Root for Web Aplication directory
@@ -38,9 +40,9 @@ $cipher_ssloffloading="AES";
 $htpass="/etc/passwd";#update
 #ZAPI KEY
 $zapikey="";
-# Zen license 
+# Zen license
 $licenseFileTxt="/usr/local/zevenet/license.txt";
-# Zen license 
+# Zen license
 $licenseFileHtml="/usr/local/zevenet/license.html";
 
 #dns file server?
@@ -175,7 +177,7 @@ $recent_ip_list_hash_size="6000";#update
 # Iptables lock filename
 $iptlock = "/tmp/iptables.lock";
 
-#Directory where is check script. In this directory you can save your own check scripts. 
+#Directory where is check script. In this directory you can save your own check scripts.
 $libexec_dir="/usr/local/zevenet/app/libexec";
 #FarmGuardian binary, create advanced check for backend servers
 $farmguardian="/usr/local/zevenet/app/farmguardian/bin/farmguardian";
@@ -189,7 +191,7 @@ $rrd_dir="rrd";#update
 
 #Service for configure Zen directory replication
 $zenino="/usr/local/zevenet/app/zeninotify/zeninotify.pl";
-#Zen Inotify pid file 
+#Zen Inotify pid file
 $zeninopid="/var/run/zeninotify.pid";
 #Rsync replication parameters
 $zenrsync="-auzvr --delete";#update
