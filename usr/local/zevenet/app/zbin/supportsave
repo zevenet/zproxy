@@ -34,6 +34,8 @@ fi
 backup_dir="${prefix}/${ss_dir}"
 
 config_paths=`perl -MZevenet::Config -e 'print getGlobalConfiguration("backupfor");'`;
+zbindir=`perl -MZevenet::Config -e 'print getGlobalConfiguration("zbindir");'`;
+
 monitoring_paths="${home_dir}/app/zenrrd/rrd ${home_dir}/logs /var/log/messages* /var/log/syslog* /var/log/cherokee* ${home_dir}/node_status";
 
 
@@ -72,7 +74,7 @@ echo "- Partitions"
 /bin/df -h                              >> $backup_dir/partitions.txt 2>&1
 
 echo "- Time"
-${home_dir}/app/zenntp/zenntp.pl        >> $backup_dir/ntp_test.txt 2>&1
+${zbindir}/zenntp.pl                    >> $backup_dir/ntp_test.txt 2>&1
 
 echo "- Sessions Table"
 ${home_dir}/app/ssyncd/bin/ssyncdctl show http	>> $backup_dir/sessions_http.txt 2>&1
@@ -134,8 +136,8 @@ then
     done
 fi
 
-echo "- ipset"
 if [ -f /sbin/ipset ]; then
+	echo "- ipset"
     /sbin/ipset save                    >> $backup_dir/ipset_tables.txt 2>&1
 fi
 
