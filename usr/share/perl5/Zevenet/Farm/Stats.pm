@@ -54,7 +54,7 @@ sub getBackendEstConns    # ($farm_name,$ip_backend,$port_backend,$netstat)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Stats;
-		$connections = &getL4BackendEstConns( $farm_name, $ip_backend, $netstat );
+		$connections = &getL4BackendEstConns( $farm_name, $ip_backend, $port_backend, $netstat );
 	}
 
 	return $connections;
