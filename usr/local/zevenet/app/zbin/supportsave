@@ -118,8 +118,11 @@ echo -e "\nRaw table "                  >> $backup_dir/netfilter.txt
 
 echo "- ARP table"
 /usr/sbin/arp -n                        >> $backup_dir/arp_table.txt
-echo "- ARP filtering"
-/sbin/arptables -L                      >> $backup_dir/arp_filtering.txt
+if [ -f /sbin/arptables ];
+then
+	echo "- ARP filtering"
+	/sbin/arptables -L                      >> $backup_dir/arp_filtering.txt
+fi
 
 echo "- nf_conntrack"
 if [ -f /usr/sbin/conntrack ];
