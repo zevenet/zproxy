@@ -78,7 +78,7 @@ sub get_nic_list    # ()
 {
 	require Zevenet::Net::Interface;
 
-	my $EE = eval{ require Zevenet::Net::Bonding; }? 1: undef;
+	my $EE = eval { require Zevenet::Net::Bonding; } ? 1 : undef;
 
 	my $desc  = "List NIC interfaces";
 	my @vlans = &getInterfaceTypeList( 'vlan' );
@@ -105,12 +105,12 @@ sub get_nic_list    # ()
 		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		my $if_conf = {
-						name     => $if_ref->{ name },
-						ip       => $if_ref->{ addr },
-						netmask  => $if_ref->{ mask },
-						gateway  => $if_ref->{ gateway },
-						status   => $if_ref->{ status },
-						mac      => $if_ref->{ mac },
+						name    => $if_ref->{ name },
+						ip      => $if_ref->{ addr },
+						netmask => $if_ref->{ mask },
+						gateway => $if_ref->{ gateway },
+						status  => $if_ref->{ status },
+						mac     => $if_ref->{ mac },
 		};
 
 		$if_conf->{ is_slave } = $if_ref->{ is_slave } if $EE;
@@ -145,7 +145,7 @@ sub get_nic    # ()
 
 	require Zevenet::Net::Interface;
 
-	my $EE = eval{ require Zevenet::Net::Bonding; }? 1: undef;
+	my $EE = eval { require Zevenet::Net::Bonding; } ? 1 : undef;
 
 	my $desc = "Show NIC interface";
 	my $interface;
@@ -165,12 +165,12 @@ sub get_nic    # ()
 		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		$interface = {
-					   name     => $if_ref->{ name },
-					   ip       => $if_ref->{ addr },
-					   netmask  => $if_ref->{ mask },
-					   gateway  => $if_ref->{ gateway },
-					   status   => $if_ref->{ status },
-					   mac      => $if_ref->{ mac },
+					   name    => $if_ref->{ name },
+					   ip      => $if_ref->{ addr },
+					   netmask => $if_ref->{ mask },
+					   gateway => $if_ref->{ gateway },
+					   status  => $if_ref->{ status },
+					   mac     => $if_ref->{ mac },
 		};
 
 		$interface->{ is_slave } = $if_ref->{ is_slave } if $EE;
@@ -223,7 +223,10 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 		my $if_ref = &getInterfaceConfig( $nic, $ip_v );
 
 		# Delete routes in case that it is not a vini
-		&delRoutes( "local", $if_ref ) if $if_ref;
+		if ( $if_ref->{ addr } )
+		{
+			&delRoutes( "local", $if_ref ) if $if_ref;
+		}
 
 		&addIp( $if_ref ) if $if_ref;
 
@@ -232,31 +235,29 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 		if ( !$state )
 		{
 			require Zevenet::Net::Util;
-
-			&applyRoutes( "local", $if_ref ) if $if_ref;
+			&applyRoutes( "local", $if_ref ) if $if_ref->{ addr };
 
 			# put all dependant interfaces up
 			&setIfacesUp( $nic, "vlan" );
 			&setIfacesUp( $nic, "vini" ) if $if_ref;
-
 
 			# WARNING: This is now control by GUI
 			#~ # put a NIC interface up will do all VLANs go up
 			#~ # Then put VLAN down again
 			#~ foreach my $if_vlan_name ( &getLinkNameList() )
 			#~ {
-				#~ if ( $if_vlan_name =~ /^$nic./ )
-				#~ {
-					#~ my $if_vlan_conf = &getInterfaceConfig ( $if_vlan_name );
-					#~ if ( $if_vlan_conf->{status} eq "down" )
-					#~ {
-						#~ if ( &downIf( $if_vlan_conf ) )
-						#~ {
-							#~ my $msg = "Error, setting up the appending VLAN $if_vlan_name";
-							#~ &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-						#~ }
-					#~ }
-				#~ }
+			#~ if ( $if_vlan_name =~ /^$nic./ )
+			#~ {
+			#~ my $if_vlan_conf = &getInterfaceConfig ( $if_vlan_name );
+			#~ if ( $if_vlan_conf->{status} eq "down" )
+			#~ {
+			#~ if ( &downIf( $if_vlan_conf ) )
+			#~ {
+			#~ my $msg = "Error, setting up the appending VLAN $if_vlan_name";
+			#~ &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			#~ }
+			#~ }
+			#~ }
 			#~ }
 		}
 		else
@@ -279,7 +280,7 @@ sub actions_interface_nic    # ( $json_obj, $nic )
 	}
 	else
 	{
-		my $msg = "Action accepted values are: up or down";
+		my $msg = "The accepted values for 'action' are: up or down";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -407,7 +408,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	if ( $json_obj->{ ip } )
 	{
 		if ( ( ( $json_obj->{ ip } ne $if_ref->{ addr } ) && $if_ref->{ addr } )
-			|| ! $if_ref->{ addr } )
+			 || !$if_ref->{ addr } )
 		{
 			require Zevenet::Net::Util;
 			if ( grep ( /^$json_obj->{ ip }$/, &listallips() ) )
@@ -472,9 +473,9 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 		{
 			foreach my $appending ( &getInterfaceChild( $nic ) )
 			{
-				my $app_config = &getInterfaceConfig ( $appending );
+				my $app_config = &getInterfaceConfig( $appending );
 				$app_config->{ gateway } = $json_obj->{ gateway };
-				&setInterfaceConfig ( $app_config );
+				&setInterfaceConfig( $app_config );
 			}
 		}
 

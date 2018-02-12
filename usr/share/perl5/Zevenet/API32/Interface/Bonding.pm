@@ -284,8 +284,12 @@ sub delete_bond    # ( $bond )
 	}
 
 	my $bond_in_use = 0;
-	$bond_in_use = 1 if &getInterfaceConfig( $bond, 4 )->{ addr };
-	$bond_in_use = 1 if &getInterfaceConfig( $bond, 6 )->{ addr };
+	my $bond_hash   = &getInterfaceConfig( $bond );
+	if ( $bond_hash )
+	{
+		$bond_in_use = 1 if &getInterfaceConfig( $bond, 4 )->{ addr };
+		$bond_in_use = 1 if &getInterfaceConfig( $bond, 6 )->{ addr };
+	}
 
 	if ( $bond_in_use )
 	{

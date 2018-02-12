@@ -77,6 +77,11 @@ sub new_vini    # ( $json_obj )
 		my $msg = "The parent interface $json_obj->{ parent } doesn't exist.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+	if ( $if_parent->{ type } eq 'nic' and !$if_parent->{ addr } )
+	{
+		my $msg = "The parent interface $json_obj->{ parent } must be configured.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
 	# Check network interface errors
 	# A virtual interface cannnot exist in two stacks
@@ -256,7 +261,7 @@ sub get_virtual_list    # ()
 		  };
 	}
 
-	if ( eval{ require Zevenet::RBAC::Group::Core; } )
+	if ( eval { require Zevenet::RBAC::Group::Core; } )
 	{
 		@output_list = @{ &getRBACUserSet( 'interfaces', \@output_list ) };
 	}
@@ -473,7 +478,12 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 	require Zevenet::Net::Validate;
 	my $if_ref_parent = &getInterfaceConfig( $if_ref->{ parent }, $ip_v );
 	unless (
-		 &getNetValidate( $if_ref_parent->{ addr }, $if_ref->{ mask }, $json_obj->{ ip } ) )
+			 &getNetValidate(
+							  $if_ref_parent->{ addr },
+							  $if_ref->{ mask },
+							  $json_obj->{ ip }
+			 )
+	  )
 	{
 		$msg = "IP Address $json_obj->{ip} must be same net than the father interface.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

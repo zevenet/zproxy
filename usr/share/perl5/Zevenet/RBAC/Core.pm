@@ -235,8 +235,9 @@ sub getRBACRolePermission
 		$out = 0 if ( $fileHandle->{ $section }->{ $action } eq 'false' );
 	}
 
+	&zenlog( "RBAC:: $ENV{ REQUEST_METHOD } $ENV{ PATH_INFO } " ) if &debug;
 	&zenlog(
-		"Checking permissions ($out) for user $user, in the group $group with the role $role: \[$section\]\->\{$action\} = $fileHandle->{ $section }->{ $action } "
+		"RBAC:: Permissions: $out, user:$user, group:$group, role:$role \[$section\]\->\{$action\} = $fileHandle->{ $section }->{ $action } "
 	) if &debug;
 
 	return $out;
@@ -308,19 +309,23 @@ sub getRBACPermissionHash
 	my $hashSection;
 
 	# exceptions or advances checks
-	if ( $path =~ qr{^/interfaces/($object_re)} )
+	if ( $path =~ qr{^/interfaces/($object_re)} and $method eq 'POST' )
 	{
-		my $data = &getCgiParam( 'POSTDATA' );
-		my $json = eval { decode_json( $data ) };
+		if ( $1 ne 'virtual' )
+		{
+			my $data = &getCgiParam( 'POSTDATA' );
+			require JSON::XS;
+			my $json = eval { JSON::XS::decode_json( $data ) };
 
-		$section = 'interfaces';
-		if ( $path =~ qr{/actions$} and $method eq 'POST' and exists $json->{ action } )
-		{
-			$action = 'action';
-		}
-		else
-		{
-			$action = 'modify';
+			$section = 'interface';
+			if ( $path =~ qr{/actions$} and exists $json->{ action } )
+			{
+				$action = 'action';
+			}
+			else
+			{
+				$action = 'modify';
+			}
 		}
 	}
 
@@ -330,7 +335,8 @@ sub getRBACPermissionHash
 		$section = 'ipds';
 		$action  = 'action';
 	}
-	else
+
+	if ( !$action or !$section )
 	{
 		$hashSection = &getRBACRoleMenu( $path );
 
@@ -965,26 +971,26 @@ sub getRBACPermissionRbacHash
 				  },
 		],
 		'DELETE' => [
-				  {
-					 'regex'   => qr{^/rbac/users/$object_re$},
-					 'section' => 'rbac-user',
-					 'action'  => 'delete',
-				  },
-				  {
-					 'regex'   => qr{^/rbac/groups/$object_re$},
-					 'section' => 'rbac-group',
-					 'action'  => 'delete',
-				  },
-				  {
-					 'regex'   => qr{^/rbac/groups/$object_re/(?:resources|users)/$object_re$},
-					 'section' => 'rbac-group',
-					 'action'  => 'modify',
-				  },
-				  {
-					 'regex'   => qr{^/rbac/roles/$object_re$},
-					 'section' => 'rbac-role',
-					 'action'  => 'delete',
-				  },
+			{
+			   'regex'   => qr{^/rbac/users/$object_re$},
+			   'section' => 'rbac-user',
+			   'action'  => 'delete',
+			},
+			{
+			   'regex'   => qr{^/rbac/groups/$object_re$},
+			   'section' => 'rbac-group',
+			   'action'  => 'delete',
+			},
+			{
+			   'regex'   => qr{^/rbac/groups/$object_re/(?:interfaces|farms|users)/$object_re$},
+			   'section' => 'rbac-group',
+			   'action'  => 'modify',
+			},
+			{
+			   'regex'   => qr{^/rbac/roles/$object_re$},
+			   'section' => 'rbac-role',
+			   'action'  => 'delete',
+			},
 		],
 		'POST' => [
 				   {
@@ -998,7 +1004,7 @@ sub getRBACPermissionRbacHash
 					  'action'  => 'create',
 				   },
 				   {
-					  'regex'   => qr{^/rbac/groups/$object_re/(?:resources|users)},
+					  'regex'   => qr{^/rbac/groups/$object_re/(?:interfaces|farms|users)},
 					  'section' => 'rbac-group',
 					  'action'  => 'modify',
 				   },
