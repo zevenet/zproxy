@@ -340,10 +340,12 @@ if ( $action eq "start" )
 		}
 	}
 
-	&zenlog("zevenet: Setting up Cluster...");
-
-	# enable cluster hook
-	&eload( module => $mod, func => 'enable_cluster' ) if $eload;
+	# Hook to enable cluster
+	if ( $eload )
+	{
+		&zenlog("zevenet: Setting up Cluster...");
+		&eload( module => $mod, func => 'enable_cluster' );
+	}
 
 	&zenlog("zevenet: Setting up virtual interfaces...");
 
