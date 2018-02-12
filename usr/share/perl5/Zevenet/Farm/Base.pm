@@ -171,6 +171,7 @@ sub getFarmVipStatus    # ($farm_name)
 	my $farm_name = shift;
 
 	my $output = -1;
+	my $farmStatus = &getFarmStatus( $farm_name );
 	return $output if !defined ( $farm_name );    # farm name cannot be empty
 	
 	$output = "problem";
@@ -178,15 +179,17 @@ sub getFarmVipStatus    # ($farm_name)
 	{
 		return "needed restart";
 	}
-	elsif ( &getFarmStatus( $farm_name ) eq "down" )
+	elsif ( $farmStatus eq "down" )
 	{
 		return "down";
+	}
+	elsif ( $farmStatus ne "up" )
+	{
+		return -1;
 	}
 	
 	# types: "http", "https", "datalink", "l4xnat", "gslb" or 1
 	my $type = &getFarmType( $farm_name );
-
-	require Zevenet::Farm::Config;
 
 	my $backends;
 	my $up_flag;		# almost one backend is not reachable
@@ -196,24 +199,17 @@ sub getFarmVipStatus    # ($farm_name)
 	# Profile without services
 	if ( $type eq "datalink" || $type eq "l4xnat" )
 	{
+		require Zevenet::Farm::Config;
 		$backends = &getFarmBackends( $farm_name );
 	}
 	# Profiles with services
 	elsif ( $type eq "gslb" || $type =~ /http/ )
 	{
-		require Zevenet::Farm::Service;
-
-		foreach my $srv ( &getFarmServices($farm_name) )
-		{
-			# Fill an array with backends of all services
-			push @{ $backends }, @{ &getFarmBackends( $farm_name, $srv ) };
-		}
-	}	
-	else
-	{
-		return -1;
+		require Zevenet::Farm::HTTP::Stats;
+		my $stats = &getHTTPFarmBackendsStats($farm_name);
+		$backends = $stats->{ backends };
 	}
-	
+
 	# checking status
 	foreach my $be ( @{$backends} )
 	{
