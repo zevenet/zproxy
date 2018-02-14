@@ -220,15 +220,11 @@ if ( $action eq "start" )
 		}
 	}
 
-	# enterprise hook
-	&eload( module => $mod, func => 'start_service' ) if $eload;
-
 	print ( "* Starting Interfaces:\n" );
 
 	my $mgmt_ip    = &getHttpServerIp();
 	my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
 	my @interfaces = &getInterfaceTypeList('nic');
-	push( @interfaces, &getInterfaceTypeList('bond') ) if $eload;
 
 	&zenlog("zevenet: Setting up NIC interfaces...");
 
