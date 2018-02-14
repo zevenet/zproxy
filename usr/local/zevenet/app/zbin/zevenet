@@ -70,12 +70,12 @@ sub getInterfaceBlocks
 		{
 			$in_block = 'true';
 
-			if ( @interface ) # exclude first block 
+			if ( @interface ) # exclude first block
 			{
 				my ( @array ) = @interface;
 				push( @interface_list, \@array ); # store previous iface
 			}
-			
+
 			@interface = ( $line ); # start new interface
 		}
 		elsif ( $in_block )
@@ -187,7 +187,7 @@ if ( $action eq "start" )
 				);
 
 				# Write iface file
-				if ( $interface{ name } ) 
+				if ( $interface{ name } )
 				{
 					&zenlog( "Writing iface: $interface{ name }" );
 					&setInterfaceConfig( \%interface ) ;
@@ -217,16 +217,13 @@ if ( $action eq "start" )
 		}
 	}
 
-	# enterprise hook
-	&eload( module => $mod, func => 'start_service' );
-
 	print ( "* Starting Interfaces:\n" );
 
 	my $mgmt_ip    = &getHttpServerIp();
 	my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
-	my @interfaces = @{ &getConfigInterfaceList() };
+	my @interfaces = &getInterfaceTypeList('nic');
 
-	&zenlog("zevenet: Setting up NIC and Bonding interfaces...");
+	&zenlog("zevenet: Setting up NIC interfaces...");
 
 	# first real interfaces
 	foreach my $iface ( &getInterfaceTypeList('nic'), &getInterfaceTypeList('bond') )
@@ -280,6 +277,9 @@ if ( $action eq "start" )
 			}
 		}
 	}
+
+	# enterprise hook
+	&eload( module => $mod, func => 'start_service' ) if $eload;
 
 	&zenlog("zevenet: Setting up VLAN interfaces...");
 

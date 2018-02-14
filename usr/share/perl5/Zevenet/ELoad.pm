@@ -55,7 +55,7 @@ sub eload
 	require JSON;
 	JSON->import( qw( encode_json decode_json ) );
 
-	# make sure $req{ args } is always an array reference 
+	# make sure $req{ args } is always an array reference
 	my $validArrayRef = exists $req{ args } && ref $req{ args } eq 'ARRAY';
 	$req{ args } = [] unless $validArrayRef;
 
@@ -106,6 +106,7 @@ sub eload
 		#~ zenlog( "rc: '$rc'" );
 		#~ zenlog( "ret_output: '$ret_output'" );
 		&zenlog( "$msg. $ret_output" );
+		exit 1 if $0 =~ /zevenet$/;
 		die( $msg );
 	}
 
