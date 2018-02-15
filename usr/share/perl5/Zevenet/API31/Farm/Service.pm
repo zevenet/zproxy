@@ -167,7 +167,7 @@ sub farm_services
 
 	my $body = {
 				 description => $desc,
-				 services    => $service,
+				 params    => $service,
 	};
 
 	&httpResponse( { code => 200, body => $body } );
