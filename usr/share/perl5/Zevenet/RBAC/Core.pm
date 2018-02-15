@@ -137,22 +137,27 @@ sub getRBACResourcePermissions
 	elsif ( $path =~ qr{^/(?:stats|graphs)?/?farms/($object_re)} )
 	{
 		my $farm = $1;
-
-		if ( !grep ( /^$farm$/, @{ &getRBACUsersResources( $user, 'farms' ) } ) )
+		require Zevenet::Farm::Core;
+		# check if it exists to control the HTTP output code
+		if ( &getFarmExists( $farm ) )
 		{
-			$permission = 0;
-
-			#~ &zenlog( "The user $user cannot access to the farm $farm.", 'error' );
+			if ( !grep ( /^$farm$/, @{ &getRBACUsersResources( $user, 'farms' ) } ) )
+			{
+				$permission = 0;
+			}
 		}
 	}
 	elsif ( $path =~ qr{^/(?:graphs/)?interfaces/virtual/($object_re)} )
 	{
 		my $iface = $1;
-		if ( !grep ( /^$iface$/, @{ &getRBACUsersResources( $user, 'interfaces' ) } ) )
-		{
-			$permission = 0;
+		require Zevenet::Net::Interface;
 
-			#~ &zenlog( "The user $user cannot access to the interface $iface.", 'error' );
+		if ( &getInterfaceConfig( $iface ) )
+		{
+			if ( !grep ( /^$iface$/, @{ &getRBACUsersResources( $user, 'interfaces' ) } ) )
+			{
+				$permission = 0;
+			}
 		}
 	}
 
@@ -492,7 +497,7 @@ sub getRBACPermissionFarmHash
 					  'action'  => 'modify',
 				   },
 				   {
-					  'regex'   => qr{^/farms/($farm_re)/ipds/$},
+					  'regex'   => qr{^/farms/($farm_re)/ipds/},
 					  'section' => 'farm',
 					  'action'  => 'action',
 				   },
