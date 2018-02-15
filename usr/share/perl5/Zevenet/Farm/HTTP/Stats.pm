@@ -189,6 +189,7 @@ sub getHTTPFarmBackendsStats    # ($farm_name,@content)
 	my $firstService = 1;
 	
 	require Zevenet::Farm::Base;
+	require Zevenet::Farm::HTTP::Config;
 	my $fvip = &getFarmVip( "vip", $farm_name );
 	
 	my $service_re = &getValidFormat( 'service' );

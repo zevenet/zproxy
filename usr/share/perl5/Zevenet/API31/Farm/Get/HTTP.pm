@@ -22,15 +22,12 @@
 
 use strict;
 use Zevenet::Farm::HTTP::Config;
-use Zevenet::Farm::HTTP::Service;
 
-# GET /farms/<farmname> Request info of a http|https Farm
-sub farms_name_http # ( $farmname )
+
+sub get_farm_struct
 {
 	my $farmname = shift;
-
 	my $output_params;
-	my @out_s;
 	my @out_cn;
 	my $connto          = 0 + &getFarmConnTO( $farmname );
 	my $timeout         = 0 + &getHTTPFarmTimeout( $farmname );
@@ -130,6 +127,20 @@ sub farms_name_http # ( $farmname )
 		$output_params->{ disable_tlsv1_2 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_2") )? "true": "false";
 	}
 
+	return $output_params;
+}
+
+
+# GET /farms/<farmname> Request info of a http|https Farm
+sub farms_name_http # ( $farmname )
+{
+	my $farmname = shift;
+
+	require Zevenet::Farm::HTTP::Service;
+
+	my $farm_st = &get_farm_struct( $farmname );
+	my @out_s;
+
 	# Services
 	my $services = &getHTTPFarmVS( $farmname, "", "" );
 	my @serv = split ( "\ ", $services );
@@ -143,13 +154,12 @@ sub farms_name_http # ( $farmname )
 		{
 			$be->{ 'status' } = 'up'  if ($be->{ 'status' } eq 'undefined');
 		}
-		
 		push @out_s, $serviceStruct;
 	}
 
 	my $body = {
 				 description => "List farm $farmname",
-				 params      => $output_params,
+				 params      => $farm_st,
 				 services    => \@out_s,
 	};
 
@@ -160,5 +170,39 @@ sub farms_name_http # ( $farmname )
 
 	&httpResponse({ code => 200, body => $body });
 }
+
+# GET /farms/<farmname>/resume
+sub farms_name_http_resume
+{
+	my $farmname = shift;
+
+	require Zevenet::Farm::HTTP::Service;
+
+	my $farm_st = &get_farm_struct( $farmname );
+	my @out_s;
+
+	# Services
+	my $services = &getHTTPFarmVS( $farmname, "", "" );
+	my @serv = split ( "\ ", $services );
+
+	foreach my $s ( @serv )
+	{
+		push @out_s, { 'id' => $s };
+	}
+
+	my $body = {
+				 description => "List farm $farmname",
+				 params      => $farm_st,
+				 services    => \@out_s,
+	};
+
+	if ( eval{ require Zevenet::IPDS::Core; } )
+	{
+		$body->{ ipds } = &getIPDSfarmsRules( $farmname );
+	}
+
+	&httpResponse({ code => 200, body => $body });
+}
+
 
 1;

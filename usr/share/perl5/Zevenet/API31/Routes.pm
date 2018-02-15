@@ -144,6 +144,9 @@ if ( $q->path_info =~ qr{^/farms} )
 		GET qr{^/farms/modules/lslb$} => \&farms_lslb;
 		GET qr{^/farms/modules/dslb$} => \&farms_dslb;
 
+		##### /farms/FARM/resume
+		GET qr{^/farms/($farm_re)/resume$} => \&farms_name_resume;
+
 		##### /farms/FARM
 		GET qr{^/farms/($farm_re)$} => \&farms_name;
 	}
