@@ -131,8 +131,8 @@ sub farms_dslb    # ()
 	&httpResponse( { code => 200, body => $body } );
 }
 
-#GET /farms/<name>
-sub farms_name_resume    # ( $farmname )
+#GET /farms/<name>/summary
+sub farms_name_summary    # ( $farmname )
 {
 	my $farmname = shift;
 	my $desc     = "Show farm $farmname";
@@ -148,7 +148,7 @@ sub farms_name_resume    # ( $farmname )
 	if ( $type =~ /https?/ )
 	{
 		require Zevenet::API31::Farm::Get::HTTP;
-		&farms_name_http_resume( $farmname );
+		&farms_name_http_summary( $farmname );
 	}
 
 }

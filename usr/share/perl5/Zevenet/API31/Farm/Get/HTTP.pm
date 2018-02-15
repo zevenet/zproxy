@@ -171,8 +171,8 @@ sub farms_name_http # ( $farmname )
 	&httpResponse({ code => 200, body => $body });
 }
 
-# GET /farms/<farmname>/resume
-sub farms_name_http_resume
+# GET /farms/<farmname>/summary
+sub farms_name_http_summary
 {
 	my $farmname = shift;
 
