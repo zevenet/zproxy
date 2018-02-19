@@ -244,7 +244,6 @@ if ( $q->path_info =~ qr{^/stats} )
 	GET qr{^/stats/system/network$}            => \&stats_network;
 
 	# Farm stats
-	my $modules_re = &getValidFormat( 'farm_modules' );
 	GET qr{^/stats/farms$}                       => \&all_farms_stats;
 	GET qr{^/stats/farms/($farm_re)$}            => \&farm_stats;
 	GET qr{^/stats/farms/($farm_re)/backends$}   => \&farm_stats;

@@ -29,6 +29,7 @@ use Zevenet::System;
 #Get a farm status resume
 sub module_stats_status
 {
+	require Zevenet::API32::Stats;
 	my @farms = @{ &getAllFarmStats() };
 	my $lslb = {
 				 'total'    => 0,
@@ -133,6 +134,7 @@ sub module_stats # ()
 {
 	my $module = shift;
 
+	require Zevenet::API32::Stats;
 	my $valid_module;
 
 	if ( $module eq 'gslb' && eval { require Zevenet::Farm::GSLB::Stats; } )

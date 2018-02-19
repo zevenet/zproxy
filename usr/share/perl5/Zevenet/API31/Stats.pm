@@ -77,6 +77,7 @@ sub getAllFarmStats
 sub farm_stats # ( $farmname )
 {
 	my $farmname = shift;
+	if ( $farmname eq 'modules' ) {return;}
 
 	require Zevenet::Farm::Core;
 
