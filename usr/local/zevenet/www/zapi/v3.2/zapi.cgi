@@ -99,22 +99,18 @@ require Zevenet::API32::Routes::Activation
 &checkActivationCertificate();
 
 # Verify RBAC permissions
-require Zevenet::User;
-my $username = &getUser();
 require Zevenet::Core;
-&zenlog( "RBAC:: Request from $username" );
-if ( $username ne 'root' )
+require Zevenet::RBAC::Core;
+if ( !&getRBACPathPermissions( $q->path_info,  $ENV{REQUEST_METHOD} ) )
 {
-	require Zevenet::RBAC::Core;
-	if ( !&getRBACPathPermissions( $q->path_info,  $ENV{REQUEST_METHOD} ) )
-	{
-		my $desc = "RBAC auth";
-		&httpErrorResponse(
-							code => 403,
-							desc => $desc,
-							msg  => "The user $username has not permissions"
-		);
-	}
+	require Zevenet::User;
+	my $username = &getUser();
+	my $desc = "RBAC auth";
+	&httpErrorResponse(
+						code => 403,
+						desc => $desc,
+						msg  => "The user $username has not permissions"
+	);
 }
 
 ##### Load API routes ################################################

@@ -273,6 +273,12 @@ sub getRBACPathPermissions
 	my $section;
 	my $action;
 
+	require Zevenet::User;
+	my $username = &getUser();
+	
+	return 1 if ( $username eq 'root');
+
+	&zenlog( "RBAC:: Request from $username" );
 	# it is resource?
 	$permission = &getRBACResourcePermissions( $path );
 
