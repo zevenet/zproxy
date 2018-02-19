@@ -29,6 +29,7 @@ sub move_services
 
 	require Zevenet::Farm::Base;
 	require Zevenet::Farm::HTTP::Service;
+	require Zevenet::Farm::HTTP::Service::Ext;    # Load MoveService functions
 
 	my $desc         = "Move service";
 	my @services     = &getHTTPFarmServices( $farmname );

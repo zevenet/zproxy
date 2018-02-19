@@ -82,7 +82,7 @@ sub getFarmVip    # ($info,$farm_name)
 Function: getFarmStatus
 
 	Return farm status checking if pid file exists
-	 
+
 Parameters:
 	farmname - Farm name
 
@@ -91,7 +91,7 @@ Returns:
 
 NOTE:
 	Generic function
-		
+
 =cut
 sub getFarmStatus    # ($farm_name)
 {
@@ -146,16 +146,16 @@ sub getFarmStatus    # ($farm_name)
 Function: getFarmVipStatus
 
 	Return a vip status depend on the backends:
-	
+
 	down = The farm is not running
 	needed restart = The farm is up but it is pending of a restart action
 	critical = The farm is up and all backends are unreachable or maintenance
-	problem = The farm is up and there are some backend unreachable, but 
+	problem = The farm is up and there are some backend unreachable, but
 		almost a backend is in up status
-	maintenance = The farm is up and there are backends in up status, but 
+	maintenance = The farm is up and there are backends in up status, but
 		almost a backend is in maintenance mode.
 	up = The farm is up and all the backends are working success.
-	 
+
 Parameters:
 	farmname - Farm name
 
@@ -164,56 +164,52 @@ Returns:
 
 NOTE:
 	Generic function
-		
+
 =cut
 sub getFarmVipStatus    # ($farm_name)
 {
 	my $farm_name = shift;
 
 	my $output = -1;
+	my $farmStatus = &getFarmStatus( $farm_name );
 	return $output if !defined ( $farm_name );    # farm name cannot be empty
-	
+
 	$output = "problem";
 	if ( &getFarmLock( $farm_name ) != -1 )
 	{
 		return "needed restart";
 	}
-	elsif ( &getFarmStatus( $farm_name ) eq "down" )
+	elsif ( $farmStatus eq "down" )
 	{
 		return "down";
+	}
+	elsif ( $farmStatus ne "up" )
+	{
+		return -1;
 	}
 	
 	# types: "http", "https", "datalink", "l4xnat", "gslb" or 1
 	my $type = &getFarmType( $farm_name );
 
-	require Zevenet::Farm::Config;
-
 	my $backends;
-	my $up_flag;		# almost one backend is not reachable
-	my $down_flag; 	# almost one backend is not reachable
+	my $up_flag;			# almost one backend is not reachable
+	my $down_flag; 			# almost one backend is not reachable
 	my $maintenance_flag; 	# almost one backend is not reachable
 
 	# Profile without services
 	if ( $type eq "datalink" || $type eq "l4xnat" )
 	{
+		require Zevenet::Farm::Config;
 		$backends = &getFarmBackends( $farm_name );
 	}
 	# Profiles with services
 	elsif ( $type eq "gslb" || $type =~ /http/ )
 	{
-		require Zevenet::Farm::Service;
-
-		foreach my $srv ( &getFarmServices($farm_name) )
-		{
-			# Fill an array with backends of all services
-			push @{ $backends }, @{ &getFarmBackends( $farm_name, $srv ) };
-		}
-	}	
-	else
-	{
-		return -1;
+		require Zevenet::Farm::HTTP::Stats;
+		my $stats = &getHTTPFarmBackendsStats($farm_name);
+		$backends = $stats->{ backends };
 	}
-	
+
 	# checking status
 	foreach my $be ( @{$backends} )
 	{
@@ -221,7 +217,7 @@ sub getFarmVipStatus    # ($farm_name)
 		$maintenance_flag = 1 if $be->{ 'status' } eq "maintenance";
 		$down_flag = 1 if $be->{ 'status' } eq "down";
 	}
-	
+
 	# Decision logic
 	if( !$up_flag )
 	{
@@ -239,7 +235,7 @@ sub getFarmVipStatus    # ($farm_name)
 	{
 		$output = "up";
 	}
-	
+
 	return $output;
 }
 
@@ -247,13 +243,13 @@ sub getFarmVipStatus    # ($farm_name)
 Function: getFarmPid
 
 	Returns farm PID
-		
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Integer - return pid of farm, '-' if pid not exist or -1 on failure
-			
+
 =cut
 sub getFarmPid    # ($farm_name)
 {

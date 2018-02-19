@@ -23,7 +23,7 @@
 
 use strict;
 use warnings;
-use Zevenet::Log;
+use Zevenet;
 
 # error codes:
 #
@@ -210,6 +210,61 @@ sub start_service
 			else
 			{
 				print " \033[1;31m ERROR \033[0m \n";
+			}
+		}
+
+		my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
+
+		# bonding adresses configuration
+		foreach my $iface ( &getInterfaceTypeList('bond') )
+		{
+			# interfaces as eth0 for example
+			if ( $$iface{ name } eq $$iface{ dev } )
+			{
+				use IO::Interface ':flags';
+
+				if ( $$iface{ status } eq "up" )
+				{
+					print( "  * Starting interface $$iface{name}" );
+					&upIf( $iface );
+
+					if ( exists $$iface{ addr } && length $$iface{ addr } )
+					{
+						print( "\n    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+
+						if ( defined $$iface{ gateway } && $$iface{ gateway } ne '' )
+						{
+							print( " Gateway:$$iface{gateway}" );
+						}
+
+						my $return_code = &addIp( $iface );
+
+						if ( $return_code )
+						{
+							my @ip_output = `$ip_bin address show dev $$iface{name}`;
+							$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
+						}
+
+						# kept in case it is required for first interface
+						&writeRoutes( $$iface{ name } );
+
+						&applyRoutes( "local", $iface );
+
+						if ( $return_code == 0 )
+						{
+							print ( " \033[1;32m OK \033[0m \n" );
+						}
+						else
+						{
+							print ( " \033[1;31m ERROR \033[0m \n" );
+						}
+					}
+
+					if ( defined $$iface{ ip_v } && $$iface{ ip_v } == 4 )
+					{
+						&sendGPing( $$iface{ name } );
+					}
+				}
 			}
 		}
 	}

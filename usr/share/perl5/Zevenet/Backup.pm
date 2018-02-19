@@ -187,20 +187,27 @@ sub uploadBackup
 {
 	my $filename          = shift;
 	my $upload_filehandle = shift;
+
 	my $error;
-	my $configdir = &getGlobalConfiguration( 'backupdir' );
+	my $backupdir = &getGlobalConfiguration( 'backupdir' );
 	$filename = "backup-$filename.tar.gz";
 
-	if ( !-f "$configdir/$filename" )
+	if ( !-f "$backupdir/$filename" )
 	{
-		open ( my $filehandle, '>', "$configdir/$filename" ) or die "$!";
-		print $filehandle $upload_filehandle;
-		close $filehandle;
+		open ( my $disk_fh, '>', "$backupdir/$filename" ) or die "$!";
+
+		binmode $disk_fh;
+
+		use MIME::Base64 qw( decode_base64 );
+		print $disk_fh decode_base64( $upload_filehandle );
+
+		close $disk_fh;
 	}
 	else
 	{
 		$error = 1;
 	}
+
 	return $error;
 }
 

@@ -345,7 +345,6 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 
 	my $farm   = shift;    # input: first argument can be a farm reference
 	my $server = shift;    # input: second argument can be a server reference
-	my $rule;              # output: iptables rule template string
 
 	if ( defined $farm )
 	{
@@ -359,7 +358,6 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 	}
 
 	my $layer = '';
-
 	if ( $$farm{ proto } ne "all" )
 	{
 		$layer = "--protocol $$farm{ proto }";
@@ -381,7 +379,8 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 	# Get the binary of iptables (iptables or ip6tables)
 	my $iptables_bin = &getBinVersion( $farm_name );
 
-	$rule =
+	# output: iptables rule template string
+	my $rule =
 	    "$iptables_bin --table nat --::ACTION_TAG:: PREROUTING "
 	  . "--match mark --mark $$server{ tag } "
 	  . "$persist_match "
@@ -389,7 +388,6 @@ sub genIptRedirect    # ($farm_name,$index,$rip,$protocol,$mark,$persist)
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
 	  . "--jump DNAT $layer --to-destination $$server{ rip } ";
 
-	#~ &zenlog( $rule );
 	return $rule;
 }
 
@@ -402,9 +400,6 @@ sub genIptSourceNat    # ($farm_name,$vip,$index,$protocol,$mark)
 
 	my $farm   = shift;    # input: first argument can be a farm reference
 	my $server = shift;    # input: second argument can be a server reference
-	my $rule;              # output: iptables rule template string
-
-	require Zevenet::Net::Floating;
 
 	if ( defined $farm )
 	{
@@ -417,25 +412,29 @@ sub genIptSourceNat    # ($farm_name,$vip,$index,$protocol,$mark)
 		$server = $$farm{ servers }[$index];
 	}
 
-	# Get the binary of iptables (iptables or ip6tables)
-	my $iptables_bin = &getBinVersion( $farm_name );
-
-	my $float_if = &getFloatInterfaceForAddress( $$server{ vip } );
-
 	my $layer = '';
 	if ( $$farm{ proto } ne "all" )
 	{
 		$layer = "--protocol $$farm{ proto }";
 	}
 
-	$rule =
+	# Get the binary of iptables (iptables or ip6tables)
+	my $iptables_bin = &getBinVersion( $farm_name );
+	my $nat_params   = "--jump SNAT --to-source $$server{ vip }";
+
+	if ( eval { require Zevenet::Net::Floating; } )
+	{
+		$nat_params = &getFloatingSnatParams( $server );
+	}
+
+	# output: iptables rule template string
+	my $rule =
 	    "$iptables_bin --table nat --::ACTION_TAG:: POSTROUTING "
 	  . "$layer "
 	  . "--match mark --mark $$server{ tag } "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
-	  . "--jump SNAT --to-source $float_if->{ addr } ";
+	  . "$nat_params ";
 
-	#~ &zenlog( $rule );
 	return $rule;
 }
 
@@ -446,11 +445,8 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 	# structure references
 	my ( $farm_name, $index, $protocol, $mark ) = @_;
 
-	require Zevenet::Net::Floating;
-
 	my $farm   = shift;    # input: first argument can be a farm reference
 	my $server = shift;    # input: second argument can be a server reference
-	my $rule;              # output: iptables rule template string
 
 	if ( defined $farm )
 	{
@@ -471,23 +467,21 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 
 	# Get the binary of iptables (iptables or ip6tables)
 	my $iptables_bin = &getBinVersion( $farm_name );
+	my $nat_params   = "--jump MASQUERADE";
 
-	my $float_if = &getFloatInterfaceForAddress( $$server{ vip } );
-	if ( ! $float_if )
+	if ( eval { require Zevenet::Net::Floating; } )
 	{
-		$float_if = &getFloatInterfaceForAddress( $$farm{ vip } );
+		$nat_params = &getFloatingMasqParams( $farm, $server );
 	}
 
-	#~ &zenlog( "genIptMasquerade server{ vip }: $$server{ vip }" );
-	#~ &zenlog( "genIptMasquerade float_if: " . Dumper $float_if );
-
-	$rule =
+	# output: iptables rule template string
+	my $rule =
 	    "$iptables_bin --table nat --::ACTION_TAG:: POSTROUTING "
 	  . "$layer "
 	  . "--match mark --mark $$server{ tag } "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
-	  . "--jump SNAT --to-source $float_if->{ addr } ";
-	  
+	  . "$nat_params ";
+
 	return $rule;
 }
 
@@ -525,7 +519,7 @@ sub setIptConnmarkRestore
 {
 	my $farm_name   = shift;    # farmname
 	my $switch      = shift;    # 'true' or not true value
-	$switch ||= 'false';   
+	$switch ||= 'false';
 
 	my $return_code = -1;       # return value
 
@@ -567,8 +561,8 @@ sub setIptConnmarkSave
 {
 	my $farm_name   = shift;    # farmname
 	my $switch      = shift;    # 'true' or not true value
-	$switch ||= 'false';    
-	
+	$switch ||= 'false';
+
 	my $return_code = -1;       # return value
 
 	## lock iptables use ##
@@ -948,7 +942,7 @@ sub getBinVersion    # ($farm_name)
 {
 	# Variables
 	my $farm_name = shift;
-	
+
 	require Zevenet::Net::Validate;
 	my $binary = &getGlobalConfiguration('iptables');
 	my $vip = &getFarmVip( "vip", $farm_name );

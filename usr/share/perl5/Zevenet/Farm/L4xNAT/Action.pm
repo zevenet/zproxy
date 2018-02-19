@@ -29,7 +29,7 @@ my $configdir = &getGlobalConfiguration( 'configdir' );
 Function: runL4FarmRestart
 
 	Restart a l4xnat farm
-	
+
 Parameters:
 	farmname - Farm name
 	writeconf - Write start on configuration file
@@ -78,7 +78,7 @@ sub runL4FarmRestart    # ($farm_name,$writeconf,$type)
 Function: _runL4FarmRestart
 
 	Restart a l4xnat farm
-	
+
 Parameters:
 	farmname - Farm name
 	writeconf - Write start on configuration file
@@ -93,7 +93,7 @@ FIXME:
 
 BUG:
 	DUPLICATED FUNCTION, do the same than &runL4FarmRestart function.
-	
+
 =cut
 
 sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
@@ -132,17 +132,17 @@ sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
 Function: _runL4FarmStart
 
 	Run a l4xnat farm
-	
+
 Parameters:
 	farmname - Farm name
 	writeconf - write this change in configuration status "true" or omit it "false"
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
-	
-FIXME: 
+
+FIXME:
 	delete writeconf parameter. It is obsolet
-	
+
 =cut
 
 sub _runL4FarmStart    # ($farm_name,$writeconf)
@@ -286,17 +286,17 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 Function: _runL4FarmStop
 
 	Stop a l4xnat farm
-	
+
 Parameters:
 	farmname - Farm name
 	writeconf - write this change in configuration status "true" or omit it "false"
 
 Returns:
 	Integer - return 0 on success or other value on failure
-	
-FIXME: 
+
+FIXME:
 	delete writeconf parameter. It is obsolet
-	
+
 =cut
 
 sub _runL4FarmStop    # ($farm_name,$writeconf)
@@ -381,6 +381,12 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 		# remove conntrack
 		&resetL4FarmBackendConntrackMark( $server );
 
+		unless ( defined $table_if )
+		{
+			&zenlog("Warning: Skipping removal of backend $server->{ tag } routing rule. Interface table not found.");
+			next;
+		}
+
 		my $ip_cmd = "$ip_bin rule del fwmark $server->{ tag } table table_$table_if";
 		&logAndRun( $ip_cmd );
 	}
@@ -402,17 +408,17 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 Function: setL4NewFarmName
 
 	Function that renames a farm
-		
+
 Parameters:
-	newfarmname - New farm name 
-	farmname - Farm name 
+	newfarmname - New farm name
+	farmname - Farm name
 
 Returns:
 	Array - Each line has the next format: ";server;ip;port;mark;weight;priority;status"
-	
+
 Bugfix:
 	DUPLICATED, do same than getL4FarmServers
-		
+
 =cut
 
 sub setL4NewFarmName    # ($farm_name,$new_farm_name)
@@ -461,6 +467,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	}
 
 	# Rename fw marks for this farm
+	require Zevenet::Netfilter;
 	&renameMarks( $farm_name, $new_farm_name );
 
 	$farm = &getL4FarmStruct( $new_farm_name );

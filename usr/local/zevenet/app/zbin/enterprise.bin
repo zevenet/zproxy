@@ -159,11 +159,10 @@ my $input;
 	$input = <STDIN>;
 }
 
-my $input_l = length $input;
-unless ( $input_l >= 2 )
-{ &zenlog("#### Function args input length: NOT Enough characters. Failed!" ); } ####
-
-&zenlog( "#### Function input: $input" ) if $input ne '["1"]';
+# my $input_l = length $input;
+# unless ( $input_l >= 2 )
+# { &zenlog("Function args input length: Not enough characters. Failed!" ); }
+# &zenlog( "#### Function input: $input" ) if $input ne '["1"]';
 
 # decode JSON
 require Zevenet::API31::HTTP;

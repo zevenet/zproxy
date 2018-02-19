@@ -29,12 +29,12 @@ my $configdir = &getGlobalConfiguration( 'configdir' );
 Function: setL4FarmServer
 
 	Edit a backend or add a new one if the id is not found
-		
+
 Parameters:
 	id - Backend id
 	ip - Backend IP
 	port - Backend port
-	weight - Backend weight. The backend with more weight will manage more connections 
+	weight - Backend weight. The backend with more weight will manage more connections
 	priority - The priority of this backend (between 1 and 9). Higher priority backends will be used more often than lower priority ones
 	farmname - Farm name
 
@@ -43,7 +43,7 @@ Returns:
 
 Returns:
 	Scalar - 0 on success or other value on failure
-	
+
 =cut
 
 sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
@@ -160,14 +160,14 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 Function: runL4FarmServerDelete
 
 	Delete a backend from a l4 farm
-		
+
 Parameters:
 	backend - Backend id
 	farmname - Farm name
 
 Returns:
 	Scalar - 0 on success or other value on failure
-	
+
 =cut
 
 sub runL4FarmServerDelete    # ($ids,$farm_name)
@@ -273,16 +273,16 @@ Function: getL4FarmBackendsStatus_old
 
 	function that return the status information of a farm:
 	ip, port, backendstatus, weight, priority, clients
-		
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Array - one backed per line. The line format is: "ip;port;weight;priority;status"
-	
+
 FIXME:
-	Change output to hash	
-		
+	Change output to hash
+
 =cut
 
 sub getL4FarmBackendsStatus_old    # ($farm_name,@content)
@@ -310,16 +310,16 @@ Function: setL4FarmBackendsSessionsRemove
 
 	Remove all the active sessions enabled to a backend in a given service
 	Used by farmguardian
-	
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
 
 Returns:
 	Integer - 0 on success or -1 on failure
-	
-FIXME: 
-		
+
+FIXME:
+
 =cut
 
 sub setL4FarmBackendsSessionsRemove
@@ -351,7 +351,7 @@ sub setL4FarmBackendsSessionsRemove
 Function: setL4FarmBackendStatus
 
 	Set backend status for a l4 farm
-		
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
@@ -359,7 +359,7 @@ Parameters:
 
 Returns:
 	Integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
@@ -458,18 +458,18 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 =begin nd
 Function: getL4FarmServers
 
-	 Get all backends and theris configuration 
-	
+	 Get all backends and theris configuration
+
 Parameters:
 	farmname - Farm name
 
 Returns:
-	Array - one backed per line. The line format is: 
+	Array - one backed per line. The line format is:
 	"index;ip;port;mark;weight;priority;status"
-	
+
 FIXME:
 	Return as array of hash refs
-	
+
 =cut
 
 sub getL4FarmServers    # ($farm_name)
@@ -504,15 +504,15 @@ sub getL4FarmServers    # ($farm_name)
 =begin nd
 Function: getL4FarmBackends
 
-	 Get all backends and theirs configuration 
-	
+	 Get all backends and theirs configuration
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Array ref - Return a array in each element is a hash with the backend
 	configuration. The array index is the backend id
-	
+
 =cut
 
 sub getL4FarmBackends    # ($farm_name)
@@ -575,16 +575,16 @@ sub getL4FarmBackends    # ($farm_name)
 Function: getL4FarmBackendStatusCtl
 
 	Returns backends information lines
-		
+
 Parameters:
-	farmname - Farmname 
+	farmname - Farmname
 
 Returns:
 	Array - Each line has the next format: ";server;ip;port;mark;weight;priority;status"
-	
+
 Bugfix:
 	DUPLICATED, do same than getL4FarmServers
-		
+
 =cut
 
 sub getL4FarmBackendStatusCtl    # ($farm_name)
@@ -607,14 +607,14 @@ Function: _runL4ServerStart
 
 	called from setL4FarmBackendStatus($farm_name,$server_id,$status)
 	Run rules to enable a backend
-		
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
 
 Returns:
-	Integer - Error code: 0 on success or other value on failure 
-	
+	Integer - Error code: 0 on success or other value on failure
+
 =cut
 
 sub _runL4ServerStart    # ($farm_name,$server_id)
@@ -668,14 +668,14 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 Function: _runL4ServerStop
 
 	Delete rules to disable a backend
-		
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
 
 Returns:
-	Integer - Error code: 0 on success or other value on failure 
-	
+	Integer - Error code: 0 on success or other value on failure
+
 =cut
 
 sub _runL4ServerStop    # ($farm_name,$server_id)
@@ -726,7 +726,7 @@ sub _runL4ServerStop    # ($farm_name,$server_id)
 Function: getL4ServerActionRules
 
 	???
-		
+
 Parameters:
 	farm - Farm hash ref. It is a hash with all information about the farm
 	backend - Backend id
@@ -734,7 +734,7 @@ Parameters:
 
 Returns:
 	???
-	
+
 =cut
 
 sub getL4ServerActionRules
@@ -813,13 +813,13 @@ sub getL4ServerActionRules
 Function: getL4ServerWithLowestPriority
 
 	Look for backend with the lowest priority
-		
+
 Parameters:
 	farm - Farm hash ref. It is a hash with all information about the farm
 
 Returns:
 	hash ref - reference to the selected server for prio algorithm
-	
+
 =cut
 
 sub getL4ServerWithLowestPriority    # ($farm)
@@ -845,14 +845,14 @@ sub getL4ServerWithLowestPriority    # ($farm)
 Function: getL4FarmBackendMaintenance
 
 	Check if a backend on a farm is on maintenance mode
-		
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
 
 Returns:
 	Integer - 0 for backend in maintenance or 1 for backend not in maintenance
-	
+
 =cut
 
 sub getL4FarmBackendMaintenance
@@ -874,17 +874,17 @@ sub getL4FarmBackendMaintenance
 Function: setL4FarmBackendMaintenance
 
 	Enable the maintenance mode for backend
-		
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
-	mode - Maintenance mode, the options are: drain, the backend continues working with 
-	  the established connections; or cut, the backend cuts all the established 
+	mode - Maintenance mode, the options are: drain, the backend continues working with
+	  the established connections; or cut, the backend cuts all the established
 	  connections
 
 Returns:
 	Integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub setL4FarmBackendMaintenance    # ( $farm_name, $backend )
@@ -908,14 +908,14 @@ sub setL4FarmBackendMaintenance    # ( $farm_name, $backend )
 Function: setL4FarmBackendNoMaintenance
 
 	Disable the maintenance mode for backend
-		
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
 
 Returns:
 	Integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub setL4FarmBackendNoMaintenance
@@ -929,13 +929,13 @@ sub setL4FarmBackendNoMaintenance
 Function: getL4BackendsWeightProbability
 
 	Get probability for every backend
-		
+
 Parameters:
 	farm - Farm hash ref. It is a hash with all information about the farm
 
 Returns:
 	none - .
-	
+
 =cut
 
 sub getL4BackendsWeightProbability
@@ -978,7 +978,7 @@ sub resetL4FarmBackendConntrackMark
 	# return_code = 1 -> not found/deleted
 	# WARNIG: STDOUT must be null so cherokee does not receive this output
 	# as http headers.
-	my $return_code = system ( "$cmd 1>/dev/null" );
+	my $return_code = system ( "$cmd >/dev/null 2>&1" );
 
 	if ( &debug() )
 	{
