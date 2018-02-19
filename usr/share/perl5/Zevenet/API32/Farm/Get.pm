@@ -146,6 +146,27 @@ sub farms_dslb    # ()
 	&httpResponse( { code => 200, body => $body } );
 }
 
+#GET /farms/<name>/summary
+sub farms_name_summary    # ( $farmname )
+{
+	my $farmname = shift;
+	my $desc     = "Show farm $farmname";
+
+	# Check if the farm exists
+	if ( &getFarmFile( $farmname ) == -1 )
+	{
+		my $msg = "Farm not found.";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my $type = &getFarmType( $farmname );
+	if ( $type =~ /https?/ )
+	{
+		require Zevenet::API32::Farm::Get::HTTP;
+		&farms_name_http_summary( $farmname );
+	}
+}
+
 #GET /farms/<name>
 sub farms_name    # ( $farmname )
 {

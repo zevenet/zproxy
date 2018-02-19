@@ -100,6 +100,11 @@ sub POST
 	{
 		$input_ref = $data;
 	}
+	elsif ( exists $ENV{ CONTENT_TYPE }
+			&& $ENV{ CONTENT_TYPE } eq 'application/gzip' )
+	{
+		$input_ref = $data;
+	}
 	else
 	{
 		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }" );
@@ -153,6 +158,11 @@ sub PUT
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE }
 			&& $ENV{ CONTENT_TYPE } eq 'application/x-pem-file' )
+	{
+		$input_ref = $data;
+	}
+	elsif ( exists $ENV{ CONTENT_TYPE }
+			&& $ENV{ CONTENT_TYPE } eq 'application/gzip' )
 	{
 		$input_ref = $data;
 	}

@@ -59,7 +59,9 @@ sub get_license
 sub get_supportsave
 {
 	my $desc = "Get supportsave file";
-	my @ss_output = `/usr/local/zevenet/app/zbin/supportsave 2>&1`;
+
+	my $zbindir = &getGlobalConfiguration( 'zbindir' );
+	my @ss_output = `${zbindir}/supportsave 2>&1`;
 
 	# get the last "word" from the first line
 	my $first_line = shift @ss_output;
