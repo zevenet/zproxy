@@ -152,10 +152,21 @@ unless ( $func )
 
 # check if the activation certificate is valid
 my $hostname = &getHostname();
-my $basedir  = &getGlobalConfiguration('basedir');
+my $basedir  = &getGlobalConfiguration( 'basedir' );
 
-my $skip_cert_check = (    $mod->{ name } =~ /Zevenet::API3\d::Certificate::Activation/
-						&& $func   eq 'upload_activation_certificate' );
+### Exceptions to activation certificate check ### BEGIN
+# Upload activation certificate
+my $upload_cert = ( $mod->{ name } eq 'Zevenet::API31::Certificate::Activation'
+					&& $func eq 'upload_activation_certificate' );
+
+# Stopping zevenet service
+my $stop_zevenet = (
+				   $mod->{ name } eq 'Zevenet::Service' && ( $func eq 'stop_service'
+													 || $func eq 'disable_cluster' )
+);
+### Exceptions to activation certificate check ### END
+
+my $skip_cert_check = ( $upload_cert || $stop_zevenet );
 
 unless ( $skip_cert_check )
 {
@@ -529,14 +540,14 @@ sub certcontrol
 	if ($cert_ou =~ m/-/  && $func eq 'upload_activation_certificate') {
 		$swcert = 5;
 		return $swcert;
-	}	
+	}
 #	&zenlog("KeyCert: $cert_ou");
 
 	if ( !grep /keyid:$keyid/, @zen_cert ) {
         #swcert = 2 ==> Cert isn't signed OK
         $swcert = 2;
         return $swcert;
-    } elsif (( !grep /$key/, @zen_cert ) 
+    } elsif (( !grep /$key/, @zen_cert )
 			 || ( !grep (/(CN=$hostname\/|CN = $hostname\,)/, @zen_cert)) ) {
  		#swcert = 5 ==> Cert isn't valid
        	$swcert = 5;
