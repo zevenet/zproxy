@@ -229,6 +229,114 @@ if ( &debug() )
 exit 0;
 
 
+=begin nd
+Function: include
+
+	Load Enterprise module, encrypted or not.
+
+
+	Variable			Example
+	------------------------------------
+	$mod_space			Zevenet::Debug
+	$mod_path			Zevenet/Debug
+	$mod_key			Zevenet/Debug.pme
+	$mod_fullpath		/usr/share/perl5/Zevenet/Debug.pme
+
+
+	Example %INC:
+	{
+		'Zevenet/Debug.pme' => '/usr/share/perl5/Zevenet/Debug.pme'
+		...
+	};
+
+
+Parameters:
+	mod_space - .
+
+Returns:
+	undef
+=cut
+sub include
+{
+	my ( $mod_space ) = @_;
+
+	my $debug = &debug();
+
+	&zenlog("< include > mod_space = $mod_space") if $debug;
+
+	my $path_prefix = &getGlobalConfiguration('zlibdir');
+	$path_prefix =~ s|/Zevenet$||;
+
+	&zenlog("< include > path_prefix = $path_prefix") if $debug;
+
+
+	# get mod's path
+	my $mod_path = $mod_space;
+	$mod_path =~ s|::|/|g;
+
+	&zenlog("< include > mod_path = $mod_path") if $debug;
+
+
+	my $enc;
+	my $mod_key;
+	my $mod_fullpath;
+
+	if ( -f "$path_prefix/$mod_path.pm" )
+	{
+		$enc          = 'false';
+		$mod_key      = "$mod_path.pm";
+	}
+	elsif ( -f "$path_prefix/$mod_path.pme" )
+	{
+		$enc          = 'true';
+		$mod_key      = "$mod_path.pme";
+	}
+
+	my $mod_fullpath = "$path_prefix/$mod_path";
+
+	if ( $debug )
+	{
+		&zenlog( "< include > enc          = $enc" );
+		&zenlog( "< include > mod_key      = $mod_key" );
+		&zenlog( "< include > mod_fullpath = $mod_fullpath" );
+	}
+
+
+	# Finish if the module is already loaded
+	return if exists $INC{ $mod_key };
+
+
+	if ( $enc eq 'false' )    # Load unencrypted module
+	{
+		require $mod_fullpath;
+	}
+	elsif ( $enc eq 'true' )    # Load encrypted module
+	{
+		my $cmd = "openssl aes-256-cbc -d -a -nosalt -k \"${SYMKEY}\" -in ${mod_fullpath}";
+		$cmd .= " -md md5" if $kernel_release =~ /^4.9/;
+
+		# get code
+		$code = `$cmd`;
+
+		# load module
+		eval $code;
+
+		# log error messages if any happened
+		if ( $@ )
+		{
+			&zenlog( "### Module name: $mod_space" );
+			&zenlog( "### Module path: $mod_fullpath" );
+			&zenlog( $@ );
+			die $@;
+		}
+		else
+		{
+			$INC{ $mod_key } = $mod_fullpath;
+		}
+	}
+}
+
+
 ### Activation certificate code ############
 use Time::Local;
 use Zevenet::Config;
