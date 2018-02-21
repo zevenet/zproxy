@@ -83,8 +83,20 @@ unless ( $func )
 my $hostname = &getHostname();
 my $basedir = &getGlobalConfiguration('basedir');
 
-my $skip_cert_check = (    $module eq 'Zevenet::API31::Certificate::Activation'
-						&& $func   eq 'upload_activation_certificate' );
+
+### Exceptions to activation certificate check ### BEGIN
+# Upload activation certificate
+my $upload_cert = (    $module eq 'Zevenet::API31::Certificate::Activation'
+					&& $func eq 'upload_activation_certificate' );
+
+# Stopping zevenet service
+my $stop_zevenet = (
+					 $module eq 'Zevenet::Service' && ( $func eq 'stop_service'
+													 || $func eq 'disable_cluster' )
+);
+### Exceptions to activation certificate check ### END
+
+my $skip_cert_check = ( $upload_cert || $stop_zevenet );
 
 unless ( $skip_cert_check )
 {
