@@ -2,6 +2,7 @@
 
 use strict;
 
+use Config::Tiny;
 use Zevenet::Core;
 use Zevenet::RBAC::User::Core;
 use Zevenet::RBAC::User::Runtime;

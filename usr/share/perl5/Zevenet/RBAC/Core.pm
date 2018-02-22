@@ -138,6 +138,7 @@ sub getRBACResourcePermissions
 	{
 		my $farm = $1;
 		require Zevenet::Farm::Core;
+
 		# check if it exists to control the HTTP output code
 		if ( &getFarmExists( $farm ) )
 		{
@@ -275,10 +276,11 @@ sub getRBACPathPermissions
 
 	require Zevenet::User;
 	my $username = &getUser();
-	
-	return 1 if ( $username eq 'root');
+
+	return 1 if ( $username eq 'root' );
 
 	&zenlog( "RBAC:: Request from $username" );
+
 	# it is resource?
 	$permission = &getRBACResourcePermissions( $path );
 
@@ -925,7 +927,7 @@ sub getRBACPermissionSystemHash
 					 'action'  => 'show',
 				  },
 				  {
-					 'regex'   => qr{^/system/supportsve$},
+					 'regex'   => qr{^/system/supportsave$},
 					 'section' => 'supportsave',
 					 'action'  => 'download',
 				  },

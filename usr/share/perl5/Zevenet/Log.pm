@@ -23,14 +23,16 @@
 
 use strict;
 
-use Unix::Syslog qw(:macros :subs);  # Syslog macros
+use Unix::Syslog qw(:macros :subs);    # Syslog macros
+
 #~ use Sys::Syslog;                          #use of syslog
 #~ use Sys::Syslog qw(:standard :macros);    #standard functions for Syslog
 
 # Get the program name for zenlog
 my $run_cmd_name = ( split '/', $0 )[-1];
-$run_cmd_name = ( split '/', "$ENV{'SCRIPT_NAME'}" )[-1] if $run_cmd_name eq '-e';
-$run_cmd_name = ( split '/', $^X )[-1] if ! $run_cmd_name;
+$run_cmd_name = ( split '/', "$ENV{'SCRIPT_NAME'}" )[-1]
+  if $run_cmd_name eq '-e';
+$run_cmd_name = ( split '/', $^X )[-1] if !$run_cmd_name;
 
 =begin nd
 Function: zenlog
@@ -54,10 +56,21 @@ Parameters:
 Returns:
 	none - .
 =cut
+
 sub zenlog    # ($string, $type)
 {
-	my $string = shift;            # string = message
-	my $type = shift // 'info';    # type   = log level (Default: info))
+	my $string = shift;              # string = message
+	my $type   = shift // 'info';    # type   = log level (Default: info))
+	my $tag    = shift // "";
+
+	if ( $type =~ /^debug(\d*)$/i )
+	{
+		# debug lvl
+		my $debug_lvl = $1 // 1;
+		return if &debug < $debug_lvl;
+	}
+
+	$tag = "$tag :: " if $tag;
 
 	# Get the program name
 	my $program = $run_cmd_name;
@@ -73,7 +86,7 @@ sub zenlog    # ($string, $type)
 		syslog( LOG_INFO, "(" . uc ( $type ) . ") " . $line );
 	}
 
-	closelog();                              #close syslog
+	closelog();    #close syslog
 }
 
 =begin nd
@@ -89,7 +102,8 @@ Parameters:
 Returns:
 	none - .
 =cut
-sub zlog                                          # (@message)
+
+sub zlog    # (@message)
 {
 	my @message = shift;
 
@@ -130,6 +144,7 @@ Returns:
 See Also:
 	Widely used.
 =cut
+
 sub logAndRun    # ($command)
 {
 	my $command = shift;    # command string to log and run
@@ -139,6 +154,7 @@ sub logAndRun    # ($command)
 	my $program = ( split '/', $0 )[-1];
 	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
 	$program .= ' ';
+
 	# &zenlog( (caller (2))[3] . ' >>> ' . (caller (1))[3]);
 
 	require Zevenet::Debug;
@@ -146,7 +162,7 @@ sub logAndRun    # ($command)
 	{
 		&zenlog( $program . "running: $command" );
 
-		@cmd_output = `$command 2>&1`;
+		@cmd_output  = `$command 2>&1`;
 		$return_code = $?;
 
 		if ( $return_code )

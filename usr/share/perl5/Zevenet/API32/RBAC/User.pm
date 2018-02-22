@@ -62,18 +62,18 @@ sub add_rbac_user
 
 	my $desc = "Create the RBAC user, $json_obj->{ 'name' }";
 	my $params = {
-				   "name" => {
-							   'valid_format' => 'user_name',
-							   'non_blank'    => 'true',
-							   'required'     => 'true',
-							   'exceptcions'  => ["zapi"]
-				   },
-				   "password" => {
-								   'valid_format' => 'rbac_password',
-								   'non_blank'    => 'true',
-								   'required'     => 'true',
-								   'format_msg'   => 'must be alphanumeric and must have at least 8 characters'
-				   },
+		  "name" => {
+					  'valid_format' => 'user_name',
+					  'non_blank'    => 'true',
+					  'required'     => 'true',
+					  'exceptcions'  => ["zapi"]
+		  },
+		  "password" => {
+				  'valid_format' => 'rbac_password',
+				  'non_blank'    => 'true',
+				  'required'     => 'true',
+				  'format_msg' => 'must be alphanumeric and must have at least 8 characters'
+		  },
 	};
 
 	# Check if it exists
@@ -128,9 +128,9 @@ sub set_rbac_user
 		 "webgui_permissions" => { 'valid_format' => 'boolean', 'non_black' => 'true' },
 		 "password" => { 'valid_format' => 'rbac_password', 'non_blank' => 'true' },
 		 "newpassword" => {
-							'valid_format' => 'rbac_password',
-							'non_blank'    => 'true',
-							'format_msg'   => 'must be alphanumeric and must have at least 8 characters'
+				  'valid_format' => 'rbac_password',
+				  'non_blank'    => 'true',
+				  'format_msg' => 'must be alphanumeric and must have at least 8 characters'
 		 },
 	};
 
@@ -258,6 +258,61 @@ sub del_rbac_user
 		my $msg = "Deleting the RBAC user $user.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+}
+
+#  POST /rbac/myuser
+sub add_rbac_my_user
+{
+	my $json_obj = shift;
+
+	require Zevenet::RBAC::User::Config;
+	require Zevenet::User;
+	require Zevenet::Login;
+
+	my $user = &getUser();
+	my $desc = "Modify the user $user";
+	my $params = {
+		  "password" => {
+						  'non_blank' => 'true',
+						  'required'  => 'true',
+		  },
+		  "new_password" => {
+				  'valid_format' => 'rbac_password',
+				  'non_blank'    => 'true',
+				  'required'     => 'true',
+				  'format_msg' => 'must be alphanumeric and must have at least 8 characters'
+		  },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	if ( $json_obj->{ 'new_password' } eq $json_obj->{ 'password' } )
+	{
+		my $msg = "The new password must be different to the current password.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	if ( !&checkValidUser( $user, $json_obj->{ 'password' } ) )
+	{
+		my $msg = "Invalid current password.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $error = &setRBACUserPassword( $user, $json_obj->{ 'new_password' } );
+	if ( $error )
+	{
+		my $msg = "Changing $user password.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $msg = "Settings was changed successful.";
+	my $body = { description => $desc, params => $json_obj, message => $msg };
+
+	&httpResponse( { code => 200, body => $body } );
+
 }
 
 1;

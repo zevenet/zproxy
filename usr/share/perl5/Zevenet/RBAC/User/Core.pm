@@ -21,7 +21,7 @@ Returns:
 
 sub getRBACUserConf
 {
-	my $rbacPath       = &getRBACConfPath();
+	my $rbacPath = &getRBACConfPath();
 	return "$rbacPath/users.conf";
 }
 
@@ -145,7 +145,12 @@ sub validateRBACUserZapi
 			last;
 		}
 	}
-	return 0 if ( !$user );
+
+	if ( !$user )
+	{
+		&zenlog( "RBAC, the zapikey does not match with any user" );
+		return 0;
+	}
 
 	# check permissions
 	my $groups      = &getGlobalConfiguration( 'groups_bin' );
@@ -153,7 +158,7 @@ sub validateRBACUserZapi
 	chomp $user_groups;
 	if ( !grep ( / zapi( |$)/, $user_groups ) )
 	{
-		&zenlog( "The user $user has not zapi permissions" );
+		&zenlog( "RBAC, the user $user has not zapi permissions" );
 		return 0;
 	}
 
