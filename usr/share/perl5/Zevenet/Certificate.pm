@@ -630,6 +630,19 @@ sub getCertInfo    # ($certfile)
 	#~ $issuer = &getCleanBlanc( $issuer );
 
 
+	#Cert type (definitive or temporal)
+	my $type_cert = "";
+	if ( $type eq "Certificate" )
+	{
+		my @type_cert_array = grep /C ?= ?(DE|TE)\,/, @cert_data;
+		$type_cert_array[0] =~ /C ?= ?(DE|TE)\,/;
+		$type_cert = $1;
+	}
+	elsif ( $type eq "CSR" )
+	{
+		$type_cert = "NA";
+	}
+
 	# Cert Creation Date
 	my $creation = "";
 	if ( $type eq "Certificate" )
@@ -668,6 +681,7 @@ sub getCertInfo    # ($certfile)
 			 issuer     => $issuer,
 			 creation   => $creation,
 			 expiration => $expiration,
+			 type_cert	=> $type_cert			 
 	};
 }
 
