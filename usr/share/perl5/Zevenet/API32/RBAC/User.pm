@@ -270,13 +270,21 @@ sub add_rbac_my_user
 	require Zevenet::Login;
 
 	my $user = &getUser();
-	my $desc = "Modify the user $user";
+	my $desc = "Modify a user";
+
+	if ( $user eq 'root' )
+	{
+		my $msg = "This user is not mannager by RBAC";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	$desc = "Modify the user $user";
 	my $params = {
 		  "password" => {
 						  'non_blank' => 'true',
 						  'required'  => 'true',
 		  },
-		  "new_password" => {
+		  "newpassword" => {
 				  'valid_format' => 'rbac_password',
 				  'non_blank'    => 'true',
 				  'required'     => 'true',
@@ -289,7 +297,7 @@ sub add_rbac_my_user
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	if ( $json_obj->{ 'new_password' } eq $json_obj->{ 'password' } )
+	if ( $json_obj->{ 'newpassword' } eq $json_obj->{ 'password' } )
 	{
 		my $msg = "The new password must be different to the current password.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -301,7 +309,7 @@ sub add_rbac_my_user
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $error = &setRBACUserPassword( $user, $json_obj->{ 'new_password' } );
+	my $error = &setRBACUserPassword( $user, $json_obj->{ 'newpassword' } );
 	if ( $error )
 	{
 		my $msg = "Changing $user password.";
@@ -309,7 +317,7 @@ sub add_rbac_my_user
 	}
 
 	my $msg = "Settings was changed successful.";
-	my $body = { description => $desc, params => $json_obj, message => $msg };
+	my $body = { description => $desc, message => $msg };
 
 	&httpResponse( { code => 200, body => $body } );
 

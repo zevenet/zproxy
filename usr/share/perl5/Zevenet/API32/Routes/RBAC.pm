@@ -44,7 +44,7 @@ if ( $ENV{ PATH_INFO } =~ qr{^/rbac/(?:users|myuser)} )
 	#  DELETE /rbac/users/<user>
 	DELETE qr{^/rbac/users/($user_name)$}, 'del_rbac_user', $mod;
 
-	#  DELETE /rbac/myuser
+	#  POST /rbac/myuser
 	POST qr{^/rbac/myuser$}, 'add_rbac_my_user', $mod;
 }
 

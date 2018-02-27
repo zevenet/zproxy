@@ -63,11 +63,13 @@ sub zenlog    # ($string, $type)
 	my $type   = shift // 'info';    # type   = log level (Default: info))
 	my $tag    = shift // "";
 
-	if ( $type =~ /^debug(\d*)$/i )
+	if ( $type =~ /^(debug)(\d*)$/ )
 	{
 		# debug lvl
-		my $debug_lvl = $1 // 1;
-		return if &debug < $debug_lvl;
+		my $debug_lvl = $2;
+		$debug_lvl = 1 if not $debug_lvl;
+		$type = $1;
+		return 0 if ( &debug lt $debug_lvl );
 	}
 
 	$tag = "$tag :: " if $tag;
@@ -83,7 +85,7 @@ sub zenlog    # ($string, $type)
 	foreach my $line ( @lines )
 	{
 		#~ syslog( $type, "(" . uc ( $type ) . ") " . $line );
-		syslog( LOG_INFO, "(" . uc ( $type ) . ") " . $line );
+		syslog( LOG_INFO, "(" . uc ( $type ) . ") " . "${tag}$line" );
 	}
 
 	closelog();    #close syslog

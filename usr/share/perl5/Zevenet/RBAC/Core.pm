@@ -228,7 +228,11 @@ sub getRBACRolePermission
 
 	my $user  = &getUser();
 	my $group = &getRBACUserGroup( $user );
+	&zenlog( "The user $user has not a group", "debug", "RBAC" ) if not $group;
+
 	my $role  = &getRBACGroupParam( $group, 'role' );
+	&zenlog( "The user $user has not a role", "debug", "RBAC" ) if ( not $role and $group );
+
 	my $fileHandle;
 
 	if ( $role )
@@ -241,10 +245,10 @@ sub getRBACRolePermission
 		$out = 0 if ( $fileHandle->{ $section }->{ $action } eq 'false' );
 	}
 
-	&zenlog( "RBAC:: $ENV{ REQUEST_METHOD } $ENV{ PATH_INFO } " ) if &debug;
+	&zenlog( "$ENV{ REQUEST_METHOD } $ENV{ PATH_INFO }", "debug", "RBAC" );
 	&zenlog(
-		"RBAC:: Permissions: $out, user:$user, group:$group, role:$role \[$section\]\->\{$action\} = $fileHandle->{ $section }->{ $action } "
-	) if &debug;
+		"Permissions: $out, user:$user, group:$group, role:$role \[$section\]\->\{$action\} = $fileHandle->{ $section }->{ $action }", "debug","RBAC"
+	);
 
 	return $out;
 }
@@ -284,7 +288,7 @@ sub getRBACPathPermissions
 	# it is resource?
 	$permission = &getRBACResourcePermissions( $path );
 
-	&zenlog( "Checking resource ($permission) " ) if &debug > 1;
+	&zenlog( "Checking resource ($permission)", "debug2","RBAC" );
 
 	return 0 if ( !$permission );
 
@@ -875,12 +879,12 @@ sub getRBACPermissionSystemHash
 					  'action'  => 'maintenance',
 				   },
 				   {
-					  'regex'   => qr{^/system/notifications/email$},
+					  'regex'   => qr{^/system/notifications/methods/email$},
 					  'section' => 'notification',
 					  'action'  => 'modify-method',
 				   },
 				   {
-					  'regex'   => qr{^/system/notifications/email/actions$},
+					  'regex'   => qr{^/system/notifications/methods/email/actions$},
 					  'section' => 'notification',
 					  'action'  => 'test',
 				   },

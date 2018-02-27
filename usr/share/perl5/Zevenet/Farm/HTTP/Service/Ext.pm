@@ -405,5 +405,4 @@ sub moveServiceFarmStatus
 	return 0;
 }
 
->>>>>>> hotfix-master
 1;

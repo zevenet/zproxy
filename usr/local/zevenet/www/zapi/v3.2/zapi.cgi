@@ -105,7 +105,7 @@ if ( !&getRBACPathPermissions( $q->path_info,  $ENV{REQUEST_METHOD} ) )
 {
 	require Zevenet::User;
 	my $username = &getUser();
-	my $desc = "RBAC auth";
+	my $desc = "Authentication";
 	&httpErrorResponse(
 						code => 403,
 						desc => $desc,
