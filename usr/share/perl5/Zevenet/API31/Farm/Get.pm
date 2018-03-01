@@ -153,8 +153,10 @@ sub farms_name_summary    # ( $farmname )
 		require Zevenet::API31::Farm::Get::HTTP;
 		&farms_name_http_summary( $farmname );
 	}
-
-	&farms_name( $farmname );
+	else
+	{
+		&farms_name( $farmname );
+	}
 }
 
 #GET /farms/<name>
