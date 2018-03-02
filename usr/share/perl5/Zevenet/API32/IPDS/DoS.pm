@@ -302,7 +302,7 @@ sub add_dos_to_farm
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $desc     = "Apply the DoS rule $name to the farm $farmName";
 
-	if ( &getFarmFile( $farmName ) eq '-1' )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "$farmName doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -375,7 +375,7 @@ sub del_dos_from_farm
 	my $desc     = "Unset the DoS rule $name from the farm $farmName";
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 
-	if ( &getFarmFile( $farmName ) eq "-1" )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "$farmName doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );

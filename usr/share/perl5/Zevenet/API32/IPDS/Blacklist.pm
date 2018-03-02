@@ -833,7 +833,7 @@ sub add_blacklists_to_farm
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
-	if ( &getFarmFile( $farmName ) eq "-1" )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "$farmName doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -883,7 +883,7 @@ sub del_blacklists_from_farm
 
 	my $desc = "Unset the blacklist $listName from the farm $farmName";
 
-	if ( &getFarmFile( $farmName ) eq '-1' )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "$farmName doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );

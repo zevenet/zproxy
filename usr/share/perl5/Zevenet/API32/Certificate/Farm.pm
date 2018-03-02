@@ -37,7 +37,7 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 	my $desc = "Add certificate to farm '$farmname'";
 
 	# Check if the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "Farm not found";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -128,7 +128,7 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 	}
 
 	# Check if the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );

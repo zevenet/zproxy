@@ -707,7 +707,7 @@ sub add_rbl_to_farm
 	}
 
 	require Zevenet::Farm::Core;
-	if ( &getFarmFile( $farmName ) eq "-1" )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "$farmName doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -767,7 +767,7 @@ sub del_rbl_from_farm
 
 	my $desc = "Delete the RBL rule $name from the farm $farmName";
 
-	if ( &getFarmFile( $farmName ) eq '-1' )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "$farmName doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );

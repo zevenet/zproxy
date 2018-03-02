@@ -36,7 +36,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 	my $action;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -135,7 +135,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	my $desc = "Set service backend status";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) eq '-1' )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -283,7 +283,7 @@ sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 	my $desc = "Set backend status";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );

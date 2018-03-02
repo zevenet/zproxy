@@ -31,7 +31,7 @@ sub modify_farm # ( $json_obj, $farmname )
 	my $desc = "Modify farm";
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) eq '-1' )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );

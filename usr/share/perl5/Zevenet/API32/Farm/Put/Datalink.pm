@@ -72,8 +72,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 			}
 
 			#Check if the new farm's name alredy exists
-			my $newffile = &getFarmFile( $json_obj->{ newfarmname } );
-			if ( $newffile != -1 )
+			if ( ! &getFarmExists( $newfarmname ) )
 			{
 				my $msg = "The farm $json_obj->{newfarmname} already exists, try another name.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

@@ -37,7 +37,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 	# Check that the farm exists
 	require Zevenet::Farm::Core;
 
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -99,7 +99,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	my $default_ttl = '';
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -234,7 +234,7 @@ sub gslb_zone_resources # ( $farmname, $zone )
 	require Zevenet::Farm::Core;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( ! &getFarmExists( $farmname )  )
 	{
 		my $msg = "Farm name not found";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -288,7 +288,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	require Zevenet::Farm::Core;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -451,7 +451,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 	require Zevenet::Farm::Core;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -504,7 +504,7 @@ sub delete_zone # ( $farmname, $zone )
 	my $desc = "Delete zone";
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -550,7 +550,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 	my $desc = "Delete zone resource";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );

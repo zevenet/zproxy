@@ -42,7 +42,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	my $farmname_old;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "The farm '$farmname' does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -94,8 +94,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		}
 
 		#Check if the new farm's name alredy exists
-		my $newffile = &getFarmFile( $json_obj->{ newfarmname } );
-		if ( $newffile != -1 )
+		if ( ! &getFarmExists( $newfarmname ) )
 		{
 			my $msg = "The farm $json_obj->{newfarmname} already exists, try another name.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

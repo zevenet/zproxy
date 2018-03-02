@@ -31,9 +31,8 @@ sub delete_farm # ( $farmname )
 	my $farmname = shift;
 
 	my $desc = "Delete farm $farmname";
-	my $newffile = &getFarmFile( $farmname );
 
-	if ( $newffile == -1 )
+	if ( ! &getFarmExists( $farmname ) )
 	{
 		my $msg = "The farm $farmname doesn't exist, try another name.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
