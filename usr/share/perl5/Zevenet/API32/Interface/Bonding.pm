@@ -284,10 +284,10 @@ sub delete_bond    # ( $bond )
 	}
 
 	my $bond_in_use = 0;
-	my $bond_hash   = &getInterfaceConfig( $bond, 4 );
+	my $bond_hash = &getInterfaceConfig( $bond, 4 );
 	$bond_in_use = 1 if ( $bond_hash and exists $bond_hash->{ addr } );
 
-	$bond_hash   = &getInterfaceConfig( $bond, 6 );
+	$bond_hash = &getInterfaceConfig( $bond, 6 );
 	$bond_in_use = 1 if ( $bond_hash and exists $bond_hash->{ addr } );
 
 	if ( $bond_in_use )
@@ -385,6 +385,9 @@ sub get_bond_list    # ()
 		$cluster_if = $zcl_conf->{ _ }->{ interface };
 	}
 
+	require Zevenet::Alias;
+	my $alias = &getAlias( 'interface' );
+
 	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )
 	{
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
@@ -402,6 +405,7 @@ sub get_bond_list    # ()
 		push ( @output_slaves, { name => $_ } ) for @bond_slaves;
 
 		my $if_conf = {
+			alias   => $alias->{ $if_ref->{ name } },
 			name    => $if_ref->{ name },
 			ip      => $if_ref->{ addr },
 			netmask => $if_ref->{ mask },
@@ -440,6 +444,9 @@ sub get_bond    # ()
 	my $desc      = "Show bonding interface";
 	my $bond_conf = &getBondConfig();
 
+	require Zevenet::Alias;
+	my $alias = &getAlias( 'interface' );
+
 	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )
 	{
 		next unless $if_ref->{ name } eq $bond;
@@ -459,6 +466,7 @@ sub get_bond    # ()
 		push ( @output_slaves, { name => $_ } ) for @bond_slaves;
 
 		$interface = {
+					 alias   => $alias->{ $if_ref->{ name } },
 					 name    => $if_ref->{ name },
 					 ip      => $if_ref->{ addr },
 					 netmask => $if_ref->{ mask },

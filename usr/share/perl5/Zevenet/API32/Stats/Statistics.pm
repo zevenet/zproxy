@@ -303,6 +303,9 @@ sub stats_network_interfaces
 	my @restIfaces;
 	@bond = &getInterfaceTypeList( 'bond' ) if $EE;
 
+	require Zevenet::Alias;
+	my $alias = &getAlias( 'interface' );
+
 	foreach my $iface ( @interfaces )
 	{
 		my $extrainfo;
@@ -320,6 +323,7 @@ sub stats_network_interfaces
 				}
 			}
 
+			$iface->{ alias }   = $alias->{ $iface->{ interface } };
 			$iface->{ mac }     = $extrainfo->{ mac };
 			$iface->{ ip }      = $extrainfo->{ addr };
 			$iface->{ status }  = $extrainfo->{ status };
@@ -341,6 +345,7 @@ sub stats_network_interfaces
 				}
 			}
 
+			$iface->{ alias }   = $alias->{ $iface->{ interface } };
 			$iface->{ mac }     = $extrainfo->{ mac };
 			$iface->{ ip }      = $extrainfo->{ addr };
 			$iface->{ status }  = $extrainfo->{ status };

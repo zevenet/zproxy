@@ -98,6 +98,9 @@ sub getDatalinkFarmBackends    # ($farm_name)
 	require Zevenet::Farm::Base;
 	my $farmStatus = &getFarmStatus( $farm_name );
 
+	require Zevenet::Alias;
+	my $alias = &getAlias( "backend" );
+
 	open FI, "<$configdir/$farm_filename";
 
 	while ( my $line = <FI> )
@@ -113,6 +116,7 @@ sub getDatalinkFarmBackends    # ($farm_name)
 
 			push @servers,
 			  {
+				alias     => $alias->{ $aux[2] },
 				id        => $sindex,
 				ip        => $aux[2],
 				interface => $aux[3],

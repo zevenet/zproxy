@@ -34,6 +34,7 @@ Parameters:
 Returns:
 	String - Return a string with json format
 =cut
+
 sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ( )
 {
 	my $farmName = shift;
@@ -69,6 +70,7 @@ Returns:
 FIXME:
 	change to monitoring libs
 =cut
+
 sub getGSLBFarmEstConns    # ($farm_name,$netstat)
 {
 	my ( $farm_name, $netstat ) = @_;
@@ -77,13 +79,9 @@ sub getGSLBFarmEstConns    # ($farm_name,$netstat)
 	my $vip_port = &getFarmVip( "vipp", $farm_name );
 
 	return
-		&getNetstatFilter(
-			"udp",
-			"",
-			"src=.* dst=$vip sport=.* dport=$vip_port .*src=.*",
-			"",
-			$netstat
-		);
+	  &getNetstatFilter( "udp", "",
+						 "src=.* dst=$vip sport=.* dport=$vip_port .*src=.*",
+						 "", $netstat );
 }
 
 sub getGSLBFarmBackendsStats
@@ -96,6 +94,10 @@ sub getGSLBFarmBackendsStats
 	my $out_rss;
 	my $gslb_stats = &getGSLBGdnsdStats( $farmname );
 	my @services   = &getGSLBFarmServices( $farmname );
+
+	# alias
+	require Zevenet::Alias;
+	my $alias = &getAlias( 'backend' );
 
 	foreach my $srv ( @services )
 	{
@@ -110,7 +112,7 @@ sub getGSLBFarmBackendsStats
 		{
 			$subline =~ s/^\s+//;
 
-			if ($subline =~ /^$/)
+			if ( $subline =~ /^$/ )
 			{
 				next;
 			}
@@ -135,8 +137,9 @@ sub getGSLBFarmBackendsStats
 			$id =~ s/^secondary$/2/;
 			$status = lc $status if defined $status;
 
-			push @$gslb_stats->{ 'backend' },
+			push @{ $gslb_stats->{ 'backend' } },
 			  {
+				alias   => $alias->{ ip },
 				id      => $id + 0,
 				ip      => $addr,
 				service => $srv,

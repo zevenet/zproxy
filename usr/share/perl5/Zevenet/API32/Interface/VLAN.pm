@@ -176,7 +176,7 @@ sub new_vlan    # ( $json_obj )
 	require Zevenet::Net::Interface;
 
 	eval {
-		&zenlog("new_vlan: $if_ref->{name}");
+		&zenlog( "new_vlan: $if_ref->{name}" );
 		die if &createIf( $if_ref );
 		die if &addIp( $if_ref );
 		&writeRoutes( $if_ref->{ name } );
@@ -279,6 +279,9 @@ sub get_vlan_list    # ()
 		$cluster_if = $zcl_conf->{ _ }->{ interface };
 	}
 
+	require Zevenet::Alias;
+	my $alias = &getAlias( 'interface' );
+
 	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
 	{
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
@@ -292,6 +295,7 @@ sub get_vlan_list    # ()
 		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		my $if_conf = {
+						alias   => $alias->{ $if_ref->{ name } },
 						name    => $if_ref->{ name },
 						ip      => $if_ref->{ addr },
 						netmask => $if_ref->{ mask },
@@ -324,6 +328,9 @@ sub get_vlan    # ()
 	my $desc = "Show VLAN interface $vlan";
 	my $interface;
 
+	require Zevenet::Alias;
+	my $alias = &getAlias( 'interface' );
+
 	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
 	{
 		next unless $if_ref->{ name } eq $vlan;
@@ -339,6 +346,7 @@ sub get_vlan    # ()
 		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		$interface = {
+					   alias   => $alias->{ $if_ref->{ name } },
 					   name    => $if_ref->{ name },
 					   ip      => $if_ref->{ addr },
 					   netmask => $if_ref->{ mask },
@@ -616,9 +624,9 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		{
 			foreach my $appending ( &getInterfaceChild( $vlan ) )
 			{
-				my $app_config = &getInterfaceConfig ( $appending );
+				my $app_config = &getInterfaceConfig( $appending );
 				$app_config->{ gateway } = $json_obj->{ gateway };
-				&setInterfaceConfig ( $app_config );
+				&setInterfaceConfig( $app_config );
 			}
 		}
 

@@ -59,8 +59,8 @@ sub delete_interface_floating    # ( $floating )
 	if ( eval { require Zevenet::Cluster; } )
 	{
 		# force sync to make sure the configuration is updated
-		my $configdir = &getGlobalConfiguration('configdir');
-		&zenlog("Syncing $configdir");
+		my $configdir = &getGlobalConfiguration( 'configdir' );
+		&zenlog( "Syncing $configdir" );
 		&runSync( $configdir );
 
 		&runZClusterRemoteManager( 'interface', 'float-update' );
@@ -123,9 +123,9 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		}
 
 		my @interfaces = &getInterfaceTypeList( 'virtual' );
-		( $if_ref ) = grep
-		{
-			$json_obj->{ floating_ip } eq $_->{ addr } && $_->{ parent } eq $interface
+		( $if_ref ) = grep {
+			     $json_obj->{ floating_ip } eq $_->{ addr }
+			  && $_->{ parent } eq $interface
 		} @interfaces;
 
 		# validate ADDRESS in system
@@ -157,8 +157,8 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 	if ( eval { require Zevenet::Cluster; } )
 	{
 		# force sync to make sure the configuration is updated
-		my $configdir = &getGlobalConfiguration('configdir');
-		&zenlog("Syncing $configdir");
+		my $configdir = &getGlobalConfiguration( 'configdir' );
+		&zenlog( "Syncing $configdir" );
 		&runSync( $configdir );
 
 		&runZClusterRemoteManager( 'interface', 'float-update' );
@@ -187,6 +187,9 @@ sub get_interfaces_floating
 	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
+	require Zevenet::Alias;
+	my $alias = &getAlias( 'interface' );
+
 	for my $iface ( @ifaces )
 	{
 		next unless $iface->{ ip_v } == 4;
@@ -205,8 +208,10 @@ sub get_interfaces_floating
 
 		push @output,
 		  {
+			alias             => $alias->{ $iface->{ name } },
 			interface         => $iface->{ name },
 			floating_ip       => $floating_ip,
+			floating_alias    => $alias->{ $floating_interface },
 			interface_virtual => $floating_interface,
 		  };
 	}
@@ -234,6 +239,9 @@ sub get_floating
 	my $floatfile         = &getGlobalConfiguration( 'floatfile' );
 	my $float_ifaces_conf = &getConfigTiny( $floatfile );
 
+	require Zevenet::Alias;
+	my $alias = &getAlias( 'interface' );
+
 	for my $iface ( @ifaces )
 	{
 		next unless $iface->{ ip_v } == 4;
@@ -259,8 +267,10 @@ sub get_floating
 		}
 
 		$output = {
+					alias             => $alias->{ $iface->{ name } },
 					interface         => $iface->{ name },
 					floating_ip       => $floating_ip,
+					floating_alias    => $alias->{ $floating_interface },
 					interface_virtual => $floating_interface,
 		};
 	}

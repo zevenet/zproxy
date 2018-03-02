@@ -23,7 +23,7 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: setHTTPFarmServer
@@ -43,6 +43,7 @@ Returns:
 	Integer - return 0 on success or -1 on failure
 
 =cut
+
 sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 {
 	my ( $ids, $rip, $port, $priority, $timeout, $farm_name, $service ) = @_;
@@ -238,6 +239,7 @@ Returns:
 	Integer - return 0 on success or -1 on failure
 
 =cut
+
 sub runHTTPFarmServerDelete    # ($ids,$farm_name,$service)
 {
 	my ( $ids, $farm_name, $service ) = @_;
@@ -295,11 +297,12 @@ Returns:
 	array - return the output of poundctl command for a farm
 
 =cut
+
 sub getHTTPFarmBackendStatusCtl    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $poundctl = &getGlobalConfiguration('poundctl');
+	my $poundctl = &getGlobalConfiguration( 'poundctl' );
 
 	return `$poundctl -c  /tmp/$farm_name\_pound.socket`;
 }
@@ -330,6 +333,7 @@ FIXME:
 	Sustitute by getHTTPFarmBackendsStats function
 
 =cut
+
 sub getHTTPFarmBackendsStatus_old    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
@@ -366,10 +370,10 @@ sub getHTTPFarmBackendsStatus_old    # ($farm_name,@content)
 			my @backends_ip  = split ( ":", $backends[2] );
 			my $ip_backend   = $backends_ip[0];
 			my $port_backend = $backends_ip[1];
-			$line         = $line . "\t" . $ip_backend . "\t" . $port_backend;
+			$line = $line . "\t" . $ip_backend . "\t" . $port_backend;
 
 			#status
-			my $status_backend = $backends[7];
+			my $status_backend   = $backends[7];
 			my $backend_disabled = $backends[3];
 
 			if ( $backend_disabled eq "DISABLED" )
@@ -419,11 +423,6 @@ sub getHTTPFarmBackendsStatus_old    # ($farm_name,@content)
 	return @backends_data;
 }
 
-
-
-
-
-
 =begin nd
 Function: getHTTPFarmBackends
 
@@ -446,35 +445,40 @@ sub getHTTPFarmBackends    # ($farm_name,$service)
 	require Zevenet::Farm::HTTP::Service;
 
 	my $backendsvs = &getHTTPFarmVS( $farmname, $service, "backends" );
-	my @be         = split ( "\n", $backendsvs );
-	my @be_status  = @{ &getHTTPFarmBackendsStatus( $farmname, $service ) };
+	my @be = split ( "\n", $backendsvs );
+	my @be_status = @{ &getHTTPFarmBackendsStatus( $farmname, $service ) };
 	my @out_ba;
+
+	# alias
+	require Zevenet::Alias;
+	my $alias = &getAlias( 'backend' );
 
 	foreach my $subl ( @be )
 	{
 		my @subbe = split ( ' ', $subl );
-		my $id    = $subbe[1] + 0;
+		my $id = $subbe[1] + 0;
 
 		my $ip   = $subbe[3];
 		my $port = $subbe[5] + 0;
 		my $tout = $subbe[7];
 		my $prio = $subbe[9];
 
-		$tout = $tout eq '-' ? undef: $tout+0;
-		$prio = $prio eq '-' ? undef: $prio+0;
+		$tout = $tout eq '-' ? undef : $tout + 0;
+		$prio = $prio eq '-' ? undef : $prio + 0;
 
 		my $status = "undefined";
-		$status = $be_status[ $id ] if $be_status[ $id ];
+		$status = $be_status[$id] if $be_status[$id];
 
 		push @out_ba,
-		{
+		  {
+			alias   => $alias->{ $ip },
 			id      => $id,
 			status  => $status,
 			ip      => $ip,
-			port    => $port,
+			port    => $port + 0,
 			timeout => $tout,
 			weight  => $prio
-		};
+		  };
 	}
 
 	return \@out_ba;
@@ -513,7 +517,7 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 	{
 		require Zevenet::Farm::HTTP::Stats;
 
-		my $stats = &getHTTPFarmBackendsStats($farm_name);
+		my $stats = &getHTTPFarmBackendsStats( $farm_name );
 
 		foreach my $be ( @{ $stats->{ backends } } )
 		{
@@ -531,14 +535,15 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 			push ( @status, $be->{ status } );
 		}
 	}
+
 	# farm status is down
 	else
 	{
 		require Zevenet::Farm::HTTP::Service;
 
 		my $backendsvs = &getHTTPFarmVS( $farm_name, $service, "backends" );
-		my @be         = split ( "\n", $backendsvs );
-		my $id         = 0;
+		my @be = split ( "\n", $backendsvs );
+		my $id = 0;
 
 		# @be is used to get size of backend array
 		for ( @be )
@@ -547,15 +552,15 @@ sub getHTTPFarmBackendsStatus    # ($farm_name,@content)
 
 			if ( $backendstatus eq "maintenance" )
 			{
-				$backendstatus = "maintenance"
+				$backendstatus = "maintenance";
 			}
 			else
 			{
-				$backendstatus = "undefined"
+				$backendstatus = "undefined";
 			}
 
 			push @status, $backendstatus;
-			$id = $id+1;
+			$id = $id + 1;
 		}
 	}
 
@@ -576,6 +581,7 @@ Returns:
 	scalar - return backend status: "maintentance", "fgDOWN", "active" or -1 on failure
 
 =cut
+
 sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
@@ -585,10 +591,11 @@ sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 	my $index;
 	my $line;
 	my $stfile = "$configdir\/$farm_name\_status.cfg";
+
 	# if the status file does not exist the backend is ok
 	my $output = "active";
 
-	if ( ! -e $stfile )
+	if ( !-e $stfile )
 	{
 		return $output;
 	}
@@ -620,7 +627,6 @@ sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 	return $output;
 }
 
-
 =begin nd
 Function: setHTTPFarmBackendStatusFile
 
@@ -640,6 +646,7 @@ FIXME:
 	Not return nothing, do error control
 
 =cut
+
 sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
 {
 	my ( $farm_name, $backend, $status, $idsv ) = @_;
@@ -652,8 +659,8 @@ sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
 	if ( !-e $statusfile )
 	{
 		open FW, ">$statusfile";
-		my $poundctl = &getGlobalConfiguration('poundctl');
-		my @run = `$poundctl -c /tmp/$farm_name\_pound.socket`;
+		my $poundctl = &getGlobalConfiguration( 'poundctl' );
+		my @run      = `$poundctl -c /tmp/$farm_name\_pound.socket`;
 		my @sw;
 		my @bw;
 
@@ -721,7 +728,6 @@ sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
 
 }
 
-
 =begin nd
 Function: getHTTPFarmBackendsClients
 
@@ -736,6 +742,7 @@ Returns:
 	Integer - return number of clients in the backend
 
 =cut
+
 sub getHTTPFarmBackendsClients    # ($idserver,@content,$farm_name)
 {
 	my ( $idserver, @content, $farm_name ) = @_;
@@ -774,6 +781,7 @@ FIXME:
 	will be useful change output format to hash format
 
 =cut
+
 sub getHTTPFarmBackendsClientsList    # ($farm_name,@content)
 {
 	my ( $farm_name, @content ) = @_;
@@ -822,6 +830,7 @@ Returns:
 	scalar - if backend is in maintenance mode, return 0 else return -1
 
 =cut
+
 sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
@@ -831,12 +840,12 @@ sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	my $output = -1;
 
 	# if the farm is running, take status from poundctl
-	if ( &getFarmStatus ($farm_name) eq 'up' )
+	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
-		my $poundctl = &getGlobalConfiguration('poundctl');
-		my @run    = `$poundctl -c "/tmp/$farm_name\_pound.socket"`;
+		my $poundctl = &getGlobalConfiguration( 'poundctl' );
+		my @run      = `$poundctl -c "/tmp/$farm_name\_pound.socket"`;
 
-		my $sw     = 0;
+		my $sw = 0;
 
 		foreach my $line ( @run )
 		{
@@ -853,7 +862,7 @@ sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 				if ( $backendstatus eq "DISABLED" )
 				{
 					$backendstatus =
-					&getHTTPBackendStatusFromFile( $farm_name, $backend, $service );
+					  &getHTTPBackendStatusFromFile( $farm_name, $backend, $service );
 
 					if ( $backendstatus =~ /maintenance/ )
 					{
@@ -864,6 +873,7 @@ sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 			}
 		}
 	}
+
 	# if the farm is not running, take status from status file
 	else
 	{
@@ -871,7 +881,7 @@ sub getHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 
 		if ( -e $statusfile )
 		{
-			open( my $fh, '<', $statusfile );
+			open ( my $fh, '<', $statusfile );
 
 			my @sol;
 			my $service_index = &getFarmVSI( $farm_name, $service );
@@ -905,6 +915,7 @@ Returns:
 	Integer - return 0 on success or -1 on failure
 
 =cut
+
 sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $mode, $service ) = @_;
@@ -924,9 +935,9 @@ sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 
 	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
-		my $poundctl = &getGlobalConfiguration('poundctl');
+		my $poundctl = &getGlobalConfiguration( 'poundctl' );
 		my $poundctl_command =
-		"$poundctl -c /tmp/$farm_name\_pound.socket -b 0 $idsv $backend";
+		  "$poundctl -c /tmp/$farm_name\_pound.socket -b 0 $idsv $backend";
 
 		&zenlog( "running '$poundctl_command'" );
 		my @run = `$poundctl_command`;
@@ -952,6 +963,7 @@ Returns:
 	Integer - return 0 on success or -1 on failure
 
 =cut
+
 sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
@@ -967,12 +979,12 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 
 	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
-		my $poundctl = &getGlobalConfiguration('poundctl');
+		my $poundctl = &getGlobalConfiguration( 'poundctl' );
 		my $poundctl_command =
-			"$poundctl -c /tmp/$farm_name\_pound.socket -B 0 $idsv $backend";
+		  "$poundctl -c /tmp/$farm_name\_pound.socket -B 0 $idsv $backend";
 
 		&zenlog( "running '$poundctl_command'" );
-		my @run    = `$poundctl_command`;
+		my @run = `$poundctl_command`;
 		$output = $?;
 	}
 
@@ -999,6 +1011,7 @@ FIXME:
 	This function returns nothing, do error control
 
 =cut
+
 sub runRemoveHTTPBackendStatus    # ($farm_name,$backend,$service)
 {
 	my ( $farm_name, $backend, $service ) = @_;
@@ -1028,12 +1041,12 @@ sub runRemoveHTTPBackendStatus    # ($farm_name,$backend,$service)
 	{
 		if ( $line =~ /0\ ${serv_index}\ (\d+) (\w+)/ )
 		{
-			my $backend_index = $1 ;
-			my $status = $2;
+			my $backend_index = $1;
+			my $status        = $2;
 			if ( $backend_index > $backend )
 			{
-				$backend_index = $backend_index -1;
-				$line = "-b 0 $serv_index $backend_index $status";
+				$backend_index = $backend_index - 1;
+				$line          = "-b 0 $serv_index $backend_index $status";
 			}
 		}
 	}
@@ -1055,6 +1068,7 @@ FIXME:
 	This function returns nothing, do error control
 
 =cut
+
 sub setHTTPFarmBackendStatus    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -1079,7 +1093,7 @@ sub setHTTPFarmBackendStatus    # ($farm_name)
 		die $msg;
 	}
 
-	my $poundctl = &getGlobalConfiguration('poundctl');
+	my $poundctl = &getGlobalConfiguration( 'poundctl' );
 
 	while ( my $line_aux = <$fh> )
 	{
@@ -1107,6 +1121,7 @@ Returns:
 FIXME:
 
 =cut
+
 sub setHTTPFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 {
 	my ( $farm_name, $service, $backendid ) = @_;
@@ -1119,7 +1134,7 @@ sub setHTTPFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 	my @sessionid;
 	my $sessid;
 	my $sessionid2;
-	my $poundctl = &getGlobalConfiguration('poundctl');
+	my $poundctl = &getGlobalConfiguration( 'poundctl' );
 	my @output;
 
 	&zenlog(

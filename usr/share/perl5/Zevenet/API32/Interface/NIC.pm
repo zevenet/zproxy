@@ -92,6 +92,9 @@ sub get_nic_list    # ()
 		$cluster_if = $zcl_conf->{ _ }->{ interface };
 	}
 
+	require Zevenet::Alias;
+	my $alias = &getAlias( "interface" );
+
 	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
 	{
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
@@ -105,6 +108,7 @@ sub get_nic_list    # ()
 		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		my $if_conf = {
+					    alias   => $alias->{ $if_ref->{ name } },
 						name    => $if_ref->{ name },
 						ip      => $if_ref->{ addr },
 						netmask => $if_ref->{ mask },
@@ -127,6 +131,7 @@ sub get_nic_list    # ()
 		}
 
 		$if_conf->{ has_vlan } = 'false' unless $if_conf->{ has_vlan };
+		$if_conf->{ alias } = $alias->{ $if_ref->{ name } };
 
 		push @output_list, $if_conf;
 	}
@@ -150,6 +155,9 @@ sub get_nic    # ()
 	my $desc = "Show NIC interface";
 	my $interface;
 
+	require Zevenet::Alias;
+	my $alias = &getAlias( "interface" );
+
 	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
 	{
 		next unless $if_ref->{ name } eq $nic;
@@ -165,6 +173,7 @@ sub get_nic    # ()
 		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		$interface = {
+					   alias   => $alias->{ $if_ref->{ name } },
 					   name    => $if_ref->{ name },
 					   ip      => $if_ref->{ addr },
 					   netmask => $if_ref->{ mask },

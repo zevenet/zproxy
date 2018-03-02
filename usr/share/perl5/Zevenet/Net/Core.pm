@@ -420,8 +420,11 @@ sub delIf    # ($if_ref)
 	require Zevenet::RRD;
 	&delGraph( $$if_ref{ name }, "iface" );
 
-	#delete from RBAC
+	# delete alias
+	require Zevenet::Alias;
+	&delAlias( 'interface', $$if_ref{ name } );
 
+	#delete from RBAC
 	if ( eval { require Zevenet::RBAC::Group::Config; } )
 	{
 		&delRBACResource( $$if_ref{ name }, 'interfaces' );

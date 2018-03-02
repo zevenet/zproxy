@@ -49,6 +49,7 @@ Returns:
 See Also:
 	memory-rrd.pl, zapi/v3/system_stats.cgi, zapi/v2/system_stats.cgi
 =cut
+
 sub getMemStats
 {
 	my ( $format ) = @_;
@@ -188,6 +189,7 @@ Returns:
 See Also:
 	load-rrd.pl, zapi/v3/system_stats.cgi, zapi/v2/system_stats.cgi
 =cut
+
 sub getLoadStats
 {
 	my $last;
@@ -197,7 +199,7 @@ sub getLoadStats
 	if ( -f "/proc/loadavg" )
 	{
 		my $lastline;
-		
+
 		my $line;
 		open FR, "/proc/loadavg";
 		while ( $line = <FR> )
@@ -265,11 +267,12 @@ Returns:
 See Also:
 	iface-rrd.pl, zapi/v3/system_stats.cgi, zapi/v2/system_stats.cgi
 =cut
+
 sub getNetworkStats
 {
 	my ( $format ) = @_;
 
-	$format = "" unless defined $format; # removes undefined variable warnings
+	$format = "" unless defined $format;    # removes undefined variable warnings
 
 	if ( !-f "/proc/net/dev" )
 	{
@@ -285,6 +288,9 @@ sub getNetworkStats
 	my @interface;
 	my @interfacein;
 	my @interfaceout;
+
+	require Zevenet::Alias;
+	my $alias = &getAlias( 'interface' );
 
 	my $i = -1;
 	while ( <DEV> )
@@ -318,13 +324,19 @@ sub getNetworkStats
 			$if =~ s/\ //g;
 
 			# not show cluster maintenance interface
-			$i=$i-1 if $if eq 'cl_maintenance';
+			$i = $i - 1 if $if eq 'cl_maintenance';
 			next if $if eq 'cl_maintenance';
 			push @interface,    $if;
 			push @interfacein,  $in;
 			push @interfaceout, $out;
 
-			push @outHash, { 'interface' => $if, 'in' => $in, 'out' => $out };
+			push @outHash,
+			  {
+				'alias'     => $alias->{ $if },
+				'interface' => $if,
+				'in'        => $in,
+				'out'       => $out
+			  };
 		}
 	}
 
@@ -335,9 +347,9 @@ sub getNetworkStats
 	}
 
 	close DEV;
-	
+
 	@data = @outHash if ( $format eq 'hash' );
-	
+
 	return @data;
 }
 
@@ -368,6 +380,7 @@ Returns:
 See Also:
 	zapi/v3/system_stats.cgi, zapi/v2/system_stats.cgi, cpu-rrd.pl
 =cut
+
 sub getCPU
 {
 	my @data;
@@ -378,14 +391,14 @@ sub getCPU
 		print "$0: Error: File /proc/stat not exist ...\n";
 		exit 1;
 	}
-	
+
 	my $cpu_user1;
 	my $cpu_nice1;
 	my $cpu_sys1;
 	my $cpu_idle1;
 	my $cpu_iowait1;
 	my $cpu_irq1;
-	my $cpu_softirq1; 
+	my $cpu_softirq1;
 	my $cpu_total1;
 
 	my $cpu_user2;
@@ -394,7 +407,7 @@ sub getCPU
 	my $cpu_idle2;
 	my $cpu_iowait2;
 	my $cpu_irq2;
-	my $cpu_softirq2; 
+	my $cpu_softirq2;
 	my $cpu_total2;
 
 	my @line_s;
@@ -404,7 +417,7 @@ sub getCPU
 	{
 		if ( $line =~ /^cpu\ / )
 		{
-			@line_s = split ( "\ ", $line );
+			@line_s       = split ( "\ ", $line );
 			$cpu_user1    = $line_s[1];
 			$cpu_nice1    = $line_s[2];
 			$cpu_sys1     = $line_s[3];
@@ -532,9 +545,10 @@ Returns:
 See Also:
 	disk-rrd.pl
 =cut
+
 sub getDiskSpace
 {
-	my @data;       # output
+	my @data;    # output
 
 	my $df_bin = &getGlobalConfiguration( 'df_bin' );
 	my @system = `$df_bin -k`;
@@ -603,11 +617,12 @@ Returns:
 See Also:
 	zapi/v3/system_stats.cgi
 =cut
+
 sub getDiskPartitionsInfo
 {
-	my $partitions;          # output
+	my $partitions;    # output
 
-	my $df_bin    = &getGlobalConfiguration( 'df_bin' );
+	my $df_bin = &getGlobalConfiguration( 'df_bin' );
 
 	my @df_lines = grep { /^\/dev/ } `$df_bin -k`;
 	chomp ( @df_lines );
@@ -646,6 +661,7 @@ Returns:
 See Also:
 	<genDiskGraph>
 =cut
+
 sub getDiskMountPoint
 {
 	my ( $dev ) = @_;
@@ -682,6 +698,7 @@ Returns:
 See Also:
 	temperature-rrd.pl
 =cut
+
 sub getCPUTemp
 {
 	my $file = &getGlobalConfiguration( "temperatureFile" );

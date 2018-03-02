@@ -529,6 +529,9 @@ sub getL4FarmBackends    # ($farm_name)
 	open FI, "<", "$configdir/$farm_filename"
 	  or &zenlog( "Error opening file $configdir/$farm_filename: $!" );
 
+	require Zevenet::Alias;
+	my $alias = getAlias( 'backend' );
+
 	while ( my $line = <FI> )
 	{
 		chomp ( $line );
@@ -552,9 +555,10 @@ sub getL4FarmBackends    # ($farm_name)
 			}
 
 			push @servers, {
-				id   => $sindex,
-				ip   => $aux[2],
-				port => ( $aux[3] ) ? $aux[3] : undef,
+				alias => $alias->{ $aux[2] },
+				id    => $sindex,
+				ip    => $aux[2],
+				port  => ( $aux[3] ) ? $aux[3] : undef,
 
 				#~ mark=>$aux[4],
 				weight    => $aux[5] + 0,

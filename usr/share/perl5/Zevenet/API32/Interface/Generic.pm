@@ -55,6 +55,9 @@ sub get_interfaces    # ()
 	# to include 'has_vlan' to nics
 	my @vlans = &getInterfaceTypeList( 'vlan' );
 
+	require Zevenet::Alias;
+	my $alias = &getAlias( "interface" );
+
 	for my $if_ref ( @interfaces )
 	{
 		# Exclude IPv6
@@ -82,6 +85,7 @@ sub get_interfaces    # ()
 		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		my $if_conf = {
+			alias   => $alias->{ $if_ref->{ name } },
 			name    => $if_ref->{ name },
 			ip      => $if_ref->{ addr },
 			netmask => $if_ref->{ mask },

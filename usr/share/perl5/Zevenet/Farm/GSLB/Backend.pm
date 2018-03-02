@@ -23,7 +23,7 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: remFarmServiceBackend
@@ -39,6 +39,7 @@ Returns:
 	Integer - Error code: 0 on success or different of 0 on failure
 
 =cut
+
 sub remFarmServiceBackend    # ($id,$farm_name,$service)
 {
 	my ( $id, $fname, $srv ) = @_;
@@ -53,7 +54,7 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 	my $pluginfile = "";
 	my $found;
 
-	# this backend is used if the round robin service has not backends. This one need to have one backend almost.
+# this backend is used if the round robin service has not backends. This one need to have one backend almost.
 	my $default_ip = '127.0.0.1';
 	my $flagNoDel;
 	my @backends = split ( "\n", &getFarmVS( $fname, $srv, "backends" ) );
@@ -139,6 +140,7 @@ BUG:
 	This function has a bad name and is used in wrong way
 	It is duplicated with "remGSLBFarmZoneResource"
 =cut
+
 sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
 {
 	my ( $ids, $farm_name, $service ) = @_;
@@ -182,12 +184,13 @@ Returns:
 	none - No returned value.
 
 =cut
+
 sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 {
 	my ( $fname, $srv, $lb, $id, $ipaddress ) = @_;
 
-	my $ftype  = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
+	my $ftype = &getFarmType( $fname );
+	my $ffile = &getFarmFile( $fname );
 
 	my @fileconf;
 	my $line;
@@ -273,7 +276,6 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 	untie @fileconf;
 }
 
-
 =begin nd
 Function: getGSLBFarmBackends
 
@@ -288,13 +290,14 @@ Returns:
 	configuration. The array index is the backend id
 	
 =cut
+
 sub getGSLBFarmBackends    # ($farm_name)
 {
 	my ( $farmname, $service ) = @_;
-		
+
 	my @backendStats;
 	my @services = &getGSLBFarmServices( $farmname );
-	
+
 	require Zevenet::Farm::Base;
 	my $farmStatus = &getFarmStatus( $farmname );
 	my $gslb_stats;
@@ -303,31 +306,35 @@ sub getGSLBFarmBackends    # ($farm_name)
 		require Zevenet::Farm::GSLB::Stats;
 		$gslb_stats = &getGSLBGdnsdStats( $farmname );
 	}
-	
+
 	# Default port health check
 	require Zevenet::Farm::GSLB::Service;
 	my $port       = &getGSLBFarmVS( $farmname, $service, "dpc" );
 	my $backendsvs = &getGSLBFarmVS( $farmname, $service, "backends" );
 	my @be = split ( "\n", $backendsvs );
-	
+
+	# get backend Alias
+	require Zevenet::Alias;
+	my $alias = &getAlias( 'backend' );
+
 	#
 	# Backends
 	#
 	foreach my $subline ( @be )
 	{
 		$subline =~ s/^\s+//;
-	
-		if ($subline =~ /^$/)
+
+		if ( $subline =~ /^$/ )
 		{
 			next;
 		}
-	
+
 		# ID and IP
-		my @subbe = split(" => ",$subline);
-		my $id = $subbe[0];
-		my $addr = $subbe[1];
+		my @subbe  = split ( " => ", $subline );
+		my $id     = $subbe[0];
+		my $addr   = $subbe[1];
 		my $status = "undefined";
-	
+
 		if ( $farmStatus eq "up" )
 		{
 			# look for backend status in stats
@@ -340,23 +347,22 @@ sub getGSLBFarmBackends    # ($farm_name)
 				}
 			}
 		}
-	
+
 		$id =~ s/^primary$/1/;
 		$id =~ s/^secondary$/2/;
 		$status = lc $status if defined $status;
-	
+
 		push @backendStats,
-		{
-			id      => $id + 0,
-			ip      => $addr,
-			port    => $port + 0,
-			status  => $status
-		};
+		  {
+			alias => $alias->{ $addr } // "",
+			id    => $id + 0,
+			ip    => $addr,
+			port  => $port + 0,
+			status => $status
+		  };
 	}
-	
+
 	return \@backendStats;
 }
-
-
 
 1;

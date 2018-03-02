@@ -431,8 +431,6 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		"ZAPI success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}."
 	);
 
-	$json_obj->{ timeout } = $json_obj->{ timeout } + 0 if $json_obj->{ timeout };
-
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
 		require Zevenet::Farm::Action;
@@ -440,18 +438,13 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		&setFarmRestart( $farmname );
 	}
 
+	require Zevenet::Farm::Config;
 	my $message = "Added backend to service successfully";
 	my $body = {
 				 description => $desc,
-				 params      => {
-							 id      => $id,
-							 ip      => $json_obj->{ ip },
-							 port    => $json_obj->{ port } + 0,
-							 weight  => $json_obj->{ weight } + 0,
-							 timeout => $json_obj->{ timeout },
-				 },
-				 message => $message,
-				 status  => &getFarmVipStatus( $farmname ),
+				 params      => @{ &getFarmBackends( $farmname, $service ) }[$id],
+				 message     => $message,
+				 status      => &getFarmVipStatus( $farmname ),
 	};
 
 	&httpResponse( { code => 201, body => $body } );
@@ -541,9 +534,7 @@ sub service_backends
 	}
 
 	# HTTP
-	require Zevenet::Farm::HTTP::Backend;
 	require Zevenet::Farm::HTTP::Service;
-
 	my @services_list = split ' ', &getHTTPFarmVS( $farmname );
 
 	# check if the requested service exists
@@ -553,47 +544,13 @@ sub service_backends
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my @be = split ( "\n", &getHTTPFarmVS( $farmname, $service, "backends" ) );
-	my @backends;
-
-	# populate output array
-	foreach my $subl ( @be )
-	{
-		my @subbe       = split ( ' ', $subl );
-		my $id          = $subbe[1] + 0;
-		my $maintenance = &getHTTPFarmBackendMaintenance( $farmname, $id, $service );
-
-		if ( $maintenance != 0 )
-		{
-			$backendstatus = "up";
-		}
-		else
-		{
-			$backendstatus = "maintenance";
-		}
-
-		my $ip   = $subbe[3];
-		my $port = $subbe[5] + 0;
-		my $tout = $subbe[7];
-		my $prio = $subbe[9];
-
-		$tout = $tout eq '-' ? undef : $tout + 0;
-		$prio = $prio eq '-' ? undef : $prio + 0;
-
-		push @backends,
-		  {
-			id      => $id,
-			status  => $backendstatus,
-			ip      => $ip,
-			port    => $port,
-			timeout => $tout,
-			weight  => $prio,
-		  };
-	}
+	require Zevenet::Farm::Config;
+	my $backends = &getFarmBackends( $farmname, $service );
 
 	my $body = {
-				 description => $desc,
-				 params      => \@backends,
+		description => $desc,
+		params      => $backends,
+
 	};
 
 	&httpResponse( { code => 200, body => $body } );
@@ -669,8 +626,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 			unless (    $json_obj->{ weight } =~ /^[1-9]$/
 					 || $json_obj->{ weight } == undef )    # 1 or higher
 			{
-				my $msg =
-				  "Invalid backend weight value, please insert a value form 1 to 9.";
+				my $msg = "Invalid backend weight value, please insert a value form 1 to 9.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 

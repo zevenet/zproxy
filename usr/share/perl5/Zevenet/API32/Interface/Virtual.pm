@@ -237,6 +237,9 @@ sub get_virtual_list    # ()
 	my $desc = "List virtual interfaces";
 	my @output_list;
 
+	require Zevenet::Alias;
+	my $alias = &getAlias( 'interface' );
+
 	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
 	{
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
@@ -251,6 +254,7 @@ sub get_virtual_list    # ()
 
 		push @output_list,
 		  {
+			alias   => $alias->{ $if_ref->{ name } },
 			name    => $if_ref->{ name },
 			ip      => $if_ref->{ addr },
 			netmask => $if_ref->{ mask },
@@ -283,6 +287,9 @@ sub get_virtual    # ()
 
 	require Zevenet::Net::Interface;
 
+	require Zevenet::Alias;
+	my $alias = &getAlias( 'interface' );
+
 	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
 	{
 		next unless $if_ref->{ name } eq $virtual;
@@ -298,6 +305,7 @@ sub get_virtual    # ()
 		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		$interface = {
+					   alias   => $alias->{ $if_ref->{ name } },
 					   name    => $if_ref->{ name },
 					   ip      => $if_ref->{ addr },
 					   netmask => $if_ref->{ mask },

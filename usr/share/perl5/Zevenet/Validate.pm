@@ -225,6 +225,11 @@ my %format_re = (
 	'group_name'    => qr/[\w-]+/,
 	'role_name'     => qr/[\w-]+/,
 
+	# alais
+	'alias_id'   => qr/$ipv4v6|$nic_if(\.$vlan_tag)?(\:$virtual_tag)?/,
+	'alias_name' => qr/[\w-]+/,
+	'alias_type' => qr/(?:backend|interface)/,
+
 );
 
 =begin nd
