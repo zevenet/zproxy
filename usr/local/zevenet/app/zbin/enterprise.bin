@@ -218,7 +218,7 @@ if ( $@ )
 
 unless ( defined $returned_value ) { &zenlog( "#### Function output defined: Failed!" ); } ####
 
-my $output;
+my $output = '';
 
 if ( ref $returned_value )
 {
