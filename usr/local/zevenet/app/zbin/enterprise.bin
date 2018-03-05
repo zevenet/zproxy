@@ -28,8 +28,6 @@ use Time::Local;
 use Zevenet::Log;
 use Zevenet::Debug;
 use Zevenet::Config;
-use Zevenet::Validate;
-use Zevenet::SystemInfo;
 
 my $DEBUG    = &debug();
 my $SYMKEY   = "1135628147310";
@@ -65,6 +63,8 @@ if ( $basename ne 'enterprise.bin' )
 	exit;
 }
 
+require Zevenet::Validate;
+require Zevenet::SystemInfo;
 
 # check module name provided
 unless ( $module )
