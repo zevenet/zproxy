@@ -31,9 +31,40 @@ use Zevenet::Config;
 use Zevenet::Validate;
 use Zevenet::SystemInfo;
 
+my $DEBUG    = &debug();
 my $SYMKEY   = "1135628147310";
 my $lib_path = '/usr/share/perl5';
 my $module   = shift @ARGV;
+my $basename = ( split ( '/', $0 ) )[-1];
+
+# Run encrypted command
+if ( $basename ne 'enterprise.bin' )
+{
+	$basename =~ s|\.pl$||; # Remove trailing .pl if exists
+
+	my $mod = "Zevenet::Cmd::$basename";
+
+	#~ if ( $DEBUG )
+	if ( 0 )
+	{
+		my $msg = '';
+
+		$msg = "enterprise.bin called: $0";
+		#~ &zenlog( $msg );
+		say( $msg );
+
+		$msg = "enterprise.bin basename: $basename";
+		say( $msg );
+
+		$msg = "Module: $mod";
+		#~ &zenlog( $msg );
+		say( $msg );
+	}
+
+	&include( $mod );
+	exit;
+}
+
 
 # check module name provided
 unless ( $module )
@@ -47,15 +78,9 @@ Try 'enterprise.bin --help' for more information.\n";
 # command help and usage instructions
 if ( $module =~ /^(?:-h|-help|--help)$/ )
 {
-	print "Usage: enterprise.bin [enc] MODULE [FUNCTION]
-Encrypt or decrypt Zevenet Module.
+	print "Usage: enterprise.bin MODULE [FUNCTION]
+Decrypt Zevenet Enterprise Edition Module.
 
-Encryption
-Example:\tenterprise.bin enc Zevenet::API31::System::Cluster
-
-Writes the module encrypted in the same path as the .pm module with extension .pme
-
-Decryption
 Example:\tenterprise.bin Zevenet::API31::System::Cluster get_cluster < JSONFILE
 
 Run encrypted module accepting arguments from STDIN in JSON format, returning JSON output.
@@ -81,7 +106,7 @@ unless ( $func )
 
 # check if the activation certificate is valid
 my $hostname = &getHostname();
-my $basedir = &getGlobalConfiguration('basedir');
+my $basedir  = &getGlobalConfiguration('basedir');
 
 my $skip_cert_check = (    $module =~ /Zevenet::API3\d::Certificate::Activation/
 						&& $func   eq 'upload_activation_certificate' );
@@ -279,7 +304,6 @@ sub include
 
 	my $enc;
 	my $mod_key;
-	my $mod_fullpath;
 
 	if ( -f "$path_prefix/$mod_path.pm" )
 	{
@@ -292,7 +316,7 @@ sub include
 		$mod_key      = "$mod_path.pme";
 	}
 
-	my $mod_fullpath = "$path_prefix/$mod_path";
+	my $mod_fullpath = "$path_prefix/$mod_key";
 
 	if ( $debug )
 	{
@@ -312,6 +336,9 @@ sub include
 	}
 	elsif ( $enc eq 'true' )    # Load encrypted module
 	{
+		my $uname          = &getGlobalConfiguration( 'uname' );
+		my $kernel_release = `$uname -r`;
+
 		my $cmd = "openssl aes-256-cbc -d -a -nosalt -k \"${SYMKEY}\" -in ${mod_fullpath}";
 		$cmd .= " -md md5" if $kernel_release =~ /^4.9/;
 
@@ -338,9 +365,9 @@ sub include
 
 
 ### Activation certificate code ############
-use Time::Local;
-use Zevenet::Config;
-use Zevenet::SystemInfo;
+#~ use Time::Local;
+#~ use Zevenet::Config;
+#~ use Zevenet::SystemInfo;
 
 # build local key
 sub keycert

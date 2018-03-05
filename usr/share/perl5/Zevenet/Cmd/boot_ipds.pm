@@ -23,13 +23,31 @@
 
 use strict;
 use warnings;
-use Zevenet::Config;
+use Zevenet::IPDS::Blacklist;
+use Zevenet::IPDS::DoS;
 
-my $ntp     = &getGlobalConfiguration( 'ntp' );
-my $datentp = &getGlobalConfiguration( 'datentp' );
+my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+my $touch          = &getGlobalConfiguration( 'touch' );
+my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 
-if ( $datentp !~ /^$/ )
+# blacklists
+if ( !-d $blacklistsPath )
 {
-	my @conf = `$datentp $ntp`;
-	print @conf;
+	system ( &getGlobalConfiguration( 'mkdir' ) . " -p $blacklistsPath" );
+	&zenlog( "Created $blacklistsPath directory." );
 }
+
+# create list config if doesn't exist
+if ( !-e $blacklistsConf )
+{
+	system ( "$touch $blacklistsConf" );
+	&zenlog( "Created $blacklistsConf file." );
+}
+
+# load preload lists
+#~ &setBLAddPreloadLists();
+
+#dos
+&setDOSCreateFileConf();
+
+exit 0;

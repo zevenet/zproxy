@@ -26,6 +26,12 @@ use warnings;
 use Curses::UI;
 use Zevenet::Config;
 use Zevenet::BUI;
+use Zevenet::Debug;
+
+# This two sentences should make zenbui behave like zenbui.sh
+$ENV{ NCURSES_NO_UTF8_ACS } = 1;
+open(STDERR, '>', '/dev/null') if &debug();
+
 
 my $ifconfig_bin = &getGlobalConfiguration( 'ifconfig_bin' );
 my $zlbmenu;

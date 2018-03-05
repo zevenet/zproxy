@@ -1,1 +1,0 @@
-../../www/Notifications/sendNotification.pl

@@ -20,7 +20,7 @@ else
 	print( $program . "Cannot open $iptlock: $!" );
 }
 
-my @setbox= ( 
+my @setbox= (
 	{ chain=>"PREROUTING", table=>"raw" },
 	{ chain=>"PREROUTING", table=>"mangle" },
 	{ chain=>"INPUT", table=>"filter" },
@@ -45,7 +45,7 @@ foreach my $point ( @setbox )
 			#	iptables -D PREROUTING -t raw 3
 			my $out = system( "iptables --table $table -D $chain $lineNum" );
 		}
-	}	
+	}
 }
 
 ## unlock iptables use ##
@@ -55,7 +55,7 @@ if ( $open_rc )
 	close $ipt_lockfile;
 }
 
-# remove ipset 
+# remove ipset
 my @ipsets = `ipset list --name`;
 chomp (@ipsets);
 foreach my $set ( @ipsets )
@@ -63,7 +63,6 @@ foreach my $set ( @ipsets )
 	system("ipset destroy $set");
 }
 
-
-
 &runIPDSStartModule();
 
+exit 0;
