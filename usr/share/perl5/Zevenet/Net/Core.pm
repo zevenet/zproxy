@@ -153,6 +153,12 @@ sub upIf    # ($if_ref, $writeconf)
 			$status = 1;
 			&zenlog( "No link up for $$if_ref{name}" );
 		}
+
+		# Start monitoring throughput
+		eval {
+			require Zevenet::Net::Throughput;
+			&startTHROUIface( $$if_ref{ name } );
+		};
 	}
 
 	return $status;
@@ -211,6 +217,12 @@ sub downIf    # ($if_ref, $writeconf)
 	if ( $$if_ref{ vini } eq '' )
 	{
 		$ip_cmd = "$ip_bin link set $$if_ref{name} down";
+
+		# Stop monitoring throughput
+		eval {
+			require Zevenet::Net::Throughput;
+			&stopTHROUIface( $$if_ref{ name } );
+		};
 	}
 
 	# For Vini

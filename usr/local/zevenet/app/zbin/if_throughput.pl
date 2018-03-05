@@ -22,29 +22,14 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Net::Throughput;
 
-my $q = getCGI();
+my $time = &getGlobalConfiguration( 'throughput_period' );
 
-
-# Statistics
-if ( $q->path_info =~ qr{^/stats} )
+while ( 1 )
 {
-	my $modules_re = &getValidFormat( 'farm_modules' );
-	my $mod = 'Zevenet::API32::Stats::Statistics';
-
-	# System stats
-	GET qr{^/stats/system/network/interfaces$} , 'stats_network_interfaces', $mod;
-	GET qr{^/stats/system/memory$}             , 'stats_mem', $mod;
-	GET qr{^/stats/system/load$}               , 'stats_load', $mod;
-	GET qr{^/stats/system/cpu$}                , 'stats_cpu', $mod;
-	GET qr{^/stats/system/connections$}        , 'stats_conns', $mod;
-
-	GET qr{^/stats/throughput$}					, 'stats_throughput', $mod;
-
-	# Farm stats
-	GET qr{^/stats/farms/total$}                 , 'farms_number', $mod;
-	GET qr{^/stats/farms/modules$}               , 'module_stats_status', $mod;
-	GET qr{^/stats/farms/modules/($modules_re)$} , 'module_stats', $mod;
+	sleep ( $time );
+	&saveTHROUCounters();
+	&resetTHROUCounter();
 }
 
-1;

@@ -213,10 +213,10 @@ sub start_service
 			}
 		}
 
-		my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
+		my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 
 		# bonding adresses configuration
-		foreach my $iface ( &getInterfaceTypeList('bond') )
+		foreach my $iface ( &getInterfaceTypeList( 'bond' ) )
 		{
 			# interfaces as eth0 for example
 			if ( $$iface{ name } eq $$iface{ dev } )
@@ -225,16 +225,16 @@ sub start_service
 
 				if ( $$iface{ status } eq "up" )
 				{
-					print( "  * Starting interface $$iface{name}" );
+					print ( "  * Starting interface $$iface{name}" );
 					&upIf( $iface );
 
 					if ( exists $$iface{ addr } && length $$iface{ addr } )
 					{
-						print( "\n    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+						print ( "\n    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
 						if ( defined $$iface{ gateway } && $$iface{ gateway } ne '' )
 						{
-							print( " Gateway:$$iface{gateway}" );
+							print ( " Gateway:$$iface{gateway}" );
 						}
 
 						my $return_code = &addIp( $iface );
@@ -297,6 +297,13 @@ sub start_modules
 	{
 		&runIPDSStartModule();
 	}
+
+	# enable monitoring interface throughput
+	if ( eval { require Zevenet::Net::Throughput; } )
+	{
+		&startTHROUTask();
+	}
+
 }
 
 # this function syncs files with the other node before starting the cluster and
@@ -424,10 +431,12 @@ sub stop_service
 {
 	require Zevenet::Notify;
 	require Zevenet::IPDS::Base;
+	require Zevenet::Net::Throughput;
 
 	# stop all modules
 	&zlbstopNotifications();
 	&runIPDSStopModule();
+	&stopTHROUTask();
 
 	if ( &getZClusterStatus() )
 	{

@@ -278,6 +278,9 @@ $ssyncd_bin     = "/usr/local/zevenet/app/ssyncd/bin/ssyncd";
 $ssyncdctl_bin  = "/usr/local/zevenet/app/ssyncd/bin/ssyncdctl";
 $ssyncd_port    = "9999";
 
+# time period to get the interface throughput stats
+$throughput_period = "5";
+$throughput_enabled = "true";
 
 #::END Global Section
 
