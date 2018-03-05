@@ -40,6 +40,7 @@ See Also:
 	zapi/v2/put_http.cgi
 	zapi/v2/put_tcp.cgi
 =cut
+
 sub setFarmBlacklistTime    # ($blacklist_time,$farm_name)
 {
 	my ( $blacklist_time, $farm_name ) = @_;
@@ -72,6 +73,7 @@ See Also:
 	zapi/v2/put_http.cgi
 	zapi/v2/put_tcp.cgi
 =cut
+
 sub getFarmBlacklistTime    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -104,6 +106,7 @@ See Also:
 	zapi/v3/put_l4.cgi
 	zapi/v2/put_l4.cgi
 =cut
+
 sub setFarmSessionType    # ($session,$farm_name)
 {
 	my ( $session, $farm_name ) = @_;
@@ -139,6 +142,7 @@ Returns:
 Bugs:
 	NOT USED
 =cut
+
 sub getFarmSessionType    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -177,6 +181,7 @@ See Also:
 	zapi/v2/put_http.cgi
 	zapi/v2/put_tcp.cgi
 =cut
+
 sub setFarmTimeout    # ($timeout,$farm_name)
 {
 	my ( $timeout, $farm_name ) = @_;
@@ -211,6 +216,7 @@ See Also:
 	zapi/v2/get_http.cgi
 	zapi/v2/get_tcp.cgi
 =cut
+
 sub getFarmTimeout    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -251,6 +257,7 @@ See Also:
 	zapi/v2/put_datalink.cgi
 	zapi/v2/put_tcp.cgi
 =cut
+
 sub setFarmAlgorithm    # ($algorithm,$farm_name)
 {
 	my ( $algorithm, $farm_name ) = @_;
@@ -298,6 +305,7 @@ See Also:
 	zapi/v2/get_l4.cgi
 	zapi/v2/get_datalink.cgi
 =cut
+
 sub getFarmAlgorithm    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -336,6 +344,7 @@ Returns:
 BUG:
 	Obsolete, only used in tcp farms
 =cut
+
 sub setFarmPersistence    # ($persistence,$farm_name)
 {
 	my ( $persistence, $farm_name ) = @_;
@@ -367,6 +376,7 @@ BUG
 	DUPLICATED, use for l4 farms getFarmSessionType
 	obsolete for tcp farms
 =cut
+
 sub getFarmPersistence    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -395,6 +405,7 @@ Parameters:
 Returns:
 	Integer - Error code: 0 on success, or -1 on failure.
 =cut
+
 sub setFarmMaxClientTime    # ($max_client_time,$track,$farm_name)
 {
 	my ( $max_client_time, $track, $farm_name ) = @_;
@@ -431,6 +442,7 @@ Parameters:
 Returns:
 	Integer - Return maximum time, or -1 on failure.
 =cut
+
 sub getFarmMaxClientTime    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -467,6 +479,7 @@ Returns:
 BUG:
 	Not used in zapi v3. It is used "setFarmMaxClientTime"
 =cut
+
 sub setFarmMaxConn    # ($max_connections,$farm_name)
 {
 	my ( $max_connections, $farm_name ) = @_;
@@ -500,6 +513,7 @@ Returns:
 BUG:
 	It is only used in tcp, for http farms profile does nothing
 =cut
+
 sub getFarmMaxConn    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -523,7 +537,7 @@ Function: setFarmVirtualConf
 
 Parameters:
 	vip - virtual ip
-	port - virtual port
+	port or inteface - virtual port (interface in datalink farms). If the port is not sent, the port will not be changed
 	farmname - Farm name
 
 Returns:
@@ -532,6 +546,7 @@ Returns:
 See Also:
 	To get values use getFarmVip.
 =cut
+
 sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
 	my ( $vip, $vip_port, $farm_name ) = @_;
@@ -569,6 +584,43 @@ sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 }
 
 =begin nd
+Function: setAllFarmByVip
+
+	This function change the virtual interface for a set of farms. If some farm
+	is up, this function will restart it.
+
+Parameters:
+	IP - New virtual interface for the farms
+	farm list - List of farms to update. This list will send as reference
+
+Returns:
+	None - .
+=cut
+
+sub setAllFarmByVip
+{
+	my $vip      = shift;
+	my $farmList = shift;
+
+	require Zevenet::Farm::Action;
+	foreach my $farm ( @{ $farmList } )
+	{
+		# get status
+		my $status = &getFarmStatus( $farm );
+
+		# stop farm
+		if ( $status eq 'up' ) { &runFarmStop( $farm ); }
+
+		# change vip
+		&setFarmVirtualConf( $vip, undef, $farm );
+
+		# start farm
+		if ( $status eq 'up' ) { &runFarmStart( $farm ); }
+	}
+
+}
+
+=begin nd
 Function: getFarmConfigIsOK
 
 	Function that check if the config file is OK.
@@ -579,6 +631,7 @@ Parameters:
 Returns:
 	scalar - return 0 on success or different on failure
 =cut
+
 sub getFarmConfigIsOK    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -621,6 +674,7 @@ FIXME:
 NOTE:
 	Generic function.
 =cut
+
 sub checkFarmnameOK    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -643,6 +697,7 @@ Parameters:
 Returns:
 	Integer - The requested parameter value
 =cut
+
 sub getFarmVS    # ($farm_name, $service, $tag)
 {
 	my ( $farm_name, $service, $tag ) = @_;
@@ -678,6 +733,7 @@ Parameters:
 Returns:
 	Array ref - Each element in the array it is a hash ref to a backend.
 =cut
+
 sub getFarmBackends    # ($farm_name, $service)
 {
 	my ( $farm_name, $service ) = @_;
@@ -725,6 +781,7 @@ Parameters:
 Returns:
 	Integer - Error code: 0 on success or -1 on failure
 =cut
+
 sub setFarmVS    # ($farm_name,$service,$tag,$string)
 {
 	my ( $farm_name, $service, $tag, $string ) = @_;
@@ -762,6 +819,7 @@ Returns:
 Bugs:
 	WARNING: This function is only used in zapi/v2/post.cgi, this substitution should be done without a function, so we can remove iŧ.
 =cut
+
 sub setFarmName    # ($farm_name)
 {
 	my $farm_name = shift;
@@ -785,6 +843,7 @@ FIXME:
 	Use it in zapi to get services from a farm
 		
 =cut
+
 sub getServiceStruct
 {
 	my ( $farmname, $service ) = @_;

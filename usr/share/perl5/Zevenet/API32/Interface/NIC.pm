@@ -108,7 +108,7 @@ sub get_nic_list    # ()
 		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		my $if_conf = {
-					    alias   => $alias->{ $if_ref->{ name } },
+						alias   => $alias->{ $if_ref->{ name } },
 						name    => $if_ref->{ name },
 						ip      => $if_ref->{ addr },
 						netmask => $if_ref->{ mask },
@@ -305,6 +305,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 {
 	my $json_obj = shift;
 	my $nic      = shift;
+	my @farms;
 
 	require Zevenet::Net::Interface;
 	require Zevenet::Net::Core;
@@ -426,6 +427,16 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
+
+		require Zevenet::Farm::Base;
+		@farms = &getFarmListByVip( $if_ref->{ addr } );
+		if ( @farms and $json_obj->{ force } ne 'true' )
+		{
+			my $str = join ( ', ', @farms );
+			my $msg =
+			  "The IP is been used as farm vip in the farm(s): $str. If you are sure, repeat with parameter 'force'. All farms using this interface will be restarted.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	if ( $if_ref->{ addr } )
@@ -491,6 +502,13 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 		# put all dependant interfaces up
 		require Zevenet::Net::Util;
 		&setIfacesUp( $nic, "vini" );
+
+		# change farm vip,
+		if ( @farms )
+		{
+			require Zevenet::Farm::Config;
+			&setAllFarmByVip( $json_obj->{ ip }, \@farms );
+		}
 	};
 
 	if ( $@ )

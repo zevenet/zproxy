@@ -1231,7 +1231,7 @@ Function: setHTTPFarmVirtualConf
 	
 Parameters:
 	vip - virtual ip
-	port - virtual port
+	port - virtual port. If the port is not sent, the port will not be changed
 	farmname - Farm name
 
 Returns:
@@ -1258,7 +1258,7 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 			$stat = $? || $stat;
 			$enter--;
 		}
-		if ( $array[$i] =~ /Port/ )
+		if ( $array[$i] =~ /Port/ and $vip_port )
 		{
 			$array[$i] =~ s/.*Port\ .*/\tPort\ $vip_port/g;
 			$stat = $? || $stat;

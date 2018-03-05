@@ -476,4 +476,21 @@ sub getNumberOfFarmTypeRunning
 	return $counter;
 }
 
+
+sub getFarmListByVip
+{
+	my $ip = shift;
+	my @out;
+
+	foreach my $farm ( &getFarmNameList() )
+	{
+		if ( &getFarmVip( 'vip',$farm ) eq $ip )
+		{
+			push @out, $farm;
+		}
+	}
+	return @out;
+}
+
+
 1;

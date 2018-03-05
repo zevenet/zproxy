@@ -584,6 +584,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 
 	my $desc = "Modify bond address";
 	my $ip_v = 4;
+	my @farms;
 
 	# validate BOND NAME
 	my @system_interfaces = &getInterfaceList();
@@ -595,7 +596,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( grep { !/^(?:ip|netmask|gateway)$/ } keys %$json_obj )
+	if ( grep { !/^(?:ip|netmask|gateway|force)$/ } keys %$json_obj )
 	{
 		my $msg = "Parameter not recognized";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -698,6 +699,16 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
+
+		require Zevenet::Farm::Base;
+		@farms = &getFarmListByVip( $if_ref->{ addr } );
+		if ( @farms and $json_obj->{ force } ne 'true' )
+		{
+			my $str = join ( ', ', @farms );
+			my $msg =
+			  "The IP is been used as farm vip in the farm(s): $str. If you are sure, repeat with parameter 'force'. All farms using this interface will be restarted.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	# hash reference may exist without key-value pairs
@@ -766,6 +777,13 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		# put all dependant interfaces up
 		require Zevenet::Net::Util;
 		&setIfacesUp( $bond, "vini" );
+
+		# change farm vip,
+		if ( @farms )
+		{
+			require Zevenet::Farm::Config;
+			&setAllFarmByVip( $json_obj->{ ip }, \@farms );
+		}
 	};
 
 	if ( $@ )

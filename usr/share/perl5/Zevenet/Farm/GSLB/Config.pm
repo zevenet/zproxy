@@ -460,7 +460,7 @@ Function: setGSLBFarmVirtualConf
 
 Parameters:
 	vip - Virtual IP
-	port - Virtual port
+	port - Virtual port. If the port is not sent, the port will not be changed
 	farmname - Farm name
 
 Returns:     
@@ -495,7 +495,7 @@ sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		{
 			$line =~ s/$line/   listen = $vip/g;
 		}
-		if ( $found == 1 && $line =~ /dns_port = / )
+		if ( $found == 1 && $line =~ /dns_port = / && $vipp )
 		{
 			$line =~ s/$line/   dns_port = $vipp/g;
 		}

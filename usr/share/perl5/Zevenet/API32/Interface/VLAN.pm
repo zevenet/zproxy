@@ -480,6 +480,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 {
 	my $json_obj = shift;
 	my $vlan     = shift;
+	my @farms;
 
 	require Zevenet::Net::Interface;
 
@@ -537,6 +538,16 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 				my $msg = "The IP address is already in use for other interface.";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
+		}
+
+		require Zevenet::Farm::Base;
+		@farms = &getFarmListByVip( $if_ref->{ addr } );
+		if ( @farms and $json_obj->{ force } ne 'true' )
+		{
+			my $str = join ( ', ', @farms );
+			my $msg =
+			  "The IP is been used as farm vip in the farm(s): $str. If you are sure, repeat with parameter 'force'. All farms using this interface will be restarted.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
@@ -633,6 +644,13 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		# put all dependant interfaces up
 		require Zevenet::Net::Util;
 		&setIfacesUp( $vlan, "vini" );
+
+		# change farm vip,
+		if ( @farms )
+		{
+			require Zevenet::Farm::Config;
+			&setAllFarmByVip( $json_obj->{ ip }, \@farms );
+		}
 	};
 
 	if ( $@ )

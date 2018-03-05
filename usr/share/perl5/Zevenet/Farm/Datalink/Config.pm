@@ -23,7 +23,7 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: getDatalinkFarmAlgorithm
@@ -37,6 +37,7 @@ Returns:
 	scalar - The possible values are "weight", "priority" or -1 on failure
 	
 =cut
+
 sub getDatalinkFarmAlgorithm    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -77,6 +78,7 @@ FIXME:
 	set a return value, and do error control
 	
 =cut
+
 sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 {
 	my ( $algorithm, $farm_name ) = @_;
@@ -84,7 +86,7 @@ sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 	require Tie::File;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $i = 0;
+	my $i             = 0;
 
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 
@@ -123,6 +125,7 @@ Returns:
 	scalar - return "down" if the farm not run at boot or "up" if the farm run at boot
 
 =cut
+
 sub getDatalinkFarmBootStatus    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -157,9 +160,10 @@ Parameters:
 	farmname - Farm name
 
 Returns:
-	scalar - return NIC inteface or -1 on failure
+	scalar - return NIC interface or -1 on failure
 
 =cut
+
 sub getDatalinkFarmInterface    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
@@ -202,6 +206,7 @@ Returns:
 	Scalar - return request parameter on success or -1 on failure
 		
 =cut
+
 sub getDatalinkFarmVip    # ($info,$farm_name)
 {
 	my ( $info, $farm_name ) = @_;
@@ -236,19 +241,31 @@ Function: setDatalinkFarmVirtualConf
 	
 Parameters:
 	vip - virtual ip
-	port - virtual port
+	interface - interface
 	farmname - Farm name
 
 Returns:
 	Scalar - Error code: 0 on success or -1 on failure
 		
 =cut
-sub setDatalinkFarmVirtualConf    # ($vip,$vip_port,$farm_name)
+
+sub setDatalinkFarmVirtualConf    # ($vip,$interface,$farm_name)
 {
-	my ( $vip, $vip_port, $farm_name ) = @_;
+	my ( $vip, $interface, $farm_name ) = @_;
 
 	require Tie::File;
 	require Zevenet::Farm::Action;
+
+	# set the interface that has defined the vip
+	require Zevenet::Net::Interface;
+	foreach my $if_ref ( @{ &getConfigInterfaceList() } )
+	{
+		if ( $if_ref->{ addr } eq $vip )
+		{
+			$interface = $if_ref->{ name };
+			last;
+		}
+	}
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $farm_state    = &getFarmStatus( $farm_name );
@@ -264,7 +281,8 @@ sub setDatalinkFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
-			$line = "$args[0]\;$vip\;$vip_port\;$args[3]\;$args[4]";
+			$interface = $args[2] if ( !$interface );
+			$line = "$args[0]\;$vip\;$interface\;$args[3]\;$args[4]";
 			splice @configfile, $i, $line;
 			$stat = $?;
 		}

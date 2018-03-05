@@ -1079,7 +1079,7 @@ Function: setL4FarmVirtualConf
 		
 Parameters:
 	vip - Farm virtual IP
-	port - Farm virtual port
+	port - Farm virtual port. If the port is not sent, the port will not be changed
 	farmname - Farm name
 
 Returns:
@@ -1116,6 +1116,7 @@ sub setL4FarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		if ( $line =~ /^$farm_name\;/ )
 		{
 			my @args = split ( "\;", $line );
+			$vip_port = $args[3] if ( ! $vip_port );
 			$line =
 			  "$args[0]\;$args[1]\;$vip\;$vip_port\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8]";
 			splice @configfile, $i, $line;

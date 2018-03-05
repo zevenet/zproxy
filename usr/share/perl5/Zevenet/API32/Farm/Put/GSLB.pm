@@ -98,7 +98,7 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 		if ( $json_obj->{ newfarmname } ne $farmname )
 		{
 			#Check if the new farm's name alredy exists
-			if ( ! &getFarmExists( $newfarmname ) )
+			if ( &getFarmExists( $json_obj->{ newfarmname } ) )
 			{
 				my $msg = "The farm $json_obj->{newfarmname} already exists, try another name.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

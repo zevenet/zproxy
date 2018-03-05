@@ -86,7 +86,7 @@ sub setRBACGroupConfigFile
 	{
 		foreach my $param ( keys %{ $key } )
 		{
-			$key->{ $param } = join( ' ', @{ $param } ) if ( ref $param );
+			$key->{ $param } = join ( ' ', @{ $param } ) if ( ref $param );
 		}
 		$fileHandle->{ $group } = $key;
 	}
@@ -126,7 +126,7 @@ Returns:
 
 sub createRBACGroup
 {
-	my $group   = shift;
+	my $group = shift;
 	my $group_obj;
 
 	# execute cmd
@@ -137,9 +137,9 @@ sub createRBACGroup
 	{
 		# save it
 		$group_obj->{ 'interfaces' } = '';
-		$group_obj->{ 'farms' } = '';
-		$group_obj->{ 'users' } = '';
-		$group_obj->{ 'role' } = '';
+		$group_obj->{ 'farms' }      = '';
+		$group_obj->{ 'users' }      = '';
+		$group_obj->{ 'role' }       = '';
 
 		&setRBACGroupConfigFile( $group, $group_obj );
 	}
@@ -197,9 +197,9 @@ Returns:
 
 sub addRBACGroupResource
 {
-	my $group = shift;
+	my $group    = shift;
 	my $resource = shift;
-	my $type = shift;
+	my $type     = shift;
 	my $error;
 
 	# Add it to system
@@ -235,9 +235,9 @@ Returns:
 
 sub delRBACGroupResource
 {
-	my $group = shift;
+	my $group    = shift;
 	my $resource = shift;
-	my $type = shift;
+	my $type     = shift;
 	my $error;
 
 	# Add it to system
@@ -273,20 +273,21 @@ Returns:
 sub addRBACUserResource
 {
 	my $resource = shift;
-	my $type = shift;
+	my $type     = shift;
 	my $error;
+
+	require Zevenet::User;
 	my $user = &getUser();
-	
+
 	if ( $user ne 'root' )
 	{
 		my $group = &getRBACUserGroup( $user );
 		return 1 if ( !$group );
 		$error = &addRBACGroupResource( $group, $resource, $type );
 	}
-	
+
 	return $error;
 }
-
 
 =begin nd
 Function: delRBACResource
@@ -301,11 +302,12 @@ Returns:
 	None - .
 	
 =cut
+
 sub delRBACResource
 {
 	my $resource = shift;
-	my $type = shift;
-	
+	my $type     = shift;
+
 	foreach my $group ( &getRBACGroupList() )
 	{
 		if ( grep ( /^$resource$/, @{ &getRBACGroupParam( $group, $type ) } ) )
@@ -314,7 +316,6 @@ sub delRBACResource
 		}
 	}
 }
-
 
 =begin nd
 Function: setRBACRenameByFarm
@@ -329,11 +330,12 @@ Returns:
 	None - .
 	
 =cut
+
 sub setRBACRenameByFarm
 {
 	my $old_farmname = shift;
 	my $new_farmname = shift;
-	
+
 	foreach my $group ( &getRBACGroupList() )
 	{
 		if ( grep ( /^$old_farmname$/, @{ &getRBACGroupParam( $group, 'farms' ) } ) )
@@ -342,7 +344,7 @@ sub setRBACRenameByFarm
 			&addRBACGroupResource( $group, $new_farmname, 'farms' );
 		}
 	}
-	
+
 }
 
 1;

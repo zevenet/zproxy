@@ -430,6 +430,7 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 {
 	my $json_obj = shift;
 	my $virtual  = shift;
+	my @farms;
 
 	require Zevenet::Net::Interface;
 	require Net::Netmask;
@@ -481,6 +482,16 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
+
+		require Zevenet::Farm::Base;
+		@farms = &getFarmListByVip( $if_ref->{ addr } );
+		if ( @farms and $json_obj->{ force } ne 'true' )
+		{
+			my $str = join ( ', ', @farms );
+			my $msg =
+			  "The IP is been used as farm vip in the farm(s): $str. If you are sure, repeat with parameter 'force'. All farms using this interface will be restarted.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	require Zevenet::Net::Validate;
@@ -521,6 +532,13 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 
 		# Add new IP, netmask and gateway
 		&setInterfaceConfig( $if_ref ) or die;
+
+		# change farm vip,
+		if ( @farms )
+		{
+			require Zevenet::Farm::Config;
+			&setAllFarmByVip( $json_obj->{ ip }, \@farms );
+		}
 	};
 
 	if ( $@ )
