@@ -213,7 +213,6 @@ sub getNetValidate    # ($ip, $mask, $ip2)
 	my $output = 0;
 
 	require Net::Netmask;
-	&zenlog("???? <$ip, $mask, $ip2> ");
 	my $ip_struct = new2 Net::Netmask ( $ip, $mask );
 
 	eval{
