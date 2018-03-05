@@ -610,19 +610,6 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-  # not modify gateway or netmask if exists a virtual interface using this interface
-	if ( exists $json_obj->{ netmask } )
-	{
-		my @child = &getInterfaceChild( $bond );
-		if ( @child )
-		{
-			my $child_string = join ( ', ', @child );
-			my $msg =
-			  "Is is not possible to modify $bond because there are virtual interfaces using it: $child_string.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
 	# Check address errors
 	if ( exists $json_obj->{ ip } )
 	{
@@ -675,9 +662,36 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 				   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
 	};
 
+   #not modify gateway or netmask if exists a virtual interface using this interface
+	require Zevenet::Net::Validate;
+	if ( exists $json_obj->{ ip } or exists $json_obj->{ netmask } )
+	{
+		my @child = &getInterfaceChild( $bond );
+		my @wrong_conf;
+		if ( @child )
+		{
+			foreach my $child_name ( @child )
+			{
+				my $child_if = &getInterfaceConfig( $child_name );
+				unless (
+					  &getNetValidate( $child_if->{ addr }, $new_if->{ mask }, $new_if->{ addr } ) )
+				{
+					push @wrong_conf, $child_name;
+				}
+			}
+		}
+		if ( @wrong_conf )
+		{
+			my $child_string = join ( ', ', @wrong_conf );
+			my $msg =
+			  "The virtual interface(s): '$child_string' will not be compatible with the new configuration.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
+	# check the gateway is in network
 	if ( $new_if->{ gateway } )
 	{
-		require Zevenet::Net::Validate;
 		unless (
 			 &getNetValidate( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
 		{

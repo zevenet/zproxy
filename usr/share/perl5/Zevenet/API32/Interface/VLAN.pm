@@ -495,19 +495,6 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	#not modify gateway or netmask if exists a virtual interface using this vlan
-	if ( exists $json_obj->{ netmask } )
-	{
-		my @child = &getInterfaceChild( $vlan );
-		if ( @child )
-		{
-			my $child_string = join ( ', ', @child );
-			my $msg =
-			  "Is is not possible to modify $vlan because there are virtual interfaces using it: $child_string.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
 	unless (    exists $json_obj->{ ip }
 			 || exists $json_obj->{ netmask }
 			 || exists $json_obj->{ gateway } )
@@ -587,9 +574,36 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 				   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
 	};
 
+	#not modify gateway or netmask if exists a virtual interface using this interface
+	require Zevenet::Net::Validate;
+	if ( exists $json_obj->{ ip } or exists $json_obj->{ netmask } )
+	{
+		my @child = &getInterfaceChild( $vlan );
+		my @wrong_conf;
+		if ( @child )
+		{
+			foreach my $child_name ( @child )
+			{
+				my $child_if = &getInterfaceConfig( $child_name );
+				unless (
+					  &getNetValidate( $child_if->{ addr }, $new_if->{ mask }, $new_if->{ addr } ) )
+				{
+					push @wrong_conf, $child_name;
+				}
+			}
+		}
+		if ( @wrong_conf )
+		{
+			my $child_string = join ( ', ', @wrong_conf );
+			my $msg =
+			  "The virtual interface(s): '$child_string' will not be compatible with the new configuration.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
+	# check the gateway is in network
 	if ( $new_if->{ gateway } )
 	{
-		require Zevenet::Net::Validate;
 		unless (
 			 &getNetValidate( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
 		{

@@ -499,7 +499,7 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 	unless (
 			 &getNetValidate(
 							  $if_ref_parent->{ addr },
-							  $if_ref->{ mask },
+							  $if_ref_parent->{ mask },
 							  $json_obj->{ ip }
 			 )
 	  )

@@ -191,6 +191,14 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		  ( grep { $iface{ name } eq $_ } &getAllBondsSlaves ) ? 'true' : 'false';
 	}
 
+	# for virtual inteface, overwrite mask and gw with parent values
+	if ( $iface{ type } eq 'vini' )
+	{
+		my $if_parent = &getInterfaceConfig( $iface{ parent } );
+		$iface{ mask }    = $if_parent->{ mask };
+		$iface{ gateway } = $if_parent->{ gateway };
+	}
+
 	return \%iface;
 }
 
@@ -950,6 +958,11 @@ sub getInterfaceTypeList
 			{
 				my $iface = &getInterfaceConfig( $1 );
 				$iface->{ status } = &getInterfaceSystemStatus( $iface );
+
+				# put the gateway and netmask of parent interface
+				my $parent_if = &getInterfaceConfig( $iface->{ parent } );
+				$iface->{ mask }    = $parent_if->{ mask };
+				$iface->{ gateway } = $parent_if->{ gateway };
 				push ( @interfaces, $iface );
 			}
 		}
