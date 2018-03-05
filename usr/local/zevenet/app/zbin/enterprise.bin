@@ -42,8 +42,7 @@ if ( $basename ne 'enterprise.bin' )
 
 	my $mod = "Zevenet::Cmd::$basename";
 
-	#~ if ( $DEBUG )
-	if ( 0 )
+	if ( $DEBUG )
 	{
 		my $msg = '';
 
