@@ -347,10 +347,13 @@ sub checkNetworkExists
 
 		# found
 		my $net2 = new2 Net::Netmask( $if_ref->{ addr }, $if_ref->{ mask } );
-		if ( $net1->match( $net2 ) or $net2->match( $net1 ) )
+		eval
 		{
-			return $if_ref->{ name };
-		}
+			if ( $net1->match( $net2 ) or $net2->match( $net1 ) )
+			{
+				return $if_ref->{ name };
+			}
+		};
 	}
 
 	return "";

@@ -89,9 +89,15 @@ sub new_bond    # ( $json_obj )
 		}
 	}
 
-	if ( $missing_slave || !@{ $json_obj->{ slaves } } )
+	if ( $missing_slave )
 	{
-		my $msg = "Error loading the slave interfaces list";
+		my $msg = "The interface $missing_slave is not a valid bond slave.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	if ( !@{ $json_obj->{ slaves } } )
+	{
+		my $msg = "The slave interfaces list cannot be empty.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 

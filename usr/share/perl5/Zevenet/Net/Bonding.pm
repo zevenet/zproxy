@@ -681,8 +681,9 @@ sub getBondAvailableSlaves
 		next if $dir_entry =~ /(:|\.)/;                 # not vlan nor vini
 		next if grep ( /^$dir_entry$/, @bond_list );    # not a bond
 		my $iface = &getSystemInterface( $dir_entry );
-		next if $iface->{ status } ne 'down';           # must be down
-		#~ next if $iface->{ addr };                       # without address
+		next if $iface->{ status } ne 'down';           # must be down		next if $iface->{ addr };                       # without address
+		$iface = &getInterfaceConfig( $iface->{ name } );
+		next if $iface->{ addr };
 
 		push ( @avail_ifaces, $dir_entry );
 	}
