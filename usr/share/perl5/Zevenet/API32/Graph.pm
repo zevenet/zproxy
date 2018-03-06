@@ -275,7 +275,7 @@ sub get_farm_graphs    #()
 	my $desc = "Get farm graphs";
 
 	# this farm doesn't exist
-	if ( ! &getFarmExists( $farmname ) )
+	if ( ! &getFarmExists( $farmName ) )
 	{
 		my $msg = "$farmName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -319,7 +319,7 @@ sub get_frec_farm_graphs    #()
 	my $desc = "Get farm graphs";
 
 	# this farm doesn't exist
-	if ( ! &getFarmExists( $farmname ) )
+	if ( ! &getFarmExists( $farmName ) )
 	{
 		my $msg = "$farmName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
