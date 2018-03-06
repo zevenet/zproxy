@@ -121,7 +121,7 @@ echo "- ARP table"
 if [ -f /sbin/arptables ];
 then
 	echo "- ARP filtering"
-	/sbin/arptables -L                      >> $backup_dir/arp_filtering.txt
+	/sbin/arptables -nL                      >> $backup_dir/arp_filtering.txt
 fi
 
 echo "- nf_conntrack"
