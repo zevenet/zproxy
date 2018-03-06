@@ -187,6 +187,16 @@ sub delete_interface_virtual    # ( $virtual )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	# check if some farm is using this ip
+	require Zevenet::Farm::Base;
+	my @farms = &getFarmListByVip( $if_ref->{ addr } );
+	if ( @farms )
+	{
+		my $str = join ( ', ', @farms );
+		my $msg = "This interface is been used as farm vip in the farm(s): $str.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	my @child = &getInterfaceChild( $virtual );
 	if ( @child )
 	{
