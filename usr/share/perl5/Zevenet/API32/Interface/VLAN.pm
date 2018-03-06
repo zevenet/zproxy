@@ -108,17 +108,6 @@ sub new_vlan    # ( $json_obj )
 	}
 
 	# FIXME: Check IPv6 compatibility
-	# Check new IP address is not in use
-	my @activeips = &listallips();
-
-	for my $ip ( @activeips )
-	{
-		if ( $ip eq $json_obj->{ ip } )
-		{
-			my $msg = "IP Address $json_obj->{ip} is already in use.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
 
 	# Check netmask errors
 	if (
@@ -129,6 +118,17 @@ sub new_vlan    # ( $json_obj )
 	{
 		my $msg = "Netmask parameter not valid";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	# check if network exists in other interface
+	if ( $json_obj->{ ip } or $json_obj->{ netmask } )
+	{
+		my $if_used = &checkNetworkExists( $json_obj->{ ip }, $json_obj->{ netmask } );
+		if ( $if_used )
+		{
+			my $msg = "The network already exists in the interface $if_used.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	## Check netmask errors for IPv6
@@ -514,19 +514,9 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		}
 	}
 
-	# check if ip exists in other interface
 	if ( $json_obj->{ ip } )
 	{
-		if ( $json_obj->{ ip } ne $if_ref->{ addr } )
-		{
-			require Zevenet::Net::Util;
-			if ( grep ( /^$json_obj->{ ip }$/, &listallips() ) )
-			{
-				my $msg = "The IP address is already in use for other interface.";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
-		}
-
+		# check if some farm is using this ip
 		require Zevenet::Farm::Base;
 		@farms = &getFarmListByVip( $if_ref->{ addr } );
 		if ( @farms and $json_obj->{ force } ne 'true' )
@@ -574,7 +564,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 				   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
 	};
 
-	#not modify gateway or netmask if exists a virtual interface using this interface
+   #not modify gateway or netmask if exists a virtual interface using this interface
 	require Zevenet::Net::Validate;
 	if ( exists $json_obj->{ ip } or exists $json_obj->{ netmask } )
 	{
@@ -597,6 +587,18 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 			my $child_string = join ( ', ', @wrong_conf );
 			my $msg =
 			  "The virtual interface(s): '$child_string' will not be compatible with the new configuration.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
+	# check if network exists in other interface
+	if ( $json_obj->{ ip } or $json_obj->{ netmask } )
+	{
+		my $if_used =
+		  &checkNetworkExists( $new_if->{ addr }, $new_if->{ mask }, $vlan );
+		if ( $if_used )
+		{
+			my $msg = "The network already exists in the interface $if_used.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}

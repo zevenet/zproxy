@@ -38,6 +38,7 @@ Returns:
 See Also:
 	<getRandomPort>
 =cut
+
 #check if a port in a ip is up
 sub checkport    # ($host, $port)
 {
@@ -88,6 +89,7 @@ Parameters:
 Returns:
 	boolean - string "true" or "false".
 =cut
+
 #check if a ip is ok structure
 sub ipisok    # ($checkip, $version)
 {
@@ -131,6 +133,7 @@ Returns:
 Bugs:
 	Fix return on non IPv4 or IPv6 valid address.
 =cut
+
 #check if a ip is IPv4 or IPv6
 sub ipversion    # ($checkip)
 {
@@ -168,6 +171,7 @@ Returns:
 Bugs:
 	NOT USED
 =cut
+
 #function checks if ip is in a range
 sub ipinrange    # ($netmask, $toip, $newip)
 {
@@ -207,17 +211,16 @@ Returns:
 	Integer - 1 if the configuration is correct or 0 on incorrect
 
 =cut
+
 sub getNetValidate    # ($ip, $mask, $ip2)
 {
 	my ( $ip, $mask, $ip2 ) = @_;
 	my $output = 0;
 
 	require Net::Netmask;
-	my $ip_struct = new2 Net::Netmask ( $ip, $mask );
+	my $ip_struct = new2 Net::Netmask( $ip, $mask );
 
-	eval{
-		$output = 1 if ( $ip_struct->match( $ip2 ) );
-	};
+	eval { $output = 1 if ( $ip_struct->match( $ip2 ) ); };
 	return $output;
 }
 
@@ -239,12 +242,13 @@ Returns:
 Bugs:
 	"created"
 =cut
+
 #function check if interface exist
 sub ifexist    # ($nif)
 {
 	my $nif = shift;
 
-	use IO::Interface qw(:flags); # Needs to load with 'use'
+	use IO::Interface qw(:flags);    # Needs to load with 'use'
 
 	require IO::Socket;
 	require Zevenet::Net::Interface;
@@ -288,6 +292,7 @@ Returns:
 See Also:
 	snmp_functions.cgi, check_functions.cgi, zapi/v3/post.cgi, zapi/v3/put.cgi
 =cut
+
 sub isValidPortNumber    # ($port)
 {
 	my $port = shift;
@@ -303,6 +308,52 @@ sub isValidPortNumber    # ($port)
 	}
 
 	return $valid;
+}
+
+=begin nd
+Function: checkNetworkExists
+
+	Check if a network exists in other interface
+
+Parameters:
+	ip - A ip in the network segment
+	mask - mask of the network segment
+	exception - This parameter is optional, if it is sent, that interface will not be checked.
+		It is used to exclude the interface that is been changed
+
+Returns:
+	String - interface name where the checked network exists
+
+	v3.2/interface/vlan, v3.2/interface/nic, v3.2/interface/bonding
+=cut
+
+sub checkNetworkExists
+{
+	my ( $net, $mask, $exception ) = @_;
+
+	require Zevenet::Net::Interface;
+	require Net::Netmask;
+	my $net1 = new2 Net::Netmask( $net, $mask );
+
+	my @interfaces = &getInterfaceTypeList( 'nic' );
+	push @interfaces, &getInterfaceTypeList( 'bond' );
+	push @interfaces, &getInterfaceTypeList( 'vlan' );
+
+	foreach my $if_ref ( @interfaces )
+	{
+		# if it is the same net pass
+		if ( defined $exception and $if_ref->{ name } eq $exception ) { next; }
+		if ( !$if_ref->{ addr } ) { next; }
+
+		# found
+		my $net2 = new2 Net::Netmask( $if_ref->{ addr }, $if_ref->{ mask } );
+		if ( $net1->match( $net2 ) or $net2->match( $net1 ) )
+		{
+			return $if_ref->{ name };
+		}
+	}
+
+	return "";
 }
 
 1;
