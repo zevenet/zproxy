@@ -182,7 +182,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	# Load L4 scheduler if needed
 	if ( $$farm{ lbalg } eq 'leastconn' && -e "$l4sd" )
 	{
-		system ( "$l4sd >/dev/null &" );
+		system ( "$l4sd >/dev/null 2>&1 &" );
 	}
 
 	# Load required modules
