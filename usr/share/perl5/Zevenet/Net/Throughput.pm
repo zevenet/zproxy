@@ -113,10 +113,10 @@ sub createTHROUFile
 sub getTHROUPid
 {
 	my $pid;
-	my $cmd = "ps a |grep $throughput_bin | grep -v grep";
+	my $cmd = "ps aux |grep $throughput_bin | grep -v grep";
 
 	my @cmd_out = `$cmd`;
-	if ( $cmd_out[0] =~ /^\s*(\d+)\s/ ) { $pid = $1; }
+	if ( $cmd_out[0] =~ /^\s*[^\s]+\s+(\d+)\s/ ) { $pid = $1; }
 
 	return $pid;
 }
