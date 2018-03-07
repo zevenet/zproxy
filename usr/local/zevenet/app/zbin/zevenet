@@ -224,7 +224,7 @@ if ( $action eq "start" )
 
 	my $mgmt_ip    = &getHttpServerIp();
 	my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
-	my @interfaces = &getInterfaceTypeList('nic');
+	my @interfaces = @{ &getConfigInterfaceList() };
 
 	&zenlog("zevenet: Setting up NIC interfaces...");
 
