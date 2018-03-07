@@ -135,7 +135,7 @@ sub modify_gateway # ( $json_obj )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	&zenlog("applyRoutes interface:$interface address:$address if_ref:$if_ref") if &debug();
+	&zenlog("applyRoutes interface:$interface address:$address if_ref:$if_ref", "debug", "NETWORK") if &debug();
 
 	my $error = &applyRoutes( "global", $if_ref, $address );
 

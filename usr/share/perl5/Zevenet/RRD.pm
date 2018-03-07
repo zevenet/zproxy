@@ -91,13 +91,13 @@ sub delGraph	#($name, type)
 
 	if ( $type =~ /iface/ )
 	{
-		&zenlog( "Delete graph file: $rrdap_dir/$rrd_dir/${name}iface.rrd" );
+		&zenlog( "Delete graph file: $rrdap_dir/$rrd_dir/${name}iface.rrd", "info", "MONITOR" );
 		unlink ( "$rrdap_dir/$rrd_dir/${name}iface.rrd" );
 	}
 
 	if ( $type =~ /farm/ )
 	{
-		&zenlog( "Delete graph file: $rrdap_dir/$rrd_dir/$name-farm.rrd" );
+		&zenlog( "Delete graph file: $rrdap_dir/$rrd_dir/$name-farm.rrd", "info", "DELETE" );
 		unlink glob ( "$rrdap_dir/$rrd_dir/$name-farm.rrd" );
 	}
 }

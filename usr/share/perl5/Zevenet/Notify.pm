@@ -41,7 +41,7 @@ sub setNotifCreateConfFile
 	if ( ! -d $confdir )
 	{
 		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $confdir" );
-		&zenlog( "Created $confdir directory." );
+		&zenlog( "Created $confdir directory.", "info", "NOTIFICATIONS" );
 	}
 
 	# restore old config files
@@ -52,13 +52,13 @@ sub setNotifCreateConfFile
 	if ( -e $alertsOld )
 	{
 		system ( "$mv $alertsOld $alertsFile" );
-		&zenlog( "Alert config file was moved to $confdir." );
+		&zenlog( "Alert config file was moved to $confdir.", "info", "NOTIFICATIONS" );
 	}
 
 	if ( -e $sendersOld )
 	{
 		system ( "$mv $sendersOld $senderFile" );
-		&zenlog( "Sender config file was moved to $confdir." );
+		&zenlog( "Sender config file was moved to $confdir.", "info", "NOTIFICATIONS" );
 	}
 
 	# Create sender configuration file
@@ -78,7 +78,7 @@ sub setNotifCreateConfFile
 		open my $fileHandle, '>', $senderFile;
 		print $fileHandle $senderConf;
 		close $fileHandle;
-		&zenlog( "Sender config file created." );
+		&zenlog( "Sender config file created.", "info", "NOTIFICATIONS" );
 	}
 
 	# Create alert configuration file. It's different in each host
@@ -97,7 +97,7 @@ sub setNotifCreateConfFile
 		open my $fileHandle, '>', $alertsFile;
 		print $fileHandle $alertConf;
 		close $fileHandle;
-		&zenlog( "Alert config file created." );
+		&zenlog( "Alert config file created.", "info", "NOTIFICATIONS" );
 	}
 
 	return $output;
@@ -194,7 +194,7 @@ sub setNotifAlertsAction
 	{
 		$errMsg = &setNotifData( 'alerts', $notif, 'Status', 'on' );
 		$errMsg = &enableRule( $notif );
-		&zenlog( "Turn on $notif notifications." );
+		&zenlog( "Turn on $notif notifications.", "info", "NOTIFICATIONS" );
 	}
 
 	# disable rule
@@ -202,7 +202,7 @@ sub setNotifAlertsAction
 	{
 		$errMsg = &setNotifData( 'alerts', $notif, 'Status', 'off' );
 		$errMsg = &disableRule( $notif );
-		&zenlog( "Turn off $notif notifications." );
+		&zenlog( "Turn off $notif notifications.", "info", "NOTIFICATIONS" );
 	}
 	else
 	{
@@ -291,7 +291,7 @@ sub enableRule    # &enableRule ( $rule )
 	if ( !-f $fileConf )
 	{
 		$output = 1;
-		&zenlog ("don't find $fileConf file");
+		&zenlog ("don't find $fileConf file", "error", "NOTIFICATIONS");
 	}
 	else
 	{
@@ -406,7 +406,7 @@ sub zlbstopNotifications
 	if ( $pid )
 	{
 		kill 'KILL', $pid;
-		&zenlog( "SEC stoped." );
+		&zenlog( "SEC stopped.", "info", "NOTIFICATIONS" );
 	}
 }
 
@@ -425,21 +425,21 @@ sub runNotifications
 		&enableRule( 'Cluster' )	if ( &getNotifData( 'alerts', 'Cluster', 'Status' ) eq 'on');
 
 		# start sec process
-		&zenlog( "$sec --conf=$secConf --input=$syslogFile" );
+		&zenlog( "$sec --conf=$secConf --input=$syslogFile", "info", "NOTIFICATIONS" );
 		system ( "$sec --conf=$secConf --input=$syslogFile >/dev/null 2>&1 &" );
 		$pid = `$pidof -x sec`;
 		if ( $pid )
 		{
-			&zenlog( "run SEC, pid $pid" );
+			&zenlog( "run SEC, pid $pid", "info", "NOTIFICATIONS" );
 		}
 		else
 		{
-			&zenlog( "SEC couldn't run" );
+			&zenlog( "SEC couldn't run", "error", "NOTIFICATIONS" );
 		}
 	}
 	else
 	{
-		&zenlog( "SEC couldn't run because a process for this program already exists, pid:$pid." );
+		&zenlog( "SEC couldn't run because a process for this program already exists, pid:$pid.", "info", "NOTIFICATIONS" );
 	}
 }
 
@@ -451,7 +451,7 @@ sub reloadNotifications
 	if ( $pid )
 	{
 		kill 'HUP', $pid;
-		&zenlog( "SEC reloaded successful" );
+		&zenlog( "SEC reloaded successful", "info", "NOTIFICATIONS" );
 	}
 }
 
@@ -485,7 +485,7 @@ sub setNotifData
 		$fileHandle = Config::Tiny->read( $fileName );
 		$fileHandle->{ $section }->{ $key } = $data;
 		$fileHandle->write( $fileName );
-		#~ &zenlog( "'$key' was modificated in '$section' notifications to '$data'" );
+		#~ &zenlog( "'$key' was modificated in '$section' notifications to '$data'", "info", "SYSTEM" );
 	}
 
 	return $errMsg;

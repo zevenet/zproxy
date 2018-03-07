@@ -84,7 +84,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		if ( !&getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend l4xnat in farm $farmname, invalid backend IP value."
+				"Error trying to create a new backend l4xnat in farm $farmname, invalid backend IP value.", "error", "LSLB"
 			);
 
 			# Error
@@ -104,7 +104,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 				 || $json_obj->{ port } eq '' )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend l4xnat in farm $farmname, invalid IP address and port for a backend, ir can't be blank."
+				"Error trying to create a new backend l4xnat in farm $farmname, invalid IP address and port for a backend, ir can't be blank.", "error", "LSLB"
 			);
 
 			# Error
@@ -180,7 +180,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		if ( $status != -1 )
 		{
 			&zenlog(
-				"ZAPI success, a new backend has been created in farm $farmname with IP $json_obj->{ip}."
+				"Success, a new backend has been created in farm $farmname with IP $json_obj->{ip}.", "info", "LSLB"
 			);
 
 			$json_obj->{ port }     += 0 if $json_obj->{ port };
@@ -254,7 +254,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		if ( !&getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend datalink in farm $farmname, invalid backend IP value."
+				"Error trying to create a new backend datalink in farm $farmname, invalid backend IP value.", "error", "DSLB"
 			);
 
 			# Error
@@ -287,7 +287,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		if ( !$valid_interface )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend in the farm $farmname, invalid interface."
+				"Error trying to create a new backend in the farm $farmname, invalid interface.", "error", "NETWORK"
 			);
 
 			my $errormsg =
@@ -306,7 +306,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 				 || $json_obj->{ weight } == undef )    # 1 or higher or undef
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend in the farm $farmname, invalid weight."
+				"Error trying to create a new backend in the farm $farmname, invalid weight.", "error", ""
 			);
 
 			my $errormsg = "Invalid weight value, please insert a valid weight value.";
@@ -324,7 +324,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 				 || $json_obj->{ priority } == undef )    # (1-9)
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend in the farm $farmname, invalid priority."
+				"Error trying to create a new backend in the farm $farmname, invalid priority.", "error", ""
 			);
 
 			my $errormsg = "Invalid priority value, please insert a valid priority value.";
@@ -349,7 +349,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		if ( $status != -1 )
 		{
 			&zenlog(
-				"ZAPI success, a new backend has been created in farm $farmname with IP $json_obj->{ip}."
+				"Success, a new backend has been created in farm $farmname with IP $json_obj->{ip}.", "info", ""
 			);
 
 			# Success
@@ -376,7 +376,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		else
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend datalink in farm $farmname, it's not possible to create the backend."
+				"Error trying to create a new backend datalink in farm $farmname, it's not possible to create the backend.", "error", "DSLB"
 			);
 
 			# Error
@@ -491,7 +491,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 				 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend http in service $service in farm $farmname, invalid backend IP value."
+				"Error trying to create a new backend http in service $service in farm $farmname, invalid backend IP value.", "error", "LSLB"
 			);
 
 			# Error
@@ -510,7 +510,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		unless ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend http in service $service in farm $farmname, invalid IP address and port for a backend, ir can't be blank."
+				"Error trying to create a new backend http in service $service in farm $farmname, invalid IP address and port for a backend, ir can't be blank.", "error", "LSLB"
 			);
 
 			# Error
@@ -529,7 +529,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 				 || $json_obj->{ weight } =~ /^[1-9]$/ )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend http in service $service in farm $farmname, invalid weight value for a backend, it must be 1-9."
+				"Error trying to create a new backend http in service $service in farm $farmname, invalid weight value for a backend, it must be 1-9.", "error", "LSLB"
 			);
 
 			# Error
@@ -548,7 +548,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 			   || ( $json_obj->{ timeout } =~ /^\d+$/ && $json_obj->{ timeout } != 0 ) )
 		{
 			&zenlog(
-				"ZAPI error, trying to modify the backends in a farm $farmname, invalid timeout."
+				"Error trying to modify the backends in a farm $farmname, invalid timeout.", "error", ""
 			);
 
 			# Error
@@ -576,7 +576,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		if ( $status != -1 )
 		{
 			&zenlog(
-				"ZAPI success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}."
+				"Success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}.", "info", ""
 			);
 
 			# Success
@@ -657,7 +657,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		unless ( $lb eq 'roundrobin' )
 		{
 			&zenlog(
-				   "ZAPI error, this service algorithm does not support adding new backends." );
+				   "Error, this service algorithm does not support adding new backends.", "error", "" 
+			);
 
 			# Error
 			my $errormsg = "This service algorithm does not support adding new backends.";
@@ -684,7 +685,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		unless ( &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new backend in the service $service of the farm $farmname, invalid IP."
+				"Error trying to create a new backend in the service $service of the farm $farmname, invalid IP.", "error", ""
 			);
 
 			# Error
@@ -707,7 +708,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		if ( $status != -1 )
 		{
 			&zenlog(
-				"ZAPI success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}."
+				"Success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}.", "info", ""
 			);
 
 			# Success
@@ -1089,8 +1090,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backend in the farm $farmname, invalid IP.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backend in the farm $farmname, invalid IP.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
@@ -1103,8 +1104,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backend in the farm $farmname, invalid port number.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backend in the farm $farmname, invalid port number.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
@@ -1117,8 +1118,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in a farm $farmname, invalid weight.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in a farm $farmname, invalid weight.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
@@ -1131,8 +1132,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in the farm $farmname, invalid priority.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in the farm $farmname, invalid priority.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
@@ -1145,8 +1146,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the connection limit in the farm $farmname, invalid value.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the connection limit in the farm $farmname, invalid value.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
@@ -1165,8 +1166,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			if ( $status == -1 )
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in a farm $farmname, it's not possible to modify the backend with ip $json_obj->{ip}.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in a farm $farmname, it's not possible to modify the backend with ip $json_obj->{ip}.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 	}
@@ -1203,8 +1204,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in the farm $farmname, invalid IP.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in the farm $farmname, invalid IP.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
@@ -1232,8 +1233,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in the farm $farmname, invalid interface.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in the farm $farmname, invalid interface.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
@@ -1246,8 +1247,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in the farm $farmname, invalid weight.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in the farm $farmname, invalid weight.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
@@ -1260,8 +1261,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in the farm $farmname, invalid priority.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in the farm $farmname, invalid priority.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
@@ -1278,8 +1279,8 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 			if ( $status == -1 )
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in the farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} and interface $json_obj->{interface}.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in the farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} and interface $json_obj->{interface}.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 	}
@@ -1300,7 +1301,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 	if ( !$error )
 	{
 		&zenlog(
-			"ZAPI success, some parameters have been changed in the backend $id_server in farm $farmname."
+			"Success, some parameters have been changed in the backend $id_server in farm $farmname.", "info", ""
 		);
 
 		# Success
@@ -1322,7 +1323,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 	else
 	{
 		&zenlog(
-			"Error trying to modify the backend in the farm $farmname, it's not possible to modify the backend."
+			"Error trying to modify the backend in the farm $farmname, it's not possible to modify the backend.", "error", ""
 		);
 
 		# Error
@@ -1441,8 +1442,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in a farm $farmname, invalid IP.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in a farm $farmname, invalid IP.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
@@ -1457,8 +1458,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in a farm $farmname, invalid port.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in a farm $farmname, invalid port.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
@@ -1471,8 +1472,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in a farm $farmname, invalid weight.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in a farm $farmname, invalid weight.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
@@ -1485,8 +1486,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in a farm $farmname, invalid timeout.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in a farm $farmname, invalid timeout.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
@@ -1505,8 +1506,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			if ( $status == -1 )
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in a farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} in service $service.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in a farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} in service $service.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 			else
 			{
@@ -1603,8 +1604,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			else
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in a farm $farmname, invalid IP.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in a farm $farmname, invalid IP.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 		}
 
@@ -1618,8 +1619,8 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 			if ( $status == -1 )
 			{
 				$error = "true";
-				$zapierror = "Error, trying to modify the backends in a farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} in service $service.";
-				&zenlog( "Zapi $zapierror" );
+				$zapierror = "Error trying to modify the backends in a farm $farmname, it's not possible to modify the backend with IP $json_obj->{ip} in service $service.";
+				&zenlog( "$zapierror", "error", "" );
 			}
 			else
 			{
@@ -1645,7 +1646,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 	if ( !$error )
 	{
 		&zenlog(
-			"ZAPI success, some parameters have been changed in the backend $id_server in service $service in farm $farmname."
+			"Success, some parameters have been changed in the backend $id_server in service $service in farm $farmname.", "info", ""
 		);
 
 		# Success
@@ -1668,7 +1669,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to modify the backends in a farm $farmname, it's not possible to modify the backend."
+			"Error trying to modify the backends in a farm $farmname, it's not possible to modify the backend.", "error", ""
 		);
 
 		# Error
@@ -1748,7 +1749,7 @@ sub delete_backend # ( $farmname, $id_server )
 	if ( $status != -1 )
 	{
 		&zenlog(
-			   "ZAPI success, the backend $id_server in farm $farmname has been deleted." );
+			   "Success, the backend $id_server in farm $farmname has been deleted.", "info", "" );
 
 		# Success
 		include 'Zevenet::Cluster';
@@ -1768,7 +1769,7 @@ sub delete_backend # ( $farmname, $id_server )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to delete the backend $id_server in farm $farmname, it's not possible to delete the backend."
+			"Error trying to delete the backend $id_server in farm $farmname, it's not possible to delete the backend.", "error", ""
 		);
 
 		# Error
@@ -1856,7 +1857,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 		if ( &getFarmVS( $farmname, $service, "algorithm" ) eq 'prio' )
 		{
 			&zenlog(
-				 "ZAPI error, this service algorithm does not support removing backends." );
+				 "Error this service algorithm does not support removing backends.", "error", "" );
 
 			# Error
 			my $errormsg = "This service algorithm does not support removing backends.";
@@ -1911,7 +1912,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 	if ( $status != -1 )
 	{
 		&zenlog(
-			"ZAPI success, the backend $id_server in service $service in farm $farmname has been deleted."
+			"Success, the backend $id_server in service $service in farm $farmname has been deleted.", "info", ""
 		);
 
 		require Zevenet::Farm::Action;
@@ -1935,7 +1936,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to delete the backend $id_server in service $service in farm $farmname, it's not possible to delete the backend."
+			"Error trying to delete the backend $id_server in service $service in farm $farmname, it's not possible to delete the backend.", "error", ""
 		);
 
 		# Error

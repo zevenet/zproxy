@@ -45,7 +45,7 @@ sub new_farm    # ( $json_obj )
 	{
 		my $errormsg =
 		  "Error trying to create a new farm, the farm name is required to have alphabet letters, numbers or hypens (-) only.";
-		&zenlog( $errormsg );
+		&zenlog( $errormsg, "error", "FARMS" );
 
 		# Error
 		my $body = {
@@ -62,7 +62,7 @@ sub new_farm    # ( $json_obj )
 	{
 		my $errormsg =
 		  "Error trying to create a new farm, the farm name already exists.";
-		&zenlog( $errormsg );
+		&zenlog( $errormsg, "error", "FARMS" );
 
 		# Error
 		my $body = {
@@ -79,7 +79,7 @@ sub new_farm    # ( $json_obj )
 	{
 		my $errormsg =
 		  "Error trying to create a new farm, the farm's profile is not supported.";
-		&zenlog( $errormsg );
+		&zenlog( $errormsg, "error", "FARMS" );
 
 		# Error
 		my $body = {
@@ -97,7 +97,7 @@ sub new_farm    # ( $json_obj )
 	{
 		my $errormsg =
 		  "Error trying to create a new farm, an available virtual IP must be set.";
-		&zenlog( $errormsg );
+		&zenlog( $errormsg, "error", "FARMS" );
 
 		# Error
 		my $body = {
@@ -128,8 +128,8 @@ sub new_farm    # ( $json_obj )
 	  )
 	{
 		my $errormsg =
-		  "Error trying to create a new farm, the virtual port must be an acceptable value and must be available.";
-		&zenlog( $errormsg );
+		  "Error trying to create a new farm, the Virtual port must be an acceptable value and must be available.";
+		&zenlog( $errormsg, "error", "FARMS" );
 
 		# Error
 		my $body = {
@@ -156,7 +156,7 @@ sub new_farm    # ( $json_obj )
 	if ( $status eq '-1' )
 	{
 		&zenlog(
-			"ZAPI error, trying to create a new farm $json_obj->{ farmname }, can't be created."
+			"Error trying to create a new farm $json_obj->{ farmname }, it can't be created.", "error", "FARMS"
 		);
 
 		# Error
@@ -173,7 +173,7 @@ sub new_farm    # ( $json_obj )
 	else
 	{
 		&zenlog(
-			 "ZAPI success, the farm $json_obj->{ farmname } has been created successfully."
+			 "Success, the farm $json_obj->{ farmname } has been created successfully.", "info", "FARMS"
 		);
 
 		# Success

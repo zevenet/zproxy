@@ -243,11 +243,11 @@ sub deleteBackup
 	if ( -e $filepath )
 	{
 		unlink ( $filepath );
-		&zenlog( "Deleted backup file $file" );
+		&zenlog( "Deleted backup file $file", "info", "SYSTEM" );
 	}
 	else
 	{
-		&zenlog( "File $file not found" );
+		&zenlog( "File $file not found", "warning", "SYSTEM" );
 		$error = 1;
 	}
 
@@ -278,17 +278,17 @@ sub applyBackup
 	my @eject = `$tar -xvzf $file -C /`;
 	unlink '/zevenet_version';
 
-	&zenlog( "Restoring backup $file" );
-	&zenlog( "unpacking files: @eject" );
+	&zenlog( "Restoring backup $file", "info", "SYSTEM" );
+	&zenlog( "unpacking files: @eject" "info", "SYSTEM" );
 	$error = system ( "/etc/init.d/zevenet restart 2> /dev/null" );
 
 	if ( !$error )
 	{
-		&zenlog( "Backup applied and Zen Load Balancer restarted..." );
+		&zenlog( "Backup applied and Zen Load Balancer restarted...", "info", "SYSTEM" );
 	}
 	else
 	{
-		&zenlog( "Problem restarting Zen Load Balancer service" );
+		&zenlog( "Problem restarting Zen Load Balancer service", "info", "SYSTEM" );
 	}
 
 	return $error;

@@ -252,7 +252,6 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 	}
 
 	include 'Zevenet::Farm::GSLB::Service';
-
 	zenlog( "Services: " . &getGSLBFarmServices( $fname ) );
 	if ( grep ( /^$svice$/, &getGSLBFarmServices( $fname ) ) )
 	{

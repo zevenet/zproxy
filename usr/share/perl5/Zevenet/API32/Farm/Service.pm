@@ -118,7 +118,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 
 	# no error found, return successful response
 	&zenlog(
-		"ZAPI success, a new service has been created in farm $farmname with id $json_obj->{id}."
+		"Success, a new service has been created in farm $farmname with id $json_obj->{id}.", "info", "FARMS"
 	);
 
 	my $body = {
@@ -528,7 +528,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	$output_params = &get_http_service_struct( $farmname, $service );
 
 	&zenlog(
-		"ZAPI success, some parameters have been changed in service $service in farm $farmname."
+		"Success, some parameters have been changed in service $service in farm $farmname.", "info", "FARMS"
 	);
 
 	my $body = {
@@ -624,9 +624,9 @@ sub delete_service    # ( $farmname, $service )
 
 	# no errors found, returning successful response
 	&zenlog(
-			 "ZAPI success, the service $service in farm $farmname has been deleted." );
+			 "Success, the service $service has been deleted in farm $farmname.", "info", "FARMS" );
 
-	my $message = "The service $service in farm $farmname has been deleted.";
+	my $message = "The service $service has been deleted in farm $farmname.";
 	my $body = {
 				 description => $desc,
 				 success     => "true",

@@ -147,10 +147,10 @@ sub delete_certificate # ( $cert_filename )
 	my $cert_filename = shift;
 	my $description = "Delete certificate";
 	my $errormsg;
-	
+
 	my $cert_dir = &getGlobalConfiguration('configdir');
 	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
-	
+
 	if ( !-f "$cert_dir\/$cert_filename" )
 	{
 		$errormsg = "Certificate file not found.";
@@ -174,7 +174,7 @@ sub delete_certificate # ( $cert_filename )
 		else
 		{
 			&delCert( $cert_filename );
-			
+
 			if ( !-f "$cert_dir\/$cert_filename" )
 			{
 				$errormsg = "The Certificate $cert_filename has been deleted.";
@@ -192,7 +192,7 @@ sub delete_certificate # ( $cert_filename )
 			}
 		}
 	}
-	
+
 	my $body = {
 				 description => $description,
 				 error       => "true",
@@ -201,6 +201,7 @@ sub delete_certificate # ( $cert_filename )
 	&httpResponse({ code => 400, body => $body });
 
 }
+
 
 # POST /certificates (Create CSR)
 sub create_csr
@@ -214,7 +215,7 @@ sub create_csr
 
 	if ( -f "$configdir/$json_obj->{name}.csr" )
 	{
-		&zenlog( "ZAPI error, $json_obj->{name} already exists." );
+		&zenlog( "Error $json_obj->{name} already exists.", "error", "LSLB" );
 		# Error
 		my $errormsg = "$json_obj->{name} already exists.";
 		my $body = {
@@ -250,7 +251,7 @@ sub create_csr
 		 )
 	{
 		$errormsg = "Fields can not be empty. Try again.";
-		&zenlog( $errormsg );
+		&zenlog( $errormsg, "error", "LSLB" );
 
 		my $body = {
 					 description => $description,
@@ -264,7 +265,7 @@ sub create_csr
 	if ( &checkFQDN( $json_obj->{ fqdn } ) eq "false" )
 	{
 		$errormsg = "FQDN is not valid. It must be as these examples: domain.com, mail.domain.com, or *.domain.com. Try again.";
-		&zenlog( $errormsg );
+		&zenlog( $errormsg, "error", "LSLB" );
 
 		my $body = {
 					 description => $description,
@@ -278,7 +279,7 @@ sub create_csr
 	if ( $json_obj->{ name } !~ /^[a-zA-Z0-9\-]*$/ )
 	{
 		$errormsg = "Certificate Name is not valid. Only letters, numbers and '-' chararter are allowed. Try again.";
-		&zenlog( $errormsg );
+		&zenlog( $errormsg, "error", "LSLB" );
 
 		my $body = {
 					 description => $description,
@@ -299,8 +300,8 @@ sub create_csr
 	if ( !$errormsg )
 	{
 		my $message = "Certificate $json_obj->{ name } created";
-		&zenlog( $message );
-		
+		&zenlog( $message, "info", "LSLB" );
+
 		my $body = {
 					description => $description,
 					success     => "true",
@@ -310,9 +311,9 @@ sub create_csr
 	}
 	else
 	{
-		$errormsg = "Error, creating certificate $json_obj->{ name }.";
-		&zenlog( $errormsg );
-		
+		$errormsg = "Error creating certificate $json_obj->{ name }.";
+		&zenlog( $errormsg, "error", "LSLB" );
+
 		my $body = {
 					description => $description,
 					error     => "true",
@@ -374,7 +375,7 @@ sub upload_certificate # ()
 	}
 	else
 	{
-		&zenlog( "ZAPI error, trying to upload a certificate." );
+		&zenlog( "Error trying to upload a certificate.", "error", "LSLB");
 
 		# Error
 		my $errormsg = "Invalid certificate file name";

@@ -55,7 +55,7 @@ sub getGlobalConfiguration
 	{
 		my $msg = "Could not open $global_conf_filepath: $!";
 
-		&zenlog( $msg );
+		&zenlog( $msg, "error", "SYSTEM" );
 		die $msg;
 	}
 

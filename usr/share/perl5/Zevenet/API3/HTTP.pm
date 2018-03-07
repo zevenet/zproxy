@@ -63,7 +63,7 @@ sub POST($$)
 		if ( &debug() )
 		{
 			use Data::Dumper;
-			&zenlog( "json: " . Dumper( $input_ref ) );
+			&zenlog( "json: " . Dumper( $input_ref ), "debug", "ZAPI" );
 		}
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
@@ -77,7 +77,7 @@ sub POST($$)
 	}
 	else
 	{
-		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }" );
+		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }", "error", "ZAPI" );
 		my $body = { message => 'Content-Type not supported', error => 'true' };
 
 		&httpResponse( { code => 415, body => $body } );
@@ -111,7 +111,7 @@ sub PUT($$)
 		{
 			require Data::Dumper;
 			Data::Dumper->import;
-			&zenlog( "json: " . Dumper $input_ref );
+			&zenlog( "json: " . Dumper $input_ref, "debug", "ZAPI" );
 		}
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
@@ -125,7 +125,7 @@ sub PUT($$)
 	}
 	else
 	{
-		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }" );
+		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }", "error", "ZAPI" );
 		my $body = { message => 'Content-Type not supported', error => 'true' };
 
 		&httpResponse( { code => 415, body => $body } );
@@ -183,7 +183,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 {
 	my $self = shift;
 
-	#~ &zenlog("DEBUG httpResponse input: " . Dumper $self ); # DEBUG
+	#~ &zenlog("DEBUG httpResponse input: " . Dumper $self, "debug", "ZAPI" ); # DEBUG
 
 	die 'httpResponse: Bad input' if !defined $self or ref $self ne 'HASH';
 
@@ -270,7 +270,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 		}
 	}
 
-	#~ &zenlog( "Response:$output<" ); # DEBUG
+	#~ &zenlog( "Response:$output<", "debug", "ZAPI" ); # DEBUG
 	print $output;
 
 	if ( &debug )
@@ -279,12 +279,12 @@ sub httpResponse    # ( \%hash ) hash_keys->( code, headers, body )
 		my $req_msg = "STATUS: $self->{ code } REQUEST: $ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}";
 		# include memory usage if debug is 2 or higher
 		$req_msg .= " " . &getMemoryUsage() if &debug() > 1;
-		&zenlog( $req_msg );
+		&zenlog( $req_msg , "debug", "ZAPI");
 
 		# log error message on error.
 		if ( ref $self->{ body } eq 'HASH' )
 		{
-			&zenlog( "Error Message: $self->{ body }->{ message }" )
+			&zenlog( "Error Message: $self->{ body }->{ message }", "error", "ZAPI" )
 			  if ( exists $self->{ body }->{ message } );
 		}
 	}

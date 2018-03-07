@@ -143,7 +143,7 @@ sub modify_gateway # ( $json_obj )
 	require Zevenet::Net::Interface;
 	my $if_ref = getInterfaceConfig( $interface, $ip_version );
 
-	&zenlog("applyRoutes interface:$interface address:$address if_ref:$if_ref");
+	&zenlog("applyRoutes interface:$interface address:$address if_ref:$if_ref", "info", "NETWORK");
 	my $state = &applyRoutes( "global", $if_ref, $address );
 
 	if ( $state == 0 )

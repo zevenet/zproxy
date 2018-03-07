@@ -33,9 +33,9 @@ sub validCGISession    # ()
 
 	my $session      = CGI::Session->load( $q );
 
-	#~ &zenlog( "CGI SESSION ID: " . Dumper $session );
-	#~ &zenlog( "CGI SESSION ID: " . $session->id ) if $session->id;
-	#~ &zenlog( "session data: " . Dumper $session->dataref() ); # DEBUG
+	#~ &zenlog( "CGI SESSION ID: " . Dumper $session, "debug", "ZAPI" );
+	#~ &zenlog( "CGI SESSION ID: " . $session->id, "debug", "ZAPI" ) if $session->id;
+	#~ &zenlog( "session data: " . Dumper $session->dataref(),"debug", "ZAPI" ); # DEBUG
 
 	if ( $session && $session->param( 'is_logged_in' ) && !$session->is_expired )
 	{

@@ -235,6 +235,7 @@ sub modify_cluster
 					"$zcluster_manager setKeepalivedConfig",
 					$zcl_conf->{$rhost}->{ip}
 				)
+				, "info", "CLUSTER"
 			);
 
 			# reload keepalived configuration local and remotely
@@ -246,6 +247,7 @@ sub modify_cluster
 					$zcl_conf->{$rhost}->{ip}
 				)
 				. "" # forcing string output
+				, "info", "CLUSTER"
 			);
 		}
 	};
@@ -270,7 +272,7 @@ sub modify_cluster
 	else
 	{
 		# Error
-		&zenlog( $@ );
+		&zenlog( $@, "error", "CLUSTER" );
 
 		my $errormsg = "Error configuring the cluster";
 		my $body = {
@@ -471,6 +473,7 @@ sub disable_cluster
 				"/etc/init.d/zevenet stop >/dev/null 2>&1",
 				$zcl_conf->{$rhost}->{ip}
 			)
+			, "info", "CLUSTER"
 		);
 
 		# 3 stop master cluster service
@@ -484,6 +487,7 @@ sub disable_cluster
 				"$zenino stop",
 				$zcl_conf->{$rhost}->{ip}
 			)
+			,"info", "CLUSTER"
 		);
 
 		# 2 stop slave zevenet
@@ -497,6 +501,7 @@ sub disable_cluster
 				"$zcluster_manager disableZCluster",
 				$zcl_conf->{$rhost}->{ip}
 			)
+			, "info", "CLUSTER"
 		);
 	}
 
@@ -517,6 +522,7 @@ sub disable_cluster
 				"rm $cl_file >/dev/null 2>&1",
 				$zcl_conf->{$rhost}->{ip}
 			)
+			, "info", "CLUSTER"
 		);
 	}
 
@@ -625,7 +631,7 @@ sub enable_cluster
 
 		if ( $error )
 		{
-			&zenlog("Error enabling the cluster: Keys Ids exchange failed");
+			&zenlog("Error enabling the cluster: Keys Ids exchange failed", "error", "CLUSTER");
 			die;
 		}
 
@@ -657,7 +663,7 @@ sub enable_cluster
 		unless ( scalar grep( { /^\d+: $cl_if\s+inet? $rm_ip\// } @remote_ips ) )
 		{
 			my $msg = "Remote address does not match the cluster interface";
-			&zenlog( $msg );
+			&zenlog( $msg, "error", "CLUSTER" );
 			die $msg;
 		}
 
@@ -688,21 +694,21 @@ sub enable_cluster
 			"$zcluster_manager setConntrackdConfig",
 			$zcl_conf->{$remote_hostname}->{ip}
 		);
-		&zenlog( "rc:$? $cl_output" );
+		&zenlog( "rc:$? $cl_output", "info", "CLUSTER" );
 
 		# remote keepalived configuration
 		$cl_output = &runRemotely(
 			"$zcluster_manager setKeepalivedConfig",
 			$zcl_conf->{$remote_hostname}->{ip}
 		);
-		&zenlog( "rc:$? $cl_output" );
+		&zenlog( "rc:$? $cl_output", "info", "CLUSTER" );
 
 		# start remote interfaces, farms and cluster
 		$cl_output = &runRemotely(
 			'/etc/init.d/zevenet start',
 			$zcl_conf->{$remote_hostname}->{ip}
 		);
-		&zenlog( "rc:$? $cl_output" );
+		&zenlog( "rc:$? $cl_output", "info", "CLUSTER" );
 	};
 	if ( ! $@ )
 	{

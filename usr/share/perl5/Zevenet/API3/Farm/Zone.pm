@@ -51,7 +51,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 	if ( $json_obj->{ id } =~ /^$/ )
 	{
 		&zenlog(
-			 "ZAPI error, trying to create a new zone in farm $farmname, invalid zone name."
+			 "Error trying to create a new zone in farm $farmname, invalid zone name.", "error", "GSLB"
 		);
 
 		# Error
@@ -68,7 +68,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 	if ( $json_obj->{ id } !~ /.*\..*/ )
 	{
 		&zenlog(
-			"Wrong zone name. The name has to be like zonename.com, zonename.net, etc. The zone $zone can't be created"
+			"Wrong zone name. The name has to be like zonename.com, zonename.net, etc. The zone $zone can't be created", "error", "GSLB"
 		);
 
 		# Error
@@ -89,7 +89,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 	if ( $result eq "0" )
 	{
 		&zenlog(
-			"ZAPI success, a new zone has been created in farm $farmname with id $json_obj->{id}."
+			"Success, a new zone has been created in farm $farmname with id $json_obj->{id}.", "info", "GSLB"
 		);
 
 		# Success
@@ -111,7 +111,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to create a new zone in farm $farmname with id $json_obj->{id}, it's not possible to create the zone."
+			"Error trying to create a new zone in farm $farmname with id $json_obj->{id}, it's not possible to create the zone.", "error", "GSLB"
 		);
 
 		# Error
@@ -183,7 +183,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	unless ( $json_obj->{ rname } && &getValidFormat( 'resource_name', $json_obj->{ rname } ) )
 	{
 		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter zone resource name (rname) doesn't exist."
+			"Error trying to create a new resource in zone $zone in farm $farmname, the parameter zone resource name (rname) doesn't exist.", "error", "GSLB"
 		);
 
 		# Error
@@ -204,7 +204,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	unless ( $json_obj->{ ttl } eq '' || ( &getValidFormat( 'resource_ttl', $json_obj->{ ttl } ) && $json_obj->{ ttl } != 0 ) ) # (1second-1year)
 	{
 		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter time to live value (ttl) doesn't exist."
+			"Error trying to create a new resource in zone $zone in farm $farmname, the parameter time to live value (ttl) doesn't exist.", "error", "GSLB"
 		);
 
 		# Error
@@ -223,7 +223,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	unless ( &getValidFormat( 'resource_type', $json_obj->{ type } ) )
 	{
 		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, the parameter DNS record type (type) doesn't exist."
+			"Error trying to create a new resource in zone $zone in farm $farmname, the parameter DNS record type (type) doesn't exist.", "error", "GSLB"
 		);
 
 		# Error
@@ -257,7 +257,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 		# TXT and NAPTR input let all characters
 
 		$errormsg .= " $json_obj->{ rname } not added to zone $zone";
-		&zenlog( $errormsg );
+		&zenlog( $errormsg, "error", "GSLB" );
 
 		# Error
 		$errormsg =
@@ -286,7 +286,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 		require Zevenet::Farm::Base;
 
 		&zenlog(
-			"ZAPI success, a new resource has been created in zone $zone in farm $farmname."
+			"Success, a new resource has been created in zone $zone in farm $farmname.", "info", "GSLB"
 		);
 
 		# Success
@@ -327,7 +327,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to create a new resource in zone $zone in farm $farmname, it's not possible to create a new resource."
+			"Error trying to create a new resource in zone $zone in farm $farmname, it's not possible to create a new resource.", "error", "GSLB"
 		);
 
 		# Error
@@ -506,7 +506,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify the resources in a farm $farmname, invalid rname, can't be blank."
+				"Error trying to modify the resources in a farm $farmname, invalid rname, can't be blank.", "error", "GSLB"
 			);
 		}
 	}
@@ -528,7 +528,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		{
 			$error = "true";
 			&zenlog(
-				  "ZAPI error, trying to modify the resources in a farm $farmname, invalid ttl."
+				  "Error trying to modify the resources in a farm $farmname, invalid ttl.", "error", "GSLB"
 			);
 		}
 	}
@@ -547,7 +547,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		{
 			$error = "true";
 			&zenlog(
-				 "ZAPI error, trying to modify the resources in a farm $farmname, invalid type."
+				 "Error trying to modify the resources in a farm $farmname, invalid type.", "error", "GSLB"
 			);
 		}
 	}
@@ -572,8 +572,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		$errormsg .= "RDATA must be a valid format ( 10 60 5060 host.example.com ),"		if ( $auxType eq 'SRV' );
 		$errormsg .= "RDATA must be a valid format ( foo.bar.com ),"			if ( $auxType eq 'PTR' );
 		# TXT and NAPTR input let all characters
-
-		&zenlog( $errormsg );
+		&zenlog( $errormsg, "error", "GSLB" );
 
 		my $body = {
 					 description => $description,
@@ -605,7 +604,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify the resources in a farm $farmname, it's not possible to modify the resource $id_resource in zone $zone."
+				"Error trying to modify the resources in a farm $farmname, it's not possible to modify the resource $id_resource in zone $zone.", "error", "GSLB"
 			);
 		}
 		elsif ($status == -2)
@@ -626,7 +625,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	if ( !$error )
 	{
 		&zenlog(
-			"ZAPI success, some parameters have been changed in the resource $id_resource in zone $zone in farm $farmname."
+			"Success, some parameters have been changed in the resource $id_resource in zone $zone in farm $farmname.", "info", "GSLB"
 		);
 
 		# Success
@@ -651,7 +650,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to modify the resources in a farm $farmname, it's not possible to modify the resource."
+			"Error trying to modify the resources in a farm $farmname, it's not possible to modify the resource.", "error", "GSLB"
 		);
 
 		# Error
@@ -694,7 +693,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 	{
 		$error = "true";
 		&zenlog(
-			"ZAPI error, trying to modify the zones in a farm $farmname, invalid defnamesv, can't be blank."
+			"Error trying to modify the zones in a farm $farmname, invalid defnamesv, can't be blank.", "error", "GSLB"
 		);
 	}
 
@@ -712,7 +711,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify the zones in a farm $farmname, it's not possible to modify the zone $zone."
+				"Error trying to modify the zones in a farm $farmname, it's not possible to modify the zone $zone.", "error", "GSLB"
 			);
 		}
 	}
@@ -721,7 +720,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 	if ( $error ne "true" )
 	{
 		&zenlog(
-			"ZAPI success, some parameters have been changed  in zone $zone in farm $farmname."
+			"Success, some parameters have been changed  in zone $zone in farm $farmname.", "info", "GSLB"
 		);
 
 		# Success
@@ -735,7 +734,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to modify the zones in a farm $farmname, it's not possible to modify the zone $zone."
+			"Error trying to modify the zones in a farm $farmname, it's not possible to modify the zone $zone.", "error", "GSLB"
 		);
 
 		# Error
@@ -779,7 +778,7 @@ sub delete_zone # ( $farmname, $zone )
 
 	if ( $? eq 0 )
 	{
-		&zenlog( "ZAPI success, the zone $zone in farm $farmname has been deleted." );
+		&zenlog( "Success, the zone $zone in farm $farmname has been deleted.", "info", "GSLB" );
 
 		# Success
 		require Zevenet::Farm::Base;
@@ -804,7 +803,7 @@ sub delete_zone # ( $farmname, $zone )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to delete the zone $zone in farm $farmname, the zone hasn't been deleted."
+			"Error trying to delete the zone $zone in farm $farmname, the zone hasn't been deleted.", "error", "GSLB"
 		);
 
 		# Error
@@ -861,7 +860,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 	if ( ! scalar grep { $_ eq $zone } &getGSLBFarmZones( $farmname ) )
 	{
 		&zenlog(
-			"ZAPI error, trying to delete the resource $resource in zone $zone in farm $farmname, invalid zone name."
+			"Error trying to delete the resource $resource in zone $zone in farm $farmname, invalid zone name.", "error", "GSLB"
 		);
 
 		# Error
@@ -885,7 +884,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 	if ( ! $resource_line )
 	{
 		&zenlog(
-			"ZAPI error, trying to delete the resource $resource in zone $zone in farm $farmname, invalid resource id."
+			"Error trying to delete the resource $resource in zone $zone in farm $farmname, invalid resource id.", "error", "GSLB"
 		);
 
 		# Error
@@ -904,7 +903,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 	if ( $status != -1 )
 	{
 		&zenlog(
-			"ZAPI success, the resource $resource in zone $zone in farm $farmname has been deleted."
+			"Success, the resource $resource in zone $zone in farm $farmname has been deleted.", "info", "GSLB"
 		);
 
 		# Success
@@ -931,7 +930,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to delete the resource $resource in zone $zone in farm $farmname, it's not possible to delete the resource."
+			"Error trying to delete the resource $resource in zone $zone in farm $farmname, it's not possible to delete the resource.", "error", "GSLB"
 		);
 
 		# Error

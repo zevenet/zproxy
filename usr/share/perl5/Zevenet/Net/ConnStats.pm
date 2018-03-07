@@ -78,8 +78,8 @@ sub getConntrack    # ($orig_src, $orig_dst, $reply_src, $reply_dst, $protocol)
 	my $output = \@output;
 
 	# my $conns_count = scalar @output;
-	# &zenlog( "getConntrack command: $conntrack_cmd" );
-	# &zenlog( "getConntrack returned $conns_count connections." );
+	# &zenlog( "getConntrack command: $conntrack_cmd", "info", "MONITOR" );
+	# &zenlog( "getConntrack returned $conns_count connections.", "info", "MONITOR" );
 
 	return $output;
 }
@@ -132,8 +132,8 @@ sub getNetstatFilter    # ($proto,$state,$ninfo,$fpid,$netstat)
 	my $output = \@output;
 
 	# my $conns_count = scalar @output;
-	# &zenlog( "getNetstatFilter filter: '$filter'" );
-	# &zenlog( "getNetstatFilter returned $conns_count connections." );
+	# &zenlog( "getNetstatFilter filter: '$filter'", "info", "MONITOR" );
+	# &zenlog( "getNetstatFilter returned $conns_count connections.", "info", "MONITOR" );
 
 	return $output;
 }
@@ -284,7 +284,7 @@ sub getConntrackParams    # ($filter)
 		$conntrack_params .= "--$param $filter->{ $filter_key } ";
 	}
 
-	#~ &zenlog( "getConntrackParams conntrack_params: $conntrack_params" );
+	#~ &zenlog( "getConntrackParams conntrack_params: $conntrack_params", "info", "MONITOR" );
 
 	return $conntrack_params;
 }
@@ -296,14 +296,14 @@ sub getConntrackCount
 	my $conntrack_bin = &getGlobalConfiguration('conntrack');
 	my $conntrack_cmd = "$conntrack_bin -L $conntrack_params 2>&1 >/dev/null";
 
-	#~ &zenlog( "getConntrackCount conntrack_cmd: $conntrack_cmd" );
+	#~ &zenlog( "getConntrackCount conntrack_cmd: $conntrack_cmd", "info", "MONITOR" );
 
 	my $summary = `$conntrack_cmd`;
 	my $error   = $?;
 	my ( $count )  = $summary =~ m/: ([0-9]+) flow entries have been shown./;
 
-	&zenlog( "getConntrackCount: An error happened running conntrack command: $conntrack_cmd" ) if $error;
-	#~ &zenlog( "getConntrackCount found $count connections." );
+	&zenlog( "getConntrackCount: An error happened running conntrack command: $conntrack_cmd", "error", "MONITOR" ) if $error;
+	#~ &zenlog( "getConntrackCount found $count connections.", "info", "CLUSTER" );
 
 	return $count + 0;
 }

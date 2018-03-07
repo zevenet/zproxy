@@ -207,7 +207,7 @@ sub runGSLBFarmReload    # ($farm_name)
 
 	my $gdnsd_command = "$gdnsd -c $configdir\/$fname\_$type.cfg/etc reload-zones";
 
-	&zenlog( "running $gdnsd_command" );
+	&zenlog( "running $gdnsd_command", "info", "GSLB" );
 
 	zsystem( "$gdnsd_command >/dev/null 2>&1" );
 	$output = $?;
@@ -382,7 +382,7 @@ sub setGSLBFarmStatus    # ($farm_name, $status, $writeconf)
 	}
 
 	require Zevenet::System;
-	&zenlog( "setGSLBFarmStatus(): Executing $command" );
+	&zenlog( "setGSLBFarmStatus(): Executing $command", "info", "GSLB" );
 	zsystem( "$command > /dev/null 2>&1" );
 
 	#TODO
@@ -477,7 +477,7 @@ sub setGSLBFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	my $fconf = &getFarmFile( $fname );
 	my $type  = &getFarmType( $fname );
 
-	&zenlog( "setting 'VirtualConf $vip $vipp' for $fname farm $type" );
+	&zenlog( "setting 'VirtualConf $vip $vipp' for $fname farm $type", "info", "GSLB" );
 
 	my $index = 0;
 	my $found = 0;

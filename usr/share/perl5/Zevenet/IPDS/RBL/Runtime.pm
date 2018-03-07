@@ -169,7 +169,7 @@ sub runRBLIptablesRule
 	else
 	{
 		$error = -1;
-		&zenlog( "Wrong action to create the rule " );
+		&zenlog( "Wrong action to create the rule ", "error", "IPDS" );
 	}
 
 	# only check packets with SYN flag: "--tcp-flags SYN SYN"
@@ -227,7 +227,7 @@ sub runRBLStartPacketbl
 	# Run packetbl
 	my $error = system ( "bash", "-c",
 						 ". /etc/profile_packetbl && $packetbl -f $configfile" );
-	&zenlog( "Error, starting packetbl" ) if ( $error );
+	&zenlog( "Error, starting packetbl", "error", "IPDS" ) if ( $error );
 	return $error;
 }
 
@@ -353,7 +353,7 @@ LogLevel	$params->{'log_level'}
 
 	unless ( $fh )
 	{
-		&zenlog( "Could not open file $filename: $!" );
+		&zenlog( "Could not open file $filename: $!", "error", "IPDS" );
 		return -1;
 	}
 

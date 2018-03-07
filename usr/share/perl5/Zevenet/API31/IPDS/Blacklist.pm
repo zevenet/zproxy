@@ -417,7 +417,7 @@ sub set_blacklists_list
 			my $noPush = grep ( !/^$source_format$/, @{ $json_obj->{ 'sources' } } );
 
 			# error
-			&zenlog( "$noPush sources couldn't be added" ) if ( $noPush );
+			&zenlog( "$noPush sources couldn't be added", "error", "IPDS"  ) if ( $noPush );
 		}
 
 		# set params

@@ -56,12 +56,12 @@ sub setBLCreateList
 	if ( !-e $blacklistsConf )
 	{
 		$output = system ( "$touch $blacklistsConf" );
-		&zenlog( "blacklists configuration file was created." );
+		&zenlog( "blacklists configuration file was created.", "info", "IPDS" );
 	}
 
 	if ( $listParams->{ 'type' } eq 'remote' && !exists $listParams->{ 'url' } )
 	{
-		&zenlog( "Remote lists need a url" );
+		&zenlog( "Remote lists need an url", "warning", "IPDS" );
 		return -1;
 	}
 
@@ -151,7 +151,7 @@ sub setBLDeleteList
 	if ( &getBLIpsetStatus( $listName ) eq "up" )
 	{
 		&zenlog(
-			"Error deleting the list, it is not possible remove the rule while it is running."
+			"Error deleting the list, it is not possible remove the rule while it is running.", "error", "IPDS"
 		);
 		return -1;
 	}
@@ -171,7 +171,7 @@ sub setBLDeleteList
 
 	if ( $output != 0 )
 	{
-		&zenlog( "Error deleting the list '$listName'." );
+		&zenlog( "Error deleting the list '$listName'.", "error", "IPDS" );
 	}
 
 	return $output;
@@ -234,13 +234,13 @@ sub setBLAddPreloadLists
 			$listHash->{ 'preload' } = 'true';
 
 			&setBLCreateList( $list, $listHash );
-			&zenlog( "The preload list '$list' was created." );
+			&zenlog( "The preload list '$list' was created.", "info", "IPDS" );
 		}
 
 		# list exists like preload. Update settings
 		elsif ( &getBLParam( $list, 'preload' ) eq 'true' )
 		{
-			&zenlog( "Update list $list" );
+			&zenlog( "Update list $list", "info", "IPDS" );
 			&setBLParam( $list, 'url', $preload_remote->{ $list }->{ 'url' } );
 
 			# Create list file if it doesn't exist
@@ -248,14 +248,14 @@ sub setBLAddPreloadLists
 			{
 				system ( "$touch $blacklistsPath/$list.txt 2>/dev/null" );
 			}
-			&zenlog( "The preload list '$list' was updated." );
+			&zenlog( "The preload list '$list' was updated.", "info", "IPDS" );
 		}
 
 		# list exists like NO preload
 		else
 		{
 			&zenlog(
-				"The preload list '$list' can't be loaded because other list exists with the same name."
+				"The preload list '$list' can't be loaded because other list exists with the same name.", "warning", "IPDS"
 			);
 		}
 	}
@@ -331,7 +331,7 @@ sub setBLParam
 	{
 		if ( &getBLExists( $value ) )
 		{
-			&zenlog( "List '$value' already exists." );
+			&zenlog( "List '$value' already exists.", "warning", "IPDS" );
 			$output = -1;
 		}
 		else
@@ -448,7 +448,7 @@ sub delBLParam
 
 	if ( exists ( $fileHandle->{ $listName }->{ $key } ) )
 	{
-		&zenlog( "Delete parameter $key in list $listName." );
+		&zenlog( "Deleted parameter $key in list $listName.", "info", "IPDS" );
 		delete $fileHandle->{ $listName }->{ $key };
 		$fileHandle->write( $blacklistsConf );
 	}
@@ -485,7 +485,7 @@ sub setBLAddToList
 		&ztielock( \my @list, "$blacklistsPath/$listName.txt" );
 		@list = @ipList;
 		untie @list;
-		&zenlog( "IPs of '$listName' was modificated." );
+		&zenlog( "IPs of '$listName' were modificated.", "info", "IPDS" );
 		$output = 0;
 	}
 
@@ -534,7 +534,7 @@ sub setBLAddSource
 		}
 	}
 
-	&zenlog( "$source was added to $listName" ) if ( !$error );
+	&zenlog( "$source was added to $listName", "info", "IPDS" ) if ( !$error );
 
 	return $error;
 }
@@ -572,7 +572,7 @@ sub setBLModifSource
 		$err = system ( "$ipset add $listName $source >/dev/null 2>&1" ) if ( !$err );
 	}
 
-	&zenlog( "$oldSource was replaced for $source in the list $listName" )
+	&zenlog( "$oldSource was replaced for $source in the list $listName", "info", "IPDS" )
 	  if ( !$err );
 
 	return $err;
@@ -610,7 +610,7 @@ sub setBLDeleteSource
 		$err = system ( "$ipset del $listName $source >/dev/null 2>&1" );
 	}
 
-	&zenlog( "$source was deleted from $listName" ) if ( !$err );
+	&zenlog( "$source was deleted from $listName", "info", "IPDS" ) if ( !$err );
 
 	return $err;
 }

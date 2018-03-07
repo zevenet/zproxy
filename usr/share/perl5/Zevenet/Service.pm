@@ -46,7 +46,7 @@ sub getEnableFarmGuardian
 sub setSystemOptimizations
 {
 	my $appliance_version = &getApplianceVersion();
-	&zenlog( "Appliance version: $appliance_version" );
+	&zenlog( "Appliance version: $appliance_version", "info", "SYSTEM" );
 
 	#### Starts node tuning ####
 	my $recent_ip_list_tot = &getGlobalConfiguration( 'recent_ip_list_tot' );
@@ -152,29 +152,32 @@ sub setSystemOptimizations
 	if ( $sysctl_errno )
 	{
 		$sysclt_msg = "An error happenend applying sysctl policies.";
+		&zenlog( $sysclt_msg, "error", "SYSTEM" );
 	}
 	else
 	{
 		$sysclt_msg = "Sysctl applied policies successfully.";
+		&zenlog( $sysclt_msg, "info", "SYSTEM" );
 	}
 
-	&zenlog( $sysclt_msg );
 	#### End of node tuning ####
 }
 
 sub start_service
 {
-	&zenlog( "Zevenet Service: Starting..." );
+	&zenlog( "Zevenet Service: Starting...", "info", "SYSTEM" );
+
 	if ( $swcert > 0 )
 	{
 		&printAndLog( "No valid ZLB certificate was found, no farm started\n" );
 		return 1;
 	}
 
-	&zenlog( "Zevenet Service: Loading Optimizations..." );
+	&zenlog( "Zevenet Service: Loading Optimizations...", "info", "SYSTEM" );
+
 	&setSystemOptimizations();
 
-	&zenlog( "Zevenet Service: Loading Bonding configuration..." );
+	&zenlog( "Zevenet Service: Loading Bonding configuration...", "info", "SYSTEM" );
 	include 'Zevenet::Net::Bonding';
 
 	# bonding
@@ -270,12 +273,13 @@ sub start_service
 
 sub start_modules
 {
-	# notifications
-	&zenlog( "Zevenet Service: Loading Notification configuration..." );
+	&zenlog( "Zevenet Service: Loading Notification configuration...", "info", "NOTIFICATIONS" );
 
+	# Notifications
 	include 'Zevenet::Notify';
 	&zlbstartNotifications();
 
+	&zenlog( "Zevenet Service: Starting RBAC system...", "info", "RBAC" );
 
 	# rbac
 	&zenlog( "Zevenet Service: Starting RBAC system..." );
@@ -283,9 +287,8 @@ sub start_modules
 	include 'Zevenet::RBAC::Action';
 	&initRBACModule();
 
-
 	# ipds
-	&zenlog( "Zevenet Service: Starting IPDS system..." );
+	&zenlog( "Zevenet Service: Starting IPDS system...", "info", "IPDS" );
 
 	include 'Zevenet::IPDS::Base';
 	&runIPDSStartModule();
@@ -319,11 +322,11 @@ sub enable_cluster
 	# end this function if the cluster is not configured
 	unless ( $zcl_configured )
 	{
-		&zenlog( "Cluster configuration not found" );
+		&zenlog( "Cluster configuration not found", "info", "CLUSTER" );
 		return 0;
 	}
 
-	&zenlog( "Cluster configuration found" );
+	&zenlog( "Cluster configuration found", "info", "CLUSTER" );
 
 	# check node status if node_status_file exists
 	if ( -f $znode_status_file )
@@ -347,12 +350,12 @@ sub enable_cluster
 		&runRemotely( "$zcluster_manager sync", $remote_ip );
 		&enableZCluster( 10 );
 
-		&zenlog( "Syncing RBAC users" );
+		&zenlog( "Syncing RBAC users", "info", "RBAC" );
 
 		include 'Zevenet::RBAC::Action';
 		&updateRBACAllUser();
 
-		&zenlog( "enableZCluster returned" );
+		&zenlog( "enableZCluster returned", "info", "CLUSTER" );
 	}
 
 	# disable ip announcement if the node is not master
@@ -392,7 +395,7 @@ sub start_cluster
 	# end this function if the cluster is not configured
 	unless ( $zcl_configured )
 	{
-		&zenlog( "Cluster configuration not found" );
+		&zenlog( "Cluster configuration not found", "info", "CLUSTER" );
 		return 0;
 	}
 
@@ -430,7 +433,7 @@ sub stop_service
 
 	if ( &getZClusterStatus() )
 	{
-		&zenlog( "Stopping ZCluster...\n" );
+		&zenlog( "Stopping ZCluster...", "info", "CLUSTER");
 
 		if ( `pgrep zeninotify` )
 		{

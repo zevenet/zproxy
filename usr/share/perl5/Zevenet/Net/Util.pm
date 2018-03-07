@@ -138,11 +138,11 @@ sub setIfacesUp    # ($if_name,$type)
 
 		if ( $type eq "vini" )
 		{
-			&zenlog( "Virtual interfaces of $if_name have been put up." );
+			&zenlog( "Virtual interfaces of $if_name have been put up.", "info", "NETWORK" );
 		}
 		elsif ( $type eq "vlan" )
 		{
-			&zenlog( "VLAN interfaces of $if_name have been put up." );
+			&zenlog( "VLAN interfaces of $if_name have been put up.", "info", "NETWORK" );
 		}
 	}
 
@@ -178,7 +178,7 @@ sub sendGPing    # ($pif)
 		my $pingc    = &getGlobalConfiguration( 'pingc' );
 		my $ping_cmd = "$ping_bin -c $pingc $gw";
 
-		&zenlog( "Sending $pingc ping(s) to gateway $gw" );
+		&zenlog( "Sending $pingc ping(s) to gateway $gw", "info", "NETWORK" );
 		system ( "$ping_cmd >/dev/null 2>&1 &" );
 	}
 }
@@ -261,7 +261,7 @@ sub sendGArp    # ($if,$ip)
 		my $arp_arg = $arp_unsolicited ? '-U' : '-A';
 		my $arping_cmd = "$arping_bin $arp_arg -c 2 -I $iface[0] $ip";
 
-		&zenlog( "$arping_cmd" );
+		&zenlog( "$arping_cmd", "info", "NETWORK" );
 		system ( "$arping_cmd >/dev/null &" );
 	}
 	elsif ( $ip_v == 6 )
@@ -270,7 +270,7 @@ sub sendGArp    # ($if,$ip)
 		#~ my $arpsend_bin = &getGlobalConfiguration( 'arping_bin' );
 		my $arping_cmd  = "$arpsend_bin -U -i $ip $iface[0]";
 
-		&zenlog( "$arping_cmd" );
+		&zenlog( "$arping_cmd", "info", "NETWORK" );
 		system ( "$arping_cmd >/dev/null &" );
 	}
 
@@ -408,7 +408,7 @@ sub setIpForward    # ($arg)
 	  ? 1           # set switch on if arg == 'true'
 	  : 0;          # switch is off by default
 
-	&zenlog( "setting $arg to IP forwarding " );
+	&zenlog( "setting $arg to IP forwarding ", "info", "NETWORK" );
 
 	# switch forwarding as requested
 	system ( "echo $switch > /proc/sys/net/ipv4/conf/all/forwarding" );
@@ -451,7 +451,7 @@ sub getInterfaceOfIp    # ($ip)
 	}
 
 	# returns an invalid interface name, an undefined variable
-	&zenlog("Warning: No interface was found configured with IP address $ip");
+	&zenlog("Warning: No interface was found configured with IP address $ip", "info", "NETWORK" );
 
 	return undef;
 }

@@ -52,7 +52,7 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 			 && &getValidFormat( 'cert_pem', $json_obj->{ file } ) )
 	{
 		&zenlog(
-			"ZAPI error, trying to add a certificate to the SNI list, invalid certificate name."
+			"Error trying to add a certificate to the SNI list, invalid certificate name.", "error", "LSLB"
 		);
 
 		# Error
@@ -72,7 +72,7 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 
 	if ( $status == 0 )
 	{
-		&zenlog( "ZAPI Success, trying to add a certificate to the SNI list." );
+		&zenlog( "Success, trying to add a certificate to the SNI list.", "info", "LSLB" );
 
 		# Success
 		my $message =
@@ -97,7 +97,7 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to add a certificate to the SNI list, it's not possible to add the certificate."
+			"Error trying to add a certificate to the SNI list, it's not possible to add the certificate.", "error", "LSLB"
 		);
 
 		# Error
@@ -144,7 +144,7 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 
 		if ( $status == 0 )
 		{
-			&zenlog( "ZAPI Success, trying to delete a certificate to the SNI list." );
+			&zenlog( "Success, certificate deleted from the SNI list.", "info", "LSLB" );
 
 			# Success
 			my $message = "The Certificate $certfilename has been deleted";
@@ -168,7 +168,7 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 		if ( $status == -1 )
 		{
 			&zenlog(
-				"ZAPI error, trying to delete a certificate to the SNI list, it's not possible to delete the certificate."
+				"Error trying to delete a certificate to the SNI list, it's not possible to delete the certificate."," error", "LSLB"
 			);
 
 			# Error
@@ -186,7 +186,7 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 		if ( $status == 1 )
 		{
 			&zenlog(
-				"ZAPI error, trying to delete a certificate to the SNI list, it's not possible to delete all certificates, at least one is required for HTTPS."
+				"Error trying to delete the certificates from the SNI list, it's not possible to delete all certificates, at least one is required for HTTPS.", "error", "LSLB"
 			);
 
 			# Error
@@ -204,7 +204,7 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to delete a certificate to the SNI list, invalid certificate id."
+			"Error trying to delete a certificate from the SNI list, invalid certificate id.", "error", "LSLB"
 		);
 
 		# Error

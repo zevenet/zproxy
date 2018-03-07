@@ -52,14 +52,14 @@ sub runBLStartModule
 	if ( !-d $blacklistsPath )
 	{
 		system ( &getGlobalConfiguration( 'mkdir' ) . " -p $blacklistsPath" );
-		&zenlog( "Created $blacklistsPath directory." );
+		&zenlog( "Created $blacklistsPath directory.", "info", "IPDS" );
 	}
 
 	# create list config if doesn't exist
 	if ( !-e $blacklistsConf )
 	{
 		system ( "$touch $blacklistsConf" );
-		&zenlog( "Created $blacklistsConf file." );
+		&zenlog( "Created $blacklistsConf file.", "info", "IPDS" );
 	}
 
 	# load preload lists
@@ -93,7 +93,7 @@ sub runBLStartModule
 					# load in memory the list
 					&setBLRunList( $list );
 				}
-				&zenlog( "Creating rules for the list $list and farm $farm." );
+				&zenlog( "Creating rules for the list $list and farm $farm.", "info", "IPDS" );
 				&setBLCreateRule( $farm, $list );
 			}
 		}
@@ -191,7 +191,7 @@ sub runBLStartByRule
 	{
 		if ( &runBLStart( $ruleName, $farmName ) != 0 )
 		{
-			&zenlog( "Error running the rule $ruleName in the farm $farmName." );
+			&zenlog( "Error running the rule $ruleName in the farm $farmName.", "error", "IPDS" );
 		}
 	}
 
@@ -230,7 +230,7 @@ sub runBLStopByRule
 	{
 		if ( &runBLStop( $ruleName, $farmName ) != 0 )
 		{
-			&zenlog( "Error stopping the rule $ruleName in the farm $farmName." );
+			&zenlog( "Error stopping the rule $ruleName in the farm $farmName.", "error", "IPDS" );
 		}
 	}
 
@@ -296,7 +296,7 @@ sub runBLStart
 		}
 		if ( !$error )
 		{
-			&zenlog( "Creating rules for the list $list and farm $farm." );
+			&zenlog( "Creating rules for the list $list and farm $farm.", "info", "IPDS" );
 			$error = &setBLCreateRule( $farm, $list );
 		}
 	}

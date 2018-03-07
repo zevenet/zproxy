@@ -44,7 +44,7 @@ sub getConfigTiny
 	if ( ! -f $file_path )
 	{
 		open my $fi, '>', $file_path;
-		&zenlog("Could not open file $file_path: $!") if ! $fi;
+		&zenlog("Could not open file $file_path: $!", "error", "SYSTEM") if ! $fi;
 		close $fi;
 	}
 
@@ -76,13 +76,13 @@ sub setConfigTiny
 
 	if ( ! -f $file_path )
 	{
-		&zenlog("Could not find $file_path: $!");
+		&zenlog("Could not find $file_path: $!", "error", "SYSTEM");
 		return undef;
 	}
 
 	if ( ref $config_ref ne 'Config::Tiny' )
 	{
-		&zenlog("Ilegal configuration argument.");
+		&zenlog("Ilegal configuration argument.", "error", "SYSTEM");
 		return undef;
 	}
 

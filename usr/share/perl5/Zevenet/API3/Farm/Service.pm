@@ -56,7 +56,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $json_obj->{ id } =~ /^$/ )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, invalid service name."
+				"Error trying to create a new service in farm $farmname, invalid service name.", "error", "LSLB"
 			);
 
 			# Error
@@ -76,7 +76,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $result eq "0" )
 		{
 			&zenlog(
-				"ZAPI success, a new service has been created in farm $farmname with id $json_obj->{id}."
+				"Success, a new service has been created in farm $farmname with id $json_obj->{id}.", "info", "LSLB"
 			);
 
 			# Success
@@ -99,7 +99,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $result eq "2" )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, new service $json_obj->{id} can't be empty."
+				"Error trying to create a new service in farm $farmname, new service $json_obj->{id} can't be empty.", "error", "LSLB"
 			);
 
 			# Error
@@ -115,7 +115,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $result eq "1" )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, the service $json_obj->{id} already exists."
+				"Error trying to create a new service in farm $farmname, the service $json_obj->{id} already exists.", "error", "LSLB"
 			);
 
 			# Error
@@ -131,7 +131,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $result eq "3" )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, the service name $json_obj->{id} is not valid, only allowed numbers,letters and hyphens."
+				"Error trying to create a new service in farm $farmname, the service name $json_obj->{id} is not valid, only allowed numbers,letters and hyphens.", "error", "LSLB"
 			);
 
 			# Error
@@ -154,7 +154,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $json_obj->{ id } =~ /^$/ )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, invalid service name."
+				"Error trying to create a new service in farm $farmname, invalid service name.", "error", "LSLB"
 			);
 
 			# Error
@@ -171,7 +171,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $json_obj->{ algorithm } =~ /^$/ )
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, invalid algorithm."
+				"Error trying to create a new service in farm $farmname, invalid algorithm.", "error", "LSLB"
 			);
 
 			# Error
@@ -191,7 +191,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		if ( $status != -1 )
 		{
 			&zenlog(
-				"ZAPI success, a new service has been created in farm $farmname with id $json_obj->{id}."
+				"Success, a new service has been created in farm $farmname with id $json_obj->{id}.", "info", "LSLB"
 			);
 
 			# Success
@@ -218,7 +218,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		else
 		{
 			&zenlog(
-				"ZAPI error, trying to create a new service in farm $farmname, it's not possible to create the service $json_obj->{id}."
+				"Error trying to create a new service in farm $farmname, it's not possible to create the service $json_obj->{id}.", "error", "LSLB"
 			);
 
 			# Error
@@ -395,7 +395,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid redirect."
+					"Error trying to modify the service $service in a farm $farmname, invalid redirect.", "error", "LSLB"
 				);
 			}
 		}
@@ -418,7 +418,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid redirecttype."
+					"Error trying to modify the service $service in a farm $farmname, invalid redirecttype.", "error", "LSLB"
 				);
 			}
 		}
@@ -434,7 +434,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid ttl, can't be blank."
+					"Error trying to modify the service $service in a farm $farmname, invalid ttl, can't be blank.", "error", "LSLB"
 				);
 			}
 			elsif ( $json_obj->{ ttl } =~ /^\d+/ )
@@ -444,7 +444,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 				{
 					$error = "true";
 					&zenlog(
-						"ZAPI error, trying to modify the service $service in a farm $farmname, it's not possible to change the ttl parameter."
+						"Error trying to modify the service $service in a farm $farmname, it's not possible to change the ttl parameter.", "error", "LSLB"
 					);
 				}
 			}
@@ -452,7 +452,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid ttl, must be numeric."
+					"Error trying to modify the service $service in a farm $farmname, invalid ttl, must be numeric.", "error", "LSLB"
 				);
 			}
 		}
@@ -470,7 +470,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 				{
 					$error = "true";
 					&zenlog(
-						"ZAPI error, trying to modify the service $service in a farm $farmname, it's not possible to change the persistence parameter."
+						"Error trying to modify the service $service in a farm $farmname, it's not possible to change the persistence parameter.", "error", "LSLB"
 					);
 				}
 			}
@@ -482,7 +482,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid leastresp, can't be blank."
+					"Error trying to modify the service $service in a farm $farmname, invalid leastresp, can't be blank.", "error", "LSLB"
 				);
 			}
 			elsif ( $json_obj->{ leastresp } =~ /^true|false$/ )
@@ -500,7 +500,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid leastresp."
+					"Error trying to modify the service $service in a farm $farmname, invalid leastresp.", "error", "LSLB"
 				);
 			}
 		}
@@ -519,7 +519,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid httpsb, can't be blank."
+					"Error trying to modify the service $service in a farm $farmname, invalid httpsb, can't be blank.", "error", "LSLB"
 				);
 			}
 			elsif ( $json_obj->{ httpsb } =~ /^true|false$/ )
@@ -537,7 +537,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, invalid httpsb."
+					"Error trying to modify the service $service in a farm $farmname, invalid httpsb.", "error", "LSLB"
 				);
 			}
 		}
@@ -552,7 +552,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify the service $service in a farm $farmname, invalid deftcpport, can't be blank."
+				"Error trying to modify the service $service in a farm $farmname, invalid deftcpport, can't be blank.", "error" "LSLB"
 			);
 		}
 		if ( $error eq "false" )
@@ -583,7 +583,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify the service $service in a farm $farmname, it's not possible to change the deftcpport parameter."
+					"Error trying to modify the service $service in a farm $farmname, it's not possible to change the deftcpport parameter.", "error", "LSLB"
 				);
 			}
 		}
@@ -598,7 +598,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		require Zevenet::Farm::Base;
 
 		&zenlog(
-			"ZAPI success, some parameters have been changed in service $service in farm $farmname."
+			"Success, parameters have been changed in service $service in farm $farmname.", "info", "LSLB"
 		);
 
 		# Success
@@ -621,7 +621,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to modify the zones in a farm $farmname, it's not possible to modify the service $service."
+			"Error trying to modify the zones in a farm $farmname, it's not possible to modify the service $service.", "error", "LSLB"
 		);
 
 		# Error
@@ -719,7 +719,7 @@ sub move_services
 						}
 						else
 						{
-							&zenlog( "Farm stopped successful." );
+							&zenlog( "Farm stopped successful.", "info", "LSLB" );
 						}
 					}
 					if ( !$errormsg )
@@ -740,7 +740,7 @@ sub move_services
 							if ( &runFarmStart( $farmname, "true" ) == 0 )
 							{
 								&setHTTPFarmBackendStatus( $farmname );
-								&zenlog( "$service was moved successful." );
+								&zenlog( "$service was moved successful.", "info", "LSLB" );
 							}
 							else
 							{
@@ -847,7 +847,7 @@ sub delete_service # ( $farmname, $service )
 	if ( $return == -2 )
 	{
 		&zenlog(
-				 "ZAPI error, the service $service in farm $farmname hasn't been deleted. The service is used by a zone." );
+				 "Error, the service $service in farm $farmname hasn't been deleted. The service is used by a zone.", "error", "LSLB" );
 
 		# Error
 		my $message = "The service $service in farm $farmname hasn't been deleted. The service is used by a zone.";
@@ -862,7 +862,7 @@ sub delete_service # ( $farmname, $service )
 	elsif ( $return == 0 )
 	{
 		&zenlog(
-				 "ZAPI success, the service $service in farm $farmname has been deleted." );
+				 "Success, the service $service in farm $farmname has been deleted.", "info", "LSLB" );
 
 		# Success
 		my $message = "The service $service in farm $farmname has been deleted.";
@@ -887,7 +887,7 @@ sub delete_service # ( $farmname, $service )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to delete the service $service in farm $farmname, the service hasn't been deleted."
+			"Error trying to delete the service $service in farm $farmname, the service hasn't been deleted.", "error", "LSLB"
 		);
 
 		# Error

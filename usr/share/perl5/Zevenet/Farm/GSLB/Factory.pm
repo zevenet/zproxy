@@ -57,7 +57,7 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	}
 
 	my $farm_path = "$configdir/${fname}_${type}\.cfg";
-	&zenlog( "running 'Create' for $fname farm $type in path $farm_path " );
+	&zenlog( "running 'Create' for $fname farm $type in path $farm_path ", "info", "GSLB" );
 
 	mkdir "$farm_path";
 	mkdir "$farm_path\/etc";
@@ -90,8 +90,8 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 
 	#run farm
 	my $exec = &getGSLBStartCommand( $fname );
-	&zenlog( "running $exec" );
 
+	&zenlog( "running $exec", "info", "GSLB" );
 	require Zevenet::System;
 	zsystem( "$exec > /dev/null 2>&1" );
 

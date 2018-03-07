@@ -88,7 +88,7 @@ sub new_bond # ( $json_obj )
 
 	if ( $missing_slave || !@{ $json_obj->{ slaves } } )
 	{
-		&zenlog("missing_slave:$missing_slave slaves:@{ $json_obj->{ slaves } }");
+		&zenlog("missing_slave:$missing_slave slaves:@{ $json_obj->{ slaves } }", "error", "NETWORK");
 		# Error
 		my $errormsg = "Error loading the slave interfaces list";
 		my $body = {

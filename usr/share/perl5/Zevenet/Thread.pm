@@ -55,13 +55,13 @@ sub runParallel
 	# validate input arguments
 	if ( ref $code_ref ne 'CODE' )
 	{
-		&zenlog( ( caller )[3] . ": Invalid code ref");
+		&zenlog( ( caller )[3] . ": Invalid code ref", "error", "SYSTEM");
 		die;
 	}
 
 	if ( ref $arg_list ne 'ARRAY' )
 	{
-		&zenlog( ( caller )[3] . ": Invalid argument list");
+		&zenlog( ( caller )[3] . ": Invalid argument list", "error", "SYSTEM");
 		die;
 	}
 

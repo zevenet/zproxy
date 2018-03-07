@@ -46,7 +46,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 	if ( ! &getValidFormat( 'zone', $json_obj->{ id } ) )
 	{
 		&zenlog(
-			"Wrong zone name. The name has to be like zonename.com, zonename.net, etc. The zone $zone can't be created"
+			"Wrong zone name. The name has to be like zonename.com, zonename.net, etc. The zone $zone can't be created", "error", "GSLB"
 		);
 
 		my $msg =
@@ -66,7 +66,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 	}
 
 	&zenlog(
-		"ZAPI success, a new zone has been created in farm $farmname with id $json_obj->{id}."
+		"Success, a new zone has been created in farm $farmname with id $json_obj->{id}.", "info", "GSLB"
 	);
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
@@ -184,7 +184,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	require Zevenet::Farm::Base;
 
 	&zenlog(
-		"ZAPI success, a new resource has been created in zone $zone in farm $farmname."
+		"Success, a new resource has been created in zone $zone in farm $farmname.", "info", "GSLB"
 	);
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
@@ -422,7 +422,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	}
 
 	&zenlog(
-		"ZAPI success, some parameters have been changed in the resource $id_resource in zone $zone in farm $farmname."
+		"Success, some parameters have been changed in the resource $id_resource in zone $zone in farm $farmname.", "info", "GSLB"
 	);
 
 	my $message = "Resource modified";
@@ -485,7 +485,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 		&runGSLBFarmReload( $farmname );
 	}
 
-	&zenlog( "ZAPI success, some parameters have been changed  in zone $zone in farm $farmname." );
+	&zenlog( "Success, some parameters have been changed  in zone $zone in farm $farmname.", "info", "GSLB" );
 
 	my $body = {
 				 description => $desc,
@@ -522,7 +522,7 @@ sub delete_zone # ( $farmname, $zone )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	&zenlog( "ZAPI success, the zone $zone in farm $farmname has been deleted." );
+	&zenlog( "Success, the zone $zone in farm $farmname has been deleted.", "info", "GSLB" );
 
 	require Zevenet::Farm::Base;
 
@@ -598,7 +598,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	&zenlog( "ZAPI success, the resource $resource in zone $zone in farm $farmname has been deleted." );
+	&zenlog( "Success, the resource $resource in zone $zone in farm $farmname has been deleted.", "info", "GSLB" );
 
 	require Zevenet::Farm::Base;
 

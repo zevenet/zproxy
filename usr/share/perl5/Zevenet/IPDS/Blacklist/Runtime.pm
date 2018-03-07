@@ -66,17 +66,17 @@ sub setBLRunList
 
 	#~ if ( &getBLIpsetStatus ( $listName ) eq 'down' )
 	{
-		&zenlog( "Creating ipset table" );
+		&zenlog( "Creating ipset table", "info", "IPDS" );
 		$output = system (
 			   "$ipset create -exist $listName hash:net maxelem $maxelem >/dev/null 2>&1" );
 	}
 
 	if ( !$output )
 	{
-		&zenlog( "Refreshing list $listName" );
+		&zenlog( "Refreshing list $listName", "info", "IPDS" );
 		$output = &setBLRefreshList( $listName );
 
-		&zenlog( "Error, refreshing list $listName" ) if ( $output );
+		&zenlog( "Error, refreshing list $listName", "error", "IPDS" ) if ( $output );
 	}
 
 	if ( &getBLParam( $listName, 'type' ) eq 'remote' )
@@ -104,7 +104,7 @@ sub setBLDestroyList
 	# FIXME:  lunch consecutively this ipset command and below return error
 	#~ if ( &getBLIpsetStatus ( $listName ) eq 'up' )
 	#~ {
-	&zenlog( "Destroying blacklist $listName" );
+	&zenlog( "Destroying blacklist $listName", "info", "IPDS" );
 	system ( "$ipset destroy $listName >/dev/null 2>&1" );
 
 	#~ }
@@ -160,7 +160,7 @@ sub setBLRefreshList
 	my $ipset     = &getGlobalConfiguration( 'ipset' );
 	my $source_re = &getValidFormat( 'blacklists_source' );
 
-	&zenlog( "refreshing '$listName'... " );
+	&zenlog( "refreshing '$listName'... ", "info", "IPDS" );
 	$output = system ( "$ipset flush $listName >/dev/null 2>&1" );
 
 	if ( !$output )
@@ -186,7 +186,7 @@ sub setBLRefreshList
 
 	if ( $output )
 	{
-		&zenlog( "Error, refreshing '$listName'." );
+		&zenlog( "Error refreshing '$listName'.", "error", "IPDS" );
 	}
 
 	return $output;
@@ -226,7 +226,7 @@ sub setBLRefreshAllLists
 		{
 			&setBLRefreshList( $listName );
 		}
-		&zenlog( "The preload list '$listName' was update." );
+		&zenlog( "The preload list '$listName' was updated.", "info", "IPDS" );
 	}
 
 	return $output;
@@ -257,7 +257,7 @@ sub setBLDownloadRemoteList
 	my $timeout = 10;
 	my $error;
 
-	&zenlog( "Downloading $listName..." );
+	&zenlog( "Downloading $listName...", "info", "IPDS" );
 
 	# if ( $fileHandle->{ $listName }->{ 'update_status' } ne 'dis' )
 
@@ -279,7 +279,7 @@ sub setBLDownloadRemoteList
 	if ( !@ipList )
 	{
 		&setBLParam( $listName, 'update_status', 'down' );
-		&zenlog( "Fail, downloading $listName from url '$url'. Not found any source." );
+		&zenlog( "Failed downloading $listName from url '$url'. Not found any source.", "error", "IPDS" );
 		$error = 1;
 	}
 	else
@@ -293,7 +293,7 @@ sub setBLDownloadRemoteList
 		untie @list;
 
 		&setBLParam( $listName, 'update_status', 'up' );
-		&zenlog( "$listName was downloaded successful." );
+		&zenlog( "$listName was downloaded successful.", "info", "IPDS" );
 	}
 
 	return $error;
@@ -353,7 +353,7 @@ sub setBLCreateRule
 	else
 	{
 		&zenlog(
-				"The parameter 'action' isn't valid in function 'setBLCreateIptableCmd'." );
+				"The parameter 'action' isn't valid in function 'setBLCreateIptableCmd'.", "warning", "IPDS" );
 		return -1;
 	}
 
@@ -436,7 +436,7 @@ sub setBLCreateRule
 
 			if ( !$output )
 			{
-				&zenlog( "List '$listName' was applied successful to the farm '$farmName'." );
+				&zenlog( "List '$listName' was applied successful to the farm '$farmName'.", "info", "IPDS" );
 			}
 		}
 	}
@@ -540,7 +540,7 @@ sub delBLCronTask
 	my $cron_service = &getGlobalConfiguration( 'cron_service' );
 	&logAndRun( "$cron_service restart" );
 
-	&zenlog( "Delete the task associated to the list $listName" );
+	&zenlog( "Deleted the task associated to the list $listName", "info", "IPDS" );
 }
 
 # &setBLCronTask ( $list );
@@ -607,7 +607,7 @@ sub setBLCronTask
 	my $cmd =
 	  "$cronFormat->{ 'min' } $cronFormat->{ 'hour' } $cronFormat->{ 'dom' } $cronFormat->{ 'month' } $cronFormat->{ 'dow' }\t"
 	  . "root\t/usr/local/zevenet/www/ipds/blacklists/updateRemoteList.pl $listName & >/dev/null 2>&1";
-	&zenlog( "Added cron task: $cmd" );
+	&zenlog( "Added cron task: $cmd", "info", "IPDS" );
 
 	require Zevenet::Lock;
 	&ztielock( \my @list, $blacklistsCronFile );
@@ -615,7 +615,7 @@ sub setBLCronTask
 	# this line already exists, replace it
 	if ( grep ( s/.* $listName .*/$cmd/, @list ) )
 	{
-		&zenlog( "update cron task for list $listName" );
+		&zenlog( "update cron task for list $listName", "info", "IPDS" );
 	}
 	else
 	{
@@ -625,7 +625,7 @@ sub setBLCronTask
 
 	my $cron_service = &getGlobalConfiguration( 'cron_service' );
 	&logAndRun( "$cron_service restart" );
-	&zenlog( "Created a cron task for the list $listName" );
+	&zenlog( "Created a cron task for the list $listName", "info", "IPDS" );
 }
 
 # setBLApplyToFarm ( $farmName, $list );

@@ -103,7 +103,7 @@ sub new_gslb_farm_service    # ( $json_obj, $farmname )
 
 	# no error found, return a succesful response
 	&zenlog(
-		"ZAPI success, a new service has been created in farm $farmname with id $json_obj->{id}."
+		"Success, a new service has been created in farm $farmname with id $json_obj->{id}.", "info", "GSLB"
 	);
 
 	my $body = {
@@ -176,7 +176,7 @@ sub modify_gslb_service    # ( $json_obj, $farmname, $service )
 
 	# no errors found, return succesful response
 	&zenlog(
-		"ZAPI success, some parameters have been changed in service $service in farm $farmname."
+		"Success, some parameters have been changed in service $service in farm $farmname.", "info", "GSLB"
 	);
 
 	my $body = {
@@ -246,7 +246,7 @@ sub delete_gslb_service    # ( $farmname, $service )
 
 	# no error found, return succesful response
 	&zenlog(
-			 "ZAPI success, the service $service in farm $farmname has been deleted." );
+			 "Success, the service $service in farm $farmname has been deleted.", "info", "GSLB" );
 
 	my $msg = "The service $service in farm $farmname has been deleted.";
 	my $body = {
@@ -342,7 +342,7 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 
 	# no error found, return successful response
 	&zenlog(
-		"ZAPI success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}."
+		"Success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}.", "info", "GSLB"
 	);
 
 	my $message = "Added backend to service successfully";
@@ -488,7 +488,7 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 	&setFarmRestart( $farmname );
 
 	&zenlog(
-		"ZAPI success, some parameters have been changed in the backend $id_server in service $service in farm $farmname."
+		"Success, some parameters have been changed in the backend $id_server in service $service in farm $farmname.", "info", "GSLB"
 	);
 
 
@@ -584,7 +584,7 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 	# check if there was an error removing the backend
 	if ( $status == -1 )
 	{
-		&zenlog( "It's not possible to delete the backend." );
+		&zenlog( "It's not possible to delete the backend.", "warning", "GSLB" );
 
 		my $msg =
 		  "Could not find the backend with ID $id_server of the $farmname farm.";
@@ -593,7 +593,7 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 
 	# no error found, return successful response
 	&zenlog(
-		"ZAPI success, the backend $id_server in service $service in farm $farmname has been deleted."
+		"Success, the backend $id_server in service $service in farm $farmname has been deleted.", "info", "GSLB"
 	);
 
 	&setFarmRestart( $farmname );

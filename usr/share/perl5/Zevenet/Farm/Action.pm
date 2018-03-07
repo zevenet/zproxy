@@ -54,7 +54,7 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 	# finish the function if the tarm is already up
 	if ( &getFarmStatus( $farm_name ) eq "up" )
 	{
-		zenlog( "Farm $farm_name already up" );
+		zenlog( "Farm $farm_name already up", "info", "FARMS" );
 		return 0;
 	}
 
@@ -69,7 +69,8 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
-	&zenlog( "running 'Start write $writeconf' for $farm_name farm $farm_type" );
+
+	&zenlog( "running 'Start write $writeconf' for $farm_name farm $farm_type", "info", "FARMS" );
 
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
@@ -224,7 +225,7 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 	my $farm_type = &getFarmType( $farm_name );
 	$status = $farm_type;
 
-	&zenlog( "running 'Stop write $writeconf' for $farm_name farm $farm_type" );
+	&zenlog( "running 'Stop write $writeconf' for $farm_name farm $farm_type", "info", "FARMS" );
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -318,7 +319,7 @@ sub runFarmDelete    # ($farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $status    = 1;
 
-	&zenlog( "running 'Delete' for $farm_name" );
+	&zenlog( "running 'Delete' for $farm_name", "info", "FARMS" );
 
 	if ( $farm_type eq "gslb" )
 	{
@@ -455,7 +456,7 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	# end of farmguardian renaming
 
 	&zenlog(
-			 "setting 'NewFarmName $new_farm_name' for $farm_name farm $farm_type" );
+			 "setting 'NewFarmName $new_farm_name' for $farm_name farm $farm_type", "info", "FARMS"  );
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{

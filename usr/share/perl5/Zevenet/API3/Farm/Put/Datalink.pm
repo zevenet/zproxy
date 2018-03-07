@@ -58,7 +58,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 		unless ( &getFarmStatus( $farmname ) eq 'down' )
 		{
 			&zenlog(
-				"ZAPI error, trying to modify a datalink farm $farmname, cannot change the farm name while running"
+				"Error trying to modify a datalink farm $farmname, cannot change the farm name while running", "error", "DSLB"
 			);
 
 			my $errormsg = 'Cannot change the farm name while running';
@@ -76,7 +76,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a datalink farm $farmname, invalid newfarmname, can't be blank."
+				"Error trying to modify a datalink farm $farmname, invalid newfarmname, can't be blank.", "error", "DSLB"
 			);
 		}
 		else
@@ -92,7 +92,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 					{
 						$error = "true";
 						&zenlog(
-							"ZAPI error, trying to modify a datalink farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
+							"Error trying to modify a datalink farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name.", "error", "DSLB"
 						);
 					}
 					else
@@ -103,7 +103,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 						{
 							&error = "true";
 							&zenlog(
-								"ZAPI error, trying to modify a datalink farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
+								"Error trying to modify a datalink farm $farmname, the name of the farm can't be modified, delete the farm and create a new one.", "error", "DSLB"
 							);
 						}
 						else
@@ -116,7 +116,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 				{
 					$error = "true";
 					&zenlog(
-						  "ZAPI error, trying to modify a datalink farm $farmname, invalid newfarmname."
+						  "Error trying to modify a datalink farm $farmname, invalid new farm name.", "error", "DSLB"
 					);
 				}
 			}
@@ -130,7 +130,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a datalink farm $farmname, invalid algorithm, can't be blank."
+				"Error trying to modify a datalink farm $farmname, invalid algorithm, can't be blank.", "error", "DSLB"
 			);
 		}
 		if ( $json_obj->{ algorithm } =~ /^weight|prio$/ )
@@ -140,7 +140,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify a datalink farm $farmname, some errors happened trying to modify the algorithm."
+					"Error trying to modify a datalink farm $farmname, some errors detected trying to modify the algorithm.", "error", "DSLB"
 				);
 			}
 			else
@@ -152,7 +152,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-				 "ZAPI error, trying to modify a datalink farm $farmname, invalid algorithm." );
+				 "Error trying to modify a datalink farm $farmname, invalid algorithm.", "error", "DSLB" );
 		}
 	}
 
@@ -163,7 +163,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a datalink farm $farmname, invalid vip, can't be blank."
+				"Error trying to modify a datalink farm $farmname, invalid Virtual IP, can't be blank.", "error", "DSLB"
 			);
 		}
 		elsif ( $json_obj->{ vip } =~ /^[a-zA-Z0-9.]+/ )
@@ -174,14 +174,14 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify a datalink farm $farmname, invalid Virtual IP value."
+					"Error, trying to modify a datalink farm $farmname, invalid Virtual IP value.", "error", "DSLB"
 				);
 			}
 			elsif ( ! defined $fdev )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify a datalink farm $farmname, invalid Interface value."
+					"Error trying to modify a datalink farm $farmname, invalid Interface value.", "error", "DSLB"
 				);
 			}
 			else
@@ -195,7 +195,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 				{
 					$error = "true";
 					&zenlog(
-						"ZAPI error, trying to modify a datalink farm $farmname, it's not possible to change the farm virtual IP and interface."
+						"Error trying to modify a datalink farm $farmname, it's not possible to change the farm Virtual IP and interface.", "error", "DSLB"
 					);
 				}
 			}
@@ -204,7 +204,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-				 "ZAPI error, trying to modify a datalink farm $farmname, invalid vip."
+				 "Error trying to modify a datalink farm $farmname, invalid vip.", "error", "DSLB"
 			);
 		}
 	}
@@ -221,7 +221,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 	# Check errors and print JSON
 	if ( $error ne "true" )
 	{
-		&zenlog( "ZAPI success, some parameters have been changed in farm $farmname." );
+		&zenlog( "Success, some parameters have been changed in farm $farmname.", "info", "DSLB" );
 
 		# Success
 		my $body = {
@@ -234,7 +234,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to modify a datalink farm $farmname, it's not possible to modify the farm."
+			"Error trying to modify a datalink farm $farmname, it's not possible to modify the farm.", "error", "DSLB"
 		);
 
 		# Error

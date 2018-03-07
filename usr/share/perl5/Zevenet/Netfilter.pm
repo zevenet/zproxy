@@ -43,7 +43,7 @@ sub loadNfModule    # ($modname,$params)
 		my $modprobe = &getGlobalConfiguration('modprobe');
 		my $modprobe_command = "$modprobe $modname $params";
 
-		&zenlog( "L4 loadNfModule: $modprobe_command" );
+		&zenlog( "L4 loadNfModule: $modprobe_command", "info", "SYSTEM" );
 		system ( "$modprobe_command >/dev/null 2>&1" );
 		$status = $?;
 	}
@@ -59,7 +59,7 @@ sub removeNfModule    # ($modname)
 	my $modprobe = &getGlobalConfiguration('modprobe');
 	my $modprobe_command = "$modprobe -r $modname";
 
-	&zenlog( "L4 removeNfModule: $modprobe_command" );
+	&zenlog( "L4 removeNfModule: $modprobe_command", "info", "SYSTEM" );
 
 	return system ( "$modprobe_command >/dev/null 2>&1" );
 }
@@ -92,7 +92,7 @@ sub getIptList                              # ($table,$chain)
 	my $iptables_command = "$iptables_bin $table -L $chain -n -v --line-numbers";
 
 	my @ipt_output = `$iptables_command`;
-	&zenlog( "failed: $iptables_command" ) if $?;
+	&zenlog( "failed: $iptables_command", "error", "SYSTEM") if $?;
 
 	return @ipt_output;
 }
@@ -262,7 +262,7 @@ sub genIptMarkPersist    # ($farm_name,$vip,$vport,$protocol,$ttl,$index,$mark)
 	  . "--jump MARK --set-xmark $$server{ tag } ";    # new
 	    #~ . "--jump MARK --set-mark $$server{ tag } ";	# old
 
-	#~ &zenlog( $rule );
+	#~ &zenlog( $rule, "info", "SYSTEM" );
 	return $rule;
 }
 
@@ -335,7 +335,7 @@ sub genIptMark # ($farm_name,$lbalg,$vip,$vport,$protocol,$index,$mark,$value,$p
 	  . "--jump MARK --set-xmark $$server{ tag } ";    # new
 	    #~ . "--jump MARK --set-mark $$server{ tag } ";	# old
 
-	#~ &zenlog( $rule );
+	#~ &zenlog( $rule, "info", "SYSTEM" );
 	return $rule;
 }
 
@@ -540,7 +540,7 @@ sub setIptConnmarkRestore
 
 	unless ( $ipt_lockfile )
 	{
-		&zenlog("Could not open $iptlock: $!");
+		&zenlog("Could not open $iptlock: $!", "error", "SYSTEM");
 		return 1;
 	}
 
@@ -582,7 +582,7 @@ sub setIptConnmarkSave
 
 	unless ( $ipt_lockfile )
 	{
-		&zenlog("Could not open $iptlock: $!");
+		&zenlog("Could not open $iptlock: $!", "error", "SYSTEM");
 		return 1;
 	}
 
@@ -631,7 +631,7 @@ sub applyIptRuleAction
 	}
 	elsif ( $action eq 'replace' )
 	{
-		&zenlog( 'Error: Iptables \'replace\' action requires a rule number' );
+		&zenlog( 'Error: Iptables \'replace\' action requires a rule number', "error", "SYSTEM" );
 	}
 
 	# applied for any accepted action
@@ -656,11 +656,11 @@ sub getIptRuleNumber
 
 	# debugging
 	( defined ( $rule ) && $rule ne '' )
-	  or &zenlog( ( caller ( 0 ) )[3] . ' $rule invalid' );
+	  or &zenlog( ( caller ( 0 ) )[3] . ' $rule invalid', "error", "SYSTEM" );
 	( defined ( $farm_name ) && !ref $farm_name )
-	  or &zenlog( ( caller ( 0 ) )[3] . ' $farm_name invalid' );
-	#~ ( defined ( $index ) && !ref $index )
-	  #~ or &zenlog( ( caller ( 0 ) )[3] . ' $index invalid' );
+	  or &zenlog( ( caller ( 0 ) )[3] . ' $farm_name invalid', "error", "SYSTEM" );
+	( defined ( $index ) && !ref $index )
+	  or &zenlog( ( caller ( 0 ) )[3] . ' $index invalid', "error", "SYSTEM" );
 
 	my $rule_num;      # output: rule number for requested rule
 
@@ -684,7 +684,7 @@ sub getIptRuleNumber
 		# get backend tag
 		@server_line = &getL4FarmServers( $farm_name );
 
-		#~ &zenlog("index:$index server_lines:@server_lines");
+		#~ &zenlog("index:$index server_lines:@server_lines", "info", "SYSTEM");
 		@server_line = grep { /^$index;/ } @server_line;
 		$filter = ( split ';', $server_line[0] )[3];
 	}
@@ -884,7 +884,7 @@ sub getIptRuleDelete
 	}
 	else
 	{
-		&zenlog( "Delete: rule not found: $rule" );
+		&zenlog( "Delete: rule not found: $rule", "info", "SYSTEM" );
 
 	  #~ my @rule_args = split / +/, $rule;
 	  #~ my $table     = $rule_args[2];       # second argument of iptables is the table
@@ -987,11 +987,11 @@ sub setIptLock    # ($lockfile)
 
 	if ( flock ( $ipt_lockfile, LOCK_EX ) )
 	{
-		&zenlog( "Success locking IPTABLES" ) if &debug == 3;
+		&zenlog( "Success locking IPTABLES", "debug", "SYSTEM" ) if &debug == 3;
 	}
 	else
 	{
-		&zenlog( "Cannot lock iptables: $!" );
+		&zenlog( "Cannot lock iptables: $!", "error", "SYSTEM" );
 	}
 }
 
@@ -1002,11 +1002,11 @@ sub setIptUnlock    # ($lockfile)
 
 	if ( flock ( $ipt_lockfile, LOCK_UN ) )
 	{
-		&zenlog( "Success unlocking IPTABLES" ) if &debug == 3;
+		&zenlog( "Success unlocking IPTABLES", "debug", "SYSTEM" ) if &debug == 3;
 	}
 	else
 	{
-		&zenlog( "Cannot unlock iptables: $!" );
+		&zenlog( "Cannot unlock iptables: $!", "error", "SYSTEM" );
 	}
 }
 
@@ -1030,7 +1030,7 @@ sub iptSystem
 	}
 	else
 	{
-		&zenlog( $program . "Cannot open $iptlock: $!" );
+		&zenlog( $program . "Cannot open $iptlock: $!", "error", "SYSTEM" );
 	}
 
 	$return_code = system ( "$command >/dev/null 2>&1" );    # run
@@ -1046,12 +1046,12 @@ sub iptSystem
 	{
 		if ( grep ( /--check/, $command ) || grep ( /-C /, $command ) )
 		{
-			&zenlog( $program . "Not found line: $command" )
+			&zenlog( $program . "Not found line: $command", "warning", "SYSTEM" )
 			  if &debug == 2;    # show in logs if failed
 		}
 		else
 		{
-			&zenlog( $program . "failed: $command" );    # show in logs if failed
+			&zenlog( $program . "failed: $command", "error", "SYSTEM" );    # show in logs if failed
 		}
 	}
 
@@ -1070,17 +1070,17 @@ sub runIptables
 	{
 		if ( $checking )
 		{
-			&zenlog( "Previous iptables line not found" ) if &debug > 1;
+			&zenlog( "Previous iptables line not found", "warning", "SYSTEM" ) if &debug > 1;
 		}
 		else
 		{
-			zenlog("return_code: $return_code rule: $command");
+			zenlog("return_code: $return_code rule: $command", "info", "SYSTEM");
 
 			for my $retry ( 1 .. 2 )
 			{
-				&zenlog( "Previous command failed! Retrying..." );
+				&zenlog( "Previous command failed! Retrying...", "warning", "SYSTEM" );
 				$return_code = system ( "$command >/dev/null 2>&1" );
-				zenlog("Retry ($retry) ... return_code: $return_code rule: $command");
+				zenlog("Retry ($retry) ... return_code: $return_code rule: $command", "warning", "SYSTEM");
 				last unless $return_code;
 			}
 		}

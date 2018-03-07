@@ -78,7 +78,7 @@ sub session_login
 	$body->{ host } = &getHostname();
 	$body->{ key } = &keycert() if defined ( &keycert );
 
-	&zenlog( "Login successful for user: $username" );
+	&zenlog( "Login successful for user: $username", "info", "ZAPI" );
 	&httpResponse(
 				   {
 					 code    => 200,
@@ -110,7 +110,7 @@ sub session_logout
 	my $username = $session->param( 'username' );
 	my $ip_addr  = $session->param( '_SESSION_REMOTE_ADDR' );
 
-	&zenlog( "Logged out user $username from $ip_addr" );
+	&zenlog( "Logged out user $username from $ip_addr", "info", "ZAPI" );
 
 	$session->delete();
 	$session->flush();

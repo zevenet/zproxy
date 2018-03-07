@@ -608,7 +608,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		$restart_flag = "true";
 	}
 
-	&zenlog( "ZAPI success, some parameters have been changed in farm $farmname." );
+	&zenlog( "Success, some parameters have been changed in farm $farmname.", "info", "LSLB" );
 
 	# set numeric values to numeric type
 	for my $key ( keys %{ $json_obj } )

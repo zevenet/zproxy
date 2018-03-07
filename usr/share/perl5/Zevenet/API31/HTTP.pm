@@ -52,7 +52,7 @@ sub GET
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("GET captures( @captures )") if &debug();
+	&zenlog("GET captures( @captures )", "debug", "ZAPI") if &debug();
 
 	if ( ref $code eq 'CODE' )
 	{
@@ -73,7 +73,7 @@ sub POST
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("POST captures( @captures )") if &debug();
+	&zenlog("POST captures( @captures )", "debug", "ZAPI") if &debug();
 
 	my $data = &getCgiParam( 'POSTDATA' );
 	my $input_ref;
@@ -88,7 +88,7 @@ sub POST
 		if ( &debug() )
 		{
 			use Data::Dumper;
-			&zenlog( "json: " . Dumper( $input_ref ) );
+			&zenlog( "json: " . Dumper( $input_ref ), "debug", "ZAPI" );
 		}
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
@@ -107,7 +107,7 @@ sub POST
 	}
 	else
 	{
-		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }" );
+		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }", "warning", "ZAPI" );
 		my $body = { message => 'Content-Type not supported', error => 'true' };
 
 		&httpResponse( { code => 415, body => $body } );
@@ -134,7 +134,7 @@ sub PUT
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("PUT captures( @captures )") if &debug();
+	&zenlog("PUT captures( @captures )", "debug", "ZAPI") if &debug();
 
 	my $data = &getCgiParam( 'PUTDATA' );
 	my $input_ref;
@@ -149,7 +149,7 @@ sub PUT
 		if ( &debug() )
 		{
 			use Data::Dumper;
-			&zenlog( "json: " . Dumper( $input_ref ) );
+			&zenlog( "json: " . Dumper( $input_ref ), "debug", "ZAPI" );
 		}
 	}
 	elsif ( exists $ENV{ CONTENT_TYPE } && $ENV{ CONTENT_TYPE } eq 'text/plain' )
@@ -168,7 +168,7 @@ sub PUT
 	}
 	else
 	{
-		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }" );
+		&zenlog( "Content-Type not supported: $ENV{ CONTENT_TYPE }", "warning", "ZAPI" );
 		my $body = { message => 'Content-Type not supported', error => 'true' };
 
 		&httpResponse( { code => 415, body => $body } );
@@ -195,7 +195,7 @@ sub DELETE
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("DELETE captures( @captures )") if &debug();
+	&zenlog("DELETE captures( @captures )", "debug", "ZAPI") if &debug();
 
 	if ( ref $code eq 'CODE' )
 	{
@@ -216,7 +216,7 @@ sub OPTIONS
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("OPTIONS captures( @captures )") if &debug();
+	&zenlog("OPTIONS captures( @captures )", "debug", "ZAPI") if &debug();
 
 	$code->( @captures );
 }
@@ -244,7 +244,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 
 	return $self unless exists $ENV{ GATEWAY_INTERFACE };
 
-	#~ &zenlog("DEBUG httpResponse input: " . Dumper $self ); # DEBUG
+	#~ &zenlog("DEBUG httpResponse input: " . Dumper $self, "debug", "ZAPI" ); # DEBUG
 
 	die 'httpResponse: Bad input' if !defined $self or ref $self ne 'HASH';
 
@@ -338,7 +338,7 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 		}
 	}
 
-	#~ &zenlog( "Response:$output<" ); # DEBUG
+	#~ &zenlog( "Response:$output<", "debug", "ZAPI" ); # DEBUG
 	print $output;
 
 	if ( &debug )
@@ -347,12 +347,12 @@ sub httpResponse    # ( \%hash ) hash_keys->( $code, %headers, $body )
 		my $req_msg = "STATUS: $self->{ code } REQUEST: $ENV{REQUEST_METHOD} $ENV{SCRIPT_URL}";
 		# include memory usage if debug is 2 or higher
 		$req_msg .= " " . &getMemoryUsage() if &debug() > 1;
-		&zenlog( $req_msg );
+		&zenlog( $req_msg, "debug", "ZAPI" );
 
 		# log error message on error.
 		if ( ref $self->{ body } eq 'HASH' )
 		{
-			&zenlog( "Error Message: $self->{ body }->{ message }" )
+			&zenlog( "Error Message: $self->{ body }->{ message }", "debug", "ZAPI" )
 			  if ( exists $self->{ body }->{ message } );
 		}
 	}
@@ -396,8 +396,8 @@ sub httpErrorResponse
 				 message     => $args->{ msg },
 	};
 
-	&zenlog( "[Error] $args->{ desc }: $args->{ msg }" );
-	&zenlog( $args->{ log_msg } ) if exists $args->{ log_msg };
+	&zenlog( "[Error] $args->{ desc }: $args->{ msg }", "error", "ZAPI" );
+	&zenlog( $args->{ log_msg }, "info", "ZAPI" ) if exists $args->{ log_msg };
 
 	my $response = { code => $args->{ code }, body => $body };
 
@@ -435,7 +435,7 @@ sub httpSuccessResponse
 				 message     => $args->{ msg },
 	};
 
-	&zenlog( $args->{ log_msg } ) if exists $args->{ log_msg };
+	&zenlog( $args->{ log_msg }, "info", "ZAPI" ) if exists $args->{ log_msg };
 	&httpResponse({ code => $args->{ code }, body => $body });
 }
 
@@ -500,7 +500,7 @@ sub httpDownloadResponse
 	# optionally, remove the downloaded file, useful for temporal files
 	unlink $path if $args->{ remove } eq 'true';
 
-	&zenlog( "[Download] $args->{ desc }: $path" );
+	&zenlog( "[Download] $args->{ desc }: $path", "info", "ZAPI" );
 
 	&httpResponse({ code => 200, headers => $headers, body => $body });
 }

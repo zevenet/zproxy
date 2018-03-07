@@ -61,7 +61,7 @@ sub delete_farm # ( $farmname )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	&zenlog( "ZAPI success, the farm $farmname has been deleted." );
+	&zenlog( "Success, the farm $farmname has been deleted.", "info", "FARMS" );
 
 	&eload(
 		module => 'Zevenet::Cluster',

@@ -86,7 +86,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		unless ( &getFarmStatus( $farmname ) eq 'down' )
 		{
 			&zenlog(
-				"ZAPI error, trying to modify a gslb farm $farmname, cannot change the farm name while running"
+				"Error trying to modify a gslb farm $farmname, cannot change the farm name while it is running", "error", "GSLB"
 			);
 
 			my $errormsg = 'Cannot change the farm name while running';
@@ -105,7 +105,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname, can't be blank."
+				"Error trying to modify a gslb farm $farmname, invalid new farm name, can't be blank.", "error", "GSLB"
 			);
 		}
 		else
@@ -121,7 +121,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 					{
 						$error = "true";
 						&zenlog(
-							"ZAPI error, trying to modify a gslb farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
+							"Error trying to modify a gslb farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name.", "error", "GSLB"
 						);
 					}
 					else
@@ -131,7 +131,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 						{
 							$error = "true";
 							&zenlog(
-								"ZAPI error, trying to modify a gslb farm $farmname, the farm is not disabled, are you sure it's running?"
+								"Error trying to modify a gslb farm $farmname, the farm is not disabled, are you sure it's running?", "error", "GSLB"
 							);
 						}
 						else
@@ -144,21 +144,21 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 							{
 								&error = "true";
 								&zenlog(
-									"ZAPI error, trying to modify a gslb farm $farmname, the name of the farm can't be modified, delete the farm and create a new one."
+									"Error trying to modify a gslb farm $farmname, the name of the farm can't be modified, delete the farm and create a new one.", "error", "GSLB"
 								);
 							}
 							elsif ( $fnchange == -2 )
 							{
 								$error = "true";
 								&zenlog(
-									"ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname, the new name can't be empty."
+									"Error trying to modify a gslb farm $farmname, invalid new farm name, the new name can't be empty.", "error", "GSLB"
 								);
 								#~ $newfstat = &runFarmStart( $farmname, "true" );
 								if ( $newfstat != 0 )
 								{
 									$error = "true";
 									&zenlog(
-										"ZAPI error, trying to modify a gslb farm $farmname, the farm isn't running, chick if the IP address is up and the PORT is in use."
+										"Error trying to modify a gslb farm $farmname, the farm isn't running, check if the IP address is up and the PORT is in use.", "error", "GSLB"
 									);
 								}
 							}
@@ -171,7 +171,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 								{
 									$error = "true";
 									&zenlog(
-										"ZAPI error, trying to modify a gslb farm $farmname, the farm isn't running, chick if the IP address is up and the PORT is in use."
+										"Error trying to modify a gslb farm $farmname, the farm isn't running, check if the IP address is up and the PORT is in use.", "error", "GSLB"
 									);
 								}
 							}
@@ -183,7 +183,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 			{
 				$error = "true";
 				&zenlog(
-						   "ZAPI error, trying to modify a gslb farm $farmname, invalid newfarmname." );
+						   "Error trying to modify a gslb farm $farmname, invalid new farm name.", "error", "GSLB" );
 			}
 		}
 	}
@@ -195,14 +195,14 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a gslb farm $farmname, invalid vip, can't be blank."
+				"Error trying to modify a gslb farm $farmname, invalid Virtual IP, can't be blank.", "error", "GSLB"
 			);
 		}
 		elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
 		{
 			$error = "true";
 			&zenlog(
-					  "ZAPI error, trying to modify a gslb farm $farmname, invalid vip." );
+					  "Error trying to modify a gslb farm $farmname, invalid Virtual IP.", "error", "GSLB" );
 		}
 		else
 		{
@@ -211,7 +211,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 			{
 				$error = "true";
 				&zenlog(
-						  "ZAPI error, trying to modify a gslb farm $farmname, invalid vip." );
+						  "Error trying to modify a gslb farm $farmname, invalid Virtual IP.", "error", "GSLB" );
 			}
 			else
 			{
@@ -227,14 +227,14 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a gslb farm $farmname, invalid vport, can't be blank."
+				"Error trying to modify a gslb farm $farmname, invalid Virtual port, can't be blank.", "error", "GSLB"
 			);
 		}
 		elsif ( !$json_obj->{ vport } =~ /^\d+$/ )
 		{
 			$error = "true";
 			&zenlog(
-					  "ZAPI error, trying to modify a gslb farm $farmname, invalid vport." );
+					  "Error trying to modify a gslb farm $farmname, invalid Virtual port.", "error", "GSLB" );
 		}
 		else
 		{
@@ -244,7 +244,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 			{
 				$error = "true";
 				&zenlog(
-						  "ZAPI error, trying to modify a gslb farm $farmname, invalid vport." );
+						  "Error trying to modify a gslb farm $farmname, invalid Virtual port.", "error", "GSLB" );
 			}
 			else
 			{
@@ -260,14 +260,14 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a gslb farm $farmname, invalid vip, can't be blank."
+				"Error trying to modify a gslb farm $farmname, invalid Virtual IP, can't be blank.", "error", "GSLB"
 			);
 		}
 		elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
 		{
 			$error = "true";
 			&zenlog(
-					  "ZAPI error, trying to modify a gslb farm $farmname, invalid vip." );
+					  "Error trying to modify a gslb farm $farmname, invalid Virtual IP.", "error", "GSLB" );
 		}
 		else
 		{
@@ -277,14 +277,14 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 				{
 					$error = "true";
 					&zenlog(
-						"ZAPI error, trying to modify a gslb farm $farmname, invalid vport, can't be blank."
+						"Error trying to modify a gslb farm $farmname, invalid Virtual port, can't be blank.", "error", "GSLB"
 					);
 				}
 				elsif ( !$json_obj->{ vport } =~ /^\d+$/ )
 				{
 					$error = "true";
 					&zenlog(
-							  "ZAPI error, trying to modify a gslb farm $farmname, invalid vport." );
+							  "Error trying to modify a gslb farm $farmname, invalid Virtual port.", "error", "GSLB" );
 				}
 				else
 				{
@@ -295,7 +295,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 					{
 						$error = "true";
 						&zenlog(
-							"ZAPI error, trying to modify a gslb farm $farmname, invalid vport or invalid vip."
+							"Error trying to modify a gslb farm $farmname, invalid Virtual port or invalid Virtual IP.", "error", "GSLB"
 						);
 					}
 					else
@@ -312,7 +312,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	if ( $error ne "true" )
 	{
 		&zenlog(
-				  "ZAPI success, some parameters have been changed in farm $farmname." );
+				  "Success, some parameters have been changed in farm $farmname.", "error", "GSLB" );
 
 		&runIPDSStartByFarm($farmname);
 
@@ -348,7 +348,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to modify a gslb farm $farmname, it's not possible to modify the farm."
+			"Error trying to modify a gslb farm $farmname, it's not possible to modify the farm.", "error", "GSLB"
 		);
 
 		# Error

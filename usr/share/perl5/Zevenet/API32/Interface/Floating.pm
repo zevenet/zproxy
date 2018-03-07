@@ -61,8 +61,9 @@ sub delete_interface_floating    # ( $floating )
 	# force sync to make sure the configuration is updated
 	if ( &getZClusterRunning() && &getZClusterNodeStatus() eq 'master' )
 	{
-		my $configdir = &getGlobalConfiguration('configdir');
-		&zenlog("Syncing $configdir");
+		# force sync to make sure the configuration is updated
+		my $configdir = &getGlobalConfiguration( 'configdir' );
+		&zenlog( "Syncing $configdir", "info", "NETWORK" );
 		&runSync( $configdir );
 
 		&runZClusterRemoteManager( 'interface', 'float-update' );
@@ -160,8 +161,8 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 	if ( &getZClusterRunning() && &getZClusterNodeStatus() eq 'master' )
 	{
 		# force sync to make sure the configuration is updated
-		my $configdir = &getGlobalConfiguration('configdir');
-		&zenlog("Syncing $configdir");
+		my $configdir = &getGlobalConfiguration( 'configdir' );
+		&zenlog( "Syncing $configdir", "info", "NETWORK" );
 		&runSync( $configdir );
 
 		&runZClusterRemoteManager( 'interface', 'float-update' );

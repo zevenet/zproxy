@@ -247,7 +247,7 @@ sub setGSLBFarmGuardianParams    # ( farmName, service, param, value );
 		# End service block
 		elsif ( $flagSvc && $line =~ /^\t\}/ )
 		{
-			&zenlog( "GSLB FarmGuardian has corrupt fileconf", "Error" );
+			&zenlog( "GSLB FarmGuardian has corrupt fileconf", "error", "GSLB" );
 		}
 		elsif ( $flagSvc && $line =~ /$param/ )
 		{

@@ -96,7 +96,7 @@ sub addlocalnet    # ($if_ref)
 {
 	my $if_ref = shift;
 
-	&zenlog("addlocalnet( name: $$if_ref{ name }, addr: $$if_ref{ addr }, mask: $$if_ref{ mask } )") if &debug();
+	&zenlog("addlocalnet( name: $$if_ref{ name }, addr: $$if_ref{ addr }, mask: $$if_ref{ mask } )", "debug", "NETWORK") if &debug();
 
 	# Get network
 	use NetAddr::IP;
@@ -125,7 +125,7 @@ sub addlocalnet    # ($if_ref)
 			next if $if_ref->{ status } ne 'up';
 		}
 
-		&zenlog("addlocalnet: setting route in table $table") if &debug();
+		&zenlog("addlocalnet: setting route in table $table", "debug", "NETWORK") if &debug();
 
 		my $ip_cmd =
 		  "$ip_bin -$$if_ref{ip_v} route replace $net dev $$if_ref{name} src $$if_ref{addr} table $table $routeparams";
@@ -140,7 +140,7 @@ sub addlocalnet    # ($if_ref)
 	{
 		next if $iface->{ type } eq 'virtual';
 		next if $iface->{ name } eq $if_ref->{ name };
-		&zenlog("addlocalnet: into current interface: name $$iface{name} type $$iface{type}") if &debug();
+		&zenlog("addlocalnet: into current interface: name $$iface{name} type $$iface{type}", "debug", "NETWORK") if &debug();
 
 		my $ip = new NetAddr::IP( $$iface{ addr }, $$iface{ mask } );
 		my $net = $ip->network();
@@ -223,7 +223,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 		if ( $table eq "local" )
 		{
 			&zenlog(
-				"Applying $table routes in stack IPv$$if_ref{ip_v} to $$if_ref{name} with gateway \"$$if_ref{gateway}\""
+				"Applying $table routes in stack IPv$$if_ref{ip_v} to $$if_ref{name} with gateway \"$$if_ref{gateway}\"", "info", "NETWORK"
 			);
 
 			# &delRoutes( "local", $if );
@@ -258,7 +258,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 					$action = "add";
 				}
 				&zenlog(
-					"Applying $table routes in stack IPv$$if_ref{ip_v} with gateway \"".&getGlobalConfiguration( 'defaultgw' )."\""
+					"Applying $table routes in stack IPv$$if_ref{ip_v} with gateway \"".&getGlobalConfiguration( 'defaultgw' )."\"", "info", "NETWORK"
 				);
 				my $ip_cmd =
 				  "$ip_bin -$$if_ref{ip_v} route $action default via $gateway dev $$if_ref{name} $routeparams";
@@ -342,7 +342,7 @@ sub delRoutes    # ($table,$if_ref)
 	my $status = 0;
 
 	&zenlog(
-		   "Deleting $table routes for IPv$$if_ref{ip_v} in interface $$if_ref{name}" );
+		   "Deleting $table routes for IPv$$if_ref{ip_v} in interface $$if_ref{name}", "info", "NETWORK" );
 
 	if ( !defined $$if_ref{ vini } || $$if_ref{ vini } eq '' )
 	{
@@ -604,7 +604,7 @@ Bugs:
 # Flush cache routes
 sub flushCacheRoutes    # ()
 {
-	&zenlog( "flushing routes cache" );
+	&zenlog( "flushing routes cache", "info", "NETWORK" );
 	system ( "$ip_bin route flush cache >/dev/null 2>$1" );
 }
 

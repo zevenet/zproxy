@@ -186,7 +186,7 @@ sub new_vlan    # ( $json_obj )
 	require Zevenet::Net::Interface;
 
 	eval {
-		&zenlog( "new_vlan: $if_ref->{name}" );
+		&zenlog( "new_vlan: $if_ref->{name}", "info", "NETWORK" );
 		die if &createIf( $if_ref );
 		die if &addIp( $if_ref );
 		&writeRoutes( $if_ref->{ name } );

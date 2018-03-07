@@ -92,7 +92,7 @@ sub modify_interface_floating # ( $json_obj, $floating )
 
 	my $description = "Modify floating interface";
 
-	#~ &zenlog("modify_interface_floating interface:$interface json_obj:".Dumper $json_obj );
+	#~ &zenlog("modify_interface_floating interface:$interface json_obj:".Dumper $json_obj, "info", "NETWORK" );
 
 	if ( grep { $_ ne 'floating_ip' } keys %{$json_obj} )
 	{
@@ -231,7 +231,7 @@ sub get_interfaces_floating
 
 	for my $iface ( @ifaces )
 	{
-		#~ &zenlog( "getActiveInterfaceList: $iface->{ name }" );
+		#~ &zenlog( "getActiveInterfaceList: $iface->{ name }", "info", "NETWORK" );
 		next unless $iface->{ ip_v } == 4;
 		next if $iface->{ type } eq 'virtual';
 		next unless $iface->{ addr };
@@ -279,7 +279,7 @@ sub get_floating
 
 	for my $iface ( @ifaces )
 	{
-		#~ &zenlog( "getActiveInterfaceList: $iface->{ name }" );
+		#~ &zenlog( "getActiveInterfaceList: $iface->{ name }", "info", "NETWORK" );
 		next unless $iface->{ ip_v } == 4;
 		next if $iface->{ type } eq 'virtual';
 		next unless $iface->{ name } eq $floating;

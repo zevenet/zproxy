@@ -359,7 +359,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	}
 
 	# no error found, return successful response
-	&zenlog( "ZAPI success, some parameters have been changed in farm $farmname." );
+	&zenlog( "Success, some parameters have been changed in farm $farmname.", "info", "LSLB" );
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{

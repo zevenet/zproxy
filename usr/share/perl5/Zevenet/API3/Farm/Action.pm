@@ -54,7 +54,7 @@ sub farm_actions # ( $json_obj, $farmname )
 	}
 	else
 	{
-		&zenlog( "ZAPI error, trying to set an action." );
+		&zenlog( "Error trying to set an action.", "error", "ZAPI" );
 
 		my $errormsg = "Invalid action; the possible actions are stop, start and restart";
 		my $body = {
@@ -75,7 +75,7 @@ sub farm_actions # ( $json_obj, $farmname )
 		if ( $status != 0 )
 		{
 			my $errormsg = "Error trying to set the action stop in farm $farmname.";
-			&zenlog( $errormsg );
+			&zenlog( $errormsg, "error", "ZAPI" );
 
 			my $body = {
 						 description => $description,
@@ -88,7 +88,7 @@ sub farm_actions # ( $json_obj, $farmname )
 		else
 		{
 			&zenlog(
-					  "ZAPI success, the action stop has been established in farm $farmname." );
+					  "Success, the action stop has been established in farm $farmname.", "info", "ZAPI" );
 
 			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'stop', $farmname );
@@ -102,7 +102,7 @@ sub farm_actions # ( $json_obj, $farmname )
 		if ( $status != 0 )
 		{
 			my $errormsg = "Error trying to set the action start in farm $farmname.";
-			&zenlog( $errormsg );
+			&zenlog( $errormsg, "error", "ZAPI" );
 
 			my $body = {
 						 description => $description,
@@ -115,7 +115,7 @@ sub farm_actions # ( $json_obj, $farmname )
 		else
 		{
 			&zenlog(
-					 "ZAPI success, the action start has been established in farm $farmname." );
+					 "Success, the action start has been established in farm $farmname.", "info", "ZAPI" );
 
 			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'start', $farmname );
@@ -130,7 +130,7 @@ sub farm_actions # ( $json_obj, $farmname )
 		if ( $status != 0 )
 		{
 			my $errormsg = "Error trying to stop the farm in the action restart in farm $farmname.";
-			&zenlog( $errormsg );
+			&zenlog( $errormsg, "error", "ZAPI" );
 
 			my $body = {
 						 description => $description,
@@ -154,15 +154,15 @@ sub farm_actions # ( $json_obj, $farmname )
 
 			&setFarmNoRestart( $farmname );
 			&zenlog(
-				   "ZAPI success, the action restart has been established in farm $farmname." );
+				   "Success, the action restart has been established in farm $farmname.", "info", "ZAPI" );
 
 			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 		}
 		else
 		{
-			my $errormsg = "ZAPI error, trying to start the farm in the action restart in farm $farmname.";
-			&zenlog( $errormsg );
+			my $errormsg = "Error trying to start the farm in the action restart in farm $farmname.";
+			&zenlog( $errormsg, "error", "ZAPI" );
 
 			my $body = {
 						 description => $description,
@@ -315,7 +315,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 		my $status = &setFarmBackendMaintenance( $farmname, $backend_id, "drain", $service );
 
 		&zenlog(
-			"Changing status to maintenance of backend $backend_id in service $service in farm $farmname"
+			"Changing status to maintenance of backend $backend_id in service $service in farm $farmname", "info", "ZAPI"
 		);
 
 		if ( $? ne 0 )
@@ -335,7 +335,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 		my $status = &setFarmBackendNoMaintenance( $farmname, $backend_id, $service );
 
 		&zenlog(
-			 "Changing status to up of backend $backend_id in service $service in farm $farmname" );
+			 "Changing status to up of backend $backend_id in service $service in farm $farmname", "info", "ZAPI" );
 
 		if ( $? ne 0 )
 		{
@@ -438,7 +438,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 		my $status = &setFarmBackendMaintenance( $farmname, $backend_id, "drain" );
 
 		&zenlog(
-			"Changing status to maintenance of backend $backend_id in farm $farmname"
+			"Changing status to maintenance of backend $backend_id in farm $farmname", "info", "ZAPI"
 		);
 
 		if ( $status != 0 )
@@ -458,7 +458,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 		my $status = &setFarmBackendNoMaintenance( $farmname, $backend_id );
 
 		&zenlog(
-			 "Changing status to up of backend $backend_id in farm $farmname" );
+			 "Changing status to up of backend $backend_id in farm $farmname", "info", "ZAPI" );
 
 		if ( $status != 0 )
 		{

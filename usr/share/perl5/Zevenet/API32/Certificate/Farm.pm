@@ -95,12 +95,12 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 		my $msg =
 		  "It's not possible to add the certificate with name $json_obj->{file} for the $farmname farm";
 
-		&zenlog( "It's not possible to add the certificate." );
+		&zenlog( "It's not possible to add the certificate.", "error", "LSLB" );
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# no errors found, return succesful response
-	&zenlog( "ZAPI Success, trying to add a certificate to the farm." );
+	&zenlog( "Success trying to add a certificate to the farm.", "info", "LSLB" );
 
 	my $message =
 	  "The certificate $json_obj->{file} has been added to the farm $farmname, you need restart the farm to apply";
@@ -147,7 +147,7 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 	unless ( $certfilename && &getValidFormat( 'cert_pem', $certfilename ) )
 	{
 		my $msg = "Invalid certificate id, please insert a valid value.";
-		&zenlog( "Invalid certificate id." );
+		&zenlog( "Invalid certificate id.", "error", "LSLB" );
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -175,7 +175,7 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 	# check if the certificate could not be removed
 	if ( $status == -1 )
 	{
-		&zenlog( "It's not possible to delete the certificate." );
+		&zenlog( "It's not possible to delete the certificate.", "error", "LSLB" );
 
 		my $msg =
 		  "It isn't possible to delete the selected certificate $certfilename from the SNI list";
@@ -186,7 +186,7 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 	if ( $status == 1 )
 	{
 		&zenlog(
-			"It's not possible to delete all certificates, at least one is required for HTTPS."
+			"It's not possible to delete all certificates, at least one is required for HTTPS.", "error", "LSLB"
 		);
 
 		my $msg =
@@ -210,7 +210,7 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 		$body->{ status } = 'needed restart';
 	}
 
-	&zenlog( "ZAPI Success, trying to delete a certificate to the SNI list." );
+	&zenlog( "Success trying to delete a certificate to the SNI list.", "error", "LSLB" );
 	&httpResponse( { code => 200, body => $body } );
 }
 

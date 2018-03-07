@@ -195,7 +195,7 @@ sub create_csr
 	}
 
 	my $message = "Certificate $json_obj->{ name } created";
-	&zenlog( $message );
+	&zenlog( $message, "info", "LSLB" );
 
 	my $body = {
 				description => $desc,

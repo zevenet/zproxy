@@ -255,11 +255,11 @@ sub setInterfaceConfig    # $bool ($if_ref)
 
 	if ( ref $if_ref ne 'HASH' )
 	{
-		&zenlog( "Input parameter is not a hash reference" );
+		&zenlog( "Input parameter is not a hash reference", "warning", "NETWORK" );
 		return undef;
 	}
 
-	&zenlog( "setInterfaceConfig: " . Dumper $if_ref) if &debug() > 2;
+	&zenlog( "setInterfaceConfig: " . Dumper $if_ref, "debug", "NETWORK") if &debug() > 2;
 	my @if_params = ( 'name', 'addr', 'mask', 'gateway' );
 
 	my $if_line         = join ( ';', @{ $if_ref }{ @if_params } ) . ';';
@@ -317,7 +317,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	}
 	else
 	{
-		&zenlog( "$config_filename: $!" );
+		&zenlog( "$config_filename: $!", "info", "NETWORK" );
 
 		# returns zero on failure
 		return 0;
@@ -412,7 +412,7 @@ sub getConfigInterfaceList
 	}
 	else
 	{
-		&zenlog( "Error reading directory $configdir: $!" );
+		&zenlog( "Error reading directory $configdir: $!", "error", "NETWORK" );
 	}
 
 	return \@configured_interfaces;
@@ -935,7 +935,7 @@ sub getInterfaceType
 
 	my $msg = "Could not recognize the type of the interface $if_name.";
 
-	&zenlog( $msg );
+	&zenlog( $msg, "error", "NETWORK" );
 	die ( $msg );    # This should not happen
 }
 
@@ -1006,7 +1006,7 @@ sub getInterfaceTypeList
 	else
 	{
 		my $msg = "Interface type '$list_type' is not supported.";
-		&zenlog( $msg );
+		&zenlog( $msg, "error", "NETWORK" );
 		die ( $msg );
 	}
 

@@ -120,7 +120,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 	}
 
 	&zenlog(
-		"ZAPI success, the action $json_obj->{ action } has been performed in farm $farmname."
+		"Success, the action $json_obj->{ action } has been performed in farm $farmname.", "info", "FARMS"
 	);
 
 	&eload(
@@ -245,7 +245,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 										  $service );
 
 		&zenlog(
-			"Changing status to maintenance of backend $backend_id in service $service in farm $farmname"
+			"Changing status to maintenance of backend $backend_id in service $service in farm $farmname", "info", "FARMS"
 		);
 
 		if ( $status )
@@ -260,7 +260,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 		  &setHTTPFarmBackendNoMaintenance( $farmname, $backend_id, $service );
 
 		&zenlog(
-			"Changing status to up of backend $backend_id in service $service in farm $farmname"
+			"Changing status to up of backend $backend_id in service $service in farm $farmname", "info", "FARMS"
 		);
 
 		if ( $? )
@@ -352,7 +352,7 @@ sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 		  &setFarmBackendMaintenance( $farmname, $backend_id, $maintenance_mode );
 
 		&zenlog(
-				"Changing status to maintenance of backend $backend_id in farm $farmname" );
+				"Changing status to maintenance of backend $backend_id in farm $farmname", "info", "FARMS" );
 
 		if ( $status != 0 )
 		{
@@ -364,7 +364,7 @@ sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 	{
 		my $status = &setFarmBackendNoMaintenance( $farmname, $backend_id );
 
-		&zenlog( "Changing status to up of backend $backend_id in farm $farmname" );
+		&zenlog( "Changing status to up of backend $backend_id in farm $farmname", "info", "FARMS" );
 
 		if ( $status )
 		{

@@ -45,7 +45,7 @@ sub runDOSStartModule
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $output;
 
-	&zenlog( "Booting dos system... " );
+	&zenlog( "Booting dos system... ", "info", "IPDS"  );
 	&setDOSCreateFileConf();
 
 	my $fileHandle = Config::Tiny->read( $confFile );
@@ -65,7 +65,7 @@ sub runDOSStartModule
 				{
 					if ( &runDOSStart( $ruleName, $farmName ) != 0 )
 					{
-						&zenlog( "Error running the rule $ruleName in the farm $farmName." );
+						&zenlog( "Error running the rule $ruleName in the farm $farmName.", "error", "IPDS" );
 					}
 				}
 			}
@@ -74,7 +74,7 @@ sub runDOSStartModule
 		{
 			if ( &runDOSStart( $ruleName ) != 0 )
 			{
-				&zenlog( "Error, running the rule $ruleName." );
+				&zenlog( "Error, running the rule $ruleName.", "error", "IPDS" );
 			}
 		}
 	}
@@ -194,7 +194,7 @@ sub runDOSStartByRule
 			{
 				if ( &runDOSStart( $ruleName, $farmName ) != 0 )
 				{
-					&zenlog( "Error running the rule $ruleName in the farm $farmName." );
+					&zenlog( "Error running the rule $ruleName in the farm $farmName.", "error", "IPDS" );
 				}
 			}
 		}
@@ -231,7 +231,7 @@ sub runDOSStopByRule
 		{
 			if ( &setDOSStopRule( $ruleName, $farmName ) != 0 )
 			{
-				&zenlog( "Error stopping the rule $ruleName in the farm $farmName." );
+				&zenlog( "Error stopping the rule $ruleName in the farm $farmName.", "error", "IPDS" );
 			}
 		}
 	}

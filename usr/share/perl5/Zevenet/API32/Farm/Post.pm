@@ -112,7 +112,7 @@ sub new_farm    # ( $json_obj )
 	if ( $status == -1 )
 	{
 		&zenlog(
-			"ZAPI error, trying to create a new farm $json_obj->{ farmname }, can't be created."
+			"Error trying to create a new farm $json_obj->{ farmname }, can't be created.", "error", "FARMS"
 		);
 
 		my $msg = "The $json_obj->{ farmname } farm can't be created";
@@ -120,7 +120,7 @@ sub new_farm    # ( $json_obj )
 	}
 
 	&zenlog(
-		 "ZAPI success, the farm $json_obj->{ farmname } has been created successfully."
+		 "Success, the farm $json_obj->{ farmname } has been created successfully.", "info", "FARMS"
 	);
 
 	my $out_p;

@@ -32,7 +32,7 @@ sub delete_farm # ( $farmname )
 	if ( $newffile eq '-1' )
 	{
 		&zenlog(
-			 "ZAPI error, trying to delete the farm $farmname, the farm name doesn't exist."
+			 "Error, trying to delete the farm $farmname, the farm name doesn't exist.", "error", "FARMS"
 		);
 
 		# Error
@@ -57,7 +57,7 @@ sub delete_farm # ( $farmname )
 
 	if ( $stat == 0 )
 	{
-		&zenlog( "ZAPI success, the farm $farmname has been deleted." );
+		&zenlog( "Success, the farm $farmname has been deleted.", "info", "FARMS" );
 
 		# Success
 		include 'Zevenet::Cluster';
@@ -75,7 +75,7 @@ sub delete_farm # ( $farmname )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to delete the farm $farmname, the farm hasn't been deleted."
+			"Error trying to delete the farm $farmname, the farm hasn't been deleted.", "error", "FARMS"
 		);
 
 		# Error

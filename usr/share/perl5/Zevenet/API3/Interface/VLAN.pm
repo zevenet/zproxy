@@ -218,7 +218,7 @@ sub new_vlan # ( $json_obj )
 	require Zevenet::Net::Route;
 	require Zevenet::Net::Interface;
 	eval {
-		&zenlog("new_vlan: $if_ref->{name}");
+		&zenlog("new_vlan: $if_ref->{name}", "info", "NETWORK");
 		die if &createIf( $if_ref );
 		die if &addIp( $if_ref );
 		&writeRoutes( $if_ref->{name} );
@@ -491,10 +491,10 @@ sub actions_interface_vlan # ( $json_obj, $vlan )
 
 		if ( $parent_if_name )
 		{
-			#~ &zenlog ("parent exists parent_if_name:$parent_if_name");
+			#~ &zenlog ("parent exists parent_if_name:$parent_if_name", "info", "NETWORK");
 			my $parent_if_ref = &getSystemInterface( $parent_if_name );
 			$parent_if_status = &getInterfaceSystemStatus( $parent_if_ref );
-			#~ &zenlog ("parent exists parent_if_ref:$parent_if_ref parent_if_status:$parent_if_status");
+			#~ &zenlog ("parent exists parent_if_ref:$parent_if_ref parent_if_status:$parent_if_status", "info", "NETWORK");
 		}
 
 		# validate PARENT INTERFACE STATUS

@@ -79,7 +79,7 @@ sub getBondList
 
 	if ( !$bond_file )
 	{
-		&zenlog( "Could not open file $bonding_masters_filename: $!" );
+		&zenlog( "Could not open file $bonding_masters_filename: $!", "error", "NETWORK" );
 		return undef;
 	}
 
@@ -140,7 +140,7 @@ sub getBondMode
 
 	if ( !-d $bond_path )
 	{
-		&zenlog( "Could not find bonding $bond_path" );
+		&zenlog( "Could not find bonding $bond_path", "error", "NETWORK" );
 		return undef;
 	}
 
@@ -150,7 +150,7 @@ sub getBondMode
 
 	if ( !$bond_mode_file )
 	{
-		&zenlog( "Could not open file $bond_path/$bonding_mode_filename: $!" );
+		&zenlog( "Could not open file $bond_path/$bonding_mode_filename: $!", "error", "NETWORK" );
 		return undef;
 	}
 
@@ -188,7 +188,7 @@ sub getBondSlaves
 
 	if ( !-d $bond_path )
 	{
-		&zenlog( "Could not find bonding $bond_path" );
+		&zenlog( "Could not find bonding $bond_path", "error", "NETWORK" );
 		return undef;
 	}
 
@@ -198,7 +198,7 @@ sub getBondSlaves
 
 	if ( !$bond_slaves_file )
 	{
-		&zenlog( "Could not open file $bond_path/$bonding_slaves_filename: $!" );
+		&zenlog( "Could not open file $bond_path/$bonding_slaves_filename: $!", "error", "NETWORK" );
 		return undef;
 	}
 
@@ -265,14 +265,14 @@ sub applyBondChange
 	{
 		if ( $slave =~ /(:|\.)/ )    # do not allow vlans or vinis
 		{
-			&zenlog( "$slave is not a NIC" );
+			&zenlog( "$slave is not a NIC", "error", "NETWORK" );
 			return $return_code;
 		}
 		elsif (
 				grep ( /^$slave$/, @interface_list ) !=
 				1 )                  # only allow interfaces in the system
 		{
-			&zenlog( "Could not find $slave" );
+			&zenlog( "Could not find $slave", "error", "NETWORK" );
 			return $return_code;
 		}
 	}
@@ -280,7 +280,7 @@ sub applyBondChange
 	# add bond master and set mode only if it is a new one
 	if ( !$sys_bond )
 	{
-		&zenlog( "Bonding not found, adding new master" );
+		&zenlog( "Bonding not found, adding new master", "info", "NETWORK" );
 		&setBondMaster( $bond->{ name }, 'add' );
 		&setBondMode( $bond );
 	}
@@ -293,7 +293,7 @@ sub applyBondChange
 	{
 		if ( !$sys_bond )
 		{
-			&zenlog( "adding $slave" );
+			&zenlog( "adding $slave", "info", "NETWORK" );
 			&setBondSlave( $bond->{ name }, $slave, 'add' );
 		}
 		else
@@ -301,7 +301,7 @@ sub applyBondChange
 			# add slave if not already configured
 			if ( grep ( /^$slave$/, @{ $sys_bond->{ slaves } } ) == 0 )
 			{
-				&zenlog( "adding $slave" );
+				&zenlog( "adding $slave", "info", "NETWORK" );
 				&setBondSlave( $bond->{ name }, $slave, 'add' );
 			}
 
@@ -314,7 +314,7 @@ sub applyBondChange
 	{
 		if ( $sys_bond_slaves{ $slave } )
 		{
-			&zenlog( "removing $slave" );
+			&zenlog( "removing $slave", "info", "NETWORK" );
 			&setBondSlave( $bond->{ name }, $slave, 'del' );
 		}
 	}
@@ -367,7 +367,7 @@ sub setBondMaster
 	}
 	else
 	{
-		&zenlog( "Wrong bonding master operation" );
+		&zenlog( "Wrong bonding master operation", "error", "NETWORK" );
 		return $return_code;
 	}
 
@@ -375,7 +375,7 @@ sub setBondMaster
 
 	if ( !-f $bonding_masters_filename )
 	{
-		&zenlog( "Bonding module seems missing" );
+		&zenlog( "Bonding module seems missing" , "error", "NETWORK" );
 		return $return_code;
 	}
 
@@ -383,7 +383,7 @@ sub setBondMaster
 
 	if ( !$bond_file )
 	{
-		&zenlog( "Could not open file $bonding_masters_filename: $!" );
+		&zenlog( "Could not open file $bonding_masters_filename: $!", "error", "NETWORK" );
 		return $return_code;
 	}
 
@@ -399,7 +399,7 @@ sub setBondMaster
 
 	if ( !$miimon_file )
 	{
-		&zenlog( "Could not open file $miimon_filepath: $!" );
+		&zenlog( "Could not open file $miimon_filepath: $!", "error", "NETWORK" );
 	}
 	else
 	{
@@ -449,7 +449,7 @@ sub setBondMode
 
 	if ( !-d $bond_path )
 	{
-		&zenlog( "Could not find bonding $bond_path" );
+		&zenlog( "Could not find bonding $bond_path", "error", "NETWORK" );
 		return $return_code;
 	}
 
@@ -459,7 +459,7 @@ sub setBondMode
 
 	if ( !$bond_mode_file )
 	{
-		&zenlog( "Could not open file $bond_path/$bonding_mode_filename: $!" );
+		&zenlog( "Could not open file $bond_path/$bonding_mode_filename: $!", "error", "NETWORK" );
 		return $return_code;
 	}
 
@@ -508,13 +508,13 @@ sub setBondSlave
 	}
 	else
 	{
-		&zenlog( "Wrong slave operation" );
+		&zenlog( "Wrong slave operation", "error", "NETWORK" );
 		return $return_code;
 	}
 
 	if ( !-d $bond_path )
 	{
-		&zenlog( "Could not find bonding $bond_name in path $bond_path" );
+		&zenlog( "Could not find bonding $bond_name in path $bond_path", "error", "NETWORK" );
 	#	return $return_code;
 	}
 
@@ -526,7 +526,7 @@ sub setBondSlave
 
 	if ( ! -f $bond_slaves_file )
 	{
-		&zenlog( "Could not open file $bondslave: $!" );
+		&zenlog( "Could not open file $bondslave: $!", "error", "NETWORK" );
 		#return $return_code;
 	}
 
@@ -563,12 +563,12 @@ sub getBondConfig
 
 	if ( !-f $bond_config_file )
 	{
-		&zenlog( "Creating bonding configuration file $bond_config_file" );
+		&zenlog( "Creating bonding configuration file $bond_config_file", "info", "NETWORK" );
 		open my $bond_file, '>', $bond_config_file;
 
 		if ( !$bond_file )
 		{
-			&zenlog( "Could not create bonding configuration file $bond_config_file: $!" );
+			&zenlog( "Could not create bonding configuration file $bond_config_file: $!", "error", "NETWORK" );
 			return 0;
 		}
 
@@ -666,7 +666,7 @@ sub getBondAvailableSlaves
 
 	if ( !$dir_h )
 	{
-		&zenlog( "Could not open $sys_net_dir: $!" );
+		&zenlog( "Could not open $sys_net_dir: $!", "error", "NETWORK" );
 		return -1;
 	}
 

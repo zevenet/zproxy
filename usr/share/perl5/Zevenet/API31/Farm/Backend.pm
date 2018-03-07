@@ -148,7 +148,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		&zenlog( "New backend created in farm $farmname with IP $json_obj->{ip}." );
+		&zenlog( "New backend created in farm $farmname with IP $json_obj->{ip}.", "info", "FARMS" );
 
 		$json_obj->{ port }     += 0 if $json_obj->{ port };
 		$json_obj->{ weight }   += 0 if $json_obj->{ weight };
@@ -268,7 +268,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		# check error adding a new backend
 		if ( $status == -1 )
 		{
-			&zenlog( "It's not possible to create the backend." );
+			&zenlog( "It's not possible to create the backend.", "warning", "FARMS" );
 
 			my $msg = "It's not possible to create the backend with ip $json_obj->{ ip }"
 			  . " and port $json_obj->{ port } for the $farmname farm";
@@ -277,7 +277,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		&zenlog(
-			"ZAPI success, a new backend has been created in farm $farmname with IP $json_obj->{ip}."
+			"Success, a new backend has been created in farm $farmname with IP $json_obj->{ip}.", "info", "FARMS"
 		);
 
 		my $message = "Backend added";
@@ -396,7 +396,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	# validate PORT
 	unless ( &isValidPortNumber( $json_obj->{ port } ) eq 'true' )
 	{
-		&zenlog( "Invalid IP address and port for a backend, ir can't be blank." );
+		&zenlog( "Invalid IP address and port for a backend, ir can't be blank.", "warning", "FARMS" );
 
 		my $msg = "Invalid port for a backend.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -440,7 +440,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 
 	# no error found, return successful response
 	&zenlog(
-		"ZAPI success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}."
+		"Success, a new backend has been created in farm $farmname in service $service with IP $json_obj->{ip}.", "info", "FARMS"
 	);
 
 	$json_obj->{ timeout } = $json_obj->{ timeout } + 0 if $json_obj->{ timeout };
@@ -848,7 +848,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 	}
 
 	&zenlog(
-		"ZAPI success, some parameters have been changed in the backend $id_server in farm $farmname."
+		"Success, some parameters have been changed in the backend $id_server in farm $farmname.", "info", "FARMS"
 	);
 
 	require Zevenet::Farm::Base;
@@ -1020,7 +1020,7 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 
 	# no error found, return successful response
 	&zenlog(
-		"ZAPI success, some parameters have been changed in the backend $id_server in service $service in farm $farmname."
+		"Success, some parameters have been changed in the backend $id_server in service $service in farm $farmname.", "info", "FARMS"
 	);
 
 	if ( &getFarmStatus( $farmname ) eq "up" )
@@ -1089,7 +1089,7 @@ sub delete_backend    # ( $farmname, $id_server )
 	}
 
 	&zenlog(
-		   "ZAPI success, the backend $id_server in farm $farmname has been deleted." );
+		   "Success, the backend $id_server in farm $farmname has been deleted.", "info" "FARMS" );
 
 	&eload(
 		module => 'Zevenet::Cluster',
@@ -1173,7 +1173,7 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 	# check if there was an error deleting the backend
 	if ( $status == -1 )
 	{
-		&zenlog( "It's not possible to delete the backend." );
+		&zenlog( "It's not possible to delete the backend.", "warning", "FARMS" );
 
 		my $msg =
 		  "Could not find the backend with ID $id_server of the $farmname farm.";
@@ -1182,7 +1182,7 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 
 	# no error found, return successful response
 	&zenlog(
-		"ZAPI success, the backend $id_server in service $service in farm $farmname has been deleted."
+		"Success, the backend $id_server in service $service in farm $farmname has been deleted.", "info", "FARMS"
 	);
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )

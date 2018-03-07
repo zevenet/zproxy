@@ -126,7 +126,7 @@ sub upload_activation_certificate # ()
 	}
 	else
 	{
-		&zenlog( "ZAPI error, trying to upload activation certificate." );
+		&zenlog( "Error trying to upload activation certificate.", "error", "SYSTEM" );
 
 		# Error
 		my $errormsg = "Error uploading activation certificate file";

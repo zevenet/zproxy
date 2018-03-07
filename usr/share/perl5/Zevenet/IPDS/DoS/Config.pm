@@ -118,21 +118,21 @@ sub setDOSCreateFileConf
 		if ( !-d $dosConfDir )
 		{
 			$output = system ( &getGlobalConfiguration( 'mkdir' ) . " -p $dosConfDir" );
-			&zenlog( "Created ipds configuration directory: $dosConfDir" );
+			&zenlog( "Created ipds configuration directory: $dosConfDir", "info", "IPDS" );
 		}
 
 		# create file conf if doesn't exist
 		if ( !$output )
 		{
-			&zenlog( "Created dos configuration directory: $dosConfDir" );
+			&zenlog( "Created dos configuration directory: $dosConfDir", "info", "IPDS" );
 			$output = system ( &getGlobalConfiguration( 'touch' ) . " $confFile" );
 			if ( $output )
 			{
-				&zenlog( "Error, creating dos configuration directory: $dosConfDir" );
+				&zenlog( "Error, creating DoS configuration directory: $dosConfDir", "error", "IPDS" );
 			}
 			else
 			{
-				&zenlog( "Created dos configuration file: $confFile" );
+				&zenlog( "Created dos configuration file: $confFile", "info", "IPDS" );
 			}
 		}
 	}
@@ -227,7 +227,7 @@ sub createDOSRule
 	$params = &getDOSInitialParams( $rule );
 	if ( !$params )
 	{
-		&zenlog( "Error, saving $ruleName rule." );
+		&zenlog( "Error, saving $ruleName rule.", "error", "IPDS" );
 		return -2;
 	}
 
@@ -237,7 +237,7 @@ sub createDOSRule
 	if ( exists $fileHandle->{ $ruleName } )
 	{
 		&setDOSUnlockConfigFile( $lock );
-		&zenlog( "$ruleName rule already exists." );
+		&zenlog( "$ruleName rule already exists.", "warning", "IPDS" );
 		return -1;
 	}
 
@@ -251,7 +251,7 @@ sub createDOSRule
 	$fileHandle->write( $confFile );
 	&setDOSUnlockConfigFile( $lock );
 
-	&zenlog( "$ruleName rule created successful." );
+	&zenlog( "$ruleName rule created successful.", "info", "IPDS" );
 	return 0;
 }
 
@@ -281,7 +281,7 @@ sub deleteDOSRule
 	if ( !exists $fileHandle->{ $name } )
 	{
 		&setDOSUnlockConfigFile( $lock );
-		&zenlog( "$name rule doesn't exist." );
+		&zenlog( "$name rule doesn't exist.", "warning", "IPDS" );
 		return -1;
 	}
 

@@ -86,7 +86,7 @@ sub move_services
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		&zenlog( "Farm stopped successful." );
+		&zenlog( "Farm stopped successful.", "info", "LSLB"  );
 	}
 
 	&moveService( $farmname, $service, $json_obj->{ 'position' } );

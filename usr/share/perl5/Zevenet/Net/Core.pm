@@ -51,7 +51,7 @@ sub createIf    # ($if_ref)
 
 	if ( defined $$if_ref{ vlan } && $$if_ref{ vlan } ne '' )
 	{
-		&zenlog( "Creating vlan $$if_ref{name}" );
+		&zenlog( "Creating vlan $$if_ref{name}", "info", "NETWORK" );
 
 # enable the parent physical interface
 #~ my $parent_if = &getInterfaceConfig( $$if_ref{ dev }, $$if_ref{ ip_v } );
@@ -135,10 +135,8 @@ sub upIf    # ($if_ref, $writeconf)
 	{
 		#check if link is up after ip link up; checks /sys/class/net/$$if_ref{name}/operstate
 		my $status_if = `cat /sys/class/net/$$if_ref{name}/operstate`;
-
-		&zenlog( "Link status for $$if_ref{name} is $status_if" );
-		zenlog( "Waiting link up for $$if_ref{name}" );
-
+		&zenlog( "Link status for $$if_ref{name} is $status_if", "info", "NETWORK" );
+		&zenlog( "Waiting link up for $$if_ref{name}", "info", "NETWORK" );
 		my $iter = 6;
 
 		while ( $status_if =~ /down/ && $iter > 0 )
@@ -146,7 +144,7 @@ sub upIf    # ($if_ref, $writeconf)
 			$status_if = `cat /sys/class/net/$$if_ref{name}/operstate`;
 			if ( $status_if !~ /down/ )
 			{
-				&zenlog( "Link up for $$if_ref{name}" );
+				&zenlog( "Link up for $$if_ref{name}", "info", "NETWORK" );
 				last;
 			}
 			$iter--;
@@ -156,7 +154,7 @@ sub upIf    # ($if_ref, $writeconf)
 		if ( $iter == 0 )
 		{
 			$status = 1;
-			&zenlog( "No link up for $$if_ref{name}" );
+			&zenlog( "No link up for $$if_ref{name}", "warning", "NETWORK" );
 		}
 
 		# Start monitoring throughput
@@ -193,7 +191,7 @@ sub downIf    # ($if_ref, $writeconf)
 
 	if ( ref $if_ref ne 'HASH' )
 	{
-		&zenlog( "Wrong argument putting down the interface" );
+		&zenlog( "Wrong argument putting down the interface", "error", "NETWORK" );
 		return -1;
 	}
 
@@ -274,7 +272,7 @@ sub stopIf    # ($if_ref)
 {
 	my $if_ref = shift;
 
-	&zenlog( "Stopping interface $$if_ref{ name }" );
+	&zenlog( "Stopping interface $$if_ref{ name }", "info", "NETWORK" );
 
 	my $status = 0;
 	my $if     = $$if_ref{ name };
@@ -326,7 +324,7 @@ sub stopIf    # ($if_ref)
 			my $cmd = "$ip_bin addr del $ip/$mask brd + dev $ifphysic[0] label $if";
 
 			system ( "$cmd >/dev/null 2>&1" );
-			&zenlog( "failed: $cmd" ) if $?;
+			&zenlog( "failed: $cmd", "info", "NETWORK" ) if $?;
 		}
 	}
 
@@ -390,7 +388,7 @@ sub delIf    # ($if_ref)
 	}
 	else
 	{
-		&zenlog( "Error opening $file: $!" );
+		&zenlog( "Error opening $file: $!", "info", "NETWORK" );
 		$status = 1;
 	}
 
@@ -478,7 +476,7 @@ sub delIp    # 	($if, $ip ,$netmask)
 {
 	my ( $if, $ip, $netmask ) = @_;
 
-	&zenlog( "Deleting ip $ip/$netmask from interface $if" );
+	&zenlog( "Deleting ip $ip/$netmask from interface $if", "info", "NETWORK" );
 
 	# Vini
 	if ( $if =~ /\:/ )
@@ -513,7 +511,7 @@ sub addIp    # ($if_ref)
 	my ( $if_ref ) = @_;
 
 	&zenlog(
-			 "Adding IP $$if_ref{addr}/$$if_ref{mask} to interface $$if_ref{name}" );
+			 "Adding IP $$if_ref{addr}/$$if_ref{mask} to interface $$if_ref{name}", "info", "NETWORK" );
 
 	# finish if the address is already assigned
 	my $routed_iface = $$if_ref{ dev };

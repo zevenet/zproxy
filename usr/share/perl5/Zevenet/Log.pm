@@ -49,9 +49,10 @@ Function: zenlog
 		&zenlog("Some errors happended.", "err");
 		&zenlog("testing debug mode", "debug");
 
-Parameters:
+Parametes:
 	string - String to be written in log.
-	type   - Log level.
+	type   - Log level. info, error, debug, debug2, warn
+	tag    - RBAC, LSLB, GSLB, DSLB, IPDS, FG, NOTIF, NETWORK, MONITOR, SYSTEM, CLUSTER
 
 Returns:
 	none - .
@@ -161,22 +162,22 @@ sub logAndRun    # ($command)
 
 	if ( &debug )
 	{
-		&zenlog( "$program running: $command" );
+		&zenlog( $program . "running: $command", "debug", "SYSTEM" );
 
 		@cmd_output  = `$command 2>&1`;
 		$return_code = $?;
 
 		if ( $return_code )
 		{
-			&zenlog( "@cmd_output", "error" );
-			&zenlog( "last command failed!" );
+			&zenlog( "@cmd_output", "error", "error", "SYSTEM" );
+			&zenlog( "last command failed!", "error", "SYSTEM" );
 		}
 	}
 	else
 	{
 		system ( "$command >/dev/null 2>&1" );
 		$return_code = $?;
-		&zenlog( "$program failed: $command", 'error' ) if $return_code;
+		&zenlog( $program . "failed: $command", 'error', "SYSTEM" ) if $return_code;
 	}
 
 	# returning error code from execution

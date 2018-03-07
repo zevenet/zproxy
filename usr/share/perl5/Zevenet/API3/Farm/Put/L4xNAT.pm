@@ -71,7 +71,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		unless ( &getFarmStatus( $farmname ) eq 'down' )
 		{
 			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, cannot change the farm name while running"
+				"Error trying to modify a l4xnat farm $farmname, cannot change the farm name while running", "error", "LSLB"
 			);
 
 			my $errormsg = 'Cannot change the farm name while running';
@@ -89,7 +89,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid newfarmname, can't be blank."
+				"Error trying to modify a l4xnat farm $farmname, invalid new farm name, can't be blank.", "error", "LSLB"
 			);
 		}
 		else
@@ -107,7 +107,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 						{
 							$error = "true";
 							&zenlog(
-								"ZAPI error, trying to modify a l4xnat farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name."
+								"Error trying to modify a l4xnat farm $farmname, the farm $json_obj->{newfarmname} already exists, try another name.", "error", "LSLB"
 							);
 						}
 						else
@@ -134,7 +134,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 				{
 					$error = "true";
 					&zenlog(
-						 "ZAPI error, trying to modify a l4xnat farm $farmname, invalid newfarmname." );
+						 "Error trying to modify a l4xnat farm $farmname, invalid new farm name.", "error", "LSLB" );
 				}
 			}
 		}
@@ -147,7 +147,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid algorithm, can't be blank."
+				"Error trying to modify a l4xnat farm $farmname, invalid algorithm, can't be blank.", "error", "LSLB"
 			);
 		}
 		if ( $json_obj->{ algorithm } =~ /^leastconn|weight|prio$/ )
@@ -157,7 +157,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify a l4xnat farm $farmname, some errors happened trying to modify the algorithm."
+					"Error trying to modify a l4xnat farm $farmname, some errors detected trying to modify the algorithm.", "error", "LSLB"
 				);
 			}
 			else
@@ -169,7 +169,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-				   "ZAPI error, trying to modify a l4xnat farm $farmname, invalid algorithm." );
+				   "Error trying to modify a l4xnat farm $farmname, invalid algorithm.", "error", "LSLB" );
 		}
 	}
 
@@ -188,7 +188,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 				{
 					$error = "true";
 					&zenlog(
-						"ZAPI error, trying to modify a l4xnat farm $farmname, some errors happened trying to modify the persistence."
+						"Error trying to modify a l4xnat farm $farmname, some errors detected trying to modify the persistence.", "error", "LSLB"
 					);
 				}
 				else
@@ -201,7 +201,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-				 "ZAPI error, trying to modify a l4xnat farm $farmname, invalid persistence." );
+				 "Error trying to modify a l4xnat farm $farmname, invalid persistence.", "error", "LSLB" );
 		}
 	}
 
@@ -212,7 +212,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid protocol, can't be blank."
+				"Error trying to modify a l4xnat farm $farmname, invalid protocol, can't be blank.", "error", "LSLB"
 			);
 		}
 		if ( $json_obj->{ protocol } =~ /^all|tcp|udp|sip|ftp|tftp$/ )
@@ -222,7 +222,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify a l4xnat farm $farmname, some errors happened trying to modify the protocol."
+					"Error trying to modify a l4xnat farm $farmname, some errors detected trying to modify the protocol.", "error", "LSLB"
 				);
 			}
 			else
@@ -238,7 +238,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-					"ZAPI error, trying to modify a l4xnat farm $farmname, invalid protocol." );
+					"Error trying to modify a l4xnat farm $farmname, invalid protocol.", "error", "LSLB" );
 		}
 	}
 
@@ -249,7 +249,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		{
 			&error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid nattype, can't be blank."
+				"Error trying to modify a l4xnat farm $farmname, invalid nat type, can't be blank.", "error", "LSLB"
 			);
 		}
 		if ( $json_obj->{ nattype } =~ /^nat|dnat$/ )
@@ -261,7 +261,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 				{
 					$error = "true";
 					&zenlog(
-						"ZAPI error, trying to modify a l4xnat farm $farmname, some errors happened trying to modify the nattype."
+						"Error trying to modify a l4xnat farm $farmname, some errors detected trying to modify the nat type.", "error", "LSLB"
 					);
 				}
 				else
@@ -274,7 +274,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-					 "ZAPI error, trying to modify a l4xnat farm $farmname, invalid nattype." );
+					 "Error trying to modify a l4xnat farm $farmname, invalid nat type.", "error", "LSLB" );
 		}
 	}
 
@@ -285,7 +285,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid ttl, can't be blank."
+				"Error trying to modify a l4xnat farm $farmname, invalid ttl, can't be blank.", "error", "LSLB"
 			);
 		}
 		elsif ( $json_obj->{ ttl } =~ /^\d+$/ )
@@ -295,7 +295,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			{
 				$error = "true";
 				&zenlog(
-					"ZAPI error, trying to modify a l4xnat farm $farmname, some errors happened trying to modify the ttl."
+					"Error trying to modify a l4xnat farm $farmname, some errors detected trying to modify the ttl.", "error", "LSLB"
 				);
 			}
 			else
@@ -307,7 +307,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-					  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid ttl." );
+					  "Error trying to modify a l4xnat farm $farmname, invalid ttl.", "error", "LSLB"  );
 		}
 	}
 
@@ -318,14 +318,14 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip, can't be blank."
+				"Error trying to modify a l4xnat farm $farmname, invalid Virtual IP, it can't be blank.", "error", "LSLB"
 			);
 		}
 		elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
 		{
 			$error = "true";
 			&zenlog(
-					  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip." );
+					  "Error trying to modify a l4xnat farm $farmname, invalid Virtual IP.", "error", "LSLB" );
 		}
 		else
 		{
@@ -334,7 +334,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			{
 				$error = "true";
 				&zenlog(
-						  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip." );
+						  "Error trying to modify a l4xnat farm $farmname, invalid Virtual IP.", "error", "LSLB" );
 			}
 			else
 			{
@@ -350,7 +350,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport, can't be blank."
+				"Error trying to modify a l4xnat farm $farmname, invalid Virtual port, it can't be blank.", "error", "LSLB"
 			);
 		}
 		elsif ( !$json_obj->{ vport } =~ /^\d+((\:\d+)*(\,\d+)*)*$/ )
@@ -359,7 +359,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			{
 				$error = "true";
 				&zenlog(
-						  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport." );
+						  "Error trying to modify a l4xnat farm $farmname, invalid Virtual port.", "error", "LSLB" );
 			}
 		}
 		else
@@ -369,7 +369,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			{
 				$error = "true";
 				&zenlog(
-						  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport." );
+						  "Error trying to modify a l4xnat farm $farmname, invalid Virtual port.", "error", "LSLB" );
 			}
 			else
 			{
@@ -385,14 +385,14 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			&zenlog(
-				"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip, can't be blank."
+				"Error trying to modify a l4xnat farm $farmname, invalid Virtual IP, it can't be blank.", "error", "LSLB"
 			);
 		}
 		elsif ( !$json_obj->{ vip } =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ )
 		{
 			$error = "true";
 			&zenlog(
-					  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vip." );
+					  "Error trying to modify a l4xnat farm $farmname, invalid Virtual IP.", "error", "LSLB" );
 		}
 		else
 		{
@@ -402,7 +402,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 				{
 					$error = "true";
 					&zenlog(
-						"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport, can't be blank."
+						"Error trying to modify a l4xnat farm $farmname, invalid Virtual port, it can't be blank.", "error", "LSLB"
 					);
 				}
 				elsif ( !$json_obj->{ vport } =~ /^\d+((\:\d+)*(\,\d+)*)*$/ )
@@ -411,7 +411,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 					{
 						$error = "true";
 						&zenlog(
-								  "ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport." );
+								  "Error trying to modify a l4xnat farm $farmname, invalid Virtual port.", "error", "LSLB" );
 					}
 				}
 				else
@@ -422,7 +422,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 					{
 						$error = "true";
 						&zenlog(
-							"ZAPI error, trying to modify a l4xnat farm $farmname, invalid vport or invalid vip."
+							"Error trying to modify a l4xnat farm $farmname, invalid Virtual port or invalid Virtual IP.", "error", "LSLB"
 						);
 					}
 					else
@@ -438,7 +438,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	if ( $error ne "true" )
 	{
 		&zenlog(
-				  "ZAPI success, some parameters have been changed in farm $farmname." );
+				  "Success, some parameters have been changed in farm $farmname.", "info", "LSLB" );
 
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
@@ -481,7 +481,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	else
 	{
 		&zenlog(
-			"ZAPI error, trying to modify a l4xnat farm $farmname, it's not possible to modify the farm."
+			"Error trying to modify a l4xnat farm $farmname, it's not possible to modify the farm.", "error", "LSLB"
 		);
 
 		# Error

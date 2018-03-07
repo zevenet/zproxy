@@ -80,7 +80,7 @@ sub download_logs
 		}
 		close $fh;
 
-		&zenlog( "[Download] $description: $logPath" );
+		&zenlog( "[Download] $description: $logPath", "info", "SYSTEM" );
 
 		return &httpResponse({ code => 200, headers => $headers, body => $body });		
 	}

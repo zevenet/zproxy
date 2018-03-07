@@ -51,8 +51,8 @@ sub getGSLBFarmConfigIsOK    # ($farm_name)
 	if ( $return_code or &debug() )
 	{
 		my $message = $return_code ? 'failure' : 'running';
-		&zenlog( "$message: $gdnsd_command" );
-		&zenlog( "output: $run " );
+		&zenlog( "$message: $gdnsd_command", "info", "GSLB" );
+		&zenlog( "output: $run ", "info", "GSLB" );
 	}
 
 	return $return_code;

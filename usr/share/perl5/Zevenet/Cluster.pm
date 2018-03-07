@@ -115,7 +115,7 @@ sub getZClusterConfig
 
 		if ( ! $zcl_file )
 		{
-			&zenlog("Could not create file $filecluster: $!");
+			&zenlog("Could not create file $filecluster: $!", "error", "CLUSTER");
 			return undef;
 		}
 
@@ -197,7 +197,7 @@ sub enableZCluster
 
 	if ( $error_code )
 	{
-		&zenlog("An error happened setting vrrp configuration");
+		&zenlog("An error happened setting vrrp configuration", "error", "CLUSTER");
 		return 1;
 	}
 
@@ -208,7 +208,7 @@ sub enableZCluster
 	{
 		my $ip_bin = &getGlobalConfiguration('ip_bin');
 
-		&zenlog("Starting cluster maintenance interface");
+		&zenlog("Starting cluster maintenance interface", "info", "CLUSTER");
 
 		# create the interface and put it up
 		my $ip_cmd = "$ip_bin link add name $maint_if type dummy";
@@ -228,17 +228,17 @@ sub enableZCluster
 	# start or reload keepalived
 	if ( &getZClusterRunning() )
 	{
-		&zenlog("Reloading keepalived service");
+		&zenlog("Reloading keepalived service", "info", "CLUSTER");
 
 		#~ my $ka_cmd = "/etc/init.d/keepalived reload >/dev/null 2>&1";
 		my $ka_cmd = "/etc/init.d/keepalived reload";
 		$error_code = &logAndRun( $ka_cmd );
 
-		&zenlog("Reloading keepalived service output: $error_code");
+		&zenlog("Reloading keepalived service output: $error_code", "info", "CLUSTER");
 	}
 	else
 	{
-		&zenlog("Starting keepalived service");
+		&zenlog("Starting keepalived service", "info", "CLUSTER");
 
 		# WARNING: Sometimes keepalived needs to be stopped before it can be started
 		my $ka_cmd = "/etc/init.d/keepalived stop >/dev/null 2>&1";
@@ -251,7 +251,7 @@ sub enableZCluster
 
 		if ( &pgrep( "keepalived" ) )
 		{
-			&zenlog("Error starting Keepalived service");
+			&zenlog("Error starting Keepalived service", "error", "CLUSTER");
 			return 1;
 		}
 	}
@@ -310,7 +310,7 @@ sub disableZCluster
 	# remove dummy interface
 	if ( &getSystemInterface( $maint_if ) )
 	{
-		&zenlog("Removing cluster maintenance interface");
+		&zenlog("Removing cluster maintenance interface", "error", "CLUSTER");
 
 		my $ip_bin = &getGlobalConfiguration('ip_bin');
 
@@ -345,8 +345,13 @@ sub setKeepalivedConfig
 
 	require Zevenet::SystemInfo;
 
+<<<<<<< HEAD
 	&zenlog("Setting keepalived configuration file");
 
+=======
+	&zenlog("Setting keepalived configuration file", "info", "CLUSTER");
+	
+>>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 	my $zcl_conf = &getZClusterConfig();
 	my $keepalived_conf = &getGlobalConfiguration('keepalived_conf');
 
@@ -354,7 +359,7 @@ sub setKeepalivedConfig
 
 	if ( ! $ka_file )
 	{
-		&zenlog("Could not open file $keepalived_conf: $!");
+		&zenlog("Could not open file $keepalived_conf: $!", "error", "CLUSTER");
 		return 1;
 	}
 
@@ -542,7 +547,7 @@ sub generateIdKey # $rc ()
 
 	if ( $error_code != 0 )
 	{
-		&zenlog("An error happened generating the RSA id key: $gen_output");
+		&zenlog("An error happened generating the RSA id key: $gen_output", "error", "CLUSTER");
 	}
 
 	return $error_code;
@@ -577,7 +582,7 @@ sub copyIdKey # $rc ( $ip_addr, $pass )
 
 	if ( $error_code != 0 )
 	{
-		&zenlog("An error happened copying the Id key to the host $ip_address: $copy_output");
+		&zenlog("An error happened copying the Id key to the host $ip_address: $copy_output", "error", "CLUSTER");
 	}
 
 	return $error_code;
@@ -616,7 +621,7 @@ sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 
 		if ( $return_code || ! -f "$key_path/$key_id" )
 		{
-			&zenlog("Key ID $key_path/$key_id does not exist, aborting.");
+			&zenlog("Key ID $key_path/$key_id does not exist, aborting.", "error", "CLUSTER");
 			return 1;
 		}
 	}
@@ -642,7 +647,7 @@ sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 
 		if ( $error_code != 0 )
 		{
-			&zenlog("An error happened generating the RSA id key remotely: $gen_output");
+			&zenlog("An error happened generating the RSA id key remotely: $gen_output", "error", "CLUSTER");
 			return 1;
 		}
 	}
@@ -653,7 +658,7 @@ sub exchangeIdKeys # $bool ( $ip_addr, $pass )
 
 	if ( $error_code != 0 )
 	{
-		&zenlog("An error happened getting the remote public key: $key_id_pub");
+		&zenlog("An error happened getting the remote public key: $key_id_pub", "error", "CLUSTER");
 		return 1;
 	}
 
@@ -709,8 +714,8 @@ sub runRemotely # `output` ( $cmd, $ip_addr [, $port ] )
 	my $ssh     = &getGlobalConfiguration( 'ssh' );
 	my $ssh_cmd = "$ssh $ssh_options root\@$ip_address '$cmd'";
 
-	&zenlog("Running remotely: \@$ip_address: $cmd") if &debug();
-	&zenlog("Running: $ssh_cmd") if &debug() > 2;
+	&zenlog("Running remotely: \@$ip_address: $cmd", "debug", "CLUSTER") if &debug();
+	&zenlog("Running: $ssh_cmd", "debug", "CLUSTER") if &debug() > 2;
 
 	# capture output and return it
 	return `$ssh_cmd 2>/dev/null`;
@@ -754,23 +759,23 @@ sub zsync
 
 	if ( ref $args ne 'HASH' )
 	{
-		&zenlog( ( caller )[3] . ": Invalid hash reference.");
+		&zenlog( ( caller )[3] . ": Invalid hash reference.", "error", "CLUSTER");
 		die;
 	}
 
-	#~ &zenlog( "running zsync with $args->{ip_addr} for $args->{path}" );
+	#~ &zenlog( "running zsync with $args->{ip_addr} for $args->{path}", "info", "CLUSTER" );
 
 	my $exclude = '';
 	for my $pattern ( @{ $args->{exclude} } )
 	{
-		#~ &zenlog( "exclude:$pattern" );
+		#~ &zenlog( "exclude:$pattern", "info", "CLUSTER" );
 		$exclude .= "--exclude=\"$pattern\" ";
 	}
 
 	my $include = '';
 	for my $pattern ( @{ $args->{include} } )
 	{
-		#~ &zenlog( "include:$pattern" );
+		#~ &zenlog( "include:$pattern", "info", "CLUSTER" );
 		$include .= "--include=\"$pattern\" ";
 	}
 
@@ -788,15 +793,15 @@ sub zsync
 	my $zenrsync = &getGlobalConfiguration('zenrsync');
 	my $rsync_cmd = "$rsync $zenrsync $include $exclude $src $dest";
 
-	&zenlog( "Running: $rsync_cmd" );
+	&zenlog( "Running: $rsync_cmd", "info", "CLUSTER" );
 	my $rsync_output = `$rsync_cmd`;
 	my $error_code = $?;
 
-	#~ &zenlog_thread("$rsync_output");
+	#~ &zenlog_thread("$rsync_output", "info", "CLUSTER");
 
 	if ( $error_code )
 	{
-		&zenlog( $rsync_output );
+		&zenlog( $rsync_output, "info", "CLUSTER" );
 	}
 
 	return $error_code;
@@ -820,7 +825,11 @@ sub runSync
 {
 	my $src_path = shift;
 
+<<<<<<< HEAD
 	#~ &zenlog("starting runSync for path: '$src_path'");
+=======
+	#~ &zenlog("starting runSync", "info", "CLUSTER");
+>>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 
 	require Zevenet::SystemInfo;
 
@@ -841,7 +850,7 @@ sub runSync
 	# Warning: The Config::Tiny object can be defined without holding any key
 	if ( ! $cl_conf || ( keys %$cl_conf ) == 0 )
 	{
-		&zenlog( "Cluster configuration not found. Aborting sync." );
+		&zenlog( "Cluster configuration not found. Aborting sync.", "error", "CLUSTER" );
 		return 1;
 	}
 
@@ -852,10 +861,10 @@ sub runSync
 		next if $key eq &getHostname();
 		#~ next if $cl_conf->{$key}->{ip} eq $local_ip;
 
-		#~ &zenlog("runSync key:$key");
+		#~ &zenlog("runSync key:$key", "info", "CLUSTER");
 
-		#~ &zenlog("Element:$element");
-		#~ &zenlog("Adding $cl_conf->{$element}->{ip}");
+		#~ &zenlog("Element:$element", "info", "CLUSTER");
+		#~ &zenlog("Adding $cl_conf->{$element}->{ip}", "info", "CLUSTER");
 
 		my %arg = (
 			exclude => \@excluded_files,
@@ -866,10 +875,10 @@ sub runSync
 			path => $src_path,
 		);
 
-		#~ &zenlog("Element:$element ($cl_conf->{$element}->{ip})");
-		#~ &zenlog("Adding $cl_conf->{$element}->{ip}");
+		#~ &zenlog("Element:$element ($cl_conf->{$element}->{ip})", "info", "CLUSTER");
+		#~ &zenlog("Adding $cl_conf->{$element}->{ip}", "info", "CLUSTER");
 		push( @args, \%arg );
-		#~ &zenlog( Dumper \%arg );
+		#~ &zenlog( Dumper \%arg , "debug", "CLUSTER");
 	}
 
 	# WARNING: as a temporal workaround run zsync once
@@ -881,11 +890,16 @@ sub runSync
 
 	#~ for my $rc ( @{ $r_list } )
 	#~ {
+<<<<<<< HEAD
 		#~ &zenlog("Return[$rc->{tid}] $rc->{ret_val}");
 
+=======
+		#~ &zenlog("Return[$rc->{tid}] $rc->{ret_val}", "info", "CLUSTER);
+		
+>>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 		#~ if ( $rc->{ret_val} )
 		#~ {
-			#~ &zenlog( "An error happened syncing with $rc->{arg}->{ip_addr}");
+			#~ &zenlog( "An error happened syncing with $rc->{arg}->{ip_addr}", "info", "CLUSTER");
 		#~ }
 	#~ }
 }
@@ -924,8 +938,13 @@ sub getZClusterNodeStatus
 	# Empty return if the file could not be opened
 	if ( ! $znode_status )
 	{
+<<<<<<< HEAD
 		#~ &zenlog( "Could not open file $znode_status_file: $!" );
 		return;
+=======
+		#~ &zenlog( "Could not open file $znode_status_file: $!", "error", "CLUSTER" );
+		return undef;
+>>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 	}
 
 	my $status = <$znode_status>;
@@ -958,7 +977,7 @@ sub setZClusterNodeStatus
 
 	if ( $node_status !~ /^(master|backup|maintenance)$/ )
 	{
-		&zenlog("\"$node_status\" is not an accepted node status");
+		&zenlog("\"$node_status\" is not an accepted node status", "error", "CLUSTER");
 		return 1;
 	}
 
@@ -967,7 +986,7 @@ sub setZClusterNodeStatus
 
 	if ( ! $znode_status )
 	{
-		&zenlog( "Could not open file $znode_status_file: $!" );
+		&zenlog( "Could not open file $znode_status_file: $!", "error", "CLUSTER" );
 		return 1;
 	}
 
@@ -1004,12 +1023,17 @@ sub disableInterfaceDiscovery
 	}
 	elsif ( $iface->{ ip_v } == 6 )
 	{
+<<<<<<< HEAD
 		my $ip6tables = &getGlobalConfiguration('ip6tables');
 		return &logAndRun( "$ip6tables -A INPUT -d $iface->{ addr } -p icmpv6 --icmpv6-type echo-request -j DROP" );
+=======
+		&zenlog("disableInterfaceDiscovery pending for IPv6", "warning", "CLUSTER");
+		return 0;
+>>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 	}
 	else
 	{
-		&zenlog("IP version not supported");
+		&zenlog("IP version not supported", "error", "CLUSTER");
 		return 1;
 	}
 }
@@ -1040,12 +1064,17 @@ sub enableInterfaceDiscovery
 	}
 	elsif ( $iface->{ ip_v } == 6 )
 	{
+<<<<<<< HEAD
 		my $ip6tables = &getGlobalConfiguration('ip6tables');
 		return &logAndRun( "$ip6tables -F INPUT -d $iface->{ addr } -p icmpv6 --icmpv6-type echo-request" );
+=======
+		&zenlog(" enableInterfaceDiscovery pending for IPv6", "warning", "CLUSTER");
+		return 0;
+>>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 	}
 	else
 	{
-		&zenlog("IP version not supported");
+		&zenlog("IP version not supported", "error", "CLUSTER");
 		return 1;
 	}
 }
@@ -1071,8 +1100,12 @@ sub enableAllInterfacesDiscovery
 	my $rc = &logAndRun( "$arptables -F" );
 
 	# IPv6
+<<<<<<< HEAD
 	my $ip6tables = &getGlobalConfiguration('ip6tables');
 	$rc |= &logAndRun( "$ip6tables -F INPUT" );
+=======
+	&zenlog("enableInterfaceDiscovery pending for IPv6", "warning", "CLUSTER");
+>>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 
 	return $rc;
 }
@@ -1096,10 +1129,11 @@ sub broadcastInterfaceDiscovery
 {
 	my $iface = shift;
 
-	&zenlog("Sending GArping for $iface->{ name }: $iface->{ addr }");
+	&zenlog("Sending GArping for $iface->{ name }: $iface->{ addr }", "info", "CLUSTER");
 
 	require Zevenet::Net::Util;
 
+<<<<<<< HEAD
 	# arping
 	&sendGArp( $iface->{ name }, $iface->{ addr } );
 
@@ -1119,6 +1153,20 @@ sub broadcastInterfaceDiscovery
 #		&zenlog("IP version not supported");
 #		return 1;
 #	}
+=======
+		# arping
+		&sendGArp( $iface->{ name }, $iface->{ addr } );
+	}
+	elsif ( $iface->{ ip_v } == 6 )
+	{
+		&zenlog("broadcastInterfaceDiscovery pending for IPv6", "warning", "CLUSTER");
+	}
+	else
+	{
+		&zenlog("IP version not supported", "error", "CLUSTER");
+		return 1;
+	}
+>>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 
 	return 0;
 }
@@ -1188,7 +1236,7 @@ sub runZClusterRemoteManager
 		my $msg = "rc:$rc";
 		$msg .= " $cl_output" if $rc;
 
-		&zenlog( $msg );
+		&zenlog( $msg, "info", "CLUSTER" );
 
 		return $rc;
 	}
@@ -1217,7 +1265,7 @@ sub pgrep
 	# return_code
 	my $rc = system("/usr/bin/pgrep $cmd >/dev/null");
 
-	#~ &zenlog("$cmd not found running") if $rc && &debug();
+	#~ &zenlog("$cmd not found running", "debug", "CLUSTER") if $rc && &debug();
 
 	return $rc;
 }

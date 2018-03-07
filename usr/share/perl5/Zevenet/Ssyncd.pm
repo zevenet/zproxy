@@ -103,7 +103,7 @@ sub setSsyncdDisabled
 	if ( `pgrep ssyncd` )
 	{
 		system("pkill ssyncd");
-		&zenlog("ssyncd found still running and was killed");
+		&zenlog("ssyncd found still running and was killed", "info", "CLUSTER");
 	}
 
 	return $error;
@@ -111,7 +111,7 @@ sub setSsyncdDisabled
 
 sub setSsyncdBackup
 {
-	&zenlog("/// Starting setSsyncdBackup");
+	&zenlog("/// Starting setSsyncdBackup", "info", "CLUSTER");
 
 	return 0 if $ssyncd_enabled eq 'false';
 
@@ -128,14 +128,14 @@ sub setSsyncdBackup
 
 		if ( $mode eq 'backup' )
 		{
-			&zenlog("Ssyncd already in backup mode");
+			&zenlog("Ssyncd already in backup mode", "info", "CLUSTER");
 
 			# end function if already in backup mode
 			return 0;
 		}
 		else
 		{
-			&zenlog("Ssyncd current mode: $mode");
+			&zenlog("Ssyncd current mode: $mode", "info", "CLUSTER");
 		}
 
 		&setSsyncdDisabled();
@@ -171,14 +171,14 @@ sub setSsyncdMaster
 
 		if ( $mode eq 'master' )
 		{
-			&zenlog("Ssyncd already in master mode");
+			&zenlog("Ssyncd already in master mode", "info", "CLUSTER");
 
 			# end function if already in master mode
 			return 0;
 		}
 		else
 		{
-			&zenlog("Ssyncd current mode: $mode");
+			&zenlog("Ssyncd current mode: $mode", "info", "CLUSTER");
 		}
 
 		# Before changing to master mode:
@@ -187,12 +187,12 @@ sub setSsyncdMaster
 		my $error;
 
 		$ssync_cmd = "$ssyncdctl_bin write http";
-		$error = system( "$ssync_cmd" );
-		&zenlog("setSsyncdMaster ssyncd write http: $error > cmd: $ssync_cmd") if $error;
+		my $error = system( "$ssync_cmd" );
+		&zenlog("setSsyncdMaster ssyncd write http: $error > cmd: $ssync_cmd", "error", "CLUSTER") if $error;
 
 		$ssync_cmd = "$ssyncdctl_bin write recent";
-		$error = system( "$ssync_cmd" );
-		&zenlog("setSsyncdMaster ssyncd write recent: $error > cmd: $ssync_cmd") if $error;
+		my $error = system( "$ssync_cmd" );
+		&zenlog("setSsyncdMaster ssyncd write recent: $error > cmd: $ssync_cmd", "error", "CLUSTER") if $error;
 
 		&setSsyncdDisabled();
 	}
@@ -202,7 +202,7 @@ sub setSsyncdMaster
 
 	$ssync_cmd = "$ssyncd_bin -d -M -p $ssyncd_port";
 	my $error = system( "$ssync_cmd" );
-	&zenlog("/// ssyncd as master: $error > cmd: $ssync_cmd");
+	&zenlog("/// ssyncd as master: $error > cmd: $ssync_cmd", "info", "CLUSTER");
 
 	# ./ssyncdctl start http <farm>
 	# ./ssyncdctl start recent

@@ -83,7 +83,7 @@ sub getIptListV4
 	&setIptLock( $ipt_lockfile );
 
 	my @ipt_output = `$iptables_command`;
-	&zenlog( "failed: $iptables_command" ) if $?;
+	&zenlog( "failed: $iptables_command", "error", "IPDS" ) if $?;
 
 	## unlock iptables use ##
 	&setIptUnlock( $ipt_lockfile );

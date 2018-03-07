@@ -181,7 +181,8 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 	}
 
 	# no error found, return successful response
-	&zenlog( "ZAPI success, some parameters have been changed in farm $farmname." );
+	&zenlog( "Success, some parameters have been changed in farm $farmname.", "info", "DSLB" );
+
 
 	my $body = {
 				 description => $desc,

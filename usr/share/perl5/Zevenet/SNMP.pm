@@ -50,7 +50,7 @@ sub setSnmpdStatus    # ($snmpd_status)
 
 	if ( $snmpd_status eq 'true' )
 	{
-		&zenlog( "Starting snmp service" );
+		&zenlog( "Starting snmp service", "info", "SYSTEM" );
 		my @run = system("$updatercd snmpd enable");
 
 		if ( -f $systemctl )
@@ -64,7 +64,7 @@ sub setSnmpdStatus    # ($snmpd_status)
 	}
 	elsif ( $snmpd_status eq 'false' )
 	{
-		&zenlog( "Stopping snmp service" );
+		&zenlog( "Stopping snmp service", "info", "SYSTEM" );
 		my @run = system("$updatercd snmpd disable");
 
 		if ( -f $systemctl )
@@ -78,7 +78,7 @@ sub setSnmpdStatus    # ($snmpd_status)
 	}
 	else
 	{
-		&zenlog( "SNMP requested state is invalid" );
+		&zenlog( "SNMP requested state is invalid", "warning", "SYSTEM" );
 		return -1;
 	}
 
@@ -203,7 +203,7 @@ sub setSnmpdConfig    # ($snmpd_conf)
 
 	if ( !$config_file )
 	{
-		&zenlog( "Could not open $snmpdconfig_file: $!" );
+		&zenlog( "Could not open $snmpdconfig_file: $!", "warning", "SYSTEM" );
 		return -1;
 	}
 
@@ -245,7 +245,7 @@ sub setSnmpdService    # ($snmpd_enabled)
 	# verify valid input
 	if ( $snmpd_enabled ne 'true' && $snmpd_enabled ne 'false' )
 	{
-		&zenlog( "SNMP Service: status not available" );
+		&zenlog( "SNMP Service: status not available", "warning", "SYSTEM" );
 		return $return_code;
 	}
 
@@ -253,7 +253,7 @@ sub setSnmpdService    # ($snmpd_enabled)
 	$return_code = &setSnmpdStatus( $snmpd_enabled );
 	if ( $return_code != 0 )
 	{
-		&zenlog( "SNMP Status change failed" );
+		&zenlog( "SNMP Status change failed", "warning", "SYSTEM" );
 		return $return_code;
 	}
 
@@ -262,7 +262,7 @@ sub setSnmpdService    # ($snmpd_enabled)
 	# perform runlevel change
 	if ( $snmpd_enabled eq 'true' )
 	{
-		&zenlog( "Enabling snmp service" );
+		&zenlog( "Enabling snmp service", "info", "SYSTEM" );
 
 		if ( -f $systemctl )
 		{
@@ -275,7 +275,7 @@ sub setSnmpdService    # ($snmpd_enabled)
 	}
 	else
 	{
-		&zenlog( "Disabling snmp service" );
+		&zenlog( "Disabling snmp service", "info", "SYSTEM" );
 
 		if ( -f $systemctl )
 		{
@@ -290,7 +290,7 @@ sub setSnmpdService    # ($snmpd_enabled)
 	# show message if failed
 	if ( $return_code != 0 )
 	{
-		&zenlog( "SNMP runlevel setup failed" );
+		&zenlog( "SNMP runlevel setup failed", "warning", "SYSTEM" );
 	}
 	return $return_code;
 }
@@ -320,7 +320,7 @@ sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_sc
 
 	if ( ref $snmpd_new ne 'HASH' )
 	{
-		&zenlog( "Wrong argument applying snmp changes." );
+		&zenlog( "Wrong argument applying snmp changes.", "warning", "SYSTEM" );
 		return $return_code;
 	}
 
@@ -342,7 +342,7 @@ sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_sc
 	# check port
 	if ( !&isValidPortNumber( $snmpd_new->{ port } ) )
 	{
-		&zenlog( "SNMP: Port out of range" );
+		&zenlog( "SNMP: Port out of range", "warning", "SYSTEM" );
 		return $return_code;
 	}
 
@@ -351,12 +351,12 @@ sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_sc
 
 	if ( &ipisok( $ip, 4 ) eq 'false' )
 	{
-		&zenlog( "SNMP: Invalid ip or subnet with access" );
+		&zenlog( "SNMP: Invalid ip or subnet with access", "warning", "SYSTEM" );
 		return $return_code;
 	}
 	if ( $subnet !~ /^\d+$/ || $subnet < 0 || $subnet > 32 )
 	{
-		&zenlog( "SNMP: Invalid subnet with access" );
+		&zenlog( "SNMP: Invalid subnet with access", "warning", "SYSTEM" );
 		return $return_code;
 	}
 
@@ -388,7 +388,7 @@ sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_sc
 
 		if ( $return_code )
 		{
-			&zenlog( "SNMP failed setting the service" );
+			&zenlog( "SNMP failed setting the service", "warning", "SYSTEM" );
 			return $return_code;
 		}
 	}
@@ -400,7 +400,7 @@ sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_sc
 	{
 		if ( &setSnmpdStatus( 'false' ) || &setSnmpdStatus( 'true' ) )
 		{
-			&zenlog( "SNMP failed restarting the server" );
+			&zenlog( "SNMP failed restarting the server", "warning", "SYSTEM" );
 			return -1;
 		}
 	}

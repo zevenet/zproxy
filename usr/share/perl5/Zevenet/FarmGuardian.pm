@@ -593,6 +593,9 @@ sub runFGFarmStart
 	elsif ( $ftype eq 'l4xnat' || $ftype =~ /http/ )
 	{
 		my $fgname = &getFGFarm( $farm, $svice );
+		my $farmguardian = &getGlobalConfiguration('farmguardian');
+		my $fg_cmd = "$farmguardian $fname $sv $log";
+		&zenlog( "running $fg_cmd", "info", "FG" );
 
 		return 0 if not $fgname;
 
@@ -878,10 +881,23 @@ sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 {
 	my ( $fname, $ttcheck, $script, $usefg, $fglog, $svice ) = @_;
 
-	&zenlog(
-		"runFarmGuardianCreate( farm: $fname, interval: $ttcheck, cmd: $script, log: $fglog, enabled: $usefg )",
-		"debug2"
-	);
+	&zenlog( "runFarmGuardianCreate( farm: $fname, interval: $ttcheck, cmd: $script, log: $fglog, enabled: $usefg )", "debug", "FG" );
+
+	my $fgfile = &getFarmGuardianFile( $fname, $svice );
+	my $output = -1;
+
+	if ( $fgfile == -1 )
+	{
+		if ( $svice ne "" )
+		{
+			$svice = "${svice}_";
+		}
+
+		$fgfile = "${fname}_${svice}guardian.conf";
+		&zenlog(
+			  "running 'Create FarmGuardian $ttcheck $script $usefg $fglog' for $fname farm", "info", "FG"
+		);
+	}
 
 	# get default name and check not exist
 	my $obj = {

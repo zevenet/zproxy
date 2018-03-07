@@ -106,7 +106,7 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 	}
 	my $exec = &getGSLBStartCommand( $fname );
 
-	&zenlog( "running $exec" );
+	&zenlog( "running $exec", "info", "GSLB" );
 
 	require Zevenet::System;
 	zsystem( "$exec > /dev/null 2>&1" );
@@ -161,7 +161,7 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 	if ( $checkfarm )
 	{
 		&zenlog(
-			  "Farm $fname can't be stopped, check the logs and modify the configuration" );
+			  "Farm $fname can't be stopped, check the logs and modify the configuration", "error", "GSLB" );
 		return 1;
 	}
 
@@ -192,6 +192,7 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 
 	# $exec returns 0 even when gslb stop fails, checked, so force TERM
 	my $pid_gslb = &getGSLBFarmPid( $fname );
+	&zenlog( "Forcing stop to gslb with PID $pid_gslb", "info", "GSLB" );
 
 	if ( $pid_gslb ne "-" )
 	{
@@ -271,11 +272,11 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 
 	unless ( length $newfname )
 	{
-		&zenlog( "error 'NewFarmName $newfname' is empty" );
+		&zenlog( "error 'New Farm Name $newfname' is empty", "error", "GSLB" );
 		return -2;
 	}
 
-	&zenlog( "setting 'NewFarmName $newfname' for $fname farm $type" );
+	&zenlog( "setting 'NewFarmName $newfname' for $fname farm $type", "info", "GSLB" );
 
 	my $newffile = "$newfname\_$type.cfg";
 	rename ( "$configdir\/$ffile", "$configdir\/$newffile" );

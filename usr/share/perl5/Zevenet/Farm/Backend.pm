@@ -99,7 +99,7 @@ sub setFarmServer # $output ($ids,$rip,$port|$iface,$max,$weight,$priority,$time
 	my $output    = -1;
 
 	&zenlog(
-		"setting 'Server $ids $rip $port max $max weight $weight prio $priority timeout $timeout' for $farm_name farm $farm_type"
+		"setting 'Server $ids $rip $port max $max weight $weight prio $priority timeout $timeout' for $farm_name farm $farm_type", "info", "FARMS"
 	);
 
 	if ( $farm_type eq "datalink" )
@@ -147,7 +147,7 @@ sub runFarmServerDelete    # ($ids,$farm_name,$service)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	&zenlog( "running 'ServerDelete $ids' for $farm_name farm $farm_type" );
+	&zenlog( "running 'ServerDelete $ids' for $farm_name farm $farm_type", "info", "FARMS" );
 
 	if ( $farm_type eq "datalink" )
 	{

@@ -37,7 +37,7 @@ sub eload
 	{
 		my $msg = "Required eload parameter '$required' missing";
 
-		&zenlog( $msg );
+		&zenlog( $msg, "error", "SYSTEM" );
 		die( $msg );
 	}
 
@@ -48,9 +48,9 @@ sub eload
 	if ( grep { not exists $req{ $_ } } @required )
 	{
 		my $params = join( ', ', @required );
-		my $msg = "Warning: Detected unused eload parameter: $params";
+		my $msg = "Detected unused eload parameter: $params";
 
-		&zenlog( $msg );
+		&zenlog( $msg, "warning", "SYSTEM"  );
 	}
 
 	# make sure $req{ args } is always an array reference
@@ -79,7 +79,7 @@ sub eload
 
 	unless ( ref( $req{ args } ) eq 'ARRAY' )
 	{
-		&zenlog("eload: ARGS is ARRAY ref: Failed!");
+		&zenlog("eload: ARGS is ARRAY ref: Failed!", "info", "SYSTEM");
 	}
 
 	if ( exists $ENV{ PATH_INFO } && $ENV{ PATH_INFO } eq '/certificates/activation' )
@@ -92,7 +92,7 @@ sub eload
 	{
 		my $msg = "eload: Error encoding JSON: $@";
 
-		zenlog( $msg );
+		zenlog( $msg, "error", "SYSTEM" );
 		die $msg;
 	}
 
@@ -100,8 +100,8 @@ sub eload
 
 	if ( &debug() )
 	{
-		&zenlog("eload: CMD: '$cmd'");
-		&zenlog("eload: INPUT: '$input'") unless $input eq '[]';
+		&zenlog("eload: CMD: '$cmd'", "debug", "SYSTEM");
+		&zenlog("eload: INPUT: '$input'", "debug", "SYSTEM") unless $input eq '[]';
 	}
 
 	my $ret_output;
@@ -127,8 +127,8 @@ sub eload
 
 		#~ zenlog( "rc: '$rc'" );
 		#~ zenlog( "ret_output: '$ret_output'" );
-		&zenlog( "$msg. $ret_output" );
-		exit 1 if $0 =~ /zevenet$/; # finish zevenet process
+		&zenlog( "$msg. $ret_output", "error". "SYSTEM" );
+		exit 1 if $0 =~ /zevenet$/;
 		die( $msg );
 	}
 

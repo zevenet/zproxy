@@ -192,7 +192,7 @@ sub setFarmTimeout    # ($timeout,$farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	&zenlog( "setting 'Timeout $timeout' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'Timeout $timeout' for $farm_name farm $farm_type", "info", "LSLB", "info", "LSLB" );
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -268,7 +268,7 @@ sub setFarmAlgorithm    # ($algorithm,$farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	&zenlog( "setting 'Algorithm $algorithm' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'Algorithm $algorithm' for $farm_name farm $farm_type", "info", "FARMS" );
 
 	if ( $farm_type eq "datalink" )
 	{
@@ -417,7 +417,7 @@ sub setFarmMaxClientTime    # ($max_client_time,$track,$farm_name)
 	my $output    = -1;
 
 	&zenlog(
-		"setting 'MaxClientTime $max_client_time $track' for $farm_name farm $farm_type"
+		"setting 'MaxClientTime $max_client_time $track' for $farm_name farm $farm_type", "info", "LSLB"
 	);
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
@@ -491,7 +491,7 @@ sub setFarmMaxConn    # ($max_connections,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&zenlog( "setting 'MaxConn $max_connections' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'MaxConn $max_connections' for $farm_name farm $farm_type", "info", "LSLB" );
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -558,7 +558,7 @@ sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	my $stat      = -1;
 
 	&zenlog(
-			 "setting 'VirtualConf $vip $vip_port' for $farm_name farm $farm_type" );
+			 "setting 'VirtualConf $vip $vip_port' for $farm_name farm $farm_type", "info", "FARMS" );
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{

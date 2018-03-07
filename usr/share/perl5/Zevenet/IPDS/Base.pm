@@ -93,7 +93,7 @@ sub addIPDSIptablesChain
 
 	if ( $error )
 	{
-		&zenlog( "Error creating iptables chains" );
+		&zenlog( "Error creating iptables chains", "error", "IPDS" );
 	}
 
 	return $error;
@@ -138,7 +138,7 @@ sub delIPDSIptablesChain
 
 	if ( $error )
 	{
-		&zenlog( "Error deleting iptables chains" );
+		&zenlog( "Error deleting iptables chains", "error", "IPDS" );
 	}
 
 	return $error;
