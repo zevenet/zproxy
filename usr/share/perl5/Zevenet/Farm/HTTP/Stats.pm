@@ -23,6 +23,9 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 =begin nd
 Function: getHTTPFarmEstConns
 
@@ -223,7 +226,7 @@ sub getHTTPFarmBackendsStats    # ($farm_name)
 	my $fvip         = &getFarmVip( "vip", $farm_name );
 	my $service_re   = &getValidFormat( 'service' );
 
-	unless ( eval { require Zevenet::Net::Floating; } )
+	unless ( $eload )
 	{
 		require Zevenet::Net::ConnStats;
 	}

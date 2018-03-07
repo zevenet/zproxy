@@ -24,6 +24,8 @@
 use strict;
 
 my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
 =begin nd
 Function: createIf
@@ -326,7 +328,7 @@ Returns:
 	integer - return code ofip command.
 
 See Also:
-	
+
 =cut
 
 # delete network interface configuration and from the system
@@ -422,9 +424,13 @@ sub delIf    # ($if_ref)
 
 	#delete from RBAC
 
-	if ( eval { require Zevenet::RBAC::Group::Config; } )
+	if ( $eload )
 	{
-		&delRBACResource( $$if_ref{ name }, 'interfaces' );
+		&eload(
+				module => 'Zevenet::RBAC::Group::Config',
+				func   => 'delRBACResource',
+				args   => [$$if_ref{ name }, 'interfaces'],
+		);
 	}
 
 	return $status;

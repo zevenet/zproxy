@@ -208,7 +208,7 @@ my $code_ref = \&{ $func };
 my $returned_value;
 
 # call api request function
-eval { $returned_value = $code_ref->( @{ $args } ) };
+eval { $returned_value = [ $code_ref->( @{ $args } ) ] };
 if ( $@ )
 {
 	&zenlog( "#### Function run $func: Failed!" );

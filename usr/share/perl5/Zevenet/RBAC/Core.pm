@@ -130,7 +130,7 @@ sub getRBACResourcePermissions
 	my $user       = &getUser();
 	my $permission = 1;
 
-	require Zevenet::RBAC::Group::Core;
+	include 'Zevenet::RBAC::Group::Core';
 
 	# check resources
 	if ( $path =~ qr{^/(?:stats|graphs)?/?farms/modules} ) { }

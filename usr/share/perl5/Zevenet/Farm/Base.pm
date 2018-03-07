@@ -26,6 +26,8 @@ use Zevenet::Config;
 use Zevenet::Farm::Core;
 
 my $configdir = &getGlobalConfiguration('configdir');
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
 =begin nd
 Function: getFarmVip
@@ -67,12 +69,13 @@ sub getFarmVip    # ($info,$farm_name)
 		require Zevenet::Farm::Datalink::Config;
 		$output = &getDatalinkFarmVip( $info, $farm_name );
 	}
-	elsif ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" && $eload )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Config; } )
-		{
-			$output = &getGSLBFarmVip( $info, $farm_name );
-		}
+		$output = &eload(
+						  module => 'Zevenet::Farm::GSLB::Config',
+						  func   => 'getGSLBFarmVip',
+						  args   => [$info, $farm_name],
+		);
 	}
 
 	return $output;
@@ -187,7 +190,7 @@ sub getFarmVipStatus    # ($farm_name)
 	{
 		return -1;
 	}
-	
+
 	# types: "http", "https", "datalink", "l4xnat", "gslb" or 1
 	my $type = &getFarmType( $farm_name );
 
@@ -263,12 +266,13 @@ sub getFarmPid    # ($farm_name)
 		require Zevenet::Farm::HTTP::Config;
 		$output = &getHTTPFarmPid( $farm_name );
 	}
-	elsif ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" && $eload )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Config; } )
-		{
-			$output = &getGSLBFarmPid( $farm_name );
-		}
+		$output = &eload(
+						  module => 'Zevenet::Farm::GSLB::Config',
+						  func   => 'getGSLBFarmPid',
+						  args   => [$farm_name],
+		);
 	}
 
 	return $output;
@@ -379,12 +383,13 @@ sub getFarmBootStatus    # ($farm_name)
 		require Zevenet::Farm::L4xNAT::Config;
 		$output = &getL4FarmBootStatus( $farm_name );
 	}
-	elsif ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" && $eload )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Config; } )
-		{
-			$output = &getGSLBFarmBootStatus( $farm_name );
-		}
+		$output = &eload(
+						  module => 'Zevenet::Farm::GSLB::Config',
+						  func   => 'getGSLBFarmBootStatus',
+						  args   => [$farm_name],
+		);
 	}
 
 	return $output;

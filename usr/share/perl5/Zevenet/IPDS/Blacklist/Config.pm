@@ -37,8 +37,6 @@ use Zevenet::Debug;
 
 include 'Zevenet::IPDS::Blacklist::Core';
 
-# use Zevenet::IPDS::Blacklist::Runtime; # only it's used in some cases
-
 # $listParams = \ %paramsRef;
 # &setBLCreateList ( $listName, $paramsRef );
 sub setBLCreateList

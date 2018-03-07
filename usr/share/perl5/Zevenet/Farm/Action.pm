@@ -24,20 +24,23 @@
 use strict;
 use Zevenet::Config;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: _runFarmStart
 
 	Run a farm
-	
+
 Parameters:
 	farmname - Farm name
 	writeconf - write this change in configuration status "true" or omit it "false"
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
-	
+
 =cut
 
 sub _runFarmStart    # ($farm_name, $writeconf)
@@ -83,12 +86,13 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 		require Zevenet::Farm::L4xNAT::Action;
 		$status = &_runL4FarmStart( $farm_name, $writeconf );
 	}
-	elsif ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" && $eload )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Action; } )
-		{
-			$status = &_runGSLBFarmStart( $farm_name, $writeconf );
-		}
+		$status = &eload(
+						  module => 'Zevenet::Farm::GSLB::Action',
+						  func   => '_runGSLBFarmStart',
+						  args   => [$farm_name, $writeconf],
+		);
 	}
 
 	return $status;
@@ -98,7 +102,7 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 Function: runFarmStart
 
 	Run a farm completely a farm. Run farm, its farmguardian and ipds rules
-	
+
 Parameters:
 	farmname - Farm name
 	writeconf - write this change in configuration status "true" or omit it "false"
@@ -108,7 +112,7 @@ Returns:
 
 NOTE:
 	Generic function
-	
+
 =cut
 
 sub runFarmStart    # ($farm_name,$writeconf)
@@ -123,15 +127,19 @@ sub runFarmStart    # ($farm_name,$writeconf)
 		&runFarmGuardianStart( $farm_name, "" );
 	}
 
-	# run ipds rules
-	if ( eval { require Zevenet::IPDS::Base; } )
+	if ( $eload )
 	{
-		&runIPDSStartByFarm( $farm_name );
-	}
+		&eload(
+				module => 'Zevenet::IPDS::Base',
+				func   => 'runIPDSStartByFarm',
+				args   => [$farm_name],
+		);
 
-	if ( eval { require Zevenet::Cluster } )
-	{
-		&zClusterFarmUp( $farm_name );
+		&eload(
+				module => 'Zevenet::Cluster',
+				func   => 'zClusterFarmUp',
+				args   => [$farm_name],
+		);
 	}
 
 	return $status;
@@ -141,7 +149,7 @@ sub runFarmStart    # ($farm_name,$writeconf)
 Function: runFarmStop
 
 	Stop a farm completely a farm. Stop the farm, its farmguardian and ipds rules
-	
+
 Parameters:
 	farmname - Farm name
 	writeconf - write this change in configuration status "true" or omit it "false"
@@ -151,22 +159,27 @@ Returns:
 
 NOTE:
 	Generic function
-		
+
 =cut
 
 sub runFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
 
-	if ( eval { require Zevenet::Cluster } )
+	if ( $eload )
 	{
-		&zClusterFarmDown( $farm_name );
-	}
+		&eload(
+				module => 'Zevenet::Cluster',
+				func   => 'zClusterFarmDown',
+				args   => [$farm_name],
+		);
 
-	# stop ipds rules
-	if ( eval { require Zevenet::IPDS::Base; } )
-	{
-		&runIPDSStopByFarm( $farm_name );
+		# stop ipds rules
+		&eload(
+				module => 'Zevenet::IPDS::Base',
+				func   => 'runIPDSStopByFarm',
+				args   => [$farm_name],
+		);
 	}
 
 	require Zevenet::FarmGuardian;
@@ -181,14 +194,14 @@ sub runFarmStop    # ($farm_name,$writeconf)
 Function: _runFarmStop
 
 	Stop a farm
-	
+
 Parameters:
 	farmname - Farm name
 	writeconf - write this change in configuration status "true" or omit it "false"
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
-	
+
 =cut
 
 sub _runFarmStop    # ($farm_name,$writeconf)
@@ -228,12 +241,13 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 		require Zevenet::Farm::L4xNAT::Action;
 		$status = &_runL4FarmStop( $farm_name, $writeconf );
 	}
-	elsif ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" && $eload )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Action; } )
-		{
-			$status = &_runGSLBFarmStop( $farm_name, $writeconf );
-		}
+		$status = &eload(
+						  module => 'Zevenet::Farm::GSLB::Action',
+						  func   => '_runGSLBFarmStop',
+						  args   => [$farm_name, $writeconf],
+		);
 	}
 
 	if ( $writeconf eq "true" && $farm_type =~ /^https?$/ )
@@ -250,16 +264,16 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 Function: runFarmDelete
 
 	Delete a farm
-		
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	String - farm name
-	
+
 NOTE:
 	Generic function
-	
+
 =cut
 
 sub runFarmDelete    # ($farm_name)
@@ -275,16 +289,21 @@ sub runFarmDelete    # ($farm_name)
 	my $logdir    = &getGlobalConfiguration( 'logdir' );
 	my $rrd_dir   = &getGlobalConfiguration( 'rrd_dir' );
 
-	#delete IPDS rules
-	if ( eval { require Zevenet::IPDS::Base; } )
+	if ( $eload )
 	{
-		&runIPDSDeleteByFarm( $farm_name );
-	}
+		#delete IPDS rules
+		&eload(
+			module => 'Zevenet::IPDS::Base',
+			func   => 'runIPDSDeleteByFarm',
+			args   => [$farm_name],
+		);
 
-	#delete from RBAC
-	if ( eval { require Zevenet::RBAC::Group::Config; } )
-	{
-		&delRBACResource( $farm_name, 'farms' );
+		#delete from RBAC
+		&eload(
+			module => 'Zevenet::RBAC::Group::Config',
+			func   => 'delRBACResource',
+			args   => [$farm_name, 'farms'],
+		);
 	}
 
 	my $farm_type = &getFarmType( $farm_name );
@@ -342,16 +361,16 @@ sub runFarmDelete    # ($farm_name)
 Function: setFarmRestart
 
 	This function creates a file to tell that the farm needs to be restarted to apply changes
-		
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	undef
-	
+
 NOTE:
 	Generic function
-	
+
 =cut
 
 sub setFarmRestart    # ($farm_name)
@@ -370,16 +389,16 @@ sub setFarmRestart    # ($farm_name)
 Function: setFarmNoRestart
 
 	This function deletes the file marking the farm to be restarted to apply changes
-		
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	none - .
-	
+
 NOTE:
 	Generic function
-	
+
 =cut
 
 sub setFarmNoRestart    # ($farm_name)
@@ -393,14 +412,14 @@ sub setFarmNoRestart    # ($farm_name)
 Function: setNewFarmName
 
 	Function that renames a farm. Before call this function, stop the farm.
-	
+
 Parameters:
 	farmname - Farm name
 	newfarmname - New farm name
 
 Returns:
 	Integer - return 0 on success or -1 on failure
-		
+
 =cut
 
 sub setNewFarmName    # ($farm_name,$new_farm_name)
@@ -463,13 +482,13 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 		require Zevenet::Farm::L4xNAT::Action;
 		$output = &setL4NewFarmName( $farm_name, $new_farm_name );
 	}
-	elsif ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" && $eload )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Action; } )
-		{
-			require Zevenet::Farm::GSLB::Action;
-			$output = &setGSLBNewFarmName( $farm_name, $new_farm_name );
-		}
+		$output = &eload(
+						  module => 'Zevenet::Farm::GSLB::Action',
+						  func   => 'setGSLBNewFarmName',
+						  args   => [$farm_name, $new_farm_name],
+		);
 	}
 
 	# farmguardian renaming
@@ -502,14 +521,19 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	# delete old graphs
 	unlink ( "img/graphs/bar$farm_name.png" );
 
-	if ( eval { require Zevenet::IPDS; } )
+	if ( $eload )
 	{
-		&runIPDSRenameByFarm( $farm_name, $new_farm_name );
-	}
+		&eload(
+				module => 'Zevenet::IPDS',
+				func   => 'runIPDSRenameByFarm',
+				args   => [$farm_name, $new_farm_name],
+		);
 
-	if ( eval { require Zevenet::RBAC::Group::Config; } )
-	{
-		&setRBACRenameByFarm( $farm_name, $new_farm_name );
+		&eload(
+				module => 'Zevenet::RBAC::Group::Config',
+				func   => 'setRBACRenameByFarm',
+				args   => [$farm_name, $new_farm_name],
+		);
 	}
 
 	# FIXME: farmguardian files

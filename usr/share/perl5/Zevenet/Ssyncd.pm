@@ -23,6 +23,8 @@
 
 use strict;
 
+require Zevenet::Farm::Core;
+
 # my $ssyncd_enabled = 'true';
 # my $ssyncd_bin     = '/usr/local/zevenet/app/ssyncd/bin/ssyncd';
 # my $ssyncdctl_bin  = '/usr/local/zevenet/app/ssyncd/bin/ssyncdctl';
@@ -38,7 +40,7 @@ sub setSsyncdFarmUp
 	return 0 if $ssyncd_enabled eq 'false';
 
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
-	my $type          = getFarmType( $farm_name );
+	my $type          = &getFarmType( $farm_name );
 
 	if ( $type eq 'l4xnat' )
 	{
@@ -66,7 +68,7 @@ sub setSsyncdFarmDown
 	return 0 if $ssyncd_enabled eq 'false';
 
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
-	my $type          = getFarmType( $farm_name );
+	my $type          = &getFarmType( $farm_name );
 
 	if ( $type eq 'l4xnat' )
 	{

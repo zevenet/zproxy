@@ -28,7 +28,7 @@ sub eload
 	my %req = @_;
 
 	my @required = ( qw(module func) );
-	my @params   = ( qw(module func args) );
+	my @params   = ( qw(module func args decode) );
 
 	# check required params
 	if ( my ( $required ) = grep { not exists $req{ $_ } } @required )
@@ -110,11 +110,28 @@ sub eload
 		die( $msg );
 	}
 
-	# return function output for non-API functions (service)
-	return $ret_output if $req{module} !~ /^Zevenet::API/;
+	# condition flags
+	#~ my $decode_f = ( exists $req{ decode } && $req{ decode } );
+	my $api_f    = ( $req{ module }         =~ /^Zevenet::API/ );
 
-	my $ref = decode_json( $ret_output );
-	&httpResponse( $ref );
+	#~ my $output = ( $decode_f || $api_f ) ?	decode_json( $ret_output ):
+											#~ $ret_output;
+
+	my @output = eval{ @{ decode_json( $ret_output ) } };
+
+	if ( $@ )
+	{
+		&zenlog( $@ );
+		@output = undef;
+	}
+
+	use Data::Dumper;
+	&zenlog( Dumper \@output );
+
+	# return function output for non-API functions (service)
+	return @output if not $api_f;
+
+	&httpResponse( @output );
 }
 
 1;

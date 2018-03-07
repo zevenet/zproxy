@@ -3,10 +3,10 @@
 use strict;
 
 use Zevenet::Core;
-require Zevenet::RBAC::User::Action;
-require Zevenet::RBAC::Group::Action;
-require Zevenet::RBAC::Group::Core;
-require Zevenet::RBAC::Core;
+include 'Zevenet::RBAC::User::Action';
+include 'Zevenet::RBAC::Group::Action';
+include 'Zevenet::RBAC::Group::Core';
+include 'Zevenet::RBAC::Core';
 
 =begin nd
 Function: initRBACModule

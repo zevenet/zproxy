@@ -183,9 +183,9 @@ sub setHTTPServiceCookieIns    # ($farm_name,$service,$ci)
 
 sub add_service_cookie_intertion
 {
-	my ( $farmname, $s ) = @_;
+	my ( $farmname, $service ) = @_;
 
-	my $ci = &getHTTPServiceCookieIns( $farmname, $s->{ id } );
+	my $ci = &getHTTPServiceCookieIns( $farmname, $service->{ id } );
 
 	$service->{ cookieinsert } = $ci->{ status };
 	$service->{ cookiename }   = $ci->{ name };

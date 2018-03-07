@@ -23,6 +23,9 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 
 =begin nd
@@ -185,10 +188,17 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		$iface{ float } = $float->{ _ }->{ $iface{ name } } // '';
 	}
 
-	if ( $iface{ type } eq 'nic' && eval { require Zevenet::Net::Bonding; } )
+	if ( $iface{ type } eq 'nic' && $eload )
 	{
+		my @bond_slaves;
+
+		@bond_slaves = &eload(
+			module => 'Zevenet::Net::Bonding',
+			func   => 'getAllBondsSlaves',
+		);
+
 		$iface{ is_slave } =
-		  ( grep { $iface{ name } eq $_ } &getAllBondsSlaves ) ? 'true' : 'false';
+		  ( grep { $iface{ name } eq $_ } @bond_slaves ) ? 'true' : 'false';
 	}
 
 	return \%iface;
@@ -715,14 +725,12 @@ sub getSystemInterface    # ($if_name)
 	$$if_ref{ type }   = &getInterfaceType( $$if_ref{ name } );
 	$$if_ref{ parent } = &getParentInterfaceName( $$if_ref{ name } );
 
-	if ( $$if_ref{ type } eq 'nic' )
+	if ( $$if_ref{ type } eq 'nic' && $eload )
 	{
 		my @bond_slaves;
 
-		if ( eval { require Zevenet::Net::Bonding; } )
-		{
-			@bond_slaves = &getAllBondsSlaves();
-		}
+		@bond_slaves = &eload( module => 'Zevenet::Net::Bonding',
+							   func   => 'getAllBondsSlaves', );
 
 		$$if_ref{ is_slave } =
 		  ( grep { $$if_ref{ name } eq $_ } @bond_slaves ) ? 'true' : 'false';
@@ -750,7 +758,7 @@ Returns:
 	scalar - Interface type: nic, virtual, vlan, bond, dummy or lo.
 
 See Also:
-	
+
 =cut
 
 # Source in bash translated to perl:
@@ -909,7 +917,7 @@ Returns:
 	list - list of network interfaces hashrefs.
 
 See Also:
-	
+
 =cut
 
 sub getInterfaceTypeList
@@ -979,7 +987,7 @@ Returns:
 	scalar - reference to an array of interfaces names.
 
 See Also:
-	
+
 =cut
 
 # Get vlan or virtual interfaces appended from a interface

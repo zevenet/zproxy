@@ -3,8 +3,8 @@
 use strict;
 
 use Zevenet::Core;
-use Zevenet::RBAC::Group::Core;
-use Zevenet::RBAC::Group::Runtime;
+include 'Zevenet::RBAC::Group::Core';
+include 'Zevenet::RBAC::Group::Runtime';
 
 # rbac configuration paths
 my $rbacGroupConfig = &getRBACGroupConf();
@@ -48,14 +48,14 @@ sub updateRBACGroup
 	# Add users
 	elsif ( $action eq 'add_user' )
 	{
-		require Zevenet::RBAC::User::Runtime;
+		include 'Zevenet::RBAC::User::Runtime';
 		&runRBACAddUserToGroup( $user, $group );
 	}
 
 	# delete users
 	elsif ( $action eq 'del_user' )
 	{
-		require Zevenet::RBAC::User::Runtime;
+		include 'Zevenet::RBAC::User::Runtime';
 		&runRBACDelUserToGroup( $user, $group );
 	}
 
@@ -67,7 +67,7 @@ sub updateRBACGroup
 		  if ( !grep ( /^$group$/, @{ &getRBACGroupsSys() } ) );
 
 		# update the user list
-		require Zevenet::RBAC::User::Runtime;
+		include 'Zevenet::RBAC::User::Runtime';
 		my @sysUsers = &getRBACGroupMembers( $group );
 		my @confUsers = @{ &getRBACGroupParam( $group, 'users' ) };
 

@@ -2,7 +2,7 @@
 
 use strict;
 use Zevenet::Core;
-use Zevenet::RBAC::Core;
+include 'Zevenet::RBAC::Core';
 
 =begin nd
 Function: getRBACRolesList

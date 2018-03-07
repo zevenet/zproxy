@@ -3,7 +3,7 @@
 use strict;
 
 use Zevenet::Core;
-use Zevenet::RBAC::User::Core;
+include 'Zevenet::RBAC::User::Core';
 
 # rbac configuration paths
 my $rbacUserConfig = &getRBACUserConf();

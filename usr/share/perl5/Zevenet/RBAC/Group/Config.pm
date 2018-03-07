@@ -3,8 +3,8 @@
 use strict;
 
 use Zevenet::Core;
-use Zevenet::RBAC::Group::Core;
-use Zevenet::RBAC::Group::Runtime;
+include 'Zevenet::RBAC::Group::Core';
+include 'Zevenet::RBAC::Group::Runtime';
 
 # rbac configuration paths
 my $rbacGroupConfig = &getRBACGroupConf();
@@ -205,7 +205,7 @@ sub addRBACGroupResource
 	# Add it to system
 	if ( $type eq 'users' )
 	{
-		require Zevenet::RBAC::User::Runtime;
+		include 'Zevenet::RBAC::User::Runtime';
 		$error = &runRBACAddUserToGroup( $resource, $group );
 	}
 
@@ -243,7 +243,7 @@ sub delRBACGroupResource
 	# Add it to system
 	if ( $type eq "users" )
 	{
-		require Zevenet::RBAC::User::Runtime;
+		include 'Zevenet::RBAC::User::Runtime';
 		$error = &runRBACDelUserToGroup( $resource, $group );
 	}
 

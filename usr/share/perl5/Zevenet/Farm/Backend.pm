@@ -25,20 +25,23 @@ use strict;
 
 use Zevenet::Farm::Backend::Maintenance;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 =begin nd
 Function: getFarmServers
 
 	List all farm backends and theirs configuration
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	array - list of backends
-		
+
 FIXME:
 	changes output to hash format
-	
+
 =cut
 sub getFarmServers    # ($farm_name)
 {
@@ -65,7 +68,7 @@ sub getFarmServers    # ($farm_name)
 Function: setFarmServer
 
 	Add a new Backend
-	
+
 Parameters:
 	id - Backend id, if this id doesn't exist, it will create a new backend
 	ip - Real server ip
@@ -78,12 +81,12 @@ Parameters:
 	service - service name. For HTTP farms
 
 Returns:
-	Scalar - Error code: undef on success or -1 on error 
-	
+	Scalar - Error code: undef on success or -1 on error
+
 FIXME:
 	Use a hash
 	max parameter is only used by tcp farms
-		
+
 =cut
 sub setFarmServer # $output ($ids,$rip,$port|$iface,$max,$weight,$priority,$timeout,$farm_name,$service)
 {
@@ -127,15 +130,15 @@ sub setFarmServer # $output ($ids,$rip,$port|$iface,$max,$weight,$priority,$time
 Function: runFarmServerDelete
 
 	Delete a Backend
-	
+
 Parameters:
 	id - Backend id, if this id doesn't exist, it will create a new backend
 	farmname - Farm name
 	service - service name. For HTTP farms
 
 Returns:
-	Scalar - Error code: undef on success or -1 on error 
-			
+	Scalar - Error code: undef on success or -1 on error
+
 =cut
 sub runFarmServerDelete    # ($ids,$farm_name,$service)
 {
@@ -161,12 +164,13 @@ sub runFarmServerDelete    # ($ids,$farm_name,$service)
 		require Zevenet::Farm::HTTP::Backend;
 		$output = &runHTTPFarmServerDelete( $ids, $farm_name, $service );
 	}
-	elsif ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" && $eload )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Backend; } )
-		{
-			$output = &runGSLBFarmServerDelete( $ids, $farm_name, $service );
-		}
+		$output = &eload(
+						  module => 'Zevenet::Farm::GSLB::Backend',
+						  func   => 'runGSLBFarmServerDelete',
+						  args   => [$ids, $farm_name, $service],
+		);
 	}
 
 	return $output;
@@ -176,13 +180,13 @@ sub runFarmServerDelete    # ($ids,$farm_name,$service)
 Function: getFarmBackendStatusCtl
 
 	get information about status and configuration of backend
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Array - Each profile has a different output format
-			
+
 =cut
 sub getFarmBackendStatusCtl    # ($farm_name)
 {
@@ -216,14 +220,14 @@ Function: getFarmBackendStatus_old
 
 	[Deprecated] Get processed information about status and configuration of backends.
 	This function is deprecated, use getFarmBackend to get a complete backend array list
-	
+
 Parameters:
 	farmname - Farm name
 	content - Raw backend info
 
 Returns:
-	Array - List of backend. Each profile has a different output format 
-		
+	Array - List of backend. Each profile has a different output format
+
 =cut
 sub getFarmBackendsStatus_old    # ($farm_name,@content)
 {
@@ -256,7 +260,7 @@ sub getFarmBackendsStatus_old    # ($farm_name,@content)
 Function: getFarmBackendsClients
 
 	Function that return the status information of sessions
-	
+
 Parameters:
 	backend - Backend id
 	content - Raw backend info
@@ -264,10 +268,10 @@ Parameters:
 
 Returns:
 	Integer - Number of clients with session in a backend or -1 on failure
-	
-FIXME: 
+
+FIXME:
 	used in zapi v2
-	
+
 =cut
 sub getFarmBackendsClients    # ($idserver,@content,$farm_name)
 {
@@ -290,17 +294,17 @@ sub getFarmBackendsClients    # ($idserver,@content,$farm_name)
 Function: getFarmBackendsClientsList
 
 	Return session status of all backends of a farm
-	
+
 Parameters:
 	content - Raw backend info
 	farmname - Farm name
 
 Returns:
 	Array - The format for each line is: "service" . "\t" . "session_id" . "\t" . "session_value" . "\t" . "backend_id"
-	
-FIXME: 
+
+FIXME:
 	Same name than getFarmBackendsClients function but different uses
-	
+
 =cut
 sub getFarmBackendsClientsList    # ($farm_name,@content)
 {
@@ -322,7 +326,7 @@ sub getFarmBackendsClientsList    # ($farm_name,@content)
 Function: setFarmBackendStatus
 
 	Set backend status for a farm
-		
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
@@ -330,7 +334,7 @@ Parameters:
 
 Returns:
 	Integer - 0 on success or other value on failure
-	
+
 =cut
 sub setFarmBackendStatus    # ($farm_name,$index,$stat)
 {

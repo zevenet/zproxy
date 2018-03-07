@@ -23,6 +23,9 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 =begin nd
 Function: getBackendEstConns
 
@@ -98,10 +101,11 @@ sub getFarmEstConns    # ($farm_name,$netstat)
 	}
 	elsif ( $farm_type eq "gslb" )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Stats; } )
-		{
-			$connections = &getGSLBFarmEstConns( $farm_name, $netstat );
-		}
+		$connections = &eload(
+			module => 'Zevenet::Farm::GSLB::Stats',
+			func   => 'getGSLBFarmEstConns',
+			args   => [$farm_name, $netstat],
+		) if $eload;
 	}
 
 	return $connections;
