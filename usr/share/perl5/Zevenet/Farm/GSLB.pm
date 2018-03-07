@@ -25,14 +25,14 @@ use strict;
 
 use Zevenet::Net;
 
-use Zevenet::Farm::GSLB::Config;
-use Zevenet::Farm::GSLB::Action;
-use Zevenet::Farm::GSLB::Factory;
-use Zevenet::Farm::GSLB::Validate;
-use Zevenet::Farm::GSLB::Service;
-use Zevenet::Farm::GSLB::Backend;
-use Zevenet::Farm::GSLB::Zone;
-use Zevenet::Farm::GSLB::Stats;
-use Zevenet::Farm::GSLB::FarmGuardian;
+include 'Zevenet::Farm::GSLB::Config';
+include 'Zevenet::Farm::GSLB::Action';
+include 'Zevenet::Farm::GSLB::Factory';
+include 'Zevenet::Farm::GSLB::Validate';
+include 'Zevenet::Farm::GSLB::Service';
+include 'Zevenet::Farm::GSLB::Backend';
+include 'Zevenet::Farm::GSLB::Zone';
+include 'Zevenet::Farm::GSLB::Stats';
+include 'Zevenet::Farm::GSLB::FarmGuardian';
 
 1;

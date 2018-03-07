@@ -36,13 +36,13 @@ Parameters:
 
 Returns:
 	Integer - return 0 on success or -1 on failure
-	
-FIXME: 
+
+FIXME:
 	writeconf must not exist, always it has to be TRUE. Obsolet parameter
-	
+
 BUG:
 	the returned variable must be $output and not $status
-	
+
 =cut
 sub _runGSLBFarmStart    # ($fname,$writeconf)
 {
@@ -100,23 +100,23 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 Function: _runGSLBFarmStop
 
 	Stop a gslb farm rutine
-	
+
 Parameters:
 	farmname - Farm name
 	writeconf - If this param has the value "true" in config file will be saved the current status
 
 Returns:
 	Integer - return 0 on success or -1 on failure
-	
-FIXME: 
-	writeconf must not exist, always it has to be TRUE 
-	
+
+FIXME:
+	writeconf must not exist, always it has to be TRUE
+
 =cut
 sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 {
 	my ( $fname, $writeconf ) = @_;
 
-	require Zevenet::Farm::GSLB::Validate;
+	include 'Zevenet::Farm::GSLB::Validate';
 
 	my $status = &getFarmStatus( $fname );
 	if ( $status eq "down" )
@@ -183,7 +183,7 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 Function: getGSLBStartCommand
 
 	Create a string with the gslb farm start command
-	
+
 Parameters:
 	farmname - Farm name
 
@@ -203,7 +203,7 @@ sub getGSLBStartCommand    # ($farm_name)
 Function: getGSLBStopCommand
 
 	Create a string with the gslb farm stop command
-	
+
 Parameters:
 	farmname - Farm name
 
@@ -228,9 +228,9 @@ Parameters:
 	farmname - Farm name
 	newfarmname - New farm name
 
-Returns:     
+Returns:
 	Integer - Error code: 0 on success or -2 when new farm name is blank
-	
+
 =cut
 sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 {
@@ -239,9 +239,9 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 	my $rrdap_dir = &getGlobalConfiguration( "rrdap_dir" );
 	my $rrd_dir   = &getGlobalConfiguration( "rrd_dir" );
 	my $configdir = &getGlobalConfiguration( "configdir" );
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
+	my $type      = &getFarmType( $fname );
+	my $ffile     = &getFarmFile( $fname );
+	my $output    = -1;
 
 	unless ( length $newfname )
 	{

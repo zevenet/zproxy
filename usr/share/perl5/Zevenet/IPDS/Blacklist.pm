@@ -21,9 +21,9 @@
 #
 ###############################################################################
 
-use Zevenet::IPDS::Blacklist::Core;
-use Zevenet::IPDS::Blacklist::Runtime;
-use Zevenet::IPDS::Blacklist::Config;
-use Zevenet::IPDS::Blacklist::Actions;
+include 'Zevenet::IPDS::Blacklist::Core';
+include 'Zevenet::IPDS::Blacklist::Runtime';
+include 'Zevenet::IPDS::Blacklist::Config';
+include 'Zevenet::IPDS::Blacklist::Actions';
 
 1;

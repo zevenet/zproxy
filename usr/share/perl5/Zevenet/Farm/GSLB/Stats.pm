@@ -38,7 +38,7 @@ sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ( )
 {
 	my $farmName = shift;
 
-	require Zevenet::Farm::GSLB::Config;
+	include 'Zevenet::Farm::GSLB::Config';
 
 	my $wget       = &getGlobalConfiguration( 'wget' );
 	my $httpPort   = &getGSLBControlPort( $farmName );
@@ -91,7 +91,7 @@ sub getGSLBFarmBackendsStats
 	my ( $farmname ) = @_;
 
 	require Zevenet::Farm::Config;
-	require Zevenet::Farm::GSLB::Service;
+	include 'Zevenet::Farm::GSLB::Service';
 
 	my $out_rss;
 	my $gslb_stats = &getGSLBGdnsdStats( $farmname );

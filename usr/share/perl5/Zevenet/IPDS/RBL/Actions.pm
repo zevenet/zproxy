@@ -22,7 +22,7 @@
 ###############################################################################
 
 use strict;
-use Zevenet::IPDS::RBL::Runtime;
+include 'Zevenet::IPDS::RBL::Runtime';
 
 =begin nd
 Function: runRBLStartModule
@@ -30,7 +30,7 @@ Function: runRBLStartModule
 	Boot the RBL module
 
 Parameters:
-				
+
 Returns:
 
 =cut
@@ -39,7 +39,7 @@ Returns:
 # when start a module load the blocked sources from logs
 sub runRBLStartModule
 {
-	require Zevenet::IPDS::RBL::Config;
+	include 'Zevenet::IPDS::RBL::Config';
 
 	# create config directory if it doesn't exist and config file
 	my $error = &setRBLCreateDirectory();
@@ -57,7 +57,7 @@ Function: runRBLStopModule
 	Stop the module
 
 Parameters:
-				
+
 Returns:
 
 =cut
@@ -78,7 +78,7 @@ Function: runRBLRestartModule
 	Restart the module
 
 Parameters:
-				
+
 Returns:
 
 =cut
@@ -101,15 +101,16 @@ Function: runRBLStartByRule
 
 Parameters:
 	Rule - Rule name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runRBLStartByRule
 {
 	my ( $rule ) = @_;
+
 	my $error = 0;
 	my @farms = @{ &getRBLObjectRuleParam( $rule, 'farms' ) };
 
@@ -118,7 +119,7 @@ sub runRBLStartByRule
 		#~ &zenlog( "RBL rule \"$rule\" has not any farm linked" );
 		return -1;
 	}
-	
+
 	# Check if the rule is disabled
 	if ( &getRBLObjectRuleParam( $rule, 'status' ) eq 'down' )
 	{
@@ -141,10 +142,10 @@ Function: runRBLStopByRule
 
 Parameters:
 	Rule - Rule name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runRBLStopByRule
@@ -169,10 +170,10 @@ Function: runRBLRestartByRule
 
 Parameters:
 	Rule - Rule name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runRBLRestartByRule
@@ -197,10 +198,10 @@ Function: runRBLStart
 Parameters:
 	Rule - Rule name
 	Farmanme - Farm name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runRBLStart
@@ -257,10 +258,10 @@ Function: runRBLStop
 Parameters:
 	Rule - Rule name
 	Farmname - Farm name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runRBLStop
@@ -289,10 +290,10 @@ Function: runRBLRestart
 Parameters:
 	Rule - Rule name
 	Farmname - Farm name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runRBLRestart

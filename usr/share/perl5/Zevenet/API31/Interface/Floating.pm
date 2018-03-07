@@ -27,7 +27,7 @@ sub delete_interface_floating    # ( $floating )
 {
 	my $floating = shift;
 
-	require Zevenet::Net::Floating;
+	include 'Zevenet::Net::Floating';
 	require Zevenet::Farm::L4xNAT::Config;
 
 	my $desc              = "Remove floating interface";
@@ -56,15 +56,14 @@ sub delete_interface_floating    # ( $floating )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( eval { require Zevenet::Cluster; } )
-	{
-		# force sync to make sure the configuration is updated
-		my $configdir = &getGlobalConfiguration('configdir');
-		&zenlog("Syncing $configdir");
-		&runSync( $configdir );
+	include 'Zevenet::Cluster';
 
-		&runZClusterRemoteManager( 'interface', 'float-update' );
-	}
+	# force sync to make sure the configuration is updated
+	my $configdir = &getGlobalConfiguration('configdir');
+	&zenlog("Syncing $configdir");
+	&runSync( $configdir );
+
+	&runZClusterRemoteManager( 'interface', 'float-update' );
 
 	my $message = "The floating interface has been removed.";
 	my $body = {
@@ -83,8 +82,8 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 	my $interface = shift;
 
 	require Zevenet::Net::Interface;
-	require Zevenet::Net::Floating;
 	require Zevenet::Farm::L4xNAT::Config;
+	include 'Zevenet::Net::Floating';
 
 	my $desc = "Modify floating interface";
 
@@ -115,6 +114,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 	{
 		# validate ADDRESS format
 		require Zevenet::Validate;
+
 		unless (    $json_obj->{ floating_ip }
 				 && &getValidFormat( 'IPv4_addr', $json_obj->{ floating_ip } ) )
 		{
@@ -154,15 +154,14 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( eval { require Zevenet::Cluster; } )
-	{
-		# force sync to make sure the configuration is updated
-		my $configdir = &getGlobalConfiguration('configdir');
-		&zenlog("Syncing $configdir");
-		&runSync( $configdir );
+	include 'Zevenet::Cluster';
 
-		&runZClusterRemoteManager( 'interface', 'float-update' );
-	}
+	# force sync to make sure the configuration is updated
+	my $configdir = &getGlobalConfiguration('configdir');
+	&zenlog("Syncing $configdir");
+	&runSync( $configdir );
+
+	&runZClusterRemoteManager( 'interface', 'float-update' );
 
 	my $message = "Floating interface modification done";
 	my $body = {
@@ -177,7 +176,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 sub get_interfaces_floating
 {
 	require Zevenet::Net::Interface;
-	require Zevenet::Net::Floating;
+	include 'Zevenet::Net::Floating';
 
 	my $desc = "List floating interfaces";
 
@@ -224,7 +223,7 @@ sub get_floating
 	my $floating = shift;
 
 	require Zevenet::Net::Interface;
-	require Zevenet::Net::Floating;
+	include 'Zevenet::Net::Floating';
 
 	my $desc = "Show floating interface";
 

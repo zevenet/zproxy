@@ -23,7 +23,7 @@
 
 use Config::Tiny;
 use Zevenet::Config;
-use Zevenet::Notify;
+include 'Zevenet::Notify';
 
 ( my $section, my $pattern ) = @ARGV;
 

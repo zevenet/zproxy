@@ -23,7 +23,7 @@
 
 use strict;
 use Config::Tiny;
-use Zevenet::IPDS::DoS::Core;
+include 'Zevenet::IPDS::DoS::Core';
 
 =begin nd
 Function: getDOSInitialParams
@@ -32,7 +32,7 @@ Function: getDOSInitialParams
 
 Parameters:
 	rule	 - Rule name
-				
+
 Returns:
 	Hash ref - Parameters for the rule
 
@@ -43,7 +43,7 @@ sub getDOSInitialParams
 	my $rule = shift;
 
 	# get ssh port
-	require Zevenet::System::SSH;
+	include 'Zevenet::System::SSH';
 
 	my $sshconf = &getSsh();
 	my $port    = $sshconf->{ 'port' };
@@ -100,7 +100,7 @@ Function: setDOSCreateFileConf
 
 Parameters:
 	none	 - .
-				
+
 Returns:
 	Integer - Error code. 0 on success or other value on failure
 
@@ -155,7 +155,7 @@ Parameters:
 	rule	 - Rule name
 	parameter	 - Parameter to change
 	value	 - Value for the parameter
-				
+
 Returns:
 	none - .
 
@@ -167,7 +167,7 @@ sub setDOSParam
 	my $param = shift;
 	my $value = shift;
 
-	require Zevenet::IPDS::DoS::Actions;
+	include 'Zevenet::IPDS::DoS::Actions';
 
 	#Stop related rules
 	my $status = ( &getDOSLookForRule( $name ) ) ? "up" : "down";
@@ -209,7 +209,7 @@ Function: getDOSInitialParams
 Parameters:
 	name	 - Rule name
 	rule	 - key that identify the DoS rule type
-				
+
 Returns:
 	Integer - Error code. 0 on success or other value on failure
 
@@ -262,7 +262,7 @@ Function: deleteDOSRule
 
 Parameters:
 	rule	 - Rule name
-				
+
 Returns:
 	none - .
 

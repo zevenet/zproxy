@@ -37,11 +37,11 @@ Function: getRBLFarm
 	Return all farms where the rule is applied
 
 Parameters:
-	Rule - Rule name 
-				
+	Rule - Rule name
+
 Returns:
 	Array ref - List with all farms where this rule is applied
-	
+
 =cut
 
 sub getRBLFarm
@@ -58,10 +58,10 @@ Function: getRBLExists
 
 Parameters:
 	Rule - Rule name
-				
+
 Returns:
 	Integer - 1 if it exists or 0 if it doesn't exist
-	
+
 =cut
 
 sub getRBLExists
@@ -80,10 +80,10 @@ Function: getRBLRuleList
 	Get an array with all RBL rule names
 
 Parameters:
-				
+
 Returns:
 	Array - RBL name list
-	
+
 =cut
 
 sub getRBLRuleList
@@ -102,10 +102,10 @@ Function: getRBLObjectRule
 	Get parameters of a RBL rule
 
 Parameters:
-				
+
 Returns:
 	hash ref - Struct with the RBL rule data
-	
+
 	{
 		domains = [ domain1, domain2... ],
 		farms = [ farm1, farm2... ],
@@ -117,7 +117,7 @@ Returns:
 		threadmax	= thread_maximum,
 		local_traffic	= local_traffic,
 	}
-	
+
 =cut
 
 sub getRBLObjectRule
@@ -148,13 +148,13 @@ Function: getRBLObjectRuleParam
 Parameters:
 	Rule - Rule name
 	Key - Requested parameter
-				
+
 Returns:
 	String - if the requested parameter is "name"
 	Integer - if the requested parameter is "cache_size", "cache_time", "queue_size", "threadmax" or "nf_queue_number"
 	yes/no - if the requested parameter is "local_traffic"
-	Array ref - if the requested parameter is "domains" of "farms" 
-	
+	Array ref - if the requested parameter is "domains" of "farms"
+
 =cut
 
 sub getRBLObjectRuleParam
@@ -174,10 +174,10 @@ Function: getRBLFarmApplied
 
 Parameters:
 	Farmname -  Farm name
-				
+
 Returns:
 	Array - list of RBL rules
-	
+
 =cut
 
 sub getRBLFarmApplied
@@ -202,19 +202,19 @@ Function: getRBLRunningFarmList
 	Return a list with all farms that are using currently this rule. Looking and greping iptables list
 
 Parameters:
-	Rule - Rule name 
-				
+	Rule - Rule name
+
 Returns:
-	Array - List of farm names 
-	
+	Array - List of farm names
+
 =cut
 
 sub getRBLRunningFarmList
 {
 	my $rule = shift;
 
-	require Zevenet::IPDS::Core;
 	require Zevenet::Validate;
+	include 'Zevenet::IPDS::Core';
 
 	my @farms;
 	my $table           = "raw";
@@ -239,7 +239,7 @@ Function: getRBLUserDomains
 	Get a list with the domains added by the user
 
 Parameters:
-	
+
 Returns:
 	Array ref - Domain list
 
@@ -250,6 +250,7 @@ sub getRBLUserDomains
 	my @domains;
 
 	require Tie::File;
+
 	tie my @list, 'Tie::File', $userDomainsFile;
 	@domains = @list;
 	untie @list;
@@ -263,7 +264,7 @@ Function: getRBLPreloadedDomains
 	Get a list with the preloaded domains
 
 Parameters:
-	
+
 Returns:
 	Array ref - Domain list
 
@@ -274,6 +275,7 @@ sub getRBLPreloadedDomains
 	my @domains;
 
 	require Tie::File;
+
 	tie my @list, 'Tie::File', $preloadedDomainsFile;
 	@domains = @list;
 	untie @list;
@@ -287,7 +289,7 @@ Function: getRBLDomains
 	Get a list with all existing domains.
 
 Parameters:
-	
+
 Returns:
 	Array ref - Domain list
 
@@ -309,8 +311,8 @@ Function: getRBLPacketblPid
 	Get the packetbl pid file of a RBL rule
 
 Parameters:
-	String - Rule name 
-	
+	String - Rule name
+
 Returns:
 	Integer - Return the packetbl pid
 
@@ -319,14 +321,16 @@ Returns:
 sub getRBLPacketblPid
 {
 	my $rule = shift;
-	my $pid;
 
+	my $pid;
 	my $ps      = &getGlobalConfiguration( 'ps' );
 	my @process = `$ps -x`;
+
 	if ( @process = grep ( /\/packetbl_$rule\.conf/, @process ) )
 	{
 		$pid = $1 if ( $process[0] =~ /^\s*(\d+)\s/ );
 	}
+
 	return $pid;
 }
 
@@ -336,8 +340,8 @@ Function: getRBLPacketblConfig
 	Get the configuration file of a RBL rule
 
 Parameters:
-	String - Rule name 
-	
+	String - Rule name
+
 Returns:
 	String - Return a chain with packetbl configuration file of a RBL rule
 
@@ -355,10 +359,10 @@ Function: getRBLZapi
 	Create a array with zapi output formats of all rbl rules
 
 Parameters:
-	
+
 Returns:
-	Array ref - 
-	
+	Array ref -
+
 	{
 		"cache_size" : 8192,
 		"cache_time" : 3600,
@@ -400,17 +404,19 @@ Function: getRBLStatusRule
 	Check if a RBL rule is running. Check packetbl pid file.
 
 Parameters:
-	String - Rule name 
-				
+	String - Rule name
+
 Returns:
 	String - "up" if the rule is running or "down" if it is not running
-	
+
 =cut
 
 sub getRBLStatusRule
 {
 	my $rule   = shift;
+
 	my $status = "down";
+
 	if ( &getRBLPacketblPid( $rule ) )
 	{
 		$status = "up";
@@ -426,10 +432,10 @@ Function: getRBLZapiRule
 
 Parameters:
 	Rule - rule name
-	
+
 Returns:
 	Hash ref - Hash with the rbl parameters
-	
+
 	{
 		"cache_size" : 8192,
 		"cache_time" : 3600,
@@ -456,6 +462,7 @@ sub getRBLZapiRule
 	my $rule = shift;
 
 	require Config::Tiny;
+
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 
 	my $output = $fileHandle->{ $rule };

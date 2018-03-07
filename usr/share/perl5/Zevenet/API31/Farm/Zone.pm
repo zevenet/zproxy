@@ -54,7 +54,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	require Zevenet::Farm::GSLB::Zone;
+	include 'Zevenet::Farm::GSLB::Zone';
 
 	my $result = &setGSLBFarmNewZone( $farmname, $json_obj->{ id } );
 
@@ -71,7 +71,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 
 		&runGSLBFarmReload( $farmname );
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
@@ -93,7 +93,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	my $zone     = shift;
 
 	require Zevenet::Farm::Core;
-	require Zevenet::Farm::GSLB::Zone;
+	include 'Zevenet::Farm::GSLB::Zone';
 
 	my $desc = "New zone resource";
 	my $default_ttl = '';
@@ -143,9 +143,9 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	}
 
 	# validate RESOURCE DATA
-	require Zevenet::Farm::GSLB::Service;
+	include 'Zevenet::Farm::GSLB::Service';
 
-	unless ( ! grep ( /$json_obj->{ rdata }/, &getGSLBFarmServices ( $farmname ) && $json_obj->{ type } eq 'DYNA' ) && 
+	unless ( ! grep ( /$json_obj->{ rdata }/, &getGSLBFarmServices ( $farmname ) && $json_obj->{ type } eq 'DYNA' ) &&
 						&getValidFormat( "resource_data_$json_obj->{ type }", $json_obj->{ rdata } ) )
 	{
 		my $log_msg = "If you choose $json_obj->{ type } type, ";
@@ -188,7 +188,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 
 		&runGSLBFarmReload( $farmname );
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
@@ -209,7 +209,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 				 message => $message,
 	};
 
-	require Zevenet::Farm::GSLB::Validate;
+	include 'Zevenet::Farm::GSLB::Validate';
 	my $checkConf = &getGSLBCheckConf  ( $farmname );
 
 	if ( $checkConf =~ /^(.+?)\s/ )
@@ -248,7 +248,7 @@ sub gslb_zone_resources # ( $farmname, $zone )
 	}
 
 	# validate ZONE
-	require Zevenet::Farm::GSLB::Zone;
+	include 'Zevenet::Farm::GSLB::Zone';
 
 	if ( ! scalar grep { $_ eq $zone } &getGSLBFarmZones( $farmname ) )
 	{
@@ -302,7 +302,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	}
 
 	# validate ZONE
-	require Zevenet::Farm::GSLB::Zone;
+	include 'Zevenet::Farm::GSLB::Zone';
 	unless ( grep { $_ eq $zone } &getGSLBFarmZones( $farmname ) )
 	{
 		my $msg = "Could not find the requested zone.";
@@ -369,20 +369,20 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	{
 		$auxData = $json_obj->{ rdata };
 	}
-	
+
 	# validate RESOURCE DATA
-	unless ( ! grep ( /$auxData/, &getGSLBFarmServices ( $farmname ) && $auxType eq 'DYNA' ) && 
+	unless ( ! grep ( /$auxData/, &getGSLBFarmServices ( $farmname ) && $auxType eq 'DYNA' ) &&
 						&getValidFormat( "resource_data_$auxType", $auxData ) )
 	{
 		my $msg = "If you choose $auxType type, ";
-		$msg .= "RDATA must be a valid IPv4 address," 		if ($auxType eq "A" ); 
-		$msg .= "RDATA must be a valid IPv6 address,"		if ($auxType eq "AAAA" ); 
-		$msg .= "RDATA format is not valid,"						if ($auxType eq "NS" ); 
+		$msg .= "RDATA must be a valid IPv4 address," 		if ($auxType eq "A" );
+		$msg .= "RDATA must be a valid IPv6 address,"		if ($auxType eq "AAAA" );
+		$msg .= "RDATA format is not valid,"						if ($auxType eq "NS" );
 		$msg .= "RDATA must be a valid format ( foo.bar.com ),"		if ($auxType eq "CNAME" );
-		$msg .= "RDATA must be a valid service,"									if ( $auxType eq 'DYNA' ); 
-		$msg .= "RDATA must be a valid format ( mail.example.com ),"		if ( $auxType eq 'MX' ); 
-		$msg .= "RDATA must be a valid format ( 10 60 5060 host.example.com ),"		if ( $auxType eq 'SRV' ); 
-		$msg .= "RDATA must be a valid format ( foo.bar.com ),"			if ( $auxType eq 'PTR' ); 
+		$msg .= "RDATA must be a valid service,"									if ( $auxType eq 'DYNA' );
+		$msg .= "RDATA must be a valid format ( mail.example.com ),"		if ( $auxType eq 'MX' );
+		$msg .= "RDATA must be a valid format ( 10 60 5060 host.example.com ),"		if ( $auxType eq 'SRV' );
+		$msg .= "RDATA must be a valid format ( foo.bar.com ),"			if ( $auxType eq 'PTR' );
 		# TXT and NAPTR input let all characters
 
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -392,7 +392,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		$rsc->{ data } = $auxData;
 		$rsc->{ type } = $auxType;
 	}
-	
+
 	if ( !$error )
 	{
 		my $status = &setGSLBFarmZoneResource(
@@ -429,7 +429,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 				 message      => $message,
 	};
 
-	require Zevenet::Farm::GSLB::Validate;
+	include 'Zevenet::Farm::GSLB::Validate';
 
 	my $checkConf = &getGSLBCheckConf  ( $farmname );
 
@@ -477,7 +477,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		require Zevenet::Farm::GSLB::Config;
+		include 'Zevenet::Farm::GSLB::Config';
 		&runGSLBFarmReload( $farmname );
 	}
 
@@ -499,7 +499,7 @@ sub delete_zone # ( $farmname, $zone )
 	my ( $farmname, $zone ) = @_;
 
 	require Zevenet::Farm::Core;
-	require Zevenet::Farm::GSLB::Zone;
+	include 'Zevenet::Farm::GSLB::Zone';
 
 	my $desc = "Delete zone";
 
@@ -524,7 +524,7 @@ sub delete_zone # ( $farmname, $zone )
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 
 		&runGSLBFarmReload( $farmname );
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
@@ -564,7 +564,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 	}
 
 	# validate ZONE
-	require Zevenet::Farm::GSLB::Zone;
+	include 'Zevenet::Farm::GSLB::Zone';
 
 	if ( ! scalar grep { $_ eq $zone } &getGSLBFarmZones( $farmname ) )
 	{
@@ -599,7 +599,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 
 		&runGSLBFarmReload( $farmname );
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );

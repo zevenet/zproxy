@@ -29,14 +29,14 @@ sub setNotifCreateConfFile
 {
 	use Zevenet::SystemInfo;
 
-	my $confdir = &getGlobalConfiguration( 'notifConfDir' );
-	my $hostname = &getHostname();
+	my $confdir    = &getGlobalConfiguration( 'notifConfDir' );
+	my $hostname   = &getHostname();
 	my $senderFile = "$confdir/sender.conf";
 	my $alertsFile = "$confdir/alert_$hostname.conf";
+	my $version = 1;    # version of senders config file
 	my $fileHandle;
 	my $output;
-	my $version = 1; # version of senders config file
-	
+
 	# create config directory
 	if ( ! -d $confdir )
 	{
@@ -45,11 +45,11 @@ sub setNotifCreateConfFile
 	}
 
 	# restore old config files
-	my $mv = &getGlobalConfiguration( "mv" );
-	my $alertsOld = "/usr/local/zevenet/www/Plugins/Notifications/Alerts.conf";
+	my $mv         = &getGlobalConfiguration( "mv" );
+	my $alertsOld  = "/usr/local/zevenet/www/Plugins/Notifications/Alerts.conf";
 	my $sendersOld = "/usr/local/zevenet/www/Plugins/Notifications/Senders.conf";
 
-	if ( -e $alertsOld )	
+	if ( -e $alertsOld )
 	{
 		system ( "$mv $alertsOld $alertsFile" );
 		&zenlog( "Alert config file was moved to $confdir." );
@@ -60,7 +60,7 @@ sub setNotifCreateConfFile
 		system ( "$mv $sendersOld $senderFile" );
 		&zenlog( "Sender config file was moved to $confdir." );
 	}
-	
+
 	# Create sender configuration file
 	if ( ! -e $senderFile )
 	{
@@ -80,7 +80,7 @@ sub setNotifCreateConfFile
 		close $fileHandle;
 		&zenlog( "Sender config file created." );
 	}
-	
+
 	# Create alert configuration file. It's different in each host
 	if ( ! -e $alertsFile )
 	{
@@ -99,7 +99,7 @@ sub setNotifCreateConfFile
 		close $fileHandle;
 		&zenlog( "Alert config file created." );
 	}
-	
+
 	return $output;
 }
 
@@ -108,7 +108,7 @@ sub setNotifCreateConfFile
 # &setNotifSenders ( $sender, $params );
 sub setNotifSenders
 {
-	my $sender  = shift;
+	my $sender = shift;
 	my $params = shift;
 
 	my $sendersFile = &getGlobalConfiguration( 'senders' );
@@ -118,14 +118,15 @@ sub setNotifSenders
 	{
 		if ( $key eq 'password' )
 		{
-			require Zevenet::Code;
+			include 'Zevenet::Code';
+
 			$errMsg =
-			  &setNotifData( 'senders', $sender, 'auth-password', 
+			  &setNotifData( 'senders', $sender, 'auth-password',
 				&getCodeEncode($params->{ $key } ) );
 		}
 		elsif ( $key eq 'user' )
 		{
-			$errMsg = &setNotifData( 'senders', $sender, 'auth-user', 
+			$errMsg = &setNotifData( 'senders', $sender, 'auth-user',
 				$params->{ $key } );
 		}
 		else
@@ -176,17 +177,18 @@ sub setNotifAlerts
 # &setNotifAlertsAction ( $alert, $action )
 sub setNotifAlertsAction
 {
-	my $notif     = shift;
-	my $action    = shift;
+	my $notif  = shift;
+	my $action = shift;
 
 	my $alertFile = &getGlobalConfiguration( 'alerts' );
 	my $errMsg;
 	my $noChanged;
-	
+
 	$notif = "Backend" if ( $notif =~ /backends/i );
-	$notif = "Cluster"  if ( $notif =~ /cluster/i );
+	$notif = "Cluster" if ( $notif =~ /cluster/i );
 
 	my $status = &getNotifData( 'alerts', $notif, 'Status' );
+
 	# enable rule
 	if ( $status eq 'off' && $action eq 'enable' )
 	{
@@ -363,10 +365,10 @@ sub changeTimeSwitch    # &changeTimeSwitch ( $rule, $time )
 sub zlbstartNotifications
 {
 	my $notificationsPath = &getGlobalConfiguration( 'notifConfDir' ) ;
-	
+
 	# create conf file if don't exists
 	&setNotifCreateConfFile();
-	
+
 	# check last state before stop service
 	my $status = &getNotifData( 'alerts', 'Notifications', 'Status' );
 	my $output;
@@ -420,7 +422,7 @@ sub runNotifications
 		# Fix inconguity between sec.rules and alert conf file
 		&enableRule( 'Backend' )	if ( &getNotifData( 'alerts', 'Backend', 'Status' ) eq 'on');
 		&enableRule( 'Cluster' )	if ( &getNotifData( 'alerts', 'Cluster', 'Status' ) eq 'on');
-		
+
 		# start sec process
 		&zenlog( "$sec --conf=$secConf --input=$syslogFile" );
 		system ( "$sec --conf=$secConf --input=$syslogFile >/dev/null 2>&1 &" );
@@ -546,7 +548,7 @@ sub getNotifAlert
 	my $alert = shift;
 
 	my $method;
-	
+
 	if ( $alert =~ /Backends/i )
 	{
 		$alert = 'Backend';
@@ -594,13 +596,13 @@ sub sendByMail
 	my $pass = &getNotifData( 'senders', 'Smtp', 'auth-password' );
 	if ( $pass )
 	{
-		require Zevenet::Code;
+		include 'Zevenet::Code';
 		$pass = &getCodeDecode($pass);
 	}
 
 	$body = "\n***** Notifications *****\n\n" . "Alerts: $section Notification\n";
 	$body .= $bodycomp;
-	
+
 	my $from = &getNotifData( 'senders', 'Smtp', 'from' );
 	$command .= &getNotifData( 'senders', 'Smtp', 'bin' );
 	$command .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
@@ -610,7 +612,7 @@ sub sendByMail
 	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
 	{
 		$command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
-		$command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' ) 
+		$command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' )
 				if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
 		$command .= " --auth-password " . $pass if ( $pass );
 	}
@@ -639,11 +641,11 @@ sub sendByMail
 	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
 	{
 		$logMsg .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
-		$logMsg .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' ) 
+		$logMsg .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' )
 				if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
 		$logMsg .= " --auth-password ********"
 				if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
-	}	
+	}
 	$logMsg .= " -tls" 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) );
 
 	#~ $logMsg .= " --header 'From: $from'";
@@ -666,11 +668,11 @@ sub sendTestMail
 	my $command;
 	my $logger = &getGlobalConfiguration ( 'logger' );
 	my $error;
-	
+
 	my $pass = &getNotifData( 'senders', 'Smtp', 'auth-password' );
 	if ( $pass )
 	{
-		require Zevenet::Code;
+		include 'Zevenet::Code';
 		$pass = &getCodeDecode($pass);
 	}
 
@@ -687,10 +689,10 @@ sub sendTestMail
 	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
 	{
 		$command .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
-		$command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' ) 
+		$command .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' )
 				if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
 		$command .= " --auth-password " . $pass if ( $pass );
-	}	
+	}
 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) ) { $command .= " -tls"; }
 
 	#~ $command .= " --header 'From: $from, ' --header 'Subject: $subject'";
@@ -709,18 +711,18 @@ sub sendTestMail
 	$logMsg .= " --to " . &getNotifData( 'senders', 'Smtp', 'to' );
 	$logMsg .= " --from " . &getNotifData( 'senders', 'Smtp', 'from' );
 	$logMsg .= " --server " . &getNotifData( 'senders', 'Smtp', 'server' );
-	
+
 	if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) || &getNotifData( 'senders', 'Smtp', 'auth-password' ) )
 	{
 		$logMsg .= " --auth " . &getNotifData( 'senders', 'Smtp', 'auth' );
-		$logMsg .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' ) 
+		$logMsg .= " --auth-user " . &getNotifData( 'senders', 'Smtp', 'auth-user' )
 				if ( &getNotifData( 'senders', 'Smtp', 'auth-user' ) );
 		$logMsg .= " --auth-password ********"
 				if ( &getNotifData( 'senders', 'Smtp', 'auth-password' ) );
-	}		
-	
+	}
+
 	$logMsg .= " -tls" 	if ( 'true' eq &getNotifData( 'senders', 'Smtp', 'tls' ) );
-	
+
 	#~ $logMsg .= " --header 'From: $from' --header 'Subject: $subject'";
 	$logMsg .= " --header 'Subject: $subject'";
 	$logMsg .= " --body 'BODY'";

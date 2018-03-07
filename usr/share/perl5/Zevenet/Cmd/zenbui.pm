@@ -25,12 +25,12 @@ use strict;
 use warnings;
 use Curses::UI;
 use Zevenet::Config;
-use Zevenet::BUI;
 use Zevenet::Debug;
+include 'Zevenet::BUI';
 
 # This two sentences should make zenbui behave like zenbui.sh
 $ENV{ NCURSES_NO_UTF8_ACS } = 1;
-open(STDERR, '>', '/dev/null') if &debug();
+open ( STDERR, '>', '/dev/null' ) if &debug();
 
 
 my $ifconfig_bin = &getGlobalConfiguration( 'ifconfig_bin' );
@@ -41,7 +41,7 @@ my $zlbhostinput;
 my ( $mgmtif,      $mgmtip,      $mgmtmask,      $mgmtgw );
 my ( $mgmtifinput, $mgmtipinput, $mgmtmaskinput, $mgmtgwinput );
 
-my $zenui = new Curses::UI( -color_support => 1, -clear_on_exit => 1 );
+my $zenui = Curses::UI->new( -color_support => 1, -clear_on_exit => 1 );
 
 #my $co = $Curses::UI::color_object;
 #$co->define_color('white', 70, 185, 113);

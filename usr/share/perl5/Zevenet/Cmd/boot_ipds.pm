@@ -23,8 +23,8 @@
 
 use strict;
 use warnings;
-use Zevenet::IPDS::Blacklist;
-use Zevenet::IPDS::DoS;
+include 'Zevenet::IPDS::Blacklist';
+include 'Zevenet::IPDS::DoS';
 
 my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 my $touch          = &getGlobalConfiguration( 'touch' );

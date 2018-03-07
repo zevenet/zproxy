@@ -69,7 +69,7 @@ sub new_gslb_farm_service    # ( $json_obj, $farmname )
 	my $farmname = shift;
 
 	require Zevenet::Farm::Base;
-	require Zevenet::Farm::GSLB::Service;
+	include 'Zevenet::Farm::GSLB::Service';
 
 	my $desc = "New service";
 
@@ -127,9 +127,9 @@ sub modify_gslb_service # ( $json_obj, $farmname, $service )
 {
 	my ( $json_obj, $farmname, $service ) = @_;
 
-	require Zevenet::Farm::GSLB::Config;
-	require Zevenet::Farm::GSLB::FarmGuardian;
-	require Zevenet::Farm::GSLB::Service;
+	include 'Zevenet::Farm::GSLB::Config';
+	include 'Zevenet::Farm::GSLB::FarmGuardian';
+	include 'Zevenet::Farm::GSLB::Service';
 	require Zevenet::Farm::Config;
 	require Zevenet::Farm::Base;
 
@@ -199,7 +199,7 @@ sub delete_gslb_service # ( $farmname, $service )
 	my ( $farmname, $service ) = @_;
 
 	require Zevenet::Farm::Base;
-	require Zevenet::Farm::GSLB::Service;
+	include 'Zevenet::Farm::GSLB::Service';
 
 	my $desc     = "Delete service in GSLB farm";
 	my @services = &getGSLBFarmServices( $farmname );
@@ -271,8 +271,8 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 
 	require Zevenet::Farm::Base;
 	require Zevenet::Farm::Config;
-	require Zevenet::Farm::GSLB::Service;
-	require Zevenet::Farm::GSLB::Backend;
+	include 'Zevenet::Farm::GSLB::Service';
+	include 'Zevenet::Farm::GSLB::Backend';
 
 	my $desc = "New service backend";
 	my @services_list = &getGSLBFarmServices( $farmname );
@@ -355,7 +355,7 @@ sub list_gslb_service_backends
 	my ( $farmname, $service ) = @_;
 
 	require Zevenet::Farm::Config;
-	require Zevenet::Farm::GSLB::Service;
+	include 'Zevenet::Farm::GSLB::Service';
 
 	my $desc          = "List service backends";
 	my $type          = &getFarmType( $farmname );
@@ -385,8 +385,8 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 	require Zevenet::Farm::Action;
 	require Zevenet::Farm::Config;
-	require Zevenet::Farm::GSLB::Service;
-	require Zevenet::Farm::GSLB::Backend;
+	include 'Zevenet::Farm::GSLB::Service';
+	include 'Zevenet::Farm::GSLB::Backend';
 
 	my $desc     = "Modify service backend";
 	my @services = &getGSLBFarmServices( $farmname );
@@ -494,8 +494,8 @@ sub delete_gslb_service_backend # ( $farmname, $service, $id_server )
 
 	require Zevenet::Farm::Action;
 	require Zevenet::Farm::Config;
-	require Zevenet::Farm::GSLB::Service;
-	require Zevenet::Farm::GSLB::Backend;
+	include 'Zevenet::Farm::GSLB::Service';
+	include 'Zevenet::Farm::GSLB::Backend';
 
 	my $desc     = "Delete service backend";
 	my @services = &getGSLBFarmServices( $farmname );
@@ -568,8 +568,8 @@ sub modify_gslb_farmguardian    # ( $json_obj, $farmname )
 	my $service  = shift;
 
 	require Zevenet::Farm::Base;
-	require Zevenet::Farm::GSLB::Service;
-	require Zevenet::Farm::GSLB::FarmGuardian;
+	include 'Zevenet::Farm::GSLB::Service';
+	include 'Zevenet::Farm::GSLB::FarmGuardian';
 
 	my $desc = "Modify farm guardian";
 

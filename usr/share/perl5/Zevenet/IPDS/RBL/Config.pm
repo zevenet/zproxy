@@ -32,13 +32,13 @@ my $userDomainsFile      = "$rblPath/user_domains.conf";
 =begin nd
 Function: setRBLCreateDirectory
 
-	This function creates the RBL directory and RBL config file if they are not exist.	
+	This function creates the RBL directory and RBL config file if they are not exist.
 
 Parameters:
-				
+
 Returns:
 	none - .
-	
+
 =cut
 
 sub setRBLCreateDirectory
@@ -70,10 +70,10 @@ Function: setRBLInitialParams
 	This function return a struct used as template to create a RBL object
 
 Parameters:
-				
+
 Returns:
 	hash ref - Struct with default values for a rbl rule
-	
+
 =cut
 
 sub getRBLInitialParams
@@ -124,10 +124,10 @@ Function: addRBLCreateObjectRule
 
 Parameters:
 	Rule - Rule name
-				
+
 Returns:
 	Integer - 0 on success or -1 on failure
-	
+
 =cut
 
 sub addRBLCreateObjectRule
@@ -147,6 +147,7 @@ sub addRBLCreateObjectRule
 	$params->{ 'name' } = $rule;
 
 	require Config::Tiny;
+
 	my $lock       = &setRBLLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 	$fileHandle->{ $rule } = $params;
@@ -166,10 +167,10 @@ Function: setRBLObjectRule
 Parameters:
 	Rule - Rule name
 	Hash ref - Hash with the value to change and its values
-				
+
 Returns:
 	Integer - 0 on success or -1 on failure
-	
+
 =cut
 
 sub setRBLObjectRule
@@ -178,6 +179,7 @@ sub setRBLObjectRule
 	my $params = shift;
 
 	require Config::Tiny;
+
 	my $lock       = &setRBLLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 
@@ -195,16 +197,16 @@ sub setRBLObjectRule
 =begin nd
 Function: setRBLObjectRuleParam
 
-	Set the value of a parameter (only one)     
+	Set the value of a parameter (only one)
 
 Parameters:
 	Rule - Rule name
 	Key - Parameter to set a value
 	Value - Value for the parameter
-				
+
 Returns:
 	Integer - 0 on success or -1 on failure
-	
+
 =cut
 
 sub setRBLObjectRuleParam
@@ -214,6 +216,7 @@ sub setRBLObjectRuleParam
 	my $value = shift;
 
 	require Config::Tiny;
+
 	my $lock       = &setRBLLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 
@@ -257,7 +260,7 @@ Function: addRBLDomains
 
 Parameters:
 	Domain - String with a domain
-	
+
 Returns:
 	none - .
 
@@ -268,6 +271,7 @@ sub addRBLDomains
 	my $new_domain = shift;
 
 	require Zevenet::Lock;
+
 	&ztielock( \my @domains, "$userDomainsFile" );
 	push @domains, $new_domain;
 	untie @domains;
@@ -281,7 +285,7 @@ Function: setRBLDomains
 Parameters:
 	Domain - Domain to remove from the list
 	Domain_new - New domain for the list
-	
+
 Returns:
 	none - .
 
@@ -304,7 +308,7 @@ Function: delRBLDomains
 Parameters:
 	Domain - Domain to remove from the list
 	Domain_new - New domain for the list
-	
+
 Returns:
 	Integer - Error code, 0 on success or -1 on failure.
 
@@ -313,10 +317,12 @@ Returns:
 sub delRBLDomains
 {
 	my $domain = shift;
-	my $error  = -1;
-	my $it     = 0;
 
 	require Zevenet::Lock;
+
+	my $error = -1;
+	my $it    = 0;
+
 	&ztielock( \my @domains, "$userDomainsFile" );
 
 	foreach my $item ( @domains )
@@ -341,10 +347,10 @@ Function: addRBLCopyObjectRule
 
 Parameters:
 	Rule - Rule name
-				
+
 Returns:
 	Integer - 0 on success or -1 on failure
-	
+
 =cut
 
 sub addRBLCopyObjectRule
@@ -368,6 +374,7 @@ sub addRBLCopyObjectRule
 	$params->{ 'domains' }         = join ( " ", @{ $params->{ 'domains' } } );
 
 	require Config::Tiny;
+
 	my $lock       = &setRBLLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 	$fileHandle->{ $newrule } = $params;
@@ -380,15 +387,15 @@ sub addRBLCopyObjectRule
 =begin nd
 Function: addRBLFarm
 
-	Associate a farm with a IPDS object, adding the farm to the configuration file of the rule. If the farm is up, apply the rule 
+	Associate a farm with a IPDS object, adding the farm to the configuration file of the rule. If the farm is up, apply the rule
 
 Parameters:
-	Farmname - Farm name 
-	Rule - Rule name 
-					
+	Farmname - Farm name
+	Rule - Rule name
+
 Returns:
 	None - .
-	
+
 =cut
 
 sub addRBLFarm
@@ -410,7 +417,7 @@ sub addRBLFarm
 				return -1;
 			}
 
-			require Zevenet::IPDS::RBL::Runtime;
+			include 'Zevenet::IPDS::RBL::Runtime';
 
 			# if rule is not running, start it
 			if ( &getRBLStatusRule( $rule ) eq 'down' )
@@ -441,12 +448,12 @@ Function: delRBLFarm
 	Disassociate a farm from a IPDS object, removing the farm from the configuration file of the rule. If the farm is up, stop the rule
 
 Parameters:
-	Rule - Rule name 
-	Farmname - Farm name 
-				
+	Rule - Rule name
+	Farmname - Farm name
+
 Returns:
 	None - .
-	
+
 =cut
 
 sub delRBLFarm
@@ -454,7 +461,7 @@ sub delRBLFarm
 	my ( $farmname, $rule ) = @_;
 	my $error;
 
-	require Zevenet::IPDS::RBL::Runtime;
+	include 'Zevenet::IPDS::RBL::Runtime';
 
 	# create iptables rule to link with rbl rule
 	$error = &runRBLIptablesRule( $rule, $farmname, 'delete' );
@@ -478,17 +485,17 @@ sub delRBLFarm
 }
 
 =begin nd
-Function: setRBLRenameObjectRule 
+Function: setRBLRenameObjectRule
 
 	Rename a RBL rule. The farm must be stopped.
 
 Parameters:
 	Rule - Rule name
 	NewRule - New name for the rule
-				
+
 Returns:
 	Integer - 0 on success or -1 on failure
-	
+
 =cut
 
 sub setRBLRenameObjectRule
@@ -527,10 +534,10 @@ Function: addRBLCopyObjectRule
 
 Parameters:
 	Rule - Rule name
-				
+
 Returns:
 	Integer - 0 on success or -1 on failure
-	
+
 =cut
 
 sub delRBLDeleteObjectRule
@@ -545,6 +552,7 @@ sub delRBLDeleteObjectRule
 	}
 
 	require Config::Tiny;
+
 	my $lock       = &setRBLLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 	delete $fileHandle->{ $rule };

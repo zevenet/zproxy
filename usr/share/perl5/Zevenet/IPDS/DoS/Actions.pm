@@ -23,25 +23,24 @@
 
 use strict;
 
-use Zevenet::IPDS::DoS::Runtime;
 use Zevenet::Farm::Base;
+include 'Zevenet::IPDS::DoS::Runtime';
 
 =begin nd
-        Function: runDOSStartModule
+Function: runDOSStartModule
 
-        Boot all DoS rules-
+	Boot all DoS rules-
 
-        Parameters:
-				
-        Returns:
-				== 0	- Successful
-             != 0	- Number of rules didn't boot
+Parameters:
 
+Returns:
+	== 0	- Successful
+	!= 0	- Number of rules didn't boot
 =cut
 
 sub runDOSStartModule
 {
-	require Zevenet::IPDS::DoS::Config;
+	include 'Zevenet::IPDS::DoS::Config';
 
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $output;
@@ -83,7 +82,7 @@ sub runDOSStartModule
 	# This block is a bugfix. When ssh_brute_force rule doesn't show the port
 	if ( !&setDOSParam( 'ssh_brute_force', 'port' ) )
 	{
-		require Zevenet::System::SSH;
+		include 'Zevenet::System::SSH';
 
 		my $sshconf = &getSsh();
 		my $port    = $sshconf->{ 'port' };
@@ -99,7 +98,7 @@ sub runDOSStartModule
         Stop all DoS rules
 
         Parameters:
-				
+
         Returns:
 			== 0	- Successful
             != 0	- Number of rules didn't Stop
@@ -146,10 +145,10 @@ sub runDOStopModule
 =begin nd
 Function: runDOSRestartModule
 
-	Stop the module	
+	Stop the module
 
 Parameters:
-				
+
 Returns:
 
 =cut
@@ -168,10 +167,10 @@ Function: runDOSStartByRule
 
 Parameters:
 	Rule - Rule name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runDOSStartByRule
@@ -211,10 +210,10 @@ Function: runDOSStopByRule
 
 Parameters:
 	Rule - Rule name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runDOSStopByRule
@@ -248,10 +247,10 @@ Function: runDOSRestartByRule
 
 Parameters:
 	Rule - Rule name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runDOSRestartByRule
@@ -276,10 +275,10 @@ Function: runDOSStart
 Parameters:
 	Rule - Rule name
 	Farmanme - Farm name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runDOSStart
@@ -302,10 +301,10 @@ Function: runDOSStop
 Parameters:
 	Rule - Rule name
 	Farmname - Farm name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runDOSStop
@@ -323,10 +322,10 @@ Function: runDOSRestart
 Parameters:
 	Rule - Rule name
 	Farmname - Farm name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runDOSrestart

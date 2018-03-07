@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -60,7 +60,6 @@ use feature 'say';
 use Zevenet::Log;
 use Zevenet::Config;
 use Zevenet::Debug;
-use Data::Dumper;
 
 #~ my $primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
 
@@ -74,11 +73,11 @@ if ( !grep { $object eq $_ } ( qw(interface gateway farm ipds) ) )
 {
 	if ( $object =~ /Conntrackd/ )
 	{
-		require Zevenet::Conntrackd;
+		include 'Zevenet::Conntrackd';
 	}
 	else
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 	}
 }
 
@@ -193,7 +192,7 @@ if ( $object eq 'farm' )
 		my $status = &_runFarmStart( $farm_name );
 
 		# Start ipds rules
-		require Zevenet::IPDS::Base;
+		include 'Zevenet::IPDS::Base';
 		&runIPDSStartByFarm( $farm_name );
 
 		exit $status;
@@ -204,7 +203,7 @@ if ( $object eq 'farm' )
 		&quit( "Missing farm name argument" ) if !$farm_name;
 
 		# Stop ipds rules
-		require Zevenet::IPDS::Base;
+		include 'Zevenet::IPDS::Base';
 		&runIPDSStopByFarm( $farm_name );
 
 		exit &_runFarmStop( $farm_name );
@@ -239,13 +238,13 @@ if ( $object =~ /^rbac_(user|group)/ )
 	my $module = $1;
 	if ( $module eq "user" )
 	{
-		require Zevenet::RBAC::User::Action;
+		include 'Zevenet::RBAC::User::Action';
 		my ( $user ) = @ARGV;
 		&updateRBACUser( $user, $command );
 	}
 	if ( $module eq "group" )
 	{
-		require Zevenet::RBAC::Group::Action;
+		include 'Zevenet::RBAC::Group::Action';
 		my ( $group, $user ) = @ARGV;
 		&updateRBACGroup( $group, $command, $user );
 	}
@@ -256,7 +255,7 @@ if ( $object =~ /^rbac_(user|group)/ )
 #  object = ipds
 if ( $object eq "ipds" )
 {
-	require Zevenet::IPDS::Base;
+	include 'Zevenet::IPDS::Base';
 	my $farm_name = shift @ARGV;
 
 	# stop DOS rules
@@ -287,7 +286,7 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 
 	if ( $module eq 'bl' )
 	{
-		require Zevenet::IPDS::Blacklist::Actions;
+		include 'Zevenet::IPDS::Blacklist::Actions';
 
 		if ( $farm_name )
 		{
@@ -334,7 +333,7 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 	}
 	elsif ( $module eq 'dos' )
 	{
-		require Zevenet::IPDS::DoS::Actions;
+		include 'Zevenet::IPDS::DoS::Actions';
 
 		if ( $farm_name )
 		{
@@ -381,7 +380,7 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 	}
 	elsif ( $module eq 'rbl' )
 	{
-		require Zevenet::IPDS::RBL::Actions;
+		include 'Zevenet::IPDS::RBL::Actions';
 
 		if ( $farm_name )
 		{
@@ -442,7 +441,7 @@ if ( $object eq 'interface' )
 	if ( $command eq 'float-update' )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 
 		&reloadL4FarmsSNAT();
 		exit 0;
@@ -468,7 +467,7 @@ if ( $object eq 'interface' )
 	# configures ip
 	if ( $command eq 'start' )
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		require Zevenet::Farm::L4xNAT::Config;
 
 		&disableInterfaceDiscovery( $if_ref );    # backup node only
@@ -479,7 +478,7 @@ if ( $object eq 'interface' )
 	}
 	elsif ( $command eq 'stop' )                  # flush ip
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		require Zevenet::Farm::L4xNAT::Config;
 
 		$status = &delIp( $$if_ref{ name }, $$if_ref{ addr }, $$if_ref{ mask } );
@@ -545,7 +544,7 @@ sub setNodeStatusMaster
 	require Zevenet::Net::Interface;
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
-	require Zevenet::Ssyncd;
+	include 'Zevenet::Ssyncd';
 
 	# conntrackd sync
 	my $primary_backup = &getGlobalConfiguration( 'primary_backup' );
@@ -632,7 +631,7 @@ sub setNodeStatusBackup
 	}
 
 	require Zevenet::Net::Interface;
-	require Zevenet::Ssyncd;
+	include 'Zevenet::Ssyncd';
 
 	# conntrackd
 	my $primary_backup = &getGlobalConfiguration( 'primary_backup' );
@@ -667,7 +666,7 @@ sub setNodeStatusMaintenance
 {
 	&zenlog( "############### Starting setNodeStatusMaintenance" );
 
-	require Zevenet::Ssyncd;
+	include 'Zevenet::Ssyncd';
 	require Zevenet::Net::Interface;
 
 	my $node_status = &getZClusterNodeStatus();

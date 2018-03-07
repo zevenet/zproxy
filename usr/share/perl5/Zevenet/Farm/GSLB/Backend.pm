@@ -29,7 +29,7 @@ my $configdir = &getGlobalConfiguration('configdir');
 Function: remFarmServiceBackend
 
 	Remove a backend from a gslb service
-	
+
 Parameters:
 	backend - Backend id
 	farmname - Farm name
@@ -170,7 +170,7 @@ sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
 Function: setGSLBFarmNewBackend
 
 	Create a new backend in a gslb service
-	 
+
 Parameters:
 	farmname - Farm name
 	service - Service name
@@ -277,8 +277,8 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 =begin nd
 Function: getGSLBFarmBackends
 
-	 Get all backends and theris configuration 
-	
+	 Get all backends and theris configuration
+
 Parameters:
 	farmname - Farm name
 	service - service name
@@ -286,48 +286,51 @@ Parameters:
 Returns:
 	Array ref - Return a array in each element is a hash with the backend
 	configuration. The array index is the backend id
-	
+
 =cut
 sub getGSLBFarmBackends    # ($farm_name)
 {
 	my ( $farmname, $service ) = @_;
-		
+
 	my @backendStats;
 	my @services = &getGSLBFarmServices( $farmname );
-	
+
 	require Zevenet::Farm::Base;
+
 	my $farmStatus = &getFarmStatus( $farmname );
 	my $gslb_stats;
+
 	if ( $farmStatus eq "up" )
 	{
-		require Zevenet::Farm::GSLB::Stats;
+		include 'Zevenet::Farm::GSLB::Stats';
 		$gslb_stats = &getGSLBGdnsdStats( $farmname );
 	}
-	
+
 	# Default port health check
-	require Zevenet::Farm::GSLB::Service;
+	include 'Zevenet::Farm::GSLB::Service';
+
 	my $port       = &getGSLBFarmVS( $farmname, $service, "dpc" );
 	my $backendsvs = &getGSLBFarmVS( $farmname, $service, "backends" );
 	my @be = split ( "\n", $backendsvs );
-	
+
 	#
 	# Backends
 	#
 	foreach my $subline ( @be )
 	{
 		$subline =~ s/^\s+//;
-	
+
 		if ($subline =~ /^$/)
 		{
 			next;
 		}
-	
+
 		# ID and IP
 		my @subbe = split(" => ",$subline);
 		my $id = $subbe[0];
 		my $addr = $subbe[1];
 		my $status = "undefined";
-	
+
 		if ( $farmStatus eq "up" )
 		{
 			# look for backend status in stats
@@ -340,11 +343,11 @@ sub getGSLBFarmBackends    # ($farm_name)
 				}
 			}
 		}
-	
+
 		$id =~ s/^primary$/1/;
 		$id =~ s/^secondary$/2/;
 		$status = lc $status if defined $status;
-	
+
 		push @backendStats,
 		{
 			id      => $id + 0,
@@ -353,10 +356,8 @@ sub getGSLBFarmBackends    # ($farm_name)
 			status  => $status
 		};
 	}
-	
+
 	return \@backendStats;
 }
-
-
 
 1;

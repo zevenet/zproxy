@@ -24,19 +24,19 @@
 use strict;
 
 use Zevenet::Netfilter;
-use Zevenet::IPDS::Core;
-use Zevenet::IPDS::DoS::Core;
+include 'Zevenet::IPDS::Core';
+include 'Zevenet::IPDS::DoS::Core';
 
 =begin nd
 Function: setDOSRunRule
 
-	Wrapper that get the farm values and launch the necessary function to 
+	Wrapper that get the farm values and launch the necessary function to
 	start run the iptables rule
 
 Parameters:
 	rule	 - Rule name
 	farmname - farm name
-				
+
 Returns:
 	Integer - Error code: 0 on success or other value on failure
 
@@ -138,7 +138,7 @@ Function: setDOSStopRule
 Parameters:
 	ruleName		- id that indetify a rule, ( rule = 'farms' to remove rules from farm )
 	farmname 	- farm name
-				
+
 Returns:
 	Integer - Error code, 0 on success or other value on failure
 
@@ -175,7 +175,7 @@ Function: setDOSBogusTcpFlagsRule
 Parameters:
 	ruleName	- Rule name
 	farmname 	- Farm name
-				
+
 Returns:
 	Integer - Error code, 0 on success or other value on failure
 
@@ -184,11 +184,12 @@ Returns:
 sub setDOSBogusTcpFlagsRule
 {
 	my ( $ruleName, $ruleOptRef ) = @_;
-	my %ruleOpt = %{ $ruleOptRef };
 
-	require Zevenet::IPDS::Core;
-	my $chain = &getIPDSChain( 'dos' );
-	my $table = "mangle";
+	include 'Zevenet::IPDS::Core';
+
+	my %ruleOpt = %{ $ruleOptRef };
+	my $chain   = &getIPDSChain( 'dos' );
+	my $table   = "mangle";
 
 	#~ my $rule    = "bogustcpflags";
 	my $logMsg = &createLogMsg( "DOS", $ruleName, $ruleOpt{ 'farmName' } );
@@ -344,7 +345,7 @@ Function: setDOSLimitConnsRule
 Parameters:
 	ruleName	- Rule name
 	farmname 	- Farm name
-				
+
 Returns:
 	Integer - Error code, 0 on success or other value on failure
 
@@ -353,11 +354,12 @@ Returns:
 sub setDOSLimitConnsRule
 {
 	my ( $ruleName, $ruleOptRef ) = @_;
-	my %ruleOpt = %{ $ruleOptRef };
 
-	require Zevenet::IPDS::Core;
-	my $chain = &getIPDSChain( 'dos' );
-	my $table = "mangle";
+	include 'Zevenet::IPDS::Core';
+
+	my %ruleOpt = %{ $ruleOptRef };
+	my $chain   = &getIPDSChain( 'dos' );
+	my $table   = "mangle";
 
 	#~ my $rule    = "limitconns";
 	my $logMsg = &createLogMsg( "DOS", $ruleName, $ruleOpt{ 'farmName' } );
@@ -395,7 +397,7 @@ Function: setDOSLimitRstRule
 Parameters:
 	ruleName	- Rule name
 	farmname 	- Farm name
-				
+
 Returns:
 	Integer - Error code, 0 on success or other value on failure
 
@@ -404,11 +406,12 @@ Returns:
 sub setDOSLimitRstRule
 {
 	my ( $ruleName, $ruleOptRef ) = @_;
-	my %ruleOpt = %{ $ruleOptRef };
 
-	require Zevenet::IPDS::Core;
-	my $chain = &getIPDSChain( 'dos' );
-	my $table = "mangle";
+	include 'Zevenet::IPDS::Core';
+
+	my %ruleOpt = %{ $ruleOptRef };
+	my $chain   = &getIPDSChain( 'dos' );
+	my $table   = "mangle";
 
 	#~ my $rule        = "limitrst";
 	my $logMsg = &createLogMsg( "DOS", $ruleName, $ruleOpt{ 'farmName' } );
@@ -450,7 +453,7 @@ Function: setDOSLimitSecRule
 Parameters:
 	ruleName	- Rule name
 	farmname 	- Farm name
-				
+
 Returns:
 	Integer - Error code, 0 on success or other value on failure
 
@@ -459,11 +462,12 @@ Returns:
 sub setDOSLimitSecRule
 {
 	my ( $ruleName, $ruleOptRef ) = @_;
-	my %ruleOpt = %{ $ruleOptRef };
 
-	require Zevenet::IPDS::Core;
-	my $chain = &getIPDSChain( 'dos' );
-	my $table = "mangle";
+	include 'Zevenet::IPDS::Core';
+
+	my %ruleOpt = %{ $ruleOptRef };
+	my $chain   = &getIPDSChain( 'dos' );
+	my $table   = "mangle";
 
 	#~ my $rule        = "limitsec";
 	my $logMsg = &createLogMsg( "DOS", $ruleName, $ruleOpt{ 'farmName' } );
@@ -550,9 +554,9 @@ Returns:
 
 sub setDOSSshBruteForceRule
 {
-	require Zevenet::System::SSH;
+	include 'Zevenet::System::SSH';
+	include 'Zevenet::IPDS::Core';
 
-	require Zevenet::IPDS::Core;
 	my $chain = &getIPDSChain( 'dos' );
 	my $table = "mangle";
 
@@ -594,7 +598,7 @@ sub setDOSSshBruteForceRule
 
 =begin nd
 Function: setDOSApplyRule
-	
+
 	Enable a DoS rule for rules of farm or system type
 	Farm type: Link a DoS rule with a farm
 	System type: Put rule in up status
@@ -602,7 +606,7 @@ Function: setDOSApplyRule
 Parameters:
 	rule	- Rule name
 	farmname - Farm name
-				
+
 Returns:
 	Integer - Error code. 0 on succes or other value on failure.
 
@@ -615,9 +619,9 @@ sub setDOSApplyRule
 	require Zevenet::Farm::Base;
 	require Config::Tiny;
 
-	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $output;
-	my $rule = &getDOSParam( $ruleName, 'rule' );
+	my $confFile = &getGlobalConfiguration( 'dosConf' );
+	my $rule     = &getDOSParam( $ruleName, 'rule' );
 	my $protocol = &getFarmProto( $farmName );
 
 	#~ if (    ( $rule eq 'DROPFRAGMENTS' )
@@ -670,7 +674,7 @@ sub setDOSApplyRule
 =begin nd
 
 Function: setDOSUnsetRule
-	
+
 	Enable a DoS rule for rules of farm or system type
 	Farm type: Unlink a DoS rule with a farm
 	System type: Put rule in down status
@@ -678,7 +682,7 @@ Function: setDOSUnsetRule
 Parameters:
 	rule	- Rule name
 	farmname - Farm name
-				
+
 Returns:
 	Integer - Error code. 0 on succes or other value on failure.
 

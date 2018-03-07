@@ -25,7 +25,7 @@ use strict;
 use warnings;
 use Zevenet::Config;
 use Zevenet::SystemInfo;
-use Zevenet::Cluster;
+include 'Zevenet::Cluster';
 
 my $DEBUG = 0;
 

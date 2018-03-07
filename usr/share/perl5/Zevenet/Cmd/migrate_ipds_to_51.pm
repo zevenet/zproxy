@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 
 use Zevenet::Core;
-require Zevenet::IPDS::Blacklist;
-require Zevenet::IPDS::Base;
+include 'Zevenet::IPDS::Blacklist';
+include 'Zevenet::IPDS::Base';
 
 &runIPDSStopModule();
 
@@ -20,11 +20,11 @@ else
 	print( $program . "Cannot open $iptlock: $!" );
 }
 
-my @setbox= (
-	{ chain=>"PREROUTING", table=>"raw" },
-	{ chain=>"PREROUTING", table=>"mangle" },
-	{ chain=>"INPUT", table=>"filter" },
-	{ chain=>"FORWARDING", table=>"filter" },
+my @setbox = (
+			   { chain => "PREROUTING", table => "raw" },
+			   { chain => "PREROUTING", table => "mangle" },
+			   { chain => "INPUT",      table => "filter" },
+			   { chain => "FORWARDING", table => "filter" },
 );
 
 foreach my $point ( @setbox )

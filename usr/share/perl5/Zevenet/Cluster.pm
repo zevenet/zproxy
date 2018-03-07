@@ -23,8 +23,6 @@
 
 use strict;
 
-#~ use Zevenet::Conntrackd;
-
 my $maint_if = 'cl_maintenance';
 
 =begin nd
@@ -44,7 +42,7 @@ See Also:
 sub getZClusterLocalIp
 {
 	return undef if ! &getZClusterStatus();
-	
+
 	my $zcl_conf = getZClusterConfig();
 
 	return $zcl_conf->{ &getHostname() }->{ ip };
@@ -121,7 +119,7 @@ sub getZClusterConfig
 
 		close $zcl_file;
 	}
-	
+
 	my $config = Config::Tiny->read( $filecluster );
 
 	# returns object on success or undef on error.
@@ -257,7 +255,8 @@ sub enableZCluster
 	}
 
 	# conntrackd
-	require Zevenet::Conntrackd;
+	include 'Zevenet::Conntrackd';
+
 	unless ( -f &getGlobalConfiguration('conntrackd_conf') )
 	{
 		&setConntrackdConfig();
@@ -294,8 +293,8 @@ sub disableZCluster
 	my $error_code = system("/etc/init.d/keepalived stop >/dev/null 2>&1");
 
 	require Zevenet::Net::Interface;
-	require Zevenet::Conntrackd;
-	require Zevenet::Ssyncd;
+	include 'Zevenet::Conntrackd';
+	include 'Zevenet::Ssyncd';
 
 	# conntrackd
 	if ( &getConntrackdRunning() )
@@ -345,7 +344,7 @@ sub setKeepalivedConfig
 	require Zevenet::SystemInfo;
 
 	&zenlog("Setting keepalived configuration file");
-	
+
 	my $zcl_conf = &getZClusterConfig();
 	my $keepalived_conf = &getGlobalConfiguration('keepalived_conf');
 
@@ -690,7 +689,7 @@ Returns:
 	Returns remote command output.
 
 See Also:
-	<exchangeIdKeys>, <checkZClusterInterfaces>, <runZClusterRemoteManager>, <getZCusterStatusInfo>, 
+	<exchangeIdKeys>, <checkZClusterInterfaces>, <runZClusterRemoteManager>, <getZCusterStatusInfo>,
 
 	zapi/v3/cluster.cgi
 =cut
@@ -765,7 +764,7 @@ sub zsync
 		#~ &zenlog( "exclude:$pattern" );
 		$exclude .= "--exclude=\"$pattern\" ";
 	}
-	
+
 	my $include = '';
 	for my $pattern ( @{ $args->{include} } )
 	{
@@ -880,7 +879,7 @@ sub runSync
 	#~ for my $rc ( @{ $r_list } )
 	#~ {
 		#~ &zenlog("Return[$rc->{tid}] $rc->{ret_val}");
-		
+
 		#~ if ( $rc->{ret_val} )
 		#~ {
 			#~ &zenlog( "An error happened syncing with $rc->{arg}->{ip_addr}");
@@ -1413,12 +1412,12 @@ sub setZClusterIptablesException
 	return 0 unless &getZClusterStatus();
 
 	require Zevenet::Netfilter;
-	require Zevenet::Conntrackd;
-	require Zevenet::IPDS::Core;
+	include 'Zevenet::Conntrackd';
+	include 'Zevenet::IPDS::Core';
 
 	my $error;
 	my $action;
-	
+
 	if ( $option eq "insert" )
 	{
 		$action = "-I";
@@ -1431,7 +1430,7 @@ sub setZClusterIptablesException
 	{
 		return -1;
 	 }
-	
+
 	my $config    = &getZClusterConfig();
 	my $remote_hn = &getZClusterRemoteHost();
 	my $ipremote  = $config->{ $remote_hn }->{ ip };
@@ -1442,13 +1441,13 @@ sub setZClusterIptablesException
 	# Avoid blacklist rules and rbl rules
 	my $cmd = "$iptables $action $chain -t raw -s $ipremote $ipt_args";
 	$error = &iptSystem( $cmd );
-	
+
 	return -1 if $error;
 
 	# Avoid the dos rules
 	$cmd = "$iptables $action $chain -t mangle -s $ipremote $ipt_args";
 	$error = &iptSystem( $cmd );
-	
+
 	return $error;
 }
 
@@ -1460,7 +1459,7 @@ sub zClusterFarmUp
 
 	if ( $ssyncd_enabled eq 'true' )
 	{
-		require Zevenet::Ssyncd;
+		include 'Zevenet::Ssyncd';
 		&setSsyncdFarmUp( $farm_name );
 	}
 
@@ -1475,7 +1474,7 @@ sub zClusterFarmDown
 
 	if ( $ssyncd_enabled eq 'true' )
 	{
-		require Zevenet::Ssyncd;
+		include 'Zevenet::Ssyncd';
 		&setSsyncdFarmDown( $farm_name );
 	}
 

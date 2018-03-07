@@ -41,11 +41,11 @@ See Also:
 =cut
 sub setConntrackdConfig
 {
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	require Zevenet::SystemInfo;
 
 	&zenlog("Setting conntrackd configuration file");
-	
+
 	my $zcl_conf = &getZClusterConfig();
 	my $conntrackd_conf = &getGlobalConfiguration('conntrackd_conf');
 

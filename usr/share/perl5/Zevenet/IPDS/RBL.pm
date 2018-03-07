@@ -21,9 +21,9 @@
 #
 ###############################################################################
 
-use Zevenet::IPDS::RBL::Core;
-use Zevenet::IPDS::RBL::Config;
-use Zevenet::IPDS::RBL::Runtime;
-use Zevenet::IPDS::RBL::Actions;
+include 'Zevenet::IPDS::RBL::Core';
+include 'Zevenet::IPDS::RBL::Config';
+include 'Zevenet::IPDS::RBL::Runtime';
+include 'Zevenet::IPDS::RBL::Actions';
 
 1;

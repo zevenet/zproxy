@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -22,7 +22,7 @@
 ###############################################################################
 
 use Zevenet::Config;
-use Zevenet::IPDS::Blacklist;
+include 'Zevenet::IPDS::Blacklist';
 
 my ( $listName ) = @ARGV;
 my $logger = &getGlobalConfiguration ( 'logger' );
@@ -32,15 +32,15 @@ my $output;
 if ( &getBLStatus ( $listName ) eq 'up' )
 {
 	$output = &setBLRefreshList ( $listName );
-	
+
 	if ( ! $output )
-	{	
+	{
 		system ("$logger \"$listName was updated successful\" -i -t updatelist");
 	}
 	else
 	{
 		system ("$logger \"Error, updating $listName.\" -i -t updatelist");
-	}	
+	}
 }
 
 exit $output;

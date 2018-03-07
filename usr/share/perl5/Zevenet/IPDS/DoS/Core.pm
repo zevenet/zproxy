@@ -33,15 +33,16 @@ Function: getDOSExists
 
 Parameters:
 	Farmname -  Farm name
-				
+
 Returns:
 	Integer - return 1 if the rule already exists or 0 if it is not exist
-	
+
 =cut
 
 sub getDOSExists
 {
 	my $name       = shift;
+
 	my $output     = 0;
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
@@ -57,16 +58,17 @@ Function: getDOSRuleList
 	Get an array with all DOS rule names
 
 Parameters:
-				
+
 Returns:
 	Array - DOS name list
-	
+
 =cut
 
 sub getDOSRuleList
 {
-	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	require Config::Tiny;
+
+	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 
 	return keys %{ $fileHandle };
@@ -78,35 +80,35 @@ Function: getDOSParam
 	Get information about a DoS rule saved in the config file.
 	If it is indicated a parameter, only that parameter will be returned,
 	else a hash with all parameters will be returned.
-	
+
 	These are the available values depend on the DoS type rule
-	
+
 	bogustcpflags: farms, type, name, rule
 	limitconns: farms, limit_conns, type, name, rule
 	limitrst: farms, limit, limit_burst, type, name, rule
 	limitsec: farms, limit, limit_burst, type, name, rule
 	sshbruteforce: status, hits, port, time, type, name, rule
-	
+
 	type is where the rule is applied: "farm" or "system"
 	rule identifies the type of rule: sshbruteforce, limitsec, limitconns...
-	
+
 
 Parameters:
 	Rule 	- DoS rule
-	Parameter - Parameter of the rule. The possible values are: 
-				
+	Parameter - Parameter of the rule. The possible values are:
+
 Returns:
 	scalar or hash - return scalar when it is request a unique parameter,
 		return a hash when no parameter is requested
-	
+
 =cut
 
 sub getDOSParam
 {
 	my $ruleName = shift;
 	my $param    = shift;
-	my $output;
 
+	my $output;
 	my $confFile   = &getGlobalConfiguration( 'dosConf' );
 	my $fileHandle = Config::Tiny->read( $confFile );
 
@@ -127,10 +129,10 @@ Function: getDOSFarmApplied
 
 Parameters:
 	Farmname -  Farm name
-				
+
 Returns:
 	Array ref - list of DOS rules
-	
+
 =cut
 
 sub getDOSFarmApplied
@@ -150,33 +152,32 @@ sub getDOSFarmApplied
 }
 
 =begin nd
-        Function: getDOSLookForRule
+	Function: getDOSLookForRule
 
-        Look for a:
-			- global name 				( key )
-			- set of rules applied a farm 	( key, farmName )
-        
-        Parameters:
-				key		 - id that indetify a rule
-				farmName - farm name
-				
-        Returns:
-				== 0	- don't find any rule
-             @out	- Array with reference hashs
-							- out[i]= { 
-									line  => num,
-									table => string,
-									chain => string
-								  }
+	Look for a:
+		- global name 				( key )
+		- set of rules applied a farm 	( key, farmName )
 
+	Parameters:
+		key		 - id that indetify a rule
+		farmName - farm name
+
+	Returns:
+		== 0	- don't find any rule
+		@out	- Array with reference hashs
+				- out[i]= {
+						line  => num,
+						table => string,
+						chain => string
+					  }
 =cut
 
 sub getDOSLookForRule
 {
 	my ( $ruleName, $farmName ) = @_;
 
-	require Zevenet::IPDS::Core;
 	require Zevenet::Validate;
+	include 'Zevenet::IPDS::Core';
 
 	# table and chain where there are saved dos rules
 	#~ my @table = ( 'raw',        'filter', 'filter',  'mangle' );
@@ -188,6 +189,7 @@ sub getDOSLookForRule
 
 	my @output;
 	my $ind = -1;
+
 	for ( @table )
 	{
 		$ind++;
@@ -238,11 +240,11 @@ Function: getDOSStatusRule
 	Check if a DoS rule is applied in iptables
 
 Parameters:
-	String - Rule name 
-				
+	String - Rule name
+
 Returns:
 	String - "up" if the rule is running or "down" if it is not running
-	
+
 =cut
 
 sub getDOSStatusRule
@@ -263,10 +265,10 @@ Function: getDOSZapiRule
 
 Parameters:
 	String - Rule name
-				
+
 Returns:
 	hash ref - The output depend on the rule
-	
+
 =cut
 
 sub getDOSZapiRule

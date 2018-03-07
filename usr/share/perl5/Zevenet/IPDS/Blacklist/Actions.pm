@@ -26,8 +26,8 @@
 
 use strict;
 
-use Zevenet::IPDS::Blacklist::Runtime;
 use Zevenet::Farm::Base;
+include 'Zevenet::IPDS::Blacklist::Runtime';
 
 my $blacklistsPath = &getGlobalConfiguration( 'blacklistsPath' );
 my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
@@ -115,8 +115,8 @@ sub runBLStopModule
 {
 	my $error;
 
-	require Zevenet::IPDS::Core;
 	require Zevenet::Netfilter;
+	include 'Zevenet::IPDS::Core';
 
 	foreach my $typelist ( 'blacklist', 'whitelist' )
 	{
@@ -128,6 +128,7 @@ sub runBLStopModule
 	# destroy lists
 	my $ipset = &getGlobalConfiguration( 'ipset' );
 	my @lists = `$ipset list -name`;
+
 	foreach my $rule ( @lists )
 	{
 		chomp ( $rule );
@@ -146,10 +147,10 @@ sub runBLStopModule
 =begin nd
 Function: runBLRestartModule
 
-	Stop the module	
+	Stop the module
 
 Parameters:
-				
+
 Returns:
 
 =cut
@@ -170,12 +171,13 @@ Parameters:
 
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runBLStartByRule
 {
 	my ( $ruleName ) = @_;
+
 	my $error = 0;
 	my @farms = @{ &getBLParam( $ruleName, 'farms' ) };
 
@@ -203,17 +205,17 @@ Function: runBLStopByRule
 
 Parameters:
 	Rule - Rule name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runBLStopByRule
 {
 	my ( $ruleName ) = @_;
-	my $error = 0;
 
+	my $error = 0;
 	my $ipset = &getGlobalConfiguration( 'ipset' );
 
 	# run cron process
@@ -243,10 +245,10 @@ Function: runBLRestartByRule
 
 Parameters:
 	Rule - Rule name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runBLRestartByRule
@@ -271,10 +273,10 @@ Function: runBLStart
 Parameters:
 	Rule - Rule name
 	Farmanme - Farm name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runBLStart
@@ -310,10 +312,10 @@ Function: runBLStop
 Parameters:
 	Rule - Rule name
 	Farmname - Farm name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runBLStop
@@ -341,10 +343,10 @@ Function: runBLRestart
 Parameters:
 	Rule - Rule name
 	Farmname - Farm name
-				
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runBLrestart

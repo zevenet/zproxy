@@ -24,15 +24,7 @@
 use strict;
 
 use Config::Tiny;
-use Tie::File;
-
-#~ use Zevenet::Core;
-#~ use Zevenet::Debug;
-use Zevenet::IPDS::Core;
-
-#~ use Zevenet::IPDS::RBL;
-#~ use Zevenet::IPDS::Blacklist;
-#~ use Zevenet::IPDS::DoS;
+include 'Zevenet::IPDS::Core';
 
 =begin nd
 Function: addIPDSIptablesChain
@@ -40,11 +32,11 @@ Function: addIPDSIptablesChain
 	This function create the iptables chains where the IPDS rules will be created
 
 Parameters:
-	none - .			
-				
+	none - .
+
 Returns:
 	Integer - Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub addIPDSIptablesChain
@@ -113,11 +105,11 @@ Function: delIPDSIptablesChain
 	This function delete the iptables chains where the IPDS rules are created
 
 Parameters:
-	none - .			
-				
+	none - .
+
 Returns:
 	Integer - Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub delIPDSIptablesChain
@@ -157,21 +149,21 @@ actions:
 =begin nd
 Function: runIPDSStartModule
 
-        Boot the IPDS module
+	Boot the IPDS module
 
 Parameters:
-				
+
 Returns:
 	none - .
-	
+
 =cut
 
 sub runIPDSStartModule
 {
-	require Zevenet::IPDS::Blacklist::Actions;
-	require Zevenet::IPDS::RBL::Actions;
-	require Zevenet::IPDS::DoS::Actions;
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
+	include 'Zevenet::IPDS::RBL::Actions';
+	include 'Zevenet::IPDS::DoS::Actions';
+	include 'Zevenet::IPDS::Blacklist::Actions';
 
 	&addIPDSIptablesChain();
 
@@ -185,10 +177,10 @@ sub runIPDSStartModule
 =begin nd
 Function: runIPDSStopModule
 
-        Stop the IPDS module
+	Stop the IPDS module
 
 Parameters:
-				
+
 Returns:
 	none - .
 
@@ -196,10 +188,10 @@ Returns:
 
 sub runIPDSStopModule
 {
-	require Zevenet::Cluster;
-	require Zevenet::IPDS::Blacklist::Actions;
-	require Zevenet::IPDS::RBL::Actions;
-	require Zevenet::IPDS::DoS::Actions;
+	include 'Zevenet::Cluster';
+	include 'Zevenet::IPDS::RBL::Actions';
+	include 'Zevenet::IPDS::DoS::Actions';
+	include 'Zevenet::IPDS::Blacklist::Actions';
 
 	&runRBLStopModule();
 	&runBLStopModule();
@@ -221,10 +213,10 @@ Function: runIPDSStartByFarm
 
 Parameters:
 	Farmname - Farm name
-				
+
 Returns:
 	none - .
-	
+
 =cut
 
 sub runIPDSStartByFarm
@@ -236,9 +228,11 @@ sub runIPDSStartByFarm
 
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );
-	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{ blacklists } } );
-	require Zevenet::IPDS::DoS::Actions       if ( @{ $rules->{ dos } } );
-	require Zevenet::IPDS::RBL::Actions       if ( @{ $rules->{ rbl } } );
+
+	include 'Zevenet::IPDS::Blacklist::Actions' if ( @{ $rules->{ blacklists } } );
+	include 'Zevenet::IPDS::DoS::Actions'       if ( @{ $rules->{ dos } } );
+	include 'Zevenet::IPDS::RBL::Actions'       if ( @{ $rules->{ rbl } } );
+
 	my $name;
 
 	# start BL rules
@@ -271,10 +265,10 @@ Function: runIPDSStopByFarm
 
 Parameters:
 	Farmname - Farm name
-				
+
 Returns:
 	none - .
-	
+
 =cut
 
 sub runIPDSStopByFarm
@@ -283,9 +277,11 @@ sub runIPDSStopByFarm
 
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );
-	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{ blacklists } } );
-	require Zevenet::IPDS::DoS::Actions       if ( @{ $rules->{ dos } } );
-	require Zevenet::IPDS::RBL::Actions       if ( @{ $rules->{ rbl } } );
+
+	include 'Zevenet::IPDS::Blacklist::Actions' if ( @{ $rules->{ blacklists } } );
+	include 'Zevenet::IPDS::DoS::Actions'       if ( @{ $rules->{ dos } } );
+	include 'Zevenet::IPDS::RBL::Actions'       if ( @{ $rules->{ rbl } } );
+
 	my $name;
 
 	# start BL rules
@@ -318,10 +314,10 @@ Function: runIPDSRestartByFarm
 
 Parameters:
 	Farmname - Farm name
-				
+
 Returns:
 	none - .
-	
+
 =cut
 
 sub runIPDSRestartByFarm
@@ -333,9 +329,11 @@ sub runIPDSRestartByFarm
 
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );
-	require Zevenet::IPDS::Blacklist::Actions if ( @{ $rules->{ blacklists } } );
-	require Zevenet::IPDS::DoS::Actions       if ( @{ $rules->{ dos } } );
-	require Zevenet::IPDS::RBL::Actions       if ( @{ $rules->{ rbl } } );
+
+	include 'Zevenet::IPDS::Blacklist::Actions' if ( @{ $rules->{ blacklists } } );
+	include 'Zevenet::IPDS::DoS::Actions'       if ( @{ $rules->{ dos } } );
+	include 'Zevenet::IPDS::RBL::Actions'       if ( @{ $rules->{ rbl } } );
+
 	my $name;
 
 	# start BL rules
@@ -370,10 +368,10 @@ Function: runIPDSDeleteByFarm
 
 Parameters:
 	Farmname - Farm name
-				
+
 Returns:
 	none - .
-	
+
 =cut
 
 sub runIPDSDeleteByFarm
@@ -382,9 +380,11 @@ sub runIPDSDeleteByFarm
 
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );
-	require Zevenet::IPDS::Blacklist::Runtime if ( @{ $rules->{ blacklists } } );
-	require Zevenet::IPDS::DoS::Runtime       if ( @{ $rules->{ dos } } );
-	require Zevenet::IPDS::RBL::Config        if ( @{ $rules->{ rbl } } );
+
+	include 'Zevenet::IPDS::Blacklist::Runtime' if ( @{ $rules->{ blacklists } } );
+	include 'Zevenet::IPDS::DoS::Runtime'       if ( @{ $rules->{ dos } } );
+	include 'Zevenet::IPDS::RBL::Config'        if ( @{ $rules->{ rbl } } );
+
 	my $name;
 
 	# start BL rules
@@ -430,9 +430,11 @@ sub runIPDSRenameByFarm
 
 	# get rules and perl modules
 	my $rules = &getIPDSfarmsRules( $farmname );
-	require Zevenet::IPDS::Blacklist::Config if ( @{ $rules->{ blacklists } } );
-	require Zevenet::IPDS::DoS::Config       if ( @{ $rules->{ dos } } );
-	require Zevenet::IPDS::RBL::Config       if ( @{ $rules->{ rbl } } );
+
+	include 'Zevenet::IPDS::Blacklist::Config' if ( @{ $rules->{ blacklists } } );
+	include 'Zevenet::IPDS::DoS::Config'       if ( @{ $rules->{ dos } } );
+	include 'Zevenet::IPDS::RBL::Config'       if ( @{ $rules->{ rbl } } );
+
 	my $name;
 
 	# start BL rules

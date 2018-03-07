@@ -25,7 +25,8 @@ use strict;
 # GET /ipds$
 sub get_ipds_rules_list
 {
-	require Zevenet::IPDS::Core;
+	include 'Zevenet::IPDS::Core';
+
 	my $desc = "List the available IPDS rules.";
 
 	return &httpResponse(

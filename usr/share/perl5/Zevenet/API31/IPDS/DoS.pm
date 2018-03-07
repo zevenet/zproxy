@@ -22,7 +22,7 @@
 
 use strict;
 
-use Zevenet::IPDS::DoS;
+include 'Zevenet::IPDS::DoS';
 
 # GET /ipds/dos/rules
 sub get_dos_rules
@@ -82,7 +82,7 @@ sub create_dos_rule
 {
 	my $json_obj = shift;
 
-	require Zevenet::IPDS::DoS::Config;
+	include 'Zevenet::IPDS::DoS::Config';
 
 	my $desc     = "Create the DoS rule '$json_obj->{ 'rule' }'";
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
@@ -156,8 +156,8 @@ sub set_dos_rule
 	my $json_obj = shift;
 	my $name     = shift;
 
-	require Zevenet::IPDS::DoS::Config;
-	require Zevenet::IPDS::DoS::Actions;
+	include 'Zevenet::IPDS::DoS::Config';
+	include 'Zevenet::IPDS::DoS::Actions';
 
 	my $desc = "Modify the DoS rule $name";
 	my @requiredParams;
@@ -219,7 +219,7 @@ sub set_dos_rule
 	&runDOSStartByRule( $name ) if ( $status eq "up" );
 	my $refRule = &getDOSZapiRule( $name );
 
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_dos', 'restart', $name );
 
 	my $body = { description => $desc, success => "true", params => $refRule };
@@ -231,7 +231,7 @@ sub del_dos_rule
 {
 	my $name = shift;
 
-	require Zevenet::IPDS::DoS::Config;
+	include 'Zevenet::IPDS::DoS::Config';
 
 	my $desc = "Delete the DoS rule $name";
 
@@ -268,9 +268,10 @@ sub del_dos_rule
 sub get_dos_farm
 {
 	my $farmName = shift;
+
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
+	my $desc     = "Get status DoS $farmName.";
 	my @output;
-	my $desc = "Get status DoS $farmName.";
 
 	if ( -e $confFile )
 	{
@@ -296,7 +297,7 @@ sub add_dos_to_farm
 	my $json_obj = shift;
 	my $farmName = shift;
 
-	require Zevenet::IPDS::DoS::Runtime;
+	include 'Zevenet::IPDS::DoS::Runtime';
 
 	my $name     = $json_obj->{ 'name' };
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
@@ -327,7 +328,8 @@ sub add_dos_to_farm
 
 	# A farm can not simultaneasly have a "limitsec" and "limitrst" rule
 	# or two dos rules with the same type
-	require Zevenet::IPDS::Core;
+	include 'Zevenet::IPDS::Core';
+
 	my $farm_rules = &getIPDSfarmsRules( $farmName );
 	foreach my $rule_dos ( @{ $farm_rules->{ 'dos' } } )
 	{
@@ -356,7 +358,7 @@ sub add_dos_to_farm
 
 	if ( &getFarmStatus( $farmName ) eq 'up' )
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'ipds_dos', 'start', $name, $farmName );
 	}
 
@@ -400,11 +402,12 @@ sub del_dos_from_farm
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	require Zevenet::IPDS::DoS::Runtime;
+	include 'Zevenet::IPDS::DoS::Runtime';
 	&setDOSUnsetRule( $name, $farmName );
 
 	# check output
 	my $output = &getDOSZapiRule( $name );
+
 	if ( grep ( /^$farmName$/, @{ $output->{ 'farms' } } ) )
 	{
 		my $msg = "Error, removing $name rule from $farmName.";
@@ -413,7 +416,7 @@ sub del_dos_from_farm
 
 	if ( &getFarmStatus( $farmName ) eq 'up' )
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'ipds_dos', 'stop', $name, $farmName );
 	}
 
@@ -429,7 +432,7 @@ sub actions_dos
 	my $json_obj = shift;
 	my $rule     = shift;
 
-	require Zevenet::IPDS::DoS::Actions;
+	include 'Zevenet::IPDS::DoS::Actions';
 
 	my $desc = "Apply a action to the DoS rule $rule";
 	my $msg  = "Error, applying the action to the DoS rule.";
@@ -450,6 +453,7 @@ sub actions_dos
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
+
 		&setDOSParam( $rule, 'status', 'up' );
 
 		my $error = &runDOSStartByRule( $rule );
@@ -457,7 +461,8 @@ sub actions_dos
 	}
 	elsif ( $json_obj->{ action } eq 'stop' )
 	{
-		require Zevenet::IPDS::Blacklist::Config;
+		include 'Zevenet::IPDS::Blacklist::Config';
+
 		&setDOSParam( $rule, 'status', 'down' );
 		my $error = &runDOSStopByRule( $rule );
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
@@ -474,7 +479,7 @@ sub actions_dos
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_dos', $json_obj->{ action }, $rule );
 
 	my $body = {
