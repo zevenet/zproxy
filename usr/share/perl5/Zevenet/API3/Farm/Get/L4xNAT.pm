@@ -111,7 +111,7 @@ sub farms_name_l4 # ( $farmname )
 			max_conns => $l_serv[7],
 		  };
 	}
-	require Zevenet::IPDS;
+	include 'Zevenet::IPDS';
 	my $ipds = &getIPDSfarmsRules_zapiv3( $farmname );
 
 	my $body = {

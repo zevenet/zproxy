@@ -222,7 +222,7 @@ sub set_dos_rule
 				{
 					my $refRule = &getDOSZapiRule( $name );
 
-					require Zevenet::Cluster;
+					include 'Zevenet::Cluster';
 					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
 
 					&httpResponse(
@@ -373,7 +373,7 @@ sub add_dos_to_farm
 
 				if ( &getFarmStatus( $farmName ) eq 'up' )
 				{
-					require Zevenet::Cluster;
+					include 'Zevenet::Cluster';
 					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
 				}
 
@@ -450,7 +450,7 @@ sub del_dos_from_farm
 
 				if ( &getFarmStatus( $farmName ) eq 'up' )
 				{
-					require Zevenet::Cluster;
+					include 'Zevenet::Cluster';
 					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
 				}
 

@@ -466,7 +466,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			}
 
 			&runIPDSStartByFarm($farmname);
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 		}
 

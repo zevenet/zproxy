@@ -26,7 +26,7 @@ use strict;
 # GET /system/ssh
 sub get_ssh
 {
-	require Zevenet::System::SSH;
+	include 'Zevenet::System::SSH';
 
 	my $description = "Get ssh";
 	my $ssh         = &getSsh();
@@ -78,7 +78,7 @@ sub set_ssh
 
 			if ( !$errormsg )
 			{
-				require Zevenet::System::SSH;
+				include 'Zevenet::System::SSH';
 				$errormsg = &setSsh( $json_obj );
 
 				if ( !$errormsg )

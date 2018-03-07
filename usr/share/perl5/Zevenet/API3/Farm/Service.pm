@@ -509,7 +509,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		if ( scalar grep ( /^cookie/, keys $json_obj ) )
 		{
 			require Zevenet::API31::HTTP;
-			require Zevenet::Farm::HTTP::Service::Ext;
+			include 'Zevenet::Farm::HTTP::Service::Ext';
 			&modify_service_cookie_intertion( $farmname, $service, $json_obj );
 		}
 
@@ -642,7 +642,7 @@ sub move_services
 	my ( $json_obj, $farmname, $service ) = @_;
 
 	require Zevenet::Farm::HTTP::Service;
-	require Zevenet::Farm::HTTP::Service::Ext;
+	include 'Zevenet::Farm::HTTP::Service::Ext';
 
 	my @services = &getHTTPFarmServices( $farmname );
 	my $services_num = scalar @services;
@@ -755,7 +755,7 @@ sub move_services
 							if ( &getFarmStatus( $farmname ) eq 'up' )
 							{
 								&runGSLBFarmReload( $farmname );
-								require Zevenet::Cluster;
+								include 'Zevenet::Cluster';
 								&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 							}
 

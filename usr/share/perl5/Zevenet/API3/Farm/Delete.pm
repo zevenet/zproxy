@@ -49,7 +49,7 @@ sub delete_farm # ( $farmname )
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
 		&runFarmStop( $farmname, "true" );
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'farm', 'stop', $farmname );
 	}
 
@@ -60,7 +60,7 @@ sub delete_farm # ( $farmname )
 		&zenlog( "ZAPI success, the farm $farmname has been deleted." );
 
 		# Success
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'farm', 'delete', $farmname );
 
 		my $message = "The Farm $farmname has been deleted.";

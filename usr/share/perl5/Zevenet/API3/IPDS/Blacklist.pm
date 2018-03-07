@@ -420,7 +420,7 @@ sub set_blacklists_list
 						
 						my $body = { description => $description, params => $listHash };
 
-						require Zevenet::Cluster;
+						include 'Zevenet::Cluster';
 						&runZClusterRemoteManager( 'ipds', 'restart_bl' );
 
 						&httpResponse({ code => 200, body => $body } );
@@ -543,7 +543,7 @@ sub update_remote_blacklists
 						&setBLRefreshList( $listName );
 					}
 
-					require Zevenet::Cluster;
+					include 'Zevenet::Cluster';
 					&runZClusterRemoteManager( 'ipds', 'restart_bl' );
 
 					&httpResponse(
@@ -673,7 +673,7 @@ sub add_blacklists_source
 
 					$errormsg = "Added $json_obj->{'source'} successful.";
 
-					require Zevenet::Cluster;
+					include 'Zevenet::Cluster';
 					&runZClusterRemoteManager( 'ipds', 'restart_bl' );
 
 					my $body = {
@@ -760,7 +760,7 @@ sub set_blacklists_source
 							 params      => { "source" => $json_obj->{'source'}, 'id' => $id } 
 				};
 
-				require Zevenet::Cluster;
+				include 'Zevenet::Cluster';
 				&runZClusterRemoteManager( 'ipds', 'restart_bl' );
 
 				&httpResponse( { code => 200, body => $body } );
@@ -821,7 +821,7 @@ sub del_blacklists_source
 						 message     => $errormsg,
 			};
 
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'ipds', 'restart_bl' );
 
 			&httpResponse( { code => 200, body => $body } );
@@ -892,7 +892,7 @@ sub add_blacklists_to_farm
 
 					if ( &getFarmStatus( $farmName ) eq 'up' )
 					{
-						require Zevenet::Cluster;
+						include 'Zevenet::Cluster';
 						&runZClusterRemoteManager( 'ipds', 'restart_bl' );
 					}
 
@@ -971,7 +971,7 @@ sub del_blacklists_from_farm
 
 			if ( &getFarmStatus( $farmName ) eq 'up' )
 			{
-				require Zevenet::Cluster;
+				include 'Zevenet::Cluster';
 				&runZClusterRemoteManager( 'ipds', 'restart_bl' );
 			}
 

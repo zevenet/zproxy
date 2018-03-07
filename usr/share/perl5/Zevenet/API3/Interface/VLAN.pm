@@ -328,7 +328,7 @@ sub get_vlan_list # ()
 	my $description = "List VLAN interfaces";
 
 	# get cluster interface
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	my $zcl_conf  = &getZClusterConfig();
 	my $cluster_if = $zcl_conf->{ _ }->{ interface };
 	

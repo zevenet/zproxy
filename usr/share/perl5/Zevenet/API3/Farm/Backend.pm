@@ -202,7 +202,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 						 message => $message,
 			};
 
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 
 			&httpResponse( { code => 201, body => $body } );
@@ -368,7 +368,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 				message => $message,
 			};
 
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 
 			&httpResponse( { code => 201, body => $body } );
@@ -1311,7 +1311,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 		}
 
@@ -1749,7 +1749,7 @@ sub delete_backend # ( $farmname, $id_server )
 			   "ZAPI success, the backend $id_server in farm $farmname has been deleted." );
 
 		# Success
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 
 		#~ my $message = "The backend with ID $id_server of the $farmname farm has been deleted.";

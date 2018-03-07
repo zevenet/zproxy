@@ -214,7 +214,7 @@ sub modify_datalink_farm    # ( $json_obj, $farmname )
 	{
 		&runFarmStop( $farmname, "true" );
 		&runFarmStart( $farmname, "true" );
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 	}
 

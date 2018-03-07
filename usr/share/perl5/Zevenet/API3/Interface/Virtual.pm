@@ -157,7 +157,7 @@ sub new_vini # ( $json_obj )
 	if ( !$@ )
 	{
 		# Success
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
 
 		my $body = {
@@ -222,7 +222,7 @@ sub delete_interface_virtual # ( $virtual )
 	if ( ! $@ )
 	{
 		# Success
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
 		&runZClusterRemoteManager( 'interface', 'delete', $if_ref->{ name } );
 
@@ -436,7 +436,7 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
 	}
 	elsif ( $json_obj->{action} eq "down" )
@@ -458,7 +458,7 @@ sub actions_interface_virtual # ( $json_obj, $virtual )
 			&httpResponse({ code => 400, body => $body });
 		}
 
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
 	}
 	else

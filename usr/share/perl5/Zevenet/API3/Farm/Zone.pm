@@ -95,7 +95,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 		# Success
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 
 			&runGSLBFarmReload( $farmname );
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
@@ -292,7 +292,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 		# Success
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 
 			&runGSLBFarmReload( $farmname );
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
@@ -786,7 +786,7 @@ sub delete_zone # ( $farmname, $zone )
 
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 
 			&runGSLBFarmReload( $farmname );
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
@@ -912,7 +912,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 
 		if ( &getFarmStatus( $farmname ) eq 'up' )
 		{
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 
 			&runGSLBFarmReload( $farmname );
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );

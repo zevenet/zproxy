@@ -226,7 +226,7 @@ sub modify_cluster
 			system( "scp $filecluster root\@$zcl_conf->{$rhost}->{ip}:$filecluster" );
 
 			# reconfigure local conntrackd
-			require Zevenet::Conntrackd;
+			include 'Zevenet::Conntrackd';
 			&setConntrackdConfig();
 
 			# reconfigure remote conntrackd

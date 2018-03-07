@@ -85,9 +85,9 @@ sub delete_interface_nic # ( $nic )
 # GET /interfaces Get params of the interfaces
 sub get_nic_list # ()
 {
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	require Zevenet::Net::Interface;
-	require Zevenet::Net::Bonding;
+	include 'Zevenet::Net::Bonding';
 
 	my @output_list;
 
@@ -148,7 +148,7 @@ sub get_nic_list # ()
 sub get_nic # ()
 {
 	require Zevenet::Net::Interface;
-	require Zevenet::Net::Bonding;
+	include 'Zevenet::Net::Bonding';
 
 	my $nic = shift;
 
@@ -325,7 +325,7 @@ sub modify_interface_nic # ( $json_obj, $nic )
 	require Zevenet::Net::Interface;
 	require Zevenet::Net::Core;
 	require Zevenet::Net::Route;
-	#~ require Zevenet::Net::Bonding;
+	#~ include 'Zevenet::Net::Bonding';
 
 	my $json_obj = shift;
 	my $nic = shift;

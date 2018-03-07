@@ -90,7 +90,7 @@ sub farm_actions # ( $json_obj, $farmname )
 			&zenlog(
 					  "ZAPI success, the action stop has been established in farm $farmname." );
 
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'stop', $farmname );
 		}
 	}
@@ -117,7 +117,7 @@ sub farm_actions # ( $json_obj, $farmname )
 			&zenlog(
 					 "ZAPI success, the action start has been established in farm $farmname." );
 
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'start', $farmname );
 		}
 
@@ -156,7 +156,7 @@ sub farm_actions # ( $json_obj, $farmname )
 			&zenlog(
 				   "ZAPI success, the action restart has been established in farm $farmname." );
 
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 		}
 		else
@@ -369,7 +369,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 	}
 
@@ -492,7 +492,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
-		require require Zevenet::Cluster;
+		require include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 	}
 
