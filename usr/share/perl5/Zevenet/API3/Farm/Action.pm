@@ -65,7 +65,7 @@ sub farm_actions # ( $json_obj, $farmname )
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	
+
 	# Functions
 	require Zevenet::Farm::Action;
 	if ( $action eq "stop" )
@@ -492,7 +492,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
-		require include 'Zevenet::Cluster';
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 	}
 

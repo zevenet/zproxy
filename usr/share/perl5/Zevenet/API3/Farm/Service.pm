@@ -506,7 +506,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		}
 
 		# Cookie insertion
-		if ( scalar grep ( /^cookie/, keys $json_obj ) )
+		if ( scalar grep ( /^cookie/, keys %{ $json_obj } ) )
 		{
 			require Zevenet::API31::HTTP;
 			include 'Zevenet::Farm::HTTP::Service::Ext';
