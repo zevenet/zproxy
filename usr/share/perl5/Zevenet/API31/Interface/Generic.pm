@@ -23,6 +23,9 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 # GET /interfaces Get params of the interfaces
 sub get_interfaces # ()
 {
@@ -34,12 +37,16 @@ sub get_interfaces # ()
 
 	# Configured interfaces list
 	my @interfaces = @{ &getSystemInterfaceList() };
-	
+
 	# get cluster interface
 	my $cluster_if;
-	if ( eval { require Zevenet::Cluster; } )
+
+	if ( $eload )
 	{
-		my $zcl_conf = &getZClusterConfig();
+		my $zcl_conf = &eload(
+			module => 'Zevenet::Cluster',
+			func   => 'getZClusterConfig',
+		);
 		$cluster_if = $zcl_conf->{ _ }->{ interface };
 	}
 
@@ -78,11 +85,15 @@ sub get_interfaces # ()
 
 		if ( $if_ref->{ type } eq 'nic' )
 		{
-			if ( eval { require Zevenet::Net::Bonding; } )
-			{
-				$if_conf->{ is_slave } =
-				  ( grep { $$if_ref{ name } eq $_ } &getAllBondsSlaves ) ? 'true' : 'false';
-			}
+			my @bond_slaves = ();
+
+			@bond_slaves = &eload(
+					module => 'Zevenet::Net::Bonding',
+					func   => 'getAllBondsSlaves',
+			) if ( $eload );
+
+			$if_conf->{ is_slave } =
+			  ( grep { $$if_ref{ name } eq $_ } @bond_slaves ) ? 'true' : 'false';
 
 			# include 'has_vlan'
 			for my $vlan_ref ( @vlans )
@@ -125,17 +136,17 @@ sub delete_interface # ( $if )
 		my @ifandipv = split ( '/', $if );
 		$if = $ifandipv[0];
 		$ip_v = $ifandipv[1];
-		
+
 		# If $ip_v is empty, establish IPv4 like default protocol
 		$ip_v = 4 if not $ip_v;
-		
+
 		if ( $ip_v != 4 && $ip_v != 6 )
 		{
 			my $msg = "The ip version value $ip_v must be 4 or 6";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
-	
+
 	# If ip_v is empty, default value is 4
 	if ( !$ip_v ) { $ip_v = 4; }
 
@@ -145,9 +156,9 @@ sub delete_interface # ( $if )
 		my $msg = "Interface name $if can't be empty";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-	
+
 	my $if_ref = &getInterfaceConfig( $if, $ip_v );
-	
+
 	if ( !$if_ref )
 	{
 		my $msg = "The stack IPv$ip_v in Network interface $if doesn't exist.";

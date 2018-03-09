@@ -23,6 +23,9 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 sub delete_interface_nic    # ( $nic )
 {
 	my $nic = shift;
@@ -78,17 +81,19 @@ sub get_nic_list    # ()
 {
 	require Zevenet::Net::Interface;
 
-	my $EE = eval{ require Zevenet::Net::Bonding; }? 1: undef;
-
 	my $desc  = "List NIC interfaces";
 	my @vlans = &getInterfaceTypeList( 'vlan' );
 	my @output_list;
 
 	# get cluster interface
 	my $cluster_if;
-	if ( eval { require Zevenet::Cluster; } )
+
+	if ( $eload )
 	{
-		my $zcl_conf = &getZClusterConfig();
+		my $zcl_conf = &eload(
+			module => 'Zevenet::Cluster',
+			func   => 'getZClusterConfig',
+		);
 		$cluster_if = $zcl_conf->{ _ }->{ interface };
 	}
 
@@ -113,7 +118,7 @@ sub get_nic_list    # ()
 						mac      => $if_ref->{ mac },
 		};
 
-		$if_conf->{ is_slave } = $if_ref->{ is_slave } if $EE;
+		$if_conf->{ is_slave } = $if_ref->{ is_slave } if $eload;
 		$if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
 
 		# include 'has_vlan'
@@ -145,8 +150,6 @@ sub get_nic    # ()
 
 	require Zevenet::Net::Interface;
 
-	my $EE = eval{ require Zevenet::Net::Bonding; }? 1: undef;
-
 	my $desc = "Show NIC interface";
 	my $interface;
 
@@ -173,7 +176,7 @@ sub get_nic    # ()
 					   mac      => $if_ref->{ mac },
 		};
 
-		$interface->{ is_slave } = $if_ref->{ is_slave } if $EE;
+		$interface->{ is_slave } = $if_ref->{ is_slave } if $eload;
 	}
 
 	unless ( $interface )

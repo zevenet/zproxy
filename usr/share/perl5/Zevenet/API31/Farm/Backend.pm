@@ -24,6 +24,9 @@
 use strict;
 use Zevenet::Farm::Core;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 # POST
 
 sub new_farm_backend    # ( $json_obj, $farmname )
@@ -159,10 +162,11 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 					 status  => &getFarmVipStatus( $farmname ),
 		};
 
-		if ( eval { require Zevenet::Cluster; } )
-		{
-			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
-		}
+		&eload(
+			module => 'Zevenet::Cluster',
+			func   => 'runZClusterRemoteManager',
+			args   => ['farm', 'restart', $farmname],
+		) if ( $eload );
 
 		&httpResponse( { code => 201, body => $body } );
 	}
@@ -285,10 +289,11 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 			status  => &getFarmVipStatus( $farmname ),
 		};
 
-		if ( eval { require Zevenet::Cluster; } )
-		{
-			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
-		}
+		&eload(
+			module => 'Zevenet::Cluster',
+			func   => 'runZClusterRemoteManager',
+			args   => ['farm', 'restart', $farmname],
+		) if ( $eload );
 
 		&httpResponse( { code => 201, body => $body } );
 	}
@@ -848,13 +853,11 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 				 status      => &getFarmVipStatus( $farmname ),
 	};
 
-	if ( eval { require Zevenet::Cluster; } )
-	{
-		if ( &getFarmStatus( $farmname ) eq 'up' )
-		{
-			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
-		}
-	}
+	&eload(
+		module => 'Zevenet::Cluster',
+		func   => 'runZClusterRemoteManager',
+		args   => ['farm', 'restart', $farmname],
+	) if ( $eload && &getFarmStatus( $farmname ) eq 'up' );
 
 	&httpResponse( { code => 200, body => $body } );
 }
@@ -1081,10 +1084,11 @@ sub delete_backend    # ( $farmname, $id_server )
 	&zenlog(
 		   "ZAPI success, the backend $id_server in farm $farmname has been deleted." );
 
-	if ( eval { require Zevenet::Cluster; } )
-	{
-		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
-	}
+	&eload(
+		module => 'Zevenet::Cluster',
+		func   => 'runZClusterRemoteManager',
+		args   => ['farm', 'restart', $farmname],
+	) if ( $eload );
 
 	my $message = "Backend removed";
 	my $body = {
