@@ -22,7 +22,7 @@
 
 use strict;
 
-use Zevenet::IPDS::Core;
+include 'Zevenet::IPDS::Core';
 
 ########### GET L4XNAT
 # GET /farms/<farmname> Request info of a l4xnat Farm

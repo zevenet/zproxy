@@ -22,7 +22,7 @@
 
 use strict;
 
-use Zevenet::IPDS::Core;
+include 'Zevenet::IPDS::Core';
 
 # GET /farms/<farmname> Request info of a http|https Farm
 sub farms_name_http # ( $farmname )

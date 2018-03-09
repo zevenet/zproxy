@@ -23,7 +23,7 @@
 
 use strict;
 
-use Zevenet::Notify;
+include 'Zevenet::Notify';
 
 # GET /system/notifications/methods/METHOD
 sub get_notif_methods

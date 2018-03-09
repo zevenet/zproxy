@@ -22,7 +22,7 @@
 
 use strict;
 
-use Zevenet::IPDS::DoS;
+include 'Zevenet::IPDS::DoS';
 
 # GET /ipds/dos/rules
 sub get_dos_rules

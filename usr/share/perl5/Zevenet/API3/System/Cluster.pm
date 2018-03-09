@@ -22,7 +22,7 @@
 
 use strict;
 
-use Zevenet::Cluster;
+include 'Zevenet::Cluster';
 
 # disable smartmatch experimental warnings for perl >= 5.18
 no if $] >= 5.018, warnings => "experimental::smartmatch";
