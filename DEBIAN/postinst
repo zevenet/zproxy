@@ -70,6 +70,9 @@ fi
 # Set crontab
 if [ ! -f /etc/cron.d/zevenet ]; then
 	cp /usr/local/zevenet/share/zevenet.cron /etc/cron.d/zevenet
+else
+	sed -i 's!zevenet/app/zenrrd/zenrrd.pl!zevenet/bin/zenrrd!' /etc/cron.d/zevenet
+	sed -i 's!zevenet/app/zenntp/zenntp.pl!zevenet/bin/zenntp!' /etc/cron.d/zevenet
 fi
 
 #Disable conntrackd stats
