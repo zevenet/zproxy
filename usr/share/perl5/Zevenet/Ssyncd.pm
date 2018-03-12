@@ -44,8 +44,9 @@ sub setSsyncdFarmUp
 
 	if ( $type eq 'l4xnat' )
 	{
+		require Zevenet::Farm::Base;
 		my $farms_started = &getNumberOfFarmTypeRunning( 'l4xnat' );
-		
+
 		if ( $farms_started )
 		{
 			return system( "$ssyncdctl_bin start recent >/dev/null" );
@@ -72,8 +73,9 @@ sub setSsyncdFarmDown
 
 	if ( $type eq 'l4xnat' )
 	{
+		require Zevenet::Farm::Base;
 		my $farms_started = &getNumberOfFarmTypeRunning( 'l4xnat' );
-		
+
 		if ( $farms_started <= 1 )
 		{
 			return system( "$ssyncdctl_bin stop recent >/dev/null" );
@@ -147,7 +149,7 @@ sub setSsyncdBackup
 	# ./ssyncd -d -B -p 9999 -a 172.16.1.1 --> start backup node and connect to master 172.16.1.1:9999
 
 	my $error = system( "$ssyncd_bin -d -B -p $ssyncd_port -a $remote_node_ip" );
-	
+
 	return $error;
 }
 
@@ -180,7 +182,7 @@ sub setSsyncdMaster
 		}
 
 		# Before changing to master mode:
-		# ./ssyncdctl write http   --> Write http sessions data to pound 
+		# ./ssyncdctl write http   --> Write http sessions data to pound
 		# ./ssyncdctl write recent --> Write recent data to recent module
 		$ssync_cmd = "$ssyncdctl_bin write http";
 		my $error = system( "$ssync_cmd" );

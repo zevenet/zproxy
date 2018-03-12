@@ -23,6 +23,9 @@
 
 use strict;
 
+use Zevenet::Farm;
+use Zevenet::Farm::GSLB::Config;
+
 my $configdir = &getGlobalConfiguration('configdir');
 
 =begin nd
@@ -117,6 +120,7 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 	my ( $fname, $writeconf ) = @_;
 
 	include 'Zevenet::Farm::GSLB::Validate';
+	include 'Zevenet::Farm::GSLB::Config';
 
 	my $status = &getFarmStatus( $fname );
 	if ( $status eq "down" )
@@ -167,10 +171,10 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 
 	# $exec returns 0 even when gslb stop fails, checked, so force TERM
 	my $pid_gslb = &getGSLBFarmPid( $fname );
-	&zenlog( "forcing stop to gslb with PID $pid_gslb" );
 
 	if ( $pid_gslb ne "-" )
 	{
+		&zenlog( "forcing to stop gslb farm $fname with PID $pid_gslb" );
 		kill 'TERM' => $pid_gslb;
 	}
 	unlink ( $pidfile );
@@ -242,6 +246,7 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 	my $type      = &getFarmType( $fname );
 	my $ffile     = &getFarmFile( $fname );
 	my $output    = -1;
+	my $file;
 
 	unless ( length $newfname )
 	{
@@ -256,13 +261,13 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 	$output = 0;
 
 	# substitute paths in config file
-	open ( my $file, '<', "$configdir\/$newffile\/etc\/config" );
+	open ( $file, '<', "$configdir\/$newffile\/etc\/config" );
 	my @lines = <$file>;
 	close $file;
 
 	s/$configdir\/$ffile/$configdir\/$newffile/ for @lines;
 
-	open ( my $file, '>', "$configdir\/$newffile\/etc\/config" );
+	open ( $file, '>', "$configdir\/$newffile\/etc\/config" );
 	print { $file } @lines;
 	close $file;
 

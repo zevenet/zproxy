@@ -135,14 +135,16 @@ sub getGSLBFarmBackendsStats
 			$id =~ s/^secondary$/2/;
 			$status = lc $status if defined $status;
 
-			push @$gslb_stats->{ 'backend' },
-			  {
-				id      => $id + 0,
-				ip      => $addr,
-				service => $srv,
-				port    => $port + 0,
-				status  => $status
-			  };
+			push (
+				@{ $gslb_stats->{ 'backend' } },
+				{
+				  id      => $id + 0,
+				  ip      => $addr,
+				  service => $srv,
+				  port    => $port + 0,
+				  status  => $status,
+				}
+			);
 		}
 	}
 

@@ -524,7 +524,7 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	if ( $eload )
 	{
 		&eload(
-				module => 'Zevenet::IPDS',
+				module => 'Zevenet::IPDS::Base',
 				func   => 'runIPDSRenameByFarm',
 				args   => [$farm_name, $new_farm_name],
 		);

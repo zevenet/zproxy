@@ -24,6 +24,7 @@
 use strict;
 
 use Zevenet::Net;
+use Zevenet::Farm;
 
 include 'Zevenet::Farm::GSLB::Config';
 include 'Zevenet::Farm::GSLB::Action';

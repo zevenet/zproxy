@@ -16,10 +16,10 @@ Function: setRBACGroupLockConfigFile
 
 Parameters:
 	None - .
-					
+
 Returns:
 	Integer - 0 on failure or other value on success
-	
+
 =cut
 
 sub setRBACGroupLockConfigFile
@@ -33,14 +33,14 @@ sub setRBACGroupLockConfigFile
 =begin nd
 Function: setRBACGroupUnlockConfigFile
 
-	Unlock the group configuration file 
+	Unlock the group configuration file
 
 Parameters:
 	Integer - Lock file identifier
-					
+
 Returns:
 	None - .
-	
+
 =cut
 
 sub setRBACGroupUnlockConfigFile
@@ -65,7 +65,7 @@ Parameters:
 	value - new value for the parameter
 	action - This is a optional parameter. The possible values are: "add" to add
 	a item to a list, or "del" to delete a item from a list
-					
+
 Returns:
 	None - .
 
@@ -118,10 +118,10 @@ Function: createRBACGroup
 
 Parameters:
 	Group - Group name
-					
+
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub createRBACGroup
@@ -157,7 +157,7 @@ Parameters:
 
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub delRBACGroup
@@ -192,7 +192,7 @@ Parameters:
 
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub addRBACGroupResource
@@ -230,7 +230,7 @@ Parameters:
 
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub delRBACGroupResource
@@ -267,23 +267,26 @@ Parameters:
 
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub addRBACUserResource
 {
 	my $resource = shift;
 	my $type = shift;
+
+	require Zevenet::User;
+
 	my $error;
 	my $user = &getUser();
-	
+
 	if ( $user ne 'root' )
 	{
 		my $group = &getRBACUserGroup( $user );
 		return 1 if ( !$group );
 		$error = &addRBACGroupResource( $group, $resource, $type );
 	}
-	
+
 	return $error;
 }
 
@@ -299,13 +302,13 @@ Parameters:
 
 Returns:
 	None - .
-	
+
 =cut
 sub delRBACResource
 {
 	my $resource = shift;
 	my $type = shift;
-	
+
 	foreach my $group ( &getRBACGroupList() )
 	{
 		if ( grep ( /^$resource$/, @{ &getRBACGroupParam( $group, $type ) } ) )
@@ -327,13 +330,13 @@ Parameters:
 
 Returns:
 	None - .
-	
+
 =cut
 sub setRBACRenameByFarm
 {
 	my $old_farmname = shift;
 	my $new_farmname = shift;
-	
+
 	foreach my $group ( &getRBACGroupList() )
 	{
 		if ( grep ( /^$old_farmname$/, @{ &getRBACGroupParam( $group, 'farms' ) } ) )
@@ -342,7 +345,7 @@ sub setRBACRenameByFarm
 			&addRBACGroupResource( $group, $new_farmname, 'farms' );
 		}
 	}
-	
+
 }
 
 1;
