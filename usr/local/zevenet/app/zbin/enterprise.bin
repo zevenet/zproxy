@@ -48,21 +48,21 @@ if ( $basename ne 'enterprise.bin' )
 
 	my $mod = "Zevenet::Cmd::$basename";
 
-	if ( $DEBUG )
-	{
-		my $msg = '';
-
-		$msg = "enterprise.bin called: $0";
-		#~ &zenlog( $msg );
-		say( $msg );
-
-		$msg = "enterprise.bin basename: $basename";
-		say( $msg );
-
-		$msg = "Module: $mod";
-		#~ &zenlog( $msg );
-		say( $msg );
-	}
+#	if ( $DEBUG )
+#	{
+#		my $msg = '';
+#
+#		$msg = "enterprise.bin called: $0";
+#		#~ &zenlog( $msg );
+#		#~ say( $msg );
+#
+#		$msg = "enterprise.bin basename: $basename";
+#		#~ say( $msg );
+#
+#		$msg = "Module: $mod";
+#		#~ &zenlog( $msg );
+#		#~ say( $msg );
+#	}
 
 	&include( $mod );
 	exit;
@@ -290,7 +290,8 @@ sub include
 {
 	my ( $mod_space ) = @_;
 
-	my $debug = &debug();
+	#~ my $debug = &debug();
+	my $debug = 0;
 
 	&zenlog("< include > mod_space = $mod_space") if $debug;
 
