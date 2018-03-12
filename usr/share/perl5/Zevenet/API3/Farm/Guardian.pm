@@ -41,9 +41,9 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 
 	my @allowParams = ( "fgtimecheck", "fgscript", "fglog", "fgenabled" );
 
-	require Zevenet::Farm::GSLB::Service;
+	include 'Zevenet::Farm::GSLB::Service';
 	require Zevenet::Farm::HTTP::Service;
-	
+
 	# validate FARM NAME
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
@@ -82,7 +82,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 
 	my @fgKeys = ( "fg_time", "fg_log", "fg_enabled", "fg_type" );
 
-	# check Params 
+	# check Params
 	if ( exists ( $json_obj->{ fgtimecheck } ) && ! &getValidFormat( 'fg_time', $json_obj->{ fgtimecheck } ) )
 	{
 		$errormsg = "Invalid format, please insert a valid fgtimecheck.";
@@ -115,9 +115,9 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 			else
 			{
 				# Change check script
-				if ( exists $json_obj->{ fgscript } ) 
+				if ( exists $json_obj->{ fgscript } )
 				{
-					require Zevenet::Farm::GSLB::FarmGuardian;
+					include 'Zevenet::Farm::GSLB::FarmGuardian';
 
 					if ( &setGSLBFarmGuardianParams( $farmname, $service, 'cmd', $json_obj->{ fgscript } ) == -1 )
 					{
@@ -126,7 +126,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 				}
 
 				# local variables
-				require Zevenet::Farm::GSLB::FarmGuardian;
+				include 'Zevenet::Farm::GSLB::FarmGuardian';
 
 				my $fgStatus = &getGSLBFarmFGStatus( $farmname, $service );
 				my ( $fgTime, $fgCmd ) = &getGSLBFarmGuardianParams( $farmname, $service );
@@ -157,7 +157,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 							$errormsg = "Error, it's necesary add a check script to enable farm guardian";
 						}
 					}
-				
+
 					# disable farmguardian
 					elsif ( $json_obj->{ fgenabled } eq 'false' && $fgStatus eq 'true' )
 					{
@@ -176,7 +176,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 			require Zevenet::FarmGuardian;
 
 			my @fgconfig;
-	
+
 			if ( $type eq "l4xnat" )
 			{
 				@fgconfig = &getFarmGuardianConf( $farmname, "" );

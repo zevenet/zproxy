@@ -626,7 +626,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	}
 	elsif ( $type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Service;
+		include 'Zevenet::Farm::GSLB::Service';
 		# validate SERVICE
 		{
 			my @services_list = &getGSLBFarmServices( $farmname );
@@ -699,7 +699,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		}
 
 		#Adding the backend
-		require Zevenet::Farm::GSLB::Backend;
+		include 'Zevenet::Farm::GSLB::Backend';
+
 		my $status =
 		  &setGSLBFarmNewBackend( $farmname, $service, $lb, $id, $json_obj->{ ip } );
 
@@ -960,7 +961,7 @@ sub service_backends
 	}
 	elsif ( $type eq 'gslb' )
 	{
-		require Zevenet::Farm::GSLB::Service;
+		include 'Zevenet::Farm::GSLB::Service';
 
 		my @services_list = &getGSLBFarmServices( $farmname );
 
@@ -1518,7 +1519,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 	{
 		# validate SERVICE
 		{
-			require Zevenet::Farm::GSLB::Service;
+			include 'Zevenet::Farm::GSLB::Service';
 
 			my @services = &getGSLBFarmServices($farmname);
 			my $found_service = grep { $service eq $_ } @services;
@@ -1608,7 +1609,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 		if ( !$error )
 		{
-			require Zevenet::Farm::GSLB::Backend;
+			include 'Zevenet::Farm::GSLB::Backend';
 
 			my $status =
 			  &setGSLBFarmNewBackend( $farmname, $service, $lb, $backend_id, $json_obj->{ ip } );
@@ -1824,7 +1825,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 
 		if ($type eq "gslb")
 		{
-			require Zevenet::Farm::GSLB::Service;
+			include 'Zevenet::Farm::GSLB::Service';
 			@services = &getGSLBFarmServices($farmname);
 		}
 		else
@@ -1888,7 +1889,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 						error       => "true",
 						message     => $errormsg
 			};
-	
+
 			&httpResponse({ code => 404, body => $body });
 		}
 	}
@@ -1902,7 +1903,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 	}
 	if ( $type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Backend;
+		include 'Zevenet::Farm::GSLB::Backend';
 		$status = &remFarmServiceBackend( $id_server, $farmname, $service );
 	}
 

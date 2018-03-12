@@ -150,7 +150,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 
 	if ( $type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Service;
+		include 'Zevenet::Farm::GSLB::Service';
 
 		if ( $json_obj->{ id } =~ /^$/ )
 		{
@@ -565,7 +565,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			&setFarmVS( $farmname, $service, "dpc", $json_obj->{ deftcpport } );
 
 			# Update farmguardian
-			require Zevenet::Farm::GSLB::FarmGuardian;
+			include 'Zevenet::Farm::GSLB::FarmGuardian';
 			my ( $fgTime, $fgScript ) = &getGSLBFarmGuardianParams( $farmname, $service );
 
 			# Changing farm guardian port check
@@ -576,7 +576,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 			if ( $? eq 0 )
 			{
-				require Zevenet::Farm::GSLB::Config;
+				include 'Zevenet::Farm::GSLB::Config';
 				&runGSLBFarmReload( $farmname );
 			}
 			else
@@ -801,7 +801,7 @@ sub delete_service # ( $farmname, $service )
 	my @services;
 	if ($type eq "gslb")
 	{
-		require Zevenet::Farm::GSLB::Service;
+		include 'Zevenet::Farm::GSLB::Service';
 		@services = &getGSLBFarmServices($farmname);
 	}
 	else

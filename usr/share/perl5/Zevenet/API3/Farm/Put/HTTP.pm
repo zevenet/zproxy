@@ -28,13 +28,14 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
+	include 'Zevenet::IPDS::Base';
+	include 'Zevenet::IPDS::Blacklist';
+	include 'Zevenet::IPDS::DoS';
+
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;
-	require Zevenet::IPDS::Base;
-	require Zevenet::IPDS::Blacklist;
-	require Zevenet::IPDS::DoS;
 	my $ipds = &getIPDSfarmsRules_zapiv3( $farmname );
-	
+
 	# Flags
 	my $reload_flag  = "false";
 	my $restart_flag = "false";
@@ -43,7 +44,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 
 	my $status;
 	my $zapierror;
-	
+
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) == -1 )
 	{
@@ -240,7 +241,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			$zapierror = "Error, trying to modify a http farm $farmname, invalid resurrectime.";
-			&zenlog( "Zapi $zapierror" );	  
+			&zenlog( "Zapi $zapierror" );
 		}
 	}
 
@@ -362,7 +363,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			{
 				$error = "true";
 				$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the httpverb.";
-				&zenlog( "Zapi $zapierror" );			
+				&zenlog( "Zapi $zapierror" );
 			}
 		}
 		else
@@ -385,7 +386,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the error414.";
-			&zenlog( "Zapi $zapierror" );		
+			&zenlog( "Zapi $zapierror" );
 		}
 	}
 
@@ -719,7 +720,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	{
 		&zenlog(
 				  "ZAPI success, some parameters have been changed in farm $farmname." );
-	
+
 		# set numeric values to numeric type
 		for my $key ( keys %{ $json_obj } )
 		{

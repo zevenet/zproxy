@@ -284,8 +284,8 @@ sub farm_stats # ( $farmname )
 
 	if ( $type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Stats;
-		require Zevenet::Farm::GSLB::Service;
+		include 'Zevenet::Farm::GSLB::Stats';
+		include 'Zevenet::Farm::GSLB::Service';
 
 		my $out_rss;
 		my $gslb_stats = &getGSLBGdnsdStats( $farmname );

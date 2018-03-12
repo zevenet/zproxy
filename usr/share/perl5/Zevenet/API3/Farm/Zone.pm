@@ -83,7 +83,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	require Zevenet::Farm::GSLB::Zone;
+	include 'Zevenet::Farm::GSLB::Zone';
 
 	my $result = &setGSLBFarmNewZone( $farmname, $json_obj->{ id } );
 	if ( $result eq "0" )
@@ -165,7 +165,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	}
 
 	# validate ZONE
-	require Zevenet::Farm::GSLB::Zone;
+	include 'Zevenet::Farm::GSLB::Zone';
 
 	unless ( grep { $_ eq $zone } &getGSLBFarmZones( $farmname ) )
 	{
@@ -239,13 +239,13 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	}
 
 	# validate RESOURCE DATA
-	require Zevenet::Farm::GSLB::Service;
+	include 'Zevenet::Farm::GSLB::Service';
 
-	unless ( ! grep ( /$json_obj->{ rdata }/, &getGSLBFarmServices ( $farmname ) && $json_obj->{ type } eq 'DYNA' ) && 
+	unless ( ! grep ( /$json_obj->{ rdata }/, &getGSLBFarmServices ( $farmname ) && $json_obj->{ type } eq 'DYNA' ) &&
 						&getValidFormat( "resource_data_$json_obj->{ type }", $json_obj->{ rdata } ) )
 	{
 		my $errormsg = "If you choose $json_obj->{ type } type, ";
-		
+
 		$errormsg .= "RDATA must be a valid IPv4 address," 							if ( $json_obj->{ type } eq "A" );
 		$errormsg .= "RDATA must be a valid IPv6 address,"							if ( $json_obj->{ type } eq "AAAA" );
 		$errormsg .= "RDATA format is not valid,"									if ( $json_obj->{ type } eq "NS" );
@@ -255,7 +255,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 		$errormsg .= "RDATA must be a valid format ( 10 60 5060 host.example.com )," if ( $json_obj->{ type } eq 'SRV' );
 		$errormsg .= "RDATA must be a valid format ( foo.bar.com ),"				if ( $json_obj->{ type } eq 'PTR' );
 		# TXT and NAPTR input let all characters
-		
+
 		$errormsg .= " $json_obj->{ rname } not added to zone $zone";
 		&zenlog( $errormsg );
 
@@ -313,7 +313,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 					 message => $message,
 		};
 
-		require Zevenet::Farm::GSLB::Validate;
+		include 'Zevenet::Farm::GSLB::Validate';
 		my $checkConf = &getGSLBCheckConf  ( $farmname );
 
 		if ( $checkConf =~ /^(.+?)\s/ )
@@ -383,7 +383,7 @@ sub gslb_zone_resources # ( $farmname, $zone )
 	}
 
 	# validate ZONE
-	require Zevenet::Farm::GSLB::Zone;
+	include 'Zevenet::Farm::GSLB::Zone';
 
 	if ( ! scalar grep { $_ eq $zone } &getGSLBFarmZones( $farmname ) )
 	{
@@ -457,7 +457,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	}
 
 	# validate ZONE
-	require Zevenet::Farm::GSLB::Zone;
+	include 'Zevenet::Farm::GSLB::Zone';
 	unless ( grep { $_ eq $zone } &getGSLBFarmZones( $farmname ) )
 	{
 		my $errormsg = "Could not find the requested zone.";
@@ -556,23 +556,23 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	{
 		$auxData = $json_obj->{ rdata };
 	}
-	
+
 	# validate RESOURCE DATA
-	unless ( ! grep ( /$auxData/, &getGSLBFarmServices ( $farmname ) && $auxType eq 'DYNA' ) && 
+	unless ( ! grep ( /$auxData/, &getGSLBFarmServices ( $farmname ) && $auxType eq 'DYNA' ) &&
 						&getValidFormat( "resource_data_$auxType", $auxData ) )
 	{
 		my $errormsg = "If you choose $auxType type, ";
-		
-		$errormsg .= "RDATA must be a valid IPv4 address," 		if ($auxType eq "A" ); 
-		$errormsg .= "RDATA must be a valid IPv6 address,"		if ($auxType eq "AAAA" ); 
-		$errormsg .= "RDATA format is not valid,"						if ($auxType eq "NS" ); 
+
+		$errormsg .= "RDATA must be a valid IPv4 address," 		if ($auxType eq "A" );
+		$errormsg .= "RDATA must be a valid IPv6 address,"		if ($auxType eq "AAAA" );
+		$errormsg .= "RDATA format is not valid,"						if ($auxType eq "NS" );
 		$errormsg .= "RDATA must be a valid format ( foo.bar.com ),"		if ($auxType eq "CNAME" );
-		$errormsg .= "RDATA must be a valid service,"									if ( $auxType eq 'DYNA' ); 
-		$errormsg .= "RDATA must be a valid format ( mail.example.com ),"		if ( $auxType eq 'MX' ); 
-		$errormsg .= "RDATA must be a valid format ( 10 60 5060 host.example.com ),"		if ( $auxType eq 'SRV' ); 
-		$errormsg .= "RDATA must be a valid format ( foo.bar.com ),"			if ( $auxType eq 'PTR' ); 
+		$errormsg .= "RDATA must be a valid service,"									if ( $auxType eq 'DYNA' );
+		$errormsg .= "RDATA must be a valid format ( mail.example.com ),"		if ( $auxType eq 'MX' );
+		$errormsg .= "RDATA must be a valid format ( 10 60 5060 host.example.com ),"		if ( $auxType eq 'SRV' );
+		$errormsg .= "RDATA must be a valid format ( foo.bar.com ),"			if ( $auxType eq 'PTR' );
 		# TXT and NAPTR input let all characters
-		
+
 		&zenlog( $errormsg );
 
 		my $body = {
@@ -588,7 +588,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		$rsc->{ data } = $auxData;
 		$rsc->{ type } =  $auxType;
 	}
-	
+
 	if ( !$error )
 	{
 		my $status = &setGSLBFarmZoneResource(
@@ -637,12 +637,12 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 					 params       => $json_obj,
 					 message      => $message,
 		};
-		
-		require Zevenet::Farm::GSLB::Validate;
+
+		include 'Zevenet::Farm::GSLB::Validate';
 
 		my $checkConf = &getGSLBCheckConf  ( $farmname );
 		if( $checkConf )
-		{	
+		{
 			$body->{ warning }  =  $checkConf;
 		}
 
@@ -705,7 +705,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 		&setFarmVS( $farmname, $zone, "ns", $json_obj->{ defnamesv } );
 		if ( $? eq 0 )
 		{
-			require Zevenet::Farm::GSLB::Config;
+			include 'Zevenet::Farm::GSLB::Config';
 			&runGSLBFarmReload( $farmname );
 		}
 		else
@@ -773,7 +773,7 @@ sub delete_zone # ( $farmname, $zone )
 		&httpResponse({ code => 404, body => $body });
 	}
 
-	require Zevenet::Farm::GSLB::Zone;
+	include 'Zevenet::Farm::GSLB::Zone';
 
 	&setGSLBFarmDeleteZone( $farmname, $zone );
 
@@ -856,7 +856,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 	}
 
 	# validate ZONE
-	require Zevenet::Farm::GSLB::Zone;
+	include 'Zevenet::Farm::GSLB::Zone';
 
 	if ( ! scalar grep { $_ eq $zone } &getGSLBFarmZones( $farmname ) )
 	{

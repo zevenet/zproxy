@@ -49,7 +49,7 @@ sub farms_name_gslb # ( $farmname )
 	# Services
 	#
 
-	require Zevenet::Farm::GSLB::Service;
+	include 'Zevenet::Farm::GSLB::Service';
 	my @services = &getGSLBFarmServices( $farmname );
 
 	foreach my $srv_it ( @services )
@@ -92,10 +92,10 @@ sub farms_name_gslb # ( $farmname )
 			  };
 		}
 
-		# farm guardian 
+		# farm guardian
 		my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $srv );
 		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $srv );
-		
+
 		push @out_s,
 		  {
 			id        => $srv,
@@ -111,7 +111,7 @@ sub farms_name_gslb # ( $farmname )
 	#
 	# Zones
 	#
-	require Zevenet::Farm::GSLB::Zone;
+	include 'Zevenet::Farm::GSLB::Zone';
 	my @zones   = &getGSLBFarmZones( $farmname );
 	my $first   = 0;
 	my $vserver = 0;

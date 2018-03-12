@@ -64,7 +64,7 @@ sub get_blacklists_list
 	my $description = "Get list $listName";
 	my $errormsg;
 
-	require Zevenet::IPDS::Blacklist;
+	include 'Zevenet::IPDS::Blacklist';
 
 	if ( &getBLExists( $listName ) )
 	{
@@ -99,9 +99,9 @@ sub add_blacklists_list
 	# $errormsg == 0, no error
 	if ( !$errormsg )
 	{
-		require Zevenet::IPDS::Blacklist;
+		include 'Zevenet::IPDS::Blacklist';
 
-		# A list already exists with this name 
+		# A list already exists with this name
 		if ( &getBLExists( $listName ) )
 		{
 			$errormsg = "A list already exists with name '$listName'.";
@@ -191,13 +191,13 @@ sub set_blacklists_list
 		{
 			$json_obj->{ $timeParameters } = $json_obj->{ 'time' }->{ $timeParameters };
 		}
-	} 	
+	}
 	delete $json_obj->{ 'time' };
-	
+
 	my @allowParams =
 	  ( "policy", "url", "source", "name", "minutes", "hour", "day", "frequency", "frequency_type", "period", "unit" );
 
-	require Zevenet::IPDS::Blacklist;
+	include 'Zevenet::IPDS::Blacklist';
 
 	if ( ! &getBLExists( $listName ) )
 	{
@@ -238,7 +238,7 @@ sub set_blacklists_list
 			{
 				if ( grep ( /^(url|minutes|hour|day|frequency|frequency_type|period|unit)$/ , keys %{ $json_obj } ) )
 				#~ if ( ! &getValidOptParams( $json_obj, [ "url", "minutes", "hour", "day", "frequency", "frequency_type", "period", "unit" ] ) )
-				{ 
+				{
 					$errormsg = "Error, trying to change a remote list parameter in a local list.";
 				}
 			}
@@ -253,13 +253,13 @@ sub set_blacklists_list
 			if ( !$errormsg )
 			{
 				my $cronFlag;
-				
+
 				# if there is a new update time configuration to remote lists, delete old configuration
 				#checking available configurations
 				if ( grep ( /^(minutes|hour|day|frequency|frequency_type|period|unit)$/ , keys %{ $json_obj } ) )
-				{				
+				{
 					$json_obj->{ 'frequency' } 	||=&getBLParam ( $listName, "frequency" );
-					
+
 					if ( $json_obj->{ 'frequency' } eq 'daily' )
 					{
 						$json_obj->{ 'frequency_type' }	||= &getBLParam ( $listName, "frequency_type" );
@@ -275,7 +275,7 @@ sub set_blacklists_list
 								if ( ! &getValidFormat( "blacklists_$timeParam", $json_obj->{ $timeParam } ) || $json_obj->{ $timeParam } eq '' )
 								{
 									$errormsg = "$timeParam parameter missing to $json_obj->{ frequency } configuration.";
-									last; 	
+									last;
 								}
 							}
 
@@ -314,7 +314,7 @@ sub set_blacklists_list
 					}
 					elsif ( $json_obj->{ 'frequency' } eq 'weekly'  )
 					{
-						$json_obj->{ 'minutes' } =&getBLParam ( $listName, "minutes" ) if ( ! exists $json_obj->{ 'minutes' } ); 
+						$json_obj->{ 'minutes' } =&getBLParam ( $listName, "minutes" ) if ( ! exists $json_obj->{ 'minutes' } );
 						$json_obj->{ 'hour' } 		=&getBLParam ( $listName, "hour" ) if ( ! exists $json_obj->{ 'hour' } );
 						$json_obj->{ 'day' } 		=&getBLParam ( $listName, "day" ) if ( ! exists $json_obj->{ 'day' } );
 
@@ -329,7 +329,7 @@ sub set_blacklists_list
 
 						if ( ! &getValidFormat ('weekdays', $json_obj->{ 'day' }) )
 						{
-							$errormsg = "Error value of day parameter in $json_obj->{ 'frequency' } frequency."; 
+							$errormsg = "Error value of day parameter in $json_obj->{ 'frequency' } frequency.";
 						}
 
 						if ( ! $errormsg )
@@ -357,7 +357,7 @@ sub set_blacklists_list
 
 						if ( ! &getValidFormat ('day_of_month', $json_obj->{ 'day' }) )
 						{
-							$errormsg = "Error value of day parameter in $json_obj->{ 'frequency' } frequency."; 
+							$errormsg = "Error value of day parameter in $json_obj->{ 'frequency' } frequency.";
 						}
 
 						if ( ! $errormsg )
@@ -376,7 +376,7 @@ sub set_blacklists_list
 				if ( !$errormsg )
 				{
 					my $source_format = &getValidFormat( 'blacklists_source' );
-					
+
 					foreach my $key ( keys %{ $json_obj } )
 					{
 						# add only the sources with a correct format
@@ -384,20 +384,20 @@ sub set_blacklists_list
 						if ( $key eq 'sources' )
 						{
 							my $noPush = grep ( !/^$source_format$/, @{ $json_obj->{ 'sources' } } );
-	
+
 							# error
 							&zenlog( "$noPush sources couldn't be added" ) if ( $noPush );
 						}
 
 						# set params
 						$errormsg = &setBLParam( $listName, $key, $json_obj->{ $key } );
-	
+
 						# once changed list, update de list name
 						if ( $key eq 'name' )
 						{
 							$listName = $json_obj->{ 'name' };
 						}
-	
+
 						# not continue if there was a error
 						if ( $errormsg )
 						{
@@ -412,12 +412,12 @@ sub set_blacklists_list
 						{
 							&setBLCronTask( $listName );
 						}
-			
+
 						# all successful
 						my $listHash = &getBLzapi( $listName );
 						delete $listHash->{ 'sources' };
 						delete $listHash->{ 'farms' };
-						
+
 						my $body = { description => $description, params => $listHash };
 
 						include 'Zevenet::Cluster';
@@ -496,7 +496,7 @@ sub update_remote_blacklists
 	my $json_obj    = shift;
 	my $listName    = shift;
 
-	require Zevenet::IPDS::Blacklist;
+	include 'Zevenet::IPDS::Blacklist';
 
 	my $description = "Update a remote list";
 	my $errormsg;
@@ -568,7 +568,7 @@ sub get_blacklists_source
 {
 	my $listName    = shift;
 
-	require Zevenet::IPDS::Blacklist;
+	include 'Zevenet::IPDS::Blacklist';
 
 	my $description = "Get $listName sources";
 	my %listHash;
@@ -615,7 +615,7 @@ sub add_blacklists_source
 	my @requiredParams = ( "source" );
 	my @optionalParams;
 
-	require Zevenet::IPDS::Blacklist;
+	include 'Zevenet::IPDS::Blacklist';
 
 	if ( ! &getBLExists( $listName ) )
 	{
@@ -712,7 +712,7 @@ sub set_blacklists_source
 	my $errormsg;
 	my @allowParams = ( "source" );
 
-	require Zevenet::IPDS::Blacklist;
+	include 'Zevenet::IPDS::Blacklist';
 
 	# check list exists
 	if ( ! &getBLExists( $listName ) )
@@ -757,7 +757,7 @@ sub set_blacklists_source
 				$errormsg = "Source $id has been modified successful.";
 				my $body = {
 							 description => $description, message     => $errormsg,
-							 params      => { "source" => $json_obj->{'source'}, 'id' => $id } 
+							 params      => { "source" => $json_obj->{'source'}, 'id' => $id }
 				};
 
 				include 'Zevenet::Cluster';
@@ -784,7 +784,7 @@ sub del_blacklists_source
 	my $errormsg;
 	my $description = "Delete source from the list $listName";
 
-	require Zevenet::IPDS::Blacklist;
+	include 'Zevenet::IPDS::Blacklist';
 
 	if (! &getBLExists( $listName ) )
 	{
@@ -849,7 +849,7 @@ sub add_blacklists_to_farm
 
 	if ( !$errormsg )
 	{
-		require Zevenet::IPDS::Blacklist;
+		include 'Zevenet::IPDS::Blacklist';
 
 		if ( &getFarmFile( $farmName ) eq "-1" )
 		{
@@ -924,7 +924,7 @@ sub del_blacklists_from_farm
 	my $errormsg;
 	my $description = "Delete a rule from a farm";
 
-	require Zevenet::IPDS::Blacklist;
+	include 'Zevenet::IPDS::Blacklist';
 
 	if ( &getFarmFile( $farmName ) eq '-1' )
 	{

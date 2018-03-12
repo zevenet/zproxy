@@ -360,7 +360,7 @@ sub add_dos_to_farm
 		}
 		else
 		{
-			require Zevenet::IPDS::DoS::Runtime;
+			include 'Zevenet::IPDS::DoS::Runtime';
 			&setDOSApplyRule( $name, $farmName );
 
 			my $confFile = &getGlobalConfiguration( 'dosConf' );
@@ -439,7 +439,7 @@ sub del_dos_from_farm
 		}
 		else
 		{
-			require Zevenet::IPDS::DoS::Runtime;
+			include 'Zevenet::IPDS::DoS::Runtime';
 			&setDOSUnsetRule( $name, $farmName );
 
 			# check output

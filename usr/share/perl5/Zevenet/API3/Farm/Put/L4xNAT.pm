@@ -35,13 +35,13 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	my $error        = "false";
 	my $status;
 	my $initialStatus = &getFarmStatus( $farmname );
-	
+
+	include 'Zevenet::IPDS::Base';
+	include 'Zevenet::IPDS::Blacklist';
+	include 'Zevenet::IPDS::DoS';
+
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;
-	require Zevenet::IPDS::Base;
-	require Zevenet::IPDS::Blacklist;
-	require Zevenet::IPDS::DoS;
-
 	my $ipds = &getIPDSfarmsRules_zapiv3( $farmname );
 
 	# Check that the farm exists
