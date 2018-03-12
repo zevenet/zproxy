@@ -81,8 +81,18 @@ sub set_alias
 		}
 	}
 
+	my $alias_list = &getAlias( $type );
+	foreach my $key ( keys %{ $alias_list } )
+	{
+		if ( $alias_list->{ $key } eq $json_obj->{ alias } )
+		{
+			my $msg = "The alias $json_obj->{ alias } already exists in the $type $key.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	my $message;
-	if ( &getAlias( $type, $id ) )
+	if ( exists $alias_list->{ $id } )
 	{
 		$message = "Alias for $id has been updated successfully";
 	}
@@ -103,7 +113,7 @@ sub set_alias
 sub get_by_type
 {
 	my $type = shift;
-	my $desc = "List the alias";
+	my $desc = "List the aliases";
 
 	my $alias_list = &getAlias( $type );
 

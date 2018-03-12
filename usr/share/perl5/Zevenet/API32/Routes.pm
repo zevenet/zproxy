@@ -353,7 +353,7 @@ if ( $q->path_info =~ qr{^/system/users} )
 	GET qr{^/system/users$}             => \&get_all_users;    #  GET users
 	GET qr{^/system/users/($user_re)$}  => \&get_user;         #  GET user settings
 	POST qr{^/system/users/zapi$}       => \&set_user_zapi;    #  POST zapi user
-	POST qr{^/system/users/($user_re)$} => \&set_user;         #  POST other user
+	PUT qr{^/system/users/($user_re)$} => \&set_user;         #  POST other user
 }
 
 if ( $q->path_info =~ qr{^/system/log} )
@@ -397,15 +397,16 @@ if ( $q->path_info =~ qr{^/system/(?:version|license|supportsave)} )
 }
 
 # Alias
-if ( $q->path_info =~ qr{^/alias} )
+if ( $q->path_info =~ qr{^/aliases} )
 {
 	require Zevenet::API32::Alias;
 	my $alias_re   = &getValidFormat( 'alias_id' );
 	my $alias_type = &getValidFormat( 'alias_type' );
 
-	GET qr{^/alias/($alias_type)$}                => \&get_by_type;
-	PUT qr{^/alias/($alias_type)/($alias_re)$}    => \&set_alias;
-	DELETE qr{^/alias/($alias_type)/($alias_re)$} => \&delete_alias;
+	# /aliases/(backend)s, not match the charater 's'
+	GET qr{^/aliases/($alias_type)s$}                => \&get_by_type;
+	PUT qr{^/aliases/($alias_type)s/($alias_re)$}    => \&set_alias;
+	DELETE qr{^/aliases/($alias_type)s/($alias_re)$} => \&delete_alias;
 }
 
 ##### Load modules dynamically #######################################
