@@ -24,7 +24,7 @@
 use strict;
 
 use Zevenet::Farm;
-use Zevenet::Farm::GSLB::Config;
+include 'Zevenet::Farm::GSLB::Config';
 
 my $configdir = &getGlobalConfiguration('configdir');
 

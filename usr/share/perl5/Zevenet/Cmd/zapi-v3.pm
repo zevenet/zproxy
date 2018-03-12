@@ -26,11 +26,11 @@ use Zevenet;
 use Zevenet::API3;
 use Zevenet::Farm;
 use Zevenet::Farm::Core;
-use Zevenet::Farm::GSLB;
 include 'Zevenet::IPDS';
 include 'Zevenet::Cluster';
 include 'Zevenet::Net::Bonding';
 include 'Zevenet::Net::Floating';
+include 'Zevenet::Farm::GSLB';
 include 'Zevenet::Farm::HTTP::HTTPS::Ext';
 include 'Zevenet::System::SSH';
 
