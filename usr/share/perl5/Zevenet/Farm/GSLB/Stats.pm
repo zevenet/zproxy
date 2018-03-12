@@ -23,6 +23,9 @@
 
 use strict;
 
+require Zevenet::Farm::Base;
+require Zevenet::Net::ConnStats;
+
 =begin nd
 Function: getGSLBGdnsdStats
 
@@ -76,14 +79,14 @@ sub getGSLBFarmEstConns    # ($farm_name,$netstat)
 	my $vip      = &getFarmVip( "vip",  $farm_name );
 	my $vip_port = &getFarmVip( "vipp", $farm_name );
 
-	return
+	return scalar @{
 		&getNetstatFilter(
 			"udp",
 			"",
 			"src=.* dst=$vip sport=.* dport=$vip_port .*src=.*",
 			"",
 			$netstat
-		);
+		) };
 }
 
 sub getGSLBFarmBackendsStats
