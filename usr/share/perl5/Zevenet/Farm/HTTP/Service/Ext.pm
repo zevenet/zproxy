@@ -52,6 +52,8 @@ sub getHTTPServiceCookieIns    # ($farm_name,$service)
 {
 	my ( $farm_name, $service ) = @_;
 
+	require Zevenet::Farm::Core;
+
 	# cookieins, cookieins-name, cookieins-domain, cookieins-path, cookieins-ttlc
 
 	# input control
@@ -93,13 +95,13 @@ sub getHTTPServiceCookieIns    # ($farm_name,$service)
 
 		for my $p ( @params ) # remove quotes
 		{
-			s/^".*"$/$1/;
+			$p =~ s/^"(.*)"$/$1/;
 		}
 
 		$ci->{ name }   = shift @params;
 		$ci->{ domain } = shift @params;
 		$ci->{ path }   = shift @params;
-		$ci->{ ttl }    = shift @params + 0;
+		$ci->{ ttl }    = shift( @params ) + 0;
 	}
 
 	# check errors
@@ -405,5 +407,4 @@ sub moveServiceFarmStatus
 	return 0;
 }
 
->>>>>>> hotfix-master
 1;
