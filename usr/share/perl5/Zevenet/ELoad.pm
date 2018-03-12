@@ -129,7 +129,10 @@ sub eload
 	&zenlog( Dumper \@output );
 
 	# return function output for non-API functions (service)
-	return @output if not $api_f;
+	if ( not $api_f )
+	{
+		return wantarray ? @output : shift @output;
+	}
 
 	&httpResponse( @output );
 }
