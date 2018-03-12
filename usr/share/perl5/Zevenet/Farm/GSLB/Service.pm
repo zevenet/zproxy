@@ -23,6 +23,8 @@
 
 use strict;
 
+require Zevenet::Farm;
+
 my $configdir = &getGlobalConfiguration('configdir');
 
 =begin nd
@@ -450,7 +452,11 @@ sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 				}
 				if ( $found == 1 && $line !~ /^$/ && $line !~ /.*service_types.*/ )
 				{
-					$output = "$output\n$line";
+					# remove tab characters
+					my $tmp = $line;
+					$tmp =~ s/\t//g;
+
+					$output = "$output\n$tmp";
 				}
 				if ( $line =~ /\t$svice => / )
 				{
