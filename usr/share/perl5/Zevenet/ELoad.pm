@@ -23,6 +23,8 @@
 
 use strict;
 
+require Zevenet::Debug;
+
 sub eload
 {
 	my %req = @_;
@@ -84,7 +86,7 @@ sub eload
 	if ( &debug() )
 	{
 		&zenlog("eload: CMD: '$cmd'");
-		&zenlog("eload: INPUT: '$input'");
+		&zenlog("eload: INPUT: '$input'") unless $input eq '[]';
 	}
 
 	my $ret_output;
@@ -126,7 +128,7 @@ sub eload
 	}
 
 	use Data::Dumper;
-	&zenlog( Dumper \@output );
+	&zenlog( "eload $req{ module } $req{ func } output: " . Dumper \@output ) if @output;
 
 	# return function output for non-API functions (service)
 	if ( not $api_f )
