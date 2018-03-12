@@ -38,7 +38,13 @@ my $basename = ( split ( '/', $0 ) )[-1];
 # Run encrypted command
 if ( $basename ne 'enterprise.bin' )
 {
-	$basename =~ s|\.pl$||; # Remove trailing .pl if exists
+	$basename =~ s!\.(?:pl|cgi)$!!; # Remove trailing .pl or .cgi if exists
+
+	if ( $basename eq 'zapi' )
+	{
+		my $api_ver = ( split ( '/', $0 ) )[-2]; # get zapi.cgi directory name
+		$basename = "$basename-$api_ver"; # add version. E.g.: 'zapi-v3'
+	}
 
 	my $mod = "Zevenet::Cmd::$basename";
 

@@ -81,6 +81,7 @@ sub farm_stats # ( $farmname )
 {
 	my $farmname = shift;
 	if ( $farmname eq 'modules' ) {return;}
+	if ( $farmname eq 'total' ) {return;}
 
 	require Zevenet::Farm::Core;
 
