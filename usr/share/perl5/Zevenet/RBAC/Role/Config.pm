@@ -124,10 +124,6 @@ sub getRBACRoleParamDefaultStruct
 											'test'          => 'false',
 											'action'        => 'false',
 						},
-						'system-user' => {
-										   'show'   => 'false',
-										   'modify' => 'false',
-						},
 						'supportsave' => {
 										   'download' => 'false',
 						},
@@ -148,6 +144,11 @@ sub getRBACRoleParamDefaultStruct
 						'rbac-role' => {
 										 'show'   => 'false',
 										 'create' => 'false',
+										 'modify' => 'false',
+										 'delete' => 'false',
+						},
+						'alias' => {
+										 'show'   => 'false',
 										 'modify' => 'false',
 										 'delete' => 'false',
 						},

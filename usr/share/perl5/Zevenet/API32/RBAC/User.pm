@@ -260,8 +260,8 @@ sub del_rbac_user
 	}
 }
 
-#  POST /rbac/myuser
-sub add_rbac_my_user
+#  PUT /system/user
+sub set_rbac_my_user
 {
 	my $json_obj = shift;
 
@@ -274,7 +274,7 @@ sub add_rbac_my_user
 
 	if ( $user eq 'root' )
 	{
-		my $msg = "This user is not mannager by RBAC";
+		my $msg = "This user is not manager by RBAC";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 

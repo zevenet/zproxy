@@ -394,8 +394,6 @@ sub stats_throughput
 		}
 	}
 
-	&zenlog( Dumper( $out ) );
-
 	my $body = {
 				 description => "throughput stats",
 				 params      => $out

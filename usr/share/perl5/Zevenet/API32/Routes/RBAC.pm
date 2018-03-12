@@ -23,13 +23,22 @@
 
 use strict;
 
+my $user_name = &getValidFormat( 'user_name' );
+if ( $ENV{ PATH_INFO } =~ qr{^/system/users/$user_name$} )
+{
+	my $mod = 'Zevenet::API32::RBAC::User';
+
+	#  PUT /rbac/users/<user>
+	PUT qr{^/system/users/$user_name$}, 'set_rbac_my_user', $mod;
+}
+
 if ( $ENV{ PATH_INFO } =~ qr{^/rbac/(?:users|myuser)} )
 {
 	my $mod = 'Zevenet::API32::RBAC::User';
 
 	my $user_name = &getValidFormat( 'user_name' );
 
-	#GET /rbac/users
+	#  GET /rbac/users
 	GET qr{^/rbac/users$}, 'get_rbac_all_users', $mod;
 
 	#  POST /rbac/users
@@ -43,9 +52,6 @@ if ( $ENV{ PATH_INFO } =~ qr{^/rbac/(?:users|myuser)} )
 
 	#  DELETE /rbac/users/<user>
 	DELETE qr{^/rbac/users/($user_name)$}, 'del_rbac_user', $mod;
-
-	#  POST /rbac/myuser
-	POST qr{^/rbac/myuser$}, 'add_rbac_my_user', $mod;
 }
 
 if ( $ENV{ PATH_INFO } =~ qr{^/rbac/groups} )

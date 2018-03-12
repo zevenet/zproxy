@@ -230,8 +230,9 @@ sub getRBACRolePermission
 	my $group = &getRBACUserGroup( $user );
 	&zenlog( "The user $user has not a group", "debug", "RBAC" ) if not $group;
 
-	my $role  = &getRBACGroupParam( $group, 'role' );
-	&zenlog( "The user $user has not a role", "debug", "RBAC" ) if ( not $role and $group );
+	my $role = &getRBACGroupParam( $group, 'role' );
+	&zenlog( "The user $user has not a role", "debug", "RBAC" )
+	  if ( not $role and $group );
 
 	my $fileHandle;
 
@@ -247,7 +248,8 @@ sub getRBACRolePermission
 
 	&zenlog( "$ENV{ REQUEST_METHOD } $ENV{ PATH_INFO }", "debug", "RBAC" );
 	&zenlog(
-		"Permissions: $out, user:$user, group:$group, role:$role \[$section\]\->\{$action\} = $fileHandle->{ $section }->{ $action }", "debug","RBAC"
+		"Permissions: $out, user:$user, group:$group, role:$role \[$section\]\->\{$action\} = $fileHandle->{ $section }->{ $action }",
+		"debug", "RBAC"
 	);
 
 	return $out;
@@ -283,12 +285,15 @@ sub getRBACPathPermissions
 
 	return 1 if ( $username eq 'root' );
 
+	# zapi calls reserved for root user
+	return 0 if ( &getRBACForbidden( $path, $method ) );
+
 	&zenlog( "RBAC:: Request from $username" );
 
 	# it is resource?
 	$permission = &getRBACResourcePermissions( $path );
 
-	&zenlog( "Checking resource ($permission)", "debug2","RBAC" );
+	&zenlog( "Checking resource ($permission)", "debug2", "RBAC" );
 
 	return 0 if ( !$permission );
 
@@ -299,6 +304,29 @@ sub getRBACPathPermissions
 	$permission = &getRBACRolePermission( $section, $action );
 
 	return $permission;
+}
+
+=begin nd
+Function: getRBACForbidden
+
+	Check if any user can use the zapi request
+
+Parameters:
+	Path - URL path of the HTTP request
+	Method - HTTP method of the request
+
+Returns:
+	Integer - 1 if the call is reserved for root user or 0 if any user can use it
+=cut
+
+sub getRBACForbidden
+{
+	my $path   = shift;
+	my $method = shift;
+
+	if ( $path eq "/system/users/zapi" ) { return 1; }
+
+	return 0;
 }
 
 =begin nd
@@ -420,6 +448,10 @@ sub getRBACRoleMenu
 	elsif ( $path =~ /^\/system/ )
 	{
 		$hash = &getRBACPermissionSystemHash( $path );
+	}
+	elsif ( $path =~ /^\/alias/ )
+	{
+		$hash = &getRBACPermissionAliasHash( $path );
 	}
 	elsif ( $path =~ /^\/rbac/ )
 	{
@@ -790,6 +822,32 @@ sub getRBACPermissionIpdsHash
 	return $hash;
 }
 
+# [alias]
+# modify=false
+# delete=true
+
+sub getRBACPermissionAliasHash
+{
+	my $hash = {
+				 'PUT' => [
+						   {
+							 'regex'   => qr{^/alias},
+							 'section' => 'alias',
+							 'action'  => 'modify',
+						   },
+				 ],
+				 'DELETE' => [
+							  {
+								'regex'   => qr{^/alias},
+								'section' => 'alias',
+								'action'  => 'delete',
+							  },
+				 ],
+	};
+
+	return $hash;
+}
+
 #	[system-service]
 #	modify=false
 #
@@ -898,16 +956,6 @@ sub getRBACPermissionSystemHash
 					  'section' => 'notification',
 					  'action'  => 'action',
 				   },
-				   {
-					  'regex'   => qr{^/system/users/root$},
-					  'section' => 'system-user',
-					  'action'  => 'modify',
-				   },
-				   {
-					  'regex'   => qr{^/system/users/zapi$},
-					  'section' => 'system-user',
-					  'action'  => 'modify',
-				   },
 		],
 		'GET' => [
 				  {
@@ -934,11 +982,6 @@ sub getRBACPermissionSystemHash
 					 'regex'   => qr{^/system/supportsave$},
 					 'section' => 'supportsave',
 					 'action'  => 'download',
-				  },
-				  {
-					 'regex'   => qr{^/system/users/zapi$},
-					 'section' => 'system-user',
-					 'action'  => 'show',
 				  },
 		],
 

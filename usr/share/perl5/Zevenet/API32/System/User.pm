@@ -28,15 +28,15 @@ sub get_all_users
 {
 	require Zevenet::Zapi;
 
-	my $desc = "Get users";
+	my $desc       = "Get users";
 	my $zapiStatus = &getZAPI( "status" );
 	my @users = (
 				  { "user" => "root", "status" => "true" },
 				  { "user" => "zapi", "status" => "$zapiStatus" }
 	);
-	
+
 	&httpResponse(
-		  { code => 200, body => { description => $desc, params => \@users } } );
+				 { code => 200, body => { description => $desc, params => \@users } } );
 }
 
 #	GET	/system/users/zapi
@@ -59,7 +59,8 @@ sub get_user
 				 'status' => &getZAPI( "status" ),
 	};
 
-	&httpResponse( { code => 200, body => { description => $desc, params => $zapi } } );
+	&httpResponse(
+				   { code => 200, body => { description => $desc, params => $zapi } } );
 }
 
 # POST /system/users/zapi
@@ -125,18 +126,29 @@ sub set_user_zapi
 	&httpResponse( { code => 200, body => $body } );
 }
 
-# POST /system/users/root
+# PUT /system/users/root
 sub set_user
 {
 	my $json_obj = shift;
 	my $user     = shift;
 
 	require Zevenet::Login;
+	require Zevenet::User;
+
+	my $user_session = &getUser();
+	my $desc         = "Modify a user";
+
+	if ( $user_session ne $user )
+	{
+		my $msg = "It is not allowed to change the password of another user.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
 	my $desc = "User settings.";
 
 	my @requiredParams = ( "password", "newpassword" );
-	my $param_msg = &getValidReqParams( $json_obj, \@requiredParams, \@requiredParams );
+	my $param_msg =
+	  &getValidReqParams( $json_obj, \@requiredParams, \@requiredParams );
 
 	if ( $param_msg )
 	{
