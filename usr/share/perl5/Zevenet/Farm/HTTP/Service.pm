@@ -451,7 +451,7 @@ sub getHTTPServiceStruct
 
 	&eload(
 		module => 'Zevenet::Farm::HTTP::Service::Ext',
-		func   => 'add_service_cookie_intertion',
+		func   => 'add_service_cookie_insertion',
 		args   => [$farmname, $service_ref],
 	) if $eload;
 

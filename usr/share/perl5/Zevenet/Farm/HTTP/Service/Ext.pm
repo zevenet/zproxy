@@ -183,7 +183,7 @@ sub setHTTPServiceCookieIns    # ($farm_name,$service,$ci)
 	return $errno;
 }
 
-sub add_service_cookie_intertion
+sub add_service_cookie_insertion
 {
 	my ( $farmname, $service ) = @_;
 

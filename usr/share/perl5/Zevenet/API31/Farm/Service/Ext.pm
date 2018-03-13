@@ -21,11 +21,11 @@
 #
 ###############################################################################
 
-sub modify_service_cookie_intertion
+sub modify_service_cookie_insertion
 {
 	my ( $farmname, $service, $json_obj ) = @_;
 
-	require Zevenet::API31::Farm::HTTP::Service::Ext;
+	include 'Zevenet::API31::Farm::HTTP::Service::Ext';
 
 	my $ci = &getHTTPServiceCookieIns( $farmname, $service );
 

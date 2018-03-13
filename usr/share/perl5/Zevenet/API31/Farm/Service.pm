@@ -24,6 +24,9 @@
 use strict;
 use Zevenet::Farm::Core;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 # POST
 sub new_farm_service    # ( $json_obj, $farmname )
 {
@@ -338,9 +341,13 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	# Cookie insertion
 	if ( scalar grep( /^cookie/, keys %$json_obj ) )
 	{
-		if ( eval { require Zevenet::API31::Farm::Service::Ext; } )
+		if ( $eload )
 		{
-			&modify_service_cookie_intertion( $farmname, $service, $json_obj );
+			&eload(
+					module => 'Zevenet::API31::Farm::Service::Ext',
+					func   => 'modify_service_cookie_insertion',
+					args   => [$farmname, $service, $json_obj],
+			);
 		}
 		else
 		{
@@ -413,10 +420,13 @@ sub delete_service    # ( $farmname, $service )
 	# check the farm type is supported
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq "gslb" )
+	if ( $type eq "gslb" && $eload )
 	{
-		require Zevenet::ELoad;
-		&eload( module => 'Zevenet::API31::Farm::GSLB', func => 'delete_gslb_service', args => [ $farmname, $service ] );
+		&eload(
+				module => 'Zevenet::API31::Farm::GSLB',
+				func   => 'delete_gslb_service',
+				args   => [$farmname, $service]
+		);
 	}
 	elsif ( $type !~ /^https?$/ )
 	{

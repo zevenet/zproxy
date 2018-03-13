@@ -510,7 +510,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		{
 			require Zevenet::API31::HTTP;
 			include 'Zevenet::Farm::HTTP::Service::Ext';
-			&modify_service_cookie_intertion( $farmname, $service, $json_obj );
+			&modify_service_cookie_insertion( $farmname, $service, $json_obj );
 		}
 
 		if ( exists ( $json_obj->{ httpsb } ) )
