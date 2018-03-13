@@ -22,15 +22,15 @@
 
 use strict;
 
-use Zevenet::API3::System::Service::DNS;
-use Zevenet::API3::System::Service::SSH;
-use Zevenet::API3::System::Service::SNMP;
-use Zevenet::API3::System::Service::NTP;
-use Zevenet::API3::System::Service::HTTP;
-use Zevenet::API3::System::Log;
-use Zevenet::API3::System::User;
-use Zevenet::API3::System::Backup;
-use Zevenet::API3::System::Notification;
-use Zevenet::API3::System::Info;
+include 'Zevenet::API3::System::Service::DNS';
+include 'Zevenet::API3::System::Service::SSH';
+include 'Zevenet::API3::System::Service::SNMP';
+include 'Zevenet::API3::System::Service::NTP';
+include 'Zevenet::API3::System::Service::HTTP';
+include 'Zevenet::API3::System::Log';
+include 'Zevenet::API3::System::User';
+include 'Zevenet::API3::System::Backup';
+include 'Zevenet::API3::System::Notification';
+include 'Zevenet::API3::System::Info';
 
 1;

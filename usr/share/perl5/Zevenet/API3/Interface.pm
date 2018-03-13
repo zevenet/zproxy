@@ -23,12 +23,12 @@
 
 use strict;
 
-use Zevenet::API3::Interface::Generic;
-use Zevenet::API3::Interface::NIC;
-use Zevenet::API3::Interface::VLAN;
-use Zevenet::API3::Interface::Bonding;
-use Zevenet::API3::Interface::Virtual;
-use Zevenet::API3::Interface::Floating;
-use Zevenet::API3::Interface::Gateway;
+include 'Zevenet::API3::Interface::Generic';
+include 'Zevenet::API3::Interface::NIC';
+include 'Zevenet::API3::Interface::VLAN';
+include 'Zevenet::API3::Interface::Bonding';
+include 'Zevenet::API3::Interface::Virtual';
+include 'Zevenet::API3::Interface::Floating';
+include 'Zevenet::API3::Interface::Gateway';
 
 1;

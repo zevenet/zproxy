@@ -26,7 +26,7 @@ sub modify_farm # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;
 	my $farmname = shift;
-	
+
 	# Check that the farm exists
 	if ( &getFarmFile( $farmname ) eq '-1' )
 	{
@@ -45,25 +45,25 @@ sub modify_farm # ( $json_obj, $farmname )
 
 	if ( $type eq "http" || $type eq "https" )
 	{
-		require Zevenet::API3::Farm::Put::HTTP;
+		include 'Zevenet::API3::Farm::Put::HTTP';
 		&modify_http_farm( $json_obj, $farmname );
 	}
 
 	if ( $type eq "l4xnat" )
 	{
-		require Zevenet::API3::Farm::Put::L4xNAT;
+		include 'Zevenet::API3::Farm::Put::L4xNAT';
 		&modify_l4xnat_farm( $json_obj, $farmname );
 	}
 
 	if ( $type eq "datalink" )
 	{
-		require Zevenet::API3::Farm::Put::Datalink;
+		include 'Zevenet::API3::Farm::Put::Datalink';
 		&modify_datalink_farm( $json_obj, $farmname );
 	}
 
 	if ( $type eq "gslb" )
 	{
-		require Zevenet::API3::Farm::Put::GSLB;
+		include 'Zevenet::API3::Farm::Put::GSLB';
 		&modify_gslb_farm( $json_obj, $farmname );
 	}
 }

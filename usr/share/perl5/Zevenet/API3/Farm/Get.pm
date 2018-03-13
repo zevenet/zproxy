@@ -193,22 +193,22 @@ sub farms_name # ( $farmname )
 	{
 		case /http.*/
 		{
-			require Zevenet::API3::Farm::Get::HTTP;
+			include 'Zevenet::API3::Farm::Get::HTTP';
 			&farms_name_http( $farmname );
 		}
 		case /gslb/
 		{
-			require Zevenet::API3::Farm::Get::GSLB;
+			include 'Zevenet::API3::Farm::Get::GSLB';
 			&farms_name_gslb( $farmname );
 		}
 		case /l4xnat/
 		{
-			require Zevenet::API3::Farm::Get::L4xNAT;
+			include 'Zevenet::API3::Farm::Get::L4xNAT';
 			&farms_name_l4( $farmname );
 		}
 		case /datalink/
 		{
-			require Zevenet::API3::Farm::Get::Datalink;
+			include 'Zevenet::API3::Farm::Get::Datalink';
 			&farms_name_datalink( $farmname );
 		}
 	}
