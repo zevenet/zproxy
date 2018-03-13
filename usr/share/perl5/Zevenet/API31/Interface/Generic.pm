@@ -47,7 +47,10 @@ sub get_interfaces # ()
 			module => 'Zevenet::Cluster',
 			func   => 'getZClusterConfig',
 		);
-		$cluster_if = $zcl_conf->{ _ }->{ interface };
+
+		if ( exists $zcl_conf->{ _ }->{ interface } ) {
+			$cluster_if = $zcl_conf->{ _ }->{ interface };
+		}
 	}
 
 	# to include 'has_vlan' to nics

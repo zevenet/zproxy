@@ -234,7 +234,7 @@ if ( ref $returned_value )
 	my $json = JSON->new();
 
 	#~ unless ( eval { $json_out = encode_json( $returned_value ); } )
-	unless ( eval { $output = $json->pretty->indent->canonical->encode( $returned_value ); } )
+	unless ( eval { $output = $json->pretty->indent->canonical->allow_blessed->convert_blessed->encode( $returned_value ); } )
 	{ &zenlog( "#### Function output JSON encode: Failed!" ); }
 
 	# Optionally send JSON to system log
