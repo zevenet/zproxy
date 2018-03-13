@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use Zevenet::Farm::Core;
 
 my $configdir = &getGlobalConfiguration('configdir');
 
@@ -40,25 +41,20 @@ sub getFarmCertificatesSNI    #($fname)
 {
 	my $fname = shift;
 
-	my $type = &getFarmType( $fname );
 	my @output;
 
-	if ( $type eq "https" )
+	my $file = &getFarmFile( $fname );
+	open FI, "<$configdir/$file";
+	my @content = <FI>;
+	close FI;
+	foreach my $line ( @content )
 	{
-		my $file = &getFarmFile( $fname );
-		open FI, "<$configdir/$file";
-		my @content = <FI>;
-		close FI;
-		foreach my $line ( @content )
+		if ( $line =~ /Cert "/ && $line !~ /\#.*Cert/ )
 		{
-			if ( $line =~ /Cert "/ && $line !~ /\#.*Cert/ )
-			{
-				my @partline = split ( '\"', $line );
-				@partline = split ( "\/", $partline[1] );
-				my $lfile = @partline;
-				push ( @output, $partline[$lfile - 1] );
-
-			}
+			my @partline = split ( '\"', $line );
+			@partline = split ( "\/", $partline[1] );
+			my $lfile = @partline;
+			push ( @output, $partline[$lfile - 1] );
 		}
 	}
 
