@@ -189,13 +189,13 @@ sub add_service_cookie_insertion
 
 	my $ci = &getHTTPServiceCookieIns( $farmname, $service->{ id } );
 
-	$service->{ cookieinsert } = $ci->{ status };
+	$service->{ cookieinsert } = $ci->{ enabled };
 	$service->{ cookiename }   = $ci->{ name };
 	$service->{ cookiedomain } = $ci->{ domain };
 	$service->{ cookiepath }   = $ci->{ path };
 	$service->{ cookiettl }    = $ci->{ ttl };
 
-	return;
+	return $service;
 }
 
 
