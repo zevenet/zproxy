@@ -325,6 +325,10 @@ sub include
 		$enc          = 'true';
 		$mod_key      = "$mod_path.pme";
 	}
+	else
+	{
+		&zenlog("FAILURE!!! \$path_prefix/\$mod_key: $path_prefix/$mod_key");
+	}
 
 	my $mod_fullpath = "$path_prefix/$mod_key";
 
