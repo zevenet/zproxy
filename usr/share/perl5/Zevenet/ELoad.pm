@@ -97,8 +97,8 @@ sub eload
 	}
 	my $rc = $?;
 
-	#~ &zenlog( "rc: '$rc'" );
-	#~ &zenlog( "ret_output: '$ret_output'" );
+	&zenlog( "enterprise.bin errno: '$rc'" );
+	&zenlog( "$req{ module }::$req{ func } output: '$ret_output'" );
 
 	if ( $rc )
 	{

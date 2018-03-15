@@ -215,6 +215,10 @@ my $returned_value;
 
 # call api request function
 eval { $returned_value = [ $code_ref->( @{ $args } ) ] };
+
+&zenlog("$module::$func returned ". $returned_value );
+&zenlog("$module::$func returned value dump ". Dumper( $returned_value ) );
+
 if ( $@ )
 {
 	&zenlog( "#### Function run $func: Failed!" );
