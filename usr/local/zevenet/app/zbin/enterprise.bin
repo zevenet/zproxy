@@ -34,12 +34,9 @@ my $DEBUG    = &debug();
 my $SYMKEY   = "1135628147310";
 my $lib_path = '/usr/share/perl5';
 my $module   = shift @ARGV;
-my $basename = ( split ( '/', $0 ) )[-1];
-
-$basename = $^X if $0 eq '-e';
+my $basename = ( split ( '/', $^X ) )[-1];
 
 &zenlog("\$basename: '$basename'" );
-&zenlog("\$^X: '$^X'" );
 &zenlog("%ENV: ". Dumper( \%ENV ) );
 
 # Run encrypted command
