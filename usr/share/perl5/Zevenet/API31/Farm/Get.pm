@@ -154,6 +154,7 @@ sub farms_name_summary    # ( $farmname )
 		&farms_name_http_summary( $farmname );
 	}
 
+	&farms_name( $farmname );
 }
 
 #GET /farms/<name>
