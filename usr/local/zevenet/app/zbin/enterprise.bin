@@ -35,6 +35,8 @@ my $lib_path = '/usr/share/perl5';
 my $module   = shift @ARGV;
 my $basename = ( split ( '/', $^X ) )[-1];
 
+&zenlog("[ENTERPRISE.BIN] $^X @ARGV ");
+
 # Run encrypted command
 if ( $basename ne 'enterprise.bin' )
 {
@@ -294,10 +296,10 @@ sub include
 {
 	my ( $mod_space ) = @_;
 
-	#~ my $debug = &debug();
-	my $debug = 1;
+	my $debug = &debug();
+	#~ my $debug = 1;
 
-	&zenlog("< include > mod_space = $mod_space") if $debug;
+	&zenlog("< include > mod_space = $mod_space");# if $debug;
 
 	my $path_prefix = &getGlobalConfiguration('zlibdir');
 	$path_prefix =~ s|/Zevenet$||;
