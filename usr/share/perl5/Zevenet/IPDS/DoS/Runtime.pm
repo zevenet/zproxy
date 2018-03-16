@@ -48,18 +48,19 @@ sub setDOSRunRule
 
 	require Zevenet::Farm::Base;
 
-	my %hash;
+	my %options;
 	my $output = -2;
 	my $protocol;
 
 	# return if this rule already is applied
 	return 0 if ( @{ &getDOSLookForRule( $ruleName, $farmName ) } );
+
 	if ( $farmName )
 	{
 		require Zevenet::Farm::L4xNAT::Validate;
 
 		# get farm struct
-		%hash = (
+		%options = (
 				  farmName => $farmName,
 				  vip      => "-d " . &getFarmVip( 'vip', $farmName ),
 				  vport    => "",
@@ -69,17 +70,17 @@ sub setDOSRunRule
 
 		if ( $port =~ /^\d+$/ )
 		{
-			$hash{ vport } = "--dport $port";
+			$options{ vport } = "--dport $port";
 		}
 		elsif ( $port eq '*' )
 		{
-			$hash{ vport } = "";
+			$options{ vport } = "";
 		}
 
 		# l4 farm multiport
 		elsif ( &ismport( $port ) eq "true" )
 		{
-			$hash{ vport } = "-m multiport --dports $port";
+			$options{ vport } = "-m multiport --dports $port";
 		}
 
 		# -d farmIP -p PROTOCOL --dport farmPORT
@@ -87,43 +88,54 @@ sub setDOSRunRule
 
 		if ( $protocol =~ /UDP/i || $protocol =~ /TFTP/i || $protocol =~ /SIP/i )
 		{
-			$hash{ 'protocol' } = "-p udp";
+			$options{ 'protocol' } = "-p udp";
 		}
 		if ( $protocol =~ /TCP/i || $protocol =~ /FTP/i )
 		{
-			$hash{ 'protocol' } = "-p tcp";
+			$options{ 'protocol' } = "-p tcp";
 		}
 	}
 
-	use Switch;
-	switch ( &getDOSParam( $ruleName, "rule" ) )
-	{
-		# comented rules aren't finished
-		# global rules
-		case 'sshbruteforce' { $output = &setDOSSshBruteForceRule(); }
-		case 'dropicmp'      { $output = &setDOSDropIcmpRule(); }
+	my $rule = &getDOSParam( $ruleName, "rule" );
 
-		#~ case 'PORTSCANNING'		{ $output = &setDOSPortScanningRule();		}
+	$output =
+	    ( $rule eq 'sshbruteforce' ) ? &setDOSSshBruteForceRule()
+	  : ( $rule eq 'dropicmp' )      ? &setDOSDropIcmpRule()
+	  : ( $rule eq 'limitconns' )    ? &setDOSLimitConnsRule( $ruleName, \%options )
+	  : ( $rule eq 'limitsec' )      ? &setDOSLimitSecRule( $ruleName, \%options )
+	  : ( $rule eq 'bogustcpflags' ) ? &setDOSBogusTcpFlagsRule( $ruleName, \%options )
+	  : ( $rule eq 'limitrst' )      ? &setDOSLimitRstRule( $ruleName, \%options )
+	  ;
 
-		# rules for farms
-		case 'limitconns' { $output = &setDOSLimitConnsRule( $ruleName, \%hash ); }
-		case 'limitsec' { $output = &setDOSLimitSecRule( $ruleName, \%hash ); }
-
-		#~ case 'INVALID'				{ $output = &setDOSInvalidPacketRule();	}
-		#~ case 'BLOCKSPOOFED'	{ $output = &setDOSBlockSpoofedRule();	}
-
-		# rules for tcp farms
-		case 'bogustcpflags'
-		{
-			$output = &setDOSBogusTcpFlagsRule( $ruleName, \%hash );
-		}
-		case 'limitrst' { $output = &setDOSLimitRstRule( $ruleName, \%hash ); }
-
-		#~ case 'DROPFRAGMENTS'	{ $output = &setDOSDropFragmentsRule(); }
-		#~ case 'NEWNOSYN'				{ $output = &setDOSNewNoSynRule();		 }
-		#~ case 'SYNWITHMSS'			{ $output = &setDOSSynWithMssRule();	 }
-		#~ case 'SYNPROXY'				{ $output = &setDOSynProxyRule();			 }
-	}
+#	use Switch;
+#	switch ( &getDOSParam( $ruleName, "rule" ) )
+#	{
+#		# comented rules aren't finished
+#		# global rules
+#		case 'sshbruteforce' { $output = &setDOSSshBruteForceRule(); }
+#		case 'dropicmp'      { $output = &setDOSDropIcmpRule(); }
+#
+#		#~ case 'PORTSCANNING'		{ $output = &setDOSPortScanningRule();		}
+#
+#		# rules for farms
+#		case 'limitconns' { $output = &setDOSLimitConnsRule( $ruleName, \%hash ); }
+#		case 'limitsec' { $output = &setDOSLimitSecRule( $ruleName, \%hash ); }
+#
+#		#~ case 'INVALID'				{ $output = &setDOSInvalidPacketRule();	}
+#		#~ case 'BLOCKSPOOFED'	{ $output = &setDOSBlockSpoofedRule();	}
+#
+#		# rules for tcp farms
+#		case 'bogustcpflags'
+#		{
+#			$output = &setDOSBogusTcpFlagsRule( $ruleName, \%hash );
+#		}
+#		case 'limitrst' { $output = &setDOSLimitRstRule( $ruleName, \%hash ); }
+#
+#		#~ case 'DROPFRAGMENTS'	{ $output = &setDOSDropFragmentsRule(); }
+#		#~ case 'NEWNOSYN'				{ $output = &setDOSNewNoSynRule();		 }
+#		#~ case 'SYNWITHMSS'			{ $output = &setDOSSynWithMssRule();	 }
+#		#~ case 'SYNPROXY'				{ $output = &setDOSynProxyRule();			 }
+#	}
 
 	$output = ( @{ &getDOSLookForRule( $ruleName, $farmName ) } ) ? 0 : 1;
 
