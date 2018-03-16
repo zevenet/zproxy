@@ -219,7 +219,6 @@ if ( $action eq "start" )
 
 	print ( "* Starting Interfaces:\n" );
 
-	my $mgmt_ip    = &getHttpServerIp();
 	my $ip_bin     = &getGlobalConfiguration( 'ip_bin' );
 	my @interfaces = &getInterfaceTypeList('nic');
 
@@ -338,7 +337,7 @@ if ( $action eq "start" )
 	{
 		&zenlog("zevenet: Setting up Cluster...");
 		&eload( module => $mod, func => 'enable_cluster' );
-		
+
 		# enable modules
 		&eload( module => $mod, func => 'start_modules' );
 	}
