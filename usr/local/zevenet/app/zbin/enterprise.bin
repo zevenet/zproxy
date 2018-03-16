@@ -295,7 +295,7 @@ sub include
 	my ( $mod_space ) = @_;
 
 	#~ my $debug = &debug();
-	my $debug = 0;
+	my $debug = 1;
 
 	&zenlog("< include > mod_space = $mod_space") if $debug;
 
