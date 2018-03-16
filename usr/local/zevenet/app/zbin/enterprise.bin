@@ -24,7 +24,6 @@
 use strict;
 use warnings;
 
-use Data::Dumper;
 use Time::Local;
 use Zevenet::Log;
 use Zevenet::Debug;
@@ -35,9 +34,6 @@ my $SYMKEY   = "1135628147310";
 my $lib_path = '/usr/share/perl5';
 my $module   = shift @ARGV;
 my $basename = ( split ( '/', $^X ) )[-1];
-
-&zenlog("\$basename: '$basename'" );
-&zenlog("%ENV: ". Dumper( \%ENV ) );
 
 # Run encrypted command
 if ( $basename ne 'enterprise.bin' )
