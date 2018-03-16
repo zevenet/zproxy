@@ -30,7 +30,7 @@ sub eload
 	my %req = @_;
 
 	my @required = ( qw(module func) );
-	my @params   = ( qw(module func args decode) );
+	my @params   = ( qw(module func args just_ret ) );
 
 	# check required params
 	if ( my ( $required ) = grep { not exists $req{ $_ } } @required )
@@ -108,17 +108,15 @@ sub eload
 		#~ zenlog( "rc: '$rc'" );
 		#~ zenlog( "ret_output: '$ret_output'" );
 		&zenlog( "$msg. $ret_output" );
-		exit 1 if $0 =~ /zevenet$/;
+		exit 1 if $0 =~ /zevenet$/; # finish zevenet process
 		die( $msg );
 	}
 
 	# condition flags
-	#~ my $decode_f = ( exists $req{ decode } && $req{ decode } );
-	my $api_f    = ( $req{ module }         =~ /^Zevenet::API/ );
+	my $ret_f = exists $req{ just_ret } && $req{ just_ret };
+	my $api_f = ( $req{ module } =~ /^Zevenet::API/ );
 
-	#~ my $output = ( $decode_f || $api_f ) ?	decode_json( $ret_output ):
-											#~ $ret_output;
-
+	my $output = ( not $ret_f && $api_f ) ?	decode_json( $ret_output ): $ret_output;
 	my @output = eval{ @{ decode_json( $ret_output ) } };
 
 	if ( $@ )
@@ -131,7 +129,7 @@ sub eload
 	&zenlog( "eload $req{ module } $req{ func } output: " . Dumper \@output ) if @output;
 
 	# return function output for non-API functions (service)
-	if ( not $api_f )
+	if ( $ret_f || not $api_f )
 	{
 		return wantarray ? @output : shift @output;
 	}

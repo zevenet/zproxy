@@ -343,11 +343,17 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	{
 		if ( $eload )
 		{
-			&eload(
-					module => 'Zevenet::API31::Farm::Service::Ext',
-					func   => 'modify_service_cookie_insertion',
-					args   => [$farmname, $service, $json_obj],
+			my $msg = &eload(
+							  module   => 'Zevenet::API31::Farm::Service::Ext',
+							  func     => 'modify_service_cookie_insertion',
+							  args     => [$farmname, $service, $json_obj],
+							  just_ret => 1,
 			);
+
+			if ( defined $msg && length $msg )
+			{
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
 		}
 		else
 		{

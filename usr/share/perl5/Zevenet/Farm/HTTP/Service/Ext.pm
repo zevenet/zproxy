@@ -151,7 +151,7 @@ sub setHTTPServiceCookieIns    # ($farm_name,$service,$ci)
 
 	# form new policy
 	my $ci_enabled = $ci->{ enabled } == 1 ? '' : '#';
-	my $new_ci_policy = qq(\t\t${ci_enabled}BackendCookie "$ci->{ enabled }" "$ci->{ name }" "$ci->{ domain }" "$ci->{ path }" $ci->{ ttl });
+	my $new_ci_policy = qq(\t\t${ci_enabled}BackendCookie "$ci->{ name }" "$ci->{ domain }" "$ci->{ path }" $ci->{ ttl });
 
 	# apply new policy
 	require Tie::File;
@@ -189,7 +189,7 @@ sub add_service_cookie_insertion
 
 	my $ci = &getHTTPServiceCookieIns( $farmname, $service->{ id } );
 
-	$service->{ cookieinsert } = $ci->{ enabled };
+	$service->{ cookieinsert } = $ci->{ enabled } ? 'true' : 'false';
 	$service->{ cookiename }   = $ci->{ name };
 	$service->{ cookiedomain } = $ci->{ domain };
 	$service->{ cookiepath }   = $ci->{ path };
