@@ -42,7 +42,7 @@ if ( $basename ne 'enterprise.bin' )
 
 	if ( $basename eq 'zapi' )
 	{
-		my $api_ver = ( split ( '/', $0 ) )[-2]; # get zapi.cgi directory name
+		my $api_ver = ( split ( '/', $^X ) )[-2]; # get zapi.cgi directory name
 		$basename = "$basename-$api_ver"; # add version. E.g.: 'zapi-v3'
 	}
 
