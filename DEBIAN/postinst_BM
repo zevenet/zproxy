@@ -34,8 +34,8 @@ fi
 # Check for binaries
 PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
 compiled_files=(
-	/usr/local/zevenet/www/zapi/v3/zapi.cgi
 	/usr/local/zevenet/www/zapi/v3.1/zapi.cgi
+	/usr/local/zevenet/www/zapi/v3.2/zapi.cgi
 	/usr/local/zevenet/app/zbin/zevenet
 	/usr/local/zevenet/app/zbin/enterprise.bin
 )
