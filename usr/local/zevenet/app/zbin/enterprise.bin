@@ -42,10 +42,11 @@ my $basename = ( split ( '/', $program_name ) )[-1];
 
 &zenlog("[ENTERPRISE.BIN] \$0 = '$0'");
 &zenlog("[ENTERPRISE.BIN] \$^X = '$^X'");
+&zenlog("[ENTERPRISE.BIN] \$ENV{_} = '$ENV{_}'") if exists $ENV{_};
 &zenlog("[ENTERPRISE.BIN] \$program_name = '$program_name'");
 &zenlog("[ENTERPRISE.BIN] \$basename = '$basename'");
 &zenlog("[ENTERPRISE.BIN] \@ARGV = '@ARGV'");
-&zenlog("[ENTERPRISE.BIN] \%ENV = " . Dumper \%ENV );
+#~ &zenlog("[ENTERPRISE.BIN] \%ENV = " . Dumper \%ENV );
 
 # Run encrypted command
 if ( $basename ne 'enterprise.bin' )
