@@ -25,7 +25,6 @@ use strict;
 
 my $q = getCGI();
 
-
 # Statistics
 if ( $q->path_info =~ qr{^/stats} )
 {
