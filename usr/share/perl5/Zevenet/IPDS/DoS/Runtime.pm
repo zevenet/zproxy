@@ -98,14 +98,12 @@ sub setDOSRunRule
 
 	my $rule = &getDOSParam( $ruleName, "rule" );
 
-	$output =
-	    ( $rule eq 'sshbruteforce' ) ? &setDOSSshBruteForceRule()
-	  : ( $rule eq 'dropicmp' )      ? &setDOSDropIcmpRule()
-	  : ( $rule eq 'limitconns' )    ? &setDOSLimitConnsRule( $ruleName, \%options )
-	  : ( $rule eq 'limitsec' )      ? &setDOSLimitSecRule( $ruleName, \%options )
-	  : ( $rule eq 'bogustcpflags' ) ? &setDOSBogusTcpFlagsRule( $ruleName, \%options )
-	  : ( $rule eq 'limitrst' )      ? &setDOSLimitRstRule( $ruleName, \%options )
-	  ;
+	if    ( $rule eq 'sshbruteforce' ){ &setDOSSshBruteForceRule() }
+	elsif ( $rule eq 'dropicmp' )     { &setDOSDropIcmpRule() }
+	elsif ( $rule eq 'limitconns' )   { &setDOSLimitConnsRule( $ruleName, \%options ) }
+	elsif ( $rule eq 'limitsec' )     { &setDOSLimitSecRule( $ruleName, \%options ) }
+	elsif ( $rule eq 'bogustcpflags' ){ &setDOSBogusTcpFlagsRule( $ruleName, \%options ) }
+	elsif ( $rule eq 'limitrst' )     { &setDOSLimitRstRule( $ruleName, \%options ) }
 
 #	use Switch;
 #	switch ( &getDOSParam( $ruleName, "rule" ) )
