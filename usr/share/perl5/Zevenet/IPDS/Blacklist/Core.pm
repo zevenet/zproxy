@@ -229,8 +229,6 @@ sub getBLRunningRules
 {
 	include 'Zevenet::IPDS::Core';
 
-	my @blRules;
-
 	# look for blacklist rules
 	my $blacklist_chain = &getIPDSChain( "blacklist" );
 	my @rules           = &getIptListV4( 'raw', $blacklist_chain );
