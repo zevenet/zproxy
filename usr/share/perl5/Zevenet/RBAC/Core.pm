@@ -14,10 +14,10 @@ Function: getRBACConfPath
 
 Parameters:
 	None - .
-					
+
 Returns:
 	String - path
-	
+
 =cut
 
 sub getRBACConfPath
@@ -32,7 +32,7 @@ Function: getRBACGroupMembers
 
 Parameters:
 	Group - group name
-					
+
 Returns:
 	Array - List of members
 
@@ -58,10 +58,10 @@ Function: getRBACUserIsMember
 Parameters:
 	User - User name
 	Group - Group name
-					
+
 Returns:
 	Integer - Return 1 if the user is member of the group or 0 else it is not
-	
+
 =cut
 
 sub getRBACUserIsMember
@@ -82,10 +82,10 @@ Function: getRBACUserGroup
 
 Parameters:
 	User - User name
-					
+
 Returns:
 	String - Group of the user
-	
+
 =cut
 
 sub getRBACUserGroup
@@ -220,15 +220,14 @@ sub getRBACRolePermission
 {
 	my $section = shift;
 	my $action  = shift;
-	my $out     = 0;
+
+	my $out = 0;
 
 	my $roleFile;
 	my $fileHandle;
-
 	my $user  = &getUser();
 	my $group = &getRBACUserGroup( $user );
 	my $role  = &getRBACGroupParam( $group, 'role' );
-	my $fileHandle;
 
 	if ( $role )
 	{
