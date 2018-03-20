@@ -36,7 +36,10 @@ my $module   = shift @ARGV;
 my $program_name = ( $0 eq '-e' ) ? $^X: $0;
 my $basename = ( split ( '/', $program_name ) )[-1];
 
-&zenlog("[ENTERPRISE.BIN] $program_name @ARGV ");
+&zenlog("[ENTERPRISE.BIN] \$0 = '$0'");
+&zenlog("[ENTERPRISE.BIN] \$^X = '$^X'");
+&zenlog("[ENTERPRISE.BIN] \$program_name = '$program_name'");
+&zenlog("[ENTERPRISE.BIN] \@ARGV = '@ARGV'");
 
 # Run encrypted command
 if ( $basename ne 'enterprise.bin' )
