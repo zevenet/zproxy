@@ -34,7 +34,10 @@ my $DEBUG    = &debug();
 my $SYMKEY   = "1135628147310";
 my $lib_path = '/usr/share/perl5';
 my $module   = shift @ARGV;
-my $program_name = ( $0 eq '-e' ) ? $^X: $0;
+my $program_name =
+    ( $0 ne '-e' ) ? $0
+  : ( exists $ENV{ _ } && $ENV{ _ } !~ /enterprise.bin$/ ) ? $ENV{ _ }
+  :                                                          $^X;
 my $basename = ( split ( '/', $program_name ) )[-1];
 
 &zenlog("[ENTERPRISE.BIN] \$0 = '$0'");
