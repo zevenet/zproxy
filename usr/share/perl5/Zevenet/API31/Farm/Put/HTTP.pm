@@ -45,7 +45,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	my $farmname_old;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farm '$farmname' does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );

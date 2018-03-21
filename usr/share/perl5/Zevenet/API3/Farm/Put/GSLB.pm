@@ -47,7 +47,7 @@ sub modify_gslb_farm # ( $json_obj,	$farmname )
 	my $errormsg;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		$errormsg = "The farmname $farmname does not exists.";

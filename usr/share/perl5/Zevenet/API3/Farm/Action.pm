@@ -34,7 +34,7 @@ sub farm_actions # ( $json_obj, $farmname )
 	my $action;
 
 	# calidate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -195,7 +195,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	my $description = "Set service backend status";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) eq '-1' )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -386,7 +386,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 	my $description = "Set backend status";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";

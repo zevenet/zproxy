@@ -34,7 +34,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	my $farmname = shift;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -246,7 +246,7 @@ sub farm_services
 	my $description = "Get services of a farm";
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) eq '-1' )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
@@ -316,7 +316,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 	my $errormsg;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
@@ -650,7 +650,7 @@ sub move_services
 	my $errormsg;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( !&getFarmExists( $farmname ) ) {
 		# Error
 		$errormsg = "The farmname $farmname does not exists.";
 		my $body = {
@@ -781,7 +781,7 @@ sub delete_service # ( $farmname, $service )
 	my ( $farmname, $service ) = @_;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";

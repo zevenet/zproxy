@@ -327,7 +327,7 @@ sub add_dos_to_farm
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $output   = "down";
 
-	if ( &getFarmFile( $farmName ) eq '-1' )
+	if ( !&getFarmExists( $farmName ) )
 	{
 		$errormsg = "$farmName doesn't exist.";
 		my $body = {
@@ -406,7 +406,7 @@ sub del_dos_from_farm
 
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 
-	if ( &getFarmFile( $farmName ) eq "-1" )
+	if ( !&getFarmExists( $farmName ) )
 	{
 		$errormsg = "$farmName doesn't exist.";
 		my $body = {

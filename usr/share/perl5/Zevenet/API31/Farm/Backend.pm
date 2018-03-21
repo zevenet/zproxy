@@ -41,7 +41,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	my $desc = "New farm backend";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -314,7 +314,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	my $desc = "New service backend";
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -472,7 +472,7 @@ sub backends
 	my $desc = "List backends";
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -521,7 +521,7 @@ sub service_backends
 	my $backendstatus;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) eq '-1' )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -614,7 +614,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 	my $zapierror;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -869,7 +869,7 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 	my $desc = "Modify service backend";
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -1047,7 +1047,7 @@ sub delete_backend    # ( $farmname, $id_server )
 	my $desc = "Delete backend";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -1109,7 +1109,7 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 	my $desc = "Delete service backend";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );

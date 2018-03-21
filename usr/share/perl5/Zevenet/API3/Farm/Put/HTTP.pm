@@ -46,7 +46,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	my $zapierror;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";

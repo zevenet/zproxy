@@ -38,7 +38,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	my $desc = "New service";
 
 	# Check if the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -136,7 +136,7 @@ sub farm_services
 	my $service;
 
 	# Check if the farm exists
-	if ( &getFarmFile( $farmname ) eq '-1' )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -190,7 +190,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	my $output_params;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -417,7 +417,7 @@ sub delete_service    # ( $farmname, $service )
 	my $desc = "Delete service";
 
 	# Check if the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );

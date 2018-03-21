@@ -36,7 +36,7 @@ sub new_farm_zone # ( $json_obj, $farmname )
 	# Check that the farm exists
 	require Zevenet::Farm::Core;
 
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( !&getFarmExists( $farmname ) ) {
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
@@ -139,7 +139,7 @@ sub new_farm_zone_resource # ( $json_obj, $farmname, $zone )
 	# validate FARM NAME
 	require Zevenet::Farm::Core;
 
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
@@ -356,7 +356,7 @@ sub gslb_zone_resources # ( $farmname, $zone )
 	require Zevenet::Farm::Core;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "Farm name not found";
@@ -430,7 +430,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 	require Zevenet::Farm::Core;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -675,7 +675,7 @@ sub modify_zones # ( $json_obj, $farmname, $zone )
 	require Zevenet::Farm::Core;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( !&getFarmExists( $farmname ) ) {
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
 		my $body = {
@@ -760,7 +760,7 @@ sub delete_zone # ( $farmname, $zone )
 	require Zevenet::Farm::Core;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -829,7 +829,7 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 	require Zevenet::Farm::Core;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";

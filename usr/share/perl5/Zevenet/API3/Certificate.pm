@@ -211,7 +211,7 @@ sub add_farm_certificate # ( $json_obj, $farmname )
 	my $description = "Add certificate";
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "Farm not found";
@@ -300,7 +300,7 @@ sub delete_farm_certificate # ( $farmname, $certfilename )
 	my $description = "Delete farm certificate";
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists";

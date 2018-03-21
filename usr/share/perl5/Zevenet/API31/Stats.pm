@@ -87,7 +87,7 @@ sub farm_stats # ( $farmname )
 
 	my $desc = "Get farm stats";
 
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

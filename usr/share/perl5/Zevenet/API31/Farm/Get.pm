@@ -141,7 +141,7 @@ sub farms_name_summary    # ( $farmname )
 	my $desc     = "Show farm $farmname";
 
 	# Check if the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "Farm not found.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -165,7 +165,7 @@ sub farms_name    # ( $farmname )
 	my $desc = "Show farm $farmname";
 
 	# Check if the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "Farm not found.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );

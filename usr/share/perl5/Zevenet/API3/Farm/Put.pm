@@ -28,7 +28,7 @@ sub modify_farm # ( $json_obj, $farmname )
 	my $farmname = shift;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) eq '-1' )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";

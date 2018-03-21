@@ -37,7 +37,7 @@ sub move_services
 	my $moveservice;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );

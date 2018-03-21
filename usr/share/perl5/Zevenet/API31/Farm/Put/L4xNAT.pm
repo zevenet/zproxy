@@ -43,7 +43,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	my $initialStatus = &getFarmStatus( $farmname );
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );

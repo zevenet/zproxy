@@ -45,7 +45,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	my $ipds = &getIPDSfarmsRules_zapiv3( $farmname );
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";

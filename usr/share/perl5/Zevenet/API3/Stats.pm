@@ -83,7 +83,7 @@ sub farm_stats # ( $farmname )
 
 	require Zevenet::Farm::Core;
 
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmFile( $farmname ) )
 	{
 		$errormsg = "The farmname $farmname does not exist.";
 		my $body = { description => $description, error  => "true", message => $errormsg };

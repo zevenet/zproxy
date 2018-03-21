@@ -851,7 +851,7 @@ sub add_blacklists_to_farm
 	{
 		include 'Zevenet::IPDS::Blacklist';
 
-		if ( &getFarmFile( $farmName ) eq "-1" )
+		if ( !&getFarmExists( $farmName ) )
 		{
 			$errormsg = "$farmName doesn't exist.";
 			my $body = {
@@ -926,7 +926,7 @@ sub del_blacklists_from_farm
 
 	include 'Zevenet::IPDS::Blacklist';
 
-	if ( &getFarmFile( $farmName ) eq '-1' )
+	if ( !&getFarmExists( $farmName ) )
 	{
 		$errormsg = "$farmName doesn't exist.";
 		my $body = {

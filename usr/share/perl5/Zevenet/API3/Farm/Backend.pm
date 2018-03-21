@@ -38,7 +38,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	my $description = "New farm backend";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -420,7 +420,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	my $description = "New service backend";
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -772,7 +772,7 @@ sub backends
 	my $description = "List backends";
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
@@ -879,7 +879,7 @@ sub service_backends
 	my $description = "List service backends";
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) eq '-1' )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
@@ -1034,7 +1034,7 @@ sub modify_backends #( $json_obj, $farmname, $id_server )
 	my $zapierror;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -1348,7 +1348,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 	my $zapierror;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
@@ -1696,7 +1696,7 @@ sub delete_backend # ( $farmname, $id_server )
 	my $description = "Delete backend";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -1791,7 +1791,7 @@ sub delete_service_backend # ( $farmname, $service, $id_server )
 	my $description = "Delete service backend";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";

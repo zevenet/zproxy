@@ -45,7 +45,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	require Zevenet::Farm::HTTP::Service;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		$errormsg = "The farmname $farmname does not exists.";
 		my $body = { description => $description, error       => "true", message     => $errormsg };
