@@ -292,10 +292,11 @@ sub getGSLBFarmBackends    # ($farm_name)
 {
 	my ( $farmname, $service ) = @_;
 
+	require Zevenet::Farm::Base;
+	include 'Zevenet::Farm::GSLB::Service';
+
 	my @backendStats;
 	my @services = &getGSLBFarmServices( $farmname );
-
-	require Zevenet::Farm::Base;
 
 	my $farmStatus = &getFarmStatus( $farmname );
 	my $gslb_stats;
@@ -307,7 +308,6 @@ sub getGSLBFarmBackends    # ($farm_name)
 	}
 
 	# Default port health check
-	include 'Zevenet::Farm::GSLB::Service';
 
 	my $port       = &getGSLBFarmVS( $farmname, $service, "dpc" );
 	my $backendsvs = &getGSLBFarmVS( $farmname, $service, "backends" );

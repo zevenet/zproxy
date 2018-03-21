@@ -579,8 +579,8 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 		my $actualPort;
 		my $srvConf;
 		my @srvCp;
-		my $firstIndNew;
-		my $offsetIndNew;
+		my $firstIndNew = 0;
+		my $offsetIndNew = 0;
 		my $firstIndOld;
 		my $offsetIndOld;
 		my $newPortFlag;
