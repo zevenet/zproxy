@@ -412,7 +412,7 @@ sub delCert    # ($certname)
 
 	my $files_removed = unlink ( "$certdir\/$file[0]" );
 
-	&zenlog( "Error removing certificate $certdir\/$file[0]" ) if !$files_removed;
+	&zenlog( "Error removing certificate $certdir\/$file[0]", "error", "LSLB" ) if !$files_removed;
 
 	return $files_removed;
 }
@@ -462,7 +462,7 @@ sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, 
 	{
 		&zenlog(
 			"Creating CSR: $openssl req -nodes -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\""
-		);
+		, "info", "LSLB");
 		$output =
 		  system (
 			"$openssl req -nodes -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\" 2> /dev/null"
@@ -475,7 +475,7 @@ sub createCSR # ($certname, $certfqdn, $certcountry, $certstate, $certlocality, 
 			"$openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\" 2> /dev/null"
 		  );
 		&zenlog(
-			"Creating CSR: $openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\""
+			"Creating CSR: $openssl req -passout pass:$certpassword -newkey rsa:$certkey -keyout $configdir/$certname.key -out $configdir/$certname.csr -batch -subj \"/C=$certcountry\/ST=$certstate/L=$certlocality/O=$certorganization/OU=$certdivision/CN=$certfqdn/emailAddress=$certmail\"", "info", "LSLB"
 		);
 	}
 	return $output;

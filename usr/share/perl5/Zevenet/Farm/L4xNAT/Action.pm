@@ -158,7 +158,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 
 	my $status = 0;           # output
 
-	&zenlog( "_runL4FarmStart << farm_name:$farm_name writeconf:$writeconf" )
+	&zenlog( "_runL4FarmStart << farm_name:$farm_name writeconf:$writeconf", "debug", "LSLB" )
 	  if &debug;
 
 	# initialize a farm struct
@@ -209,7 +209,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 
 	foreach my $server ( @{ $$farm{ servers } } )
 	{
-		&zenlog( "_runL4FarmStart :: server:$server->{id}" ) if &debug;
+		&zenlog( "_runL4FarmStart :: server:$server->{id}", "debug", "LSLB" ) if &debug;
 
 		my $backend_rules;
 
@@ -254,7 +254,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 
 	unless ( $ipt_lockfile )
 	{
-		&zenlog( "Could not open $iptlock: $!" );
+		&zenlog( "Could not open $iptlock: $!", "warning", "LSLB" );
 		return 1;
 	}
 
@@ -339,7 +339,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 
 	unless ( $ipt_lockfile )
 	{
-		&zenlog( "Could not open $iptlock: $!" );
+		&zenlog( "Could not open $iptlock: $!", "warning", "LSLB" );
 		return 1;
 	}
 
@@ -392,7 +392,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 
 		unless ( defined $table_if )
 		{
-			&zenlog("Warning: Skipping removal of backend $server->{ tag } routing rule. Interface table not found.");
+			&zenlog("Warning: Skipping removal of backend $server->{ tag } routing rule. Interface table not found.", "warning", "LSLB");
 			next;
 		}
 

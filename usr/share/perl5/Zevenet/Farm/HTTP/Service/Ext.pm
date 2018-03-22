@@ -107,12 +107,12 @@ sub getHTTPServiceCookieIns    # ($farm_name,$service)
 	# check errors
 	unless ( defined $ci )
 	{
-		&zenlog("Cookie insertion policy not found in Farm: $farm_name, Service: $service.");
+		&zenlog("Cookie insertion policy not found in Farm: $farm_name, Service: $service.", "warning", "LSLB");
 	}
 
 	if ( ! defined $ci->{ name } || ! defined $ci->{ domain } || ! defined $ci->{ path } || ! defined $ci->{ ttl } )
 	{
-		&zenlog("Error found in cookie insertion policy: Incorrect parameter in Farm: $farm_name, Service: $service.");
+		&zenlog("Error found in cookie insertion policy: Incorrect parameter in Farm: $farm_name, Service: $service.", "error", "LSLB");
 	}
 
 	return $ci;
@@ -178,7 +178,7 @@ sub setHTTPServiceCookieIns    # ($farm_name,$service,$ci)
 	# error control
 	$errno = 0 if $updated_flag;
 
-	&zenlog("Could not apply cookie insertion change") if $errno;
+	&zenlog("Could not apply cookie insertion change", "error", "LSLB") if $errno;
 
 	return $errno;
 }
@@ -717,7 +717,7 @@ sub moveServiceFarmStatus
 	untie @file;
 
 	&zenlog(
-		"The service \"$serviceSelect\" from farm \"$farmName\" has been moved $moveService"
+		"The service \"$serviceSelect\" from farm \"$farmName\" has been moved $moveService", "info", "LSLB"
 	);
 
 	return 0;

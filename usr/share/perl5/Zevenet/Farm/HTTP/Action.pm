@@ -53,7 +53,7 @@ sub _runHTTPFarmStart    # ($farm_name)
 	my $ssyncd_enabled = &getGlobalConfiguration( 'ssyncd_enabled' );
 	my $args = ( $ssyncd_enabled eq 'true' ) ? '-s': '';
 
-	&zenlog( "Checking $farm_name farm configuration" );
+	&zenlog( "Checking $farm_name farm configuration", "info", "LSLB" );
 	return -1 if( &getHTTPFarmConfigIsOK( $farm_name ) );
 
 	my $cmd = "$pound $args -f $configdir\/$farm_filename -p $piddir\/$farm_name\_pound.pid";
@@ -80,7 +80,7 @@ sub _runHTTPFarmStart    # ($farm_name)
 	}
 	else
 	{
-		&zenlog( "failed: $cmd" );
+		&zenlog( "failed: $cmd", "error", "LSLB" );
 	}
 
 	return $status;
@@ -114,11 +114,11 @@ sub _runHTTPFarmStop    # ($farm_name)
 
 		if ( $pid eq '-' || $pid == -1 )
 		{
-			&zenlog( "Not found pid" );
+			&zenlog( "Not found pid", "warning", "LSLB" );
 		}
 		else
 		{
-			&zenlog( "Stopping HTTP farm $farm_name with PID $pid" );
+			&zenlog( "Stopping HTTP farm $farm_name with PID $pid", "info", "LSLB" );
 
 			# Returns the number of arguments that were successfully used to signal.
 			kill 15, $pid;
@@ -131,7 +131,7 @@ sub _runHTTPFarmStop    # ($farm_name)
 	else
 	{
 		&zenlog(
-			 "Farm $farm_name can't be stopped, check the logs and modify the configuration"
+			 "Farm $farm_name can't be stopped, check the logs and modify the configuration", "info", "LSLB"
 		);
 		return 1;
 	}
@@ -207,7 +207,7 @@ sub setHTTPNewFarmName    # ($farm_name,$new_farm_name)
 
 			rename ( "$farm_filename", "$new_farm_configfiles[0]" ) or $output = -1;
 
-			&zenlog( "configuration saved in $new_farm_configfiles[0] file" );
+			&zenlog( "Configuration saved in $new_farm_configfiles[0] file", "info", "LSLB" );
 		}
 		shift ( @new_farm_configfiles );
 	}

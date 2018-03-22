@@ -86,11 +86,11 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 
 	if ( $cfile =~ /^$/ )
 	{
-		&zenlog ( "Certificate not found." );
+		&zenlog ( "Certificate not found.", "warning", "LSLB" );
 		return $output;
 	}
 
-	&zenlog( "setting 'Certificate $cfile' for $fname farm $type" );
+	&zenlog( "setting 'Certificate $cfile' for $fname farm $type", "info", "LSLB" );
 
 	if ( $type eq "https" )
 	{
@@ -119,7 +119,7 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 	}
 	else
 	{
-		&zenlog ( "Error, adding certificate to farm $fname. This farm is not https type." );
+		&zenlog ( "Error adding certificate to farm $fname. This farm is not https type.", "error", "LSLB" );
 	}
 
 	return $output;
@@ -150,7 +150,7 @@ sub setFarmDeleteCertSNI    #($certn,$fname)
 	my $i      = 0;
 	my $j      = 0;
 
-	&zenlog( "deleting 'Certificate $certn' for $fname farm $type" );
+	&zenlog( "Deleting 'Certificate $certn' for $fname farm $type", "info", "LSLB" );
 
 	if ( $type eq "https" )
 	{
@@ -209,7 +209,7 @@ sub setFarmDeleteCertNameSNI    #($certn,$fname)
 	my $output = -1;
 	my $j      = 0;
 
-	&zenlog( "deleting 'Certificate $certname' for $fname farm $type" );
+	&zenlog( "Deleting 'Certificate $certname' for $fname farm $type", "info", "LSLB" );
 
 	if ( $type eq "https" )
 	{

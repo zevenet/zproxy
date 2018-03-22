@@ -121,7 +121,7 @@ sub setSsh
 
 	if ( !-e $sshFile )
 	{
-		&zenlog( "SSH configuration file doesn't exist." );
+		&zenlog( "SSH configuration file doesn't exist.", "error", "SYSTEM" );
 		return -1;
 	}
 

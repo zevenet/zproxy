@@ -171,7 +171,7 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&zenlog( "setting 'Certificate $cfile' for $farm_name farm $farm_type" );
+	&zenlog( "Setting 'Certificate $cfile' for $farm_name farm $farm_type", "info", "LSLB" );
 	if ( $farm_type eq "https" )
 	{
 		# lock file
@@ -258,7 +258,7 @@ sub genDHFile    # ($farm_name)
 
 	if ( ! -e "$dhfile" )
 	{
-		&zenlog( "Generating DH keys in $dhfile ..." );
+		&zenlog( "Generating DH keys in $dhfile ...", "info", "LSLB" );
 		&setFarmLock( $farm_name, "on", "<a href=\"https://www.zenloadbalancer.com/knowledge-base/misc/diffie-hellman-keys-generation-important/\" target=\"_blank\">Generating SSL Diffie-Hellman 2048 keys</a> <img src=\"img/loading.gif\"/>" );
 
 		my $openssl = &getGlobalConfiguration('openssl');

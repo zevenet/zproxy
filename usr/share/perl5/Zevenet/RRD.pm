@@ -97,7 +97,7 @@ sub delGraph	#($name, type)
 
 	if ( $type =~ /farm/ )
 	{
-		&zenlog( "Delete graph file: $rrdap_dir/$rrd_dir/$name-farm.rrd", "info", "DELETE" );
+		&zenlog( "Delete graph file: $rrdap_dir/$rrd_dir/$name-farm.rrd", "info", "MONITOR" );
 		unlink glob ( "$rrdap_dir/$rrd_dir/$name-farm.rrd" );
 	}
 }

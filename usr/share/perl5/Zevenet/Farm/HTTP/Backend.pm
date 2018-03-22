@@ -93,12 +93,12 @@ sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 					if ( $contents[$i + 3] =~ /TimeOut/ )
 					{
 						$contents[$i + 3] = "\t\t\tTimeOut $timeout";
-						&zenlog( "Modified current timeout" );
+						&zenlog( "Modified current timeout", "info", "LSLB", "info", "LSLB" );
 					}
 					if ( $contents[$i + 4] =~ /Priority/ )
 					{
 						$contents[$i + 4] = "\t\t\tPriority $priority";
-						&zenlog( "Modified current priority" );
+						&zenlog( "Modified current priority", "info", "LSLB" );
 						$p_m = 1;
 					}
 					if ( $contents[$i + 3] =~ /Priority/ )
@@ -942,7 +942,7 @@ sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 	my $idsv = &getFarmVSI( $farm_name, $service );
 
 	&zenlog(
-		  "setting Maintenance mode for $farm_name service $service backend $backend" );
+		  "setting Maintenance mode for $farm_name service $service backend $backend", "info", "LSLB" );
 
 	if ( &getFarmStatus( $farm_name ) eq 'up' )
 	{
@@ -950,7 +950,7 @@ sub setHTTPFarmBackendMaintenance    # ($farm_name,$backend,$service)
 		my $poundctl_command =
 		  "$poundctl -c /tmp/$farm_name\_pound.socket -b 0 $idsv $backend";
 
-		&zenlog( "running '$poundctl_command'" );
+		&zenlog( "running '$poundctl_command'", "info", "LSLB" );
 		my @run = `$poundctl_command`;
 		$output = $?;
 	}
@@ -985,7 +985,7 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 	my $idsv = &getFarmVSI( $farm_name, $service );
 
 	&zenlog(
-		"setting Disabled maintenance mode for $farm_name service $service backend $backend"
+		"setting Disabled maintenance mode for $farm_name service $service backend $backend", "info", "LSLB"
 	);
 
 	if ( &getFarmStatus( $farm_name ) eq 'up' )
@@ -994,7 +994,7 @@ sub setHTTPFarmBackendNoMaintenance    # ($farm_name,$backend,$service)
 		my $poundctl_command =
 		  "$poundctl -c /tmp/$farm_name\_pound.socket -B 0 $idsv $backend";
 
-		&zenlog( "running '$poundctl_command'" );
+		&zenlog( "running '$poundctl_command'", "info", "LSLB" );
 		my @run = `$poundctl_command`;
 		$output = $?;
 	}
@@ -1084,7 +1084,7 @@ sub setHTTPFarmBackendStatus    # ($farm_name)
 {
 	my $farm_name = shift;
 
-	&zenlog( "Setting backends status in farm $farm_name" );
+	&zenlog( "Setting backends status in farm $farm_name", "info", "LSLB" );
 
 	my $be_status_filename = "$configdir\/$farm_name\_status.cfg";
 
@@ -1100,7 +1100,7 @@ sub setHTTPFarmBackendStatus    # ($farm_name)
 	{
 		my $msg = "Error opening $be_status_filename: $!. Aborting execution.";
 
-		&zenlog( $msg );
+		&zenlog( $msg, "error", "LSLB" );
 		die $msg;
 	}
 
@@ -1148,7 +1148,7 @@ sub setHTTPFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 	my @output;
 
 	&zenlog(
-		"Deleting established sessions to a backend $backendid from farm $farm_name in service $service"
+		"Deleting established sessions to a backend $backendid from farm $farm_name in service $service", "info", "LSLB"
 	);
 
 	foreach ( @content )
@@ -1173,7 +1173,7 @@ sub setHTTPFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 			$sessid     = $sessionid[1];
 			@output = `$poundctl -c  /tmp/$farm_name\_pound.socket -n 0 $serviceid $sessid`;
 			&zenlog(
-				"Executing:  $poundctl -c /tmp/$farm_name\_pound.socket -n 0 $serviceid $sessid"
+				"Executing:  $poundctl -c /tmp/$farm_name\_pound.socket -n 0 $serviceid $sessid", "info", "LSLB"
 			);
 		}
 	}

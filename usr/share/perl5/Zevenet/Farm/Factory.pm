@@ -60,7 +60,7 @@ sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 		return $output;
 	}
 
-	&zenlog( "running 'Create' for $farm_name farm $farm_type" );
+	&zenlog( "running 'Create' for $farm_name farm $farm_type", "info", "LSLB" );
 
 	if ( $farm_type =~ /^HTTP[S]?$/i )
 	{

@@ -170,7 +170,7 @@ sub setHttpServerIp
 	if ( $ip =~ /^\*$/ )
 	{
 		@array[1] = "#server!bind!1!interface = \n";
-		&zenlog( "The interface where is running is --All interfaces--" );
+		&zenlog( "The interface where is running is --All interfaces--", "info", "SYSTEM" );
 	}
 	else
 	{

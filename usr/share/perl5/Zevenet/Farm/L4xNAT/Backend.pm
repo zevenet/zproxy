@@ -54,7 +54,7 @@ sub setL4FarmServer    # ($ids,$rip,$port,$weight,$priority,$farm_name)
 	require Zevenet::Farm::L4xNAT::Config;
 
 	&zenlog(
-		"setL4FarmServer << ids:$ids rip:$rip port:$port weight:$weight priority:$priority farm_name:$farm_name max_conns:$max_conns"
+		"setL4FarmServer << ids:$ids rip:$rip port:$port weight:$weight priority:$priority farm_name:$farm_name max_conns:$max_conns", "debug", "LSLB", "debug", "LSLB"
 	) if &debug;
 
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -341,7 +341,7 @@ sub setL4FarmBackendsSessionsRemove
 	}
 	else
 	{
-		&zenlog( "Could not open file $recent_file: $!" );
+		&zenlog( "Could not open file $recent_file: $!", "warning", "LSLB" );
 	}
 
 	return $output;
@@ -376,7 +376,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	my $serverid = 0;         # server index tracker
 
 	&zenlog(
-		"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status)"
+		"setL4FarmBackendStatus(farm_name:$farm_name,server_id:$server_id,status:$status)", "debug", "LSLB"
 	);
 
 	my $farm        = &getL4FarmStruct( $farm_name );
@@ -481,7 +481,7 @@ sub getL4FarmServers    # ($farm_name)
 	my @servers;
 
 	open FI, "<", "$configdir/$farm_filename"
-	  or &zenlog( "Error opening file $configdir/$farm_filename: $!" );
+	  or &zenlog( "Error opening file $configdir/$farm_filename: $!", "error", "LSLB" );
 
 	while ( my $line = <FI> )
 	{
@@ -527,7 +527,7 @@ sub getL4FarmBackends    # ($farm_name)
 	my $farmStatus = &getFarmStatus( $farm_name );
 
 	open FI, "<", "$configdir/$farm_filename"
-	  or &zenlog( "Error opening file $configdir/$farm_filename: $!" );
+	  or &zenlog( "Error opening file $configdir/$farm_filename: $!", "error", "LSLB" );
 
 	require Zevenet::Alias;
 	my $alias = getAlias( 'backend' );
@@ -629,7 +629,7 @@ sub _runL4ServerStart    # ($farm_name,$server_id)
 	my $status = 0;
 	my $rules;
 
-	&zenlog( "_runL4ServerStart << farm_name:$farm_name server_id:$server_id" )
+	&zenlog( "_runL4ServerStart << farm_name:$farm_name server_id:$server_id", "debug", "LSLB" )
 	  if &debug;
 
 	my $fg_enabled = ( &getFarmGuardianConf( $farm_name ) )[3];
@@ -976,7 +976,7 @@ sub resetL4FarmBackendConntrackMark
 	my $conntrack = &getGlobalConfiguration( 'conntrack' );
 	my $cmd       = "$conntrack -D -m $server->{ tag }";
 
-	&zenlog( "running: $cmd" ) if &debug();
+	&zenlog( "running: $cmd", "info", "LSLB" ) if &debug();
 
 	# return_code = 0 -> deleted
 	# return_code = 1 -> not found/deleted
@@ -988,11 +988,11 @@ sub resetL4FarmBackendConntrackMark
 	{
 		if ( $return_code )
 		{
-			&zenlog( "Connection tracking for $server->{ vip } not found." );
+			&zenlog( "Connection tracking for $server->{ vip } not found.", "info", "LSLB" );
 		}
 		else
 		{
-			&zenlog( "Connection tracking for $server->{ vip } removed." );
+			&zenlog( "Connection tracking for $server->{ vip } removed.", "info", "LSLB" );
 		}
 	}
 

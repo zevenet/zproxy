@@ -151,7 +151,7 @@ sub validateRBACUserZapi
 
 	if ( !$user )
 	{
-		&zenlog( "RBAC, the zapikey does not match with any user" );
+		&zenlog( "RBAC, the zapikey does not match with any user", "warning", "RBAC" );
 		return 0;
 	}
 
@@ -162,7 +162,7 @@ sub validateRBACUserZapi
 
 	if ( !grep ( / zapi( |$)/, $user_groups ) )
 	{
-		&zenlog( "RBAC, the user $user has not zapi permissions" );
+		&zenlog( "RBAC, the user $user has not zapi permissions", "warning", "RBAC" );
 		return 0;
 	}
 

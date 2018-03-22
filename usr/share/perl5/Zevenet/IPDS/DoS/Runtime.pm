@@ -167,7 +167,7 @@ sub setDOSStopRule
 		my $output = &iptSystem( $cmd );
 		if ( $output != 0 )
 		{
-			&zenlog( "Error deleting '$cmd'" );
+			&zenlog( "Error deleting '$cmd'", "error", "IPDS" );
 			$output++;
 		}
 	}
@@ -542,7 +542,7 @@ sub setDOSDropIcmpRule
 	my $output = &setIPDSDropAndLog( $cmd, $logMsg );
 	if ( $output != 0 )
 	{
-		&zenlog( "Error appling '$rule' rule." );
+		&zenlog( "Error appling '$rule' rule.", "error", "IPDS" );
 	}
 
 	return $output;
@@ -661,7 +661,7 @@ sub setDOSApplyRule
 	else
 	{
 		&setDOSUnlockConfigFile( $lock );
-		&zenlog( "Rule $ruleName already is applied" );
+		&zenlog( "Rule $ruleName already is applied", "warning", "IPDS" );
 		return 0;
 	}
 
@@ -673,7 +673,7 @@ sub setDOSApplyRule
 			$output = &setDOSRunRule( $ruleName, $farmName );
 			if ( $output )
 			{
-				&zenlog( "Error, running rule $ruleName" );
+				&zenlog( "Error, running rule $ruleName", "error", "IPDS" );
 			}
 		}
 	}

@@ -85,7 +85,7 @@ sub setFarmClientTimeout    # ($client,$farm_name)
 
 			if ( $filefarmhttp[$i_f] =~ /^Client/ )
 			{
-				&zenlog( "setting 'ClientTimeout $client' for $farm_name farm $farm_type" );
+				&zenlog( "setting 'ClientTimeout $client' for $farm_name farm $farm_type", "info", "LSLB" );
 				$filefarmhttp[$i_f] = "Client\t\t $client";
 				$output             = $?;
 				$found              = "true";
@@ -161,7 +161,7 @@ sub setHTTPFarmSessionType    # ($session,$farm_name)
 	# lock file
 	my $lock_fh = &lockHTTPFile( $farm_name );
 
-	&zenlog( "setting 'Session type $session' for $farm_name farm $farm_type" );
+	&zenlog( "Setting 'Session type $session' for $farm_name farm $farm_type", "info", "LSLB" );
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
 	my $i     = -1;
 	my $found = "false";
@@ -301,7 +301,7 @@ sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 		if ( $filefarmhttp[$i_f] =~ /^Alive/ )
 		{
 			&zenlog(
-					"setting 'Blacklist time $blacklist_time' for $farm_name farm $farm_type" );
+					"Setting 'Blacklist time $blacklist_time' for $farm_name farm $farm_type", "info", "LSLB" );
 			$filefarmhttp[$i_f] = "Alive\t\t $blacklist_time";
 			$output             = $?;
 			$found              = "true";
@@ -389,7 +389,7 @@ sub setFarmHttpVerb    # ($verb,$farm_name)
 			$i_f++;
 			if ( $filefarmhttp[$i_f] =~ /xHTTP/ )
 			{
-				&zenlog( "setting 'Http verb $verb' for $farm_name farm $farm_type" );
+				&zenlog( "Setting 'Http verb $verb' for $farm_name farm $farm_type", "info", "LSLB" );
 				$filefarmhttp[$i_f] = "\txHTTP $verb";
 				$output             = $?;
 				$found              = "true";
@@ -621,7 +621,7 @@ sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
-	&zenlog( "setting 'Rewrite Location' for $farm_name to $rewritelocation" );
+	&zenlog( "setting 'Rewrite Location' for $farm_name to $rewritelocation", "info", "LSLB" );
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -708,7 +708,7 @@ sub setFarmConnTO    # ($tout,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&zenlog( "setting 'ConnTo timeout $tout' for $farm_name farm $farm_type" );
+	&zenlog( "Setting 'ConnTo timeout $tout' for $farm_name farm $farm_type", "info", "LSLB" );
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
@@ -998,7 +998,7 @@ sub setFarmErr    # ($farm_name,$content,$nerr)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	&zenlog( "setting 'Err $nerr' for $farm_name farm $farm_type" );
+	&zenlog( "Setting 'Err $nerr' for $farm_name farm $farm_type", "info", "LSLB" );
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		if ( -e "$configdir\/$farm_name\_Err$nerr.html" && $nerr != "" )
@@ -1362,8 +1362,8 @@ sub getHTTPFarmConfigIsOK    # ($farm_name)
 	if ( $rc or &debug() )
 	{
 		my $message = $rc ? 'failed' : 'running';
-		&zenlog( "$message: $pound_command" );
-		&zenlog( "output: $run " );
+		&zenlog( "$message: $pound_command", "error", "LSLB" );
+		&zenlog( "output: $run ", "error", "LSLB" );
 	}
 
 	return $rc;
@@ -1473,7 +1473,7 @@ sub setFarmNameParam    # &setFarmNameParam( $farm_name, $new_name );
 	my $farmFilename = &getFarmFile( $farmName );
 	my $output       = -1;
 
-	&zenlog( "setting 'farm name $newName' for $farmName farm $farmType" );
+	&zenlog( "Setting 'farm name $newName' for $farmName farm $farmType", "info", "LSLB" );
 
 	if ( $farmType eq "http" || $farmType eq "https" )
 	{

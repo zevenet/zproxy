@@ -204,7 +204,7 @@ sub sendL4ConfChange    # ($farm_name)
 	}
 	else
 	{
-		&zenlog( "Running L4 restart for $farm_name" );
+		&zenlog( "Running L4 restart for $farm_name", "info", "LSLB" );
 		&_runL4FarmRestart( $farm_name, "false", "" );
 	}
 
@@ -525,11 +525,11 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 
 					# close normally
 					kill 'TERM' => $pid;
-					&zenlog( "l4sd ended" );
+					&zenlog( "l4sd ended", "info", "LSLB" );
 				}
 				else
 				{
-					&zenlog( "Error opening file l4sd_pidfile: $!" ) if !defined $pidfile;
+					&zenlog( "Error opening file l4sd_pidfile: $!", "error", "LSLB" ) if !defined $pidfile;
 				}
 			}
 		}
@@ -609,7 +609,7 @@ sub setFarmProto    # ($proto,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = 0;
 
-	&zenlog( "setting 'Protocol $proto' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'Protocol $proto' for $farm_name farm $farm_type", "info", "LSLB" );
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $old_proto  = $$farm{ vproto };
@@ -742,7 +742,7 @@ sub setFarmNatType    # ($nat,$farm_name)
 
 	require Zevenet::FarmGuardian;
 
-	&zenlog( "setting 'NAT type $nat' for $farm_name farm $farm_type" );
+	&zenlog( "setting 'NAT type $nat' for $farm_name farm $farm_type", "info", "LSLB" );
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
@@ -1415,7 +1415,7 @@ sub refreshL4FarmRules    # AlgorithmRules
 
 	unless ( $ipt_lockfile )
 	{
-		&zenlog( "Could not open $iptlock: $!" );
+		&zenlog( "Could not open $iptlock: $!", "warning", "LSLB" );
 		return 1;
 	}
 

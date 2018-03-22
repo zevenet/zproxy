@@ -46,7 +46,7 @@ sub setConntrackdConfig
 	include 'Zevenet::Cluster';
 	require Zevenet::SystemInfo;
 
-	&zenlog("Setting conntrackd configuration file");
+	&zenlog("Setting conntrackd configuration file", "info", "CLUSTER");
 
 	my $zcl_conf = &getZClusterConfig();
 	my $conntrackd_conf = &getGlobalConfiguration('conntrackd_conf');
@@ -55,7 +55,7 @@ sub setConntrackdConfig
 
 	if ( ! $ct_file )
 	{
-		&zenlog("Could not open file $conntrackd_conf: $!");
+		&zenlog("Could not open file $conntrackd_conf: $!", "warning", "CLUSTER");
 		return 1;
 	}
 
@@ -153,7 +153,7 @@ See Also:
 =cut
 sub startConntrackd
 {
-	&zenlog("Starting conntrackd");
+	&zenlog("Starting conntrackd", "info", "CLUSTER");
 	return system("/etc/init.d/conntrackd start >/dev/null 2>&1");
 }
 
@@ -175,12 +175,12 @@ See Also:
 =cut
 sub stopConntrackd
 {
-	&zenlog("Stopping conntrackd");
+	&zenlog("Stopping conntrackd", "info", "CLUSTER");
 	system("/etc/init.d/conntrackd stop >/dev/null 2>&1");
 
 	if ( getConntrackdRunning() )
 	{
-		&zenlog("Forcing conntrackd to stop");
+		&zenlog("Forcing conntrackd to stop", "info", "CLUSTER");
 		system("pkill conntrackd >/dev/null 2>&1");
 	}
 

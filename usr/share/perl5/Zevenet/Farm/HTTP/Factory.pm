@@ -53,7 +53,7 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 	#copy template modyfing values
 	my $poundtpl = &getGlobalConfiguration('poundtpl');
 	my $pound_conf_file = "$configdir/${farm_name}_pound.cfg";
-	&zenlog( "copying pound template ($poundtpl) to $pound_conf_file" );
+	&zenlog( "Copying pound template ($poundtpl) to $pound_conf_file", "info", "LSLB" );
 	copy( $poundtpl, $pound_conf_file );
 
 	#modify strings with variables
@@ -93,7 +93,7 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 
 	#run farm
 	&zenlog(
-		"running $pound -f $configdir\/$farm_name\_pound.cfg -p $piddir\/$farm_name\_pound.pid"
+		"Running $pound -f $configdir\/$farm_name\_pound.cfg -p $piddir\/$farm_name\_pound.pid", "info", "LSLB"
 	);
 
 	require Zevenet::System;
