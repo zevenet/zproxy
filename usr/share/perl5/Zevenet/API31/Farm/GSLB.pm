@@ -418,7 +418,7 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 
 		my @current_be = split ( " => ", $be_line );
 
-		if ( $current_be[0] == $backend_id )
+		if ( $current_be[0] eq $backend_id )
 		{
 			$be = {
 					id       => $current_be[1],
