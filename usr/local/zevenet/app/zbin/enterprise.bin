@@ -142,6 +142,7 @@ unless ( $skip_cert_check )
 
 
 ## Module. Find, decrypt and load the module
+#~ include $module;
 
 # validate module
 my $mod_path = "$lib_path/$module.pm";
@@ -184,11 +185,16 @@ if ( $@ )
 
 
 ## Function. Check the function is in the module, load params from input in JSON
+#~ my @code = split( "\n", $code );
+#~ &zenlog("enterprise.bin code: $_") for grep( /$func/, @code );
+
+my $func_found = grep { /^sub $func(?:\W|$)/ } split( "\n", $code );
+#~ &zenlog("enterprise.bin count: $count");
 
 # check if the function is available
-unless ( grep { /^sub $func(?:\W|$)/ } split( '\n', $code ) )
+unless ( $func_found )
 {
-	die "$basename: API function $func definition not found in $module. $basename file";
+	die "$basename: definition of function $func not found in $module";
 }
 
 
