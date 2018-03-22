@@ -216,6 +216,7 @@ sub getFarmVipStatus    # ($farm_name)
 	elsif ( $type eq "gslb" )
 	{
 		require Zevenet::Farm::Service;
+		require Zevenet::Farm::Config;
 
 		foreach my $srv ( &getFarmServices($farm_name) )
 		{
