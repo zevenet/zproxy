@@ -115,7 +115,7 @@ Run encrypted module accepting arguments from STDIN in JSON format, returning JS
 my $func = shift @ARGV;
 unless ( $func )
 {
-	die "$0: No API function name received.";
+	die "$basename: No function name received.";
 }
 
 
@@ -135,7 +135,7 @@ unless ( $skip_cert_check )
 
 	if ( $swcert > 0 )
 	{
-		die "$0: Invalid activation certificate ($swcert)";
+		die "$basename: Invalid activation certificate ($swcert)";
 	}
 }
 
@@ -160,6 +160,7 @@ elsif ( -f $emod_path )
 	$cmd .= " -md md5" if `uname -r` =~ /^4.9/;
 
 	$code = `$cmd`;
+	# FIXME: Check errno
 }
 else
 {
@@ -187,7 +188,7 @@ if ( $@ )
 # check if the function is available
 unless ( grep { /^sub $func(?:\W|$)/ } split( '\n', $code ) )
 {
-	die "$0: API function $func definition not found";
+	die "$basename: API function $func definition not found in $module. $basename file";
 }
 
 
