@@ -41,6 +41,9 @@ sub eload
 		die( $msg );
 	}
 
+	use Carp qw(cluck);
+	cluck "[eload]" if &debug() > 3; # warn with stack backtrace
+
 	# check not used params
 	if ( grep { not exists $req{ $_ } } @required )
 	{
@@ -50,8 +53,8 @@ sub eload
 		&zenlog( $msg );
 	}
 
-	my $zbin_path  = '/usr/local/zevenet/app/zbin';
-	my $bin        = "$zbin_path/enterprise.bin";
+	my $zbin_path = '/usr/local/zevenet/app/zbin';
+	my $bin       = "$zbin_path/enterprise.bin";
 	my $input;
 
 	require JSON;
