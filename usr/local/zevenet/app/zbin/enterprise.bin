@@ -185,8 +185,8 @@ if ( $@ )
 
 
 ## Function. Check the function is in the module, load params from input in JSON
-#~ my @code = split( "\n", $code );
-#~ &zenlog("enterprise.bin code: $_") for grep( /$func/, @code );
+my @code = split( "\n", $code );
+&zenlog("enterprise.bin code: $_") for grep( /$func/, @code );
 
 my $func_found = grep { /^sub $func(?:\W|$)/ } split( "\n", $code );
 #~ &zenlog("enterprise.bin count: $count");
@@ -317,18 +317,18 @@ sub include
 	my $debug = &debug();
 	#~ my $debug = 1;
 
-	&zenlog("< include > mod_space = $mod_space");# if $debug;
+	&zenlog("< include > mod_space    = $mod_space");# if $debug;
 
 	my $path_prefix = &getGlobalConfiguration('zlibdir');
 	$path_prefix =~ s|/Zevenet$||;
 
-	&zenlog("< include > path_prefix = $path_prefix") if $debug;
+	&zenlog("< include > path_prefix  = $path_prefix") if $debug;
 
 	# get mod's path
 	my $mod_path = $mod_space;
 	$mod_path =~ s|::|/|g;
 
-	&zenlog("< include > mod_path = $mod_path") if $debug;
+	&zenlog("< include > mod_path     = $mod_path") if $debug;
 
 	my $enc;
 	my $mod_key;
