@@ -68,7 +68,7 @@ sub set_ssh
 		{
 			if ( $sshIp eq $iface->{ addr } )
 			{
-				if ( $iface->{ vini } ne '' )    # discard virtual interfaces
+				if ( $iface->{ type } eq 'virtual' )    # discard virtual interfaces
 				{
 					my $msg = "Virtual interface canot be configurate as http interface.";
 					return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );

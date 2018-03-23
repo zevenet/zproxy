@@ -92,7 +92,7 @@ sub set_http
 		{
 			next unless $httpIp eq $iface->{ addr };
 
-			if ( $iface->{ vini } ne '' )    # discard virtual interfaces
+			if ( $iface->{ type } eq 'virtual' )    # discard virtual interfaces
 			{
 				my $msg = "Virtual interface canot be configurate as http interface.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
