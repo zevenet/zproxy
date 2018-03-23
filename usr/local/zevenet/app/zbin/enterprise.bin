@@ -30,10 +30,11 @@ use Zevenet::Debug;
 use Zevenet::Config;
 use Data::Dumper;
 
+sub include;
+
 my $DEBUG    = &debug();
 my $SYMKEY   = "1135628147310";
-my $lib_path = '/usr/share/perl5';
-my $module   = shift @ARGV;
+my $mod;
 my $program_name =
     ( $0 ne '-e' ) ? $0
   : ( exists $ENV{ _ } && $ENV{ _ } !~ /enterprise.bin$/ ) ? $ENV{ _ }
@@ -59,7 +60,7 @@ if ( $basename ne 'enterprise.bin' && $basename ne 'zevenet' )
 		$basename = "$basename-$api_ver"; # add version. E.g.: 'zapi-v3'
 	}
 
-	my $mod = "Zevenet::Cmd::$basename";
+	$mod->{ name } = "Zevenet::Cmd::$basename";
 
 #	if ( $DEBUG )
 #	{
@@ -77,15 +78,17 @@ if ( $basename ne 'enterprise.bin' && $basename ne 'zevenet' )
 #		#~ say( $msg );
 #	}
 
-	&include( $mod );
+	include $mod->{ name };
 	exit;
 }
 
 require Zevenet::Validate;
 require Zevenet::SystemInfo;
 
+$mod->{ name } = shift @ARGV;
+
 # check module name provided
-unless ( $module )
+unless ( $mod->{ name } )
 {
 	print STDERR "enterprise.bin: missing operand
 Try 'enterprise.bin --help' for more information.\n";
@@ -94,7 +97,7 @@ Try 'enterprise.bin --help' for more information.\n";
 }
 
 # command help and usage instructions
-if ( $module =~ /^(?:-h|-help|--help)$/ )
+if ( $mod->{ name } =~ /^(?:-h|-help|--help)$/ )
 {
 	print "Usage: enterprise.bin MODULE [FUNCTION]
 Decrypt Zevenet Enterprise Edition Module.
@@ -107,9 +110,12 @@ Run encrypted module accepting arguments from STDIN in JSON format, returning JS
 	exit 0;
 }
 
+&getModuleInfo( $mod );
 
 
-## Required conditions
+#########################
+## Required conditions ##
+#########################
 
 # check function name provided
 my $func = shift @ARGV;
@@ -119,14 +125,15 @@ unless ( $func )
 }
 
 
-
-## Activation certificate
+############################
+## Activation certificate ##
+############################
 
 # check if the activation certificate is valid
 my $hostname = &getHostname();
 my $basedir  = &getGlobalConfiguration('basedir');
 
-my $skip_cert_check = (    $module =~ /Zevenet::API3\d::Certificate::Activation/
+my $skip_cert_check = (    $mod->{ name } =~ /Zevenet::API3\d::Certificate::Activation/
 						&& $func   eq 'upload_activation_certificate' );
 
 unless ( $skip_cert_check )
@@ -142,62 +149,7 @@ unless ( $skip_cert_check )
 
 
 ## Module. Find, decrypt and load the module
-#~ include $module;
-
-# validate module
-my $mod_path = "$lib_path/$module.pm";
-$mod_path =~ s#\:\:#\/#g; # Replace :: with /
-my $emod_path = "${mod_path}e";
-
-my $code;
-
-if ( -f $mod_path )
-{
-	$code = `cat ${mod_path}`;
-}
-elsif ( -f $emod_path )
-{
-	my $cmd = "openssl aes-256-cbc -d -a -nosalt -k \"${SYMKEY}\" -in ${emod_path}";
-	$cmd .= " -md md5" if `uname -r` =~ /^4.9/;
-
-	$code = `$cmd`;
-	# FIXME: Check errno
-}
-else
-{
-	my $msg = "Module file $module not found.";
-	&zenlog( $msg );
-	die $msg;
-}
-
-# load module
-eval $code;
-
-if ( $@ )
-{
-	&zenlog( "### Module path:   $mod_path" );
-	&zenlog( "### E-Module path: $emod_path" );
-	&zenlog( "### Module name:   $module" );
-	&zenlog( $@ );
-	die $@;
-}
-
-
-
-## Function. Check the function is in the module, load params from input in JSON
-my @code = split( "\n", $code );
-&zenlog("enterprise.bin function found: '$_'") for grep( /^sub /, @code );
-&zenlog("enterprise.bin code: '$_'") for grep( /$func/, @code );
-
-my $func_found = grep { /^sub $func(?:\W|$)/ } split( "\n", $code );
-&zenlog("enterprise.bin count: $func_found");
-
-# check if the function is available
-unless ( $func_found )
-{
-	die "$basename: definition of function $func not found in $module";
-}
-
+include $mod->{ name }, $func;
 
 
 # Arguments. Passed from STDIN as a JSON string
@@ -237,8 +189,8 @@ my $returned_value;
 # call api request function
 eval { $returned_value = [ $code_ref->( @{ $args } ) ] };
 
-&zenlog("$module::$func returned ". $returned_value );
-&zenlog("$module::$func returned value dump ". Dumper( $returned_value ) );
+&zenlog("$mod->{ name }::$func returned ". $returned_value );
+&zenlog("$mod->{ name }::$func returned value dump ". Dumper( $returned_value ) );
 
 if ( $@ )
 {
@@ -276,7 +228,7 @@ print $output;
 # Send memory usage info to system log
 if ( &debug() )
 {
-	my $msg = "MODULE: $module FUNCTION: $func " . &getMemoryUsage();
+	my $msg = "MODULE: $mod->{ name } FUNCTION: $func " . &getMemoryUsage();
 
 	&zenlog( $msg );
 }
@@ -284,18 +236,72 @@ if ( &debug() )
 exit 0;
 
 
+
+=begin nd
+Function: getModuleInfo
+
+	Get some information from a module
+
+
+	Variable		Example
+	--------------------------------------------------------
+	'lib_path'    '/usr/share/perl5',
+	'path'        'Zevenet/Cluster.pm',
+	'fullpath'    '/usr/share/perl5/Zevenet/Cluster.pm',
+	'key'         'Zevenet/Cluster.pm',
+	'name'        'Zevenet::Cluster',
+	'epath'       'Zevenet/Cluster.pme',
+	'enc'         'false'
+
+
+Parameters:
+	mod_space - .
+
+Returns:
+	undef
+=cut
+sub getModuleInfo
+{
+	my $mod = shift;
+
+	# Predefined lib path
+	$mod->{ lib_path } = '/usr/share/perl5';
+
+	# There are 2 possible paths:
+	# - path	=> is a .pm file
+	# - epath	=> is a .pme file
+	$mod->{ path } = "$mod->{ name }.pm";
+	$mod->{ path } =~ s#\:\:#\/#g;    # Replace :: with /
+	$mod->{ epath } = "$mod->{ path }e";
+
+	# Store in $mod->{ key } the correct path relative to $mod->{ lib_path }
+	if ( -f "$mod->{ lib_path }/$mod->{ path }" )
+	{
+		$mod->{ enc } = 'false';
+		$mod->{ key } = "$mod->{ path }";
+	}
+	elsif ( -f "$mod->{ lib_path }/$mod->{ epath }" )
+	{
+		$mod->{ enc } = 'true';
+		$mod->{ key } = "$mod->{ epath }";
+	}
+	else
+	{
+		$mod->{ key } = '';
+		&zenlog( "FAILURE!!! \$mod->{ lib_path }/\$mod->{ key }: $mod->{ lib_path }/$mod->{ key }" );
+	}
+
+	# Store in $mod->{ fullpath } the full path to the module
+	$mod->{ fullpath } = "$mod->{ lib_path }/$mod->{ key }";
+
+	# Debugging message
+	&zenlog( Data::Dumper->Dump( [$mod], ['mod'] ) ) if $DEBUG;
+}
+
 =begin nd
 Function: include
 
 	Load Enterprise module, encrypted or not.
-
-
-	Variable			Example
-	------------------------------------
-	$mod_space			Zevenet::Debug
-	$mod_path			Zevenet/Debug
-	$mod_key			Zevenet/Debug.pme
-	$mod_fullpath		/usr/share/perl5/Zevenet/Debug.pme
 
 
 	Example %INC:
@@ -313,64 +319,28 @@ Returns:
 =cut
 sub include
 {
-	my ( $mod_space ) = @_;
+	my $mod;
+	$mod->{ name } = shift @_;
+	my $func = shift;
 
-	my $debug = &debug();
-	#~ my $debug = 1;
-
-	&zenlog("< include > mod_space    = $mod_space");# if $debug;
-
-	my $path_prefix = &getGlobalConfiguration('zlibdir');
-	$path_prefix =~ s|/Zevenet$||;
-
-	&zenlog("< include > path_prefix  = $path_prefix") if $debug;
-
-	# get mod's path
-	my $mod_path = $mod_space;
-	$mod_path =~ s|::|/|g;
-
-	&zenlog("< include > mod_path     = $mod_path") if $debug;
-
-	my $enc;
-	my $mod_key;
-
-	if ( -f "$path_prefix/$mod_path.pm" )
-	{
-		$enc          = 'false';
-		$mod_key      = "$mod_path.pm";
-	}
-	elsif ( -f "$path_prefix/$mod_path.pme" )
-	{
-		$enc          = 'true';
-		$mod_key      = "$mod_path.pme";
-	}
-	else
-	{
-		&zenlog("FAILURE!!! \$path_prefix/\$mod_key: $path_prefix/$mod_key");
-	}
-
-	my $mod_fullpath = "$path_prefix/$mod_key";
-
-	if ( $debug )
-	{
-		&zenlog( "< include > enc          = $enc" );
-		&zenlog( "< include > mod_key      = $mod_key" );
-		&zenlog( "< include > mod_fullpath = $mod_fullpath" );
-	}
+	&getModuleInfo( $mod );
 
 	# Finish if the module is already loaded
-	return if exists $INC{ $mod_key };
+	return if exists $INC{ $mod->{ key } };
 
-	if ( $enc eq 'false' )    # Load unencrypted module
+	my $code;
+
+	if ( $mod->{ enc } eq 'false' )    # Load unencrypted module
 	{
-		require $mod_fullpath;
+		require $mod->{ fullpath };
+		$code = `cat $mod->{ fullpath }`;
 	}
-	elsif ( $enc eq 'true' )    # Load encrypted module
+	elsif ( $mod->{ enc } eq 'true' )    # Load encrypted module
 	{
 		my $uname          = &getGlobalConfiguration( 'uname' );
 		my $kernel_release = `$uname -r`;
 
-		my $cmd = "openssl aes-256-cbc -d -a -nosalt -k \"${SYMKEY}\" -in ${mod_fullpath}";
+		my $cmd = "openssl aes-256-cbc -d -a -nosalt -k \"${SYMKEY}\" -in $mod->{ fullpath }";
 		$cmd .= " -md md5" if $kernel_release =~ /^4.9/;
 
 		# get code
@@ -382,20 +352,40 @@ sub include
 		# log error messages if any happened
 		if ( $@ )
 		{
-			&zenlog( "### Module name: $mod_space" );
-			&zenlog( "### Module path: $mod_fullpath" );
+			&zenlog( "### Module name: $mod->{ name }" );
+			&zenlog( "### Module path: $mod->{ fullpath }" );
 			&zenlog( $@ );
 			die $@;
 		}
 		else
 		{
-			$INC{ $mod_key } = $mod_fullpath;
+			$INC{ $mod->{ key } } = $mod->{ fullpath };
+		}
+	}
+
+	if ( $func )
+	{
+		# Function. Check the function is in the module, load params from input in JSON
+		my @code = split( "\n", $code );
+		&zenlog("enterprise.bin function found: '$_'") for grep( /^sub /, @code );
+		&zenlog("enterprise.bin code: '$_'") for grep( /$func/, @code );
+
+		my $func_found = grep { /^sub $func(?:\W|$)/ } split( "\n", $code );
+		&zenlog("enterprise.bin count: $func_found");
+
+		# check if the function is available
+		unless ( $func_found )
+		{
+			die "$basename: definition of function $func not found in $mod->{ name }";
 		}
 	}
 }
 
 
+
+############################################
 ### Activation certificate code ############
+############################################
 #~ use Time::Local;
 #~ use Zevenet::Config;
 #~ use Zevenet::SystemInfo;
