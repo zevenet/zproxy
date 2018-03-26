@@ -621,6 +621,13 @@ sub get_cluster_localhost_status
 	my $node = &getZClusterNodeStatusDigest();
 	$node->{ name } = &getHostname();
 
+	if ( $node->{ role } eq 'error' )
+	{
+		$node->{ role }    = 'not configured';
+		$node->{ status }  = 'not configured';
+		$node->{ message } = 'Cluster not configured';
+	}
+
 	my $body = {
 				 description => $desc,
 				 params      => $node,
