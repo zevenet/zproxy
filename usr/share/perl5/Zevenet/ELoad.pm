@@ -100,6 +100,8 @@ sub eload
 	}
 	my $rc = $?;
 
+	chomp $ret_output;
+
 	&zenlog( "enterprise.bin errno: '$rc'" );
 	&zenlog( "$req{ module }::$req{ func } output: '$ret_output'" );
 
