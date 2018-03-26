@@ -909,12 +909,20 @@ sub getZClusterNodeStatus
 	require Zevenet::Config;
 
 	my $znode_status_file = &getGlobalConfiguration('znode_status_file');
+
+	# Empty return if the file does not exists or is empty
+	unless ( -e $znode_status_file && -s $znode_status_file )
+	{
+		return;
+	}
+
 	open my $znode_status, '<', $znode_status_file;
 
+	# Empty return if the file could not be opened
 	if ( ! $znode_status )
 	{
 		#~ &zenlog( "Could not open file $znode_status_file: $!" );
-		return undef;
+		return;
 	}
 
 	my $status = <$znode_status>;
