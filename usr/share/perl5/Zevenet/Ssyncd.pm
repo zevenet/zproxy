@@ -184,12 +184,14 @@ sub setSsyncdMaster
 		# Before changing to master mode:
 		# ./ssyncdctl write http   --> Write http sessions data to pound
 		# ./ssyncdctl write recent --> Write recent data to recent module
+		my $error;
+
 		$ssync_cmd = "$ssyncdctl_bin write http";
-		my $error = system( "$ssync_cmd" );
+		$error = system( "$ssync_cmd" );
 		&zenlog("setSsyncdMaster ssyncd write http: $error > cmd: $ssync_cmd") if $error;
 
 		$ssync_cmd = "$ssyncdctl_bin write recent";
-		my $error = system( "$ssync_cmd" );
+		$error = system( "$ssync_cmd" );
 		&zenlog("setSsyncdMaster ssyncd write recent: $error > cmd: $ssync_cmd") if $error;
 
 		&setSsyncdDisabled();
