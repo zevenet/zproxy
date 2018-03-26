@@ -28,9 +28,9 @@ use Unix::Syslog qw(:macros :subs);  # Syslog macros
 #~ use Sys::Syslog qw(:standard :macros);    #standard functions for Syslog
 
 # Get the program name for zenlog
-my $run_cmd_name = ( split '/', $0 )[-1];
-$run_cmd_name = ( split '/', "$ENV{'SCRIPT_NAME'}" )[-1] if $run_cmd_name eq '-e';
-$run_cmd_name = ( split '/', $^X )[-1] if ! $run_cmd_name;
+#~ my $run_cmd_name = ( split '/', $0 )[-1];
+#~ $run_cmd_name = ( split '/', "$ENV{'SCRIPT_NAME'}" )[-1] if $run_cmd_name eq '-e';
+#~ $run_cmd_name = ( split '/', $^X )[-1] if ! $run_cmd_name;
 
 
 ############################## Debug ######################################
@@ -80,7 +80,7 @@ sub zenlog    # ($string, $type)
 	my $type = shift // 'info';    # type   = log level (Default: info))
 
 	# Get the program name
-	my $program = $run_cmd_name;
+	my $program = $basename;
 
 	#~ openlog( $program, 'pid', 'local0' );    #open syslog
 	openlog( $program, LOG_PID, LOG_LOCAL0 );
@@ -153,18 +153,22 @@ See Also:
 sub logAndRun    # ($command)
 {
 	my $command = shift;    # command string to log and run
-	my $return_code;
-	my @cmd_output;
-
-	my $program = ( split '/', $0 )[-1];
-	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
-	$program .= ' ';
-	# &zenlog( (caller (2))[3] . ' >>> ' . (caller (1))[3]);
 
 	require Zevenet::Debug;
+
+	my $return_code;
+	my @cmd_output;
+	my $program = $basename;
+
+	#~ my $program = ( split '/', $0 )[-1];
+	#~ $program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
+	#~ $program .= ' ';
+
+	# &zenlog( (caller (2))[3] . ' >>> ' . (caller (1))[3]);
+
 	if ( &debug )
 	{
-		&zenlog( $program . "running: $command" );
+		&zenlog( "$program running: $command" );
 
 		@cmd_output = `$command 2>&1`;
 		$return_code = $?;
@@ -179,7 +183,7 @@ sub logAndRun    # ($command)
 	{
 		system ( "$command >/dev/null 2>&1" );
 		$return_code = $?;
-		&zenlog( $program . "failed: $command", 'error' ) if $return_code;
+		&zenlog( "$program failed: $command", 'error' ) if $return_code;
 	}
 
 	# returning error code from execution
