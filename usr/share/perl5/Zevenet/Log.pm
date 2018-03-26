@@ -93,8 +93,8 @@ sub zlog                                          # (@message)
 {
 	my @message = shift;
 
-	#my ($package,		# 0
-	#$filename,		# 1
+	#my ($package,   # 0
+	#$filename,      # 1
 	#$line,          # 2
 	#$subroutine,    # 3
 	#$hasargs,       # 4
