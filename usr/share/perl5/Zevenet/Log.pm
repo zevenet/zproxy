@@ -32,6 +32,26 @@ my $run_cmd_name = ( split '/', $0 )[-1];
 $run_cmd_name = ( split '/', "$ENV{'SCRIPT_NAME'}" )[-1] if $run_cmd_name eq '-e';
 $run_cmd_name = ( split '/', $^X )[-1] if ! $run_cmd_name;
 
+
+############################## Debug ######################################
+my $TAG = "[Log.pm]";
+my $program_name =
+    ( $0 ne '-e' ) ? $0
+  : ( exists $ENV{ _ } && $ENV{ _ } !~ /enterprise.bin$/ ) ? $ENV{ _ }
+  :                                                          $^X;
+
+my $basename = ( split ( '/', $program_name ) )[-1];
+
+&zenlog("$TAG \$0 = '$0'");
+&zenlog("$TAG \$^X = '$^X'");
+&zenlog("$TAG \$ENV\{_\} = '$ENV{_}'") if exists $ENV{_};
+&zenlog("$TAG \$ENV\{SCRIPT_NAME\} = '$ENV{SCRIPT_NAME}'") if exists $ENV{SCRIPT_NAME};
+&zenlog("$TAG \$program_name = '$program_name'");
+&zenlog("$TAG \$basename = '$basename'");
+
+###########################################################################
+
+
 =begin nd
 Function: zenlog
 
