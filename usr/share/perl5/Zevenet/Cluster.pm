@@ -1317,7 +1317,7 @@ sub getZClusterNodeStatusDigest
 	my $n              = &getZClusterNodeStatusInfo( $ip );
 	my $node->{ role } = $n->{ role };
 
-	if ( $node->{ role } eq 'master' )
+	if ( $node->{ role } && $node->{ role } eq 'master' )
 	{
 		my $ssync_ok = $ssyncd_enabled eq 'false' || $n->{ sy } eq 'master';
 
@@ -1338,7 +1338,7 @@ sub getZClusterNodeStatusDigest
 			$node->{ message } .= join ', ', @services;
 		}
 	}
-	elsif ( $node->{ role } eq 'backup' )
+	elsif ( $node->{ role } && $node->{ role } eq 'backup' )
 	{
 		my $ssync_ok = $ssyncd_enabled eq 'false' || $n->{ sy } eq 'backup';
 
@@ -1359,7 +1359,7 @@ sub getZClusterNodeStatusDigest
 			$node->{ message } .= join ', ', @services;
 		}
 	}
-	elsif ( $node->{ role } eq 'maintenance' )
+	elsif ( $node->{ role } && $node->{ role } eq 'maintenance' )
 	{
 		my $ssync_ok = $ssyncd_enabled eq 'false' || $n->{ sy } eq 'error';
 
@@ -1380,7 +1380,7 @@ sub getZClusterNodeStatusDigest
 			$node->{ message } .= join ', ', @services;
 		}
 	}
-	elsif ( $node->{ role } eq '' )
+	elsif ( $node->{ role } && $node->{ role } eq '' )
 	{
 		$node->{ role }    = 'unreachable';
 		$node->{ status }  = 'unreachable';
