@@ -223,6 +223,7 @@ else
 }
 
 # Send Output to STDOUT
+chomp $output;
 print $output;
 
 # Send memory usage info to system log
