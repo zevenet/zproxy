@@ -344,7 +344,7 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 
 	if ( exists ( $json_obj->{ ttl } ) )
 	{
-		unless ( $json_obj->{ ttl } == undef || ( &getValidFormat( 'resource_ttl', $json_obj->{ ttl } ) && $json_obj->{ ttl } ) )
+		unless ( !defined $json_obj->{ ttl } || ( &getValidFormat( 'resource_ttl', $json_obj->{ ttl } ) && $json_obj->{ ttl } ) )
 		{
 			my $msg = "Invalid ttl.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
