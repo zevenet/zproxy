@@ -245,7 +245,7 @@ $key_id="id_rsa";
 $keygen_cmd="ssh-keygen -t rsa -f $key_path/$key_id -N '' -q";#update
 
 #Zen backup
-$zenbackup="/usr/local/zevenet/app/zenbackup/zenbackup.pl";
+$zenbackup="/usr/local/zevenet/bin/zenbackup.pl";
 
 #SNMP Service
 $snmpdconfig_file="/etc/snmp/snmpd.conf";
