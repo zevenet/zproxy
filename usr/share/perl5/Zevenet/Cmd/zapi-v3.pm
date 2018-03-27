@@ -23,9 +23,9 @@
 
 use strict;
 use Zevenet;
-use Zevenet::API3;
 use Zevenet::Farm;
 use Zevenet::Farm::Core;
+include 'Zevenet::API3';
 include 'Zevenet::IPDS';
 include 'Zevenet::Cluster';
 include 'Zevenet::Net::Bonding';

@@ -23,19 +23,19 @@
 
 use strict;
 
-use Zevenet::API3::Certificate;
-use Zevenet::API3::Certificate::Activation;
-use Zevenet::API3::Certificate::Farm;
-use Zevenet::API3::Farm::Delete;
-use Zevenet::API3::Farm::Action;
-use Zevenet::API3::Farm::Guardian;
-use Zevenet::API3::Farm::Get;
-use Zevenet::API3::Farm::Post;
-use Zevenet::API3::Farm::Put;
-use Zevenet::API3::Interface;
-use Zevenet::API3::System;
-use Zevenet::API3::System::Cluster;
-use Zevenet::API3::Stats;
-use Zevenet::API3::Graph;
+include 'Zevenet::API3::Certificate';
+include 'Zevenet::API3::Certificate::Activation';
+include 'Zevenet::API3::Certificate::Farm';
+include 'Zevenet::API3::Farm::Delete';
+include 'Zevenet::API3::Farm::Action';
+include 'Zevenet::API3::Farm::Guardian';
+include 'Zevenet::API3::Farm::Get';
+include 'Zevenet::API3::Farm::Post';
+include 'Zevenet::API3::Farm::Put';
+include 'Zevenet::API3::Interface';
+include 'Zevenet::API3::System';
+include 'Zevenet::API3::System::Cluster';
+include 'Zevenet::API3::Stats';
+include 'Zevenet::API3::Graph';
 
 1;
