@@ -42,7 +42,7 @@ sub eload
 	}
 
 	use Carp qw(cluck);
-	cluck "[eload]" if &debug() > 3; # warn with stack backtrace
+	cluck "[eload]" if &debug() > 4; # warn with stack backtrace
 
 	# check not used params
 	if ( grep { not exists $req{ $_ } } @required )
