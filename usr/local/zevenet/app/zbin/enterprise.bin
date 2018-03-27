@@ -37,8 +37,8 @@ my $SYMKEY   = "1135628147310";
 my $mod;
 my $program_name =
     ( $0 ne '-e' ) ? $0
+  : ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /\/v3\/zapi.cgi$/ ) ? $ENV{ SCRIPT_NAME }
   : ( exists $ENV{ _ } && $ENV{ _ } !~ /enterprise.bin$/ ) ? $ENV{ _ }
-  : ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /\/zapi.cgi$/ ) ? $ENV{ SCRIPT_NAME }
   :                                                          $^X;
 my $basename = ( split ( '/', $program_name ) )[-1];
 
