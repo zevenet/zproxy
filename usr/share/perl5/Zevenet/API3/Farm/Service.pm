@@ -25,7 +25,6 @@ use strict;
 
 use Zevenet::Farm::Core;
 
-
 # POST
 
 sub new_farm_service    # ( $json_obj, $farmname )
@@ -508,7 +507,8 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		# Cookie insertion
 		if ( scalar grep ( /^cookie/, keys %{ $json_obj } ) )
 		{
-			include 'Zevenet::Farm::HTTP::Service::Ext';
+			sub include;
+			include 'Zevenet::API3::Farm::Service::Ext';
 			&modify_service_cookie_insertion( $farmname, $service, $json_obj );
 		}
 
