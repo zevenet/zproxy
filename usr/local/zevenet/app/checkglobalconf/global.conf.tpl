@@ -204,7 +204,7 @@ $img_dir="/tmp";#update
 $rrd_dir="rrd";#update
 
 #Service for configure Zen directory replication
-$zenino="/usr/local/zevenet/app/zeninotify/zeninotify.pl";
+$zenino="/usr/local/zevenet/bin/zeninotify";#update
 #Zen Inotify pid file
 $zeninopid="/var/run/zeninotify.pid";
 #Rsync replication parameters
@@ -245,7 +245,7 @@ $key_id="id_rsa";
 $keygen_cmd="ssh-keygen -t rsa -f $key_path/$key_id -N '' -q";#update
 
 #Zen backup
-$zenbackup="/usr/local/zevenet/bin/zenbackup.pl";
+$zenbackup="/usr/local/zevenet/bin/zenbackup.pl";#update
 
 #SNMP Service
 $snmpdconfig_file="/etc/snmp/snmpd.conf";
