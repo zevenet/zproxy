@@ -228,6 +228,7 @@ sub setNotifAlertsAction
 		}
 		else
 		{
+			$errMsg = "";
 			&reloadNotifications();
 		}
 	}
