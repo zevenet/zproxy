@@ -23,8 +23,8 @@
 
 use strict;
 
-use Zevenet::System::HTTP;
 use Zevenet::Net::Interface;
+include 'Zevenet::System::HTTP';
 
 
 # GET /system/http
