@@ -173,7 +173,7 @@ sub set_notif_alert_actions
 	}
 
 	my $error = &setNotifAlertsAction( $alert, $json_obj->{ 'action' } );
-	if ( $error == -2 )
+	if ( $error eq '-2' )
 	{
 		my $msg = "$alert is already $json_obj->{action}.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
