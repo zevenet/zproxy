@@ -26,7 +26,7 @@ use strict;
 use warnings;
 use Linux::Inotify2;
 use Zevenet::Config;
-include Zevenet::Cluster;
+include 'Zevenet::Cluster';
 
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
