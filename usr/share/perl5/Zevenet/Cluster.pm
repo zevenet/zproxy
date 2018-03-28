@@ -98,7 +98,7 @@ See Also:
 
 	<setConntrackdConfig>, <setDOSSshBruteForceRule>
 
-	zapi/v3/interface.cgi, zapi/v3/cluster.cgi, zeninotify.pl, cluster_status.pl, zevenet
+	zapi/v3/interface.cgi, zapi/v3/cluster.cgi, zeninotify, cluster_status.pl, zevenet
 =cut
 sub getZClusterConfig
 {
@@ -812,7 +812,7 @@ Returns:
 	none - .
 
 See Also:
-	zapi/v3/cluster.cgi, zeninotify.pl, zcluster-manager
+	zapi/v3/cluster.cgi, zeninotify, zcluster-manager
 =cut
 sub runSync
 {
@@ -1242,7 +1242,7 @@ sub getZClusterNodeStatusInfo
 	if ( ! defined( $ip ) || $ip eq &getZClusterLocalIp() )
 	{
 		$node->{ ka } = pgrep('keepalived');
-		$node->{ zi } = pgrep('zeninotify.pl');
+		$node->{ zi } = pgrep('zeninotify');
 		$node->{ ct } = pgrep('conntrackd');
 
 		chomp( ( $node->{ sy } ) = `$ssyncdctl_bin show mode` ) if $ssyncd_enabled eq 'true';
@@ -1254,7 +1254,7 @@ sub getZClusterNodeStatusInfo
 		&runRemotely("pgrep keepalived", $ip );
 		$node->{ ka } = $?;
 
-		&runRemotely("pgrep zeninotify.pl", $ip );
+		&runRemotely("pgrep zeninotify", $ip );
 		$node->{ zi } = $?;
 
 		&runRemotely("pgrep conntrackd", $ip );
@@ -1332,7 +1332,7 @@ sub getZClusterNodeStatusDigest
 			$node->{ message } = 'Failed services: ';
 			my @services;
 			push ( @services, 'keepalived' )    if $n->{ ka };
-			push ( @services, 'zeninotify.pl' ) if $n->{ zi };
+			push ( @services, 'zeninotify' ) if $n->{ zi };
 			push ( @services, 'conntrackd' )    if $n->{ ct };
 			push ( @services, 'ssyncd' )        unless $ssync_ok;
 			$node->{ message } .= join ', ', @services;
@@ -1353,7 +1353,7 @@ sub getZClusterNodeStatusDigest
 			$node->{ message } = 'Failed services: ';
 			my @services;
 			push ( @services, 'keepalived' )    if $n->{ ka };
-			push ( @services, 'zeninotify.pl' ) if !$n->{ zi };
+			push ( @services, 'zeninotify' ) if !$n->{ zi };
 			push ( @services, 'conntrackd' )    if $n->{ ct };
 			push ( @services, 'ssyncd' )        unless $ssync_ok;
 			$node->{ message } .= join ', ', @services;
@@ -1374,7 +1374,7 @@ sub getZClusterNodeStatusDigest
 			$node->{ message } = 'Services not running: ';
 			my @services;
 			push ( @services, 'keepalived' )    if $n->{ ka };
-			push ( @services, 'zeninotify.pl' ) if !$n->{ zi };
+			push ( @services, 'zeninotify' ) if !$n->{ zi };
 			push ( @services, 'conntrackd' )    if $n->{ ct };
 			push ( @services, 'ssyncd' )        unless $ssync_ok;
 			$node->{ message } .= join ', ', @services;

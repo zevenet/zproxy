@@ -275,7 +275,7 @@ Returns:
 	scalar - string with IP address.
 
 See Also:
-	<getInterfaceOfIp>, <_runDatalinkFarmStart>, <_runDatalinkFarmStop>, <zeninotify.pl>
+	<getInterfaceOfIp>, <_runDatalinkFarmStart>, <_runDatalinkFarmStop>, <zeninotify>
 =cut
 
 #know if and return ip

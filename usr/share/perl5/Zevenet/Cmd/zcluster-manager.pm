@@ -641,7 +641,7 @@ sub setNodeStatusBackup
 	&setSsyncdBackup();
 
 	my $zenino = &getGlobalConfiguration( 'zenino' );
-	system ( "$zenino stop &" ) unless system ( 'pgrep zeninotify.pl >/dev/null' );
+	system ( "$zenino stop &" ) unless system ( 'pgrep zeninotify >/dev/null' );
 
 	# stop farmguardians
 	my $pids = `pgrep farmguardian`;
