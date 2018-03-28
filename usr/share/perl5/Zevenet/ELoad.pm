@@ -53,6 +53,15 @@ sub eload
 		&zenlog( $msg );
 	}
 
+	# Run directly Already running inside enterprise.bin
+	if ( defined &main::include )
+	{
+		include $module;
+
+		my $code_ref = \&{ $req{ func } };
+		return $code_ref->( @{  $req{ args }  } ) );
+	}
+
 	my $zbin_path = '/usr/local/zevenet/app/zbin';
 	my $bin       = "$zbin_path/enterprise.bin";
 	my $input;
