@@ -53,13 +53,21 @@ sub eload
 		&zenlog( $msg );
 	}
 
+	# make sure $req{ args } is always an array reference
+	my $validArrayRef = exists $req{ args } && ref $req{ args } eq 'ARRAY';
+	$req{ args } = [] unless $validArrayRef;
+
+
 	# Run directly Already running inside enterprise.bin
 	if ( defined &main::include )
 	{
-		include $module;
+		sub include;
+		#~ &include( $req{ module } );
+
+		include $req{ module };
 
 		my $code_ref = \&{ $req{ func } };
-		return $code_ref->( @{  $req{ args }  } ) );
+		return $code_ref->( @{  $req{ args }  } );
 	}
 
 	my $zbin_path = '/usr/local/zevenet/app/zbin';
@@ -68,11 +76,6 @@ sub eload
 
 	require JSON;
 	JSON->import( qw( encode_json decode_json ) );
-
-	# make sure $req{ args } is always an array reference
-	my $validArrayRef = exists $req{ args } && ref $req{ args } eq 'ARRAY';
-	$req{ args } = [] unless $validArrayRef;
-
 
 	unless ( ref( $req{ args } ) eq 'ARRAY' )
 	{
