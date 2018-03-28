@@ -70,7 +70,7 @@ sub eload
 		return $code_ref->( @{  $req{ args }  } );
 	}
 
-	my $zbin_path = '/usr/local/zevenet/app/zbin';
+	my $zbin_path = '/usr/local/zevenet/bin';
 	my $bin       = "$zbin_path/enterprise.bin";
 	my $input;
 

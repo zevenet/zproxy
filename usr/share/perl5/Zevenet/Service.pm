@@ -302,7 +302,7 @@ sub enable_cluster
 
 		# stop zevenet service if the certificate is not valid
 		# WARNING: this MUST be 'exec' and not other way of running a program
-		exec ( '/usr/local/zevenet/app/zbin/zevenet stop' );
+		exec ( '/usr/local/zevenet/bin/zevenet stop' );
 	}
 
 	include 'Zevenet::Cluster';
@@ -380,7 +380,7 @@ sub start_cluster
 
 		# stop zevenet service if the certificate is not valid
 		# WARNING: this MUST be 'exec' and not other execution
-		exec ( '/usr/local/zevenet/app/zbin/zevenet stop' );
+		exec ( '/usr/local/zevenet/bin/zevenet stop' );
 	}
 
 	my $zcl_configured = &getZClusterStatus();

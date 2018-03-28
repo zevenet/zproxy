@@ -388,10 +388,10 @@ vrrp_instance ZCluster {
 \t\t$zcl_conf->{$remotehost}->{ip}
 \t}
 
-\tnotify_master	\"/usr/local/zevenet/app/zbin/zcluster-manager notify_master\"
-\tnotify_backup	\"/usr/local/zevenet/app/zbin/zcluster-manager notify_backup\"
-\tnotify_fault	\"/usr/local/zevenet/app/zbin/zcluster-manager notify_fault\"
-\tnotify		\"/usr/local/zevenet/app/zbin/zcluster-manager\"
+\tnotify_master	\"/usr/local/zevenet/bin/zcluster-manager notify_master\"
+\tnotify_backup	\"/usr/local/zevenet/bin/zcluster-manager notify_backup\"
+\tnotify_fault	\"/usr/local/zevenet/bin/zcluster-manager notify_fault\"
+\tnotify		\"/usr/local/zevenet/abin/zcluster-manager\"
 }
 
 ";
@@ -568,7 +568,7 @@ sub copyIdKey # $rc ( $ip_addr, $pass )
 
 	my $safe_password = quotemeta( $password );
 
-	my $copyId_cmd = "HOME=\"/root\" /usr/local/zevenet/app/zbin/ssh-copy-id.sh $safe_password root\@$ip_address";
+	my $copyId_cmd = "HOME=\"/root\" /usr/local/zevenet/bin/ssh-copy-id.sh $safe_password root\@$ip_address";
 
 	my $copy_output = `$copyId_cmd`; # WARNING: Do not redirect stderr to stdout
 	my $error_code = $?;

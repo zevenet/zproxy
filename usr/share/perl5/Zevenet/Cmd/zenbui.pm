@@ -761,7 +761,7 @@ sub manage_zlb_services()
 					 &confirm_dialog( "Are you sure you want to STOP ZEVENET service?" );
 				   if ( $ret )
 				   {
-					   my $zenbin="/usr/local/zevenet/app/zbin/zevenet";
+					   my $zenbin="/usr/local/zevenet/bin/zevenet";
 					   system ("$zenbin stop >/dev/null 2>&1");
 					   &inform_dialog( 'Service already stopped' );
 					   $zlbmenu->focus();
@@ -778,7 +778,7 @@ sub manage_zlb_services()
 				   my $ret = &confirm_dialog( "Are you sure you want to START ZEVENET service?" );
 				   if ( $ret )
 				   {
-					   my $zenbin="/usr/local/zevenet/app/zbin/zevenet";
+					   my $zenbin="/usr/local/zevenet/bin/zevenet";
 					   system ("$zenbin start >/dev/null 2>&1");
 					   &inform_dialog( 'Service already started' );
 					   $zlbmenu->focus();
@@ -795,7 +795,7 @@ sub manage_zlb_services()
 				   my $ret = &confirm_dialog( "Are you sure you want to RESTART ZEVENET service?" );
 				   if ( $ret )
 				   {
-					   my $zenbin="/usr/local/zevenet/app/zbin/zevenet";
+					   my $zenbin="/usr/local/zevenet/bin/zevenet";
 					   system ("$zenbin stop >/dev/null 2>&1");
 					   system ("$zenbin start >/dev/null 2>&1");
 					   &inform_dialog( 'Service already restarted' );
