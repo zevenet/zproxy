@@ -605,8 +605,8 @@ sub enable_cluster
 	my $message = "Cluster enabled successfully";
 	my $body = {
 				 description => $desc,
-				 success => 'true',
-				 message      => $message,
+				 success     => 'true',
+				 message     => $message,
 	};
 
 	return &httpResponse({ code => 200, body => $body });
