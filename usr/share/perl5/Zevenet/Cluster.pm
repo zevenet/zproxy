@@ -1155,10 +1155,12 @@ sub runZClusterRemoteManager
 {
 	my $object = shift;
 	my $command = shift;
+
 	my @arguments = @_;
+	my $node_status = &getZClusterNodeStatus();
 
 	# zcluster: start farm in remote node
-	if ( &getZClusterRunning() && &getZClusterNodeStatus() eq 'master' )
+	if ( &getZClusterRunning() && defined( $node_status ) && $node_status eq 'master' )
 	{
 		my $zcl_conf = &getZClusterConfig();
 		my $remote_hostname = &getZClusterRemoteHost();
