@@ -194,7 +194,7 @@ sub getCertIssuer    # ($certfile)
 		my @eject = `$openssl x509 -noout -in $certfile -text | grep Issuer:`;
 		@eject = split ( /CN=/,             $eject[0] );
 		@eject = split ( /\/emailAddress=/, $eject[1] );
-		$certissu = $eject[0];
+		$certissu = $eject[0] // '';
 	}
 	else
 	{
