@@ -120,7 +120,7 @@ sub get_nic_list # ()
 						is_slave => $if_ref->{ is_slave },
 		};
 
-		$if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
+		$if_conf->{ is_cluster } = 'true' if ( defined $cluster_if && $cluster_if eq $if_ref->{ name } );
 
 		# include 'has_vlan'
 		for my $vlan_ref ( @vlans )
