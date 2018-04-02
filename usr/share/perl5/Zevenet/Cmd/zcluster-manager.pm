@@ -567,7 +567,7 @@ sub setNodeStatusMaster
 
 	# start sync
 	my $zenino = &getGlobalConfiguration( 'zenino' );
-	system ( "$zenino &" );
+	&logAndRun( "$zenino &" );
 
 	# start farmguardians
 	my @farmsf = &getFarmList();
