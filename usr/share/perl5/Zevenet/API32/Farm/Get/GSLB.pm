@@ -58,17 +58,13 @@ sub farms_name_gslb # ( $farmname )
 		my @out_b = &getGSLBFarmBackends( $farmname, $srv );
 
 		# Farmguardian
-		my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $srv );
-		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $srv );
-		
+		require Zevenet::FarmGuardian;
 		push @out_s,
 		  {
 			id          => $srv,
 			algorithm   => $lb,
 			deftcpport  => $dpc + 0,
-			fgenabled   => $fgStatus,
-			fgscript    => $fgScrip,
-			fgtimecheck => $fgTime + 0,
+			farmguardian => &getFGFarm( $farmname, $srv ),
 			backends    => \@out_b,
 		  };
 	}

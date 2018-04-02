@@ -1,0 +1,8 @@
+[check_tcp]
+description=It does a TCP connection to test if the backend is alive
+command=check_tcp -p PORT -H HOST
+farms=
+log=false
+interval=5
+cut_conns=false
+template=true

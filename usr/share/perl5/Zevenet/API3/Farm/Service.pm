@@ -242,6 +242,7 @@ sub farm_services
 {
 	my ( $farmname, $servicename ) = @_;
 
+	require Zevenet::API3::Farm::Get::HTTP;
 	my $service;
 	my $description = "Get services of a farm";
 
@@ -289,7 +290,7 @@ sub farm_services
 	}
 
 	require Zevenet::Farm::Config;
-	$service = &getServiceStruct ( $farmname, $servicename );
+	$service = &getZapiHTTPServiceStruct ( $farmname, $servicename );
 	foreach my $be ( @{ $service->{backends} } )
 	{
 		$be->{status} = "up" if $be->{status} eq "undefined";
@@ -506,9 +507,9 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		}
 
 		# Cookie insertion
-		if ( scalar grep ( /^cookie/, keys $json_obj ) )
+		if ( scalar grep ( /^cookie/, keys %{ $json_obj } ) )
 		{
-			require Zevenet::API31::HTTP;
+			require Zevenet::API3::HTTP;
 			require Zevenet::Farm::HTTP::Service::Ext;
 			&modify_service_cookie_intertion( $farmname, $service, $json_obj );
 		}

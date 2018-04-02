@@ -31,6 +31,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
+	require Zevenet::FarmGuardian;
 
 	my $desc    = "Modify farm guardian";
 	my $type    = &getFarmType( $farmname );
@@ -114,6 +115,19 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	my $fg = &getFGFarm( $farmname, $service );
+	if ( $fg )
+	{
+		my $num_farms = scalar @{ &getFGObject( $fg )->{ farms } };
+		if ( $num_farms > 1 )
+		{
+			my $errormsg =
+			  "Farm guardian $fg is used for several farms, modify it from API 3.2 or later";
+			my $body = { description => $desc, error => "true", message => $errormsg };
+			&httpResponse( { code => 400, body => $body } );
+		}
+	}
+
 	if ( $type eq 'gslb' )
 	{
 		require Zevenet::ELoad;
@@ -127,8 +141,6 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	else
 	{
 		# HTTP or L4xNAT
-		require Zevenet::FarmGuardian;
-
 		# get current farmguardian configuration
 		my @fgconfig = &getFarmGuardianConf( $farmname, $service );
 
@@ -186,7 +198,6 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 		}
 
 		# get current farmguardian configuration
-		require Zevenet::FarmGuardian;
 		my ( undef, $timetocheck, $check_script, $usefarmguardian, $farmguardianlog ) =
 		  &getFarmGuardianConf( $farmname, $service );
 

@@ -148,6 +148,7 @@ sub farms_name_http # ( $farmname )
 	my $farmname = shift;
 
 	require Zevenet::Farm::HTTP::Service;
+	require Zevenet::FarmGuardian;
 
 	my $farm_st = &get_farm_struct( $farmname );
 	my @out_s;
@@ -158,7 +159,7 @@ sub farms_name_http # ( $farmname )
 
 	foreach my $s ( @serv )
 	{
-		my $serviceStruct = &getHTTPServiceStruct ( $farmname, $s );
+		my $serviceStruct = &getZapiHTTPServiceStruct ( $farmname, $s );
 
 		# Remove backend status 'undefined', it is for news api versions
 		foreach my $be (@{$serviceStruct->{ 'backends' }})
@@ -214,6 +215,89 @@ sub farms_name_http_summary
 
 	&httpResponse({ code => 200, body => $body });
 }
+
+
+sub getZapiHTTPServiceStruct
+{
+	my ( $farmname, $service_name ) = @_;
+
+	require Zevenet::FarmGuardian;
+	require Zevenet::Farm::HTTP::Backend;
+
+	my $service_ref = -1;
+
+	# http services
+	my $services = &getHTTPFarmVS( $farmname, "", "" );
+	my @serv = split ( ' ', $services );
+
+	# return error if service is not found
+	return $service_ref unless grep( { $service_name eq $_ } @serv );
+
+	my $vser         = &getHTTPFarmVS( $farmname, $service_name, "vs" );
+	my $urlp         = &getHTTPFarmVS( $farmname, $service_name, "urlp" );
+	my $redirect     = &getHTTPFarmVS( $farmname, $service_name, "redirect" );
+	my $redirecttype = &getHTTPFarmVS( $farmname, $service_name, "redirecttype" );
+	my $session      = &getHTTPFarmVS( $farmname, $service_name, "sesstype" );
+	my $ttl          = &getHTTPFarmVS( $farmname, $service_name, "ttl" );
+	my $sesid        = &getHTTPFarmVS( $farmname, $service_name, "sessionid" );
+	my $dyns         = &getHTTPFarmVS( $farmname, $service_name, "dynscale" );
+	my $httpsbe      = &getHTTPFarmVS( $farmname, $service_name, "httpsbackend" );
+
+	if ( $dyns =~ /^$/ )
+	{
+		$dyns = "false";
+	}
+	if ( $httpsbe =~ /^$/ )
+	{
+		$httpsbe = "false";
+	}
+
+	my @fgconfig  = &getFarmGuardianConf( $farmname, $service_name );
+	my $fgttcheck = $fgconfig[1]+0;
+	my $fgscript  = $fgconfig[2];
+	my $fguse     = $fgconfig[3];
+	my $fglog     = $fgconfig[4];
+
+	# Default values for farm guardian parameters
+	if ( !$fgttcheck ) { $fgttcheck = 5; }
+	if ( !$fguse )     { $fguse     = "false"; }
+	if ( !$fglog )     { $fglog     = "false"; }
+	if ( !$fgscript )  { $fgscript  = ""; }
+
+	$fgscript =~ s/\n//g;
+	$fguse =~ s/\n//g;
+
+	my $backends = &getHTTPFarmBackends( $farmname, $service_name );
+
+	$ttl       = 0 unless $ttl;
+	$fgttcheck = 0 unless $fgttcheck;
+
+	$service_ref = {
+					 id           => $service_name,
+					 vhost        => $vser,
+					 urlp         => $urlp,
+					 redirect     => $redirect,
+					 redirecttype => $redirecttype,
+					 persistence  => $session,
+					 ttl          => $ttl + 0,
+					 sessionid    => $sesid,
+					 leastresp    => $dyns,
+					 httpsb       => $httpsbe,
+					 backends     => $backends,
+					 fgtimecheck     => $fgttcheck,
+					 fglog    		=> $fglog,
+					 fgenabled     => $fguse,
+					 fgscript     => $fgscript,
+	};
+
+	if ( eval { require Zevenet::Farm::HTTP::Service::Ext; } )
+	{
+		&add_service_cookie_intertion( $farmname, $service_ref );
+	}
+
+	return $service_ref;
+}
+
 
 
 1;

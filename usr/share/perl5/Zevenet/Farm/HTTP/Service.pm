@@ -218,9 +218,7 @@ sub deleteFarmService    # ($farm_name,$service)
 	tie my @fileconf, 'Tie::File', "$configdir/$farm_filename";
 
 	# Stop FG service
-	&runFarmGuardianStop( $farm_name, $service );
-	&runFarmGuardianRemove( $farm_name, $service );
-	unlink "$configdir/$farm_name\_$service\_guardian.conf";
+	&delFGFarm( $farm_name, $service );
 
 	my $i = 0;
 	for ( $i = 0 ; $i < $#fileconf ; $i++ )
@@ -439,10 +437,6 @@ sub getHTTPServiceStruct
 					 sessionid    => $sesid,
 					 leastresp    => $dyns,
 					 httpsb       => $httpsbe,
-					 fgtimecheck  => $fgttcheck + 0,
-					 fgscript     => $fgscript,
-					 fgenabled    => $fguse,
-					 fglog        => $fglog,
 					 backends     => $backends,
 	};
 

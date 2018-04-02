@@ -45,6 +45,9 @@
 #
 # zcluster-manager farm [start|stop|restart|delete] <farm>
 #
+# zcluster-manager fg 		[stop|start|stop] <fg>
+# zcluster-manager fg_farm 	[stop|start|stop] <farm> [service]
+#
 # zcluster-manager ipds [start|stop|restart] <farm>
 # zcluster-manager ipds_bl [start|stop|restart] <rule> [farm]
 # zcluster-manager ipds_dos [start|stop|restart] <rule> [farm]
@@ -229,6 +232,50 @@ if ( $object eq 'farm' )
 	else
 	{
 		&quit( "Unrecognized farm command" );
+	}
+}
+
+&zenlog( "checking $object" );
+
+# zcluster-manager fg 		[stop|start|stop] <fg>
+# zcluster-manager fg_farm 	[stop|start|stop] <farm> [service]
+if ( $object =~ /^fg(_farm)?/ )
+{
+	my $module = $1;
+	my ( $obj, $srv ) = @ARGV;
+
+	#~ &zenlog ("module: $module, cmd: $command, obj: $obj");
+
+	require Zevenet::FarmGuardian;
+	if ( $module )
+	{
+		if ( $command eq 'start' )
+		{
+			&runFGFarmStart( $obj, $srv );
+		}
+		elsif ( $command eq 'stop' )
+		{
+			&runFGFarmStop( $obj, $srv );
+		}
+		elsif ( $command eq 'restart' )
+		{
+			&runFGFarmRestart( $obj, $srv );
+		}
+	}
+	else
+	{
+		if ( $command eq 'start' )
+		{
+			&runFGStart( $obj );
+		}
+		elsif ( $command eq 'stop' )
+		{
+			&runFGStop( $obj );
+		}
+		elsif ( $command eq 'restart' )
+		{
+			&runFGRestart( $obj );
+		}
 	}
 }
 

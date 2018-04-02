@@ -22,192 +22,464 @@
 
 use strict;
 
-#  PUT /farms/<farmname>/fg Modify the parameters of the farm guardian in a Farm
-#  PUT /farms/<farmname>/fg Modify the parameters of the farm guardian in a Service
-sub modify_farmguardian    # ( $json_obj, $farmname )
+use Zevenet::FarmGuardian;
+use Zevenet::Farm::Core;
+
+sub getZapiFG
+{
+	my $fg_name  = shift;
+	my $template = shift;
+
+	my $fg = &getFGObject( $fg_name, $template );
+	my $out = {
+				'name'        => $fg_name,
+				'description' => $fg->{ description },
+				'command'     => $fg->{ command },
+				'farms'       => $fg->{ farms },
+				'log'         => $fg->{ log },
+				'interval'    => $fg->{ interval } + 0,
+				'cut_conns'   => $fg->{ cut_conns },
+				'template'    => $fg->{ template },
+	};
+
+	return $out;
+}
+
+sub getZapiFGList
+{
+	my $list_type = shift
+	  ; # if this parameter is not send as 'template', the config list will be returned
+	my @out;
+	my @list =
+	  ( $list_type eq 'template' ) ? &getFGTemplateList() : &getFGConfigList();
+
+	foreach my $fg_name ( @list )
+	{
+		my $fg = &getZapiFG( $fg_name, $list_type );
+		push @out, $fg;
+	}
+
+	return \@out;
+}
+
+# first, it checks is exists and later look for in both lists, template and config
+#  GET /monitoring/fg/<fg_name>
+sub get_farmguardian
+{
+	my $fg_name = shift;
+
+	my $desc = "Retrive the farm guardian $fg_name";
+
+	unless ( &getFGExists( $fg_name ) )
+	{
+		my $msg = "The farm guardian $fg_name has not been found.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my $out;
+	if ( &getFGExistsConfig( $fg_name ) ) { $out = &getZapiFG( $fg_name ); }
+	else { $out = &getZapiFG( $fg_name, "template" ); }
+
+	my $body = { description => $desc, params => $out };
+
+	return &httpResponse( { code => 200, body => $body } );
+}
+
+#  GET /monitoring/fg
+sub list_farmguardian
+{
+	my $fg = &getZapiFGList();
+	push @{ $fg }, @{ &getZapiFGList( 'template' ) };
+	my $desc = "List farm guardian checks and templates";
+
+	return &httpResponse(
+					 { code => 200, body => { description => $desc, params => $fg } } );
+}
+
+#  POST /monitoring/fg
+sub create_farmguardian
 {
 	my $json_obj = shift;
-	my $farmname = shift;
+	my $fg_name  = $json_obj->{ name };
+	my $desc     = "Create a farm guardian $fg_name";
 
-	require Zevenet::Farm::Core;
-	require Zevenet::Farm::Base;
-
-	my $desc    = "Modify farm guardian";
-	my $type    = &getFarmType( $farmname );
-	my $service = $json_obj->{ 'service' };
-	delete $json_obj->{ 'service' };
-
-	#~ my @fgKeys = ( "fg_time", "fg_log", "fg_enabled", "fg_type" );
-
-	# validate FARM NAME
-	if ( ! &getFarmExists( $farmname ) )
+	if ( &getFGExistsConfig( $fg_name ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
-		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+		my $msg = "The farm guardian $fg_name already exists.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# validate FARM TYPE
-	unless ( $type eq 'l4xnat' || $type =~ /^https?$/ || $type eq 'gslb' )
+	if ( &getFGExistsTemplate( $fg_name ) )
 	{
-		my $msg = "Farm guardian is not supported for the requested farm profile.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		my $msg =
+		  "The farm guardian $fg_name is a template, select another name, please";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# check if no service is declared for l4xnat farms
-	if ( $type eq 'l4xnat' && $service )
+	my $params = {
+				   "name" => {
+							   'non_blank'    => 'true',
+							   'required'     => 'true',
+							   'valid_format' => 'fg_name',
+				   },
+				   "parent" => {
+								 'valid_format' => 'fg_name',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	if ( exists $json_obj->{ parent }
+		 and not &getFGExists( $json_obj->{ parent } ) )
 	{
-		my $msg = "L4xNAT profile farms do not have services.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		my $msg = "The parent farm guardian $json_obj->{ parent } does not exist.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# make service variable empty for l4xnat functions
-	$service = '' if $type eq "l4xnat";
-
-	# check if the service exists for http farms
-	if ( $type =~ /^https?$/ )
+	if ( not exists $json_obj->{ parent } ) { &createFGBlank( $fg_name ); }
+	elsif ( &getFGExistsTemplate( $json_obj->{ parent } ) )
 	{
-		require Zevenet::Farm::HTTP::Service;
-
-		if ( !grep ( /^$service$/, &getHTTPFarmServices( $farmname ) ) )
-		{
-			my $msg = "Invalid service name, please insert a valid value.";
-			&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-		}
+		&createFGTemplate( $fg_name, $json_obj->{ parent } );
 	}
+	else { &createFGConfig( $fg_name, $json_obj->{ parent } ); }
 
-	# check farmguardian time interval
-	if ( exists ( $json_obj->{ fgtimecheck } )
-		 && !&getValidFormat( 'fg_time', $json_obj->{ fgtimecheck } ) )
+	my $out = &getZapiFG( $fg_name );
+	if ( $out )
 	{
-		my $msg = "Invalid format, please insert a valid fgtimecheck.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		my $msg = "The farm guardian $fg_name has been created successfully";
+		my $body = {
+					 description => $desc,
+					 params      => $out,
+					 message     => $msg,
+		};
+		return &httpResponse( { code => 200, body => $body } );
 	}
-
-	# check farmguardian command
-	elsif ( exists ( $json_obj->{ fgscript } ) && $json_obj->{ fgscript } eq '' )
-	{
-		my $msg = "Invalid fgscript, can't be blank.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	# check farmguardian enabled
-	elsif ( exists ( $json_obj->{ fgenabled } )
-			&& !&getValidFormat( 'fg_enabled', $json_obj->{ fgenabled } ) )
-	{
-		my $msg = "Invalid format, please insert a valid fgenabled.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	# check farmguardian log
-	elsif ( exists ( $json_obj->{ fglog } )
-			&& !&getValidFormat( 'fg_log', $json_obj->{ fglog } ) )
-	{
-		my $msg = "Invalid format, please insert a valid fglog.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	my @allowParams = ( "fgtimecheck", "fgscript", "fglog", "fgenabled" );
-
-	# check optional parameters
-	if ( my $msg = &getValidOptParams( $json_obj, \@allowParams ) )
-	{
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	if ( $type eq 'gslb' )
-	{
-		require Zevenet::ELoad;
-		&eload(
-				module => 'Zevenet::API32::Farm::GSLB',
-				func   => 'modify_gslb_farmguardian',
-				args   => [$json_obj, $farmname, $service]
-		);
-	}
-
 	else
 	{
-		# HTTP or L4xNAT
-		require Zevenet::FarmGuardian;
+		my $msg = "The farm guardian $fg_name could not be created";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+}
 
-		# get current farmguardian configuration
-		my @fgconfig = &getFarmGuardianConf( $farmname, $service );
+#  PUT /monitoring/fg/<fg_name>
+sub modify_farmguardian
+{
+	my $json_obj = shift;
+	my $fgname   = shift;
 
-		chomp @fgconfig;
-		my ( undef, $timetocheck, $check_script, $usefarmguardian, $farmguardianlog ) =
-		  @fgconfig;
+	my $desc = "Modify farm guardian $fgname";
 
-		$timetocheck += 0;
-		$timetocheck = 5 if !$timetocheck;
+	if ( &getFGExistsTemplate( $fgname ) )
+	{
+		my $msg = "The farm guardian $fgname is a template.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
-		$check_script =~ s/\"/\'/g;
+	if ( not &getFGExistsConfig( $fgname ) )
+	{
+		my $msg = "The farm guardian $fgname does not exist.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
-		# update current configuration with new settings
-		if ( exists $json_obj->{ fgtimecheck } )
+	my $params = {
+				   "description" => {
+									  'non_blank' => 'true',
+				   },
+				   "command" => {
+								  'non_blank' => 'true',
+				   },
+				   "log" => {
+							  'valid_format' => 'boolean',
+				   },
+				   "interval" => {
+								   'valid_format' => 'natural_num',
+				   },
+				   "cut_conns" => {
+									'valid_format' => 'boolean',
+				   },
+				   "force" => {
+								'valid_format' => 'boolean',
+				   },
+	};
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	my @run_farms = @{ &getFGRunningFarms( $fgname ) };
+	my $run_farms;
+	$run_farms = join ( ', ', @run_farms ) if @run_farms;
+
+	# check if farm guardian is running
+	if (     $run_farms
+		 and not exists $json_obj->{ force }
+		 and $json_obj->{ force } ne 'true' )
+	{
+		if ( exists $json_obj->{ command } )
 		{
-			$timetocheck = $json_obj->{ fgtimecheck };
-			$timetocheck = $timetocheck + 0;
+			my $msg =
+			  "Farm guardian $fgname is running in: $run_farms. To apply, send parameter 'force'";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $error_msg );
 		}
-		if ( exists $json_obj->{ fgscript } )
-		{
-			$check_script = $json_obj->{ fgscript };    # FIXME: Make safe script string
-		}
-		if ( exists $json_obj->{ fgenabled } )
-		{
-			$usefarmguardian = $json_obj->{ fgenabled };
-		}
-		if ( exists $json_obj->{ fglog } )
-		{
-			$farmguardianlog = $json_obj->{ fglog };
-		}
+	}
 
-		# apply new farmguardian configuration
-		&runFarmGuardianStop( $farmname, $service );
-		&runFarmGuardianRemove( $farmname, $service );
+	delete $json_obj->{ force };
+	my $error = &setFGObject( $fgname, $json_obj );
 
-		my $status =
-		  &runFarmGuardianCreate( $farmname, $timetocheck, $check_script,
-								  $usefarmguardian, $farmguardianlog, $service );
-
-		# check for errors setting farmguardian
-		if ( $status == -1 )
-		{
-			my $msg = "It's not possible to create the FarmGuardian configuration file.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		# run farmguardian if enabled and the farm running
-		if ( &getFarmStatus( $farmname ) eq 'up' && $usefarmguardian eq 'true' )
-		{
-			if ( &runFarmGuardianStart( $farmname, $service ) == -1 )
-			{
-				my $msg = "An error ocurred while starting the FarmGuardian service.";
-				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
-		}
-
-		# get current farmguardian configuration
-		require Zevenet::FarmGuardian;
-		my ( undef, $timetocheck, $check_script, $usefarmguardian, $farmguardianlog ) =
-		  &getFarmGuardianConf( $farmname, $service );
-
-		$timetocheck += 0;
-		$timetocheck = 5 if !$timetocheck;
+	if ( not $error )
+	{
+		# sync with cluster
+		require Zevenet::Cluster;
+		&runZClusterRemoteManager( 'fg', 'restart', $fgname );
 
 		# no error found, return successful response
 		my $msg =
-		  "Success, some parameters have been changed in farm guardian in farm $farmname.";
-		my $body = {
-					 description => $desc,
-					 params      => {
-								 fgenabled   => $usefarmguardian,
-								 fgtimecheck => $timetocheck,
-								 fgscript    => $check_script,
-								 fglog       => $farmguardianlog,
-					 },
-					 message => $msg,
-		};
+		  "Success, some parameters have been changed in farm guardian $fgname.";
+		my $out = &getZapiFG( $fgname );
+		my $body = { description => $desc, params => $out, message => $msg, };
 
 		&httpResponse( { code => 200, body => $body } );
+	}
+	else
+	{
+		my $msg = "Modifying farm guardian $fgname.";
+		my $body = { description => $desc, message => $msg, };
+
+		&httpResponse( { code => 400, body => $body } );
+	}
+}
+
+#  DELETE /monitoring/fg/<fg_name>
+sub delete_farmguardian
+{
+	my $fg_name = shift;
+
+	my $desc = "Delete the farm guardian $fg_name";
+
+	unless ( &getFGExists( $fg_name ) )
+	{
+		my $msg = "The farm guardian $fg_name does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	my @running_farms = @{ &getFGRunningFarms( $fg_name ) };
+	if ( @running_farms )
+	{
+		my $farm_str = join ( ', ', @running_farms );
+		my $msg =
+		  "It is not possible delete farm guardian $fg_name because it is running in: $farm_str";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	&delFGObject( $fg_name );
+
+	if ( !&getFGExists( $fg_name ) )
+	{
+		# sync with cluster
+		require Zevenet::Cluster;
+		&runZClusterRemoteManager( 'fg', 'stop', $fgname );
+
+		my $msg = "$fg_name has been deleted successful.";
+		my $body = {
+					 description => $desc,
+					 success     => "true",
+					 message     => $msg,
+		};
+		return &httpResponse( { code => 200, body => $body } );
+	}
+	else
+	{
+		my $msg = "Deleting the farm guardian $fg_name.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+}
+
+#  POST /farms/<farm>(/services/<service>)?/fg
+sub add_farmguardian_farm
+{
+	my $json_obj = shift;
+	my $farm     = shift;
+	my $srv      = shift;
+
+	my $srv_message = ( $srv ) ? "service $srv in the farm $farm" : "farm $farm";
+
+	my $desc = "Add the farm guardian $json_obj->{ 'name' } to the $srv_message";
+	my $params = {
+				   "name" => {
+							   'non_blank' => 'true',
+							   'required'  => 'true',
+				   },
+	};
+
+	require Zevenet::Farm::Service;
+
+	# Check if it exists
+	if ( !&getFarmExists( $farm ) )
+	{
+		my $msg = "The farm $farm does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	# Check if fg is a template
+	if ( &getFGExistsTemplate( $json_obj->{ name } ) )
+	{
+		my $msg = "$json_obj->{ name } is a template";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	# Check if it exists
+	if ( !&getFGExistsConfig( $json_obj->{ name } ) )
+	{
+		my $msg = "The farmguardian $json_obj->{ name } does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	# Check if it exists
+	if ( $srv and !grep ( /^$srv$/, &getFarmServices( $farm ) ) )
+	{
+		my $msg = "The service $srv does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	# check if another fg is applied to the farm
+	my $fg_old = &getFGFarm( $farm, $srv );
+	if ( $fg_old )
+	{
+		my $msg = "The $srv_message has linked another farm guardian";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	# link the check with the farm_service
+	my $farm_tag = $farm;
+	$farm_tag = "${farm}_$srv" if $srv;
+
+	# Check allowed parameters
+	my $error_msg = &checkZAPIParams( $json_obj, $params );
+	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
+	  if ( $error_msg );
+
+	# check if the farm guardian is already applied to the farm
+	my $fg_obj = &getFGObject( $json_obj->{ name } );
+	if ( grep ( /^$farm_tag$/, @{ $fg_obj->{ farms } } ) )
+	{
+		my $msg = "$json_obj->{ name } is already applied in the $srv_message";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	# check farm type
+	my $type = &getFarmType( $farm );
+	if ( $type =~ /http|gslb/ and not $srv )
+	{
+		my $msg = "The farm guardian expects a service";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	my $output = &linkFGFarm( $json_obj->{ name }, $farm, $srv );
+
+	# check result and return success or failure
+	if ( $output )
+	{
+		# sync with cluster
+		require Zevenet::Cluster;
+		&runZClusterRemoteManager( 'fg_farm', 'start', $farm, $srv );
+
+		my $msg =
+		  "Success, The farm guardian $json_obj->{ 'name' } was added to the $srv_message";
+		my $body = {
+					 description => $desc,
+					 message     => $msg,
+		};
+		return &httpResponse( { code => 200, body => $body } );
+	}
+	else
+	{
+		my $msg =
+		  "There was an error trying to add $json_obj->{ 'name' } to the $srv_message";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+}
+
+#  DELETE /farms/<farm>(/services/<service>)?/fg/<fg_name>
+sub rem_farmguardian_farm
+{
+	my $farm = shift;
+	my $srv;
+	my $fgname;
+
+	if ( scalar @_ == 1 )
+	{
+		$fgname = shift;
+	}
+	else
+	{
+		$srv    = shift;
+		$fgname = shift;
+	}
+
+	my $srv_message = ( $srv ) ? "service $srv in the farm $farm" : "farm $farm";
+	my $desc = "Remove the farm guardian $fgname from the $srv_message";
+
+	require Zevenet::Farm::Service;
+
+	# Check if it exists
+	if ( !&getFarmExists( $farm ) )
+	{
+		my $msg = "The farm $farm does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	# Check if it exists
+	if ( !&getFGExists( $fgname ) )
+	{
+		my $msg = "The farmguardian $fgname does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	# Check if it exists
+	if ( $srv and !grep ( /^$srv$/, &getFarmServices( $farm ) ) )
+	{
+		my $msg = "The service $srv does not exist";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	# link the check with the farm_service
+	my $farm_tag = $farm;
+	$farm_tag = "${farm}_$srv" if $srv;
+
+	# check if the farm guardian is already applied to the farm
+	my $fg_obj = &getFGObject( $fgname );
+	if ( not grep ( /^$farm_tag$/, @{ $fg_obj->{ farms } } ) )
+	{
+		my $msg = "The farm guardian $fgname is not applied to the $srv_message";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	&unlinkFGFarm( $fgname, $farm, $srv );
+
+	# check output
+	$fg_obj = &getFGObject( $fgname );
+	if ( grep ( /^$farm_tag$/, @{ $fg_obj->{ farms } } ) or &getFGPidFarm( $farm ) )
+	{
+		my $msg = "Error removing $fgname from the $srv_message";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+	else
+	{
+		# sync with cluster
+		require Zevenet::Cluster;
+		&runZClusterRemoteManager( 'fg_farm', 'stop', $farm, $srv );
+
+		my $msg = "Sucess, $fgname was removed from the $srv_message";
+		my $body = {
+					 description => $desc,
+					 message     => $msg,
+		};
+		return &httpResponse( { code => 200, body => $body } );
 	}
 }
 

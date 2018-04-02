@@ -50,6 +50,7 @@ my $virtual_tag = qr/[a-zA-Z0-9\-]{1,13}/;
 my $nic_if      = qr/[a-zA-Z0-9\-]{1,15}/;
 my $bond_if     = qr/[a-zA-Z0-9\-]{1,15}/;
 my $vlan_if     = qr/[a-zA-Z0-9\-]{1,13}\.$vlan_tag/;
+my $interface    = qr/$nic_if(?:\.$vlan_tag)?(?:\:$virtual_tag)?/;
 my $port_range =
   qr/(?:[1-5]?\d{1,4}|6[0-4]\d{3}|65[1-4]\d{2}|655[1-2]\d{1}|6553[1-5])/;
 my $graphsFrequency = qr/(?:daily|weekly|monthly|yearly)/;
@@ -214,6 +215,7 @@ my %format_re = (
 	'IPv4_mask' => qr/(?:$ipv4_addr|3[0-2]|[1-2][0-9]|[0-9])/,
 
 	# farm guardian
+	'fg_name'    => qr/[\w-]+/,
 	'fg_type'    => qr/(?:http|https|l4xnat|gslb)/,
 	'fg_enabled' => $boolean,
 	'fg_log'     => $boolean,
@@ -226,7 +228,7 @@ my %format_re = (
 	'role_name'     => qr/[\w-]+/,
 
 	# alais
-	'alias_id'   => qr/$ipv4v6|$nic_if(\.$vlan_tag)?(\:$virtual_tag)?/,
+	'alias_id'   => qr/(?:$ipv4v6|$interface)/,
 	'alias_name' => qr/[\w-]+/,
 	'alias_type' => qr/(?:backend|interface)/,
 

@@ -23,7 +23,7 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: getGSLBCommandInExtmonFormat
@@ -46,13 +46,14 @@ More info:
 	Extmon Format: "bin", "-x", "option"...
                 
 =cut
-sub getGSLBCommandInExtmonFormat	# ( $cmd, $port )
+
+sub getGSLBCommandInExtmonFormat    # ( $cmd, $port )
 {
 	my ( $cmd, $port ) = @_;
 
-	my $libexec_dir = &getGlobalConfiguration ( 'libexec_dir' );
-	my @aux = split ( ' ', $cmd );
-	my $newCmd = "\"$libexec_dir/$aux[0]\"";
+	my $libexec_dir = &getGlobalConfiguration( 'libexec_dir' );
+	my @aux         = split ( ' ', $cmd );
+	my $newCmd      = "\"$libexec_dir/$aux[0]\"";
 	my $stringArg;
 	my $flag;
 
@@ -128,13 +129,14 @@ More info:
 	Extmon Format: "bin", "-x", "option"...
 			
 =cut
-sub getGSLBCommandInFGFormat	# ( $cmd, $port )
+
+sub getGSLBCommandInFGFormat    # ( $cmd, $port )
 {
 	my ( $cmd, $port ) = @_;
 
-	my $libexec_dir = &getGlobalConfiguration ( 'libexec_dir' );
-	my @aux = split ( ', ', $cmd );
-	my $newCmd = $aux[0];
+	my $libexec_dir = &getGlobalConfiguration( 'libexec_dir' );
+	my @aux         = split ( ', ', $cmd );
+	my $newCmd      = $aux[0];
 	my $flagPort;
 
 	splice @aux, 0, 1;
@@ -185,62 +187,22 @@ FIXME:
 	Change output to a hash
 
 =cut
-sub getGSLBFarmGuardianParams # ( farmName, $service )
+
+sub getGSLBFarmGuardianParams    # ( farmName, $service )
 {
 	my ( $fname, $service ) = @_;
 
-	require Zevenet::Farm::Config;
+	require Zevenet::FarmGuardian;
 
-	my $port = &getFarmVS( $fname, $service, "dpc" );
-	my $ftype = &getFarmType( $fname );
-	my $cmd;
-	my $time;
-	my $flagSvc = 0;
-
-	require Tie::File;
-	tie my @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
-
-	foreach my $line ( @file )
+	my $fg = &getFGFarm( $fname, $service );
+	if ( $fg )
 	{
-		# Begin service block
-		if ( $line =~ /^\t${service}_fg_\d+ =>/ )
-		{
-			$flagSvc = 1;
-		}
-		elsif ( $flagSvc )
-		{
-			# get interval time
-			if ( $line =~ /interval = (\d+),/ )
-			{
-				$time = $1;
-				next;
-			}
-
-			# get cmd
-			elsif ( $line =~ /cmd = \[(.+)\],/ )
-			{
-				$cmd = $1;
-				$cmd = getGSLBCommandInFGFormat( $cmd, $port );
-				next;
-			}
-		}
-		if ( $flagSvc && $line =~ /\t}/ )
-		{
-			last;
-		}
+		my $fg_obj = &getFGObject( $fg );
+		return ( $fg_obj->{ interval }, $fg_obj->{ command } );
 	}
 
-	# $cmd it's initialized "1" for avoid systasis error
-	if ( $cmd eq "1" )
-	{
-		$cmd = "";
-	}
-
-	my @config;
-	push @config, $time, $cmd;
-	untie @file;
-
-	return @config;
+	# not fg found
+	return ( "", "" );
 }
 
 =begin nd
@@ -258,15 +220,19 @@ Returns:
 	Integer - Error code: 0 on success or -1 on failure
 
 =cut
-sub setGSLBFarmGuardianParams	# ( farmName, service, param, value );
+
+sub setGSLBFarmGuardianParams    # ( farmName, service, param, value );
 {
 	my ( $fname, $service, $param, $value ) = @_;
+
+	# bugfix
+	$param = 'interval' if ( $param eq 'time' );
 
 	my $ftype = &getFarmType( $fname );
 	my @file;
 	my $flagSvc = 0;
 	my $err     = -1;
-	my $port = &getGSLBFarmVS ($fname,$service, 'dpc');
+	my $port    = &getGSLBFarmVS( $fname, $service, 'dpc' );
 
 	tie @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
 
@@ -331,7 +297,8 @@ Returns:
 	Integer - Error code: 0 on success or -1 on failure
 	
 =cut
-sub setGSLBDeleteFarmGuardian	# ( $fname, $service )
+
+sub setGSLBDeleteFarmGuardian    # ( $fname, $service )
 {
 	my ( $fname, $service ) = @_;
 
@@ -383,72 +350,16 @@ Returns:
 	Scalar - "true" if fg is enabled, "false" if fg is disable or -1 on failure
 
 =cut
-sub getGSLBFarmFGStatus	# ( fname, service )
+
+sub getGSLBFarmFGStatus    # ( fname, service )
 {
 	my ( $fname, $service ) = @_;
 
-	my $ftype  = &getFarmType( $fname );
-	my $output = -1;
+	require Zevenet::FarmGuardian;
 
-	require Tie::File;
+	my $fg = &getFGFarm( $fname, $service );
 
-	# select all ports used in plugins
-	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
-	my @pluginlist = readdir ( DIR );
-	closedir ( DIR );
-
-	foreach my $plugin ( @pluginlist )
-	{
-		if ( $plugin !~ /^\./ )
-		{
-			my @fileconf = ();
-
-			tie @fileconf, 'Tie::File',
-			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
-
-			# looking for in plugins
-			foreach my $line ( @fileconf )
-			{
-				# find service
-				if ( $line =~ /\s$service =>/ )
-				{
-					$output = 0;
-				}
-
-				# find line with status
-				if ( !$output && $line =~ /service_types/ )
-				{
-					# if service_type point to tpc_port, fg is down
-					if ( $line =~ /service_types = tcp_\d+/ )
-					{
-						$output = "false";
-					}
-
-					# if service_type point to fg, fg is up
-					elsif ( $line =~ /service_types = ${service}_fg_\d+/ )
-					{
-						$output = "true";
-					}
-					else
-					{
-						# file corrupt
-						$output = -1;
-					}
-					last;
-				}
-
-				# didn't find
-				if ( !$output && $line =~ /\}/ )
-				{
-					$output = -1;
-					last;
-				}
-			}
-			untie @fileconf;
-		}
-	}
-
-	return $output;
+	return ( $fg ) ? "true" : "false";
 }
 
 =begin nd
@@ -465,7 +376,8 @@ Returns:
 	Integer - Error code: 0 on success or -1 on failure
 	
 =cut
-sub enableGSLBFarmGuardian	# ( $fname, $service, $option )
+
+sub enableGSLBFarmGuardian    # ( $fname, $service, $option )
 {
 	my ( $fname, $service, $option ) = @_;
 

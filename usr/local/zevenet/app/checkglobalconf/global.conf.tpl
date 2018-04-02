@@ -6,6 +6,8 @@
 $zdir="/usr/local/zevenet";
 #Zevenet bin directory
 $zbindir = "/usr/local/zevenet/app/zbin";
+#Zevenet bin directory
+$templatedir = "/usr/local/zevenet/share";
 #Zevenet lib directory
 $zlibdir="/usr/share/perl5/Zevenet";#update
 #Document Root for Web Aplication directory

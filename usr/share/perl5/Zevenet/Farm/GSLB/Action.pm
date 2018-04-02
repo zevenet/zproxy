@@ -49,6 +49,9 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 	my ( $fname, $writeconf ) = @_;
 
 	require Tie::File;
+	require Zevenet::Farm::GSLB::Service;
+	require Zevenet::Farm::GSLB::FarmGuardian;
+	require Zevenet::FarmGuardian;
 
 	my $output;
 	my $status = &getFarmStatus( $fname );
@@ -62,6 +65,24 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 	}
 
 	&setGSLBControlPort( $fname );
+
+	# set fg foreach service
+	foreach my $srv ( &getGSLBFarmServices( $fname ) )
+	{
+		my $fg = &getFGFarm( $fname, $srv );
+		&zenlog ("$fg");
+		if ( ! $fg )
+		{
+			&enableGSLBFarmGuardian( $fname, $srv, 'down' );
+		}
+		else
+		{
+			my $obj = &getFGObject( $fg );
+			&setGSLBFarmGuardianParams( $fname, $srv, 'time', $obj->{ interval } );
+			&setGSLBFarmGuardianParams( $fname, $srv, 'cmd', $obj->{ command } );
+			&enableGSLBFarmGuardian( $fname, $srv, 'up' );
+		}
+	}
 
 	if ( $writeconf eq "true" )
 	{

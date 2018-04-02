@@ -193,10 +193,12 @@ sub setGSLBFarmDeleteService    # ($farm_name,$service)
 
 		require Zevenet::Farm::GSLB::FarmGuardian;
 		&setGSLBDeleteFarmGuardian( $fname, $svice );
+		require Zevenet::FarmGuardian;
+		&runFarmGuardianRemove( $fname, $svice );
 
 		# Delete port configuration from config file
 		require Zevenet::Farm::GSLB::Validate;
-		if ( !getGSLBCheckPort( $fname, $srv_port ) )
+		if ( !&getGSLBCheckPort( $fname, $srv_port ) )
 		{
 			require Zevenet::Farm::GSLB::Config;
 			$output = &setGSLBRemoveTcpPort( $fname, $srv_port );

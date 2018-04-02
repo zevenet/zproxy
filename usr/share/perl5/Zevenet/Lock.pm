@@ -25,6 +25,21 @@ use strict;
 
 use Fcntl ':flock';    #use of lock functions
 
+# generate a lock file based on a input path
+sub getLockFile
+{
+	my $path = shift;
+	my $lock = $path;
+
+	my $lock_dir = "/tmp/locks";
+	mkdir $lock_dir if !-d $lock_dir;
+
+	$lock =~ s/\//_/g;
+	$lock = "$lock_dir/$lock.lock";
+
+	return $lock;
+}
+
 sub lockfile
 {
 	my $lockfile = shift;

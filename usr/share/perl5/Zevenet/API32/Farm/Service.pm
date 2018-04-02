@@ -126,6 +126,7 @@ sub farm_services
 {
 	my ( $farmname, $servicename ) = @_;
 
+	require Zevenet::API32::Farm::Get::HTTP;
 	require Zevenet::Farm::Config;
 	require Zevenet::Farm::HTTP::Service;
 
@@ -158,7 +159,7 @@ sub farm_services
 	}
 
 	# no error found, return successful response
-	my $service = &getServiceStruct( $farmname, $servicename );
+	my $service = &get_http_service_struct( $farmname, $servicename );
 
 	foreach my $be ( @{ $service->{ backends } } )
 	{

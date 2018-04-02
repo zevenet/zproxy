@@ -44,18 +44,6 @@ sub farms_name_l4 # ( $farmname )
 	my @ttl = &getFarmMaxClientTime( $farmname, "" );
 	my $timetolimit = $ttl[0] + 0;
 	
-	# Farmguardian
-	my @fgconfig    = &getFarmGuardianConf( $farmname, "" );
-	my $fguse       = $fgconfig[3];
-	my $fgcommand   = $fgconfig[2];
-	my $fgtimecheck = $fgconfig[1];
-	my $fglog       = $fgconfig[4];
-	
-	if ( !$fgtimecheck ) { $fgtimecheck = 5; }
-    if ( !$fguse ) { $fguse = "false"; }
-    if ( !$fglog  ) { $fglog = "false"; }
-    if ( !$fgcommand ) { $fgcommand = ""; }
-
 	my $status = &getFarmVipStatus( $farmname );
 
 	my $persistence = &getFarmPersistence( $farmname );
@@ -70,10 +58,7 @@ sub farms_name_l4 # ( $farmname )
 			   persistence => $persistence,
 			   protocol    => &getFarmProto( $farmname ),
 			   ttl         => $timetolimit,
-			   fgenabled   => $fguse,
-			   fgtimecheck => $fgtimecheck + 0,
-			   fgscript    => $fgcommand,
-			   fglog       => $fglog,
+			   farmguardian	=> &getFGFarm( $farmname ),
 			   listener    => 'l4xnat',
 	};
 

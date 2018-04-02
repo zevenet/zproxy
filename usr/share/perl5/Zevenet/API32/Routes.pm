@@ -53,6 +53,7 @@ if ( $q->path_info =~ qr{^/certificates} )
 my $farm_re    = &getValidFormat( 'farm_name' );
 my $service_re = &getValidFormat( 'service' );
 my $be_re      = &getValidFormat( 'backend' );
+my $fg_name_re = &getValidFormat( 'fg_name' );
 
 if ( $q->path_info =~ qr{^/farms/$farm_re/certificates} )
 {
@@ -64,11 +65,22 @@ if ( $q->path_info =~ qr{^/farms/$farm_re/certificates} )
 	  \&delete_farm_certificate;
 }
 
-if ( $q->path_info =~ qr{^/farms/$farm_re/fg} )
+# Farmguardian
+if (    $q->path_info =~ qr{^/monitoring/fg}
+	 or $q->path_info =~ qr{^/farms/$farm_re(?:/services/$service_re)?/fg} )
 {
 	require Zevenet::API32::Farm::Guardian;
 
-	PUT qr{^/farms/($farm_re)/fg$} => \&modify_farmguardian;
+	POST qr{^/farms/($farm_re)(?:/services/($service_re))?/fg$} =>
+	  \&add_farmguardian_farm;
+	DELETE qr{^/farms/($farm_re)(?:/services/($service_re))?/fg/($fg_name_re)$} =>
+	  \&rem_farmguardian_farm;
+
+	GET qr{^/monitoring/fg$}                  => \&list_farmguardian;
+	POST qr{^/monitoring/fg$}                 => \&create_farmguardian;
+	GET qr{^/monitoring/fg/($fg_name_re)$}    => \&get_farmguardian;
+	PUT qr{^/monitoring/fg/($fg_name_re)$}    => \&modify_farmguardian;
+	DELETE qr{^/monitoring/fg/($fg_name_re)$} => \&delete_farmguardian;
 }
 
 if ( $q->path_info =~ qr{^/farms/$farm_re/actions} )

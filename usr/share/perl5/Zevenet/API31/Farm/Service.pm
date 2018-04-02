@@ -158,7 +158,8 @@ sub farm_services
 	}
 
 	# no error found, return successful response
-	my $service = &getServiceStruct( $farmname, $servicename );
+	require Zevenet::API31::Farm::Get::HTTP;
+	my $service = &getZapiHTTPServiceStruct( $farmname, $servicename );
 
 	foreach my $be ( @{ $service->{ backends } } )
 	{
@@ -336,7 +337,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	}
 
 	# Cookie insertion
-	if ( scalar grep( /^cookie/, keys %$json_obj ) )
+	if ( scalar grep( /^cookie/, keys %{ $json_obj } ) )
 	{
 		if ( eval { require Zevenet::API31::Farm::Service::Ext; } )
 		{

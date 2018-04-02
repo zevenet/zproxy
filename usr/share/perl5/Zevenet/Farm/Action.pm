@@ -120,7 +120,7 @@ sub runFarmStart    # ($farm_name,$writeconf)
 	if ( $status == 0 )
 	{
 		require Zevenet::FarmGuardian;
-		&runFarmGuardianStart( $farm_name, "" );
+		&runFGFarmStart( $farm_name );
 	}
 
 	# run ipds rules
@@ -170,7 +170,7 @@ sub runFarmStop    # ($farm_name,$writeconf)
 	}
 
 	require Zevenet::FarmGuardian;
-	&runFarmGuardianStop( $farm_name, "" );
+	&runFGFarmStop( $farm_name );
 
 	my $status = &_runFarmStop( $farm_name, $writeconf );
 
@@ -287,6 +287,10 @@ sub runFarmDelete    # ($farm_name)
 		&delRBACResource( $farm_name, 'farms' );
 	}
 
+	# stop and unlink farmguardian
+	require Zevenet::FarmGuardian;
+	&delFGFarm( $farm_name );
+
 	my $farm_type = &getFarmType( $farm_name );
 	my $status    = 1;
 
@@ -324,12 +328,11 @@ sub runFarmDelete    # ($farm_name)
 		elsif ( $farm_type eq "l4xnat" )
 		{
 			# delete nf marks
-			delMarks( $farm_name, "" );
+			&delMarks( $farm_name, "" );
 		}
 	}
 
 	unlink glob ( "$configdir/$farm_name\_*\.conf" );
-	unlink glob ( "${logdir}/${farm_name}\_*farmguardian*" );
 
 	require Zevenet::RRD;
 
@@ -413,35 +416,17 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	my @fg_files;
 	my $fg_status;
 	my $farm_status;
 
 	# farmguardian renaming
-	if ( $farm_type =~ /http/ )
-	{
-		opendir ( my $dir, "$configdir" );
-		@fg_files = grep { /^$farm_name\_.+guardian\.conf/ } readdir ( $dir );
-		closedir $dir;
-	}
-	elsif ( $farm_type =~ /l4xnat/ )
-	{
-		require Zevenet::FarmGuardian;
-		$fg_files[0] = &getFarmGuardianFile( $farm_name );
-		&zlog( "found farmguardian file:@fg_files" ) if &debug;
-	}
+	require Zevenet::FarmGuardian;
 
-	if ( @fg_files )
-	{
-		$fg_status = &getFarmGuardianStatus( $farm_name ) if @fg_files;
-		$farm_status = &getFarmStatus( $farm_name );
+	# stop farm
+	&runFGFarmStop( $farm_name );
 
-		if ( $fg_status == 1 && $farm_status eq 'up' )
-		{
-			&zlog( "stopping farmguardian" ) if &debug;
-			&runFarmGuardianStop( $farm_name );
-		}
-	}
+	# rename farmguardian
+	&setFGFarmRename( $farm_name, $new_farm_name );
 
 	# end of farmguardian renaming
 
@@ -473,24 +458,10 @@ sub setNewFarmName    # ($farm_name,$new_farm_name)
 	}
 
 	# farmguardian renaming
-	if ( $output == 0 && @fg_files )
+	if ( $output == 0 and $farm_status eq 'up' )
 	{
-		foreach my $filename ( @fg_files )
-		{
-			my $new_filename = $filename;
-			$new_filename =~ s/$farm_name/$new_farm_name/;
-
-			&zlog( "renaming $filename =>> $new_filename" ) if &debug;
-			rename ( "$configdir/$filename", "$configdir/$new_filename" );
-
-			#~ TODO: rename farmguardian logs
-		}
-
-		if ( $fg_status == 1 && $farm_status eq 'up' )
-		{
-			&zlog( "restarting farmguardian" ) if &debug;
-			&runFarmGuardianStart( $new_farm_name );
-		}
+		&zenlog( "restarting farmguardian", 'info', 'FG' ) if &debug;
+		&runFGFarmStart( $farm_name );
 	}
 
 	# end of farmguardian renaming
