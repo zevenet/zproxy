@@ -393,7 +393,7 @@ sub start_cluster
 	}
 
 	# start cluster
-	if ( &getZClusterStatus() )
+	if ( $zcl_configured )
 	{
 		&enableAllInterfacesDiscovery();
 		&enableZCluster();
