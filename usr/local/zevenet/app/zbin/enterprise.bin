@@ -59,6 +59,7 @@ my $basename = ( split ( '/', $program_name ) )[-1];
 &zenlog("[ENTERPRISE.BIN] \$^X = '$^X'");
 &zenlog("[ENTERPRISE.BIN] \$ENV\{_\} = '$ENV{_}'") if exists $ENV{_};
 &zenlog("[ENTERPRISE.BIN] \$ENV\{SCRIPT_NAME\} = '$ENV{SCRIPT_NAME}'") if exists $ENV{SCRIPT_NAME};
+&zenlog("[ENTERPRISE.BIN] \$ENV\{INVOCATION_ID\} = '$ENV{INVOCATION_ID}'") if exists $ENV{INVOCATION_ID};
 &zenlog("[ENTERPRISE.BIN] \$program_name = '$program_name'");
 &zenlog("[ENTERPRISE.BIN] \$basename = '$basename'");
 &zenlog("[ENTERPRISE.BIN] \@ARGV = '@ARGV'");
