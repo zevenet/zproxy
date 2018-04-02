@@ -610,14 +610,14 @@ sub setNodeStatusBackup
 	my $node_status = &getZClusterNodeStatus();
 	&zenlog( "Cluster ==== node_status: $node_status ===> Backup" );
 
-	if ( &getZClusterNodeStatus() eq 'maintenance' )
+	if ( $node_status eq 'maintenance' )
 	{
 		&zenlog( "Node on maintenance mode. Setting maintenance mode instead" );
 		&setNodeStatusMaintenance();
 
 		return 0;
 	}
-	elsif ( &getZClusterNodeStatus() eq 'backup' )
+	elsif ( $node_status eq 'backup' )
 	{
 		# FIXME: Deprecate this condition if it is not required.
 		&zenlog( "Node is already backup" );
