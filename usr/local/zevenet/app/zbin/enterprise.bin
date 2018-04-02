@@ -50,7 +50,7 @@ my $program_name =
 #           'PWD' => '/',
 #           'INVOCATION_ID' => 'e411a760c957493eb7e1624ae2f67c61'
 #         };
-$program_name = 'zcluster-manager' if $program_name eq 'enterprise.bin' && exists $ENV{INVOCATION_ID};
+$program_name = 'zcluster-manager' if $program_name =~ /enterprise.bin$/ && exists $ENV{INVOCATION_ID};
 ######################################################################
 
 my $basename = ( split ( '/', $program_name ) )[-1];
