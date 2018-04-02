@@ -926,6 +926,7 @@ sub getZClusterNodeStatus
 	}
 
 	my $status = <$znode_status>;
+	$status = '' if not defined $status;
 	chomp $status;
 
 	return $status;
@@ -949,6 +950,8 @@ See Also:
 sub setZClusterNodeStatus
 {
 	my $node_status = shift;
+
+	&zenlog(">>>>>>> Requested node status: $node_status <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 
 	if ( $node_status !~ /^(master|backup|maintenance)$/ )
 	{
