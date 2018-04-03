@@ -157,7 +157,8 @@ sub new_vlan # ( $json_obj )
 	}
 
 	my $isipv4       = $json_obj->{ ip_v } == 4;
-	my $isnetmskudef = $json_obj->{ netmask } == undef;
+	my $isnetmske    = exists $json_obj->{ netmask };
+	my $isnetmskudef = defined $json_obj->{ netmask };
 	my $isvalid	 = &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } );
 
 	# Check netmask errors
