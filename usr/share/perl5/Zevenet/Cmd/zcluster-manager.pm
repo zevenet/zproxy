@@ -570,9 +570,7 @@ sub setNodeStatusMaster
 	&zenlog( "Running: $zenino &" );
 	{
 		local %ENV = ( %ENV );
-
-		$ENV{ _ }    = $zenino;
-		$ENV{ name } = $zenino;
+		$ENV{ _ } = $zenino;
 
 		&logAndRun( "$zenino &" );
 	}
@@ -650,8 +648,15 @@ sub setNodeStatusBackup
 	# Ssyncd
 	&setSsyncdBackup();
 
-	my $zenino = &getGlobalConfiguration( 'zenino' );
-	system ( "$zenino stop &" ) unless system ( 'pgrep zeninotify >/dev/null' );
+	unless ( system ( 'pgrep zeninotify >/dev/null' ) )
+	{
+		my $zenino = &getGlobalConfiguration( 'zenino' );
+
+		local %ENV = ( %ENV );
+		$ENV{ _ } = $zenino;
+
+		&logAndRun( "$zenino stop &" );
+	}
 
 	# stop farmguardians
 	my $pids = `pgrep farmguardian`;
@@ -693,8 +698,15 @@ sub setNodeStatusMaintenance
 	&setSsyncdDisabled();
 
 	# stop zeninotify
-	my $zenino = &getGlobalConfiguration( 'zenino' );
-	system ( "$zenino stop" );
+	unless ( system ( 'pgrep zeninotify >/dev/null' ) )
+	{
+		my $zenino = &getGlobalConfiguration( 'zenino' );
+
+		local %ENV = ( %ENV );
+		$ENV{ _ } = $zenino;
+
+		&logAndRun( "$zenino stop" );
+	}
 
 	# stop farmguardian
 	system ( "pkill farmguardian" );
