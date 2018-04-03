@@ -202,7 +202,7 @@ sub getCertIssuer    # ($certfile)
 	}
 
 	$certissu = &getCleanBlanc( $certissu );
-	&zenlog("certissuer is $certissu");
+
 	return $certissu;
 }
 
@@ -619,9 +619,9 @@ sub getCertInfo    # ($certfile)
 	my $issuer = "";
 	if ( $type eq "Certificate" )
 	{
-		my ( $line ) = grep (/Issuer:/, @cert_data);
-		( undef, $line ) = split ( /CN=/, $line );
-		( $issuer ) = split ( /\/emailAddress=/, $line );
+		my ( $line ) = grep /Issuer:/, @cert_data;
+		( undef, $line ) = split ( /CN ?=/, $line );
+		( $issuer ) = split ( /\/emailAddress ?=/, $line );
 	}
 	elsif ( $type eq "CSR" )
 	{
