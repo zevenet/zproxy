@@ -730,7 +730,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			}
 		}
 
-		if ( $json_obj->{ listener } eq 'https' )
+		if ( exists $json_obj->{ listener } && $json_obj->{ listener } eq 'https' )
 		{
 			# certlist
 			my @certlist;

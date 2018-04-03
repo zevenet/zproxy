@@ -153,7 +153,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		if ( $json_obj->{ algorithm } =~ /^leastconn|weight|prio$/ )
 		{
 			$status = &setFarmAlgorithm( $json_obj->{ algorithm }, $farmname );
-			if ( $status == -1 )
+			if ( $status eq '-1' )
 			{
 				$error = "true";
 				&zenlog(
