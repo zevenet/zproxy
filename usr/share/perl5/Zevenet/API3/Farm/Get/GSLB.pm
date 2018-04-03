@@ -38,7 +38,7 @@ sub farms_name_gslb # ( $farmname )
 	my $vport = &getFarmVip( "vipp", $farmname );
 	$vport = $vport + 0;
 
-	if ( $status == 'up' && -e "/tmp/$farmname.lock" )
+	if ( $status eq 'up' && -e "/tmp/$farmname.lock" )
 	{
 		$status = "needed restart";
 	}

@@ -153,7 +153,7 @@ sub new_farm    # ( $json_obj )
 								 $json_obj->{ interface }
 	);
 
-	if ( $status == -1 )
+	if ( $status eq '-1' )
 	{
 		&zenlog(
 			"ZAPI error, trying to create a new farm $json_obj->{ farmname }, can't be created."
