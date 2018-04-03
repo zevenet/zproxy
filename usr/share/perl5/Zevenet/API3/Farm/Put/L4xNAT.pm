@@ -519,7 +519,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $dosConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @dosRules, $key;
 			}
@@ -531,7 +531,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @blacklistsRules, $key;
 			}
@@ -543,7 +543,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $rblConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @rblRules, $key;
 			}

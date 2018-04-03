@@ -29,7 +29,7 @@ sub delete_farm # ( $farmname )
 
 	my $newffile = &getFarmFile( $farmname );
 
-	if ( $newffile == -1 )
+	if ( $newffile eq '-1' )
 	{
 		&zenlog(
 			 "ZAPI error, trying to delete the farm $farmname, the farm name doesn't exist."
