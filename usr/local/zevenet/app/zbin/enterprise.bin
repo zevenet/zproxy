@@ -369,12 +369,12 @@ sub include
 		# get code
 		$code = `$cmd`;
 
-		&zenlog("[include] Module load BEGIN :: $mod->{ name }");
+		#~ &zenlog("[include] Module load BEGIN :: $mod->{ name }");
 
 		# load module
 		eval $code;
 
-		&zenlog("[include] Module load END :: $mod->{ name }");
+		#~ &zenlog("[include] Module load END :: $mod->{ name }");
 
 		# log error messages if any happened
 		if ( $@ )
