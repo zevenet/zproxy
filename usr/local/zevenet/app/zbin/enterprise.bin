@@ -393,12 +393,8 @@ sub include
 	if ( $func )
 	{
 		# Function. Check the function is in the module, load params from input in JSON
-		my @code = split( "\n", $code );
-		&zenlog("enterprise.bin function found: '$_'") for grep( /^sub /, @code );
-		&zenlog("enterprise.bin code: '$_'") for grep( /$func/, @code );
-
-		my $func_found = grep { /^sub $func(?:\W|$)/ } split( "\n", $code );
-		&zenlog("enterprise.bin count: $func_found");
+		my @code = split ( "\n", $code );
+		my $func_found = grep { /^sub $func(?:\W|$)/ } split ( "\n", $code );
 
 		# check if the function is available
 		unless ( $func_found )
