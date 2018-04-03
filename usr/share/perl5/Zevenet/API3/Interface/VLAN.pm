@@ -157,7 +157,7 @@ sub new_vlan # ( $json_obj )
 	}
 
 	# Check netmask errors
-	if ( $json_obj->{ ip_v } == 4 && ($json_obj->{ netmask } == undef || ! &getValidFormat( 'IPv4_mask', $json_obj->{ ip } )) )
+	if ( $json_obj->{ ip_v } == 4 && ($json_obj->{ netmask } == undef || ! &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } )) )
 	{
 		# Error
 		my $errormsg = "Netmask parameter not valid";
@@ -210,7 +210,7 @@ sub new_vlan # ( $json_obj )
 				mask    => $json_obj->{ netmask },
 				gateway => $json_obj->{ gateway } // '',
 				ip_v    => &ipversion( $json_obj->{ ip } ),
-				mac     => $socket->if_hwaddr( $if_ref->{ dev } ),
+				mac     => $socket->if_hwaddr( $json_obj->{ parent } ),
 	};
 
 	# No errors

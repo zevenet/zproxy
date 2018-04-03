@@ -148,6 +148,10 @@ sub ipversion    # ($checkip)
 	{
 		$output = 6;
 	}
+	else
+	{
+		$output = '';
+	}
 
 	return $output;
 }
