@@ -474,7 +474,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
 		my @be = split ( "\n", $backendsvs );
 
-		my $id;
+		my $id = 0;
 		foreach my $subl ( @be )
 		{
 			my @subbe = split ( "\ ", $subl );
@@ -834,7 +834,7 @@ sub backends
 			$l_serv[0] = $l_serv[0] + 0;
 			$l_serv[3] = ($l_serv[3]) ? $l_serv[3]+0: undef;
 			$l_serv[4] = ($l_serv[4]) ? $l_serv[4]+0: undef;
-			$l_serv[5] = $l_serv[5] + 0;
+			$l_serv[5] = $l_serv[5];
 
 			if ( $l_serv[1] ne "0.0.0.0" )
 			{
@@ -844,7 +844,8 @@ sub backends
 					ip        => $l_serv[1],
 					interface => $l_serv[2],
 					weight    => $l_serv[3],
-					priority  => $l_serv[4]
+					priority  => $l_serv[4],
+					status  => $l_serv[5]
 				  };
 			}
 		}
