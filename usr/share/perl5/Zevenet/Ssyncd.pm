@@ -23,6 +23,8 @@
 
 use strict;
 
+require Zevenet::Farm::Core;
+
 # my $ssyncd_enabled = 'true';
 # my $ssyncd_bin     = '/usr/local/zevenet/app/ssyncd/bin/ssyncd';
 # my $ssyncdctl_bin  = '/usr/local/zevenet/app/ssyncd/bin/ssyncdctl';
@@ -38,12 +40,13 @@ sub setSsyncdFarmUp
 	return 0 if $ssyncd_enabled eq 'false';
 
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
-	my $type          = getFarmType( $farm_name );
+	my $type          = &getFarmType( $farm_name );
 
 	if ( $type eq 'l4xnat' )
 	{
+		require Zevenet::Farm::Base;
 		my $farms_started = &getNumberOfFarmTypeRunning( 'l4xnat' );
-		
+
 		if ( $farms_started )
 		{
 			return system( "$ssyncdctl_bin start recent >/dev/null" );
@@ -66,12 +69,13 @@ sub setSsyncdFarmDown
 	return 0 if $ssyncd_enabled eq 'false';
 
 	my $ssyncdctl_bin = &getGlobalConfiguration( 'ssyncdctl_bin' );
-	my $type          = getFarmType( $farm_name );
+	my $type          = &getFarmType( $farm_name );
 
 	if ( $type eq 'l4xnat' )
 	{
+		require Zevenet::Farm::Base;
 		my $farms_started = &getNumberOfFarmTypeRunning( 'l4xnat' );
-		
+
 		if ( $farms_started <= 1 )
 		{
 			return system( "$ssyncdctl_bin stop recent >/dev/null" );
@@ -145,7 +149,7 @@ sub setSsyncdBackup
 	# ./ssyncd -d -B -p 9999 -a 172.16.1.1 --> start backup node and connect to master 172.16.1.1:9999
 
 	my $error = system( "$ssyncd_bin -d -B -p $ssyncd_port -a $remote_node_ip" );
-	
+
 	return $error;
 }
 
@@ -178,14 +182,16 @@ sub setSsyncdMaster
 		}
 
 		# Before changing to master mode:
-		# ./ssyncdctl write http   --> Write http sessions data to pound 
+		# ./ssyncdctl write http   --> Write http sessions data to pound
 		# ./ssyncdctl write recent --> Write recent data to recent module
+		my $error;
+
 		$ssync_cmd = "$ssyncdctl_bin write http";
-		my $error = system( "$ssync_cmd" );
+		$error = system( "$ssync_cmd" );
 		&zenlog("setSsyncdMaster ssyncd write http: $error > cmd: $ssync_cmd") if $error;
 
 		$ssync_cmd = "$ssyncdctl_bin write recent";
-		my $error = system( "$ssync_cmd" );
+		$error = system( "$ssync_cmd" );
 		&zenlog("setSsyncdMaster ssyncd write recent: $error > cmd: $ssync_cmd") if $error;
 
 		&setSsyncdDisabled();

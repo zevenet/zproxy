@@ -23,7 +23,6 @@
 
 use strict;
 
-
 if ( $ENV{ PATH_INFO } =~ qr{^/system/cluster} )
 {
 	my $mod = 'Zevenet::API31::System::Cluster';

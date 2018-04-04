@@ -341,7 +341,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	{
 		if ( eval { require Zevenet::API32::Farm::Service::Ext; } )
 		{
-			&modify_service_cookie_intertion( $farmname, $service, $json_obj );
+			&modify_service_cookie_insertion( $farmname, $service, $json_obj );
 		}
 		else
 		{

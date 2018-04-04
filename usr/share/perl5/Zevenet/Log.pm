@@ -23,16 +23,16 @@
 
 use strict;
 
-use Unix::Syslog qw(:macros :subs);    # Syslog macros
-
-#~ use Sys::Syslog;                          #use of syslog
-#~ use Sys::Syslog qw(:standard :macros);    #standard functions for Syslog
+use Unix::Syslog qw(:macros :subs);  # Syslog macros
 
 # Get the program name for zenlog
-my $run_cmd_name = ( split '/', $0 )[-1];
-$run_cmd_name = ( split '/', "$ENV{'SCRIPT_NAME'}" )[-1]
-  if $run_cmd_name eq '-e';
-$run_cmd_name = ( split '/', $^X )[-1] if !$run_cmd_name;
+my $TAG = "[Log.pm]";
+my $program_name =
+    ( $0 ne '-e' ) ? $0
+  : ( exists $ENV{ _ } && $ENV{ _ } !~ /enterprise.bin$/ ) ? $ENV{ _ }
+  :                                                          $^X;
+
+my $basename = ( split ( '/', $program_name ) )[-1];
 
 =begin nd
 Function: zenlog
@@ -75,7 +75,7 @@ sub zenlog    # ($string, $type)
 	$tag = "$tag :: " if $tag;
 
 	# Get the program name
-	my $program = $run_cmd_name;
+	my $program = $basename;
 
 	#~ openlog( $program, 'pid', 'local0' );    #open syslog
 	openlog( $program, LOG_PID, LOG_LOCAL0 );
@@ -109,8 +109,8 @@ sub zlog    # (@message)
 {
 	my @message = shift;
 
-	#my ($package,		# 0
-	#$filename,		# 1
+	#my ($package,   # 0
+	#$filename,      # 1
 	#$line,          # 2
 	#$subroutine,    # 3
 	#$hasargs,       # 4
@@ -150,19 +150,18 @@ See Also:
 sub logAndRun    # ($command)
 {
 	my $command = shift;    # command string to log and run
+
+	require Zevenet::Debug;
+
 	my $return_code;
 	my @cmd_output;
-
-	my $program = ( split '/', $0 )[-1];
-	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
-	$program .= ' ';
+	my $program = $basename;
 
 	# &zenlog( (caller (2))[3] . ' >>> ' . (caller (1))[3]);
 
-	require Zevenet::Debug;
 	if ( &debug )
 	{
-		&zenlog( $program . "running: $command" );
+		&zenlog( "$program running: $command" );
 
 		@cmd_output  = `$command 2>&1`;
 		$return_code = $?;
@@ -177,7 +176,7 @@ sub logAndRun    # ($command)
 	{
 		system ( "$command >/dev/null 2>&1" );
 		$return_code = $?;
-		&zenlog( $program . "failed: $command", 'error' ) if $return_code;
+		&zenlog( "$program failed: $command", 'error' ) if $return_code;
 	}
 
 	# returning error code from execution

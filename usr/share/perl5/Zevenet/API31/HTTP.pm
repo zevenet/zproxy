@@ -401,7 +401,7 @@ sub httpErrorResponse
 
 	my $response = { code => $args->{ code }, body => $body };
 
-	if ( $0 =~ m!app/zbin/enterprise\.bin$! )
+	if ( $0 =~ m!bin/enterprise\.bin$! )
 	{
 		return $response;
 	}

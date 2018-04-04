@@ -60,7 +60,7 @@ sub get_license
 sub get_supportsave
 {
 	my $description = "Get supportsave file";
-	my @ss_output = `/usr/local/zevenet/app/zbin/supportsave 2>&1`;
+	my @ss_output = `/usr/local/zevenet/bin/supportsave 2>&1`;
 
 	# get the last "word" from the first line
 	my $first_line = shift @ss_output;
@@ -115,14 +115,14 @@ sub get_version
 	chop $hostname;
 
 	&httpResponse(
-		{ 	code => 200, body => { description => $description, 
-				params => { 
+		{ 	code => 200, body => { description => $description,
+				params => {
 					'kernel_version' => $kernel,
 					'zevenet_version' => $zevenet,
 					'hostname' => $hostname,
 					'system_date' => $date,
 					'appliance_version' => $applicance,
-				} } 
+				} }
 		}
 	);
 }

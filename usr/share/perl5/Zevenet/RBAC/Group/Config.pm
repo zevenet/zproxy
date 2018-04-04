@@ -3,8 +3,8 @@
 use strict;
 
 use Zevenet::Core;
-use Zevenet::RBAC::Group::Core;
-use Zevenet::RBAC::Group::Runtime;
+include 'Zevenet::RBAC::Group::Core';
+include 'Zevenet::RBAC::Group::Runtime';
 
 # rbac configuration paths
 my $rbacGroupConfig = &getRBACGroupConf();
@@ -16,10 +16,10 @@ Function: setRBACGroupLockConfigFile
 
 Parameters:
 	None - .
-					
+
 Returns:
 	Integer - 0 on failure or other value on success
-	
+
 =cut
 
 sub setRBACGroupLockConfigFile
@@ -33,14 +33,14 @@ sub setRBACGroupLockConfigFile
 =begin nd
 Function: setRBACGroupUnlockConfigFile
 
-	Unlock the group configuration file 
+	Unlock the group configuration file
 
 Parameters:
 	Integer - Lock file identifier
-					
+
 Returns:
 	None - .
-	
+
 =cut
 
 sub setRBACGroupUnlockConfigFile
@@ -65,7 +65,7 @@ Parameters:
 	value - new value for the parameter
 	action - This is a optional parameter. The possible values are: "add" to add
 	a item to a list, or "del" to delete a item from a list
-					
+
 Returns:
 	None - .
 
@@ -118,10 +118,10 @@ Function: createRBACGroup
 
 Parameters:
 	Group - Group name
-					
+
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub createRBACGroup
@@ -157,7 +157,7 @@ Parameters:
 
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub delRBACGroup
@@ -192,7 +192,7 @@ Parameters:
 
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub addRBACGroupResource
@@ -205,7 +205,7 @@ sub addRBACGroupResource
 	# Add it to system
 	if ( $type eq 'users' )
 	{
-		require Zevenet::RBAC::User::Runtime;
+		include 'Zevenet::RBAC::User::Runtime';
 		$error = &runRBACAddUserToGroup( $resource, $group );
 	}
 
@@ -230,7 +230,7 @@ Parameters:
 
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub delRBACGroupResource
@@ -243,7 +243,7 @@ sub delRBACGroupResource
 	# Add it to system
 	if ( $type eq "users" )
 	{
-		require Zevenet::RBAC::User::Runtime;
+		include 'Zevenet::RBAC::User::Runtime';
 		$error = &runRBACDelUserToGroup( $resource, $group );
 	}
 
@@ -267,13 +267,14 @@ Parameters:
 
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub addRBACUserResource
 {
 	my $resource = shift;
 	my $type     = shift;
+
 	my $error;
 
 	require Zevenet::User;
@@ -300,7 +301,7 @@ Parameters:
 
 Returns:
 	None - .
-	
+
 =cut
 
 sub delRBACResource
@@ -328,7 +329,7 @@ Parameters:
 
 Returns:
 	None - .
-	
+
 =cut
 
 sub setRBACRenameByFarm

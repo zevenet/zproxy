@@ -23,6 +23,9 @@
 
 use strict;
 
+require Zevenet::Farm::Base;
+require Zevenet::Net::ConnStats;
+
 =begin nd
 Function: getGSLBGdnsdStats
 
@@ -39,7 +42,7 @@ sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ( )
 {
 	my $farmName = shift;
 
-	require Zevenet::Farm::GSLB::Config;
+	include 'Zevenet::Farm::GSLB::Config';
 
 	my $wget       = &getGlobalConfiguration( 'wget' );
 	my $httpPort   = &getGSLBControlPort( $farmName );
@@ -78,10 +81,14 @@ sub getGSLBFarmEstConns    # ($farm_name,$netstat)
 	my $vip      = &getFarmVip( "vip",  $farm_name );
 	my $vip_port = &getFarmVip( "vipp", $farm_name );
 
-	return
-	  &getNetstatFilter( "udp", "",
-						 "src=.* dst=$vip sport=.* dport=$vip_port .*src=.*",
-						 "", $netstat );
+	return scalar @{
+		&getNetstatFilter(
+			"udp",
+			"",
+			"src=.* dst=$vip sport=.* dport=$vip_port .*src=.*",
+			"",
+			$netstat
+		) };
 }
 
 sub getGSLBFarmBackendsStats
@@ -89,7 +96,7 @@ sub getGSLBFarmBackendsStats
 	my ( $farmname ) = @_;
 
 	require Zevenet::Farm::Config;
-	require Zevenet::Farm::GSLB::Service;
+	include 'Zevenet::Farm::GSLB::Service';
 
 	my $out_rss;
 	my $gslb_stats = &getGSLBGdnsdStats( $farmname );
@@ -137,15 +144,16 @@ sub getGSLBFarmBackendsStats
 			$id =~ s/^secondary$/2/;
 			$status = lc $status if defined $status;
 
-			push @{ $gslb_stats->{ 'backend' } },
-			  {
-				alias   => $alias->{ ip },
-				id      => $id + 0,
-				ip      => $addr,
-				service => $srv,
-				port    => $port + 0,
-				status  => $status
-			  };
+			push (
+				@{ $gslb_stats->{ 'backend' } },
+				{
+				  id      => $id + 0,
+				  ip      => $addr,
+				  service => $srv,
+				  port    => $port + 0,
+				  status  => $status,
+				}
+			);
 		}
 	}
 

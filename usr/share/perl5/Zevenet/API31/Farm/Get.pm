@@ -25,6 +25,9 @@ use Zevenet::Config;
 use Zevenet::Farm::Core;
 use Zevenet::Farm::Base;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 #GET /farms
 sub farms    # ()
 {
@@ -138,7 +141,7 @@ sub farms_name_summary    # ( $farmname )
 	my $desc     = "Show farm $farmname";
 
 	# Check if the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "Farm not found.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -150,10 +153,8 @@ sub farms_name_summary    # ( $farmname )
 		require Zevenet::API31::Farm::Get::HTTP;
 		&farms_name_http_summary( $farmname );
 	}
-	else
-	{
-		&farms_name( $farmname );
-	}
+
+	&farms_name( $farmname );
 }
 
 #GET /farms/<name>
@@ -164,7 +165,7 @@ sub farms_name    # ( $farmname )
 	my $desc = "Show farm $farmname";
 
 	# Check if the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "Farm not found.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -187,12 +188,13 @@ sub farms_name    # ( $farmname )
 		require Zevenet::API31::Farm::Get::Datalink;
 		&farms_name_datalink( $farmname );
 	}
-	if ( $type eq 'gslb' )
+	if ( $type eq 'gslb' && $eload )
 	{
-		if ( eval { require Zevenet::API31::Farm::Get::GSLB; } )
-		{
-			&farms_name_gslb( $farmname );
-		}
+		&eload(
+			module => 'Zevenet::API31::Farm::Get::GSLB',
+			func   => 'farms_name_gslb',
+			args   => [$farmname],
+		) if ( $eload );
 	}
 }
 

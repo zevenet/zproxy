@@ -23,6 +23,9 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
@@ -440,10 +443,11 @@ sub getHTTPServiceStruct
 					 backends     => $backends,
 	};
 
-	if ( eval { require Zevenet::Farm::HTTP::Service::Ext; } )
-	{
-		&add_service_cookie_intertion( $farmname, $service_ref );
-	}
+	$service_ref = &eload(
+		module => 'Zevenet::Farm::HTTP::Service::Ext',
+		func   => 'add_service_cookie_insertion',
+		args   => [$farmname, $service_ref],
+	) if $eload;
 
 	return $service_ref;
 }

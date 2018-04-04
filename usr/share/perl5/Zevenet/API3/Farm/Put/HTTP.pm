@@ -28,13 +28,14 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
+	include 'Zevenet::IPDS::Base';
+	include 'Zevenet::IPDS::Blacklist';
+	include 'Zevenet::IPDS::DoS';
+
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;
-	require Zevenet::IPDS::Base;
-	require Zevenet::IPDS::Blacklist;
-	require Zevenet::IPDS::DoS;
 	my $ipds = &getIPDSfarmsRules_zapiv3( $farmname );
-	
+
 	# Flags
 	my $reload_flag  = "false";
 	my $restart_flag = "false";
@@ -43,9 +44,9 @@ sub modify_http_farm # ( $json_obj, $farmname )
 
 	my $status;
 	my $zapierror;
-	
+
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
@@ -240,7 +241,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			$zapierror = "Error, trying to modify a http farm $farmname, invalid resurrectime.";
-			&zenlog( "Zapi $zapierror" );	  
+			&zenlog( "Zapi $zapierror" );
 		}
 	}
 
@@ -362,7 +363,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			{
 				$error = "true";
 				$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the httpverb.";
-				&zenlog( "Zapi $zapierror" );			
+				&zenlog( "Zapi $zapierror" );
 			}
 		}
 		else
@@ -385,7 +386,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		{
 			$error = "true";
 			$zapierror = "Error, trying to modify a http farm $farmname, some errors happened trying to modify the error414.";
-			&zenlog( "Zapi $zapierror" );		
+			&zenlog( "Zapi $zapierror" );
 		}
 	}
 
@@ -569,7 +570,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 		# Add Certificate to SNI list
 		if ( exists ( $json_obj->{ certname } ) )
 		{
-			require Zevenet::Farm::HTTP::HTTPS::Ext;
+			include 'Zevenet::Farm::HTTP::HTTPS::Ext';
 
 			$status = &setFarmCertificateSNI( $json_obj->{ certname }, $farmname );
 			if ( $status != -1 )
@@ -719,7 +720,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 	{
 		&zenlog(
 				  "ZAPI success, some parameters have been changed in farm $farmname." );
-	
+
 		# set numeric values to numeric type
 		for my $key ( keys %{ $json_obj } )
 		{
@@ -729,7 +730,7 @@ sub modify_http_farm # ( $json_obj, $farmname )
 			}
 		}
 
-		if ( $json_obj->{ listener } eq 'https' )
+		if ( exists $json_obj->{ listener } && $json_obj->{ listener } eq 'https' )
 		{
 			# certlist
 			my @certlist;
@@ -819,7 +820,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $dosConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @dosRules, $key;
 			}
@@ -831,7 +832,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @blacklistsRules, $key;
 			}
@@ -843,7 +844,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $rblConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @rblRules, $key;
 			}

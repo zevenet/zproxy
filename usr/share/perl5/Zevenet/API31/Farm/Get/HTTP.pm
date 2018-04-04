@@ -23,6 +23,8 @@
 use strict;
 use Zevenet::Farm::HTTP::Config;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
 sub get_farm_struct
 {
@@ -58,9 +60,13 @@ sub get_farm_struct
 	{
 		require Zevenet::Farm::HTTP::HTTPS;
 
-		if ( eval { require Zevenet::Farm::HTTP::HTTPS::Ext; } )
+		if ( $eload )
 		{
-			@cnames = &getFarmCertificatesSNI( $farmname );
+			@cnames = &eload(
+				module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+				func   => 'getFarmCertificatesSNI',
+				args   => [$farmname],
+			);
 		}
 		else
 		{
@@ -118,12 +124,14 @@ sub get_farm_struct
 						  error503            => $err503
 	};
 
-	my $EE = eval { require Zevenet::HTTP::Ext; } ? 1 : undef;
-
-	if ( $EE )
+	if ( $eload )
 	{
-		$output_params->{ ignore_100_continue } =
-		  ( &getHTTPFarm100Continue( $farmname ) ) ? "true" : "false";
+		my $flag = &eload(
+			module => 'Zevenet::Farm::HTTP::Ext',
+			func   => 'getHTTPFarm100Continue',
+			args   => [$farmname],
+		);
+		$output_params->{ ignore_100_continue } = ( $flag ) ? "true" : "false";
 	}
 
 	if ( $type eq "https" )
@@ -175,10 +183,11 @@ sub farms_name_http # ( $farmname )
 				 services    => \@out_s,
 	};
 
-	if ( eval{ require Zevenet::IPDS::Core; } )
-	{
-		$body->{ ipds } = &getIPDSfarmsRules( $farmname );
-	}
+	$body->{ ipds } = &eload(
+				module => 'Zevenet::IPDS::Core',
+				func   => 'getIPDSfarmsRules',
+				args   => [$farmname],
+	) if ( $eload );
 
 	&httpResponse({ code => 200, body => $body });
 }
@@ -208,10 +217,11 @@ sub farms_name_http_summary
 				 services    => \@out_s,
 	};
 
-	if ( eval{ require Zevenet::IPDS::Core; } )
-	{
-		$body->{ ipds } = &getIPDSfarmsRules( $farmname );
-	}
+	$body->{ ipds } = &eload(
+				module => 'Zevenet::IPDS::Core',
+				func   => 'getIPDSfarmsRules',
+				args   => [$farmname],
+	) if ( $eload );
 
 	&httpResponse({ code => 200, body => $body });
 }

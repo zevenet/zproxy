@@ -23,7 +23,7 @@
 
 use strict;
 
-use Zevenet::IPDS::RBL::Core;
+include 'Zevenet::IPDS::RBL::Core';
 
 # rbl configuration path
 my $rblPath              = &getGlobalConfiguration( 'configdir' ) . "/ipds/rbl";
@@ -39,10 +39,10 @@ Function: getRBLFarmMatch
 
 Parameters:
 	Farmname -  Farm name. If farm name is in blank, the rule applies to all destine IPs and ports
-				
+
 Returns:
 	Scalar - iptables chain that matches with the farm
-	
+
 =cut
 
 sub getRBLFarmMatch
@@ -114,12 +114,12 @@ Parameters:
 	Farmname -  Farm name. If farm name is in blank, the rule applies to all destine IPs and ports
 	Action - Action to apply to iptables. The available options are: 'append', create the rule the last in the iptables list;
 	  'insert', create the rule the first in the iptables list; or 'delete' delete the rule from iptables list
-				
+
 Returns:
 	Integer - 0 on success or other value on failure
-	
+
 FIXME: Define the chain and the table for iptables
-	
+
 =cut
 
 sub runRBLIptablesRule
@@ -128,7 +128,7 @@ sub runRBLIptablesRule
 	my $error;
 
 	require Zevenet::Netfilter;
-	require Zevenet::IPDS::Core;
+	include 'Zevenet::IPDS::Core';
 
 	my $nfqueue;
 	my $rbl_chain = &getIPDSChain( "rbl" );
@@ -197,11 +197,11 @@ Function: runRBLStart
 	Run packetbl binary
 
 Parameters:
-	String - Rule name 
-	
+	String - Rule name
+
 Returns:
 	integer - 0 on success or other value on failure
-	
+
 =cut
 
 sub runRBLStartPacketbl
@@ -237,13 +237,13 @@ Function: runRBLStopPacketbl
 	Stop packetbl bin
 
 Parameters:
-	String - Rule name 
-	
+	String - Rule name
+
 Returns:
 
 FIXME:
 	if packetbl is stopped without delete its pid file, the rule will appear in UP status
-	
+
 =cut
 
 sub runRBLStopPacketbl
@@ -271,8 +271,8 @@ Function: runRBLRestartPacketbl
 	Restart packetbl bin. It is useful to reload configuration
 
 Parameters:
-	String - Rule name 
-	
+	String - Rule name
+
 Returns:
 	integer - 0 on success or other value on failure
 
@@ -281,8 +281,10 @@ Returns:
 sub runRBLRestartPacketbl
 {
 	my $rule = shift;
+
 	&runRBLStopPacketbl( $rule );
 	my $error = &runRBLStartPacketbl( $rule );
+
 	return $error;
 }
 
@@ -292,8 +294,8 @@ Function: setRBLPacketblConfig
 	before than exec packetbl, configure a new config file with rule configuration and overwrite the existing one
 
 Parameters:
-	String - Rule name 
-	
+	String - Rule name
+
 Returns:
 	Integer - 0 on success or other value on failure
 
@@ -304,6 +306,7 @@ sub setRBLPacketblConfig
 	my $rule = shift;
 
 	require Zevenet::Lock;
+
 	my $params = &getRBLObjectRule( $rule );
 	my $error  = 0;
 
@@ -326,7 +329,7 @@ sub setRBLPacketblConfig
 		$fileContent .= "\n\tblacklistbl\t$domain";
 	}
 
-	$fileContent .= "	
+	$fileContent .= "
 </host>
 FallthroughAccept	yes
 AllowNonPort25		yes
@@ -347,11 +350,13 @@ LogLevel	$params->{'log_level'}
 	my $fh;
 	my $filename = &getRBLPacketblConfig( $rule );
 	$fh = &openlock( '>', $filename );
+
 	unless ( $fh )
 	{
 		&zenlog( "Could not open file $filename: $!" );
 		return -1;
 	}
+
 	print $fh $fileContent;
 	&closelock( $fh );
 
@@ -364,11 +369,11 @@ Function: setRBLCreateNfqueue
 	Looking for a not used nf queue and assigned it to a RBL rule
 
 Parameters:
-	String - Rule name 
-	
+	String - Rule name
+
 Returns:
 	integer - netfilter queue number
-	
+
 =cut
 
 sub setRBLCreateNfqueue
@@ -376,11 +381,10 @@ sub setRBLCreateNfqueue
 	my $rule = shift;
 
 	require Config::Tiny;
-	require Zevenet::IPDS::RBL::Config;
+	include 'Zevenet::IPDS::RBL::Config';
 
-	my $queue_num = 0;
-	my @rules     = &getRBLRuleList();
-	require Config::Tiny;
+	my $queue_num  = 0;
+	my @rules      = &getRBLRuleList();
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 	my @queue_list;
 
@@ -411,18 +415,18 @@ Function: setRBLRemoveNfqueue
 	Remove the associated netfilter queue for a rule
 
 Parameters:
-	String - Rule name 
-	
+	String - Rule name
+
 Returns:
 	none - .
-	
+
 =cut
 
 sub setRBLRemoveNfqueue
 {
 	my $rule = shift;
 
-	require Zevenet::IPDS::RBL::Config;
+	include 'Zevenet::IPDS::RBL::Config';
 	&setRBLObjectRuleParam( $rule, 'nf_queue_number', '' );
 }
 

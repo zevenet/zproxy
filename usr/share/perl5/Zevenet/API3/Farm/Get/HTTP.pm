@@ -22,7 +22,7 @@
 
 use strict;
 
-use Zevenet::IPDS::Core;
+include 'Zevenet::IPDS::Core';
 
 # GET /farms/<farmname> Request info of a http|https Farm
 sub farms_name_http # ( $farmname )
@@ -58,7 +58,7 @@ sub farms_name_http # ( $farmname )
 	if ( $type eq "https" )
 	{
 		require Zevenet::Farm::HTTP::HTTPS;
-		require Zevenet::Farm::HTTP::HTTPS::Ext;
+		include 'Zevenet::Farm::HTTP::HTTPS::Ext';
 
 		@cnames = &getFarmCertificatesSNI( $farmname );
 		my $elem = scalar @cnames;
@@ -148,7 +148,7 @@ sub farms_name_http # ( $farmname )
 		
 		push @out_s, $serviceStruct;
 	}
-	require Zevenet::IPDS;
+	include 'Zevenet::IPDS';
 	my $ipds = &getIPDSfarmsRules_zapiv3( $farmname );
 
 	# Success
@@ -185,7 +185,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $dosConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @dosRules, $key;
 			}
@@ -197,7 +197,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @blacklistsRules, $key;
 			}
@@ -209,7 +209,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $rblConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @rblRules, $key;
 			}

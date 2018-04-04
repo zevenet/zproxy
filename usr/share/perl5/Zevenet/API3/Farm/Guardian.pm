@@ -42,11 +42,11 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 
 	my @allowParams = ( "fgtimecheck", "fgscript", "fglog", "fgenabled" );
 
-	require Zevenet::Farm::GSLB::Service;
+	include 'Zevenet::Farm::GSLB::Service';
 	require Zevenet::Farm::HTTP::Service;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		$errormsg = "The farmname $farmname does not exists.";
 		my $body =
@@ -138,7 +138,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	{
 		if ( $type eq 'gslb' )
 		{
-			require Zevenet::Farm::GSLB::FarmGuardian;
+			include 'Zevenet::Farm::GSLB::FarmGuardian';
 
 			# Change check script
 			my $fgStatus =
@@ -173,17 +173,17 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 				@fgconfig = &getFarmGuardianConf( $farmname, $service );
 			}
 
-			my $timetocheck = $fgconfig[1] + 0;
-			$timetocheck = 5 if ( !$timetocheck );
+			my $timetocheck  = $fgconfig[1] + 0 if defined $fgconfig[1];
+			$timetocheck = 5 if ( ! $timetocheck );
 
-			my $check_script = $fgconfig[2];
+			my $check_script = ( defined $fgconfig[2] ) ? $fgconfig[2] : "";
 			$check_script =~ s/\n//g;
 			$check_script =~ s/\"/\'/g;
 
-			my $usefarmguardian = $fgconfig[3];
+			my $usefarmguardian = ( defined $fgconfig[3] ) ? $fgconfig[3] : "";
 			$usefarmguardian =~ s/\n//g;
 
-			my $farmguardianlog = $fgconfig[4];
+			my $farmguardianlog = ( defined $fgconfig[4] ) ? $fgconfig[4] : "";
 
 			if ( exists ( $json_obj->{ fgtimecheck } ) )
 			{

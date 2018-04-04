@@ -34,7 +34,7 @@ sub farm_actions # ( $json_obj, $farmname )
 	my $action;
 
 	# calidate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -65,7 +65,7 @@ sub farm_actions # ( $json_obj, $farmname )
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	
+
 	# Functions
 	require Zevenet::Farm::Action;
 	if ( $action eq "stop" )
@@ -90,7 +90,7 @@ sub farm_actions # ( $json_obj, $farmname )
 			&zenlog(
 					  "ZAPI success, the action stop has been established in farm $farmname." );
 
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'stop', $farmname );
 		}
 	}
@@ -117,7 +117,7 @@ sub farm_actions # ( $json_obj, $farmname )
 			&zenlog(
 					 "ZAPI success, the action start has been established in farm $farmname." );
 
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'start', $farmname );
 		}
 
@@ -156,7 +156,7 @@ sub farm_actions # ( $json_obj, $farmname )
 			&zenlog(
 				   "ZAPI success, the action restart has been established in farm $farmname." );
 
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 		}
 		else
@@ -195,7 +195,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	my $description = "Set service backend status";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) eq '-1' )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -369,7 +369,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 	}
 
@@ -386,7 +386,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 	my $description = "Set backend status";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -492,7 +492,7 @@ sub backend_maintenance # ( $json_obj, $farmname, $backend_id )
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
-		require require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 	}
 

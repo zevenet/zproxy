@@ -25,7 +25,6 @@ use strict;
 
 use Zevenet::Farm::Core;
 
-
 # POST
 
 sub new_farm_service    # ( $json_obj, $farmname )
@@ -34,7 +33,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	my $farmname = shift;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -150,7 +149,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 
 	if ( $type eq "gslb" )
 	{
-		require Zevenet::Farm::GSLB::Service;
+		include 'Zevenet::Farm::GSLB::Service';
 
 		if ( $json_obj->{ id } =~ /^$/ )
 		{
@@ -247,7 +246,7 @@ sub farm_services
 	my $description = "Get services of a farm";
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) eq '-1' )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
@@ -317,7 +316,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 	my $errormsg;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
@@ -509,9 +508,9 @@ sub modify_services # ( $json_obj, $farmname, $service )
 		# Cookie insertion
 		if ( scalar grep ( /^cookie/, keys %{ $json_obj } ) )
 		{
-			require Zevenet::API3::HTTP;
-			require Zevenet::Farm::HTTP::Service::Ext;
-			&modify_service_cookie_intertion( $farmname, $service, $json_obj );
+			sub include;
+			include 'Zevenet::API3::Farm::Service::Ext';
+			&modify_service_cookie_insertion( $farmname, $service, $json_obj );
 		}
 
 		if ( exists ( $json_obj->{ httpsb } ) )
@@ -566,7 +565,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 			&setFarmVS( $farmname, $service, "dpc", $json_obj->{ deftcpport } );
 
 			# Update farmguardian
-			require Zevenet::Farm::GSLB::FarmGuardian;
+			include 'Zevenet::Farm::GSLB::FarmGuardian';
 			my ( $fgTime, $fgScript ) = &getGSLBFarmGuardianParams( $farmname, $service );
 
 			# Changing farm guardian port check
@@ -577,7 +576,7 @@ sub modify_services # ( $json_obj, $farmname, $service )
 
 			if ( $? eq 0 )
 			{
-				require Zevenet::Farm::GSLB::Config;
+				include 'Zevenet::Farm::GSLB::Config';
 				&runGSLBFarmReload( $farmname );
 			}
 			else
@@ -643,7 +642,7 @@ sub move_services
 	my ( $json_obj, $farmname, $service ) = @_;
 
 	require Zevenet::Farm::HTTP::Service;
-	require Zevenet::Farm::HTTP::Service::Ext;
+	include 'Zevenet::Farm::HTTP::Service::Ext';
 
 	my @services = &getHTTPFarmServices( $farmname );
 	my $services_num = scalar @services;
@@ -652,7 +651,7 @@ sub move_services
 	my $errormsg;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 ) {
+	if ( !&getFarmExists( $farmname ) ) {
 		# Error
 		$errormsg = "The farmname $farmname does not exists.";
 		my $body = {
@@ -756,7 +755,7 @@ sub move_services
 							if ( &getFarmStatus( $farmname ) eq 'up' )
 							{
 								&runGSLBFarmReload( $farmname );
-								require Zevenet::Cluster;
+								include 'Zevenet::Cluster';
 								&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 							}
 
@@ -783,7 +782,7 @@ sub delete_service # ( $farmname, $service )
 	my ( $farmname, $service ) = @_;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -802,7 +801,7 @@ sub delete_service # ( $farmname, $service )
 	my @services;
 	if ($type eq "gslb")
 	{
-		require Zevenet::Farm::GSLB::Service;
+		include 'Zevenet::Farm::GSLB::Service';
 		@services = &getGSLBFarmServices($farmname);
 	}
 	else

@@ -14,10 +14,10 @@ Function: getRBACConfPath
 
 Parameters:
 	None - .
-					
+
 Returns:
 	String - path
-	
+
 =cut
 
 sub getRBACConfPath
@@ -32,7 +32,7 @@ Function: getRBACGroupMembers
 
 Parameters:
 	Group - group name
-					
+
 Returns:
 	Array - List of members
 
@@ -58,10 +58,10 @@ Function: getRBACUserIsMember
 Parameters:
 	User - User name
 	Group - Group name
-					
+
 Returns:
 	Integer - Return 1 if the user is member of the group or 0 else it is not
-	
+
 =cut
 
 sub getRBACUserIsMember
@@ -82,10 +82,10 @@ Function: getRBACUserGroup
 
 Parameters:
 	User - User name
-					
+
 Returns:
 	String - Group of the user
-	
+
 =cut
 
 sub getRBACUserGroup
@@ -130,7 +130,7 @@ sub getRBACResourcePermissions
 	my $user       = &getUser();
 	my $permission = 1;
 
-	require Zevenet::RBAC::Group::Core;
+	include 'Zevenet::RBAC::Group::Core';
 
 	# check resources
 	if ( $path =~ qr{^/(?:stats|graphs)?/?farms/modules} ) { }
@@ -221,20 +221,19 @@ sub getRBACRolePermission
 {
 	my $section = shift;
 	my $action  = shift;
-	my $out     = 0;
+
+	my $out = 0;
 
 	my $roleFile;
 	my $fileHandle;
-
 	my $user  = &getUser();
 	my $group = &getRBACUserGroup( $user );
+
 	&zenlog( "The user $user has not a group", "debug", "RBAC" ) if not $group;
 
 	my $role = &getRBACGroupParam( $group, 'role' );
 	&zenlog( "The user $user has not a role", "debug", "RBAC" )
 	  if ( not $role and $group );
-
-	my $fileHandle;
 
 	if ( $role )
 	{

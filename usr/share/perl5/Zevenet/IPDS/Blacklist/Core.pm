@@ -101,11 +101,10 @@ sub getBLStatus
 sub getBLListNoUsed
 {
 	my $blacklist = shift;
-	my $ipset     = &getGlobalConfiguration( 'ipset' );
 
-	#~ require Zevenet::Validate;
-	my $matchs = 0;
+	my $ipset  = &getGlobalConfiguration( 'ipset' );
 	my @cmd    = `$ipset -L -terse $blacklist 2>/dev/null`;
+	my $matchs = 0;
 
 	foreach my $line ( @cmd )
 	{
@@ -190,10 +189,10 @@ Function: getBLFarmApplied
 
 Parameters:
 	Farmname -  Farm name
-				
+
 Returns:
 	Array - list of BL rules
-	
+
 =cut
 
 sub getBLFarmApplied
@@ -228,9 +227,7 @@ Returns:
 
 sub getBLRunningRules
 {
-	require Zevenet::IPDS::Core;
-
-	my @blRules;
+	include 'Zevenet::IPDS::Core';
 
 	# look for blacklist rules
 	my $blacklist_chain = &getIPDSChain( "blacklist" );
@@ -378,9 +375,9 @@ sub getBLIpList
 
         Parameters:
         list - list name
-				
+
         Returns:
-			integer - number of sources 
+			integer - number of sources
 
 =cut
 

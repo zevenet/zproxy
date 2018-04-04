@@ -29,7 +29,7 @@ sub move_services
 
 	require Zevenet::Farm::Base;
 	require Zevenet::Farm::HTTP::Service;
-	require Zevenet::Farm::HTTP::Service::Ext;    # Load MoveService functions
+	include 'Zevenet::Farm::HTTP::Service::Ext';    # Load MoveService functions
 
 	my $desc         = "Move service";
 	my @services     = &getHTTPFarmServices( $farmname );
@@ -37,7 +37,7 @@ sub move_services
 	my $moveservice;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -120,10 +120,9 @@ sub move_services
 
 		&setHTTPFarmBackendStatus( $farmname );
 
-		if ( eval { require Zevenet::Cluster; } )
-		{
-			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
-		}
+		include 'Zevenet::Cluster';
+
+		&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 	}
 
 	my $msg = "$service was moved successfully.";

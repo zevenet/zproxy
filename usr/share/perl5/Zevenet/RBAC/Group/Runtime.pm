@@ -3,7 +3,7 @@
 use strict;
 
 use Zevenet::Core;
-use Zevenet::RBAC::Group::Core;
+include 'Zevenet::RBAC::Group::Core';
 
 # rbac configuration paths
 my $rbacGroupConfig = &getRBACGroupConf();
@@ -30,7 +30,7 @@ sub runRBACCreateGroupCmd
 	my $error = &logAndRun( "$groupadd $group" );
 
 	# add it to rbac user
-	require Zevenet::RBAC::User::Runtime;
+	include 'Zevenet::RBAC::User::Runtime';
 	$error = &runRBACAddUserToGroup( 'rbac', $group ) if ( !$error );
 
 	return $error;

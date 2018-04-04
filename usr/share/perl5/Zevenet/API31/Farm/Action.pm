@@ -23,6 +23,9 @@
 use strict;
 use Zevenet::Farm::Core;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 # POST /farms/<farmname>/actions Set an action in a Farm
 sub farm_actions    # ( $json_obj, $farmname )
 {
@@ -36,7 +39,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 	my $action;
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -102,10 +105,11 @@ sub farm_actions    # ( $json_obj, $farmname )
 		"ZAPI success, the action $json_obj->{ action } has been performed in farm $farmname."
 	);
 
-	if ( eval { require Zevenet::Cluster; } )
-	{
-		&runZClusterRemoteManager( 'farm', $json_obj->{ action }, $farmname );
-	}
+	&eload(
+		module => 'Zevenet::Cluster',
+		func   => 'runZClusterRemoteManager',
+		args   => ['farm', $json_obj->{ action }, $farmname],
+	) if ( $eload );
 
 	my $body = {
 				 description => "Set a new action in $farmname",
@@ -135,7 +139,7 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	my $desc = "Set service backend status";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) eq '-1' )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -259,13 +263,11 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 					 farm => { status => &getFarmVipStatus( $farmname ) } },
 	};
 
-	if ( eval { require Zevenet::Cluster; } )
-	{
-		if ( &getFarmStatus( $farmname ) eq 'up' )
-		{
-			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
-		}
-	}
+	&eload(
+		module => 'Zevenet::Cluster',
+		func   => 'runZClusterRemoteManager',
+		args   => ['farm', 'restart', $farmname],
+	) if ( $eload && &getFarmStatus( $farmname ) eq 'up' );
 
 	&httpResponse( { code => 200, body => $body } );
 }
@@ -283,7 +285,7 @@ sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 	my $desc = "Set backend status";
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -365,13 +367,11 @@ sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 					farm => { status => &getFarmVipStatus( $farmname ) } },
 	};
 
-	if ( eval { require Zevenet::Cluster; } )
-	{
-		if ( &getFarmStatus( $farmname ) eq 'up' )
-		{
-			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
-		}
-	}
+	&eload(
+		module => 'Zevenet::Cluster',
+		func   => 'runZClusterRemoteManager',
+		args   => ['farm', 'restart', $farmname],
+	) if ( $eload && &getFarmStatus( $farmname ) eq 'up' );
 
 	&httpResponse( { code => 200, body => $body } );
 }

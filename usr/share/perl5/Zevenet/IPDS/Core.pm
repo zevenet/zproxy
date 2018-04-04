@@ -177,7 +177,7 @@ sub getIPDSfarmsRules
 		$fileHandle = Config::Tiny->read( $dosConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( exists $fileHandle->{ $key }->{'farms'} && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				my $status = $fileHandle->{ $key }->{ 'status' } || "down";
 				push @dosRules, { 'name' => $key, 'status' => $status };

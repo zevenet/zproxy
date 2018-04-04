@@ -23,6 +23,9 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 my $configdir = &getGlobalConfiguration('configdir');
 
 =begin nd
@@ -52,10 +55,11 @@ sub getFarmServices    # ($farm_name)
 
 	if ( $farm_type eq "gslb" )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Service; } )
-		{
-			@output = &getGSLBFarmServices( $farm_name );
-		}
+		@output = &eload(
+			module => 'Zevenet::Farm::GSLB::Service',
+			func   => 'getGSLBFarmServices',
+			args   => [$farm_name],
+		) if $eload;
 	}
 
 	return @output;

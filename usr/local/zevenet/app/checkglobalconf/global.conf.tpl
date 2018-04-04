@@ -196,7 +196,7 @@ $iptlock = "/tmp/iptables.lock";
 #Directory where is check script. In this directory you can save your own check scripts.
 $libexec_dir="/usr/local/zevenet/app/libexec";
 #FarmGuardian binary, create advanced check for backend servers
-$farmguardian="/usr/local/zevenet/app/farmguardian/bin/farmguardian";
+$farmguardian="/usr/local/zevenet/bin/farmguardian";
 
 #Where is ZenRRD Directory?. There is a perl script that create rrd database and images from Monitoring section
 $rrdap_dir="/usr/local/zevenet/app/zenrrd";#update
@@ -206,7 +206,7 @@ $img_dir="/tmp";#update
 $rrd_dir="rrd";#update
 
 #Service for configure Zen directory replication
-$zenino="/usr/local/zevenet/app/zeninotify/zeninotify.pl";
+$zenino="/usr/local/zevenet/bin/zeninotify";#update
 #Zen Inotify pid file
 $zeninopid="/var/run/zeninotify.pid";
 #Rsync replication parameters
@@ -247,7 +247,7 @@ $key_id="id_rsa";
 $keygen_cmd="ssh-keygen -t rsa -f $key_path/$key_id -N '' -q";#update
 
 #Zen backup
-$zenbackup="/usr/local/zevenet/app/zenbackup/zenbackup.pl";
+$zenbackup="/usr/local/zevenet/bin/zenbackup.pl";#update
 
 #SNMP Service
 $snmpdconfig_file="/etc/snmp/snmpd.conf";

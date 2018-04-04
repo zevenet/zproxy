@@ -390,6 +390,7 @@ if ( $q->path_info =~ qr{^/system/(?:version|license|supportsave)} )
 
 ##### Load modules dynamically #######################################
 my $routes_path = &getGlobalConfiguration( 'zlibdir' ) . '/API31/Routes';
+
 opendir( my $dir, $routes_path );
 foreach my $file ( readdir $dir )
 {

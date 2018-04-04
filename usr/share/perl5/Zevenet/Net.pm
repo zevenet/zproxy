@@ -30,7 +30,4 @@ use Zevenet::Net::Route;
 use Zevenet::Net::Util;
 use Zevenet::Net::Validate;
 
-#~ use Zevenet::Net::Bonding;
-#~ use Zevenet::Net::Floating;
-
 1;

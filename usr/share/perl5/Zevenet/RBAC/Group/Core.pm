@@ -2,7 +2,7 @@
 
 use strict;
 use Zevenet::Core;
-use Zevenet::RBAC::Core;
+include 'Zevenet::RBAC::Core';
 
 my $rbacGroupConfig = &getRBACGroupConf();
 
@@ -193,10 +193,8 @@ Returns:
 	Array ref - list of elements that are user's resources
 
 Example:
-	if ( eval{ require Zevenet::RBAC::Group::Core; } )
-	{
-		@out = @{ &getRBACUserSet( 'farms', \@out ) };
-	}
+	include 'Zevenet::RBAC::Group::Core';
+	@out = @{ &getRBACUserSet( 'farms', \@out ) };
 
 =cut
 

@@ -1,1 +1,0 @@
-../zenbui/zenbui.pl

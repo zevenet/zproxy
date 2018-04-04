@@ -23,19 +23,21 @@
 
 use strict;
 
+require Zevenet::Farm;
+
 my $configdir = &getGlobalConfiguration('configdir');
 
 =begin nd
 Function: getGSLBFarmServices
 
 	Get farm services list for GSLB farms
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Array - list of service names or -1 on failure
-	
+
 =cut
 sub getGSLBFarmServices    # ($farm_name)
 {
@@ -84,7 +86,7 @@ sub getGSLBFarmServices    # ($farm_name)
 Function: setGSLBFarmDeleteService
 
 	Delete an existing Service in a GSLB farm
-	 
+
 Parameters:
 	farmname - Farm name
 	service - Service name
@@ -191,16 +193,17 @@ sub setGSLBFarmDeleteService    # ($farm_name,$service)
 			untie @config_file;
 		}
 
-		require Zevenet::Farm::GSLB::FarmGuardian;
+		include 'Zevenet::Farm::GSLB::FarmGuardian';
 		&setGSLBDeleteFarmGuardian( $fname, $svice );
 		require Zevenet::FarmGuardian;
 		&runFarmGuardianRemove( $fname, $svice );
 
 		# Delete port configuration from config file
-		require Zevenet::Farm::GSLB::Validate;
-		if ( !&getGSLBCheckPort( $fname, $srv_port ) )
+		include 'Zevenet::Farm::GSLB::Validate';
+
+		if ( !getGSLBCheckPort( $fname, $srv_port ) )
 		{
-			require Zevenet::Farm::GSLB::Config;
+			include 'Zevenet::Farm::GSLB::Config';
 			$output = &setGSLBRemoveTcpPort( $fname, $srv_port );
 		}
 		untie @fileconf;
@@ -213,7 +216,7 @@ sub setGSLBFarmDeleteService    # ($farm_name,$service)
 Function: setGSLBFarmNewService
 
 	Create a new Service in a GSLB farm
-	 
+
 Parameters:
 	farmname - Farm name
 	service - Service name
@@ -230,7 +233,7 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 {
 	my ( $fname, $svice, $alg ) = @_;
 
-	require Zevenet::Farm::GSLB::Service;
+	include 'Zevenet::Farm::GSLB::Service';
 
 	my $output = -1;
 	my $ftype  = &getFarmType( $fname );
@@ -248,7 +251,8 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 		}
 	}
 
-	require Zevenet::Farm::HTTP::Service;
+	include 'Zevenet::Farm::GSLB::Service';
+
 	zenlog( "Services: " . &getGSLBFarmServices( $fname ) );
 	if ( grep ( /^$svice$/, &getGSLBFarmServices( $fname ) ) )
 	{
@@ -361,15 +365,15 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 Function: getHTTPFarmVS
 
 	Return a virtual server parameter
-	
+
 Parameters:
 	farmname - Farm name
 	service - Service name
-	tag - Indicate which field will be returned. The options are: 
+	tag - Indicate which field will be returned. The options are:
 		ns - return string
 		resources - return string with format: "resource1" . "\n" . "resource2" . "\n" . "resource3"..."
 		backends - return string with format: "backend1" . "\n" . "backend2" . "\n" . "backend3"..."
-		algorithm - string with the possible values: "prio" for priority algorihm or "roundrobin" for round robin algorithm 
+		algorithm - string with the possible values: "prio" for priority algorihm or "roundrobin" for round robin algorithm
 		plugin - Gslb plugin used for balancing. String with the possbible values: "simplefo " for priority or "multifo" for round robin
 		dpc - Default port check. Gslb use a tcp check to a port to check if backend is alive. This is disable when farm guardian is actived
 
@@ -378,7 +382,7 @@ Returns:
 
 FIXME:
 	return a hash with all parameters
-				
+
 =cut
 sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 {
@@ -450,7 +454,11 @@ sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 				}
 				if ( $found == 1 && $line !~ /^$/ && $line !~ /.*service_types.*/ )
 				{
-					$output = "$output\n$line";
+					# remove tab characters
+					my $tmp = $line;
+					$tmp =~ s/\t//g;
+
+					$output = "$output\n$tmp";
 				}
 				if ( $line =~ /\t$svice => / )
 				{
@@ -516,12 +524,12 @@ Parameters:
 	param	- Parameter to modificate. The possible values are: "ns" name server or "dpc" default tcp port check
 	value	- Value for the parameter
 
-Returns:     
-	Integer  - always return 0 
-	
+Returns:
+	Integer  - always return 0
+
 Bug:
 	Always return 0, do error control
-                
+
 =cut
 sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 {
@@ -561,20 +569,20 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 		}
 		untie @fileconf;
 
-		require Zevenet::Farm::GSLB::Zone;
+		include 'Zevenet::Farm::GSLB::Zone';
 		&setGSLBFarmZoneSerial( $fname, $svice );
 	}
 
 	if ( $tag eq "dpc" )
 	{
-		require Zevenet::Farm::GSLB::Validate;
+		include 'Zevenet::Farm::GSLB::Validate';
 
 		my $existPortFlag = &getGSLBCheckPort( $fname, $stri );
 		my $actualPort;
 		my $srvConf;
 		my @srvCp;
-		my $firstIndNew;
-		my $offsetIndNew;
+		my $firstIndNew = 0;
+		my $offsetIndNew = 0;
 		my $firstIndOld;
 		my $offsetIndOld;
 		my $newPortFlag;
@@ -605,6 +613,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 		#Find the plugin file
 		opendir ( DIR, "$configdir\/$ffile\/etc\/plugins\/" );
 		my @pluginlist = readdir ( DIR );
+
 		foreach my $plugin ( @pluginlist )
 		{
 			tie @fileconf, 'Tie::File', "$configdir\/$ffile\/etc\/plugins\/$plugin";
@@ -618,12 +627,14 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 
 		# Change configuration in plugin file
 		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
+
 		foreach $line ( @fileconf )
 		{
 			if ( $found == 1 && $line =~ /.*}.*/ )
 			{
 				last;
 			}
+
 			if ( $found == 1 && $line =~ /service_types = (${svice}_fg_|tcp_)(\d+)/ )
 			{
 				$actualPort = $2;
@@ -631,6 +642,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 				$output     = 0;
 				last;
 			}
+
 			if ( $line =~ /\t$svice => / )
 			{
 				$found = 1;
@@ -653,7 +665,6 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 			{
 				$newPortFlag = 1;
 			}
-
 			else
 			{
 				tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
@@ -751,6 +762,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 			$index = 0;
 			my $firstIndex = 0;
 			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
+
 			foreach $line ( @fileconf )
 			{
 				if ( $line =~ /service_types => / )

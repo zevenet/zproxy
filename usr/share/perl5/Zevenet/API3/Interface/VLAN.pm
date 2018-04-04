@@ -51,7 +51,7 @@ sub new_vlan # ( $json_obj )
 
 		&httpResponse({ code => 400, body => $body });
 	}
-	
+
 	# validate PARENT
 	require Zevenet::Net::Validate;
 	my $parent_exist = &ifexist($json_obj->{ parent });
@@ -157,7 +157,7 @@ sub new_vlan # ( $json_obj )
 	}
 
 	# Check netmask errors
-	if ( $json_obj->{ ip_v } == 4 && ($json_obj->{ netmask } == undef || ! &getValidFormat( 'IPv4_mask', $json_obj->{ ip } )) )
+	if ( $json_obj->{ ip_v } == 4 && ( ! defined $json_obj->{ netmask } || ! &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } )) )
 	{
 		# Error
 		my $errormsg = "Netmask parameter not valid";
@@ -183,7 +183,7 @@ sub new_vlan # ( $json_obj )
     #
     #    &httpResponse({ code => 400, body => $body });
 	#}
-	
+
 	# Check gateway errors
 	unless ( ! defined( $json_obj->{ gateway } ) || &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) )
 	{
@@ -210,7 +210,7 @@ sub new_vlan # ( $json_obj )
 				mask    => $json_obj->{ netmask },
 				gateway => $json_obj->{ gateway } // '',
 				ip_v    => &ipversion( $json_obj->{ ip } ),
-				mac     => $socket->if_hwaddr( $if_ref->{ dev } ),
+				mac     => $socket->if_hwaddr( $json_obj->{ parent } ),
 	};
 
 	# No errors
@@ -328,10 +328,10 @@ sub get_vlan_list # ()
 	my $description = "List VLAN interfaces";
 
 	# get cluster interface
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	my $zcl_conf  = &getZClusterConfig();
-	my $cluster_if = $zcl_conf->{ _ }->{ interface };
-	
+	my $cluster_if = $zcl_conf->{ _ }->{ interface } // '';
+
 	require Zevenet::Net::Interface;
 	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
 	{
@@ -355,9 +355,9 @@ sub get_vlan_list # ()
 			mac     => $if_ref->{ mac },
 			parent  => $if_ref->{ parent },
 		  };
-		  
+
 		  $if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
-		  
+
 		  push @output_list, $if_conf;
 	}
 

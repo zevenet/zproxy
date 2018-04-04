@@ -29,7 +29,7 @@ my $configdir = &getGlobalConfiguration( 'configdir' );
 Function: remFarmServiceBackend
 
 	Remove a backend from a gslb service
-	
+
 Parameters:
 	backend - Backend id
 	farmname - Farm name
@@ -172,7 +172,7 @@ sub runGSLBFarmServerDelete    # ($ids,$farm_name,$service)
 Function: setGSLBFarmNewBackend
 
 	Create a new backend in a gslb service
-	 
+
 Parameters:
 	farmname - Farm name
 	service - Service name
@@ -279,8 +279,8 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 =begin nd
 Function: getGSLBFarmBackends
 
-	 Get all backends and theris configuration 
-	
+	 Get all backends and theris configuration
+
 Parameters:
 	farmname - Farm name
 	service - service name
@@ -288,27 +288,30 @@ Parameters:
 Returns:
 	Array ref - Return a array in each element is a hash with the backend
 	configuration. The array index is the backend id
-	
+
 =cut
 
 sub getGSLBFarmBackends    # ($farm_name)
 {
 	my ( $farmname, $service ) = @_;
 
+	require Zevenet::Farm::Base;
+	include 'Zevenet::Farm::GSLB::Service';
+
 	my @backendStats;
 	my @services = &getGSLBFarmServices( $farmname );
 
-	require Zevenet::Farm::Base;
 	my $farmStatus = &getFarmStatus( $farmname );
 	my $gslb_stats;
+
 	if ( $farmStatus eq "up" )
 	{
-		require Zevenet::Farm::GSLB::Stats;
+		include 'Zevenet::Farm::GSLB::Stats';
 		$gslb_stats = &getGSLBGdnsdStats( $farmname );
 	}
 
 	# Default port health check
-	require Zevenet::Farm::GSLB::Service;
+
 	my $port       = &getGSLBFarmVS( $farmname, $service, "dpc" );
 	my $backendsvs = &getGSLBFarmVS( $farmname, $service, "backends" );
 	my @be = split ( "\n", $backendsvs );

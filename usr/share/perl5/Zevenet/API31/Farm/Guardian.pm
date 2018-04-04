@@ -41,7 +41,7 @@ sub modify_farmguardian    # ( $json_obj, $farmname )
 	#~ my @fgKeys = ( "fg_time", "fg_log", "fg_enabled", "fg_type" );
 
 	# validate FARM NAME
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );

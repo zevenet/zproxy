@@ -83,7 +83,7 @@ sub getBondList
 		return undef;
 	}
 
-	my @bond_names = split ( ' ', <$bond_file> );
+	my @bond_names = split ( ' ', <$bond_file> // '' );
 	close $bond_file;
 	chomp ( @bond_names );
 
@@ -129,7 +129,7 @@ Bugs:
 	There is not need to return a reference. Returning a list is simpler.
 
 See Also:
-	
+
 =cut
 sub getBondMode
 {
@@ -177,7 +177,7 @@ Returns:
 	scalar - reference to a list of slaves in bonding interface.
 
 See Also:
-	
+
 =cut
 sub getBondSlaves
 {
@@ -228,7 +228,7 @@ Bugs:
 	Use better return values.
 
 See Also:
-	
+
 =cut
 sub applyBondChange
 {
@@ -346,7 +346,7 @@ Returns:
 	scalar - 0 on success, or 1 on failure.
 
 See Also:
-	
+
 =cut
 sub setBondMaster
 {
@@ -437,7 +437,7 @@ Returns:
 	scalar - 0 on success, or 1 on failure.
 
 See Also:
-	
+
 =cut
 sub setBondMode
 {
@@ -485,7 +485,7 @@ Returns:
 	scalar - 0 on success, or 1 on failure.
 
 See Also:
-	
+
 =cut
 sub setBondSlave
 {
@@ -550,7 +550,7 @@ Returns:
 	scalar - Hash reference with pairs (bonding name => bonding hashref) of all bonding interfaces.
 
 See Also:
-	
+
 =cut
 sub getBondConfig
 {
@@ -603,7 +603,7 @@ Returns:
 	none - .
 
 See Also:
-	
+
 =cut
 sub setBondConfig
 {
@@ -644,7 +644,7 @@ Returns:
 	list - list of nic interfaces available.
 
 See Also:
-	
+
 =cut
 sub getBondAvailableSlaves
 {
@@ -704,7 +704,7 @@ Returns:
 	list - list of NIC names used by bonding interfaces.
 
 See Also:
-	
+
 =cut
 sub getAllBondsSlaves
 {

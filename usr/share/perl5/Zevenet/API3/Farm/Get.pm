@@ -171,10 +171,8 @@ sub farms_name # ( $farmname )
 {
 	my $farmname = shift;
 
-	use Switch;
-
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exist.";
@@ -189,28 +187,25 @@ sub farms_name # ( $farmname )
 
 	my $type = &getFarmType( $farmname );
 
-	switch ( $type )
+	if ( $type eq 'http' || $type eq 'https' )
 	{
-		case /http.*/
-		{
-			require Zevenet::API3::Farm::Get::HTTP;
-			&farms_name_http( $farmname );
-		}
-		case /gslb/
-		{
-			require Zevenet::API3::Farm::Get::GSLB;
-			&farms_name_gslb( $farmname );
-		}
-		case /l4xnat/
-		{
-			require Zevenet::API3::Farm::Get::L4xNAT;
-			&farms_name_l4( $farmname );
-		}
-		case /datalink/
-		{
-			require Zevenet::API3::Farm::Get::Datalink;
-			&farms_name_datalink( $farmname );
-		}
+		include 'Zevenet::API3::Farm::Get::HTTP';
+		&farms_name_http( $farmname );
+	}
+	elsif ( $type eq 'gslb' )
+	{
+		include 'Zevenet::API3::Farm::Get::GSLB';
+		&farms_name_gslb( $farmname );
+	}
+	elsif ( $type eq 'l4xnat' )
+	{
+		include 'Zevenet::API3::Farm::Get::L4xNAT';
+		&farms_name_l4( $farmname );
+	}
+	elsif ( $type eq 'datalink' )
+	{
+		include 'Zevenet::API3::Farm::Get::Datalink';
+		&farms_name_datalink( $farmname );
 	}
 }
 

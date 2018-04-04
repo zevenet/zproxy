@@ -21,10 +21,10 @@
 ###############################################################################
 
 use strict;
-use Zevenet::Farm::GSLB::Service;
-use Zevenet::Farm::GSLB::Backend;
-use Zevenet::Farm::GSLB::FarmGuardian;
-use Zevenet::Farm::GSLB::Zone;
+include 'Zevenet::Farm::GSLB::Service';
+include 'Zevenet::Farm::GSLB::Backend';
+include 'Zevenet::Farm::GSLB::FarmGuardian';
+include 'Zevenet::Farm::GSLB::Zone';
 
 #	/farms/<GSLBfarm>
 sub farms_name_gslb # ( $farmname )
@@ -32,13 +32,14 @@ sub farms_name_gslb # ( $farmname )
 	my $farmname = shift;
 
 	require Zevenet::Farm::Config;
+
 	my $farm_ref;
 	my @out_s;
 	my @out_z;
 
 	my $status = &getFarmVipStatus( $farmname );
-	my $vip   = &getFarmVip( "vip",  $farmname );
-	my $vport = &getFarmVip( "vipp", $farmname ) + 0;
+	my $vip    = &getFarmVip( "vip", $farmname );
+	my $vport  = &getFarmVip( "vipp", $farmname ) + 0;
 
 	$farm_ref = { vip => $vip, vport => $vport, status => $status };
 
@@ -60,7 +61,7 @@ sub farms_name_gslb # ( $farmname )
 		# Farmguardian
 		my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $srv );
 		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $srv );
-		
+
 		push @out_s,
 		  {
 			id          => $srv,
@@ -110,10 +111,9 @@ sub farms_name_gslb # ( $farmname )
 				 zones       => \@out_z,
 	};
 
-	if ( eval{ require Zevenet::IPDS; } )
-	{
-		$body->{ ipds } = &getIPDSfarmsRules( $farmname );
-	}
+	include 'Zevenet::IPDS';
+
+	$body->{ ipds } = &getIPDSfarmsRules( $farmname );
 
 	&httpResponse({ code => 200, body => $body });
 }

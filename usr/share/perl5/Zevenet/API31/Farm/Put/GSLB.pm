@@ -23,7 +23,7 @@
 use strict;
 use Zevenet::Farm::Action;
 use Zevenet::Farm::Base;
-use Zevenet::Farm::GSLB::Config;
+include 'Zevenet::Farm::GSLB::Config';
 
 sub modify_gslb_farm    # ( $json_obj,	$farmname )
 {
@@ -40,7 +40,7 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 	my $status;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -57,13 +57,11 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 		 || exists $json_obj->{ vip }
 		 || exists $json_obj->{ newfarmname } )
 	{
-		if ( eval { require Zevenet::IPDS::Base; } )
-		{
-			$reload_ipds = 1;
-			&runIPDSStopByFarm( $farmname );
-			require Zevenet::Cluster;
-			&runZClusterRemoteManager( 'ipds', 'stop', $farmname );
-		}
+		include 'Zevenet::IPDS::Base';
+		$reload_ipds = 1;
+		&runIPDSStopByFarm( $farmname );
+		include 'Zevenet::Cluster';
+		&runZClusterRemoteManager( 'ipds', 'stop', $farmname );
 	}
 
 	# Get current vip & vport
@@ -221,12 +219,10 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 
 	if ( $reload_ipds )
 	{
-		if ( eval { require Zevenet::IPDS::Base; } )
-		{
-			&runIPDSStartByFarm( $farmname );
-			require Zevenet::Cluster;
-			&runZClusterRemoteManager( 'ipds', 'start', $farmname );
-		}
+		include 'Zevenet::IPDS::Base';
+		&runIPDSStartByFarm( $farmname );
+		include 'Zevenet::Cluster';
+		&runZClusterRemoteManager( 'ipds', 'start', $farmname );
 	}
 
 	$json_obj->{ vport } += 0 if ( exists $json_obj->{ vport } );

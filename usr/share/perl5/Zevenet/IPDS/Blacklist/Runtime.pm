@@ -27,7 +27,7 @@
 use strict;
 
 use Zevenet::Core;
-use Zevenet::IPDS::Blacklist::Core;
+include 'Zevenet::IPDS::Blacklist::Core';
 
 # &setBLRunList ( $listName );
 sub setBLRunList
@@ -167,6 +167,7 @@ sub setBLRefreshList
 	{
 		require Tie::File;
 		require Zevenet::Lock;
+
 		my $tmp_list = "/tmp/tmp_blacklist.txt";
 		&ztielock( \my @list_tmp, $tmp_list );
 
@@ -248,9 +249,9 @@ sub setBLDownloadRemoteList
 {
 	my ( $listName ) = @_;
 
-	require Zevenet::Validate;
-	require Zevenet::IPDS::Blacklist::Config;
 	require Tie::File;
+	require Zevenet::Validate;
+	include 'Zevenet::IPDS::Blacklist::Config';
 
 	my $url = &getBLParam( $listName, 'url' );
 	my $timeout = 10;
@@ -319,9 +320,9 @@ sub setBLCreateRule
 {
 	my ( $farmName, $listName ) = @_;
 
-	require Zevenet::IPDS::Core;
 	require Zevenet::Farm::Base;
 	require Zevenet::Netfilter;
+	include 'Zevenet::IPDS::Core';
 
 	my $add;
 	my $cmd;
@@ -454,7 +455,7 @@ sub setBLDeleteRule
 	my ( $farmName, $listName ) = @_;
 
 	require Zevenet::Netfilter;
-	require Zevenet::IPDS::Core;
+	include 'Zevenet::IPDS::Core';
 
 	my $chain  = 'blacklist';
 	my @tables = ( 'raw' );
@@ -573,17 +574,15 @@ sub setBLCronTask
 
 		if ( $rblFormat->{ 'frequency' } eq 'weekly' )
 		{
-			use Switch;
-			switch ( $rblFormat->{ 'day' } )
-			{
-				case 'monday'    { $cronFormat->{ 'dow' } = '0' };
-				case 'tuesday'   { $cronFormat->{ 'dow' } = '1' };
-				case 'wednesday' { $cronFormat->{ 'dow' } = '2' };
-				case 'thursday'  { $cronFormat->{ 'dow' } = '3' };
-				case 'friday'    { $cronFormat->{ 'dow' } = '4' };
-				case 'saturday'  { $cronFormat->{ 'dow' } = '5' };
-				case 'sunday'    { $cronFormat->{ 'dow' } = '6' };
-			}
+			my $day = $rblFormat->{ 'day' };
+
+			if    ( $day eq 'monday' )    { $cronFormat->{ 'dow' } = '0' }
+			elsif ( $day eq 'tuesday' )   { $cronFormat->{ 'dow' } = '1' }
+			elsif ( $day eq 'wednesday' ) { $cronFormat->{ 'dow' } = '2' }
+			elsif ( $day eq 'thursday' )  { $cronFormat->{ 'dow' } = '3' }
+			elsif ( $day eq 'friday' )    { $cronFormat->{ 'dow' } = '4' }
+			elsif ( $day eq 'saturday' )  { $cronFormat->{ 'dow' } = '5' }
+			elsif ( $day eq 'sunday' )    { $cronFormat->{ 'dow' } = '6' }
 		}
 		elsif ( $rblFormat->{ 'frequency' } eq 'monthly' )
 		{
@@ -654,7 +653,7 @@ sub setBLApplyToFarm
 
 	if ( !$output )
 	{
-		require Zevenet::IPDS::Blacklist::Config;
+		include 'Zevenet::IPDS::Blacklist::Config';
 		$output = &setBLParam( $listName, 'farms-add', $farmName );
 	}
 
@@ -670,7 +669,7 @@ sub setBLRemFromFarm
 
 	if ( !$output )
 	{
-		require Zevenet::IPDS::Blacklist::Config;
+		include 'Zevenet::IPDS::Blacklist::Config';
 		$output = &setBLParam( $listName, 'farms-del', $farmName );
 	}
 

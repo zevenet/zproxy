@@ -44,8 +44,8 @@ fi
 # Check for binaries
 PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
 compiled_files=(
-	/usr/local/zevenet/www/zapi/v3/zapi.cgi
 	/usr/local/zevenet/www/zapi/v3.1/zapi.cgi
+	/usr/local/zevenet/www/zapi/v3.2/zapi.cgi
 	/usr/local/zevenet/app/zbin/zevenet
 	/usr/local/zevenet/app/zbin/enterprise.bin
 )
@@ -70,9 +70,12 @@ fi
 # Set crontab
 if [ ! -f /etc/cron.d/zevenet ]; then
 	cp /usr/local/zevenet/share/zevenet.cron /etc/cron.d/zevenet
+else
+	sed -i 's!zevenet/app/zenrrd/zenrrd.pl!zevenet/bin/zenrrd!' /etc/cron.d/zevenet
+	sed -i 's!zevenet/app/zenntp/zenntp.pl!zevenet/bin/zenntp!' /etc/cron.d/zevenet
 fi
 
-#Disable conntrackd stats 
+#Disable conntrackd stats
 sed -i '/Stats/,/}/d' /etc/conntrackd/conntrackd.conf 2>/dev/null
 #delete old conntrackd-stats logs
 rm -rf /var/log/conntrackd-stats* 2>/dev/null
@@ -163,7 +166,7 @@ if [ -f /usr/local/zevenet/app/zbin/ssh_nodns.sh ]; then
 fi
 
 # Create IPDS directories
-/usr/local/zevenet/app/zbin/boot_ipds.pl
+/usr/local/zevenet/bin/boot_ipds
 
 # Do not show warning messages from bonding module on syslog
 ZEVENET_SYSLOG_FILE="/etc/rsyslog.d/10-zevenet.conf"

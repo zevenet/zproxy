@@ -165,7 +165,6 @@ sub setSystemOptimizations
 sub start_service
 {
 	&zenlog( "Zevenet Service: Starting..." );
-
 	if ( $swcert > 0 )
 	{
 		&printAndLog( "No valid ZLB certificate was found, no farm started\n" );
@@ -173,97 +172,94 @@ sub start_service
 	}
 
 	&zenlog( "Zevenet Service: Loading Optimizations..." );
-
 	&setSystemOptimizations();
 
 	&zenlog( "Zevenet Service: Loading Bonding configuration..." );
+	include 'Zevenet::Net::Bonding';
 
 	# bonding
-	if ( eval { require Zevenet::Net::Bonding; } )
+	# required previous setup
+	my $missing_bonding = system ( 'lsmod | grep bonding >/dev/null' );
+	if ( $missing_bonding )
 	{
-		# required previous setup
-		my $missing_bonding = system ( 'lsmod | grep bonding >/dev/null' );
-		if ( $missing_bonding )
+		system ( '/sbin/modprobe bonding >/dev/null 2>&1' );
+		my $bonding_masters_filename =
+		  &getGlobalConfiguration( 'bonding_masters_filename' );
+		system ( "echo -bond0 > $bonding_masters_filename" );
+	}
+
+	# interface configuration
+	my $bond_conf = &getBondConfig();
+	for my $bond_k ( keys %{ $bond_conf } )
+	{
+		next if $bond_k eq '_';
+
+		my $bond = $bond_conf->{ $bond_k };
+
+		print "  * Up bonding master $$bond{name} ";
+
+		my $error_code = &applyBondChange( $bond );
+
+		if ( $error_code == 0 )
 		{
-			system ( '/sbin/modprobe bonding >/dev/null 2>&1' );
-			my $bonding_masters_filename =
-			  &getGlobalConfiguration( 'bonding_masters_filename' );
-			system ( "echo -bond0 > $bonding_masters_filename" );
+			print " \033[1;32m OK \033[0m \n";
 		}
-
-		# interface configuration
-		my $bond_conf = &getBondConfig();
-		for my $bond_k ( keys %{ $bond_conf } )
+		else
 		{
-			next if $bond_k eq '_';
-
-			my $bond = $bond_conf->{ $bond_k };
-
-			print "  * Up bonding master $$bond{name} ";
-
-			my $error_code = &applyBondChange( $bond );
-
-			if ( $error_code == 0 )
-			{
-				print " \033[1;32m OK \033[0m \n";
-			}
-			else
-			{
-				print " \033[1;31m ERROR \033[0m \n";
-			}
+			print " \033[1;31m ERROR \033[0m \n";
 		}
+	}
 
-		my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 
-		# bonding adresses configuration
-		foreach my $iface ( &getInterfaceTypeList( 'bond' ) )
+	# bonding adresses configuration
+	foreach my $iface ( &getInterfaceTypeList('bond') )
+	{
+		# interfaces as eth0 for example
+		if ( $$iface{ name } eq $$iface{ dev } )
 		{
-			# interfaces as eth0 for example
-			if ( $$iface{ name } eq $$iface{ dev } )
-			{
-				use IO::Interface ':flags';
+			use IO::Interface ':flags';
 
-				if ( $$iface{ status } eq "up" )
+			if ( $$iface{ status } eq "up" )
+			{
+				print( "  * Starting interface $$iface{name}" );
+				&upIf( $iface );
+
+				if ( exists $$iface{ addr } && length $$iface{ addr } )
 				{
-					print ( "  * Starting interface $$iface{name}" );
-					&upIf( $iface );
+					print( "\n    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
-					if ( exists $$iface{ addr } && length $$iface{ addr } )
+					if ( defined $$iface{ gateway } && $$iface{ gateway } ne '' )
 					{
-						print ( "\n    Ip:$$iface{addr} Netmask:$$iface{mask}" );
-
-						if ( defined $$iface{ gateway } && $$iface{ gateway } ne '' )
-						{
-							print ( " Gateway:$$iface{gateway}" );
-						}
-
-						my $return_code = &addIp( $iface );
-
-						if ( $return_code )
-						{
-							my @ip_output = `$ip_bin address show dev $$iface{name}`;
-							$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
-						}
-
-						# kept in case it is required for first interface
-						&writeRoutes( $$iface{ name } );
-
-						&applyRoutes( "local", $iface );
-
-						if ( $return_code == 0 )
-						{
-							print ( " \033[1;32m OK \033[0m \n" );
-						}
-						else
-						{
-							print ( " \033[1;31m ERROR \033[0m \n" );
-						}
+						print( " Gateway:$$iface{gateway}" );
 					}
 
-					if ( defined $$iface{ ip_v } && $$iface{ ip_v } == 4 )
+					my $return_code = &addIp( $iface );
+
+					if ( $return_code )
 					{
-						&sendGPing( $$iface{ name } );
+						my @ip_output = `$ip_bin address show dev $$iface{name}`;
+						$return_code = 0 if ( grep /$$iface{addr}/, @ip_output );
 					}
+
+					# kept in case it is required for first interface
+					&writeRoutes( $$iface{ name } );
+
+					&applyRoutes( "local", $iface );
+
+					if ( $return_code == 0 )
+					{
+						print ( " \033[1;32m OK \033[0m \n" );
+					}
+					else
+					{
+						print ( " \033[1;31m ERROR \033[0m \n" );
+					}
+				}
+
+				if ( defined $$iface{ ip_v } && $$iface{ ip_v } == 4 )
+				{
+					&sendGPing( $$iface{ name } );
 				}
 			}
 		}
@@ -274,36 +270,31 @@ sub start_service
 
 sub start_modules
 {
+	# notifications
 	&zenlog( "Zevenet Service: Loading Notification configuration..." );
 
-	# notifications
-	if ( eval { require Zevenet::Notify; } )
-	{
-		&zlbstartNotifications();
-	}
+	include 'Zevenet::Notify';
+	&zlbstartNotifications();
 
-	&zenlog( "Zevenet Service: Starting RBAC system..." );
 
 	# rbac
-	if ( eval { require Zevenet::RBAC::Action; } )
-	{
-		&initRBACModule();
-	}
+	&zenlog( "Zevenet Service: Starting RBAC system..." );
 
-	&zenlog( "Zevenet Service: Starting IPDS system..." );
+	include 'Zevenet::RBAC::Action';
+	&initRBACModule();
+
 
 	# ipds
-	if ( eval { require Zevenet::IPDS::Base; } )
-	{
-		&runIPDSStartModule();
-	}
+	&zenlog( "Zevenet Service: Starting IPDS system..." );
+
+	include 'Zevenet::IPDS::Base';
+	&runIPDSStartModule();
 
 	# enable monitoring interface throughput
 	if ( eval { require Zevenet::Net::Throughput; } )
 	{
 		&startTHROUTask();
 	}
-
 }
 
 # this function syncs files with the other node before starting the cluster and
@@ -317,10 +308,10 @@ sub enable_cluster
 
 		# stop zevenet service if the certificate is not valid
 		# WARNING: this MUST be 'exec' and not other way of running a program
-		exec ( '/usr/local/zevenet/app/zbin/zevenet stop' );
+		exec ( '/usr/local/zevenet/bin/zevenet stop' );
 	}
 
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 
 	my $zcl_configured    = &getZClusterStatus();
 	my $znode_status_file = &getGlobalConfiguration( 'znode_status_file' );
@@ -359,7 +350,8 @@ sub enable_cluster
 		&enableZCluster( 10 );
 
 		&zenlog( "Syncing RBAC users" );
-		require Zevenet::RBAC::Action;
+
+		include 'Zevenet::RBAC::Action';
 		&updateRBACAllUser();
 
 		&zenlog( "enableZCluster returned" );
@@ -385,7 +377,7 @@ sub enable_cluster
 
 sub start_cluster
 {
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 
 	# check activation certificate
 	if ( $swcert > 0 )
@@ -394,7 +386,7 @@ sub start_cluster
 
 		# stop zevenet service if the certificate is not valid
 		# WARNING: this MUST be 'exec' and not other execution
-		exec ( '/usr/local/zevenet/app/zbin/zevenet stop' );
+		exec ( '/usr/local/zevenet/bin/zevenet stop' );
 	}
 
 	my $zcl_configured = &getZClusterStatus();
@@ -407,7 +399,7 @@ sub start_cluster
 	}
 
 	# start cluster
-	if ( &getZClusterStatus() )
+	if ( $zcl_configured )
 	{
 		&enableAllInterfacesDiscovery();
 		&enableZCluster();
@@ -429,9 +421,9 @@ sub start_cluster
 
 sub stop_service
 {
-	require Zevenet::Notify;
-	require Zevenet::IPDS::Base;
-	require Zevenet::Net::Throughput;
+	include 'Zevenet::Notify';
+	include 'Zevenet::IPDS::Base';
+	include 'Zevenet::Net::Throughput';
 
 	# stop all modules
 	&zlbstopNotifications();
@@ -459,7 +451,7 @@ sub stop_service
 
 sub disable_cluster
 {
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 
 	my $zcl_configured = &getZClusterStatus();
 	&enableAllInterfacesDiscovery() if $zcl_configured;

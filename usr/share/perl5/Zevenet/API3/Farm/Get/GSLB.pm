@@ -22,7 +22,7 @@
 
 use strict;
 
-use Zevenet::IPDS::Core;
+include 'Zevenet::IPDS::Core';
 
 #	/farms/<GSLBfarm>
 sub farms_name_gslb # ( $farmname )
@@ -38,7 +38,7 @@ sub farms_name_gslb # ( $farmname )
 	my $vport = &getFarmVip( "vipp", $farmname );
 	$vport = $vport + 0;
 
-	if ( $status == 'up' && -e "/tmp/$farmname.lock" )
+	if ( $status eq 'up' && -e "/tmp/$farmname.lock" )
 	{
 		$status = "needed restart";
 	}
@@ -49,7 +49,7 @@ sub farms_name_gslb # ( $farmname )
 	# Services
 	#
 
-	require Zevenet::Farm::GSLB::Service;
+	include 'Zevenet::Farm::GSLB::Service';
 	my @services = &getGSLBFarmServices( $farmname );
 
 	foreach my $srv_it ( @services )
@@ -92,10 +92,10 @@ sub farms_name_gslb # ( $farmname )
 			  };
 		}
 
-		# farm guardian 
+		# farm guardian
 		my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $srv );
 		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $srv );
-		
+
 		push @out_s,
 		  {
 			id        => $srv,
@@ -111,7 +111,7 @@ sub farms_name_gslb # ( $farmname )
 	#
 	# Zones
 	#
-	require Zevenet::Farm::GSLB::Zone;
+	include 'Zevenet::Farm::GSLB::Zone';
 	my @zones   = &getGSLBFarmZones( $farmname );
 	my $first   = 0;
 	my $vserver = 0;
@@ -142,7 +142,7 @@ sub farms_name_gslb # ( $farmname )
 		  };
 	}
 
-	require Zevenet::IPDS;
+	include 'Zevenet::IPDS';
 	my $ipds = &getIPDSfarmsRules_zapiv3( $farmname );
 
 	# Success
@@ -181,7 +181,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $dosConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @dosRules, $key;
 			}
@@ -193,7 +193,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @blacklistsRules, $key;
 			}
@@ -205,7 +205,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $rblConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @rblRules, $key;
 			}

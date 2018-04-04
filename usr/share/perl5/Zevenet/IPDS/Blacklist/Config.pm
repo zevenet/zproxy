@@ -30,15 +30,12 @@
 use strict;
 
 use Config::Tiny;
-use Tie::File;
 
 # general dependencies
 use Zevenet::Core;
 use Zevenet::Debug;
 
-use Zevenet::IPDS::Blacklist::Core;
-
-# use Zevenet::IPDS::Blacklist::Runtime; # only it's used in some cases
+include 'Zevenet::IPDS::Blacklist::Core';
 
 # $listParams = \ %paramsRef;
 # &setBLCreateList ( $listName, $paramsRef );
@@ -97,7 +94,7 @@ sub setBLCreateList
 	# specific to remote lists
 	if ( $type eq 'remote' )
 	{
-		require Zevenet::IPDS::Blacklist::Config;
+		include 'Zevenet::IPDS::Blacklist::Config';
 
 		&setBLParam( $listName, 'url',           $listParams->{ 'url' } );
 		&setBLParam( $listName, 'update_status', "This list isn't downloaded yet." );
@@ -271,7 +268,7 @@ sub setBLAddPreloadLists
 
         Parameters:
         list - list name
-				
+
         Returns:
 			integer - maxelem of the set
 
@@ -364,7 +361,7 @@ sub setBLParam
 			# refresh if not error and this list is applied almost to one farm
 			if ( !$output && &getBLIpsetStatus( $name ) eq 'up' )
 			{
-				require Zevenet::IPDS::Blacklist::Runtime;
+				include 'Zevenet::IPDS::Blacklist::Runtime';
 				$output = &setBLRefreshList( $name );
 			}
 		}
@@ -526,7 +523,7 @@ sub setBLAddSource
 		# The list is full,  re-create it
 		if ( &getBLSourceNumber( $listName ) > &getBLMaxelem( $listName ) )
 		{
-			require Zevenet::IPDS::Blacklist::Actions;
+			include 'Zevenet::IPDS::Blacklist::Actions';
 			&runBLStartByRule( $listName );
 		}
 

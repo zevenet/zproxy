@@ -23,6 +23,9 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 =begin nd
 Function: setFarmBlacklistTime
 
@@ -284,7 +287,7 @@ sub setFarmAlgorithm    # ($algorithm,$farm_name)
 =begin nd
 Function: getFarmAlgorithm
 
-	Get type of balancing algorithm. 
+	Get type of balancing algorithm.
 
 	Supports farm types: Datalink, L4xNAT.
 
@@ -533,7 +536,7 @@ sub getFarmMaxConn    # ($farm_name)
 =begin nd
 Function: setFarmVirtualConf
 
-	Set farm virtual IP and virtual PORT		
+	Set farm virtual IP and virtual PORT
 
 Parameters:
 	vip - virtual ip
@@ -572,12 +575,13 @@ sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		require Zevenet::Farm::L4xNAT::Config;
 		$stat = &setL4FarmVirtualConf( $vip, $vip_port, $farm_name );
 	}
-	elsif ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" && $eload )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Config; } )
-		{
-			$stat = &setGSLBFarmVirtualConf( $vip, $vip_port, $farm_name );
-		}
+		$stat = &eload(
+						module => 'Zevenet::Farm::GSLB::Config',
+						func   => 'setGSLBFarmVirtualConf',
+						args   => [$vip, $vip_port, $farm_name],
+		);
 	}
 
 	return $stat;
@@ -644,12 +648,13 @@ sub getFarmConfigIsOK    # ($farm_name)
 		require Zevenet::Farm::HTTP::Config;
 		$output = &getHTTPFarmConfigIsOK( $farm_name );
 	}
-	elsif ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" && $eload )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Validate; } )
-		{
-			$output = &getGSLBFarmConfigIsOK( $farm_name );
-		}
+		$output = &eload(
+						  module => 'Zevenet::Farm::GSLB::Validate',
+						  func   => 'getGSLBFarmConfigIsOK',
+						  args   => [$farm_name],
+		);
 	}
 
 	return $output;
@@ -710,12 +715,13 @@ sub getFarmVS    # ($farm_name, $service, $tag)
 		require Zevenet::Farm::HTTP::Service;
 		$output = &getHTTPFarmVS( $farm_name, $service, $tag );
 	}
-	elsif ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" && $eload )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Service; } )
-		{
-			$output = &getGSLBFarmVS( $farm_name, $service, $tag );
-		}
+		$output = &eload(
+						  module => 'Zevenet::Farm::GSLB::Service',
+						  func   => 'getGSLBFarmVS',
+						  args   => [$farm_name, $service, $tag],
+		);
 	}
 
 	return $output;
@@ -756,12 +762,13 @@ sub getFarmBackends    # ($farm_name, $service)
 		require Zevenet::Farm::Datalink::Backend;
 		$output = &getDatalinkFarmBackends( $farm_name );
 	}
-	elsif ( $farm_type eq "gslb" )
+	elsif ( $farm_type eq "gslb" && $eload )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Backend; } )
-		{
-			$output = &getGSLBFarmBackends( $farm_name, $service );
-		}
+		$output = &eload(
+						  module => 'Zevenet::Farm::GSLB::Backend',
+						  func   => 'getGSLBFarmBackends',
+						  args   => [$farm_name, $service],
+		);
 	}
 
 	return $output;
@@ -796,10 +803,11 @@ sub setFarmVS    # ($farm_name,$service,$tag,$string)
 	}
 	elsif ( $farm_type eq "gslb" )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Service; } )
-		{
-			$output = &setGSLBFarmVS( $farm_name, $service, $tag, $string );
-		}
+		$output = &eload(
+			module => 'Zevenet::Farm::GSLB::Service',
+			func   => 'setGSLBFarmVS',
+			args   => [$farm_name, $service, $tag, $string],
+		) if $eload;
 	}
 
 	return $output;
@@ -838,10 +846,10 @@ Parameters:
 Returns:
 	hash ref - It is a struct with all information about a farm service
 
-FIXME: 
+FIXME:
 	Complete with more farm profiles.
 	Use it in zapi to get services from a farm
-		
+
 =cut
 
 sub getServiceStruct

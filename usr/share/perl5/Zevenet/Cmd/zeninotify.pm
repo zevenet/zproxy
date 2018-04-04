@@ -26,7 +26,7 @@ use strict;
 use warnings;
 use Linux::Inotify2;
 use Zevenet::Config;
-use Zevenet::Cluster;
+include 'Zevenet::Cluster';
 
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
@@ -60,10 +60,10 @@ if ( @ARGV && $ARGV[0] eq 'stop' )
 sub abort
 {
 	my $msg = shift;
-	
+
 	&zenlog( $msg ) if $msg ;
 	&zenlog("Aborting zeninotify");
-	
+
 	exit 1;
 }
 
@@ -119,7 +119,7 @@ foreach my $path ( @ino_targets )
 }
 
 # $event->w			The watcher object for this event.
-# $event->{w}	
+# $event->{w}
 # $event->name		The path of the file system object, relative to the watched name.
 # $event->{name}
 # $event->fullname	Returns the "full" name of the relevant object, i.e. including the name
@@ -131,7 +131,7 @@ foreach my $path ( @ino_targets )
 # $event->IN_xxx	Returns a boolean that returns true if the event mask contains
 #					any events specified by the mask. All of the IN_xxx constants
 #					can be used as methods.
-# $event->cookie	
+# $event->cookie
 # $event->{cookie}	The event cookie to "synchronize two events". Normally zero,
 #					this value is set when two events relating to the same file are generated.
 #					As far as I know, this only happens for IN_MOVED_FROM and IN_MOVED_TO events,
@@ -256,7 +256,7 @@ sub getSubdirectories
 	}
 
 	my @dir_list;
-	
+
 	while ( my $dir_entry = readdir $dir_h )
 	{
 		next if $dir_entry eq '.';

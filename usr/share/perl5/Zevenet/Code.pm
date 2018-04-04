@@ -127,8 +127,8 @@ sub getCodeDecode
 =begin nd
 Function: setCryptString
 
-	Encrypt a string 
-	
+	Encrypt a string
+
 Parameters:
 	clean string - Text to compare
 
@@ -140,6 +140,7 @@ Returns:
 sub setCryptString
 {
 	my $clearString = shift;
+
 	require Crypt::CBC;
 
 	my $cipher = Crypt::CBC->new( -key    => $crypt_key,
@@ -154,7 +155,7 @@ sub setCryptString
 Function: validateCryptString
 
 	Decript a encrypted string to check if it is the same than a clear string
-	
+
 Parameters:
 	encrypted string - Text to decrypt and compare
 	clean string - Text to compare
@@ -168,9 +169,11 @@ sub validateCryptString
 {
 	my $encryptString = shift;
 	my $clearString   = shift;
+
+	require Crypt::CBC;
+
 	my $decrypt       = '';
 	my $out           = 0;
-	require Crypt::CBC;
 
 	my $cipher = Crypt::CBC->new( -key    => $crypt_key,
 								  -cipher => 'Blowfish', );

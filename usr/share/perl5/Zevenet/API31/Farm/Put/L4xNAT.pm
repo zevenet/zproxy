@@ -24,6 +24,9 @@ use strict;
 use Zevenet::Farm::Base;
 use Zevenet::Farm::L4xNAT::Config;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 # PUT /farms/<farmname> Modify a l4xnat Farm
 sub modify_l4xnat_farm # ( $json_obj, $farmname )
 {
@@ -40,7 +43,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	my $initialStatus = &getFarmStatus( $farmname );
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -53,12 +56,22 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	my $reload_ipds = 0;
 	if (exists $json_obj->{vport} || exists $json_obj->{vip} || exists $json_obj->{newfarmname})
 	{
-		if ( eval { require Zevenet::IPDS; } )		
+
+		if ( $eload )
 		{
 			$reload_ipds = 1;
-			&runIPDSStopByFarm( $farmname );
-			require Zevenet::Cluster;
-			&runZClusterRemoteManager( 'ipds', 'stop', $farmname );
+
+			&eload(
+				module => 'Zevenet::IPDS::Base',
+				func   => 'runIPDSStopByFarm',
+				args   => [$farmname],
+			);
+
+			&eload(
+				module => 'Zevenet::Cluster',
+				func   => 'runZClusterRemoteManager',
+				args   => ['ipds', 'stop', $farmname],
+			);
 		}
 	}
 	
@@ -352,19 +365,26 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			}
 		}
 
-		if ( eval { require Zevenet::Cluster; } )
-		{
-			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
-		}
+		&eload(
+			module => 'Zevenet::Cluster',
+			func   => 'runZClusterRemoteManager',
+			args   => ['farm', 'restart', $farmname],
+		) if ( $eload );
 
-		if ( $reload_ipds )
+		if ( $reload_ipds && $eload )
 		{
-			if ( eval { require Zevenet::IPDS::Base; } )
-			{
-				&runIPDSStartByFarm( $farmname );
-				require Zevenet::Cluster;
-				&runZClusterRemoteManager( 'ipds', 'start', $farmname );
-			}
+
+			&eload(
+				module => 'Zevenet::IPDS::Base',
+				func   => 'runIPDSStartByFarm',
+				args   => [$farmname],
+			);
+
+			&eload(
+				module => 'Zevenet::Cluster',
+				func   => 'runZClusterRemoteManager',
+				args   => ['ipds', 'start', $farmname],
+			);
 		}
 	}
 

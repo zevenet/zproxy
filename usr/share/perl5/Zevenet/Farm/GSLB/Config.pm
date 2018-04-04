@@ -23,19 +23,21 @@
 
 use strict;
 
+use Zevenet::Farm;
+
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
 Function: getGSLBFarmBootStatus
 
 	Return the farm status at boot zevenet
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Scalar - "up" the farm must run at boot, "down" the farm must not run at boot or -1 on failure
-	
+
 =cut
 
 sub getGSLBFarmBootStatus    # ($farm_name)
@@ -67,24 +69,22 @@ sub getGSLBFarmBootStatus    # ($farm_name)
 Function: getGSLBFarmPid
 
 	Returns farm PID. Through ps command
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Scalar - pid, the farm is running; '-' the farm is stopped or -1 on failure
-	
+
 FIXME:
 	Do this function uses pid gslb farms file
-	
+
 =cut
 
 sub getGSLBFarmPid    # ($farm_name)
 {
 	my ( $fname ) = @_;
 
-	my $type          = &getFarmType( $fname );
-	my $file          = &getFarmFile( $fname );
 	my $farm_filename = &getFarmFile( $fname );
 	my $output        = -1;
 	my $ps            = &getGlobalConfiguration( 'ps' );
@@ -111,16 +111,16 @@ sub getGSLBFarmPid    # ($farm_name)
 Function: getGSLBFarmPidFile
 
 	Returns farm PID. Through ps command
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Scalar - pid, the farm is running; '-' the farm is stopped or -1 on failure
-	
+
 FIXME:
-	Use this function to get gslb farms pid 
-	
+	Use this function to get gslb farms pid
+
 =cut
 
 sub getGSLBFarmPidFile    # ($farm_name)
@@ -134,7 +134,7 @@ sub getGSLBFarmPidFile    # ($farm_name)
 Function: getGSLBFarmVip
 
 	Returns farm vip or farm port
-	
+
 Parameters:
 	tag - requested parameter. The options are vip, for virtual ip or vipp, for virtual port
 	farmname - Farm name
@@ -144,7 +144,7 @@ Returns:
 
 FIXME:
 	return a hash with all parameters
-				
+
 =cut
 
 sub getGSLBFarmVip    # ($info,$farm_name)
@@ -186,7 +186,7 @@ sub getGSLBFarmVip    # ($info,$farm_name)
 Function: runGSLBFarmReload
 
 	Reload zones of a gslb farm
-	
+
 Parameters:
 	farmname - Farm name
 
@@ -405,7 +405,7 @@ Parameters:
 	farmnmae - Farm name
 	port  - tcp default check port
 
-Returns:	
+Returns:
 	Ingeter - Error code: 0 on success or -3 on failure
 =cut
 
@@ -463,7 +463,7 @@ Parameters:
 	port - Virtual port. If the port is not sent, the port will not be changed
 	farmname - Farm name
 
-Returns:     
+Returns:
 	none - No returned value
 
 Bug:

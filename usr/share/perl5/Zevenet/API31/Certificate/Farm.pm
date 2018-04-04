@@ -24,9 +24,11 @@ use strict;
 
 use Zevenet::Farm::Core;
 use Zevenet::Farm::Base;
-my $EE = eval { require Zevenet::Farm::HTTP::HTTPS::Ext; } ? 1: undef;
 
-unless ( $EE ) { require Zevenet::Farm::HTTP::HTTPS; }
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
+unless ( $eload ) { require Zevenet::Farm::HTTP::HTTPS; }
 
 # POST /farms/FARM/certificates (Add certificate to farm)
 sub add_farm_certificate    # ( $json_obj, $farmname )
@@ -37,7 +39,7 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 	my $desc = "Add certificate to farm '$farmname'";
 
 	# Check if the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "Farm not found";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -55,9 +57,12 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 	}
 
 	my $cert_in_use;
-	if ( $EE )
+	if ( $eload )
 	{
-		$cert_in_use = grep ( /^$json_obj->{ file }$/, &getFarmCertificatesSNI( $farmname ) );
+		$cert_in_use = grep ( /^$json_obj->{ file }$/, &eload(
+					module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+					func   => 'getFarmCertificatesSNI',
+					args   => [$farmname] ) );
 	}
 	else
 	{
@@ -72,9 +77,13 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 
 	# FIXME: Show error if the certificate is already in the list
 	my $status;
-	if ( $EE )
+	if ( $eload )
 	{
-		$status = &setFarmCertificateSNI( $json_obj->{ file }, $farmname );
+		$status = &eload(
+			module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+			func   => 'setFarmCertificateSNI',
+			args   => [$json_obj->{ file }, $farmname],
+		);
 	}
 	else
 	{
@@ -121,14 +130,14 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 
 	my $desc = "Delete farm certificate";
 
-	unless ( $EE )
+	unless ( $eload )
 	{
 		my $msg = "HTTPS farm without certificate is not allowed.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# Check if the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -155,7 +164,11 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 	# This is a BUGFIX: delete the certificate all times that it appears in config file
 	for ( my $it = 0 ; $it < $number ; $it++ )
 	{
-		$status = &setFarmDeleteCertNameSNI( $certfilename, $farmname );
+		$status = &eload(
+			module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+			func   => 'setFarmDeleteCertNameSNI',
+			args   => [$certfilename, $farmname],
+		);
 		last if ( $status == -1 );
 	}
 
@@ -169,7 +182,7 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-   # check if removing the certificate would leave the SNI list empty, not supported
+	# check if removing the certificate would leave the SNI list empty, not supported
 	if ( $status == 1 )
 	{
 		&zenlog(

@@ -2,7 +2,7 @@
 
 use strict;
 use Zevenet::Core;
-use Zevenet::RBAC::Core;
+include 'Zevenet::RBAC::Core';
 
 my $rbacUserConfig = &getRBACUserConf();
 
@@ -13,10 +13,10 @@ Function: getRBACUserConf
 
 Parameters:
 	None - .
-					
+
 Returns:
 	String - path
-	
+
 =cut
 
 sub getRBACUserConf
@@ -32,10 +32,10 @@ Function: getRBACUserList
 
 Parameters:
 	None - .
-					
+
 Returns:
 	Array - List of users
-	
+
 =cut
 
 sub getRBACUserList
@@ -53,10 +53,10 @@ Function: getRBACUserExists
 
 Parameters:
 	User - User name
-					
+
 Returns:
 	Integer - 1 if the user exists or 0 if it doesn't exist
-	
+
 =cut
 
 sub getRBACUserExists
@@ -76,10 +76,10 @@ Function: getRBACUserObject
 
 Parameters:
 	User - User name
-					
+
 Returns:
 	Hash ref - Configuration of a user
-	
+
 =cut
 
 sub getRBACUserObject
@@ -100,10 +100,10 @@ Function: getRBACUserParam
 Parameters:
 	User - User name
 	Parameter - Required parameter
-					
+
 Returns:
 	Scalar - the data type depends of the required parameter
-	
+
 =cut
 
 sub getRBACUserParam
@@ -122,21 +122,24 @@ Function: validateRBACUserZapi
 Parameters:
 	User - User name
 	zapikey - Zapikey sent by the user. It is encrypt
-					
+
 Returns:
 	Integer - 1 if the user has been validated sucessfully or 0 if it has not
-	
+
 =cut
 
 sub validateRBACUserZapi
 {
 	my ( $zapikey ) = @_;
+
+	include 'Zevenet::Code';
+
 	my $user;
-	require Zevenet::Code;
 
 	# look for the user owned of zapikey
 	require Config::Tiny;
 	my $fileHandle = Config::Tiny->read( $rbacUserConfig );
+
 	foreach my $key ( keys %{ $fileHandle } )
 	{
 		if ( &validateCryptString( $fileHandle->{ $key }->{ 'zapikey' }, $zapikey ) )
@@ -156,6 +159,7 @@ sub validateRBACUserZapi
 	my $groups      = &getGlobalConfiguration( 'groups_bin' );
 	my $user_groups = `$groups $user`;
 	chomp $user_groups;
+
 	if ( !grep ( / zapi( |$)/, $user_groups ) )
 	{
 		&zenlog( "RBAC, the user $user has not zapi permissions" );

@@ -25,7 +25,13 @@ use strict;
 use warnings;
 use Curses::UI;
 use Zevenet::Config;
-use Zevenet::BUI;
+use Zevenet::Debug;
+include 'Zevenet::BUI';
+
+# This two sentences should make zenbui behave like zenbui.sh
+$ENV{ NCURSES_NO_UTF8_ACS } = 1;
+open ( STDERR, '>', '/dev/null' ) if &debug();
+
 
 my $ifconfig_bin = &getGlobalConfiguration( 'ifconfig_bin' );
 my $zlbmenu;
@@ -35,7 +41,7 @@ my $zlbhostinput;
 my ( $mgmtif,      $mgmtip,      $mgmtmask,      $mgmtgw );
 my ( $mgmtifinput, $mgmtipinput, $mgmtmaskinput, $mgmtgwinput );
 
-my $zenui = new Curses::UI( -color_support => 1, -clear_on_exit => 1 );
+my $zenui = Curses::UI->new( -color_support => 1, -clear_on_exit => 1 );
 
 #my $co = $Curses::UI::color_object;
 #$co->define_color('white', 70, 185, 113);
@@ -755,7 +761,7 @@ sub manage_zlb_services()
 					 &confirm_dialog( "Are you sure you want to STOP ZEVENET service?" );
 				   if ( $ret )
 				   {
-					   my $zenbin="/usr/local/zevenet/app/zbin/zevenet";
+					   my $zenbin="/usr/local/zevenet/bin/zevenet";
 					   system ("$zenbin stop >/dev/null 2>&1");
 					   &inform_dialog( 'Service already stopped' );
 					   $zlbmenu->focus();
@@ -772,7 +778,7 @@ sub manage_zlb_services()
 				   my $ret = &confirm_dialog( "Are you sure you want to START ZEVENET service?" );
 				   if ( $ret )
 				   {
-					   my $zenbin="/usr/local/zevenet/app/zbin/zevenet";
+					   my $zenbin="/usr/local/zevenet/bin/zevenet";
 					   system ("$zenbin start >/dev/null 2>&1");
 					   &inform_dialog( 'Service already started' );
 					   $zlbmenu->focus();
@@ -789,7 +795,7 @@ sub manage_zlb_services()
 				   my $ret = &confirm_dialog( "Are you sure you want to RESTART ZEVENET service?" );
 				   if ( $ret )
 				   {
-					   my $zenbin="/usr/local/zevenet/app/zbin/zevenet";
+					   my $zenbin="/usr/local/zevenet/bin/zevenet";
 					   system ("$zenbin stop >/dev/null 2>&1");
 					   system ("$zenbin start >/dev/null 2>&1");
 					   &inform_dialog( 'Service already restarted' );

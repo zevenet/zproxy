@@ -23,6 +23,9 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 =begin nd
 Function: runFarmCreate
 
@@ -76,15 +79,18 @@ sub runFarmCreate    # ($farm_type,$vip,$vip_port,$farm_name,$fdev)
 	}
 	elsif ( $farm_type =~ /^GSLB$/i )
 	{
-		if ( eval { require Zevenet::Farm::GSLB::Factory; } )
-		{
-			$output = &runGSLBFarmCreate( $vip, $vip_port, $farm_name );
-		}
+		$output = &eload(
+						  module => 'Zevenet::Farm::GSLB::Factory',
+						  func   => 'runGSLBFarmCreate',
+						  args   => [$vip, $vip_port, $farm_name],
+		) if $eload;
 	}
-	if ( eval { require Zevenet::RBAC::Group::Config; } )
-	{
-		&addRBACUserResource( $farm_name, 'farms' );
-	}
+
+	&eload(
+			module => 'Zevenet::RBAC::Group::Config',
+			func   => 'addRBACUserResource',
+			args   => [$farm_name, 'farms'],
+	) if $eload;
 
 	return $output;
 }

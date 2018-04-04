@@ -21,9 +21,9 @@
 #
 ###############################################################################
 
-use Zevenet::IPDS::DoS::Core;
-use Zevenet::IPDS::DoS::Runtime;
-use Zevenet::IPDS::DoS::Config;
-use Zevenet::IPDS::DoS::Actions;
+include 'Zevenet::IPDS::DoS::Core';
+include 'Zevenet::IPDS::DoS::Runtime';
+include 'Zevenet::IPDS::DoS::Config';
+include 'Zevenet::IPDS::DoS::Actions';
 
 1;

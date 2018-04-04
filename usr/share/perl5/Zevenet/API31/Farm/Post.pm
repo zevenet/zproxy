@@ -25,6 +25,9 @@ use Zevenet::Net::Util;
 use Zevenet::Farm::Core;
 use Zevenet::Farm::Factory;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 sub new_farm    # ( $json_obj )
 {
 	my $json_obj = shift;
@@ -147,10 +150,19 @@ sub new_farm    # ( $json_obj )
 				 params      => $out_p,
 	};
 
-	if ( eval { require Zevenet::Cluster; } )
+	if ( $eload )
 	{
-		&zClusterFarmUp( $json_obj->{ farmname } ) if $json_obj->{ profile } =~ /^l4xnat$/i;
-		&runZClusterRemoteManager( 'farm', 'start', $json_obj->{ farmname } );
+		&eload(
+			module => 'Zevenet::Cluster',
+			func   => 'zClusterFarmUp',
+			args   => [$json_obj->{ farmname }],
+		) if $json_obj->{ profile } =~ /^l4xnat$/i;
+
+		&eload(
+			module => 'Zevenet::Cluster',
+			func   => 'runZClusterRemoteManager',
+			args   => ['farm', 'start', $json_obj->{ farmname }],
+		);
 	}
 
 	&httpResponse( { code => 201, body => $body } );

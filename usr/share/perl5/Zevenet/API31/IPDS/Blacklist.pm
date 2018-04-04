@@ -21,7 +21,7 @@
 ###############################################################################
 
 use strict;
-use Zevenet::IPDS::Blacklist::Core;
+include 'Zevenet::IPDS::Blacklist::Core';
 
 # GET /ipds/blacklists
 sub get_blacklists_all_lists
@@ -82,7 +82,7 @@ sub add_blacklists_list
 {
 	my $json_obj = shift;
 
-	require Zevenet::IPDS::Blacklist::Config;
+	include 'Zevenet::IPDS::Blacklist::Config';
 
 	my $desc     = "Create the blacklist $json_obj->{ 'name' }";
 	my $listName = $json_obj->{ 'name' };
@@ -162,7 +162,7 @@ sub set_blacklists_list
 	my $json_obj = shift;
 	my $listName = shift;
 
-	require Zevenet::IPDS::Blacklist::Config;
+	include 'Zevenet::IPDS::Blacklist::Config';
 
 	my $desc = "Modify the blacklist $listName.";
 
@@ -401,10 +401,10 @@ sub set_blacklists_list
 
 	if ( &getBLParam( $listName, 'status' ) eq 'up' )
 	{
-		require Zevenet::IPDS::Blacklist::Actions;
+		include 'Zevenet::IPDS::Blacklist::Actions';
 		&runBLStopByRule( $listName );
 
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'ipds_bl', 'stop', $listName );
 	}
 
@@ -441,10 +441,10 @@ sub set_blacklists_list
 
 	if ( &getBLParam( $listName, 'status' ) eq 'up' )
 	{
-		require Zevenet::IPDS::Blacklist::Actions;
+		include 'Zevenet::IPDS::Blacklist::Actions';
 		&runBLStartByRule( $listName );
 
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'ipds_bl', 'start', $listName );
 	}
 
@@ -463,7 +463,7 @@ sub del_blacklists_list
 {
 	my $listName = shift;
 
-	require Zevenet::IPDS::Blacklist::Config;
+	include 'Zevenet::IPDS::Blacklist::Config';
 
 	my $desc = "Delete the list $listName";
 
@@ -505,7 +505,7 @@ sub actions_blacklists
 	my $json_obj = shift;
 	my $listName = shift;
 
-	require Zevenet::IPDS::Blacklist::Actions;
+	include 'Zevenet::IPDS::Blacklist::Actions';
 
 	my $desc = "Apply a action to a blacklist $listName";
 	my $msg  = "Error, applying the action to the blacklist.";
@@ -532,16 +532,21 @@ sub actions_blacklists
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 		}
-		require Zevenet::IPDS::Blacklist::Config;
+
+		include 'Zevenet::IPDS::Blacklist::Config';
+
 		&setBLParam( $listName, 'status', 'up' );
 		my $error = &runBLStartByRule( $listName );
+
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'stop' )
 	{
-		require Zevenet::IPDS::Blacklist::Config;
+		include 'Zevenet::IPDS::Blacklist::Config';
+
 		&setBLParam( $listName, 'status', 'down' );
 		my $error = &runBLStopByRule( $listName );
+
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 	}
 	elsif ( $json_obj->{ action } eq 'restart' )
@@ -560,7 +565,7 @@ sub actions_blacklists
 	my $action =
 	  $json_obj->{ action } eq 'update' ? 'restart' : $json_obj->{ action };
 
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_bl', $action, $listName );
 
 	my $body = {
@@ -577,7 +582,7 @@ sub update_remote_blacklists
 {
 	my $listName = shift;
 
-	require Zevenet::IPDS::Blacklist::Runtime;
+	include 'Zevenet::IPDS::Blacklist::Runtime';
 
 	my $desc = "Update a remote list";
 
@@ -601,7 +606,7 @@ sub update_remote_blacklists
 		&setBLRefreshList( $listName );
 	}
 
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
 	my $body = {
@@ -685,7 +690,7 @@ sub add_blacklists_source
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	require Zevenet::IPDS::Blacklist::Config;
+	include 'Zevenet::IPDS::Blacklist::Config';
 	my $error = &setBLAddSource( $listName, $json_obj->{ 'source' } );
 
 	if ( $error )
@@ -702,7 +707,7 @@ sub add_blacklists_source
 		push @ipList, { id => $index++, source => $source };
 	}
 
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
 	# no error found, send successful response
@@ -723,7 +728,7 @@ sub set_blacklists_source
 	my $listName = shift;
 	my $id       = shift;
 
-	require Zevenet::IPDS::Blacklist::Config;
+	include 'Zevenet::IPDS::Blacklist::Config';
 
 	my $desc        = "Modify a source of the blacklsit $listName";
 	my @allowParams = ( "source" );
@@ -768,7 +773,7 @@ sub set_blacklists_source
 				 params      => { "source" => $json_obj->{ 'source' }, 'id' => $id }
 	};
 
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
 	return &httpResponse( { code => 200, body => $body } );
@@ -780,7 +785,7 @@ sub del_blacklists_source
 	my $listName = shift;
 	my $id       = shift;
 
-	require Zevenet::IPDS::Blacklist::Config;
+	include 'Zevenet::IPDS::Blacklist::Config';
 
 	my $desc = "Delete a source from the blacklist $listName";
 
@@ -809,7 +814,7 @@ sub del_blacklists_source
 				 message     => $msg,
 	};
 
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_bl', 'restart', $listName );
 
 	return &httpResponse( { code => 200, body => $body } );
@@ -822,7 +827,7 @@ sub add_blacklists_to_farm
 	my $farmName = shift;
 
 	require Zevenet::Farm::Core;
-	require Zevenet::IPDS::Blacklist::Runtime;
+	include 'Zevenet::IPDS::Blacklist::Runtime';
 
 	my $desc = "Apply the blacklist $json_obj->{ 'name' } to the farm $farmName";
 	my $listName = $json_obj->{ 'name' };
@@ -833,7 +838,7 @@ sub add_blacklists_to_farm
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $param_msg );
 	}
 
-	if ( &getFarmFile( $farmName ) eq "-1" )
+	if ( !&getFarmExists( $farmName ) )
 	{
 		my $msg = "$farmName doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -866,7 +871,7 @@ sub add_blacklists_to_farm
 				 message     => $msg
 	};
 
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_bl', 'start', $listName, $farmName );
 
 	return &httpResponse( { code => 200, body => $body } );
@@ -878,12 +883,12 @@ sub del_blacklists_from_farm
 	my $farmName = shift;
 	my $listName = shift;
 
-	require Zevenet::IPDS::Blacklist::Runtime;
+	include 'Zevenet::IPDS::Blacklist::Runtime';
 	require Zevenet::Farm::Core;
 
 	my $desc = "Unset the blacklist $listName from the farm $farmName";
 
-	if ( &getFarmFile( $farmName ) eq '-1' )
+	if ( !&getFarmExists( $farmName ) )
 	{
 		my $msg = "$farmName doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -923,7 +928,7 @@ sub del_blacklists_from_farm
 				 message     => $msg,
 	};
 
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'ipds_bl', 'stop', $listName, $farmName );
 
 	return &httpResponse( { code => 200, body => $body } );

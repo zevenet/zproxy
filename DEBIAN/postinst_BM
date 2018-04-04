@@ -34,8 +34,8 @@ fi
 # Check for binaries
 PERLVER=`dpkg -l perl | grep perl | cut -d. -f-2 | xargs | cut -d\  -f3`
 compiled_files=(
-	/usr/local/zevenet/www/zapi/v3/zapi.cgi
 	/usr/local/zevenet/www/zapi/v3.1/zapi.cgi
+	/usr/local/zevenet/www/zapi/v3.2/zapi.cgi
 	/usr/local/zevenet/app/zbin/zevenet
 	/usr/local/zevenet/app/zbin/enterprise.bin
 )
@@ -77,7 +77,7 @@ if [[ -f /etc/snmp/snmpd.conf && `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' 
 fi
 
 # Create IPDS directories
-/usr/local/zevenet/app/zbin/boot_ipds.pl
+/usr/local/zevenet/bin/boot_ipds
 
 # boot dependencies
 sed -i 's/^\# Required-Start:.*/# Required-Start:\t\$remote_fs \$syslog zevenet/g' /etc/init.d/ssh

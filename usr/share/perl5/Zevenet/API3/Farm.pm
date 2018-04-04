@@ -23,9 +23,9 @@
 
 use strict;
 
-use Zevenet::API3::Farm::Post;
-use Zevenet::API3::Farm::Get;
-use Zevenet::API3::Farm::Put;
-use Zevenet::API3::Farm::Delete;
+include 'Zevenet::API3::Farm::Post';
+include 'Zevenet::API3::Farm::Get';
+include 'Zevenet::API3::Farm::Put';
+include 'Zevenet::API3::Farm::Delete';
 
 1;

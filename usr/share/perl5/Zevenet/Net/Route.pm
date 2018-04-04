@@ -257,7 +257,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 			if ( $gateway )
 			{
 				my $routeparams = &getGlobalConfiguration('routeparams');
-				
+
 				my $action = "replace";
 				my $system_default_gw = &getDefaultGW();
 				if ( $system_default_gw eq "" ){
@@ -434,7 +434,7 @@ sub getDefaultGW    # ($if)
 	my @defgw;
 	my $gw;
 	my @routes = "";
-	
+
 	if ( $if )
 	{
 		my $cif = $if;
@@ -561,7 +561,7 @@ Returns:
 See Also:
 	zevenet
 =cut
-# from zbin/zevenet, almost exactly
+# from bin/zevenet, almost exactly
 sub configureDefaultGW    #()
 {
 	my $defaultgw = &getGlobalConfiguration('defaultgw');

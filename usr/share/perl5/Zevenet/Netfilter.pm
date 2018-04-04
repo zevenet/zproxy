@@ -26,6 +26,9 @@ use strict;
 use Data::Dumper;
 use Fcntl qw(:flock SEEK_END);
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 #
 sub loadNfModule    # ($modname,$params)
 {
@@ -422,9 +425,13 @@ sub genIptSourceNat    # ($farm_name,$vip,$index,$protocol,$mark)
 	my $iptables_bin = &getBinVersion( $farm_name );
 	my $nat_params   = "--jump SNAT --to-source $$server{ vip }";
 
-	if ( eval { require Zevenet::Net::Floating; } )
+	if ( $eload )
 	{
-		$nat_params = &getFloatingSnatParams( $server );
+		$nat_params = &eload(
+							  module => 'Zevenet::Net::Floating',
+							  func   => 'getFloatingSnatParams',
+							  args   => [$server],
+		);
 	}
 
 	# output: iptables rule template string
@@ -469,9 +476,13 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 	my $iptables_bin = &getBinVersion( $farm_name );
 	my $nat_params   = "--jump MASQUERADE";
 
-	if ( eval { require Zevenet::Net::Floating; } )
+	if ( $eload )
 	{
-		$nat_params = &getFloatingMasqParams( $farm, $server );
+		$nat_params = &eload(
+							  module => 'Zevenet::Net::Floating',
+							  func   => 'getFloatingMasqParams',
+							  args   => [$farm, $server],
+		);
 	}
 
 	# output: iptables rule template string

@@ -22,7 +22,7 @@
 
 use strict;
 
-use Zevenet::IPDS::DoS;
+include 'Zevenet::IPDS::DoS';
 
 # GET /ipds/dos/rules
 sub get_dos_rules
@@ -222,7 +222,7 @@ sub set_dos_rule
 				{
 					my $refRule = &getDOSZapiRule( $name );
 
-					require Zevenet::Cluster;
+					include 'Zevenet::Cluster';
 					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
 
 					&httpResponse(
@@ -327,7 +327,7 @@ sub add_dos_to_farm
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 	my $output   = "down";
 
-	if ( &getFarmFile( $farmName ) eq '-1' )
+	if ( !&getFarmExists( $farmName ) )
 	{
 		$errormsg = "$farmName doesn't exist.";
 		my $body = {
@@ -360,7 +360,7 @@ sub add_dos_to_farm
 		}
 		else
 		{
-			require Zevenet::IPDS::DoS::Runtime;
+			include 'Zevenet::IPDS::DoS::Runtime';
 			&setDOSApplyRule( $name, $farmName );
 
 			my $confFile = &getGlobalConfiguration( 'dosConf' );
@@ -373,7 +373,7 @@ sub add_dos_to_farm
 
 				if ( &getFarmStatus( $farmName ) eq 'up' )
 				{
-					require Zevenet::Cluster;
+					include 'Zevenet::Cluster';
 					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
 				}
 
@@ -406,7 +406,7 @@ sub del_dos_from_farm
 
 	my $confFile = &getGlobalConfiguration( 'dosConf' );
 
-	if ( &getFarmFile( $farmName ) eq "-1" )
+	if ( !&getFarmExists( $farmName ) )
 	{
 		$errormsg = "$farmName doesn't exist.";
 		my $body = {
@@ -439,7 +439,7 @@ sub del_dos_from_farm
 		}
 		else
 		{
-			require Zevenet::IPDS::DoS::Runtime;
+			include 'Zevenet::IPDS::DoS::Runtime';
 			&setDOSUnsetRule( $name, $farmName );
 
 			# check output
@@ -450,7 +450,7 @@ sub del_dos_from_farm
 
 				if ( &getFarmStatus( $farmName ) eq 'up' )
 				{
-					require Zevenet::Cluster;
+					include 'Zevenet::Cluster';
 					&runZClusterRemoteManager( 'ipds', 'restart_dos' );
 				}
 

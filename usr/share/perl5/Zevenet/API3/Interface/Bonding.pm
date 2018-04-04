@@ -75,7 +75,7 @@ sub new_bond # ( $json_obj )
 	$json_obj->{ mode } = &indexOfElementInArray( $json_obj->{ mode }, \@bond_modes_short );
 
 	# validate SLAVES
-	require Zevenet::Net::Bonding;
+	include 'Zevenet::Net::Bonding';
 	my $missing_slave;
 	for my $slave ( @{ $json_obj->{slaves} } )
 	{
@@ -149,7 +149,7 @@ sub new_bond_slave # ( $json_obj, $bond )
 
 	my $description = "Add a slave to a bond interface";
 
-	require Zevenet::Net::Bonding;
+	include 'Zevenet::Net::Bonding';
 
 	# validate BOND NAME
 	my $bonds = &getBondConfig();
@@ -367,7 +367,7 @@ sub delete_bond_slave # ( $bond, $slave )
 	my $bond  = shift;
 	my $slave = shift;
 
-	require Zevenet::Net::Bonding;
+	include 'Zevenet::Net::Bonding';
 
 	my $description = "Remove bonding slave interface";
 	my $bonds = &getBondConfig();
@@ -432,8 +432,8 @@ sub delete_bond_slave # ( $bond, $slave )
 
 sub get_bond_list # ()
 {
-	require Zevenet::Net::Bonding;
-	require Zevenet::Cluster;
+	include 'Zevenet::Net::Bonding';
+	include 'Zevenet::Cluster';
 	require Zevenet::Net::Interface;
 
 	my @output_list;
@@ -492,7 +492,7 @@ sub get_bond # ()
 {
 	my $bond = shift;
 
-	require Zevenet::Net::Bonding;
+	include 'Zevenet::Net::Bonding';
 	require Zevenet::Net::Interface;
 
 	my $interface; # output

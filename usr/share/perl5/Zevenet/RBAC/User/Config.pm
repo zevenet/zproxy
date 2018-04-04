@@ -4,8 +4,8 @@ use strict;
 
 use Config::Tiny;
 use Zevenet::Core;
-use Zevenet::RBAC::User::Core;
-use Zevenet::RBAC::User::Runtime;
+include 'Zevenet::RBAC::User::Core';
+include 'Zevenet::RBAC::User::Runtime';
 
 # rbac configuration paths
 my $rbacUserConfig = &getRBACUserConf();
@@ -17,10 +17,10 @@ Function: setRBACUserLockConfigFile
 
 Parameters:
 	None - .
-					
+
 Returns:
 	Integer - 0 on failure or other value on success
-	
+
 =cut
 
 sub setRBACUserLockConfigFile
@@ -34,14 +34,14 @@ sub setRBACUserLockConfigFile
 =begin nd
 Function: setRBACUserUnlockConfigFile
 
-	Unlock the user configuration file 
+	Unlock the user configuration file
 
 Parameters:
 	Integer - Lock file identifier
-					
+
 Returns:
 	None - .
-	
+
 =cut
 
 sub setRBACUserUnlockConfigFile
@@ -64,10 +64,10 @@ Parameters:
 	User - User to apply the change
 	key - parameter to change or struct ref
 	value - new value for the parameter
-					
+
 Returns:
 	None - .
-	
+
 =cut
 
 sub setRBACUserConfigFile
@@ -100,10 +100,10 @@ Function: createRBACUser
 Parameters:
 	User - User name
 	Password - Password for the user
-					
+
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub createRBACUser
@@ -144,17 +144,17 @@ Function: delRBACUser
 
 Parameters:
 	User - User name
-					
+
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub delRBACUser
 {
 	my $user = shift;
 
-	require Zevenet::RBAC::Group::Config;
+	include 'Zevenet::RBAC::Group::Config';
 
 	# delete from its group
 	my $group = &getRBACUserGroup( $user );
@@ -184,10 +184,10 @@ Function: setRBACUserWebPermissions
 Parameters:
 	User - User name
 	Actived - "true" if the user has got webgui permissions or "false" it it has not got
-					
+
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub setRBACUserWebPermissions
@@ -219,10 +219,10 @@ Function: setRBACUserZapiPermissions
 Parameters:
 	User - User name
 	Actived - "true" if the user has got zapi permissions or "false" it it has not got
-					
+
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub setRBACUserZapiPermissions
@@ -253,17 +253,18 @@ Function: setRBACUserZapikey
 
 Parameters:
 	User - User name
-	zapikey - zapikey in plain text 
-					
+	zapikey - zapikey in plain text
+
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub setRBACUserZapikey
 {
 	my ( $user, $zapikey ) = @_;
-	require Zevenet::Code;
+
+	include 'Zevenet::Code';
 
 	# encrypt
 	$zapikey = &setCryptString( $zapikey );
@@ -280,10 +281,10 @@ Function: setRBACUserPassword
 Parameters:
 	User - User name
 	password - the new password
-					
+
 Returns:
 	Integer -  Error code: 0 on success or other value on failure
-	
+
 =cut
 
 sub setRBACUserPassword
@@ -293,6 +294,7 @@ sub setRBACUserPassword
 
 	# Change pass
 	require Zevenet::Login;
+
 	if ( !&changePassword( $user, $password ) )
 	{
 		# get password from system

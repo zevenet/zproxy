@@ -35,17 +35,17 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	my $error        = "false";
 	my $status;
 	my $initialStatus = &getFarmStatus( $farmname );
-	
+
+	include 'Zevenet::IPDS::Base';
+	include 'Zevenet::IPDS::Blacklist';
+	include 'Zevenet::IPDS::DoS';
+
 	# flag to reset IPDS rules when the farm changes the name.
 	my $farmname_old;
-	require Zevenet::IPDS::Base;
-	require Zevenet::IPDS::Blacklist;
-	require Zevenet::IPDS::DoS;
-
 	my $ipds = &getIPDSfarmsRules_zapiv3( $farmname );
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		# Error
 		my $errormsg = "The farmname $farmname does not exists.";
@@ -153,7 +153,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		if ( $json_obj->{ algorithm } =~ /^leastconn|weight|prio$/ )
 		{
 			$status = &setFarmAlgorithm( $json_obj->{ algorithm }, $farmname );
-			if ( $status == -1 )
+			if ( $status eq '-1' )
 			{
 				$error = "true";
 				&zenlog(
@@ -466,7 +466,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			}
 
 			&runIPDSStartByFarm($farmname);
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'farm', 'restart', $farmname );
 		}
 
@@ -519,7 +519,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $dosConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @dosRules, $key;
 			}
@@ -531,7 +531,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @blacklistsRules, $key;
 			}
@@ -543,7 +543,7 @@ sub getIPDSfarmsRules_zapiv3
 		$fileHandle = Config::Tiny->read( $rblConf );
 		foreach my $key ( keys %{ $fileHandle } )
 		{
-			if ( $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
+			if ( defined $fileHandle->{ $key }->{ 'farms' } && $fileHandle->{ $key }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
 			{
 				push @rblRules, $key;
 			}

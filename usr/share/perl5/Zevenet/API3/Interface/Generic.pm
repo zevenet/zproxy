@@ -35,7 +35,7 @@ sub get_interfaces # ()
 	my @interfaces = @{ &getSystemInterfaceList() };
 	
 	# get cluster interface
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	my $zcl_conf  = &getZClusterConfig();
 	my $cluster_if = $zcl_conf->{ _ }->{ interface };
 

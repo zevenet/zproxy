@@ -22,7 +22,7 @@
 
 use strict;
 
-use Zevenet::Cluster;
+include 'Zevenet::Cluster';
 
 # disable smartmatch experimental warnings for perl >= 5.18
 no if $] >= 5.018, warnings => "experimental::smartmatch";
@@ -226,7 +226,7 @@ sub modify_cluster
 			system( "scp $filecluster root\@$zcl_conf->{$rhost}->{ip}:$filecluster" );
 
 			# reconfigure local conntrackd
-			require Zevenet::Conntrackd;
+			include 'Zevenet::Conntrackd';
 			&setConntrackdConfig();
 
 			# reconfigure remote conntrackd

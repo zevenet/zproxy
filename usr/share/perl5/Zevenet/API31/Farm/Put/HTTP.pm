@@ -25,6 +25,9 @@ use Zevenet::Farm::Base;
 use Zevenet::Farm::Config;
 use Zevenet::Farm::Action;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 # PUT /farms/<farmname> Modify a http|https Farm
 sub modify_http_farm    # ( $json_obj, $farmname )
 {
@@ -42,7 +45,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	my $farmname_old;
 
 	# Check that the farm exists
-	if ( &getFarmFile( $farmname ) == -1 )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farm '$farmname' does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -58,14 +61,22 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		 || exists $json_obj->{ vip }
 		 || exists $json_obj->{ newfarmname } )
 	{
-		if ( eval { require Zevenet::IPDS; } )
-		{
-			require Zevenet::Cluster;
 
+		if ( $eload )
+		{
 			$reload_ipds = 1;
 
-			&runIPDSStopByFarm( $farmname );
-			&runZClusterRemoteManager( 'ipds', 'stop', $farmname );
+			&eload(
+				module => 'Zevenet::IPDS::Base',
+				func   => 'runIPDSStopByFarm',
+				args   => [$farmname],
+			);
+
+			&eload(
+				module => 'Zevenet::Cluster',
+				func   => 'runZClusterRemoteManager',
+				args   => ['ipds', 'stop', $farmname],
+			);
 		}
 	}
 
@@ -232,9 +243,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		$restart_flag = "true";
 	}
 
-	my $EE = eval { require Zevenet::HTTP::Ext; } ? 1 : undef;
-
-	if ( $EE )
+	if ( $eload )
 	{
 		# Enable or disable ignore 100 continue header
 		if ( exists ( $json_obj->{ ignore_100_continue } ) )
@@ -248,9 +257,20 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 			my $action = 0;
 			$action = 1 if ( $json_obj->{ ignore_100_continue } =~ /^true$/ );
 
-			if ( &getHTTPFarm100Continue( $farmname ) != $action )
+			my $newaction = &eload(
+				module => 'Zevenet::Farm::HTTP::Ext',
+				func   => 'getHTTPFarm100Continue',
+				args   => [$farmname],
+			);
+
+			if ( $newaction != $action )
 			{
-				my $status = &setHTTPFarm100Continue( $farmname, $action );
+				my $status = &eload(
+					module => 'Zevenet::Farm::HTTP::Ext',
+					func   => 'setHTTPFarm100Continue',
+					args   => [$farmname, $action],
+				);
+
 				if ( $status == -1 )
 				{
 					my $msg = "Some errors happened trying to modify the certname.";
@@ -363,7 +383,6 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 
 	# Modify HTTPS Params
 	my $farmtype = &getFarmType( $farmname );
-	my $EE;
 
 	if ( $farmtype eq "https" )
 	{
@@ -393,11 +412,14 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 			elsif ( $json_obj->{ ciphers } eq "highsecurity" ) { $ciphers = "cipherpci"; }
 			elsif ( $json_obj->{ ciphers } eq "ssloffloading" )
 			{
-				if ( eval { require Zevenet::Farm::HTTP::HTTPS::Ext; } )
+				if ( $eload )
 				{
-					$EE = 1;
+					my $ssloff = &eload(
+						module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+						func   => 'getFarmCipherSSLOffLoadingSupport',
+					);
 
-					unless ( &getFarmCipherSSLOffLoadingSupport() )
+					unless ( $ssloff )
 					{
 						my $msg = "The CPU does not support SSL offloading.";
 						&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -452,9 +474,13 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		if ( exists ( $json_obj->{ certname } ) )
 		{
 			my $status;
-			if ( $EE )
+			if ( $eload )
 			{
-				$status = &setFarmCertificateSNI( $json_obj->{ certname }, $farmname );
+				$status = &eload(
+					module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+					func   => 'setFarmCertificateSNI',
+					args   => [$json_obj->{ certname }, $farmname],
+				);
 			}
 			else
 			{
@@ -599,9 +625,13 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		my @certlist;
 		my @cnames;
 
-		if ( $EE )
+		if ( $eload )
 		{
-			@cnames = &getFarmCertificatesSNI( $farmname );
+			@cnames = &eload(
+				module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+				func   => 'getFarmCertificatesSNI',
+				args   => [$farmname],
+			);
 		}
 		else
 		{
@@ -649,12 +679,20 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 
 	if ( $reload_ipds )
 	{
-		if ( eval { require Zevenet::IPDS::Base; } )
-		{
-			require Zevenet::Cluster;
 
-			&runIPDSStartByFarm( $farmname );
-			&runZClusterRemoteManager( 'ipds', 'start', $farmname );
+		if ( $eload )
+		{
+			&eload(
+				module => 'Zevenet::IPDS::Base',
+				func   => 'runIPDSStartByFarm',
+				args   => [$farmname],
+			);
+
+			&eload(
+				module => 'Zevenet::Cluster',
+				func   => 'runZClusterRemoteManager',
+				args   => ['ipds', 'start', $farmname],
+			);
 		}
 	}
 

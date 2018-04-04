@@ -118,6 +118,11 @@ sub createBackup
 	my $zenbackup = &getGlobalConfiguration( 'zenbackup' );
 	my $error     = system ( "$zenbackup $name -c 2> /dev/null" );
 
+	if ( $error )
+	{
+		&zenlog( "$zenbackup $name -c 2> /dev/null" );
+	}
+
 	return $error;
 }
 

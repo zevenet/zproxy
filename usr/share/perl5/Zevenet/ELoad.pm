@@ -23,12 +23,14 @@
 
 use strict;
 
+require Zevenet::Debug;
+
 sub eload
 {
 	my %req = @_;
 
 	my @required = ( qw(module func) );
-	my @params   = ( qw(module func args) );
+	my @params   = ( qw(module func args just_ret ) );
 
 	# check required params
 	if ( my ( $required ) = grep { not exists $req{ $_ } } @required )
@@ -39,6 +41,9 @@ sub eload
 		die( $msg );
 	}
 
+	use Carp qw(cluck);
+	cluck "[eload]" if &debug() > 4; # warn with stack backtrace
+
 	# check not used params
 	if ( grep { not exists $req{ $_ } } @required )
 	{
@@ -48,17 +53,29 @@ sub eload
 		&zenlog( $msg );
 	}
 
-	my $zbin_path  = '/usr/local/zevenet/app/zbin';
-	my $bin        = "$zbin_path/enterprise.bin";
-	my $input;
-
-	require JSON;
-	JSON->import( qw( encode_json decode_json ) );
-
 	# make sure $req{ args } is always an array reference
 	my $validArrayRef = exists $req{ args } && ref $req{ args } eq 'ARRAY';
 	$req{ args } = [] unless $validArrayRef;
 
+
+	# Run directly Already running inside enterprise.bin
+	if ( defined &main::include )
+	{
+		sub include;
+		#~ &include( $req{ module } );
+
+		include $req{ module };
+
+		my $code_ref = \&{ $req{ func } };
+		return $code_ref->( @{  $req{ args }  } );
+	}
+
+	my $zbin_path = '/usr/local/zevenet/bin';
+	my $bin       = "$zbin_path/enterprise.bin";
+	my $input;
+
+	require JSON;
+	JSON->import( qw( encode_json decode_json ) );
 
 	unless ( ref( $req{ args } ) eq 'ARRAY' )
 	{
@@ -84,7 +101,7 @@ sub eload
 	if ( &debug() )
 	{
 		&zenlog("eload: CMD: '$cmd'");
-		&zenlog("eload: INPUT: '$input'");
+		&zenlog("eload: INPUT: '$input'") unless $input eq '[]';
 	}
 
 	my $ret_output;
@@ -95,8 +112,10 @@ sub eload
 	}
 	my $rc = $?;
 
-	#~ &zenlog( "rc: '$rc'" );
-	#~ &zenlog( "ret_output: '$ret_output'" );
+	chomp $ret_output;
+
+	&zenlog( "enterprise.bin errno: '$rc'" );
+	&zenlog( "$req{ module }::$req{ func } output: '$ret_output'" );
 
 	if ( $rc )
 	{
@@ -106,15 +125,33 @@ sub eload
 		#~ zenlog( "rc: '$rc'" );
 		#~ zenlog( "ret_output: '$ret_output'" );
 		&zenlog( "$msg. $ret_output" );
-		exit 1 if $0 =~ /zevenet$/;
+		exit 1 if $0 =~ /zevenet$/; # finish zevenet process
 		die( $msg );
 	}
 
-	# return function output for non-API functions (service)
-	return $ret_output if $req{module} !~ /^Zevenet::API/;
+	# condition flags
+	my $ret_f = exists $req{ just_ret } && $req{ just_ret };
+	my $api_f = ( $req{ module } =~ /^Zevenet::API/ );
 
-	my $ref = decode_json( $ret_output );
-	&httpResponse( $ref );
+	my $output = ( not $ret_f && $api_f ) ?	decode_json( $ret_output ): $ret_output;
+	my @output = eval{ @{ decode_json( $ret_output ) } };
+
+	if ( $@ )
+	{
+		&zenlog( $@ );
+		@output = undef;
+	}
+
+	use Data::Dumper;
+	&zenlog( "eload $req{ module } $req{ func } output: " . Dumper \@output ) if @output;
+
+	# return function output for non-API functions (service)
+	if ( $ret_f || not $api_f )
+	{
+		return wantarray ? @output : shift @output;
+	}
+
+	&httpResponse( @output );
 }
 
 1;

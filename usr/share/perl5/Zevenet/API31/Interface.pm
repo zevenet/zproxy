@@ -26,9 +26,7 @@ use strict;
 use Zevenet::API31::Interface::Generic;
 use Zevenet::API31::Interface::NIC;
 use Zevenet::API31::Interface::VLAN;
-use Zevenet::API31::Interface::Bonding;
 use Zevenet::API31::Interface::Virtual;
-use Zevenet::API31::Interface::Floating;
 use Zevenet::API31::Interface::Gateway;
 
 1;
