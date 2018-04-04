@@ -24,16 +24,8 @@
 use strict;
 
 use Unix::Syslog qw(:macros :subs);  # Syslog macros
-#~ use Sys::Syslog;                          #use of syslog
-#~ use Sys::Syslog qw(:standard :macros);    #standard functions for Syslog
 
 # Get the program name for zenlog
-#~ my $run_cmd_name = ( split '/', $0 )[-1];
-#~ $run_cmd_name = ( split '/', "$ENV{'SCRIPT_NAME'}" )[-1] if $run_cmd_name eq '-e';
-#~ $run_cmd_name = ( split '/', $^X )[-1] if ! $run_cmd_name;
-
-
-############################## Debug ######################################
 my $TAG = "[Log.pm]";
 my $program_name =
     ( $0 ne '-e' ) ? $0
@@ -41,16 +33,6 @@ my $program_name =
   :                                                          $^X;
 
 my $basename = ( split ( '/', $program_name ) )[-1];
-
-&zenlog("$TAG \$0 = '$0'");
-&zenlog("$TAG \$^X = '$^X'");
-&zenlog("$TAG \$ENV\{_\} = '$ENV{_}'") if exists $ENV{_};
-&zenlog("$TAG \$ENV\{SCRIPT_NAME\} = '$ENV{SCRIPT_NAME}'") if exists $ENV{SCRIPT_NAME};
-&zenlog("$TAG \$program_name = '$program_name'");
-&zenlog("$TAG \$basename = '$basename'");
-
-###########################################################################
-
 
 =begin nd
 Function: zenlog
@@ -159,10 +141,6 @@ sub logAndRun    # ($command)
 	my $return_code;
 	my @cmd_output;
 	my $program = $basename;
-
-	#~ my $program = ( split '/', $0 )[-1];
-	#~ $program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
-	#~ $program .= ' ';
 
 	# &zenlog( (caller (2))[3] . ' >>> ' . (caller (1))[3]);
 
