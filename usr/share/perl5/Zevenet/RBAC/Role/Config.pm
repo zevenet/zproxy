@@ -61,100 +61,35 @@ Returns:
 	
 =cut
 
+#~ return $paramStruct;
+#~ }
 sub getRBACRoleParamDefaultStruct
 {
-	my $paramStruct = {
-						'activation-certificate' => {
-													  'show'   => 'false',
-													  'upload' => 'false',
-													  'delete' => 'false',
-						},
-						'certificate' => {
-										   'show'     => 'false',
-										   'create'   => 'false',
-										   'download' => 'false',
-										   'upload'   => 'false',
-										   'delete'   => 'false',
-						},
-						'farm' => {
-									'create'      => 'false',
-									'modify'      => 'false',
-									'action'      => 'false',
-									'maintenance' => 'false',
-									'delete'      => 'false',
-						},
-						'interface-virtual' => {
-												 'create' => 'false',
-												 'modify' => 'false',
-												 'action' => 'false',
-												 'delete' => 'false',
-						},
-						'interface' => {
-										 'modify' => 'false',
-										 'action' => 'false',
-						},
-						'ipds' => {
-									'modify' => 'false',
-									'action' => 'false',
-						},
-						'system-service' => {
-											  'modify' => 'false',
-						},
-						'log' => {
-								   'download' => 'false',
-								   'show'     => 'false',
-						},
-						'backup' => {
-									  'create'   => 'false',
-									  'apply'    => 'false',
-									  'upload'   => 'false',
-									  'delete'   => 'false',
-									  'download' => 'false',
-						},
-						'cluster' => {
-									   'create'      => 'false',
-									   'modify'      => 'false',
-									   'delete'      => 'false',
-									   'maintenance' => 'false',
-						},
-						'notification' => {
-											'show'          => 'false',
-											'modify-method' => 'false',
-											'modify-alert'  => 'false',
-											'test'          => 'false',
-											'action'        => 'false',
-						},
-						'supportsave' => {
-										   'download' => 'false',
-						},
-						'rbac-user' => {
-										 'show'   => 'false',
-										 'create' => 'false',
-										 'list'   => 'false',
-										 'modify' => 'false',
-										 'delete' => 'false',
-						},
-						'rbac-group' => {
-										  'show'   => 'false',
-										  'create' => 'false',
-										  'list'   => 'false',
-										  'modify' => 'false',
-										  'delete' => 'false',
-						},
-						'rbac-role' => {
-										 'show'   => 'false',
-										 'create' => 'false',
-										 'modify' => 'false',
-										 'delete' => 'false',
-						},
-						'alias' => {
-										 'show'   => 'false',
-										 'modify' => 'false',
-										 'delete' => 'false',
-						},
-	};
+	my $struct;
 
-	return $paramStruct;
+	# list of functions with hashes permissions
+	my @functions =
+	  qw(getRBACPermissionFgHash getRBACPermissionRbacHash getRBACPermissionSystemHash getRBACPermissionAliasHash getRBACPermissionIpdsHash getRBACPermissionIntefaceHash getRBACPermissionIntefaceVirtualHash getRBACPermissionCertificateHash getRBACPermissionActivationCertificateHash getRBACPermissionFarmHash);
+
+	foreach my $funct ( @functions )
+	{
+		# this step is important for strict
+		my $funct_ref = \&$funct;
+		my $perm      = &$funct_ref();
+
+		foreach my $method ( qw(PUT POST GET DELETE) )
+		{
+			foreach my $it ( @{ $perm->{ $method } } )
+			{
+				my $action  = $it->{ action };
+				my $section = $it->{ section };
+
+				$struct->{ $section }->{ $action } = 'false';
+			}
+		}
+	}
+
+	return $struct;
 }
 
 =begin nd

@@ -457,6 +457,10 @@ sub getRBACRoleMenu
 	{
 		$hash = &getRBACPermissionRbacHash( $path );
 	}
+	elsif ( $path =~ /^\/monitoring\/fg/ )
+	{
+		$hash = &getRBACPermissionFgHash( $path );
+	}
 
 	return $hash;
 }
@@ -519,11 +523,6 @@ sub getRBACPermissionFarmHash
 			   'action'  => 'modify',
 			},
 			{
-			   'regex'   => qr{^/farms/($farm_re)/fg$},
-			   'section' => 'farm',
-			   'action'  => 'modify',
-			},
-			{
 			   'regex'   => qr{^/farms/($farm_re)$},
 			   'section' => 'farm',
 			   'action'  => 'modify',
@@ -571,6 +570,11 @@ sub getRBACPermissionFarmHash
 					  'action'  => 'create',
 				   },
 				   {
+					  'regex'   => qr{^/farms/$object_re(?:/services/$object_re)?/fg$},
+					  'section' => 'farm',
+					  'action'  => 'modify',
+				   },
+				   {
 					  'regex'   => qr{^/farms/($farm_re)/zones$},
 					  'section' => 'farm',
 					  'action'  => 'modify',
@@ -586,6 +590,11 @@ sub getRBACPermissionFarmHash
 			   'regex'   => qr{^/farms/($farm_re)/ipds/},
 			   'section' => 'farm',
 			   'action'  => 'action',
+			},
+			{
+			   'regex'   => qr{^/farms/$object_re(?:/services/$object_re)?/fg/$object_re$},
+			   'section' => 'farm',
+			   'action'  => 'modify',
 			},
 			{
 			   'regex'   => qr{^/farms/($farm_re)/certificates/($cert_pem_re)$},
@@ -831,17 +840,24 @@ sub getRBACPermissionAliasHash
 	my $hash = {
 				 'PUT' => [
 						   {
-							 'regex'   => qr{^/alias},
+							 'regex'   => qr{^/aliases},
 							 'section' => 'alias',
 							 'action'  => 'modify',
 						   },
 				 ],
 				 'DELETE' => [
 							  {
-								'regex'   => qr{^/alias},
+								'regex'   => qr{^/aliases},
 								'section' => 'alias',
 								'action'  => 'delete',
 							  },
+				 ],
+				 'GET' => [
+						   {
+							 'regex'   => qr{^/aliases},
+							 'section' => 'alias',
+							 'action'  => 'list',
+						   },
 				 ],
 	};
 
@@ -939,7 +955,7 @@ sub getRBACPermissionSystemHash
 				   {
 					  'regex'   => qr{^/system/notifications/methods/email$},
 					  'section' => 'notification',
-					  'action'  => 'modify-method',
+					  'action'  => 'modify',
 				   },
 				   {
 					  'regex'   => qr{^/system/notifications/methods/email/actions$},
@@ -949,7 +965,7 @@ sub getRBACPermissionSystemHash
 				   {
 					  'regex'   => qr{^/system/notifications/alerts/$object_re$},
 					  'section' => 'notification',
-					  'action'  => 'modify-alert',
+					  'action'  => 'modify',
 				   },
 				   {
 					  'regex'   => qr{^/system/notifications/alerts/$object_re/actions$},
@@ -1101,6 +1117,37 @@ sub getRBACPermissionRbacHash
 					 'action'  => 'show',
 				  },
 		],
+	};
+
+	return $hash;
+}
+
+# fg
+
+sub getRBACPermissionFgHash
+{
+	my $hash = {
+				 'PUT' => [
+						   {
+							 'regex'   => qr{^/monitoring/fg/$object_re$},
+							 'section' => 'farmguardian',
+							 'action'  => 'modify',
+						   },
+				 ],
+				 'DELETE' => [
+							  {
+								'regex'   => qr{^/monitoring/fg/$object_re$},
+								'section' => 'farmguardian',
+								'action'  => 'modify',
+							  },
+				 ],
+				 'POST' => [
+							{
+							  'regex'   => qr{^/monitoring/fg/$object_re$},
+							  'section' => 'farmguardian',
+							  'action'  => 'modify',
+							},
+				 ],
 	};
 
 	return $hash;

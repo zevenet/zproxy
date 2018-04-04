@@ -171,7 +171,7 @@ sub set_rbac_role
 	}
 
 	# Check allowed parameters
-	my $confStruct = &getRBACRoleStruct();
+	my $confStruct = &getRBACRoleParamDefaultStruct();
 	foreach my $key ( keys %{ $json_obj } )
 	{
 		foreach my $param ( keys %{ $json_obj->{ $key } } )
