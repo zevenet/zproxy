@@ -390,6 +390,7 @@ sub stats_throughput
 	require Zevenet::Net::Throughput;
 
 	my $throughput_file = &getTHROUStruct();
+	my $time = &getGlobalConfiguration( 'throughput_period' );
 
 	my $out;
 	foreach my $if ( keys %{ $throughput_file } )
@@ -398,8 +399,8 @@ sub stats_throughput
 		{
 			my $val = $throughput_file->{ $if }->{ $io };
 			my @par = split ( ' ', $val );
-			$out->{ $if }->{ $io }->{ 'packets' } = $par[0];
-			$out->{ $if }->{ $io }->{ 'bytes' }   = $par[1];
+			$out->{ $if }->{ $io }->{ 'packets' } = $par[0]/$time;
+			$out->{ $if }->{ $io }->{ 'bytes' }   = $par[1]/$time;
 		}
 	}
 

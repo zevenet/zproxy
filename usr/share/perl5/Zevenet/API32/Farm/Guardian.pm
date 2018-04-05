@@ -281,7 +281,7 @@ sub delete_farmguardian
 	{
 		# sync with cluster
 		require Zevenet::Cluster;
-		&runZClusterRemoteManager( 'fg', 'stop', $fgname );
+		&runZClusterRemoteManager( 'fg', 'stop', $fg_name );
 
 		my $msg = "$fg_name has been deleted successful.";
 		my $body = {
@@ -349,7 +349,7 @@ sub add_farmguardian_farm
 	my $fg_old = &getFGFarm( $farm, $srv );
 	if ( $fg_old )
 	{
-		my $msg = "The $srv_message has linked another farm guardian";
+		my $msg = "The $srv_message has already linked a farm guardian";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 

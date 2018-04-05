@@ -257,7 +257,7 @@ sub setTinyObj
 	{
 		foreach my $param ( keys %{ $key } )
 		{
-			if ( ref $key->{ $param } )
+			if ( ref $key->{ $param } eq 'ARRAY' )
 			{
 				$key->{ $param } = join ( ' ', @{ $key->{ $param } } );
 			}

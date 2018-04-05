@@ -93,7 +93,7 @@ sub getFGObject
 {
 	my $fg_name      = shift;
 	my $use_template = shift;
-&zlog("sss");
+
 	my $file = ( $use_template eq 'template' ) ? $fg_template : $fg_conf;
 	my $obj = &getTiny( $file )->{ $fg_name };
 
@@ -231,6 +231,7 @@ sub linkFGFarm
 	my $srv     = shift;
 	my $out;
 
+	require Zevenet::Farm::Base;
 	my $farm_tag = ( $srv ) ? "${farm}_$srv" : "$farm";
 
 	$out = &setTinyObj( $fg_conf, $fg_name, 'farms', $farm_tag, 'add' );
@@ -335,9 +336,6 @@ sub getFGPidFarm
 	# if it does not exists, remove the pid file
 	if ( !$run )
 	{
-		&zenlog( " no esta corriendo", "debug2" );
-		my @dd = `ps aux | grep farmguardian`;
-		&zenlog( @dd, "debug2" );
 		$pid = 0;
 		unlink $pidFile;
 	}
@@ -435,7 +433,9 @@ sub runFGFarmStop
 		{
 			&zenlog( "running 'kill 9, $fgpid' stopping FarmGuardian $farm $service",
 					 "debug", "FG" );
+			# kill returns the number of process affected
 			$out = kill 9, $fgpid;
+			$out = ( not $out );
 			if ( $out )
 			{
 				&zenlog( "running 'kill 9, $fgpid' stopping FarmGuardian $farm $service",
@@ -615,7 +615,7 @@ sub getFGRunningFarms
 
 	require Zevenet::Farm::Core;
 	# check all pid
-	foreach my $farm ( @{ &getFGObject( $fg, 'farms' ) } )
+	foreach my $farm ( @{ &getFGObject( $fg )->{ 'farms' } } )
 	{
 		my $srv;
 		if ( $farm =~ /([^_]+)_(.+)/ )
