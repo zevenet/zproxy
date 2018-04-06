@@ -110,4 +110,84 @@ sub setHTTPFarm100Continue    # ($farm_name, $action)
 	return $output;
 }
 
+=begin nd
+Function: getHTTPFarmLogs
+
+	Return the log connection tracking status
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	scalar - The possible values are: 0 on disabled, possitive value on enabled or -1 on failure
+
+=cut
+sub getHTTPFarmLogs    # ($farm_name)
+{
+	my ( $farm_name ) = @_;
+
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+
+	if ( $farm_type eq "http" || $farm_type eq "https" )
+	{
+		open FR, '<', "$configdir\/$farm_filename" or return $output;
+		$output = 0;	# if the sentence is not in config file, it is disabled
+		my @file = <FR>;
+		foreach my $line ( @file )
+		{
+			if ( $line =~ /LogLevel\s+(\d).*/ )
+			{
+				$output = $1;
+				last;
+			}
+		}
+		close FR;
+	}
+
+	return $output;
+}
+
+=begin nd
+Function: setHTTPFarmLogs
+
+	Enable or disable the log connection tracking for a http farm
+
+Parameters:
+	farmname - Farm name
+	action - The available actions are: "true" to enable or "false" to disable
+
+Returns:
+	scalar - The possible values are: 0 on success or -1 on failure
+
+=cut
+sub setHTTPFarmLogs    # ($farm_name, $action)
+{
+	my ( $farm_name, $action ) = @_;
+
+	my $farm_type     = &getFarmType( $farm_name );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $output        = -1;
+
+	my $loglvl = ( $action eq "true" ) ? 5 : 0;
+	if ( $farm_type eq "http" || $farm_type eq "https" )
+	{
+		require Tie::File;
+		tie my @file, 'Tie::File', "$configdir/$farm_filename";
+
+		# check if 100 continue directive exists
+		if ( ! grep( s/^LogLevel\s+(\d).*$/LogLevel\t$loglvl/, @file) )
+		{
+			&zenlog( "Error modifying http logs", "error", "HTTP");
+		}
+		else
+		{
+			$output = 0;
+		}
+		untie @file;
+	}
+	return $output;
+}
+
 1;

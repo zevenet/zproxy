@@ -83,7 +83,7 @@ sub get_http_service_struct
 
 	if ( eval { require Zevenet::Farm::HTTP::Service::Ext; } )
 	{
-		&add_service_cookie_intertion( $farmname, $service_ref );
+		&add_service_cookie_insertion( $farmname, $service_ref );
 	}
 
 	return $service_ref;
@@ -196,6 +196,13 @@ sub get_farm_struct
 			args   => [$farmname],
 		);
 		$output_params->{ ignore_100_continue } = ( $flag ) ? "true" : "false";
+
+		my $flag = &eload(
+			module => 'Zevenet::Farm::HTTP::Ext',
+			func   => 'getHTTPFarmLogs',
+			args   => [$farmname],
+		);
+		$output_params->{ logs } = ( $flag ) ) ? "true" : "false";
 	}
 
 	if ( $type eq "https" )

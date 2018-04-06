@@ -238,12 +238,34 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 			my $msg = "Some errors happened trying to modify the rewritelocation.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-
 		$restart_flag = "true";
 	}
 
 	if ( $eload )
 	{
+		# Enable the log connection tracking
+		if ( exists ( $json_obj->{ logs } ) )
+		{
+			if ( $json_obj->{ logs } !~ /^(?:true|false)$/ )
+			{
+				my $msg = "Invalid logs value.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
+			my $status = &eload(
+				module => 'Zevenet::Farm::HTTP::Ext',
+				func   => 'setHTTPFarmLogs',
+				args   => [$farmname, $json_obj->{ logs }],
+			);
+
+			if ( $status )
+			{
+				my $msg = "Some errors happened trying to modify the log parameter.";
+				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+				$restart_flag = "true";
+		}
+
 		# Enable or disable ignore 100 continue header
 		if ( exists ( $json_obj->{ ignore_100_continue } ) )
 		{
@@ -272,7 +294,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 
 				if ( $status == -1 )
 				{
-					my $msg = "Some errors happened trying to modify the certname.";
+					my $msg = "Some errors happened trying to modify the ignore_100_continue parameter.";
 					&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 				}
 
