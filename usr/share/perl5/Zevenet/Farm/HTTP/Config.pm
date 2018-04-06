@@ -664,7 +664,7 @@ sub getHTTPFarm100Continue    # ($farm_name)
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		open FR, "<$configdir\/$farm_filename" or return $output;
-		$output = 0;	# if the sentence is not in config file, it is disabled
+		$output = 1;	# if the sentence is not in config file, it is enabled
 		my @file = <FR>;
 		foreach my $line ( @file )
 		{
