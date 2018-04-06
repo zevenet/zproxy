@@ -22,7 +22,7 @@
 
 use strict;
 
-use Zevenet::Cluster;
+include 'Zevenet::Cluster';
 
 # disable smartmatch experimental warnings for perl >= 5.18
 no if $] >= 5.018, warnings => "experimental::smartmatch";
@@ -188,7 +188,7 @@ sub modify_cluster
 			system( "scp $filecluster root\@$zcl_conf->{$rhost}->{ip}:$filecluster" );
 
 			# reconfigure local conntrackd
-			require Zevenet::Conntrackd;
+			include 'Zevenet::Conntrackd';
 			&setConntrackdConfig();
 
 			# reconfigure remote conntrackd
@@ -347,7 +347,7 @@ sub set_cluster_actions
 			my $msg = "Status parameter not recognized";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-	
+
 		my $message = "Cluster status changed to $json_obj->{status} successfully";
 		my $body = {
 					 description => $desc,
@@ -443,7 +443,7 @@ sub disable_cluster
 		);
 		unlink $cl_file;
 	}
-	
+
 	my $message = "Cluster disabled successfully";
 	my $body = {
 				 description => $desc,
@@ -550,7 +550,7 @@ sub enable_cluster
 		}
 
 		&setZClusterConfig( $zcl_conf ) or die;
-		
+
 		# Add cluster exception not to block traffic from the other node of cluster
 		&setZClusterIptablesException( "insert" );
 
@@ -594,7 +594,7 @@ sub enable_cluster
 			$zcl_conf->{$remote_hostname}->{ip}
 		);
 		&zenlog( "rc:$? $cl_output" );
-		
+
 	};
 	if ( $@ )
 	{

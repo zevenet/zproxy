@@ -25,6 +25,9 @@ use Zevenet::Config;
 use Zevenet::Farm::Core;
 use Zevenet::Farm::Base;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 #GET /farms
 sub farms    # ()
 {
@@ -202,12 +205,13 @@ sub farms_name    # ( $farmname )
 		require Zevenet::API32::Farm::Get::Datalink;
 		&farms_name_datalink( $farmname );
 	}
-	if ( $type eq 'gslb' )
+	if ( $type eq 'gslb' && $eload )
 	{
-		if ( eval { require Zevenet::API32::Farm::Get::GSLB; } )
-		{
-			&farms_name_gslb( $farmname );
-		}
+		&eload(
+			module => 'Zevenet::API32::Farm::Get::GSLB',
+			func   => 'farms_name_gslb',
+			args   => [$farmname],
+		) if ( $eload );
 	}
 }
 

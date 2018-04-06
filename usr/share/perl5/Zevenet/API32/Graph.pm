@@ -25,6 +25,9 @@ use strict;
 
 use Zevenet::RRD;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 # Supported graphs periods
 my $graph_period = {
 					 'daily'   => 'd',
@@ -251,9 +254,13 @@ sub get_all_farm_graphs    #()
 {
 	my @farms = grep ( s/-farm$//, &getGraphs2Show( "Farm" ) );
 
-	if ( eval { require Zevenet::RBAC::Group::Core; } )
+	if ( $eload )
 	{
-		@farms = @{ &getRBACResourcesFromList( 'farms', \@farms ) };
+		@farms = &eload(
+						 module => 'Zevenet::RBAC::Group::Core',
+						 func   => 'getRBACResourcesFromList',
+						 args   => ['farms', \@farms]
+		);
 	}
 
 	my $body = {

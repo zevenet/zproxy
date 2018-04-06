@@ -25,6 +25,12 @@ use strict;
 
 use Zevenet::System;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
+
 # GET /stats/farms/modules
 #Get a farm status resume
 sub module_stats_status
@@ -137,7 +143,7 @@ sub module_stats    # ()
 	require Zevenet::API32::Stats;
 	my $valid_module;
 
-	if ( $module eq 'gslb' && eval { require Zevenet::Farm::GSLB::Stats; } )
+	if ( $module eq 'gslb' && $eload )
 	{
 		$valid_module = 1;
 	}
@@ -295,8 +301,6 @@ sub stats_network_interfaces
 	require Zevenet::Stats;
 	require Zevenet::Net::Interface;
 
-	my $EE = eval { require Zevenet::Net::Bonding; } ? 1 : undef;
-
 	my $desc       = "Interfaces info";
 	my @interfaces = &getNetworkStats( 'hash' );
 	my @nic        = &getInterfaceTypeList( 'nic' );
@@ -304,7 +308,7 @@ sub stats_network_interfaces
 	my @nicList;
 	my @bondList;
 	my @restIfaces;
-	@bond = &getInterfaceTypeList( 'bond' ) if $EE;
+	@bond = &getInterfaceTypeList( 'bond' ) if $eload;
 
 	require Zevenet::Alias;
 	my $alias = &getAlias( 'interface' );
@@ -333,11 +337,12 @@ sub stats_network_interfaces
 			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
 			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
 
+
 			push @nicList, $iface;
 		}
 
 		# Fill bond interface list
-		elsif ( $type eq 'bond' && $EE )
+		elsif ( $type eq 'bond' && $eload )
 		{
 			foreach my $ifaceBond ( @bond )
 			{
@@ -354,7 +359,11 @@ sub stats_network_interfaces
 			$iface->{ status }  = $extrainfo->{ status };
 			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
 			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
-			$iface->{ slaves }  = &getBondSlaves( $iface->{ interface } );
+			$iface->{ slaves } = &eload(
+										 module => 'Zevenet::Net::Bonding',
+										 func   => 'getBondSlaves',
+										 args   => [$iface->{ interface }],
+			);
 
 			push @bondList, $iface;
 		}
@@ -365,7 +374,7 @@ sub stats_network_interfaces
 	}
 
 	my $params->{ nic } = \@nicList;
-	$params->{ bond } = \@bondList if $EE;
+	$params->{ bond } = \@bondList if $eload;
 
 	my $body = {
 				 description => $desc,

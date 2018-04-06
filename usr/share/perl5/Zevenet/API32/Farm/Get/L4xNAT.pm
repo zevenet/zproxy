@@ -25,6 +25,9 @@ use Zevenet::FarmGuardian;
 use Zevenet::Farm::Config;
 use Zevenet::Farm::L4xNAT::Backend;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 # GET /farms/<farmname> Request info of a l4xnat Farm
 sub farms_name_l4 # ( $farmname )
 {
@@ -43,7 +46,7 @@ sub farms_name_l4 # ( $farmname )
 
 	my @ttl = &getFarmMaxClientTime( $farmname, "" );
 	my $timetolimit = $ttl[0] + 0;
-	
+
 	my $status = &getFarmVipStatus( $farmname );
 
 	my $persistence = &getFarmPersistence( $farmname );
@@ -58,7 +61,7 @@ sub farms_name_l4 # ( $farmname )
 			   persistence => $persistence,
 			   protocol    => &getFarmProto( $farmname ),
 			   ttl         => $timetolimit,
-			   farmguardian	=> &getFGFarm( $farmname ),
+			   farmguardian => &getFGFarm( $farmname ),
 			   listener    => 'l4xnat',
 	};
 
@@ -71,10 +74,11 @@ sub farms_name_l4 # ( $farmname )
 				 backends    => \@out_b,
 	};
 
-	if ( eval{ require Zevenet::IPDS; } )
-	{
-		$body->{ ipds } = &getIPDSfarmsRules( $farmname );
-	}
+	$body->{ ipds } = &eload(
+			module => 'Zevenet::IPDS::Core',
+			func   => 'getIPDSfarmsRules',
+			args   => [$farmname],
+	) if ( $eload );
 
 	&httpResponse({ code => 200, body => $body });
 }

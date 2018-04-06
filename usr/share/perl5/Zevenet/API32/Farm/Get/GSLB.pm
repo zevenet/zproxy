@@ -21,10 +21,10 @@
 ###############################################################################
 
 use strict;
-use Zevenet::Farm::GSLB::Service;
-use Zevenet::Farm::GSLB::Backend;
-use Zevenet::Farm::GSLB::FarmGuardian;
-use Zevenet::Farm::GSLB::Zone;
+include 'Zevenet::Farm::GSLB::Service';
+include 'Zevenet::Farm::GSLB::Backend';
+include 'Zevenet::Farm::GSLB::FarmGuardian';
+include 'Zevenet::Farm::GSLB::Zone';
 
 #	/farms/<GSLBfarm>
 sub farms_name_gslb # ( $farmname )
@@ -106,10 +106,9 @@ sub farms_name_gslb # ( $farmname )
 				 zones       => \@out_z,
 	};
 
-	if ( eval{ require Zevenet::IPDS; } )
-	{
-		$body->{ ipds } = &getIPDSfarmsRules( $farmname );
-	}
+	include 'Zevenet::IPDS';
+
+	$body->{ ipds } = &getIPDSfarmsRules( $farmname );
 
 	&httpResponse({ code => 200, body => $body });
 }

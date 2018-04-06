@@ -23,6 +23,9 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 # POST /addvini/<interface> Create a new virtual network interface
 sub new_vini    # ( $json_obj )
 {
@@ -140,9 +143,13 @@ sub new_vini    # ( $json_obj )
 		}
 
 		&setInterfaceConfig( $if_ref ) or die;
-		if ( eval { require Zevenet::RBAC::Group::Config; } )
+		if ( $eload )
 		{
-			&addRBACUserResource( $if_ref->{ name }, 'interfaces' );
+			&eload(
+					module => 'Zevenet::RBAC::Group::Config',
+					func   => 'addRBACUserResource',
+					args   => [$if_ref->{ name }, 'interfaces'],
+			);
 		}
 	};
 
@@ -152,10 +159,11 @@ sub new_vini    # ( $json_obj )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( eval { require Zevenet::Cluster; } )
-	{
-		&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
-	}
+	&eload(
+			module => 'Zevenet::Cluster',
+			func   => 'runZClusterRemoteManager',
+			args   => ['interface', 'start', $if_ref->{ name }],
+	) if ( $eload );
 
 	my $body = {
 				 description => $desc,
@@ -224,11 +232,17 @@ sub delete_interface_virtual    # ( $virtual )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( eval { require Zevenet::Cluster; } )
-	{
-		&runZClusterRemoteManager( 'interface', 'stop',   $if_ref->{ name } );
-		&runZClusterRemoteManager( 'interface', 'delete', $if_ref->{ name } );
-	}
+	&eload(
+			module => 'Zevenet::Cluster',
+			func   => 'runZClusterRemoteManager',
+			args   => ['interface', 'stop', $if_ref->{ name }],
+	) if ( $eload );
+
+	&eload(
+			module => 'Zevenet::Cluster',
+			func   => 'runZClusterRemoteManager',
+			args   => ['interface', 'delete', $if_ref->{ name }],
+	) if ( $eload );
 
 	my $message = "The virtual interface $virtual has been deleted.";
 	my $body = {
@@ -275,9 +289,13 @@ sub get_virtual_list    # ()
 		  };
 	}
 
-	if ( eval { require Zevenet::RBAC::Group::Core; } )
+	if ( $eload )
 	{
-		@output_list = @{ &getRBACUserSet( 'interfaces', \@output_list ) };
+		@output_list = &eload(
+							   module => 'Zevenet::RBAC::Group::Core',
+							   func   => 'getRBACUserSet',
+							   args   => ['interfaces', \@output_list],
+		);
 	}
 
 	my $body = {
@@ -400,10 +418,11 @@ sub actions_interface_virtual    # ( $json_obj, $virtual )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		if ( eval { require Zevenet::Cluster; } )
-		{
-			&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
-		}
+		&eload(
+				module => 'Zevenet::Cluster',
+				func   => 'runZClusterRemoteManager',
+				args   => ['interface', 'start', $if_ref->{ name }],
+		) if ( $eload );
 	}
 	elsif ( $json_obj->{ action } eq "down" )
 	{
@@ -417,10 +436,11 @@ sub actions_interface_virtual    # ( $json_obj, $virtual )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		if ( eval { require Zevenet::Cluster; } )
-		{
-			&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
-		}
+		&eload(
+			module => 'Zevenet::Cluster',
+			func   => 'runZClusterRemoteManager',
+			args   => ['interface', 'stop', $if_ref->{ name }],
+		) if ( $eload );
 	}
 	else
 	{
@@ -523,10 +543,11 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 	my $state = $if_ref->{ 'status' };
 	&downIf( $if_ref ) if $state eq 'up';
 
-	if ( eval { require Zevenet::Cluster; } )
-	{
-		&runZClusterRemoteManager( 'interface', 'stop', $if_ref->{ name } );
-	}
+	&eload(
+		module => 'Zevenet::Cluster',
+		func   => 'runZClusterRemoteManager',
+		args   => ['interface', 'stop', $if_ref->{ name }],
+	) if ( $eload );
 
 	eval {
 		# Set the new params
@@ -557,10 +578,11 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( eval { require Zevenet::Cluster; } )
-	{
-		&runZClusterRemoteManager( 'interface', 'start', $if_ref->{ name } );
-	}
+	&eload(
+		module => 'Zevenet::Cluster',
+		func   => 'runZClusterRemoteManager',
+		args   => ['interface', 'start', $if_ref->{ name }],
+	) if ( $eload );
 
 	my $body = {
 				 description => $desc,

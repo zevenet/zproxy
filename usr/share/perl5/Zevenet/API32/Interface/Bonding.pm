@@ -34,7 +34,7 @@ sub new_bond    # ( $json_obj )
 {
 	my $json_obj = shift;
 
-	require Zevenet::Net::Bonding;
+	include 'Zevenet::Net::Bonding';
 	require Zevenet::Net::Validate;
 	require Zevenet::Net::Interface;
 	require Zevenet::System;
@@ -136,7 +136,7 @@ sub new_bond_slave    # ( $json_obj, $bond )
 	my $json_obj = shift;
 	my $bond     = shift;
 
-	require Zevenet::Net::Bonding;
+	include 'Zevenet::Net::Bonding';
 	require Zevenet::Net::Interface;
 
 	my $desc = "Add a slave to a bond interface";
@@ -267,7 +267,7 @@ sub delete_bond    # ( $bond )
 	my $bond = shift;
 
 	require Zevenet::Net::Core;
-	require Zevenet::Net::Bonding;
+	include 'Zevenet::Net::Bonding';
 
 	my $desc  = "Remove bonding interface";
 	my $bonds = &getBondConfig();
@@ -355,7 +355,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 	my $bond  = shift;
 	my $slave = shift;
 
-	require Zevenet::Net::Bonding;
+	include 'Zevenet::Net::Bonding';
 
 	my $desc  = "Remove bonding slave interface";
 	my $bonds = &getBondConfig();
@@ -397,7 +397,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 
 sub get_bond_list    # ()
 {
-	require Zevenet::Net::Bonding;
+	include 'Zevenet::Net::Bonding';
 	require Zevenet::Net::Interface;
 
 	my @output_list;
@@ -407,11 +407,11 @@ sub get_bond_list    # ()
 
 	# get cluster interface
 	my $cluster_if;
-	if ( eval { require Zevenet::Cluster; } )
-	{
-		my $zcl_conf = &getZClusterConfig();
-		$cluster_if = $zcl_conf->{ _ }->{ interface };
-	}
+
+	include 'Zevenet::Cluster';
+
+	my $zcl_conf = &getZClusterConfig();
+	$cluster_if = $zcl_conf->{ _ }->{ interface };
 
 	require Zevenet::Alias;
 	my $alias = &getAlias( 'interface' );
@@ -465,7 +465,7 @@ sub get_bond    # ()
 {
 	my $bond = shift;
 
-	require Zevenet::Net::Bonding;
+	include 'Zevenet::Net::Bonding';
 	require Zevenet::Net::Interface;
 
 	my $interface;    # output
@@ -720,6 +720,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	# check the gateway is in network
 	if ( $new_if->{ gateway } )
 	{
+		require Zevenet::Net::Validate;
 		unless (
 			 &getNetValidate( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
 		{

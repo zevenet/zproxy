@@ -25,7 +25,7 @@ sub modify_service_cookie_insertion
 {
 	my ( $farmname, $service, $json_obj ) = @_;
 
-	require Zevenet::API32::Farm::HTTP::Service::Ext;
+	include 'Zevenet::Farm::HTTP::Service::Ext';
 
 	my $ci = &getHTTPServiceCookieIns( $farmname, $service );
 
@@ -41,38 +41,37 @@ sub modify_service_cookie_insertion
 		}
 		else
 		{
-			my $msg = "Invalid cookieinsert value.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return "Invalid cookieinsert value.";
 		}
 	}
 
 	if ( exists $json_obj->{ cookiename } )
 	{
-		ci->{ name } = $json_obj->{ cookiename };
+		$ci->{ name } = $json_obj->{ cookiename };
 	}
 
 	if ( exists $json_obj->{ cookiedomain } )
 	{
-		ci->{ domain } = $json_obj->{ cookiedomain };
+		$ci->{ domain } = $json_obj->{ cookiedomain };
 	}
 
 	if ( exists $json_obj->{ cookiepath } )
 	{
-		ci->{ path } = $json_obj->{ cookiepath };
+		$ci->{ path } = $json_obj->{ cookiepath };
 	}
 
 	if ( exists $json_obj->{ cookiettl } )
 	{
 		unless ( $json_obj->{ cookiettl } =~ /^[0-9]+$/ )
 		{
-			my $msg = "Invalid cookiettl value, must be an integer number.";
-			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			return "Invalid cookiettl value, must be an integer number.";
 		}
 
-		ci->{ ttl } = $json_obj->{ cookiettl };
+		$ci->{ ttl } = $json_obj->{ cookiettl };
 	}
 
 	&setHTTPServiceCookieIns( $farmname, $service, $ci );
+	return;
 }
 
 1;

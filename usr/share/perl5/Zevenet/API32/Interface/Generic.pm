@@ -23,6 +23,9 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 # GET /interfaces Get params of the interfaces
 sub get_interfaces    # ()
 {
@@ -37,19 +40,29 @@ sub get_interfaces    # ()
 
 	# get cluster interface
 	my $cluster_if;
-	if ( eval { require Zevenet::Cluster; } )
+	if ( $eload )
 	{
-		my $zcl_conf = &getZClusterConfig();
-		$cluster_if = $zcl_conf->{ _ }->{ interface };
+		my $zcl_conf = &eload(
+			module => 'Zevenet::Cluster',
+			func   => 'getZClusterConfig',
+		);
+
+		if ( exists $zcl_conf->{ _ }->{ interface } ) {
+			$cluster_if = $zcl_conf->{ _ }->{ interface };
+		}
 	}
 
 	my $rbac_mod;
 	my $rbac_if_list = [];
 	my $user         = &getUser();
-	if ( eval { require Zevenet::RBAC::Group::Core; } && ( $user ne 'root' ) )
+	if ( $eload && ( $user ne 'root' ) )
 	{
 		$rbac_mod = 1;
-		$rbac_if_list = &getRBACUsersResources( $user, 'interfaces' );
+		$rbac_if_list = &eload(
+								module => 'Zevenet::RBAC::Group::Core',
+								func   => 'getRBACUsersResources',
+								args   => [$user, 'interfaces'],
+		);
 	}
 
 	# to include 'has_vlan' to nics
@@ -99,11 +112,15 @@ sub get_interfaces    # ()
 
 		if ( $if_ref->{ type } eq 'nic' )
 		{
-			if ( eval { require Zevenet::Net::Bonding; } )
-			{
-				$if_conf->{ is_slave } =
-				  ( grep { $$if_ref{ name } eq $_ } &getAllBondsSlaves ) ? 'true' : 'false';
-			}
+			my @bond_slaves = ();
+
+			@bond_slaves = &eload(
+					module => 'Zevenet::Net::Bonding',
+					func   => 'getAllBondsSlaves',
+			) if ( $eload );
+
+			$if_conf->{ is_slave } =
+			  ( grep { $$if_ref{ name } eq $_ } @bond_slaves ) ? 'true' : 'false';
 
 			# include 'has_vlan'
 			for my $vlan_ref ( @vlans )

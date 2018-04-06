@@ -23,7 +23,7 @@
 
 use strict;
 
-use Zevenet::Notify;
+include 'Zevenet::Notify';
 
 # GET /system/notifications/methods/METHOD
 sub get_notif_methods
@@ -173,7 +173,7 @@ sub set_notif_alert_actions
 	}
 
 	my $error = &setNotifAlertsAction( $alert, $json_obj->{ 'action' } );
-	if ( $error == -2 )
+	if ( $error eq '-2' )
 	{
 		my $msg = "$alert is already $json_obj->{action}.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );

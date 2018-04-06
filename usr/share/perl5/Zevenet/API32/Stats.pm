@@ -25,6 +25,9 @@ use strict;
 
 use Zevenet::System;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 # Get all farm stats
 sub getAllFarmStats
 {
@@ -83,6 +86,7 @@ sub farm_stats                                                # ( $farmname )
 {
 	my $farmname = shift;
 	if ( $farmname eq 'modules' ) {return;}
+	if ( $farmname eq 'total' ) {return;}
 
 	require Zevenet::Farm::Core;
 
@@ -123,11 +127,15 @@ sub farm_stats                                                # ( $farmname )
 		&httpResponse( { code => 200, body => $body } );
 	}
 
-	if ( $type eq "gslb" )
+	if ( $type eq "gslb" && $eload )
 	{
-		require Zevenet::Farm::GSLB::Stats;
+		my $gslb_stats = &eload(
+								 module => 'Zevenet::Farm::GSLB::Stats',
+								 func   => 'getGSLBFarmBackendsStats',
+								 args   => [$farmname],
+								 decode => 'true'
+		);
 
-		my $gslb_stats = &getGSLBFarmBackendsStats( $farmname );
 		my $body = {
 					 description => $desc,
 					 backends    => $gslb_stats->{ 'backend' },

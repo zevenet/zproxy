@@ -24,6 +24,12 @@
 use strict;
 use Zevenet::Farm::Core;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
+
 # POST
 sub new_farm_service    # ( $json_obj, $farmname )
 {
@@ -35,7 +41,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	my $desc = "New service";
 
 	# Check if the farm exists
-	if ( ! &getFarmExists( $farmname ) )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -54,7 +60,11 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	if ( $type eq "gslb" )
 	{
 		require Zevenet::ELoad;
-		&eload( module => 'Zevenet::API32::Farm::GSLB', func => 'new_gslb_farm_service', args => [ $json_obj, $farmname ] );
+		&eload(
+				module => 'Zevenet::API32::Farm::GSLB',
+				func   => 'new_gslb_farm_service',
+				args   => [$json_obj, $farmname]
+		);
 	}
 	elsif ( $type !~ /^https?$/ )
 	{
@@ -63,6 +73,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	}
 
 	# HTTP profile
+	require Zevenet::API32::Farm::Get::HTTP;
 	require Zevenet::Farm::Base;
 	require Zevenet::Farm::HTTP::Service;
 
@@ -134,7 +145,7 @@ sub farm_services
 	my $service;
 
 	# Check if the farm exists
-	if ( ! &getFarmExists( $farmname ) )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -168,7 +179,7 @@ sub farm_services
 
 	my $body = {
 				 description => $desc,
-				 params    => $service,
+				 params      => $service,
 	};
 
 	&httpResponse( { code => 200, body => $body } );
@@ -188,7 +199,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	my $output_params;
 
 	# validate FARM NAME
-	if ( ! &getFarmExists( $farmname ) )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -217,7 +228,11 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	if ( $type eq "gslb" )
 	{
 		require Zevenet::ELoad;
-		&eload( module => 'Zevenet::API32::Farm::GSLB', func => 'modify_gslb_service', args => [ $json_obj, $farmname, $service ] );
+		&eload(
+				module => 'Zevenet::API32::Farm::GSLB',
+				func   => 'modify_gslb_service',
+				args   => [$json_obj, $farmname, $service]
+		);
 	}
 	elsif ( $type !~ /^https?$/ )
 	{
@@ -337,11 +352,21 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	}
 
 	# Cookie insertion
-	if ( scalar grep( /^cookie/, keys %$json_obj ) )
+	if ( scalar grep ( /^cookie/, keys %{ $json_obj } ) )
 	{
-		if ( eval { require Zevenet::API32::Farm::Service::Ext; } )
+		if ( $eload )
 		{
-			&modify_service_cookie_insertion( $farmname, $service, $json_obj );
+			my $msg = &eload(
+							  module   => 'Zevenet::API32::Farm::Service::Ext',
+							  func     => 'modify_service_cookie_insertion',
+							  args     => [$farmname, $service, $json_obj],
+							  just_ret => 1,
+			);
+
+			if ( defined $msg && length $msg )
+			{
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
 		}
 		else
 		{
@@ -352,7 +377,8 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 
 	if ( exists $json_obj->{ httpsb } )
 	{
-		if ( $json_obj->{ httpsb } ne &getFarmVS( $farmname, $service, 'httpsbackend' ) )
+		if (
+			 $json_obj->{ httpsb } ne &getFarmVS( $farmname, $service, 'httpsbackend' ) )
 		{
 			if ( $json_obj->{ httpsb } eq "true" )
 			{
@@ -405,7 +431,7 @@ sub delete_service    # ( $farmname, $service )
 	my $desc = "Delete service";
 
 	# Check if the farm exists
-	if ( ! &getFarmExists( $farmname ) )
+	if ( !&getFarmExists( $farmname ) )
 	{
 		my $msg = "The farmname $farmname does not exists.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -414,10 +440,13 @@ sub delete_service    # ( $farmname, $service )
 	# check the farm type is supported
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq "gslb" )
+	if ( $type eq "gslb" && $eload )
 	{
-		require Zevenet::ELoad;
-		&eload( module => 'Zevenet::API32::Farm::GSLB', func => 'delete_gslb_service', args => [ $farmname, $service ] );
+		&eload(
+				module => 'Zevenet::API32::Farm::GSLB',
+				func   => 'delete_gslb_service',
+				args   => [$farmname, $service]
+		);
 	}
 	elsif ( $type !~ /^https?$/ )
 	{

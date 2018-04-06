@@ -25,6 +25,9 @@ use Zevenet::Farm::Core;
 use Zevenet::Farm::Base;
 use Zevenet::Farm::Action;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 # DELETE /farms/FARMNAME
 sub delete_farm # ( $farmname )
 {
@@ -42,10 +45,11 @@ sub delete_farm # ( $farmname )
 	{
 		&runFarmStop( $farmname, "true" );
 
-		if ( eval { require Zevenet::Cluster; } )
-		{
-			&runZClusterRemoteManager( 'farm', 'stop', $farmname );
-		}
+		&eload(
+			module => 'Zevenet::Cluster',
+			func   => 'runZClusterRemoteManager',
+			args   => ['farm', 'stop', $farmname],
+		) if ( $eload );
 	}
 
 	my $error = &runFarmDelete( $farmname );
@@ -58,10 +62,11 @@ sub delete_farm # ( $farmname )
 
 	&zenlog( "ZAPI success, the farm $farmname has been deleted." );
 
-	if ( eval { require Zevenet::Cluster; } )
-	{
-		&runZClusterRemoteManager( 'farm', 'delete', $farmname );
-	}
+	&eload(
+		module => 'Zevenet::Cluster',
+		func   => 'runZClusterRemoteManager',
+		args   => ['farm', 'delete', $farmname],
+	) if ( $eload );
 
 	my $msg = "The Farm $farmname has been deleted.";
 	my $body = {
