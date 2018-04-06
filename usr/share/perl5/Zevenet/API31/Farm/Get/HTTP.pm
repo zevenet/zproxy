@@ -302,7 +302,7 @@ sub getZapiHTTPServiceStruct
 
 	if ( eval { require Zevenet::Farm::HTTP::Service::Ext; } )
 	{
-		&add_service_cookie_intertion( $farmname, $service_ref );
+		&add_service_cookie_insertion( $farmname, $service_ref );
 	}
 
 	return $service_ref;
