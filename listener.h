@@ -9,11 +9,16 @@
 #include "event/event_manager.h"
 #include "StreamManager.h"
 
-class Listener : public EventManager {
+class Listener : public EpollManager {
+  std::thread worker_thread;
   bool is_running;
   Connection listener_connection;
   std::vector<StreamManager *> stream_manager_set;
   static void doWork(Listener &);
+
+  StreamManager *
+  getManager(int fd);
+
  public:
   Listener();
   ~Listener();

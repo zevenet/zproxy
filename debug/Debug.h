@@ -8,6 +8,7 @@
 #include <mutex>
 #include <string>
 #include <type_traits>
+#include <thread>
 
 #define DEBUG_LEVEl 10
 #define LOGFACILITY -1
@@ -56,7 +57,7 @@ class Debug {
       return;
     }
     std::lock_guard<std::mutex> locker(log_lock);
-    std::cout << str << std::endl;
+    std::cout << std::this_thread::get_id() << " :" << str << std::endl;
   }
 
   static void logmsg(const int priority, const char *fmt, ...) {

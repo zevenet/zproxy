@@ -9,6 +9,6 @@ int main() {
   Listener listener;
   listener.init("0.0.0.0", 7777);
   listener.start();
-  getchar();
+//  getchar();
   return 0;
 }

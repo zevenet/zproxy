@@ -6,18 +6,25 @@
 #define NEW_ZHTTP_WORKER_H
 
 #include <map>
+#include <deque>
 #include "http/http_stream.h"
 #include "event/event_manager.h"
 
-class StreamManager : public EventManager {
+class StreamManager : public EpollManager {
+  int thread_id;
+  std::thread worker;
   bool is_running;
-  std::map<int, HttpStream *> streams;
+
+  std::map<int, HttpStream *> streams_set;
   void HandleEvent(int fd, EVENT_TYPE event_type) override;
   static void doWork(StreamManager &);
  public:
   StreamManager();
   ~StreamManager();
-  void start(int thread_id = 0);
+  void addStream(int fd);
+
+  int getId();
+  void start(int thread_id_ = 0);
   void stop();
 };
 

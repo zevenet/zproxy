@@ -7,24 +7,28 @@
 
 #include <sys/epoll.h>
 #include <mutex>
-#include <map>
-
-#define EPOLL_TIMOUT 500
-#define MAX_EPOLL_EVENT 100000
-
 #include "../connection/connection.h"
 
+#include <map>
+#define EPOLL_TIMOUT -1
+
+#define MAX_EPOLL_EVENT 100000
+
+#define READ_MASK (EPOLLIN | EPOLLET | EPOLLRDHUP)
+#define  READ_ONESHOT_MASK  (EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP)
+#define  WRITE_MASK  (EPOLLOUT | EPOLLET | EPOLLONESHOT | EPOLLRDHUP) //is always one shot
+#define  ACCEPT_MASK (EPOLLIN | EPOLLET)
+
 enum EVENT_TYPE {
-  READ = EPOLLIN | EPOLLET | EPOLLRDHUP,
-  READ_ONESHOT = EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP,
-  WRITE = EPOLLOUT | EPOLLET | EPOLLONESHOT | EPOLLRDHUP, //is always one shot
+  READ,
+  READ_ONESHOT,
+  WRITE, //is always one shot
   CONNECT,
   DISCONNECT,
-  ACCEPT = EPOLLIN | EPOLLET,
+  ACCEPT,
 };
 
-class EventManager {
-
+class EpollManager {
   std::mutex epoll_mutex;
   int epoll_fd;
   int accept_fd;
@@ -37,13 +41,13 @@ class EventManager {
   void onConnectEvent(int fd);
 
  public:
-  EventManager();
-  virtual ~EventManager();
+  EpollManager();
+  virtual ~EpollManager();
   bool handleAccept(int listener_fd);
   bool addFd(int fd, EVENT_TYPE event_type);
   bool deleteFd(int fd);
   bool updateFd(int fd, EVENT_TYPE event_type);
-
+  inline unsigned int getMask(EVENT_TYPE event_type);
 };
 
 #endif //NEW_ZHTTP_EPOLL_H

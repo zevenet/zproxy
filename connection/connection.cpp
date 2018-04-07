@@ -20,7 +20,7 @@ int Connection::read() {
   ssize_t count = -1;
   size_t buffer_size = 0;
 
-  while (!done && is_connected) {
+  while (!done) {
     count = ::recv(socket_fd, buffer + buffer_size, MAX_DATA_SIZE,
                    MSG_NOSIGNAL);
     if (count == -1) {
@@ -79,8 +79,34 @@ int Connection::writeTo(int fd) {
   return static_cast<int> (sent);
 }
 int Connection::write(const char *data, size_t buffer_size) {
-  return 0;
+  bool done = false;
+  size_t sent = 0;
+  ssize_t count;
+
+  while (!done) {
+    count =
+        ::send(socket_fd, data + sent,
+               buffer_size - sent,
+               MSG_NOSIGNAL);
+    if (count < 0) {
+      if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
+          errno != ECONNRESET*/) {  // TODO:: What to do if connection closed
+        std::string error = "write() failed  ";
+        error += std::strerror(errno);
+        Debug::Log(error, LOG_NOTICE);
+      }
+      done = true;
+      break;
+    } else if (count == 0) {
+      done = true;
+      break;
+    } else {
+      sent += static_cast<size_t>(count);
+    }
+  }
+  return static_cast<int> (sent);
 }
+
 void Connection::closeConnection() {
   is_connected = false;
   ::shutdown(socket_fd, 2);
@@ -149,6 +175,7 @@ int Connection::doAccept() {
   }
   if (static_cast<sockaddr_in *>(&clnt_addr)->sin_family == AF_INET ||
       static_cast<sockaddr_in *>(&clnt_addr)->sin_family == AF_INET6) {
+
     return new_fd;
   } else {
     ::close(new_fd);
