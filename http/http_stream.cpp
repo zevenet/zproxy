@@ -3,6 +3,7 @@
 //
 
 #include "http_stream.h"
-Connection &HttpStream::getConnection(int fd) {
-  return fd == client_connection.getFileDescriptor() ? client_connection : backend_connection;
+Connection *HttpStream::getConnection(int fd) {
+  return fd == client_connection.getFileDescriptor() ? &client_connection
+                                                     : &backend_connection;
 }

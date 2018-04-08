@@ -4,16 +4,21 @@
 
 #include "connection.h"
 #include "../debug/Debug.h"
-#include "Network.h"
+#include "../util/Network.h"
 
 Connection::Connection() : string_buffer(), socket_fd(-1), is_connected(false) {
-  address.ai_addr = new sockaddr();
+  //address.ai_addr = new sockaddr();
 }
 Connection::~Connection() {
   is_connected = false;
   this->closeConnection();
-  delete address.ai_addr;
+  if (address != nullptr) {
+    if (address->ai_addr != nullptr)
+      delete address->ai_addr;
+  }
+  delete address;
 }
+
 int Connection::read() {
   char buffer[MAX_DATA_SIZE];
   bool should_close = false, done = false;
@@ -173,8 +178,8 @@ int Connection::doAccept() {
     // break;
     return -1;
   }
-  if (static_cast<sockaddr_in *>(&clnt_addr)->sin_family == AF_INET ||
-      static_cast<sockaddr_in *>(&clnt_addr)->sin_family == AF_INET6) {
+  if ((&clnt_addr)->sin_family == AF_INET ||
+      (&clnt_addr)->sin_family == AF_INET6) {
 
     return new_fd;
   } else {
@@ -185,13 +190,13 @@ int Connection::doAccept() {
   return -1;
 }
 bool Connection::listen(std::string &address_str, int port) {
-  auto addr = Network::getAddress(address_str, port);
-  if (addr != nullptr) return listen(*addr);
+  this->address = Network::getAddress(address_str, port);
+  if (this->address != nullptr) return listen(*this->address);
   return false;
 }
 
 bool Connection::listen(addrinfo &address) {
-  this->address = address;
+  this->address = &address;
   /* prepare the socket */
   if ((socket_fd = socket(
       address.ai_family == AF_INET ? PF_INET : PF_INET6,

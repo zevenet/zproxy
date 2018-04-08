@@ -7,10 +7,11 @@
 #include <iostream>
 #include <mutex>
 #include <string>
-#include <type_traits>
 #include <thread>
+#include <type_traits>
+#include "../util/utils.h"
 
-#define DEBUG_LEVEl 10
+#define DEBUG_LEVEl 9
 #define LOGFACILITY -1
 #define MAXBUF 4096
 
@@ -57,7 +58,8 @@ class Debug {
       return;
     }
     std::lock_guard<std::mutex> locker(log_lock);
-    std::cout << std::this_thread::get_id() << " :" << str << std::endl;
+    std::cout << ThreadHelper::getThreadName(pthread_self()) << " :" << str
+              << std::endl;
   }
 
   static void logmsg(const int priority, const char *fmt, ...) {

@@ -5,6 +5,7 @@
 
 #include <pthread.h>
 #include <string>
+#include <thread>
 
 class ThreadHelper {
  public:
@@ -20,6 +21,13 @@ class ThreadHelper {
   static bool setThreadName(std::string name, pthread_t native_handle) {
     int rc = pthread_setname_np(native_handle, name.c_str());
     return rc == 0;
+  }
+
+  inline static std::string getThreadName(pthread_t native_handle) {
+    int rc;
+    char thread_name[100];
+    rc = pthread_getname_np(native_handle, thread_name, 100);
+    return rc != 0 ? "no_name" : std::string(thread_name);
   }
 
 };

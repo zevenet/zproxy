@@ -6,7 +6,7 @@
 #define NEW_ZHTTP_CONNECTION_H
 
 #include <netdb.h>
-#include "../string_buffer.h"
+#include "../util/string_buffer.h"
 #include <unistd.h>
 
 #define MAX_DATA_SIZE  65000
@@ -14,10 +14,10 @@
 class Connection {
  protected:
   bool is_connected;
-  StringBuffer string_buffer;
  public:
   int socket_fd;
-  addrinfo address;
+  addrinfo *address;
+  StringBuffer string_buffer;
 
   int getFileDescriptor() const;
   void setFileDescriptor(int fd);

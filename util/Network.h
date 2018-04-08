@@ -46,10 +46,14 @@ class Network {
 
     if (getHost(address.c_str(), addr, PF_UNSPEC)) {
       Debug::Log("Unknown Listener address");
+      delete addr;
       return nullptr;
     }
-    if (addr->ai_family != AF_INET && addr->ai_family != AF_INET6)
+    if (addr->ai_family != AF_INET && addr->ai_family != AF_INET6) {
       Debug::Log("Unknown Listener address family");
+      delete addr;
+      return nullptr;
+    }
     switch (addr->ai_family) {
       case AF_INET:memcpy(&in, addr->ai_addr, sizeof(in));
         in.sin_port = (in_port_t) htons(port);
@@ -158,10 +162,10 @@ class Network {
     return setsockopt(sock_fd, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag)) !=
         -1;
   }
-  inline static bool setSoLingerOption(int sock_fd) {
-    struct linger l{
-        1, 10
-    };
+  inline static bool setSoLingerOption(int sock_fd, bool enable = false) {
+    struct linger l{};
+    l.l_onoff = 1;
+    l.l_linger = enable ? 10 : 0;
     return setsockopt(sock_fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l)) != -1;
   }
 
@@ -183,6 +187,35 @@ class Network {
     int flag = 1;
     return setsockopt(sock_fd, SOL_SOCKET, SO_ZEROCOPY, &flag, sizeof(flag)) !=
         -1;
+  }
+
+  static std::string read(int fd) {
+    int size = 65536;
+    char buffer[size];
+    bool should_close = false, done = false;
+    ssize_t count = -1;
+    size_t buffer_size = 0;
+
+    while (!done) {
+      count = ::recv(fd, buffer + buffer_size, size,
+                     MSG_NOSIGNAL);
+      if (count == -1) {
+        if (errno != EAGAIN && errno != EWOULDBLOCK) {
+          std::string error = "read() failed  ";
+          error += std::strerror(errno);
+          Debug::Log(error, LOG_NOTICE);
+          should_close = true;
+        }
+        done = true;
+      } else if (count == 0) {
+        //  The  remote has closed the connection, wait for EPOLLRDHUP
+        should_close = true;
+        done = true;
+      } else {
+        buffer_size += static_cast<size_t>(count);
+      }
+    }
+    return std::string(buffer);
   }
 };
 #endif  // NETWORK_H

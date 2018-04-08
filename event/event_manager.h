@@ -14,22 +14,22 @@
 
 #define MAX_EPOLL_EVENT 100000
 
-#define READ_MASK (EPOLLIN | EPOLLET | EPOLLRDHUP)
-#define  READ_ONESHOT_MASK  (EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP)
-#define  WRITE_MASK  (EPOLLOUT | EPOLLET | EPOLLONESHOT | EPOLLRDHUP) //is always one shot
-#define  ACCEPT_MASK (EPOLLIN | EPOLLET)
+//#define READ_MASK (EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP)
+//#define  READ_ONESHOT_MASK  (EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP |EPOLLHUP)
+//#define  WRITE_MASK  (EPOLLOUT | EPOLLET | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP) //is always one shot
+//#define  ACCEPT_MASK (EPOLLIN | EPOLLET)
 
 enum EVENT_TYPE {
-  READ,
-  READ_ONESHOT,
-  WRITE, //is always one shot
   CONNECT,
   DISCONNECT,
-  ACCEPT,
+  READ = (EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP),
+  READ_ONESHOT = (EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP),
+  WRITE = (EPOLLOUT | EPOLLET | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP), //is always one shot
+  ACCEPT = (EPOLLIN | EPOLLET),
 };
 
 class EpollManager {
-  std::mutex epoll_mutex;
+//  std::mutex epoll_mutex;
   int epoll_fd;
   int accept_fd;
   epoll_event events[MAX_EPOLL_EVENT];
@@ -37,17 +37,17 @@ class EpollManager {
   virtual void HandleEvent(int fd, EVENT_TYPE event_type) = 0;
   void onReadEvent(int fd);
   void onWriteEvent(int fd);
-  int loopOnce();
   void onConnectEvent(int fd);
-
  public:
+
   EpollManager();
+  int loopOnce();
   virtual ~EpollManager();
   bool handleAccept(int listener_fd);
   bool addFd(int fd, EVENT_TYPE event_type);
   bool deleteFd(int fd);
   bool updateFd(int fd, EVENT_TYPE event_type);
-  inline unsigned int getMask(EVENT_TYPE event_type);
+//  inline unsigned int getMask(EVENT_TYPE event_type);
 };
 
 #endif //NEW_ZHTTP_EPOLL_H

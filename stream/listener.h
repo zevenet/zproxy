@@ -6,15 +6,16 @@
 #define NEW_ZHTTP_LISTENER_H
 
 #include <vector>
-#include "event/event_manager.h"
+#include <thread>
+#include "../event/event_manager.h"
 #include "StreamManager.h"
 
 class Listener : public EpollManager {
   std::thread worker_thread;
   bool is_running;
   Connection listener_connection;
-  std::vector<StreamManager *> stream_manager_set;
-  static void doWork(Listener &);
+  std::map<int, StreamManager *> stream_manager_set;
+  void doWork();
 
   StreamManager *
   getManager(int fd);

@@ -5,21 +5,24 @@
 #ifndef NEW_ZHTTP_WORKER_H
 #define NEW_ZHTTP_WORKER_H
 
-#include <map>
 #include <deque>
-#include "http/http_stream.h"
-#include "event/event_manager.h"
+#include <thread>
+#include <unordered_map>
+#include "../event/event_manager.h"
+#include "../http/http_stream.h"
 
 class StreamManager : public EpollManager {
   int thread_id;
   std::thread worker;
   bool is_running;
 
-  std::map<int, HttpStream *> streams_set;
+  std::unordered_map<int, HttpStream *> streams_set;
   void HandleEvent(int fd, EVENT_TYPE event_type) override;
-  static void doWork(StreamManager &);
+  void doWork();
+
  public:
   StreamManager();
+  StreamManager(const StreamManager &) = delete;
   ~StreamManager();
   void addStream(int fd);
 
@@ -28,4 +31,4 @@ class StreamManager : public EpollManager {
   void stop();
 };
 
-#endif //NEW_ZHTTP_WORKER_H
+#endif  // NEW_ZHTTP_WORKER_H
