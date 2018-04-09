@@ -34,7 +34,7 @@ sub farms_name_l4 # ( $farmname )
 	my $farmname = shift;
 
 	my $out_p;
-	my @out_b;
+	my $out_b;
 
 	my $vip   = &getFarmVip( "vip",  $farmname );
 	my $vport = &getFarmVip( "vipp", $farmname );
@@ -66,12 +66,12 @@ sub farms_name_l4 # ( $farmname )
 	};
 
 	# Backends
-	@out_b = &getL4FarmBackends( $farmname );
+	$out_b = &getL4FarmBackends( $farmname );
 
 	my $body = {
 				 description => "List farm $farmname",
 				 params      => $out_p,
-				 backends    => \@out_b,
+				 backends    => $out_b,
 	};
 
 	$body->{ ipds } = &eload(
