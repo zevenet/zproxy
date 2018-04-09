@@ -202,7 +202,7 @@ sub get_farm_struct
 			func   => 'getHTTPFarmLogs',
 			args   => [$farmname],
 		);
-		$output_params->{ logs } = ( $flag ) ) ? "true" : "false";
+		$output_params->{ logs } = ( $flag ) ? "true" : "false";
 	}
 
 	if ( $type eq "https" )

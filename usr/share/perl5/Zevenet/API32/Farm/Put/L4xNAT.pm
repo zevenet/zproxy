@@ -330,6 +330,28 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		$restart_flag = "true";
 	}
 
+	# Modify logs
+	if ( exists ( $json_obj->{ logs } ) )
+	{
+		require Zevenet::Farm::Config;
+		my $err;
+		if ( $json_obj->{ logs } =~ /(?:true|false)/ )
+		{
+			$err = &setL4FarmLogs( $farmname, $json_obj->{ logs } );
+		}
+		else
+		{
+			my $msg = "Invalid value for logs parameter.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
+		if ( $err )
+		{
+			my $msg = "Error modifying the parameter logs.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	# no error found, return successful response
 	&zenlog( "ZAPI success, some parameters have been changed in farm $farmname." );
 

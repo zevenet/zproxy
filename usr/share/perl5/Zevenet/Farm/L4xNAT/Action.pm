@@ -279,6 +279,12 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 		close $fi;
 	}
 
+	#enable log rule
+	if ( &getL4FarmLogs( $farm_name ) eq "true" )
+	{
+		&reloadL4FarmLogsRule( $farm_name, "true" );
+	}
+
 	return $status;
 }
 
@@ -323,6 +329,9 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 		}
 		untie @configfile;
 	}
+
+	# Remove log rules
+	&reloadL4FarmLogsRule( $farm_name, "false" );
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration( 'iptlock' );

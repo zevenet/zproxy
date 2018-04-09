@@ -31,7 +31,7 @@ my $configdir = &getGlobalConfiguration('configdir');
 Function: runL4FarmCreate
 
 	Create a l4xnat farm
-	
+
 Parameters:
 	vip - Virtual IP
 	port - Virtual port. In l4xnat it ls possible to define multiport using ',' for add ports and ':' for ranges
@@ -39,7 +39,7 @@ Parameters:
 
 Returns:
 	Integer - return 0 on success or other value on failure
-	
+
 =cut
 sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 {
@@ -51,7 +51,8 @@ sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 	$vip_port = 80 if not defined $vip_port;
 
 	open FO, ">$configdir\/$farm_name\_$farm_type.cfg";
-	print FO "$farm_name\;tcp\;$vip\;$vip_port\;nat\;weight\;none\;120\;up\n";
+	# farmname;protocol;vip;vport;nattype;algorithm;persistence;ttl;status;logs
+	print FO "$farm_name\;tcp\;$vip\;$vip_port\;nat\;weight\;none\;120\;up;false\n";
 	close FO;
 	$output = $?;      # FIXME
 

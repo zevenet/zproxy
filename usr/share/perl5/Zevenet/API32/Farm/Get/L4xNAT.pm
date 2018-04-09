@@ -62,6 +62,7 @@ sub farms_name_l4 # ( $farmname )
 			   protocol    => &getFarmProto( $farmname ),
 			   ttl         => $timetolimit,
 			   farmguardian => &getFGFarm( $farmname ),
+			   logs 		=> &getL4FarmLogs( $farmname ),
 			   listener    => 'l4xnat',
 	};
 

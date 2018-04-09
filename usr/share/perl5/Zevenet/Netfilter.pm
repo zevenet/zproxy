@@ -954,8 +954,10 @@ sub getBinVersion    # ($farm_name)
 	# Variables
 	my $farm_name = shift;
 
-	require Zevenet::Net::Validate;
 	my $binary = &getGlobalConfiguration('iptables');
+	$binary if not $farm_name;
+
+	require Zevenet::Net::Validate;
 	my $vip = &getFarmVip( "vip", $farm_name );
 	my $ipv = &ipversion( $vip );
 
@@ -1083,5 +1085,33 @@ sub runIptables
 	# returning error code from execution
 	return $return_code;
 }
+
+
+sub runIptDeleteByComment
+{
+	my $comment = shift;
+	my $chain = shift;
+	my $table = shift;
+	my $find;
+
+	# lookfor comments
+	my $bin = &getBinVersion();
+	my @out_ipt = `$bin -S $chain -t $table 2>/dev/null`;
+	my @list = grep ( /--comment "$comment"/ , @out_ipt );
+
+	# delete
+	foreach my $cmd ( @list )
+	{
+		&zenlog ("> $cmd");
+		$cmd =~ s/-(A|I)/-D/;
+
+		&zenlog ("- $cmd");
+		&zenlog ("$bin -t $table $cmd");
+		$find |= &iptSystem( "$bin -t $table $cmd" );
+	}
+
+	return $find;
+}
+
 
 1;
