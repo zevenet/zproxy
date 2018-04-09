@@ -29,16 +29,17 @@ Function: getZapiRBACUsers
 
 Parameters:
 	User - User name
-					
+
 Returns:
 	Hash ref - Configuration of a user
-	
+
 =cut
 
 sub getZapiRBACUsers
 {
 	my $user = shift;
-	require Zevenet::RBAC::User::Core;
+
+	include 'Zevenet::RBAC::User::Core';
 	my $obj   = &getRBACUserObject( $user );
 	my $group = &getRBACUserGroup( $user );
 
@@ -58,10 +59,10 @@ Function: getZapiRBACUsersAll
 
 Parameters:
 	None - .
-					
+
 Returns:
 	Array ref - User list
-	
+
 =cut
 
 sub getZapiRBACAllUsers
@@ -91,7 +92,8 @@ Returns:
 sub getZapiRBACGroups
 {
 	my $group = shift;
-	require Zevenet::RBAC::Group::Core;
+
+	include 'Zevenet::RBAC::Group::Core';
 	my $obj = &getRBACGroupObject( $group );
 
 	my $out;

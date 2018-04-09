@@ -54,9 +54,15 @@ sub farms    # ()
 		  };
 	}
 
-	if ( eval { require Zevenet::RBAC::Group::Core; } )
+	if ( $eload )
 	{
-		@out = @{ &getRBACUserSet( 'farms', \@out ) };
+		@out = @{
+			&eload(
+					module => 'Zevenet::RBAC::Group::Core',
+					func   => 'getRBACUserSet',
+					args   => ['farms', \@out],
+			)
+		};
 	}
 
 	my $body = {
@@ -96,9 +102,15 @@ sub farms_lslb    # ()
 		  };
 	}
 
-	if ( eval { require Zevenet::RBAC::Group::Core; } )
+	if ( $eload )
 	{
-		@out = @{ &getRBACUserSet( 'farms', \@out ) };
+		@out = @{
+			&eload(
+					module => 'Zevenet::RBAC::Group::Core',
+					func   => 'getRBACUserSet',
+					args   => ['farms', \@out],
+			)
+		};
 	}
 
 	my $body = {
@@ -136,9 +148,15 @@ sub farms_dslb    # ()
 		  };
 	}
 
-	if ( eval { require Zevenet::RBAC::Group::Core; } )
+	if ( $eload )
 	{
-		@out = @{ &getRBACUserSet( 'farms', \@out ) };
+		@out = @{
+			&eload(
+					module => 'Zevenet::RBAC::Group::Core',
+					func   => 'getRBACUserSet',
+					args   => ['farms', \@out],
+			)
+		};
 	}
 
 	my $body = {

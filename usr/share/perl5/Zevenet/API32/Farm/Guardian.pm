@@ -25,6 +25,9 @@ use strict;
 use Zevenet::FarmGuardian;
 use Zevenet::Farm::Core;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 sub getZapiFG
 {
 	my $fg_name  = shift;
@@ -233,8 +236,14 @@ sub modify_farmguardian
 	if ( not $error )
 	{
 		# sync with cluster
-		require Zevenet::Cluster;
-		&runZClusterRemoteManager( 'fg', 'restart', $fgname );
+		if ( $eload )
+		{
+			&eload(
+					module => 'Zevenet::Cluster',
+					func   => 'runZClusterRemoteManager',
+					args   => ['fg', 'restart', $fgname],
+			);
+		}
 
 		# no error found, return successful response
 		my $msg =
@@ -280,8 +289,14 @@ sub delete_farmguardian
 	if ( !&getFGExists( $fg_name ) )
 	{
 		# sync with cluster
-		require Zevenet::Cluster;
-		&runZClusterRemoteManager( 'fg', 'stop', $fg_name );
+		if ( $eload )
+		{
+			&eload(
+					module => 'Zevenet::Cluster',
+					func   => 'runZClusterRemoteManager',
+					args   => ['fg', 'stop', $fg_name],
+			);
+		}
 
 		my $msg = "$fg_name has been deleted successful.";
 		my $body = {
@@ -384,8 +399,14 @@ sub add_farmguardian_farm
 	if ( $output )
 	{
 		# sync with cluster
-		require Zevenet::Cluster;
-		&runZClusterRemoteManager( 'fg_farm', 'start', $farm, $srv );
+		if ( $eload )
+		{
+			&eload(
+					module => 'Zevenet::Cluster',
+					func   => 'runZClusterRemoteManager',
+					args   => ['fg_farm', 'start', $farm, $srv],
+			);
+		}
 
 		my $msg =
 		  "Success, The farm guardian $json_obj->{ 'name' } was added to the $srv_message";
@@ -471,8 +492,14 @@ sub rem_farmguardian_farm
 	else
 	{
 		# sync with cluster
-		require Zevenet::Cluster;
-		&runZClusterRemoteManager( 'fg_farm', 'stop', $farm, $srv );
+		if ( $eload )
+		{
+			&eload(
+					module => 'Zevenet::Cluster',
+					func   => 'runZClusterRemoteManager',
+					args   => ['fg_farm', 'stop', $farm, $srv],
+			);
+		}
 
 		my $msg = "Sucess, $fgname was removed from the $srv_message";
 		my $body = {

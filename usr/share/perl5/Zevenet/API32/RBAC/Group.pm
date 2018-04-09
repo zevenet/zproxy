@@ -21,8 +21,8 @@
 ###############################################################################
 
 use strict;
-use Zevenet::RBAC::Group::Core;
-use Zevenet::API32::RBAC::Structs;
+include 'Zevenet::RBAC::Group::Core';
+include 'Zevenet::API32::RBAC::Structs';
 
 #GET /rbac/groups
 sub get_rbac_all_groups
@@ -58,7 +58,7 @@ sub add_rbac_group
 {
 	my $json_obj = shift;
 
-	require Zevenet::RBAC::Group::Config;
+	include 'Zevenet::RBAC::Group::Config';
 
 	my $desc = "Create the RBAC group, $json_obj->{ 'name' }";
 	my $params = {
@@ -89,7 +89,7 @@ sub add_rbac_group
 	# check result and return success or failure
 	if ( $output )
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'rbac_group', 'add', $json_obj->{ 'name' } );
 
 		my $msg = "Added the RBAC group $json_obj->{ 'name' }";
@@ -113,7 +113,8 @@ sub set_rbac_group
 	my $json_obj = shift;
 	my $group    = shift;
 
-	require Zevenet::RBAC::Group::Config;
+	include 'Zevenet::RBAC::Group::Config';
+
 	my $desc = "Modify the RBAC group $group";
 	my $params = {
 				   "role" => {
@@ -136,7 +137,8 @@ sub set_rbac_group
 	  if ( $error_msg );
 
 	# Check if role exists
-	require Zevenet::RBAC::Role::Config;
+	include 'Zevenet::RBAC::Role::Config';
+
 	if ( ! grep( /^$json_obj->{ role }$/, &getRBACRolesList() ) )
 	{
 		my $msg = "The role $json_obj->{ 'role' } doesn't exist.";
@@ -165,7 +167,7 @@ sub del_rbac_group
 {
 	my $group = shift;
 
-	require Zevenet::RBAC::Group::Config;
+	include 'Zevenet::RBAC::Group::Config';
 
 	my $desc = "Delete the RBAC group $group";
 
@@ -179,7 +181,7 @@ sub del_rbac_group
 
 	if ( !&getRBACGroupExists( $group ) )
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'rbac_group', 'delete', $group );
 
 		my $msg = "The RBAC group $group has been deleted successful.";
@@ -208,7 +210,7 @@ sub add_rbac_group_resource
 	my $type_msg = $type;
 	$type_msg =~ s/s$//;
 
-	require Zevenet::RBAC::Group::Config;
+	include 'Zevenet::RBAC::Group::Config';
 
 	my $desc = "Add the $type_msg $json_obj->{ 'name' } to the group $group";
 	my $params = {
@@ -258,7 +260,7 @@ sub add_rbac_group_resource
 	}
 	elsif ( $type eq "users" )
 	{
-		require Zevenet::RBAC::User::Core;
+		include 'Zevenet::RBAC::User::Core';
 		if ( !&getRBACUserExists( $resource ) )
 		{
 			my $msg = "The user $resource does not exist.";
@@ -286,7 +288,7 @@ sub add_rbac_group_resource
 	{
 		if ( $type eq 'users' )
 		{
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'rbac_group', 'add_user', $group,
 									   $json_obj->{ 'name' } );
 		}
@@ -316,7 +318,7 @@ sub del_rbac_group_resource
 	my $type_msg = $type;
 	$type_msg =~ s/s$//;
 
-	require Zevenet::RBAC::Group::Config;
+	include 'Zevenet::RBAC::Group::Config';
 
 	my $desc = "Removing the $type_msg $resource from the group $group";
 
@@ -340,7 +342,7 @@ sub del_rbac_group_resource
 	{
 		if ( $type eq 'users' )
 		{
-			require Zevenet::Cluster;
+			include 'Zevenet::Cluster';
 			&runZClusterRemoteManager( 'rbac_group', 'del_user', $group, $resource );
 		}
 

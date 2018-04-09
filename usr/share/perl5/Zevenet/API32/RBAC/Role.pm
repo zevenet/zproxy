@@ -21,9 +21,9 @@
 ###############################################################################
 
 use strict;
-use Zevenet::RBAC::Core;
-use Zevenet::RBAC::Role::Config;
-use Zevenet::API32::RBAC::Structs;
+include 'Zevenet::RBAC::Core';
+include 'Zevenet::RBAC::Role::Config';
+include 'Zevenet::API32::RBAC::Structs';
 
 # GET /rbac/roles
 #list
@@ -120,7 +120,7 @@ sub del_rbac_role
 	}
 
 	my $used_flag;
-	require Zevenet::RBAC::Group::Core;
+	include 'Zevenet::RBAC::Group::Core';
 	foreach my $group_it ( &getRBACGroupList() )
 	{
 		if ( &getRBACGroupParam( $group_it, 'role' ) eq $role )

@@ -21,8 +21,8 @@
 ###############################################################################
 
 use strict;
-use Zevenet::RBAC::User::Core;
-use Zevenet::API32::RBAC::Structs;
+include 'Zevenet::RBAC::User::Core';
+include 'Zevenet::API32::RBAC::Structs';
 
 #GET /rbac/users
 sub get_rbac_all_users
@@ -58,7 +58,7 @@ sub add_rbac_user
 {
 	my $json_obj = shift;
 
-	require Zevenet::RBAC::User::Config;
+	include 'Zevenet::RBAC::User::Config';
 
 	my $desc = "Create the RBAC user, $json_obj->{ 'name' }";
 	my $params = {
@@ -96,7 +96,7 @@ sub add_rbac_user
 	# check result and return success or failure
 	if ( $output )
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'rbac_user', 'add', $json_obj->{ 'name' } );
 
 		my $msg = "Added the RBAC user $json_obj->{ 'name' }";
@@ -120,7 +120,8 @@ sub set_rbac_user
 	my $json_obj = shift;
 	my $user     = shift;
 
-	require Zevenet::RBAC::User::Config;
+	include 'Zevenet::RBAC::User::Config';
+
 	my $desc = "Modify the RBAC user $user";
 	my $params = {
 		 "zapikey"            => { 'valid_format' => 'zapi_key' },
@@ -169,7 +170,7 @@ sub set_rbac_user
 	# modify zapikey
 	if ( exists $json_obj->{ 'zapikey' } )
 	{
-		require Zevenet::Code;
+		include 'Zevenet::Code';
 		foreach my $userAux ( &getRBACUserList() )
 		{
 			if (
@@ -212,7 +213,7 @@ sub set_rbac_user
 		}
 	}
 
-	require Zevenet::Cluster;
+	include 'Zevenet::Cluster';
 	&runZClusterRemoteManager( 'rbac_user', 'update', $user );
 
 	my $msg    = "Settings were changed successful.";
@@ -228,7 +229,7 @@ sub del_rbac_user
 {
 	my $user = shift;
 
-	require Zevenet::RBAC::User::Config;
+	include 'Zevenet::RBAC::User::Config';
 
 	my $desc = "Delete the RBAC user $user";
 
@@ -242,7 +243,7 @@ sub del_rbac_user
 
 	if ( !&getRBACUserExists( $user ) )
 	{
-		require Zevenet::Cluster;
+		include 'Zevenet::Cluster';
 		&runZClusterRemoteManager( 'rbac_user', 'delete', $user );
 
 		my $msg = "The RBAC user $user has been deleted successful.";
@@ -265,7 +266,7 @@ sub set_rbac_my_user
 {
 	my $json_obj = shift;
 
-	require Zevenet::RBAC::User::Config;
+	include 'Zevenet::RBAC::User::Config';
 	require Zevenet::User;
 	require Zevenet::Login;
 

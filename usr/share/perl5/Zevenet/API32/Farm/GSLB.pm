@@ -52,10 +52,8 @@ sub farms_gslb    # ()
 		  };
 	}
 
-	if ( eval { require Zevenet::RBAC::Group::Core; } )
-	{
-		@out = @{ &getRBACUserSet( 'farms', \@out ) };
-	}
+	include 'Zevenet::RBAC::Group::Core';
+	@out = @{ &getRBACUserSet( 'farms', \@out ) };
 
 	my $body = {
 				 description => "List GSLB farms",

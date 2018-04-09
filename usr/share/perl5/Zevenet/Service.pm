@@ -291,10 +291,8 @@ sub start_modules
 	&runIPDSStartModule();
 
 	# enable monitoring interface throughput
-	if ( eval { require Zevenet::Net::Throughput; } )
-	{
-		&startTHROUTask();
-	}
+	include 'Zevenet::Net::Throughput';
+	&startTHROUTask();
 }
 
 # this function syncs files with the other node before starting the cluster and

@@ -133,11 +133,14 @@ sub upIf    # ($if_ref, $writeconf)
 	# not check virtual interfaces
 	if ( $if_ref->{ type } ne "virtual" )
 	{
-   #check if link is up after ip link up; checks /sys/class/net/$$if_ref{name}/operstate
+		#check if link is up after ip link up; checks /sys/class/net/$$if_ref{name}/operstate
 		my $status_if = `cat /sys/class/net/$$if_ref{name}/operstate`;
+
 		&zenlog( "Link status for $$if_ref{name} is $status_if" );
 		zenlog( "Waiting link up for $$if_ref{name}" );
+
 		my $iter = 6;
+
 		while ( $status_if =~ /down/ && $iter > 0 )
 		{
 			$status_if = `cat /sys/class/net/$$if_ref{name}/operstate`;
@@ -157,10 +160,11 @@ sub upIf    # ($if_ref, $writeconf)
 		}
 
 		# Start monitoring throughput
-		eval {
-			require Zevenet::Net::Throughput;
-			&startTHROUIface( $$if_ref{ name } );
-		};
+		&eload(
+				module => 'Zevenet::Net::Throughput',
+				func   => 'startTHROUIface',
+				args   => [$$if_ref{ name }],
+		) if $eload;
 	}
 
 	return $status;
@@ -221,10 +225,11 @@ sub downIf    # ($if_ref, $writeconf)
 		$ip_cmd = "$ip_bin link set $$if_ref{name} down";
 
 		# Stop monitoring throughput
-		eval {
-			require Zevenet::Net::Throughput;
-			&stopTHROUIface( $$if_ref{ name } );
-		};
+		&eload(
+				module => 'Zevenet::Net::Throughput',
+				func   => 'stopTHROUIface',
+				args   => [$$if_ref{ name }],
+		) if $eload;
 	}
 
 	# For Vini

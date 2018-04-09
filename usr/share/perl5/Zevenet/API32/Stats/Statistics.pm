@@ -387,7 +387,7 @@ sub stats_network_interfaces
 # /stats/throughput
 sub stats_throughput
 {
-	require Zevenet::Net::Throughput;
+	include 'Zevenet::Net::Throughput';
 
 	my $throughput_file = &getTHROUStruct();
 	my $time = &getGlobalConfiguration( 'throughput_period' );

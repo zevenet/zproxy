@@ -42,9 +42,16 @@ sub possible_graphs    #()
 	require Zevenet::Stats;
 
 	my @farms = grep ( s/-farm$//, &getGraphs2Show( "Farm" ) );
-	if ( eval { require Zevenet::RBAC::Group::Core; } )
+
+	if ( $eload )
 	{
-		@farms = @{ &getRBACResourcesFromList( 'farms', \@farms ) };
+		@farms = @{
+			&eload(
+					module => 'Zevenet::RBAC::Group::Core',
+					func   => 'getRBACResourcesFromList',
+					args   => ['farms', \@farms],
+			)
+		};
 	}
 
 	my @net = grep ( s/iface$//, &getGraphs2Show( "Network" ) );

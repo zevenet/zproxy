@@ -23,6 +23,9 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 sub validCGISession    # ()
 {
 	require Zevenet::CGI;
@@ -71,9 +74,14 @@ sub validZapiKey    # ()
 			&setUser( 'root' );
 			$validKey = 1;
 		}
-		elsif ( eval { require Zevenet::RBAC::User::Core; } )
+		elsif ( $eload )
 		{
-			$validKey = 1 if ( &validateRBACUserZapi( $ENV{ $key } ) );
+			$validKey = 1
+			  if &eload(
+						 module => 'Zevenet::RBAC::User::Core',
+						 func   => 'validateRBACUserZapi',
+						 args   => [$ENV{ $key }],
+			  );
 		}
 	}
 

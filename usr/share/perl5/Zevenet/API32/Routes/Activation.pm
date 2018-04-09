@@ -28,13 +28,13 @@ if ( $ENV{ PATH_INFO } =~ qr{^/certificates/activation} )
 {
 	my $mod = 'Zevenet::API32::Certificate::Activation';
 
-	require Zevenet::RBAC::Core;
+	include 'Zevenet::RBAC::Core';
 	if ( &getRBACPathPermissions( $ENV{ PATH_INFO },  $ENV{REQUEST_METHOD} ) )
 	{
 		GET qr{^/certificates/activation$},    'get_activation_certificate',    $mod;
 		POST qr{^/certificates/activation$},   'upload_activation_certificate', $mod;
 		DELETE qr{^/certificates/activation$}, 'delete_activation_certificate', $mod;
-	
+
 		GET    qr{^/certificates/activation/info$}, 'get_activation_certificate_info', $mod;
 	}
 }

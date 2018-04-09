@@ -73,9 +73,15 @@ sub getAllFarmStats
 		  };
 	}
 
-	if ( eval { require Zevenet::RBAC::Group::Core; } )
+	if ( $eload )
 	{
-		@farms = @{ &getRBACUserSet( 'farms', \@farms ) };
+		@farms = @{
+			&eload(
+					module => 'Zevenet::RBAC::Group::Core',
+					func   => 'getRBACUserSet',
+					args   => ['farms', \@farms],
+			)
+		};
 	}
 
 	return \@farms;
