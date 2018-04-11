@@ -268,11 +268,11 @@ sub delFGFarm
 
 	my $err = &runFGFarmStop( $farm, $srv );
 	my $type = &getFarmType( $farm );
-	if ( $type =~ /http/ )
+	if ( $type =~ /http/ or $type eq 'gslb' )
 	{
 		if ( not $srv )
 		{
-			foreach $srv ( &getFarmBackends( $farm ) )
+			foreach $srv ( &getFarmServices( $farm ) )
 			{
 				$fg = &getFGFarm( $farm, $srv );
 				$err |= &setTinyObj( $fg_conf, $fg, 'farms', "${farm}_$srv", 'del' );
@@ -534,7 +534,7 @@ sub runFGFarmStart
 	}
 
 	&zenlog( "Start fg for farm $farm, $svice", "debug2", "FG" );
-	
+
 
 	if ( $ftype =~ /http/ && $svice eq "" )
 	{
@@ -552,22 +552,22 @@ sub runFGFarmStart
 	elsif ( $ftype eq 'l4xnat' || $ftype =~ /http/ )
 	{
 		my $fgname = &getFGFarm( $farm, $svice );
-		
+
 		return 0 if not $fgname;
-	
+
 		&zenlog( "Starting fg $fgname, farm $farm, $svice", "debug2", "FG" );
 		my $fg = &getFGObject( $fgname );
-	
+
 		if ( $fg->{ log } eq 'true' )
 		{
 			$log = "-l";
 		}
-	
+
 		if ( $svice ne "" )
 		{
 			$sv = "-s $svice";
 		}
-	
+
 		my $farmguardian = &getGlobalConfiguration( 'farmguardian' );
 		my $fg_cmd       = "$farmguardian $farm $sv $log";
 
@@ -954,9 +954,9 @@ sub getFarmGuardianConf    # ($fname,$svice)
 =begin nd
 Function: getFarmGuardianPid
 
-	Read farmgardian pid from pid file. Check if the pid is running and return it, 
+	Read farmgardian pid from pid file. Check if the pid is running and return it,
 	else it removes the pid file.
-	
+
 Parameters:
 	fname - Farm name.
 	svice - Service name. Only apply if the farm profile has services. Leave undefined for farms without services.
