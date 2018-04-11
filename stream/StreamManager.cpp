@@ -15,15 +15,15 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
 //        Debug::Log("Stream doesn't exist for " + std::to_string(fd), LOG_DEBUG);
         stream = new HttpStream();
         stream->client_connection.setFileDescriptor(fd);
-//        auto bck = getBackend();
-//        Debug::Log("Connecting to backend " + bck->address, LOG_DEBUG);
-//        if (!stream->backend_connection.doConnect(*bck->address_info, bck->timeout)) {
-//          Debug::Log("Error connecting to backend " + bck->address, LOG_NOTICE); //TODO:: respond e503
-//          stream->backend_connection.closeConnection();
-//          return;
-//        } else {
-//          Debug::Log("Connected to backend : " + bck->address + ":" + std::to_string(bck->port), LOG_DEBUG);
-//        }
+        auto bck = getBackend();
+        Debug::Log("Connecting to backend " + bck->address, LOG_DEBUG);
+        if (!stream->backend_connection.doConnect(*bck->address_info, bck->timeout)) {
+          Debug::Log("Error connecting to backend " + bck->address, LOG_NOTICE); //TODO:: respond e503
+          stream->backend_connection.closeConnection();
+          return;
+        } else {
+          Debug::Log("Connected to backend : " + bck->address + ":" + std::to_string(bck->port), LOG_DEBUG);
+        }
         streams_set[fd] = stream;
       }
       auto connection = stream->getConnection(fd);
@@ -39,15 +39,15 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
 //        Debug::Log("Stream doesn't exist for " + std::to_string(fd), LOG_DEBUG);
         stream = new HttpStream();
         stream->client_connection.setFileDescriptor(fd);
-//        auto bck = getBackend();
-//        Debug::Log("Connecting to backend " + bck->address, LOG_DEBUG);
-//        if (!stream->backend_connection.doConnect(*bck->address_info, bck->timeout)) {
-//          Debug::Log("Error connecting to backend " + bck->address, LOG_NOTICE); //TODO:: respond e503
-//          stream->backend_connection.closeConnection();
-//          return;
-//        } else {
-//          Debug::Log("Connected to backend : " + bck->address + ":" + std::to_string(bck->port), LOG_DEBUG);
-//        }
+        auto bck = getBackend();
+        Debug::Log("Connecting to backend " + bck->address, LOG_DEBUG);
+        if (!stream->backend_connection.doConnect(*bck->address_info, bck->timeout)) {
+          Debug::Log("Error connecting to backend " + bck->address, LOG_NOTICE); //TODO:: respond e503
+          stream->backend_connection.closeConnection();
+          return;
+        } else {
+          Debug::Log("Connected to backend : " + bck->address + ":" + std::to_string(bck->port), LOG_DEBUG);
+        }
         streams_set[fd] = stream;
       }
       auto connection = stream->getConnection(fd);
@@ -64,7 +64,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
       }
       auto connection = stream->getConnection(fd);
       auto sent =
-          connection->write(stream->send_e200.c_str(), stream->send_e200.length());
+          connection->write(stream->send_e200.c_str(), stream->send_e200.length() - 1);
       if (sent != stream->send_e200.length()) {
         Debug::Log("Something happend sentid e200", LOG_DEBUG);
       }
