@@ -11,7 +11,7 @@
 #include <type_traits>
 #include "../util/utils.h"
 
-#define DEBUG_LEVEl 9
+#define DEBUG_LEVEl 1
 #define LOGFACILITY -1
 #define MAXBUF 4096
 
@@ -45,10 +45,10 @@ static CODE facilitynames[] = {
 #endif
 
 // Log to stdout
-//#define __DEBUG(x)                          \
-//  do {                                      \
-//    std::cout << "  (" << x << ")" << endl; \
-//  } while (0)
+#define __DEBUG(x)                          \
+  do {                                      \
+    std::cout << "  (" << x << ")" << endl; \
+  } while (0)
 
 class Debug {
  public:
@@ -58,7 +58,7 @@ class Debug {
       return;
     }
     std::lock_guard<std::mutex> locker(log_lock);
-    std::cout << ThreadHelper::getThreadName(pthread_self()) << " :" << str
+    std::cout << helper::ThreadHelper::getThreadName(pthread_self()) << " :" << str
               << std::endl;
   }
 

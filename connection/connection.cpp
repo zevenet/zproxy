@@ -85,9 +85,8 @@ int Connection::writeTo(int fd) {
 }
 int Connection::write(const char *data, size_t buffer_size) {
   bool done = false;
-  size_t sent = 0;
   ssize_t count;
-
+  size_t sent = 0;
   while (!done) {
     count =
         ::send(socket_fd, data + sent,

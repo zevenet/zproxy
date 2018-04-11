@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <thread>
-#include "../event/event_manager.h"
+#include "../event/epoll_manager.h"
 #include "StreamManager.h"
 
 class Listener : public EpollManager {
@@ -26,7 +26,7 @@ class Listener : public EpollManager {
   bool init(std::string address, int port);
   void start();
   void stop();
-  void HandleEvent(int fd, EVENT_TYPE event_type) override;
+  void HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) override;
 };
 
 #endif //NEW_ZHTTP_LISTENER_H

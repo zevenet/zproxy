@@ -6,6 +6,18 @@
 #include <pthread.h>
 #include <string>
 #include <thread>
+namespace IO {
+
+enum IO_RESULT {
+  ERROR,
+  SUCCESS,
+  FD_BLOCKED,
+  FD_CLOSED,
+  FULL_BUFFER,
+};
+}
+
+namespace helper {
 
 class ThreadHelper {
  public:
@@ -31,3 +43,4 @@ class ThreadHelper {
   }
 
 };
+}

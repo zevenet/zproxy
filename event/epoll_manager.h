@@ -19,6 +19,12 @@
 //#define  WRITE_MASK  (EPOLLOUT | EPOLLET | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP) //is always one shot
 //#define  ACCEPT_MASK (EPOLLIN | EPOLLET)
 
+enum EVENT_GROUP {
+  ACCEPTOR = 1,
+  SERVER,
+  CLIENT,
+};
+
 enum EVENT_TYPE {
   CONNECT,
   DISCONNECT,
@@ -34,19 +40,19 @@ class EpollManager {
   int accept_fd;
   epoll_event events[MAX_EPOLL_EVENT];
  protected:
-  virtual void HandleEvent(int fd, EVENT_TYPE event_type) = 0;
-  void onReadEvent(int fd);
-  void onWriteEvent(int fd);
-  void onConnectEvent(int fd);
+  virtual void HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) = 0;
+  void onReadEvent(epoll_event &event);
+  void onWriteEvent(epoll_event &event);
+  void onConnectEvent(epoll_event &event);
  public:
 
   EpollManager();
-  int loopOnce();
+  int loopOnce(int time_out = -1);
   virtual ~EpollManager();
   bool handleAccept(int listener_fd);
-  bool addFd(int fd, EVENT_TYPE event_type);
+  bool addFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group);
   bool deleteFd(int fd);
-  bool updateFd(int fd, EVENT_TYPE event_type);
+  bool updateFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group);
 //  inline unsigned int getMask(EVENT_TYPE event_type);
 };
 
