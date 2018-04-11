@@ -1669,10 +1669,6 @@ sub reloadL4FarmLogsRule
 		$error = &iptSystem( "$bin -A $ipt_hook -t $table -j $log_chain" );
 	}
 
-
-	#~ my %be          = %{ $farm{ servers }[$backend] };
-	#~ my $recent_file = "/proc/net/xt_recent/_${farmname}_$be{tag}_sessions";
-
 	my %farm_st        = %{ &getL4FarmStruct( $farmname ) };
 	foreach my $bk ( @{ $farm_st{ servers } } )
 	{

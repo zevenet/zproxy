@@ -1097,16 +1097,13 @@ sub runIptDeleteByComment
 	# lookfor comments
 	my $bin = &getBinVersion();
 	my @out_ipt = `$bin -S $chain -t $table 2>/dev/null`;
-	my @list = grep ( /--comment "$comment"/ , @out_ipt );
+
+	my @list = grep ( /\-\-comment \"$comment\"/ , @out_ipt );
 
 	# delete
 	foreach my $cmd ( @list )
 	{
-		&zenlog ("> $cmd");
 		$cmd =~ s/-(A|I)/-D/;
-
-		&zenlog ("- $cmd");
-		&zenlog ("$bin -t $table $cmd");
 		$find |= &iptSystem( "$bin -t $table $cmd" );
 	}
 

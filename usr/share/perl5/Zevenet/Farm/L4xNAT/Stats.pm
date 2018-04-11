@@ -432,4 +432,53 @@ sub getL4FarmBackendsStats
 	return \@backends;
 }
 
+
+   #~ "sessions" : [
+      #~ {
+         #~ "client" : 0,
+         #~ "id" : 3,
+         #~ "service" : "dfasdf",
+         #~ "session" : "192.168.1.186"
+      #~ }
+   #~ ]
+
+sub getL4FarmSessions
+{
+	my $farmname = shift;
+
+	require Zevenet::Net::ConnStats;
+
+	my $conntrack_bin = &getGlobalConfiguration('conntrack');
+	my $sessions;
+	my $farm_st = &getL4FarmStruct( $farmname );
+
+	my $id = 0;
+
+	foreach my $bk ( @{ $farm_st->{ servers } } )
+	{
+		# get backend lines
+		my $params = &getConntrackParams( { 'mark' => $bk->{ tag } } );
+		#~ my $params = &getConntrackParams( { 'mark' => $bk->{ tag } , 'state' => 'ESTABLISHED' } );
+		my @list = `$conntrack_bin -L $params 2>/dev/null`;
+
+		# parse and add to the struct
+		foreach my $line ( @list )
+		{
+			$line =~ /sport=\d+ dport=\d+ src=.+ dst=(.+) sport=\d+ dport=\d+ [ASSURED] mark=\d+ use=/;
+
+			push @{ $sessions }, {
+				'id' => $bk->{ id },
+				'session' => $1,
+				'client' => $id,
+				};
+
+			$id += 1;
+		};
+	}
+
+	return $sessions;
+}
+
+
+
 1;
