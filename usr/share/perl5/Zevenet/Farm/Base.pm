@@ -231,6 +231,23 @@ sub getFarmVipStatus    # ($farm_name)
 		$up_flag = 1 if $be->{ 'status' } eq "up";
 		$maintenance_flag = 1 if $be->{ 'status' } eq "maintenance";
 		$down_flag = 1 if $be->{ 'status' } eq "down";
+
+		# if there is a backend up and another down, the status is 'problem'
+		last if ( $down_flag and $up_flag );
+	}
+
+	# check if redirect exists when there are not backends
+	if ( $type =~ /http/ )
+	{
+		require Zevenet::Farm::HTTP::Service;
+		foreach my $srv ( &getHTTPFarmServices( $farm_name ) )
+		{
+			if ( &getHTTPFarmVS( $farm_name, $srv, 'redirect' ) )
+			{
+				$up_flag = 1;
+				last;
+			}
+		}
 	}
 
 	# Decision logic
