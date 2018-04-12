@@ -614,6 +614,7 @@ sub getFGRunningFarms
 	my @runfarm;
 
 	require Zevenet::Farm::Core;
+	require Zevenet::Farm::Base;
 	# check all pid
 	foreach my $farm ( @{ &getFGObject( $fg )->{ 'farms' } } )
 	{
@@ -624,7 +625,7 @@ sub getFGRunningFarms
 			$srv  = $2;
 		}
 
-		if ( getFarmStatus( $farm ) eq 'up' )
+		if ( &getFarmStatus( $farm ) eq 'up' )
 		{
 			push @runfarm, $farm;
 		}
