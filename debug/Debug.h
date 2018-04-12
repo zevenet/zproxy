@@ -11,8 +11,9 @@
 #include <type_traits>
 #include "../util/utils.h"
 
-#define DEBUG_LEVEl 1
+#define DEBUG_LEVEl 5
 #define LOGFACILITY -1
+
 #define MAXBUF 4096
 
 //#ifdef MISS_FACILITYNAMES
@@ -44,21 +45,23 @@ static CODE facilitynames[] = {
     {"local7", LOG_LOCAL7}, {NULL, -1}};
 #endif
 
-// Log to stdout
-#define __DEBUG(x)                          \
-  do {                                      \
-    std::cout << "  (" << x << ")" << endl; \
-  } while (0)
+#define Log(...) \
+Debug::Log2(__FILENAME__ ,__FUNCTION__, __LINE__ , __VA_ARGS__)
 
 class Debug {
  public:
   static std::mutex log_lock;
-  inline static void Log(const std::string &str, int level = -1) {
+  inline static void Log2(const std::string file,
+                          const std::string function,
+                          int line,
+                          const std::string &str,
+                          int level = -1) {
     if (level > DEBUG_LEVEl) {
       return;
     }
     std::lock_guard<std::mutex> locker(log_lock);
-    std::cout << helper::ThreadHelper::getThreadName(pthread_self()) << " :" << str
+    std::cout << helper::ThreadHelper::getThreadName(pthread_self()) << " "
+              << file << ":" << function << ":" << line << " " << " :" << str
               << std::endl;
   }
 
@@ -91,4 +94,5 @@ class Debug {
     }
   }
 };
+
 #endif  // DEBUG_H

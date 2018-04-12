@@ -86,7 +86,6 @@ void Listener::start() {
       0, pthread_self());  // worker_thread.native_handle());
   helper::ThreadHelper::setThreadName("LISTENER", pthread_self());
   doWork();
-
 }
 
 StreamManager *Listener::getManager(int fd) {

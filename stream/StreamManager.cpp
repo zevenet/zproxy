@@ -9,14 +9,13 @@
 
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) {
   switch (event_type) {
+    case READ:
     case READ_ONESHOT: {
       HttpStream *stream = streams_set[fd];
       if (stream == nullptr) {
-//        Debug::Log("Stream doesn't exist for " + std::to_string(fd), LOG_DEBUG);
         stream = new HttpStream();
         stream->client_connection.setFileDescriptor(fd);
         auto bck = getBackend();
-        Debug::Log("Connecting to backend " + bck->address, LOG_DEBUG);
         if (!stream->backend_connection.doConnect(*bck->address_info, bck->timeout)) {
           Debug::Log("Error connecting to backend " + bck->address, LOG_NOTICE); //TODO:: respond e503
           stream->backend_connection.closeConnection();
@@ -25,50 +24,39 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
           Debug::Log("Connected to backend : " + bck->address + ":" + std::to_string(bck->port), LOG_DEBUG);
         }
         streams_set[fd] = stream;
+        streams_set[stream->backend_connection.getFileDescriptor()] = stream;
       }
-      auto connection = stream->getConnection(fd);
-      connection->read();
-
-      updateFd(fd, EVENT_TYPE::WRITE, EVENT_GROUP::CLIENT);
+      switch (event_group) {
+        case ACCEPTOR:break;
+        case SERVER:break;
+        case CLIENT: {
+          stream->client_connection.read();
+          updateFd(fd, EVENT_TYPE::WRITE, EVENT_GROUP::CLIENT);
+          break;
+        }
+      }
       break;
     }
-
-    case READ: {
-      HttpStream *stream = streams_set[fd];
-      if (stream == nullptr) {
-//        Debug::Log("Stream doesn't exist for " + std::to_string(fd), LOG_DEBUG);
-        stream = new HttpStream();
-        stream->client_connection.setFileDescriptor(fd);
-        auto bck = getBackend();
-        Debug::Log("Connecting to backend " + bck->address, LOG_DEBUG);
-        if (!stream->backend_connection.doConnect(*bck->address_info, bck->timeout)) {
-          Debug::Log("Error connecting to backend " + bck->address, LOG_NOTICE); //TODO:: respond e503
-          stream->backend_connection.closeConnection();
-          return;
-        } else {
-          Debug::Log("Connected to backend : " + bck->address + ":" + std::to_string(bck->port), LOG_DEBUG);
-        }
-        streams_set[fd] = stream;
-      }
-      auto connection = stream->getConnection(fd);
-      connection->read();
-
-      updateFd(fd, EVENT_TYPE::WRITE, EVENT_GROUP::CLIENT);
-    }
-
     case WRITE: {
       auto stream = streams_set[fd];
       if (stream == nullptr) {
         Debug::Log("Stream doesn't exist for " + std::to_string(fd));
         return;
       }
-      auto connection = stream->getConnection(fd);
-      auto sent =
-          connection->write(stream->send_e200.c_str(), stream->send_e200.length() - 1);
-      if (sent != stream->send_e200.length()) {
-        Debug::Log("Something happend sentid e200", LOG_DEBUG);
+
+      switch (event_group) {
+        case ACCEPTOR:break;
+        case SERVER:break;
+        case CLIENT: {
+          auto sent =
+              stream->client_connection.write(stream->send_e200.c_str(), stream->send_e200.length() - 1);
+          if (sent != stream->send_e200.length() - 1) {
+            Debug::Log("Something happend sentid e200", LOG_DEBUG);
+          }
+          updateFd(fd, READ_ONESHOT, EVENT_GROUP::CLIENT);
+          break;
+        }
       }
-      updateFd(fd, READ_ONESHOT, EVENT_GROUP::CLIENT);
       break;
     }
     case CONNECT:break;
@@ -80,8 +68,10 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
         ::close(fd);
         return;
       }
-      delete stream;
       streams_set.erase(fd);
+      streams_set.erase(stream->client_connection.getFileDescriptor());
+      streams_set.erase(stream->backend_connection.getFileDescriptor());
+      delete stream;
       break;
     }
   }

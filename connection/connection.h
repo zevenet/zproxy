@@ -7,6 +7,7 @@
 
 #include <netdb.h>
 #include "../util/string_buffer.h"
+#include "../util/utils.h"
 #include <unistd.h>
 
 #define MAX_DATA_SIZE  65000
@@ -24,7 +25,7 @@ class Connection {
 
   int write(const char *data, size_t buffer_size);
   int writeTo(int fd);
-  int read();
+  IO::IO_RESULT read();
   void closeConnection();
   Connection();
   virtual ~Connection();

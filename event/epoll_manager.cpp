@@ -32,7 +32,7 @@ void EpollManager::onReadEvent(epoll_event &event) {
 
 bool EpollManager::deleteFd(int fd) {
   if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) < 0) {
-    std::string error = "epoll_ctl(2) failed on main server socket";
+    std::string error = "epoll_ctl(delete) failed on main server socket";
     error += std::strerror(errno);
     Debug::Log(error, LOG_DEBUG);
     return false;
@@ -51,18 +51,19 @@ int EpollManager::loopOnce(int time_out) {
   for (i = 0; i < ev_count; ++i) {
     fd = static_cast<int>(events[i].data.u64 >> CHAR_BIT);
     if ((events[i].events & EPOLLERR) ||
-        (events[i].events & EPOLLHUP) ||
-        (!(events[i].events & EPOLLIN))) {
+        (events[i].events & EPOLLHUP))//||
+//        (!(events[i].events & EPOLLIN)))
+    {
 #if DEBUG_EPOLL
       std::string error = "EPOLLERR | EPOLLHUP An error has occured on fd " +
           std::to_string(fd) + " ";
       error += std::strerror(errno);
       Debug::Log(error, LOG_DEBUG);
 #endif
-      HandleEvent(fd, DISCONNECT, static_cast<EVENT_GROUP >(events[i].data.u32 & 0xff));
       if (fd != accept_fd) {
         deleteFd(fd);
       }
+      HandleEvent(fd, DISCONNECT, static_cast<EVENT_GROUP >(events[i].data.u32 & 0xff));
       continue;
     } else if ((events[i].events & EPOLLRDHUP) != 0u) {
 #if DEBUG_EPOLL
@@ -115,7 +116,7 @@ bool EpollManager::addFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group)
   epevent.data.u64 <<= CHAR_BIT;
   epevent.data.u64 |= event_group & 0xff;
   if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &epevent) < 0) {
-    std::string error = "epoll_ctl(2) failed ";
+    std::string error = "epoll_ctl(add) failed ";
     error += std::strerror(errno);
     Debug::Log(error, LOG_DEBUG);
     return false;
@@ -134,7 +135,7 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_gro
   epevent.data.u64 <<= CHAR_BIT;
   epevent.data.u64 |= event_group & 0xff;
   if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &epevent) < 0) {
-    std::string error = "epoll_ctl(2) failed ";
+    std::string error = "epoll_ctl(update) failed ";
     error += std::strerror(errno);
     Debug::Log(error, LOG_DEBUG);
     return false;

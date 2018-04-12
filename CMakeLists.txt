@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 project(s_zhttp)
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D__FILENAME__='\"$(subst  ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 set(CMAKE_CXX_STANDARD 11)
 find_package(Threads)
 add_executable(${PROJECT_NAME} main.cpp event/epoll_manager.cpp event/epoll_manager.h connection/connection.cpp connection/connection.h stream/StreamManager.cpp stream/StreamManager.h http/http_stream.cpp http/http_stream.h util/string_buffer.cpp util/string_buffer.h debug/Debug.h util/Network.h stream/listener.cpp stream/listener.h util/utils.h config/BackendConfig.h)

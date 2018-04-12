@@ -19,33 +19,40 @@ Connection::~Connection() {
   delete address;
 }
 
-int Connection::read() {
+IO::IO_RESULT Connection::read() {
   char buffer[MAX_DATA_SIZE];
-  bool should_close = false, done = false;
-  ssize_t count = -1;
+  bool done = false;
+  ssize_t count;
   size_t buffer_size = 0;
-
+  IO::IO_RESULT result = IO::ERROR;
   while (!done) {
-    count = ::recv(socket_fd, buffer + buffer_size, MAX_DATA_SIZE,
+    count = ::recv(socket_fd, buffer + buffer_size, MAX_DATA_SIZE - buffer_size,
                    MSG_NOSIGNAL);
     if (count == -1) {
       if (errno != EAGAIN && errno != EWOULDBLOCK) {
         std::string error = "read() failed  ";
         error += std::strerror(errno);
         Debug::Log(error, LOG_NOTICE);
-        should_close = true;
+        result = IO::IO_RESULT::FD_BLOCKED;
+      } else {
+        result = IO::IO_RESULT::ERROR;
       }
       done = true;
     } else if (count == 0) {
       //  The  remote has closed the connection, wait for EPOLLRDHUP
-      should_close = true;
       done = true;
+      result = IO::IO_RESULT::FD_CLOSED;
     } else {
       buffer_size += static_cast<size_t>(count);
+      result = IO::IO_RESULT::SUCCESS;
     }
   }
-  string_buffer << buffer;
-  return static_cast<int>(buffer_size);
+  if (result != IO::ERROR && buffer_size > 0)
+    string_buffer << buffer;
+  if (buffer_size == 0) {
+    result = IO::FULL_BUFFER;
+  }
+  return result;
 }
 
 int Connection::getFileDescriptor() const {
