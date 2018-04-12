@@ -203,7 +203,14 @@ sub getFarmVipStatus    # ($farm_name)
 		$backends = &getFarmBackends( $farm_name );
 	}
 	# Profiles with services
-	elsif ( $type eq "gslb" || $type =~ /http/ )
+	elsif ( $type eq "gslb" )
+	{
+		require Zevenet::Farm::GSLB::Stats;
+		my $stats = &getGSLBFarmBackendsStats($farm_name);
+		$backends = $stats->{ backends };
+	}
+	# Profiles with services
+	elsif ( $type =~ /http/ )
 	{
 		require Zevenet::Farm::HTTP::Stats;
 		my $stats = &getHTTPFarmBackendsStats($farm_name);

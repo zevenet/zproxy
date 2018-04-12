@@ -92,7 +92,7 @@ sub farm_stats # ( $farmname )
 
 	if ( $type eq "http" || $type eq "https" )
 	{
-		require Zevenet::Farm::HTTP::Stats;		
+		require Zevenet::Farm::HTTP::Stats;
 
 		my $stats = &getHTTPFarmBackendsStats( $farmname );
 		my $body = {
@@ -124,7 +124,7 @@ sub farm_stats # ( $farmname )
 		my $gslb_stats = &getGSLBFarmBackendsStats( $farmname );
 		my $body = {
 					 description => $desc,
-					 backends    => $gslb_stats->{ 'backend' },
+					 backends    => $gslb_stats->{ 'backends' },
 					 client      => $gslb_stats->{ 'udp' },
 					 server      => $gslb_stats->{ 'tcp' },
 					 extended    => $gslb_stats->{ 'stats' },
@@ -161,7 +161,7 @@ sub farms_number
 }
 
 # GET /stats/farms/modules
-#Get a farm status resume 
+#Get a farm status resume
 sub module_stats_status
 {
 	my @farms = @{ &getAllFarmStats() };
@@ -252,7 +252,7 @@ sub module_stats_status
 	}
 
 	my $body = {
-				 description => "Module status", 	
+				 description => "Module status",
 				 params 		=> {
 					 "lslb" => $lslb,
 					 "gslb" => $gslb,
@@ -488,10 +488,10 @@ sub stats_network_interfaces
 			$iface->{ status }  = $extrainfo->{ status };
 			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
 			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
-			
+
 			push @nicList, $iface;
 		}
-		
+
 		# Fill bond interface list
 		elsif ( $type eq 'bond' )
 		{
@@ -510,10 +510,10 @@ sub stats_network_interfaces
 			$iface->{ vlan }    = &getAppendInterfaces( $iface->{ interface }, 'vlan' );
 			$iface->{ virtual } = &getAppendInterfaces( $iface->{ interface }, 'virtual' );
 			$iface->{ slaves }  = &getBondSlaves( $iface->{ interface } );
-			
+
 			push @bondList, $iface;
 		}
-		else 
+		else
 		{
 			push @restIfaces, $iface;
 		}

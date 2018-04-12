@@ -31,9 +31,9 @@ Function: getGSLBGdnsdStats
 Parameters:
 	farmname - Farm name
 
-Returns:     
+Returns:
 	String - Return a string with json format
-		
+
 =cut
 sub getGSLBGdnsdStats    # &getGSLBGdnsdStats ( )
 {
@@ -63,7 +63,7 @@ Parameters:
 	farmname - Farm name
 	netstat - Conntrack -L output
 
-Returns:     
+Returns:
 	array - Return all ESTABLISHED conntrack lines for a farm
 
 FIXME:
@@ -86,7 +86,7 @@ sub getGSLBFarmEstConns    # ($farm_name,@netstat)
 sub getGSLBFarmBackendsStats
 {
 	my ($farmname) = @_;
-	
+
 	require Zevenet::Farm::GSLB::Service;
 
 	my $out_rss;
@@ -148,8 +148,8 @@ sub getGSLBFarmBackendsStats
 			  };
 		}
 	}
-	$gslb_stats->{ 'backend' } = \@backendStats;
+	$gslb_stats->{ 'backends' } = \@backendStats;
 	return $gslb_stats;
-}		
-		
+}
+
 1;
