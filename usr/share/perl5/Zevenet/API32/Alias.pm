@@ -116,10 +116,20 @@ sub get_by_type
 	my $desc = "List the aliases";
 
 	my $alias_list = &getAlias( $type );
+        my @out;
+        foreach my $key ( keys %{ $alias_list } )
+        {
+           my %hash = (
+                "id"    =>      $key,
+                "alias" =>      $alias_list->{ $key },
+           );
+           push @out, \%hash;
+
+        }
 
 	my $body = {
 				 description => $desc,
-				 params      => $alias_list
+				 params      => \@out
 	};
 
 	return &httpResponse( { code => 200, body => $body } );
