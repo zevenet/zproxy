@@ -289,14 +289,13 @@ sub get_virtual_list    # ()
 		  };
 	}
 
-	if ( $eload )
-	{
-		@output_list = &eload(
-							   module => 'Zevenet::RBAC::Group::Core',
-							   func   => 'getRBACUserSet',
-							   args   => ['interfaces', \@output_list],
-		);
-	}
+	@output_list = @{
+		&eload(
+				module => 'Zevenet::RBAC::Group::Core',
+				func   => 'getRBACUserSet',
+				args   => ['interfaces', \@output_list],
+		)
+	} if $eload;
 
 	my $body = {
 				 description => $desc,
