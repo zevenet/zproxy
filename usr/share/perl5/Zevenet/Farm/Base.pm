@@ -82,7 +82,7 @@ sub getFarmVip    # ($info,$farm_name)
 Function: getFarmStatus
 
 	Return farm status checking if pid file exists
-	 
+
 Parameters:
 	farmname - Farm name
 
@@ -91,7 +91,7 @@ Returns:
 
 NOTE:
 	Generic function
-		
+
 =cut
 sub getFarmStatus    # ($farm_name)
 {
@@ -146,16 +146,16 @@ sub getFarmStatus    # ($farm_name)
 Function: getFarmVipStatus
 
 	Return a vip status depend on the backends:
-	
+
 	down = The farm is not running
 	needed restart = The farm is up but it is pending of a restart action
 	critical = The farm is up and all backends are unreachable or maintenance
-	problem = The farm is up and there are some backend unreachable, but 
+	problem = The farm is up and there are some backend unreachable, but
 		almost a backend is in up status
-	maintenance = The farm is up and there are backends in up status, but 
+	maintenance = The farm is up and there are backends in up status, but
 		almost a backend is in maintenance mode.
 	up = The farm is up and all the backends are working success.
-	 
+
 Parameters:
 	farmname - Farm name
 
@@ -164,7 +164,7 @@ Returns:
 
 NOTE:
 	Generic function
-		
+
 =cut
 sub getFarmVipStatus    # ($farm_name)
 {
@@ -173,7 +173,7 @@ sub getFarmVipStatus    # ($farm_name)
 	my $output = -1;
 	my $farmStatus = &getFarmStatus( $farm_name );
 	return $output if !defined ( $farm_name );    # farm name cannot be empty
-	
+
 	$output = "problem";
 	if ( &getFarmLock( $farm_name ) != -1 )
 	{
@@ -187,7 +187,7 @@ sub getFarmVipStatus    # ($farm_name)
 	{
 		return -1;
 	}
-	
+
 	# types: "http", "https", "datalink", "l4xnat", "gslb" or 1
 	my $type = &getFarmType( $farm_name );
 
@@ -216,8 +216,25 @@ sub getFarmVipStatus    # ($farm_name)
 		$up_flag = 1 if $be->{ 'status' } eq "up";
 		$maintenance_flag = 1 if $be->{ 'status' } eq "maintenance";
 		$down_flag = 1 if $be->{ 'status' } eq "down";
+
+		# if there is a backend up and another down, the status is 'problem'
+		last if ( $down_flag and $up_flag );
 	}
-	
+
+	# check if redirect exists when there are not backends
+	if ( $type =~ /http/ )
+	{
+		require Zevenet::Farm::HTTP::Service;
+		foreach my $srv ( &getHTTPFarmServices( $farm_name ) )
+		{
+			if ( &getHTTPFarmVS( $farm_name, $srv, 'redirect' ) )
+			{
+				$up_flag = 1;
+				last;
+			}
+		}
+	}
+
 	# Decision logic
 	if( !$up_flag )
 	{
@@ -235,7 +252,7 @@ sub getFarmVipStatus    # ($farm_name)
 	{
 		$output = "up";
 	}
-	
+
 	return $output;
 }
 
@@ -243,13 +260,13 @@ sub getFarmVipStatus    # ($farm_name)
 Function: getFarmPid
 
 	Returns farm PID
-		
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Integer - return pid of farm, '-' if pid not exist or -1 on failure
-			
+
 =cut
 sub getFarmPid    # ($farm_name)
 {
