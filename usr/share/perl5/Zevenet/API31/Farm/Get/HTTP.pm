@@ -294,9 +294,9 @@ sub getZapiHTTPServiceStruct
 					 leastresp    => $dyns,
 					 httpsb       => $httpsbe,
 					 backends     => $backends,
-					 fgtimecheck     => $fgttcheck,
-					 fglog    		=> $fglog,
-					 fgenabled     => $fguse,
+					 fgtimecheck  => $fgttcheck,
+					 fglog        => $fglog,
+					 fgenabled    => $fguse,
 					 fgscript     => $fgscript,
 	};
 

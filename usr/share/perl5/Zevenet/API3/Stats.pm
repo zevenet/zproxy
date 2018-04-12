@@ -144,10 +144,12 @@ sub farm_stats # ( $farmname )
 		{
 			my @backends_data = split ( "\t", $_ );
 			$activesessions = $activesessions + $backends_data[6];
+
 			if ( $backends_data[0] == 0 )
 			{
 				$i++;
 			}
+
 			my $ip_backend   = $backends_data[1];
 			my $port_backend = $backends_data[2];
 
@@ -194,9 +196,9 @@ sub farm_stats # ( $farmname )
 
 		# Print Success
 		my $body = {
-					description         => "List farm stats",
-					backends => \@out_rss,
-					sessions => \@out_css,
+					 description => "List farm stats",
+					 backends    => \@out_rss,
+					 sessions    => \@out_css,
 		};
 
 		&httpResponse({ code => 200, body => $body });
