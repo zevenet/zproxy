@@ -546,6 +546,7 @@ sub actions_blacklists
 	}
 	elsif ( $json_obj->{ action } eq 'restart' )
 	{
+		require Zevenet::IPDS::Blacklist::Config;
 		my $error = &runBLRestartByRule( $listName );
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg ) if $error;
 		&setBLParam( $listName, 'status', 'up' );
