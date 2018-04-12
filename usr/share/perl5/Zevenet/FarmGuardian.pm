@@ -264,10 +264,13 @@ sub delFGFarm
 {
 	my $farm = shift;
 	my $srv  = shift;
-	my $fg;
 
+	require Zevenet::Farm::Service;
+
+	my $fg;
 	my $err = &runFGFarmStop( $farm, $srv );
 	my $type = &getFarmType( $farm );
+
 	if ( $type =~ /http/ or $type eq 'gslb' )
 	{
 		if ( not $srv )
