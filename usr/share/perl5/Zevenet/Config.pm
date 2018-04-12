@@ -231,6 +231,12 @@ sub setTinyObj
 {
 	my ( $path, $object, $key, $value, $action ) = @_;
 
+	unless ( $object )
+	{
+		&zenlog( "Object not defined trying to save it in file $path" );
+		return;
+	}
+
 	if ( !-f $path )
 	{
 		open my $fi, '>', $path;
@@ -251,6 +257,8 @@ sub setTinyObj
 	my $lock_fd   = &lockfile( $lock_file );
 
 	my $fileHandle = Config::Tiny->read( $path );
+
+	&zenlog( "Could not open file $path: $Config::Tiny::errstr" ) unless $fileHandle;
 
 	# save all struct
 	if ( ref $key )
