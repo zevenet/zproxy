@@ -59,11 +59,14 @@ sub delete_interface_floating    # ( $floating )
 	include 'Zevenet::Cluster';
 
 	# force sync to make sure the configuration is updated
-	my $configdir = &getGlobalConfiguration('configdir');
-	&zenlog("Syncing $configdir");
-	&runSync( $configdir );
+	if ( &getZClusterRunning() && &getZClusterNodeStatus() eq 'master' )
+	{
+		my $configdir = &getGlobalConfiguration('configdir');
+		&zenlog("Syncing $configdir");
+		&runSync( $configdir );
 
-	&runZClusterRemoteManager( 'interface', 'float-update' );
+		&runZClusterRemoteManager( 'interface', 'float-update' );
+	}
 
 	my $message = "The floating interface has been removed.";
 	my $body = {
@@ -156,12 +159,15 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 
 	include 'Zevenet::Cluster';
 
-	# force sync to make sure the configuration is updated
-	my $configdir = &getGlobalConfiguration('configdir');
-	&zenlog("Syncing $configdir");
-	&runSync( $configdir );
+	if ( &getZClusterRunning() && &getZClusterNodeStatus() eq 'master' )
+	{
+		# force sync to make sure the configuration is updated
+		my $configdir = &getGlobalConfiguration('configdir');
+		&zenlog("Syncing $configdir");
+		&runSync( $configdir );
 
-	&runZClusterRemoteManager( 'interface', 'float-update' );
+		&runZClusterRemoteManager( 'interface', 'float-update' );
+	}
 
 	my $message = "Floating interface modification done";
 	my $body = {
