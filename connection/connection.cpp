@@ -61,11 +61,11 @@ int Connection::getFileDescriptor() const {
 void Connection::setFileDescriptor(int fd) {
   socket_fd = fd;
 }
-int Connection::writeTo(int fd) {
+IO::IO_RESULT Connection::writeTo(int fd) {
   bool done = false;
   size_t sent = 0;
   ssize_t count;
-
+  IO::IO_RESULT result = IO::ERROR;
   while (!done) {
     count =
         ::send(fd, string_buffer.string().c_str() + sent,
@@ -77,23 +77,29 @@ int Connection::writeTo(int fd) {
         std::string error = "write() failed  ";
         error += std::strerror(errno);
         Debug::Log(error, LOG_NOTICE);
+        result = IO::FD_BLOCKED;
+      } else {
+        result = IO::IO_RESULT::ERROR;
       }
       done = true;
       break;
     } else if (count == 0) {
       done = true;
+      result = IO::FD_CLOSED;
       break;
     } else {
       sent += static_cast<size_t>(count);
+      result = IO::SUCCESS;
     }
   }
-  string_buffer.erase(static_cast<unsigned int>(sent));
-  return static_cast<int> (sent);
+  if (sent > 0 && result != IO::ERROR) { string_buffer.erase(static_cast<unsigned int>(sent)); }
+  return result;
 }
-int Connection::write(const char *data, size_t buffer_size) {
+IO::IO_RESULT Connection::write(const char *data, size_t buffer_size) {//}, size_t *sent) {
   bool done = false;
   ssize_t count;
-  size_t sent = 0;
+  IO::IO_RESULT result = IO::ERROR;
+  int sent = 0;
   while (!done) {
     count =
         ::send(socket_fd, data + sent,
@@ -101,21 +107,26 @@ int Connection::write(const char *data, size_t buffer_size) {
                MSG_NOSIGNAL);
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
-          errno != ECONNRESET*/) {  // TODO:: What to do if connection closed
+          errno != ECONNRESET*/) {  // TODO:: What to do if connection closes
         std::string error = "write() failed  ";
         error += std::strerror(errno);
-        Debug::Log(error, LOG_NOTICE);
+        Debug::Log(error, LOG_DEBUG);
+        result = IO::FD_BLOCKED;
+      } else {
+        result = IO::ERROR;
       }
       done = true;
       break;
     } else if (count == 0) {
       done = true;
+      result = IO::FD_CLOSED;
       break;
     } else {
       sent += static_cast<size_t>(count);
+      result = IO::SUCCESS;
     }
   }
-  return static_cast<int> (sent);
+  return result;
 }
 
 void Connection::closeConnection() {

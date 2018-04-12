@@ -1,5 +1,4 @@
-//20447 root       20   0  9356  3440  2316 S  0.7  0.0  1:38.75 watch -n 1 netstat -putan | grep zhttp
-2
+//
 // Created by abdess on 4/5/18.
 //
 
@@ -33,7 +32,6 @@ class StreamManager : public EpollManager {
   void stop();
   void addBackend(std::string address, int port);
   BackendConfig *getBackend();
-
 };
 
 #endif  // NEW_ZHTTP_WORKER_H
