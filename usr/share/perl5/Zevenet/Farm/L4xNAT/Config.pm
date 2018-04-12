@@ -266,7 +266,6 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 			$line =
 			  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$session\;$args[7]\;$args[8];$args[9]";
 			splice @configfile, $i, $line;
-			$output = $?;    # FIXME
 		}
 		$i++;
 	}
