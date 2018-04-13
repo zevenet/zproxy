@@ -23,6 +23,8 @@
 
 use strict;
 
+sub include;
+
 =begin nd
 Function: setConntrackdConfig
 
