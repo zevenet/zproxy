@@ -359,51 +359,62 @@ sub setBLCreateRule
 
 	$add = '-I';
 
-	foreach my $table ( @tables )
+	my @match;
+	my $type       = &getFarmType( $farmName );
+	my $protocol   = &getFarmProto( $farmName );
+	my $protocolL4 = &getFarmProto( $farmName );
+	my $vip        = &getFarmVip( 'vip', $farmName );
+	my $vport      = &getFarmVip( 'vipp', $farmName );
+
+	# no farm
+	# blank chain
+	if ( $type eq 'l4xnat' )
 	{
-		# -d farmIP, -p PROTOCOL --dport farmPORT
-		my $vip       = &getFarmVip( 'vip',  $farmName );
-		my $vport_str = &getFarmVip( 'vipp', $farmName );
+		require Zevenet::Farm::L4xNAT::Validate;
 
-		$vip = "-d $vip";
-		my $protocol = &getFarmProto( $farmName );
-
-		# multiport
-		my @ports = split ( ',', $vport_str );
-
-		foreach my $vport ( @ports )
+		# all ports
+		if ( $vport eq '*' )
 		{
-			my $farmOpt;
-			if ( $protocol =~ /UDP/i || $protocol =~ /TFTP/i || $protocol =~ /SIP/i )
-			{
-				$protocol = 'udp';
-				if ( $vport eq "*" )
-				{
-					$farmOpt  = "$vip";
-				}
-				else
-				{
-					$farmOpt  = "$vip -p $protocol --dport $vport";
-				}
-			}
+			push @match, "-d $vip --protocol tcp";
+		}
 
-			if ( $protocol =~ /HTTP/i || $protocol =~ /TCP/i || $protocol =~ /FTP/i )
-			{
-				$protocol = 'tcp';
-				if ( $vport eq "*" )
-				{
-					$farmOpt  = "$vip";
-				}
-				else
-				{
-					$farmOpt  = "$vip -p $protocol --dport $vport";
-				}
-			}
-			# no port in datalink famrs
-			else
-			{
-				$farmOpt  = "$vip";
-			}
+		# l4 farm multiport
+		elsif ( &ismport( $vport ) eq "true" )
+		{
+			push @match, "-d $vip --protocol tcp -m multiport --dports $vport";
+		}
+
+		# unique port
+		else
+		{
+			push @match, "-d $vip --protocol tcp --dport $vport";
+			push @match, "-d $vip --protocol udp --dport $vport";
+		}
+	}
+
+	# farm using tcp and udp protocol
+	elsif ( $type eq 'gslb' )
+	{
+		push @match, "-d $vip --protocol tcp --dport $vport";
+		push @match, "-d $vip --protocol udp --dport $vport";
+	}
+
+	# http farms
+	elsif ( $type =~ /http/ )
+	{
+		push @match, "-d $vip --protocol tcp --dport $vport";
+	}
+
+	#~ #not valid datlink farms
+	elsif ( $type eq 'datalink' )
+	{
+	push @match, "-d $vip";
+	}
+
+	foreach my $farmOpt (@match)
+	{
+		foreach my $table (@tables	)
+		{
 
 # iptables -A PREROUTING -t raw -m set --match-set wl_2 src -d 192.168.100.242 -p tcp --dport 80 -j DROP -m comment --comment "BL,rulename,farmname"
 			$cmd = &getGlobalConfiguration( 'iptables' )
