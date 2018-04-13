@@ -23,6 +23,8 @@
 
 use strict;
 
+sub include;
+
 my $maint_if = 'cl_maintenance';
 
 =begin nd
@@ -391,7 +393,7 @@ vrrp_instance ZCluster {
 \tnotify_master \"/usr/local/zevenet/bin/zcluster-manager notify_master\"
 \tnotify_backup \"/usr/local/zevenet/bin/zcluster-manager notify_backup\"
 \tnotify_fault  \"/usr/local/zevenet/bin/zcluster-manager notify_fault\"
-\tnotify        \"/usr/local/zevenet/abin/zcluster-manager\"
+\tnotify        \"/usr/local/zevenet/bin/zcluster-manager\"
 }
 
 ";
@@ -818,7 +820,7 @@ sub runSync
 {
 	my $src_path = shift;
 
-	#~ &zenlog("starting runSync");
+	#~ &zenlog("starting runSync for path: '$src_path'");
 
 	require Zevenet::SystemInfo;
 
@@ -1272,6 +1274,9 @@ sub getZClusterNodeStatusInfo
 		$node->{ role } = &runRemotely("$zcluster_manager getZClusterNodeStatus", $ip );
 		chomp $node->{ role };
 	}
+
+	$ip = '' unless defined $ip;
+	&zenlog("getZClusterNodeStatusInfo($ip): " . Dumper $node);
 
 	return $node;
 }
