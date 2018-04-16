@@ -646,6 +646,7 @@ sub getCertInfo    # ($certfile)
 		$creation = join ( ' ', @eject );
 	}
 	chomp ( $creation );
+	$creation = `date -d "${creation}" +%F" "%T" "%Z -u`;
 
 
 	# Cert Expiration Date
@@ -654,12 +655,13 @@ sub getCertInfo    # ($certfile)
 	{
 		my ( $line ) = grep /\sNot After/, @cert_data;
 		( undef, $expiration ) = split ( /: /, $line );
+		chomp ( $expiration );
+        $expiration = `date -d "${expiration}" +%F" "%T" "%Z -u`;
 	}
 	elsif ( $type eq "CSR" )
 	{
 		$expiration = "NA";
 	}
-	chomp ( $expiration );
 
 	return {
 			 file       => $certfile,
