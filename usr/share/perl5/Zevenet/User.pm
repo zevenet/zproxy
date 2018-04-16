@@ -38,7 +38,13 @@ Returns:
 
 sub getUser
 {
-	return $ENV{ REQ_USER };
+	if ( ! exists $ENV{ REQ_USER } || ! defined $ENV{ REQ_USER } )
+	{
+		use Carp 'cluck';
+		cluck('Warning: User name not defined');
+	}
+
+	return $ENV{ REQ_USER } // '';
 }
 
 =begin nd
