@@ -75,16 +75,6 @@ sub move_services
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# select action
-	if ( $srv_position > $json_obj->{ 'position' } )
-	{
-		$moveservice = "up";
-	}
-	else
-	{
-		$moveservice = "down";
-	}
-
 	# stopping farm
 	my $farm_status = &getFarmStatus( $farmname );
 	if ( $farm_status eq 'up' )
@@ -99,15 +89,7 @@ sub move_services
 		&zenlog( "Farm stopped successful." );
 	}
 
-	# move service until required position
-	while ( $srv_position != $json_obj->{ 'position' } )
-	{
-		#change configuration file
-		&moveServiceFarmStatus( $farmname, $moveservice, $service );
-		&moveService( $farmname, $moveservice, $service );
-
-		$srv_position = &getFarmVSI( $farmname, $service );
-	}
+	&moveService( $farmname, $service, $json_obj->{ 'position' } );
 
 	# start farm if his status was up
 	if ( $farm_status eq 'up' )

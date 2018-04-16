@@ -125,11 +125,11 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 					{
 						$lline =~ s/\[DESC\]/$service/;
 					}
-					if ( $lline =~ /StrictTransportSecurity/
-                            && $farm_type eq "https" )
-                   	{
-                        $lline =~ s/#//;
-                   	}					
+					if (    $lline =~ /StrictTransportSecurity/
+						 && $farm_type eq "https" )
+					{
+						$lline =~ s/#//;
+					}
 					splice @fileconf, $i, 0, "$lline";
 					$i++;
 				}
@@ -319,6 +319,271 @@ sub getHTTPFarmServices
 	}
 
 	return @output;
+}
+
+=begin nd
+Function: getHTTPServiceBlocks
+
+	Return a struct with configuration about the configuration farm and its services
+
+Parameters:
+	farmname - Farm name
+	service - Service to move
+
+Returns:
+	Hash ref - Return 3 keys: farm, it is the part of the farm configuration file with the configuration; request, it is the block of code for the request service;
+	services, it is a hash reference with the id service, the code of the service is appending from the id, it is excluid the request service from this list.
+
+	example:
+
+	{
+		farm => [
+			'######################################################################',
+			'##GLOBAL OPTIONS                                                      ',
+			'User		"root"                                                     ',
+			'Group		"root"                                                     ',
+			'Name		AAmovesrv                                                  ',
+			'## allow PUT and DELETE also (by default only GET, POST and HEAD)?:   ',
+			'#ExtendedHTTP	0                                                      ',
+			'## Logging: (goes to syslog by default)                               ',
+			'##	0	no logging                                                     ',
+			'##	1	normal                                                         ',
+			'...																   '
+		],
+		request => [
+			'Service "sev3"											 ',
+			'	##False##HTTPS-backend##                             ',
+			'	#DynScale 1                                          ',
+			'	#BackendCookie "ZENSESSIONID" "domainname.com" "/" 0 ',
+			'	#HeadRequire "Host: "                                ',
+			'	#Url ""                                              ',
+			'	Redirect "https://SEFAwwwwwwwwwwFA.hf"               ',
+			'	#StrictTransportSecurity 21600000                    ',
+			'	#Session                                             ',
+			'	...													 '
+		],
+		services => {
+			'0' => [
+				'Service "sev1"											 ',
+				'	##False##HTTPS-backend##                             ',
+				'	#DynScale 1                                          ',
+				'	#BackendCookie "ZENSESSIONID" "domainname.com" "/" 0 ',
+				'	#HeadRequire "Host: "                                ',
+				'	#Url ""                                              ',
+				'	Redirect "https://SEFAwwwwwwwwwwFA.hf"               ',
+				'	#StrictTransportSecurity 21600000                    ',
+				'	#Session                                             ',
+				'	...													 '
+			],
+			'1' => [
+				'Service "sev2"											 ',
+				'	##False##HTTPS-backend##                             ',
+				'	#DynScale 1                                          ',
+				'	#BackendCookie "ZENSESSIONID" "domainname.com" "/" 0 ',
+				'	#HeadRequire "Host: "                                ',
+				'	#Url ""                                              ',
+				'	Redirect "https://SEFAwwwwwwwwwwFA.hf"               ',
+				'	#StrictTransportSecurity 21600000                    ',
+				'	#Session                                             ',
+				'	...													 '
+			],
+		}
+	}
+
+=cut
+
+
+sub getHTTPServiceBlocks
+{
+	my $farm = shift;
+	my $srv  = shift;
+	my $out = {
+		farm => [],
+		services => {},
+		request => [],
+		};
+	my @block;
+	my @srv_block;
+	my $current_srv;
+	my $srv_flag;
+	my @srv_request;
+	my $farm_flag = 1;
+	my @aux;
+
+	my $farm_filename = &getFarmFile( $farm );
+	open my $fileconf, '<', "$configdir/$farm_filename";
+
+	my $ind = 0;
+	foreach my $line ( <$fileconf> )
+	{
+		if ( $line =~ /^\tService \"(.+)\"/ )
+		{
+			$srv_flag = 1;
+			$farm_flag = 0;
+			$current_srv = $1;
+		}
+
+		if ( $farm_flag )
+		{
+			push @{ $out->{ farm } }, $line;
+		}
+		if ( $srv_flag )
+		{
+			if ( $srv ne $current_srv )
+			{
+				push @{ $out->{ services }->{ $ind } }, $line;
+			}
+			else
+			{
+				push @{ $out->{ request } }, $line;
+			}
+		}
+		if ( $line =~ /^\tEnd$/ and $srv_flag )
+		{
+			$srv_flag=0;
+			$ind++ if ( $srv ne $current_srv );
+		}
+	}
+
+	return $out;
+}
+
+=begin nd
+Function: moveService
+
+	Move a HTTP service to change its preference. This function changes the possition of a service in farm config file
+
+Parameters:
+	farmname - Farm name
+	move - Direction where it moves the service. The possbile value are: "down", decrease the priority or "up", increase the priority
+	service - Service to move
+
+Returns:
+	integer - Always return 0
+
+FIXME:
+	Rename function to setHTTPFarmMoveService
+	Always return 0, create error control
+
+=cut
+
+
+sub moveService
+{
+	my $farm      = shift;
+	my $srv       = shift;
+	my $req_index = shift;
+	my $out;
+
+	# lock file
+	my $farm_filename = &getFarmFile( $farm );
+	require Zevenet::Lock;
+	my $lock_file = "/tmp/$farm.lock";
+	my $lock_fh   = &lockfile( $lock_file );
+
+	# reduce a index if service was in a previuos position.
+	my $srv_index = &getFarmVSI( $farm, $srv );
+
+	# get service code
+	my $srv_block = &getHTTPServiceBlocks( $farm, $srv );
+
+	my @sort_list = @{ $srv_block->{ farm } };
+
+	my $size = scalar keys %{ $srv_block->{ services } };
+	my $srv_flag = 0;
+	my $id = 0;
+
+	for ( my $i=0; $i < $size+1; $i++ )
+	{
+		if ( $i == $req_index )
+		{
+			push @sort_list, @{ $srv_block->{ request } };
+		}
+
+		else
+		{
+			push @sort_list, @{ $srv_block->{ services }->{ $id } };
+			$id++;
+		}
+	}
+	push @sort_list, "End";
+
+	# write in config file
+	use Tie::File;
+	tie my @file, "Tie::File", "$configdir/$farm_filename";
+	@file = @sort_list;
+	untie @file;
+
+	# unlock file
+	&unlockfile( $lock_fh );
+
+	# move fg
+	&moveServiceFarmStatus( $farm, $srv, $req_index );
+
+	return $out;
+}
+
+
+=begin nd
+Function: moveServiceFarmStatus
+
+	Modify the service index in status file ( farmname_status.cfg ). For updating farmguardian backend status.
+
+Parameters:
+	farmname - Farm name
+	move - Direction where it moves the service. The possbile value are: "down", decrease the priority or "up", increase the priority
+	service - Service to move
+
+Returns:
+	integer - Always return 0
+
+FIXME:
+	Rename function to setHTTPFarmMoveServiceStatusFile
+	Always return 0, create error control
+
+=cut
+
+sub moveServiceFarmStatus
+{
+	my ( $farmname, $service, $req_index ) = @_;
+
+	use Tie::File;
+	my $fileName = "$configdir\/${farmname}_status.cfg";
+	tie my @file, 'Tie::File', $fileName;
+
+	my $srv_id = &getFarmVSI( $farmname, $service );
+	return if ( $srv_id == -1 );
+	return if ( $srv_id == $req_index );
+	#
+	my $dir = ( $srv_id < $req_index )? "up" : "down";
+
+	foreach my $line ( @file )
+	{
+		if ( $line =~ /(^-[bB] 0) (\d+) (.+)$/ )
+		{
+			my $cad1 = $1;
+			my $index = $2;
+			my $cad2 = $3;
+
+			# replace with the new service position
+			if ( $index == $srv_id ) 				{ $index = $req_index; }
+
+			# replace with the new service position
+			elsif ( $dir eq "down" and $index < $srv_id and $index >= $req_index )	{ $index++ ; }
+			# replace with the new service position
+			elsif ( $dir eq "up" and $index > $srv_id and $index <= $req_index )	{ $index-- ; }
+
+			$line = "$cad1 $index $cad2";
+		}
+	}
+
+	untie @file;
+
+	&zenlog(
+		"The service \"$service\" from farm \"$farmname\" has been moved to $req_index the position", "debug2"
+	);
+
+	return 0;
 }
 
 =begin nd
@@ -805,7 +1070,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 				my $policy = 'Redirect';
 				$policy .= 'Append' if $tag eq "redirectappend";
 
-				my $comment = ( $string eq "" )? '#': '';
+				my $comment = ( $string eq "" ) ? '#' : '';
 
 				$line =~ /Redirect(?:Append)? (30[127] )?"/;
 				my $redirect_code = $1 // "";
@@ -964,10 +1229,9 @@ Parameters:
 	service - Service name
 
 Returns:
-	integer - Service index
+	integer - Service index, it returns -1 if the service does not exist
 
 FIXME:
-	Initialize output to -1 and do error control
 	Rename with intuitive name, something like getHTTPFarmServiceIndex
 =cut
 
@@ -976,18 +1240,20 @@ sub getFarmVSI    # ($farm_name,$service)
 	my ( $farmname, $service ) = @_;
 
 	# get service position
-	my $srv_position = 0;
+	my $srv_position = -1;
 	my @services     = &getHTTPFarmServices( $farmname );
+	my $index = 0;
 	foreach my $srv ( @services )
 	{
 		if ( $srv eq $service )
 		{
 			# found
+			$srv_position = $index;
 			last;
 		}
 		else
 		{
-			$srv_position++;
+			$index++;
 		}
 	}
 
