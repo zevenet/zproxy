@@ -21,20 +21,34 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
           stream->backend_connection.closeConnection();
           return;
         } else {
+          Network::setSocketNonBlocking(stream->backend_connection.getFileDescriptor());
           Debug::Log("Connected to backend : " + bck->address + ":" + std::to_string(bck->port), LOG_DEBUG);
         }
         streams_set[fd] = stream;
         streams_set[stream->backend_connection.getFileDescriptor()] = stream;
+        addFd(stream->backend_connection.getFileDescriptor(), EVENT_TYPE::READ, EVENT_GROUP::SERVER);
       }
       switch (event_group) {
         case ACCEPTOR:break;
-        case SERVER:break;
+        case SERVER: {
+          auto result = stream->backend_connection.read();
+          if (result != IO::SUCCESS && result != IO::FD_BLOCKED) {
+            Debug::Log("Erorr reading response ", LOG_DEBUG);
+          }
+
+          updateFd(stream->client_connection.getFileDescriptor(), EVENT_TYPE::WRITE, EVENT_GROUP::CLIENT);
+          break;
+        }
         case CLIENT: {
-          stream->client_connection.read();
-          updateFd(fd, EVENT_TYPE::WRITE, EVENT_GROUP::CLIENT);
+          auto result = stream->client_connection.read();
+          if (result != IO::SUCCESS && result != IO::FD_BLOCKED) {
+            Debug::Log("Erorr reading request ", LOG_DEBUG);
+          }
+          updateFd(stream->backend_connection.getFileDescriptor(), EVENT_TYPE::WRITE, EVENT_GROUP::SERVER);
           break;
         }
       }
+      updateFd(fd, EVENT_TYPE::READ, event_group);
       break;
     }
     case WRITE: {
@@ -46,21 +60,35 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
 
       switch (event_group) {
         case ACCEPTOR:break;
-        case SERVER:break;
-        case CLIENT: {
-          auto sent =
-              stream->client_connection.write(stream->send_e200.c_str(), stream->send_e200.length() - 1);
-          if (sent != stream->send_e200.length() - 1) {
-            Debug::Log("Something happend sentid e200", LOG_DEBUG);
+        case SERVER: {
+          auto result = stream->client_connection.writeTo(stream->backend_connection.getFileDescriptor());
+          if (result == IO::SUCCESS) {
+            updateFd(fd, EVENT_TYPE::READ, event_group);
+          } else if (result == IO::FD_BLOCKED) {
+            updateFd(fd, EVENT_TYPE::WRITE, event_group);
+          } else {
+            updateFd(fd, EVENT_TYPE::ANY, event_group);
+            Debug::Log("Erorr sending data to client", LOG_DEBUG);
           }
-          updateFd(fd, READ_ONESHOT, EVENT_GROUP::CLIENT);
+          updateFd(stream->client_connection.getFileDescriptor(), EVENT_TYPE::READ, EVENT_GROUP::CLIENT);
+          break;
+        }
+        case CLIENT: {
+          auto result = stream->backend_connection.writeTo(stream->client_connection.getFileDescriptor());
+          if (result == IO::SUCCESS) {
+            updateFd(fd, EVENT_TYPE::READ, event_group);
+          } else if (result == IO::FD_BLOCKED) {
+            updateFd(fd, EVENT_TYPE::WRITE, event_group);
+          } else {
+            updateFd(fd, EVENT_TYPE::ANY, event_group);
+            Debug::Log("Erorr sending data to client", LOG_DEBUG);
+          }
+          updateFd(stream->backend_connection.getFileDescriptor(), EVENT_TYPE::READ, EVENT_GROUP::SERVER);
           break;
         }
       }
       break;
     }
-    case CONNECT:break;
-    case ACCEPT:break;
     case DISCONNECT: {
       auto stream = streams_set[fd];
       if (stream == nullptr) {
@@ -74,6 +102,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
       delete stream;
       break;
     }
+    default: Debug::Log("Unexpected  event type", LOG_DEBUG);
   }
 }
 void StreamManager::stop() { is_running = false; }

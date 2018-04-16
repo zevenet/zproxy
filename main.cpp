@@ -5,13 +5,13 @@
 
 std::mutex Debug::log_lock;
 
-int main() {
+int initListener() {
   Debug::Log("Zhttp starting");
 
   // Increase num file descriptor ulimit
   struct rlimit r;
   getrlimit(RLIMIT_NOFILE, &r);
-  Debug::Log("GetUlimit::RLIMIT_NOFILE\n\tCurrent " +
+  Debug::Log("current::RLIMIT_NOFILE\n\tCurrent " +
       std::to_string(r.rlim_cur));
   Debug::Log("\tMaximum " + std::to_string(r.rlim_cur));
   if (r.rlim_cur != r.rlim_max) {
@@ -26,8 +26,13 @@ int main() {
   Debug::Log("\tMaximum " + std::to_string(r.rlim_cur));
 
   Listener listener;
-  listener.init("127.0.0.1", 7777);
+  listener.init("127.0.0.1", 9999);
   listener.start();
   //  getchar();
-  return 0;
+
+}
+
+int main() {
+//  test_runner::test_stringBuffer();
+  return initListener();
 }

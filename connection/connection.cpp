@@ -6,7 +6,13 @@
 #include "../debug/Debug.h"
 #include "../util/Network.h"
 
-Connection::Connection() : string_buffer(), socket_fd(-1), is_connected(false) {
+#define  PRINT_BUFFER_SIZE \
+//  Debug::Log("BUFFER::SIZE = " + std::to_string(buffer_size), LOG_DEBUG); \
+//  Debug::Log("BUFFER::STRLEN = " + std::to_string(strlen(buffer)), LOG_DEBUG);
+
+Connection::Connection() : buffer_size(0),
+//string_buffer(),
+                           socket_fd(-1), is_connected(false) {
   //address.ai_addr = new sockaddr();
 }
 Connection::~Connection() {
@@ -20,11 +26,14 @@ Connection::~Connection() {
 }
 
 IO::IO_RESULT Connection::read() {
-  char buffer[MAX_DATA_SIZE];
+//  char buffer[MAX_DATA_SIZE];
+//  size_t buffer_size = 0;
+
   bool done = false;
   ssize_t count;
-  size_t buffer_size = 0;
   IO::IO_RESULT result = IO::ERROR;
+//  Debug::Log("#IN#bufer_size" + std::to_string(string_buffer.string().length()));
+  PRINT_BUFFER_SIZE
   while (!done) {
     count = ::recv(socket_fd, buffer + buffer_size, MAX_DATA_SIZE - buffer_size,
                    MSG_NOSIGNAL);
@@ -33,9 +42,9 @@ IO::IO_RESULT Connection::read() {
         std::string error = "read() failed  ";
         error += std::strerror(errno);
         Debug::Log(error, LOG_NOTICE);
-        result = IO::IO_RESULT::FD_BLOCKED;
-      } else {
         result = IO::IO_RESULT::ERROR;
+      } else {
+        result = IO::IO_RESULT::FD_BLOCKED;
       }
       done = true;
     } else if (count == 0) {
@@ -44,14 +53,20 @@ IO::IO_RESULT Connection::read() {
       result = IO::IO_RESULT::FD_CLOSED;
     } else {
       buffer_size += static_cast<size_t>(count);
-      result = IO::IO_RESULT::SUCCESS;
+      if ((MAX_DATA_SIZE - buffer_size) < 5) {
+        Debug::Log("Buffer maximum size reached !!1", LOG_DEBUG);
+        done = true;
+        result = IO::FULL_BUFFER;
+        break;
+      } else
+        result = IO::IO_RESULT::SUCCESS;
     }
   }
-  if (result != IO::ERROR && buffer_size > 0)
-    string_buffer << buffer;
-  if (buffer_size == 0) {
-    result = IO::FULL_BUFFER;
-  }
+  PRINT_BUFFER_SIZE
+//  if (buffer_size > 0)
+//    string_buffer << buffer;
+//  Debug::Log("#OUT#bufer_size" + std::to_string(string_buffer.string().length()));
+
   return result;
 }
 
@@ -66,10 +81,12 @@ IO::IO_RESULT Connection::writeTo(int fd) {
   size_t sent = 0;
   ssize_t count;
   IO::IO_RESULT result = IO::ERROR;
+//  Debug::Log("#IN#bufer_size" + std::to_string(string_buffer.string().length()));
+  PRINT_BUFFER_SIZE
   while (!done) {
     count =
-        ::send(fd, string_buffer.string().c_str() + sent,
-               string_buffer.string().length() - sent,
+        ::send(fd, buffer + sent,
+               buffer_size - sent,
                MSG_NOSIGNAL);
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
@@ -77,22 +94,26 @@ IO::IO_RESULT Connection::writeTo(int fd) {
         std::string error = "write() failed  ";
         error += std::strerror(errno);
         Debug::Log(error, LOG_NOTICE);
-        result = IO::FD_BLOCKED;
+        result = IO::ERROR;
       } else {
-        result = IO::IO_RESULT::ERROR;
+        result = IO::IO_RESULT::FD_BLOCKED;
       }
       done = true;
       break;
     } else if (count == 0) {
       done = true;
-      result = IO::FD_CLOSED;
       break;
     } else {
       sent += static_cast<size_t>(count);
       result = IO::SUCCESS;
     }
   }
-  if (sent > 0 && result != IO::ERROR) { string_buffer.erase(static_cast<unsigned int>(sent)); }
+  if (sent > 0 && result != IO::ERROR) {
+    buffer_size -= sent;
+//    string_buffer.erase(static_cast<unsigned int>(sent));
+  }
+//  Debug::Log("#OUT#bufer_size" + std::to_string(string_buffer.string().length()));
+  PRINT_BUFFER_SIZE
   return result;
 }
 IO::IO_RESULT Connection::write(const char *data, size_t buffer_size) {//}, size_t *sent) {
@@ -119,13 +140,13 @@ IO::IO_RESULT Connection::write(const char *data, size_t buffer_size) {//}, size
       break;
     } else if (count == 0) {
       done = true;
-      result = IO::FD_CLOSED;
       break;
     } else {
       sent += static_cast<size_t>(count);
       result = IO::SUCCESS;
     }
   }
+
   return result;
 }
 

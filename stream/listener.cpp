@@ -73,8 +73,9 @@ void Listener::start() {
   for (int i = 0; i < stream_manager_set.size(); i++) {
     auto sm = stream_manager_set[i];
     if (sm != nullptr) {
-      sm->addBackend("192.168.101.253", 80);
-      sm->addBackend("192.168.101.254", 80);
+//      sm->addBackend("192.168.101.253", 80);
+//      sm->addBackend("192.168.101.254", 80);
+      sm->addBackend("0.0.0.0", 7777);
       sm->start(i);
     } else {
       Debug::Log("StreamManager id doesn't exist : " + std::to_string(i), LOG_ERR);

@@ -2,11 +2,12 @@
 // Created by abdess on 4/5/18.
 //
 #include "string_buffer.h"
-StringBuffer::StringBuffer() :buffer(){
+StringBuffer::StringBuffer() : buffer() {
 
 }
-StringBuffer &StringBuffer::operator<<(char const *s) {
+StringBuffer &StringBuffer::operator<<(const char *s) {
   buffer += s;
+//  buffer.insert(std::string(s));
   return *this;
 }
 
@@ -15,7 +16,7 @@ StringBuffer &StringBuffer::operator<<(int i) {
   return *this;
 }
 StringBuffer &StringBuffer::operator<<(std::string const &s) {
-  buffer +=s;
+  buffer += s;
   return *this;
 }
 StringBuffer &StringBuffer::operator<<(StringBuffer const &s) {
@@ -27,4 +28,8 @@ std::string const &StringBuffer::string() const {
 }
 void StringBuffer::erase(unsigned int end) {
   buffer.erase(buffer.begin(), buffer.begin() + end);
+}
+void StringBuffer::addData(char const *s, size_t size) {
+  for (int i = 0; i < size; i++)
+    buffer += s[0];
 }

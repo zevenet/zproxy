@@ -11,7 +11,7 @@
 #include <type_traits>
 #include "../util/utils.h"
 
-#define DEBUG_LEVEl 5
+#define DEBUG_LEVEl 6
 #define LOGFACILITY -1
 
 #define MAXBUF 4096

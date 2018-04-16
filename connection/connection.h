@@ -18,7 +18,9 @@ class Connection {
  public:
   int socket_fd;
   addrinfo *address;
-  StringBuffer string_buffer;
+  // StringBuffer string_buffer;
+  char buffer[MAX_DATA_SIZE * 2];
+  size_t buffer_size = 0;
 
   int getFileDescriptor() const;
   void setFileDescriptor(int fd);

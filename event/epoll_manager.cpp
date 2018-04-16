@@ -50,24 +50,25 @@ int EpollManager::loopOnce(int time_out) {
   if (ev_count == 0) Debug::Log("Epoll timeout ");
   for (i = 0; i < ev_count; ++i) {
     fd = static_cast<int>(events[i].data.u64 >> CHAR_BIT);
-    if ((events[i].events & EPOLLERR) ||
-        (events[i].events & EPOLLHUP))//||
-//        (!(events[i].events & EPOLLIN)))
-    {
+//    if ((events[i].events & EPOLLERR) ||
+//        (events[i].events & EPOLLHUP))//||
+////        (!(events[i].events & EPOLLIN)))
+//    {
+//#if DEBUG_EPOLL
+//      std::string error = "EPOLLERR | EPOLLHUP An error has occured on fd " +
+//          std::to_string(fd) + " ";
+//      error += std::strerror(errno);
+//      Debug::Log(error, LOG_DEBUG);
+//#endif
+//      if (fd != accept_fd) {
+//        deleteFd(fd);
+//      }
+//      HandleEvent(fd, DISCONNECT, static_cast<EVENT_GROUP >(events[i].data.u32 & 0xff));
+//      continue;
+//    } else
+    if ((events[i].events & EPOLLRDHUP) != 0u) {
 #if DEBUG_EPOLL
-      std::string error = "EPOLLERR | EPOLLHUP An error has occured on fd " +
-          std::to_string(fd) + " ";
-      error += std::strerror(errno);
-      Debug::Log(error, LOG_DEBUG);
-#endif
-      if (fd != accept_fd) {
-        deleteFd(fd);
-      }
-      HandleEvent(fd, DISCONNECT, static_cast<EVENT_GROUP >(events[i].data.u32 & 0xff));
-      continue;
-    } else if ((events[i].events & EPOLLRDHUP) != 0u) {
-#if DEBUG_EPOLL
-      std::string error = "EPOLLRDHUP:Peer closed the connection fd: " +
+      std::string error = "\n>>EPOLLRDHUP:Peer closed the connection fd: " +
           std::to_string(fd) + " ";
       Debug::Log(error, LOG_DEBUG);
 #endif
@@ -77,20 +78,20 @@ int EpollManager::loopOnce(int time_out) {
     }
     if (fd == accept_fd) {
 #if DEBUG_EPOLL
-      Debug::Log("EPOLL::ON_ACCEPT", LOG_DEBUG);
+      Debug::Log("\n>>EPOLL::ON_ACCEPT::FD=" + std::to_string(fd), LOG_DEBUG);
 #endif
       onConnectEvent(events[i]);
       continue;
     }
     if ((events[i].events & EPOLLIN) != 0u) {
 #if DEBUG_EPOLL
-      Debug::Log("EPOLL::ON_READ", LOG_DEBUG);
+      Debug::Log("\n>>EPOLL::ON_READ::FD=" + std::to_string(fd), LOG_DEBUG);
 #endif
       onReadEvent(events[i]);
     }
     if ((events[i].events & EPOLLOUT) != 0u) {
 #if DEBUG_EPOLL
-      Debug::Log("EPOLL::ON_WRITE", LOG_DEBUG);
+      Debug::Log("\n>>EPOLL::ON_WRITE::FD=" + std::to_string(fd), LOG_DEBUG);
 #endif
       onWriteEvent(events[i]);
     }
