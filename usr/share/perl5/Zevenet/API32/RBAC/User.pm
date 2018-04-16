@@ -173,7 +173,7 @@ sub set_rbac_user
 		include 'Zevenet::Code';
 		foreach my $userAux ( &getRBACUserList() )
 		{
-			next if ( $userAux eq &getUser() );
+			next if ( $userAux eq $user );
 			if (
 				 &validateCryptString( &getRBACUserParam( $userAux, 'zapikey' ),
 									   $json_obj->{ 'zapikey' } )

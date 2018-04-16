@@ -278,18 +278,21 @@ sub delFGFarm
 			foreach $srv ( &getFarmServices( $farm ) )
 			{
 				$fg = &getFGFarm( $farm, $srv );
+				next if not $fg;
 				$err |= &setTinyObj( $fg_conf, $fg, 'farms', "${farm}_$srv", 'del' );
 			}
 		}
 		else
 		{
 			$fg = &getFGFarm( $farm, $srv );
+			next if not $fg;
 			$err |= &setTinyObj( $fg_conf, $fg, 'farms', "${farm}_$srv", 'del' );
 		}
 	}
 	else
 	{
 		$fg = &getFGFarm( $farm );
+		next if not $fg;
 		$err |= &setTinyObj( $fg_conf, $fg, 'farms', $farm, 'del' );
 	}
 }
