@@ -122,9 +122,6 @@ sub getFloatInterfaceForAddress
 	for my $iface ( @interface_list )
 	{
 		next if $iface->{ vini } ne '';
-		# not to select the interface if it is down ???
-		# if the interface is started, the farm must be restarted to recalculate the source nat
-		next if $iface->{ status } ne 'up';
 
 		my $network = NetAddr::IP->new( $iface->{ addr }, $iface->{ mask } );
 
