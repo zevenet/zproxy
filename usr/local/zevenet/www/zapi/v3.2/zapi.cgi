@@ -98,10 +98,19 @@ require Zevenet::API32::Routes::Activation
 # Check activation certificate
 &checkActivationCertificate();
 
-# Verify RBAC permissions
+##### Verify RBAC permissions ########################################
 require Zevenet::Core;
-require Zevenet::RBAC::Core;
-if ( !&getRBACPathPermissions( $q->path_info,  $ENV{REQUEST_METHOD} ) )
+
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
+my $has_permission = &eload(
+							 module => 'Zevenet::RBAC::Core',
+							 func   => 'getRBACPathPermissions',
+							 args   => [$q->path_info, $ENV{ REQUEST_METHOD }],
+);
+
+if ( ! $has_permission )
 {
 	require Zevenet::User;
 	my $username = &getUser();
@@ -109,7 +118,7 @@ if ( !&getRBACPathPermissions( $q->path_info,  $ENV{REQUEST_METHOD} ) )
 	&httpErrorResponse(
 						code => 403,
 						desc => $desc,
-						msg  => "The user $username has not permissions"
+						msg  => "The user '$username' has not permissions"
 	);
 }
 
