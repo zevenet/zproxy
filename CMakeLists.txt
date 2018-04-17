@@ -33,13 +33,18 @@ set(ENV{PKG_CONFIG_PATH} "/usr/lib/openssl-1.0/pkgconfig")
 find_package(PkgConfig REQUIRED)
 pkg_search_module(OPENSSL REQUIRED openssl)
 
-if (OPENSSL_FOUND)
-  message(STATUS "Openssl includes ${OPENSSL_INCLUDE_DIRS}")
-  include_directories(${OPENSSL_INCLUDE_DIRS})
-  message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
-else ()
-  # Error; with REQUIRED, pkg_search_module() will throw an error by it's own
-endif ()
+#if (OPENSSL_FOUND)
+#  message(STATUS "Openssl includes ${OPENSSL_INCLUDE_DIRS}")
+#  message(STATUS "Openssl link ${OPENSSL_LIBRARIES}")
+#  include_directories(${OPENSSL_INCLUDE_DIRS})
+#  message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+#else ()
+#  # Error; with REQUIRED, pkg_search_module() will throw an error by it's own
+#endif ()
+#
+include_directories(/usr/include/openssl-1.0)
+link_directories(/usr/lib/openssl-1.0)
+
 add_executable(${PROJECT_NAME}
     main.cpp
     event/epoll_manager.cpp
@@ -67,4 +72,4 @@ add_executable(${PROJECT_NAME}
     config/svc.cpp
     )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} ${OPENSSL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} libssl.so libcrypto.so)# ${OPENSSL_LIBRARIES})
