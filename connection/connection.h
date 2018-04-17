@@ -28,6 +28,7 @@ class Connection {
   IO::IO_RESULT write(const char *data, size_t buffer_size);
   IO::IO_RESULT writeTo(int fd);
   IO::IO_RESULT read();
+
   void closeConnection();
   Connection();
   virtual ~Connection();
