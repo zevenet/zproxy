@@ -449,7 +449,7 @@ sub getL4FarmSessions
 	require Zevenet::Net::ConnStats;
 
 	my $conntrack_bin = &getGlobalConfiguration('conntrack');
-	my $sessions;
+	my $sessions = [];
 	my $farm_st = &getL4FarmStruct( $farmname );
 
 	my $id = 0;
@@ -458,18 +458,18 @@ sub getL4FarmSessions
 	{
 		# get backend lines
 		my $params = &getConntrackParams( { 'mark' => $bk->{ tag } } );
-		#~ my $params = &getConntrackParams( { 'mark' => $bk->{ tag } , 'state' => 'ESTABLISHED' } );
-		my @list = `$conntrack_bin -L $params 2>/dev/null`;
+		&zenlog ( "Executing: $conntrack_bin --dump $params 2>/dev/null", 'debug' );
+		my @list = `$conntrack_bin --dump $params 2>/dev/null`;
 
 		# parse and add to the struct
 		foreach my $line ( @list )
 		{
-			$line =~ /sport=\d+ dport=\d+ src=.+ dst=(.+) sport=\d+ dport=\d+ [ASSURED] mark=\d+ use=/;
-
+			# tcp      6 0 TIME_WAIT src=192.168.1.185 dst=192.168.102.249 sport=40696 dport=778 src=192.168.101.253 dst=192.168.101.249 sport=80 dport=40696 [ASSURED] mark=545 use=1
+			$line =~ /src=(.+) dst=.+ sport=\d+ dport=\d+ src=(.+) dst=.+ sport=\d+ dport=\d+ \[ASSURED\] mark=\d+ use=/;
 			push @{ $sessions }, {
 				'id' => $bk->{ id },
-				'session' => $1,
-				'client' => $id,
+				'session' => $2,
+				'client' => $1,
 				};
 
 			$id += 1;

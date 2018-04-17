@@ -125,9 +125,11 @@ sub farm_stats                                                # ( $farmname )
 		require Zevenet::Farm::L4xNAT::Stats;
 
 		my $stats = &getL4FarmBackendsStats( $farmname );
+		my $sessions = &getL4FarmSessions( $farmname );
 		my $body = {
 					 description => $desc,
 					 backends    => $stats,
+					 sessions    => $sessions,
 		};
 
 		&httpResponse( { code => 200, body => $body } );
