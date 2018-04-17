@@ -138,7 +138,7 @@ sub createFGTemplate
 	my $template = shift;
 
 	my $values = &getFGObject( $template, 'template' );
-	$values->{ $name }->{ 'template' } = "false";
+	$values->{ 'template' } = "false";
 
 	&setFGObject( $name, $values );
 }
