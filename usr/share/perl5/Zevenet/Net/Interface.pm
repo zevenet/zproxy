@@ -76,14 +76,23 @@ See Also:
 
 sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 {
-	my ( $if_name, $ip_version ) = @_;
+	my ( $if_name ) = @_;
 
+	unless ( defined $if_name )
+	{
+		require Carp;
+		Carp->import('cluck');
+
+		cluck('getInterfaceConfig got undefined interface name');
+	}
+
+	#~ &zenlog( "[CALL] getInterfaceConfig( $if_name )" );
+
+	my $ip_version;
 	my $if_line;
 	my $if_status;
 	my $configdir       = &getGlobalConfiguration( 'configdir' );
 	my $config_filename = "$configdir/if_${if_name}_conf";
-
-	$ip_version = 4 if !$ip_version;
 
 	if ( open my $file, '<', "$config_filename" )
 	{
@@ -92,17 +101,16 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		for my $line ( @lines )
 		{
 			my ( undef, $ip ) = split ';', $line;
-			my $line_ipversion;
 
 			if ( defined $ip )
 			{
-				$line_ipversion =
+				$ip_version =
 				    ( $ip =~ /:/ )  ? 6
 				  : ( $ip =~ /\./ ) ? 4
 				  :                   undef;
 			}
 
-			if ( defined $line_ipversion && $ip_version == $line_ipversion && !$if_line )
+			if ( defined $ip_version && !$if_line )
 			{
 				$if_line = $line;
 			}
@@ -137,13 +145,14 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	$iface{ mask }    = shift @if_params;
 	$iface{ gateway } = shift @if_params;                            # optional
 	$iface{ status }  = $if_status;
-	$iface{ ip_v }    = ( $iface{ addr } =~ /:/ ) ? '6' : '4';
 	$iface{ dev }     = $if_name;
 	$iface{ vini }    = undef;
 	$iface{ vlan }    = undef;
 	$iface{ mac }     = undef;
 	$iface{ type }    = &getInterfaceType( $if_name );
 	$iface{ parent }  = &getParentInterfaceName( $iface{ name } );
+	$iface{ ip_v } =
+	  ( $iface{ addr } =~ /:/ ) ? '6' : ( $iface{ addr } =~ /\./ ) ? '4' : 0;
 
 	if ( $iface{ dev } =~ /:/ )
 	{
@@ -208,6 +217,27 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		$iface{ mask }    = $if_parent->{ mask };
 		$iface{ gateway } = $if_parent->{ gateway };
 	}
+
+	use NetAddr::IP;
+	#~ NetAddr::IP->import();
+
+	if ( $iface{ ip_v } == 4 )
+	{
+		my $ip = NetAddr::IP->new( $iface{ addr }, $iface{ mask } );
+		$iface{ net } = lc $ip->network()->addr();
+	}
+	elsif ( $iface{ ip_v } == 6 )
+	{
+		my $ip = NetAddr::IP->new6( $iface{ addr }, $iface{ mask } );
+		$iface{ net } = lc $ip->network()->addr();
+	}
+	else
+	{
+		$iface{ net } = undef;
+	}
+
+	#~ &zenlog(
+			 #~ "getInterfaceConfig( $if_name ) returns " . Dumper \%iface );
 
 	return \%iface;
 }
@@ -373,17 +403,18 @@ sub getConfigInterfaceList
 				my $if_name = $1;
 				my $if_ref;
 
-				$if_ref = &getInterfaceConfig( $if_name, 4 );
+				#~ $if_ref = &getInterfaceConfig( $if_name, 4 );
+				$if_ref = &getInterfaceConfig( $if_name );
 				if ( $$if_ref{ addr } )
 				{
 					push @configured_interfaces, $if_ref;
 				}
 
-				$if_ref = &getInterfaceConfig( $if_name, 6 );
-				if ( $$if_ref{ addr } )
-				{
-					push @configured_interfaces, $if_ref;
-				}
+				#~ $if_ref = &getInterfaceConfig( $if_name, 6 );
+				#~ if ( $$if_ref{ addr } )
+				#~ {
+					#~ push @configured_interfaces, $if_ref;
+				#~ }
 			}
 		}
 
@@ -460,13 +491,12 @@ sub getInterfaceSystemStatus    # ($if_ref)
 
 	return $if_ref->{ status } if $if_ref->{ status } eq 'down';
 
+	return $if_ref->{ status } if !$parent_if_name;
+
 	my $parent_if_ref = &getInterfaceConfig( $parent_if_name, $if_ref->{ ip_v } );
 
 	# vlans do not require the parent interface to be configured
-	if ( !$parent_if_name || !$parent_if_ref )
-	{
-		return $if_ref->{ status };
-	}
+	return $if_ref->{ status } if !$parent_if_ref;
 
 	return &getInterfaceSystemStatus( $parent_if_ref );
 }
@@ -621,9 +651,10 @@ sub getSystemInterfaceList
 		my $if_flags = $socket->if_flags( $if_name );
 
 		# run for IPv4 and IPv6
-		for my $ip_stack ( 4, 6 )
+		#~ for my $ip_stack ( 4, 6 )
 		{
-			$if_ref = &getInterfaceConfig( $if_name, $ip_stack );
+			#~ $if_ref = &getInterfaceConfig( $if_name, $ip_stack );
+			$if_ref = &getInterfaceConfig( $if_name );
 
 			if ( !$$if_ref{ addr } )
 			{
@@ -636,7 +667,7 @@ sub getSystemInterfaceList
 				$$if_ref{ dev }    = $if_parts{ dev };
 				$$if_ref{ vlan }   = $if_parts{ vlan };
 				$$if_ref{ vini }   = $if_parts{ vini };
-				$$if_ref{ ip_v }   = $ip_stack;
+				$$if_ref{ ip_v }   = '';
 				$$if_ref{ type }   = &getInterfaceType( $if_name );
 			}
 
@@ -655,7 +686,7 @@ sub getSystemInterfaceList
 				next if $$vlan_if_conf{ vlan } eq '';
 				next if $$vlan_if_conf{ vini } ne '';
 
-				if ( $$vlan_if_conf{ ip_v } == $ip_stack )
+				#~ if ( $$vlan_if_conf{ ip_v } == $ip_stack )
 				{
 					push ( @interfaces, $vlan_if_conf );
 
@@ -666,7 +697,7 @@ sub getSystemInterfaceList
 						next if $$vini_if_conf{ vlan } ne $$vlan_if_conf{ vlan };
 						next if $$vini_if_conf{ vini } eq '';
 
-						if ( $$vini_if_conf{ ip_v } == $ip_stack )
+						#~ if ( $$vini_if_conf{ ip_v } == $ip_stack )
 						{
 							push ( @interfaces, $vini_if_conf );
 						}
@@ -681,7 +712,7 @@ sub getSystemInterfaceList
 				next if $$vini_if_conf{ vlan } ne '';
 				next if $$vini_if_conf{ vini } eq '';
 
-				if ( $$vini_if_conf{ ip_v } == $ip_stack )
+				#~ if ( $$vini_if_conf{ ip_v } == $ip_stack )
 				{
 					push ( @interfaces, $vini_if_conf );
 				}

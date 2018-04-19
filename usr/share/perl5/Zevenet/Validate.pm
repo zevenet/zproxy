@@ -214,6 +214,12 @@ my %format_re = (
 	'IPv4_addr' => qr/$ipv4_addr/,
 	'IPv4_mask' => qr/(?:$ipv4_addr|3[0-2]|[1-2][0-9]|[0-9])/,
 
+	'IPv6_addr' => qr/$ipv6_addr/,
+	'IPv6_mask' => $UNSIGNED8BITS, # Fixme
+
+	'ip_addr' => $ipv4v6,
+	'ip_mask' => qr/(?:$ipv4_addr|$UNSIGNED8BITS)/,
+
 	# farm guardian
 	'fg_name'    => qr/[\w-]+/,
 	'fg_type'    => qr/(?:http|https|l4xnat|gslb)/,
@@ -227,7 +233,7 @@ my %format_re = (
 	'group_name'    => qr/[\w-]+/,
 	'role_name'     => qr/[\w-]+/,
 
-	# alais
+	# alias
 	'alias_id'   => qr/(?:$ipv4v6|$interface)/,
 	'alias_name' => qr/[\w-]+/,
 	'alias_type' => qr/(?:backend|interface)/,

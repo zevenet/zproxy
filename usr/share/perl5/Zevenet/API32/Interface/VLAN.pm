@@ -26,7 +26,7 @@ use strict;
 my $eload;
 if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
-#  POST /addvlan/<interface> Create a new vlan network interface
+#  POST /interfaces/vlan Create a new vlan network interface
 sub new_vlan    # ( $json_obj )
 {
 	my $json_obj = shift;
@@ -93,7 +93,7 @@ sub new_vlan    # ( $json_obj )
 
 	# validate IP
 	unless ( defined ( $json_obj->{ ip } )
-			 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+			 && &getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
 	{
 		my $msg = "IP Address is not valid.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -523,7 +523,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	if ( exists $json_obj->{ ip } )
 	{
 		unless ( defined ( $json_obj->{ ip } )
-				 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+				 && &getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
 		{
 			my $msg = "IP Address $json_obj->{ip} structure is not ok.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -548,7 +548,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	if ( exists $json_obj->{ netmask } )
 	{
 		unless ( defined ( $json_obj->{ netmask } )
-				 && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
+				 && &getValidFormat( 'ip_mask', $json_obj->{ netmask } ) )
 		{
 			my $msg =
 			  "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";

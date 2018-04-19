@@ -99,8 +99,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $ip_v = 4;
-	my $if_ref = &getInterfaceConfig( $interface, $ip_v );
+	my $if_ref = &getInterfaceConfig( $interface );
 
 	unless ( $if_ref )
 	{
@@ -115,7 +114,7 @@ sub modify_interface_floating    # ( $json_obj, $floating )
 		# validate ADDRESS format
 		require Zevenet::Validate;
 		unless (    $json_obj->{ floating_ip }
-				 && &getValidFormat( 'IPv4_addr', $json_obj->{ floating_ip } ) )
+				 && &getValidFormat( 'ip_addr', $json_obj->{ floating_ip } ) )
 		{
 			my $msg = "Invalid floating address format";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -190,7 +189,7 @@ sub get_interfaces_floating
 
 	for my $iface ( @ifaces )
 	{
-		next unless $iface->{ ip_v } == 4;
+		next unless $iface->{ ip_v } == 4 || $iface->{ ip_v } == 6;
 		next if $iface->{ type } eq 'virtual';
 		next unless $iface->{ addr };
 
@@ -242,7 +241,7 @@ sub get_floating
 
 	for my $iface ( @ifaces )
 	{
-		next unless $iface->{ ip_v } == 4;
+		next unless $iface->{ ip_v } == 4 || $iface->{ ip_v } == 6;
 		next if $iface->{ type } eq 'virtual';
 		next unless $iface->{ name } eq $floating;
 

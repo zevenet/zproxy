@@ -611,7 +611,6 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	require Zevenet::Net::Interface;
 
 	my $desc = "Modify bond address";
-	my $ip_v = 4;
 	my @farms;
 
 	# validate BOND NAME
@@ -642,7 +641,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	if ( exists $json_obj->{ ip } )
 	{
 		unless ( defined ( $json_obj->{ ip } )
-				 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } )
+				 && &getValidFormat( 'ip_addr', $json_obj->{ ip } )
 				 || $json_obj->{ ip } eq '' )
 		{
 			my $msg = "IP Address is not valid.";
@@ -660,10 +659,10 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	if ( exists $json_obj->{ netmask } )
 	{
 		unless ( defined ( $json_obj->{ netmask } )
-				 && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
+				 && &getValidFormat( 'ip_mask', $json_obj->{ netmask } ) )
 		{
 			my $msg =
-			  "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
+			  "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4/6 structure or numeric.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -672,7 +671,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	if ( exists $json_obj->{ gateway } )
 	{
 		unless ( defined ( $json_obj->{ gateway } )
-				 && &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } )
+				 && &getValidFormat( 'ip_addr', $json_obj->{ gateway } )
 				 || $json_obj->{ gateway } eq '' )
 		{
 			my $msg = "Gateway Address $json_obj->{gateway} structure is not ok.";
@@ -681,7 +680,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	}
 
 	# Delete old interface configuration
-	my $if_ref = &getInterfaceConfig( $bond, $ip_v );
+	my $if_ref = &getInterfaceConfig( $bond );
 
 	# check if network is correct
 	my $new_if = {
@@ -772,7 +771,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
-	$if_ref->{ ip_v }    = 4;
+	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
 
 	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
 	{

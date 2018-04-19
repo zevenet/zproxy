@@ -180,14 +180,9 @@ sub isRule    # ($if_ref, $toif)
 
 	$toif = $$if_ref{ name } if !$toif;
 
-	my $existRule  = 0;
-
-	my ( $net, $mask ) = ipv4_network( "$$if_ref{addr} / $$if_ref{mask}" );
-
 	my @eject      = `$ip_bin -$$if_ref{ip_v} rule list`;
-	my $expression = "from $net/$mask lookup table_$toif";
-
-	$existRule = grep /$expression/, @eject;
+	my $expression = "from $$if_ref{net}/$$if_ref{mask} lookup table_$toif";
+	my $existRule  = grep /$expression/, @eject;
 
 	return $existRule;
 }
@@ -244,9 +239,8 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 			if ( &isRule( $if_ref ) == 0 )
 			{
-				my ( $net, $mask ) = ipv4_network( "$$if_ref{addr} / $$if_ref{mask}" );
 				my $ip_cmd =
-				  "$ip_bin -$$if_ref{ip_v} rule add from $net/$mask table table_$$if_ref{name}";
+				  "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{net}/$$if_ref{mask} table table_$$if_ref{name}";
 				$status = &logAndRun( "$ip_cmd" );
 			}
 		}
@@ -272,6 +266,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 				require Tie::File;
 				tie my @contents, 'Tie::File', &getGlobalConfiguration( 'globalcfg' );
+
 				for my $line ( @contents )
 				{
 					if ( grep /^\$defaultgw/, $line )
@@ -288,6 +283,7 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 						}
 					}
 				}
+
 				untie @contents;
 
 				require Zevenet::Farm::L4xNAT::Config;
@@ -310,9 +306,8 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 		if ( &isRule( $if_ref, $toif ) == 0 )
 		{
-			my ( $net, $mask ) = ipv4_network( "$$if_ref{addr} / $$if_ref{mask}" );
 			my $ip_cmd =
-			  "$ip_bin -$$if_ref{ip_v} rule add from $net/$mask table table_$toif";
+			  "$ip_bin -$$if_ref{ip_v} rule add from $$if_ref{net}/$$if_ref{mask} table table_$toif";
 			$status = &logAndRun( "$ip_cmd" );
 		}
 	}

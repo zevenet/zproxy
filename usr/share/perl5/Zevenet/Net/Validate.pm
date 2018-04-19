@@ -219,13 +219,13 @@ Returns:
 sub getNetValidate    # ($ip, $mask, $ip2)
 {
 	my ( $ip, $mask, $ip2 ) = @_;
-	my $output = 0;
 
-	require Net::Netmask;
-	my $ip_struct = new2 Net::Netmask( $ip, $mask );
+	require NetAddr::IP;
 
-	eval { $output = 1 if ( $ip_struct->match( $ip2 ) ); };
-	return $output;
+	my $addr1 = NetAddr::IP->new( $ip, $mask );
+	my $addr2 = NetAddr::IP->new( $ip2, $mask );
+
+	return $addr1->network() eq $addr2->network();
 }
 
 =begin nd

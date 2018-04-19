@@ -26,7 +26,7 @@ use strict;
 my $eload;
 if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
-# POST /addvini/<interface> Create a new virtual network interface
+# POST /interfaces/virtual Create a new virtual network interface
 sub new_vini    # ( $json_obj )
 {
 	my $json_obj = shift;
@@ -61,7 +61,7 @@ sub new_vini    # ( $json_obj )
 
 	# validate IP
 	unless ( defined ( $json_obj->{ ip } )
-			 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+			 && &getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
 	{
 		my $msg = "IP Address is not valid.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -484,7 +484,7 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 
 	# Check address errors
 	unless ( defined ( $json_obj->{ ip } )
-			 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+			 && &getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
 	{
 		$msg = "IP Address $json_obj->{ip} structure is not ok.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
