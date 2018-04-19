@@ -396,6 +396,37 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 		}
 	}
 
+
+	# Redirect code
+	if ( exists $json_obj->{ redirect_code } )
+	{
+		if ( $eload )
+		{
+			if ( ! &getValidFormat( 'redirect_code', $json_obj->{ redirect_code } ) )
+			{
+				my $msg = "The available values for redirect_code are: 301, 302 or 307";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
+			my $err = &eload(
+							  module   => 'Zevenet::Farm::HTTP::Service::Ext',
+							  func     => 'setHTTPServiceRedirectCode',
+							  args     => [$farmname, $service, $json_obj->{ redirect_code } ],
+			);
+
+			if ( $err )
+			{
+				my $msg = "Error modifying redirect code.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+		else
+		{
+			my $msg = "Redirect code feature not available.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	# no error found, return succesful response
 	$output_params = &getHTTPServiceStruct( $farmname, $service );
 

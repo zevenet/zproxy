@@ -449,6 +449,12 @@ sub getHTTPServiceStruct
 		args   => [$farmname, $service_ref],
 	) if $eload;
 
+	$service_ref->{ redirect_code } = &eload(
+		module => 'Zevenet::Farm::HTTP::Service::Ext',
+		func   => 'getHTTPServiceRedirectCode',
+		args   => [$farmname, $service_name],
+	) if $eload;
+
 	return $service_ref;
 }
 

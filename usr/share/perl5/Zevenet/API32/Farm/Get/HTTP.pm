@@ -61,7 +61,6 @@ sub get_http_service_struct
 		$httpsbe = "false";
 	}
 
-
 	my $backends = &getHTTPFarmBackends( $farmname, $service_name );
 
 	$ttl       = 0 unless $ttl;
@@ -81,10 +80,17 @@ sub get_http_service_struct
 					 backends     => $backends,
 	};
 
-	if ( eval { require Zevenet::Farm::HTTP::Service::Ext; } )
-	{
-		&add_service_cookie_insertion( $farmname, $service_ref );
-	}
+	$service_ref = &eload(
+		module => 'Zevenet::Farm::HTTP::Service::Ext',
+		func   => 'add_service_cookie_insertion',
+		args   => [$farmname, $service_ref],
+	) if $eload;
+
+	$service_ref->{ redirect_code } = &eload(
+		module => 'Zevenet::Farm::HTTP::Service::Ext',
+		func   => 'getHTTPServiceRedirectCode',
+		args   => [$farmname, $service_name],
+	) if $eload;
 
 	return $service_ref;
 }

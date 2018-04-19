@@ -198,6 +198,103 @@ sub add_service_cookie_insertion
 	return $service;
 }
 
+# Redirect
+
+=begin nd
+Function: getHTTPServiceRedirectCode
+
+	If a redirect exists, the function returns the redirect HTTP code
+
+Parameters:
+	farmname - Farm name
+	service  - Service name
+
+Returns:
+	Integer  - Redirect code: 302 ( by default ), 301 or 307
+	undef    - If redirect is not configured
+
+=cut
+sub getHTTPServiceRedirectCode    # ($farm_name,$service)
+{
+	my ( $farm_name, $service ) = @_;
+
+	require Zevenet::Farm::Core;
+
+	# input control
+	return undef unless $service;
+
+	# look for cookie insertion policy
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $in_block = 0;
+	my $code = "";
+
+	open my $fileconf, '<', "$configdir/$farm_filename";
+
+	foreach my $line ( <$fileconf> )
+	{
+		if ( $line =~ /^\tService \"$service\"/ )    { $in_block = 1; }
+		next if not $in_block;
+		if ( $line =~ /^\tEnd$/ && $in_block == 1 )  { last; }
+		if ( $line =~ /^\s*#/ ) { next; }
+		# example
+		# 	Redirect 301 "http://google.com"
+		if ( $line =~ /^\s*(?:Redirect|RedirectAppend)\s+(\d+)?/ )
+		{
+			$code = $1 // 302;
+			last;
+		}
+	}
+
+	close $fileconf;
+
+	return $code;
+}
+
+=begin nd
+Function: setHTTPServiceRedirectCode
+
+	Set the redirect code. This value only will be show when the line is discomment
+
+Parameters:
+	farmname - Farm name
+	service - Service name
+	code - The available values are: 301, 302 and 307
+
+Returns:
+	Integer - Error code: 0 on success or 1 on failure
+
+=cut
+sub setHTTPServiceRedirectCode    # ($farm_name,$service,$code)
+{
+	my ( $farm_name, $service, $code ) = @_;
+
+	require Zevenet::Farm::Core;
+	my $ffile = &getFarmFile( $farm_name );
+	my $srv_flag  = 0;
+	my $errno     = 1;
+
+	require Zevenet::Lock;
+	&ztielock ( \my @fileconf, "$configdir/$ffile" );
+
+	foreach my $line ( @fileconf )
+	{
+		if ( $line =~ /\tService \"$service\"/ )    { $srv_flag = 1; }
+		if ( $line =~ /^\tEnd$/ && $srv_flag == 1 ) { last; }
+		next if $srv_flag == 0;
+
+		if ( $line =~ /^\s*(#)?\s*(Redirect|RedirectAppend)\s+(?:\d+)?\s*(\".+\")?/ )
+		{
+			$line = "\t\t${1}$2 $code $3";
+			$errno = 0;
+			last;
+		}
+	}
+	untie @fileconf;
+
+	&zenlog("Could not apply redirect HTTP code") if $errno;
+
+	return $errno;
+}
 
 # Move/Sort services
 

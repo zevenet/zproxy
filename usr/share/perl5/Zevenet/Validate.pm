@@ -121,6 +121,9 @@ my %format_re = (
 	'graphs_system_id' => qr/(?:cpu|load|ram|swap)/,
 	'mount_point'      => qr/root[\w\-\.\/]*/,
 
+	# http
+	'redirect_code'          => qr/(?:301|302|307)/,
+
 	# gslb
 	'zone'          => qr/(?:$hostname\.)+[a-z]{2,}/,
 	'resource_id'   => qr/\d+/,
