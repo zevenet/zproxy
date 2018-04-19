@@ -396,7 +396,6 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 		}
 	}
 
-
 	# Redirect code
 	if ( exists $json_obj->{ redirect_code } )
 	{
@@ -427,8 +426,70 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 		}
 	}
 
+	# sts options
+	if ( exists $json_obj->{ sts_status } )
+	{
+		if ( $eload )
+		{
+			# status
+			if ( ! &getValidFormat( 'http_sts_status', $json_obj->{ sts_status } ) )
+			{
+				my $msg = "The value $json_obj->{ sts_status } of the param sts_status is invalid";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
+			my $err = &eload(
+							  module   => 'Zevenet::Farm::HTTP::Service::Ext',
+							  func     => 'setHTTPServiceSTSStatus',
+							  args     => [$farmname, $service, $json_obj->{ sts_status } ],
+			);
+
+			if ( $err )
+			{
+				my $msg = "Error modifying STS status.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
+		}
+		else
+		{
+			my $msg = "Strict Transport Security feature not available.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
+	if ( exists $json_obj->{ sts_timeout } )
+	{
+		if ( $eload )
+		{
+			if ( ! &getValidFormat( 'http_sts_timeout', $json_obj->{ sts_timeout } ) )
+			{
+				my $msg = "The value $json_obj->{ sts_timeout } of the param sts_timeout is invalid";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+
+			my $err = &eload(
+							  module   => 'Zevenet::Farm::HTTP::Service::Ext',
+							  func     => 'setHTTPServiceSTSTimeout',
+							  args     => [$farmname, $service, $json_obj->{ sts_timeout } ],
+			);
+
+			if ( $err )
+			{
+				my $msg = "Error modifying STS status.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+		else
+		{
+			my $msg = "Strict Transport Security feature not available.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	# no error found, return succesful response
-	$output_params = &getHTTPServiceStruct( $farmname, $service );
+	require Zevenet::API32::Farm::Get::HTTP;
+	$output_params = &get_http_service_struct( $farmname, $service );
 
 	&zenlog(
 		"ZAPI success, some parameters have been changed in service $service in farm $farmname."

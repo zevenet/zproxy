@@ -296,6 +296,217 @@ sub setHTTPServiceRedirectCode    # ($farm_name,$service,$code)
 	return $errno;
 }
 
+# Strict secure transport
+
+=begin nd
+Function: getHTTPServiceSTSStatus
+
+	This function shows the status of the Strict Transport Security parameter
+
+Parameters:
+	farmname - Farm name
+	service  - Service name
+
+Returns:
+	Scalar  - "true" if it is enabled or "false" if it is disabled
+
+=cut
+sub getHTTPServiceSTSStatus    # ($farm_name,$service)
+{
+	my ( $farm_name, $service ) = @_;
+
+	require Zevenet::Farm::Core;
+
+	# input control
+	return undef unless $service;
+
+	# look for cookie insertion policy
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $sw = 0;
+	my $out = "false";
+
+	open my $fileconf, '<', "$configdir/$farm_filename";
+
+	foreach my $line ( <$fileconf> )
+	{
+		if ( $line =~ /^\tService \"$service\"/ )    { $sw = 1; }
+		next if not $sw;
+		if ( $line =~ /^\tEnd$/ && $sw == 1 )  { last; }
+
+		# example
+		#	StrictTransportSecurity 21600000
+		if ( $line =~ /^\s*StrictTransportSecurity/ )
+		{
+			$out = "true";
+			last;
+		}
+	}
+
+	close $fileconf;
+
+	return $out;
+}
+
+=begin nd
+Function: setHTTPServiceSTSStatus
+
+	Change the status of the Strict Transport Security for a HTTP service
+
+Parameters:
+	farmname - Farm name
+	service - Service name
+	status - The available values are: "true" to enable STS or "false" to disable it
+
+Returns:
+	Integer - Error code: 0 on success or 1 on failure
+
+=cut
+sub setHTTPServiceSTSStatus    # ($farm_name,$service,$code)
+{
+	my ( $farm_name, $service, $status ) = @_;
+
+	require Zevenet::Farm::Core;
+	my $ffile = &getFarmFile( $farm_name );
+	my $srv_flag  = 0;
+	my $errno     = 1;
+
+	require Zevenet::Lock;
+	&ztielock ( \my @fileconf, "$configdir/$ffile" );
+
+	foreach my $line ( @fileconf )
+	{
+		if ( $line =~ /\tService \"$service\"/ )    { $srv_flag = 1; }
+		if ( $line =~ /^\tEnd$/ && $srv_flag == 1 ) { last; }
+		next if $srv_flag == 0;
+
+		if ( $line =~ /StrictTransportSecurity(\s+\d+)?/ )
+		{
+			my $time = $1 // 21600000;
+			$time =~ s/^\s+//g;
+			$status = ( $status eq 'true' )? "": "#";
+			$line = "\t\t${status}StrictTransportSecurity $time";
+			$errno = 0;
+			last;
+		}
+
+		# add the line if it does not exist and status is up
+		elsif ( $line =~ /BackEnd/ and $status eq 'true' )
+		{
+			$line = "\t\tStrictTransportSecurity 21600000\n$line";
+			$errno = 0;
+			last;
+		}
+	}
+	untie @fileconf;
+
+	&zenlog("Could not apply STS status") if $errno;
+
+	return $errno;
+}
+
+=begin nd
+Function: getHTTPServiceSTSTimeout
+
+	This function shows the status of the Strict Transport Security parameter
+
+Parameters:
+	farmname - Farm name
+	service  - Service name
+
+Returns:
+	Scalar  - "true" if it is enabled or "false" if it is disabled
+
+=cut
+sub getHTTPServiceSTSTimeout    # ($farm_name,$service)
+{
+	my ( $farm_name, $service ) = @_;
+
+	require Zevenet::Farm::Core;
+
+	# input control
+	return undef unless $service;
+
+	# look for cookie insertion policy
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $sw = 0;
+	my $out = "";
+
+	open my $fileconf, '<', "$configdir/$farm_filename";
+
+	foreach my $line ( <$fileconf> )
+	{
+		if ( $line =~ /^\tService \"$service\"/ )    { $sw = 1; }
+		next if not $sw;
+		if ( $line =~ /^\tEnd$/ && $sw == 1 )  { last; }
+
+		# example
+		#	StrictTransportSecurity 21600000
+		if ( $line =~ /^\s*StrictTransportSecurity\s+(\d+)/ )
+		{
+			$out = $1;
+			last;
+		}
+	}
+
+	close $fileconf;
+
+	return $out;
+}
+
+=begin nd
+Function: setHTTPServiceSTSTimeout
+
+	Change the status of the Strict Transport Security for a HTTP service
+
+Parameters:
+	farmname - Farm name
+	service - Service name
+	status - It is the number of seconds for STS
+
+Returns:
+	Integer - Error code: 0 on success or 1 on failure
+
+=cut
+sub setHTTPServiceSTSTimeout    # ($farm_name,$service,$code)
+{
+	my ( $farm_name, $service, $time ) = @_;
+
+	require Zevenet::Farm::Core;
+	my $ffile = &getFarmFile( $farm_name );
+	my $srv_flag  = 0;
+	my $errno     = 1;
+
+	require Zevenet::Lock;
+	&ztielock ( \my @fileconf, "$configdir/$ffile" );
+
+	foreach my $line ( @fileconf )
+	{
+		if ( $line =~ /\tService \"$service\"/ )    { $srv_flag = 1; }
+		if ( $line =~ /^\tEnd$/ && $srv_flag == 1 ) { last; }
+		next if $srv_flag == 0;
+
+		if ( $line =~ /StrictTransportSecurity/ )
+		{
+			$line =~ s/StrictTransportSecurity(\s+\d+)?/StrictTransportSecurity $time/;
+			$errno = 0;
+			last;
+		}
+
+		# add the line if the StrictTransportSecurity does not exist. Put it as disabled
+		elsif ( $line =~ /BackEnd/ )
+		{
+			$line = "\t\t#StrictTransportSecurity $time\n$line";
+			$errno = 0;
+			last;
+		}
+	}
+	untie @fileconf;
+
+	&zenlog("Could not apply STS timeout") if $errno;
+
+	return $errno;
+}
+
 # Move/Sort services
 
 =begin nd

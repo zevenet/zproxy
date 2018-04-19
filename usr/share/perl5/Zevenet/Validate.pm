@@ -123,6 +123,8 @@ my %format_re = (
 
 	# http
 	'redirect_code'          => qr/(?:301|302|307)/,
+	'http_sts_status'        => qr/(?:true|false)/,
+	'http_sts_timeout'          => qr/(?:\d+)/,
 
 	# gslb
 	'zone'          => qr/(?:$hostname\.)+[a-z]{2,}/,

@@ -92,6 +92,18 @@ sub get_http_service_struct
 		args   => [$farmname, $service_name],
 	) if $eload;
 
+	$service_ref->{ sts_status } = &eload(
+		module => 'Zevenet::Farm::HTTP::Service::Ext',
+		func   => 'getHTTPServiceSTSStatus',
+		args   => [$farmname, $service_name],
+	) if $eload;
+
+	$service_ref->{ sts_timeout } = &eload(
+		module => 'Zevenet::Farm::HTTP::Service::Ext',
+		func   => 'getHTTPServiceSTSTimeout',
+		args   => [$farmname, $service_name],
+	) if $eload;
+
 	return $service_ref;
 }
 
