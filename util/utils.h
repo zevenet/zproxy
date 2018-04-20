@@ -42,5 +42,23 @@ class ThreadHelper {
     return rc != 0 ? "no_name" : std::string(thread_name);
   }
 
+  static void setMaximumFilesLimit(int maximum) {
+//    // Increase num file descriptor ulimit
+//    //TODO:: take outside main initialization
+//    struct rlimit r;
+//    getrlimit(RLIMIT_NOFILE, &r);
+//    Debug::Log("current::RLIMIT_NOFILE\n\tCurrent " +
+//        std::to_string(r.rlim_cur));
+//    Debug::Log("\tMaximum " + std::to_string(r.rlim_cur));
+//    if (r.rlim_cur != r.rlim_max) {
+//      r.rlim_cur = r.rlim_max;
+//      if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
+//        Debug::logmsg(LOG_ERR, "setrlimit failed ");
+//        return EXIT_FAILURE;
+//      }
+//    }
+
+  }
+
 };
 }

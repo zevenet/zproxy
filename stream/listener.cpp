@@ -73,9 +73,15 @@ void Listener::start() {
   for (int i = 0; i < stream_manager_set.size(); i++) {
     auto sm = stream_manager_set[i];
     if (sm != nullptr) {
-//      sm->addBackend("192.168.101.253", 80);
-//      sm->addBackend("192.168.101.254", 80);
-      sm->addBackend("0.0.0.0", 7777);
+      for (auto bck = listener_config.services[0].backends;
+           bck != nullptr;
+           bck = bck->next) {
+        if (bck->disabled != 1) {
+          sm->addBackend(bck->address, bck->port);
+        } else {
+          Debug::Log("Backend " + bck->address + ":" + std::to_string(bck->port) + " disabled.", LOG_NOTICE);
+        }
+      }
       sm->start(i);
     } else {
       Debug::Log("StreamManager id doesn't exist : " + std::to_string(i), LOG_ERR);
@@ -94,4 +100,9 @@ StreamManager *Listener::getManager(int fd) {
   ++c;
   unsigned long id = c % stream_manager_set.size();
   return stream_manager_set[id];
+}
+bool Listener::init(ListenerConfig &config) {
+  listener_config = config;
+  if (!listener_connection.listen(listener_config.addr)) return false;
+  return handleAccept(listener_connection.socket_fd);
 };

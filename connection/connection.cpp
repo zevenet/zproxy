@@ -3,7 +3,6 @@
 //
 
 #include "connection.h"
-#include "../debug/Debug.h"
 #include "../util/Network.h"
 
 #define  PRINT_BUFFER_SIZE \
@@ -116,7 +115,7 @@ IO::IO_RESULT Connection::writeTo(int fd) {
   PRINT_BUFFER_SIZE
   return result;
 }
-IO::IO_RESULT Connection::write(const char *data, size_t buffer_size) {//}, size_t *sent) {
+IO::IO_RESULT Connection::write(const char *data, size_t size) {//}, size_t *sent) {
   bool done = false;
   ssize_t count;
   IO::IO_RESULT result = IO::ERROR;
@@ -124,7 +123,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t buffer_size) {//}, size
   while (!done) {
     count =
         ::send(socket_fd, data + sent,
-               buffer_size - sent,
+               size - sent,
                MSG_NOSIGNAL);
     if (count < 0) {
       if (errno != EAGAIN && errno != EWOULDBLOCK /* && errno != EPIPE &&
@@ -200,7 +199,7 @@ bool Connection::doConnect(addrinfo &address, int timeout) {
 }
 
 int Connection::doAccept() {
-  int new_fd = -1;
+  int new_fd;
   sockaddr_in clnt_addr{};
   socklen_t clnt_length = sizeof(clnt_addr);
 
@@ -233,11 +232,11 @@ bool Connection::listen(std::string &address_str, int port) {
   return false;
 }
 
-bool Connection::listen(addrinfo &address) {
-  this->address = &address;
+bool Connection::listen(addrinfo &address_) {
+  this->address = &address_;
   /* prepare the socket */
   if ((socket_fd = socket(
-      address.ai_family == AF_INET ? PF_INET : PF_INET6,
+      this->address->ai_family == AF_INET ? PF_INET : PF_INET6,
       SOCK_STREAM, 0)) < 0) {
     Debug::logmsg(LOG_ERR, "socket () failed %s s - aborted",
                   strerror(errno));
@@ -248,8 +247,8 @@ bool Connection::listen(addrinfo &address) {
   Network::setSoReuseAddrOption(socket_fd);
   Network::setTcpDeferAcceptOption(socket_fd);
 
-  if (::bind(socket_fd, address.ai_addr,
-             static_cast<socklen_t>(address.ai_addrlen)) < 0) {
+  if (::bind(socket_fd, address->ai_addr,
+             static_cast<socklen_t>(address->ai_addrlen)) < 0) {
     Debug::logmsg(LOG_ERR, "bind () failed %s s - aborted",
                   strerror(errno));
     ::close(socket_fd);

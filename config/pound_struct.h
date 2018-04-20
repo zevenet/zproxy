@@ -1,4 +1,5 @@
 #pragma once
+
 #include <netdb.h>
 #include <openssl/ssl.h>
 
@@ -37,7 +38,8 @@ typedef enum {
 /* back-end definition */
 class BackendConfig {
  public:
-  std::string backend_name = "bck_test";
+  std::string address;
+  int port;
   int be_type; /* 0 if real back-end, otherwise code (301, 302/default, 307) */
   struct addrinfo addr;    /* IPv4/6 address */
   int priority;            /* priority */
@@ -58,7 +60,7 @@ class BackendConfig {
   int resurrect;       /* this back-end is to be resurrected */
   int disabled;        /* true if the back-end is disabled */
   int connections;
-  BackendConfig *next;
+  BackendConfig *next = nullptr;
   int key_id;
 };
 

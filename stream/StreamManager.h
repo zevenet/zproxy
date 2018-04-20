@@ -11,12 +11,13 @@
 #include "../event/epoll_manager.h"
 #include "../http/http_stream.h"
 #include "../config/BackendConfig.h"
+#include "../config/pound_struct.h"
 
 class StreamManager : public EpollManager {
   int worker_id;
   std::thread worker;
   bool is_running;
-  std::vector<BackendConfig> backend_set;
+  std::vector<Backend> backend_set;
   std::unordered_map<int, HttpStream *> streams_set;
 
   void HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) override;
@@ -31,7 +32,8 @@ class StreamManager : public EpollManager {
   void start(int thread_id_ = 0);
   void stop();
   void addBackend(std::string address, int port);
-  BackendConfig *getBackend();
+  void addBackend(BackendConfig *backend_config);
+  Backend *getBackend();
 };
 
 #endif  // NEW_ZHTTP_WORKER_H

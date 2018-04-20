@@ -15,8 +15,8 @@ class Listener : public EpollManager {
   bool is_running;
   Connection listener_connection;
   std::map<int, StreamManager *> stream_manager_set;
+  ListenerConfig listener_config;
   void doWork();
-
   StreamManager *
   getManager(int fd);
 
@@ -24,6 +24,7 @@ class Listener : public EpollManager {
   Listener();
   ~Listener();
   bool init(std::string address, int port);
+  bool init(ListenerConfig &config);
   void start();
   void stop();
   void HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) override;

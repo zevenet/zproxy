@@ -9,9 +9,11 @@
 #include <string>
 #include <thread>
 #include <type_traits>
+#include <iomanip>
+#include <sstream>
 #include "../util/utils.h"
 
-#define DEBUG_LEVEl 6
+#define DEBUG_LEVEl 8
 #define LOGFACILITY -1
 
 #define MAXBUF 4096
@@ -60,12 +62,28 @@ class Debug {
       return;
     }
     std::lock_guard<std::mutex> locker(log_lock);
-    std::cout << helper::ThreadHelper::getThreadName(pthread_self()) << " "
-              << file << ":" << function << ":" << line << " " << " :" << str
-              << std::endl;
+    if (DEBUG_LEVEl > 7) {
+      std::stringstream buffer;
+      buffer << "["
+             << helper::ThreadHelper::getThreadName(pthread_self())
+             << "]["
+             << file << ":" << function << ":" << line << "] ";
+
+      std::cout <<
+                std::left << std::setfill('.') << std::setw(60) << buffer.str();
+    }
+    std::cout << str;
+
+//    if (DEBUG_LEVEl > 7) {
+//      std::cout << "\033[1;31mbold red text\033[0m\n";
+//
+//    }
+
+    std::cout << std::endl;
   }
 
-  static void logmsg(const int priority, const char *fmt, ...) {
+  static
+  void logmsg(const int priority, const char *fmt, ...) {
     if (priority > DEBUG_LEVEl) {
       return;
     }

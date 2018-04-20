@@ -1328,14 +1328,17 @@ BackendConfig *Config::parseBackend(const int is_emergency) {
         strcpy(res->addr.ai_addr->sa_data, lin + matches[1].rm_so);
         res->addr.ai_addrlen = sizeof(struct sockaddr_un);
       }
+      res->address = std::string(lin + matches[1].rm_so);
       has_addr = 1;
     } else if (!regexec(&Port, lin, 4, matches, 0)) {
       switch (res->addr.ai_family) {
         case AF_INET:memcpy(&in, res->addr.ai_addr, sizeof(in));
+          res->port = atoi(lin + matches[1].rm_so);
           in.sin_port = (in_port_t) htons(atoi(lin + matches[1].rm_so));
           memcpy(res->addr.ai_addr, &in, sizeof(in));
           break;
         case AF_INET6:memcpy(&in6, res->addr.ai_addr, sizeof(in6));
+          res->port = atoi(lin + matches[1].rm_so);
           in6.sin6_port = (in_port_t) htons(atoi(lin + matches[1].rm_so));
           memcpy(res->addr.ai_addr, &in6, sizeof(in6));
           break;

@@ -6,6 +6,7 @@
 #include <functional>
 #include "../debug/Debug.h"
 #include "../util/Network.h"
+#include "../http/HttpStatus.h"
 
 void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) {
   switch (event_type) {
@@ -16,7 +17,16 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
         stream = new HttpStream();
         stream->client_connection.setFileDescriptor(fd);
         auto bck = getBackend();
+        if (bck == nullptr) {
+          //No backend available
+          auto response = HttpStatus::getErrorResponse(HttpStatus::Code::ServiceUnavailable);
+          stream->client_connection.write(response.c_str(), response.length());
+          stream->client_connection.closeConnection();
+          return;;
+        }
         if (!stream->backend_connection.doConnect(*bck->address_info, bck->timeout)) {
+          auto response = HttpStatus::getErrorResponse(HttpStatus::Code::ServiceUnavailable);
+          stream->client_connection.write(response.c_str(), response.length());
           Debug::Log("Error connecting to backend " + bck->address, LOG_NOTICE); //TODO:: respond e503
           stream->backend_connection.closeConnection();
           return;
@@ -28,6 +38,7 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
         streams_set[stream->backend_connection.getFileDescriptor()] = stream;
         addFd(stream->backend_connection.getFileDescriptor(), EVENT_TYPE::READ, EVENT_GROUP::SERVER);
       }
+
       switch (event_group) {
         case ACCEPTOR:break;
         case SERVER: {
@@ -35,8 +46,25 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
           if (result != IO::SUCCESS && result != IO::FD_BLOCKED) {
             Debug::Log("Erorr reading response ", LOG_DEBUG);
           }
+          size_t parsed = 0;
+          auto ret = stream->response.parseResponse(stream->backend_connection.buffer,
+                                                    stream->backend_connection.buffer_size,
+                                                    &parsed); // parsing http data as response structured
+          switch (ret) {
+            case http_parser::SUCCESS:
+              updateFd(stream->client_connection.getFileDescriptor(),
+                       EVENT_TYPE::WRITE,
+                       EVENT_GROUP::CLIENT);
+              Debug::Log("Parser SUCCESS", LOG_DEBUG);
+              break;
+            case http_parser::FAILED:Debug::Log("Parser FAILED", LOG_DEBUG);
+              break;
+            case http_parser::INCOMPLETE:Debug::Log("Parser INCOMPLETE", LOG_DEBUG);
+              break;
+            case http_parser::TOOLONG:Debug::Log("Parser TOOLONG", LOG_DEBUG);
+              break;
+          }
 
-          updateFd(stream->client_connection.getFileDescriptor(), EVENT_TYPE::WRITE, EVENT_GROUP::CLIENT);
           break;
         }
         case CLIENT: {
@@ -44,7 +72,25 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
           if (result != IO::SUCCESS && result != IO::FD_BLOCKED) {
             Debug::Log("Erorr reading request ", LOG_DEBUG);
           }
-          updateFd(stream->backend_connection.getFileDescriptor(), EVENT_TYPE::WRITE, EVENT_GROUP::SERVER);
+
+          size_t parsed = 0;
+          auto ret = stream->request.parseRequest(stream->client_connection.buffer,
+                                                  stream->client_connection.buffer_size,
+                                                  &parsed); // parsing http data as response structured
+          switch (ret) {
+            case http_parser::SUCCESS:stream->request.printRequest();
+              updateFd(stream->backend_connection.getFileDescriptor(),
+                       EVENT_TYPE::WRITE,
+                       EVENT_GROUP::SERVER);
+              Debug::Log("Parser SUCCESS", LOG_DEBUG);
+              break;
+            case http_parser::FAILED:Debug::Log("Parser FAILED", LOG_DEBUG);
+              break;
+            case http_parser::INCOMPLETE:Debug::Log("Parser INCOMPLETE", LOG_DEBUG);
+              break;
+            case http_parser::TOOLONG:Debug::Log("Parser TOOLONG", LOG_DEBUG);
+              break;
+          }
           break;
         }
       }
@@ -149,7 +195,7 @@ int StreamManager::getWorkerId() { return worker_id; }
 void StreamManager::addBackend(std::string address, int port) {
   static int backend_id;
   backend_id++;
-  BackendConfig config;
+  Backend config;
   config.address_info = Network::getAddress(address, port);
   if (config.address_info != nullptr) {
     config.address = address;
@@ -162,10 +208,15 @@ void StreamManager::addBackend(std::string address, int port) {
   }
 }
 
-BackendConfig *StreamManager::getBackend() {
+Backend *StreamManager::getBackend() {
+  if (backend_set.size() == 0) return nullptr;
   static unsigned int seed;
   seed++;
   return &backend_set[seed % backend_set.size()];
+}
+
+void StreamManager::addBackend(BackendConfig *backend_config) {
+
 }
 
 

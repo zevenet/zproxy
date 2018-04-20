@@ -70,6 +70,6 @@ add_executable(${PROJECT_NAME}
     config/pound_struct.h
     config/svc.h
     config/svc.cpp
-    )
+    http/HttpStatus.cpp http/HttpStatus.h http/http_parser.cpp http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h http/HttpRequest.h)
 
 target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} libssl.so libcrypto.so)# ${OPENSSL_LIBRARIES})
