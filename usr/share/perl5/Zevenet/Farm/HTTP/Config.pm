@@ -29,7 +29,7 @@ my $configdir = &getGlobalConfiguration('configdir');
 Function: setFarmClientTimeout
 
 	Configure the client time parameter for a HTTP farm.
-	
+
 Parameters:
 	client - It is the time in seconds for the client time parameter
 	farmname - Farm name
@@ -77,7 +77,7 @@ sub setFarmClientTimeout    # ($client,$farm_name)
 Function: getFarmClientTimeout
 
 	Return the client time parameter for a HTTP farm.
-	
+
 Parameters:
 	farmname - Farm name
 
@@ -116,7 +116,7 @@ sub getFarmClientTimeout    # ($farm_name)
 Function: setHTTPFarmSessionType
 
 	Configure type of persistence
-	
+
 Parameters:
 	session - type of session: nothing, HEADER, URL, COOKIE, PARAM, BASIC or IP
 	farmname - Farm name
@@ -207,7 +207,7 @@ sub setHTTPFarmSessionType    # ($session,$farm_name)
 Function: getHTTPFarmSessionType
 
 	Return the type of session persistence for a HTTP farm.
-	
+
 Parameters:
 	farmname - Farm name
 
@@ -239,7 +239,7 @@ sub getHTTPFarmSessionType    # ($farm_name)
 Function: setHTTPFarmBlacklistTime
 
 	Configure check time for resurected back-end. It is a HTTP farm paramter.
-	
+
 Parameters:
 	checktime - time for resurrected checks
 	farmname - Farm name
@@ -283,7 +283,7 @@ sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 Function: getHTTPFarmBlacklistTime
 
 	Return  time for resurrected checks for a HTTP farm.
-	
+
 Parameters:
 	farmname - Farm name
 
@@ -317,13 +317,13 @@ sub getHTTPFarmBlacklistTime    # ($farm_name)
 Function: setFarmHttpVerb
 
 	Configure the accepted HTTP verb for a HTTP farm.
-	The accepted verb sets are: 
+	The accepted verb sets are:
 		0. standardHTTP, for the verbs GET, POST, HEAD.
 		1. extendedHTTP, add the verbs PUT, DELETE.
 		2. standardWebDAV, add the verbs LOCK, UNLOCK, PROPFIND, PROPPATCH, SEARCH, MKCOL, MOVE, COPY, OPTIONS, TRACE, MKACTIVITY, CHECKOUT, MERGE, REPORT.
 		3. MSextWebDAV, add the verbs SUBSCRIBE, UNSUBSCRIBE, NOTIFY, BPROPFIND, BPROPPATCH, POLL, BMOVE, BCOPY, BDELETE, CONNECT.
 		4. MSRPCext, add the verbs RPC_IN_DATA, RPC_OUT_DATA.
-	
+
 Parameters:
 	verb - accepted verbs: 0, 1, 2, 3 or 4
 	farmname - Farm name
@@ -368,13 +368,13 @@ sub setFarmHttpVerb    # ($verb,$farm_name)
 Function: getFarmHttpVerb
 
 	Return the available verb set for a HTTP farm.
-	The possible verb sets are: 
+	The possible verb sets are:
 		0. standardHTTP, for the verbs GET, POST, HEAD.
 		1. extendedHTTP, add the verbs PUT, DELETE.
 		2. standardWebDAV, add the verbs LOCK, UNLOCK, PROPFIND, PROPPATCH, SEARCH, MKCOL, MOVE, COPY, OPTIONS, TRACE, MKACTIVITY, CHECKOUT, MERGE, REPORT.
 		3. MSextWebDAV, add the verbs SUBSCRIBE, UNSUBSCRIBE, NOTIFY, BPROPFIND, BPROPPATCH, POLL, BMOVE, BCOPY, BDELETE, CONNECT.
 		4. MSRPCext, add the verbs RPC_IN_DATA, RPC_OUT_DATA.
-	
+
 Parameters:
 	farmname - Farm name
 
@@ -412,15 +412,15 @@ sub getFarmHttpVerb    # ($farm_name)
 Function: setFarmListen
 
 	Change a HTTP farm between HTTP and HTTPS listener
-	
+
 Parameters:
 	farmname - Farm name
 	listener - type of listener: http or https
 
 Returns:
 	none - .
-	
-FIXME 
+
+FIXME
 	not return nothing, use $found variable to return success or error
 
 =cut
@@ -563,7 +563,7 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 Function: setFarmRewriteL
 
 	Asign a RewriteLocation vaue to a farm HTTP or HTTPS
-	
+
 Parameters:
 	farmname - Farm name
 	rewritelocation - The options are: disabled, enabled or enabled-backends
@@ -645,7 +645,7 @@ sub getFarmRewriteL    # ($farm_name)
 Function: setFarmConnTO
 
 	Configure connection time out value to a farm HTTP or HTTPS
-	
+
 Parameters:
 	connectionTO - Conection time out in seconds
 	farmname - Farm name
@@ -728,7 +728,7 @@ sub getFarmConnTO    # ($farm_name)
 Function: setHTTPFarmTimeout
 
 	Asign a timeout value to a farm
-	
+
 Parameters:
 	timeout - Time out in seconds
 	farmname - Farm name
@@ -769,7 +769,7 @@ sub setHTTPFarmTimeout    # ($timeout,$farm_name)
 Function: getHTTPFarmTimeout
 
 	Return the farm time out
-	
+
 Parameters:
 	farmname - Farm name
 
@@ -804,7 +804,7 @@ sub getHTTPFarmTimeout    # ($farm_filename)
 Function: setHTTPFarmMaxClientTime
 
 	Set the maximum time for a client
-	
+
 Parameters:
 	maximumTO - Maximum client time
 	farmname - Farm name
@@ -844,7 +844,7 @@ sub setHTTPFarmMaxClientTime    # ($track,$farm_name)
 Function: getHTTPFarmMaxClientTime
 
 	Return the maximum time for a client
-	
+
 Parameters:
 	farmname - Farm name
 
@@ -882,7 +882,7 @@ sub getHTTPFarmMaxClientTime    # ($farm_name)
 Function: setHTTPFarmMaxConn
 
 	set the max conn of a farm
-	
+
 Parameters:
 	none - .
 
@@ -902,12 +902,12 @@ sub setHTTPFarmMaxConn    # ($max_connections,$farm_name)
 Function: getHTTPFarmGlobalStatus
 
 	Get the status of a farm and its backends through pound command.
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
-	array - Return poundctl output 
+	array - Return poundctl output
 
 =cut
 sub getHTTPFarmGlobalStatus    # ($farm_name)
@@ -923,7 +923,7 @@ sub getHTTPFarmGlobalStatus    # ($farm_name)
 Function: setFarmErr
 
 	Configure a error message for http error: 414, 500, 501 or 503
-	 
+
 Parameters:
 	farmname - Farm name
 	message - Message body for the error
@@ -965,7 +965,7 @@ sub setFarmErr    # ($farm_name,$content,$nerr)
 Function: getFarmErr
 
 	Return the error message for a http error: 414, 500, 501 or 503
-	 
+
 Parameters:
 	farmname - Farm name
 	error_number - Number of error to set, the options are 414, 500, 501 or 503
@@ -1016,7 +1016,7 @@ sub getFarmErr    # ($farm_name,$nerr)
 Function: getHTTPFarmBootStatus
 
 	Return the farm status at boot zevenet
-	 
+
 Parameters:
 	farmname - Farm name
 
@@ -1052,16 +1052,16 @@ sub getHTTPFarmBootStatus    # ($farm_name)
 Function: getHTTPFarmMaxConn
 
 	Returns farm max connections
-	
+
 Parameters:
 	none - .
 
 Returns:
 	Integer - always return 0
-	
+
 FIXME:
 	This function do nothing
-		
+
 =cut
 sub getHTTPFarmMaxConn    # ($farm_name)
 {
@@ -1092,13 +1092,13 @@ sub getHTTPFarmSocket       # ($farm_name)
 Function: getHTTPFarmPid
 
 	Returns farm PID
-		
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Integer - return pid of farm, '-' if pid not exist or -1 on failure
-			
+
 =cut
 sub getHTTPFarmPid        # ($farm_name)
 {
@@ -1137,14 +1137,14 @@ sub getHTTPFarmPid        # ($farm_name)
 =begin nd
 Function: getFarmChildPid
 
-	Returns farm Child PID 
-		
+	Returns farm Child PID
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Integer - return child pid of farm or -1 on failure
-			
+
 =cut
 sub getFarmChildPid    # ($farm_name)
 {
@@ -1177,17 +1177,17 @@ sub getFarmChildPid    # ($farm_name)
 Function: getHTTPFarmVip
 
 	Returns farm vip or farm port
-		
+
 Parameters:
 	tag - requested parameter. The options are vip, for virtual ip or vipp, for virtual port
 	farmname - Farm name
 
 Returns:
 	Scalar - return vip or port of farm or -1 on failure
-	
+
 FIXME
 	vipps parameter is only used in tcp farms. Soon this parameter will be obsolet
-			
+
 =cut
 sub getHTTPFarmVip    # ($info,$farm_name)
 {
@@ -1228,7 +1228,7 @@ sub getHTTPFarmVip    # ($info,$farm_name)
 Function: setHTTPFarmVirtualConf
 
 	Set farm virtual IP and virtual PORT
-	
+
 Parameters:
 	vip - virtual ip
 	port - virtual port. If the port is not sent, the port will not be changed
@@ -1236,7 +1236,7 @@ Parameters:
 
 Returns:
 	Integer - return 0 on success or different on failure
-	
+
 =cut
 sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 {
@@ -1274,13 +1274,13 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 Function: getHTTPFarmConfigIsOK
 
 	Function that check if the config file is OK.
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	scalar - return 0 on success or different on failure
-		
+
 =cut
 sub getHTTPFarmConfigIsOK    # ($farm_name)
 {
@@ -1304,20 +1304,100 @@ sub getHTTPFarmConfigIsOK    # ($farm_name)
 }
 
 =begin nd
+Function: getHTTPFarmConfigErrorMessage
+
+	This function return a message to know what parameter is not correct in a HTTP farm
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Scalar - If there is an error, it returns a message, else it returns a blank string
+
+=cut
+
+sub getHTTPFarmConfigErrorMessage    # ($farm_name)
+{
+	my $farm_name = shift;
+
+	my $pound         = &getGlobalConfiguration( 'pound' );
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $pound_command = "$pound -f $configdir\/$farm_filename -c";
+
+	my @run = `$pound_command 2>&1`;
+	my $rc  = $?;
+	my $msg;
+
+	return "" unless ( $rc );
+
+	$run[-1] =~ / line (\d+): /;
+
+	my $line_num = $1;
+
+	# get line
+	my ( $farm_name, $service ) = @_;
+	open my $fileconf, '<', "$configdir/$farm_filename";
+	my $file_id = 0;
+	my $file_line;
+	my $srv;
+	foreach my $line ( <$fileconf> )
+	{
+		if ( $line =~ /^\tService \"(.+)\"/ )    { $srv = $1; }
+		if ( $file_id == $line_num-1 )
+		{
+			$file_line = $line;
+			last;
+		}
+		$file_id++;
+	}
+	close $fileconf;
+
+	# examples of error msg
+	#	AAAhttps, /usr/local/zevenet/config/AAAhttps_pound.cfg line 36: unknown directive
+	#	AAAhttps, /usr/local/zevenet/config/AAAhttps_pound.cfg line 40: SSL_CTX_use_PrivateKey_file failed - aborted
+	$file_line =~ /\s*([\w-]+)/;
+	my $param = $1;
+
+	# parse line
+	if( $param eq "Cert" )
+	{
+		# return pem name if the pem file is not valid
+		$file_line =~ /([^\/]+)\"$/;
+		$msg = "Error loading the certificate: $1" if $1;
+	}
+	elsif ( $param )
+	{
+		$srv = "in the service $srv" if ( $srv );
+		$msg = "Error in the parameter $param ${srv}";
+	}
+
+	if ( not $msg )
+	{
+		if ( &debug() ) 	{ $msg = $file_line; }
+		else 	{ $msg = "Error in the configuration file"; }
+	}
+
+	&zenlog("Error checking config file: $msg",'debug');
+
+	return $msg;
+}
+
+
+=begin nd
 Function: setFarmNameParam
 
 	[NOT USED] Rename a HTTP farm
-	
+
 Parameters:
 	farmname - Farm name
 	newfarmname - New farm name
 
 Returns:
 	none - Error code: 0 on success or -1 on failure
-	
-BUG: 
+
+BUG:
 	this function is duplicated
-		
+
 =cut
 sub setFarmNameParam    # &setFarmNameParam( $farm_name, $new_name );
 {

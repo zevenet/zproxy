@@ -41,7 +41,7 @@ sub farm_actions    # ( $json_obj, $farmname )
 	# validate FARM NAME
 	if ( ! &getFarmExists( $farmname ) )
 	{
-		my $msg = "The farmname $farmname does not exists.";
+		my $msg = "The farmname $farmname does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -50,6 +50,17 @@ sub farm_actions    # ( $json_obj, $farmname )
 	{
 		my $msg = "No action has been requested.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
+	require Zevenet::Farm::Core;
+	if ( &getFarmType( $farmname ) =~ /http/ )
+	{
+		require Zevenet::Farm::HTTP::Config;
+		my $err_msg = &getHTTPFarmConfigErrorMessage( $farmname );
+		if ( $err_msg )
+		{
+			&httpErrorResponse( code => 400, desc => $desc, msg => $err_msg );
+		}
 	}
 
 	if ( $json_obj->{ action } eq "stop" )
