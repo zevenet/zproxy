@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -189,5 +189,304 @@ sub setHTTPFarmLogs    # ($farm_name, $action)
 	}
 	return $output;
 }
+
+
+
+# Add headers
+
+=begin nd
+Function: getHTTPAddheader
+
+	Get a list with all the http headers are added by the farm
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Array ref - headers list
+
+=cut
+sub getHTTPAddheader    # ($farm_name,$service)
+{
+	my ( $farm_name ) = @_;
+	my @out = ();
+
+	require Zevenet::Farm::Core;
+
+	# look for cookie insertion policy
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $sw = 0;
+	my $out = "false";
+
+	open my $fileconf, '<', "$configdir/$farm_filename";
+
+	foreach my $line ( <$fileconf> )
+	{
+		if ( $line =~ /^[#\s]*Service \"/ )
+			{ last; }
+		elsif ( $line =~ /^[#\s]*AddHeader\s+"(.+)"/ )
+		{
+			push @out, $1;
+		}
+	}
+
+	close $fileconf;
+
+	return \@out;
+}
+
+
+=begin nd
+Function: addHTTPHeadremove
+
+	The HTTP farm will add the header to the http communication
+
+Parameters:
+	farmname - Farm name
+	header - Header to add
+
+Returns:
+	Integer - Error code: 0 on success or 1 on failure
+
+=cut
+sub addHTTPAddheader    # ($farm_name,$service,$code)
+{
+	my ( $farm_name, $header ) = @_;
+
+	require Zevenet::Farm::Core;
+	my $ffile = &getFarmFile( $farm_name );
+	my $srv_flag  = 0;
+	my $errno     = 1;
+
+	require Zevenet::Lock;
+	&ztielock ( \my @fileconf, "$configdir/$ffile" );
+
+	my $index = 0;
+	my $rewrite_flag=0;		# it is used to add HeadRemove before than AddHeader
+	foreach my $line ( @fileconf )
+	{
+		if ( $line =~ /[#\s]*RewriteLocation/ )
+		{
+			$rewrite_flag=1;
+		}
+		elsif ( $rewrite_flag )
+		{
+			# put new headremove before than last one
+			if ( $line !~ /^[#\s]*AddHeader\s+"/ and $rewrite_flag )
+			{
+				# example: AddHeader "header: to add"
+				splice @fileconf, $index, 0, "\tAddHeader \"$header\"";
+				$errno = 0;
+				last;
+			}
+		}
+		$index++;
+	}
+	untie @fileconf;
+
+	&zenlog("Could not add AddHeader") if $errno;
+
+	return $errno;
+}
+
+=begin nd
+Function: delHTTPAddheader
+
+	Delete a sentence "AddHeader".
+
+Parameters:
+	farmname - Farm name
+	index - Header index
+
+Returns:
+	Integer - Error code: 0 on success or 1 on failure
+
+=cut
+sub delHTTPAddheader    # ($farm_name,$service,$code)
+{
+	my ( $farm_name, $header_ind ) = @_;
+
+	require Zevenet::Farm::Core;
+	my $ffile = &getFarmFile( $farm_name );
+	my $srv_flag  = 0;
+	my $errno     = 1;
+
+	require Zevenet::Lock;
+	&ztielock ( \my @fileconf, "$configdir/$ffile" );
+
+	my $index = 0;
+	my $ind = 0;
+	foreach my $line ( @fileconf )
+	{
+		if ( $line =~ /^\s*AddHeader\s+"/ )
+		{
+			if( $header_ind == $ind )
+			{
+				$errno = 0;
+				splice @fileconf, $index, 1;
+				last;
+			}
+			else
+			{
+				$ind++;
+			}
+		}
+		$index++;
+	}
+	untie @fileconf;
+
+	&zenlog("Could not remove HeadRemove") if $errno;
+
+	return $errno;
+}
+
+# remove header
+
+=begin nd
+Function: getHTTPHeadremove
+
+	Get a list with all the http headers are added by the farm
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Array ref - headers list
+
+=cut
+sub getHTTPHeadremove    # ($farm_name,$service)
+{
+	my ( $farm_name ) = @_;
+	my @out = ();
+
+	require Zevenet::Farm::Core;
+
+	# look for cookie insertion policy
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $sw = 0;
+	my $out = "false";
+
+	open my $fileconf, '<', "$configdir/$farm_filename";
+
+	foreach my $line ( <$fileconf> )
+	{
+		if ( $line =~ /^[#\s]*Service \"/ )
+			{ last; }
+		elsif ( $line =~ /^[#\s]*HeadRemove\s+"(.+)"/ )
+		{
+			push @out, $1;
+		}
+	}
+
+	close $fileconf;
+
+	return \@out;
+}
+
+=begin nd
+Function: addHTTPHeadremove
+
+	Add a sentence "HeadRemove". The HTTP farm will remove the header that match with the sentence
+
+Parameters:
+	farmname - Farm name
+	header - Header to add
+
+Returns:
+	Integer - Error code: 0 on success or 1 on failure
+
+=cut
+sub addHTTPHeadremove    # ($farm_name,$service,$code)
+{
+	my ( $farm_name, $header ) = @_;
+
+	require Zevenet::Farm::Core;
+	my $ffile = &getFarmFile( $farm_name );
+	my $srv_flag  = 0;
+	my $errno     = 1;
+
+	require Zevenet::Lock;
+	&ztielock ( \my @fileconf, "$configdir/$ffile" );
+
+	my $index = 0;
+	my $rewrite_flag=0;		# it is used to add HeadRemove before than AddHeader
+	foreach my $line ( @fileconf )
+	{
+		if ( $line =~ /[#\s]*RewriteLocation/ )
+		{
+			$rewrite_flag=1;
+		}
+		elsif ( $rewrite_flag )
+		{
+			# put new headremove before than last one
+			if ( $line !~ /^[#\s]*(?:AddHeader|HeadRemove)\s+"/ and $rewrite_flag )
+			{
+				# example: AddHeader "header: to add"
+				splice @fileconf, $index, 0, "\tHeadRemove \"$header\"";
+				$errno = 0;
+				last;
+			}
+		}
+		$index++;
+	}
+	untie @fileconf;
+
+	&zenlog("Could not add HeadRemove") if $errno;
+
+	return $errno;
+}
+
+=begin nd
+Function: delHTTPHeadremove
+
+	Delete a sentence "HeadRemove".
+
+Parameters:
+	farmname - Farm name
+	index - Header index
+
+Returns:
+	Integer - Error code: 0 on success or 1 on failure
+
+=cut
+sub delHTTPHeadremove    # ($farm_name,$service,$code)
+{
+	my ( $farm_name, $header_ind ) = @_;
+
+	require Zevenet::Farm::Core;
+	my $ffile = &getFarmFile( $farm_name );
+	my $srv_flag  = 0;
+	my $errno     = 1;
+
+	require Zevenet::Lock;
+	&ztielock ( \my @fileconf, "$configdir/$ffile" );
+
+	my $index = 0;
+	my $ind = 0;
+	foreach my $line ( @fileconf )
+	{
+		if ( $line =~ /^\s*HeadRemove\s+"/ )
+		{
+			if( $header_ind == $ind )
+			{
+				$errno = 0;
+				splice @fileconf, $index, 1;
+				last;
+			}
+			else
+			{
+				$ind++;
+			}
+		}
+		$index++;
+	}
+	untie @fileconf;
+
+	&zenlog("Could not remove HeadRemove") if $errno;
+
+	return $errno;
+}
+
+
 
 1;

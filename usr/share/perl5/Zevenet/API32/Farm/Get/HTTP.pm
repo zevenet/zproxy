@@ -221,6 +221,18 @@ sub get_farm_struct
 			args   => [$farmname],
 		);
 		$output_params->{ logs } = ( $flag ) ? "true" : "false";
+
+		$output_params->{ addheader } = &eload(
+			module => 'Zevenet::Farm::HTTP::Ext',
+			func   => 'getHTTPAddheader',
+			args   => [$farmname],
+		);
+
+		$output_params->{ headremove } = &eload(
+			module => 'Zevenet::Farm::HTTP::Ext',
+			func   => 'getHTTPHeadremove',
+			args   => [$farmname],
+		);
 	}
 
 	if ( $type eq "https" )

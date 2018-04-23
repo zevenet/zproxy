@@ -1361,7 +1361,7 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 	# parse line
 	if( $param eq "Cert" )
 	{
-		# return pem name if the pem file is not valid
+		# return pem name if the pem file is not correct
 		$file_line =~ /([^\/]+)\"$/;
 		$msg = "Error loading the certificate: $1" if $1;
 	}
@@ -1373,7 +1373,7 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 
 	if ( not $msg )
 	{
-		if ( &debug() ) 	{ $msg = $file_line; }
+		if ( &debug() ) 	{ $msg = $run[-1]; }
 		else 	{ $msg = "Error in the configuration file"; }
 	}
 

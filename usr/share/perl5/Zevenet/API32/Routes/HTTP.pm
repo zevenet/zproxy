@@ -34,4 +34,14 @@ if ( $ENV{ PATH_INFO } =~ qr{^/farms/$farm_re/services/$service_re/actions$} )
 	POST qr{^/farms/($farm_re)/services/($service_re)/actions$}, 'move_services', $mod;
 }
 
+if ( $ENV{ PATH_INFO } =~ qr{^/farms/$farm_re/(?:addheader|headremove)(:?/\d+)?$} )
+{
+	my $mod = 'Zevenet::API32::Farm::HTTP::Ext';
+
+	POST qr{^/farms/($farm_re)/addheader$}, 'add_addheader', $mod;
+	DELETE qr{^/farms/($farm_re)/addheader/(\d+)$}, 'del_addheader', $mod;
+}
+
+
+
 1;

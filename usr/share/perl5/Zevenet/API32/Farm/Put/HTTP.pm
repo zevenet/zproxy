@@ -301,6 +301,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 				$restart_flag = "true";
 			}
 		}
+
 	}
 
 	# Modify HTTP Verbs Accepted
