@@ -365,6 +365,13 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	# check if the service has configured a redirect
+	if ( &getHTTPFarmVS( $farmname, $service, 'redirect' ) )
+	{
+		my $msg = "It is not possible to create a backend when the service has a redirect configured.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	# get an ID for the new backend
 	my $backendsvs = &getHTTPFarmVS( $farmname, $service, "backends" );
 	my @be = split ( "\n", $backendsvs );

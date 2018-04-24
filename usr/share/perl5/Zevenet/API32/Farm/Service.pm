@@ -197,6 +197,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 
 	my $desc = "Modify service";
 	my $output_params;
+	my $bk_msg = "";
 
 	# validate FARM NAME
 	if ( !&getFarmExists( $farmname ) )
@@ -265,6 +266,21 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 		}
 
 		&setFarmVS( $farmname, $service, "redirect", $redirect );
+
+		# delete service's backends if redirect has been configured
+		if ( $redirect )
+		{
+			require Zevenet::Farm::HTTP::Backend;
+			my $backends = scalar @{ &getHTTPFarmBackends( $farmname, $service ) };
+			if ( $backends )
+			{
+				$bk_msg = "The backends of $service have been deleted.";
+				for( my $id = $backends - 1; $id >= 0; $id-- )
+				{
+					&runHTTPFarmServerDelete( $id, $farmname, $service );
+				}
+			}
+		}
 	}
 
 	my $redirect = &getFarmVS( $farmname, $service, "redirect" );
@@ -499,6 +515,8 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 				 description => "Modify service $service in farm $farmname",
 				 params      => $output_params,
 	};
+
+	$body->{ message } = $bk_msg if ( $bk_msg );
 
 	if ( &getFarmStatus( $farmname ) eq 'up' )
 	{
