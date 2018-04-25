@@ -224,13 +224,13 @@ if ( $q->path_info =~ qr{^/interfaces/virtual} )
 	  \&actions_interface_virtual;
 }
 
-if ( $q->path_info =~ qr{^/interfaces/gateway} )
+if ( $q->path_info =~ qr{^/interfaces/gateway(?:/ipv([46]))?$} )
 {
 	require Zevenet::API32::Interface::Gateway;
 
-	GET qr{^/interfaces/gateway$}    => \&get_gateway;
-	PUT qr{^/interfaces/gateway$}    => \&modify_gateway;
-	DELETE qr{^/interfaces/gateway$} => \&delete_gateway;
+	GET qr{^/interfaces/gateway(?:/ipv([46]))?$}    => \&get_gateway;
+	PUT qr{^/interfaces/gateway(?:/ipv([46]))?$}    => \&modify_gateway;
+	DELETE qr{^/interfaces/gateway(?:/ipv([46]))?$} => \&delete_gateway;
 }
 
 if ( $q->path_info =~ qr{^/interfaces$} )

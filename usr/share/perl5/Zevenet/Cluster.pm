@@ -838,7 +838,8 @@ sub runSync
 	my $cl_conf = &getZClusterConfig(); # cluster configuration hash
 	#~ my $local_ip = &iponif( $cl_conf->{_}->{interface} );
 
-	if ( ! $cl_conf )
+	# Warning: The Config::Tiny object can be defined without holding any key
+	if ( ! $cl_conf || ( keys %$cl_conf ) == 0 )
 	{
 		&zenlog( "Cluster configuration not found. Aborting sync." );
 		return 1;

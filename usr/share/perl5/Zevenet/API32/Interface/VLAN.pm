@@ -26,7 +26,7 @@ use strict;
 my $eload;
 if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
-#  POST /addvlan/<interface> Create a new vlan network interface
+#  POST /interfaces/vlan Create a new vlan network interface
 sub new_vlan    # ( $json_obj )
 {
 	my $json_obj = shift;
@@ -87,39 +87,34 @@ sub new_vlan    # ( $json_obj )
 	# validate VLAN TAG
 	unless ( $json_obj->{ tag } >= 1 && $json_obj->{ tag } <= 4094 )
 	{
-		my $msg = "The vlan tag must be in the range 1-4094, both included";
+		my $msg = "The VLAN tag must be in the range 1-4094, both included";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	# validate IP
-	unless ( defined ( $json_obj->{ ip } )
-			 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+	unless ( defined $json_obj->{ ip }
+			 && &getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
 	{
-		my $msg = "IP Address is not valid.";
+		my $msg = "Invalid IP address.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	$json_obj->{ ip_v } = ipversion( $json_obj->{ ip } );
 
 	# Check if interface already exists
-	my $if_ref = &getInterfaceConfig( $json_obj->{ name }, $json_obj->{ ip_v } );
+	my $if_ref = &getInterfaceConfig( $json_obj->{ name } );
 
 	if ( $if_ref )
 	{
-		my $msg = "Vlan network interface $json_obj->{ name } already exists.";
+		my $msg = "VLAN network interface $json_obj->{ name } already exists.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# FIXME: Check IPv6 compatibility
-
 	# Check netmask errors
-	if (
-		 $json_obj->{ ip_v } == 4
-		 && ( $json_obj->{ netmask } == undef
-			  || !&getValidFormat( 'IPv4_mask', $json_obj->{ ip } ) )
-	  )
+	unless ( defined $json_obj->{ netmask }
+			 && &getValidFormat( 'ip_mask', $json_obj->{ netmask } ) )
 	{
-		my $msg = "Netmask parameter not valid";
+		my $msg = "Invalid network mask.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -134,18 +129,11 @@ sub new_vlan    # ( $json_obj )
 		}
 	}
 
-	## Check netmask errors for IPv6
-#if ( $json_obj->{ ip_v } == 6 && ( $json_obj->{netmask} !~ /^\d+$/ || $json_obj->{netmask} > 128 || $json_obj->{netmask} < 0 ) )
-#{
-#	my $msg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric [0-128].";
-#	&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-#}
-
 	# Check gateway errors
 	unless ( !defined ( $json_obj->{ gateway } )
-			 || &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) )
+			 || &getValidFormat( 'ip_addr', $json_obj->{ gateway } ) )
 	{
-		my $msg = "Gateway Address $json_obj->{gateway} structure is not ok.";
+		my $msg = "Invalid gateway address.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -164,12 +152,31 @@ sub new_vlan    # ( $json_obj )
 				mac     => $socket->if_hwaddr( $if_ref->{ dev } ),
 	};
 
+	# Make sure the address, mask and gateway belong to the same stack
+	if ( $if_ref->{ addr } )
+	{
+		my $ip_v = &ipversion( $if_ref->{ addr } );
+		my $gw_v = &ipversion( $if_ref->{ gateway } );
+
+		my $mask_v =
+		    ( $ip_v == 4 && &getValidFormat( 'IPv4_mask', $if_ref->{ mask } ) ) ? 4
+		  : ( $ip_v == 6 && &getValidFormat( 'IPv6_mask', $if_ref->{ mask } ) ) ? 6
+		  :                                                                       '';
+
+		if ( $ip_v ne $mask_v
+			 || ( $if_ref->{ gateway } && $ip_v ne $gw_v ) )
+		{
+			my $msg = "Invalid IP stack version match.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	if ( $if_ref->{ gateway } )
 	{
 		unless (
 			 &getNetValidate( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ gateway } ) )
 		{
-			my $msg = "The gateway is not valid for the network.";
+			my $msg = "Gateway does not belong to the interface subnet.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -496,18 +503,18 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 {
 	my $json_obj = shift;
 	my $vlan     = shift;
-	my @farms;
 
 	require Zevenet::Net::Interface;
+	require Zevenet::Net::Validate;
 
 	my $desc   = "Modify VLAN interface";
-	my $ip_v   = 4;
-	my $if_ref = &getInterfaceConfig( $vlan, $ip_v );
+	my $if_ref = &getInterfaceConfig( $vlan );
+	my @farms;
 
 	# Check interface errors
 	unless ( $if_ref )
 	{
-		my $msg = "VLAN not found";
+		my $msg = "VLAN interface not found";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
@@ -523,9 +530,9 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	if ( exists $json_obj->{ ip } )
 	{
 		unless ( defined ( $json_obj->{ ip } )
-				 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+				 && &getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
 		{
-			my $msg = "IP Address $json_obj->{ip} structure is not ok.";
+			my $msg = "Invalid IP address.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -547,29 +554,21 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	# Check netmask errors
 	if ( exists $json_obj->{ netmask } )
 	{
-		unless ( defined ( $json_obj->{ netmask } )
-				 && &getValidFormat( 'IPv4_mask', $json_obj->{ netmask } ) )
+		unless ( $json_obj->{ netmask }
+				 && &getValidFormat( 'ip_mask', $json_obj->{ netmask } ) )
 		{
-			my $msg =
-			  "Netmask Address $json_obj->{netmask} structure is not ok. Must be IPv4 structure or numeric.";
+			my $msg = "Invalid network mask.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
 
-	## Check netmask errors for IPv6
-#if ( $ip_v == 6 && ( $json_obj->{netmask} !~ /^\d+$/ || $json_obj->{netmask} > 128 || $json_obj->{netmask} < 0 ) )
-#{
-#	my $msg = "Netmask Address $json_obj->{netmask} structure is not ok. Must be numeric.";
-#	&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-#}
-
 	# Check gateway errors
 	if ( exists $json_obj->{ gateway } )
 	{
-		unless ( exists ( $json_obj->{ gateway } )
-				 || &getValidFormat( 'IPv4_addr', $json_obj->{ gateway } ) )
+		unless ( defined ( $json_obj->{ gateway } )
+				 && &getValidFormat( 'ip_addr', $json_obj->{ gateway } ) )
 		{
-			my $msg = "Gateway Address $json_obj->{gateway} structure is not ok.";
+			my $msg = "Invalid gateway address.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -580,24 +579,41 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 				   gateway => $json_obj->{ gateway } // $if_ref->{ gateway },
 	};
 
-   #not modify gateway or netmask if exists a virtual interface using this interface
-	require Zevenet::Net::Validate;
+	# Make sure the address, mask and gateway belong to the same stack
+	if ( $new_if->{ addr } )
+	{
+		my $ip_v = &ipversion( $new_if->{ addr } );
+		my $gw_v = &ipversion( $new_if->{ gateway } );
+
+		my $mask_v =
+		    ( $ip_v == 4 && &getValidFormat( 'IPv4_mask', $new_if->{ mask } ) ) ? 4
+		  : ( $ip_v == 6 && &getValidFormat( 'IPv6_mask', $new_if->{ mask } ) ) ? 6
+		  :                                                                       '';
+
+		if ( $ip_v ne $mask_v
+			 || ( $new_if->{ gateway } && $ip_v ne $gw_v ) )
+		{
+			my $msg = "Invalid IP stack version match.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
+	# Do not modify gateway or netmask if exists a virtual interface using this interface
 	if ( exists $json_obj->{ ip } or exists $json_obj->{ netmask } )
 	{
 		my @child = &getInterfaceChild( $vlan );
 		my @wrong_conf;
-		if ( @child )
+
+		foreach my $child_name ( @child )
 		{
-			foreach my $child_name ( @child )
+			my $child_if = &getInterfaceConfig( $child_name );
+			unless (
+				  &getNetValidate( $child_if->{ addr }, $new_if->{ mask }, $new_if->{ addr } ) )
 			{
-				my $child_if = &getInterfaceConfig( $child_name );
-				unless (
-					  &getNetValidate( $child_if->{ addr }, $new_if->{ mask }, $new_if->{ addr } ) )
-				{
-					push @wrong_conf, $child_name;
-				}
+				push @wrong_conf, $child_name;
 			}
 		}
+
 		if ( @wrong_conf )
 		{
 			my $child_string = join ( ', ', @wrong_conf );
@@ -622,7 +638,6 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	# check the gateway is in network
 	if ( $new_if->{ gateway } )
 	{
-		require Zevenet::Net::Validate;
 		unless (
 			 &getNetValidate( $new_if->{ addr }, $new_if->{ mask }, $new_if->{ gateway } ) )
 		{

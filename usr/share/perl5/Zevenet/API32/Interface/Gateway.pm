@@ -25,16 +25,26 @@ use strict;
 
 sub get_gateway
 {
+	my ( $ip_ver ) = @_;
+
 	require Zevenet::Net::Route;
 
 	my $desc = "Default gateway";
+	my $ip_v = ( $ip_ver == 6 )? 6: 4;
+
+	my $addr =
+	  ( $ip_v == 6 ) ? &getIPv6DefaultGW() : &getDefaultGW();
+
+	my $if_name =
+	  ( $ip_v == 6 ) ? &getIPv6IfDefaultGW() : &getIfDefaultGW();
+
+	&zenlog("get_gateway ip_ver: $ip_ver");
 
 	my $body = {
 		description => $desc,
 		params      => {
-			address   => &getDefaultGW(),
-			interface => &getIfDefaultGW(),
-
+			address   => $addr,
+			interface => $if_name,
 		},
 	};
 
@@ -44,11 +54,13 @@ sub get_gateway
 sub modify_gateway # ( $json_obj )
 {
 	my $json_obj = shift;
+	my $ip_ver   = shift;
 
 	require Zevenet::Net::Route;
 
 	my $desc       = "Modify default gateway";
-	my $default_gw = &getDefaultGW();
+	my $ip_v       = ( $ip_ver == 6 ) ? 6 : 4;
+	my $default_gw = ( $ip_v == 6 ) ? &getIPv6DefaultGW() : &getDefaultGW();
 
 	# verify ONLY ACCEPTED parameters received
 	if ( grep { $_ !~ /^(?:address|interface)$/ } keys %$json_obj )
@@ -79,9 +91,11 @@ sub modify_gateway # ( $json_obj )
 	# validate ADDRESS
 	if ( exists $json_obj->{ address } )
 	{
-		unless ( defined( $json_obj->{ address } ) && &getValidFormat( 'IPv4_addr', $json_obj->{ address } ) )
+		my $ip_format = ( $ip_v == 6 ) ? 'IPv6_addr' : 'IPv4_addr';
+
+		unless ( $json_obj->{ address } && &getValidFormat( $ip_format, $json_obj->{ address } ) )
 		{
-			my $msg = "Gateway address is not valid.";
+			my $msg = "Invalid gateway address.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -100,15 +114,20 @@ sub modify_gateway # ( $json_obj )
 		}
 	}
 
-	my $ip_version = 4;
-	my $interface = $json_obj->{ interface } // &getIfDefaultGW();
+	my $interface = $json_obj->{ interface };
 	my $address = $json_obj->{ address } // $default_gw;
 
+	unless ( $interface )
+	{
+		$interface = ( $ip_ver == 6 ) ? &getIPv6IfDefaultGW() : &getIfDefaultGW();
+	}
+
 	require Zevenet::Net::Interface;
-	my $if_ref = &getInterfaceConfig( $interface, $ip_version );
+	my $if_ref = &getInterfaceConfig( $interface );
 
 	# check if network is correct
 	require Zevenet::Net::Validate;
+
 	unless (
 		&getNetValidate( $if_ref->{ addr }, $if_ref->{ mask }, $address ) )
 	{
@@ -138,13 +157,16 @@ sub modify_gateway # ( $json_obj )
 
 sub delete_gateway
 {
+	my ( $ip_ver ) = @_;
+
 	require Zevenet::Net::Route;
 	require Zevenet::Net::Interface;
 
-	my $desc        = "Remove default gateway";
-	my $ip_version  = 4;
-	my $defaultgwif = &getIfDefaultGW();
-	my $if_ref      = &getInterfaceConfig( $defaultgwif, $ip_version );
+	my $desc = "Remove default gateway";
+	my $ip_v = ( $ip_ver == 6 ) ? 6 : 4;
+
+	my $defaultgwif = ( $ip_v == 6 ) ? &getIPv6IfDefaultGW() : &getIfDefaultGW();
+	my $if_ref      = &getInterfaceConfig( $defaultgwif );
 	my $error       = &delRoutes( "global", $if_ref );
 
 	if ( $error )
@@ -153,15 +175,20 @@ sub delete_gateway
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	my $addr =
+	  ( $ip_v == 6 ) ? &getIPv6DefaultGW() : &getDefaultGW();
+
+	my $if_name =
+	  ( $ip_v == 6 ) ? &getIPv6IfDefaultGW() : &getIfDefaultGW();
+
 	my $msg = "The default gateway has been deleted successfully";
 	my $body = {
-		description => $desc,
-		message     => $msg,
-		params      => {
-			address   => &getDefaultGW(),
-			interface => &getIfDefaultGW(),
-
-		},
+				 description => $desc,
+				 message     => $msg,
+				 params      => {
+							 address   => $addr,
+							 interface => $if_name,
+				 },
 	};
 
 	&httpResponse({ code => 200, body => $body });

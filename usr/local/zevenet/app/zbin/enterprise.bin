@@ -208,15 +208,15 @@ my $returned_value;
 # call api request function
 eval { $returned_value = [ $code_ref->( @{ $args } ) ] };
 
-&zenlog("$mod->{ name }::$func returned ". $returned_value );
-&zenlog("$mod->{ name }::$func returned value dump ". Dumper( $returned_value ) );
-
 if ( $@ )
 {
 	&zenlog( "#### Function run $func: Failed!" );
 	&zenlog( $@ );
 	die $@;
 }
+
+&zenlog("$mod->{ name }::$func returned ". $returned_value );
+&zenlog("$mod->{ name }::$func returned value dump ". Dumper( $returned_value ) );
 
 unless ( defined $returned_value ) { &zenlog( "#### Function output defined: Failed!" ); } ####
 

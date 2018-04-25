@@ -26,7 +26,7 @@ use Zevenet::Farm::Core;
 my $eload;
 if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
-# POST /farms/<farmname>/actions Set an action in a Farm
+# PUT /farms/<farmname>/actions Set an action in a Farm
 sub farm_actions    # ( $json_obj, $farmname )
 {
 	my $json_obj = shift;

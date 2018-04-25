@@ -81,7 +81,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# validate IP
-		if ( !&getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+		if ( !&getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
 		{
 			my $msg = "Invalid backend IP value.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -387,7 +387,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 
 	# validate IP
 	unless ( defined $json_obj->{ ip }
-			 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+			 && &getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
 	{
 		my $msg = "Invalid backend IP value, please insert a valid value.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -616,7 +616,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 		if ( exists ( $json_obj->{ ip } ) )
 		{
 			unless (    $json_obj->{ ip }
-					 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+					 && &getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
 			{
 				my $msg = "Invalid IP.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
