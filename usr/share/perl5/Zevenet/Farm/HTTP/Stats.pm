@@ -265,7 +265,7 @@ sub getHTTPFarmBackendsStats    # ($farm_name)
 		# i.e.
 		#      0. Backend 192.168.100.254:80 active (5 0.000 sec) alive (0)
 		if ( $line =~
-			/(\d+)\. Backend (\d+\.\d+\.\d+\.\d+):(\d+) (\w+) .+ (\w+)(?: \((\d+)\))?/ )
+			/(\d+)\. Backend (\d+\.\d+\.\d+\.\d+|[a-fA-F0-9:]+):(\d+) (\w+) .+ (\w+)(?: \((\d+)\))?/ )
 		{
 			my $backendHash = {
 								alias   => $alias->{ $2 },
