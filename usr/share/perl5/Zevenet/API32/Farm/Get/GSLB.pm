@@ -55,7 +55,7 @@ sub farms_name_gslb # ( $farmname )
 		my $dpc = &getGSLBFarmVS( $farmname, $srv, "dpc" );
 
 		# Backends
-		my @out_b = &getGSLBFarmBackends( $farmname, $srv );
+		my $out_b = &getGSLBFarmBackends( $farmname, $srv );
 
 		# Farmguardian
 		require Zevenet::FarmGuardian;
@@ -65,7 +65,7 @@ sub farms_name_gslb # ( $farmname )
 			algorithm   => $lb,
 			deftcpport  => $dpc + 0,
 			farmguardian => &getFGFarm( $farmname, $srv ),
-			backends    => \@out_b,
+			backends    => $out_b,
 		  };
 	}
 
