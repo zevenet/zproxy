@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use Regexp::IPv6 qw($IPv6_re);
 
 # Notes about regular expressions:
 #
@@ -29,8 +30,10 @@ use strict;
 #
 
 my $UNSIGNED8BITS = qr/(?:25[0-5]|2[0-4]\d|[01]?\d\d?)/;         # (0-255)
+my $UNSIGNED7BITS = qr/(?:[0-9]{1,2}|10[0-9]|11[0-9]|12[0-8])/;  # (0-128)
+my $ipv6_word     = qr/(?:[A-Fa-f0-9]+){1,4}/;
 my $ipv4_addr     = qr/(?:$UNSIGNED8BITS\.){3}$UNSIGNED8BITS/;
-my $ipv6_addr     = qr/(?:[\:\.a-f0-9]+)/;
+my $ipv6_addr     = $IPv6_re;
 my $ipv4v6        = qr/(?:$ipv4_addr|$ipv6_addr)/;
 my $boolean       = qr/(?:true|false)/;
 my $enable        = qr/(?:enable|disable)/;
@@ -121,7 +124,7 @@ my %format_re = (
 	'graphs_system_id' => qr/(?:cpu|load|ram|swap)/,
 	'mount_point'      => qr/root[\w\-\.\/]*/,
 
-	# gslb
+	# GSLB
 	'zone'          => qr/(?:$hostname\.)+[a-z]{2,}/,
 	'resource_id'   => qr/\d+/,
 	'resource_name' => qr/(?:[\w\-\.]+|\@)/,
@@ -159,7 +162,7 @@ my %format_re = (
 	'notif_action' => $enable,
 	'notif_time'   => $natural,                   # this value can't be 0
 
-	# ipds
+	# IPDS
 	# blacklists
 	'day_of_month'              => qr{$dayofmonth},
 	'weekdays'                  => qr{$weekdays},
@@ -177,7 +180,7 @@ my %format_re = (
 	'blacklists_frequency'      => qr{(:?daily|weekly|monthly)},
 	'blacklists_frequency_type' => qr{(:?period|exact)},
 
-	# dos
+	# DoS
 	'dos_name'        => qr/[\w]+/,
 	'dos_rule'        => qr/(?:$dos_global|$dos_all|$dos_tcp)/,
 	'dos_rule_farm'   => qr/(?:$dos_all|$dos_tcp)/,
@@ -192,7 +195,7 @@ my %format_re = (
 	'dos_port'        => $port_range,
 	'dos_hits'        => $natural,
 
-	# rbl
+	# RBL
 	'rbl_name'          => qr/[\w]+/,
 	'rbl_domain'        => qr/[\w\.\-]+/,
 	'rbl_log_level'     => qr/[0-7]/,
@@ -210,15 +213,15 @@ my %format_re = (
 	'cert_csr'    => qr/\w[\w\.\-]*\.csr/,
 	'cert_dh2048' => qr/\w[\w\.\-]*_dh2048\.pem/,
 
-	# ips
+	# IPS
 	'IPv4_addr' => qr/$ipv4_addr/,
 	'IPv4_mask' => qr/(?:$ipv4_addr|3[0-2]|[1-2][0-9]|[0-9])/,
 
 	'IPv6_addr' => qr/$ipv6_addr/,
-	'IPv6_mask' => $UNSIGNED8BITS, # Fixme
+	'IPv6_mask' => $UNSIGNED7BITS,
 
 	'ip_addr' => $ipv4v6,
-	'ip_mask' => qr/(?:$ipv4_addr|$UNSIGNED8BITS)/,
+	'ip_mask' => qr/(?:$ipv4_addr|$UNSIGNED7BITS)/,
 
 	# farm guardian
 	'fg_name'    => qr/[\w-]+/,
@@ -227,7 +230,7 @@ my %format_re = (
 	'fg_log'     => $boolean,
 	'fg_time'    => qr/$natural/,                     # this value can't be 0
 
-	# rbac
+	# RBAC
 	'user_name'     => qr/[\w-]+/,
 	'rbac_password' => qr/(?=.*[0-9])(?=.*[a-zA-Z]).{8,16}/,
 	'group_name'    => qr/[\w-]+/,

@@ -63,7 +63,7 @@ sub new_vini    # ( $json_obj )
 	unless ( defined ( $json_obj->{ ip } )
 			 && &getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
 	{
-		my $msg = "IP Address is not valid.";
+		my $msg = "Invalid IP address.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -105,7 +105,7 @@ sub new_vini    # ( $json_obj )
 	{
 		if ( $ip eq $json_obj->{ ip } )
 		{
-			my $msg = "IP Address $json_obj->{ip} is already in use.";
+			my $msg = "IP address $json_obj->{ip} already in use.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -459,16 +459,14 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 {
 	my $json_obj = shift;
 	my $virtual  = shift;
-	my @farms;
 
 	require Zevenet::Net::Interface;
 	require Net::Netmask;
 
 	my $desc   = "Modify virtual interface";
-	my $ip_v   = 4;
-	my $if_ref = &getInterfaceConfig( $virtual, $ip_v );
+	my $if_ref = &getInterfaceConfig( $virtual );
+	my @farms;
 
-	my $msg;
 	my @allowParams = ( "ip" );
 
 	unless ( $if_ref )
@@ -477,7 +475,7 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	if ( $msg = &getValidOptParams( $json_obj, \@allowParams ) )
+	if ( my $msg = &getValidOptParams( $json_obj, \@allowParams ) )
 	{
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
@@ -486,7 +484,7 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 	unless ( defined ( $json_obj->{ ip } )
 			 && &getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
 	{
-		$msg = "IP Address $json_obj->{ip} structure is not ok.";
+		my $msg = "Invalid IP address.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -524,7 +522,7 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 	}
 
 	require Zevenet::Net::Validate;
-	my $if_ref_parent = &getInterfaceConfig( $if_ref->{ parent }, $ip_v );
+	my $if_ref_parent = &getInterfaceConfig( $if_ref->{ parent } );
 	unless (
 			 &getNetValidate(
 							  $if_ref_parent->{ addr },
@@ -533,7 +531,7 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 			 )
 	  )
 	{
-		$msg = "IP Address $json_obj->{ip} must be same net than the father interface.";
+		my $msg = "IP address $json_obj->{ip} must be on the same network than the parent interface.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 

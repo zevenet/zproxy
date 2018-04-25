@@ -93,9 +93,9 @@ sub modify_gateway # ( $json_obj )
 	{
 		my $ip_format = ( $ip_v == 6 ) ? 'IPv6_addr' : 'IPv4_addr';
 
-		unless ( defined( $json_obj->{ address } ) && &getValidFormat( $ip_format, $json_obj->{ address } ) )
+		unless ( $json_obj->{ address } && &getValidFormat( $ip_format, $json_obj->{ address } ) )
 		{
-			my $msg = "Gateway address is not valid.";
+			my $msg = "Invalid gateway address.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
