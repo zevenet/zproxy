@@ -55,6 +55,7 @@ sub get_interfaces    # ()
 	my $rbac_mod;
 	my $rbac_if_list = [];
 	my $user         = &getUser();
+
 	if ( $eload && ( $user ne 'root' ) )
 	{
 		$rbac_mod = 1;
@@ -73,15 +74,10 @@ sub get_interfaces    # ()
 
 	for my $if_ref ( @interfaces )
 	{
-		# Exclude IPv6
-		next
-		  if $if_ref->{ ip_v } == 6
-		  && &getGlobalConfiguration( 'ipv6_enabled' ) ne 'true';
-
 		# Exclude cluster maintenance interface
 		next if $if_ref->{ type } eq 'dummy';
 
-		# Exclude no user's virtual intefaces
+		# Exclude no user's virtual interfaces
 		next
 		  if (    $rbac_mod
 			   && !grep ( /^$if_ref->{ name }$/, @{ $rbac_if_list } )
