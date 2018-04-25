@@ -312,9 +312,9 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 	}
 
 	# validate IP
-	unless ( &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+	unless ( &getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
 	{
-		my $msg = "Invalid IP value.";
+		my $msg = "Invalid IP address.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -453,9 +453,9 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 	if ( exists ( $json_obj->{ ip } ) )
 	{
 		unless (    $json_obj->{ ip }
-				 && &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
+				 && &getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
 		{
-			my $msg = "Invalid IP.";
+			my $msg = "Invalid IP address.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
