@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use feature 'state';
 
 my $eload;
 if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
@@ -197,17 +198,19 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		$iface{ float } = $float->{ _ }->{ $iface{ name } } // '';
 	}
 
-	if ( $iface{ type } eq 'nic' && $eload )
-	{
-		my @bond_slaves;
+	state $saved_bond_slaves = 0;
 
-		@bond_slaves = &eload(
+	if ( $eload && $iface{ type } eq 'nic' && ! $saved_bond_slaves )
+	{
+		@TMP::bond_slaves = &eload(
 			module => 'Zevenet::Net::Bonding',
 			func   => 'getAllBondsSlaves',
 		);
 
 		$iface{ is_slave } =
-		  ( grep { $iface{ name } eq $_ } @bond_slaves ) ? 'true' : 'false';
+		  ( grep { $iface{ name } eq $_ } @TMP::bond_slaves ) ? 'true' : 'false';
+
+		$saved_bond_slaves = 1;
 	}
 
 	# for virtual inteface, overwrite mask and gw with parent values
