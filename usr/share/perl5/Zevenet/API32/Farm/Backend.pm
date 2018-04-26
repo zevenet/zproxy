@@ -49,6 +49,7 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 
 	# validate FARM TYPE
 	my $type = &getFarmType( $farmname );
+	my $vip  = &getFarmVip( $farmname );
 
 	if ( $type eq "l4xnat" )
 	{
@@ -57,11 +58,11 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		# Get ID of the new backend
 		# FIXME: Maybe make a function of this?
 		my $id  = 0;
-		my @run = &getFarmServers( $farmname );
+		my @server_lines = &getFarmServers( $farmname );
 
-		if ( @run > 0 )
+		if ( @server_lines > 0 )
 		{
-			foreach my $l_servers ( @run )
+			foreach my $l_servers ( @server_lines )
 			{
 				my @l_serv = split ( ";", $l_servers );
 
@@ -81,9 +82,10 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# validate IP
-		if ( !&getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
+		my $vip_stack = ( &ipversion( $vip ) == 6 ) ? 'IPv6_addr' : 'IPv4_addr';
+		unless ( &getValidFormat( $vip_stack, $json_obj->{ ip } ) )
 		{
-			my $msg = "Invalid backend IP value.";
+			my $msg = "Invalid backend IP address. Must be the same stack as the VIP.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 

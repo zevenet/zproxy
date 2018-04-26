@@ -263,14 +263,18 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	{
 		# the ip must exist in some interface
 		require Zevenet::Net::Interface;
+
 		unless ( &getIpAddressExists( $json_obj->{ vip } ) )
 		{
 			my $msg = "The vip IP must exist in some interface.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-		unless ( length $json_obj->{ vip } )
+
+		my @backends = &getL4FarmBackends( $farmname );
+		unless ( !@backends
+			 || &ipversion( $backends[0]->{ ip } ) eq &ipversion( $json_obj->{ vip } ) )
 		{
-			my $msg = "Invalid vip, can't be blank.";
+			my $msg = "Invalid VIP address, VIP and backends can't be from diferent IP version.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
