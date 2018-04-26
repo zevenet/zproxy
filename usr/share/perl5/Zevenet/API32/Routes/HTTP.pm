@@ -40,6 +40,8 @@ if ( $ENV{ PATH_INFO } =~ qr{^/farms/$farm_re/(?:addheader|headremove)(:?/\d+)?$
 
 	POST qr{^/farms/($farm_re)/addheader$}, 'add_addheader', $mod;
 	DELETE qr{^/farms/($farm_re)/addheader/(\d+)$}, 'del_addheader', $mod;
+	POST qr{^/farms/($farm_re)/headremove$}, 'add_headremove', $mod;
+	DELETE qr{^/farms/($farm_re)/headremove/(\d+)$}, 'del_headremove', $mod;
 }
 
 
