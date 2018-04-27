@@ -65,10 +65,15 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 
 	if ( $writeconf eq "true" && $farm_type =~ /^https?$/ )
 	{
+		require Zevenet::Farm::HTTP::Config;
+		my $lock_fh = &lockHTTPFile( $farm_name );
+
 		require Tie::File;
 		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 		@configfile = grep !/^\#down/, @configfile;
 		untie @configfile;
+
+		&unlockfile ( $lock_fh );
 	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
@@ -252,9 +257,14 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 
 	if ( $writeconf eq "true" && $farm_type =~ /^https?$/ )
 	{
+		require Zevenet::Farm::HTTP::Config;
+		my $lock_fh = &lockHTTPFile( $farm_name );
+
 		open FW, ">>$configdir/$farm_filename";
 		print FW "#down\n";
 		close FW;
+
+		&unlockfile( $lock_fh );
 	}
 
 	return $status;

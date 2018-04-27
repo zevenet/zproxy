@@ -28,7 +28,7 @@ my $configdir = &getGlobalConfiguration( 'configdir' );
 =begin nd
 Function: getHTTPFarmDHStatus
 
-	Obtain the status of the DH file
+	[NOT USED] Obtain the status of the DH file
 
 Parameters:
 	farmname - Farm name
@@ -79,6 +79,10 @@ sub setHTTPFarmDHStatus    # ($farm_name, $newstatus)
 	my $dhfile = "$configdir\/$farm_name\_dh2048.pem";
 	my $output        = 0;
 
+	#lock file
+	require Zevenet::Farm::HTTP::Config;
+	my $lock_fh = &lockHTTPFile( $farm_name );
+
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 	foreach my $row (@filefarmhttp)
 	{
@@ -90,6 +94,8 @@ sub setHTTPFarmDHStatus    # ($farm_name, $newstatus)
 		}
 	}
 	untie @filefarmhttp;
+
+	&unlockfile( $lock_fh );
 
 	unlink ( "$dhfile" ) if -e "$dhfile" && $newstatus eq "off";
 
@@ -168,6 +174,10 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 	&zenlog( "setting 'Certificate $cfile' for $farm_name farm $farm_type" );
 	if ( $farm_type eq "https" )
 	{
+		# lock file
+		require Zevenet::Farm::HTTP::Config;
+		my $lock_fh = &lockHTTPFile( $farm_name );
+
 		tie my @array, 'Tie::File', "$configdir/$farm_filename";
 		for ( @array )
 		{
@@ -178,6 +188,8 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 			}
 		}
 		untie @array;
+
+		&unlockfile( $lock_fh );
 	}
 
 	return $output;
@@ -282,6 +294,11 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 	my $output        = -1;
 
 	require Tie::File;
+
+	# lock file
+	require Zevenet::Farm::HTTP::Config;
+	my $lock_fh = &lockHTTPFile( $farm_name );
+
 	tie my @array, 'Tie::File', "$configdir/$farm_filename";
 
 	for my $line ( @array )
@@ -327,6 +344,8 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 		last;
 	}
 	untie @array;
+
+	&unlockfile( $lock_fh );
 
 	return $output;
 }
@@ -470,6 +489,10 @@ sub setHTTPFarmDisableSSL    # ($farm_name, $protocol, $action )
 
 	if ( $farm_type eq "https" )
 	{
+		# lock file
+		require Zevenet::Farm::HTTP::Config;
+		my $lock_fh = &lockHTTPFile( $farm_name );
+
 		tie my @file, 'Tie::File', "$configdir/$farm_filename";
 
 		if ( $action == 1 )
@@ -497,6 +520,8 @@ sub setHTTPFarmDisableSSL    # ($farm_name, $protocol, $action )
 		}
 
 		untie @file;
+
+		&unlockfile( $lock_fh );
 	}
 
 	return $output;

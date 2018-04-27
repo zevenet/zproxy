@@ -51,6 +51,10 @@ sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
+	# lock file
+	require Zevenet::Farm::HTTP::Config;
+	my $lock_fh = &lockHTTPFile( $farm_name );
+
 	require Tie::File;
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
 
@@ -221,6 +225,7 @@ sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 		}
 	}
 	untie @contents;
+	&unlockfile( $lock_fh );
 
 	return $output;
 }
@@ -250,6 +255,10 @@ sub runHTTPFarmServerDelete    # ($ids,$farm_name,$service)
 	my $j             = -1;
 	my $sw            = 0;
 
+	# lock file
+	require Zevenet::Farm::HTTP::Config;
+	my $lock_fh = &lockHTTPFile( $farm_name );
+
 	require Tie::File;
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
 
@@ -276,6 +285,8 @@ sub runHTTPFarmServerDelete    # ($ids,$farm_name,$service)
 		}
 	}
 	untie @contents;
+
+	&unlockfile( $lock_fh );
 
 	if ( $output != -1 )
 	{
@@ -601,7 +612,7 @@ sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 	}
 
 	$index = &getFarmVSI( $farm_name, $service );
-	open FG, "$stfile";
+	open FG, '<', $stfile;
 
 	while ( my $line = <FG> )
 	{

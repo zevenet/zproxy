@@ -25,6 +25,27 @@ use strict;
 
 my $configdir = &getGlobalConfiguration('configdir');
 
+
+=begin nd
+Function: lockHTTPFile
+
+	Lock the configuration file for a http farm. To unlock the file, use the function unlockfile()
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Integer - lock description
+
+=cut
+sub lockHTTPFile
+{
+	my $farm = shift;
+	require Zevenet::Lock;
+	my $lock_file = "/tmp/$farm.open";
+	return &lockfile( $lock_file );
+}
+
 =begin nd
 Function: setFarmClientTimeout
 
@@ -48,6 +69,9 @@ sub setFarmClientTimeout    # ($client,$farm_name)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		# lock file
+		my $lock_fh = &lockHTTPFile( $farm_name );
+
 		require Tie::File;
 		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 
@@ -68,6 +92,7 @@ sub setFarmClientTimeout    # ($client,$farm_name)
 			}
 		}
 		untie @filefarmhttp;
+		&unlockfile( $lock_fh );
 	}
 
 	return $output;
@@ -132,6 +157,9 @@ sub setHTTPFarmSessionType    # ($session,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $farm_type     = &getFarmType( $farm_name );
 	my $output        = -1;
+
+	# lock file
+	my $lock_fh = &lockHTTPFile( $farm_name );
 
 	&zenlog( "setting 'Session type $session' for $farm_name farm $farm_type" );
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
@@ -200,6 +228,8 @@ sub setHTTPFarmSessionType    # ($session,$farm_name)
 		}
 	}
 	untie @contents;
+	&unlockfile( $lock_fh );
+
 	return $output;
 }
 
@@ -256,6 +286,9 @@ sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
+	# lock file
+	my $lock_fh = &lockHTTPFile( $farm_name );
+
 	require Tie::File;
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 	my $i_f         = -1;
@@ -275,6 +308,7 @@ sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 		}
 	}
 	untie @filefarmhttp;
+	&unlockfile( $lock_fh );
 
 	return $output;
 }
@@ -342,6 +376,9 @@ sub setFarmHttpVerb    # ($verb,$farm_name)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		# lock file
+		my $lock_fh = &lockHTTPFile( $farm_name );
+
 		require Tie::File;
 		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 		my $i_f         = -1;
@@ -359,6 +396,7 @@ sub setFarmHttpVerb    # ($verb,$farm_name)
 			}
 		}
 		untie @filefarmhttp;
+		&unlockfile( $lock_fh );
 	}
 
 	return $output;
@@ -433,6 +471,9 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $i_f           = -1;
 	my $found         = "false";
+
+	# lock file
+	my $lock_fh = &lockHTTPFile( $farm_name );
 
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 	my $array_count = @filefarmhttp;
@@ -557,6 +598,7 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 
 	}
 	untie @filefarmhttp;
+	&unlockfile( $lock_fh );
 }
 
 =begin nd
@@ -583,6 +625,9 @@ sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		# lock file
+		my $lock_fh = &lockHTTPFile( $farm_name );
+
 		require Tie::File;
 		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 		my $i_f         = -1;
@@ -599,6 +644,7 @@ sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 			}
 		}
 		untie @filefarmhttp;
+		&unlockfile( $lock_fh );
 	}
 
 }
@@ -666,6 +712,9 @@ sub setFarmConnTO    # ($tout,$farm_name)
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
+		# lock file
+		my $lock_fh = &lockHTTPFile( $farm_name );
+
 		require Tie::File;
 		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 		my $i_f         = -1;
@@ -682,6 +731,7 @@ sub setFarmConnTO    # ($tout,$farm_name)
 			}
 		}
 		untie @filefarmhttp;
+		&unlockfile( $lock_fh );
 	}
 	return $output;
 }
@@ -744,6 +794,9 @@ sub setHTTPFarmTimeout    # ($timeout,$farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
+	# lock file
+	my $lock_fh = &lockHTTPFile( $farm_name );
+
 	require Tie::File;
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 	my $i_f         = -1;
@@ -761,6 +814,7 @@ sub setHTTPFarmTimeout    # ($timeout,$farm_name)
 		}
 	}
 	untie @filefarmhttp;
+	&unlockfile( $lock_fh );
 
 	return $output;
 }
@@ -822,6 +876,9 @@ sub setHTTPFarmMaxClientTime    # ($track,$farm_name)
 	my $i_f           = -1;
 	my $found         = "false";
 
+	# lock file
+	my $lock_fh = &lockHTTPFile( $farm_name );
+
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
 	my $array_count = @filefarmhttp;
 
@@ -836,6 +893,7 @@ sub setHTTPFarmMaxClientTime    # ($track,$farm_name)
 		}
 	}
 	untie @filefarmhttp;
+	&unlockfile( $lock_fh );
 
 	return $output;
 }
@@ -945,6 +1003,9 @@ sub setFarmErr    # ($farm_name,$content,$nerr)
 	{
 		if ( -e "$configdir\/$farm_name\_Err$nerr.html" && $nerr != "" )
 		{
+			# lock file
+			my $lock_fh = &lockHTTPFile( $farm_name );
+
 			$output = 0;
 			my @err = split ( "\n", "$content" );
 			open FO, ">$configdir\/$farm_name\_Err$nerr.html";
@@ -955,6 +1016,7 @@ sub setFarmErr    # ($farm_name,$content,$nerr)
 				$output = $? || $output;
 			}
 			close FO;
+			&unlockfile( $lock_fh );
 		}
 	}
 
@@ -1246,6 +1308,9 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	my $stat          = 0;
 	my $enter         = 2;
 
+	# lock file
+	my $lock_fh = &lockHTTPFile( $farm_name );
+
 	require Tie::File;
 	tie my @array, 'Tie::File', "$configdir\/$farm_filename";
 	my $size = @array;
@@ -1266,6 +1331,7 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 		}
 	}
 	untie @array;
+	&unlockfile( $lock_fh );
 
 	return $stat;
 }
@@ -1411,6 +1477,9 @@ sub setFarmNameParam    # &setFarmNameParam( $farm_name, $new_name );
 
 	if ( $farmType eq "http" || $farmType eq "https" )
 	{
+		# lock file
+		my $lock_fh = &lockHTTPFile( $farmName );
+
 		tie my @filefarmhttp, 'Tie::File', "$configdir/$farmFilename";
 		my $i_f        = -1;
 		my $arrayCount = @filefarmhttp;
@@ -1426,6 +1495,7 @@ sub setFarmNameParam    # &setFarmNameParam( $farm_name, $new_name );
 			}
 		}
 		untie @filefarmhttp;
+		&unlockfile( $lock_fh );
 	}
 
 	return $output;
