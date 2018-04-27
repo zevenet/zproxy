@@ -106,6 +106,10 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 		$newservice[0] =~ s/#//g;
 		$newservice[$#newservice] =~ s/#//g;
 
+		# lock file
+		require Zevenet::Farm::HTTP::Config;
+		my $lock_fh = &lockHTTPFile( $farm_name );
+
 		my @fileconf;
 		tie @fileconf, 'Tie::File', "$configdir/$farm_name\_pound.cfg";
 		my $i         = 0;
@@ -136,6 +140,8 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 		}
 		untie @fileconf;
 		$output = 0;
+
+		&unlockfile( $lock_fh );
 	}
 	else
 	{
@@ -215,12 +221,16 @@ sub deleteFarmService    # ($farm_name,$service)
 		$counter++;
 	}
 
-	tie my @fileconf, 'Tie::File', "$configdir/$farm_filename";
-
 	# Stop FG service
 	&runFarmGuardianStop( $farm_name, $service );
 	&runFarmGuardianRemove( $farm_name, $service );
 	unlink "$configdir/$farm_name\_$service\_guardian.conf";
+
+	# lock file
+	require Zevenet::Farm::HTTP::Config;
+	my $lock_fh = &lockHTTPFile( $farm_name );
+
+	tie my @fileconf, 'Tie::File', "$configdir/$farm_filename";
 
 	my $i = 0;
 	for ( $i = 0 ; $i < $#fileconf ; $i++ )
@@ -246,6 +256,8 @@ sub deleteFarmService    # ($farm_name,$service)
 		}
 	}
 	untie @fileconf;
+
+	&unlockfile( $lock_fh );
 
 	# delete service's backends  in status file
 	if ( $counter > -1 )
@@ -1087,6 +1099,10 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 	$string =~ s/^\s+//;
 	$string =~ s/\s+$//;
 
+	# lock file
+	require Zevenet::Farm::HTTP::Config;
+	my $lock_fh = &lockHTTPFile( $farm_name );
+
 	require Tie::File;
 	tie my @fileconf, 'Tie::File', "$configdir/$farm_filename";
 
@@ -1367,6 +1383,8 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 		}
 	}
 	untie @fileconf;
+
+	&unlockfile( $lock_fh );
 
 	return $output;
 }
