@@ -125,11 +125,6 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 					{
 						$lline =~ s/\[DESC\]/$service/;
 					}
-					if (    $lline =~ /StrictTransportSecurity/
-						 && $farm_type eq "https" )
-					{
-						$lline =~ s/#//;
-					}
 					splice @fileconf, $i, 0, "$lline";
 					$i++;
 				}
