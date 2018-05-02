@@ -224,7 +224,7 @@ sub modify_farmguardian
 	{
 		if ( exists $json_obj->{ command } )
 		{
-			my $msg =
+			my $error_msg =
 			  "Farm guardian $fgname is running in: $run_farms. To apply, send parameter 'force'";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $error_msg );
 		}
