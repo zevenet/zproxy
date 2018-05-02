@@ -11,7 +11,7 @@ namespace IO {
 enum IO_RESULT {
   ERROR,
   SUCCESS,
-  FD_BLOCKED,
+  DONE_TRY_AGAIN,
   FD_CLOSED,
   FULL_BUFFER,
 };

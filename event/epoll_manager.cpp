@@ -6,8 +6,7 @@
 #include "epoll_manager.h"
 #include "../debug/Debug.h"
 #include "../util/Network.h"
-
-#define DEBUG_EPOLL 0
+namespace epoll_manager {
 
 EpollManager::EpollManager() : accept_fd(-1) {
   if ((epoll_fd = epoll_create1(0)) < 0) {
@@ -32,7 +31,7 @@ void EpollManager::onReadEvent(epoll_event &event) {
 
 bool EpollManager::deleteFd(int fd) {
   if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) < 0) {
-    std::string error = "epoll_ctl(delete) failed on main server socket";
+    std::string error = "epoll_ctl(delete) failed ";
     error += std::strerror(errno);
     Debug::Log(error, LOG_DEBUG);
     return false;
@@ -54,7 +53,7 @@ int EpollManager::loopOnce(int time_out) {
 //        (events[i].events & EPOLLHUP))//||
 ////        (!(events[i].events & EPOLLIN)))
 //    {
-//#if DEBUG_EPOLL
+//#if DEBUG_EVENT_MANAGER
 //      std::string error = "EPOLLERR | EPOLLHUP An error has occured on fd " +
 //          std::to_string(fd) + " ";
 //      error += std::strerror(errno);
@@ -67,7 +66,7 @@ int EpollManager::loopOnce(int time_out) {
 //      continue;
 //    } else
     if ((events[i].events & EPOLLRDHUP) != 0u) {
-#if DEBUG_EPOLL
+#if DEBUG_EVENT_MANAGER
       std::string error = "\n>>EPOLLRDHUP:Peer closed the connection fd: " +
           std::to_string(fd) + " ";
       Debug::Log(error, LOG_DEBUG);
@@ -77,20 +76,20 @@ int EpollManager::loopOnce(int time_out) {
       continue;
     }
     if (fd == accept_fd) {
-#if DEBUG_EPOLL
+#if DEBUG_EVENT_MANAGER
       Debug::Log("\n>>EPOLL::ON_ACCEPT::FD=" + std::to_string(fd), LOG_DEBUG);
 #endif
       onConnectEvent(events[i]);
       continue;
     }
     if ((events[i].events & EPOLLIN) != 0u) {
-#if DEBUG_EPOLL
+#if DEBUG_EVENT_MANAGER
       Debug::Log("\n>>EPOLL::ON_READ::FD=" + std::to_string(fd), LOG_DEBUG);
 #endif
       onReadEvent(events[i]);
     }
     if ((events[i].events & EPOLLOUT) != 0u) {
-#if DEBUG_EPOLL
+#if DEBUG_EVENT_MANAGER
       Debug::Log("\n>>EPOLL::ON_WRITE::FD=" + std::to_string(fd), LOG_DEBUG);
 #endif
       onWriteEvent(events[i]);
@@ -122,7 +121,7 @@ bool EpollManager::addFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group)
     Debug::Log(error, LOG_DEBUG);
     return false;
   }
-#if DEBUG_EPOLL
+#if DEBUG_EVENT_MANAGER
   Debug::Log("Epoll::AddFD " + std::to_string(fd) + " To EpollFD: " + std::to_string(epoll_fd), LOG_DEBUG);
 #endif
   return true;
@@ -141,7 +140,7 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_gro
     Debug::Log(error, LOG_DEBUG);
     return false;
   }
-#if DEBUG_EPOLL
+#if DEBUG_EVENT_MANAGER
   Debug::Log("Epoll::UpdateFd " + std::to_string(fd), LOG_DEBUG);
 #endif
   return true;
@@ -162,3 +161,4 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_gro
 //}
 
 
+};

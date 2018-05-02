@@ -1179,11 +1179,11 @@ ServiceConfig *Config::parseService(const char *svc_name) {
     } else if (!regexec(&Session, lin, 4, matches, 0)) {
       parseSession(res);
     } else if (!regexec(&DynScale, lin, 4, matches, 0)) {
-      res->dynscale = atoi(lin + matches[1].rm_so);
+      res->dynscale = atoi(lin + matches[1].rm_so) == 1;
     } else if (!regexec(&IgnoreCase, lin, 4, matches, 0)) {
       ign_case = atoi(lin + matches[1].rm_so);
     } else if (!regexec(&Disabled, lin, 4, matches, 0)) {
-      res->disabled = atoi(lin + matches[1].rm_so);
+      res->disabled = atoi(lin + matches[1].rm_so) == 1;
     } else if (!regexec(&End, lin, 4, matches, 0)) {
       for (be = res->backends; be; be = be->next) {
         if (!be->disabled) res->tot_pri += be->priority;
@@ -1630,7 +1630,7 @@ bool Config::compile_regex() {
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&LogFacility, "^[ \t]*LogFacility[ \t]+([a-z0-9-]+)[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
-      regcomp(&LogLevel, "^[ \t]*LogLevel[ \t]+([0-5])[ \t]*$",
+      regcomp(&LogLevel, "^[ \t]*LogLevel[ \t]+([0-9])[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||
       regcomp(&Grace, "^[ \t]*Grace[ \t]+([0-9]+)[ \t]*$",
               REG_ICASE | REG_NEWLINE | REG_EXTENDED) ||

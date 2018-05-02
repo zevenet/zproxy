@@ -9,7 +9,7 @@
 //  Debug::Log("BUFFER::SIZE = " + std::to_string(buffer_size), LOG_DEBUG); \
 //  Debug::Log("BUFFER::STRLEN = " + std::to_string(strlen(buffer)), LOG_DEBUG);
 
-Connection::Connection() : buffer_size(0),
+Connection::Connection() : buffer_size(0), address(nullptr),
 //string_buffer(),
                            socket_fd(-1), is_connected(false) {
   //address.ai_addr = new sockaddr();
@@ -43,7 +43,7 @@ IO::IO_RESULT Connection::read() {
         Debug::Log(error, LOG_NOTICE);
         result = IO::IO_RESULT::ERROR;
       } else {
-        result = IO::IO_RESULT::FD_BLOCKED;
+        result = IO::IO_RESULT::DONE_TRY_AGAIN;
       }
       done = true;
     } else if (count == 0) {
@@ -95,7 +95,7 @@ IO::IO_RESULT Connection::writeTo(int fd) {
         Debug::Log(error, LOG_NOTICE);
         result = IO::ERROR;
       } else {
-        result = IO::IO_RESULT::FD_BLOCKED;
+        result = IO::IO_RESULT::DONE_TRY_AGAIN;
       }
       done = true;
       break;
@@ -131,7 +131,7 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {//}, size_t *sen
         std::string error = "write() failed  ";
         error += std::strerror(errno);
         Debug::Log(error, LOG_DEBUG);
-        result = IO::FD_BLOCKED;
+        result = IO::DONE_TRY_AGAIN;
       } else {
         result = IO::ERROR;
       }

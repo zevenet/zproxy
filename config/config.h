@@ -51,7 +51,7 @@ class Config {
   int clnt_to;
   int be_to;
   int be_connto;
-  int dynscale;
+  bool dynscale;
   int ignore_case;
 
   char *f_name[MAX_FIN];

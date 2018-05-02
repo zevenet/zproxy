@@ -73,13 +73,14 @@ void Listener::start() {
   for (int i = 0; i < stream_manager_set.size(); i++) {
     auto sm = stream_manager_set[i];
     if (sm != nullptr) {
-      for (auto bck = listener_config.services[0].backends;
-           bck != nullptr;
-           bck = bck->next) {
-        if (bck->disabled != 1) {
-          sm->addBackend(bck->address, bck->port);
+      for (auto service_config = listener_config.services;
+           service_config != nullptr;
+           service_config = service_config->next) {
+        if (service_config->disabled != 1) {
+          sm->addService(*service_config);
         } else {
-          Debug::Log("Backend " + bck->address + ":" + std::to_string(bck->port) + " disabled.", LOG_NOTICE);
+          Debug::Log("Backend " + std::string(service_config->name) + " disabled.",
+                     LOG_NOTICE);
         }
       }
       sm->start(i);

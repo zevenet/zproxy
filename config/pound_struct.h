@@ -100,8 +100,8 @@ class ServiceConfig {
       *becdomain,      /* Backend Cookie domain */
       *becpath;        /* Backend cookie path */
   int becage;          /* Backend cookie age */
-  int dynscale; /* true if the back-ends should be dynamically rescaled */
-  int disabled; /* true if the service is disabled */
+  bool dynscale; /* true if the back-ends should be dynamically rescaled */
+  bool disabled; /* true if the service is disabled */
   int sts;      /* strict transport security */
   ServiceConfig *next;
 };

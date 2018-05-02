@@ -19,8 +19,8 @@ class Connection {
   int socket_fd;
   addrinfo *address;
   // StringBuffer string_buffer;
-  char buffer[MAX_DATA_SIZE * 2];
-  size_t buffer_size = 0;
+  char buffer[MAX_DATA_SIZE];
+  size_t buffer_size;
 
   int getFileDescriptor() const;
   void setFileDescriptor(int fd);
@@ -31,7 +31,7 @@ class Connection {
 
   void closeConnection();
   Connection();
-  virtual ~Connection();
+  ~Connection();
 
   bool listen(std::string &address_str, int port);
   bool listen(addrinfo &address);

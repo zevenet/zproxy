@@ -13,7 +13,7 @@
 #include <sstream>
 #include "../util/utils.h"
 
-#define DEBUG_LEVEl 8
+//#define DEBUG_LEVEl 8
 #define LOGFACILITY -1
 
 #define MAXBUF 4096
@@ -52,17 +52,18 @@ Debug::Log2(__FILENAME__ ,__FUNCTION__, __LINE__ , __VA_ARGS__)
 
 class Debug {
  public:
+  static int log_level;
   static std::mutex log_lock;
   inline static void Log2(const std::string file,
                           const std::string function,
                           int line,
                           const std::string &str,
                           int level = -1) {
-    if (level > DEBUG_LEVEl) {
+    if (level > log_level) {
       return;
     }
     std::lock_guard<std::mutex> locker(log_lock);
-    if (DEBUG_LEVEl > 7) {
+    if (log_level > 7) {
       std::stringstream buffer;
       buffer << "["
              << helper::ThreadHelper::getThreadName(pthread_self())
@@ -70,21 +71,19 @@ class Debug {
              << file << ":" << function << ":" << line << "] ";
 
       std::cout <<
-                std::left << std::setfill('.') << std::setw(60) << buffer.str();
+                std::left << std::setfill('.') << std::setw(60) << buffer.str() << "\033[1;32m";
     }
     std::cout << str;
 
-//    if (DEBUG_LEVEl > 7) {
-//      std::cout << "\033[1;31mbold red text\033[0m\n";
-//
-//    }
-
+    if (log_level > 7) {
+      std::cout << "\033[0m";
+    }
     std::cout << std::endl;
   }
 
   static
   void logmsg(const int priority, const char *fmt, ...) {
-    if (priority > DEBUG_LEVEl) {
+    if (priority > log_level) {
       return;
     }
     char buf[MAXBUF + 1];

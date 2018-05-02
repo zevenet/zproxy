@@ -9,6 +9,7 @@
 
 void cleanExit() { closelog(); }
 std::mutex Debug::log_lock;
+int Debug::log_level;
 
 void handleInterrupt(int sig) {
   // stop listener
@@ -16,6 +17,8 @@ void handleInterrupt(int sig) {
 }
 
 int main(int argc, char *argv[]) {
+  Debug::log_level = 5;
+
   Debug::logmsg(LOG_NOTICE, "zhttp starting...");
 
   ::signal(SIGPIPE, SIG_IGN);
@@ -57,7 +60,7 @@ int main(int argc, char *argv[]) {
   Config config;
   //ControlInterface control_interface;
   config.parseConfig(argc, argv);
-
+  Debug::log_level = config.listeners->log_level;
   Listener listener;
   listener.init(config.listeners[0]);
 //  listener.init("127.0.0.1", 9999);

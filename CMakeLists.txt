@@ -5,6 +5,7 @@ project(s_zhttp)
 #endif ()
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}   -m64 -std=c++11 -m64 -fpermissive  -Wshadow -pipe   -D__FILENAME__='\"$(subst  ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
+add_definitions(-D DEBUG_EVENT_MANAGER=0 -DHELLO_WORLD_SERVER=0)
 set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVERSION='\"zhttp_abdess\"'")
@@ -70,6 +71,10 @@ add_executable(${PROJECT_NAME}
     config/pound_struct.h
     config/svc.h
     config/svc.cpp
-    http/HttpStatus.cpp http/HttpStatus.h http/http_parser.cpp http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h http/HttpRequest.h)
+    http/HttpStatus.cpp http/HttpStatus.h http/http_parser.cpp
+    http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
+    http/HttpRequest.h service/Service.cpp service/Service.h service/ServiceManager.cpp service/ServiceManager.h
+
+    connection/backend_connection.cpp connection/backend_connection.h)
 
 target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} libssl.so libcrypto.so)# ${OPENSSL_LIBRARIES})
