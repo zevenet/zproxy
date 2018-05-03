@@ -126,7 +126,7 @@ sub upIf    # ($if_ref, $writeconf)
 		}
 	}
 
-	my $ip_cmd = "$ip_bin link set $$if_ref{name} up";
+	my $ip_cmd = "$ip_bin link set dev $$if_ref{name} up";
 
 	$status = &logAndRun( $ip_cmd );
 
@@ -222,7 +222,7 @@ sub downIf    # ($if_ref, $writeconf)
 	# For Eth and Vlan
 	if ( $$if_ref{ vini } eq '' )
 	{
-		$ip_cmd = "$ip_bin link set $$if_ref{name} down";
+		$ip_cmd = "$ip_bin link set dev $$if_ref{name} down";
 
 		# Stop monitoring throughput
 		&eload(
@@ -296,7 +296,7 @@ sub stopIf    # ($if_ref)
 		#ensure Link Up
 		if ( $$if_ref{ status } eq 'up' )
 		{
-			$ip_cmd = "$ip_bin link set $$if_ref{name} up";
+			$ip_cmd = "$ip_bin link set dev $$if_ref{name} up";
 			$status = &logAndRun( $ip_cmd );
 		}
 
