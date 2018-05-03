@@ -263,6 +263,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	{
 		# the ip must exist in some interface
 		require Zevenet::Net::Interface;
+		require Zevenet::Farm::L4xNAT::Backend;
 
 		unless ( &getIpAddressExists( $json_obj->{ vip } ) )
 		{
@@ -270,7 +271,8 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
-		my @backends = &getL4FarmBackends( $farmname );
+		my @backends = @{ &getL4FarmBackends( $farmname ) };
+
 		unless ( !@backends
 			 || &ipversion( $backends[0]->{ ip } ) eq &ipversion( $json_obj->{ vip } ) )
 		{
