@@ -31,7 +31,7 @@ sub add_addheader    # ( $json_obj, $farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
-	my $desc = "Add addheader sentence.";
+	my $desc = "Add addheader directive.";
 
 	# Check that the farm exists
 	if ( !&getFarmExists( $farmname ) )
@@ -90,7 +90,7 @@ sub del_addheader
 	my $farmname = shift;
 	my $index    = shift;
 
-	my $desc = "Delete addheader sentence.";
+	my $desc = "Delete addheader directive.";
 
 	# Check that the farm exists
 	if ( !&getFarmExists( $farmname ) )
@@ -137,7 +137,7 @@ sub add_headremove    # ( $json_obj, $farmname )
 	my $json_obj = shift;
 	my $farmname = shift;
 
-	my $desc = "Add headremove sentence.";
+	my $desc = "Add headremove directive.";
 
 	# Check that the farm exists
 	if ( !&getFarmExists( $farmname ) )
@@ -196,7 +196,7 @@ sub del_headremove
 	my $farmname = shift;
 	my $index    = shift;
 
-	my $desc = "Delete headremove sentence.";
+	my $desc = "Delete headremove directive.";
 
 	# Check that the farm exists
 	if ( !&getFarmExists( $farmname ) )

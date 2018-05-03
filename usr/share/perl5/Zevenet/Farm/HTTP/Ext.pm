@@ -49,7 +49,7 @@ sub getHTTPFarm100Continue    # ($farm_name)
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		open FR, '<', "$configdir\/$farm_filename" or return $output;
-		$output = 1;	# if the sentence is not in config file, it is enabled
+		$output = 1;	# if the directive is not in config file, it is enabled
 		my @file = <FR>;
 		foreach my $line ( @file )
 		{
@@ -133,7 +133,7 @@ sub getHTTPFarmLogs    # ($farm_name)
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		open FR, '<', "$configdir\/$farm_filename" or return $output;
-		$output = 0;	# if the sentence is not in config file, it is disabled
+		$output = 0;	# if the directive is not in config file, it is disabled
 		my @file = <FR>;
 		foreach my $line ( @file )
 		{
@@ -292,7 +292,7 @@ sub addHTTPAddheader    # ($farm_name,$service,$code)
 =begin nd
 Function: delHTTPAddheader
 
-	Delete a sentence "AddHeader".
+	Delete a directive "AddHeader".
 
 Parameters:
 	farmname - Farm name
@@ -386,7 +386,7 @@ sub getHTTPHeadremove    # ($farm_name,$service)
 =begin nd
 Function: addHTTPHeadremove
 
-	Add a sentence "HeadRemove". The HTTP farm will remove the header that match with the sentence
+	Add a directive "HeadRemove". The HTTP farm will remove the header that match with the sentence
 
 Parameters:
 	farmname - Farm name
@@ -439,7 +439,7 @@ sub addHTTPHeadremove    # ($farm_name,$service,$code)
 =begin nd
 Function: delHTTPHeadremove
 
-	Delete a sentence "HeadRemove".
+	Delete a directive "HeadRemove".
 
 Parameters:
 	farmname - Farm name

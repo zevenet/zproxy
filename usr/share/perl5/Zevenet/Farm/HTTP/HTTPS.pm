@@ -429,7 +429,7 @@ sub getHTTPFarmDisableSSL    # ($farm_name, $protocol)
 	if ( $farm_type eq "https" )
 	{
 		open FR, "<$configdir\/$farm_filename" or return $output;
-		$output = 0;	# if the sentence is not in config file, it is disabled
+		$output = 0;	# if the directive is not in config file, it is disabled
 		my @file = <FR>;
 		foreach my $line ( @file )
 		{
