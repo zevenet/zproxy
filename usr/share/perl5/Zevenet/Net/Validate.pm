@@ -336,8 +336,9 @@ sub checkNetworkExists
 	my ( $net, $mask, $exception ) = @_;
 
 	require Zevenet::Net::Interface;
-	require Net::Netmask;
-	my $net1 = new2 Net::Netmask( $net, $mask );
+	require NetAddr::IP;
+
+	my $net1 = NetAddr::IP->new( $net, $mask );
 
 	my @interfaces = &getInterfaceTypeList( 'nic' );
 	push @interfaces, &getInterfaceTypeList( 'bond' );
@@ -346,14 +347,15 @@ sub checkNetworkExists
 	foreach my $if_ref ( @interfaces )
 	{
 		# if it is the same net pass
-		if ( defined $exception and $if_ref->{ name } eq $exception ) { next; }
-		if ( !$if_ref->{ addr } ) { next; }
+		next if defined $exception and $if_ref->{ name } eq $exception;
+		next if !$if_ref->{ addr };
 
 		# found
-		my $net2 = new2 Net::Netmask( $if_ref->{ addr }, $if_ref->{ mask } );
+		my $net2 = NetAddr::IP->new( $if_ref->{ addr }, $if_ref->{ mask } );
+
 		eval
 		{
-			if ( $net1->match( $net2 ) or $net2->match( $net1 ) )
+			if ( $net1->contains( $net2 ) or $net2->contains( $net1 ) )
 			{
 				return $if_ref->{ name };
 			}

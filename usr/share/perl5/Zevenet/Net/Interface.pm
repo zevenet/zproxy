@@ -154,6 +154,8 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	$iface{ parent }  = &getParentInterfaceName( $iface{ name } );
 	$iface{ ip_v } =
 	  ( $iface{ addr } =~ /:/ ) ? '6' : ( $iface{ addr } =~ /\./ ) ? '4' : 0;
+	$iface{ net } =
+	  &getAddressNetwork( $iface{ addr }, $iface{ mask }, $iface{ ip_v } );
 
 	if ( $iface{ dev } =~ /:/ )
 	{
@@ -219,24 +221,6 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 		my $if_parent = &getInterfaceConfig( $iface{ parent } );
 		$iface{ mask }    = $if_parent->{ mask };
 		$iface{ gateway } = $if_parent->{ gateway };
-	}
-
-	use NetAddr::IP;
-	#~ NetAddr::IP->import();
-
-	if ( $iface{ ip_v } == 4 )
-	{
-		my $ip = NetAddr::IP->new( $iface{ addr }, $iface{ mask } );
-		$iface{ net } = lc $ip->network()->addr();
-	}
-	elsif ( $iface{ ip_v } == 6 )
-	{
-		my $ip = NetAddr::IP->new6( $iface{ addr }, $iface{ mask } );
-		$iface{ net } = lc $ip->network()->addr();
-	}
-	else
-	{
-		$iface{ net } = undef;
 	}
 
 	#~ &zenlog(
@@ -1158,15 +1142,31 @@ Returns:
 
 sub getIpAddressExists
 {
-	my $ip     = shift;
-	my $output = 0;
+	my $ip = shift;
+
+	require Zevenet::Net::Validate;
+
+	my $output   = 0;
+	my $ip_ver   = &ipversion( $ip );
+	my $addr_ref = NetAddr::IP->new( $ip );
 
 	foreach my $if_ref ( @{ &getConfigInterfaceList() } )
 	{
-		if ( $if_ref->{ addr } eq $ip )
+		# IPv4
+		if ( $ip_ver == 4 && $if_ref->{ ip_v } == 4 && $if_ref->{ addr } eq $ip )
 		{
 			$output = 1;
 			last;
+		}
+
+		# IPv6
+		if ( $ip_ver == 6 && $if_ref->{ ip_v } == 6 )
+		{
+			if ( NetAddr::IP->new( $if_ref->{ addr } ) eq $addr_ref )
+			{
+				$output = 1;
+				last;
+			}
 		}
 	}
 
@@ -1196,6 +1196,7 @@ See Also:
 sub getInterfaceChild
 {
 	my $if_name     = shift;
+
 	my @output      = ();
 	my $if_ref      = &getInterfaceConfig( $if_name );
 	my $virtual_tag = &getValidFormat( 'virtual_tag' );
@@ -1221,6 +1222,32 @@ sub getInterfaceChild
 	}
 
 	return @output;
+}
+
+sub getAddressNetwork
+{
+	my ( $addr, $mask, $ip_v ) = @_;
+
+	require NetAddr::IP;
+
+	my $net;
+
+	if ( $ip_v == 4 )
+	{
+		my $ip = NetAddr::IP->new( $addr, $mask );
+		$net = lc $ip->network()->addr();
+	}
+	elsif ( $ip_v == 6 )
+	{
+		my $ip = NetAddr::IP->new6( $addr, $mask );
+		$net = lc $ip->network()->addr();
+	}
+	else
+	{
+		$net = undef;
+	}
+
+	return $net;
 }
 
 1;

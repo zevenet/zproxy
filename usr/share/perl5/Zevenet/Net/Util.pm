@@ -424,10 +424,14 @@ sub getInterfaceOfIp    # ($ip)
 
 	require Zevenet::Net::Interface;
 
+	my $ref_addr = NetAddr::IP->new( $ip );
+
 	foreach my $iface ( &getInterfaceList() )
 	{
 		# return interface if found in the list
-		return $iface if &iponif( $iface ) eq $ip;
+		my $if_addr = NetAddr::IP->new( &iponif( $iface ) );
+
+		return $iface if $if_addr eq $ref_addr;
 	}
 
 	# returns an invalid interface name, an undefined variable
