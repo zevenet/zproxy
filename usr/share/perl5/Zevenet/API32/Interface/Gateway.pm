@@ -41,11 +41,11 @@ sub get_gateway
 	&zenlog("get_gateway ip_ver: $ip_ver");
 
 	my $body = {
-		description => $desc,
-		params      => {
-			address   => $addr,
-			interface => $if_name,
-		},
+				 description => $desc,
+				 params      => {
+							 address   => $addr,
+							 interface => $if_name,
+				 },
 	};
 
 	&httpResponse({ code => 200, body => $body });
