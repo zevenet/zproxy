@@ -284,8 +284,10 @@ sub delete_bond    # ( $bond )
 	}
 
 	my $bond_in_use = 0;
-	$bond_in_use = 1 if &getInterfaceConfig( $bond, 4 )->{ addr };
-	$bond_in_use = 1 if &getInterfaceConfig( $bond, 6 )->{ addr };
+	my $ipv4 = &getInterfaceConfig( $bond, 4 );
+	my $ipv6 = &getInterfaceConfig( $bond, 6 );
+	$bond_in_use = 1 if ( defined $ipv4 and $ipv4->{ addr });
+	$bond_in_use = 1 if ( defined $ipv6 and $ipv6->{ addr });
 
 	if ( $bond_in_use )
 	{
