@@ -500,6 +500,7 @@ sub modify_interface_nic    # ( $json_obj, $nic )
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
 	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
+	$if_ref->{ net }     = &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
 
 	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
 	{
