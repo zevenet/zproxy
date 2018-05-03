@@ -285,13 +285,13 @@ sub delFGFarm
 		else
 		{
 			$fg = &getFGFarm( $farm, $srv );
-			$err |= &setTinyObj( $fg_conf, $fg, 'farms', "${farm}_$srv", 'del' ) if ( not $fg );
+			$err |= &setTinyObj( $fg_conf, $fg, 'farms', "${farm}_$srv", 'del' ) if $fg;
 		}
 	}
 	else
 	{
 		$fg = &getFGFarm( $farm );
-		$err |= &setTinyObj( $fg_conf, $fg, 'farms', $farm, 'del' ) if ( not $fg );
+		$err |= &setTinyObj( $fg_conf, $fg, 'farms', $farm, 'del' ) if $fg;
 	}
 }
 
