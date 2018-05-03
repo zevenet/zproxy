@@ -91,12 +91,14 @@ sub farms_name_gslb # ( $farmname )
 			$resource->{ ttl } += 0 if $resource->{ ttl };
 		}
 
-		push @out_z,
-		  {
-			id        => $zone,
-			defnamesv => $ns,
-			resources => $resources,
-		  };
+		push (
+			   @out_z,
+			   {
+				  id        => $zone,
+				  defnamesv => $ns,
+				  resources => $resources,
+			   }
+		);
 	}
 
 	my $body = {
