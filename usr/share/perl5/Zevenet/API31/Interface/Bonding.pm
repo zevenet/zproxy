@@ -518,7 +518,7 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 
 		my $if_ref = &getInterfaceConfig( $bond, $ip_v );
 
-		unless ( exists $if_ref->{ addr } )
+		unless ( exists $if_ref->{ addr } and $if_ref->{ addr } )
 		{
 			my $msg = "It is necessary to configure an address to start the interface";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
