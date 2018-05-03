@@ -9,7 +9,7 @@
 namespace epoll_manager {
 
 EpollManager::EpollManager() : accept_fd(-1) {
-  if ((epoll_fd = epoll_create1(0)) < 0) {
+  if ((epoll_fd = epoll_create1(EPOLL_CLOEXEC)) < 0) {
     std::string error = "epoll_create(2) failed: ";
     error += std::strerror(errno);
     Debug::Log(error, LOG_ERR);
@@ -31,6 +31,12 @@ void EpollManager::onReadEvent(epoll_event &event) {
 
 bool EpollManager::deleteFd(int fd) {
   if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) < 0) {
+    if (errno == ENOENT || errno == EBADF || errno == EPERM) {
+      std::string error = "epoll_ctl(delete) unnecessary. ";
+      error += std::strerror(errno);
+      Debug::Log(error, LOG_DEBUG);
+      return true;
+    }
     std::string error = "epoll_ctl(delete) failed ";
     error += std::strerror(errno);
     Debug::Log(error, LOG_DEBUG);
@@ -65,7 +71,7 @@ int EpollManager::loopOnce(int time_out) {
 //      HandleEvent(fd, DISCONNECT, static_cast<EVENT_GROUP >(events[i].data.u32 & 0xff));
 //      continue;
 //    } else
-    if ((events[i].events & EPOLLRDHUP) != 0u) {
+    if ((events[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) != 0u) {
 #if DEBUG_EVENT_MANAGER
       std::string error = "\n>>EPOLLRDHUP:Peer closed the connection fd: " +
           std::to_string(fd) + " ";
@@ -116,10 +122,13 @@ bool EpollManager::addFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group)
   epevent.data.u64 <<= CHAR_BIT;
   epevent.data.u64 |= event_group & 0xff;
   if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &epevent) < 0) {
-    std::string error = "epoll_ctl(add) failed ";
-    error += std::strerror(errno);
-    Debug::Log(error, LOG_DEBUG);
-    return false;
+    if (errno == EEXIST) { return updateFd(fd, event_type, event_group); }
+    else {
+      std::string error = "epoll_ctl(add) failed ";
+      error += std::strerror(errno);
+      Debug::Log(error, LOG_DEBUG);
+      return false;
+    }
   }
 #if DEBUG_EVENT_MANAGER
   Debug::Log("Epoll::AddFD " + std::to_string(fd) + " To EpollFD: " + std::to_string(epoll_fd), LOG_DEBUG);
@@ -135,10 +144,17 @@ bool EpollManager::updateFd(int fd, EVENT_TYPE event_type, EVENT_GROUP event_gro
   epevent.data.u64 <<= CHAR_BIT;
   epevent.data.u64 |= event_group & 0xff;
   if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &epevent) < 0) {
-    std::string error = "epoll_ctl(update) failed ";
-    error += std::strerror(errno);
-    Debug::Log(error, LOG_DEBUG);
-    return false;
+    if (errno == ENOENT) {
+      std::string error = "epoll_ctl(update) failed, fd reopened, adding .. ";
+      error += std::strerror(errno);
+      Debug::Log(error, LOG_DEBUG);
+      return addFd(fd, event_type, event_group);
+    } else {
+      std::string error = "epoll_ctl(update) failed ";
+      error += std::strerror(errno);
+      Debug::Log(error, LOG_DEBUG);
+      return false;
+    }
   }
 #if DEBUG_EVENT_MANAGER
   Debug::Log("Epoll::UpdateFd " + std::to_string(fd), LOG_DEBUG);

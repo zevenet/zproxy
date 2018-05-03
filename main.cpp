@@ -1,11 +1,11 @@
-#include <sys/stat.h>
-#include <iostream>
 #include <openssl/ssl.h>
+#include <sys/resource.h>
+#include <sys/stat.h>
 #include <csignal>
+#include <iostream>
+#include "config/config.h"
 #include "debug/Debug.h"
 #include "stream/listener.h"
-#include "config/config.h"
-#include <sys/resource.h>
 
 void cleanExit() { closelog(); }
 std::mutex Debug::log_lock;
@@ -30,22 +30,20 @@ int main(int argc, char *argv[]) {
   ::srandom(static_cast<unsigned int>(::getpid()));
 
   // Increase num file descriptor ulimit
-  //TODO:: take outside main initialization
+  // TODO:: take outside main initialization
   struct rlimit r;
   getrlimit(RLIMIT_NOFILE, &r);
-  Debug::Log("RLIMIT_NOFILE\tCurrent " +
-      std::to_string(r.rlim_cur));
+  Debug::Log("RLIMIT_NOFILE\tCurrent " + std::to_string(r.rlim_cur));
   Debug::Log("RLIMIT_NOFILE\tMaximum " + std::to_string(r.rlim_max));
   if (r.rlim_cur != r.rlim_max) {
-    r.rlim_cur = r.rlim_max * 1000;
+    r.rlim_cur = r.rlim_max;
     if (setrlimit(RLIMIT_NOFILE, &r) == -1) {
       Debug::logmsg(LOG_ERR, "setrlimit failed ");
       return EXIT_FAILURE;
     }
   }
   getrlimit(RLIMIT_NOFILE, &r);
-  Debug::Log("RLIMIT_NOFILE\tSetCurrent " +
-      std::to_string(r.rlim_cur));
+  Debug::Log("RLIMIT_NOFILE\tSetCurrent " + std::to_string(r.rlim_cur));
 
   /* SSL stuff */
   SSL_load_error_strings();
@@ -58,12 +56,12 @@ int main(int argc, char *argv[]) {
   //  CRYPTO_set_locking_callback(l_lock);
 
   Config config;
-  //ControlInterface control_interface;
+  // ControlInterface control_interface;
   config.parseConfig(argc, argv);
   Debug::log_level = config.listeners->log_level;
   Listener listener;
   listener.init(config.listeners[0]);
-//  listener.init("127.0.0.1", 9999);
+  //  listener.init("127.0.0.1", 9999);
   listener.start();
 
   return EXIT_SUCCESS;

@@ -156,6 +156,7 @@ void Connection::closeConnection() {
 }
 bool Connection::doConnect(addrinfo &address, int timeout) {
   long arg;
+  //this->address = &address;
   fd_set sdset{};
   struct timeval tv{};
   socklen_t len;

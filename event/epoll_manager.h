@@ -24,6 +24,7 @@ enum EVENT_GROUP {
   ACCEPTOR = 1,
   SERVER,
   CLIENT,
+  TIMER,
 };
 
 enum EVENT_TYPE {
