@@ -68,6 +68,11 @@ sub add_rbl_rule
 		my $msg = "A RBL rule already exists with the name '$name'.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+	elsif ( not $name )
+	{
+		my $msg = "The RBL name cannot be in blank.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 	elsif ( !&getValidFormat( "rbl_name", $name ) )
 	{
 		my $msg = "The RBL name has not a valid format.";
@@ -173,6 +178,11 @@ sub set_rbl_rule
 		if ( !&getValidFormat( 'rbl_name', $json_obj->{ 'name' } ) )
 		{
 			my $msg = "The RBL name has not a valid format.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+		elsif ( not $json_obj->{ 'name' } )
+		{
+			my $msg = "The RBL name cannot be in blank.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 		elsif ( &getRBLExists( $json_obj->{ 'name' } ) )

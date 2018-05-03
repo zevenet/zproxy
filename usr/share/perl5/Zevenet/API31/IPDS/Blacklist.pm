@@ -473,6 +473,13 @@ sub del_blacklists_list
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	# do not delete preloaded lists
+	if ( &getBLParam( $listName, 'preload' ) eq 'true' )
+	{
+		my $msg = "Preloaded lists are not removable.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	# check the list is not being used
 	if ( @{ &getBLParam( $listName, 'farms' ) } )
 	{
@@ -663,6 +670,13 @@ sub add_blacklists_source
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	# do not delete preloaded lists
+	if ( &getBLParam( $listName, 'preload' ) eq 'true' )
+	{
+		my $msg = "Preloaded lists are not editable.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	my $msg = &getValidReqParams( $json_obj, \@requiredParams, \@optionalParams );
 
 	if ( $msg )
@@ -741,6 +755,13 @@ sub set_blacklists_source
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
+	# do not delete preloaded lists
+	if ( &getBLParam( $listName, 'preload' ) eq 'true' )
+	{
+		my $msg = "Preloaded lists are not editable.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	# check source id exists
 	elsif ( @{ &getBLParam( $listName, 'source' ) } <= $id )
 	{
@@ -794,6 +815,13 @@ sub del_blacklists_source
 	{
 		my $msg = "$listName doesn't exist.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
+
+	# do not delete preloaded lists
+	if ( &getBLParam( $listName, 'preload' ) eq 'true' )
+	{
+		my $msg = "Preloaded lists are not editable.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	if ( @{ &getBLParam( $listName, 'source' ) } <= $id )
