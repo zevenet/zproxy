@@ -114,8 +114,11 @@ sub eload
 
 	chomp $ret_output;
 
-	&zenlog( "enterprise.bin errno: '$rc'" );
-	&zenlog( "$req{ module }::$req{ func } output: '$ret_output'" );
+	if ( $rc )
+	{
+		&zenlog( "enterprise.bin errno: '$rc'" );
+		&zenlog( "$req{ module }::$req{ func } output: '$ret_output'" );
+	}
 
 	if ( $rc )
 	{
@@ -143,7 +146,7 @@ sub eload
 	}
 
 	use Data::Dumper;
-	&zenlog( "eload $req{ module } $req{ func } output: " . Dumper \@output ) if @output;
+	&zenlog( "eload $req{ module } $req{ func } output: " . Dumper \@output ) if @output && $rc;
 
 	# return function output for non-API functions (service)
 	if ( $ret_f || not $api_f )
