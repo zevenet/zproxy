@@ -403,22 +403,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 			elsif ( $json_obj->{ httpsb } eq "false" )
 			{
 				&setFarmVS( $farmname, $service, "httpsbackend", "" );
-				
-				my $err = '0';
-                                $err = &eload(
-                                  module   => 'Zevenet::Farm::HTTP::Service::Ext',
-                                  func     => 'getHTTPServiceSTSStatus',
-                                  args     => [$farmname, $service],
-                                ) if $eload;
-
-                                if ( $err ne '0' and $err ne 'false' )
-                                {
-                                        my $out = &eload(
-                                          module   => 'Zevenet::Farm::HTTP::Service::Ext',
-                                          func     => 'setHTTPServiceSTSStatus',
-                                          args     => [$farmname, $service, 'false' ],
-                                        );
-                                }
+								
 			}
 			else
 			{
@@ -463,14 +448,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	{
 		if ( $eload )
 		{
-			# status
-                        if ( $json_obj->{ sts_status } eq 'true' and ( ( exists $json_obj->{ httpsb }  && $json_obj->{ httpsb } ne 'true' ) or ( &getFarmVS( $farmname, $service, 'httpsbackend' ) ne 'true' ) ))
-                        {
-                                my $msg = "The HTTPS backends has to be enabled in order to enable STS";
-                                return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-
-                        }
-
+			# status                        
 			if ( ! &getValidFormat( 'http_sts_status', $json_obj->{ sts_status } ) )
 			{
 				my $msg = "The value $json_obj->{ sts_status } of the param sts_status is invalid";
