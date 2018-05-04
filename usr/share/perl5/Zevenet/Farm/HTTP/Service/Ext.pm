@@ -369,23 +369,31 @@ sub setHTTPServiceSTSStatus    # ($farm_name,$service,$code)
 	my $ffile = &getFarmFile( $farm_name );
 	my $srv_flag  = 0;
 	my $errno     = 1;
+	my $index  = -1;
 
 	require Zevenet::Lock;
 	&ztielock ( \my @fileconf, "$configdir/$ffile" );
 
 	foreach my $line ( @fileconf )
 	{
+		$index++;						
 		if ( $line =~ /\tService \"$service\"/ )    { $srv_flag = 1; }
 		if ( $line =~ /^\tEnd$/ && $srv_flag == 1 ) { last; }
 		next if $srv_flag == 0;
 
 		if ( $line =~ /StrictTransportSecurity(\s+\d+)?/ )
 		{
-			my $time = $1 // 21600000;
-			$time =~ s/^\s+//g;
-			$status = ( $status eq 'true' )? "": "#";
-			$line = "\t\t${status}StrictTransportSecurity $time";
-			$errno = 0;
+			if ($status eq 'true') 
+			{
+				my $time = $1 // 21600000;
+				$time =~ s/^\s+//g;
+				$line =~ s/#//g;
+				$errno = 0;
+			}
+			else 
+			{
+				splice @fileconf, $index, 1;
+			}
 			last;
 		}
 

@@ -448,7 +448,13 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	{
 		if ( $eload )
 		{
-			# status                        
+			# status      
+			if ( $type ne 'https'  )
+			{
+				my $msg = "The farms have to be HTTPS to modify STS";
+                return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+
+			} 			                  
 			if ( ! &getValidFormat( 'http_sts_status', $json_obj->{ sts_status } ) )
 			{
 				my $msg = "The value $json_obj->{ sts_status } of the param sts_status is invalid";
@@ -479,6 +485,12 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	{
 		if ( $eload )
 		{
+			if ( $type ne 'https'  )
+			{
+				my $msg = "The farms have to be HTTPS to modify STS";
+                return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+
+			} 			
 			if ( ! &getValidFormat( 'http_sts_timeout', $json_obj->{ sts_timeout } ) )
 			{
 				my $msg = "The value $json_obj->{ sts_timeout } of the param sts_timeout is invalid";
