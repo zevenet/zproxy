@@ -202,17 +202,20 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 	state $saved_bond_slaves = 0;
 
-	if ( $eload && $iface{ type } eq 'nic' && ! $saved_bond_slaves )
+	if ( $eload && $iface{ type } eq 'nic' )
 	{
-		@TMP::bond_slaves = &eload(
-			module => 'Zevenet::Net::Bonding',
-			func   => 'getAllBondsSlaves',
-		);
+		unless ( $saved_bond_slaves )
+		{
+			@TMP::bond_slaves = &eload(
+				module => 'Zevenet::Net::Bonding',
+				func   => 'getAllBondsSlaves',
+			);
+
+			$saved_bond_slaves = 1;
+		}
 
 		$iface{ is_slave } =
 		  ( grep { $iface{ name } eq $_ } @TMP::bond_slaves ) ? 'true' : 'false';
-
-		$saved_bond_slaves = 1;
 	}
 
 	# for virtual inteface, overwrite mask and gw with parent values
@@ -751,15 +754,22 @@ sub getSystemInterface    # ($if_name)
 	$$if_ref{ type }   = &getInterfaceType( $$if_ref{ name } );
 	$$if_ref{ parent } = &getParentInterfaceName( $$if_ref{ name } );
 
-	if ( $$if_ref{ type } eq 'nic' && $eload )
-	{
-		my @bond_slaves;
+	state $saved_bond_slaves = 0;
 
-		@bond_slaves = &eload( module => 'Zevenet::Net::Bonding',
-							   func   => 'getAllBondsSlaves', );
+	if ( $eload && $$if_ref{ type } eq 'nic' )
+	{
+		unless ( $saved_bond_slaves )
+		{
+			@TMP::bond_slaves = &eload(
+				module => 'Zevenet::Net::Bonding',
+				func   => 'getAllBondsSlaves',
+			);
+
+			$saved_bond_slaves = 1;
+		}
 
 		$$if_ref{ is_slave } =
-		  ( grep { $$if_ref{ name } eq $_ } @bond_slaves ) ? 'true' : 'false';
+		  ( grep { $$if_ref{ name } eq $_ } @TMP::bond_slaves ) ? 'true' : 'false';
 	}
 
 	return $if_ref;
