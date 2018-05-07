@@ -275,32 +275,39 @@ sub getRBACPathPermissions
 	my $path   = shift;
 	my $method = shift;
 
-	my $permission;
+	my $permission = 0;
 	my $section;
 	my $action;
 
 	require Zevenet::User;
 	my $username = &getUser();
 
-	return 1 if ( $username eq 'root' );
-
+	if ( $username eq 'root' )
+	{
+		$permission = 1;
+	}
 	# zapi calls reserved for root user
-	return 0 if ( &getRBACForbidden( $path, $method ) );
+	elsif ( not &getRBACForbidden( $path, $method ) )
+	{
+		# it is resource?
+		$permission = &getRBACResourcePermissions( $path );
 
-	&zenlog( "RBAC:: Request from $username" );
+		&zenlog( "Checking resource ($permission)", "debug2", "RBAC" );
 
-	# it is resource?
-	$permission = &getRBACResourcePermissions( $path );
+		if ( $permission )
+		{
+			# get action and section of config file
+			( $section, $action ) = &getRBACPermissionHash( $path, $method );
 
-	&zenlog( "Checking resource ($permission)", "debug2", "RBAC" );
+			# get permission role
+			$permission = &getRBACRolePermission( $section, $action );
+		}
+	}
 
-	return 0 if ( !$permission );
-
-	# get action and section of config file
-	( $section, $action ) = &getRBACPermissionHash( $path, $method );
-
-	# get permission role
-	$permission = &getRBACRolePermission( $section, $action );
+	if ( $permission )
+	{ &zenlog( "Request from $username to $method $path. Action allowed", "Info", "RBAC" ); }
+	else
+	{ &zenlog( "Request from $username to $method $path. Action BLOCKED", "Error", "RBAC" ); }
 
 	return $permission;
 }

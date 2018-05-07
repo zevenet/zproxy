@@ -24,7 +24,10 @@
 use strict;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 sub validCGISession    # ()
 {
@@ -63,6 +66,7 @@ sub validZapiKey    # ()
 	my $validKey = 0;                 # output
 	my $key      = "HTTP_ZAPI_KEY";
 
+	require Zevenet::User;
 	if ( exists $ENV{ $key } )        # zapi key was provided
 	{
 		if (
@@ -70,18 +74,22 @@ sub validZapiKey    # ()
 			 && &getZAPI( "keyzapi" ) eq $ENV{ $key }    # matches key
 		  )
 		{
-			require Zevenet::User;
+
 			&setUser( 'root' );
 			$validKey = 1;
 		}
 		elsif ( $eload )
 		{
-			$validKey = 1
-			  if &eload(
-						 module => 'Zevenet::RBAC::User::Core',
-						 func   => 'validateRBACUserZapi',
-						 args   => [$ENV{ $key }],
-			  );
+			my $user = &eload(
+							   module => 'Zevenet::RBAC::User::Core',
+							   func   => 'validateRBACUserZapi',
+							   args   => [$ENV{ $key }],
+			);
+			if ( $user )
+			{
+				&setUser( $user );
+				$validKey = 1;
+			}
 		}
 	}
 

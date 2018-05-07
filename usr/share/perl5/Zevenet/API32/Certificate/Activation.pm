@@ -22,6 +22,10 @@
 
 use strict;
 
+# Check RBAC permissions
+include 'Zevenet::RBAC::Core';
+require Zevenet::User;
+
 # GET /certificates/activation/info
 sub get_activation_certificate_info # ()
 {
@@ -30,6 +34,19 @@ sub get_activation_certificate_info # ()
 	my $desc          = "Activation certificate information";
 	my $cert_filename = 'zlbcertfile.pem';
 	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
+
+	# Check if the user has permissions with the activation certificate
+	unless ( &getRBACPathPermissions( $ENV{ PATH_INFO },  $ENV{REQUEST_METHOD} ) )
+	{
+		my $username = &getUser();
+		my $desc = "Authentication";
+
+		return &httpErrorResponse(
+							code => 403,
+							desc => $desc,
+							msg  => "The user '$username' has not permissions"
+		);
+	}
 
 	unless ( -f "$cert_dir\/$cert_filename" )
 	{
@@ -60,6 +77,19 @@ sub get_activation_certificate # ()
 	my $cert_filename = 'zlbcertfile.pem';
 	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
 
+	# Check if the user has permissions with the activation certificate
+	unless ( &getRBACPathPermissions( $ENV{ PATH_INFO },  $ENV{REQUEST_METHOD} ) )
+	{
+		my $username = &getUser();
+		my $desc = "Authentication";
+
+		return &httpErrorResponse(
+							code => 403,
+							desc => $desc,
+							msg  => "The user '$username' has not permissions"
+		);
+	}
+
 	unless ( -f "$cert_dir\/$cert_filename" )
 	{
 		my $msg = "There is no activation certificate installed";
@@ -79,6 +109,19 @@ sub delete_activation_certificate # ( $cert_filename )
 
 	my $desc          = "Delete activation certificate";
 	my $cert_filename = 'zlbcertfile.pem';
+
+	# Check if the user has permissions with the activation certificate
+	unless ( &getRBACPathPermissions( $ENV{ PATH_INFO },  $ENV{REQUEST_METHOD} ) )
+	{
+		my $username = &getUser();
+		my $desc = "Authentication";
+
+		return &httpErrorResponse(
+							code => 403,
+							desc => $desc,
+							msg  => "The user '$username' has not permissions"
+		);
+	}
 
 	unless ( &delCert( $cert_filename ) )
 	{
@@ -107,6 +150,19 @@ sub upload_activation_certificate # ()
 
 	my $desc = "Upload activation certificate";
 	my $filename = 'zlbcertfile.pem';
+
+	# Check if the user has permissions with the activation certificate
+	unless ( &getRBACPathPermissions( $ENV{ PATH_INFO },  $ENV{REQUEST_METHOD} ) )
+	{
+		my $username = &getUser();
+		my $desc = "Authentication";
+
+		return &httpErrorResponse(
+							code => 403,
+							desc => $desc,
+							msg  => "The user '$username' has not permissions"
+		);
+	}
 
 	unless ( $upload_filehandle )
 	{

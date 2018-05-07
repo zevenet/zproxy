@@ -166,10 +166,7 @@ sub validateRBACUserZapi
 		return 0;
 	}
 
-	require Zevenet::User;
-	&setUser( $user );
-
-	return 1;
+	return $user;
 }
 
 1;
