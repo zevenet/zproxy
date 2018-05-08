@@ -318,6 +318,13 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	# match ip stack version
+	unless ( ! @be || &ipversion( $json_obj->{ ip } ) eq &ipversion( $be[0] ) )
+	{
+		my $msg = "Invalid IP version.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	# Adding the backend
 	my $status =
 	  &setGSLBFarmNewBackend( $farmname, $service, $lb, $id, $json_obj->{ ip } );
@@ -481,11 +488,45 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 		"ZAPI success, some parameters have been changed in the backend $id_server in service $service in farm $farmname."
 	);
 
+
+	# Check IP stack version
+	require Zevenet::Net::Validate;
+
+	my $service_stack;
+	my $ipv_mismatch;
+	$backendsvs = &getFarmVS( $farmname, $service, "backends" );
+	@be_list = split ( "\n", $backendsvs );
+
+	# check every backend ip version
+	foreach my $be_line ( @be_list )
+	{
+		$be_line =~ s/^\s+//;
+		next if !$be_line;
+
+		my ( undef, $ip ) = split ( " => ", $be_line );
+		my $current_stack = &ipversion( $ip );
+
+		if ( !$service_stack )
+		{
+			$service_stack = $current_stack;
+		}
+		else
+		{
+			$ipv_mismatch = $current_stack ne $service_stack;
+		}
+
+		last if $ipv_mismatch;
+	}
+
+
 	# Get farm status. If farm is down the restart is not required.
+	my $msg = "Backend modified";
+	$msg .= ". IPv4 and IPv6 addresses on the same service are not supported." if $ipv_mismatch;
+
 	my $body = {
 				 description => $desc,
 				 params      => $json_obj,
-				 message     => "Backend modified",
+				 message     => $msg,
 	};
 
 	if ( &getFarmStatus( $farmname ) eq "up" )
