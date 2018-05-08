@@ -1656,11 +1656,13 @@ sub reloadL4FarmLogsRule
 		&iptSystem( "$bin -X $log_chain -t $table" );
 	}
 
+	# not to apply rules if:
 	return if ( $action eq 'false' );
+	return if ( &getL4FarmLogs( $farmname ) ne "true" );
 	return if ( &getFarmStatus( $farmname ) ne 'up' );
 
 	my $comment_tag = "-m comment --comment \"$comment\"";
-	my $log_tag = "-j LOG --log-prefix \"conn_track,$farmname \" --log-level 4";
+	my $log_tag = "-j LOG --log-prefix \"l4: $farmname \" --log-level 4";
 
 	# create chain if it does not exist
 	if ( &iptSystem( "$bin -L $log_chain -t $table" ) )
@@ -1673,7 +1675,16 @@ sub reloadL4FarmLogsRule
 	foreach my $bk ( @{ $farm_st{ servers } } )
 	{
 		my $mark = "-m mark --mark $bk->{tag}";
-		$error |= &iptSystem( "$bin -A $log_chain -t $table $mark $log_tag $comment_tag" );
+		# log only the new connections
+		if ( &getGlobalConfiguration( 'full_farm_logs' ) ne 'true' )
+		{
+			$error |= &iptSystem( "$bin -A $log_chain -t $table -m state --state NEW $mark $log_tag $comment_tag" );
+		}
+		# log all trace
+		else
+		{
+			$error |= &iptSystem( "$bin -A $log_chain -t $table $mark $log_tag $comment_tag" );
+		}
 	}
 
 	#~ return $error;

@@ -284,6 +284,10 @@ $ssyncd_port    = "9999";
 $throughput_period = "5";
 $throughput_enabled = "true";
 
+# connection logs for farms. If this parameter is "true" all traffic will be logged
+# else only the new connections will be logged
+full_farm_logs = "false";
+
 #::END Global Section
 
 #!!!!NOT REMOVE NEXT LINE!!!!!!
