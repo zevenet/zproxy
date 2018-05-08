@@ -49,7 +49,7 @@ sub getAllFarmStats
 		my $established = 0;
 		my $pending     = 0;
 
-		if ( $status eq "up" )
+		if ( $status ne "down" )
 		{
 			require Zevenet::Net::ConnStats;
 			require Zevenet::Farm::Stats;
