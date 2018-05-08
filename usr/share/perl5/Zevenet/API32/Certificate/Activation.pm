@@ -55,20 +55,24 @@ sub get_activation_certificate_info # ()
 	}
 
 	my $cert = &getCertInfo( $cert_filename, $cert_dir );
-
 	my $c_type = 'temporal';
-	my $support = 'N/A';	
-	if ($cert->{ key } =~ m/-/) {
+	my $support = 'N/A';
+
+	if ($cert->{ key } =~ m/-/)
+	{
 		my $c_days = ( &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) / 86400;
 	    $c_type = ( $c_days > 364 )? 'permanent': 'temporal';
-	} else {
+	}
+	else
+	{
 		my $cert_type = $cert->{ type_cert };
 		$c_type = ( $cert_type eq 'DE' )? 'permanent': 'temporal';
 		my $c_days = ( &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) / 86400;
+
 		if ( $c_type eq 'permanent' )
 		{
 			if ( $c_days < 1 ) { $support = 'false'; } else { $support = 'true' };
-		}		
+		}
 	}
 
 	my $params = {
