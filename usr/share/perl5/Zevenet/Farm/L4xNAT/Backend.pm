@@ -432,7 +432,7 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	{
 		$output |= &refreshL4FarmRules( \%farm );
 
-		if ( $status eq 'fgDOWN' && $farm{ persist } eq 'ip' )
+		if ( $status eq 'fgDOWN' && $farm{ lbalg } ne 'prio' && $farm{ persist } eq 'ip' )
 		{
 			&setL4FarmBackendsSessionsRemove( $farm{ name }, $server_id );
 		}

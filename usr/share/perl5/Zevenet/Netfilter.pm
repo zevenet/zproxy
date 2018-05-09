@@ -487,7 +487,7 @@ sub genIptMasquerade    # ($farm_name,$index,$protocol,$mark)
 	  . "--match mark --mark $$server{ tag } "
 	  . "--match comment --comment ' FARM\_$$farm{ name }\_$$server{ id }\_ ' "
 	  . "--jump SNAT --to-source $float_if->{ addr } ";
-	  
+
 	return $rule;
 }
 
@@ -525,7 +525,7 @@ sub setIptConnmarkRestore
 {
 	my $farm_name   = shift;    # farmname
 	my $switch      = shift;    # 'true' or not true value
-	$switch ||= 'false';   
+	$switch ||= 'false';
 
 	my $return_code = -1;       # return value
 
@@ -567,8 +567,8 @@ sub setIptConnmarkSave
 {
 	my $farm_name   = shift;    # farmname
 	my $switch      = shift;    # 'true' or not true value
-	$switch ||= 'false';    
-	
+	$switch ||= 'false';
+
 	my $return_code = -1;       # return value
 
 	## lock iptables use ##
@@ -654,8 +654,8 @@ sub getIptRuleNumber
 	  or &zenlog( ( caller ( 0 ) )[3] . ' $rule invalid' );
 	( defined ( $farm_name ) && !ref $farm_name )
 	  or &zenlog( ( caller ( 0 ) )[3] . ' $farm_name invalid' );
-	( defined ( $index ) && !ref $index )
-	  or &zenlog( ( caller ( 0 ) )[3] . ' $index invalid' );
+	#~ ( defined ( $index ) && !ref $index )
+	  #~ or &zenlog( ( caller ( 0 ) )[3] . ' $index invalid' );
 
 	my $rule_num;      # output: rule number for requested rule
 
@@ -948,7 +948,7 @@ sub getBinVersion    # ($farm_name)
 {
 	# Variables
 	my $farm_name = shift;
-	
+
 	require Zevenet::Net::Validate;
 	my $binary = &getGlobalConfiguration('iptables');
 	my $vip = &getFarmVip( "vip", $farm_name );
