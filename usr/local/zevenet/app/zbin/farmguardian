@@ -61,6 +61,7 @@ if ( !defined $ARGV[0] )
 my $farmname = "$ARGV[0]";
 my $service  = '';
 my $fservice = '';
+my $zcluster_send_action = "/usr/local/zevenet/app/zbin/zcluster-send-action";
 
 # validate FARM TYPE
 my $type = &getFarmType( $farmname );
@@ -332,6 +333,8 @@ while ( 1 )
 			{
 				&setL4FarmBackendStatus( $farmname, $j, 'up' );
 				$auxLog = " in farm: '$farmname'";
+
+				system ( "$zcluster_send_action farm restart $farmname &" ) if -f $zcluster_send_action;
 			}
 
 			$backendstatus[$j] = 'active';
@@ -365,6 +368,8 @@ while ( 1 )
 				&setL4FarmBackendStatus( $farmname, $j, 'fgDOWN' );
 				$auxLog = " in farm: '$farmname'";
 				&setL4FarmBackendsSessionsRemove( $farmname, $j ) if ( $cutConns eq 'true' );
+
+				system ( "$zcluster_send_action farm restart $farmname &" ) if -f $zcluster_send_action;
 			}
 
 			$backendstatus[$j] = 'fgDOWN';

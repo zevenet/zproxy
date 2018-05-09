@@ -659,8 +659,8 @@ sub getIptRuleNumber
 	  or &zenlog( ( caller ( 0 ) )[3] . ' $rule invalid' );
 	( defined ( $farm_name ) && !ref $farm_name )
 	  or &zenlog( ( caller ( 0 ) )[3] . ' $farm_name invalid' );
-	( defined ( $index ) && !ref $index )
-	  or &zenlog( ( caller ( 0 ) )[3] . ' $index invalid' );
+	#~ ( defined ( $index ) && !ref $index )
+	  #~ or &zenlog( ( caller ( 0 ) )[3] . ' $index invalid' );
 
 	my $rule_num;      # output: rule number for requested rule
 
@@ -954,10 +954,13 @@ sub getBinVersion    # ($farm_name)
 	# Variables
 	my $farm_name = shift;
 
-	my $binary = &getGlobalConfiguration('iptables');
-	$binary if not $farm_name;
+	unless ( $farm_name )
+	{
+		return &getGlobalConfiguration('iptables');
+	}
 
 	require Zevenet::Net::Validate;
+
 	my $vip = &getFarmVip( "vip", $farm_name );
 	my $ipv = &ipversion( $vip );
 
