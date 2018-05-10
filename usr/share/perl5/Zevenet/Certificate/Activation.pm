@@ -80,6 +80,26 @@ sub keycert
 	return $str;
 }
 
+# build local old key
+sub keycert_old
+{
+    #~ use Zevenet::SystemInfo;
+	my $dmi      = get_sys_uuid();
+	my $hostname = &getHostname();
+
+	my $block1 = crypt ( "${dmi}${hostname}", "93" );
+	my $block2 = crypt ( "${hostname}${dmi}", "a3" );
+	my $block3 = crypt ( "${dmi}${hostname}", "ZH" );
+	my $block4 = crypt ( "${hostname}${dmi}", "h7" );
+	$block1 =~ s/^93//;
+	$block2 =~ s/^a3//;
+	$block3 =~ s/^ZH//;
+	$block4 =~ s/^h7//;
+
+	my $str = "${block1}-${block2}-${block3}-${block4}";
+	return $str;
+}
+
 # evaluate certificate
 sub certcontrol
 {
@@ -101,106 +121,129 @@ sub certcontrol
 	my $keyid       = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
 	my @months      = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 	my $hostname    = &getHostname();
-	my $key         = &keycert();
+	my $key         = &keycert_old();
 	my $dmi 		= &get_sys_uuid();
 	my $mod_appl	= &get_mod_appl();
 
 	my @zen_cert    = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
 
-	my ($subject) = grep( /^\s+Subject: /, @zen_cert );
 	my $serial = `$openssl_bin x509 -in $zlbcertfile -serial -noout`;
 	$serial =~ /serial\=(\w+)/;
 	$serial = $1;
-	&zenlog("Serial: $serial");
 
-	my $key_decrypy = &decrypt($key);
-	my @data_key = split /::/, $key_decrypy;
+	my @key_cert = grep /Subject: ?.+/, @zen_cert;
+	$key_cert[0] =~ /Subject: ?.+OU ?= ?([.\/0-9A-Za-z\-]+), ?/;
+	my $cert_ou = $1;
 
-	my @type_cert_array = grep /C ?= ?(DE|TE)\,/, @zen_cert;
-	$type_cert_array[0] =~ /C ?= ?(DE|TE)\,/;
-	my $type_cert = $1;
-	&zenlog("Type cert: $type_cert");
-
-	if (    ( !grep /$key/, @zen_cert )
-		 || ( !grep /CN=$hostname\/|CN = $hostname\,/, @zen_cert )
-		 || ( !grep /$hostname/, $data_key[0] )
-		 || ( !grep /$dmi/, $data_key[1] )
-		 || ( !grep /$mod_appl/, $data_key[2] ))
+	if ($cert_ou eq 'false')
 	{
-		#swcert = 5 ==> Cert isn't valid
-		$swcert = 5;
-		return $swcert;
-
-	}
-	elsif ( ! grep( /keyid:$keyid/, @zen_cert ) )
-	{
-		#swcert = 2 ==> Cert isn't signed OK
-		$swcert = 2;
-		return $swcert;
+		$key_cert[0] =~ /Subject: ?.+1\.2\.3\.4\.5\.8 ?= ?(.+)/;
+		my $cert_ou = $1;
+		$key = &keycert();
 	}
 
-	# Verify date of check
-	my $date_today = strftime "%F", localtime;
-	my $date_encode = &encrypt($date_today);
-	$date_encode =~ s/\s*$//;
-#	&zenlog("Date today: $date_today\n Date today encode: $date_encode");
+	if ( !grep /keyid:$keyid/, @zen_cert ) {
+        #swcert = 2 ==> Cert isn't signed OK
+        $swcert = 2;
+        return $swcert;
+    } elsif (( !grep /$key/, @zen_cert ) 
+			 || ( !grep (/(CN=$hostname\/|CN = $hostname\,)/, @zen_cert)) ) {
+ 		#swcert = 5 ==> Cert isn't valid
+       	$swcert = 5;
+       	return $swcert;
+ 	}
 
-	my $configdir = &getGlobalConfiguration( 'configdir' );
-	my $file_check = "$configdir/config_check";
-	my $date_check = `cat $file_check`;
-	$date_check =~ s/\s*$//;
-#	&zenlog("Date check encode: $date_check\n Date check decode: $last_date_check");
+ 	 # Certificate expiring date
+    my ( $na ) = grep /Not After/i, @zen_cert;
+    $na =~ s/.*not after.*:\ //i;
+    my ( $month2, $day2, $hours2, $min2, $sec2, $year2 ) = split /[ :]+/, $na;
+	( $month2 ) = grep { $months[$_] eq $month2 } 0 .. $#months;
+    my $end = timegm( $sec2, $min2, $hours2, $day2, $month2, $year2 );
+    my $totaldays = undef;
+    my $type_cert = undef;
 
-	if ($date_check ne $date_encode) {
-		my $crl_path = "$configdir/cacrl.crl";
+	if ($cert_ou =~ m/-/ ) {
+		# Certificate validity date
+       	my ( $nb ) = grep /Not Before/i, @zen_cert;
+       	$nb =~ s/.*not before.*:\ //i;
 
-		my $date_mod = `stat -c%y $crl_path`;
-		my @modification = split /\ /, $date_mod;
+       	my ( $month, $day, $hours, $min, $sec, $year ) = split /[ :]+/, $nb;
+       	( $month ) = grep { $months[$_] eq $month } 0 .. $#months;
+       	my $ini = timegm( $sec, $min, $hours, $day, $month, $year );
 
-		if ( $modification[0] ne $date_today) {
-			# Download CRL
-	  		my $download = `wget -q -O $crl_path https://devcerts.zevenet.com/pki/ca/index.php?stage=dl_crl`;
-	  		&zenlog("CRL Downloaded on $date_today");
-	  	}
+       	$totaldays = ( $end - $ini ) / 86400;
+		$totaldays =~ s/\-//g;
 
-		my @decoded = `openssl crl -inform DER -text -noout -in $crl_path`;
-		if ( !grep /keyid:$keyid/, @decoded ) {
-			#swcert = 2 ==> Cert isn't signed OK
-			$swcert = 2;
+	} else {
+		my $key_decrypy = &decrypt($key);
+		my @data_key = split /::/, $key_decrypy;
+
+		my @type_cert_array = grep /C ?= ?(DE|TE)\,/, @zen_cert;
+		$type_cert_array[0] =~ /C ?= ?(DE|TE)\,/;
+		$type_cert = $1;
+
+		if (( !grep /$hostname/, $data_key[0] )
+			 || ( !grep /$dmi/, $data_key[1] )
+			 || ( !grep /$mod_appl/, $data_key[2] ))
+		{
+			#swcert = 5 ==> Cert isn't valid
+			$swcert = 5;
 			return $swcert;
 		}
 
-		foreach my $line (@decoded) {
-			if (grep /Serial Number\: ?$serial/, $line) {
-				my $isRevoked = grep /Serial Number\: ?$serial/, $line;
-				if ($isRevoked > 0) {
-					&zenlog("Certificate Revoked (CRL check)");
-					$swcert = 4;
-					return $swcert;
+		# Verify date of check
+		my $date_today = strftime "%F", localtime;
+		my $date_encode = &encrypt($date_today);
+		$date_encode =~ s/\s*$//;
+
+		my $configdir = &getGlobalConfiguration( 'configdir' );
+		my $file_check = "$configdir/config_check";
+		my $date_check = `cat $file_check`;
+		$date_check =~ s/\s*$//;
+
+		if ($date_check ne $date_encode) {
+			my $crl_path = "$configdir/cacrl.crl";
+
+			my $date_mod = `stat -c%y $crl_path`;
+			my @modification = split /\ /, $date_mod;
+
+			if ( $modification[0] ne $date_today) {
+				# Download CRL
+		  		my $download = `wget -q -O $crl_path https://devcerts.zevenet.com/pki/ca/index.php?stage=dl_crl`;
+		  		&zenlog("CRL Downloaded on $date_today");
+		  	}
+
+			my @decoded = `openssl crl -inform DER -text -noout -in $crl_path`;
+			if ( !grep /keyid:$keyid/, @decoded ) {
+				#swcert = 2 ==> Cert isn't signed OK
+				$swcert = 2;
+				return $swcert;
+			}
+
+			foreach my $line (@decoded) {
+				if (grep /Serial Number\: ?$serial/, $line) {
+					my $isRevoked = grep /Serial Number\: ?$serial/, $line;
+					if ($isRevoked > 0) {
+						&zenlog("Certificate Revoked (CRL check)");
+						$swcert = 4;
+						return $swcert;
+					}
 				}
 			}
+			require Tie::File;
+			tie my @contents, 'Tie::File', "$file_check";
+			@contents = ($date_encode);
+
+			untie @contents;
 		}
-		require Tie::File;
-		tie my @contents, 'Tie::File', "$file_check";
-		@contents = ($date_encode);
-
-		untie @contents;
 	}
-
-	# Certificate expiring date
-	my ( $na ) = grep /Not After/i, @zen_cert;
-	$na =~ s/.*not after.*:\ //i;
-
-	my ( $month, $day, $hours, $min, $sec, $year ) = split /[ :]+/, $na;
-	( $month ) = grep { $months[$_] eq $month } 0..$#months;
-	my $end = timegm( $sec, $min, $hours, $day, $month, $year );
 
 	my $dayright = ( $end - time () ) / 86400;
 
 	if ( $dayright < 0 )
 	{
 		#control errors
-		if ( $type_cert eq 'TE' )
+		if ( ($totaldays ne undef && $totaldays < 364 ) || ($totaldays eq undef && $type_cert eq 'TE') )
 		{
 			# Policy: expired testing certificates would not stop zen service,
 			# but rebooting the service would not start the service,
@@ -208,7 +251,7 @@ sub certcontrol
 			$swcert = 3;
 		}
 
-		if ( $type_cert eq 'DE' )
+		if ( ($totaldays ne undef && $totaldays > 364 ) || ($totaldays eq undef && $type_cert eq 'DE') )
 		{
 			# The contract support plan is expired you have to request a
 			# new contract support. Only message alert!
@@ -227,7 +270,6 @@ sub certcontrol
 	#swcert = -1 ==> Cert support and it's expired
 
 	#output
-	&zenlog("Paso enterpirse.bin swcert: $swcert");
 	return $swcert;
 }
 

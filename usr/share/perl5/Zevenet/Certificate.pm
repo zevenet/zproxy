@@ -612,6 +612,9 @@ sub getCertInfo    # ($certfile)
 			$cn = $1 if ( $param =~ /CN ?= ?(.+)/ );
 			( $cn ) = split ( /\/emailAddress=/, $cn );
 			$key = $1 if ( $param =~ /OU ?= ?(.+)/ );
+			if ($key eq 'false') {
+				$key = $1 if ( $param =~ /1\.2\.3\.4\.5\.8 ?= ?(.+)/ );
+			}
 		}
 	}
 	#~ $cn = &getCleanBlanc( $cn );
