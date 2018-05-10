@@ -599,6 +599,7 @@ sub getCertInfo    # ($certfile)
 	# Stretch: Subject: C = SP, ST = SP, L = SP, O = Test, O = f9**3b, OU = al**X6, CN = zevenet-hostname, emailAddress = cr**@zevenet.com
 	# Jessie:  Subject: C=SP, ST=SP, L=SP, O=Test, O=f9**3b, OU=al**X6, CN=zevenet-hostname/emailAddress=cr**@zevenet.com
 	my $cn;
+	my $key;
 	{
 		my ( $string ) = grep( /\sSubject: /, @cert_data );
 		chomp $string;
@@ -610,10 +611,10 @@ sub getCertInfo    # ($certfile)
 		{
 			$cn = $1 if ( $param =~ /CN ?= ?(.+)/ );
 			( $cn ) = split ( /\/emailAddress=/, $cn );
+			$key = $1 if ( $param =~ /OU ?= ?(.+)/ );
 		}
 	}
 	#~ $cn = &getCleanBlanc( $cn );
-
 
 	# Cert Issuer
 	my $issuer = "";
@@ -678,6 +679,7 @@ sub getCertInfo    # ($certfile)
 			 file       => $certfile,
 			 type       => $type,
 			 CN         => $cn,
+			 key 		=> $key,
 			 issuer     => $issuer,
 			 creation   => $creation,
 			 expiration => $expiration,
