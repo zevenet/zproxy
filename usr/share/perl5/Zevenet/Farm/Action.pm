@@ -58,28 +58,24 @@ sub _runFarmStart    # ($farm_name, $writeconf)
 		return 0;
 	}
 
+	# check if the ip exists in any interface
+	my $ip = &getFarmVip( "vip", $farm_name );
+	require Zevenet::Net::Interface;
+	if ( !&getIpAddressExists( $ip ) )
+	{
+		&zenlog( "The virtual interface $ip is not defined any interface." );
+		return $status;
+	}
+
 	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
-
 	&zenlog( "running 'Start write $writeconf' for $farm_name farm $farm_type" );
 
-	if ( $writeconf eq "true" && $farm_type =~ /^https?$/ )
-	{
-		require Zevenet::Farm::HTTP::Config;
-		my $lock_fh = &lockHTTPFile( $farm_name );
-
-		require Tie::File;
-		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
-		@configfile = grep !/^\#down/, @configfile;
-		untie @configfile;
-
-		&unlockfile ( $lock_fh );
-	}
 
 	if ( $farm_type eq "http" || $farm_type eq "https" )
 	{
 		require Zevenet::Farm::HTTP::Action;
-		$status = &_runHTTPFarmStart( $farm_name );
+		$status = &_runHTTPFarmStart( $farm_name, $writeconf );
 	}
 	elsif ( $farm_type eq "datalink" )
 	{
@@ -126,11 +122,10 @@ sub runFarmStart    # ($farm_name,$writeconf)
 
 	my $status = &_runFarmStart( $farm_name, $writeconf );
 
-	if ( $status == 0 )
-	{
-		require Zevenet::FarmGuardian;
-		&runFGFarmStart( $farm_name );
-	}
+	return -1 if ( $status != 0 );
+
+	require Zevenet::FarmGuardian;
+	&runFarmGuardianStart( $farm_name, "" );
 
 	if ( $eload )
 	{
