@@ -41,7 +41,7 @@ sub get_activation_certificate_info # ()
 
 	my $c_type = 'temporal';
 	if ($cert->{ key } =~ m/-/) {
-		my $c_days = $cert->{ expiration } - $cert->{ creation };
+		my $c_days = ( &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) / 86400;
 	    my $c_type = ( $c_days > 364 )? 'permanent': 'temporal';
 	} else {
 		my $cert_type = $cert->{ type_cert };
