@@ -69,7 +69,7 @@ sub add_addheader    # ( $json_obj, $farmname )
 					 message     => $message,
 		};
 
-		if ( &getFarmStatus( $farmname ) eq 'up' )
+		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
 			&setFarmRestart( $farmname );
@@ -116,7 +116,7 @@ sub del_addheader
 					 message     => $message,
 		};
 
-		if ( &getFarmStatus( $farmname ) eq 'up' )
+		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
 			&setFarmRestart( $farmname );
@@ -175,7 +175,7 @@ sub add_headremove    # ( $json_obj, $farmname )
 					 message     => $message,
 		};
 
-		if ( &getFarmStatus( $farmname ) eq 'up' )
+		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
 			&setFarmRestart( $farmname );
@@ -222,7 +222,7 @@ sub del_headremove
 					 message     => $message,
 		};
 
-		if ( &getFarmStatus( $farmname ) eq 'up' )
+		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			include 'Zevenet::Farm::Action';
 			&setFarmRestart( $farmname );

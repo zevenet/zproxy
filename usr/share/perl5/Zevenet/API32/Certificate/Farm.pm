@@ -111,7 +111,7 @@ sub add_farm_certificate    # ( $json_obj, $farmname )
 				 message     => $message,
 	};
 
-	if ( &getFarmStatus( $farmname ) eq 'up' )
+	if ( &getFarmStatus( $farmname ) ne 'down' )
 	{
 		require Zevenet::Farm::Action;
 
@@ -202,7 +202,7 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 				 message     => $msg
 	};
 
-	if ( &getFarmStatus( $farmname ) eq 'up' )
+	if ( &getFarmStatus( $farmname ) ne 'down' )
 	{
 		require Zevenet::Farm::Action;
 

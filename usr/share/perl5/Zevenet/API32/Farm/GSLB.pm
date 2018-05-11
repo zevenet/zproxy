@@ -41,7 +41,7 @@ sub farms_gslb    # ()
 		my $vip    = &getFarmVip( 'vip', $name );
 		my $port   = &getFarmVip( 'vipp', $name );
 
-		$status = "needed restart" if $status eq 'up' && !&getFarmLock( $name );
+		$status = "needed restart" if $status ne 'down' && !&getFarmLock( $name );
 
 		push @out,
 		  {
@@ -114,7 +114,7 @@ sub new_gslb_farm_service    # ( $json_obj, $farmname )
 				 },
 	};
 
-	if ( &getFarmStatus( $farmname ) eq 'up' )
+	if ( &getFarmStatus( $farmname ) ne 'down' )
 	{
 		require Zevenet::Farm::Action;
 
@@ -184,7 +184,7 @@ sub modify_gslb_service    # ( $json_obj, $farmname, $service )
 				 params      => $output_params,
 	};
 
-	if ( &getFarmStatus( $farmname ) eq 'up' )
+	if ( &getFarmStatus( $farmname ) ne 'down' )
 	{
 		require Zevenet::Farm::Action;
 
@@ -255,7 +255,7 @@ sub delete_gslb_service    # ( $farmname, $service )
 				 message     => $msg,
 	};
 
-	if ( &getFarmStatus( $farmname ) eq 'up' )
+	if ( &getFarmStatus( $farmname ) ne 'down' )
 	{
 		require Zevenet::Farm::Action;
 
@@ -352,7 +352,7 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 				 message => $message,
 	};
 
-	if ( &getFarmStatus( $farmname ) eq 'up' )
+	if ( &getFarmStatus( $farmname ) ne 'down' )
 	{
 		require Zevenet::Farm::Action;
 
@@ -529,7 +529,7 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 				 message     => $msg,
 	};
 
-	if ( &getFarmStatus( $farmname ) eq "up" )
+	if ( &getFarmStatus( $farmname ) ne 'down' )
 	{
 		$body->{ status } = 'needed restart';
 		$body->{ info } =
@@ -602,7 +602,7 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 				 message     => $message,
 	};
 
-	if ( &getFarmStatus( $farmname ) eq 'up' )
+	if ( &getFarmStatus( $farmname ) ne 'down' )
 	{
 		$body->{ status } = "needed restart";
 		&setFarmRestart( $farmname );
@@ -727,7 +727,7 @@ sub modify_gslb_farmguardian    # ( $json_obj, $farmname )
 				 message => $msg,
 	};
 
-	if ( &getFarmStatus( $farmname ) eq 'up' )
+	if ( &getFarmStatus( $farmname ) ne 'down' )
 	{
 		require Zevenet::Farm::Action;
 

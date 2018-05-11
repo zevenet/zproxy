@@ -723,7 +723,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 				 params      => $json_obj,
 	};
 
-	if ( $restart_flag eq "true" && &getFarmStatus( $farmname ) eq 'up' )
+	if ( $restart_flag eq "true" && &getFarmStatus( $farmname ) ne 'down' )
 	{
 		&setFarmRestart( $farmname );
 		$body->{ status } = 'needed restart';

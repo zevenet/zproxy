@@ -119,7 +119,7 @@ sub new_farm_service    # ( $json_obj, $farmname )
 				 params      => { id => $json_obj->{ id } },
 	};
 
-	if ( &getFarmStatus( $farmname ) eq 'up' )
+	if ( &getFarmStatus( $farmname ) ne 'down' )
 	{
 		require Zevenet::Farm::Action;
 
@@ -403,7 +403,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 			elsif ( $json_obj->{ httpsb } eq "false" )
 			{
 				&setFarmVS( $farmname, $service, "httpsbackend", "" );
-								
+
 			}
 			else
 			{
@@ -448,13 +448,13 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	{
 		if ( $eload )
 		{
-			# status      
+			# status
 			if ( $type ne 'https'  )
 			{
 				my $msg = "The farms have to be HTTPS to modify STS";
                 return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 
-			} 			                  
+			}
 			if ( ! &getValidFormat( 'http_sts_status', $json_obj->{ sts_status } ) )
 			{
 				my $msg = "The value $json_obj->{ sts_status } of the param sts_status is invalid";
@@ -490,7 +490,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 				my $msg = "The farms have to be HTTPS to modify STS";
                 return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 
-			} 			
+			}
 			if ( ! &getValidFormat( 'http_sts_timeout', $json_obj->{ sts_timeout } ) )
 			{
 				my $msg = "The value $json_obj->{ sts_timeout } of the param sts_timeout is invalid";
@@ -531,7 +531,7 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 
 	$body->{ message } = $bk_msg if ( $bk_msg );
 
-	if ( &getFarmStatus( $farmname ) eq 'up' )
+	if ( &getFarmStatus( $farmname ) ne 'down' )
 	{
 		require Zevenet::Farm::Action;
 
@@ -626,7 +626,7 @@ sub delete_service    # ( $farmname, $service )
 				 message     => $message,
 	};
 
-	if ( &getFarmStatus( $farmname ) eq 'up' )
+	if ( &getFarmStatus( $farmname ) ne 'down' )
 	{
 		require Zevenet::Farm::Action;
 

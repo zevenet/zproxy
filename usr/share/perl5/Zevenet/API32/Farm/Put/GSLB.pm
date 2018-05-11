@@ -235,7 +235,7 @@ sub modify_gslb_farm    # ( $json_obj,	$farmname )
 		$body->{ info } =
 		  "There're changes that need to be applied, stop and start farm to apply them!";
 
-		if ( &getFarmStatus( $farmname ) eq 'up' )
+		if ( &getFarmStatus( $farmname ) ne 'down' )
 		{
 			&setFarmRestart( $farmname );
 			$body->{ status } = 'needed restart';
