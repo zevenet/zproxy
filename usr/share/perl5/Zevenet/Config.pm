@@ -252,13 +252,19 @@ sub setTinyObj
 		close $fi;
 	}
 
+	&zenlog( "Modify $object from $path", "debug2" );
+
 	require Zevenet::Lock;
 	my $lock_file = &getLockFile( $path );
 	my $lock_fd   = &lockfile( $lock_file );
 
 	my $fileHandle = Config::Tiny->read( $path );
 
-	&zenlog( "Could not open file $path: $Config::Tiny::errstr" ) unless $fileHandle;
+	unless ( $fileHandle )
+	{
+		&zenlog( "Could not open file $path: $Config::Tiny::errstr" );
+		return -1;
+	}
 
 	# save all struct
 	if ( ref $key )
@@ -294,8 +300,6 @@ sub setTinyObj
 
 	my $error = $fileHandle->write( $path );
 	&unlockfile( $lock_fd );
-
-	&zenlog( "Modify $object from $path", "debug2" );
 
 	return $error;
 }

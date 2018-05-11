@@ -519,8 +519,8 @@ sub runFGFarmStart
 	my ( $farm, $svice ) = @_;
 
 	my $status = 0;
-	my $log;
-	my $sv;
+	my $log = "";
+	my $sv = "";
 
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
