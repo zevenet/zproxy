@@ -5,7 +5,6 @@
 
 namespace http_parser {
 
-enum HTTP_VERSION { HTTP_1_0, HTTP_1_1, HTTP_2_0 };
 enum PARSE_RESULT { SUCCESS, FAILED, INCOMPLETE, TOOLONG };
 
 enum EVENT_TYPE {
@@ -16,22 +15,18 @@ enum EVENT_TYPE {
 };
 
 class HttpParser {
-  void onHeaders();
-  void onContent();
-  void onHeaderField();
-
  public:
   HttpParser();
 
-  PARSE_RESULT parseRequest(const std::string &data, size_t *used_bytes);
-  PARSE_RESULT parseRequest(const char *data, const size_t data_size, size_t *used_bytes);
+  PARSE_RESULT parseRequest(const std::string &data, size_t *used_bytes, bool reset = true);
+  PARSE_RESULT parseRequest(const char *data, const size_t data_size, size_t *used_bytes, bool reset = true);
 
-  PARSE_RESULT parseResponse(const std::string &data, size_t *used_bytes);
-  PARSE_RESULT parseResponse(const char *data, const size_t data_size, size_t *used_bytes);
+  PARSE_RESULT parseResponse(const std::string &data, size_t *used_bytes, bool reset = true);
+  PARSE_RESULT parseResponse(const char *data, const size_t data_size, size_t *used_bytes, bool reset = true);
 
   void printRequest();
   void printResponse();
-  void clean();
+  void reset_parser();
 
  private:
 
@@ -51,6 +46,7 @@ class HttpParser {
   const char *message;
   size_t message_length;
 
+  //headers
   EVENT_TYPE events;
 };
 }  // namespace http_parser

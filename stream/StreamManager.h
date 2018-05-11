@@ -17,6 +17,11 @@
 using namespace epoll_manager;
 
 class StreamManager : public EpollManager, public ServiceManager {
+
+  //TODO::REMOVE
+  std::string e200 =
+      "HTTP/1.1 200 OK\r\nServer: zhttp/1.0\r\nExpires: now\r\nPragma: no-cache\r\nCache-control: no-cache,no-store\r\nContent-Type: text/html\r\nContent-Length: 11\r\n\r\nHello World\n";
+
   int worker_id;
   std::thread worker;
   bool is_running;
@@ -28,11 +33,19 @@ class StreamManager : public EpollManager, public ServiceManager {
   StreamManager();
   StreamManager(const StreamManager &) = delete;
   ~StreamManager();
+
   void addStream(int fd);
   int getWorkerId();
   void start(int thread_id_ = 0);
   void stop();
 
+  inline void onResponseEvent(int fd);
+  inline void onRequestEvent(int fd);
+  inline void onResponseTimeoutEvent(int fd);
+  inline void onRequestTimeoutEvent(int fd);
+  inline void onSignalEvent(int fd);
+
+  bool isRequestMethodValid(HttpRequest &request);
 };
 
 #endif  // NEW_ZHTTP_WORKER_H

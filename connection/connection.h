@@ -1,9 +1,7 @@
 //
 // Created by abdess on 4/5/18.
 //
-
-#ifndef NEW_ZHTTP_CONNECTION_H
-#define NEW_ZHTTP_CONNECTION_H
+#pragma once
 
 #include <netdb.h>
 #include "../util/string_buffer.h"
@@ -11,12 +9,35 @@
 #include <unistd.h>
 
 #define MAX_DATA_SIZE  65000
-
+struct ConnectionStadistic_t {
+  clock_t last_read = 0;
+  double avr_read_time = 0;
+  double max_read_time = 0;
+  double min_read_time = 0;
+  void update() {
+    if (last_read != 0) {
+      auto elapsed = (clock() - last_read);
+      if (avr_read_time != 0) {
+        if (elapsed < min_read_time) min_read_time = elapsed;
+        if (elapsed > max_read_time) max_read_time = elapsed;
+        avr_read_time = (avr_read_time + elapsed) / 2;
+      }
+    }
+    last_read = clock();
+    avr_read_time = 0;
+    min_read_time = 0;
+    max_read_time = 0;
+  }
+};
 class Connection {
+  clock_t last_read_;
+  clock_t last_write_;
+
  protected:
+  int socket_fd;
   bool is_connected;
  public:
-  int socket_fd;
+
   addrinfo *address;
   // StringBuffer string_buffer;
   char buffer[MAX_DATA_SIZE];
@@ -41,4 +62,4 @@ class Connection {
 
 };
 
-#endif //NEW_ZHTTP_CONNECTION_H
+

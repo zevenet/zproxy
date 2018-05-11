@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <string>
 #include <thread>
+
 namespace IO {
 
 enum IO_RESULT {
@@ -19,8 +20,15 @@ enum IO_RESULT {
 
 namespace helper {
 
-class ThreadHelper {
- public:
+struct DateTime {
+  inline static std::string getDayTime() {
+    auto now = std::time(0);
+    return std::ctime(&now);
+  }
+};
+
+struct ThreadHelper {
+
   static bool setThreadAffinity(int cpu_id, pthread_t native_handle) {
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);

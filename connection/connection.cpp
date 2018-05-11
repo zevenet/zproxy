@@ -9,10 +9,10 @@
 //  Debug::Log("BUFFER::SIZE = " + std::to_string(buffer_size), LOG_DEBUG); \
 //  Debug::Log("BUFFER::STRLEN = " + std::to_string(strlen(buffer)), LOG_DEBUG);
 
-Connection::Connection() : buffer_size(0), address(nullptr),
+Connection::Connection() : buffer_size(0), address(nullptr), last_read_(0), last_write_(0),
 //string_buffer(),
                            socket_fd(-1), is_connected(false) {
-  //address.ai_addr = new sockaddr();
+//address.ai_addr = new sockaddr();
 }
 Connection::~Connection() {
   is_connected = false;
@@ -22,12 +22,11 @@ Connection::~Connection() {
       delete address->ai_addr;
   }
   delete address;
+
 }
 
 IO::IO_RESULT Connection::read() {
-//  char buffer[MAX_DATA_SIZE];
-//  size_t buffer_size = 0;
-
+  last_read_ = clock();
   bool done = false;
   ssize_t count;
   IO::IO_RESULT result = IO::ERROR;
@@ -54,7 +53,6 @@ IO::IO_RESULT Connection::read() {
       buffer_size += static_cast<size_t>(count);
       if ((MAX_DATA_SIZE - buffer_size) < 5) {
         Debug::Log("Buffer maximum size reached !!1", LOG_DEBUG);
-        done = true;
         result = IO::FULL_BUFFER;
         break;
       } else
@@ -62,24 +60,23 @@ IO::IO_RESULT Connection::read() {
     }
   }
   PRINT_BUFFER_SIZE
-//  if (buffer_size > 0)
-//    string_buffer << buffer;
-//  Debug::Log("#OUT#bufer_size" + std::to_string(string_buffer.string().length()));
-
   return result;
 }
 
 int Connection::getFileDescriptor() const {
   return socket_fd;
 }
+
 void Connection::setFileDescriptor(int fd) {
   socket_fd = fd;
 }
+
 IO::IO_RESULT Connection::writeTo(int fd) {
   bool done = false;
   size_t sent = 0;
   ssize_t count;
   IO::IO_RESULT result = IO::ERROR;
+
 //  Debug::Log("#IN#bufer_size" + std::to_string(string_buffer.string().length()));
   PRINT_BUFFER_SIZE
   while (!done) {
@@ -151,8 +148,10 @@ IO::IO_RESULT Connection::write(const char *data, size_t size) {//}, size_t *sen
 
 void Connection::closeConnection() {
   is_connected = false;
-  ::shutdown(socket_fd, 2);
-  ::close(socket_fd);
+  if (socket_fd > 0) {
+    ::shutdown(socket_fd, 2);
+    ::close(socket_fd);
+  }
 }
 bool Connection::doConnect(addrinfo &address, int timeout) {
   long arg;
@@ -260,3 +259,4 @@ bool Connection::listen(addrinfo &address_) {
   ::listen(socket_fd, 2048);
   return true;
 }
+

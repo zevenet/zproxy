@@ -21,10 +21,13 @@ namespace epoll_manager {
 //#define  ACCEPT_MASK (EPOLLIN | EPOLLET)
 
 enum EVENT_GROUP {
-  ACCEPTOR = 1,
+  ACCEPTOR = 0x1,
   SERVER,
   CLIENT,
-  TIMER,
+  CONNECT_TIMEOUT,
+  REQUEST_TIMEOUT,
+  RESPONSE_TIMEOUT,
+  SIGNAL,
 };
 
 enum EVENT_TYPE {
@@ -35,8 +38,10 @@ enum EVENT_TYPE {
   READ_ONESHOT = (EPOLLIN | EPOLLET | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP),
   WRITE = (EPOLLOUT | EPOLLET | EPOLLONESHOT | EPOLLRDHUP | EPOLLHUP), //is always one shot
   ACCEPT = (EPOLLIN | EPOLLET),
+  TIMEOUT = EPOLLIN,
 };
 
+//TODO:: Make it static polimorphosm, template<typename Handler>
 class EpollManager {
 //  std::mutex epoll_mutex;
   int epoll_fd;

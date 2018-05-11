@@ -21,6 +21,11 @@ int main(int argc, char *argv[]) {
 
   Debug::logmsg(LOG_NOTICE, "zhttp starting...");
 
+//  /* block all signals. we take signals synchronously via signalfd */
+//  sigset_t all;
+//  sigfillset(&all);
+//  sigprocmask(SIG_SETMASK,&all,NULL);
+
   ::signal(SIGPIPE, SIG_IGN);
   ::signal(SIGINT, handleInterrupt);
   ::signal(SIGTERM, handleInterrupt);

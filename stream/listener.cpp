@@ -38,7 +38,7 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_grou
 
 bool Listener::init(std::string address, int port) {
   if (!listener_connection.listen(address, port)) return false;
-  return handleAccept(listener_connection.socket_fd);
+  return handleAccept(listener_connection.getFileDescriptor());
 }
 
 Listener::Listener()
@@ -105,5 +105,5 @@ StreamManager *Listener::getManager(int fd) {
 bool Listener::init(ListenerConfig &config) {
   listener_config = config;
   if (!listener_connection.listen(listener_config.addr)) return false;
-  return handleAccept(listener_connection.socket_fd);
+  return handleAccept(listener_connection.getFileDescriptor());
 };

@@ -9,20 +9,27 @@
 #include "HttpRequest.h"
 #include "HttpStatus.h"
 #include "../connection/backend_connection.h"
+#include "../event/epoll_manager.h"
 
 class HttpStream {
  public:
   HttpStream();
+  ~HttpStream();
+
   Connection *getConnection(int fd);
+
+  ConnectionStadistic_t client_stadistics;
+  ConnectionStadistic_t backend_stadistics;
+
   Connection client_connection;
   BackendConnection backend_connection;
   HttpRequest request;
   HttpResponse response;
-
   void replyError(HttpStatus::Code code);
 
-  std::string send_e200 =
-      "HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nHello World";
+  inline void printReadStadistics(ConnectionStadistic_t &stadistic,
+                                  std::string tag
+  );
 
 };
 
