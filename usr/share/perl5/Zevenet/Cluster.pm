@@ -1004,8 +1004,8 @@ sub disableInterfaceDiscovery
 	}
 	elsif ( $iface->{ ip_v } == 6 )
 	{
-		&zenlog("WARNING: disableInterfaceDiscovery pending for IPv6");
-		return 0;
+		my $ip6tables = &getGlobalConfiguration('ip6tables');
+		return &logAndRun( "$ip6tables -A INPUT -d $iface->{ addr } -p icmpv6 --icmpv6-type echo-request -j DROP" );
 	}
 	else
 	{
@@ -1040,8 +1040,8 @@ sub enableInterfaceDiscovery
 	}
 	elsif ( $iface->{ ip_v } == 6 )
 	{
-		&zenlog("WARNING: enableInterfaceDiscovery pending for IPv6");
-		return 0;
+		my $ip6tables = &getGlobalConfiguration('ip6tables');
+		return &logAndRun( "$ip6tables -F INPUT -d $iface->{ addr } -p icmpv6 --icmpv6-type echo-request" );
 	}
 	else
 	{
@@ -1071,7 +1071,8 @@ sub enableAllInterfacesDiscovery
 	my $rc = &logAndRun( "$arptables -F" );
 
 	# IPv6
-	&zenlog("WARNING: enableInterfaceDiscovery pending for IPv6");
+	my $ip6tables = &getGlobalConfiguration('ip6tables');
+	$rc |= &logAndRun( "$ip6tables -F INPUT" );
 
 	return $rc;
 }

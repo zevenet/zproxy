@@ -248,15 +248,29 @@ sub sendGArp    # ($if,$ip)
 {
 	my ( $if, $ip ) = @_;
 
-	my @iface           = split ( ":", $if );
-	my $arping_bin      = &getGlobalConfiguration( 'arping_bin' );
-	my $arp_unsolicited = &getGlobalConfiguration( 'arp_unsolicited' );
+	my @iface = split ( ":", $if );
+	my $ip_v = &ipversion( $ip );
 
-	my $arp_arg = $arp_unsolicited ? '-U' : '-A';
-	my $arping_cmd = "$arping_bin $arp_arg -c 2 -I $iface[0] $ip";
+	if ( $ip_v == 4 )
+	{
+		my $arping_bin      = &getGlobalConfiguration( 'arping_bin' );
+		my $arp_unsolicited = &getGlobalConfiguration( 'arp_unsolicited' );
 
-	&zenlog( "$arping_cmd" );
-	system ( "$arping_cmd >/dev/null &" );
+		my $arp_arg = $arp_unsolicited ? '-U' : '-A';
+		my $arping_cmd = "$arping_bin $arp_arg -c 2 -I $iface[0] $ip";
+
+		&zenlog( "$arping_cmd" );
+		system ( "$arping_cmd >/dev/null &" );
+	}
+	elsif ( $ip_v == 6 )
+	{
+		my $arpsend_bin = '/usr/sbin/arpsend';
+		#~ my $arpsend_bin = &getGlobalConfiguration( 'arping_bin' );
+		my $arping_cmd  = "$arpsend_bin -U -i $ip $iface[0]";
+
+		&zenlog( "$arping_cmd" );
+		system ( "$arping_cmd >/dev/null &" );
+	}
 
 	&sendGPing( $iface[0] );
 }
