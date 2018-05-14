@@ -214,4 +214,99 @@ sub getCpuCores
 	return $cores;
 }
 
+=begin nd
+Function: getCPUSecondToJiffy
+
+	Is returns the number of jiffies for X seconds.
+	If any value is sent. The function calculate the how many jiffies are 1 second
+
+Parameters:
+	seconds - Number of seconds to pass to jiffies
+
+Returns:
+	integer - Number of jiffies
+
+=cut
+
+sub getCPUSecondToJiffy
+{
+	my $sec = shift // 1;
+	my $ticks = &getCPUTicks();
+
+	return -1 unless ( $ticks > 0 );
+
+	return $sec * $ticks;
+}
+
+=begin nd
+Function: getCPUJiffiesNow
+
+	Get the number of jiffies since the last boot
+
+Parameters:
+	none - .
+
+Returns:
+	integer - number of jiffies
+
+=cut
+
+sub getCPUJiffiesNow
+{
+	my $jiffies = -1;
+	my $file    = '/proc/timer_list';
+	open my $fh, '<', $file or return -1;
+
+	foreach my $line ( <$fh> )
+	{
+		if ( $line =~ /^jiffies: ([\d]+)/ )
+		{
+			$jiffies = $1;
+			last;
+		}
+	}
+
+	close $fh;
+
+	return $jiffies;
+}
+
+=begin nd
+Function: getCPUTicks
+
+	Get how many ticks are for a Hertz
+
+Parameters:
+	none - .
+
+Returns:
+	integer - Number of ticks
+
+=cut
+
+sub getCPUTicks
+{
+	my $ticks = -1;
+	my $file  = '/boot/config-';    # end file with the kernel version
+
+	my $uname  = &getGlobalConfiguration( "uname" );
+	my $kernel = `$uname -r`;
+	chomp ( $kernel );
+
+	open my $fh, '<', "${file}$kernel" or return -1;
+
+	foreach my $line ( <$fh> )
+	{
+		if ( $line =~ /^CONFIG_HZ[=: ](\d+)/ )
+		{
+			$ticks = $1;
+			last;
+		}
+	}
+
+	close $fh;
+
+	return $ticks;
+}
+
 1;

@@ -432,53 +432,68 @@ sub getL4FarmBackendsStats
 	return \@backends;
 }
 
+=begin nd
+Function: getL4FarmSessions
 
-   #~ "sessions" : [
-      #~ {
-         #~ "client" : 0,
-         #~ "id" : 3,
-         #~ "service" : "dfasdf",
-         #~ "session" : "192.168.1.186"
-      #~ }
-   #~ ]
+	Get the alive sessions for a l4 farm
+
+Parameters:
+	farmname - Farm name
+
+Returns:
+	Array ref - It returns an array of hashes. Each hash has the next format:
+
+      {
+         "id" : 3,
+         "session" : "192.168.1.186"
+      }
+
+=cut
 
 sub getL4FarmSessions
 {
 	my $farmname = shift;
 
-	require Zevenet::Net::ConnStats;
-
 	my $conntrack_bin = &getGlobalConfiguration('conntrack');
-	my $sessions = [];
 	my $farm_st = &getL4FarmStruct( $farmname );
 
-	my $id = 0;
+	my $sessions = [];
+	# non continue if persistence is not configured
+	return $sessions if ( $farm_st->{ persist } ne 'ip' );
 
+	require Zevenet::System;
+	my $jiffies_session;
+	my $xt_file;
+	my $client;
+	my $ttl_jiffies = &getCPUSecondToJiffy( $farm_st->{ ttl } );
+	my $jiffies_now = &getCPUJiffiesNow();
 	foreach my $bk ( @{ $farm_st->{ servers } } )
 	{
 		# get backend lines
-		my $params = &getConntrackParams( { 'mark' => $bk->{ tag } } );
-		&zenlog ( "Executing: $conntrack_bin --dump $params 2>/dev/null", 'debug' );
-		my @list = `$conntrack_bin --dump $params 2>/dev/null`;
+		my $xt_file = "/proc/net/xt_recent/_${farmname}_$bk->{ tag }_sessions";
+		open my $fh, '<', $xt_file;
 
 		# parse and add to the struct
-		foreach my $line ( @list )
+		foreach my $line ( <$fh> )
 		{
-			# tcp      6 0 TIME_WAIT src=192.168.1.185 dst=192.168.102.249 sport=40696 dport=778 src=192.168.101.253 dst=192.168.101.249 sport=80 dport=40696 [ASSURED] mark=545 use=1
-			$line =~ /src=(.+) dst=.+ sport=\d+ dport=\d+ src=(.+) dst=.+ sport=\d+ dport=\d+ \[ASSURED\] mark=\d+ use=/;
-			push @{ $sessions }, {
-				'id' => $bk->{ id },
-				'session' => $2,
-				'client' => $1,
-				};
+			# src=192.168.0.186 ttl: 63 last_seen: 4752489960 oldest_pkt: 2 4752266477, 4752489960
+			$line =~ /src=(.+) ttl: .+ last_seen: (\d+)/;
+			$client = $1;
+			$jiffies_session = $2;
+			if ( ( $jiffies_now - $jiffies_session ) < $ttl_jiffies )
+			{
+				push @{ $sessions }, {
+					'session' => $client,
+					'id' => $bk->{ id }, # backend id
+					};
+			}
+		}
 
-			$id += 1;
-		};
+		close $fh;
 	}
 
 	return $sessions;
 }
-
 
 
 1;
