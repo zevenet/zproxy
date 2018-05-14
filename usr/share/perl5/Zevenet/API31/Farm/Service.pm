@@ -98,6 +98,14 @@ sub new_farm_service    # ( $json_obj, $farmname )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	# Return 0 on success
+	if ( $result )
+	{
+		my $msg =
+		  "Error creating the service $json_obj->{ id }.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	# no error found, return successful response
 	&zenlog(
 		"ZAPI success, a new service has been created in farm $farmname with id $json_obj->{id}."

@@ -120,6 +120,7 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 		{
 			if ( $line =~ /#ZWACL-END/ )
 			{
+				$output = 0;
 				foreach my $lline ( @newservice )
 				{
 					if ( $lline =~ /\[DESC\]/ )
@@ -139,7 +140,6 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 			$i++;
 		}
 		untie @fileconf;
-		$output = 0;
 
 		&unlockfile( $lock_fh );
 	}
@@ -517,6 +517,9 @@ sub moveService
 			$id++;
 		}
 	}
+
+	# finish tags of config file
+	push @sort_list, "\t#ZWACL-END";
 	push @sort_list, "End";
 
 	# write in config file
