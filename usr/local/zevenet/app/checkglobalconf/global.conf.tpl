@@ -48,6 +48,8 @@ $zapikey="";
 $licenseFileTxt="/usr/local/zevenet/license.txt";
 # Zen license
 $licenseFileHtml="/usr/local/zevenet/license.html";
+# debug level
+$debug="0";
 
 #dns file server?
 $filedns="/etc/resolv.conf";

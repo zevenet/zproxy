@@ -41,7 +41,11 @@ Bugs:
 See Also:
 	Widely used.
 =cut
-sub debug { return 0 }
+sub debug {
+	require Zevenet::Config;
+	state $debug = &getGlobalConfiguration( 'debug' ) + 0;
+	return $debug;
+}
 
 =begin nd
 Function: getMemoryUsage
