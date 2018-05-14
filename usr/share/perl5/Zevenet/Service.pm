@@ -196,17 +196,17 @@ sub start_service
 
 		my $bond = $bond_conf->{ $bond_k };
 
-		print "  * Up bonding master $$bond{name} ";
+		print STDERR "  * Up bonding master $$bond{name} ";
 
 		my $error_code = &applyBondChange( $bond );
 
 		if ( $error_code == 0 )
 		{
-			print " \033[1;32m OK \033[0m \n";
+			print STDERR " \033[1;32m OK \033[0m \n";
 		}
 		else
 		{
-			print " \033[1;31m ERROR \033[0m \n";
+			print STDERR " \033[1;31m ERROR \033[0m \n";
 		}
 	}
 
@@ -222,16 +222,16 @@ sub start_service
 
 			if ( $$iface{ status } eq "up" )
 			{
-				print( "  * Starting interface $$iface{name}" );
+				print( STDERR "  * Starting interface $$iface{name}" );
 				&upIf( $iface );
 
 				if ( exists $$iface{ addr } && length $$iface{ addr } )
 				{
-					print( "\n    Ip:$$iface{addr} Netmask:$$iface{mask}" );
+					print( STDERR "\n    Ip:$$iface{addr} Netmask:$$iface{mask}" );
 
 					if ( defined $$iface{ gateway } && $$iface{ gateway } ne '' )
 					{
-						print( " Gateway:$$iface{gateway}" );
+						print( STDERR " Gateway:$$iface{gateway}" );
 					}
 
 					my $return_code = &addIp( $iface );
@@ -249,11 +249,11 @@ sub start_service
 
 					if ( $return_code == 0 )
 					{
-						print ( " \033[1;32m OK \033[0m \n" );
+						print ( STDERR " \033[1;32m OK \033[0m \n" );
 					}
 					else
 					{
-						print ( " \033[1;31m ERROR \033[0m \n" );
+						print ( STDERR " \033[1;31m ERROR \033[0m \n" );
 					}
 				}
 
