@@ -1098,22 +1098,27 @@ sub broadcastInterfaceDiscovery
 
 	&zenlog("Sending GArping for $iface->{ name }: $iface->{ addr }");
 
-	if ( $iface->{ ip_v } == 4 )
-	{
-		require Zevenet::Net::Util;
+	require Zevenet::Net::Util;
 
-		# arping
-		&sendGArp( $iface->{ name }, $iface->{ addr } );
-	}
-	elsif ( $iface->{ ip_v } == 6 )
-	{
-		&zenlog("WARNING: broadcastInterfaceDiscovery pending for IPv6");
-	}
-	else
-	{
-		&zenlog("IP version not supported");
-		return 1;
-	}
+	# arping
+	&sendGArp( $iface->{ name }, $iface->{ addr } );
+
+#	if ( $iface->{ ip_v } == 4 )
+#	{
+#		require Zevenet::Net::Util;
+#
+#		# arping
+#		&sendGArp( $iface->{ name }, $iface->{ addr } );
+#	}
+#	elsif ( $iface->{ ip_v } == 6 )
+#	{
+#		&zenlog("WARNING: broadcastInterfaceDiscovery pending for IPv6");
+#	}
+#	else
+#	{
+#		&zenlog("IP version not supported");
+#		return 1;
+#	}
 
 	return 0;
 }
@@ -1278,7 +1283,7 @@ sub getZClusterNodeStatusInfo
 	}
 
 	$ip = '' unless defined $ip;
-	&zenlog("getZClusterNodeStatusInfo($ip): " . Dumper $node);
+	#~ &zenlog("getZClusterNodeStatusInfo($ip): " . Dumper $node);
 
 	return $node;
 }
