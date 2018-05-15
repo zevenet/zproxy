@@ -248,7 +248,9 @@ sub sendGArp    # ($if,$ip)
 {
 	my ( $if, $ip ) = @_;
 
-	my @iface = split ( ":", $if );
+	require Zevenet::Net::Validate;
+
+	my @iface = split ( ':', $if );
 	my $ip_v = &ipversion( $ip );
 
 	if ( $ip_v == 4 )
