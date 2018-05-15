@@ -64,8 +64,8 @@ my $basename = ( split ( '/', $program_name ) )[-1];
 #~ &zenlog("[ENTERPRISE.BIN] \$ENV\{SCRIPT_NAME\}   = '$ENV{SCRIPT_NAME}'") if exists $ENV{SCRIPT_NAME};
 #~ &zenlog("[ENTERPRISE.BIN] \$ENV\{INVOCATION_ID\} = '$ENV{INVOCATION_ID}'") if exists $ENV{INVOCATION_ID};
 #~ &zenlog("[ENTERPRISE.BIN] \$program_name         = '$program_name'");
-&zenlog("[ENTERPRISE.BIN] \$basename             = '$basename'");
-&zenlog("[ENTERPRISE.BIN] \@ARGV                 = '@ARGV'");
+#~ &zenlog("[ENTERPRISE.BIN] \$basename             = '$basename'");
+#~ &zenlog("[ENTERPRISE.BIN] \@ARGV                 = '@ARGV'");
 #~ &zenlog('[ENTERPRISE.BIN] %ENV                   = ' . Dumper \%ENV );
 
 # Run encrypted command
@@ -215,8 +215,8 @@ if ( $@ )
 	die $@;
 }
 
-&zenlog("$mod->{ name }::$func returned ". $returned_value );
-&zenlog("$mod->{ name }::$func returned value dump ". Dumper( $returned_value ) );
+#~ &zenlog("$mod->{ name }::$func returned ". $returned_value );
+#~ &zenlog("$mod->{ name }::$func returned value dump ". Dumper( $returned_value ) );
 
 unless ( defined $returned_value ) { &zenlog( "#### Function output defined: Failed!" ); } ####
 
