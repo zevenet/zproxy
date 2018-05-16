@@ -72,7 +72,7 @@ if [ ! -f /etc/cron.d/zevenet ]; then
 	cp /usr/local/zevenet/share/zevenet.cron /etc/cron.d/zevenet
 fi
 
-#Disable conntrackd stats 
+#Disable conntrackd stats
 sed -i '/Stats/,/}/d' /etc/conntrackd/conntrackd.conf 2>/dev/null
 #delete old conntrackd-stats logs
 rm -rf /var/log/conntrackd-stats* 2>/dev/null
@@ -151,6 +151,10 @@ do
 		sed -i -e 's/Threads\t\t[0-9]*$/ThreadModel\tdynamic/' $i
 	fi
 done
+# add #ZWACL-END tag to pound configuration files
+if [ -f /usr/local/zevenet/app/zbin/add_srv_tag_pound.pl ]; then
+	/usr/local/zevenet/app/zbin/add_srv_tag_pound.pl
+fi
 
 # Migrate interface configuration files to IPv6 ready format
 if [ -f /usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl ]; then
