@@ -367,9 +367,10 @@ sub certcontrol
     my ( $month2, $day2, $hours2, $min2, $sec2, $year2 ) = split /[ :]+/, $na;
 	( $month2 ) = grep { $months[$_] eq $month2 } 0 .. $#months;
     my $end = timegm( $sec2, $min2, $hours2, $day2, $month2, $year2 );
-    my $totaldays = undef;
-    my $type_cert = undef;
+    my $totaldays = '';
+    my $type_cert = '';
 
+    	#Certificate with old format
 	if ($cert_ou =~ m/-/ ) {
 		# Certificate validity date
        	my ( $nb ) = grep /Not Before/i, @zen_cert;
@@ -382,6 +383,7 @@ sub certcontrol
        	$totaldays = ( $end - $ini ) / 86400;
 		$totaldays =~ s/\-//g;
 
+	#Certificate with new format
 	} else {
 		my $key_decrypy = &decrypt($key);
 		my @data_key = split /::/, $key_decrypy;
@@ -389,7 +391,7 @@ sub certcontrol
 		my @type_cert_array = grep /C ?= ?(DE|TE)\,/, @zen_cert;
 		$type_cert_array[0] =~ /C ?= ?(DE|TE)\,/;
 		$type_cert = $1;
-		&zenlog("Type cert: $type_cert");
+#		&zenlog("Type cert: $type_cert");
 
 		if (( !grep /$hostname/, $data_key[0] )
 			 || ( !grep /$dmi/, $data_key[1] )
@@ -404,19 +406,20 @@ sub certcontrol
 		my $date_today = strftime "%F", localtime;
 		my $date_encode = &encrypt($date_today);
 		$date_encode =~ s/\s*$//;
-	#	&zenlog("Date today: $date_today\n Date today encode: $date_encode");
+#		&zenlog("Date today: $date_today\n Date today encode: $date_encode");
 
 		my $configdir = &getGlobalConfiguration( 'configdir' );
 		my $file_check = "$configdir/config_check";
 		my $date_check = `cat $file_check`;
 		$date_check =~ s/\s*$//;
-	#	&zenlog("Date check encode: $date_check\n Date check decode: $last_date_check");
+#		&zenlog("Date check encode: $date_check\n Date check decode: $date_encode");
 
 		if ($date_check ne $date_encode) {
 			my $crl_path = "$configdir/cacrl.crl";
 
 			my $date_mod = `stat -c%y $crl_path`;
 			my @modification = split /\ /, $date_mod;
+			$modification[0] = $modification[0] // '';
 
 			if ( $modification[0] ne $date_today) {
 				# Download CRL
@@ -454,7 +457,7 @@ sub certcontrol
 	if ( $dayright < 0 )
 	{
 		#control errors
-		if ( ($totaldays ne undef && $totaldays < 364 ) || ($totaldays eq undef && $type_cert eq 'TE') )
+		if ( ($totaldays ne '' && $totaldays < 364 ) || ($totaldays eq '' && $type_cert eq 'TE') )
 		{
 			# Policy: expired testing certificates would not stop zen service,
 			# but rebooting the service would not start the service,
@@ -462,7 +465,7 @@ sub certcontrol
 			$swcert = 3;
 		}
 
-		if ( ($totaldays ne undef && $totaldays > 364 ) || ($totaldays eq undef && $type_cert eq 'DE') )
+		if ( ($totaldays ne '' && $totaldays > 364 ) || ($totaldays eq '' && $type_cert eq 'DE') )
 		{
 			# The contract support plan is expired you have to request a
 			# new contract support. Only message alert!
@@ -529,7 +532,7 @@ sub checkActivationCertificate
 					 hostname        => &getHostname(),
 		};
 
-		return &httpResponse( { code => 403, body => $body } );
+		return &httpResponse( { code => 402, body => $body } );
 	}
 
 	return $swcert;

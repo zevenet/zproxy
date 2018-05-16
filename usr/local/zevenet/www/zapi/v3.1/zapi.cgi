@@ -239,8 +239,8 @@ sub certcontrol
     } elsif ( (!grep /$key/, @zen_cert ) 
 			 	|| ( !grep /CN=$hostname\/|CN = $hostname\,/, @zen_cert) ) {
  		#swcert = 5 ==> Cert isn't valid
-       $swcert = 5;
-       return $swcert;
+       	$swcert = 5;
+       	return $swcert;
  	}
 
  	 # Certificate expiring date
@@ -250,8 +250,8 @@ sub certcontrol
     my ( $month2, $day2, $hours2, $min2, $sec2, $year2 ) = split /[ :]+/, $na;
 	( $month2 ) = grep { $months[$_] eq $month2 } 0 .. $#months;
     my $end = timegm( $sec2, $min2, $hours2, $day2, $month2, $year2 );
-    my $totaldays = undef;
-    my $type_cert = undef;
+    my $totaldays = '';
+    my $type_cert = '';
 
 	if ($cert_ou =~ m/-/ ) {
 
@@ -302,6 +302,7 @@ sub certcontrol
 
 			my $date_mod = `stat -c%y $crl_path`;
 			my @modification = split /\ /, $date_mod;
+			$modification[0] = $modification[0] // '';			
 
 			if ( $modification[0] ne $date_today) {
 				# Download CRL
@@ -340,7 +341,7 @@ sub certcontrol
 	if ( $dayright < 0 )
 	{
 		#control errors
-		if ( ($totaldays ne undef && $totaldays < 364 ) || ($totaldays eq undef && $type_cert eq 'TE') )
+		if ( ($totaldays ne '' && $totaldays < 364 ) || ($totaldays eq '' && $type_cert eq 'TE') )
 		{
 			# Policy: expired testing certificates would not stop zen service,
 			# but rebooting the service would not start the service,
@@ -348,7 +349,7 @@ sub certcontrol
 			$swcert = 3;
 		}
 
-		if ( ($totaldays ne undef && $totaldays > 364 ) || ($totaldays eq undef && $type_cert eq 'DE') )
+		if ( ($totaldays ne '' && $totaldays > 364 ) || ($totaldays eq '' && $type_cert eq 'DE') )
 		{
 			# The contract support plan is expired you have to request a
 			# new contract support. Only message alert!
