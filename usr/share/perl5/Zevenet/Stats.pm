@@ -348,7 +348,10 @@ sub getNetworkStats
 
 	close DEV;
 
-	@data = @outHash if ( $format eq 'hash' );
+	if ( $format eq 'hash' )
+	{
+		@data = sort { $a->{ interface } cmp $b->{ interface } } @outHash;
+	}
 
 	return @data;
 }
