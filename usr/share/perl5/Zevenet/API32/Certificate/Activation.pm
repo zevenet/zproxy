@@ -40,12 +40,18 @@ sub get_activation_certificate_info # ()
 	my $cert = &getCertInfo( $cert_filename, $cert_dir );
 
 	my $c_type = 'temporal';
+	my $support = 'N/A';	
 	if ($cert->{ key } =~ m/-/) {
 		my $c_days = ( &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) / 86400;
-	    	$c_type = ( $c_days > 364 )? 'permanent': 'temporal';
+	    $c_type = ( $c_days > 364 )? 'permanent': 'temporal';
 	} else {
 		my $cert_type = $cert->{ type_cert };
 		$c_type = ( $cert_type eq 'DE' )? 'permanent': 'temporal';
+		my $c_days = ( &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) / 86400;
+		if ( $c_type eq 'permanent' )
+		{
+			if ( $c_days < 1 ) { $support = 'false'; } else { $support = 'true' };
+		}		
 	}
 
 	my $params = {
@@ -53,7 +59,8 @@ sub get_activation_certificate_info # ()
 				   hostname      	=> $cert->{ CN },
 				   type           	=> $c_type,
 				   certificate_key	=> $cert->{ key },
-				   host_key			=> &keycert()
+				   host_key			=> &keycert(),
+				   support			=> $support
 	};
 	my $body = { description => $desc, params => $params };
 
