@@ -146,6 +146,7 @@ enum class Code {
   InsufficientStorage =
   507, //!< Means the method could not be performed on the resource because the server is unable to store the representation needed to successfully complete the request.
   NetworkAuthenticationRequired = 511  //!< Indicates that the client needs to authenticate to gain network access.
+
 };
 
 inline bool isInformational(int code) {
@@ -262,12 +263,29 @@ inline std::string reasonPhrase(Code code) {
   return reasonPhrase(static_cast<int>(code));
 }
 
-inline std::string getErrorResponse(Code code, std::string error_message = "") {
+inline std::string getErrorResponse(Code code,
+                                    std::string code_error_string = std::string(),
+                                    std::string error_message = std::string()) {
+  //FIXME:: Add dynamic zhttp version
+  std::string code_error = code_error_string != std::string() ? code_error_string : reasonPhrase(code);
+  std::string body = error_message != std::string() ? "<html>\n"
+                                                      "<head><title>" + std::to_string(static_cast<int>(code)) + " "
+      + code_error
+      + " </title > </head >\n"
+        "<body bgcolor=\"white\">\n"
+        "<center><h1>" + std::to_string(static_cast<int>(code)) + " " + code_error +
+      "</h1></center>\n"
+      "<hr><center>zhttp /0.1 /center>\n"
+      "</body>\n"
+      "</html>" : error_message;
+
   std::string err_response =
-      "HTTP/1.0 " + std::to_string((int) code) + " " + reasonPhrase(code)
+      "HTTP/1.0 " + std::to_string((int) code) + " " + code_error
           + "\r\nContent-Type: text/html\r\nContent-Length: "
-          + std::to_string(error_message.length())
-          + "\r\nExpires: now\r\nPragma: no-cache\r\nCache-control: no-cache,no-store\r\n\r\n" + error_message;
+          + std::to_string(body.length() + 1)
+          + "\r\nExpires: now\r\nPragma: no-cache\r\nServer: zhttp/0.1\r\nCache-control: no-cache,no-store\r\n\r\n"
+          + body + "\n";
+
   return err_response;
 }
 

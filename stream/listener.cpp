@@ -3,7 +3,6 @@
 //
 
 #include "listener.h"
-#include "../debug/Debug.h"
 
 void Listener::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) {
   switch (event_type) {
@@ -72,17 +71,7 @@ void Listener::stop() { is_running = false; }
 void Listener::start() {
   for (int i = 0; i < stream_manager_set.size(); i++) {
     auto sm = stream_manager_set[i];
-    if (sm != nullptr) {
-      for (auto service_config = listener_config.services;
-           service_config != nullptr;
-           service_config = service_config->next) {
-        if (service_config->disabled != 1) {
-          sm->addService(*service_config);
-        } else {
-          Debug::Log("Backend " + std::string(service_config->name) + " disabled.",
-                     LOG_NOTICE);
-        }
-      }
+    if (sm != nullptr && sm->init(listener_config)) {
       sm->start(i);
     } else {
       Debug::Log("StreamManager id doesn't exist : " + std::to_string(i), LOG_ERR);

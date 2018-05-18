@@ -12,7 +12,30 @@
 class Network {
  public:
 
-  static int getHost(const char *name, addrinfo *res, int ai_family) {
+  inline static char *getPeerAddress(int socket_fd, char *buf, size_t bufsiz, bool include_port = false) {
+    int result;
+    sockaddr_in adr_inet{};
+    int len_inet = sizeof adr_inet;
+    result = getpeername(socket_fd, (struct sockaddr *) &adr_inet, &len_inet);
+    if (result == -1) {
+      return nullptr;
+    }
+
+    if (snprintf(buf, bufsiz, "%s", inet_ntoa(adr_inet.sin_addr)) == -1) {
+      return nullptr; /* Buffer too small */
+    }
+    if (include_port) {
+//      result = snprintf(buf, bufsiz, "%s:%u",
+//                        inet_ntoa(adr_inet.sin_addr),
+//                        (unsigned) ntohs(adr_inet.sin_port));
+//      if (result == -1) {
+//        return nullptr; /* Buffer too small */
+//      }
+    }
+    return buf;
+  }
+
+  inline static int getHost(const char *name, addrinfo *res, int ai_family) {
     struct addrinfo *chain, *ap;
     struct addrinfo hints;
     int ret_val;
@@ -39,7 +62,7 @@ class Network {
     return ret_val;
   }
 
-  static addrinfo *getAddress(std::string &address, int port) {
+  inline static addrinfo *getAddress(std::string &address, int port) {
     struct sockaddr_in in{};
     struct sockaddr_in6 in6{};
     auto *addr = new addrinfo(); /* IPv4/6 address */
@@ -71,7 +94,6 @@ class Network {
   /*
    * Translate inet/inet6 address/port into a string
    */
-
   static void addr2str(char *const res, const int res_len,
                        const struct addrinfo *addr, const int no_port) {
     char buf[MAXBUF];

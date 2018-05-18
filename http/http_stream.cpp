@@ -3,7 +3,6 @@
 //
 
 #include "http_stream.h"
-#include "../debug/Debug.h"
 
 Connection *HttpStream::getConnection(int fd) {
   return fd == client_connection.getFileDescriptor() ? &client_connection
@@ -15,8 +14,8 @@ HttpStream::HttpStream()
       backend_connection() {
 
 }
-void HttpStream::replyError(HttpStatus::Code code) {
-  auto response_ = HttpStatus::getErrorResponse(code);
+void HttpStream::replyError(HttpStatus::Code code, const char *code_string, const char *string) {
+  auto response_ = HttpStatus::getErrorResponse(code, code_string, string);
   client_connection.write(response_.c_str(), response_.length());
 }
 
@@ -34,5 +33,4 @@ void HttpStream::printReadStadistics(ConnectionStadistic_t &stadistic, std::stri
                 stadistic.avr_read_time / CLOCKS_PER_SEC,
                 stadistic.min_read_time / CLOCKS_PER_SEC,
                 stadistic.max_read_time / CLOCKS_PER_SEC);
-
 }

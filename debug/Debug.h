@@ -16,6 +16,8 @@
 //#define DEBUG_LEVEl 8
 #define LOGFACILITY -1
 
+#define LOG_REMOVE LOG_DEBUG //TODO:: REMOVE
+
 #define MAXBUF 4096
 
 //#ifdef MISS_FACILITYNAMES
@@ -50,6 +52,11 @@ static CODE facilitynames[] = {
 #define Log(...) \
 Debug::Log2(__FILENAME__ ,__FUNCTION__, __LINE__ , __VA_ARGS__)
 
+#define logmsg(...) \
+Debug::logmsg2(__FILENAME__ ,__FUNCTION__, __LINE__ , __VA_ARGS__)
+
+#define COUT_GREEN_COLOR(x)  "\033[1;32m"+ x + "\033[0m"
+
 class Debug {
  public:
   static int log_level;
@@ -68,21 +75,23 @@ class Debug {
       buffer << "["
              << helper::ThreadHelper::getThreadName(pthread_self())
              << "]["
-             << file << ":" << function << ":" << line << "] ";
-
-      std::cout <<
-                std::left << std::setfill('.') << std::setw(60) << buffer.str() << "\033[1;32m";
+             << file << ":" /*<< function << ":" */<< line << "] ";
+      std::cout << std::left << std::setfill('.') << std::setw(60) << buffer.str() << "\033[1;32m";
     }
-    std::cout << str;
 
     if (log_level > 7) {
-      std::cout << "\033[0m";
+      //std::cout << "\033[0m";
+      std::cout << COUT_GREEN_COLOR(str);
+    } else {
+      std::cout << str;
     }
     std::cout << std::endl;
   }
 
   static
-  void logmsg(const int priority, const char *fmt, ...) {
+  void logmsg2(const std::string file,
+               const std::string function,
+               int line, const int priority, const char *fmt, ...) {
     if (priority > log_level) {
       return;
     }
@@ -102,7 +111,7 @@ class Debug {
       //            stderr,
       //            "%s, %s\n", name, buf);
       //      else
-      Log(std::string(buf));
+      Log2(file, function, line, std::string(buf), priority);
     } else {
       //      if (print_log)
       Log(std::string(buf));

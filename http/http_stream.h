@@ -12,6 +12,7 @@
 #include "../event/epoll_manager.h"
 
 class HttpStream {
+
  public:
   HttpStream();
   ~HttpStream();
@@ -25,7 +26,7 @@ class HttpStream {
   BackendConnection backend_connection;
   HttpRequest request;
   HttpResponse response;
-  void replyError(HttpStatus::Code code);
+  void replyError(HttpStatus::Code code, const char *code_string, const char *string);
 
   inline void printReadStadistics(ConnectionStadistic_t &stadistic,
                                   std::string tag

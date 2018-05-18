@@ -32,9 +32,9 @@ void EpollManager::onReadEvent(epoll_event &event) {
 bool EpollManager::deleteFd(int fd) {
   if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) < 0) {
     if (errno == ENOENT || errno == EBADF || errno == EPERM) {
-      std::string error = "epoll_ctl(delete) unnecessary. ";
-      error += std::strerror(errno);
-      Debug::Log(error, LOG_DEBUG);
+//      std::string error = "epoll_ctl(delete) unnecessary. ";
+//      error += std::strerror(errno);
+//      Debug::Log(error, LOG_DEBUG);
       return true;
     }
     std::string error = "epoll_ctl(delete) failed ";

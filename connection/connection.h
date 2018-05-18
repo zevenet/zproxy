@@ -59,7 +59,6 @@ class Connection {
 
   int doAccept();
   bool doConnect(addrinfo &address, int timeout);
-
 };
 
 

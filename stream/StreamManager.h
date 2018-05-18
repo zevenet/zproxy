@@ -20,11 +20,12 @@ class StreamManager : public EpollManager, public ServiceManager {
 
   //TODO::REMOVE
   std::string e200 =
-      "HTTP/1.1 200 OK\r\nServer: zhttp/1.0\r\nExpires: now\r\nPragma: no-cache\r\nCache-control: no-cache,no-store\r\nContent-Type: text/html\r\nContent-Length: 11\r\n\r\nHello World\n";
+      "HTTP/1.1 200 OK\r\nServer: zhttp 1.0\r\nExpires: now\r\nPragma: no-cache\r\nCache-control: no-cache,no-store\r\nContent-Type: text/html\r\nContent-Length: 11\r\n\r\nHello World\n";
 
   int worker_id;
   std::thread worker;
   bool is_running;
+  ListenerConfig listener_config_;
   std::unordered_map<int, HttpStream *> streams_set;
   void HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) override;
   void doWork();
@@ -36,6 +37,7 @@ class StreamManager : public EpollManager, public ServiceManager {
 
   void addStream(int fd);
   int getWorkerId();
+  bool init(ListenerConfig &listener_config);
   void start(int thread_id_ = 0);
   void stop();
 
@@ -45,7 +47,8 @@ class StreamManager : public EpollManager, public ServiceManager {
   inline void onRequestTimeoutEvent(int fd);
   inline void onSignalEvent(int fd);
 
-  bool isRequestMethodValid(HttpRequest &request);
+  validation::VALIDATION_RESULT validateRequest(HttpRequest &request);
+  void clearStream(HttpStream *stream);
 };
 
 #endif  // NEW_ZHTTP_WORKER_H
