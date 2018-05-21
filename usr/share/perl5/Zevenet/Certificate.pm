@@ -599,6 +599,7 @@ sub getCertInfo    # ($certfile)
 	# Stretch: Subject: C = SP, ST = SP, L = SP, O = Test, O = f9**3b, OU = al**X6, CN = zevenet-hostname, emailAddress = cr**@zevenet.com
 	# Jessie:  Subject: C=SP, ST=SP, L=SP, O=Test, O=f9**3b, OU=al**X6, CN=zevenet-hostname/emailAddress=cr**@zevenet.com
 	my $cn;
+	my $key;
 	{
 		my ( $string ) = grep( /\sSubject: /, @cert_data );
 		chomp $string;
@@ -610,10 +611,13 @@ sub getCertInfo    # ($certfile)
 		{
 			$cn = $1 if ( $param =~ /CN ?= ?(.+)/ );
 			( $cn ) = split ( /\/emailAddress=/, $cn );
+			$key = $1 if ( $param =~ /OU ?= ?(.+)/ );
+			if ($key eq 'false') {
+				$key = $1 if ( $param =~ /1\.2\.3\.4\.5\.8 ?= ?(.+)/ );
+			}
 		}
 	}
 	#~ $cn = &getCleanBlanc( $cn );
-
 
 	# Cert Issuer
 	my $issuer = "";
@@ -629,6 +633,19 @@ sub getCertInfo    # ($certfile)
 	}
 	#~ $issuer = &getCleanBlanc( $issuer );
 
+
+	#Cert type (definitive or temporal)
+	my $type_cert = "";
+	if ( $type eq "Certificate" )
+	{
+		my @type_cert_array = grep /C ?= ?(DE|TE)\,/, @cert_data;
+		$type_cert_array[0] =~ /C ?= ?(DE|TE)\,/;
+		$type_cert = $1;
+	}
+	elsif ( $type eq "CSR" )
+	{
+		$type_cert = "NA";
+	}
 
 	# Cert Creation Date
 	my $creation = "";
@@ -667,9 +684,11 @@ sub getCertInfo    # ($certfile)
 			 file       => $certfile,
 			 type       => $type,
 			 CN         => $cn,
+			 key 		=> $key,
 			 issuer     => $issuer,
 			 creation   => $creation,
 			 expiration => $expiration,
+			 type_cert	=> $type_cert			 
 	};
 }
 
