@@ -219,14 +219,20 @@ sub getHTTPAddheader    # ($farm_name,$service)
 	my $out = "false";
 
 	open my $fileconf, '<', "$configdir/$farm_filename";
-
+    
+    my $index = 0;
 	foreach my $line ( <$fileconf> )
 	{
 		if ( $line =~ /^[#\s]*Service \"/ )
 			{ last; }
 		elsif ( $line =~ /^[#\s]*AddHeader\s+"(.+)"/ )
 		{
-			push @out, $1;
+	        my %hash = (
+	                "id"            => $index,
+	                "header"        => $1
+	        );
+	        push @out, \%hash;
+	        $index++;
 		}
 	}
 
@@ -368,13 +374,19 @@ sub getHTTPHeadremove    # ($farm_name,$service)
 
 	open my $fileconf, '<', "$configdir/$farm_filename";
 
+    my $index = 0;
 	foreach my $line ( <$fileconf> )
 	{
 		if ( $line =~ /^[#\s]*Service \"/ )
 			{ last; }
 		elsif ( $line =~ /^[#\s]*HeadRemove\s+"(.+)"/ )
 		{
-			push @out, $1;
+            my %hash = (
+                    "id"            => $index,
+                    "pattern"       => $1
+            );
+            push @out, \%hash;
+            $index++;
 		}
 	}
 
