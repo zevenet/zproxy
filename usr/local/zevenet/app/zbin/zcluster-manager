@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -230,7 +230,7 @@ if ( $object eq 'farm' )
 
 
 # ipds commands
-#  object = ipds 
+#  object = ipds
 if ( $object eq "ipds" )
 {
 	require Zevenet::IPDS::Base;
@@ -258,7 +258,7 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 	my $module = $1;
 	my $rule_name = shift @ARGV;
 	my $farm_name = shift @ARGV;
-	
+
 	if ( $module eq 'bl' )
 	{
 		require Zevenet::IPDS::Blacklist::Actions;
@@ -299,7 +299,7 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 				&runBLRestartByRule( $rule_name );
 			}
 		}
-		
+
 		exit 0;
 	}
 	elsif ( $module eq 'dos' )
@@ -385,7 +385,7 @@ if ( $object =~ /^ipds_(rbl|bl|dos)/ )
 				&runRBLRestartByRule( $rule_name );
 			}
 		}
-		
+
 		exit 0;
 	}
 
@@ -463,16 +463,16 @@ if ( $object eq 'gateway' )
 	require Zevenet::Net;
 
 	my $status;
-	
+
 	if ( $command eq 'update' )
 	{
 		my $if_ref = getInterfaceConfig( $iface_name, $ip_version );
 
 		exit 1 if ! $if_ref;
-		
+
 		$status = &applyRoutes( "global", $if_ref, $if_ref->{ gateway } );
 		&reloadL4FarmsSNAT();
-		
+
 		exit $status;
 	}
 	elsif ( $command eq 'delete' ) # remove interface stats and other
@@ -520,7 +520,7 @@ sub setNodeStatusMaster
 
 	# announce ips ( arp and neigh )
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
-	
+
 	for my $if_ref ( @configured_interfaces )
 	{
 		next unless $if_ref->{ type } eq 'virtual';
@@ -530,6 +530,12 @@ sub setNodeStatusMaster
 	# start sync
 	my $zenino = &getGlobalConfiguration('zenino');
 	system( "$zenino &" );
+
+	# put interface as up
+	my $maint_if = 'cl_maintenance';
+	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+	my $if_ref = &getSystemInterface( $maint_if );
+	system("$ip_bin link set $maint_if up");
 
 	# start farmguardians
 	my @farmsf = &getFarmList();
@@ -601,6 +607,12 @@ sub setNodeStatusBackup
 	# Ssyncd
 	&setSsyncdBackup();
 
+	# put interface as up
+	my $maint_if = 'cl_maintenance';
+	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+	my $if_ref = &getSystemInterface( $maint_if );
+	system("$ip_bin link set $maint_if up");
+
 	my $zenino = &getGlobalConfiguration('zenino');
 	system( "$zenino stop &" ) unless system('pgrep zeninotify.pl >/dev/null');
 
@@ -635,6 +647,12 @@ sub setNodeStatusMaintenance
 
 	&zenlog("Switching node to under maintenance");
 	&setZClusterNodeStatus('maintenance');
+
+	# put interface as down
+	my $maint_if = 'cl_maintenance';
+	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+	my $if_ref = &getSystemInterface( $maint_if );
+	system("$ip_bin link set $maint_if down");
 
 	# conntrackd
 	my $primary_backup = &getGlobalConfiguration('primary_backup');
