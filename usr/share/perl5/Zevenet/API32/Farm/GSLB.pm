@@ -321,11 +321,6 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 
 	my ( undef, undef, $be_ip ) = split /\s+/, $be[0];
 
-	zenlog("&ipversion( $json_obj->{ ip } ): " . &ipversion( $json_obj->{ ip } ) );
-	zenlog("&ipversion( $be[0] ): " . &ipversion( $be[0] ) );
-	zenlog("\$be[0]: " . $be[0] );
-	zenlog("\$be_ip: " . $be_ip );
-
 	# match ip stack version
 	unless ( ! @be || &ipversion( $json_obj->{ ip } ) eq &ipversion( $be_ip ) )
 	{
