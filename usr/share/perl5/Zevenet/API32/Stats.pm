@@ -146,7 +146,7 @@ sub farm_stats                                                # ( $farmname )
 
 		my $body = {
 					 description => $desc,
-					 backends    => $gslb_stats->{ 'backend' },
+					 backends    => $gslb_stats->{ 'backends' },
 					 client      => $gslb_stats->{ 'udp' },
 					 server      => $gslb_stats->{ 'tcp' },
 					 extended    => $gslb_stats->{ 'stats' },

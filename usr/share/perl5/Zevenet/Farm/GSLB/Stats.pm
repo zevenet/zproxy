@@ -145,7 +145,7 @@ sub getGSLBFarmBackendsStats
 			$status = lc $status if defined $status;
 
 			push (
-				@{ $gslb_stats->{ 'backend' } },
+				@{ $gslb_stats->{ 'backends' } },
 				{
 				  id      => $id + 0,
 				  ip      => $addr,

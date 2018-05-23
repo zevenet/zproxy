@@ -215,14 +215,9 @@ sub getFarmVipStatus    # ($farm_name)
 	# GSLB
 	elsif ( $type eq "gslb" )
 	{
-		require Zevenet::Farm::Service;
-		require Zevenet::Farm::Config;
-
-		foreach my $srv ( &getFarmServices($farm_name) )
-		{
-				# Fill an array with backends of all services
-				push @{ $backends }, @{ &getFarmBackends( $farm_name, $srv ) };
-		}
+		require Zevenet::Farm::GSLB::Stats;
+		my $stats = &getGSLBFarmBackendsStats( $farm_name );
+		$backends = $stats->{ backends };
 	}
 
 	# checking status
