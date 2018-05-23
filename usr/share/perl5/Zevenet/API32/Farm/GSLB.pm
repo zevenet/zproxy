@@ -275,6 +275,7 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 	my $farmname = shift;
 	my $service  = shift;
 
+	require Zevenet::Net::Validate;
 	require Zevenet::Farm::Base;
 	require Zevenet::Farm::Config;
 	include 'Zevenet::Farm::GSLB::Service';
@@ -318,8 +319,15 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	my ( undef, undef, $be_ip ) = split /\s+/, $be[0];
+
+	zenlog("&ipversion( $json_obj->{ ip } ): " . &ipversion( $json_obj->{ ip } ) );
+	zenlog("&ipversion( $be[0] ): " . &ipversion( $be[0] ) );
+	zenlog("\$be[0]: " . $be[0] );
+	zenlog("\$be_ip: " . $be_ip );
+
 	# match ip stack version
-	unless ( ! @be || &ipversion( $json_obj->{ ip } ) eq &ipversion( $be[0] ) )
+	unless ( ! @be || &ipversion( $json_obj->{ ip } ) eq &ipversion( $be_ip ) )
 	{
 		my $msg = "Invalid IP version.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
