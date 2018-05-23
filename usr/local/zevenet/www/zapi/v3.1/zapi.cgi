@@ -230,10 +230,6 @@ sub certcontrol
 		my $cert_ou = $1;
 		$key = &keycert();
 	}
-	if ($cert_ou =~ m/-/  && $func eq 'upload_activation_certificate') {
-		$swcert = 5;
-		return $swcert;
-	}	
 #	&zenlog("KeyCert: $cert_ou");
 
 	if ( !grep /keyid:$keyid/, @zen_cert ) {
