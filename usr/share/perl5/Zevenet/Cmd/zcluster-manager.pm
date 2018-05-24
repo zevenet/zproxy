@@ -624,6 +624,12 @@ sub setNodeStatusMaster
 
 	&zenlog( "\$ENV{ name }: $ENV{ name }" );
 
+	# put interface as up
+	my $maint_if = 'cl_maintenance';
+	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+	my $if_ref = &getSystemInterface( $maint_if );
+	system("$ip_bin link set $maint_if up");
+
 	# start farmguardians
 	my @farmsf = &getFarmList();
 
@@ -695,6 +701,12 @@ sub setNodeStatusBackup
 	# Ssyncd
 	&setSsyncdBackup();
 
+	# put interface as up
+	my $maint_if = 'cl_maintenance';
+	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+	my $if_ref = &getSystemInterface( $maint_if );
+	system("$ip_bin link set $maint_if up");
+
 	unless ( system ( 'pgrep zeninotify >/dev/null' ) )
 	{
 		my $zenino = &getGlobalConfiguration( 'zenino' );
@@ -736,6 +748,12 @@ sub setNodeStatusMaintenance
 
 	&zenlog( "Switching node to under maintenance" );
 	&setZClusterNodeStatus( 'maintenance' );
+
+	# put interface as down
+	my $maint_if = 'cl_maintenance';
+	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
+	my $if_ref = &getSystemInterface( $maint_if );
+	system("$ip_bin link set $maint_if down");
 
 	# conntrackd
 	my $primary_backup = &getGlobalConfiguration( 'primary_backup' );
