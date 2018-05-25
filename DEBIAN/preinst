@@ -22,6 +22,7 @@
 ###############################################################################
 
 use File::Copy 'move';
+use Crypt::CBC;
 
 my $openssl_bin   = "/usr/bin/openssl";
 my $dmidecode_bin = "/usr/sbin/dmidecode";
@@ -209,7 +210,7 @@ sub certcontrol
 			if (grep /Serial Number\: ?$serial/, $line) {
 				my $isRevoked = grep /Serial Number\: ?$serial/, $line;
 				if ($isRevoked > 0) {
-					print "Current certificate revoked\n"
+					print "Current certificate revoked\n";
 					$swcert = 4;
 					return $swcert;
 				}
