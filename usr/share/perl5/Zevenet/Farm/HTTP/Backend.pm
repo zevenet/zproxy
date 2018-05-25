@@ -1109,8 +1109,7 @@ sub setHTTPFarmBackendStatus    # ($farm_name)
 	while ( my $line_aux = <$fh> )
 	{
 		my @line = split ( "\ ", $line_aux );
-		my @run =
-		  `$poundctl -c /tmp/$farm_name\_pound.socket $line[0] $line[1] $line[2] $line[3]`;
+		my $err = &logAndRun ( "$poundctl -c /tmp/$farm_name\_pound.socket $line[0] $line[1] $line[2] $line[3]" );
 	}
 	close $fh;
 }
