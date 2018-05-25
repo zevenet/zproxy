@@ -199,7 +199,7 @@ sub setFGObject
 	my $value   = shift;
 
 	my $restart = 0;
-	my $out;
+	my $out = 0;
 
 	# not restart if only is changed the parameter description
 	if ( &getFGExistsConfig( $fg_name ) )

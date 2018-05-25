@@ -298,10 +298,10 @@ sub setTinyObj
 		}
 	}
 
-	my $error = $fileHandle->write( $path );
+	my $success = $fileHandle->write( $path );
 	&unlockfile( $lock_fd );
 
-	return $error;
+	return ($success)? 0:1;
 }
 
 =begin nd

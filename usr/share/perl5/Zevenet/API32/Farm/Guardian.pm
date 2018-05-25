@@ -38,7 +38,7 @@ sub getZapiFG
 				'description' => $fg->{ description },
 				'command'     => $fg->{ command },
 				'farms'       => $fg->{ farms },
-				'log'         => $fg->{ log },
+				'log'         => $fg->{ log } // 'false',
 				'interval'    => $fg->{ interval } + 0,
 				'cut_conns'   => $fg->{ cut_conns },
 				'template'    => $fg->{ template },
