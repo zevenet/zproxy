@@ -89,12 +89,37 @@ sub getFGTemplateList
 	return keys %{ $fg_file };
 }
 
+# it is a list with the available fg and its configuration
+sub getFGList
+{
+	my @list = &getFGConfigList();
+
+	# get from template file
+	foreach my $fg ( &getFGTemplateList() )
+	{
+		next if ( grep ( /^$fg$/, @list ) );
+		push @list, $fg;
+	}
+
+	return @list;
+}
+
 sub getFGObject
 {
 	my $fg_name      = shift;
 	my $use_template = shift;
+	my $file = "";
 
-	my $file = ( $use_template eq 'template' ) ? $fg_template : $fg_conf;
+	# using template file if this parameter is sent
+	if ( $use_template eq 'template' )
+		{ $file = $fg_template; }
+	# using farmguardian config file by default
+	elsif ( grep ( /^$fg_name$/, &getFGConfigList() ) )
+		{ $file = $fg_conf; }
+	# using template file if farmguardian is not defined in config file
+	else
+		{ $file = $fg_template; }
+
 	my $obj = &getTiny( $file )->{ $fg_name };
 
 	$obj = &setConfigStr2Arr( $obj, ['farms'] );
@@ -177,12 +202,24 @@ sub setFGObject
 	my $out;
 
 	# not restart if only is changed the parameter description
-	if ( ref $key )
+	if ( &getFGExistsConfig( $fg_name ) )
 	{
-		if ( grep ( !/^description$/, keys %{ $key } ) ) { $restart = 1; }
+		if ( @{ &getFGRunningFarms( $fg_name ) } )
+		{
+			if ( ref $key and grep ( !/^description$/, keys %{ $key } ) )
+			{
+				$restart = 1;
+			}
+			elsif ( $key ne 'description' ) { $restart = 1; }
+		}
 	}
-	elsif ( $key ne 'description' ) { $restart = 1; }
-	if ( not &getFGExistsConfig( $fg_name ) ) { $restart = 0; }
+
+	# if the fg does not exist in config file, take it from template file
+	unless ( &getFGExistsConfig( $fg_name ) )
+	{
+		my $template = &getFGObject( $fg_name, 'template' );
+		$out = &setTinyObj( $fg_conf, $fg_name, $template );
+	}
 
 	$out = &runFGStop( $fg_name ) if $restart;
 	$out = &setTinyObj( $fg_conf, $fg_name, $key, $value );

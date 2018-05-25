@@ -31,9 +31,8 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 sub getZapiFG
 {
 	my $fg_name  = shift;
-	my $template = shift;
 
-	my $fg = &getFGObject( $fg_name, $template );
+	my $fg = &getFGObject( $fg_name );
 	my $out = {
 				'name'        => $fg_name,
 				'description' => $fg->{ description },
@@ -50,15 +49,12 @@ sub getZapiFG
 
 sub getZapiFGList
 {
-	my $list_type = shift
-	  ; # if this parameter is not send as 'template', the config list will be returned
 	my @out;
-	my @list =
-	  ( $list_type eq 'template' ) ? &getFGTemplateList() : &getFGConfigList();
+	my @list = &getFGList();
 
 	foreach my $fg_name ( @list )
 	{
-		my $fg = &getZapiFG( $fg_name, $list_type );
+		my $fg = &getZapiFG( $fg_name);
 		push @out, $fg;
 	}
 
@@ -79,10 +75,7 @@ sub get_farmguardian
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $out;
-	if ( &getFGExistsConfig( $fg_name ) ) { $out = &getZapiFG( $fg_name ); }
-	else { $out = &getZapiFG( $fg_name, "template" ); }
-
+	my $out = &getZapiFG( $fg_name );
 	my $body = { description => $desc, params => $out };
 
 	return &httpResponse( { code => 200, body => $body } );
@@ -92,7 +85,6 @@ sub get_farmguardian
 sub list_farmguardian
 {
 	my $fg = &getZapiFGList();
-	push @{ $fg }, @{ &getZapiFGList( 'template' ) };
 	my $desc = "List farm guardian checks and templates";
 
 	return &httpResponse(
@@ -175,13 +167,7 @@ sub modify_farmguardian
 
 	my $desc = "Modify farm guardian $fgname";
 
-	if ( &getFGExistsTemplate( $fgname ) )
-	{
-		my $msg = "The farm guardian $fgname is a template.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	if ( not &getFGExistsConfig( $fgname ) )
+	unless ( &getFGExists( $fgname ) )
 	{
 		my $msg = "The farm guardian $fgname does not exist.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -216,6 +202,16 @@ sub modify_farmguardian
 	my @run_farms = @{ &getFGRunningFarms( $fgname ) };
 	my $run_farms;
 	$run_farms = join ( ', ', @run_farms ) if @run_farms;
+
+	# avoid modifying some parameters of a template
+	if ( &getFGExistsTemplate( $fgname ) )
+	{
+		if ( exists $json_obj->{ 'description' } or exists $json_obj->{ 'command' } )
+		{
+			my $msg = "It is not allow to modify the parameters 'description' or 'command' in a template.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
 
 	# check if farm guardian is running
 	if (     $run_farms
@@ -339,15 +335,15 @@ sub add_farmguardian_farm
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	# Check if fg is a template
-	if ( &getFGExistsTemplate( $json_obj->{ name } ) )
-	{
-		my $msg = "$json_obj->{ name } is a template";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	#~ # Check if fg is a template
+	#~ if ( &getFGExistsTemplate( $json_obj->{ name } ) )
+	#~ {
+		#~ my $msg = "$json_obj->{ name } is a template";
+		#~ return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	#~ }
 
 	# Check if it exists
-	if ( !&getFGExistsConfig( $json_obj->{ name } ) )
+	if ( !&getFGExists( $json_obj->{ name } ) )
 	{
 		my $msg = "The farmguardian $json_obj->{ name } does not exist";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
