@@ -117,10 +117,16 @@ if ( ! $has_permission )
 	require Zevenet::User;
 	my $username = &getUser();
 	my $desc = "Authentication";
+
+	my ( $section, $action ) = &eload(
+							 module => 'Zevenet::RBAC::Core',
+							 func   => 'getRBACPermissionHash',
+							 args   => [$q->path_info, $ENV{ REQUEST_METHOD }], );
+
 	&httpErrorResponse(
 						code => 403,
 						desc => $desc,
-						msg  => "The user '$username' has not permissions"
+						msg  => "The user '$username' has not permissions for the object '$section' and the action '$action'"
 	);
 }
 
@@ -164,7 +170,7 @@ sub encrypt # string for encrypt
 sub decrypt # string for decrypt
 {
 	my $data = shift;
-	
+
 	my $cipher = &buildcbc();
 	my $result = $cipher->decrypt_hex($data);
 
@@ -253,7 +259,7 @@ sub certcontrol
         #swcert = 2 ==> Cert isn't signed OK
         $swcert = 2;
         return $swcert;
-    } elsif ( (!grep /$key/, @zen_cert ) 
+    } elsif ( (!grep /$key/, @zen_cert )
 			 	|| ( !grep /CN=$hostname\/|CN = $hostname\,/, @zen_cert) ) {
  		#swcert = 5 ==> Cert isn't valid
        $swcert = 5;
@@ -332,7 +338,7 @@ sub certcontrol
 				#swcert = 2 ==> Cert isn't signed OK
 				$swcert = 2;
 				return $swcert;
-			}				
+			}
 			foreach my $line (@decoded) {
 				if (grep /Serial Number\: ?$serial/, $line) {
 					my $isRevoked = grep /Serial Number\: ?$serial/, $line;
