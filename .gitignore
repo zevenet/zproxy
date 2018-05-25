@@ -4,9 +4,6 @@
 # exceptions
 !/license.txt
 
-#crl
-!DEBIAN/
-
 #!/etc/cron.d/zevenet
 !/etc/profile
 !/etc/motd.tail
