@@ -198,21 +198,22 @@ sub certcontrol
 
 		# Download CRL
 	  	#my $download = `wget -q -O $crl_path https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
+	  	if ( $0 eq '-e' ) {
+			my @decoded = `openssl crl -inform DER -text -noout -in $crl_path`;
+			if ( !grep /keyid:$keyid/, @decoded ) {
+				#swcert = 2 ==> Cert isn't signed OK
+				$swcert = 2;
+				return $swcert;
+			}
 
-		my @decoded = `openssl crl -inform DER -text -noout -in $crl_path`;
-		if ( !grep /keyid:$keyid/, @decoded ) {
-			#swcert = 2 ==> Cert isn't signed OK
-			$swcert = 2;
-			return $swcert;
-		}
-
-		foreach my $line (@decoded) {
-			if (grep /Serial Number\: ?$serial/, $line) {
-				my $isRevoked = grep /Serial Number\: ?$serial/, $line;
-				if ($isRevoked > 0) {
-					print "Current certificate revoked\n";
-					$swcert = 4;
-					return $swcert;
+			foreach my $line (@decoded) {
+				if (grep /Serial Number\: ?$serial/, $line) {
+					my $isRevoked = grep /Serial Number\: ?$serial/, $line;
+					if ($isRevoked > 0) {
+						print "Current certificate revoked\n";
+						$swcert = 4;
+						return $swcert;
+					}
 				}
 			}
 		}

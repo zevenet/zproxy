@@ -452,7 +452,7 @@ sub runFGFarmStop
 	my $farm    = shift;
 	my $service = shift
 	  ; # optional, if the farm is http and the service is not sent to the function, all services will be restarted
-	my $out;
+	my $out = 0;
 	my $srvtag;
 	my $status_file = &getFGStatusFile( $farm, $service );
 
