@@ -684,11 +684,11 @@ sub getCertInfo    # ($certfile)
 			 file       => $certfile,
 			 type       => $type,
 			 CN         => $cn,
-			 key 		=> $key,
+			 key        => $key,
 			 issuer     => $issuer,
 			 creation   => $creation,
 			 expiration => $expiration,
-			 type_cert	=> $type_cert			 
+			 type_cert  => $type_cert,
 	};
 }
 
@@ -705,7 +705,7 @@ sub getCertDaysToExpire
 		my $date_string = shift @_;
 		my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 
-		my  ( $year, $month, $day, $hours, $min, $sec ) = split /[ :-]+/, $date_string;
+		my ( $year, $month, $day, $hours, $min, $sec ) = split /[ :-]+/, $date_string;
 
 		# the range of the month is from 0 to 11
 		$month--;
@@ -715,6 +715,7 @@ sub getCertDaysToExpire
 	my $end = &getDateEpoc( $cert_ends );
 	my $days_left = ( $end - time () ) / 86400;
 	$days_left =~ s/\..*//g;
+
 	return $days_left + 0;
 }
 
