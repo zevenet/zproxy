@@ -4,6 +4,9 @@
 # exceptions
 !/license.txt
 
+#crl
+!DEBIAN/
+
 #!/etc/cron.d/zevenet
 !/etc/profile
 !/etc/motd.tail
@@ -73,4 +76,5 @@ usr/local/zevenet/app/zbin/zlbchecknetpersistent.pl
 usr/local/zevenet/app/zbin/zlbgennet.sh
 usr/local/zevenet/app/zendisplayinfo/
 usr/local/zevenet/app/zennetname/
+
 
