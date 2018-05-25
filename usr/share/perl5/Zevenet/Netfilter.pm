@@ -963,6 +963,7 @@ sub getBinVersion    # ($farm_name)
 
 	my $vip = &getFarmVip( "vip", $farm_name );
 	my $ipv = &ipversion( $vip );
+	my $binary;
 
 	# Check the type of binary to use
 	if ( $ipv == 4 )
