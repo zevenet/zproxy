@@ -279,7 +279,7 @@ sub applyBackup
 	unlink '/zevenet_version';
 
 	&zenlog( "Restoring backup $file", "info", "SYSTEM" );
-	&zenlog( "unpacking files: @eject" "info", "SYSTEM" );
+	&zenlog( "unpacking files: @eject", "info", "SYSTEM" );
 	$error = system ( "/etc/init.d/zevenet restart 2> /dev/null" );
 
 	if ( !$error )
