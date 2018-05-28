@@ -233,8 +233,6 @@ sub certcontrol
 	my @months      = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 	my $hostname    = &getHostname();
 	my $key         = &keycert_old();
-	my $dmi 		= &get_sys_uuid();
-	my $mod_appl	= &get_mod_appl();
 
 	my @zen_cert    = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
 
@@ -265,6 +263,55 @@ sub certcontrol
        $swcert = 5;
        return $swcert;
  	}
+	# Verify date of check
+	my $date_today = strftime "%F", localtime;
+	my $date_encode = &encrypt($date_today);
+	$date_encode =~ s/\s*$//;
+#	&zenlog("Date today: $date_today\n Date today encode: $date_encode");
+
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	my $file_check = "$configdir/config_check";
+	my $date_check = `cat $file_check`;
+	$date_check =~ s/\s*$//;
+#	&zenlog("Date check encode: $date_check\n Date check decode: $last_date_check");
+
+	if ($date_check ne $date_encode) {
+		&zenlog("Date diferent");
+		my $crl_path = "$configdir/cacrl.crl";
+
+		my $date_mod = `stat -c%y $crl_path`;
+		my @modification = split /\ /, $date_mod;
+		$modification[0] = $modification[0] // '';
+
+		if ( $modification[0] ne $date_today) {
+			&zenlog("Date modification diferent");
+			# Download CRL
+	  		my $download = `wget -q -O $crl_path https://devcerts.zevenet.com/pki/ca/index.php?stage=dl_crl`;
+	  		&zenlog("CRL Downloaded on $date_today");
+	  	}
+
+		my @decoded = `openssl crl -inform DER -text -noout -in $crl_path`;
+		if ( !grep /keyid:$keyid/, @decoded ) {
+			#swcert = 2 ==> Cert isn't signed OK
+			$swcert = 2;
+			return $swcert;
+		}
+		foreach my $line (@decoded) {
+			if (grep /Serial Number\: ?$serial/, $line) {
+				my $isRevoked = grep /Serial Number\: ?$serial/, $line;
+				if ($isRevoked > 0) {
+					&zenlog("Certificate Revoked (CRL check)");
+					$swcert = 4;
+					return $swcert;
+				}
+			}
+		}
+		require Tie::File;
+		tie my @contents, 'Tie::File', "$file_check";
+		@contents = ($date_encode);
+
+		untie @contents;
+	} 	
 
  	 # Certificate expiring date
     my ( $na ) = grep /Not After/i, @zen_cert;
@@ -290,6 +337,8 @@ sub certcontrol
 		$totaldays =~ s/\-//g;
 
 	} else {
+		my $dmi 		= &get_sys_uuid();
+		my $mod_appl	= &get_mod_appl();
 
 		my $key_decrypy = &decrypt($key);
 		my @data_key = split /::/, $key_decrypy;
@@ -307,55 +356,6 @@ sub certcontrol
 			$swcert = 5;
 			return $swcert;
 		}
-
-		# Verify date of check
-		my $date_today = strftime "%F", localtime;
-		my $date_encode = &encrypt($date_today);
-		$date_encode =~ s/\s*$//;
-	#	&zenlog("Date today: $date_today\n Date today encode: $date_encode");
-
-		my $configdir = &getGlobalConfiguration( 'configdir' );
-		my $file_check = "$configdir/config_check";
-		my $date_check = `cat $file_check`;
-		$date_check =~ s/\s*$//;
-	#	&zenlog("Date check encode: $date_check\n Date check decode: $last_date_check");
-
-		if ($date_check ne $date_encode) {
-			my $crl_path = "$configdir/cacrl.crl";
-
-			my $date_mod = `stat -c%y $crl_path`;
-			my @modification = split /\ /, $date_mod;
-			$modification[0] = $modification[0] // '';
-
-			if ( $modification[0] ne $date_today) {
-				# Download CRL
-		  		my $download = `wget -q -O $crl_path https://devcerts.zevenet.com/pki/ca/index.php?stage=dl_crl`;
-		  		&zenlog("CRL Downloaded on $date_today");
-		  	}
-
-			my @decoded = `openssl crl -inform DER -text -noout -in $crl_path`;
-			if ( !grep /keyid:$keyid/, @decoded ) {
-				#swcert = 2 ==> Cert isn't signed OK
-				$swcert = 2;
-				return $swcert;
-			}
-			foreach my $line (@decoded) {
-				if (grep /Serial Number\: ?$serial/, $line) {
-					my $isRevoked = grep /Serial Number\: ?$serial/, $line;
-					if ($isRevoked > 0) {
-						&zenlog("Certificate Revoked (CRL check)");
-						$swcert = 4;
-						return $swcert;
-					}
-				}
-			}
-			require Tie::File;
-			tie my @contents, 'Tie::File', "$file_check";
-			@contents = ($date_encode);
-
-			untie @contents;
-		}
-
 	}
 
 	my $dayright = ( $end - time () ) / 86400;
