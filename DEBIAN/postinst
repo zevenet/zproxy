@@ -95,6 +95,8 @@ if [ -f /bin/systemctl ]
 then
 	systemctl stop sec 2>/dev/null
 	systemctl disable sec 2>/dev/null
+	systemctl stop systemd-timesyncd 2>/dev/null
+	systemctl disable systemd-timesyncd 2>/dev/null
 else
 	/etc/init.d/sec stop > /dev/null
 	insserv -r sec
