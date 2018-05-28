@@ -820,11 +820,7 @@ sub runSync
 {
 	my $src_path = shift;
 
-<<<<<<< HEAD
-	#~ &zenlog("starting runSync for path: '$src_path'");
-=======
 	#~ &zenlog("starting runSync", "info", "CLUSTER");
->>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 
 	require Zevenet::SystemInfo;
 
@@ -885,13 +881,8 @@ sub runSync
 
 	#~ for my $rc ( @{ $r_list } )
 	#~ {
-<<<<<<< HEAD
-		#~ &zenlog("Return[$rc->{tid}] $rc->{ret_val}");
-
-=======
 		#~ &zenlog("Return[$rc->{tid}] $rc->{ret_val}", "info", "CLUSTER);
 		
->>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 		#~ if ( $rc->{ret_val} )
 		#~ {
 			#~ &zenlog( "An error happened syncing with $rc->{arg}->{ip_addr}", "info", "CLUSTER");
@@ -933,13 +924,8 @@ sub getZClusterNodeStatus
 	# Empty return if the file could not be opened
 	if ( ! $znode_status )
 	{
-<<<<<<< HEAD
-		#~ &zenlog( "Could not open file $znode_status_file: $!" );
-		return;
-=======
 		#~ &zenlog( "Could not open file $znode_status_file: $!", "error", "CLUSTER" );
 		return undef;
->>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 	}
 
 	my $status = <$znode_status>;
