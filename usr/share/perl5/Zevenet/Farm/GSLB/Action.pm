@@ -52,8 +52,8 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 	my ( $fname, $writeconf ) = @_;
 
 	require Tie::File;
-	require Zevenet::Farm::GSLB::Service;
-	require Zevenet::Farm::GSLB::FarmGuardian;
+	include 'Zevenet::Farm::GSLB::Service';
+	include 'Zevenet::Farm::GSLB::FarmGuardian';
 	require Zevenet::FarmGuardian;
 
 	my $output;

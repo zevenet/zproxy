@@ -213,10 +213,13 @@ sub getFarmVipStatus    # ($farm_name)
 		$backends = $stats->{ backends };
 	}
 	# GSLB
-	elsif ( $type eq "gslb" )
+	elsif ( $type eq "gslb" && $eload )
 	{
-		require Zevenet::Farm::GSLB::Stats;
-		my $stats = &getGSLBFarmBackendsStats( $farm_name );
+		my $stats = &eload(
+							module => 'Zevenet::Farm::GSLB::Stats',
+							func   => 'getGSLBFarmBackendsStats',
+							args   => [$farm_name],
+		);
 		$backends = $stats->{ backends };
 	}
 
