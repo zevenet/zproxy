@@ -282,7 +282,13 @@ sub getRBACPathPermissions
 	require Zevenet::User;
 	my $username = &getUser();
 
+	# if the user is root, the user can use any call
 	if ( $username eq 'root' )
+	{
+		$permission = 1;
+	}
+	# all user have permissions
+	elsif( &getRBACExceptions( $path, $method ) )
 	{
 		$permission = 1;
 	}
@@ -331,6 +337,29 @@ sub getRBACForbidden
 	my $method = shift;
 
 	if ( $path eq "/system/users/zapi" ) { return 1; }
+
+	return 0;
+}
+
+=begin nd
+Function: getRBACForbidden
+
+	Check if any user can use the zapi request
+
+Parameters:
+	Path - URL path of the HTTP request
+	Method - HTTP method of the request
+
+Returns:
+	Integer - 1 if the call is reserved for root user or 0 if any user can use it
+=cut
+
+sub getRBACExceptions
+{
+	my $path   = shift;
+	my $method = shift;
+
+	if ( $path eq "/certificates/activation/info" and $method eq 'GET' ) { return 1; }
 
 	return 0;
 }
