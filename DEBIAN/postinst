@@ -209,6 +209,10 @@ then
 	ln -sf /usr/local/zevenet/app/zenbui/zenbui /usr/bin/zenbui
 fi
 
+#uninstalling not needed packages
+/usr/bin/dpkg -l  popularity-contest &>/dev/null && apt-get purge -y popularity-contest
+
+
 #Change prompt color
 sed -i "s/1;30m/0;37m/g" /etc/bash.bashrc 2> /dev/null
 
