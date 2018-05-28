@@ -345,13 +345,8 @@ sub setKeepalivedConfig
 
 	require Zevenet::SystemInfo;
 
-<<<<<<< HEAD
-	&zenlog("Setting keepalived configuration file");
-
-=======
 	&zenlog("Setting keepalived configuration file", "info", "CLUSTER");
 	
->>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 	my $zcl_conf = &getZClusterConfig();
 	my $keepalived_conf = &getGlobalConfiguration('keepalived_conf');
 
