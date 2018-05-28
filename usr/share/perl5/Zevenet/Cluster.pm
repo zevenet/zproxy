@@ -1004,13 +1004,8 @@ sub disableInterfaceDiscovery
 	}
 	elsif ( $iface->{ ip_v } == 6 )
 	{
-<<<<<<< HEAD
 		my $ip6tables = &getGlobalConfiguration('ip6tables');
 		return &logAndRun( "$ip6tables -A INPUT -d $iface->{ addr } -p icmpv6 --icmpv6-type echo-request -j DROP" );
-=======
-		&zenlog("disableInterfaceDiscovery pending for IPv6", "warning", "CLUSTER");
-		return 0;
->>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 	}
 	else
 	{
@@ -1045,13 +1040,8 @@ sub enableInterfaceDiscovery
 	}
 	elsif ( $iface->{ ip_v } == 6 )
 	{
-<<<<<<< HEAD
 		my $ip6tables = &getGlobalConfiguration('ip6tables');
 		return &logAndRun( "$ip6tables -F INPUT -d $iface->{ addr } -p icmpv6 --icmpv6-type echo-request" );
-=======
-		&zenlog(" enableInterfaceDiscovery pending for IPv6", "warning", "CLUSTER");
-		return 0;
->>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 	}
 	else
 	{
@@ -1081,12 +1071,8 @@ sub enableAllInterfacesDiscovery
 	my $rc = &logAndRun( "$arptables -F" );
 
 	# IPv6
-<<<<<<< HEAD
 	my $ip6tables = &getGlobalConfiguration('ip6tables');
 	$rc |= &logAndRun( "$ip6tables -F INPUT" );
-=======
-	&zenlog("enableInterfaceDiscovery pending for IPv6", "warning", "CLUSTER");
->>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 
 	return $rc;
 }
@@ -1114,31 +1100,11 @@ sub broadcastInterfaceDiscovery
 
 	require Zevenet::Net::Util;
 
-<<<<<<< HEAD
-	# arping
 	&sendGArp( $iface->{ name }, $iface->{ addr } );
 
-#	if ( $iface->{ ip_v } == 4 )
-#	{
-#		require Zevenet::Net::Util;
-#
-#		# arping
-#		&sendGArp( $iface->{ name }, $iface->{ addr } );
-#	}
-#	elsif ( $iface->{ ip_v } == 6 )
-#	{
-#		&zenlog("WARNING: broadcastInterfaceDiscovery pending for IPv6");
-#	}
-#	else
-#	{
-#		&zenlog("IP version not supported");
-#		return 1;
-#	}
-=======
-		# arping
-		&sendGArp( $iface->{ name }, $iface->{ addr } );
-	}
-	elsif ( $iface->{ ip_v } == 6 )
+	# arping
+	&sendGArp( $iface->{ name }, $iface->{ addr } );
+	if ( $iface->{ ip_v } == 6 )
 	{
 		&zenlog("broadcastInterfaceDiscovery pending for IPv6", "warning", "CLUSTER");
 	}
@@ -1147,7 +1113,6 @@ sub broadcastInterfaceDiscovery
 		&zenlog("IP version not supported", "error", "CLUSTER");
 		return 1;
 	}
->>>>>>> 0161ac0e... [Improvement] Logs messages improvement.
 
 	return 0;
 }
