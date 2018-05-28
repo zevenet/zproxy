@@ -594,7 +594,7 @@ sub runFGFarmStart
 	{
 		my $fgname = &getFGFarm( $farm, $svice );
 		my $farmguardian = &getGlobalConfiguration('farmguardian');
-		my $fg_cmd = "$farmguardian $fname $sv $log";
+		my $fg_cmd = "$farmguardian $farm $sv $log";
 		&zenlog( "running $fg_cmd", "info", "FG" );
 
 		return 0 if not $fgname;
