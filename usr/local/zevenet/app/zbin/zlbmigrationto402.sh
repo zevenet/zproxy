@@ -44,7 +44,7 @@ if [ `ls *_pound_cfg 2>/dev/null` ]; then
 		echo "Directive $dssl migrated in the file $file"
 	done
 
-	for file in $(ls -1 *_pound.cfg); do
+	for file in $(ls -1 *_pound.cfg 2>/dev/null); do
 		if [ "`grep $dcookie $file`" == "" ]; then
 			sed -e "/DynScale/ a$lcookie"  $file | sed -e "s?$lcookie?\t\t$lcookie?g" > /tmp/migratefile.txt
 			mv /tmp/migratefile.txt $file
@@ -52,7 +52,7 @@ if [ `ls *_pound_cfg 2>/dev/null` ]; then
 		fi
 	done
 
-	for file in $(ls -1 *_pound.cfg); do
+	for file in $(ls -1 *_pound.cfg 2>/dev/null); do
 		if [ "`grep $ddhparam $file`" == "" ]; then
 			sed -i "/^Control/ a$ldhparam" $file
 			sync
