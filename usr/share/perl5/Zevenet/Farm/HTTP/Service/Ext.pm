@@ -89,7 +89,7 @@ sub getHTTPServiceCookieIns    # ($farm_name,$service)
 	{
 		my ( $prefix, $params ) = split( "BackendCookie ", $ci_line );
 
-		$ci->{ enabled } = $prefix !~ /#/ ? 'true' : 'false';
+		$ci->{ enabled } = ( $prefix !~ /#/ ) ? 'true' : 'false';
 
 		my @params = split( ' ', $params );
 
@@ -189,7 +189,7 @@ sub add_service_cookie_insertion
 
 	my $ci = &getHTTPServiceCookieIns( $farmname, $service->{ id } );
 
-	$service->{ cookieinsert } = $ci->{ enabled } ? 'true' : 'false';
+	$service->{ cookieinsert } = ( $ci->{ enabled } eq 'true' ) ? 'true' : 'false';
 	$service->{ cookiename }   = $ci->{ name };
 	$service->{ cookiedomain } = $ci->{ domain };
 	$service->{ cookiepath }   = $ci->{ path };
