@@ -227,7 +227,6 @@ sub certcontrol
 		my $cert_ou = $1;
 		$key = &keycert();
 	}
-#	&zenlog("KeyCert: $cert_ou");
 
 	if ( !grep /keyid:$keyid/, @zen_cert ) {
         #swcert = 2 ==> Cert isn't signed OK
@@ -244,13 +243,11 @@ sub certcontrol
 	my $date_today = strftime "%F", localtime;
 	my $date_encode = &encrypt($date_today);
 	$date_encode =~ s/\s*$//;
-#	&zenlog("Date today: $date_today\n Date today encode: $date_encode");
 
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $file_check = "$configdir/config_check";
 	my $date_check = `cat $file_check`;
 	$date_check =~ s/\s*$//;
-#	&zenlog("Date check encode: $date_check\n Date check decode: $last_date_check");
 
 	if ($date_check ne $date_encode) {
 		my $crl_path = "$configdir/cacrl.crl";
@@ -322,7 +319,6 @@ sub certcontrol
 		my @type_cert_array = grep /C ?= ?(DE|TE)\,/, @zen_cert;
 		$type_cert_array[0] =~ /C ?= ?(DE|TE)\,/;
 		$type_cert = $1;
-#		&zenlog("Type cert: $type_cert");
 
 		if (( !grep /$hostname/, $data_key[0] )
 			 || ( !grep /$dmi/, $data_key[1] )

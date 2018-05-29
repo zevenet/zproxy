@@ -190,14 +190,9 @@ sub certcontrol
 		$serial =~ /serial\=(\w+)/;
 		$serial = $1;	 	
 
-#		my $configdir = "/usr/local/zevenet/config";
-#		my $crl_path = "$configdir/cacrl.crl";
-
 		my $tmpdir = "/tmp/zlb";
 		my $crl_path = "$tmpdir/cacrl.crl";
 
-		# Download CRL
-	  	#my $download = `wget -q -O $crl_path https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
 	  	if ( $0 eq '-e' ) {
 			my @decoded = `openssl crl -inform DER -text -noout -in $crl_path`;
 			if ( !grep /keyid:$keyid/, @decoded ) {
@@ -210,7 +205,7 @@ sub certcontrol
 				if (grep /Serial Number\: ?$serial/, $line) {
 					my $isRevoked = grep /Serial Number\: ?$serial/, $line;
 					if ($isRevoked > 0) {
-						print "Current certificate revoked\n";
+						print "The certificate is revoked\n";
 						$swcert = 4;
 						return $swcert;
 					}
@@ -245,7 +240,6 @@ sub certcontrol
 			my @type_cert_array = grep /C ?= ?(DE|TE)\,/, @run;
 			$type_cert_array[0] =~ /C ?= ?(DE|TE)\,/;
 			$type_cert = $1;
-	#		&zenlog("Type cert: $type_cert");
 
 			my $dmi     = &get_sys_uuid();
 			my $mod_appl = &get_mod_appl();
@@ -265,13 +259,14 @@ sub certcontrol
 		{
 			#it is working with test cert and cert is expired. It should goes down
 			$swcert = 3;
-			print "Cert expired, $totaldays < 364 && $dayright < 0 && $swcert == 0\n";
+			print "Demo cert expired, $totaldays < 364 && $dayright < 0 && $swcert == 0\n";
 		}
 
 		if ( $dayright < 0 && $swcert == 0 && ( ($totaldays ne '' && $totaldays > 364) || ($totaldays eq '' && $type_cert eq 'DE') ))
 		{
 			#The contract support plan is expired you have to request a new contract support. Only message alert!
 			$swcert = -1;
+			print "The contract support plan is expired you have to request a new contract support\n";
 		}
 	}
 	else
