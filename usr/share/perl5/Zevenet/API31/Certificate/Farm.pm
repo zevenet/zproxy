@@ -151,8 +151,13 @@ sub delete_farm_certificate    # ( $farmname, $certfilename )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $number =
-	  scalar grep ( /^$certfilename$/, &getFarmCertificatesSNI( $farmname ) );
+    my @certSNI = &eload(
+            module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+            func   => 'getFarmCertificatesSNI',
+            args   => [$farmname],
+    );
+
+	my $number = scalar grep ( { $_ eq $certfilename } @certSNI );
 	if ( !$number )
 	{
 		my $msg = "Certificate is not used by the farm.";
