@@ -45,7 +45,7 @@ sub migrate_blacklist_names
 				# rename first one
 				if ( ! &getBLExists( $newlist ) )
 				{
-					&setBLParam( $oldlist, name, $newlist );
+					&setBLParam( $oldlist, 'name', $newlist );
 				}
 				else
 				# delete others one
@@ -65,9 +65,9 @@ sub remove_blacklists
 
 	foreach my $list ( @lists_to_remove )
 	{
-		if ( &getBLExists( $list ) && &getBLParam( $list, preload ) eq "true" )
+		if ( &getBLExists( $list ) && &getBLParam( $list, 'preload' ) eq "true" )
 		{
-			if ( !@{ &getBLParam( $list, farms ) } )
+			if ( !@{ &getBLParam( $list, 'farms' ) } )
 			{
 				&setBLDeleteList( $list );
 			}
@@ -83,9 +83,9 @@ sub rename_blacklists
 
 	foreach my $list ( @list_to_rename )
 	{
-		if ( &getBLExists( $list->{ name } ) && &getBLParam( $list->{ name }, preload ) eq "true" )
+		if ( &getBLExists( $list->{ name } ) && &getBLParam( $list->{ name }, 'preload' ) eq "true" )
 		{
-			&setBLParam( $list->{ name }, name, $list->{ new_name } );
+			&setBLParam( $list->{ name }, 'name', $list->{ new_name } );
 		}
 	}
 }
