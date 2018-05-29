@@ -263,11 +263,12 @@ sub get_all_farm_graphs    #()
 
 	if ( $eload )
 	{
-		@farms = &eload(
+		my $ref_farm = &eload(
 						 module => 'Zevenet::RBAC::Group::Core',
 						 func   => 'getRBACResourcesFromList',
 						 args   => ['farms', \@farms]
 		);
+		@farms = @{ $ref_farm };
 	}
 
 	my $body = {
