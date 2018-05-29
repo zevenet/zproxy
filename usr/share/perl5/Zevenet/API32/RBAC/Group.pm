@@ -248,6 +248,12 @@ sub add_rbac_group_resource
 			my $msg = "The interface $resource does not exist.";
 			return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 		}
+
+		elsif ( ! &getValidFormat( 'virt_interface', $resource ) )
+		{
+			my $msg = "The interface has to be a virtual interface.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 	elsif ( $type eq "farms" )
 	{
