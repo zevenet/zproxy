@@ -25,6 +25,8 @@ use strict;
 use Config::Tiny;
 use Zevenet::Config;
 
+sub include;
+
 sub setNotifCreateConfFile
 {
 	use Zevenet::SystemInfo;
