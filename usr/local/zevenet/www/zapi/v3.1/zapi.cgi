@@ -82,6 +82,8 @@ require Zevenet::Validate;
 
 ##### Authentication #################################################
 require Zevenet::API31::Auth;
+require Zevenet::Zapi;
+
 
 # Session request
 require Zevenet::API31::Routes::Session if ( $q->path_info eq '/session' );
@@ -144,7 +146,7 @@ sub encrypt # string for encrypt
 sub decrypt # string for decrypt
 {
 	my $data = shift;
-	
+
 	my $cipher = &buildcbc();
 	my $result = $cipher->decrypt_hex($data);
 
@@ -232,13 +234,13 @@ sub certcontrol
         #swcert = 2 ==> Cert isn't signed OK
         $swcert = 2;
         return $swcert;
-    } elsif ( (!grep /$key/, @zen_cert ) 
+    } elsif ( (!grep /$key/, @zen_cert )
 			 	|| ( !grep /CN=$hostname\/|CN = $hostname\,/, @zen_cert) ) {
  		#swcert = 5 ==> Cert isn't valid
        	$swcert = 5;
        	return $swcert;
  	}
- 	
+
 	# Verify date of check
 	my $date_today = strftime "%F", localtime;
 	my $date_encode = &encrypt($date_today);
@@ -254,7 +256,7 @@ sub certcontrol
 
 		my $date_mod = `stat -c%y $crl_path`;
 		my @modification = split /\ /, $date_mod;
-		$modification[0] = $modification[0] // '';			
+		$modification[0] = $modification[0] // '';
 
 		if ( $modification[0] ne $date_today) {
 			# Download CRL
@@ -267,7 +269,7 @@ sub certcontrol
 			#swcert = 2 ==> Cert isn't signed OK
 			$swcert = 2;
 			return $swcert;
-		}				
+		}
 
 		foreach my $line (@decoded) {
 			if (grep /Serial Number\: ?$serial/, $line) {

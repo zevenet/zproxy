@@ -23,6 +23,9 @@
 
 use strict;
 
+my $eload;
+$eload = 1 if ( eval { require Zevenet::ELoad; } );
+
 =begin nd
 Function: getZAPI
 
@@ -129,6 +132,18 @@ sub setZAPI    #($name,$value)
 	#Set ZAPI KEY
 	if ( $name eq "key" )
 	{
+		if ( $eload )
+		{
+			&zenlog ("encriptando: $value");
+			$value = &eload(
+					 module => 'Zevenet::Code',
+					 func   => 'setCryptString',
+					 args   => [$value],
+			);
+		}
+			&zenlog ("encriptando: $value");
+
+
 		require Tie::File;
 		tie my @contents, 'Tie::File', "$globalcfg";
 
@@ -167,5 +182,58 @@ sub setZAPIKey    #()
 
 	return $randpassword;
 }
+
+
+
+sub validZapiKey    # ()
+{
+	require Zevenet::Zapi;
+
+	my $validKey = 0;                 # output
+	my $key      = "HTTP_ZAPI_KEY";
+
+	require Zevenet::User;
+	if ( exists $ENV{ $key } )        # zapi key was provided
+	{
+		if (
+			 &getZAPI( "status" ) eq "true"              # zapi user is enabled
+			 && &getZAPI( "keyzapi" ) eq $ENV{ $key }    # matches key
+		  )
+		{
+			&setUser( 'root' );
+			$validKey = 1;
+		}
+		elsif ( $eload )
+		{
+			my $root_auth = &eload(
+					 module => 'Zevenet::Code',
+					 func   => 'validateCryptString',
+					 args   => [&getZAPI( 'keyzapi' ), $ENV{ $key }],
+			);
+
+			if ( $root_auth )
+			{
+				&setUser( 'root' );
+				$validKey = 1;
+			}
+			else
+			{
+				my $user = &eload(
+								module => 'Zevenet::RBAC::User::Core',
+								func   => 'validateRBACUserZapi',
+								args   => [$ENV{ $key }],
+				);
+				if ( $user )
+				{
+					&setUser( $user );
+					$validKey = 1;
+				}
+			}
+		}
+	}
+
+	return $validKey;
+}
+
 
 1;

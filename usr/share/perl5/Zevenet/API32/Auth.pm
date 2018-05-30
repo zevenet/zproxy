@@ -59,43 +59,6 @@ sub validCGISession    # ()
 	return $validSession;
 }
 
-sub validZapiKey    # ()
-{
-	require Zevenet::Zapi;
-
-	my $validKey = 0;                 # output
-	my $key      = "HTTP_ZAPI_KEY";
-
-	require Zevenet::User;
-	if ( exists $ENV{ $key } )        # zapi key was provided
-	{
-		if (
-			 &getZAPI( "status" ) eq "true"              # zapi user is enabled
-			 && &getZAPI( "keyzapi" ) eq $ENV{ $key }    # matches key
-		  )
-		{
-
-			&setUser( 'root' );
-			$validKey = 1;
-		}
-		elsif ( $eload )
-		{
-			my $user = &eload(
-							   module => 'Zevenet::RBAC::User::Core',
-							   func   => 'validateRBACUserZapi',
-							   args   => [$ENV{ $key }],
-			);
-			if ( $user )
-			{
-				&setUser( $user );
-				$validKey = 1;
-			}
-		}
-	}
-
-	return $validKey;
-}
-
 sub getAuthorizationCredentials    # ()
 {
 	my $base64_digest;

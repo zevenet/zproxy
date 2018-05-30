@@ -147,16 +147,6 @@ sub set_rbac_user
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
-	# modify zapi permissions
-	if ( exists $json_obj->{ 'zapi_permissions' } )
-	{
-		if ( &setRBACUserZapiPermissions( $user, $json_obj->{ 'zapi_permissions' } ) )
-		{
-			my $msg = "Changing RBAC $user zapi permissions.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-	}
-
 	# modify webgui permissions
 	if ( exists $json_obj->{ 'webgui_permissions' } )
 	{
@@ -186,6 +176,22 @@ sub set_rbac_user
 		if ( &setRBACUserZapikey( $user, $json_obj->{ 'zapikey' } ) )
 		{
 			my $msg = "Changing RBAC $user zapikey.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
+	# modify zapi permissions
+	if ( exists $json_obj->{ 'zapi_permissions' } )
+	{
+		if ( not &getRBACUserParam( $user, 'zapikey' ) )
+		{
+			my $msg = "Is is necessary a zapikey to enable the zapi permissions.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
+		if ( &setRBACUserZapiPermissions( $user, $json_obj->{ 'zapi_permissions' } ) )
+		{
+			my $msg = "Changing RBAC $user zapi permissions.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
@@ -276,7 +282,7 @@ sub get_system_user_rbac
 	{
 		my $params = {
 					 'user'   => $user,
-					 'status' => $obj->{ 'zapi_permissions' },
+					 'zapi_permissions' => $obj->{ 'zapi_permissions' },
 		};
 
 		&httpResponse(
@@ -302,16 +308,6 @@ sub set_system_user_rbac
 	{
 		my $msg = "The user is not a RBAC user";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
-
-	# modify zapi permissions
-	if ( exists $json_obj->{ 'status' } )
-	{
-		if ( &setRBACUserZapiPermissions( $user, $json_obj->{ 'zapi_permissions' } ) )
-		{
-			my $msg = "Changing RBAC $user zapi permissions.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
 	}
 
 	# modify password
@@ -346,6 +342,23 @@ sub set_system_user_rbac
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}
+
+	# modify zapi permissions
+	if ( exists $json_obj->{ 'status' } )
+	{
+		if ( not &getRBACUserParam( $user, 'zapikey' ) )
+		{
+			my $msg = "It is necessary a zapikey to enable the zapi permissions.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+
+		if ( &setRBACUserZapiPermissions( $user, $json_obj->{ 'zapi_permissions' } ) )
+		{
+			my $msg = "Changing RBAC $user zapi permissions.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	my $msg = "Settings was changed successful.";
 	my $body = { description => $desc, message => $msg };
 	return &httpResponse( { code => 200, body => $body } );

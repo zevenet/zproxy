@@ -51,24 +51,6 @@ sub validCGISession    # ()
 	return $validSession;
 }
 
-sub validZapiKey    # ()
-{
-	require Zevenet::Zapi;
-
-	my $validKey = 0;    # output
-	my $key = "HTTP_ZAPI_KEY";
-
-	if (
-		 exists $ENV{ $key }                         # zapi key was provided
-		 && &getZAPI( "status" ) eq "true"           # zapi user is enabled
-		 && &getZAPI( "keyzapi" ) eq $ENV{ $key }    # matches key
-	  )
-	{
-		$validKey = 1;
-	}
-
-	return $validKey;
-}
 
 sub getAuthorizationCredentials                     # ()
 {

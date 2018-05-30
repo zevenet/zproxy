@@ -79,6 +79,7 @@ require Zevenet::Validate;
 
 ##### Authentication #################################################
 require Zevenet::API32::Auth;
+require Zevenet::Zapi;
 
 # Session request
 require Zevenet::API32::Routes::Session if ( $q->path_info eq '/session' );
@@ -305,7 +306,7 @@ sub certcontrol
 		@contents = ($date_encode);
 
 		untie @contents;
-	} 	
+	}
 
  	 # Certificate expiring date
     my ( $na ) = grep /Not After/i, @zen_cert;

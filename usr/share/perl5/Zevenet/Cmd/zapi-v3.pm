@@ -26,6 +26,7 @@ use Zevenet;
 use Zevenet::Farm;
 use Zevenet::Farm::Core;
 include 'Zevenet::API3';
+include 'Zevenet::Zapi';
 include 'Zevenet::IPDS';
 include 'Zevenet::Cluster';
 include 'Zevenet::Net::Bonding';
