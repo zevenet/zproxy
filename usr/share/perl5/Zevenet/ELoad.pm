@@ -25,6 +25,8 @@ use strict;
 
 require Zevenet::Debug;
 
+my $debug = &getGlobalConfiguration('debug');
+
 sub eload
 {
 	my %req = @_;
@@ -135,6 +137,8 @@ sub eload
 	# condition flags
 	my $ret_f = exists $req{ just_ret } && $req{ just_ret };
 	my $api_f = ( $req{ module } =~ /^Zevenet::API/ );
+
+	&zenlog( $ret_output ) if $debug;
 
 	my $output = ( not $ret_f && $api_f ) ?	decode_json( $ret_output ): $ret_output;
 	my @output = eval{ @{ decode_json( $ret_output ) } };
