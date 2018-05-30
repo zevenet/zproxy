@@ -560,27 +560,40 @@ sub certcontrol
 	my $date_check = `cat $file_check 2>/dev/null`;
 	$date_check =~ s/\s*$//;
 
-	if ($date_check ne $date_encode) {
+	if ($date_check ne $date_encode)
+	{
 		my $crl_path = "$configdir/cacrl.crl";
 
-		my $date_mod = `stat -c%y $crl_path`;
+		my $date_mod = '';
+
+		if ( -f $crl_path )
+		{
+			my $date_mod = `stat -c%y $crl_path`;
+		}
+		else
+		{
+			&zenlog("WARNING!!! File $crl_path not found.");
+		}
+
 		my @modification = split /\ /, $date_mod;
 		$modification[0] = $modification[0] // '';
 
 		if ( $modification[0] ne $date_today) {
 			# Download CRL
-	  		my $download = `wget -q -O $crl_path https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
-	  		&zenlog("CRL Downloaded on $date_today");
-	  	}
+			my $download = `wget -q -O $crl_path https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
+			&zenlog("CRL Downloaded on $date_today");
+		}
 
 		my @decoded = `openssl crl -inform DER -text -noout -in $crl_path`;
-		if ( !grep /keyid:$keyid/, @decoded ) {
+		if ( !grep /keyid:$keyid/, @decoded )
+		{
 			#swcert = 2 ==> Cert isn't signed OK
 			$swcert = 2;
 			return $swcert;
 		}
 
-		foreach my $line (@decoded) {
+		foreach my $line (@decoded)
+		{
 			if (grep /Serial Number\: ?$serial/, $line) {
 				my $isRevoked = grep /Serial Number\: ?$serial/, $line;
 				if ($isRevoked > 0) {
@@ -590,6 +603,7 @@ sub certcontrol
 				}
 			}
 		}
+
 		require Tie::File;
 		tie my @contents, 'Tie::File', "$file_check";
 		@contents = ($date_encode);
