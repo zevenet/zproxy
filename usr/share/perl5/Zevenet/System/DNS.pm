@@ -47,7 +47,7 @@ See Also:
 
 sub getDns
 {
-	my $dns;
+	my $dns = { 'primary' => '', 'secondary' => '' };
 	my $dnsFile = &getGlobalConfiguration( 'filedns' );
 
 	if ( !-f $dnsFile )
