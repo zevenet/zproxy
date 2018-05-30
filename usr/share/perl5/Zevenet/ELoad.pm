@@ -23,6 +23,7 @@
 
 use strict;
 
+require Zevenet::Config;
 require Zevenet::Debug;
 
 my $debug = &getGlobalConfiguration('debug');
