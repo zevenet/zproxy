@@ -69,7 +69,7 @@ sub getZapiRBACAllUsers
 {
 	my @allUsers = ();
 
-	foreach my $user ( &getRBACUserList() )
+	foreach my $user ( sort &getRBACUserList() )
 	{
 		push @allUsers, &getZapiRBACUsers( $user );
 	}
@@ -123,7 +123,7 @@ sub getZapiRBACAllGroups
 {
 	my @allGroups = ();
 
-	foreach my $group ( &getRBACGroupList() )
+	foreach my $group ( sort &getRBACGroupList() )
 	{
 		push @allGroups, &getZapiRBACGroups( $group );
 	}

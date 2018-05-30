@@ -134,25 +134,17 @@ sub validateRBACUserZapi
 
 	include 'Zevenet::Code';
 
-	my $user;
-
 	# look for the user owned of zapikey
-	require Config::Tiny;
-	my $fileHandle = Config::Tiny->read( $rbacUserConfig );
-
-	foreach my $key ( keys %{ $fileHandle } )
-	{
-		if ( &validateCryptString( $fileHandle->{ $key }->{ 'zapikey' }, $zapikey ) )
-		{
-			$user = $key;
-			last;
-		}
-	}
+	my $user = &getRBACUserbyZapikey( $zapikey );
 
 	if ( !$user )
 	{
 		&zenlog( "RBAC, the zapikey does not match with any user", "warning", "RBAC" );
 		return 0;
+	}
+	elsif ( $user eq 'root' )
+	{
+		return $user;
 	}
 
 	# check permissions
@@ -168,5 +160,35 @@ sub validateRBACUserZapi
 
 	return $user;
 }
+
+
+sub getRBACUserbyZapikey
+{
+	my $zapikey = shift;
+	my $user;
+	include 'Zevenet::Zapi';
+	include 'Zevenet::Code';
+	if ( &validateCryptString( &getZAPI( 'keyzapi' ), $zapikey ) )
+	{
+		$user = 'root';
+	}
+	else
+	{
+		require Config::Tiny;
+		my $fileHandle = Config::Tiny->read( $rbacUserConfig );
+		foreach my $key ( keys %{ $fileHandle } )
+		{
+			if ( &validateCryptString( $fileHandle->{ $key }->{ 'zapikey' }, $zapikey ) )
+			{
+				$user = $key;
+				last;
+			}
+		}
+	}
+
+	return $user;
+}
+
+
 
 1;

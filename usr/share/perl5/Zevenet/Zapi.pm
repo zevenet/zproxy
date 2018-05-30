@@ -42,6 +42,7 @@ Returns:
 See Also:
 	zapi/v3/system.cgi
 =cut
+
 sub getZAPI    #($name)
 {
 	my ( $name ) = @_;
@@ -53,14 +54,14 @@ sub getZAPI    #($name)
 	#return if zapi user is enabled or not true = enable, false = disabled
 	if ( $name eq "status" )
 	{
-		if ( fgrep { /^zapi/ } &getGlobalConfiguration('htpass') )
+		if ( fgrep { /^zapi/ } &getGlobalConfiguration( 'htpass' ) )
 		{
 			$result = "true";
 		}
 	}
 	elsif ( $name eq "keyzapi" )
 	{
-		$result = &getGlobalConfiguration ( 'zapikey' );
+		$result = &getGlobalConfiguration( 'zapikey' );
 	}
 
 	return $result;
@@ -91,12 +92,13 @@ Bugs:
 See Also:
 	zapi/v3/system.cgi
 =cut
+
 sub setZAPI    #($name,$value)
 {
 	my ( $name, $value ) = @_;
 
-	my $result = "false";
-	my $globalcfg = &getGlobalConfiguration('globalcfg');
+	my $result    = "false";
+	my $globalcfg = &getGlobalConfiguration( 'globalcfg' );
 
 	#Enable ZAPI
 	if ( $name eq "enable" )
@@ -134,15 +136,12 @@ sub setZAPI    #($name,$value)
 	{
 		if ( $eload )
 		{
-			&zenlog ("encriptando: $value");
 			$value = &eload(
-					 module => 'Zevenet::Code',
-					 func   => 'setCryptString',
-					 args   => [$value],
+							 module => 'Zevenet::Code',
+							 func   => 'setCryptString',
+							 args   => [$value],
 			);
 		}
-			&zenlog ("encriptando: $value");
-
 
 		require Tie::File;
 		tie my @contents, 'Tie::File', "$globalcfg";
@@ -172,6 +171,7 @@ Returns:
 See Also:
 	<setZAPI>
 =cut
+
 sub setZAPIKey    #()
 {
 	my $passwordsize = shift;
@@ -182,8 +182,6 @@ sub setZAPIKey    #()
 
 	return $randpassword;
 }
-
-
 
 sub validZapiKey    # ()
 {
@@ -205,35 +203,21 @@ sub validZapiKey    # ()
 		}
 		elsif ( $eload )
 		{
-			my $root_auth = &eload(
-					 module => 'Zevenet::Code',
-					 func   => 'validateCryptString',
-					 args   => [&getZAPI( 'keyzapi' ), $ENV{ $key }],
+			# get a RBAC user
+			my $user = &eload(
+							   module => 'Zevenet::RBAC::User::Core',
+							   func   => 'validateRBACUserZapi',
+							   args   => [$ENV{ $key }],
 			);
-
-			if ( $root_auth )
+			if ( $user )
 			{
-				&setUser( 'root' );
+				&setUser( $user );
 				$validKey = 1;
-			}
-			else
-			{
-				my $user = &eload(
-								module => 'Zevenet::RBAC::User::Core',
-								func   => 'validateRBACUserZapi',
-								args   => [$ENV{ $key }],
-				);
-				if ( $user )
-				{
-					&setUser( $user );
-					$validKey = 1;
-				}
 			}
 		}
 	}
 
 	return $validKey;
 }
-
 
 1;

@@ -170,8 +170,6 @@ sub validateCryptString
 	my $encryptString = shift;
 	my $clearString   = shift;
 
-
-
 	require Crypt::CBC;
 
 	my $decrypt       = '';
@@ -194,21 +192,6 @@ sub validateCryptString
 	}
 
 	return $out;
-}
-
-# check if this zapi is used by another user
-sub checkZapikeyRoot
-{
-	my $zapikey = shift;
-	include 'Zevenet::Code';
-	include 'Zevenet::RBAC::User::Core';
-
-	my $err = 1;
-	foreach my $userAux ( &getRBACUserList() )
-	{
-		$err = 0 if &validateCryptString( &getRBACUserParam( $userAux, 'zapikey' ), $zapikey );
-	}
-	return $err;
 }
 
 

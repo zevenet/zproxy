@@ -29,7 +29,7 @@ include 'Zevenet::API32::RBAC::Structs';
 #list
 sub get_rbac_all_roles
 {
-	my @roleList = &getRBACRolesList();
+	my @roleList = sort &getRBACRolesList();
 	my $desc     = "List the RBAC roles";
 
 	return &httpResponse(

@@ -160,18 +160,10 @@ sub set_rbac_user
 	# modify zapikey
 	if ( exists $json_obj->{ 'zapikey' } )
 	{
-		include 'Zevenet::Code';
-		foreach my $userAux ( &getRBACUserList() )
+		if ( &getRBACUserbyZapikey( $json_obj->{ 'zapikey' } ) )
 		{
-			next if ( $userAux eq $user );
-			if (
-				 &validateCryptString( &getRBACUserParam( $userAux, 'zapikey' ),
-									   $json_obj->{ 'zapikey' } )
-			  )
-			{
-				my $msg = "The zapikey is not valid.";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
+			my $msg = "The zapikey is not valid.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 		if ( &setRBACUserZapikey( $user, $json_obj->{ 'zapikey' } ) )
 		{
@@ -323,18 +315,10 @@ sub set_system_user_rbac
 	# modify zapikey
 	if ( exists $json_obj->{ 'zapikey' } )
 	{
-		include 'Zevenet::Code';
-		foreach my $userAux ( &getRBACUserList() )
+		if ( &getRBACUserbyZapikey( $json_obj->{ 'zapikey' } ) )
 		{
-			next if ( $userAux eq $user );
-			if (
-				 &validateCryptString( &getRBACUserParam( $userAux, 'zapikey' ),
-									   $json_obj->{ 'zapikey' } )
-			  )
-			{
-				my $msg = "The zapikey is not valid.";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
+			my $msg = "The zapikey is not valid.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 		if ( &setRBACUserZapikey( $user, $json_obj->{ 'zapikey' } ) )
 		{

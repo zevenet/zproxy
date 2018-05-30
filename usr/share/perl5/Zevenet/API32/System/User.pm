@@ -145,10 +145,15 @@ sub set_system_user
 			if ( $eload)
 			{
 				my $err = &eload(
-					module  => 'Zevenet::Code',
-					func => 'checkZapikeyRoot',
+					module  => 'Zevenet::RBAC::User::Core',
+					func => 'getRBACUserbyZapikey',
 					args   => [$json_obj->{ 'zapikey' }],
 				);
+				if ( $err )
+				{
+					my $msg = "The zapikey is not valid.";
+					return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				}
 			}
 			if ( &setZAPI( 'key', $json_obj->{ 'zapikey' } ) )
 			{
