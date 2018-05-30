@@ -7,7 +7,7 @@ use Tie::File;
 
 my $dir = '/usr/local/zevenet/config';
 
-foreach my $i ( `ls $dir/*_pound.cfg` )
+foreach my $i ( `ls $dir/*_pound.cfg 2>/dev/null` )
 {
 	chomp $i;
 
