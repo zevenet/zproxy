@@ -129,31 +129,37 @@ chmod +x /usr/local/zevenet/config/zlb-start
 chmod +x /usr/local/zevenet/config/zlb-stop
 
 # Migrate TCP farms to L4xNAT
+echo Migrate TCP farms to L4xNAT
 if [ "-f /usr/local/zevenet/config/*_pen.cfg" ]; then
 	/usr/local/zevenet/app/zbin/migrate_tcp_to_l4xnat.pl
 fi
 
 # HTTP profile directives migration to 4.2
+echo HTTP profile directives migration to 4.2
 if [ -f /usr/local/zevenet/app/zbin/zlbmigrationto42.sh ]; then
 	/usr/local/zevenet/app/zbin/zlbmigrationto42.sh
 fi
 
 # Http profile directives migration
+echo Http profile directives migration
 if [ -f /usr/local/zevenet/app/zbin/zlbmigrationto402.sh ]; then
 	/usr/local/zevenet/app/zbin/zlbmigrationto402.sh
 fi
 
 # Fix fwmarks for L4xNAT backends
+echo Fix fwmarks for L4xNAT backends
 if [ -f /usr/local/zevenet/app/zbin/fwmark_tag_fix.pl ]; then
 	/usr/local/zevenet/app/zbin/fwmark_tag_fix.pl
 fi
 
 # add #ZWACL-END tag to pound configuration files
+echo 'add #ZWACL-END tag to pound configuration files'
 if [ -f /usr/local/zevenet/app/zbin/add_srv_tag_pound.pl ]; then
 	/usr/local/zevenet/app/zbin/add_srv_tag_pound.pl
 fi
 
 # Migrate HTTP farms to dynamic thread model, without tcmalloc
+echo Migrate HTTP farms to dynamic thread model, without tcmalloc
 for i in $(find /usr/local/zevenet/config/ -name *pound.cfg);
 do
 	if [[ `grep -c ThreadModel $i` == '0' ]]; then
@@ -163,19 +169,23 @@ do
 done
 
 # Migrate interface configuration files to IPv6 ready format
+echo Migrate interface configuration files to IPv6 ready format
 if [ -f /usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl ]; then
 	/usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl
 fi
 
 # Disable DNS resolution for SSH service
+echo Disable DNS resolution for SSH service
 if [ -f /usr/local/zevenet/app/zbin/ssh_nodns.sh ]; then
         /usr/local/zevenet/app/zbin/ssh_nodns.sh
 fi
 
 # Create IPDS directories
+echo Create IPDS directories
 /usr/local/zevenet/bin/boot_ipds
 
 # Do not show warning messages from bonding module on syslog
+echo Do not show warning messages from bonding module on syslog
 ZEVENET_SYSLOG_FILE="/etc/rsyslog.d/10-zevenet.conf"
 if [ ! -f ${ZEVENET_SYSLOG_FILE} ];
 then
@@ -192,7 +202,9 @@ fi
 
 # restarting zevenet service
 echo "Zevenet will be unavailable while the service is restarting."
+echo /etc/init.d/zevenet stop
 /etc/init.d/zevenet stop
+echo /etc/init.d/zevenet start
 /etc/init.d/zevenet start
 
 # Load conntrack modules
@@ -210,9 +222,6 @@ if [ -f /usr/local/zevenet/app/zenbui/zenbui ];
 then
 	ln -sf /usr/local/zevenet/app/zenbui/zenbui /usr/bin/zenbui
 fi
-
-#uninstalling not needed packages
-/usr/bin/dpkg -l  popularity-contest &>/dev/null && apt-get purge -y popularity-contest
 
 
 #Change prompt color
