@@ -246,7 +246,7 @@ sub certcontrol
 
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 	my $file_check = "$configdir/config_check";
-	my $date_check = `cat $file_check`;
+	my $date_check = `cat $file_check 2>/dev/null`;
 	$date_check =~ s/\s*$//;
 
 	if ($date_check ne $date_encode) {
