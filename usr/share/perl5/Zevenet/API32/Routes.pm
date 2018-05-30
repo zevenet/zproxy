@@ -348,12 +348,8 @@ if ( $q->path_info =~ qr{^/system/users} )
 {
 	require Zevenet::API32::System::User;
 
-	my $user_re = &getValidFormat( 'user' );
-
-	GET qr{^/system/users$}             => \&get_all_users;    #  GET users
-	GET qr{^/system/users/($user_re)$}  => \&get_user;         #  GET user settings
-	POST qr{^/system/users/zapi$}       => \&set_user_zapi;    #  POST zapi user
-	PUT qr{^/system/users/($user_re)$} => \&set_user;         #  POST other user
+	GET qr{^/system/users$} 	=> \&get_system_user;    #  GET users
+	POST qr{^/system/users$}	=> \&set_system_user;    #  POST users
 }
 
 if ( $q->path_info =~ qr{^/system/log} )

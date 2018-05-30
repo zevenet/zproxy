@@ -68,6 +68,12 @@ EOF
 	`;
 
 	$output = $?;
+	if ( $output )
+	{
+		&zenlog( "Error trying to change the $user password", "error" );
+	}
+	else { &zenlog( "The $user password was changed", "info" ); }
+
 
 	return $output;
 }

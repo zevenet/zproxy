@@ -310,10 +310,12 @@ sub getRBACPathPermissions
 		}
 	}
 
-	if ( $permission )
-	{ &zenlog( "Request from $username to $method $path. Action allowed", "Info", "RBAC" ); }
-	else
+	if ( not $permission )
 	{ &zenlog( "Request from $username to $method $path. Action BLOCKED", "Error", "RBAC" ); }
+	# elsif ( &getRBACExceptions( $path, $method ) ) {}  # it is not needed now. All exceptions are GET methods
+	elsif ( $method eq 'GET' ) {} # to not log GET requests
+	else
+	{ &zenlog( "Request from $username to $method $path. Action allowed", "Info", "RBAC" ); }
 
 	return $permission;
 }
@@ -360,6 +362,8 @@ sub getRBACExceptions
 	my $method = shift;
 
 	if ( $path eq "/certificates/activation/info" and $method eq 'GET' ) { return 1; }
+	if ( $path eq "/stats/system/connections" and $method eq 'GET' ) { return 1; }
+	if ( $path eq "/system/cluster/nodes/localhost" and $method eq 'GET' ) { return 1; }
 
 	return 0;
 }

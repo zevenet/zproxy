@@ -262,67 +262,93 @@ sub del_rbac_user
 	}
 }
 
-#  PUT /system/user
-sub set_rbac_my_user
+
+# 	GET /system/users
+sub get_system_user_rbac
+{
+	require Zevenet::User;
+	my $user = &getUser();
+
+	my $desc = "Retrieve the user $user";
+	my $obj   = &getRBACUserObject( $user );
+
+	if ( $obj )
+	{
+		my $params = {
+					 'user'   => $user,
+					 'status' => $obj->{ 'zapi_permissions' },
+		};
+
+		&httpResponse(
+			   { code => 200, body => { description => $desc, params => $params } } );
+	}
+}
+
+# 	POST /system/users
+sub set_system_user_rbac
 {
 	my $json_obj = shift;
 
 	include 'Zevenet::RBAC::User::Config';
-	require Zevenet::User;
-	require Zevenet::Login;
+	include 'Zevenet::User';
 
+	my $error = 0;
 	my $user = &getUser();
-	my $desc = "Modify a user";
-
-	if ( $user eq 'root' )
-	{
-		my $msg = "This user is not manager by RBAC";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	my $desc = "Modify the user $user";
 
 	$desc = "Modify the user $user";
-	my $params = {
-		  "password" => {
-						  'non_blank' => 'true',
-						  'required'  => 'true',
-		  },
-		  "newpassword" => {
-				  'valid_format' => 'rbac_password',
-				  'non_blank'    => 'true',
-				  'required'     => 'true',
-				  'format_msg' => 'must be alphanumeric and must have at least 8 characters'
-		  },
-	};
 
-	# Check allowed parameters
-	my $error_msg = &checkZAPIParams( $json_obj, $params );
-	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
-	  if ( $error_msg );
-
-	if ( $json_obj->{ 'newpassword' } eq $json_obj->{ 'password' } )
+	if ( !&getRBACUserExists( $user ) )
 	{
-		my $msg = "The new password must be different to the current password.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		my $msg = "The user is not a RBAC user";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( !&checkValidUser( $user, $json_obj->{ 'password' } ) )
+	# modify zapi permissions
+	if ( exists $json_obj->{ 'status' } )
 	{
-		my $msg = "Invalid current password.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		if ( &setRBACUserZapiPermissions( $user, $json_obj->{ 'zapi_permissions' } ) )
+		{
+			my $msg = "Changing RBAC $user zapi permissions.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
-	my $error = &setRBACUserPassword( $user, $json_obj->{ 'newpassword' } );
-	if ( $error )
+	# modify password
+	if ( exists $json_obj->{ 'newpassword' } )
 	{
-		my $msg = "Changing $user password.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		if ( &setRBACUserPassword( $user, $json_obj->{ 'newpassword' } ) )
+		{
+			my $msg = "Changing the password in the RBAC user $user.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
+	# modify zapikey
+	if ( exists $json_obj->{ 'zapikey' } )
+	{
+		include 'Zevenet::Code';
+		foreach my $userAux ( &getRBACUserList() )
+		{
+			next if ( $userAux eq $user );
+			if (
+				 &validateCryptString( &getRBACUserParam( $userAux, 'zapikey' ),
+									   $json_obj->{ 'zapikey' } )
+			  )
+			{
+				my $msg = "The zapikey is not valid.";
+				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			}
+		}
+		if ( &setRBACUserZapikey( $user, $json_obj->{ 'zapikey' } ) )
+		{
+			my $msg = "Changing RBAC $user zapikey.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
 	my $msg = "Settings was changed successful.";
 	my $body = { description => $desc, message => $msg };
-
-	&httpResponse( { code => 200, body => $body } );
-
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 1;
