@@ -84,7 +84,7 @@ sub set_system_user
 	$desc = "Modify the user $user";
 	my $params = {
 		"zapikey" => { 'valid_format' => 'zapi_key' },
-		"status"  => { 'valid_format' => 'boolean', 'non_black' => 'true' }
+		"zapi_permissions"  => { 'valid_format' => 'boolean', 'non_black' => 'true' }
 		,    # it is the permissions value
 		"password" => {
 						'non_blank' => 'true',
