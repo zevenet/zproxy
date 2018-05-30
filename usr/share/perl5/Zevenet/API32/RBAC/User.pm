@@ -328,7 +328,7 @@ sub set_system_user_rbac
 	}
 
 	# modify zapi permissions
-	if ( exists $json_obj->{ 'status' } )
+	if ( exists $json_obj->{ 'zapi_permissions' } )
 	{
 		if ( not &getRBACUserParam( $user, 'zapikey' ) )
 		{
