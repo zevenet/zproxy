@@ -50,7 +50,7 @@ sub delete_interface_nic    # ( $nic )
 	{
 		my $child_string = join ( ', ', @child );
 		my $msg =
-		  "Is is not possible to delete $nic because there are virtual interfaces using it: $child_string.";
+		  "It is not possible to delete $nic because there are virtual interfaces using it: $child_string.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 

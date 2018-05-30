@@ -177,7 +177,7 @@ sub set_rbac_user
 	{
 		if ( not &getRBACUserParam( $user, 'zapikey' ) )
 		{
-			my $msg = "Is is necessary a zapikey to enable the zapi permissions.";
+			my $msg = "It is necessary a zapikey to enable the zapi permissions.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 

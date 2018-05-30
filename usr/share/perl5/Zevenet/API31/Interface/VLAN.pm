@@ -501,7 +501,7 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 		{
 			my $child_string = join ( ', ', @child );
 			my $msg =
-			  "Is is not possible to modify $vlan because there are virtual interfaces using it: $child_string.";
+			  "It is not possible to modify $vlan because there are virtual interfaces using it: $child_string.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}

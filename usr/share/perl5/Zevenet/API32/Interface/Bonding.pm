@@ -225,7 +225,7 @@ sub delete_interface_bond    # ( $bond )
 	{
 		my $child_string = join ( ', ', @child );
 		my $msg =
-		  "Is is not possible to delete $bond because there are virtual interfaces using it: $child_string.";
+		  "It is not possible to delete $bond because there are virtual interfaces using it: $child_string.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -285,7 +285,7 @@ sub delete_bond    # ( $bond )
 	{
 		my $child_string = join ( ', ', @vlans );
 		my $msg =
-		  "Is is not possible to delete $bond if it has configured VLAN: $child_string.";
+		  "It is not possible to delete $bond if it has configured VLAN: $child_string.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -295,7 +295,7 @@ sub delete_bond    # ( $bond )
 	{
 		my $child_string = join ( ', ', @child );
 		my $msg =
-		  "Is is not possible to delete $bond because there are virtual interfaces using it: $child_string.";
+		  "It is not possible to delete $bond because there are virtual interfaces using it: $child_string.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
