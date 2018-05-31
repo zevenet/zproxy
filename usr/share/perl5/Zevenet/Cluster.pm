@@ -346,7 +346,7 @@ sub setKeepalivedConfig
 	require Zevenet::SystemInfo;
 
 	&zenlog("Setting keepalived configuration file", "info", "CLUSTER");
-	
+
 	my $zcl_conf = &getZClusterConfig();
 	my $keepalived_conf = &getGlobalConfiguration('keepalived_conf');
 
@@ -882,7 +882,7 @@ sub runSync
 	#~ for my $rc ( @{ $r_list } )
 	#~ {
 		#~ &zenlog("Return[$rc->{tid}] $rc->{ret_val}", "info", "CLUSTER);
-		
+
 		#~ if ( $rc->{ret_val} )
 		#~ {
 			#~ &zenlog( "An error happened syncing with $rc->{arg}->{ip_addr}", "info", "CLUSTER");
@@ -1391,7 +1391,7 @@ sub getZClusterNodeStatusDigest
 			$node->{ message } .= join ', ', @services;
 		}
 	}
-	elsif ( $node->{ role } && $node->{ role } eq '' )
+	elsif ( ( $node->{ role } && $node->{ role } eq '' ) or ( ! $node->{ role } ) )
 	{
 		$node->{ role }    = 'unreachable';
 		$node->{ status }  = 'unreachable';
