@@ -91,7 +91,7 @@ my %format_re = (
 	'password' => qr/.+/,
 
 	# system
-	'dns_nameserver' => $ipv4_addr,
+	'dns_nameserver' => $ipv4v6,
 	'dns'            => qr/(?:primary|secondary)/,
 	'ssh_port'       => $port_range,
 	'ssh_listen'     => qr/(?:$ipv4v6|\*)/,

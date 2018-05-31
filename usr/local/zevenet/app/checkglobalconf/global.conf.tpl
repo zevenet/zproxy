@@ -198,7 +198,7 @@ $iptlock = "/tmp/iptables.lock";
 #Directory where is check script. In this directory you can save your own check scripts.
 $libexec_dir="/usr/local/zevenet/app/libexec";
 #FarmGuardian binary, create advanced check for backend servers
-$farmguardian="/usr/local/zevenet/zbin/farmguardian"; #update
+$farmguardian="/usr/local/zevenet/app/zbin/farmguardian"; #update
 
 #Where is ZenRRD Directory?. There is a perl script that create rrd database and images from Monitoring section
 $rrdap_dir="/usr/local/zevenet/app/zenrrd";#update
