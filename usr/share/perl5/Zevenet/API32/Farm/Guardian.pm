@@ -392,7 +392,7 @@ sub add_farmguardian_farm
 	my $output = &linkFGFarm( $json_obj->{ name }, $farm, $srv );
 
 	# check result and return success or failure
-	if ( $output )
+	if ( ! $output )
 	{
 		# sync with cluster
 		if ( $eload )
