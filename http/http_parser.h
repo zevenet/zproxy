@@ -41,26 +41,28 @@ class HttpParser {
   size_t num_headers;
 
   size_t last_length;
+
+  int headers_length;
   //request
   const char *method;
   size_t method_len;
   int minor_version;
-  const char *path;
 
+  const char *path;
   size_t path_length;
   //response
   int http_status_code;
-  const char *message;
+
+  const char *status_message;
 
   size_t message_length;
-
   //headers
   EVENT_TYPE events;
   //TODO::
   http::HTTP_VERSION http_version;
   http::REQUEST_METHOD request_method;
-  http::TRANSFER_ENCODING_TYPE transfer_encoding_type;
 
+  http::TRANSFER_ENCODING_TYPE transfer_encoding_type;
 };
 }  // namespace http_parser
 #endif  // HTTPPARSER_H

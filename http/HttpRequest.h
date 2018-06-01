@@ -13,11 +13,15 @@ enum VALIDATION_RESULT {
   BAD_REQUEST,
   BAD_URL,
   URL_CONTAIN_NULL,
+  REQUEST_TOO_LARGE,
 };
 
 const std::unordered_map<VALIDATION_RESULT, char *> validation_reason = {
-    {OK, "valid request"}, {METHOD_NOT_ALLOWED, "Method not allowed"},
-    {BAD_REQUEST, "Bad request"}, {BAD_URL, "Bad URL"}, {URL_CONTAIN_NULL, "URL contains null"}
+    {OK, "valid request"},
+    {METHOD_NOT_ALLOWED, "Method not allowed"},
+    {BAD_REQUEST, "Bad request"}, {BAD_URL, "Bad URL"},
+    {URL_CONTAIN_NULL, "URL contains null"},
+    {REQUEST_TOO_LARGE, "Request too large"}
 };
 
 }

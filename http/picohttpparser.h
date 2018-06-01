@@ -24,6 +24,24 @@
  * IN THE SOFTWARE.
  */
 
+/*
+ *
+ * LIMITATIONS
+   Both "parse_http_request()" and "parse_http_response()" in XS
+   implementation have some size limitations.
+
+ The number of headers
+   The number of headers is limited to 128. If it exceeds, both parsing
+   routines report parsing errors, i.e. return -1 for $ret.
+
+ The size of header names
+   The size of header names is limited to 1024, but the parsers do not the
+   same action.
+
+   "parse_http_request()" returns -1 if too-long header names exist.
+
+   "parse_http_request()" simply ignores too-long header names.*/
+
 #ifndef picohttpparser_h
 #define picohttpparser_h
 

@@ -41,10 +41,10 @@ find_package(PkgConfig REQUIRED)
 pkg_search_module(OPENSSL REQUIRED openssl)
 
 #if (OPENSSL_FOUND)
-#  message(STATUS "Openssl includes ${OPENSSL_INCLUDE_DIRS}")
-#  message(STATUS "Openssl link ${OPENSSL_LIBRARIES}")
+#  status_message(STATUS "Openssl includes ${OPENSSL_INCLUDE_DIRS}")
+#  status_message(STATUS "Openssl link ${OPENSSL_LIBRARIES}")
 #  include_directories(${OPENSSL_INCLUDE_DIRS})
-#  message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+#  status_message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
 #else ()
 #  # Error; with REQUIRED, pkg_search_module() will throw an error by it's own
 #endif ()
@@ -81,6 +81,6 @@ add_executable(${PROJECT_NAME}
     http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
     http/HttpRequest.h service/Service.cpp service/Service.h service/ServiceManager.cpp service/ServiceManager.h
     connection/backend_connection.cpp connection/backend_connection.h event/TimerFd.cpp event/TimerFd.h
-    event/SignalFd.cpp event/SignalFd.h http/http.h util/common.h http/http_headers.h)
+    event/SignalFd.cpp event/SignalFd.h http/http.h util/common.h)
 
 target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} libssl.so libcrypto.so)# ${OPENSSL_LIBRARIES})

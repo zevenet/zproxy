@@ -33,7 +33,7 @@ Service::Service(ServiceConfig &service_config_) :
   for (auto bck = service_config_.backends;
        bck != nullptr;
        bck = bck->next) {
-    if (bck->disabled != 1) {
+    if (!bck->disabled) {
       this->addBackend(bck->address, bck->port, backend_id++);
     } else {
       Debug::Log("Backend " + bck->address + ":" + std::to_string(bck->port) + " disabled.", LOG_NOTICE);

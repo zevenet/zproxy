@@ -16,7 +16,7 @@ http_parser::HttpParser::HttpParser()
       num_headers(0),
       last_length(0),
       http_status_code(0),
-      message(nullptr),
+      status_message(nullptr),
       message_length(0) {}
 
 void http_parser::HttpParser::reset_parser() {
@@ -28,7 +28,7 @@ void http_parser::HttpParser::reset_parser() {
   num_headers = 0;
   last_length = 0;
   http_status_code = 0;
-  message = nullptr;
+  status_message = nullptr;
   message_length = 0;
 }
 
@@ -70,18 +70,18 @@ http_parser::PARSE_RESULT http_parser::HttpParser::parseResponse(const char *dat
                                                                  size_t *used_bytes, bool reset) {
   if (LIKELY(reset)) reset_parser();
   num_headers = sizeof(headers) / sizeof(headers[0]);
-  auto pret = phr_parse_response(data, data_size, &minor_version, &http_status_code, &message, &message_length,
+  auto pret = phr_parse_response(data, data_size, &minor_version, &http_status_code, &status_message, &message_length,
                                  headers, &num_headers, last_length);
   last_length = data_size;
 //  Debug::logmsg(LOG_DEBUG, "request is %d bytes long\n", pret);
   if (pret > 0) {
     *used_bytes = static_cast<size_t>(pret);
-
+    headers_length = pret;
 #if DEBUG_HTTP_PARSER
     printResponse();
 #endif
     return PARSE_RESULT::SUCCESS; /* successfully parsed the request */
-  } else if (pret == -2) {    /* response is incomplete, continue the loop */
+  } else if (pret == -1) {    /* response is incomplete, continue the loop */
     return PARSE_RESULT::INCOMPLETE;
   }
   return PARSE_RESULT::FAILED;

@@ -7,7 +7,9 @@
 ServiceManager::ServiceManager() {}
 Service *ServiceManager::getService(HttpRequest &request) {
   //TODO::Impelement::
+
   auto service = &services[0];
+
   return service;
 }
 

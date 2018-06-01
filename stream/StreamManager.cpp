@@ -96,21 +96,26 @@ void StreamManager::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event
     case WRITE: {
       auto stream = streams_set[fd];
       if (stream == nullptr) {
-        //We should be here without an established stream, so we remove from the eventloop
+        //We should not be here without a stream created, so we remove the fd from the eventloop
         switch (event_group) {
           case ACCEPTOR:break;
-          case SERVER:Debug::Log("SERVER : Stream doesn't exist for " + std::to_string(fd));
-
+          case SERVER:Debug::Log("SERVER_WRITE : Stream doesn't exist for " + std::to_string(fd));
             break;
-          case CLIENT:Debug::Log("CLIENT : Stream doesn't exist for " + std::to_string(fd));
+          case CLIENT:Debug::Log("CLIENT_WRITE : Stream doesn't exist for " + std::to_string(fd));
             break;
         }
         return;
       }
+
       switch (event_group) {
         case ACCEPTOR:break;
         case SERVER: {
+          //Send client request to backend server
+
+          //skip lstn->head_off
+
           auto result = stream->client_connection.writeTo(stream->backend_connection.getFileDescriptor());
+
           if (result == IO::SUCCESS) {
             updateFd(fd, EVENT_TYPE::READ, event_group);
           } else if (result == IO::DONE_TRY_AGAIN) {
@@ -387,24 +392,28 @@ validation::VALIDATION_RESULT StreamManager::validateRequest(HttpRequest &reques
     return validation::BAD_URL;
   }
 
-  //check for correct headers
+  //TODO:: Check reqeuest size .
+  if (UNLIKELY(listener_config_.max_req > 0 && request.headers_length > listener_config_.max_req
+                   && request.request_method != http::RM_RPC_IN_DATA
+                   && request.request_method != http::RM_RPC_OUT_DATA)) {
+    return validation::REQUEST_TOO_LARGE;
+  }
 
+  //TODO:: Check for correct headers
   for (auto i = 0; i != request.num_headers; ++i) {
     std::string header(request.headers[i].name, request.headers[i].name_len);
     std::string header_value(request.headers[i].value, request.headers[i].value_len);
-
     auto header_name = http::headers_names[header];
     if (header_name != http::H_NONE) {
       auto header_name_string = http::headers_names_strings[header_name];
       Debug::
           logmsg(LOG_DEBUG, "\t%s: %s", header_name_string, header_value.c_str());
     } else {
-      //What todo
-      Debug::
-          logmsg(LOG_DEBUG, "\tUnknown: %s", header_value.c_str());
+      //Unknown header, What to do ??
+      Debug::logmsg(LOG_DEBUG, "\tUnknown: %s", header_value.c_str());
     }
   }
-
+  
   return validation::OK;
 }
 
@@ -413,7 +422,7 @@ bool StreamManager::init(ListenerConfig &listener_config) {
   for (auto service_config = listener_config.services;
        service_config != nullptr;
        service_config = service_config->next) {
-    if (service_config->disabled != 1) {
+    if (!service_config->disabled) {
       this->addService(*service_config);
     } else {
       Debug::Log("Backend " + std::string(service_config->name) + " disabled in config file",
@@ -422,6 +431,7 @@ bool StreamManager::init(ListenerConfig &listener_config) {
   }
   return true;
 }
+
 void StreamManager::clearStream(HttpStream *stream) {
   if (stream == nullptr) {
     return;
