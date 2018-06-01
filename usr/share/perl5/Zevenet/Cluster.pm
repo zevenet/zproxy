@@ -1391,11 +1391,17 @@ sub getZClusterNodeStatusDigest
 			$node->{ message } .= join ', ', @services;
 		}
 	}
-	elsif ( ( $node->{ role } && $node->{ role } eq '' ) or ( ! $node->{ role } ) )
+	elsif ( ( $node->{ role } && $node->{ role } eq '' ) )
 	{
 		$node->{ role }    = 'unreachable';
 		$node->{ status }  = 'unreachable';
 		$node->{ message } = 'Node unreachable';
+	}
+	elsif ( ! $node->{ role } )
+	{
+		$node->{ role }    = 'not configured';
+		$node->{ status }  = 'not configured';
+		$node->{ message } = 'cluster not configured';
 	}
 	else
 	{
