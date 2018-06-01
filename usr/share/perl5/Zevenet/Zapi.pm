@@ -32,7 +32,7 @@ Function: getZAPI
 	Get zapi status
 
 Parameters:
-	name - 'status' to get if the user 'zapi' is enabled, or 'keyzapi' to get the 'zapikey'.
+	name - 'status' to get if the user 'zapi' is enabled, or 'zapikey' to get the 'zapikey'.
 
 Returns:
 	For 'status': Boolean. 'true' if the zapi user is enabled, or 'false' if it is disabled.
@@ -59,7 +59,7 @@ sub getZAPI    #($name)
 			$result = "true";
 		}
 	}
-	elsif ( $name eq "keyzapi" )
+	elsif ( $name eq "zapikey" )
 	{
 		$result = &getGlobalConfiguration( 'zapikey' );
 	}
@@ -195,7 +195,7 @@ sub validZapiKey    # ()
 	{
 		if (
 			 &getZAPI( "status" ) eq "true"              # zapi user is enabled
-			 && &getZAPI( "keyzapi" ) eq $ENV{ $key }    # matches key
+			 && &getZAPI( "zapikey" ) eq $ENV{ $key }    # matches key
 		  )
 		{
 			&setUser( 'root' );

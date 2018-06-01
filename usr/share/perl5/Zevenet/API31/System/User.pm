@@ -34,7 +34,7 @@ sub get_all_users
 				  { "user" => "root", "status" => "true" },
 				  { "user" => "zapi", "status" => "$zapiStatus" }
 	);
-	
+
 	&httpResponse(
 		  { code => 200, body => { description => $desc, params => \@users } } );
 }
@@ -55,7 +55,7 @@ sub get_user
 	}
 
 	my $zapi = {
-				 'key'    => &getZAPI( "keyzapi" ),
+				 'key'    => &getZAPI( "zapikey" ),
 				 'status' => &getZAPI( "status" ),
 	};
 

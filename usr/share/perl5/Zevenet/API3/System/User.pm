@@ -31,7 +31,7 @@ sub get_all_users
 	my $description = "Get users";
 	my $zapiStatus = &getZAPI( "status" );
 	my @users = ( { "user"=>"root", "status"=>"true" }, { "user"=>"zapi","status"=>"$zapiStatus" } );
-	
+
 	&httpResponse(
 		  { code => 200, body => { description => $description, params => \@users } } );
 }
@@ -52,7 +52,7 @@ sub get_user
 	{
 		require Zevenet::Zapi;
 
-		my $zapi->{ 'key' } = &getZAPI( "keyzapi" );
+		my $zapi->{ 'key' } = &getZAPI( "zapikey" );
 		$zapi->{ 'status' } = &getZAPI( "status" );
 
 		&httpResponse(
@@ -81,7 +81,7 @@ sub set_user_zapi
 	if ( !$errormsg )
 	{
 		if ( !&getValidFormat( "zapi_key", $json_obj->{ 'key' } ) )
-		{ 
+		{
 			$errormsg = "Error, character incorrect in key zapi.";
 		}
 		elsif ( !&getValidFormat( "zapi_password", $json_obj->{ 'newpassword' } ) )

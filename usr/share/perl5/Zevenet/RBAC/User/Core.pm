@@ -168,7 +168,7 @@ sub getRBACUserbyZapikey
 	my $user;
 	include 'Zevenet::Zapi';
 	include 'Zevenet::Code';
-	if ( &validateCryptString( &getZAPI( 'keyzapi' ), $zapikey ) )
+	if ( &validateCryptString( &getZAPI( 'zapikey' ), $zapikey ) )
 	{
 		$user = 'root';
 	}
