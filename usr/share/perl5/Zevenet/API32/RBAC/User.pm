@@ -160,7 +160,8 @@ sub set_rbac_user
 	# modify zapikey
 	if ( exists $json_obj->{ 'zapikey' } )
 	{
-		if ( &getRBACUserbyZapikey( $json_obj->{ 'zapikey' } ) )
+		my $zapi_user = &getRBACUserbyZapikey( $json_obj->{ 'zapikey' } );
+		if ( $zapi_user and $zapi_user ne $user )
 		{
 			my $msg = "The zapikey is not valid.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -315,7 +316,8 @@ sub set_system_user_rbac
 	# modify zapikey
 	if ( exists $json_obj->{ 'zapikey' } )
 	{
-		if ( &getRBACUserbyZapikey( $json_obj->{ 'zapikey' } ) )
+		my $zapi_user = &getRBACUserbyZapikey( $json_obj->{ 'zapikey' } );
+		if ( $zapi_user and $zapi_user ne $user )
 		{
 			my $msg = "The zapikey is not valid.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
