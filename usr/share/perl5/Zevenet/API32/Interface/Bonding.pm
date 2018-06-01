@@ -400,7 +400,7 @@ sub get_bond_list    # ()
 	include 'Zevenet::Net::Bonding';
 	require Zevenet::Net::Interface;
 
-	my @output_list;
+	my @output_list = ();
 
 	my $desc      = "List bonding interfaces";
 	my $bond_conf = &getBondConfig();
@@ -418,6 +418,8 @@ sub get_bond_list    # ()
 
 	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )
 	{
+		next unless $bond_conf->{ $if_ref->{ name } };
+
 		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
 
 		# Any key must cotain a value or "" but can't be null

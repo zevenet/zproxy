@@ -960,7 +960,7 @@ sub getInterfaceTypeList
 {
 	my $list_type = shift;
 
-	my @interfaces;
+	my @interfaces = ();
 
 	if ( $list_type =~ /^(?:nic|bond|vlan)$/ )
 	{
