@@ -335,13 +335,6 @@ sub add_farmguardian_farm
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	#~ # Check if fg is a template
-	#~ if ( &getFGExistsTemplate( $json_obj->{ name } ) )
-	#~ {
-		#~ my $msg = "$json_obj->{ name } is a template";
-		#~ return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	#~ }
-
 	# Check if it exists
 	if ( !&getFGExists( $json_obj->{ name } ) )
 	{

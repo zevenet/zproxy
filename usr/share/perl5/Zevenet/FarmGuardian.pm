@@ -271,6 +271,12 @@ sub linkFGFarm
 	require Zevenet::Farm::Base;
 	my $farm_tag = ( $srv ) ? "${farm}_$srv" : "$farm";
 
+	# if the fg does not exist in config file, take it from template file
+	unless ( &getFGExistsConfig( $fg_name ) )
+	{
+		my $template = &getFGObject( $fg_name, 'template' );
+		$out = &setTinyObj( $fg_conf, $fg_name, $template );
+	}
 	$out = &setTinyObj( $fg_conf, $fg_name, 'farms', $farm_tag, 'add' );
 
 	$out |= &runFGFarmStart( $farm, $srv ) if ( &getFarmStatus( $farm ) eq 'up' );
