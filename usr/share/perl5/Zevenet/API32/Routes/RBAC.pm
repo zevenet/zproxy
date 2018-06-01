@@ -23,16 +23,9 @@
 
 use strict;
 
-my $user_name = &getValidFormat( 'user_name' );
-if ( $ENV{ PATH_INFO } =~ qr{^/system/users/$user_name$} )
-{
-	my $mod = 'Zevenet::API32::RBAC::User';
 
-	#  PUT /rbac/users/<user>
-	PUT qr{^/system/users/$user_name$}, 'set_rbac_my_user', $mod;
-}
 
-if ( $ENV{ PATH_INFO } =~ qr{^/rbac/(?:users|myuser)} )
+if ( $ENV{ PATH_INFO } =~ qr{^/rbac/(?:users)} )
 {
 	my $mod = 'Zevenet::API32::RBAC::User';
 
