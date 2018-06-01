@@ -400,9 +400,9 @@ if ( $q->path_info =~ qr{^/aliases} )
 	my $alias_type = &getValidFormat( 'alias_type' );
 
 	# /aliases/(backend)s, not match the charater 's'
-	GET qr{^/aliases/($alias_type)s$}                => \&get_by_type;
-	PUT qr{^/aliases/($alias_type)s/($alias_re)$}    => \&set_alias;
-	DELETE qr{^/aliases/($alias_type)s/($alias_re)$} => \&delete_alias;
+	GET qr{^/aliases/($alias_type)s$}               => \&get_by_type;
+	PUT qr{^/aliases/($alias_type)s/([^/]+)$}    => \&set_alias;
+	DELETE qr{^/aliases/($alias_type)s/([^/]+)$}   => \&delete_alias;
 }
 
 ##### Load modules dynamically #######################################

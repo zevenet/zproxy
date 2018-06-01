@@ -243,6 +243,8 @@ my %format_re = (
 
 	# alias
 	'alias_id'   => qr/(?:$ipv4v6|$interface)/,
+	'alias_backend'   => qr/$ipv4v6/,
+	'alias_interface'   => qr/$interface/,
 	'alias_name' => qr/[\w-]+/,
 	'alias_type' => qr/(?:backend|interface)/,
 

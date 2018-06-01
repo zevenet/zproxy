@@ -71,6 +71,13 @@ sub set_alias
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
+	unless ( ( $type eq 'interface' and &getValidFormat( 'alias_interface', $id ) )
+		or ( $type eq 'backend' and &getValidFormat( 'alias_backend', $id ) ) )
+	{
+		my $msg = "The id $id is not correct";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
+
 	if ( $type eq 'interface' )
 	{
 		require Zevenet::Net::Interface;
