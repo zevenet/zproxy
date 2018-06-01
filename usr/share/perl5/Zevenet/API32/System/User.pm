@@ -69,7 +69,7 @@ sub get_system_user
 	}
 }
 
-#  PUT /system/users
+#  POST /system/users
 sub set_system_user
 {
 	my $json_obj = shift;
@@ -165,7 +165,7 @@ sub set_system_user
 		# modify zapi permissions
 		if ( exists $json_obj->{ 'zapi_permissions' } )
 		{
-			if ( &getZapi( 'zapikey' ) )
+			if ( $json_obj->{ 'zapi_permissions' } eq 'true' && &getZAPI( 'zapikey' ) )
 			{
 				my $msg = "It is necessary a zapikey to enable the zapi permissions.";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
