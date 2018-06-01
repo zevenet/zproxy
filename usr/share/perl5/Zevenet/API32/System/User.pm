@@ -165,7 +165,7 @@ sub set_system_user
 		# modify zapi permissions
 		if ( exists $json_obj->{ 'zapi_permissions' } )
 		{
-			if ( $json_obj->{ 'zapi_permissions' } eq 'true' && &getZAPI( 'zapikey' ) )
+			if ( $json_obj->{ 'zapi_permissions' } eq 'true' && !&getZAPI( 'keyzapi' ) )
 			{
 				my $msg = "It is necessary a zapikey to enable the zapi permissions.";
 				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
