@@ -155,11 +155,7 @@ sub set_system_user
 					return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 				}
 			}
-			if ( &setZAPI( 'key', $json_obj->{ 'zapikey' } ) )
-			{
-				my $msg = "Changing $user zapikey.";
-				return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-			}
+			&setZAPI( 'key', $json_obj->{ 'zapikey' } );
 		}
 
 		# modify zapi permissions
