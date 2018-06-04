@@ -112,6 +112,7 @@ sub eload
 	{
 		local %ENV = %ENV;
 		delete $ENV{ GATEWAY_INTERFACE };
+		zenlog("eload full command: echo -n '$input' | $cmd");
 		$ret_output = `echo -n '$input' | $cmd`;
 	}
 	my $rc = $?;
