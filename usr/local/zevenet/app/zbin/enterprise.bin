@@ -589,11 +589,11 @@ sub certcontrol
 
 		if ( $modification[0] ne $date_today) {
 			# Download CRL
-			my $download = `wget -q -O $crl_path https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
+			my $download = `$wget -q -O $crl_path https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
 			&zenlog("CRL Downloaded on $date_today");
 		}
 
-		my @decoded = `openssl crl -inform DER -text -noout -in $crl_path`;
+		my @decoded = `$openssl crl -inform DER -text -noout -in $crl_path`;
 		if ( !grep /keyid:$keyid/, @decoded )
 		{
 			#swcert = 2 ==> Cert isn't signed OK
