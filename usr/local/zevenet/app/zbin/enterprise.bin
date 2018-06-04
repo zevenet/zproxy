@@ -583,7 +583,8 @@ sub certcontrol
 		{
 			&zenlog("WARNING!!! File $crl_path not found.");
 		}
-
+		my $wget = &getGlobalConfiguration( 'wget' );
+		my $openssl = &getGlobalConfiguration( 'openssl' );
 		my @modification = split /\ /, $date_mod;
 		$modification[0] = $modification[0] // '';
 
