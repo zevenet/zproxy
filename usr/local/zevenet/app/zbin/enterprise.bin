@@ -307,13 +307,17 @@ sub getModuleInfo
 	$mod->{ epath } = "$mod->{ path }e";
 
 	# Store in $mod->{ key } the correct path relative to $mod->{ lib_path }
+	&zenlog( "Checking $mod->{ lib_path }/$mod->{ path }" );
+
 	if ( -f "$mod->{ lib_path }/$mod->{ path }" )
 	{
+		&zenlog( "Found $mod->{ lib_path }/$mod->{ path }" );
 		$mod->{ enc } = 'false';
 		$mod->{ key } = "$mod->{ path }";
 	}
 	elsif ( -f "$mod->{ lib_path }/$mod->{ epath }" )
 	{
+		&zenlog( "Found $mod->{ lib_path }/$mod->{ epath }" );
 		$mod->{ enc } = 'true';
 		$mod->{ key } = "$mod->{ epath }";
 	}
