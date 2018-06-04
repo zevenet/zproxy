@@ -38,7 +38,7 @@ my $mod;
 my $program_name =
     ( $0 ne '-e' ) ? $0
   : ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /\/v3\/zapi.cgi$/ ) ? $ENV{ SCRIPT_NAME }
-  : ( exists $ENV{ _ } && $ENV{ _ } !~ /enterprise.bin$/ ) ? $ENV{ _ }
+  : ( exists $ENV{ _ } && $ENV{ _ } !~ /enterprise.bin$/ && $ENV{ _ } !~ /dpkg$/ ) ? $ENV{ _ }
   :                                                          $^X;
 
 # Exception for keepalived running zcluster-manager
