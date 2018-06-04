@@ -328,10 +328,11 @@ sub getModuleInfo
 	}
 	else
 	{
+		use Data::Dumper;
 		$mod->{ key } = '';
 		&zenlog( "FAILURE!!! \$mod->{ lib_path }/\$mod->{ key }: $mod->{ lib_path }/$mod->{ key }" );
-
-		use Data::Dumper;
+		&zenlog( "Module " );
+		&zenlog( Dumper $mod );
 		&zenlog( Dumper \%ENV );
 	}
 
