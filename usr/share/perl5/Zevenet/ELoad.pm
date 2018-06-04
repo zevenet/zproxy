@@ -45,7 +45,7 @@ sub eload
 	}
 
 	use Carp qw(cluck);
-	cluck "[eload]" if &debug() > 4; # warn with stack backtrace
+	cluck "[eload]" if $debug > 4; # warn with stack backtrace
 
 	# check not used params
 	if ( grep { not exists $req{ $_ } } @required )
@@ -101,10 +101,11 @@ sub eload
 
 	my $cmd = "$bin $req{ module } $req{ func }";
 
-	if ( &debug() )
+	if ( $debug )
 	{
 		&zenlog("eload: CMD: '$cmd'", "debug", "SYSTEM");
-		&zenlog("eload: INPUT: '$input'", "debug", "SYSTEM") unless $input eq '[]';
+		&zenlog("eload: INPUT: '$input'", "debug", "SYSTEM");
+		#~ &zenlog("eload: INPUT: '$input'", "debug", "SYSTEM") unless $input eq '[]';
 	}
 
 	my $ret_output;
