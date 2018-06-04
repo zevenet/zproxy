@@ -35,11 +35,16 @@ sub include;
 my $DEBUG  = &debug();
 my $SYMKEY = "1135628147310";
 my $mod;
+#~ my $program_name =
+    #~ ( $0 ne '-e' ) ? $0
+  #~ : ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /\/v3\/zapi.cgi$/ ) ? $ENV{ SCRIPT_NAME }
+  #~ : ( exists $ENV{ _ } && $ENV{ _ } !~ /enterprise.bin$/ && $ENV{ _ } !~ /dpkg$/ ) ? $ENV{ _ }
+  #~ :                                                          $^X;
 my $program_name =
     ( $0 ne '-e' ) ? $0
   : ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /\/v3\/zapi.cgi$/ ) ? $ENV{ SCRIPT_NAME }
-  : ( exists $ENV{ _ } && $ENV{ _ } !~ /enterprise.bin$/ && $ENV{ _ } !~ /dpkg$/ ) ? $ENV{ _ }
-  :                                                          $^X;
+  : ( exists $ENV{ _ } && $ENV{ _ } =~ /enterprise.bin$/ ) ? $^X
+  :															$ENV{ _ };
 
 # Exception for keepalived running zcluster-manager
 # %ENV  = {
