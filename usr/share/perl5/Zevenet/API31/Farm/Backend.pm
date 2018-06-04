@@ -1089,7 +1089,7 @@ sub delete_backend    # ( $farmname, $id_server )
 	}
 
 	&zenlog(
-		   "Success, the backend $id_server in farm $farmname has been deleted.", "info" "FARMS" );
+		   "Success, the backend $id_server in farm $farmname has been deleted.", "info", "FARMS" );
 
 	&eload(
 		module => 'Zevenet::Cluster',

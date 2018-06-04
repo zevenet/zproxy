@@ -889,21 +889,7 @@ sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 
 	&zenlog( "runFarmGuardianCreate( farm: $fname, interval: $ttcheck, cmd: $script, log: $fglog, enabled: $usefg )", "debug", "FG" );
 
-	my $fgfile = &getFarmGuardianFile( $fname, $svice );
 	my $output = -1;
-
-	if ( $fgfile == -1 )
-	{
-		if ( $svice ne "" )
-		{
-			$svice = "${svice}_";
-		}
-
-		$fgfile = "${fname}_${svice}guardian.conf";
-		&zenlog(
-			  "running 'Create FarmGuardian $ttcheck $script $usefg $fglog' for $fname farm", "info", "FG"
-		);
-	}
 
 	# get default name and check not exist
 	my $obj = {
