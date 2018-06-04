@@ -138,22 +138,36 @@ if [ -f /usr/local/zevenet/app/zbin/zlbmigrationto42.sh ]; then
 	/usr/local/zevenet/app/zbin/zlbmigrationto42.sh
 fi
 
+###########
+
 # Http profile directives migration
+echo Http profile directives migration
+sleep 1
+
 if [ -f /usr/local/zevenet/app/zbin/zlbmigrationto402.sh ]; then
 	/usr/local/zevenet/app/zbin/zlbmigrationto402.sh
 fi
 
 # Fix fwmarks for L4xNAT backends
+echo Fix fwmarks for L4xNAT backends
+sleep 1
+
 if [ -f /usr/local/zevenet/app/zbin/fwmark_tag_fix.pl ]; then
 	/usr/local/zevenet/app/zbin/fwmark_tag_fix.pl
 fi
 
 # add #ZWACL-END tag to pound configuration files
+echo add #ZWACL-END tag to pound configuration files
+sleep 1
+
 if [ -f /usr/local/zevenet/app/zbin/add_srv_tag_pound.pl ]; then
 	/usr/local/zevenet/app/zbin/add_srv_tag_pound.pl
 fi
 
 # Migrate HTTP farms to dynamic thread model, without tcmalloc
+echo Migrate HTTP farms to dynamic thread model, without tcmalloc
+sleep 1
+
 for i in $(find /usr/local/zevenet/config/ -name *pound.cfg);
 do
 	if [[ `grep -c ThreadModel $i` == '0' ]]; then
@@ -163,19 +177,31 @@ do
 done
 
 # Migrate interface configuration files to IPv6 ready format
+echo Migrate interface configuration files to IPv6 ready format
+sleep 1
+
 if [ -f /usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl ]; then
 	/usr/local/zevenet/app/zbin/zlbmigrationtoipv6ready.pl
 fi
 
 # Disable DNS resolution for SSH service
+echo Disable DNS resolution for SSH service
+sleep 1
+
 if [ -f /usr/local/zevenet/app/zbin/ssh_nodns.sh ]; then
         /usr/local/zevenet/app/zbin/ssh_nodns.sh
 fi
 
 # Create IPDS directories
+echo Create IPDS directories
+sleep 1
+
 /usr/local/zevenet/bin/boot_ipds
 
 # Do not show warning messages from bonding module on syslog
+echo Do not show warning messages from bonding module on syslog
+sleep 1
+
 ZEVENET_SYSLOG_FILE="/etc/rsyslog.d/10-zevenet.conf"
 if [ ! -f ${ZEVENET_SYSLOG_FILE} ];
 then
@@ -189,6 +215,11 @@ then
 	echo ':msg,contains,"Loading kernel module for a network device with CAP_SYS_MODULE (deprecated).  Use CAP_NET_ADMIN and alias netdev- instead"' ${STOP_TAG} > ${ZEVENET_SYSLOG_FILE}
 	/etc/init.d/rsyslog restart
 fi
+
+echo Done
+sleep 1
+
+############
 
 # restarting zevenet service
 echo "Zevenet will be unavailable while the service is restarting."
