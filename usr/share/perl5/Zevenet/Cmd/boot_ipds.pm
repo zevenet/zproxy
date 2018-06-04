@@ -23,8 +23,14 @@
 
 use strict;
 use warnings;
+
+use feature 'say';
+
+say "[ boot_ipds ] loading Zevenet::IPDS::Blacklist";
 include 'Zevenet::IPDS::Blacklist';
+say "[ boot_ipds ] loading Zevenet::IPDS::DoS";
 include 'Zevenet::IPDS::DoS';
+say "[ boot_ipds ] Done loading";
 
 my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
 my $touch          = &getGlobalConfiguration( 'touch' );
@@ -49,5 +55,7 @@ if ( !-e $blacklistsConf )
 
 #dos
 &setDOSCreateFileConf();
+
+say "[ boot_ipds ] Finished";
 
 exit 0;
