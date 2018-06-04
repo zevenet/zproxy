@@ -3,6 +3,7 @@
 use strict;
 
 use Zevenet::Core;
+use Config::Tiny;
 include 'Zevenet::RBAC::Group::Core';
 include 'Zevenet::RBAC::Group::Runtime';
 
