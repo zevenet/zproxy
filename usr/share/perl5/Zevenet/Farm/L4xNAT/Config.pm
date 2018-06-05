@@ -1655,16 +1655,10 @@ sub reloadL4FarmLogsRule
 		&iptSystem( "$bin -X $log_chain -t $table" );
 	}
 
-	&zenlog ( " ?? $action eq 'false' " );
-	&zenlog ( " ?? ". &getL4FarmLogs( $farmname ). " ne 'true' and $action ne 'true'" );
-	&zenlog ( " ?? ".&getFarmStatus( $farmname )." ne 'up'" );
-
 	# not to apply rules if:
 	return if ( $action eq 'false' );
 	return if ( &getL4FarmLogs( $farmname ) ne "true" and $action ne "true" );
 	return if ( &getFarmStatus( $farmname ) ne 'up' );
-		&zenlog ( " ?? run rules " );
-
 
 	my $comment_tag = "-m comment --comment \"$comment\"";
 	my $log_tag = "-j LOG --log-prefix \"l4: $farmname \" --log-level 4";
@@ -1679,7 +1673,6 @@ sub reloadL4FarmLogsRule
 	my %farm_st        = %{ &getL4FarmStruct( $farmname ) };
 	foreach my $bk ( @{ $farm_st{ servers } } )
 	{
-		&zenlog ( " ?? trying " );
 		my $mark = "-m mark --mark $bk->{tag}";
 		# log only the new connections
 		if ( &getGlobalConfiguration( 'full_farm_logs' ) ne 'true' )
