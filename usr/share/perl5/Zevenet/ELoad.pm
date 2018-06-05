@@ -104,15 +104,13 @@ sub eload
 	if ( $debug )
 	{
 		&zenlog("eload: CMD: '$cmd'", "debug", "SYSTEM");
-		&zenlog("eload: INPUT: '$input'", "debug", "SYSTEM");
-		#~ &zenlog("eload: INPUT: '$input'", "debug", "SYSTEM") unless $input eq '[]';
+		&zenlog("eload: INPUT: '$input'", "debug", "SYSTEM") unless $input eq '[]';
 	}
 
 	my $ret_output;
 	{
 		local %ENV = %ENV;
 		delete $ENV{ GATEWAY_INTERFACE };
-		zenlog("eload full command: echo -n '$input' | $cmd");
 		$ret_output = `echo -n '$input' | $cmd`;
 	}
 	my $rc = $?;
