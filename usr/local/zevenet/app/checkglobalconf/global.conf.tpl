@@ -284,7 +284,7 @@ $ssyncd_port    = "9999";
 
 # time period to get the interface throughput stats
 $throughput_period = "5";
-$throughput_enabled = "true";
+$throughput_enabled = "false";
 
 # connection logs for farms. If this parameter is "true" all traffic will be logged
 # else only the new connections will be logged
