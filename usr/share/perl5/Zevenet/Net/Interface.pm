@@ -29,6 +29,13 @@ if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
 my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
 
+sub getInterfaceConfigFile
+{
+	my $if_name   = shift;
+	my $configdir = &getGlobalConfiguration( 'configdir' );
+	return "$configdir/if_${if_name}_conf";
+}
+
 =begin nd
 Variable: $if_ref
 
