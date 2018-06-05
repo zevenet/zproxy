@@ -60,16 +60,19 @@ my $program_name =
 
 my $basename = ( split ( '/', $program_name ) )[-1];
 
-&zenlog("[ENTERPRISE.BIN] \$0                    = '$0'");
-&zenlog("[ENTERPRISE.BIN] \$^X                   = '$^X'");
-&zenlog("[ENTERPRISE.BIN] \$ENV\{_\}             = '$ENV{_}'") if exists $ENV{_};
-&zenlog("[ENTERPRISE.BIN] \$SYMBOLIC_LINK        = $symbolic_link") if exists $ENV{_};
-&zenlog("[ENTERPRISE.BIN] \$ENV\{SCRIPT_NAME\}   = '$ENV{SCRIPT_NAME}'") if exists $ENV{SCRIPT_NAME};
-&zenlog("[ENTERPRISE.BIN] \$ENV\{INVOCATION_ID\} = '$ENV{INVOCATION_ID}'") if exists $ENV{INVOCATION_ID};
-&zenlog("[ENTERPRISE.BIN] \$program_name         = '$program_name'");
-&zenlog("[ENTERPRISE.BIN] \$basename             = '$basename'");
-&zenlog("[ENTERPRISE.BIN] \@ARGV                 = '@ARGV'");
-#~ &zenlog('[ENTERPRISE.BIN] %ENV                   = ' . Dumper \%ENV );
+if ( $DEBUG > 5 )
+{
+	&zenlog("[ENTERPRISE.BIN] \$0                    = '$0'");
+	&zenlog("[ENTERPRISE.BIN] \$^X                   = '$^X'");
+	&zenlog("[ENTERPRISE.BIN] \$ENV\{_\}             = '$ENV{_}'") if exists $ENV{_};
+	&zenlog("[ENTERPRISE.BIN] \$SYMBOLIC_LINK        = $symbolic_link") if exists $ENV{_};
+	&zenlog("[ENTERPRISE.BIN] \$ENV\{SCRIPT_NAME\}   = '$ENV{SCRIPT_NAME}'") if exists $ENV{SCRIPT_NAME};
+	&zenlog("[ENTERPRISE.BIN] \$ENV\{INVOCATION_ID\} = '$ENV{INVOCATION_ID}'") if exists $ENV{INVOCATION_ID};
+	&zenlog("[ENTERPRISE.BIN] \$program_name         = '$program_name'");
+	&zenlog("[ENTERPRISE.BIN] \$basename             = '$basename'");
+	&zenlog("[ENTERPRISE.BIN] \@ARGV                 = '@ARGV'");
+	#~ &zenlog('[ENTERPRISE.BIN] %ENV                   = ' . Dumper \%ENV );
+}
 
 # Run encrypted command
 if ( $basename ne 'enterprise.bin' && $basename ne 'zevenet' )
@@ -331,15 +334,13 @@ sub getModuleInfo
 		use Data::Dumper;
 		$mod->{ key } = '';
 		&zenlog( "FAILURE!!! \$mod->{ lib_path }/\$mod->{ key }: $mod->{ lib_path }/$mod->{ key }" );
-		&zenlog( "Module " );
-		&zenlog( Dumper $mod );
 	}
 
 	# Store in $mod->{ fullpath } the full path to the module
 	$mod->{ fullpath } = "$mod->{ lib_path }/$mod->{ key }";
 
 	# Debugging message
-	&zenlog( Data::Dumper->Dump( [$mod], ['mod'] ) ) if $DEBUG;
+	&zenlog( Data::Dumper->Dump( [$mod], ['mod'] ), 'debug2' );
 }
 
 =begin nd
