@@ -260,7 +260,7 @@ sub certcontrol
 
 		if ( $modification[0] ne $date_today) {
 			# Download CRL
-	  		my $download = `wget -q -O $crl_path https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
+	  		my $download = `wget -q -O $crl_path https://devcerts.zevenet.com/pki/ca/index.php?stage=dl_crl`;
 	  		&zenlog("CRL Downloaded on $date_today");
 	  	}
 
