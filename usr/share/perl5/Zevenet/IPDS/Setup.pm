@@ -31,8 +31,6 @@ sub migrate_blacklist_names
 	include 'Zevenet::IPDS::Blacklist';
 	use Data::Dumper;
 
-	&zenlog( "migrate_blacklist_names: " . Dumper( $migration ) );
-
 	foreach my $key ( keys %{ $migration } )
 	{
 		my $newlist = $migration->{ $key }->{ name };
