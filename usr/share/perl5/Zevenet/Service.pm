@@ -429,7 +429,7 @@ sub stop_service
 	# stop all modules
 	&zlbstopNotifications();
 	&runIPDSStopModule();
-	&stopTHROUTask();
+	#~ &stopTHROUTask();
 
 	if ( &getZClusterStatus() )
 	{

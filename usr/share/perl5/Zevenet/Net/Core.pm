@@ -158,11 +158,11 @@ sub upIf    # ($if_ref, $writeconf)
 		}
 
 		# Start monitoring throughput
-		&eload(
-				module => 'Zevenet::Net::Throughput',
-				func   => 'startTHROUIface',
-				args   => [$$if_ref{ name }],
-		) if $eload;
+		#~ &eload(
+				#~ module => 'Zevenet::Net::Throughput',
+				#~ func   => 'startTHROUIface',
+				#~ args   => [$$if_ref{ name }],
+		#~ ) if $eload;
 	}
 
 	return $status;
@@ -223,11 +223,11 @@ sub downIf    # ($if_ref, $writeconf)
 		$ip_cmd = "$ip_bin link set dev $$if_ref{name} down";
 
 		# Stop monitoring throughput
-		&eload(
-				module => 'Zevenet::Net::Throughput',
-				func   => 'stopTHROUIface',
-				args   => [$$if_ref{ name }],
-		) if $eload;
+		#~ &eload(
+				#~ module => 'Zevenet::Net::Throughput',
+				#~ func   => 'stopTHROUIface',
+				#~ args   => [$$if_ref{ name }],
+		#~ ) if $eload;
 	}
 
 	# For Vini
