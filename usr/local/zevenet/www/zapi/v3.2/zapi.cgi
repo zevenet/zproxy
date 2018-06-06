@@ -92,6 +92,30 @@ unless (    ( exists $ENV{ HTTP_ZAPI_KEY } && &validZapiKey() )
 				   { code => 401, body => { message => 'Authorization required' } } );
 }
 
+
+
+##### Verify RBAC permissions ########################################
+require Zevenet::Core;
+
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
+my $rbac_msg = &eload(
+							 module => 'Zevenet::RBAC::Core',
+							 func   => 'getRBACPermissionsMsg',
+							 args   => [$q->path_info, $ENV{ REQUEST_METHOD }],
+);
+if ( $rbac_msg )
+{
+	my $desc = "Authentication";
+	&httpErrorResponse(
+						code => 403,
+						desc => $desc,
+						msg  => $rbac_msg
+	);
+}
+
+
 ##### Activation certificates ########################################
 require Zevenet::SystemInfo;
 
@@ -101,35 +125,8 @@ require Zevenet::API32::Routes::Activation
 # Check activation certificate
 &checkActivationCertificate();
 
-##### Verify RBAC permissions ########################################
-require Zevenet::Core;
 
-my $eload;
-if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
-my $has_permission = &eload(
-							 module => 'Zevenet::RBAC::Core',
-							 func   => 'getRBACPathPermissions',
-							 args   => [$q->path_info, $ENV{ REQUEST_METHOD }],
-);
-
-if ( ! $has_permission )
-{
-	require Zevenet::User;
-	my $username = &getUser();
-	my $desc = "Authentication";
-
-	my ( $section, $action ) = &eload(
-							 module => 'Zevenet::RBAC::Core',
-							 func   => 'getRBACPermissionHash',
-							 args   => [$q->path_info, $ENV{ REQUEST_METHOD }], );
-
-	&httpErrorResponse(
-						code => 403,
-						desc => $desc,
-						msg  => "The user '$username' has not permissions for the object '$section' and the action '$action'"
-	);
-}
 
 ##### Load API routes ################################################
 require Zevenet::API32::Routes;

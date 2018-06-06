@@ -118,7 +118,7 @@ Parameters:
 	URL path - Request URL. It was sent by the user in the HTTP request
 
 Returns:
-	Integer - 0 if the user has not permissions or 1 if he can continue with the request
+	String - returns a blank string if the user has permissions, or a error message if it has not
 
 =cut
 
@@ -128,7 +128,7 @@ sub getRBACResourcePermissions
 
 	require Zevenet::User;
 	my $user       = &getUser();
-	my $permission = 1;
+	my $rbac_msg = "";
 
 	include 'Zevenet::RBAC::Group::Core';
 
@@ -144,7 +144,7 @@ sub getRBACResourcePermissions
 		{
 			if ( !grep ( /^$farm$/, @{ &getRBACUsersResources( $user, 'farms' ) } ) )
 			{
-				$permission = 0;
+				$rbac_msg = "The farm $farm is accessible by the user $user";
 			}
 		}
 	}
@@ -157,12 +157,12 @@ sub getRBACResourcePermissions
 		{
 			if ( !grep ( /^$iface$/, @{ &getRBACUsersResources( $user, 'interfaces' ) } ) )
 			{
-				$permission = 0;
+				$rbac_msg = "The interface $iface is not accessible by the user $user";
 			}
 		}
 	}
 
-	return $permission;
+	return $rbac_msg;
 }
 
 =begin nd
@@ -255,7 +255,7 @@ sub getRBACRolePermission
 }
 
 =begin nd
-Function: getRBACPathPermissions
+Function: getRBACPermissionsMsg
 
 	Check if a user has permissions for a request.
 	If a path is not contempled in the role configuration file, by default it will be allowed
@@ -266,16 +266,16 @@ Parameters:
 	Method - HTTP method of the request
 
 Returns:
-	Integerr - 0 if the user's role has not permissions for the path or 1 if it has
+	String - returns a blank string if the user has permissions, or a error message if it has not
 
 =cut
 
-sub getRBACPathPermissions
+sub getRBACPermissionsMsg
 {
 	my $path   = shift;
 	my $method = shift;
 
-	my $permission = 0;
+	my $msg = "";
 	my $section;
 	my $action;
 
@@ -285,39 +285,36 @@ sub getRBACPathPermissions
 	# if the user is root, the user can use any call
 	if ( $username eq 'root' )
 	{
-		$permission = 1;
 	}
 	# all user have permissions
 	elsif( &getRBACExceptions( $path, $method ) )
 	{
-		$permission = 1;
 	}
 	# zapi calls reserved for root user
 	elsif ( not &getRBACForbidden( $path, $method ) )
 	{
 		# it is resource?
-		$permission = &getRBACResourcePermissions( $path );
+		$msg = &getRBACResourcePermissions( $path );
 
-		&zenlog( "Checking resource ($permission)", "debug2", "RBAC" );
-
-		if ( $permission )
+		if ( !$msg )
 		{
 			# get action and section of config file
 			( $section, $action ) = &getRBACPermissionHash( $path, $method );
 
 			# get permission role
-			$permission = &getRBACRolePermission( $section, $action );
+			my $permission = &getRBACRolePermission( $section, $action );
+			$msg = "The user '$username' has not permissions for the object '$section' and the action '$action'" if ( ! $permission );
 		}
 	}
 
-	if ( not $permission )
+	if ( $msg )
 	{ &zenlog( "Request from $username to $method $path. Action BLOCKED", "Error", "RBAC" ); }
 	# elsif ( &getRBACExceptions( $path, $method ) ) {}  # it is not needed now. All exceptions are GET methods
 	elsif ( $method eq 'GET' ) {} # to not log GET requests
 	else
 	{ &zenlog( "Request from $username to $method $path. Action allowed", "Info", "RBAC" ); }
 
-	return $permission;
+	return $msg;
 }
 
 =begin nd
@@ -362,8 +359,11 @@ sub getRBACExceptions
 	my $method = shift;
 
 	if ( $path eq "/certificates/activation/info" and $method eq 'GET' ) { return 1; }
-	if ( $path eq "/stats/system/connections" and $method eq 'GET' ) { return 1; }
+	#~ if ( $path eq "/stats/system/connections" and $method eq 'GET' ) { return 1; }
 	if ( $path eq "/system/cluster/nodes/localhost" and $method eq 'GET' ) { return 1; }
+	if ( $path eq "/system/version" and $method eq 'GET' ) { return 1; }
+	if ( $path =~ "/stats" and $method eq 'GET' ) { return 1; }
+	if ( $path =~ "/graphs" and $method eq 'GET' ) { return 1; }
 
 	return 0;
 }

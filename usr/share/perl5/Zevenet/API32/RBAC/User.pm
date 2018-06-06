@@ -147,6 +147,17 @@ sub set_rbac_user
 	return &httpErrorResponse( code => 400, desc => $desc, msg => $error_msg )
 	  if ( $error_msg );
 
+
+	# Checking the user has a group
+	if ( exists $json_obj->{ 'webgui_permissions' } or exists $json_obj->{ 'zapi_permissions' } )
+	{
+		unless ( &getRBACUserGroup( $user ) )
+		{
+			my $msg = "The user needs a group to enable permissions.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
+	}
+
 	# modify webgui permissions
 	if ( exists $json_obj->{ 'webgui_permissions' } )
 	{

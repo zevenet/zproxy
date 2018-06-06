@@ -24,11 +24,10 @@ use strict;
 
 # Check RBAC permissions
 include 'Zevenet::Certificate';
-include 'Zevenet::RBAC::Core';
 require Zevenet::User;
 
 # GET /certificates/activation/info
-sub get_activation_certificate_info # ()
+sub get_activation_certificate_info    # ()
 {
 	require Zevenet::Certificate;
 
@@ -36,80 +35,59 @@ sub get_activation_certificate_info # ()
 	my $cert_filename = 'zlbcertfile.pem';
 	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
 
-	# Check if the user has permissions with the activation certificate
-	unless ( &getRBACPathPermissions( $ENV{ PATH_INFO },  $ENV{REQUEST_METHOD} ) )
-	{
-		my $username = &getUser();
-		my $desc = "Authentication";
-
-		return &httpErrorResponse(
-							code => 403,
-							desc => $desc,
-							msg  => "The user '$username' has not permissions"
-		);
-	}
-
 	unless ( -f "$cert_dir\/$cert_filename" )
 	{
 		my $msg = "There is no activation certificate installed";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $cert = &getCertInfo( $cert_filename, $cert_dir );
-	my $c_type = 'temporal';
+	my $cert    = &getCertInfo( $cert_filename, $cert_dir );
+	my $c_type  = 'temporal';
 	my $support = 'N/A';
 
-	if ($cert->{ key } =~ m/-/)
+	if ( $cert->{ key } =~ m/-/ )
 	{
-		my $c_days = ( &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) / 86400;
-	    $c_type = ( $c_days > 364 )? 'permanent': 'temporal';
+		my $c_days = (
+			 &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) /
+		  86400;
+		$c_type = ( $c_days > 364 ) ? 'permanent' : 'temporal';
 	}
 	else
 	{
 		my $cert_type = $cert->{ type_cert };
-		$c_type = ( $cert_type eq 'DE' )? 'permanent': 'temporal';
-		my $c_days = ( &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) / 86400;
+		$c_type = ( $cert_type eq 'DE' ) ? 'permanent' : 'temporal';
+		my $c_days = (
+			 &getDateEpoc( $cert->{ expiration } ) - &getDateEpoc( $cert->{ creation } ) ) /
+		  86400;
 
 		if ( $c_type eq 'permanent' )
 		{
-			if ( $c_days < 1 ) { $support = 'false'; } else { $support = 'true' };
+			if   ( $c_days < 1 ) { $support = 'false'; }
+			else                 { $support = 'true' }
 		}
 	}
 
 	my $params = {
-				   days_to_expire 	=> &getCertDaysToExpire( $cert->{ expiration } ),
-				   hostname      	=> $cert->{ CN },
-				   type           	=> $c_type,
-				   certificate_key	=> $cert->{ key },
-				   host_key			=> &keycert(),
-				   support			=> $support
+				   days_to_expire  => &getCertDaysToExpire( $cert->{ expiration } ),
+				   hostname        => $cert->{ CN },
+				   type            => $c_type,
+				   certificate_key => $cert->{ key },
+				   host_key        => &keycert(),
+				   support         => $support
 	};
 	my $body = { description => $desc, params => $params };
 
-	return &httpResponse({ code => 200, body => $body, type => 'text/plain' });
+	return &httpResponse( { code => 200, body => $body, type => 'text/plain' } );
 }
 
 # GET /certificates/activation
-sub get_activation_certificate # ()
+sub get_activation_certificate    # ()
 {
 	require Zevenet::Certificate;
 
 	my $desc          = "Activation certificate";
 	my $cert_filename = 'zlbcertfile.pem';
 	my $cert_dir      = &getGlobalConfiguration( 'basedir' );
-
-	# Check if the user has permissions with the activation certificate
-	unless ( &getRBACPathPermissions( $ENV{ PATH_INFO },  $ENV{REQUEST_METHOD} ) )
-	{
-		my $username = &getUser();
-		my $desc = "Authentication";
-
-		return &httpErrorResponse(
-							code => 403,
-							desc => $desc,
-							msg  => "The user '$username' has not permissions"
-		);
-	}
 
 	unless ( -f "$cert_dir\/$cert_filename" )
 	{
@@ -118,31 +96,18 @@ sub get_activation_certificate # ()
 	}
 
 	my @cert_info = &getCertData( $cert_filename );
-	my $body = "@cert_info";
+	my $body      = "@cert_info";
 
-	return &httpResponse({ code => 200, body => $body, type => 'text/plain' });
+	return &httpResponse( { code => 200, body => $body, type => 'text/plain' } );
 }
 
 # DELETE /certificates/activation
-sub delete_activation_certificate # ( $cert_filename )
+sub delete_activation_certificate    # ( $cert_filename )
 {
 	require Zevenet::Certificate;
 
 	my $desc          = "Delete activation certificate";
 	my $cert_filename = 'zlbcertfile.pem';
-
-	# Check if the user has permissions with the activation certificate
-	unless ( &getRBACPathPermissions( $ENV{ PATH_INFO },  $ENV{REQUEST_METHOD} ) )
-	{
-		my $username = &getUser();
-		my $desc = "Authentication";
-
-		return &httpErrorResponse(
-							code => 403,
-							desc => $desc,
-							msg  => "The user '$username' has not permissions"
-		);
-	}
 
 	unless ( &delCert_activation( $cert_filename ) )
 	{
@@ -157,7 +122,7 @@ sub delete_activation_certificate # ( $cert_filename )
 				 message     => $msg,
 	};
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 # POST /certificates/activation
@@ -165,25 +130,12 @@ sub delete_activation_certificate # ( $cert_filename )
 # Curl command:
 #
 # curl -kis --tcp-nodelay -X POST -H "ZAPI_KEY: 2bJUd" -H 'Content-Type: application/x-pem-file' https://1.2.3.4:444/zapi/v3/zapi.cgi/certificates/activation --data-binary @hostmane.pem
-sub upload_activation_certificate # ()
+sub upload_activation_certificate    # ()
 {
 	my $upload_filehandle = shift;
 
-	my $desc = "Upload activation certificate";
+	my $desc     = "Upload activation certificate";
 	my $filename = 'zlbcertfile.pem';
-
-	# Check if the user has permissions with the activation certificate
-	unless ( &getRBACPathPermissions( $ENV{ PATH_INFO },  $ENV{REQUEST_METHOD} ) )
-	{
-		my $username = &getUser();
-		my $desc = "Authentication";
-
-		return &httpErrorResponse(
-							code => 403,
-							desc => $desc,
-							msg  => "The user '$username' has not permissions"
-		);
-	}
 
 	unless ( $upload_filehandle )
 	{
@@ -191,7 +143,7 @@ sub upload_activation_certificate # ()
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my $basedir = &getGlobalConfiguration('basedir');
+	my $basedir = &getGlobalConfiguration( 'basedir' );
 
 	open ( my $cert_filehandle, '>', "$basedir/$filename" ) or die "$!";
 	binmode $cert_filehandle;
@@ -210,8 +162,7 @@ sub upload_activation_certificate # ()
 				 message     => $msg,
 	};
 
-	return &httpResponse({ code => 200, body => $body });
+	return &httpResponse( { code => 200, body => $body } );
 }
-
 
 1;
