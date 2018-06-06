@@ -714,9 +714,13 @@ sub getCertDaysToExpire
 
 	my $end = &getDateEpoc( $cert_ends );
 	my $days_left = ( $end - time () ) / 86400;
-	$days_left =~ s/\..*//g;
 
-	return $days_left + 0;
+	# leave only two decimals
+	$days_left *= 100;
+	$days_left =~ s/\..*//g;
+	$days_left /= 100;
+
+	return $days_left;
 }
 
 1;
