@@ -1182,7 +1182,7 @@ sub getRBACPermissionFgHash
 				 ],
 				 'POST' => [
 							{
-							  'regex'   => qr{^/monitoring/fg/$object_re$},
+							  'regex'   => qr{^/monitoring/fg$},
 							  'section' => 'farmguardian',
 							  'action'  => 'modify',
 							},
