@@ -24,6 +24,10 @@
 use strict;
 use warnings;
 
+my $LOG_TAG = "";
+$LOG_TAG = "ZAPI" if ( exists $ENV{ HTTP_ZAPI_KEY } );
+$LOG_TAG = "WEBGUI" if ( exists $ENV{ HTTP_COOKIE } );
+
 require CGI::Session;
 
 # POST CGISESSID to login
@@ -78,7 +82,7 @@ sub session_login
 	$body->{ host } = &getHostname();
 	$body->{ key } = &keycert() if defined ( &keycert );
 
-	&zenlog( "Login successful for user: $username", "info", "ZAPI" );
+	&zenlog( "Login successful for user: $username", "info", $LOG_TAG );
 	&httpResponse(
 				   {
 					 code    => 200,
@@ -110,7 +114,7 @@ sub session_logout
 	my $username = $session->param( 'username' );
 	my $ip_addr  = $session->param( '_SESSION_REMOTE_ADDR' );
 
-	&zenlog( "Logged out user $username from $ip_addr", "info", "ZAPI" );
+	&zenlog( "Logged out user $username from $ip_addr", "info", $LOG_TAG );
 
 	$session->delete();
 	$session->flush();
