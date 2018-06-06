@@ -680,16 +680,18 @@ sub getCertInfo    # ($certfile)
 		$expiration = "NA";
 	}
 
-	return {
-			 file       => $certfile,
-			 type       => $type,
-			 CN         => $cn,
-			 key        => $key,
-			 issuer     => $issuer,
-			 creation   => $creation,
-			 expiration => $expiration,
-			 type_cert  => $type_cert,
-	};
+    my %response = (
+                     file       => $certfile,
+                     type       => $type,
+                     CN         => $cn,
+                     key        => $key,
+                     issuer     => $issuer,
+                     creation   => $creation,
+                     expiration => $expiration,
+    );
+    $response{type_cert} = $type_cert if ($filepath eq 'zlbcertfile.pem');
+
+    return \%response;
 }
 
 sub getCertDaysToExpire
