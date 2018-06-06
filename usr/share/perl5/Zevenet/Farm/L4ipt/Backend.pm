@@ -268,42 +268,6 @@ sub runL4FarmServerDelete    # ($ids,$farm_name)
 	return $output;
 }
 
-=begin nd
-Function: getL4FarmBackendsStatus_old
-
-	function that return the status information of a farm:
-	ip, port, backendstatus, weight, priority, clients
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Array - one backed per line. The line format is: "ip;port;weight;priority;status"
-
-FIXME:
-	Change output to hash
-
-=cut
-
-sub getL4FarmBackendsStatus_old    # ($farm_name,@content)
-{
-	my ( $farm_name, @content ) = @_;
-
-	my @backends_data;             # output
-
-	foreach my $server ( @content )
-	{
-		my @serv = split ( "\;", $server );
-		my $port = $serv[3];
-		if ( $port eq "" )
-		{
-			$port = &getFarmVip( "vipp", $farm_name );
-		}
-		push ( @backends_data, "$serv[2]\;$port\;$serv[5]\;$serv[6]\;$serv[7]" );
-	}
-
-	return @backends_data;
-}
 
 =begin nd
 Function: setL4FarmBackendsSessionsRemove
@@ -455,20 +419,17 @@ sub setL4FarmBackendStatus    # ($farm_name,$server_id,$status)
 	return $output;
 }
 
+
 =begin nd
 Function: getL4FarmServers
 
-	 Get all backends and theris configuration
+	 Get all backends and their configuration
 
 Parameters:
 	farmname - Farm name
 
 Returns:
-	Array - one backed per line. The line format is:
-	"index;ip;port;mark;weight;priority;status"
-
-FIXME:
-	Return as array of hash refs
+	Array - array of hash refs of backend struct
 
 =cut
 
@@ -477,62 +438,45 @@ sub getL4FarmServers    # ($farm_name)
 	my $farm_name = shift;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $sindex        = 0;
-	my @servers;
 
-	open FI, "<", "$configdir/$farm_filename"
-	  or &zenlog( "Error opening file $configdir/$farm_filename: $!" );
-
-	while ( my $line = <FI> )
-	{
-		chomp ( $line );
-
-		if ( $line =~ /^\;server\;/ )
-		{
-			$line =~ s/^\;server/$sindex/g;    #, $line;
-			push ( @servers, $line );
-			$sindex++;
-		}
-	}
+	open FI, "<", "$configdir/$farm_filename";
+	chomp(my @content = <FI>);
 	close FI;
 
-	chomp @servers;
-
-	return @servers;
+	return &_getL4FarmParseServers( \@content );
 }
 
-=begin nd
-Function: getL4FarmBackends
 
-	 Get all backends and theirs configuration
+=begin nd
+Function: _getL4FarmParseServers
+
+	Return the list of backends with all data about a backend in a l4 farm
 
 Parameters:
-	farmname - Farm name
+	config - plain text server list
 
 Returns:
-	Array ref - Return a array in each element is a hash with the backend
-	configuration. The array index is the backend id
+	backends array - array of backends structure
+		\%backend = { $id, $alias, $family, $ip, $port, $tag, $weight, $priority, $status, $rip = $ip }
 
 =cut
 
-sub getL4FarmBackends    # ($farm_name)
+sub _getL4FarmParseServers
 {
-	my $farm_name = shift;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $sindex        = 0;
+	my $config = shift;
+	my $stage = 0;
+	my $sindex = 0;
+	my $server;
 	my @servers;
 
-	require Zevenet::Farm::Base;
-	my $farmStatus = &getFarmStatus( $farm_name );
-
-	open FI, "<", "$configdir/$farm_filename"
-	  or &zenlog( "Error opening file $configdir/$farm_filename: $!" );
+	require Zevenet::Farm::L4xNAT::Config;
+	my $farmStatus = &_getL4ParseFarmConfig( 'status', undef, $config );
+	my $fproto = &_getL4ParseFarmConfig( 'proto', undef, $config );
 
 	require Zevenet::Alias;
 	my $alias = getAlias( 'backend' );
 
-	while ( my $line = <FI> )
+	foreach my $line( @{ $config } )
 	{
 		chomp ( $line );
 
@@ -542,69 +486,52 @@ sub getL4FarmBackends    # ($farm_name)
 			my @aux = split ( ';', $line );
 
 			# Return port as integer
-			$aux[3] = $aux[3] + 0 if ( $aux[3] =~ /^\d+$/ );
+			my $port = $aux[3] + 0 if ( $aux[3] =~ /^\d+$/ );
 
 			my $status = $aux[7];
 			if ( $status eq "fgDOWN" )
 			{
 				$status = "down";
 			}
+
 			if ( ( $status ne "maintenance" ) && ( $farmStatus eq "down" ) )
 			{
 				$status = "undefined";
 			}
 
-			push @servers, {
-				alias => $alias->{ $aux[2] },
-				id    => $sindex,
-				ip    => $aux[2],
-				port  => ( $aux[3] ) ? $aux[3] : undef,
+			my $rip;
+			if ( $port ne '' && $fproto ne 'all' )
+			{
+				if ( &ipversion( $aux[2] ) == 4 )
+				{
+					$rip = "$aux[2]\:$port";
+				}
+				elsif ( &ipversion( $aux[2] ) == 6 )
+				{
+					$rip = "[$aux[2]]\:$port";
+				}
+			}
 
-				#~ mark=>$aux[4],
-				weight    => $aux[5] + 0,
-				priority  => $aux[6] + 0,
-				max_conns => $aux[8] + 0,
-				status    => $status,
+			push @servers, {
+				alias		=> $alias->{ $aux[2] },
+				id		=> $sindex,
+				ip		=> $aux[2],
+				port		=> ( $aux[3] ) ? $aux[3] : undef,
+				tag		=> $aux[4],
+				weight		=> $aux[5] + 0,
+				priority	=> $aux[6] + 0,
+				max_conns	=> $aux[8] + 0,
+				status		=> $status,
+				rip		=> $rip,
 			};
 
 			$sindex++;
 		}
 	}
-	close FI;
 
-	return \@servers;
+	return \@servers;    # return reference
 }
 
-=begin nd
-Function: getL4FarmBackendStatusCtl
-
-	Returns backends information lines
-
-Parameters:
-	farmname - Farmname
-
-Returns:
-	Array - Each line has the next format: ";server;ip;port;mark;weight;priority;status"
-
-Bugfix:
-	DUPLICATED, do same than getL4FarmServers
-
-=cut
-
-sub getL4FarmBackendStatusCtl    # ($farm_name)
-{
-	my $farm_name     = shift;
-	my $farm_filename = &getFarmFile( $farm_name );
-	my @output;
-
-	open my $farm_file, '<', "$configdir\/$farm_filename";
-	@output = grep { /^\;server\;/ } <$farm_file>;
-	close $farm_file;
-
-	chomp @output;
-
-	return @output;
-}
 
 =begin nd
 Function: _runL4ServerStart
@@ -864,11 +791,9 @@ sub getL4FarmBackendMaintenance
 	my ( $farm_name, $backend ) = @_;
 
 	my @servers = &getL4FarmServers( $farm_name );
-	my @backend_args = split "\;", $servers[$backend];
-	chomp ( @backend_args );
 
 	return (    # parentheses required
-		$backend_args[6] eq 'maintenance'
+		$servers[$backend]{ status } eq 'maintenance'
 		? 0                                 # in maintenance
 		: 1                                 # not in maintenance
 	);

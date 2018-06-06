@@ -58,20 +58,13 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	{
 		# Get ID of the new backend
 		my $id  = 0;
-		my @run = &getFarmServers( $farmname );
+		my @servers = &getL4FarmServers( $farmname );
 
-		if ( @run > 0 )
+		foreach my $l_server ( @servers )
 		{
-			foreach my $l_servers ( @run )
+			if ( $l_server->{ ip } ne "0.0.0.0" && $l_server->{ id } > $id )
 			{
-				my @l_serv = split ( ";", $l_servers );
-				if ( $l_serv[1] ne "0.0.0.0" )
-				{
-					if ( $l_serv[0] > $id )
-					{
-						$id = $l_serv[0];
-					}
-				}
+				$id = $l_server->{ id };
 			}
 
 			if ( $id >= 0 )
@@ -1725,12 +1718,23 @@ sub delete_backend # ( $farmname, $id_server )
 		&httpResponse({ code => 400, body => $body });
 	}
 
-	require Zevenet::Farm::Backend;
+	my $exists = 0;
 
-	my @backends = &getFarmServers( $farmname );
-	my $backend_line = $backends[$id_server];
+	if ( $type eq 'l4xnat' )
+	{
+		require Zevenet::Farm::L4xNAT::Backend;
+		my @servers = &getL4FarmServers( $farmname );
+		my $nservers = @servers;
+		$exists = ( $nservers ) ? 1 : 0;
+	}
+	else
+	{
+		require Zevenet::Farm::Backend;
+		my @backends = &getFarmServers( $farmname );
+		my $exists = $backends[$id_server];
+	}
 
-	if ( !$backend_line )
+	if ( !$exists )
 	{
 		# Error
 		my $errormsg = "Could not find a backend with such id.";

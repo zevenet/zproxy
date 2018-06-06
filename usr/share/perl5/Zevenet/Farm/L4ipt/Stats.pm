@@ -44,11 +44,9 @@ sub getL4BackendEstConns    # ($farm_name,$be_ip,$be_port,$netstat)
 {
 	my ( $farm_name, $be_ip, $be_port, $netstat ) = @_;
 
-	my $fvip        = &getFarmVip( "vip",  $farm_name );
-	my $fvipp       = &getFarmVip( "vipp", $farm_name );
-	my $proto       = &getFarmProto( $farm_name );
-	my $nattype     = &getFarmNatType( $farm_name );
-	my @fportlist   = &getFarmPortList( $fvipp );
+	my %farm = &getL4FarmStruct( $farm_name );
+
+	my @fportlist   = &getFarmPortList( $farm{ port } );
 	my $regexp      = "";
 	my $connections = 0;
 
@@ -61,9 +59,9 @@ sub getL4BackendEstConns    # ($farm_name,$be_ip,$be_port,$netstat)
 		$regexp = "\.*";
 	}
 
-	if ( $nattype eq "dnat" )
+	if ( $farm{ mode } eq "dnat" )
 	{
-		if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+		if ( $farm{ proto } eq "sip" || $farm{ proto } eq "all" || $farm{ proto } eq "tcp" )
 		{
 			# i.e.
 			# tcp      6 431998 ESTABLISHED src=192.168.0.168 dst=192.168.100.241 sport=40130 dport=81 src=192.168.100.254 dst=192.168.100.241 sport=80 dport=40130 [ASSURED] mark=523 use=1
@@ -72,18 +70,18 @@ sub getL4BackendEstConns    # ($farm_name,$be_ip,$be_port,$netstat)
 				&getNetstatFilter(
 					"tcp",
 					"",
-					"\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp \.*src=$be_ip \.*",
+					"\.* ESTABLISHED src=\.* dst=$farm{ vip } \.* dport=$regexp \.*src=$be_ip \.*",
 					"",
 					$netstat
 				) };
 		}
-		if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
+		if ( $farm{ proto } eq "sip" || $farm{ proto } eq "all" || $farm{ proto } eq "udp" )
 		{
 			$connections += scalar @{
 				&getNetstatFilter(
 					"udp",
 					"",
-					"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$be_ip \.*",
+					"\.* src=\.* dst=$farm{ vip } \.* dport=$regexp .*src=$be_ip \.*",
 					"",
 					$netstat
 				) };
@@ -91,24 +89,24 @@ sub getL4BackendEstConns    # ($farm_name,$be_ip,$be_port,$netstat)
 	}
 	else
 	{
-		if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+		if ( $farm{ proto } eq "sip" || $farm{ proto } eq "all" || $farm{ proto } eq "tcp" )
 		{
 			$connections += scalar @{
 				&getNetstatFilter(
 					"tcp",
 					"",
-					"\.*ESTABLISHED src=\.* dst=$fvip sport=\.* dport=$regexp \.*src=$be_ip \.*",
+					"\.*ESTABLISHED src=\.* dst=$farm{ vip } sport=\.* dport=$regexp \.*src=$be_ip \.*",
 					"",
 					$netstat
 				) };
 		}
-		if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
+		if ( $farm{ proto } eq "sip" || $farm{ proto } eq "all" || $farm{ proto } eq "udp" )
 		{
 			$connections += scalar @{
 				&getNetstatFilter(
 					"udp",
 					"",
-					"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$be_ip \.*",
+					"\.* src=\.* dst=$farm{ vip } \.* dport=$regexp .*src=$be_ip \.*",
 					"",
 					$netstat
 				) };
@@ -138,13 +136,9 @@ sub getL4FarmEstConns    # ($farm_name,$netstat)
 {
 	my ( $farm_name, $netstat ) = @_;
 
-	require Zevenet::Farm::L4xNAT::Backend;
+	my %farm = &getL4FarmStruct( $farm_name );
 
-	my $proto     = &getFarmProto( $farm_name );
-	my $nattype   = &getFarmNatType( $farm_name );
-	my $fvip      = &getFarmVip( "vip", $farm_name );
-	my $fvipp     = &getFarmVip( "vipp", $farm_name );
-	my @fportlist = &getFarmPortList( $fvipp );
+	my @fportlist = &getFarmPortList( $farm{ port } );
 	my $regexp    = "";
 	my $connections = 0;
 
@@ -157,39 +151,33 @@ sub getL4FarmEstConns    # ($farm_name,$netstat)
 		$regexp = "\.*";
 	}
 
-	my @content  = &getL4FarmBackendStatusCtl( $farm_name );
-	my @backends = &getL4FarmBackendsStatus_old( $farm_name, @content );
+	my $backends  = &getL4FarmServers( $farm_name );
 
-	foreach ( @backends )
+	foreach my $backend ( @{ $backends } )
 	{
-		chomp($_);
-		my @backends_data = split ( ";", $_ );
-
-		if ( $backends_data[4] eq "up" )
+		if ( $backend->{ status } eq "up" )
 		{
-			my $ip_backend = $backends_data[0];
-
-			if ( $nattype eq "dnat" )
+			if ( $farm{ mode } eq "dnat" )
 			{
-				if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+				if ( $farm{ proto } eq "sip" || $farm{ proto } eq "all" || $farm{ proto } eq "tcp" )
 				{
 					$connections += scalar @{
 						&getNetstatFilter(
 							"tcp",
 							"",
-							"\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+							"\.* ESTABLISHED src=\.* dst=$farm{ vip } \.* dport=$regexp .*src=$backend->{ ip } \.*",
 							"",
 							$netstat
 						) };
 				}
 
-				if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
+				if ( $farm{ proto } eq "sip" || $farm{ proto } eq "all" || $farm{ proto } eq "udp" )
 				{
 					$connections += scalar @{
 						&getNetstatFilter(
 							"udp",
 							"",
-							"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+							"\.* src=\.* dst=$farm{ vip } \.* dport=$regexp .*src=$backend->{ ip } \.*",
 							"",
 							$netstat
 						) };
@@ -197,25 +185,25 @@ sub getL4FarmEstConns    # ($farm_name,$netstat)
 			}
 			else
 			{
-				if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+				if ( $farm{ proto } eq "sip" || $farm{ proto } eq "all" || $farm{ proto } eq "tcp" )
 				{
 					$connections += scalar @{
 						&getNetstatFilter(
 							"tcp",
 							"",
-							"\.* ESTABLISHED src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend \.*",
+							"\.* ESTABLISHED src=\.* dst=$farm{ vip } \.* dport=$regexp .*src=$backend->{ ip } \.*",
 							"",
 							$netstat
 						) };
 				}
 
-				if ( $proto eq "sip" || $proto eq "all" || $proto eq "udp" )
+				if ( $farm{ proto } eq "sip" || $farm{ proto } eq "all" || $farm{ proto } eq "udp" )
 				{
 					$connections += scalar @{
 						&getNetstatFilter(
 							"udp",
 							"",
-							"\.* src=\.* dst=$fvip \.* dport=$regexp .*src=$ip_backend",
+							"\.* src=\.* dst=$farm{ vip } \.* dport=$regexp .*src=$backend->{ ip }",
 							"",
 							$netstat
 						) };
@@ -248,11 +236,9 @@ sub getL4BackendSYNConns    # ($farm_name,$be_ip,$be_port,$netstat)
 {
 	my ( $farm_name, $be_ip, $be_port, $netstat ) = @_;
 
-	my $proto     = &getFarmProto( $farm_name );
-	my $nattype   = &getFarmNatType( $farm_name );
-	my $fvip      = &getFarmVip( "vip", $farm_name );
-	my $fvipp     = &getFarmVip( "vipp", $farm_name );
-	my @fportlist = &getFarmPortList( $fvipp );
+	my %farm = &getL4FarmStruct( $farm_name );
+
+	my @fportlist = &getFarmPortList( $farm{ port } );
 	my $regexp    = "";
 	my $connections = 0;
 
@@ -265,15 +251,15 @@ sub getL4BackendSYNConns    # ($farm_name,$be_ip,$be_port,$netstat)
 		$regexp = "\.*";
 	}
 
-	if ( $nattype eq "dnat" )
+	if ( $farm{ mode } eq "dnat" )
 	{
-		if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+		if ( $farm{ proto } eq "sip" || $farm{ proto } eq "all" || $farm{ proto } eq "tcp" )
 		{
 			$connections += scalar @{
 				&getNetstatFilter(
 					"tcp",
 					"",
-					"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$be_ip \.*",
+					"\.* SYN\.* src=\.* dst=$farm{ vip } \.* dport=$regexp \.* src=$be_ip \.*",
 					"",
 					$netstat
 				) };
@@ -282,13 +268,13 @@ sub getL4BackendSYNConns    # ($farm_name,$be_ip,$be_port,$netstat)
 	}
 	else
 	{
-		if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+		if ( $farm{ proto } eq "sip" || $farm{ proto } eq "all" || $farm{ proto } eq "tcp" )
 		{
 			$connections += scalar @{
 				&getNetstatFilter(
 					"tcp",
 					"",
-					"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$be_ip \.*",
+					"\.* SYN\.* src=\.* dst=$farm{ vip } \.* dport=$regexp \.* src=$be_ip \.*",
 					"",
 					$netstat
 				) };
@@ -319,13 +305,9 @@ sub getL4FarmSYNConns    # ($farm_name,$netstat)
 {
 	my ( $farm_name, $netstat ) = @_;
 
-	require Zevenet::Farm::L4xNAT::Backend;
+	my %farm = &getL4FarmStruct( $farm_name );
 
-	my $fvip  = &getFarmVip( "vip",  $farm_name );
-	my $fvipp = &getFarmVip( "vipp", $farm_name );
-	my $proto = &getFarmProto( $farm_name );
-	my $nattype   = &getFarmNatType( $farm_name );
-	my @fportlist = &getFarmPortList( $fvipp );
+	my @fportlist = &getFarmPortList( $farm{ port } );
 	my $regexp    = "";
 	my $connections = 0;
 
@@ -338,28 +320,22 @@ sub getL4FarmSYNConns    # ($farm_name,$netstat)
 		$regexp = ".*";
 	}
 
-	my @content  = &getL4FarmBackendStatusCtl( $farm_name );
-	my @backends = &getL4FarmBackendsStatus_old( $farm_name, @content );
+	my $backends  = &getL4FarmServers( $farm_name );
 
 	# tcp      6 299 ESTABLISHED src=192.168.0.186 dst=192.168.100.241 sport=56668 dport=80 src=192.168.0.186 dst=192.168.100.241 sport=80 dport=56668 [ASSURED] mark=517 use=2
-	foreach ( @backends )
+	foreach my $backend ( @{ $backends } )
 	{
-		my @backends_data = split ( ";", $_ );
-		chomp ( @backends_data );
-
-		if ( $backends_data[4] eq "up" )
+		if ( $backend->{ status } eq "up" )
 		{
-			my $ip_backend = $backends_data[0];
-
-			if ( $nattype eq "dnat" )
+			if ( $farm{ mode } eq "dnat" )
 			{
-				if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+				if ( $farm{ proto } eq "sip" || $farm{ proto } eq "all" || $farm{ proto } eq "tcp" )
 				{
 					$connections += scalar @{
 						&getNetstatFilter(
 								"tcp",
 								"",
-								"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*",
+								"\.* SYN\.* src=\.* dst=$farm{ vip } \.* dport=$regexp \.* src=$backend->{ ip } \.*",
 								"",
 								$netstat
 						) };
@@ -368,13 +344,13 @@ sub getL4FarmSYNConns    # ($farm_name,$netstat)
 			}
 			else
 			{
-				if ( $proto eq "sip" || $proto eq "all" || $proto eq "tcp" )
+				if ( $farm{ proto } eq "sip" || $farm{ proto } eq "all" || $farm{ proto } eq "tcp" )
 				{
 					$connections += scalar @{
 						&getNetstatFilter(
 								"tcp",
 								"",
-								"\.* SYN\.* src=\.* dst=$fvip \.* dport=$regexp \.* src=$ip_backend \.*",
+								"\.* SYN\.* src=\.* dst=$farm{ vip } \.* dport=$regexp \.* src=$backend->{ ip } \.*",
 								"",
 								$netstat
 						) };
@@ -403,17 +379,16 @@ sub getL4FarmBackendsStats
 	my $farmname = shift;
 
 	require Zevenet::Net::ConnStats;
-	require Zevenet::Farm::L4xNAT::Backend;
-	require Zevenet::Farm::L4xNAT::Stats;
+	require Zevenet::Farm::L4xNAT::Config;
 
 	# Get list of backend hashes and add stats
-	my @backends = @{ &getL4FarmBackends( $farmname ) };
-	my $proto    = &getFarmProto( $farmname );
-	my $fvip     = &getFarmVip( "vip", $farmname );
+	my %farm_st = &getL4FarmStruct( $farmname );
 
-	foreach my $be ( @backends )
+	my $backends = $farm_st{ servers };
+
+	foreach my $be ( @{ $backends } )
 	{
-		my $netstat = &getConntrack( "", $fvip, $be->{ 'ip' }, "", "" );
+		my $netstat = &getConntrack( "", $farm_st{ vip }, $be->{ 'ip' }, "", "" );
 
 		# Established
 		$be->{ 'established' } =
@@ -422,14 +397,14 @@ sub getL4FarmBackendsStats
 		# Pending
 		$be->{ 'pending' } = 0;
 
-		if ( $proto ne "udp" )
+		if ( $farm_st{ proto } ne "udp" )
 		{
 			$be->{ 'pending' } =
 			  &getL4BackendSYNConns( $farmname, $be->{ 'ip' }, $be->{ 'port' }, $netstat );
 		}
 	}
 
-	return \@backends;
+	return $backends;
 }
 
 
@@ -450,11 +425,11 @@ sub getL4FarmSessions
 
 	my $conntrack_bin = &getGlobalConfiguration('conntrack');
 	my $sessions = [];
-	my $farm_st = &getL4FarmStruct( $farmname );
+	my $backends  = &getL4FarmServers( $farmname );
 
 	my $id = 0;
 
-	foreach my $bk ( @{ $farm_st->{ servers } } )
+	foreach my $bk ( @{ $backends } )
 	{
 		# get backend lines
 		my $params = &getConntrackParams( { 'mark' => $bk->{ tag } } );

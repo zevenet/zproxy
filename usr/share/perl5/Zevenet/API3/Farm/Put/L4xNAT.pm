@@ -34,7 +34,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	my $restart_flag = "false";
 	my $error        = "false";
 	my $status;
-	my $initialStatus = &getFarmStatus( $farmname );
+	my $initialStatus = &getL4FarmParam( 'status', $farmname );
 
 	include 'Zevenet::IPDS::Base';
 	include 'Zevenet::IPDS::Blacklist';
@@ -68,7 +68,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 	# Modify Farm's Name
 	if ( exists ( $json_obj->{ newfarmname } ) )
 	{
-		unless ( &getFarmStatus( $farmname ) eq 'down' )
+		unless ( &getL4FarmParam( 'status', $farmname ) eq 'down' )
 		{
 			&zenlog(
 				"ZAPI error, trying to modify a l4xnat farm $farmname, cannot change the farm name while running"
@@ -181,7 +181,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 			my $persistence = $json_obj->{ persistence };
 			$persistence = 'none' if $persistence eq '';
 
-			if (&getFarmPersistence($farmname) ne $persistence)
+			if (&getL4FarmParam('persist', $farmname) ne $persistence)
 			{
 				my $statusp = &setFarmSessionType( $persistence, $farmname, "" );
 				if ( $statusp != 0 )
@@ -217,7 +217,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		}
 		if ( $json_obj->{ protocol } =~ /^all|tcp|udp|sip|ftp|tftp$/ )
 		{
-			$status = &setFarmProto( $json_obj->{ protocol }, $farmname );
+			$status = &setL4FarmParam( 'proto', $json_obj->{ protocol }, $farmname );
 			if ( $status != 0 )
 			{
 				$error = "true";
@@ -254,9 +254,9 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		}
 		if ( $json_obj->{ nattype } =~ /^nat|dnat$/ )
 		{
-			if (&getFarmNatType($farmname) ne $json_obj->{nattype})
+			if ( &getL4FarmParam( 'mode', $farmname) ne $json_obj->{nattype} )
 			{
-				$status = &setFarmNatType( $json_obj->{ nattype }, $farmname );
+				$status = &setL4FarmParam( 'mode', $json_obj->{ nattype }, $farmname );
 				if ( $status != 0 )
 				{
 					$error = "true";
@@ -440,7 +440,7 @@ sub modify_l4xnat_farm # ( $json_obj, $farmname )
 		&zenlog(
 				  "ZAPI success, some parameters have been changed in farm $farmname." );
 
-		if ( &getFarmStatus( $farmname ) eq 'up' )
+		if ( &getL4FarmParam( 'status', $farmname ) eq 'up' )
 		{
 			# Reset ip rule mark when changing the farm's vip
 			if ( exists $json_obj->{ vip } && $json_obj->{ vip } ne $vip )

@@ -57,21 +57,13 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		# Get ID of the new backend
 		# FIXME: Maybe make a function of this?
 		my $id  = 0;
-		my @run = &getFarmServers( $farmname );
+		my $servers = &getFarmServers( $farmname );
 
-		if ( @run > 0 )
+		foreach my $l_server ( @{ $servers } )
 		{
-			foreach my $l_servers ( @run )
+			if ( $l_server->{ ip } ne "0.0.0.0" && $l_server->{ id } > $id )
 			{
-				my @l_serv = split ( ";", $l_servers );
-
-				if ( $l_serv[1] ne "0.0.0.0" )
-				{
-					if ( $l_serv[0] > $id )
-					{
-						$id = $l_serv[0];
-					}
-				}
+				$id = $l_server->{ id };
 			}
 
 			if ( $id >= 0 )
@@ -483,7 +475,7 @@ sub backends
 	if ( $type eq 'l4xnat' )
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
-		my $backends = &getL4FarmBackends( $farmname );
+		my $backends = &getL4FarmServers( $farmname );
 
 		my $body = {
 					 description => $desc,
@@ -626,6 +618,7 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 	if ( $type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
+		require Zevenet::Net::Validate;
 
 		# Params
 		my $l4_farm = &getL4FarmStruct( $farmname );
@@ -1061,12 +1054,22 @@ sub delete_backend    # ( $farmname, $id_server )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
+	my $exists = 0;
+
 	require Zevenet::Farm::Backend;
+	if ( $type eq 'l4xnat' )
+	{
+		my $servers = &getFarmServers( $farmname );
+		my $nservers = @{ $servers };
+		$exists = ( $nservers ) ? 1 : 0;
+	}
+	else
+	{
+		my $backends = &getFarmServers( $farmname );
+		my $exists = @{ $backends }[$id_server];
+	}
 
-	my @backends     = &getFarmServers( $farmname );
-	my $backend_line = $backends[$id_server];
-
-	if ( !$backend_line )
+	if ( !$exists )
 	{
 		my $msg = "Could not find a backend with such id.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
@@ -1091,6 +1094,7 @@ sub delete_backend    # ( $farmname, $id_server )
 	) if ( $eload );
 
 	my $message = "Backend removed";
+	require Zevenet::Farm::Base;
 	my $body = {
 				 description => $desc,
 				 success     => "true",

@@ -212,15 +212,15 @@ sub farm_stats # ( $farmname )
 		my @out_rss;
 
 		my @args;
-		my $nattype = &getFarmNatType( $farmname );
-		my $proto   = &getFarmProto( $farmname );
+		my $nattype = &getL4FarmParam( 'mode', $farmname );
+		my $proto   = &getL4FarmParam( 'proto', $farmname );
 
 		if ( $proto eq "all" )
 		{
 			$proto = "";
 		}
 
-		my $fvip     = &getFarmVip( "vip", $farmname );
+		my $fvip     = &getL4FarmParam( 'vip', $farmname );
 		my @content  = &getFarmBackendStatusCtl( $farmname );
 		my @backends = &getFarmBackendsStatus_old( $farmname, @content );
 

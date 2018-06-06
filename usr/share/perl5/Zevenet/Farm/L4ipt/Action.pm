@@ -48,7 +48,7 @@ sub runL4FarmRestart    # ($farm_name,$writeconf,$type)
 	my ( $farm_name, $writeconf, $type ) = @_;
 
 	my $algorithm   = &getFarmAlgorithm( $farm_name );
-	my $fbootstatus = &getFarmBootStatus( $farm_name );
+	my $fbootstatus = &getL4FarmParam( 'status', $farm_name );
 	my $output      = 0;
 	my $pidfile     = "/var/run/l4sd.pid";
 
@@ -101,7 +101,7 @@ sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
 	my ( $farm_name, $writeconf, $type ) = @_;
 
 	my $algorithm   = &getFarmAlgorithm( $farm_name );
-	my $fbootstatus = &getFarmBootStatus( $farm_name );
+	my $fbootstatus = &getL4FarmParam( 'status', $farm_name );
 	my $output      = 0;
 	my $pidfile     = "/var/run/l4sd.pid";
 
@@ -425,9 +425,6 @@ Parameters:
 Returns:
 	Array - Each line has the next format: ";server;ip;port;mark;weight;priority;status"
 
-Bugfix:
-	DUPLICATED, do same than getL4FarmServers
-
 =cut
 
 sub setL4NewFarmName    # ($farm_name,$new_farm_name)
@@ -440,7 +437,6 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	my $farm_type         = &getFarmType( $farm_name );
 	my $new_farm_filename = "$new_farm_name\_$farm_type.cfg";
 	my $output            = 0;
-	my $status            = &getFarmStatus( $farm_name );
 
 	# previous farm info
 	my $prev_farm = &getL4FarmStruct( $farm_name );

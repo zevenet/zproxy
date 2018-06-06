@@ -920,8 +920,6 @@ Bugs:
 	There is no control if the file could not be opened, for example, if it does not exist.
 
 See Also:
-	L4xNAT: <setL4FarmSessionType>, <setL4FarmAlgorithm>, <setFarmProto>, <setFarmNatType>, <setL4FarmMaxClientTime>, <setL4FarmVirtualConf>, <setL4FarmServer>, <runL4FarmServerDelete>, <setL4FarmBackendStatus>, <setL4NewFarmName>, <_runL4ServerStart>, <_runL4ServerStop>
-
 	zapi/v3/get_l4.cgi, zapi/v3/farm_guardian.cgi,
 
 	zapi/v2/get_l4.cgi, zapi/v2/farm_guardian.cgi, zapi/v2/get_http.cgi, zapi/v2/get_tcp.cgi
@@ -976,7 +974,6 @@ Bugs:
 See Also:
 	zevenet
 
-	L4xNAT: <setL4FarmSessionType>, <setL4FarmAlgorithm>, <setFarmProto>, <setFarmNatType>, <setL4FarmMaxClientTime>, <setL4FarmVirtualConf>, <setL4FarmServer>, <runL4FarmServerDelete>, <setL4FarmBackendStatus>, <setL4NewFarmName>, <_runL4ServerStart>, <_runL4ServerStop>
 =cut
 
 sub getFarmGuardianPid    # ($fname,$svice)

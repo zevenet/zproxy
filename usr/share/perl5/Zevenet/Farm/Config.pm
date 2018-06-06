@@ -125,7 +125,7 @@ sub setFarmSessionType    # ($session,$farm_name)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
-		$output = &setL4FarmSessionType( $session, $farm_name );
+		$output = &setL4FarmParam( 'persist', $session, $farm_name );
 	}
 
 	return $output;
@@ -161,7 +161,7 @@ sub getFarmSessionType    # ($farm_name)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
-		$output = &getL4FarmSessionType( $farm_name );
+		$output = &getL4FarmParam( 'persist', $farm_name );
 	}
 
 	return $output;
@@ -278,7 +278,7 @@ sub setFarmAlgorithm    # ($algorithm,$farm_name)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
-		$output = &setL4FarmAlgorithm( $algorithm, $farm_name );
+		$output = &setL4FarmParam( 'alg', $algorithm, $farm_name );
 	}
 
 	return $output;
@@ -324,7 +324,7 @@ sub getFarmAlgorithm    # ($farm_name)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
-		$algorithm = &getL4FarmAlgorithm( $farm_name );
+		$algorithm = &getL4FarmParam( 'scheduler', $farm_name );
 	}
 
 	return $algorithm;
@@ -365,38 +365,6 @@ sub setFarmPersistence    # ($persistence,$farm_name)
 }
 
 =begin nd
-Function: getFarmPersistence
-
-	Get type of persistence session for a farm
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Scalar - persistence type or -1 on failure
-
-BUG
-	DUPLICATED, use for l4 farms getFarmSessionType
-	obsolete for tcp farms
-=cut
-
-sub getFarmPersistence    # ($farm_name)
-{
-	my ( $farm_name ) = @_;
-
-	my $farm_type   = &getFarmType( $farm_name );
-	my $persistence = -1;
-
-	if ( $farm_type eq "l4xnat" )
-	{
-		require Zevenet::Farm::L4xNAT::Config;
-		$persistence = &getL4FarmPersistence( $farm_name );
-	}
-
-	return $persistence;
-}
-
-=begin nd
 Function: setFarmMaxClientTime
 
 	Set the maximum time for a client
@@ -428,7 +396,7 @@ sub setFarmMaxClientTime    # ($max_client_time,$track,$farm_name)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
-		$output = &setL4FarmMaxClientTime( $track, $farm_name );
+		$output = &setL4FarmParam( 'persisttm', $track, $farm_name );
 	}
 
 	return $output;
@@ -461,7 +429,7 @@ sub getFarmMaxClientTime    # ($farm_name)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
-		@max_client_time = &getL4FarmMaxClientTime( $farm_name );
+		@max_client_time = &getL4FarmParam( 'persisttm', $farm_name );
 	}
 
 	return @max_client_time;
@@ -573,7 +541,15 @@ sub setFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Config;
-		$stat = &setL4FarmVirtualConf( $vip, $vip_port, $farm_name );
+		if ( $vip )
+		{
+			$stat = &setL4FarmParam( 'vip', $vip, $farm_name );
+		}
+		return $stat if ( $stat != 0 );
+		if ( $vip_port )
+		{
+			$stat = &setL4FarmParam( 'vipp', $vip_port, $farm_name );
+		}
 	}
 	elsif ( $farm_type eq "gslb" && $eload )
 	{
@@ -727,52 +703,6 @@ sub getFarmVS    # ($farm_name, $service, $tag)
 	return $output;
 }
 
-=begin nd
-Function: getFarmBackends
-
-	Return a list with all backends
-
-Parameters:
-	farmname - Farm name
-	service - Service name, required parameter to profiles: http and gslb)
-
-Returns:
-	Array ref - Each element in the array it is a hash ref to a backend.
-=cut
-
-sub getFarmBackends    # ($farm_name, $service)
-{
-	my ( $farm_name, $service ) = @_;
-
-	my $output    = "";
-	my $farm_type = &getFarmType( $farm_name );
-
-	if ( $farm_type =~ /http/ )
-	{
-		require Zevenet::Farm::HTTP::Backend;
-		$output = &getHTTPFarmBackends( $farm_name, $service );
-	}
-	elsif ( $farm_type eq "l4xnat" )
-	{
-		require Zevenet::Farm::L4xNAT::Backend;
-		$output = &getL4FarmBackends( $farm_name );
-	}
-	elsif ( $farm_type eq "datalink" )
-	{
-		require Zevenet::Farm::Datalink::Backend;
-		$output = &getDatalinkFarmBackends( $farm_name );
-	}
-	elsif ( $farm_type eq "gslb" && $eload )
-	{
-		$output = &eload(
-						  module => 'Zevenet::Farm::GSLB::Backend',
-						  func   => 'getGSLBFarmBackends',
-						  args   => [$farm_name, $service],
-		);
-	}
-
-	return $output;
-}
 
 =begin nd
 Function: setFarmVS

@@ -35,33 +35,47 @@ Function: getFarmServers
 
 Parameters:
 	farmname - Farm name
+	service - service backends related (optional)
 
 Returns:
-	array - list of backends
+	array ref - list of backends
 
 FIXME:
 	changes output to hash format
 
 =cut
-sub getFarmServers    # ($farm_name)
+sub getFarmServers    # ($farm_name, $service)
 {
-	my ( $farm_name ) = @_;
+	my ( $farm_name, $service ) = @_;
 
 	my $farm_type = &getFarmType( $farm_name );
-	my @servers;
+	my $servers;
 
-	if ( $farm_type eq "datalink" )
+	if ( $farm_type =~ /http/ )
 	{
-		require Zevenet::Farm::Datalink::Backend;
-		@servers = &getDatalinkFarmServers( $farm_name );
+		require Zevenet::Farm::HTTP::Backend;
+		$servers = &getHTTPFarmBackends( $farm_name, $service );
 	}
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
-		@servers = &getL4FarmServers( $farm_name );
+		$servers = &getL4FarmServers( $farm_name );
+	}
+	elsif ( $farm_type eq "datalink" )
+	{
+		require Zevenet::Farm::Datalink::Backend;
+		$servers = &getDatalinkFarmBackends( $farm_name );
+	}
+	elsif ( $farm_type eq "gslb" && $eload )
+	{
+		$servers = &eload(
+						  module => 'Zevenet::Farm::GSLB::Backend',
+						  func   => 'getGSLBFarmBackends',
+						  args   => [$farm_name, $service],
+		);
 	}
 
-	return @servers;
+	return $servers;
 }
 
 =begin nd
@@ -208,7 +222,7 @@ sub getFarmBackendStatusCtl    # ($farm_name)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
-		@output = &getL4FarmBackendStatusCtl( $farm_name );
+		@output = &getL4FarmServers( $farm_name );
 	}
 
 	return @output;
@@ -249,7 +263,7 @@ sub getFarmBackendsStatus_old    # ($farm_name,@content)
 	elsif ( $farm_type eq "l4xnat" )
 	{
 		require Zevenet::Farm::L4xNAT::Backend;
-		@output = &getL4FarmBackendsStatus_old( $farm_name, @content );
+		@output = &getL4FarmServers( $farm_name );
 	}
 
 	return @output;
