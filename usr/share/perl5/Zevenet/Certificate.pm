@@ -396,14 +396,7 @@ sub delCert    # ($certname)
 	$certname = quotemeta $certname;
 	my $certdir;
 
-	if ( 'zlbcertfile.pem' =~ /^$certname$/ )
-	{
-		$certdir = &getGlobalConfiguration( 'basedir' );
-	}
-	else
-	{
-		$certdir = &getGlobalConfiguration( 'configdir' );
-	}
+	$certdir = &getGlobalConfiguration( 'configdir' );
 
 	# verify existance in config directory for security reasons
 	opendir ( DIR, $certdir );
@@ -416,6 +409,7 @@ sub delCert    # ($certname)
 
 	return $files_removed;
 }
+
 
 =begin nd
 Function: createCSR
@@ -723,6 +717,43 @@ sub getCertDaysToExpire
 	$days_left /= 100;
 
 	return $days_left;
+}
+
+=begin nd
+Function: delCert_activation
+
+	Removes the activation certificate
+
+Parameters:
+	String - Certificate filename.
+
+Returns:
+	Integer - Number of files removed.
+
+Bugs:
+	Removes the _first_ file found _starting_ with the given certificate name.
+
+See Also:
+	zapi/v3/certificates.cgi, zapi/v2/certificates.cgi
+=cut
+
+sub delCert_activation    # ($certname)
+{
+	my ( $certname ) = @_;
+
+	my $certdir = &getGlobalConfiguration( 'basedir' );
+	# escaping special caracters
+	$certname = quotemeta $certname;
+	$certname = "$certdir\/$certname";
+
+	my $files_removed = 1;
+	if ( -f "$certname" )
+	{
+		$files_removed = unlink ( "$certname" );
+		&zenlog( "Error removing certificate $certname", "error", "Activation" ) if !$files_removed;
+	}
+
+	return $files_removed;
 }
 
 1;

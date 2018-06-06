@@ -54,7 +54,6 @@ sub download_certificate # ()
 
 	my $desc = "Download certificate";
 	my $cert_dir = &getGlobalConfiguration('configdir');
-	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
 
 	open ( my $download_fh, '<', "$cert_dir/$cert_filename" );
 
@@ -89,8 +88,6 @@ sub delete_certificate # ( $cert_filename )
 	my $desc     = "Delete certificate";
 	my $cert_dir = &getGlobalConfiguration( 'configdir' );
 
-	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
-
 	# check is the certificate file exists
 	if ( ! -f "$cert_dir\/$cert_filename" )
 	{
@@ -108,7 +105,7 @@ sub delete_certificate # ( $cert_filename )
 	}
 
 	&delCert( $cert_filename );
-	
+
 	# check if the certificate exists
 	if ( -f "$cert_dir\/$cert_filename" )
 	{

@@ -22,6 +22,8 @@
 
 use strict;
 
+include 'Zevenet::Certifcate';
+
 # GET /certificates/activation
 sub get_activation_certificate_info # ()
 {
@@ -64,7 +66,7 @@ sub delete_activation_certificate # ( $cert_filename )
 	my $description = "Delete activation certificate";
 	my $cert_filename = 'zlbcertfile.pem';
 
-	if ( &delCert( $cert_filename ) )
+	if ( &delCert_activation( $cert_filename ) )
 	{
 		# Success
 		my $message = "The activation certificate has been deleted";

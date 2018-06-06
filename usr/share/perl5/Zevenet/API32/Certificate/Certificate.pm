@@ -34,7 +34,6 @@ sub get_certificate_info # ()
 
 	my $desc = "Show certificate details";
 	my $cert_dir = &getGlobalConfiguration('configdir');
-	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
 
 	if ( &getValidFormat( 'certificate', $cert_filename ) && -f "$cert_dir\/$cert_filename" )
 	{

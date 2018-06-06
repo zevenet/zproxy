@@ -23,6 +23,7 @@
 use strict;
 
 # Check RBAC permissions
+include 'Zevenet::Certificate';
 include 'Zevenet::RBAC::Core';
 require Zevenet::User;
 
@@ -143,7 +144,7 @@ sub delete_activation_certificate # ( $cert_filename )
 		);
 	}
 
-	unless ( &delCert( $cert_filename ) )
+	unless ( &delCert_activation( $cert_filename ) )
 	{
 		my $msg = "An error happened deleting the activation certificate";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -211,5 +212,6 @@ sub upload_activation_certificate # ()
 
 	return &httpResponse({ code => 200, body => $body });
 }
+
 
 1;
