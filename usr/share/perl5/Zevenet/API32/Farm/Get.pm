@@ -229,7 +229,7 @@ sub farms_name    # ( $farmname )
 			module => 'Zevenet::API32::Farm::Get::GSLB',
 			func   => 'farms_name_gslb',
 			args   => [$farmname],
-		) if ( $eload );
+		);
 	}
 }
 

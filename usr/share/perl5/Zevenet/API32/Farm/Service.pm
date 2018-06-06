@@ -25,10 +25,7 @@ use strict;
 use Zevenet::Farm::Core;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } )
-{
-	$eload = 1;
-}
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
 # POST
 sub new_farm_service    # ( $json_obj, $farmname )

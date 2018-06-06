@@ -22,6 +22,9 @@
 
 use strict;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
+
 # GET /ciphers
 sub ciphers_available # ( $json_obj, $farmname )
 {
@@ -33,9 +36,15 @@ sub ciphers_available # ( $json_obj, $farmname )
 				{ 'ciphers' => "customsecurity", "description" => "Custom security" }
 	);
 
-	if ( eval { require Zevenet::Farm::HTTP::HTTPS::Ext; } )
+	if ( $eload )
 	{
-		push( @out, &getExtraCipherProfiles() );
+		push (
+			   @out,
+			   &eload(
+					   module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+					   func   => 'getExtraCipherProfiles',
+			   )
+		);
 	}
 
 	my $body = {

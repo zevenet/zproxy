@@ -300,9 +300,13 @@ sub getZapiHTTPServiceStruct
 					 fgscript     => $fgscript,
 	};
 
-	if ( eval { require Zevenet::Farm::HTTP::Service::Ext; } )
+	if ( $eload )
 	{
-		&add_service_cookie_insertion( $farmname, $service_ref );
+		&eload(
+				module => 'Zevenet::Farm::HTTP::Service::Ext',
+				func   => 'add_service_cookie_insertion',
+				args   => [$farmname, $service_ref],
+		);
 	}
 
 	return $service_ref;

@@ -26,10 +26,7 @@ use strict;
 use Zevenet::System;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } )
-{
-	$eload = 1;
-}
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
 # GET /stats/farms/modules
 #Get a farm status resume

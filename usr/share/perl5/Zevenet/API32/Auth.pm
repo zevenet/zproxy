@@ -24,10 +24,7 @@
 use strict;
 
 my $eload;
-if ( eval { require Zevenet::ELoad; } )
-{
-	$eload = 1;
-}
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
 sub validCGISession    # ()
 {
