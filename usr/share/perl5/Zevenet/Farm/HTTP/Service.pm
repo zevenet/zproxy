@@ -1074,7 +1074,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 				$line = "\t\tDynScale 1";
 				last;
 			}
-			if ( $line =~ /^\t\t#DynScale/ && $sw == 1 && $string eq "" )
+			if ( $line =~ /^\t\t#?DynScale/ && $sw == 1 && $string eq "" )
 			{
 				$line = "\t\t#DynScale 1";
 				last;
