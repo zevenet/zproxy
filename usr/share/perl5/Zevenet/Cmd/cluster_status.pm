@@ -22,7 +22,7 @@
 ###############################################################################
 
 use strict;
-use warnings;
+#~ use warnings;
 use Zevenet::Config;
 use Zevenet::SystemInfo;
 include 'Zevenet::Cluster';

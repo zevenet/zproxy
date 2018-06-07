@@ -22,7 +22,7 @@
 ###############################################################################
 
 # zeninotify version 2.0
-use strict;
+#~ use strict;
 use warnings;
 use Linux::Inotify2;
 use Zevenet::Config;

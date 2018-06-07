@@ -58,7 +58,7 @@
 #
 
 use strict;
-use warnings;
+#~ use warnings;
 use feature 'say';
 use Zevenet::Log;
 use Zevenet::Config;
