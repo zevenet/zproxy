@@ -22,7 +22,7 @@
 ###############################################################################
 
 use strict;
-use warnings;
+#~ use warnings;
 
 use Time::Local;
 use Zevenet::Log;
