@@ -1328,7 +1328,13 @@ sub getZClusterNodeStatusDigest
 	my $n              = &getZClusterNodeStatusInfo( $ip );
 	my $node->{ role } = $n->{ role };
 
-	if ( $node->{ role } && $node->{ role } eq 'master' )
+	if ( ! &getZClusterStatus() )
+	{
+		$node->{ role }    = 'not configured';
+		$node->{ status }  = 'not configured';
+		$node->{ message } = 'cluster not configured';
+	}
+	elsif ( $node->{ role } && $node->{ role } eq 'master' )
 	{
 		my $ssync_ok = $ssyncd_enabled eq 'false' || $n->{ sy } eq 'master';
 
@@ -1391,17 +1397,11 @@ sub getZClusterNodeStatusDigest
 			$node->{ message } .= join ', ', @services;
 		}
 	}
-	elsif ( ( $node->{ role } && $node->{ role } eq '' ) )
+	elsif ( exists $node->{ role } && ! $node->{ role } )
 	{
 		$node->{ role }    = 'unreachable';
 		$node->{ status }  = 'unreachable';
 		$node->{ message } = 'Node unreachable';
-	}
-	elsif ( ! $node->{ role } )
-	{
-		$node->{ role }    = 'not configured';
-		$node->{ status }  = 'not configured';
-		$node->{ message } = 'cluster not configured';
 	}
 	else
 	{
