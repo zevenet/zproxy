@@ -488,9 +488,11 @@ sub httpDownloadResponse
 
 	# make headers
 	my $headers = {
-					-type            => 'application/x-download',
-					-attachment      => $args->{ file },
-					'Content-length' => -s $path,
+					-type            					=> 'application/x-download',
+					-attachment      					=> $args->{ file },
+					'Content-length' 					=> -s $path,
+					'Access-Control-Allow-Origin'      	=> "https://$ENV{ HTTP_HOST }/",
+					'Access-Control-Allow-Credentials' 	=> 'true'					
 	};
 
 	# make body

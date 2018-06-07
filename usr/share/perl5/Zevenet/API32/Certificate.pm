@@ -61,9 +61,11 @@ sub download_certificate # ()
 	{
 		my $cgi = &getCGI();
 		print $cgi->header(
-						  -type            => 'application/x-download',
-						  -attachment      => $cert_filename,
-						  'Content-length' => -s "$cert_dir/$cert_filename",
+						  -type            					=> 'application/x-download',
+						  -attachment      					=> $cert_filename,
+						  'Content-length'					 => -s "$cert_dir/$cert_filename",
+						  'Access-Control-Allow-Origin'      => "https://$ENV{ HTTP_HOST }/",
+						  'Access-Control-Allow-Credentials' => 'true',
 		);
 
 		binmode $download_fh;
