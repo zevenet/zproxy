@@ -393,6 +393,7 @@ sub setHTTPServiceSTSStatus    # ($farm_name,$service,$code)
 			else 
 			{
 				splice @fileconf, $index, 1;
+				$errno = 0;
 			}
 			last;
 		}

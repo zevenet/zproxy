@@ -57,7 +57,7 @@ sub session_login
 		$session->delete();
 		$session->flush();
 
-		my $msg = "Login failed for username: $username";
+		my $msg = "The username and/or password are incorrect";
 		&httpErrorResponse( code => 401, desc => $desc, msg => $msg );
 	}
 
@@ -67,7 +67,7 @@ sub session_login
 		my ( $name, $passwd, $gid, $webgui_group ) = getgrnam ( 'webgui' );
 		if ( !grep ( /(^| )$username( |$)/, $webgui_group ) )
 		{
-			my $msg = "the user $username has not web permissions";
+			my $msg = "The user $username has not web permissions";
 			&httpErrorResponse( code => 401, desc => $desc, msg => $msg );
 		}
 	}
