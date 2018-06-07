@@ -967,7 +967,7 @@ sub getRBACPermissionSystemHash
 		],
 		'POST' => [
 				   {
-					  'regex'   => qr{^/system/(?:ssh|dns|ntp|snmp)$},
+					  'regex'   => qr{^/system/(?:ssh|dns|ntp|http|snmp)$},
 					  'section' => 'system-service',
 					  'action'  => 'modify',
 				   },
