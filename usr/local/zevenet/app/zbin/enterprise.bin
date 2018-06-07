@@ -36,29 +36,45 @@ my $DEBUG  = &debug();
 my $SYMKEY = "1135628147310";
 my $mod;
 
-my $symbolic_link = ( exists $ENV{ _ } and -l $ENV{ _ } ) ? readlink( $ENV{ _ } ) : "";
-my $program_name =
-    ( $0 ne '-e' ) ? $0
-  : ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /\/v3\/zapi.cgi$/ ) ? $ENV{ SCRIPT_NAME }
-  : ( $symbolic_link && $symbolic_link =~ /enterprise.bin$/ ) ? $ENV{ _ }
-  :															$^X;
+my $symbolic_link;
+my $program_name;
+my $basename;
 
-# Exception for keepalived running zcluster-manager
-# %ENV  = {
-#           'PATH' => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
-#           'JOURNAL_STREAM' => '8:4800662',
-#           'LANG' => 'en_US.UTF-8',
-#           'DAEMON_ARGS' => '',
-#           'PWD' => '/',
-#           'INVOCATION_ID' => 'e411a760c957493eb7e1624ae2f67c61'
-#         };
-#~ if ( $program_name =~ /enterprise.bin$/ && exists $ENV{INVOCATION_ID} )
-#~ {
-	#~ $program_name = 'zcluster-manager';
-#~ }
-######################################################################
 
-my $basename = ( split ( '/', $program_name ) )[-1];
+&zenlog ( "Enterprise.bin", 'debug', 'enterprise.bin' );
+&zenlog ( "checking file: /usr/share/perl5/Zevenet/Cmd/$ARGV[0].pm", 'debug', 'enterprise.bin' ) if $ARGV[0];
+
+if ( defined $ARGV[0] and -f "/usr/share/perl5/Zevenet/Cmd/$ARGV[0].pm" )
+{
+	$basename = shift @ARGV;
+	&zenlog ( "get basename from parameters: $basename", 'debug', 'enterprise.bin' );
+}
+else
+{
+	$symbolic_link = ( exists $ENV{ _ } and -l $ENV{ _ } ) ? readlink( $ENV{ _ } ) : "";
+	$program_name =
+		( $0 ne '-e' ) ? $0
+	: ( exists $ENV{ SCRIPT_NAME } && $ENV{ SCRIPT_NAME } =~ /\/v3\/zapi.cgi$/ ) ? $ENV{ SCRIPT_NAME }
+	: ( $symbolic_link && $symbolic_link =~ /enterprise.bin$/ ) ? $ENV{ _ }
+	:															$^X;
+
+	# Exception for keepalived running zcluster-manager
+	# %ENV  = {
+	#           'PATH' => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+	#           'JOURNAL_STREAM' => '8:4800662',
+	#           'LANG' => 'en_US.UTF-8',
+	#           'DAEMON_ARGS' => '',
+	#           'PWD' => '/',
+	#           'INVOCATION_ID' => 'e411a760c957493eb7e1624ae2f67c61'
+	#         };
+	#~ if ( $program_name =~ /enterprise.bin$/ && exists $ENV{INVOCATION_ID} )
+	#~ {
+		#~ $program_name = 'zcluster-manager';
+	#~ }
+	######################################################################
+
+	$basename = ( split ( '/', $program_name ) )[-1];
+}
 
 if ( $DEBUG > 5 )
 {
