@@ -187,11 +187,11 @@ sub setSsyncdMaster
 		my $error;
 
 		$ssync_cmd = "$ssyncdctl_bin write http";
-		my $error = system( "$ssync_cmd" );
+		$error = system( "$ssync_cmd" );
 		&zenlog("setSsyncdMaster ssyncd write http: $error > cmd: $ssync_cmd", "error", "CLUSTER") if $error;
 
 		$ssync_cmd = "$ssyncdctl_bin write recent";
-		my $error = system( "$ssync_cmd" );
+		$error = system( "$ssync_cmd" );
 		&zenlog("setSsyncdMaster ssyncd write recent: $error > cmd: $ssync_cmd", "error", "CLUSTER") if $error;
 
 		&setSsyncdDisabled();
