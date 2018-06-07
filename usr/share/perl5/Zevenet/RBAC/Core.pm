@@ -276,8 +276,8 @@ sub getRBACPermissionsMsg
 	my $method = shift;
 
 	my $msg = "";
-	my $section;
-	my $action;
+	my $section = "";
+	my $action = "";
 
 	require Zevenet::User;
 	my $username = &getUser();
