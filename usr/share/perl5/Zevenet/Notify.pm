@@ -735,4 +735,21 @@ sub sendTestMail
 	return $error;
 }
 
+sub encryptNotifPass
+{
+	if ( !&getNotifData( "senders", "_", "version" ) )
+	{
+		my $pass = &getNotifData( "senders", "Smtp", "auth-password" );
+
+		if ( $pass )
+		{
+			require Zevenet::Code;
+			my $coded = &getCodeEncode( $pass );
+			&setNotifData( "senders", "Smtp", "auth-password", &getCodeEncode( $pass ) );
+		}
+
+		&setNotifData( "senders", "_", "version", 1 );
+	}
+}
+
 1;
