@@ -42,9 +42,13 @@ my $basename;
 
 
 &zenlog ( "Enterprise.bin", 'debug', 'enterprise.bin' );
-&zenlog ( "checking file: /usr/share/perl5/Zevenet/Cmd/$ARGV[0].pm", 'debug', 'enterprise.bin' ) if $ARGV[0];
 
 my $cmd_dir = "/usr/share/perl5/Zevenet/Cmd";
+&zenlog ( "checking file: $cmd_dir/$ARGV[0].pm", 'debug', 'enterprise.bin' ) if $ARGV[0];
+&zenlog ( "checking file: $cmd_dir/$ARGV[0].pme", 'debug', 'enterprise.bin' ) if $ARGV[0];
+
+&zenlog ( "defined $ARGV[0] and ( -f $cmd_dir/$ARGV[0].pm or -f $cmd_dir/$ARGV[0].pme )" );
+
 if ( defined $ARGV[0] and ( -f "$cmd_dir/$ARGV[0].pm" or -f "$cmd_dir/$ARGV[0].pme" ) )
 {
 	$basename = shift @ARGV;
