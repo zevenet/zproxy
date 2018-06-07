@@ -73,7 +73,7 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 	foreach my $srv ( &getGSLBFarmServices( $fname ) )
 	{
 		my $fg = &getFGFarm( $fname, $srv );
-		&zenlog ("$fg");
+
 		if ( ! $fg )
 		{
 			&enableGSLBFarmGuardian( $fname, $srv, 'down' );

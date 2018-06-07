@@ -223,7 +223,7 @@ sub runIPDSStartByFarm
 {
 	my $farmname = shift;
 
-	require Zevenet::Farm::Base;
+	include 'Zevenet::Farm::Base';
 	return 0 if ( &getFarmBootStatus( $farmname ) eq "down" );
 
 	# get rules and perl modules

@@ -180,7 +180,7 @@ sub setNotifAlerts
 sub setNotifAlertsAction
 {
 	my $notif  = shift;
-	my $action = shift;
+	my $action = shift // "";
 
 	my $alertFile = &getGlobalConfiguration( 'alerts' );
 	my $errMsg;
