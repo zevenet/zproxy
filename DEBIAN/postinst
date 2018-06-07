@@ -90,6 +90,12 @@ if [[ `grep -c 'Lsd' /etc/default/snmpd` == '1' ]]; then
         sed -i -e 's/Lsd/LS6d/' /etc/default/snmpd
 fi
 
+# Disable apt-daily.timer
+systemctl stop apt-daily.timer
+systemctl disable apt-daily.timer
+systemctl mask apt-daily.service
+systemctl daemon-reload
+
 # sec service for zevenet notifications
 if [ -f /bin/systemctl ]
 then

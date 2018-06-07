@@ -64,6 +64,12 @@ fi
 
 # Disable services
 
+# Disable apt-daily.timer
+systemctl stop apt-daily.timer
+systemctl disable apt-daily.timer
+systemctl mask apt-daily.service
+systemctl daemon-reload
+
 # disable sec service
 systemctl stop sec 2>/dev/null
 systemctl disable sec 2>/dev/null
