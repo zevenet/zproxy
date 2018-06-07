@@ -52,7 +52,7 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 	my $body;
 
 	my ( $date, $host, $program, $ip, $port, $status, $farm, $service, $pid );
-	my $auxBody;
+	my $auxBody = "";
 
 	# Keep date, host and program from log msg
 	# Sep  1 15:59:06 maqvir gdnsd[18513]:
