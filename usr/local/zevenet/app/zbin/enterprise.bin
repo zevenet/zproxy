@@ -36,8 +36,8 @@ my $DEBUG  = &debug();
 my $SYMKEY = "1135628147310";
 my $mod;
 
-my $symbolic_link;
-my $program_name;
+my $symbolic_link = "";
+my $program_name = "";
 my $basename;
 
 
