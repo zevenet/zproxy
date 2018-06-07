@@ -62,16 +62,16 @@ my $basename = ( split ( '/', $program_name ) )[-1];
 
 if ( $DEBUG > 5 )
 {
-	&zenlog("[ENTERPRISE.BIN] \$0                    = '$0'", 'debug');
-	&zenlog("[ENTERPRISE.BIN] \$^X                   = '$^X'", 'debug');
-	&zenlog("[ENTERPRISE.BIN] \$ENV\{_\}             = '$ENV{_}'", 'debug') if exists $ENV{_};
-	&zenlog("[ENTERPRISE.BIN] \$SYMBOLIC_LINK        = $symbolic_link", 'debug') if exists $ENV{_};
-	&zenlog("[ENTERPRISE.BIN] \$ENV\{SCRIPT_NAME\}   = '$ENV{SCRIPT_NAME}'", 'debug') if exists $ENV{SCRIPT_NAME};
-	&zenlog("[ENTERPRISE.BIN] \$ENV\{INVOCATION_ID\} = '$ENV{INVOCATION_ID}'", 'debug') if exists $ENV{INVOCATION_ID};
-	&zenlog("[ENTERPRISE.BIN] \$program_name         = '$program_name'", 'debug');
-	&zenlog("[ENTERPRISE.BIN] \$basename             = '$basename'", 'debug');
-	&zenlog("[ENTERPRISE.BIN] \@ARGV                 = '@ARGV'", 'debug');
-	#~ &zenlog('[ENTERPRISE.BIN] %ENV                   = ' . Dumper \%ENV );
+	&zenlog("[ENTERPRISE.BIN] \$PROGRAM_NAME (\$0)     = '$0'", 'debug');
+	&zenlog("[ENTERPRISE.BIN] \$EXECUTABLE_NAME (\$^X) = '$^X'", 'debug');
+	&zenlog("[ENTERPRISE.BIN] \$ENV\{_\}               = '$ENV{_}'", 'debug') if exists $ENV{_};
+	&zenlog("[ENTERPRISE.BIN] \$SYMBOLIC_LINK          = $symbolic_link", 'debug') if exists $ENV{_};
+	&zenlog("[ENTERPRISE.BIN] \$ENV\{SCRIPT_NAME\}      = '$ENV{SCRIPT_NAME}'", 'debug') if exists $ENV{SCRIPT_NAME};
+	&zenlog("[ENTERPRISE.BIN] \$ENV\{INVOCATION_ID\}    = '$ENV{INVOCATION_ID}'", 'debug') if exists $ENV{INVOCATION_ID};
+	&zenlog("[ENTERPRISE.BIN] \$program_name          = '$program_name'", 'debug');
+	&zenlog("[ENTERPRISE.BIN] \$basename              = '$basename'", 'debug');
+	&zenlog("[ENTERPRISE.BIN] \@ARGV                  = '@ARGV'", 'debug');
+	#~ &zenlog('[ENTERPRISE.BIN] %ENV                     = ' . Dumper \%ENV );
 }
 
 # Run encrypted command
