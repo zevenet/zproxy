@@ -130,7 +130,7 @@ sub runRBLIptablesRule
 	require Zevenet::Netfilter;
 	include 'Zevenet::IPDS::Core';
 
-	my $nfqueue;
+	my $nfqueue = "";
 	my $rbl_chain = &getIPDSChain( "rbl" );
 	my $ruleParam = &getRBLFarmMatch( $farmname );
 

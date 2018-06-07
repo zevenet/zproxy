@@ -1441,7 +1441,7 @@ sub setZClusterIptablesException
 	include 'Zevenet::IPDS::Core';
 
 	my $error;
-	my $action;
+	my $action = "";
 
 	if ( $option eq "insert" )
 	{

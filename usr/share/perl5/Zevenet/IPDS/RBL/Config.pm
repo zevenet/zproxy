@@ -220,7 +220,7 @@ sub setRBLObjectRuleParam
 	my $lock       = &setRBLLockConfigFile();
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 
-	my $action;
+	my $action = "";
 
 	# if command has a action, split it
 	# key-action

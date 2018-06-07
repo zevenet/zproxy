@@ -36,7 +36,6 @@ sub farm_actions    # ( $json_obj, $farmname )
 	require Zevenet::Farm::Base;
 
 	my $desc = "Farm actions";
-	my $action;
 
 	# validate FARM NAME
 	if ( ! &getFarmExists( $farmname ) )
