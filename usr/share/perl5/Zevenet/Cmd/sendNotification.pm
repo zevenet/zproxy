@@ -78,7 +78,7 @@ sub getSubjectBody    # &getSubjectBody ( $msg )
 		$service = $2;
 		$farm    = &getGSLBFarm( $pid );
 
-		if ( $service eq tcp )
+		if ( $service eq 'tcp' )
 		{
 			$program = "It has been";
 		}
