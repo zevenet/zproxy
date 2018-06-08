@@ -40,14 +40,17 @@ sub getZapiRBACUsers
 	my $user = shift;
 
 	include 'Zevenet::RBAC::User::Core';
-	my $obj   = &getRBACUserObject( $user );
-	my $group = &getRBACUserGroup( $user );
-
 	my $out;
-	$out->{ 'name' }               = $user;
-	$out->{ 'webgui_permissions' } = $obj->{ 'webgui_permissions' };
-	$out->{ 'zapi_permissions' }   = $obj->{ 'zapi_permissions' };
-	$out->{ 'group' }              = $group;
+	my $obj   = &getRBACUserObject( $user );
+
+	if ( $obj )
+	{
+		my $group = &getRBACUserGroup( $user );
+		$out->{ 'name' }               = $user;
+		$out->{ 'webgui_permissions' } = $obj->{ 'webgui_permissions' };
+		$out->{ 'zapi_permissions' }   = $obj->{ 'zapi_permissions' };
+		$out->{ 'group' }              = $group;
+	}
 
 	return $out;
 }
