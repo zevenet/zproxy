@@ -64,6 +64,11 @@ fi
 
 # Disable services
 
+# Disable systemd-sysctl
+systemctl disable systemd-sysctl
+systemctl mask systemd-sysctl.service
+systemctl daemon-reload
+
 # Disable apt-daily.timer
 systemctl stop apt-daily.timer
 systemctl disable apt-daily.timer
