@@ -217,9 +217,10 @@ rm -f /etc/rc*.d/*zenloadbalancer
 update-rc.d zevenet defaults
 
 # Link zenbui
-if [ -f /usr/local/zevenet/app/zenbui/zenbui ];
+if [ -f /usr/local/zevenet/bin/zenbui ];
 then
-	ln -sf /usr/local/zevenet/app/zenbui/zenbui /usr/bin/zenbui
+	rm /usr/bin/zenbui 2>/dev/null
+	ln -sf /usr/local/zevenet/bin/zenbui /usr/bin/zenbui
 fi
 
 
