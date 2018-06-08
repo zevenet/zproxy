@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+use Fcntl ':flock';
+
 use Zevenet::Core;
 include 'Zevenet::IPDS::Blacklist';
 include 'Zevenet::IPDS::Base';
@@ -10,6 +12,7 @@ include 'Zevenet::IPDS::Base';
 #lock iptables
 my $iptlock = "/tmp/iptables.lock";
 my $open_rc = open ( my $ipt_lockfile, ">", $iptlock );
+my $program = 'migrate_ipds_to_51: ';
 
 if ( $open_rc )
 {
