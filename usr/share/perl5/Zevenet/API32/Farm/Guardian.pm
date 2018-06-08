@@ -402,6 +402,7 @@ sub add_farmguardian_farm
 		my $body = {
 					 description => $desc,
 					 message     => $msg,
+					 status => &getFarmVipStatus( $farm ),
 		};
 		return &httpResponse( { code => 200, body => $body } );
 	}
@@ -494,6 +495,7 @@ sub rem_farmguardian_farm
 		my $body = {
 					 description => $desc,
 					 message     => $msg,
+					 status => &getFarmVipStatus( $farm ),
 		};
 		return &httpResponse( { code => 200, body => $body } );
 	}

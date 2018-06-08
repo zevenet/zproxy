@@ -281,6 +281,13 @@ sub linkFGFarm
 
 	$out |= &runFGFarmStart( $farm, $srv ) if ( &getFarmStatus( $farm ) eq 'up' );
 
+	# the gslb fg is put in the start process, then, it is necessary to restart the farm
+	if ( &getFarmType( $farm ) eq 'gslb' )
+	{
+		require Zevenet::Farm::Action;
+		&setFarmRestart( $farm );
+	}
+
 	return $out;
 }
 
@@ -299,6 +306,12 @@ sub unlinkFGFarm
 	my $out = &runFGFarmStop( $farm, $srv );
 
 	$out = &setTinyObj( $fg_conf, $fg_name, 'farms', $farm_tag, 'del' ) if !$out;
+	# the gslb fg is put in the start process, then, it is necessary to restart the farm
+	if ( &getFarmType( $farm ) eq 'gslb' )
+	{
+		require Zevenet::Farm::Action;
+		&setFarmRestart( $farm );
+	}
 
 	return $out;
 }
@@ -629,13 +642,7 @@ sub runFGFarmStart
 		# necessary for waiting that fg process write its process
 		sleep ( 1 );
 	}
-	# the gslb fg is put in the start process, then, it is necessary to restart the farm
-	elsif ( $ftype eq 'gslb' )
-	{
-		require Zevenet::Farm::Action;
-		&setFarmRestart( $farm );
-	}
-	else
+	elsif ( $ftype ne 'gslb' )
 	{
 		# WARNING: farm types not supported by farmguardian return 0.
 		$status = 1;
