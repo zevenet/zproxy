@@ -44,12 +44,13 @@ sub migrate_blacklist_names
 			if ( &getBLExists( $oldlist ) )
 			{
 				# rename first one
-				if ( ! &getBLExists( $newlist ) )
+				if ( !&getBLExists( $newlist ) )
 				{
 					&setBLParam( $oldlist, 'name', $newlist );
 				}
 				else
-				# delete others one
+
+				  # delete others one
 				{
 					&setBLDeleteList( $oldlist );
 				}
@@ -66,12 +67,9 @@ sub remove_blacklists
 
 	foreach my $list ( @lists_to_remove )
 	{
-		if ( &getBLExists( $list ) && &getBLParam( $list, 'preload' ) eq "true" )
+		if ( &getBLExists( $list ) && !@{ &getBLParam( $list, 'farms' ) } )
 		{
-			if ( !@{ &getBLParam( $list, 'farms' ) } )
-			{
-				&setBLDeleteList( $list );
-			}
+			&setBLDeleteList( $list );
 		}
 	}
 }
@@ -84,7 +82,8 @@ sub rename_blacklists
 
 	foreach my $list ( @list_to_rename )
 	{
-		if ( &getBLExists( $list->{ name } ) && &getBLParam( $list->{ name }, 'preload' ) eq "true" )
+		if (    &getBLExists( $list->{ name } )
+			 && &getBLParam( $list->{ name }, 'preload' ) eq "true" )
 		{
 			&setBLParam( $list->{ name }, 'name', $list->{ new_name } );
 		}
@@ -97,13 +96,13 @@ sub set_blacklists_status
 	require Config::Tiny;
 
 	my $blacklistsConf = "/usr/local/zevenet/config/ipds/blacklists/lists.conf";
-	my $fileHandle = Config::Tiny->read( $blacklistsConf );
+	my $fileHandle     = Config::Tiny->read( $blacklistsConf );
 
 	foreach my $list ( keys %{ $fileHandle } )
 	{
-		next if ( exists $fileHandle->{ $list }->{ status });
+		next if ( exists $fileHandle->{ $list }->{ status } );
 
-		if ( $fileHandle->{ $list }->{ farms } =~ /\w/  )
+		if ( $fileHandle->{ $list }->{ farms } =~ /\w/ )
 		{
 			$fileHandle->{ $list }->{ status } = "up";
 		}
@@ -116,20 +115,19 @@ sub set_blacklists_status
 	$fileHandle->write( $blacklistsConf );
 }
 
-
 # populate status parameter for dos rules
 sub set_dos_status
 {
 	require Config::Tiny;
 
-	my $dosConf = "/usr/local/zevenet/config/ipds/dos/dos.conf";
+	my $dosConf    = "/usr/local/zevenet/config/ipds/dos/dos.conf";
 	my $fileHandle = Config::Tiny->read( $dosConf );
 
 	foreach my $rule ( keys %{ $fileHandle } )
 	{
-		next if ( exists $fileHandle->{ $rule }->{ status });
+		next if ( exists $fileHandle->{ $rule }->{ status } );
 
-		if ( $fileHandle->{ $rule }->{ farms } =~ /\w/  )
+		if ( $fileHandle->{ $rule }->{ farms } =~ /\w/ )
 		{
 			$fileHandle->{ $rule }->{ status } = "up";
 		}
