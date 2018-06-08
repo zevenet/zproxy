@@ -136,15 +136,15 @@ sub create_dos_rule
 sub get_dos_rule
 {
 	my $name = shift;
-
 	my $desc    = "Get the DoS rule $name";
-	my $refRule = &getDOSZapiRule( $name );
 
-	if ( ref ( $refRule ) ne 'HASH' )
+	if ( !&getDOSExists( $name ) )
 	{
-		my $msg = "$name doesn't exist.";
+		my $msg = "$name does not found";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
+
+	my $refRule = &getDOSZapiRule( $name );
 
 	my $body = { description => $desc, params => $refRule };
 	return &httpResponse( { code => 200, body => $body } );
