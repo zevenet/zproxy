@@ -127,7 +127,6 @@ sub set_rbac_user
 		 "zapikey"            => { 'valid_format' => 'zapi_key' },
 		 "zapi_permissions"   => { 'valid_format' => 'boolean', 'non_black' => 'true' },
 		 "webgui_permissions" => { 'valid_format' => 'boolean', 'non_black' => 'true' },
-		 "password" => { 'valid_format' => 'rbac_password', 'non_blank' => 'true' },
 		 "newpassword" => {
 				  'valid_format' => 'rbac_password',
 				  'non_blank'    => 'true',
@@ -201,27 +200,10 @@ sub set_rbac_user
 	}
 
 	# change password
-	if ( exists $json_obj->{ 'password' } || exists $json_obj->{ 'newpassword' } )
+	if ( &setRBACUserPassword( $user, $json_obj->{ 'newpassword' } ) )
 	{
-		unless (    exists $json_obj->{ 'password' }
-				 && exists $json_obj->{ 'newpassword' } )
-		{
-			my $msg =
-			  "The parameters password and new password are necessary to change the password.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-		require Zevenet::Login;
-		if ( !&checkValidUser( $user, $json_obj->{ 'password' } ) )
-		{
-			my $msg = "Invalid current password.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
-
-		if ( &setRBACUserPassword( $user, $json_obj->{ 'newpassword' } ) )
-		{
-			my $msg = "Changing RBAC $user password.";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-		}
+		my $msg = "Changing RBAC $user password.";
+		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
 	include 'Zevenet::Cluster';
