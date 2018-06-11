@@ -518,16 +518,13 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 
 		my $if_ref = &getInterfaceConfig( $bond, $ip_v );
 
-		unless ( exists $if_ref->{ addr } and $if_ref->{ addr } )
+		if ( exists $if_ref->{ addr } and $if_ref->{ addr } ne "" )
 		{
-			my $msg = "It is necessary to configure an address to start the interface";
-			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+			# Delete routes in case that it is not a vini
+			&delRoutes( "local", $if_ref ) if $if_ref;
+
+			&addIp( $if_ref ) if $if_ref;
 		}
-
-		# Delete routes in case that it is not a vini
-		&delRoutes( "local", $if_ref ) if $if_ref;
-
-		&addIp( $if_ref ) if $if_ref;
 
 		my $state = &upIf( { name => $bond }, 'writeconf' );
 
@@ -535,7 +532,10 @@ sub actions_interface_bond    # ( $json_obj, $bond )
 		{
 			require Zevenet::Net::Util;
 
-			&applyRoutes( "local", $if_ref ) if $if_ref;
+			if ( exists $if_ref->{ addr } and $if_ref->{ addr } ne "" )
+			{
+				&applyRoutes( "local", $if_ref ) if $if_ref;
+			}
 
 			# put all dependant interfaces up
 			&setIfacesUp( $bond, "vlan" );
