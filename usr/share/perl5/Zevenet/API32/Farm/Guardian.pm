@@ -492,7 +492,7 @@ sub rem_farmguardian_farm
 			);
 		}
 
-		my $msg = "Sucess, $fgname was removed from the $srv_message";
+		my $msg = "Success, $fgname was removed from the $srv_message";
 		my $body = {
 					 description => $desc,
 					 message     => $msg,

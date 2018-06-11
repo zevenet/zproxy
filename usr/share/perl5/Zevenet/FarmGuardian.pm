@@ -34,11 +34,8 @@ my $fg_template =
 sub getFGStatusFile
 {
 	my $farm = shift;
-	my $srv  = shift;
 
-	my $farm_tag = ( $srv ) ? "${farm}_$srv" : "$farm";
-
-	return "$configdir\/$farm_tag\_status.cfg";
+	return "$configdir\/$farm\_status.cfg";
 }
 
 # return a struct with the parameters of farm guardian
@@ -513,6 +510,7 @@ sub runFGFarmStop
 					require Zevenet::Farm::HTTP::Config;
 					my $portadmin = &getHTTPFarmSocket( $farm );
 					my $idsv = &getFarmVSI( $farm, $service );
+					my $poundctl = &getGlobalConfiguration( 'poundctl' );
 
 					require Tie::File;
 					tie my @filelines, 'Tie::File', $status_file;
@@ -528,7 +526,6 @@ sub runFGFarmStop
 						{
 							my $index    = $1;
 							my $auxlin   = splice ( @fileAux, $lines, 1, );
-							my $poundctl = &getGlobalConfiguration( 'poundctl' );
 
 							&logAndRun( "$poundctl -c $portadmin -B 0 $idsv $index" );
 						}
