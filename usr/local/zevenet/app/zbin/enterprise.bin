@@ -189,8 +189,9 @@ my $stop_zevenet = (
 );
 ### Exceptions to activation certificate check ### END
 my $exception = ( $mod->{ name } eq 'Zevenet::RBAC::User::Core' and $func eq 'validateRBACUserZapi' );
+my $exception_rbac = ( $mod->{ name } eq 'Zevenet::RBAC::Core' and $func eq 'getRBACPermissionsMsg' );
 
-my $skip_cert_check = ( $upload_cert || $stop_zevenet || $exception );
+my $skip_cert_check = ( $upload_cert || $stop_zevenet || $exception || exception_rbac);
 
 unless ( $skip_cert_check )
 {
