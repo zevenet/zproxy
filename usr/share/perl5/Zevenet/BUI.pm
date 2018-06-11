@@ -295,6 +295,8 @@ sub get_interface_stack_ip_mask_gateway    # ($if_name, $ip_version)
 
 	if ( $ip_version == 6 )
 	{
+		my $defaultgw6 = &getGlobalConfiguration('defaultgw6');
+		my $defaultgwif6 = &getGlobalConfiguration('defaultgwif6');
 		( $ip, $mask ) = split ( '/', $ip );
 		$gateway = $defaultgw6 if $defaultgwif6 eq $if_name;
 	}
