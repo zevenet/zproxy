@@ -93,6 +93,7 @@ sub keycert
 
 	my $key = "$hostname::$dmi::$mod_appl";
 	my $str = &encrypt($key);
+	print "System Certificate Key=$str\n";
 
 	return $str;
 }
@@ -104,7 +105,6 @@ sub keycert_old
 	$hostname =~ s/\"//g;
 	$hostname =~ s/^\s+//;
 	$hostname =~ s/\s+$//;
-	print "Hostname=$hostname\n";
 
 	$n = 2;
 	$encrypted_string  = crypt ( "${dmi}${hostname}", "93" );
@@ -120,7 +120,6 @@ sub keycert_old
 	$str =~ s/\"//g;
 	$str =~ s/^\s+//;
 	$str =~ s/\s+$//;
-	print "System Certificate Key=$str\n";
 	return $str;
 }
 
