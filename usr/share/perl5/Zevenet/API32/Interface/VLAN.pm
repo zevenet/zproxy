@@ -152,6 +152,8 @@ sub new_vlan    # ( $json_obj )
 				mac     => $socket->if_hwaddr( $if_ref->{ dev } ),
 	};
 
+	$if_ref->{ net } = &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
+
 	# Make sure the address, mask and gateway belong to the same stack
 	if ( $if_ref->{ addr } )
 	{
