@@ -1,4 +1,25 @@
 #!/usr/bin/perl
+###############################################################################
+#
+#    Zevenet Software License
+#    This file is part of the Zevenet Load Balancer software package.
+#
+#    Copyright (C) 2014-today ZEVENET SL, Sevilla (Spain)
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+###############################################################################
 
 use strict;
 use Zevenet::Core;
@@ -13,10 +34,10 @@ Function: getRBACGroupConf
 
 Parameters:
 	None - .
-					
+
 Returns:
 	String - path
-	
+
 =cut
 
 sub getRBACGroupConf
@@ -32,10 +53,10 @@ Function: getRBACGroupList
 
 Parameters:
 	None - .
-					
+
 Returns:
 	Array - List of groups
-	
+
 =cut
 
 sub getRBACGroupList
@@ -53,10 +74,10 @@ Function: getRBACGroupExists
 
 Parameters:
 	Group - Group name
-					
+
 Returns:
 	Integer - 1 if the group exists or 0 if it doesn't exist
-	
+
 =cut
 
 sub getRBACGroupExists
@@ -76,10 +97,10 @@ Function: getRBACGroupObject
 
 Parameters:
 	Group - Group name
-					
+
 Returns:
 	Hash ref - Configuration of a group
-	
+
 =cut
 
 sub getRBACGroupObject
@@ -116,10 +137,10 @@ Function: getRBACGroupParam
 Parameters:
 	Group - Group name
 	Parameter - Required parameter
-					
+
 Returns:
 	Scalar - the data type depends of the required parameter
-	
+
 =cut
 
 sub getRBACGroupParam
@@ -138,10 +159,10 @@ Function: getRBACUsersResources
 Parameters:
 	User - Group name
 	Type - It is the type of resource to list
-					
+
 Returns:
 	Array ref - list of elements
-	
+
 =cut
 
 sub getRBACUsersResources

@@ -1,4 +1,25 @@
 #!/usr/bin/perl
+###############################################################################
+#
+#    Zevenet Software License
+#    This file is part of the Zevenet Load Balancer software package.
+#
+#    Copyright (C) 2014-today ZEVENET SL, Sevilla (Spain)
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+###############################################################################
 
 use strict;
 use Zevenet::Core;
@@ -7,14 +28,14 @@ include 'Zevenet::RBAC::Core';
 =begin nd
 Function: getRBACRolesList
 
-	List all RBAC roles 
+	List all RBAC roles
 
 Parameters:
 	None - .
-					
+
 Returns:
 	Array - List with the role names
-	
+
 =cut
 
 sub getRBACRolesList
@@ -34,10 +55,10 @@ Function: getRBACRoleExists
 
 Parameters:
 	Role - Role name
-					
+
 Returns:
 	Integer - Return 1 if the role exists or 0 if it doesn't exist
-	
+
 =cut
 
 sub getRBACRoleExists
@@ -55,10 +76,10 @@ Function: getRBACRoleParamDefaultStruct
 
 Parameters:
 	None - .
-					
+
 Returns:
 	Hash ref - Hash with a default role configuration
-	
+
 =cut
 
 #~ return $paramStruct;
@@ -99,10 +120,10 @@ Function: createRBACRole
 
 Parameters:
 	Role - Role name
-					
+
 Returns:
 	Integer - 0 on sucess or other value on failure
-	
+
 =cut
 
 sub createRBACRole
@@ -135,10 +156,10 @@ Function: delRBACRole
 
 Parameters:
 	Role - Role name
-					
+
 Returns:
 	None - .
-	
+
 =cut
 
 sub delRBACRole
@@ -157,7 +178,7 @@ Function: setRBACRoleConfigFile
 Parameters:
 	Role - Role to update
 	key - it is a hash with same struct than configuration file. It has the parameters to change
-					
+
 Returns:
 	None - .
 
