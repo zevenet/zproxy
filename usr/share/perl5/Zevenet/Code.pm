@@ -194,5 +194,15 @@ sub validateCryptString
 	return $out;
 }
 
+sub migrate_zapi_to_52
+{
+	require Zevenet::Config;
+
+	my $zapikey = &getGlobalConfiguration( 'zapikey' );
+
+	$zapikey = &setCryptString( $zapikey );
+
+	&setGlobalConfiguration( 'zapikey', $zapikey );
+}
 
 1;
