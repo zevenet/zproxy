@@ -292,7 +292,7 @@ See Also:
 =cut
 sub disableZCluster
 {
-	my $error_code = system("/etc/init.d/keepalived stop >/dev/null 2>&1");
+	my $error_code = &logAndRun("/etc/init.d/keepalived stop");
 
 	require Zevenet::Net::Interface;
 	include 'Zevenet::Conntrackd';
