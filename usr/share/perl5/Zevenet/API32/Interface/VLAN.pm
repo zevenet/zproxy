@@ -130,11 +130,14 @@ sub new_vlan    # ( $json_obj )
 	}
 
 	# Check gateway errors
-	unless ( !defined ( $json_obj->{ gateway } )
-			 || &getValidFormat( 'ip_addr', $json_obj->{ gateway } ) )
+	if ( exists $json_obj->{ gateway } )
 	{
-		my $msg = "Invalid gateway address.";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		unless ( defined ( $json_obj->{ gateway } )
+				 && &getValidFormat( 'ip_addr', $json_obj->{ gateway } ) )
+		{
+			my $msg = "Invalid gateway address.";
+			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	# setup parameters of vlan
@@ -568,7 +571,8 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	if ( exists $json_obj->{ gateway } )
 	{
 		unless ( defined ( $json_obj->{ gateway } )
-				 && &getValidFormat( 'ip_addr', $json_obj->{ gateway } ) )
+				 && ( $json_obj->{ gateway } eq ""
+				 || &getValidFormat( 'ip_addr', $json_obj->{ gateway } ) ) )
 		{
 			my $msg = "Invalid gateway address.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
