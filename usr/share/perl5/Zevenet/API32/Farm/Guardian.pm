@@ -481,6 +481,7 @@ sub rem_farmguardian_farm
 	}
 	else
 	{
+		require Zevenet::Farm::Base;
 		# sync with cluster
 		if ( $eload )
 		{
