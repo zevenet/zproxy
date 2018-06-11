@@ -410,6 +410,12 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 		&loadL4Modules( $$farm{ vproto } );
 	}
 
+	# Stopping L4xNAT Scheduler Daemon
+	if ( &getNumberOfFarmTypeRunning( 'l4xnat' ) == 0 )
+	{
+		system ( "pkill l4sd >/dev/null 2>&1" );
+	}
+
 	return $status;
 }
 
