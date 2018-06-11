@@ -518,6 +518,7 @@ sub setHTTPServiceSTSTimeout    # ($farm_name,$service,$code)
 
 # Move/Sort services
 
+
 =begin nd
 Function: moveService
 
@@ -536,108 +537,66 @@ FIXME:
 	Always return 0, create error control
 
 =cut
-sub moveService    # moveService ( $farmName, $move, $serviceSelect);
+
+
+sub moveService
 {
-	# Params
-	my $farmName      = shift;
-	my $move          = shift;
-	my $serviceSelect = shift;
+	my $farm      = shift;
+	my $srv       = shift;
+	my $req_index = shift;
+	my $out;
 
-	my $farm_filename = &getFarmFile( $farmName );
-	$farm_filename = "$configdir\/$farm_filename";
+	# lock file
+	my $farm_filename = &getFarmFile( $farm );
+	require Zevenet::Lock;
+	my $lock_file = "/tmp/$farm.lock";
+	my $lock_fh   = &lockfile( $lock_file );
 
-	my @file;
-	my @services = &getHTTPFarmServices( $farmName );
-	my @serviceIndex;
-	my $selectServiceInd;
-	my $size = scalar @services;
-	my @aux;
-	my $lastService;
+	# reduce a index if service was in a previuos position.
+	my $srv_index = &getFarmVSI( $farm, $srv );
 
-	# loop
-	my $ind        = 0;
-	my $serviceNum = 0;
-	my $flag       = 0;
-	my @definition;    # Service definition
+	# get service code
+	my $srv_block = &getHTTPServiceBlocks( $farm, $srv );
 
-	if (    ( ( $move eq 'up' ) && ( $services[0] ne $serviceSelect ) )
-		 || ( ( $move eq 'down' ) && ( $services[$size - 1] ne $serviceSelect ) ) )
+	my @sort_list = @{ $srv_block->{ farm } };
+
+	my $size = scalar keys %{ $srv_block->{ services } };
+	my $srv_flag = 0;
+	my $id = 0;
+
+	for ( my $i=0; $i < $size+1; $i++ )
 	{
-		#~ system ( "cp $farm_filename $farm_filename.bak" );
-		tie @file, 'Tie::File', $farm_filename;
-
-		# Find service indexs
-		foreach my $line ( @file )
+		if ( $i == $req_index )
 		{
-			# Select service index
-			if ( $line =~ /^\tService \"$serviceSelect\"$/ )
-			{
-				$flag             = 1;
-				$selectServiceInd = $serviceNum;
-			}
-
-			# keep service definition and delete it from configuration file
-			if ( $flag == 1 )
-			{
-				push @definition, $line;
-
-				# end service definition
-				if ( $line =~ /^\tEnd$/ )
-				{
-					$flag = 0;
-					$ind -= 1;
-				}
-			}
-			else
-			{
-				push @aux, $line;
-			}
-
-			# add a new index to the index table
-			if ( $line =~ /^\tService \"$services[$serviceNum]\"$/ )
-			{
-				push @serviceIndex, $ind;
-				$serviceNum += 1;
-			}
-
-			# index of last service
-			if ( $line =~ /^\tEnd$/ )
-			{
-				$lastService = $ind + 1;
-			}
-
-			if ( !$flag )
-			{
-				$ind += 1;
-			}
-
-		}
-		@file = @aux;
-
-		# move up service
-		if ( $move eq 'up' )
-		{
-			splice ( @file, $serviceIndex[$selectServiceInd - 1], 0, @definition );
+			push @sort_list, @{ $srv_block->{ request } };
 		}
 
-		# move down service
-		elsif ( $move eq 'down' )
+		else
 		{
-			if ( $selectServiceInd == ( $size - 2 ) )
-			{
-				unshift @definition, "\n";
-				splice ( @file, $lastService + 1, 0, @definition );
-			}
-			else
-			{
-				splice ( @file, $serviceIndex[$selectServiceInd + 2], 0, @definition );
-			}
+			push @sort_list, @{ $srv_block->{ services }->{ $id } };
+			$id++;
 		}
-		untie @file;
 	}
 
-	return 0;
+	# finish tags of config file
+	push @sort_list, "\t#ZWACL-END";
+	push @sort_list, "End";
+
+	# write in config file
+	use Tie::File;
+	tie my @file, "Tie::File", "$configdir/$farm_filename";
+	@file = @sort_list;
+	untie @file;
+
+	# unlock file
+	&unlockfile( $lock_fh );
+
+	# move fg
+	&moveServiceFarmStatus( $farm, $srv, $req_index );
+
+	return $out;
 }
+
 
 =begin nd
 Function: moveServiceFarmStatus
@@ -657,68 +616,45 @@ FIXME:
 	Always return 0, create error control
 
 =cut
+
 sub moveServiceFarmStatus
 {
-	my ( $farmName, $moveService, $serviceSelect ) = @_;
+	my ( $farmname, $service, $req_index ) = @_;
 
-	require Tie::File;
-	my @file;
-	my $fileName = "$configdir\/${farmName}_status.cfg";
+	use Tie::File;
+	my $fileName = "$configdir\/${farmname}_status.cfg";
+	tie my @file, 'Tie::File', $fileName;
 
-	my @services = &getHTTPFarmServices( $farmName );
-	my $size     = scalar @services;
-	my $ind      = -1;
-	my $auxInd;
-	my $serviceNum;
+	my $srv_id = &getFarmVSI( $farmname, $service );
+	return if ( $srv_id == -1 );
+	return if ( $srv_id == $req_index );
+	#
+	my $dir = ( $srv_id < $req_index )? "up" : "down";
 
-	# Find service select index
-	foreach my $se ( @services )
-	{
-		$ind += 1;
-		last if ( $services[$ind] eq $serviceSelect );
-	}
-
-	#~ system ( "cp $fileName $fileName.bak" );
-
-	tie @file, 'Tie::File', $fileName;
-
-	# change server id
 	foreach my $line ( @file )
 	{
-		$line =~ /(^-[bB] 0 )(\d+)/;
-		my $cad = $1;
-		$serviceNum = $2;
-
-		#	&main::zenlog("$moveService::$ind::$serviceNum");
-		if ( ( $moveService eq 'up' ) && ( $serviceNum == $ind ) )
+		if ( $line =~ /(^-[bB] 0) (\d+) (.+)$/ )
 		{
-			$auxInd = $serviceNum - 1;
-			$line =~ s/^-[bB] 0 (\d+)/${cad}$auxInd/;
-		}
+			my $cad1 = $1;
+			my $index = $2;
+			my $cad2 = $3;
 
-		if ( ( $moveService eq 'up' ) && ( $serviceNum == $ind - 1 ) )
-		{
-			$auxInd = $serviceNum + 1;
-			$line =~ s/^-[bB] 0 (\d+)/${cad}$auxInd/;
-		}
+			# replace with the new service position
+			if ( $index == $srv_id ) 				{ $index = $req_index; }
 
-		if ( ( $moveService eq 'down' ) && ( $serviceNum == $ind ) )
-		{
-			$auxInd = $serviceNum + 1;
-			$line =~ s/^-[bB] 0 (\d+)/${cad}$auxInd/;
-		}
+			# replace with the new service position
+			elsif ( $dir eq "down" and $index < $srv_id and $index >= $req_index )	{ $index++ ; }
+			# replace with the new service position
+			elsif ( $dir eq "up" and $index > $srv_id and $index <= $req_index )	{ $index-- ; }
 
-		if ( ( $moveService eq 'down' ) && ( $serviceNum == $ind + 1 ) )
-		{
-			$auxInd = $serviceNum - 1;
-			$line =~ s/^-[bB] 0 (\d+)/${cad}$auxInd/;
+			$line = "$cad1 $index $cad2";
 		}
 	}
 
 	untie @file;
 
 	&zenlog(
-		"The service \"$serviceSelect\" from farm \"$farmName\" has been moved $moveService", "info", "LSLB"
+		"The service \"$service\" from farm \"$farmname\" has been moved to $req_index the position", "debug2"
 	);
 
 	return 0;
