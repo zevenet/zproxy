@@ -28,6 +28,7 @@ sub modify_service_cookie_insertion
 	include 'Zevenet::Farm::HTTP::Service::Ext';
 
 	my $ci = &getHTTPServiceCookieIns( $farmname, $service );
+	$ci->{ enabled } = ( $ci->{ enabled } eq 'true' ) ? 1 : 0;
 
 	if ( exists ( $json_obj->{ cookieinsert } ) )
 	{

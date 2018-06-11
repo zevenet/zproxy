@@ -150,7 +150,7 @@ sub setHTTPServiceCookieIns    # ($farm_name,$service,$ci)
 	# TODO: check valid input
 
 	# form new policy
-	my $ci_enabled = $ci->{ enabled } == 1 ? '' : '#';
+	my $ci_enabled = ( $ci->{ enabled } == 1 ) ? '' : '#';
 	my $new_ci_policy = qq(\t\t${ci_enabled}BackendCookie "$ci->{ name }" "$ci->{ domain }" "$ci->{ path }" $ci->{ ttl });
 
 	# apply new policy
@@ -376,21 +376,21 @@ sub setHTTPServiceSTSStatus    # ($farm_name,$service,$code)
 
 	foreach my $line ( @fileconf )
 	{
-		$index++;						
+		$index++;
 		if ( $line =~ /\tService \"$service\"/ )    { $srv_flag = 1; }
 		if ( $line =~ /^\tEnd$/ && $srv_flag == 1 ) { last; }
 		next if $srv_flag == 0;
 
 		if ( $line =~ /StrictTransportSecurity(\s+\d+)?/ )
 		{
-			if ($status eq 'true') 
+			if ($status eq 'true')
 			{
 				my $time = $1 // 21600000;
 				$time =~ s/^\s+//g;
 				$line =~ s/#//g;
 				$errno = 0;
 			}
-			else 
+			else
 			{
 				splice @fileconf, $index, 1;
 				$errno = 0;
