@@ -1174,7 +1174,7 @@ sub runZClusterRemoteManager
 
 		# start remote interfaces, farms and cluster
 		my $cl_output = &runRemotely(
-			"$zcluster_manager zcluster_manager $object $command @arguments",
+			"$zcluster_manager $object $command @arguments",
 			$zcl_conf->{$remote_hostname}->{ip}
 		);
 
