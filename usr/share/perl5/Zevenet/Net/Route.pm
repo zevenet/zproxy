@@ -180,11 +180,16 @@ sub isRule    # ($if_ref, $toif)
 
 	$toif = $$if_ref{ name } if !$toif;
 
-	my @eject      = `$ip_bin -$$if_ref{ip_v} rule list`;
-	my $expression = "from $$if_ref{net}/$$if_ref{mask} lookup table_$toif";
-	my $existRule  = grep /$expression/, @eject;
+	require NetAddr::IP;
+	my $ipblock = NetAddr::IP->new( $$if_ref{net}, $$if_ref{mask} );
 
-	return $existRule;
+	my @eject       = `$ip_bin -$$if_ref{ip_v} rule list`;
+	my $expression1 = "from $$if_ref{net}/$$if_ref{mask} lookup table_$toif";
+	my $existRule1   = grep /$expression1/, @eject;
+	my $expression2 = "from $ipblock lookup table_$toif";
+	my $existRule2   = grep /$expression2/, @eject;
+
+	return $existRule1 || $existRule2;
 }
 
 =begin nd
