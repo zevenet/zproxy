@@ -57,7 +57,7 @@ sub GET
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("GET captures( @captures )", "debug", $LOG_TAG) if &debug();
+	#~ &zenlog("GET captures( @captures )", "debug", $LOG_TAG) if &debug();
 
 	if ( ref $code eq 'CODE' )
 	{
@@ -78,7 +78,7 @@ sub POST
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("POST captures( @captures )", "info", $LOG_TAG) if &debug();
+	#~ &zenlog("POST captures( @captures )", "info", $LOG_TAG) if &debug();
 
 	my $data = &getCgiParam( 'POSTDATA' );
 	my $input_ref;
@@ -139,7 +139,7 @@ sub PUT
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("PUT captures( @captures )", "debug", $LOG_TAG) if &debug();
+	#~ &zenlog("PUT captures( @captures )", "debug", $LOG_TAG) if &debug();
 
 	my $data = &getCgiParam( 'PUTDATA' );
 	my $input_ref;
@@ -200,7 +200,7 @@ sub DELETE
 	my @captures = ( $ENV{ PATH_INFO } =~ $path );
 	return unless @captures;
 
-	&zenlog("DELETE captures( @captures )", "debug", $LOG_TAG) if &debug();
+	#~ &zenlog("DELETE captures( @captures )", "debug", $LOG_TAG) if &debug();
 
 	if ( ref $code eq 'CODE' )
 	{
@@ -492,7 +492,7 @@ sub httpDownloadResponse
 					-attachment      					=> $args->{ file },
 					'Content-length' 					=> -s $path,
 					'Access-Control-Allow-Origin'      	=> "https://$ENV{ HTTP_HOST }/",
-					'Access-Control-Allow-Credentials' 	=> 'true'					
+					'Access-Control-Allow-Credentials' 	=> 'true'
 	};
 
 	# make body

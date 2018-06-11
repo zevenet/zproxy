@@ -104,7 +104,7 @@ sub eload
 	if ( $debug )
 	{
 		&zenlog("eload: CMD: '$cmd'", "debug", "SYSTEM");
-		&zenlog("eload: INPUT: '$input'", "debug", "SYSTEM") unless $input eq '[]';
+		#~ &zenlog("eload: INPUT: '$input'", "debug", "SYSTEM") unless $input eq '[]';
 	}
 
 	my $ret_output;
