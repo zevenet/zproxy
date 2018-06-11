@@ -5,7 +5,7 @@
 #Zevenet root directory
 $zdir="/usr/local/zevenet";
 #Zevenet bin directory
-$zbindir = "/usr/local/zevenet/app/zbin";
+$zbindir = "/usr/local/zevenet/bin";
 #Zevenet bin directory
 $templatedir = "/usr/local/zevenet/share";
 #Zevenet lib directory
@@ -130,7 +130,7 @@ $lsmod="/sbin/lsmod";
 #Where is gdnsd?
 $gdnsd="/usr/local/zevenet/app/gdnsd/sbin/gdnsd";
 #Where is l4sd?
-$l4sd="/usr/local/zevenet/app/l4s/bin/l4sd";
+$l4sd="/usr/local/zevenet/bin/l4sd";#update
 #Where is id binary?
 $bin_id="/usr/bin/id";
 #Where is wget binary?
@@ -198,7 +198,7 @@ $iptlock = "/tmp/iptables.lock";
 #Directory where is check script. In this directory you can save your own check scripts.
 $libexec_dir="/usr/local/zevenet/app/libexec";
 #FarmGuardian binary, create advanced check for backend servers
-$farmguardian="/usr/local/zevenet/app/zbin/farmguardian"; #update
+$farmguardian="/usr/local/zevenet/bin/farmguardian";#update
 
 #Where is ZenRRD Directory?. There is a perl script that create rrd database and images from Monitoring section
 $rrdap_dir="/usr/local/zevenet/app/zenrrd";#update
@@ -231,9 +231,9 @@ $floatfile="/usr/local/zevenet/config/float.conf";
 $znode_status_file="/usr/local/zevenet/node_status";
 
 # zcluster-manager command path
-$zcluster_manager="/usr/local/zevenet/app/zbin/zcluster-manager";
+$zcluster_manager="/usr/local/zevenet/bin/zcluster-manager";#update
 # ssh-copy-id file path
-$ssh_copy_id="/usr/local/zevenet/app/zbin/ssh-copy-id.sh";
+$ssh_copy_id="/usr/local/zevenet/bin/ssh-copy-id.sh";#update
 # primary-backup conntrackd script
 $primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
 
