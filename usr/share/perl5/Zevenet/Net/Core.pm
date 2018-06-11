@@ -523,6 +523,11 @@ sub addIp    # ($if_ref)
 
 	my @ip_output = `$ip_bin -$$if_ref{ip_v} addr show dev $routed_iface`;
 
+	if ( $$if_ref{addr} eq "" || $$if_ref{addr} eq "" )
+	{
+		return 0;
+	}
+
 	if ( grep /$$if_ref{addr}\//, @ip_output )
 	{
 		return 0;
