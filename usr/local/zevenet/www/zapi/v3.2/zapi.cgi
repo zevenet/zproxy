@@ -226,15 +226,15 @@ sub certcontrol
 		$swcert = 1;
 		return $swcert;
 	}
-	my $openssl_bin = "/usr/bin/openssl";
+	my $openssl 	= &getGlobalConfiguration( 'openssl' );
 	my $keyid       = "4B:1B:18:EE:21:4A:B6:F9:76:DE:C3:D8:86:6D:DE:98:DE:44:93:B9";
 	my @months      = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 	my $hostname    = &getHostname();
 	my $key         = &keycert_old();
 
-	my @zen_cert    = `$openssl_bin x509 -in $zlbcertfile -noout -text 2>/dev/null`;
+	my @zen_cert    = `$openssl x509 -in $zlbcertfile -noout -text 2>/dev/null`;
 
-	my $serial = `$openssl_bin x509 -in $zlbcertfile -serial -noout`;
+	my $serial = `$openssl x509 -in $zlbcertfile -serial -noout`;
 	$serial =~ /serial\=(\w+)/;
 	$serial = $1;
 
@@ -269,20 +269,36 @@ sub certcontrol
 	my $date_check = `cat $file_check 2>/dev/null`;
 	$date_check =~ s/\s*$//;
 
-	if ($date_check ne $date_encode) {
+	if ($date_check ne $date_encode) 
+	{
 		my $crl_path = "$configdir/cacrl.crl";
 
-		my $date_mod = `stat -c%y $crl_path`;
+		my $date_mod = '';
+
+		if ( -f $crl_path )
+		{
+			$date_mod = `stat -c%y $crl_path`;
+		}
+		else
+		{
+			&zenlog("WARNING!!! File $crl_path not found.");
+		}
+		my $wget = &getGlobalConfiguration( 'wget' );
 		my @modification = split /\ /, $date_mod;
 		$modification[0] = $modification[0] // '';
 
 		if ( $modification[0] ne $date_today) {
 			# Download CRL
-	  		my $download = `wget -q -O $crl_path https://devcerts.zevenet.com/pki/ca/index.php?stage=dl_crl`;
-	  		&zenlog("CRL Downloaded on $date_today");
+			my $tmp_file = '/opt/cacrl.crl';
+			my $download = `$wget -q -O $tmp_file https://devcerts.zevenet.com/pki/ca/index.php?stage=dl_crl`;
+			if ( -s $tmp_file > 0 ) {
+				&zenlog("CRL Downloaded on $date_today");
+				my $copy = `cp $tmp_file $crl_path`;
+			}
+			unlink $tmp_file;
 	  	}
 
-		my @decoded = `openssl crl -inform DER -text -noout -in $crl_path`;
+		my @decoded = `$openssl crl -inform DER -text -noout -in $crl_path` if -f $crl_path;
 		if ( !grep /keyid:$keyid/, @decoded ) {
 			#swcert = 2 ==> Cert isn't signed OK
 			$swcert = 2;
