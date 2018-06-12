@@ -75,6 +75,12 @@ systemctl disable apt-daily.timer
 systemctl mask apt-daily.service
 systemctl daemon-reload
 
+# Disable OpenVZ (arpsend)
+systemctl stop vz
+systemctl disable vz
+systemctl mask vz.service
+systemctl daemon-reload
+
 # disable sec service
 systemctl stop sec 2>/dev/null
 systemctl disable sec 2>/dev/null
@@ -96,7 +102,7 @@ sed -i 's/^\# Required-Stop:.*/# Required-Stop:\t\$remote_fs \$syslog zevenet/g'
 
 # Disable DNS resolution for SSH service
 if [ -f /usr/local/zevenet/app/zbin/ssh_nodns.sh ]; then
-        /usr/local/zevenet/app/zbin/ssh_nodns.sh
+	/usr/local/zevenet/app/zbin/ssh_nodns.sh
 fi
 
 # Load conntrack modules

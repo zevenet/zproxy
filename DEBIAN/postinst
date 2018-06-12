@@ -101,6 +101,12 @@ systemctl disable apt-daily.timer
 systemctl mask apt-daily.service
 systemctl daemon-reload
 
+# Disable OpenVZ (arpsend)
+systemctl stop vz
+systemctl disable vz
+systemctl mask vz.service
+systemctl daemon-reload
+
 # sec service for zevenet notifications
 if [ -f /bin/systemctl ]
 then
