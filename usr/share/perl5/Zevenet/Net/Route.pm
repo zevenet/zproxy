@@ -123,6 +123,7 @@ sub addlocalnet    # ($if_ref)
 
 			# ignores interfaces down or not configured
 			next if $if_ref->{ status } ne 'up';
+			next if ! defined $if_ref->{ addr };
 		}
 
 		&zenlog("addlocalnet: setting route in table $table", "debug", "NETWORK") if &debug();
