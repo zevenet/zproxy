@@ -75,6 +75,11 @@ else
 	sed -i 's!zevenet/app/zenntp/zenntp.pl!zevenet/bin/zenntp!' /etc/cron.d/zevenet
 fi
 
+# Migrate keepalived.conf
+if [ -f /etc/keepalived/keepalived.conf ]; then
+	sed -i 's"/usr/local/zevenet/bin/zcluster-manager"/usr/local/zevenet/bin/enterprise.bin zcluster-manager"' /etc/keepalived/keepalived.conf
+fi
+
 #Disable conntrackd stats
 sed -i '/Stats/,/}/d' /etc/conntrackd/conntrackd.conf 2>/dev/null
 #delete old conntrackd-stats logs

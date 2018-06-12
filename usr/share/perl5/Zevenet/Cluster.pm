@@ -371,7 +371,7 @@ sub setKeepalivedConfig
 		$priority = ( $zcl_conf->{_}->{ primary } eq $localhost )? 120: 50;
 	}
 
-	my $ka_conf = "! Zen Load Balancer configuration file for keepalived
+	my $ka_conf = "! Zevenet configuration file for keepalived
 
 vrrp_instance ZCluster {
 \tinterface $zcl_conf->{_}->{interface}

@@ -622,8 +622,6 @@ sub setNodeStatusMaster
 		system( "$zenino >dev/null 2>&1 &" );
 	}
 
-	&zenlog( "\$ENV{ name }: $ENV{ name }" );
-
 	# put interface as up
 	my $maint_if = 'cl_maintenance';
 	my $ip_bin = &getGlobalConfiguration( 'ip_bin' );
