@@ -628,32 +628,10 @@ sub setNodeStatusMaster
 	system("$ip_bin link set $maint_if up");
 
 	# start farmguardians
-	my @farmsf = &getFarmList();
-
-	foreach my $ffile ( @farmsf )
+	require Zevenet::FarmGuardian;
+	foreach my $fg ( &getFGList() )
 	{
-		my $farmname = &getFarmName( $ffile );
-		my $bstatus  = &getFarmBootStatus( $farmname );
-
-		if ( $bstatus eq "up" )
-		{
-			require Zevenet::FarmGuardian;
-
-			#~ print "  * Starting Farm $farmname:";
-			#~ $status = &_runFarmStart( $farmname, "false" );
-
-			#farmguardian configured and up?
-			my $fgstatus = &getFarmGuardianStatus( $farmname );
-
-			if ( ( $bstatus eq 'up' ) && ( $fgstatus == 1 ) )
-			{
-				my $error_code = &runFarmGuardianStart( $farmname, "" );
-				if ( $error_code )
-				{
-					&zenlog( "Some error happened starting farmguardian for farm $farmname" );
-				}
-			}
-		}
+		&runFGStart( $fg );
 	}
 
 	&zenlog( "End of setNodeStatusMaster ###################" );
@@ -718,9 +696,7 @@ sub setNodeStatusBackup
 	}
 
 	# stop farmguardians
-	my $pids = `pgrep farmguardian`;
-	$pids =~ s/\n/ /g;
-	system ( "kill $pids" ) if $pids;
+	system ( "pkill farmguardian" );
 
 	# block/disable ip announces ( arp and neigh )
 	my @configured_interfaces = @{ &getConfigInterfaceList() };
