@@ -25,6 +25,8 @@ use strict;
 
 use Zevenet::Alias;
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 # DELETE /alias/(alias_type)/(alias_re)
 sub delete_alias
 {
