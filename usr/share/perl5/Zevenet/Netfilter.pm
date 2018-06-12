@@ -1051,7 +1051,7 @@ sub iptSystem
 		}
 		else
 		{
-			&zenlog( $program . "failed: $command", "error", "SYSTEM" );    # show in logs if failed
+			&zenlog( $program . "failed: $command", "warning", "SYSTEM" );    # show in logs if failed
 		}
 	}
 
