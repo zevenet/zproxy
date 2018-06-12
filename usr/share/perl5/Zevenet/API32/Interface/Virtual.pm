@@ -469,7 +469,7 @@ sub modify_interface_virtual    # ( $json_obj, $virtual )
 	my $if_ref = &getInterfaceConfig( $virtual );
 	my @farms;
 
-	my @allowParams = ( "ip" );
+	my @allowParams = ( "ip", "force" );
 
 	unless ( $if_ref )
 	{
