@@ -212,7 +212,7 @@ $zenino="/usr/local/zevenet/bin/zeninotify";#update
 #Zen Inotify pid file
 $zeninopid="/var/run/zeninotify.pid";
 #Rsync replication parameters
-$zenrsync="-auzvr --delete";#update
+$zenrsync="-azvr --delete";#update
 #Arptables
 $arptables="/sbin/arptables";
 #ARP unsolicited
