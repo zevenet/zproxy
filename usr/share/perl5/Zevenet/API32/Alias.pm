@@ -123,17 +123,30 @@ sub get_by_type
 	my $desc = "List the aliases";
 
 	my $alias_list = &getAlias( $type );
-        my @out;
-        foreach my $key ( keys %{ $alias_list } )
-        {
-           my %hash = (
-                "id"    =>      $key,
-                "alias" =>      $alias_list->{ $key },
-           );
-           push @out, \%hash;
+	my $user         = &getUser();
+	my @others_alias = [];
 
-        }
+	if ( $type eq 'interface' and $user ne 'root')
+	{	
+		my @virtual_alias = map { { name => $_, alias => $alias_list->{$_} } } grep { /:/ } keys %{$alias_list};
+		@others_alias = map { { name => $_, alias => $alias_list->{$_} } } grep { !/:/ } keys %{$alias_list};		
 
+		if ( $eload )
+		{
+			my @out2 = @{
+				&eload(
+						module => 'Zevenet::RBAC::Group::Core',
+						func   => 'getRBACUserSet',
+						args   => ['interfaces', \@virtual_alias],
+				)
+			};
+			push (@others_alias, @out2);
+		}
+	} else {
+		@others_alias = map { { name => $_, alias => $alias_list->{$_} } } keys %{$alias_list};
+	}
+
+	my @out = map { {id => $_->{name}, alias => $_->{alias} } } @others_alias;		
 	my $body = {
 				 description => $desc,
 				 params      => \@out
