@@ -425,6 +425,7 @@ sub stop_service
 	include 'Zevenet::Notify';
 	include 'Zevenet::IPDS::Base';
 	include 'Zevenet::Net::Throughput';
+	include 'Zevenet::Cluster';
 
 	# stop all modules
 	&zlbstopNotifications();
@@ -434,8 +435,9 @@ sub stop_service
 	if ( &getZClusterStatus() )
 	{
 		&zenlog( "Stopping ZCluster...", "info", "CLUSTER");
+		my $zenino_proc = &get_zeninotify_process();
 
-		if ( `pgrep zeninotify` )
+		unless ( &logAndRun( $zenino_proc ) )
 		{
 			my $zenino = &getGlobalConfiguration( 'zenino' );
 			system ( "$zenino stop" );

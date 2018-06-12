@@ -690,6 +690,9 @@ sub setNodeStatusBackup
 
 	require Zevenet::Net::Interface;
 	include 'Zevenet::Ssyncd';
+	include 'Zevenet::Cluster';
+
+	my $zenino_proc = &get_zeninotify_process();
 
 	# conntrackd
 	my $primary_backup = &getGlobalConfiguration( 'primary_backup' );
@@ -704,7 +707,7 @@ sub setNodeStatusBackup
 	my $if_ref = &getSystemInterface( $maint_if );
 	system("$ip_bin link set $maint_if up");
 
-	unless ( system ( 'pgrep zeninotify >/dev/null' ) )
+	unless ( &logAndRun( $zenino_proc ) )
 	{
 		my $zenino = &getGlobalConfiguration( 'zenino' );
 
@@ -738,8 +741,10 @@ sub setNodeStatusMaintenance
 	&zenlog( "############### Starting setNodeStatusMaintenance" );
 
 	include 'Zevenet::Ssyncd';
+	include 'Zevenet::Cluster';
 	require Zevenet::Net::Interface;
 
+	my $zenino_proc = &get_zeninotify_process();
 	my $node_status = &getZClusterNodeStatus();
 	&zenlog( "Cluster ==== node_status: $node_status ===> Maintenance" );
 
@@ -760,7 +765,7 @@ sub setNodeStatusMaintenance
 	&setSsyncdDisabled();
 
 	# stop zeninotify
-	unless ( system ( 'pgrep zeninotify >/dev/null' ) )
+	unless ( &logAndRun( $zenino_proc ) )
 	{
 		my $zenino = &getGlobalConfiguration( 'zenino' );
 
