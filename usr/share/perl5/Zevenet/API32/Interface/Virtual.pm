@@ -220,6 +220,14 @@ sub delete_interface_virtual    # ( $virtual )
 	eval {
 		if ( $if_ref->{ status } eq 'up' )
 		{
+			# removing before in the remote node
+			&eload(
+				module => 'Zevenet::Cluster',
+				func   => 'runZClusterRemoteManager',
+				args   => ['interface', 'stop', $if_ref->{ name }],
+			) if ( $eload );
+
+
 			die if &delRoutes( "local", $if_ref );
 			die if &downIf( $if_ref, 'writeconf' );
 		}
@@ -231,12 +239,6 @@ sub delete_interface_virtual    # ( $virtual )
 		my $msg = "The virtual interface $virtual can't be deleted";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
-
-	&eload(
-			module => 'Zevenet::Cluster',
-			func   => 'runZClusterRemoteManager',
-			args   => ['interface', 'stop', $if_ref->{ name }],
-	) if ( $eload );
 
 	&eload(
 			module => 'Zevenet::Cluster',

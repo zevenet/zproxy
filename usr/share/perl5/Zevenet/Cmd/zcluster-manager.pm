@@ -66,8 +66,8 @@ use Zevenet::Debug;
 
 #~ my $primary_backup = "/usr/share/doc/conntrackd/examples/sync/primary-backup.sh";
 
-#&zenlog( "ARGV:@ARGV" ) if &debug();
-&zenlog( "ARGV:@ARGV:" );
+&zenlog( "zcluster-manager args: @ARGV", 'debug', 'cluster' );
+
 
 my $object  = shift @ARGV // '';
 my $command = shift @ARGV // '';
@@ -234,7 +234,7 @@ if ( $object eq 'farm' )
 	}
 }
 
-&zenlog( "checking $object" );
+&zenlog( "checking zcluster-manager object: $object", 'debug', 'cluster' );
 
 # zcluster-manager fg 		[stop|start|stop] <fg>
 # zcluster-manager fg_farm 	[stop|start|stop] <farm> [service]
@@ -527,7 +527,6 @@ if ( $object eq 'interface' )
 	{
 		include 'Zevenet::Cluster';
 		require Zevenet::Farm::L4xNAT::Config;
-
 		$status = &delIp( $$if_ref{ name }, $$if_ref{ addr }, $$if_ref{ mask } );
 		&reloadL4FarmsSNAT();
 		&enableInterfaceDiscovery( $if_ref );
