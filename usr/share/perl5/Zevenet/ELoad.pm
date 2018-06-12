@@ -44,8 +44,8 @@ sub eload
 		die( $msg );
 	}
 
-	use Carp qw(cluck);
-	cluck "[eload]" if $debug > 4; # warn with stack backtrace
+	#~ use Carp qw(cluck);
+	#~ cluck "[eload]" if $debug > 4; # warn with stack backtrace
 
 	# check not used params
 	if ( grep { not exists $req{ $_ } } @required )
@@ -139,7 +139,7 @@ sub eload
 	my $ret_f = exists $req{ just_ret } && $req{ just_ret };
 	my $api_f = ( $req{ module } =~ /^Zevenet::API/ );
 
-	&zenlog( $ret_output ) if $debug;
+	#~ &zenlog( $ret_output ) if $debug;
 
 	my $output = ( not $ret_f && $api_f ) ?	decode_json( $ret_output ): $ret_output;
 	my @output = eval{ @{ decode_json( $ret_output ) } };

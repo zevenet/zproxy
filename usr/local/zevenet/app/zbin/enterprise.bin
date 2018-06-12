@@ -216,10 +216,10 @@ my $input;
 	local $/ = undef;
 	$input = <STDIN>;
 
-	if ( $DEBUG > 9 )
-	{
-		&zenlog("enterprise.bin INPUT: $input");
-	}
+	#~ if ( $DEBUG > 9 )
+	#~ {
+		#~ &zenlog("enterprise.bin INPUT: $input");
+	#~ }
 }
 
 # my $input_l = length $input;
