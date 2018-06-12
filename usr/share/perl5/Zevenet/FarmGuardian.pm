@@ -582,16 +582,23 @@ sub runFGFarmStart
 
 	# check if the farm is up
 	return if ( &getFarmStatus( $farm ) ne 'up' );
-
 	# if the farmguardian is running...
 	if ( &getFGPidFarm( $farm, $svice ) )
 	{
 		return;
 		#~ &runFGFarmStop( $farm, $svice );
 	}
+	# check if the node is master
+	my $node = "";
+	$node = &eload(
+			 module => 'Zevenet::Cluster',
+			 func   => 'getZClusterNodeStatus',
+			 args   => [],
+	);
+	return unless ( ! $node or $node eq 'master' );
+
 
 	&zenlog( "Start fg for farm $farm, $svice", "debug2", "FG" );
-
 
 	if ( $ftype =~ /http/ && $svice eq "" )
 	{
