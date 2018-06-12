@@ -235,7 +235,7 @@ sub delete_interface_bond    # ( $bond )
 	if ( @farms )
 	{
 		my $str = join ( ', ', @farms );
-		my $msg = "This interface is been used as vip in the farm(s): $str.";
+		my $msg = "This interface is being used as vip in the farm(s): $str.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -308,7 +308,7 @@ sub delete_bond    # ( $bond )
 	if ( @farms )
 	{
 		my $str = join ( ', ', @farms );
-		my $msg = "This interface is been used as vip in the farm(s): $str.";
+		my $msg = "This interface is being used as vip in the farm(s): $str.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
@@ -778,7 +778,7 @@ sub modify_interface_bond    # ( $json_obj, $bond )
 		{
 			my $str = join ( ', ', @farms );
 			my $msg =
-			  "The IP is been used as farm vip in the farm(s): $str. If you are sure, repeat with parameter 'force'. All farms using this interface will be restarted.";
+			  "The IP is being used as farm vip in the farm(s): $str. If you are sure, repeat with parameter 'force'. All farms using this interface will be restarted.";
 			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 	}

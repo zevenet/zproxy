@@ -131,7 +131,7 @@ sub del_rbac_role
 	}
 	if ( $used_flag )
 	{
-		my $msg = "The RBAC role $role is been used by some group";
+		my $msg = "The RBAC role $role is being used by some group";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
