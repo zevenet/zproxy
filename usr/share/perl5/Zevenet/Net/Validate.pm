@@ -225,7 +225,8 @@ sub getNetValidate    # ($ip, $mask, $ip2)
 	my $addr1 = NetAddr::IP->new( $ip, $mask );
 	my $addr2 = NetAddr::IP->new( $ip2, $mask );
 
-	return $addr1->network() eq $addr2->network();
+	return defined $addr1 && defined $addr2 &&
+		( $addr1->network() eq $addr2->network() );
 }
 
 =begin nd
