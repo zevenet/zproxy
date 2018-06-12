@@ -1250,7 +1250,7 @@ sub getZClusterNodeStatusInfo
 	if ( ! defined( $ip ) || $ip eq &getZClusterLocalIp() )
 	{
 		$node->{ ka } = pgrep('keepalived');
-		$node->{ zi } = pgrep('zeninotify');
+		$node->{ zi } = &logAndRun( "ps aux | grep -v grep | grep zeninotify" );
 		$node->{ ct } = pgrep('conntrackd');
 
 		chomp( ( $node->{ sy } ) = `$ssyncdctl_bin show mode` ) if $ssyncd_enabled eq 'true';
@@ -1262,7 +1262,7 @@ sub getZClusterNodeStatusInfo
 		&runRemotely("pgrep keepalived", $ip );
 		$node->{ ka } = $?;
 
-		&runRemotely("pgrep zeninotify", $ip );
+		&runRemotely("ps aux | grep -v grep | grep zeninotify", $ip );
 		$node->{ zi } = $?;
 
 		&runRemotely("pgrep conntrackd", $ip );
