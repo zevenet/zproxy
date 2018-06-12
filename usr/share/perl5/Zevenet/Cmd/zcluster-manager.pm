@@ -614,12 +614,12 @@ sub setNodeStatusMaster
 
 	# start sync
 	my $zenino = &getGlobalConfiguration( 'zenino' );
-	&zenlog( "Running: $zenino &" );
+	&zenlog( "Running: $zenino >dev/null 2>&1 &" );
 	{
 		local %ENV = ( %ENV );
 		$ENV{ _ } = $zenino;
 
-		&logAndRun( "$zenino &" );
+		system( "$zenino >dev/null 2>&1 &" );
 	}
 
 	&zenlog( "\$ENV{ name }: $ENV{ name }" );
