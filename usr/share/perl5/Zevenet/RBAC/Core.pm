@@ -322,9 +322,13 @@ sub getRBACPermissionsMsg
 			# get action and section of config file
 			( $section, $action ) = &getRBACPermissionHash( $path, $method );
 
-			# get permission role
-			my $permission = &getRBACRolePermission( $section, $action );
-			$msg = "The user '$username' has not permissions for the object '$section' and the action '$action'" if ( ! $permission );
+			# allow by default if there is no specific permission
+			if ( $section ne '' && $action ne '' )
+			{
+				# get permission role
+				my $permission = &getRBACRolePermission( $section, $action );
+				$msg = "The user '$username' has not permissions for the object '$section' and the action '$action'" if ( ! $permission );
+			}
 		}
 	}
 
@@ -432,13 +436,6 @@ sub getRBACPermissionHash
 				$action = 'modify';
 			}
 		}
-	}
-
-	# ipds actions
-	if ( $path =~ qr{^/ipds/(?:rbl|blacklist|dos)/($object_re)/actions$} )
-	{
-		$section = 'ipds';
-		$action  = 'action';
 	}
 
 	if ( !$action or !$section )
@@ -880,6 +877,11 @@ sub getRBACPermissionIpdsHash
 							  },
 				 ],
 				 'POST' => [
+							{
+							  'regex'   => qr{^/ipds/(?:rbl|blacklist|dos)/($object_re)/actions$},
+							  'section' => 'ipds',
+							  'action'  => 'action',
+							},
 							{
 							  'regex'   => qr{^/ipds},
 							  'section' => 'ipds',
