@@ -712,9 +712,13 @@ sub getCertDaysToExpire
 	my $days_left = ( $end - time () ) / 86400;
 
 	# leave only two decimals
-	$days_left *= 100;
-	$days_left =~ s/\..*//g;
-	$days_left /= 100;
+	if ( $days_left < 1 ) {
+		$days_left *= 100;
+		$days_left =~ s/\..*//g;
+		$days_left /= 100;
+	} else {
+		$days_left =~ s/\..*//g;
+	}
 
 	return $days_left;
 }
