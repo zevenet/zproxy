@@ -88,10 +88,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 	unless ( defined $if_name )
 	{
-		require Carp;
-		Carp->import('cluck');
-
-		cluck('getInterfaceConfig got undefined interface name');
+		&zenlog('getInterfaceConfig got undefined interface name', 'debug2', 'network');
 	}
 
 	#~ &zenlog( "[CALL] getInterfaceConfig( $if_name )" );

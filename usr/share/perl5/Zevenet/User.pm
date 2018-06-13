@@ -40,8 +40,7 @@ sub getUser
 {
 	if ( ! exists $ENV{ REQ_USER } || ! defined $ENV{ REQ_USER } )
 	{
-		use Carp 'cluck';
-		cluck('Warning: User name not defined');
+		&zenlog('User name not defined', 'Warning');
 	}
 
 	return $ENV{ REQ_USER } // '';
