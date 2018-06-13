@@ -162,7 +162,7 @@ sub logAndRun    # ($command)
 
 	if ( &debug )
 	{
-		&zenlog( $program . "running: $command", "debug", "SYSTEM" );
+		&zenlog( $program . " running: $command", "debug", "SYSTEM" );
 
 		@cmd_output  = `$command 2>&1`;
 		$return_code = $?;
