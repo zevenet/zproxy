@@ -510,7 +510,9 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	my $vlan     = shift;
 
 	require Zevenet::Net::Interface;
+	require Zevenet::Net::Core;
 	require Zevenet::Net::Validate;
+	require NetAddr::IP;
 
 	my $desc   = "Modify VLAN interface";
 	my $if_ref = &getInterfaceConfig( $vlan );
@@ -668,6 +670,14 @@ sub modify_interface_vlan    # ( $json_obj, $vlan )
 	$if_ref->{ addr }    = $json_obj->{ ip }      if exists $json_obj->{ ip };
 	$if_ref->{ mask }    = $json_obj->{ netmask } if exists $json_obj->{ netmask };
 	$if_ref->{ gateway } = $json_obj->{ gateway } if exists $json_obj->{ gateway };
+	$if_ref->{ ip_v }    = &ipversion( $if_ref->{ addr } );
+	$if_ref->{ net }     = &getAddressNetwork( $if_ref->{ addr }, $if_ref->{ mask }, $if_ref->{ ip_v } );
+
+	unless ( $if_ref->{ addr } && $if_ref->{ mask } )
+	{
+		my $msg = "Cannot configure the interface without address or without netmask.";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
 	eval {
 		# Add new IP, netmask and gateway
