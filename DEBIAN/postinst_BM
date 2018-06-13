@@ -81,6 +81,12 @@ systemctl disable vz
 systemctl mask vz.service
 systemctl daemon-reload
 
+# Disable vzeventd
+systemctl stop vzeventd
+systemctl disable vzeventd
+systemctl mask vzeventd.service
+systemctl daemon-reload
+
 # disable sec service
 systemctl stop sec 2>/dev/null
 systemctl disable sec 2>/dev/null

@@ -112,6 +112,12 @@ systemctl disable vz
 systemctl mask vz.service
 systemctl daemon-reload
 
+# Disable vzeventd
+systemctl stop vzeventd
+systemctl disable vzeventd
+systemctl mask vzeventd.service
+systemctl daemon-reload
+
 # sec service for zevenet notifications
 if [ -f /bin/systemctl ]
 then
