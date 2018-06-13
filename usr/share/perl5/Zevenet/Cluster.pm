@@ -799,7 +799,7 @@ sub zsync
 
 	if ( $error_code )
 	{
-		&zenlog( $rsync_output, "info", "CLUSTER" );
+		&zenlog( "rsync output: $rsync_output", "info", "CLUSTER" );
 	}
 
 	return $error_code;
@@ -1174,7 +1174,7 @@ sub runZClusterRemoteManager
 		my $msg = "rc:$rc";
 		$msg .= " $cl_output" if $rc;
 
-		&zenlog( $msg, "info", "CLUSTER" );
+		&zenlog( "runZClusterRemoteManager message: $msg", "info", "CLUSTER" );
 
 		return $rc;
 	}
