@@ -508,11 +508,13 @@ sub runFGFarmStop
 				if ( -e $status_file )
 				{
 					require Zevenet::Farm::HTTP::Config;
+					require Zevenet::Farm::HTTP::Service;
+					require Tie::File;
+
 					my $portadmin = &getHTTPFarmSocket( $farm );
 					my $idsv = &getFarmVSI( $farm, $service );
 					my $poundctl = &getGlobalConfiguration( 'poundctl' );
 
-					require Tie::File;
 					tie my @filelines, 'Tie::File', $status_file;
 
 					my @fileAux = @filelines;
