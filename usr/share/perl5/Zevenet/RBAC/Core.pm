@@ -263,7 +263,9 @@ sub getRBACRolePermission
 		require Config::Tiny;
 		$fileHandle = Config::Tiny->read( $roleFile );
 
-		$out = 0 if ( $fileHandle->{ $section }->{ $action } eq 'false' );
+		$out = 0 if (	! exists( $fileHandle->{ $section }->{ $action } ) ||
+				! defined( $fileHandle->{ $section }->{ $action } ) ||
+				$fileHandle->{ $section }->{ $action } ne 'true' );
 	}
 
 	&zenlog( "$ENV{ REQUEST_METHOD } $ENV{ PATH_INFO }", "debug", "RBAC" );
