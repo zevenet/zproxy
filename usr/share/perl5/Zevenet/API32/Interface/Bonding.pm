@@ -321,7 +321,7 @@ sub delete_bond    # ( $bond )
 
 	if ( $bond_in_use )
 	{
-		my $msg = "Bonding interface is configured";
+		my $msg = "It is not possible to delete the bonding interface because it is configured. First you should unset the bonding configuration.";
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
