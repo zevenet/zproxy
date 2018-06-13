@@ -187,7 +187,7 @@ sub delete_interface_virtual    # ( $virtual )
 	{
 		my $child_string = join ( ', ', @child );
 		my $msg =
-		  "Before of removing $virtual interface, disable the floating IPs: $child_string.";
+		  "Before removing $virtual interface, disable the floating IPs: $child_string.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 

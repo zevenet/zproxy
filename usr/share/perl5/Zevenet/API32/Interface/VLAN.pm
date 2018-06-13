@@ -260,7 +260,7 @@ sub delete_interface_vlan    # ( $vlan )
 	{
 		my $child_string = join ( ', ', @child );
 		my $msg =
-		  "Before of removing $vlan interface, delete de virtual interfaces: $child_string.";
+		  "Before removing $vlan interface, delete the virtual interfaces: $child_string.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
