@@ -113,16 +113,16 @@ sub setDns
 	{
 		if ( $line =~ /\s*nameserver/ )
 		{
-			$line = "nameserver $value" if ( $index == 1 and $dns eq 'primary' );
-			$line = "nameserver $value" if ( $index == 2 and $dns eq 'secondary' );
-
+			$line = "nameserver $value" if ( $index == 1 and $dns eq 'primary' and $value ne '' );
+			$line = "nameserver $value" if ( $index == 2 and $dns eq 'secondary' and $value ne '' );
+			splice @dnsArr, ($index - 1) if ( $index == 2 and $dns eq 'secondary' and $value eq '');;
 			$index++;
 			last if ( $index > 2 );
 		}
 	}
 
 	# if the secondary nameserver has not been found, add it
-	push @dnsArr, "nameserver $value" if ( $index == 2 and $dns eq 'secondary' );
+	push @dnsArr, "nameserver $value" if ( $index == 2 and $dns eq 'secondary' and $value ne '' );
 
 	untie @dnsArr;
 
