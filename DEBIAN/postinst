@@ -138,6 +138,10 @@ else
 	insserv -r keepalived
 fi
 
+# Do not load init-functions on keepalived service
+# This allows keepalived to stop correctly
+sed -i -e 's!^. /lib/lsb/init-functions!#. /lib/lsb/init-functions!' /etc/init.d/keepalived
+
 # Do not mount /usr/local/zevenet/logs for zlb 4000 series
 sed -i 's/^\/dev\/mapper\/zva64-log \/usr\/local\/zevenet\/logs        ext4    defaults        0       2//' /etc/fstab
 
