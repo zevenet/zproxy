@@ -194,6 +194,11 @@ if [ -f /usr/local/zevenet/app/zbin/ssh_nodns.sh ]; then
         /usr/local/zevenet/app/zbin/ssh_nodns.sh
 fi
 
+# Correct file DNS
+if [ -f /etc/resolv.conf ]; then
+        sed -i -r '/nameserver ?$/d' /etc/resolv.conf
+fi;
+
 # Create IPDS directories
 /usr/local/zevenet/bin/boot_ipds
 
