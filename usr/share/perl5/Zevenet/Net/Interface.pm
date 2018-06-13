@@ -291,7 +291,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	if ( tie my @file_lines, 'Tie::File', "$config_filename" )
 	{
 		require Zevenet::Net::Validate;
-		my $ip_line_found;
+		my $ip_line_found = 0;
 
 		for my $line ( @file_lines )
 		{
@@ -303,7 +303,8 @@ sub setInterfaceConfig    # $bool ($if_ref)
 
 			my ( undef, $ip ) = split ';', $line;
 
-			if ( $$if_ref{ ip_v } eq &ipversion( $ip ) && !$ip_line_found )
+			#if ( $$if_ref{ ip_v } eq &ipversion( $ip ) && !$ip_line_found )
+			if ( defined( $ip ) && !$ip_line_found )
 			{
 				# replace line
 				$line          = $if_line;
