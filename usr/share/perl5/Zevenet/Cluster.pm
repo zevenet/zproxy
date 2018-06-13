@@ -293,6 +293,9 @@ See Also:
 sub disableZCluster
 {
 	my $error_code = &logAndRun("/etc/init.d/keepalived stop");
+	# confirm keepalived stop
+	my @keepalived_process = `pgrep keepalived`;
+	kill 'KILL', @keepalived_process if ( @keepalived_process );
 
 	require Zevenet::Net::Interface;
 	include 'Zevenet::Conntrackd';
