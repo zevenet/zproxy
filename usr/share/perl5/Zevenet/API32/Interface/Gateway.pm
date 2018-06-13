@@ -38,8 +38,6 @@ sub get_gateway
 	my $if_name =
 	  ( $ip_v == 6 ) ? &getIPv6IfDefaultGW() : &getIfDefaultGW();
 
-	&zenlog("get_gateway ip_ver: $ip_ver");
-
 	my $body = {
 				 description => $desc,
 				 params      => {
