@@ -294,7 +294,7 @@ sub disableZCluster
 {
 	my $error_code = &logAndRun("/etc/init.d/keepalived stop");
 	# confirm keepalived stop
-	my @keepalived_process = `pgrep keepalived`;
+	my @keepalived_process = `pgrep keepalived 2>/dev/null`;
 	kill 'KILL', @keepalived_process if ( @keepalived_process );
 
 	require Zevenet::Net::Interface;
@@ -1210,7 +1210,7 @@ sub pgrep
 
 sub get_zeninotify_process
 {
-	return "ps aux | grep -v grep | grep zeninotify";
+	return "ps aux | grep -v grep | grep zeninotify >/dev/null 2>&1";
 }
 
 =begin nd
