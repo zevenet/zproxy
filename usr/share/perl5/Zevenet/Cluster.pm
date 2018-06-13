@@ -1100,19 +1100,8 @@ sub broadcastInterfaceDiscovery
 
 	require Zevenet::Net::Util;
 
-	&sendGArp( $iface->{ name }, $iface->{ addr } );
-
 	# arping
 	&sendGArp( $iface->{ name }, $iface->{ addr } );
-	if ( $iface->{ ip_v } == 6 )
-	{
-		&zenlog("broadcastInterfaceDiscovery pending for IPv6", "warning", "CLUSTER");
-	}
-	else
-	{
-		&zenlog("IP version not supported", "error", "CLUSTER");
-		return 1;
-	}
 
 	return 0;
 }
