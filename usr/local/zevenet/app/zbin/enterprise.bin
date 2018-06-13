@@ -608,7 +608,7 @@ sub certcontrol
 		if ( $modification[0] ne $date_today) {
 			# Download CRL
 			my $tmp_file = '/opt/cacrl.crl';
-			my $download = `$wget -q -O $tmp_file https://devcerts.zevenet.com/pki/ca/index.php?stage=dl_crl`;
+			my $download = `$wget -q -O $tmp_file https://certs.zevenet.com/pki/ca/index.php?stage=dl_crl`;
 			if ( -s $tmp_file > 0 ) {
 				&zenlog("CRL Downloaded on $date_today");
 				my $copy = `cp $tmp_file $crl_path`;
