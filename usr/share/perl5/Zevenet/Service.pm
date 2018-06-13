@@ -437,7 +437,7 @@ sub stop_service
 		&zenlog( "Stopping ZCluster...", "info", "CLUSTER");
 		my $zenino_proc = &get_zeninotify_process();
 
-		unless ( &logAndRun( $zenino_proc ) )
+		unless ( system( $zenino_proc ) )
 		{
 			my $zenino = &getGlobalConfiguration( 'zenino' );
 			system ( "$zenino stop" );

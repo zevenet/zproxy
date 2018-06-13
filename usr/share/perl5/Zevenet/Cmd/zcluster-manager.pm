@@ -685,7 +685,7 @@ sub setNodeStatusBackup
 	my $if_ref = &getSystemInterface( $maint_if );
 	system("$ip_bin link set $maint_if up");
 
-	unless ( &logAndRun( $zenino_proc ) )
+	unless ( system( $zenino_proc ) )
 	{
 		my $zenino = &getGlobalConfiguration( 'zenino' );
 
@@ -741,7 +741,7 @@ sub setNodeStatusMaintenance
 	&setSsyncdDisabled();
 
 	# stop zeninotify
-	unless ( &logAndRun( $zenino_proc ) )
+	unless ( system( $zenino_proc ) )
 	{
 		my $zenino = &getGlobalConfiguration( 'zenino' );
 

@@ -1257,7 +1257,7 @@ sub getZClusterNodeStatusInfo
 	if ( ! defined( $ip ) || $ip eq &getZClusterLocalIp() )
 	{
 		$node->{ ka } = pgrep('keepalived');
-		$node->{ zi } = &logAndRun( $zeninotify_cmd );
+		$node->{ zi } = system( $zeninotify_cmd );
 		$node->{ ct } = pgrep('conntrackd');
 
 		chomp( ( $node->{ sy } ) = `$ssyncdctl_bin show mode` ) if $ssyncd_enabled eq 'true';
