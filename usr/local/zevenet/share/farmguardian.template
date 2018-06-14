@@ -26,7 +26,7 @@ cut_conns=false
 template=true
 
 [check_http_response_string]
-description=Send HTTP request to backend and expect response of 200 OK and a given string in the HTML with a timeout of 5 secs. Change string by value to find in the response. 
+description=Send HTTP request to backend and expect response of 200 OK and a given string in the HTML with a timeout of 5 secs. Change string by value to find in the response.
 command=check_http -I HOST -p PORT -e 200 -s 'string'
 farms=
 log=false
@@ -35,7 +35,7 @@ cut_conns=false
 template=true
 
 [check_https_response_string]
-description=Send HTTP request to backend and expect response of 200 OK and a given string in the HTML with a timeout of 5 secs. Change string by value to find in the response. 
+description=Send HTTP request to backend and expect response of 200 OK and a given string in the HTML with a timeout of 5 secs. Change string by value to find in the response.
 command=check_http -I HOST -p PORT -S -e 200 -s 'string' -t 5
 farms=
 log=false
@@ -63,7 +63,7 @@ template=true
 
 [check_smtp]
 description=Send SMTP connection to backend and expect a SMTP response OK with a timeout of 5 secs.
-command=check_smtp -H HOST -p POSRT -C 'helo host' -t 5
+command=check_smtp -H HOST -p PORT -C 'hello host' -t 5
 farms=
 log=false
 interval=15
@@ -72,7 +72,7 @@ template=true
 
 [check_imap]
 description=Send IMAP connection to backend and expect an IMAP response OK with a timeout of 5 secs.
-command=check_imap -H HOST -p POSRT -t 5
+command=check_imap -H HOST -p PORT -t 5
 farms=
 log=false
 interval=15
@@ -81,7 +81,7 @@ template=true
 
 [check_pop]
 description=Send POP connection to backend and expect a POP response OK with a timeout of 5 secs.
-command=check_pop -H HOST -p POSRT -t 5
+command=check_pop -H HOST -p PORT -t 5
 farms=
 log=false
 interval=15
