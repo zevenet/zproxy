@@ -22,7 +22,7 @@
 
 use strict;
 
-include 'Zevenet::Certifcate';
+include 'Zevenet::Certificate';
 
 # GET /certificates/activation
 sub get_activation_certificate_info # ()
