@@ -80,6 +80,13 @@ echo "- Sessions Table"
 ${home_dir}/app/ssyncd/bin/ssyncdctl show http	>> $backup_dir/sessions_http.txt 2>&1
 ${home_dir}/app/ssyncd/bin/ssyncdctl show recent	>> $backup_dir/sessions_recent.txt 2>&1
 
+if [[ -d ${home_dir}/lib/Zevenet/RBAC ]];
+then
+	echo "- RBAC"
+	cp /etc/group                          $backup_dir/
+	cp /etc/passwd                         $backup_dir/
+fi
+
 
 echo "Saving network information:"
 ##################################
