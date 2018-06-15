@@ -158,26 +158,18 @@ sub logAndRun    # ($command)
 	my @cmd_output;
 	my $program = $basename;
 
-	# &zenlog( (caller (2))[3] . ' >>> ' . (caller (1))[3]);
+	@cmd_output  = `$command 2>&1`;
+	$return_code = $?;
 
-	if ( &debug )
+	if ( $return_code )
 	{
-		&zenlog( $program . " running: $command", "debug", "SYSTEM" );
-
-		@cmd_output  = `$command 2>&1`;
-		$return_code = $?;
-
-		if ( $return_code )
-		{
-			&zenlog( "@cmd_output", "error", "error", "SYSTEM" );
-			&zenlog( "last command failed!", "error", "SYSTEM" );
-		}
+		&zenlog( $program . " running: $command", "error", "SYSTEM" );
+		&zenlog( "@cmd_output", "error", "error", "SYSTEM" );
+		&zenlog( "last command failed!", "error", "SYSTEM" );
 	}
 	else
 	{
-		system ( "$command >/dev/null 2>&1" );
-		$return_code = $?;
-		&zenlog( $program . "failed: $command", 'error', "SYSTEM" ) if $return_code;
+		&zenlog( $program . " running: $command", "debug", "SYSTEM" );
 	}
 
 	# returning error code from execution
