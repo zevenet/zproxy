@@ -236,7 +236,7 @@ my %format_re = (
 	'fg_time'    => qr/$natural/,                     # this value can't be 0
 
 	# RBAC
-	'user_name'     => qr/[0-9a-z-]+/,
+	'user_name'     => qr/^[a-z][-a-z0-9_]+/,
 	'rbac_password' => qr/(?=.*[0-9])(?=.*[a-zA-Z]).{8,16}/,
 	'group_name'    => qr/[\w-]+/,
 	'role_name'     => qr/[\w-]+/,
