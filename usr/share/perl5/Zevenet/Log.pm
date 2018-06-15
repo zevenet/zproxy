@@ -155,10 +155,9 @@ sub logAndRun    # ($command)
 	require Zevenet::Debug;
 
 	my $return_code;
-	my @cmd_output;
 	my $program = $basename;
 
-	@cmd_output  = `$command 2>&1`;
+	my @cmd_output  = `$command 2>&1`;
 	$return_code = $?;
 
 	if ( $return_code )
