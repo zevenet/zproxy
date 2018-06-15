@@ -30,32 +30,16 @@ use Zevenet::Log;
 use Zevenet::Config;
 use Zevenet::Farm::Core;
 use Zevenet::Farm::Service;
-use Zevenet::Farm::GSLB::FarmGuardian;
 use Zevenet::FarmGuardian;
+
+my $eload;
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
 
 my $configdir = &getGlobalConfiguration( "configdir" );
 my $piddir    = &getGlobalConfiguration( 'piddir' );
-
-# get running fg
-#~ opendir ( my $dir, "$piddir" ) || return -1;
-#~ my @running_fg =
-#~ grep { /^([^_]+)(_.*)?_guardian\.pid$/ && -f "$piddir/$_" } readdir ( $dir );
-#~ closedir $dir;
-#~ my @running_farms;
-
-#~ foreach my $file ( @running_fg )
-#~ {
-#~ my @fg = split ( '_', $file );
-
-#~ # stop fg
-#~ &runFarmGuardianStop( $fg[0] );
-#~ }
-
-# get farmguardian configuration
-#~ opendir ( my $dir, "$configdir" ) || return -1;
-#~ my @fg_conf =
-#~ grep { /^.*_guardian\.conf$/ && -f "$configdir/$_" } readdir ( $dir );
-#~ closedir $dir;
 
 # mkdir to save a backup of the old fg
 my $bkdir = "/opt/fg_bk";
@@ -89,22 +73,33 @@ foreach my $farm ( &getFarmNameList() )
 			}
 
 			# gslb
-			else
+			elsif ( $eload )
 			{
-				@conf = &getGSLBFarmGuardianParams( $farm, $srv );
+				@conf = &eload(
+								module => 'Zevenet::Farm::GSLB::Service',
+								func   => 'getGSLBFarmGuardianParams',
+								args   => [$farm, $srv],
+				);
+				my $status_fg = &eload(
+								module => 'Zevenet::Farm::GSLB::Service',
+								func   => 'getGSLBFarmFGStatus',
+								args   => [$farm, $srv],
+				);
+
 				next if not $conf[2];
 				$obj = {
 						 'farm'     => $farm,
 						 'service'  => $srv,
 						 'interval' => $conf[1],
 						 'command'  => $conf[2],
-						 'enable'   => &getGSLBFarmFGStatus( $farm, $srv ),
+						 'enable'   => $status_fg,
 						 'log'      => 'false',
 				};
 			}
-			
-			&zenlog ("Migrating farm guardian configuration file of farm $farm and service $srv ");
-			
+
+			&zenlog(
+				 "Migrating farm guardian configuration file of farm $farm and service $srv " );
+
 			&setOldFarmguardian( $obj );
 		}
 	}
@@ -121,8 +116,8 @@ foreach my $farm ( &getFarmNameList() )
 			'enable'   => $conf[3],
 			'log'      => $conf[4],
 		};
-		
-		&zenlog ("Migrating farm guardian configuration file of farm $farm");
+
+		&zenlog( "Migrating farm guardian configuration file of farm $farm" );
 		&setOldFarmguardian( $obj );
 	}
 
@@ -130,11 +125,6 @@ foreach my $farm ( &getFarmNameList() )
 }
 system ( "rm $configdir/*_guardian.conf" );
 
-#~ # Run the up fg
-#~ foreach my $fg ( &getFGConfigList() )
-#~ {
-#~ &runFGStart( $fg );
-#~ }
 
 ### ### ### functions ### ### ###
 
@@ -666,9 +656,9 @@ sub getFarmGuardianConf    # ($fname,$svice)
 =begin nd
 Function: getFarmGuardianPid
 
-	Read farmgardian pid from pid file. Check if the pid is running and return it, 
+	Read farmgardian pid from pid file. Check if the pid is running and return it,
 	else it removes the pid file.
-	
+
 Parameters:
 	fname - Farm name.
 	svice - Service name. Only apply if the farm profile has services. Leave undefined for farms without services.
