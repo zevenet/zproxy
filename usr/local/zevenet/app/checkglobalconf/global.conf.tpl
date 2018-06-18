@@ -231,7 +231,7 @@ $floatfile="/usr/local/zevenet/config/float.conf";
 $znode_status_file="/usr/local/zevenet/node_status";
 
 # zcluster-manager command path
-$zcluster_manager="/usr/local/zevenet/bin/enterprise.bin zcluster-manager";#update
+$zcluster_manager="/usr/local/zevenet/bin/zcluster-manager";#update
 # ssh-copy-id file path
 $ssh_copy_id="/usr/local/zevenet/bin/ssh-copy-id.sh";#update
 # primary-backup conntrackd script
