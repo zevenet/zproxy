@@ -77,13 +77,13 @@ systemctl daemon-reload
 
 # Disable OpenVZ (arpsend)
 systemctl stop vz
-systemctl disable vz
+systemctl disable vz 2>/dev/null
 systemctl mask vz.service
 systemctl daemon-reload
 
 # Disable vzeventd
 systemctl stop vzeventd
-systemctl disable vzeventd
+systemctl disable vzeventd 2>/dev/null
 systemctl mask vzeventd.service
 systemctl daemon-reload
 
