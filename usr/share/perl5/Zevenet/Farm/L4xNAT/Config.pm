@@ -1582,8 +1582,8 @@ sub getL4FarmLogs    # ($farm_name)
 		if ( $line ne "" )
 		{
 			my @line_a = split ( "\;", $line );
-			$output = $line_a[9] // "false";
-			chomp ( $output );
+			chomp($line_a[9]);
+			$output = 'true' if ($line_a[9] eq 'true');
 			last;
 		}
 	}
