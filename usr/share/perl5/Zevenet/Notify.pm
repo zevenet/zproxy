@@ -741,6 +741,7 @@ sub sendTestMail
 
 sub encryptNotifPass
 {
+	include 'Zevenet::Code';
 	if ( !&getNotifData( "senders", "_", "version" ) )
 	{
 		my $pass = &getNotifData( "senders", "Smtp", "auth-password" );
