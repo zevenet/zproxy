@@ -189,6 +189,11 @@ if [ -f /usr/local/zevenet/app/zbin/add_srv_tag_pound.pl ]; then
 	/usr/local/zevenet/app/zbin/add_srv_tag_pound.pl
 fi
 
+# Migrate FG
+if [ -f /usr/local/zevenet/app/zbin/migrate_old_fg.pl ]; then
+	/usr/local/zevenet/app/zbin/migrate_old_fg.pl
+fi
+
 # Migrate HTTP farms to dynamic thread model, without tcmalloc
 for i in $(find /usr/local/zevenet/config/ -name *pound.cfg);
 do
