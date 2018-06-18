@@ -748,7 +748,7 @@ sub encryptNotifPass
 
 		if ( $pass )
 		{
-			require Zevenet::Code;
+			include 'Zevenet::Code';
 			my $coded = &getCodeEncode( $pass );
 			&setNotifData( "senders", "Smtp", "auth-password", &getCodeEncode( $pass ) );
 		}
