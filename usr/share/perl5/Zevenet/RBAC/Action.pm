@@ -51,16 +51,18 @@ sub initRBACModule
 	my $rbacUserConfig  = &getRBACUserConf();
 	my $rbacGroupConfig = &getRBACGroupConf();
 	mkdir $rbacPath                         if ( !-d $rbacPath );
-	mkdir $rbacRolePath                    	if ( !-d $rbacRolePath );
+	mkdir $rbacRolePath                     if ( !-d $rbacRolePath );
 	&logAndRun( "$touch $rbacUserConfig" )  if ( !-f $rbacUserConfig );
 	&logAndRun( "$touch $rbacGroupConfig" ) if ( !-f $rbacGroupConfig );
-	&runRBACCreateGroupCmd( "zapi" )        if ( !getgrnam ( 'zapi' ) );
-	&runRBACCreateGroupCmd( "rbac" )        if ( !getgrnam ( 'rbac' ) );
 
 	# create  rbac user
 	my $adduser = &getGlobalConfiguration( "adduser_bin" );
 	&logAndRun( "$adduser --system --shell /bin/false --no-create-home rbac" )
 	  if ( !getpwnam ( 'rbac' ) );
+
+	# create group
+	&logAndRun( "$groupadd rbac" ) if ( !getgrnam ( 'rbac' ) );
+	&logAndRun( "$groupadd zapi" ) if ( !getgrnam ( 'zapi' ) );
 
 	&updateRBACAllUser();
 	&updateRBACAllGroup();
