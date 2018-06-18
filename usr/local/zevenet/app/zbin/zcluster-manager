@@ -1,1 +1,1 @@
-/usr/local/zevenet/bin/enterprise.bin zcluster-manager
+/usr/local/zevenet/bin/enterprise.bin zcluster-manager "$@"
