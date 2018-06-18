@@ -77,7 +77,11 @@ fi
 
 # Migrate keepalived.conf
 if [ -f /etc/keepalived/keepalived.conf ]; then
-	sed -i 's"/usr/local/zevenet/bin/zcluster-manager"/usr/local/zevenet/bin/enterprise.bin zcluster-manager"' /etc/keepalived/keepalived.conf
+	sed -i 's"/usr/local/zevenet/bin/enterprise.bin zcluster-manager"/usr/local/zevenet/bin/zcluster-manager"' /etc/keepalived/keepalived.conf
+
+	if [ `pgrep keepalived` ]; then
+		/etc/init.d/keepalived reload;
+	fi
 fi
 
 #Disable conntrackd stats
