@@ -413,12 +413,9 @@ if ( $action eq "start" )
 			}
 
 			#farmguardian configured and up?
-			my $fgstatus = &getFarmGuardianStatus( $farmname );
-
-			if ( ( $status == 0 ) && ( $fgstatus == 1 ) && $enable_fg )
+			if ( $status == 0 )
 			{
-				print ( "  * Starting Farm Guardian for $farmname:" );
-				my $stat = &runFarmGuardianStart( $farmname, "" );
+				my $stat = &runFGFarmStart( $farmname );
 
 				if ( $stat == 0 )
 				{
