@@ -264,7 +264,7 @@ $bonding_miimon_filename="bonding/miimon";
 
 #Notifications Module
 $notifConfDir = "/usr/local/zevenet/config/notifications";
-$secConf="/usr/local/zevenet/www/Notifications/sec.rules";#update
+$secTemplate="/usr/local/zevenet/share/sec.rules";
 $syslogFile="/var/log/syslog";
 
 #IPDS Module

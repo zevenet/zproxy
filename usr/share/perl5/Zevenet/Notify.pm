@@ -27,6 +27,13 @@ use Zevenet::Config;
 
 sub include;
 
+my $secConf = &getNotifConfFile();
+
+sub getNotifConfFile
+{
+	return &getGlobalConfiguration( "notifConfDir") . "/sec.rules";
+}
+
 sub setNotifCreateConfFile
 {
 	use Zevenet::SystemInfo;
@@ -166,8 +173,6 @@ sub setNotifAlerts
 	{
 		$errMsg =
 		  &setNotifData( 'alerts', $notif, 'SwitchTime', $params->{ 'SwitchTime' } );
-		$errMsg = &changeTimeSwitch( $notif, $params->{ 'SwitchTime' } )
-		  if ( ! $errMsg );
 	}
 
 	# successful message and reset
@@ -195,7 +200,6 @@ sub setNotifAlertsAction
 	if ( $status eq 'off' && $action eq 'enable' )
 	{
 		$errMsg = &setNotifData( 'alerts', $notif, 'Status', 'on' );
-		$errMsg = &enableRule( $notif );
 		&zenlog( "Turn on $notif notifications.", "info", "NOTIFICATIONS" );
 	}
 
@@ -203,7 +207,6 @@ sub setNotifAlertsAction
 	elsif ( $status eq 'on' && $action eq 'disable' )
 	{
 		$errMsg = &setNotifData( 'alerts', $notif, 'Status', 'off' );
-		$errMsg = &disableRule( $notif );
 		&zenlog( "Turn off $notif notifications.", "info", "NOTIFICATIONS" );
 	}
 	else
@@ -243,19 +246,17 @@ sub disableRule    # &disableRule ( $rule )
 {
 	my ( $rule ) = @_;
 
-	my $secConf  = &getGlobalConfiguration( 'secConf' );
-	my $fileConf = $secConf;
 	my $flag = 0;    # $flag = 0 rule don't find, $flag = 1 changing rule
 	my $errMsg;
 
-	if ( !-f $fileConf )
+	if ( !-f $secConf )
 	{
-		$errMsg = "don't find $fileConf file";
+		$errMsg = "don't find $secConf file";
 	}
 	else
 	{
 		require Tie::File;
-		tie my @handle, 'Tie::File', $fileConf;
+		tie my @handle, 'Tie::File', $secConf;
 
 		# change server id
 		foreach my $line ( @handle )
@@ -286,19 +287,18 @@ sub enableRule    # &enableRule ( $rule )
 {
 	my ( $rule ) = @_;
 
-	my $fileConf = &getGlobalConfiguration( 'secConf' );
 	my $flag = 0;    # $flag = 0 rule don't find, $flag = 1 changing rule
 	my $output;
 
-	if ( !-f $fileConf )
+	if ( !-f $secConf )
 	{
 		$output = 1;
-		&zenlog ("don't find $fileConf file", "error", "NOTIFICATIONS");
+		&zenlog ("don't find $secConf file", "error", "NOTIFICATIONS");
 	}
 	else
 	{
 		require Tie::File;
-		tie my @handle, 'Tie::File', $fileConf;
+		tie my @handle, 'Tie::File', $secConf;
 
 		# change server id
 		foreach my $line ( @handle )
@@ -329,7 +329,7 @@ sub changeTimeSwitch    # &changeTimeSwitch ( $rule, $time )
 {
 	my ( $rule, $time ) = @_;
 
-	my $fileConf = &getGlobalConfiguration( 'secConf' );
+	my $fileConf = $secConf;
 	my $flag   = 0;     # $flag = 0 rule don't find, $flag = 1 changing rule
 	my $errMsg = -1;
 
@@ -368,25 +368,13 @@ sub changeTimeSwitch    # &changeTimeSwitch ( $rule, $time )
 sub zlbstartNotifications
 {
 	my $notificationsPath = &getGlobalConfiguration( 'notifConfDir' ) ;
+	my $output;
 
 	# create conf file if don't exists
 	&setNotifCreateConfFile();
 
 	# check last state before stop service
 	my $status = &getNotifData( 'alerts', 'Notifications', 'Status' );
-	my $output;
-
-	# set switch time in sec.rules configuration file
-	my $sections = &getNotifData( 'alerts' );
-
-	foreach my $notif ( keys %{ $sections } )
-	{
-		if ( exists $sections->{ $notif }->{ 'SwitchTime' } )
-		{
-			my $time = &getNotifData( 'alerts', $notif, 'SwitchTime' );
-			&changeTimeSwitch( $notif, $time );
-		}
-	}
 
 	# run service if was up before than stop zevenet
 	if ( $status eq 'on' )
@@ -412,19 +400,34 @@ sub zlbstopNotifications
 	}
 }
 
+sub createSecConfig
+{
+	my $template    = &getGlobalConfiguration( 'secTemplate' );
+
+	# Copy the template
+	my $cp = &getGlobalConfiguration( "cp" );
+	system ( "$cp $template $secConf" );
+
+	# Fix inconguity between sec.rules and alert conf file
+	if ( &getNotifData( 'alerts', 'Backend', 'Status' ) eq 'on')
+	{
+		my $time = &getNotifData( 'alerts', 'Backend', 'SwitchTime' );
+		&enableRule( 'Backend' );
+		&changeTimeSwitch( 'Backend', $time )
+	}
+	&enableRule( 'Cluster' )	if ( &getNotifData( 'alerts', 'Cluster', 'Status' ) eq 'on');
+}
+
 sub runNotifications
 {
 	my $pidof      = &getGlobalConfiguration( 'pidof' );
 	my $sec        = &getGlobalConfiguration( 'sec' );
-	my $secConf    = &getGlobalConfiguration( 'secConf' );
 	my $syslogFile = &getGlobalConfiguration( 'syslogFile' );
 	my $pid        = `$pidof -x sec`;
 
 	if ( $pid eq "" )
 	{
-		# Fix inconguity between sec.rules and alert conf file
-		&enableRule( 'Backend' )	if ( &getNotifData( 'alerts', 'Backend', 'Status' ) eq 'on');
-		&enableRule( 'Cluster' )	if ( &getNotifData( 'alerts', 'Cluster', 'Status' ) eq 'on');
+		&createSecConfig();
 
 		# start sec process
 		&zenlog( "$sec --conf=$secConf --input=$syslogFile", "info", "NOTIFICATIONS" );
@@ -436,7 +439,7 @@ sub runNotifications
 		}
 		else
 		{
-			&zenlog( "SEC couldn't run", "error", "NOTIFICATIONS" );
+			&zenlog( "SEC could not run", "error", "NOTIFICATIONS" );
 		}
 	}
 	else
@@ -452,6 +455,7 @@ sub reloadNotifications
 
 	if ( $pid )
 	{
+		&createSecConfig();
 		kill 'HUP', $pid;
 		&zenlog( "SEC reloaded successful", "info", "NOTIFICATIONS" );
 	}
