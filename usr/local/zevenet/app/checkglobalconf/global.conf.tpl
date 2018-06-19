@@ -31,7 +31,7 @@ $rttables = "/etc/iproute2/rt_tables";
 #this file
 $globalcfg = "/usr/local/zevenet/config/global.conf";
 #version ZEVENET
-$version="5.2";#update
+$version="5.2.1";#update
 #appliance version file
 $applianceVersionFile="/etc/zevenet_version";
 #Cipher PCI
