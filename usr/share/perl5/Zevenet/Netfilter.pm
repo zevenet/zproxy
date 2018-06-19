@@ -1017,7 +1017,7 @@ sub iptSystem
 	my $return_code;
 
 	my $program = ( split '/', $0 )[-1];
-	$program = "$ENV{'SCRIPT_NAME'}" if $program eq '-e';
+	$program = "$ENV{'SCRIPT_NAME'} " if $program eq '-e';
 	$program .= ' ';
 
 	## lock iptables use ##
@@ -1046,8 +1046,11 @@ sub iptSystem
 	{
 		if ( grep ( /--check/, $command ) || grep ( /-C /, $command ) )
 		{
-			&zenlog( $program . "Not found line: $command", "warning", "SYSTEM" )
-			  if &debug == 2;    # show in logs if failed
+			&zenlog( $program . "Not found line: $command", "debug2", "SYSTEM" );
+		}
+		elsif( grep ( /-S\s/, $command ) )
+		{
+			&zenlog( $program . "Not found line: $command", "debug2", "SYSTEM" );
 		}
 		else
 		{

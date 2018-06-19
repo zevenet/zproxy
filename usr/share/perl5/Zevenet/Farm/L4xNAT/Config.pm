@@ -1649,7 +1649,10 @@ sub reloadL4FarmLogsRule
 
 	# delete chain if it was the last rule
 	my @ipt_list = `$bin -S $log_chain -t $table 2>/dev/null`;
-	unless ( scalar @ipt_list > 1 )
+	my $err = $?;
+
+	# If the CHAIN is created, has a rule: -N LOG_CONNS
+	if ( scalar @ipt_list <= 1 and !$err )
 	{
 		&iptSystem( "$bin -D $ipt_hook -t $table -j $log_chain" );
 		&iptSystem( "$bin -X $log_chain -t $table" );
@@ -1664,7 +1667,7 @@ sub reloadL4FarmLogsRule
 	my $log_tag = "-j LOG --log-prefix \"l4: $farmname \" --log-level 4";
 
 	# create chain if it does not exist
-	if ( &iptSystem( "$bin -L $log_chain -t $table" ) )
+	if ( &iptSystem( "$bin -S $log_chain -t $table" ) )
 	{
 		$error = &iptSystem( "$bin -N $log_chain -t $table" );
 		$error = &iptSystem( "$bin -A $ipt_hook -t $table -j $log_chain" );
