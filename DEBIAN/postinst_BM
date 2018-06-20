@@ -130,6 +130,18 @@ then
 	ln -sf /usr/local/zevenet/bin/zenbui /usr/bin/zenbui
 fi
 
+# copy rbac roles template to config if they do not exist
+TMPROLE="/usr/local/zevenet/share/rbac_roles"
+CONFROLE="/usr/local/zevenet/config/rbac/roles"
+for i in `ls $TMPROLE`
+do
+	FILE=`echo $i | sed "s,$TMPROLE,,"`
+	if [ ! -f "${CONFROLE}/$FILE" ]
+	then
+		cp "$TMPROLE/$FILE" "$CONFROLE/$FILE"
+	fi
+done
+
 #Change prompt color
 sed -i "s/1;30m/0;37m/g" /etc/bash.bashrc 2> /dev/null
 
