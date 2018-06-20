@@ -97,6 +97,7 @@ systemctl disable keepalived 2>/dev/null
 # Do not load init-functions on keepalived service
 # This allows keepalived to stop correctly
 sed -i -e 's!^. /lib/lsb/init-functions!#. /lib/lsb/init-functions!' /etc/init.d/keepalived
+sed -i -e 's!\slog_!#log_!' /etc/init.d/keepalived
 
 # disable SNMP service
 if [[ -f /etc/snmp/snmpd.conf && `grep -c '#zenlb' /etc/snmp/snmpd.conf` == '0' ]]; then
