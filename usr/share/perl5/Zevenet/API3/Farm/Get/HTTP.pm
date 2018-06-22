@@ -36,7 +36,6 @@ sub farms_name_http # ( $farmname )
 	my $timeout         = 0 + &getFarmTimeout( $farmname );
 	my $alive           = 0 + &getFarmBlacklistTime( $farmname );
 	my $client          = 0 + &getFarmClientTimeout( $farmname );
-	my $conn_max        = 0 + &getFarmMaxConn( $farmname );
 	my $rewritelocation = 0 + &getFarmRewriteL( $farmname );
 	my $httpverb        = 0 + &getFarmHttpVerb( $farmname );
 

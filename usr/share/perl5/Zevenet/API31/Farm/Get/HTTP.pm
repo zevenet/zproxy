@@ -36,7 +36,6 @@ sub get_farm_struct
 	my $timeout         = 0 + &getHTTPFarmTimeout( $farmname );
 	my $alive           = 0 + &getHTTPFarmBlacklistTime( $farmname );
 	my $client          = 0 + &getFarmClientTimeout( $farmname );
-	my $conn_max        = 0 + &getHTTPFarmMaxConn( $farmname );
 	my $rewritelocation = 0 + &getFarmRewriteL( $farmname );
 	my $httpverb        = 0 + &getFarmHttpVerb( $farmname );
 

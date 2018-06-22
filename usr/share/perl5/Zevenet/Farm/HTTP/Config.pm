@@ -937,26 +937,6 @@ sub getHTTPFarmMaxClientTime    # ($farm_name)
 }
 
 =begin nd
-Function: setHTTPFarmMaxConn
-
-	set the max conn of a farm
-
-Parameters:
-	none - .
-
-Returns:
-	Integer - always return 0
-
-FIXME:
-	This function is in blank
-
-=cut
-sub setHTTPFarmMaxConn    # ($max_connections,$farm_name)
-{
-	return 0;
-}
-
-=begin nd
 Function: getHTTPFarmGlobalStatus
 
 	Get the status of a farm and its backends through pound command.
@@ -1108,26 +1088,6 @@ sub getHTTPFarmBootStatus    # ($farm_name)
 	}
 
 	return $output;
-}
-
-=begin nd
-Function: getHTTPFarmMaxConn
-
-	Returns farm max connections
-
-Parameters:
-	none - .
-
-Returns:
-	Integer - always return 0
-
-FIXME:
-	This function do nothing
-
-=cut
-sub getHTTPFarmMaxConn    # ($farm_name)
-{
-	return 0;
 }
 
 =begin nd
