@@ -172,56 +172,6 @@ sub getFarmGuardianFile    # ($fname,$svice)
 }
 
 =begin nd
-Function: getFarmGuardianStatus
-
-	Returns if FarmGuardian is activated for this farm
-
-Parameters:
-	fname - Farm name.
-	svice - Service name. Only apply if the farm profile has services. Leave undefined for farms without services.
-
-Returns:
-	-1 - If farmguardian file was not found.
-	 0 - If farmguardian is disabled.
-	 1 - If farmguardian is enabled.
-
-Bugs:
-
-See Also:
-	zcluster-manager, zevenet, <setNewFarmName>
-=cut
-
-sub getFarmGuardianStatus    # ($fname,$svice)
-{
-	my ( $fname, $svice ) = @_;
-
-	my $fgfile = &getFarmGuardianFile( $fname, $svice );
-	my $output = -1;
-
-	if ( $fgfile == -1 )
-	{
-		return $output;
-	}
-
-	open FR, "$configdir/$fgfile";
-	my $line;
-	my $lastline;
-	while ( $line = <FR> )
-	{
-		$lastline = $line;
-	}
-
-	my @line_s = split ( "\:\:\:", $lastline );
-	my $value = $line_s[3];
-	close FR;
-
-	if   ( $value =~ /true/ ) { $output = 1; }
-	else                      { $output = 0; }
-
-	return $output;
-}
-
-=begin nd
 Function: getFarmGuardianLog
 
 	Returns if FarmGuardian has logs activated for this farm

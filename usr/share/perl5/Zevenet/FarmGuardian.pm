@@ -757,41 +757,6 @@ sub setOldFarmguardian
 ####################################################################
 
 =begin nd
-Function: getFarmGuardianStatus
-
-	Returns if FarmGuardian is activated for this farm
-
-Parameters:
-	fname - Farm name.
-	svice - Service name. Only apply if the farm profile has services. Leave undefined for farms without services.
-
-Returns:
-	-1 - If farmguardian file was not found.
-	 0 - If farmguardian is disabled.
-	 1 - If farmguardian is enabled.
-
-=cut
-
-sub getFarmGuardianStatus    # ($fname,$svice)
-{
-	my ( $fname, $svice ) = @_;
-
-	if ( !&getFGFarm( $fname, $svice ) )
-	{
-		&zenlog( "The $fname $svice has not farm guardian linked", "debug", "FG" );
-		return -1;
-	}
-
-	if ( &getFGPidFarm( $fname, $svice ) )
-	{
-		&zenlog( "The fg for $fname $svice is running", "debug2", "FG" );
-		return 1;
-	}
-
-	return 0;
-}
-
-=begin nd
 Function: getFarmGuardianLog
 
 	Returns if FarmGuardian has logs activated for this farm
