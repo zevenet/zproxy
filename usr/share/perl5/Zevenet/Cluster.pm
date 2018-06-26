@@ -1008,7 +1008,7 @@ sub disableInterfaceDiscovery
 	elsif ( $iface->{ ip_v } == 6 )
 	{
 		my $ip6tables = &getGlobalConfiguration('ip6tables');
-		return &logAndRun( "$ip6tables -A INPUT -d $iface->{ addr } -p icmpv6 --icmpv6-type echo-request -j DROP" );
+		return &logAndRun( "$ip6tables -A INPUT -d $iface->{ addr } -j DROP" );
 	}
 	else
 	{
