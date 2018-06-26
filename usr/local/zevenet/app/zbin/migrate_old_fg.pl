@@ -76,7 +76,7 @@ foreach my $farm ( &getFarmNameList() )
 			elsif ( $eload )
 			{
 				@conf = &eload(
-								module => 'Zevenet::Farm::GSLB::Service',
+								module => 'Zevenet::Farm::GSLB::FarmGuardian',
 								func   => 'getGSLBFarmGuardianParams',
 								args   => [$farm, $srv],
 				);
