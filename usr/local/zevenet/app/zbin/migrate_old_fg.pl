@@ -81,7 +81,7 @@ foreach my $farm ( &getFarmNameList() )
 								args   => [$farm, $srv],
 				);
 				my $status_fg = &eload(
-								module => 'Zevenet::Farm::GSLB::Service',
+								module => 'Zevenet::Farm::GSLB::FarmGuardian',
 								func   => 'getGSLBFarmFGStatus',
 								args   => [$farm, $srv],
 				);
