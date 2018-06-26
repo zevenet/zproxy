@@ -123,7 +123,7 @@ foreach my $farm ( &getFarmNameList() )
 
 	#~ system ( "mv $fg_conf $bkdir" );
 }
-system ( "rm $configdir/*_guardian.conf" );
+system ( "rm $configdir/*_guardian.conf 2>/dev/null" );
 
 
 ### ### ### functions ### ### ###
