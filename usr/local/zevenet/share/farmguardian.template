@@ -8,7 +8,7 @@ cut_conns=false
 template=true
 
 [check_http]
-description=Send HTTP request to backend and expect response of 200 OK with a timeout of 5 secs.
+description=Send HTTP request to backend and expect a 200 OK response with a timeout of 5 secs.
 command=check_http -I HOST -p PORT -e 200 -t 5
 farms=
 log=false
@@ -17,7 +17,7 @@ cut_conns=false
 template=true
 
 [check_https]
-description=Send HTTPS request to backend and expect response of 200 OK with a timeout of 5 secs.
+description=Send HTTPS request to backend and expect a 200 OK response with a timeout of 5 secs.
 command=check_http -I HOST -p PORT -e 200 -S -t 5
 farms=
 log=false
@@ -26,7 +26,7 @@ cut_conns=false
 template=true
 
 [check_http_response_string]
-description=Send HTTP request to backend and expect response of 200 OK and a given string in the HTML with a timeout of 5 secs. Change string by value to find in the response.
+description=Send HTTP request to backend, expect a 200 OK response and a given string in the HTML with a timeout of 5 secs. Change string by value to find in the response.
 command=check_http -I HOST -p PORT -e 200 -s 'string'
 farms=
 log=false
@@ -98,7 +98,7 @@ cut_conns=true
 template=true
 
 [check_ping]
-description=Send 2 ICMP packets and checks that the 100% reache the host.
+description=Send 2 ICMP packets and check that the 100% reaches the host.
 command=check_ping -H HOST -w 2,100% -c 2,100% -p 2
 farms=
 log=false
@@ -107,7 +107,7 @@ cut_conns=true
 template=true
 
 [check_common]
-description=Check the directory /usr/loca/zevenet/libexec, this directory includes more checks, extend more health check information with <command> --help.
+description=Check the folder /usr/local/zevenet/libexec, which includes more checks, get more info about the health check with <command> --help.
 command=
 farms=
 log=false
