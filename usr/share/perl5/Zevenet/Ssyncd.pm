@@ -228,20 +228,4 @@ sub setSsyncdMaster
 	}
 }
 
-sub setSsyncRestart
-{
-	my $status = &getZClusterNodeStatus();
-
-	&setSsyncdDisabled();
-
-	if ( $status eq "master" )
-	{
-		setSsyncdMaster();
-	}
-	elsif ( $status eq "backup" )
-	{
-		setSsyncdBackup();
-	}
-}
-
 1;
