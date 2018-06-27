@@ -1008,7 +1008,7 @@ sub disableInterfaceDiscovery
 	elsif ( $iface->{ ip_v } == 6 )
 	{
 		my $ip6tables = &getGlobalConfiguration('ip6tables');
-		return &logAndRun( "$ip6tables -A INPUT -d $iface->{ addr } -j DROP" );
+		return &logAndRun( "$ip6tables -t raw -A PREROUTING -d $iface->{ addr } -j DROP" );
 	}
 	else
 	{
@@ -1044,7 +1044,7 @@ sub enableInterfaceDiscovery
 	elsif ( $iface->{ ip_v } == 6 )
 	{
 		my $ip6tables = &getGlobalConfiguration('ip6tables');
-		return &logAndRun( "$ip6tables -F INPUT -d $iface->{ addr } -p icmpv6 --icmpv6-type echo-request" );
+		return &logAndRun( "$ip6tables -t raw -F PREROUTING -d $iface->{ addr }" );
 	}
 	else
 	{
@@ -1075,7 +1075,7 @@ sub enableAllInterfacesDiscovery
 
 	# IPv6
 	my $ip6tables = &getGlobalConfiguration('ip6tables');
-	$rc |= &logAndRun( "$ip6tables -F INPUT" );
+	$rc |= &logAndRun( "$ip6tables -t raw -F PREROUTING" );
 
 	return $rc;
 }

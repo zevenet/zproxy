@@ -237,6 +237,9 @@ then
 	/etc/init.d/rsyslog restart
 fi
 
+# Remove residual cluster DROP(s) on ip6tables
+ip6tables -F INPUT 2>/dev/null
+
 # restarting zevenet service
 echo "Zevenet will be unavailable while the service is restarting."
 /etc/init.d/zevenet stop
