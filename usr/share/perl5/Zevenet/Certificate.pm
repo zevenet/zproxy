@@ -410,7 +410,6 @@ sub delCert    # ($certname)
 	return $files_removed;
 }
 
-
 =begin nd
 Function: createCSR
 
@@ -516,60 +515,6 @@ sub getCertData    # ($certfile)
 	}
 
 	return @eject;
-}
-
-=begin nd
-Function: createPemFromKeyCRT
-
-	NOT USED. Create PEM certificate from key, crt and certaut.
-
-Parameters:
-	keyfile - .
-	crtfile - .
-	certautfile - .
-	tmpdir - .
-
-Returns:
-	null - .
-
-Bugs:
-	NOT USED.
-
-See Also:
-
-=cut
-
-sub createPemFromKeyCRT    # ($keyfile,$crtfile,$certautfile,$tmpdir)
-{
-	my ( $keyfile, $crtfile, $certautfile, $tmpdir ) = @_;
-
-	my $path    = &getGlobalConfiguration( 'configdir' );
-	my $buff    = "";
-	my $pemfile = $keyfile;
-	$pemfile =~ s/\.key$/\.pem/;
-
-	my @files = ( "$path/$keyfile", "$tmpdir/$crtfile", "$tmpdir/$certautfile" );
-
-	foreach my $file ( @files )
-	{
-		# Open key files
-		open FILE, "<", $file or die $!;
-
-	  # Now get every line in the file, and attach it to the full ‘buffer’ variable.
-		while ( my $line = <FILE> )
-		{
-			$buff .= $line;
-		}
-
-		# Close this particular file.
-		close FILE;
-	}
-	open my $pemhandler, ">", "$path/$pemfile" or die $!;
-
-	# Write the buffer into the output file.
-	print $pemhandler $buff;
-
-	close $pemhandler;
 }
 
 sub getCertInfo    # ($certfile)
