@@ -94,8 +94,6 @@ Bugs:
 	Not a bug, but using pam would be desirable.
 
 See Also:
-	<checkLoggedZapiUser>
-
 	Zapi v3: <set_user>
 =cut
 
@@ -112,38 +110,6 @@ sub checkValidUser    #($user,$curpasswd)
 	}
 
 	return $output;
-}
-
-=begin nd
-Function: checkLoggedZapiUser
-
-	Check ZAPI user password.
-
-Parameters:
-	none - .
-
-Returns:
-	scalar - Boolean. Whether the zapi user password is correct.
-
-See Also:
-	zapi/v2/zapi.cgi
-=cut
-
-sub checkLoggedZapiUser    #()
-{
-	my $allowed  = 0;
-	my $userpass = $ENV{ HTTP_AUTHORIZATION };
-	$userpass =~ s/Basic\ //i;
-	my $userpass_dec = decode_base64( $userpass );
-	my @user         = split ( ":", $userpass_dec );
-	my $user         = $user[0];
-	my $pass         = $user[1];
-
-	if ( &checkValidUser( "zapi", $pass ) )
-	{
-		$allowed = 1;
-	}
-	return $allowed;
 }
 
 1;
