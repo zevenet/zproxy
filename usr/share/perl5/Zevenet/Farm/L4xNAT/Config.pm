@@ -179,7 +179,7 @@ FIXME:
 	only used in zapi v2. Obsolet
 
 BUG:
-	same functionlity than _runL4FarmRestart and runL4FarmRestart
+	same functionlity than _runL4FarmRestart
 
 =cut
 
@@ -227,7 +227,7 @@ FIXME:
 	only used in zapi v2. Obsolet
 
 BUG:
-	same functionlity than _runL4FarmRestart and runL4FarmRestart
+	same functionlity than _runL4FarmRestart
 
 =cut
 
