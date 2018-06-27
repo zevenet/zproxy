@@ -55,7 +55,6 @@ sub download_logs
 	{
 # Download function ends communication if itself finishes successful. It is not necessary send "200 OK" msg
 		require Zevenet::System::Log;
-		#~ $errormsg = &downloadLog( $logFile );
 
 		open ( my $fh, '<', $logPath );
 		unless ( $fh )
@@ -82,7 +81,7 @@ sub download_logs
 
 		&zenlog( "[Download] $description: $logPath", "info", "SYSTEM" );
 
-		return &httpResponse({ code => 200, headers => $headers, body => $body });		
+		return &httpResponse({ code => 200, headers => $headers, body => $body });
 	}
 	my $body =
 	  { description => $description, error => "true", message => $errormsg };

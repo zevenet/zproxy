@@ -40,7 +40,7 @@ Returns:
 Bugs:
 
 See Also:
-	zapi/v3/zapi.cgi, zapi/v3/certificates.cgi, zapi/v3/system.cgi, <downloadBackup>, <downloadLog>
+	zapi/v3/zapi.cgi, zapi/v3/certificates.cgi, zapi/v3/system.cgi, <downloadBackup>
 =cut
 sub getCGI
 {

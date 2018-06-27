@@ -54,10 +54,10 @@ sub getLogs
 	closedir ( DIR );
 
 	foreach my $line ( @files )
-	{	
+	{
 		# not list if it is a directory
 		next if -d "$logdir/$line";
-		
+
 		use File::stat; # Cannot 'require' this module
 		#~ use Time::localtime qw(ctime);
 
@@ -73,38 +73,6 @@ sub getLogs
 
 	return \@logs;
 }
-
-=begin nd
-Function: downloadLog
-
-	Download a log file.
-
-	This function ends the current precess on success.
-
-	Should this function be part of the API?
-
-Parameters:
-	logFile - log file name in /var/log.
-
-Returns:
-	1 - on failure.
-
-Bugs:
-	To end the http request should be used the function httpResponse.
-
-See Also:
-	zapi/v3/system.cgi
-=cut
-sub downloadLog
-{
-	my $logFile = shift;
-
-	my $desc = "Download log file ";
-	my $logdir = &getGlobalConfiguration( 'logdir' );
-
-	&httpDownloadResponse( desc => $desc, dir => $logdir, file => $logFile );
-}
-
 
 =begin nd
 Function: getLogLines
