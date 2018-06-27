@@ -852,13 +852,6 @@ sub getIptRuleInsert
 	return;    # do not return a rule if the rule already exist
 }
 
-sub setIptRuleDelete
-{
-	my $rule = shift;    # input: iptables rule string
-
-	return &applyIptRules( &getIptRuleDelete( $rule ) );
-}
-
 sub getIptRuleDelete
 {
 	my $rule = shift;    # input: iptables rule string
