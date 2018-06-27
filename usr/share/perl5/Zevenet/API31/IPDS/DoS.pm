@@ -264,33 +264,6 @@ sub del_dos_rule
 	return &httpResponse( { code => 200, body => $body } );
 }
 
-#  GET /farms/<farmname>/ipds/dos
-sub get_dos_farm
-{
-	my $farmName = shift;
-
-	my $confFile = &getGlobalConfiguration( 'dosConf' );
-	my $desc     = "Get status DoS $farmName.";
-	my @output;
-
-	if ( -e $confFile )
-	{
-		my $fileHandle = Config::Tiny->read( $confFile );
-
-		foreach my $ruleName ( keys %{ $fileHandle } )
-		{
-			if ( $fileHandle->{ $ruleName }->{ 'farms' } =~ /( |^)$farmName( |$)/ )
-			{
-				push @output, $ruleName;
-			}
-		}
-	}
-
-	my $body = { description => $desc, params => \@output };
-
-	return &httpResponse( { code => 200, body => $body } );
-}
-
 #  POST /farms/<farmname>/ipds/dos
 sub add_dos_to_farm
 {
