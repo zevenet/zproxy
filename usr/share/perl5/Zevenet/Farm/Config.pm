@@ -489,42 +489,6 @@ sub setAllFarmByVip
 }
 
 =begin nd
-Function: getFarmConfigIsOK
-
-	Function that check if the config file is OK.
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	scalar - return 0 on success or different on failure
-=cut
-
-sub getFarmConfigIsOK    # ($farm_name)
-{
-	my ( $farm_name ) = @_;
-
-	my $farm_type = &getFarmType( $farm_name );
-	my $output    = -1;
-
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		require Zevenet::Farm::HTTP::Config;
-		$output = &getHTTPFarmConfigIsOK( $farm_name );
-	}
-	elsif ( $farm_type eq "gslb" && $eload )
-	{
-		$output = &eload(
-						  module => 'Zevenet::Farm::GSLB::Validate',
-						  func   => 'getGSLBFarmConfigIsOK',
-						  args   => [$farm_name],
-		);
-	}
-
-	return $output;
-}
-
-=begin nd
 Function: checkFarmnameOK
 
 	Checks the farmname has correct characters (number, letters and lowercases)
