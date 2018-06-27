@@ -241,47 +241,6 @@ sub setNotifAlertsAction
 	return $errMsg;
 }
 
-# Comemnt rule in sec rule file
-sub disableRule    # &disableRule ( $rule )
-{
-	my ( $rule ) = @_;
-
-	my $flag = 0;    # $flag = 0 rule don't find, $flag = 1 changing rule
-	my $errMsg;
-
-	if ( !-f $secConf )
-	{
-		$errMsg = "don't find $secConf file";
-	}
-	else
-	{
-		require Tie::File;
-		tie my @handle, 'Tie::File', $secConf;
-
-		# change server id
-		foreach my $line ( @handle )
-		{
-			if ( !$flag )
-			{
-				if ( $line =~ /^#\[$rule/ ) { $flag = 1; }
-			}
-			else
-			{
-				# next rule
-				if ( $line =~ /^#\[/ ) { last; }
-				else
-				{
-					if ( $line ne "" ) { $line = "#$line"; }
-				}
-			}
-		}
-
-		untie @handle;
-	}
-
-	return $errMsg;
-}
-
 # Discomment rule in sec rule file
 sub enableRule    # &enableRule ( $rule )
 {
