@@ -698,42 +698,4 @@ sub setFarmName    # ($farm_name)
 	$farm_name =~ s/[^a-zA-Z0-9]//g;
 }
 
-=begin nd
-Function: getServiceStruct
-
-	Get a struct with all parameters of a service
-
-Parameters:
-	farmname - Farm name
-	service - Farm name
-
-Returns:
-	hash ref - It is a struct with all information about a farm service
-
-FIXME:
-	Complete with more farm profiles.
-	Use it in zapi to get services from a farm
-
-=cut
-
-sub getServiceStruct
-{
-	my ( $farmname, $service ) = @_;
-
-	my $output;
-	my $farm_type = &getFarmType( $farmname );
-
-	if ( $farm_type =~ /http/ )
-	{
-		require Zevenet::Farm::HTTP::Service;
-		$output = &getHTTPServiceStruct( $farmname, $service );
-	}
-	else
-	{
-		$output = -1;
-	}
-
-	return $output;
-}
-
 1;
