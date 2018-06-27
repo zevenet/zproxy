@@ -168,35 +168,6 @@ sub getRBLObjectRuleParam
 }
 
 =begin nd
-Function: getRBLFarmApplied
-
-	Return a list with all rules where the farm is applied
-
-Parameters:
-	Farmname -  Farm name
-
-Returns:
-	Array - list of RBL rules
-
-=cut
-
-sub getRBLFarmApplied
-{
-	my $farmname = shift;
-
-	my @rules;
-
-	foreach my $rule ( @{ &getRBLRuleList() } )
-	{
-		if ( grep ( /^$farmname$/, @{ &getRBLObjectRuleParam( $rule, 'farms' ) } ) )
-		{
-			push @rules, $rule;
-		}
-	}
-	return \@rules;
-}
-
-=begin nd
 Function: getRBLRunningFarmList
 
 	Return a list with all farms that are using currently this rule. Looking and greping iptables list
