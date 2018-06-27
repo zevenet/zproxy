@@ -581,13 +581,11 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 		if ( $filefarmhttp[$i_f] =~ /^\#*DHParams/ && $flisten eq "http" )
 		{
 			$filefarmhttp[$i_f] =~ s/.*DHParams/\#DHParams/;
-			#&setHTTPFarmDHStatus( $farm_name, "off" );
 		}
 		if ( $filefarmhttp[$i_f] =~ /^\#*DHParams/ && $flisten eq "https" )
 		{
 			$filefarmhttp[$i_f] =~ s/.*DHParams/DHParams/;
 			#$filefarmhttp[$i_f] =~ s/.*DHParams.*/DHParams\t"$dhfile"/;
-			#&setHTTPFarmDHStatus( $farm_name, "on" );
 			#&genDHFile ( $farm_name );
 		}
 

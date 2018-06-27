@@ -58,51 +58,6 @@ sub getHTTPFarmDHStatus    # ($farm_name)
 }
 
 =begin nd
-Function: setHTTPFarmDHStatus
-
-	[NOT USED] Configure the status of the DH file
-
-Parameters:
-	farmname - Farm name
-	status - set a status for the DH file
-
-Returns:
-	Integer - Error code: 1 on success, or 0 on failure.
-
-=cut
-sub setHTTPFarmDHStatus    # ($farm_name, $newstatus)
-{
-	my ( $farm_name, $newstatus ) = @_;
-
-	my $farm_type     = &getFarmType( $farm_name );
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $dhfile = "$configdir\/$farm_name\_dh2048.pem";
-	my $output        = 0;
-
-	#lock file
-	require Zevenet::Farm::HTTP::Config;
-	my $lock_fh = &lockHTTPFile( $farm_name );
-
-	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
-	foreach my $row (@filefarmhttp)
-	{
-		if ($row =~ /.*DHParams.*/)
-		{
-			$row =~ s/.*DHParams.*/DHParams\t"$dhfile"/ if $newstatus eq "on";
-			$row =~ s/.*DHParams/\#DHParams/ if $newstatus eq "off";
-			$output = 1;
-		}
-	}
-	untie @filefarmhttp;
-
-	&unlockfile( $lock_fh );
-
-	unlink ( "$dhfile" ) if -e "$dhfile" && $newstatus eq "off";
-
-	return $output;
-}
-
-=begin nd
 Function: getFarmCertificate
 
 	Return the certificate applied to the farm
