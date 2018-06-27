@@ -123,35 +123,6 @@ sub getDOSParam
 }
 
 =begin nd
-Function: getDOSFarmApplied
-
-	Return a list with all rules where the farm is applied
-
-Parameters:
-	Farmname -  Farm name
-
-Returns:
-	Array ref - list of DOS rules
-
-=cut
-
-sub getDOSFarmApplied
-{
-	my $farmname = shift;
-
-	my @rules;
-
-	foreach my $rule ( @{ &getDOSRuleList() } )
-	{
-		if ( grep ( /^$farmname$/, @{ &getDOSParam( $rule, 'farms' ) } ) )
-		{
-			push @rules, $rule;
-		}
-	}
-	return \@rules;
-}
-
-=begin nd
 	Function: getDOSLookForRule
 
 	Look for a:
