@@ -37,14 +37,14 @@ Parameters:
 
 Returns:
 	String - command with extmon format
-                
+
 See Also:
 	changeCmdToFGFormat
-                
+
 More info:
 	Farmguardian Fotmat: bin -x option...
 	Extmon Format: "bin", "-x", "option"...
-                
+
 =cut
 
 sub getGSLBCommandInExtmonFormat    # ( $cmd, $port )
@@ -109,69 +109,6 @@ sub getGSLBCommandInExtmonFormat    # ( $cmd, $port )
 }
 
 =begin nd
-Function: getGSLBCommandInFGFormat
-
-	Transform command with extmon format to command with fg format,
-	this function is used to show the command in GUI.
-
-Parameters:
-	cmd - command with extmon format
-	port - port where service is checking
-
-Returns:
-	newCmd  - command with farm guardian format
-                
-See Also:
-	changeCmdToExtmonFormat
-                
-More info:
-	Farmguardian Fotmat: bin -x option...
-	Extmon Format: "bin", "-x", "option"...
-			
-=cut
-
-sub getGSLBCommandInFGFormat    # ( $cmd, $port )
-{
-	my ( $cmd, $port ) = @_;
-
-	my $libexec_dir = &getGlobalConfiguration( 'libexec_dir' );
-	my @aux         = split ( ', ', $cmd );
-	my $newCmd      = $aux[0];
-	my $flagPort;
-
-	splice @aux, 0, 1;
-
-	$newCmd =~ s/$libexec_dir\///;
-	$newCmd =~ s/^"(.+)"$/$1/;
-
-	foreach my $word ( @aux )
-	{
-		if ( $word =~ '-p' )
-		{
-			$flagPort = 1;
-		}
-
-		# dns only can check one port
-		if ( $flagPort && $word =~ /^"$port"$/ )
-		{
-			$word     = "PORT";
-			$flagPort = 0;
-		}
-
-		# change HOST param from FG to %%ITEM%% from extmon
-		$word =~ s/%%ITEM%%/HOST/;
-
-		# remove " only if $word isn't a string
-		if ( $word !~ / / )
-		{
-			$word =~ s/^"(.+)"$/$1/;
-		}
-		$newCmd .= " $word";
-	}
-	return $newCmd;
-}
-
-=begin nd
 Function: getGSLBFarmGuardianParams
 
 	Get farmguardian configuration
@@ -180,9 +117,9 @@ Parameters:
 	farmname - Farm name
 	service - Service name
 
-Returns:         
+Returns:
 	@output = ( time, cmd ), "time" is interval time to repeat cmd and "cmd" is command to check backend
-	
+
 FIXME:
 	Change output to a hash
 
@@ -295,7 +232,7 @@ Parameters:
 
 Returns:
 	Integer - Error code: 0 on success or -1 on failure
-	
+
 =cut
 
 sub setGSLBDeleteFarmGuardian    # ( $fname, $service )
@@ -374,7 +311,7 @@ Parameters:
 
 Returns:
 	Integer - Error code: 0 on success or -1 on failure
-	
+
 =cut
 
 sub enableGSLBFarmGuardian    # ( $fname, $service, $option )
