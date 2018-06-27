@@ -335,32 +335,4 @@ sub runBLStop
 	#~ return $error;
 }
 
-=begin nd
-Function: runBLRestart
-
-	Restart the runtime of a blacklist rule with a farm.
-
-Parameters:
-	Rule - Rule name
-	Farmname - Farm name
-
-Returns:
-	integer - 0 on success or other value on failure
-
-=cut
-
-sub runBLrestart
-{
-	my ( $rule, $farm ) = @_;
-
-	my $error = &runBLStop( $rule, $farm );
-
-	if ( !$error )
-	{
-		$error = &runBLStart( $rule, $farm );
-	}
-
-	return $error;
-}
-
 1;
