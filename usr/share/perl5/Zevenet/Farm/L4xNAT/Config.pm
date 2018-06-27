@@ -165,53 +165,6 @@ sub validL4ExtPort    # ($farm_protocol,$ports)
 }
 
 =begin nd
-Function: sendL4ConfChange
-
-	Run a l4xnat farm
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Integer - Error code: 0 on success or other value on failure
-
-FIXME:
-	only used in zapi v2. Obsolet
-
-BUG:
-	same functionlity than _runL4FarmRestart
-
-=cut
-
-sub sendL4ConfChange    # ($farm_name)
-{
-	my $farm_name = shift;
-
-	my $algorithm   = &getFarmAlgorithm( $farm_name );
-	my $fbootstatus = &getFarmBootStatus( $farm_name );
-	my $output      = 0;
-	my $pidfile     = "/var/run/l4sd.pid";
-
-	if ( $algorithm eq "leastconn" && -e "$pidfile" )
-	{
-		# read pid number
-		open my $file, "<", "$pidfile";
-		my $pid = <$file>;
-		close $file;
-
-		kill USR1 => $pid;
-		$output = $?;    # FIXME
-	}
-	else
-	{
-		&zenlog( "Running L4 restart for $farm_name", "info", "LSLB" );
-		&_runL4FarmRestart( $farm_name, "false", "" );
-	}
-
-	return $output;      # FIXME
-}
-
-=begin nd
 Function: setL4FarmSessionType
 
 	Configure type of persistence session

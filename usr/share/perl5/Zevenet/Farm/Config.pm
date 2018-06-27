@@ -263,7 +263,7 @@ Returns:
 
 See Also:
 	<_runDatalinkFarmStart>
-	<_runL4FarmRestart>, <sendL4ConfChange>
+	<_runL4FarmRestart>
 	l4sd
 
 	zapi/v3/get_l4.cgi
