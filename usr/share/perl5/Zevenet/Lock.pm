@@ -214,34 +214,4 @@ sub ztielock    # ($file_name)
 	$o->flock;
 }
 
-=begin nd
-Function: untielock
-
-	Untie close file with lock
-
-	Usage:
-
-		&untielock($array);
-
-	Examples:
-
-		&untielock($myarray);
-
-Parameters:
-	array - Reference to array.
-
-Returns:
-	none - .
-
-Bugs:
-	Not used yet.
-=cut
-
-sub untielock    # (@array)
-{
-	my $array = shift;
-
-	untie @{ $array };
-}
-
 1;
