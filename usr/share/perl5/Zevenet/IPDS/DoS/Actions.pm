@@ -143,24 +143,6 @@ sub runDOStopModule
 }
 
 =begin nd
-Function: runDOSRestartModule
-
-	Stop the module
-
-Parameters:
-
-Returns:
-
-=cut
-
-# this function has to remove the tmp directory /tmp/IPDS/<module> and stop all rules in /tmp/IPDS/<module> directory
-sub runDOSRestartModule
-{
-	&runDOStopModule;
-	&runDOStartModule;
-}
-
-=begin nd
 Function: runDOSStartByRule
 
 	Start the runtime of a DOS rule and link with all farm that are using this rule.
