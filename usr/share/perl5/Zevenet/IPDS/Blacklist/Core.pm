@@ -183,35 +183,6 @@ sub getBLParam
 }
 
 =begin nd
-Function: getBLFarmApplied
-
-	Return a list with all rules where the farm is applied
-
-Parameters:
-	Farmname -  Farm name
-
-Returns:
-	Array - list of BL rules
-
-=cut
-
-sub getBLFarmApplied
-{
-	my $farmname = shift;
-
-	my @rules;
-
-	foreach my $rule ( @{ &getBLRuleList() } )
-	{
-		if ( grep ( /^$farmname$/, @{ &getBLParam( $rule, 'farms' ) } ) )
-		{
-			push @rules, $rule;
-		}
-	}
-	return @rules;
-}
-
-=begin nd
 Function: getBLRunningRules
 
 	List all running BL rules.
