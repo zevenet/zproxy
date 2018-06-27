@@ -170,46 +170,6 @@ sub setBLRefreshList
 }
 
 =begin nd
-Function: setBLRefreshAllLists
-
-	Check if config file data and list directories are coherent
-	Refresh all lists, locals and remotes.
-
-Parameters: None.
-
-Returns:
-
-	0	- successful
-	!=0	- error in some list
-
-=cut
-
-sub setBLRefreshAllLists
-{
-	my $output;
-	my @lists = &getBLRuleList;
-
-	# update lists
-	foreach my $listName ( @lists )
-	{
-		# Download the remote lists
-		if ( &getBLParam( $listName, 'type' ) eq 'remote' )
-		{
-			&setBLDownloadRemoteList( $listName );
-		}
-
-		# Refresh list if is running
-		if ( &getBLIpsetStatus( $listName ) eq 'up' )
-		{
-			&setBLRefreshList( $listName );
-		}
-		&zenlog( "The preload list '$listName' was updated.", "info", "IPDS" );
-	}
-
-	return $output;
-}
-
-=begin nd
 Function: setBLDownloadRemoteList
 
 	Download a list from url and keep it in file
