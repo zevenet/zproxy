@@ -586,7 +586,6 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 		{
 			$filefarmhttp[$i_f] =~ s/.*DHParams/DHParams/;
 			#$filefarmhttp[$i_f] =~ s/.*DHParams.*/DHParams\t"$dhfile"/;
-			#&genDHFile ( $farm_name );
 		}
 
 		if ( $filefarmhttp[$i_f] =~ /ZWACL-END/ )

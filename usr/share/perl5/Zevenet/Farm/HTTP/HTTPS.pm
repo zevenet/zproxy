@@ -151,40 +151,6 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 }
 
 =begin nd
-Function: genDHFile
-
-	[NOT USED] Generate the Diffie Hellman keys file
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Integer - return 0 on success or different of 0 on failure
-=cut
-sub genDHFile    # ($farm_name)
-{
-	my ( $farm_name ) = @_;
-
-	my $farm_type     = &getFarmType( $farm_name );
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = 0;
-
-	my $dhfile = "$configdir\/$farm_name\_dh2048.pem";
-
-	if ( ! -e "$dhfile" )
-	{
-		&zenlog( "Generating DH keys in $dhfile ...", "info", "LSLB" );
-		&setFarmLock( $farm_name, "on", "<a href=\"https://www.zenloadbalancer.com/knowledge-base/misc/diffie-hellman-keys-generation-important/\" target=\"_blank\">Generating SSL Diffie-Hellman 2048 keys</a> <img src=\"img/loading.gif\"/>" );
-
-		my $openssl = &getGlobalConfiguration('openssl');
-		system("$openssl dhparam -5 2048 -out $dhfile &");
-		$output = $?;
-	}
-
-	return $output
-}
-
-=begin nd
 Function: setFarmCipherList
 
 	Set Farm Ciphers value
