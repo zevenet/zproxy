@@ -296,32 +296,4 @@ sub runDOSStop
 	return $error;
 }
 
-=begin nd
-Function: runDOSRestart
-
-	Restart the runtime of a DOS rule with a farm.
-
-Parameters:
-	Rule - Rule name
-	Farmname - Farm name
-
-Returns:
-	integer - 0 on success or other value on failure
-
-=cut
-
-sub runDOSrestart
-{
-	my ( $rule, $farm ) = @_;
-
-	my $error = &runDOSStop( $rule, $farm );
-
-	if ( !$error )
-	{
-		$error = &runDOSStart( $rule, $farm );
-	}
-
-	return $error;
-}
-
 1;
