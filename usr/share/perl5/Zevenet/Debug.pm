@@ -95,14 +95,4 @@ sub getNewModules
 	return @new_modules;
 }
 
-sub logNewModules
-{
-	return; ################### disable debugging info
-	my $msg = shift;
-
-	zenlog("## ## ## $msg ## ## ## BEGIN");
-	zenlog($_) for getNewModules();
-	zenlog("## ## ## $msg ## ## ## END " . getMemoryUsage() );
-}
-
 1;
