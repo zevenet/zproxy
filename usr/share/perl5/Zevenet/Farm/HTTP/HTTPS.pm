@@ -196,46 +196,6 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 }
 
 =begin nd
-Function: validateHTTPFarmDH
-
-	[NOT USED] Validate the farm Diffie Hellman configuration
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Integer - always return -1
-
-BUG
-	Not finish
-=cut
-sub validateHTTPFarmDH    # ($farm_name)
-{
-	my ( $farm_name ) = @_;
-
-	my $farm_type     = &getFarmType( $farm_name );
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
-
-	my $dhstatus = &getHTTPFarmDHStatus($farm_name);
-	if ( $farm_type eq "https" && $dhstatus ne "on" )
-	{
-		my $lockstatus = &getFarmLock( $farm_name );
-		if ( $lockstatus !~ /Diffie-Hellman/ ) {
-			#$output = &setHTTPFarmDHStatus( $farm_name, "on" );
-			#&genDHFile( $farm_name );
-		}
-	}
-
-	if ( $farm_type eq "http" && $dhstatus ne "on" )
-	{
-		#$output = &setHTTPFarmDHStatus( $farm_name, "off" );
-	}
-
-	return $output;
-}
-
-=begin nd
 Function: genDHFile
 
 	[NOT USED] Generate the Diffie Hellman keys file
