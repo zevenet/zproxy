@@ -593,25 +593,4 @@ sub configureDefaultGW    #()
 	}
 }
 
-=begin nd
-Function: flushCacheRoutes
-
-	[NOT USED] Flush cache routes
-
-Parameters:
-	none - .
-
-Returns:
-	none - .
-
-Bugs:
-	NOT USED
-=cut
-# Flush cache routes
-sub flushCacheRoutes    # ()
-{
-	&zenlog( "flushing routes cache", "info", "NETWORK" );
-	system ( "$ip_bin route flush cache >/dev/null 2>$1" );
-}
-
 1;
