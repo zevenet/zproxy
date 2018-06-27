@@ -266,29 +266,6 @@ sub runRBLStopPacketbl
 }
 
 =begin nd
-Function: runRBLRestartPacketbl
-
-	Restart packetbl bin. It is useful to reload configuration
-
-Parameters:
-	String - Rule name
-
-Returns:
-	integer - 0 on success or other value on failure
-
-=cut
-
-sub runRBLRestartPacketbl
-{
-	my $rule = shift;
-
-	&runRBLStopPacketbl( $rule );
-	my $error = &runRBLStartPacketbl( $rule );
-
-	return $error;
-}
-
-=begin nd
 Function: setRBLPacketblConfig
 
 	before than exec packetbl, configure a new config file with rule configuration and overwrite the existing one
