@@ -456,46 +456,4 @@ sub getInterfaceOfIp    # ($ip)
 	return undef;
 }
 
-=begin nd
-Function: getVipOutputIp
-
-	[NOT USED] Get outbound IP address (actually NIC) of vip.
-
-Parameters:
-	vip - vip address.
-
-Returns:
-	scalar - IP address string.
-
-Bugs:
-	NOT USED
-=cut
-
-sub getVipOutputIp    # ($vip)
-{
-	my $vip = shift;
-
-	my $socket = &getIOSocket();
-	my $device;
-
-	foreach my $interface ( &getInterfaceList( $socket ) )
-	{
-		# ignore/skip localhost
-		next if $interface eq "lo";
-
-		# get interface ip
-		my $ip = $socket->if_addr( $interface );
-
-		# get NIC of our vip
-		if ( $ip eq $vip )
-		{
-			# remove alias part of interface name
-			( $device ) = split ( ":", $interface );
-			last;
-		}
-	}
-
-	return $socket->if_addr( $device );
-}
-
 1;
