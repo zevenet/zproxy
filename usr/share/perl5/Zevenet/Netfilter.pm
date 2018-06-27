@@ -910,13 +910,6 @@ sub getIptRuleReplace      # $return_code ( \%farm, \%server, $rule)
 	return &applyIptRuleAction( $rule, 'replace', $rule_num );
 }
 
-sub setIptRuleAppend       # $return_code (\%farm, \%server, $rule)
-{
-	my $rule = shift;      # input: iptables rule string
-
-	return &applyIptRules( &getIptRuleAppend( $rule ) );
-}
-
 sub getIptRuleAppend       # $return_code (\%farm, \%server, $rule)
 {
 	my $rule = shift;      # input: iptables rule string
