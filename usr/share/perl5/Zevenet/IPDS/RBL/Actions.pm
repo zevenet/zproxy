@@ -73,28 +73,6 @@ sub runRBLStopModule
 }
 
 =begin nd
-Function: runRBLRestartModule
-
-	Restart the module
-
-Parameters:
-
-Returns:
-
-=cut
-
-# this function has to remove the tmp directory /tmp/IPDS/<module> and stop all rules in /tmp/IPDS/<module> directory
-sub runRBLRestartModule
-{
-	# Get RBL rules
-	foreach my $rule ( &getRBLRuleList() )
-	{
-		&runRBLStopByRule( $rule );
-		&runRBLStartByRule( $rule );
-	}
-}
-
-=begin nd
 Function: runRBLStartByRule
 
 	Start the runtime of a RBL rule and link with all farm that are using this rule.
