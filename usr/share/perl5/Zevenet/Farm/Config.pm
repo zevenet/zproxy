@@ -295,40 +295,6 @@ sub getFarmAlgorithm    # ($farm_name)
 }
 
 =begin nd
-Function: setFarmPersistence
-
-	Set client persistence to a farm
-
-	Supports farm types: L4xNAT.
-
-Parameters:
-	persistence - Type of persitence
-	farmname - Farm name
-
-Returns:
-	scalar - Error code: 0 on success or -1 on failure
-
-BUG:
-	Obsolete, only used in tcp farms
-=cut
-
-sub setFarmPersistence    # ($persistence,$farm_name)
-{
-	my ( $persistence, $farm_name ) = @_;
-
-	my $farm_type = &getFarmType( $farm_name );
-	my $output    = -1;
-
-	if ( $farm_type eq "l4xnat" )
-	{
-		require Zevenet::Farm::L4xNAT::Config;
-		$output = &setL4FarmPersistence( $persistence, $farm_name );
-	}
-
-	return $output;
-}
-
-=begin nd
 Function: getFarmPersistence
 
 	Get type of persistence session for a farm
