@@ -132,42 +132,6 @@ sub setFarmSessionType    # ($session,$farm_name)
 }
 
 =begin nd
-Function: getFarmSessionType
-
-	NOT USED. Return the type of session persistence for a farm.
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	scalar - type of persistence or -1 on failure.
-
-Bugs:
-	NOT USED
-=cut
-
-sub getFarmSessionType    # ($farm_name)
-{
-	my ( $farm_name ) = @_;
-
-	my $farm_type = &getFarmType( $farm_name );
-	my $output    = -1;
-
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		require Zevenet::Farm::HTTP::Config;
-		$output = &getHTTPFarmSessionType( $farm_name );
-	}
-	elsif ( $farm_type eq "l4xnat" )
-	{
-		require Zevenet::Farm::L4xNAT::Config;
-		$output = &getL4FarmSessionType( $farm_name );
-	}
-
-	return $output;
-}
-
-=begin nd
 Function: setFarmTimeout
 
 	Asign a timeout value to a farm
