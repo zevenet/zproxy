@@ -58,7 +58,7 @@ sub setSnmpdStatus    # ($snmpd_status)
 			$return_code = system ( "$systemctl start snmpd > /dev/null" );
 		}
 		else
-		{	
+		{
 			$return_code = system ( "/etc/init.d/snmpd start > /dev/null" );
 		}
 	}
@@ -98,7 +98,7 @@ Returns:
 	string - Boolean. 'true' if it is running, or 'false' if it is not runnig.
 
 See Also:
-	zapi/v3/system.cgi, <applySnmpChanges>
+	zapi/v3/system.cgi
 =cut
 sub getSnmpdStatus    # ()
 {
@@ -140,7 +140,7 @@ Returns:
 	scalar - Hash reference with SNMP configuration.
 
 See Also:
-	<applySnmpChanges>, zapi/v3/system.cgi
+	zapi/v3/system.cgi
 =cut
 sub getSnmpdConfig    # ()
 {
@@ -185,14 +185,14 @@ Returns:
 	integer - 0 on success, or -1 on failure.
 
 See Also:
-	<applySnmpChanges>, zapi/v3/system.cgi
+	zapi/v3/system.cgi
 =cut
 sub setSnmpdConfig    # ($snmpd_conf)
 {
 	my ( $snmpd_conf ) = @_;
 
 	my $snmpdconfig_file = &getGlobalConfiguration('snmpdconfig_file');
-	
+
 	my $ip = $snmpd_conf->{ ip };
 	$ip = '0.0.0.0' if ( $snmpd_conf->{ ip } eq '*' );
 
@@ -231,9 +231,6 @@ Parameters:
 
 Returns:
 	integer - 0 on succes, or non-zero on failure.
-
-See Also:
-	<applySnmpChanges>
 =cut
 sub setSnmpdService    # ($snmpd_enabled)
 {
@@ -293,118 +290,6 @@ sub setSnmpdService    # ($snmpd_enabled)
 		&zenlog( "SNMP runlevel setup failed", "warning", "SYSTEM" );
 	}
 	return $return_code;
-}
-
-=begin nd
-Function: applySnmpChanges
-
-	NOT USED. This function only is used in content??!!
-
-Parameters:
-	none - .
-
-Returns:
-	none - .
-
-Bugs:
-	NOT USED.
-
-See Also:
-	NOT USED.
-=cut
-sub applySnmpChanges # ($snmpd_enabled, $snmpd_port, $snmpd_community, $snmpd_scope)
-{
-	my ( $snmpd_new ) = @_;
-
-	my $return_code = -1;
-
-	if ( ref $snmpd_new ne 'HASH' )
-	{
-		&zenlog( "Wrong argument applying snmp changes.", "warning", "SYSTEM" );
-		return $return_code;
-	}
-
-	## setting up valiables ##
-	# if checkbox not checked set as false instead of undefined
-	if ( !defined $snmpd_new->{ status } )
-	{
-		&setGlobalConfiguration( 'snmpd_enabled', 'false');
-	}
-
-	# read current management IP
-	my $snmpd_ip;
-	if ( $snmpd_new->{ ip } eq '*' )
-	{
-		$snmpd_ip = '0.0.0.0';
-	}
-
-	## validating some input values ##
-	# check port
-	if ( !&isValidPortNumber( $snmpd_new->{ port } ) )
-	{
-		&zenlog( "SNMP: Port out of range", "warning", "SYSTEM" );
-		return $return_code;
-	}
-
-	# if $snmpd_scope is not a valid ip or subnet
-	my ( $ip, $subnet ) = split ( '/', $snmpd_new->{ scope } );
-
-	if ( &ipisok( $ip, 4 ) eq 'false' )
-	{
-		&zenlog( "SNMP: Invalid ip or subnet with access", "warning", "SYSTEM" );
-		return $return_code;
-	}
-	if ( $subnet !~ /^\d+$/ || $subnet < 0 || $subnet > 32 )
-	{
-		&zenlog( "SNMP: Invalid subnet with access", "warning", "SYSTEM" );
-		return $return_code;
-	}
-
-	# SNMP arguments validated
-
-	# get config values of snmp server
-	my $snmpd_old = &getSnmpdConfig();
-	$snmpd_old->{ status } = &getSnmpdStatus();
-
-	my $conf_changed = 'false';
-
-	# configuration/service status logic
-	# setup config file if requested configuration changes
-	if (    $snmpd_old->{ ip } ne $snmpd_new->{ ip }
-		 || $snmpd_old->{ port } ne $snmpd_new->{ port }
-		 || $snmpd_old->{ community } ne $snmpd_new->{ community }
-		 || $snmpd_old->{ scope } ne $snmpd_new->{ scope } )
-	{
-		$return_code  = &setSnmpdConfig( $snmpd_new );
-		$conf_changed = 'true';
-
-		return $return_code if $return_code;
-	}
-
-   # if the desired snmp status is different to the current status => switch service
-	if ( $snmpd_new->{ status } ne $snmpd_old->{ status } )
-	{
-		$return_code = &setSnmpdService( $snmpd_new->{ status } );
-
-		if ( $return_code )
-		{
-			&zenlog( "SNMP failed setting the service", "warning", "SYSTEM" );
-			return $return_code;
-		}
-	}
-
-	# if snmp is on and want it on loading new configuration => restart server
-	elsif (    $snmpd_new->{ status } eq 'true'
-			&& $snmpd_old->{ status } eq 'true'
-			&& $conf_changed eq 'true' )
-	{
-		if ( &setSnmpdStatus( 'false' ) || &setSnmpdStatus( 'true' ) )
-		{
-			&zenlog( "SNMP failed restarting the server", "warning", "SYSTEM" );
-			return -1;
-		}
-	}
-	return 0;
 }
 
 1;

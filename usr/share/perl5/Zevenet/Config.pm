@@ -106,8 +106,6 @@ Bugs:
 	Control file handling errors.
 
 See Also:
-	<applySnmpChanges>
-
 	Zapi v3: <set_ntp>
 =cut
 
