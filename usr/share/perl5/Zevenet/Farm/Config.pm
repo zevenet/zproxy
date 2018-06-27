@@ -641,25 +641,4 @@ sub setFarmVS    # ($farm_name,$service,$tag,$string)
 	return $output;
 }
 
-=begin nd
-Function: setFarmName
-
-	Set values for service parameters
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	none - .
-
-Bugs:
-	WARNING: This function is only used in zapi/v2/post.cgi, this substitution should be done without a function, so we can remove iŧ.
-=cut
-
-sub setFarmName    # ($farm_name)
-{
-	my $farm_name = shift;
-	$farm_name =~ s/[^a-zA-Z0-9]//g;
-}
-
 1;

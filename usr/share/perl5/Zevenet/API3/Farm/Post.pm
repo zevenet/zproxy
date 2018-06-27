@@ -35,7 +35,6 @@ sub new_farm    # ( $json_obj )
    #	- vip
    #	- vport: optional for L4xNAT and not used in Datalink profile.
 
-	#~ &setFarmName( $json_obj->{ farmname } );
 	my $error       = "false";
 	my $description = "Creating farm '$json_obj->{ farmname }'";
 
