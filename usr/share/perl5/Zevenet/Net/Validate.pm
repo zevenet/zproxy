@@ -160,45 +160,6 @@ sub ipversion    # ($checkip)
 }
 
 =begin nd
-Function: ipinrange
-
-	[NOT USED] Check if an IP is in a range.
-
-Parameters:
-	netmask - .
-	toip - .
-	newip - .
-
-Returns:
-	boolean - string "true" or "false".
-
-Bugs:
-	NOT USED
-=cut
-
-#function checks if ip is in a range
-sub ipinrange    # ($netmask, $toip, $newip)
-{
-	my ( $netmask, $toip, $newip ) = @_;
-
-	require Net::IPv4Addr;
-	Net::IPv4Addr->import( qw( :all ) );
-
-	#$ip_str1="10.234.18.13";
-	#$mask_str1="255.255.255.0";
-	#$cidr_str2="10.234.18.23";
-	#print "true" if ipv4_in_network( $toip, $netmask, $newip );
-	if ( ipv4_in_network( $toip, $netmask, $newip ) )
-	{
-		return "true";
-	}
-	else
-	{
-		return "false";
-	}
-}
-
-=begin nd
 Function: getNetValidate
 
 	Check if the network configuration is valid. This function receive two IP
