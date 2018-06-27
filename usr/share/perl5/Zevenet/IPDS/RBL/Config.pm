@@ -160,41 +160,6 @@ sub addRBLCreateObjectRule
 }
 
 =begin nd
-Function: setRBLObjectRule
-
-	Modify an object, receive a hash with all parameters to modify.
-
-Parameters:
-	Rule - Rule name
-	Hash ref - Hash with the value to change and its values
-
-Returns:
-	Integer - 0 on success or -1 on failure
-
-=cut
-
-sub setRBLObjectRule
-{
-	my $rule   = shift;
-	my $params = shift;
-
-	require Config::Tiny;
-
-	my $lock       = &setRBLLockConfigFile();
-	my $fileHandle = Config::Tiny->read( $rblConfigFile );
-
-	foreach my $key ( keys %{ $params } )
-	{
-		$fileHandle->{ $rule }->{ $key } = $params->{ $key };
-	}
-
-	$fileHandle->write( $rblConfigFile );
-	&setRBLUnlockConfigFile( $lock );
-
-	return 0;
-}
-
-=begin nd
 Function: setRBLObjectRuleParam
 
 	Set the value of a parameter (only one)
