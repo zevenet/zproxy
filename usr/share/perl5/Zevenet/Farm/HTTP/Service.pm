@@ -155,35 +155,6 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 }
 
 =begin nd
-Function: setFarmNewService
-
-	[Not used] Create a new Service in a HTTP farm
-
-Parameters:
-	farmname - Farm name
-	service - Service name
-
-Returns:
-	Integer - Error code: 0 on success, other value on failure
-
-=cut
-
-sub setFarmNewService    # ($farm_name,$service)
-{
-	my ( $farm_name, $service ) = @_;
-
-	my $farm_type = &getFarmType( $farm_name );
-	my $output    = -1;
-
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		$output = &setFarmHTTPNewService( $farm_name, $service );
-	}
-
-	return $output;
-}
-
-=begin nd
 Function: deleteFarmService
 
 	Delete a service in a Farm
