@@ -126,66 +126,6 @@ sub setFarmCertificateSNI    #($cfile,$fname)
 }
 
 =begin nd
-Function: setFarmDeleteCertSNI
-
-	Delete the selected certificate from a HTTP farm. This function is used in zapi v2
-
-Parameters:
-	certificate - Certificate name
-	farmname - Farm name.
-
-Returns:
-	Integer - Error code: 1 on success, or -1 on failure.
-
-FIXME:
-	Duplicate function with: setFarmDeleteCertNameSNI used in zapiv3
-=cut
-sub setFarmDeleteCertSNI    #($certn,$fname)
-{
-	my ( $certn, $fname ) = @_;
-
-	my $type   = &getFarmType( $fname );
-	my $ffile  = &getFarmFile( $fname );
-	my $output = -1;
-	my $i      = 0;
-	my $j      = 0;
-
-	&zenlog( "Deleting 'Certificate $certn' for $fname farm $type", "info", "LSLB" );
-
-	if ( $type eq "https" )
-	{
-		require Tie::File;
-		require Zevenet::Lock;
-		&ztielock ( \my @array, "$configdir/$ffile" );
-
-		for ( @array )
-		{
-			if ( $_ =~ /Cert "/ )
-			{
-				$i++;
-			}
-
-			if ( $_ =~ /Cert/ && $i eq "$certn" )
-			{
-				splice @array, $j, 1,;
-				$output = 0;
-
-				if ( $array[$j] !~ /Cert/ && $array[$j - 1] !~ /Cert/ )
-				{
-					splice @array, $j, 0, "\tCert\ \"$configdir\/zencert.pem\"";
-					$output = 1;
-				}
-				last;
-			}
-			$j++;
-		}
-		untie @array;
-	}
-
-	return $output;
-}
-
-=begin nd
 Function: setFarmDeleteCertNameSNI
 
 	Delete the selected certificate from a HTTP farm
@@ -196,9 +136,6 @@ Parameters:
 
 Returns:
 	Integer - Error code: 1 on success, or -1 on failure.
-
-FIXME:
-	Duplicate function with: setFarmDeleteCertSNI used in zapiv3
 =cut
 sub setFarmDeleteCertNameSNI    #($certn,$fname)
 {
