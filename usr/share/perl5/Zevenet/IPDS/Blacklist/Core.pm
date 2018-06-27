@@ -183,37 +183,6 @@ sub getBLParam
 }
 
 =begin nd
-Function: getBLRunningRules
-
-	List all running BL rules.
-
-Parameters: None.
-
-Returns:
-
-	@array  - BL applied rules
-	== 0	- error
-
-=cut
-
-sub getBLRunningRules
-{
-	include 'Zevenet::IPDS::Core';
-
-	# look for blacklist rules
-	my $blacklist_chain = &getIPDSChain( "blacklist" );
-	my @rules           = &getIptListV4( 'raw', $blacklist_chain );
-	my @blRules         = grep ( /BL_/, @rules );
-
-	# look for whitelist rules
-	$blacklist_chain = &getIPDSChain( "whitelist" );
-	@rules           = &getIptListV4( 'raw', $blacklist_chain );
-	@blRules         = grep ( /BL_/, @rules );
-
-	return \@blRules;
-}
-
-=begin nd
 Function: getBLRuleList
 
 	Get an array with all BL rule names

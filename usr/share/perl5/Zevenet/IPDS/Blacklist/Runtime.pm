@@ -112,29 +112,6 @@ sub setBLDestroyList
 	return $output;
 }
 
-sub setBLReloadFarmRules
-{
-	my $farmName = shift;
-
-	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
-
-	# get all lists
-	my $allListsRef = Config::Tiny->read( $blacklistsConf );
-	my %allLists    = %{ $allListsRef };
-
-	foreach my $list ( keys %allLists )
-	{
-		my @farms = @{ &getBLParam( $list, "farms" ) };
-		if ( grep ( /^$farmName$/, @farms ) )
-		{
-			&setBLDeleteRule( $farmName, $list );
-			&setBLCreateRule( $farmName, $list );
-		}
-	}
-
-	#~ return $output;
-}
-
 =begin nd
 Function: setBLRefreshList
 
