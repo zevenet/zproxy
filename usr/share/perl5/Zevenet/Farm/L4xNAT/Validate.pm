@@ -27,16 +27,16 @@ use strict;
 Function: ismport
 
 	Check if the string is a valid multiport definition
-	
+
 Parameters:
 	port - Multiport string
 
 Returns:
 	String - "true" if port has a correct format or "false" if port has a wrong format
-	
-FIXME: 
+
+FIXME:
 	Define regexp in check_functions.cgi and use it here
-	
+
 =cut
 sub ismport    # ($string)
 {
@@ -48,32 +48,6 @@ sub ismport    # ($string)
 		return "true";
 	}
 	elsif ( $string =~ /^([1-9][0-9]*|[1-9][0-9]*\:[1-9][0-9]*)(,([1-9][0-9]*|[1-9][0-9]*\:[1-9][0-9]*))*$/ )
-	{
-		return "true";
-	}
-	else
-	{
-		return "false";
-	}
-}
-
-=begin nd
-Function: checkmport
-
-	Check if the port has more than 1 port
-	
-Parameters:
-	port - Port string
-
-Returns:
-	String - "true" if port string has more then one port or "false" if port has only a port
-	
-=cut
-sub checkmport    # ($port)
-{
-	my $port = shift;
-
-	if ( $port =~ /\,|\:|\*/ )
 	{
 		return "true";
 	}
