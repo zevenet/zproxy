@@ -76,23 +76,4 @@ sub getLoadedModules
 	return sort keys %INC;
 }
 
-sub getNewModules
-{
-	state @modules;
-
-	my @new_modules = ();
-
-	for my $mod ( getLoadedModules() )
-	{
-		unless ( grep { $mod eq $_ } @modules  )
-		{
-			push @new_modules, $mod;
-		}
-	}
-
-	push @modules, @new_modules;
-
-	return @new_modules;
-}
-
 1;
