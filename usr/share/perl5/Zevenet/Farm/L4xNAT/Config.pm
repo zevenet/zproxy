@@ -258,48 +258,6 @@ sub setL4FarmSessionType    # ($session,$farm_name)
 }
 
 =begin nd
-Function: getL4FarmSessionType
-
-	Get type of persistence session
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	Scalar - "none" not use persistence, "ip" for ip persistencia or -1 on failure
-
-BUG:
-	DUPLICATE with getL4FarmPersistence
-	Not used
-	Use get and set with same name
-
-=cut
-
-sub getL4FarmSessionType    # ($farm_name)
-{
-	my $farm_name = shift;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
-	my $first         = "true";
-
-	open FI, "<$configdir/$farm_filename";
-
-	while ( my $line = <FI> )
-	{
-		if ( $line ne "" && $first eq "true" )
-		{
-			$first = "false";
-			my @line = split ( "\;", $line );
-			$output = $line[6];
-		}
-	}
-	close FI;
-
-	return $output;
-}
-
-=begin nd
 Function: setL4FarmAlgorithm
 
 	Set the load balancing algorithm to a farm
