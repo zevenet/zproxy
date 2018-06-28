@@ -234,38 +234,6 @@ sub setHTTPFarmSessionType    # ($session,$farm_name)
 }
 
 =begin nd
-Function: getHTTPFarmSessionType
-
-	Return the type of session persistence for a HTTP farm.
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	scalar - type of persistence or -1 on failure.
-
-=cut
-sub getHTTPFarmSessionType    # ($farm_name)
-{
-	my ( $farm_name ) = @_;
-	my $output = -1;
-
-	open FR, "<$configdir\/$farm_name";
-	my @file = <FR>;
-	foreach my $line ( @file )
-	{
-		if ( $line =~ /Type/ && $line !~ /#/ )
-		{
-			my @line_aux = split ( "\ ", $line );
-			$output = $line_aux[1];
-		}
-	}
-	close FR;
-
-	return $output;
-}
-
-=begin nd
 Function: setHTTPFarmBlacklistTime
 
 	Configure check time for resurected back-end. It is a HTTP farm paramter.
