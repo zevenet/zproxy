@@ -24,28 +24,6 @@
 use strict;
 
 =begin nd
-Function: getIOSocket
-
-	Get a IO Socket. Used to get information about interfaces.
-
-Parameters:
-	none - .
-
-Returns:
-	scalar - IO::Socket::INET object reference.
-
-See Also:
-	<zevenet>
-=cut
-
-# IO Socket is needed to get information about interfaces
-sub getIOSocket
-{
-	# udp for a basic socket
-	return IO::Socket::INET->new( Proto => 'udp' );
-}
-
-=begin nd
 Function: getIfacesFromIf
 
 	Get List of Vinis or Vlans from a network interface.
