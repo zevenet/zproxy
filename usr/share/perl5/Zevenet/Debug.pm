@@ -71,9 +71,4 @@ sub getMemoryUsage
 	return $mem_string;
 }
 
-sub getLoadedModules
-{
-	return sort keys %INC;
-}
-
 1;
