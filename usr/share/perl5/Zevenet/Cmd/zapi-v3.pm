@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use warnings;
 use Zevenet;
 use Zevenet::Farm;
 use Zevenet::Farm::Core;

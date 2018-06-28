@@ -21,6 +21,8 @@
 #
 ###############################################################################
 
+use strict;
+use warnings;
 use Tie::File;
 use File::Basename;
 use Zevenet::Config;
@@ -92,7 +94,7 @@ foreach my $farm_name ( @l4_farmnames )
 	if ($boot_status eq 'up')
 	{
 		my $status = &_runL4FarmStop( $farm_name, 'false' );
-		
+
 		if ( defined $status && $status == 0 )
 		{
 			&zenlog("$BASENAME: $farm_name stopped");
@@ -173,7 +175,7 @@ foreach my $farm_name ( @l4_farmnames )
 	if ($boot_status eq 'up')
 	{
 		my $status = &_runL4FarmStart( $farm_name, 'false' );
-		
+
 		if ( defined $status && $status == 0 )
 		{
 			&zenlog("$BASENAME: $farm_name started");

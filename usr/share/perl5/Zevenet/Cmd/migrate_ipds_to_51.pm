@@ -21,6 +21,9 @@
 #
 ###############################################################################
 
+use strict;
+use warnings;
+
 use Fcntl ':flock';
 
 use Zevenet::Core;

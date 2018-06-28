@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use warnings;
 use Zevenet::Net::Throughput;
 
 my $time = &getGlobalConfiguration( 'throughput_period' );

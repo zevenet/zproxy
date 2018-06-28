@@ -22,7 +22,7 @@
 ###############################################################################
 
 use strict;
-#~ use warnings;
+use warnings;
 
 include 'Zevenet::IPDS::Blacklist';
 include 'Zevenet::IPDS::DoS';

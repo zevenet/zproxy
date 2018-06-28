@@ -24,6 +24,9 @@
 # This script migrates interfaces configuration files to IPv6 ready version.
 # Only supported for Zevenet Load Balancer Enterprise Edition.
 
+use strict;
+use warnings;
+
 my $configdir="/usr/local/zevenet/config";
 
 opendir my $config_dh, $configdir

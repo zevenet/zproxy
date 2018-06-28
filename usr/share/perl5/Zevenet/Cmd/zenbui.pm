@@ -22,7 +22,7 @@
 ###############################################################################
 
 use strict;
-#~ use warnings;
+use warnings;
 use Curses::UI;
 use Zevenet::Config;
 use Zevenet::Debug;

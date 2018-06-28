@@ -3,6 +3,7 @@
 # This script is for a bugfix moving http services, where the tag '#ZWACL-END' was deleted
 
 use strict;
+use warnings;
 use Tie::File;
 
 my $dir = '/usr/local/zevenet/config';

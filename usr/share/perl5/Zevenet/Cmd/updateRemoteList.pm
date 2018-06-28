@@ -21,6 +21,9 @@
 #
 ###############################################################################
 
+use strict;
+use warnings;
+
 use Zevenet::Config;
 include 'Zevenet::IPDS::Blacklist';
 

@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 ###############################################################################
 #
 #    Zevenet Software License
@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use warnings;
 use Tie::File;
 
 my $dir = "/usr/local/zevenet/config";
@@ -39,10 +40,10 @@ foreach my $farm ( @files )
 	chomp $farm;
 	# the original config file is copied
 	system ("cp ${dir}/${farm}_pen.cfg ${backup_dir}/${farm}_pen.cfg");
-	
+
 	chomp ($farm);
-	print( "Migrating farm \"${farm}\" to l4xnat profile\n");	
-	if ( ! -f "${dir}/${farm}_l4xnat.cfg" )	
+	print( "Migrating farm \"${farm}\" to l4xnat profile\n");
+	if ( ! -f "${dir}/${farm}_l4xnat.cfg" )
 	{
 		#open l4xnat file
 		tie my @l4file, 'Tie::File', "${dir}/${farm}_l4xnat.cfg";
@@ -63,7 +64,7 @@ foreach my $farm ( @files )
 		{
 			$algorithm = "prio";
 		}
-		
+
 		my @l4_backends;
 		# get backends
 		foreach my  $tcpline ( @tcpfile )
@@ -83,13 +84,13 @@ foreach my $farm ( @files )
 				my $ip=$3;
 				my $port=$4;
 				my $maxconns=$5;
-				
+
 				my $weight="1";
 				$weight = $1 if ( $tcpline =~ /weight (\d+)/);
-				
+
 				my $priority="1";
 				$priority = $1 if ( $tcpline =~ /prio (\d+)/);
-				
+
 				my $status="up";
 				$status="maintenance" if ( $acl==9 );
 
@@ -100,7 +101,7 @@ foreach my $farm ( @files )
 				push @l4_backends, $l4_back;
 			}
 		}
-		
+
 		# pen -S 10 -c 2049 -x 257 -F '/usr/local/zevenet/config/tcpfarm_pen.cfg' -C 127.0.0.1:16802 192.168.100.249:41
 		if ( $tcpfile[1] =~ /^# pen .+ (\d+\.\d+\.\d+\.\d+):(\d+)$/)
 		{
@@ -114,30 +115,30 @@ foreach my $farm ( @files )
 			print "Error matching.\n";
 			exit 1;
 		}
-		
+
 		$l4_status="up";
 		$l4_status="down" if ( grep ( /^\#down/, @tcpfile ) );
-		
-		
+
+
 		$l4_persistence="ip";
 		$l4_persistence="none" if ( grep ( /^roundrobin/, @tcpfile ) );
-		
+
 		$l4_timeout=120;
-		
+
 		# save config parameter in l4 format
 		#l4farm;tcp;192.168.100.102;70;nat;weight;none;125;up
 		$l4file[0] = "$farm;tcp;$vip;$vport;nat;$algorithm;$l4_persistence;$l4_timeout;$l4_status";
-		
+
 		# save backends
-		push @l4file, @l4_backends;			
-	
+		push @l4file, @l4_backends;
+
 		# close l4xnat file
 		untie @l4file;
 		# close tcp file
 		untie @tcpfile;
-		
+
 		unlink "${dir}/${farm}_pen.cfg";
-		
+
 		# create a farmguardian service if it is not exist or if it is stopped
 		my $farmguardian_file = "${dir}/${farm}_guardian.conf";
 		if ( ! -f "$farmguardian_file" )
@@ -155,13 +156,13 @@ foreach my $farm ( @files )
 				my $fgcmd = $fgParams[2];
 				my $fgstatus = $fgParams[3];
 				my $fglogs = $fgParams[4];
-				
+
 				if ( $fgstatus ne "true" )
 				{
 					$fgstatus = "true";
 				}
 				system ( "echo '${farm}:::${fgtime}:::${fgcmd}:::${fgstatus}:::$fglogs' > $farmguardian_file" );
-				
+
 			}
 			# no correct farmguardian. Put a default farmguardian
 			else
@@ -169,16 +170,16 @@ foreach my $farm ( @files )
 				system ( "echo '${farm}:::5:::check_tcp -H HOST -p PORT -t 5:::true:::false' > $farmguardian_file" );
 			}
 		}
-		
+
 	}
-	
-	else 
+
+	else
 	{
 		my $errormsg = "Error migrating TCP farm $farm because already exists a L4xNAT farm with this name.";
 		print "$errormsg\n";
 		system ( "logger -i migrate $errormsg" );
 	}
-	
+
 }
 
 

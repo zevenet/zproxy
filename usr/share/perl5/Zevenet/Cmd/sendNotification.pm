@@ -21,6 +21,9 @@
 #
 ###############################################################################
 
+use strict;
+use warnings;
+
 use Config::Tiny;
 use Zevenet::Config;
 include 'Zevenet::Notify';

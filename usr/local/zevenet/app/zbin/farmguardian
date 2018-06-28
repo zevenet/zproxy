@@ -34,6 +34,7 @@
 #[farmname]:::[timeout]:::[timetocheck]:::[script args]:::[logs]
 
 use strict;
+use warnings;
 
 #~ use Data::Dumper;
 use Proc::Daemon;

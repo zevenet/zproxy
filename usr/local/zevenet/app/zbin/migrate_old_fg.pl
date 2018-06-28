@@ -24,6 +24,7 @@
 # Execute script in postinst
 
 use strict;
+use warnings;
 
 use Zevenet;
 use Zevenet::Log;
