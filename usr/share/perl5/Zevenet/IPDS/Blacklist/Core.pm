@@ -182,26 +182,6 @@ sub getBLParam
 	return $output;
 }
 
-=begin nd
-Function: getBLRuleList
-
-	Get an array with all BL rule names
-
-Parameters:
-
-Returns:
-	Array - BL name list
-
-=cut
-
-sub getBLRuleList
-{
-	require Config::Tiny;
-	my $fileHandle = Config::Tiny->read( $blacklistsConf );
-
-	return keys %{ $fileHandle };
-}
-
 # &getBLlastUptdate ( list );
 sub getBLlastUptdate
 {
