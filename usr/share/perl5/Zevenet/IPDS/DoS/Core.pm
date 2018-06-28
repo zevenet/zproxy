@@ -53,28 +53,6 @@ sub getDOSExists
 }
 
 =begin nd
-Function: getDOSRuleList
-
-	Get an array with all DOS rule names
-
-Parameters:
-
-Returns:
-	Array - DOS name list
-
-=cut
-
-sub getDOSRuleList
-{
-	require Config::Tiny;
-
-	my $confFile   = &getGlobalConfiguration( 'dosConf' );
-	my $fileHandle = Config::Tiny->read( $confFile );
-
-	return keys %{ $fileHandle };
-}
-
-=begin nd
 Function: getDOSParam
 
 	Get information about a DoS rule saved in the config file.
