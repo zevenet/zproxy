@@ -583,11 +583,11 @@ sub runFGFarmStart
 	my $ftype = &getFarmType( $farm );
 
 	# check if the farm is up
-	return if ( &getFarmStatus( $farm ) ne 'up' );
+	return 0 if ( &getFarmStatus( $farm ) ne 'up' );
 	# if the farmguardian is running...
 	if ( &getFGPidFarm( $farm, $svice ) )
 	{
-		return;
+		return 0;
 		#~ &runFGFarmStop( $farm, $svice );
 	}
 	# check if the node is master
@@ -597,7 +597,7 @@ sub runFGFarmStart
 			 func   => 'getZClusterNodeStatus',
 			 args   => [],
 	);
-	return unless ( ! $node or $node eq 'master' );
+	return 0 unless ( ! $node or $node eq 'master' );
 
 
 	&zenlog( "Start fg for farm $farm, $svice", "debug2", "FG" );
