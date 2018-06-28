@@ -37,7 +37,7 @@ Returns:
 	scalar - 0 on success, non-zero on failure.
 
 See Also:
-	zapi/v3/system.cgi, <setSnmpdService>, <setSnmpdStatus>
+	zapi/v3/system.cgi, <setSnmpdStatus>
 =cut
 sub setSnmpdStatus    # ($snmpd_status)
 {
@@ -219,77 +219,6 @@ sub setSnmpdConfig    # ($snmpd_conf)
 	close $config_file;
 
 	return 0;
-}
-
-=begin nd
-Function: setSnmpdService
-
-	Enable or disable SNMP service start on boot process.
-
-Parameters:
-	snmpd_enabled - 'true' to enable SNMP service, or 'false' to disable it.
-
-Returns:
-	integer - 0 on succes, or non-zero on failure.
-=cut
-sub setSnmpdService    # ($snmpd_enabled)
-{
-	my ( $snmpd_enabled ) = @_;
-
-	my $return_code = -1;
-	my $insserv = &getGlobalConfiguration('insserv');
-
-	# verify valid input
-	if ( $snmpd_enabled ne 'true' && $snmpd_enabled ne 'false' )
-	{
-		&zenlog( "SNMP Service: status not available", "warning", "SYSTEM" );
-		return $return_code;
-	}
-
-	# change snmpd status
-	$return_code = &setSnmpdStatus( $snmpd_enabled );
-	if ( $return_code != 0 )
-	{
-		&zenlog( "SNMP Status change failed", "warning", "SYSTEM" );
-		return $return_code;
-	}
-
-	my $systemctl = &getGlobalConfiguration('systemctl');
-
-	# perform runlevel change
-	if ( $snmpd_enabled eq 'true' )
-	{
-		&zenlog( "Enabling snmp service", "info", "SYSTEM" );
-
-		if ( -f $systemctl )
-		{
-			$return_code = system ( "$systemctl enable snmpd > /dev/null" );
-		}
-		else
-		{
-			$return_code = system ( "$insserv snmpd" );
-		}
-	}
-	else
-	{
-		&zenlog( "Disabling snmp service", "info", "SYSTEM" );
-
-		if ( -f $systemctl )
-		{
-			$return_code = system ( "$systemctl disable snmpd > /dev/null" );
-		}
-		else
-		{
-			$return_code = system ( "$insserv -r snmpd" );
-		}
-	}
-
-	# show message if failed
-	if ( $return_code != 0 )
-	{
-		&zenlog( "SNMP runlevel setup failed", "warning", "SYSTEM" );
-	}
-	return $return_code;
 }
 
 1;
