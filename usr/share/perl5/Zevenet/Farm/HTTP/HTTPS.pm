@@ -26,38 +26,6 @@ use strict;
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
-Function: getHTTPFarmDHStatus
-
-	[NOT USED] Obtain the status of the DH file
-
-Parameters:
-	farmname - Farm name
-
-Returns:
-	scalar - on, if it is actived or off, if it is desactived
-
-=cut
-sub getHTTPFarmDHStatus    # ($farm_name)
-{
-	my ( $farm_name ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = "off";
-
-	my $dhfile = "$configdir\/$farm_name\_dh2048.pem";
-	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
-	# my $match =~ /^DHParams.*/, @filefarmhttp;
-	my @match = grep ( /^DHParams.*/, @filefarmhttp );
-	untie @filefarmhttp;
-
-	if ($match[0] ne "" && -e "$dhfile"){
-		$output = "on";
-	}
-
-	return $output;
-}
-
-=begin nd
 Function: getFarmCertificate
 
 	Return the certificate applied to the farm
