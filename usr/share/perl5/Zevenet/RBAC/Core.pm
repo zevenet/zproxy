@@ -247,11 +247,15 @@ sub getRBACRolePermission
 
 	my $roleFile;
 	my $fileHandle;
+	require Zevenet::User;
 	my $user  = &getUser();
+	if ( $user eq 'root' ) { return 1 }
+
 	my $group = &getRBACUserGroup( $user );
 
 	&zenlog( "The user $user has not a group", "debug", "RBAC" ) if not $group;
 
+	include 'Zevenet::RBAC::Group::Core';
 	my $role = &getRBACGroupParam( $group, 'role' );
 	&zenlog( "The user $user has not a role", "debug", "RBAC" )
 	  if ( not $role and $group );

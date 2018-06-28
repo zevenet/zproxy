@@ -317,8 +317,11 @@ sub getGSLBFarmBackends    # ($farm_name)
 	my @be = split ( "\n", $backendsvs );
 
 	# get backend Alias
-	require Zevenet::Alias;
-	my $alias = &getAlias( 'backend' );
+	include 'Zevenet::RBAC::Core';
+	my $permission =  &getRBACRolePermission( 'alias', 'list' );
+
+	require Zevenet::Alias if ($permission);
+	my $alias = &getAlias( 'backend' ) if ($permission);
 
 	#
 	# Backends
@@ -357,7 +360,7 @@ sub getGSLBFarmBackends    # ($farm_name)
 
 		push @backendStats,
 		  {
-			alias => $alias->{ $addr } // "",
+			alias => $permission ? $alias->{ $addr } // "" : undef,
 			id    => $id + 0,
 			ip    => $addr,
 			port  => $port + 0,

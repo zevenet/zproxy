@@ -69,8 +69,19 @@ sub get_interfaces    # ()
 	# to include 'has_vlan' to nics
 	my @vlans = &getInterfaceTypeList( 'vlan' );
 
-	require Zevenet::Alias;
-	my $alias = &getAlias( "interface" );
+	my $permission = 0;
+	if ( $eload )
+	{
+		$permission = &eload(
+					module => 'Zevenet::RBAC::Core',
+					func   => 'getRBACRolePermission',
+					args   => ['alias', 'list'],
+			)
+	}
+	&zenlog("Permission: ".$permission);
+
+	require Zevenet::Alias if ($permission);
+	my $alias = &getAlias( "interface" ) if ($permission);
 
 	for my $if_ref ( @interfaces )
 	{
@@ -94,7 +105,7 @@ sub get_interfaces    # ()
 		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
 
 		my $if_conf = {
-			alias   => $alias->{ $if_ref->{ name } },
+			alias   => $permission ? $alias->{ $if_ref->{ name } } : undef,
 			name    => $if_ref->{ name },
 			ip      => $if_ref->{ addr },
 			netmask => $if_ref->{ mask },

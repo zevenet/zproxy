@@ -24,7 +24,9 @@
 use strict;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
+my $eload;
 
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 =begin nd
 Function: setL4FarmServer
 
@@ -529,8 +531,17 @@ sub getL4FarmBackends    # ($farm_name)
 	open FI, "<", "$configdir/$farm_filename"
 	  or &zenlog( "Error opening file $configdir/$farm_filename: $!", "error", "LSLB" );
 
-	require Zevenet::Alias;
-	my $alias = getAlias( 'backend' );
+	my $permission = 0;
+	if ( $eload )
+	{
+		$permission = &eload(
+					module => 'Zevenet::RBAC::Core',
+					func   => 'getRBACRolePermission',
+					args   => ['alias', 'list'],
+			)
+	}
+	require Zevenet::Alias if ( $permission );	
+	my $alias = getAlias( 'backend' ) if ( $permission );
 
 	while ( my $line = <FI> )
 	{
@@ -555,7 +566,7 @@ sub getL4FarmBackends    # ($farm_name)
 			}
 
 			push @servers, {
-				alias => $alias->{ $aux[2] },
+				alias => $permission ? $alias->{ $aux[2] } : undef,
 				id    => $sindex,
 				ip    => $aux[2],
 				port  => ( $aux[3] ) ? $aux[3] : undef,

@@ -25,6 +25,8 @@ use strict;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 =begin nd
 Function: getDatalinkFarmServers
 
@@ -98,8 +100,17 @@ sub getDatalinkFarmBackends    # ($farm_name)
 	require Zevenet::Farm::Base;
 	my $farmStatus = &getFarmStatus( $farm_name );
 
-	require Zevenet::Alias;
-	my $alias = &getAlias( "backend" );
+	my $permission = 0;
+	if ( $eload )
+	{
+		$permission = &eload(
+					module => 'Zevenet::RBAC::Core',
+					func   => 'getRBACRolePermission',
+					args   => ['alias', 'list'],
+			)
+	}
+	require Zevenet::Alias if ( $permission );
+	my $alias = &getAlias( "backend" ) if ( $permission );
 
 	open FI, "<$configdir/$farm_filename";
 
@@ -116,7 +127,7 @@ sub getDatalinkFarmBackends    # ($farm_name)
 
 			push @servers,
 			  {
-				alias     => $alias->{ $aux[2] },
+				alias     => $permission ? $alias->{ $aux[2] } : undef,
 				id        => $sindex,
 				ip        => $aux[2],
 				interface => $aux[3],

@@ -24,7 +24,8 @@
 use strict;
 
 my $configdir = &getGlobalConfiguration( 'configdir' );
-
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 =begin nd
 Function: setHTTPFarmServer
 
@@ -461,8 +462,18 @@ sub getHTTPFarmBackends    # ($farm_name,$service)
 	my @out_ba;
 
 	# alias
-	require Zevenet::Alias;
-	my $alias = &getAlias( 'backend' );
+	my $permission = 0;
+	if ( $eload )
+	{
+		$permission = &eload(
+					module => 'Zevenet::RBAC::Core',
+					func   => 'getRBACRolePermission',
+					args   => ['alias', 'list'],
+			)
+	}
+
+	require Zevenet::Alias if ($permission);
+	my $alias = &getAlias( 'backend' ) if ($permission);
 
 	foreach my $subl ( @be )
 	{
@@ -482,7 +493,7 @@ sub getHTTPFarmBackends    # ($farm_name,$service)
 
 		push @out_ba,
 		  {
-			alias   => $alias->{ $ip },
+			alias   => $permission ? $alias->{ $ip } : undef,
 			id      => $id,
 			status  => $status,
 			ip      => $ip,
