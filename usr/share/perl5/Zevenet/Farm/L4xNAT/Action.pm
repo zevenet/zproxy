@@ -26,56 +26,6 @@ use strict;
 my $configdir = &getGlobalConfiguration( 'configdir' );
 
 =begin nd
-Function: _runL4FarmRestart
-
-	Restart a l4xnat farm
-
-Parameters:
-	farmname - Farm name
-	writeconf - Write start on configuration file
-	changes - This field lets to do the changes without stop the farm. The possible values are: "", blank for stop and start the farm, or "hot" for not stop the farm before run it
-
-Returns:
-	Integer - Error code: 0 on success or other value on failure
-
-FIXME:
-	writeconf is a obsolet parameter
-	$type parameter never is used
-=cut
-
-sub _runL4FarmRestart    # ($farm_name,$writeconf,$type)
-{
-	my ( $farm_name, $writeconf, $type ) = @_;
-
-	my $algorithm   = &getFarmAlgorithm( $farm_name );
-	my $fbootstatus = &getFarmBootStatus( $farm_name );
-	my $output      = 0;
-	my $pidfile     = "/var/run/l4sd.pid";
-
-	if (    $algorithm eq "leastconn"
-		 && $fbootstatus eq "up"
-		 && $writeconf eq "false"
-		 && $type eq "hot"
-		 && -e $pidfile )
-	{
-		open FILE, "<$pidfile";
-		my $pid = <FILE>;
-		close FILE;
-
-		# reload config file
-		kill USR1 => $pid;
-		$output = $?;    # FIXME
-	}
-	else
-	{
-		&_runL4FarmStop( $farm_name, $writeconf );
-		$output = &_runL4FarmStart( $farm_name, $writeconf );
-	}
-
-	return $output;
-}
-
-=begin nd
 Function: _runL4FarmStart
 
 	Run a l4xnat farm
