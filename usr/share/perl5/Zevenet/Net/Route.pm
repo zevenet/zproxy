@@ -223,6 +223,13 @@ sub applyRoutes    # ($table,$if_ref,$gateway)
 
 	my $status = 0;
 
+	unless ( $$if_ref{net} )
+	{
+		require Zevenet::Net::Interface;
+		$$if_ref{ net } =
+			&getAddressNetwork( $$if_ref{ addr }, $$if_ref{ mask }, $$if_ref{ ip_v } );
+	}
+
 	# not virtual interface
 	if ( !defined $$if_ref{ vini } || $$if_ref{ vini } eq '' )
 	{
