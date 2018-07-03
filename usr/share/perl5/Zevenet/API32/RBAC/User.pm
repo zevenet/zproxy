@@ -200,10 +200,13 @@ sub set_rbac_user
 	}
 
 	# change password
-	if ( &setRBACUserPassword( $user, $json_obj->{ 'newpassword' } ) )
+	if ( exists $json_obj->{ 'newpassword' } )
 	{
-		my $msg = "Changing RBAC $user password.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		if ( &setRBACUserPassword( $user, $json_obj->{ 'newpassword' } ) )
+		{
+			my $msg = "Changing RBAC $user password.";
+			return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		}
 	}
 
 	include 'Zevenet::Cluster';
