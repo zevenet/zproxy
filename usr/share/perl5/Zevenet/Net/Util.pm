@@ -217,7 +217,7 @@ sub getRandomPort    # ()
 	do
 	{
 		$random_port = int ( rand ( $max - $min ) ) + $min;
-	} while ( &checkport( '127.0.0.1', $random_port ) eq 'false' );
+	} while ( &checkport( '127.0.0.1', $random_port ) eq 'true' );
 
 	my $check = &checkport( '127.0.0.1', $random_port );
 

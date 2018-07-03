@@ -67,8 +67,6 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 		return 0;
 	}
 
-	&setGSLBControlPort( $fname );
-
 	# set fg foreach service
 	foreach my $srv ( &getGSLBFarmServices( $fname ) )
 	{

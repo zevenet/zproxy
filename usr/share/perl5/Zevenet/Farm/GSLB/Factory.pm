@@ -45,7 +45,16 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 	require Zevenet::Farm::Core;
 	require Zevenet::Net::Util;
 
-	my $httpport = &getRandomPort();
+	# get a control port not used
+	my $httpport;
+	my @gslb_ports = ();
+	my @gslb_farms = &getFarmsByType( 'gslb' );
+	push @gslb_ports, &getGSLBControlPort( $_ ) for @gslb_farms;
+	do
+	{
+		$httpport = &getRandomPort();
+	} while ( grep( /^$httpport$/, @gslb_ports ) );
+
 	my $type     = "gslb";
 	my $ffile    = &getFarmFile( $fname );
 	my $output   = -1;
