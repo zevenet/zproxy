@@ -29,16 +29,16 @@ my $configdir = &getGlobalConfiguration( 'configdir' );
 Function: getDatalinkFarmServers
 
 	List all farm backends and theirs configuration
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	array - list of backends. Each item has the format: ";index;ip;iface;weight;priority;status"
-		
+
 FIXME:
 	changes output to hash format
-	
+
 =cut
 
 sub getDatalinkFarmServers    # ($farm_name)
@@ -77,13 +77,13 @@ sub getDatalinkFarmServers    # ($farm_name)
 Function: getDatalinkFarmBackends
 
 	List all farm backends and theirs configuration
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	array - list of backends. Each item has the format: ";index;ip;iface;weight;priority;status"
-	
+
 =cut
 
 sub getDatalinkFarmBackends    # ($farm_name)
@@ -140,7 +140,7 @@ sub getDatalinkFarmBackends    # ($farm_name)
 Function: setDatalinkFarmServer
 
 	Set a backend or create it if it doesn't exist
-	
+
 Parameters:
 	id - Backend id, if this id doesn't exist, it will create a new backend
 	ip - Real server ip
@@ -151,10 +151,10 @@ Parameters:
 
 Returns:
 	none - .
-	
+
 FIXME:
 	Not return nothing, do error control
-		
+
 =cut
 
 sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
@@ -217,14 +217,14 @@ sub setDatalinkFarmServer    # ($ids,$rip,$iface,$weight,$priority,$farm_name)
 Function: runDatalinkFarmServerDelete
 
 	Delete a backend from a datalink farm
-	
+
 Parameters:
 	id - Backend id
 	farmname - Farm name
 
 Returns:
 	Integer - Error code: return 0 on success or -1 on failure
-	
+
 =cut
 
 sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
@@ -276,18 +276,18 @@ sub runDatalinkFarmServerDelete    # ($ids,$farm_name)
 Function: getDatalinkFarmBackendsStatus_old
 
 	Get the backend status from a datalink farm
-	
+
 Parameters:
 	content - Not used, it is necessary create a function to generate content
 
 Returns:
 	array - Each item has the next format: "ip;port;backendstatus;weight;priority;clients"
-	
+
 BUG:
 	Not used. This function exist but is not contemplated in zapi v3
 	Use farmname as parameter
 	It is necessary creates backend checks and save backend status
-	
+
 =cut
 
 sub getDatalinkFarmBackendsStatus_old    # (@content)
@@ -309,7 +309,7 @@ sub getDatalinkFarmBackendsStatus_old    # (@content)
 Function: setDatalinkFarmBackendStatus
 
 	Change backend status to up or down
-	
+
 Parameters:
 	farmname - Farm name
 	backend - Backend id
@@ -317,10 +317,10 @@ Parameters:
 
 Returns:
 	none - .
-	
+
 FIXME:
-	Not return nothing, do error control	
-	
+	Not return nothing, do error control
+
 =cut
 
 sub setDatalinkFarmBackendStatus    # ($farm_name,$index,$stat)
@@ -366,13 +366,13 @@ sub setDatalinkFarmBackendStatus    # ($farm_name,$index,$stat)
 Function: getDatalinkFarmBackendStatusCtl
 
 	Return from datalink config file, all backends with theirs parameters and status
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	array - Each item has the next format: ";server;ip;interface;weight;priority;status"
-	
+
 =cut
 
 sub getDatalinkFarmBackendStatusCtl    # ($farm_name)
@@ -387,6 +387,37 @@ sub getDatalinkFarmBackendStatusCtl    # ($farm_name)
 	untie @content;
 
 	return @output;
+}
+
+sub getDatalinkFarmBackendAvailableID
+{
+	my $farmname = shift;
+
+	my $id  = 0;
+	my @run = &getDatalinkFarmServers( $farmname );
+
+	if ( @run > 0 )
+	{
+		foreach my $l_servers ( @run )
+		{
+			my @l_serv = split ( ";", $l_servers );
+
+			if ( $l_serv[1] ne "0.0.0.0" )
+			{
+				if ( $l_serv[0] > $id )
+				{
+					$id = $l_serv[0];
+				}
+			}
+		}
+
+		if ( $id >= 0 )
+		{
+			$id++;
+		}
+	}
+
+	return $id;
 }
 
 1;

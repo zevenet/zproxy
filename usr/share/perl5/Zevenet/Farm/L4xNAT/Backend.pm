@@ -999,4 +999,26 @@ sub resetL4FarmBackendConntrackMark
 	return $return_code;
 }
 
+sub getL4FarmBackendAvailableID
+{
+	my $farmname = shift;
+
+	my $id           = 0;
+	my @server_lines = &getL4FarmServers( $farmname );
+
+	foreach my $l_servers ( @server_lines )
+	{
+		my @l_serv = split ( ";", $l_servers );
+
+		if ( $l_serv[0] > $id )
+		{
+			$id = $l_serv[0];
+		}
+	}
+
+	$id++ if @server_lines;
+
+	return $id;
+}
+
 1;

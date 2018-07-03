@@ -56,29 +56,10 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 
 	if ( $type eq "l4xnat" )
 	{
-		# Get ID of the new backend
-		my $id  = 0;
-		my @run = &getFarmServers( $farmname );
+		require Zevenet::Net::Validate;
+		require Zevenet::Farm::L4xNAT::Backend;
 
-		if ( @run > 0 )
-		{
-			foreach my $l_servers ( @run )
-			{
-				my @l_serv = split ( ";", $l_servers );
-				if ( $l_serv[1] ne "0.0.0.0" )
-				{
-					if ( $l_serv[0] > $id )
-					{
-						$id = $l_serv[0];
-					}
-				}
-			}
-
-			if ( $id >= 0 )
-			{
-				$id++;
-			}
-		}
+		my $id = &getL4FarmBackendAvailableID( $farmname );
 
 		# validate IP
 		if ( !&getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
@@ -99,7 +80,6 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# validate PORT
-		require Zevenet::Net::Validate;
 		unless (    &isValidPortNumber( $json_obj->{ port } ) eq 'true'
 				 || $json_obj->{ port } eq '' )
 		{
@@ -167,14 +147,15 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 			&httpResponse( { code => 400, body => $body } );
 		}
 
-
-####### Create backend
-
-		my $status = &setFarmServer(
-									 $id,                   $json_obj->{ ip },
-									 $json_obj->{ port },   $json_obj->{ max_conns },
-									 $json_obj->{ weight }, $json_obj->{ priority },
-									 "",                    $farmname
+		# Create backend
+		my $status = &setL4FarmServer(
+									   $id,
+									   $json_obj->{ ip },
+									   $json_obj->{ port },
+									   $json_obj->{ weight },
+									   $json_obj->{ priority },
+									   $farmname,
+									   $json_obj->{ max_conns },
 		);
 
 		if ( $status != -1 )
@@ -228,27 +209,9 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	elsif ( $type eq "datalink" )
 	{
 		# get an ID
-		my $id  = 0;
-		my @run = &getFarmServers( $farmname );
-		if ( @run > 0 )
-		{
-			foreach my $l_servers ( @run )
-			{
-				my @l_serv = split ( ";", $l_servers );
-				if ( $l_serv[1] ne "0.0.0.0" )
-				{
-					if ( $l_serv[0] > $id )
-					{
-						$id = $l_serv[0];
-					}
-				}
-			}
+		require Zevenet::Farm::Datalink::Backend;
 
-			if ( $id >= 0 )
-			{
-				$id++;
-			}
-		}
+		my $id = &getDatalinkFarmBackendAvailableID( $farmname );
 
 		# validate IP
 		if ( !&getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )
@@ -337,13 +300,14 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 			&httpResponse( { code => 400, body => $body } );
 		}
 
-####### Create backend
-
-		my $status = &setFarmServer(
-									 $id,                      $json_obj->{ ip },
-									 $json_obj->{ interface }, "",
-									 $json_obj->{ weight },    $json_obj->{ priority },
-									 "",                       $farmname
+		# Create backend
+		my $status = &setDatalinkFarmServer(
+											 $id,
+											 $json_obj->{ ip },
+											 $json_obj->{ interface },
+											 $json_obj->{ weight },
+											 $json_obj->{ priority },
+											 $farmname,
 		);
 
 		if ( $status != -1 )
@@ -354,18 +318,19 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 
 			# Success
 			my $message = "Backend added";
+			my $weight = ( $json_obj->{ weight } ne '' ) ? $json_obj->{ weight } + 0 : undef;
+			my $prio = ( $json_obj->{ priority } ne '' ) ? $json_obj->{ priority } + 0 : undef;
+
 			my $body = {
-				description => $description,
-				params      => {
-					  id        => $id,
-					  ip        => $json_obj->{ ip },
-					  interface => $json_obj->{ interface },
-					  weight => ( $json_obj->{ weight } ne '' ) ? $json_obj->{ weight } + 0 : undef,
-					  priority => ( $json_obj->{ priority } ne '' )
-					  ? $json_obj->{ priority } + 0
-					  : undef,
-				},
-				message => $message,
+						 description => $description,
+						 params      => {
+									 id        => $id,
+									 ip        => $json_obj->{ ip },
+									 interface => $json_obj->{ interface },
+									 weight    => $weight,
+									 priority  => $prio,
+						 },
+						 message => $message,
 			};
 
 			include 'Zevenet::Cluster';
@@ -657,7 +622,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		unless ( $lb eq 'roundrobin' )
 		{
 			&zenlog(
-				   "Error, this service algorithm does not support adding new backends.", "error", "" 
+				   "Error, this service algorithm does not support adding new backends.", "error", ""
 			);
 
 			# Error

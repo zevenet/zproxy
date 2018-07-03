@@ -53,32 +53,10 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	if ( $type eq "l4xnat" )
 	{
 		require Zevenet::Net::Validate;
+		require Zevenet::Farm::L4xNAT::Backend;
 
 		# Get ID of the new backend
-		# FIXME: Maybe make a function of this?
-		my $id  = 0;
-		my @run = &getFarmServers( $farmname );
-
-		if ( @run > 0 )
-		{
-			foreach my $l_servers ( @run )
-			{
-				my @l_serv = split ( ";", $l_servers );
-
-				if ( $l_serv[1] ne "0.0.0.0" )
-				{
-					if ( $l_serv[0] > $id )
-					{
-						$id = $l_serv[0];
-					}
-				}
-			}
-
-			if ( $id >= 0 )
-			{
-				$id++;
-			}
-		}
+		my $id = &getL4FarmBackendAvailableID( $farmname );
 
 		# validate IP
 		if ( ! $json_obj->{ ip } )
@@ -130,15 +108,14 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# Create backend
-		my $status = &setFarmServer(
-									 $id,
-									 $json_obj->{ ip },
-									 $json_obj->{ port },
-									 $json_obj->{ max_conns },
-									 $json_obj->{ weight },
-									 $json_obj->{ priority },
-									 "",
-									 $farmname
+		my $status = &setL4FarmServer(
+									   $id,
+									   $json_obj->{ ip },
+									   $json_obj->{ port },
+									   $json_obj->{ weight },
+									   $json_obj->{ priority },
+									   $farmname,
+									   $json_obj->{ max_conns },
 		);
 
 		if ( $status == -1 )
@@ -180,30 +157,9 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 	elsif ( $type eq "datalink" )
 	{
 		# get an ID
-		# FIXME: Maybe make a function of this?
-		my $id  = 0;
-		my @run = &getFarmServers( $farmname );
+		require Zevenet::Farm::Datalink::Backend;
 
-		if ( @run > 0 )
-		{
-			foreach my $l_servers ( @run )
-			{
-				my @l_serv = split ( ";", $l_servers );
-
-				if ( $l_serv[1] ne "0.0.0.0" )
-				{
-					if ( $l_serv[0] > $id )
-					{
-						$id = $l_serv[0];
-					}
-				}
-			}
-
-			if ( $id >= 0 )
-			{
-				$id++;
-			}
-		}
+		my $id = &getDatalinkFarmBackendAvailableID( $farmname );
 
 		# validate INTERFACE
 		require Zevenet::Net::Interface;
@@ -258,11 +214,13 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		}
 
 		# Create backend
-		my $status = &setFarmServer(
-									 $id,                      $json_obj->{ ip },
-									 $json_obj->{ interface }, "",
-									 $json_obj->{ weight },    $json_obj->{ priority },
-									 "",                       $farmname
+		my $status = &setDatalinkFarmServer(
+											 $id,
+											 $json_obj->{ ip },
+											 $json_obj->{ interface },
+											 $json_obj->{ weight },
+											 $json_obj->{ priority },
+											 $farmname,
 		);
 
 		# check error adding a new backend
@@ -281,26 +239,27 @@ sub new_farm_backend    # ( $json_obj, $farmname )
 		);
 
 		my $message = "Backend added";
+		my $weight = ( $json_obj->{ weight } ne '' ) ? $json_obj->{ weight } + 0 : undef;
+		my $prio = ( $json_obj->{ priority } ne '' ) ? $json_obj->{ priority } + 0 : undef;
+
 		my $body = {
-			description => $desc,
-			params      => {
-				  id        => $id,
-				  ip        => $json_obj->{ ip },
-				  interface => $json_obj->{ interface },
-				  weight => ( $json_obj->{ weight } ne '' ) ? $json_obj->{ weight } + 0 : undef,
-				  priority => ( $json_obj->{ priority } ne '' )
-				  ? $json_obj->{ priority } + 0
-				  : undef,
-			},
-			message => $message,
-			status  => &getFarmVipStatus( $farmname ),
+					 description => $desc,
+					 params      => {
+								 id        => $id,
+								 ip        => $json_obj->{ ip },
+								 interface => $json_obj->{ interface },
+								 weight    => $weight,
+								 priority  => $prio,
+					 },
+					 message => $message,
+					 status  => &getFarmVipStatus( $farmname ),
 		};
 
 		&eload(
 			module => 'Zevenet::Cluster',
 			func   => 'runZClusterRemoteManager',
 			args   => ['farm', 'restart', $farmname],
-		) if ( $eload );
+		) if $eload;
 
 		&httpResponse( { code => 201, body => $body } );
 	}
