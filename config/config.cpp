@@ -1023,6 +1023,7 @@ ServiceConfig *Config::parseService(const char *svc_name) {
     conf_err("Service config: out of memory - aborted");
   }
   memset(res, 0, sizeof(ServiceConfig));
+  res->max_headers_allowed = 128;
   res->sess_type = SESS_NONE;
   res->dynscale = dynscale;
   res->sts = -1;

@@ -103,6 +103,7 @@ class ServiceConfig {
   bool dynscale; /* true if the back-ends should be dynamically rescaled */
   bool disabled; /* true if the service is disabled */
   int sts;      /* strict transport security */
+  int max_headers_allowed;
   ServiceConfig *next;
 };
 

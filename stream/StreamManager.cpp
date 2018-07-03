@@ -267,10 +267,18 @@ void StreamManager::onRequestEvent(int fd) {
           return;
         }
         auto service = getService(stream->request);
+        if (service == nullptr) {
+          //TODO:: Reply e503 no service
+          auto response = HttpStatus::getErrorResponse(HttpStatus::Code::NotFound);
+          stream->client_connection.write(response.c_str(), response.length());
+          stream->client_connection.closeConnection();
+          return;;
+        }
         auto bck = service->getBackend(stream->client_connection);
         // if (stream->backend_connection.getFileDescriptor() == BACKEND_STATUS::NO_BACKEND) {
         if (bck == nullptr) {
           //No backend available
+          //TODO:: Reply e503 no backend
           auto response = HttpStatus::getErrorResponse(HttpStatus::Code::ServiceUnavailable);
           stream->client_connection.write(response.c_str(), response.length());
           stream->client_connection.closeConnection();
@@ -409,11 +417,11 @@ validation::VALIDATION_RESULT StreamManager::validateRequest(HttpRequest &reques
       Debug::
           logmsg(LOG_DEBUG, "\t%s: %s", header_name_string, header_value.c_str());
     } else {
-      //Unknown header, What to do ??
+      //TODO::Unknown header, What to do ??
       Debug::logmsg(LOG_DEBUG, "\tUnknown: %s", header_value.c_str());
     }
   }
-  
+
   return validation::OK;
 }
 

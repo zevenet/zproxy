@@ -7,10 +7,15 @@
 ServiceManager::ServiceManager() {}
 Service *ServiceManager::getService(HttpRequest &request) {
   //TODO::Impelement::
-
-  auto service = &services[0];
-
-  return service;
+  for (auto &srv : services) {
+    if (!srv.service_config.disabled) {
+      if (srv.doMatch(request)) {
+        Debug::Log("Service found " + std::string(srv.service_config.name), LOG_DEBUG);
+        return &srv;
+      }
+    }
+  }
+  return nullptr;
 }
 
 bool ServiceManager::addService(ServiceConfig &service_config) {

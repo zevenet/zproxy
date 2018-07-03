@@ -40,3 +40,31 @@ Service::Service(ServiceConfig &service_config_) :
     }
   }
 }
+bool Service::doMatch(HttpRequest &request) {
+  MATCHER *m;
+  int i, found;
+
+  /* check for request */
+  for (m = service_config.url; m; m = m->next)
+    if (regexec(&m->pat, request.getRequestLine().c_str(), 0, NULL, 0))
+      return false;
+
+  /* check for required headers */
+  for (m = service_config.req_head; m; m = m->next) {
+    for (found = i = 0; i < (request.num_headers - 1) && !found; i++)
+      if (!regexec(&m->pat, request.headers[i].name, 0, NULL, 0))
+        found = 1;
+    if (!found)
+      return false;
+  }
+
+  /* check for forbidden headers */
+  for (m = service_config.deny_head; m; m = m->next) {
+    for (found = i = 0; i < (request.num_headers - 1) && !found; i++)
+      if (!regexec(&m->pat, request.headers[i].name, 0, NULL, 0))
+        found = 1;
+    if (found)
+      return false;
+  }
+  return true;
+}

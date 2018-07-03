@@ -14,7 +14,6 @@
 class ServiceManager {
 
   std::vector<Service> services;
-
  public:
   ServiceManager();
   Service *getService(HttpRequest &request);
