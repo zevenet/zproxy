@@ -95,37 +95,6 @@ sub upIf    # ($if_ref, $writeconf)
 	my $status    = 0;
 	$if_ref->{ status } = 'up';
 
-	if ( $writeconf )
-	{
-		my $file = "$configdir/if_$$if_ref{name}_conf";
-
-		if ( -f $file )
-		{
-			require Tie::File;
-
-			my $found = 0;
-			tie my @if_lines, 'Tie::File', "$file";
-			for my $line ( @if_lines )
-			{
-				if ( $line =~ /^status=/ )
-				{
-					$line  = "status=up";
-					$found = 1;
-					last;
-				}
-			}
-
-			unshift ( @if_lines, 'status=up' ) if !$found;
-			untie @if_lines;
-		}
-		else
-		{
-			open ( my $fh, '>', $file );
-			print { $fh } "status=up\n";
-			close $fh;
-		}
-	}
-
 	my $ip_cmd = "$ip_bin link set dev $$if_ref{name} up";
 
 	$status = &logAndRun( $ip_cmd );
@@ -155,6 +124,7 @@ sub upIf    # ($if_ref, $writeconf)
 		{
 			$status = 1;
 			&zenlog( "No link up for $$if_ref{name}", "warning", "NETWORK" );
+			&downIf( { name => $if_ref->{name} }, '' );
 		}
 
 		# Start monitoring throughput
@@ -163,6 +133,36 @@ sub upIf    # ($if_ref, $writeconf)
 				#~ func   => 'startTHROUIface',
 				#~ args   => [$$if_ref{ name }],
 		#~ ) if $eload;
+	}
+	if ( !$status and $writeconf )
+	{
+		my $file = "$configdir/if_$$if_ref{name}_conf";
+
+		if ( -f $file )
+		{
+			require Tie::File;
+
+			my $found = 0;
+			tie my @if_lines, 'Tie::File', "$file";
+			for my $line ( @if_lines )
+			{
+				if ( $line =~ /^status=/ )
+				{
+					$line  = "status=up";
+					$found = 1;
+					last;
+				}
+			}
+
+			unshift ( @if_lines, 'status=up' ) if !$found;
+			untie @if_lines;
+		}
+		else
+		{
+			open ( my $fh, '>', $file );
+			print { $fh } "status=up\n";
+			close $fh;
+		}
 	}
 
 	return $status;
@@ -197,26 +197,6 @@ sub downIf    # ($if_ref, $writeconf)
 
 	my $ip_cmd;
 
-	# Set down status in configuration file
-	if ( $writeconf )
-	{
-		my $configdir = &getGlobalConfiguration( 'configdir' );
-		my $file      = "$configdir/if_$$if_ref{name}_conf";
-
-		require Tie::File;
-		tie my @if_lines, 'Tie::File', "$file";
-
-		for my $line ( @if_lines )
-		{
-			if ( $line =~ /^status=/ )
-			{
-				$line = "status=down";
-				last;
-			}
-		}
-		untie @if_lines;
-	}
-
 	# For Eth and Vlan
 	if ( $$if_ref{ vini } eq '' )
 	{
@@ -239,6 +219,26 @@ sub downIf    # ($if_ref, $writeconf)
 	}
 
 	my $status = &logAndRun( $ip_cmd );
+
+	# Set down status in configuration file
+	if ( !$status and $writeconf )
+	{
+		my $configdir = &getGlobalConfiguration( 'configdir' );
+		my $file      = "$configdir/if_$$if_ref{name}_conf";
+
+		require Tie::File;
+		tie my @if_lines, 'Tie::File', "$file";
+
+		for my $line ( @if_lines )
+		{
+			if ( $line =~ /^status=/ )
+			{
+				$line = "status=down";
+				last;
+			}
+		}
+		untie @if_lines;
+	}
 
 	return $status;
 }
