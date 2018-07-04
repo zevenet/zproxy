@@ -37,14 +37,14 @@ Parameters:
 
 Returns:
 	String - command with extmon format
-                
+
 See Also:
 	changeCmdToFGFormat
-                
+
 More info:
 	Farmguardian Fotmat: bin -x option...
 	Extmon Format: "bin", "-x", "option"...
-                
+
 =cut
 
 sub getGSLBCommandInExtmonFormat    # ( $cmd, $port )
@@ -120,14 +120,14 @@ Parameters:
 
 Returns:
 	newCmd  - command with farm guardian format
-                
+
 See Also:
 	changeCmdToExtmonFormat
-                
+
 More info:
 	Farmguardian Fotmat: bin -x option...
 	Extmon Format: "bin", "-x", "option"...
-			
+
 =cut
 
 sub getGSLBCommandInFGFormat    # ( $cmd, $port )
@@ -180,9 +180,9 @@ Parameters:
 	farmname - Farm name
 	service - Service name
 
-Returns:         
+Returns:
 	@output = ( time, cmd ), "time" is interval time to repeat cmd and "cmd" is command to check backend
-	
+
 FIXME:
 	Change output to a hash
 
@@ -256,7 +256,7 @@ sub setGSLBFarmGuardianParams    # ( farmName, service, param, value );
 			{
 				$line =~ s/interval =.*,/interval = $value,/;
 				$err = 0;
-				next;
+				last;
 			}
 
 			# change cmd
@@ -295,7 +295,7 @@ Parameters:
 
 Returns:
 	Integer - Error code: 0 on success or -1 on failure
-	
+
 =cut
 
 sub setGSLBDeleteFarmGuardian    # ( $fname, $service )
@@ -374,7 +374,7 @@ Parameters:
 
 Returns:
 	Integer - Error code: 0 on success or -1 on failure
-	
+
 =cut
 
 sub enableGSLBFarmGuardian    # ( $fname, $service, $option )
