@@ -819,10 +819,12 @@ sub service_backends
 
 	if ( $type eq 'http' || $type eq 'https' )
 	{
-		require Zevenet::Farm::Config;
-		my @services_list = split ' ', &getFarmVS( $farmname );
+		require Zevenet::Farm::HTTP::Service;
 
-		unless ( grep { $service eq $_ } @services_list )
+		my $service_ref = &getHTTPServiceStruct( $farmname, $service );
+
+		# check if the requested service exists
+		if ( $service_ref == -1 )
 		{
 			# Error
 			my $errormsg = "The service $service does not exist.";
@@ -835,48 +837,9 @@ sub service_backends
 			&httpResponse({ code => 404, body => $body });
 		}
 
-		my @be         = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
-		my @backends;
-
-		foreach my $subl ( @be )
-		{
-			require Zevenet::Farm::Backend::Maintenance;
-
-			my @subbe       = split ( "\ ", $subl );
-			my $id          = $subbe[1] + 0;
-			my $maintenance = &getFarmBackendMaintenance( $farmname, $id, $service );
-
-			if ( $maintenance != 0 )
-			{
-				$backendstatus = "up";
-			}
-			else
-			{
-				$backendstatus = "maintenance";
-			}
-
-			my $ip   = $subbe[3];
-			my $port = $subbe[5] + 0;
-			my $tout = $subbe[7];
-			my $prio = $subbe[9];
-
-			$tout = $tout eq '-' ? undef: $tout+0;
-			$prio = $prio eq '-' ? undef: $prio+0;
-
-			push @backends,
-			  {
-				id      => $id,
-				status  => $backendstatus,
-				ip      => $ip,
-				port    => $port,
-				timeout => $tout,
-				weight  => $prio,
-			  };
-		}
-
 		my $body = {
 					description => $description,
-					params      => \@backends,
+					params      => $service_ref->{ backends },
 		};
 
 		# Success
@@ -885,15 +848,19 @@ sub service_backends
 	elsif ( $type eq 'gslb' )
 	{
 		include 'Zevenet::Farm::GSLB::Service';
+		include 'Zevenet::Farm::GSLB::Backend';
 
+		my $desc          = "List service backends";
 		my @services_list = &getGSLBFarmServices( $farmname );
+		my @backends;    # output
 
+		# check if the service exists
 		unless ( grep { $service eq $_ } @services_list )
 		{
 			# Error
 			my $errormsg = "The service $service does not exist.";
 			my $body = {
-					description => $description,
+					description => $desc,
 					error => "true",
 					message => $errormsg
 			};
@@ -901,34 +868,10 @@ sub service_backends
 			&httpResponse({ code => 404, body => $body });
 		}
 
-		require Zevenet::Farm::Config;
-
-		my @be = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
-		my @backends;
-
-		foreach my $subline ( @be )
-		{
-			$subline =~ s/^\s+//;
-			if ( $subline =~ /^$/ )
-			{
-				next;
-			}
-
-			my @subbe = split ( " => ", $subline );
-
-			$subbe[0] =~ s/^primary$/1/;
-			$subbe[0] =~ s/^secondary$/2/;
-
-			push @backends,
-			  {
-				id => $subbe[0]+0,
-				ip => $subbe[1],
-			  };
-		}
-
+		my $backends = &getGSLBFarmBackends( $farmname, $service );
 		my $body = {
-					 description => $description,
-					 params      => \@backends,
+					 description => $desc,
+					 params      => $backends,
 		};
 
 		&httpResponse({ code => 200, body => $body });
