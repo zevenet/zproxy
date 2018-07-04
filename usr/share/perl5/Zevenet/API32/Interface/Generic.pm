@@ -78,7 +78,6 @@ sub get_interfaces    # ()
 					args   => ['alias', 'list'],
 			)
 	}
-	&zenlog("Permission: ".$permission);
 
 	require Zevenet::Alias if ($permission);
 	my $alias = &getAlias( "interface" ) if ($permission);
