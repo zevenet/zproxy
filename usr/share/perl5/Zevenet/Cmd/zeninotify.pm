@@ -195,9 +195,12 @@ while ( 1 )
 		{
 			if ( -d $event->fullname )
 			{
-				&zenlog("Watching $event_fullname");
-				push( @ino_targets, $event->fullname );
-				$inotify->watch( $event->fullname, IN_CLOSE_WRITE | IN_CREATE | IN_DELETE );
+				foreach my $path ( &getSubdirectories($event_fullname) )
+				{
+					&zenlog("Watching $paath");
+					push( @ino_targets, $path );
+					$inotify->watch( $path, IN_CLOSE_WRITE | IN_CREATE | IN_DELETE );
+				}
 				&runSync( $configdir );
 			}
 			next;
