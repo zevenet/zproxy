@@ -348,11 +348,10 @@ sub list_gslb_service_backends
 {
 	my ( $farmname, $service ) = @_;
 
-	require Zevenet::Farm::Config;
 	include 'Zevenet::Farm::GSLB::Service';
+	include 'Zevenet::Farm::GSLB::Backend';
 
 	my $desc          = "List service backends";
-	my $type          = &getFarmType( $farmname );
 	my @services_list = &getGSLBFarmServices( $farmname );
 	my @backends;    # output
 
@@ -363,7 +362,7 @@ sub list_gslb_service_backends
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $backends = &getFarmBackends( $farmname, $service );
+	my $backends = &getGSLBFarmBackends( $farmname, $service );
 	my $body = {
 				 description => $desc,
 				 params      => $backends,
@@ -513,7 +512,7 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 	}
 
 	# check if the backend id is available
-	my @backends = split ( "\n", &getFarmVS( $farmname, $service, "backends" ) );
+	my @backends = split ( "\n", &getGSLBFarmBackends( $farmname, $service, "backends" ) );
 	my $be_found = grep ( /\s*$id_server\s=>\s/, @backends );
 
 	unless ( $be_found )

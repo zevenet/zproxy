@@ -743,18 +743,18 @@ sub backends
 		for my $be ( @{ $l4_farm->{ 'servers' } } )
 		{
 			$be->{ 'vport' } = $be->{ 'vport' } eq '' ? undef : $be->{ 'vport' } + 0;
-			$be->{ 'priority' } = $be->{ 'priority' }? $be->{ 'priority' }+0: undef;
-			$be->{ 'weight' } = $be->{ 'weight' }? $be->{ 'weight' }+0: undef;
-			$be->{ 'max_conns' } = $be->{ 'max_conns' }+0;
+			$be->{ 'priority' } = $be->{ 'priority' } ? $be->{ 'priority' } + 0 : undef;
+			$be->{ 'weight' }   = $be->{ 'weight' }   ? $be->{ 'weight' } + 0   : undef;
+			$be->{ 'max_conns' } = $be->{ 'max_conns' } + 0;
 
 			push @backends,
 			  {
-				id       => $be->{ 'id' } + 0,
-				ip       => $be->{ 'vip' },
-				port     => $be->{ 'vport' },
-				priority => $be->{ 'priority' },
-				weight   => $be->{ 'weight' },
-				status   => $be->{ 'status' },
+				id        => $be->{ 'id' } + 0,
+				ip        => $be->{ 'vip' },
+				port      => $be->{ 'vport' },
+				priority  => $be->{ 'priority' },
+				weight    => $be->{ 'weight' },
+				status    => $be->{ 'status' },
 				max_conns => $be->{ 'max_conns' },
 			  };
 		}
@@ -769,37 +769,12 @@ sub backends
 	}
 	elsif ( $type eq 'datalink' )
 	{
-		require Zevenet::Farm::Backend;
-
-		my @backends;
-		my @run = &getFarmServers( $farmname );
-
-		foreach my $l_servers ( @run )
-		{
-			my @l_serv = split ( ";", $l_servers );
-
-			$l_serv[0] = $l_serv[0] + 0;
-			$l_serv[3] = ($l_serv[3]) ? $l_serv[3]+0: undef;
-			$l_serv[4] = ($l_serv[4]) ? $l_serv[4]+0: undef;
-			$l_serv[5] = $l_serv[5];
-
-			if ( $l_serv[1] ne "0.0.0.0" )
-			{
-				push @backends,
-				  {
-					id        => $l_serv[0],
-					ip        => $l_serv[1],
-					interface => $l_serv[2],
-					weight    => $l_serv[3],
-					priority  => $l_serv[4],
-					status  => $l_serv[5]
-				  };
-			}
-		}
+		require Zevenet::Farm::Datalink::Backend;
+		my $backends = &getDatalinkFarmBackends( $farmname );
 
 		my $body = {
-					 description => $description,
-					 params      => \@backends,
+					 description => $desc,
+					 params      => $backends,
 		};
 
 		&httpResponse({ code => 200, body => $body });
