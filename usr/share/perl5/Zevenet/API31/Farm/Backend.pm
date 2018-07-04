@@ -681,26 +681,19 @@ sub modify_backends    #( $json_obj, $farmname, $id_server )
 	}
 	elsif ( $type eq "datalink" )
 	{
-		require Zevenet::Farm::Backend;
+		require Zevenet::Farm::Datalink::Backend;
 
-		my @run         = &getFarmServers( $farmname );
-		my $serv_values = $run[$id_server];
 		my $be;
+		{
+			my @be = &getDatalinkFarmBackends( $farmname );
+			$be = $be[$id_server];
+		}
 
-		if ( !$serv_values )
+		if ( !$be )
 		{
 			my $msg = "Could not find a backend with such id.";
 			&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 		}
-
-		(
-		   undef,
-		   $be->{ ip },
-		   $be->{ interface },
-		   $be->{ weight },
-		   $be->{ priority },
-		   $be->{ status }
-		) = split ( ";", $serv_values );
 
 		# Functions
 		if ( exists ( $json_obj->{ ip } ) )
