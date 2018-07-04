@@ -1233,6 +1233,7 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 	if ( $type eq "http" || $type eq "https" )
 	{
 		require Zevenet::Farm::HTTP::Service;
+		require Zevenet::Farm::HTTP::Backend;
 
 		# validate SERVICE
 		{
@@ -1256,44 +1257,22 @@ sub modify_service_backends #( $json_obj, $farmname, $service, $id_server )
 		# validate BACKEND
 		my $be;
 		{
-			require Zevenet::Farm::Config;
+			my @be = &getHTTPFarmBackends( $farmname, $service );
+			$be = $be[ $id_server ];
+		}
 
-			my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
-			my @be_list = split ( "\n", $backendsvs );
+		# check if the backend was found
+		if ( !$be )
+		{
+			# Error
+			my $errormsg = "Could not find a service backend with such id.";
+			my $body = {
+						 description => $desc,
+						 error       => "true",
+						 message     => $errormsg,
+			};
 
-			foreach my $be_line ( @be_list )
-			{
-				my @current_be = split ( " ", $be_line );
-
-				if ( $current_be[1] == $id_server )
-				{
-					$current_be[7] = undef if $current_be[7] eq '-';
-					$current_be[9] = undef if $current_be[9] eq '-';
-
-					$be = {
-							id       => $current_be[1],
-							ip       => $current_be[3],
-							port     => $current_be[5],
-							timeout  => $current_be[7],
-							priority => $current_be[9],
-					};
-
-					last;
-				}
-			}
-
-			if ( !$be )
-			{
-				# Error
-				my $errormsg = "Could not find a service backend with such id.";
-				my $body = {
-							 description => $description,
-							 error       => "true",
-							 message     => $errormsg,
-				};
-
-				&httpResponse({ code => 404, body => $body });
-			}
+			&httpResponse({ code => 404, body => $body });
 		}
 
 		# Functions
