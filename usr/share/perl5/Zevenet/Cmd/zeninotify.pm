@@ -197,7 +197,7 @@ while ( 1 )
 			{
 				foreach my $path ( &getSubdirectories($event_fullname) )
 				{
-					&zenlog("Watching $paath");
+					&zenlog("Watching $path");
 					push( @ino_targets, $path );
 					$inotify->watch( $path, IN_CLOSE_WRITE | IN_CREATE | IN_DELETE );
 				}
