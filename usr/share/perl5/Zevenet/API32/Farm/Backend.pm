@@ -1051,11 +1051,13 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my @backends =
-	  split ( "\n", &getHTTPFarmVS( $farmname, $service, "backends" ) );
-	my $be_found = grep { ( split ( " ", $_ ) )[1] == $id_server } @backends;
-
 	# check if the backend id is available
+	my $be_found;
+	{
+		my @be = &getHTTPFarmBackends( $farmname, $service );
+		$be_found = defined $be[ $id_server ];
+	}
+
 	unless ( $be_found )
 	{
 		my $msg = "Could not find the requested backend.";
