@@ -1179,4 +1179,27 @@ sub setHTTPFarmBackendsSessionsRemove    #($farm_name,$service,$backendid)
 	}
 }
 
+sub getHTTPFarmBackendAvailableID
+{
+	my $farmname = shift;
+	my $service  = shift;
+
+	require Zevenet::Farm::HTTP::Service;
+
+	# get an ID for the new backend
+	my $backendsvs = &getHTTPFarmVS( $farmname, $service, "backends" );
+	my @be = split ( "\n", $backendsvs );
+	my $id;
+
+	foreach my $subl ( @be )
+	{
+		my @subbe = split ( ' ', $subl );
+		$id = $subbe[1] + 1;
+	}
+
+	$id = 0 if $id eq '';
+
+	return $id;
+}
+
 1;

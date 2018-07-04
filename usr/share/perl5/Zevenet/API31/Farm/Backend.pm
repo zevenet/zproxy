@@ -332,17 +332,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	}
 
 	# get an ID for the new backend
-	my $backendsvs = &getHTTPFarmVS( $farmname, $service, "backends" );
-	my @be = split ( "\n", $backendsvs );
-	my $id;
-
-	foreach my $subl ( @be )
-	{
-		my @subbe = split ( ' ', $subl );
-		$id = $subbe[1] + 1;
-	}
-
-	$id = 0 if $id eq '';
+	my $id = &getHTTPFarmBackendAvailableID( $farmname, $service );
 
 	# validate IP
 	unless ( defined $json_obj->{ ip }

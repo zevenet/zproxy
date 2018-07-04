@@ -368,4 +368,26 @@ sub getGSLBFarmBackends    # ($farm_name)
 	return \@backendStats;
 }
 
+sub getGSLBFarmServiceBackendAvailableID
+{
+	my $farmname = shift;
+	my $service  = shift;
+
+	include 'Zevenet::Farm::GSLB::Service';
+
+	# Get an ID for the new backend
+	my $id         = 1;
+	my $backendsvs = &getGSLBFarmVS( $farmname, $service, "backends" );
+	my @be         = split ( "\n", $backendsvs );
+
+	foreach my $subline ( @be )
+	{
+		$subline =~ s/^\s+//;
+		next unless length $subline;
+		$id++;
+	}
+
+	return $id;
+}
+
 1;

@@ -412,7 +412,6 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		my $found = 0;
 		foreach my $farmservice ( @services )
 		{
-			#print "service: $farmservice";
 			if ( $service eq $farmservice )
 			{
 				$found = 1;
@@ -434,22 +433,9 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		}
 
 		# get an ID
-		require Zevenet::Farm::Config;
+		require Zevenet::Farm::HTTP::Service;
 
-		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
-		my @be = split ( "\n", $backendsvs );
-
-		my $id = 0;
-		foreach my $subl ( @be )
-		{
-			my @subbe = split ( "\ ", $subl );
-			$id = $subbe[1] + 1;
-		}
-
-		if ( $id =~ /^$/ )
-		{
-			$id = 0;
-		}
+		my $id = &getHTTPFarmBackendAvailableID( $farmname, $service );
 
 		# validate IP
 		unless ( defined $json_obj->{ ip }
@@ -530,12 +516,15 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 
 # First param ($id) is an empty string to let function autogenerate the id for the new backend
 		require Zevenet::Farm::Backend;
-		my $status = &setFarmServer(
-									 "",                     $json_obj->{ ip },
-									 $json_obj->{ port },    "",
-									 "",                     $json_obj->{ weight },
-									 $json_obj->{ timeout }, $farmname,
-									 $service,
+
+		my $status = &setHTTPFarmServer(
+										 "",
+										 $json_obj->{ ip },
+										 $json_obj->{ port },
+										 $json_obj->{ weight },
+										 $json_obj->{ timeout },
+										 $farmname,
+										 $service,
 		);
 
 		if ( $status != -1 )
@@ -592,6 +581,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	elsif ( $type eq "gslb" )
 	{
 		include 'Zevenet::Farm::GSLB::Service';
+		include 'Zevenet::Farm::GSLB::Backend';
+
 		# validate SERVICE
 		{
 			my @services_list = &getGSLBFarmServices( $farmname );
@@ -613,10 +604,7 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		# Get an ID
 		require Zevenet::Farm::Config;
 
-		my $id         = 1;
-		my $lb         = &getFarmVS( $farmname, $service, "algorithm" );
-		my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
-		my @be         = split ( "\n", $backendsvs );
+		my $lb = &getFarmVS( $farmname, $service, "algorithm" );
 
 		# validate ALGORITHM
 		unless ( $lb eq 'roundrobin' )
@@ -636,15 +624,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 			&httpResponse( { code => 400, body => $body } );
 		}
 
-		foreach my $subline ( @be )
-		{
-			$subline =~ s/^\s+//;
-			if ( $subline =~ /^$/ )
-			{
-				next;
-			}
-			$id++;
-		}
+		# Get an ID for the new backend
+		my $id = &getGSLBFarmServiceBackendAvailableID( $farmname, $service );
 
 		# validate IP
 		unless ( &getValidFormat( 'IPv4_addr', $json_obj->{ ip } ) )

@@ -301,16 +301,7 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 	}
 
 	# Get an ID for the new backend
-	my $id         = 1;
-	my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
-	my @be         = split ( "\n", $backendsvs );
-
-	foreach my $subline ( @be )
-	{
-		$subline =~ s/^\s+//;
-		next unless length $subline;
-		$id++;
-	}
+	my $id = &getGSLBFarmServiceBackendAvailableID( $farmname, $service );
 
 	# validate IP
 	unless ( &getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
