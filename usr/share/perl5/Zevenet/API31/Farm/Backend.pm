@@ -502,59 +502,20 @@ sub service_backends
 	}
 
 	# HTTP
-	require Zevenet::Farm::HTTP::Backend;
 	require Zevenet::Farm::HTTP::Service;
 
-	my @services_list = split ' ', &getHTTPFarmVS( $farmname );
+	my $service_ref = &getHTTPServiceStruct( $farmname, $service );
 
 	# check if the requested service exists
-	unless ( grep { $service eq $_ } @services_list )
+	if ( $service_ref == -1 )
 	{
 		my $msg = "The service $service does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my @be = split ( "\n", &getHTTPFarmVS( $farmname, $service, "backends" ) );
-	my @backends;
-
-	# populate output array
-	foreach my $subl ( @be )
-	{
-		my @subbe       = split ( ' ', $subl );
-		my $id          = $subbe[1] + 0;
-		my $maintenance = &getHTTPFarmBackendMaintenance( $farmname, $id, $service );
-
-		if ( $maintenance != 0 )
-		{
-			$backendstatus = "up";
-		}
-		else
-		{
-			$backendstatus = "maintenance";
-		}
-
-		my $ip   = $subbe[3];
-		my $port = $subbe[5] + 0;
-		my $tout = $subbe[7];
-		my $prio = $subbe[9];
-
-		$tout = $tout eq '-' ? undef : $tout + 0;
-		$prio = $prio eq '-' ? undef : $prio + 0;
-
-		push @backends,
-		  {
-			id      => $id,
-			status  => $backendstatus,
-			ip      => $ip,
-			port    => $port,
-			timeout => $tout,
-			weight  => $prio,
-		  };
-	}
-
 	my $body = {
 				 description => $desc,
-				 params      => \@backends,
+				 params      => $service_ref->{ backends },
 	};
 
 	&httpResponse( { code => 200, body => $body } );
@@ -860,29 +821,10 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 	}
 
 	# validate BACKEND
-	my $backendsvs = &getHTTPFarmVS( $farmname, $service, "backends" );
-	my @be_list = split ( "\n", $backendsvs );
 	my $be;
-
-	foreach my $be_line ( @be_list )
 	{
-		my @current_be = split ( " ", $be_line );
-
-		if ( $current_be[1] == $id_server )    # id
-		{
-			$current_be[7] = undef if $current_be[7] eq '-';    # timeout
-			$current_be[9] = undef if $current_be[9] eq '-';    # priority
-
-			$be = {
-					id       => $current_be[1],
-					ip       => $current_be[3],
-					port     => $current_be[5],
-					timeout  => $current_be[7],
-					priority => $current_be[9],
-			};
-
-			last;
-		}
+		my @be = &getHTTPFarmBackends( $farmname, $service );
+		$be = $be[ $id_server ];
 	}
 
 	# check if the backend was found
@@ -1099,11 +1041,13 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my @backends =
-	  split ( "\n", &getHTTPFarmVS( $farmname, $service, "backends" ) );
-	my $be_found = grep { ( split ( " ", $_ ) )[1] == $id_server } @backends;
-
 	# check if the backend id is available
+	my $be_found;
+	{
+		my @be = &getHTTPFarmBackends( $farmname, $service );
+		$be_found = defined $be[ $id_server ];
+	}
+
 	unless ( $be_found )
 	{
 		my $msg = "Could not find the requested backend.";

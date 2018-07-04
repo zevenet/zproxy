@@ -501,25 +501,20 @@ sub service_backends
 	}
 
 	# HTTP
-	require Zevenet::Farm::HTTP::Backend;
 	require Zevenet::Farm::HTTP::Service;
 
-	my @services_list = split ' ', &getHTTPFarmVS( $farmname );
+	my $service_ref = &getHTTPServiceStruct( $farmname, $service );
 
 	# check if the requested service exists
-	unless ( grep { $service eq $_ } @services_list )
+	if ( $service_ref == -1 )
 	{
 		my $msg = "The service $service does not exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	require Zevenet::Farm::Config;
-	my $backends = &getFarmBackends( $farmname, $service );
-
 	my $body = {
 		description => $desc,
-		params      => $backends,
-
+		params      => $service_ref->{ backends },
 	};
 
 	&httpResponse( { code => 200, body => $body } );
