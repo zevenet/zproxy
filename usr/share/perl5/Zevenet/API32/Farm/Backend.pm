@@ -831,29 +831,10 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 	}
 
 	# validate BACKEND
-	my $backendsvs = &getHTTPFarmVS( $farmname, $service, "backends" );
-	my @be_list = split ( "\n", $backendsvs );
 	my $be;
-
-	foreach my $be_line ( @be_list )
 	{
-		my @current_be = split ( " ", $be_line );
-
-		if ( $current_be[1] == $id_server )    # id
-		{
-			$current_be[7] = undef if $current_be[7] eq '-';    # timeout
-			$current_be[9] = undef if $current_be[9] eq '-';    # priority
-
-			$be = {
-					id       => $current_be[1],
-					ip       => $current_be[3],
-					port     => $current_be[5],
-					timeout  => $current_be[7],
-					priority => $current_be[9],
-			};
-
-			last;
-		}
+		my @be = &getHTTPFarmBackends( $farmname, $service );
+		$be = $be[ $id_server ];
 	}
 
 	# check if the backend was found
