@@ -48,7 +48,7 @@ sub checkport    # ($host, $port)
 	if ( $host eq '127.0.0.1' || $host =~ /local/ )
 	{
 		my $flag = system ( "netstat -putan | grep $port" );
-		if ( $flag )
+		if ( ! $flag )
 		{
 			return "true";
 		}
