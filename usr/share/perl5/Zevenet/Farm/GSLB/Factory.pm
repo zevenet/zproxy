@@ -44,7 +44,7 @@ sub runGSLBFarmCreate    # ($vip,$vip_port,$farm_name)
 
 	require Zevenet::Farm::Core;
 	require Zevenet::Net::Util;
-	require Zevenet::GSLB::Config;
+	require Zevenet::Farm::GSLB::Config;
 
 	# get a control port not used
 	my $httpport;
