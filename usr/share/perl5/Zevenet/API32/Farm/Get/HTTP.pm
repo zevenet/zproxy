@@ -36,8 +36,7 @@ sub get_http_service_struct
 	my $service_ref = -1;
 
 	# http services
-	my $services = &getHTTPFarmVS( $farmname, "", "" );
-	my @serv = split ( ' ', $services );
+	my @serv = &getHTTPFarmServices( $farmname );
 
 	# return error if service is not found
 	return $service_ref unless grep( { $service_name eq $_ } @serv );
@@ -262,8 +261,7 @@ sub farms_name_http # ( $farmname )
 	my @out_s;
 
 	# Services
-	my $services = &getHTTPFarmVS( $farmname, '', '' );
-	my @serv = split ( ' ', $services );
+	my @serv = &getHTTPFarmServices( $farmname );
 
 	foreach my $s ( @serv )
 	{
@@ -303,8 +301,7 @@ sub farms_name_http_summary
 	my @out_s;
 
 	# Services
-	my $services = &getHTTPFarmVS( $farmname, "", "" );
-	my @serv = split ( "\ ", $services );
+	my @serv = &getHTTPFarmServices( $farmname );
 
 	foreach my $s ( @serv )
 	{
