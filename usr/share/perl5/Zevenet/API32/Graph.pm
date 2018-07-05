@@ -72,7 +72,7 @@ sub possible_graphs    #()
 
 	my $body = {
 		description =>
-		  "These are the possible graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
+		  "These are the possible graphs, you'll be able to access to the daily, weekly, monthly or yearly graph",
 		system     => \@sys,
 		interfaces => \@net,
 		farms      => \@farms
@@ -106,7 +106,7 @@ sub get_all_sys_graphs    #()
 
 	my $body = {
 		description =>
-		  "These are the possible system graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
+		  "These are the possible system graphs, you'll be able to access to the daily, weekly, monthly or yearly graph",
 		system => \@sys
 	};
 
@@ -167,7 +167,7 @@ sub get_all_iface_graphs    #()
 	my @iface = grep ( s/iface$//, &getGraphs2Show( "Network" ) );
 	my $body = {
 		description =>
-		  "These are the possible interface graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
+		  "These are the possible interface graphs, you'll be able to access to the daily, weekly, monthly or yearly graph",
 		interfaces => \@iface
 	};
 
@@ -273,7 +273,7 @@ sub get_all_farm_graphs    #()
 
 	my $body = {
 		description =>
-		  "These are the possible farm graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
+		  "These are the possible farm graphs, you'll be able to access to the daily, weekly, monthly or yearly graph",
 		farms => \@farms
 	};
 
