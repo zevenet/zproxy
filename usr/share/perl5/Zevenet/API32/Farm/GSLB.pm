@@ -310,7 +310,11 @@ sub new_gslb_service_backend    # ( $json_obj, $farmname, $service )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	my ( undef, undef, $be_ip ) = split /\s+/, $be[0];
+	# Get a backend IP
+	my @be = @{ &getGSLBFarmBackends( $farmname, $service ) };
+
+	my $be_ip = 0;
+	$be_ip = $be[0]->{ ip } if @be && exists $be[0]->{ ip };
 
 	# match ip stack version
 	unless ( ! @be || &ipversion( $json_obj->{ ip } ) eq &ipversion( $be_ip ) )
