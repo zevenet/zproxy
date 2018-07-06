@@ -311,24 +311,24 @@ sub modify_zone_resource # ( $json_obj, $farmname, $zone, $id_resource )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	require Zevenet::Farm::Config;
-
-	my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
-	my @be = split ( "\n", $backendsvs );
-	my ( $resource_line ) = grep { /;index_$id_resource$/ } @be;
+	my $res_aref = &getGSLBResources( $farmname, $zone );
 
 	# validate RESOURCE
-	unless ( $resource_line )
+	unless ( defined $res_aref->[ $id_resource ] )
 	{
 		my $msg = "Could not find the requested resource.";
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	# read resource
-	my $rsc;
-
-	( $rsc->{ name }, $rsc->{ ttl }, $rsc->{ type }, $rsc->{ data }, $rsc->{ id } )
-	  = split ( /(?:\t| ;index_)/, $resource_line );
+	my $resource = $res_aref->[$id_resource];
+	my $rsc = {
+				name => $resource->{ rname },
+				ttl  => $resource->{ ttl },
+				type => $resource->{ type },
+				data => $resource->{ rdata },
+				id   => $resource->{ id },
+	};
 
 	# Functions
 	if ( exists ( $json_obj->{ rname } ) )
@@ -577,17 +577,13 @@ sub delete_zone_resource # ( $farmname, $zone, $resource )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	require Zevenet::Farm::Config;
-
-	my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
-	my @be = split ( "\n", $backendsvs );
-	my ( $resource_line ) = grep { /;index_$resource$/ } @be;
+	my $res_aref = &getGSLBResources( $farmname, $zone );
 
 	# validate RESOURCE
-	if ( ! $resource_line )
+	unless ( defined $res_aref->[ $resource ] )
 	{
-		my $msg = "Invalid resource id, please insert a valid value.";
-		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+		my $msg = "Could not find the requested resource.";
+		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
 	my $status = &remGSLBFarmZoneResource( $resource, $farmname, $zone );
