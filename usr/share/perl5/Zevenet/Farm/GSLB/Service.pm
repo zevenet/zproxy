@@ -800,4 +800,41 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 	return $output;
 }
 
+sub getGSLBFarmServicesStruct
+{
+	my $farmname = shift;
+
+	require Zevenet::FarmGuardian;
+	include 'Zevenet::Farm::GSLB::Backends';
+
+	my @out_s = ();
+
+	# Services
+	my @services = &getGSLBFarmServices( $farmname );
+
+	foreach my $srv_it ( @services )
+	{
+		my @serv = split ( ".cfg", $srv_it );
+		my $srv  = $serv[0];
+		my $lb   = &getGSLBFarmVS( $farmname, $srv, "algorithm" );
+
+		# Default port health check
+		my $dpc = &getGSLBFarmVS( $farmname, $srv, "dpc" );
+
+		# Backends
+		my $out_b = &getGSLBFarmBackends( $farmname, $srv );
+
+		push @out_s,
+		  {
+			id           => $srv,
+			algorithm    => $lb,
+			deftcpport   => $dpc + 0,
+			farmguardian => &getFGFarm( $farmname, $srv ),
+			backends     => $out_b,
+		  };
+	}
+
+	return \@out_s;
+}
+
 1;

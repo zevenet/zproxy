@@ -322,4 +322,44 @@ sub getGSLBResources	# ( $farmname, $zone )
 	return \@resourcesArray;
 }
 
+sub getGSLBFarmZonesStruct
+{
+	my $farmname = shift;
+
+	my @zones   = &getGSLBFarmZones( $farmname );
+	my $first   = 0;
+	my $vserver = 0;
+	my $pos     = 0;
+
+	my @out_z = ();
+
+	foreach my $zone ( @zones )
+	{
+		$pos++;
+		$first = 1;
+		my $ns         = &getFarmVS( $farmname, $zone, "ns" );
+		my $backendsvs = &getFarmVS( $farmname, $zone, "resources" );
+		my @be = split ( "\n", $backendsvs );
+		my @out_re;
+		my $resources = &getGSLBResources  ( $farmname, $zone );
+
+		for my $resource ( @{ $resources } )
+		{
+			$resource->{ ttl } = undef if ! $resource->{ ttl };
+			$resource->{ ttl } += 0 if $resource->{ ttl };
+		}
+
+		push (
+			   @out_z,
+			   {
+				  id        => $zone,
+				  defnamesv => $ns,
+				  resources => $resources,
+			   }
+		);
+	}
+
+	return \@out_z;
+}
+
 1;
