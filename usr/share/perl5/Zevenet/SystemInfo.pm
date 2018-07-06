@@ -309,4 +309,16 @@ sub getCPUTicks
 	return $ticks;
 }
 
+sub getKernelVersion
+{
+	require Zevenet::Config;
+
+	my $uname = &getGlobalConfiguration( 'uname' );
+	my $version = `$uname -r`;
+
+	chomp $version;
+
+	return $version;
+}
+
 1;

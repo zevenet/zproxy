@@ -28,9 +28,10 @@ sub get_license
 {
 	my $format = shift;
 
+	require Zevenet::System;
+
 	my $desc = "Get license";
 	my $licenseFile;
-	my $file;
 
 	if ( $format eq 'txt' )
 	{
@@ -46,12 +47,7 @@ sub get_license
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	open ( my $license_fh, '<', $licenseFile );
-	{
-		local $/ = undef;
-		$file = <$license_fh>;
-	}
-	close $license_fh;
+	my $file = &slurpFile( $licenseFile );
 
 	&httpResponse({ code => 200, body => $file, type => 'text/plain' });
 }
@@ -60,15 +56,9 @@ sub get_supportsave
 {
 	my $desc = "Get supportsave file";
 
-	my $zbindir = &getGlobalConfiguration( 'zbindir' );
-	my @ss_output = `${zbindir}/supportsave 2>&1`;
+	require Zevenet::System;
 
-	# get the last "word" from the first line
-	my $first_line = shift @ss_output;
-	my $last_word = ( split ( ' ', $first_line ) )[-1];
-
-	my $ss_path = $last_word;
-	my ( undef, $ss_filename ) = split ( '/tmp/', $ss_path );
+	my $ss_filename = &getSupportSave();
 
 	&httpDownloadResponse( desc => $desc, dir => '/tmp', file => $ss_filename );
 }
@@ -80,15 +70,12 @@ sub get_version
 	require Zevenet::Certificate;
 
 	my $desc    = "Get version";
-	my $uname   = &getGlobalConfiguration( 'uname' );
 	my $zevenet = &getGlobalConfiguration( 'version' );
 
-	my $kernel     = `$uname -r`;
+	my $kernel     = &getKernelVersion();
 	my $hostname   = &getHostname();
 	my $date       = &getDate();
 	my $applicance = &getApplianceVersion();
-
-	chomp $kernel;
 
 	my $params = {
 				   'kernel_version'    => $kernel,
