@@ -255,22 +255,11 @@ sub stats_cpu    # ()
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
 
-	my @data_cpu = &getCPU();
+	my $out = &getCPUUsageStats();
 
-	my $out = {
-				'hostname' => &getHostname(),
-				'date'     => &getDate(),
-	};
-
-	foreach my $x ( 0 .. @data_cpu - 1 )
-	{
-		my $name  = $data_cpu[$x][0];
-		my $value = $data_cpu[$x][1] + 0;
-		( undef, $name ) = split ( 'CPU', $name );
-		$out->{ $name } = $value;
-	}
-
-	$out->{ cores } = &getCpuCores();
+	$out->{ hostname } = &getHostname();
+	$out->{ date }     = &getDate();
+	$out->{ cores }    = &getCpuCores();
 
 	my $body = {
 				 description => "System CPU usage",
@@ -386,20 +375,7 @@ sub stats_throughput
 {
 	include 'Zevenet::Net::Throughput';
 
-	my $throughput_file = &getTHROUStruct();
-	my $time = &getGlobalConfiguration( 'throughput_period' );
-
-	my $out;
-	foreach my $if ( keys %{ $throughput_file } )
-	{
-		foreach my $io ( 'in', 'out' )
-		{
-			my $val = $throughput_file->{ $if }->{ $io };
-			my @par = split ( ' ', $val );
-			$out->{ $if }->{ $io }->{ 'packets' } = $par[0]/$time;
-			$out->{ $if }->{ $io }->{ 'bytes' }   = $par[1]/$time;
-		}
-	}
+	my $out = &getTHROUStats();
 
 	my $body = {
 				 description => "throughput stats",

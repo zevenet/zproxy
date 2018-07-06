@@ -132,6 +132,8 @@ sub slurpFile
 
 	# Slurp: store an entire file in a variable.
 
+	require Zevenet::Log;
+
 	my $file;
 
 	open ( my $fh, '<', $path );
@@ -140,7 +142,7 @@ sub slurpFile
 	{
 		my $msg = "Could not open $file: $!";
 
-		&zenlog $msg;
+		&zenlog( $msg );
 		die $msg;
 	}
 
@@ -149,7 +151,7 @@ sub slurpFile
 		$file = <$fh>;
 	}
 
-	close $license_fh;
+	close $fh;
 
 	return $file;
 }

@@ -518,6 +518,25 @@ sub getCPU
 	return @data;
 }
 
+sub getCPUUsageStats
+{
+	my $out; # Output
+
+	my @data_cpu = &getCPU();
+
+	foreach my $x ( 0 .. @data_cpu - 1 )
+	{
+		my $name  = $data_cpu[$x][0];
+		my $value = $data_cpu[$x][1] + 0;
+
+		( undef, $name ) = split ( 'CPU', $name );
+
+		$out->{ $name } = $value;
+	}
+
+	return $out;
+}
+
 =begin nd
 Function: getDiskSpace
 

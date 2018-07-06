@@ -228,4 +228,26 @@ sub getTHROUStruct
 	return $fh;
 }
 
+sub getTHROUStats
+{
+	require Zevenet::Config;
+
+	my $throughput_file = &getTHROUStruct();
+	my $time            = &getGlobalConfiguration( 'throughput_period' );
+	my $out;
+
+	foreach my $if ( keys %{ $throughput_file } )
+	{
+		foreach my $io ( 'in', 'out' )
+		{
+			my $val = $throughput_file->{ $if }->{ $io };
+			my @par = split ( ' ', $val );
+			$out->{ $if }->{ $io }->{ 'packets' } = $par[0]/$time;
+			$out->{ $if }->{ $io }->{ 'bytes' }   = $par[1]/$time;
+		}
+	}
+
+	return $out;
+}
+
 1;
