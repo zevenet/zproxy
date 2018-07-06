@@ -41,7 +41,7 @@ sub possible_graphs	#()
 	my @farms = grep ( s/-farm$//, &getGraphs2Show( "Farm" ) );
 	my @net   = grep ( s/iface$//, &getGraphs2Show( "Network" ) );
 	my @sys = ( "cpu", "load", "ram", "swap" );
-	
+
 	# Get mount point of disks
 	my @mount_points;
 	my $partitions = &getDiskPartitionsInfo();
@@ -57,7 +57,7 @@ sub possible_graphs	#()
 
 	my $body = {
 		description =>
-		  "These are the possible graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
+		  "These are the possible graphs, you'll be able to access to the daily, weekly, monthly or yearly graph",
 		system     => \@sys,
 		interfaces => \@net,
 		farms      => \@farms
@@ -73,9 +73,9 @@ sub get_all_sys_graphs	 #()
 
 	# System values
 	my @graphlist = &getGraphs2Show( "System" );
-	
+
 	my @sys = ( "cpu", "load", "ram", "swap" );
-	
+
 	# Get mount point of disks
 	my @mount_points;
 	my $partitions = &getDiskPartitionsInfo();
@@ -91,7 +91,7 @@ sub get_all_sys_graphs	 #()
 
 	my $body = {
 		description =>
-		  "These are the possible system graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph", 
+		  "These are the possible system graphs, you'll be able to access to the daily, weekly, monthly or yearly graph",
 		  system    => \@sys
 	};
 
@@ -126,7 +126,7 @@ sub get_sys_graphs	#()
 
 # GET frequency system graphs
 sub get_frec_sys_graphs	#()
-{	
+{
 	my $key       = shift;
 	my $frequency = shift;
 
@@ -152,7 +152,7 @@ sub get_all_iface_graphs	#()
 	my @iface = grep ( s/iface$//, &getGraphs2Show( "Network" ) );
 	my $body = {
 		description =>
-		  "These are the possible interface graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
+		  "These are the possible interface graphs, you'll be able to access to the daily, weekly, monthly or yearly graph",
 		  interfaces    => \@iface
 	};
 
@@ -246,7 +246,7 @@ sub get_all_farm_graphs	#()
 	my @farms = grep ( s/-farm$//, &getGraphs2Show( "Farm" ) );
 	my $body = {
 		description =>
-		  "These are the possible farm graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph", 
+		  "These are the possible farm graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
 		  farms    => \@farms
 	};
 
@@ -267,7 +267,7 @@ sub get_farm_graphs	#()
 	{
 		my $msg = "$farmName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}	
+	}
 	# graph for this farm doesn't exist
 	elsif ( ! grep ( /^$farmName-farm$/, &getGraphs2Show( "Farm" ) ) )
 	{
@@ -310,7 +310,7 @@ sub get_frec_farm_graphs	#()
 	{
 		my $msg = "$farmName doesn't exist.";
 		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
-	}	
+	}
 	# graph for this farm doesn't exist
 	elsif ( ! grep ( /$farmName-farm/, &getGraphs2Show( "Farm" ) ) )
 	{
