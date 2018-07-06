@@ -54,7 +54,7 @@ sub get_http
 	}
 	else
 	{
-		$http->{ 'ip' } = $interface->{ 'ip' }; 
+		$http->{ 'ip' } = $interface->{ 'ip' };
 	}
 	$http->{ 'port' } = &getHttpServerPort;
 
@@ -111,7 +111,7 @@ sub set_http
 
 	&setHttpServerPort( $json_obj->{ 'port' } ) if ( exists $json_obj->{ 'port' } );
 	&setHttpServerIp( $httpIp ) if ( exists $json_obj->{ 'ip' } );
-	system ( "/etc/init.d/cherokee restart > /dev/null &" );
+	&logAndRun( "/etc/init.d/cherokee restart > /dev/null &" );
 
 	my $body = { description => $desc, params => $json_obj };
 
