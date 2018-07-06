@@ -1,5 +1,4 @@
-#ifndef DEBUG_H
-#define DEBUG_H
+#pragma once
 
 #include <sys/syslog.h>
 #include <cstdarg>
@@ -12,9 +11,6 @@
 #include <iomanip>
 #include <sstream>
 #include "../util/utils.h"
-
-//#define DEBUG_LEVEl 8
-#define LOGFACILITY -1
 
 #define LOG_REMOVE LOG_DEBUG //TODO:: REMOVE
 
@@ -60,12 +56,13 @@ Debug::logmsg2(__FILENAME__ ,__FUNCTION__, __LINE__ , __VA_ARGS__)
 class Debug {
  public:
   static int log_level;
+  static int log_facility;
   static std::mutex log_lock;
   inline static void Log2(const std::string file,
                           const std::string function,
                           int line,
                           const std::string &str,
-                          int level = -1) {
+                          int level = LOG_NOTICE) {
     if (level > log_level) {
       return;
     }
@@ -83,7 +80,13 @@ class Debug {
       //std::cout << "\033[0m";
       std::cout << COUT_GREEN_COLOR(str);
     } else {
-      std::cout << str;
+      //TODO:: send to syslog
+      if (log_facility == -1) {
+        fprintf(level >= LOG_DEBUG ? stdout : stderr, "%s\n", str.c_str());
+      } else {
+        syslog(level, "%s", str.c_str());
+      }
+
     }
     std::cout << std::endl;
   }
@@ -95,30 +98,73 @@ class Debug {
     if (priority > log_level) {
       return;
     }
-    char buf[MAXBUF + 1];
-    va_list ap;
-    struct tm *t_now;
-    struct tm t_res{};
-    bool print_log = false;
-    buf[MAXBUF] = '\0';
-    ::va_start(ap, fmt);
-    ::vsnprintf(buf, MAXBUF, fmt, ap);
-    va_end(ap);
-    if (LOGFACILITY == -1) {
-      //      if (name)
-      //        fprintf(
-      //            (priority == LOG_INFO || priority == LOG_DEBUG) ? stdout :
-      //            stderr,
-      //            "%s, %s\n", name, buf);
-      //      else
-      Log2(file, function, line, std::string(buf), priority);
+//    char buf[MAXBUF + 1];
+//    va_list ap;
+//    struct tm *t_now;
+//    struct tm t_res{};
+//    bool print_log = false;
+//    buf[MAXBUF] = '\0';
+//    ::va_start(ap, fmt);
+//    ::vsnprintf(buf, MAXBUF, fmt, ap);
+//    va_end(ap);
+//    if (LOGFACILITY == -1) {
+//      //      if (name)
+//      //        fprintf(
+//      //            (priority == LOG_INFO || priority == LOG_DEBUG) ? stdout :
+//      //            stderr,
+//      //            "%s, %s\n", name, buf);
+//      //      else
+//
+//        Log2(file, function, line, std::string(buf), priority);
+//
+//    } else {
+//      //      if (print_log)
+//      Log(std::string(buf));
+//      //      else /*if (name)*/
+//      //        syslog(LOGFACILITY | priority, "%s, %s\n", name, buf);
+//    }
+    va_list args;
+    va_start(args, fmt);
+    char buf[32];
+    size_t n = std::vsnprintf(buf, sizeof(buf), fmt, args);
+    va_end(args);
+
+    // Static buffer large enough?
+    if (n < sizeof(buf)) {
+      Log2(file, function, line, std::string(buf, n), priority);
     } else {
-      //      if (print_log)
-      Log(std::string(buf));
-      //      else /*if (name)*/
-      //        syslog(LOGFACILITY | priority, "%s, %s\n", name, buf);
+
+      // Static buffer too small
+      std::string s(n + 1, 0);
+      va_start(args, fmt);
+      std::vsnprintf(const_cast<char *>(s.data()), s.size(), fmt, args);
+      va_end(args);
+      Log2(file, function, line, s, priority);
     }
   }
+
+  std::string print_to_string(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    char buf[32];
+    size_t n = std::vsnprintf(buf, sizeof(buf), fmt, args);
+    va_end(args);
+
+    // Static buffer large enough?
+    if (n < sizeof(buf)) {
+      return {buf, n};
+    }
+
+    // Static buffer too small
+    std::string s(n + 1, 0);
+    va_start(args, fmt);
+    std::vsnprintf(const_cast<char *>(s.data()), s.size(), fmt, args);
+    va_end(args);
+
+    return s;
+  }
+
 };
 
-#endif  // DEBUG_H
+
+

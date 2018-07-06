@@ -13,6 +13,7 @@ void Listener::HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_grou
         if (new_fd > 0) {
           auto sm = getManager(new_fd);
           if (sm != nullptr) {
+            //sm->stream_set.size() ????
             sm->addStream(new_fd);
           } else {
             Debug::Log("StreamManager not found");
@@ -61,7 +62,7 @@ void Listener::doWork() {
   while (is_running) {
     if (loopOnce(0) <= 0) {
       // something bad happend
-      Debug::Log("No event received");
+//      Debug::Log("No event received");
     }
   }
 }

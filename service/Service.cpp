@@ -19,14 +19,27 @@ void Service::addBackend(std::string address, int port, int backend_id) {
     config.port = port;
     config.backen_id = backend_id;
     config.timeout = 0;
+    config.backend_type = BACKEND_TYPE::REMOTE;
     backend_set.push_back(config);
   } else {
     Debug::Log("Backend Configuration not valid ", LOG_NOTICE);
   }
 }
-void Service::addBackend(BackendConfig *backend_config) {
 
+void Service::addBackend(BackendConfig *backend_config, int backend_id) {
+  if (backend_config->be_type == 0) {
+    this->addBackend(backend_config->address, backend_config->port, backend_id);
+  } else {
+    //Redirect
+    Backend config;
+    config.backend_config = *backend_config;
+    config.backen_id = backend_id;
+    config.timeout = 0;
+    config.backend_type = BACKEND_TYPE::REDIRECT;
+    backend_set.push_back(config);
+  }
 }
+
 Service::Service(ServiceConfig &service_config_) :
     service_config(service_config_) {
   int backend_id = 1;
@@ -34,13 +47,17 @@ Service::Service(ServiceConfig &service_config_) :
        bck != nullptr;
        bck = bck->next) {
     if (!bck->disabled) {
-      this->addBackend(bck->address, bck->port, backend_id++);
+      this->addBackend(bck, backend_id++);
+      //this->addBackend(bck->address, bck->port, backend_id++);
     } else {
       Debug::Log("Backend " + bck->address + ":" + std::to_string(bck->port) + " disabled.", LOG_NOTICE);
     }
   }
 }
 bool Service::doMatch(HttpRequest &request) {
+  //TODO::  Benchmark
+  //TODO:: Implement parallel predicates ?? benchmark
+  //TODO:: Replace PCRE with RE2 --
   MATCHER *m;
   int i, found;
 

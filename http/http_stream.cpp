@@ -34,3 +34,7 @@ void HttpStream::printReadStadistics(ConnectionStadistic_t &stadistic, std::stri
                 stadistic.min_read_time / CLOCKS_PER_SEC,
                 stadistic.max_read_time / CLOCKS_PER_SEC);
 }
+void HttpStream::replyRedirect(BackendConfig &backend_config) {
+  auto response_ = HttpStatus::getRedirectResponse((HttpStatus::Code) backend_config.be_type, backend_config.url);
+  client_connection.write(response_.c_str(), response_.length());
+}

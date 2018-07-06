@@ -10,7 +10,7 @@
 
 #define MAX_DATA_SIZE  65000
 struct ConnectionStadistic_t {
-  clock_t last_read = 0;
+  long last_read = 0;
   double avr_read_time = 0;
   double max_read_time = 0;
   double min_read_time = 0;
@@ -30,8 +30,8 @@ struct ConnectionStadistic_t {
   }
 };
 class Connection {
-  clock_t last_read_;
-  clock_t last_write_;
+  long last_read_;
+  long last_write_;
 
  protected:
   int socket_fd;

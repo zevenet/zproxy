@@ -5,6 +5,7 @@
 
 #include <string>
 #include <netdb.h>
+#include "pound_struct.h"
 enum BACKEND_STATUS {
   NO_BACKEND = -1,
   BACKEND_CONNECTED = 0,
@@ -21,6 +22,7 @@ enum BACKEND_TYPE {
 class Backend {
  public:
   BACKEND_TYPE backend_type;
+  BackendConfig &backend_config;
   int std_dvt;
   addrinfo *address_info;
   int backen_id;

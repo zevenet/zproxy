@@ -25,9 +25,8 @@ class Service {
   Service(ServiceConfig &service_config_);
 
   void addBackend(std::string address, int port, int backend_id);
-  void addBackend(BackendConfig *backend_config);
+  void addBackend(BackendConfig *backend_config, int backend_id);
   bool doMatch(HttpRequest &request);
-
 };
 
 #endif //S_ZHTTP_SERVICE_H

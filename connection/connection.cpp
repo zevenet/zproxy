@@ -26,7 +26,9 @@ Connection::~Connection() {
 }
 
 IO::IO_RESULT Connection::read() {
-  last_read_ = clock();
+  if (this == nullptr) {
+    Debug::Log("Something bad happends");
+  }
   bool done = false;
   ssize_t count;
   IO::IO_RESULT result = IO::ERROR;
@@ -64,10 +66,16 @@ IO::IO_RESULT Connection::read() {
 }
 
 int Connection::getFileDescriptor() const {
+  if (socket_fd < 0) {
+    Debug::Log("Socket no valido, que hacer ....", LOG_REMOVE);
+  }
   return socket_fd;
 }
 
 void Connection::setFileDescriptor(int fd) {
+  if (fd < 0) {
+    Debug::Log("Esto que es!!", LOG_REMOVE);
+  }
   socket_fd = fd;
 }
 

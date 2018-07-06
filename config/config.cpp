@@ -2009,4 +2009,8 @@ void Config::include_dir(const char *conf_path) {
 
   closedir(dp);
 }
+bool Config::exportConfigToJsonFile(std::string save_path) {
+
+  return false;
+}
 

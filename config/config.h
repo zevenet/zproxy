@@ -196,7 +196,7 @@ class Config {
    * prepare to parse the arguments/config file
    */
   void parseConfig(const int argc, char **const argv);
-
+  bool exportConfigToJsonFile(std::string save_path);
  private:
   // LHASH
 

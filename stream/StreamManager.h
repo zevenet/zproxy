@@ -26,10 +26,10 @@ class StreamManager : public EpollManager, public ServiceManager {
   std::thread worker;
   bool is_running;
   ListenerConfig listener_config_;
-  std::unordered_map<int, HttpStream *> streams_set;
+  std::unordered_map<int, HttpStream *> streams_set; //TODO::Unordered_Map
   void HandleEvent(int fd, EVENT_TYPE event_type, EVENT_GROUP event_group) override;
   void doWork();
-
+  HttpStream *getFdStream(int fd);
  public:
   StreamManager();
   StreamManager(const StreamManager &) = delete;
@@ -47,7 +47,7 @@ class StreamManager : public EpollManager, public ServiceManager {
   inline void onRequestTimeoutEvent(int fd);
   inline void onSignalEvent(int fd);
 
-  validation::VALIDATION_RESULT validateRequest(HttpRequest &request);
+  validation::REQUEST_RESULT validateRequest(HttpRequest &request);
   void clearStream(HttpStream *stream);
 };
 

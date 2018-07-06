@@ -28,6 +28,7 @@ enum EVENT_GROUP {
   REQUEST_TIMEOUT,
   RESPONSE_TIMEOUT,
   SIGNAL,
+  MAINTENANCE,
 };
 
 enum EVENT_TYPE {
@@ -53,7 +54,6 @@ class EpollManager {
   inline void onWriteEvent(epoll_event &event);
   inline void onConnectEvent(epoll_event &event);
  public:
-
   EpollManager();
   int loopOnce(int time_out = -1);
   virtual ~EpollManager();

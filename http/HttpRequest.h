@@ -7,21 +7,25 @@
 #include "../debug/Debug.h"
 
 namespace validation {
-enum VALIDATION_RESULT {
+enum REQUEST_RESULT {
   OK,
   METHOD_NOT_ALLOWED,
   BAD_REQUEST,
   BAD_URL,
   URL_CONTAIN_NULL,
   REQUEST_TOO_LARGE,
+  SERVICE_NOT_FOUND,
+  BACKEND_NOT_FOUND,
 };
 
-const std::unordered_map<VALIDATION_RESULT, char *> validation_reason = {
+const std::unordered_map<REQUEST_RESULT, char *> request_result_reason = {
     {OK, "valid request"},
     {METHOD_NOT_ALLOWED, "Method not allowed"},
     {BAD_REQUEST, "Bad request"}, {BAD_URL, "Bad URL"},
     {URL_CONTAIN_NULL, "URL contains null"},
-    {REQUEST_TOO_LARGE, "Request too large"}
+    {REQUEST_TOO_LARGE, "Request too large"},
+    {SERVICE_NOT_FOUND, "no service"},
+    {BACKEND_NOT_FOUND, "no backend"},
 };
 
 }

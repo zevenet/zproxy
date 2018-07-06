@@ -275,7 +275,7 @@ inline std::string getErrorResponse(Code code,
         "<body bgcolor=\"white\">\n"
         "<center><h1>" + std::to_string(static_cast<int>(code)) + " " + code_error +
       "</h1></center>\n"
-      "<hr><center>zhttp /0.1 /center>\n"
+      "<hr><center>zhttp /0.1 </center>\n"
       "</body>\n"
       "</html>" : error_message;
 
@@ -287,6 +287,41 @@ inline std::string getErrorResponse(Code code,
           + body + "\n";
 
   return err_response;
+}
+
+inline std::string getRedirectResponse(Code code, std::string redirect_url) {
+  /*HTTP/1.0 302 Found
+   Location: http://www.google.com/
+   Content-Type: text/html
+   Content-Length: 162
+   <html><head><title>Redirect</title></head><body><h1>Redirect</h1><p>You should go to <a href="http://www.google.com/">http://www.google.com/</a></p></body></html>
+   */
+
+
+  std::string code_error = reasonPhrase(code);
+//  std::string body = "<html>\n"
+//                     "<head><title>" + std::to_string(static_cast<int>(code)) + " "
+//      + code_error
+//      + " </title > </head >\n"
+//        "<body bgcolor=\"white\">\n"
+//        "<center><h1>" + std::to_string(static_cast<int>(code)) + " " + code_error +
+//      "</h1></center>\n"
+//      "<hr><center>zhttp /0.1 </center>\n"
+//      "</body>\n"
+//      "</html>";
+
+  std::string body =
+      "<html><head><title>Redirect</title></head><body><h1>Redirect</h1><p>You should go to <a href=" + redirect_url
+          + ">" + redirect_url + "</a></p></body></html>";
+
+  std::string redirect_response =
+      "HTTP/1.0 " + std::to_string((int) code) + " " + reasonPhrase(code)
+          + "\r\nContent-Type: text/html\r\nContent-Length: "
+          + std::to_string(body.length() + 1) + "\r\nLocation: " + redirect_url
+          + "\r\n\r\n"
+          + body + "\n";
+
+  return redirect_response;
 }
 
 } // namespace HttpStatus

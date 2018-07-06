@@ -10,6 +10,7 @@
 #include "HttpStatus.h"
 #include "../connection/backend_connection.h"
 #include "../event/epoll_manager.h"
+#include "../config/BackendConfig.h"
 
 class HttpStream {
 
@@ -19,15 +20,15 @@ class HttpStream {
 
   Connection *getConnection(int fd);
 
-  ConnectionStadistic_t client_stadistics;
-  ConnectionStadistic_t backend_stadistics;
+//  ConnectionStadistic_t client_stadistics;
+//  ConnectionStadistic_t backend_stadistics;
 
   Connection client_connection;
   BackendConnection backend_connection;
   HttpRequest request;
   HttpResponse response;
   void replyError(HttpStatus::Code code, const char *code_string, const char *string);
-
+  void replyRedirect(BackendConfig &backend_config);
   inline void printReadStadistics(ConnectionStadistic_t &stadistic,
                                   std::string tag
   );

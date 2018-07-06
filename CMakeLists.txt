@@ -81,6 +81,6 @@ add_executable(${PROJECT_NAME}
     http/http_parser.h http/picohttpparser.cpp http/picohttpparser.h
     http/HttpRequest.h service/Service.cpp service/Service.h service/ServiceManager.cpp service/ServiceManager.h
     connection/backend_connection.cpp connection/backend_connection.h event/TimerFd.cpp event/TimerFd.h
-    event/SignalFd.cpp event/SignalFd.h http/http.h util/common.h)
+    event/SignalFd.cpp event/SignalFd.h http/http.h util/common.h util/system.h)
 
 target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} ${PCRE_LIBRARIES} libssl.so libcrypto.so)# ${OPENSSL_LIBRARIES})
