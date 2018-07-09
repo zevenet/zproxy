@@ -52,31 +52,18 @@ sub download_certificate # ()
 {
 	my $cert_filename = shift;
 
-	my $desc = "Download certificate";
-	my $cert_dir = &getGlobalConfiguration('configdir');
-	$cert_dir = &getGlobalConfiguration('basedir') if $cert_filename eq 'zlbcertfile.pem';
+	my $desc      = "Download certificate";
+	my $cert_dir  = &getGlobalConfiguration( 'configdir' );
+	$cert_dir     = &getGlobalConfiguration( 'basedir' ) if $cert_filename eq 'zlbcertfile.pem';
+	my $cert_path = "$cert_dir/$cert_filename";
 
-	open ( my $download_fh, '<', "$cert_dir/$cert_filename" );
-
-	if ( $cert_filename =~ /\.(pem|csr)$/ && -f "$cert_dir\/$cert_filename" && $download_fh )
+	unless ( $cert_filename =~ /\.(pem|csr)$/ && -f $cert_path )
 	{
-		my $cgi = &getCGI();
-		print $cgi->header(
-						  -type            => 'application/x-download',
-						  -attachment      => $cert_filename,
-						  'Content-length' => -s "$cert_dir/$cert_filename",
-		);
+		my $msg = "Could not find such certificate";
+		&httpErrorResponse( code => 404, desc => $desc, msg => $msg );
+	}
 
-		binmode $download_fh;
-		print while <$download_fh>;
-		close $download_fh;
-		exit;
-	}
-	else
-	{
-		my $msg = "Could not send such certificate";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
+	&httpDownloadResponse( desc => $desc, dir => $cert_dir, file => $cert_filename );
 }
 
 # DELETE /certificates/CERTIFICATE
@@ -108,7 +95,7 @@ sub delete_certificate # ( $cert_filename )
 	}
 
 	&delCert( $cert_filename );
-	
+
 	# check if the certificate exists
 	if ( -f "$cert_dir\/$cert_filename" )
 	{
