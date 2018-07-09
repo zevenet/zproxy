@@ -837,4 +837,29 @@ sub getGSLBFarmServicesStruct
 	return \@out_s;
 }
 
+sub getGSLBFarmServicesStruct31
+{
+	my $farmname = shift;
+
+	require Zevenet::FarmGuardian;
+
+	# Services
+	my @services = @{ &getGSLBFarmServicesStruct( $farmname ) };
+
+	foreach my $srv ( @services )
+	{
+		delete $srv{ farmguardian };
+
+		# Farmguardian
+		my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $srv{ id } );
+		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $srv{ id } );
+
+		$srv{ fgenabled }   = $fgStatus;
+		$srv{ fgscript }    = $fgScrip;
+		$srv{ fgtimecheck } = $fgTime + 0;
+	}
+
+	return \@services;
+}
+
 1;
