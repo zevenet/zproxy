@@ -224,13 +224,7 @@ sub upload_certificate # ()
 		$filename = $filen[-1];
 	}
 
-	my $content;
-	{
-		local $/ = undef;
-		$content = <$fh>;
-	}
-
-	unless ( &setFile( "$configdir/$filename", $content ) )
+	unless ( &saveFileHandler( "$configdir/$filename", $upload_filehandle ) )
 	{
 		my $msg = "Could not save the certificate file";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );

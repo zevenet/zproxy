@@ -56,6 +56,12 @@ sub setFile
 	my $path = shift;
 	my $content = shift;
 
+	unless ( defined $content )
+	{
+		&zenlog("Trying to save undefined content");
+		return 0;
+	}
+
 	open ( my $fh, '>', $path );
 
 	unless ( $fh )
@@ -65,7 +71,38 @@ sub setFile
 	}
 
 	binmode $fh;
-	print $content $fh;
+	print $fh $content;
+
+	unless ( close $fh )
+	{
+		&zenlog("Could not save file '$path': $!");
+		return 0;
+	}
+
+	return 1;
+}
+
+sub saveFileHandler
+{
+	my $path = shift;
+	my $content_fh = shift;
+
+	unless ( defined $content_fh )
+	{
+		&zenlog("Trying to save undefined file handler");
+		return 0;
+	}
+
+	open ( my $fh, '>', $path );
+
+	unless ( $fh )
+	{
+		&zenlog("Could not open file '$path': $!");
+		return 0;
+	}
+
+	binmode $fh;
+	print $fh <$content_fh>;
 
 	unless ( close $fh )
 	{
