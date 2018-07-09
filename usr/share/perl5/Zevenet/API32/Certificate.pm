@@ -196,6 +196,8 @@ sub upload_certificate # ()
 	my $upload_filehandle = shift;
 	my $filename          = shift;
 
+	require Zevenet::File;
+
 	my $desc      = "Upload PEM certificate";
 	my $configdir = &getGlobalConfiguration( 'configdir' );
 
@@ -219,9 +221,17 @@ sub upload_certificate # ()
 		$filename = $filen[-1];
 	}
 
-	open ( my $cert_filehandle, '>', "$configdir/$filename" ) or die "$!";
-	print $cert_filehandle $upload_filehandle;
-	close $cert_filehandle;
+	my $content;
+	{
+		local $/ = undef;
+		$content = <$fh>;
+	}
+
+	unless ( &setFile( "$configdir/$filename", $content ) )
+	{
+		my $msg = "Could not save the certificate file";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
 	# no errors found, return sucessful response
 	my $message = "Certificate uploaded";
