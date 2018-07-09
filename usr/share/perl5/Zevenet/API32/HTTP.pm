@@ -479,8 +479,11 @@ sub httpDownloadResponse
 		&httpErrorResponse( code => 400, desc => $args->{ desc }, msg => $msg );
 	}
 
-	open ( my $fh, '<', $path );
-	unless ( $fh )
+	require Zevenet::File;
+
+	my $body = &getFile( $path );
+
+	unless ( defined $body )
 	{
 		my $msg = "Could not open file $path: $!";
 		&httpErrorResponse( code => 400, desc => $args->{ desc }, msg => $msg );
@@ -494,15 +497,6 @@ sub httpDownloadResponse
 					'Access-Control-Allow-Origin'      	=> "https://$ENV{ HTTP_HOST }/",
 					'Access-Control-Allow-Credentials' 	=> 'true'
 	};
-
-	# make body
-	my $body;
-	binmode $fh;
-	{
-		local $/ = undef;
-		$body = <$fh>;
-	}
-	close $fh;
 
 	# optionally, remove the downloaded file, useful for temporal files
 	unlink $path if $args->{ remove } eq 'true';
