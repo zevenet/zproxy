@@ -246,7 +246,7 @@ sub get_all_farm_graphs	#()
 	my @farms = grep ( s/-farm$//, &getGraphs2Show( "Farm" ) );
 	my $body = {
 		description =>
-		  "These are the possible farm graphs, you`ll be able to access to the daily, weekly, monthly or yearly graph",
+		  "These are the possible farm graphs, you'll be able to access to the daily, weekly, monthly or yearly graph",
 		  farms    => \@farms
 	};
 
