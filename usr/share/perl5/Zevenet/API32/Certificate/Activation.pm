@@ -134,6 +134,8 @@ sub upload_activation_certificate    # ()
 {
 	my $upload_filehandle = shift;
 
+	require Zevenet::File;
+
 	my $desc     = "Upload activation certificate";
 	my $filename = 'zlbcertfile.pem';
 
@@ -145,10 +147,11 @@ sub upload_activation_certificate    # ()
 
 	my $basedir = &getGlobalConfiguration( 'basedir' );
 
-	open ( my $cert_filehandle, '>', "$basedir/$filename" ) or die "$!";
-	binmode $cert_filehandle;
-	print { $cert_filehandle } $upload_filehandle;
-	close $cert_filehandle;
+	unless ( &saveFileHandler( "$basedir/$filename", $upload_filehandle ) )
+	{
+		my $msg = "Could not save the activation certificate";
+		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+	}
 
 	my $response = &checkActivationCertificate();
 
