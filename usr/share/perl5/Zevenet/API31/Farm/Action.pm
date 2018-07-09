@@ -190,26 +190,8 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 	}
 
 	# validate BACKEND
-	my $be;
-	my $backendsvs = &getHTTPFarmVS( $farmname, $service, "backends" );
-	my @be_list = split ( "\n", $backendsvs );
-
-	foreach my $be_line ( @be_list )
-	{
-		my @current_be = split ( " ", $be_line );
-
-		next if $current_be[1] != $backend_id;
-
-		$be = {
-				id       => $current_be[1],
-				ip       => $current_be[3],
-				port     => $current_be[5],
-				timeout  => $current_be[7],
-				priority => $current_be[9],
-		};
-
-		last;
-	}
+	my $be_aref = &getHTTPFarmBackends( $farmname, $service );
+	my $be = $be_aref->[$backend_id - 1];
 
 	if ( !$be )
 	{
