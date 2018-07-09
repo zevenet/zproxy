@@ -391,40 +391,8 @@ sub modify_gslb_service_backends #( $json_obj, $farmname, $service, $id_server )
 		return &httpErrorResponse( code => 404, desc => $desc, msg => $msg );
 	}
 
-	my $be;
-	my $backend_id = $id_server;
-	my $backendsvs = &getFarmVS( $farmname, $service, "backends" );
-	my @be_list    = split ( "\n", $backendsvs );
-	my $algorithm  = &getFarmVS( $farmname, $service, "algorithm" )
-	  ;    # convert backend_id for prio algorithm
-
-	if ( $algorithm eq 'prio' )
-	{
-		$backend_id = 'primary'   if $id_server == 1;
-		$backend_id = 'secondary' if $id_server == 2;
-	}
-
-	# get requested backend info
-	foreach my $be_line ( @be_list )
-	{
-		$be_line =~ s/^\s+//;
-		next if !$be_line;
-
-		my @current_be = split ( " => ", $be_line );
-
-		if ( $current_be[0] eq $backend_id )
-		{
-			$be = {
-					id       => $current_be[1],
-					ip       => $current_be[3],
-					port     => $current_be[5],
-					timeout  => $current_be[7],
-					priority => $current_be[9],
-			};
-
-			last;
-		}
-	}
+	my $be_aref = &getGSLBFarmBackends( $farmname, $service );
+	my $be = $be_aref->[ $id_server - 1 ];
 
 	# check if the BACKEND exists
 	if ( !$be )
@@ -512,8 +480,8 @@ sub delete_gslb_service_backend    # ( $farmname, $service, $id_server )
 	}
 
 	# check if the backend id is available
-	my @backends = split ( "\n", &getGSLBFarmBackends( $farmname, $service, "backends" ) );
-	my $be_found = grep ( /\s*$id_server\s=>\s/, @backends );
+	my $be_aref = &getGSLBFarmBackends( $farmname, $service );
+	my $be_found = defined $be_aref->[ $id_server - 1 ];
 
 	unless ( $be_found )
 	{
