@@ -252,22 +252,11 @@ sub stats_cpu # ()
 	require Zevenet::Stats;
 	require Zevenet::SystemInfo;
 
-	my @data_cpu = &getCPU();
+	my $out = &getCPUUsageStats();
 
-	my $out = {
-				'hostname' => &getHostname(),
-				'date'     => &getDate(),
-	};
-
-	foreach my $x ( 0 .. @data_cpu - 1 )
-	{
-		my $name  = $data_cpu[$x][0];
-		my $value = $data_cpu[$x][1] + 0;
-		( undef, $name ) = split ( 'CPU', $name );
-		$out->{ $name } = $value;
-	}
-
-	$out->{ cores } = &getCpuCores();
+	$out->{ hostname } = &getHostname();
+	$out->{ date }     = &getDate();
+	$out->{ cores }    = &getCpuCores();
 
 	my $body = {
 				 description => "System CPU usage",
