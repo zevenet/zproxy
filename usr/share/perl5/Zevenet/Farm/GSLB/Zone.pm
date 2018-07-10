@@ -41,9 +41,8 @@ sub getGSLBFarmZones    # ($farm_name)
 	my ( $farm_name ) = @_;
 
 	my $output    = -1;
-	my $farm_type = &getFarmType( $farm_name );
 
-	opendir ( DIR, "$configdir\/$farm_name\_$farm_type.cfg\/etc\/zones\/" );
+	opendir ( DIR, "$configdir\/$farm_name\_gslb.cfg\/etc\/zones\/" );
 	my @files = grep { /^[a-zA-Z]/ } readdir ( DIR );
 	closedir ( DIR );
 
@@ -67,7 +66,6 @@ sub remGSLBFarmZoneResource    # ($id,$farm_name,$service)
 {
 	my ( $id, $fname, $service ) = @_;
 
-	my $ftype  = &getFarmType( $fname );
 	my $ffile  = &getFarmFile( $fname );
 
 	my @fileconf;
@@ -180,7 +178,6 @@ sub setGSLBFarmZoneSerial    # ($farm_name,$zone)
 {
 	my ( $fname, $zone ) = @_;
 
-	my $ftype  = &getFarmType( $fname );
 	my $ffile  = &getFarmFile( $fname );
 	my $index = 0;
 
@@ -238,17 +235,16 @@ sub setGSLBFarmNewZone    # ($farm_name,$service)
 	require Zevenet::Farm::Base;
 
 	my $output = -1;
-	my $ftype  = &getFarmType( $fname );
 	my $fvip   = &getFarmVip( "vip", $fname );
 
-	opendir ( my $dirh, "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/" );
+	opendir ( my $dirh, "$configdir\/$fname\_gslb.cfg\/etc\/zones\/" );
 	my @files = grep { /^$zone/ } readdir ( $dirh );
 	closedir ( $dirh );
 
 	if ( scalar @files == 0 )
 	{
-		open ( my $file, ">", "$configdir\/$fname\_$ftype.cfg\/etc\/zones\/$zone" )
-		  or warn "cannot open > $configdir\/$fname\_$ftype.cfg\/etc\/zones\/$zone: $!";
+		open ( my $file, ">", "$configdir\/$fname\_gslb.cfg\/etc\/zones\/$zone" )
+		  or warn "cannot open > $configdir\/$fname\_gslb.cfg\/etc\/zones\/$zone: $!";
 
 		print $file "@	SOA ns1 hostmaster (\n" . "	1\n"
 		  . "	7200\n"

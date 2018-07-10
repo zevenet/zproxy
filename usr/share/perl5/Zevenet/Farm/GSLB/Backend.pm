@@ -45,7 +45,6 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 	my ( $id, $fname, $srv ) = @_;
 
 	my $output = 0;
-	my $ftype  = &getFarmType( $fname );
 	my $ffile  = &getFarmFile( $fname );
 
 	my @fileconf;
@@ -189,7 +188,6 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 {
 	my ( $fname, $srv, $lb, $id, $ipaddress ) = @_;
 
-	my $ftype = &getFarmType( $fname );
 	my $ffile = &getFarmFile( $fname );
 
 	my @fileconf;

@@ -44,24 +44,21 @@ sub getFarmCertificate    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	if ( $farm_type eq "https" )
+	my $farm_filename = &getFarmFile( $farm_name );
+	open FI, "<$configdir/$farm_filename";
+	my @content = <FI>;
+	close FI;
+
+	foreach my $line ( @content )
 	{
-		my $farm_filename = &getFarmFile( $farm_name );
-		open FI, "<$configdir/$farm_filename";
-		my @content = <FI>;
-		close FI;
-		foreach my $line ( @content )
+		if ( $line =~ /Cert/ && $line !~ /\#.*Cert/ )
 		{
-			if ( $line =~ /Cert/ && $line !~ /\#.*Cert/ )
-			{
-				my @partline = split ( '\"', $line );
-				@partline = split ( "\/", $partline[1] );
-				my $lfile = @partline;
-				$output = $partline[$lfile - 1];
-			}
+			my @partline = split ( '\"', $line );
+			@partline = split ( "\/", $partline[1] );
+			my $lfile = @partline;
+			$output = $partline[$lfile - 1];
 		}
 	}
 
@@ -90,30 +87,27 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 
 	require Tie::File;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&zenlog( "Setting 'Certificate $cfile' for $farm_name farm $farm_type", "info", "LSLB" );
-	if ( $farm_type eq "https" )
+	&zenlog( "Setting 'Certificate $cfile' for $farm_name farm https", "info", "LSLB" );
+
+	# lock file
+	require Zevenet::Farm::HTTP::Config;
+	my $lock_fh = &lockHTTPFile( $farm_name );
+
+	tie my @array, 'Tie::File', "$configdir/$farm_filename";
+	for ( @array )
 	{
-		# lock file
-		require Zevenet::Farm::HTTP::Config;
-		my $lock_fh = &lockHTTPFile( $farm_name );
-
-		tie my @array, 'Tie::File', "$configdir/$farm_filename";
-		for ( @array )
+		if ( $_ =~ /Cert "/ )
 		{
-			if ( $_ =~ /Cert "/ )
-			{
-				s/.*Cert\ .*/\tCert\ \"$configdir\/$cfile\"/g;
-				$output = $?;
-			}
+			s/.*Cert\ .*/\tCert\ \"$configdir\/$cfile\"/g;
+			$output = $?;
 		}
-		untie @array;
-
-		&unlockfile( $lock_fh );
 	}
+	untie @array;
+
+	&unlockfile( $lock_fh );
 
 	return $output;
 }
@@ -138,7 +132,6 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 	my $ciphers   = shift;
 	my $cipherc   = shift;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
@@ -290,24 +283,21 @@ sub getHTTPFarmDisableSSL    # ($farm_name, $protocol)
 {
 	my ( $farm_name, $protocol ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "https" )
+	open FR, "<$configdir\/$farm_filename" or return $output;
+	$output = 0;	# if the directive is not in config file, it is disabled
+	my @file = <FR>;
+	close FR;
+
+	foreach my $line ( @file )
 	{
-		open FR, "<$configdir\/$farm_filename" or return $output;
-		$output = 0;	# if the directive is not in config file, it is disabled
-		my @file = <FR>;
-		foreach my $line ( @file )
+		if ( $line =~ /^\tDisable $protocol$/ )
 		{
-			if ( $line =~ /^\tDisable $protocol$/ )
-			{
-				$output = 1;
-				last;
-			}
+			$output = 1;
+			last;
 		}
-		close FR;
 	}
 
 	return $output;
@@ -332,46 +322,42 @@ sub setHTTPFarmDisableSSL    # ($farm_name, $protocol, $action )
 
 	require Tie::File;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "https" )
+	# lock file
+	require Zevenet::Farm::HTTP::Config;
+	my $lock_fh = &lockHTTPFile( $farm_name );
+
+	tie my @file, 'Tie::File', "$configdir/$farm_filename";
+
+	if ( $action == 1 )
 	{
-		# lock file
-		require Zevenet::Farm::HTTP::Config;
-		my $lock_fh = &lockHTTPFile( $farm_name );
-
-		tie my @file, 'Tie::File', "$configdir/$farm_filename";
-
-		if ( $action == 1 )
+		foreach my $line (@file)
 		{
-			foreach my $line (@file)
+			if ( $line =~ /Ciphers\ .*/ )
 			{
-				if ( $line =~ /Ciphers\ .*/ )
-				{
-					$line = "$line\n\tDisable $protocol";
-					last;
-				}
+				$line = "$line\n\tDisable $protocol";
+				last;
 			}
-			$output = 0;
 		}
-		else
-		{
-			my $it=-1;
-			foreach my $line (@file)
-			{
-				$it = $it +1;
-				last if( $line =~ /Disable $protocol$/);
-			}
-			splice @file, $it, 1;
-			$output = 0;
-		}
-
-		untie @file;
-
-		&unlockfile( $lock_fh );
+		$output = 0;
 	}
+	else
+	{
+		my $it=-1;
+		foreach my $line (@file)
+		{
+			$it = $it +1;
+			last if( $line =~ /Disable $protocol$/);
+		}
+		splice @file, $it, 1;
+		$output = 0;
+	}
+
+	untie @file;
+
+	&unlockfile( $lock_fh );
 
 	return $output;
 }

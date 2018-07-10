@@ -340,8 +340,7 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	require Tie::File;
 
 	my $farm_filename     = &getFarmFile( $farm_name );
-	my $farm_type         = &getFarmType( $farm_name );
-	my $new_farm_filename = "$new_farm_name\_$farm_type.cfg";
+	my $new_farm_filename = "$new_farm_name\_l4xnat.cfg";
 	my $output            = 0;
 	my $status            = &getFarmStatus( $farm_name );
 
@@ -371,10 +370,10 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	my $piddir = &getGlobalConfiguration( 'piddir' );
 	rename ( "$configdir\/$farm_filename", "$configdir\/$new_farm_filename" )
 	  or $output = -1;
-	if ( -f "$piddir\/$farm_name\_$farm_type.pid" )
+	if ( -f "$piddir\/$farm_name\_l4xnat.pid" )
 	{
-		rename ( "$piddir\/$farm_name\_$farm_type.pid",
-				 "$piddir\/$new_farm_name\_$farm_type.pid" )
+		rename ( "$piddir\/$farm_name\_l4xnat.pid",
+				 "$piddir\/$new_farm_name\_l4xnat.pid" )
 		  or $output = -1;
 	}
 

@@ -46,7 +46,6 @@ sub getDatalinkFarmServers    # ($farm_name)
 	my ( $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $farm_type     = &getFarmType( $farm_name );
 	my $first         = "true";
 	my $sindex        = 0;
 	my @servers;

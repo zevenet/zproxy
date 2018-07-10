@@ -63,37 +63,33 @@ sub setFarmClientTimeout    # ($client,$farm_name)
 {
 	my ( $client, $farm_name ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	# lock file
+	my $lock_fh = &lockHTTPFile( $farm_name );
+
+	require Tie::File;
+	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+
+	my $i_f         = -1;
+	my $array_count = @filefarmhttp;
+	my $found       = "false";
+
+	while ( $i_f <= $array_count && $found eq "false" )
 	{
-		# lock file
-		my $lock_fh = &lockHTTPFile( $farm_name );
+		$i_f++;
 
-		require Tie::File;
-		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
-
-		my $i_f         = -1;
-		my $array_count = @filefarmhttp;
-		my $found       = "false";
-
-		while ( $i_f <= $array_count && $found eq "false" )
+		if ( $filefarmhttp[$i_f] =~ /^Client/ )
 		{
-			$i_f++;
-
-			if ( $filefarmhttp[$i_f] =~ /^Client/ )
-			{
-				&zenlog( "setting 'ClientTimeout $client' for $farm_name farm $farm_type", "info", "LSLB" );
-				$filefarmhttp[$i_f] = "Client\t\t $client";
-				$output             = $?;
-				$found              = "true";
-			}
+			&zenlog( "setting 'ClientTimeout $client' for $farm_name farm http", "info", "LSLB" );
+			$filefarmhttp[$i_f] = "Client\t\t $client";
+			$output             = $?;
+			$found              = "true";
 		}
-		untie @filefarmhttp;
-		&unlockfile( $lock_fh );
 	}
+	untie @filefarmhttp;
+	&unlockfile( $lock_fh );
 
 	return $output;
 }
@@ -114,24 +110,20 @@ sub getFarmClientTimeout    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		open FR, "<$configdir\/$farm_filename";
-		my @file = <FR>;
+	open FR, "<$configdir\/$farm_filename";
+	my @file = <FR>;
+	close FR;
 
-		foreach my $line ( @file )
+	foreach my $line ( @file )
+	{
+		if ( $line =~ /^Client\t\t.*\d+/ )
 		{
-			if ( $line =~ /^Client\t\t.*\d+/ )
-			{
-				my @line_aux = split ( "\ ", $line );
-				$output = $line_aux[1];
-			}
+			my @line_aux = split ( "\ ", $line );
+			$output = $line_aux[1];
 		}
-		close FR;
 	}
 
 	return $output;
@@ -155,13 +147,12 @@ sub setHTTPFarmSessionType    # ($session,$farm_name)
 	my ( $session, $farm_name ) = @_;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $farm_type     = &getFarmType( $farm_name );
 	my $output        = -1;
 
 	# lock file
 	my $lock_fh = &lockHTTPFile( $farm_name );
 
-	&zenlog( "Setting 'Session type $session' for $farm_name farm $farm_type", "info", "LSLB" );
+	&zenlog( "Setting 'Session type $session' for $farm_name farm http", "info", "LSLB" );
 	tie my @contents, 'Tie::File', "$configdir\/$farm_filename";
 	my $i     = -1;
 	my $found = "false";
@@ -250,7 +241,6 @@ sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 {
 	my ( $blacklist_time, $farm_name ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
@@ -269,7 +259,7 @@ sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 		if ( $filefarmhttp[$i_f] =~ /^Alive/ )
 		{
 			&zenlog(
-					"Setting 'Blacklist time $blacklist_time' for $farm_name farm $farm_type", "info", "LSLB" );
+					"Setting 'Blacklist time $blacklist_time' for $farm_name farm http", "info", "LSLB" );
 			$filefarmhttp[$i_f] = "Alive\t\t $blacklist_time";
 			$output             = $?;
 			$found              = "true";
@@ -338,34 +328,30 @@ sub setFarmHttpVerb    # ($verb,$farm_name)
 {
 	my ( $verb, $farm_name ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		# lock file
-		my $lock_fh = &lockHTTPFile( $farm_name );
+	# lock file
+	my $lock_fh = &lockHTTPFile( $farm_name );
 
-		require Tie::File;
-		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
-		my $i_f         = -1;
-		my $array_count = @filefarmhttp;
-		my $found       = "false";
-		while ( $i_f <= $array_count && $found eq "false" )
+	require Tie::File;
+	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+	my $i_f         = -1;
+	my $array_count = @filefarmhttp;
+	my $found       = "false";
+	while ( $i_f <= $array_count && $found eq "false" )
+	{
+		$i_f++;
+		if ( $filefarmhttp[$i_f] =~ /xHTTP/ )
 		{
-			$i_f++;
-			if ( $filefarmhttp[$i_f] =~ /xHTTP/ )
-			{
-				&zenlog( "Setting 'Http verb $verb' for $farm_name farm $farm_type", "info", "LSLB" );
-				$filefarmhttp[$i_f] = "\txHTTP $verb";
-				$output             = $?;
-				$found              = "true";
-			}
+			&zenlog( "Setting 'Http verb $verb' for $farm_name farm $farm_type", "info", "LSLB" );
+			$filefarmhttp[$i_f] = "\txHTTP $verb";
+			$output             = $?;
+			$found              = "true";
 		}
-		untie @filefarmhttp;
-		&unlockfile( $lock_fh );
 	}
+	untie @filefarmhttp;
+	&unlockfile( $lock_fh );
 
 	return $output;
 }
@@ -392,23 +378,20 @@ sub getFarmHttpVerb    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	open FR, "<$configdir\/$farm_filename";
+	my @file = <FR>;
+	close FR;
+
+	foreach my $line ( @file )
 	{
-		open FR, "<$configdir\/$farm_filename";
-		my @file = <FR>;
-		foreach my $line ( @file )
+		if ( $line =~ /xHTTP/ )
 		{
-			if ( $line =~ /xHTTP/ )
-			{
-				my @line_aux = split ( "\ ", $line );
-				$output = $line_aux[1];
-			}
+			my @line_aux = split ( "\ ", $line );
+			$output = $line_aux[1];
 		}
-		close FR;
 	}
 
 	return $output;
@@ -583,35 +566,33 @@ sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 {
 	my ( $farm_name, $rewritelocation ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
+
 	&zenlog( "setting 'Rewrite Location' for $farm_name to $rewritelocation", "info", "LSLB" );
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		# lock file
-		my $lock_fh = &lockHTTPFile( $farm_name );
+	# lock file
+	my $lock_fh = &lockHTTPFile( $farm_name );
 
-		require Tie::File;
-		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
-		my $i_f         = -1;
-		my $array_count = @filefarmhttp;
-		my $found       = "false";
-		while ( $i_f <= $array_count && $found eq "false" )
+	require Tie::File;
+	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+	my $i_f         = -1;
+	my $array_count = @filefarmhttp;
+	my $found       = "false";
+
+	while ( $i_f <= $array_count && $found eq "false" )
+	{
+		$i_f++;
+		if ( $filefarmhttp[$i_f] =~ /RewriteLocation\ .*/ )
 		{
-			$i_f++;
-			if ( $filefarmhttp[$i_f] =~ /RewriteLocation\ .*/ )
-			{
-				$filefarmhttp[$i_f] = "\tRewriteLocation $rewritelocation";
-				$output             = $?;
-				$found              = "true";
-			}
+			$filefarmhttp[$i_f] = "\tRewriteLocation $rewritelocation";
+			$output             = $?;
+			$found              = "true";
 		}
-		untie @filefarmhttp;
-		&unlockfile( $lock_fh );
 	}
 
+	untie @filefarmhttp;
+	&unlockfile( $lock_fh );
 }
 
 =begin nd
@@ -630,23 +611,20 @@ sub getFarmRewriteL    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	open FR, "<$configdir\/$farm_filename";
+	my @file = <FR>;
+	close FR;
+
+	foreach my $line ( @file )
 	{
-		open FR, "<$configdir\/$farm_filename";
-		my @file = <FR>;
-		foreach my $line ( @file )
+		if ( $line =~ /RewriteLocation\ .*/ )
 		{
-			if ( $line =~ /RewriteLocation\ .*/ )
-			{
-				my @line_aux = split ( "\ ", $line );
-				$output = $line_aux[1];
-			}
+			my @line_aux = split ( "\ ", $line );
+			$output = $line_aux[1];
 		}
-		close FR;
 	}
 
 	return $output;
@@ -669,35 +647,33 @@ sub setFarmConnTO    # ($tout,$farm_name)
 {
 	my ( $tout, $farm_name ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	&zenlog( "Setting 'ConnTo timeout $tout' for $farm_name farm $farm_type", "info", "LSLB" );
+	&zenlog( "Setting 'ConnTo timeout $tout' for $farm_name farm http", "info", "LSLB" );
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	# lock file
+	my $lock_fh = &lockHTTPFile( $farm_name );
+
+	require Tie::File;
+	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+	my $i_f         = -1;
+	my $array_count = @filefarmhttp;
+	my $found       = "false";
+
+	while ( $i_f <= $array_count && $found eq "false" )
 	{
-		# lock file
-		my $lock_fh = &lockHTTPFile( $farm_name );
-
-		require Tie::File;
-		tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
-		my $i_f         = -1;
-		my $array_count = @filefarmhttp;
-		my $found       = "false";
-		while ( $i_f <= $array_count && $found eq "false" )
+		$i_f++;
+		if ( $filefarmhttp[$i_f] =~ /^ConnTO.*/ )
 		{
-			$i_f++;
-			if ( $filefarmhttp[$i_f] =~ /^ConnTO.*/ )
-			{
-				$filefarmhttp[$i_f] = "ConnTO\t\t $tout";
-				$output             = $?;
-				$found              = "true";
-			}
+			$filefarmhttp[$i_f] = "ConnTO\t\t $tout";
+			$output             = $?;
+			$found              = "true";
 		}
-		untie @filefarmhttp;
-		&unlockfile( $lock_fh );
 	}
+	untie @filefarmhttp;
+	&unlockfile( $lock_fh );
+
 	return $output;
 }
 
@@ -717,23 +693,20 @@ sub getFarmConnTO    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	open FR, "<$configdir\/$farm_filename";
+	my @file = <FR>;
+	close FR;
+
+	foreach my $line ( @file )
 	{
-		open FR, "<$configdir\/$farm_filename";
-		my @file = <FR>;
-		foreach my $line ( @file )
+		if ( $line =~ /^ConnTO/ )
 		{
-			if ( $line =~ /^ConnTO/ )
-			{
-				my @line_aux = split ( "\ ", $line );
-				$output = $line_aux[1];
-			}
+			my @line_aux = split ( "\ ", $line );
+			$output = $line_aux[1];
 		}
-		close FR;
 	}
 
 	return $output;
@@ -940,29 +913,28 @@ sub setFarmErr    # ($farm_name,$content,$nerr)
 {
 	my ( $farm_name, $content, $nerr ) = @_;
 
-	my $farm_type = &getFarmType( $farm_name );
 	my $output    = -1;
 
-	&zenlog( "Setting 'Err $nerr' for $farm_name farm $farm_type", "info", "LSLB" );
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		if ( -e "$configdir\/$farm_name\_Err$nerr.html" && $nerr != "" )
-		{
-			# lock file
-			my $lock_fh = &lockHTTPFile( $farm_name );
+	&zenlog( "Setting 'Err $nerr' for $farm_name farm http", "info", "LSLB" );
 
-			$output = 0;
-			my @err = split ( "\n", "$content" );
-			open FO, ">$configdir\/$farm_name\_Err$nerr.html";
-			foreach my $line ( @err )
-			{
-				$line =~ s/\r$//;
-				print FO "$line\n";
-				$output = $? || $output;
-			}
-			close FO;
-			&unlockfile( $lock_fh );
+	if ( -e "$configdir\/$farm_name\_Err$nerr.html" && $nerr != "" )
+	{
+		# lock file
+		my $lock_fh = &lockHTTPFile( $farm_name );
+
+		$output = 0;
+		my @err = split ( "\n", "$content" );
+		open FO, ">$configdir\/$farm_name\_Err$nerr.html";
+
+		foreach my $line ( @err )
+		{
+			$line =~ s/\r$//;
+			print FO "$line\n";
+			$output = $? || $output;
 		}
+
+		close FO;
+		&unlockfile( $lock_fh );
 	}
 
 	return $output;
@@ -986,34 +958,32 @@ sub getFarmErr    # ($farm_name,$nerr)
 {
 	my ( $farm_name, $nerr ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output;
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	open FR, "<$configdir\/$farm_filename";
+	my @file = <FR>;
+	close FR;
+
+	foreach my $line ( @file )
 	{
-		open FR, "<$configdir\/$farm_filename";
-		my @file = <FR>;
-		foreach my $line ( @file )
+		if ( $line =~ /Err$nerr/ )
 		{
-			if ( $line =~ /Err$nerr/ )
+			my @line_aux = split ( "\ ", $line );
+			my $err = $line_aux[1];
+			$err =~ s/"//g;
+
+			if ( -e $err )
 			{
-				my @line_aux = split ( "\ ", $line );
-				my $err = $line_aux[1];
-				$err =~ s/"//g;
-				if ( -e $err )
+				open FI, "$err";
+				while ( <FI> )
 				{
-					open FI, "$err";
-					while ( <FI> )
-					{
-						$output .= $_;
-					}
-					close FI;
-					chomp ($output);
+					$output .= $_;
 				}
+				close FI;
+				chomp ($output);
 			}
 		}
-		close FR;
 	}
 
 	return $output;
@@ -1139,21 +1109,18 @@ sub getFarmChildPid    # ($farm_name)
 
 	use File::Grep 'fgrep';
 
-	my $farm_type = &getFarmType( $farm_name );
 	my $fpid      = &getFarmPid( $farm_name );
 	my $output    = -1;
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	my $pids = `pidof -o $fpid pound`;
+	my @pids = split ( " ", $pids );
+
+	foreach my $pid ( @pids )
 	{
-		my $pids = `pidof -o $fpid pound`;
-		my @pids = split ( " ", $pids );
-		foreach my $pid ( @pids )
+		if ( fgrep { /^PPid:.*${fpid}$/ } "/proc/$pid/status" )
 		{
-			if ( fgrep { /^PPid:.*${fpid}$/ } "/proc/$pid/status" )
-			{
-				$output = $pid;
-				last;
-			}
+			$output = $pid;
+			last;
 		}
 	}
 

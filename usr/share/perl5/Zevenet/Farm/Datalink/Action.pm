@@ -29,18 +29,18 @@ my $configdir = &getGlobalConfiguration('configdir');
 Function: _runDatalinkFarmStart
 
 	Run a datalink farm
-	
+
 Parameters:
 	farmname - Farm name
 	writeconf - If this param has the value "true" in config file will be saved the current status
 
 Returns:
 	Integer - Error code: return 0 on success or different of 0 on failure
-	
-BUG: 
-	writeconf must not exist, always it has to be TRUE 
+
+BUG:
+	writeconf must not exist, always it has to be TRUE
 	status parameter is not useful
-	
+
 =cut
 sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 {
@@ -175,17 +175,17 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 Function: _runDatalinkFarmStop
 
 	Stop a datalink farm
-	
+
 Parameters:
 	farmname - Farm name
 	writeconf - If this param has the value "true" in config file will be saved the current status
 
 Returns:
 	Integer - Error code: return 0 on success or -1 on failure
-	
-BUG: 
-	writeconf must not exist, always it has to be TRUE 
-	
+
+BUG:
+	writeconf must not exist, always it has to be TRUE
+
 =cut
 sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 {
@@ -261,14 +261,14 @@ sub _runDatalinkFarmStop    # ($farm_name,$writeconf)
 Function: setDatalinkNewFarmName
 
 	Function that renames a farm
-	
+
 Parameters:
 	farmname - Farm name
 	newfarmname - New farm name
 
 Returns:
 	Integer - Error code: return 0 on success or -1 on failure
-	
+
 =cut
 sub setDatalinkNewFarmName    # ($farm_name,$new_farm_name)
 {
@@ -277,8 +277,7 @@ sub setDatalinkNewFarmName    # ($farm_name,$new_farm_name)
 	require Tie::File;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $farm_type     = &getFarmType( $farm_name );
-	my $newffile      = "$new_farm_name\_$farm_type.cfg";
+	my $newffile      = "$new_farm_name\_datalink.cfg";
 	my $output        = -1;
 
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
@@ -291,8 +290,8 @@ sub setDatalinkNewFarmName    # ($farm_name,$new_farm_name)
 
 	my $piddir = &getGlobalConfiguration('piddir');
 	rename ( "$configdir\/$farm_filename", "$configdir\/$newffile" );
-	rename ( "$piddir\/$farm_name\_$farm_type.pid",
-			 "$piddir\/$new_farm_name\_$farm_type.pid" );
+	rename ( "$piddir\/$farm_name\_datalink.pid",
+			 "$piddir\/$new_farm_name\_datalink.pid" );
 	$output = $?;
 
 	return $output;

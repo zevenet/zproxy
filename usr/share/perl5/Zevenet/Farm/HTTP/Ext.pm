@@ -42,24 +42,21 @@ sub getHTTPFarm100Continue    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	open FR, '<', "$configdir\/$farm_filename" or return $output;
+	$output = 1;	# if the directive is not in config file, it is enabled
+	my @file = <FR>;
+	close FR;
+
+	foreach my $line ( @file )
 	{
-		open FR, '<', "$configdir\/$farm_filename" or return $output;
-		$output = 1;	# if the directive is not in config file, it is enabled
-		my @file = <FR>;
-		foreach my $line ( @file )
+		if ( $line =~ /Ignore100Continue (\d).*/ )
 		{
-			if ( $line =~ /Ignore100Continue (\d).*/ )
-			{
-				$output = $1;
-				last;
-			}
+			$output = $1;
+			last;
 		}
-		close FR;
 	}
 
 	return $output;
@@ -82,31 +79,28 @@ sub setHTTPFarm100Continue    # ($farm_name, $action)
 {
 	my ( $farm_name, $action ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		require Tie::File;
-		tie my @file, 'Tie::File', "$configdir/$farm_filename";
+	require Tie::File;
+	tie my @file, 'Tie::File', "$configdir/$farm_filename";
 
-		# check if 100 continue directive exists
-		if ( ! grep(s/^Ignore100Continue\ .*/Ignore100Continue $action/, @file) )
+	# check if 100 continue directive exists
+	if ( ! grep(s/^Ignore100Continue\ .*/Ignore100Continue $action/, @file) )
+	{
+		foreach my $line (@file)
 		{
-			foreach my $line (@file)
+			# put ignore below than rewritelocation
+			if ( $line =~ /^Control\s/ )
 			{
-				# put ignore below than rewritelocation
-				if ( $line =~ /^Control\s/ )
-				{
-					$line = "$line\nIgnore100Continue $action";
-					last;
-				}
+				$line = "$line\nIgnore100Continue $action";
+				last;
 			}
 		}
-		$output = 0;
-		untie @file;
 	}
+	$output = 0;
+	untie @file;
+
 	return $output;
 }
 
@@ -126,24 +120,21 @@ sub getHTTPFarmLogs    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "http" || $farm_type eq "https" )
+	open FR, '<', "$configdir\/$farm_filename" or return $output;
+	$output = 0;	# if the directive is not in config file, it is disabled
+	my @file = <FR>;
+	close FR;
+
+	foreach my $line ( @file )
 	{
-		open FR, '<', "$configdir\/$farm_filename" or return $output;
-		$output = 0;	# if the directive is not in config file, it is disabled
-		my @file = <FR>;
-		foreach my $line ( @file )
+		if ( $line =~ /LogLevel\s+(\d).*/ )
 		{
-			if ( $line =~ /LogLevel\s+(\d).*/ )
-			{
-				$output = $1;
-				last;
-			}
+			$output = $1;
+			last;
 		}
-		close FR;
 	}
 
 	return $output;
@@ -166,31 +157,27 @@ sub setHTTPFarmLogs    # ($farm_name, $action)
 {
 	my ( $farm_name, $action ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
 	my $loglvl = ( $action eq "true" ) ? 5 : 0;
-	if ( $farm_type eq "http" || $farm_type eq "https" )
-	{
-		require Tie::File;
-		tie my @file, 'Tie::File', "$configdir/$farm_filename";
 
-		# check if 100 continue directive exists
-		if ( ! grep( s/^LogLevel\s+(\d).*$/LogLevel\t$loglvl/, @file) )
-		{
-			&zenlog( "Error modifying http logs", "error", "HTTP");
-		}
-		else
-		{
-			$output = 0;
-		}
-		untie @file;
+	require Tie::File;
+	tie my @file, 'Tie::File', "$configdir/$farm_filename";
+
+	# check if 100 continue directive exists
+	if ( ! grep( s/^LogLevel\s+(\d).*$/LogLevel\t$loglvl/, @file) )
+	{
+		&zenlog( "Error modifying http logs", "error", "HTTP");
 	}
+	else
+	{
+		$output = 0;
+	}
+	untie @file;
+
 	return $output;
 }
-
-
 
 # Add headers
 
@@ -215,24 +202,23 @@ sub getHTTPAddheader    # ($farm_name,$service)
 
 	# look for cookie insertion policy
 	my $farm_filename = &getFarmFile( $farm_name );
-	my $sw = 0;
-	my $out = "false";
+	my $sw            = 0;
+	my $out           = "false";
 
 	open my $fileconf, '<', "$configdir/$farm_filename";
-    
-    my $index = 0;
+
+	my $index = 0;
 	foreach my $line ( <$fileconf> )
 	{
-		if ( $line =~ /^[#\s]*Service \"/ )
-			{ last; }
+		if ( $line =~ /^[#\s]*Service \"/ ) { last; }
 		elsif ( $line =~ /^[#\s]*AddHeader\s+"(.+)"/ )
 		{
-	        my %hash = (
-	                "id"            => $index,
-	                "header"        => $1
-	        );
-	        push @out, \%hash;
-	        $index++;
+			my %hash = (
+						 "id"     => $index,
+						 "header" => $1
+			);
+			push @out, \%hash;
+			$index++;
 		}
 	}
 
@@ -374,19 +360,18 @@ sub getHTTPHeadremove    # ($farm_name,$service)
 
 	open my $fileconf, '<', "$configdir/$farm_filename";
 
-    my $index = 0;
+	my $index = 0;
 	foreach my $line ( <$fileconf> )
 	{
-		if ( $line =~ /^[#\s]*Service \"/ )
-			{ last; }
+		if ( $line =~ /^[#\s]*Service \"/ ) { last; }
 		elsif ( $line =~ /^[#\s]*HeadRemove\s+"(.+)"/ )
 		{
-            my %hash = (
-                    "id"            => $index,
-                    "pattern"       => $1
-            );
-            push @out, \%hash;
-            $index++;
+			my %hash = (
+						 "id"      => $index,
+						 "pattern" => $1
+			);
+			push @out, \%hash;
+			$index++;
 		}
 	}
 
@@ -498,7 +483,5 @@ sub delHTTPHeadremove    # ($farm_name,$service,$code)
 
 	return $errno;
 }
-
-
 
 1;

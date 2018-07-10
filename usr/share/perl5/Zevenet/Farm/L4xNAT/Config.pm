@@ -42,34 +42,30 @@ sub getL4FarmsPorts    # ($protocol)
 {
 	my $protocol = shift;
 
-	my $port_list       = "";
-	my @farms_filenames = &getFarmList();
+	my @port_list = ();
+	my @farms     = &getFarmsByType();
 
-	unless ( $#farms_filenames > -1 )
+	unless ( $#farms > -1 )
 	{
-		return $port_list;
+		return "";
 	}
 
-	foreach my $farm_filename ( @farms_filenames )
+	foreach my $farm_name ( @farms )
 	{
-		my $farm_name     = &getFarmName( $farm_filename );
-		my $farm_type     = &getFarmType( $farm_name );
 		my $farm_protocol = &getFarmProto( $farm_name );
 
-		next if not ( $farm_type eq "l4xnat" && $protocol eq $farm_protocol );
+		next if not ( $protocol eq $farm_protocol );
 		next if ( &getFarmBootStatus( $farm_name ) ne "up" );
 
 		my $farm_port = &getFarmVip( "vipp", $farm_name );
 		$farm_port = join ( ',', &getFarmPortList( $farm_port ) );
+
 		next if not &validL4ExtPort( $farm_protocol, $farm_port );
 
-		$port_list .= "$farm_port,";
+		push @port_list, $farm_port;
 	}
 
-	# remove the las comma
-	chop ( $port_list );
-
-	return $port_list;
+	return join ( ',', @port_list );
 }
 
 =begin nd
@@ -512,11 +508,10 @@ sub setFarmProto    # ($proto,$farm_name)
 	my ( $proto, $farm_name ) = @_;
 
 	require Zevenet::FarmGuardian;
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = 0;
 
-	&zenlog( "setting 'Protocol $proto' for $farm_name farm $farm_type", "info", "LSLB" );
+	&zenlog( "setting 'Protocol $proto' for $farm_name farm L4xNAT", "info", "LSLB" );
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $old_proto  = $$farm{ vproto };
@@ -531,32 +526,29 @@ sub setFarmProto    # ($proto,$farm_name)
 		}
 	}
 
-	if ( $farm_type eq "l4xnat" )
+	require Tie::File;
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename" or return $output;
+	my $i = 0;
+	for my $line ( @configfile )
 	{
-		require Tie::File;
-		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename" or return $output;
-		my $i = 0;
-		for my $line ( @configfile )
+		if ( $line =~ /^$farm_name\;/ )
 		{
-			if ( $line =~ /^$farm_name\;/ )
+			my @args = split ( "\;", $line );
+			if ( $proto eq "all" )
 			{
-				my @args = split ( "\;", $line );
-				if ( $proto eq "all" )
-				{
-					$args[3] = "*";
-				}
-				if ( $proto eq "sip" )
-				{
-					#~ $args[4] = "nat";
-				}
-				$line =
-				  "$args[0]\;$proto\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8];$args[9]";
-				splice @configfile, $i, $line;
+				$args[3] = "*";
 			}
-			$i++;
+			if ( $proto eq "sip" )
+			{
+				#~ $args[4] = "nat";
+			}
+			$line =
+			  "$args[0]\;$proto\;$args[2]\;$args[3]\;$args[4]\;$args[5]\;$args[6]\;$args[7]\;$args[8];$args[9]";
+			splice @configfile, $i, $line;
 		}
-		untie @configfile;
+		$i++;
 	}
+	untie @configfile;
 
 	$farm = &getL4FarmStruct( $farm_name );
 
@@ -602,25 +594,23 @@ sub getFarmNatType    # ($farm_name)
 {
 	my $farm_name = shift;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	if ( $farm_type eq "l4xnat" )
+	open FI, "<", "$configdir/$farm_filename";
+	my $first = "true";
+
+	while ( my $line = <FI> )
 	{
-		open FI, "<", "$configdir/$farm_filename";
-		my $first = "true";
-		while ( my $line = <FI> )
+		if ( $line ne "" && $first eq "true" )
 		{
-			if ( $line ne "" && $first eq "true" )
-			{
-				$first = "false";
-				my @line = split ( "\;", $line );
-				$output = $line[4];
-			}
+			$first = "false";
+			my @line = split ( "\;", $line );
+			$output = $line[4];
 		}
-		close FI;
 	}
+
+	close FI;
 
 	return $output;
 }
@@ -643,13 +633,12 @@ sub setFarmNatType    # ($nat,$farm_name)
 {
 	my ( $nat, $farm_name ) = @_;
 
-	my $farm_type     = &getFarmType( $farm_name );
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = 0;
 
 	require Zevenet::FarmGuardian;
 
-	&zenlog( "setting 'NAT type $nat' for $farm_name farm $farm_type", "info", "LSLB" );
+	&zenlog( "setting 'NAT type $nat' for $farm_name farm L4xNAT", "info", "LSLB" );
 
 	my $farm       = &getL4FarmStruct( $farm_name );
 	my $fg_enabled = ( &getFarmGuardianConf( $$farm{ name } ) )[3];
@@ -666,24 +655,24 @@ sub setFarmNatType    # ($nat,$farm_name)
 		}
 	}
 
-	if ( $farm_type eq "l4xnat" )
+	require Tie::File;
+
+	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
+	my $i = 0;
+
+	for my $line ( @configfile )
 	{
-		require Tie::File;
-		tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
-		my $i = 0;
-		for my $line ( @configfile )
+		if ( $line =~ /^$farm_name\;/ )
 		{
-			if ( $line =~ /^$farm_name\;/ )
-			{
-				my @args = split ( "\;", $line );
-				$line =
-				  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$nat\;$args[5]\;$args[6]\;$args[7]\;$args[8];$args[9]";
-				splice @configfile, $i, $line;
-			}
-			$i++;
+			my @args = split ( "\;", $line );
+			$line =
+			  "$args[0]\;$args[1]\;$args[2]\;$args[3]\;$nat\;$args[5]\;$args[6]\;$args[7]\;$args[8];$args[9]";
+			splice @configfile, $i, $line;
 		}
-		untie @configfile;
+		$i++;
 	}
+
+	untie @configfile;
 
 	$farm = &getL4FarmStruct( $farm_name );
 
@@ -1429,11 +1418,8 @@ sub reloadL4FarmsSNAT
 	require Zevenet::Farm::Base;
 	require Zevenet::Netfilter;
 
-	for my $farm_name ( &getFarmNameList() )
+	for my $farm_name ( &getFarmsByType() )
 	{
-		my $farm_type = &getFarmType( $farm_name );
-
-		next if $farm_type ne 'l4xnat';
 		next if &getFarmStatus( $farm_name ) ne 'up';
 
 		my $l4f_conf = &getL4FarmStruct( $farm_name );
@@ -1455,7 +1441,6 @@ sub reloadL4FarmsSNAT
 
 			$rule = &getIptRuleReplace( $l4f_conf, $server, $rule );
 
-			#~ push ( @{ $$rules{ t_snat } }, $rule );
 			&applyIptRules( $rule );
 		}
 	}

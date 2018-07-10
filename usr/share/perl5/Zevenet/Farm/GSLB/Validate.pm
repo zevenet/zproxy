@@ -29,13 +29,13 @@ my $configdir = &getGlobalConfiguration('configdir');
 Function: getGSLBFarmConfigIsOK
 
 	Function that check if the config file is OK.
-	
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	Scalar - 0 on success or -1 on failure
-	
+
 =cut
 sub getGSLBFarmConfigIsOK    # ($farm_name)
 {
@@ -65,23 +65,22 @@ Function: getGSLBCheckPort
 
 Parameters:
 	farmname - Farm name
-	checkport - Port to check 
+	checkport - Port to check
 
 Returns:
 	Integer - Number of services that are using the port
-               
+
 =cut
 sub getGSLBCheckPort
 {
 	my ( $fname, $checkPort ) = @_;
 
-	my $ftype        = &getFarmType( $fname );
 	my $servicePorts = 0;
 
 	require Tie::File;
 
 	# select all ports used in plugins
-	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
+	opendir ( DIR, "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/" );
 	my @pluginlist = readdir ( DIR );
 	closedir ( DIR );
 
@@ -92,7 +91,7 @@ sub getGSLBCheckPort
 			my @fileconf = ();
 
 			tie @fileconf, 'Tie::File',
-			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+			  "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$plugin";
 
 			#~ tie @fileconf, 'Tie::File', "plugins\/$plugin";
 			$servicePorts += grep ( /service_types = tcp_$checkPort/,   @fileconf );

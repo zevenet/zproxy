@@ -58,7 +58,6 @@ sub _runGSLBFarmStart    # ($fname,$writeconf)
 
 	my $output;
 	my $status = &getFarmStatus( $fname );
-	my $type   = &getFarmType( $fname );
 	my $file   = &getFarmFile( $fname );
 
 	chomp ( $status );
@@ -155,7 +154,6 @@ sub _runGSLBFarmStop    # ($farm_name,$writeconf)
 		return -1;
 	}
 
-	my $type = &getFarmType( $fname );
 	my $checkfarm = &getGSLBFarmConfigIsOK( $fname );
 
 	if ( $checkfarm )
@@ -265,7 +263,6 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 	my $rrdap_dir = &getGlobalConfiguration( "rrdap_dir" );
 	my $rrd_dir   = &getGlobalConfiguration( "rrd_dir" );
 	my $configdir = &getGlobalConfiguration( "configdir" );
-	my $type      = &getFarmType( $fname );
 	my $ffile     = &getFarmFile( $fname );
 	my $output    = -1;
 	my $file;
@@ -276,9 +273,9 @@ sub setGSLBNewFarmName    # ($farm_name,$new_farm_name)
 		return -2;
 	}
 
-	&zenlog( "setting 'NewFarmName $newfname' for $fname farm $type", "info", "GSLB" );
+	&zenlog( "setting 'NewFarmName $newfname' for $fname farm gslb", "info", "GSLB" );
 
-	my $newffile = "$newfname\_$type.cfg";
+	my $newffile = "$newfname\_gslb.cfg";
 	rename ( "$configdir\/$ffile", "$configdir\/$newffile" );
 	$output = 0;
 

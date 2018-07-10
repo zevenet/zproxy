@@ -28,14 +28,14 @@ my $configdir = &getGlobalConfiguration( 'configdir' );
 =begin nd
 Function: getDatalinkFarmAlgorithm
 
-	Get type of balancing algorithm. 
-	
+	Get type of balancing algorithm.
+
 Parameters:
 	farmname - Farm name
 
 Returns:
 	scalar - The possible values are "weight", "priority" or -1 on failure
-	
+
 =cut
 
 sub getDatalinkFarmAlgorithm    # ($farm_name)
@@ -66,17 +66,17 @@ sub getDatalinkFarmAlgorithm    # ($farm_name)
 Function: setDatalinkFarmAlgorithm
 
 	Set the load balancing algorithm to a farm
-	
+
 Parameters:
 	algorithm - Type of balancing mode: "weight" or "priority"
 	farmname - Farm name
 
 Returns:
 	none - .
-	
+
 FIXME:
 	set a return value, and do error control
-	
+
 =cut
 
 sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
@@ -117,7 +117,7 @@ sub setDatalinkFarmAlgorithm    # ($algorithm,$farm_name)
 Function: getDatalinkFarmBootStatus
 
 	Return the farm status at boot zevenet
-	 
+
 Parameters:
 	farmname - Farm name
 
@@ -155,7 +155,7 @@ sub getDatalinkFarmBootStatus    # ($farm_name)
 Function: getDatalinkFarmInterface
 
 	 Get network physical interface used by the farm vip
-	 
+
 Parameters:
 	farmname - Farm name
 
@@ -168,27 +168,24 @@ sub getDatalinkFarmInterface    # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $type   = &getFarmType( $farm_name );
 	my $output = -1;
 	my $line;
 
-	if ( $type eq "datalink" )
+	my $farm_filename = &getFarmFile( $farm_name );
+	open FI, "<$configdir/$farm_filename";
+	my $first = "true";
+
+	while ( $line = <FI> )
 	{
-		my $farm_filename = &getFarmFile( $farm_name );
-		open FI, "<$configdir/$farm_filename";
-		my $first = "true";
-		while ( $line = <FI> )
+		if ( $line ne "" && $first eq "true" )
 		{
-			if ( $line ne "" && $first eq "true" )
-			{
-				$first = "false";
-				my @line_a = split ( "\;", $line );
-				my @line_b = split ( "\:", $line_a[2] );
-				$output = $line_b[0];
-			}
+			$first = "false";
+			my @line_a = split ( "\;", $line );
+			my @line_b = split ( "\:", $line_a[2] );
+			$output = $line_b[0];
 		}
-		close FI;
 	}
+	close FI;
 
 	return $output;
 }
@@ -197,14 +194,14 @@ sub getDatalinkFarmInterface    # ($farm_name)
 Function: getDatalinkFarmVip
 
 	Returns farm vip, vport or vip:vport
-	
+
 Parameters:
 	info - parameter to return: vip, for virtual ip; vipp, for virtual port or vipps, for vip:vipp
 	farmname - Farm name
 
 Returns:
 	Scalar - return request parameter on success or -1 on failure
-		
+
 =cut
 
 sub getDatalinkFarmVip    # ($info,$farm_name)
@@ -238,7 +235,7 @@ sub getDatalinkFarmVip    # ($info,$farm_name)
 Function: setDatalinkFarmVirtualConf
 
 	Set farm virtual IP and virtual PORT
-	
+
 Parameters:
 	vip - virtual ip
 	interface - interface
@@ -246,7 +243,7 @@ Parameters:
 
 Returns:
 	Scalar - Error code: 0 on success or -1 on failure
-		
+
 =cut
 
 sub setDatalinkFarmVirtualConf    # ($vip,$interface,$farm_name)

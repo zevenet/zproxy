@@ -165,13 +165,12 @@ sub setGSLBFarmGuardianParams    # ( farmName, service, param, value );
 	# bugfix
 	$param = 'interval' if ( $param eq 'time' );
 
-	my $ftype = &getFarmType( $fname );
 	my @file;
 	my $flagSvc = 0;
 	my $err     = -1;
 	my $port    = &getGSLBFarmVS( $fname, $service, 'dpc' );
 
-	tie @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
+	tie @file, 'Tie::File', "$configdir\/$fname\_gslb.cfg\/etc\/config";
 
 	foreach my $line ( @file )
 	{
@@ -239,12 +238,11 @@ sub setGSLBDeleteFarmGuardian    # ( $fname, $service )
 {
 	my ( $fname, $service ) = @_;
 
-	my $ftype   = &getFarmType( $fname );
 	my $err     = -1;
 	my $index   = 0;
 	my $flagSvc = 0;
 
-	tie my @file, 'Tie::File', "$configdir\/$fname\_$ftype.cfg\/etc\/config";
+	tie my @file, 'Tie::File', "$configdir\/$fname\_gslb.cfg\/etc\/config";
 
 	my $start_i;
 	my $end_i;
@@ -318,13 +316,12 @@ sub enableGSLBFarmGuardian    # ( $fname, $service, $option )
 {
 	my ( $fname, $service, $option ) = @_;
 
-	my $ftype  = &getFarmType( $fname );
 	my $output = -1;
 
 	require Tie::File;
 
 	# select all ports used in plugins
-	opendir ( DIR, "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/" );
+	opendir ( DIR, "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/" );
 	my @pluginlist = readdir ( DIR );
 	closedir ( DIR );
 
@@ -335,7 +332,7 @@ sub enableGSLBFarmGuardian    # ( $fname, $service, $option )
 			my @fileconf = ();
 
 			tie @fileconf, 'Tie::File',
-			  "$configdir\/$fname\_$ftype.cfg\/etc\/plugins\/$plugin";
+			  "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$plugin";
 
 			foreach my $line ( @fileconf )
 			{
