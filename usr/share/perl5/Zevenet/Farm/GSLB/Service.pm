@@ -848,15 +848,15 @@ sub getGSLBFarmServicesStruct31
 
 	foreach my $srv ( @services )
 	{
-		delete $srv{ farmguardian };
+		delete $srv->{ farmguardian };
 
 		# Farmguardian
-		my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $srv{ id } );
-		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $srv{ id } );
+		my ( $fgTime, $fgScrip ) = &getGSLBFarmGuardianParams( $farmname, $srv->{ id } );
+		my $fgStatus = &getGSLBFarmFGStatus( $farmname, $srv->{ id } );
 
-		$srv{ fgenabled }   = $fgStatus;
-		$srv{ fgscript }    = $fgScrip;
-		$srv{ fgtimecheck } = $fgTime + 0;
+		$srv->{ fgenabled }   = $fgStatus;
+		$srv->{ fgscript }    = $fgScrip;
+		$srv->{ fgtimecheck } = $fgTime + 0;
 	}
 
 	return \@services;
