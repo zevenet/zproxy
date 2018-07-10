@@ -215,12 +215,6 @@ sub upload_certificate # ()
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	if ( $filename =~ /\\/ )
-	{
-		my @filen = split ( /\\/, $filename );
-		$filename = $filen[-1];
-	}
-
 	unless ( &saveFileHandler( "$configdir/$filename", $upload_filehandle ) )
 	{
 		my $msg = "Could not save the certificate file";
