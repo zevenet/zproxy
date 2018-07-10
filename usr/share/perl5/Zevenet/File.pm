@@ -28,6 +28,7 @@ sub getFile
 	unless ( -f $path )
 	{
 		&zenlog("Could not find file '$path'");
+		return;
 	}
 
 	open ( my $fh, '<', $path );
