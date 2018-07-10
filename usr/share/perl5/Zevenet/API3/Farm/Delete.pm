@@ -27,9 +27,7 @@ sub delete_farm # ( $farmname )
 {
 	my $farmname = shift;
 
-	my $newffile = &getFarmFile( $farmname );
-
-	if ( $newffile eq '-1' )
+	unless ( &getFarmExists( $farmname ) )
 	{
 		&zenlog(
 			 "Error, trying to delete the farm $farmname, the farm name doesn't exist.", "error", "FARMS"
