@@ -32,14 +32,13 @@ sub getAllFarmStats
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
 
-	my @files = &getFarmList();
+	my @farm_names = &getFarmNameList();
 	my @farms;
 
 	# FIXME: Verify stats are working with every type of farm
 
-	foreach my $file ( @files )
+	foreach my $name ( @farm_names )
 	{
-		my $name   = &getFarmName( $file );
 		my $type   = &getFarmType( $name );
 		my $status = &getFarmStatus( $name );
 		my $vip    = &getFarmVip( 'vip', $name );
@@ -83,7 +82,7 @@ sub farm_stats # ( $farmname )
 
 	require Zevenet::Farm::Core;
 
-	if ( !&getFarmFile( $farmname ) )
+	unless ( &getFarmExists( $farmname ) )
 	{
 		$errormsg = "The farmname $farmname does not exist.";
 		my $body = { description => $description, error  => "true", message => $errormsg };

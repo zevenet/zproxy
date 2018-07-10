@@ -34,7 +34,6 @@ sub delete_farm # ( $farmname )
 	my $farmname = shift;
 
 	my $desc = "Delete farm $farmname";
-	my $newffile = &getFarmFile( $farmname );
 
 	unless ( &getFarmExists( $farmname ) )
 	{
