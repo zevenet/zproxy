@@ -335,4 +335,40 @@ sub setBLUnlockConfigFile
 	&unlockfile( $lock_fd );
 }
 
+sub getBLAllLists
+{
+	require Config::Tiny;
+	require Zevenet::Config;
+
+	my @lists;    # Output
+
+	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
+	my $ipset          = &getGlobalConfiguration( 'ipset' );
+	my %all_bl         = %{ Config::Tiny->read( $blacklistsConf ) };
+
+	delete $all_bl{ _ };
+
+	foreach my $list_name ( sort keys %all_bl )
+	{
+		my $bl        = $all_bl{ $list_name };
+		my $bl_status = $bl->{ status };
+		my @bl_farms  = split ( ' ', $bl->{ farms } );
+
+		$bl_status = "down" if ( !$bl_status );
+
+		my %listHash = (
+						 name    => $list_name,
+						 farms   => ( @bl_farms ) ? \@bl_farms : [],
+						 policy  => $bl->{ policy },
+						 type    => $bl->{ type },
+						 status  => $bl_status,
+						 preload => $bl->{ preload },
+		);
+
+		push @lists, \%listHash;
+	}
+
+	return \@lists;
+}
+
 1;

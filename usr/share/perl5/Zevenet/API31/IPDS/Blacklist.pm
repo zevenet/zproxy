@@ -26,36 +26,12 @@ include 'Zevenet::IPDS::Blacklist::Core';
 # GET /ipds/blacklists
 sub get_blacklists_all_lists
 {
-	require Config::Tiny;
+	my $desc = "List the available blacklists";
 
-	my $desc           = "List the available blacklists";
-	my $blacklistsConf = &getGlobalConfiguration( 'blacklistsConf' );
-	my $ipset          = &getGlobalConfiguration( 'ipset' );
-	my %bl             = %{ Config::Tiny->read( $blacklistsConf ) };
-	my @lists;
-	delete $bl{ _ };
+	my $lists_ref = &getBLAllLists();
+	my $body = { description => $desc, params => $lists_ref };
 
-	foreach my $list_name ( sort keys %bl )
-	{
-		my $bl_n   = $bl{ $list_name };
-		my @farms  = split ( ' ', $bl_n->{ farms } );
-		my $status = $bl_n->{ status };
-		$status = "down" if ( !$status );
-
-		my %listHash = (
-						 name    => $list_name,
-						 farms   => ( @farms ) ? \@farms : [],
-						 policy  => $bl_n->{ policy },
-						 type    => $bl_n->{ type },
-						 status  => $status,
-						 preload => $bl_n->{ preload },
-		);
-
-		push @lists, \%listHash;
-	}
-
-	return &httpResponse(
-				 { code => 200, body => { description => $desc, params => \@lists } } );
+	return &httpResponse( { code => 200, body => $body } );
 }
 
 #GET /ipds/blacklists/<listname>
