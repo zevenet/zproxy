@@ -103,7 +103,10 @@ sub saveFileHandler
 	}
 
 	binmode $fh;
-	print $fh <$content_fh>;
+	while ( my $line = <$content_fh> )
+	{
+		print $fh $line;
+	}
 
 	unless ( close $fh )
 	{
@@ -112,6 +115,15 @@ sub saveFileHandler
 	}
 
 	return 1;
+}
+
+sub getFilenameFromPath
+{
+	my $path = shift;
+
+	my @path_parts = split ( /\\/, $path );
+
+	return $path_parts[-1];
 }
 
 1;
