@@ -10,7 +10,7 @@
 
 //Log initilization
 std::mutex Debug::log_lock;
-int Debug::log_level = 5;
+int Debug::log_level = 8;
 int Debug::log_facility = -1;
 
 void cleanExit() { closelog(); }

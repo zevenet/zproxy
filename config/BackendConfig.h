@@ -21,6 +21,7 @@ enum BACKEND_TYPE {
 
 class Backend {
  public:
+  Backend() {}
   BACKEND_TYPE backend_type;
   BackendConfig &backend_config;
   int std_dvt;

@@ -13,7 +13,7 @@
 
 class Service {
 
-  std::vector<Backend> backend_set;
+  std::vector<Backend *> backend_set;
  public:
 
   bool disabled;
