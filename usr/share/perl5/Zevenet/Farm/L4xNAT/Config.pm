@@ -43,7 +43,7 @@ sub getL4FarmsPorts    # ($protocol)
 	my $protocol = shift;
 
 	my @port_list = ();
-	my @farms     = &getFarmsByType();
+	my @farms     = &getFarmsByType( 'l4xnat' );
 
 	unless ( $#farms > -1 )
 	{
