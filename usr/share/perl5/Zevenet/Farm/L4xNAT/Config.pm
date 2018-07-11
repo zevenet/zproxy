@@ -1418,7 +1418,7 @@ sub reloadL4FarmsSNAT
 	require Zevenet::Farm::Base;
 	require Zevenet::Netfilter;
 
-	for my $farm_name ( &getFarmsByType() )
+	for my $farm_name ( &getFarmsByType( 'l4xnat' ) )
 	{
 		next if &getFarmStatus( $farm_name ) ne 'up';
 
