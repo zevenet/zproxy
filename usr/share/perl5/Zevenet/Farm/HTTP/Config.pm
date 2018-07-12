@@ -29,7 +29,7 @@ my $configdir = &getGlobalConfiguration('configdir');
 =begin nd
 Function: lockHTTPFile
 
-	Lock the configuration file for a http farm. To unlock the file, use the function unlockfile()
+	Locks the configuration file for a http farm.
 
 Parameters:
 	farmname - Farm name

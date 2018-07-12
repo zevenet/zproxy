@@ -330,7 +330,7 @@ sub getFarmLock    # ($farm_name)
 
 	if ( -e $lockfile )
 	{
-		open( my $fh, '<', $lockfile );
+		my $fh = &openlock( $lockfile, 'r' );
 		read $fh, $output, 255;
 		close $fh;
 	}
@@ -366,7 +366,7 @@ sub setFarmLock    # ($farm_name, $status, $msg)
 
 	if ( $status eq "on" && $lockstatus == -1 )
 	{
-		open my $fh, '>', $lockfile;
+		my $fh = &openlock( $lockfile, 'w' );
 		print $fh "$msg";
 		close $fh;
 	}

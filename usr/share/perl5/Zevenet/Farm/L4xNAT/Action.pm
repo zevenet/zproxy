@@ -147,13 +147,7 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration( 'iptlock' );
-	open ( my $ipt_lockfile, '>', $iptlock );
-
-	unless ( $ipt_lockfile )
-	{
-		&zenlog( "Could not open $iptlock: $!", "warning", "LSLB" );
-		return 1;
-	}
+	my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 	for my $table ( qw(t_mangle_p t_mangle t_nat t_snat) )
 	{
@@ -162,7 +156,6 @@ sub _runL4FarmStart    # ($farm_name,$writeconf)
 	}
 
 	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
 	close $ipt_lockfile;
 
 	# Enable IP forwarding
@@ -206,6 +199,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 {
 	my ( $farm_name, $writeconf ) = @_;
 
+	require Zevenet::Lock;
 	require Zevenet::Net::Util;
 	require Zevenet::Farm::L4xNAT::Config;
 
@@ -232,16 +226,7 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration( 'iptlock' );
-	open ( my $ipt_lockfile, '>', $iptlock );
-
-	unless ( $ipt_lockfile )
-	{
-		&zenlog( "Could not open $iptlock: $!", "warning", "LSLB" );
-		return 1;
-	}
-
-	require Zevenet::Netfilter;
-	&setIptLock( $ipt_lockfile );
+	my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 	# Disable rules
 	my @allrules;
@@ -262,7 +247,6 @@ sub _runL4FarmStop    # ($farm_name,$writeconf)
 					   @allrules );
 
 	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
 	close $ipt_lockfile;
 
 	# Disable active l4xnat file

@@ -535,14 +535,8 @@ sub setIptConnmarkRestore
 	my $return_code = -1;       # return value
 
 	## lock iptables use ##
-	my $iptlock = &getGlobalConfiguration('iptlock');
-	open ( my $ipt_lockfile, '>', $iptlock );
-
-	unless ( $ipt_lockfile )
-	{
-		&zenlog("Could not open $iptlock: $!", "error", "SYSTEM");
-		return 1;
-	}
+	my $iptlock = &getGlobalConfiguration( 'iptlock' );
+	my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 	my $rule = &getIptStringConnmarkRestore( $farm_name );
 	my $restore_on = ( &runIptables( &applyIptRuleAction( $rule, 'check' ) ) == 0 );
@@ -562,7 +556,6 @@ sub setIptConnmarkRestore
 	}
 
 	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
 	close $ipt_lockfile;
 
 	return $return_code;
@@ -578,13 +571,7 @@ sub setIptConnmarkSave
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration('iptlock');
-	open ( my $ipt_lockfile, '>', $iptlock );
-
-	unless ( $ipt_lockfile )
-	{
-		&zenlog("Could not open $iptlock: $!", "error", "SYSTEM");
-		return 1;
-	}
+	my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 	my $rule = &getIptStringConnmarkSave( $farm_name );
 	my $restore_on = ( &runIptables( &applyIptRuleAction( $rule, 'check' ) ) == 0 );
@@ -604,7 +591,6 @@ sub setIptConnmarkSave
 	}
 
 	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
 	close $ipt_lockfile;
 
 	return $return_code;
@@ -694,12 +680,14 @@ sub getIptRuleNumber
 	}
 
 	## lock iptables use ##
-	my $iptlock = &getGlobalConfiguration('iptlock');
-	open my $ipt_lockfile, '>', $iptlock;
-	&setIptLock( $ipt_lockfile );
+	my $iptlock = &getGlobalConfiguration( 'iptlock' );
+	my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 	# pick rule by farm and optionally server id
 	my @rules = grep { /$filter/ } `$ipt_cmd`;
+
+	## unlock iptables use ##
+	close $ipt_lockfile;
 
 	if ( !@rules && &debug() )
 	{
@@ -710,10 +698,6 @@ sub getIptRuleNumber
 		&zlog( "filter:$filter iptables command:$ipt_cmd" );
 		&zlog( "rules:@rules" );
 	}
-
-	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
-	close $ipt_lockfile;
 
 	chomp ( @rules );
 
@@ -813,13 +797,11 @@ sub getIptRuleInsert
 
 			## lock iptables use ##
 			my $iptlock = &getGlobalConfiguration('iptlock');
-			open my $ipt_lockfile, '>', $iptlock;
-			&setIptLock( $ipt_lockfile );
+			my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 			my @rule_list = `$iptables_bin -n --line-number --table $table --list $chain`;
 
 			## unlock iptables use ##
-			&setIptUnlock( $ipt_lockfile );
 			close $ipt_lockfile;
 
 			$rule_max_position = ( scalar @rule_list ) - 1;
@@ -965,37 +947,6 @@ sub getBinVersion    # ($farm_name)
 	return $binary;
 }
 
-#lock iptables
-sub setIptLock    # ($lockfile)
-{
-	my $ipt_lockfile = shift;
-	require Zevenet::Debug;
-
-	if ( flock ( $ipt_lockfile, LOCK_EX ) )
-	{
-		&zenlog( "Success locking IPTABLES", "debug", "SYSTEM" ) if &debug == 3;
-	}
-	else
-	{
-		&zenlog( "Cannot lock iptables: $!", "error", "SYSTEM" );
-	}
-}
-
-#unlock iptables
-sub setIptUnlock    # ($lockfile)
-{
-	my $ipt_lockfile = shift;
-
-	if ( flock ( $ipt_lockfile, LOCK_UN ) )
-	{
-		&zenlog( "Success unlocking IPTABLES", "debug", "SYSTEM" ) if &debug == 3;
-	}
-	else
-	{
-		&zenlog( "Cannot unlock iptables: $!", "error", "SYSTEM" );
-	}
-}
-
 # log and run the command string input parameter returning execution error code
 sub iptSystem
 {
@@ -1008,25 +959,12 @@ sub iptSystem
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration('iptlock');
-	my $open_rc = open ( my $ipt_lockfile, '>', $iptlock );
-
-	if ( $open_rc )
-	{
-		&setIptLock( $ipt_lockfile );
-	}
-	else
-	{
-		&zenlog( $program . "Cannot open $iptlock: $!", "error", "SYSTEM" );
-	}
+	my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 	$return_code = system ( "$command >/dev/null 2>&1" );    # run
 
 	## unlock iptables use ##
-	if ( $open_rc )
-	{
-		&setIptUnlock( $ipt_lockfile );
-		close $ipt_lockfile;
-	}
+	close $ipt_lockfile;
 
 	if ( $return_code )
 	{

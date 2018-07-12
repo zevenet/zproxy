@@ -30,10 +30,10 @@ Function: getIPDSChain
 
 Parameters:
 	Module - It is a IPDS module. The possible values are "blacklist", "whitelist", "dos" or "rbl"
-				
+
 Returns:
 	String - Name for the chain of a IPDS module
-	
+
 =cut
 
 sub getIPDSChain
@@ -56,9 +56,9 @@ sub getIPDSChain
         Obtein IPv4 iptables rules for a couple table-chain
 
         Parameters:
-				table - 
-				chain - 
-				
+				table -
+				chain -
+
         Returns:
 				== 0	- don't find any rule
              @out	- Array with rules
@@ -79,14 +79,12 @@ sub getIptListV4
 	  . " $table -L $chain -n -v --line-numbers 2>/dev/null";
 
 	## lock iptables use ##
-	open my $ipt_lockfile, '>', $iptlock;
-	&setIptLock( $ipt_lockfile );
+	my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 	my @ipt_output = `$iptables_command`;
 	&zenlog( "failed: $iptables_command", "error", "IPDS" ) if $?;
 
 	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
 	close $ipt_lockfile;
 
 	return @ipt_output;

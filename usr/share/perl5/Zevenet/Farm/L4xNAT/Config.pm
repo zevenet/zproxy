@@ -316,8 +316,8 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 	if ( $$farm{ status } eq 'up' )
 	{
 		require Zevenet::Netfilter;
-		my @rules;
 
+		my @rules;
 		my $prio_server = &getL4ServerWithLowestPriority( $farm );
 
 		foreach my $server ( @{ $$farm{ servers } } )
@@ -402,11 +402,11 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 		}
 		elsif ( -e $l4sd_pidfile )
 		{
-			require Zevenet::Netfilter;
+			require Zevenet::Lock;
+
 			## lock iptables use ##
 			my $iptlock = &getGlobalConfiguration( 'iptlock' );
-			open my $ipt_lockfile, '>', $iptlock;
-			&setIptLock( $ipt_lockfile );
+			my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 			# Get the binary of iptables (iptables or ip6tables)
 			my $iptables_bin = &getBinVersion( $farm_name );
@@ -415,7 +415,6 @@ sub setL4FarmAlgorithm    # ($algorithm,$farm_name)
 			  `$iptables_bin --numeric --table mangle --list PREROUTING`;
 
 			## unlock iptables use ##
-			&setIptUnlock( $ipt_lockfile );
 			close $ipt_lockfile;
 
 			if ( $num_lines == 0 )
@@ -1307,13 +1306,7 @@ sub refreshL4FarmRules    # AlgorithmRules
 
 	## lock iptables use ##
 	my $iptlock = &getGlobalConfiguration( 'iptlock' );
-	open ( my $ipt_lockfile, '>', $iptlock );
-
-	unless ( $ipt_lockfile )
-	{
-		&zenlog( "Could not open $iptlock: $!", "warning", "LSLB" );
-		return 1;
-	}
+	my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 	# get new rules
 	foreach my $server ( @{ $$farm{ servers } } )
@@ -1387,7 +1380,6 @@ sub refreshL4FarmRules    # AlgorithmRules
 	}
 
 	## unlock iptables use ##
-	&setIptUnlock( $ipt_lockfile );
 	close $ipt_lockfile;
 
 	&reloadL4FarmLogsRule( $$farm{ name } );
