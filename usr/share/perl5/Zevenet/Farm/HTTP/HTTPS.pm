@@ -86,15 +86,13 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 	my ( $cfile, $farm_name ) = @_;
 
 	require Tie::File;
+	require Zevenet::Farm::HTTP::Config;
 
 	my $farm_filename = &getFarmFile( $farm_name );
+	my $lock_fh       = &lockHTTPFile( $farm_name );
 	my $output        = -1;
 
 	&zenlog( "Setting 'Certificate $cfile' for $farm_name farm https", "info", "LSLB" );
-
-	# lock file
-	require Zevenet::Farm::HTTP::Config;
-	my $lock_fh = &lockHTTPFile( $farm_name );
 
 	tie my @array, 'Tie::File', "$configdir/$farm_filename";
 	for ( @array )
@@ -106,8 +104,7 @@ sub setFarmCertificate    # ($cfile,$farm_name)
 		}
 	}
 	untie @array;
-
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 
 	return $output;
 }
@@ -132,14 +129,12 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 	my $ciphers   = shift;
 	my $cipherc   = shift;
 
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $output        = -1;
-
 	require Tie::File;
-
-	# lock file
 	require Zevenet::Farm::HTTP::Config;
-	my $lock_fh = &lockHTTPFile( $farm_name );
+
+	my $farm_filename = &getFarmFile( $farm_name );
+	my $lock_fh       = &lockHTTPFile( $farm_name );
+	my $output        = -1;
 
 	tie my @array, 'Tie::File', "$configdir/$farm_filename";
 
@@ -185,9 +180,9 @@ sub setFarmCipherList    # ($farm_name,$ciphers,$cipherc)
 
 		last;
 	}
-	untie @array;
 
-	&unlockfile( $lock_fh );
+	untie @array;
+	close $lock_fh;
 
 	return $output;
 }
@@ -321,13 +316,11 @@ sub setHTTPFarmDisableSSL    # ($farm_name, $protocol, $action )
 	my ( $farm_name, $protocol, $action ) = @_;
 
 	require Tie::File;
+	require Zevenet::Farm::HTTP::Config;
 
 	my $farm_filename = &getFarmFile( $farm_name );
+	my $lock_fh       = &lockHTTPFile( $farm_name );
 	my $output        = -1;
-
-	# lock file
-	require Zevenet::Farm::HTTP::Config;
-	my $lock_fh = &lockHTTPFile( $farm_name );
 
 	tie my @file, 'Tie::File', "$configdir/$farm_filename";
 
@@ -356,8 +349,7 @@ sub setHTTPFarmDisableSSL    # ($farm_name, $protocol, $action )
 	}
 
 	untie @file;
-
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 
 	return $output;
 }

@@ -84,67 +84,71 @@ sub unlockfile
 =begin nd
 Function: openlock
 
-	Open file with lock
+	Open file and lock it, return the filehandle.
 
 	Usage:
 
-		$filehandle = &openlock($mode, $expr);
-		$filehandle = &openlock($mode);
+		my $filehandle = &openlock( $path );
+		my $filehandle = &openlock( $path, 'r' );
 
-	Examples:
+	Lock is exclusive when the file is openend for writing.
+	Lock is shared when the file is openend for reading.
+	So only opening for writing is blocking the file for other uses.
 
-		$filehandle = &openlock(">>","output.txt");
-		$filehandle = &openlock("<$fichero");
+	Opening modes:
+		r - Read
+		w - Write
+		a - Append
+
+		t - text mode. To enforce encoding UTF-8.
+		b - binary mode. To make sure no information is lost.
+
+	'r', 'w' and 'a' are mutually exclusive.
+	't' and 'b' are mutually exclusive.
+
+	If neither 't' or 'b' are used on the mode parameter, the default Perl mode is used.
 
 Parameters:
+	path - Absolute or relative path to the file to be opened.
 	mode - Mode used to open the file.
-	expr - Path of file if 3 arguments open is used.
 
 Returns:
-	scalar - File handler.
-
-Bugs:
-	Not used yet.
+	scalar - Filehandle
 =cut
 
-sub openlock    # ($mode,$expr)
+sub openlock    # ( $path, $mode )
 {
-	my ( $mode, $expr ) = @_;    #parameters
-	my $filehandle;
+	my $path = shift;
+	my $mode = shift;
 
-	if ( $expr ne "" )
-	{                            #3 parameters
-		if ( $mode =~ /</ )
-		{                        #only reading
-			open ( $filehandle, $mode, $expr )
-			  || die "some problems happened reading the file $expr\n";
-			flock $filehandle, LOCK_SH
-			  ; #other scripts with LOCK_SH can read the file. Writing scripts with LOCK_EX will be locked
-		}
-		elsif ( $mode =~ />/ )
-		{       #only writing
-			open ( $filehandle, $mode, $expr )
-			  || die "some problems happened writing the file $expr\n";
-			flock $filehandle, LOCK_EX;    #other scripts cannot open the file
-		}
+	$mode ~= s/a/>>/;	# append
+	$mode ~= s/w/>/;	# write
+	$mode ~= s/r/</;	# read
+
+	my $binmode  = $mode ~= s/b//;
+	my $textmode = $mode ~= s/t//;
+
+	my $encoding = '';
+	$encoding = ":encoding(UTF-8)" if $textmode;
+	$encoding = ":raw :bytes"      if $binmode;
+
+	open ( my $fh, "$mode $encoding", $path ) || die "Could not open '$path': $!";
+
+	binmode $fh if $fh && $binmode;
+
+	if ( $mode =~ />/ )
+	{
+		# exclusive lock for writing
+		flock $fh, LOCK_EX;
 	}
+	#~ elsif ( $mode =~ /</ )
 	else
-	{                                      #2 parameters
-		if ( $mode =~ /</ )
-		{                                  #only reading
-			open ( $filehandle, $mode )
-			  || die "some problems happened reading the filehandle $filehandle\n";
-			flock $filehandle, LOCK_SH
-			  ; #other scripts with LOCK_SH can read the file. Writing scripts with LOCK_EX will be locked
-		}
-		elsif ( $mode =~ />/ )
-		{       #only writing
-			open ( $filehandle, $mode )
-			  || die "some problems happened writing the filehandle $filehandle\n";
-			flock $filehandle, LOCK_EX;    #other scripts cannot open the file
-		}
+	{
+		# shared lock for reading
+		flock $fh, LOCK_SH;
 	}
-	return $filehandle;
+
+	return $fh;
 }
 
 =begin nd

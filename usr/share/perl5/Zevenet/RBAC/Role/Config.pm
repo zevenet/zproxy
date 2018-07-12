@@ -193,7 +193,7 @@ sub setRBACRoleConfigFile
 
 	my $rbacRoleFileConfig = &getRBACRoleFile( $role );
 	my $lockfile           = "/tmp/rbac_role_$role.lock";
-	my $lh                 = &lockfile( $lockfile );
+	my $lh                 = &openlock( $lockfile, 'w' );
 	my $fileHandle         = Config::Tiny->read( $rbacRoleFileConfig );
 
 	# save all struct
@@ -208,7 +208,7 @@ sub setRBACRoleConfigFile
 		}
 	}
 	$fileHandle->write( $rbacRoleFileConfig );
-	&unlockfile( $lh );
+	close $lh;
 }
 
 1;

@@ -326,7 +326,7 @@ LogLevel	$params->{'log_level'}
 	# save file
 	my $fh;
 	my $filename = &getRBLPacketblConfig( $rule );
-	$fh = &openlock( '>', $filename );
+	$fh = &openlock( $filename, 'w' );
 
 	unless ( $fh )
 	{
@@ -335,7 +335,7 @@ LogLevel	$params->{'log_level'}
 	}
 
 	print $fh $fileContent;
-	&closelock( $fh );
+	close $fh;
 
 	return $error;
 }

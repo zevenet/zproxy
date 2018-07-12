@@ -73,9 +73,9 @@ sub _runHTTPFarmStart    # ($farm_name)
 			require Tie::File;
 			tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
 			@configfile = grep !/^\#down/, @configfile;
-			untie @configfile;
 
-			&unlockfile ( $lock_fh );
+			untie @configfile;
+			close $lock_fh;
 		}
 	}
 	else

@@ -656,11 +656,11 @@ sub setDOSApplyRule
 		$fileHandle = Config::Tiny->read( $confFile );
 		$fileHandle->{ $ruleName }->{ 'farms' } = "$farmList $farmName";
 		$fileHandle->write( $confFile );
-		&setDOSUnlockConfigFile( $lock );
+		close $lock;
 	}
 	else
 	{
-		&setDOSUnlockConfigFile( $lock );
+		close $lock;
 		&zenlog( "Rule $ruleName already is applied", "warning", "IPDS" );
 		return 0;
 	}
@@ -720,7 +720,7 @@ sub setDOSUnsetRule
 		}
 		$fileHandle->write( $confFile );
 
-		&setDOSUnlockConfigFile( $lock );
+		close $lock;
 	}
 
 	return $output;

@@ -152,7 +152,7 @@ sub addRBLCreateObjectRule
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 	$fileHandle->{ $rule } = $params;
 	$fileHandle->write( $rblConfigFile );
-	&setRBLUnlockConfigFile( $lock );
+	close $lock;
 
 	&zenlog( "The RBL rule \"$rule\" was successfully created." );
 
@@ -213,7 +213,7 @@ sub setRBLObjectRuleParam
 	}
 
 	$fileHandle->write( $rblConfigFile );
-	&setRBLUnlockConfigFile( $lock );
+	close $lock;
 
 	return 0;
 }
@@ -344,7 +344,7 @@ sub addRBLCopyObjectRule
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 	$fileHandle->{ $newrule } = $params;
 	$fileHandle->write( $rblConfigFile );
-	&setRBLUnlockConfigFile( $lock );
+	close $lock;
 
 	return 0;
 }
@@ -522,7 +522,7 @@ sub delRBLDeleteObjectRule
 	my $fileHandle = Config::Tiny->read( $rblConfigFile );
 	delete $fileHandle->{ $rule };
 	$fileHandle->write( $rblConfigFile );
-	&setRBLUnlockConfigFile( $lock );
+	close $lock;
 
 	# Remove packetbl config file
 	my $config_file = &getRBLPacketblConfig( $rule );

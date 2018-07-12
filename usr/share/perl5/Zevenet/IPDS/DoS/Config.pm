@@ -236,7 +236,7 @@ sub createDOSRule
 
 	if ( exists $fileHandle->{ $ruleName } )
 	{
-		&setDOSUnlockConfigFile( $lock );
+		close $lock;
 		&zenlog( "$ruleName rule already exists.", "warning", "IPDS" );
 		return -1;
 	}
@@ -249,7 +249,7 @@ sub createDOSRule
 		$fileHandle->{ $ruleName }->{ 'name' } = $ruleName;
 	}
 	$fileHandle->write( $confFile );
-	&setDOSUnlockConfigFile( $lock );
+	close $lock;
 
 	&zenlog( "$ruleName rule created successful.", "info", "IPDS" );
 	return 0;
@@ -280,14 +280,14 @@ sub deleteDOSRule
 
 	if ( !exists $fileHandle->{ $name } )
 	{
-		&setDOSUnlockConfigFile( $lock );
+		close $lock;
 		&zenlog( "$name rule doesn't exist.", "warning", "IPDS" );
 		return -1;
 	}
 
 	delete $fileHandle->{ $name };
 	$fileHandle->write( $confFile );
-	&setDOSUnlockConfigFile( $lock );
+	close $lock;
 
 	return 0;
 }

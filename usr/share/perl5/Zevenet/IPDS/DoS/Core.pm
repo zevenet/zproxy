@@ -256,15 +256,14 @@ sub setDOSLockConfigFile
 
 	my $lockfile = "/tmp/dos.lock";
 
-	return &lockfile( $lockfile );
+	return &openlock( $lockfile, 'w' );
 }
 
 sub setDOSUnlockConfigFile
 {
 	my $lock_fd = shift;
 
-	require Zevenet::Lock;
-	&unlockfile( $lock_fd );
+	close $lock_fd;
 }
 
 1;

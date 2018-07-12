@@ -41,9 +41,12 @@ Returns:
 sub lockHTTPFile
 {
 	my $farm = shift;
+
 	require Zevenet::Lock;
+
 	my $lock_file = "/tmp/$farm.open";
-	return &lockfile( $lock_file );
+
+	return &openlock( $lock_file, 'w' );
 }
 
 =begin nd
@@ -88,8 +91,9 @@ sub setFarmClientTimeout    # ($client,$farm_name)
 			$found              = "true";
 		}
 	}
+
 	untie @filefarmhttp;
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 
 	return $output;
 }
@@ -218,8 +222,9 @@ sub setHTTPFarmSessionType    # ($session,$farm_name)
 			}
 		}
 	}
+
 	untie @contents;
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 
 	return $output;
 }
@@ -265,8 +270,9 @@ sub setHTTPFarmBlacklistTime    # ($blacklist_time,$farm_name)
 			$found              = "true";
 		}
 	}
+
 	untie @filefarmhttp;
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 
 	return $output;
 }
@@ -350,8 +356,9 @@ sub setFarmHttpVerb    # ($verb,$farm_name)
 			$found              = "true";
 		}
 	}
+
 	untie @filefarmhttp;
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 
 	return $output;
 }
@@ -381,9 +388,9 @@ sub getFarmHttpVerb    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	open FR, "<$configdir\/$farm_filename";
-	my @file = <FR>;
-	close FR;
+	open $fh, '<', "$configdir\/$farm_filename";
+	my @file = <$fh>;
+	close $fh;
 
 	foreach my $line ( @file )
 	{
@@ -543,10 +550,10 @@ sub setFarmListen    # ( $farm_name, $farmlisten )
 		{
 			$found = "true";
 		}
-
 	}
+
 	untie @filefarmhttp;
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 }
 
 =begin nd
@@ -592,7 +599,7 @@ sub setFarmRewriteL    # ($farm_name,$rewritelocation)
 	}
 
 	untie @filefarmhttp;
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 }
 
 =begin nd
@@ -671,8 +678,9 @@ sub setFarmConnTO    # ($tout,$farm_name)
 			$found              = "true";
 		}
 	}
+
 	untie @filefarmhttp;
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 
 	return $output;
 }
@@ -751,8 +759,9 @@ sub setHTTPFarmTimeout    # ($timeout,$farm_name)
 			$found              = "true";
 		}
 	}
+
 	untie @filefarmhttp;
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 
 	return $output;
 }
@@ -830,8 +839,9 @@ sub setHTTPFarmMaxClientTime    # ($track,$farm_name)
 			$found              = "true";
 		}
 	}
+
 	untie @filefarmhttp;
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 
 	return $output;
 }
@@ -934,7 +944,7 @@ sub setFarmErr    # ($farm_name,$content,$nerr)
 		}
 
 		close FO;
-		&unlockfile( $lock_fh );
+		close $lock_fh;
 	}
 
 	return $output;
@@ -1222,8 +1232,9 @@ sub setHTTPFarmVirtualConf    # ($vip,$vip_port,$farm_name)
 			$enter--;
 		}
 	}
+
 	untie @array;
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 
 	return $stat;
 }

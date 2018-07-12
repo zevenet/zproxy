@@ -76,8 +76,8 @@ sub setConfigTiny
 
 	if ( ! -f $file_path )
 	{
-		&zenlog("Could not find $file_path: $!", "error", "SYSTEM");
-		return undef;
+		&zenlog("Could not find $file_path.", "error", "SYSTEM");
+		return;
 	}
 
 	if ( ref $config_ref ne 'Config::Tiny' )

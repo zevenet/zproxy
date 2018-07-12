@@ -49,7 +49,7 @@ sub setRBACUserLockConfigFile
 	require Zevenet::Lock;
 
 	my $lockfile = "/tmp/rbac_users.lock";
-	return &lockfile( $lockfile );
+	return &openlock( $lockfile, 'w' );
 }
 
 =begin nd
@@ -69,8 +69,7 @@ sub setRBACUserUnlockConfigFile
 {
 	my $lock_fd = shift;
 
-	require Zevenet::Lock;
-	&unlockfile( $lock_fd );
+	close $lock_fd;
 }
 
 =begin nd
@@ -110,7 +109,7 @@ sub setRBACUserConfigFile
 		$fileHandle->{ $user }->{ $key } = $value;
 	}
 	$fileHandle->write( $rbacUserConfig );
-	&setRBACUserUnlockConfigFile( $lock );
+	close $lock;
 }
 
 =begin nd
@@ -191,7 +190,7 @@ sub delRBACUser
 		my $fileHandle = Config::Tiny->read( $rbacUserConfig );
 		delete $fileHandle->{ $user };
 		$fileHandle->write( $rbacUserConfig );
-		&setRBACUserUnlockConfigFile( $lock );
+		close $lock;
 	}
 
 	return $error;

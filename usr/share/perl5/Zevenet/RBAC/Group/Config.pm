@@ -49,7 +49,7 @@ sub setRBACGroupLockConfigFile
 	require Zevenet::Lock;
 
 	my $lockfile = "/tmp/rbac_groups.lock";
-	return &lockfile( $lockfile );
+	return &openlock( $lockfile, 'w' );
 }
 
 =begin nd
@@ -69,8 +69,7 @@ sub setRBACGroupUnlockConfigFile
 {
 	my $lock_fd = shift;
 
-	require Zevenet::Lock;
-	&unlockfile( $lock_fd );
+	close $lock_fd;
 }
 
 =begin nd
@@ -130,7 +129,7 @@ sub setRBACGroupConfigFile
 		}
 	}
 	$fileHandle->write( $rbacGroupConfig );
-	&setRBACGroupUnlockConfigFile( $lock );
+	close $lock;
 }
 
 =begin nd
@@ -196,7 +195,7 @@ sub delRBACGroup
 		my $fileHandle = Config::Tiny->read( $rbacGroupConfig );
 		delete $fileHandle->{ $group };
 		$fileHandle->write( $rbacGroupConfig );
-		&setRBACGroupUnlockConfigFile( $lock );
+		close $lock;
 	}
 
 	return $error;

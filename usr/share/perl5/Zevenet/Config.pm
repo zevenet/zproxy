@@ -254,7 +254,7 @@ sub setTinyObj
 
 	require Zevenet::Lock;
 	my $lock_file = &getLockFile( $path );
-	my $lock_fd   = &lockfile( $lock_file );
+	my $lock_fd   = &openlock( $lock_file, 'w' );
 
 	my $fileHandle = Config::Tiny->read( $path );
 
@@ -297,7 +297,7 @@ sub setTinyObj
 	}
 
 	my $success = $fileHandle->write( $path );
-	&unlockfile( $lock_fd );
+	close $lock_fd;
 
 	return ($success)? 0:1;
 }
@@ -323,13 +323,13 @@ sub delTinyObj
 
 	require Zevenet::Lock;
 	my $lock_file = &getLockFile( $path );
-	my $lock_fd   = &lockfile( $lock_file );
+	my $lock_fd   = &openlock( $lock_file, 'w' );
 
 	my $fileHandle = Config::Tiny->read( $path );
 	delete $fileHandle->{ $object };
 	my $error = $fileHandle->write( $path );
 
-	&unlockfile( $lock_fd );
+	close $lock_fd;
 
 	&zenlog( "Delete $object from $path", "debug2" );
 

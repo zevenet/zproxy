@@ -80,7 +80,7 @@ sub delAlias
 	}
 
 	require Zevenet::Lock;
-	my $lock       = &lockfile( $lockfile );
+	my $lock       = &openlock( $lockfile, 'w' );
 	my $fileHandle = Config::Tiny->read( $alias_file );
 
 	if ( exists $fileHandle->{ $type }->{ $ip } )
@@ -89,7 +89,7 @@ sub delAlias
 	}
 
 	$fileHandle->write( $alias_file );
-	&unlockfile( $lock );
+	close $lock;
 }
 
 # modify or create a nick
@@ -104,14 +104,14 @@ sub setAlias
 	}
 
 	require Zevenet::Lock;
-	my $lock       = &lockfile( $lockfile );
+	my $lock       = &openlock( $lockfile, 'w' );
 	my $fileHandle = Config::Tiny->read( $alias_file );
 
 	# save all struct
 	$fileHandle->{ $type }->{ $ip } = $alias;
 
 	$fileHandle->write( $alias_file );
-	&unlockfile( $lock );
+	close $lock;
 }
 
 1;

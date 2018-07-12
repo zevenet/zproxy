@@ -324,15 +324,14 @@ sub setBLLockConfigFile
 
 	my $lockfile = "/tmp/blacklist.lock";
 
-	return &lockfile( $lockfile );
+	return &openlock( $lockfile, 'w' );
 }
 
 sub setBLUnlockConfigFile
 {
 	my $lock_fd = shift;
 
-	require Zevenet::Lock;
-	&unlockfile( $lock_fd );
+	close $lock_fd;
 }
 
 sub getBLAllLists

@@ -89,7 +89,7 @@ sub setBLCreateList
 	}
 
 	$fileHandle->write( $blacklistsConf );
-	&setBLUnlockConfigFile( $lock );
+	close $lock;
 
 	# specific to remote lists
 	if ( $type eq 'remote' )
@@ -161,7 +161,7 @@ sub setBLDeleteList
 	$fileHandle = Config::Tiny->read( $blacklistsConf );
 	delete $fileHandle->{ $listName };
 	$fileHandle->write( $blacklistsConf );
-	&setBLUnlockConfigFile( $lock );
+	close $lock;
 
 	if ( -f "$blacklistsPath/$listName.txt" )
 	{
@@ -345,7 +345,7 @@ sub setBLParam
 			$fileHandle->{ $value } = $fileHandle->{ $name };
 			delete $fileHandle->{ $name };
 			$fileHandle->write( $blacklistsConf );
-			&setBLUnlockConfigFile( $lock );
+			close $lock;
 
 			return $output;
 		}
@@ -379,7 +379,7 @@ sub setBLParam
 			$fileHandle->write( $blacklistsConf );
 		}
 
-		&setBLUnlockConfigFile( $lock );
+		close $lock;
 	}
 	elsif ( 'farms-del' eq $key )
 	{
@@ -388,7 +388,7 @@ sub setBLParam
 		$conf       = $fileHandle->{ $name };
 		$fileHandle->{ $name }->{ 'farms' } =~ s/(^| )$value( |$)/ /;
 		$fileHandle->write( $blacklistsConf );
-		&setBLUnlockConfigFile( $lock );
+		close $lock;
 	}
 	elsif ( 'update_status' eq $key )
 	{
@@ -417,7 +417,7 @@ sub setBLParam
 			$fileHandle->{ $name }->{ $key } = $value;
 		}
 		$fileHandle->write( $blacklistsConf );
-		&setBLUnlockConfigFile( $lock );
+		close $lock;
 	}
 
 	# other value  of the file conf
@@ -427,7 +427,7 @@ sub setBLParam
 		$fileHandle = Config::Tiny->read( $blacklistsConf );
 		$fileHandle->{ $name }->{ $key } = $value;
 		$fileHandle->write( $blacklistsConf );
-		&setBLUnlockConfigFile( $lock );
+		close $lock;
 	}
 
 	return $output;
@@ -452,7 +452,7 @@ sub delBLParam
 		delete $fileHandle->{ $listName }->{ $key };
 		$fileHandle->write( $blacklistsConf );
 	}
-	&setBLUnlockConfigFile( $lock );
+	close $lock;
 }
 
 =begin nd

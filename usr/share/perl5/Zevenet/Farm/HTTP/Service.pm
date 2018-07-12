@@ -142,9 +142,9 @@ sub setFarmHTTPNewService    # ($farm_name,$service)
 			}
 			$i++;
 		}
-		untie @fileconf;
 
-		&unlockfile( $lock_fh );
+		untie @fileconf;
+		close $lock_fh;
 	}
 	else
 	{
@@ -227,9 +227,9 @@ sub deleteFarmService    # ($farm_name,$service)
 			$i--;
 		}
 	}
-	untie @fileconf;
 
-	&unlockfile( $lock_fh );
+	untie @fileconf;
+	close $lock_fh;
 
 	# delete service's backends  in status file
 	if ( $counter > -1 )
@@ -1063,9 +1063,9 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 			}
 		}
 	}
-	untie @fileconf;
 
-	&unlockfile( $lock_fh );
+	untie @fileconf;
+	close $lock_fh;
 
 	return $output;
 }

@@ -260,7 +260,7 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 		print FW "#down\n";
 		close FW;
 
-		&unlockfile( $lock_fh );
+		close $lock_fh;
 	}
 
 	return $status;

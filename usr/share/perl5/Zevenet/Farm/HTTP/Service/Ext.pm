@@ -546,11 +546,12 @@ sub moveService
 	my $req_index = shift;
 	my $out;
 
+	require Zevenet::Lock;
+
 	# lock file
 	my $farm_filename = &getFarmFile( $farm );
-	require Zevenet::Lock;
 	my $lock_file = "/tmp/$farm.lock";
-	my $lock_fh   = &lockfile( $lock_file );
+	my $lock_fh   = &openlock( $lock_file, 'w' );
 
 	# reduce a index if service was in a previuos position.
 	my $srv_index = &getFarmVSI( $farm, $srv );
@@ -589,7 +590,7 @@ sub moveService
 	untie @file;
 
 	# unlock file
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 
 	# move fg
 	&moveServiceFarmStatus( $farm, $srv, $req_index );

@@ -225,7 +225,7 @@ sub setHTTPFarmServer # ($ids,$rip,$port,$priority,$timeout,$farm_name,$service)
 		}
 	}
 	untie @contents;
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 
 	return $output;
 }
@@ -286,7 +286,7 @@ sub runHTTPFarmServerDelete    # ($ids,$farm_name,$service)
 	}
 	untie @contents;
 
-	&unlockfile( $lock_fh );
+	close $lock_fh;
 
 	if ( $output != -1 )
 	{
