@@ -56,7 +56,6 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	# validate farm profile
 	if ( $type eq "gslb" )
 	{
-		require Zevenet::ELoad;
 		&eload(
 				module => 'Zevenet::API32::Farm::GSLB',
 				func   => 'new_gslb_farm_service',
@@ -232,7 +231,6 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	# check if the farm profile gslb is supported
 	if ( $type eq "gslb" )
 	{
-		require Zevenet::ELoad;
 		&eload(
 				module => 'Zevenet::API32::Farm::GSLB',
 				func   => 'modify_gslb_service',
@@ -429,9 +427,9 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 			}
 
 			my $err = &eload(
-							  module   => 'Zevenet::Farm::HTTP::Service::Ext',
-							  func     => 'setHTTPServiceRedirectCode',
-							  args     => [$farmname, $service, $json_obj->{ redirect_code } ],
+							  module => 'Zevenet::Farm::HTTP::Service::Ext',
+							  func   => 'setHTTPServiceRedirectCode',
+							  args   => [$farmname, $service, $json_obj->{ redirect_code }],
 			);
 
 			if ( $err )
@@ -466,9 +464,9 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 			}
 
 			my $err = &eload(
-							  module   => 'Zevenet::Farm::HTTP::Service::Ext',
-							  func     => 'setHTTPServiceSTSStatus',
-							  args     => [$farmname, $service, $json_obj->{ sts_status } ],
+							  module => 'Zevenet::Farm::HTTP::Service::Ext',
+							  func   => 'setHTTPServiceSTSStatus',
+							  args   => [$farmname, $service, $json_obj->{ sts_status }],
 			);
 
 			if ( $err )
@@ -502,9 +500,9 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 			}
 
 			my $err = &eload(
-							  module   => 'Zevenet::Farm::HTTP::Service::Ext',
-							  func     => 'setHTTPServiceSTSTimeout',
-							  args     => [$farmname, $service, $json_obj->{ sts_timeout } ],
+							  module => 'Zevenet::Farm::HTTP::Service::Ext',
+							  func   => 'setHTTPServiceSTSTimeout',
+							  args   => [$farmname, $service, $json_obj->{ sts_timeout }],
 			);
 
 			if ( $err )

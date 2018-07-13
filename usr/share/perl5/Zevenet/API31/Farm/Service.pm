@@ -54,10 +54,13 @@ sub new_farm_service    # ( $json_obj, $farmname )
 	my $type = &getFarmType( $farmname );
 
 	# validate farm profile
-	if ( $type eq "gslb" )
+	if ( $type eq "gslb" && $eload )
 	{
-		require Zevenet::ELoad;
-		&eload( module => 'Zevenet::API31::Farm::GSLB', func => 'new_gslb_farm_service', args => [ $json_obj, $farmname ] );
+		&eload(
+				module => 'Zevenet::API31::Farm::GSLB',
+				func   => 'new_gslb_farm_service',
+				args   => [$json_obj, $farmname]
+		);
 	}
 	elsif ( $type !~ /^https?$/ )
 	{
@@ -225,10 +228,13 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 	}
 
 	# check if the farm profile gslb is supported
-	if ( $type eq "gslb" )
+	if ( $type eq "gslb" && $eload )
 	{
-		require Zevenet::ELoad;
-		&eload( module => 'Zevenet::API31::Farm::GSLB', func => 'modify_gslb_service', args => [ $json_obj, $farmname, $service ] );
+		&eload(
+				module => 'Zevenet::API31::Farm::GSLB',
+				func   => 'modify_gslb_service',
+				args   => [$json_obj, $farmname, $service]
+		);
 	}
 	elsif ( $type !~ /^https?$/ )
 	{

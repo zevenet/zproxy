@@ -286,9 +286,8 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 	# validate FARM TYPE
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq "gslb" )
+	if ( $type eq "gslb" && $eload )
 	{
-		require Zevenet::ELoad;
 		&eload(
 				module => 'Zevenet::API32::Farm::GSLB',
 				func   => 'new_gslb_service_backend',
@@ -484,9 +483,8 @@ sub service_backends
 
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq 'gslb' )
+	if ( $type eq 'gslb' && $eload )
 	{
-		require Zevenet::ELoad;
 		&eload(
 				module => 'Zevenet::API32::Farm::GSLB',
 				func   => 'list_gslb_service_backends',
@@ -785,9 +783,8 @@ sub modify_service_backends    #( $json_obj, $farmname, $service, $id_server )
 
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq "gslb" )
+	if ( $type eq "gslb" && $eload )
 	{
-		require Zevenet::ELoad;
 		&eload(
 				module => 'Zevenet::API32::Farm::GSLB',
 				func   => 'modify_gslb_service_backends',
@@ -1007,9 +1004,8 @@ sub delete_service_backend    # ( $farmname, $service, $id_server )
 	# validate FARM TYPE
 	my $type = &getFarmType( $farmname );
 
-	if ( $type eq 'gslb' )
+	if ( $type eq 'gslb' && $eload )
 	{
-		require Zevenet::ELoad;
 		&eload(
 				module => 'Zevenet::API32::Farm::GSLB',
 				func   => 'delete_gslb_service_backend',

@@ -171,7 +171,8 @@ sub farms_dslb    # ()
 sub farms_name_summary    # ( $farmname )
 {
 	my $farmname = shift;
-	my $desc     = "Show farm $farmname";
+
+	my $desc = "Show farm $farmname";
 
 	# Check if the farm exists
 	if ( ! &getFarmExists( $farmname ) )

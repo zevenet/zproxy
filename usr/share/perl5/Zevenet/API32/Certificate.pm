@@ -128,7 +128,6 @@ sub create_csr
 	}
 
 	$json_obj->{ name }         = &getCleanBlanc( $json_obj->{ name } );
-	#~ $json_obj->{ issuer }       = &getCleanBlanc( $json_obj->{ issuer } );
 	$json_obj->{ fqdn }         = &getCleanBlanc( $json_obj->{ fqdn } );
 	$json_obj->{ division }     = &getCleanBlanc( $json_obj->{ division } );
 	$json_obj->{ organization } = &getCleanBlanc( $json_obj->{ organization } );
@@ -138,7 +137,6 @@ sub create_csr
 	$json_obj->{ mail }         = &getCleanBlanc( $json_obj->{ mail } );
 
 	if (    $json_obj->{ name } =~ /^$/
-		 #~ || $json_obj->{ issuer } =~ /^$/
 		 || $json_obj->{ fqdn } =~ /^$/
 		 || $json_obj->{ division } =~ /^$/
 		 || $json_obj->{ organization } =~ /^$/
@@ -146,7 +144,6 @@ sub create_csr
 		 || $json_obj->{ state } =~ /^$/
 		 || $json_obj->{ country } =~ /^$/
 		 || $json_obj->{ mail } =~ /^$/
-		 #~ || $json_obj->{ key } =~ /^$/
 		 )
 	{
 		my $msg = "Fields can not be empty. Try again.";
