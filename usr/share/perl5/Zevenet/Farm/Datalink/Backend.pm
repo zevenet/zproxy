@@ -305,63 +305,6 @@ sub getDatalinkFarmBackendsStatus_old    # (@content)
 }
 
 =begin nd
-Function: setDatalinkFarmBackendStatus
-
-	Change backend status to up or down
-
-Parameters:
-	farmname - Farm name
-	backend - Backend id
-	status - Backend status, "up" or "down"
-
-Returns:
-	none - .
-
-FIXME:
-	Not return nothing, do error control
-
-=cut
-
-sub setDatalinkFarmBackendStatus    # ($farm_name,$index,$stat)
-{
-	my ( $farm_name, $index, $stat ) = @_;
-
-	require Tie::File;
-	require Zevenet::Farm::Base;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $fileid        = 0;
-	my $serverid      = 0;
-
-	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename";
-
-	foreach my $line ( @configfile )
-	{
-		if ( $line =~ /\;server\;/ )
-		{
-			if ( $serverid eq $index )
-			{
-				my @lineargs = split ( "\;", $line );
-				@lineargs[6] = $stat;
-				@configfile[$fileid] = join ( "\;", @lineargs );
-			}
-			$serverid++;
-		}
-		$fileid++;
-	}
-	untie @configfile;
-
-	# Apply changes online
-	if ( &getFarmStatus( $farm_name ) eq 'up' )
-	{
-		&runFarmStop( $farm_name, "true" );
-		&runFarmStart( $farm_name, "true" );
-	}
-
-	return;
-}
-
-=begin nd
 Function: getDatalinkFarmBackendStatusCtl
 
 	Return from datalink config file, all backends with theirs parameters and status
