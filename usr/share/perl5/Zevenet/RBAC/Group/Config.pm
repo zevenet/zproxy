@@ -53,26 +53,6 @@ sub setRBACGroupLockConfigFile
 }
 
 =begin nd
-Function: setRBACGroupUnlockConfigFile
-
-	Unlock the group configuration file
-
-Parameters:
-	Integer - Lock file identifier
-
-Returns:
-	None - .
-
-=cut
-
-sub setRBACGroupUnlockConfigFile
-{
-	my $lock_fd = shift;
-
-	close $lock_fd;
-}
-
-=begin nd
 Function: setRBACGroupConfigFile
 
 	Save a change in a config file.

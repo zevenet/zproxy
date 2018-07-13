@@ -322,41 +322,4 @@ sub getFarmBackendsClientsList    # ($farm_name,@content)
 	return @output;
 }
 
-=begin nd
-Function: setFarmBackendStatus
-
-	Set backend status for a farm
-
-Parameters:
-	farmname - Farm name
-	backend - Backend id
-	status - Backend status. The possible values are: "up" or "down"
-
-Returns:
-	Integer - 0 on success or other value on failure
-
-=cut
-sub setFarmBackendStatus    # ($farm_name,$index,$stat)
-{
-	my ( $farm_name, $index, $stat ) = @_;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	my $farm_type     = &getFarmType( $farm_name );
-
-	my $output = -1;
-
-	if ( $farm_type eq "datalink" )
-	{
-		require Zevenet::Farm::Datalink::Backend;
-		$output = &setDatalinkFarmBackendStatus( $farm_name, $index, $stat );
-	}
-	elsif ( $farm_type eq "l4xnat" )
-	{
-		require Zevenet::Farm::L4xNAT::Backend;
-		$output = &setL4FarmBackendStatus( $farm_name, $index, $stat );
-	}
-
-	return $output;
-}
-
 1;

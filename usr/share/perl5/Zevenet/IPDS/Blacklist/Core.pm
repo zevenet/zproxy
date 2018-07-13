@@ -327,13 +327,6 @@ sub setBLLockConfigFile
 	return &openlock( $lockfile, 'w' );
 }
 
-sub setBLUnlockConfigFile
-{
-	my $lock_fd = shift;
-
-	close $lock_fd;
-}
-
 sub getBLAllLists
 {
 	require Config::Tiny;

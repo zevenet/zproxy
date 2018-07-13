@@ -67,20 +67,6 @@ sub lockfile
 	return $lock_fd;
 }
 
-sub unlockfile
-{
-	my $lock_fd = shift;
-
-	if ( flock ( $lock_fd, LOCK_UN ) )
-	{
-		&zenlog( "Success unlocking IPTABLES", "info", "SYSTEM" ) if &debug == 3;
-	}
-	else
-	{
-		&zenlog( "Cannot unlock iptables: $!", "error", "SYSTEM" );
-	}
-}
-
 =begin nd
 Function: openlock
 
@@ -149,38 +135,6 @@ sub openlock    # ( $path, $mode )
 	}
 
 	return $fh;
-}
-
-=begin nd
-Function: closelock
-
-	Close file with lock
-
-	Usage:
-
-		&closelock($filehandle);
-
-	Examples:
-
-		&closelock(FILE);
-
-Parameters:
-	filehandle - reference to file handler.
-
-Returns:
-	none - .
-
-Bugs:
-	Not used yet.
-=cut
-
-sub closelock    # ($filehandle)
-{
-	my $filehandle = shift;
-
-	close ( $filehandle )
-	  || warn
-	  "some problems happened closing the filehandle $filehandle";    #close file
 }
 
 =begin nd

@@ -53,26 +53,6 @@ sub setRBACUserLockConfigFile
 }
 
 =begin nd
-Function: setRBACUserUnlockConfigFile
-
-	Unlock the user configuration file
-
-Parameters:
-	Integer - Lock file identifier
-
-Returns:
-	None - .
-
-=cut
-
-sub setRBACUserUnlockConfigFile
-{
-	my $lock_fd = shift;
-
-	close $lock_fd;
-}
-
-=begin nd
 Function: setRBACUserConfigFile
 
 	Save a change in a config file.

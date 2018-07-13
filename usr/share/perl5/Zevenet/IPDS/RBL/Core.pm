@@ -487,11 +487,4 @@ sub setRBLLockConfigFile
 	return &openlock( $lockfile, 'w' );
 }
 
-sub setRBLUnlockConfigFile
-{
-	my $lock_fd = shift;
-
-	close $lock_fd;
-}
-
 1;
