@@ -154,11 +154,9 @@ sub logAndRun    # ($command)
 
 	require Zevenet::Debug;
 
-	my $return_code;
-	my $program = $basename;
-
+	my $program     = $basename;
 	my @cmd_output  = `$command 2>&1`;
-	$return_code = $?;
+	my $return_code = $?;
 
 	if ( $return_code )
 	{
@@ -173,6 +171,44 @@ sub logAndRun    # ($command)
 
 	# returning error code from execution
 	return $return_code;
+}
+
+=begin nd
+Function: logAndRunBG
+
+	Non-blocking version of logging and running a command, returning execution error code.
+
+Parameters:
+	command - String with the command to be run.
+
+Returns:
+	boolean - true on error, false on success launching the command.
+=cut
+
+sub logAndRunBG    # ($command)
+{
+	my $command = shift;    # command string to log and run
+
+	require Zevenet::Debug;
+
+	my $program = $basename;
+
+	my $return_code = system("$command >/dev/null 2>&1 &");
+
+	if ( $return_code )
+	{
+		&zenlog( $program . " running: $command", "error", "SYSTEM" );
+		&zenlog( "last command failed!", "error", "SYSTEM" );
+	}
+	else
+	{
+		&zenlog( $program . " running: $command", "debug", "SYSTEM" );
+	}
+
+	# return_code is -1 on error.
+
+	# returns true on error launching the program, false on error launching the program
+	return $return_code == -1;
 }
 
 sub zdie
