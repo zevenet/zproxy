@@ -24,7 +24,6 @@
 use strict;
 
 use Data::Dumper;
-use Fcntl qw(:flock SEEK_END);
 
 my $eload;
 if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
