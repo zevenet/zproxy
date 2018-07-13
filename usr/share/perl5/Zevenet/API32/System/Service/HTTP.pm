@@ -111,7 +111,7 @@ sub set_http
 
 	&setHttpServerPort( $json_obj->{ 'port' } ) if ( exists $json_obj->{ 'port' } );
 	&setHttpServerIp( $httpIp ) if ( exists $json_obj->{ 'ip' } );
-	system( "/etc/init.d/cherokee restart > /dev/null &" );
+	&logAndRunBG( "/etc/init.d/cherokee restart" );
 
 	my $body = { description => $desc, params => $json_obj };
 
