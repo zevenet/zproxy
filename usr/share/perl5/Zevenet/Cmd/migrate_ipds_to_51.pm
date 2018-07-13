@@ -24,9 +24,8 @@
 use strict;
 use warnings;
 
-use Fcntl ':flock';
-
 use Zevenet::Core;
+use Zevenet::Lock;
 include 'Zevenet::IPDS::Blacklist';
 include 'Zevenet::IPDS::Base';
 
@@ -35,17 +34,9 @@ include 'Zevenet::IPDS::Base';
 
 #lock iptables
 my $iptlock = "/tmp/iptables.lock";
-my $open_rc = open ( my $ipt_lockfile, ">", $iptlock );
 my $program = 'migrate_ipds_to_51: ';
 
-if ( $open_rc )
-{
-	flock ( $ipt_lockfile, LOCK_EX )
-}
-else
-{
-	print( $program . "Cannot open $iptlock: $!" );
-}
+my $ipt_lockfile = &openlock( $iptlock, 'w' );
 
 my @setbox = (
 			   { chain => "PREROUTING", table => "raw" },
@@ -59,9 +50,9 @@ foreach my $point ( @setbox )
 	my $chain=$point->{ chain };
 	my $table=$point->{ table };
 
-	my @rules	= `iptables -L $chain -t $table --line-numbers 2>/dev/null`;
-	chomp (@rules);
-	my $size	= scalar @rules;
+	my @rules = `iptables -L $chain -t $table --line-numbers 2>/dev/null`;
+	chomp ( @rules );
+	my $size = scalar @rules;
 
 	# clean iptables rules
 	for ( ; $size >= 0 ; $size-- )
@@ -76,11 +67,7 @@ foreach my $point ( @setbox )
 }
 
 ## unlock iptables use ##
-if ( $open_rc )
-{
-	flock ( $ipt_lockfile, LOCK_UN );
-	close $ipt_lockfile;
-}
+close $ipt_lockfile;
 
 # remove ipset
 my @ipsets = `ipset list --name`;
