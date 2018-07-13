@@ -253,6 +253,7 @@ sub setTinyObj
 	&zenlog( "Modify $object from $path", "debug2" );
 
 	require Zevenet::Lock;
+
 	my $lock_file = &getLockFile( $path );
 	my $lock_fd   = &openlock( $lock_file, 'w' );
 
@@ -322,6 +323,7 @@ sub delTinyObj
 	my $object = shift;
 
 	require Zevenet::Lock;
+
 	my $lock_file = &getLockFile( $path );
 	my $lock_fd   = &openlock( $lock_file, 'w' );
 

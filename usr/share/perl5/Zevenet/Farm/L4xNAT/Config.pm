@@ -1293,6 +1293,7 @@ sub refreshL4FarmRules    # AlgorithmRules
 {
 	my $farm = shift;     # input: reference to farm structure
 
+	require Zevenet::Lock;
 	require Zevenet::Netfilter;
 
 	my $prio_server;

@@ -33,6 +33,7 @@ my $lockfile   = "/tmp/alias_file.lock";
 sub createAliasFile
 {
 	my $fh;
+
 	open ( $fh, '>', $alias_file );
 	print $fh "[backend]\n\n[interface]\n";
 	close $fh;
@@ -42,6 +43,7 @@ sub createAliasFile
 sub getAlias
 {
 	my ( $type, $name ) = @_;
+
 	my $out;
 
 	if ( !-f $alias_file )
@@ -74,12 +76,13 @@ sub delAlias
 	# ip is the interface ip or the backend ip
 	my ( $type, $ip ) = @_;
 
+	require Zevenet::Lock;
+
 	if ( !-f $alias_file )
 	{
 		&createAliasFile();
 	}
 
-	require Zevenet::Lock;
 	my $lock       = &openlock( $lockfile, 'w' );
 	my $fileHandle = Config::Tiny->read( $alias_file );
 
@@ -98,12 +101,13 @@ sub setAlias
 	# ip is the interface ip or the backend ip
 	my ( $type, $ip, $alias ) = @_;
 
+	require Zevenet::Lock;
+
 	if ( !-f $alias_file )
 	{
 		&createAliasFile();
 	}
 
-	require Zevenet::Lock;
 	my $lock       = &openlock( $lockfile, 'w' );
 	my $fileHandle = Config::Tiny->read( $alias_file );
 

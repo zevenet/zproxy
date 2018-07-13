@@ -68,6 +68,9 @@ sub getIPDSChain
 sub getIptListV4
 {
 	my ( $table, $chain ) = @_;
+
+	require Zevenet::Lock;
+
 	my $iptlock = &getGlobalConfiguration( 'iptlock' );
 
 	if ( $table ne '' )

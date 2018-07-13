@@ -330,6 +330,8 @@ sub getFarmLock    # ($farm_name)
 
 	if ( -e $lockfile )
 	{
+		require Zevenet::Lock;
+
 		my $fh = &openlock( $lockfile, 'r' );
 		read $fh, $output, 255;
 		close $fh;
@@ -366,6 +368,8 @@ sub setFarmLock    # ($farm_name, $status, $msg)
 
 	if ( $status eq "on" && $lockstatus == -1 )
 	{
+		require Zevenet::Lock;
+
 		my $fh = &openlock( $lockfile, 'w' );
 		print $fh "$msg";
 		close $fh;

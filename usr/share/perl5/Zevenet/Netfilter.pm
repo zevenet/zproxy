@@ -532,6 +532,8 @@ sub setIptConnmarkRestore
 	my $switch      = shift;    # 'true' or not true value
 	$switch ||= 'false';
 
+	require Zevenet::Lock;
+
 	my $return_code = -1;       # return value
 
 	## lock iptables use ##
@@ -566,6 +568,8 @@ sub setIptConnmarkSave
 	my $farm_name   = shift;    # farmname
 	my $switch      = shift;    # 'true' or not true value
 	$switch ||= 'false';
+
+	require Zevenet::Lock;
 
 	my $return_code = -1;       # return value
 
@@ -639,6 +643,8 @@ sub getIptRuleNumber
 		 $farm_name,    # farm name string
 		 $index         # backend index number. OPTIONAL
 	) = @_;
+
+	require Zevenet::Lock;
 
 	# debugging
 	( defined ( $rule ) && $rule ne '' )
@@ -775,6 +781,8 @@ sub getIptRuleInsert
 	my $server   = shift;    # input: server struc reference
 	my $rule     = shift;    # input: iptables rule string
 	my $rule_num = shift;    # input(optional): possition to insert the rule
+
+	require Zevenet::Lock;
 
 	my $farm_name = $$farm{ name };
 
@@ -951,6 +959,9 @@ sub getBinVersion    # ($farm_name)
 sub iptSystem
 {
 	my $command = shift;    # command string to log and run
+
+	require Zevenet::Lock;
+
 	my $return_code;
 
 	my $program = ( split '/', $0 )[-1];
