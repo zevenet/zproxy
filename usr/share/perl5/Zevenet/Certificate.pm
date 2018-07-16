@@ -633,25 +633,25 @@ sub getCertInfo    # ($certfile)
     return \%response;
 }
 
+# 2018-05-17 15:04:52 UTC
+# May 17 15:04:52 2018 GMT
+sub getDateEpoc
+{
+	my $date_string = shift @_;
+	my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+
+	my ( $year, $month, $day, $hours, $min, $sec ) = split /[ :-]+/, $date_string;
+
+	# the range of the month is from 0 to 11
+	$month--;
+	return timegm( $sec, $min, $hours, $day, $month, $year );
+}
+
 sub getCertDaysToExpire
 {
 	my ( $cert_ends ) = @_;
 
 	use Time::Local;
-
-	# 2018-05-17 15:04:52 UTC
-	# May 17 15:04:52 2018 GMT
-	sub getDateEpoc
-	{
-		my $date_string = shift @_;
-		my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-
-		my ( $year, $month, $day, $hours, $min, $sec ) = split /[ :-]+/, $date_string;
-
-		# the range of the month is from 0 to 11
-		$month--;
-		return timegm( $sec, $min, $hours, $day, $month, $year );
-	}
 
 	my $end = &getDateEpoc( $cert_ends );
 	my $days_left = ( $end - time () ) / 86400;

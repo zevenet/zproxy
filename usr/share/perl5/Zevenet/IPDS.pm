@@ -21,6 +21,8 @@
 #
 ###############################################################################
 
+use strict;
+
 include 'Zevenet::IPDS::Core';
 include 'Zevenet::IPDS::Base';
 include 'Zevenet::IPDS::RBL';

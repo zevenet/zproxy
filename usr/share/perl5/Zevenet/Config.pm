@@ -193,7 +193,7 @@ sub getTiny
 		else
 		{
 			&zenlog( "Could not open file $file_path: $!", "error" );
-			return undef;
+			return;
 		}
 		close $fi;
 	}
@@ -245,7 +245,7 @@ sub setTinyObj
 		else
 		{
 			&zenlog( "Could not open file $path: $!", "error" );
-			return undef;
+			return;
 		}
 		close $fi;
 	}

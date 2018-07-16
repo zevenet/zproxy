@@ -65,7 +65,6 @@ sub eload
 	if ( defined &main::include )
 	{
 		sub include;
-		#~ &include( $req{ module } );
 
 		include $req{ module };
 

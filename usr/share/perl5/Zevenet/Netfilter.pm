@@ -22,6 +22,7 @@
 ###############################################################################
 
 use strict;
+use warnings;
 
 use Data::Dumper;
 
@@ -796,8 +797,9 @@ sub getIptRuleInsert
 		# do not insert a rule on a position higher than this, iptable will fail
 		my $rule_max_position;
 
-		{    # calculate rule_max_position
-			    # read rule table and chain
+		{
+			# calculate rule_max_position
+			# read rule table and chain
 			my @rule_args = split / +/, $rule;
 			my $table     = $rule_args[2];       # second argument of iptables is the table
 			my $chain     = $rule_args[4];       # forth argument of iptables is the chain
@@ -823,8 +825,6 @@ sub getIptRuleInsert
 				$rule_num = $recent_rule_num;    #
 			}
 		}
-
-		my $rulenum = $rule_max_position if $rule_max_position < $rule_num;
 	}
 
 	# if the rule does not exist

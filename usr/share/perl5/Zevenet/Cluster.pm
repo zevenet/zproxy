@@ -43,7 +43,7 @@ See Also:
 =cut
 sub getZClusterLocalIp
 {
-	return undef if ! &getZClusterStatus();
+	return if ! &getZClusterStatus();
 
 	my $zcl_conf = getZClusterConfig();
 
@@ -72,7 +72,7 @@ See Also:
 sub getZClusterStatus
 {
 	# case filecuster does not exist
-	return undef if ! -f &getGlobalConfiguration('filecluster');
+	return if ! -f &getGlobalConfiguration('filecluster');
 
 	my $zcl_conf = &getZClusterConfig();
 
@@ -116,7 +116,7 @@ sub getZClusterConfig
 		if ( ! $zcl_file )
 		{
 			&zenlog("Could not create file $filecluster: $!", "error", "CLUSTER");
-			return undef;
+			return;
 		}
 
 		close $zcl_file;
@@ -928,7 +928,7 @@ sub getZClusterNodeStatus
 	if ( ! $znode_status )
 	{
 		#~ &zenlog( "Could not open file $znode_status_file: $!", "error", "CLUSTER" );
-		return undef;
+		return;
 	}
 
 	my $status = <$znode_status>;

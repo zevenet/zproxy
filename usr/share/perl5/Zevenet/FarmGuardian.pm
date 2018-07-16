@@ -128,10 +128,11 @@ sub getFGFarm
 {
 	my $farm = shift;
 	my $srv  = shift;
-	my $fg;
 
+	my $fg;
 	my $farm_tag = ( $srv ) ? "${farm}_$srv" : "$farm";
 	my $fg_list = &getTiny( $fg_conf );
+
 	foreach my $fg_name ( keys %{ $fg_list } )
 	{
 		if ( grep ( /(^| )$farm_tag( |$)/, $fg_list->{ $fg_name }->{ farms } ) )
@@ -315,20 +316,20 @@ sub unlinkFGFarm
 
 sub delFGFarm
 {
-	my $farm = shift;
-	my $srv  = shift;
+	my $farm    = shift;
+	my $service = shift;
 
 	require Zevenet::Farm::Service;
 
 	my $fg;
-	my $err = &runFGFarmStop( $farm, $srv );
+	my $err = &runFGFarmStop( $farm, $service );
 	my $type = &getFarmType( $farm );
 
 	if ( $type =~ /http/ or $type eq 'gslb' )
 	{
-		if ( not $srv )
+		if ( not $service )
 		{
-			foreach $srv ( &getFarmServices( $farm ) )
+			foreach my $srv ( &getFarmServices( $farm ) )
 			{
 				$fg = &getFGFarm( $farm, $srv );
 				next if not $fg;
