@@ -21,23 +21,24 @@
 #
 ###############################################################################
 
-#~ use Net::IP;
+use strict;
+
 use Curses::UI;
 use Zevenet::Config;
 
 sub get_system_mem
 {
-	my $line;
+	my $meminfo_filename = '/proc/meminfo';
 	my (
 		 $mname,  $mvalue,  $mfname,  $mfvalue,  $mused,   $mbname,   $mbvalue,
 		 $mcname, $mcvalue, $swtname, $swtvalue, $swfname, $swfvalue, $swused
 	);
 
-	if ( -f "/proc/meminfo" )
+	if ( -f $meminfo_filename )
 	{
-		open FR, "/proc/meminfo";
+		open ( my $file, '<', $meminfo_filename );
 
-		while ( $line = <FR> )
+		while ( my $line = <$file> )
 		{
 			if ( $line =~ /memtotal/i )
 			{
@@ -98,6 +99,7 @@ sub get_system_mem
 				$swused = $swtvalue - $swfvalue;
 			}
 		}
+
 		$mvalue   = sprintf ( "%.0f", $mvalue );
 		$mfvalue  = sprintf ( "%.0f", $mfvalue );
 		$mused    = sprintf ( "%.0f", $mused );
@@ -106,7 +108,10 @@ sub get_system_mem
 		$swtvalue = sprintf ( "%.0f", $swtvalue );
 		$swfvalue = sprintf ( "%.0f", $swfvalue );
 		$swused   = sprintf ( "%.0f", $swused );
+
+		close $file;
 	}
+
 	my @data = (
 				 [$mname,     $mvalue],
 				 [$mfname,    $mfvalue],
@@ -117,32 +122,44 @@ sub get_system_mem
 				 [$swfname,   $swfvalue],
 				 ['SwapUsed', $swused],
 	);
+
 	return @data;
 }
 
 sub get_system_loadavg
 {
-	my ( $line, $lastline );
+	my $load_filename = '/proc/loadavg';
+
+	my $lastline;
 	my ( $last, $last5, $last15 );
-	if ( -f "/proc/loadavg" )
+
+	if ( -f $load_filename )
 	{
-		open FR, "/proc/loadavg";
-		while ( $line = <FR> )
+		open my $file, '<', $load_filename;
+
+		while ( my $line = <$file> )
 		{
 			$lastline = $line;
 		}
+
 		my @splitline = split ( " ", $lastline );
+
 		$last   = $splitline[0];
 		$last5  = $splitline[1];
 		$last15 = $splitline[2];
 
+		close $line;
 	}
+
 	my @data = ( ['Last', $last], ['Last 5', $last5], ['Last 15', $last15], );
+
 	return @data;
 }
 
 sub get_system_cpu
 {
+	my $stat_filename = '/proc/stat';
+
 	my $interval = 1;
 	my ( $line,         @line_s );
 	my ( $cpu_user1,    $cpu_user2, $cpu_user, $diff_cpu_user );
@@ -154,10 +171,11 @@ sub get_system_cpu
 	my ( $cpu_softirq1, $cpu_softirq2, $cpu_softirq, $diff_cpu_softirq );
 	my ( $cpu_total1,   $cpu_total2, $cpu_usage, $diff_cpu_total );
 
-	if ( -f "/proc/stat" )
+	if ( -f $stat_filename )
 	{
-		open FR, "/proc/stat";
-		foreach $line ( <FR> )
+		open my $file, '<', $stat_filename;
+
+		foreach my $line ( <$file> )
 		{
 			if ( $line =~ /^cpu\ / )
 			{
@@ -179,10 +197,14 @@ sub get_system_cpu
 				  $cpu_softirq1;
 			}
 		}
-		close FR;
-		open FR, "/proc/stat";
+
+		close $file;
+
+		open $file, '<', $stat_filename;
+
 		sleep $interval;
-		foreach my $line ( <FR> )
+
+		foreach my $line ( <$file> )
 		{
 			if ( $line =~ /^cpu\ / )
 			{
@@ -205,7 +227,7 @@ sub get_system_cpu
 			}
 
 		}
-		close FR;
+		close $file;
 
 		$diff_cpu_user    = $cpu_user2 - $cpu_user1;
 		$diff_cpu_nice    = $cpu_nice2 - $cpu_nice1;
@@ -244,6 +266,7 @@ sub get_system_cpu
 		$cpu_usage =~ s/,/\./g;
 
 	}
+
 	my @data = (
 				 ['UserCPU',       $cpu_user],
 				 ['NiceCPU',       $cpu_nice],
@@ -254,24 +277,22 @@ sub get_system_cpu
 				 ['SoftIrqCPU',    $cpu_softirq],
 				 ['TotalUsageCPU', $cpu_usage],
 	);
-	return @data;
+
+		return @data;
 }
 
 sub set_data_string
 {
 	my ( @datain ) = @_;
 
-	my $outputstring = "";
-	my $i            = 0;
-	my $j            = 0;
+	my $output = "";
 
-	for $i ( 0 .. $#datain )
+	for my $i ( 0 .. $#datain )
 	{
-		$outputstring =
-		  $outputstring . "\t" . $datain[$i][0] . ": " . $datain[$i][1] . "\n";
+		$output .= "\t$datain[$i][0]: $datain[$i][1]\n";
 	}
 
-	return $outputstring;
+	return $output;
 }
 
 1;
