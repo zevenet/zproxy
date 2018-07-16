@@ -1112,7 +1112,7 @@ sub getVirtualInterfaceNameList
 	my $virt_if_re = &getValidFormat( 'virt_interface' );
 
 	my @filenames = grep { /^if_($virt_if_re)_conf$/ } readdir ( $conf_dir );
-	@filenames =~ s/^if_($virt_if_re)_conf$/$1/;
+	@filenames =~ /^if_($virt_if_re)_conf$/;
 
 	closedir ( $conf_dir );
 

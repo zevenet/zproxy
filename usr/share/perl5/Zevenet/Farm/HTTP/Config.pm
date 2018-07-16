@@ -342,15 +342,17 @@ sub setFarmHttpVerb    # ($verb,$farm_name)
 
 	require Tie::File;
 	tie my @filefarmhttp, 'Tie::File', "$configdir/$farm_filename";
+
 	my $i_f         = -1;
 	my $array_count = @filefarmhttp;
 	my $found       = "false";
+
 	while ( $i_f <= $array_count && $found eq "false" )
 	{
 		$i_f++;
 		if ( $filefarmhttp[$i_f] =~ /xHTTP/ )
 		{
-			&zenlog( "Setting 'Http verb $verb' for $farm_name farm $farm_type", "info", "LSLB" );
+			&zenlog( "Setting 'Http verb $verb' for $farm_name farm http", "info", "LSLB" );
 			$filefarmhttp[$i_f] = "\txHTTP $verb";
 			$output             = $?;
 			$found              = "true";
@@ -388,7 +390,7 @@ sub getFarmHttpVerb    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	open $fh, '<', "$configdir\/$farm_filename";
+	open my $fh, '<', "$configdir\/$farm_filename";
 	my @file = <$fh>;
 	close $fh;
 
