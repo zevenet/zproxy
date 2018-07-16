@@ -26,7 +26,6 @@ use warnings;
 use Curses::UI;
 use Zevenet::Config;
 use Zevenet::Debug;
-include 'Zevenet::BUI';
 
 # This two sentences should make zenbui behave like zenbui.sh
 $ENV{ NCURSES_NO_UTF8_ACS } = 1;
@@ -907,12 +906,13 @@ sub set_new_hostname()
 sub show_status_system()
 {
 	require Zevenet::SystemInfo;
+	require Zevenet::Stats;
 
-	my @memdata       = &get_system_mem();
+	my @memdata       = &getMemStats();
 	my $memstring     = &set_data_string( @memdata );
-	my @loadavgdata   = &get_system_loadavg();
+	my @loadavgdata   = &getLoadStats();
 	my $loadavgstring = &set_data_string( @loadavgdata );
-	my @cpudata       = &get_system_cpu();
+	my @cpudata       = &getCPU();
 	my $cpustring     = &set_data_string( @cpudata );
 	my $zlbversion    = &getGlobalConfiguration( 'version' );
 	my $zaversion     = &getApplianceVersion();
@@ -989,3 +989,19 @@ $zenui->set_binding( sub { $zlbmenu->focus() }, "\cX" );
 $zenui->set_binding( \&exit_dialog, "\cQ" );
 
 $zenui->mainloop();
+
+
+sub set_data_string
+{
+	my ( @datain ) = @_;
+
+	my $output = "";
+
+	for my $i ( 0 .. $#datain )
+	{
+		$output .= "\t$datain[$i][0]: $datain[$i][1]\n";
+	}
+
+	return $output;
+}
+
