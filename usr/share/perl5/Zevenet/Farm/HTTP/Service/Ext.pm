@@ -221,7 +221,7 @@ sub getHTTPServiceRedirectCode    # ($farm_name,$service)
 	require Zevenet::Farm::Core;
 
 	# input control
-	return undef unless $service;
+	return unless $service;
 
 	# look for cookie insertion policy
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -318,7 +318,7 @@ sub getHTTPServiceSTSStatus    # ($farm_name,$service)
 	require Zevenet::Farm::Core;
 
 	# input control
-	return undef unless $service;
+	return unless $service;
 
 	# look for cookie insertion policy
 	my $farm_filename = &getFarmFile( $farm_name );
@@ -433,7 +433,7 @@ sub getHTTPServiceSTSTimeout    # ($farm_name,$service)
 	require Zevenet::Farm::Core;
 
 	# input control
-	return undef unless $service;
+	return unless $service;
 
 	# look for cookie insertion policy
 	my $farm_filename = &getFarmFile( $farm_name );

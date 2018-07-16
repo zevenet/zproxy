@@ -612,9 +612,9 @@ sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 	}
 
 	$index = &getFarmVSI( $farm_name, $service );
-	open FG, '<', $stfile;
+	open my $fd, '<', $stfile;
 
-	while ( my $line = <FG> )
+	while ( my $line = <$fd> )
 	{
 		#service index
 		if ( $line =~ /\ 0\ ${index}\ ${backend}/ )
@@ -633,7 +633,7 @@ sub getHTTPBackendStatusFromFile    # ($farm_name,$backend,$service)
 			}
 		}
 	}
-	close FG;
+	close $fd;
 
 	return $output;
 }
@@ -669,7 +669,7 @@ sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
 
 	if ( !-e $statusfile )
 	{
-		open FW, ">$statusfile";
+		open my $fd, '>', "$statusfile";
 		my $poundctl = &getGlobalConfiguration( 'poundctl' );
 		my @run      = `$poundctl -c /tmp/$farm_name\_pound.socket`;
 		my @sw;
@@ -694,16 +694,16 @@ sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
 				}
 				else
 				{
-					print FW "-b 0 $sw[0] $bw[0] fgDOWN\n";
+					print $fd "-b 0 $sw[0] $bw[0] fgDOWN\n";
 				}
 			}
 		}
-		close FW;
+		close $fd;
 	}
 
 	tie my @filelines, 'Tie::File', "$statusfile";
-
 	my $i;
+
 	foreach my $linea ( @filelines )
 	{
 		if ( $linea =~ /\ 0\ $idsv\ $backend/ )
@@ -725,16 +725,18 @@ sub setHTTPFarmBackendStatusFile    # ($farm_name,$backend,$status,$idsv)
 
 	if ( $changed eq "false" )
 	{
-		open FW, ">>$statusfile";
+		open my $fd, '>>', "$statusfile";
+
 		if ( $status =~ /maintenance/ || $status =~ /fgDOWN/ )
 		{
-			print FW "-b 0 $idsv $backend $status\n";
+			print $fd "-b 0 $idsv $backend $status\n";
 		}
 		else
 		{
 			splice @filelines, $i, 1,;
 		}
-		close FW;
+
+		close $fd;
 	}
 
 }

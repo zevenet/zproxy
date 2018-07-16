@@ -374,7 +374,8 @@ sub setL4NewFarmName    # ($farm_name,$new_farm_name)
 	{
 		my @rules;
 
-		my $prio_server = &getL4ServerWithLowestPriority( $$farm{ name } )
+		my $prio_server;
+		$prio_server = &getL4ServerWithLowestPriority( $$farm{ name } )
 		  if ( $$farm{ lbalg } eq 'prio' );
 
 		# refresh backends probability values

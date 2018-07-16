@@ -44,9 +44,11 @@ sub getFarmCertificatesSNI    #($fname)
 	my @output;
 
 	my $file = &getFarmFile( $fname );
-	open FI, "<$configdir/$file";
-	my @content = <FI>;
-	close FI;
+
+	open my $fd, '<', "$configdir/$file";
+	my @content = <$fd>;
+	close $fd;
+
 	foreach my $line ( @content )
 	{
 		if ( $line =~ /Cert "/ && $line !~ /\#.*Cert/ )

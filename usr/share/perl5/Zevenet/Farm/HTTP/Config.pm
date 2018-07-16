@@ -117,9 +117,9 @@ sub getFarmClientTimeout    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	open FR, "<$configdir\/$farm_filename";
-	my @file = <FR>;
-	close FR;
+	open my $fd, '<', "$configdir\/$farm_filename";
+	my @file = <$fd>;
+	close $fd;
 
 	foreach my $line ( @file )
 	{
@@ -621,9 +621,9 @@ sub getFarmRewriteL    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	open FR, "<$configdir\/$farm_filename";
-	my @file = <FR>;
-	close FR;
+	open my $fd, '<', "$configdir\/$farm_filename";
+	my @file = <$fd>;
+	close $fd;
 
 	foreach my $line ( @file )
 	{
@@ -704,9 +704,9 @@ sub getFarmConnTO    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	open FR, "<$configdir\/$farm_filename";
-	my @file = <FR>;
-	close FR;
+	open my $fd, '<', "$configdir\/$farm_filename";
+	my @file = <$fd>;
+	close $fd;
 
 	foreach my $line ( @file )
 	{
@@ -785,8 +785,8 @@ sub getHTTPFarmTimeout    # ($farm_filename)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	open FR, "<$configdir\/$farm_filename";
-	my @file = <FR>;
+	open my $fd, '<', "$configdir\/$farm_filename";
+	my @file = <$fd>;
 
 	foreach my $line ( @file )
 	{
@@ -796,7 +796,7 @@ sub getHTTPFarmTimeout    # ($farm_filename)
 			$output = $line_aux[1];
 		}
 	}
-	close FR;
+	close $fd;
 
 	return $output;
 }
@@ -867,8 +867,9 @@ sub getHTTPFarmMaxClientTime    # ($farm_name)
 
 	push ( @max_client_time, "" );
 	push ( @max_client_time, "" );
-	open FR, "<$configdir\/$farm_filename";
-	my @configfile = <FR>;
+
+	open my $fd, '<', "$configdir\/$farm_filename";
+	my @configfile = <$fd>;
 
 	foreach my $line ( @configfile )
 	{
@@ -879,7 +880,7 @@ sub getHTTPFarmMaxClientTime    # ($farm_name)
 			@max_client_time[1] = $line_aux[1];
 		}
 	}
-	close FR;
+	close $fd;
 
 	return @max_client_time;
 }
@@ -934,16 +935,16 @@ sub setFarmErr    # ($farm_name,$content,$nerr)
 
 		$output = 0;
 		my @err = split ( "\n", "$content" );
-		open FO, ">$configdir\/$farm_name\_Err$nerr.html";
+		open my $fd, '>', "$configdir\/$farm_name\_Err$nerr.html";
 
 		foreach my $line ( @err )
 		{
 			$line =~ s/\r$//;
-			print FO "$line\n";
+			print $fd "$line\n";
 			$output = $? || $output;
 		}
 
-		close FO;
+		close $fd;
 		close $lock_fh;
 	}
 
@@ -971,9 +972,9 @@ sub getFarmErr    # ($farm_name,$nerr)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output;
 
-	open FR, "<$configdir\/$farm_filename";
-	my @file = <FR>;
-	close FR;
+	open my $fd, '<', "$configdir\/$farm_filename";
+	my @file = <$fd>;
+	close $fd;
 
 	foreach my $line ( @file )
 	{
@@ -985,12 +986,12 @@ sub getFarmErr    # ($farm_name,$nerr)
 
 			if ( -e $err )
 			{
-				open FI, "$err";
-				while ( <FI> )
+				open my $fd, '<', "$err";
+				while ( <$fd> )
 				{
 					$output .= $_;
 				}
-				close FI;
+				close $fd;
 				chomp ($output);
 			}
 		}
@@ -1019,13 +1020,13 @@ sub getHTTPFarmBootStatus    # ($farm_name)
 	my $output        = "down";
 	my $lastline;
 
-	open FO, "<$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FO> )
+	while ( my $line = <$fd> )
 	{
 		$lastline = $line;
 	}
-	close FO;
+	close $fd;
 
 	if ( $lastline !~ /^#down/ )
 	{
@@ -1071,15 +1072,15 @@ sub getHTTPFarmPid        # ($farm_name)
 {
 	my ( $farm_name ) = @_;
 
-	my $output = -1;
-	my $piddir = &getGlobalConfiguration('piddir');
-
+	my $output  = -1;
+	my $piddir  = &getGlobalConfiguration( 'piddir' );
 	my $pidfile = "$piddir\/$farm_name\_pound.pid";
+
 	if ( -e $pidfile )
 	{
-		open FPID, "<$pidfile";
-		my @pid = <FPID>;
-		close FPID;
+		open my $fd, '<', $pidfile;
+		my @pid = <$fd>;
+		close $fd;
 
 		my $pid_hprof = $pid[0];
 		chomp ( $pid_hprof );
@@ -1305,10 +1306,12 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 
 	# get line
 	my ( $farm_name, $service ) = @_;
-	open my $fileconf, '<', "$configdir/$farm_filename";
 	my $file_id = 0;
 	my $file_line;
 	my $srv;
+
+	open my $fileconf, '<', "$configdir/$farm_filename";
+
 	foreach my $line ( <$fileconf> )
 	{
 		if ( $line =~ /^\tService \"(.+)\"/ )    { $srv = $1; }
@@ -1319,6 +1322,7 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 		}
 		$file_id++;
 	}
+
 	close $fileconf;
 
 	# examples of error msg

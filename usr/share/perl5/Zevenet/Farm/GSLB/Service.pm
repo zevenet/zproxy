@@ -258,20 +258,20 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 	{
 		if ( !( -e "$configdir/${fname}_gslb.cfg/etc/plugins/${gsalg}.cfg" ) )
 		{
-			open FO, ">$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$gsalg.cfg";
-			print FO "$gsalg => {\n\tservice_types = up\n";
-			print FO "\t$svice => {\n\t\tservice_types = tcp_80\n";
+			open my $fd, '>', "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$gsalg.cfg";
+			print $fd "$gsalg => {\n\tservice_types = up\n";
+			print $fd "\t$svice => {\n\t\tservice_types = tcp_80\n";
 			if ( $gsalg eq "simplefo" )
 			{
-				print FO "\t\tprimary => 127.0.0.1\n";
-				print FO "\t\tsecondary => 127.0.0.1\n";
+				print $fd "\t\tprimary => 127.0.0.1\n";
+				print $fd "\t\tsecondary => 127.0.0.1\n";
 			}
 			else
 			{
-				print FO "\t\t1 => 127.0.0.1\n";
+				print $fd "\t\t1 => 127.0.0.1\n";
 			}
-			print FO "\t}\n}\n";
-			close FO;
+			print $fd "\t}\n}\n";
+			close $fd;
 			$output = 0;
 		}
 		else
@@ -287,6 +287,7 @@ sub setGSLBFarmNewService    # ($farm_name,$service,$algorithm)
 			{
 				my $found = 0;
 				my $index = 0;
+
 				foreach my $line ( @fileconf )
 				{
 					if ( $line =~ /$gsalg => / )
@@ -391,13 +392,12 @@ sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 	my $ffile  = &getFarmFile( $fname );
 
 	my @fileconf;
-	my $line;
 	my @linesplt;
 
 	if ( $tag eq "ns" || $tag eq "resources" )
 	{
 		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$svice";
-		foreach $line ( @fileconf )
+		foreach my $line ( @fileconf )
 		{
 			if ( $tag eq "ns" )
 			{
@@ -436,10 +436,12 @@ sub getGSLBFarmVS    # ($farm_name,$service,$tag)
 			}
 			untie @fileconf;
 		}
+
 		closedir ( DIR );
 		tie @fileconf, 'Tie::File',
 		  "$configdir\/$fname\_gslb.cfg\/etc\/plugins\/$pluginfile";
-		foreach $line ( @fileconf )
+
+		foreach my $line ( @fileconf )
 		{
 			if ( $tag eq "backends" )
 			{
@@ -535,7 +537,6 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 	my $ffile = &getFarmFile( $fname );
 	my $pluginfile;
 	my @fileconf;
-	my $line;
 	my $param;
 	my @linesplt;
 	my $tcp_port;
@@ -544,7 +545,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 	if ( $tag eq "ns" )
 	{
 		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$svice";
-		foreach $line ( @fileconf )
+		foreach my $line ( @fileconf )
 		{
 			if ( $line =~ /^@\tSOA .* hostmaster / )
 			{
@@ -622,7 +623,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 		# Change configuration in plugin file
 		tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
 
-		foreach $line ( @fileconf )
+		foreach my $line ( @fileconf )
 		{
 			if ( $found == 1 && $line =~ /.*}.*/ )
 			{
@@ -757,7 +758,7 @@ sub setGSLBFarmVS    # ($farm_name,$service,$tag,$string)
 			my $firstIndex = 0;
 			tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/config";
 
-			foreach $line ( @fileconf )
+			foreach my $line ( @fileconf )
 			{
 				if ( $line =~ /service_types => / )
 				{

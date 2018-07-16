@@ -45,10 +45,10 @@ sub getHTTPFarm100Continue    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	open FR, '<', "$configdir\/$farm_filename" or return $output;
+	open my $fd, '<', "$configdir\/$farm_filename" or return $output;
 	$output = 1;	# if the directive is not in config file, it is enabled
-	my @file = <FR>;
-	close FR;
+	my @file = <$fd>;
+	close $fd;
 
 	foreach my $line ( @file )
 	{
@@ -123,10 +123,10 @@ sub getHTTPFarmLogs    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	open FR, '<', "$configdir\/$farm_filename" or return $output;
+	open my $fd, '<', "$configdir\/$farm_filename" or return $output;
 	$output = 0;	# if the directive is not in config file, it is disabled
-	my @file = <FR>;
-	close FR;
+	my @file = <$fd>;
+	close $fd;
 
 	foreach my $line ( @file )
 	{

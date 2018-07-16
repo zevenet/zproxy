@@ -155,9 +155,9 @@ sub getGSLBFarmVip    # ($info,$farm_name)
 	my $output        = -1;
 	my $i             = 0;
 
-	open FI, "<$configdir/$farm_filename/etc/config";
-	my @file = <FI>;
-	close FI;
+	open my $fd, '<', "$configdir/$farm_filename/etc/config";
+	my @file = <$fd>;
+	close $fd;
 
 	foreach my $line ( @file )
 	{

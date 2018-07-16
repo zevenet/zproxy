@@ -50,18 +50,18 @@ sub runL4FarmCreate    # ($vip,$farm_name,$vip_port)
 
 	$vip_port = 80 if not defined $vip_port;
 
-	open FO, ">$configdir\/$farm_name\_$farm_type.cfg";
+	open my $fd, '>', "$configdir\/$farm_name\_$farm_type.cfg";
 	# farmname;protocol;vip;vport;nattype;algorithm;persistence;ttl;status;logs
-	print FO "$farm_name\;tcp\;$vip\;$vip_port\;nat\;weight\;none\;120\;up;false\n";
-	close FO;
+	print $fd "$farm_name\;tcp\;$vip\;$vip_port\;nat\;weight\;none\;120\;up;false\n";
+	close $fd;
 	$output = $?;      # FIXME
 
 	my $piddir = &getGlobalConfiguration('piddir');
 	if ( !-e "$piddir/${farm_name}_$farm_type.pid" )
 	{
 		# Enable active l4xnat file
-		open FI, ">$piddir\/$farm_name\_$farm_type.pid";
-		close FI;
+		open my $fd, '>', "$piddir\/$farm_name\_$farm_type.pid";
+		close $fd;
 	}
 
 	&_runL4FarmStart( $farm_name );

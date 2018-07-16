@@ -21,6 +21,8 @@
 #
 ###############################################################################
 
+use strict;
+
 sub modify_service_cookie_insertion
 {
 	my ( $farmname, $service, $json_obj ) = @_;

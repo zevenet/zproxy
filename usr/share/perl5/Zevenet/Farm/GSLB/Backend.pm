@@ -48,7 +48,6 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 	my $ffile  = &getFarmFile( $fname );
 
 	my @fileconf;
-	my $line;
 	my $index      = 0;
 	my $pluginfile = "";
 	my $found;
@@ -83,7 +82,7 @@ sub remFarmServiceBackend    # ($id,$farm_name,$service)
 
 	tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
 
-	foreach $line ( @fileconf )
+	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /^\t$srv => / )
 		{
@@ -191,7 +190,6 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 	my $ffile = &getFarmFile( $fname );
 
 	my @fileconf;
-	my $line;
 	my @linesplt;
 	my $found      = 0;
 	my $index      = 0;
@@ -216,7 +214,7 @@ sub setGSLBFarmNewBackend    # ($farm_name,$service,$lb,$id,$ipaddress)
 	closedir ( DIR );
 	tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/plugins/$pluginfile";
 
-	foreach $line ( @fileconf )
+	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /^\t$srv => / )
 		{

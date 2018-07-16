@@ -286,7 +286,7 @@ sub getHTTPFarmServices
 	my $pos           = 0;
 	my @output;
 
-	open my $fh, "<$configdir\/$farm_filename";
+	open my $fh, '<', "$configdir\/$farm_filename";
 	my @file = <$fh>;
 	close $fh;
 
@@ -844,7 +844,6 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = 0;
-	my $line;
 	my $sw = 0;
 	my $j  = -1;
 	my $l;
@@ -859,7 +858,7 @@ sub setHTTPFarmVS    # ($farm_name,$service,$tag,$string)
 	require Tie::File;
 	tie my @fileconf, 'Tie::File', "$configdir/$farm_filename";
 
-	foreach $line ( @fileconf )
+	foreach my $line ( @fileconf )
 	{
 		$j++;
 		if ( $line =~ /\tService \"$service\"/ ) { $sw = 1; }

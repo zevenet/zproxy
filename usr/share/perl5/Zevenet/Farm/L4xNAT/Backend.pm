@@ -480,10 +480,10 @@ sub getL4FarmServers    # ($farm_name)
 	my $sindex        = 0;
 	my @servers;
 
-	open FI, "<", "$configdir/$farm_filename"
+	open my $fd, '<', "$configdir/$farm_filename"
 	  or &zenlog( "Error opening file $configdir/$farm_filename: $!", "error", "LSLB" );
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		chomp ( $line );
 
@@ -494,7 +494,7 @@ sub getL4FarmServers    # ($farm_name)
 			$sindex++;
 		}
 	}
-	close FI;
+	close $fd;
 
 	chomp @servers;
 
@@ -526,13 +526,13 @@ sub getL4FarmBackends    # ($farm_name)
 	require Zevenet::Farm::Base;
 	my $farmStatus = &getFarmStatus( $farm_name );
 
-	open FI, "<", "$configdir/$farm_filename"
+	open my $fd, '<', "$configdir/$farm_filename"
 	  or &zenlog( "Error opening file $configdir/$farm_filename: $!", "error", "LSLB" );
 
 	require Zevenet::Alias;
 	my $alias = getAlias( 'backend' );
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		chomp ( $line );
 
@@ -570,7 +570,7 @@ sub getL4FarmBackends    # ($farm_name)
 			$sindex++;
 		}
 	}
-	close FI;
+	close $fd;
 
 	return \@servers;
 }

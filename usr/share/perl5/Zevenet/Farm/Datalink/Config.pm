@@ -46,9 +46,9 @@ sub getDatalinkFarmAlgorithm    # ($farm_name)
 	my $algorithm     = -1;
 	my $first         = "true";
 
-	open FI, "<$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
@@ -57,7 +57,7 @@ sub getDatalinkFarmAlgorithm    # ($farm_name)
 			$algorithm = $line[3];
 		}
 	}
-	close FI;
+	close $fd;
 
 	return $algorithm;
 }
@@ -134,9 +134,9 @@ sub getDatalinkFarmBootStatus    # ($farm_name)
 	my $output        = "down";
 	my $first         = "true";
 
-	open FI, "<$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
@@ -146,7 +146,7 @@ sub getDatalinkFarmBootStatus    # ($farm_name)
 			chomp ( $output );
 		}
 	}
-	close FI;
+	close $fd;
 
 	return $output;
 }
@@ -169,13 +169,14 @@ sub getDatalinkFarmInterface    # ($farm_name)
 	my ( $farm_name ) = @_;
 
 	my $output = -1;
+
 	my $line;
-
-	my $farm_filename = &getFarmFile( $farm_name );
-	open FI, "<$configdir/$farm_filename";
 	my $first = "true";
+	my $farm_filename = &getFarmFile( $farm_name );
 
-	while ( $line = <FI> )
+	open my $fd, '<', "$configdir/$farm_filename";
+
+	while ( $line = <$fd> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
@@ -185,7 +186,8 @@ sub getDatalinkFarmInterface    # ($farm_name)
 			$output = $line_b[0];
 		}
 	}
-	close FI;
+
+	close $fd;
 
 	return $output;
 }
@@ -212,9 +214,9 @@ sub getDatalinkFarmVip    # ($info,$farm_name)
 	my $output        = -1;
 	my $first         = "true";
 
-	open FI, "<$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
@@ -226,7 +228,7 @@ sub getDatalinkFarmVip    # ($info,$farm_name)
 			if ( $info eq "vipps" ) { $output = "$line_a[1]\:$line_a[2]"; }
 		}
 	}
-	close FI;
+	close $fd;
 
 	return $output;
 }

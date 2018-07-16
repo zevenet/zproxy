@@ -42,7 +42,8 @@ sub set_ssh
 
 	my $description = "Post ssh";
 	my @allowParams = ( "port", "listen" );
-	my $sshIp = $json_obj->{ 'listen' } if ( exists $json_obj->{ 'listen' } );
+	my $sshIp;
+	$sshIp = $json_obj->{ 'listen' } if ( exists $json_obj->{ 'listen' } );
 	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
 
 	if ( !$errormsg )

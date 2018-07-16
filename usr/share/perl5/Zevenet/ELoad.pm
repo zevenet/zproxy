@@ -64,7 +64,7 @@ sub eload
 	# Run directly Already running inside enterprise.bin
 	if ( defined &main::include )
 	{
-		sub include;
+		sub include; # WARNING: DO NOT REMOVE THIS
 
 		include $req{ module };
 

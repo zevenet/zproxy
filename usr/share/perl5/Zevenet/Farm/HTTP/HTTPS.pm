@@ -47,9 +47,9 @@ sub getFarmCertificate    # ($farm_name)
 	my $output    = -1;
 
 	my $farm_filename = &getFarmFile( $farm_name );
-	open FI, "<$configdir/$farm_filename";
-	my @content = <FI>;
-	close FI;
+	open my $fd, '<', "$configdir/$farm_filename";
+	my @content = <$fd>;
+	close $fd;
 
 	foreach my $line ( @content )
 	{
@@ -205,9 +205,9 @@ sub getFarmCipherList    # ($farm_name)
 
 	my $farm_filename = &getFarmFile( $farm_name );
 
-	open FI, "<$configdir/$farm_filename";
-	my @content = <FI>;
-	close FI;
+	open my $fd, '<', "$configdir/$farm_filename";
+	my @content = <$fd>;
+	close $fd;
 
 	foreach my $line ( @content )
 	{
@@ -281,10 +281,10 @@ sub getHTTPFarmDisableSSL    # ($farm_name, $protocol)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = -1;
 
-	open FR, "<$configdir\/$farm_filename" or return $output;
+	open my $fd, '<', "$configdir\/$farm_filename" or return $output;
 	$output = 0;	# if the directive is not in config file, it is disabled
-	my @file = <FR>;
-	close FR;
+	my @file = <$fd>;
+	close $fd;
 
 	foreach my $line ( @file )
 	{

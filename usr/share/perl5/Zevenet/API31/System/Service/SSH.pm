@@ -42,7 +42,8 @@ sub set_ssh
 	include 'Zevenet::System::SSH';
 
 	my $desc = "Post ssh";
-	my $sshIp = $json_obj->{ 'listen' } if ( exists $json_obj->{ 'listen' } );
+	my $sshIp;
+	$sshIp = $json_obj->{ 'listen' } if ( exists $json_obj->{ 'listen' } );
 
 	my @allowParams = ( "port", "listen" );
 	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );

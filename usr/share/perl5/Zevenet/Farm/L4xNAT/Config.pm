@@ -466,9 +466,9 @@ sub getL4FarmAlgorithm    # ($farm_name)
 	my $output        = -1;
 	my $first         = 'true';
 
-	open FI, "<", "$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		if ( $line ne '' && $first eq 'true' )
 		{
@@ -477,7 +477,7 @@ sub getL4FarmAlgorithm    # ($farm_name)
 			$output = $line[5];
 		}
 	}
-	close FI;
+	close $fd;
 
 	return $output;
 }
@@ -528,6 +528,7 @@ sub setFarmProto    # ($proto,$farm_name)
 	require Tie::File;
 	tie my @configfile, 'Tie::File', "$configdir\/$farm_filename" or return $output;
 	my $i = 0;
+
 	for my $line ( @configfile )
 	{
 		if ( $line =~ /^$farm_name\;/ )
@@ -594,12 +595,12 @@ sub getFarmNatType    # ($farm_name)
 	my $farm_name = shift;
 
 	my $farm_filename = &getFarmFile( $farm_name );
+	my $first         = "true";
 	my $output        = -1;
 
-	open FI, "<", "$configdir/$farm_filename";
-	my $first = "true";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
@@ -609,7 +610,7 @@ sub getFarmNatType    # ($farm_name)
 		}
 	}
 
-	close FI;
+	close $fd;
 
 	return $output;
 }
@@ -738,9 +739,9 @@ sub getL4FarmPersistence    # ($farm_name)
 	my $persistence   = -1;
 	my $first         = "true";
 
-	open FI, "<", "$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
@@ -749,7 +750,7 @@ sub getL4FarmPersistence    # ($farm_name)
 			$persistence = $line[6];
 		}
 	}
-	close FI;
+	close $fd;
 
 	return $persistence;
 }
@@ -866,9 +867,9 @@ sub getL4FarmMaxClientTime    # ($farm_name)
 	my $first         = "true";
 	my @max_client_time;
 
-	open FI, "<", "$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
@@ -877,7 +878,7 @@ sub getL4FarmMaxClientTime    # ($farm_name)
 			@max_client_time = $line[7];
 		}
 	}
-	close FI;
+	close $fd;
 
 	return @max_client_time;
 }
@@ -903,9 +904,9 @@ sub getL4FarmBootStatus    # ($farm_name)
 	my $output        = "down";
 	my $first         = "true";
 
-	open FI, "<$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		if ( $line ne "" && $first eq "true" )
 		{
@@ -915,7 +916,7 @@ sub getL4FarmBootStatus    # ($farm_name)
 			chomp ( $output );
 		}
 	}
-	close FI;
+	close $fd;
 
 	$output = "down" if ( !$output );
 
@@ -947,9 +948,9 @@ sub getL4FarmVip    # ($info,$farm_name)
 	my $first         = 'true';
 	my $output        = -1;
 
-	open FI, "<", "$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		if ( $line ne '' && $first eq 'true' )
 		{
@@ -961,7 +962,7 @@ sub getL4FarmVip    # ($info,$farm_name)
 			if ( $info eq 'vipps' ) { $output = "$line_a[2]\:$line_a[3]"; }
 		}
 	}
-	close FI;
+	close $fd;
 
 	return $output;
 }
@@ -1461,8 +1462,9 @@ sub getL4FarmLogs    # ($farm_name)
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $output        = "false";
 
-	open FI, "<$configdir/$farm_filename";
-	while ( my $line = <FI> )
+	open my $fd, '<', "$configdir/$farm_filename";
+
+	while ( my $line = <$fd> )
 	{
 		if ( $line ne "" )
 		{
@@ -1472,7 +1474,7 @@ sub getL4FarmLogs    # ($farm_name)
 			last;
 		}
 	}
-	close FI;
+	close $fd;
 
 	return $output;
 }
@@ -1481,7 +1483,7 @@ sub getL4FarmLogs    # ($farm_name)
 sub setL4FarmLogs
 {
 	my $farmname = shift;
-	my $action = shift; 	# true or false
+	my $action   = shift;    # true or false
 	my $out;
 
 	# execute action
@@ -1576,11 +1578,5 @@ sub reloadL4FarmLogsRule
 
 	#~ return $error;
 }
-
-
-
-
-
-
 
 1;

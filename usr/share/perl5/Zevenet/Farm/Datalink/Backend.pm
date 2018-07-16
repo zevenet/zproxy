@@ -50,9 +50,9 @@ sub getDatalinkFarmServers    # ($farm_name)
 	my $sindex        = 0;
 	my @servers;
 
-	open FI, "<$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		# ;server;45.2.2.3;eth0;1;1;up
 		if ( $line ne "" && $line =~ /^\;server\;/ && $first ne "true" )
@@ -67,7 +67,7 @@ sub getDatalinkFarmServers    # ($farm_name)
 			$first = "false";
 		}
 	}
-	close FI;
+	close $fd;
 
 	return @servers;
 }
@@ -100,9 +100,9 @@ sub getDatalinkFarmBackends    # ($farm_name)
 	require Zevenet::Alias;
 	my $alias = &getAlias( "backend" );
 
-	open FI, "<$configdir/$farm_filename";
+	open my $fd, '<', "$configdir/$farm_filename";
 
-	while ( my $line = <FI> )
+	while ( my $line = <$fd> )
 	{
 		chomp ( $line );
 
@@ -130,7 +130,7 @@ sub getDatalinkFarmBackends    # ($farm_name)
 			$first = "false";
 		}
 	}
-	close FI;
+	close $fd;
 
 	return \@servers;
 }

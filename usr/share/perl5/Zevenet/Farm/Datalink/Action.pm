@@ -165,8 +165,8 @@ sub _runDatalinkFarmStart    # ($farm_name, $writeconf, $status)
 
 	# Enable active datalink file
 	my $piddir = &getGlobalConfiguration('piddir');
-	open FI, ">$piddir\/$farm_name\_datalink.pid";
-	close FI;
+	open my $fd, '>', "$piddir\/$farm_name\_datalink.pid";
+	close $fd;
 
 	return $status;
 }

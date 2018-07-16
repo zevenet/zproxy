@@ -69,13 +69,12 @@ sub remGSLBFarmZoneResource    # ($id,$farm_name,$service)
 	my $ffile  = &getFarmFile( $fname );
 
 	my @fileconf;
-	my $line;
 	my $index = 0;
 
 	require Tie::File;
 	tie @fileconf, 'Tie::File', "$configdir/$ffile/etc/zones/$service";
 
-	foreach $line ( @fileconf )
+	foreach my $line ( @fileconf )
 	{
 		if ( $line =~ /\;index_$id/ )
 		{

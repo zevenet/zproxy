@@ -29,7 +29,7 @@ my $configdir = &getGlobalConfiguration('configdir');
 Function: runHTTPFarmCreate
 
 	Create a HTTP farm
-	
+
 Parameters:
 	vip - Virtual IP where the virtual service is listening
 	port - Virtual port where the virtual service is listening
@@ -38,7 +38,7 @@ Parameters:
 
 Returns:
 	Integer - return 0 on success or different of 0 on failure
-		
+
 =cut
 sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 {
@@ -75,16 +75,16 @@ sub runHTTPFarmCreate    # ( $vip, $vip_port, $farm_name, $farm_type )
 
 	#create files with personalized errors
 	my $f_err;
-	open $f_err, ">$configdir\/$farm_name\_Err414.html";
+	open $f_err, '>', "$configdir\/$farm_name\_Err414.html";
 	print $f_err "Request URI is too long.\n";
 	close $f_err;
-	open $f_err, ">$configdir\/$farm_name\_Err500.html";
+	open $f_err, '>', "$configdir\/$farm_name\_Err500.html";
 	print $f_err "An internal server error occurred. Please try again later.\n";
 	close $f_err;
-	open $f_err, ">$configdir\/$farm_name\_Err501.html";
+	open $f_err, '>', "$configdir\/$farm_name\_Err501.html";
 	print $f_err "This method may not be used.\n";
 	close $f_err;
-	open $f_err, ">$configdir\/$farm_name\_Err503.html";
+	open $f_err, '>', "$configdir\/$farm_name\_Err503.html";
 	print $f_err "The service is not available. Please try again later.\n";
 	close $f_err;
 

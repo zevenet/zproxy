@@ -56,7 +56,7 @@ sub get_http
 	}
 	else
 	{
-		$http->{ 'ip' } = $interface->{ 'ip' }; 
+		$http->{ 'ip' } = $interface->{ 'ip' };
 	}
 	$http->{ 'port' } = &getHttpServerPort;
 
@@ -71,7 +71,8 @@ sub set_http
 
 	my $description = "Post http";
 	my @allowParams = ( "ip", "port" );
-	my $httpIp = $json_obj->{ 'ip' } if ( exists $json_obj->{ 'ip' } );
+	my $httpIp;
+	$httpIp = $json_obj->{ 'ip' } if ( exists $json_obj->{ 'ip' } );
 	my $errormsg = &getValidOptParams( $json_obj, \@allowParams );
 
 	if ( !$errormsg )

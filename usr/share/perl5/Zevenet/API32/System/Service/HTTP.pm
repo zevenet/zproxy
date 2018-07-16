@@ -68,7 +68,8 @@ sub set_http
 	my $json_obj = shift;
 
 	my $desc = "Post http";
-	my $httpIp = $json_obj->{ 'ip' } if ( exists $json_obj->{ 'ip' } );
+	my $httpIp;
+	$httpIp = $json_obj->{ 'ip' } if ( exists $json_obj->{ 'ip' } );
 
 	my @allowParams = ( "ip", "port" );
 	my $param_msg = &getValidOptParams( $json_obj, \@allowParams );

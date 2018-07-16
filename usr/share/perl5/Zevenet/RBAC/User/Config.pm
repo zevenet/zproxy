@@ -158,7 +158,8 @@ sub delRBACUser
 
 	# delete from its group
 	my $group = &getRBACUserGroup( $user );
-	my $error = &delRBACGroupResource( $group, $user, 'users' ) if ( $group );
+	my $error;
+	$error = &delRBACGroupResource( $group, $user, 'users' ) if ( $group );
 
 	# remove from system. It removes the user of the groups
 	$error = &runRBACDeleteUserCmd( $user ) if ( !$error );
