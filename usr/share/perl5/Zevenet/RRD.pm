@@ -26,12 +26,12 @@ use RRDs;
 use MIME::Base64;
 use Zevenet::Config;
 
-my $basedir = &getGlobalConfiguration('basedir');
-my $rrdap_dir = &getGlobalConfiguration('rrdap_dir');
-my $rrd_dir = &getGlobalConfiguration('rrd_dir');
+my $basedir   = &getGlobalConfiguration( 'basedir' );
+my $rrdap_dir = &getGlobalConfiguration( 'rrdap_dir' );
+my $rrd_dir   = &getGlobalConfiguration( 'rrd_dir' );
 
-my $width  = "600";
-my $height = "150";
+my $width     = "600";
+my $height    = "150";
 my $imagetype = "PNG";
 
 =begin nd
@@ -52,13 +52,15 @@ sub printImgFile    #($file)
 {
 	my ( $file ) = @_;
 
-	if ( open PNG, "<$file" )
+	if ( open my $png, '<', $file )
 	{
-		my $raw_string = do { local $/ = undef; <PNG>; };
+		my $raw_string = do { local $/ = undef; <$png>; };
 		my $encoded = encode_base64( $raw_string );
-		close PNG;
+
+		close $png;
+
 		unlink ( $file );
-		return "$encoded";
+		return $encoded;
 	}
 	else
 	{

@@ -57,7 +57,7 @@ sub getSsh
 
 	if ( !-e $sshFile )
 	{
-		return undef;
+		return;
 	}
 	else
 	{
@@ -115,8 +115,11 @@ sub setSsh
 						 # and listen if one of this doesn't exist
 
 	# create flag to check all params are changed
-	my $portFlag   = 1 if ( exists $sshConf->{ 'port' } );
-	my $listenFlag = 1 if ( exists $sshConf->{ 'listen' } );
+	my $portFlag;
+	my $listenFlag;
+	$portFlag   = 1 if ( exists $sshConf->{ 'port' } );
+	$listenFlag = 1 if ( exists $sshConf->{ 'listen' } );
+
 	$sshConf->{ 'listen' } = '0.0.0.0' if ( $sshConf->{ 'listen' } eq '*' );
 
 	if ( !-e $sshFile )

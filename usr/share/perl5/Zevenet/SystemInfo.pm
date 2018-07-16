@@ -199,9 +199,10 @@ See Also:
 
 sub getCpuCores
 {
+	my $cpuinfo_filename = '/proc/stat';
 	my $cores = 1;
 
-	open my $stat_file, "/proc/stat";
+	open my $stat_file, '<', $cpuinfo_filename;
 
 	while ( my $line = <$stat_file> )
 	{

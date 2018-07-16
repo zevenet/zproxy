@@ -132,7 +132,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 	# includes !$if_status to avoid warning
 	if ( !$if_line && ( !$if_status || $if_status !~ /up/ ) )
 	{
-		return undef;
+		return;
 	}
 
 	chomp ( $if_line );
@@ -260,7 +260,7 @@ sub setInterfaceConfig    # $bool ($if_ref)
 	if ( ref $if_ref ne 'HASH' )
 	{
 		&zenlog( "Input parameter is not a hash reference", "warning", "NETWORK" );
-		return undef;
+		return;
 	}
 
 	&zenlog( "setInterfaceConfig: " . Dumper $if_ref, "debug", "NETWORK") if &debug() > 2;
@@ -749,7 +749,7 @@ sub getSystemInterface    # ($if_name)
 
 	$$if_ref{ mac } = $socket->if_hwaddr( $$if_ref{ name } );
 
-	return undef if not $$if_ref{ mac };
+	return if not $$if_ref{ mac };
 	$$if_ref{ status } = ( $if_flags & IFF_UP ) ? "up" : "down";
 	$$if_ref{ addr }   = '';
 	$$if_ref{ mask }   = '';
@@ -812,7 +812,7 @@ sub getInterfaceType
 
 	my $type;
 
-	return undef if $if_name eq '' || !defined $if_name;
+	return if $if_name eq '' || !defined $if_name;
 
 	# interfaz for cluster when is in maintenance mode
 	return 'dummy' if $if_name eq 'cl_maintenance';
@@ -837,7 +837,7 @@ sub getInterfaceType
 		}
 		else
 		{
-			return undef;
+			return;
 		}
 	}
 
@@ -1111,7 +1111,8 @@ sub getVirtualInterfaceNameList
 	opendir ( my $conf_dir, &getGlobalConfiguration( 'configdir' ) );
 	my $virt_if_re = &getValidFormat( 'virt_interface' );
 
-	my @filenames = grep { s/^if_($virt_if_re)_conf$/$1/ } readdir ( $conf_dir );
+	my @filenames = grep { /^if_($virt_if_re)_conf$/ } readdir ( $conf_dir );
+	@filenames =~ s/^if_($virt_if_re)_conf$/$1/;
 
 	closedir ( $conf_dir );
 

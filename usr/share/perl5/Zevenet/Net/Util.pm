@@ -431,7 +431,7 @@ sub getInterfaceOfIp    # ($ip)
 	# returns an invalid interface name, an undefined variable
 	&zenlog("Warning: No interface was found configured with IP address $ip", "info", "NETWORK" );
 
-	return undef;
+	return;
 }
 
 1;

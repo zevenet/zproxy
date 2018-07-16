@@ -57,7 +57,7 @@ sub setSsyncdFarmUp
 		return system( "$ssyncdctl_bin start http $farm_name >/dev/null" );
 	}
 
-	return undef;
+	return;
 }
 
 
@@ -86,7 +86,7 @@ sub setSsyncdFarmDown
 		return system( "$ssyncdctl_bin stop http $farm_name >/dev/null" );
 	}
 
-	return undef;
+	return;
 }
 
 #~ sub disable_ssyncd

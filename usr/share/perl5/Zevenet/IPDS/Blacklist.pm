@@ -21,6 +21,8 @@
 #
 ###############################################################################
 
+use strict;
+
 include 'Zevenet::IPDS::Blacklist::Core';
 include 'Zevenet::IPDS::Blacklist::Runtime';
 include 'Zevenet::IPDS::Blacklist::Config';

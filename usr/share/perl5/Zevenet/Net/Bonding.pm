@@ -72,7 +72,7 @@ sub getBondList
 	if ( !-f $bonding_masters_filename )
 	{
 		# No bonding interface found
-		return undef;
+		return;
 	}
 
 	open ( my $bond_file, '<', $bonding_masters_filename );
@@ -80,7 +80,7 @@ sub getBondList
 	if ( !$bond_file )
 	{
 		&zenlog( "Could not open file $bonding_masters_filename: $!", "error", "NETWORK" );
-		return undef;
+		return;
 	}
 
 	my @bond_names = split ( ' ', <$bond_file> // '' );
@@ -141,7 +141,7 @@ sub getBondMode
 	if ( !-d $bond_path )
 	{
 		&zenlog( "Could not find bonding $bond_path", "error", "NETWORK" );
-		return undef;
+		return;
 	}
 
 	my $bonding_mode_filename = &getGlobalConfiguration('bonding_mode_filename');
@@ -151,7 +151,7 @@ sub getBondMode
 	if ( !$bond_mode_file )
 	{
 		&zenlog( "Could not open file $bond_path/$bonding_mode_filename: $!", "error", "NETWORK" );
-		return undef;
+		return;
 	}
 
 	# input example: balance-rr 0
@@ -189,7 +189,7 @@ sub getBondSlaves
 	if ( !-d $bond_path )
 	{
 		&zenlog( "Could not find bonding $bond_path", "error", "NETWORK" );
-		return undef;
+		return;
 	}
 
 	my $bonding_slaves_filename = &getGlobalConfiguration('bonding_slaves_filename');
@@ -199,7 +199,7 @@ sub getBondSlaves
 	if ( !$bond_slaves_file )
 	{
 		&zenlog( "Could not open file $bond_path/$bonding_slaves_filename: $!", "error", "NETWORK" );
-		return undef;
+		return;
 	}
 
 	# input example: eth1 eth2

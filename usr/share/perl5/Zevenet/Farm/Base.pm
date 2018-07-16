@@ -453,9 +453,11 @@ sub getFarmProto    # ($farm_name)
 
 	if ( $farm_type eq "l4xnat" )
 	{
-		open FI, "<", "$configdir/$farm_filename";
+		open my $fd, '<', "$configdir/$farm_filename";
+
 		my $first = "true";
-		while ( my $line = <FI> )
+
+		while ( my $line = <$fd> )
 		{
 			if ( $line ne "" && $first eq "true" )
 			{
@@ -464,7 +466,8 @@ sub getFarmProto    # ($farm_name)
 				$output = $line[1];
 			}
 		}
-		close FI;
+
+		close $fd;
 	}
 	elsif ( $farm_type =~ /http/i )
 	{

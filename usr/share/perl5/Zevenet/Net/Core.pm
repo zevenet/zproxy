@@ -301,15 +301,15 @@ sub stopIf    # ($if_ref)
 		my $rttables = &getGlobalConfiguration( 'rttables' );
 
 		# Delete routes table
-		open ROUTINGFILE, '<', $rttables;
-		my @contents = <ROUTINGFILE>;
-		close ROUTINGFILE;
+		open my $rt_fd, '<', $rttables;
+		my @contents = <$rt_fd>;
+		close $rt_fd;
 
 		@contents = grep !/^...\ttable_$if$/, @contents;
 
-		open ROUTINGFILE, '>', $rttables;
-		print ROUTINGFILE @contents;
-		close ROUTINGFILE;
+		open $rt_fd, '>', $rttables;
+		print $rt_fd @contents;
+		close $rt_fd;
 	}
 
 	#if virtual interface
@@ -421,15 +421,15 @@ sub delIf    # ($if_ref)
 			my $rttables = &getGlobalConfiguration( 'rttables' );
 
 			# Delete routes table, complementing writeRoutes()
-			open ROUTINGFILE, '<', $rttables;
-			my @contents = <ROUTINGFILE>;
-			close ROUTINGFILE;
+			open my $rt_fd, '<', $rttables;
+			my @contents = <$rt_fd>;
+			close $rt_fd;
 
 			@contents = grep !/^...\ttable_$$if_ref{name}$/, @contents;
 
-			open ROUTINGFILE, '>', $rttables;
-			print ROUTINGFILE @contents;
-			close ROUTINGFILE;
+			open $rt_fd, '>', $rttables;
+			print $rt_fd @contents;
+			close $rt_fd;
 		}
 	}
 

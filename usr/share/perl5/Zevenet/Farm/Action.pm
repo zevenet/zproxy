@@ -256,9 +256,9 @@ sub _runFarmStop    # ($farm_name,$writeconf)
 		require Zevenet::Farm::HTTP::Config;
 		my $lock_fh = &lockHTTPFile( $farm_name );
 
-		open FW, ">>$configdir/$farm_filename";
-		print FW "#down\n";
-		close FW;
+		open my $fw, '>>', "$configdir/$farm_filename";
+		print $fw "#down\n";
+		close $fw;
 
 		close $lock_fh;
 	}

@@ -144,12 +144,12 @@ sub certcontrol
         #swcert = 2 ==> Cert isn't signed OK
         $swcert = 2;
         return $swcert;
-    } elsif (( !grep /$key/, @zen_cert ) 
+    } elsif (( !grep /$key/, @zen_cert )
 			 || ( !grep (/(CN=$hostname\/|CN = $hostname\,)/, @zen_cert)) ) {
  		#swcert = 5 ==> Cert isn't valid
        	$swcert = 5;
        	return $swcert;
- 	}	
+ 	}
 
 	# Verify date of check
 	my $date_today = strftime "%F", localtime;
@@ -177,7 +177,7 @@ sub certcontrol
 		}
 		my $wget = &getGlobalConfiguration( 'wget' );
 		my @modification = split /\ /, $date_mod;
-		$modification[0] = $modification[0] // '';			
+		$modification[0] = $modification[0] // '';
 
 		if ( $modification[0] ne $date_today) {
 			# Download CRL
@@ -190,7 +190,8 @@ sub certcontrol
 			unlink $tmp_file;
 	  	}
 
-		my @decoded = `$openssl crl -inform DER -text -noout -in $crl_path` if -f $crl_path;
+		my @decoded = ();
+		@decoded = `$openssl crl -inform DER -text -noout -in $crl_path` if -f $crl_path;
 		if ( !grep /keyid:$keyid/, @decoded ) {
 			#swcert = 2 ==> Cert isn't signed OK
 			$swcert = 2;
@@ -212,7 +213,7 @@ sub certcontrol
 		@contents = ($date_encode);
 
 		untie @contents;
-	}	
+	}
 
  	 # Certificate expiring date
     my ( $na ) = grep /Not After/i, @zen_cert;
@@ -237,7 +238,7 @@ sub certcontrol
 
 	} else {
 		my $dmi 		= &get_sys_uuid();
-		my $mod_appl	= &get_mod_appl();		
+		my $mod_appl	= &get_mod_appl();
 
 		my $key_decrypy = &decrypt($key);
 		my @data_key = split /::/, $key_decrypy;

@@ -299,22 +299,23 @@ sub manage_power()
 
 sub manage_keyboard()
 {
-	my $line;
 	my $keyboardfile = "/etc/default/keyboard";
 	my ( $keyboard, $zlbkeyboard );
+
 	if ( -f $keyboardfile )
 	{
-		open FR, $keyboardfile;
+		open my $fd, '<', $keyboardfile;
 
-		while ( $line = <FR> )
+		while ( my $line = <$fd> )
 		{
 			if ( $line =~ 'XKBLAYOUT' )
 			{
 				$keyboard = $line;
 			}
 		}
-		close FR;
+		close $fd;
 	}
+
 	$zlbkeyboard = $win3->add(
 							   'win3id1', 'TextEntry',
 							   -bg       => 'black',
@@ -326,6 +327,7 @@ sub manage_keyboard()
 							   -text     => $keyboard,
 							   -readonly => 1,
 	);
+
 	my $confirm = $win3->add(
 		'win3id2',
 		'Buttonbox',
@@ -359,19 +361,20 @@ sub manage_keyboard()
 
 sub manage_timezone()
 {
-	my $line;
 	my $timezonefile = "/etc/timezone";
 	my ( $timezone, $zlbtimezone );
+
 	if ( -f $timezonefile )
 	{
-		open FR, $timezonefile;
+		open my $fd, '<', $timezonefile;
 
-		while ( $line = <FR> )
+		while ( my $line = <$fd> )
 		{
 			$timezone = $line;
 		}
-		close FR;
+		close $fd;
 	}
+
 	$zlbtimezone = $win3->add(
 							   'win3id1', 'TextEntry',
 							   -bg       => 'black',
@@ -383,6 +386,7 @@ sub manage_timezone()
 							   -text     => $timezone,
 							   -readonly => 1,
 	);
+
 	my $confirm = $win3->add(
 		'win3id2',
 		'Buttonbox',

@@ -52,6 +52,7 @@ See Also:
 
 sub getMemStats
 {
+	my $meminfo_filename = '/proc/meminfo';
 	my ( $format ) = @_;
 	my @data;
 	my (
@@ -60,17 +61,17 @@ sub getMemStats
 	);
 	my ( $mname, $mfname, $mbname, $mcname, $swtname, $swfname, $swcname );
 
-	if ( !-f "/proc/meminfo" )
+	unless ( -f $meminfo_filename )
 	{
-		print "$0: Error: File /proc/meminfo not exist ...\n";
+		print "$0: Error: File $meminfo_filename not exist ...\n";
 		exit 1;
 	}
 
 	$format = "mb" unless $format;
 
-	open FR, "/proc/meminfo";
-	my $line;
-	while ( $line = <FR> )
+	open my $file, '<', $meminfo_filename;
+
+	while ( my $line = <$file> )
 	{
 		if ( $line =~ /memtotal/i )
 		{
@@ -142,7 +143,7 @@ sub getMemStats
 		}
 	}
 
-	close FR;
+	close $file;
 
 	$mvalue   = sprintf ( '%.2f', $mvalue );
 	$mfvalue  = sprintf ( '%.2f', $mfvalue );
@@ -192,21 +193,22 @@ See Also:
 
 sub getLoadStats
 {
+	my $load_filename = '/proc/loadavg';
+
 	my $last;
 	my $last5;
 	my $last15;
 
-	if ( -f "/proc/loadavg" )
+	if ( -f $load_filename )
 	{
 		my $lastline;
 
-		my $line;
-		open FR, "/proc/loadavg";
-		while ( $line = <FR> )
+		open my $file, '<', $load_filename;
+		while ( my $line = <$file> )
 		{
 			$lastline = $line;
 		}
-		close FR;
+		close $file;
 
 		( $last, $last5, $last15 ) = split ( " ", $lastline );
 	}
@@ -274,15 +276,17 @@ sub getNetworkStats
 
 	$format = "" unless defined $format;    # removes undefined variable warnings
 
-	if ( !-f "/proc/net/dev" )
+	my $netinfo_filename = '/proc/net/dev';
+
+	unless ( -f $netinfo_filename )
 	{
-		print "$0: Error: File /proc/net/dev not exist ...\n";
+		print "$0: Error: File $netinfo_filename not exist ...\n";
 		exit 1;
 	}
 
 	my @outHash;
 
-	open DEV, '/proc/net/dev' or die $!;
+	open my $file, '<', $netinfo_filename or die $!;
 	my ( $in, $out );
 	my @data;
 	my @interface;
@@ -293,7 +297,7 @@ sub getNetworkStats
 	my $alias = &getAlias( 'interface' );
 
 	my $i = -1;
-	while ( <DEV> )
+	while ( <$file> )
 	{
 		chomp $_;
 		if ( $_ =~ /\:/ && $_ !~ /lo/ )
@@ -346,7 +350,7 @@ sub getNetworkStats
 		  [$interface[$j] . ' out', $interfaceout[$j]];
 	}
 
-	close DEV;
+	close $file;
 
 	if ( $format eq 'hash' )
 	{
@@ -388,10 +392,11 @@ sub getCPU
 {
 	my @data;
 	my $interval = 1;
+	my $cpuinfo_filename = '/proc/stat';
 
-	if ( !-f "/proc/stat" )
+	unless ( -f $cpuinfo_filename )
 	{
-		print "$0: Error: File /proc/stat not exist ...\n";
+		print "$0: Error: File $cpuinfo_filename not exist ...\n";
 		exit 1;
 	}
 
@@ -415,8 +420,10 @@ sub getCPU
 
 	my @line_s;
 	my $line;
-	open FR, "/proc/stat";
-	foreach $line ( <FR> )
+
+	open my $file, '<', $cpuinfo_filename;
+
+	foreach my $line ( <$file> )
 	{
 		if ( $line =~ /^cpu\ / )
 		{
@@ -438,12 +445,12 @@ sub getCPU
 			  $cpu_softirq1;
 		}
 	}
-	close FR;
+	close $file;
 
 	sleep $interval;
 
-	open FR, "/proc/stat";
-	foreach $line ( <FR> )
+	open $file, '<', $cpuinfo_filename;
+	foreach my $line ( <$file> )
 	{
 		if ( $line =~ /^cpu\ / )
 		{
@@ -465,7 +472,7 @@ sub getCPU
 			  $cpu_softirq2;
 		}
 	}
-	close FR;
+	close $file;
 
 	my $diff_cpu_user    = $cpu_user2 - $cpu_user1;
 	my $diff_cpu_nice    = $cpu_nice2 - $cpu_nice1;
@@ -723,25 +730,25 @@ See Also:
 
 sub getCPUTemp
 {
-	my $file = &getGlobalConfiguration( "temperatureFile" );
+	my $filename = &getGlobalConfiguration( "temperatureFile" );
 	my $lastline;
 
-	if ( !-f "$file" )
+	unless ( -f $filename )
 	{
-		print "$0: Error: File $file not exist ...\n";
+		print "$0: Error: File $filename not exist ...\n";
 		exit 1;
 	}
 
-	my $line;
-	open FT, $file;
-	while ( $line = <FT> )
+	open my $file, '<', $filename;
+
+	while ( my $line = <$file> )
 	{
 		$lastline = $line;
 	}
-	close FT;
+
+	close $file;
 
 	my @lastlines = split ( "\:", $lastline );
-
 	my $temp = $lastlines[1];
 	$temp =~ s/\ //g;
 	$temp =~ s/\n//g;

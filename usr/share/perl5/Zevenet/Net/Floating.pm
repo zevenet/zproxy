@@ -83,7 +83,7 @@ sub setConfigTiny
 	if ( ref $config_ref ne 'Config::Tiny' )
 	{
 		&zenlog("Ilegal configuration argument.", "error", "SYSTEM");
-		return undef;
+		return;
 	}
 
 	require Config::Tiny;

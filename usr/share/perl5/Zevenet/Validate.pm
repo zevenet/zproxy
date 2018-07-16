@@ -611,7 +611,7 @@ sub checkZAPIParams
 
 	}
 
-	return undef;
+	return;
 }
 
 =begin nd

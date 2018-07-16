@@ -80,7 +80,7 @@ sub getAuthorizationCredentials    # ()
 		( $username, $password ) = split ( ":", $decoded_digest );
 	}
 
-	return undef if !$username or !$password;
+	return if !$username or !$password;
 
 	require Zevenet::User;
 	&setUser( $username );
@@ -92,7 +92,7 @@ sub authenticateCredentials    #($user,$curpasswd)
 {
 	my ( $user, $pass ) = @_;
 
-	return undef if !defined $user or !defined $pass;
+	return if !defined $user or !defined $pass;
 
 	require Authen::Simple::Passwd;
 	Authen::Simple::Passwd->import;

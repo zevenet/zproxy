@@ -52,12 +52,12 @@ sub getDns
 
 	if ( !-f $dnsFile )
 	{
-		return undef;
+		return;
 	}
 
-	open FI, '<', $dnsFile;
-	my @file = <FI>;
-	close FI;
+	open ( my $fd, '<', $dnsFile );
+	my @file = <$fd>;
+	close $fd;
 
 	my $index = 1;
 	foreach my $line ( @file )

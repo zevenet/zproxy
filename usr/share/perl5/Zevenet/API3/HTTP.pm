@@ -25,7 +25,7 @@ use strict;
 
 #~ use Zevenet::CGI;
 
-sub GET($$)
+sub GET
 {
 	my ( $path, $code ) = @_;
 
@@ -39,7 +39,7 @@ sub GET($$)
 	$code->( @captures );
 }
 
-sub POST($$)
+sub POST
 {
 	my ( $path, $code ) = @_;
 
@@ -86,7 +86,7 @@ sub POST($$)
 	$code->( $input_ref, @captures );
 }
 
-sub PUT($$)
+sub PUT
 {
 	my ( $path, $code ) = @_;
 
@@ -134,7 +134,7 @@ sub PUT($$)
 	$code->( $input_ref, @captures );
 }
 
-sub DELETE($$)
+sub DELETE
 {
 	my ( $path, $code ) = @_;
 
@@ -148,7 +148,7 @@ sub DELETE($$)
 	$code->( @captures );
 }
 
-sub OPTIONS($$)
+sub OPTIONS
 {
 	my ( $path, $code ) = @_;
 

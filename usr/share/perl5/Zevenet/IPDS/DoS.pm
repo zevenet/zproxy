@@ -21,6 +21,8 @@
 #
 ###############################################################################
 
+use strict;
+
 include 'Zevenet::IPDS::DoS::Core';
 include 'Zevenet::IPDS::DoS::Runtime';
 include 'Zevenet::IPDS::DoS::Config';

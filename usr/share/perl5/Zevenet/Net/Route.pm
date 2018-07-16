@@ -45,9 +45,9 @@ sub writeRoutes    # ($if_name)
 
 	my $rttables = &getGlobalConfiguration( 'rttables' );
 
-	open ROUTINGFILE, '<', $rttables;
-	my @contents = <ROUTINGFILE>;
-	close ROUTINGFILE;
+	open my $rt_fd, '<', $rttables;
+	my @contents = <$rt_fd>;
+	close $rt_fd;
 
 	if ( grep /^...\ttable_$if_name$/, @contents )
 	{
@@ -69,9 +69,9 @@ sub writeRoutes    # ($if_name)
 
 	if ( $found eq "true" )
 	{
-		open ( ROUTINGFILE, ">>", "$rttables" );
-		print ROUTINGFILE "$rtnumber\ttable_$if_name\n";
-		close ROUTINGFILE;
+		open ( my $rt_fd, ">>", "$rttables" );
+		print $rt_fd "$rtnumber\ttable_$if_name\n";
+		close $rt_fd;
 	}
 
 	return;
@@ -445,14 +445,14 @@ sub getDefaultGW    # ($if)
 			$cif = $iface[0];
 		}
 
-		open ( ROUTINGFILE, &getGlobalConfiguration( 'rttables' ) );
+		open ( my $rt_fd, '<', &getGlobalConfiguration( 'rttables' ) );
 
-		if ( grep { /^...\ttable_$cif$/ } <ROUTINGFILE> )
+		if ( grep { /^...\ttable_$cif$/ } <$rt_fd> )
 		{
 			@routes = `$ip_bin route list table table_$cif`;
 		}
 
-		close ROUTINGFILE;
+		close $rt_fd;
 		@defgw = grep ( /^default/, @routes );
 		@line = split ( / /, $defgw[0] );
 		$gw = $line[2];
