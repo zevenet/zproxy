@@ -208,6 +208,8 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 	if ( $eload && $iface{ type } eq 'nic' )
 	{
+		# not die if the appliance has not a certificate
+		eval {
 		unless ( $saved_bond_slaves )
 		{
 			@TMP::bond_slaves = &eload(
@@ -217,6 +219,7 @@ sub getInterfaceConfig    # \%iface ($if_name, $ip_version)
 
 			$saved_bond_slaves = 1;
 		}
+		};
 
 		$iface{ is_slave } =
 		  ( grep { $iface{ name } eq $_ } @TMP::bond_slaves ) ? 'true' : 'false';
@@ -763,6 +766,8 @@ sub getSystemInterface    # ($if_name)
 
 	if ( $eload && $$if_ref{ type } eq 'nic' )
 	{
+		# not die if the appliance has not a certificate
+		eval {
 		unless ( $saved_bond_slaves )
 		{
 			@TMP::bond_slaves = &eload(
@@ -772,6 +777,7 @@ sub getSystemInterface    # ($if_name)
 
 			$saved_bond_slaves = 1;
 		}
+		};
 
 		$$if_ref{ is_slave } =
 		  ( grep { $$if_ref{ name } eq $_ } @TMP::bond_slaves ) ? 'true' : 'false';
