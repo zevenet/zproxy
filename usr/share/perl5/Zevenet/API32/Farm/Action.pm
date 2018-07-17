@@ -51,11 +51,11 @@ sub farm_actions    # ( $json_obj, $farmname )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	require Zevenet::Farm::Core;
 	if ( &getFarmType( $farmname ) =~ /http/ )
 	{
 		require Zevenet::Farm::HTTP::Config;
 		my $err_msg = &getHTTPFarmConfigErrorMessage( $farmname );
+
 		if ( $err_msg )
 		{
 			&httpErrorResponse( code => 400, desc => $desc, msg => $err_msg );
@@ -71,13 +71,16 @@ sub farm_actions    # ( $json_obj, $farmname )
 			my $msg = "Error trying to set the action stop in farm $farmname.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
+
 		&setFarmNoRestart( $farmname );
 	}
 	elsif ( $json_obj->{ action } eq "start" )
 	{
+		require Zevenet::Net::Interface;
+
 		# check if the ip exists in any interface
 		my $ip = &getFarmVip( "vip", $farmname );
-		require Zevenet::Net::Interface;
+
 		if ( !&getIpAddressExists( $ip ) )
 		{
 			my $msg = "The virtual ip $ip is not defined any interface.";
@@ -103,9 +106,11 @@ sub farm_actions    # ( $json_obj, $farmname )
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
 
+		require Zevenet::Net::Interface;
+
 		# check if the ip exists in any interface
 		my $ip = &getFarmVip( "vip", $farmname );
-		require Zevenet::Net::Interface;
+
 		if ( !&getIpAddressExists( $ip ) )
 		{
 			my $msg = "The virtual ip $ip is not defined any interface.";
@@ -269,8 +274,12 @@ sub service_backend_maintenance # ( $json_obj, $farmname, $service, $backend_id 
 
 	my $body = {
 				 description => $desc,
-				 params      => { action => $json_obj->{ action },
-					 farm => { status => &getFarmVipStatus( $farmname ) } },
+				 params      => {
+							 action => $json_obj->{ action },
+							 farm   => {
+									   status => &getFarmVipStatus( $farmname ),
+							 },
+				 },
 	};
 
 	&eload(
@@ -373,14 +382,18 @@ sub backend_maintenance    # ( $json_obj, $farmname, $backend_id )
 	# no error found, send successful response
 	my $body = {
 				 description => $desc,
-				 params      => { action => $json_obj->{ action },
-					farm => { status => &getFarmVipStatus( $farmname ) } },
+				 params      => {
+							 action => $json_obj->{ action },
+							 farm   => {
+									   status => &getFarmVipStatus( $farmname ),
+							 },
+				 },
 	};
 
 	&eload(
-		module => 'Zevenet::Cluster',
-		func   => 'runZClusterRemoteManager',
-		args   => ['farm', 'restart', $farmname],
+			module => 'Zevenet::Cluster',
+			func   => 'runZClusterRemoteManager',
+			args   => ['farm', 'restart', $farmname],
 	) if ( $eload && &getFarmStatus( $farmname ) eq 'up' );
 
 	&httpResponse( { code => 200, body => $body } );
