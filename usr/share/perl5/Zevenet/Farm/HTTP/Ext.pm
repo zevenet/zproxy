@@ -484,4 +484,32 @@ sub delHTTPHeadremove    # ($farm_name,$service,$code)
 	return $errno;
 }
 
+
+sub get_http_farm_ee_struct
+{
+	my $farmname = shift;
+
+	require Zevenet::Farm::HTTP::Config;
+
+	# Output hash reference or undef if the farm does not exist.
+	my $farm = &get_http_farm_struct( $farmname );
+
+	return unless $farm;
+
+	# 100 Continue
+	my $flag = &getHTTPFarm100Continue( $farmname );
+	$farm->{ ignore_100_continue } = ( $flag ) ? "true" : "false";
+
+
+	# Logs
+	my $flag = &getHTTPFarmLogs( $farmname );
+	$farm->{ logs } = ( $flag ) ? "true" : "false";
+
+	# Add/remove header
+	$farm->{ addheader }  = &getHTTPAddheader( $farmname );
+	$farm->{ headremove } = &getHTTPHeadremove( $farmname );
+
+	return $farm;
+}
+
 1;

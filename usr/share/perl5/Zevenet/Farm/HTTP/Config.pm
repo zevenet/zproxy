@@ -23,8 +23,10 @@
 
 use strict;
 
-my $configdir = &getGlobalConfiguration('configdir');
+my $eload;
+if ( eval { require Zevenet::ELoad; } ) { $eload = 1; }
 
+my $configdir = &getGlobalConfiguration('configdir');
 
 =begin nd
 Function: lockHTTPFile
@@ -1356,5 +1358,248 @@ sub getHTTPFarmConfigErrorMessage    # ($farm_name)
 
 	return $msg;
 }
+
+sub get_http_farm_struct
+{
+	my $farmname = shift;
+
+	require Zevenet::Farm::Core;
+	require Zevenet::Farm::Base;
+
+	# Output hash reference or undef if the farm does not exist.
+	my $farm;
+
+	return unless $farmname;
+
+	my $type   = &getFarmType( $farmname );
+	my $vip    = &getFarmVip( "vip", $farmname );
+	my $vport  = &getFarmVip( "vipp", $farmname ) + 0;
+	my $status = &getFarmVipStatus( $farmname );
+
+	my $connto          = 0 + &getFarmConnTO( $farmname );
+	my $timeout         = 0 + &getHTTPFarmTimeout( $farmname );
+	my $alive           = 0 + &getHTTPFarmBlacklistTime( $farmname );
+	my $client          = 0 + &getFarmClientTimeout( $farmname );
+	my $rewritelocation = 0 + &getFarmRewriteL( $farmname );
+	my $httpverb        = 0 + &getFarmHttpVerb( $farmname );
+
+	if    ( $rewritelocation == 0 ) { $rewritelocation = "disabled"; }
+	elsif ( $rewritelocation == 1 ) { $rewritelocation = "enabled"; }
+	elsif ( $rewritelocation == 2 ) { $rewritelocation = "enabled-backends"; }
+
+	if    ( $httpverb == 0 ) { $httpverb = "standardHTTP"; }
+	elsif ( $httpverb == 1 ) { $httpverb = "extendedHTTP"; }
+	elsif ( $httpverb == 2 ) { $httpverb = "standardWebDAV"; }
+	elsif ( $httpverb == 3 ) { $httpverb = "MSextWebDAV"; }
+	elsif ( $httpverb == 4 ) { $httpverb = "MSRPCext"; }
+
+	my $err414 = &getFarmErr( $farmname, "414" );
+	my $err500 = &getFarmErr( $farmname, "500" );
+	my $err501 = &getFarmErr( $farmname, "501" );
+	my $err503 = &getFarmErr( $farmname, "503" );
+
+	my $farm = {
+				 status          => $status,
+				 restimeout      => $timeout,
+				 contimeout      => $connto,
+				 resurrectime    => $alive,
+				 reqtimeout      => $client,
+				 rewritelocation => $rewritelocation,
+				 httpverb        => $httpverb,
+				 listener        => $type,
+				 vip             => $vip,
+				 vport           => $vport,
+				 error500        => $err500,
+				 error414        => $err414,
+				 error501        => $err501,
+				 error503        => $err503
+	};
+
+	# HTTPS parameters
+	if ( $type eq "https" )
+	{
+		require Zevenet::Farm::HTTP::HTTPS;
+
+
+		## Get farm certificate(s)
+		my @cnames;
+
+		if ( $eload )
+		{
+			@cnames = &eload(
+				module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+				func   => 'getFarmCertificatesSNI',
+				args   => [$farmname],
+			);
+		}
+		else
+		{
+			@cnames = ( &getFarmCertificate( $farmname ) );
+		}
+
+		# Make struct array
+		my @cert_list;
+
+		for ( my $i = 0 ; $i < scalar @cnames ; $i++ )
+		{
+			push @cert_list, { file => $cnames[$i], id => $i + 1 };
+		}
+
+
+		## Get cipher set
+		my $ciphers = &getFarmCipherSet( $farmname );
+
+		# adapt "ciphers" to required interface values
+		if ( $ciphers eq "cipherglobal" )
+		{
+			$ciphers = "all";
+		}
+		elsif ( $ciphers eq "ciphercustom" )
+		{
+			$ciphers = "customsecurity";
+		}
+		elsif ( $ciphers eq "cipherpci" )
+		{
+			$ciphers = "highsecurity";
+		}
+
+
+		## All HTTPS parameters
+		$farm->{ certlist }        = \@cert_list;
+		$farm->{ ciphers }         = $ciphers;
+		$farm->{ cipherc }         = &getFarmCipherList( $farmname );
+		$farm->{ disable_sslv2 }   = ( &getHTTPFarmDisableSSL($farmname, "SSLv2") )?   "true": "false";
+		$farm->{ disable_sslv3 }   = ( &getHTTPFarmDisableSSL($farmname, "SSLv3") )?   "true": "false";
+		$farm->{ disable_tlsv1 }   = ( &getHTTPFarmDisableSSL($farmname, "TLSv1") )?   "true": "false";
+		$farm->{ disable_tlsv1_1 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_1") )? "true": "false";
+		$farm->{ disable_tlsv1_2 } = ( &getHTTPFarmDisableSSL($farmname, "TLSv1_2") )? "true": "false";
+	}
+
+	return $farm;
+}
+
+sub get_http_service_struct
+{
+	my ( $farmname, $service_name ) = @_;
+
+	require Zevenet::FarmGuardian;
+	require Zevenet::Farm::HTTP::Backend;
+
+	# http services
+	my @serv = &getHTTPFarmServices( $farmname );
+
+	# return error if service is not found
+	return unless grep( { $service_name eq $_ } @serv );
+
+	my $vser         = &getHTTPFarmVS( $farmname, $service_name, "vs" );
+	my $urlp         = &getHTTPFarmVS( $farmname, $service_name, "urlp" );
+	my $redirect     = &getHTTPFarmVS( $farmname, $service_name, "redirect" );
+	my $redirecttype = &getHTTPFarmVS( $farmname, $service_name, "redirecttype" );
+	my $session      = &getHTTPFarmVS( $farmname, $service_name, "sesstype" );
+	my $ttl          = &getHTTPFarmVS( $farmname, $service_name, "ttl" );
+	my $sesid        = &getHTTPFarmVS( $farmname, $service_name, "sessionid" );
+	my $dyns         = &getHTTPFarmVS( $farmname, $service_name, "dynscale" );
+	my $httpsbe      = &getHTTPFarmVS( $farmname, $service_name, "httpsbackend" );
+
+	if ( $dyns =~ /^$/ )
+	{
+		$dyns = "false";
+	}
+	if ( $httpsbe =~ /^$/ )
+	{
+		$httpsbe = "false";
+	}
+
+	$ttl = 0 unless $ttl;
+
+	my $backends = &getHTTPFarmBackends( $farmname, $service_name );
+
+	# Remove backend status 'undefined', it is for news api versions
+	foreach my $be ( @{ $backends } )
+	{
+		$be->{ 'status' } = 'up' if $be->{ 'status' } eq 'undefined';
+	}
+
+	my $service_ref = {
+						id           => $service_name,
+						vhost        => $vser,
+						urlp         => $urlp,
+						redirect     => $redirect,
+						redirecttype => $redirecttype,
+						persistence  => $session,
+						ttl          => $ttl + 0,
+						sessionid    => $sesid,
+						farmguardian => &getFGFarm( $farmname, $service_name ),
+						leastresp    => $dyns,
+						httpsb       => $httpsbe,
+						backends     => $backends,
+	};
+
+	if ( $eload )
+	{
+		$service_ref = &eload(
+			module => 'Zevenet::Farm::HTTP::Service::Ext',
+			func   => 'add_service_cookie_insertion',
+			args   => [$farmname, $service_ref],
+		);
+
+		$service_ref->{ redirect_code } = &eload(
+			module => 'Zevenet::Farm::HTTP::Service::Ext',
+			func   => 'getHTTPServiceRedirectCode',
+			args   => [$farmname, $service_name],
+		);
+
+		$service_ref->{ sts_status } = &eload(
+			module => 'Zevenet::Farm::HTTP::Service::Ext',
+			func   => 'getHTTPServiceSTSStatus',
+			args   => [$farmname, $service_name],
+		);
+
+		$service_ref->{ sts_timeout } = int( &eload(
+			module => 'Zevenet::Farm::HTTP::Service::Ext',
+			func   => 'getHTTPServiceSTSTimeout',
+			args   => [$farmname, $service_name],
+		) );
+	}
+
+	return $service_ref;
+}
+
+sub get_http_all_services_struct
+{
+	my ( $farmname ) = @_;
+
+	require Zevenet::Farm::HTTP::Service;
+
+	# Output
+	my @services_list = ();
+
+	foreach my $service ( &getHTTPFarmServices( $farmname ) )
+	{
+		my $service_ref = &get_http_service_struct ( $farmname, $service );
+
+		push @services_list, $service_ref;
+	}
+
+	return \@services_list;
+}
+
+sub get_http_all_services_summary_struct
+{
+	my ( $farmname ) = @_;
+
+	require Zevenet::Farm::HTTP::Service;
+
+	# Output
+	my @services_list = ();
+
+	foreach my $service ( &getHTTPFarmServices( $farmname ) )
+	{
+		push @services_list, { 'id' => $service };
+	}
+
+	return \@services_list;
+}
+
 
 1;
