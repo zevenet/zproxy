@@ -284,7 +284,7 @@ sub getHTTPFarmServices
 
 	my $farm_filename = &getFarmFile( $farm_name );
 	my $pos           = 0;
-	my @output;
+	my @output = ();
 
 	open my $fh, '<', "$configdir\/$farm_filename";
 	my @file = <$fh>;

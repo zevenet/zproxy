@@ -338,8 +338,8 @@ sub delFGFarm
 		}
 		else
 		{
-			$fg = &getFGFarm( $farm, $srv );
-			$err |= &setTinyObj( $fg_conf, $fg, 'farms', "${farm}_$srv", 'del' ) if $fg;
+			$fg = &getFGFarm( $farm, $service );
+			$err |= &setTinyObj( $fg_conf, $fg, 'farms', "${farm}_$service", 'del' ) if $fg;
 		}
 	}
 	else

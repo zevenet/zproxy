@@ -105,14 +105,14 @@ Returns:
 sub openlock    # ( $path, $mode )
 {
 	my $path = shift;
-	my $mode = shift;
+	my $mode = shift // '';
 
-	$mode ~= s/a/>>/;	# append
-	$mode ~= s/w/>/;	# write
-	$mode ~= s/r/</;	# read
+	$mode =~ s/a/>>/;	# append
+	$mode =~ s/w/>/;	# write
+	$mode =~ s/r/</;	# read
 
-	my $binmode  = $mode ~= s/b//;
-	my $textmode = $mode ~= s/t//;
+	my $binmode  = $mode =~ s/b//;
+	my $textmode = $mode =~ s/t//;
 
 	my $encoding = '';
 	$encoding = ":encoding(UTF-8)" if $textmode;
