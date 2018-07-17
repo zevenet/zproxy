@@ -131,7 +131,8 @@ sub eload
 		#~ zenlog( "rc: '$rc'" );
 		#~ zenlog( "ret_output: '$ret_output'" );
 		&zenlog( "$msg. $ret_output", "error". "SYSTEM" );
-		exit 1 if $0 =~ /zevenet$/;
+		# add exception to bonding module to not die when it is configuring nic interfaces
+		exit 1 if ( $0 =~ /zevenet$/ and exists $req{ func } and $req{ func } ne "getAllBondsSlaves" );
 		die( $msg );
 	}
 

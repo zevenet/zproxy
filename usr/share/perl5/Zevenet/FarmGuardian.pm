@@ -31,6 +31,12 @@ my $fg_conf   = "$configdir/farmguardian.conf";
 my $fg_template =
   &getGlobalConfiguration( "templatedir" ) . "/farmguardian.template";
 
+my $eload;
+if ( eval { require Zevenet::ELoad; } )
+{
+	$eload = 1;
+}
+
 sub getFGStatusFile
 {
 	my $farm = shift;
@@ -105,17 +111,16 @@ sub getFGObject
 {
 	my $fg_name      = shift;
 	my $use_template = shift;
-	my $file = "";
+	my $file         = "";
 
 	# using template file if this parameter is sent
-	if ( $use_template eq 'template' )
-		{ $file = $fg_template; }
+	if ( $use_template eq 'template' ) { $file = $fg_template; }
+
 	# using farmguardian config file by default
-	elsif ( grep ( /^$fg_name$/, &getFGConfigList() ) )
-		{ $file = $fg_conf; }
+	elsif ( grep ( /^$fg_name$/, &getFGConfigList() ) ) { $file = $fg_conf; }
+
 	# using template file if farmguardian is not defined in config file
-	else
-		{ $file = $fg_template; }
+	else { $file = $fg_template; }
 
 	my $obj = &getTiny( $file )->{ $fg_name };
 
@@ -196,7 +201,7 @@ sub setFGObject
 	my $value   = shift;
 
 	my $restart = 0;
-	my $out = 0;
+	my $out     = 0;
 
 	# not restart if only is changed the parameter description
 	if ( &getFGExistsConfig( $fg_name ) )
@@ -278,7 +283,7 @@ sub linkFGFarm
 
 	$out |= &runFGFarmStart( $farm, $srv ) if ( &getFarmStatus( $farm ) eq 'up' );
 
-	# the gslb fg is put in the start process, then, it is necessary to restart the farm
+# the gslb fg is put in the start process, then, it is necessary to restart the farm
 	if ( &getFarmType( $farm ) eq 'gslb' )
 	{
 		require Zevenet::Farm::Action;
@@ -303,7 +308,8 @@ sub unlinkFGFarm
 	my $out = &runFGFarmStop( $farm, $srv );
 
 	$out = &setTinyObj( $fg_conf, $fg_name, 'farms', $farm_tag, 'del' ) if !$out;
-	# the gslb fg is put in the start process, then, it is necessary to restart the farm
+
+# the gslb fg is put in the start process, then, it is necessary to restart the farm
 	if ( &getFarmType( $farm ) eq 'gslb' )
 	{
 		require Zevenet::Farm::Action;
@@ -490,6 +496,7 @@ sub runFGFarmStop
 		{
 			&zenlog( "running 'kill 9, $fgpid' stopping FarmGuardian $farm $service",
 					 "debug", "FG" );
+
 			# kill returns the number of process affected
 			$out = kill 9, $fgpid;
 			$out = ( not $out );
@@ -512,8 +519,8 @@ sub runFGFarmStop
 					require Tie::File;
 
 					my $portadmin = &getHTTPFarmSocket( $farm );
-					my $idsv = &getFarmVSI( $farm, $service );
-					my $poundctl = &getGlobalConfiguration( 'poundctl' );
+					my $idsv      = &getFarmVSI( $farm, $service );
+					my $poundctl  = &getGlobalConfiguration( 'poundctl' );
 
 					tie my @filelines, 'Tie::File', $status_file;
 
@@ -526,8 +533,8 @@ sub runFGFarmStop
 						my $line = $fileAux[$lines];
 						if ( $fileAux[$lines] =~ /0 $idsv (\d+) fgDOWN/ )
 						{
-							my $index    = $1;
-							my $auxlin   = splice ( @fileAux, $lines, 1, );
+							my $index = $1;
+							my $auxlin = splice ( @fileAux, $lines, 1, );
 
 							&logAndRun( "$poundctl -c $portadmin -B 0 $idsv $index" );
 						}
@@ -574,8 +581,8 @@ sub runFGFarmStart
 	my ( $farm, $svice ) = @_;
 
 	my $status = 0;
-	my $log = "";
-	my $sv = "";
+	my $log    = "";
+	my $sv     = "";
 
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
@@ -584,21 +591,26 @@ sub runFGFarmStart
 
 	# check if the farm is up
 	return if ( &getFarmStatus( $farm ) ne 'up' );
+
 	# if the farmguardian is running...
 	if ( &getFGPidFarm( $farm, $svice ) )
 	{
 		return;
+
 		#~ &runFGFarmStop( $farm, $svice );
 	}
+
 	# check if the node is master
 	my $node = "";
-	$node = &eload(
-			 module => 'Zevenet::Cluster',
-			 func   => 'getZClusterNodeStatus',
-			 args   => [],
-	);
-	return unless ( ! $node or $node eq 'master' );
-
+	if ( $eload )
+	{
+		$node = &eload(
+						module => 'Zevenet::Cluster',
+						func   => 'getZClusterNodeStatus',
+						args   => [],
+		);
+	}
+	return unless ( !$node or $node eq 'master' );
 
 	&zenlog( "Start fg for farm $farm, $svice", "debug2", "FG" );
 
@@ -617,9 +629,9 @@ sub runFGFarmStart
 	}
 	elsif ( $ftype eq 'l4xnat' || $ftype =~ /http/ )
 	{
-		my $fgname = &getFGFarm( $farm, $svice );
-		my $farmguardian = &getGlobalConfiguration('farmguardian');
-		my $fg_cmd = "$farmguardian $farm $sv $log";
+		my $fgname       = &getFGFarm( $farm, $svice );
+		my $farmguardian = &getGlobalConfiguration( 'farmguardian' );
+		my $fg_cmd       = "$farmguardian $farm $sv $log";
 		&zenlog( "running $fg_cmd", "info", "FG" );
 
 		return 0 if not $fgname;
@@ -678,6 +690,7 @@ sub getFGRunningFarms
 
 	require Zevenet::Farm::Core;
 	require Zevenet::Farm::Base;
+
 	# check all pid
 	foreach my $farm ( @{ &getFGObject( $fg )->{ 'farms' } } )
 	{
@@ -733,9 +746,9 @@ sub setOldFarmguardian
 	# if exists, update it
 	if ( &getFGExistsConfig( $name ) )
 	{
-		$set               = &getFGObject( $name );
-		$set->{ command }  = $obj->{ command } if exists $obj->{ command };
-		$set->{ log }      = $obj->{ log } if exists $obj->{ log };
+		$set = &getFGObject( $name );
+		$set->{ command }  = $obj->{ command }  if exists $obj->{ command };
+		$set->{ log }      = $obj->{ log }      if exists $obj->{ log };
 		$set->{ interval } = $obj->{ interval } if exists $obj->{ interval };
 	}
 
@@ -900,7 +913,10 @@ sub runFarmGuardianCreate    # ($fname,$ttcheck,$script,$usefg,$fglog,$svice)
 {
 	my ( $fname, $ttcheck, $script, $usefg, $fglog, $svice ) = @_;
 
-	&zenlog( "runFarmGuardianCreate( farm: $fname, interval: $ttcheck, cmd: $script, log: $fglog, enabled: $usefg )", "debug", "FG" );
+	&zenlog(
+		"runFarmGuardianCreate( farm: $fname, interval: $ttcheck, cmd: $script, log: $fglog, enabled: $usefg )",
+		"debug", "FG"
+	);
 
 	my $output = -1;
 
