@@ -23,6 +23,8 @@
 
 use strict;
 use warnings;
+
+use Fcntl 'SEEK_SET';
 use Tie::File;
 use File::Basename;
 use Zevenet::Config;
