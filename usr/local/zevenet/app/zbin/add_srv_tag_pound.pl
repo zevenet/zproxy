@@ -12,7 +12,7 @@ foreach my $i ( `ls $dir/*_pound.cfg 2>/dev/null` )
 {
 	chomp $i;
 
-	if ( system ( "egrep '\s*#ZWACL-END' $i >/dev/null 2>&1" ) )
+	if ( system ( "egrep '\\s*#ZWACL-END' $i >/dev/null 2>&1" ) )
 	{
 		&addline( $i );
 	}
