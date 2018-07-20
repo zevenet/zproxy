@@ -40,7 +40,6 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	my $reload_flag  = "false";
 	my $restart_flag = "false";
 	my $error        = "false";
-	my $flag         = "false";
 
 	my $farmname_old;
 
@@ -92,6 +91,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		}
 
 		#Check if farmname has correct characters (letters, numbers and hyphens)
+		# FIXME: use validation regex
 		unless ( $json_obj->{ newfarmname } =~ /^[a-zA-Z0-9\-]+$/ )
 		{
 			my $msg = "Invalid newfarmname value.";
@@ -307,20 +307,13 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	# Modify HTTP Verbs Accepted
 	if ( exists ( $json_obj->{ httpverb } ) )
 	{
-		if ( $json_obj->{ httpverb } !~
-			 /^(?:standardHTTP|extendedHTTP|standardWebDAV|MSextWebDAV|MSRPCext)$/ )
+		my $httpverb = &getHTTPVerbCode( $json_obj->{ httpverb } );
+
+		unless ( defined $httpverb )
 		{
 			my $msg = "Invalid httpverb value.";
 			&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 		}
-
-		my $httpverb = 0;
-
-		if    ( $json_obj->{ httpverb } eq "standardHTTP" )   { $httpverb = 0; }
-		elsif ( $json_obj->{ httpverb } eq "extendedHTTP" )   { $httpverb = 1; }
-		elsif ( $json_obj->{ httpverb } eq "standardWebDAV" ) { $httpverb = 2; }
-		elsif ( $json_obj->{ httpverb } eq "MSextWebDAV" )    { $httpverb = 3; }
-		elsif ( $json_obj->{ httpverb } eq "MSRPCext" )       { $httpverb = 4; }
 
 		my $status = &setFarmHttpVerb( $httpverb, $farmname );
 		if ( $status == -1 )
@@ -410,50 +403,48 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 	{
 		require Zevenet::Farm::HTTP::HTTPS;
 
+		my $flag = 'false';
+
 		# Modify Ciphers
 		if ( exists ( $json_obj->{ ciphers } ) )
 		{
+			# API keywords and internal keywords for cipher groups
+			my %c = (
+					  all            => "cipherglobal",
+					  customsecurity => "ciphercustom",
+					  highsecurity   => "cipherpci",
+					  ssloffloading  => "cipherssloffloading",
+			);
+
 			if ( !&getValidFormat( 'ciphers', $json_obj->{ ciphers } ) )
 			{
 				my $msg = "Invalid ciphers value.";
 				&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 			}
 
-			my $ssloffloading_error = 0;
-			my $ciphers;
+			my $ciphers = $c{ $json_obj->{ ciphers } };
 
-			if ( $json_obj->{ ciphers } eq "all" )
+			if ( $ciphers eq "cipherssloffloading" )
 			{
-				$ciphers = "cipherglobal";
-				$flag    = "true";
-			}
-			elsif ( $json_obj->{ ciphers } eq "customsecurity" )
-			{
-				$ciphers = "ciphercustom";
-			}
-			elsif ( $json_obj->{ ciphers } eq "highsecurity" ) { $ciphers = "cipherpci"; }
-			elsif ( $json_obj->{ ciphers } eq "ssloffloading" )
-			{
-				if ( $eload )
-				{
-					my $ssloff = &eload(
-						module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
-						func   => 'getFarmCipherSSLOffLoadingSupport',
-					);
-
-					unless ( $ssloff )
-					{
-						my $msg = "The CPU does not support SSL offloading.";
-						&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-					}
-
-					$ciphers = "cipherssloffloading";
-				}
-				else
+				unless ( $eload )
 				{
 					my $msg = "SSL offloading cipher profile not available.";
 					&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 				}
+
+				my $ssloff = &eload( module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+									 func   => 'getFarmCipherSSLOffLoadingSupport', );
+
+				unless ( $ssloff )
+				{
+					my $msg = "The CPU does not support SSL offloading.";
+					&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
+				}
+			}
+
+			if ( $ciphers eq "cipherglobal" )
+			{
+				$flag = "true";
 			}
 
 			my $status = &setFarmCipherList( $farmname, $ciphers );
@@ -462,7 +453,6 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 
 		# Get ciphers value
 		my $cipher = &getFarmCipherSet( $farmname );
-		chomp ( $cipher );
 
 		if ( $flag eq "false" )
 		{
@@ -519,27 +509,33 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		}
 
 		# Disable security protocol
-		my @protocols_ssl_keys = (
-								   "disable_sslv2", "disable_sslv3",
-								   "disable_tlsv1", "disable_tlsv1_1",
-								   "disable_tlsv1_2"
+		# API parameter => pound parameter
+		my %ssl_proto_hash = (
+							   "disable_sslv2"   => "SSLv2",
+							   "disable_sslv3"   => "SSLv3",
+							   "disable_tlsv1"   => "TLSv1",
+							   "disable_tlsv1_1" => "TLSv1_1",
+							   "disable_tlsv1_2" => "TLSv1_2",
 		);
-		foreach my $key_ssl ( @protocols_ssl_keys )
+
+		my %bool_to_int = (
+							"false" => 0,
+							"true"  => 1,
+		);
+
+		foreach my $key_ssl ( keys %ssl_proto_hash )
 		{
-			if ( grep ( /^$key_ssl$/, keys %{ $json_obj } ) )
+			if ( grep { $key_ssl eq $_ } keys %{ $json_obj } )
 			{
+				my $action;
 				my $ssl_proto;
-				my $action = -1;
-				$action = 1 if ( $json_obj->{ $key_ssl } eq "true" );
-				$action = 0 if ( $json_obj->{ $key_ssl } eq "false" );
 
-				$ssl_proto = "SSLv2"   if ( $key_ssl eq "disable_sslv2" );
-				$ssl_proto = "SSLv3"   if ( $key_ssl eq "disable_sslv3" );
-				$ssl_proto = "TLSv1"   if ( $key_ssl eq "disable_tlsv1" );
-				$ssl_proto = "TLSv1_1" if ( $key_ssl eq "disable_tlsv1_1" );
-				$ssl_proto = "TLSv1_2" if ( $key_ssl eq "disable_tlsv1_2" );
+				$action = $bool_to_int{ $json_obj->{ $key_ssl } }
+				  if exists $bool_to_int{ $json_obj->{ $key_ssl } };
 
-				if ( $action == -1 )
+				$ssl_proto = $ssl_proto_hash{ $key_ssl } if exists $ssl_proto_hash{ $key_ssl };
+
+				if ( not defined $action )
 				{
 					my $msg = "Error, the value is not valid for parameter $key_ssl.";
 					&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
@@ -548,6 +544,7 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 				if ( $action != &getHTTPFarmDisableSSL( $farmname, $ssl_proto ) )
 				{
 					my $status = &setHTTPFarmDisableSSL( $farmname, $ssl_proto, $action );
+
 					if ( $status == -1 )
 					{
 						my $msg = "Some errors happened trying to modify the certname.";
@@ -650,13 +647,14 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		if ( $eload )
 		{
 			@cnames = &eload(
-				module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
-				func   => 'getFarmCertificatesSNI',
-				args   => [$farmname],
+							  module => 'Zevenet::Farm::HTTP::HTTPS::Ext',
+							  func   => 'getFarmCertificatesSNI',
+							  args   => [$farmname],
 			);
 		}
 		else
 		{
+			# Make a list of a single element
 			@cnames = ( &getFarmCertificate( $farmname ) );
 		}
 
@@ -701,7 +699,6 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 
 	if ( $reload_ipds )
 	{
-
 		if ( $eload )
 		{
 			&eload(

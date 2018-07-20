@@ -482,6 +482,9 @@ Returns:
       "cookiepath" : "",
       "cookiettl" : 0,
       ...
+
+Notes:
+	Similar to the function get_http_service_struct
 =cut
 
 sub getHTTPServiceStruct
@@ -491,14 +494,12 @@ sub getHTTPServiceStruct
 	require Zevenet::FarmGuardian;
 	require Zevenet::Farm::HTTP::Backend;
 
-	my $service_ref = -1;
-
 	# http services
 	my $services = &getHTTPFarmVS( $farmname, "", "" );
 	my @serv = split ( ' ', $services );
 
 	# return error if service is not found
-	return $service_ref unless grep( { $service_name eq $_ } @serv );
+	return unless grep( { $service_name eq $_ } @serv );
 
 	my $vser         = &getHTTPFarmVS( $farmname, $service_name, "vs" );
 	my $urlp         = &getHTTPFarmVS( $farmname, $service_name, "urlp" );
@@ -510,14 +511,8 @@ sub getHTTPServiceStruct
 	my $dyns         = &getHTTPFarmVS( $farmname, $service_name, "dynscale" );
 	my $httpsbe      = &getHTTPFarmVS( $farmname, $service_name, "httpsbackend" );
 
-	if ( $dyns =~ /^$/ )
-	{
-		$dyns = "false";
-	}
-	if ( $httpsbe =~ /^$/ )
-	{
-		$httpsbe = "false";
-	}
+	$dyns    = "false" if $dyns eq '';
+	$httpsbe = "false" if $httpsbe eq '';
 
 	my @fgconfig  = &getFarmGuardianConf( $farmname, $service_name );
 	my $fgttcheck = $fgconfig[1];
@@ -536,34 +531,46 @@ sub getHTTPServiceStruct
 
 	my $backends = &getHTTPFarmBackends( $farmname, $service_name );
 
+	# Backends
+	my $backends = &getHTTPFarmBackends( $farmname, $service_name );
+
+	# Remove backend status 'undefined', it is for news api versions
+	foreach my $be ( @{ $backends } )
+	{
+		$be->{ 'status' } = 'up' if $be->{ 'status' } eq 'undefined';
+	}
+
 	$ttl       = 0 unless $ttl;
 	$fgttcheck = 0 unless $fgttcheck;
 
-	$service_ref = {
-					 id           => $service_name,
-					 vhost        => $vser,
-					 urlp         => $urlp,
-					 redirect     => $redirect,
-					 redirecttype => $redirecttype,
-					 persistence  => $session,
-					 ttl          => $ttl + 0,
-					 sessionid    => $sesid,
-					 leastresp    => $dyns,
-					 httpsb       => $httpsbe,
-					 backends     => $backends,
+	my $service_ref = {
+						id           => $service_name,
+						vhost        => $vser,
+						urlp         => $urlp,
+						redirect     => $redirect,
+						redirecttype => $redirecttype,
+						persistence  => $session,
+						ttl          => $ttl + 0,
+						sessionid    => $sesid,
+						leastresp    => $dyns,
+						httpsb       => $httpsbe,
+						backends     => $backends,
 	};
 
-	$service_ref = &eload(
-		module => 'Zevenet::Farm::HTTP::Service::Ext',
-		func   => 'add_service_cookie_insertion',
-		args   => [$farmname, $service_ref],
-	) if $eload;
+	if ( $eload )
+	{
+		$service_ref = &eload(
+							   module => 'Zevenet::Farm::HTTP::Service::Ext',
+							   func   => 'add_service_cookie_insertion',
+							   args   => [$farmname, $service_ref],
+		);
 
-	$service_ref->{ redirect_code } = &eload(
-		module => 'Zevenet::Farm::HTTP::Service::Ext',
-		func   => 'getHTTPServiceRedirectCode',
-		args   => [$farmname, $service_name],
-	) if $eload;
+		$service_ref->{ redirect_code } = &eload(
+											  module => 'Zevenet::Farm::HTTP::Service::Ext',
+											  func   => 'getHTTPServiceRedirectCode',
+											  args   => [$farmname, $service_name],
+		);
+	}
 
 	return $service_ref;
 }
@@ -1108,6 +1115,79 @@ sub getFarmVSI    # ($farm_name,$service)
 	}
 
 	return $srv_position;
+}
+
+# Similar to getHTTPServiceStruct??
+sub get_http_service_struct
+{
+	my ( $farmname, $service_name ) = @_;
+
+	require Zevenet::FarmGuardian;
+	require Zevenet::Farm::HTTP::Backend;
+
+	my $service_ref = &getHTTPServiceStruct( $farmname, $service_name );
+
+		# Backends
+		my $backends = &getHTTPFarmBackends( $farmname, $service_name );
+
+		# Remove backend status 'undefined', it is for news api versions
+		foreach my $be ( @{ $backends } )
+		{
+			$be->{ 'status' } = 'up' if $be->{ 'status' } eq 'undefined';
+		}
+
+	# Add FarmGuardian
+	$service_ref->{ farmguardian } = &getFGFarm( $farmname, $service_name );
+
+	# Add STS
+	if ( $eload )
+	{
+		$service_ref->{ sts_status } = &eload(
+			module => 'Zevenet::Farm::HTTP::Service::Ext',
+			func   => 'getHTTPServiceSTSStatus',
+			args   => [$farmname, $service_name],
+		);
+
+		$service_ref->{ sts_timeout } = int( &eload(
+			module => 'Zevenet::Farm::HTTP::Service::Ext',
+			func   => 'getHTTPServiceSTSTimeout',
+			args   => [$farmname, $service_name],
+		) );
+	}
+
+	return $service_ref;
+}
+
+sub get_http_all_services_struct
+{
+	my ( $farmname ) = @_;
+
+	# Output
+	my @services_list = ();
+
+	foreach my $service ( &getHTTPFarmServices( $farmname ) )
+	{
+		my $service_ref = &get_http_service_struct ( $farmname, $service );
+
+		push @services_list, $service_ref;
+	}
+
+	return \@services_list;
+}
+
+sub get_http_all_services_summary_struct
+{
+	my ( $farmname ) = @_;
+
+	# Output
+	my @services_list = ();
+
+	foreach my $service ( &getHTTPFarmServices( $farmname ) )
+	{
+		push @services_list, { 'id' => $service };
+	}
+
+	return \@services_list;
 }
 
 1;

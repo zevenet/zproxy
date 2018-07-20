@@ -1478,127 +1478,27 @@ sub get_http_farm_struct
 	return $farm;
 }
 
-sub get_http_service_struct
+sub getHTTPVerbCode
 {
-	my ( $farmname, $service_name ) = @_;
+	my $verbs_set = shift;
 
-	require Zevenet::FarmGuardian;
-	require Zevenet::Farm::HTTP::Backend;
+	# Default output value in case of missing verb set
+	my $verb_code;
 
-	# http services
-	my @serv = &getHTTPFarmServices( $farmname );
+	my %http_verbs = (
+					   standardHTTP   => 0,
+					   extendedHTTP   => 1,
+					   standardWebDAV => 2,
+					   MSextWebDAV    => 3,
+					   MSRPCext       => 4,
+	);
 
-	# return error if service is not found
-	return unless grep( { $service_name eq $_ } @serv );
-
-	my $vser         = &getHTTPFarmVS( $farmname, $service_name, "vs" );
-	my $urlp         = &getHTTPFarmVS( $farmname, $service_name, "urlp" );
-	my $redirect     = &getHTTPFarmVS( $farmname, $service_name, "redirect" );
-	my $redirecttype = &getHTTPFarmVS( $farmname, $service_name, "redirecttype" );
-	my $session      = &getHTTPFarmVS( $farmname, $service_name, "sesstype" );
-	my $ttl          = &getHTTPFarmVS( $farmname, $service_name, "ttl" );
-	my $sesid        = &getHTTPFarmVS( $farmname, $service_name, "sessionid" );
-	my $dyns         = &getHTTPFarmVS( $farmname, $service_name, "dynscale" );
-	my $httpsbe      = &getHTTPFarmVS( $farmname, $service_name, "httpsbackend" );
-
-	if ( $dyns =~ /^$/ )
+	if ( exists $http_verbs{ $verbs_set } )
 	{
-		$dyns = "false";
-	}
-	if ( $httpsbe =~ /^$/ )
-	{
-		$httpsbe = "false";
+		$verb_code = $http_verbs{ $verbs_set };
 	}
 
-	$ttl = 0 unless $ttl;
-
-	my $backends = &getHTTPFarmBackends( $farmname, $service_name );
-
-	# Remove backend status 'undefined', it is for news api versions
-	foreach my $be ( @{ $backends } )
-	{
-		$be->{ 'status' } = 'up' if $be->{ 'status' } eq 'undefined';
-	}
-
-	my $service_ref = {
-						id           => $service_name,
-						vhost        => $vser,
-						urlp         => $urlp,
-						redirect     => $redirect,
-						redirecttype => $redirecttype,
-						persistence  => $session,
-						ttl          => $ttl + 0,
-						sessionid    => $sesid,
-						farmguardian => &getFGFarm( $farmname, $service_name ),
-						leastresp    => $dyns,
-						httpsb       => $httpsbe,
-						backends     => $backends,
-	};
-
-	if ( $eload )
-	{
-		$service_ref = &eload(
-			module => 'Zevenet::Farm::HTTP::Service::Ext',
-			func   => 'add_service_cookie_insertion',
-			args   => [$farmname, $service_ref],
-		);
-
-		$service_ref->{ redirect_code } = &eload(
-			module => 'Zevenet::Farm::HTTP::Service::Ext',
-			func   => 'getHTTPServiceRedirectCode',
-			args   => [$farmname, $service_name],
-		);
-
-		$service_ref->{ sts_status } = &eload(
-			module => 'Zevenet::Farm::HTTP::Service::Ext',
-			func   => 'getHTTPServiceSTSStatus',
-			args   => [$farmname, $service_name],
-		);
-
-		$service_ref->{ sts_timeout } = int( &eload(
-			module => 'Zevenet::Farm::HTTP::Service::Ext',
-			func   => 'getHTTPServiceSTSTimeout',
-			args   => [$farmname, $service_name],
-		) );
-	}
-
-	return $service_ref;
-}
-
-sub get_http_all_services_struct
-{
-	my ( $farmname ) = @_;
-
-	require Zevenet::Farm::HTTP::Service;
-
-	# Output
-	my @services_list = ();
-
-	foreach my $service ( &getHTTPFarmServices( $farmname ) )
-	{
-		my $service_ref = &get_http_service_struct ( $farmname, $service );
-
-		push @services_list, $service_ref;
-	}
-
-	return \@services_list;
-}
-
-sub get_http_all_services_summary_struct
-{
-	my ( $farmname ) = @_;
-
-	require Zevenet::Farm::HTTP::Service;
-
-	# Output
-	my @services_list = ();
-
-	foreach my $service ( &getHTTPFarmServices( $farmname ) )
-	{
-		push @services_list, { 'id' => $service };
-	}
-
-	return \@services_list;
+	return $verb_code;
 }
 
 
