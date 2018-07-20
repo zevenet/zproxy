@@ -408,7 +408,8 @@ sub modify_http_farm    # ( $json_obj, $farmname )
 		# Modify Ciphers
 		if ( exists ( $json_obj->{ ciphers } ) )
 		{
-			# API keywords and internal keywords for cipher groups
+			# Cipher groups
+			# API parameter => library parameter
 			my %c = (
 					  all            => "cipherglobal",
 					  customsecurity => "ciphercustom",
