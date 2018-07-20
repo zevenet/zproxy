@@ -334,9 +334,6 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# get an ID for the new backend
-	my $id = &getHTTPFarmBackendAvailableID( $farmname, $service );
-
 	# validate IP
 	unless ( defined $json_obj->{ ip }
 			 && &getValidFormat( 'ip_addr', $json_obj->{ ip } ) )
@@ -370,6 +367,9 @@ sub new_service_backend    # ( $json_obj, $farmname, $service )
 		  "Invalid timeout value for a backend, it must be empty or greater than 0.";
 		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
+
+	# get an ID for the new backend
+	my $id = &getHTTPFarmBackendAvailableID( $farmname, $service );
 
 # First param ($id) is an empty string to let function autogenerate the id for the new backend
 	my $status = &setHTTPFarmServer(
