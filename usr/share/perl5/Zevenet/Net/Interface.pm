@@ -1266,4 +1266,218 @@ sub getAddressNetwork
 	return $net;
 }
 
+sub get_interface_list_struct
+{
+	require Zevenet::User;
+
+	my @output_list;
+
+	# Configured interfaces list
+	my @interfaces = @{ &getSystemInterfaceList() }; #140
+
+	# get cluster interface
+	my $cluster_if;
+
+	if ( $eload )
+	{
+		my $zcl_conf = &eload(
+			module => 'Zevenet::Cluster',
+			func   => 'getZClusterConfig',	# 100
+		);
+
+		if ( exists $zcl_conf->{ _ }->{ interface } ) {
+			$cluster_if = $zcl_conf->{ _ }->{ interface };
+		}
+	}
+
+	my $rbac_mod;
+	my $rbac_if_list = [];
+	my $user         = &getUser();
+
+	if ( $eload && ( $user ne 'root' ) )
+	{
+		$rbac_mod = 1;
+		$rbac_if_list = &eload(
+								module => 'Zevenet::RBAC::Group::Core',	# 100
+								func   => 'getRBACUsersResources',
+								args   => [$user, 'interfaces'],
+		);
+	}
+
+	# to include 'has_vlan' to nics
+	my @vlans = &getInterfaceTypeList( 'vlan' );	# 70
+
+	require Zevenet::Alias;
+	my $alias = &getAlias( "interface" );
+
+	for my $if_ref ( @interfaces )
+	{
+		# Exclude cluster maintenance interface
+		next if $if_ref->{ type } eq 'dummy';
+
+		# Exclude no user's virtual interfaces
+		next
+		  if (    $rbac_mod
+			   && !grep ( /^$if_ref->{ name }$/, @{ $rbac_if_list } )
+			   && ( $if_ref->{ type } eq 'virtual' ) );
+
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
+		# Any key must cotain a value or "" but can't be null
+		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+
+		my $if_conf = {
+			alias   => $alias->{ $if_ref->{ name } },
+			name    => $if_ref->{ name },
+			ip      => $if_ref->{ addr },
+			netmask => $if_ref->{ mask },
+			gateway => $if_ref->{ gateway },
+			status  => $if_ref->{ status },
+			mac     => $if_ref->{ mac },
+			type    => $if_ref->{ type },
+
+			#~ ipv     => $if_ref->{ ip_v },
+		};
+
+		if ( $if_ref->{ type } eq 'nic' )
+		{
+			my @bond_slaves = ();
+
+			@bond_slaves = &eload(
+					module => 'Zevenet::Net::Bonding',
+					func   => 'getAllBondsSlaves',
+			) if ( $eload );
+
+			$if_conf->{ is_slave } =
+			  ( grep { $$if_ref{ name } eq $_ } @bond_slaves ) ? 'true' : 'false';
+
+			# include 'has_vlan'
+			for my $vlan_ref ( @vlans )
+			{
+				if ( $vlan_ref->{ parent } eq $if_ref->{ name } )
+				{
+					$if_conf->{ has_vlan } = 'true';
+					last;
+				}
+			}
+
+			$if_conf->{ has_vlan } = 'false' unless $if_conf->{ has_vlan };
+		}
+
+		if ( $cluster_if && $cluster_if eq $if_ref->{ name } )
+		{
+			$if_conf->{ is_cluster } = 'true';
+		}
+
+		push @output_list, $if_conf;
+	}
+
+	return \@output_list;
+}
+
+sub get_nic_list_struct
+{
+	my @output_list;
+
+	my @vlans = &getInterfaceTypeList( 'vlan' );
+
+	# get cluster interface
+	my $cluster_if;
+	if ( $eload )
+	{
+		my $zcl_conf = &eload( module => 'Zevenet::Cluster',
+							   func   => 'getZClusterConfig' );
+		$cluster_if = $zcl_conf->{ _ }->{ interface };
+	}
+
+	require Zevenet::Alias;
+	my $alias = &getAlias( "interface" );
+
+	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
+	{
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
+		# Any key must cotain a value or "" but can't be null
+		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+
+		my $if_conf = {
+						alias   => $alias->{ $if_ref->{ name } },
+						name    => $if_ref->{ name },
+						ip      => $if_ref->{ addr },
+						netmask => $if_ref->{ mask },
+						gateway => $if_ref->{ gateway },
+						status  => $if_ref->{ status },
+						mac     => $if_ref->{ mac },
+		};
+
+		$if_conf->{ is_slave } = $if_ref->{ is_slave } if $eload;
+		$if_conf->{ is_cluster } = 'true' if $cluster_if eq $if_ref->{ name };
+
+		# include 'has_vlan'
+		for my $vlan_ref ( @vlans )
+		{
+			if ( $vlan_ref->{ parent } eq $if_ref->{ name } )
+			{
+				$if_conf->{ has_vlan } = 'true';
+				last;
+			}
+		}
+
+		$if_conf->{ has_vlan } = 'false' unless $if_conf->{ has_vlan };
+
+		push @output_list, $if_conf;
+	}
+
+	return \@output_list;
+}
+
+sub get_nic_struct
+{
+	my $nic = shift;
+
+	require Zevenet::Alias;
+
+	my $alias = &getAlias( "interface" );
+	my $interface;
+
+	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
+	{
+		next unless $if_ref->{ name } eq $nic;
+
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
+		# Any key must contain a value or "" but can't be null
+		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+
+		$interface = {
+					   alias   => $alias->{ $if_ref->{ name } },
+					   name    => $if_ref->{ name },
+					   ip      => $if_ref->{ addr },
+					   netmask => $if_ref->{ mask },
+					   gateway => $if_ref->{ gateway },
+					   status  => $if_ref->{ status },
+					   mac     => $if_ref->{ mac },
+		};
+
+		$interface->{ is_slave } = $if_ref->{ is_slave } if $eload;
+	}
+
+	return $interface;
+}
+
 1;
