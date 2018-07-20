@@ -175,11 +175,6 @@ sub farm_services
 	# no error found, return successful response
 	my $service = &get_http_service_struct( $farmname, $servicename );
 
-	foreach my $be ( @{ $service->{ backends } } )
-	{
-		$be->{ status } = "up" if $be->{ status } eq "undefined";
-	}
-
 	my $body = {
 				 description => $desc,
 				 params      => $service,
