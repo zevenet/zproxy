@@ -232,11 +232,6 @@ sub modify_services    # ( $json_obj, $farmname, $service )
 				args   => [$json_obj, $farmname, $service]
 		);
 	}
-	elsif ( $type !~ /^https?$/ )
-	{
-		my $msg = "Farm profile not supported";
-		&httpErrorResponse( code => 400, desc => $desc, msg => $msg );
-	}
 
 	if ( exists $json_obj->{ vhost } )
 	{
