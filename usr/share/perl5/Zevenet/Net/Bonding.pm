@@ -723,4 +723,118 @@ sub getAllBondsSlaves
 	return @slaves;
 }
 
+sub get_bond_struct
+{
+	my ( $bond ) = @_;
+
+	require Zevenet::Net::Interface;
+
+	my $bond_ref;
+
+	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )
+	{
+		next unless $if_ref->{ name } eq $bond;
+
+		$bond_ref = $if_ref;
+	}
+
+	# End here if the bonding interface was not found
+	return unless $bond_ref;
+
+	require Zevenet::Alias;
+
+	my $alias     = &getAlias( 'interface' );
+	my $bond_conf = &getBondConfig();
+
+	$bond_ref->{ status } = &getInterfaceSystemStatus( $bond_ref );
+
+	# Any key must contain a value or "" but can't be null
+	if ( !defined $bond_ref->{ name } )    { $bond_ref->{ name }    = ""; }
+	if ( !defined $bond_ref->{ addr } )    { $bond_ref->{ addr }    = ""; }
+	if ( !defined $bond_ref->{ mask } )    { $bond_ref->{ mask }    = ""; }
+	if ( !defined $bond_ref->{ gateway } ) { $bond_ref->{ gateway } = ""; }
+	if ( !defined $bond_ref->{ status } )  { $bond_ref->{ status }  = ""; }
+	if ( !defined $bond_ref->{ mac } )     { $bond_ref->{ mac }     = ""; }
+
+	my @bond_slaves = @{ $bond_conf->{ $bond_ref->{ name } }->{ slaves } };
+	my @output_slaves;
+	push ( @output_slaves, { name => $_ } ) for @bond_slaves;
+
+	# Output bonding interface hash reference
+	my $interface = {
+			   alias   => $alias->{ $bond_ref->{ name } },
+			   name    => $bond_ref->{ name },
+			   ip      => $bond_ref->{ addr },
+			   netmask => $bond_ref->{ mask },
+			   gateway => $bond_ref->{ gateway },
+			   status  => $bond_ref->{ status },
+			   mac     => $bond_ref->{ mac },
+			   slaves  => \@output_slaves,
+			   mode => $bond_modes_short[$bond_conf->{ $bond_ref->{ name } }->{ mode }],
+	};
+
+	return $interface;
+}
+
+sub get_bond_list_struct
+{
+	my $output_list = ();
+
+	require Zevenet::Alias;
+	require Zevenet::Net::Interface;
+	include 'Zevenet::Cluster';
+
+	my $desc      = "List bonding interfaces";
+	my $bond_conf = &getBondConfig();
+
+	# get cluster interface
+	my $cluster_if;
+
+	my $zcl_conf = &getZClusterConfig();
+	$cluster_if = $zcl_conf->{ _ }->{ interface } if $zcl_conf;
+
+	my $alias = &getAlias( 'interface' );
+
+	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )
+	{
+		next unless $bond_conf->{ $if_ref->{ name } };
+
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
+		# Any key must cotain a value or "" but can't be null
+		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+
+		my @bond_slaves = @{ $bond_conf->{ $if_ref->{ name } }->{ slaves } };
+		my @output_slaves;
+		push ( @output_slaves, { name => $_ } ) for @bond_slaves;
+
+		my $if_conf = {
+			alias   => $alias->{ $if_ref->{ name } },
+			name    => $if_ref->{ name },
+			ip      => $if_ref->{ addr },
+			netmask => $if_ref->{ mask },
+			gateway => $if_ref->{ gateway },
+			status  => $if_ref->{ status },
+			mac     => $if_ref->{ mac },
+
+			slaves => \@output_slaves,
+			mode   => $bond_modes_short[$bond_conf->{ $if_ref->{ name } }->{ mode }],
+
+			#~ ipv     => $if_ref->{ ip_v },
+		};
+
+		$if_conf->{ is_cluster } = 'true'
+		  if $cluster_if && $cluster_if eq $if_ref->{ name };
+
+		push @{ $output_list }, $if_conf;
+	}
+
+	return $output_list;
+}
+
 1;

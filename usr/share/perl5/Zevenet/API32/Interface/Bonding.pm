@@ -218,7 +218,7 @@ sub delete_interface_bond    # ( $bond )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	# not delete the interface if it has some vlan configured
+	# Do not delete the interface if it has some vlan configured
 	my @child = &getInterfaceChild( $bond );
 
 	if ( @child )
@@ -231,7 +231,9 @@ sub delete_interface_bond    # ( $bond )
 
 	# check if some farm is using this ip
 	require Zevenet::Farm::Base;
+
 	my @farms = &getFarmListByVip( $if_ref->{ addr } );
+
 	if ( @farms )
 	{
 		my $str = join ( ', ', @farms );
@@ -325,15 +327,14 @@ sub delete_bond    # ( $bond )
 		return &httpErrorResponse( code => 400, desc => $desc, msg => $msg );
 	}
 
-	#~ eval {
-	if ( ${ &getSystemInterface( $bond ) }{ status } eq 'up' )
-	{
-		die if &downIf( $bonds->{ $bond }, 'writeconf' );
-	}
+	eval {
+		if ( ${ &getSystemInterface( $bond ) }{ status } eq 'up' )
+		{
+			die if &downIf( $bonds->{ $bond }, 'writeconf' );
+		}
 
-	die if &setBondMaster( $bond, 'del', 'writeconf' );
-
-	#~ };
+		die if &setBondMaster( $bond, 'del', 'writeconf' );
+	};
 
 	if ( $@ )
 	{
@@ -380,6 +381,7 @@ sub delete_bond_slave    # ( $bond, $slave )
 		  grep ( { $slave ne $_ } @{ $bonds->{ $bond }{ slaves } } );
 		die if &applyBondChange( $bonds->{ $bond }, 'writeconf' );
 	};
+
 	if ( $@ )
 	{
 		my $msg = "The bonding slave interface $slave could not be removed";
@@ -399,66 +401,13 @@ sub delete_bond_slave    # ( $bond, $slave )
 sub get_bond_list    # ()
 {
 	include 'Zevenet::Net::Bonding';
-	require Zevenet::Net::Interface;
 
-	my @output_list = ();
-
-	my $desc      = "List bonding interfaces";
-	my $bond_conf = &getBondConfig();
-
-	# get cluster interface
-	my $cluster_if;
-
-	include 'Zevenet::Cluster';
-
-	my $zcl_conf = &getZClusterConfig();
-	$cluster_if = $zcl_conf->{ _ }->{ interface };
-
-	require Zevenet::Alias;
-	my $alias = &getAlias( 'interface' );
-
-	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )
-	{
-		next unless $bond_conf->{ $if_ref->{ name } };
-
-		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
-
-		# Any key must cotain a value or "" but can't be null
-		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
-
-		my @bond_slaves = @{ $bond_conf->{ $if_ref->{ name } }->{ slaves } };
-		my @output_slaves;
-		push ( @output_slaves, { name => $_ } ) for @bond_slaves;
-
-		my $if_conf = {
-			alias   => $alias->{ $if_ref->{ name } },
-			name    => $if_ref->{ name },
-			ip      => $if_ref->{ addr },
-			netmask => $if_ref->{ mask },
-			gateway => $if_ref->{ gateway },
-			status  => $if_ref->{ status },
-			mac     => $if_ref->{ mac },
-
-			slaves => \@output_slaves,
-			mode   => $bond_modes_short[$bond_conf->{ $if_ref->{ name } }->{ mode }],
-
-			#~ ipv     => $if_ref->{ ip_v },
-		};
-
-		$if_conf->{ is_cluster } = 'true'
-		  if $cluster_if && $cluster_if eq $if_ref->{ name };
-
-		push @output_list, $if_conf;
-	}
+	my $desc        = "List bonding interfaces";
+	my $output_list_ref = &get_bond_list_struct();
 
 	my $body = {
 				 description => $desc,
-				 interfaces  => \@output_list,
+				 interfaces  => $output_list_ref,
 	};
 
 	return &httpResponse( { code => 200, body => $body } );
@@ -471,43 +420,8 @@ sub get_bond    # ()
 	include 'Zevenet::Net::Bonding';
 	require Zevenet::Net::Interface;
 
-	my $interface;    # output
 	my $desc      = "Show bonding interface";
-	my $bond_conf = &getBondConfig();
-
-	require Zevenet::Alias;
-	my $alias = &getAlias( 'interface' );
-
-	for my $if_ref ( &getInterfaceTypeList( 'bond' ) )
-	{
-		next unless $if_ref->{ name } eq $bond;
-
-		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
-
-		# Any key must cotain a value or "" but can't be null
-		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
-
-		my @bond_slaves = @{ $bond_conf->{ $if_ref->{ name } }->{ slaves } };
-		my @output_slaves;
-		push ( @output_slaves, { name => $_ } ) for @bond_slaves;
-
-		$interface = {
-					 alias   => $alias->{ $if_ref->{ name } },
-					 name    => $if_ref->{ name },
-					 ip      => $if_ref->{ addr },
-					 netmask => $if_ref->{ mask },
-					 gateway => $if_ref->{ gateway },
-					 status  => $if_ref->{ status },
-					 mac     => $if_ref->{ mac },
-					 slaves  => \@output_slaves,
-					 mode => $bond_modes_short[$bond_conf->{ $if_ref->{ name } }->{ mode }],
-		};
-	}
+	my $interface = &get_bond_struct( $bond );    # output
 
 	unless ( $interface )
 	{
