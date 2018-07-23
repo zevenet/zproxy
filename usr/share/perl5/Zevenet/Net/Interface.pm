@@ -1380,6 +1380,45 @@ sub get_interface_list_struct
 	return \@output_list;
 }
 
+sub get_nic_struct
+{
+	my $nic = shift;
+
+	require Zevenet::Alias;
+
+	my $alias = &getAlias( "interface" );
+	my $interface;
+
+	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
+	{
+		next unless $if_ref->{ name } eq $nic;
+
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
+		# Any key must contain a value or "" but can't be null
+		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+
+		$interface = {
+					   alias   => $alias->{ $if_ref->{ name } },
+					   name    => $if_ref->{ name },
+					   ip      => $if_ref->{ addr },
+					   netmask => $if_ref->{ mask },
+					   gateway => $if_ref->{ gateway },
+					   status  => $if_ref->{ status },
+					   mac     => $if_ref->{ mac },
+		};
+
+		$interface->{ is_slave } = $if_ref->{ is_slave } if $eload;
+	}
+
+	return $interface;
+}
+
 sub get_nic_list_struct
 {
 	my @output_list;
@@ -1441,45 +1480,6 @@ sub get_nic_list_struct
 	return \@output_list;
 }
 
-sub get_nic_struct
-{
-	my $nic = shift;
-
-	require Zevenet::Alias;
-
-	my $alias = &getAlias( "interface" );
-	my $interface;
-
-	for my $if_ref ( &getInterfaceTypeList( 'nic' ) )
-	{
-		next unless $if_ref->{ name } eq $nic;
-
-		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
-
-		# Any key must contain a value or "" but can't be null
-		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
-
-		$interface = {
-					   alias   => $alias->{ $if_ref->{ name } },
-					   name    => $if_ref->{ name },
-					   ip      => $if_ref->{ addr },
-					   netmask => $if_ref->{ mask },
-					   gateway => $if_ref->{ gateway },
-					   status  => $if_ref->{ status },
-					   mac     => $if_ref->{ mac },
-		};
-
-		$interface->{ is_slave } = $if_ref->{ is_slave } if $eload;
-	}
-
-	return $interface;
-}
-
 sub get_vlan_struct
 {
 	my ( $vlan ) = @_;
@@ -1500,7 +1500,7 @@ sub get_vlan_struct
 
 	$interface->{ status } = &getInterfaceSystemStatus( $interface );
 
-	# Any key must cotain a value or "" but can't be null
+	# Any key must contain a value or "" but can't be null
 	if ( !defined $interface->{ name } )    { $interface->{ name }    = ""; }
 	if ( !defined $interface->{ addr } )    { $interface->{ addr }    = ""; }
 	if ( !defined $interface->{ mask } )    { $interface->{ mask }    = ""; }
@@ -1519,6 +1519,82 @@ sub get_vlan_struct
 	};
 
 	return $output;
+}
+
+sub get_virtual_struct
+{
+	my ( $virtual ) = @_;
+
+	require Zevenet::Alias;
+
+	my $interface;
+	my $alias = &getAlias( 'interface' );
+
+	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
+	{
+		next unless $if_ref->{ name } eq $virtual;
+
+		$interface = $if_ref;
+	}
+
+	return unless $interface;
+
+	$interface->{ status } = &getInterfaceSystemStatus( $interface );
+
+	# Any key must contain a value or "" but can't be null
+	if ( !defined $interface->{ name } )    { $interface->{ name }    = ""; }
+	if ( !defined $interface->{ addr } )    { $interface->{ addr }    = ""; }
+	if ( !defined $interface->{ mask } )    { $interface->{ mask }    = ""; }
+	if ( !defined $interface->{ gateway } ) { $interface->{ gateway } = ""; }
+	if ( !defined $interface->{ status } )  { $interface->{ status }  = ""; }
+	if ( !defined $interface->{ mac } )     { $interface->{ mac }     = ""; }
+
+	my $output = {
+				   alias   => $alias->{ $interface->{ name } },
+				   name    => $interface->{ name },
+				   ip      => $interface->{ addr },
+				   netmask => $interface->{ mask },
+				   gateway => $interface->{ gateway },
+				   status  => $interface->{ status },
+				   mac     => $interface->{ mac },
+	};
+
+	return $output;
+}
+
+sub get_virtual_list_struct
+{
+	require Zevenet::Alias;
+
+	my @output_list = ();
+	my $alias = &getAlias( 'interface' );
+
+	for my $if_ref ( &getInterfaceTypeList( 'virtual' ) )
+	{
+		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
+
+		# Any key must cotain a value or "" but can't be null
+		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
+		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
+		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
+		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
+		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
+		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
+
+		push @output_list,
+		  {
+			alias   => $alias->{ $if_ref->{ name } },
+			name    => $if_ref->{ name },
+			ip      => $if_ref->{ addr },
+			netmask => $if_ref->{ mask },
+			gateway => $if_ref->{ gateway },
+			status  => $if_ref->{ status },
+			mac     => $if_ref->{ mac },
+			parent  => $if_ref->{ parent },
+		  };
+	}
+
+	return \@output_list;
 }
 
 1;
