@@ -254,7 +254,7 @@ sub certcontrol
         $swcert = 2;
         return $swcert;
     } elsif ( (!grep /$key/, @zen_cert )
-			 	|| ( !grep /CN=$hostname\/|CN = $hostname\,/, @zen_cert) ) {
+				|| ( !grep (/(CN=$hostname\/|CN = $hostname\,)/, @zen_cert)) ) {
  		#swcert = 5 ==> Cert isn't valid
        $swcert = 5;
        return $swcert;
@@ -269,7 +269,7 @@ sub certcontrol
 	my $date_check = `cat $file_check 2>/dev/null`;
 	$date_check =~ s/\s*$//;
 
-	if ($date_check ne $date_encode) 
+	if ($date_check ne $date_encode)
 	{
 		my $crl_path = "$configdir/cacrl.crl";
 

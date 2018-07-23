@@ -746,7 +746,7 @@ sub delCert_activation    # ($certname)
 	my $certdir = &getGlobalConfiguration( 'basedir' );
 	my $certname = 'zlbcertfile.pem';
 
-	$certname = "$certdir\/$certname";
+	$certname = "$certdir/$certname";
 
 	my $files_removed = 1;
 	if ( -f "$certname" )
