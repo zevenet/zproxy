@@ -743,11 +743,9 @@ See Also:
 
 sub delCert_activation    # ($certname)
 {
-	my ( $certname ) = @_;
-
 	my $certdir = &getGlobalConfiguration( 'basedir' );
-	# escaping special caracters
-	$certname = quotemeta $certname;
+	my $certname = 'zlbcertfile.pem';
+
 	$certname = "$certdir\/$certname";
 
 	my $files_removed = 1;
@@ -755,6 +753,10 @@ sub delCert_activation    # ($certname)
 	{
 		$files_removed = unlink ( "$certname" );
 		&zenlog( "Error removing certificate $certname", "error", "Activation" ) if !$files_removed;
+	}
+	else
+	{
+		&zenlog( "The activation certificate $certname is not found", "error", "Activation" );
 	}
 
 	return $files_removed;
