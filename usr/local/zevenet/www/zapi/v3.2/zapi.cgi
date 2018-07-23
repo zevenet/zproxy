@@ -256,7 +256,6 @@ sub certcontrol
     } elsif ( (!grep /$key/, @zen_cert )
 			 	|| ( !grep /CN=$hostname\/|CN = $hostname\,/, @zen_cert) ) {
  		#swcert = 5 ==> Cert isn't valid
- 		&zenlog("zapi v3.2  1","debug1","certificate????");
        $swcert = 5;
        return $swcert;
  	}
@@ -361,7 +360,6 @@ sub certcontrol
 			 || ( !grep /$mod_appl/, $data_key[2] ))
 		{
 			#swcert = 5 ==> Cert isn't valid
-			&zenlog("zapi v3.2  2","debug1","certificate????");
 			$swcert = 5;
 			return $swcert;
 		}

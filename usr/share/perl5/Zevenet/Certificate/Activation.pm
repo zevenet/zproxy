@@ -148,7 +148,6 @@ sub certcontrol
 			 || ( !grep (/(CN=$hostname\/|CN = $hostname\,)/, @zen_cert)) ) {
  		#swcert = 5 ==> Cert isn't valid
        	$swcert = 5;
-       	&zenlog("activation.pm  1","debug1","certificate????");
        	return $swcert;
  	}
 
@@ -253,7 +252,6 @@ sub certcontrol
 		{
 			#swcert = 5 ==> Cert isn't valid
 			$swcert = 5;
-			&zenlog("activation.pm  2","debug1","certificate????");
 			return $swcert;
 		}
 	}

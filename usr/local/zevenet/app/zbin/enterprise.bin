@@ -563,7 +563,6 @@ sub certcontrol
 	}
 	if ($cert_ou =~ m/-/  && $func eq 'upload_activation_certificate') {
 		$swcert = 5;
-		&zenlog("Enterprise bin 3","debug1","certificate????");
 		return $swcert;
 	}
 
@@ -574,7 +573,6 @@ sub certcontrol
     } elsif (( !grep /$key/, @zen_cert )
 			 || ( !grep (/(CN=$hostname\/|CN = $hostname\,)/, @zen_cert)) ) {
  		#swcert = 5 ==> Cert isn't valid
- 		&zenlog("Enterprise bin","debug1","certificate????");
        	$swcert = 5;
        	return $swcert;
  	}
@@ -684,7 +682,6 @@ sub certcontrol
 			 || ( !grep /$mod_appl/, $data_key[2] ))
 		{
 			#swcert = 5 ==> Cert isn't valid
-			&zenlog("Enterprise bin 2","debug1","certificate????");
 			$swcert = 5;
 			return $swcert;
 		}
