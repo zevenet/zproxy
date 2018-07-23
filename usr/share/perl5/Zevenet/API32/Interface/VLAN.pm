@@ -293,55 +293,12 @@ sub get_vlan_list    # ()
 {
 	require Zevenet::Net::Interface;
 
-	my $desc = "List VLAN interfaces";
-	my @output_list;
-
-	# get cluster interface
-	my $cluster_if;
-	if ( $eload )
-	{
-		my $zcl_conf = &eload(
-			module => 'Zevenet::Cluster',
-			func   => 'getZClusterConfig',
-		);
-		$cluster_if = $zcl_conf->{ _ }->{ interface };
-	}
-
-	require Zevenet::Alias;
-	my $alias = &getAlias( 'interface' );
-
-	for my $if_ref ( &getInterfaceTypeList( 'vlan' ) )
-	{
-		$if_ref->{ status } = &getInterfaceSystemStatus( $if_ref );
-
-		# Any key must cotain a value or "" but can't be null
-		if ( !defined $if_ref->{ name } )    { $if_ref->{ name }    = ""; }
-		if ( !defined $if_ref->{ addr } )    { $if_ref->{ addr }    = ""; }
-		if ( !defined $if_ref->{ mask } )    { $if_ref->{ mask }    = ""; }
-		if ( !defined $if_ref->{ gateway } ) { $if_ref->{ gateway } = ""; }
-		if ( !defined $if_ref->{ status } )  { $if_ref->{ status }  = ""; }
-		if ( !defined $if_ref->{ mac } )     { $if_ref->{ mac }     = ""; }
-
-		my $if_conf = {
-						alias   => $alias->{ $if_ref->{ name } },
-						name    => $if_ref->{ name },
-						ip      => $if_ref->{ addr },
-						netmask => $if_ref->{ mask },
-						gateway => $if_ref->{ gateway },
-						status  => $if_ref->{ status },
-						mac     => $if_ref->{ mac },
-						parent  => $if_ref->{ parent },
-		};
-
-		$if_conf->{ is_cluster } = 'true'
-		  if $cluster_if && $cluster_if eq $if_ref->{ name };
-
-		push @output_list, $if_conf;
-	}
+	my $desc        = "List VLAN interfaces";
+	my $output_list = &get_vlan_list_struct();
 
 	my $body = {
 				 description => $desc,
-				 interfaces  => \@output_list,
+				 interfaces  => $output_list,
 	};
 
 	&httpResponse( { code => 200, body => $body } );
